@@ -1,0 +1,76 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html, body, #root {
+    @apply h-full;
+    background-color: #08090d;
+    color: #e8ecf5;
+  }
+
+  * {
+    @apply antialiased;
+  }
+
+  ::selection {
+    background-color: #4f7cff33;
+    color: #e8ecf5;
+  }
+
+  ::-webkit-scrollbar {
+    width: 4px;
+  }
+  ::-webkit-scrollbar-track {
+    background: #0f1117;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: #1e2535;
+    border-radius: 2px;
+  }
+}
+
+@layer components {
+  .btn-primary {
+    @apply inline-flex items-center gap-2 px-6 py-3 rounded-lg
+           bg-signal text-white font-body font-medium text-sm
+           hover:bg-blue-500 active:scale-95
+           transition-all duration-150 cursor-pointer;
+  }
+
+  .btn-ghost {
+    @apply inline-flex items-center gap-2 px-4 py-2 rounded-lg
+           text-dim font-body font-medium text-sm
+           hover:text-bright hover:bg-panel
+           transition-all duration-150 cursor-pointer border-0 bg-transparent;
+  }
+
+  .card {
+    @apply bg-surface border border-border rounded-xl p-6;
+  }
+
+  .input {
+    @apply w-full bg-panel border border-border rounded-lg px-4 py-3
+           text-bright font-body text-sm placeholder:text-muted
+           focus:outline-none focus:border-signal
+           transition-colors duration-150;
+  }
+
+  .label {
+    @apply block text-dim font-body text-xs uppercase tracking-widest mb-2;
+  }
+
+  .tag {
+    @apply inline-flex items-center px-2 py-0.5 rounded
+           bg-panel border border-border
+           text-dim font-mono text-xs;
+  }
+}
+
+/* Animation fill-mode utilities pour la landing */
+.animate-slide-up {
+  animation: slideUp 0.5s cubic-bezier(0.22,1,0.36,1) both;
+}
+.animate-fade-in {
+  animation: fadeIn 0.4s ease both;
+}
