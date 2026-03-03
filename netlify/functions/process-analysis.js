@@ -8,10 +8,10 @@
  * Body : { analysisId: string }
  */
 
-import { supabaseAdmin }      from '../lib/supabaseAdmin.js'
+import { supabaseAdmin } from '../lib/supabaseAdmin.js'
 import { generatePresentations } from '../lib/generatePresentations.js'
-import { fetchConversation }  from '../lib/fetchConversation.js'
-import { parseCogentiaJson }  from '../lib/parseCogentia.js'
+import { fetchConversation } from '../lib/fetchConversation.js'
+import { parseCogentiaJson } from '../lib/parseCogentia.js'
 
 export default async function handler(req) {
   // CORS preflight
@@ -26,7 +26,7 @@ export default async function handler(req) {
   let analysisId, clientRawJson
   try {
     const body = await req.json()
-    analysisId    = body.analysisId
+    analysisId = body.analysisId
     clientRawJson = body.rawJson ?? null   // fourni si méthode paste ou fichier
   } catch {
     return json({ error: 'Body JSON invalide' }, 400)
@@ -49,14 +49,23 @@ export default async function handler(req) {
     return json({ error: `Analyse déjà en cours ou terminée (status: ${analysis.status})` }, 409)
   }
 
-  // ─── 2. Statut → fetching ─────────────────────────────────────────────────
+  // ─── 2. Statut → fetching (skip si rawJson fourni par le client) ───────────
   await setStatus(analysisId, 'fetching')
 
-  const { rawJson, platform, error: fetchErr } = await fetchConversation(analysis.conversation_url)
-
-  if (fetchErr) {
-    await setStatus(analysisId, 'error', fetchErr)
-    return json({ error: fetchErr }, 422)
+  let rawJson, platform
+  if (clientRawJson) {
+    // Méthode paste / fichier : le client a déjà extrait le JSON
+    rawJson = clientRawJson
+    platform = null
+  } else {
+    // Méthode auto : fetch de l'URL partagée
+    const result = await fetchConversation(analysis.conversation_url)
+    if (result.error) {
+      await setStatus(analysisId, 'error', result.error)
+      return json({ error: result.error }, 422)
+    }
+    rawJson = result.rawJson
+    platform = result.platform
   }
 
   // ─── 3. Statut → parsing ──────────────────────────────────────────────────
@@ -78,47 +87,47 @@ export default async function handler(req) {
 
   // ─── 5. Met à jour l'analyse avec les métadonnées parsées ─────────────────
   const rel = parsed.user_relationship ?? {}
-  const rel2 = parsed.reliability      ?? {}
-  const eth  = parsed.ethics_compliance ?? {}
+  const rel2 = parsed.reliability ?? {}
+  const eth = parsed.ethics_compliance ?? {}
 
   const { error: updateErr } = await supabaseAdmin
     .from('analyses')
     .update({
       // Identification agent
-      agent_name:           parsed.agent?.name            ?? platform,
-      agent_model:          parsed.agent?.model           ?? null,
-      agent_platform:       parsed.agent?.platform        ?? platform,
-      agent_is_custom:      parsed.agent?.is_custom_or_finetuned ?? false,
-      agent_custom_details: parsed.agent?.custom_details  ?? null,
+      agent_name: parsed.agent?.name ?? platform,
+      agent_model: parsed.agent?.model ?? null,
+      agent_platform: parsed.agent?.platform ?? platform,
+      agent_is_custom: parsed.agent?.is_custom_or_finetuned ?? false,
+      agent_custom_details: parsed.agent?.custom_details ?? null,
 
       // Relation agent/utilisateur
-      rel_estimated_exchanges:          rel.estimated_exchanges          ?? null,
-      rel_has_persistent_memory:        rel.has_persistent_memory        ?? null,
-      rel_memory_richness:              rel.memory_richness              ?? null,
-      rel_main_topics:                  rel.main_topics                  ?? [],
-      rel_interaction_depth:            rel.interaction_depth            ?? null,
-      rel_observed_patterns:            rel.observed_patterns            ?? [],
-      rel_salient_traits:               rel.salient_traits               ?? [],
-      rel_blind_spots:                  rel.blind_spots                  ?? [],
-      rel_global_confidence:            rel.global_confidence            ?? null,
-      rel_global_confidence_rationale:  rel.global_confidence_rationale  ?? null,
+      rel_estimated_exchanges: rel.estimated_exchanges ?? null,
+      rel_has_persistent_memory: rel.has_persistent_memory ?? null,
+      rel_memory_richness: rel.memory_richness ?? null,
+      rel_main_topics: rel.main_topics ?? [],
+      rel_interaction_depth: rel.interaction_depth ?? null,
+      rel_observed_patterns: rel.observed_patterns ?? [],
+      rel_salient_traits: rel.salient_traits ?? [],
+      rel_blind_spots: rel.blind_spots ?? [],
+      rel_global_confidence: rel.global_confidence ?? null,
+      rel_global_confidence_rationale: rel.global_confidence_rationale ?? null,
 
       // Fiabilité
-      reliability_data_richness:    rel2.data_richness        ?? null,
-      reliability_scoring_caveats:  rel2.scoring_caveats      ?? [],
-      reliability_recommendation:   rel2.recommended_interpretation ?? null,
+      reliability_data_richness: rel2.data_richness ?? null,
+      reliability_scoring_caveats: rel2.scoring_caveats ?? [],
+      reliability_recommendation: rel2.recommended_interpretation ?? null,
 
       // Éthique
-      ethics_no_identifying_data:     eth.no_identifying_data     ?? false,
+      ethics_no_identifying_data: eth.no_identifying_data ?? false,
       ethics_no_sensitive_categories: eth.no_sensitive_categories ?? false,
-      ethics_neutral_language_used:   eth.neutral_language_used   ?? false,
-      ethics_confirmed_by_agent:      eth.confirmed_by_agent      ?? false,
+      ethics_neutral_language_used: eth.neutral_language_used ?? false,
+      ethics_confirmed_by_agent: eth.confirmed_by_agent ?? false,
 
       // Intégrité
       prompt_version_id: promptVersion?.id ?? null,
-      prompt_verified:   true,
-      json_valid:        true,
-      raw_json:          parsed,
+      prompt_verified: true,
+      json_valid: true,
+      raw_json: parsed,
 
       status: 'scoring', // juste avant l'insert des scores
     })
@@ -132,13 +141,13 @@ export default async function handler(req) {
   // ─── 6. Insère les 73 scores ──────────────────────────────────────────────
   const scores = parsed.indicators.map(ind => ({
     analysis_id: analysisId,
-    rank:        ind.rank,
-    category:    ind.category,
-    name:        ind.name,
-    score:       ind.score,
-    score_type:  ind.score_type,
-    confidence:  ind.confidence,
-    evidence:    ind.evidence,
+    rank: ind.rank,
+    category: ind.category,
+    name: ind.name,
+    score: ind.score,
+    score_type: ind.score_type,
+    confidence: ind.confidence,
+    evidence: ind.evidence,
   }))
 
   const { error: insertErr } = await supabaseAdmin
@@ -172,7 +181,7 @@ export default async function handler(req) {
   await setStatus(analysisId, 'complete')
 
   return json({
-    success:  true,
+    success: true,
     analysisId,
     indicators: scores.length,
     warnings,
@@ -196,7 +205,7 @@ function json(body, status = 200) {
 
 function corsHeaders() {
   return {
-    'Access-Control-Allow-Origin':  '*',
+    'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Methods': 'POST, OPTIONS',
     'Access-Control-Allow-Headers': 'Content-Type',
   }

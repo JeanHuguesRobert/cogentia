@@ -8,7 +8,7 @@
  * 3. À l'inscription → claimAnalyses() rattache toutes les analyses au nouveau compte
  */
 
-import { supabase } from './supabaseClient'
+import { supabase } from '../supabaseClient'
 
 const SESSION_KEY = 'cogentia_anonymous_session_id'
 
