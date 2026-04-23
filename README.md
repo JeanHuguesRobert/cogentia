@@ -4,6 +4,8 @@ Cogentia (KYS) is an open-source project designed to experiment with **personal 
 
 This MVP provides a **simple personality test**, inspired by the principle “Know Yourself,” interacting only with the user’s personal AI agent to generate anonymized measurements of cognitive, emotional, relational, and behavioral traits.
 
+There is an AI generated prototype, based on this README file : [https://kys-psycho.preview.emergentagent.com/](https://kys-psycho.preview.emergentagent.com/).
+
 ---
 
 ## Key Features
