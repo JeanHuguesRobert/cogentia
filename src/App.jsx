@@ -1,99 +1,62 @@
-import { Routes, Route, NavLink, Navigate, Outlet } from 'react-router-dom'
-import { useAuth } from './context/AuthContext'
-import Landing  from './pages/Landing'
-import Home     from './pages/Home'
-import Submit   from './pages/Submit'
-import Results  from './pages/Results'
-import History  from './pages/History'
-import Auth     from './pages/Auth'
-import Docs     from './pages/Docs'
+import { Routes, Route, NavLink, Navigate } from 'react-router-dom'
+import PlatformIndex from './pages/PlatformIndex'
+import Home from './pages/Home'
+import Submit from './pages/Submit'
+import Results from './pages/Results'
+import History from './pages/History'
+import Docs from './pages/Docs'
+import Auth from './pages/Auth'
+import CommonsHome from './pages/CommonsHome'
+import ThesisKernelPage from './pages/ThesisKernelPage'
+import ProjectPage from './pages/ProjectPage'
+import CritiquePage from './pages/CritiquePage'
+import TracePage from './pages/TracePage'
+import PaperPage from './pages/PaperPage'
 
-const WAITLIST_MODE = import.meta.env.VITE_WAITLIST_MODE === 'true'
-
-// ─── Nav ─────────────────────────────────────────────────────────────────────
-function Nav() {
-  const { user, signOut } = useAuth()
-  const linkClass = ({ isActive }) =>
-    `font-body text-sm transition-colors duration-150 ${
-      isActive ? 'text-bright' : 'text-dim hover:text-bright'
-    }`
-
+function Layout({ title, base, links, children }) {
   return (
-    <header className="fixed top-0 inset-x-0 z-50 border-b border-border bg-void/80 backdrop-blur-sm">
-      <div className="max-w-5xl mx-auto px-6 h-14 flex items-center justify-between">
-        <NavLink to="/" className="flex items-center gap-2.5">
-          <span className="w-6 h-6 rounded bg-signal flex items-center justify-center">
-            <span className="font-mono text-white text-xs font-medium">C</span>
-          </span>
-          <span className="font-display font-semibold text-bright tracking-tight">Cogentia</span>
-          <span className="tag">PrivAI</span>
-        </NavLink>
-        <nav className="flex items-center gap-6">
-          {!WAITLIST_MODE && (
-            <>
-              <NavLink to="/app"     className={linkClass}>Tester</NavLink>
-              <NavLink to="/history" className={linkClass}>Historique</NavLink>
-            </>
-          )}
-          <NavLink to="/docs" className={linkClass}>Docs</NavLink>
-          {user
-            ? <button onClick={signOut} className="btn-ghost text-xs">Déconnexion</button>
-            : <NavLink to="/auth" className="btn-primary text-xs px-4 py-2">Connexion</NavLink>
-          }
-        </nav>
-      </div>
-    </header>
-  )
-}
-
-// ─── Layout avec nav + padding top ───────────────────────────────────────────
-function AppLayout() {
-  return (
-    <>
-      <Nav />
-      <div className="min-h-screen pt-14">
-        <Outlet />
-      </div>
-    </>
-  )
-}
-
-// ─── Guard waitlist ───────────────────────────────────────────────────────────
-function WaitlistGuard() {
-  if (WAITLIST_MODE) return <Navigate to="/" replace />
-  return <Outlet />
-}
-
-// ─── App ─────────────────────────────────────────────────────────────────────
-export default function App() {
-  const { loading } = useAuth()
-
-  if (loading) return (
-    <div className="h-screen flex items-center justify-center">
-      <span className="font-mono text-muted text-sm animate-pulse-slow">
-        initialisation…
-      </span>
+    <div className="min-h-screen bg-slate-950 text-slate-100">
+      <header className="border-b border-slate-800 bg-slate-900/90">
+        <div className="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
+          <NavLink to="/" className="font-semibold">Cogentia Platform</NavLink>
+          <div className="flex items-center gap-6">
+            <span className="text-sm text-slate-300">{title}</span>
+            <nav className="flex gap-4 text-sm">
+              {links.map((l) => <NavLink key={l.to} to={`${base}${l.to}`}>{l.label}</NavLink>)}
+            </nav>
+          </div>
+        </div>
+      </header>
+      <main className="max-w-6xl mx-auto p-4">{children}</main>
     </div>
   )
+}
+
+export default function App() {
+  const personalLinks = [
+    { to: '', label: 'Home' }, { to: '/submit', label: 'Submit' }, { to: '/history', label: 'History' }, { to: '/docs', label: 'Docs' }, { to: '/auth', label: 'Auth' }
+  ]
+  const commonsLinks = [
+    { to: '', label: 'Home' }, { to: '/kernel', label: 'Thesis Kernel' }, { to: '/project', label: 'Project' }, { to: '/critique', label: 'Critique' }, { to: '/trace', label: 'Trace' }, { to: '/paper', label: 'Paper' }
+  ]
 
   return (
     <Routes>
-      {/* Landing — layout propre sans nav */}
-      <Route path="/" element={<Landing />} />
+      <Route path="/" element={<PlatformIndex />} />
 
-      {/* Routes avec nav */}
-      <Route element={<AppLayout />}>
-        <Route path="/auth" element={<Auth />} />
-        <Route path="/docs" element={<Docs />} />
+      <Route path="/personal" element={<Layout title="Personal Cogentia" base="/personal" links={personalLinks}><Home /></Layout>} />
+      <Route path="/personal/submit" element={<Layout title="Personal Cogentia" base="/personal" links={personalLinks}><Submit /></Layout>} />
+      <Route path="/personal/results/:id" element={<Layout title="Personal Cogentia" base="/personal" links={personalLinks}><Results /></Layout>} />
+      <Route path="/personal/history" element={<Layout title="Personal Cogentia" base="/personal" links={personalLinks}><History /></Layout>} />
+      <Route path="/personal/docs" element={<Layout title="Personal Cogentia" base="/personal" links={personalLinks}><Docs /></Layout>} />
+      <Route path="/personal/auth" element={<Layout title="Personal Cogentia" base="/personal" links={personalLinks}><Auth /></Layout>} />
 
-        {/* Routes protégées par le mode waitlist */}
-        <Route element={<WaitlistGuard />}>
-          <Route path="/app"           element={<Home />} />
-          <Route path="/submit"        element={<Submit />} />
-          <Route path="/results/:id"   element={<Results />} />
-          <Route path="/history"       element={<History />} />
-        </Route>
-      </Route>
+      <Route path="/commons" element={<Layout title="Cogentia Commons" base="/commons" links={commonsLinks}><CommonsHome /></Layout>} />
+      <Route path="/commons/kernel" element={<Layout title="Cogentia Commons" base="/commons" links={commonsLinks}><ThesisKernelPage /></Layout>} />
+      <Route path="/commons/project" element={<Layout title="Cogentia Commons" base="/commons" links={commonsLinks}><ProjectPage /></Layout>} />
+      <Route path="/commons/critique" element={<Layout title="Cogentia Commons" base="/commons" links={commonsLinks}><CritiquePage /></Layout>} />
+      <Route path="/commons/trace" element={<Layout title="Cogentia Commons" base="/commons" links={commonsLinks}><TracePage /></Layout>} />
+      <Route path="/commons/paper" element={<Layout title="Cogentia Commons" base="/commons" links={commonsLinks}><PaperPage /></Layout>} />
 
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
