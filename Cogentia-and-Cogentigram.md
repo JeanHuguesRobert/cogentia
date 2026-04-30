@@ -6,13 +6,15 @@
 
 ## Abstract
 
-Persistent interaction with artificial intelligence systems generates stable structural representations of users’ behavioral, cognitive, and stylistic tendencies. This paper introduces **Cogentia**, defined as the enduring structural signature of an entity as inferred through repeated AI-mediated interaction.
+Persistent interaction with artificial intelligence systems generates stable structural representations of users' behavioral, cognitive, and stylistic tendencies. This paper introduces **Cogentia**, defined as the enduring structural signature of an entity as inferred through repeated AI-mediated interaction.
 
 Its measurable representation, the **Cogentigram**, formalizes this signature along defined psychometric and behavioral axes, using percentile normalization, uncertainty estimation, and longitudinal analysis.
 
 We propose a methodological framework integrating psychometrics, semantic embeddings, federated learning, and differential privacy. We further outline governance mechanisms and graded disclosure licensing structures designed to preserve individual autonomy while enabling legitimate institutional use.
 
 The objective is not to amplify predictive power, but to make inevitable modeling processes transparent, auditable, and contractually regulated.
+
+**Relation to DHITL and Cogentia Commons.** This paper establishes the individual-level foundation for **Cogentia Commons** (Robert, 2026b), which extends the personal Cogentigram into collaborative, multi-agent settings. Together, they constitute **Layer 4 (Cognitive Infrastructure)** of the Democratic Humans in the Loop (DHITL) framework (Robert, 2026c) — the epistemic substrate through which distributed democratic oversight of AI systems becomes operationally possible rather than merely aspirational.
 
 ---
 
@@ -26,8 +28,11 @@ Cogentia is not biography. It is not demographic metadata. It is not episodic me
 
 The measurable projection of Cogentia is the **Cogentigram**.
 
-The central claim of this paper is modest but consequential:
-if AI systems will inevitably model persistent user structure, then those models should be formalized, measurable, contestable, privacy-preserving, and governed.
+The central claim of this paper is modest but consequential: if AI systems will inevitably model persistent user structure, then those models should be formalized, measurable, contestable, privacy-preserving, and governed.
+
+### 1.1 Positioning within DHITL
+
+The DHITL framework (Robert, 2026c) identifies five functional layers required for distributed AI governance: physical/energy, economic, political, cognitive, and technical. Cogentia and Cogentigrams address the cognitive layer — the individual level of that architecture. Cogentia Commons (Robert, 2026b) extends it to the collective level. The claim is not merely that users deserve transparency about how they are modeled; it is that structuring, measuring, and governing that modeling is a precondition for meaningful democratic oversight of AI systems at scale.
 
 ---
 
@@ -52,13 +57,16 @@ The persistent structural signature of an entity inferred from repeated AI-media
 A structured representation of Cogentia composed of defined axes, percentile normalization against reference populations, confidence intervals, and longitudinal indicators.
 
 **KYS License (Know Your Self)**
-A graded disclosure contractual framework defining permissible uses and resolution levels of a Cogentigram.
+A graded disclosure contractual framework defining permissible uses and resolution levels of a Cogentigram. Governed by PrivAI under MIT license.
 
 **KYS Cloak**
 A privacy-preserving transformation layer applying differential privacy techniques to sensitive axes.
 
 **Federated Computation**
 A distributed training or scoring architecture in which raw behavioral data remains local and only aggregated parameters are transmitted.
+
+**Cogentia Commons**
+The collaborative extension of the individual Cogentia framework: a platform that organizes the collective reasoning trace of epistemic communities through Thesis Kernels, Cogentia Graphs, and multi-agent critique loops. See Robert (2026b).
 
 ---
 
@@ -165,7 +173,7 @@ This allows monitoring of structural stability without presuming deterministic i
 
 KYS Cloak implements controlled noise injection consistent with differential privacy principles (Dwork et al., 2006; Zhu et al., 2020).
 
-Sensitive gradients—such as age proxies, ethnicity proxies, or health markers—may be selectively obfuscated.
+Sensitive gradients — such as age proxies, ethnicity proxies, or health markers — may be selectively obfuscated.
 
 Noise parameters must be explicitly documented.
 
@@ -212,14 +220,16 @@ Sensitive attributes must not be inferable at usable precision in contexts where
 
 ### 6.4 Institutional Oversight
 
-An independent oversight entity (e.g., a non-profit governance body) may:
+The governance body for the KYS License framework is **PrivAI**, operating under MIT license. PrivAI may:
 
 * Certify compliance
-* Audit models
+* Audit Cogentigram models and axis definitions
 * Administer dispute resolution
 * Manage revenue-sharing schemes
 
 Revenue redistribution models may resemble data trust or data dividend proposals but require jurisdictional validation.
+
+The Cogentia Commons platform (Robert, 2026b) extends this governance architecture to the collective level, applying analogous anti-capture provisions to the shared Cogentia Graph.
 
 ---
 
@@ -227,8 +237,8 @@ Revenue redistribution models may resemble data trust or data dividend proposals
 
 Commercial users of Cogentigrams may:
 
-* Pay licensing fees
-* Contribute to governance funds
+* Pay licensing fees under the KYS framework
+* Contribute to PrivAI governance funds
 * Participate in audited compliance programs
 
 Revenue allocation may include:
@@ -271,10 +281,11 @@ Cogentia is a modeling framework, not a metaphysical claim of identity essence.
 
 AI systems already construct persistent structural representations of individuals. These representations influence hiring, credit, recommendation systems, and governance processes.
 
-The choice is not whether modeling occurs.
-The choice is whether modeling remains opaque and extractive or becomes structured, measurable, privacy-preserving, and governable.
+The choice is not whether modeling occurs. The choice is whether modeling remains opaque and extractive or becomes structured, measurable, privacy-preserving, and governable.
 
 Cogentia and Cogentigrams provide a formal vocabulary and methodological scaffold for the latter.
+
+At the collective level, Cogentia Commons (Robert, 2026b) extends this scaffold into collaborative epistemic settings — providing the cognitive infrastructure through which democratic communities can reason rigorously about the AI systems that are simultaneously modeling them. This is the core argument of the DHITL framework (Robert, 2026c): cognitive infrastructure is not ancillary to AI governance. It is the layer without which governance remains performative.
 
 ---
 
@@ -295,3 +306,7 @@ Wolfram, S. (2002). *A New Kind of Science*.
 Spinoza, B. (1677). *Ethics*.
 
 Buffon, G.-L. L. de. (1770). *Œuvres complètes*.
+
+Robert, J. H. (2026b). *Cogentia Commons: A platform architecture for collaborative possibility exploration under scientific constraint*. Working Paper v0.3. Institut Mariani R&D. https://github.com/JeanHuguesRobert/cogentia/blob/main/research/Cogentia_Commons_Working_Paper.md
+
+Robert, J. H. (2026c). *Democratic Humans in the Loop: Why Infrastructure Is All You Need for AI Safety* (DHITL). MareNostrum Repository. https://github.com/JeanHuguesRobert/marenostrum
