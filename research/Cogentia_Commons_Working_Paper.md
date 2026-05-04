@@ -1,16 +1,13 @@
 # Cogentia Commons: A Platform Architecture for Collaborative Possibility Exploration Under Scientific Constraint
 
-**Working Paper — April 2026**
-
-*Jean Hugues Robert, baron Mariani, Institut Mariani, 1 cours Paoli, F-20250 Corte, Corsica*
-
-jhr@baronsmariani.org
+**Working Paper v0.4 — May 2026**
+*Jean Hugues Noël Robert, baron Mariani, Institut Mariani, Corte, Corsica*
 
 ---
 
 ## Abstract
 
-Cogentia Commons is proposed as a public-by-default infrastructure for collaborative exploration of ideas, theories, projects, and research programs under explicit scientific constraints. The platform does not claim to determine truth; rather, it organizes disciplined conjecture, critique, revision, and synthesis through persistent epistemic traceability. The system operationalizes *thesis kernels*, *epistemic status tagging*, *multi-agent critique loops*, and recognition signals structurally decoupled from validity claims. We define a minimal platform architecture, discuss governance mechanisms and anticipated failure modes, and propose an empirical evaluation plan.
+Cogentia Commons is proposed as a public-by-default infrastructure for collaborative exploration of ideas, theories, projects, and research programs under explicit scientific constraints. The platform does not claim to determine truth; rather, it organizes disciplined conjecture, critique, revision, and synthesis through persistent epistemic traceability. The system operationalizes *thesis kernels*, *epistemic status tagging*, *multi-agent critique loops*, and recognition signals structurally decoupled from validity claims. We define a minimal platform architecture, discuss governance mechanisms and anticipated failure modes, and propose an empirical evaluation plan. A regional bootstrap case — Corsica, the lowest R&D-intensity metropolitan region in France — illustrates how the platform performs under conditions of extreme institutional concentration and demonstrates that the cost of instantiation at this scale is negligible relative to any existing research budget.
 
 The core procedural claim: *the platform distributes the conditions of exploration; it does not democratize truth.*
 
@@ -184,7 +181,7 @@ The system must explicitly reject: algorithmic ranking of Thesis Kernels by enga
 
 This is not a rhetorical device. It is an architectural commitment.
 
-The working paper you are reading constitutes version v0.3 of a Thesis Kernel whose core claim is the proposition that exploratory epistemic infrastructure of the kind described here is both feasible and necessary. The platform, once instantiated, will host this paper — and its objections, revisions, and critique history — as its inaugural Cogentia Graph node.
+The working paper you are reading constitutes version v0.4 of a Thesis Kernel whose core claim is the proposition that exploratory epistemic infrastructure of the kind described here is both feasible and necessary. The platform, once instantiated, will host this paper — and its objections, revisions, and critique history — as its inaugural Cogentia Graph node.
 
 The recursive structure has several consequences. First, it forces the designers to submit their own work to the same critique-and-revision process the platform is designed to enable. If a section of this paper is structurally incoherent, that incoherence will be documented and linked to the revision that corrects it, permanently. Second, it provides a concrete bootstrapping object that is inherently interesting to potential early users: a platform that argues, in real time, for its own existence and tracks the objections to that argument. Third, it instantiates Possibilism as a lived practice rather than a stated value — the exploration is genuine because the outcome, including the possibility that the platform design is fundamentally flawed, is genuinely open.
 
@@ -192,7 +189,7 @@ The recursive structure has several consequences. First, it forces the designers
 
 **Response** (v0.2): The regress is arrested by temporal sequencing. The paper exists prior to the platform and is migrated to it upon instantiation. The recursive structure becomes active, not constitutive. The paper does not require the platform to exist; it anticipates it.
 
-**Remaining open question**: Whether the bootstrapping threshold — the minimum viable community size for the critique loop to generate genuine epistemic signal — can be reached without prior institutional sponsorship. This is the primary empirical uncertainty of the project.
+**Remaining open question**: Whether the bootstrapping threshold — the minimum viable community size for the critique loop to generate genuine epistemic signal — can be reached without prior institutional sponsorship. This is the primary empirical uncertainty of the project. Section 10 addresses this question through a concrete regional case.
 
 ---
 
@@ -264,7 +261,63 @@ This positions Cogentia Commons not as a neutral epistemic tool but as a tool wi
 
 ---
 
-## 10. Conclusion
+## 10. A Regional Bootstrap Case: Corsica as Minimal Viable Instance
+
+### 10.1 The Structural Opportunity of Extreme Underdevelopment
+
+The argument for Cogentia Commons is most legible at the extremes. At the lower end of the research intensity distribution, the structural failures of the canonical publication system are not attenuated by institutional density — they are exposed in sharp relief.
+
+Corsica presents this extreme in concentrated form. With research expenditure amounting to approximately 0.3% of regional GDP (roughly €30 million in 2017, of which €20.4 million in the public sector and approximately €10 million in private enterprise), the region occupies the last rank among French metropolitan regions — below the overseas departments, below every comparable Mediterranean island economy at equivalent development stage (MESR-SIES, 2022). Research activity is structurally concentrated at a single institution: the Université de Corse Pasquale Paoli in Corte, with a student population of approximately 5,000 — a non-negligible fraction of whom are enrolled in the island's only research master and doctoral programs.
+
+This configuration is not a failure to be apologized for. It is a structural condition that defines the region's entry point into any infrastructure design.
+
+The canonical publication system interacts with this configuration in a predictable way: the volume of output is too low to sustain a local review ecosystem, the thematic range too broad relative to the researcher population to support peer review within discipline, and the institutional prestige too limited to attract external reviewers for local submissions. The result is a one-way funnel: Corsican researchers submit to national and international venues calibrated for institutional contexts radically different from their own, with acceptance rates that systematically undercount the value of contextually grounded, territory-specific research.
+
+### 10.2 What a Minimal Instance Would Look Like
+
+A Cogentia Commons instance calibrated to the Corsican research system would be, by global standards, a very small system. The parameters are recoverable from the volume estimates developed in Section 6 and the federation architecture described in Section 9.
+
+At current research output levels, the Université de Corse produces approximately 150–250 citable publications per year across its research units (SPE, UMR CNRS 6134; LISA; LREM; Lieux, Identités, eSpaces, Activités). A conservative estimate of Thesis Kernels deposited annually — accounting for working papers, doctoral chapters, conference contributions, and research reports that currently enter no structured epistemic record — would be in the range of 300–500 per year, assuming a Cogentia Commons onboarding rate of 40% of active research output in the first operational year.
+
+At this volume:
+
+- **Storage**: approximately 15–25 GB per year, fully manageable on a single institutional server with standard backup infrastructure.
+- **AI compute**: 240–400 GPU·hours per year for ingestion, structural critique, and embedding — equivalent to approximately €240–400 at current cloud pricing, or a single A100 instance running intermittently. This cost is negligible relative to any institutional IT budget.
+- **Reviewer pool**: the existing HDR (Habilitation à Diriger des Recherches) holders at the Université de Corse, combined with a network of Mediterranean partner institutions (the Université de Corse is already part of networks including the Conférence des Présidents d'Université and UNIMED), constitute a sufficient reviewer base for a functioning multi-agent critique loop.
+
+The federation architecture positions this instance at Level 3 (institutional meso-instance), with upward federation to Level 4 discipline nodes — relevant disciplinary societies in environmental science, legal studies, history and anthropology, computer science — and ultimately to the Global Commons layer for the public epistemic graph.
+
+### 10.3 The Structural Argument for Rapid Leverage
+
+A region operating at 0.3% R&D intensity has a property that high-intensity regions lack: marginal returns on research infrastructure investment are extremely high, because the baseline is so low that almost any structured addition to the epistemic ecosystem produces visible effects.
+
+This is not a projection — it is an observable pattern. Between 2022 and 2023, Corsica recorded the highest percentage growth in R&D expenditure of any French metropolitan region (MESR-SIES, 2024), not because absolute investment was large, but because the denominator was small enough that modest increments are statistically significant. The same mechanism applies to epistemic infrastructure: a single functioning Thesis Kernel on a topic of regional significance — say, the economic modeling of agrivoltaic land use on abandoned vineyard terraces, or the governance structure of a cooperative energy community under the 2025 loi Huwart — creates a traceable public record where none currently exists. That is not a marginal improvement on existing practice; it is a categorical one.
+
+The concentration of research at a single institution, typically cited as a structural weakness, becomes an advantage for bootstrapping: there is one governance conversation to have, one onboarding process to design, one institutional interlocutor whose cooperation unlocks the majority of regional research output. The critical threshold for a functioning critique loop — estimated conservatively at 30–50 active Thesis Kernels in concurrent revision cycles — is reachable within a single academic year at the Université de Corse without requiring any external institutional involvement.
+
+### 10.4 The Resistance Structure
+
+The structural argument for rapid leverage must be read alongside an equally structural account of institutional resistance. In Corsica, as in many peripheral academic systems, institutional conservatism operates through mechanisms that are worth naming precisely rather than lamenting generically.
+
+First, there is the **prestige coupling problem**: careers are built on publications in venues ranked by national evaluation bodies (HCERES, CNU sections), and any time spent contributing to a non-ranked local infrastructure is career-invisible. This is not irrationality — it is a rational response to incentive structures set entirely outside the region. Cogentia Commons does not immediately resolve this problem, but it addresses it structurally: a Thesis Kernel with a traceable critique history and a documented revision record is, over time, a more legible contribution to knowledge than a rejected submission to a ranked journal that leaves no public trace.
+
+Second, there is the **monopoly of legitimation**: in a small research ecosystem with a single university, the informal authority to determine what counts as valid research is concentrated among a small number of senior researchers. New infrastructure that distributes epistemic legitimation — by making the critique process public and the revision history auditable — redistributes a form of institutional power. This redistribution is precisely the design intent of Cogentia Commons, and it is precisely the source of the resistance.
+
+Third, there is the **island insularity premium**: Corsican institutions operate with a degree of informational closure relative to mainland and international networks that is not entirely dysfunctional — it preserves local specificity and resists the homogenizing pressures of national evaluation systems — but it also means that externally developed tools and frameworks face higher adoption barriers than they would in more porous institutional environments.
+
+None of these resistances is insuperable. The prestige coupling problem is addressed by designing Cogentia Commons from the outset to produce outputs that feed into, rather than compete with, existing publication pipelines: a well-developed Thesis Kernel is a better first draft for a journal submission, not an alternative to one. The monopoly of legitimation problem is addressed by the anti-capture provisions in the governance architecture (§4.6). The insularity premium is addressed by timing: ICOME'26 (Université de Corse Pasquale Paoli, June 2026) offers a natural anchoring event — a moment of institutional openness to external epistemic norms — at which a concrete proposal for a pilot instance can be formally introduced.
+
+### 10.5 The Recursive Instance
+
+There is a further reason why Corsica is not an arbitrary choice for the bootstrap case. The Cogentia Commons Working Paper itself — the document in which this section appears — was submitted in adjacent form as a contribution to ICOME'26. The paper proposes an infrastructure for rigorous exploratory reasoning and argues, in Section 6, that the first Thesis Kernel of that infrastructure is the paper itself.
+
+If ICOME'26 accepts the contribution, the bootstrap case becomes concrete in the most direct sense: the conference at which the infrastructure is first presented publicly is held at the university that would host the pilot instance, in the city where the infrastructure concept was developed, in the region whose research landscape the infrastructure is designed to serve. The recursion is not rhetorical. It is an institutional opportunity with a specific calendar attached.
+
+If the contribution is rejected, the Working Paper remains a public document, the objection is a data point in its critique history, and the proposal for a pilot instance is independent of the conference outcome. The platform's design principle — that rejection by a canonical venue is not the end of an epistemic trajectory — applies to itself.
+
+---
+
+## 11. Conclusion
 
 Cogentia Commons should be interpreted as exploratory infrastructure, not truth arbitration. Its purpose is to make the exploration of uncertain ideas tractable, traceable, and collectively productive — not to accelerate convergence on predetermined conclusions.
 
@@ -290,16 +343,24 @@ Johnson, S. (2010). *Where good ideas come from: The natural history of innovati
 
 Kauffman, S. (1996). *At home in the universe: The search for the laws of self-organization and complexity*. Oxford University Press.
 
+MESR-SIES. (2024). *Dépenses de R&D par région 2022–2023*. Note Flash n°23, septembre 2024. Ministère de l'Enseignement supérieur, de la Recherche et de l'Innovation.
+
+CCI de Corse. (2022). *Schéma Sectoriel Appui aux Entreprises*. Chambre de Commerce et d'Industrie de Corse, novembre 2022.
+
+Observatoire des Territoires. (2024). *Part de la DIRD rapportée au PIB — indicateur régional*. https://www.observatoire-des-territoires.gouv.fr
+
 Ostrom, E. (1990). *Governing the commons: The evolution of institutions for collective action*. Cambridge University Press.
 
 Popper, K. R. (1959). *The logic of scientific discovery*. Hutchinson.
 
-Robert, J. H. (2026a). *Cogentia and Cogentigrams: A framework for structured representation of persistent cognitive signatures in AI systems*. Cogentia/PrivAI, MIT License. https://github.com/JeanHuguesRobert/cogentia
+Robert, J. H. (2026a). *Cogentia and Cogentigrams: A framework for structured representation of persistent cognitive signatures in AI systems*. Cogentia/PrivAI, MIT License. https://github.com/JeanHuguesRobert/cogentia/blob/main/Cogentia-and-Cogentigram.md
 
-Robert, J. H. (2026b). *Democratic Humans in the Loop: Why Infrastructure Is All You Need for AI Safety* (DHITL). MareNostrum Repository. https://github.com/JeanHuguesRobert/marenostrum
+Robert, J. H. (2026b). *Democratic Humans in the Loop: Why Infrastructure Is All You Need for AI Safety* (DHITL). MareNostrum Working Paper Series. https://github.com/JeanHuguesRobert/marenostrum/blob/main/DHITL.md
+
+Robert, J. H. (2026c). *Infrastructure Is All You Need: Toward a structural theory of AI safety grounded in compute sovereignty and democratic energy governance*. MareNostrum Working Paper Series. https://github.com/JeanHuguesRobert/marenostrum/blob/main/infrastructure_is_all_you_need.md
 
 ---
 
-*This paper is version v0.3 of a living document. Objections, revisions, and critique records will be hosted at the Cogentia Commons platform upon instantiation. The paper itself constitutes the inaugural Thesis Kernel of the system it describes.*
+*This paper is version v0.4 of a living document. Objections, revisions, and critique records will be hosted at the Cogentia Commons platform upon instantiation. The paper itself constitutes the inaugural Thesis Kernel of the system it describes.*
 
-*Jean Hugues Robert — Institut Mariani, 1 cours Paoli, F-20250 Corte, Corsica. jhr@baronsmariani.org*
+*Jean Hugues Robert — Institut Mariani R&D, 1 cours Paoli, F-20250 Corte, Corsica. jhr@baronsmariani.org*
