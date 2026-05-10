@@ -39,13 +39,11 @@
  * License: MIT
  */
 
-"use strict";
-
-const fs            = require( "fs"             );
-const path          = require( "path"           );
-const { execSync }  = require( "child_process"  );
-const https         = require( "https"          );
-const http          = require( "http"           );
+import fs           from "fs";
+import path         from "path";
+import { execSync } from "child_process";
+import https        from "https";
+import http         from "http";
 
 // ── Platform detection ────────────────────────────────────────────────────────
 
