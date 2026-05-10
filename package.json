@@ -1,23 +1,19 @@
 {
   "name": "cogentia",
-  "version": "0.1.0",
+  "version": "0.2.0",
+  "private": true,
   "type": "module",
+  "packageManager": "pnpm@10.28.2",
   "scripts": {
-    "dev": "vite",
-    "build": "vite build",
-    "preview": "vite preview"
-  },
-  "dependencies": {
-    "@supabase/supabase-js": "^2.43.0",
-    "react": "^18.3.0",
-    "react-dom": "^18.3.0",
-    "react-router-dom": "^6.23.0"
+    "dev": "turbo run dev",
+    "build": "turbo run build",
+    "preview": "turbo run preview",
+    "personal:dev": "pnpm --filter @cogentia/personal run dev",
+    "personal:build": "pnpm --filter @cogentia/personal run build",
+    "commons:dev": "pnpm --filter @cogentia/commons run dev",
+    "commons:build": "pnpm --filter @cogentia/commons run build"
   },
   "devDependencies": {
-    "@vitejs/plugin-react": "^4.3.0",
-    "autoprefixer": "^10.4.19",
-    "postcss": "^8.4.38",
-    "tailwindcss": "^3.4.3",
-    "vite": "^5.2.0"
+    "turbo": "^2.0.0"
   }
 }

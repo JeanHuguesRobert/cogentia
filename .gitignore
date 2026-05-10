@@ -24,3 +24,10 @@ yarn-error.log*
 
 # Cache
 .cache/
+.turbo/
+
+# pnpm — package-lock.json should never exist (pnpm uses pnpm-lock.yaml)
+package-lock.json
+
+# Cogentia Commons registry — lives in the user's repo (JeanHuguesRobert/)
+.cogentia.json
