@@ -1,54 +1,41 @@
-# Cogentia Platform (Dual MVP)
+# Cogentia
 
-This repository now hosts two connected products:
+Two connected products under one monorepo:
 
-1. **Personal Cogentia (KYS)** — knowledge about self from AI-mediated interaction traces.
-2. **Cogentia Commons** — evolving shared knowledge under explicit scientific constraints.
+1. **Personal Cogentia (KYS)** — `apps/personal/` — knowledge about self from AI-mediated interaction traces. PII-bearing.
+2. **Cogentia Commons** — `apps/commons/` — evolving shared knowledge under explicit scientific constraints. Public.
 
-Together they represent two sides of the same idea: private epistemic self-modeling and public collaborative exploration.
+The repository is a **node** in the [Cogentia Commons](research/index.md) distributed knowledge graph (see sibling repos: marenostrum, FractaVolta, barons-Mariani).
 
-## Routing architecture
-- `/` → platform index (choose a side)
-- `/personal/*` → Personal Cogentia MVP
-- `/commons/*` → Cogentia Commons MVP
+## Layout
 
-## Stack
-- React (Vite), 100% JavaScript (no TypeScript)
-- Tailwind CSS
-- Supabase (Postgres)
-- Netlify Functions (Node.js)
-
-## Personal Cogentia scope
-- Prompt-driven analysis submission
-- Results/history/docs/auth flow
-- Existing netlify/supabase processing pipeline retained
-
-## Cogentia Commons scope
-- Thesis Kernel
-- Public Project page
-- Multi-agent critique loop
-- Traceability/version view
-- Working paper integration
-- Donation/reputation signaling mock
-
-## Database files
-To support coexistence, SQL has been split:
-- `supabase_schema_personal.sql` + `supabase_seed_personal.sql`
-- `supabase_schema_commons.sql` + `supabase_seed_commons.sql`
-
-`supabase_schema.sql` and `supabase_seed_prompt.sql` remain Commons-compatible baseline files for backward compatibility.
-
-## Run locally
-```bash
-npm install
-npm run dev
+```
+apps/
+  personal/        # KYS app — Vite + React + Supabase + Netlify Functions
+  commons/         # Public peer-review app — Vite + React + Supabase
+research/          # Knowledge-graph node: index.md + published papers
+scripts/           # cogentia.js CLI (manages the cross-repo registry)
 ```
 
-## Research deliverables (Commons)
-- `research/Cogentia_Commons_Working_Paper.md`
-- `research/ARCHITECTURE_NOTE.md`
+## Run locally
+
+Uses pnpm workspaces + Turbo (matching the inseme monorepo pattern).
+
+```bash
+pnpm install                # installs both workspaces
+pnpm personal:dev           # apps/personal on the default Vite port
+pnpm commons:dev            # apps/commons on the default Vite port
+pnpm dev                    # both via Turbo
+```
+
+Each app has its own `.env`, Supabase project, Tailwind/Vite config, and Netlify deploy.
+
+## Research deliverables
+
+All published documents live in `research/` and are catalogued in `research/index.md`. The `cogentia.js` CLI (`scripts/cogentia.js`) treats each registered repo's `research/index.md` as a node in the network — see `node scripts/cogentia.js help`.
 
 ## Preserved principles
-- “The platform distributes the conditions of exploration; it does not democratize truth.”
-- “Donations signal recognition, not validity.”
-- “The first object explored by Cogentia Commons is Cogentia Commons itself.”
+
+- "The platform distributes the conditions of exploration; it does not democratize truth."
+- "Donations signal recognition, not validity."
+- "The first object explored by Cogentia Commons is Cogentia Commons itself."
