@@ -10,9 +10,12 @@
 | Title | Location | Date |
 |---|---|---|
 | [Cogentia Commons Working Paper](Cogentia_Commons_Working_Paper.md) | this repo | 2026 |
-| [Cogentia and Cogentigram](../Cogentia-and-Cogentigram.md) | this repo | 2026 |
+| [Cogentia and Cogentigram](Cogentia-and-Cogentigram.md) | this repo | 2026 |
+| [The Sovereign Digital Twin — Cogentia, Cogentigram, Cogentiscope](cogentia-digital-twin.md) | this repo | 2026-04 |
 | [Radical Democracy as the Best AI Safety Strategy](democratic_ai_safety.md) | this repo | 2026-05-04 |
-| [Constellia](Constellia.md) *(ICOME'26, avec Guillermo Valdes)* | this repo | 2026 |
+| [Projet Cogentia](cogentia-project.md) | this repo | 2026-03-06 |
+| [KYS — Psychocognitive Analysis Protocol v1.0](kys-prompt.md) | this repo | 2026 |
+| [COGENTIA v1.0 — Prompt d'analyse psychocognitive (FR)](cogentia_prompt_v1.md) | this repo | 2026 |
 
 ---
 
@@ -22,8 +25,10 @@
 
 | Title | Location |
 |---|---|
+| [Discours de la seconde méthode](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/second_method.md) *(founding doctrine — names cogentia.js as canonical tooling)* | barons-Mariani |
 | [DHITL — Democratic Humans in the Loop](https://github.com/JeanHuguesRobert/marenostrum/blob/main/DHITL.md) *(Cogentia = Layer 4)* | marenostrum |
 | [CXU Specification](https://github.com/JeanHuguesRobert/marenostrum/blob/main/CXU_SPEC.md) | marenostrum |
+| [Constellia](https://github.com/JeanHuguesRobert/marenostrum/blob/main/constellia.md) *(ICOME'26, avec Guillermo Valdes)* | marenostrum |
 | [Packetized Gravity Networks](https://github.com/JeanHuguesRobert/FractaVolta/blob/main/PGN.md) | FractaVolta |
 
 ---
@@ -31,7 +36,6 @@
 ## In Progress
 
 - Multi-Agent Critique Loop — formal specification
-- KYS (Know Your Self) psychometric protocol — MVP spec
 - Cogentia × Corsica: student registration as democratic infrastructure
 
 ---
