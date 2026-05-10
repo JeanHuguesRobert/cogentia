@@ -1,6 +1,6 @@
 # Cogentia Commons: A Platform Architecture for Collaborative Possibility Exploration Under Scientific Constraint
 
-**Working Paper v0.4 — May 2026**
+**May 2026**
 *Jean Hugues Noël Robert, baron Mariani, Institut Mariani, Corte, Corsica*
 
 ---
@@ -59,17 +59,11 @@ The companion paper *Cogentia and Cogentigrams* (Robert, 2026a) formalizes **Cog
 
 Cogentia Commons is the collaborative extension of this individual framework. Where a Cogentigram tracks an individual's reasoning trace, the Cogentia Graph tracks the collective trace of an exploratory community — the network of theses, objections, revisions, and syntheses that constitute the group's epistemic work.
 
-### 2.5 DHITL Layer 4: Cognitive Infrastructure
+### 2.5 DHITL Cognitive Infrastructure Layer
 
-The Democratic Humans in the Loop (DHITL) framework (Robert, 2026b) proposes a five-layer architecture for distributed AI governance:
+The Democratic Humans in the Loop (DHITL) framework (Robert, 2026b) specifies the architectural layers of a distributed AI governance proposal and locates the boundary between agent-permitted epistemic participation and human-only political deliberation. Refer to DHITL for the canonical layer specification.
 
-1. **Physical/Energy Layer** — computational substrate and energy sovereignty
-2. **Economic Layer** — incentive structures and resource allocation
-3. **Political Layer** — democratic control mechanisms
-4. **Cognitive Layer** — epistemic infrastructure for collective reasoning
-5. **Technical Layer** — AI model governance and safety mechanisms
-
-Cogentia Commons constitutes **Layer 4**, the cognitive infrastructure layer. It provides the structured epistemic substrate through which democratic human oversight of AI systems becomes operationally possible — not as a rhetorical commitment but as a functioning system with persistent records, revision histories, and multi-agent critique. Without this layer, democratic oversight of AI remains aspirational; with it, oversight becomes architecturally embedded.
+Cogentia Commons constitutes the cognitive infrastructure layer — open to agents, auditable, the substrate on which deliberative governance operates. It provides the structured epistemic substrate through which democratic human oversight of AI systems becomes operationally possible — not as a rhetorical commitment but as a functioning system with persistent records, revision histories, and multi-agent critique. Without this layer, democratic oversight of AI remains aspirational; with it, oversight becomes architecturally embedded.
 
 ---
 
@@ -181,13 +175,13 @@ The system must explicitly reject: algorithmic ranking of Thesis Kernels by enga
 
 This is not a rhetorical device. It is an architectural commitment.
 
-The working paper you are reading constitutes version v0.4 of a Thesis Kernel whose core claim is the proposition that exploratory epistemic infrastructure of the kind described here is both feasible and necessary. The platform, once instantiated, will host this paper — and its objections, revisions, and critique history — as its inaugural Cogentia Graph node.
+The working paper you are reading is itself a Thesis Kernel whose core claim is the proposition that exploratory epistemic infrastructure of the kind described here is both feasible and necessary. The platform, once instantiated, will host this paper — and its objections, revisions, and critique history — as its inaugural Cogentia Graph node.
 
 The recursive structure has several consequences. First, it forces the designers to submit their own work to the same critique-and-revision process the platform is designed to enable. If a section of this paper is structurally incoherent, that incoherence will be documented and linked to the revision that corrects it, permanently. Second, it provides a concrete bootstrapping object that is inherently interesting to potential early users: a platform that argues, in real time, for its own existence and tracks the objections to that argument. Third, it instantiates Possibilism as a lived practice rather than a stated value — the exploration is genuine because the outcome, including the possibility that the platform design is fundamentally flawed, is genuinely open.
 
-**Objection on record** (v0.1, internal review): *"The recursive structure creates an infinite regress: the paper about the platform is a Thesis Kernel on the platform, which requires the platform, which requires the paper."*
+**Objection on record:** *"The recursive structure creates an infinite regress: the paper about the platform is a Thesis Kernel on the platform, which requires the platform, which requires the paper."*
 
-**Response** (v0.2): The regress is arrested by temporal sequencing. The paper exists prior to the platform and is migrated to it upon instantiation. The recursive structure becomes active, not constitutive. The paper does not require the platform to exist; it anticipates it.
+**Response:** The regress is arrested by temporal sequencing. The paper exists prior to the platform and is migrated to it upon instantiation. The recursive structure becomes active, not constitutive. The paper does not require the platform to exist; it anticipates it.
 
 **Remaining open question**: Whether the bootstrapping threshold — the minimum viable community size for the critique loop to generate genuine epistemic signal — can be reached without prior institutional sponsorship. This is the primary empirical uncertainty of the project. Section 10 addresses this question through a concrete regional case.
 
@@ -275,7 +269,7 @@ The canonical publication system interacts with this configuration in a predicta
 
 ### 10.2 What a Minimal Instance Would Look Like
 
-A Cogentia Commons instance calibrated to the Corsican research system would be, by global standards, a very small system. The parameters are recoverable from the volume estimates developed in Section 6 and the federation architecture described in Section 9.
+A Cogentia Commons instance calibrated to the Corsican research system would be, by global standards, a very small system. The parameters can be estimated as follows.
 
 At current research output levels, the Université de Corse produces approximately 150–250 citable publications per year across its research units (SPE, UMR CNRS 6134; LISA; LREM; Lieux, Identités, eSpaces, Activités). A conservative estimate of Thesis Kernels deposited annually — accounting for working papers, doctoral chapters, conference contributions, and research reports that currently enter no structured epistemic record — would be in the range of 300–500 per year, assuming a Cogentia Commons onboarding rate of 40% of active research output in the first operational year.
 
@@ -361,6 +355,6 @@ Robert, J. H. (2026c). *Infrastructure Is All You Need: Toward a structural theo
 
 ---
 
-*This paper is version v0.4 of a living document. Objections, revisions, and critique records will be hosted at the Cogentia Commons platform upon instantiation. The paper itself constitutes the inaugural Thesis Kernel of the system it describes.*
+*This paper is a living document. Objections, revisions, and critique records will be hosted at the Cogentia Commons platform upon instantiation. The paper itself constitutes the inaugural Thesis Kernel of the system it describes.*
 
 *Jean Hugues Robert — Institut Mariani R&D, 1 cours Paoli, F-20250 Corte, Corsica. jhr@baronsmariani.org*

@@ -32,7 +32,9 @@ The central claim of this paper is modest but consequential: if AI systems will 
 
 ### 1.1 Positioning within DHITL
 
-The DHITL framework (Robert, 2026c) identifies five functional layers required for distributed AI governance: physical/energy, economic, political, cognitive, and technical. Cogentia and Cogentigrams address the cognitive layer — the individual level of that architecture. Cogentia Commons (Robert, 2026b) extends it to the collective level. The claim is not merely that users deserve transparency about how they are modeled; it is that structuring, measuring, and governing that modeling is a precondition for meaningful democratic oversight of AI systems at scale.
+The DHITL framework (Robert, 2026c) specifies the architectural layers of a distributed AI governance proposal and locates the boundary between agent-permitted epistemic participation and human-only political deliberation. Refer to DHITL for the canonical layer specification.
+
+Cogentia and Cogentigrams formalize the individual scale of cognitive infrastructure; Cogentia Commons (Robert, 2026b) extends this to the collective scale. The claim is not merely that users deserve transparency about how they are modeled; it is that structuring, measuring, and governing that modeling is a precondition for meaningful democratic oversight of AI systems at scale.
 
 ---
 
@@ -55,6 +57,9 @@ The persistent structural signature of an entity inferred from repeated AI-media
 
 **Cogentigram**
 A structured representation of Cogentia composed of defined axes, percentile normalization against reference populations, confidence intervals, and longitudinal indicators.
+
+**Cogentiscope**
+The instrument of inference — the protocol, the measurement process, and the analytical engine that produces a Cogentigram from observable behavior. In the current MVP, the Cogentiscope is the Cogentia prompt submitted to the user's own AI agent; the agent acts as the measurement instrument. Any structured inference process that produces a Cogentigram from behavioral data is a Cogentiscope, regardless of technical implementation.
 
 **KYS License (Know Your Self)**
 A graded disclosure contractual framework defining permissible uses and resolution levels of a Cogentigram. Governed by PrivAI under MIT license.
@@ -307,6 +312,6 @@ Spinoza, B. (1677). *Ethics*.
 
 Buffon, G.-L. L. de. (1770). *Œuvres complètes*.
 
-Robert, J. H. (2026b). *Cogentia Commons: A platform architecture for collaborative possibility exploration under scientific constraint*. Working Paper v0.3. Institut Mariani R&D. https://github.com/JeanHuguesRobert/cogentia/blob/main/research/Cogentia_Commons_Working_Paper.md
+Robert, J. H. (2026b). *Cogentia Commons: A platform architecture for collaborative possibility exploration under scientific constraint*. Institut Mariani R&D. https://github.com/JeanHuguesRobert/cogentia/blob/main/research/Cogentia_Commons_Working_Paper.md
 
 Robert, J. H. (2026c). *Democratic Humans in the Loop: Why Infrastructure Is All You Need for AI Safety* (DHITL). MareNostrum Repository. https://github.com/JeanHuguesRobert/marenostrum

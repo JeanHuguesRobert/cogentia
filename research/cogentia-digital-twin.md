@@ -6,7 +6,7 @@
 Institut Mariani R&D / C.O.R.S.I.C.A. — 1 cours Paoli, F-20250 Corte, Corsica  
 jhr@baronsmariani.org
 
-*Working paper. April 2026. Design in the open.*
+*April 2026. Design in the open.*
 
 ---
 
@@ -25,7 +25,7 @@ The Cogentia project proposes the inverse architecture: **a sovereign digital tw
 
 ## The Triptych
 
-Three concepts constitute the framework, each distinct and necessary:
+Three concepts constitute the framework, each distinct and necessary. Formal definitions and methodological grounding live in [Cogentia and Cogentigrams](Cogentia-and-Cogentigram.md); this paper is the position essay.
 
 ### Cogentia
 The persistent structural signature of a person as expressed through repeated AI-mediated interaction. Not biography. Not demographic metadata. Not episodic memory. The *organizational structure* of cognitive and behavioral expression — the stable underlying pattern from which observable behaviors are generated.
@@ -102,17 +102,9 @@ The question of who owns a posthumous twin, who can activate it, who can contest
 
 ## The Triptych in the Broader Architecture
 
-Cogentia is Layer 4 of the DHITL architecture — the personal AI layer that mediates between the individual and collective governance. Within that layer:
+Cogentia is the personal-scale instantiation of the cognitive infrastructure layer in the DHITL architecture — the layer that mediates between the individual and collective governance. The Cogentiscope produces the Cogentigram (the personal data object). Cognitive impedance is the interface concept across the boundary between cognitive infrastructure and democratic deliberation. PrivAI is the institutional governance for sovereign twins; MareNostrum the collective governance of shared infrastructure. Refer to [DHITL](https://github.com/JeanHuguesRobert/marenostrum/blob/main/DHITL.md) for the canonical layer specification.
 
-| Concept | Role | Scale |
-|---|---|---|
-| **Cogentiscope** | Inference instrument — produces the Cogentigram | Personal protocol |
-| **Cogentigram** | Structured self-model — the sovereign twin | Personal data object |
-| **Cognitive impedance** | Inter-Cogentia compatibility measure | Layer 4 → Layer 5 interface |
-| **PrivAI** | Institutional governance for sovereign twins | Layer 5 — Democratic |
-| **MareNostrum** | Collective governance of shared infrastructure | Layer 5 — Democratic |
-
-The triptych is not a psychometric product. It is a layer in a governance architecture — the layer that makes the human side of the human-AI interface legible, auditable, and sovereign.
+The triptych is not a psychometric product. It is the personal-scale instantiation of cognitive infrastructure — the layer that makes the human side of the human-AI interface legible, auditable, and sovereign.
 
 Without Cogentia, MareNostrum is governance without self-knowing participants.  
 Without MareNostrum, Cogentia is self-knowledge without a democratic use.  
@@ -138,7 +130,7 @@ The following questions are open, published here in the spirit of design in the 
 
 ## Status
 
-Cogentia MVP is under active development. The current implementation provides a copy-paste workflow: the Cogentia prompt is submitted to the user's own AI agent; the agent's structured JSON response is submitted to the analysis engine; results are displayed as a percentile radar across 73 indicators mapped to Big Five, MBTI, DISC, and Enneagram frameworks.
+Cogentia MVP is under active development. The current implementation provides a copy-paste workflow: the Cogentia prompt is submitted to the user's own AI agent; the agent's structured JSON response is submitted to the analysis engine; results are displayed as a percentile radar across 73 indicators grounded in established psychometric frameworks (see [Cogentia and Cogentigrams](Cogentia-and-Cogentigram.md) §4 for the formal axis construction).
 
 Honesty indicators are not yet included in the public protocol. PrivAI does not yet exist as a formal institution. Both are prerequisites for any deployment beyond experimental MVP.
 

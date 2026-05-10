@@ -1,45 +1,39 @@
 # Radical Democracy as the Best AI Safety Strategy
-## Cogentia Commons Working Paper — v0.2
 
 **Auteur principal** : Jean Hugues Noël Robert, Institut Mariani, Corte, Corse
 
 **Agent de revue** : Claude (Anthropic Sonnet 4.6) — instance stateless, biais connus : alignment-adjacent, pro-procédural
 
-**Date de révision** : 3 mai 2026
+**Date** : mai 2026
 
 **Licence** : CC BY-SA 4.0
 
 **Dépôt de référence** : https://github.com/JeanHuguesRobert/cogentia
 
-**Statut global** : Working Hypothesis v0.2 — ouvert à critique multi-agents
+**Statut global** : Working Hypothesis — ouverte à critique multi-agents
 
-> **Note méthodologique** : Ce document suit le format Cogentia Commons [1]. Chaque bloc est étiqueté avec un statut épistémique explicite. Les objections sont des contributions de première classe, pas des annexes. La vérité n'est pas l'objectif de la plateforme ; la traçabilité et la révisabilité le sont.
+> **Note sur ce document.** Ce document est une *démonstration de cohérence* : il applique le format Cogentia Commons (Thesis Kernel + Objection Kernels + Coherence Kernel) à l'axiome porteur articulé dans [DHITL](https://github.com/JeanHuguesRobert/marenostrum/blob/main/DHITL.md). C'est la procédure de la plateforme exercée sur la fondation de la plateforme, avant que la plateforme n'existe. La vérité n'est pas l'objectif de la plateforme ; la traçabilité et la révisabilité le sont.
 
 ---
 
 ## Table des matières
 
-1. [Thesis Kernel v0.2](#1-thesis-kernel-v02)
+1. [Thesis Kernel](#1-thesis-kernel)
 2. [Grille de Comparaison des Stratégies](#2-grille-de-comparaison-des-stratégies)
 3. [Objection Kernel #1 — Vitesse de coordination](#3-objection-kernel-1--vitesse-de-coordination)
 4. [Objection Kernel #2 — Sous-spécification de "personne physique"](#4-objection-kernel-2--sous-spécification-de-personne-physique)
 5. [Objection Kernel #3 — Asymétrie épistémique technique](#5-objection-kernel-3--asymétrie-épistémique-technique)
 6. [Objection Kernel #4 — La joie comme signal épistémique ambigu](#6-objection-kernel-4--la-joie-comme-signal-épistémique-ambigu)
 7. [Coherence Kernel — DHITL ↔ Démocratie Radicale](#7-coherence-kernel--dhitl--démocratie-radicale)
-8. [Revision History](#8-revision-history)
-9. [Références](#9-références)
+8. [Références](#8-références)
 
 ---
 
-## 1. Thesis Kernel v0.2
+## 1. Thesis Kernel
 
 **Titre** : Radical Democracy as the Best AI Safety Strategy
 
 **Statut épistémique** : Working Hypothesis / Strong Conjecture
-
-**Version** : v0.2 (post-revue agent)
-
-**Δ depuis v0.1** : Ajout de la grille de comparaison ; précision sur le régime d'urgence ; explicitation du lien DHITL ; reformulation de la falsifiabilité.
 
 ### Core Assertion
 
@@ -57,7 +51,7 @@ Cette assertion est *comparative* : elle ne prétend pas que la démocratie radi
 
 **P4.** Le risque résiduel irréductible n'est pas un bug de la démocratie : c'est l'expression du libre arbitre collectif. Vouloir l'éliminer entièrement conduit nécessairement à une forme de contrôle qui devient elle-même un risque existentiel.
 
-**P5.** *(ajoutée en v0.2)* Une stratégie de sécurité que les humains n'adoptent pas volontairement n'est pas réellement sûre. La désirabilité est donc une contrainte épistémiquement légitime, non un biais rhétorique.
+**P5.** Une stratégie de sécurité que les humains n'adoptent pas volontairement n'est pas réellement sûre. La désirabilité est donc une contrainte épistémiquement légitime, non un biais rhétorique.
 
 ### Contraintes que la thèse doit satisfaire
 
@@ -67,7 +61,7 @@ Cette assertion est *comparative* : elle ne prétend pas que la démocratie radi
 - Articuler clairement son rapport aux thèses DHITL et MareNostrum.
 - Être falsifiable de manière opérationnalisable (voir §1.4).
 
-### Conditions de falsifiabilité (version opérationnalisée)
+### Conditions de falsifiabilité
 
 La thèse est révisable ou abandonnée si l'une des conditions suivantes est démontrée de manière convaincante :
 
@@ -110,15 +104,15 @@ La vitesse de réponse est le seul critère où l'accélération non régulée d
 
 **Titre** : Le problème de la vitesse de coordination
 
-**Statut épistémique** : Strong Concern — partiellement absorbé en v0.2
+**Statut épistémique** : Strong Concern — partiellement absorbé
 
-**Agent émetteur** : Claude (revue v0.1)
+**Agent émetteur** : Claude (revue agent)
 
 ### L'objection
 
-La démocratie radicale fractale est structurellement lente : délibération, super-majorité, subsidiarité ascendante. Or certains scénarios de risque IA sont *rapides* — émergence capacitaire brutale, weaponisation soudaine de modèles existants, prolifération de désinformation coordonnée. La thèse ne traitait pas ce cas en v0.1.
+La démocratie radicale fractale est structurellement lente : délibération, super-majorité, subsidiarité ascendante. Or certains scénarios de risque IA sont *rapides* — émergence capacitaire brutale, weaponisation soudaine de modèles existants, prolifération de désinformation coordonnée. La thèse doit traiter ce cas explicitement.
 
-### Response Kernel v0.1
+### Response Kernel
 
 **Statut épistémique** : Working Response (à affiner)
 
@@ -152,13 +146,13 @@ Il reste un scénario non couvert : une menace qui nécessite une **réponse mon
 
 **Statut épistémique** : Genuine Gap — partiellement traité
 
-**Agent émetteur** : Claude (revue v0.1)
+**Agent émetteur** : Claude (revue agent)
 
 ### L'objection
 
 "Égalité stricte des personnes physiques" est posé comme fondement mais non défendu. Les démocraties formelles one-person-one-vote ont historiquement élu des régimes qui ont ensuite concentré le pouvoir. Qu'est-ce qui distingue la "démocratie radicale fractale" de la démocratie libérale représentative standard ?
 
-### Response Kernel v0.1
+### Response Kernel
 
 **Statut épistémique** : Design Proposal
 
@@ -184,7 +178,7 @@ Ces quatre mécanismes sont interdépendants. L'absence de l'un affaiblit les tr
 
 **Statut épistémique** : Potential Fatal Flaw — réponse développée, non concluante
 
-**Agent émetteur** : Claude (revue v0.1)
+**Agent émetteur** : Claude (revue agent)
 
 **Priorité** : HAUTE — c'est l'objection la plus sérieuse
 
@@ -202,7 +196,7 @@ Cette asymétrie est qualitativement différente de celle qui existe pour d'autr
 
 La question acérée est : **peut-on gouverner démocratiquement un outil qui modifie les conditions mêmes de la délibération démocratique ?**
 
-### Response Kernel v0.1
+### Response Kernel
 
 **Statut épistémique** : Working Response — quatre arguments, force inégale
 
@@ -246,15 +240,15 @@ La question de l'*endogénéité* reste ouverte : si l'IA modifie les processus 
 
 **Titre** : La joie est-elle une contrainte légitime ou un biais de confirmation ?
 
-**Statut épistémique** : Soft Warning — absorbé par la Prémisse P5 en v0.2
+**Statut épistémique** : Soft Warning — absorbé par la Prémisse P5
 
-**Agent émetteur** : Claude (revue v0.1)
+**Agent émetteur** : Claude (revue agent)
 
 ### L'objection
 
 Le ton maïeutique et joyeux est une force rhétorique réelle, mais la contrainte "pouvoir être vécue comme une aventure joyeuse" figure parmi les critères que la thèse *doit satisfaire*. Cela est inhabituel pour un critère de sécurité existentielle. Est-ce du Possibilisme ou du wishful thinking ?
 
-### Response Kernel v0.1
+### Response Kernel
 
 **Statut épistémique** : Défendu, avec nuance
 
@@ -266,7 +260,7 @@ Ce raisonnement est isomorphe à l'argument de Rawls [4] sur les principes que d
 
 **La nuance** : La joie est un signal proximal mais insuffisant. Elle peut être produite par des systèmes qui ne sont pas robustes (le casino est joyeux). La thèse ne prétend pas que tout ce qui est joyeux est sûr, mais que tout ce qui est sûr *doit* aussi être désirable pour être adopté. La contrainte de joie est nécessaire, pas suffisante.
 
-La Prémisse P5 (v0.2) formalise cela : "Une stratégie de sécurité que les humains n'adoptent pas volontairement n'est pas réellement sûre."
+La Prémisse P5 formalise cela : "Une stratégie de sécurité que les humains n'adoptent pas volontairement n'est pas réellement sûre."
 
 ---
 
@@ -276,7 +270,7 @@ La Prémisse P5 (v0.2) formalise cela : "Une stratégie de sécurité que les hu
 
 **Statut épistémique** : Positive Coherence Claim — démonstration en cours
 
-**Agent émetteur** : Claude (revue v0.1)
+**Agent émetteur** : Claude (revue agent)
 
 ### La question
 
@@ -310,29 +304,23 @@ La cohérence n'est pas seulement logique — elle est *implémentée en cours*,
 
 DHITL affirme que l'infrastructure *suffit* ("all you need"). Le Thesis Kernel implique qu'elle ne suffit pas sans cadre démocratique. Il faut trancher : est-ce "infrastructure is necessary and sufficient" ou "infrastructure is necessary but not sufficient" ?
 
-**Proposition de résolution** : "All you need" dans DHITL doit être lu comme "all you need at the infrastructure layer" — la gouvernance démocratique est présupposée comme couche supérieure, pas incluse dans la claim. Cette lecture est cohérente mais devrait être explicitée dans DHITL v0.2.
+**Proposition de résolution** : "All you need" dans DHITL doit être lu comme "all you need at the infrastructure layer" — la gouvernance démocratique est présupposée comme couche supérieure, pas incluse dans la claim. Cette lecture est cohérente mais devrait être explicitée dans DHITL.
 
 ---
 
-## 8. Revision History
+## 8. Chantiers ouverts
 
-| Version | Date | Δ principal | Agent |
-|---|---|---|---|
-| v0.1 | 3 mai 2026 | Création initiale — structure maïeutique | Jean-Hugues Robert |
-| v0.2 | 3 mai 2026 | Grille de comparaison ; objections #1–#4 développées ; Coherence Kernel DHITL ; Prémisse P5 ; falsifiabilité opérationnalisée | Claude (revue) |
-
-**Prochains chantiers prioritaires** (par ordre de criticité) :
+Par ordre de criticité :
 
 1. **Kernel Temporalité** : la gouvernance démocratique peut-elle se stabiliser avant que l'IA modifie les conditions de la délibération ? (résidu §5)
 2. **Kernel Exemples Historiques** : inventaire des précédents de M1–M4 (§4) pour évaluer la crédibilité de l'implémentation.
-3. **DHITL v0.2** : explicitation de la relation infrastructure/gouvernance (§7).
-4. **Kernel Urgence** : développer le mécanisme de circuit-breaker pré-autorisé avec cas de test réalistes (§3).
+3. **Kernel Urgence** : développer le mécanisme de circuit-breaker pré-autorisé avec cas de test réalistes (§3).
 
 ---
 
 ## 9. Références
 
-[1] Robert, J.-H. (2026). *Cogentia Commons: A Platform Architecture for Collaborative Possibility Exploration Under Scientific Constraint.* Working Paper v0.1. https://github.com/JeanHuguesRobert/cogentia/blob/main/research/Cogentia_Commons_Working_Paper.md
+[1] Robert, J.-H. (2026). *Cogentia Commons: A Platform Architecture for Collaborative Possibility Exploration Under Scientific Constraint.* https://github.com/JeanHuguesRobert/cogentia/blob/main/research/Cogentia_Commons_Working_Paper.md
 
 [2] Taleb, N. N. (2018). *Skin in the Game: Hidden Asymmetries in Daily Life.* Random House. — Pour les arguments sur la robustesse (Lindy), l'optionalité et la via negativa appliqués aux systèmes complexes.
 
@@ -340,7 +328,7 @@ DHITL affirme que l'infrastructure *suffit* ("all you need"). Le Thesis Kernel i
 
 [4] Rawls, J. (1971). *A Theory of Justice.* Harvard University Press. — Pour le voile d'ignorance et la légitimité des principes universellement acceptables.
 
-[5] Robert, J.-H. (2026). *Democratic Humans in the Loop: Why Infrastructure Is All You Need for AI Safety* (DHITL). Working Paper. https://github.com/JeanHuguesRobert/marenostrum — À commettre comme DHITL.md dans le dépôt MareNostrum.
+[5] Robert, J.-H. (2026). *Democratic Humans in the Loop: Why Infrastructure Is All You Need for AI Safety* (DHITL). MareNostrum Repository. https://github.com/JeanHuguesRobert/marenostrum/blob/main/DHITL.md
 
 [6] Robert, J.-H. (2026). *MareNostrum Framework* — Energy-compute commons méditerranéen, Charte du Soleil Méditerranéen, SCIC coopérative. https://github.com/JeanHuguesRobert/marenostrum
 

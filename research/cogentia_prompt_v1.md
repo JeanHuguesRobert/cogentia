@@ -22,7 +22,7 @@ PARTIE 1 — IDENTIFICATION DE L'AGENT
 
 Identifie-toi avec précision :
 - Ton nom (ex: Claude, ChatGPT, Gemini, Mistral, autre)
-- Ton modèle exact si tu le connais (ex: claude-3-5-sonnet, gpt-4o, gemini-1.5-pro...)
+- Ton modèle exact si tu le connais (ex: claude-opus-4-7, gpt-4o, gemini-1.5-pro...)
 - Ta plateforme (ex: claude.ai, chat.openai.com, gemini.google.com, application tierce...)
 - Si tu es une version fine-tunée ou customisée, précise-le
 
