@@ -40,6 +40,7 @@ This repository instantiates the **cognitive infrastructure layer** of the [DHIT
 
 ## In Progress
 
+- [Cogentia Commons — MVP Specification](cogentia_commons_mvp_spec.md) *(draft v0.1, 2026-05-11)*
 - Multi-Agent Critique Loop — formal specification
 - Cogentia × Corsica: student registration as democratic infrastructure
 
