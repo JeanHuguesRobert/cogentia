@@ -3,7 +3,7 @@ title: "Cogentia Commons — MVP Specification"
 description: "Exchanges, formats, and results for the first operational instance of the Cogentia Commons platform"
 layout: default
 nav_order: 5
-version: "draft-0.2"
+version: "draft-0.4"
 last_modified_at: 2026-05-11
 author: "Jean Hugues Noël Robert, baron Mariani"
 affiliation: "Institut Mariani — C.O.R.S.I.C.A., 1 cours Paoli, F-20250 Corte, Corsica"
@@ -13,7 +13,7 @@ status: "Working specification — applies the method to itself"
 
 # Cogentia Commons — MVP Specification
 
-*v0.2 — draft. Premier commit établit la priorité.*
+*v0.4 — draft. Premier commit établit la priorité.*
 *Companion to [`Cogentia_Commons_Working_Paper.md`](Cogentia_Commons_Working_Paper.md) (the **what / why**), [`second_method.md`](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/second_method.md) (the **rules**), and the [COP — Cognitive Orchestration Protocol](https://github.com/JeanHuguesRobert/inseme/blob/main/packages/cop-core/Architecture.md) (the **orchestration substrate**).*
 *This document is itself a Thesis Kernel. It will be the second exhibit in the Commons graph; the first remains `second_method.md`.*
 
@@ -38,10 +38,11 @@ Orchestration is inherited, not re-invented. Cogentia Commons is a [**COP/HITL p
 1. Dual representation of every document: a **literate** markdown form anchored in a GitHub repository, and a **formal** graph representation in a per-community Supabase instance.
 2. A **plugin architecture for audit prompts**: versioned prompt templates with declared output schemas and contract classes, run through a human-mediated copy/paste bridge to any conversational agent.
 3. A **revision graph** built incrementally from accepted contributions, with typed edges and commit-anchored versioning.
-4. A **Support primitive**: non-fungible recognition signal, architecturally decoupled from epistemic status.
-5. **GitHub-anchored identity** for authors, objectors, reviewers, editors.
-6. **Per-community federation contract** (URI scheme, no live protocol in v1).
-7. **Publication** as a discrete act that mints a stable URI = community + commit + node.
+4. **Continuations on every node** (COP `cop/continuation` artifacts): the multi-directional, queryable "what should happen next" attached to any Thesis, Premise, Claim, Objection, Revision, AgentReview, or Support.
+5. A **Support primitive**: non-fungible recognition signal, architecturally decoupled from epistemic status.
+6. **GitHub-anchored identity** for authors, objectors, reviewers, editors.
+7. **Per-community federation contract** (URI scheme, no live protocol in v1).
+8. **Publication** as a discrete act that mints a stable URI = community + commit + node.
 
 ### 1.2 Explicitly out of scope (v1, with rationale)
 
@@ -129,6 +130,30 @@ The federation contract is the URI scheme (§8) and a `federation.json` file lis
 
 A live federation protocol is an open question (§14).
 
+### 4.4 Editor eligibility
+
+"Synthesis is editorial labour, not authority" (§3) needs an operational definition before the role is meaningful in v1. Without one, either anyone can claim it (collapsing the role into Objector) or the home community implicitly hands it to its founders (collapsing toward §4.6 of the Working Paper — disproportionate moderation authority, the anti-capture violation).
+
+**Default eligibility policy (community-overridable).** A user is eligible to claim a `revision_draft` or `editor_synthesis` Continuation on a Document if both:
+
+1. **Contribution floor** — at least three of their Objections, Revisions, or Claims have been *accepted* (not merely submitted) on the same Document, in the rolling 12 months preceding the claim.
+2. **Independence constraint** — they are not the author of any Objection that the synthesis would consolidate. A user who raised the objections cannot be the one who synthesises the response; that would collapse the loop.
+
+A user who is eligible can claim the Continuation; the claim itself is an action recorded as a COP Event and is visible to the community. There is no Editor seat assignment.
+
+**Community-manifest overrides.** A community's `COMMUNITY.md` may:
+
+- raise the contribution floor (e.g. require five accepted contributions, or contributions across two Documents);
+- adjust the rolling window;
+- strengthen the independence constraint (e.g. add "not a current co-author of any other open Revision on the same Document");
+- delegate eligibility decisions to a named Reviewer panel for a specific Document class.
+
+A community manifest MAY NOT lower the independence constraint below the v1 default — independence between objector and synthesiser is a Rule 0 + anti-capture invariant, not a parameter.
+
+**Why these specific numbers.** Three and twelve are calibrated for the bootstrap case (Working Paper §10.2: 30–50 active Thesis Kernels at the Université de Corse). Above the threshold, the role is not an unbounded prerogative — it is access to a specific Continuation that any other eligible user could also claim. Below the threshold, the role is unreachable. Both bounds are needed; either alone would drift toward seat-assignment.
+
+**Authoring exception.** A Document's Author is always eligible to synthesise on their own Document, regardless of contribution count, but is still bound by the independence constraint with respect to Objections they themselves raised under a separate role.
+
 ---
 
 ## 5. The Formal Graph
@@ -201,6 +226,19 @@ Publication
   - id, document_id, commit_sha
   - artifact_type: { initial | improved | premise_note | conclusion_note | refutation | synthesis }
   - canonical_uri
+
+Continuation                         -- COP cop/continuation Artifact
+  - id, attached_to_id, attached_to_type
+  - intent: { kernel_extraction | burton_conversion | citation_validation |
+              consistency_scan | objection_response | revision_draft |
+              editor_synthesis | author_acceptance | publication_review | custom }
+  - resumers: [ { kind: human|agent|plugin, eligibility: github_handle | role | plugin_id } ]
+  - state: jsonb                     -- resume-state payload (COP §2.7)
+  - resumption_conditions: jsonb     -- events_awaited, time_window, prerequisite_continuations
+  - status: { open | claimed | resolved | abandoned | superseded }
+  - parent_continuation_id           -- forks form a tree
+  - opened_by_github_handle, opened_at, commit_sha
+  - resolved_by_github_handle, resolved_at, resolution_kind
 ```
 
 ### 5.2 Edge types
@@ -226,6 +264,63 @@ No node is ever overwritten. Every state change appends a new row referencing th
 ### 5.4 Status propagation
 
 A refuted Premise propagates a *visible flag* to all Claims with a `derived_from` path to it. The flag is informational — it signals review is warranted. It does not auto-invalidate. This is Rule 0 applied to status: agents do not get to invalidate human-authored Claims; they get to surface dependencies.
+
+### 5.5 Continuations
+
+A **Continuation** is the COP primitive (`cop/continuation` Artifact, defined in [`inseme/packages/cop-core/Architecture.md`](https://github.com/JeanHuguesRobert/inseme/blob/main/packages/cop-core/Architecture.md) §1.8 / §2.7 / §5.5) that Cogentia Commons uses to make *"what should happen next on this node?"* a first-class, queryable property of every artefact. Commons does not define a parallel todo, queue, or workflow mechanism; it consumes the COP/HITL profile.
+
+**Attached to any node.** A Continuation always names its `attached_to_id` + `attached_to_type`. Any entity in §5.1 — Thesis, Premise, Claim, Constraint, Objection, Revision, AgentReview, Support, Publication, Document — can carry zero, one, or many open Continuations at the same time. This is what makes the structure **multi-directional**: a single Premise can simultaneously have a *citation_validation* Continuation awaiting a structural plugin, an *objection_response* Continuation awaiting the Author, and an *editor_synthesis* Continuation that any community Editor is eligible to claim.
+
+**Named resumers, explicit conditions.** Every Continuation declares (a) who is eligible to resume it — a specific GitHub handle, a role tag (`reviewer`, `editor`, `author`), or a plugin ID — and (b) under what conditions it becomes resumable: events to wait for, time windows, prerequisite Continuations that must resolve first. The state required to resume is carried in the `state` payload, not in any hidden in-memory cache (COP invariant 5).
+
+**Forking and joining.** A Continuation can fork via `parent_continuation_id`. A typical fork pattern: a single `burton_conversion` Continuation on an Objection forks into one `objection_response` Continuation on the Author and one `revision_draft` Continuation on the Editor pool, both blocked on the parent's resolution. Join points are implicit — a downstream Continuation lists its prerequisites under `resumption_conditions.prerequisite_continuations`.
+
+**Resolution kinds.** A Continuation closes with one of: `resolved` (the intended work happened — typically tied to a commit_sha), `abandoned` (deliberately dropped, with justification), `superseded` (replaced by a newer Continuation, which references it). Closed Continuations are immutable and remain visible — the closed-Continuation history of a node *is* part of its narrative trace.
+
+**Why not just a `tasks` table.** A Continuation is not a task assignment. It is a *capsule of suspended reasoning* with everything needed to resume it on any node, by any eligible resumer, after any interruption. Reusing the COP primitive across the corpus (Personal Cogentia, Commons, plugin runtimes, future Cogentia components) keeps a single orchestration substrate and a single event log — agents are replaceable, models evolve, the reasoning trace persists.
+
+**Rule 0 anchoring.** Even when a Continuation is resumable by an agent (e.g. a `citation_validation` whose only eligible resumer is the `citation_validator` plugin), the Continuation that *accepts* its output is human-resumable. Agents close their own structural Continuations; substantive resolutions always have a human resumer in the close path. This is the data-layer enforcement of §10.
+
+### 5.6 Anchor lifecycle and re-anchor semantics
+
+The dual-representation contract (§2) binds every formal node to `(repo, commit_sha, anchor_id)`. The literate form lives in git; the literate form changes; therefore anchors move. v1 specifies precisely what happens when the literate form is edited under a formal graph with open Objections, Continuations, and Supports — silent re-anchoring is a doctrinal failure (§2.3 forbids it).
+
+**The five anchor-change cases.** When the Author commits a new revision of the literate form, Commons diffs anchor-by-anchor. Each anchor present in the previous commit ends in exactly one of five states:
+
+| Case | Detection | Default proposal |
+|---|---|---|
+| **Unchanged** | Same `anchor_id`, surrounding text byte-equivalent. | Carry the formal node forward; append the new `commit_sha` to its version chain. |
+| **Edited** | Same `anchor_id`, surrounding text differs. | Propose a Revision row; Author confirms whether the edit is *cosmetic* (no semantic change, version chain extended) or *substantive* (new Premise version, old one preserved). |
+| **Removed** | `anchor_id` no longer present anywhere in the literate form. | Propose `status=deprecated`. Author confirms or restores. |
+| **Split** | One previous anchor has two heuristic successors (similar text fragments at two distinct new anchor IDs). | Propose two new Premises with `derived_from` edges back to the old one. Author confirms the split, edits the proposed text per child, or rejects (treats as a Removed + two Created). |
+| **Merged** | Two previous anchors collapse into one new anchor. | Propose one new Premise with `derived_from` edges from both. Author confirms or rejects. |
+
+**Provisional commits.** Until the Author resolves the migration Continuation (see below), the new commit is **provisional**: the formal graph continues to read from the previous *confirmed* commit, contributions can still be submitted against the previous state, and the platform displays a "migration pending" badge on the Document. There is never a window during which the formal graph is silently misaligned with the literate form it claims to annotate.
+
+**The migration Continuation.** Each non-trivial commit opens a single Continuation on the Document:
+
+```
+intent: "anchor_migration"
+resumers: [<author>]
+state: { proposals: [ {anchor_id, case, ...} ], previous_commit_sha, new_commit_sha }
+resumption_conditions: { events_awaited: [] }    # blocks on the Author alone
+```
+
+Resolving this Continuation atomically applies all confirmed migrations and promotes the new commit to *confirmed*. Rejecting it leaves the previous commit confirmed and marks the new commit as `migration_rejected` — the literate form is still in git, but the formal graph treats it as a draft. The Author can re-open the migration later by re-committing or by manually re-running the migration on the existing commit.
+
+**Per-entity migration rules** when an anchor moves under a contribution:
+
+- **Objection.** If the target anchor is *Unchanged* → carry forward unmodified. If *Edited* → Objection enters `status=needs_revisit`; a Continuation `intent=objection_revisit` is opened with the *Objector* as resumer ("the premise text has changed; does your objection still apply? re-affirm | withdraw | re-state"). If *Removed* → Objection enters `status=stranded`; a Continuation `intent=stranded_objection_disposition` opens for the Author, who declares whether the removal was *responsive* (the Objection is marked `resolved-by-removal`) or *orphaned* (the Objection is preserved as historical record with no live target). If *Split* / *Merged* → Objection clones across the resulting anchors with `parent_objection_id`; the Objector confirms which clones apply.
+
+- **Continuation.** If `resumption_conditions` are anchor-independent (e.g. waiting for an external Event) → carried forward with the new `commit_sha`. If the `state` payload quotes the literate text or the formal node's previous statement → the Continuation is marked `superseded`; a new Continuation with patched state is opened and the old one's `superseded_by` links forward. If the target is *Removed* → all open Continuations on it are marked `abandoned` with auto-generated justification `"target deprecated at commit <sha>"`. This is the one closure path that does not have a named human resumer; it is logged separately and surfaces in the Document's audit view.
+
+- **Support.** Supports never migrate. A Support is a historical recognition event attached to a specific version of a contribution and is preserved forever in that form. A Support given to Objection_v1 remains a Support of Objection_v1 even after the Objection becomes Objection_v2; the v2 row has its own (empty until earned) Support set.
+
+- **Edge.** When both endpoints survive (Unchanged or Edited carried forward) → edge survives, with new `commit_sha`. When one endpoint is *Removed* → edge is marked `inactive` and preserved as historical record. When endpoints *Split* or *Merge* → edge migration is part of the same Author-confirmation step that resolves the node migration: the Author chooses which resulting node(s) inherit the edge.
+
+**What the Author actually does.** In the steady state, a typical commit produces a migration Continuation containing 0–3 proposals — mostly *Unchanged* (auto-carried, not shown), occasionally one *Edited* requiring a cosmetic-vs-substantive choice. A heavy refactor (many *Split* / *Merge* operations) produces a larger migration Continuation; the Author may resolve it in stages by partially confirming and re-opening, since the Continuation supports incremental progress through its `state` payload.
+
+**Why this is not silent re-anchoring.** Every migration produces (a) a confirmation Continuation owned by the Author, (b) an immutable audit trail of which anchors moved and how, (c) a visible "migration pending" state on the Document while unresolved, and (d) explicit, named handling for every contribution that the migration touches. The literate form is the source of truth for text; the formal graph is the source of truth for structure; the migration protocol is what keeps them honest under change.
 
 ---
 
@@ -304,46 +399,61 @@ Each plugin manifest is signed (commit-anchored in the plugin's repo). The commu
 
 ## 7. The Exchange Cycle (one round)
 
-A **round** is the atomic unit of method application: one author, one target node, one or more audit plugins, one author acceptance pass, one possible Revision commit.
+A **round** is the atomic unit of method application: one author, one target node, one or more audit plugins, one author acceptance pass, one possible Revision commit. Mechanically, a round is a small tree of Continuations rooted on the target node.
 
 ```
 1. Author opens a round
    - selects target node (Thesis | Premise | Claim | Objection)
    - selects audit plugin(s) from community allow-list
+   - Commons OPENS one root Continuation on the target with
+       intent = "round.open", resumers = [author]
+     and, as children, one Continuation per selected plugin with
+       intent = matching plugin intent, resumers = [<author>, plugin:<plugin_id>]
    - Commons renders each plugin's prompt with placeholders bound to the live
-     formal-graph state at HEAD
+     formal-graph state at HEAD; the rendered prompt is the Continuation's state
 
-2. Human paste bridge
-   - for each plugin:
+2. Human paste bridge  (per plugin Continuation)
        a. Commons displays the rendered prompt + a "Copy" button
        b. Author pastes the prompt into a conversational agent (their choice)
        c. Author copies the agent's response back into the Commons paste field
        d. Commons extracts the JSON block matching the plugin's output_schema
           (same extractor logic as apps/personal/src/pages/Submit.jsx)
-       e. Extraction failure → author retries or aborts plugin
+       e. Extraction failure → Continuation remains open; author retries or
+          marks it abandoned with justification
 
-3. Per-plugin disposition
-   - structural plugins: AgentReview row written automatically with status=accepted;
-     no further author action required
-   - substantive plugins: AgentReview row written with status=proposed;
-     author must accept, reject, or invoke the falsifiability conversion sub-round
+3. Per-plugin disposition  (Continuation resolution)
+   - structural plugins: AgentReview row written; plugin Continuation closed
+     with resolution_kind = "resolved" (agent self-closes its own structural
+     Continuation — §5.5 Rule 0 anchoring permits this for structural only)
+   - substantive plugins: AgentReview row written with status=proposed; the
+     plugin Continuation closes, but FORKS a child Continuation
+       intent = "author_acceptance", resumers = [author]
+     which must close with a human action — accept, reject, or escalate
 
 4. Burton gate (substantive plugins only)
    - if plugin output declares falsifiable=false OR reviewer flags it:
-       round cannot close on this output until the converted_statement is
-       either accepted by the author or escalated as an Objection in its
-       own right (a converted feeling-of-certainty IS a contribution)
+       the author_acceptance Continuation forks a sibling
+         intent = "burton_conversion", resumers = [author, reviewer-role]
+       that blocks the parent (resumption_conditions.prerequisite_continuations).
+       The converted_statement either becomes an accepted contribution or is
+       escalated as an Objection in its own right — a converted feeling-of-
+       certainty IS a contribution.
 
 5. Round closure
-   - author manually marks the round closed
-   - if any plugin output triggered an editorial action, Commons surfaces
-     a "draft Revision" view that produces a candidate patch the author can
-     paste into a GitHub PR or commit
-   - round metadata (target, plugins, dispositions, commit_sha at HEAD) is
-     persisted as an immutable record
+   - the round.open root Continuation can only close when all of its
+     descendants have closed (resolved | abandoned | superseded)
+   - if any plugin output triggered an editorial action, Commons opens a
+     child Continuation
+       intent = "revision_draft", resumers = [author, editor-role]
+     which produces a candidate patch the resumer can paste into a GitHub
+     PR or commit; resolution requires a commit_sha
+   - round metadata (target, plugins, dispositions, full Continuation tree,
+     commit_sha at HEAD) is persisted as an immutable record
 ```
 
-The round never auto-closes. There is no agent who decides the round is done.
+The round never auto-closes. There is no agent who decides the round is done — the root Continuation has only human resumers.
+
+**Multi-directional in practice.** A node can simultaneously sit inside multiple round trees. Continuations on the same node from different rounds are listed together in the node's *pending work* view, with their resumer eligibility surfaced for triage. Two Editors can race on the same `revision_draft` Continuation; the first to commit closes it as `resolved`, the second's Continuation closes as `superseded` with a reference to the winning commit.
 
 ---
 
@@ -435,6 +545,9 @@ The boundary the second method draws between epistemic participation (agents per
 | Propose Revision | Human Editor or Author (commit patch) | Commit hash + responds_to edges. |
 | Publish | Author | Publication row + commit hash + canonical URI. |
 | Support | Human Supporter | Supabase row + handle + justification. |
+| Open Continuation | Any role; carries `opened_by_github_handle` | Continuation row + commit_sha. |
+| Resolve substantive Continuation | Human resumer only | Continuation row + `resolved_by_github_handle` + commit_sha. |
+| Resolve structural Continuation | Plugin may self-close | AgentReview row + plugin signature; downstream substantive Continuation gates any onward propagation. |
 
 Every row in the platform has a human GitHub handle in its causal chain. No agent has a write capability that bypasses this. This is verified at the data-access layer, not by convention.
 
@@ -465,6 +578,25 @@ All seven steps must be verifiable *from the URLs alone* — no platform login r
 
 If any of these fails on the acceptance test, the design is defective. Per the Working Paper conclusion: that is a legitimate outcome — document the failure, revise the spec.
 
+### 11.3 Rollout posture under mimetic constraints
+
+A Cogentia Commons instance does not enter a host community on a neutral substrate. It enters under the structural conditions identified by Working Paper §10.4 (prestige coupling, monopoly of legitimation, island insularity premium), which are themselves expressions of the DRSJ cycle named in [`Indirect Action Under Mimetic Constraints`](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/mimetic_desynchronization.md): *Denial of competence → causal Reattribution → moral Suspicion → Justification of sanction*. The MVP rollout assumes resistance is structural and intrinsic, not anomalous, and is designed to delay or diffuse the cycle long enough for the platform to cross its irreversibility threshold inside the host community.
+
+The six mechanisms of mimetic desynchronization map onto concrete v1 design choices:
+
+| Mechanism | MVP embodiment |
+|---|---|
+| **Delayed visibility** | No public landing page, no announcement, no metrics dashboard on day 1. The platform's first activity is internal to the home community; external visibility is a deliberate later step, gated by the author. |
+| **Interpretive buffering** | Cogentia Commons is framed as *complement* to journal submission, not alternative. A Thesis Kernel produces a better first draft for an existing publication pipeline; it does not replace one. This is the §10.4 prestige-coupling mitigation, restated in mimetic terms. |
+| **Semantic minimization** | The minimal contribution path is one Objection on one anchor (§13 over-modeling). Every other surface is optional and hidden until invoked. The recursive first use case (doctrine-on-doctrine) keeps cognitive load low: one document, one community, one round. |
+| **Non-ostentation** | No leaderboard, no public Support count surfaced above the per-node Recognition view, no Kudos primitive in v1 (§9.3). The deferred monetary layer is not a temporary omission — it is the desynchronization principle applied. Visible competitive signaling is the DRSJ trigger; v1 deprives the cycle of that input. |
+| **Reversibility** | A Thesis Kernel can be withdrawn by its author at any time (the literate form remains in git; the formal-graph node moves to `status=deprecated`). Communities can be left without forfeiture. No lock-in primitive exists in v1. Low entry cost + possible exit is itself the mitigation. |
+| **Institutional pre-legitimation** | ICOME'26 at the Université de Corse (Working Paper §10.5) is the v1 institutional anchor. A platform that arrives *with* a recognized academic venue is processed through a different interpretive frame than one that arrives *against* the canonical publication system. The recursive instance is not rhetorical — it is the pre-legitimation move. |
+
+The framework is general; the specifics above are calibrated for the Corsican bootstrap case. A Cogentia Commons instance entering a different host community would re-derive the table from the six mechanisms before rollout.
+
+This is also the principled answer to a question that would otherwise be tactical: *why is the v1 surface so deliberately small?* Not because more was impossible to build, but because **structural change succeeds when transformation precedes stabilization of meaning** (mimetic_desynchronization §9). Every primitive deferred from v1 was deferred because surfacing it before the platform crosses its irreversibility threshold would feed the DRSJ cycle that the same primitive, surfaced later, would be safe inside.
+
 ---
 
 ## 12. Reference Implementation Sketch (non-normative)
@@ -494,6 +626,7 @@ The Working Paper §7 enumerates seven failure modes. The MVP responses are:
 | Privacy confusion (§7.5) | Per-community profile model; profile fields are opt-in; no Cogentigram surface in Commons v1. |
 | Cultic closure (§7.6) | Federation URI scheme + `federation.json` exists in v1 so external-community objections are first-class once the second community arrives. |
 | Over-modeling (§7.7) | Minimal contribution path = submit one Objection on one anchor. Everything else optional. |
+| **DRSJ expulsion from host community** *(added v0.3)* | Distinct from §7.6 cultic closure: the *internal* mode is convergence on shared axioms; the DRSJ mode is *external* — the host community expels the platform before it crosses irreversibility. Mitigation: rollout posture under mimetic desynchronization (§11.3). The MVP surface itself is the mitigation; this is not a feature added against the failure mode but the design principle that shaped the in-scope/out-of-scope list of §1. |
 
 ---
 
@@ -502,10 +635,12 @@ The Working Paper §7 enumerates seven failure modes. The MVP responses are:
 1. **Live federation protocol.** Push vs pull, subscription semantics, conflict policy when a referenced community alters a node. Specified only as URI + manual link in v1.
 2. **Plugin marketplace and signing chain.** Trivial for the v1 baseline (six plugins, one author). Non-trivial as soon as third-party plugins arrive.
 3. **Personhood attestation for high-stakes editorial actions.** Refers to the DHITL Rule 0 research problem; cannot be solved at the Commons layer alone.
-4. **Snapshot-vs-streaming sync** between Supabase and GitHub. v1 does snapshot at commit boundaries; a streaming model may be required later.
-5. **Editor eligibility rules.** The "synthesis is editorial labour, not authority" formulation needs operational thresholds (how many accepted prior contributions on a document, etc.). v1 leaves this to the community manifest.
-6. **Conflict between literate form and formal graph during fast revision.** What happens when a commit re-anchors a Premise that has 30 open Objections? v1 says the Objections re-anchor to the closest surviving Premise and surface a *re-anchor pending* flag for author triage. This needs stress-testing.
-7. **Internationalisation.** The doctrine is bilingual. v1 is EN-only on the platform surface. FR support is a v1.1 item.
+4. **Snapshot-vs-streaming sync** between Supabase and GitHub. v1 does snapshot at commit boundaries (resolved at the per-commit level by §5.6, but the question of finer-grained streaming for in-flight edits remains).
+5. **`kernel_extractor` sub-specification.** The most ambitious of the §6.3 baseline plugins, and the one that bootstraps a Document into a formal graph in the first place. Needs its own contract: how it proposes anchor IDs against existing markdown heading structure, how it handles documents that already have hand-written anchors, and how the proposal interacts with the §5.6 migration protocol on subsequent edits.
+6. **Internationalisation.** The doctrine is bilingual. v1 is EN-only on the platform surface. FR support is a v1.1 item.
+7. **Measuring proximity to the irreversibility threshold.** §11.3 names the threshold; it does not specify how to detect that the platform is near it inside a given host community. Candidate indicators (number of unprompted Thesis Kernels per active researcher, ratio of accepted Objections from external GitHub identities, retention across two academic terms) need empirical calibration before any of them can drive a decision to lift a desynchronization measure (e.g. enable a public landing page). Until then, the conservative default is to leave each measure in place.
+
+*Resolved since v0.3:* Editor eligibility (now §4.4); re-anchor / formal-vs-literate conflict semantics (now §5.6).
 
 ---
 
@@ -517,6 +652,8 @@ This spec is a refinement of, and is bound by:
 - [`second_method.md`](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/second_method.md) — the five rules. Rule 0 and Rule 2 are load-bearing on every section here.
 - [`DHITL.md`](https://github.com/JeanHuguesRobert/marenostrum/blob/main/DHITL.md) — Cogentia Commons is Layer 4. By design, no Layer 3 capability lives here.
 - [`Cogentia-and-Cogentigram.md`](Cogentia-and-Cogentigram.md) — Personal Cogentia is the individual analogue; the paste-bridge UX is shared.
+- [`inseme/packages/cop-core/Architecture.md`](https://github.com/JeanHuguesRobert/inseme/blob/main/packages/cop-core/Architecture.md) — COP (Cognitive Orchestration Protocol). Commons is a COP/HITL profile consumer. The Continuation primitive (§1.8, §2.7, §5.5) is inherited verbatim.
+- [`mimetic_desynchronization.md`](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/mimetic_desynchronization.md) — the DRSJ cycle and the six mechanisms of indirect action. Shapes the v1 in-scope/out-of-scope list (§1) and the rollout posture (§11.3).
 - The Kudos book (`C:\tweesic\Kudos`) — anchors the deferred reward primitive.
 
 It supersedes nothing. If a contradiction is identified between this spec and any of the above, the above wins until this spec is revised through the method it describes.
