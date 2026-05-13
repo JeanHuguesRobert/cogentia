@@ -26,12 +26,20 @@
  *   graph               Generate Mermaid cross-reference graph
  *   check               Validate internal links in all research/index.md
  *   jekyll              Ensure Jekyll frontmatter in all research/index.md
+ *   whoami              Print detected GitHub identity + registry location
+ *   stamp <file>        Stamp canonical_url into a markdown file's front-matter
+ *   stamp --all         Stamp every research-grade .md across registered repos
+ *                       (combine with --check to preview without writing)
  *   help                Show this help
  *
  * Flags:
  *   --json              Output machine-readable JSON (status, scan, graph)
  *
- * Config: .cogentia.json — searched upward from CWD, created on first add.
+ * Config:  .cogentia.json   — registry, searched upward from CWD, created on first add.
+ * Ignore:  .cogentiaignore  — per-repo, lists files that are not research deliverables
+ *                             (line-per-pattern, supports basename or path globs `*`/`**`,
+ *                             merged with built-in defaults: README, LICENSE, TODO,
+ *                             CHANGELOG, CONTRIBUTING, CODE_OF_CONDUCT).
  *
  * Platform: Linux, macOS, Windows. Zero npm dependencies.
  *
@@ -168,9 +176,53 @@ function commonAncestor( a, b ) {
   return common.join( sep ) || sep;
 }
 
+/**
+ * Read the GitHub owner/repo from a repo's `origin` remote.
+ * Returns { owner, repo } or null if it cannot be determined.
+ */
+function gitRemoteOwner( repoPath ) {
+  try {
+    const url = execSync( "git config --get remote.origin.url", {
+      cwd: repoPath, encoding: "utf8",
+    } ).trim();
+    const m = url.match( /github\.com[:/]([^/]+)\/([^/.]+?)(?:\.git)?\/?$/ );
+    if ( !m ) return null;
+    return { owner: m[ 1 ], repo: m[ 2 ] };
+  } catch ( _ ) {
+    return null;
+  }
+}
+
+/**
+ * Try to find the user's GitHub profile repo locally.
+ * Convention: github.com/<user>/<user> is the user's profile repo. If a sibling
+ * directory named <owner> exists at the workspace root AND is itself a git repo,
+ * that's where .cogentia.json prefers to live.
+ *
+ * Returns the absolute path to the profile repo, or null.
+ */
+function detectProfileRepoLocation( seedRepoPath ) {
+  const info = gitRemoteOwner( seedRepoPath );
+  if ( !info ) return null;
+  const workspaceRoot = path.dirname( path.resolve( seedRepoPath ) );
+  const candidate     = path.join( workspaceRoot, info.owner );
+  if ( fs.existsSync( candidate ) && isGitRepo( candidate ) ) return candidate;
+  return null;
+}
+
 function resolveConfigPath( repoPaths ) {
   const existing = findConfig( process.cwd() );
   if ( existing ) return existing;
+
+  // Try profile-repo detection on each candidate before falling back.
+  for ( const p of repoPaths ) {
+    const resolved = path.resolve( p );
+    if ( !fs.existsSync( resolved ) || !isGitRepo( resolved ) ) continue;
+    const profilePath = detectProfileRepoLocation( resolved );
+    if ( profilePath ) return path.join( profilePath, CONFIG_FILE );
+  }
+
+  // Fallback: common ancestor of CWD + new repos.
   const allPaths = [ process.cwd(), ...repoPaths ].map( p => path.resolve( p ) );
   let common = allPaths[ 0 ];
   for ( const p of allPaths.slice( 1 ) ) common = commonAncestor( common, p );
@@ -248,6 +300,65 @@ function findOwnerRepo( filePath, config ) {
   return null;
 }
 
+// ── Ignore patterns (.cogentiaignore) ─────────────────────────────────────────
+
+const IGNORE_FILE = ".cogentiaignore";
+
+// Always-ignored: workspace artefacts that are never research deliverables.
+const BUILTIN_IGNORE = [
+  "README.md",
+  "LICENSE",
+  "LICENSE.md",
+  "LICENSE.txt",
+  "TODO.md",
+  "CHANGELOG.md",
+  "CHANGES.md",
+  "CONTRIBUTING.md",
+  "CODE_OF_CONDUCT.md",
+  ".cogentiaignore",
+];
+
+/** Load .cogentiaignore from a repo, merged with built-in defaults. */
+function loadIgnore( repoPath ) {
+  const ignorePath = path.join( repoPath, IGNORE_FILE );
+  if ( !fs.existsSync( ignorePath ) ) return [ ...BUILTIN_IGNORE ];
+  let userPatterns = [];
+  try {
+    userPatterns = fs.readFileSync( ignorePath, "utf8" )
+      .split( /\r?\n/ )
+      .map( l => l.split( "#" )[ 0 ].trim() )
+      .filter( Boolean );
+  } catch ( _ ) { /* unreadable → defaults only */ }
+  return [ ...BUILTIN_IGNORE, ...userPatterns ];
+}
+
+/** Convert a glob pattern with `*` and `**` to a RegExp. */
+function patternToRegex( p ) {
+  let r = p.replace( /[.+^${}()|[\]\\]/g, "\\$&" );
+  r = r.replace( /\*\*/g, "<<DSTAR>>" );
+  r = r.replace( /\*/g, "[^/]+" );
+  r = r.replace( /<<DSTAR>>/g, ".+" );
+  return new RegExp( "^" + r + "$" );
+}
+
+/**
+ * Test whether a relative path matches any ignore pattern.
+ * - Pattern without `/` → match basename at any depth.
+ * - Pattern with `/`    → match the full relative path (globs `*`/`**` allowed).
+ */
+function matchesIgnore( rel, patterns ) {
+  const relNorm = rel.replace( /\\/g, "/" );
+  const base    = path.basename( relNorm );
+  for ( const p of patterns ) {
+    if ( !p.includes( "/" ) ) {
+      if ( base === p ) return true;
+    } else {
+      if ( patternToRegex( p ).test( relNorm ) ) return true;
+    }
+  }
+  return false;
+}
+
 // ── Markdown analysis ─────────────────────────────────────────────────────────
 
 function listMarkdown( dir, base ) {
@@ -311,6 +422,349 @@ function extractCrossRefs( indexPath, repoName, allRepoNames ) {
     }
   }
   return refs;
+}
+
+// ── Document self-address (stamp) ─────────────────────────────────────────────
+
+/**
+ * Insert or update `canonical_url` and `last_stamped_at` keys in a markdown
+ * file's YAML front-matter. If no front-matter exists, prepend a minimal one.
+ * Returns the new content (or the original if nothing changed).
+ */
+function stampFrontmatter( content, canonicalUrl, stampDate ) {
+  const fmRegex = /^---\r?\n([\s\S]*?)\r?\n---\r?\n?/;
+  const match   = content.match( fmRegex );
+
+  if ( !match ) {
+    // No front-matter — prepend a minimal one.
+    const fm = [
+      "---",
+      `canonical_url: ${canonicalUrl}`,
+      `last_stamped_at: ${stampDate}`,
+      "---",
+      "",
+    ].join( "\n" );
+    return fm + content;
+  }
+
+  let fm = match[ 1 ];
+  let changed = false;
+
+  function upsert( key, value ) {
+    const lineRe = new RegExp( `^${key}\\s*:.*$`, "m" );
+    const newLine = `${key}: ${value}`;
+    if ( lineRe.test( fm ) ) {
+      const oldLine = fm.match( lineRe )[ 0 ];
+      if ( oldLine !== newLine ) {
+        fm = fm.replace( lineRe, newLine );
+        changed = true;
+      }
+    } else {
+      fm = fm + ( fm.endsWith( "\n" ) ? "" : "\n" ) + newLine;
+      changed = true;
+    }
+  }
+
+  upsert( "canonical_url", canonicalUrl );
+  upsert( "last_stamped_at", stampDate );
+
+  if ( !changed ) return content;
+  return `---\n${fm}\n---\n` + content.slice( match[ 0 ].length );
+}
+
+/**
+ * Stamp one markdown file with its canonical URL. Returns a result object.
+ * If opts.check is true, do not write — just report what would change.
+ */
+function stampOne( filePath, opts ) {
+  opts = opts || {};
+  const absPath = path.resolve( filePath );
+  if ( !fs.existsSync( absPath ) ) {
+    return { ok: false, file: filePath, reason: "not found" };
+  }
+
+  const { configPath, config } = loadConfig();
+  if ( !configPath ) {
+    return { ok: false, file: filePath, reason: "no registry" };
+  }
+
+  const owner = findOwnerRepo( absPath, config );
+  if ( !owner ) {
+    return { ok: false, file: filePath, reason: "not in any registered repo" };
+  }
+
+  const { entry, repoPath } = owner;
+  const remoteInfo = gitRemoteOwner( repoPath );
+  if ( !remoteInfo ) {
+    return { ok: false, file: filePath, reason: "no usable git remote" };
+  }
+
+  const branch  = gitCurrentBranch( repoPath );
+  const relPath = path.relative( repoPath, absPath ).replace( /\\/g, "/" );
+  const canonicalUrl = `https://github.com/${remoteInfo.owner}/${remoteInfo.repo}/blob/${branch}/${relPath}`;
+  const stampDate    = fmtDate( new Date() );
+
+  const content = fs.readFileSync( absPath, "utf8" );
+  const updated = stampFrontmatter( content, canonicalUrl, stampDate );
+
+  if ( updated === content ) {
+    return { ok: true, file: relPath, repo: entry.name, action: "unchanged", canonicalUrl };
+  }
+  if ( opts.check ) {
+    return { ok: true, file: relPath, repo: entry.name, action: "would-update", canonicalUrl };
+  }
+  fs.writeFileSync( absPath, updated, "utf8" );
+  return { ok: true, file: relPath, repo: entry.name, action: "stamped", canonicalUrl };
+}
+
+// ── Corpus status ─────────────────────────────────────────────────────────────
+
+const CORPUS_STATUS_BASENAMES = [ "corpus-status.md", "corpus_status.md" ];
+const CORPUS_STATUS_CANONICAL = "corpus-status.md";
+
+/** Replace content between <!-- BEGIN_AUTO: id --> and <!-- END_AUTO: id --> markers. */
+function replaceMarkedSection( content, sectionId, body ) {
+  const re = new RegExp(
+    `(<!-- BEGIN_AUTO: ${sectionId} -->)[\\s\\S]*?(<!-- END_AUTO: ${sectionId} -->)`,
+    "m"
+  );
+  if ( re.test( content ) ) {
+    return { content: content.replace( re, `$1\n${body}\n$2` ), updated: true };
+  }
+  return { content, updated: false };
+}
+
+/** Extract a "## Heading" section body until the next "## " or "---" line. */
+function extractIndexSection( content, heading ) {
+  const lines = content.split( /\r?\n/ );
+  let start = -1, end = lines.length;
+  for ( let i = 0; i < lines.length; i++ ) {
+    if ( lines[ i ].trim() === `## ${heading}` ) { start = i + 1; continue; }
+    if ( start >= 0 && ( lines[ i ].startsWith( "## " ) || lines[ i ].trim() === "---" ) ) {
+      end = i; break;
+    }
+  }
+  if ( start < 0 ) return "";
+  return lines.slice( start, end ).join( "\n" ).trim();
+}
+
+/** Pull published-table rows (without the header) from research/index.md content. */
+function extractPublishedRows( indexContent ) {
+  const block = extractIndexSection( indexContent, "Published" );
+  if ( !block ) return [];
+  return block.split( /\r?\n/ )
+    .filter( l => l.startsWith( "|" ) && !/\|\s*-+\s*\|/.test( l ) && !/\|\s*Title\s*\|/i.test( l ) )
+    .map( l => l.trim() );
+}
+
+/** Pull bulleted open-possibilities from research/index.md content. */
+function extractOpenPossibilities( indexContent ) {
+  const block = extractIndexSection( indexContent, "Open Possibilities" );
+  if ( !block ) return [];
+  return block.split( /\r?\n/ )
+    .filter( l => l.trim().startsWith( "- " ) )
+    .map( l => l.trim() );
+}
+
+function findCorpusStatusFile( repoPath ) {
+  const dir = path.join( repoPath, "research" );
+  for ( const base of CORPUS_STATUS_BASENAMES ) {
+    const p = path.join( dir, base );
+    if ( fs.existsSync( p ) ) return p;
+  }
+  return null;
+}
+
+function buildRegisteredReposBlock( config ) {
+  const lines = [
+    "| Repository | research/index.md | Branch | Last commit |",
+    "|---|---|---|---|",
+  ];
+  for ( const entry of config.repos ) {
+    const repoPath = resolveRepoPath( entry );
+    if ( !repoPath ) { lines.push( `| ${entry.name} | ❌ not found | — | — |` ); continue; }
+    const indexPath = path.join( repoPath, "research", "index.md" );
+    const hasIndex  = fs.existsSync( indexPath ) ? "✅" : "❌";
+    const branch    = gitCurrentBranch( repoPath );
+    const last      = gitLastCommit( repoPath ) || "—";
+    lines.push( `| ${entry.name} | ${hasIndex} | ${branch} | ${last} |` );
+  }
+  return lines.join( "\n" );
+}
+
+function buildGraphBlock( config ) {
+  const allNames = config.repos.map( r => r.name );
+  const edges = [];
+  for ( const entry of config.repos ) {
+    const repoPath  = resolveRepoPath( entry );
+    if ( !repoPath ) continue;
+    const indexPath = path.join( repoPath, "research", "index.md" );
+    if ( !fs.existsSync( indexPath ) ) continue;
+    const refs = extractCrossRefs( indexPath, entry.name, allNames );
+    for ( const r of refs ) edges.push( { from: entry.name, to: r } );
+  }
+  const lines = [ "```mermaid", "graph LR" ];
+  for ( const n of allNames ) lines.push( `  ${n}["📄 ${n}"]` );
+  for ( const e of edges ) lines.push( `  ${e.from} --> ${e.to}` );
+  lines.push( "```" );
+  return lines.join( "\n" );
+}
+
+function buildPublishedBlock( repoPath, repoName ) {
+  const indexPath = path.join( repoPath, "research", "index.md" );
+  if ( !fs.existsSync( indexPath ) ) return "*(no `research/index.md` found.)*";
+  const content = fs.readFileSync( indexPath, "utf8" );
+  const rows = extractPublishedRows( content );
+  if ( rows.length === 0 ) return "*(no entries in the *Published* section of `research/index.md`.)*";
+  return [
+    "| Title | Location | Date |",
+    "|---|---|---|",
+    ...rows,
+  ].join( "\n" );
+}
+
+function buildPossibilitiesBlock( repoPath ) {
+  const indexPath = path.join( repoPath, "research", "index.md" );
+  if ( !fs.existsSync( indexPath ) ) return "*(no `research/index.md` found.)*";
+  const content = fs.readFileSync( indexPath, "utf8" );
+  const items = extractOpenPossibilities( content );
+  if ( items.length === 0 ) return "*(no entries in the *Open Possibilities* section of `research/index.md`.)*";
+  return items.join( "\n" );
+}
+
+function buildCorpusStatusSkeleton( entry, config, now ) {
+  const remote = ( function() {
+    const repoPath = resolveRepoPath( entry );
+    return repoPath ? gitRemoteOwner( repoPath ) : null;
+  } )();
+  const repoSlug = remote ? `${remote.owner}/${remote.repo}` : entry.name;
+
+  return [
+    "---",
+    `title: "Corpus Status — ${entry.name}"`,
+    `description: "Current state of the ${entry.name} knowledge corpus — what is proved, what is open, what remains possible"`,
+    "layout: default",
+    "nav_order: 2",
+    `last_modified_at: ${fmtDate( now )}`,
+    `repository: "github.com/${repoSlug}"`,
+    "---",
+    "",
+    `# Corpus Status — ${entry.name}`,
+    "",
+    "*Auto-refreshed by `cogentia.js corpus-status`. The structural sections* —",
+    "*Registered Repositories, Cross-Reference Graph, Published, What Remains Possible* —",
+    "*are regenerated from the registry and from `research/index.md` on every run.*",
+    "*The substantive sections* — *What Is Proved* *and* *Open Objections* —",
+    "*are manually curated and preserved across refreshes.*",
+    "",
+    "---",
+    "",
+    "## Registered Repositories",
+    "",
+    "<!-- BEGIN_AUTO: registered_repos -->",
+    "",
+    "<!-- END_AUTO: registered_repos -->",
+    "",
+    "---",
+    "",
+    "## Cross-Reference Graph",
+    "",
+    "<!-- BEGIN_AUTO: graph -->",
+    "",
+    "<!-- END_AUTO: graph -->",
+    "",
+    "---",
+    "",
+    "## Published in this repo",
+    "",
+    "<!-- BEGIN_AUTO: published -->",
+    "",
+    "<!-- END_AUTO: published -->",
+    "",
+    "---",
+    "",
+    "## What Is Proved",
+    "",
+    "*Manually curated: claims demonstrated by the published work in this corpus.*",
+    "",
+    "| Claim | Status | Evidence |",
+    "|---|---|---|",
+    "| _(add claims here)_ | | |",
+    "",
+    "---",
+    "",
+    "## Open Objections",
+    "",
+    "*Manually curated: objections received publicly, not yet fully resolved.*",
+    "",
+    "| Objection | Source | Status |",
+    "|---|---|---|",
+    "| _(add objections here)_ | | |",
+    "",
+    "---",
+    "",
+    "## What Remains Possible",
+    "",
+    "<!-- BEGIN_AUTO: possibilities -->",
+    "",
+    "<!-- END_AUTO: possibilities -->",
+    "",
+    "---",
+    "",
+    "*Generated with `cogentia.js corpus-status` — [scripts/cogentia.js](https://github.com/JeanHuguesRobert/cogentia/blob/main/scripts/cogentia.js)*",
+    "*Challenge via issues. Fork to explore alternatives.*",
+    "",
+  ].join( "\n" );
+}
+
+/** Generate (or refresh) corpus-status.md for one repo. Returns a result object. */
+function generateCorpusStatusFor( entry, config, opts ) {
+  opts = opts || {};
+  const repoPath = resolveRepoPath( entry );
+  if ( !repoPath ) return { ok: false, name: entry.name, reason: "not found on disk" };
+
+  const now = new Date();
+  const blocks = {
+    registered_repos: buildRegisteredReposBlock( config ),
+    graph:            buildGraphBlock( config ),
+    published:        buildPublishedBlock( repoPath, entry.name ),
+    possibilities:    buildPossibilitiesBlock( repoPath ),
+  };
+
+  let target  = findCorpusStatusFile( repoPath );
+  let bootstrap = false;
+  let content;
+
+  if ( target ) {
+    content = fs.readFileSync( target, "utf8" );
+  } else {
+    target    = path.join( repoPath, "research", CORPUS_STATUS_CANONICAL );
+    content   = buildCorpusStatusSkeleton( entry, config, now );
+    bootstrap = true;
+  }
+
+  // Replace each marked section.
+  const missing = [];
+  for ( const [ id, body ] of Object.entries( blocks ) ) {
+    const r = replaceMarkedSection( content, id, body );
+    if ( r.updated ) content = r.content;
+    else             missing.push( id );
+  }
+
+  // Refresh last_modified_at front-matter (best-effort, only if present).
+  content = content.replace(
+    /^(last_modified_at:\s*).*$/m,
+    `$1${fmtDate( now )}`
+  );
+
+  const existing = bootstrap ? "" : fs.readFileSync( target, "utf8" );
+  const changed  = bootstrap || content !== existing;
+
+  if ( opts.check ) {
+    return { ok: true, name: entry.name, target, bootstrap, changed, missing };
+  }
+  if ( changed ) fs.writeFileSync( target, content, "utf8" );
+  return { ok: true, name: entry.name, target, bootstrap, changed, missing };
 }
 
 // ── Jekyll frontmatter ────────────────────────────────────────────────────────
@@ -506,6 +960,10 @@ ${bold( "Commands:" )}
   ${c.cyan}graph${c.reset}               Generate Mermaid cross-reference graph
   ${c.cyan}check${c.reset}               Validate internal links in all research/index.md
   ${c.cyan}jekyll${c.reset}              Ensure Jekyll frontmatter in all research/index.md
+  ${c.cyan}whoami${c.reset}              Print detected GitHub identity + registry location
+  ${c.cyan}stamp${c.reset} <file>        Stamp canonical_url into a markdown file's front-matter
+  ${c.cyan}stamp${c.reset} --all          Stamp every research-grade .md in every registered repo
+                      (use ${c.cyan}--check${c.reset} to preview without writing)
   ${c.cyan}help${c.reset}                Show this help
 
 ${bold( "Flags:" )}
@@ -521,7 +979,14 @@ ${bold( "Example workflow:" )}
   node scripts/cogentia.js graph > corpus-graph.md
 
 ${bold( "Config:" )}
-  ${CONFIG_FILE} — searched upward from CWD, created on first ${c.cyan}add${c.reset}.
+  ${CONFIG_FILE} — registry, searched upward from CWD, created on first ${c.cyan}add${c.reset}.
+
+${bold( "Ignore:" )}
+  ${IGNORE_FILE} — per-repo, one pattern per line. Patterns without ${c.cyan}/${c.reset} match basename
+                   at any depth; patterns with ${c.cyan}/${c.reset} match the full relative path
+                   (supports ${c.cyan}*${c.reset} and ${c.cyan}**${c.reset} globs).
+                   Built-in defaults: README.md, LICENSE*, TODO.md, CHANGELOG.md,
+                   CHANGES.md, CONTRIBUTING.md, CODE_OF_CONDUCT.md.
 
 ${dim( "Repository: github.com/JeanHuguesRobert/cogentia" )}
 ${dim( "License: MIT" )}
@@ -658,11 +1123,15 @@ function cmdStatus() {
     }
 
     const { indexCreated } = ensureIndex( repoPath, entry.name );
-    const indexPath    = path.join( repoPath, "research", "index.md" );
-    const indexContent = fs.readFileSync( indexPath, "utf8" );
-    const mdFiles      = listMarkdown( repoPath );
-    const unreferenced = mdFiles.filter( f => {
+    const indexPath      = path.join( repoPath, "research", "index.md" );
+    const indexContent   = fs.readFileSync( indexPath, "utf8" );
+    const mdFiles        = listMarkdown( repoPath );
+    const ignorePatterns = loadIgnore( repoPath );
+    const ignored        = mdFiles.filter( f => matchesIgnore( f.rel, ignorePatterns ) );
+    const ignoredSet     = new Set( ignored.map( f => f.rel ) );
+    const unreferenced   = mdFiles.filter( f => {
       if ( f.rel === "research/index.md" ) return false;
+      if ( ignoredSet.has( f.rel ) ) return false;
       return !indexContent.includes( path.basename( f.rel ) );
     } );
 
@@ -672,6 +1141,7 @@ function cmdStatus() {
       branch:            gitCurrentBranch( repoPath ),
       lastCommit:        gitLastCommit( repoPath ),
       totalMarkdown:     mdFiles.length,
+      ignoredCount:      ignored.length,
       unreferencedCount: unreferenced.length,
       indexBootstrapped: indexCreated,
     } );
@@ -684,8 +1154,8 @@ function cmdStatus() {
 
   console.log( `\n${hdr( "Corpus Status" )}  ${dim( result.timestamp )}\n` );
   const W = 20;
-  console.log( `  ${dim( pad( "Repository", W ) + "  Branch    Last commit   MD files  Unref" )}` );
-  console.log( `  ${dim( "─".repeat( 70 ) )}` );
+  console.log( `  ${dim( pad( "Repository", W ) + "  Branch    Last commit   MD files  Ignored  Unref" )}` );
+  console.log( `  ${dim( "─".repeat( 78 ) )}` );
 
   for ( const r of result.repos ) {
     if ( !r.found ) {
@@ -700,6 +1170,7 @@ function cmdStatus() {
       `${dim( pad( r.branch || "", 9 ) )}  ` +
       `${dim( r.lastCommit || "         " )}    ` +
       `${pad( r.totalMarkdown, 4, true )}      ` +
+      `${dim( pad( r.ignoredCount, 4, true ) )}    ` +
       `${unref}${boot}`
     );
   }
@@ -729,12 +1200,16 @@ function cmdScan() {
     }
 
     const { researchCreated, indexCreated } = ensureIndex( repoPath, entry.name );
-    const indexPath    = path.join( repoPath, "research", "index.md" );
-    const indexStat    = fs.statSync( indexPath );
-    const indexContent = fs.readFileSync( indexPath, "utf8" );
-    const mdFiles      = listMarkdown( repoPath );
-    const unreferenced = mdFiles.filter( f => {
+    const indexPath      = path.join( repoPath, "research", "index.md" );
+    const indexStat      = fs.statSync( indexPath );
+    const indexContent   = fs.readFileSync( indexPath, "utf8" );
+    const mdFiles        = listMarkdown( repoPath );
+    const ignorePatterns = loadIgnore( repoPath );
+    const ignored        = mdFiles.filter( f => matchesIgnore( f.rel, ignorePatterns ) );
+    const ignoredSet     = new Set( ignored.map( f => f.rel ) );
+    const unreferenced   = mdFiles.filter( f => {
       if ( f.rel === "research/index.md" ) return false;
+      if ( ignoredSet.has( f.rel ) ) return false;
       return !indexContent.includes( path.basename( f.rel ) );
     } );
 
@@ -749,7 +1224,9 @@ function cmdScan() {
       size:  f.size,
       mtime: fmtDate( f.mtime ),
       referenced: f.rel === "research/index.md" || indexContent.includes( path.basename( f.rel ) ),
+      ignored:    ignoredSet.has( f.rel ),
     } ) );
+    repoResult.ignored          = ignored.map( f => f.rel );
     repoResult.unreferenced     = unreferenced.map( f => f.rel );
     result.repos.push( repoResult );
 
@@ -766,11 +1243,12 @@ function cmdScan() {
       continue;
     }
 
-    console.log( `\n${bold( "Markdown files" )} (${mdFiles.length}, newest first):\n` );
-    const W_F = 54, W_S = 7, W_D = 10;
+    const visibleFiles = mdFiles.filter( f => !ignoredSet.has( f.rel ) );
+    console.log( `\n${bold( "Markdown files" )} (${visibleFiles.length} active${ignored.length ? `, ${ignored.length} ignored via .cogentiaignore` : ""}, newest first):\n` );
+    const W_F = 54, W_S = 7;
     console.log( `  ${dim( pad( "File", W_F ) + "  " + pad( "Size", W_S, true ) + "  Date" )}` );
 
-    for ( const f of mdFiles ) {
+    for ( const f of visibleFiles ) {
       const isIndex = f.rel === "research/index.md";
       const isRef   = isIndex || indexContent.includes( path.basename( f.rel ) );
       const label   = isIndex ? bold( pad( f.rel, W_F ) ) : pad( f.rel, W_F );
@@ -784,8 +1262,9 @@ function cmdScan() {
         console.log( `  ${c.yellow}→${c.reset} ${f.rel}` );
         console.log( `    ${dim( "cogentia ref " + f.rel )}` );
       }
+      console.log( `\n${dim( `Tip: add genuinely non-research files to .${IGNORE_FILE} to silence them.` )}` );
     } else {
-      console.log( `\n${ok( "All markdown files referenced in research/index.md" )}` );
+      console.log( `\n${ok( "All non-ignored markdown files referenced in research/index.md" )}` );
     }
   }
 
@@ -1108,6 +1587,115 @@ function cmdJekyll() {
   else console.log();
 }
 
+// ── whoami ────────────────────────────────────────────────────────────────────
+
+function cmdWhoami() {
+  const { configPath, config } = loadConfig();
+
+  const result = {
+    registry: configPath || null,
+    repos:    config.repos.length,
+    detected: null,
+    profile_repo_path: null,
+  };
+
+  // Detect from the first registered repo with a github remote.
+  for ( const entry of config.repos ) {
+    const repoPath = resolveRepoPath( entry );
+    if ( !repoPath ) continue;
+    const info = gitRemoteOwner( repoPath );
+    if ( !info ) continue;
+    result.detected = info.owner;
+    const profile = detectProfileRepoLocation( repoPath );
+    if ( profile ) result.profile_repo_path = profile;
+    break;
+  }
+
+  if ( JSON_MODE ) {
+    console.log( JSON.stringify( result, null, 2 ) );
+    return;
+  }
+
+  console.log( `\n${hdr( "Cogentia identity" )}\n` );
+  if ( result.registry ) {
+    console.log( `  ${bold( "Registry:" )}      ${result.registry}` );
+    console.log( `  ${bold( "Repos:" )}         ${result.repos}` );
+  } else {
+    console.log( `  ${warn( "No registry found. Run: cogentia add <repo>" )}` );
+  }
+  if ( result.detected ) {
+    console.log( `  ${bold( "GitHub user:" )}   ${result.detected}` );
+    console.log( `  ${bold( "Profile repo:" )}  ${result.detected}/${result.detected}` );
+  }
+  if ( result.profile_repo_path ) {
+    console.log( `  ${bold( "Local clone:" )}   ${result.profile_repo_path}` );
+    if ( result.registry && !result.registry.startsWith( result.profile_repo_path ) ) {
+      console.log( `  ${warn( `Registry is not at the profile-repo location — consider moving ${CONFIG_FILE} to ${result.profile_repo_path}` )}` );
+    }
+  }
+  console.log();
+}
+
+// ── stamp ─────────────────────────────────────────────────────────────────────
+
+function cmdStamp( fileArg ) {
+  const checkOnly = argv.includes( "--check" );
+  const stampAll  = argv.includes( "--all" );
+
+  if ( !stampAll && !fileArg ) {
+    die( "Usage: cogentia stamp <file>  |  cogentia stamp --all  [--check]" );
+  }
+
+  const results = [];
+
+  if ( stampAll ) {
+    const { configPath, config } = loadConfig();
+    if ( !configPath ) die( "No registry found. Run: cogentia add <repo> first." );
+
+    for ( const entry of config.repos ) {
+      const repoPath = resolveRepoPath( entry );
+      if ( !repoPath ) continue;
+      const ignorePatterns = loadIgnore( repoPath );
+      const mdFiles        = listMarkdown( repoPath );
+      for ( const f of mdFiles ) {
+        if ( f.rel === "research/index.md" )                 continue;
+        if ( matchesIgnore( f.rel, ignorePatterns ) )        continue;
+        const abs = path.join( repoPath, f.rel );
+        results.push( stampOne( abs, { check: checkOnly } ) );
+      }
+    }
+  } else {
+    results.push( stampOne( fileArg, { check: checkOnly } ) );
+  }
+
+  if ( JSON_MODE ) {
+    console.log( JSON.stringify( { results }, null, 2 ) );
+    return;
+  }
+
+  const stamped     = results.filter( r => r.ok && r.action === "stamped" );
+  const wouldUpdate = results.filter( r => r.ok && r.action === "would-update" );
+  const unchanged   = results.filter( r => r.ok && r.action === "unchanged" );
+  const failed     = results.filter( r => !r.ok );
+
+  console.log( `\n${hdr( checkOnly ? "Stamp check" : "Stamp" )}\n` );
+  for ( const r of stamped ) {
+    console.log( `  ${ok( `${r.repo}/${r.file}` )}` );
+    console.log( `    ${dim( r.canonicalUrl )}` );
+  }
+  for ( const r of wouldUpdate ) {
+    console.log( `  ${warn( `would update: ${r.repo}/${r.file}` )}` );
+    console.log( `    ${dim( r.canonicalUrl )}` );
+  }
+  for ( const r of failed ) {
+    console.log( `  ${fail( `${r.file}` )} — ${r.reason}` );
+  }
+  console.log(
+    `\n  ${dim( `${stamped.length} stamped, ${wouldUpdate.length} would-update, ${unchanged.length} unchanged, ${failed.length} failed` )}`
+  );
+  console.log();
+}
+
 // ═══════════════════════════════════════════════════════════════════════════════
 // ENTRY POINT
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -1126,6 +1714,8 @@ function cmdJekyll() {
     case "graph":  cmdGraph();               break;
     case "check":  await cmdCheck();         break;
     case "jekyll": cmdJekyll();              break;
+    case "whoami": cmdWhoami();              break;
+    case "stamp":  cmdStamp(  cmdArgs[ 0 ] ); break;
     case "help":
     case "--help":
     case "-h":
