@@ -7,7 +7,7 @@ This repository instantiates the **cognitive infrastructure layer** of the [DHIT
 ---
 
 *A map of what is, what is in progress, and what could be.*
-*See sibling indexes in [MareNostrum](https://github.com/JeanHuguesRobert/marenostrum/blob/main/research/index.md), [FractaVolta](https://github.com/JeanHuguesRobert/FractaVolta/blob/main/research/index.md), [barons-Mariani](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/index.md).*
+*See sibling indexes in [MareNostrum](https://github.com/JeanHuguesRobert/marenostrum/blob/main/research/index.md), [FractaVolta](https://github.com/JeanHuguesRobert/FractaVolta/blob/main/research/index.md), [barons-Mariani](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/index.md), [Inseme](https://github.com/JeanHuguesRobert/inseme/blob/main/research/index.md).*
 
 ---
 
@@ -15,6 +15,7 @@ This repository instantiates the **cognitive infrastructure layer** of the [DHIT
 
 | Title | Location | Date |
 |---|---|---|
+| [Cogentia Workflows](cogentia_workflows.md) *(private/group/public/federated workflow architecture, draft v0.2)* | this repo | 2026-05-11 |
 | [Cogentia Commons Working Paper](Cogentia_Commons_Working_Paper.md) | this repo | 2026 |
 | [Cogentia and Cogentigram](Cogentia-and-Cogentigram.md) | this repo | 2026 |
 | [The Sovereign Digital Twin — Cogentia, Cogentigram, Cogentiscope](cogentia-digital-twin.md) | this repo | 2026-04 |
@@ -35,12 +36,19 @@ This repository instantiates the **cognitive infrastructure layer** of the [DHIT
 | [CXU Specification](https://github.com/JeanHuguesRobert/marenostrum/blob/main/CXU_SPEC.md) | marenostrum |
 | [Constellia](https://github.com/JeanHuguesRobert/marenostrum/blob/main/constellia.md) *(ICOME'26, avec Guillermo Valdes)* | marenostrum |
 | [Packetized Gravity Networks](https://github.com/JeanHuguesRobert/FractaVolta/blob/main/PGN.md) | FractaVolta |
+| [Inseme — deployable platform + COP runtime](https://github.com/JeanHuguesRobert/inseme/blob/main/research/index.md) *(targets brique-cogentia-commons in v1)* | inseme |
 
 ---
 
 ## In Progress
 
-- [Cogentia Commons — MVP Specification](cogentia_commons_mvp_spec.md) *(draft v0.1, 2026-05-11)*
+- [Cogentia Commons — MVP Specification](cogentia_commons_mvp_spec.md) *(draft v0.10.2, 2026-05-13)*
+- [Cogentia Commons — COMMUNITY.md Sub-Specification](cogentia_commons_community_manifest.md) *(draft v0.2, 2026-05-13)*
+- [Cogentia Commons — `kernel_extractor` Plugin Sub-Specification](cogentia_commons_kernel_extractor.md) *(draft v0.1, 2026-05-12)*
+- [Cogentia Commons — Structural Plugin Sub-Specifications](cogentia_commons_structural_plugins.md) *(draft v0.1, 2026-05-12)* — `citation_validator`, `consistency_scanner`, `objection_summariser`
+- [Cogentia Commons — Substantive Plugin Sub-Specifications](cogentia_commons_substantive_plugins.md) *(draft v0.1, 2026-05-12)* — `falsifiability_conversion`, `revision_proposer`
+- [Cogentia Commons — Workflows](cogentia_commons_workflows.md) *(draft v0.1, 2026-05-13)* — 11 end-to-end user journeys, prioritised for v1 velocity
+- [Cogentia Commons — Session Continuation Snapshot](cogentia_commons_continuation.md) *(snapshot 2026-05-13)* — handoff document; entry point for the next session
 - Multi-Agent Critique Loop — formal specification
 - Cogentia × Corsica: student registration as democratic infrastructure
 
