@@ -30,7 +30,23 @@
  *   stamp <file>        Stamp canonical_url into a markdown file's front-matter
  *   stamp --all         Stamp every research-grade .md across registered repos
  *                       (combine with --check to preview without writing)
+ *   corpus-status [name]  Refresh research/corpus-status.md (auto-generate
+ *                         structural parts, preserve manual sections, bootstrap
+ *                         the file if missing). Add --check for dry-run.
+ *   manifest            OpenAI-compatible tool definitions for every command
+ *                       (machine-discoverable surface; --json for AI agents).
+ *   state               Denormalised JSON snapshot of registry+status+identity.
+ *   explain-ignore <f>  Report whether a file is matched by .cogentiaignore.
  *   help                Show this help
+ *
+ * Global flags (any command):
+ *   --json                       Machine-readable JSON output.
+ *   --registry <path>            Override registry location. Also honours
+ *                                COGENTIA_REGISTRY env var.
+ *   --cwd <path>                 Change working directory before running.
+ *   --narrative-short <text>     Short description; appended to .cogentia/audit.jsonl.
+ *   --narrative-long <text>      Long description / reasoning.
+ *   --chat-url <url>             Conversational-agent session URL (repeatable).
  *
  * Flags:
  *   --json              Output machine-readable JSON (status, scan, graph)
@@ -88,8 +104,51 @@ const bold  = s => `${c.bold}${s}${c.reset}`;
 
 const argv      = process.argv.slice( 2 );
 const JSON_MODE = argv.includes( "--json" );
-const args      = argv.filter( a => !a.startsWith( "--" ) );
+
+// Value-flags consume the following argv entry as their value (also support --flag=value).
+const VALUE_FLAGS = new Set( [
+  "--registry", "--cwd",
+  "--narrative-short", "--narrative-long", "--chat-url",
+] );
+
+/** Return the value of a `--flag value` or `--flag=value` option. Null if absent. */
+function getFlagValue( name ) {
+  const eq = argv.find( a => a.startsWith( name + "=" ) );
+  if ( eq ) return eq.slice( name.length + 1 );
+  const i = argv.indexOf( name );
+  if ( i >= 0 && i + 1 < argv.length ) return argv[ i + 1 ];
+  return null;
+}
+
+/** Return all values for a repeatable value-flag (e.g. --chat-url). */
+function getFlagValues( name ) {
+  const out = [];
+  for ( let i = 0; i < argv.length; i++ ) {
+    if ( argv[ i ] === name && i + 1 < argv.length ) out.push( argv[ i + 1 ] );
+    else if ( argv[ i ].startsWith( name + "=" ) ) out.push( argv[ i ].slice( name.length + 1 ) );
+  }
+  return out;
+}
+
+// Filter argv into positional args, accounting for value-flag-consumed positions.
+const consumedPositions = new Set();
+for ( let i = 0; i < argv.length; i++ ) {
+  if ( VALUE_FLAGS.has( argv[ i ] ) ) consumedPositions.add( i + 1 );
+}
+const args = argv.filter( ( a, i ) =>
+  !a.startsWith( "--" ) && !consumedPositions.has( i )
+);
 const [ command, ...cmdArgs ] = args;
+
+// Registry override (precedence: flag > env > upward-search-from-cwd).
+const REGISTRY_OVERRIDE = getFlagValue( "--registry" ) || process.env.COGENTIA_REGISTRY || null;
+
+// CWD override.
+const CWD_OVERRIDE = getFlagValue( "--cwd" );
+if ( CWD_OVERRIDE ) {
+  try { process.chdir( path.resolve( CWD_OVERRIDE ) ); }
+  catch ( e ) { console.error( `cogentia: --cwd: ${e.message}` ); process.exit( 1 ); }
+}
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 
@@ -132,6 +191,20 @@ function die( msg ) {
 // ── Config management ─────────────────────────────────────────────────────────
 
 function findConfig( startDir ) {
+  // Explicit override (--registry or COGENTIA_REGISTRY) wins.
+  if ( REGISTRY_OVERRIDE ) {
+    const abs = path.resolve( REGISTRY_OVERRIDE );
+    // Accept either a direct file path or a directory containing CONFIG_FILE.
+    if ( fs.existsSync( abs ) ) {
+      if ( fs.statSync( abs ).isDirectory() ) {
+        const inDir = path.join( abs, CONFIG_FILE );
+        return fs.existsSync( inDir ) ? inDir : null;
+      }
+      return abs;
+    }
+    return null;
+  }
+  // Upward search from CWD (legacy behaviour).
   let current = path.resolve( startDir );
   const visited = new Set();
   while ( true ) {
@@ -227,6 +300,57 @@ function resolveConfigPath( repoPaths ) {
   let common = allPaths[ 0 ];
   for ( const p of allPaths.slice( 1 ) ) common = commonAncestor( common, p );
   return path.join( common, CONFIG_FILE );
+}
+
+// ── Audit log (.cogentia/audit.jsonl) ─────────────────────────────────────────
+
+const AUDIT_DIR  = ".cogentia";
+const AUDIT_FILE = "audit.jsonl";
+
+/** Collect --narrative-short / --narrative-long / --chat-url into a narrative block. */
+function collectNarrative() {
+  const short      = getFlagValue( "--narrative-short" );
+  const long       = getFlagValue( "--narrative-long" );
+  const chat_urls  = getFlagValues( "--chat-url" );
+  if ( !short && !long && chat_urls.length === 0 ) return null;
+  return {
+    short:     short || null,
+    long:      long  || null,
+    chat_urls,
+  };
+}
+
+/** Best-effort detection of the human actor running this command. */
+function detectActor() {
+  let gitUserName = null, gitUserEmail = null;
+  try { gitUserName  = execSync( "git config --get user.name",  { encoding: "utf8" } ).trim() || null; } catch ( _ ) {}
+  try { gitUserEmail = execSync( "git config --get user.email", { encoding: "utf8" } ).trim() || null; } catch ( _ ) {}
+  return {
+    git_user_name:  gitUserName,
+    git_user_email: gitUserEmail,
+    process_user:   process.env.USERNAME || process.env.USER || null,
+    invoked_via:    "cogentia.js",
+  };
+}
+
+/**
+ * Append one JSON line to the audit log. Best-effort: if the registry is
+ * unknown or the write fails, silently no-op rather than failing the command.
+ */
+function appendAudit( entry ) {
+  const configPath = findConfig( process.cwd() );
+  if ( !configPath ) return;
+  try {
+    const auditDir  = path.join( path.dirname( configPath ), AUDIT_DIR );
+    if ( !fs.existsSync( auditDir ) ) fs.mkdirSync( auditDir, { recursive: true } );
+    const auditPath = path.join( auditDir, AUDIT_FILE );
+    const line      = JSON.stringify( {
+      ts:      new Date().toISOString(),
+      actor:   detectActor(),
+      ...entry,
+    } ) + "\n";
+    fs.appendFileSync( auditPath, line, "utf8" );
+  } catch ( _ ) { /* audit failures must not fail commands */ }
 }
 
 // ── Repo discovery ────────────────────────────────────────────────────────────
@@ -514,6 +638,12 @@ function stampOne( filePath, opts ) {
     return { ok: true, file: relPath, repo: entry.name, action: "would-update", canonicalUrl };
   }
   fs.writeFileSync( absPath, updated, "utf8" );
+  appendAudit( {
+    command: "stamp",
+    args:    { file: relPath, repo: entry.name },
+    result:  { canonicalUrl, action: "stamped" },
+    narrative: opts.narrative || null,
+  } );
   return { ok: true, file: relPath, repo: entry.name, action: "stamped", canonicalUrl };
 }
 
@@ -763,7 +893,15 @@ function generateCorpusStatusFor( entry, config, opts ) {
   if ( opts.check ) {
     return { ok: true, name: entry.name, target, bootstrap, changed, missing };
   }
-  if ( changed ) fs.writeFileSync( target, content, "utf8" );
+  if ( changed ) {
+    fs.writeFileSync( target, content, "utf8" );
+    appendAudit( {
+      command: "corpus-status",
+      args:    { repo: entry.name },
+      result:  { target, bootstrap, action: bootstrap ? "bootstrapped" : "refreshed" },
+      narrative: opts.narrative || null,
+    } );
+  }
   return { ok: true, name: entry.name, target, bootstrap, changed, missing };
 }
 
@@ -964,7 +1102,27 @@ ${bold( "Commands:" )}
   ${c.cyan}stamp${c.reset} <file>        Stamp canonical_url into a markdown file's front-matter
   ${c.cyan}stamp${c.reset} --all          Stamp every research-grade .md in every registered repo
                       (use ${c.cyan}--check${c.reset} to preview without writing)
+  ${c.cyan}corpus-status${c.reset}        Refresh research/corpus-status.md in every registered repo;
+                      auto-generates the structural sections, preserves
+                      manually-curated What Is Proved / Open Objections;
+                      bootstraps the file if missing. ${c.cyan}<name>${c.reset} for one repo;
+                      ${c.cyan}--check${c.reset} for dry-run.
+  ${c.cyan}manifest${c.reset}            Print the command manifest (OpenAI-compatible tool
+                      definitions for every command). Use ${c.cyan}--json${c.reset} for
+                      machine consumption by AI agents.
+  ${c.cyan}state${c.reset}               Denormalised JSON snapshot of registry + per-repo
+                      status + identity (one call replaces list+status+whoami).
+  ${c.cyan}explain-ignore${c.reset} <file>  Report whether a file is matched by .cogentiaignore,
+                      and which pattern matched.
   ${c.cyan}help${c.reset}                Show this help
+
+${bold( "Global flags:" )}
+  ${c.cyan}--registry${c.reset} <path>          Use this .cogentia.json (or its directory).
+                              Also honours ${c.cyan}COGENTIA_REGISTRY${c.reset} env var.
+  ${c.cyan}--cwd${c.reset} <path>               Change working directory before running.
+  ${c.cyan}--narrative-short${c.reset} <text>   Short description; appended to ${AUDIT_DIR}/${AUDIT_FILE}.
+  ${c.cyan}--narrative-long${c.reset} <text>    Long description / reasoning.
+  ${c.cyan}--chat-url${c.reset} <url>           Conversational-agent session URL (repeatable).
 
 ${bold( "Flags:" )}
   ${c.cyan}--json${c.reset}              Machine-readable JSON output (status, scan, graph)
@@ -1026,7 +1184,17 @@ function cmdAdd( arg ) {
     r => r.name === repoName || r.path === repoPath
   );
   if ( existing ) {
-    if ( !JSON_MODE ) console.log( warn( `"${repoName}" is already registered (${existing.path})` ) );
+    appendAudit( {
+      command: "add",
+      args:    { name_or_path: arg },
+      result:  { added: repoName, path: existing.path, action: "already_present" },
+      narrative: collectNarrative(),
+    } );
+    if ( JSON_MODE ) {
+      console.log( JSON.stringify( { added: repoName, path: existing.path, action: "already_present" }, null, 2 ) );
+    } else {
+      console.log( warn( `"${repoName}" is already registered (${existing.path})` ) );
+    }
     return;
   }
 
@@ -1034,8 +1202,15 @@ function cmdAdd( arg ) {
   config.repos.push( { name: repoName, path: repoPath, branch, added: new Date().toISOString() } );
   saveConfig( configPath, config );
 
+  appendAudit( {
+    command: "add",
+    args:    { name_or_path: arg },
+    result:  { added: repoName, path: repoPath, branch, action: "created" },
+    narrative: collectNarrative(),
+  } );
+
   if ( JSON_MODE ) {
-    console.log( JSON.stringify( { added: repoName, path: repoPath, branch }, null, 2 ) );
+    console.log( JSON.stringify( { added: repoName, path: repoPath, branch, action: "created" }, null, 2 ) );
   } else {
     console.log( ok( `Added "${repoName}" → ${repoPath} (${branch})` ) );
   }
@@ -1054,6 +1229,12 @@ function cmdRemove( name ) {
     return;
   }
   saveConfig( configPath, config );
+  appendAudit( {
+    command: "remove",
+    args:    { name },
+    result:  { removed: name },
+    narrative: collectNarrative(),
+  } );
   if ( JSON_MODE ) {
     console.log( JSON.stringify( { removed: name }, null, 2 ) );
   } else {
@@ -1296,6 +1477,13 @@ function cmdInit( name ) {
   }
 
   const { researchCreated, indexCreated } = ensureIndex( repoPath, repoName );
+
+  appendAudit( {
+    command: "init",
+    args:    { name: repoName },
+    result:  { repo: repoName, researchCreated, indexCreated },
+    narrative: collectNarrative(),
+  } );
 
   if ( JSON_MODE ) {
     console.log( JSON.stringify( { repo: repoName, researchCreated, indexCreated }, null, 2 ) );
@@ -1636,6 +1824,42 @@ function cmdWhoami() {
   console.log();
 }
 
+// ── corpus-status ─────────────────────────────────────────────────────────────
+
+function cmdCorpusStatus( repoArg ) {
+  const checkOnly = argv.includes( "--check" );
+  const { configPath, config } = loadConfig();
+  if ( !configPath ) die( "No registry found. Run: cogentia add <repo> first." );
+
+  const targets = repoArg
+    ? config.repos.filter( r => r.name === repoArg )
+    : config.repos;
+
+  if ( targets.length === 0 ) die( `No registered repo matching "${repoArg}".` );
+
+  const narrative = collectNarrative();
+  const results   = targets.map( entry => generateCorpusStatusFor( entry, config, { check: checkOnly, narrative } ) );
+
+  if ( JSON_MODE ) {
+    console.log( JSON.stringify( { results }, null, 2 ) );
+    return;
+  }
+
+  console.log( `\n${hdr( checkOnly ? "Corpus-status check" : "Corpus-status refresh" )}\n` );
+  for ( const r of results ) {
+    if ( !r.ok ) { console.log( `  ${fail( r.name )} — ${r.reason}` ); continue; }
+    const verb = r.bootstrap ? "bootstrapped" : ( r.changed ? "refreshed" : "unchanged" );
+    const tag  = r.bootstrap ? info( "bootstrapped" )
+              : r.changed   ? ok( verb )
+              : dim( verb );
+    console.log( `  ${bold( pad( r.name, 18 ) )}  ${tag}  ${dim( r.target )}` );
+    if ( r.missing && r.missing.length > 0 ) {
+      console.log( `    ${warn( `markers missing: ${r.missing.join( ", " )} — section not refreshed; add <!-- BEGIN_AUTO: <id> --> / <!-- END_AUTO: <id> --> in the file to enable` )}` );
+    }
+  }
+  console.log();
+}
+
 // ── stamp ─────────────────────────────────────────────────────────────────────
 
 function cmdStamp( fileArg ) {
@@ -1646,7 +1870,8 @@ function cmdStamp( fileArg ) {
     die( "Usage: cogentia stamp <file>  |  cogentia stamp --all  [--check]" );
   }
 
-  const results = [];
+  const narrative = collectNarrative();
+  const results   = [];
 
   if ( stampAll ) {
     const { configPath, config } = loadConfig();
@@ -1661,11 +1886,11 @@ function cmdStamp( fileArg ) {
         if ( f.rel === "research/index.md" )                 continue;
         if ( matchesIgnore( f.rel, ignorePatterns ) )        continue;
         const abs = path.join( repoPath, f.rel );
-        results.push( stampOne( abs, { check: checkOnly } ) );
+        results.push( stampOne( abs, { check: checkOnly, narrative } ) );
       }
     }
   } else {
-    results.push( stampOne( fileArg, { check: checkOnly } ) );
+    results.push( stampOne( fileArg, { check: checkOnly, narrative } ) );
   }
 
   if ( JSON_MODE ) {
@@ -1696,6 +1921,287 @@ function cmdStamp( fileArg ) {
   console.log();
 }
 
+// ── manifest ──────────────────────────────────────────────────────────────────
+
+/**
+ * OpenAI-compatible tool definitions for every command. AI agents (or the
+ * inseme Ophélia mediator via cop-host) bind this once to discover the entire
+ * CLI surface — same shape inseme briques already use for their `tools` array.
+ */
+const COGENTIA_JS_VERSION    = "0.4.0";
+const COGENTIA_MANIFEST_VERSION = "1.0";
+
+const COMMAND_MANIFEST = [
+  {
+    name: "add", description: "Register a git repository in the cogentia registry.",
+    parameters: { type: "object", properties: { name_or_path: { type: "string", description: "Directory name (search-by-name from CWD) OR a path." } }, required: [ "name_or_path" ] },
+    side_effects: [ "registry-write", "audit-log" ],
+    examples: [ { input: { name_or_path: "../barons-Mariani" } } ],
+  },
+  {
+    name: "remove", description: "Unregister a git repository from the cogentia registry.",
+    parameters: { type: "object", properties: { name: { type: "string", description: "The registered name to remove." } }, required: [ "name" ] },
+    side_effects: [ "registry-write", "audit-log" ],
+  },
+  {
+    name: "list", description: "List registered repositories with their on-disk + index status.",
+    parameters: { type: "object", properties: {} },
+    side_effects: [],
+  },
+  {
+    name: "status", description: "Quick health check across all registered repos (md count, ignored count, unreferenced count).",
+    parameters: { type: "object", properties: {} },
+    side_effects: [],
+  },
+  {
+    name: "scan", description: "Full scan — list every markdown file per repo, flag those unreferenced in research/index.md and not matched by .cogentiaignore.",
+    parameters: { type: "object", properties: {} },
+    side_effects: [ "creates research/index.md if missing" ],
+  },
+  {
+    name: "init", description: "Bootstrap research/index.md (Jekyll-ready) in a registered or implicit repo.",
+    parameters: { type: "object", properties: { name: { type: "string", description: "Repo name. Optional — defaults to the repo containing CWD." } } },
+    side_effects: [ "creates research/ and research/index.md", "audit-log" ],
+  },
+  {
+    name: "ref", description: "Generate a research/index.md entry (Published row + cross-repo Referenced row) for a markdown file.",
+    parameters: { type: "object", properties: { file: { type: "string", description: "Path to the .md file." } }, required: [ "file" ] },
+    side_effects: [],
+  },
+  {
+    name: "open", description: "Open a repo's research/index.md in the default editor (no-op in headless context).",
+    parameters: { type: "object", properties: { name: { type: "string", description: "Optional repo name." } } },
+    side_effects: [ "invokes editor" ],
+  },
+  {
+    name: "sync", description: "git pull --ff-only in every registered repo.",
+    parameters: { type: "object", properties: {} },
+    side_effects: [ "git-pull" ],
+  },
+  {
+    name: "graph", description: "Generate a Mermaid cross-reference graph across all repos.",
+    parameters: { type: "object", properties: {} },
+    side_effects: [],
+  },
+  {
+    name: "check", description: "Validate every link in every research/index.md (HTTP HEAD + internal file existence).",
+    parameters: { type: "object", properties: {} },
+    side_effects: [ "outbound-http" ],
+  },
+  {
+    name: "jekyll", description: "Ensure Jekyll-style YAML front-matter in every research/index.md.",
+    parameters: { type: "object", properties: {} },
+    side_effects: [ "may write research/index.md" ],
+  },
+  {
+    name: "whoami", description: "Detect GitHub identity from registered repo remotes and report the registry location.",
+    parameters: { type: "object", properties: {} },
+    side_effects: [],
+  },
+  {
+    name: "stamp", description: "Insert canonical_url + last_stamped_at into a markdown file's YAML front-matter, anchored to its GitHub commit URL.",
+    parameters: { type: "object", properties: {
+      file: { type: "string", description: "Single file. Omit when using --all." },
+      all:  { type: "boolean", description: "Stamp every research-grade .md across registered repos." },
+      check:{ type: "boolean", description: "Dry-run — report what would change without writing." }
+    } },
+    side_effects: [ "file-write", "audit-log" ],
+  },
+  {
+    name: "corpus-status", description: "Refresh research/corpus-status.md: auto-regenerate structural sections (Registered Repositories, Cross-Reference Graph, Published, What Remains Possible), preserve manually-curated sections (What Is Proved, Open Objections), bootstrap if missing.",
+    parameters: { type: "object", properties: {
+      name:  { type: "string", description: "Optional single repo. Default: all registered repos." },
+      check: { type: "boolean", description: "Dry-run." }
+    } },
+    side_effects: [ "file-write", "audit-log" ],
+  },
+  {
+    name: "state", description: "Denormalised JSON snapshot combining registry + status + identity (one call replaces list + status + whoami).",
+    parameters: { type: "object", properties: {} },
+    side_effects: [],
+  },
+  {
+    name: "explain-ignore", description: "Test a file path against the resolved .cogentiaignore patterns for its owning repo. Report which pattern (if any) matched.",
+    parameters: { type: "object", properties: { file: { type: "string" } }, required: [ "file" ] },
+    side_effects: [],
+  },
+  {
+    name: "manifest", description: "Return this command manifest itself (OpenAI-compatible tool definitions for every command).",
+    parameters: { type: "object", properties: {} },
+    side_effects: [],
+  },
+];
+
+const GLOBAL_FLAGS = [
+  { name: "--json",             description: "Machine-readable JSON output." },
+  { name: "--registry <path>",  description: "Override registry location (.cogentia.json file or its containing dir). Also honours COGENTIA_REGISTRY env var." },
+  { name: "--cwd <path>",       description: "Change effective working directory before running." },
+  { name: "--narrative-short <text>", description: "Short description of the change (for audit log + future Commons narrative)." },
+  { name: "--narrative-long <text>",  description: "Long description / reasoning (audit log)." },
+  { name: "--chat-url <url>",   description: "URL pointing to a conversational-agent session that informed this action. Repeatable." },
+];
+
+function cmdManifest() {
+  const tools = COMMAND_MANIFEST.map( c => ( {
+    type:     "function",
+    function: { name: c.name, description: c.description, parameters: c.parameters },
+    cogentia: {
+      side_effects:  c.side_effects || [],
+      examples:      c.examples     || [],
+    },
+  } ) );
+
+  const out = {
+    cogentia_manifest_version: COGENTIA_MANIFEST_VERSION,
+    cogentia_js_version:       COGENTIA_JS_VERSION,
+    global_flags:              GLOBAL_FLAGS,
+    audit_log:                 `${AUDIT_DIR}/${AUDIT_FILE} (in the registry-containing directory; one JSONL line per state-changing call)`,
+    tools,
+  };
+
+  if ( JSON_MODE ) {
+    console.log( JSON.stringify( out, null, 2 ) );
+    return;
+  }
+
+  console.log( `\n${hdr( "cogentia.js manifest" )}  ${dim( `v${COGENTIA_JS_VERSION}, manifest schema v${COGENTIA_MANIFEST_VERSION}` )}\n` );
+  for ( const t of tools ) {
+    console.log( `  ${bold( t.function.name )}` );
+    console.log( `    ${dim( t.function.description )}` );
+    if ( t.cogentia.side_effects.length ) {
+      console.log( `    ${dim( `side_effects: ${t.cogentia.side_effects.join( ", " )}` )}` );
+    }
+  }
+  console.log();
+  console.log( `  ${bold( "(use --json for the OpenAI-tool-compatible structured output)" )}` );
+  console.log();
+}
+
+// ── state ─────────────────────────────────────────────────────────────────────
+
+function cmdState() {
+  const { configPath, config } = loadConfig();
+  const result = {
+    cogentia_js_version: COGENTIA_JS_VERSION,
+    registry:            configPath || null,
+    repo_count:          config.repos.length,
+    repos:               [],
+    detected:            null,
+    profile_repo_path:   null,
+  };
+
+  for ( const entry of config.repos ) {
+    const repoPath = resolveRepoPath( entry );
+    const r        = { name: entry.name, found: !!repoPath, path: repoPath || null };
+
+    if ( repoPath ) {
+      const indexPath = path.join( repoPath, "research", "index.md" );
+      const hasIndex  = fs.existsSync( indexPath );
+      r.has_index     = hasIndex;
+      r.branch        = gitCurrentBranch( repoPath );
+      r.last_commit   = gitLastCommit( repoPath );
+      r.remote        = gitRemoteOwner( repoPath );
+
+      if ( hasIndex ) {
+        const indexContent   = fs.readFileSync( indexPath, "utf8" );
+        const mdFiles        = listMarkdown( repoPath );
+        const ignorePatterns = loadIgnore( repoPath );
+        const ignored        = mdFiles.filter( f => matchesIgnore( f.rel, ignorePatterns ) );
+        const ignoredSet     = new Set( ignored.map( f => f.rel ) );
+        const unreferenced   = mdFiles.filter( f => {
+          if ( f.rel === "research/index.md" ) return false;
+          if ( ignoredSet.has( f.rel ) )       return false;
+          return !indexContent.includes( path.basename( f.rel ) );
+        } );
+        r.markdown_total     = mdFiles.length;
+        r.ignored_count      = ignored.length;
+        r.unreferenced_count = unreferenced.length;
+        r.unreferenced       = unreferenced.map( f => f.rel );
+      }
+
+      const corpusFile = findCorpusStatusFile( repoPath );
+      r.has_corpus_status = !!corpusFile;
+      if ( corpusFile ) r.corpus_status_path = corpusFile;
+    }
+
+    result.repos.push( r );
+
+    if ( !result.detected && repoPath ) {
+      const info = gitRemoteOwner( repoPath );
+      if ( info ) {
+        result.detected         = info.owner;
+        const profile           = detectProfileRepoLocation( repoPath );
+        if ( profile ) result.profile_repo_path = profile;
+      }
+    }
+  }
+
+  if ( JSON_MODE ) {
+    console.log( JSON.stringify( result, null, 2 ) );
+    return;
+  }
+
+  console.log( `\n${hdr( "Cogentia state" )}\n` );
+  console.log( `  ${bold( "Registry:" )}     ${result.registry || warn( "(none)" )}` );
+  console.log( `  ${bold( "GitHub user:" )} ${result.detected || dim( "(undetected)" )}` );
+  console.log( `  ${bold( "Repos:" )}        ${result.repo_count}` );
+  console.log();
+  console.log( `  ${dim( "Use --json for the full denormalised snapshot." )}` );
+  console.log();
+}
+
+// ── explain-ignore ────────────────────────────────────────────────────────────
+
+function cmdExplainIgnore( fileArg ) {
+  if ( !fileArg ) die( "Usage: cogentia explain-ignore <file>" );
+  const absPath = path.resolve( fileArg );
+  const { config } = loadConfig();
+  const owner = findOwnerRepo( absPath, config );
+
+  const result = {
+    file:       absPath,
+    in_repo:    owner ? owner.entry.name : null,
+    relpath:    owner ? path.relative( owner.repoPath, absPath ).replace( /\\/g, "/" ) : null,
+    ignored:    false,
+    matched_by: null,
+    patterns_in_effect: owner ? loadIgnore( owner.repoPath ) : [ ...BUILTIN_IGNORE ],
+    builtin:    BUILTIN_IGNORE,
+  };
+
+  if ( owner ) {
+    const patterns = result.patterns_in_effect;
+    const rel      = result.relpath;
+    const base     = path.basename( rel );
+    for ( const p of patterns ) {
+      if ( !p.includes( "/" ) ) {
+        if ( base === p ) { result.ignored = true; result.matched_by = p; result.match_kind = "basename"; break; }
+      } else {
+        if ( patternToRegex( p ).test( rel ) ) { result.ignored = true; result.matched_by = p; result.match_kind = "path-glob"; break; }
+      }
+    }
+  }
+
+  if ( JSON_MODE ) {
+    console.log( JSON.stringify( result, null, 2 ) );
+    return;
+  }
+
+  console.log( `\n${hdr( "Ignore-match check" )}\n` );
+  console.log( `  ${bold( "File:" )}     ${result.file}` );
+  if ( !owner ) {
+    console.log( `  ${warn( "Not inside any registered repo. Built-in defaults apply." )}` );
+  } else {
+    console.log( `  ${bold( "Repo:" )}     ${result.in_repo}` );
+    console.log( `  ${bold( "Relpath:" )}  ${result.relpath}` );
+  }
+  if ( result.ignored ) {
+    console.log( `  ${ok( `IGNORED via "${result.matched_by}" (${result.match_kind})` )}` );
+  } else {
+    console.log( `  ${dim( "Not ignored — would be subject to research/index.md reference check." )}` );
+  }
+  console.log();
+}
+
 // ═══════════════════════════════════════════════════════════════════════════════
 // ENTRY POINT
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -1714,8 +2220,12 @@ function cmdStamp( fileArg ) {
     case "graph":  cmdGraph();               break;
     case "check":  await cmdCheck();         break;
     case "jekyll": cmdJekyll();              break;
-    case "whoami": cmdWhoami();              break;
-    case "stamp":  cmdStamp(  cmdArgs[ 0 ] ); break;
+    case "whoami":         cmdWhoami();                    break;
+    case "stamp":          cmdStamp(  cmdArgs[ 0 ] );       break;
+    case "corpus-status":  cmdCorpusStatus( cmdArgs[ 0 ] ); break;
+    case "manifest":       cmdManifest();                   break;
+    case "state":          cmdState();                      break;
+    case "explain-ignore": cmdExplainIgnore( cmdArgs[ 0 ] );break;
     case "help":
     case "--help":
     case "-h":

@@ -22,6 +22,7 @@ This repository instantiates the **cognitive infrastructure layer** of the [DHIT
 | [Radical Democracy as the Best AI Safety Strategy](democratic_ai_safety.md) | this repo | 2026-05-04 |
 | [KYS — Psychocognitive Analysis Protocol v1.0](kys-prompt.md) | this repo | 2026 |
 | [COGENTIA v1.0 — Prompt d'analyse psychocognitive (FR)](cogentia_prompt_v1.md) | this repo | 2026 |
+| [Corpus Status](corpus-status.md) *(living view — auto-refreshed by `cogentia.js corpus-status`)* | this repo | refreshable |
 
 ---
 
