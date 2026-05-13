@@ -9,6 +9,8 @@ author: "Jean Hugues Noël Robert, baron Mariani (with AI co-drafting)"
 affiliation: "Institut Mariani — C.O.R.S.I.C.A., 1 cours Paoli, F-20250 Corte, Corsica"
 license: "CC BY-SA 4.0"
 status: "Working continuation — apply COP §2.7 semantics to the conversation itself"
+canonical_url: https://github.com/JeanHuguesRobert/cogentia/blob/main/research/cogentia_commons_continuation.md
+last_stamped_at: 2026-05-13
 ---
 
 # Cogentia Commons — Session Continuation Snapshot

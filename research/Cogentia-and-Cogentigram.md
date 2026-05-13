@@ -1,3 +1,7 @@
+---
+canonical_url: https://github.com/JeanHuguesRobert/cogentia/blob/main/research/Cogentia-and-Cogentigram.md
+last_stamped_at: 2026-05-13
+---
 # Cogentia and Cogentigrams
 
 ## A Framework for Structured Representation of Persistent Cognitive Signatures in AI Systems

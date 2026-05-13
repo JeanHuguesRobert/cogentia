@@ -9,6 +9,8 @@ author: "Jean Hugues Noël Robert, baron Mariani"
 affiliation: "Institut Mariani — C.O.R.S.I.C.A., 1 cours Paoli, F-20250 Corte, Corsica"
 license: "CC BY-SA 4.0 (text), MIT (reference code contracts)"
 status: "Working specification — applies the method to itself"
+canonical_url: https://github.com/JeanHuguesRobert/cogentia/blob/main/research/cogentia_commons_mvp_spec.md
+last_stamped_at: 2026-05-13
 ---
 
 # Cogentia Commons — MVP Specification

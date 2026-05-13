@@ -1,3 +1,7 @@
+---
+canonical_url: https://github.com/JeanHuguesRobert/cogentia/blob/main/research/Cogentia_Commons_Working_Paper.md
+last_stamped_at: 2026-05-13
+---
 # Cogentia Commons: A Platform Architecture for Collaborative Possibility Exploration Under Scientific Constraint
 
 **May 2026**

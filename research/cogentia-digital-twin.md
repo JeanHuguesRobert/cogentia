@@ -1,3 +1,7 @@
+---
+canonical_url: https://github.com/JeanHuguesRobert/cogentia/blob/main/research/cogentia-digital-twin.md
+last_stamped_at: 2026-05-13
+---
 # The Sovereign Digital Twin: Cogentia, Cogentigram, Cogentiscope
 
 ## A Position Paper on Self-Knowledge, AI Governance, and the Right to Your Own Cognitive Model

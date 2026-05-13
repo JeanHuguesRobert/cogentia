@@ -1,3 +1,7 @@
+---
+canonical_url: https://github.com/JeanHuguesRobert/cogentia/blob/main/research/cogentia_prompt_v1.md
+last_stamped_at: 2026-05-13
+---
 # COGENTIA v1.0 — Prompt d'analyse psychocognitive
 
 > Ce fichier contient le prompt à copier tel quel dans l'interface de l'agent IA de l'utilisateur.
