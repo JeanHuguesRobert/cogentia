@@ -15,6 +15,7 @@ This repository instantiates the **cognitive infrastructure layer** of the [DHIT
 
 | Title | Location | Date |
 |---|---|---|
+| [**Cogentia — the framework, in five distinctive moves**](../COGENTIA.md) *(identity document; entry point)* | this repo | 2026-05-13 |
 | [Cogentia Workflows](cogentia_workflows.md) *(private/group/public/federated workflow architecture, draft v0.2)* | this repo | 2026-05-11 |
 | [Cogentia Commons Working Paper](Cogentia_Commons_Working_Paper.md) | this repo | 2026 |
 | [Cogentia and Cogentigram](Cogentia-and-Cogentigram.md) | this repo | 2026 |

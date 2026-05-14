@@ -1,5 +1,11 @@
 # Cogentia
 
+> *Cogito ergo sum.* *Cogentia ergo scimus.*
+
+📖 **Start here →** [**COGENTIA.md**](COGENTIA.md) — the framework in five distinctive moves (entry-point document, ~5 minute read).
+
+---
+
 Cogentia is the **cognitive infrastructure layer** of the [DHITL](https://github.com/JeanHuguesRobert/marenostrum/blob/main/DHITL.md) AI Safety anti-capture proposal. It comes in two scales:
 
 1. **Personal Cogentia** (`apps/personal/`) — sovereign cognitive twin: knowledge about self from AI-mediated interaction traces, governed under the KYS (*Know Your Self*) license framework. PII-bearing.

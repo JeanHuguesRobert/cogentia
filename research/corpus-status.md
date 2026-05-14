@@ -3,7 +3,7 @@ title: "Corpus Status — cogentia"
 description: "Current state of the cogentia knowledge corpus — what is proved, what is open, what remains possible"
 layout: default
 nav_order: 2
-last_modified_at: 2026-05-13
+last_modified_at: 2026-05-14
 repository: "github.com/JeanHuguesRobert/cogentia"
 canonical_url: https://github.com/JeanHuguesRobert/cogentia/blob/main/research/corpus-status.md
 last_stamped_at: 2026-05-13
@@ -73,6 +73,7 @@ graph LR
 <!-- BEGIN_AUTO: published -->
 | Title | Location | Date |
 |---|---|---|
+| [**Cogentia — the framework, in five distinctive moves**](../COGENTIA.md) *(identity document; entry point)* | this repo | 2026-05-13 |
 | [Cogentia Workflows](cogentia_workflows.md) *(private/group/public/federated workflow architecture, draft v0.2)* | this repo | 2026-05-11 |
 | [Cogentia Commons Working Paper](Cogentia_Commons_Working_Paper.md) | this repo | 2026 |
 | [Cogentia and Cogentigram](Cogentia-and-Cogentigram.md) | this repo | 2026 |
