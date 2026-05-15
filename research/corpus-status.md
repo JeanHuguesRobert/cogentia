@@ -24,11 +24,11 @@ last_stamped_at: 2026-05-15
 <!-- BEGIN_AUTO: registered_repos -->
 | Repository | research/index.md | Branch | Last commit |
 |---|---|---|---|
-| cogentia | ✅ | main | 2026-05-14 |
-| FractaVolta | ✅ | main | 2026-05-14 |
-| marenostrum | ✅ | main | 2026-05-14 |
-| barons-Mariani | ✅ | main | 2026-05-14 |
-| inseme | ✅ | main | 2026-05-14 |
+| cogentia | ✅ | main | 2026-05-15 |
+| FractaVolta | ✅ | main | 2026-05-15 |
+| marenostrum | ✅ | main | 2026-05-15 |
+| barons-Mariani | ✅ | main | 2026-05-15 |
+| inseme | ✅ | main | 2026-05-15 |
 <!-- END_AUTO: registered_repos -->
 
 ---
@@ -74,6 +74,7 @@ graph LR
 | Title | Location | Date |
 |---|---|---|
 | [**Cogentia — the framework, in five distinctive moves**](../COGENTIA.md) *(identity document; entry point)* | this repo | 2026-05-13 |
+| [Agent-Resumable CLI — Externalized Judgment, Continuations, and Provider-Neutral Resumption for AI-Compatible CLI Tools](agent_resumable_cli.md) *(defines `cogentia.continuation.v1`, implemented by `scripts/cogentia.js continuation`)* | this repo | 2026-05-14 |
 | [Cogentia Workflows](cogentia_workflows.md) *(private/group/public/federated workflow architecture, draft v0.2)* | this repo | 2026-05-11 |
 | [Cogentia Commons Working Paper](Cogentia_Commons_Working_Paper.md) | this repo | 2026 |
 | [Cogentia and Cogentigram](Cogentia-and-Cogentigram.md) | this repo | 2026 |

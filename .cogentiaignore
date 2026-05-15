@@ -1,0 +1,6 @@
+# Operational artefacts (prompts, templates) — part of the publication package
+# named by research/agent_resumable_cli.md §22.3, but not research deliverables
+# in themselves. Decided via cogentia.continuation.v1 dogfood:
+#   ctn_f527db66 (designer prompt) and ctn_03a87ce2 (user prompt) both resumed
+#   with chosen_alternative=ignore_with_reason on 2026-05-15.
+prompts/**
