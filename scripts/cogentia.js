@@ -109,6 +109,7 @@ const JSON_MODE = argv.includes( "--json" );
 const VALUE_FLAGS = new Set( [
   "--registry", "--cwd",
   "--narrative-short", "--narrative-long", "--chat-url",
+  "--paper", "--topic", "--from", "--reason", "--status",
 ] );
 
 /** Return the value of a `--flag value` or `--flag=value` option. Null if absent. */
@@ -1114,6 +1115,14 @@ ${bold( "Commands:" )}
                       status + identity (one call replaces list+status+whoami).
   ${c.cyan}explain-ignore${c.reset} <file>  Report whether a file is matched by .cogentiaignore,
                       and which pattern matched.
+  ${c.cyan}continuation${c.reset} <sub>   Typed, resumable judgment points (cogentia.continuation.v1).
+                      Sub: ${c.cyan}emit${c.reset} <task.json> [--paper <f>|--topic <id>|--from <id>]
+                           ${c.cyan}inspect${c.reset} <id>
+                           ${c.cyan}resume${c.reset} <id> <step_result.json> [--strict]
+                           ${c.cyan}fail${c.reset} <id> <branch-id> --reason "..."
+                           ${c.cyan}abort${c.reset} <id> --reason "..."
+                           ${c.cyan}queue${c.reset} [--status active|completed|aborted|dormant]
+                           ${c.cyan}schema${c.reset}
   ${c.cyan}help${c.reset}                Show this help
 
 ${bold( "Global flags:" )}
@@ -1921,6 +1930,674 @@ function cmdStamp( fileArg ) {
   console.log();
 }
 
+// ═══════════════════════════════════════════════════════════════════════════════
+// CONTINUATION PROTOCOL (tier 1) — cogentia.continuation.v1
+// ═══════════════════════════════════════════════════════════════════════════════
+//
+// Typed, validated, provider-neutral resumption points for the CLI.
+// See research/agent_resumable_cli.md for the protocol definition.
+//
+// Storage: <registry-dir>/.cogentia/continuations/<id>.json. Single directory,
+// status field, no file moves (Occam).
+//
+// Heraclitean follow-up: every resume that closes a continuation (success or
+// abort) emits a dormant successor. Backtrack stays inside the same continuation.
+
+const CONTINUATIONS_DIR_NAME = "continuations";
+const CONTINUATION_PROTOCOL  = "cogentia.continuation.v1";
+const CONTINUATION_AGENT_ANY = "*";
+const CONTINUATION_STATUSES  = new Set( [ "active", "completed", "aborted", "dormant" ] );
+const STEP_RESULT_STATUSES   = new Set( [ "success", "failed", "aborted", "needs_more_context" ] );
+
+const VALIDATE_STRICT = argv.includes( "--strict" )
+  || process.env.COGENTIA_VALIDATE === "strict";
+
+function continuationsDir() {
+  const configPath = findConfig( process.cwd() );
+  if ( !configPath ) die( `No ${CONFIG_FILE} registry found.` );
+  const dir = path.join( path.dirname( configPath ), AUDIT_DIR, CONTINUATIONS_DIR_NAME );
+  if ( !fs.existsSync( dir ) ) fs.mkdirSync( dir, { recursive: true } );
+  return dir;
+}
+
+function continuationPath( id ) {
+  return path.join( continuationsDir(), `${id}.json` );
+}
+
+function generateContinuationId() {
+  const hex = Array.from( { length: 8 }, () =>
+    Math.floor( Math.random() * 16 ).toString( 16 ),
+  ).join( "" );
+  return `ctn_${hex}`;
+}
+
+function loadContinuation( id ) {
+  const p = continuationPath( id );
+  if ( !fs.existsSync( p ) ) die( `Continuation not found: ${id}` );
+  try {
+    return JSON.parse( fs.readFileSync( p, "utf8" ) );
+  } catch ( e ) {
+    die( `Cannot parse continuation ${id}: ${e.message}` );
+  }
+}
+
+function saveContinuation( cnt ) {
+  fs.writeFileSync(
+    continuationPath( cnt.id ),
+    JSON.stringify( cnt, null, 2 ) + "\n",
+    "utf8",
+  );
+}
+
+function listContinuations() {
+  const dir = continuationsDir();
+  const out = [];
+  if ( !fs.existsSync( dir ) ) return out;
+  for ( const name of fs.readdirSync( dir ) ) {
+    if ( !name.endsWith( ".json" ) ) continue;
+    try {
+      out.push( JSON.parse( fs.readFileSync( path.join( dir, name ), "utf8" ) ) );
+    } catch ( _ ) { /* skip unparseable */ }
+  }
+  return out;
+}
+
+function deriveTopicForRepo( repoName ) {
+  return `urn:cop:topic:cogentia/${repoName}`;
+}
+
+function deriveTopicForFile( filePath ) {
+  const { config } = loadConfig();
+  const abs   = path.resolve( filePath );
+  const owner = findOwnerRepo( abs, config );
+  if ( !owner ) return null;
+  const rel  = path.relative( owner.repoPath, abs ).replace( /\\/g, "/" );
+  const stem = rel.replace( /\.md$/i, "" );
+  return `urn:cop:topic:cogentia/${owner.entry.name}/${stem}`;
+}
+
+function defaultTopicFromCwd() {
+  const { config } = loadConfig();
+  const cwd = path.resolve( process.cwd() );
+  for ( const r of config.repos || [] ) {
+    if ( cwd === r.path || cwd.startsWith( r.path + path.sep ) ) {
+      return deriveTopicForRepo( r.name );
+    }
+  }
+  return "urn:cop:topic:cogentia/_unknown";
+}
+
+function resolveTopic( opts ) {
+  if ( opts.topic ) return opts.topic;
+  if ( opts.paper ) {
+    const t = deriveTopicForFile( opts.paper );
+    if ( !t ) die( `Cannot derive topic from --paper "${opts.paper}": file is not in any registered repo.` );
+    return t;
+  }
+  if ( opts.from ) return loadContinuation( opts.from ).topicId;
+  return defaultTopicFromCwd();
+}
+
+function validateContinuationShape( cnt ) {
+  const errs = [], warns = [];
+  if ( !cnt.id ) errs.push( "missing id" );
+  if ( cnt.status !== "dormant" ) {
+    if ( !cnt.task )                   errs.push( "missing task" );
+    if ( !cnt.context )                errs.push( "missing context" );
+    if ( !cnt.expected_result_schema ) errs.push( "missing expected_result_schema" );
+  }
+  if ( cnt.alternatives ) {
+    if ( !Array.isArray( cnt.alternatives ) ) {
+      errs.push( "alternatives must be array" );
+    } else {
+      const seen = new Set();
+      for ( const a of cnt.alternatives ) {
+        if ( !a.id ) errs.push( "alternative missing id" );
+        else if ( seen.has( a.id ) ) errs.push( `duplicate alternative id: ${a.id}` );
+        seen.add( a.id );
+      }
+    }
+  }
+  if ( !CONTINUATION_STATUSES.has( cnt.status ) ) {
+    errs.push( `invalid status: "${cnt.status}" (expected: ${[ ...CONTINUATION_STATUSES ].join( "|" )})` );
+  }
+  return { errs, warns };
+}
+
+function validateStepResultShape( sr, cnt ) {
+  const errs = [], warns = [];
+  if ( sr.continuation_id !== cnt.id ) {
+    errs.push( `continuation_id mismatch: step_result has "${sr.continuation_id}", expected "${cnt.id}"` );
+  }
+  if ( !STEP_RESULT_STATUSES.has( sr.status ) ) {
+    errs.push( `invalid step_result status: "${sr.status}" (expected: ${[ ...STEP_RESULT_STATUSES ].join( "|" )})` );
+  }
+  if ( cnt.status !== "active" ) {
+    errs.push( `continuation is not active (status="${cnt.status}")` );
+  }
+  if ( sr.status === "success" && Array.isArray( cnt.alternatives ) && cnt.alternatives.length > 0 ) {
+    if ( !sr.chosen_alternative ) {
+      warns.push( "step_result has no chosen_alternative but the continuation declares alternatives" );
+    } else {
+      const ids = cnt.alternatives.map( a => a.id );
+      if ( !ids.includes( sr.chosen_alternative ) ) {
+        errs.push( `chosen_alternative "${sr.chosen_alternative}" not in alternatives [${ids.join( ", " )}]` );
+      }
+    }
+  }
+  if ( sr.status === "failed" ) {
+    if ( !sr.failed_alternative ) {
+      warns.push( "step_result.status=failed but no failed_alternative specified" );
+    } else if ( Array.isArray( cnt.alternatives ) ) {
+      const ids = cnt.alternatives.map( a => a.id );
+      if ( !ids.includes( sr.failed_alternative ) ) {
+        errs.push( `failed_alternative "${sr.failed_alternative}" not in alternatives [${ids.join( ", " )}]` );
+      }
+    }
+  }
+  if ( sr.status === "success" && cnt.expected_result_schema ) {
+    for ( const key of Object.keys( cnt.expected_result_schema ) ) {
+      if ( !( key in sr ) ) {
+        warns.push( `step_result missing key "${key}" from expected_result_schema` );
+      }
+    }
+  }
+  return { errs, warns };
+}
+
+function emitDormantSuccessor( predecessor ) {
+  const successor = {
+    type:        "continuation",
+    protocol:    CONTINUATION_PROTOCOL,
+    id:          generateContinuationId(),
+    topicId:     predecessor.topicId,
+    agent:       CONTINUATION_AGENT_ANY,
+    predecessor: predecessor.id,
+    status:      "dormant",
+    createdAt:   new Date().toISOString(),
+  };
+  saveContinuation( successor );
+  appendAudit( {
+    command: "continuation.dormant",
+    args:    { predecessor: predecessor.id },
+    result:  { id: successor.id, topicId: successor.topicId },
+    narrative: collectNarrative(),
+  } );
+  return successor;
+}
+
+function applyStepResult( cnt, sr ) {
+  if ( sr.status === "success" ) {
+    cnt.status      = "completed";
+    cnt.step_result = sr;
+    cnt.completedAt = new Date().toISOString();
+    return { action: "completed" };
+  }
+  if ( sr.status === "failed" ) {
+    if ( !cnt.failed_alternatives ) cnt.failed_alternatives = [];
+    cnt.failed_alternatives.push( {
+      id:        sr.failed_alternative,
+      reason:    sr.reason || "(no reason given)",
+      failed_at: new Date().toISOString(),
+    } );
+    if ( Array.isArray( cnt.alternatives ) ) {
+      cnt.alternatives = cnt.alternatives.filter( a => a.id !== sr.failed_alternative );
+    }
+    return {
+      action:                 "backtracked",
+      remaining_alternatives: cnt.alternatives ? cnt.alternatives.length : 0,
+    };
+  }
+  if ( sr.status === "aborted" ) {
+    cnt.status      = "aborted";
+    cnt.step_result = sr;
+    cnt.abortedAt   = new Date().toISOString();
+    return { action: "aborted" };
+  }
+  if ( sr.status === "needs_more_context" ) {
+    if ( !cnt.context_requests ) cnt.context_requests = [];
+    cnt.context_requests.push( {
+      reason:   sr.reason || "",
+      question: sr.follow_up_question || sr.question || "",
+      at:       new Date().toISOString(),
+    } );
+    return { action: "needs_more_context" };
+  }
+  return { action: "unknown" };
+}
+
+// ── continuation emit ───────────────────────────────────────────────────────
+
+function cmdContinuationEmit( taskFileArg ) {
+  if ( !taskFileArg ) {
+    die( "Usage: cogentia continuation emit <task.json> [--paper <file>|--topic <id>|--from <id>]" );
+  }
+  if ( !fs.existsSync( taskFileArg ) ) die( `Task file not found: ${taskFileArg}` );
+
+  let task;
+  try {
+    task = JSON.parse( fs.readFileSync( taskFileArg, "utf8" ) );
+  } catch ( e ) {
+    die( `Cannot parse ${taskFileArg}: ${e.message}` );
+  }
+
+  const opts = {
+    paper: getFlagValue( "--paper" ),
+    topic: getFlagValue( "--topic" ),
+    from:  getFlagValue( "--from" ),
+  };
+
+  if ( opts.from ) {
+    const pred = loadContinuation( opts.from );
+    if ( pred.status !== "dormant" ) {
+      die( `--from ${opts.from} requires a dormant continuation (got status="${pred.status}").` );
+    }
+    pred.task                   = task.task                   || pred.task;
+    pred.context                = task.context                || {};
+    if ( Array.isArray( task.alternatives ) && task.alternatives.length ) pred.alternatives = task.alternatives;
+    pred.expected_result_schema = task.expected_result_schema || {};
+    if ( task.constraints ) pred.constraints = task.constraints;
+    pred.status                 = "active";
+    pred.activatedAt            = new Date().toISOString();
+    pred.resume                 = pred.resume || { command: `node scripts/cogentia.js continuation resume ${pred.id} <step_result.json>` };
+
+    const v = validateContinuationShape( pred );
+    if ( v.errs.length ) die( `Invalid activated continuation:\n  ${v.errs.join( "\n  " )}` );
+    saveContinuation( pred );
+
+    appendAudit( {
+      command: "continuation.emit",
+      args:    { task_file: taskFileArg, from: opts.from },
+      result:  { id: pred.id, topicId: pred.topicId, action: "activated_dormant" },
+      narrative: collectNarrative(),
+    } );
+
+    if ( JSON_MODE ) {
+      console.log( JSON.stringify( pred, null, 2 ) );
+      return;
+    }
+    console.log( `\n${hdr( "Continuation activated" )}\n` );
+    console.log( `  ${bold( "id:" )}        ${pred.id}` );
+    console.log( `  ${bold( "task:" )}      ${pred.task}` );
+    console.log( `  ${bold( "topicId:" )}   ${pred.topicId}` );
+    console.log( `  ${dim( `file: ${continuationPath( pred.id )}` )}` );
+    console.log();
+    return;
+  }
+
+  const topicId = resolveTopic( opts );
+  const cnt = {
+    type:                   "continuation",
+    protocol:               CONTINUATION_PROTOCOL,
+    id:                     generateContinuationId(),
+    topicId,
+    agent:                  CONTINUATION_AGENT_ANY,
+    task:                   task.task,
+    context:                task.context || {},
+    expected_result_schema: task.expected_result_schema || {},
+    status:                 "active",
+    createdAt:              new Date().toISOString(),
+  };
+  if ( Array.isArray( task.alternatives ) && task.alternatives.length ) {
+    cnt.alternatives = task.alternatives;
+  }
+  if ( task.constraints ) cnt.constraints = task.constraints;
+  cnt.resume = {
+    command: `node scripts/cogentia.js continuation resume ${cnt.id} <step_result.json>`,
+  };
+
+  const v = validateContinuationShape( cnt );
+  for ( const w of v.warns ) console.error( warn( w ) );
+  if ( v.errs.length ) die( `Invalid continuation:\n  ${v.errs.join( "\n  " )}` );
+
+  saveContinuation( cnt );
+
+  appendAudit( {
+    command: "continuation.emit",
+    args:    { task_file: taskFileArg, paper: opts.paper, topic: opts.topic },
+    result:  { id: cnt.id, topicId, task: cnt.task },
+    narrative: collectNarrative(),
+  } );
+
+  if ( JSON_MODE ) {
+    console.log( JSON.stringify( cnt, null, 2 ) );
+    return;
+  }
+
+  console.log( `\n${hdr( "Continuation emitted" )}\n` );
+  console.log( `  ${bold( "id:" )}        ${cnt.id}` );
+  console.log( `  ${bold( "task:" )}      ${cnt.task}` );
+  console.log( `  ${bold( "topicId:" )}   ${cnt.topicId}` );
+  console.log( `  ${bold( "agent:" )}     ${cnt.agent} ${dim( "(any compliant)" )}` );
+  if ( cnt.alternatives ) {
+    console.log( `  ${bold( "alternatives:" )} ${cnt.alternatives.map( a => a.id ).join( ", " )}` );
+  }
+  console.log( `  ${dim( `file: ${continuationPath( cnt.id )}` )}` );
+  console.log( `\n  ${dim( "Resume with:" )} ${cnt.resume.command}` );
+  console.log();
+}
+
+// ── continuation inspect ────────────────────────────────────────────────────
+
+function cmdContinuationInspect( idArg ) {
+  if ( !idArg ) die( "Usage: cogentia continuation inspect <id>" );
+  const cnt = loadContinuation( idArg );
+  appendAudit( {
+    command: "continuation.inspect",
+    args:    { id: cnt.id },
+    result:  { status: cnt.status },
+    narrative: collectNarrative(),
+  } );
+  if ( JSON_MODE ) {
+    console.log( JSON.stringify( cnt, null, 2 ) );
+    return;
+  }
+  console.log( `\n${hdr( `Continuation ${cnt.id}` )}\n` );
+  console.log( `  ${bold( "status:" )}   ${cnt.status}` );
+  console.log( `  ${bold( "task:" )}     ${cnt.task || dim( "(dormant)" )}` );
+  console.log( `  ${bold( "topicId:" )}  ${cnt.topicId}` );
+  console.log( `  ${bold( "agent:" )}    ${cnt.agent}` );
+  console.log( `  ${bold( "created:" )}  ${cnt.createdAt}` );
+  if ( cnt.predecessor ) console.log( `  ${bold( "predecessor:" )} ${cnt.predecessor}` );
+  if ( cnt.successor )   console.log( `  ${bold( "successor:" )}   ${cnt.successor}` );
+  if ( cnt.context && Object.keys( cnt.context ).length ) {
+    console.log( `\n  ${bold( "context:" )}` );
+    for ( const [ k, v ] of Object.entries( cnt.context ) ) {
+      console.log( `    ${k}: ${typeof v === "object" ? JSON.stringify( v ) : v}` );
+    }
+  }
+  if ( cnt.alternatives ) {
+    console.log( `\n  ${bold( "alternatives:" )}` );
+    for ( const a of cnt.alternatives ) {
+      console.log( `    ${c.cyan}${a.id}${c.reset}: ${a.description || ""}` );
+    }
+  }
+  if ( cnt.failed_alternatives && cnt.failed_alternatives.length ) {
+    console.log( `\n  ${bold( "failed_alternatives:" )}` );
+    for ( const f of cnt.failed_alternatives ) {
+      console.log( `    ${c.red}${f.id}${c.reset}: ${f.reason || ""} ${dim( "(" + ( f.failed_at || "" ) + ")" )}` );
+    }
+  }
+  if ( cnt.expected_result_schema && Object.keys( cnt.expected_result_schema ).length ) {
+    console.log( `\n  ${bold( "expected_result_schema:" )}` );
+    for ( const [ k, t ] of Object.entries( cnt.expected_result_schema ) ) {
+      console.log( `    ${k}: ${t}` );
+    }
+  }
+  if ( cnt.step_result ) {
+    console.log( `\n  ${bold( "step_result:" )}` );
+    const lines = JSON.stringify( cnt.step_result, null, 2 ).split( "\n" );
+    for ( const l of lines ) console.log( `    ${l}` );
+  }
+  if ( cnt.resume && cnt.status === "active" ) {
+    console.log( `\n  ${dim( "Resume with: " + cnt.resume.command )}` );
+  }
+  console.log();
+}
+
+// ── continuation resume ────────────────────────────────────────────────────
+
+function cmdContinuationResume( idArg, stepResultFileArg ) {
+  if ( !idArg || !stepResultFileArg ) {
+    die( "Usage: cogentia continuation resume <id> <step_result.json> [--strict]" );
+  }
+  if ( !fs.existsSync( stepResultFileArg ) ) die( `Step result file not found: ${stepResultFileArg}` );
+  let sr;
+  try {
+    sr = JSON.parse( fs.readFileSync( stepResultFileArg, "utf8" ) );
+  } catch ( e ) {
+    die( `Cannot parse ${stepResultFileArg}: ${e.message}` );
+  }
+  if ( !sr.continuation_id ) sr.continuation_id = idArg;
+  if ( !sr.type )            sr.type            = "step_result";
+
+  const cnt = loadContinuation( idArg );
+  const v = validateStepResultShape( sr, cnt );
+  for ( const w of v.warns ) console.error( warn( w ) );
+  if ( v.errs.length ) {
+    const msg = `Step-result validation failed:\n  ${v.errs.join( "\n  " )}`;
+    if ( VALIDATE_STRICT ) die( msg );
+    console.error( fail( msg ) );
+    console.error( dim( "  (proceeding because --strict is not set)" ) );
+  }
+
+  const delta = applyStepResult( cnt, sr );
+  saveContinuation( cnt );
+
+  const auditType =
+      delta.action === "completed"   ? "continuation.complete"
+    : delta.action === "backtracked" ? "continuation.fail"
+    : delta.action === "aborted"     ? "continuation.abort"
+    :                                  "continuation.resume";
+
+  appendAudit( {
+    command: auditType,
+    args:    { id: cnt.id, step_result_file: stepResultFileArg },
+    result:  { ...delta, status: cnt.status },
+    narrative: collectNarrative(),
+  } );
+
+  let successor = null;
+  if ( delta.action === "completed" || delta.action === "aborted" ) {
+    successor = emitDormantSuccessor( cnt );
+    cnt.successor = successor.id;
+    saveContinuation( cnt );
+  }
+
+  if ( JSON_MODE ) {
+    console.log( JSON.stringify( { continuation: cnt, successor }, null, 2 ) );
+    return;
+  }
+
+  console.log( `\n${hdr( "Continuation resumed" )}\n` );
+  console.log( `  ${bold( "id:" )}        ${cnt.id}` );
+  console.log( `  ${bold( "action:" )}    ${delta.action}` );
+  console.log( `  ${bold( "status:" )}    ${cnt.status}` );
+  if ( delta.action === "backtracked" ) {
+    console.log( `  ${bold( "remaining:" )} ${delta.remaining_alternatives} alternative(s)` );
+    if ( delta.remaining_alternatives === 0 ) {
+      console.log( `\n  ${warn( "All alternatives exhausted — consider aborting or revising." )}` );
+    }
+  }
+  if ( successor ) {
+    console.log( `\n  ${dim( `Heraclitean successor: ${successor.id} (dormant)` )}` );
+    console.log( `  ${dim( `Activate with: cogentia continuation emit <task.json> --from ${successor.id}` )}` );
+  }
+  console.log();
+}
+
+// ── continuation fail ──────────────────────────────────────────────────────
+
+function cmdContinuationFail( idArg, branchIdArg ) {
+  if ( !idArg || !branchIdArg ) {
+    die( 'Usage: cogentia continuation fail <id> <branch-id> --reason "..."' );
+  }
+  const reason = getFlagValue( "--reason" ) || "(no reason given)";
+  const sr = {
+    type:               "step_result",
+    continuation_id:    idArg,
+    status:             "failed",
+    failed_alternative: branchIdArg,
+    reason,
+  };
+  const cnt = loadContinuation( idArg );
+  const v = validateStepResultShape( sr, cnt );
+  for ( const w of v.warns ) console.error( warn( w ) );
+  if ( v.errs.length ) die( `Cannot fail branch:\n  ${v.errs.join( "\n  " )}` );
+
+  const delta = applyStepResult( cnt, sr );
+  saveContinuation( cnt );
+  appendAudit( {
+    command: "continuation.fail",
+    args:    { id: cnt.id, branch: branchIdArg, reason },
+    result:  { ...delta, status: cnt.status },
+    narrative: collectNarrative(),
+  } );
+  if ( JSON_MODE ) {
+    console.log( JSON.stringify( { continuation: cnt }, null, 2 ) );
+    return;
+  }
+  console.log( `\n${hdr( "Branch failed" )}\n` );
+  console.log( `  ${bold( "id:" )}        ${cnt.id}` );
+  console.log( `  ${bold( "branch:" )}    ${branchIdArg}` );
+  console.log( `  ${bold( "reason:" )}    ${reason}` );
+  console.log( `  ${bold( "remaining:" )} ${delta.remaining_alternatives} alternative(s)` );
+  if ( delta.remaining_alternatives === 0 ) {
+    console.log( `\n  ${warn( "All alternatives exhausted." )}` );
+  }
+  console.log();
+}
+
+// ── continuation abort ─────────────────────────────────────────────────────
+
+function cmdContinuationAbort( idArg ) {
+  if ( !idArg ) die( 'Usage: cogentia continuation abort <id> --reason "..."' );
+  const reason = getFlagValue( "--reason" ) || "(no reason given)";
+  const sr = {
+    type:            "step_result",
+    continuation_id: idArg,
+    status:          "aborted",
+    reason,
+  };
+  const cnt = loadContinuation( idArg );
+  if ( cnt.status !== "active" && cnt.status !== "dormant" ) {
+    die( `Cannot abort continuation in status "${cnt.status}".` );
+  }
+  applyStepResult( cnt, sr );
+  saveContinuation( cnt );
+  appendAudit( {
+    command: "continuation.abort",
+    args:    { id: cnt.id, reason },
+    result:  { status: cnt.status },
+    narrative: collectNarrative(),
+  } );
+  const successor = emitDormantSuccessor( cnt );
+  cnt.successor = successor.id;
+  saveContinuation( cnt );
+  if ( JSON_MODE ) {
+    console.log( JSON.stringify( { continuation: cnt, successor }, null, 2 ) );
+    return;
+  }
+  console.log( `\n${hdr( "Continuation aborted" )}\n` );
+  console.log( `  ${bold( "id:" )}        ${cnt.id}` );
+  console.log( `  ${bold( "reason:" )}    ${reason}` );
+  console.log( `  ${dim( `Heraclitean successor: ${successor.id} (dormant)` )}` );
+  console.log();
+}
+
+// ── continuation queue ─────────────────────────────────────────────────────
+
+function cmdContinuationQueue() {
+  const filterStatus = getFlagValue( "--status" );
+  const all = listContinuations();
+  const filtered = filterStatus
+    ? all.filter( cnt => cnt.status === filterStatus )
+    : all;
+  filtered.sort( ( a, b ) => ( a.createdAt || "" ).localeCompare( b.createdAt || "" ) );
+
+  if ( JSON_MODE ) {
+    console.log( JSON.stringify( filtered, null, 2 ) );
+    return;
+  }
+  console.log( `\n${hdr( "Continuation queue" )}  ${dim( filterStatus ? `(status=${filterStatus})` : "(all)" )}\n` );
+  if ( filtered.length === 0 ) {
+    console.log( `  ${dim( "No continuations match." )}\n` );
+    return;
+  }
+  console.log( `  ${dim( pad( "id", 16 ) + pad( "status", 12 ) + pad( "task", 32 ) + "topic" )}` );
+  for ( const cnt of filtered ) {
+    const colorStart =
+        cnt.status === "active"    ? c.cyan
+      : cnt.status === "completed" ? c.green
+      : cnt.status === "aborted"   ? c.red
+      : cnt.status === "dormant"   ? c.dim
+      :                              "";
+    console.log(
+      "  " + pad( cnt.id, 16 ) +
+      colorStart + pad( cnt.status, 12 ) + c.reset +
+      pad( cnt.task || "(dormant)", 32 ) +
+      ( cnt.topicId || "" ),
+    );
+  }
+  console.log();
+}
+
+// ── continuation schema ────────────────────────────────────────────────────
+
+const CONTINUATION_SCHEMA_DOC = {
+  protocol:  CONTINUATION_PROTOCOL,
+  reference: "research/agent_resumable_cli.md",
+  continuation: {
+    required_minimum: [ "id", "task", "context", "expected_result_schema" ],
+    structure: {
+      type:                   "string (\"continuation\")",
+      protocol:               "string (\"cogentia.continuation.v1\")",
+      id:                     "string (ctn_xxxxxxxx)",
+      topicId:                "string (URN: urn:cop:topic:cogentia/<repo>[/<paper>])",
+      agent:                  "string (\"*\" = any compliant agent)",
+      task:                   "string (short task name)",
+      context:                "object (domain-specific)",
+      alternatives:           "array<{id, description}> (optional)",
+      expected_result_schema: "object (key -> type-string)",
+      constraints:            "object (optional; tier 2+ — pay-as-you-go verbosity)",
+      status:                 "string (active|completed|aborted|dormant)",
+      createdAt:              "ISO-8601 timestamp",
+      predecessor:            "string (optional, set on successor)",
+      successor:              "string (optional, set on completed/aborted predecessor)",
+      failed_alternatives:    "array<{id, reason, failed_at}> (accumulated on backtrack)",
+      step_result:            "object (embedded after resolve)",
+      resume:                 "object ({command: ...})",
+    },
+  },
+  step_result: {
+    required_minimum: [ "continuation_id", "status" ],
+    structure: {
+      type:                "string (\"step_result\")",
+      continuation_id:     "string",
+      status:              "string (success|failed|aborted|needs_more_context)",
+      chosen_alternative:  "string (success branch; must be in continuation.alternatives)",
+      failed_alternative:  "string (failed branch; must be in continuation.alternatives)",
+      reason:              "string",
+      confidence:          "number (0..1)",
+      "...":               "domain-specific fields per continuation.expected_result_schema",
+    },
+  },
+  validation: {
+    default: "loose — warnings to stderr; resume proceeds",
+    strict:  "via --strict or COGENTIA_VALIDATE=strict; errors block resume",
+  },
+  heraclitean_followup: "Every resume that closes a continuation (success or abort) emits a dormant successor — minimal node, linked by predecessor id, same topicId. Chain is non-terminal.",
+};
+
+function cmdContinuationSchema() {
+  if ( JSON_MODE ) {
+    console.log( JSON.stringify( CONTINUATION_SCHEMA_DOC, null, 2 ) );
+    return;
+  }
+  console.log( `\n${hdr( "cogentia.continuation.v1 schema" )}\n` );
+  console.log( JSON.stringify( CONTINUATION_SCHEMA_DOC, null, 2 ) );
+  console.log();
+}
+
+// ── continuation dispatcher ────────────────────────────────────────────────
+
+function cmdContinuation( sub, ...rest ) {
+  switch ( sub ) {
+    case "emit":    cmdContinuationEmit(    rest[ 0 ] );             break;
+    case "inspect": cmdContinuationInspect( rest[ 0 ] );             break;
+    case "resume":  cmdContinuationResume(  rest[ 0 ], rest[ 1 ] );  break;
+    case "fail":    cmdContinuationFail(    rest[ 0 ], rest[ 1 ] );  break;
+    case "abort":   cmdContinuationAbort(   rest[ 0 ] );             break;
+    case "queue":   cmdContinuationQueue();                          break;
+    case "schema":  cmdContinuationSchema();                         break;
+    case undefined:
+      die( "Usage: cogentia continuation <emit|inspect|resume|fail|abort|queue|schema> ..." );
+      break;
+    default:
+      die( `Unknown continuation subcommand: "${sub}". Try: emit, inspect, resume, fail, abort, queue, schema.` );
+  }
+}
+
 // ── manifest ──────────────────────────────────────────────────────────────────
 
 /**
@@ -1928,7 +2605,7 @@ function cmdStamp( fileArg ) {
  * inseme Ophélia mediator via cop-host) bind this once to discover the entire
  * CLI surface — same shape inseme briques already use for their `tools` array.
  */
-const COGENTIA_JS_VERSION    = "0.4.0";
+const COGENTIA_JS_VERSION    = "0.5.0";
 const COGENTIA_MANIFEST_VERSION = "1.0";
 
 const COMMAND_MANIFEST = [
@@ -2029,6 +2706,27 @@ const COMMAND_MANIFEST = [
     name: "manifest", description: "Return this command manifest itself (OpenAI-compatible tool definitions for every command).",
     parameters: { type: "object", properties: {} },
     side_effects: [],
+  },
+  {
+    name: "continuation", description: "Emit/inspect/resume/fail/abort/queue typed continuation requests — cogentia.continuation.v1, a provider-neutral protocol for surfacing missing judgment as serializable, schema-bearing, resumable objects across process boundaries. See research/agent_resumable_cli.md.",
+    parameters: {
+      type: "object",
+      properties: {
+        subcommand:       { type: "string", enum: [ "emit", "inspect", "resume", "fail", "abort", "queue", "schema" ], description: "Continuation operation to perform." },
+        task_file:        { type: "string", description: "Path to a JSON task descriptor (emit)." },
+        id:               { type: "string", description: "Continuation id (inspect/resume/fail/abort)." },
+        step_result_file: { type: "string", description: "Path to a step_result JSON (resume)." },
+        branch_id:        { type: "string", description: "Alternative id (fail)." },
+        paper:            { type: "string", description: "Optional --paper <file>: derive topicId from the document's path inside its owning repo." },
+        topic:            { type: "string", description: "Optional --topic <urn>: override topic explicitly." },
+        from:             { type: "string", description: "Optional --from <id>: activate a dormant successor in place." },
+        reason:           { type: "string", description: "Reason string for fail/abort." },
+        status:           { type: "string", description: "Filter for queue (active|completed|aborted|dormant)." },
+        strict:           { type: "boolean", description: "Reject resume on validation issues (also via COGENTIA_VALIDATE=strict)." },
+      },
+      required: [ "subcommand" ],
+    },
+    side_effects: [ "file-write", "audit-log" ],
   },
 ];
 
@@ -2226,6 +2924,7 @@ function cmdExplainIgnore( fileArg ) {
     case "manifest":       cmdManifest();                   break;
     case "state":          cmdState();                      break;
     case "explain-ignore": cmdExplainIgnore( cmdArgs[ 0 ] );break;
+    case "continuation":   cmdContinuation( ...cmdArgs );  break;
     case "help":
     case "--help":
     case "-h":
