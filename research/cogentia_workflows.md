@@ -10,7 +10,7 @@ affiliation: "Institut Mariani — C.O.R.S.I.C.A., 1 cours Paoli, F-20250 Corte,
 license: "CC BY-SA 4.0"
 status: "Working paper — companion to Cogentia Commons MVP Specification"
 canonical_url: https://github.com/JeanHuguesRobert/cogentia/blob/main/research/cogentia_workflows.md
-last_stamped_at: 2026-05-13
+last_stamped_at: 2026-05-15
 ---
 
 # Cogentia Workflows

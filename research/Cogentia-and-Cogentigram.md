@@ -1,6 +1,6 @@
 ---
 canonical_url: https://github.com/JeanHuguesRobert/cogentia/blob/main/research/Cogentia-and-Cogentigram.md
-last_stamped_at: 2026-05-13
+last_stamped_at: 2026-05-15
 ---
 # Cogentia and Cogentigrams
 

@@ -1,6 +1,6 @@
 ---
 canonical_url: https://github.com/JeanHuguesRobert/cogentia/blob/main/research/cogentia-digital-twin.md
-last_stamped_at: 2026-05-13
+last_stamped_at: 2026-05-15
 ---
 # The Sovereign Digital Twin: Cogentia, Cogentigram, Cogentiscope
 

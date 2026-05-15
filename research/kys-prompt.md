@@ -1,6 +1,6 @@
 ---
 canonical_url: https://github.com/JeanHuguesRobert/cogentia/blob/main/research/kys-prompt.md
-last_stamped_at: 2026-05-13
+last_stamped_at: 2026-05-15
 ---
 [COGENTIA — PSYCHOCOGNITIVE ANALYSIS PROTOCOL v1.0 | PrivAI]
 

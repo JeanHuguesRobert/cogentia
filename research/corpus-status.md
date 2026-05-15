@@ -3,10 +3,10 @@ title: "Corpus Status — cogentia"
 description: "Current state of the cogentia knowledge corpus — what is proved, what is open, what remains possible"
 layout: default
 nav_order: 2
-last_modified_at: 2026-05-14
+last_modified_at: 2026-05-15
 repository: "github.com/JeanHuguesRobert/cogentia"
 canonical_url: https://github.com/JeanHuguesRobert/cogentia/blob/main/research/corpus-status.md
-last_stamped_at: 2026-05-13
+last_stamped_at: 2026-05-15
 ---
 
 # Corpus Status — cogentia
@@ -24,11 +24,11 @@ last_stamped_at: 2026-05-13
 <!-- BEGIN_AUTO: registered_repos -->
 | Repository | research/index.md | Branch | Last commit |
 |---|---|---|---|
-| cogentia | ✅ | main | 2026-05-13 |
-| FractaVolta | ✅ | main | 2026-05-13 |
-| marenostrum | ✅ | main | 2026-05-13 |
-| barons-Mariani | ✅ | main | 2026-05-13 |
-| inseme | ✅ | master | 2026-05-13 |
+| cogentia | ✅ | main | 2026-05-14 |
+| FractaVolta | ✅ | main | 2026-05-14 |
+| marenostrum | ✅ | main | 2026-05-14 |
+| barons-Mariani | ✅ | main | 2026-05-14 |
+| inseme | ✅ | main | 2026-05-14 |
 <!-- END_AUTO: registered_repos -->
 
 ---

@@ -1,6 +1,6 @@
 ---
 canonical_url: https://github.com/JeanHuguesRobert/cogentia/blob/main/research/democratic_ai_safety.md
-last_stamped_at: 2026-05-13
+last_stamped_at: 2026-05-15
 ---
 # Radical Democracy as the Best AI Safety Strategy
 

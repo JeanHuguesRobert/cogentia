@@ -1,3 +1,7 @@
+---
+canonical_url: https://github.com/JeanHuguesRobert/cogentia/blob/main/prompts/continuation_designer_prompt.md
+last_stamped_at: 2026-05-15
+---
 # Cogentia Continuation Designer Prompt
 
 ## Role
