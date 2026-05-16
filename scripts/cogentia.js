@@ -33,6 +33,8 @@
  *   corpus-status [name]  Refresh research/corpus-status.md (auto-generate
  *                         structural parts, preserve manual sections, bootstrap
  *                         the file if missing). Add --check for dry-run.
+ *   concepts <sub>      Manage research/concepts.md as a typed concept registry
+ *                       without performing semantic interpretation.
  *   manifest            OpenAI-compatible tool definitions for every command
  *                       (machine-discoverable surface; --json for AI agents).
  *   state               Denormalised JSON snapshot of registry+status+identity.
@@ -814,6 +816,14 @@ function buildCorpusStatusSkeleton( entry, config, now ) {
     "",
     "---",
     "",
+    "## Concept Status",
+    "",
+    "<!-- BEGIN_AUTO: concepts -->",
+    "",
+    "<!-- END_AUTO: concepts -->",
+    "",
+    "---",
+    "",
     "## What Is Proved",
     "",
     "*Manually curated: claims demonstrated by the published work in this corpus.*",
@@ -859,6 +869,7 @@ function generateCorpusStatusFor( entry, config, opts ) {
     registered_repos: buildRegisteredReposBlock( config ),
     graph:            buildGraphBlock( config ),
     published:        buildPublishedBlock( repoPath, entry.name ),
+    concepts:         buildConceptStatusBlock( repoPath, entry.name ),
     possibilities:    buildPossibilitiesBlock( repoPath ),
   };
 
@@ -1108,6 +1119,9 @@ ${bold( "Commands:" )}
                       manually-curated What Is Proved / Open Objections;
                       bootstraps the file if missing. ${c.cyan}<name>${c.reset} for one repo;
                       ${c.cyan}--check${c.reset} for dry-run.
+  ${c.cyan}concepts${c.reset} <sub>       Manage ${c.cyan}research/concepts.md${c.reset} as a typed concept registry.
+                      Sub: ${c.cyan}init${c.reset} [repo] | ${c.cyan}list${c.reset} [repo] | ${c.cyan}check${c.reset} [repo] | ${c.cyan}graph${c.reset} [repo]
+                           ${c.cyan}ref${c.reset} <concept> [repo] | ${c.cyan}status${c.reset} [repo] | ${c.cyan}schema${c.reset}
   ${c.cyan}manifest${c.reset}            Print the command manifest (OpenAI-compatible tool
                       definitions for every command). Use ${c.cyan}--json${c.reset} for
                       machine consumption by AI agents.
@@ -1930,6 +1944,560 @@ function cmdStamp( fileArg ) {
   console.log();
 }
 
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// CONCEPT REGISTRY — research/concepts.md
+// ═══════════════════════════════════════════════════════════════════════════════
+//
+// cogentia.js does not infer semantic truth. It only maintains the structural
+// conditions under which a semantic agent can reason safely: declared concepts,
+// stable links, scope/status metadata, graphs, checks and audit logs.
+
+const CONCEPTS_CANONICAL = "concepts.md";
+const CONCEPTS_BASENAMES = [ "concepts.md", "concept-index.md", "concept_index.md" ];
+const CONCEPT_STATUS_VALUES = [ "Seed", "Working", "Defined", "Operational", "Canonical" ];
+const CONCEPT_SCOPE_VALUES  = [ "Global", "Barons Mariani", "FractaVolta", "Cogentia", "Mare Nostrum", "C.O.R.S.I.C.A.", "Casa Mariani", "Paese Capable", "Paese Capace", "Project", "Repo-specific" ];
+
+function findConceptsFile( repoPath ) {
+  const dir = path.join( repoPath, "research" );
+  for ( const base of CONCEPTS_BASENAMES ) {
+    const p = path.join( dir, base );
+    if ( fs.existsSync( p ) ) return p;
+  }
+  return null;
+}
+
+function conceptsCanonicalPath( repoPath ) {
+  return path.join( repoPath, "research", CONCEPTS_CANONICAL );
+}
+
+function slugifyMarkdownHeading( s ) {
+  return String( s )
+    .trim()
+    .toLowerCase()
+    .normalize( "NFD" ).replace( /[\u0300-\u036f]/g, "" )
+    .replace( /[`*_~]/g, "" )
+    .replace( /[^a-z0-9\s-]/g, "" )
+    .replace( /\s+/g, "-" )
+    .replace( /-+/g, "-" )
+    .replace( /^-|-$/g, "" );
+}
+
+function conceptGraphId( s ) {
+  const slug = slugifyMarkdownHeading( s ) || "unnamed";
+  return "c_" + slug.replace( /[^a-z0-9_]/g, "_" );
+}
+
+function extractBoldField( body, field ) {
+  // Accept both **Field:** value and **Field**: value.
+  const re = new RegExp( `^\\*\\*${field}\\s*:?\\*\\*\\s*:?\\s*(.+)$`, "im" );
+  const m = body.match( re );
+  return m ? m[ 1 ].trim() : null;
+}
+
+function extractListAfterField( body, field ) {
+  const lines = body.split( /\r?\n/ );
+  const out = [];
+  let inBlock = false;
+  // Accept both **Field:** and **Field**: forms.
+  const fieldRe = new RegExp( `^\\*\\*${field}\\s*:?\\*\\*\\s*:?\\s*$`, "i" );
+  const fieldInlineRe = new RegExp( `^\\*\\*${field}\\s*:?\\*\\*\\s*:?\\s*(.+)$`, "i" );
+  for ( const line of lines ) {
+    const trimmed = line.trim();
+    const inline = trimmed.match( fieldInlineRe );
+    if ( inline ) {
+      const value = inline[ 1 ].trim();
+      if ( value && value !== "—" && !value.startsWith( "- " ) ) {
+        out.push( ...value.split( /[,;]/ ).map( x => x.trim() ).filter( Boolean ) );
+      }
+      inBlock = true;
+      continue;
+    }
+    if ( fieldRe.test( trimmed ) ) { inBlock = true; continue; }
+    if ( inBlock ) {
+      if ( /^\*\*[^*]+\*\*\s*:/.test( trimmed ) || /^\*\*[^*]+:\*\*/.test( trimmed ) || /^#{2,6}\s+/.test( trimmed ) ) break;
+      if ( trimmed.startsWith( "- " ) ) out.push( trimmed.slice( 2 ).trim() );
+      else if ( trimmed === "" ) continue;
+      else if ( out.length > 0 ) break;
+    }
+  }
+  return [ ...new Set( out ) ];
+}
+
+function cleanConceptRef( s ) {
+  return String( s )
+    .replace( /`/g, "" )
+    .replace( /^\[([^\]]+)\]\([^)]+\)$/, "$1" )
+    .trim();
+}
+
+function parseConceptsMarkdown( content, repoName, filePath ) {
+  const lines = content.split( /\r?\n/ );
+  const sections = [];
+  let current = null;
+  for ( const line of lines ) {
+    const m = line.match( /^##\s+(.+)$/ );
+    if ( m ) {
+      if ( current ) sections.push( current );
+      current = { name: m[ 1 ].trim(), bodyLines: [] };
+      continue;
+    }
+    if ( current ) current.bodyLines.push( line );
+  }
+  if ( current ) sections.push( current );
+
+  return sections
+    .filter( s => !/^status|scope|template|deprecated|risky|notes$/i.test( s.name ) )
+    .map( s => {
+      const body = s.bodyLines.join( "\n" ).trim();
+      const shortDefinition = ( function() {
+        const m = body.match( /\*\*Short definition:\*\*\s*\n+([\s\S]*?)(?:\n\s*\n|\n\*\*|$)/i );
+        if ( m ) return m[ 1 ].replace( /\s+/g, " " ).trim();
+        const firstPara = body.split( /\n\s*\n/ ).find( p => p.trim() && !p.trim().startsWith( "**" ) );
+        return firstPara ? firstPara.replace( /\s+/g, " " ).trim() : null;
+      } )();
+      return {
+        name: s.name,
+        slug: slugifyMarkdownHeading( s.name ),
+        repo: repoName,
+        file: filePath,
+        type: extractBoldField( body, "Type" ),
+        scope: extractBoldField( body, "Scope" ),
+        status: extractBoldField( body, "Status" ),
+        short_definition: shortDefinition,
+        parents: extractListAfterField( body, "Parent concepts" ).map( cleanConceptRef ),
+        children: extractListAfterField( body, "Child concepts" ).map( cleanConceptRef ),
+        related: extractListAfterField( body, "Related concepts" ).map( cleanConceptRef ),
+        reference_documents: extractListAfterField( body, "Reference documents" ),
+        used_in: extractListAfterField( body, "Used in" ),
+      };
+    } );
+}
+
+function loadConceptsForRepo( entry ) {
+  const repoPath = resolveRepoPath( entry );
+  if ( !repoPath ) return { ok: false, name: entry.name, reason: "not found on disk", concepts: [] };
+  const conceptsPath = findConceptsFile( repoPath );
+  if ( !conceptsPath ) return { ok: false, name: entry.name, repoPath, reason: "no research/concepts.md", concepts: [] };
+  try {
+    const content = fs.readFileSync( conceptsPath, "utf8" );
+    const rel = path.relative( repoPath, conceptsPath ).replace( /\\/g, "/" );
+    return { ok: true, name: entry.name, repoPath, conceptsPath, rel, concepts: parseConceptsMarkdown( content, entry.name, rel ) };
+  } catch ( e ) {
+    return { ok: false, name: entry.name, repoPath, conceptsPath, reason: e.message, concepts: [] };
+  }
+}
+
+function loadAllConcepts( config, repoArg ) {
+  const targets = repoArg ? config.repos.filter( r => r.name === repoArg ) : config.repos;
+  if ( repoArg && targets.length === 0 ) die( `No registered repo matching "${repoArg}".` );
+  return targets.map( loadConceptsForRepo );
+}
+
+function buildConceptsSkeleton( repoName ) {
+  return [
+    "---",
+    `title: "Concept Index — ${repoName}"`,
+    "description: \"Typed concept registry for humans and AI agents; structure only, not semantic authority.\"",
+    "layout: default",
+    "nav_order: 3",
+    `last_modified_at: ${fmtDate( new Date() )}`,
+    "---",
+    "",
+    `# Concept Index — ${repoName}`,
+    "",
+    "This file maps concepts used across the corpus.",
+    "",
+    "`cogentia.js` maintains structure, links, scopes, status and graphs. It does not infer semantic truth.",
+    "",
+    "## Status scale",
+    "",
+    "- **Seed** — intuition not yet stabilized.",
+    "- **Working** — recurring and usable, but still evolving.",
+    "- **Defined** — explicit definition exists.",
+    "- **Operational** — connected to implementation, protocol, code, governance or legal use.",
+    "- **Canonical** — should be treated as a reference concept unless revised.",
+    "",
+    "---",
+    "",
+    "## Cogentia",
+    "",
+    "**Type:** abstract concept / agentivity class",
+    "**Scope:** Global",
+    "**Status:** Working",
+    "",
+    "**Short definition:**",
+    "Cogentia designates the actual situated agentivity of an entity — physical person, legal person, or AI agent — combining memory, mandate, capabilities, procedures, acts and traces.",
+    "",
+    "**Parent concepts:**",
+    "- Traceable agency",
+    "",
+    "**Child concepts:**",
+    "- Cogentigram",
+    "- Operational memory",
+    "",
+    "**Reference documents:**",
+    "- `research/concepts.md`",
+    "",
+    "**Used in:**",
+    "- digital twin work",
+    "- AI agent governance",
+    "",
+    "---",
+    "",
+    "## Cogentigram",
+    "",
+    "**Type:** representation / map",
+    "**Scope:** Global",
+    "**Status:** Working",
+    "",
+    "**Short definition:**",
+    "A cogentigram is a structured, partial, auditable and revisable representation of a Cogentia.",
+    "",
+    "**Parent concepts:**",
+    "- Cogentia",
+    "",
+    "**Related concepts:**",
+    "- Map vs territory",
+    "- Operational memory",
+    "- Traceable agency",
+    "",
+  ].join( "\n" );
+}
+
+function buildConceptStatusBlock( repoPath, repoName ) {
+  const entry = { name: repoName, path: repoPath };
+  const loaded = loadConceptsForRepo( entry );
+  if ( !loaded.ok ) return "*(no `research/concepts.md` found.)*";
+  if ( loaded.concepts.length === 0 ) return "*(no concept entries found in `research/concepts.md`.)*";
+  const lines = [
+    "| Concept | Scope | Status | Type |",
+    "|---|---|---|---|",
+  ];
+  for ( const concept of loaded.concepts ) {
+    const link = `[${concept.name}](./concepts.md#${concept.slug})`;
+    lines.push( `| ${link} | ${concept.scope || "—"} | ${concept.status || "—"} | ${concept.type || "—"} |` );
+  }
+  return lines.join( "\n" );
+}
+
+function validateConceptDocumentLinks( loaded, concept ) {
+  const warnings = [];
+  const docs = [ ...concept.reference_documents, ...concept.used_in ];
+  for ( const raw of docs ) {
+    const m = String( raw ).match( /`([^`]+)`/ ) || String( raw ).match( /^([^\s]+\.md)(?:\s|$)/ );
+    if ( !m ) continue;
+    const rel = m[ 1 ];
+    if ( rel.startsWith( "http" ) ) continue;
+    const full = path.resolve( loaded.repoPath, rel );
+    if ( !fs.existsSync( full ) ) warnings.push( `missing linked document for ${concept.name}: ${rel}` );
+  }
+  return warnings;
+}
+
+function conceptCheckResults( loadedResults ) {
+  const results = [];
+  const byName = new Map();
+  for ( const loaded of loadedResults ) {
+    for ( const concept of loaded.concepts ) {
+      const key = concept.name.toLowerCase();
+      if ( !byName.has( key ) ) byName.set( key, [] );
+      byName.get( key ).push( concept );
+      const slugKey = concept.slug;
+      if ( !byName.has( slugKey ) ) byName.set( slugKey, [] );
+      byName.get( slugKey ).push( concept );
+    }
+  }
+
+  for ( const loaded of loadedResults ) {
+    const repoResult = { repo: loaded.name, ok: loaded.ok, reason: loaded.reason || null, concepts: [], warnings: [], errors: [] };
+    if ( !loaded.ok ) { results.push( repoResult ); continue; }
+    for ( const concept of loaded.concepts ) {
+      const cRes = { name: concept.name, warnings: [], errors: [] };
+      if ( !concept.type ) cRes.warnings.push( "missing Type" );
+      if ( !concept.scope ) cRes.warnings.push( "missing Scope" );
+      if ( !concept.status ) cRes.warnings.push( "missing Status" );
+      if ( concept.status && !CONCEPT_STATUS_VALUES.some( s => concept.status.toLowerCase().includes( s.toLowerCase() ) ) ) {
+        cRes.warnings.push( `non-standard Status: ${concept.status}` );
+      }
+      if ( !concept.short_definition ) cRes.warnings.push( "missing Short definition" );
+      cRes.warnings.push( ...validateConceptDocumentLinks( loaded, concept ) );
+      for (const p of concept.parents) {
+         if (!byName.has(p.toLowerCase()) && !byName.has(slugifyMarkdownHeading(p))) {
+            cRes.warnings.push(`orphan reference: Parent '${p}' is not defined in any registered concepts.md`);
+         }
+      }
+      for (const c of concept.children) {
+         if (!byName.has(c.toLowerCase()) && !byName.has(slugifyMarkdownHeading(c))) {
+            cRes.warnings.push(`orphan reference: Child '${c}' is not defined in any registered concepts.md`);
+         }
+      }
+      for (const rel of concept.related) {
+         if (!byName.has(rel.toLowerCase()) && !byName.has(slugifyMarkdownHeading(rel))) {
+            cRes.warnings.push(`orphan reference: Related concept '${rel}' is not defined in any registered concepts.md`);
+         }
+      }
+      const same = byName.get( concept.name.toLowerCase() ) || [];
+      if ( same.length > 1 ) {
+        const repos = same.map( x => x.repo ).join( ", " );
+        cRes.warnings.push( `duplicate concept name across repos: ${repos}` );
+      }
+      if ( concept.scope && /global/i.test( concept.scope ) && loaded.name !== "barons-Mariani" ) {
+        cRes.warnings.push( "global concept outside barons-Mariani; prefer defining the canonical entry in barons-Mariani and referencing it here" );
+      }
+      repoResult.concepts.push( cRes );
+      repoResult.warnings.push( ...cRes.warnings.map( w => `${concept.name}: ${w}` ) );
+      repoResult.errors.push( ...cRes.errors.map( e => `${concept.name}: ${e}` ) );
+    }
+    results.push( repoResult );
+  }
+  return results;
+}
+
+function cmdConceptsInit( repoArg ) {
+  const { configPath, config } = loadConfig();
+  if ( !configPath ) die( "No registry found. Run: cogentia add <repo> first." );
+  const targets = repoArg ? config.repos.filter( r => r.name === repoArg ) : config.repos;
+  if ( targets.length === 0 ) die( `No registered repo matching "${repoArg}".` );
+  const results = [];
+  for ( const entry of targets ) {
+    const repoPath = resolveRepoPath( entry );
+    if ( !repoPath ) { results.push( { name: entry.name, ok: false, reason: "not found on disk" } ); continue; }
+    const researchDir = path.join( repoPath, "research" );
+    if ( !fs.existsSync( researchDir ) ) fs.mkdirSync( researchDir, { recursive: true } );
+    const target = conceptsCanonicalPath( repoPath );
+    let action = "unchanged";
+    if ( !fs.existsSync( target ) ) {
+      fs.writeFileSync( target, buildConceptsSkeleton( entry.name ), "utf8" );
+      action = "created";
+    }
+
+    // Auto-inject links and markers
+    let injected = false;
+    const indexPath = path.join( researchDir, "index.md" );
+    if ( fs.existsSync( indexPath ) ) {
+      let content = fs.readFileSync( indexPath, "utf8" );
+      if ( !content.includes( "concepts.md)" ) ) {
+        content = content.replace( /(^.*\[Corpus Status\]\(corpus-status\.md\).*?\r?\n)/m, "$1| [Concept Index](concepts.md) *(typed concept registry — mapped by `cogentia.js concepts`)* | this repo | refreshable |\n" );
+        fs.writeFileSync( indexPath, content, "utf8" );
+        injected = true;
+      }
+    }
+    const statusPath = path.join( researchDir, "corpus-status.md" );
+    if ( fs.existsSync( statusPath ) ) {
+      let content = fs.readFileSync( statusPath, "utf8" );
+      if ( !content.includes( "BEGIN_AUTO: concepts" ) ) {
+        content = content.replace( /\n## Published/, "\n## Concepts\n\n<!-- BEGIN_AUTO: concepts -->\n<!-- END_AUTO: concepts -->\n\n## Concept Graph\n\n<!-- BEGIN_AUTO: concept_graph -->\n<!-- END_AUTO: concept_graph -->\n\n---\n\n## Published" );
+        fs.writeFileSync( statusPath, content, "utf8" );
+        injected = true;
+      }
+    }
+
+    if ( action === "created" || injected ) {
+      appendAudit( { command: "concepts.init", args: { repo: entry.name }, result: { target, action: action === "created" ? "created" : "injected" }, narrative: collectNarrative() } );
+    }
+    results.push( { name: entry.name, ok: true, target, action: action === "created" ? "created" : ( injected ? "injected" : "unchanged" ) } );
+  }
+  if ( JSON_MODE ) { console.log( JSON.stringify( { results }, null, 2 ) ); return; }
+  console.log( `\n${hdr( "Concept registry init" )}\n` );
+  for ( const r of results ) {
+    if ( !r.ok ) console.log( `  ${fail( r.name )} — ${r.reason}` );
+    else {
+      const stateStr = r.action === "created" ? ok( "created" ) : ( r.action === "injected" ? ok( "injected" ) : dim( "unchanged" ) );
+      console.log( `  ${bold( pad( r.name, 18 ) )} ${stateStr} ${dim( r.target )}` );
+    }
+  }
+  console.log();
+}
+
+function cmdConceptsList( repoArg ) {
+  const { configPath, config } = loadConfig();
+  if ( !configPath ) die( "No registry found. Run: cogentia add <repo> first." );
+  const loaded = loadAllConcepts( config, repoArg );
+  const concepts = loaded.flatMap( r => r.concepts );
+  if ( JSON_MODE ) { console.log( JSON.stringify( { repos: loaded, concepts }, null, 2 ) ); return; }
+  console.log( `\n${hdr( "Concepts" )}\n` );
+  for ( const r of loaded ) {
+    if ( !r.ok ) { console.log( `  ${fail( r.name )} — ${r.reason}` ); continue; }
+    console.log( `  ${bold( r.name )} ${dim( r.rel )}` );
+    for ( const concept of r.concepts ) {
+      console.log( `    ${c.cyan}${concept.name}${c.reset}  ${dim( `${concept.scope || "—"} / ${concept.status || "—"}` )}` );
+    }
+  }
+  console.log();
+}
+
+function cmdConceptsCheck( repoArg ) {
+  const { configPath, config } = loadConfig();
+  if ( !configPath ) die( "No registry found. Run: cogentia add <repo> first." );
+  const loaded = loadAllConcepts( config, repoArg );
+  const results = conceptCheckResults( loaded );
+  if ( JSON_MODE ) { console.log( JSON.stringify( { results }, null, 2 ) ); return; }
+  console.log( `\n${hdr( "Concept registry check" )}\n` );
+  for ( const r of results ) {
+    if ( !r.ok ) { console.log( `  ${fail( r.repo )} — ${r.reason}` ); continue; }
+    const mark = r.errors.length ? fail( r.repo ) : ( r.warnings.length ? warn( r.repo ) : ok( r.repo ) );
+    console.log( `  ${mark}` );
+    for ( const w of r.warnings ) console.log( `    ${c.yellow}→${c.reset} ${w}` );
+    for ( const e of r.errors ) console.log( `    ${c.red}→${c.reset} ${e}` );
+  }
+  console.log();
+}
+
+function buildConceptGraphBlock(loaded) {
+  const nodes = [], edges = [], edgeKeys = new Set();
+  function addEdge( fromName, toName, label ) {
+    const edge = { from: conceptGraphId( fromName ), to: conceptGraphId( toName ), label };
+    const key = `${edge.from}|${edge.to}`;
+    if ( edgeKeys.has( key ) ) return;
+    edgeKeys.add( key );
+    edges.push( edge );
+  }
+  for ( const r of loaded ) {
+    for ( const concept of r.concepts ) {
+      nodes.push( { id: conceptGraphId( concept.name ), slug: concept.slug, name: concept.name, repo: r.name, scope: concept.scope, status: concept.status } );
+      for ( const p of concept.parents ) addEdge( p, concept.name, "parent" );
+      for ( const ch of concept.children ) addEdge( concept.name, ch, "child" );
+      for ( const rel of concept.related ) addEdge( concept.name, rel, "related" );
+    }
+  }
+  const lines = [ "```mermaid", "graph LR" ];
+  const nodeIds = new Set( nodes.map( n => n.id ) );
+  for ( const n of nodes ) lines.push( `  ${n.id}["${n.name}"]` );
+  for ( const e of edges ) {
+    if ( !nodeIds.has( e.from ) ) lines.push( `  ${e.from}["${e.from.replace( /^c_/, "" ).replace( /_/g, " " )}"]` );
+    if ( !nodeIds.has( e.to ) )   lines.push( `  ${e.to}["${e.to.replace( /^c_/, "" ).replace( /_/g, " " )}"]` );
+    nodeIds.add( e.from ); nodeIds.add( e.to );
+    const arrow = e.label === "related" ? "-.->" : "-->";
+    lines.push( `  ${e.from} ${arrow} ${e.to}` );
+  }
+  lines.push( "```" );
+  return lines.join( "\n" );
+}
+
+function cmdConceptsGraph( repoArg ) {
+  const { configPath, config } = loadConfig();
+  if ( !configPath ) die( "No registry found. Run: cogentia add <repo> first." );
+  const loaded = loadAllConcepts( config, repoArg );
+  if ( JSON_MODE ) {
+    const nodes = [], edges = [], edgeKeys = new Set();
+    function addEdge( fromName, toName, label ) {
+      const edge = { from: conceptGraphId( fromName ), to: conceptGraphId( toName ), label };
+      const key = `${edge.from}|${edge.to}`;
+      if ( edgeKeys.has( key ) ) return;
+      edgeKeys.add( key );
+      edges.push( edge );
+    }
+    for ( const r of loaded ) {
+      for ( const concept of r.concepts ) {
+        nodes.push( { id: conceptGraphId( concept.name ), slug: concept.slug, name: concept.name, repo: r.name, scope: concept.scope, status: concept.status } );
+        for ( const p of concept.parents ) addEdge( p, concept.name, "parent" );
+        for ( const ch of concept.children ) addEdge( concept.name, ch, "child" );
+        for ( const rel of concept.related ) addEdge( concept.name, rel, "related" );
+      }
+    }
+    console.log( JSON.stringify( { nodes, edges }, null, 2 ) ); return;
+  }
+  const graphCode = buildConceptGraphBlock(loaded);
+  const lines = [ "# Cogentia — Concept Graph", "", `*Generated: ${fmtNow()}*`, "", graphCode ];
+  console.log( lines.join( "\n" ) );
+}
+
+function cmdConceptsRef( conceptName, repoArg ) {
+  if ( !conceptName ) die( "Usage: cogentia concepts ref <concept> [repo]" );
+  const { configPath, config } = loadConfig();
+  if ( !configPath ) die( "No registry found. Run: cogentia add <repo> first." );
+  const loaded = loadAllConcepts( config, repoArg );
+  const matches = loaded.flatMap( r => r.concepts.map( cpt => ( { ...cpt, repoPath: r.repoPath, rel: r.rel } ) ) )
+    .filter( cpt => cpt.name.toLowerCase() === conceptName.toLowerCase() || cpt.slug === slugifyMarkdownHeading( conceptName ) );
+  if ( matches.length === 0 ) die( `Concept not found: ${conceptName}` );
+  const concept = matches[ 0 ];
+  const link = `[${concept.name}](${concept.rel || "research/concepts.md"}#${concept.slug})`;
+  if ( JSON_MODE ) { console.log( JSON.stringify( { concept, link }, null, 2 ) ); return; }
+  console.log( link );
+}
+
+function refreshConceptStatusFor( entry, opts ) {
+  opts = opts || {};
+  const repoPath = resolveRepoPath( entry );
+  if ( !repoPath ) return { ok: false, name: entry.name, reason: "not found on disk" };
+  const target = findCorpusStatusFile( repoPath );
+  if ( !target ) return { ok: false, name: entry.name, reason: "no research/corpus-status.md" };
+  const body = buildConceptStatusBlock( repoPath, entry.name );
+  const original = fs.readFileSync( target, "utf8" );
+  let r = replaceMarkedSection( original, "concepts", body );
+  
+  if (original.includes("BEGIN_AUTO: concept_graph")) {
+    const { config } = loadConfig();
+    const loaded = loadAllConcepts(config, null);
+    const graphBody = buildConceptGraphBlock(loaded);
+    r = replaceMarkedSection(r.content, "concept_graph", graphBody);
+  }
+
+  if ( !r.updated ) return { ok: false, name: entry.name, target, reason: "missing concepts auto markers" };
+  const changed = r.content !== original;
+  if ( opts.check ) return { ok: true, name: entry.name, target, changed };
+  if ( changed ) {
+    fs.writeFileSync( target, r.content, "utf8" );
+    appendAudit( { command: "concepts.status", args: { repo: entry.name }, result: { target, action: "refreshed" }, narrative: collectNarrative() } );
+  }
+  return { ok: true, name: entry.name, target, changed };
+}
+
+function cmdConceptsStatus( repoArg ) {
+  const checkOnly = argv.includes( "--check" );
+  const { configPath, config } = loadConfig();
+  if ( !configPath ) die( "No registry found. Run: cogentia add <repo> first." );
+  const targets = repoArg ? config.repos.filter( r => r.name === repoArg ) : config.repos;
+  if ( targets.length === 0 ) die( `No registered repo matching "${repoArg}".` );
+  const results = targets.map( entry => refreshConceptStatusFor( entry, { check: checkOnly } ) );
+  if ( JSON_MODE ) { console.log( JSON.stringify( { results }, null, 2 ) ); return; }
+  console.log( `\n${hdr( checkOnly ? "Concept-status check" : "Concept-status refresh" )}\n` );
+  for ( const r of results ) {
+    if ( !r.ok ) { console.log( `  ${fail( r.name )} — ${r.reason}` ); continue; }
+    console.log( `  ${bold( pad( r.name, 18 ) )} ${r.changed ? ok( "refreshed" ) : dim( "unchanged" )} ${dim( r.target )}` );
+  }
+  console.log();
+}
+
+function cmdConceptsSchema() {
+  const schema = {
+    file: "research/concepts.md",
+    principle: "The CLI validates structure. A human or AI agent interprets semantics.",
+    concept_heading: "## Concept name",
+    fields: [
+      "**Type:** abstract concept / interface / project / protocol / document / agent",
+      "**Scope:** Global / repository-specific / project-specific",
+      "**Status:** Seed / Working / Defined / Operational / Canonical",
+      "**Short definition:** paragraph",
+      "**Parent concepts:** bullet list",
+      "**Child concepts:** bullet list",
+      "**Related concepts:** bullet list",
+      "**Reference documents:** bullet list of markdown paths or URLs",
+      "**Used in:** bullet list of markdown paths, repos or contexts",
+    ],
+  };
+  if ( JSON_MODE ) { console.log( JSON.stringify( schema, null, 2 ) ); return; }
+  console.log( JSON.stringify( schema, null, 2 ) );
+}
+
+function cmdConcepts( sub, ...rest ) {
+  switch ( sub ) {
+    case "init":   cmdConceptsInit(   rest[ 0 ] ); break;
+    case "list":   cmdConceptsList(   rest[ 0 ] ); break;
+    case "check":  cmdConceptsCheck(  rest[ 0 ] ); break;
+    case "graph":  cmdConceptsGraph(  rest[ 0 ] ); break;
+    case "ref":    cmdConceptsRef(    rest[ 0 ], rest[ 1 ] ); break;
+    case "status": cmdConceptsStatus( rest[ 0 ] ); break;
+    case "schema": cmdConceptsSchema(); break;
+    case undefined:
+      die( "Usage: cogentia concepts <init|list|check|graph|ref|status|schema> ..." );
+      break;
+    default:
+      die( `Unknown concepts subcommand: "${sub}".` );
+  }
+}
+
 // ═══════════════════════════════════════════════════════════════════════════════
 // CONTINUATION PROTOCOL (tier 1) — cogentia.continuation.v1
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -2487,6 +3055,26 @@ function cmdContinuationAbort( idArg ) {
 
 // ── continuation queue ─────────────────────────────────────────────────────
 
+
+function cmdContinuationPrune() {
+  const daysArg = getFlagValue("--days") || "30";
+  const days = parseInt(daysArg, 10);
+  if (isNaN(days)) die(`Invalid days: ${daysArg}`);
+  const cutoff = new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString();
+  
+  const all = listContinuations();
+  const toDelete = all.filter(c => (c.status === "aborted" || c.status === "dormant") && (c.createdAt || c.abortedAt) < cutoff);
+  
+  for (const c of toDelete) {
+      fs.unlinkSync(continuationPath(c.id));
+  }
+  
+  if (JSON_MODE) { console.log(JSON.stringify({ pruned: toDelete.length, days }, null, 2)); return; }
+  console.log(`\n${hdr("Continuation Garbage Collection")}\n`);
+  console.log(`  ${bold("pruned:")} ${toDelete.length} continuations older than ${days} days.`);
+  console.log();
+}
+
 function cmdContinuationQueue() {
   const filterStatus = getFlagValue( "--status" );
   const all = listContinuations();
@@ -2589,12 +3177,13 @@ function cmdContinuation( sub, ...rest ) {
     case "fail":    cmdContinuationFail(    rest[ 0 ], rest[ 1 ] );  break;
     case "abort":   cmdContinuationAbort(   rest[ 0 ] );             break;
     case "queue":   cmdContinuationQueue();                          break;
+    case "prune":   cmdContinuationPrune();                          break;
     case "schema":  cmdContinuationSchema();                         break;
     case undefined:
-      die( "Usage: cogentia continuation <emit|inspect|resume|fail|abort|queue|schema> ..." );
+      die( "Usage: cogentia continuation <emit|inspect|resume|fail|abort|queue|prune|schema> ..." );
       break;
     default:
-      die( `Unknown continuation subcommand: "${sub}". Try: emit, inspect, resume, fail, abort, queue, schema.` );
+      die( `Unknown continuation subcommand: "${sub}". Try: emit, inspect, resume, fail, abort, queue, prune, schema.` );
   }
 }
 
@@ -2605,7 +3194,7 @@ function cmdContinuation( sub, ...rest ) {
  * inseme Ophélia mediator via cop-host) bind this once to discover the entire
  * CLI surface — same shape inseme briques already use for their `tools` array.
  */
-const COGENTIA_JS_VERSION    = "0.5.0";
+const COGENTIA_JS_VERSION    = "0.9.0";
 const COGENTIA_MANIFEST_VERSION = "1.0";
 
 const COMMAND_MANIFEST = [
@@ -2703,6 +3292,20 @@ const COMMAND_MANIFEST = [
     side_effects: [],
   },
   {
+    name: "concepts", description: "Manage research/concepts.md as a typed concept registry. The CLI validates structure and links; semantic interpretation remains the responsibility of the human or AI agent using it.",
+    parameters: {
+      type: "object",
+      properties: {
+        subcommand: { type: "string", enum: [ "init", "list", "check", "graph", "ref", "status", "schema" ], description: "Concept registry operation." },
+        repo:       { type: "string", description: "Optional registered repo name. Default: all repos for init/list/check/graph/status." },
+        concept:    { type: "string", description: "Concept name for ref." },
+        check:      { type: "boolean", description: "Dry-run for status refresh." }
+      },
+      required: [ "subcommand" ],
+    },
+    side_effects: [ "may write research/concepts.md", "may write research/corpus-status.md", "audit-log" ],
+  },
+  {
     name: "manifest", description: "Return this command manifest itself (OpenAI-compatible tool definitions for every command).",
     parameters: { type: "object", properties: {} },
     side_effects: [],
@@ -2712,7 +3315,7 @@ const COMMAND_MANIFEST = [
     parameters: {
       type: "object",
       properties: {
-        subcommand:       { type: "string", enum: [ "emit", "inspect", "resume", "fail", "abort", "queue", "schema" ], description: "Continuation operation to perform." },
+        subcommand:       { type: "string", enum: [ "emit", "inspect", "resume", "fail", "abort", "queue", "prune", "schema" ], description: "Continuation operation to perform." },
         task_file:        { type: "string", description: "Path to a JSON task descriptor (emit)." },
         id:               { type: "string", description: "Continuation id (inspect/resume/fail/abort)." },
         step_result_file: { type: "string", description: "Path to a step_result JSON (resume)." },
@@ -2727,6 +3330,36 @@ const COMMAND_MANIFEST = [
       required: [ "subcommand" ],
     },
     side_effects: [ "file-write", "audit-log" ],
+  },
+  {
+    name: "install-hooks", description: "Install Git pre-commit hooks in all registered repositories to enforce cogentia status checks.",
+    parameters: { type: "object", properties: {} },
+    side_effects: [ "file-write" ],
+  },
+  {
+    name: "init-jekyll", description: "Bootstrap GitHub Pages support (_config.yml) in all registered repositories.",
+    parameters: { type: "object", properties: {} },
+    side_effects: [ "file-write" ],
+  },
+  {
+    name: "backlinks", description: "Scan all Markdown files to build an inverted cross-reference index and auto-inject 'Mentioned in' lists at the bottom of targeted documents.",
+    parameters: { type: "object", properties: {} },
+    side_effects: [ "file-write" ],
+  },
+  {
+    name: "trails", description: "Parse research/trails/*.md playlists and auto-inject Previous/Next navigation headers in referenced documents.",
+    parameters: { type: "object", properties: {} },
+    side_effects: [ "file-write" ],
+  },
+  {
+    name: "query", description: "Structural search engine for AI agents. Searches Markdown files, ignoring node_modules and .cogentiaignore paths. Use --json for structured output.",
+    parameters: { type: "object", properties: { keyword: { type: "string" }, regex: { type: "boolean", description: "Use regex matching" }, repo: { type: "string", description: "Optional repo filter" } }, required: [ "keyword" ] },
+    side_effects: [],
+  },
+  {
+    name: "bundle", description: "Context bundler for AI agents. Concatenates all Markdown files related to a concept or trail into a single structured output.",
+    parameters: { type: "object", properties: { concept: { type: "string" }, trail: { type: "string" }, repo: { type: "string" }, all: { type: "boolean" } } },
+    side_effects: [],
   },
 ];
 
@@ -2820,6 +3453,17 @@ function cmdState() {
       const corpusFile = findCorpusStatusFile( repoPath );
       r.has_corpus_status = !!corpusFile;
       if ( corpusFile ) r.corpus_status_path = corpusFile;
+
+      const conceptsFile = findConceptsFile( repoPath );
+      r.has_concepts = !!conceptsFile;
+      if ( conceptsFile ) {
+        const loaded = loadConceptsForRepo( entry );
+        r.concepts_path = conceptsFile;
+        r.concepts_count = loaded.concepts.length;
+        r.concepts = loaded.concepts.map( cpt => ( {
+          name: cpt.name, scope: cpt.scope, status: cpt.status, type: cpt.type, slug: cpt.slug,
+        } ) );
+      }
     }
 
     result.repos.push( r );
@@ -2900,12 +3544,433 @@ function cmdExplainIgnore( fileArg ) {
   console.log();
 }
 
+
+// ── navigation & wiki features ────────────────────────────────────────────────
+
+function cmdInitJekyll() {
+  const { configPath, config } = loadConfig();
+  if ( !configPath ) die( "No registry found. Run: cogentia add <repo> first." );
+  const results = [];
+  
+  for ( const entry of config.repos ) {
+    const repoPath = resolveRepoPath( entry );
+    if ( !repoPath ) continue;
+    const configYmlPath = path.join( repoPath, "_config.yml" );
+    const content = `title: "Cogentia Corpus — ${entry.name}"\ndescription: "Distributed research and governance."\ntheme: just-the-docs\n\ncolor_scheme: dark\n\n# Cogentia structure\naux_links:\n  "Cogentia README": "https://github.com/JeanHuguesRobert/cogentia"\n\n# Disable default Jekyll behavior that might interfere with raw Markdown files\nexclude:\n  - ".cogentiaignore"\n  - ".git/"\n  - "node_modules/"\n`;
+    if (!fs.existsSync(configYmlPath)) {
+      fs.writeFileSync(configYmlPath, content, "utf8");
+      results.push( { name: entry.name, action: "created" } );
+    } else {
+      results.push( { name: entry.name, action: "exists" } );
+    }
+  }
+  
+  if ( JSON_MODE ) { console.log( JSON.stringify( { results }, null, 2 ) ); return; }
+  console.log( `\n${hdr( "Jekyll Configuration" )}\n` );
+  for ( const r of results ) {
+    console.log( `  ${bold( pad( r.name, 18 ) )} ${r.action === "created" ? ok( "created _config.yml" ) : dim( "already exists" )}` );
+  }
+  console.log();
+}
+
+function buildBacklinksIndex() {
+  const { config } = loadConfig();
+  const index = new Map();
+  
+  for ( const entry of config.repos ) {
+    const repoPath = resolveRepoPath( entry );
+    if ( !repoPath ) continue;
+    const mdFiles = listMarkdown( repoPath );
+    const ignorePatterns = loadIgnore( repoPath );
+    
+    for ( const f of mdFiles ) {
+      if ( matchesIgnore( f.rel, ignorePatterns ) ) continue;
+      
+      const content = fs.readFileSync( f.full, "utf8" );
+      const titleMatch = content.match( /^title:\s*"([^"]+)"/m ) || content.match( /^#\s+(.+)$/m );
+      const sourceTitle = titleMatch ? titleMatch[1].trim() : path.basename( f.rel );
+      
+      const linkRegex = /\[([^\]]+)\]\(([^)]+\.md)(?:#[^)]+)?\)/g;
+      let m;
+      while ( ( m = linkRegex.exec( content ) ) ) {
+        const linkPath = m[2];
+        if ( linkPath.startsWith( "http" ) ) continue;
+        const targetAbs = path.resolve( path.dirname( f.full ), linkPath ).toLowerCase();
+        
+        if ( !index.has( targetAbs ) ) index.set( targetAbs, [] );
+        const arr = index.get( targetAbs );
+        if ( !arr.some( a => a.sourceFull === f.full ) ) {
+          arr.push( { sourceRepo: entry.name, sourceRel: f.rel, sourceFull: f.full, sourceTitle } );
+        }
+      }
+    }
+  }
+  return index;
+}
+
+function cmdBacklinks() {
+  const { configPath, config } = loadConfig();
+  if ( !configPath ) die( "No registry found. Run: cogentia add <repo> first." );
+  
+  const index = buildBacklinksIndex();
+  let updatedCount = 0;
+  
+  for ( const entry of config.repos ) {
+    const repoPath = resolveRepoPath( entry );
+    if ( !repoPath ) continue;
+    const mdFiles = listMarkdown( repoPath );
+    const ignorePatterns = loadIgnore( repoPath );
+    
+    for ( const f of mdFiles ) {
+      if ( matchesIgnore( f.rel, ignorePatterns ) ) continue;
+      const targetAbs = f.full.toLowerCase();
+      const links = index.get( targetAbs );
+      if ( !links || links.length === 0 ) continue;
+      
+      let content = fs.readFileSync( f.full, "utf8" );
+      const original = content;
+      
+      let block = "### Backlinks\n\n*These documents link to this file:*\n";
+      for ( const link of links ) {
+        const relPath = path.relative( path.dirname( f.full ), link.sourceFull ).replace( /\\/g, "/" );
+        block += `- [${link.sourceTitle}](${relPath})\n`;
+      }
+      
+      if ( !content.includes( "<!-- BEGIN_AUTO: backlinks -->" ) ) {
+        content += `\n\n<!-- BEGIN_AUTO: backlinks -->\n<!-- END_AUTO: backlinks -->\n`;
+      }
+      
+      const r = replaceMarkedSection( content, "backlinks", block );
+      if ( r.updated && r.content !== original ) {
+        fs.writeFileSync( f.full, r.content, "utf8" );
+        updatedCount++;
+      }
+    }
+  }
+  
+  if ( JSON_MODE ) { console.log( JSON.stringify( { updated: updatedCount }, null, 2 ) ); return; }
+  console.log( `\n${hdr( "Backlinks Auto-Injection" )}\n` );
+  console.log( `  Injected/Updated backlinks in ${bold( updatedCount )} files.` );
+  console.log();
+}
+
+function cmdTrails() {
+  const { configPath, config } = loadConfig();
+  if ( !configPath ) die( "No registry found. Run: cogentia add <repo> first." );
+  
+  let updatedCount = 0;
+  const trails = [];
+  
+  for ( const entry of config.repos ) {
+    const repoPath = resolveRepoPath( entry );
+    if ( !repoPath ) continue;
+    const trailsDir = path.join( repoPath, "research", "trails" );
+    if ( !fs.existsSync( trailsDir ) ) continue;
+    
+    for ( const file of fs.readdirSync( trailsDir ) ) {
+      if ( !file.endsWith( ".md" ) ) continue;
+      const full = path.join( trailsDir, file );
+      const content = fs.readFileSync( full, "utf8" );
+      const titleMatch = content.match( /^#\s+Trail:\s*(.+)$/m );
+      if ( !titleMatch ) continue;
+      const trailName = titleMatch[1].trim();
+      
+      const items = [];
+      const linkRegex = /^\s*(?:\d+\.|\*|-)\s+\[([^\]]+)\]\(([^)]+\.md)(?:#[^)]+)?\)/gm;
+      let m;
+      while ( ( m = linkRegex.exec( content ) ) ) {
+        const linkTitle = m[1];
+        const linkPath = m[2];
+        const targetAbs = path.resolve( path.dirname( full ), linkPath );
+        if ( fs.existsSync( targetAbs ) ) {
+          items.push( { title: linkTitle, fullPath: targetAbs, relFromTrail: linkPath } );
+        }
+      }
+      
+      if ( items.length > 0 ) {
+        trails.push( { repo: entry.name, name: trailName, source: full, items } );
+      }
+    }
+  }
+  
+  const fileUpdates = new Map();
+  for ( const trail of trails ) {
+    for ( let i = 0; i < trail.items.length; i++ ) {
+      const item = trail.items[i];
+      const prev = i > 0 ? trail.items[i - 1] : null;
+      const next = i < trail.items.length - 1 ? trail.items[i + 1] : null;
+      
+      let block = `> 🧭 **Trail: ${trail.name}**\n> `;
+      const parts = [];
+      if ( prev ) {
+        const relPrev = path.relative( path.dirname( item.fullPath ), prev.fullPath ).replace( /\\/g, "/" );
+        parts.push( `⬅️ Previous: [${prev.title}](${relPrev})` );
+      }
+      if ( next ) {
+        const relNext = path.relative( path.dirname( item.fullPath ), next.fullPath ).replace( /\\/g, "/" );
+        parts.push( `➡️ Next: [${next.title}](${relNext})` );
+      }
+      block += parts.join( " | " ) + "\n";
+      
+      if ( !fileUpdates.has( item.fullPath ) ) fileUpdates.set( item.fullPath, [] );
+      fileUpdates.get( item.fullPath ).push( block );
+    }
+  }
+  
+  for ( const [ targetAbs, blocks ] of fileUpdates.entries() ) {
+    let content = fs.readFileSync( targetAbs, "utf8" );
+    const original = content;
+    const finalBlock = blocks.join( "\n" );
+    
+    if ( !content.includes( "<!-- BEGIN_AUTO: trails -->" ) ) {
+      const fmMatch = content.match( /^---\r?\n[\s\S]*?\r?\n---\r?\n\r?\n#\s+[^\r\n]+\r?\n\r?\n/ );
+      if ( fmMatch ) {
+        content = content.slice( 0, fmMatch[0].length ) + "<!-- BEGIN_AUTO: trails -->\n<!-- END_AUTO: trails -->\n\n" + content.slice( fmMatch[0].length );
+      } else {
+        content = "<!-- BEGIN_AUTO: trails -->\n<!-- END_AUTO: trails -->\n\n" + content;
+      }
+    }
+    
+    const r = replaceMarkedSection( content, "trails", finalBlock );
+    if ( r.updated && r.content !== original ) {
+      fs.writeFileSync( targetAbs, r.content, "utf8" );
+      updatedCount++;
+    }
+  }
+  
+  if ( JSON_MODE ) { console.log( JSON.stringify( { trails: trails.length, updated: updatedCount }, null, 2 ) ); return; }
+  console.log( `\n${hdr( "Navigation Trails Injection" )}\n` );
+  console.log( `  Found ${bold( trails.length )} trails.` );
+  console.log( `  Injected/Updated trail headers in ${bold( updatedCount )} files.` );
+  console.log();
+}
+
+
+// ── AI agent tools ────────────────────────────────────────────────────────────
+
+function cmdQuery( keywordArg ) {
+  const { configPath, config } = loadConfig();
+  if ( !configPath ) die( "No registry found. Run: cogentia add <repo> first." );
+  if ( !keywordArg ) die( "Usage: cogentia query <keyword> [--regex] [--repo <name>]" );
+  
+  const isRegex = argv.includes( "--regex" );
+  const repoFilter = getFlagValue( "--repo" );
+  
+  let regex;
+  if ( isRegex ) {
+    try { regex = new RegExp( keywordArg, "gi" ); } catch ( e ) { die( `Invalid regex: ${e.message}` ); }
+  } else {
+    regex = new RegExp( keywordArg.replace( /[.*+?^${}()|[\\]\\\\]/g, '\\\\$&' ), "gi" );
+  }
+  
+  const results = [];
+  
+  for ( const entry of config.repos ) {
+    if ( repoFilter && entry.name !== repoFilter ) continue;
+    const repoPath = resolveRepoPath( entry );
+    if ( !repoPath ) continue;
+    const mdFiles = listMarkdown( repoPath );
+    const ignorePatterns = loadIgnore( repoPath );
+    
+    for ( const f of mdFiles ) {
+      if ( matchesIgnore( f.rel, ignorePatterns ) ) continue;
+      const fileContent = fs.readFileSync( f.full, "utf8" );
+      const lines = fileContent.split( /\r?\n/ );
+      
+      for ( let i = 0; i < lines.length; i++ ) {
+        if ( regex.test( lines[i] ) ) {
+          regex.lastIndex = 0;
+          const snippetLines = lines.slice( Math.max( 0, i - 1 ), Math.min( lines.length, i + 2 ) );
+          results.push( {
+            repo: entry.name,
+            file: f.rel,
+            full_path: f.full.replace( /\\/g, "/" ),
+            line: i + 1,
+            snippet: snippetLines.join( "\n" ).trim()
+          } );
+        }
+      }
+    }
+  }
+  
+  if ( JSON_MODE ) { console.log( JSON.stringify( { query: keywordArg, is_regex: isRegex, matches: results }, null, 2 ) ); return; }
+  
+  console.log( `\n${hdr( "Structural Query Engine" )}\n` );
+  console.log( `  Searching for: "${keywordArg}" ${isRegex ? "(Regex)" : ""}\n` );
+  
+  if ( results.length === 0 ) {
+    console.log( `  ${dim("No matches found.")}\n` );
+    return;
+  }
+  
+  for ( const r of results ) {
+    console.log( `  ${bold( r.repo )} : ${c.cyan}${r.file}${c.reset}:${c.yellow}${r.line}${c.reset}` );
+    console.log( `    ${dim( r.snippet.replace( /\n/g, "\n    " ) )}\n` );
+  }
+}
+
+function cmdBundle() {
+  const { configPath, config } = loadConfig();
+  if ( !configPath ) die( "No registry found. Run: cogentia add <repo> first." );
+  
+  const conceptFilter = getFlagValue( "--concept" );
+  const trailFilter = getFlagValue( "--trail" );
+  const repoFilter = getFlagValue( "--repo" );
+  const doAll = argv.includes( "--all" );
+  
+  if ( !conceptFilter && !trailFilter && !repoFilter && !doAll ) {
+    die( "Usage: cogentia bundle < --concept <name> | --trail <name> | --repo <name> | --all >" );
+  }
+  
+  const filesToBundle = new Set();
+  
+  if ( doAll || repoFilter ) {
+    for ( const entry of config.repos ) {
+      if ( repoFilter && entry.name !== repoFilter ) continue;
+      const repoPath = resolveRepoPath( entry );
+      if ( !repoPath ) continue;
+      const mdFiles = listMarkdown( repoPath );
+      const ignorePatterns = loadIgnore( repoPath );
+      for ( const f of mdFiles ) {
+        if ( !matchesIgnore( f.rel, ignorePatterns ) ) filesToBundle.add( f.full.replace( /\\/g, "/" ) );
+      }
+    }
+  }
+  
+  if ( conceptFilter ) {
+    const loaded = loadAllConcepts( config, null );
+    let found = false;
+    for ( const r of loaded ) {
+      for ( const cpt of r.concepts ) {
+        if ( cpt.name.toLowerCase() === conceptFilter.toLowerCase() || cpt.slug === slugifyMarkdownHeading( conceptFilter ) ) {
+          found = true;
+          const docs = [ ...cpt.reference_documents, ...cpt.used_in ];
+          for ( const raw of docs ) {
+            const m = String( raw ).match( /`([^`]+)`/ ) || String( raw ).match( /^([^\s]+\.md)(?:\s|$)/ );
+            if ( !m ) continue;
+            const rel = m[ 1 ];
+            if ( rel.startsWith( "http" ) ) continue;
+            filesToBundle.add( path.resolve( r.repoPath, rel ).replace( /\\/g, "/" ) );
+          }
+        }
+      }
+    }
+    if ( !found ) die( `Concept "${conceptFilter}" not found.` );
+  }
+  
+  if ( trailFilter ) {
+    for ( const entry of config.repos ) {
+      const repoPath = resolveRepoPath( entry );
+      if ( !repoPath ) continue;
+      const trailsDir = path.join( repoPath, "research", "trails" );
+      if ( !fs.existsSync( trailsDir ) ) continue;
+      
+      for ( const file of fs.readdirSync( trailsDir ) ) {
+        if ( !file.endsWith( ".md" ) ) continue;
+        const full = path.join( trailsDir, file );
+        const content = fs.readFileSync( full, "utf8" );
+        const titleMatch = content.match( /^#\s+Trail:\s*(.+)$/m );
+        if ( titleMatch && titleMatch[1].trim().toLowerCase() === trailFilter.toLowerCase() ) {
+          const linkRegex = /^\s*(?:\d+\.|\*|-)\s+\[([^\]]+)\]\(([^)]+\.md)(?:#[^)]+)?\)/gm;
+          let m;
+          while ( ( m = linkRegex.exec( content ) ) ) {
+            filesToBundle.add( path.resolve( path.dirname( full ), m[2] ).replace( /\\/g, "/" ) );
+          }
+        }
+      }
+    }
+  }
+  
+  const blocks = [];
+  for ( const fileAbs of filesToBundle ) {
+    if ( fs.existsSync( fileAbs ) ) {
+      const content = fs.readFileSync( fileAbs, "utf8" );
+      const relPathMatch = fileAbs.match(/c:\/tweesic\/([^\/]+)\/(.*)/i);
+      const headerTitle = relPathMatch ? `${relPathMatch[1]}/${relPathMatch[2]}` : fileAbs;
+      blocks.push( `======================================================================\nFILE: ${headerTitle}\n======================================================================\n${content}\n` );
+    }
+  }
+  
+  const finalOutput = blocks.join( "\n" );
+  if ( JSON_MODE ) {
+    console.log( JSON.stringify( { bundled_files: Array.from( filesToBundle ), content: finalOutput }, null, 2 ) );
+  } else {
+    console.log( finalOutput );
+  }
+}
+
 // ═══════════════════════════════════════════════════════════════════════════════
 // ENTRY POINT
 // ═══════════════════════════════════════════════════════════════════════════════
 
+
+function cmdInstallHooks() {
+  const { configPath, config } = loadConfig();
+  if ( !configPath ) die( "No registry found. Run: cogentia add <repo> first." );
+  const results = [];
+
+  // The hook is a pure Node.js script so it runs identically on Windows,
+  // macOS, and Linux.  Git on Windows (Git-for-Windows) will execute any
+  // file whose name is exactly "pre-commit" via its bundled sh.exe, but
+  // will also pick up "pre-commit.cmd" for native cmd/PowerShell flows.
+  // We write BOTH so every Git client is covered.
+
+  for (const entry of config.repos) {
+    const repoPath = resolveRepoPath(entry);
+    if (!repoPath) continue;
+    const hooksDir = path.join(repoPath, ".git", "hooks");
+    if (!fs.existsSync(hooksDir)) continue;
+
+    const cogentiaScript = process.argv[1].replace(/\\/g, "/");
+
+    // ── 1. Portable POSIX hook (Git-for-Windows sh.exe, macOS, Linux) ─────
+    const posixHook = [
+      "#!/usr/bin/env node",
+      "// Auto-generated by cogentia.js install-hooks — do not edit by hand",
+      `import { execFileSync } from "node:child_process";`,
+      `try {`,
+      `  process.stdout.write("[Cogentia] Running pre-commit checks...\\n");`,
+      `  execFileSync(process.execPath, [${JSON.stringify(cogentiaScript)}, "status"],`,
+      `               { stdio: "inherit" });`,
+      `} catch (_) {`,
+      `  process.stdout.write("[Cogentia] Commit blocked — fix status errors first.\\n");`,
+      `  process.exit(1);`,
+      `}`,
+    ].join("\n") + "\n";
+
+    // ── 2. Windows .cmd twin (native cmd / PowerShell Git clients) ─────────
+    const cmdHook = [
+      "@echo off",
+      ":: Auto-generated by cogentia.js install-hooks — do not edit by hand",
+      `node "${cogentiaScript}" status`,
+      "if %ERRORLEVEL% neq 0 (",
+      "  echo [Cogentia] Commit blocked — fix status errors first.",
+      "  exit /b 1",
+      ")",
+    ].join("\r\n") + "\r\n";
+
+    const preCommitPath    = path.join(hooksDir, "pre-commit");
+    const preCommitCmdPath = path.join(hooksDir, "pre-commit.cmd");
+
+    fs.writeFileSync(preCommitPath,    posixHook, { encoding: "utf8", mode: 0o755 });
+    fs.writeFileSync(preCommitCmdPath, cmdHook,   { encoding: "utf8" });
+    results.push(entry.name);
+  }
+
+  if (JSON_MODE) { console.log(JSON.stringify({ hooks_installed: results }, null, 2)); return; }
+  console.log(`\n${hdr("Git Hooks Installation")}\n`);
+  console.log(`  Installed cross-platform pre-commit hooks (POSIX + .cmd) in ${results.length} repos:`);
+  console.log(`  ${results.join(", ")}`);
+  console.log();
+}
+
 ( async () => {
   switch ( command ) {
+    case "query": cmdQuery( cmdArgs[ 0 ] ); break;
+    case "bundle": cmdBundle(); break;
+    case "init-jekyll": cmdInitJekyll(); break;
+    case "backlinks": cmdBacklinks(); break;
+    case "trails": cmdTrails(); break;
     case "add":    cmdAdd(    cmdArgs[ 0 ] ); break;
     case "remove": cmdRemove( cmdArgs[ 0 ] ); break;
     case "list":   cmdList();                break;
@@ -2922,8 +3987,10 @@ function cmdExplainIgnore( fileArg ) {
     case "stamp":          cmdStamp(  cmdArgs[ 0 ] );       break;
     case "corpus-status":  cmdCorpusStatus( cmdArgs[ 0 ] ); break;
     case "manifest":       cmdManifest();                   break;
+    case "install-hooks":  cmdInstallHooks();               break;
     case "state":          cmdState();                      break;
     case "explain-ignore": cmdExplainIgnore( cmdArgs[ 0 ] );break;
+    case "concepts":       cmdConcepts( ...cmdArgs );      break;
     case "continuation":   cmdContinuation( ...cmdArgs );  break;
     case "help":
     case "--help":

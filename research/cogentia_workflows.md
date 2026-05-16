@@ -10,7 +10,7 @@ affiliation: "Institut Mariani — C.O.R.S.I.C.A., 1 cours Paoli, F-20250 Corte,
 license: "CC BY-SA 4.0"
 status: "Working paper — companion to Cogentia Commons MVP Specification"
 canonical_url: https://github.com/JeanHuguesRobert/cogentia/blob/main/research/cogentia_workflows.md
-last_stamped_at: 2026-05-15
+last_stamped_at: 2026-05-16
 ---
 
 # Cogentia Workflows
@@ -1249,3 +1249,13 @@ Together, they form an infrastructure for collective intelligence.
 
 *Draft v0.2 — Corte, 2026-05-11*  
 *Institut Mariani — C.O.R.S.I.C.A.*
+
+
+<!-- BEGIN_AUTO: backlinks -->
+### Backlinks
+
+*These documents link to this file:*
+- [Corpus Status — cogentia](corpus-status.md)
+- [Research Index — Cogentia](index.md)
+
+<!-- END_AUTO: backlinks -->

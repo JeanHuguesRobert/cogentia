@@ -1,6 +1,6 @@
 ---
 canonical_url: https://github.com/JeanHuguesRobert/cogentia/blob/main/research/Cogentia-and-Cogentigram.md
-last_stamped_at: 2026-05-15
+last_stamped_at: 2026-05-16
 ---
 # Cogentia and Cogentigrams
 
@@ -319,3 +319,15 @@ Buffon, G.-L. L. de. (1770). *Œuvres complètes*.
 Robert, J. H. (2026b). *Cogentia Commons: A platform architecture for collaborative possibility exploration under scientific constraint*. Institut Mariani R&D. https://github.com/JeanHuguesRobert/cogentia/blob/main/research/Cogentia_Commons_Working_Paper.md
 
 Robert, J. H. (2026c). *Democratic Humans in the Loop: Why Infrastructure Is All You Need for AI Safety* (DHITL). MareNostrum Repository. https://github.com/JeanHuguesRobert/marenostrum
+
+
+<!-- BEGIN_AUTO: backlinks -->
+### Backlinks
+
+*These documents link to this file:*
+- [Corpus Status — cogentia](corpus-status.md)
+- [Research Index — Cogentia](index.md)
+- [Cogentia Commons — MVP Specification](cogentia_commons_mvp_spec.md)
+- [The Sovereign Digital Twin: Cogentia, Cogentigram, Cogentiscope](cogentia-digital-twin.md)
+
+<!-- END_AUTO: backlinks -->

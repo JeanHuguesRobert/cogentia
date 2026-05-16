@@ -25,6 +25,9 @@ This repository instantiates the **cognitive infrastructure layer** of the [DHIT
 | [KYS — Psychocognitive Analysis Protocol v1.0](kys-prompt.md) | this repo | 2026 |
 | [COGENTIA v1.0 — Prompt d'analyse psychocognitive (FR)](cogentia_prompt_v1.md) | this repo | 2026 |
 | [Corpus Status](corpus-status.md) *(living view — auto-refreshed by `cogentia.js corpus-status`)* | this repo | refreshable |
+| [Concept Index](concepts.md) *(typed concept registry — mapped by `cogentia.js concepts`)* | this repo | refreshable |
+| [Agent Navigation Guide (Context Server)](../docs/agent_context_server.md) *(meta-prompt for AI agents — bundle, query, continuation)* | this repo | 2026-05-16 |
+| [The Knowledge Mesh (Decentralized Wiki)](../docs/knowledge_mesh.md) *(backlinks, trails, Jekyll — human navigation guide)* | this repo | 2026-05-16 |
 
 ---
 

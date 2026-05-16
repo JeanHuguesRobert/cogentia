@@ -1,6 +1,12 @@
+<!-- BEGIN_AUTO: trails -->
+> 🧭 **Trail: From Method to Machine**
+> ⬅️ Previous: [FractaVolta — Energy Packet Networks](../../FractaVolta/fractavolta_paper.md) | ➡️ Next: [Agent-Resumable CLI](agent_resumable_cli.md)
+
+<!-- END_AUTO: trails -->
+
 ---
 canonical_url: https://github.com/JeanHuguesRobert/cogentia/blob/main/research/cogentia-digital-twin.md
-last_stamped_at: 2026-05-15
+last_stamped_at: 2026-05-16
 ---
 # The Sovereign Digital Twin: Cogentia, Cogentigram, Cogentiscope
 
@@ -149,3 +155,13 @@ This document is a position paper, not a product announcement. It is published i
 - [Cogentia MVP](https://github.com/JeanHuguesRobert/cogentia)
 - [The Generalized Tocqueville Law](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/tocqueville_law.md)
 - [Inox](https://github.com/virteal/Inox) — intended edge runtime for Layer 3 of DHITL
+
+
+<!-- BEGIN_AUTO: backlinks -->
+### Backlinks
+
+*These documents link to this file:*
+- [Corpus Status — cogentia](corpus-status.md)
+- [Research Index — Cogentia](index.md)
+
+<!-- END_AUTO: backlinks -->

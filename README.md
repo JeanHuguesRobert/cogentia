@@ -77,6 +77,22 @@ All published documents live in `research/` and are catalogued in [`research/ind
 - **[Cogentia Commons MVP Spec](research/cogentia_commons_mvp_spec.md)** — the v1 architecture for `brique-cogentia-commons`.
 - **[Democratic AI Safety](research/democratic_ai_safety.md)** — radical democracy as the best AI Safety strategy.
 - **[The Sovereign Digital Twin](research/cogentia-digital-twin.md)** — Cogentia, Cogentigram, Cogentiscope.
+- **[Agent Navigation Guide](docs/agent_context_server.md)** — meta-prompt for AI agents navigating the corpus.
+- **[The Knowledge Mesh](docs/knowledge_mesh.md)** — backlinks, trails, and Jekyll for human navigation.
+
+## CLI features (v0.9.0)
+
+- **Concepts & Taxonomy**
+  * `cogentia concepts init` · `concepts status` · `concepts check` (orphan validation)
+- **Agentic Context Server**
+  * `cogentia bundle --concept <name>` — compile a sub-graph into a single LLM-ready payload
+  * `cogentia query "keyword"` — structural search (respects `.cogentiaignore`)
+- **Knowledge Mesh (Wiki)**
+  * `cogentia backlinks` — auto-inject "Mentioned in" lists
+  * `cogentia trails` — inject Previous/Next navigation from curated playlists
+  * `cogentia init-jekyll` — generate `_config.yml` for GitHub Pages
+- **Integrity**
+  * `cogentia install-hooks` — cross-platform pre-commit hooks (Node.js + .cmd)
 
 ## Ecosystem
 

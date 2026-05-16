@@ -8,10 +8,16 @@ author: "Jean Hugues Noël Robert, baron Mariani"
 affiliation: "Institut Mariani / C.O.R.S.I.C.A., 1 cours Paoli, F-20250 Corte, Corsica"
 license: "CC BY-SA 4.0"
 canonical_url: https://github.com/JeanHuguesRobert/cogentia/blob/main/COGENTIA.md
-last_stamped_at: 2026-05-15
+last_stamped_at: 2026-05-16
 ---
 
 # Cogentia
+
+<!-- BEGIN_AUTO: trails -->
+> 🧭 **Trail: From Method to Machine**
+> ⬅️ Previous: [Discours de la seconde méthode](../barons-Mariani/research/second_method.md) | ➡️ Next: [Radical Democracy as the Best AI Safety Strategy](research/democratic_ai_safety.md)
+
+<!-- END_AUTO: trails -->
 
 > *Cogito ergo sum.*
 > *Cogentia ergo scimus.*
@@ -128,3 +134,13 @@ The framework exists to be argued against, in the form it itself defined.
 
 *— Jean Hugues Noël Robert, baron Mariani*
 *Institut Mariani / C.O.R.S.I.C.A., 1 cours Paoli, F-20250 Corte, Corsica*
+
+
+<!-- BEGIN_AUTO: backlinks -->
+### Backlinks
+
+*These documents link to this file:*
+- [Corpus Status — cogentia](research/corpus-status.md)
+- [Research Index — Cogentia](research/index.md)
+
+<!-- END_AUTO: backlinks -->

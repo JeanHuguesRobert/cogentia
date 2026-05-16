@@ -1,6 +1,6 @@
 ---
 canonical_url: https://github.com/JeanHuguesRobert/cogentia/blob/main/research/cogentia_prompt_v1.md
-last_stamped_at: 2026-05-15
+last_stamped_at: 2026-05-16
 ---
 # COGENTIA v1.0 — Prompt d'analyse psychocognitive
 
@@ -257,3 +257,13 @@ Pour les indicateurs catégorie F (scores dérivés, rangs 59-65), calcule-les �
 - Vérifier la présence de `cogentia_version: "1.0"` pour authentifier le prompt non altéré
 - Vérifier que `indicators.length >= 65`
 - Indexer par `rank` pour le scoring
+
+
+<!-- BEGIN_AUTO: backlinks -->
+### Backlinks
+
+*These documents link to this file:*
+- [Corpus Status — cogentia](corpus-status.md)
+- [Research Index — Cogentia](index.md)
+
+<!-- END_AUTO: backlinks -->

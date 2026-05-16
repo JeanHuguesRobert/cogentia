@@ -10,7 +10,7 @@ license: "CC BY-SA 4.0 for text; MIT for associated code"
 spdx: "CC-BY-SA-4.0"
 canonical_project: "[https://github.com/JeanHuguesRobert/cogentia](https://github.com/JeanHuguesRobert/cogentia)"
 canonical_url: https://github.com/JeanHuguesRobert/cogentia/blob/main/research/agent_resumable_cli.md
-last_stamped_at: 2026-05-15
+last_stamped_at: 2026-05-16
 ---
 --------------------------------------------------------------------------------------------------------------
 
@@ -45,6 +45,12 @@ AI agents; command-line interfaces; continuations; `call/cc`; continuation-passi
 ---
 
 # Part I — The General Principle
+
+<!-- BEGIN_AUTO: trails -->
+> 🧭 **Trail: From Method to Machine**
+> ⬅️ Previous: [The Sovereign Digital Twin](cogentia-digital-twin.md) | ➡️ Next: [Agent Navigation Guide](../docs/agent_context_server.md)
+
+<!-- END_AUTO: trails -->
 
 ## 1. Introduction
 
@@ -1097,3 +1103,14 @@ Preserve the possibility of resumption.
 ## Appendix C — Minimal Designer Rule
 
 A compliant CLI does not hide judgment. It exposes judgment as a continuation, constrains it, assigns accountability, validates the response, records the decision, and resumes.
+
+
+<!-- BEGIN_AUTO: backlinks -->
+### Backlinks
+
+*These documents link to this file:*
+- [Corpus Status — cogentia](corpus-status.md)
+- [Research Index — Cogentia](index.md)
+- [Agent-Resumable CLI](agent_resumable_cli.md)
+
+<!-- END_AUTO: backlinks -->

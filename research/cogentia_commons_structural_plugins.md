@@ -10,7 +10,7 @@ affiliation: "Institut Mariani — C.O.R.S.I.C.A., 1 cours Paoli, F-20250 Corte,
 license: "CC BY-SA 4.0 (text + prompt templates), MIT (schemas and tooling)"
 status: "Working sub-specification — companion to cogentia_commons_mvp_spec.md §6.3"
 canonical_url: https://github.com/JeanHuguesRobert/cogentia/blob/main/research/cogentia_commons_structural_plugins.md
-last_stamped_at: 2026-05-15
+last_stamped_at: 2026-05-16
 ---
 
 # Cogentia Commons — Structural Plugin Sub-Specifications
@@ -499,3 +499,15 @@ JSON Schema files, fixtures, and reference implementations: **MIT**.
 
 *Premier commit : 2026-05-12 — Corte. Sub-spec draft v0.1.*
 *Institut Mariani — C.O.R.S.I.C.A., 1 cours Paoli, F-20250 Corte, Corsica*
+
+
+<!-- BEGIN_AUTO: backlinks -->
+### Backlinks
+
+*These documents link to this file:*
+- [Research Index — Cogentia](index.md)
+- [Cogentia Commons — Session Continuation Snapshot](cogentia_commons_continuation.md)
+- [Cogentia Commons — Workflows](cogentia_commons_workflows.md)
+- [Cogentia Commons — Substantive Plugin Sub-Specifications](cogentia_commons_substantive_plugins.md)
+
+<!-- END_AUTO: backlinks -->

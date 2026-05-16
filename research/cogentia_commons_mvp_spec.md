@@ -10,7 +10,7 @@ affiliation: "Institut Mariani — C.O.R.S.I.C.A., 1 cours Paoli, F-20250 Corte,
 license: "CC BY-SA 4.0 (text), MIT (reference code contracts)"
 status: "Working specification — applies the method to itself"
 canonical_url: https://github.com/JeanHuguesRobert/cogentia/blob/main/research/cogentia_commons_mvp_spec.md
-last_stamped_at: 2026-05-15
+last_stamped_at: 2026-05-16
 ---
 
 # Cogentia Commons — MVP Specification
@@ -1286,3 +1286,20 @@ Reference implementation contracts (schemas, plugin manifests, resolver code): *
 
 *Premier commit : 2026-05-11 — Corte. Draft v0.1.*
 *Institut Mariani — C.O.R.S.I.C.A., 1 cours Paoli, F-20250 Corte, Corsica*
+
+
+<!-- BEGIN_AUTO: backlinks -->
+### Backlinks
+
+*These documents link to this file:*
+- [Corpus Status — cogentia](corpus-status.md)
+- [Research Index — Cogentia](index.md)
+- [Cogentia Commons — Session Continuation Snapshot](cogentia_commons_continuation.md)
+- [Cogentia Commons — COMMUNITY.md Sub-Specification](cogentia_commons_community_manifest.md)
+- [Cogentia Commons — Workflows](cogentia_commons_workflows.md)
+- [Cogentia Commons — Substantive Plugin Sub-Specifications](cogentia_commons_substantive_plugins.md)
+- [Cogentia Commons — Structural Plugin Sub-Specifications](cogentia_commons_structural_plugins.md)
+- [Cogentia Commons — `kernel_extractor` Plugin Sub-Specification](cogentia_commons_kernel_extractor.md)
+- [Cogentia](../COGENTIA.md)
+
+<!-- END_AUTO: backlinks -->

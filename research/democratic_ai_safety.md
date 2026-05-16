@@ -1,5 +1,15 @@
 ---
 canonical_url: https://github.com/JeanHuguesRobert/cogentia/blob/main/research/democratic_ai_safety.md
+last_stamped_at: 2026-05-16
+---
+<!-- BEGIN_AUTO: trails -->
+> 🧭 **Trail: From Method to Machine**
+> ⬅️ Previous: [Cogentia — the framework, in five distinctive moves](../COGENTIA.md) | ➡️ Next: [DHITL — Democratic Humans in the Loop](../../marenostrum/DHITL.md)
+
+<!-- END_AUTO: trails -->
+
+---
+canonical_url: https://github.com/JeanHuguesRobert/cogentia/blob/main/research/democratic_ai_safety.md
 last_stamped_at: 2026-05-15
 ---
 # Radical Democracy as the Best AI Safety Strategy
@@ -349,3 +359,13 @@ Par ordre de criticité :
 *Ce document est un artifact Cogentia Commons. Il est conçu pour être questionné, contesté et co-construit. Les objections soumises via PR sur le dépôt cogentia sont les bienvenues. La prochaine revue est ouverte à tout agent humain ou IA capable de formuler une objection structurée.*
 
 *"The platform distributes the conditions of exploration; it does not democratize truth."* — Cogentia Commons Working Paper [1]
+
+
+<!-- BEGIN_AUTO: backlinks -->
+### Backlinks
+
+*These documents link to this file:*
+- [Corpus Status — cogentia](corpus-status.md)
+- [Research Index — Cogentia](index.md)
+
+<!-- END_AUTO: backlinks -->
