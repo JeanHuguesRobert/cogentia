@@ -6,10 +6,10 @@ Repo-local engineering follow-ups. Network-level / cross-repo work lives in `Jea
 
 **Goal:** provide both (a) a new method for rational exploration of the possible, and (b) a first GitHub-based tool that complies with that method.
 
-**Distance estimate (2026-05-10):**
+**Distance estimate (2026-05-18):**
 
 - **Method as *statement* — ~80%.** `second_method.md` exists, applies its own rules to its own production, and names what it has not yet solved. The remaining 20% is the hard 20%, and it is named explicitly in the doctrine itself: Rule 0's architectural enforcement is unsolved; the bootstrap problem ("30 years" is not a path); the circular guarantee can only be closed by external challengers, which currently don't exist.
-- **`cogentia.js` (the static corpus tool) — ~70%.** Works, MIT, zero deps, named in the doctrine. The `scan` correctness gap is the largest remaining liability — it can produce false-clean reports, which directly contradicts Rule 4. See "`cogentia.js` improvements" below.
+- **`cogentia.js` (the static corpus tool) — ~85%.** Works, MIT, zero deps, named in the doctrine. Publishable without doctrinal reservation: `scan` correctness is now anchored on real link parsing (`buildReferencedFileSet`), cross-repo refs are path-segment-matched (no false positive on `cogentia-old` vs `cogentia`), Mermaid diagrams are navigable (orphan-filtered + clickable), and `cogentia documents` / `cogentia forks` extend the corpus-hygiene surface. Remaining 15% is polish + the `cogentia inflection` / continuation-tracking work that's still design-stage.
 - **Cogentia Commons (`apps/commons`, the operational platform) — ~15-20%.** Currently UI scaffolding over `mockData`. The multi-agent critique loop — the piece that would *demonstrate* the method, not just state it — does not yet exist. See "Cogentia Commons — design contracts from `second_method.md`" below.
 
 **Honest reading:** the *method* is articulated, the *static tool* works, the *operational platform* is a stub. Mutual cross-linking among four repos by one author is structurally close to one repo with extra `git remote`s — the method requires external challengers to close its circular guarantee, and we have none yet.
@@ -19,40 +19,44 @@ Repo-local engineering follow-ups. Network-level / cross-repo work lives in `Jea
 Three highest-leverage next moves, in order of impact-per-effort. Detailed sub-items live in the dedicated sections below.
 
 1. **Build the smallest real multi-agent critique loop in `apps/commons`** — agent reads `research/second_method.md` (or `marenostrum/DHITL.md`), surfaces an unanchored claim, produces a falsifiable counter-claim, human gates whether it enters the corpus. Even crude. That is the smallest unit of the method *working*, not just *stated*. Doing this on the doctrine itself, publicly, with the resulting commits visible, is the demonstration the method requires of itself.
-2. **Fix `scan` correctness in `cogentia.js`.** Roughly one day. Replaces basename-substring matching with actual link parsing. Shores up the only public-facing claim ("the tool flags every unanchored assertion") that doesn't fully hold today.
+2. **Fix `scan` correctness in `cogentia.js`.** *(Done 2026-05-18 — `buildReferencedFileSet` now resolves real markdown links instead of basename-substring matching.)* Replaces basename-substring matching with actual link parsing. Shores up the only public-facing claim ("the tool flags every unanchored assertion") that doesn't fully hold today.
 3. **Invite specific named external participants to fork** — *(driver: jhrobert; this one cannot be done from inside)*. The circular guarantee cannot close from inside the four-repo corpus. Until at least one external fork exists with a `research/index.md` that links into the network, the corpus is structurally a single-author project regardless of repo count. Pick names. Reach out concretely.
 
 ## Verify the monorepo migration
 
-- [ ] `pnpm install` from repo root — confirm both workspaces resolve.
-- [ ] `pnpm personal:dev` — `apps/personal` boots, all routes (`/`, `/submit`, `/results/:id`, `/history`, `/docs`, `/auth`) render. Supabase calls succeed against the Personal project.
-- [ ] `pnpm commons:dev` — `apps/commons` boots, all routes (`/`, `/kernel`, `/project`, `/critique`, `/trace`, `/paper`) render against `mockData`.
-- [ ] `pnpm build` (Turbo) — both apps build cleanly, `apps/*/dist/` produced.
+- [x] *(Done 2026-05-18.)* `pnpm install` from repo root — both workspaces resolve, 143 packages added, 25.4s.
+- [x] *(Done 2026-05-18.)* `pnpm build` (Turbo) — both apps build cleanly. Revealed and fixed one stale path: `apps/commons/src/pages/PaperPage.jsx` imported `../../research/…` (left over from pre-refactor); corrected to `../../../../research/…`.
+- [ ] `pnpm personal:dev` / `pnpm commons:dev` — boot + manual route walk. Requires dev server + browser (and Supabase creds for `personal`). Run when next touching either app.
 
-## Migration decisions still open
+## Migration decisions
 
-- [ ] **PlatformIndex.jsx** — parked in `apps/commons/src/pages/` but unrouted. Decide: delete, or extract into a tiny third "front-door" landing (Netlify redirect from `cogentia.com` → `personal.cogentia.com` / `commons.cogentia.com`).
-- [ ] **`apps/commons/netlify.toml`** — Commons currently has no Netlify config. Add one when its Netlify site is provisioned.
-- [ ] **`apps/commons/.env.example`** — none yet (Commons doesn't import Supabase today). Add when Commons starts using a real backend.
-- [ ] **Commit strategy** — the monorepo refactor + corpus restructuring is two large changesets. Split into ~5 logical commits (workspace skeleton, source moves, doc consolidation + DHITL canonicalization, version-scaffolding cleanup, README + Foundation headers) or one each? My instinct: split.
+- [x] *(Done 2026-05-18.)* **PlatformIndex.jsx** — deleted. Unrouted, assumed a single-deployment archi that doesn't match current Netlify split. A future `cogentia.com` front-door would deserve its own `apps/landing/`.
+- [ ] **`apps/commons/netlify.toml`** — *Blocked: unblock when the Commons Netlify site is provisioned.* Not actionable until then.
+- [ ] **`apps/commons/.env.example`** — *Blocked: unblock when Commons starts using a real backend.* Not actionable today (no Supabase import in Commons).
+- ~~Commit strategy~~ — *moot, the changesets are committed.*
 
 ## Audit follow-ups (lighter)
 
 - [ ] **`apps/personal/samples/cogentigram_author.json`** (19KB) — orphan. Document its purpose in `apps/personal/README.md`, or remove.
-- [ ] Consider a root pnpm script `cogentia` → `node scripts/cogentia.js` so usage becomes `pnpm cogentia list` etc.
+- [x] *(Done 2026-05-18.)* Root pnpm script `cogentia` → `node scripts/cogentia.js`. Usage: `pnpm cogentia list`, `pnpm cogentia documents`, etc.
 
 ## `cogentia.js` improvements
 
 Priority is doctrinally-anchored: `second_method.md` names `cogentia.js scan` / `check` as canonical tooling. The script's behaviour is part of a published method.
 
-- [ ] **Tighten `scan` reference detection.** Replace `indexContent.includes(basename(X))` with actual link parsing (regex `[...](path)` + path resolution). Current implementation gives **false-clean** scan results when an index uses a non-basename relative path — undermines Rule 4.
-- [ ] **Fix help-text invocation string.** Top-of-help and example workflow say `node cogentia.js`; the doctrinal Coda calls it `node scripts/cogentia.js`. Align.
-- [ ] `extractCrossRefs` matches repo names by `link.url.includes('/${name}')`, which can false-positive between similarly-named repos (e.g. `cogentia-old` alongside `cogentia`).
+- [x] **Tighten `scan` reference detection.** (Done 2026-05-18.) Replaced `indexContent.includes(basename(X))` at 5 sites (`cmdStatus`, `cmdScan` ×3, `cmdState`) with `buildReferencedFileSet(indexPath, indexContent)` — parses real `[text](url)` links, skips URLs with a scheme / pure fragments, decodes percent-encoding, resolves relative to the index's directory. Caught one masked false-clean in `barons-Mariani` (`research/democratic_ai_safety.md` is a local duplicate of cogentia's; the index links to the cogentia URL, not the local copy).
+- [x] *(Done 2026-05-18.)* **Fix help-text invocation string** — every `node cogentia.js` in JSDoc + help + error string is now `node scripts/cogentia.js`, aligned with the doctrinal Coda.
+- [x] *(Done 2026-05-18.)* **`extractCrossRefs` path-segment match.** New helper `urlMatchesRepoName(url, name)` uses `(?:^|/)<name>(?:/|$|#|?)` regex so `cogentia-old` URLs no longer false-positively count as refs to `cogentia`. Verified with 9 unit tests.
 - [ ] No tests for the CLI itself.
+- [ ] **`cogentia forks <repo>` — make divergence visible from the origin.** The doctrine treats forking *as* the objection (no merge required). Smallest tool: query GitHub `/repos/{owner}/{name}/forks`, fetch each fork's `research/index.md` (and files whose `canonical_url` points back to this repo) via `raw.githubusercontent.com`, diff against local. Output: a table of "this line / this file has diverged at fork X". Merging stays manual (cherry-pick / PR). Pre-requisite: a GitHub API access path (env `GITHUB_TOKEN` first, `gh auth token` fallback, anonymous mode for public repos at the 60 req/h ceiling). Multi-user forks and PR-helper sugar are post-MVP.
+- [x] *(Done 2026-05-18.)* **`buildConceptGraphBlock` — dedupe concept nodes by id.** Canonical-repo policy: prefer `scope` containing "global" (case-insensitive), else first-iterated (load order from `.cogentia.json`). Edges keep all fan-in/out from every declaration. Verified: `Cogentia` and `Cogentigram` (each declared in 5 repos) now emit one node + one click each, URL pointing at the cogentia repo.
+- [ ] **Multi-agent loop — trace inflections, not commits, not conversations.** Current practice: manual copy/paste between agent conversations; commits are already filtered ("raisonnablement stabilisé"), typically in small clusters (1 stabilization + 1-2 fixups), with rare exceptional doctrinal-innovation commits. The friction is doctrinally valuable (Rule 0), so don't automate the dispatcher. Annotating *every* commit would be noise — clusters would repeat or contradict themselves. Right grain: annotate **at cluster close, only when doctrinally significant** (~1 in 10). Recommended mechanism: `git tag -a doctrinal/YYYY-MM-DD-<slug> -m "Challenge: … / Decision: … / Reason: …"` (signable, dated, listable via `git tag -l "doctrinal/*"`, no log pollution). Alternative: `git notes add` on the last commit of a cluster. Tool-side: optional `cogentia inflection <slug>` that wraps the tag command, validates the trailer format, appends to `.cogentia/audit.jsonl`, and (eventually) emits a `cogentia.continuation.v1` artifact recording the inflection. Discipline + git tag covers the 95% case; tool is sugar.
 
 ## Cogentia Commons — design contracts from `second_method.md` and DHITL
 
 The Five Rules are load-bearing on the `apps/commons` product. DHITL is the architectural axiom every feature must respect.
+
+> *All five items below are gated by strategic priority **#1** (the multi-agent critique loop). Kept here as a design checklist for when that work ripens; not currently actionable in isolation.*
 
 - [ ] **Rule 0 audit** — any "validation" / "vote" / "binding decision" feature must structurally exclude agent participation. Cogentia Commons sits at the cognitive infrastructure layer: open to agents, *not* deliberative. Document where the human is in the causal chain of every binding decision.
 - [ ] **Rule 2 — Burton conversion affordance** — the multi-agent critique loop must distinguish *feelings of certainty* from falsifiable objections. UI implication: every objection input should have an explicit "convert your feeling into a falsifiable claim" prompt before it enters the record.
@@ -68,30 +72,8 @@ The internal-consistency audit is largely resolved by the restructuring just per
 - [ ] **Review `Cogentia_Commons_Working_Paper.md` cross-section references** — beyond §10.2 (already fixed), spot-check that no other section references are dangling.
 - [ ] **Consider unifying the EN/FR `kys-prompt.md` / `cogentia_prompt_v1.md`** into a single source-of-truth + translation, rather than two parallel documents that can drift.
 
-## Done this session (for context)
+## Recent doctrinal work
 
-### Earlier (2026-05-09)
+Historical session notes (2026-05-09 monorepo refactor, 2026-05-10 DHITL canonicalization) live in git log. Recent additions:
 
-- ESM conversion of `scripts/cogentia.js`.
-- Renamed `congentia-project.md` → `cogentia-project.md` (typo).
-- Fixed broken/wrong links across all four registered repos (`check` reports 0).
-- Constellia ownership resolved: lives in `marenostrum`; `cogentia` references it.
-- Moved registry to `JeanHuguesRobert/.cogentia.json`; `.gitignore`d locally.
-- Refactored to monorepo: `apps/personal`, `apps/commons`, `research/`, pnpm + Turbo.
-- Removed SQL duplicates (`supabase_schema.sql`, `supabase_seed_prompt.sql`).
-
-### Today (2026-05-10) — corpus restructuring around DHITL as foundation
-
-- Deleted `research/cogentia-project.md` (March 2026 outdated formulation, predated the DHITL/Cogentia Commons synthesis).
-- Deleted `research/ARCHITECTURE_NOTE.md` (9-line stub; not a research deliverable).
-- Promoted DHITL as the single source of truth for the layer scheme. Removed competing layer enumerations from `Cogentia_Commons_Working_Paper.md`, `Cogentia-and-Cogentigram.md`, and `cogentia-digital-twin.md` — all three now cite DHITL instead.
-- Added Cogentiscope definition to `Cogentia-and-Cogentigram.md` §3 (resolves the audit gap where the Triptych was incomplete in the formal paper).
-- Reframed `democratic_ai_safety.md` as a *Coherence Demonstration* — the Cogentia Commons format applied to DHITL itself.
-- Dropped version-number scaffolding (`v0.4`, `v0.3`, `v0.1` markers, `Δ depuis v0.1` notes, the explicit Revision History section). Trust git for versioning.
-- Fixed Working Paper §10.2 broken cross-references to non-existent §6 / §9 content (audit H2).
-- Removed unsupported framework claim ("Big Five, MBTI, DISC, Enneagram") from `cogentia-digital-twin.md`; it now correctly defers to `Cogentia-and-Cogentigram.md` §4 for the formal axis construction.
-- Updated stale reference [5] in `democratic_ai_safety.md` ("À commettre" → actual GitHub URL).
-- Synced model-name examples between EN and FR prompt versions.
-- Added **Foundation** headers to all four `research/index.md` files (cogentia, marenostrum, FractaVolta, barons-Mariani), each declaring the repo's role in the AI Safety anti-capture proposal and pointing at DHITL + second_method.
-- Rewrote `cogentia/README.md` to lead with the architectural framing (Layer 4 of DHITL) instead of the product framing ("two products under one monorepo").
-- Saved system-purpose memory: corpus is fundamentally an AI Safety anti-capture proposal; DHITL is the load-bearing axiom held openly as a faith commitment.
+- **2026-05-18** — `cogentia documents`, `cogentia forks`, Mermaid orphan-filter + clickable nodes, `scan` correctness fix (`buildReferencedFileSet`), `extractCrossRefs` path-segment match, concept-graph dedupe, root `pnpm cogentia` script, GitHub-token cascade (env → `gh auth token`), English-language discipline for generated artifacts. Monorepo verification (`pnpm install` + `pnpm build`) + fixed a stale import in `PaperPage.jsx` + deleted unrouted `PlatformIndex.jsx`.
