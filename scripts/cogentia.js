@@ -1114,6 +1114,59 @@ function gitPull( repoPath ) {
   }
 }
 
+/**
+ * Return the upstream tracking ref (e.g. "origin/main") for the given branch,
+ * or null if the branch has no upstream configured.
+ */
+function gitUpstream( repoPath, branch ) {
+  if ( !branch ) return null;
+  try {
+    return execSync( `git rev-parse --abbrev-ref ${branch}@{upstream}`, {
+      cwd:      repoPath,
+      encoding: "utf8",
+      stdio:    [ "ignore", "pipe", "ignore" ],
+    } ).trim() || null;
+  } catch ( _ ) {
+    return null;
+  }
+}
+
+/**
+ * Return { ahead, behind } counts of local branch vs its upstream,
+ * computed from cached refs (no network). Caller decides whether to fetch first.
+ */
+function gitAheadBehind( repoPath, branch, upstream ) {
+  if ( !branch || !upstream ) return null;
+  try {
+    const out = execSync(
+      `git rev-list --left-right --count ${branch}...${upstream}`,
+      { cwd: repoPath, encoding: "utf8", stdio: [ "ignore", "pipe", "ignore" ] },
+    ).trim();
+    const parts = out.split( /\s+/ ).map( n => parseInt( n, 10 ) );
+    if ( parts.length !== 2 || parts.some( isNaN ) ) return null;
+    return { ahead: parts[ 0 ], behind: parts[ 1 ] };
+  } catch ( _ ) {
+    return null;
+  }
+}
+
+/**
+ * git fetch --quiet (no merge). Returns { ok, output }.
+ * Times out at 30s; callers should be ready for network failure.
+ */
+function gitFetch( repoPath ) {
+  try {
+    const out = execSync( "git fetch --quiet", {
+      cwd:      repoPath,
+      encoding: "utf8",
+      timeout:  30000,
+    } );
+    return { ok: true, output: ( out || "" ).trim() };
+  } catch ( e ) {
+    return { ok: false, output: e.message.split( "\n" )[ 0 ] };
+  }
+}
+
 function gitCurrentBranch( repoPath ) {
   try {
     return execSync( "git rev-parse --abbrev-ref HEAD", {
@@ -1345,6 +1398,10 @@ ${bold( "Commands:" )}
   ${c.cyan}ref${c.reset} <file>          Generate a research/index.md entry for a file
   ${c.cyan}open${c.reset} [name]         Open research/index.md in default editor
   ${c.cyan}sync${c.reset}                git pull in all repos
+  ${c.cyan}drift${c.reset}               Detect ahead/behind/diverged vs upstream across all repos.
+                      Fetches by default; ${c.cyan}--check${c.reset} uses cached refs only.
+                      ${c.cyan}--pull${c.reset} fast-forwards behind repos; ${c.cyan}--strict${c.reset} exits non-zero
+                      if any repo is behind or diverged.
   ${c.cyan}graph${c.reset}               Generate Mermaid cross-reference graph
   ${c.cyan}check${c.reset}               Validate internal links in all research/index.md
   ${c.cyan}jekyll${c.reset}              Ensure Jekyll frontmatter in all research/index.md
@@ -1591,10 +1648,17 @@ function cmdStatus() {
       return !referenced.has( f.full );
     } );
 
+    const branch    = gitCurrentBranch( repoPath );
+    const upstream  = gitUpstream( repoPath, branch );
+    const drift     = gitAheadBehind( repoPath, branch, upstream );
+
     result.repos.push( {
       name:              entry.name,
       found:             true,
-      branch:            gitCurrentBranch( repoPath ),
+      branch,
+      upstream,
+      ahead:             drift ? drift.ahead  : null,
+      behind:            drift ? drift.behind : null,
       lastCommit:        gitLastCommit( repoPath ),
       totalMarkdown:     mdFiles.length,
       ignoredCount:      ignored.length,
@@ -1610,8 +1674,8 @@ function cmdStatus() {
 
   console.log( `\n${hdr( "Corpus Status" )}  ${dim( result.timestamp )}\n` );
   const W = 20;
-  console.log( `  ${dim( pad( "Repository", W ) + "  Branch    Last commit   MD files  Ignored  Unref" )}` );
-  console.log( `  ${dim( "─".repeat( 78 ) )}` );
+  console.log( `  ${dim( pad( "Repository", W ) + "  Branch    Last commit   MD files  Ignored  Unref  Drift" )}` );
+  console.log( `  ${dim( "─".repeat( 86 ) )}` );
 
   for ( const r of result.repos ) {
     if ( !r.found ) {
@@ -1621,16 +1685,26 @@ function cmdStatus() {
     const unrefColor = r.unreferencedCount > 0 ? c.yellow : c.green;
     const unref      = `${unrefColor}${r.unreferencedCount}${c.reset}`;
     const boot       = r.indexBootstrapped ? ` ${info( "bootstrapped" )}` : "";
+
+    let driftCell;
+    if ( !r.upstream )                                  driftCell = dim( "no-upstream" );
+    else if ( r.ahead === null || r.behind === null )   driftCell = dim( "—" );
+    else if ( r.ahead === 0 && r.behind === 0 )         driftCell = `${c.green}✅${c.reset}`;
+    else if ( r.ahead > 0  && r.behind === 0 )          driftCell = `${c.cyan}🔼 ${r.ahead} ahead${c.reset}`;
+    else if ( r.ahead === 0 && r.behind > 0 )           driftCell = `${c.yellow}⚠️  ${r.behind} behind${c.reset}`;
+    else                                                driftCell = `${c.red}⚡ ${r.ahead}↑/${r.behind}↓ diverged${c.reset}`;
+
     console.log(
       `  ${bold( pad( r.name, W ) )}  ` +
       `${dim( pad( r.branch || "", 9 ) )}  ` +
       `${dim( r.lastCommit || "         " )}    ` +
       `${pad( r.totalMarkdown, 4, true )}      ` +
       `${dim( pad( r.ignoredCount, 4, true ) )}    ` +
-      `${unref}${boot}`
+      `${unref}    ` +
+      `${driftCell}${boot}`
     );
   }
-  console.log();
+  console.log( `\n  ${dim( "Drift uses cached refs (no fetch). Run " )}${c.cyan}cogentia drift${c.reset}${dim( " for an up-to-date check." )}\n` );
 }
 
 // ── scan ──────────────────────────────────────────────────────────────────────
@@ -1891,6 +1965,147 @@ function cmdSync() {
 
   if ( JSON_MODE ) console.log( JSON.stringify( { results }, null, 2 ) );
   else console.log();
+}
+
+// ── drift ─────────────────────────────────────────────────────────────────────
+//
+// Detects when local working copies are out of sync with their GitHub upstreams.
+// Motivated by sessions where the user edits via GitHub's web UI between local
+// runs; without an explicit fetch, `status` reports stale "in sync" because the
+// behind count is computed from cached refs.
+
+function cmdDrift() {
+  const { configPath, config } = loadConfig();
+  if ( !configPath || config.repos.length === 0 ) die( "No repos registered." );
+
+  const checkOnly  = argv.includes( "--check" );
+  const wantPull   = argv.includes( "--pull" );
+  const strict     = argv.includes( "--strict" );
+  const willFetch  = !checkOnly;
+
+  if ( !JSON_MODE ) {
+    const subtitle = checkOnly ? "cached refs only" : ( wantPull ? "fetch + fast-forward pull" : "fetch only" );
+    console.log( `\n${hdr( "Corpus drift" )}  ${dim( fmtNow() )}  ${dim( "(" + subtitle + ")" )}\n` );
+  }
+
+  const repos = [];
+  for ( const entry of config.repos ) {
+    const repoPath = resolveRepoPath( entry );
+    if ( !repoPath ) {
+      repos.push( { name: entry.name, found: false } );
+      continue;
+    }
+
+    let fetchOutput = null;
+    let fetchOk     = null;
+    if ( willFetch ) {
+      const r = gitFetch( repoPath );
+      fetchOk     = r.ok;
+      fetchOutput = r.output;
+    }
+
+    const branch   = gitCurrentBranch( repoPath );
+    const upstream = gitUpstream( repoPath, branch );
+    const drift    = gitAheadBehind( repoPath, branch, upstream );
+
+    let state = "unknown";
+    if ( !upstream )                                                    state = "no-upstream";
+    else if ( !drift )                                                  state = "unknown";
+    else if ( drift.ahead === 0 && drift.behind === 0 )                 state = "in-sync";
+    else if ( drift.ahead  >  0 && drift.behind === 0 )                 state = "local-ahead";
+    else if ( drift.ahead === 0 && drift.behind  >  0 )                 state = "behind";
+    else                                                                state = "diverged";
+
+    let pulled    = null;
+    if ( wantPull && state === "behind" ) {
+      const res = gitPull( repoPath );
+      pulled    = { ok: res.ok, output: res.output };
+      if ( res.ok ) {
+        // Re-read post-pull drift so the report reflects reality.
+        const d2 = gitAheadBehind( repoPath, branch, upstream );
+        if ( d2 && d2.ahead === 0 && d2.behind === 0 ) state = "in-sync";
+      }
+    }
+
+    repos.push( {
+      name:        entry.name,
+      found:       true,
+      branch,
+      upstream,
+      ahead:       drift ? drift.ahead  : null,
+      behind:      drift ? drift.behind : null,
+      state,
+      fetched:     fetchOk,
+      fetchOutput,
+      pulled,
+    } );
+  }
+
+  const anyBehind   = repos.some( r => r.state === "behind"   );
+  const anyDiverged = repos.some( r => r.state === "diverged" );
+  const anyAhead    = repos.some( r => r.state === "local-ahead" );
+
+  if ( JSON_MODE ) {
+    console.log( JSON.stringify( {
+      timestamp:  fmtNow(),
+      checkOnly,
+      pull:       wantPull,
+      strict,
+      anyBehind,
+      anyDiverged,
+      anyAhead,
+      repos,
+    }, null, 2 ) );
+  } else {
+    const W = 20;
+    console.log( `  ${dim( pad( "Repository", W ) + "  Branch    Upstream         Ahead  Behind  State" )}` );
+    console.log( `  ${dim( "─".repeat( 86 ) )}` );
+    for ( const r of repos ) {
+      if ( !r.found ) {
+        console.log( `  ${fail( pad( r.name, W ) )} — not found on disk` );
+        continue;
+      }
+      let stateCell;
+      switch ( r.state ) {
+        case "in-sync":     stateCell = `${c.green}✅ in sync${c.reset}`; break;
+        case "behind":      stateCell = `${c.yellow}⚠️  behind — \`git pull\` needed${c.reset}`; break;
+        case "local-ahead": stateCell = `${c.cyan}🔼 local ahead — \`git push\` pending${c.reset}`; break;
+        case "diverged":    stateCell = `${c.red}⚡ diverged — manual merge${c.reset}`; break;
+        case "no-upstream": stateCell = `${dim( "no upstream configured" )}`; break;
+        default:            stateCell = `${dim( "unknown" )}`;
+      }
+      if ( r.pulled ) {
+        stateCell += r.pulled.ok
+          ? ` ${c.green}→ pulled${c.reset}`
+          : ` ${c.red}→ pull failed: ${r.pulled.output}${c.reset}`;
+      }
+      console.log(
+        `  ${bold( pad( r.name, W ) )}  ` +
+        `${dim( pad( r.branch || "", 9 ) )}  ` +
+        `${dim( pad( r.upstream || "—", 14 ) )}  ` +
+        `${pad( r.ahead === null ? "—" : r.ahead, 5, true )}  ` +
+        `${pad( r.behind === null ? "—" : r.behind, 6, true )}  ` +
+        `${stateCell}`
+      );
+    }
+    console.log();
+    if ( anyBehind || anyDiverged ) {
+      if ( anyDiverged ) console.log( `  ${c.red}One or more repos have diverged. Resolve manually before mutating commands.${c.reset}` );
+      if ( anyBehind && !wantPull ) console.log( `  ${dim( "Tip: run " )}${c.cyan}cogentia drift --pull${c.reset}${dim( " to fast-forward the behind repos." )}` );
+      console.log();
+    }
+  }
+
+  appendAudit( {
+    command:   "drift",
+    args:      { check: checkOnly, pull: wantPull, strict },
+    result:    { anyBehind, anyDiverged, anyAhead, repoCount: repos.length },
+    narrative: collectNarrative(),
+  } );
+
+  if ( strict && ( anyBehind || anyDiverged ) ) {
+    process.exitCode = 1;
+  }
 }
 
 // ── graph ─────────────────────────────────────────────────────────────────────
@@ -4744,6 +4959,7 @@ function cmdInstallHooks() {
     case "ref":    cmdRef(    cmdArgs[ 0 ] ); break;
     case "open":   cmdOpen(   cmdArgs[ 0 ] ); break;
     case "sync":   cmdSync();                break;
+    case "drift":  cmdDrift();               break;
     case "graph":  cmdGraph();               break;
     case "check":  await cmdCheck();         break;
     case "jekyll": cmdJekyll();              break;
