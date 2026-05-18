@@ -25,9 +25,9 @@ last_stamped_at: 2026-05-16
 | Repository | research/index.md | Branch | Last commit |
 |---|---|---|---|
 | cogentia | ✅ | main | 2026-05-18 |
-| FractaVolta | ✅ | main | 2026-05-17 |
+| FractaVolta | ✅ | main | 2026-05-18 |
 | marenostrum | ✅ | main | 2026-05-16 |
-| barons-Mariani | ✅ | main | 2026-05-17 |
+| barons-Mariani | ✅ | main | 2026-05-18 |
 | inseme | ✅ | main | 2026-05-17 |
 <!-- END_AUTO: registered_repos -->
 
@@ -174,13 +174,14 @@ graph LR
 | [Cogentia Commons Working Paper](Cogentia_Commons_Working_Paper.md) | this repo | 2026 |
 | [Cogentia and Cogentigram](Cogentia-and-Cogentigram.md) | this repo | 2026 |
 | [The Sovereign Digital Twin — Cogentia, Cogentigram, Cogentiscope](cogentia-digital-twin.md) | this repo | 2026-04 |
-| [Radical Democracy as the Best AI Safety Strategy](democratic_ai_safety.md) | this repo | 2026-05-04 |
+| [Democratic AI Safety — alias](democratic_ai_safety.md) *(canonical in barons-Mariani; this file is now a stub)* | this repo | 2026-05-18 |
 | [KYS — Psychocognitive Analysis Protocol v1.0](kys-prompt.md) | this repo | 2026 |
 | [COGENTIA v1.0 — Prompt d'analyse psychocognitive (FR)](cogentia_prompt_v1.md) | this repo | 2026 |
 | [Corpus Status](corpus-status.md) *(living view — auto-refreshed by `cogentia.js corpus-status`)* | this repo | refreshable |
 | [Concept Index](concepts.md) *(typed concept registry — mapped by `cogentia.js concepts`)* | this repo | refreshable |
 | [Agent Navigation Guide (Context Server)](../docs/agent_context_server.md) *(meta-prompt for AI agents — bundle, query, continuation)* | this repo | 2026-05-16 |
 | [The Knowledge Mesh (Decentralized Wiki)](../docs/knowledge_mesh.md) *(backlinks, trails, Jekyll — human navigation guide)* | this repo | 2026-05-16 |
+| [Trail — From Method to Machine](trails/from_method_to_machine.md) *(curated reading path for newcomers)* | this repo | 2026-05 |
 <!-- END_AUTO: published -->
 
 ---
