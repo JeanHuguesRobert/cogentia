@@ -11,7 +11,7 @@
  * humans and AI agents alike.
  *
  * Usage:
- *   node cogentia.js <command> [args] [--json]
+ *   node scripts/cogentia.js <command> [args] [--json]
  *
  * Commands:
  *   add <name|path>     Add a repo to the registry
@@ -34,9 +34,12 @@
  *                         structural parts, preserve manual sections, bootstrap
  *                         the file if missing). Add --check for dry-run.
  *   documents             Refresh research/documents.md in the registry repo:
- *                         every tracked repo's markdown listed anté-chrono on
- *                         activity, chrono on authorship, with per-repo anchors.
- *                         Add --check for dry-run.
+ *                         every tracked repo's markdown listed reverse-chrono
+ *                         on activity, chrono on authorship, with per-repo
+ *                         anchors. Add --check for dry-run.
+ *   forks <name>          List GitHub forks of a registered repo (owner, stars,
+ *                         pushed date, URL). Auth resolves: --github-token >
+ *                         GITHUB_TOKEN env > gh CLI > anonymous (60 req/h).
  *   concepts <sub>      Manage research/concepts.md as a typed concept registry
  *                       without performing semantic interpretation.
  *   manifest            OpenAI-compatible tool definitions for every command
@@ -53,6 +56,12 @@
  *   --narrative-short <text>     Short description; appended to .cogentia/audit.jsonl.
  *   --narrative-long <text>      Long description / reasoning.
  *   --chat-url <url>             Conversational-agent session URL (repeatable).
+ *   --github-token <token>       Override GitHub API token. Also honours
+ *                                GITHUB_TOKEN env var; falls back to
+ *                                `gh auth token`, then anonymous mode.
+ *   --include-orphans            Mermaid diagrams (corpus-status, graph,
+ *                                concepts graph) hide degree-0 nodes by
+ *                                default; this flag restores them.
  *
  * Flags:
  *   --json              Output machine-readable JSON (status, scan, graph)
@@ -116,6 +125,7 @@ const VALUE_FLAGS = new Set( [
   "--registry", "--cwd",
   "--narrative-short", "--narrative-long", "--chat-url",
   "--paper", "--topic", "--from", "--reason", "--status",
+  "--github-token", "--limit",
 ] );
 
 /** Return the value of a `--flag value` or `--flag=value` option. Null if absent. */
@@ -538,6 +548,35 @@ function extractLinks( content ) {
   return links;
 }
 
+/**
+ * Resolve every relative markdown link in `indexContent` to an absolute
+ * filesystem path, anchored at the index's directory. The returned Set is
+ * the *real* "files referenced by the index" — replaces the loose
+ * basename-substring heuristic that masked false-clean scans (doctrinal
+ * Rule 4 — second_method.md names `scan` as canonical tooling).
+ *
+ * - Skips URLs with a scheme (http://, mailto:, etc.) and pure fragments.
+ * - Strips #anchor and ?query before resolving.
+ * - Decodes percent-encoding (e.g. spaces as %20).
+ * - Does NOT verify the file exists; presence in the set means "linked",
+ *   not "linked and valid" (use `cogentia check` for the latter).
+ */
+function buildReferencedFileSet( indexPath, indexContent ) {
+  const indexDir = path.dirname( indexPath );
+  const refs     = new Set();
+  for ( const link of extractLinks( indexContent ) ) {
+    let url = link.url.trim();
+    if ( !url || url.startsWith( "#" ) ) continue;
+    if ( /^[a-z][a-z0-9+.-]*:/i.test( url ) ) continue;
+    url = url.split( "#" )[ 0 ].split( "?" )[ 0 ];
+    if ( !url ) continue;
+    let decoded;
+    try { decoded = decodeURIComponent( url ); } catch ( _ ) { decoded = url; }
+    refs.add( path.resolve( indexDir, decoded ) );
+  }
+  return refs;
+}
+
 /** Extract cross-repo references from a research/index.md */
 function extractCrossRefs( indexPath, repoName, allRepoNames ) {
   const refs = [];
@@ -547,12 +586,23 @@ function extractCrossRefs( indexPath, repoName, allRepoNames ) {
   for ( const link of links ) {
     for ( const name of allRepoNames ) {
       if ( name === repoName ) continue;
-      if ( link.url.includes( `/${name}/` ) || link.url.includes( `/${name}` ) ) {
+      if ( urlMatchesRepoName( link.url, name ) ) {
         if ( !refs.includes( name ) ) refs.push( name );
       }
     }
   }
   return refs;
+}
+
+/**
+ * True iff `url` contains `repoName` as a complete path segment.
+ * Replaces a substring check (`url.includes('/cogentia')`) that
+ * false-positively matched siblings (e.g. `cogentia-old`). Works for
+ * absolute and relative URLs without URL-parser quirks.
+ */
+function urlMatchesRepoName( url, repoName ) {
+  const escaped = repoName.replace( /[.+*?^${}()|[\]\\]/g, "\\$&" );
+  return new RegExp( `(?:^|/)${escaped}(?:/|$|#|\\?)` ).test( url );
 }
 
 // ── Document self-address (stamp) ─────────────────────────────────────────────
@@ -729,21 +779,59 @@ function buildRegisteredReposBlock( config ) {
   return lines.join( "\n" );
 }
 
+// ── Mermaid helpers (shared by cross-repo and concept graphs) ─────────────────
+
+/** Honour `--include-orphans` to suppress degree-0 node filtering. */
+function includeOrphans() {
+  return argv.includes( "--include-orphans" );
+}
+
+/** Set of node ids that appear in at least one edge (either side). */
+function nodesWithEdges( edges, fromKey, toKey ) {
+  const s = new Set();
+  const fk = fromKey || "from";
+  const tk = toKey   || "to";
+  for ( const e of edges ) { s.add( e[ fk ] ); s.add( e[ tk ] ); }
+  return s;
+}
+
+/** Mermaid `click` line for navigation. */
+function mermaidClick( id, url, tooltip ) {
+  return `  click ${id} "${url}"${tooltip ? ` "${tooltip}"` : ""}`;
+}
+
 function buildGraphBlock( config ) {
   const allNames = config.repos.map( r => r.name );
-  const edges = [];
+  const edges    = [];
+  const remotes  = new Map(); // name → { owner, repo }
   for ( const entry of config.repos ) {
     const repoPath  = resolveRepoPath( entry );
     if ( !repoPath ) continue;
+    const remote = gitRemoteOwner( repoPath );
+    if ( remote ) remotes.set( entry.name, remote );
     const indexPath = path.join( repoPath, "research", "index.md" );
     if ( !fs.existsSync( indexPath ) ) continue;
     const refs = extractCrossRefs( indexPath, entry.name, allNames );
     for ( const r of refs ) edges.push( { from: entry.name, to: r } );
   }
+
+  const connected = nodesWithEdges( edges );
+  const showAll   = includeOrphans();
+  const visible   = showAll ? allNames : allNames.filter( n => connected.has( n ) );
+  const orphans   = allNames.filter( n => !connected.has( n ) );
+
   const lines = [ "```mermaid", "graph LR" ];
-  for ( const n of allNames ) lines.push( `  ${n}["📄 ${n}"]` );
-  for ( const e of edges ) lines.push( `  ${e.from} --> ${e.to}` );
+  for ( const n of visible ) lines.push( `  ${n}["📄 ${n}"]` );
+  for ( const e of edges )   lines.push( `  ${e.from} --> ${e.to}` );
+  for ( const n of visible ) {
+    const r = remotes.get( n );
+    if ( r ) lines.push( mermaidClick( n, `https://github.com/${r.owner}/${r.repo}/blob/main/research/index.md`, "Open research/index.md" ) );
+  }
   lines.push( "```" );
+  if ( !showAll && orphans.length > 0 ) {
+    lines.push( "" );
+    lines.push( `*Orphan repos (no cross-references in \`research/index.md\`): ${orphans.map( n => `\`${n}\`` ).join( ", " )}. Re-include with \`--include-orphans\`.*` );
+  }
   return lines.join( "\n" );
 }
 
@@ -1151,6 +1239,68 @@ function checkUrl( url ) {
   } );
 }
 
+// ── GitHub API access ─────────────────────────────────────────────────────────
+
+/**
+ * Resolve a GitHub token, in order: --github-token flag → GITHUB_TOKEN env →
+ * `gh auth token` if the gh CLI is on PATH → null (anonymous mode, 60 req/h
+ * against the public-repo endpoints).
+ */
+function getGitHubToken() {
+  const flagVal = getFlagValue( "--github-token" );
+  if ( flagVal ) return flagVal;
+  if ( process.env.GITHUB_TOKEN ) return process.env.GITHUB_TOKEN;
+  try {
+    const out = execSync( "gh auth token", {
+      encoding: "utf8",
+      timeout:  3000,
+      stdio:    [ "ignore", "pipe", "ignore" ],
+    } ).trim();
+    if ( out ) return out;
+  } catch ( _ ) { /* gh missing or not logged in — fall through */ }
+  return null;
+}
+
+/**
+ * GET a JSON endpoint on api.github.com. Returns
+ * { status, body, headers, rateLimit: { limit, remaining, reset } }.
+ * body is the parsed JSON (or null on parse failure). Does NOT throw on
+ * non-2xx — the caller decides what to do with status codes.
+ */
+function ghFetchJson( url, token ) {
+  return new Promise( resolve => {
+    const headers = {
+      "User-Agent": "cogentia.js",
+      "Accept":     "application/vnd.github+json",
+    };
+    if ( token ) headers.Authorization = `Bearer ${token}`;
+    try {
+      const req = https.get( url, { headers, timeout: 10000 }, res => {
+        let buf = "";
+        res.on( "data", c => buf += c );
+        res.on( "end", () => {
+          let body = null;
+          try { body = JSON.parse( buf ); } catch ( _ ) { body = buf; }
+          resolve( {
+            status:  res.statusCode,
+            headers: res.headers,
+            body,
+            rateLimit: {
+              limit:     Number( res.headers[ "x-ratelimit-limit" ]     || 0 ),
+              remaining: Number( res.headers[ "x-ratelimit-remaining" ] || 0 ),
+              reset:     Number( res.headers[ "x-ratelimit-reset" ]     || 0 ),
+            },
+          } );
+        } );
+      } );
+      req.on( "timeout", () => { req.destroy(); resolve( { status: 0, body: null, headers: {}, rateLimit: {}, error: "timeout" } ); } );
+      req.on( "error",   e  => resolve( { status: 0, body: null, headers: {}, rateLimit: {}, error: e.message } ) );
+    } catch ( e ) {
+      resolve( { status: 0, body: null, headers: {}, rateLimit: {}, error: e.message } );
+    }
+  } );
+}
+
 // ── Open in editor ────────────────────────────────────────────────────────────
 
 function openFile( filePath ) {
@@ -1183,7 +1333,7 @@ ${hdr( "cogentia.js" )} — Cogentia Commons CLI
 ${dim( "Traceable, auditable, AI-connectable knowledge infrastructure." )}
 
 ${bold( "Usage:" )}
-  node cogentia.js <command> [args] [--json]
+  node scripts/cogentia.js <command> [args] [--json]
 
 ${bold( "Commands:" )}
   ${c.cyan}add${c.reset} <name|path>     Add a repo to the registry
@@ -1209,9 +1359,13 @@ ${bold( "Commands:" )}
                       ${c.cyan}--check${c.reset} for dry-run.
   ${c.cyan}documents${c.reset}            Refresh ${c.cyan}research/documents.md${c.reset} in the registry repo:
                       one consolidated page listing every tracked repo's
-                      markdown (after .cogentiaignore), with an anté-chrono
+                      markdown (after .cogentiaignore), with a reverse-chrono
                       table on activity, a chrono table on authorship, and
                       per-repo anchored replays. ${c.cyan}--check${c.reset} for dry-run.
+  ${c.cyan}forks${c.reset} <name>         List GitHub forks of a registered repo (owner, stars,
+                      pushed date, URL). Auth resolves ${c.cyan}--github-token${c.reset} →
+                      ${c.cyan}GITHUB_TOKEN${c.reset} env → ${c.cyan}gh auth token${c.reset} → anonymous
+                      (60 req/h). ${c.cyan}--limit <n>${c.reset} caps page size (max 100).
   ${c.cyan}concepts${c.reset} <sub>       Manage ${c.cyan}research/concepts.md${c.reset} as a typed concept registry.
                       Sub: ${c.cyan}init${c.reset} [repo] | ${c.cyan}list${c.reset} [repo] | ${c.cyan}check${c.reset} [repo] | ${c.cyan}graph${c.reset} [repo]
                            ${c.cyan}ref${c.reset} <concept> [repo] | ${c.cyan}status${c.reset} [repo] | ${c.cyan}schema${c.reset}
@@ -1239,6 +1393,10 @@ ${bold( "Global flags:" )}
   ${c.cyan}--narrative-short${c.reset} <text>   Short description; appended to ${AUDIT_DIR}/${AUDIT_FILE}.
   ${c.cyan}--narrative-long${c.reset} <text>    Long description / reasoning.
   ${c.cyan}--chat-url${c.reset} <url>           Conversational-agent session URL (repeatable).
+  ${c.cyan}--github-token${c.reset} <token>     GitHub API token. Also honours ${c.cyan}GITHUB_TOKEN${c.reset};
+                              falls back to ${c.cyan}gh auth token${c.reset}, then anonymous.
+  ${c.cyan}--include-orphans${c.reset}            Mermaid diagrams hide degree-0 nodes by
+                              default; this flag restores them.
 
 ${bold( "Flags:" )}
   ${c.cyan}--json${c.reset}              Machine-readable JSON output (status, scan, graph)
@@ -1422,6 +1580,7 @@ function cmdStatus() {
     const { indexCreated } = ensureIndex( repoPath, entry.name );
     const indexPath      = path.join( repoPath, "research", "index.md" );
     const indexContent   = fs.readFileSync( indexPath, "utf8" );
+    const referenced     = buildReferencedFileSet( indexPath, indexContent );
     const mdFiles        = listMarkdown( repoPath );
     const ignorePatterns = loadIgnore( repoPath );
     const ignored        = mdFiles.filter( f => matchesIgnore( f.rel, ignorePatterns ) );
@@ -1429,7 +1588,7 @@ function cmdStatus() {
     const unreferenced   = mdFiles.filter( f => {
       if ( f.rel === "research/index.md" ) return false;
       if ( ignoredSet.has( f.rel ) ) return false;
-      return !indexContent.includes( path.basename( f.rel ) );
+      return !referenced.has( f.full );
     } );
 
     result.repos.push( {
@@ -1500,6 +1659,7 @@ function cmdScan() {
     const indexPath      = path.join( repoPath, "research", "index.md" );
     const indexStat      = fs.statSync( indexPath );
     const indexContent   = fs.readFileSync( indexPath, "utf8" );
+    const referenced     = buildReferencedFileSet( indexPath, indexContent );
     const mdFiles        = listMarkdown( repoPath );
     const ignorePatterns = loadIgnore( repoPath );
     const ignored        = mdFiles.filter( f => matchesIgnore( f.rel, ignorePatterns ) );
@@ -1507,7 +1667,7 @@ function cmdScan() {
     const unreferenced   = mdFiles.filter( f => {
       if ( f.rel === "research/index.md" ) return false;
       if ( ignoredSet.has( f.rel ) ) return false;
-      return !indexContent.includes( path.basename( f.rel ) );
+      return !referenced.has( f.full );
     } );
 
     repoResult.path             = repoPath;
@@ -1520,7 +1680,7 @@ function cmdScan() {
       rel:   f.rel,
       size:  f.size,
       mtime: fmtDate( f.mtime ),
-      referenced: f.rel === "research/index.md" || indexContent.includes( path.basename( f.rel ) ),
+      referenced: f.rel === "research/index.md" || referenced.has( f.full ),
       ignored:    ignoredSet.has( f.rel ),
     } ) );
     repoResult.ignored          = ignored.map( f => f.rel );
@@ -1547,7 +1707,7 @@ function cmdScan() {
 
     for ( const f of visibleFiles ) {
       const isIndex = f.rel === "research/index.md";
-      const isRef   = isIndex || indexContent.includes( path.basename( f.rel ) );
+      const isRef   = isIndex || referenced.has( f.full );
       const label   = isIndex ? bold( pad( f.rel, W_F ) ) : pad( f.rel, W_F );
       const marker  = isRef ? " " : `${c.yellow}*${c.reset}`;
       console.log( `${marker} ${label}  ${fmtSize( f.size )}  ${fmtDate( f.mtime )}` );
@@ -1742,11 +1902,14 @@ function cmdGraph() {
   const allNames = config.repos.map( r => r.name );
   const edges    = [];
   const nodes    = [];
+  const remotes  = new Map();
 
   for ( const entry of config.repos ) {
     const repoPath  = resolveRepoPath( entry );
     const indexPath = repoPath ? path.join( repoPath, "research", "index.md" ) : null;
     const hasIndex  = indexPath && fs.existsSync( indexPath );
+    const remote    = repoPath ? gitRemoteOwner( repoPath ) : null;
+    if ( remote ) remotes.set( entry.name, remote );
     nodes.push( { name: entry.name, hasIndex, found: !!repoPath } );
 
     if ( hasIndex ) {
@@ -1762,7 +1925,11 @@ function cmdGraph() {
     return;
   }
 
-  // Generate Mermaid diagram + Markdown page
+  const connected     = nodesWithEdges( edges );
+  const showAll       = includeOrphans();
+  const visibleNodes  = showAll ? nodes : nodes.filter( n => connected.has( n.name ) );
+  const orphans       = nodes.filter( n => !connected.has( n.name ) );
+
   const lines = [];
   lines.push( "# Cogentia Commons — Corpus Graph" );
   lines.push( "" );
@@ -1771,7 +1938,7 @@ function cmdGraph() {
   lines.push( "```mermaid" );
   lines.push( "graph LR" );
 
-  for ( const node of nodes ) {
+  for ( const node of visibleNodes ) {
     const label = node.hasIndex
       ? `${node.name}["📄 ${node.name}"]`
       : `${node.name}["⚠️ ${node.name}"]`;
@@ -1782,7 +1949,16 @@ function cmdGraph() {
     lines.push( `  ${edge.from} --> ${edge.to}` );
   }
 
+  for ( const node of visibleNodes ) {
+    const r = remotes.get( node.name );
+    if ( r ) lines.push( mermaidClick( node.name, `https://github.com/${r.owner}/${r.repo}/blob/main/research/index.md`, "Open research/index.md" ) );
+  }
+
   lines.push( "```" );
+  if ( !showAll && orphans.length > 0 ) {
+    lines.push( "" );
+    lines.push( `*Orphan repos (no cross-references): ${orphans.map( n => `\`${n.name}\`` ).join( ", " )}. Re-include with \`--include-orphans\`.*` );
+  }
   lines.push( "" );
   lines.push( "## Nodes" );
   lines.push( "" );
@@ -1796,7 +1972,7 @@ function cmdGraph() {
   }
 
   lines.push( "" );
-  lines.push( `*${edges.length} cross-reference(s) detected across ${nodes.length} repo(s).*` );
+  lines.push( `*${edges.length} cross-reference(s) detected across ${nodes.length} repo(s)${orphans.length && !showAll ? `; ${orphans.length} orphan(s) hidden from diagram` : ""}.*` );
 
   console.log( lines.join( "\n" ) );
 }
@@ -2082,12 +2258,12 @@ function renderOldRow( d ) {
 }
 
 const ACTIVITY_TABLE_HEAD = [
-  "| Titre | Dépôt | Activité | Auteur | Local | Édition |",
+  "| Title | Repo | Activity | Authored | Local | Edit |",
   "|---|---|---|---|---|---|",
 ].join( "\n" );
 
 const OLD_TABLE_HEAD = [
-  "| Titre | Dépôt | Auteur | Activité | Local | Édition |",
+  "| Title | Repo | Authored | Activity | Local | Edit |",
   "|---|---|---|---|---|---|",
 ].join( "\n" );
 
@@ -2109,35 +2285,35 @@ function buildDocumentsPage( config, docs, now ) {
 
   const lines = [];
   lines.push( "---" );
-  lines.push( `title: "Documents — Tous les dépôts"` );
-  lines.push( `description: "Liste consolidée des documents Markdown à travers les dépôts enregistrés."` );
+  lines.push( `title: "Documents — All Tracked Repos"` );
+  lines.push( `description: "Consolidated list of Markdown documents across registered repositories."` );
   lines.push( "layout: default" );
   lines.push( "nav_order: 3" );
   lines.push( `last_modified_at: ${fmtDate( now )}` );
   lines.push( "---" );
   lines.push( "" );
-  lines.push( "# Documents — Tous les dépôts" );
+  lines.push( "# Documents — All Tracked Repos" );
   lines.push( "" );
-  lines.push( "*Auto-généré par `cogentia documents`. Ne pas éditer à la main.*" );
+  lines.push( "*Auto-generated by `cogentia documents`. Do not edit by hand.*" );
   lines.push( "" );
-  lines.push( `*Période d'activité récente : ${RECENT_WINDOW_DAYS} jours (depuis le ${cutoffStr}).*  ` );
-  lines.push( `*Date d'**activité*** : dernier commit ignorant les passages bulk (stamp / jekyll / frontmatter / canonical, ou commit touchant > ${BULK_COMMIT_FILE_THRESHOLD} fichiers).*  ` );
-  lines.push( "*Date d'**auteur*** : `date:` / `created:` du frontmatter, sinon date de création git, sinon mtime.*" );
-  lines.push( "" );
-
-  lines.push( "## Vue d'ensemble" );
-  lines.push( "" );
-  lines.push( `- Dépôts suivis : **${config.repos.length}**` );
-  lines.push( `- Documents totaux (après \`.cogentiaignore\`) : **${docs.length}**` );
-  lines.push( `- Activité récente (≤ ${RECENT_WINDOW_DAYS} j) : **${recent.length}**` );
-  lines.push( `- Plus anciens listés : **${oldest.length}** / ${oldSorted.length}` );
+  lines.push( `*Recent-activity window: ${RECENT_WINDOW_DAYS} days (since ${cutoffStr}).*  ` );
+  lines.push( `***Activity*** *date: most recent commit, excluding bulk passes (stamp / jekyll / frontmatter / canonical, or commits touching more than ${BULK_COMMIT_FILE_THRESHOLD} files).*  ` );
+  lines.push( "***Authored*** *date: `date:` / `created:` from frontmatter, else git creation date, else filesystem mtime.*" );
   lines.push( "" );
 
-  lines.push( "## Sommaire" );
+  lines.push( "## Overview" );
   lines.push( "" );
-  lines.push( "- [Activité récente](#activité-récente)" );
-  lines.push( `- [Plus anciens (top ${DOCUMENTS_OLD_N})](#plus-anciens)` );
-  lines.push( "- Par dépôt :" );
+  lines.push( `- Tracked repos: **${config.repos.length}**` );
+  lines.push( `- Documents (after \`.cogentiaignore\`): **${docs.length}**` );
+  lines.push( `- Recent activity (≤ ${RECENT_WINDOW_DAYS}d): **${recent.length}**` );
+  lines.push( `- Oldest listed: **${oldest.length}** / ${oldSorted.length}` );
+  lines.push( "" );
+
+  lines.push( "## Contents" );
+  lines.push( "" );
+  lines.push( "- [Recent activity](#recent-activity)" );
+  lines.push( `- [Oldest (top ${DOCUMENTS_OLD_N})](#oldest)` );
+  lines.push( "- By repository:" );
   for ( const name of Array.from( byRepo.keys() ).sort() ) {
     lines.push( `  - [${name}](#${repoAnchor( name )})` );
   }
@@ -2145,12 +2321,12 @@ function buildDocumentsPage( config, docs, now ) {
   lines.push( "---" );
   lines.push( "" );
 
-  lines.push( "## Activité récente" );
+  lines.push( "## Recent activity" );
   lines.push( "" );
-  lines.push( `*Trié anté-chronologique sur la date d'activité. ${recent.length} document(s).*` );
+  lines.push( `*Reverse-chronological on activity date. ${recent.length} document(s).*` );
   lines.push( "" );
   if ( recent.length === 0 ) {
-    lines.push( `_(Aucun document avec activité dans les ${RECENT_WINDOW_DAYS} derniers jours.)_` );
+    lines.push( `_(No document with activity in the last ${RECENT_WINDOW_DAYS} days.)_` );
   } else {
     lines.push( ACTIVITY_TABLE_HEAD );
     for ( const d of recent ) lines.push( renderActivityRow( d ) );
@@ -2159,12 +2335,12 @@ function buildDocumentsPage( config, docs, now ) {
   lines.push( "---" );
   lines.push( "" );
 
-  lines.push( "## Plus anciens" );
+  lines.push( "## Oldest" );
   lines.push( "" );
-  lines.push( `*Trié chronologique sur la date d'auteur. Top ${DOCUMENTS_OLD_N}.*` );
+  lines.push( `*Chronological on authored date. Top ${DOCUMENTS_OLD_N}.*` );
   lines.push( "" );
   if ( oldest.length === 0 ) {
-    lines.push( "_(Aucun document avec date d'auteur connue.)_" );
+    lines.push( "_(No document with a known authored date.)_" );
   } else {
     lines.push( OLD_TABLE_HEAD );
     for ( const d of oldest ) lines.push( renderOldRow( d ) );
@@ -2173,7 +2349,7 @@ function buildDocumentsPage( config, docs, now ) {
   lines.push( "---" );
   lines.push( "" );
 
-  lines.push( "## Par dépôt" );
+  lines.push( "## By repository" );
   lines.push( "" );
   for ( const name of Array.from( byRepo.keys() ).sort() ) {
     const repoDocs   = byRepo.get( name );
@@ -2189,33 +2365,33 @@ function buildDocumentsPage( config, docs, now ) {
 
     lines.push( `### <a id="${repoAnchor( name )}"></a>${name}` );
     lines.push( "" );
-    lines.push( `*${repoDocs.length} document(s) au total.*` );
+    lines.push( `*${repoDocs.length} document(s) total.*` );
     lines.push( "" );
-    lines.push( `**Activité récente** (≤ ${RECENT_WINDOW_DAYS} j) — ${repoRecent.length}` );
+    lines.push( `**Recent activity** (≤ ${RECENT_WINDOW_DAYS}d) — ${repoRecent.length}` );
     lines.push( "" );
     if ( repoRecent.length === 0 ) {
-      lines.push( "_(rien dans la fenêtre)_" );
+      lines.push( "_(nothing in the window)_" );
     } else {
       lines.push( ACTIVITY_TABLE_HEAD );
       for ( const d of repoRecent ) lines.push( renderActivityRow( d ) );
     }
     lines.push( "" );
-    lines.push( `**Plus anciens** (top ${DOCUMENTS_OLD_N_PER_REPO})` );
+    lines.push( `**Oldest** (top ${DOCUMENTS_OLD_N_PER_REPO})` );
     lines.push( "" );
     if ( repoOldest.length === 0 ) {
-      lines.push( "_(aucune date d'auteur connue)_" );
+      lines.push( "_(no known authored date)_" );
     } else {
       lines.push( OLD_TABLE_HEAD );
       for ( const d of repoOldest ) lines.push( renderOldRow( d ) );
     }
     lines.push( "" );
-    lines.push( "[↑ Sommaire](#sommaire)" );
+    lines.push( "[↑ Contents](#contents)" );
     lines.push( "" );
   }
 
   lines.push( "---" );
   lines.push( "" );
-  lines.push( `*Généré le ${fmtDate( now )} par \`cogentia documents\` — [scripts/cogentia.js](https://github.com/JeanHuguesRobert/cogentia/blob/main/scripts/cogentia.js).*` );
+  lines.push( `*Generated on ${fmtDate( now )} by \`cogentia documents\` — [scripts/cogentia.js](https://github.com/JeanHuguesRobert/cogentia/blob/main/scripts/cogentia.js).*` );
   lines.push( "" );
 
   return lines.join( "\n" );
@@ -2282,6 +2458,103 @@ function cmdDocuments() {
     narrative: collectNarrative(),
   } );
   console.log( `  ${bold( "Action" )}      ${ok( "refreshed" )}\n` );
+}
+
+// ── forks ─────────────────────────────────────────────────────────────────────
+
+const FORKS_DEFAULT_LIMIT = 100;
+const FORKS_MAX_LIMIT     = 100;
+
+function describeAuthMode( token ) {
+  if ( !token ) return "anonymous (60 req/h)";
+  if ( getFlagValue( "--github-token" ) ) return "token (flag)";
+  if ( process.env.GITHUB_TOKEN )         return "token (env GITHUB_TOKEN)";
+  return "token (gh CLI)";
+}
+
+async function cmdForks( repoArg ) {
+  if ( !repoArg ) die( "Usage: cogentia forks <repo-name>" );
+  const { configPath, config } = loadConfig();
+  if ( !configPath ) die( "No registry found. Run: cogentia add <repo> first." );
+
+  const entry = config.repos.find( r => r.name === repoArg );
+  if ( !entry ) die( `"${repoArg}" is not in the registry.` );
+
+  const repoPath = resolveRepoPath( entry );
+  if ( !repoPath ) die( `"${repoArg}" not found on disk.` );
+
+  const remote = gitRemoteOwner( repoPath );
+  if ( !remote ) die( `"${repoArg}" has no usable github.com remote.` );
+
+  const limitArg = parseInt( getFlagValue( "--limit" ), 10 );
+  const perPage  = Math.min( Number.isFinite( limitArg ) && limitArg > 0 ? limitArg : FORKS_DEFAULT_LIMIT, FORKS_MAX_LIMIT );
+  const token    = getGitHubToken();
+  const url      = `https://api.github.com/repos/${remote.owner}/${remote.repo}/forks?per_page=${perPage}&sort=newest`;
+  const res      = await ghFetchJson( url, token );
+
+  if ( res.status !== 200 ) {
+    const msg = res.error
+      ? `network error: ${res.error}`
+      : `GitHub API returned ${res.status}` + ( res.body && res.body.message ? ` — ${res.body.message}` : "" );
+    die( msg );
+  }
+
+  const forks = Array.isArray( res.body ) ? res.body.map( f => ( {
+    owner:          f.owner && f.owner.login,
+    full_name:      f.full_name,
+    html_url:       f.html_url,
+    default_branch: f.default_branch,
+    stars:          f.stargazers_count,
+    pushed_at:      f.pushed_at,
+    created_at:     f.created_at,
+    private:        f.private,
+  } ) ) : [];
+
+  // Newest activity first.
+  forks.sort( ( a, b ) => ( b.pushed_at || "" ).localeCompare( a.pushed_at || "" ) );
+
+  if ( JSON_MODE ) {
+    console.log( JSON.stringify( {
+      repo:      `${remote.owner}/${remote.repo}`,
+      authMode:  describeAuthMode( token ),
+      rateLimit: res.rateLimit,
+      total:     forks.length,
+      forks,
+    }, null, 2 ) );
+    return;
+  }
+
+  const auth = describeAuthMode( token );
+  const rl   = res.rateLimit;
+  const rlSuffix = ( rl && rl.limit )
+    ? `  ${dim( `${rl.remaining}/${rl.limit} req remaining` )}`
+    : "";
+
+  console.log( `\n${hdr( `Forks of ${remote.owner}/${remote.repo}` )}  ${dim( auth )}${rlSuffix}\n` );
+
+  if ( forks.length === 0 ) {
+    console.log( `  ${dim( "(no forks found)" )}\n` );
+    return;
+  }
+
+  const W_OWNER = 30, W_STARS = 6, W_PUSHED = 10, W_BRANCH = 14;
+  console.log( `  ${dim( pad( "Owner", W_OWNER ) + "  " + pad( "Stars", W_STARS, true ) + "  " + pad( "Pushed", W_PUSHED ) + "  " + pad( "Branch", W_BRANCH ) + "  URL" )}` );
+  console.log( `  ${dim( "─".repeat( 96 ) )}` );
+  for ( const f of forks ) {
+    const pushed = ( f.pushed_at || "" ).slice( 0, 10 );
+    console.log(
+      "  " +
+      bold( pad( f.full_name || "?", W_OWNER ) ) + "  " +
+      pad( String( f.stars || 0 ), W_STARS, true ) + "  " +
+      dim( pad( pushed, W_PUSHED ) ) + "  " +
+      dim( pad( f.default_branch || "?", W_BRANCH ) ) + "  " +
+      dim( f.html_url || "" )
+    );
+  }
+  console.log();
+  if ( forks.length === perPage ) {
+    console.log( `  ${warn( `Showing ${perPage} forks (the per-page cap). Use --limit <n> to widen, or raise to multi-page once needed.` )}\n` );
+  }
 }
 
 // ── stamp ─────────────────────────────────────────────────────────────────────
@@ -2754,7 +3027,13 @@ function buildConceptGraphBlock(loaded) {
     edgeKeys.add( key );
     edges.push( edge );
   }
+  // Resolve GitHub remote per loaded repo, once.
+  const remotes = new Map();
   for ( const r of loaded ) {
+    if ( r.repoPath ) {
+      const remote = gitRemoteOwner( r.repoPath );
+      if ( remote ) remotes.set( r.name, remote );
+    }
     for ( const concept of r.concepts ) {
       nodes.push( { id: conceptGraphId( concept.name ), slug: concept.slug, name: concept.name, repo: r.name, scope: concept.scope, status: concept.status } );
       for ( const p of concept.parents ) addEdge( p, concept.name, "parent" );
@@ -2762,9 +3041,28 @@ function buildConceptGraphBlock(loaded) {
       for ( const rel of concept.related ) addEdge( concept.name, rel, "related" );
     }
   }
-  const lines = [ "```mermaid", "graph LR" ];
-  const nodeIds = new Set( nodes.map( n => n.id ) );
-  for ( const n of nodes ) lines.push( `  ${n.id}["${n.name}"]` );
+
+  // Dedupe nodes by id. Canonical-repo policy: prefer scope containing
+  // "global" (case-insensitive); else keep first-iterated (load order).
+  // Edges keep all fan-in/out from every declaration.
+  const dedupedById = new Map();
+  for ( const n of nodes ) {
+    const existing = dedupedById.get( n.id );
+    if ( !existing ) { dedupedById.set( n.id, n ); continue; }
+    const incomingGlobal = /global/i.test( n.scope || "" );
+    const existingGlobal = /global/i.test( existing.scope || "" );
+    if ( incomingGlobal && !existingGlobal ) dedupedById.set( n.id, n );
+  }
+  const dedupedNodes = Array.from( dedupedById.values() );
+
+  const connected = nodesWithEdges( edges );
+  const showAll   = includeOrphans();
+  const visible   = showAll ? dedupedNodes : dedupedNodes.filter( n => connected.has( n.id ) );
+  const orphans   = dedupedNodes.filter( n => !connected.has( n.id ) );
+
+  const lines   = [ "```mermaid", "graph LR" ];
+  const nodeIds = new Set( visible.map( n => n.id ) );
+  for ( const n of visible ) lines.push( `  ${n.id}["${n.name}"]` );
   for ( const e of edges ) {
     if ( !nodeIds.has( e.from ) ) lines.push( `  ${e.from}["${e.from.replace( /^c_/, "" ).replace( /_/g, " " )}"]` );
     if ( !nodeIds.has( e.to ) )   lines.push( `  ${e.to}["${e.to.replace( /^c_/, "" ).replace( /_/g, " " )}"]` );
@@ -2772,7 +3070,18 @@ function buildConceptGraphBlock(loaded) {
     const arrow = e.label === "related" ? "-.->" : "-->";
     lines.push( `  ${e.from} ${arrow} ${e.to}` );
   }
+  // Clickable nodes: real (registered) concepts go to their concepts.md#slug.
+  for ( const n of visible ) {
+    const r = remotes.get( n.repo );
+    if ( r && n.slug ) {
+      lines.push( mermaidClick( n.id, `https://github.com/${r.owner}/${r.repo}/blob/main/research/concepts.md#${n.slug}`, `Open ${n.name}` ) );
+    }
+  }
   lines.push( "```" );
+  if ( !showAll && orphans.length > 0 ) {
+    lines.push( "" );
+    lines.push( `*Orphan concepts (no parents / children / related): ${orphans.map( n => `\`${n.name}\` (${n.repo})` ).join( ", " )}. Re-include with \`--include-orphans\`.*` );
+  }
   return lines.join( "\n" );
 }
 
@@ -3836,6 +4145,7 @@ function cmdState() {
 
       if ( hasIndex ) {
         const indexContent   = fs.readFileSync( indexPath, "utf8" );
+        const referenced     = buildReferencedFileSet( indexPath, indexContent );
         const mdFiles        = listMarkdown( repoPath );
         const ignorePatterns = loadIgnore( repoPath );
         const ignored        = mdFiles.filter( f => matchesIgnore( f.rel, ignorePatterns ) );
@@ -3843,7 +4153,7 @@ function cmdState() {
         const unreferenced   = mdFiles.filter( f => {
           if ( f.rel === "research/index.md" ) return false;
           if ( ignoredSet.has( f.rel ) )       return false;
-          return !indexContent.includes( path.basename( f.rel ) );
+          return !referenced.has( f.full );
         } );
         r.markdown_total     = mdFiles.length;
         r.ignored_count      = ignored.length;
@@ -4386,6 +4696,7 @@ function cmdInstallHooks() {
     case "stamp":          cmdStamp(  cmdArgs[ 0 ] );       break;
     case "corpus-status":  cmdCorpusStatus( cmdArgs[ 0 ] ); break;
     case "documents":      cmdDocuments();                  break;
+    case "forks":          await cmdForks( cmdArgs[ 0 ] );  break;
     case "manifest":       cmdManifest();                   break;
     case "install-hooks":  cmdInstallHooks();               break;
     case "state":          cmdState();                      break;
@@ -4399,6 +4710,6 @@ function cmdInstallHooks() {
       cmdHelp();
       break;
     default:
-      die( `Unknown command: "${command}". Run: node cogentia.js help` );
+      die( `Unknown command: "${command}". Run: node scripts/cogentia.js help` );
   }
 } )();

@@ -87,6 +87,8 @@ All published documents live in `research/` and are catalogued in [`research/ind
 - **Agentic Context Server**
   * `cogentia bundle --concept <name>` — compile a sub-graph into a single LLM-ready payload
   * `cogentia query "keyword"` — structural search (respects `.cogentiaignore`)
+- **Cross-repo overview**
+  * `cogentia documents` — consolidated `research/documents.md` listing every tracked repo's markdown, reverse-chronological on activity (the bulk-pass filter strips out stamp/jekyll noise) and chronological on authorship, with per-repo anchored replays
 - **Knowledge Mesh (Wiki)**
   * `cogentia backlinks` — auto-inject "Mentioned in" lists
   * `cogentia trails` — inject Previous/Next navigation from curated playlists
