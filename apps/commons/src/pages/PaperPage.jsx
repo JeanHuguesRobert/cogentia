@@ -1,4 +1,4 @@
-import paper from '../../research/Cogentia_Commons_Working_Paper.md?raw'
+import paper from '../../../../research/Cogentia_Commons_Working_Paper.md?raw'
 export default function PaperPage(){
   return <section className="space-y-4">
     <h2 className="text-2xl font-semibold">Working Paper</h2>
