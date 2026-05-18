@@ -26,7 +26,7 @@ last_stamped_at: 2026-05-16
 |---|---|---|---|
 | cogentia | ✅ | main | 2026-05-18 |
 | FractaVolta | ✅ | main | 2026-05-18 |
-| marenostrum | ✅ | main | 2026-05-16 |
+| marenostrum | ✅ | main | 2026-05-18 |
 | barons-Mariani | ✅ | main | 2026-05-18 |
 | inseme | ✅ | main | 2026-05-17 |
 <!-- END_AUTO: registered_repos -->
@@ -181,7 +181,8 @@ graph LR
 | [Concept Index](concepts.md) *(typed concept registry — mapped by `cogentia.js concepts`)* | this repo | refreshable |
 | [Agent Navigation Guide (Context Server)](../docs/agent_context_server.md) *(meta-prompt for AI agents — bundle, query, continuation)* | this repo | 2026-05-16 |
 | [The Knowledge Mesh (Decentralized Wiki)](../docs/knowledge_mesh.md) *(backlinks, trails, Jekyll — human navigation guide)* | this repo | 2026-05-16 |
-| [Trail — From Method to Machine](trails/from_method_to_machine.md) *(curated reading path for newcomers)* | this repo | 2026-05 |
+| [Trail — From Method to Machine](trails/from_method_to_machine.md) *(curated reading path for newcomers — technical / cognitive infrastructure entry)* | this repo | 2026-05 |
+| [Trail — From Autonomia to DHITL](trails/from_autonomia_to_dhitl.md) *(curated reading path for the political / territorial entry into the Democratic AI Safety thesis)* | this repo | 2026-05-18 |
 <!-- END_AUTO: published -->
 
 ---

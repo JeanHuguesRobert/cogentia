@@ -15,7 +15,7 @@ last_stamped_at: 2026-05-16
 
 <!-- BEGIN_AUTO: trails -->
 > 🧭 **Trail: From Method to Machine**
-> ⬅️ Previous: [Discours de la seconde méthode](../barons-Mariani/research/second_method.md) | ➡️ Next: [Radical Democracy as the Best AI Safety Strategy](research/democratic_ai_safety.md)
+> ⬅️ Previous: [Discours de la seconde méthode](../barons-Mariani/research/second_method.md) | ➡️ Next: [Democratic AI Safety](../barons-Mariani/research/democratic_ai_safety.md)
 
 <!-- END_AUTO: trails -->
 

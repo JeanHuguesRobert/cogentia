@@ -11,8 +11,8 @@
 2. [Cogentia — the framework, in five distinctive moves](../../COGENTIA.md)
    *The identity document. What Cogentia is, condensed into five propositions.*
 
-3. [Radical Democracy as the Best AI Safety Strategy](../democratic_ai_safety.md)
-   *The political thesis. Why AI safety requires democratic humans in the loop.*
+3. [Democratic AI Safety](../../../barons-Mariani/research/democratic_ai_safety.md)
+   *The political thesis. Why AI safety must protect human sovereignty against AI-augmented legal persons.*
 
 4. [DHITL — Democratic Humans in the Loop](../../../marenostrum/DHITL.md)
    *The axiom. The formal definition of Layer 4 — where cognition meets governance.*
