@@ -5,22 +5,22 @@
 
 ---
 
-1. [Discours de la seconde méthode](../../../barons-Mariani/research/second_method.md)
+1. [Discours de la seconde méthode](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/second_method.md)
    *The founding doctrine. Why a new method of inquiry is needed, and what its rules are.*
 
 2. [Cogentia — the framework, in five distinctive moves](../../COGENTIA.md)
    *The identity document. What Cogentia is, condensed into five propositions.*
 
-3. [Democratic AI Safety](../../../barons-Mariani/research/democratic_ai_safety.md)
+3. [Democratic AI Safety](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/democratic_ai_safety.md)
    *The political thesis. Why AI safety must protect human sovereignty against AI-augmented legal persons.*
 
-4. [DHITL — Democratic Humans in the Loop](../../../marenostrum/DHITL.md)
+4. [DHITL — Democratic Humans in the Loop](https://github.com/JeanHuguesRobert/marenostrum/blob/main/DHITL.md)
    *The axiom. The formal definition of Layer 4 — where cognition meets governance.*
 
-5. [Infrastructure is All You Need](../../../marenostrum/infrastructure_is_all_you_need.md)
+5. [Infrastructure is All You Need](https://github.com/JeanHuguesRobert/marenostrum/blob/main/infrastructure_is_all_you_need.md)
    *The implementation thesis. From abstract governance to concrete Corsican infrastructure.*
 
-6. [FractaVolta — Energy Packet Networks](../../../FractaVolta/fractavolta_paper.md)
+6. [FractaVolta — Energy Packet Networks](https://github.com/JeanHuguesRobert/FractaVolta/blob/main/fractavolta_paper.md)
    *The engineering layer. How distributed energy and compute become the physical substrate.*
 
 7. [The Sovereign Digital Twin](../cogentia-digital-twin.md)

@@ -1,6 +1,6 @@
 <!-- BEGIN_AUTO: trails -->
 > 🧭 **Trail: From Method to Machine**
-> ⬅️ Previous: [FractaVolta — Energy Packet Networks](../../FractaVolta/fractavolta_paper.md) | ➡️ Next: [Agent-Resumable CLI](agent_resumable_cli.md)
+> ⬅️ Previous: [FractaVolta — Energy Packet Networks](https://github.com/JeanHuguesRobert/FractaVolta/blob/main/fractavolta_paper.md) | ➡️ Next: [Agent-Resumable CLI](agent_resumable_cli.md)
 
 <!-- END_AUTO: trails -->
 

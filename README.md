@@ -8,11 +8,13 @@
 
 Cogentia is the **cognitive infrastructure tooling** of a five-repository corpus that operationalizes the [DHITL](https://github.com/JeanHuguesRobert/marenostrum/blob/main/DHITL.md) AI Safety anti-capture proposal.
 
-Three surfaces, one commitment:
+One infrastructure, two scales — *I* and *we*:
 
-- **`scripts/cogentia.js`** — the zero-dependency Node.js CLI that runs the corpus. Multi-repo registry, canonical-URL stamping, link validation, scan-for-unreferenced-claims, and the **`cogentia.continuation.v1`** protocol for typed, provider-neutral, resumable judgment. As of v0.5.0.
-- **Cogentia Commons** — the methodology. GitHub-anchored, audit-trailed, every objection a first-class contribution. See [`research/Cogentia_Commons_Working_Paper.md`](research/Cogentia_Commons_Working_Paper.md).
-- **`brique-cogentia-commons`** (in spec) — the web-GUI complement to the CLI, deployable as a brique inside the [inseme](https://github.com/JeanHuguesRobert/inseme) platform. Shares the same COP Event log + Supabase projection.
+- **`scripts/cogentia.js`** — the zero-dependency Node.js CLI substrate. Multi-repo registry, canonical-URL stamping, link validation, scan-for-unreferenced-claims, and the **`cogentia.continuation.v1`** protocol for typed, provider-neutral, resumable judgment.
+- **Cogentia Personal** — the *individual* scale. A sovereign cognitive twin: Cogentia (memory + mandate + traces), Cogentigram (structured profile of the Cogentia), Cogentiscope (navigation surface). See [`apps/personal/`](apps/personal/) and [`research/cogentia-digital-twin.md`](research/cogentia-digital-twin.md).
+- **Cogentia Commons** — the *collective* scale. The methodology of public, accountable, audit-trailed knowledge: GitHub-anchored, every objection a first-class contribution. See [`apps/commons/`](apps/commons/) and [`research/Cogentia_Commons_Working_Paper.md`](research/Cogentia_Commons_Working_Paper.md). The web GUI also ships as **`brique-cogentia-commons`** inside the [inseme](https://github.com/JeanHuguesRobert/inseme) platform (shared COP Event log + Supabase projection).
+
+The CLI is the substrate both scales sit on; Personal and Commons are the two faces of the same cognitive infrastructure, applied to one person or to a community.
 
 Cogentia implements **Layer 4** of the DHITL architecture (cognitive infrastructure, open to agents, auditable). It is the substrate on which Layer 5 — democratic deliberation reserved for living humans — operates.
 
@@ -73,10 +75,10 @@ Each app has its own `.env`, Supabase project, Tailwind/Vite config, and Netlify
 All published documents live in `research/` and are catalogued in [`research/index.md`](research/index.md). Headline papers:
 
 - **[Agent-Resumable CLI](research/agent_resumable_cli.md)** — *Externalized Judgment, Continuations, and Provider-Neutral Resumption for AI-Compatible CLI Tools.* The protocol paper. Defines `cogentia.continuation.v1`.
-- **[Cogentia Commons Working Paper](research/Cogentia_Commons_Working_Paper.md)** — the methodology's formal specification.
+- **[The Sovereign Digital Twin](research/cogentia-digital-twin.md)** — Personal Cogentia: Cogentia, Cogentigram, Cogentiscope. The individual-scale foundation.
+- **[Cogentia Commons Working Paper](research/Cogentia_Commons_Working_Paper.md)** — Commons methodology, formal specification. The collective-scale foundation.
 - **[Cogentia Commons MVP Spec](research/cogentia_commons_mvp_spec.md)** — the v1 architecture for `brique-cogentia-commons`.
-- **[Democratic AI Safety](research/democratic_ai_safety.md)** — radical democracy as the best AI Safety strategy.
-- **[The Sovereign Digital Twin](research/cogentia-digital-twin.md)** — Cogentia, Cogentigram, Cogentiscope.
+- **[Democratic AI Safety](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/democratic_ai_safety.md)** — the political thesis on which both scales rest (canonical in barons-Mariani).
 - **[Agent Navigation Guide](docs/agent_context_server.md)** — meta-prompt for AI agents navigating the corpus.
 - **[The Knowledge Mesh](docs/knowledge_mesh.md)** — backlinks, trails, and Jekyll for human navigation.
 

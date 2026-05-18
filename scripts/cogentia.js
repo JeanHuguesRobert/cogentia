@@ -4368,16 +4368,40 @@ function cmdBacklinks() {
 function cmdTrails() {
   const { configPath, config } = loadConfig();
   if ( !configPath ) die( "No registry found. Run: cogentia add <repo> first." );
-  
+
   let updatedCount = 0;
   const trails = [];
-  
+
+  // Precompute metadata for each registered repo. Used to (a) accept absolute
+  // GitHub URLs as item targets, and (b) emit absolute URLs in banners that
+  // cross repo boundaries (GitHub does not resolve `../../<sibling-repo>/...`).
+  const repoMeta = config.repos.map( entry => {
+    const repoPath = resolveRepoPath( entry );
+    if ( !repoPath ) return null;
+    return {
+      name:   entry.name,
+      repoPath,
+      remote: gitRemoteOwner( repoPath ),
+      branch: gitCurrentBranch( repoPath ),
+    };
+  } ).filter( Boolean );
+
+  function owningRepo( absPath ) {
+    for ( const meta of repoMeta ) {
+      const rel = path.relative( meta.repoPath, absPath );
+      if ( rel && !rel.startsWith( ".." ) && !path.isAbsolute( rel ) ) {
+        return { meta, rel: rel.replace( /\\/g, "/" ) };
+      }
+    }
+    return null;
+  }
+
   for ( const entry of config.repos ) {
     const repoPath = resolveRepoPath( entry );
     if ( !repoPath ) continue;
     const trailsDir = path.join( repoPath, "research", "trails" );
     if ( !fs.existsSync( trailsDir ) ) continue;
-    
+
     for ( const file of fs.readdirSync( trailsDir ) ) {
       if ( !file.endsWith( ".md" ) ) continue;
       const full = path.join( trailsDir, file );
@@ -4385,44 +4409,75 @@ function cmdTrails() {
       const titleMatch = content.match( /^#\s+Trail:\s*(.+)$/m );
       if ( !titleMatch ) continue;
       const trailName = titleMatch[1].trim();
-      
+
       const items = [];
       const linkRegex = /^\s*(?:\d+\.|\*|-)\s+\[([^\]]+)\]\(([^)]+\.md)(?:#[^)]+)?\)/gm;
       let m;
       while ( ( m = linkRegex.exec( content ) ) ) {
         const linkTitle = m[1];
-        const linkPath = m[2];
-        const targetAbs = path.resolve( path.dirname( full ), linkPath );
-        if ( fs.existsSync( targetAbs ) ) {
-          items.push( { title: linkTitle, fullPath: targetAbs, relFromTrail: linkPath } );
+        const linkPath  = m[2];
+        let targetAbs   = null;
+
+        // Accept absolute GitHub URLs as item targets — required for cross-repo
+        // trails to render on GitHub (relative paths cannot leave a repo there).
+        const urlMatch = linkPath.match( /^https?:\/\/github\.com\/([^/]+)\/([^/]+)\/blob\/[^/]+\/(.+\.md)$/ );
+        if ( urlMatch ) {
+          const repoName = urlMatch[2];
+          const meta = repoMeta.find( r => r.name === repoName );
+          if ( meta ) targetAbs = path.resolve( meta.repoPath, urlMatch[3] );
+        } else {
+          targetAbs = path.resolve( path.dirname( full ), linkPath );
+        }
+
+        if ( targetAbs && fs.existsSync( targetAbs ) ) {
+          const owning = owningRepo( targetAbs );
+          let githubUrl = null;
+          let repoName  = null;
+          if ( owning ) {
+            repoName = owning.meta.name;
+            if ( owning.meta.remote ) {
+              githubUrl = `https://github.com/${owning.meta.remote.owner}/${owning.meta.remote.repo}/blob/${owning.meta.branch}/${owning.rel}`;
+            }
+          }
+          items.push( {
+            title:        linkTitle,
+            fullPath:     targetAbs,
+            relFromTrail: linkPath,
+            repoName,
+            githubUrl,
+          } );
         }
       }
-      
+
       if ( items.length > 0 ) {
         trails.push( { repo: entry.name, name: trailName, source: full, items } );
       }
     }
   }
-  
+
+  // Cross-repo links get an absolute GitHub URL; same-repo links stay relative.
+  function bannerHref( fromItem, toItem ) {
+    if ( fromItem.repoName && toItem.repoName
+      && fromItem.repoName !== toItem.repoName
+      && toItem.githubUrl ) {
+      return toItem.githubUrl;
+    }
+    return path.relative( path.dirname( fromItem.fullPath ), toItem.fullPath ).replace( /\\/g, "/" );
+  }
+
   const fileUpdates = new Map();
   for ( const trail of trails ) {
     for ( let i = 0; i < trail.items.length; i++ ) {
       const item = trail.items[i];
       const prev = i > 0 ? trail.items[i - 1] : null;
       const next = i < trail.items.length - 1 ? trail.items[i + 1] : null;
-      
+
       let block = `> 🧭 **Trail: ${trail.name}**\n> `;
       const parts = [];
-      if ( prev ) {
-        const relPrev = path.relative( path.dirname( item.fullPath ), prev.fullPath ).replace( /\\/g, "/" );
-        parts.push( `⬅️ Previous: [${prev.title}](${relPrev})` );
-      }
-      if ( next ) {
-        const relNext = path.relative( path.dirname( item.fullPath ), next.fullPath ).replace( /\\/g, "/" );
-        parts.push( `➡️ Next: [${next.title}](${relNext})` );
-      }
+      if ( prev ) parts.push( `⬅️ Previous: [${prev.title}](${bannerHref( item, prev )})` );
+      if ( next ) parts.push( `➡️ Next: [${next.title}](${bannerHref( item, next )})` );
       block += parts.join( " | " ) + "\n";
-      
+
       if ( !fileUpdates.has( item.fullPath ) ) fileUpdates.set( item.fullPath, [] );
       fileUpdates.get( item.fullPath ).push( block );
     }
