@@ -33,6 +33,10 @@
  *   corpus-status [name]  Refresh research/corpus-status.md (auto-generate
  *                         structural parts, preserve manual sections, bootstrap
  *                         the file if missing). Add --check for dry-run.
+ *   documents             Refresh research/documents.md in the registry repo:
+ *                         every tracked repo's markdown listed anté-chrono on
+ *                         activity, chrono on authorship, with per-repo anchors.
+ *                         Add --check for dry-run.
  *   concepts <sub>      Manage research/concepts.md as a typed concept registry
  *                       without performing semantic interpretation.
  *   manifest            OpenAI-compatible tool definitions for every command
@@ -1044,6 +1048,90 @@ function gitLastCommit( repoPath ) {
   }
 }
 
+// ── Document date resolution ──────────────────────────────────────────────────
+//
+// mtime and "last commit" both get rewritten by automated passes (stamp --all,
+// jekyll, etc), so they are unreliable for sorting documents. We resolve dates
+// through a tiered fallback that prefers human-authored signals.
+
+const RECENT_WINDOW_DAYS         = 45;
+const BULK_COMMIT_FILE_THRESHOLD = 10;
+const BULK_COMMIT_SUBJECT_RE     = /\b(stamp|jekyll|frontmatter|canonical|auto[- ]?(stamp|refresh|generate)|bulk)\b/i;
+
+/**
+ * Read the first YAML frontmatter and return the human-authored date if any.
+ * Honours `date:` then `created:` — NOT `last_stamped_at` / `last_modified_at`,
+ * which are rewritten by automation.
+ * Returns { date: "YYYY-MM-DD", source: "frontmatter:<key>" } or null.
+ */
+function extractFrontmatterDate( content ) {
+  const m = content.match( /^---\r?\n([\s\S]*?)\r?\n---/ );
+  if ( !m ) return null;
+  const fm = m[ 1 ];
+  for ( const key of [ "date", "created" ] ) {
+    const re   = new RegExp( `^${key}\\s*:\\s*(.+?)\\s*$`, "m" );
+    const hit  = fm.match( re );
+    if ( !hit ) continue;
+    const raw  = hit[ 1 ].replace( /^['"]|['"]$/g, "" ).trim();
+    const iso  = raw.match( /^(\d{4}-\d{2}-\d{2})/ );
+    if ( iso ) return { date: iso[ 1 ], source: `frontmatter:${key}` };
+  }
+  return null;
+}
+
+/**
+ * Date of the commit that first introduced a file (follows renames).
+ * Returns "YYYY-MM-DD" or null.
+ */
+function gitFirstCommitDate( repoPath, relPath ) {
+  try {
+    const out = execSync(
+      `git log --diff-filter=A --follow --format=%aI -- "${relPath}"`,
+      { cwd: repoPath, encoding: "utf8", timeout: 5000 }
+    ).trim();
+    if ( !out ) return null;
+    const lines = out.split( /\r?\n/ ).filter( Boolean );
+    const first = lines[ lines.length - 1 ];
+    return first ? first.slice( 0, 10 ) : null;
+  } catch ( _ ) {
+    return null;
+  }
+}
+
+/**
+ * Date of the most recent commit that touched the file AND is not a "bulk"
+ * pass (heuristic: touched more than BULK_COMMIT_FILE_THRESHOLD files, or
+ * subject matches BULK_COMMIT_SUBJECT_RE). Falls back to the most recent
+ * commit if every candidate was bulk.
+ * Returns "YYYY-MM-DD" or null.
+ */
+function gitLastNonBulkCommitDate( repoPath, relPath ) {
+  try {
+    const REC = "---COGENTIA-REC---";
+    const out = execSync(
+      `git log --follow --name-only --format=${REC}%n%aI%n%s -- "${relPath}"`,
+      { cwd: repoPath, encoding: "utf8", timeout: 8000, maxBuffer: 16 * 1024 * 1024 }
+    );
+    if ( !out ) return null;
+    const records = out.split( REC ).map( s => s.trim() ).filter( Boolean );
+    let fallback = null;
+    for ( const rec of records ) {
+      const lines    = rec.split( /\r?\n/ );
+      const isoDate  = ( lines[ 0 ] || "" ).trim();
+      const subject  = ( lines[ 1 ] || "" ).trim();
+      const files    = lines.slice( 2 ).filter( Boolean );
+      const isoShort = isoDate.slice( 0, 10 );
+      if ( !fallback && isoShort ) fallback = isoShort;
+      const isBulk   = files.length > BULK_COMMIT_FILE_THRESHOLD
+                    || BULK_COMMIT_SUBJECT_RE.test( subject );
+      if ( !isBulk && isoShort ) return isoShort;
+    }
+    return fallback;
+  } catch ( _ ) {
+    return null;
+  }
+}
+
 // ── HTTP link check ───────────────────────────────────────────────────────────
 
 function checkUrl( url ) {
@@ -1119,6 +1207,11 @@ ${bold( "Commands:" )}
                       manually-curated What Is Proved / Open Objections;
                       bootstraps the file if missing. ${c.cyan}<name>${c.reset} for one repo;
                       ${c.cyan}--check${c.reset} for dry-run.
+  ${c.cyan}documents${c.reset}            Refresh ${c.cyan}research/documents.md${c.reset} in the registry repo:
+                      one consolidated page listing every tracked repo's
+                      markdown (after .cogentiaignore), with an anté-chrono
+                      table on activity, a chrono table on authorship, and
+                      per-repo anchored replays. ${c.cyan}--check${c.reset} for dry-run.
   ${c.cyan}concepts${c.reset} <sub>       Manage ${c.cyan}research/concepts.md${c.reset} as a typed concept registry.
                       Sub: ${c.cyan}init${c.reset} [repo] | ${c.cyan}list${c.reset} [repo] | ${c.cyan}check${c.reset} [repo] | ${c.cyan}graph${c.reset} [repo]
                            ${c.cyan}ref${c.reset} <concept> [repo] | ${c.cyan}status${c.reset} [repo] | ${c.cyan}schema${c.reset}
@@ -1881,6 +1974,314 @@ function cmdCorpusStatus( repoArg ) {
     }
   }
   console.log();
+}
+
+// ── documents ─────────────────────────────────────────────────────────────────
+
+const DOCUMENTS_FILE           = "documents.md";
+const DOCUMENTS_OLD_N          = 20;
+const DOCUMENTS_OLD_N_PER_REPO = 10;
+
+function repoAnchor( name ) {
+  return "repo-" + name.toLowerCase()
+    .replace( /[^a-z0-9]+/g, "-" )
+    .replace( /^-+|-+$/g, "" );
+}
+
+/**
+ * Resolve authored + activity dates for a single markdown file.
+ * Returns { authored: {date, source}|null, activity: {date, source}|null }.
+ *
+ * Authored fallback : frontmatter date/created → git first commit → fs mtime.
+ * Activity fallback : git last non-bulk commit → fs mtime.
+ * The `source` tag is rendered next to the date so the page is self-explanatory.
+ */
+function resolveDocumentDates( repoPath, relPath, mtime, content ) {
+  let authored = extractFrontmatterDate( content );
+  if ( !authored ) {
+    const first = gitFirstCommitDate( repoPath, relPath );
+    if ( first ) authored = { date: first, source: "git:first-commit" };
+  }
+  if ( !authored && mtime ) authored = { date: fmtDate( mtime ), source: "fs:mtime" };
+
+  let activity = null;
+  const last   = gitLastNonBulkCommitDate( repoPath, relPath );
+  if ( last ) activity = { date: last, source: "git:last-non-bulk" };
+  if ( !activity && mtime ) activity = { date: fmtDate( mtime ), source: "fs:mtime" };
+
+  return { authored, activity };
+}
+
+/**
+ * Walk every registered repo and build document records, respecting
+ * .cogentiaignore (so README/LICENSE/TODO/etc. are excluded by default).
+ */
+function collectAllDocuments( config ) {
+  const docs = [];
+  for ( const entry of config.repos ) {
+    const repoPath = resolveRepoPath( entry );
+    if ( !repoPath ) continue;
+    const remote   = gitRemoteOwner( repoPath );
+    const branch   = gitCurrentBranch( repoPath );
+    const ignore   = loadIgnore( repoPath );
+    const mdFiles  = listMarkdown( repoPath );
+    for ( const f of mdFiles ) {
+      if ( matchesIgnore( f.rel, ignore ) ) continue;
+      let content = "";
+      try { content = fs.readFileSync( f.full, "utf8" ); } catch ( _ ) {}
+      const titleMatch = content.match( /^#\s+(.+)$/m );
+      const title      = titleMatch ? titleMatch[ 1 ].trim() : path.basename( f.full, ".md" );
+      const { authored, activity } = resolveDocumentDates( repoPath, f.rel, f.mtime, content );
+      const githubBlob = remote
+        ? `https://github.com/${remote.owner}/${remote.repo}/blob/${branch}/${f.rel}`
+        : null;
+      const githubEdit = remote
+        ? `https://github.com/${remote.owner}/${remote.repo}/edit/${branch}/${f.rel}`
+        : null;
+      docs.push( {
+        repoName: entry.name,
+        repoPath,
+        relPath:  f.rel,
+        full:     f.full,
+        title,
+        authored,
+        activity,
+        githubBlob,
+        githubEdit,
+      } );
+    }
+  }
+  docs.sort( ( a, b ) =>
+    ( b.activity?.date || "" ).localeCompare( a.activity?.date || "" )
+  );
+  return docs;
+}
+
+function escCell( s ) {
+  return String( s == null ? "" : s ).replace( /\|/g, "\\|" ).replace( /\r?\n/g, " " );
+}
+
+function renderActivityRow( d ) {
+  const titleCell = d.githubBlob
+    ? `[${escCell( d.title )}](${d.githubBlob})`
+    : escCell( d.title );
+  const editCell  = d.githubEdit ? `[✎](${d.githubEdit})` : "—";
+  const act       = d.activity ? `${d.activity.date} <sub>${d.activity.source}</sub>` : "—";
+  const aut       = d.authored ? `${d.authored.date} <sub>${d.authored.source}</sub>` : "—";
+  return `| ${titleCell} | ${escCell( d.repoName )} | ${act} | ${aut} | \`${escCell( d.relPath )}\` | ${editCell} |`;
+}
+
+function renderOldRow( d ) {
+  const titleCell = d.githubBlob
+    ? `[${escCell( d.title )}](${d.githubBlob})`
+    : escCell( d.title );
+  const editCell  = d.githubEdit ? `[✎](${d.githubEdit})` : "—";
+  const aut       = d.authored ? `${d.authored.date} <sub>${d.authored.source}</sub>` : "—";
+  const act       = d.activity ? `${d.activity.date} <sub>${d.activity.source}</sub>` : "—";
+  return `| ${titleCell} | ${escCell( d.repoName )} | ${aut} | ${act} | \`${escCell( d.relPath )}\` | ${editCell} |`;
+}
+
+const ACTIVITY_TABLE_HEAD = [
+  "| Titre | Dépôt | Activité | Auteur | Local | Édition |",
+  "|---|---|---|---|---|---|",
+].join( "\n" );
+
+const OLD_TABLE_HEAD = [
+  "| Titre | Dépôt | Auteur | Activité | Local | Édition |",
+  "|---|---|---|---|---|---|",
+].join( "\n" );
+
+function buildDocumentsPage( config, docs, now ) {
+  const cutoff    = new Date( now.getTime() - RECENT_WINDOW_DAYS * 86400000 );
+  const cutoffStr = fmtDate( cutoff );
+  const recent    = docs.filter( d => d.activity && d.activity.date >= cutoffStr );
+  const oldSorted = docs
+    .filter( d => d.authored )
+    .slice()
+    .sort( ( a, b ) => a.authored.date.localeCompare( b.authored.date ) );
+  const oldest    = oldSorted.slice( 0, DOCUMENTS_OLD_N );
+
+  const byRepo = new Map();
+  for ( const d of docs ) {
+    if ( !byRepo.has( d.repoName ) ) byRepo.set( d.repoName, [] );
+    byRepo.get( d.repoName ).push( d );
+  }
+
+  const lines = [];
+  lines.push( "---" );
+  lines.push( `title: "Documents — Tous les dépôts"` );
+  lines.push( `description: "Liste consolidée des documents Markdown à travers les dépôts enregistrés."` );
+  lines.push( "layout: default" );
+  lines.push( "nav_order: 3" );
+  lines.push( `last_modified_at: ${fmtDate( now )}` );
+  lines.push( "---" );
+  lines.push( "" );
+  lines.push( "# Documents — Tous les dépôts" );
+  lines.push( "" );
+  lines.push( "*Auto-généré par `cogentia documents`. Ne pas éditer à la main.*" );
+  lines.push( "" );
+  lines.push( `*Période d'activité récente : ${RECENT_WINDOW_DAYS} jours (depuis le ${cutoffStr}).*  ` );
+  lines.push( `*Date d'**activité*** : dernier commit ignorant les passages bulk (stamp / jekyll / frontmatter / canonical, ou commit touchant > ${BULK_COMMIT_FILE_THRESHOLD} fichiers).*  ` );
+  lines.push( "*Date d'**auteur*** : `date:` / `created:` du frontmatter, sinon date de création git, sinon mtime.*" );
+  lines.push( "" );
+
+  lines.push( "## Vue d'ensemble" );
+  lines.push( "" );
+  lines.push( `- Dépôts suivis : **${config.repos.length}**` );
+  lines.push( `- Documents totaux (après \`.cogentiaignore\`) : **${docs.length}**` );
+  lines.push( `- Activité récente (≤ ${RECENT_WINDOW_DAYS} j) : **${recent.length}**` );
+  lines.push( `- Plus anciens listés : **${oldest.length}** / ${oldSorted.length}` );
+  lines.push( "" );
+
+  lines.push( "## Sommaire" );
+  lines.push( "" );
+  lines.push( "- [Activité récente](#activité-récente)" );
+  lines.push( `- [Plus anciens (top ${DOCUMENTS_OLD_N})](#plus-anciens)` );
+  lines.push( "- Par dépôt :" );
+  for ( const name of Array.from( byRepo.keys() ).sort() ) {
+    lines.push( `  - [${name}](#${repoAnchor( name )})` );
+  }
+  lines.push( "" );
+  lines.push( "---" );
+  lines.push( "" );
+
+  lines.push( "## Activité récente" );
+  lines.push( "" );
+  lines.push( `*Trié anté-chronologique sur la date d'activité. ${recent.length} document(s).*` );
+  lines.push( "" );
+  if ( recent.length === 0 ) {
+    lines.push( `_(Aucun document avec activité dans les ${RECENT_WINDOW_DAYS} derniers jours.)_` );
+  } else {
+    lines.push( ACTIVITY_TABLE_HEAD );
+    for ( const d of recent ) lines.push( renderActivityRow( d ) );
+  }
+  lines.push( "" );
+  lines.push( "---" );
+  lines.push( "" );
+
+  lines.push( "## Plus anciens" );
+  lines.push( "" );
+  lines.push( `*Trié chronologique sur la date d'auteur. Top ${DOCUMENTS_OLD_N}.*` );
+  lines.push( "" );
+  if ( oldest.length === 0 ) {
+    lines.push( "_(Aucun document avec date d'auteur connue.)_" );
+  } else {
+    lines.push( OLD_TABLE_HEAD );
+    for ( const d of oldest ) lines.push( renderOldRow( d ) );
+  }
+  lines.push( "" );
+  lines.push( "---" );
+  lines.push( "" );
+
+  lines.push( "## Par dépôt" );
+  lines.push( "" );
+  for ( const name of Array.from( byRepo.keys() ).sort() ) {
+    const repoDocs   = byRepo.get( name );
+    const repoRecent = repoDocs
+      .filter( d => d.activity && d.activity.date >= cutoffStr )
+      .slice()
+      .sort( ( a, b ) => b.activity.date.localeCompare( a.activity.date ) );
+    const repoOldest = repoDocs
+      .filter( d => d.authored )
+      .slice()
+      .sort( ( a, b ) => a.authored.date.localeCompare( b.authored.date ) )
+      .slice( 0, DOCUMENTS_OLD_N_PER_REPO );
+
+    lines.push( `### <a id="${repoAnchor( name )}"></a>${name}` );
+    lines.push( "" );
+    lines.push( `*${repoDocs.length} document(s) au total.*` );
+    lines.push( "" );
+    lines.push( `**Activité récente** (≤ ${RECENT_WINDOW_DAYS} j) — ${repoRecent.length}` );
+    lines.push( "" );
+    if ( repoRecent.length === 0 ) {
+      lines.push( "_(rien dans la fenêtre)_" );
+    } else {
+      lines.push( ACTIVITY_TABLE_HEAD );
+      for ( const d of repoRecent ) lines.push( renderActivityRow( d ) );
+    }
+    lines.push( "" );
+    lines.push( `**Plus anciens** (top ${DOCUMENTS_OLD_N_PER_REPO})` );
+    lines.push( "" );
+    if ( repoOldest.length === 0 ) {
+      lines.push( "_(aucune date d'auteur connue)_" );
+    } else {
+      lines.push( OLD_TABLE_HEAD );
+      for ( const d of repoOldest ) lines.push( renderOldRow( d ) );
+    }
+    lines.push( "" );
+    lines.push( "[↑ Sommaire](#sommaire)" );
+    lines.push( "" );
+  }
+
+  lines.push( "---" );
+  lines.push( "" );
+  lines.push( `*Généré le ${fmtDate( now )} par \`cogentia documents\` — [scripts/cogentia.js](https://github.com/JeanHuguesRobert/cogentia/blob/main/scripts/cogentia.js).*` );
+  lines.push( "" );
+
+  return lines.join( "\n" );
+}
+
+function cmdDocuments() {
+  const checkOnly = argv.includes( "--check" );
+  const { configPath, config } = loadConfig();
+  if ( !configPath ) die( "No registry found. Run: cogentia add <repo> first." );
+  if ( config.repos.length === 0 ) die( "No registered repos. Run: cogentia add <repo>." );
+
+  const registryDir = path.dirname( configPath );
+  const researchDir = path.join( registryDir, "research" );
+  if ( !fs.existsSync( researchDir ) ) fs.mkdirSync( researchDir, { recursive: true } );
+  const target = path.join( researchDir, DOCUMENTS_FILE );
+
+  const now      = new Date();
+  const docs     = collectAllDocuments( config );
+  const content  = buildDocumentsPage( config, docs, now );
+  const existing = fs.existsSync( target ) ? fs.readFileSync( target, "utf8" ) : "";
+  const changed  = content !== existing;
+
+  if ( JSON_MODE ) {
+    if ( !checkOnly && changed ) {
+      fs.writeFileSync( target, content, "utf8" );
+      appendAudit( {
+        command: "documents",
+        args:    { check: checkOnly },
+        result:  { target, totalDocs: docs.length, action: "refreshed" },
+        narrative: collectNarrative(),
+      } );
+    }
+    console.log( JSON.stringify( {
+      target,
+      changed,
+      check:     checkOnly,
+      totalDocs: docs.length,
+      perRepo:   config.repos.map( r => ( {
+        name:  r.name,
+        count: docs.filter( d => d.repoName === r.name ).length,
+      } ) ),
+    }, null, 2 ) );
+    return;
+  }
+
+  console.log( `\n${hdr( checkOnly ? "Documents check" : "Documents refresh" )}\n` );
+  console.log( `  ${bold( "Target" )}      ${dim( target )}` );
+  console.log( `  ${bold( "Repos" )}       ${config.repos.length}` );
+  console.log( `  ${bold( "Documents" )}   ${docs.length}` );
+
+  if ( checkOnly ) {
+    console.log( `  ${bold( "Action" )}      ${changed ? warn( "would update" ) : dim( "unchanged" )}\n` );
+    return;
+  }
+  if ( !changed ) {
+    console.log( `  ${bold( "Action" )}      ${dim( "unchanged" )}\n` );
+    return;
+  }
+  fs.writeFileSync( target, content, "utf8" );
+  appendAudit( {
+    command: "documents",
+    args:    {},
+    result:  { target, totalDocs: docs.length, action: "refreshed" },
+    narrative: collectNarrative(),
+  } );
+  console.log( `  ${bold( "Action" )}      ${ok( "refreshed" )}\n` );
 }
 
 // ── stamp ─────────────────────────────────────────────────────────────────────
@@ -3984,6 +4385,7 @@ function cmdInstallHooks() {
     case "whoami":         cmdWhoami();                    break;
     case "stamp":          cmdStamp(  cmdArgs[ 0 ] );       break;
     case "corpus-status":  cmdCorpusStatus( cmdArgs[ 0 ] ); break;
+    case "documents":      cmdDocuments();                  break;
     case "manifest":       cmdManifest();                   break;
     case "install-hooks":  cmdInstallHooks();               break;
     case "state":          cmdState();                      break;
