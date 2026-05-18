@@ -3,7 +3,7 @@ title: "Corpus Status — cogentia"
 description: "Current state of the cogentia knowledge corpus — what is proved, what is open, what remains possible"
 layout: default
 nav_order: 2
-last_modified_at: 2026-05-16
+last_modified_at: 2026-05-18
 repository: "github.com/JeanHuguesRobert/cogentia"
 canonical_url: https://github.com/JeanHuguesRobert/cogentia/blob/main/research/corpus-status.md
 last_stamped_at: 2026-05-16
@@ -24,11 +24,11 @@ last_stamped_at: 2026-05-16
 <!-- BEGIN_AUTO: registered_repos -->
 | Repository | research/index.md | Branch | Last commit |
 |---|---|---|---|
-| cogentia | ✅ | main | 2026-05-15 |
-| FractaVolta | ✅ | main | 2026-05-15 |
-| marenostrum | ✅ | main | 2026-05-15 |
-| barons-Mariani | ✅ | main | 2026-05-15 |
-| inseme | ✅ | main | 2026-05-15 |
+| cogentia | ✅ | main | 2026-05-18 |
+| FractaVolta | ✅ | main | 2026-05-17 |
+| marenostrum | ✅ | main | 2026-05-16 |
+| barons-Mariani | ✅ | main | 2026-05-17 |
+| inseme | ✅ | main | 2026-05-17 |
 <!-- END_AUTO: registered_repos -->
 
 ---
@@ -63,6 +63,11 @@ graph LR
   inseme --> marenostrum
   inseme --> FractaVolta
   inseme --> barons-Mariani
+  click cogentia "https://github.com/JeanHuguesRobert/cogentia/blob/main/research/index.md" "Open research/index.md"
+  click FractaVolta "https://github.com/JeanHuguesRobert/FractaVolta/blob/main/research/index.md" "Open research/index.md"
+  click marenostrum "https://github.com/JeanHuguesRobert/marenostrum/blob/main/research/index.md" "Open research/index.md"
+  click barons-Mariani "https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/index.md" "Open research/index.md"
+  click inseme "https://github.com/JeanHuguesRobert/inseme/blob/main/research/index.md" "Open research/index.md"
 ```
 <!-- END_AUTO: graph -->
 
