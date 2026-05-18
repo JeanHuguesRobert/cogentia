@@ -11,7 +11,8 @@
     "personal:dev": "pnpm --filter @cogentia/personal run dev",
     "personal:build": "pnpm --filter @cogentia/personal run build",
     "commons:dev": "pnpm --filter @cogentia/commons run dev",
-    "commons:build": "pnpm --filter @cogentia/commons run build"
+    "commons:build": "pnpm --filter @cogentia/commons run build",
+    "cogentia": "node scripts/cogentia.js"
   },
   "devDependencies": {
     "turbo": "^2.0.0"
