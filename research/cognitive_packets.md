@@ -8,7 +8,8 @@ status: "Working paper"
 version: "0.2"
 license: "CC BY-SA 4.0 for text; MIT for associated schemas or code"
 spdx: "CC-BY-SA-4.0"
-canonical_path: "cogentia/research/cognitive_packets.md"
+canonical_path: cogentia/research/cognitive_packets.md
+operational_prompt: cogentia/prompts/cognitive_packet.md
 ---
 
 # Cognitive Packets
