@@ -28,6 +28,16 @@ Institut Mariani / C.O.R.S.I.C.A.
 
 **v0.2** adds the notion of **self-describing cognitive packets**. A packet transmitted by copy may include a minimal protocol header explaining how to interpret the packet and how to produce another one. This makes the convention propagable by ordinary copy/paste while preserving the rule that **self-describing does not mean self-validating**.
 
+## Genre note
+
+This document is a **design pattern** in the sense of Christopher Alexander and the Gang of Four — not a formal specification, not an academic proof, not a normative protocol.
+
+A pattern names something already present, in many forms, in domains that have solved related problems. It codifies a recurring structure so that practitioners recognize what they were already doing, share a vocabulary, and discuss variants. SBAR (healthcare handoffs, since 2002) and Architecture Decision Records (software, since 2011) are the closest existing patterns — the latter explicitly described by its author as "in a format similar to an Alexandrian pattern". Cognitive packets transpose the same family of patterns to the case where one or more agents in the loop are not human.
+
+The reader looking for formal proofs, exhaustive related work, normative schemas, or completeness should expect to be disappointed. The reader who recognizes the problem and finds a useful name for it is the intended audience.
+
+See Appendix C for known uses of the same pattern family in adjacent domains.
+
 ---
 
 ## Abstract
@@ -1258,3 +1268,48 @@ Paquet d’échec.
 Paquet de décision.
 Paquet d’hypothèse.
 ```
+
+# Appendix C — Known Uses
+
+Cognitive packets are not novel as a family. Several mature patterns in adjacent domains carry continuation payloads with structured fields, optimized for handoff under time pressure or across role boundaries. Listing them is part of the pattern: a pattern is validated, in the Alexandrian sense, by recurrence.
+
+## SBAR — healthcare handoffs
+
+**Situation / Background / Assessment / Recommendation.** Developed for handoffs on US Navy nuclear submarines, adapted for clinical use by Michael Leonard, Doug Bonacum and Suzanne Graham at Kaiser Permanente Colorado in 2002. Now endorsed by the Joint Commission, AHRQ, IHI, and the WHO; used in the majority of US hospitals and widely abroad. Mapping: Situation → Object + State; Background → Context + Traces; Assessment → Decisions + Assumptions; Recommendation → Next Action. SBAR has no explicit "Resumption Risks" field — this is one place where cognitive packets extend the pattern.
+
+## ADR — Architecture Decision Records
+
+**Context / Decision / Status / Consequences.** Introduced by Michael Nygard in a November 2011 blog post ("Documenting Architecture Decisions") and now widely adopted across software teams (Thoughtworks Technology Radar Adopt category, AWS Prescriptive Guidance, UK Government Digital Service). Stored as Markdown files in the project repository, versioned with the code. Nygard explicitly describes an ADR as "a short text file in a format similar to an Alexandrian pattern". Mapping: Context → State + Constraints; Decision → Decisions; Status → packet status field; Consequences → Resumption Risks + Reversibility. ADRs are the closest existing precedent for a Decision Packet (§10.4).
+
+## AAR — After Action Review
+
+**What was supposed to happen / What actually happened / Why / What to do next.** Originating in US Army training doctrine in the 1970s–80s, now standard in emergency management, corporate retrospectives, and incident response. Mapping: the four AAR questions correspond directly to State, Traces, Decisions, and Next Action. AARs are the closest existing precedent for a Failure Packet (§10.5).
+
+## OPORD — Military Operations Order
+
+**Situation / Mission / Execution / Sustainment / Command & Signal.** Standard five-paragraph format in US and NATO military doctrine for issuing operational orders. Designed so that a unit receiving an OPORD has enough state to execute without further clarification — a full continuation-by-copy packet for a hierarchical, time-pressured context. The execution paragraph is structured around commander's intent and concept of operations, close to packet-level Decisions and Next Action.
+
+## Aviation cockpit handover briefing
+
+**Who has control / aircraft state / weather and traffic / fuel and time / open items.** Standardized as part of Crew Resource Management (CRM) from the 1980s onward, following NTSB analyses of communication-failure accidents (notably post-Tenerife 1977). Each handover transfers a continuation payload covering current state, decisions taken, constraints active, and items requiring resumption. Notable for explicit attention to what the receiver is likely to misjudge — a direct analogue to the Resumption Risks field.
+
+## Incident postmortems
+
+**Timeline / Impact / Root cause / What went well / What went poorly / Action items.** Codified in the Google SRE book and now standard practice across operations and platform teams. Postmortems carry state forward from a failed branch, preserving it as actionable knowledge for the next attempt. Mapping: combined Failure Packet (§10.5) and Continuation Packet (§10.1) — exactly the combination cognitive packets are designed to express.
+
+## Conventional Commits and well-formed Git commit bodies
+
+**Type / Scope / Subject / Body / Footers.** Specified at conventionalcommits.org and widely adopted in software repositories. A well-formed commit body answers what changed, why, and what the reviewer should attend to — a miniature continuation packet attached to each unit of code change, versioned with the work itself.
+
+## Common pattern
+
+All seven cases share:
+
+- a small fixed set of named fields;
+- enough state for the receiver to act without re-fetching context;
+- an institutional cost paid for skipping the format (medical errors, lost architectural rationale, repeated incidents, ambiguous orders, broken bisects);
+- a culture that treats writing the packet as a professional responsibility, not as overhead.
+
+Cognitive packets generalize this family to the case where the receiver may be an AI agent and the producer may be an AI agent, while keeping the same minimal commitment: structured fields, sufficient state, named cost for skipping.
+
+The novelty of cognitive packets is therefore not the existence of the pattern, but two specific extensions: the **Resumption Risks** field (absent from SBAR, AAR, ADR, OPORD) and the **self-describing protocol header** that makes the convention propagable by copy/paste to receivers who do not yet know it.
