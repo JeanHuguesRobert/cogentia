@@ -6,7 +6,8 @@ date: "2026-05-19"
 status: "Prompt contract"
 version: "0.2"
 license: "CC BY-SA 4.0"
-canonical_path: "cogentia/research/cognitive_packet_prompt_contract.md"
+canonical_path: "cogentia/prompts/cognitive_packet.md"
+related_research: "cogentia/research/cognitive_packets.md"
 ---
 
 # Cognitive Packet Prompt Contract
