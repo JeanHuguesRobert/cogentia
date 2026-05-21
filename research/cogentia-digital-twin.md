@@ -7,9 +7,6 @@ license: "CC BY-SA 4.0"
 > 🧭 **Trail: From Method to Machine**
 > ⬅️ Previous: [FractaVolta — Energy Packet Networks](https://github.com/JeanHuguesRobert/FractaVolta/blob/main/fractavolta_paper.md) | ➡️ Next: [Agent-Resumable CLI](agent_resumable_cli.md)
 
-> 🧭 **Trail: From Method to Machine**
-> ⬅️ Previous: [Cognitive Packets](cognitive_packets.md)
-
 <!-- END_AUTO: trails -->
 
 ---
@@ -169,10 +166,12 @@ This document is a position paper, not a product announcement. It is published i
 ### Backlinks
 
 *These documents link to this file:*
-- [Research Index — Cogentia](index.md)
-- [Corpus Status — cogentia](corpus-status.md)
-- [Trail: From Method to Machine](trails/from_method_to_machine.md)
+- [Cognitive Packets](cognitive_packets.md)
 - [Agent-Resumable CLI](agent_resumable_cli.md)
+- [Cogentia](../COGENTIA.md)
+- [Corpus Status — cogentia](corpus-status.md)
+- [Research Index — Cogentia](index.md)
+- [Trail: From Method to Machine](trails/from_method_to_machine.md)
 - [Cogentia and Cogentigrams](Cogentia-and-Cogentigram.md)
 - [The Knowledge Mesh (Decentralized Wiki)](../docs/knowledge_mesh.md)
 

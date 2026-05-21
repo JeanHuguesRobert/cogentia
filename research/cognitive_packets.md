@@ -8,7 +8,6 @@ status: "Working paper"
 version: "0.3"
 license: "CC BY-SA 4.0 for text; MIT for associated schemas or code"
 spdx: "CC-BY-SA-4.0"
-canonical_path: cogentia/research/cognitive_packets.md
 operational_prompt: cogentia/prompts/cognitive_packet.md
 canonical_url: https://github.com/JeanHuguesRobert/cogentia/blob/main/research/cognitive_packets.md
 last_stamped_at: 2026-05-21
@@ -19,9 +18,6 @@ last_stamped_at: 2026-05-21
 <!-- BEGIN_AUTO: trails -->
 > 🧭 **Trail: From Method to Machine**
 > ⬅️ Previous: [Agent-Resumable CLI](agent_resumable_cli.md) | ➡️ Next: [Agent Navigation Guide](../docs/agent_context_server.md)
-
-> 🧭 **Trail: From Method to Machine**
-> ⬅️ Previous: [Agent-Resumable CLI](agent_resumable_cli.md) | ➡️ Next: [The Sovereign Digital Twin: Cogentia, Cogentigram, Cogentiscope](cogentia-digital-twin.md)
 
 <!-- END_AUTO: trails -->
 
@@ -1500,10 +1496,11 @@ The novelty of cognitive packets is therefore not the existence of the pattern, 
 ### Backlinks
 
 *These documents link to this file:*
-- [Agent Navigation Guide (Context Server)](../docs/agent_context_server.md)
-- [Research Index — Cogentia](index.md)
-- [Corpus Status — cogentia](corpus-status.md)
-- [Trail: From Method to Machine](trails/from_method_to_machine.md)
 - [Agent-Resumable CLI](agent_resumable_cli.md)
+- [Agent Navigation Guide (Context Server)](../docs/agent_context_server.md)
+- [The Sovereign Digital Twin: Cogentia, Cogentigram, Cogentiscope](cogentia-digital-twin.md)
+- [Corpus Status — cogentia](corpus-status.md)
+- [Research Index — Cogentia](index.md)
+- [Trail: From Method to Machine](trails/from_method_to_machine.md)
 
 <!-- END_AUTO: backlinks -->

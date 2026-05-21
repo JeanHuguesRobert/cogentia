@@ -871,7 +871,6 @@ function buildCorpusStatusSkeleton( entry, config, now ) {
     "layout: default",
     "nav_order: 2",
     `last_modified_at: ${fmtDate( now )}`,
-    `repository: "github.com/${repoSlug}"`,
     "---",
     "",
     `# Corpus Status — ${entry.name}`,
@@ -4962,7 +4961,12 @@ function cmdTrails() {
     for ( const file of fs.readdirSync( trailsDir ) ) {
       if ( !file.endsWith( ".md" ) ) continue;
       const full = path.join( trailsDir, file );
-      const content = fs.readFileSync( full, "utf8" );
+      const rawContent = fs.readFileSync( full, "utf8" );
+      // Auto-injected sections (backlinks etc.) use the same bullet-link
+      // format as trail items. Strip them before parsing so we never
+      // duplicate-count the same target as an item.
+      const autoIdx = rawContent.indexOf( "<!-- BEGIN_AUTO:" );
+      const content = autoIdx >= 0 ? rawContent.slice( 0, autoIdx ) : rawContent;
       const titleMatch = content.match( /^#\s+Trail:\s*(.+)$/m );
       if ( !titleMatch ) continue;
       const trailName = titleMatch[1].trim();

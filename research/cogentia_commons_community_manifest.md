@@ -563,12 +563,12 @@ The `cogentia.js manifest` subcommand and its fixtures: **MIT**.
 ### Backlinks
 
 *These documents link to this file:*
-- [Research Index — Cogentia](index.md)
 - [Corpus Status — cogentia](corpus-status.md)
-- [Cogentia Commons — MVP Specification](cogentia_commons_mvp_spec.md)
+- [Research Index — Cogentia](index.md)
 - [Cogentia Commons — Session Continuation Snapshot](cogentia_commons_continuation.md)
 - [Cogentia Commons — `kernel_extractor` Plugin Sub-Specification](cogentia_commons_kernel_extractor.md)
-- [Cogentia Commons — Structural Plugin Sub-Specifications](cogentia_commons_structural_plugins.md)
+- [Cogentia Commons — MVP Specification](cogentia_commons_mvp_spec.md)
 - [Cogentia Commons — Workflows](cogentia_commons_workflows.md)
+- [Cogentia Commons — Structural Plugin Sub-Specifications](cogentia_commons_structural_plugins.md)
 
 <!-- END_AUTO: backlinks -->

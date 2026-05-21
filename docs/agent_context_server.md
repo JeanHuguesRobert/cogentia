@@ -14,10 +14,7 @@ last_stamped_at: 2026-05-16
 
 <!-- BEGIN_AUTO: trails -->
 > 🧭 **Trail: From Method to Machine**
-> ⬅️ Previous: [Cognitive Packets](../research/cognitive_packets.md) | ➡️ Next: [Agent Navigation Guide (Context Server)](agent_context_server.md)
-
-> 🧭 **Trail: From Method to Machine**
-> ⬅️ Previous: [Agent Navigation Guide](agent_context_server.md) | ➡️ Next: [Research Index — Cogentia](../research/index.md)
+> ⬅️ Previous: [Cognitive Packets](../research/cognitive_packets.md)
 
 <!-- END_AUTO: trails -->
 
@@ -74,10 +71,11 @@ node scripts/cogentia.js continuation emit --task "Explain what the KYS protocol
 ### Backlinks
 
 *These documents link to this file:*
-- [Research Index — Cogentia](../research/index.md)
-- [Corpus Status — cogentia](../research/corpus-status.md)
-- [Trail: From Method to Machine](../research/trails/from_method_to_machine.md)
-- [Agent-Resumable CLI](../research/agent_resumable_cli.md)
 - [Cognitive Packets](../research/cognitive_packets.md)
+- [Agent-Resumable CLI](../research/agent_resumable_cli.md)
+- [Agent Navigation Guide (Context Server)](agent_context_server.md)
+- [Corpus Status — cogentia](../research/corpus-status.md)
+- [Research Index — Cogentia](../research/index.md)
+- [Trail: From Method to Machine](../research/trails/from_method_to_machine.md)
 
 <!-- END_AUTO: backlinks -->

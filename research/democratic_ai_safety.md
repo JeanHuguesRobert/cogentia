@@ -33,8 +33,8 @@ The earlier French Cogentia-format draft is preserved in the git history of this
 ### Backlinks
 
 *These documents link to this file:*
-- [Research Index — Cogentia](index.md)
 - [Corpus Status — cogentia](corpus-status.md)
+- [Research Index — Cogentia](index.md)
 - [The Knowledge Mesh (Decentralized Wiki)](../docs/knowledge_mesh.md)
 
 <!-- END_AUTO: backlinks -->

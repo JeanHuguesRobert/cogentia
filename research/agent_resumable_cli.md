@@ -8,7 +8,6 @@ date: "2026-05-14"
 status: "Working paper"
 license: "CC BY-SA 4.0 for text; MIT for associated code"
 spdx: "CC-BY-SA-4.0"
-canonical_project: "[https://github.com/JeanHuguesRobert/cogentia](https://github.com/JeanHuguesRobert/cogentia)"
 canonical_url: https://github.com/JeanHuguesRobert/cogentia/blob/main/research/agent_resumable_cli.md
 last_stamped_at: 2026-05-16
 ---
@@ -49,9 +48,6 @@ AI agents; command-line interfaces; continuations; `call/cc`; continuation-passi
 <!-- BEGIN_AUTO: trails -->
 > 🧭 **Trail: From Method to Machine**
 > ⬅️ Previous: [The Sovereign Digital Twin](cogentia-digital-twin.md) | ➡️ Next: [Cognitive Packets](cognitive_packets.md)
-
-> 🧭 **Trail: From Method to Machine**
-> ⬅️ Previous: [Cogentia](../COGENTIA.md) | ➡️ Next: [Cognitive Packets](cognitive_packets.md)
 
 <!-- END_AUTO: trails -->
 
@@ -1112,12 +1108,13 @@ A compliant CLI does not hide judgment. It exposes judgment as a continuation, c
 ### Backlinks
 
 *These documents link to this file:*
-- [Agent Navigation Guide (Context Server)](../docs/agent_context_server.md)
-- [Research Index — Cogentia](index.md)
-- [Corpus Status — cogentia](corpus-status.md)
-- [Trail: From Method to Machine](trails/from_method_to_machine.md)
-- [Agent-Resumable CLI](agent_resumable_cli.md)
 - [Cognitive Packets](cognitive_packets.md)
+- [Agent-Resumable CLI](agent_resumable_cli.md)
+- [Agent Navigation Guide (Context Server)](../docs/agent_context_server.md)
+- [Cogentia](../COGENTIA.md)
 - [The Sovereign Digital Twin: Cogentia, Cogentigram, Cogentiscope](cogentia-digital-twin.md)
+- [Corpus Status — cogentia](corpus-status.md)
+- [Research Index — Cogentia](index.md)
+- [Trail: From Method to Machine](trails/from_method_to_machine.md)
 
 <!-- END_AUTO: backlinks -->

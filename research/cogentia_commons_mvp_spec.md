@@ -1292,16 +1292,16 @@ Reference implementation contracts (schemas, plugin manifests, resolver code): *
 ### Backlinks
 
 *These documents link to this file:*
-- [Research Index — Cogentia](index.md)
-- [Corpus Status — cogentia](corpus-status.md)
 - [Cogentia](../COGENTIA.md)
-- [Cogentia Commons — Session Continuation Snapshot](cogentia_commons_continuation.md)
+- [Corpus Status — cogentia](corpus-status.md)
+- [Research Index — Cogentia](index.md)
 - [Cogentia Commons — COMMUNITY.md Sub-Specification](cogentia_commons_community_manifest.md)
+- [Cogentia Commons — Session Continuation Snapshot](cogentia_commons_continuation.md)
 - [Cogentia Commons — `kernel_extractor` Plugin Sub-Specification](cogentia_commons_kernel_extractor.md)
-- [Cogentia Commons — Structural Plugin Sub-Specifications](cogentia_commons_structural_plugins.md)
 - [Cogentia Commons — Substantive Plugin Sub-Specifications](cogentia_commons_substantive_plugins.md)
 - [Cogentia Commons — Workflows](cogentia_commons_workflows.md)
-- [Cogentia Commons: A Platform Architecture for Collaborative Possibility Exploration Under Scientific Constraint](Cogentia_Commons_Working_Paper.md)
 - [Cogentia and Cogentigrams](Cogentia-and-Cogentigram.md)
+- [Cogentia Commons — Structural Plugin Sub-Specifications](cogentia_commons_structural_plugins.md)
+- [Cogentia Commons: A Platform Architecture for Collaborative Possibility Exploration Under Scientific Constraint](Cogentia_Commons_Working_Paper.md)
 
 <!-- END_AUTO: backlinks -->
