@@ -26,8 +26,11 @@
 7. [Democratic AI Safety](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/democratic_ai_safety.md)
    *The pivot. Technical AI Safety is layer-incomplete: a model can be aligned with its deployer while accelerating AI-augmented legal persons against the demos. Anti-capture is a safety concern.*
 
-8. [DHITL — Democratic Humans in the Loop](https://github.com/JeanHuguesRobert/marenostrum/blob/main/DHITL.md)
+8. [La pathologie du secret](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/pathologie_du_secret.md)
+   *The legal-doctrinal anchor. The human-imputability requirement courts and patent offices already enforce for private rights must apply, more strongly, to public acts. Algorithmic opacity is a democratic pathology, not an inconvenience.*
+
+9. [DHITL — Democratic Humans in the Loop](https://github.com/JeanHuguesRobert/marenostrum/blob/main/DHITL.md)
    *The axiom. AI Safety requires democratically accountable humans, not subordinated operators clicking approval inside a corporate process.*
 
-9. [Infrastructure is All You Need](https://github.com/JeanHuguesRobert/marenostrum/blob/main/infrastructure_is_all_you_need.md)
-   *The loop closes. From the democratic axiom back to the Corsican infrastructure that makes it real — energy, compute, governance held in common.*
+10. [Infrastructure is All You Need](https://github.com/JeanHuguesRobert/marenostrum/blob/main/infrastructure_is_all_you_need.md)
+    *The loop closes. From the democratic axiom back to the Corsican infrastructure that makes it real — energy, compute, governance held in common.*

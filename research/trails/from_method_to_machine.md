@@ -29,5 +29,8 @@
 8. [Agent-Resumable CLI](../agent_resumable_cli.md)
    *The operational protocol. How machines and humans pass the baton through continuations.*
 
-9. [Agent Navigation Guide](../../docs/agent_context_server.md)
-   *The meta-prompt. You are here — now you know how to navigate the rest.*
+9. [Cognitive Packets](../cognitive_packets.md)
+   *The portable payload. A minimal continuation that travels by copy or by reference — between AI agents, between humans, between tools, and across the seam between them.*
+
+10. [Agent Navigation Guide](../../docs/agent_context_server.md)
+    *The meta-prompt. You are here — now you know how to navigate the rest.*

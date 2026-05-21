@@ -3,7 +3,7 @@ title: "Corpus Status — cogentia"
 description: "Current state of the cogentia knowledge corpus — what is proved, what is open, what remains possible"
 layout: default
 nav_order: 2
-last_modified_at: 2026-05-18
+last_modified_at: 2026-05-21
 repository: "github.com/JeanHuguesRobert/cogentia"
 canonical_url: https://github.com/JeanHuguesRobert/cogentia/blob/main/research/corpus-status.md
 last_stamped_at: 2026-05-16
@@ -24,11 +24,11 @@ last_stamped_at: 2026-05-16
 <!-- BEGIN_AUTO: registered_repos -->
 | Repository | research/index.md | Branch | Last commit |
 |---|---|---|---|
-| cogentia | ✅ | main | 2026-05-18 |
-| FractaVolta | ✅ | main | 2026-05-18 |
+| cogentia | ✅ | main | 2026-05-20 |
+| FractaVolta | ✅ | main | 2026-05-20 |
 | marenostrum | ✅ | main | 2026-05-18 |
-| barons-Mariani | ✅ | main | 2026-05-18 |
-| inseme | ✅ | main | 2026-05-18 |
+| barons-Mariani | ✅ | main | 2026-05-20 |
+| inseme | ✅ | main | 2026-05-20 |
 <!-- END_AUTO: registered_repos -->
 
 ---
@@ -81,6 +81,7 @@ graph LR
 | [Cogentia](./concepts.md#cogentia) | Global | Working | abstract concept / agentivity class |
 | [Cogentigram](./concepts.md#cogentigram) | Global | Working | representation / map |
 | [Continuation Protocol](./concepts.md#continuation-protocol) | Global | Operational | protocol |
+| [Cognitive Packet](./concepts.md#cognitive-packet) | Global | Defined | protocol / envelope+payload format |
 | [Cogentia Commons](./concepts.md#cogentia-commons) | Global | Canonical | methodology |
 | [Sovereign Digital Twin](./concepts.md#sovereign-digital-twin) | Global | Defined | system model |
 | [Agent-Resumable CLI](./concepts.md#agent-resumable-cli) | Global | Operational | architecture |
@@ -170,6 +171,7 @@ graph LR
 |---|---|---|
 | [**Cogentia — the framework, in five distinctive moves**](../COGENTIA.md) *(identity document; entry point)* | this repo | 2026-05-13 |
 | [Agent-Resumable CLI — Externalized Judgment, Continuations, and Provider-Neutral Resumption for AI-Compatible CLI Tools](agent_resumable_cli.md) *(defines `cogentia.continuation.v1`, implemented by `scripts/cogentia.js continuation`)* | this repo | 2026-05-14 |
+| [Cognitive Packets — An Envelope and Payload Format for Human–AI and Multi-Agent Cooperation](cognitive_packets.md) *(working paper v0.3 — envelope/payload split ; paired operational prompt in `prompts/cognitive_packet.md`)* | this repo | 2026-05-21 |
 | [Cogentia Workflows](cogentia_workflows.md) *(private/group/public/federated workflow architecture, draft v0.2)* | this repo | 2026-05-11 |
 | [Cogentia Commons Working Paper](Cogentia_Commons_Working_Paper.md) | this repo | 2026 |
 | [Cogentia and Cogentigram](Cogentia-and-Cogentigram.md) | this repo | 2026 |

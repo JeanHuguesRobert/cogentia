@@ -11,7 +11,7 @@ last_stamped_at: 2026-05-16
 
 <!-- BEGIN_AUTO: trails -->
 > 🧭 **Trail: From Method to Machine**
-> ⬅️ Previous: [Agent-Resumable CLI](../research/agent_resumable_cli.md)
+> ⬅️ Previous: [Cognitive Packets](../research/cognitive_packets.md)
 
 <!-- END_AUTO: trails -->
 

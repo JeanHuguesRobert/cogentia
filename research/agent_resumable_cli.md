@@ -48,7 +48,7 @@ AI agents; command-line interfaces; continuations; `call/cc`; continuation-passi
 
 <!-- BEGIN_AUTO: trails -->
 > 🧭 **Trail: From Method to Machine**
-> ⬅️ Previous: [The Sovereign Digital Twin](cogentia-digital-twin.md) | ➡️ Next: [Agent Navigation Guide](../docs/agent_context_server.md)
+> ⬅️ Previous: [The Sovereign Digital Twin](cogentia-digital-twin.md) | ➡️ Next: [Cognitive Packets](cognitive_packets.md)
 
 <!-- END_AUTO: trails -->
 

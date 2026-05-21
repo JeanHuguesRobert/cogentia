@@ -85,6 +85,42 @@ The foundational system allowing AI agents to pause execution, seek human judgme
 
 ---
 
+## Cognitive Packet
+
+**Type:** protocol / envelope+payload format
+**Scope:** Global
+**Status:** Defined
+
+**Short definition:**
+A minimal, transport-neutral, human-readable and machine-readable unit of cognitive work composed of two layers: an **envelope** carrying kind-agnostic metadata that any receiver can route, queue, archive, or acknowledge without interpreting the inner work; and a **payload** carrying kind-specific cognitive content (continuation, objection, hypothesis, decision, failure, routing) that an agent capable of handling the declared kind interprets. The `cogentia.continuation.v1` object is the canonical payload of `packet_kind = continuation`.
+
+**Parent concepts:**
+- Continuation Protocol
+- Agent-Resumable CLI
+
+**Child concepts:**
+- Envelope (kind-agnostic metadata layer)
+- Payload (kind-specific content layer)
+- Continuation payload
+- Objection payload
+- Hypothesis payload
+- Decision payload
+- Failure payload
+- Routing payload
+
+**Related concepts:**
+- Cogentia Commons
+
+**Reference documents:**
+- `research/cognitive_packets.md` (working paper v0.3 — envelope/payload structure)
+- `prompts/cognitive_packet.md`
+
+**Used in:**
+- Cogentia CLI packet sub-commands (proposed in §22.3 of the working paper)
+- copy/paste handoffs between AI agents and humans
+
+---
+
 ## Cogentia Commons
 
 **Type:** methodology
