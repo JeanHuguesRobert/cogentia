@@ -1,5 +1,8 @@
 ---
 canonical_url: https://github.com/JeanHuguesRobert/cogentia/blob/main/research/Cogentia_Commons_Working_Paper.md
+author: "Jean Hugues Noël Robert, baron Mariani"
+affiliation: "Institut Mariani / C.O.R.S.I.C.A., 1 cours Paoli, F-20250 Corte, Corsica"
+license: "CC BY-SA 4.0"
 last_stamped_at: 2026-05-16
 ---
 # Cogentia Commons: A Platform Architecture for Collaborative Possibility Exploration Under Scientific Constraint
@@ -368,13 +371,13 @@ Robert, J. H. (2026c). *Infrastructure Is All You Need: Toward a structural theo
 ### Backlinks
 
 *These documents link to this file:*
-- [Corpus Status — cogentia](corpus-status.md)
 - [Research Index — Cogentia](index.md)
+- [Corpus Status — cogentia](corpus-status.md)
 - [Cogentia Commons — MVP Specification](cogentia_commons_mvp_spec.md)
 - [Cogentia Commons — Session Continuation Snapshot](cogentia_commons_continuation.md)
-- [Cogentia Commons — Workflows](cogentia_commons_workflows.md)
-- [Cogentia Commons — Substantive Plugin Sub-Specifications](cogentia_commons_substantive_plugins.md)
-- [Cogentia Commons — Structural Plugin Sub-Specifications](cogentia_commons_structural_plugins.md)
 - [Cogentia Commons — `kernel_extractor` Plugin Sub-Specification](cogentia_commons_kernel_extractor.md)
+- [Cogentia Commons — Structural Plugin Sub-Specifications](cogentia_commons_structural_plugins.md)
+- [Cogentia Commons — Substantive Plugin Sub-Specifications](cogentia_commons_substantive_plugins.md)
+- [Cogentia Commons — Workflows](cogentia_commons_workflows.md)
 
 <!-- END_AUTO: backlinks -->

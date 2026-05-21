@@ -8,7 +8,7 @@ last_modified_at: 2026-05-13
 author: "Jean Hugues Noël Robert, baron Mariani"
 affiliation: "Institut Mariani — C.O.R.S.I.C.A., 1 cours Paoli, F-20250 Corte, Corsica"
 license: "CC BY-SA 4.0 (text), MIT (validation tooling)"
-status: "Working sub-specification — companion to cogentia_commons_mvp_spec.md §4"
+status: "working-paper"
 canonical_url: https://github.com/JeanHuguesRobert/cogentia/blob/main/research/cogentia_commons_community_manifest.md
 last_stamped_at: 2026-05-16
 ---
@@ -563,12 +563,12 @@ The `cogentia.js manifest` subcommand and its fixtures: **MIT**.
 ### Backlinks
 
 *These documents link to this file:*
-- [Corpus Status — cogentia](corpus-status.md)
 - [Research Index — Cogentia](index.md)
+- [Corpus Status — cogentia](corpus-status.md)
 - [Cogentia Commons — MVP Specification](cogentia_commons_mvp_spec.md)
 - [Cogentia Commons — Session Continuation Snapshot](cogentia_commons_continuation.md)
-- [Cogentia Commons — Workflows](cogentia_commons_workflows.md)
-- [Cogentia Commons — Structural Plugin Sub-Specifications](cogentia_commons_structural_plugins.md)
 - [Cogentia Commons — `kernel_extractor` Plugin Sub-Specification](cogentia_commons_kernel_extractor.md)
+- [Cogentia Commons — Structural Plugin Sub-Specifications](cogentia_commons_structural_plugins.md)
+- [Cogentia Commons — Workflows](cogentia_commons_workflows.md)
 
 <!-- END_AUTO: backlinks -->

@@ -8,7 +8,7 @@ last_modified_at: 2026-05-12
 author: "Jean Hugues Noël Robert, baron Mariani"
 affiliation: "Institut Mariani — C.O.R.S.I.C.A., 1 cours Paoli, F-20250 Corte, Corsica"
 license: "CC BY-SA 4.0 (text + prompt template), MIT (schema and tooling)"
-status: "Working sub-specification — companion to cogentia_commons_mvp_spec.md §6.3"
+status: "working-paper"
 canonical_url: https://github.com/JeanHuguesRobert/cogentia/blob/main/research/cogentia_commons_kernel_extractor.md
 last_stamped_at: 2026-05-16
 ---
@@ -633,8 +633,10 @@ The plugin's input/output JSON Schema files, fixtures, and any reference impleme
 - [Research Index — Cogentia](index.md)
 - [Cogentia Commons — MVP Specification](cogentia_commons_mvp_spec.md)
 - [Cogentia Commons — Session Continuation Snapshot](cogentia_commons_continuation.md)
-- [Cogentia Commons — Workflows](cogentia_commons_workflows.md)
-- [Cogentia Commons — Substantive Plugin Sub-Specifications](cogentia_commons_substantive_plugins.md)
+- [Cogentia Commons — COMMUNITY.md Sub-Specification](cogentia_commons_community_manifest.md)
 - [Cogentia Commons — Structural Plugin Sub-Specifications](cogentia_commons_structural_plugins.md)
+- [Cogentia Commons — Substantive Plugin Sub-Specifications](cogentia_commons_substantive_plugins.md)
+- [Cogentia Commons — Workflows](cogentia_commons_workflows.md)
+- [Cogentia Commons: A Platform Architecture for Collaborative Possibility Exploration Under Scientific Constraint](Cogentia_Commons_Working_Paper.md)
 
 <!-- END_AUTO: backlinks -->

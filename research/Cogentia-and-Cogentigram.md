@@ -1,5 +1,8 @@
 ---
 canonical_url: https://github.com/JeanHuguesRobert/cogentia/blob/main/research/Cogentia-and-Cogentigram.md
+author: "Jean Hugues Noël Robert, baron Mariani"
+affiliation: "Institut Mariani / C.O.R.S.I.C.A., 1 cours Paoli, F-20250 Corte, Corsica"
+license: "CC BY-SA 4.0"
 last_stamped_at: 2026-05-16
 ---
 # Cogentia and Cogentigrams
@@ -325,8 +328,8 @@ Robert, J. H. (2026c). *Democratic Humans in the Loop: Why Infrastructure Is All
 ### Backlinks
 
 *These documents link to this file:*
-- [Corpus Status — cogentia](corpus-status.md)
 - [Research Index — Cogentia](index.md)
+- [Corpus Status — cogentia](corpus-status.md)
 - [Cogentia Commons — MVP Specification](cogentia_commons_mvp_spec.md)
 - [The Sovereign Digital Twin: Cogentia, Cogentigram, Cogentiscope](cogentia-digital-twin.md)
 

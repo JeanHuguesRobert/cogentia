@@ -31,6 +31,8 @@ The soundness test is binding:
 
 It rides inside COP's `cop/continuation` Artifact (in `inseme/packages/cop-core`) as a profile — they are aligned by construction.
 
+**Cognitive Packets** (v0.3, [`research/cognitive_packets.md`](research/cognitive_packets.md)) generalise the continuation pattern beyond the CLI: a transport-neutral **envelope + payload** structure that lets a continuation travel by copy or by reference across humans, AI agents, GitHub issues, prompts, and tools. The `cogentia.continuation.v1` object is the canonical payload of a packet whose `packet_kind = continuation` — no semantic change to the CLI primitive, only a clearer transport story. Five other payload kinds are defined: objection, hypothesis, decision, failure, routing.
+
 ## Layout
 
 ```
@@ -75,6 +77,7 @@ Each app has its own `.env`, Supabase project, Tailwind/Vite config, and Netlify
 All published documents live in `research/` and are catalogued in [`research/index.md`](research/index.md). Headline papers:
 
 - **[Agent-Resumable CLI](research/agent_resumable_cli.md)** — *Externalized Judgment, Continuations, and Provider-Neutral Resumption for AI-Compatible CLI Tools.* The protocol paper. Defines `cogentia.continuation.v1`.
+- **[Cognitive Packets](research/cognitive_packets.md)** — *An Envelope and Payload Format for Human–AI and Multi-Agent Cooperation* (v0.3). Generalises continuations beyond the CLI: envelope (kind-agnostic metadata) + payload (kind-specific content). Six packet kinds defined.
 - **[The Sovereign Digital Twin](research/cogentia-digital-twin.md)** — Personal Cogentia: Cogentia, Cogentigram, Cogentiscope. The individual-scale foundation.
 - **[Cogentia Commons Working Paper](research/Cogentia_Commons_Working_Paper.md)** — Commons methodology, formal specification. The collective-scale foundation.
 - **[Cogentia Commons MVP Spec](research/cogentia_commons_mvp_spec.md)** — the v1 architecture for `brique-cogentia-commons`.
@@ -82,21 +85,38 @@ All published documents live in `research/` and are catalogued in [`research/ind
 - **[Agent Navigation Guide](docs/agent_context_server.md)** — meta-prompt for AI agents navigating the corpus.
 - **[The Knowledge Mesh](docs/knowledge_mesh.md)** — backlinks, trails, and Jekyll for human navigation.
 
-## CLI features (v0.9.0)
+## CLI features (v0.11)
 
-- **Concepts & Taxonomy**
-  * `cogentia concepts init` · `concepts status` · `concepts check` (orphan validation)
-- **Agentic Context Server**
+- **Sync & inspection**
+  * `cogentia drift` — fetch and report ahead/behind/diverged vs upstream across all repos. `--pull` fast-forwards behind repos; `--strict` exits non-zero on drift (pre-commit hook friendly)
+  * `cogentia lint` — single-table corpus health report: unreferenced, frontmatter issues, drift, in one pass. `--strict` for pre-commit semantics
+- **Derived views (refresh)**
+  * `cogentia refresh` — runs all derived-view generators in canonical order (`corpus-status` → `backlinks` → `trails` → `documents`). One command replaces 4
+  * `cogentia documents` — consolidated cross-corpus catalog with reverse-chrono activity and chrono authorship, bulk-pass commits filtered out
+  * `cogentia corpus-status` — per-repo living health view
+- **Frontmatter governance**
+  * `cogentia frontmatter check [repo]` — diagnose docs missing Level 2 fields, using deprecated names, or carrying a `status:` value outside the controlled vocabulary
+  * `cogentia frontmatter promote <file>` — add a Level 2 skeleton (placeholders for title/author/affiliation/date/license/status)
+  * `cogentia frontmatter promote --batch` — bulk-inject only the three invariants (author/affiliation/license) across substantive docs; leaves judgment fields for human edit
+  * `cogentia frontmatter schema` — canonical schema reference (Level 1/2/3, status vocabulary, deprecated fields)
+- **Personal scheduler — *fractal***
+  * `cogentia todo` — list, add, done, defer, drop. Each `.cogentia/SCHEDULE.md` is sovereign at its scope; `--global` aggregates across the workspace
+  * `cogentia next [--pick]` — apply scheduler policy (priority → overdue → FIFO) and surface the next item; `--pick` marks it Active and audits
+  * Storage: markdown task lists with priority + tags + cross-scope refs ; readable on GitHub, editable by hand
+- **Concepts & taxonomy**
+  * `cogentia concepts init` · `concepts status` · `concepts check` (orphan validation) · `concepts graph` · `concepts ref` · `concepts schema`
+- **Agentic context server**
   * `cogentia bundle --concept <name>` — compile a sub-graph into a single LLM-ready payload
   * `cogentia query "keyword"` — structural search (respects `.cogentiaignore`)
-- **Cross-repo overview**
-  * `cogentia documents` — consolidated `research/documents.md` listing every tracked repo's markdown, reverse-chronological on activity (the bulk-pass filter strips out stamp/jekyll noise) and chronological on authorship, with per-repo anchored replays
-- **Knowledge Mesh (Wiki)**
+- **Knowledge mesh (Wiki)**
   * `cogentia backlinks` — auto-inject "Mentioned in" lists
-  * `cogentia trails` — inject Previous/Next navigation from curated playlists
+  * `cogentia trails` — inject Previous/Next navigation from curated playlists; emits absolute GitHub URLs for cross-repo links (so they render on the web)
   * `cogentia init-jekyll` — generate `_config.yml` for GitHub Pages
 - **Integrity**
   * `cogentia install-hooks` — cross-platform pre-commit hooks (Node.js + .cmd)
+  * `cogentia check` — internal + external link validation across all `research/index.md`
+
+The session ritual that emerges: `cogentia drift` (start of session) → work → `cogentia refresh` → `cogentia lint` (pre-commit). Three commands replace the dozen-step manual rituals that preceded.
 
 ## Ecosystem
 
@@ -121,4 +141,5 @@ Mapped onto the [FractaVolta four-layer stack](https://fractavolta.com): Cogenti
 
 ---
 
-*License: MIT (code), CC BY-SA 4.0 (research). Author: Jean Hugues Noël Robert, baron Mariani — Institut Mariani / C.O.R.S.I.C.A., 1 cours Paoli, F-20250 Corte.*
+*License: MIT (code) · CC BY-SA 4.0 (research).*
+*Author: Jean Hugues Noël Robert, baron Mariani — Institut Mariani / C.O.R.S.I.C.A., 1 cours Paoli, F-20250 Corte, Corsica — jhr@baronsmariani.org*

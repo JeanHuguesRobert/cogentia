@@ -34,3 +34,18 @@
 
 10. [Agent Navigation Guide](../../docs/agent_context_server.md)
     *The meta-prompt. You are here — now you know how to navigate the rest.*
+
+
+<!-- BEGIN_AUTO: backlinks -->
+### Backlinks
+
+*These documents link to this file:*
+- [Agent Navigation Guide (Context Server)](../../docs/agent_context_server.md)
+- [Research Index — Cogentia](../index.md)
+- [Corpus Status — cogentia](../corpus-status.md)
+- [Cogentia](../../COGENTIA.md)
+- [Agent-Resumable CLI](../agent_resumable_cli.md)
+- [Cognitive Packets](../cognitive_packets.md)
+- [The Sovereign Digital Twin: Cogentia, Cogentigram, Cogentiscope](../cogentia-digital-twin.md)
+
+<!-- END_AUTO: backlinks -->

@@ -17,6 +17,9 @@ last_stamped_at: 2026-05-16
 > 🧭 **Trail: From Method to Machine**
 > ⬅️ Previous: [Discours de la seconde méthode](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/second_method.md) | ➡️ Next: [Democratic AI Safety](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/democratic_ai_safety.md)
 
+> 🧭 **Trail: From Method to Machine**
+> ⬅️ Previous: [Corpus Status — cogentia](research/corpus-status.md) | ➡️ Next: [Agent-Resumable CLI](research/agent_resumable_cli.md)
+
 <!-- END_AUTO: trails -->
 
 > *Cogito ergo sum.*
@@ -140,7 +143,10 @@ The framework exists to be argued against, in the form it itself defined.
 ### Backlinks
 
 *These documents link to this file:*
-- [Corpus Status — cogentia](research/corpus-status.md)
 - [Research Index — Cogentia](research/index.md)
+- [Corpus Status — cogentia](research/corpus-status.md)
+- [Trail: From Method to Machine](research/trails/from_method_to_machine.md)
+- [Cogentia Commons — MVP Specification](research/cogentia_commons_mvp_spec.md)
+- [Cogentia Commons — Substantive Plugin Sub-Specifications](research/cogentia_commons_substantive_plugins.md)
 
 <!-- END_AUTO: backlinks -->

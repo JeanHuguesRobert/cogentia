@@ -1,3 +1,12 @@
+<!-- BEGIN_AUTO: trails -->
+> 🧭 **Trail: From Autonomia to DHITL**
+> ⬅️ Previous: [Infrastructure is All You Need](https://github.com/JeanHuguesRobert/marenostrum/blob/main/infrastructure_is_all_you_need.md) | ➡️ Next: [Corpus Status — cogentia](corpus-status.md)
+
+> 🧭 **Trail: From Method to Machine**
+> ⬅️ Previous: [Agent Navigation Guide (Context Server)](../docs/agent_context_server.md) | ➡️ Next: [Corpus Status — cogentia](corpus-status.md)
+
+<!-- END_AUTO: trails -->
+
 # Research Index — Cogentia
 
 ## Foundation
@@ -76,3 +85,32 @@ This repository instantiates the **cognitive infrastructure layer** of the [DHIT
 
 *Priority established by first public commit. License: CC BY-SA 4.0 (research) / MIT (code, via PrivAI).*
 *Fork to explore alternatives. Challenge via issues.*
+
+<!-- BEGIN_AUTO: backlinks -->
+### Backlinks
+
+*These documents link to this file:*
+- [Agent Navigation Guide (Context Server)](../docs/agent_context_server.md)
+- [Corpus Status — cogentia](corpus-status.md)
+- [Cogentia](../COGENTIA.md)
+- [Trail: From Autonomia to DHITL](trails/from_autonomia_to_dhitl.md)
+- [Trail: From Method to Machine](trails/from_method_to_machine.md)
+- [Agent-Resumable CLI](agent_resumable_cli.md)
+- [Cognitive Packets](cognitive_packets.md)
+- [Cogentia Commons — MVP Specification](cogentia_commons_mvp_spec.md)
+- [Cogentia Commons — Session Continuation Snapshot](cogentia_commons_continuation.md)
+- [Cogentia Commons — COMMUNITY.md Sub-Specification](cogentia_commons_community_manifest.md)
+- [Cogentia Commons — `kernel_extractor` Plugin Sub-Specification](cogentia_commons_kernel_extractor.md)
+- [Cogentia Commons — Structural Plugin Sub-Specifications](cogentia_commons_structural_plugins.md)
+- [Cogentia Commons — Substantive Plugin Sub-Specifications](cogentia_commons_substantive_plugins.md)
+- [Cogentia Commons — Workflows](cogentia_commons_workflows.md)
+- [The Sovereign Digital Twin: Cogentia, Cogentigram, Cogentiscope](cogentia-digital-twin.md)
+- [Cogentia Commons: A Platform Architecture for Collaborative Possibility Exploration Under Scientific Constraint](Cogentia_Commons_Working_Paper.md)
+- [Democratic AI Safety — alias cogentia](democratic_ai_safety.md)
+- [Cogentia and Cogentigrams](Cogentia-and-Cogentigram.md)
+- [COGENTIA v1.0 — Prompt d'analyse psychocognitive](cogentia_prompt_v1.md)
+- [kys-prompt.md](kys-prompt.md)
+- [Concept Index — cogentia](concepts.md)
+- [Cogentia Workflows](cogentia_workflows.md)
+
+<!-- END_AUTO: backlinks -->

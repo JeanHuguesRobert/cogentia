@@ -1013,6 +1013,54 @@ function generateCorpusStatusFor( entry, config, opts ) {
 
 const FRONTMATTER_SEP = "---";
 
+// Canonical frontmatter schema for the corpus. See `cogentia frontmatter schema`.
+const FRONTMATTER_LEVEL_1 = [ "canonical_url", "last_stamped_at" ];
+const FRONTMATTER_LEVEL_2_REQUIRED = [ "title", "author", "affiliation", "date", "license", "status" ];
+const FRONTMATTER_LEVEL_2_OPTIONAL = [ "subtitle", "version" ];
+const FRONTMATTER_LEVEL_3 = {
+  jekyll:       [ "description", "layout", "nav_order", "last_modified_at" ],
+  multilingual: [ "translations", "lang" ],
+  semantics:    [ "role", "related" ],
+  alias:        [ "canonical_document", "parent_document" ],
+  changelog:    [ "changelog" ],
+};
+const FRONTMATTER_STATUS_VOCABULARY = [
+  "draft", "working-paper", "published", "alias",
+  "refreshable", "working-note", "prompt-contract", "journal",
+];
+const FRONTMATTER_DEPRECATED = [ "canonical_path", "path", "repository", "canonical_project" ];
+const FRONTMATTER_AUTO_VIEW_RE = [
+  /(?:^|\/)corpus-status\.md$/,
+  /(?:^|\/)concepts\.md$/,
+  /(?:^|\/)documents\.md$/,
+  /(?:^|\/)research\/index\.md$/,
+  /(?:^|\/)research\/trails\/[^/]+\.md$/,
+];
+
+function isAutoView( relPath ) {
+  const p = relPath.replace( /\\/g, "/" );
+  return FRONTMATTER_AUTO_VIEW_RE.some( re => re.test( p ) );
+}
+
+function parseFrontmatter( content ) {
+  const m = content.match( /^---\r?\n([\s\S]*?)\r?\n---/ );
+  if ( !m ) return null;
+  const fields = {};
+  for ( const line of m[ 1 ].split( /\r?\n/ ) ) {
+    const km = line.match( /^([a-zA-Z_][a-zA-Z0-9_-]*)\s*:\s*(.*)$/ );
+    if ( !km ) continue;
+    fields[ km[ 1 ] ] = km[ 2 ].trim().replace( /^['"]|['"]$/g, "" );
+  }
+  return fields;
+}
+
+function frontmatterCanonicalStatus( raw ) {
+  if ( !raw ) return null;
+  // Strip trailing em-dash clauses (U+2014 only — ASCII hyphen stays inside the token).
+  const s = raw.replace( /\s*—.*$/, "" ).trim().toLowerCase().replace( /\s+/g, "-" );
+  return FRONTMATTER_STATUS_VOCABULARY.includes( s ) ? s : null;
+}
+
 function hasFrontmatter( content ) {
   return content.trimStart().startsWith( FRONTMATTER_SEP );
 }
@@ -1433,6 +1481,21 @@ ${bold( "Commands:" )}
                       status + identity (one call replaces list+status+whoami).
   ${c.cyan}explain-ignore${c.reset} <file>  Report whether a file is matched by .cogentiaignore,
                       and which pattern matched.
+  ${c.cyan}frontmatter${c.reset} <sub>     Diagnose and harmonise document frontmatter.
+                      Sub: ${c.cyan}check${c.reset} [repo] | ${c.cyan}promote${c.reset} <file> | ${c.cyan}promote --batch${c.reset} [--repo <name>] [--check] | ${c.cyan}schema${c.reset}
+  ${c.cyan}refresh${c.reset}             Refresh all derived views (corpus-status, backlinks, trails,
+                      documents) in canonical order. ${c.cyan}--check${c.reset} for dry-run.
+  ${c.cyan}lint${c.reset}                Single-table corpus health report: unreferenced, frontmatter
+                      issues, drift, in one pass. Local checks only.
+                      ${c.cyan}--strict${c.reset} makes exit code non-zero on any issue.
+  ${c.cyan}todo${c.reset} <sub>          Fractal personal scheduler — one ${c.cyan}.cogentia/SCHEDULE.md${c.reset}
+                      per scope, aggregated by walking the tree.
+                      Sub: ${c.cyan}list${c.reset} (default) | ${c.cyan}add${c.reset} "<title>" | ${c.cyan}done${c.reset} <id> |
+                           ${c.cyan}defer${c.reset} <id> [--until <date>] | ${c.cyan}drop${c.reset} <id>
+                      ${c.cyan}--global${c.reset} on ${c.cyan}list${c.reset} aggregates all scopes.
+  ${c.cyan}next${c.reset}                Apply the scheduler policy and surface the next item(s).
+                      ${c.cyan}--global${c.reset}: across all scopes. ${c.cyan}--tag${c.reset} <t>: filter.
+                      ${c.cyan}--limit${c.reset} <N>: surface N items. ${c.cyan}--pick${c.reset}: mark items Active.
   ${c.cyan}continuation${c.reset} <sub>   Typed, resumable judgment points (cogentia.continuation.v1).
                       Sub: ${c.cyan}emit${c.reset} <task.json> [--paper <f>|--topic <id>|--from <id>]
                            ${c.cyan}inspect${c.reset} <id>
@@ -4418,6 +4481,285 @@ function cmdState() {
   console.log();
 }
 
+// ── frontmatter ───────────────────────────────────────────────────────────────
+
+function cmdFrontmatterSchema() {
+  const schema = {
+    level_1_stamp: { fields: FRONTMATTER_LEVEL_1, emitted_by: "cogentia.js stamp" },
+    level_2_document: {
+      required: FRONTMATTER_LEVEL_2_REQUIRED,
+      optional: FRONTMATTER_LEVEL_2_OPTIONAL,
+      emitted_by: "cogentia.js frontmatter promote",
+    },
+    level_3_extensions: FRONTMATTER_LEVEL_3,
+    status_vocabulary:  FRONTMATTER_STATUS_VOCABULARY,
+    deprecated_fields:  FRONTMATTER_DEPRECATED,
+    auto_view_patterns: FRONTMATTER_AUTO_VIEW_RE.map( re => re.source ),
+  };
+  if ( JSON_MODE ) { console.log( JSON.stringify( schema, null, 2 ) ); return; }
+
+  console.log( `\n${hdr( "Frontmatter schema (canonical)" )}  ${dim( fmtNow() )}\n` );
+  console.log( `  ${bold( "Level 1 - Stamp" )}  ${dim( "(auto-stamped, always present)" )}` );
+  for ( const k of FRONTMATTER_LEVEL_1 ) console.log( `    ${c.cyan}${k}${c.reset}` );
+  console.log();
+  console.log( `  ${bold( "Level 2 - Document base" )}  ${dim( "(required for substantive papers)" )}` );
+  for ( const k of FRONTMATTER_LEVEL_2_REQUIRED ) console.log( `    ${c.cyan}${k}${c.reset}  ${dim( "(required)" )}` );
+  for ( const k of FRONTMATTER_LEVEL_2_OPTIONAL ) console.log( `    ${c.cyan}${k}${c.reset}  ${dim( "(optional)" )}` );
+  console.log();
+  console.log( `  ${bold( "Level 3 - Extensions by use case" )}` );
+  for ( const [ group, fields ] of Object.entries( FRONTMATTER_LEVEL_3 ) ) {
+    console.log( `    ${dim( group.padEnd( 14 ) )} ${fields.map( f => c.cyan + f + c.reset ).join( ", " ) }` );
+  }
+  console.log();
+  console.log( `  ${bold( "Controlled vocabulary for status:" )}` );
+  console.log( `    ${FRONTMATTER_STATUS_VOCABULARY.map( s => c.green + s + c.reset ).join( " · " )}` );
+  console.log();
+  console.log( `  ${bold( "Deprecated fields (to remove on edit)" )}` );
+  console.log( `    ${FRONTMATTER_DEPRECATED.map( s => c.yellow + s + c.reset ).join( " · " )}` );
+  console.log();
+}
+
+function cmdFrontmatterCheck( repoArg ) {
+  const { configPath, config } = loadConfig();
+  if ( !configPath ) die( "No registry found. Run: cogentia add <repo> first." );
+  const repos = repoArg ? config.repos.filter( r => r.name === repoArg ) : config.repos;
+  if ( repoArg && repos.length === 0 ) die( `Repo not found: ${repoArg}` );
+
+  const result = { timestamp: fmtNow(), repos: [] };
+  for ( const entry of repos ) {
+    const repoPath = resolveRepoPath( entry );
+    if ( !repoPath ) continue;
+    const ignore  = loadIgnore( repoPath );
+    const mdFiles = listMarkdown( repoPath );
+    const files   = [];
+
+    for ( const f of mdFiles ) {
+      if ( matchesIgnore( f.rel, ignore ) ) continue;
+      let content = "";
+      try { content = fs.readFileSync( f.full, "utf8" ); } catch ( _ ) { continue; }
+      const fm   = parseFrontmatter( content );
+      const auto = isAutoView( f.rel );
+      const deprecated = [];
+      let statusBad = null, state = "complete", missingL2 = [];
+      if ( !fm ) {
+        state = auto ? "no-frontmatter-auto" : "no-frontmatter";
+      } else {
+        for ( const k of FRONTMATTER_DEPRECATED ) if ( k in fm ) deprecated.push( k );
+        if ( fm.status && !frontmatterCanonicalStatus( fm.status ) ) statusBad = fm.status;
+        if ( !auto ) {
+          for ( const k of FRONTMATTER_LEVEL_2_REQUIRED ) if ( !( k in fm ) ) missingL2.push( k );
+          if ( missingL2.length === FRONTMATTER_LEVEL_2_REQUIRED.length ) state = "level-1-only";
+          else if ( missingL2.length > 0 )                                state = "partial";
+        }
+      }
+      files.push( { path: f.rel, state, auto, missingL2, deprecated, statusBad } );
+    }
+    result.repos.push( { name: entry.name, files } );
+  }
+
+  if ( JSON_MODE ) { console.log( JSON.stringify( result, null, 2 ) ); return; }
+
+  console.log( `\n${hdr( "Frontmatter check" )}  ${dim( result.timestamp )}\n` );
+  for ( const r of result.repos ) {
+    const sm = {
+      complete:  r.files.filter( f => f.state === "complete" ).length,
+      partial:   r.files.filter( f => f.state === "partial" ).length,
+      level1:    r.files.filter( f => f.state === "level-1-only" ).length,
+      noFm:      r.files.filter( f => f.state === "no-frontmatter" ).length,
+      auto:      r.files.filter( f => f.auto ).length,
+      depUsage:  r.files.filter( f => f.deprecated.length > 0 ).length,
+      statusBad: r.files.filter( f => f.statusBad ).length,
+    };
+    console.log( `  ${bold( r.name )}` );
+    console.log( `    ${dim( sm.complete + " complete · " + sm.partial + " partial · " + sm.level1 + " level-1-only · " + sm.noFm + " no-frontmatter · " + sm.auto + " auto-views" )}` );
+    if ( sm.depUsage )  console.log( `    ${c.yellow}${sm.depUsage} file(s) use deprecated field name(s)${c.reset}` );
+    if ( sm.statusBad ) console.log( `    ${c.yellow}${sm.statusBad} file(s) carry a status value outside the vocabulary${c.reset}` );
+
+    for ( const f of r.files ) {
+      const hasIssue = f.state !== "complete" || f.deprecated.length > 0 || f.statusBad;
+      if ( !hasIssue ) continue;
+      if ( f.auto && f.deprecated.length === 0 && !f.statusBad ) continue;
+      let label;
+      switch ( f.state ) {
+        case "level-1-only":      label = warn( "level-1 only" ); break;
+        case "partial":           label = `${c.yellow}missing ${f.missingL2.length}${c.reset}`; break;
+        case "no-frontmatter":    label = fail( "no frontmatter" ); break;
+        case "no-frontmatter-auto": label = dim( "no frontmatter (auto-view)" ); break;
+        default:                  label = dim( "complete" );
+      }
+      const extras = [];
+      if ( f.statusBad )             extras.push( `${c.red}status: "${f.statusBad}"${c.reset}` );
+      if ( f.deprecated.length > 0 ) extras.push( `${c.yellow}deprecated: ${f.deprecated.join( "," )}${c.reset}` );
+      console.log( `    ${dim( pad( f.path, 60 ) )} ${label}${extras.length ? "  " + extras.join( "  " ) : ""}` );
+    }
+    console.log();
+  }
+}
+
+function cmdFrontmatterPromoteBatch() {
+  const checkOnly = argv.includes( "--check" );
+  const repoArg   = getFlagValue( "--repo" );
+  const { configPath, config } = loadConfig();
+  if ( !configPath ) die( "No registry found." );
+  const repos = repoArg ? config.repos.filter( r => r.name === repoArg ) : config.repos;
+  if ( repoArg && repos.length === 0 ) die( `Repo not found: ${repoArg}` );
+
+  const invariants = {
+    author:      "Jean Hugues Noël Robert, baron Mariani",
+    affiliation: "Institut Mariani / C.O.R.S.I.C.A., 1 cours Paoli, F-20250 Corte, Corsica",
+    license:     "CC BY-SA 4.0",
+  };
+  const summary = { timestamp: fmtNow(), checkOnly, repos: [], touched: 0, addedFields: 0 };
+
+  for ( const entry of repos ) {
+    const repoPath = resolveRepoPath( entry );
+    if ( !repoPath ) continue;
+    const repoReport = { name: entry.name, files: [] };
+    const ignore  = loadIgnore( repoPath );
+    const mdFiles = listMarkdown( repoPath );
+
+    for ( const f of mdFiles ) {
+      if ( matchesIgnore( f.rel, ignore ) ) continue;
+      if ( isAutoView( f.rel ) ) continue;
+      let content;
+      try { content = fs.readFileSync( f.full, "utf8" ); } catch ( _ ) { continue; }
+      const fm = parseFrontmatter( content );
+      const toAdd = [];
+      for ( const [ k, v ] of Object.entries( invariants ) ) {
+        if ( !fm || !( k in fm ) ) toAdd.push( [ k, v ] );
+      }
+      if ( toAdd.length === 0 ) continue;
+
+      if ( !checkOnly ) {
+        if ( !fm ) {
+          const lines = [ "---" ];
+          for ( const [ k, v ] of toAdd ) lines.push( `${k}: "${v}"` );
+          lines.push( "---", "" );
+          fs.writeFileSync( f.full, lines.join( "\n" ) + content, "utf8" );
+        } else {
+          const fmMatch = content.match( /^---\r?\n([\s\S]*?)\r?\n---\r?\n?/ );
+          if ( !fmMatch ) continue;
+          let fmText = fmMatch[ 1 ];
+          const additions = toAdd.map( ( [ k, v ] ) => `${k}: "${v}"` );
+          const stampRe = /^last_stamped_at:.*$/m;
+          if ( stampRe.test( fmText ) ) {
+            fmText = fmText.replace( stampRe, ( m ) => additions.join( "\n" ) + "\n" + m );
+          } else {
+            fmText = fmText.replace( /\s+$/, "" ) + "\n" + additions.join( "\n" );
+          }
+          fs.writeFileSync( f.full, `---\n${fmText}\n---\n` + content.slice( fmMatch[ 0 ].length ), "utf8" );
+        }
+      }
+      repoReport.files.push( { path: f.rel, added: toAdd.map( ( [ k ] ) => k ) } );
+      summary.touched++;
+      summary.addedFields += toAdd.length;
+    }
+    summary.repos.push( repoReport );
+  }
+
+  if ( JSON_MODE ) { console.log( JSON.stringify( summary, null, 2 ) ); return; }
+  const title = checkOnly ? "Frontmatter batch promote (check)" : "Frontmatter batch promote";
+  console.log( `\n${hdr( title )}  ${dim( summary.timestamp )}\n` );
+  console.log( `  ${dim( "Invariants only: " )}${c.cyan}author${c.reset}, ${c.cyan}affiliation${c.reset}, ${c.cyan}license${c.reset}  ${dim( "(title/date/status/version left for human edit)" )}` );
+  console.log();
+  for ( const r of summary.repos ) {
+    if ( r.files.length === 0 ) continue;
+    console.log( `  ${bold( r.name )}  ${dim( "(" + r.files.length + " file" + ( r.files.length > 1 ? "s" : "" ) + ")" )}` );
+    for ( const f of r.files ) {
+      console.log( `    ${dim( pad( f.path, 56 ) )} ${c.green}+ ${f.added.join( ", " )}${c.reset}` );
+    }
+    console.log();
+  }
+  const verb = checkOnly ? "would add" : "added";
+  console.log( `  ${bold( "Total:" )}  ${verb} ${summary.addedFields} field(s) across ${summary.touched} file(s)` );
+  if ( checkOnly ) console.log( `  ${dim( "Re-run without --check to apply." )}` );
+  console.log();
+
+  if ( !checkOnly && summary.touched > 0 ) {
+    appendAudit( {
+      command:   "frontmatter promote --batch",
+      args:      { repo: repoArg || null, check: false },
+      result:    { touched: summary.touched, addedFields: summary.addedFields },
+      narrative: collectNarrative(),
+    } );
+  }
+}
+
+function cmdFrontmatterPromote( fileArg ) {
+  if ( argv.includes( "--batch" ) ) return cmdFrontmatterPromoteBatch();
+  if ( !fileArg ) die( "Usage: cogentia frontmatter promote <file>  |  promote --batch [--repo <name>] [--check]" );
+
+  const absPath = path.resolve( fileArg );
+  if ( !fs.existsSync( absPath ) ) die( `File not found: ${fileArg}` );
+  const content = fs.readFileSync( absPath, "utf8" );
+  const fm = parseFrontmatter( content );
+  const today = fmtDate( new Date() );
+
+  let titleFromBody = null;
+  const bodyMatch = content.match( /^#\s+(.+)$/m );
+  if ( bodyMatch ) titleFromBody = bodyMatch[ 1 ].trim();
+
+  const skeleton = {
+    title:       titleFromBody || path.basename( absPath, ".md" ),
+    author:      "Jean Hugues Noël Robert, baron Mariani",
+    affiliation: "Institut Mariani / C.O.R.S.I.C.A., 1 cours Paoli, F-20250 Corte, Corsica",
+    date:        today,
+    license:     "CC BY-SA 4.0",
+    status:      "draft",
+  };
+
+  if ( !fm ) {
+    const lines = [ "---" ];
+    for ( const [ k, v ] of Object.entries( skeleton ) ) lines.push( `${k}: "${v}"` );
+    lines.push( "---", "" );
+    fs.writeFileSync( absPath, lines.join( "\n" ) + content, "utf8" );
+    console.log( ok( absPath ) );
+    console.log( dim( "  Created frontmatter with Level 2 skeleton." ) );
+    console.log( dim( "  Review placeholder values, then run `cogentia stamp <file>` to add Level 1." ) );
+    return;
+  }
+
+  const fmMatch = content.match( /^---\r?\n([\s\S]*?)\r?\n---\r?\n?/ );
+  if ( !fmMatch ) die( "Could not parse frontmatter block." );
+  const additions = [];
+  for ( const [ k, v ] of Object.entries( skeleton ) ) {
+    if ( k in fm ) continue;
+    additions.push( `${k}: "${v}"` );
+  }
+  if ( additions.length === 0 ) {
+    console.log( dim( absPath + " — already has all Level 2 fields. Nothing to add." ) );
+    return;
+  }
+  let fmText = fmMatch[ 1 ];
+  const stampLineRe = /^last_stamped_at:.*$/m;
+  if ( stampLineRe.test( fmText ) ) {
+    fmText = fmText.replace( stampLineRe, ( m ) => additions.join( "\n" ) + "\n" + m );
+  } else {
+    fmText = fmText.replace( /\s+$/, "" ) + "\n" + additions.join( "\n" );
+  }
+  fs.writeFileSync( absPath, `---\n${fmText}\n---\n` + content.slice( fmMatch[ 0 ].length ), "utf8" );
+
+  console.log( ok( absPath ) );
+  console.log( dim( "  Added " + additions.length + " Level 2 field(s)." ) );
+  for ( const a of additions ) console.log( `    ${dim( "+ " + a )}` );
+  appendAudit( {
+    command: "frontmatter promote",
+    args:    { file: absPath },
+    result:  { added: additions.length },
+    narrative: collectNarrative(),
+  } );
+}
+
+function cmdFrontmatter( sub, ...rest ) {
+  switch ( sub ) {
+    case "check":   cmdFrontmatterCheck( rest[ 0 ] ); break;
+    case "promote": cmdFrontmatterPromote( rest[ 0 ] ); break;
+    case "schema":  cmdFrontmatterSchema(); break;
+    default:
+      die( "Usage: cogentia frontmatter <check [repo] | promote <file> | promote --batch [--repo <name>] [--check] | schema>" );
+  }
+}
+
 // ── explain-ignore ────────────────────────────────────────────────────────────
 
 function cmdExplainIgnore( fileArg ) {
@@ -4727,6 +5069,566 @@ function cmdTrails() {
 }
 
 
+// ── refresh ───────────────────────────────────────────────────────────────────
+
+function cmdRefresh() {
+  const checkOnly = argv.includes( "--check" );
+  if ( JSON_MODE ) die( "cogentia refresh does not support --json. Call individual commands with --json instead." );
+
+  console.log( `\n${hdr( checkOnly ? "Corpus refresh (check)" : "Corpus refresh" )}  ${dim( fmtNow() )}\n` );
+  console.log( `${dim( "── corpus-status ──" )}` );
+  cmdCorpusStatus();
+
+  if ( !checkOnly ) {
+    console.log( `\n${dim( "── backlinks ──" )}` );
+    cmdBacklinks();
+    console.log( `\n${dim( "── trails ──" )}` );
+    cmdTrails();
+  } else {
+    console.log( `\n${dim( "── backlinks / trails — skipped in --check mode (no dry-run support) ──" )}\n` );
+  }
+
+  console.log( `${dim( "── documents ──" )}` );
+  cmdDocuments();
+  console.log( `\n${dim( "All derived views " + ( checkOnly ? "checked." : "refreshed." ) )}\n` );
+}
+
+
+// ── lint ──────────────────────────────────────────────────────────────────────
+
+function cmdLint() {
+  const strict = argv.includes( "--strict" );
+  const { configPath, config } = loadConfig();
+  if ( !configPath ) die( "No registry found." );
+
+  const result = { timestamp: fmtNow(), strict, repos: [] };
+  let anyIssue = false;
+
+  for ( const entry of config.repos ) {
+    const repoPath = resolveRepoPath( entry );
+    if ( !repoPath ) { result.repos.push( { name: entry.name, found: false } ); continue; }
+    const branch   = gitCurrentBranch( repoPath );
+    const upstream = gitUpstream( repoPath, branch );
+    const drift    = gitAheadBehind( repoPath, branch, upstream );
+    const ignore   = loadIgnore( repoPath );
+    const mdFiles  = listMarkdown( repoPath );
+
+    let unrefCount = 0;
+    const indexPath = path.join( repoPath, "research", "index.md" );
+    if ( fs.existsSync( indexPath ) ) {
+      const indexContent = fs.readFileSync( indexPath, "utf8" );
+      const referenced   = buildReferencedFileSet( indexPath, indexContent );
+      const ignoredSet   = new Set( mdFiles.filter( f => matchesIgnore( f.rel, ignore ) ).map( f => f.rel ) );
+      for ( const f of mdFiles ) {
+        if ( f.rel === "research/index.md" ) continue;
+        if ( ignoredSet.has( f.rel ) ) continue;
+        if ( !referenced.has( f.full ) ) unrefCount++;
+      }
+    }
+
+    let fmPartial = 0, fmLevel1 = 0, fmNoFm = 0, fmDeprecated = 0, fmStatusBad = 0;
+    for ( const f of mdFiles ) {
+      if ( matchesIgnore( f.rel, ignore ) ) continue;
+      if ( isAutoView( f.rel ) ) continue;
+      let content = "";
+      try { content = fs.readFileSync( f.full, "utf8" ); } catch ( _ ) { continue; }
+      const fm = parseFrontmatter( content );
+      if ( !fm ) { fmNoFm++; continue; }
+      for ( const k of FRONTMATTER_DEPRECATED ) if ( k in fm ) { fmDeprecated++; break; }
+      if ( fm.status && !frontmatterCanonicalStatus( fm.status ) ) fmStatusBad++;
+      const missingL2 = FRONTMATTER_LEVEL_2_REQUIRED.filter( k => !( k in fm ) );
+      if ( missingL2.length === FRONTMATTER_LEVEL_2_REQUIRED.length ) fmLevel1++;
+      else if ( missingL2.length > 0 ) fmPartial++;
+    }
+
+    const repoData = {
+      name: entry.name, found: true, branch, upstream,
+      drift: drift ? { ahead: drift.ahead, behind: drift.behind } : null,
+      unreferenced: unrefCount,
+      frontmatter: {
+        partial: fmPartial, level_1_only: fmLevel1, no_frontmatter: fmNoFm,
+        deprecated: fmDeprecated, status_bad: fmStatusBad,
+      },
+    };
+    const hardProblem = unrefCount > 0 || fmNoFm > 0 || fmStatusBad > 0 || ( drift && drift.behind > 0 && drift.ahead > 0 );
+    const softProblem = fmLevel1 > 0 || fmPartial > 0 || fmDeprecated > 0 || ( drift && ( drift.behind > 0 || drift.ahead > 0 ) );
+    if ( hardProblem ) anyIssue = true;
+    if ( strict && softProblem ) anyIssue = true;
+    result.repos.push( repoData );
+  }
+
+  if ( JSON_MODE ) {
+    console.log( JSON.stringify( result, null, 2 ) );
+    if ( strict && anyIssue ) process.exitCode = 1;
+    return;
+  }
+
+  console.log( `\n${hdr( "Lint report" )}  ${dim( result.timestamp )}\n` );
+  console.log( `  ${dim( pad( "Repository", 17 ) + "  Unref  Frontmatter                              Drift" )}` );
+  console.log( `  ${dim( "─".repeat( 86 ) )}` );
+
+  for ( const r of result.repos ) {
+    if ( !r.found ) { console.log( `  ${fail( pad( r.name, 17 ) )} — not found on disk` ); continue; }
+    const unrefStr = r.unreferenced > 0 ? `${c.yellow}${pad( r.unreferenced, 5, true )}${c.reset}` : `${c.green}${pad( r.unreferenced, 5, true )}${c.reset}`;
+    const fm = r.frontmatter;
+    const parts = [];
+    if ( fm.no_frontmatter > 0 ) parts.push( `${c.red}${fm.no_frontmatter} no-fm${c.reset}` );
+    if ( fm.status_bad > 0 )     parts.push( `${c.red}${fm.status_bad} bad-status${c.reset}` );
+    if ( fm.level_1_only > 0 )   parts.push( `${c.yellow}${fm.level_1_only} L1${c.reset}` );
+    if ( fm.partial > 0 )        parts.push( `${c.yellow}${fm.partial} partial${c.reset}` );
+    if ( fm.deprecated > 0 )     parts.push( `${c.yellow}${fm.deprecated} deprec${c.reset}` );
+    const fmStr = parts.length === 0 ? `${c.green}clean${c.reset}` : parts.join( " · " );
+    let driftStr;
+    if ( !r.upstream )                                       driftStr = dim( "no upstream" );
+    else if ( !r.drift )                                     driftStr = dim( "—" );
+    else if ( r.drift.ahead === 0 && r.drift.behind === 0 )  driftStr = `${c.green}✅ in sync${c.reset}`;
+    else if ( r.drift.ahead > 0 && r.drift.behind > 0 )      driftStr = `${c.red}⚡ diverged${c.reset}`;
+    else if ( r.drift.behind > 0 )                           driftStr = `${c.yellow}⚠️  ${r.drift.behind} behind${c.reset}`;
+    else                                                     driftStr = `${c.cyan}🔼 ${r.drift.ahead} ahead${c.reset}`;
+
+    const fmVisible = fmStr.replace( /\x1b\[[0-9;]*m/g, "" ).length;
+    const fmPad     = fmVisible < 48 ? " ".repeat( 48 - fmVisible ) : "";
+    console.log( `  ${bold( pad( r.name, 17 ) )}  ${unrefStr}    ${fmStr}${fmPad}  ${driftStr}` );
+  }
+  console.log();
+  if ( strict ) {
+    if ( anyIssue ) {
+      console.log( `  ${c.red}Strict mode: lint failures present (exit code 1).${c.reset}` );
+      process.exitCode = 1;
+    } else {
+      console.log( `  ${c.green}Strict mode: no lint failures.${c.reset}` );
+    }
+  } else {
+    console.log( `  ${dim( "Local checks only. Run `cogentia check` for external link validation, `cogentia drift` for upstream fetch." )}` );
+  }
+  console.log();
+}
+
+
+// ── todo + next (fractal scheduler) ──────────────────────────────────────────
+//
+// Each `.cogentia/SCHEDULE.md` is a sovereign work list at its scope. Views are
+// composed by walking the tree. Mirrors the packet-switching topology applied
+// to personal cognitive work.
+
+const SCHEDULE_FILE      = "SCHEDULE.md";
+const SCHEDULE_SECTIONS  = [ "pending", "active", "deferred", "done" ];
+const PRIORITY_ORDER     = { high: 0, medium: 1, low: 2 };
+const META_KEY_ORDER     = [ "tags", "refs", "due", "until", "ref", "started", "created", "id" ];
+
+function scheduleShortId() {
+  return Math.random().toString( 36 ).slice( 2, 8 );
+}
+
+function scheduleParse( content ) {
+  const fmMatch     = content.match( /^---\r?\n([\s\S]*?)\r?\n---\r?\n?/ );
+  const frontmatter = fmMatch ? parseFrontmatter( content ) : {};
+  const body        = fmMatch ? content.slice( fmMatch[ 0 ].length ) : content;
+  const items   = [];
+  let section   = null;
+  let current   = null;
+
+  for ( const line of body.split( /\r?\n/ ) ) {
+    const sectMatch = line.match( /^##\s+(Pending|Active|Deferred|Done)\s*$/ );
+    if ( sectMatch ) {
+      if ( current ) { items.push( current ); current = null; }
+      section = sectMatch[ 1 ].toLowerCase();
+      continue;
+    }
+    if ( !section ) continue;
+
+    const itemMatch = line.match( /^-\s+\[( |-|x|X)\]\s+(.*)$/ );
+    if ( itemMatch ) {
+      if ( current ) items.push( current );
+      let title = itemMatch[ 2 ];
+      let priority = null;
+      const prioMatch = title.match( /^\*\*\[(high|medium|low)\]\*\*\s+/ );
+      if ( prioMatch ) { priority = prioMatch[ 1 ]; title = title.slice( prioMatch[ 0 ].length ); }
+
+      let completed = null;
+      const doneSuffix = title.match( /^~~([\s\S]*?)~~\s*(?:—\s+(\d{4}-\d{2}-\d{2}))?\s*$/ );
+      if ( doneSuffix && section === "done" ) {
+        title     = doneSuffix[ 1 ].trim();
+        completed = doneSuffix[ 2 ] || null;
+      }
+      current = { section, priority, title: title.trim(), meta: {} };
+      if ( completed ) current.meta.completed = completed;
+      continue;
+    }
+    const metaMatch = line.match( /^\s+-\s+(\w+)\s*:\s*(.+)$/ );
+    if ( metaMatch && current ) {
+      const key = metaMatch[ 1 ];
+      const val = metaMatch[ 2 ].trim();
+      if ( key === "tags" ) current.meta.tags = val.split( "," ).map( s => s.trim() ).filter( Boolean );
+      else current.meta[ key ] = val;
+    }
+  }
+  if ( current ) items.push( current );
+  for ( const item of items ) if ( !item.meta.id ) item.meta.id = scheduleShortId();
+  return { frontmatter, items };
+}
+
+function scheduleRender( scope, items ) {
+  const today = fmtDate( new Date() );
+  const lines = [ "---", `scope: ${scope}`, `last_modified_at: ${today}`, "---", "", `# Schedule — ${scope}`, "" ];
+  const bySection = { pending: [], active: [], deferred: [], done: [] };
+  for ( const item of items ) if ( bySection[ item.section ] ) bySection[ item.section ].push( item );
+
+  const sortByPriority = ( a, b ) => {
+    const pa = PRIORITY_ORDER[ a.priority ] !== undefined ? PRIORITY_ORDER[ a.priority ] : 3;
+    const pb = PRIORITY_ORDER[ b.priority ] !== undefined ? PRIORITY_ORDER[ b.priority ] : 3;
+    if ( pa !== pb ) return pa - pb;
+    return ( a.meta.created || "" ).localeCompare( b.meta.created || "" );
+  };
+  bySection.pending.sort( sortByPriority );
+  bySection.active.sort( sortByPriority );
+  bySection.deferred.sort( ( a, b ) => ( a.meta.until || "" ).localeCompare( b.meta.until || "" ) );
+  bySection.done.sort( ( a, b ) => ( b.meta.completed || "" ).localeCompare( a.meta.completed || "" ) );
+
+  for ( const sect of SCHEDULE_SECTIONS ) {
+    const sectItems = bySection[ sect ];
+    if ( sectItems.length === 0 ) continue;
+    lines.push( "## " + sect.charAt( 0 ).toUpperCase() + sect.slice( 1 ) );
+    lines.push( "" );
+    for ( const item of sectItems ) {
+      const check = sect === "done" ? "x" : sect === "active" ? "-" : " ";
+      const prio  = item.priority ? `**[${item.priority}]** ` : "";
+      if ( sect === "done" ) {
+        const dateSuffix = item.meta.completed ? ` — ${item.meta.completed}` : "";
+        lines.push( `- [${check}] ${prio}~~${item.title}~~${dateSuffix}` );
+      } else {
+        lines.push( `- [${check}] ${prio}${item.title}` );
+      }
+      const seen = new Set();
+      for ( const k of META_KEY_ORDER ) {
+        if ( k === "completed" ) continue;
+        const v = item.meta[ k ];
+        if ( v === undefined || v === null ) continue;
+        seen.add( k );
+        if ( Array.isArray( v ) ) lines.push( `  - ${k}: ${v.join( ", " )}` );
+        else                       lines.push( `  - ${k}: ${v}` );
+      }
+      for ( const k of Object.keys( item.meta ) ) {
+        if ( seen.has( k ) || k === "completed" ) continue;
+        const v = item.meta[ k ];
+        if ( Array.isArray( v ) ) lines.push( `  - ${k}: ${v.join( ", " )}` );
+        else                       lines.push( `  - ${k}: ${v}` );
+      }
+      lines.push( "" );
+    }
+  }
+  return lines.join( "\n" ).replace( /\n+$/, "\n" );
+}
+
+function scheduleResolveRegistryDir() {
+  const { configPath } = loadConfig();
+  return configPath ? path.dirname( configPath ) : null;
+}
+
+function scheduleScopeFromPath( absSchedulePath, workspaceRoot ) {
+  const scopeDir = path.dirname( path.dirname( absSchedulePath ) );
+  const rel = path.relative( workspaceRoot, scopeDir ).replace( /\\/g, "/" );
+  return rel || "workspace";
+}
+
+function scheduleFindNearest( cwd ) {
+  let dir = path.resolve( cwd );
+  const root = path.parse( dir ).root;
+  while ( dir !== root ) {
+    const candidate = path.join( dir, ".cogentia", SCHEDULE_FILE );
+    if ( fs.existsSync( candidate ) ) return candidate;
+    dir = path.dirname( dir );
+  }
+  return null;
+}
+
+function scheduleNearestCogentiaDir( cwd ) {
+  let dir = path.resolve( cwd );
+  const root = path.parse( dir ).root;
+  while ( dir !== root ) {
+    const candidate = path.join( dir, ".cogentia" );
+    if ( fs.existsSync( candidate ) ) return candidate;
+    dir = path.dirname( dir );
+  }
+  return path.join( path.resolve( cwd ), ".cogentia" );
+}
+
+function scheduleWalkAll( workspaceRoot ) {
+  const found = [];
+  const SKIP = new Set( [ ".git", "node_modules", "inseme.worktrees", "dist", "build", ".next", ".turbo" ] );
+  function walk( dir ) {
+    let entries;
+    try { entries = fs.readdirSync( dir, { withFileTypes: true } ); } catch ( _ ) { return; }
+    for ( const e of entries ) {
+      if ( !e.isDirectory() ) continue;
+      if ( SKIP.has( e.name ) ) continue;
+      const sub = path.join( dir, e.name );
+      if ( e.name === ".cogentia" ) {
+        const f = path.join( sub, SCHEDULE_FILE );
+        if ( fs.existsSync( f ) ) found.push( f );
+      } else {
+        walk( sub );
+      }
+    }
+  }
+  walk( workspaceRoot );
+  return found;
+}
+
+function scheduleLoadOne( absPath ) {
+  if ( !fs.existsSync( absPath ) ) return { frontmatter: {}, items: [], path: absPath };
+  const content = fs.readFileSync( absPath, "utf8" );
+  const parsed  = scheduleParse( content );
+  parsed.path   = absPath;
+  return parsed;
+}
+
+function scheduleSaveOne( absPath, scope, items ) {
+  const dir = path.dirname( absPath );
+  if ( !fs.existsSync( dir ) ) fs.mkdirSync( dir, { recursive: true } );
+  fs.writeFileSync( absPath, scheduleRender( scope, items ), "utf8" );
+}
+
+function scheduleApplyPolicy( items ) {
+  const today = fmtDate( new Date() );
+  return items
+    .filter( i => i.section === "pending" )
+    .sort( ( a, b ) => {
+      const pa = PRIORITY_ORDER[ a.priority ] !== undefined ? PRIORITY_ORDER[ a.priority ] : 3;
+      const pb = PRIORITY_ORDER[ b.priority ] !== undefined ? PRIORITY_ORDER[ b.priority ] : 3;
+      if ( pa !== pb ) return pa - pb;
+      const aOver = a.meta.due && a.meta.due <= today;
+      const bOver = b.meta.due && b.meta.due <= today;
+      if ( aOver !== bOver ) return aOver ? -1 : 1;
+      return ( a.meta.created || "" ).localeCompare( b.meta.created || "" );
+    } );
+}
+
+function renderItemList( items, withScope ) {
+  const grouped = { pending: [], active: [], deferred: [], done: [] };
+  for ( const i of items ) if ( grouped[ i.section ] ) grouped[ i.section ].push( i );
+  for ( const sect of SCHEDULE_SECTIONS ) {
+    const sectItems = grouped[ sect ];
+    if ( sectItems.length === 0 ) continue;
+    const header = sect.charAt( 0 ).toUpperCase() + sect.slice( 1 );
+    console.log( `  ${bold( header )}  ${dim( "(" + sectItems.length + ")" )}` );
+    for ( const item of sectItems ) {
+      const id = item.meta.id || "??????";
+      const prio = item.priority === "high"   ? c.red    + "[H]" + c.reset
+                 : item.priority === "medium" ? c.yellow + "[M]" + c.reset
+                 : item.priority === "low"    ? c.cyan   + "[L]" + c.reset
+                 : "   ";
+      const scopeStr = withScope && item._scope ? `  ${dim( "(" + item._scope + ")" )}` : "";
+      console.log( `    ${dim( id )}  ${prio}  ${item.title}${scopeStr}` );
+      const hints = [];
+      if ( item.meta.due )   hints.push( `due: ${item.meta.due}` );
+      if ( item.meta.until ) hints.push( `until: ${item.meta.until}` );
+      if ( item.meta.tags && item.meta.tags.length ) hints.push( "#" + item.meta.tags.join( " #" ) );
+      if ( item.meta.ref )   hints.push( `ref: ${item.meta.ref}` );
+      if ( hints.length > 0 ) console.log( `            ${dim( hints.join( " · " ) )}` );
+    }
+    console.log();
+  }
+}
+
+function cmdTodoList() {
+  const useGlobal = argv.includes( "--global" );
+  const cwd = process.cwd();
+  if ( useGlobal ) {
+    const registry = scheduleResolveRegistryDir();
+    if ( !registry ) die( "No registry found." );
+    const workspaceRoot = path.dirname( registry );
+    const paths = scheduleWalkAll( workspaceRoot );
+    const all = [];
+    for ( const p of paths ) {
+      const parsed = scheduleLoadOne( p );
+      const scope  = parsed.frontmatter.scope || scheduleScopeFromPath( p, workspaceRoot );
+      for ( const item of parsed.items ) all.push( { ...item, _scope: scope, _path: p } );
+    }
+    if ( JSON_MODE ) { console.log( JSON.stringify( { scope: "global", items: all }, null, 2 ) ); return; }
+    const scopes = new Set( all.map( i => i._scope ) ).size;
+    console.log( `\n${hdr( "Schedule — global" )}  ${dim( "(" + all.length + " items · " + scopes + " scopes)" )}\n` );
+    if ( all.length === 0 ) { console.log( dim( "  No SCHEDULE.md found in the workspace.\n" ) ); return; }
+    renderItemList( all, true );
+    return;
+  }
+  const schedulePath = scheduleFindNearest( cwd );
+  if ( !schedulePath ) {
+    console.log( dim( "No SCHEDULE.md found from " + cwd + " upward. Use `cogentia todo add \"<title>\"` to create one." ) );
+    return;
+  }
+  const parsed = scheduleLoadOne( schedulePath );
+  const workspaceRoot = path.dirname( scheduleResolveRegistryDir() || cwd );
+  const scope = parsed.frontmatter.scope || scheduleScopeFromPath( schedulePath, workspaceRoot );
+  if ( JSON_MODE ) { console.log( JSON.stringify( { scope, path: schedulePath, items: parsed.items }, null, 2 ) ); return; }
+  console.log( `\n${hdr( "Schedule — " + scope )}  ${dim( "(" + parsed.items.length + " items)" )}` );
+  console.log( `  ${dim( schedulePath )}\n` );
+  renderItemList( parsed.items, false );
+}
+
+function cmdTodoAdd( title ) {
+  if ( !title ) die( "Usage: cogentia todo add \"<title>\" [--priority h|m|l] [--tag t]... [--due YYYY-MM-DD] [--ref <ctn_id>]" );
+  const prioRaw = getFlagValue( "--priority" );
+  const prioMap = { h: "high", m: "medium", l: "low", high: "high", medium: "medium", low: "low" };
+  const priority = prioRaw ? ( prioMap[ prioRaw.toLowerCase() ] || null ) : null;
+  const due = getFlagValue( "--due" );
+  const ref = getFlagValue( "--ref" );
+  const tags = [];
+  for ( let i = 0; i < argv.length; i++ ) {
+    if ( argv[ i ] === "--tag" && argv[ i + 1 ] ) tags.push( argv[ i + 1 ] );
+  }
+  const cwd = process.cwd();
+  let schedulePath = scheduleFindNearest( cwd );
+  let parsed, scope;
+  const workspaceRoot = path.dirname( scheduleResolveRegistryDir() || cwd );
+  if ( schedulePath ) {
+    parsed = scheduleLoadOne( schedulePath );
+    scope  = parsed.frontmatter.scope || scheduleScopeFromPath( schedulePath, workspaceRoot );
+  } else {
+    const cogDir = scheduleNearestCogentiaDir( cwd );
+    schedulePath = path.join( cogDir, SCHEDULE_FILE );
+    parsed = { frontmatter: {}, items: [] };
+    scope  = scheduleScopeFromPath( schedulePath, workspaceRoot );
+  }
+  const newItem = {
+    section: "pending", priority, title,
+    meta: { id: scheduleShortId(), created: fmtDate( new Date() ) },
+  };
+  if ( tags.length > 0 ) newItem.meta.tags = tags;
+  if ( due ) newItem.meta.due = due;
+  if ( ref ) newItem.meta.ref = ref;
+  parsed.items.push( newItem );
+  scheduleSaveOne( schedulePath, scope, parsed.items );
+  if ( JSON_MODE ) { console.log( JSON.stringify( { added: newItem, scope, path: schedulePath }, null, 2 ) ); return; }
+  console.log( `${c.green}✅${c.reset} ${dim( newItem.meta.id )}  ${title}` );
+  console.log( `   ${dim( "scope: " + scope + "  ·  " + schedulePath )}` );
+  appendAudit( {
+    command: "todo add", args: { scope, title, priority, tags, due, ref },
+    result: { id: newItem.meta.id, path: schedulePath }, narrative: collectNarrative(),
+  } );
+}
+
+function cmdTodoSetStatus( shortId, newStatus, extraMeta ) {
+  if ( !shortId ) die( `Usage: cogentia todo ${newStatus} <id>` );
+  const cwd = process.cwd();
+  const registry = scheduleResolveRegistryDir();
+  const workspaceRoot = registry ? path.dirname( registry ) : path.dirname( path.resolve( cwd ) );
+  let schedulePath = scheduleFindNearest( cwd );
+  let parsed = null;
+  if ( schedulePath ) {
+    parsed = scheduleLoadOne( schedulePath );
+    if ( !parsed.items.find( i => i.meta.id === shortId ) ) parsed = null;
+  }
+  if ( !parsed && registry ) {
+    for ( const p of scheduleWalkAll( workspaceRoot ) ) {
+      const cand = scheduleLoadOne( p );
+      if ( cand.items.find( i => i.meta.id === shortId ) ) { schedulePath = p; parsed = cand; break; }
+    }
+  }
+  if ( !parsed ) die( `Item not found: ${shortId}` );
+  const scope = parsed.frontmatter.scope || scheduleScopeFromPath( schedulePath, workspaceRoot );
+  const item  = parsed.items.find( i => i.meta.id === shortId );
+  item.section = newStatus;
+  if ( extraMeta ) Object.assign( item.meta, extraMeta );
+  if ( newStatus === "done"  ) item.meta.completed = fmtDate( new Date() );
+  if ( newStatus === "active" && !item.meta.started ) item.meta.started = fmtDate( new Date() );
+  scheduleSaveOne( schedulePath, scope, parsed.items );
+  if ( JSON_MODE ) { console.log( JSON.stringify( { updated: item, scope, path: schedulePath }, null, 2 ) ); return; }
+  console.log( `${c.green}✅${c.reset} ${dim( shortId )}  ${item.title} → ${newStatus}` );
+  appendAudit( {
+    command: "todo " + newStatus, args: { id: shortId, scope },
+    result: { id: shortId, newStatus, path: schedulePath }, narrative: collectNarrative(),
+  } );
+}
+
+function cmdTodo( sub, ...rest ) {
+  switch ( sub ) {
+    case undefined:
+    case "list":   cmdTodoList(); break;
+    case "add":    cmdTodoAdd( rest[ 0 ] ); break;
+    case "done":   cmdTodoSetStatus( rest[ 0 ], "done" ); break;
+    case "defer": {
+      const until = getFlagValue( "--until" );
+      cmdTodoSetStatus( rest[ 0 ], "deferred", until ? { until } : {} );
+      break;
+    }
+    case "drop":   cmdTodoSetStatus( rest[ 0 ], "done", { dropped: "true" } ); break;
+    default:
+      die( `Usage: cogentia todo [list | add "<title>" | done <id> | defer <id> [--until <date>] | drop <id>]` );
+  }
+}
+
+function cmdNext() {
+  const useGlobal = argv.includes( "--global" );
+  const wantPick  = argv.includes( "--pick" );
+  const tagFilter = getFlagValue( "--tag" );
+  const limit     = parseInt( getFlagValue( "--limit" ) || "1", 10 );
+  const cwd = process.cwd();
+  const registry = scheduleResolveRegistryDir();
+  const workspaceRoot = registry ? path.dirname( registry ) : path.dirname( path.resolve( cwd ) );
+  let items, sourceLabel;
+
+  if ( useGlobal ) {
+    const paths = scheduleWalkAll( workspaceRoot );
+    items = [];
+    for ( const p of paths ) {
+      const parsed = scheduleLoadOne( p );
+      const scope  = parsed.frontmatter.scope || scheduleScopeFromPath( p, workspaceRoot );
+      for ( const it of parsed.items ) items.push( { ...it, _scope: scope, _path: p } );
+    }
+    sourceLabel = "global";
+  } else {
+    const schedulePath = scheduleFindNearest( cwd );
+    if ( !schedulePath ) { console.log( dim( "No SCHEDULE.md found. Nothing to pick." ) ); return; }
+    const parsed = scheduleLoadOne( schedulePath );
+    const scope  = parsed.frontmatter.scope || scheduleScopeFromPath( schedulePath, workspaceRoot );
+    items = parsed.items.map( it => ( { ...it, _scope: scope, _path: schedulePath } ) );
+    sourceLabel = scope;
+  }
+
+  let candidates = scheduleApplyPolicy( items );
+  if ( tagFilter ) candidates = candidates.filter( i => i.meta.tags && i.meta.tags.includes( tagFilter ) );
+  const picks = candidates.slice( 0, limit );
+
+  if ( JSON_MODE ) {
+    console.log( JSON.stringify( { scope: sourceLabel, picks, picked: wantPick }, null, 2 ) );
+    if ( !( wantPick && picks.length > 0 ) ) return;
+  }
+
+  if ( !JSON_MODE ) {
+    console.log( `\n${hdr( "Next — " + sourceLabel )}${tagFilter ? "  " + dim( "(tag: " + tagFilter + ")" ) : ""}\n` );
+    if ( picks.length === 0 ) {
+      console.log( dim( "  Nothing pending" + ( tagFilter ? " with tag " + tagFilter : "" ) + ".\n" ) );
+      return;
+    }
+    renderItemList( picks, useGlobal );
+  }
+
+  if ( wantPick && picks.length > 0 ) {
+    const byPath = new Map();
+    for ( const item of picks ) {
+      if ( !byPath.has( item._path ) ) byPath.set( item._path, scheduleLoadOne( item._path ) );
+      const inFile = byPath.get( item._path ).items.find( i => i.meta.id === item.meta.id );
+      if ( inFile ) {
+        inFile.section = "active";
+        if ( !inFile.meta.started ) inFile.meta.started = fmtDate( new Date() );
+      }
+    }
+    for ( const [ filePath, fileParsed ] of byPath ) {
+      const fileScope = fileParsed.frontmatter.scope || scheduleScopeFromPath( filePath, workspaceRoot );
+      scheduleSaveOne( filePath, fileScope, fileParsed.items );
+    }
+    if ( !JSON_MODE ) console.log( `${c.green}✅${c.reset} ${picks.length} item(s) moved to Active.` );
+    appendAudit( {
+      command: "next --pick", args: { scope: sourceLabel, tag: tagFilter || null, limit },
+      result: { picked: picks.map( p => ( { id: p.meta.id, scope: p._scope } ) ) }, narrative: collectNarrative(),
+    } );
+  } else if ( !JSON_MODE && picks.length > 0 ) {
+    console.log( dim( "Tip: " + c.cyan + "cogentia next --pick" + c.reset + dim( " to mark these items as Active." ) ) );
+  }
+}
+
+
 // ── AI agent tools ────────────────────────────────────────────────────────────
 
 function cmdQuery( keywordArg ) {
@@ -4972,6 +5874,11 @@ function cmdInstallHooks() {
     case "install-hooks":  cmdInstallHooks();               break;
     case "state":          cmdState();                      break;
     case "explain-ignore": cmdExplainIgnore( cmdArgs[ 0 ] );break;
+    case "frontmatter":    cmdFrontmatter( ...cmdArgs );    break;
+    case "refresh":        cmdRefresh();                    break;
+    case "lint":           cmdLint();                       break;
+    case "todo":           cmdTodo( ...cmdArgs );           break;
+    case "next":           cmdNext();                       break;
     case "concepts":       cmdConcepts( ...cmdArgs );      break;
     case "continuation":   cmdContinuation( ...cmdArgs );  break;
     case "help":

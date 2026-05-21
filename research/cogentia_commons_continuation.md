@@ -8,7 +8,7 @@ last_modified_at: 2026-05-13
 author: "Jean Hugues Noël Robert, baron Mariani (with AI co-drafting)"
 affiliation: "Institut Mariani — C.O.R.S.I.C.A., 1 cours Paoli, F-20250 Corte, Corsica"
 license: "CC BY-SA 4.0"
-status: "Working continuation — apply COP §2.7 semantics to the conversation itself"
+status: "working-paper"
 canonical_url: https://github.com/JeanHuguesRobert/cogentia/blob/main/research/cogentia_commons_continuation.md
 last_stamped_at: 2026-05-16
 ---
@@ -384,8 +384,15 @@ The conversation itself is the chat URL the next session may wish to consult, pe
 ### Backlinks
 
 *These documents link to this file:*
-- [Corpus Status — cogentia](corpus-status.md)
 - [Research Index — Cogentia](index.md)
+- [Corpus Status — cogentia](corpus-status.md)
+- [Cogentia Commons — MVP Specification](cogentia_commons_mvp_spec.md)
 - [Cogentia Commons — Session Continuation Snapshot](cogentia_commons_continuation.md)
+- [Cogentia Commons — COMMUNITY.md Sub-Specification](cogentia_commons_community_manifest.md)
+- [Cogentia Commons — `kernel_extractor` Plugin Sub-Specification](cogentia_commons_kernel_extractor.md)
+- [Cogentia Commons — Structural Plugin Sub-Specifications](cogentia_commons_structural_plugins.md)
+- [Cogentia Commons — Substantive Plugin Sub-Specifications](cogentia_commons_substantive_plugins.md)
+- [Cogentia Commons — Workflows](cogentia_commons_workflows.md)
+- [Cogentia Commons: A Platform Architecture for Collaborative Possibility Exploration Under Scientific Constraint](Cogentia_Commons_Working_Paper.md)
 
 <!-- END_AUTO: backlinks -->

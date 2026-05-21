@@ -4,6 +4,9 @@ description: "Meta-prompt and guide for autonomous AI agents navigating the Coge
 layout: default
 nav_order: 3
 canonical_url: https://github.com/JeanHuguesRobert/cogentia/blob/main/docs/agent_context_server.md
+author: "Jean Hugues Noël Robert, baron Mariani"
+affiliation: "Institut Mariani / C.O.R.S.I.C.A., 1 cours Paoli, F-20250 Corte, Corsica"
+license: "CC BY-SA 4.0"
 last_stamped_at: 2026-05-16
 ---
 
@@ -11,7 +14,10 @@ last_stamped_at: 2026-05-16
 
 <!-- BEGIN_AUTO: trails -->
 > 🧭 **Trail: From Method to Machine**
-> ⬅️ Previous: [Cognitive Packets](../research/cognitive_packets.md)
+> ⬅️ Previous: [Cognitive Packets](../research/cognitive_packets.md) | ➡️ Next: [Agent Navigation Guide (Context Server)](agent_context_server.md)
+
+> 🧭 **Trail: From Method to Machine**
+> ⬅️ Previous: [Agent Navigation Guide](agent_context_server.md) | ➡️ Next: [Research Index — Cogentia](../research/index.md)
 
 <!-- END_AUTO: trails -->
 
@@ -62,3 +68,16 @@ If you encounter a task requiring human judgment, or if a multi-step operation t
 node scripts/cogentia.js continuation emit --task "Explain what the KYS protocol implies for local governance"
 \`\`\`
 *(See [Agent-Resumable CLI](../research/agent_resumable_cli.md) for details on the Continuation Protocol).*
+
+
+<!-- BEGIN_AUTO: backlinks -->
+### Backlinks
+
+*These documents link to this file:*
+- [Research Index — Cogentia](../research/index.md)
+- [Corpus Status — cogentia](../research/corpus-status.md)
+- [Trail: From Method to Machine](../research/trails/from_method_to_machine.md)
+- [Agent-Resumable CLI](../research/agent_resumable_cli.md)
+- [Cognitive Packets](../research/cognitive_packets.md)
+
+<!-- END_AUTO: backlinks -->

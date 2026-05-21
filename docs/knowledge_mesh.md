@@ -4,6 +4,9 @@ description: "How humans and agents curate, cross-reference, and navigate the Co
 layout: default
 nav_order: 4
 canonical_url: https://github.com/JeanHuguesRobert/cogentia/blob/main/docs/knowledge_mesh.md
+author: "Jean Hugues Noël Robert, baron Mariani"
+affiliation: "Institut Mariani / C.O.R.S.I.C.A., 1 cours Paoli, F-20250 Corte, Corsica"
+license: "CC BY-SA 4.0"
 last_stamped_at: 2026-05-16
 ---
 

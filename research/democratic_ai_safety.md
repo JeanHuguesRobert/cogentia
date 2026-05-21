@@ -1,6 +1,9 @@
 ---
 canonical_url: https://github.com/JeanHuguesRobert/cogentia/blob/main/research/democratic_ai_safety.md
 status: alias
+author: "Jean Hugues Noël Robert, baron Mariani"
+affiliation: "Institut Mariani / C.O.R.S.I.C.A., 1 cours Paoli, F-20250 Corte, Corsica"
+license: "CC BY-SA 4.0"
 last_stamped_at: 2026-05-18
 canonical_document: https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/democratic_ai_safety.md
 ---
@@ -24,3 +27,14 @@ In draft v0.5 (2026-05-18) of the canonical paper, the three substantive contrib
 - the Coherence Kernel articulating the relationship to DHITL (now §11.5).
 
 The earlier French Cogentia-format draft is preserved in the git history of this file.
+
+
+<!-- BEGIN_AUTO: backlinks -->
+### Backlinks
+
+*These documents link to this file:*
+- [Research Index — Cogentia](index.md)
+- [Corpus Status — cogentia](corpus-status.md)
+- [The Knowledge Mesh (Decentralized Wiki)](../docs/knowledge_mesh.md)
+
+<!-- END_AUTO: backlinks -->

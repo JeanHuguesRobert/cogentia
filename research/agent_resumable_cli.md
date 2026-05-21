@@ -50,6 +50,9 @@ AI agents; command-line interfaces; continuations; `call/cc`; continuation-passi
 > 🧭 **Trail: From Method to Machine**
 > ⬅️ Previous: [The Sovereign Digital Twin](cogentia-digital-twin.md) | ➡️ Next: [Cognitive Packets](cognitive_packets.md)
 
+> 🧭 **Trail: From Method to Machine**
+> ⬅️ Previous: [Cogentia](../COGENTIA.md) | ➡️ Next: [Cognitive Packets](cognitive_packets.md)
+
 <!-- END_AUTO: trails -->
 
 ## 1. Introduction
@@ -1109,8 +1112,12 @@ A compliant CLI does not hide judgment. It exposes judgment as a continuation, c
 ### Backlinks
 
 *These documents link to this file:*
-- [Corpus Status — cogentia](corpus-status.md)
+- [Agent Navigation Guide (Context Server)](../docs/agent_context_server.md)
 - [Research Index — Cogentia](index.md)
+- [Corpus Status — cogentia](corpus-status.md)
+- [Trail: From Method to Machine](trails/from_method_to_machine.md)
 - [Agent-Resumable CLI](agent_resumable_cli.md)
+- [Cognitive Packets](cognitive_packets.md)
+- [The Sovereign Digital Twin: Cogentia, Cogentigram, Cogentiscope](cogentia-digital-twin.md)
 
 <!-- END_AUTO: backlinks -->

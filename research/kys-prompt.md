@@ -1,5 +1,8 @@
 ---
 canonical_url: https://github.com/JeanHuguesRobert/cogentia/blob/main/research/kys-prompt.md
+author: "Jean Hugues Noël Robert, baron Mariani"
+affiliation: "Institut Mariani / C.O.R.S.I.C.A., 1 cours Paoli, F-20250 Corte, Corsica"
+license: "CC BY-SA 4.0"
 last_stamped_at: 2026-05-16
 ---
 [COGENTIA — PSYCHOCOGNITIVE ANALYSIS PROTOCOL v1.0 | PrivAI]
@@ -289,7 +292,7 @@ PRESENTATION INSTRUCTIONS (important for data collection):
 ### Backlinks
 
 *These documents link to this file:*
-- [Corpus Status — cogentia](corpus-status.md)
 - [Research Index — Cogentia](index.md)
+- [Corpus Status — cogentia](corpus-status.md)
 
 <!-- END_AUTO: backlinks -->

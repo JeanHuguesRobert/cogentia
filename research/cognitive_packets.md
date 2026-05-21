@@ -20,6 +20,9 @@ last_stamped_at: 2026-05-21
 > 🧭 **Trail: From Method to Machine**
 > ⬅️ Previous: [Agent-Resumable CLI](agent_resumable_cli.md) | ➡️ Next: [Agent Navigation Guide](../docs/agent_context_server.md)
 
+> 🧭 **Trail: From Method to Machine**
+> ⬅️ Previous: [Agent-Resumable CLI](agent_resumable_cli.md) | ➡️ Next: [The Sovereign Digital Twin: Cogentia, Cogentigram, Cogentiscope](cogentia-digital-twin.md)
+
 <!-- END_AUTO: trails -->
 
 ## An Envelope and Payload Format for Human–AI and Multi-Agent Cooperation
@@ -1491,3 +1494,16 @@ All seven cases share:
 Cognitive packets generalize this family to the case where the receiver may be an AI agent and the producer may be an AI agent, while keeping the same minimal commitment: structured fields, sufficient state, named cost for skipping.
 
 The novelty of cognitive packets is therefore not the existence of the pattern, but two specific extensions: the **Resumption Risks** field (absent from SBAR, AAR, ADR, OPORD) and the **self-describing protocol header** that makes the convention propagable by copy/paste to receivers who do not yet know it.
+
+
+<!-- BEGIN_AUTO: backlinks -->
+### Backlinks
+
+*These documents link to this file:*
+- [Agent Navigation Guide (Context Server)](../docs/agent_context_server.md)
+- [Research Index — Cogentia](index.md)
+- [Corpus Status — cogentia](corpus-status.md)
+- [Trail: From Method to Machine](trails/from_method_to_machine.md)
+- [Agent-Resumable CLI](agent_resumable_cli.md)
+
+<!-- END_AUTO: backlinks -->

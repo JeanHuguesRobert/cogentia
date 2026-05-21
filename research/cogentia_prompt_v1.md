@@ -1,5 +1,8 @@
 ---
 canonical_url: https://github.com/JeanHuguesRobert/cogentia/blob/main/research/cogentia_prompt_v1.md
+author: "Jean Hugues Noël Robert, baron Mariani"
+affiliation: "Institut Mariani / C.O.R.S.I.C.A., 1 cours Paoli, F-20250 Corte, Corsica"
+license: "CC BY-SA 4.0"
 last_stamped_at: 2026-05-16
 ---
 # COGENTIA v1.0 — Prompt d'analyse psychocognitive
@@ -263,7 +266,7 @@ Pour les indicateurs catégorie F (scores dérivés, rangs 59-65), calcule-les �
 ### Backlinks
 
 *These documents link to this file:*
-- [Corpus Status — cogentia](corpus-status.md)
 - [Research Index — Cogentia](index.md)
+- [Corpus Status — cogentia](corpus-status.md)
 
 <!-- END_AUTO: backlinks -->
