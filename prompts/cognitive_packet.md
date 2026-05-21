@@ -1,13 +1,15 @@
 ---
 title: "Cognitive Packet Prompt Contract"
-subtitle: "Self-Describing Continuations by Copy or by Reference"
+subtitle: "Envelope and Payload — Continuations by Copy or by Reference"
 author: "Jean Hugues Noël Robert, baron Mariani"
-date: "2026-05-19"
+date: "2026-05-21"
 status: "Prompt contract"
-version: "0.2"
+version: "0.3"
 license: "CC BY-SA 4.0"
 canonical_path: "cogentia/prompts/cognitive_packet.md"
 related_research: "cogentia/research/cognitive_packets.md"
+canonical_url: https://github.com/JeanHuguesRobert/cogentia/blob/main/prompts/cognitive_packet.md
+last_stamped_at: 2026-05-21
 ---
 
 # Cognitive Packet Prompt Contract
@@ -15,36 +17,39 @@ related_research: "cogentia/research/cognitive_packets.md"
 Paste this at the beginning of a conversation with an AI agent when you want that conversation to support cognitive packets and continuations.
 
 ```markdown
-Apply the cognitive packet continuation protocol in this conversation.
+Apply the cognitive packet protocol in this conversation.
 
-A cognitive packet is a structured unit of cognitive work intended to let a human, AI agent, tool, or repository resume work.
+A cognitive packet is a structured unit of cognitive work intended to let a human, AI agent, tool, or repository resume work. It is composed of two layers:
 
-It is not an ordinary summary. It distinguishes established state, decisions, assumptions, constraints, next action, traces, and resumption risks.
+- an envelope — kind-agnostic metadata any receiver can read: protocol header, transmission mode, packet kind, status, provenance, context reference, routing, traces;
+- a payload — kind-specific cognitive content (the work itself).
+
+It is not an ordinary summary. The envelope tells a router what to do with the packet without reading the payload. The payload is for an agent capable of handling the declared kind.
 
 Two transmission modes exist:
 
-1. Continuation by copy:
+1. By copy:
    The necessary context is embedded in the packet. Use this when the receiver may not share the current context.
 
-2. Continuation by reference:
+2. By reference:
    The packet points to a shared, stable, accessible context. Use this only when the receiver can dereference that context.
 
-When I ask for a "continuation by copy", produce a standalone self-describing packet that can be pasted into another conversation, todo list, issue, document, tool, or repository.
+When I ask for a "continuation by copy", produce a standalone self-describing packet with envelope and a continuation-kind payload, ready to be pasted into another conversation, todo list, issue, document, tool, or repository.
 
-When I ask for a "continuation by reference", produce a shorter situated packet that assumes the receiver shares the current context.
+When I ask for a "continuation by reference", produce a shorter situated packet whose envelope points at the shared context and whose payload assumes the receiver shares it.
 
-Do not produce an ordinary summary. Produce a resumable object.
+Do not produce an ordinary summary. Produce a packet whose payload is a resumable object.
 
-Always distinguish:
+For a continuation-kind payload, always distinguish:
 - established state;
 - decisions;
 - assumptions;
 - constraints;
 - next action;
-- traces;
+- traces (in the envelope);
 - resumption risks.
 
-A by-copy packet should include a short protocol header so that the receiver can understand the packet and produce another packet after resumption.
+A by-copy packet should include the protocol header field in its envelope so that the receiver can understand the packet and produce another packet after resumption.
 
 Self-describing does not mean self-validating. The receiver must still verify the packet's claims, references, assumptions, and decisions.
 
@@ -56,39 +61,50 @@ If the referenced context is not stable or not available to the receiver, say so
 # Minimal by-copy template
 
 ```markdown
-# CONTINUATION PACKET — BY COPY
+# COGNITIVE PACKET — CONTINUATION — BY COPY
 
-## Protocol Header
+## Envelope
 
-This block is a continuation packet: a cognitive packet intended to let a human, AI agent, tool, or repository resume work.
+packet_kind: continuation
+transmission_mode: copy
+status: active
+self_describing: true
 
-It is not an ordinary summary. It distinguishes established state, decisions, assumptions, constraints, next action, traces, and resumption risks.
+### Protocol Header
+
+This block is a cognitive packet of kind continuation: a structured unit of cognitive work intended to let a human, AI agent, tool, or repository resume work.
+
+The envelope is kind-agnostic; the payload carries the work state. After using this packet, the receiver may produce a new cognitive packet according to the same convention.
 
 Two transmission modes exist:
 - by copy: the necessary context is embedded;
 - by reference: the packet points to a shared, stable, accessible context.
 
-After using this packet, the receiver may produce a new continuation packet according to the same convention.
-
 Self-describing does not mean self-validating.
 
-## Object
+### Provenance
 
-## Context
+### Context Reference
 
-## State
+### Routing
 
-## Decisions
+### Traces
 
-## Constraints
+## Payload
 
-## Assumptions
+### Object
 
-## Next Action
+### State
 
-## Traces
+### Decisions
 
-## Resumption Risks
+### Constraints
+
+### Assumptions
+
+### Next Action
+
+### Resumption Risks
 ```
 
 ---
@@ -96,21 +112,31 @@ Self-describing does not mean self-validating.
 # Minimal by-reference template
 
 ```markdown
-# CONTINUATION PACKET — BY REFERENCE
+# COGNITIVE PACKET — CONTINUATION — BY REFERENCE
 
-## Context Reference
+## Envelope
 
-## Resumption Point
+packet_kind: continuation
+transmission_mode: reference
+status: active
 
-## Decisions to Preserve
+### Context Reference
 
-## Immediate Constraints
+### Routing
 
-## Next Action
-
-## Vigilance
-
-## Fallback
+### Fallback
 
 If the referenced context is unavailable, request or produce a continuation packet by copy.
+
+## Payload
+
+### Resumption Point
+
+### Decisions to Preserve
+
+### Immediate Constraints
+
+### Next Action
+
+### Vigilance
 ```

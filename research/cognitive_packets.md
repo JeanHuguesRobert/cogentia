@@ -1,32 +1,47 @@
 ---
 title: "Cognitive Packets"
-subtitle: "A Minimal Continuation Payload for Human–AI and Multi-Agent Cooperation"
+subtitle: "An Envelope and Payload Format for Human–AI and Multi-Agent Cooperation"
 author: "Jean Hugues Noël Robert, baron Mariani"
 affiliation: "Institut Mariani / C.O.R.S.I.C.A., 1 cours Paoli, F-20250 Corte, Corsica"
-date: "2026-05-19"
+date: "2026-05-21"
 status: "Working paper"
-version: "0.2"
+version: "0.3"
 license: "CC BY-SA 4.0 for text; MIT for associated schemas or code"
 spdx: "CC-BY-SA-4.0"
 canonical_path: cogentia/research/cognitive_packets.md
 operational_prompt: cogentia/prompts/cognitive_packet.md
+canonical_url: https://github.com/JeanHuguesRobert/cogentia/blob/main/research/cognitive_packets.md
+last_stamped_at: 2026-05-21
 ---
 
 # Cognitive Packets
 
-## A Minimal Continuation Payload for Human–AI and Multi-Agent Cooperation
+<!-- BEGIN_AUTO: trails -->
+> 🧭 **Trail: From Method to Machine**
+> ⬅️ Previous: [Agent-Resumable CLI](agent_resumable_cli.md) | ➡️ Next: [Agent Navigation Guide](../docs/agent_context_server.md)
+
+<!-- END_AUTO: trails -->
+
+## An Envelope and Payload Format for Human–AI and Multi-Agent Cooperation
 
 **Jean Hugues Noël Robert, baron Mariani**  
 Institut Mariani / C.O.R.S.I.C.A.  
 1 cours Paoli, F-20250 Corte, Corsica
 
-*Working paper — May 2026 — v0.2*
+*Working paper — May 2026 — v0.3*
 
 ---
 
 ## Version note
 
-**v0.2** adds the notion of **self-describing cognitive packets**. A packet transmitted by copy may include a minimal protocol header explaining how to interpret the packet and how to produce another one. This makes the convention propagable by ordinary copy/paste while preserving the rule that **self-describing does not mean self-validating**.
+**v0.3** introduces the **envelope and payload** distinction. A cognitive packet now has two layers:
+
+- an **envelope** carrying kind-agnostic metadata (protocol header, provenance, context reference, transmission mode, routing, traces) that any agent — human or machine — can read without interpreting the inner work;
+- a **payload** carrying the kind-specific cognitive content (continuation, objection, hypothesis, decision, failure, or routing), validated by an agent that understands the declared kind.
+
+Continuations are no longer one *kind of packet*; they are the canonical *payload* of a packet whose `packet_kind = continuation`. The earlier `cogentia.continuation.v1` protocol maps directly to this payload — no semantic change to the existing CLI primitive, only a clearer transport story.
+
+**v0.2** added **self-describing cognitive packets**. A packet transmitted by copy may include a minimal protocol header explaining how to interpret the packet and how to produce another one. From v0.3, that protocol header lives in the envelope (it travels with every kind, not just continuations). The rule still holds: **self-describing does not mean self-validating**.
 
 ## Genre note
 
@@ -44,11 +59,13 @@ See Appendix C for known uses of the same pattern family in adjacent domains.
 
 Current agent protocols increasingly standardize how artificial agents communicate, call tools, access resources, delegate tasks, and produce execution traces. Yet they often leave underspecified the unit of cognitive work that must be transmitted for a task to be reliably resumed across humans, artificial agents, tools, conversations, repositories, and workflow systems.
 
-This paper introduces **cognitive packets**: structured units of cognitive work carrying enough state — context, decisions, assumptions, constraints, provenance, and next action — to enable continuation. A cognitive packet is neither a prompt, nor a message, nor a task, nor a trace, although it may contain or produce all four.
+This paper introduces **cognitive packets**: structured units of cognitive work composed of two layers. An **envelope** carries kind-agnostic metadata — protocol header, provenance, context reference, transmission mode, routing, traces — that any receiver can read without interpreting the inner work. A **payload** carries the kind-specific cognitive content — continuation, objection, hypothesis, decision, failure, or routing — validated by an agent capable of handling that kind. A cognitive packet is neither a prompt, nor a message, nor a task, nor a trace, although it may contain or produce all four.
 
 The paper distinguishes two transmission modes. A packet may be transmitted **by copy**, embedding the necessary context for portability, or **by reference**, assuming a shared, stable, and accessible context. This distinction mirrors pass-by-value and pass-by-reference semantics in programming.
 
-Version 0.2 introduces **self-describing packets**. A packet transmitted by copy may carry not only the state of work to be resumed, but also the minimal convention required to interpret the packet and produce another one. This enables protocol propagation by copy/paste without requiring prior installation, shared tooling, or a preloaded system prompt.
+The envelope/payload split is the standard envelope-and-content pattern familiar from HTTP, email, and most transport protocols. Here it serves a specific cooperative purpose: a routing agent (human or machine) can validate, dispatch, queue, archive, or acknowledge a packet by reading the envelope alone, leaving the cognitive interpretation of the payload to whoever can handle the declared kind. New kinds may be added without modifying the envelope.
+
+Version 0.2 introduced **self-describing packets** — the envelope may carry not only the state required to resume work but also the minimal convention required to interpret the packet and produce another one. From v0.3 the protocol header lives in the envelope, so self-description benefits every kind, not only continuations. This enables protocol propagation by copy/paste without requiring prior installation, shared tooling, or a preloaded system prompt.
 
 Cognitive packets are presented as a minimal semantic payload layer compatible with agent-to-agent protocols, tool protocols, workflow engines, command-line tools, Git repositories, todo systems, and ordinary copy/paste. Their role is not to replace existing infrastructure, but to make human–AI and multi-agent cooperation more resumable, auditable, and operationally reliable.
 
@@ -56,7 +73,7 @@ Cognitive packets are presented as a minimal semantic payload layer compatible w
 
 ## Keywords
 
-cognitive packets; continuation; multi-agent systems; agent orchestration; human-AI cooperation; copy/paste; pass by value; pass by reference; self-describing payload; resumability; traceability; Cogentia; second method; agent-resumable CLI.
+cognitive packets; envelope and payload; continuation; multi-agent systems; agent orchestration; human-AI cooperation; copy/paste; pass by value; pass by reference; self-describing envelope; resumability; traceability; Cogentia; second method; agent-resumable CLI.
 
 ---
 
@@ -239,6 +256,11 @@ The analogy must remain limited. A self-describing packet is not self-executing 
 
 A **cognitive packet** is a structured unit of cognitive work designed to be transmitted between humans, artificial agents, tools, or repositories.
 
+It is composed of two layers:
+
+- an **envelope** — kind-agnostic metadata that any receiver can read without interpreting the inner work: protocol header, provenance, transmission mode, context reference, routing, and traces;
+- a **payload** — kind-specific cognitive content, validated by an agent that understands the declared kind.
+
 Unlike a message, it is not merely communicative.  
 Unlike a trace, it is not merely retrospective.  
 Unlike a task, it is not merely imperative.  
@@ -255,13 +277,15 @@ It carries enough state to allow another actor to:
 - branch;
 - or convert the work into another operational form.
 
-Minimal definition:
+Minimal definition (v0.3):
 
-> A cognitive packet is a transport-neutral continuation payload carrying the state required to resume cognitive work.
+> A cognitive packet is a transport-neutral pair of an envelope (kind-agnostic metadata) and a payload (kind-specific cognitive content), together carrying the state required to resume, critique, or route cognitive work.
 
-Extended v0.2 definition:
+Extended definition:
 
-> A self-describing cognitive packet also carries the minimal convention required to produce another packet after resumption.
+> A **self-describing** cognitive packet is one whose envelope also carries the minimal convention required to interpret the packet and produce another one after resumption.
+
+The two layers serve different cooperative roles. A routing agent — a workflow engine, a human dispatcher, a bot — needs only the envelope to validate, queue, dispatch, archive, or acknowledge the packet. Only an agent capable of handling the declared kind needs to interpret the payload. New kinds may be added without changing the envelope.
 
 ---
 
@@ -348,16 +372,16 @@ A self-describing packet solves this by embedding a short protocol header.
 
 ## 7.1 Definition
 
-> A cognitive packet is self-describing when it carries both a resumable work state and the minimal convention required to produce another packet.
+> A cognitive packet is self-describing when its **envelope** carries the minimal convention required to interpret the packet and produce another one. The **payload** still carries the resumable work state (or the equivalent kind-specific content).
 
 This makes the packet **copy/paste propagable**. The receiver can:
 
-1. understand the packet;
-2. resume the work;
-3. produce a new packet;
-4. forward or archive the new packet.
+1. read the envelope and understand the convention (without prior tooling);
+2. dispatch to the right handler based on `envelope.packet_kind`;
+3. resume, critique, route, or archive the payload accordingly;
+4. produce a new packet — envelope conventions copied, payload composed.
 
-The protocol convention therefore travels with the work state.
+Because self-description lives in the envelope, it travels with every packet kind, not only continuations. The protocol convention therefore travels with any cognitive work, not only with work-state to resume.
 
 ## 7.2 Protocol header
 
@@ -416,132 +440,204 @@ The receiver remains responsible for validation.
 
 ## 7.5 When to include the protocol header
 
-Recommended rule:
+The protocol header is an envelope field. Recommended rule:
 
 ```text
-A by-copy packet SHOULD include a protocol header when the receiver may not already know the convention.
+A by-copy packet SHOULD include the protocol header field in its envelope
+when the receiver may not already know the convention.
 ```
 
 A by-reference packet MAY omit the header if the protocol is already part of the shared context.
 
-However, if a by-reference packet may leave its original context, it should either include the header or be converted into a by-copy packet.
+However, if a by-reference packet may leave its original context, the envelope should either include the header or the packet should be converted into a by-copy form.
 
 ---
 
-# 8. Minimal Packet Schema
+# 8. Packet Structure: Envelope and Payload
 
-A minimal packet may be represented in Markdown:
+A cognitive packet has two layers:
+
+```text
+┌──────────────────────────────────────────────────────────────┐
+│ ENVELOPE  — kind-agnostic; readable by any receiver          │
+│  protocol_header · transmission_mode · packet_kind · status  │
+│  self_describing · provenance · context_ref · routing        │
+│  traces                                                      │
+├──────────────────────────────────────────────────────────────┤
+│ PAYLOAD   — kind-specific; readable by an agent of that kind │
+│  (shape depends on packet_kind; see §10)                     │
+└──────────────────────────────────────────────────────────────┘
+```
+
+A routing agent — human dispatcher, workflow engine, queue manager — validates and dispatches by reading the envelope alone. Only an agent capable of handling the declared kind interprets the payload.
+
+## 8.1 Envelope schema
+
+The envelope is the same across all packet kinds. Minimal Markdown form:
 
 ```markdown
 # COGNITIVE PACKET
 
-type: continuation
-mode: copy | reference
+## Envelope
+
+packet_kind: continuation | objection | hypothesis | decision | failure | routing
+transmission_mode: copy | reference
 status: draft | active | completed | failed | superseded
 self_describing: true | false
 
-## Protocol Header
+### Protocol Header
 Required for by-copy packets when the receiver may not know the protocol.
 
-## Object
+### Provenance
+Who emitted this packet, when, and (optionally) under what authority.
+
+### Context Reference
+Project, conversation, repository, parent packet, predecessor chain.
+
+### Routing
+(Optional) Intended receiver(s) and response channel.
+
+### Traces
+Sources, files, links, commits, conversations, identifiers, prior packets.
+```
+
+## 8.2 Payload schema
+
+The payload shape depends on `envelope.packet_kind`. See §10 for the six kinds defined in this paper.
+
+Generic Markdown form (the actual fields vary by kind):
+
+```markdown
+## Payload
+
+### Object
 What is being worked on.
 
-## State
+### State
 What is already established.
 
-## Decisions
+### Decisions
 What has already been decided and should not be reopened without cause.
 
-## Constraints
+### Constraints
 Rules, limits, preferences, deadlines, budgets, risk boundaries.
 
-## Assumptions
+### Assumptions
 What is plausible but not yet verified.
 
-## Next Action
-The next small useful action.
+### Next Action
+The next small useful action (continuation kind).
 
-## Traces
-Sources, files, links, commits, conversations, identifiers, prior packets.
-
-## Resumption Risks
+### Resumption Risks
 What a receiver is likely to misunderstand.
 ```
 
-This is intentionally small. Additional fields may be added for specific environments.
+## 8.3 Validation in two layers
+
+A receiver validates the envelope independently of the payload:
+
+```text
+1. Parse envelope (always present, kind-agnostic).
+2. Read envelope.packet_kind.
+3. Dispatch to the payload validator for that kind.
+4. The payload validator runs only on the inner content.
+```
+
+This separation means new payload kinds may be added — and new validators written — without touching the envelope or any existing payload validator. It also means a router that does not understand a given kind can still queue, archive, or forward the packet without misinterpreting it.
+
+This is intentionally small. Additional fields may be added to either layer for specific environments.
 
 ---
 
 # 9. JSON Representation
 
-A minimal machine-readable representation:
+A minimal machine-readable representation makes the envelope/payload structure explicit:
 
 ```json
 {
   "type": "cognitive_packet",
-  "version": "0.2",
-  "packet_kind": "continuation",
-  "transmission_mode": "copy",
-  "status": "active",
-  "self_describing": true,
-  "protocol_header": "This is a cognitive packet: a structured unit of cognitive work intended to let a receiver resume work and produce a new packet after resumption. Self-describing does not mean self-validating.",
-  "object": "Define cognitive packets as a minimal continuation payload.",
-  "state": [
-    "Agent protocols standardize communication and tool access.",
-    "They do not fully specify the cognitive unit required for reliable resumption."
-  ],
-  "decisions": [
-    "This is not positioned as a replacement for A2A or MCP.",
-    "The paper remains technical and narrowly scoped."
-  ],
-  "constraints": [
-    "Avoid broad AI safety claims.",
-    "Keep the schema transport-neutral.",
-    "Support both humans and artificial agents."
-  ],
-  "assumptions": [
-    "A minimal schema can improve handoffs across agents and tools."
-  ],
-  "next_action": "Refine the schema and test it on copy/paste, GitHub issue, and CLI continuation use cases.",
-  "traces": [
-    {
-      "type": "path",
-      "value": "cogentia/research/cognitive_packets.md"
-    }
-  ],
-  "resumption_risks": [
-    "Confusing a cognitive packet with a transport protocol.",
-    "Treating the protocol header as validation of content."
-  ]
+  "version": "0.3",
+  "envelope": {
+    "packet_kind": "continuation",
+    "transmission_mode": "copy",
+    "status": "active",
+    "self_describing": true,
+    "protocol_header": "This is a cognitive packet: a structured unit of cognitive work intended to let a receiver resume work and produce a new packet after resumption. Self-describing does not mean self-validating.",
+    "provenance": {
+      "actor": "jhrobert",
+      "ts": "2026-05-21T10:14:00Z"
+    },
+    "context_ref": {
+      "repo": "cogentia",
+      "document": "research/cognitive_packets.md",
+      "predecessor": null
+    },
+    "routing": {
+      "agent": "*",
+      "response_channel": "cogentia packet ingest <id>"
+    },
+    "traces": [
+      { "type": "path", "value": "cogentia/research/cognitive_packets.md" }
+    ]
+  },
+  "payload": {
+    "object": "Define cognitive packets as an envelope/payload pair.",
+    "state": [
+      "Agent protocols standardize communication and tool access.",
+      "They do not fully specify the cognitive unit required for reliable resumption."
+    ],
+    "decisions": [
+      "This is not positioned as a replacement for A2A or MCP.",
+      "The paper remains technical and narrowly scoped.",
+      "v0.3 adopts an envelope/payload split."
+    ],
+    "constraints": [
+      "Avoid broad AI safety claims.",
+      "Keep the schema transport-neutral.",
+      "Support both humans and artificial agents."
+    ],
+    "assumptions": [
+      "A two-layer schema improves handoffs across agents and tools."
+    ],
+    "next_action": "Refine the kind-specific payload schemas and test them on copy/paste, GitHub issue, and CLI continuation use cases.",
+    "resumption_risks": [
+      "Confusing the envelope with the payload.",
+      "Treating the protocol header as validation of payload content."
+    ]
+  }
 }
 ```
 
+The same packet validates in two phases: envelope first, then payload according to `envelope.packet_kind`.
+
 ---
 
-# 10. Packet Kinds
+# 10. Payload Kinds
 
-A cognitive packet is a generic container. Several packet kinds may be defined.
+The envelope is the same for every packet. The **payload** schema depends on `envelope.packet_kind`. Six kinds are defined in this paper. Others may be added without modifying the envelope.
 
-## 10.1 Continuation packet
+## 10.1 Continuation payload — `packet_kind: continuation`
 
 Purpose:
 
 > Continue this work from the current state.
 
-Required emphasis:
+Required payload emphasis:
 
 - current state;
 - decisions;
 - constraints;
 - next action.
 
-## 10.2 Objection packet
+This is the canonical payload of `cogentia.continuation.v1` — see §12.
+
+## 10.2 Objection payload — `packet_kind: objection`
 
 Purpose:
 
 > Convert an objection into a first-class contribution.
 
-Required emphasis:
+Required payload emphasis:
 
 - target claim;
 - objection;
@@ -549,26 +645,26 @@ Required emphasis:
 - evidence required;
 - expected effect if validated.
 
-## 10.3 Hypothesis packet
+## 10.3 Hypothesis payload — `packet_kind: hypothesis`
 
 Purpose:
 
 > Preserve a possibility to be tested.
 
-Required emphasis:
+Required payload emphasis:
 
 - hypothesis;
 - test method;
 - expected observations;
 - falsification criteria.
 
-## 10.4 Decision packet
+## 10.4 Decision payload — `packet_kind: decision`
 
 Purpose:
 
 > Record a decision and the basis for it.
 
-Required emphasis:
+Required payload emphasis:
 
 - decision;
 - alternatives considered;
@@ -576,13 +672,13 @@ Required emphasis:
 - authority or accountable party;
 - reversibility.
 
-## 10.5 Failure packet
+## 10.5 Failure payload — `packet_kind: failure`
 
 Purpose:
 
 > Preserve a failed branch as useful knowledge.
 
-Required emphasis:
+Required payload emphasis:
 
 - branch attempted;
 - failure condition;
@@ -590,13 +686,13 @@ Required emphasis:
 - recoverability;
 - suggested next branch.
 
-## 10.6 Routing packet
+## 10.6 Routing payload — `packet_kind: routing`
 
 Purpose:
 
 > Send work to an appropriate actor.
 
-Required emphasis:
+Required payload emphasis:
 
 - destination role;
 - required capability;
@@ -605,117 +701,177 @@ Required emphasis:
 
 ---
 
-# 11. Continuation Packets
+# 11. Continuation Packets — A Worked Example
 
-A continuation packet is the most important kind for human–AI cooperation.
+The continuation kind is the most important for human–AI cooperation. This section gives the by-copy and by-reference templates with the envelope and the payload made explicit.
 
-Minimal Markdown form by copy:
+## 11.1 By-copy continuation packet
 
 ```markdown
-# CONTINUATION PACKET — BY COPY
+# COGNITIVE PACKET — CONTINUATION — BY COPY
 
-## Protocol Header
+## Envelope
 
-This block is a continuation packet: a cognitive packet intended to let a human, AI agent, tool, or repository resume work.
+packet_kind: continuation
+transmission_mode: copy
+status: active
+self_describing: true
 
-It is not an ordinary summary. It distinguishes established state, decisions, assumptions, constraints, next action, traces, and resumption risks.
+### Protocol Header
+
+This block is a cognitive packet of kind continuation: a structured unit of cognitive work intended to let a human, AI agent, tool, or repository resume work.
+
+It is not an ordinary summary. The envelope carries metadata any receiver can read; the payload carries the work state.
 
 Two transmission modes exist:
 - by copy: the necessary context is embedded;
 - by reference: the packet points to a shared, stable, accessible context.
 
-After using this packet, the receiver may produce a new continuation packet according to the same convention.
+After using this packet, the receiver may produce a new cognitive packet according to the same convention.
 
 Self-describing does not mean self-validating.
 
-## Object
+### Provenance
 ...
 
-## Context
+### Context Reference
 ...
 
-## State
+### Routing
 ...
 
-## Decisions
+### Traces
 ...
 
-## Constraints
+## Payload
+
+### Object
 ...
 
-## Assumptions
+### State
 ...
 
-## Next Action
+### Decisions
 ...
 
-## Traces
+### Constraints
 ...
 
-## Resumption Risks
+### Assumptions
+...
+
+### Next Action
+...
+
+### Resumption Risks
 ...
 ```
 
-Minimal Markdown form by reference:
+## 11.2 By-reference continuation packet
 
 ```markdown
-# CONTINUATION PACKET — BY REFERENCE
+# COGNITIVE PACKET — CONTINUATION — BY REFERENCE
 
-## Context Reference
+## Envelope
+
+packet_kind: continuation
+transmission_mode: reference
+status: active
+
+### Context Reference
 ...
 
-## Resumption Point
+### Routing
 ...
 
-## Decisions to Preserve
-...
-
-## Immediate Constraints
-...
-
-## Next Action
-...
-
-## Vigilance
-...
-
-## Fallback
+### Fallback
 If the referenced context is unavailable, request or produce a continuation packet by copy.
+
+## Payload
+
+### Resumption Point
+...
+
+### Decisions to Preserve
+...
+
+### Immediate Constraints
+...
+
+### Next Action
+...
+
+### Vigilance
+...
 ```
 
-A continuation packet by reference is valid only if the context reference is dereferenceable by the receiver.
+A by-reference continuation packet is valid only if the context reference is dereferenceable by the receiver. The envelope's `Fallback` field makes the recovery path explicit when it is not.
 
 ---
 
 # 12. Relation to Agent-Resumable CLI
 
-Agent-Resumable CLI is a concrete technical pattern for command-line tools that need external judgment.
+Agent-Resumable CLI is a concrete technical pattern for command-line tools that need external judgment. A CLI tool reaches a point where deterministic execution is insufficient. Instead of embedding an AI provider, it emits a typed continuation object. A surrounding actor supplies a structured result. The tool validates the result against an expected schema and resumes.
 
-A CLI tool reaches a point where deterministic execution is insufficient. Instead of embedding an AI provider, it emits a continuation object. A surrounding actor supplies a structured result. The tool validates the result and resumes.
+The protocol that formalises this is `cogentia.continuation.v1`, specified in [Agent-Resumable CLI](agent_resumable_cli.md) and implemented in `scripts/cogentia.js continuation`.
 
-Cognitive packets generalize the same pattern beyond CLI tools.
+## 12.1 Mapping
+
+In v0.3 terms, the `cogentia.continuation.v1` object **is the canonical payload** of a cognitive packet whose `envelope.packet_kind = continuation`. The two are aligned by construction:
 
 ```text
-Agent-Resumable CLI:
-  tool emits continuation → judge supplies step_result → tool resumes
+.cogentia/continuations/<id>.json    ← strict CLI continuation (payload only)
 
-Cognitive Packets:
-  actor emits packet → receiver resumes, critiques, routes, validates, archives, or branches
+When transported (copy/paste, GitHub issue, prompt, file):
+                ↓
+{
+  "type": "cognitive_packet",
+  "version": "0.3",
+  "envelope": {
+    "packet_kind": "continuation",
+    "transmission_mode": "copy",
+    "provenance":   { ... },
+    "context_ref":  { ... },
+    "routing":      { "response_channel": "cogentia continuation resume <id>" },
+    "traces":       [ ... predecessor chain, audit refs ... ]
+  },
+  "payload": {                       ← the existing continuation object
+    "task":                    "...",
+    "context":                 { ... },
+    "expected_result_schema":  { ... },
+    "constraints":             { ... }
+  }
+}
 ```
 
-Agent-Resumable CLI is therefore a strict technical use case of cognitive packets.
+No semantic change to `cogentia.continuation.v1`. The wrapper provides a transport envelope when the continuation leaves the CLI runtime.
 
-A CLI continuation may be implemented as a cognitive packet with stricter schema requirements:
+## 12.2 Two surfaces, one protocol
+
+```text
+Agent-Resumable CLI (cogentia.continuation.v1):
+  tool emits continuation → judge supplies step_result → tool resumes
+
+Cognitive Packets (this paper, v0.3):
+  actor emits packet → receiver routes, validates, queues, resumes, critiques, archives, or branches
+```
+
+The CLI runtime stays strict (typed `expected_result_schema`, validated `step_result`). The packet wrapper is what lets a human paste the continuation into another medium without losing the metadata required to resume it elsewhere.
+
+## 12.3 Stricter validation for CLI payloads
+
+A continuation payload originating from a CLI runtime carries stricter requirements than a continuation payload composed by hand:
 
 ```json
 {
-  "packet_kind": "continuation",
   "expected_result_schema": {},
-  "resume_command": "tool continuation resume ...",
-  "validation_rules": [],
-  "constraints": {}
+  "resume_command":         "cogentia continuation resume <id> <step_result.json>",
+  "validation_rules":       [],
+  "constraints":            {}
 }
 ```
+
+These fields are payload-level, kind-specific. They do not change the envelope.
 
 ---
 
@@ -1173,7 +1329,21 @@ A cognitive packet addresses that gap.
 
 It is a minimal unit of structured cognitive work, transport-neutral, readable by humans and machines, designed to be copied, referenced, routed, resumed, critiqued, validated, archived, or branched.
 
-Version 0.2 adds that a packet transmitted by copy can be self-describing. It can carry both the work state and the minimal convention needed to produce another packet.
+Version 0.2 added that a packet transmitted by copy can be self-describing — carrying not only the work state but also the minimal convention needed to produce another packet.
+
+Version 0.3 makes the structure explicit. A cognitive packet has two layers:
+
+```text
+Envelope:
+  kind-agnostic metadata — readable by any receiver,
+  routing-sufficient by itself.
+
+Payload:
+  kind-specific cognitive content — readable by an agent
+  capable of handling the declared kind.
+```
+
+The two-layer structure is what makes inter-agent cooperation tractable: a dispatcher can route, queue, archive, or acknowledge a packet by reading the envelope alone, leaving the cognitive interpretation of the payload to whoever can handle the declared kind. New kinds may be added without changing the envelope.
 
 The essential distinction remains simple:
 
@@ -1191,17 +1361,25 @@ The essential rule remains equally simple:
 When in doubt, copy the context.
 ```
 
-The new rule is:
+The v0.2 rule still holds:
 
 ```text
 Self-describing does not mean self-validating.
+```
+
+And the v0.3 rule is:
+
+```text
+The envelope is for routers; the payload is for handlers.
+A receiver can ignore the payload, but never the envelope.
 ```
 
 A message communicates.  
 A task requests.  
 A trace records.  
 A cognitive packet enables continuation.  
-A self-describing cognitive packet also propagates the convention of continuation.
+A self-describing cognitive packet also propagates the convention of continuation.  
+And in v0.3, a cognitive packet *cleanly separates routing from interpretation* — so cooperation can scale across agents that do not all share the same competencies.
 
 ---
 
