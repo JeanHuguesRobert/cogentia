@@ -38,6 +38,7 @@ last_stamped_at: 2026-05-16
 | marenostrum | ✅ | main | 2026-05-21 |
 | barons-Mariani | ✅ | main | 2026-05-21 |
 | inseme | ✅ | main | 2026-05-21 |
+| Inox | ✅ | master | 2026-04-19 |
 <!-- END_AUTO: registered_repos -->
 
 ---
@@ -52,6 +53,7 @@ graph LR
   marenostrum["📄 marenostrum"]
   barons-Mariani["📄 barons-Mariani"]
   inseme["📄 inseme"]
+  Inox["📄 Inox"]
   cogentia --> marenostrum
   cogentia --> barons-Mariani
   cogentia --> FractaVolta
@@ -72,11 +74,17 @@ graph LR
   inseme --> marenostrum
   inseme --> FractaVolta
   inseme --> barons-Mariani
+  Inox --> marenostrum
+  Inox --> FractaVolta
+  Inox --> cogentia
+  Inox --> barons-Mariani
+  Inox --> inseme
   click cogentia "https://github.com/JeanHuguesRobert/cogentia/blob/main/research/index.md" "Open research/index.md"
   click FractaVolta "https://github.com/JeanHuguesRobert/FractaVolta/blob/main/research/index.md" "Open research/index.md"
   click marenostrum "https://github.com/JeanHuguesRobert/marenostrum/blob/main/research/index.md" "Open research/index.md"
   click barons-Mariani "https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/index.md" "Open research/index.md"
   click inseme "https://github.com/JeanHuguesRobert/inseme/blob/main/research/index.md" "Open research/index.md"
+  click Inox "https://github.com/JeanHuguesRobert/Inox/blob/main/research/index.md" "Open research/index.md"
 ```
 <!-- END_AUTO: graph -->
 
@@ -247,21 +255,21 @@ graph LR
 ### Backlinks
 
 *These documents link to this file:*
-- [Cognitive Packets](cognitive_packets.md)
-- [Agent-Resumable CLI](agent_resumable_cli.md)
-- [Agent Navigation Guide (Context Server)](../docs/agent_context_server.md)
-- [Cogentia](../COGENTIA.md)
-- [The Sovereign Digital Twin: Cogentia, Cogentigram, Cogentiscope](cogentia-digital-twin.md)
-- [Corpus Status — cogentia](corpus-status.md)
-- [Research Index — Cogentia](index.md)
+- [Cogentia and Cogentigrams](Cogentia-and-Cogentigram.md)
 - [Cogentia Commons — COMMUNITY.md Sub-Specification](cogentia_commons_community_manifest.md)
 - [Cogentia Commons — Session Continuation Snapshot](cogentia_commons_continuation.md)
 - [Cogentia Commons — MVP Specification](cogentia_commons_mvp_spec.md)
 - [Cogentia Commons — Workflows](cogentia_commons_workflows.md)
-- [Trail: From Autonomia to DHITL](trails/from_autonomia_to_dhitl.md)
-- [Trail: From Method to Machine](trails/from_method_to_machine.md)
-- [Cogentia and Cogentigrams](Cogentia-and-Cogentigram.md)
 - [Cogentia Commons: A Platform Architecture for Collaborative Possibility Exploration Under Scientific Constraint](Cogentia_Commons_Working_Paper.md)
+- [Research Index — Cogentia](index.md)
+- [Trail: From Method to Machine](trails/from_method_to_machine.md)
+- [Cogentia](../COGENTIA.md)
+- [The Sovereign Digital Twin: Cogentia, Cogentigram, Cogentiscope](cogentia-digital-twin.md)
+- [Agent-Resumable CLI](agent_resumable_cli.md)
+- [Cognitive Packets](cognitive_packets.md)
+- [Agent Navigation Guide (Context Server)](../docs/agent_context_server.md)
+- [Corpus Status — cogentia](corpus-status.md)
+- [Trail: From Autonomia to DHITL](trails/from_autonomia_to_dhitl.md)
 - [COGENTIA v1.0 — Prompt d'analyse psychocognitive](cogentia_prompt_v1.md)
 - [Cogentia Workflows](cogentia_workflows.md)
 - [Concept Index — cogentia](concepts.md)

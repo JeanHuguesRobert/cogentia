@@ -1496,11 +1496,11 @@ The novelty of cognitive packets is therefore not the existence of the pattern, 
 ### Backlinks
 
 *These documents link to this file:*
-- [Agent-Resumable CLI](agent_resumable_cli.md)
-- [Agent Navigation Guide (Context Server)](../docs/agent_context_server.md)
-- [The Sovereign Digital Twin: Cogentia, Cogentigram, Cogentiscope](cogentia-digital-twin.md)
-- [Corpus Status — cogentia](corpus-status.md)
 - [Research Index — Cogentia](index.md)
 - [Trail: From Method to Machine](trails/from_method_to_machine.md)
+- [The Sovereign Digital Twin: Cogentia, Cogentigram, Cogentiscope](cogentia-digital-twin.md)
+- [Agent-Resumable CLI](agent_resumable_cli.md)
+- [Agent Navigation Guide (Context Server)](../docs/agent_context_server.md)
+- [Corpus Status — cogentia](corpus-status.md)
 
 <!-- END_AUTO: backlinks -->

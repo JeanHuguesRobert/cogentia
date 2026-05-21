@@ -328,9 +328,9 @@ Robert, J. H. (2026c). *Democratic Humans in the Loop: Why Infrastructure Is All
 ### Backlinks
 
 *These documents link to this file:*
+- [Cogentia Commons — MVP Specification](cogentia_commons_mvp_spec.md)
+- [Research Index — Cogentia](index.md)
 - [The Sovereign Digital Twin: Cogentia, Cogentigram, Cogentiscope](cogentia-digital-twin.md)
 - [Corpus Status — cogentia](corpus-status.md)
-- [Research Index — Cogentia](index.md)
-- [Cogentia Commons — MVP Specification](cogentia_commons_mvp_spec.md)
 
 <!-- END_AUTO: backlinks -->

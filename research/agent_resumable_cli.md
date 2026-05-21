@@ -1108,13 +1108,13 @@ A compliant CLI does not hide judgment. It exposes judgment as a continuation, c
 ### Backlinks
 
 *These documents link to this file:*
-- [Cognitive Packets](cognitive_packets.md)
-- [Agent-Resumable CLI](agent_resumable_cli.md)
-- [Agent Navigation Guide (Context Server)](../docs/agent_context_server.md)
-- [Cogentia](../COGENTIA.md)
-- [The Sovereign Digital Twin: Cogentia, Cogentigram, Cogentiscope](cogentia-digital-twin.md)
-- [Corpus Status — cogentia](corpus-status.md)
 - [Research Index — Cogentia](index.md)
 - [Trail: From Method to Machine](trails/from_method_to_machine.md)
+- [Cogentia](../COGENTIA.md)
+- [The Sovereign Digital Twin: Cogentia, Cogentigram, Cogentiscope](cogentia-digital-twin.md)
+- [Agent-Resumable CLI](agent_resumable_cli.md)
+- [Cognitive Packets](cognitive_packets.md)
+- [Agent Navigation Guide (Context Server)](../docs/agent_context_server.md)
+- [Corpus Status — cogentia](corpus-status.md)
 
 <!-- END_AUTO: backlinks -->

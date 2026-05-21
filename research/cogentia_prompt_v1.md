@@ -266,7 +266,7 @@ Pour les indicateurs catégorie F (scores dérivés, rangs 59-65), calcule-les �
 ### Backlinks
 
 *These documents link to this file:*
-- [Corpus Status — cogentia](corpus-status.md)
 - [Research Index — Cogentia](index.md)
+- [Corpus Status — cogentia](corpus-status.md)
 
 <!-- END_AUTO: backlinks -->

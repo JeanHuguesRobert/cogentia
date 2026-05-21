@@ -505,7 +505,6 @@ JSON Schema files, fixtures, and reference implementations: **MIT**.
 ### Backlinks
 
 *These documents link to this file:*
-- [Research Index — Cogentia](index.md)
 - [Cogentia Commons — COMMUNITY.md Sub-Specification](cogentia_commons_community_manifest.md)
 - [Cogentia Commons — Session Continuation Snapshot](cogentia_commons_continuation.md)
 - [Cogentia Commons — `kernel_extractor` Plugin Sub-Specification](cogentia_commons_kernel_extractor.md)
@@ -513,5 +512,6 @@ JSON Schema files, fixtures, and reference implementations: **MIT**.
 - [Cogentia Commons — Substantive Plugin Sub-Specifications](cogentia_commons_substantive_plugins.md)
 - [Cogentia Commons — Workflows](cogentia_commons_workflows.md)
 - [Cogentia Commons: A Platform Architecture for Collaborative Possibility Exploration Under Scientific Constraint](Cogentia_Commons_Working_Paper.md)
+- [Research Index — Cogentia](index.md)
 
 <!-- END_AUTO: backlinks -->
