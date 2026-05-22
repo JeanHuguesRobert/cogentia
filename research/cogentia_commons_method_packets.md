@@ -8,12 +8,12 @@ address: "1 cours Paoli, F-20250 Corte, Corsica, France"
 email: "jhr@baronsmariani.org"
 website: "https://fractavolta.com"
 repository: "https://github.com/JeanHuguesRobert/cogentia"
-canonical_url: "https://github.com/JeanHuguesRobert/cogentia/blob/main/research/cogentia_commons.md"
+canonical_url: https://github.com/JeanHuguesRobert/cogentia/blob/main/research/cogentia_commons_method_packets.md
 version: "0.1"
 status: "working-paper"
 date: "2026-05-22"
 last_modified_at: "2026-05-22"
-last_stamped_at: "2026-05-22"
+last_stamped_at: 2026-05-22
 license: "CC BY-SA 4.0"
 layout: default
 tags:
