@@ -43,15 +43,6 @@ keywords:
 
 ## Method Packets, Continuations, and the Generative Corpus
 
-**Jean Hugues Noël Robert, baron Mariani**  
-Institut Mariani / C.O.R.S.I.C.A.  
-1 cours Paoli, F-20250 Corte, Corsica, France  
-jhr@baronsmariani.org | fractavolta.com
-
-*Working paper — v0.1 — May 2026*  
-*License: CC BY-SA 4.0*  
-*Repository: github.com/JeanHuguesRobert/cogentia*
-
 ---
 
 ## Abstract
