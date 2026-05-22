@@ -4897,6 +4897,14 @@ function cmdBacklinks() {
       let content = fs.readFileSync( f.full, "utf8" );
       const original = content;
       
+      // Sort by (sourceRepo, sourceRel) for deterministic output across runs.
+      // Without this, the order depends on FS iteration order in buildBacklinksIndex
+      // and produces spurious diffs corpus-wide on every refresh.
+      links.sort( ( a, b ) => {
+        if ( a.sourceRepo !== b.sourceRepo ) return a.sourceRepo.localeCompare( b.sourceRepo );
+        return a.sourceRel.localeCompare( b.sourceRel );
+      } );
+
       let block = "### Backlinks\n\n*These documents link to this file:*\n";
       for ( const link of links ) {
         const relPath = path.relative( path.dirname( f.full ), link.sourceFull ).replace( /\\/g, "/" );
