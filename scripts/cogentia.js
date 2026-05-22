@@ -659,14 +659,34 @@ function stampFrontmatter( content, canonicalUrl, stampDate ) {
  */
 function stampOne( filePath, opts ) {
   opts = opts || {};
-  const absPath = path.resolve( filePath );
-  if ( !fs.existsSync( absPath ) ) {
-    return { ok: false, file: filePath, reason: "not found" };
-  }
 
   const { configPath, config } = loadConfig();
   if ( !configPath ) {
     return { ok: false, file: filePath, reason: "no registry" };
+  }
+
+  // If --repo <name> is given, resolve filePath relative to that repo's path
+  // rather than relative to the current working directory. Without this,
+  // `cogentia stamp research/foo.md --repo Inox` silently ignored the flag
+  // and looked for the file under CWD, returning a confusing "not found".
+  const repoFlagIdx = argv.indexOf( "--repo" );
+  const repoFlag = repoFlagIdx >= 0 ? argv[ repoFlagIdx + 1 ] : null;
+  let absPath;
+  if ( repoFlag && !path.isAbsolute( filePath ) ) {
+    const entry = config.repos.find( r => r.name === repoFlag );
+    if ( !entry ) {
+      return { ok: false, file: filePath, reason: `--repo "${repoFlag}" not in registry` };
+    }
+    const repoPath = resolveRepoPath( entry );
+    if ( !repoPath ) {
+      return { ok: false, file: filePath, reason: `--repo "${repoFlag}" has no resolvable path` };
+    }
+    absPath = path.resolve( repoPath, filePath );
+  } else {
+    absPath = path.resolve( filePath );
+  }
+  if ( !fs.existsSync( absPath ) ) {
+    return { ok: false, file: filePath, reason: `not found (resolved: ${absPath})` };
   }
 
   const owner = findOwnerRepo( absPath, config );
@@ -4966,7 +4986,10 @@ function cmdTrails() {
     const trailsDir = path.join( repoPath, "research", "trails" );
     if ( !fs.existsSync( trailsDir ) ) continue;
 
-    for ( const file of fs.readdirSync( trailsDir ) ) {
+    // Sort readdirSync output so trail-banner stacking order is stable across
+    // runs when a target appears in multiple trails (otherwise FS-iteration
+    // order leaks into the rendered banner sequence).
+    for ( const file of fs.readdirSync( trailsDir ).sort() ) {
       if ( !file.endsWith( ".md" ) ) continue;
       const full = path.join( trailsDir, file );
       const rawContent = fs.readFileSync( full, "utf8" );
