@@ -140,12 +140,12 @@ The framework exists to be argued against, in the form it itself defined.
 ### Backlinks
 
 *These documents link to this file:*
+- [Agent-Resumable CLI](research/agent_resumable_cli.md)
 - [Cogentia Commons — MVP Specification](research/cogentia_commons_mvp_spec.md)
 - [Cogentia Commons — Substantive Plugin Sub-Specifications](research/cogentia_commons_substantive_plugins.md)
+- [The Sovereign Digital Twin: Cogentia, Cogentigram, Cogentiscope](research/cogentia-digital-twin.md)
+- [Corpus Status — cogentia](research/corpus-status.md)
 - [Research Index — Cogentia](research/index.md)
 - [Trail: From Method to Machine](research/trails/from_method_to_machine.md)
-- [The Sovereign Digital Twin: Cogentia, Cogentigram, Cogentiscope](research/cogentia-digital-twin.md)
-- [Agent-Resumable CLI](research/agent_resumable_cli.md)
-- [Corpus Status — cogentia](research/corpus-status.md)
 
 <!-- END_AUTO: backlinks -->

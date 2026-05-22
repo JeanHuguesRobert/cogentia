@@ -71,11 +71,11 @@ node scripts/cogentia.js continuation emit --task "Explain what the KYS protocol
 ### Backlinks
 
 *These documents link to this file:*
-- [Research Index — Cogentia](../research/index.md)
-- [Trail: From Method to Machine](../research/trails/from_method_to_machine.md)
+- [Agent Navigation Guide (Context Server)](agent_context_server.md)
 - [Agent-Resumable CLI](../research/agent_resumable_cli.md)
 - [Cognitive Packets](../research/cognitive_packets.md)
-- [Agent Navigation Guide (Context Server)](agent_context_server.md)
 - [Corpus Status — cogentia](../research/corpus-status.md)
+- [Research Index — Cogentia](../research/index.md)
+- [Trail: From Method to Machine](../research/trails/from_method_to_machine.md)
 
 <!-- END_AUTO: backlinks -->

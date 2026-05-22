@@ -166,13 +166,13 @@ This document is a position paper, not a product announcement. It is published i
 ### Backlinks
 
 *These documents link to this file:*
-- [Cogentia and Cogentigrams](Cogentia-and-Cogentigram.md)
-- [Research Index — Cogentia](index.md)
-- [Trail: From Method to Machine](trails/from_method_to_machine.md)
 - [Cogentia](../COGENTIA.md)
+- [The Knowledge Mesh (Decentralized Wiki)](../docs/knowledge_mesh.md)
 - [Agent-Resumable CLI](agent_resumable_cli.md)
+- [Cogentia and Cogentigrams](Cogentia-and-Cogentigram.md)
 - [Cognitive Packets](cognitive_packets.md)
 - [Corpus Status — cogentia](corpus-status.md)
-- [The Knowledge Mesh (Decentralized Wiki)](../docs/knowledge_mesh.md)
+- [Research Index — Cogentia](index.md)
+- [Trail: From Method to Machine](trails/from_method_to_machine.md)
 
 <!-- END_AUTO: backlinks -->

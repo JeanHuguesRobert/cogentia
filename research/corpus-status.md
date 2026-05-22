@@ -3,7 +3,7 @@ title: "Corpus Status — cogentia"
 description: "Current state of the cogentia knowledge corpus — what is proved, what is open, what remains possible"
 layout: default
 nav_order: 2
-last_modified_at: 2026-05-21
+last_modified_at: 2026-05-22
 repository: "github.com/JeanHuguesRobert/cogentia"
 canonical_url: https://github.com/JeanHuguesRobert/cogentia/blob/main/research/corpus-status.md
 last_stamped_at: 2026-05-16
@@ -33,12 +33,12 @@ last_stamped_at: 2026-05-16
 <!-- BEGIN_AUTO: registered_repos -->
 | Repository | research/index.md | Branch | Last commit |
 |---|---|---|---|
-| cogentia | ✅ | main | 2026-05-21 |
-| FractaVolta | ✅ | main | 2026-05-21 |
-| marenostrum | ✅ | main | 2026-05-21 |
+| cogentia | ✅ | main | 2026-05-22 |
+| FractaVolta | ✅ | main | 2026-05-22 |
+| marenostrum | ✅ | main | 2026-05-22 |
 | barons-Mariani | ✅ | main | 2026-05-21 |
 | inseme | ✅ | main | 2026-05-21 |
-| Inox | ✅ | master | 2026-04-19 |
+| Inox | ✅ | master | 2026-05-22 |
 <!-- END_AUTO: registered_repos -->
 
 ---
@@ -255,25 +255,25 @@ graph LR
 ### Backlinks
 
 *These documents link to this file:*
-- [Cogentia and Cogentigrams](Cogentia-and-Cogentigram.md)
+- [Cogentia](../COGENTIA.md)
+- [Agent Navigation Guide (Context Server)](../docs/agent_context_server.md)
+- [Agent-Resumable CLI](agent_resumable_cli.md)
 - [Cogentia Commons — COMMUNITY.md Sub-Specification](cogentia_commons_community_manifest.md)
 - [Cogentia Commons — Session Continuation Snapshot](cogentia_commons_continuation.md)
 - [Cogentia Commons — MVP Specification](cogentia_commons_mvp_spec.md)
 - [Cogentia Commons — Workflows](cogentia_commons_workflows.md)
 - [Cogentia Commons: A Platform Architecture for Collaborative Possibility Exploration Under Scientific Constraint](Cogentia_Commons_Working_Paper.md)
-- [Research Index — Cogentia](index.md)
-- [Trail: From Method to Machine](trails/from_method_to_machine.md)
-- [Cogentia](../COGENTIA.md)
-- [The Sovereign Digital Twin: Cogentia, Cogentigram, Cogentiscope](cogentia-digital-twin.md)
-- [Agent-Resumable CLI](agent_resumable_cli.md)
-- [Cognitive Packets](cognitive_packets.md)
-- [Agent Navigation Guide (Context Server)](../docs/agent_context_server.md)
-- [Corpus Status — cogentia](corpus-status.md)
-- [Trail: From Autonomia to DHITL](trails/from_autonomia_to_dhitl.md)
 - [COGENTIA v1.0 — Prompt d'analyse psychocognitive](cogentia_prompt_v1.md)
 - [Cogentia Workflows](cogentia_workflows.md)
+- [Cogentia and Cogentigrams](Cogentia-and-Cogentigram.md)
+- [The Sovereign Digital Twin: Cogentia, Cogentigram, Cogentiscope](cogentia-digital-twin.md)
+- [Cognitive Packets](cognitive_packets.md)
 - [Concept Index — cogentia](concepts.md)
+- [Corpus Status — cogentia](corpus-status.md)
 - [Democratic AI Safety — alias cogentia](democratic_ai_safety.md)
+- [Research Index — Cogentia](index.md)
 - [kys-prompt.md](kys-prompt.md)
+- [Trail: From Autonomia to DHITL](trails/from_autonomia_to_dhitl.md)
+- [Trail: From Method to Machine](trails/from_method_to_machine.md)
 
 <!-- END_AUTO: backlinks -->

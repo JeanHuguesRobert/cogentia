@@ -1001,3 +1001,12 @@ Produce a separate applied note connecting:
 [^cogentia-cogentigram]: Robert, J. H. N. *Cogentia and Cogentigrams: A Framework for Structured Representation of Persistent Cognitive Signatures in AI Systems*. Cogentia repository, 2026. https://github.com/JeanHuguesRobert/cogentia/blob/main/research/Cogentia-and-Cogentigram.md
 
 [^cognitive-packets]: Robert, J. H. N. *Cognitive Packets: An Envelope and Payload Format for Human–AI and Multi-Agent Cooperation*. Cogentia repository, 2026. https://github.com/JeanHuguesRobert/cogentia/blob/main/research/cognitive_packets.md
+
+
+<!-- BEGIN_AUTO: backlinks -->
+### Backlinks
+
+*These documents link to this file:*
+- [From Biometrics and Psychometrics to Structural Signatures](structural_signatures.md)
+
+<!-- END_AUTO: backlinks -->
