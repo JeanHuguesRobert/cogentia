@@ -78,6 +78,7 @@ All published documents live in `research/` and are catalogued in [`research/ind
 
 - **[Agent-Resumable CLI](research/agent_resumable_cli.md)** — *Externalized Judgment, Continuations, and Provider-Neutral Resumption for AI-Compatible CLI Tools.* The protocol paper. Defines `cogentia.continuation.v1`.
 - **[Cognitive Packets](research/cognitive_packets.md)** — *An Envelope and Payload Format for Human–AI and Multi-Agent Cooperation* (v0.3). Generalises continuations beyond the CLI: envelope (kind-agnostic metadata) + payload (kind-specific content). Six packet kinds defined.
+- **[Cogentia Commons — Method Packets](research/cogentia_commons_method_packets.md)** — *Method Packets, Continuations, and the Generative Corpus.* Infrastructure for producing, transmitting, criticising, and improving cognitive packets, method packets, and corpus-based continuations across humans, AI agents, tools, and repositories.
 - **[The Sovereign Digital Twin](research/cogentia-digital-twin.md)** — Personal Cogentia: Cogentia, Cogentigram, Cogentiscope. The individual-scale foundation.
 - **[Cogentia Commons Working Paper](research/Cogentia_Commons_Working_Paper.md)** — Commons methodology, formal specification. The collective-scale foundation.
 - **[Cogentia Commons MVP Spec](research/cogentia_commons_mvp_spec.md)** — the v1 architecture for `brique-cogentia-commons`.
