@@ -1,3 +1,10 @@
+---
+title: "Research Index — Cogentia"
+description: "A map of what is, what is in progress, and what could be."
+layout: default
+nav_order: 1
+last_modified_at: 2026-05-22
+---
 <!-- BEGIN_AUTO: trails -->
 > 🧭 **Trail: From Autonomia to DHITL**
 > ⬅️ Previous: [Corpus Status — cogentia](corpus-status.md)
