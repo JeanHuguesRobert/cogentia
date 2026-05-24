@@ -15,7 +15,7 @@ This working paper proposes a conceptual and operational framework for understan
 
 The framework distinguishes between substance, form, platform, and publication. The *source corpus* carries the substance. The *derived product* organizes the form. The *platform* provides a scene or channel of publication. The *persona* governs the mode of appearance. The *publication agent* manages distribution, metadata, timing, traceability, and coherence across scenes.
 
-Within the Cogentia ecosystem, this paper positions Ubikia as an editorial derivation workshop and Ubikia as a publication agent: not the author of the corpus, but the intermediary that helps derived products appear in the right scene, under the right form, with the right provenance.
+Within the Cogentia ecosystem, this paper positions Ubikia as an editorial derivation workshop and Ubikia Publisher as a publication agent: not the author of the corpus, but the intermediary that helps derived products appear in the right scene, under the right form, with the right provenance.
 
 The central rule is: do not popularize from the academic paper; derive from the corpus.
 
@@ -41,7 +41,7 @@ The goal is to formalize this reversal.
 
 ## 2. Positioning Note
 
-This paper is part of the Cogentia and Ubikia research track.
+This paper is part of the Cogentia and Ubi research track.
 
 It builds on the framework developed in `personas.md`, where a persona is defined as a situated mode of appearance of a person, institution, project, corpus, or agent before a given audience.
 
@@ -52,9 +52,9 @@ A publication is not only a container of information. It is an appearance of a s
 The paper therefore has two layers:
 
 1. a general theory of derived products;
-2. an operational proposal for Cogentia / Ubikia workflows.
+2. an operational proposal for Cogentia / Ubi workflows.
 
-The general theory can be understood independently of the internal terminology. Ubikia and Ubikia are introduced as possible implementation tools.
+The general theory can be understood independently of the internal terminology. Ubikia and Ubikia Publisher are introduced as possible implementation tools.
 
 ---
 
@@ -688,9 +688,9 @@ Its central principle may be:
 
 ---
 
-## 16. Ubikia as Publication Agent
+## 16. Ubikia Publisher as Publication Agent
 
-Ubikia may be understood as the publication agent of Ubikia. It is not a writing agent. It is a publication agent.
+Ubikia Publisher may be understood as the publication agent of Ubikia. It is not a writing agent. It is a publication agent.
 
 The analogy is an artistic agent.
 
@@ -1181,9 +1181,9 @@ publication/
 templates/
 ```
 
-### 22.4 Ubikia Agent
+### 22.4 Ubikia Publisher Agent
 
-Design Ubikia as a publication agent able to prepare, track, and later publish derived products under human supervision.
+Design Ubikia Publisher as a publication agent able to prepare, track, and later publish derived products under human supervision.
 
 ### 22.5 Case Studies
 
