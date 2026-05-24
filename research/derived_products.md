@@ -4,7 +4,7 @@
 **Status:** Working paper v0.2 draft — consolidated  
 **Repository target:** `cogentia/research/derived_products.md`  
 **Language:** English  
-**Authorial context:** Cogentia / Cogentia Commons / Ubikial / Jean Hugues Noël Robert  
+**Authorial context:** Cogentia / Cogentia Commons / Ubikia / Jean Hugues Noël Robert  
 **Date:** 2026-05-23  
 
 ---
@@ -15,7 +15,7 @@ This working paper proposes a conceptual and operational framework for understan
 
 The framework distinguishes between substance, form, platform, and publication. The *source corpus* carries the substance. The *derived product* organizes the form. The *platform* provides a scene or channel of publication. The *persona* governs the mode of appearance. The *publication agent* manages distribution, metadata, timing, traceability, and coherence across scenes.
 
-Within the Cogentia ecosystem, this paper positions Ubikial as an editorial derivation workshop and Ubikia as a publication agent: not the author of the corpus, but the intermediary that helps derived products appear in the right scene, under the right form, with the right provenance.
+Within the Cogentia ecosystem, this paper positions Ubikia as an editorial derivation workshop and Ubikia as a publication agent: not the author of the corpus, but the intermediary that helps derived products appear in the right scene, under the right form, with the right provenance.
 
 The central rule is: do not popularize from the academic paper; derive from the corpus.
 
@@ -41,7 +41,7 @@ The goal is to formalize this reversal.
 
 ## 2. Positioning Note
 
-This paper is part of the Cogentia and Ubikial research track.
+This paper is part of the Cogentia and Ubikia research track.
 
 It builds on the framework developed in `personas.md`, where a persona is defined as a situated mode of appearance of a person, institution, project, corpus, or agent before a given audience.
 
@@ -52,9 +52,9 @@ A publication is not only a container of information. It is an appearance of a s
 The paper therefore has two layers:
 
 1. a general theory of derived products;
-2. an operational proposal for Cogentia / Ubikial workflows.
+2. an operational proposal for Cogentia / Ubikia workflows.
 
-The general theory can be understood independently of the internal terminology. Ubikial and Ubikia are introduced as possible implementation tools.
+The general theory can be understood independently of the internal terminology. Ubikia and Ubikia are introduced as possible implementation tools.
 
 ---
 
@@ -66,7 +66,7 @@ This framework is adjacent to several existing operational traditions, but it sh
 
 Content management systems organize publication, editing rights, pages, posts, media, and users. They usually start from the published object.
 
-Ubikial starts from the source corpus and tracks derivation from source to form.
+Ubikia starts from the source corpus and tracks derivation from source to form.
 
 ### 3.2 Static Site Generators
 
@@ -90,11 +90,11 @@ Editorial calendars organize timing and planning. They do not usually preserve d
 
 ### 3.7 Agentic Workflows
 
-Agentic workflows can automate tasks across tools. The risk is that automation optimizes production without preserving fidelity. Ubikial should use agents only under derivation rules: source primacy, persona explicitness, provenance, review, and anti-capture.
+Agentic workflows can automate tasks across tools. The risk is that automation optimizes production without preserving fidelity. Ubikia should use agents only under derivation rules: source primacy, persona explicitness, provenance, review, and anti-capture.
 
 The key distinction is therefore:
 
-> Ubikial is not primarily a CMS, a static site generator, or a social media manager. It is a derivation and provenance system for versioned corpora.
+> Ubikia is not primarily a CMS, a static site generator, or a social media manager. It is a derivation and provenance system for versioned corpora.
 
 
 ## 4. Core Distinction: Substance, Form, Platform
@@ -660,13 +660,13 @@ Does the publication generate feedback that can improve the corpus?
 
 ---
 
-## 15. Ubikial as Derivation Infrastructure
+## 15. Ubikia as Derivation Infrastructure
 
-Ubikial may be positioned as an editorial derivation infrastructure for versioned corpora.
+Ubikia may be positioned as an editorial derivation infrastructure for versioned corpora.
 
 Its purpose should not be generic content generation. It should be governed derivation.
 
-Ubikial should help answer:
+Ubikia should help answer:
 
 - What is the source?
 - What form is needed?
@@ -680,7 +680,7 @@ Ubikial should help answer:
 - What review is required?
 - What publication history should be recorded?
 
-Ubikial should therefore manage not only text generation but the structured relation between source, form, persona, audience, platform, and provenance.
+Ubikia should therefore manage not only text generation but the structured relation between source, form, persona, audience, platform, and provenance.
 
 Its central principle may be:
 
@@ -690,7 +690,7 @@ Its central principle may be:
 
 ## 16. Ubikia as Publication Agent
 
-Ubikia may be understood as the publication agent of Ubikial. It is not a writing agent. It is a publication agent.
+Ubikia may be understood as the publication agent of Ubikia. It is not a writing agent. It is a publication agent.
 
 The analogy is an artistic agent.
 
@@ -832,7 +832,7 @@ derived_products:
     platform: facebook
     purpose: announce_and_test_reception
 
-  - id: personas_ubikial_spec_fragment
+  - id: personas_ubikia_spec_fragment
     form: technical_specification
     persona: builder_architect
     audience: developers_and_agents
@@ -1162,9 +1162,9 @@ Define schemas for:
 Build a minimal CLI:
 
 ```bash
-ubikial derive research/personas.md --form public_essay --platform substack
-ubikial derive research/personas.md --form academic_paper --platform journal
-ubikial derive research/personas.md --form facebook_post --platform facebook
+ubikia derive research/personas.md --form public_essay --platform substack
+ubikia derive research/personas.md --form academic_paper --platform journal
+ubikia derive research/personas.md --form facebook_post --platform facebook
 ```
 
 ### 22.3 Repository Integration
