@@ -12,7 +12,7 @@ Repo-local engineering follow-ups. Network-level / cross-repo work lives in `Jea
 - **`cogentia.js` (the static corpus tool) — ~85%.** Works, MIT, zero deps, named in the doctrine. Publishable without doctrinal reservation: `scan` correctness is now anchored on real link parsing (`buildReferencedFileSet`), cross-repo refs are path-segment-matched (no false positive on `cogentia-old` vs `cogentia`), Mermaid diagrams are navigable (orphan-filtered + clickable), and `cogentia documents` / `cogentia forks` extend the corpus-hygiene surface. Remaining 15% is polish + the `cogentia inflection` / continuation-tracking work that's still design-stage.
 - **Cogentia Commons (`apps/commons`, the operational platform) — ~15-20%.** Currently UI scaffolding over `mockData`. The multi-agent critique loop — the piece that would *demonstrate* the method, not just state it — does not yet exist. See "Cogentia Commons — design contracts from `second_method.md`" below.
 
-**Honest reading:** the *method* is articulated, the *static tool* works, the *operational platform* is a stub. Mutual cross-linking among four repos by one author is structurally close to one repo with extra `git remote`s — the method requires external challengers to close its circular guarantee, and we have none yet.
+**Honest reading:** the *method* is articulated, the *static tool* works, the *operational platform* is a stub. Mutual cross-linking among six repos by one author is structurally close to one repo with extra `git remote`s — the method requires external challengers to close its circular guarantee, and we have none yet.
 
 ## Strategic priorities (ranked)
 
@@ -20,7 +20,7 @@ Three highest-leverage next moves, in order of impact-per-effort. Detailed sub-i
 
 1. **Build the smallest real multi-agent critique loop in `apps/commons`** — agent reads `research/second_method.md` (or `marenostrum/DHITL.md`), surfaces an unanchored claim, produces a falsifiable counter-claim, human gates whether it enters the corpus. Even crude. That is the smallest unit of the method *working*, not just *stated*. Doing this on the doctrine itself, publicly, with the resulting commits visible, is the demonstration the method requires of itself.
 2. **Fix `scan` correctness in `cogentia.js`.** *(Done 2026-05-18 — `buildReferencedFileSet` now resolves real markdown links instead of basename-substring matching.)* Replaces basename-substring matching with actual link parsing. Shores up the only public-facing claim ("the tool flags every unanchored assertion") that doesn't fully hold today.
-3. **Invite specific named external participants to fork** — *(driver: jhrobert; this one cannot be done from inside)*. The circular guarantee cannot close from inside the four-repo corpus. Until at least one external fork exists with a `research/index.md` that links into the network, the corpus is structurally a single-author project regardless of repo count. Pick names. Reach out concretely.
+3. **Invite specific named external participants to fork** — *(driver: jhrobert; this one cannot be done from inside)*. The circular guarantee cannot close from inside the six-repo corpus. Until at least one external fork exists with a `research/index.md` that links into the network, the corpus is structurally a single-author project regardless of repo count. Pick names. Reach out concretely.
 
 ## Verify the monorepo migration
 

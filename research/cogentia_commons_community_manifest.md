@@ -388,8 +388,8 @@ manifest_commit: "pending"
 
 ## 1. Membership
 
-This community hosts the documents of the four-repo corpus (barons-Mariani,
-marenostrum, cogentia, FractaVolta) and welcomes objections and revisions from
+This community hosts the documents of the six-repo corpus (barons-Mariani,
+marenostrum, cogentia, FractaVolta, inseme, Inox) and welcomes objections and revisions from
 any verified GitHub identity. Membership is open; participation is signed.
 
 ```yaml

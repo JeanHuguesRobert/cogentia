@@ -224,7 +224,7 @@ These are inferred from observation across the session. Treat as guidelines, not
 
 ## 9. The user's profile (terse summary, with full version in memory)
 
-Jean Hugues Noël Robert, baron Mariani. Based at Institut Mariani / C.O.R.S.I.C.A., 1 cours Paoli, F-20250 Corte, Corsica. GitHub: JeanHuguesRobert. Email: jeanhuguesrobert@gmail.com (also jhr@baronsmariani.org). Founded C.O.R.S.I.C.A. in 1995 — predates "open source" as a term. Author of *Discours de la seconde méthode* (`barons-Mariani/research/second_method.md`, v1.0 2026-05-08). Architect of the four-repo Cogentia corpus and the #PERTITELLU / inseme civic-tech agenda.
+Jean Hugues Noël Robert, baron Mariani. Based at Institut Mariani / C.O.R.S.I.C.A., 1 cours Paoli, F-20250 Corte, Corsica. GitHub: JeanHuguesRobert. Email: jeanhuguesrobert@gmail.com (also jhr@baronsmariani.org). Founded C.O.R.S.I.C.A. in 1995 — predates "open source" as a term. Author of *Discours de la seconde méthode* (`barons-Mariani/research/second_method.md`, v1.0 2026-05-08). Architect of the six-repo Cogentia corpus and the #PERTITELLU / inseme civic-tech agenda.
 
 Works on **Windows + PowerShell**. Uses **pnpm**, not npm. Prefers **monorepo over multi-repo** when avoidable. Reads and writes both French and English; published doctrine is bilingual.
 

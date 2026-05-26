@@ -23,7 +23,7 @@ This repository instantiates the **cognitive infrastructure layer** of the [DHIT
 ---
 
 *A map of what is, what is in progress, and what could be.*
-*See sibling indexes in [MareNostrum](https://github.com/JeanHuguesRobert/marenostrum/blob/main/research/index.md), [FractaVolta](https://github.com/JeanHuguesRobert/FractaVolta/blob/main/research/index.md), [barons-Mariani](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/index.md), [Inseme](https://github.com/JeanHuguesRobert/inseme/blob/main/research/index.md).*
+*See sibling indexes in [MareNostrum](https://github.com/JeanHuguesRobert/marenostrum/blob/main/research/index.md), [FractaVolta](https://github.com/JeanHuguesRobert/FractaVolta/blob/main/research/index.md), [barons-Mariani](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/index.md), [Inseme](https://github.com/JeanHuguesRobert/inseme/blob/main/research/index.md), [Inox](https://github.com/JeanHuguesRobert/Inox/blob/master/research/index.md).*
 
 ---
 
@@ -34,6 +34,8 @@ This repository instantiates the **cognitive infrastructure layer** of the [DHIT
 | [**Cogentia — the framework, in five distinctive moves**](../COGENTIA.md) *(identity document; entry point)* | this repo | 2026-05-13 |
 | [Agent-Resumable CLI — Externalized Judgment, Continuations, and Provider-Neutral Resumption for AI-Compatible CLI Tools](agent_resumable_cli.md) *(defines `cogentia.continuation.v1`, implemented by `scripts/cogentia.js continuation`)* | this repo | 2026-05-14 |
 | [Cognitive Packets — An Envelope and Payload Format for Human–AI and Multi-Agent Cooperation](cognitive_packets.md) *(working paper v0.3 — envelope/payload split ; paired operational prompt in `prompts/cognitive_packet.md`)* | this repo | 2026-05-21 |
+| [Pipeline — From cognitive packets to source documents and derived products](pipeline.md) *(method note v0.4 — packet-switched, self-applicative; canonical operational method of the corpus)* | this repo | 2026-05-25 |
+| [Derived Products — Versioned Source Corpora, Situated Forms, and Publication Agents](derived_products.md) *(working paper v0.2 — source ↔ derived split; companion to `pipeline.md`)* | this repo | 2026-05-23 |
 | [Cogentia Workflows](cogentia_workflows.md) *(private/group/public/federated workflow architecture, draft v0.2)* | this repo | 2026-05-11 |
 | [Cogentia Commons Working Paper](Cogentia_Commons_Working_Paper.md) | this repo | 2026 |
 | [Cogentia and Cogentigram](Cogentia-and-Cogentigram.md) | this repo | 2026 |
@@ -63,6 +65,7 @@ This repository instantiates the **cognitive infrastructure layer** of the [DHIT
 | [Constellia](https://github.com/JeanHuguesRobert/marenostrum/blob/main/constellia.md) *(ICOME'26, avec Guillermo Valdes)* | marenostrum |
 | [Packetized Gravity Networks](https://github.com/JeanHuguesRobert/FractaVolta/blob/main/PGN.md) | FractaVolta |
 | [Inseme — deployable platform + COP runtime](https://github.com/JeanHuguesRobert/inseme/blob/main/research/index.md) *(targets brique-cogentia-commons in v1)* | inseme |
+| [Inox — language and runtime substrate](https://github.com/JeanHuguesRobert/Inox/blob/master/research/inox-spec.md) *(concatenative stack VM; long-term Fractanet node runtime; cognitive-infrastructure tooling may eventually compile/run on Inox)* | Inox |
 
 ---
 
@@ -116,7 +119,9 @@ This repository instantiates the **cognitive infrastructure layer** of the [DHIT
 - [Concept Index — cogentia](concepts.md)
 - [Corpus Status — cogentia](corpus-status.md)
 - [Democratic AI Safety — alias cogentia](democratic_ai_safety.md)
+- [Derived Products](derived_products.md)
 - [kys-prompt.md](kys-prompt.md)
+- [Pipeline](pipeline.md)
 - [Trail: From Autonomia to DHITL](trails/from_autonomia_to_dhitl.md)
 - [Trail: From Method to Machine](trails/from_method_to_machine.md)
 

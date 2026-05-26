@@ -14,8 +14,8 @@
 3. [GR20 : du quota à l'autonomie de capacité](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/gr20_autonomie_de_capacite.md)
    *Application — the mountain. From flow-limiting quotas to capacity that converts seasonal pressure into territorial value.*
 
-4. [Test 1755 — Reconnaissance internationale de la République corse](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/autonomia/1755.md)
-   *First public auto-application. A documented test of whether a Corsican initiative, without state backing, can move international institutions on a verifiable historical claim.*
+4. [Projet #1755 — Réintégrer la séquence corse 1729–1755 dans l'histoire mondiale du constitutionnalisme démocratique moderne](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/autonomia/projet_1755.md)
+   *First public auto-application. The source document (v0.13) of the test: a Corsican initiative, without state backing, attempting to move international institutions on a verifiable historical claim. Public dashboard at [`autonomia/1755.md`](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/autonomia/1755.md).*
 
 5. [Traçabilité civique anti-mafieuse](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/traceabilite_civique_antimafia.md)
    *Application — governance. Documenting capture without building a surveillance society.*

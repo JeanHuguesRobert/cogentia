@@ -15,7 +15,7 @@ last_stamped_at: 2026-05-16
 
 <!-- BEGIN_AUTO: trails -->
 > 🧭 **Trail: From Method to Machine**
-> ⬅️ Previous: [Discours de la seconde méthode](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/second_method.md) | ➡️ Next: [Democratic AI Safety](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/democratic_ai_safety.md)
+> ⬅️ Previous: [Pipeline — From cognitive packets to source documents and derived products](research/pipeline.md) | ➡️ Next: [Democratic AI Safety](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/democratic_ai_safety.md)
 
 <!-- END_AUTO: trails -->
 
@@ -146,6 +146,7 @@ The framework exists to be argued against, in the form it itself defined.
 - [The Sovereign Digital Twin: Cogentia, Cogentigram, Cogentiscope](research/cogentia-digital-twin.md)
 - [Corpus Status — cogentia](research/corpus-status.md)
 - [Research Index — Cogentia](research/index.md)
+- [Pipeline](research/pipeline.md)
 - [Trail: From Method to Machine](research/trails/from_method_to_machine.md)
 
 <!-- END_AUTO: backlinks -->

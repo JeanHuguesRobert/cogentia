@@ -3,7 +3,7 @@ title: "Corpus Status — cogentia"
 description: "Current state of the cogentia knowledge corpus — what is proved, what is open, what remains possible"
 layout: default
 nav_order: 2
-last_modified_at: 2026-05-22
+last_modified_at: 2026-05-26
 repository: "github.com/JeanHuguesRobert/cogentia"
 canonical_url: https://github.com/JeanHuguesRobert/cogentia/blob/main/research/corpus-status.md
 last_stamped_at: 2026-05-16
@@ -33,10 +33,10 @@ last_stamped_at: 2026-05-16
 <!-- BEGIN_AUTO: registered_repos -->
 | Repository | research/index.md | Branch | Last commit |
 |---|---|---|---|
-| cogentia | ✅ | main | 2026-05-23 |
+| cogentia | ✅ | main | 2026-05-25 |
 | FractaVolta | ✅ | main | 2026-05-23 |
 | marenostrum | ✅ | main | 2026-05-23 |
-| barons-Mariani | ✅ | main | 2026-05-23 |
+| barons-Mariani | ✅ | main | 2026-05-26 |
 | inseme | ✅ | main | 2026-05-23 |
 | Inox | ✅ | master | 2026-05-23 |
 <!-- END_AUTO: registered_repos -->
@@ -58,22 +58,27 @@ graph LR
   cogentia --> barons-Mariani
   cogentia --> FractaVolta
   cogentia --> inseme
+  cogentia --> Inox
   FractaVolta --> marenostrum
   FractaVolta --> barons-Mariani
   FractaVolta --> cogentia
   FractaVolta --> inseme
+  FractaVolta --> Inox
   marenostrum --> barons-Mariani
   marenostrum --> FractaVolta
   marenostrum --> cogentia
   marenostrum --> inseme
+  marenostrum --> Inox
   barons-Mariani --> marenostrum
   barons-Mariani --> FractaVolta
   barons-Mariani --> cogentia
   barons-Mariani --> inseme
+  barons-Mariani --> Inox
   inseme --> cogentia
   inseme --> marenostrum
   inseme --> FractaVolta
   inseme --> barons-Mariani
+  inseme --> Inox
   Inox --> marenostrum
   Inox --> FractaVolta
   Inox --> cogentia
@@ -189,6 +194,8 @@ graph LR
 | [**Cogentia — the framework, in five distinctive moves**](../COGENTIA.md) *(identity document; entry point)* | this repo | 2026-05-13 |
 | [Agent-Resumable CLI — Externalized Judgment, Continuations, and Provider-Neutral Resumption for AI-Compatible CLI Tools](agent_resumable_cli.md) *(defines `cogentia.continuation.v1`, implemented by `scripts/cogentia.js continuation`)* | this repo | 2026-05-14 |
 | [Cognitive Packets — An Envelope and Payload Format for Human–AI and Multi-Agent Cooperation](cognitive_packets.md) *(working paper v0.3 — envelope/payload split ; paired operational prompt in `prompts/cognitive_packet.md`)* | this repo | 2026-05-21 |
+| [Pipeline — From cognitive packets to source documents and derived products](pipeline.md) *(method note v0.4 — packet-switched, self-applicative; canonical operational method of the corpus)* | this repo | 2026-05-25 |
+| [Derived Products — Versioned Source Corpora, Situated Forms, and Publication Agents](derived_products.md) *(working paper v0.2 — source ↔ derived split; companion to `pipeline.md`)* | this repo | 2026-05-23 |
 | [Cogentia Workflows](cogentia_workflows.md) *(private/group/public/federated workflow architecture, draft v0.2)* | this repo | 2026-05-11 |
 | [Cogentia Commons Working Paper](Cogentia_Commons_Working_Paper.md) | this repo | 2026 |
 | [Cogentia and Cogentigram](Cogentia-and-Cogentigram.md) | this repo | 2026 |
@@ -215,7 +222,7 @@ graph LR
 | Cogentia Commons MVP is fully specifiable as a coherent set of contracts | ✅ Demonstrated | 7 research documents totalling ~4500 lines: [MVP spec](cogentia_commons_mvp_spec.md) v0.10.2 + [COMMUNITY.md sub-spec](cogentia_commons_community_manifest.md) v0.2 + 3 plugin sub-specs + [workflows](cogentia_commons_workflows.md) + [continuation snapshot](cogentia_commons_continuation.md) |
 | The CLI face of Cogentia Commons (`cogentia.js`) is operational with 18 commands | ✅ Operational | `scripts/cogentia.js` v0.4.0; see `cogentia.js manifest --json` for the live tool surface |
 | Rule 4 ("let the corpus be its own evidence") runs in practice | ✅ Demonstrated | `cogentia.js scan` surfaced a real uncatalogued working paper on 2026-05-13 ([`cogentia_workflows.md`](cogentia_workflows.md)); gap closed by `cogentia.js ref` + index.md edit; this very file is auto-refreshed evidence |
-| The four-repo (now 5-repo) network is structurally symmetric | ✅ Verified | `cogentia.js graph` shows complete K5 (20 directed cross-references); see *Cross-Reference Graph* above |
+| The 6-repo network is structurally symmetric | ✅ Verified | `cogentia.js graph` shows complete K6 (30 directed cross-references) since 2026-05-26 when Inox was added to every other repo's *Referenced* section; see *Cross-Reference Graph* above |
 | Every research document carries its own canonical URL | ✅ Demonstrated | 71+ files stamped with `canonical_url:` in YAML front-matter via `cogentia.js stamp --all` |
 | Cogentia Commons can ship as an inseme brique | 🔄 Specified, implementation pending | [MVP spec §12](cogentia_commons_mvp_spec.md) maps the brique deployment in detail; `@inseme/brique-cogentia-commons` package not yet created |
 | The CLI is AI-agent-bindable as an OpenAI tool palette | ✅ Demonstrated | `cogentia.js manifest --json` returns OpenAI-compatible `tools[]` with parameters + side_effects; same shape as `brique-actes/brique.config.js` tools array |
@@ -271,8 +278,10 @@ graph LR
 - [Concept Index — cogentia](concepts.md)
 - [Corpus Status — cogentia](corpus-status.md)
 - [Democratic AI Safety — alias cogentia](democratic_ai_safety.md)
+- [Derived Products](derived_products.md)
 - [Research Index — Cogentia](index.md)
 - [kys-prompt.md](kys-prompt.md)
+- [Pipeline](pipeline.md)
 - [Trail: From Autonomia to DHITL](trails/from_autonomia_to_dhitl.md)
 - [Trail: From Method to Machine](trails/from_method_to_machine.md)
 

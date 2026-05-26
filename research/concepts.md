@@ -135,6 +135,53 @@ The methodology surrounding Cogentia, establishing principles like "Every object
 
 ---
 
+## Cogentia Pipeline
+
+**Type:** methodology / packet-based transformation network
+**Scope:** Global
+**Status:** Defined
+
+**Short definition:**
+The operational method note of the Cogentia corpus: *pipeline on the surface, packet network in depth.* A packet-switched transformation chain — intuitions become cognitive packets, packets become versioned source documents, source documents derive into audience-specific products (papers, blogposts, parliamentary notes, public dashboards), public feedback reintegrates into the corpus. Self-applicative: the method note is itself an artefact of the method it describes. Operational counterpart of the *Discours de la seconde méthode*.
+
+**Parent concepts:**
+- Cogentia Commons
+- Cognitive Packet
+
+**Child concepts:**
+- Source Document
+- Derived Product
+
+**Reference documents:**
+- `research/pipeline.md` (method note v0.4)
+- `research/derived_products.md` (companion paper v0.2)
+
+**Used in:**
+- the deployment of `projet_1755.md` (source) + `1755.md` (derived dashboard) in `barons-Mariani`
+- the source ↔ derived treatment of `christianity_verticalization.md` and its blogpost derivative
+
+---
+
+## Derived Product
+
+**Type:** editorial form / publication mode
+**Scope:** Global
+**Status:** Defined
+
+**Short definition:**
+A situated form of a versioned source corpus, adapted to a specific audience, platform, persona and constraint. Academic papers, public essays, social posts, video scripts, parliamentary notes, public dashboards are all derived forms of equal status. Operating rule: *do not popularize from the academic paper; derive from the corpus.*
+
+**Parent concepts:**
+- Cogentia Pipeline
+
+**Related concepts:**
+- Source Document
+
+**Reference documents:**
+- `research/derived_products.md`
+
+---
+
 ## Sovereign Digital Twin
 
 **Type:** system model

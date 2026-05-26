@@ -1240,3 +1240,13 @@ Publication agents manage distribution and traceability.
 The task is therefore not to multiply content.
 
 It is to make a corpus appear without losing itself.
+
+
+<!-- BEGIN_AUTO: backlinks -->
+### Backlinks
+
+*These documents link to this file:*
+- [Corpus Status — cogentia](corpus-status.md)
+- [Research Index — Cogentia](index.md)
+
+<!-- END_AUTO: backlinks -->

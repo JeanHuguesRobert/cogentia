@@ -163,7 +163,7 @@ The manifest itself is a markdown file in the community's home GitHub repository
 
 ### 4.2 The home-community rule
 
-Every document has **exactly one home community** at any commit. The home community holds the document's formal graph. References from other communities resolve through the URI scheme. This mirrors the cross-repo network symmetry rule already governing the four-repo corpus: one canonical home, references elsewhere.
+Every document has **exactly one home community** at any commit. The home community holds the document's formal graph. References from other communities resolve through the URI scheme. This mirrors the cross-repo network symmetry rule already governing the six-repo corpus: one canonical home, references elsewhere.
 
 ### 4.3 Federation in v1
 
@@ -1054,7 +1054,7 @@ This is also the principled answer to a question that would otherwise be tactica
 
 ## 12. Two surfaces — the existing CLI and the new Brique
 
-Cogentia Commons already has an operational surface: the **`cogentia.js` CLI** in `cogentia/scripts/`. Its own docstring opens with *"cogentia.js — Cogentia Commons CLI. Infrastructure for traceable, auditable, AI-connectable distributed knowledge production across git repositories."* The script is publicly named in `second_method.md` Coda and ships 12 commands today (`add`, `remove`, `list`, `status`, `scan`, `init`, `ref`, `open`, `sync`, `graph`, `check`, `jekyll`). It manages the cross-repo registry and the `research/index.md` files that form the four-repo corpus's distributed knowledge graph.
+Cogentia Commons already has an operational surface: the **`cogentia.js` CLI** in `cogentia/scripts/`. Its own docstring opens with *"cogentia.js — Cogentia Commons CLI. Infrastructure for traceable, auditable, AI-connectable distributed knowledge production across git repositories."* The script is publicly named in `second_method.md` Coda and ships 12 commands today (`add`, `remove`, `list`, `status`, `scan`, `init`, `ref`, `open`, `sync`, `graph`, `check`, `jekyll`). It manages the cross-repo registry and the `research/index.md` files that form the six-repo corpus's distributed knowledge graph.
 
 The v1 work specified in this document **extends and complements** the existing CLI, it does not replace it.
 
@@ -1080,7 +1080,7 @@ Inseme's documented architecture ([`docs/MODULAR_SYSTEM.md`](https://github.com/
 - **Reusing Ophélia** as the AI mediator surface for Commons plugins, via the brique's `tools` array (OpenAI-compatible function schemas the AI invokes).
 - **Reusing the existing brique pattern** — 12 briques already follow it (brique-actes, brique-wiki, brique-blog, brique-democracy, brique-map, etc.). Adding brique-cogentia-commons is an additive change.
 
-The four-repo doctrinal corpus (`barons-Mariani`, `marenostrum`, `cogentia`, `FractaVolta`) provides the *what* and *why*; the inseme platform provides the *deployable substrate*. This connection is intentional — it brings the AI Safety anti-capture proposal into the concrete operational platform.
+The four-repo doctrinal corpus (`barons-Mariani`, `marenostrum`, `cogentia`, `FractaVolta`) provides the *what* and *why*; the inseme platform provides the *deployable substrate*; the Inox runtime (added 2026-05) provides the perpendicular *language substrate* for future Fractanet nodes. This connection is intentional — it brings the AI Safety anti-capture proposal into the concrete operational platform.
 
 ### 12.2 Package layout
 
@@ -1200,7 +1200,7 @@ The current cogentia repo scaffolding stays:
 - `cogentia/plugins/` — the directory hosting plugin manifests (`kernel_extractor/manifest.v0.1.0.yaml` etc.) and prompts (`prompt.v0.1.0.md`). Both the CLI and the brique read from here.
 - `cogentia/apps/commons/` — the older Vite + React scaffolding. Stays as a research prototype / standalone deployment option. v1 ships the brique inside inseme; the prototype remains useful for offline experimentation and for reviewers who want to inspect the UI surface without an inseme deployment.
 
-The doctrinal artefacts (specs + CLI + plugin manifests) and the platform deployment (brique) are deliberately split between the cogentia and inseme repositories. This is consistent with the four-repo corpus structure: each repo has one canonical home.
+The doctrinal artefacts (specs + CLI + plugin manifests) and the platform deployment (brique) are deliberately split between the cogentia and inseme repositories. This is consistent with the six-repo corpus structure: each repo has one canonical home.
 
 ### 12.6 CLI / brique parity (v1 acceptance criterion)
 

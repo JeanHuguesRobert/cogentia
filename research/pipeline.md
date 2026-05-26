@@ -34,6 +34,12 @@ ai_assisted_by:
 
 # Pipeline
 
+<!-- BEGIN_AUTO: trails -->
+> 🧭 **Trail: From Method to Machine**
+> ⬅️ Previous: [Discours de la seconde méthode](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/second_method.md) | ➡️ Next: [Cogentia — the framework, in five distinctive moves](../COGENTIA.md)
+
+<!-- END_AUTO: trails -->
+
 ## From cognitive packets to source documents and derived products
 
 **Version 0.4 — 2026-05-25**  
@@ -87,13 +93,14 @@ Or, more compactly:
 
 This method note should be read together with:
 
+- `barons-Mariani/research/second_method.md` — *Discours de la seconde méthode*, founding methodological doctrine v1.0; the present pipeline is its operational counterpart in the Cogentia corpus;
 - `cogentia_reactive_corpus.md` — theory of a reactive corpus;
 - `derived_products.md` — typology of derived products;
 - `cognitive_packets.md` — packet-based representation of reusable ideas;
 - `agent_resumable_cli.md` — continuation and resumability in agent workflows;
 - `COGENTIA.md` — general orientation of the Cogentia project;
 - `ubikia` — future publishing and transformation agent;
-- recent second-method documents in `barons-Mariani`, especially `christianity_verticalization.md`.
+- recent second-method documents in `barons-Mariani`, especially `christianity_verticalization.md` and `autonomia/projet_1755.md`.
 
 ### Status
 
@@ -1278,3 +1285,15 @@ Possible answer:
 
 > The Cogentia pipeline is not a pipe.  
 > It is a packet-based transformation network for turning latent possibilities into source documents, derived products, public artifacts, and reusable cognitive structures.
+
+
+<!-- BEGIN_AUTO: backlinks -->
+### Backlinks
+
+*These documents link to this file:*
+- [Cogentia](../COGENTIA.md)
+- [Corpus Status — cogentia](corpus-status.md)
+- [Research Index — Cogentia](index.md)
+- [Trail: From Method to Machine](trails/from_method_to_machine.md)
+
+<!-- END_AUTO: backlinks -->
