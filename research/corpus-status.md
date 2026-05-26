@@ -33,12 +33,12 @@ last_stamped_at: 2026-05-16
 <!-- BEGIN_AUTO: registered_repos -->
 | Repository | research/index.md | Branch | Last commit |
 |---|---|---|---|
-| cogentia | ✅ | main | 2026-05-25 |
-| FractaVolta | ✅ | main | 2026-05-23 |
-| marenostrum | ✅ | main | 2026-05-23 |
+| cogentia | ✅ | main | 2026-05-26 |
+| FractaVolta | ✅ | main | 2026-05-26 |
+| marenostrum | ✅ | main | 2026-05-26 |
 | barons-Mariani | ✅ | main | 2026-05-26 |
-| inseme | ✅ | main | 2026-05-23 |
-| Inox | ✅ | master | 2026-05-23 |
+| inseme | ✅ | main | 2026-05-26 |
+| Inox | ✅ | master | 2026-05-26 |
 <!-- END_AUTO: registered_repos -->
 
 ---
@@ -105,6 +105,8 @@ graph LR
 | [Continuation Protocol](./concepts.md#continuation-protocol) | Global | Operational | protocol |
 | [Cognitive Packet](./concepts.md#cognitive-packet) | Global | Defined | protocol / envelope+payload format |
 | [Cogentia Commons](./concepts.md#cogentia-commons) | Global | Canonical | methodology |
+| [Cogentia Pipeline](./concepts.md#cogentia-pipeline) | Global | Defined | methodology / packet-based transformation network |
+| [Derived Product](./concepts.md#derived-product) | Global | Defined | editorial form / publication mode |
 | [Sovereign Digital Twin](./concepts.md#sovereign-digital-twin) | Global | Defined | system model |
 | [Agent-Resumable CLI](./concepts.md#agent-resumable-cli) | Global | Operational | architecture |
 | [Kernel Extractor](./concepts.md#kernel-extractor) | repository-specific | Working | mechanism |

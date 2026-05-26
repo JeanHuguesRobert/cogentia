@@ -30,6 +30,8 @@ related_projects:
 ai_assisted_by:
   - "ChatGPT"
   - "Grok"
+canonical_url: https://github.com/JeanHuguesRobert/cogentia/blob/main/research/pipeline.md
+last_stamped_at: 2026-05-26
 ---
 
 # Pipeline

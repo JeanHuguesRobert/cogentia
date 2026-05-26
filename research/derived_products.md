@@ -1,3 +1,7 @@
+---
+canonical_url: https://github.com/JeanHuguesRobert/cogentia/blob/main/research/derived_products.md
+last_stamped_at: 2026-05-26
+---
 # Derived Products
 ## Versioned Source Corpora, Situated Forms, and Publication Agents
 
