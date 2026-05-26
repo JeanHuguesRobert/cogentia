@@ -1,3 +1,7 @@
+---
+canonical_url: https://github.com/JeanHuguesRobert/cogentia/blob/main/research/trails/from_method_to_machine.md
+last_stamped_at: 2026-05-26
+---
 # Trail: From Method to Machine
 
 *The origin story of Cogentia — from philosophical axiom to operational infrastructure.*

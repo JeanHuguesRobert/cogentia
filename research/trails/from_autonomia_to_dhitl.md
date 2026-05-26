@@ -1,3 +1,7 @@
+---
+canonical_url: https://github.com/JeanHuguesRobert/cogentia/blob/main/research/trails/from_autonomia_to_dhitl.md
+last_stamped_at: 2026-05-26
+---
 # Trail: From Autonomia to DHITL
 
 *The territorial leg of the Democratic AI Safety thesis.*

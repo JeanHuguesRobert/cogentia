@@ -10,7 +10,7 @@ affiliation: "Institut Mariani — C.O.R.S.I.C.A., 1 cours Paoli, F-20250 Corte,
 license: "CC BY-SA 4.0 (text), MIT (reference code contracts)"
 status: "working-paper"
 canonical_url: https://github.com/JeanHuguesRobert/cogentia/blob/main/research/cogentia_commons_mvp_spec.md
-last_stamped_at: 2026-05-16
+last_stamped_at: 2026-05-26
 ---
 
 # Cogentia Commons — MVP Specification

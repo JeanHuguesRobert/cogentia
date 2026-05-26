@@ -9,7 +9,7 @@ status: "Working paper"
 license: "CC BY-SA 4.0 for text; MIT for associated code"
 spdx: "CC-BY-SA-4.0"
 canonical_url: https://github.com/JeanHuguesRobert/cogentia/blob/main/research/agent_resumable_cli.md
-last_stamped_at: 2026-05-16
+last_stamped_at: 2026-05-26
 ---
 --------------------------------------------------------------------------------------------------------------
 

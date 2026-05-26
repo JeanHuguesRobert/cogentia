@@ -6,7 +6,7 @@ nav_order: 2
 last_modified_at: 2026-05-26
 repository: "github.com/JeanHuguesRobert/cogentia"
 canonical_url: https://github.com/JeanHuguesRobert/cogentia/blob/main/research/corpus-status.md
-last_stamped_at: 2026-05-16
+last_stamped_at: 2026-05-26
 ---
 
 # Corpus Status — cogentia

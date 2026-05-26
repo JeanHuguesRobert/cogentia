@@ -2,6 +2,8 @@
 author: "Jean Hugues Noël Robert, baron Mariani"
 affiliation: "Institut Mariani / C.O.R.S.I.C.A., 1 cours Paoli, F-20250 Corte, Corsica"
 license: "CC BY-SA 4.0"
+canonical_url: https://github.com/JeanHuguesRobert/cogentia/blob/main/research/cogentia-digital-twin.md
+last_stamped_at: 2026-05-26
 ---
 <!-- BEGIN_AUTO: trails -->
 > 🧭 **Trail: From Method to Machine**

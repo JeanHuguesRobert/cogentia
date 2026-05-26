@@ -9,6 +9,7 @@ version: "0.9"
 license: "CC BY-SA 4.0 for text; MIT for associated schemas or code"
 spdx: "CC-BY-SA-4.0"
 canonical_url: https://github.com/JeanHuguesRobert/cogentia/blob/main/research/structural_signatures.md
+last_stamped_at: 2026-05-26
 ---
 
 # From Biometrics and Psychometrics to Structural Signatures

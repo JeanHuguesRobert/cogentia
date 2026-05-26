@@ -8,7 +8,7 @@ author: "Jean Hugues Noël Robert, baron Mariani"
 affiliation: "Institut Mariani / C.O.R.S.I.C.A., 1 cours Paoli, F-20250 Corte, Corsica"
 license: "CC BY-SA 4.0"
 canonical_url: https://github.com/JeanHuguesRobert/cogentia/blob/main/COGENTIA.md
-last_stamped_at: 2026-05-16
+last_stamped_at: 2026-05-26
 ---
 
 # Cogentia

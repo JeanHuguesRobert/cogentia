@@ -13,7 +13,7 @@ version: "0.1"
 status: "working-paper"
 date: "2026-05-22"
 last_modified_at: "2026-05-22"
-last_stamped_at: 2026-05-22
+last_stamped_at: 2026-05-26
 license: "CC BY-SA 4.0"
 layout: default
 tags:
