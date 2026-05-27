@@ -1201,13 +1201,13 @@ That is the central design.
 
 This document complements:
 
-- `cogentia_commons_mvp_spec.md` — operational specification of the first public Commons implementation.
-- `Cogentia_Commons_Working_Paper.md` — conceptual and political justification.
-- `second_method.md` — methodological rules for knowledge production under AI conditions.
-- `cognitive_waves.md` — theoretical framework for navigating dynamic cognitive terrains.
-- `potentics.md` — general framework for the rational exploration of possibilities.
-- `DHITL.md` — democratic human-in-the-loop architecture.
-- `Cogentia-and-Cogentigram.md` — personal layer and digital twin continuity.
+- [`cogentia_commons_mvp_spec.md`](cogentia_commons_mvp_spec.md) — operational specification of the first public Commons implementation.
+- [`Cogentia_Commons_Working_Paper.md`](Cogentia_Commons_Working_Paper.md) — conceptual and political justification.
+- [`second_method.md`](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/second_method.md) — methodological rules for knowledge production under AI conditions.
+- [`cognitive_waves.md`](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/cognitive_waves.md) — theoretical framework for navigating dynamic cognitive terrains.
+- [`potentics.md`](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/potentics.md) — general framework for the rational exploration of possibilities.
+- [`DHITL.md`](https://github.com/JeanHuguesRobert/marenostrum/blob/main/DHITL.md) — democratic human-in-the-loop architecture.
+- [`Cogentia-and-Cogentigram.md`](Cogentia-and-Cogentigram.md) — personal layer and digital twin continuity.
 - the Kudos book — future reputation and recognition substrate.
 - the COP — Cognitive Orchestration Protocol — as the natural substrate for continuations.
 
@@ -1255,6 +1255,10 @@ Together, they form an infrastructure for collective intelligence.
 ### Backlinks
 
 *These documents link to this file:*
+- [Cogentia Commons — MVP Specification](cogentia_commons_mvp_spec.md)
+- [Cogentia Commons: A Platform Architecture for Collaborative Possibility Exploration Under Scientific Constraint](Cogentia_Commons_Working_Paper.md)
+- [Cogentia and Cogentigrams](Cogentia-and-Cogentigram.md)
+- [Concept Index — cogentia](concepts.md)
 - [Corpus Status — cogentia](corpus-status.md)
 - [Research Index — Cogentia](index.md)
 

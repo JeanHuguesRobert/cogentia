@@ -377,6 +377,9 @@ Robert, J. H. (2026c). *Infrastructure Is All You Need: Toward a structural theo
 - [Cogentia Commons — Structural Plugin Sub-Specifications](cogentia_commons_structural_plugins.md)
 - [Cogentia Commons — Substantive Plugin Sub-Specifications](cogentia_commons_substantive_plugins.md)
 - [Cogentia Commons — Workflows](cogentia_commons_workflows.md)
+- [cogentia.js — Tutorial and Near-Specification](cogentia_js_tutorial.md)
+- [Cogentia Workflows](cogentia_workflows.md)
+- [Concept Index — cogentia](concepts.md)
 - [Corpus Status — cogentia](corpus-status.md)
 - [Research Index — Cogentia](index.md)
 

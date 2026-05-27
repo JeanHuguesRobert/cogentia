@@ -85,7 +85,7 @@ The v1-critical set is the path implementation velocity should optimise for: wor
 
 **Soft spots.**
 - If the Author rejects ALL proposals, the Document remains `status: draft` with no kernel. Re-running `kernel_extractor` (possibly with a different conversational agent) is the recovery path. No data loss — the rejected proposals stay in the Event log.
-- If the Document is bilingual (FR preamble + EN body, like `second_method.md`), the v0.1 `kernel_extractor` stop-word list is EN-only; the FR sections may be under-extracted. Acceptable in v1; flagged for v0.2.
+- If the Document is bilingual (FR preamble + EN body, like [`second_method.md`](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/second_method.md)), the v0.1 `kernel_extractor` stop-word list is EN-only; the FR sections may be under-extracted. Acceptable in v1; flagged for v0.2.
 - Author confirmation locks anchor IDs forever (§5.6). A typo at acceptance time is hard to fix later. UI should display the proposed `cogentia://` URI for each kernel node *before* the Author clicks Accept.
 
 ---
@@ -379,7 +379,7 @@ The v1-critical set is the path implementation velocity should optimise for: wor
 
 **Soft spots.**
 - The Founder is the sole owner in v1. If the Founder becomes inactive, the community cannot amend its manifest. Multi-owner stewardship is a v1.1 open question (manifest sub-spec §10.1).
-- The community's first Document can be registered immediately after founding (Workflow #1). The recursive first use case — `second_method.md` in the `barons-Mariani` community — has the Founder be both the manifest author and the Document author.
+- The community's first Document can be registered immediately after founding (Workflow #1). The recursive first use case — [`second_method.md`](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/second_method.md) in the `barons-Mariani` community — has the Founder be both the manifest author and the Document author.
 
 ---
 
@@ -446,7 +446,7 @@ The parent spec's §11.1 v1 acceptance test requires seven verifiable artifacts 
 
 | Acceptance item | Workflow producing it |
 |---|---|
-| Document registered as `second_method.md` in `barons-Mariani` community | **#9** (community founding) + **#1** (document registration) |
+| Document registered as [`second_method.md`](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/second_method.md) in `barons-Mariani` community | **#9** (community founding) + **#1** (document registration) |
 | Formal graph with anchors matching literate form | **#1** |
 | Accepted Objection that has gone through Burton conversion | **#2** |
 | Revision proposed in response, with a real GitHub commit | **#4** (or self-synthesis via **#3** + Author-claimed Revision Continuation) |
@@ -477,7 +477,7 @@ The v1-critical workflow set (#1, #2, #3, #5, #6, #9, plus #4 if multi-user demo
 - [`cogentia_commons_kernel_extractor.md`](cogentia_commons_kernel_extractor.md) — plugin running in workflow #1.
 - [`cogentia_commons_structural_plugins.md`](cogentia_commons_structural_plugins.md) — plugins running in workflows #2, #3, #4, #6, #8.
 - [`cogentia_commons_substantive_plugins.md`](cogentia_commons_substantive_plugins.md) — plugins running in workflows #2, #4.
-- [`Cogentia_Commons_Working_Paper.md`](Cogentia_Commons_Working_Paper.md) §6 — the recursive first use case is realised by workflows #9 + #1 on `second_method.md`.
+- [`Cogentia_Commons_Working_Paper.md`](Cogentia_Commons_Working_Paper.md) §6 — the recursive first use case is realised by workflows #9 + #1 on [`second_method.md`](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/second_method.md).
 - [`inseme/packages/cop-core/Architecture.md`](https://github.com/JeanHuguesRobert/inseme/blob/main/packages/cop-core/Architecture.md) — every workflow's Events, Tasks, Steps, Continuations conform to the COP/HITL profile.
 
 ---

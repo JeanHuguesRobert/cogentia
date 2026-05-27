@@ -1498,9 +1498,13 @@ The novelty of cognitive packets is therefore not the existence of the pattern, 
 *These documents link to this file:*
 - [Agent Navigation Guide (Context Server)](../docs/agent_context_server.md)
 - [Agent-Resumable CLI](agent_resumable_cli.md)
+- [Cogentia Commons](cogentia_commons_method_packets.md)
+- [cogentia.js — Tutorial and Near-Specification](cogentia_js_tutorial.md)
 - [The Sovereign Digital Twin: Cogentia, Cogentigram, Cogentiscope](cogentia-digital-twin.md)
+- [Concept Index — cogentia](concepts.md)
 - [Corpus Status — cogentia](corpus-status.md)
 - [Research Index — Cogentia](index.md)
+- [Pipeline](pipeline.md)
 - [Trail: From Method to Machine](trails/from_method_to_machine.md)
 
 <!-- END_AUTO: backlinks -->

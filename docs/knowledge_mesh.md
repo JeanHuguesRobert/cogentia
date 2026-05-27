@@ -18,10 +18,10 @@ To maintain semantic coherence without relying on external databases, `cogentia.
 
 ## 1. The Concept Registry
 
-Every repository contains a `research/concepts.md` file. This is the local glossary.
+Every repository contains a [`research/concepts.md`](../research/concepts.md) file. This is the local glossary.
 When you write a new theoretical memo, you should formally register its key concepts in this file. 
 
-The `cogentia.js concepts graph` command mathematically parses all these local registries to build a global **Mermaid Graph**, which is auto-injected into `research/corpus-status.md`.
+The `cogentia.js concepts graph` command mathematically parses all these local registries to build a global **Mermaid Graph**, which is auto-injected into [`research/corpus-status.md`](../research/corpus-status.md).
 
 ## 2. Automatic Backlinks (Cross-References)
 

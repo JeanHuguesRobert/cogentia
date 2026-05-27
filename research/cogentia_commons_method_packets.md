@@ -157,7 +157,7 @@ Examples:
 - a research workflow;
 - a corpus-indexing method.
 
-The `packet_paper_template.md` document is a method packet. It contains a procedure for declining the Generalized Packet Networks framework into substrate-specific papers. It defines a minimal packet example, an operational boundary rule, non-claims, service metrics, failure modes, claim manifests, and a review prompt.
+The [`packet_paper_template.md`](https://github.com/JeanHuguesRobert/FractaVolta/blob/main/research/packet_paper_template.md) document is a method packet. It contains a procedure for declining the Generalized Packet Networks framework into substrate-specific papers. It defines a minimal packet example, an operational boundary rule, non-claims, service metrics, failure modes, claim manifests, and a review prompt.
 
 It is therefore not only a document about method. It is a method encoded as a packet.
 
@@ -781,7 +781,17 @@ A corpus becomes intelligent not when it stores everything, but when it teaches 
 
 This draft should be continued in four directions:
 
-1. Align with the existing Cogentia papers, especially `cognitive_packets.md`, `second_method.md`, and any existing `cogentia_commons` text.
+1. Align with the existing Cogentia papers, especially [`cognitive_packets.md`](cognitive_packets.md), [`second_method.md`](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/second_method.md), and any existing `cogentia_commons` text.
 2. Produce a stricter technical specification for continuation payloads.
 3. Define the role of `cogentia.js` in stamping, indexing, validating, and routing cognitive packets.
 4. Apply the Seconde méthode to this paper itself, with special attention to risks of corpus bloat, method bureaucracy, hallucinated coherence, and overclaiming about digital twins.
+
+
+<!-- BEGIN_AUTO: backlinks -->
+### Backlinks
+
+*These documents link to this file:*
+- [cogentia.js — Tutorial and Near-Specification](cogentia_js_tutorial.md)
+- [Cognitive Packets](cognitive_packets.md)
+
+<!-- END_AUTO: backlinks -->

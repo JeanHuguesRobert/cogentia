@@ -1250,7 +1250,10 @@ It is to make a corpus appear without losing itself.
 ### Backlinks
 
 *These documents link to this file:*
+- [cogentia.js — Tutorial and Near-Specification](cogentia_js_tutorial.md)
+- [Concept Index — cogentia](concepts.md)
 - [Corpus Status — cogentia](corpus-status.md)
 - [Research Index — Cogentia](index.md)
+- [Pipeline](pipeline.md)
 
 <!-- END_AUTO: backlinks -->

@@ -1507,6 +1507,11 @@ ${bold( "Commands:" )}
   ${c.cyan}lint${c.reset}                Single-table corpus health report: unreferenced, frontmatter
                       issues, drift, in one pass. Local checks only.
                       ${c.cyan}--strict${c.reset} makes exit code non-zero on any issue.
+  ${c.cyan}links${c.reset}               Convert backtick \`*.md\` references to clickable
+                      Markdown links: \`pipeline.md\` → [\`pipeline.md\`](pipeline.md).
+                      Default mode: ${c.cyan}--check${c.reset} (preview, no writes).
+                      ${c.cyan}--fix${c.reset} to apply. ${c.cyan}--include-headings${c.reset} / ${c.cyan}--include-code${c.reset}
+                      to widen scope (off by default). Optional repo name positional.
   ${c.cyan}todo${c.reset} <sub>          Fractal personal scheduler — one ${c.cyan}.cogentia/SCHEDULE.md${c.reset}
                       per scope, aggregated by walking the tree.
                       Sub: ${c.cyan}list${c.reset} (default) | ${c.cyan}add${c.reset} "<title>" | ${c.cyan}done${c.reset} <id> |
@@ -1522,6 +1527,11 @@ ${bold( "Commands:" )}
                            ${c.cyan}fail${c.reset} <id> <branch-id> --reason "..."
                            ${c.cyan}abort${c.reset} <id> --reason "..."
                            ${c.cyan}queue${c.reset} [--status active|completed|aborted|dormant]
+                           ${c.cyan}prioritize${c.reset} <id> [--priority <N>]
+                           ${c.cyan}validate${c.reset} <id> [<step_result.json>]
+                           ${c.cyan}export${c.reset} <id> [-o <file>] [--bundle]
+                           ${c.cyan}log${c.reset} <id>
+                           ${c.cyan}prune${c.reset} [--days <N>]
                            ${c.cyan}schema${c.reset}
   ${c.cyan}help${c.reset}                Show this help
 
@@ -4088,18 +4098,28 @@ function cmdContinuationQueue() {
   const filtered = filterStatus
     ? all.filter( cnt => cnt.status === filterStatus )
     : all;
-  filtered.sort( ( a, b ) => ( a.createdAt || "" ).localeCompare( b.createdAt || "" ) );
+  // Sort: higher priority first, then older createdAt first.
+  filtered.sort( ( a, b ) => {
+    const pa = a.priority || 0;
+    const pb = b.priority || 0;
+    if ( pa !== pb ) return pb - pa;
+    return ( a.createdAt || "" ).localeCompare( b.createdAt || "" );
+  } );
 
   if ( JSON_MODE ) {
     console.log( JSON.stringify( filtered, null, 2 ) );
     return;
   }
+  const anyPriority = filtered.some( cnt => ( cnt.priority || 0 ) !== 0 );
   console.log( `\n${hdr( "Continuation queue" )}  ${dim( filterStatus ? `(status=${filterStatus})` : "(all)" )}\n` );
   if ( filtered.length === 0 ) {
     console.log( `  ${dim( "No continuations match." )}\n` );
     return;
   }
-  console.log( `  ${dim( pad( "id", 16 ) + pad( "status", 12 ) + pad( "task", 32 ) + "topic" )}` );
+  const header = anyPriority
+    ? pad( "id", 16 ) + pad( "pri", 6 ) + pad( "status", 12 ) + pad( "task", 32 ) + "topic"
+    : pad( "id", 16 ) + pad( "status", 12 ) + pad( "task", 32 ) + "topic";
+  console.log( `  ${dim( header )}` );
   for ( const cnt of filtered ) {
     const colorStart =
         cnt.status === "active"    ? c.cyan
@@ -4107,12 +4127,229 @@ function cmdContinuationQueue() {
       : cnt.status === "aborted"   ? c.red
       : cnt.status === "dormant"   ? c.dim
       :                              "";
+    const priCell = anyPriority ? pad( String( cnt.priority || 0 ), 6 ) : "";
     console.log(
       "  " + pad( cnt.id, 16 ) +
+      priCell +
       colorStart + pad( cnt.status, 12 ) + c.reset +
       pad( cnt.task || "(dormant)", 32 ) +
       ( cnt.topicId || "" ),
     );
+  }
+  console.log();
+}
+
+// ── continuation prioritize ─────────────────────────────────────────────────
+
+function cmdContinuationPrioritize( idArg ) {
+  if ( !idArg ) die( "Usage: cogentia continuation prioritize <id> [--priority <N>]" );
+  const cnt = loadContinuation( idArg );
+  const priorityArg = getFlagValue( "--priority" );
+  if ( priorityArg === null ) {
+    // No --priority: report current priority.
+    appendAudit( {
+      command: "continuation.prioritize.read",
+      args:    { id: cnt.id },
+      result:  { priority: cnt.priority || 0, status: cnt.status },
+      narrative: collectNarrative(),
+    } );
+    if ( JSON_MODE ) {
+      console.log( JSON.stringify( { id: cnt.id, priority: cnt.priority || 0, status: cnt.status }, null, 2 ) );
+      return;
+    }
+    console.log( `\n${hdr( `Continuation ${cnt.id}` )}\n` );
+    console.log( `  ${bold( "priority:" )} ${cnt.priority || 0}` );
+    console.log( `  ${bold( "status:" )}   ${cnt.status}` );
+    console.log( `  ${dim( "Use --priority <integer> to change. Higher priority sorts first in queue." )}\n` );
+    return;
+  }
+  const priority = parseInt( priorityArg, 10 );
+  if ( isNaN( priority ) ) die( `Invalid priority: "${priorityArg}" (expected integer)` );
+  const old = cnt.priority || 0;
+  cnt.priority = priority;
+  saveContinuation( cnt );
+  appendAudit( {
+    command: "continuation.prioritize",
+    args:    { id: cnt.id, old, new: priority },
+    result:  { status: cnt.status, priority },
+    narrative: collectNarrative(),
+  } );
+  if ( JSON_MODE ) {
+    console.log( JSON.stringify( { id: cnt.id, priority, previous: old, status: cnt.status }, null, 2 ) );
+    return;
+  }
+  console.log( `\n${hdr( "Continuation prioritized" )}\n` );
+  console.log( `  ${bold( "id:" )}       ${cnt.id}` );
+  console.log( `  ${bold( "priority:" )} ${old} → ${c.cyan}${priority}${c.reset}` );
+  console.log( `  ${bold( "status:" )}   ${cnt.status}` );
+  console.log();
+}
+
+// ── continuation validate ──────────────────────────────────────────────────
+
+function cmdContinuationValidate( idArg, stepResultFileArg ) {
+  if ( !idArg ) die( "Usage: cogentia continuation validate <id> [step_result.json]" );
+  const cnt = loadContinuation( idArg );
+  const cntCheck = validateContinuationShape( cnt );
+  let srCheck = null;
+  if ( stepResultFileArg ) {
+    let sr;
+    try { sr = JSON.parse( fs.readFileSync( stepResultFileArg, "utf8" ) ); }
+    catch ( e ) { die( `Cannot read ${stepResultFileArg}: ${e.message}` ); }
+    if ( !sr.continuation_id ) sr.continuation_id = idArg;
+    srCheck = validateStepResultShape( sr, cnt );
+  }
+  const valid = cntCheck.errs.length === 0 && ( !srCheck || srCheck.errs.length === 0 );
+  appendAudit( {
+    command: "continuation.validate",
+    args:    { id: cnt.id, step_result_file: stepResultFileArg || null },
+    result:  {
+      valid,
+      continuation_errs: cntCheck.errs.length,
+      continuation_warns: cntCheck.warns.length,
+      step_result_errs: srCheck ? srCheck.errs.length : null,
+      step_result_warns: srCheck ? srCheck.warns.length : null,
+    },
+    narrative: collectNarrative(),
+  } );
+  if ( JSON_MODE ) {
+    console.log( JSON.stringify( {
+      id: cnt.id,
+      status: cnt.status,
+      valid,
+      continuation: cntCheck,
+      step_result: srCheck,
+    }, null, 2 ) );
+    if ( !valid ) process.exit( 1 );
+    return;
+  }
+  console.log( `\n${hdr( `Validate ${cnt.id}` )}\n` );
+  const fmt = ( label, check ) => {
+    const status = check.errs.length ? `${c.red}INVALID${c.reset}` : `${c.green}OK${c.reset}`;
+    console.log( `  ${bold( label + ":" )} ${status}  ${dim( `(${check.errs.length} err, ${check.warns.length} warn)` )}` );
+    for ( const e of check.errs )  console.log( `    ${c.red}✗${c.reset} ${e}` );
+    for ( const w of check.warns ) console.log( `    ${c.yellow}⚠${c.reset} ${w}` );
+  };
+  fmt( "Continuation", cntCheck );
+  if ( srCheck ) fmt( "Step result", srCheck );
+  console.log();
+  if ( !valid ) process.exit( 1 );
+}
+
+// ── continuation export ────────────────────────────────────────────────────
+
+function cmdContinuationExport( idArg ) {
+  if ( !idArg ) die( "Usage: cogentia continuation export <id> [-o <file>] [--bundle]" );
+  const cnt = loadContinuation( idArg );
+  const outFile = getFlagValue( "-o" ) || getFlagValue( "--output" );
+  const bundle  = process.argv.includes( "--bundle" );
+
+  let payload;
+  if ( bundle ) {
+    const chain = { continuation: cnt };
+    if ( cnt.predecessor ) {
+      try { chain.predecessor = loadContinuation( cnt.predecessor ); }
+      catch ( _ ) { chain.predecessor = { id: cnt.predecessor, note: "not found locally" }; }
+    }
+    if ( cnt.successor ) {
+      try { chain.successor = loadContinuation( cnt.successor ); }
+      catch ( _ ) { chain.successor = { id: cnt.successor, note: "not found locally" }; }
+    }
+    payload = chain;
+  } else {
+    payload = cnt;
+  }
+
+  const json = JSON.stringify( payload, null, 2 );
+  appendAudit( {
+    command: "continuation.export",
+    args:    { id: cnt.id, bundle, output: outFile || null },
+    result:  { status: cnt.status, bytes: Buffer.byteLength( json, "utf8" ) },
+    narrative: collectNarrative(),
+  } );
+  if ( outFile ) {
+    fs.writeFileSync( outFile, json + "\n", "utf8" );
+    if ( !JSON_MODE ) {
+      console.error( `${dim( "exported" )} ${cnt.id} ${dim( "→" )} ${outFile} ${dim( `(${Buffer.byteLength( json, "utf8" )} bytes)` )}` );
+    }
+    return;
+  }
+  console.log( json );
+}
+
+// ── continuation log ───────────────────────────────────────────────────────
+
+function cmdContinuationLog( idArg ) {
+  if ( !idArg ) die( "Usage: cogentia continuation log <id>" );
+  // Best-effort: load continuation for header context; don't fail if it's been pruned.
+  // loadContinuation calls die() on missing file, so we must check existence first.
+  let cnt = null;
+  if ( fs.existsSync( continuationPath( idArg ) ) ) {
+    try { cnt = loadContinuation( idArg ); } catch ( _ ) {}
+  }
+
+  const configPath = findConfig( process.cwd() );
+  if ( !configPath ) die( "No registry found." );
+  const auditPath = path.join( path.dirname( configPath ), AUDIT_DIR, AUDIT_FILE );
+  if ( !fs.existsSync( auditPath ) ) {
+    appendAudit( {
+      command: "continuation.log",
+      args:    { id: idArg },
+      result:  { events: 0, note: "no audit log" },
+      narrative: collectNarrative(),
+    } );
+    if ( JSON_MODE ) { console.log( "[]" ); return; }
+    console.log( `\n${hdr( `Continuation log: ${idArg}` )}\n` );
+    console.log( `  ${dim( "No audit log yet." )}\n` );
+    return;
+  }
+
+  const lines = fs.readFileSync( auditPath, "utf8" ).split( "\n" );
+  const matching = [];
+  const idNeedle = `"${idArg}"`;
+  for ( const line of lines ) {
+    if ( !line.trim() ) continue;
+    if ( !line.includes( idNeedle ) ) continue;
+    try {
+      const entry = JSON.parse( line );
+      matching.push( entry );
+    } catch ( _ ) { /* skip malformed */ }
+  }
+
+  appendAudit( {
+    command: "continuation.log",
+    args:    { id: idArg },
+    result:  { events: matching.length, found: cnt !== null },
+    narrative: collectNarrative(),
+  } );
+
+  if ( JSON_MODE ) {
+    console.log( JSON.stringify( matching, null, 2 ) );
+    return;
+  }
+  console.log( `\n${hdr( `Continuation log: ${idArg}` )}  ${dim( `${matching.length} event(s)` )}\n` );
+  if ( cnt ) {
+    console.log( `  ${bold( "status:" )}  ${cnt.status}` );
+    console.log( `  ${bold( "task:" )}    ${cnt.task || dim( "(dormant)" )}\n` );
+  } else {
+    console.log( `  ${dim( "Continuation file not found (pruned?) — showing audit trace only." )}\n` );
+  }
+  if ( matching.length === 0 ) {
+    console.log( `  ${dim( "No matching audit entries." )}\n` );
+    return;
+  }
+  for ( const e of matching ) {
+    const ts = ( e.ts || "" ).replace( "T", " " ).replace( /\.\d+Z$/, "Z" );
+    const cmd = e.command || "?";
+    const summary = e.result
+      ? Object.entries( e.result )
+          .map( ( [ k, v ] ) => `${k}=${typeof v === "object" ? JSON.stringify( v ) : v}` )
+          .join( "  " )
+      : "";
+    console.log( `  ${dim( ts )}  ${c.cyan}${pad( cmd, 26 )}${c.reset}  ${dim( summary )}` );
+    if ( e.narrative && e.narrative.short ) {
+      console.log( `                                  ${dim( "└─ " + e.narrative.short )}` );
+    }
   }
   console.log();
 }
@@ -4142,6 +4379,7 @@ const CONTINUATION_SCHEMA_DOC = {
       failed_alternatives:    "array<{id, reason, failed_at}> (accumulated on backtrack)",
       step_result:            "object (embedded after resolve)",
       resume:                 "object ({command: ...})",
+      priority:               "integer (optional; default 0; higher sorts first in queue; set via continuation prioritize <id> --priority <N>)",
     },
   },
   step_result: {
@@ -4178,19 +4416,23 @@ function cmdContinuationSchema() {
 
 function cmdContinuation( sub, ...rest ) {
   switch ( sub ) {
-    case "emit":    cmdContinuationEmit(    rest[ 0 ] );             break;
-    case "inspect": cmdContinuationInspect( rest[ 0 ] );             break;
-    case "resume":  cmdContinuationResume(  rest[ 0 ], rest[ 1 ] );  break;
-    case "fail":    cmdContinuationFail(    rest[ 0 ], rest[ 1 ] );  break;
-    case "abort":   cmdContinuationAbort(   rest[ 0 ] );             break;
-    case "queue":   cmdContinuationQueue();                          break;
-    case "prune":   cmdContinuationPrune();                          break;
-    case "schema":  cmdContinuationSchema();                         break;
+    case "emit":       cmdContinuationEmit(       rest[ 0 ] );             break;
+    case "inspect":    cmdContinuationInspect(    rest[ 0 ] );             break;
+    case "resume":     cmdContinuationResume(     rest[ 0 ], rest[ 1 ] );  break;
+    case "fail":       cmdContinuationFail(       rest[ 0 ], rest[ 1 ] );  break;
+    case "abort":      cmdContinuationAbort(      rest[ 0 ] );             break;
+    case "queue":      cmdContinuationQueue();                             break;
+    case "prune":      cmdContinuationPrune();                             break;
+    case "schema":     cmdContinuationSchema();                            break;
+    case "prioritize": cmdContinuationPrioritize( rest[ 0 ] );             break;
+    case "validate":   cmdContinuationValidate(   rest[ 0 ], rest[ 1 ] );  break;
+    case "export":     cmdContinuationExport(     rest[ 0 ] );             break;
+    case "log":        cmdContinuationLog(        rest[ 0 ] );             break;
     case undefined:
-      die( "Usage: cogentia continuation <emit|inspect|resume|fail|abort|queue|prune|schema> ..." );
+      die( "Usage: cogentia continuation <emit|inspect|resume|fail|abort|queue|prune|schema|prioritize|validate|export|log> ..." );
       break;
     default:
-      die( `Unknown continuation subcommand: "${sub}". Try: emit, inspect, resume, fail, abort, queue, prune, schema.` );
+      die( `Unknown continuation subcommand: "${sub}". Try: emit, inspect, resume, fail, abort, queue, prune, schema, prioritize, validate, export, log.` );
   }
 }
 
@@ -4201,7 +4443,7 @@ function cmdContinuation( sub, ...rest ) {
  * inseme Ophélia mediator via cop-host) bind this once to discover the entire
  * CLI surface — same shape inseme briques already use for their `tools` array.
  */
-const COGENTIA_JS_VERSION    = "0.9.0";
+const COGENTIA_JS_VERSION    = "0.10.0";
 const COGENTIA_MANIFEST_VERSION = "1.0";
 
 const COMMAND_MANIFEST = [
@@ -4318,18 +4560,21 @@ const COMMAND_MANIFEST = [
     side_effects: [],
   },
   {
-    name: "continuation", description: "Emit/inspect/resume/fail/abort/queue typed continuation requests — cogentia.continuation.v1, a provider-neutral protocol for surfacing missing judgment as serializable, schema-bearing, resumable objects across process boundaries. See research/agent_resumable_cli.md.",
+    name: "continuation", description: "Emit/inspect/resume/fail/abort/queue/prioritize/validate/export/log typed continuation requests — cogentia.continuation.v1, a provider-neutral protocol for surfacing missing judgment as serializable, schema-bearing, resumable objects across process boundaries. See research/agent_resumable_cli.md.",
     parameters: {
       type: "object",
       properties: {
-        subcommand:       { type: "string", enum: [ "emit", "inspect", "resume", "fail", "abort", "queue", "prune", "schema" ], description: "Continuation operation to perform." },
+        subcommand:       { type: "string", enum: [ "emit", "inspect", "resume", "fail", "abort", "queue", "prune", "schema", "prioritize", "validate", "export", "log" ], description: "Continuation operation to perform." },
         task_file:        { type: "string", description: "Path to a JSON task descriptor (emit)." },
-        id:               { type: "string", description: "Continuation id (inspect/resume/fail/abort)." },
-        step_result_file: { type: "string", description: "Path to a step_result JSON (resume)." },
+        id:               { type: "string", description: "Continuation id (inspect/resume/fail/abort/prioritize/validate/export/log)." },
+        step_result_file: { type: "string", description: "Path to a step_result JSON (resume / validate)." },
         branch_id:        { type: "string", description: "Alternative id (fail)." },
         paper:            { type: "string", description: "Optional --paper <file>: derive topicId from the document's path inside its owning repo." },
         topic:            { type: "string", description: "Optional --topic <urn>: override topic explicitly." },
         from:             { type: "string", description: "Optional --from <id>: activate a dormant successor in place." },
+        priority:         { type: "integer", description: "Optional --priority <N> for prioritize: integer; higher sorts first in queue. Omit to read current priority." },
+        output:           { type: "string", description: "Optional -o/--output <file> for export: write JSON to file instead of stdout." },
+        bundle:           { type: "boolean", description: "Optional --bundle flag for export: include predecessor + successor in the exported payload." },
         reason:           { type: "string", description: "Reason string for fail/abort." },
         status:           { type: "string", description: "Filter for queue (active|completed|aborted|dormant)." },
         strict:           { type: "boolean", description: "Reject resume on validation issues (also via COGENTIA_VALIDATE=strict)." },
@@ -4367,6 +4612,26 @@ const COMMAND_MANIFEST = [
     name: "bundle", description: "Context bundler for AI agents. Concatenates all Markdown files related to a concept or trail into a single structured output.",
     parameters: { type: "object", properties: { concept: { type: "string" }, trail: { type: "string" }, repo: { type: "string" }, all: { type: "boolean" } } },
     side_effects: [],
+  },
+  {
+    name: "links",
+    description: "Convert backtick `*.md` references to clickable Markdown links across the corpus. Default mode is --check (preview, no writes). --fix applies the changes. Resolves each reference against the registry-wide doc index, preferring same-repo matches (relative path) over cross-repo hits (absolute GitHub URL). Skips lines inside fenced code blocks and headings by default; skips refs already wrapped in [...]() ; skips self-references and unresolvable names (which may be planned-but-not-yet-published docs).",
+    parameters: {
+      type: "object",
+      properties: {
+        repo:              { type: "string", description: "Optional repo name (positional) — limit scan to one repo, or 'all' (default)." },
+        check:             { type: "boolean", description: "Preview only. Default true when --fix is absent." },
+        fix:               { type: "boolean", description: "Apply conversions. Audit-logged as links.fix." },
+        include_headings:  { type: "boolean", description: "Also convert refs inside #..# headings (off by default to keep anchors clean)." },
+        include_code:      { type: "boolean", description: "Also convert refs inside fenced ```/~~~ code blocks (off by default)." },
+      },
+    },
+    side_effects: [ "file-write (in --fix mode)", "audit-log" ],
+    examples: [
+      { input: { repo: "all" } },
+      { input: { repo: "all", fix: true } },
+      { input: { repo: "cogentia", check: true } },
+    ],
   },
 ];
 
@@ -5103,6 +5368,295 @@ function cmdTrails() {
   console.log();
 }
 
+
+// ── links ─────────────────────────────────────────────────────────────────────
+//
+// `cogentia links` scans research-grade .md files for backtick references to
+// other corpus documents — `pipeline.md`, `agent_resumable_cli.md`, `path/to/x.md`,
+// — and offers to rewrite them as clickable Markdown links: [`name.md`](path-or-url).
+//
+// By default it runs as --check (preview, no writes). --fix applies the changes.
+// Per the Object/Associated documents convention (see cogentia/research/pipeline.md),
+// the goal is exhaustive navigability without overwriting human-curated link text.
+//
+// Skips by default:
+//   - lines inside fenced code blocks (``` or ~~~) — --include-code overrides
+//   - lines starting with #..# (headings, to keep anchors clean) — --include-headings overrides
+//   - backticks already inside [...]( ) (already linked)
+//   - LINKS_SKIP_NAMES (per-repo conventions with no canonical home)
+//
+// Resolution policy: prefer same-repo match (relative path); else cogentia
+// (meta-node) if it carries the basename; else first registry hit (absolute
+// GitHub URL). Self-references are dropped.
+
+const LINKS_SKIP_NAMES = new Set( [
+  "LICENSE.md", "LICENSE",
+  "TODO.md",
+  "CHANGELOG.md", "CHANGES.md",
+  "CONTRIBUTING.md",
+  "CODE_OF_CONDUCT.md",
+] );
+
+const LINKS_DOC_REF_RE = /(?<!\[)`([A-Za-z0-9_\-./]+\.md)`(?!\])/g;
+
+function buildDocIndex() {
+  const { config } = loadConfig();
+  if ( !config ) return new Map();
+  const index = new Map();
+  for ( const entry of config.repos ) {
+    const repoPath = resolveRepoPath( entry );
+    if ( !repoPath ) continue;
+    const mdFiles = listMarkdown( repoPath );
+    const ignorePatterns = loadIgnore( repoPath );
+    const remote = gitRemoteOwner( repoPath );
+    const branch = gitCurrentBranch( repoPath ) || "main";
+    const ownerRepo = remote ? `${remote.owner}/${remote.repo}` : null;
+    for ( const f of mdFiles ) {
+      if ( matchesIgnore( f.rel, ignorePatterns ) ) continue;
+      const basename = path.basename( f.rel );
+      const url = ownerRepo ? `https://github.com/${ownerRepo}/blob/${branch}/${f.rel}` : null;
+      if ( !index.has( basename ) ) index.set( basename, [] );
+      index.get( basename ).push( {
+        repo: entry.name,
+        repoPath,
+        rel:  f.rel,
+        full: f.full,
+        url,
+      } );
+    }
+  }
+  return index;
+}
+
+function resolveDocReference( ref, currentRepo, currentDocFull, currentRepoPath, docIndex ) {
+  // Path-shaped references: try literal resolution (relative to doc dir, then to repo root,
+  // then as <repo-name>/<rest> against the registry).
+  if ( ref.includes( "/" ) ) {
+    const tries = [
+      path.join( path.dirname( currentDocFull ), ref ),
+      path.join( currentRepoPath, ref ),
+    ];
+    for ( const t of tries ) {
+      if ( fs.existsSync( t ) && path.resolve( t ) !== path.resolve( currentDocFull ) ) {
+        const rel = path.relative( path.dirname( currentDocFull ), t ).replace( /\\/g, "/" );
+        return { kind: "relative", target: rel, repo: currentRepo };
+      }
+    }
+    // Try <repo-name>/<rest>: parse the first segment as a registry name.
+    const firstSeg = ref.split( "/" )[ 0 ];
+    const rest = ref.slice( firstSeg.length + 1 );
+    const { config } = loadConfig();
+    if ( config ) {
+      const namedRepo = config.repos.find( e => e.name === firstSeg );
+      if ( namedRepo ) {
+        const namedRepoPath = resolveRepoPath( namedRepo );
+        if ( namedRepoPath ) {
+          const full = path.join( namedRepoPath, rest );
+          if ( fs.existsSync( full ) && path.resolve( full ) !== path.resolve( currentDocFull ) ) {
+            if ( namedRepo.name === currentRepo ) {
+              const rel = path.relative( path.dirname( currentDocFull ), full ).replace( /\\/g, "/" );
+              return { kind: "relative", target: rel, repo: namedRepo.name };
+            }
+            const remote = gitRemoteOwner( namedRepoPath );
+            const branch = gitCurrentBranch( namedRepoPath ) || "main";
+            if ( remote ) {
+              return {
+                kind:   "absolute",
+                target: `https://github.com/${remote.owner}/${remote.repo}/blob/${branch}/${rest.replace( /\\/g, "/" )}`,
+                repo:   namedRepo.name,
+              };
+            }
+          }
+        }
+      }
+    }
+    return null;
+  }
+  const basename = ref;
+  if ( LINKS_SKIP_NAMES.has( basename ) ) return null;
+  const candidates = ( docIndex.get( basename ) || [] ).filter( c => c.full !== currentDocFull );
+  if ( candidates.length === 0 ) return null;
+  // Prefer same-repo match
+  const sameRepo = candidates.find( c => c.repo === currentRepo );
+  if ( sameRepo ) {
+    const rel = path.relative( path.dirname( currentDocFull ), sameRepo.full ).replace( /\\/g, "/" );
+    return { kind: "relative", target: rel, repo: sameRepo.repo };
+  }
+  // Cross-repo: prefer cogentia (meta-node) if it carries the basename
+  const cogentiaHit = candidates.find( c => c.repo === "cogentia" );
+  const chosen = cogentiaHit || candidates[ 0 ];
+  if ( !chosen.url ) return null;
+  return { kind: "absolute", target: chosen.url, repo: chosen.repo };
+}
+
+function findLinkCandidates( content, options ) {
+  const includeHeadings = !!options.includeHeadings;
+  const includeCode     = !!options.includeCode;
+  const lines = content.split( "\n" );
+  const out = [];
+  let inFence = false;
+  for ( let i = 0; i < lines.length; i++ ) {
+    const line = lines[ i ];
+    if ( /^(```|~~~)/.test( line.trim() ) ) { inFence = !inFence; continue; }
+    if ( inFence && !includeCode ) continue;
+    if ( /^#{1,6}\s/.test( line ) && !includeHeadings ) continue;
+    LINKS_DOC_REF_RE.lastIndex = 0;
+    let m;
+    while ( ( m = LINKS_DOC_REF_RE.exec( line ) ) !== null ) {
+      out.push( { lineIdx: i, lineNum: i + 1, match: m[ 0 ], name: m[ 1 ], col: m.index } );
+    }
+  }
+  return out;
+}
+
+function applyLinkRewrites( content, options, mappings ) {
+  // mappings: Map<oldText, newText>. We apply only on lines that pass the
+  // same filters as findLinkCandidates (no fences, no headings unless overrides).
+  const includeHeadings = !!options.includeHeadings;
+  const includeCode     = !!options.includeCode;
+  const lines = content.split( "\n" );
+  let inFence = false;
+  for ( let i = 0; i < lines.length; i++ ) {
+    const line = lines[ i ];
+    if ( /^(```|~~~)/.test( line.trim() ) ) { inFence = !inFence; continue; }
+    if ( inFence && !includeCode ) continue;
+    if ( /^#{1,6}\s/.test( line ) && !includeHeadings ) continue;
+    lines[ i ] = line.replace( LINKS_DOC_REF_RE, ( match, name ) => {
+      const repl = mappings.get( match );
+      return repl !== undefined ? repl : match;
+    } );
+  }
+  return lines.join( "\n" );
+}
+
+function cmdLinks() {
+  const isFix = argv.includes( "--fix" );
+  const isCheck = !isFix; // default is check
+  const includeHeadings = argv.includes( "--include-headings" );
+  const includeCode     = argv.includes( "--include-code" );
+
+  const { configPath, config } = loadConfig();
+  if ( !configPath ) die( "No registry found. Run: cogentia add <repo> first." );
+
+  // Positional arg [name|all]: take the first non-flag positional after the command.
+  // The command argument has already been consumed by main(); we receive nothing,
+  // so search for a positional in argv that isn't a known flag.
+  const KNOWN_FLAGS = new Set( [ "--check", "--fix", "--json", "--include-headings", "--include-code" ] );
+  let targetRepo = null;
+  for ( let i = 0; i < argv.length; i++ ) {
+    if ( argv[ i ] === "links" ) {
+      const next = argv[ i + 1 ];
+      if ( next && !next.startsWith( "--" ) && !KNOWN_FLAGS.has( next ) ) {
+        targetRepo = next;
+      }
+      break;
+    }
+  }
+
+  const docIndex = buildDocIndex();
+  const results = {
+    mode:   isFix ? "fix" : "check",
+    repos:  {},
+    totals: { candidates: 0, resolved: 0, unresolved: 0, applied: 0, files_modified: 0 },
+  };
+
+  for ( const entry of config.repos ) {
+    if ( targetRepo && targetRepo !== "all" && entry.name !== targetRepo ) continue;
+    const repoPath = resolveRepoPath( entry );
+    if ( !repoPath ) continue;
+    const mdFiles = listMarkdown( repoPath );
+    const ignorePatterns = loadIgnore( repoPath );
+
+    const repoResult = { files: [] };
+
+    for ( const f of mdFiles ) {
+      if ( matchesIgnore( f.rel, ignorePatterns ) ) continue;
+      const content = fs.readFileSync( f.full, "utf8" );
+      const cands = findLinkCandidates( content, { includeHeadings, includeCode } );
+      if ( cands.length === 0 ) continue;
+
+      const fileResult = { file: f.rel, conversions: [] };
+      const mappings   = new Map();
+      let fileResolved = 0, fileUnresolved = 0;
+
+      for ( const cand of cands ) {
+        const resolved = resolveDocReference( cand.name, entry.name, f.full, repoPath, docIndex );
+        results.totals.candidates++;
+        if ( !resolved ) {
+          results.totals.unresolved++;
+          fileUnresolved++;
+          fileResult.conversions.push( { line: cand.lineNum, name: cand.name, status: "unresolved" } );
+          continue;
+        }
+        results.totals.resolved++;
+        fileResolved++;
+        const newText = `[\`${cand.name}\`](${resolved.target})`;
+        mappings.set( cand.match, newText );
+        fileResult.conversions.push( {
+          line:        cand.lineNum,
+          name:        cand.name,
+          status:      "resolved",
+          target:      resolved.target,
+          kind:        resolved.kind,
+          target_repo: resolved.repo,
+        } );
+      }
+
+      if ( isFix && mappings.size > 0 ) {
+        const updated = applyLinkRewrites( content, { includeHeadings, includeCode }, mappings );
+        if ( updated !== content ) {
+          fs.writeFileSync( f.full, updated, "utf8" );
+          // Count actual occurrences replaced, not unique-mapping count
+          // (one mapping with a /g regex replaces all occurrences of that ref).
+          results.totals.applied += fileResolved;
+          results.totals.files_modified++;
+        }
+      }
+
+      if ( fileResult.conversions.length > 0 ) repoResult.files.push( fileResult );
+    }
+
+    if ( repoResult.files.length > 0 ) results.repos[ entry.name ] = repoResult;
+  }
+
+  appendAudit( {
+    command: isFix ? "links.fix" : "links.check",
+    args:    {
+      include_headings: includeHeadings,
+      include_code:     includeCode,
+      target_repo:      targetRepo,
+    },
+    result:  results.totals,
+    narrative: collectNarrative(),
+  } );
+
+  if ( JSON_MODE ) {
+    console.log( JSON.stringify( results, null, 2 ) );
+    return;
+  }
+  console.log( `\n${hdr( `Links ${isFix ? "fix" : "check"}` )}  ${dim( `(${results.totals.candidates} candidate(s) across ${Object.keys( results.repos ).length} repo(s))` )}\n` );
+  for ( const [ repoName, repoResult ] of Object.entries( results.repos ) ) {
+    console.log( `  ${bold( repoName )}` );
+    for ( const fr of repoResult.files ) {
+      const r = fr.conversions.filter( c => c.status === "resolved" ).length;
+      const u = fr.conversions.filter( c => c.status === "unresolved" ).length;
+      const summary = `${r} resolved${u ? `, ${c.yellow}${u} unresolved${c.reset}` : ""}`;
+      console.log( `    ${dim( fr.file )}  ${summary}` );
+    }
+  }
+  console.log();
+  console.log( `  ${bold( "totals:" )}` );
+  console.log( `    candidates:     ${results.totals.candidates}` );
+  console.log( `    resolved:       ${c.green}${results.totals.resolved}${c.reset}` );
+  console.log( `    unresolved:     ${results.totals.unresolved ? c.yellow : ""}${results.totals.unresolved}${c.reset}` );
+  if ( isFix ) {
+    console.log( `    applied:        ${c.cyan}${results.totals.applied}${c.reset}` );
+    console.log( `    files modified: ${c.cyan}${results.totals.files_modified}${c.reset}` );
+  } else {
+    console.log( `    ${dim( `(check mode — re-run with --fix to apply ${results.totals.resolved} conversion(s))` )}` );
+  }
+  console.log();
+}
 
 // ── refresh ───────────────────────────────────────────────────────────────────
 
@@ -5912,6 +6466,7 @@ function cmdInstallHooks() {
     case "frontmatter":    cmdFrontmatter( ...cmdArgs );    break;
     case "refresh":        cmdRefresh();                    break;
     case "lint":           cmdLint();                       break;
+    case "links":          cmdLinks();                      break;
     case "todo":           cmdTodo( ...cmdArgs );           break;
     case "next":           cmdNext();                       break;
     case "concepts":       cmdConcepts( ...cmdArgs );      break;

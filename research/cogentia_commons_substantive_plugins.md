@@ -27,7 +27,7 @@ This is the doctrinal half of the parent spec §10 Rule 0 audit: an Agent can pr
 
 The two substantive plugins covered here are the v1 baseline beyond `kernel_extractor`:
 
-- **`falsifiability_conversion`** — operationalises Rule 2 of `second_method.md` (Burton conversion). Given an Objection that reads as a feeling of certainty, propose a falsifiable form.
+- **`falsifiability_conversion`** — operationalises Rule 2 of [`second_method.md`](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/second_method.md) (Burton conversion). Given an Objection that reads as a feeling of certainty, propose a falsifiable form.
 - **`revision_proposer`** — given an Objection and the Premise or Claim it targets, draft a candidate Revision patch against the literate form. The output is a patch proposal that the Author or Editor can commit, edit, or reject.
 
 Both plugins share the substantive contract:
@@ -42,7 +42,7 @@ Both plugins share the substantive contract:
 
 ### 1.1 Job
 
-Read an Objection (and the Premise or Claim it targets), assess whether the Objection is already in falsifiable form, and if not, propose a converted statement that names the calculation, citation, or measurable prediction whose value would settle the disagreement. The plugin operationalises the Burton conversion named in `second_method.md` Rule 2 and quoted verbatim in the parent spec §7.
+Read an Objection (and the Premise or Claim it targets), assess whether the Objection is already in falsifiable form, and if not, propose a converted statement that names the calculation, citation, or measurable prediction whose value would settle the disagreement. The plugin operationalises the Burton conversion named in [`second_method.md`](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/second_method.md) Rule 2 and quoted verbatim in the parent spec §7.
 
 Under the parent spec's §1.1 *permissive action, accountable record* design principle, the plugin does NOT block the Objection from entering the record — un-falsifiable Objections are admitted with a permanent `un-falsifiable` Mark (§4.5 rung 2). The plugin's job is to give the Objector and the community a converted form to engage with; conversion is an *invitation*, not a gate.
 

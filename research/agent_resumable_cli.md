@@ -643,7 +643,7 @@ Cogentia is a framework for distributed knowledge production under AI conditions
 
 Cogentia’s operating environment is Git-based knowledge production. Repositories contain research documents, indexes, objections, revisions, canonical URLs, and cross-references. The corpus is not merely a publication output; it is the evidentiary substrate. The git history is part of the proof.
 
-The current `cogentia.js` CLI is described as infrastructure for traceable, auditable, AI-connectable distributed knowledge production across git repositories. It maintains repository registries, supports `research/index.md`, scans markdown files, flags unreferenced work, generates cross-reference graphs, validates links, and stamps canonical URLs. It is implemented as a zero-dependency Node.js CLI under the MIT license.
+The current `cogentia.js` CLI is described as infrastructure for traceable, auditable, AI-connectable distributed knowledge production across git repositories. It maintains repository registries, supports [`research/index.md`](index.md), scans markdown files, flags unreferenced work, generates cross-reference graphs, validates links, and stamps canonical URLs. It is implemented as a zero-dependency Node.js CLI under the MIT license.
 
 This makes Cogentia a natural testbed for Agent-Resumable CLI.
 
@@ -733,29 +733,38 @@ This object is answerable by Claude, ChatGPT, a human reviewer, a script, or a f
 
 If yes, the protocol is sound. If no, the protocol is contaminated.
 
-## 14. Suggested Cogentia CLI Surface
+## 14. Cogentia CLI Surface
 
-The continuation support should be additive. Existing commands such as `scan`, `status`, `graph`, `check`, `stamp`, and `corpus-status` should not be broken.
+The continuation support is additive. Existing commands such as `scan`, `status`, `graph`, `check`, `stamp`, and `corpus-status` are not broken.
 
-A minimal command surface may be:
+The minimal command surface is implemented (`cogentia.js` v0.5.0+):
 
 ```bash
 node scripts/cogentia.js continuation emit <task-file>
 node scripts/cogentia.js continuation inspect <id>
-node scripts/cogentia.js continuation resume <id> --step-result <result.json>
-node scripts/cogentia.js continuation fail <id> --branch <branch-id> --reason "<reason>"
-node scripts/cogentia.js continuation queue
-node scripts/cogentia.js continuation abort <id>
+node scripts/cogentia.js continuation resume <id> <step_result.json> [--strict]
+node scripts/cogentia.js continuation fail <id> <branch-id> --reason "<reason>"
+node scripts/cogentia.js continuation queue [--status active|completed|aborted|dormant]
+node scripts/cogentia.js continuation abort <id> --reason "<reason>"
 ```
 
-Additional commands may include:
+The additional commands are implemented (`cogentia.js` v0.10.0+):
 
 ```bash
-node scripts/cogentia.js continuation prioritize
-node scripts/cogentia.js continuation validate <id>
-node scripts/cogentia.js continuation export <id>
+node scripts/cogentia.js continuation prioritize <id> [--priority <N>]
+node scripts/cogentia.js continuation validate <id> [<step_result.json>]
+node scripts/cogentia.js continuation export <id> [-o <file>] [--bundle]
 node scripts/cogentia.js continuation log <id>
 ```
+
+Two operational commands round out the surface:
+
+```bash
+node scripts/cogentia.js continuation prune [--days <N>]
+node scripts/cogentia.js continuation schema
+```
+
+`prioritize` writes a `priority` integer (default 0) on the continuation; `queue` then sorts higher priority first, then older `createdAt` first. `validate` runs the same shape checks as `resume`, but as a read-only pre-flight (exit 1 on errors). `export` serializes the continuation (optionally with its predecessor and successor via `--bundle`) for copy/paste handoffs across agents, tools, or process boundaries. `log` reads `.cogentia/audit.jsonl` and replays every audit event referencing the continuation id, in chronological order.
 
 ## 15. Storage Model
 
@@ -830,7 +839,7 @@ This aligns with the Cogentia principle:
 
 ## 18. Example Use Case: Unanchored Claim
 
-Suppose `cogentia.js scan` detects a markdown document not referenced in `research/index.md`.
+Suppose `cogentia.js scan` detects a markdown document not referenced in [`research/index.md`](index.md).
 
 The deterministic tool can report the file. But a semantic question remains:
 
@@ -1111,10 +1120,13 @@ A compliant CLI does not hide judgment. It exposes judgment as a continuation, c
 - [Cogentia](../COGENTIA.md)
 - [Agent Navigation Guide (Context Server)](../docs/agent_context_server.md)
 - [Agent-Resumable CLI](agent_resumable_cli.md)
+- [cogentia.js — Tutorial and Near-Specification](cogentia_js_tutorial.md)
 - [The Sovereign Digital Twin: Cogentia, Cogentigram, Cogentiscope](cogentia-digital-twin.md)
 - [Cognitive Packets](cognitive_packets.md)
+- [Concept Index — cogentia](concepts.md)
 - [Corpus Status — cogentia](corpus-status.md)
 - [Research Index — Cogentia](index.md)
+- [Pipeline](pipeline.md)
 - [Trail: From Method to Machine](trails/from_method_to_machine.md)
 
 <!-- END_AUTO: backlinks -->

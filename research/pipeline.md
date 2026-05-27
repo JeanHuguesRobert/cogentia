@@ -95,14 +95,15 @@ Or, more compactly:
 
 This method note should be read together with:
 
-- `barons-Mariani/research/second_method.md` — *Discours de la seconde méthode*, founding methodological doctrine v1.0; the present pipeline is its operational counterpart in the Cogentia corpus;
-- `cogentia_reactive_corpus.md` — theory of a reactive corpus;
-- `derived_products.md` — typology of derived products;
-- `cognitive_packets.md` — packet-based representation of reusable ideas;
-- `agent_resumable_cli.md` — continuation and resumability in agent workflows;
-- `COGENTIA.md` — general orientation of the Cogentia project;
-- `ubikia` — future publishing and transformation agent;
-- recent second-method documents in `barons-Mariani`, especially `christianity_verticalization.md` and `autonomia/projet_1755.md`.
+- [Discours de la seconde méthode](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/second_method.md) — founding methodological doctrine v1.0; the present pipeline is its operational counterpart in the Cogentia corpus;
+- `cogentia_reactive_corpus.md` — theory of a reactive corpus (planned, not yet published);
+- [Derived Products](derived_products.md) — typology of derived products;
+- [Cognitive Packets](cognitive_packets.md) — packet-based representation of reusable ideas;
+- [Agent-Resumable CLI](agent_resumable_cli.md) — continuation and resumability in agent workflows;
+- [Cogentia — the framework, in five distinctive moves](../COGENTIA.md) — general orientation of the Cogentia project;
+- [`cogentia.js` Tutorial and Near-Specification](cogentia_js_tutorial.md) — the operational gloss on the CLI that drives the pipeline in practice;
+- *Ubikia* — future publishing and transformation agent (not yet a published document);
+- Recent second-method documents in `barons-Mariani`, especially [Christianity verticalization](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/christianity_verticalization.md) and [Projet #1755](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/autonomia/projet_1755.md).
 
 ### Status
 
@@ -522,7 +523,7 @@ The pipeline should not remain a purely abstract method. It becomes more useful 
 
 ### 6.1 Full case study — `christianity_verticalization.md`
 
-The working paper `christianity_verticalization.md` is the clearest recent example of the method operating end-to-end.
+The working paper [`christianity_verticalization.md`](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/christianity_verticalization.md) is the clearest recent example of the method operating end-to-end.
 
 #### Trigger
 
@@ -628,7 +629,7 @@ The Substack article generated platform-specific sharing drafts:
 - Instagram;
 - possible LinkedIn adaptation.
 
-The process revealed the need to formalize the method itself. This led directly to the present `pipeline.md`.
+The process revealed the need to formalize the method itself. This led directly to the present `pipeline.md` (this document).
 
 Essential lesson:
 
@@ -729,7 +730,7 @@ But the trigger is not the thesis. The pipeline exists precisely to transform tr
 
 ### 6.3 Case study — `derived_products.md`
 
-The document `derived_products.md` provides the typology needed by the pipeline.
+The document [`derived_products.md`](derived_products.md) provides the typology needed by the pipeline.
 
 It clarifies that a derived product is not a mere simplified copy. It is a transformation of form relative to a source.
 
@@ -1194,13 +1195,13 @@ source documents should explain their reasoning to future readers and agents
 
 ### 13.4 Internal corpus references
 
-- `cogentia_reactive_corpus.md`
-- `derived_products.md`
-- `cognitive_packets.md`
-- `agent_resumable_cli.md`
-- `christianity_verticalization.md`
-- `kudocracy.md`
-- `agile.md`
+- `cogentia_reactive_corpus.md` (planned, not yet published)
+- [Derived Products](derived_products.md)
+- [Cognitive Packets](cognitive_packets.md)
+- [Agent-Resumable CLI](agent_resumable_cli.md)
+- [Christianity verticalization](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/christianity_verticalization.md)
+- [Kudocracy](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/kudocracy.md)
+- [Agile](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/agile.md)
 
 The purpose of these references is to triangulate the pipeline:
 
@@ -1266,11 +1267,11 @@ cogentia continuation list
 
 The method should be tested and refined using recent source documents such as:
 
-- `christianity_verticalization.md`;
-- `kudocracy.md`;
-- `agile.md`;
-- `cogentia_reactive_corpus.md`;
-- `derived_products.md`.
+- [Christianity verticalization](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/christianity_verticalization.md);
+- [Kudocracy](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/kudocracy.md);
+- [Agile](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/agile.md);
+- `cogentia_reactive_corpus.md` (planned, not yet published);
+- [Derived Products](derived_products.md).
 
 ### 14.7 Open question
 
@@ -1294,7 +1295,12 @@ Possible answer:
 
 *These documents link to this file:*
 - [Cogentia](../COGENTIA.md)
+- [Agent-Resumable CLI](agent_resumable_cli.md)
+- [cogentia.js — Tutorial and Near-Specification](cogentia_js_tutorial.md)
+- [Cognitive Packets](cognitive_packets.md)
+- [Concept Index — cogentia](concepts.md)
 - [Corpus Status — cogentia](corpus-status.md)
+- [Derived Products](derived_products.md)
 - [Research Index — Cogentia](index.md)
 - [Trail: From Method to Machine](trails/from_method_to_machine.md)
 

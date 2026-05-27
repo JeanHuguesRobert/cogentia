@@ -17,7 +17,7 @@ last_stamped_at: 2026-05-26
 
 *v0.10.2 — draft. Premier commit établit la priorité.*
 *Companion to [`Cogentia_Commons_Working_Paper.md`](Cogentia_Commons_Working_Paper.md) (the **what / why**), [`second_method.md`](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/second_method.md) (the **rules**), and the [COP — Cognitive Orchestration Protocol](https://github.com/JeanHuguesRobert/inseme/blob/main/packages/cop-core/Architecture.md) (the **orchestration substrate**).*
-*This document is itself a Thesis Kernel. It will be the second exhibit in the Commons graph; the first remains `second_method.md`.*
+*This document is itself a Thesis Kernel. It will be the second exhibit in the Commons graph; the first remains [`second_method.md`](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/second_method.md).*
 
 ---
 
@@ -27,7 +27,7 @@ The Working Paper says *what* Cogentia Commons is and *why* it must exist. The f
 
 The MVP exists to demonstrate that the method can run on a finite, runnable surface — not to host an academic-publishing system. Everything beyond what is required to perform one full critique-and-revision round on a real document is out of scope for v1, regardless of how attractive it would be.
 
-The document the MVP will run on first is `second_method.md`. The recursive commitment from Working Paper §6 is not rhetorical — it is the acceptance test.
+The document the MVP will run on first is [`second_method.md`](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/second_method.md). The recursive commitment from Working Paper §6 is not rhetorical — it is the acceptance test.
 
 Orchestration is inherited, not re-invented. Cogentia Commons is a [**COP/HITL profile consumer**](https://github.com/JeanHuguesRobert/inseme/blob/main/packages/cop-core/Architecture.md): every durable cognitive state in the platform — pending plugin runs, suspended Burton conversions, queued Editor syntheses, awaited Author acceptances — is a COP `cop/continuation` Artifact attached to the relevant target, with named resumers and explicit resumption conditions. This is what makes "what should happen next on this Premise / Objection / Revision?" a queryable, multi-directional property of every node in the formal graph, rather than a separate todo system bolted on.
 
@@ -113,7 +113,7 @@ A markdown file in a GitHub repository, owned by the document's author. This is 
 
 - YAML front-matter (title, author, version, license, status).
 - Section headings with stable, kebab-case anchor IDs.
-- Inline anchors of the form `{#claim-3}`, `{#premise-A}` for individually-addressable assertions — the same convention `second_method.md` already uses for Rules and Claims.
+- Inline anchors of the form `{#claim-3}`, `{#premise-A}` for individually-addressable assertions — the same convention [`second_method.md`](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/second_method.md) already uses for Rules and Claims.
 - Standard markdown otherwise. No platform-specific syntax.
 
 The author commits to GitHub. The Commons reads from GitHub. There is no second source of truth for the document text.
@@ -679,7 +679,7 @@ Items 4 and 5 are the load-bearing ones in *both* v1 and v1.1: they encode the C
 
 ### 5.8 Change Narrative on every state-changing action
 
-Every state-changing action in Cogentia Commons carries an **optional narrative block** in the emitting Event's payload. The narrative is the actor's chance to describe their change — why they did it, what conversational context informed it, where the reasoning trail leads — in a form that future versions of the platform (and the broader scholarly community) can read and build on. This is Rule 1 of `second_method.md` applied at the per-action granularity: "publish the process, not only the result."
+Every state-changing action in Cogentia Commons carries an **optional narrative block** in the emitting Event's payload. The narrative is the actor's chance to describe their change — why they did it, what conversational context informed it, where the reasoning trail leads — in a form that future versions of the platform (and the broader scholarly community) can read and build on. This is Rule 1 of [`second_method.md`](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/second_method.md) applied at the per-action granularity: "publish the process, not only the result."
 
 #### 5.8.1 The narrative schema
 
@@ -1013,7 +1013,7 @@ Every row in the platform has a verified human GitHub handle in its causal chain
 The MVP is acceptable if, by the end of v1, the following sequence is reproducible by any visitor with only a browser:
 
 1. Navigate to the Commons app.
-2. Find `second_method.md` as a registered Document in the `barons-Mariani` community.
+2. Find [`second_method.md`](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/second_method.md) as a registered Document in the `barons-Mariani` community.
 3. View its formal graph: at least one Thesis, several Premises, several Claims, all with anchor IDs matching the literate form.
 4. View at least one **accepted Objection** that has gone through the Burton conversion gate, with its falsifiable form visible.
 5. View at least one **Revision** proposed in response, with its commit hash resolving to a real GitHub commit on the `barons-Mariani` repo.
@@ -1054,7 +1054,7 @@ This is also the principled answer to a question that would otherwise be tactica
 
 ## 12. Two surfaces — the existing CLI and the new Brique
 
-Cogentia Commons already has an operational surface: the **`cogentia.js` CLI** in `cogentia/scripts/`. Its own docstring opens with *"cogentia.js — Cogentia Commons CLI. Infrastructure for traceable, auditable, AI-connectable distributed knowledge production across git repositories."* The script is publicly named in `second_method.md` Coda and ships 12 commands today (`add`, `remove`, `list`, `status`, `scan`, `init`, `ref`, `open`, `sync`, `graph`, `check`, `jekyll`). It manages the cross-repo registry and the `research/index.md` files that form the six-repo corpus's distributed knowledge graph.
+Cogentia Commons already has an operational surface: the **`cogentia.js` CLI** in `cogentia/scripts/`. Its own docstring opens with *"cogentia.js — Cogentia Commons CLI. Infrastructure for traceable, auditable, AI-connectable distributed knowledge production across git repositories."* The script is publicly named in [`second_method.md`](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/second_method.md) Coda and ships 12 commands today (`add`, `remove`, `list`, `status`, `scan`, `init`, `ref`, `open`, `sync`, `graph`, `check`, `jekyll`). It manages the cross-repo registry and the [`research/index.md`](index.md) files that form the six-repo corpus's distributed knowledge graph.
 
 The v1 work specified in this document **extends and complements** the existing CLI, it does not replace it.
 
@@ -1196,7 +1196,7 @@ The Commons-specific migrations live alongside inseme's existing ones at `inseme
 The current cogentia repo scaffolding stays:
 
 - `cogentia/research/` — all the spec documents (this one and its companions) remain in the cogentia meta-node repo.
-- `cogentia/scripts/cogentia.js` — **the existing Cogentia Commons CLI.** Publicly named in `second_method.md` Coda; its docstring opens with *"cogentia.js — Cogentia Commons CLI"*. v1 extends this CLI with the new subcommands declared throughout the spec set (`manifest`, `audit`, `kernel`, `objection`, `publish`, `continuation`, `sanction`, `rebuild`). The CLI's existing 12 commands are part of the v1 deliverable already operational. Continues to be zero-deps, MIT.
+- `cogentia/scripts/cogentia.js` — **the existing Cogentia Commons CLI.** Publicly named in [`second_method.md`](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/second_method.md) Coda; its docstring opens with *"cogentia.js — Cogentia Commons CLI"*. v1 extends this CLI with the new subcommands declared throughout the spec set (`manifest`, `audit`, `kernel`, `objection`, `publish`, `continuation`, `sanction`, `rebuild`). The CLI's existing 12 commands are part of the v1 deliverable already operational. Continues to be zero-deps, MIT.
 - `cogentia/plugins/` — the directory hosting plugin manifests (`kernel_extractor/manifest.v0.1.0.yaml` etc.) and prompts (`prompt.v0.1.0.md`). Both the CLI and the brique read from here.
 - `cogentia/apps/commons/` — the older Vite + React scaffolding. Stays as a research prototype / standalone deployment option. v1 ships the brique inside inseme; the prototype remains useful for offline experimentation and for reviewers who want to inspect the UI surface without an inseme deployment.
 
@@ -1282,7 +1282,7 @@ Reference implementation contracts (schemas, plugin manifests, resolver code): *
 
 ---
 
-*This document is itself a Thesis Kernel. Fork. Object in falsifiable form. Propose Revisions. The first round of critique on this document is the second exhibit in the Commons graph — the first remains `second_method.md`.*
+*This document is itself a Thesis Kernel. Fork. Object in falsifiable form. Propose Revisions. The first round of critique on this document is the second exhibit in the Commons graph — the first remains [`second_method.md`](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/second_method.md).*
 
 *Premier commit : 2026-05-11 — Corte. Draft v0.1.*
 *Institut Mariani — C.O.R.S.I.C.A., 1 cours Paoli, F-20250 Corte, Corsica*
@@ -1300,6 +1300,8 @@ Reference implementation contracts (schemas, plugin manifests, resolver code): *
 - [Cogentia Commons — Substantive Plugin Sub-Specifications](cogentia_commons_substantive_plugins.md)
 - [Cogentia Commons — Workflows](cogentia_commons_workflows.md)
 - [Cogentia Commons: A Platform Architecture for Collaborative Possibility Exploration Under Scientific Constraint](Cogentia_Commons_Working_Paper.md)
+- [cogentia.js — Tutorial and Near-Specification](cogentia_js_tutorial.md)
+- [Cogentia Workflows](cogentia_workflows.md)
 - [Cogentia and Cogentigrams](Cogentia-and-Cogentigram.md)
 - [Corpus Status — cogentia](corpus-status.md)
 - [Research Index — Cogentia](index.md)

@@ -35,9 +35,9 @@ The user's style is terse, elliptical, bilingual (FR/EN). Expect short directive
 
 ## 1. What this project is — one paragraph
 
-Cogentia Commons is a public-by-default infrastructure for collaborative epistemic exploration — a platform where AI agents help humans surface, contest, and refine ideas under explicit scientific constraints, with every action signed, attributable, and reversible. It is **Layer 4 (Cognitive Infrastructure)** of the [DHITL framework](https://github.com/JeanHuguesRobert/marenostrum/blob/main/DHITL.md) — open to agents, never sovereign. It operationalizes the [*Discours de la seconde méthode*](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/second_method.md). The first Document it will host is `second_method.md` itself.
+Cogentia Commons is a public-by-default infrastructure for collaborative epistemic exploration — a platform where AI agents help humans surface, contest, and refine ideas under explicit scientific constraints, with every action signed, attributable, and reversible. It is **Layer 4 (Cognitive Infrastructure)** of the [DHITL framework](https://github.com/JeanHuguesRobert/marenostrum/blob/main/DHITL.md) — open to agents, never sovereign. It operationalizes the [*Discours de la seconde méthode*](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/second_method.md). The first Document it will host is [`second_method.md`](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/second_method.md) itself.
 
-**Cogentia Commons already exists as a CLI.** [`cogentia/scripts/cogentia.js`](../scripts/cogentia.js) — publicly named in `second_method.md` Coda — declares itself in its own docstring as *"cogentia.js — Cogentia Commons CLI. Infrastructure for traceable, auditable, AI-connectable distributed knowledge production across git repositories."* The CLI is operational today with 12 commands (§14) managing registered repositories' `research/index.md` files. The v1 work specified in the parent spec **extends** this CLI (new subcommands for manifest validation, audit-plugin runs, kernel extraction, round mechanics, sanction tooling) and **complements** it with a web GUI shipped as `@inseme/brique-cogentia-commons` (§12). CLI and brique are two surfaces of the same Commons, sharing the same backing state (COP Event log + Supabase projection).
+**Cogentia Commons already exists as a CLI.** [`cogentia/scripts/cogentia.js`](../scripts/cogentia.js) — publicly named in [`second_method.md`](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/second_method.md) Coda — declares itself in its own docstring as *"cogentia.js — Cogentia Commons CLI. Infrastructure for traceable, auditable, AI-connectable distributed knowledge production across git repositories."* The CLI is operational today with 12 commands (§14) managing registered repositories' [`research/index.md`](index.md) files. The v1 work specified in the parent spec **extends** this CLI (new subcommands for manifest validation, audit-plugin runs, kernel extraction, round mechanics, sanction tooling) and **complements** it with a web GUI shipped as `@inseme/brique-cogentia-commons` (§12). CLI and brique are two surfaces of the same Commons, sharing the same backing state (COP Event log + Supabase projection).
 
 ---
 
@@ -52,13 +52,13 @@ Cogentia Commons is a public-by-default infrastructure for collaborative epistem
 | **`inseme`** | The deployable platform. 12 existing briques. COP runtime in `packages/cop-core` + `packages/cop-host`. Commons targets this as `brique-cogentia-commons`. |
 | `Kudos` | The book on Kudos as Mauss-style gift economy. Anchors the deferred reward primitive (Support in v1, Kudos post-v1). |
 
-The four canonical research repos (`barons-Mariani`, `marenostrum`, `cogentia`, `FractaVolta`) form a distributed knowledge graph via cross-referenced `research/index.md` files. `cogentia/scripts/cogentia.js` is publicly named in `second_method.md` Coda — its surface stability matters (treat changes there conservatively).
+The four canonical research repos (`barons-Mariani`, `marenostrum`, `cogentia`, `FractaVolta`) form a distributed knowledge graph via cross-referenced [`research/index.md`](index.md) files. `cogentia/scripts/cogentia.js` is publicly named in [`second_method.md`](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/second_method.md) Coda — its surface stability matters (treat changes there conservatively).
 
 ---
 
 ## 3. The Cogentia Commons spec set — six documents
 
-All live in `cogentia/research/` and are catalogued in `cogentia/research/index.md`. Current versions:
+All live in `cogentia/research/` and are catalogued in [`cogentia/research/index.md`](index.md). Current versions:
 
 | # | Document | Version | What it specifies |
 |---|---|---|---|
@@ -78,8 +78,8 @@ All live in `cogentia/research/` and are catalogued in `cogentia/research/index.
 The numbered list below is the load-bearing set. Each represents a deliberate choice the user signed off on (or actively introduced). Don't reverse without explicit reason.
 
 ### 4.1 Foundational
-1. **DHITL Layer 4 anchor.** Cogentia Commons sits at the cognitive-infrastructure layer. Agents may participate. Agents NEVER hold sovereign authority. Rule 0 of `second_method.md`.
-2. **First object explored is itself.** v1 acceptance test runs the platform on `second_method.md`. The recursive commitment is doctrinal, not rhetorical.
+1. **DHITL Layer 4 anchor.** Cogentia Commons sits at the cognitive-infrastructure layer. Agents may participate. Agents NEVER hold sovereign authority. Rule 0 of [`second_method.md`](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/second_method.md).
+2. **First object explored is itself.** v1 acceptance test runs the platform on [`second_method.md`](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/second_method.md). The recursive commitment is doctrinal, not rhetorical.
 3. **GitHub is the process anchor.** Identity = GitHub account. Canonical timestamp = commit SHA. Commit chronology = veneer-adoption mitigation.
 4. **Per-community Supabase, federated.** Per parent §4. Cross-community references via `cogentia://` URI scheme. No live federation protocol in v1.
 
@@ -132,7 +132,7 @@ The numbered list below is the load-bearing set. Each represents a deliberate ch
 
 A visitor with only a browser must be able to reproduce, from URLs alone:
 
-1. Navigate to Commons. Find `second_method.md` as a registered Document in `barons-Mariani` community.
+1. Navigate to Commons. Find [`second_method.md`](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/second_method.md) as a registered Document in `barons-Mariani` community.
 2. View its formal graph: Thesis + Premises + Claims with anchor IDs matching the literate form.
 3. See at least one accepted Objection that went through Burton conversion (falsifiable form visible).
 4. See at least one Revision proposed in response, with commit hash resolving to a real GitHub commit on `barons-Mariani`.
@@ -186,7 +186,7 @@ Mapped to workflows: #1 (Document registration) + #2 (Objection + Burton) + #4 (
 
 The session started fresh with the user asking for a specification for Cogentia Commons. The arc:
 
-1. **v0.1 — Initial draft of the MVP spec.** Six core sections established: dual representation, communities, actors, formal graph, audit plugin architecture, publication. Cataloged in `research/index.md` as *In Progress*.
+1. **v0.1 — Initial draft of the MVP spec.** Six core sections established: dual representation, communities, actors, formal graph, audit plugin architecture, publication. Cataloged in [`research/index.md`](index.md) as *In Progress*.
 2. **v0.2 — Continuation primitive woven in.** The user reminded me that COP defines Continuations as a first-class primitive in `inseme/packages/cop-core`. I had missed this. Saved as feedback memory: "check COP before inventing orchestration primitives." Continuations became §5.5; entity model updated.
 3. **v0.3 — Mimetic desynchronization (§11.3) + DRSJ risk row added.** After the user asked where mimetic_desynchronization was defined.
 4. **v0.4 — Audit pass resolving Editor eligibility (§4.4) + Anchor lifecycle (§5.6).** Re-anchor semantics were a load-bearing open question; now have concrete five-case migration protocol.
@@ -216,7 +216,7 @@ These are inferred from observation across the session. Treat as guidelines, not
 - **Metadata everywhere.** "Prefer to use metadata more than less, for flexibility, make sure every entity (or most of them) have a metadata field." Stated explicitly on 2026-05-13. The inseme COP schema already follows this.
 - **Brique-ify by default.** When a thing could live as an inseme brique, it should. The platform-vs-app trade-off has been resolved in favour of the platform.
 - **Cogentia.js doctrinal status.** The CLI is publicly named in second_method.md. Surface stability (help text, command names) is part of a published commitment. Be conservative with changes.
-- **Four-repo network symmetry.** Cross-repo `research/index.md` Published/Referenced edges must agree. If you edit one, check the other side.
+- **Four-repo network symmetry.** Cross-repo [`research/index.md`](index.md) Published/Referenced edges must agree. If you edit one, check the other side.
 - **First commit establishes priority.** Anti-veneer. Commit chronology is the veneer-adoption mitigation. Don't retro-fit a "version 1.0" after the fact; ship snapshots with their commit chains visible.
 - **Explicit faith commitments.** DHITL names "the democratic faith — a Lakatosian hard core." Naming the commitment is part of what makes it robust. Don't hide foundational assumptions; surface them.
 
@@ -224,7 +224,7 @@ These are inferred from observation across the session. Treat as guidelines, not
 
 ## 9. The user's profile (terse summary, with full version in memory)
 
-Jean Hugues Noël Robert, baron Mariani. Based at Institut Mariani / C.O.R.S.I.C.A., 1 cours Paoli, F-20250 Corte, Corsica. GitHub: JeanHuguesRobert. Email: jeanhuguesrobert@gmail.com (also jhr@baronsmariani.org). Founded C.O.R.S.I.C.A. in 1995 — predates "open source" as a term. Author of *Discours de la seconde méthode* (`barons-Mariani/research/second_method.md`, v1.0 2026-05-08). Architect of the six-repo Cogentia corpus and the #PERTITELLU / inseme civic-tech agenda.
+Jean Hugues Noël Robert, baron Mariani. Based at Institut Mariani / C.O.R.S.I.C.A., 1 cours Paoli, F-20250 Corte, Corsica. GitHub: JeanHuguesRobert. Email: jeanhuguesrobert@gmail.com (also jhr@baronsmariani.org). Founded C.O.R.S.I.C.A. in 1995 — predates "open source" as a term. Author of *Discours de la seconde méthode* ([`barons-Mariani/research/second_method.md`](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/second_method.md), v1.0 2026-05-08). Architect of the six-repo Cogentia corpus and the #PERTITELLU / inseme civic-tech agenda.
 
 Works on **Windows + PowerShell**. Uses **pnpm**, not npm. Prefers **monorepo over multi-repo** when avoidable. Reads and writes both French and English; published doctrine is bilingual.
 
@@ -285,7 +285,7 @@ The four substantive items surfaced this session (#11–#14) deserve a pass befo
 
 ### 11.5 Connect back to ICOME'26
 
-The Working Paper §10.5 names ICOME'26 (Université de Corse, June 2026) as the institutional pre-legitimation anchor. The v1 demo against `second_method.md` should ideally be ready for that. Concrete deadline: probably April 2026 for soft launch, May for the ICOME submission alignment. Worth tracking.
+The Working Paper §10.5 names ICOME'26 (Université de Corse, June 2026) as the institutional pre-legitimation anchor. The v1 demo against [`second_method.md`](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/second_method.md) should ideally be ready for that. Concrete deadline: probably April 2026 for soft launch, May for the ICOME submission alignment. Worth tracking.
 
 ---
 
@@ -294,11 +294,11 @@ The Working Paper §10.5 names ICOME'26 (Université de Corse, June 2026) as the
 | Term | Meaning |
 |---|---|
 | **Brique** | French for "brick." Modular package in the inseme platform pattern (`inseme/packages/brique-*`). Each ships as `@inseme/brique-X` with a `brique.config.js` manifest that cop-host compiles. |
-| **COP** | Cognitive Orchestration Protocol. Specified in `inseme/packages/cop-core/Architecture.md`. Six primitives: Event, Topic, Task, Step, Artifact, Continuation. |
+| **COP** | Cognitive Orchestration Protocol. Specified in [`inseme/packages/cop-core/Architecture.md`](https://github.com/JeanHuguesRobert/inseme/blob/main/packages/cop-core/Architecture.md). Six primitives: Event, Topic, Task, Step, Artifact, Continuation. |
 | **COP/HITL** | Human-in-the-Loop COP profile. Commons is a declared consumer. |
 | **Continuation** | A COP `cop/continuation` Artifact — suspended reasoning state with a named resumer and resumption conditions. Commons attaches them to any artefact for the "what's next" property. |
-| **DHITL** | Democratic Humans in the Loop. The load-bearing AI Safety axiom in `marenostrum/DHITL.md`. Five-layer architecture; Commons sits at Layer 4. |
-| **DRSJ** | Denial → Reattribution → Suspicion → Justification. The four-stage cycle of interpretive stabilisation, named in `barons-Mariani/mimetic_desynchronization.md`. Resistance mechanism the v1 rollout posture (§11.3) is designed to delay. |
+| **DHITL** | Democratic Humans in the Loop. The load-bearing AI Safety axiom in [`marenostrum/DHITL.md`](https://github.com/JeanHuguesRobert/marenostrum/blob/main/DHITL.md). Five-layer architecture; Commons sits at Layer 4. |
+| **DRSJ** | Denial → Reattribution → Suspicion → Justification. The four-stage cycle of interpretive stabilisation, named in [`barons-Mariani/mimetic_desynchronization.md`](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/mimetic_desynchronization.md). Resistance mechanism the v1 rollout posture (§11.3) is designed to delay. |
 | **Burton conversion** | Robert Burton's *On Being Certain* (2008) showed certainty is a brain state. Rule 2 of second_method requires objections be distinguishable from feelings — converted into falsifiable claims. The `falsifiability_conversion` plugin operationalises this. |
 | **Kudocracy** | The complementary-currency concept from `Kudos/concept.md` — Mauss gift-economy semantics. Deferred reward primitive. |
 | **Mark** | A typed primitive in §4.5 rung 2 — `un-falsifiable`, `out-of-eligibility`, `withdrawn`, `new_editor`. Attaches to contributions, not users. |
@@ -313,7 +313,7 @@ The Working Paper §10.5 names ICOME'26 (Université de Corse, June 2026) as the
 
 ## 13. `cogentia.js` — the existing CLI face of Cogentia Commons
 
-The script at `cogentia/scripts/cogentia.js` is publicly named in `second_method.md` Coda and is **already operational**. Its docstring opens with: *"cogentia.js — Cogentia Commons CLI. Infrastructure for traceable, auditable, AI-connectable distributed knowledge production across git repositories."* The CLI is the existing Cogentia Commons; the brique is the GUI complement we're adding.
+The script at `cogentia/scripts/cogentia.js` is publicly named in [`second_method.md`](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/second_method.md) Coda and is **already operational**. Its docstring opens with: *"cogentia.js — Cogentia Commons CLI. Infrastructure for traceable, auditable, AI-connectable distributed knowledge production across git repositories."* The CLI is the existing Cogentia Commons; the brique is the GUI complement we're adding.
 
 **Existing commands (v0, in production):**
 
@@ -323,20 +323,20 @@ The script at `cogentia/scripts/cogentia.js` is publicly named in `second_method
 | `remove <name>` | Unregister a repo. | Inverse of `add`. |
 | `list` | Show registered repos + status. | Operational view of the federation. |
 | `status` | Quick health check across all repos. | Operational dashboard precursor. |
-| `scan` | List all markdown, flag unreferenced. | **Doctrinally load-bearing.** §1 of `second_method.md` Rule 4 — "every unanchored claim becomes visible." The current substring-based detection is a known correctness gap (see `cogentia_js_doctrine.md` memory). |
-| `init [name]` | Bootstrap `research/index.md` with Jekyll-ready front-matter. | Lightweight community founding (Workflow #9) — a community's manifest commit can follow. |
-| `ref <file>` | Generate a `research/index.md` entry for a file. | Subset of Document registration — produces the Published / Referenced row. |
-| `open [name]` | Open `research/index.md` in default editor. | Author UX shortcut. |
+| `scan` | List all markdown, flag unreferenced. | **Doctrinally load-bearing.** §1 of [`second_method.md`](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/second_method.md) Rule 4 — "every unanchored claim becomes visible." The current substring-based detection is a known correctness gap (see `cogentia_js_doctrine.md` memory). |
+| `init [name]` | Bootstrap [`research/index.md`](index.md) with Jekyll-ready front-matter. | Lightweight community founding (Workflow #9) — a community's manifest commit can follow. |
+| `ref <file>` | Generate a [`research/index.md`](index.md) entry for a file. | Subset of Document registration — produces the Published / Referenced row. |
+| `open [name]` | Open [`research/index.md`](index.md) in default editor. | Author UX shortcut. |
 | `sync` | `git pull --ff-only` in all repos. | Federation refresh. |
 | `graph` | Mermaid cross-reference graph of the corpus. | Visualization of the federation DAG (parent §5.7.3 cross-Document correlation). |
-| `check` | Validate URLs and internal links in every `research/index.md`. | Subset of `citation_validator` plugin (§6.3 + structural-plugins §1). |
-| `jekyll` | Ensure Jekyll front-matter on every `research/index.md`. | Maintenance / lint. |
+| `check` | Validate URLs and internal links in every [`research/index.md`](index.md). | Subset of `citation_validator` plugin (§6.3 + structural-plugins §1). |
+| `jekyll` | Ensure Jekyll front-matter on every [`research/index.md`](index.md). | Maintenance / lint. |
 
 **Subcommands the v1 spec adds (already specified):**
 
 | Subcommand | Where specified | Notes |
 |---|---|---|
-| `manifest --validate <path>` | `cogentia_commons_community_manifest.md` §7.2 | Validate a `COMMUNITY.md` against the schema; exit code 0 / 1 (schema violation) / 2 (amendment violation) / 3 (I/O). |
+| `manifest --validate <path>` | [`cogentia_commons_community_manifest.md`](cogentia_commons_community_manifest.md) §7.2 | Validate a `COMMUNITY.md` against the schema; exit code 0 / 1 (schema violation) / 2 (amendment violation) / 3 (I/O). |
 | `manifest --diff <commit-a> <commit-b>` | manifest §7.3 | Field-by-field diff of two manifest commits. |
 | `manifest --check-amend <prev> <proposed>` | manifest §7.4 | Validate amendment legality (immutable / forward-only / freely-amendable fields). |
 | `rebuild` | parent §5.7.9 conformance item 3 | Drop the Supabase projection and rebuild it from the Event log. v1 capability; v1.1 adds `--diff` for the differential audit. |
@@ -354,7 +354,7 @@ The script at `cogentia/scripts/cogentia.js` is publicly named in `second_method
 
 **Doctrinal commitments inherited by any change to the CLI** (from `cogentia_js_doctrine.md` memory):
 
-- The script is publicly named in `second_method.md` — surface stability (help text, command names, output format) is part of a published commitment.
+- The script is publicly named in [`second_method.md`](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/second_method.md) — surface stability (help text, command names, output format) is part of a published commitment.
 - Zero npm dependencies (per the script's own docstring and the doctrine).
 - MIT license for code; CC BY-SA 4.0 for documentation that quotes its surface.
 - Help text in the doctrinal Coda calls it `node scripts/cogentia.js`, not `node cogentia.js` — preserve the path form.
@@ -392,6 +392,7 @@ The conversation itself is the chat URL the next session may wish to consult, pe
 - [Cogentia Commons — Substantive Plugin Sub-Specifications](cogentia_commons_substantive_plugins.md)
 - [Cogentia Commons — Workflows](cogentia_commons_workflows.md)
 - [Cogentia Commons: A Platform Architecture for Collaborative Possibility Exploration Under Scientific Constraint](Cogentia_Commons_Working_Paper.md)
+- [cogentia.js — Tutorial and Near-Specification](cogentia_js_tutorial.md)
 - [Corpus Status — cogentia](corpus-status.md)
 - [Research Index — Cogentia](index.md)
 

@@ -3,7 +3,7 @@ title: "Corpus Status — cogentia"
 description: "Current state of the cogentia knowledge corpus — what is proved, what is open, what remains possible"
 layout: default
 nav_order: 2
-last_modified_at: 2026-05-26
+last_modified_at: 2026-05-27
 repository: "github.com/JeanHuguesRobert/cogentia"
 canonical_url: https://github.com/JeanHuguesRobert/cogentia/blob/main/research/corpus-status.md
 last_stamped_at: 2026-05-26
@@ -22,7 +22,7 @@ last_stamped_at: 2026-05-26
 
 *Auto-refreshed by `cogentia.js corpus-status`. The structural sections* —
 *Registered Repositories, Cross-Reference Graph, Published, What Remains Possible* —
-*are regenerated from the registry and from `research/index.md` on every run.*
+*are regenerated from the registry and from [`research/index.md`](index.md) on every run.*
 *The substantive sections* — *What Is Proved* *and* *Open Objections* —
 *are manually curated and preserved across refreshes.*
 
@@ -36,7 +36,7 @@ last_stamped_at: 2026-05-26
 | cogentia | ✅ | main | 2026-05-26 |
 | FractaVolta | ✅ | main | 2026-05-26 |
 | marenostrum | ✅ | main | 2026-05-26 |
-| barons-Mariani | ✅ | main | 2026-05-26 |
+| barons-Mariani | ✅ | main | 2026-05-27 |
 | inseme | ✅ | main | 2026-05-26 |
 | Inox | ✅ | master | 2026-05-26 |
 <!-- END_AUTO: registered_repos -->
@@ -195,9 +195,10 @@ graph LR
 |---|---|---|
 | [**Cogentia — the framework, in five distinctive moves**](../COGENTIA.md) *(identity document; entry point)* | this repo | 2026-05-13 |
 | [Agent-Resumable CLI — Externalized Judgment, Continuations, and Provider-Neutral Resumption for AI-Compatible CLI Tools](agent_resumable_cli.md) *(defines `cogentia.continuation.v1`, implemented by `scripts/cogentia.js continuation`)* | this repo | 2026-05-14 |
-| [Cognitive Packets — An Envelope and Payload Format for Human–AI and Multi-Agent Cooperation](cognitive_packets.md) *(working paper v0.3 — envelope/payload split ; paired operational prompt in `prompts/cognitive_packet.md`)* | this repo | 2026-05-21 |
+| [Cognitive Packets — An Envelope and Payload Format for Human–AI and Multi-Agent Cooperation](cognitive_packets.md) *(working paper v0.3 — envelope/payload split ; paired operational prompt in [`prompts/cognitive_packet.md`](../prompts/cognitive_packet.md))* | this repo | 2026-05-21 |
 | [Pipeline — From cognitive packets to source documents and derived products](pipeline.md) *(method note v0.4 — packet-switched, self-applicative; canonical operational method of the corpus)* | this repo | 2026-05-25 |
-| [Derived Products — Versioned Source Corpora, Situated Forms, and Publication Agents](derived_products.md) *(working paper v0.2 — source ↔ derived split; companion to `pipeline.md`)* | this repo | 2026-05-23 |
+| [Derived Products — Versioned Source Corpora, Situated Forms, and Publication Agents](derived_products.md) *(working paper v0.2 — source ↔ derived split; companion to [`pipeline.md`](pipeline.md))* | this repo | 2026-05-23 |
+| [cogentia.js — Tutorial and Near-Specification](cogentia_js_tutorial.md) *(auto-generated tutorial v0.1 — core ideas, storage model, 14 workflows, command reference for v0.10.0; sufficient for a faithful re-implementation in another language)* | this repo | 2026-05-27 |
 | [Cogentia Workflows](cogentia_workflows.md) *(private/group/public/federated workflow architecture, draft v0.2)* | this repo | 2026-05-11 |
 | [Cogentia Commons Working Paper](Cogentia_Commons_Working_Paper.md) | this repo | 2026 |
 | [Cogentia and Cogentigram](Cogentia-and-Cogentigram.md) | this repo | 2026 |
@@ -240,7 +241,7 @@ graph LR
 |---|---|---|
 | `cogentia.js scan` uses substring-basename matching, not proper markdown link parsing | self-audit (`cogentia_js_doctrine.md` memory + this session) | 🔄 Known doctrinal gap; `.cogentiaignore` works around it but does not replace the principled fix (Rule 4) |
 | Brique `@inseme/brique-cogentia-commons` is specified but not implemented | MVP spec §12 (own roadmap) | ❌ Implementation has not started; specs are the deliverable |
-| Corpus remains solo-authored — fractal claim unverified at scale | inherited from `second_method.md` §"Conditions of Failure" | ❌ Structural — invitation to fork is open, no external forks yet |
+| Corpus remains solo-authored — fractal claim unverified at scale | inherited from [`second_method.md`](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/second_method.md) §"Conditions of Failure" | ❌ Structural — invitation to fork is open, no external forks yet |
 | Multi-owner stewardship of `COMMUNITY.md` is single-Founder in v1 | COMMUNITY.md sub-spec §10.1 | 🔄 Named, deferred to v1.1 |
 | Retrofit / proxied actors workflow is sketched, schema is reserved, but full protocol is post-v1 | MVP spec §1.4 + Workflow #11 | 🔄 Deliberately deferred; v1 schema honours the future without implementing it |
 
@@ -266,12 +267,14 @@ graph LR
 *These documents link to this file:*
 - [Cogentia](../COGENTIA.md)
 - [Agent Navigation Guide (Context Server)](../docs/agent_context_server.md)
+- [The Knowledge Mesh (Decentralized Wiki)](../docs/knowledge_mesh.md)
 - [Agent-Resumable CLI](agent_resumable_cli.md)
 - [Cogentia Commons — COMMUNITY.md Sub-Specification](cogentia_commons_community_manifest.md)
 - [Cogentia Commons — Session Continuation Snapshot](cogentia_commons_continuation.md)
 - [Cogentia Commons — MVP Specification](cogentia_commons_mvp_spec.md)
 - [Cogentia Commons — Workflows](cogentia_commons_workflows.md)
 - [Cogentia Commons: A Platform Architecture for Collaborative Possibility Exploration Under Scientific Constraint](Cogentia_Commons_Working_Paper.md)
+- [cogentia.js — Tutorial and Near-Specification](cogentia_js_tutorial.md)
 - [COGENTIA v1.0 — Prompt d'analyse psychocognitive](cogentia_prompt_v1.md)
 - [Cogentia Workflows](cogentia_workflows.md)
 - [Cogentia and Cogentigrams](Cogentia-and-Cogentigram.md)

@@ -34,7 +34,7 @@ The amendment discipline matters because a community whose manifest can be silen
 - **Path.** `<home_repo>/COMMUNITY.md` at the root of the community's home GitHub repository.
 - **Owner.** Initially the community's founder (the user who emits the first `cogentia.manifest.updated` Event). Ownership can be transferred via a `cogentia.manifest.owner.transferred` Event signed by the current owner. Multi-owner stewardship is a v1.1 concern.
 - **License.** CC BY-SA 4.0 is the default for the prose; communities may pick another permissive license but MUST declare it in the manifest.
-- **First commit establishes priority** (per `second_method.md`). The community's existence dates from its first manifest commit, not from any prior announcement.
+- **First commit establishes priority** (per [`second_method.md`](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/second_method.md)). The community's existence dates from its first manifest commit, not from any prior announcement.
 
 ---
 
@@ -253,7 +253,7 @@ The `Commit: pending` token is replaced by the validator (at commit time) or by 
 
 ## 7. The `cogentia.js manifest` Validator
 
-The `cogentia.js` CLI (already named doctrinally in `second_method.md`) gains a `manifest` subcommand. The new surface is additive; existing commands (`scan`, `check`, `graph`, `add`) are unaffected.
+The `cogentia.js` CLI (already named doctrinally in [`second_method.md`](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/second_method.md)) gains a `manifest` subcommand. The new surface is additive; existing commands (`scan`, `check`, `graph`, `add`) are unaffected.
 
 ### 7.1 Subcommand contract
 
@@ -370,7 +370,7 @@ Every sanction Event records the `manifest_commit_at_issuance` field. The platfo
 
 ## 9. Worked Example — `barons-Mariani/COMMUNITY.md`
 
-A complete, conformant manifest for the home community of `second_method.md`.
+A complete, conformant manifest for the home community of [`second_method.md`](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/second_method.md).
 
 ```markdown
 ---

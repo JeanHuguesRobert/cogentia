@@ -292,6 +292,7 @@ PRESENTATION INSTRUCTIONS (important for data collection):
 ### Backlinks
 
 *These documents link to this file:*
+- [Concept Index — cogentia](concepts.md)
 - [Corpus Status — cogentia](corpus-status.md)
 - [Research Index — Cogentia](index.md)
 

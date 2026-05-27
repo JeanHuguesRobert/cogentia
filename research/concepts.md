@@ -81,7 +81,7 @@ The foundational system allowing AI agents to pause execution, seek human judgme
 - Agent-Resumable CLI
 
 **Reference documents:**
-- `research/agent_resumable_cli.md`
+- [`research/agent_resumable_cli.md`](agent_resumable_cli.md)
 
 ---
 
@@ -112,8 +112,8 @@ A minimal, transport-neutral, human-readable and machine-readable unit of cognit
 - Cogentia Commons
 
 **Reference documents:**
-- `research/cognitive_packets.md` (working paper v0.3 — envelope/payload structure)
-- `prompts/cognitive_packet.md`
+- [`research/cognitive_packets.md`](cognitive_packets.md) (working paper v0.3 — envelope/payload structure)
+- [`prompts/cognitive_packet.md`](../prompts/cognitive_packet.md)
 
 **Used in:**
 - Cogentia CLI packet sub-commands (proposed in §22.3 of the working paper)
@@ -131,7 +131,7 @@ A minimal, transport-neutral, human-readable and machine-readable unit of cognit
 The methodology surrounding Cogentia, establishing principles like "Every objection a first-class contribution."
 
 **Reference documents:**
-- `research/Cogentia_Commons_Working_Paper.md`
+- [`research/Cogentia_Commons_Working_Paper.md`](Cogentia_Commons_Working_Paper.md)
 
 ---
 
@@ -153,12 +153,12 @@ The operational method note of the Cogentia corpus: *pipeline on the surface, pa
 - Derived Product
 
 **Reference documents:**
-- `research/pipeline.md` (method note v0.4)
-- `research/derived_products.md` (companion paper v0.2)
+- [`research/pipeline.md`](pipeline.md) (method note v0.4)
+- [`research/derived_products.md`](derived_products.md) (companion paper v0.2)
 
 **Used in:**
-- the deployment of `projet_1755.md` (source) + `1755.md` (derived dashboard) in `barons-Mariani`
-- the source ↔ derived treatment of `christianity_verticalization.md` and its blogpost derivative
+- the deployment of [`projet_1755.md`](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/autonomia/projet_1755.md) (source) + [`1755.md`](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/autonomia/1755.md) (derived dashboard) in `barons-Mariani`
+- the source ↔ derived treatment of [`christianity_verticalization.md`](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/christianity_verticalization.md) and its blogpost derivative
 
 ---
 
@@ -178,7 +178,7 @@ A situated form of a versioned source corpus, adapted to a specific audience, pl
 - Source Document
 
 **Reference documents:**
-- `research/derived_products.md`
+- [`research/derived_products.md`](derived_products.md)
 
 ---
 
@@ -192,7 +192,7 @@ A situated form of a versioned source corpus, adapted to a specific audience, pl
 A model utilizing the Cogentiscope and Cogentigram to represent and enact user intent safely in cybernetic space.
 
 **Reference documents:**
-- `research/cogentia-digital-twin.md`
+- [`research/cogentia-digital-twin.md`](cogentia-digital-twin.md)
 
 ---
 
@@ -206,7 +206,7 @@ A model utilizing the Cogentiscope and Cogentigram to represent and enact user i
 An operational architecture allowing Command Line Interfaces to be interacted with safely by LLMs by enforcing deterministic boundaries and pause points.
 
 **Reference documents:**
-- `research/agent_resumable_cli.md`
+- [`research/agent_resumable_cli.md`](agent_resumable_cli.md)
 
 ---
 
@@ -220,7 +220,7 @@ An operational architecture allowing Command Line Interfaces to be interacted wi
 A mechanism for distilling the core actionable kernel from broader deliberations and dialogues.
 
 **Reference documents:**
-- `research/cogentia_commons_kernel_extractor.md`
+- [`research/cogentia_commons_kernel_extractor.md`](cogentia_commons_kernel_extractor.md)
 
 ---
 
@@ -234,8 +234,8 @@ A mechanism for distilling the core actionable kernel from broader deliberations
 The operational protocol and prompting framework for mapping the psychocognitive footprint of an AI or human agent.
 
 **Reference documents:**
-- `research/kys-prompt.md`
-- `research/cogentia_prompt_v1.md`
+- [`research/kys-prompt.md`](kys-prompt.md)
+- [`research/cogentia_prompt_v1.md`](cogentia_prompt_v1.md)
 
 ---
 
@@ -249,14 +249,26 @@ The operational protocol and prompting framework for mapping the psychocognitive
 Specific governance structures (private, group, public, federated) enabling systematic peer review and verifiable decision trails.
 
 **Reference documents:**
-- `research/cogentia_workflows.md`
+- [`research/cogentia_workflows.md`](cogentia_workflows.md)
 
 
 <!-- BEGIN_AUTO: backlinks -->
 ### Backlinks
 
 *These documents link to this file:*
+- [The Knowledge Mesh (Decentralized Wiki)](../docs/knowledge_mesh.md)
+- [Agent-Resumable CLI](agent_resumable_cli.md)
+- [Cogentia Commons — `kernel_extractor` Plugin Sub-Specification](cogentia_commons_kernel_extractor.md)
+- [Cogentia Commons: A Platform Architecture for Collaborative Possibility Exploration Under Scientific Constraint](Cogentia_Commons_Working_Paper.md)
+- [cogentia.js — Tutorial and Near-Specification](cogentia_js_tutorial.md)
+- [COGENTIA v1.0 — Prompt d'analyse psychocognitive](cogentia_prompt_v1.md)
+- [Cogentia Workflows](cogentia_workflows.md)
+- [The Sovereign Digital Twin: Cogentia, Cogentigram, Cogentiscope](cogentia-digital-twin.md)
+- [Cognitive Packets](cognitive_packets.md)
 - [Corpus Status — cogentia](corpus-status.md)
+- [Derived Products](derived_products.md)
 - [Research Index — Cogentia](index.md)
+- [kys-prompt.md](kys-prompt.md)
+- [Pipeline](pipeline.md)
 
 <!-- END_AUTO: backlinks -->

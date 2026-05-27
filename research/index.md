@@ -18,7 +18,7 @@ last_modified_at: 2026-05-22
 
 ## Foundation
 
-This repository instantiates the **cognitive infrastructure layer** of the [DHITL](https://github.com/JeanHuguesRobert/marenostrum/blob/main/DHITL.md) AI Safety anti-capture proposal — at both the individual scale (*Personal Cogentia*) and the collective scale (*Cogentia Commons*). The architectural axiom lives in `marenostrum/DHITL.md`. The method by which the proposal develops lives in [`barons-Mariani/research/second_method.md`](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/second_method.md).
+This repository instantiates the **cognitive infrastructure layer** of the [DHITL](https://github.com/JeanHuguesRobert/marenostrum/blob/main/DHITL.md) AI Safety anti-capture proposal — at both the individual scale (*Personal Cogentia*) and the collective scale (*Cogentia Commons*). The architectural axiom lives in [`marenostrum/DHITL.md`](https://github.com/JeanHuguesRobert/marenostrum/blob/main/DHITL.md). The method by which the proposal develops lives in [`barons-Mariani/research/second_method.md`](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/second_method.md).
 
 ---
 
@@ -33,9 +33,10 @@ This repository instantiates the **cognitive infrastructure layer** of the [DHIT
 |---|---|---|
 | [**Cogentia — the framework, in five distinctive moves**](../COGENTIA.md) *(identity document; entry point)* | this repo | 2026-05-13 |
 | [Agent-Resumable CLI — Externalized Judgment, Continuations, and Provider-Neutral Resumption for AI-Compatible CLI Tools](agent_resumable_cli.md) *(defines `cogentia.continuation.v1`, implemented by `scripts/cogentia.js continuation`)* | this repo | 2026-05-14 |
-| [Cognitive Packets — An Envelope and Payload Format for Human–AI and Multi-Agent Cooperation](cognitive_packets.md) *(working paper v0.3 — envelope/payload split ; paired operational prompt in `prompts/cognitive_packet.md`)* | this repo | 2026-05-21 |
+| [Cognitive Packets — An Envelope and Payload Format for Human–AI and Multi-Agent Cooperation](cognitive_packets.md) *(working paper v0.3 — envelope/payload split ; paired operational prompt in [`prompts/cognitive_packet.md`](../prompts/cognitive_packet.md))* | this repo | 2026-05-21 |
 | [Pipeline — From cognitive packets to source documents and derived products](pipeline.md) *(method note v0.4 — packet-switched, self-applicative; canonical operational method of the corpus)* | this repo | 2026-05-25 |
-| [Derived Products — Versioned Source Corpora, Situated Forms, and Publication Agents](derived_products.md) *(working paper v0.2 — source ↔ derived split; companion to `pipeline.md`)* | this repo | 2026-05-23 |
+| [Derived Products — Versioned Source Corpora, Situated Forms, and Publication Agents](derived_products.md) *(working paper v0.2 — source ↔ derived split; companion to [`pipeline.md`](pipeline.md))* | this repo | 2026-05-23 |
+| [cogentia.js — Tutorial and Near-Specification](cogentia_js_tutorial.md) *(auto-generated tutorial v0.1 — core ideas, storage model, 14 workflows, command reference for v0.10.0; sufficient for a faithful re-implementation in another language)* | this repo | 2026-05-27 |
 | [Cogentia Workflows](cogentia_workflows.md) *(private/group/public/federated workflow architecture, draft v0.2)* | this repo | 2026-05-11 |
 | [Cogentia Commons Working Paper](Cogentia_Commons_Working_Paper.md) | this repo | 2026 |
 | [Cogentia and Cogentigram](Cogentia-and-Cogentigram.md) | this repo | 2026 |
@@ -111,6 +112,7 @@ This repository instantiates the **cognitive infrastructure layer** of the [DHIT
 - [Cogentia Commons — Substantive Plugin Sub-Specifications](cogentia_commons_substantive_plugins.md)
 - [Cogentia Commons — Workflows](cogentia_commons_workflows.md)
 - [Cogentia Commons: A Platform Architecture for Collaborative Possibility Exploration Under Scientific Constraint](Cogentia_Commons_Working_Paper.md)
+- [cogentia.js — Tutorial and Near-Specification](cogentia_js_tutorial.md)
 - [COGENTIA v1.0 — Prompt d'analyse psychocognitive](cogentia_prompt_v1.md)
 - [Cogentia Workflows](cogentia_workflows.md)
 - [Cogentia and Cogentigrams](Cogentia-and-Cogentigram.md)
@@ -122,6 +124,7 @@ This repository instantiates the **cognitive infrastructure layer** of the [DHIT
 - [Derived Products](derived_products.md)
 - [kys-prompt.md](kys-prompt.md)
 - [Pipeline](pipeline.md)
+- [From Biometrics and Psychometrics to Structural Signatures](structural_signatures.md)
 - [Trail: From Autonomia to DHITL](trails/from_autonomia_to_dhitl.md)
 - [Trail: From Method to Machine](trails/from_method_to_machine.md)
 

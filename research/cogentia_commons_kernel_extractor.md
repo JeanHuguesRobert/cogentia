@@ -289,7 +289,7 @@ If a Document is a narrative essay with no formal Thesis/Premise/Claim structure
 The plugin scans for the markdown anchor patterns already in use across the corpus:
 
 - `## Heading text {#anchor-id}` (next to a heading)
-- `*statement* {#anchor-id}` (inline, in `second_method.md` Rule 0–4 style)
+- `*statement* {#anchor-id}` (inline, in [`second_method.md`](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/second_method.md) Rule 0–4 style)
 - `**Bold lead** {#anchor-id} — rest of text`
 
 Any string matching `\{#[a-z0-9-]+\}` is collected into `existingAnchors` (the platform pre-populates this, but the plugin verifies).
@@ -545,7 +545,7 @@ The two paths are not exclusive. Most Authors will use both for any substantial 
 
 ### 11.3 First-time registration of an existing-with-anchors document
 
-A Document like `second_method.md` already has hand-written `{#rule-0}`, `{#claim-3}` anchors. On first-run extraction, the plugin adopts these (per §7) and proposes the rest. The output mixes `anchor_source: "preexisting"` and `anchor_source: "generated"`. The Author confirms or renames.
+A Document like [`second_method.md`](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/second_method.md) already has hand-written `{#rule-0}`, `{#claim-3}` anchors. On first-run extraction, the plugin adopts these (per §7) and proposes the rest. The output mixes `anchor_source: "preexisting"` and `anchor_source: "generated"`. The Author confirms or renames.
 
 ---
 
@@ -571,7 +571,7 @@ Per parent spec §1.1, the costs of any of these are entirely reputational (the 
 The plugin SHIPS with a fixture directory at `cogentia/plugins/kernel_extractor/fixtures/`:
 
 - `01_simple_essay.md` — a small Document with one Thesis, three Premises, two Claims. Reference output: `01_simple_essay.expected.json`.
-- `02_second_method_excerpt.md` — a portion of the real `second_method.md` including hand-written anchors. Tests adoption (§7).
+- `02_second_method_excerpt.md` — a portion of the real [`second_method.md`](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/second_method.md) including hand-written anchors. Tests adoption (§7).
 - `03_narrative_letter.md` — a Document that should produce mostly empty lists with a `notes` explanation (§6.6 forbidden behaviour).
 - `04_delta_simple_edit.md` + `04_existing_kernel.json` + `04_diff.patch` — a delta-mode invocation where one Premise's text is updated. Expected: a single `edit-text` proposal.
 - `05_delta_split.md` + similar — delta-mode where one Premise should split into two.
@@ -597,7 +597,7 @@ Per the `cogentia.js doctrinal status` posture (memory), fixtures for any doctri
 
 1. **Per-section vs whole-document extraction.** Long Documents (>50 KB) exceed comfortable prompt sizes. v0.1.0 says "outside scope"; v0.2.0 needs a fragmentation strategy. Candidate: per-section extraction with explicit cross-section linkage in a synthesis pass.
 2. **Multiple-Thesis Documents.** Some Documents argue several theses. v0.1.0 says "exactly one or none." A Document with two co-equal theses is a v0.2.0 concern; the practical workaround in v0.1.0 is to split into two Documents.
-3. **Bilingual extraction.** The doctrine is bilingual (FR/EN). `second_method.md` mixes both. v0.1.0 ships an English stop-word list; v0.2.0 should detect language per section.
+3. **Bilingual extraction.** The doctrine is bilingual (FR/EN). [`second_method.md`](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/second_method.md) mixes both. v0.1.0 ships an English stop-word list; v0.2.0 should detect language per section.
 4. **Confidence calibration.** The plugin emits `confidence: high | medium | low` qualitatively. There is no calibration. Authors who have run it many times will develop a sense for what `medium` means from each LLM. A future version might quantify, but the qualitative form is more honest in v0.1.0.
 5. **Hand-written anchor variant conventions.** The corpus uses `{#claim-X}`, `{#rule-X}`, `{#premise-X}` interchangeably across documents. The plugin adopts whatever it finds. A future tightening might standardise; for v0.1.0, plurality is preserved.
 6. **Re-extraction discipline.** The plugin's delta-mode and §5.6's anchor migration are formally distinct, but in practice an Author may invoke them in confusing combinations. v0.2.0 should specify an Author-facing UX that makes the difference between "small edits — let §5.6 handle it" and "big restructure — run delta-mode after migration settles" explicit and visible.
@@ -637,6 +637,7 @@ The plugin's input/output JSON Schema files, fixtures, and any reference impleme
 - [Cogentia Commons — Substantive Plugin Sub-Specifications](cogentia_commons_substantive_plugins.md)
 - [Cogentia Commons — Workflows](cogentia_commons_workflows.md)
 - [Cogentia Commons: A Platform Architecture for Collaborative Possibility Exploration Under Scientific Constraint](Cogentia_Commons_Working_Paper.md)
+- [Concept Index — cogentia](concepts.md)
 - [Research Index — Cogentia](index.md)
 
 <!-- END_AUTO: backlinks -->

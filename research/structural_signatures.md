@@ -50,7 +50,7 @@ The paper concludes that such signatures call for fiduciary-style governance. A 
 
 **v0.9** is the publication-stabilization pass.
 
-It incorporates the deflation, operational-boundary, entanglement, related-work, and recent-developments passes completed in v0.7–v0.8c. It corrects version consistency, adds a final operational boundary example, further deflates residual novelty and institutional claims, and updates the suggested `research/index.md` entry.
+It incorporates the deflation, operational-boundary, entanglement, related-work, and recent-developments passes completed in v0.7–v0.8c. It corrects version consistency, adds a final operational boundary example, further deflates residual novelty and institutional claims, and updates the suggested [`research/index.md`](index.md) entry.
 
 This version is suitable for wider circulation as a Cogentia working paper, while remaining open to external legal, biometric, technical, and governance review.
 
@@ -143,7 +143,7 @@ Thus:
 
 > **Cognitive packets preserve continuity of work. Structural signatures preserve continuity of recognizable agency.**
 
-This article should therefore be catalogued in `research/index.md` near `cogentia-digital-twin.md` and `Cogentia-and-Cogentigram.md` as a working paper on the structural extension of the Cogentigram.
+This article should therefore be catalogued in [`research/index.md`](index.md) near [`cogentia-digital-twin.md`](cogentia-digital-twin.md) and [`Cogentia-and-Cogentigram.md`](Cogentia-and-Cogentigram.md) as a working paper on the structural extension of the Cogentigram.
 
 ---
 
@@ -1008,6 +1008,9 @@ Produce a separate applied note connecting:
 ### Backlinks
 
 *These documents link to this file:*
+- [Cogentia and Cogentigrams](Cogentia-and-Cogentigram.md)
+- [The Sovereign Digital Twin: Cogentia, Cogentigram, Cogentiscope](cogentia-digital-twin.md)
+- [Research Index — Cogentia](index.md)
 - [From Biometrics and Psychometrics to Structural Signatures](structural_signatures.md)
 
 <!-- END_AUTO: backlinks -->

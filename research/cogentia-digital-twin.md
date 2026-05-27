@@ -173,8 +173,10 @@ This document is a position paper, not a product announcement. It is published i
 - [Agent-Resumable CLI](agent_resumable_cli.md)
 - [Cogentia and Cogentigrams](Cogentia-and-Cogentigram.md)
 - [Cognitive Packets](cognitive_packets.md)
+- [Concept Index — cogentia](concepts.md)
 - [Corpus Status — cogentia](corpus-status.md)
 - [Research Index — Cogentia](index.md)
+- [From Biometrics and Psychometrics to Structural Signatures](structural_signatures.md)
 - [Trail: From Method to Machine](trails/from_method_to_machine.md)
 
 <!-- END_AUTO: backlinks -->
