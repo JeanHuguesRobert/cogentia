@@ -1,111 +1,119 @@
-# Jean Hugues Robert — Interaction Packets Dashboard
+# Jean Hugues Robert — Tableau de bord Interaction Packets
 
-## Purpose
+## Objet
 
-This dashboard tracks selected public-interest interactions initiated by Jean Hugues Robert and related to his open, non-profit and public-interest work.
+Ce tableau de bord suit certaines interactions d’intérêt général initiées par Jean Hugues Robert dans le cadre de ses activités ouvertes, bénévoles et non lucratives.
 
-It is not a generic presentation of the Interaction Packets method.
+Il ne s’agit pas d’une simple présentation générique de la méthode Interaction Packets.
 
-It is the current public dashboard of traced interactions.
+Il s’agit du tableau de bord public actuel des interactions tracées.
 
-## Method
+## Méthode
 
-Each interaction may be documented as:
+Chaque interaction peut être documentée sous forme :
 
-- a Markdown register entry;
-- a YAML interaction packet;
-- a readable public note;
-- a correction when the initial interpretation was incomplete or wrong.
+- d’entrée dans un registre Markdown ;
+- de paquet interactionnel YAML ;
+- de note publique lisible ;
+- de correction lorsque l’interprétation initiale était incomplète ou erronée.
 
-The objective is to trace requests, replies, refusals, delays, silences, follow-ups and corrections.
+L’objectif est de tracer :
 
-## Current register
+- demandes ;
+- réponses ;
+- refus ;
+- délais ;
+- silences ;
+- relances ;
+- corrections.
 
-Main register:
+## Registre actuel
+
+Registre principal :
 
 - [mail_trace.md](./mail_trace.md)
 
-## Current traced cases
+## Cas actuellement tracés
 
-| ID | Date | Subject | Counterparty | Status | Disclosure | Packet |
+| ID | Date | Sujet | Interlocuteur | Statut | Divulgation | Paquet |
 |---|---:|---|---|---|---|---|
-| 2026-05-04-001 | 2026-05-04 | Session MareNostrum | Université de Corse | Reply received: negative | D2 | [YAML](./packets/2026/2026-05-04-session_marenostrum.yaml) |
+| 2026-05-04-001 | 2026-05-04 | Session MareNostrum | Université de Corse | Réponse reçue : négative | D2 | [YAML](./packets/2026/2026-05-04-session_marenostrum.yaml) |
 
-## Case 2026-05-04-001 — MareNostrum / Université de Corse
+## Cas 2026-05-04-001 — MareNostrum / Université de Corse
 
-### Request
+### Demande
 
-A proposal was sent to Université de Corse in the context of ICOME.
+Une proposition a été envoyée à l’Université de Corse dans le contexte d’ICOME.
 
-The topic was MareNostrum:
+Le sujet était MareNostrum :
 
-- island solar energy;
-- computational sovereignty;
-- AI inference;
-- Mediterranean cooperation.
+- énergie solaire insulaire ;
+- souveraineté computationnelle ;
+- inférence IA ;
+- coopération méditerranéenne.
 
-After the refusal to include MareNostrum in the official conference programme, a lighter request was made:
+Après le refus d’intégrer MareNostrum au programme officiel de la conférence, une demande plus légère a été formulée :
 
-- availability of a room;
-- one evening on 8, 9 or 10 June;
-- informal roundtable;
-- outside the official programme;
-- duration: around 90 minutes;
-- no budget requested;
-- ICOME participants welcome if interested.
+- mise à disposition d’une salle ;
+- un soir des 8, 9 ou 10 juin ;
+- table ronde informelle ;
+- hors programme officiel ;
+- durée d’environ 90 minutes ;
+- sans demande de budget ;
+- avec participation possible de personnes présentes à ICOME si elles le souhaitaient.
 
-### Result
+### Résultat
 
-A negative reply was received on 2026-05-05.
+Une réponse négative a été reçue le 2026-05-05.
 
-The reply stated that:
+La réponse indiquait que :
 
-- the special session proposal had already received a negative answer;
-- the request for a room for an informal roundtable outside the official programme was also refused.
+- la proposition de session spéciale avait déjà reçu une réponse négative ;
+- la demande de salle pour une table ronde informelle hors programme officiel était également refusée.
 
 ### Correction
 
-This case was initially interpreted as `No response detected`.
+Ce cas avait initialement été interprété comme `Aucune réponse détectée`.
 
-Thread inspection showed that a reply had in fact been received.
+L’inspection du fil a montré qu’une réponse avait bien été reçue.
 
-The register was corrected accordingly.
+Le registre a été corrigé en conséquence.
 
-This correction is methodologically important: the system must trace facts, not merely confirm impressions.
+Cette correction est méthodologiquement importante : le système doit tracer les faits, et non simplement confirmer des impressions.
 
-## Interpretation layer
+## Couche interprétative
 
-This case may illustrate a broader difficulty in establishing local cooperation around open, non-profit and public-interest initiatives in Corsica.
+Ce cas peut illustrer une difficulté plus générale à établir des coopérations locales autour d’initiatives ouvertes, bénévoles et d’intérêt général en Corse.
 
-It does not, by itself, prove a general thesis.
+Il ne démontre pas, à lui seul, une thèse générale.
 
-It is one documented case among others to be accumulated, compared and corrected over time.
+Il constitue un cas documenté parmi d’autres, destiné à être accumulé, comparé et corrigé dans le temps.
 
-## Related method documents
+## Documents liés
 
-- [Interaction Packets overview](./overview.md)
-- [Public-use package](./PACKAGE.md)
-- [Mail trace pipeline](./mail_trace_pipeline.md)
-- [Extraction prompt](./prompts/extract_interaction_packet.md)
+- [Présentation Interaction Packets](./overview.md)
+- [Package réutilisable](./PACKAGE.md)
+- [Pipeline Mail Trace](./mail_trace_pipeline.md)
+- [Prompt d’extraction](./prompts/extract_interaction_packet.md)
 
-## Status vocabulary
+## Vocabulaire des statuts
 
-Recommended observable statuses:
+Statuts observables recommandés :
 
-- `sent`
-- `reply_received`
-- `reply_received_negative`
-- `reply_received_positive`
-- `no_response_detected`
-- `followup_sent`
-- `redirected`
-- `closed`
-- `corrected`
+- `envoyé`
+- `réponse_reçue`
+- `réponse_reçue_négative`
+- `réponse_reçue_positive`
+- `aucune_réponse_detectée`
+- `relance_envoyée`
+- `redirigé`
+- `clos`
+- `corrigé`
 
-## Rule
+## Règle
 
-Facts first.
+Les faits d’abord.
 
-Interpretations second.
+Les interprétations ensuite.
 
-Corrections always visible when they matter.
+Les corrections doivent rester visibles lorsqu’elles sont importantes.
