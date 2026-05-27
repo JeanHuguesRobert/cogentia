@@ -1,11 +1,10 @@
 ---
-
 title: "Agent-Resumable CLI"
 subtitle: "Externalized Judgment, Continuations, and Provider-Neutral Resumption for AI-Compatible Command-Line Tools"
 author: "Jean Hugues Noël Robert, baron Mariani"
 affiliation: "Institut Mariani / C.O.R.S.I.C.A., 1 cours Paoli, F-20250 Corte, Corsica"
 date: "2026-05-14"
-status: "Working paper"
+status: working-paper — Working paper
 license: "CC BY-SA 4.0 for text; MIT for associated code"
 spdx: "CC-BY-SA-4.0"
 canonical_url: https://github.com/JeanHuguesRobert/cogentia/blob/main/research/agent_resumable_cli.md

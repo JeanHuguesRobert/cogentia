@@ -30,9 +30,8 @@ related_documents:
   - "cogentia/research/derived_products.md"
 reviewed_by:
   - "Grok — external AI reviewer"
-translation_from: "auto_porteur.md v0.1"
 ai_assisted_by:
-  - "ChatGPT — translation, revision, consolidation"
+  - "ChatGPT — drafting, revision, consolidation"
 ---
 
 # Self-Contained Documents in an Interconnected Corpus
@@ -158,13 +157,13 @@ A cross-reference becomes problematic when it:
 
 Weak formulation:
 
-> The concept of democratic AI safety is already established in `democratic_ai_safety.md`; therefore, this document assumes it without further explanation.
+> The concept of democratic AI safety is already established in [`democratic_ai_safety.md`](democratic_ai_safety.md); therefore, this document assumes it without further explanation.
 
 Problem: the reader cannot assess the claim without reading another document. The reference replaces the argument.
 
 Improved formulation:
 
-> By democratic AI safety, this document means the requirement that AI systems should increase, rather than dissolve, the capacity of human communities to understand, contest, revise and govern decisions that affect them. The longer version of this argument is developed in `democratic_ai_safety.md`.
+> By democratic AI safety, this document means the requirement that AI systems should increase, rather than dissolve, the capacity of human communities to understand, contest, revise and govern decisions that affect them. The longer version of this argument is developed in [`democratic_ai_safety.md`](democratic_ai_safety.md).
 
 Here, the reference enriches the argument but does not carry it alone.
 
@@ -172,7 +171,7 @@ Here, the reference enriches the argument but does not carry it alone.
 
 Acceptable formulation:
 
-> An act is “engaging” when it produces, prepares or propagates a significant effect in a system of responsibility. This document uses the minimal working definition above; a more detailed operational model is developed in `traceabilite_des_actes.md`.
+> An act is “engaging” when it produces, prepares or propagates a significant effect in a system of responsibility. This document uses the minimal working definition above; a more detailed operational model is developed in [`traceabilite_des_actes.md`](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/traceabilite_des_actes.md).
 
 The reader can understand the claim immediately. The reference only provides a deeper version.
 
@@ -286,9 +285,9 @@ In short, self-containment is a matter of proportion, not perfection.
 
 Future revisions should:
 
-- connect this note more explicitly to `cogentia/research/pipeline.md`;
+- connect this note more explicitly to [`cogentia/research/pipeline.md`](pipeline.md);
 - define levels of self-containment depending on audience and format;
-- test the principle on `traceabilite_des_actes.md`;
+- test the principle on [`traceabilite_des_actes.md`](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/traceabilite_des_actes.md);
 - test the principle on a Substack article and a Facebook post;
 - distinguish legitimate conceptual dependency from circular self-reference;
 - adapt the checklist for very short public products.
@@ -324,3 +323,15 @@ continuation:
     - "how to distinguish legitimate conceptual dependency from circularity?"
     - "how should self-containment apply to very short derived products?"
 ```
+
+
+<!-- BEGIN_AUTO: backlinks -->
+### Backlinks
+
+*These documents link to this file:*
+- [Corpus Status — cogentia](corpus-status.md)
+- [Democratic AI Safety — alias cogentia](democratic_ai_safety.md)
+- [Research Index — Cogentia](index.md)
+- [Pipeline](pipeline.md)
+
+<!-- END_AUTO: backlinks -->

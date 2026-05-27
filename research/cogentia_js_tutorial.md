@@ -2,12 +2,10 @@
 title: "cogentia.js — Tutorial and Near-Specification"
 subtitle: "From core ideas to workflows to command reference — sufficient for a faithful re-implementation in another language, storage layer, or rendering format"
 version: "0.1"
-status: "tutorial / near-functional specification"
+status: working-paper — tutorial / near-functional specification
 date: "2026-05-27"
 author: "Jean Hugues Noël Robert, baron Mariani"
 affiliation: "Institut Mariani / C.O.R.S.I.C.A., 1 cours Paoli, F-20250 Corte, Corsica"
-repository: "JeanHuguesRobert/cogentia"
-intended_path: "research/cogentia_js_tutorial.md"
 license: "CC BY-SA 4.0"
 language: "en"
 target_implementation: "cogentia.js v0.10.0"
@@ -202,6 +200,18 @@ Every state-changing call appends one JSON line to `.cogentia/audit.jsonl` in th
 Read-only commands (`list`, `status`, `scan`, `graph`, `check`) do not write to the audit log. The audit log is the **process layer of the second method** in operational form.
 
 ### 1.10 The cogentia:// URI scheme
+
+### 1.11 Inversion of control extended to meta-operations
+
+The core inversion of control ("the tool emits a continuation instead of calling an embedded AI") can and should apply even to decisions *about the continuation system itself*.
+
+Examples observed in practice:
+- Deciding whether a long-dormant continuation is still relevant (`human_judgment_on_continuation`).
+- Cleaning the continuation queue in a governed way (`prune_continuation_judgment`).
+
+This creates a coherent recursive model: any judgment that is not mechanically obvious can be externalized, including judgments on the judgment objects.
+
+---
 
 For cross-repo references with commit-pinned addressing:
 
@@ -520,7 +530,26 @@ cogentia continuation log ctn_a3f9b1c2
 
 Replays every audit entry referencing the id (emit, prioritize, validate, export, resume, fail, abort, log itself). Includes `narrative.short` annotations when present. Works even after `prune` removes the continuation file, as long as `.cogentia/audit.jsonl` still carries the trace.
 
-### 3.9 Registering a concept
+### 3.9 Externalizing meta-decisions on continuations
+
+It is sometimes necessary to decide the fate of existing continuations themselves (e.g. during cleanup with `prune`, or when an agent wants a human opinion on a specific continuation).
+
+In line with the inversion of control principle, `cogentia.js` offers two complementary mechanisms:
+
+- **Mechanical pruning** (`continuation prune --mechanical`): The tool can autonomously delete clearly obsolete continuations (e.g. aborted ones, very old dormant ones without task, obvious test artifacts).
+- **Judgment emission**: For ambiguous cases, the tool emits a dedicated continuation (`prune_continuation_judgment` or `human_judgment_on_continuation`) instead of deciding locally.
+
+The dedicated helper:
+
+```bash
+cogentia continuation consult <id> [--question "..."]
+```
+
+creates a well-formed continuation that asks the human (or another agent) for a structured decision on the target continuation. By default, it includes strong guidance for AI agents to perform genuine analysis before proposing an answer (`analysis_instructions`, pre-defined `alternatives`, and an `expected_result_schema` that encourages `nuances` and `follow_up`).
+
+This pattern allows "continuations about continuations" (meta-continuations) while keeping the core tool deterministic and auditable.
+
+### 3.10 Registering a concept
 
 ```bash
 # 1. ensure research/concepts.md exists
@@ -718,7 +747,8 @@ Side-effect taxonomy used below:
 | `validate <id> [<step_result.json>]` | Pre-flight: run continuation shape validator + optional step_result validator. Exit 1 on errors. | (no transition) | audit-log |
 | `export <id> [-o <file>] [--bundle]` | Serialize for handoff. `--bundle` includes predecessor + successor. Stdout by default. | (no transition) | file-write (when -o), audit-log |
 | `log <id>` | Replay audit.jsonl entries referencing the id, chronologically. Best-effort if continuation file missing. | (no transition) | audit-log |
-| `prune [--days <N>]` | Delete aborted/dormant continuations older than N days (default 30). | (terminal — file deletion only) | file-write, audit-log |
+| `prune` | Advanced continuation cleanup. Supports `--days` / `--older-than`, `--status`, `--task <substring>`, `--mechanical` (only safe/obvious cases), and `--apply` (dry-run by default). When not in mechanical mode, the command can emit `prune_continuation_judgment` continuations for cases requiring human or agent judgment. | file-write (deletion) + possible continuation creation, audit-log |
+| `consult <id> [--question "..."]` | Emit a `human_judgment_on_continuation` asking for a structured opinion on an existing continuation (relevance, priority, keep / archive / delete / postpone). Includes rich default analysis instructions for AI agents. The emitted continuation contains `analysis_instructions`, `alternatives`, and an enriched `expected_result_schema`. | fs-create (new continuation), audit-log |
 | `schema` | Print canonical schema reference. | (none) | (none) |
 
 ### 4.11 Scheduler

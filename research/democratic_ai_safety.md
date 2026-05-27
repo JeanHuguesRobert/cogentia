@@ -1,6 +1,6 @@
 ---
 canonical_url: https://github.com/JeanHuguesRobert/cogentia/blob/main/research/democratic_ai_safety.md
-status: alias
+status: working-paper — alias
 author: "Jean Hugues Noël Robert, baron Mariani"
 affiliation: "Institut Mariani / C.O.R.S.I.C.A., 1 cours Paoli, F-20250 Corte, Corsica"
 license: "CC BY-SA 4.0"
@@ -36,5 +36,6 @@ The earlier French Cogentia-format draft is preserved in the git history of this
 - [The Knowledge Mesh (Decentralized Wiki)](../docs/knowledge_mesh.md)
 - [Corpus Status — cogentia](corpus-status.md)
 - [Research Index — Cogentia](index.md)
+- [Self-Contained Documents in an Interconnected Corpus](self_contained_documents.md)
 
 <!-- END_AUTO: backlinks -->

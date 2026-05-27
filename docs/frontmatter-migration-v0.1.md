@@ -67,7 +67,7 @@ Ces champs seront supprimés lors de la migration (pas de phase de dépréciatio
 ### Phase 3 — Nettoyage & Validation
 - Lancer `cogentia frontmatter check` sur l’ensemble du périmètre.
 - Corriger les cas particuliers manuellement si besoin.
-- Mettre à jour la documentation (ce fichier + `frontmatter-schema.md`).
+- Mettre à jour la documentation (ce fichier + [`frontmatter-schema.md`](frontmatter-schema.md)).
 
 ## Outil de migration
 
@@ -87,3 +87,11 @@ Prochaines étapes :
 - Valider ce plan de migration directe.
 - Commencer le développement de l’outil de migration.
 - Affiner les règles d’équivalence et les valeurs par défaut.
+
+<!-- BEGIN_AUTO: backlinks -->
+### Backlinks
+
+*These documents link to this file:*
+- [Frontmatter Schema — v0.1 (Corpus)](frontmatter-schema.md)
+
+<!-- END_AUTO: backlinks -->

@@ -4,10 +4,9 @@ subtitle: "Method Packets, Continuations, and the Generative Corpus"
 description: "Working paper defining Cogentia Commons as an infrastructure for producing, transmitting, criticizing, and improving cognitive packets, method packets, and corpus-based continuations across humans, AI agents, tools, and repositories."
 author: "Jean Hugues Noël Robert, baron Mariani"
 affiliation: "Institut Mariani / C.O.R.S.I.C.A."
-address: "1 cours Paoli, F-20250 Corte, Corsica, France"
-email: "jhr@baronsmariani.org"
-website: "https://fractavolta.com"
-repository: "https://github.com/JeanHuguesRobert/cogentia"
+x-address: "1 cours Paoli, F-20250 Corte, Corsica, France"
+x-email: "jhr@baronsmariani.org"
+x-website: "https://fractavolta.com"
 canonical_url: https://github.com/JeanHuguesRobert/cogentia/blob/main/research/cogentia_commons_method_packets.md
 version: "0.1"
 status: "working-paper"
@@ -26,7 +25,7 @@ tags:
   - human-ai-cooperation
   - seconde-methode
   - generalized-packet-networks
-keywords:
+x-keywords:
   - Cogentia Commons
   - cognitive packets
   - method packets

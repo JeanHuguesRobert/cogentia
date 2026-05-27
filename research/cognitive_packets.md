@@ -4,7 +4,7 @@ subtitle: "An Envelope and Payload Format for Human–AI and Multi-Agent Coopera
 author: "Jean Hugues Noël Robert, baron Mariani"
 affiliation: "Institut Mariani / C.O.R.S.I.C.A., 1 cours Paoli, F-20250 Corte, Corsica"
 date: "2026-05-21"
-status: "Working paper"
+status: working-paper — Working paper
 version: "0.3"
 license: "CC BY-SA 4.0 for text; MIT for associated schemas or code"
 spdx: "CC-BY-SA-4.0"

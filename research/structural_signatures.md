@@ -4,7 +4,7 @@ subtitle: "Non-Biographical Identifying Structures, Cogentigrams, and Consent-Ba
 author: "Jean Hugues Noël Robert, baron Mariani"
 affiliation: "Institut Mariani / C.O.R.S.I.C.A., 1 cours Paoli, F-20250 Corte, Corsica"
 date: "2026-05-22"
-status: "Working paper"
+status: working-paper — Working paper
 version: "0.9"
 license: "CC BY-SA 4.0 for text; MIT for associated schemas or code"
 spdx: "CC-BY-SA-4.0"

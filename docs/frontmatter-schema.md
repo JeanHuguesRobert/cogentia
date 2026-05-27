@@ -14,8 +14,9 @@ Ce document définit le schéma de métadonnées (frontmatter) utilisé dans le 
 
 - Tous les documents de fond (research, specs, notes importantes) doivent avoir un frontmatter.
 - Les valeurs par défaut sont à privilégier pour alléger l’écriture.
-- Les synonymes sont tolérés **si et seulement si** une règle d’équivalence est documentée dans ce fichier.
+- Les synonymes sont tolérés **si et seulement si** une règle d’équivalence est documentée dans [`frontmatter-synonym-mapping.md`](frontmatter-synonym-mapping.md).
 - `privacy` est `public` par défaut. On ne le précise que si on sort de ce régime.
+- Un document **entièrement automatisé** (aucun contributeur humain) doit être identifiable facilement via le champ `generated_by`.
 
 ---
 
@@ -124,28 +125,29 @@ generated_by: "Claude 4.3 (génération automatique complète)"
 
 ### Règle sur les synonymes et la tolérance aux styles
 
-- Les synonymes sont **tolérés** tant qu’une règle d’équivalence claire est documentée dans ce fichier.
-- Il n’y a **pas de date limite** pour l’utilisation des formes alternatives (sauf décision explicite de dépréciation, qui sera alors marquée avec `deprecated`).
+- Les synonymes sont **tolérés** tant qu’une règle d’équivalence claire est documentée dans [`frontmatter-synonym-mapping.md`](frontmatter-synonym-mapping.md).
+- Il n’y a **pas de date limite** d’utilisation des formes alternatives (sauf décision explicite de dépréciation, qui sera alors marquée `deprecated` dans le fichier de mapping).
 - Le « style » fait partie de la personnalité de l’auteur (humain ou agent). On n’essaie pas d’uniformiser de façon excessive.
 
-Règles d’équivalence actuelles :
-- `author` / `authors` → pas automatiquement équivalent à `creator`.
-  - Utiliser `author` quand il existe un auteur humain identifiable (respect du Droit d’Auteur).
-  - Utiliser `creator` quand la production est majoritairement ou entièrement mécanique.
-- `date` / `created` → équivalents pour la date principale du document.
-- `last_modified_at` / `updated` → équivalents.
-- `source_document` / `derived_from` → `source_document` est la forme préférée.
-- `tags` / `keywords` → `tags` est la forme préférée.
+Règles d’équivalence principales (voir le fichier de mapping pour la liste complète) :
+- `author` / `authors` ↔ `creator` (avec la règle Droit d’Auteur expliquée dans le mapping)
+- `date` / `created` → équivalents
+- `last_modified_at` / `updated` → équivalents
+- `source_document` / `derived_from` → `source_document` préféré
+- `tags` / `keywords` → `tags` préféré
 
 ### Règle sur les extensions
 
 - Les champs d’extension doivent commencer par le préfixe `x-` (ex: `x-my-experiment`, `x-internal-note`).
 - Ces champs sont libres.
-- Philosophie générale : **flexible à l’entrée, strict à la sortie** (inspiré des principes IETF pour les protocoles).
-
-- Les champs d’extension doivent commencer par le préfixe `x-` (ex: `x-my-experiment`, `x-internal-note`).
-- Ces champs sont libres, mais leur usage doit rester raisonné.
 - Philosophie : **flexible à l’entrée, strict à la sortie** (inspiré des principes IETF).
+
+**Conseil pratique issu des ingestions 2026** :
+- Quand un même champ expérimental apparaît sur plusieurs fichiers d’un même dépôt (ex: `address`, `type`, `branch`, `source_file`), le passer rapidement en `x-` pour ne pas polluer le schéma principal.
+- Les clusters récurrents observés :
+  - Projets "packet" / description de réseau → `address`, `email`, `website`, `keywords`
+  - Travail politique / source material → `type`, `branch`, `source_file`, dates de création spécifiques
+- On ne force pas tout de suite une normalisation sémantique. On préfixe d’abord pour garder la lisibilité.
 
 D’autres synonymes pourront être ajoutés à condition qu’une règle d’équivalence soit documentée dans ce fichier.
 
@@ -176,6 +178,28 @@ Ces champs sont considérés comme legacy et ne doivent plus être utilisés dan
 - Il cherche un équilibre entre structure formelle et expressivité en langage naturel.
 - Il est explicitement conçu pour rester **évolutif** sans rupture trop douloureuse.
 
+### Accélérer l’ingestion de nouveaux dépôts
+
+Pour aller plus vite quand on ramène un nouveau dépôt :
+
+- Commencer par identifier les fichiers structurels ([`index.md`](../research/index.md), [`concepts.md`](../research/concepts.md), [`corpus-status.md`](../research/corpus-status.md)) → leur appliquer un traitement léger et cohérent (souvent `creator` + champs de base + `working-paper`).
+- Ne pas chercher à tout normaliser sémantiquement dès le premier passage. Première passe = suppression legacy + préfixage `x-` des clusters expérimentaux qui reviennent.
+- Utiliser les patterns documentés dans [`frontmatter-synonym-mapping.md`](frontmatter-synonym-mapping.md) (section "Patterns observés lors de l’ingestion").
+
+L’objectif est que chaque nouveau dépôt ingéré rende les suivants un peu plus mécaniques.
+
 ---
 
 *Version : 0.1 — Brouillon de travail*
+
+<!-- BEGIN_AUTO: backlinks -->
+### Backlinks
+
+*These documents link to this file:*
+- [Frontmatter Migration — v0.1](frontmatter-migration-v0.1.md)
+- [Frontmatter Synonym Mapping — v0.1](frontmatter-synonym-mapping.md)
+- [Concept Index — cogentia](../research/concepts.md)
+- [Corpus Status — cogentia](../research/corpus-status.md)
+- [Research Index — Cogentia](../research/index.md)
+
+<!-- END_AUTO: backlinks -->

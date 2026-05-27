@@ -4077,22 +4077,233 @@ function cmdContinuationAbort( idArg ) {
 
 
 function cmdContinuationPrune() {
-  const daysArg = getFlagValue("--days") || "30";
+  const daysArg = getFlagValue("--days") || getFlagValue("--older-than") || "30";
   const days = parseInt(daysArg, 10);
   if (isNaN(days)) die(`Invalid days: ${daysArg}`);
+
+  const statusFilter = getFlagValue("--status");
+  const taskFilter = getFlagValue("--task");
+  const apply = !!getFlagValue("--apply");
+  const force = !!getFlagValue("--force");
+  const mechanicalOnly = !!getFlagValue("--mechanical");
+
   const cutoff = new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString();
-  
+
   const all = listContinuations();
-  const toDelete = all.filter(c => (c.status === "aborted" || c.status === "dormant") && (c.createdAt || c.abortedAt) < cutoff);
-  
-  for (const c of toDelete) {
-      fs.unlinkSync(continuationPath(c.id));
+
+  let candidates = all.filter(c => {
+    const ageOk = (c.createdAt || c.abortedAt || "") < cutoff;
+    const statusOk = !statusFilter || statusFilter.split(",").map(s => s.trim()).includes(c.status);
+    const taskOk = !taskFilter || (c.task && c.task.toLowerCase().includes(taskFilter.toLowerCase()));
+    return ageOk && statusOk && taskOk;
+  });
+
+  candidates = candidates.filter(c => ["dormant", "aborted", "active"].includes(c.status));
+
+  if (candidates.length === 0) {
+    console.log("No continuations match the prune criteria.");
+    return;
   }
-  
-  if (JSON_MODE) { console.log(JSON.stringify({ pruned: toDelete.length, days }, null, 2)); return; }
-  console.log(`\n${hdr("Continuation Garbage Collection")}\n`);
-  console.log(`  ${bold("pruned:")} ${toDelete.length} continuations older than ${days} days.`);
+
+  // === Split into mechanical (safe to auto-act) vs needs judgment ===
+  const mechanical = [];
+  const needsJudgment = [];
+
+  for (const c of candidates) {
+    const isObvious =
+      c.status === "aborted" ||
+      (c.status === "dormant" && (!c.task || c.task.trim() === "" || c.task.toLowerCase().includes("test"))) ||
+      (c.status === "dormant" && (c.createdAt || "") < new Date(Date.now() - 180 * 24 * 60 * 60 * 1000).toISOString() && (!c.priority || c.priority === 0));
+
+    if (isObvious) {
+      mechanical.push(c);
+    } else {
+      needsJudgment.push(c);
+    }
+  }
+
+  // Dry-run mode (default)
+  if (!apply) {
+    console.log(`\n${hdr("Continuation Prune (DRY-RUN)")}\n`);
+    console.log(`Found ${candidates.length} candidates older than ${days} days.`);
+    console.log(`  Mechanical / safe to delete : ${mechanical.length}`);
+    console.log(`  Needs external judgment     : ${needsJudgment.length}\n`);
+
+    if (mechanical.length > 0) {
+      console.log("Mechanical candidates (would be deleted with --apply --mechanical):");
+      mechanical.slice(0, 15).forEach(c => {
+        const age = c.createdAt ? c.createdAt.substring(0,10) : "?";
+        console.log(`  ${c.id}  [${c.status}]  ${c.task || "(no task)"}  ${age}`);
+      });
+      if (mechanical.length > 15) console.log(`  ... +${mechanical.length - 15} more`);
+    }
+
+    if (needsJudgment.length > 0) {
+      console.log("\nNeeds judgment (would emit continuation(s) for external decision):");
+      needsJudgment.slice(0, 10).forEach(c => {
+        const age = c.createdAt ? c.createdAt.substring(0,10) : "?";
+        console.log(`  ${c.id}  [${c.status}]  ${c.task || "(no task)"}  ${age}`);
+      });
+      if (needsJudgment.length > 10) console.log(`  ... +${needsJudgment.length - 10} more`);
+    }
+
+    console.log("\nUsage examples:");
+    console.log("  --apply --mechanical     → only delete the obvious/safe ones");
+    console.log("  --apply                  → delete mechanical + emit judgment continuations for the rest");
+    return;
+  }
+
+  // === APPLY mode ===
+  let pruned = 0;
+  let emitted = 0;
+
+  // 1. Always safe to delete mechanical ones
+  for (const c of mechanical) {
+    try {
+      fs.unlinkSync(continuationPath(c.id));
+      pruned++;
+    } catch (e) {
+      console.error(`Failed to delete ${c.id}: ${e.message}`);
+    }
+  }
+
+  // 2. For needsJudgment: either delete everything (if --mechanical was not used? no) or emit continuation
+  if (needsJudgment.length > 0) {
+    if (mechanicalOnly) {
+      // User explicitly asked only for mechanical cleanup
+      console.log(`--mechanical requested: skipping ${needsJudgment.length} judgment cases.`);
+    } else {
+      // Emit a judgment continuation for the ambiguous cases
+      const pruneTask = {
+        type: "continuation",
+        protocol: CONTINUATION_PROTOCOL,
+        id: generateContinuationId(),
+        task: "prune_continuation_judgment",
+        status: "active",
+        createdAt: new Date().toISOString(),
+        context: {
+          criteria: {
+            older_than_days: days,
+            status: statusFilter,
+            task_contains: taskFilter,
+          },
+          mechanical_pruned: mechanical.map(c => c.id),
+          candidates: needsJudgment.map(c => ({
+            id: c.id,
+            task: c.task,
+            status: c.status,
+            createdAt: c.createdAt,
+            topicId: c.topicId,
+          })),
+          note: "These continuations matched the prune filter but require human/agent judgment before deletion."
+        },
+      };
+
+      try {
+        saveContinuation(pruneTask);
+        emitted++;
+        console.log(`\nEmitted judgment continuation: ${pruneTask.id}`);
+        console.log(`  Task: prune_continuation_judgment`);
+        console.log(`  ${needsJudgment.length} candidates listed for review.`);
+      } catch (e) {
+        console.error("Failed to emit prune judgment continuation:", e.message);
+      }
+    }
+  }
+
+  if (JSON_MODE) {
+    console.log(JSON.stringify({ pruned, emitted_judgment: emitted, mechanical: mechanical.length, judgment: needsJudgment.length }, null, 2));
+    return;
+  }
+
+  console.log(`\n${hdr("Continuation Prune - Applied")}\n`);
+  console.log(`  Mechanical deletions : ${pruned}`);
+  console.log(`  Judgment continuations emitted : ${emitted}`);
   console.log();
+}
+
+/**
+ * Petit helper : permet à un agent d'interroger l'humain sur une continuation existante
+ * (pertinence, priorité, archive/suppression).
+ */
+function cmdContinuationConsult( idArg ) {
+  if (!idArg) {
+    die("Usage: cogentia continuation consult <id> [--question \"...\"]");
+  }
+
+  const target = loadContinuation(idArg);
+  const customQuestion = getFlagValue("--question");
+
+  // Default prompt is deliberately written to guide an AI agent to do real analysis first
+  const defaultAnalysisPrompt = 
+    "You are a careful analyst of this corpus and its ongoing work. " +
+    "Review the target continuation in detail. Consider its age, its task description, " +
+    "its topic, any available context, and the broader state of the projects it relates to. " +
+    "Do not give a superficial answer. " +
+    "Evaluate its current relevance and potential future value. " +
+    "Then propose the single most appropriate decision, with clear reasoning and any important nuances.";
+
+  const question = customQuestion || defaultAnalysisPrompt;
+
+  const newConsultId = generateContinuationId();
+  const consult = {
+    type: "continuation",
+    protocol: CONTINUATION_PROTOCOL,
+    id: generateContinuationId(),
+    task: "human_judgment_on_continuation",
+    status: "active",
+    createdAt: new Date().toISOString(),
+    context: {
+      target_continuation: {
+        id: target.id,
+        task: target.task,
+        status: target.status,
+        createdAt: target.createdAt,
+        topicId: target.topicId,
+        priority: target.priority || 0,
+      },
+      question,
+      // Explicit, strong instructions for AI agents to perform real analysis
+      analysis_instructions: 
+        "You are a thoughtful analyst familiar with this corpus. " +
+        "Carefully examine the target continuation, its history, its task, and its relationships to current work. " +
+        "Only after genuine analysis should you propose a decision. " +
+        "If the situation is ambiguous or trade-offs exist, explicitly discuss them and state what additional information would help the human decide. " +
+        "Your goal is to reduce uncertainty for the human with reasoning, not to guess quickly or look decisive."
+    },
+    alternatives: [
+      { id: "keep", description: "The continuation remains active and relevant for ongoing or future work." },
+      { id: "archive", description: "Move it out of the active queue while preserving the full record for later reference." },
+      { id: "delete", description: "Permanently remove it — it no longer serves any useful purpose." },
+      { id: "postpone", description: "Keep it dormant but schedule an automatic re-review at a later date." }
+    ],
+    expected_result_schema: {
+      decision: "keep | archive | delete | postpone",
+      priority: "number (0-100)",
+      reason: "string (clear, evidence-based justification — required)",
+      nuances: "string (important subtleties, risks, or trade-offs — strongly encouraged for AI)",
+      follow_up: "string (specific additional context or questions that would help the human decide — optional but useful when uncertain)"
+    },
+    resume: {
+      command: `node scripts/cogentia.js continuation resume ${newConsultId} <step_result.json>`
+    }
+  };
+
+  saveContinuation(consult);
+
+  if (JSON_MODE) {
+    console.log(JSON.stringify(consult, null, 2));
+    return;
+  }
+
+  console.log(`\n${hdr("Human consultation requested")}\n`);
+  console.log(`  New continuation id : ${consult.id}`);
+  console.log(`  Target              : ${target.id}  [${target.status}]`);
+  console.log(`  Task                : ${target.task || "(no task)"}`);
+  console.log(`  Question / Guidance : ${question}`);
+  console.log(`\n  The emitted continuation contains strong analysis instructions for an AI agent.`);
+  console.log(`\n  Resume with:`);
+  console.log(`    node scripts/cogentia.js continuation resume ${consult.id} <step_result.json>\n`);
 }
 
 function cmdContinuationQueue() {
@@ -4431,11 +4642,12 @@ function cmdContinuation( sub, ...rest ) {
     case "validate":   cmdContinuationValidate(   rest[ 0 ], rest[ 1 ] );  break;
     case "export":     cmdContinuationExport(     rest[ 0 ] );             break;
     case "log":        cmdContinuationLog(        rest[ 0 ] );             break;
+    case "consult":    cmdContinuationConsult(    rest[ 0 ] );             break;
     case undefined:
-      die( "Usage: cogentia continuation <emit|inspect|resume|fail|abort|queue|prune|schema|prioritize|validate|export|log> ..." );
+      die( "Usage: cogentia continuation <emit|inspect|resume|fail|abort|queue|prune|schema|prioritize|validate|export|log|consult> ..." );
       break;
     default:
-      die( `Unknown continuation subcommand: "${sub}". Try: emit, inspect, resume, fail, abort, queue, prune, schema, prioritize, validate, export, log.` );
+      die( `Unknown continuation subcommand: "${sub}". Try: emit, inspect, resume, fail, abort, queue, prune, schema, prioritize, validate, export, log, consult.` );
   }
 }
 

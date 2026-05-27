@@ -4,6 +4,11 @@ description: "A map of what is, what is in progress, and what could be."
 layout: default
 nav_order: 1
 last_modified_at: 2026-05-22
+license: CC BY-SA 4.0
+affiliation: Institut Mariani / C.O.R.S.I.C.A., 1 cours Paoli, F-20250 Corte, Corsica
+date: 2026-05-22
+creator: Jean Hugues Noël Robert, baron Mariani
+canonical_url: https://github.com/JeanHuguesRobert/cogentia/blob/main/research/index.md
 ---
 <!-- BEGIN_AUTO: trails -->
 > 🧭 **Trail: From Autonomia to DHITL**
@@ -37,6 +42,7 @@ This repository instantiates the **cognitive infrastructure layer** of the [DHIT
 | [Pipeline — From cognitive packets to source documents and derived products](pipeline.md) *(method note v0.4 — packet-switched, self-applicative; canonical operational method of the corpus)* | this repo | 2026-05-25 |
 | [Derived Products — Versioned Source Corpora, Situated Forms, and Publication Agents](derived_products.md) *(working paper v0.2 — source ↔ derived split; companion to [`pipeline.md`](pipeline.md))* | this repo | 2026-05-23 |
 | [cogentia.js — Tutorial and Near-Specification](cogentia_js_tutorial.md) *(auto-generated tutorial v0.1 — core ideas, storage model, 14 workflows, command reference for v0.10.0; sufficient for a faithful re-implementation in another language)* | this repo | 2026-05-27 |
+| [Self-Contained Documents in an Interconnected Corpus](self_contained_documents.md) *(method note v0.3 — formalises the auto-portance principle: a document may cite/extend/transform other texts, but its main claims remain assessable without prior external reading; emerged from work on `traceabilite_des_actes`)* | this repo | 2026-05-27 |
 | [Cogentia Workflows](cogentia_workflows.md) *(private/group/public/federated workflow architecture, draft v0.2)* | this repo | 2026-05-11 |
 | [Cogentia Commons Working Paper](Cogentia_Commons_Working_Paper.md) | this repo | 2026 |
 | [Cogentia and Cogentigram](Cogentia-and-Cogentigram.md) | this repo | 2026 |
@@ -103,6 +109,8 @@ This repository instantiates the **cognitive infrastructure layer** of the [DHIT
 *These documents link to this file:*
 - [Cogentia](../COGENTIA.md)
 - [Agent Navigation Guide (Context Server)](../docs/agent_context_server.md)
+- [Frontmatter Schema — v0.1 (Corpus)](../docs/frontmatter-schema.md)
+- [Frontmatter Synonym Mapping — v0.1](../docs/frontmatter-synonym-mapping.md)
 - [Agent-Resumable CLI](agent_resumable_cli.md)
 - [Cogentia Commons — COMMUNITY.md Sub-Specification](cogentia_commons_community_manifest.md)
 - [Cogentia Commons — Session Continuation Snapshot](cogentia_commons_continuation.md)
@@ -124,6 +132,7 @@ This repository instantiates the **cognitive infrastructure layer** of the [DHIT
 - [Derived Products](derived_products.md)
 - [kys-prompt.md](kys-prompt.md)
 - [Pipeline](pipeline.md)
+- [Self-Contained Documents in an Interconnected Corpus](self_contained_documents.md)
 - [From Biometrics and Psychometrics to Structural Signatures](structural_signatures.md)
 - [Trail: From Autonomia to DHITL](trails/from_autonomia_to_dhitl.md)
 - [Trail: From Method to Machine](trails/from_method_to_machine.md)

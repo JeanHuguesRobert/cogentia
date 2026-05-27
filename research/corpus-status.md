@@ -4,9 +4,12 @@ description: "Current state of the cogentia knowledge corpus — what is proved,
 layout: default
 nav_order: 2
 last_modified_at: 2026-05-27
-repository: "github.com/JeanHuguesRobert/cogentia"
 canonical_url: https://github.com/JeanHuguesRobert/cogentia/blob/main/research/corpus-status.md
 last_stamped_at: 2026-05-26
+license: CC BY-SA 4.0
+affiliation: Institut Mariani / C.O.R.S.I.C.A., 1 cours Paoli, F-20250 Corte, Corsica
+date: 2026-05-27
+creator: Jean Hugues Noël Robert, baron Mariani (généré automatiquement par les outils du corpus)
 ---
 
 # Corpus Status — cogentia
@@ -199,6 +202,7 @@ graph LR
 | [Pipeline — From cognitive packets to source documents and derived products](pipeline.md) *(method note v0.4 — packet-switched, self-applicative; canonical operational method of the corpus)* | this repo | 2026-05-25 |
 | [Derived Products — Versioned Source Corpora, Situated Forms, and Publication Agents](derived_products.md) *(working paper v0.2 — source ↔ derived split; companion to [`pipeline.md`](pipeline.md))* | this repo | 2026-05-23 |
 | [cogentia.js — Tutorial and Near-Specification](cogentia_js_tutorial.md) *(auto-generated tutorial v0.1 — core ideas, storage model, 14 workflows, command reference for v0.10.0; sufficient for a faithful re-implementation in another language)* | this repo | 2026-05-27 |
+| [Self-Contained Documents in an Interconnected Corpus](self_contained_documents.md) *(method note v0.3 — formalises the auto-portance principle: a document may cite/extend/transform other texts, but its main claims remain assessable without prior external reading; emerged from work on `traceabilite_des_actes`)* | this repo | 2026-05-27 |
 | [Cogentia Workflows](cogentia_workflows.md) *(private/group/public/federated workflow architecture, draft v0.2)* | this repo | 2026-05-11 |
 | [Cogentia Commons Working Paper](Cogentia_Commons_Working_Paper.md) | this repo | 2026 |
 | [Cogentia and Cogentigram](Cogentia-and-Cogentigram.md) | this repo | 2026 |
@@ -267,6 +271,8 @@ graph LR
 *These documents link to this file:*
 - [Cogentia](../COGENTIA.md)
 - [Agent Navigation Guide (Context Server)](../docs/agent_context_server.md)
+- [Frontmatter Schema — v0.1 (Corpus)](../docs/frontmatter-schema.md)
+- [Frontmatter Synonym Mapping — v0.1](../docs/frontmatter-synonym-mapping.md)
 - [The Knowledge Mesh (Decentralized Wiki)](../docs/knowledge_mesh.md)
 - [Agent-Resumable CLI](agent_resumable_cli.md)
 - [Cogentia Commons — COMMUNITY.md Sub-Specification](cogentia_commons_community_manifest.md)
@@ -287,6 +293,7 @@ graph LR
 - [Research Index — Cogentia](index.md)
 - [kys-prompt.md](kys-prompt.md)
 - [Pipeline](pipeline.md)
+- [Self-Contained Documents in an Interconnected Corpus](self_contained_documents.md)
 - [Trail: From Autonomia to DHITL](trails/from_autonomia_to_dhitl.md)
 - [Trail: From Method to Machine](trails/from_method_to_machine.md)
 

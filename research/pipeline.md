@@ -2,11 +2,9 @@
 title: "Pipeline"
 subtitle: "From cognitive packets to source documents and derived products"
 version: "0.4"
-status: "method note"
+status: working-paper — method note
 date: "2026-05-25"
 author: "Jean Hugues Noël Robert"
-repository: "JeanHuguesRobert/cogentia"
-intended_path: "research/pipeline.md"
 license: "CC BY 4.0"
 language: "en"
 tags:
@@ -1303,6 +1301,7 @@ Possible answer:
 - [Corpus Status — cogentia](corpus-status.md)
 - [Derived Products](derived_products.md)
 - [Research Index — Cogentia](index.md)
+- [Self-Contained Documents in an Interconnected Corpus](self_contained_documents.md)
 - [Trail: From Method to Machine](trails/from_method_to_machine.md)
 
 <!-- END_AUTO: backlinks -->

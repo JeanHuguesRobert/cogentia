@@ -6,6 +6,10 @@ nav_order: 3
 last_modified_at: 2026-05-16
 canonical_url: https://github.com/JeanHuguesRobert/cogentia/blob/main/research/concepts.md
 last_stamped_at: 2026-05-26
+license: CC BY-SA 4.0
+affiliation: Institut Mariani / C.O.R.S.I.C.A., 1 cours Paoli, F-20250 Corte, Corsica
+date: 2026-05-16
+creator: Jean Hugues Noël Robert, baron Mariani
 ---
 
 # Concept Index — cogentia
@@ -256,6 +260,8 @@ Specific governance structures (private, group, public, federated) enabling syst
 ### Backlinks
 
 *These documents link to this file:*
+- [Frontmatter Schema — v0.1 (Corpus)](../docs/frontmatter-schema.md)
+- [Frontmatter Synonym Mapping — v0.1](../docs/frontmatter-synonym-mapping.md)
 - [The Knowledge Mesh (Decentralized Wiki)](../docs/knowledge_mesh.md)
 - [Agent-Resumable CLI](agent_resumable_cli.md)
 - [Cogentia Commons — `kernel_extractor` Plugin Sub-Specification](cogentia_commons_kernel_extractor.md)
