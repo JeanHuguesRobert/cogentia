@@ -1,0 +1,24 @@
+id: 2026-05-04-001
+channel: email
+date: 2026-05-04
+subject: "Session MareNostrum — confirmation souhaitée d'ici le 14 mai"
+from: "Jean Hugues Noël Robert"
+to:
+  - "rossi_j@univ-corse.fr"
+  - "marcelli_t@univ-corse.fr"
+  - "chatelon@univ-corse.fr"
+  - "cristofari_c@univ-corse.fr"
+cc:
+  - "institutmariani@gmail.com"
+  - "archive@baronsmariani.org"
+thread_detected: true
+reply_detected: true
+reply_date: 2026-05-05
+reply_summary: "Negative response regarding both conference integration and room availability."
+status: "reply_received_negative"
+followup_number: 0
+elapsed_days_until_reply: 1
+disclosure: "D2"
+public_summary: "MareNostrum session and informal roundtable proposal sent to Université de Corse. Negative response received on 2026-05-05."
+notes:
+  - "Initial assumption of no response corrected after thread inspection."
