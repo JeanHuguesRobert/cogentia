@@ -31,6 +31,7 @@ ai_assisted_by:
   - "ChatGPT"
   - "Grok"
 canonical_url: https://github.com/JeanHuguesRobert/cogentia/blob/main/research/pipeline.md
+affiliation: "Institut Mariani / C.O.R.S.I.C.A., 1 cours Paoli, F-20250 Corte, Corsica"
 last_stamped_at: 2026-05-26
 ---
 

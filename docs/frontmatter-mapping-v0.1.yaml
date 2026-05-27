@@ -1,0 +1,57 @@
+# Frontmatter Synonym Mapping — v0.1
+
+# Ce fichier décrit le mapping des anciennes clés vers les noms canoniques.
+# Il servira de base à l'outil de migration.
+
+mapping:
+  # === Core ===
+  author: creator
+  authors: creator
+
+  date: date
+  created: date
+
+  last_modified_at: last_modified_at
+  updated: last_modified_at
+  last_updated: last_modified_at
+
+  license: license
+  spdx-license-identifier: license
+
+  # === Provenance documentaire ===
+  source_document: source_document
+  derived_from: source_document
+  predecessor: source_document
+
+  # === Tags ===
+  keywords: tags
+
+  # === Legacy / À supprimer ===
+  repository: null          # à supprimer
+  path: null                # à supprimer
+  intended_path: null       # à supprimer
+  canonical_path: null      # à supprimer
+  canonical_slug: null      # à supprimer
+  repository_candidate: null
+
+# Règles d'équivalence (pour documentation)
+equivalence_rules:
+  - "author, authors → creator (forme canonique recommandée)"
+  - "date, created → date (date sémantique principale)"
+  - "last_modified_at, updated, last_updated → last_modified_at"
+  - "source_document, derived_from, predecessor → source_document (document source principal)"
+  - "keywords → tags"
+  - "license, spdx-license-identifier → license"
+
+# Champs dont on peut injecter une valeur par défaut lors de la migration
+defaults:
+  license: "CC BY-SA 4.0"
+  language: "fr"
+  creator: "Jean Hugues Noël Robert, baron Mariani"
+  affiliation: "Institut Mariani / C.O.R.S.I.C.A., 1 cours Paoli, F-20250 Corte, Corsica"
+
+# Notes
+notes: |
+  - Ce mapping est agressif : on supprime les champs legacy sans période de dépréciation.
+  - Les synonymes tolérés sont documentés dans frontmatter-schema.md.
+  - L'outil de migration devra être capable de faire des dry-runs.

@@ -1507,6 +1507,9 @@ ${bold( "Commands:" )}
   ${c.cyan}lint${c.reset}                Single-table corpus health report: unreferenced, frontmatter
                       issues, drift, in one pass. Local checks only.
                       ${c.cyan}--strict${c.reset} makes exit code non-zero on any issue.
+  ${c.cyan}consolidate${c.reset}         Pre-commit ritual: ${c.cyan}drift${c.reset} + ${c.cyan}lint --strict${c.reset} +
+                      ${c.cyan}refresh --check${c.reset} + scheduler items in one pass. Use when
+                      you feel the work is "reasonably ready to publish".
   ${c.cyan}links${c.reset}               Convert backtick \`*.md\` references to clickable
                       Markdown links: \`pipeline.md\` → [\`pipeline.md\`](pipeline.md).
                       Default mode: ${c.cyan}--check${c.reset} (preview, no writes).
@@ -4614,6 +4617,13 @@ const COMMAND_MANIFEST = [
     side_effects: [],
   },
   {
+    name: "consolidate",
+    description: "Pre-commit consolidation ritual. Runs drift (sync state), lint --strict (unreferenced, frontmatter, drift problems), refresh --check (corpus-status, backlinks, trails, documents — dry-run), and todo list --global (scheduler items) in that order. Use when you feel the work is reasonably ready to publish — surfaces problems that should be fixed before the next git commit. Read-only: no files modified. The audit log records a single 'consolidate' entry at start.",
+    parameters: { type: "object", properties: {} },
+    side_effects: [ "audit-log", "network (via drift fetch)" ],
+    examples: [ { input: {} } ],
+  },
+  {
     name: "links",
     description: "Convert backtick `*.md` references to clickable Markdown links across the corpus. Default mode is --check (preview, no writes). --fix applies the changes. Resolves each reference against the registry-wide doc index, preferring same-repo matches (relative path) over cross-repo hits (absolute GitHub URL). Skips lines inside fenced code blocks and headings by default; skips refs already wrapped in [...]() ; skips self-references and unresolvable names (which may be planned-but-not-yet-published docs).",
     parameters: {
@@ -6434,6 +6444,61 @@ function cmdInstallHooks() {
   console.log();
 }
 
+// ── consolidate ───────────────────────────────────────────────────────────────
+
+function cmdConsolidate() {
+  appendAudit( {
+    command:   "consolidate",
+    args:      {},
+    result:    { stages: [ "drift", "lint.strict", "refresh.check", "todo.global" ] },
+    narrative: collectNarrative(),
+  } );
+
+  console.log(`\n${hdr("Corpus Consolidation Report")}  ${dim(fmtNow())}\n`);
+  console.log(`${dim("Purpose:")} Prepare the corpus for a clean commit after a period of work.`);
+  console.log(`${dim("This runs the key hygiene and propagation checks in a recommended order.")}\n`);
+
+  // 1. Drift
+  console.log(`${bold("1. Drift (are all repos in sync?)")}`);
+  cmdDrift();
+
+  // 2. Lint (strict)
+  console.log(`\n${bold("2. Lint --strict (unreferenced, frontmatter, drift problems)")}`);
+  const hadStrict = argv.includes("--strict");
+  if (!hadStrict) argv.push("--strict");
+  cmdLint();
+  if (!hadStrict) {
+    const idx = argv.lastIndexOf("--strict");
+    if (idx !== -1) argv.splice(idx, 1);
+  }
+
+  // 3. Refresh in check mode (derived views)
+  console.log(`\n${bold("3. Refresh --check (corpus-status, documents, etc.)")}`);
+  const hadCheck = argv.includes("--check");
+  if (!hadCheck) argv.push("--check");
+  cmdRefresh();
+  if (!hadCheck) {
+    const idx = argv.lastIndexOf("--check");
+    if (idx !== -1) argv.splice(idx, 1);
+  }
+
+  // 4. Scheduler items tagged for consolidation (simple heuristic for now)
+  console.log(`\n${bold("4. Scheduler items related to consolidation")}`);
+  // For v1 we do a best-effort: run todo list --global and let the user filter visually.
+  // A more sophisticated filter can be added later (tag:consolidation or section "Ready for Propagation").
+  const useGlobal = true; // force global view for consolidation
+  if (useGlobal && !argv.includes("--global")) argv.push("--global");
+  cmdTodoList();
+  if (useGlobal) {
+    const idx = argv.lastIndexOf("--global");
+    if (idx !== -1) argv.splice(idx, 1);
+  }
+
+  console.log(`\n${dim("───────────────────────────────────────────────")}`);
+  console.log(`${bold("Consolidation checklist complete.")}`);
+  console.log(`${dim("Fix any hard problems (red / strict failures) before running git commit.")}\n`);
+}
+
 ( async () => {
   switch ( command ) {
     case "query": cmdQuery( cmdArgs[ 0 ] ); break;
@@ -6467,6 +6532,7 @@ function cmdInstallHooks() {
     case "refresh":        cmdRefresh();                    break;
     case "lint":           cmdLint();                       break;
     case "links":          cmdLinks();                      break;
+    case "consolidate":    cmdConsolidate();                break;
     case "todo":           cmdTodo( ...cmdArgs );           break;
     case "next":           cmdNext();                       break;
     case "concepts":       cmdConcepts( ...cmdArgs );      break;

@@ -685,6 +685,7 @@ Side-effect taxonomy used below:
 | `lint` | Single-table corpus health report: unreferenced, frontmatter issues, drift. `--strict` exits non-zero on any issue. | (none) |
 | `links [<name>\|all] [--check\|--fix] [--include-headings] [--include-code]` | Convert backtick `` `*.md` `` references to clickable Markdown links across the corpus. Default is `--check` (preview). `--fix` applies. Resolves each ref against the doc index — same-repo preferred (relative path) → cogentia (meta-node) → first registry hit (absolute URL). Skips fenced code blocks, headings, already-linked refs, self-refs, and unresolvable names. See §1.7. | file-write (in `--fix`), audit-log |
 | `refresh [--check]` | Run `corpus-status`, `backlinks`, `trails`, `documents` in canonical order. `--check` for dry-run. | file-write, audit-log |
+| `consolidate` | Pre-commit ritual. Composite check: `drift` → `lint --strict` → `refresh --check` → `todo list --global`. Read-only — no files modified. Run when the work feels reasonably ready to publish; fix the surfaced problems before `git commit`. | audit-log, network (via `drift`) |
 
 ### 4.8 Frontmatter
 
