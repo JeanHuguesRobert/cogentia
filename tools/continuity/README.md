@@ -37,7 +37,7 @@ These tools are not merely about storing documents. They are about preserving th
 
 This note is grounded in several documents and concepts from the Cogentia / Institut Mariani corpus:
 
-- **Symmetric traceability** — `JeanHuguesRobert/cogentia/research/tracabilite_symetrique_capture_relationnelle_v0_4.md`
+- **Symmetric traceability** — `JeanHuguesRobert/cogentia/research/tracabilite_symetrique_capture_relationnelle.md`
 - **Interaction Packets** — structured documentary units for requests, answers, silences, relances, refusals, corrections and evidence.
 - **Autonomie de Capacité** — a theoretical right has little value if one lacks the practical capacity to exercise, document, transmit and defend it.
 - **Documents autoporteurs** — documents should be understandable and evaluable without depending entirely on a portal, account or private memory.
