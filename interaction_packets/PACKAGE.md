@@ -153,12 +153,87 @@ Recommended statuses:
 - `redirected`
 - `closed`
 - `corrected`
+- `superseded`
 
 Important distinction:
 
 `no_response_detected` is not the same as `no_response`.
 
 The first means only that no reply has been found at the time of inspection.
+
+`superseded` means that a packet is intentionally kept as a historical state, but another consolidated packet is now the reference for the current state of the same case.
+
+## Follow-up events and secondary continuations
+
+An Interaction Packet may contain a `follow_up` section when the original interaction produces secondary but connected events.
+
+Use `follow_up` when:
+
+- the same case continues after a reply;
+- a document is forwarded to related stakeholders;
+- an internal archive correction is made;
+- a public notification documents a previous institutional step;
+- a new event updates the status but does not create a new autonomous case.
+
+Create a new packet only when:
+
+- a new counterparty becomes the main actor of a distinct interaction;
+- the expected continuation is different;
+- the case now has its own timeline, status and outcome.
+
+Example:
+
+```yaml
+follow_up:
+  - date: "YYYY-MM-DD"
+    time: "HH:MM"
+    direction: "outbound"
+    channel: "email"
+    event: "Stakeholders informed"
+    summary: >
+      Related actors were informed of the already documented primary interaction.
+    status: "sent"
+```
+
+## Consolidated packets and superseded packets
+
+A case may evolve after its first documentation. For example:
+
+```text
+initial request → procedural refusal or redirection → written contribution accepted → related stakeholders informed
+```
+
+When this happens, avoid two opposite errors:
+
+- deleting the initial packet too quickly, which erases the history of the case;
+- leaving several packets active for the same case, which creates ambiguity.
+
+Recommended rule:
+
+- keep the initial packet if it has historical value;
+- mark it as `superseded`;
+- point it to the consolidated packet;
+- make the register and dashboard point to the consolidated packet.
+
+Example:
+
+```yaml
+status: "superseded"
+superseded_by: "interaction_packets/packets/YYYY/YYYY-MM-DD-consolidated-case.yaml"
+superseded_reason: >
+  This packet documented the initial state of the case. The case later evolved
+  after a new documented event. The consolidated packet now tracks the current
+  state of the case.
+```
+
+The distinction to preserve is:
+
+```text
+new fact in the same case → follow_up
+new counterparty with autonomous stakes → new packet
+older state replaced by consolidated state → superseded_by
+traceability omission corrected later → archive correction / follow_up
+```
 
 ## Public register example
 
@@ -186,6 +261,35 @@ disclosure: "D2"
 public_summary: "Request sent. Negative reply received the next day."
 notes:
   - "Initial assumption corrected after thread inspection."
+```
+
+## Extended YAML packet example
+
+```yaml
+id: 2026-05-25-001
+type: "interaction_packet"
+status: "active"
+created: "YYYY-MM-DD"
+last_updated: "YYYY-MM-DD"
+disclosure: "D2"
+subject: "Public-interest contribution"
+
+current_status:
+  label: "Contribution transmitted; stakeholders informed; awaiting report"
+  details:
+    - "Contribution transmitted through the relevant institutional channel."
+    - "Related stakeholders informed."
+    - "Specific acknowledgment not yet detected."
+
+follow_up:
+  - date: "YYYY-MM-DD"
+    time: "HH:MM"
+    direction: "outbound"
+    channel: "email"
+    event: "Stakeholders informed"
+    summary: >
+      Related actors were informed of the documented primary interaction.
+    status: "sent"
 ```
 
 ## Minimal public page
