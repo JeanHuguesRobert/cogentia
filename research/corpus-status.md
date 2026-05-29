@@ -3,7 +3,7 @@ title: "Corpus Status — cogentia"
 description: "Current state of the cogentia knowledge corpus — what is proved, what is open, what remains possible"
 layout: default
 nav_order: 2
-last_modified_at: 2026-05-27
+last_modified_at: 2026-05-29
 canonical_url: https://github.com/JeanHuguesRobert/cogentia/blob/main/research/corpus-status.md
 last_stamped_at: 2026-05-26
 license: CC BY-SA 4.0
@@ -36,12 +36,13 @@ creator: Jean Hugues Noël Robert, baron Mariani (généré automatiquement par 
 <!-- BEGIN_AUTO: registered_repos -->
 | Repository | research/index.md | Branch | Last commit |
 |---|---|---|---|
-| cogentia | ✅ | main | 2026-05-27 |
+| cogentia | ✅ | main | 2026-05-29 |
 | FractaVolta | ✅ | main | 2026-05-27 |
 | marenostrum | ✅ | main | 2026-05-27 |
-| barons-Mariani | ✅ | main | 2026-05-27 |
-| inseme | ✅ | main | 2026-05-27 |
+| barons-Mariani | ✅ | main | 2026-05-29 |
+| inseme | ✅ | main | 2026-05-29 |
 | Inox | ✅ | master | 2026-05-27 |
+| JeanHuguesRobert | ✅ | main | 2026-05-29 |
 <!-- END_AUTO: registered_repos -->
 
 ---
@@ -57,42 +58,56 @@ graph LR
   barons-Mariani["📄 barons-Mariani"]
   inseme["📄 inseme"]
   Inox["📄 Inox"]
+  JeanHuguesRobert["📄 JeanHuguesRobert"]
   cogentia --> marenostrum
+  cogentia --> JeanHuguesRobert
   cogentia --> barons-Mariani
   cogentia --> FractaVolta
   cogentia --> inseme
   cogentia --> Inox
   FractaVolta --> marenostrum
+  FractaVolta --> JeanHuguesRobert
   FractaVolta --> barons-Mariani
   FractaVolta --> cogentia
   FractaVolta --> inseme
   FractaVolta --> Inox
   marenostrum --> barons-Mariani
+  marenostrum --> JeanHuguesRobert
   marenostrum --> FractaVolta
   marenostrum --> cogentia
   marenostrum --> inseme
   marenostrum --> Inox
   barons-Mariani --> marenostrum
+  barons-Mariani --> JeanHuguesRobert
   barons-Mariani --> FractaVolta
   barons-Mariani --> cogentia
   barons-Mariani --> inseme
   barons-Mariani --> Inox
   inseme --> cogentia
+  inseme --> JeanHuguesRobert
   inseme --> marenostrum
   inseme --> FractaVolta
   inseme --> barons-Mariani
   inseme --> Inox
   Inox --> marenostrum
+  Inox --> JeanHuguesRobert
   Inox --> FractaVolta
   Inox --> cogentia
   Inox --> barons-Mariani
   Inox --> inseme
+  JeanHuguesRobert --> cogentia
+  JeanHuguesRobert --> marenostrum
+  JeanHuguesRobert --> FractaVolta
+  JeanHuguesRobert --> barons-Mariani
+  JeanHuguesRobert --> inseme
+  JeanHuguesRobert --> Inox
   click cogentia "https://github.com/JeanHuguesRobert/cogentia/blob/main/research/index.md" "Open research/index.md"
   click FractaVolta "https://github.com/JeanHuguesRobert/FractaVolta/blob/main/research/index.md" "Open research/index.md"
   click marenostrum "https://github.com/JeanHuguesRobert/marenostrum/blob/main/research/index.md" "Open research/index.md"
   click barons-Mariani "https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/index.md" "Open research/index.md"
   click inseme "https://github.com/JeanHuguesRobert/inseme/blob/main/research/index.md" "Open research/index.md"
   click Inox "https://github.com/JeanHuguesRobert/Inox/blob/main/research/index.md" "Open research/index.md"
+  click JeanHuguesRobert "https://github.com/JeanHuguesRobert/JeanHuguesRobert/blob/main/research/index.md" "Open research/index.md"
 ```
 <!-- END_AUTO: graph -->
 
@@ -203,6 +218,7 @@ graph LR
 | [Derived Products — Versioned Source Corpora, Situated Forms, and Publication Agents](derived_products.md) *(working paper v0.2 — source ↔ derived split; companion to [`pipeline.md`](pipeline.md))* | this repo | 2026-05-23 |
 | [cogentia.js — Tutorial and Near-Specification](cogentia_js_tutorial.md) *(auto-generated tutorial v0.1 — core ideas, storage model, 14 workflows, command reference for v0.10.0; sufficient for a faithful re-implementation in another language)* | this repo | 2026-05-27 |
 | [Self-Contained Documents in an Interconnected Corpus](self_contained_documents.md) *(method note v0.3 — formalises the auto-portance principle: a document may cite/extend/transform other texts, but its main claims remain assessable without prior external reading; emerged from work on `traceabilite_des_actes`)* | this repo | 2026-05-27 |
+| [Traçabilité symétrique et capture relationnelle](tracabilite_symetrique_capture_relationnelle.md) *(working paper v0.4 — consolidated draft for review; concept de « capture relationnelle par architecture de canal »; email vs portails propriétaires, preuve opposable, rééquilibrage individu / personne morale; lié à Interaction Packets et Autonomie de Capacité)* | this repo | 2026-05-29 |
 | [Cogentia Workflows](cogentia_workflows.md) *(private/group/public/federated workflow architecture, draft v0.2)* | this repo | 2026-05-11 |
 | [Cogentia Commons Working Paper](Cogentia_Commons_Working_Paper.md) | this repo | 2026 |
 | [Cogentia and Cogentigram](Cogentia-and-Cogentigram.md) | this repo | 2026 |
@@ -294,6 +310,7 @@ graph LR
 - [kys-prompt.md](kys-prompt.md)
 - [Pipeline](pipeline.md)
 - [Self-Contained Documents in an Interconnected Corpus](self_contained_documents.md)
+- [Traçabilité symétrique et capture relationnelle](tracabilite_symetrique_capture_relationnelle.md)
 - [Trail: From Autonomia to DHITL](trails/from_autonomia_to_dhitl.md)
 - [Trail: From Method to Machine](trails/from_method_to_machine.md)
 

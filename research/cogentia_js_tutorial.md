@@ -9,6 +9,8 @@ affiliation: "Institut Mariani / C.O.R.S.I.C.A., 1 cours Paoli, F-20250 Corte, C
 license: "CC BY-SA 4.0"
 language: "en"
 target_implementation: "cogentia.js v0.10.0"
+derived_by: agent
+derived_from: "scripts/cogentia.js source + manifest; corpus doctrinal papers (see Associated documents)"
 tags:
   - cogentia
   - cogentia.js

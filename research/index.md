@@ -43,6 +43,7 @@ This repository instantiates the **cognitive infrastructure layer** of the [DHIT
 | [Derived Products — Versioned Source Corpora, Situated Forms, and Publication Agents](derived_products.md) *(working paper v0.2 — source ↔ derived split; companion to [`pipeline.md`](pipeline.md))* | this repo | 2026-05-23 |
 | [cogentia.js — Tutorial and Near-Specification](cogentia_js_tutorial.md) *(auto-generated tutorial v0.1 — core ideas, storage model, 14 workflows, command reference for v0.10.0; sufficient for a faithful re-implementation in another language)* | this repo | 2026-05-27 |
 | [Self-Contained Documents in an Interconnected Corpus](self_contained_documents.md) *(method note v0.3 — formalises the auto-portance principle: a document may cite/extend/transform other texts, but its main claims remain assessable without prior external reading; emerged from work on `traceabilite_des_actes`)* | this repo | 2026-05-27 |
+| [Traçabilité symétrique et capture relationnelle](tracabilite_symetrique_capture_relationnelle.md) *(working paper v0.4 — consolidated draft for review; concept de « capture relationnelle par architecture de canal »; email vs portails propriétaires, preuve opposable, rééquilibrage individu / personne morale; lié à Interaction Packets et Autonomie de Capacité)* | this repo | 2026-05-29 |
 | [Cogentia Workflows](cogentia_workflows.md) *(private/group/public/federated workflow architecture, draft v0.2)* | this repo | 2026-05-11 |
 | [Cogentia Commons Working Paper](Cogentia_Commons_Working_Paper.md) | this repo | 2026 |
 | [Cogentia and Cogentigram](Cogentia-and-Cogentigram.md) | this repo | 2026 |
@@ -134,6 +135,7 @@ This repository instantiates the **cognitive infrastructure layer** of the [DHIT
 - [Pipeline](pipeline.md)
 - [Self-Contained Documents in an Interconnected Corpus](self_contained_documents.md)
 - [From Biometrics and Psychometrics to Structural Signatures](structural_signatures.md)
+- [Traçabilité symétrique et capture relationnelle](tracabilite_symetrique_capture_relationnelle.md)
 - [Trail: From Autonomia to DHITL](trails/from_autonomia_to_dhitl.md)
 - [Trail: From Method to Machine](trails/from_method_to_machine.md)
 

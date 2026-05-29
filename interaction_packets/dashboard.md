@@ -117,3 +117,16 @@ Les faits d’abord.
 Les interprétations ensuite.
 
 Les corrections doivent rester visibles lorsqu’elles sont importantes.
+
+
+<!-- BEGIN_AUTO: backlinks -->
+### Backlinks
+
+*These documents link to this file:*
+- [Mail Trace Pipeline](mail_trace_pipeline.md)
+- [Mail Trace Register](mail_trace.md)
+- [Interaction Packets — readable overview](overview.md)
+- [Interaction Packets — public-use package](PACKAGE.md)
+- [Extract Interaction Packet](prompts/extract_interaction_packet.md)
+
+<!-- END_AUTO: backlinks -->

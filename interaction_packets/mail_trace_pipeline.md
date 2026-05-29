@@ -82,3 +82,12 @@ The objective is a general protocol for:
 - transparent public interaction.
 
 Email is only the first interaction packet type.
+
+
+<!-- BEGIN_AUTO: backlinks -->
+### Backlinks
+
+*These documents link to this file:*
+- [Jean Hugues Robert — Tableau de bord Interaction Packets](dashboard.md)
+
+<!-- END_AUTO: backlinks -->

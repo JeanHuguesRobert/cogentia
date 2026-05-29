@@ -482,6 +482,27 @@ Continuation is the explicit preservation of unfinished work.
 
 It prevents premature closure and allows future agents or humans to resume work without rediscovering the whole context.
 
+### 4.14 README maintenance
+
+A repository README is not only documentation. On GitHub it is the public dashboard of a repository — or, in a subdirectory, of a subsystem. As the corpus grows, these dashboards drift out of date.
+
+The pipeline therefore includes an **opt-in README maintenance** step. A README, at the repository root or in any subdirectory, may carry a marked block:
+
+```text
+<!-- BEGIN_AUTO: readme_index -->
+<!-- END_AUTO: readme_index -->
+```
+
+The operational tool (`cogentia readme`, also run as part of `cogentia refresh`) regenerates, inside that block only, an index of the Markdown documents living in the README's own subtree. A README without the marker is never modified — which keeps hand-written public pages, including the public profile README, fully under human control.
+
+This is a derived-view step in the same family as backlinks, trails and documents: it transforms source files into a navigable public surface without overwriting curated prose. It embodies the same default as the rest of the pipeline — *publicity by default, explicit and bounded automation, human control of the page itself.*
+
+**The user-attached profile README is treated apart.** The root README of the profile repository (the `github.com/<user>/<user>` page) is not a mechanical index but a **derived product** (§4.11) — a public, human-facing page authored *from* the corpus sources. The pipeline therefore does **not** auto-generate it. Instead, `cogentia readme` emits a typed **continuation** (`cogentia.continuation.v1`) that delegates the refresh to the intelligent agent: the continuation cites the source documents (e.g. `research/index.md`, `research/agent_brief.md`, `CONTEXT.md`, `POSSIBILISM.md`, `PROJECTS.md`, `TIMELINE.md`) and asks the agent to rewrite the page faithfully, citing its sources and inventing nothing. The delegation is idempotent — at most one active continuation per profile README — and the agent itself decides whether a refresh is actually warranted. This keeps a mechanical tool from authoring a human's public identity, while still scheduling its upkeep inside the pipeline. It is a small but exact illustration of the source ↔ derived split: the index block is symmetric and machine-generated; the profile page is an asymmetric derived product that requires judgment, so it is routed to an agent rather than a regex.
+
+**The same routing applies to a growing family of derived products.** Auto-generated tutorials, curated reading trails, and rendered websites are likewise refreshed by `cogentia derived` (also part of `refresh`), which emits **one grouped continuation per type** rather than writing them mechanically. Detection is hybrid: a document opts in with frontmatter `derived_by: agent`; trails are `research/trails/*.md` by convention; websites are any directory containing `_config.yml` (repository root or subdirectory). Each grouped continuation lists its items and asks the agent to regenerate them faithfully from their declared sources, citing them and inventing nothing — the agent deciding, per item, whether a refresh is actually warranted. The **typology** of these delegated derived products (profile README, tutorials, trails, websites, …) is maintained in [`derived_products.md`](derived_products.md); this section describes only how the pipeline schedules their upkeep.
+
+Taken together — mechanical views that regenerate themselves, and judgment-requiring products that are delegated and refreshed on demand — these artefacts begin to make the corpus genuinely **reactive**: documents (and now also websites and other rendered surfaces, not only Markdown) that stay *live* and agile, refreshing in response to changes in their sources rather than silently drifting. The realization is still partial — an agent performs the judgment work when a continuation is resumed, not continuously — but the reactive loop now exists end to end. This is the practical sense in which the planned `cogentia_reactive_corpus.md` is beginning to be true: not yet a daemon, but a corpus whose live surfaces are scheduled for upkeep by the same `refresh` that regenerates its mechanical views.
+
 ---
 
 ## 5. Transformation map of this document

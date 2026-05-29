@@ -51,3 +51,19 @@ No premature automation.
 Copy/paste first.
 Agent-assisted extraction second.
 Automation later, only after protocol stabilization.
+
+## Documents
+
+*This list is maintained by `cogentia readme` (opt-in `readme_index` block).*
+
+<!-- BEGIN_AUTO: readme_index -->
+- [Extract Interaction Packet](prompts/extract_interaction_packet.md)
+- [Follow-up Generation](prompts/followup_generation.md)
+- [Interaction Packets — architecture](architecture.md)
+- [Interaction Packets — public-use package](PACKAGE.md)
+- [Interaction Packets — readable overview](overview.md)
+- [Jean Hugues Robert — Tableau de bord Interaction Packets](dashboard.md)
+- [Mail Trace Pipeline](mail_trace_pipeline.md)
+- [Mail Trace Register](mail_trace.md)
+- [Update Interaction Registry](prompts/update_registry.md)
+<!-- END_AUTO: readme_index -->

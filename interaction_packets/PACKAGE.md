@@ -336,3 +336,12 @@ First stabilize the protocol manually with:
 - Git commits.
 
 Automation should come only after repeated use shows what is stable.
+
+
+<!-- BEGIN_AUTO: backlinks -->
+### Backlinks
+
+*These documents link to this file:*
+- [Jean Hugues Robert — Tableau de bord Interaction Packets](dashboard.md)
+
+<!-- END_AUTO: backlinks -->

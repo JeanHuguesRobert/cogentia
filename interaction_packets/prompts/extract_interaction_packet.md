@@ -38,3 +38,12 @@ Constraints:
 - avoid automatic accusations;
 - preserve confidentiality according to the selected disclosure level;
 - mark unknown fields explicitly as `unknown` rather than inventing them.
+
+
+<!-- BEGIN_AUTO: backlinks -->
+### Backlinks
+
+*These documents link to this file:*
+- [Jean Hugues Robert — Tableau de bord Interaction Packets](../dashboard.md)
+
+<!-- END_AUTO: backlinks -->

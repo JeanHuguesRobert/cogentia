@@ -3,11 +3,14 @@ title: "Traçabilité symétrique et capture relationnelle"
 subtitle: "Email, portails propriétaires, preuve opposable et rééquilibrage du rapport de force entre individus et personnes morales"
 version: "0.4"
 date: "2026-05-29"
-status: "working paper — consolidated draft for review"
-author: "Jean Hugues Robert, avec assistance IA"
+status: "working-paper — consolidated draft for review"
+author: "Jean Hugues Noël Robert"
+affiliation: "Institut Mariani / C.O.R.S.I.C.A., 1 cours Paoli, F-20250 Corte, Corsica"
+ai_assisted_by:
+  - "assistance IA"
 repository_target: "JeanHuguesRobert/cogentia"
 methodological_context: "Corpus vivant versionné ; Interaction Packets ; Autonomie de Capacité ; Cogentia ; documents autoporteurs"
-license: "CC BY 4.0 suggested"
+license: "CC BY 4.0"
 ---
 
 # Traçabilité symétrique et capture relationnelle
@@ -963,3 +966,13 @@ Une personne morale peut imposer un canal. Mais si elle impose son canal, elle d
 - CNIL, recommandations relatives aux données personnelles, à l’exercice des droits et à la portabilité.
 - Travaux internationaux sur les *dark patterns*, *administrative burden*, *vendor lock-in*, interopérabilité et accès effectif aux droits.
 - Jean Hugues Robert, `interaction_packets/dashboard.md`, dépôt `JeanHuguesRobert/JeanHuguesRobert`.
+
+
+<!-- BEGIN_AUTO: backlinks -->
+### Backlinks
+
+*These documents link to this file:*
+- [Corpus Status — cogentia](corpus-status.md)
+- [Research Index — Cogentia](index.md)
+
+<!-- END_AUTO: backlinks -->

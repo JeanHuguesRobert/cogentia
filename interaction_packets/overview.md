@@ -180,3 +180,12 @@ The next step is to use the same process on several recent sent emails, then com
 - disclosure levels.
 
 The system should remain simple until repeated use proves what deserves automation.
+
+
+<!-- BEGIN_AUTO: backlinks -->
+### Backlinks
+
+*These documents link to this file:*
+- [Jean Hugues Robert — Tableau de bord Interaction Packets](dashboard.md)
+
+<!-- END_AUTO: backlinks -->

@@ -1503,7 +1503,17 @@ ${bold( "Commands:" )}
   ${c.cyan}frontmatter${c.reset} <sub>     Diagnose and harmonise document frontmatter.
                       Sub: ${c.cyan}check${c.reset} [repo] | ${c.cyan}promote${c.reset} <file> | ${c.cyan}promote --batch${c.reset} [--repo <name>] [--check] | ${c.cyan}schema${c.reset}
   ${c.cyan}refresh${c.reset}             Refresh all derived views (corpus-status, backlinks, trails,
-                      documents) in canonical order. ${c.cyan}--check${c.reset} for dry-run.
+                      documents, readmes) in canonical order. ${c.cyan}--check${c.reset} for dry-run.
+  ${c.cyan}readme${c.reset}              Refresh README files. A README (root or subdirectory) carrying a
+                      ${c.cyan}readme_index${c.reset} BEGIN_AUTO marker gets a regenerated index of the docs
+                      in its subtree. The user-attached profile README is treated apart:
+                      delegated to the agent as a derived product via a continuation,
+                      never auto-written. Also runs inside ${c.cyan}refresh${c.reset}.
+  ${c.cyan}derived${c.reset}             Delegate judgment-requiring derived products to the agent via
+                      grouped continuations (one per type), never written mechanically:
+                      tutorials/docs opting in with frontmatter ${c.cyan}derived_by: agent${c.reset},
+                      trails (research/trails/), and websites (_config.yml dirs).
+                      Idempotent. Also runs inside ${c.cyan}refresh${c.reset}.
   ${c.cyan}lint${c.reset}                Single-table corpus health report: unreferenced, frontmatter
                       issues, drift, in one pass. Local checks only.
                       ${c.cyan}--strict${c.reset} makes exit code non-zero on any issue.
@@ -4819,6 +4829,16 @@ const COMMAND_MANIFEST = [
     side_effects: [ "file-write" ],
   },
   {
+    name: "readme", description: "Refresh README files. (1) Opt-in mechanical index: a README (repo root or any subdirectory) containing a <!-- BEGIN_AUTO: readme_index --> marker gets a regenerated list of the Markdown documents in its own subtree; READMEs without the marker are never touched. (2) The user-attached profile README (github.com/<user>/<user> root README) is treated apart as a derived product ('produit décliné'): instead of writing it, an idempotent continuation (cogentia.continuation.v1) is emitted to delegate its refresh to the intelligent agent, citing the corpus sources. Also runs as part of refresh.",
+    parameters: { type: "object", properties: {} },
+    side_effects: [ "file-write" ],
+  },
+  {
+    name: "derived", description: "Delegate refresh of judgment-requiring derived products to the intelligent agent via grouped continuations (cogentia.continuation.v1), one per type — never written mechanically. Detection is hybrid: auto-generated tutorials and opt-in docs declare frontmatter `derived_by: agent`; reading trails are research/trails/*.md by convention; websites are any directory containing _config.yml (root or subdirectory). Idempotent: at most one active continuation per type. Also runs as part of refresh.",
+    parameters: { type: "object", properties: {} },
+    side_effects: [ "file-write", "audit-log" ],
+  },
+  {
     name: "query", description: "Structural search engine for AI agents. Searches Markdown files, ignoring node_modules and .cogentiaignore paths. Use --json for structured output.",
     parameters: { type: "object", properties: { keyword: { type: "string" }, regex: { type: "boolean", description: "Use regex matching" }, repo: { type: "string", description: "Optional repo filter" } }, required: [ "keyword" ] },
     side_effects: [],
@@ -5591,6 +5611,298 @@ function cmdTrails() {
 }
 
 
+// ── README maintenance ─────────────────────────────────────────────────────────
+//
+// `cogentia readme` keeps opt-in README files current. README.md is in
+// BUILTIN_IGNORE (never scanned as a corpus document; the public profile README
+// must never be auto-clobbered), so this pass is strictly opt-in: it only touches
+// a README that already contains a <!-- BEGIN_AUTO: readme_index --> marker. For
+// each such README (repo root or any subdirectory) it regenerates a list of the
+// Markdown documents in that README's own subtree — a root README maps the whole
+// repo, a subdirectory README maps its subtree. A README without the marker is
+// left completely untouched.
+function cmdReadme() {
+  const { configPath, config } = loadConfig();
+  if ( !configPath ) die( "No registry found. Run: cogentia add <repo> first." );
+
+  let scanned = 0, optedIn = 0, updatedCount = 0, profileDelegated = 0, profilePending = 0;
+
+  for ( const entry of config.repos ) {
+    const repoPath = resolveRepoPath( entry );
+    if ( !repoPath ) continue;
+    const remote = gitRemoteOwner( repoPath );
+    // The user-attached profile repo follows the github.com/<user>/<user> convention.
+    const isProfileRepo = !!( remote && remote.owner.toLowerCase() === remote.repo.toLowerCase() );
+    const ignorePatterns = loadIgnore( repoPath );
+    const mdFiles = listMarkdown( repoPath );
+    const readmes = mdFiles.filter( f => path.basename( f.full ).toLowerCase() === "readme.md" );
+
+    for ( const rf of readmes ) {
+      scanned++;
+
+      // The user-attached profile README (root README of the profile repo) is a
+      // DERIVED PRODUCT ("produit décliné"), not a mechanical view. Its refresh is
+      // delegated to the intelligent agent via a continuation — never auto-injected.
+      if ( isProfileRepo && path.dirname( rf.full ) === repoPath ) {
+        const outcome = delegateProfileReadme( rf, repoPath, entry );
+        if ( outcome === "emitted" ) profileDelegated++;
+        else if ( outcome === "pending" ) profilePending++;
+        continue;
+      }
+
+      let content = fs.readFileSync( rf.full, "utf8" );
+      // Opt-in only: no marker → never modified (protects hand-written READMEs).
+      if ( !content.includes( "<!-- BEGIN_AUTO: readme_index -->" ) ) continue;
+      optedIn++;
+      const original  = content;
+      const readmeDir = path.dirname( rf.full );
+
+      // Documents in this README's own subtree, excluding other READMEs, the
+      // README itself, and ignored paths.
+      const docs = mdFiles
+        .filter( f => {
+          if ( f.full === rf.full ) return false;
+          if ( path.basename( f.full ).toLowerCase() === "readme.md" ) return false;
+          if ( matchesIgnore( f.rel, ignorePatterns ) ) return false;
+          const relToDir = path.relative( readmeDir, f.full );
+          return relToDir && !relToDir.startsWith( ".." ) && !path.isAbsolute( relToDir );
+        } )
+        .map( f => ( {
+          title: extractTitle( f.full ),
+          rel:   path.relative( readmeDir, f.full ).replace( /\\/g, "/" ),
+        } ) )
+        // Deterministic order (title, then path) so refresh produces no spurious diffs.
+        .sort( ( a, b ) => a.title.localeCompare( b.title ) || a.rel.localeCompare( b.rel ) );
+
+      const block = docs.length
+        ? docs.map( d => `- [${d.title}](${d.rel})` ).join( "\n" )
+        : "*(no documents found in this subtree)*";
+
+      const r = replaceMarkedSection( content, "readme_index", block );
+      if ( r.updated && r.content !== original ) {
+        fs.writeFileSync( rf.full, r.content, "utf8" );
+        updatedCount++;
+      }
+    }
+  }
+
+  if ( JSON_MODE ) {
+    console.log( JSON.stringify( { scanned, optedIn, updated: updatedCount, profileDelegated, profilePending }, null, 2 ) );
+    return;
+  }
+  console.log( `\n${hdr( "README Maintenance" )}\n` );
+  console.log( `  ${bold( scanned )} README(s) scanned · ${bold( optedIn )} opt-in (readme_index) · ${bold( updatedCount )} written.` );
+  if ( profileDelegated || profilePending ) {
+    console.log( `  Profile README (derived product): ${bold( profileDelegated )} delegated via continuation · ${bold( profilePending )} already pending.` );
+  }
+  console.log();
+}
+
+// The user-attached profile README is a derived product ("produit décliné"), not a
+// mechanical view: see cogentia/research/pipeline.md (§4.11 derived products, §4.14
+// README maintenance). Rather than generate it here, the pipeline delegates its
+// refresh to the intelligent agent by emitting a typed continuation
+// (cogentia.continuation.v1). The agent rewrites the page from the cited corpus
+// sources and reports a step_result. Idempotent: at most one active delegation per
+// profile README — the agent itself decides whether a refresh is actually needed.
+function delegateProfileReadme( rf, repoPath, entry ) {
+  const relPath = path.relative( repoPath, rf.full ).replace( /\\/g, "/" );
+  const topicId = deriveTopicForFile( rf.full ) || deriveTopicForRepo( entry.name );
+
+  const already = listContinuations().find( c =>
+    c.status === "active"
+    && c.context && c.context.kind === "profile_readme"
+    && c.context.file === relPath
+    && c.topicId === topicId
+  );
+  if ( already ) return "pending";
+
+  const sources = [
+    "research/index.md",
+    "research/agent_brief.md",
+    "CONTEXT.md",
+    "POSSIBILISM.md",
+    "PROJECTS.md",
+    "TIMELINE.md",
+  ].filter( s => fs.existsSync( path.join( repoPath, s ) ) );
+
+  const cnt = {
+    type:     "continuation",
+    protocol: CONTINUATION_PROTOCOL,
+    id:       generateContinuationId(),
+    topicId,
+    agent:    CONTINUATION_AGENT_ANY,
+    task:     `Refresh the user-attached public profile README ${entry.name}/${relPath} as a DERIVED PRODUCT from the cited corpus sources. It is the public profile page; do not generate it mechanically. Rewrite it as a faithful, human-facing summary, cite the sources it draws from, preserve the author's voice, and invent nothing.`,
+    context: {
+      kind:    "profile_readme",
+      repo:    entry.name,
+      file:    relPath,
+      note:    "User-attached profile README — treated apart from the mechanical readme_index step. A 'produit décliné' (derived product).",
+      sources,
+      method:  "source ↔ derived split — cogentia/research/pipeline.md and cogentia/research/derived_products.md",
+    },
+    expected_result_schema: {
+      updated:      "boolean — whether the profile README was rewritten",
+      readme_path:  "string — repo-relative path of the README",
+      sources_used: "array<string> — source documents actually drawn from",
+      summary:      "string — what changed and why (or why no change was needed)",
+    },
+    status:    "active",
+    createdAt: new Date().toISOString(),
+  };
+  cnt.resume = { command: `node scripts/cogentia.js continuation resume ${cnt.id} <step_result.json>` };
+
+  const v = validateContinuationShape( cnt );
+  if ( v.errs.length ) die( `Invalid profile-README continuation:\n  ${v.errs.join( "\n  " )}` );
+  saveContinuation( cnt );
+  appendAudit( {
+    command:   "readme.delegate",
+    args:      { repo: entry.name, file: relPath },
+    result:    { id: cnt.id, topicId, kind: "profile_readme" },
+    narrative: collectNarrative(),
+  } );
+  return "emitted";
+}
+
+
+// ── derived products (tutorials / trails / websites) ────────────────────────────
+//
+// Some corpus artefacts are derived products that require *judgment* to refresh,
+// not a regex: auto-generated tutorials, curated reading trails, and rendered
+// websites. Like the profile README, the pipeline does not write them mechanically;
+// it delegates their refresh to the intelligent agent via typed continuations
+// (cogentia.continuation.v1). Detection is hybrid:
+//   - tutorials / opt-in docs : frontmatter `derived_by: agent`;
+//   - trails                  : research/trails/*.md (by convention);
+//   - websites                : any directory containing _config.yml (root or sub).
+// One grouped continuation per type (idempotent: at most one active per type). The
+// agent decides, per item, whether a refresh is actually warranted.
+
+function findConfigYmlDirs( root, out ) {
+  out = out || [];
+  let entries;
+  try { entries = fs.readdirSync( root ); } catch ( _ ) { return out; }
+  if ( entries.includes( "_config.yml" ) ) out.push( root );
+  for ( const e of entries ) {
+    if ( SKIP_DIRS.has( e ) ) continue;
+    const full = path.join( root, e );
+    let st; try { st = fs.statSync( full ); } catch ( _ ) { continue; }
+    if ( st.isDirectory() ) findConfigYmlDirs( full, out );
+  }
+  return out;
+}
+
+function cmdDerived() {
+  const { configPath, config } = loadConfig();
+  if ( !configPath ) die( "No registry found. Run: cogentia add <repo> first." );
+
+  const tutorials = [], trails = [], websites = [];
+
+  for ( const entry of config.repos ) {
+    const repoPath = resolveRepoPath( entry );
+    if ( !repoPath ) continue;
+    const ignorePatterns = loadIgnore( repoPath );
+
+    // Tutorials & opt-in docs — declarative: frontmatter `derived_by: agent`.
+    for ( const f of listMarkdown( repoPath ) ) {
+      if ( matchesIgnore( f.rel, ignorePatterns ) ) continue;
+      let fm;
+      try { fm = parseFrontmatter( fs.readFileSync( f.full, "utf8" ) ); } catch ( _ ) { continue; }
+      if ( fm && String( fm.derived_by || "" ).trim().toLowerCase() === "agent" ) {
+        tutorials.push( `${entry.name}/${f.rel}` );
+      }
+    }
+
+    // Trails — convention: research/trails/*.md.
+    const trailsDir = path.join( repoPath, "research", "trails" );
+    if ( fs.existsSync( trailsDir ) ) {
+      for ( const t of fs.readdirSync( trailsDir ).sort() ) {
+        if ( t.endsWith( ".md" ) ) trails.push( `${entry.name}/research/trails/${t}` );
+      }
+    }
+
+    // Websites — convention: any directory holding _config.yml (root or subdir).
+    for ( const dir of findConfigYmlDirs( repoPath ) ) {
+      const rel = path.relative( repoPath, dir ).replace( /\\/g, "/" );
+      websites.push( rel ? `${entry.name}/${rel}` : entry.name );
+    }
+  }
+
+  const groups = [
+    {
+      kind:  "derived_tutorials",
+      label: "auto-generated tutorials",
+      items: tutorials.sort(),
+      task:  "Refresh the auto-generated tutorials listed in context.items. Each is a derived product: regenerate it from its declared sources (the file's own `derived_from` / `canonical_source`, the relevant source code, and the doctrinal papers), faithfully, citing sources, inventing nothing. Where two tutorials cover the same ground, prefer consolidating to one (Occam). Report, per item, whether it changed.",
+    },
+    {
+      kind:  "derived_trails",
+      label: "curated reading trails",
+      items: trails.sort(),
+      task:  "Review and refresh the curated reading trails in context.items as the corpus evolves: verify each playlist's documents still exist, remain well-ordered and complete. These are curated derived products — use judgment, do not mechanically reorder. Report changes.",
+    },
+    {
+      kind:  "derived_websites",
+      label: "websites",
+      items: websites.sort(),
+      task:  "Review and refresh the website(s) in context.items (Jekyll roots, including subdirectories) so they stay faithful to the corpus sources: navigation, summaries and derived pages. Derived products — cite sources, invent nothing, preserve hand-written prose. Report changes.",
+    },
+  ];
+
+  let emitted = 0, pending = 0;
+  const existing = listContinuations();
+  for ( const g of groups ) {
+    if ( !g.items.length ) continue;
+    if ( existing.find( c => c.status === "active" && c.context && c.context.kind === g.kind ) ) {
+      pending++;
+      continue;
+    }
+    const topicId = `urn:cop:topic:cogentia/_derived/${g.kind.replace( /^derived_/, "" )}`;
+    const cnt = {
+      type:     "continuation",
+      protocol: CONTINUATION_PROTOCOL,
+      id:       generateContinuationId(),
+      topicId,
+      agent:    CONTINUATION_AGENT_ANY,
+      task:     g.task,
+      context: {
+        kind:   g.kind,
+        note:   `Grouped delegation — ${g.label}. Derived products refreshed by the intelligent agent, not mechanically (cogentia/research/pipeline.md §4.14).`,
+        items:  g.items,
+        method: "source ↔ derived split — cogentia/research/pipeline.md and cogentia/research/derived_products.md",
+      },
+      expected_result_schema: {
+        updated:   "array<string> — items actually rewritten",
+        unchanged: "array<string> — items checked and left as-is",
+        summary:   "string — what changed and why",
+      },
+      status:    "active",
+      createdAt: new Date().toISOString(),
+    };
+    cnt.resume = { command: `node scripts/cogentia.js continuation resume ${cnt.id} <step_result.json>` };
+    const v = validateContinuationShape( cnt );
+    if ( v.errs.length ) die( `Invalid derived-products continuation:\n  ${v.errs.join( "\n  " )}` );
+    saveContinuation( cnt );
+    appendAudit( {
+      command:   "derived.delegate",
+      args:      { kind: g.kind, count: g.items.length },
+      result:    { id: cnt.id, topicId },
+      narrative: collectNarrative(),
+    } );
+    emitted++;
+  }
+
+  if ( JSON_MODE ) {
+    console.log( JSON.stringify( { tutorials: tutorials.length, trails: trails.length, websites: websites.length, emitted, pending }, null, 2 ) );
+    return;
+  }
+  console.log( `\n${hdr( "Derived Products Delegation" )}\n` );
+  console.log( `  tutorials ${bold( tutorials.length )} · trails ${bold( trails.length )} · websites ${bold( websites.length )}` );
+  console.log( `  grouped continuations: ${bold( emitted )} emitted · ${bold( pending )} already pending.` );
+  console.log();
+}
+
+
 // ── links ─────────────────────────────────────────────────────────────────────
 //
 // `cogentia links` scans research-grade .md files for backtick references to
@@ -5901,6 +6213,16 @@ function cmdRefresh() {
 
   console.log( `${dim( "── documents ──" )}` );
   cmdDocuments();
+
+  if ( !checkOnly ) {
+    console.log( `\n${dim( "── readmes ──" )}` );
+    cmdReadme();
+    console.log( `\n${dim( "── derived products (delegated) ──" )}` );
+    cmdDerived();
+  } else {
+    console.log( `\n${dim( "── readmes / derived products — skipped in --check mode (no dry-run support) ──" )}\n` );
+  }
+
   console.log( `\n${dim( "All derived views " + ( checkOnly ? "checked." : "refreshed." ) )}\n` );
 }
 
@@ -6718,6 +7040,8 @@ function cmdConsolidate() {
     case "init-jekyll": cmdInitJekyll(); break;
     case "backlinks": cmdBacklinks(); break;
     case "trails": cmdTrails(); break;
+    case "readme": cmdReadme(); break;
+    case "derived": cmdDerived(); break;
     case "add":    cmdAdd(    cmdArgs[ 0 ] ); break;
     case "remove": cmdRemove( cmdArgs[ 0 ] ); break;
     case "list":   cmdList();                break;
