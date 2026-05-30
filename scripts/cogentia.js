@@ -1520,6 +1520,10 @@ ${bold( "Commands:" )}
   ${c.cyan}consolidate${c.reset}         Pre-commit ritual: ${c.cyan}drift${c.reset} + ${c.cyan}lint --strict${c.reset} +
                       ${c.cyan}refresh --check${c.reset} + scheduler items in one pass. Use when
                       you feel the work is "reasonably ready to publish".
+  ${c.cyan}verify${c.reset}              Post-commit ritual (companion to ${c.cyan}consolidate${c.reset}): re-fetch every
+                      repo and confirm each is committed (clean tree), pushed
+                      (nothing ahead) and in sync (nothing behind). Catches a
+                      forgotten ${c.cyan}git add${c.reset} or un-pushed commit. ${c.cyan}--check${c.reset} = cached refs.
   ${c.cyan}links${c.reset}               Convert backtick \`*.md\` references to clickable
                       Markdown links: \`pipeline.md\` → [\`pipeline.md\`](pipeline.md).
                       Default mode: ${c.cyan}--check${c.reset} (preview, no writes).
@@ -4856,6 +4860,13 @@ const COMMAND_MANIFEST = [
     examples: [ { input: {} } ],
   },
   {
+    name: "verify",
+    description: "Post-commit verification ritual — the companion to consolidate, run AFTER a manual commit + push. Re-fetches every registered repo and reports a per-repo verdict: committed (working tree clean), pushed (nothing ahead of upstream), and in sync (nothing behind). Catches the common human errors — a forgotten `git add`, an un-pushed commit, a repo left behind the remote. Read-only (fetch updates remote-tracking refs only). Use --check to skip the fetch and use cached refs.",
+    parameters: { type: "object", properties: { check: { type: "boolean", description: "Skip fetch; use cached remote-tracking refs." } } },
+    side_effects: [ "network (fetch)" ],
+    examples: [ { input: {} } ],
+  },
+  {
     name: "links",
     description: "Convert backtick `*.md` references to clickable Markdown links across the corpus. Default mode is --check (preview, no writes). --fix applies the changes. Resolves each reference against the registry-wide doc index, preferring same-repo matches (relative path) over cross-repo hits (absolute GitHub URL). Skips lines inside fenced code blocks and headings by default; skips refs already wrapped in [...]() ; skips self-references and unresolvable names (which may be planned-but-not-yet-published docs).",
     parameters: {
@@ -6978,6 +6989,100 @@ function cmdInstallHooks() {
   console.log();
 }
 
+// ── verify (post-commit) ───────────────────────────────────────────────────────
+//
+// The post-commit companion to `consolidate`. Because to err is human: after a
+// manual commit + push, `verify` re-fetches every registered repo and confirms
+// the working tree is clean (nothing forgotten), nothing is unpushed, and nothing
+// is behind the remote. Read-only (a fetch updates remote-tracking refs only).
+
+function gitDirtyCount( repoPath ) {
+  try {
+    const out = execSync( "git status --porcelain", {
+      cwd: repoPath, encoding: "utf8", stdio: [ "ignore", "pipe", "ignore" ],
+    } );
+    return out.split( /\r?\n/ ).filter( l => l.trim() ).length;
+  } catch ( _ ) {
+    return null;
+  }
+}
+
+function gitLastCommitLine( repoPath ) {
+  try {
+    return execSync( "git log -1 --pretty=%h\\ %s", {
+      cwd: repoPath, encoding: "utf8", stdio: [ "ignore", "pipe", "ignore" ],
+    } ).trim();
+  } catch ( _ ) {
+    return null;
+  }
+}
+
+function cmdVerify() {
+  const { configPath, config } = loadConfig();
+  if ( !configPath || config.repos.length === 0 ) die( "No repos registered." );
+
+  const checkOnly = argv.includes( "--check" ); // skip fetch, use cached refs
+
+  if ( !JSON_MODE ) {
+    console.log( `\n${hdr( "Post-commit verification" )}  ${dim( fmtNow() )}  ${dim( checkOnly ? "(cached refs)" : "(fetch + working tree)" )}\n` );
+  }
+
+  const repos = [];
+  let anyIssue = false;
+
+  for ( const entry of config.repos ) {
+    const repoPath = resolveRepoPath( entry );
+    if ( !repoPath ) { repos.push( { name: entry.name, found: false } ); anyIssue = true; continue; }
+
+    if ( !checkOnly ) gitFetch( repoPath );
+    const branch   = gitCurrentBranch( repoPath );
+    const upstream = gitUpstream( repoPath, branch );
+    const drift    = gitAheadBehind( repoPath, branch, upstream );
+    const dirty    = gitDirtyCount( repoPath );
+    const last     = gitLastCommitLine( repoPath );
+
+    const issues = [];
+    if ( dirty )                              issues.push( `${dirty} uncommitted` );
+    if ( !upstream )                          issues.push( "no upstream" );
+    else if ( drift && drift.ahead  > 0 )     issues.push( `${drift.ahead} unpushed` );
+    if ( drift && drift.behind > 0 )          issues.push( `${drift.behind} behind` );
+    const clean = !!upstream && issues.length === 0;
+    if ( !clean ) anyIssue = true;
+
+    repos.push( {
+      name:   entry.name,
+      found:  true,
+      branch,
+      dirty,
+      ahead:  drift ? drift.ahead  : null,
+      behind: drift ? drift.behind : null,
+      last,
+      issues,
+      clean,
+    } );
+  }
+
+  if ( JSON_MODE ) {
+    console.log( JSON.stringify( { timestamp: fmtNow(), anyIssue, repos }, null, 2 ) );
+    return;
+  }
+
+  const W = 20;
+  for ( const r of repos ) {
+    if ( !r.found ) { console.log( `  ${fail( pad( r.name, W ) )} — not found on disk` ); continue; }
+    const verdict = r.clean
+      ? `${c.green}✅ committed · pushed · in sync${c.reset}`
+      : `${c.yellow}⚠️  ${r.issues.join( " · " )}${c.reset}`;
+    console.log( `  ${bold( pad( r.name, W ) )} ${verdict}` );
+    if ( r.last ) console.log( `  ${pad( "", W )}   ${dim( r.last )}` );
+  }
+  console.log();
+  console.log( anyIssue
+    ? `  ${warn( "Some repos need attention (see ⚠️ above) — git add/commit/push, or git pull." )}`
+    : `  ${c.green}All registered repos are committed, pushed and in sync.${c.reset}` );
+  console.log();
+}
+
 // ── consolidate ───────────────────────────────────────────────────────────────
 
 function cmdConsolidate() {
@@ -7069,6 +7174,7 @@ function cmdConsolidate() {
     case "lint":           cmdLint();                       break;
     case "links":          cmdLinks();                      break;
     case "consolidate":    cmdConsolidate();                break;
+    case "verify":         cmdVerify();                     break;
     case "todo":           cmdTodo( ...cmdArgs );           break;
     case "next":           cmdNext();                       break;
     case "concepts":       cmdConcepts( ...cmdArgs );      break;
