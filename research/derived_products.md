@@ -1273,6 +1273,7 @@ It is to make a corpus appear without losing itself.
 
 *These documents link to this file:*
 - [cogentia.js — Tutorial and Near-Specification](cogentia_js_tutorial.md)
+- [Cogentigraphic Distillation](cogentigraphic_distillation.md)
 - [Concept Index — cogentia](concepts.md)
 - [Corpus Status — cogentia](corpus-status.md)
 - [Research Index — Cogentia](index.md)

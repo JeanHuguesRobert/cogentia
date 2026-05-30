@@ -331,6 +331,7 @@ Robert, J. H. (2026c). *Democratic Humans in the Loop: Why Infrastructure Is All
 - [Cogentia Commons — MVP Specification](cogentia_commons_mvp_spec.md)
 - [Cogentia Workflows](cogentia_workflows.md)
 - [The Sovereign Digital Twin: Cogentia, Cogentigram, Cogentiscope](cogentia-digital-twin.md)
+- [Cogentigraphic Distillation](cogentigraphic_distillation.md)
 - [Corpus Status — cogentia](corpus-status.md)
 - [Research Index — Cogentia](index.md)
 - [From Biometrics and Psychometrics to Structural Signatures](structural_signatures.md)

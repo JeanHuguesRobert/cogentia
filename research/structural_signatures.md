@@ -1010,6 +1010,7 @@ Produce a separate applied note connecting:
 *These documents link to this file:*
 - [Cogentia and Cogentigrams](Cogentia-and-Cogentigram.md)
 - [The Sovereign Digital Twin: Cogentia, Cogentigram, Cogentiscope](cogentia-digital-twin.md)
+- [Cogentigraphic Distillation](cogentigraphic_distillation.md)
 - [Research Index — Cogentia](index.md)
 - [From Biometrics and Psychometrics to Structural Signatures](structural_signatures.md)
 

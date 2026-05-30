@@ -800,3 +800,18 @@ This v0.1 draft opens several continuations:
 4. **Inox / runtime pass**: explore whether a minimal cogentigraphic operating layer can be represented as an Inox-executable or COP-compatible rule bundle.
 5. **Cogentia Commons pass**: distinguish personal cogentigraphic distillation from collective deliberative operating rules.
 6. **Substack derived product**: derive a public-facing article from the source paper, probably around the formula: "Do not distill the encyclopedia. Distill the reader."
+
+
+<!-- BEGIN_AUTO: backlinks -->
+### Backlinks
+
+*These documents link to this file:*
+- [Cogentia and Cogentigrams](Cogentia-and-Cogentigram.md)
+- [The Sovereign Digital Twin: Cogentia, Cogentigram, Cogentiscope](cogentia-digital-twin.md)
+- [Cognitive Packets](cognitive_packets.md)
+- [Derived Products](derived_products.md)
+- [Research Index — Cogentia](index.md)
+- [Pipeline](pipeline.md)
+- [From Biometrics and Psychometrics to Structural Signatures](structural_signatures.md)
+
+<!-- END_AUTO: backlinks -->

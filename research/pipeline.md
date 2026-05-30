@@ -1317,6 +1317,7 @@ Possible answer:
 - [Cogentia](../COGENTIA.md)
 - [Agent-Resumable CLI](agent_resumable_cli.md)
 - [cogentia.js — Tutorial and Near-Specification](cogentia_js_tutorial.md)
+- [Cogentigraphic Distillation](cogentigraphic_distillation.md)
 - [Cognitive Packets](cognitive_packets.md)
 - [Concept Index — cogentia](concepts.md)
 - [Corpus Status — cogentia](corpus-status.md)

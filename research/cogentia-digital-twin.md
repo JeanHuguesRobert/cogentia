@@ -172,6 +172,7 @@ This document is a position paper, not a product announcement. It is published i
 - [The Knowledge Mesh (Decentralized Wiki)](../docs/knowledge_mesh.md)
 - [Agent-Resumable CLI](agent_resumable_cli.md)
 - [Cogentia and Cogentigrams](Cogentia-and-Cogentigram.md)
+- [Cogentigraphic Distillation](cogentigraphic_distillation.md)
 - [Cognitive Packets](cognitive_packets.md)
 - [Concept Index — cogentia](concepts.md)
 - [Corpus Status — cogentia](corpus-status.md)
