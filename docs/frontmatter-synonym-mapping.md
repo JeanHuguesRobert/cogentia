@@ -1,3 +1,8 @@
+---
+author: "Jean Hugues Noël Robert, baron Mariani"
+affiliation: "Institut Mariani / C.O.R.S.I.C.A., 1 cours Paoli, F-20250 Corte, Corsica"
+license: "CC BY-SA 4.0"
+---
 # Frontmatter Synonym Mapping — v0.1
 
 Ce document liste les synonymes observés dans le corpus et les règles d’équivalence associées.

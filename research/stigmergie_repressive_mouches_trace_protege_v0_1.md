@@ -1,3 +1,15 @@
+---
+title: "La trace protège"
+subtitle: "Hypothèse d'une stigmergie répulsive chez les mouches"
+author: "Jean Hugues Noël Robert, baron Mariani"
+affiliation: "Institut Mariani / C.O.R.S.I.C.A., 1 cours Paoli, F-20250 Corte, Corsica"
+date: "2026-05-29"
+status: "draft — trace d'antériorité, hypothèse de stigmergie répulsive v0.1"
+version: "0.1"
+license: "CC BY-SA 4.0"
+ai_assisted_by:
+  - "ChatGPT — drafting from 2026-05-29 conversation"
+---
 # La trace protège
 
 ## Hypothèse d’une stigmergie répulsive chez les mouches

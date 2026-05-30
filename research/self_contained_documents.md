@@ -7,7 +7,6 @@ date: "2026-05-27"
 status: "Working note — v0.3, stabilized after external review"
 version: "0.3"
 license: "CC BY-SA 4.0"
-repository: "JeanHuguesRobert/cogentia"
 intended_path: "research/self_contained_documents.md"
 canonical_url: "https://github.com/JeanHuguesRobert/cogentia/blob/main/research/self_contained_documents.md"
 method:
