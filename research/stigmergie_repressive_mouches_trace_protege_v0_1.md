@@ -229,6 +229,13 @@ Mais cette piste a une valeur particulière : elle relie l’observation paysann
 
 ---
 
+## Voir aussi
+
+- [*Stigmergie sans limite haute*](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/stigmergie_sans_limite_haute.md) — amorce de jonction (2026-05-30) proposant une lecture *scale-free* de la stigmergie qui relie cette note (étage bas, chimique) au cadre théorique des terrains cognitifs.
+- [*Sailing the Cognitive Waves*](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/cognitive_waves.md) — cadre stigmergique pour l'exploration cognitive (étage haut).
+
+---
+
 ## Continuation
 
 ```yaml
@@ -286,3 +293,12 @@ continuation:
     - "Faire une revue bibliographique rapide mais sérieuse sur les signaux d'évitement chez les diptères."
     - "Créer un tableau : espèce / signal / effet / niveau de preuve / applicabilité."
 ```
+
+
+<!-- BEGIN_AUTO: backlinks -->
+### Backlinks
+
+*These documents link to this file:*
+- [Research Index — Cogentia](index.md)
+
+<!-- END_AUTO: backlinks -->

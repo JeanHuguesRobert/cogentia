@@ -36,13 +36,13 @@ creator: Jean Hugues Noël Robert, baron Mariani (généré automatiquement par 
 <!-- BEGIN_AUTO: registered_repos -->
 | Repository | research/index.md | Branch | Last commit |
 |---|---|---|---|
-| cogentia | ✅ | main | 2026-05-29 |
-| FractaVolta | ✅ | main | 2026-05-29 |
-| marenostrum | ✅ | main | 2026-05-29 |
-| barons-Mariani | ✅ | main | 2026-05-29 |
+| cogentia | ✅ | main | 2026-05-30 |
+| FractaVolta | ✅ | main | 2026-05-30 |
+| marenostrum | ✅ | main | 2026-05-30 |
+| barons-Mariani | ✅ | main | 2026-05-30 |
 | inseme | ✅ | main | 2026-05-29 |
-| Inox | ✅ | master | 2026-05-29 |
-| JeanHuguesRobert | ✅ | main | 2026-05-29 |
+| Inox | ✅ | master | 2026-05-30 |
+| JeanHuguesRobert | ✅ | main | 2026-05-30 |
 <!-- END_AUTO: registered_repos -->
 
 ---
@@ -118,9 +118,17 @@ graph LR
 <!-- BEGIN_AUTO: concepts -->
 | Concept | Scope | Status | Type |
 |---|---|---|---|
-| [Cogentia](./concepts.md#cogentia) | Global | Working | abstract concept / agentivity class |
+| [Civilizational Stakes](./concepts.md#civilizational-stakes) | — | — | — |
+| [Machine à explorer](./concepts.md#machine-a-explorer) | Global | Seed | abstract concept / infrastructure protocol |
+| [Machine à empêcher](./concepts.md#machine-a-empecher) | Global | Seed | abstract concept |
+| [Effet Ubik](./concepts.md#effet-ubik) | Global | Working | sociological / infrastructural pathology |
+| [Stabilisateurs (anti-Ubik / procéduraux)](./concepts.md#stabilisateurs-anti-ubik-proceduraux) | Global | Working | mechanism / anti-capture pattern |
+| [Cogentia](./concepts.md#cogentia) | — | — | — |
 | [Cogentigram](./concepts.md#cogentigram) | Global | Working | representation / map |
 | [Continuation Protocol](./concepts.md#continuation-protocol) | Global | Operational | protocol |
+| [Non-deterministic Cognitive Step (Agentic Step)](./concepts.md#non-deterministic-cognitive-step-agentic-step) | — | — | process concept **Scope:** Global **Status:** Working |
+| [Human Enacted Decision Artifact](./concepts.md#human-enacted-decision-artifact) | — | — | artifact type / imputability anchor **Scope:** Global **Status:** Working |
+| [Causal Trace Replay (Auditable Causal Reconstruction)](./concepts.md#causal-trace-replay-auditable-causal-reconstruction) | — | — | audit / replay mechanism **Scope:** Global **Status:** Working |
 | [Cognitive Packet](./concepts.md#cognitive-packet) | Global | Defined | protocol / envelope+payload format |
 | [Cogentia Commons](./concepts.md#cogentia-commons) | Global | Canonical | methodology |
 | [Cogentia Pipeline](./concepts.md#cogentia-pipeline) | Global | Defined | methodology / packet-based transformation network |

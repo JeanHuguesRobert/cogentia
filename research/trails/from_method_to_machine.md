@@ -45,6 +45,9 @@ creator: Jean Hugues Noël Robert, baron Mariani
 11. [Agent Navigation Guide](../../docs/agent_context_server.md)
     *The meta-prompt. You are here — now you know how to navigate the rest.*
 
+12. Machine à explorer vs Machine à empêcher — le gabarit abstrait
+    *Le point d'arrivée politique et le critère de design pour l'écosystème de machines coopératives. Deux déclinaisons (Cogentia Commons manuel + Fractanet/COP automatisé) issues des mêmes invariants (traçabilité, Stabilisateurs, Rule 0). Voir Phase 1 lecture + validation (research/PHASE1_LECTURE_ANALYSE.md et PHASE1_VALIDATION.md dans le corpus principal).*
+
 
 <!-- BEGIN_AUTO: backlinks -->
 ### Backlinks

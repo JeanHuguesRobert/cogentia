@@ -88,6 +88,7 @@ This repository instantiates the **cognitive infrastructure layer** of the [DHIT
 - [Cogentia Commons — Session Continuation Snapshot](cogentia_commons_continuation.md) *(snapshot 2026-05-13)* — handoff document; entry point for the next session
 - Multi-Agent Critique Loop — formal specification
 - Cogentia × Corsica: student registration as democratic infrastructure
+- [La trace protège — Hypothèse d'une stigmergie répulsive chez les mouches (FR)](stigmergie_repressive_mouches_trace_protege_v0_1.md) *(amorce v0.1, 2026-05-29 — trace d'antériorité ; étage bas du pont [stigmergie sans limite haute](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/stigmergie_sans_limite_haute.md))*
 
 ---
 

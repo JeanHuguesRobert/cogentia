@@ -28,30 +28,138 @@ This file maps concepts used across the corpus.
 
 ---
 
-## Cogentia
+## Civilizational Stakes
 
-**Type:** abstract concept / agentivity class
-**Scope:** Global
-**Status:** Working
-
-**Short definition:**
-Cogentia designates the actual situated agentivity of an entity — physical person, legal person, or AI agent — combining memory, mandate, capabilities, procedures, acts and traces.
-
-**Parent concepts:**
-- Traceable agency
-
-**Child concepts:**
-- Cogentigram
-- Operational memory
-
-**Reference documents:**
-- `research/concepts.md`
-
-**Used in:**
-- digital twin work
-- AI agent governance
+The paired abstract framework that names the civilizational stakes served by the entire corpus and its two operational declinations (Cogentia Commons manual + Fractanet/COP automated). This repo develops the methodological and packet-level implementation side.
 
 ---
+
+## Machine à explorer
+
+**Type:** abstract concept / infrastructure protocol  
+**Scope:** Global  
+**Status:** Seed  
+
+**Short definition:**  
+Système (humain, hybride ou automatisé) conçu pour maximiser la capacité rationnelle et collective à explorer des futurs possibles : association d'idées, capture de sérendipité, traçabilité forte (parentEventIds, continuations), boucles theory-practice, mécanismes anti-Ubik (Stabilisateurs procéduraux), et interconnexion coopérative sans centre capturable. Gabarit abstrait dont dérivent des instances (Cogentia Commons manuel, Fractanet/COP automatisé, etc.) formant un écosystème réactif.
+
+**Parent concepts:**
+- Possibilism
+- Democratic AI Safety
+
+**Child concepts:**
+- Cogentia Commons (déclinaison manuelle)
+- Fractanet / COP (déclinaison automatisée)
+- Stabilisateurs (anti-Ubik)
+
+**Related concepts:**
+- Continuation Protocol
+- Cognitive Packet
+- DHITL (couches 4/5)
+- Effet Ubik (opposé)
+
+**Reference documents:**
+- `barons-Mariani/research/second_method.md` (Rule 0 + Five Rules)
+- `marenostrum/DHITL.md`
+- `cogentia/research/pipeline.md`
+- `cogentia/research/cogentia_workflows.md`
+- `barons-Mariani/research/ubik_reality_dislocation.md`
+- `research/PHASE1_LECTURE_ANALYSE.md` + `PHASE1_VALIDATION.md`
+
+**Used in:**
+- Gabarit abstrait "Machine à explorer" (sandbox/cop-continuation-bac-a-sable)
+- Phase 1 validation doctrinale (mai 2026)
+- Agent-Resumable CLI, Cognitive Packets, Continuation Protocol (implémentation concrète des mécanismes)
+- Future COP Phase 2 (invariants à dériver du kernel)
+
+---
+
+## Machine à empêcher
+
+**Type:** abstract concept  
+**Scope:** Global  
+**Status:** Seed  
+
+**Short definition:**  
+Cluster de dynamiques (concentration de compute/mémoire/influence, opacité, perte de traçabilité, capture par outer optimizer, effet Ubik de dislocation de la réalité partagée, rigidification procédurale, amnesia institutionnelle) qui réduisent structurellement la capacité d'individus et de collectifs à explorer des futurs possibles. Modèle explicite à neutraliser, pas seulement à déplorer.
+
+**Related concepts:**
+- Effet Ubik
+- Machine à explorer (opposé symétrique)
+- FM-11 (outer optimizer capture)
+- Concentration de compute (85% frontier)
+
+**Reference documents:**
+- `barons-Mariani/research/ubik_reality_dislocation.md`
+- `marenostrum/DHITL.md` (§1.2, FM-11)
+- `barons-Mariani/research/second_method.md` (conditions d'échec + Rule 0)
+- `research/PHASE1_LECTURE_ANALYSE.md`
+
+**Used in:**
+- Phase 1 (modélisation des empêchements à neutraliser)
+- Conception des mécanismes anti-capture dans le pipeline et les continuations
+
+---
+
+## Effet Ubik
+
+**Type:** sociological / infrastructural pathology  
+**Scope:** Global  
+**Status:** Working  
+
+**Short definition:**  
+Dislocation opérationnelle de la réalité partagée sous l'effet combiné de complexité, médiation accélérée, incitations plateformes, médias synthétiques et IA. Réalité qui "décroît" (régression d'objets, perte de consistance, demi-vie informationnelle). Pas une disparition de la réalité, mais une destruction des procédures qui permettent de la stabiliser collectivement.
+
+**Parent concepts:**
+- Machine à empêcher
+
+**Related concepts:**
+- Stabilisateurs (anti-Ubik)
+- Pathologie du secret
+- Invidia (densité sociale destructrice)
+
+**Reference documents:**
+- `barons-Mariani/research/ubik_reality_dislocation.md` (source essay v0.1, 23 mai 2026)
+- `cogentia/research/ubik_reality_dislocation_academic.md` et variantes
+
+**Used in:**
+- Phase 1 (modélisation du pôle empêcher)
+- Conception des Stabilisateurs procéduraux (pipeline, continuations, return-to-corpus)
+
+---
+
+## Stabilisateurs (anti-Ubik / procéduraux)
+
+**Type:** mechanism / anti-capture pattern  
+**Scope:** Global  
+**Status:** Working  
+
+**Short definition:**  
+Ensemble de procédures et d'infrastructures (provenance, versioning git, source corpora publics, traçabilité par continuations, objections qualifiées de premier plan, personas explicites, certification contextuelle, retour-au-corpus, event sourcing immutable, scheduler non-mutant) qui permettent à une réalité partagée de "tenir" dans le temps face à l'effet Ubik. Remplace le fantasme d'un Ubik magique par une infrastructure démocratique procédurale.
+
+**Parent concepts:**
+- Machine à explorer
+
+**Related concepts:**
+- Effet Ubik
+- Continuation Protocol
+- Cognitive Packet
+- DHITL (Compute Exergy comme unité traçable)
+
+**Reference documents:**
+- `barons-Mariani/research/ubik_reality_dislocation.md:27` (citation centrale)
+- `cogentia/research/pipeline.md`
+- `marenostrum/DHITL.md`
+
+**Used in:**
+- Conception Cogentia Commons + Fractanet/COP
+- Agent-Resumable CLI, Cognitive Packets, sandbox de validation à blanc (Phase 1)
+- Kernel Extractor et workflows
+
+---
+
+## Cogentia
+
 
 ## Cogentigram
 
@@ -79,13 +187,83 @@ A cogentigram is a structured, partial, auditable and revisable representation o
 **Status:** Operational
 
 **Short definition:**
-The foundational system allowing AI agents to pause execution, seek human judgment, and safely resume CLI tools without being hard-coded to any single provider. Known as `cogentia.continuation.v1`.
+The foundational system allowing AI agents to pause execution, seek human judgment, and safely resume CLI tools without being hard-coded to any single provider. Known as `cogentia.continuation.v1`. In the broader COP context, continuations are first-class Artifacts (`cop/continuation`) that suspend work at the boundary between deterministic protocol mechanics and non-deterministic agentic cognition.
 
 **Parent concepts:**
 - Agent-Resumable CLI
+- Machine à explorer
+
+**Related concepts:**
+- Non-deterministic Cognitive Step
+- Human Enacted Decision Artifact
+- Causal Trace Replay
 
 **Reference documents:**
 - [`research/agent_resumable_cli.md`](agent_resumable_cli.md)
+- `inseme/packages/cop-core/Architecture.md` (§1.8, 2.7, 5.5)
+- `inseme/packages/cop-core/Invariants.md` (updated Phase 2 analysis)
+
+---
+
+## Non-deterministic Cognitive Step (Agentic Step)
+
+**Type:** process concept **Scope:** Global **Status:** Working
+
+**Short definition:** A step whose output depends on agentic reasoning (human or AI) and is not guaranteed to be reproducible from identical inputs. This non-determinism is frequently a source of useful diversity for exploration and objection. COP and Cognitive Packets capture the actual output as an immutable Artifact rather than requiring deterministic re-computation.
+
+**Parent concepts:**
+- Machine à explorer
+
+**Related concepts:**
+- Human Enacted Decision Artifact
+- Causal Trace Replay
+- Continuation Protocol
+
+**Reference documents:**
+- `inseme/packages/cop-core/Architecture.md` (§3.5, updated Phase 2)
+- `inseme/packages/cop-core/Invariants.md` (§9.1, updated Phase 2)
+- `cogentia/research/cognitive_packets.md`
+
+---
+
+## Human Enacted Decision Artifact
+
+**Type:** artifact type / imputability anchor **Scope:** Global **Status:** Working
+
+**Short definition:** Explicit Artifact (especially in COP/HITL profile) representing a decision actively taken or validated by a living human. It functions as the structural anchor for imputability, skin in the game, and defense against harmful capture. Without it, log traceability survives but accountability dissolves.
+
+**Parent concepts:**
+- Machine à explorer
+- COP/HITL Profile
+
+**Related concepts:**
+- Non-deterministic Cognitive Step
+- Rule 0 (seconde méthode)
+- DHITL Layer 5
+
+**Reference documents:**
+- `inseme/packages/cop-core/Architecture.md` (COP/HITL profile, updated Phase 2)
+- `barons-Mariani/research/second_method.md`
+
+---
+
+## Causal Trace Replay (Auditable Causal Reconstruction)
+
+**Type:** audit / replay mechanism **Scope:** Global **Status:** Working
+
+**Short definition:** The replay model actually delivered by COP and Cognitive Packets: faithful reconstruction of causal history and recorded Artifacts. It does not claim deterministic re-execution of the internal reasoning of agents. This preserves honest audit while respecting the boundary between protocol mechanics and agentic cognition.
+
+**Parent concepts:**
+- COP Invariants
+- Machine à explorer
+
+**Related concepts:**
+- Continuation Protocol
+- Non-deterministic Cognitive Step
+
+**Reference documents:**
+- `inseme/packages/cop-core/Architecture.md` (§3.5, updated Phase 2)
+- `inseme/packages/cop-core/Invariants.md` (§9.1, updated Phase 2)
 
 ---
 
