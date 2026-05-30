@@ -1,21 +1,33 @@
 ---
 title: "Traçabilité symétrique et capture relationnelle"
 subtitle: "Email, portails propriétaires, preuve opposable et rééquilibrage du rapport de force entre individus et personnes morales"
-version: "0.4"
-date: "2026-05-29"
-status: "working-paper — consolidated draft for review"
+version: "0.5"
+date: "2026-05-30"
+status: "working-paper — second-method consolidation"
 author: "Jean Hugues Noël Robert"
 affiliation: "Institut Mariani / C.O.R.S.I.C.A., 1 cours Paoli, F-20250 Corte, Corsica"
 ai_assisted_by:
-  - "assistance IA"
+  - "ChatGPT"
 repository_target: "JeanHuguesRobert/cogentia"
-methodological_context: "Corpus vivant versionné ; Interaction Packets ; Autonomie de Capacité ; Cogentia ; documents autoporteurs"
+methodological_context: "Corpus vivant versionné ; Interaction Packets ; Autonomie de Capacité ; Cogentia ; documents autoporteurs ; pipeline Cogentia"
+related_documents:
+  - "research/pipeline.md"
+  - "research/cognitive_packets.md"
+  - "research/self_contained_documents.md"
+  - "research/derived_products.md"
+  - "JeanHuguesRobert/JeanHuguesRobert/interaction_packets/dashboard.md"
 license: "CC BY 4.0"
 ---
 
 # Traçabilité symétrique et capture relationnelle
 
 ## Email, portails propriétaires, preuve opposable et rééquilibrage du rapport de force entre individus et personnes morales
+
+**Version 0.5 — 2026-05-30**  
+**Repository:** `JeanHuguesRobert/cogentia`  
+**Canonical path:** `research/tracabilite_symetrique_capture_relationnelle.md`
+
+---
 
 ## Résumé
 
@@ -37,7 +49,24 @@ Formule synthétique :
 
 ---
 
-## 1. Positionnement dans le corpus
+## 1. Assisted genesis note
+
+Cette version v0.5 applique explicitement les recommandations issues du document méthodologique `pipeline.md` du dépôt `JeanHuguesRobert/cogentia`.
+
+La v0.4 avait déjà stabilisé le concept, les définitions, les recommandations, le score de traçabilité et une première section d’objections. La v0.5 ne repart donc pas de zéro. Elle consolide le document comme **source document Cogentia** en ajoutant ou renforçant :
+
+- une carte de transformation ;
+- des niveaux de preuve ;
+- des paquets cognitifs YAML ;
+- une grille d’audit plus directement réutilisable ;
+- une proposition normative courte ;
+- une clause de continuation orientée vers revue critique, cas empiriques et produits déclinés.
+
+Cette note reste un document de travail. Elle n’est pas un avis juridique. Les références juridiques doivent être vérifiées article par article avant tout usage contentieux, parlementaire ou institutionnel.
+
+---
+
+## 2. Positionnement dans le corpus
 
 Cette note s’inscrit directement dans plusieurs axes du corpus :
 
@@ -72,7 +101,36 @@ Formule doctrinale :
 
 ---
 
-## 2. Problématique générale
+## 3. Transformation map
+
+```text
+frustration pratique face aux portails captifs
+→ interrogation sur l’email comme canal ouvert
+→ déplacement du sujet : email vs portail n’est pas le fond
+→ concept de trace indépendante
+→ concept de mémoire opposable
+→ concept de traçabilité symétrique
+→ concept de traçabilité captive
+→ concept de capture relationnelle par architecture de canal
+→ rattachement à Autonomie de Capacité, Interaction Packets et Cogentia
+→ rédaction v0.4 consolidée
+→ relecture par le pipeline Cogentia
+→ v0.5 : niveaux de preuve, paquets YAML, grille d’audit, clause normative, continuation
+```
+
+Le déplacement principal est donc le suivant :
+
+```text
+Défendre l’email
+    devient
+Défendre la capacité probatoire minimale de l’individu
+```
+
+L’email n’est pas ici un fétiche technique. Il sert de témoin historique d’un Internet où la trace pouvait encore être plus facilement copiée, transmise, exportée et opposée.
+
+---
+
+## 4. Problématique générale
 
 L’analyse de l’email et des portails propriétaires conduit à une problématique plus générale : la **traçabilité** n’est pas un simple problème d’archivage. Elle est une condition de capacité.
 
@@ -88,70 +146,27 @@ Mais :
 
 ---
 
-## 3. Définitions opératoires
+## 5. Définitions opératoires
 
-### 3.1 Personne morale
+### 5.1 Personne morale
 
-Par *personne morale*, on désigne ici tout organisme capable d’imposer ou de structurer fortement un canal de relation :
-
-- État ;
-- administration ;
-- collectivité ;
-- établissement public ;
-- université ;
-- hôpital ;
-- banque ;
-- assurance ;
-- mutuelle ;
-- opérateur télécom ;
-- fournisseur d’énergie ;
-- plateforme numérique ;
-- réseau social ;
-- marketplace ;
-- bailleur ;
-- association gestionnaire ;
-- prestataire SaaS ;
-- entreprise commerciale.
+Par *personne morale*, on désigne ici tout organisme capable d’imposer ou de structurer fortement un canal de relation : État, administration, collectivité, établissement public, université, hôpital, banque, assurance, mutuelle, opérateur télécom, fournisseur d’énergie, plateforme numérique, réseau social, marketplace, bailleur, association gestionnaire, prestataire SaaS, entreprise commerciale.
 
 La distinction public / privé est importante juridiquement, mais le phénomène analysé traverse les deux domaines : la partie forte impose un canal ; la partie faible dépend de ce canal pour agir.
 
-### 3.2 Courriel Internet standard
+### 5.2 Courriel Internet standard
 
 Par *courriel Internet standard*, on désigne ici un message transporté par les standards ordinaires de l’Internet, notamment SMTP et le format de message Internet.
 
-Le courriel n’est pas parfait. Il peut être filtré, perdu, falsifié, mal authentifié ou mal archivé. Mais il offre des propriétés structurelles importantes :
+Le courriel n’est pas parfait. Il peut être filtré, perdu, falsifié, mal authentifié ou mal archivé. Mais il offre des propriétés structurelles importantes : standards publics, copies indépendantes, archivage local, export possible, transmission à des tiers, continuité du fil, pièces jointes, métadonnées, mise en copie, conservation hors du système de l’organisme.
 
-- standards publics ;
-- copies indépendantes ;
-- archivage local ;
-- export possible ;
-- transmission à des tiers ;
-- continuité du fil ;
-- pièces jointes ;
-- métadonnées ;
-- possibilité de mise en copie ;
-- conservation hors du système de l’organisme.
+### 5.3 Canal propriétaire ou captif
 
-### 3.3 Canal propriétaire ou captif
-
-Par *canal propriétaire ou captif*, on désigne tout dispositif où l’interaction est enfermée dans un outil contrôlé par l’organisme :
-
-- formulaire sans copie intégrale ;
-- portail sans export ;
-- espace client ;
-- messagerie interne ;
-- ticket support ;
-- application mobile obligatoire ;
-- chatbot obligatoire ;
-- notification sans contenu ;
-- adresse `no-reply` ;
-- statut opaque ;
-- historique révocable ;
-- compte dont la fermeture entraîne la perte du dossier.
+Par *canal propriétaire ou captif*, on désigne tout dispositif où l’interaction est enfermée dans un outil contrôlé par l’organisme : formulaire sans copie intégrale, portail sans export, espace client, messagerie interne, ticket support, application mobile obligatoire, chatbot obligatoire, notification sans contenu, adresse `no-reply`, statut opaque, historique révocable, compte dont la fermeture entraîne la perte du dossier.
 
 Le problème n’est pas que ces outils existent. Le problème est qu’ils remplacent souvent un canal ouvert sans restituer une trace équivalente.
 
-### 3.4 Traçabilité symétrique
+### 5.4 Traçabilité symétrique
 
 La **traçabilité symétrique** désigne une situation où chaque partie dispose d’une trace :
 
@@ -166,7 +181,7 @@ La **traçabilité symétrique** désigne une situation où chaque partie dispos
 
 La symétrie n’implique pas égalité absolue des moyens. Elle signifie que l’architecture du canal ne prive pas la partie faible de sa capacité minimale de preuve.
 
-### 3.5 Traçabilité captive
+### 5.5 Traçabilité captive
 
 La **traçabilité captive** désigne une situation où l’organisme conserve la mémoire complète de l’interaction, tandis que l’individu ne dispose que d’un accès partiel, révocable, opaque ou non exportable.
 
@@ -174,20 +189,15 @@ Formule courte :
 
 > Le problème n’est pas l’absence de trace. Le problème est l’asymétrie d’accès à la trace.
 
-### 3.6 Capture relationnelle par architecture de canal
+### 5.6 Mémoire opposable
 
-La **capture relationnelle** désigne une situation où la personne morale contrôle :
+La **mémoire opposable** désigne une mémoire documentaire qu’un tiers peut examiner, vérifier, transmettre, discuter ou utiliser dans une procédure de médiation, de recours, d’audit ou de contentieux.
 
-- le canal ;
-- la forme de la demande ;
-- les destinataires ;
-- le rythme ;
-- le statut ;
-- l’historique ;
-- la preuve ;
-- les conditions de réponse ;
-- les voies de contestation ;
-- parfois la possibilité même de constituer un dossier externe.
+Une mémoire purement interne à l’organisme peut être utile. Elle n’est pas suffisante si l’individu ne peut pas la conserver, l’exporter ou la contredire.
+
+### 5.7 Capture relationnelle par architecture de canal
+
+La **capture relationnelle** désigne une situation où la personne morale contrôle : le canal, la forme de la demande, les destinataires, le rythme, le statut, l’historique, la preuve, les conditions de réponse, les voies de contestation, et parfois la possibilité même de constituer un dossier externe.
 
 Formule :
 
@@ -195,9 +205,9 @@ Formule :
 
 ---
 
-## 4. Niveaux de traçabilité
+## 6. Niveaux de traçabilité
 
-### 4.1 Traçabilité technique
+### 6.1 Traçabilité technique
 
 Elle concerne les dates, identifiants, journaux, accusés, empreintes, métadonnées, versions, signatures, horodatages, formats d’export et preuves de dépôt.
 
@@ -205,7 +215,7 @@ Question :
 
 > Peut-on établir qu’un acte numérique a eu lieu, quand, sous quelle forme, avec quel contenu, par quel canal, et avec quels effets ?
 
-### 4.2 Traçabilité relationnelle
+### 6.2 Traçabilité relationnelle
 
 Elle concerne les interlocuteurs, destinataires, copies, mandataires, tiers témoins, services saisis, agents responsables, niveaux d’escalade et changements de statut.
 
@@ -213,7 +223,7 @@ Question :
 
 > Peut-on reconstituer la relation entre les parties, et non seulement l’existence abstraite d’un ticket ou d’un statut ?
 
-### 4.3 Traçabilité probatoire
+### 6.3 Traçabilité probatoire
 
 Elle concerne la capacité à produire une trace devant un tiers : juge, médiateur, avocat, association, journaliste, élu, auditeur, chercheur, supérieur hiérarchique, autorité de contrôle ou agent IA mandaté.
 
@@ -221,7 +231,7 @@ Question :
 
 > La trace existe-t-elle sous une forme utilisable par quelqu’un d’autre que l’organisme qui contrôle le système ?
 
-### 4.4 Traçabilité cognitive
+### 6.4 Traçabilité cognitive
 
 Elle concerne la capacité pour l’individu à comprendre sa propre situation : ce qu’il a demandé, ce qu’on lui a répondu, ce qui manque, ce qui bloque, ce qu’il doit faire ensuite, ce qui relève d’un fait, d’une interprétation, d’un silence ou d’une décision.
 
@@ -229,7 +239,7 @@ Question :
 
 > L’individu conserve-t-il une représentation intelligible et actionnable de son interaction avec l’organisme ?
 
-### 4.5 Traçabilité politique
+### 6.5 Traçabilité politique
 
 Elle concerne la possibilité d’agréger des cas, de comparer des pratiques, d’identifier des dysfonctionnements systémiques, de documenter des non-recours, de rendre visibles des silences, d’étayer des réformes et de demander des comptes.
 
@@ -239,31 +249,41 @@ Question :
 
 ---
 
-## 5. Cadre juridique et normatif : une désynchronisation
+## 7. Cadre juridique et normatif : une désynchronisation
 
-### 5.1 Reconnaissance de la preuve électronique
+### 7.1 Reconnaissance de la preuve électronique
 
 Le droit français et le droit européen ne traitent plus la preuve électronique comme une anomalie.
 
-En droit français, l’écrit électronique est admis en preuve sous réserve que son auteur puisse être identifié et que l’écrit soit conservé dans des conditions permettant d’en garantir l’intégrité. En droit européen, le règlement eIDAS affirme qu’un document électronique, une signature électronique, un cachet électronique, un horodatage électronique ou un service d’envoi recommandé électronique ne peuvent être écartés comme preuve au seul motif de leur forme électronique.
+En droit français, l’écrit électronique est admis en preuve sous réserve que son auteur puisse être dûment identifié et que l’écrit soit établi et conservé dans des conditions permettant d’en garantir l’intégrité. En droit européen, le règlement eIDAS affirme qu’un document électronique, une signature électronique, un cachet électronique, un horodatage électronique ou un service d’envoi recommandé électronique ne peuvent être écartés comme preuve au seul motif de leur forme électronique.
 
 La question décisive se déplace donc :
 
 > Le problème n’est plus seulement de savoir si une trace électronique peut valoir preuve ; le problème est de savoir qui a la capacité pratique de produire, conserver, exporter, vérifier et opposer cette trace.
 
-### 5.2 Ambivalence des téléservices
+### 7.2 Ambivalence des téléservices
 
 Le droit français reconnaît la saisine électronique de l’administration, mais permet aussi à l’administration d’imposer certains téléservices. C’est le point de tension : le numérique peut être présenté comme un droit d’accès, tout en devenant une obligation de passage par une interface contrôlée.
 
-### 5.3 Interopérabilité européenne et pratiques captives
+Cette note ne prétend pas trancher tous les cas juridiques. Elle identifie une question pratique préalable : lorsqu’un canal numérique est imposé, la capacité probatoire de l’usager est-elle préservée ?
 
-Le droit européen pousse vers l’interopérabilité, les standards ouverts, la réutilisabilité et la réduction du verrouillage technologique. Pourtant, de nombreuses pratiques effectives vont dans le sens opposé : portails fermés, exports absents, messageries captives, notifications sans contenu, no-reply, fragmentation des dossiers.
+### 7.3 Identité numérique européenne et trace utilisateur
+
+Le cadre européen de l’identité numérique, modifié par le règlement (UE) 2024/1183, introduit le portefeuille européen d’identité numérique et insiste sur la transparence, le contrôle par l’utilisateur, l’historique des transactions, l’identification des parties utilisatrices et la possibilité de suivre les données demandées et partagées.
+
+Ce point est important pour le présent document : l’identité numérique ne doit pas seulement authentifier l’usager devant les systèmes. Elle devrait aussi renforcer sa capacité à conserver une mémoire vérifiable des interactions significatives.
+
+### 7.4 Interopérabilité européenne et pratiques captives
+
+Le règlement (UE) 2024/903 sur une Europe interopérable vise l’interopérabilité des services publics numériques trans-européens. Cette orientation va dans le sens d’une administration plus ouverte, réutilisable et moins enfermée dans des silos.
+
+Pourtant, de nombreuses pratiques effectives vont dans le sens opposé : portails fermés, exports absents, messageries captives, notifications sans contenu, `no-reply`, fragmentation des dossiers.
 
 Cette tension peut être nommée **désynchronisation normative** :
 
 > Les textes affirment l’accès, l’interopérabilité, la preuve électronique et l’effectivité des droits ; les interfaces peuvent produire dépendance, opacité, fragmentation et perte de capacité probatoire.
 
-### 5.4 Désynchronisation entre le droit et les mœurs numériques
+### 7.5 Désynchronisation entre le droit et les mœurs numériques
 
 Les mœurs ont également évolué. Dans la vie professionnelle, commerciale, associative et administrative, l’email est devenu un outil ordinaire de prise de date, confirmation, relance, accord, désaccord, transmission de pièces et constitution de dossier.
 
@@ -279,35 +299,67 @@ Formule :
 
 ---
 
-## 6. Bonnes raisons d’encadrer l’email
+## 8. Niveaux de preuve et statut des affirmations
+
+### Level A — Faits établis ou fortement documentables
+
+- Le courriel Internet repose sur des standards publics et permet des copies indépendantes, des transferts, des fils, des pièces jointes et des archives locales.
+- De nombreux organismes utilisent des portails, formulaires, messageries internes, tickets, applications, chatbots ou adresses `no-reply`.
+- Le droit français et le droit européen reconnaissent la valeur possible de l’écrit électronique et de certains services de confiance électroniques, sous conditions.
+- Le droit européen récent renforce l’attention portée à l’identité numérique, à l’interopérabilité, à la transparence et au contrôle de certaines traces par l’utilisateur.
+
+### Level B — Interprétations défendables
+
+- Les portails propriétaires peuvent créer une asymétrie pratique lorsque l’organisme contrôle simultanément le canal et la trace.
+- Le `no-reply` est un symptôme visible de non-réciprocité lorsque le message concerne une interaction significative.
+- L’exportabilité est une condition pratique de la mémoire opposable.
+- La mise en copie ou l’association d’un tiers mandaté peut être une fonction de traçabilité distribuée.
+
+### Level C — Hypothèses propres au corpus
+
+- La traçabilité symétrique est une condition de l’Autonomie de Capacité.
+- La capture relationnelle par architecture de canal est un mécanisme général d’anti-capacité.
+- Les Interaction Packets peuvent rééquilibrer partiellement les interactions asymétriques en produisant une mémoire portable et réutilisable.
+- Un score de traçabilité peut aider à comparer des canaux institutionnels ou privés.
+
+### Level D — Formulations doctrinales ou rhétoriques
+
+- « Filtrer, oui. Capturer, non. »
+- « La sécurité du canal ne doit jamais devenir l’insécurité probatoire de l’usager. »
+- « Nul ne devrait pouvoir tirer avantage probatoire de l’opacité du canal qu’il a lui-même imposé. »
+- « Une personne morale peut imposer un canal. Mais si elle impose son canal, elle doit rendre la trace. »
+
+---
+
+## 9. Bonnes raisons d’encadrer l’email
 
 Une analyse rigoureuse doit reconnaître les raisons légitimes des organismes.
 
-### 6.1 Lutte contre le spam
+### 9.1 Lutte contre le spam
 
 Le spam, le phishing, l’usurpation, les pièces jointes malveillantes et la saturation des boîtes de réception sont des risques réels. Ils justifient des mesures de filtrage, d’authentification, de qualification et de limitation des flux.
 
-### 6.2 Sécurité et confidentialité
+### 9.2 Sécurité et confidentialité
 
 Certaines interactions concernent des données de santé, fiscales, sociales, bancaires, judiciaires ou personnelles. Des canaux sécurisés peuvent être nécessaires.
 
-### 6.3 Authentification
+### 9.3 Authentification
 
 L’email seul ne suffit pas toujours à prouver l’identité d’une personne. Un portail authentifié peut être légitime pour certains actes.
 
-### 6.4 Structuration des demandes
+### 9.4 Structuration des demandes
 
 Un formulaire peut améliorer la complétude d’un dossier : champs obligatoires, pièces, catégories, consentements, références.
 
-### 6.5 Gestion de charge
+### 9.5 Gestion de charge
 
 Les organismes reçoivent des volumes importants de demandes. Les tickets, portails et CRM peuvent aider à router, prioriser, suivre et traiter.
 
-### 6.6 Protection des agents
+### 9.6 Protection des agents
 
 Limiter l’exposition directe des agents peut être légitime, notamment contre les pressions, abus ou harcèlements.
 
-### 6.7 Traçabilité interne
+### 9.7 Traçabilité interne
 
 Un outil métier peut améliorer la traçabilité interne : affectation, escalade, suivi des délais, statistiques, contrôle qualité.
 
@@ -315,7 +367,7 @@ Ces raisons sont réelles. Elles justifient l’encadrement. Elles ne justifient
 
 ---
 
-## 7. Le prétexte anti-spam : objection sérieuse, justification insuffisante
+## 10. Le prétexte anti-spam : objection sérieuse, justification insuffisante
 
 La lutte contre le spam est souvent invoquée pour limiter ou supprimer l’usage de l’email. Cette justification ne doit pas être écartée trop vite, mais elle ne tient pas comme justification générale de la non-réciprocité.
 
@@ -353,7 +405,7 @@ Principe proposé :
 
 ---
 
-## 8. Le `no-reply` comme symptôme
+## 11. Le `no-reply` comme symptôme
 
 Le `no-reply` est la forme minimale et visible de la capture relationnelle.
 
@@ -380,9 +432,9 @@ Le `no-reply` ne doit pas être interdit dans tous les cas. Il peut être accept
 
 ---
 
-## 9. Preuve juridique et raréfaction organisée des traces
+## 12. Preuve juridique et raréfaction organisée des traces
 
-### 9.1 Du mail comme preuve faible au mail comme faisceau probatoire
+### 12.1 Du mail comme preuve faible au mail comme faisceau probatoire
 
 L’email ordinaire n’est pas nécessairement une preuve parfaite. Il peut être contesté, incomplet ou insuffisamment authentifié. Mais il peut constituer :
 
@@ -397,7 +449,7 @@ L’email ordinaire n’est pas nécessairement une preuve parfaite. Il peut êt
 
 Son intérêt ne réside pas seulement dans son contenu, mais aussi dans son fil, ses destinataires, ses copies, ses références, ses pièces jointes, ses horodatages, ses métadonnées, ses accusés éventuels et son exportabilité.
 
-### 9.2 Reconnaissance de la preuve, appauvrissement architectural
+### 12.2 Reconnaissance de la preuve, appauvrissement architectural
 
 La contradiction est nette :
 
@@ -407,7 +459,7 @@ Cela ne prouve pas nécessairement une intention explicite. Mais cela révèle u
 
 > Les organisations ont intérêt à préférer des canaux où elles gardent la mémoire complète de l’interaction, tout en ne donnant à l’autre partie qu’un accès partiel, révocable ou non exportable à cette mémoire.
 
-### 9.3 Obscurité systémique
+### 12.3 Obscurité systémique
 
 L’obscurité protège moins une personne déterminée qu’un mode d’organisation :
 
@@ -429,7 +481,7 @@ Version plus sobre :
 
 ---
 
-## 10. Typologie des mécanismes de capture
+## 13. Typologie des mécanismes de capture
 
 | Mécanisme | Description | Effet de domination discret |
 |---|---|---|
@@ -448,7 +500,7 @@ Version plus sobre :
 
 ---
 
-## 11. Critère de proportionnalité
+## 14. Critère de proportionnalité
 
 Une restriction de l’email ou d’un canal ouvert est acceptable seulement si elle est :
 
@@ -457,8 +509,6 @@ Une restriction de l’email ou d’un canal ouvert est acceptable seulement si 
 3. documentée ;
 4. compensée ;
 5. contestable.
-
-Tableau :
 
 | Mesure | Justifiable ? | Acceptable si… |
 |---|---:|---|
@@ -479,7 +529,7 @@ Principe :
 
 ---
 
-## 12. Indicateur proposé : Symmetric Traceability Score
+## 15. Indicateur proposé : Symmetric Traceability Score
 
 Un indicateur provisoire peut attribuer de 0 à 2 points à chaque critère.
 
@@ -505,27 +555,48 @@ Lecture provisoire :
 - **6–10** : traçabilité captive partielle ;
 - **0–5** : canal probatoirement défaillant.
 
+### 15.1 Mode d’emploi minimal
+
+Pour auditer un organisme, il faut documenter :
+
+```yaml
+traceability_audit:
+  audited_entity: "..."
+  channel: "portal / email / app / chatbot / desk / phone"
+  date: "YYYY-MM-DD"
+  interaction_type: "request / complaint / decision / payment / appeal / notification"
+  score:
+    complete_copy: 0
+    timestamp: 0
+    stable_identifier: 0
+    export: 0
+    copy_to_third_party: 0
+    attachments: 0
+    statuses: 0
+    decision: 0
+    log: 0
+    correction: 0
+  total: 0
+  notes: "..."
+  evidence:
+    - "screenshot"
+    - "email"
+    - "portal receipt"
+    - "downloaded file"
+  publication_status: "private / shareable / public"
+```
+
 ---
 
-## 13. Recommandations aux organismes
+## 16. Recommandations aux organismes
 
-### 13.1 Garantir une copie intégrale de chaque acte
+### 16.1 Garantir une copie intégrale de chaque acte
 
 Chaque demande, dépôt, message, formulaire, recours, réclamation ou pièce transmise doit générer une copie intégrale accessible à l’émetteur.
 
-Cette copie doit inclure :
+Cette copie doit inclure : contenu complet, date et heure, identifiant stable, canal utilisé, service destinataire, pièces jointes, empreintes cryptographiques éventuelles, accusé de dépôt, état initial du dossier.
 
-- contenu complet ;
-- date et heure ;
-- identifiant stable ;
-- canal utilisé ;
-- service destinataire ;
-- pièces jointes ;
-- empreintes cryptographiques éventuelles ;
-- accusé de dépôt ;
-- état initial du dossier.
-
-### 13.2 Interdire les formulaires sans reçu exploitable
+### 16.2 Interdire les formulaires sans reçu exploitable
 
 Un formulaire qui ne produit qu’un message du type « votre demande a bien été prise en compte » sans contenu intégral ne fournit pas une trace suffisante.
 
@@ -533,17 +604,11 @@ Règle :
 
 > Aucun formulaire ne devrait pouvoir être validé sans génération automatique d’un reçu complet.
 
-### 13.3 Remplacer le `no-reply` par une réciprocité contrôlée
+### 16.3 Remplacer le `no-reply` par une réciprocité contrôlée
 
-Un message descendant doit indiquer un canal de réponse contextualisé, traçable et équivalent :
+Un message descendant doit indiquer un canal de réponse contextualisé, traçable et équivalent : lien direct vers le dossier, possibilité de répondre dans le contexte, export de la réponse, accusé de réception, conservation du fil.
 
-- lien direct vers le dossier ;
-- possibilité de répondre dans le contexte ;
-- export de la réponse ;
-- accusé de réception ;
-- conservation du fil.
-
-### 13.4 Fournir un export complet et standard
+### 16.4 Fournir un export complet et standard
 
 Tout portail, espace client, ENT, messagerie interne, téléservice ou ticketing doit fournir un export complet.
 
@@ -556,113 +621,49 @@ Formats possibles :
 - archive signée pour les dossiers sensibles ;
 - hash des pièces jointes lorsque nécessaire.
 
-### 13.5 Permettre la mise en copie ou la désignation d’un tiers
+### 16.5 Permettre la mise en copie ou la désignation d’un tiers
 
-Sauf contrainte forte de confidentialité, l’individu doit pouvoir associer un tiers :
-
-- avocat ;
-- représentant légal ;
-- tuteur ;
-- association ;
-- élu ;
-- médiateur ;
-- proche aidant ;
-- organisation mandatée ;
-- agent numérique personnel ;
-- coffre-fort documentaire.
+Sauf contrainte forte de confidentialité, l’individu doit pouvoir associer un tiers : avocat, représentant légal, tuteur, association, élu, médiateur, proche aidant, organisation mandatée, agent numérique personnel, coffre-fort documentaire.
 
 La mise en copie est une fonction de traçabilité distribuée.
 
-### 13.6 Journaliser les changements de statut
+### 16.6 Journaliser les changements de statut
 
-Tout changement significatif doit être daté, historisé et explicable :
+Tout changement significatif doit être daté, historisé et explicable : demande reçue, pièce manquante, dossier transmis, instruction ouverte, décision prise, dossier clôturé, demande rejetée, correction effectuée, recours possible, délai expiré.
 
-- demande reçue ;
-- pièce manquante ;
-- dossier transmis ;
-- instruction ouverte ;
-- décision prise ;
-- dossier clôturé ;
-- demande rejetée ;
-- correction effectuée ;
-- recours possible ;
-- délai expiré.
-
-### 13.7 Motiver les décisions sous forme exportable
+### 16.7 Motiver les décisions sous forme exportable
 
 Une décision importante ne doit pas être seulement affichée dans un portail. Elle doit pouvoir être exportée sous une forme complète, datée, motivée, opposable et transmissible.
 
-### 13.8 Prévoir un canal de secours effectif
+### 16.8 Prévoir un canal de secours effectif
 
-Aucun canal numérique propriétaire ne doit être exclusif sans canal de secours réel :
+Aucun canal numérique propriétaire ne doit être exclusif sans canal de secours réel : email standard, courrier postal, guichet, téléphone avec compte rendu écrit, représentant mandaté, dépôt physique avec récépissé, lettre recommandée électronique, médiation.
 
-- email standard ;
-- courrier postal ;
-- guichet ;
-- téléphone avec compte rendu écrit ;
-- représentant mandaté ;
-- dépôt physique avec récépissé ;
-- lettre recommandée électronique ;
-- médiation.
+### 16.9 Auditer les canaux
 
-### 13.9 Auditer les canaux
-
-Chaque organisme devrait publier un audit de ses canaux numériques selon des critères simples :
-
-- copie intégrale ;
-- export ;
-- horodatage ;
-- identifiant stable ;
-- réponse possible ;
-- tiers possible ;
-- historique ;
-- motivation ;
-- recours ;
-- accessibilité ;
-- canal de secours.
+Chaque organisme devrait publier un audit de ses canaux numériques selon des critères simples : copie intégrale, export, horodatage, identifiant stable, réponse possible, tiers possible, historique, motivation, recours, accessibilité, canal de secours.
 
 ---
 
-## 14. Recommandations aux individus
+## 17. Recommandations aux individus
 
-### 14.1 Toujours conserver une copie locale
+### 17.1 Toujours conserver une copie locale
 
-Avant d’envoyer un formulaire ou message captif :
+Avant d’envoyer un formulaire ou message captif : copier le texte dans un fichier local, enregistrer les pièces jointes envoyées, noter date et heure, conserver l’URL ou le nom du portail, faire une capture écran comme preuve secondaire.
 
-- copier le texte dans un fichier local ;
-- enregistrer les pièces jointes envoyées ;
-- noter date et heure ;
-- conserver l’URL ou le nom du portail ;
-- faire une capture écran comme preuve secondaire.
+### 17.2 Utiliser l’email lorsque c’est possible
 
-### 14.2 Utiliser l’email lorsque c’est possible
+Lorsque l’organisme fournit une adresse email effective : envoyer un message clair, conserver l’objet, joindre les pièces, demander accusé de réception, mettre en copie les tiers pertinents, archiver le fil complet, éviter les formulations agressives, distinguer faits, demandes et interprétations.
 
-Lorsque l’organisme fournit une adresse email effective :
+### 17.3 Doubler les canaux importants
 
-- envoyer un message clair ;
-- conserver l’objet ;
-- joindre les pièces ;
-- demander accusé de réception ;
-- mettre en copie les tiers pertinents ;
-- archiver le fil complet ;
-- éviter les formulations agressives ;
-- distinguer faits, demandes et interprétations.
-
-### 14.3 Doubler les canaux importants
-
-Pour un enjeu significatif :
-
-- portail + email ;
-- email + courrier recommandé ;
-- formulaire + copie à soi-même ;
-- appel téléphonique + mail de confirmation ;
-- guichet + récépissé écrit.
+Pour un enjeu significatif : portail + email, email + courrier recommandé, formulaire + copie à soi-même, appel téléphonique + mail de confirmation, guichet + récépissé écrit.
 
 Formule :
 
 > Lorsqu’un canal est captif, créer une trace externe parallèle.
 
-### 14.4 Envoyer un mail de confirmation après téléphone ou guichet
+### 17.4 Envoyer un mail de confirmation après téléphone ou guichet
 
 Exemple :
 
@@ -670,7 +671,7 @@ Exemple :
 
 Ce type de mail crée une trace sobre, non agressive et exploitable.
 
-### 14.5 Préparer des Interaction Packets
+### 17.5 Préparer des Interaction Packets
 
 Modèle minimal :
 
@@ -691,99 +692,57 @@ next_action: "..."
 interpretation_level: "fact / hypothesis / analysis / public claim"
 ```
 
-### 14.6 Nommer les silences
+### 17.6 Nommer les silences
 
-Le silence doit être documenté comme un fait :
+Le silence doit être documenté comme un fait : demande initiale, date de relance, absence de réponse à date donnée, conséquence pratique, action suivante.
 
-- demande du 3 mai ;
-- relance du 17 mai ;
-- aucune réponse au 29 mai ;
-- conséquence pratique ;
-- action suivante.
-
-### 14.7 Distinguer preuve forte, preuve moyenne et indice
+### 17.7 Distinguer preuve forte, preuve moyenne et indice
 
 - **Preuve forte** : recommandé, signature, accusé complet, document officiel, décision motivée.
 - **Preuve moyenne** : email complet, reçu de dépôt, ticket exporté.
 - **Indice** : capture écran, note personnelle, notification sans contenu, souvenir d’appel.
 
-### 14.8 Ne pas dépendre d’un seul compte
+### 17.8 Ne pas dépendre d’un seul compte
 
 Exporter régulièrement, sauvegarder hors portail, conserver localement, transmettre à un tiers de confiance si nécessaire.
 
-### 14.9 Utiliser des formulations sobres
+### 17.9 Utiliser des formulations sobres
 
-Une trace utile doit être lisible par un tiers :
+Une trace utile doit être lisible par un tiers : factuelle, datée, courte, non diffamatoire, vérifiable, distinguant faits et hypothèses.
 
-- factuelle ;
-- datée ;
-- courte ;
-- non diffamatoire ;
-- vérifiable ;
-- distinguant faits et hypothèses.
+### 17.10 Préparer la publication possible sans publier trop tôt
 
-### 14.10 Préparer la publication possible sans publier trop tôt
-
-Distinguer :
-
-- archive privée ;
-- dossier transmissible ;
-- note semi-publique ;
-- publication publique ;
-- signalement institutionnel ;
-- contentieux.
+Distinguer : archive privée, dossier transmissible, note semi-publique, publication publique, signalement institutionnel, contentieux.
 
 ---
 
-## 15. Recommandations aux régulateurs et législateurs
+## 18. Recommandations aux régulateurs et législateurs
 
-### 15.1 Créer un droit à la trace exportable
+### 18.1 Créer un droit à la trace exportable
 
 Tout usager, client, patient, étudiant, allocataire, administré ou abonné devrait disposer d’un droit général à obtenir l’export complet de ses interactions significatives avec une personne morale.
 
-### 15.2 Créer un standard minimal de reçu numérique
+### 18.2 Créer un standard minimal de reçu numérique
 
-Un reçu numérique devrait contenir :
+Un reçu numérique devrait contenir : identifiant, date, heure, auteur, organisme, canal, contenu soumis, pièces jointes, empreintes éventuelles, statut initial, voies de relance, voies de recours.
 
-- identifiant ;
-- date ;
-- heure ;
-- auteur ;
-- organisme ;
-- canal ;
-- contenu soumis ;
-- pièces jointes ;
-- empreintes éventuelles ;
-- statut initial ;
-- voies de relance ;
-- voies de recours.
-
-### 15.3 Conditionner l’obligation de portail à une équivalence probatoire
+### 18.3 Conditionner l’obligation de portail à une équivalence probatoire
 
 Un portail ne devrait pouvoir être rendu obligatoire que s’il offre une capacité probatoire au moins équivalente à celle d’un email correctement archivé.
 
-### 15.4 Encadrer les `no-reply`
+### 18.4 Encadrer les `no-reply`
 
 Les messages `no-reply` devraient être limités aux notifications techniques ou accompagnés d’un canal de réponse contextuel, traçable et équivalent.
 
-### 15.5 Reconnaître la mise en copie comme droit fonctionnel
+### 18.5 Reconnaître la mise en copie comme droit fonctionnel
 
 La possibilité d’associer un tiers mandaté devrait être reconnue comme une condition d’accès effectif aux droits dans les interactions complexes.
 
-### 15.6 Imposer des audits de traçabilité
+### 18.6 Imposer des audits de traçabilité
 
-Les grands organismes devraient publier des audits réguliers de leurs canaux de relation :
+Les grands organismes devraient publier des audits réguliers de leurs canaux de relation : taux de formulaires sans reçu complet, taux de tickets exportables, durée de conservation, disponibilité des historiques, existence de canaux alternatifs, accessibilité, délais de réponse, taux de clôtures sans décision motivée.
 
-- taux de formulaires sans reçu complet ;
-- taux de tickets exportables ;
-- durée de conservation ;
-- disponibilité des historiques ;
-- existence de canaux alternatifs ;
-- accessibilité ;
-- délais de réponse ;
-- taux de clôtures sans décision motivée.
-
-### 15.7 Sanctionner la perte de trace imposée
+### 18.7 Sanctionner la perte de trace imposée
 
 Principe juridique possible :
 
@@ -791,7 +750,117 @@ Principe juridique possible :
 
 ---
 
-## 16. Objections sérieuses
+## 19. Proposition normative courte
+
+Formulation de travail :
+
+> Toute personne morale imposant à une personne physique un canal numérique d’interaction doit permettre à celle-ci d’obtenir, dans un format ouvert ou aisément exploitable, une trace complète, datée, intelligible, portable et opposable des échanges, pièces transmises, statuts, décisions et voies de recours associés.
+
+Version plus technique :
+
+> Lorsqu’un canal numérique propriétaire est imposé pour une interaction significative, l’organisme responsable doit garantir une équivalence probatoire minimale avec un échange électronique ouvert : accusé complet, identifiant stable, horodatage, conservation, export, historisation des statuts, motivation des décisions et possibilité d’association d’un tiers mandaté, sauf exception strictement justifiée par la sécurité, la confidentialité ou la protection des personnes.
+
+Version courte :
+
+> Une personne morale peut imposer un canal. Mais si elle impose son canal, elle doit rendre la trace.
+
+---
+
+## 20. Cognitive packets YAML
+
+```yaml
+cognitive_packet:
+  id: symmetric_traceability.v0.5
+  title: "Traçabilité symétrique"
+  type: "governance concept"
+  definition: >
+    Situation in which each party to an interaction, including the weaker
+    party, can retain, export, verify and oppose a reliable trace of the
+    exchange.
+  contrast:
+    captive_traceability: >
+      Trace controlled by the party that also imposes the channel.
+  related:
+    - autonomy_of_capacity
+    - traceability_of_acts
+    - interaction_packets
+    - anti_capture
+  status: "core concept"
+```
+
+```yaml
+cognitive_packet:
+  id: relational_capture_channel_architecture.v0.5
+  title: "Capture relationnelle par architecture de canal"
+  type: "anti-capture concept"
+  definition: >
+    Situation in which an organization controls not only the interaction
+    channel but also the trace, timing, response status, exportability,
+    memory and evidentiary conditions of the relationship.
+  symptoms:
+    - "no-reply addresses"
+    - "non-exportable portals"
+    - "internal-only message histories"
+    - "opaque ticket statuses"
+    - "forced web forms without independent receipt"
+  risk: >
+    The weaker party loses practical capacity to prove, contest, escalate or
+    reconstruct the interaction.
+  status: "core concept"
+```
+
+```yaml
+cognitive_packet:
+  id: opposable_memory.v0.5
+  title: "Mémoire opposable"
+  type: "legal-practical concept"
+  definition: >
+    A memory of interaction that can be retained, transmitted, verified and
+    used in contradiction, mediation, audit or contestation.
+  core_formula: >
+    Without independent trace, there is no opposable memory.
+  related:
+    - proof
+    - evidence
+    - contestability
+    - autonomy_of_capacity
+  status: "core concept"
+```
+
+```yaml
+cognitive_packet:
+  id: interaction_packet.v0.5
+  title: "Interaction Packet"
+  type: "operational format"
+  definition: >
+    Structured record of an interaction with an individual, institution,
+    company or platform, including dates, channel, parties, claims, evidence,
+    attachments, unanswered items, next actions and publication status.
+  possible_formats:
+    - markdown
+    - yaml
+    - json
+    - git-tracked folder
+  status: "operational packet"
+```
+
+```yaml
+cognitive_packet:
+  id: channel_architecture_as_power.v0.5
+  title: "Architecture de canal comme rapport de pouvoir"
+  type: "structural interpretation"
+  definition: >
+    The communication channel is not a neutral conduit: it determines what can
+    be asked, documented, copied, contested, escalated, exported and remembered.
+  warning: >
+    This should be treated as a structural claim, not as proof of intentional
+    domination in every concrete case.
+  status: "interpretive packet"
+```
+
+---
+
+## 21. Objections sérieuses
 
 ### Objection 1 — L’email n’est pas sûr
 
@@ -821,37 +890,109 @@ Il ne faut pas confondre traçabilité et exposition sauvage. Une bonne architec
 
 Seulement si la trace est ajoutée après coup. Si elle est conçue dès l’origine comme sous-produit naturel du système, elle réduit les coûts de contestation, de répétition, de médiation et de contentieux.
 
+### Objection 8 — La traçabilité peut devenir surveillance
+
+Objection centrale. Toute trace peut devenir instrument de contrôle. La réponse n’est donc pas « tout tracer », mais distinguer :
+
+```text
+traçabilité subie
+≠
+traçabilité opposable
+≠
+traçabilité symétrique
+```
+
+La traçabilité symétrique n’est pas la surveillance généralisée. C’est la possibilité pour chaque partie de disposer d’une mémoire vérifiable de l’interaction, sous contrôle proportionné, avec des garanties de confidentialité.
+
+### Objection 9 — La capture d’écran suffit
+
+Non. La capture d’écran peut être utile comme indice secondaire, mais elle est fragile, partielle, peu structurée, difficile à automatiser, souvent pauvre en métadonnées, et rarement suffisante pour reconstituer un historique complet.
+
+### Objection 10 — Il ne faut pas confondre droit d’accès aux données et preuve opposable
+
+Exact. Le RGPD et les droits d’accès aux données personnelles sont importants, mais ils ne couvrent pas nécessairement toute la mémoire probatoire d’une interaction : statuts, silences, décisions, changements internes, pièces déposées, historique de traitement, motifs, délais et voies de recours. La traçabilité symétrique ne se réduit donc pas à la portabilité des données personnelles.
+
 ---
 
-## 17. Penser contre soi
+## 22. Penser contre soi
 
-### 17.1 Risque de surestimer l’email
+### 22.1 Risque de surestimer l’email
 
 Le courriel n’est pas un paradis de la traçabilité. Beaucoup d’usagers ne savent pas l’archiver ; les fournisseurs filtrent ; les comptes se perdent ; les messages peuvent être supprimés ; les signatures sont rares.
 
 Réponse : le concept central doit rester la traçabilité symétrique, et non l’email lui-même.
 
-### 17.2 Risque de voir une intention partout
+### 22.2 Risque de voir une intention partout
 
 Tout mauvais portail n’est pas un instrument volontaire de domination. Il peut être mal conçu, sous-financé, hérité, sous-maintenu ou imposé par un prestataire.
 
 Réponse : la note parle d’effet structurel, pas nécessairement d’intention explicite.
 
-### 17.3 Risque de conflit avec la protection des données
+### 22.3 Risque de conflit avec la protection des données
 
 Exporter trop de traces peut accroître les risques de fuite.
 
 Réponse : il faut des exports sûrs, contextualisés, éventuellement chiffrés, mais la protection des données ne doit pas devenir un prétexte général à la dépossession probatoire.
 
-### 17.4 Risque de confusion entre transparence et publicité
+### 22.4 Risque de confusion entre transparence et publicité
 
 Tout tracer ne signifie pas tout publier. Il faut distinguer archive privée, preuve transmissible, audit public et publication.
 
 Réponse : la traçabilité donne la capacité de choisir le bon niveau d’exposition.
 
+### 22.5 Risque d’inflation documentaire
+
+Une exigence trop lourde de documentation peut devenir contre-productive.
+
+Réponse : la documentation doit être proportionnée à l’enjeu. Pour une interaction simple, un reçu complet suffit. Pour une interaction engageant des droits, des délais, une décision, une dette, une prestation ou un recours, une trace structurée devient légitime.
+
 ---
 
-## 18. Principe final : traçabilité par défaut, captivité par exception
+## 23. Cas empiriques à documenter
+
+Cette v0.5 ne prétend pas encore documenter empiriquement chaque cas. Elle établit une grille qui doit ensuite être testée.
+
+Cas prioritaires :
+
+1. **ANEF / titres de séjour** : forte dépendance au portail, enjeux vitaux, difficulté d’accès aux guichets, besoin de preuves de dépôt et de relance.
+2. **CAF / MSA / CPAM** : prestations, pièces, délais, réclamations, décisions, indus, recours.
+3. **Services fiscaux** : messagerie sécurisée, pièces, délais de réponse, opposabilité.
+4. **Banques et assurances** : réclamations, sinistres, clôtures, justificatifs, médiation.
+5. **Opérateurs télécoms et fournisseurs d’énergie** : résiliation, facturation, incident, preuve de demande.
+6. **Universités et plateformes étudiantes** : inscriptions, bourses, recours, pièces.
+7. **Hôpitaux et plateformes de santé** : confidentialité forte, mais nécessité de trace transmissible.
+8. **Réseaux sociaux et plateformes de modération** : sanctions, suppressions, recours, décisions automatisées ou semi-automatisées.
+9. **Collectivités territoriales** : urbanisme, aides, demandes de documents, inscriptions.
+10. **Associations gestionnaires et prestataires délégataires** : cas hybrides entre service public, droit privé et dépendance pratique.
+
+Pour chaque cas, il faudra mesurer : score de traçabilité, existence d’un export, preuve de dépôt, preuve de réponse, historisation des statuts, voies de recours, canal de secours, possibilité d’assistance par un tiers.
+
+---
+
+## 24. Self-evaluation selon la seconde méthode
+
+| Critère | Évaluation v0.5 | Commentaire |
+|---|---|---|
+| Clarté de l’hypothèse | Forte | La thèse est stable : la trace est condition de capacité. |
+| Contestabilité | Forte | Les objections principales sont explicites. |
+| Séparation des niveaux de preuve | Améliorée | La v0.5 distingue faits, interprétations, hypothèses et formules. |
+| Autoportance | Forte | Le document peut être lu sans connaître tout le corpus. |
+| Intégration corpus | Forte | Liens explicites avec Autonomie de Capacité, Interaction Packets et Cogentia. |
+| Utilité pratique | Forte | Score, recommandations, modèle YAML, clause normative. |
+| Solidité juridique | Moyenne | Références présentes mais à consolider précisément. |
+| Empirie | Moyenne faible | Cas listés, mais pas encore documentés. |
+| Risque rhétorique | Moyen | Certaines formules sont fortes ; elles sont désormais classées Level D. |
+| Produit décliné possible | Fort | Substack, Facebook, grille d’audit, note parlementaire. |
+
+### Internal bullshit meter
+
+Score provisoire : **1.5/10**.
+
+Raison : la structure est solide et les objections sont réelles, mais la généralisation reste large tant que les cas empiriques ne sont pas documentés et que les références juridiques ne sont pas vérifiées article par article.
+
+---
+
+## 25. Principe final : traçabilité par défaut, captivité par exception
 
 Principe général :
 
@@ -871,7 +1012,7 @@ Formule de synthèse :
 
 ---
 
-## 19. Questions pour Grok / reviewer critique
+## 26. Questions pour Grok / reviewer critique
 
 1. Le concept de **capture relationnelle par architecture de canal** est-il suffisamment distinct de *vendor lock-in*, *dark patterns* et *administrative burden* ?
 2. Faut-il parler de domination, de dépendance, d’asymétrie, de dépossession probatoire ou de capture relationnelle ?
@@ -890,9 +1031,21 @@ Formule de synthèse :
 
 ---
 
-## 20. Clause de continuation
+## 27. Clause de continuation
 
-### A. Consolidation juridique
+### A. Revue critique externe
+
+Soumettre cette v0.5 à Grok ou à un autre reviewer critique selon la seconde méthode, avec consigne de chercher :
+
+- formulations excessives ;
+- analogies abusives ;
+- faiblesses juridiques ;
+- angles morts RGPD ;
+- objections techniques ;
+- cas empiriques prioritaires ;
+- propositions de v0.6.
+
+### B. Consolidation juridique
 
 - vérifier précisément les articles applicables du CRPA ;
 - intégrer eIDAS 1 et eIDAS 2 ;
@@ -901,7 +1054,7 @@ Formule de synthèse :
 - vérifier les obligations d’accusé de réception, motivation, conservation et recours ;
 - distinguer droit français, droit européen et pratiques internationales.
 
-### B. Études de cas
+### C. Études de cas
 
 - ANEF et titres de séjour ;
 - CAF / MSA / CPAM ;
@@ -914,18 +1067,18 @@ Formule de synthèse :
 - plateformes de santé ;
 - réseaux sociaux et plateformes de modération.
 
-### C. Spécification technique
+### D. Spécification technique
 
 - modèle YAML d’Interaction Packet ;
 - modèle JSON d’export institutionnel ;
 - hash des pièces jointes ;
-- conservation en `.eml` / `.mbox`;
+- conservation en `.eml` / `.mbox` ;
 - coffre-fort personnel ;
 - API d’export ;
 - compatibilité GitHub / Git / Markdown ;
 - signature et horodatage.
 
-### D. Déclinaisons publiques
+### E. Produits déclinés
 
 - version académique longue ;
 - manifeste court ;
@@ -937,7 +1090,7 @@ Formule de synthèse :
 
 ---
 
-## 21. Conclusion
+## 28. Conclusion
 
 La question de l’email n’est pas nostalgique. Elle révèle un problème plus profond : dans une société de plus en plus administrée par interfaces, celui qui contrôle le canal contrôle souvent la trace ; celui qui contrôle la trace contrôle la mémoire ; celui qui contrôle la mémoire contrôle une partie de la preuve ; celui qui contrôle la preuve contrôle une part de la réalité institutionnelle.
 
@@ -951,8 +1104,8 @@ Une personne morale peut imposer un canal. Mais si elle impose son canal, elle d
 
 ## Références initiales à consolider
 
-- Code des relations entre le public et l’administration, articles L112-8 à L112-10 et R112-9-1 à R112-9-2, Légifrance.
-- Code civil, articles relatifs à l’écrit électronique et à la preuve.
+- Code civil, notamment articles 1366 et suivants relatifs à l’écrit électronique et à la preuve.
+- Code des relations entre le public et l’administration, notamment dispositions relatives à la saisine électronique, aux téléservices, aux accusés de réception, aux décisions et aux recours.
 - Règlement (UE) n° 910/2014, eIDAS.
 - Règlement (UE) 2024/1183, cadre européen relatif à l’identité numérique.
 - Règlement (UE) 2024/903, Interoperable Europe Act.
