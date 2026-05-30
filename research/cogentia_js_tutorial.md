@@ -109,6 +109,7 @@ Recognised block names:
 | ----------------- | --------------------------------------------------------------- | -------------------- |
 | `trails`          | Trail navigation header (Previous / Next per curated playlist)  | `cogentia trails`    |
 | `backlinks`       | "These documents link to this file" list                        | `cogentia backlinks` |
+| `readme_index`    | Index of the docs in a README's own subtree (opt-in; root or subdir README) | `cogentia readme` |
 | `registered_repos`| Per-repo table (in [`corpus-status.md`](corpus-status.md))                          | `cogentia corpus-status` |
 | `graph`           | Mermaid cross-reference graph (in [`corpus-status.md`](corpus-status.md))           | `cogentia corpus-status` |
 | `concepts`        | Concept summary table (in [`corpus-status.md`](corpus-status.md))                   | `cogentia corpus-status` |
@@ -411,11 +412,13 @@ After this, every `cogentia.js` invocation from any subdirectory finds the regis
 ```bash
 cogentia drift          # detect ahead/behind/diverged across all repos; --pull to sync behind
 # ... do work ...
-cogentia refresh        # corpus-status + backlinks + trails + documents, in order
+cogentia refresh        # corpus-status + backlinks + trails + documents + readmes + derived
 cogentia lint           # single-table health report (unreferenced, frontmatter, drift)
+# git add / commit / push  (manual — DHITL)
+cogentia verify         # post-commit ritual: every repo committed, pushed, in sync
 ```
 
-These three are the *minimal day-in / day-out commands*. `drift` opens the session, `refresh` consolidates derived views, `lint` is the pre-commit gate.
+These commands frame the day-in / day-out flow: `drift` opens the session, `refresh` consolidates derived views (mechanical regen + delegated continuations for judgment-requiring products — see §3.3.1), `lint` is the pre-commit gate, and `verify` is the post-commit safety net that re-fetches and catches a forgotten `git add` or unpushed commit (because to err is human).
 
 ### 3.3 Authoring a new document
 
@@ -436,6 +439,33 @@ git commit -m "research: add foo.md"
 ```
 
 For cross-corpus references: if `foo.md` is cited from another repo, that repo's [`research/index.md`](index.md) Referenced table must include the row (network-symmetry rule).
+
+### 3.3.1 Maintaining derived products (READMEs, tutorials, trails, websites)
+
+Beyond the symmetric, regex-generated views (backlinks / trails / documents / corpus-status), the corpus carries **judgment-requiring derived products** that a regex must not author. These are refreshed by **delegation to an intelligent agent** through typed continuations (`cogentia.continuation.v1`), not mechanical writing. See [`pipeline.md`](pipeline.md) §4.14 and the typology in [`derived_products.md`](derived_products.md) §6.7.
+
+**READMEs** — `cogentia readme` (also inside `refresh`):
+
+1. **Mechanical index (opt-in).** Any README — repo root or any subdirectory — that carries the marker
+   ```markdown
+   <!-- BEGIN_AUTO: readme_index -->
+   <!-- END_AUTO: readme_index -->
+   ```
+   gets a deterministic, alphabetical index of the Markdown documents in *that README's own subtree*. A README without the marker is never touched, so hand-written public pages stay fully manual.
+
+2. **Profile README (derived product).** The root README of the user-attached profile repository (`github.com/<user>/<user>`) is **not** a mechanical index. It is a public, human-facing page authored *from* the corpus — an asymmetric derived product. `cogentia readme` emits an idempotent continuation delegating its refresh to the agent, citing the sources to draw from (e.g. `research/index.md`, `research/agent_brief.md`, `CONTEXT.md`, `POSSIBILISM.md`, `PROJECTS.md`, `TIMELINE.md`).
+
+**Tutorials, reading trails, websites** — `cogentia derived` (also inside `refresh`) emits **one grouped continuation per type**, idempotent, with the items listed in `context.items`. Detection is hybrid:
+
+| Type | How detected | Examples |
+|---|---|---|
+| Tutorials & opt-in docs | Frontmatter `derived_by: agent` (+ `derived_from`) | `cogentia_js_tutorial.md` (this file), `Inox/research/learning-inox.md` |
+| Reading trails | `research/trails/*.md` by convention | `cogentia/research/trails/from_method_to_machine.md`, … |
+| Websites | Directory contains `_config.yml` (root or subdirectory) | `cogentia/`, `barons-Mariani/`, `marenostrum/`, `FractaVolta/` (+ `FractaVolta/docs/`), `inseme/` |
+
+The agent decides, per item, whether a refresh is actually warranted. At most one active delegation exists per type, so re-running `refresh` does not flood the queue.
+
+Taken together — mechanical views that regenerate themselves and judgment-requiring products that are delegated and refreshed on demand — these artefacts begin to make the corpus genuinely **reactive**: documents (and now also websites and other rendered surfaces, not only Markdown) that stay *live* and refresh in response to changes in their sources rather than silently drifting.
 
 ### 3.4 Cross-linking two repositories (network symmetry)
 
@@ -706,6 +736,8 @@ Side-effect taxonomy used below:
 | `backlinks` | For every cross-document markdown link, inject a `<!-- BEGIN_AUTO: backlinks -->` block in the target listing all sources. Idempotent (sorts deterministically). | file-write |
 | `trails` | For every trail playlist under `cogentia/research/trails/`, inject `<!-- BEGIN_AUTO: trails -->` blocks with Previous/Next links in each listed document. | file-write |
 | `documents` | Refresh `research/documents.md` in the registry repo: consolidated cross-corpus catalogue with reverse-chrono activity and chronological authorship tables. Bulk-pass commits filtered out. | file-write, audit-log |
+| `readme` | Refresh README files. (1) Mechanical: README (root or subdir) carrying a `<!-- BEGIN_AUTO: readme_index -->` marker gets a regenerated index of the docs in its subtree. (2) The user-attached profile README is delegated to the agent as a derived product via a continuation, never auto-written. See §3.3.1. | file-write, audit-log |
+| `derived` | Delegate judgment-requiring derived products (auto-generated tutorials, reading trails, websites) to the agent via grouped continuations — one per type, idempotent. Detection: frontmatter `derived_by: agent` for docs; `research/trails/` by convention; `_config.yml` directories for websites. See §3.3.1 and [`derived_products.md`](derived_products.md) §6.7. | file-write, audit-log |
 
 ### 4.7 Operational and hygiene
 
@@ -717,6 +749,7 @@ Side-effect taxonomy used below:
 | `links [<name>\|all] [--check\|--fix] [--include-headings] [--include-code]` | Convert backtick `` `*.md` `` references to clickable Markdown links across the corpus. Default is `--check` (preview). `--fix` applies. Resolves each ref against the doc index — same-repo preferred (relative path) → cogentia (meta-node) → first registry hit (absolute URL). Skips fenced code blocks, headings, already-linked refs, self-refs, and unresolvable names. See §1.7. | file-write (in `--fix`), audit-log |
 | `refresh [--check]` | Run `corpus-status`, `backlinks`, `trails`, `documents` in canonical order. `--check` for dry-run. | file-write, audit-log |
 | `consolidate` | Pre-commit ritual. Composite check: `drift` → `lint --strict` → `refresh --check` → `todo list --global`. Read-only — no files modified. Run when the work feels reasonably ready to publish; fix the surfaced problems before `git commit`. | audit-log, network (via `drift`) |
+| `verify [--check]` | Post-commit ritual — companion to `consolidate`, run after manual commit + push. Re-fetches every registered repo and reports a per-repo verdict: committed (working tree clean), pushed (nothing ahead of upstream), in sync (nothing behind). Catches a forgotten `git add`, an unpushed commit, or a repo left behind the remote. Read-only (fetch only). `--check` skips the fetch and uses cached refs. | network (fetch) |
 
 ### 4.8 Frontmatter
 
