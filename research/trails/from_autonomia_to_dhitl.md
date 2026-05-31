@@ -4,6 +4,9 @@ last_stamped_at: 2026-05-26
 license: CC BY-SA 4.0
 affiliation: Institut Mariani / C.O.R.S.I.C.A., 1 cours Paoli, F-20250 Corte, Corsica
 creator: Jean Hugues Noël Robert, baron Mariani
+title: "Trail: From Autonomia to DHITL"
+date: "2026-05-18"
+status: "draft — auto-filled (frontmatter cleanup)"
 ---
 # Trail: From Autonomia to DHITL
 

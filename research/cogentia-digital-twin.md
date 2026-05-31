@@ -4,6 +4,9 @@ affiliation: "Institut Mariani / C.O.R.S.I.C.A., 1 cours Paoli, F-20250 Corte, C
 license: "CC BY-SA 4.0"
 canonical_url: https://github.com/JeanHuguesRobert/cogentia/blob/main/research/cogentia-digital-twin.md
 last_stamped_at: 2026-05-26
+title: "The Sovereign Digital Twin: Cogentia, Cogentigram, Cogentiscope"
+date: "2026-04-19"
+status: "draft — auto-filled (frontmatter cleanup)"
 ---
 <!-- BEGIN_AUTO: trails -->
 > 🧭 **Trail: From Method to Machine**

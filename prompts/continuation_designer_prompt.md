@@ -1,6 +1,9 @@
 ---
 canonical_url: https://github.com/JeanHuguesRobert/cogentia/blob/main/prompts/continuation_designer_prompt.md
 last_stamped_at: 2026-05-15
+title: "Cogentia Continuation Designer Prompt"
+date: "2026-05-14"
+status: "draft — auto-filled (frontmatter cleanup)"
 ---
 # Cogentia Continuation Designer Prompt
 

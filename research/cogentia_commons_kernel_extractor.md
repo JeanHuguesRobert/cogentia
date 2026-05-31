@@ -11,6 +11,7 @@ license: "CC BY-SA 4.0 (text + prompt template), MIT (schema and tooling)"
 status: "working-paper"
 canonical_url: https://github.com/JeanHuguesRobert/cogentia/blob/main/research/cogentia_commons_kernel_extractor.md
 last_stamped_at: 2026-05-26
+date: "2026-05-13"
 ---
 
 # Cogentia Commons — `kernel_extractor` Plugin Sub-Specification

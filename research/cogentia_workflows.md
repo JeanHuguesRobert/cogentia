@@ -11,6 +11,7 @@ license: "CC BY-SA 4.0"
 status: working-paper — companion to Cogentia Commons MVP Specification
 canonical_url: https://github.com/JeanHuguesRobert/cogentia/blob/main/research/cogentia_workflows.md
 last_stamped_at: 2026-05-26
+date: "2026-05-11"
 ---
 
 # Cogentia Workflows

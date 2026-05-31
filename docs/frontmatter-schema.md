@@ -2,6 +2,9 @@
 author: "Jean Hugues Noël Robert, baron Mariani"
 affiliation: "Institut Mariani / C.O.R.S.I.C.A., 1 cours Paoli, F-20250 Corte, Corsica"
 license: "CC BY-SA 4.0"
+title: "Frontmatter Schema — v0.1 (Corpus)"
+date: "2026-05-27"
+status: "working-paper — auto-filled (frontmatter cleanup)"
 ---
 # Frontmatter Schema — v0.1 (Corpus)
 

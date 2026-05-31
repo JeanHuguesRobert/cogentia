@@ -2,6 +2,9 @@
 author: "Jean Hugues Noël Robert, baron Mariani"
 affiliation: "Institut Mariani / C.O.R.S.I.C.A., 1 cours Paoli, F-20250 Corte, Corsica"
 license: "CC BY-SA 4.0"
+title: "Frontmatter Synonym Mapping — v0.1"
+date: "2026-05-27"
+status: "working-paper — auto-filled (frontmatter cleanup)"
 ---
 # Frontmatter Synonym Mapping — v0.1
 

@@ -11,6 +11,7 @@ license: "CC BY-SA 4.0 (text), MIT (reference code contracts)"
 status: "working-paper"
 canonical_url: https://github.com/JeanHuguesRobert/cogentia/blob/main/research/cogentia_commons_mvp_spec.md
 last_stamped_at: 2026-05-26
+date: "2026-05-11"
 ---
 
 # Cogentia Commons — MVP Specification
