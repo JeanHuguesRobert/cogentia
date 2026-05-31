@@ -41,7 +41,7 @@ Formula:
 ## Non-goals for v0
 
 - no graphical interface;
-- no cloud storage;
+- no cloud storage by default;
 - no integrated AI analysis;
 - no bulk export by default;
 - no email modification;
@@ -264,7 +264,7 @@ Dependency discipline:
 - keep packet formatting, redaction, hashing, search result shaping and CLI orchestration dependency-light;
 - document any dependency as replaceable.
 
-If SQLite, Postgres or Supabase requires a dependency, keep the persistence layer swappable:
+If SQLite, Postgres, Supabase or object storage requires a dependency, keep the persistence layer swappable:
 
 ```text
 storage_adapter.js      # common interface
@@ -272,6 +272,8 @@ storage_sqlite.js       # local-first MVP backend
 storage_ndjson.js       # fallback / test backend
 storage_postgres.js     # server / Supabase-compatible backend
 storage_supabase.js     # optional Supabase client adapter, if justified
+storage_object.js       # object-storage interface for heavy artefacts
+storage_s3.js           # optional S3 / S3-compatible adapter
 ```
 
 ### Plural persistence doctrine
@@ -281,14 +283,15 @@ storage_supabase.js     # optional Supabase client adapter, if justified
 The system should not have one sacred database. It should allow several persistence regimes, because each regime carries a different style of work, traceability, cost, privacy posture and proof.
 
 ```text
-GitHub / Git        → public corpus, commits, issues, reviewable history
-Email / IMAP        → inherited private memory, chronological traces, raw correspondence
-SQLite              → local private indexing and repeatable offline exploration
-NDJSON              → minimal fallback, audit-friendly append/read format
-Postgres            → structured shared private workspace
-Supabase            → Postgres + auth/API/realtime for Netlify/cloud workflows
-RAG / vector store  → retrieval layer for semantic navigation, not source of truth
-Markdown/YAML       → human-readable packets and corpus artefacts
+GitHub / Git              → public corpus, commits, issues, reviewable history
+Email / IMAP              → inherited private memory, chronological traces, raw correspondence
+SQLite                    → local private indexing and repeatable offline exploration
+NDJSON                    → minimal fallback, audit-friendly append/read format
+Postgres                  → structured shared private workspace
+Supabase                  → Postgres + auth/API/realtime for Netlify/cloud workflows
+Object storage / S3       → heavy artefacts, attachments, snapshots, cold storage
+RAG / vector store        → retrieval layer for semantic navigation, not source of truth
+Markdown/YAML             → human-readable packets and corpus artefacts
 ```
 
 Principle:
@@ -305,7 +308,7 @@ This plurality is not accidental complexity. It is a resilience and interpretati
 
 Persistence must be adapter-based. The tool should not confuse the packet model with one storage backend.
 
-Common adapter interface, conceptually:
+Common metadata adapter interface, conceptually:
 
 ```js
 await storage.init();
@@ -316,6 +319,16 @@ await storage.loadResultSet(id);
 await storage.savePacket(packet);
 ```
 
+Common object-storage adapter interface, conceptually:
+
+```js
+await objects.putObject({ key, path, contentType, hash, visibility });
+await objects.getObject({ key });
+await objects.headObject({ key });
+await objects.freezeObject({ key, retention });
+await objects.linkObjectToMessage({ key, messageId, role });
+```
+
 Recommended posture:
 
 ```text
@@ -323,11 +336,15 @@ Local private exploration        → SQLite or NDJSON
 Repeatable local archive work    → SQLite
 Shared private workspace         → Postgres
 Netlify / web-facing workflow    → Supabase / Postgres
+Heavy artefacts                  → local filesystem first, object storage later
+Cold archive / snapshots         → S3-compatible object storage, encrypted if needed
 Semantic retrieval               → RAG / vector store fed by reviewed packets or indexes
 Public corpus publication        → Git + Markdown packets only after review
 ```
 
 Supabase/Postgres is a natural future target because the broader working style often uses Supabase with Netlify, notably in Inseme-style cloud workflows. It should therefore be anticipated architecturally, but not forced into the local MVP.
+
+Object storage is a separate tier. It is useful for heavy artefacts or cold archives: raw `.eml` bundles, attachments, exports, mailbox snapshots, signed archives, OCR outputs, audio/video material, or evidence packages too large or too sensitive for Git. S3-compatible storage should therefore be anticipated as an object adapter, not confused with the metadata database.
 
 RAG is also part of the broader ecosystem, already used in Inseme. In this context, it must be treated as a retrieval projection, not as the canonical archive. The canonical chain remains traceable:
 
@@ -339,17 +356,29 @@ raw source
 → retrieval projection
 ```
 
+For heavy artefacts, the canonical chain becomes:
+
+```text
+raw object
+→ object hash
+→ metadata record
+→ packet reference
+→ reviewed corpus artefact
+→ optional retrieval projection
+```
+
 The key separation is:
 
 ```text
 IMAP extraction
 ≠ persistence backend
+≠ object storage
 ≠ packet generation
 ≠ corpus publication
 ≠ semantic retrieval
 ```
 
-The first MVP may use SQLite. A later adapter may project the same records into Supabase/Postgres for a Netlify-based dashboard, review queue, or collaborative archive interface. A RAG layer may then index reviewed packets or selected metadata, not uncontrolled private mailboxes.
+The first MVP may use SQLite plus local filesystem storage. A later adapter may project metadata into Supabase/Postgres for a Netlify-based dashboard, review queue, or collaborative archive interface. Heavy artefacts may move to S3-compatible cold storage, while packets and reviewed traces remain human-readable and Git-addressable.
 
 ### Storage
 
@@ -369,10 +398,13 @@ Future persistence:
 
 ```text
 Postgres / Supabase adapter for shared review, Netlify workflows, dashboards, or multi-user private archives
+Object storage / S3-compatible adapter for heavy artefacts, attachments, snapshots and cold storage
 RAG / vector-store projection for semantic navigation over reviewed packets and selected metadata
 ```
 
 SQLite is preferred for the first local MVP because repeated searches over old archives will become common and because it keeps private exploration offline by default.
+
+Object storage is not needed for the first MVP unless the archive immediately produces large `.eml` bundles or attachments. The local filesystem is the first object store; S3-compatible storage is the later cold-storage projection.
 
 ### Auth
 
@@ -456,6 +488,6 @@ Issue #11 can be closed when:
 - an example `cogentia.mailarch_packet.v1` packet is provided;
 - the relationship with `cogentia.js` is clarified;
 - the Deno compatibility posture is documented;
-- the persistence-adapter posture is documented, including SQLite, NDJSON, Postgres, Supabase and RAG.
+- the persistence-adapter posture is documented, including SQLite, NDJSON, Postgres, Supabase, object storage / S3 and RAG.
 
 This README satisfies the specification part. The remaining practical step is the CLI skeleton.
