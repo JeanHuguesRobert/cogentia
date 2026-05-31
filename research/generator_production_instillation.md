@@ -4,7 +4,7 @@ subtitle: "Discrete Propagation and Operational Expression in a Reactive Corpus"
 author: "Jean Hugues Noël Robert"
 affiliation: "Institut Mariani / C.O.R.S.I.C.A."
 status: "working-note"
-version: "0.1"
+version: "0.2"
 date: "2026-05-31"
 license: "CC BY-SA 4.0"
 canonical_repo: "JeanHuguesRobert/cogentia"
@@ -14,6 +14,8 @@ related:
   - "research/derived_products.md"
   - "research/ideas_to_explore_as_issues.md"
   - "GitHub issue #17: Instillation as complement to distillation"
+  - "virteal/ephemeral"
+  - "virteal/kudocracy/lib/ephemeral.js"
 ---
 
 # Generator, Production, Instillation
@@ -40,6 +42,8 @@ cognitive packet / propagated effect
 ```
 
 The present document does not claim to close the question. It stabilizes a working grammar so that the idea can be reused, criticized, refined and instilled elsewhere in the Cogentia corpus.
+
+Version 0.2 adds the missing bridge with the earlier `virteal/ephemeral` work: a trace does not only exist or disappear. It has an operational power, and that power can decay, be renewed, be touched, be buried, or survive only as historical log.
 
 ## 2. Minimal formulation
 
@@ -307,7 +311,99 @@ Formula:
 
 When responsibility is engaged, a checkpoint may also require imputable human judgment.
 
-## 10. Ideal form and operational expression
+## 10. Trace power, decay, and Ephemeral
+
+Propagation also requires a theory of traces.
+
+A trace is not only present or absent. It has an operational power: the current capacity to orient a later action.
+
+```text
+trace
+  = situated memory of a past effect
+
+trace power
+  = current capacity of that trace to orient future action
+
+trace decay
+  = progressive loss of that orienting power
+
+reinforcement / touch / renewal
+  = operation that restores or extends trace power
+
+expiration / burial
+  = withdrawal from active validity
+
+log / archive
+  = persistence as historical memory without active authority
+```
+
+This connects the present grammar with the earlier `virteal/ephemeral` project, described as a functional reactive dataflow database, in memory but with persistent change logs.
+
+In `ephemeral.js`, entities are explicitly ephemeral: they may expire, sometimes prematurely. The code contains operational notions that are directly relevant to trace theory:
+
+```text
+expire()
+expired()
+half_life()
+bury()
+resurrect()
+schedule()
+set_duration()
+age()
+renew()
+touch()
+age_touched()
+persistent change logs
+frozen replay time
+```
+
+The important conceptual bridge is:
+
+> An entity may persist in the log while losing active validity.
+
+This distinction is crucial for Cogentia:
+
+```text
+active trace
+  = still powerful enough to orient routing
+
+expired trace
+  = no longer valid for active routing
+
+archived trace
+  = preserved for audit, history or reconstruction
+
+renewed trace
+  = reactivated by touch, citation, use, commit, checkpoint or institutional reinforcement
+```
+
+Stigmergy makes this especially clear. A pheromone trail is useful because it persists long enough to orient other agents, but it must also decay. Without persistence, there is no collective learning. Without decay, the system is captured by obsolete paths.
+
+Formula:
+
+> A trace is a memory whose orienting power decays unless it is reinforced.
+
+Or:
+
+> Without trace persistence, no distributed learning. Without trace decay, no adaptive freedom.
+
+This complements TTL and packet freshness:
+
+```text
+TTL
+  = explicit validity limit
+
+packet freshness
+  = measure of operational usefulness over time
+
+trace decay
+  = loss of orienting power
+
+stigmergic evaporation
+  = functional forgetting of non-reinforced paths
+```
+
+## 11. Ideal form and operational expression
 
 The generator / production distinction also clarifies the difference between ideal form and operational execution.
 
@@ -358,7 +454,7 @@ French:
 
 > La forme idéale peut être intemporelle. Son expression opérationnelle est temporelle parce que ses effets se propagent par étapes.
 
-## 11. Von Neumann machines
+## 12. Von Neumann machines
 
 This note does not decide whether the universe itself is procedural, discrete, continuous, computational, functional, or otherwise.
 
@@ -397,11 +493,11 @@ French:
 
 > Nous n'avons pas besoin de décider si l'univers est procédural. Une machine de von Neumann l'est assez pour rendre inévitable la propagation par étapes.
 
-## 12. Corpus consequences
+## 13. Corpus consequences
 
 This grammar has several consequences for Cogentia and related projects.
 
-### 12.1 For source corpora
+### 13.1 For source corpora
 
 A source corpus should not be treated as a fixed document only. It is a structured generative field.
 
@@ -410,7 +506,7 @@ source corpus
   = cognitive genotype / generator / potential-bearing structure
 ```
 
-### 12.2 For derived products
+### 13.2 For derived products
 
 A derived product is not merely a shorter or simplified copy of a source. It is a situated phenotype.
 
@@ -419,7 +515,7 @@ derived product
   = situated expression of a source through context, persona, platform and constraints
 ```
 
-### 12.3 For Ubikia
+### 13.3 For Ubikia
 
 Ubikia should be understood as a derivation and expression system, not as the source of the substance.
 
@@ -428,7 +524,7 @@ Ubikia
   = editorial expression layer / derivation workshop / publication agent
 ```
 
-### 12.4 For Cogentigrams
+### 13.4 For Cogentigrams
 
 A cogentigram can be read as a generator of cognitive or behavioural tendencies, not as a list of memories.
 
@@ -437,7 +533,7 @@ cogentigram
   = distilled structure capable of generating situated responses
 ```
 
-### 12.5 For issues and checkpoints
+### 13.5 For issues and checkpoints
 
 Issues capture memory in tension. Checkpoints route and verify. Commits stabilize. Source documents anchor.
 
@@ -450,7 +546,32 @@ conversation
   -> derived expressions
 ```
 
-## 13. Core schema
+### 13.6 For trace governance
+
+Trace governance should distinguish active traces, expired traces and archived traces.
+
+```text
+active trace
+  = may orient present action
+
+expired trace
+  = should no longer orient action without renewal
+
+archived trace
+  = remains available for audit, history, accountability or reconstruction
+```
+
+This prevents two opposite failures:
+
+```text
+no trace
+  -> no distributed learning
+
+immortal trace
+  -> capture by obsolete paths
+```
+
+## 14. Core schema
 
 The full schema can be written as follows:
 
@@ -469,7 +590,9 @@ checkpoints / routing / verification
         ↓
 situated productions
         ↓
-traces
+traces with decaying orienting power
+        ↓
+renewal / expiration / archival
         ↓
 possible re-distillation
 ```
@@ -484,18 +607,19 @@ idea
   -> checkpoints
   -> situated productions
   -> traces
+  -> decay / renewal / archive
   -> re-distillation
 ```
 
-## 14. Provisional doctrine
+## 15. Provisional doctrine
 
 A possible doctrine emerges:
 
-> An idea does not act merely because it exists ideally. It acts when it is instilled into a milieu, propagated step by step, routed through checkpoints, and realized as situated productions.
+> An idea does not act merely because it exists ideally. It acts when it is instilled into a milieu, propagated step by step, routed through checkpoints, and realized as situated productions whose traces may decay or be renewed.
 
 A second formulation:
 
-> The generator carries the possible; instillation introduces it into a milieu; propagation unfolds its effects; checkpoints verify its routing; productions manifest its situated phenotypes.
+> The generator carries the possible; instillation introduces it into a milieu; propagation unfolds its effects; checkpoints verify its routing; productions manifest its situated phenotypes; traces preserve its effects only while their orienting power remains active or renewed.
 
 Short formulation:
 
@@ -505,9 +629,13 @@ French formulation:
 
 > L'idéal ne produit rien sans propagation opérationnelle.
 
-## 15. What this checkpoint stabilizes
+Trace formulation:
 
-This checkpoint stabilizes five distinctions:
+> Une trace est une mémoire dont la puissance d'orientation décroît si elle n'est pas renforcée.
+
+## 16. What this checkpoint stabilizes
+
+This checkpoint stabilizes six distinctions:
 
 ```text
 1. generator / production
@@ -515,9 +643,10 @@ This checkpoint stabilizes five distinctions:
 3. instillation / propagation
 4. continuous diffusion / discrete step-by-step propagation
 5. ideal form / operational execution
+6. active trace / expired trace / archived trace
 ```
 
-It also stabilizes four correspondences:
+It also stabilizes five correspondences:
 
 ```text
 generator
@@ -531,9 +660,12 @@ checkpoint
 
 time
   <-> finite step-by-step propagation of effects
+
+trace decay
+  <-> TTL / freshness / half-life / stigmergic evaporation
 ```
 
-## 16. Occam and future work
+## 17. Occam and future work
 
 This document exists because the idea has crossed a checkpoint: it is not a passing intuition but a long-standing structural pattern in the author's work.
 
@@ -545,6 +677,8 @@ This note should not multiply concepts unnecessarily. Before creating further do
 research/derived_products.md
 research/pipeline.md
 research/ideas_to_explore_as_issues.md
+barons-Mariani/research/stigmergie_sans_limite_haute.md
+FractaVolta/research/generalized_packet_networks.md
 ```
 
 Possible future work:
@@ -553,9 +687,10 @@ Possible future work:
 2. add a checkpoint / routing paragraph to `pipeline.md`;
 3. clarify the relation between distillation and cogentigram formation;
 4. relate this grammar to FractaVolta packet logic;
-5. produce a public essay only after the source grammar has been tested.
+5. relate trace decay to TTL, packet freshness and stigmergic evaporation;
+6. produce a public essay only after the source grammar has been tested.
 
-## 17. Closing formula
+## 18. Closing formula
 
 ```text
 Distillation concentrates.
@@ -563,5 +698,6 @@ Instillation seeds.
 Propagation unfolds.
 Checkpoints route.
 Productions manifest.
-Traces allow re-distillation.
+Traces decay or are renewed.
+Archives allow re-distillation.
 ```
