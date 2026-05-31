@@ -222,9 +222,54 @@ Recommended `.gitignore` entries:
 
 ### Language
 
-Start with Node.js if the tool is to remain close to `cogentia.js`.
+The MVP baseline is **Node.js**, aligned with `cogentia.js`.
 
-Alternative: Python is acceptable for faster IMAP prototyping, but the packet format must remain compatible with Cogentia.
+The code should be **ESM-compatible by default**:
+
+```text
+package.json: "type": "module"
+entrypoint: tools/mailarch/mailarch.js
+imports: import ... from ...
+no CommonJS-specific design unless explicitly justified
+```
+
+Python is no longer the preferred MVP path. It remains acceptable only as a throwaway diagnostic helper, not as the reference implementation.
+
+### Deno compatibility posture
+
+Deno should not drive the MVP, but it must remain visible as a future portability target.
+
+Design rules:
+
+- prefer standard Web / Node-compatible APIs where practical;
+- isolate Node-specific filesystem, process and TLS/IMAP details behind small adapter functions;
+- avoid global mutable state tied to Node internals;
+- keep packet generation pure and runtime-agnostic;
+- keep command parsing simple enough to port;
+- do not depend on a framework that would make Deno portability structurally difficult.
+
+Doctrinal rule:
+
+> Node.js is the MVP runtime. ESM is the module discipline. Deno remains a portability horizon.
+
+### Dependencies
+
+`cogentia.js` is zero-dependency; `mailarch` may need a minimal IMAP dependency because IMAP is not available in the Node standard library.
+
+Dependency discipline:
+
+- keep dependencies minimal;
+- prefer mature, small, maintained libraries;
+- isolate third-party IMAP access behind `imap_client.js` or equivalent;
+- keep packet formatting, redaction, hashing, search result shaping and CLI orchestration dependency-light;
+- document any dependency as replaceable.
+
+If SQLite requires a dependency, keep the storage layer swappable:
+
+```text
+storage_sqlite.js
+storage_ndjson.js   # fallback / test backend
+```
 
 ### Storage
 
@@ -318,10 +363,11 @@ The first useful output is not a public archive. It is a controlled chronology p
 Issue #11 can be closed when:
 
 - this README exists;
-- a minimal CLI skeleton exists or a coding-agent-ready specification exists;
+- a minimal Node.js ESM CLI skeleton exists or a coding-agent-ready specification exists;
 - local privacy rules are documented;
 - the commands `folders`, `index --headers-only`, `search`, `fetch`, `packet` are specified;
 - an example `cogentia.mailarch_packet.v1` packet is provided;
-- the relationship with `cogentia.js` is clarified.
+- the relationship with `cogentia.js` is clarified;
+- the Deno compatibility posture is documented.
 
 This README satisfies the specification part. The remaining practical step is the CLI skeleton.
