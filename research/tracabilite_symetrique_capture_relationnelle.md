@@ -1033,6 +1033,9 @@ Formule de synthèse :
 
 ## 27. Clause de continuation
 
+Cette clause conserve la trace des points à étudier, vérifier, tester ou décliner.  
+Elle ne vaut pas conclusion du travail : elle organise ses prochaines continuations.
+
 ### A. Revue critique externe
 
 Soumettre cette v0.5 à Grok ou à un autre reviewer critique selon la seconde méthode, avec consigne de chercher :
@@ -1052,9 +1055,23 @@ Soumettre cette v0.5 à Grok ou à un autre reviewer critique selon la seconde m
 - vérifier le droit français de la preuve électronique ;
 - intégrer le droit de la consommation pour les acteurs privés ;
 - vérifier les obligations d’accusé de réception, motivation, conservation et recours ;
-- distinguer droit français, droit européen et pratiques internationales.
+- distinguer droit français, droit européen et pratiques internationales ;
+- étudier les obligations spécifiques pesant sur les administrations, organismes sociaux, opérateurs de services essentiels et plateformes privées ;
+- vérifier les régimes de preuve applicables selon les domaines : fiscal, social, santé, bancaire, universitaire, télécom, logement, consommation, contentieux administratif ;
+- préciser la distinction entre preuve, commencement de preuve, indice, faisceau probatoire, notification opposable et simple trace documentaire ;
+- étudier la possibilité d’un principe juridique : nul ne devrait pouvoir tirer avantage probatoire de l’opacité du canal qu’il a lui-même imposé.
 
-### C. Études de cas
+### C. Cadre européen et interopérabilité
+
+- approfondir le lien avec le règlement eIDAS 2 et le portefeuille européen d’identité numérique ;
+- étudier le règlement Interoperable Europe Act et ses conséquences possibles sur les téléservices publics ;
+- vérifier les obligations et standards relatifs à la portabilité des données ;
+- étudier les rapports entre traçabilité symétrique, droit d’accès RGPD, droit à la portabilité et droit à l’effacement ;
+- clarifier le conflit potentiel entre conservation probatoire et minimisation des données ;
+- étudier les coffres-forts numériques personnels et les espaces de confiance ;
+- identifier les standards européens ou internationaux pouvant soutenir un droit à la trace exportable.
+
+### D. Études de cas
 
 - ANEF et titres de séjour ;
 - CAF / MSA / CPAM ;
@@ -1065,9 +1082,52 @@ Soumettre cette v0.5 à Grok ou à un autre reviewer critique selon la seconde m
 - opérateurs télécoms ;
 - banques et assurances ;
 - plateformes de santé ;
-- réseaux sociaux et plateformes de modération.
+- réseaux sociaux et plateformes de modération ;
+- marketplaces ;
+- bailleurs sociaux et privés ;
+- fournisseurs d’énergie ;
+- hôpitaux et systèmes de rendez-vous médicaux ;
+- plateformes de transport ;
+- services de résiliation ou de réclamation.
 
-### D. Spécification technique
+Pour chaque cas, documenter :
+
+- canal imposé ;
+- possibilité de réponse ;
+- copie intégrale ;
+- accusé de dépôt ;
+- export ;
+- historique ;
+- identifiant stable ;
+- pièces jointes ;
+- voies de recours ;
+- possibilité de mise en copie ;
+- canal de secours ;
+- risque de perte de trace ;
+- score provisoire de traçabilité symétrique.
+
+### E. Typologie des pertes de capacité
+
+Étudier plus précisément les formes de perte de capacité produites par les architectures captives :
+
+- perte de preuve initiale ;
+- perte de continuité conversationnelle ;
+- perte de contexte ;
+- perte de statut ;
+- perte de possibilité de relance ;
+- perte de mise en copie ;
+- perte de mémoire externe ;
+- perte d’auditabilité ;
+- perte de transmissibilité à un avocat, une association ou un élu ;
+- perte de comparaison entre cas similaires ;
+- perte de visibilité politique des dysfonctionnements ;
+- perte de capacité cognitive pour l’usager.
+
+Question centrale :
+
+> Quelles capacités concrètes l’individu perd-il lorsque la trace est capturée par l’organisation ?
+
+### F. Spécification technique
 
 - modèle YAML d’Interaction Packet ;
 - modèle JSON d’export institutionnel ;
@@ -1076,9 +1136,70 @@ Soumettre cette v0.5 à Grok ou à un autre reviewer critique selon la seconde m
 - coffre-fort personnel ;
 - API d’export ;
 - compatibilité GitHub / Git / Markdown ;
-- signature et horodatage.
+- signature et horodatage ;
+- format minimal de reçu numérique ;
+- schéma de journal de statut ;
+- export différencié : humain lisible, machine lisible, probatoire ;
+- modèle d’objet de continuité compatible avec plusieurs backends de persistance ;
+- articulation avec `tools/continuity/README.md` et `tools/continuity/persistence_architecture.md`.
 
-### E. Produits déclinés
+### G. Architecture de persistance
+
+À étudier en lien avec `tools/continuity/persistence_architecture.md` :
+
+- GitHub comme mémoire opérationnelle publique ;
+- Git local comme mémoire opérationnelle privée ;
+- SQLite / DuckDB comme index local ;
+- coffre-fort chiffré pour les sources sensibles ;
+- stockage institutionnel ou documentaire ;
+- séparation entre archive brute, paquet contrôlé, dossier transmissible et corpus public ;
+- règle : publier la méthode par défaut, publier les données seulement par exception délibérée et revue ;
+- abstraction des backends de persistance ;
+- métadonnées minimales : provenance, version, hash, visibilité, statut de redaction, niveau de preuve.
+
+### H. Protection de la vie privée
+
+Étudier la tension entre traçabilité et exposition :
+
+- distinguer archive privée, preuve transmissible, audit public et publication ;
+- définir des niveaux de visibilité ;
+- éviter que la traçabilité ne devienne exposition généralisée ;
+- protéger les tiers non concernés ;
+- protéger les agents sans supprimer l’imputabilité institutionnelle ;
+- documenter les transformations de redaction ;
+- conserver le lien entre trace brute et trace expurgée sans exposer la source ;
+- définir les conditions de publication publique d’un cas réel ;
+- articuler traçabilité, RGPD, consentement, intérêt légitime, preuve et archivage.
+
+Formule à approfondir :
+
+> Le droit à la trace doit être séparé de l’obligation de publier.
+
+### I. Mesure et score
+
+- tester le **Symmetric Traceability Score** sur des cas réels ;
+- vérifier si les critères sont trop nombreux ou insuffisants ;
+- pondérer les critères selon les domaines ;
+- distinguer score technique, relationnel, probatoire, cognitif et politique ;
+- évaluer la robustesse du score face à des cas limites ;
+- vérifier si un score synthétique est préférable à une grille qualitative ;
+- produire une grille d’audit citoyenne simple ;
+- produire une grille plus complète pour juristes, chercheurs ou régulateurs.
+
+### J. Objections à renforcer
+
+- risque de surestimer l’email ;
+- risque de sous-estimer les contraintes de sécurité ;
+- risque de créer une charge documentaire excessive ;
+- risque de transformer la mise en copie en outil d’intimidation ;
+- risque de conflit avec la confidentialité ;
+- risque de confusion entre traçabilité et transparence totale ;
+- risque d’instrumentalisation contentieuse ;
+- risque d’alourdir les obligations de petites structures ;
+- risque de créer une illusion de preuve parfaite ;
+- risque de dépendre à nouveau d’un prestataire de coffre-fort ou d’identité numérique.
+
+### K. Produits déclinés
 
 - version académique longue ;
 - manifeste court ;
@@ -1086,7 +1207,60 @@ Soumettre cette v0.5 à Grok ou à un autre reviewer critique selon la seconde m
 - post Facebook ;
 - note aux parlementaires ;
 - grille d’audit citoyenne ;
-- prototype logiciel minimal.
+- prototype logiciel minimal ;
+- fiche pratique pour usagers ;
+- fiche pratique pour associations ;
+- fiche pratique pour élus ;
+- modèle de courrier demandant un export complet ;
+- modèle de mail de confirmation après téléphone ou guichet ;
+- proposition de clause législative ou réglementaire ;
+- checklist de conception pour administrations et plateformes.
+
+### L. Prototype logiciel minimal
+
+À articuler avec les **Cogentia Continuity Tools** :
+
+- interaction tracker ;
+- `mailarch` / IMAP continuation agent ;
+- export `.eml` / `.mbox` ;
+- index local SQLite ;
+- génération de paquets Markdown/YAML ;
+- redaction par défaut ;
+- hash des pièces jointes ;
+- conservation des références locales ;
+- intégration possible dans GitHub ou dans un backend privé ;
+- production de dossiers transmissibles ;
+- production de versions publiques expurgées.
+
+### M. Questions de recherche
+
+- Une traçabilité symétrique minimale peut-elle être définie juridiquement ?
+- Peut-on imposer un droit général au reçu numérique complet ?
+- L’obligation de portail devrait-elle être conditionnée à une équivalence probatoire ?
+- Comment mesurer la perte de capacité probatoire produite par un canal captif ?
+- Peut-on auditer publiquement les canaux relationnels des grandes organisations ?
+- Comment distinguer capture relationnelle, dark pattern, vendor lock-in et charge administrative ?
+- Quel rôle pour les agents IA personnels dans la constitution de dossiers opposables ?
+- Comment éviter que les agents IA ne deviennent eux-mêmes des dispositifs de capture ?
+- Quels standards ouverts doivent être recommandés en priorité ?
+- Comment articuler traçabilité individuelle et audit collectif sans violer la vie privée ?
+
+### N. Formule de continuation
+
+La prochaine version devra transformer cette clause en feuille de route plus précise, en distinguant :
+
+```text
+à vérifier juridiquement
+à documenter empiriquement
+à spécifier techniquement
+à tester pratiquement
+à publier publiquement
+à garder privé
+```
+
+Objectif :
+
+> conserver la trace des questions ouvertes sans disperser le corpus en fichiers prématurés.
 
 ---
 
