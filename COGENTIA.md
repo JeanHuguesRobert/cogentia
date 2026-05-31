@@ -3,7 +3,7 @@ title: "Cogentia"
 description: "Knowledge production under AI conditions, in five distinctive moves"
 layout: default
 nav_order: 0
-last_modified_at: 2026-05-13
+last_modified_at: 2026-05-31
 author: "Jean Hugues Noël Robert, baron Mariani"
 affiliation: "Institut Mariani / C.O.R.S.I.C.A., 1 cours Paoli, F-20250 Corte, Corsica"
 license: "CC BY-SA 4.0"
@@ -40,6 +40,8 @@ The commitment, in five distinctive moves:
 Cogentia does not claim the method works. It runs the method on its own published corpus, in public, with every commit timestamped and every objection recorded. The corpus is the demonstration. The git history is the proof.
 
 In operation: `cogentia.js scan` makes every unanchored claim visible. `cogentia.js corpus-status` auto-regenerates the *"what is currently demonstrated"* view of each registered repo. This document is itself in the corpus it describes — fork it, object to it, propose a Revision: the protocol applies to itself before it applies to anyone else.
+
+GitHub Issues serve as the Commons’ procedural memory in tension: they record objections, continuations, missing sources and proposed transformations before these are ready to become commits. They do not replace the corpus; they protect unfinished work from disappearing before it can be reviewed, transformed or deliberately rejected.
 
 → [`research/cogentia_commons_mvp_spec.md`](research/cogentia_commons_mvp_spec.md) §11 acceptance test; [`research/corpus-status.md`](research/corpus-status.md) for the live view.
 
