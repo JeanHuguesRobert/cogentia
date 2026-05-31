@@ -4,7 +4,7 @@ subtitle: "A lightweight memory category for open-ended explorations"
 author: "Jean Hugues Noël Robert"
 affiliation: "Institut Mariani / C.O.R.S.I.C.A."
 status: "working-note"
-version: "0.2"
+version: "0.3"
 license: "CC BY-SA 4.0"
 canonical_repo: "JeanHuguesRobert/cogentia"
 canonical_path: "research/ideas_to_explore_as_issues.md"
@@ -23,7 +23,7 @@ An **Idea to Explore** is a small memory device for such cases.
 The goal is not to transform every intuition into a project, nor every project into a roadmap. The goal is to avoid losing fertile possibilities while preserving a clear distinction between:
 
 - an idea;
-- an hypothesis;
+- a hypothesis;
 - a prototype;
 - a decision;
 - a committed implementation.
@@ -44,13 +44,72 @@ The issue is not a backlog item in the narrow software sense. It is a **memory p
 
 The act of opening an issue is therefore closer to taking a note than to starting a project. It captures a possible. It does not decide its future.
 
-## 3. Checkpoint discipline
+## 3. Occam discipline — the smallest sufficient container
+
+The corpus must avoid uncontrolled documentary proliferation.
+
+The working rule is:
+
+> Choose the smallest sufficient container.
+
+In practical terms:
+
+```text
+conversation
+  before local note;
+local note
+  before GitHub issue;
+GitHub issue
+  before source document;
+issue comment
+  before new issue;
+source document update
+  before new document;
+commit
+  only after checkpoint.
+```
+
+This is the corpus-level application of Occam's razor:
+
+> Do not create a new documentary entity if an existing one is sufficient.
+
+Operational consequences:
+
+- do not create an issue if the conversation is still sufficient;
+- do not create a new issue if an existing issue can receive a comment;
+- do not create a document if an issue still holds the idea adequately;
+- do not create a new concept if an existing concept already covers the case;
+- do not create a commit if no checkpoint has been crossed;
+- do not create a doctrine if a working rule is still enough.
+
+This discipline protects the corpus from becoming a stream of well-intentioned noise.
+
+## 4. Checkpoint discipline
 
 GitHub commits are durable public traces. They should not become noise.
 
-The system must therefore respect a **point d'étape** discipline:
+The system must therefore respect a **checkpoint** discipline.
 
-> commit when a step has been stabilized enough to be useful later; do not commit every transient variation of thought.
+A checkpoint is not only a point d'étape. It is a cognitive routing node where an idea is checked before being routed further.
+
+A checkpoint may decide that an idea should be:
+
+```text
+kept in conversation;
+captured as an issue;
+continued as an issue comment;
+postponed;
+rejected;
+routed to research;
+routed to prototype;
+routed to a source document;
+routed to a derived product;
+stabilized by commit.
+```
+
+In short:
+
+> A checkpoint verifies whether moving thought is ready to change container.
 
 For practical purposes:
 
@@ -63,7 +122,34 @@ For practical purposes:
 
 This preserves the repository as a transmissible corpus rather than a stream of noise.
 
-## 4. Minimal issue format
+## 5. Occam + checkpoint rule
+
+Occam and checkpoint discipline are complementary.
+
+```text
+Occam chooses the smallest sufficient container.
+Checkpoint verifies whether a change of container is justified.
+```
+
+Operational formula:
+
+```text
+Ideas move.
+Issues capture memory in tension.
+Checkpoints verify routing.
+Commits record stabilized memory.
+Source documents anchor the corpus.
+```
+
+A stricter form:
+
+```text
+Everything that passes through the mind does not deserve GitHub.
+Everything that deserves GitHub does not deserve a commit.
+Everything that deserves a commit does not deserve doctrine.
+```
+
+## 6. Minimal issue format
 
 Each issue in this category should use a normalized title:
 
@@ -100,7 +186,7 @@ checkpoint_policy: issue-first
 
 This front matter makes the issue searchable even without GitHub labels.
 
-## 5. Recommended labels
+## 7. Recommended labels
 
 When GitHub labels are available, the preferred label is:
 
@@ -123,7 +209,7 @@ traceability
 
 If labels do not yet exist in the repository, the title prefix and front matter remain sufficient.
 
-## 6. Relationship with the corpus
+## 8. Relationship with the corpus
 
 The issue is not the source of doctrine. It is an entry point.
 
@@ -138,7 +224,7 @@ GitHub Issue: Idea to explore
         ↓
 issue comments and small continuations
         ↓
-point d'étape
+checkpoint
         ↓
 working note in /research or /docs
         ↓
@@ -151,7 +237,7 @@ return to corpus with corrections
 
 The issue keeps the continuation open. The corpus stabilizes what has become clear enough to transmit.
 
-## 7. Status taxonomy
+## 9. Status taxonomy
 
 Suggested values for `status:`:
 
@@ -165,7 +251,7 @@ Suggested values for `status:`:
 | `not-now` | preserved but deliberately postponed |
 | `closed` | resolved, superseded, or rejected |
 
-## 8. Continuation levels
+## 10. Continuation levels
 
 | Level | Meaning |
 |---|---|
@@ -174,7 +260,7 @@ Suggested values for `status:`:
 | `high` | strong connection to current corpus direction |
 | `critical` | should become part of active doctrine or architecture |
 
-## 9. Commit discipline
+## 11. Commit discipline
 
 A commit should normally correspond to one of these cases:
 
@@ -193,9 +279,34 @@ A commit should normally be avoided when:
 
 In short:
 
-> Issues capture motion. Commits stabilize steps.
+> Issues capture motion. Checkpoints verify routing. Commits stabilize steps.
 
-## 10. Example: circular command center
+## 12. Checkpoint and judgment
+
+Some checkpoints are purely mechanical: link checks, schema validation, formatting, index regeneration.
+
+Other checkpoints require judgment: prioritization, rejection, doctrinal stabilization, public positioning, ethical risk, political implication, institutional commitment.
+
+When a checkpoint requires final judgment that engages responsibility, the judgment must be imputable to a living physical human person.
+
+Working distinction:
+
+| Checkpoint type | Examples | Human judgment required? |
+|---|---|---|
+| Mechanical | links, frontmatter, schema, formatting | generally no |
+| Epistemic | evidence quality, objection handling, claim level | often yes |
+| Doctrinal | corpus stabilization, public position | yes |
+| Ethical / political | publication, institutional stance, governance | yes |
+| Operational critical | expenditure, safety, material action | yes |
+
+Rule:
+
+```text
+No anonymous stabilization.
+No non-human final judgment where human responsibility is required.
+```
+
+## 13. Example: circular command center
 
 A typical issue in this category could capture the following idea:
 
@@ -209,7 +320,7 @@ This belongs to the `idea-to-explore` category because it connects:
 - Home Assistant / MQTT: pragmatic integration layer;
 - circular economy: second life for screens and interfaces.
 
-## 11. Anti-capture principle
+## 14. Anti-capture principle
 
 The issue mechanism must not become a closed managerial backlog that captures the thought process.
 
@@ -223,10 +334,29 @@ An Idea to Explore remains:
 
 It is a trace of a possible, not a command.
 
-## 12. Short public formulation
+Occam discipline is part of anti-capture: a corpus can be captured not only by secrecy or central authority, but also by excess structure, excessive traces, and premature stabilization.
+
+## 15. Short public formulation
 
 > An “Idea to Explore” is a GitHub Issue used as a memory packet for a possible continuation: structured enough not to be lost, open enough not to become a premature commitment.
 
-## 13. Short operational formulation
+## 16. Short operational formulations
 
-> Issues capture passing ideas. Commits mark points d'étape.
+```text
+Issues capture passing ideas.
+Checkpoints verify routing.
+Commits mark stabilized steps.
+```
+
+```text
+Occam chooses the smallest sufficient container.
+Checkpoint verifies whether the idea is ready to move.
+```
+
+```text
+Conversation for motion.
+Issue for memory in tension.
+Checkpoint for routing.
+Commit for stabilized memory.
+Source document for corpus anchoring.
+```
