@@ -274,6 +274,33 @@ storage_postgres.js     # server / Supabase-compatible backend
 storage_supabase.js     # optional Supabase client adapter, if justified
 ```
 
+### Plural persistence doctrine
+
+`mailarch` is one component in a broader Cogentia persistence ecology.
+
+The system should not have one sacred database. It should allow several persistence regimes, because each regime carries a different style of work, traceability, cost, privacy posture and proof.
+
+```text
+GitHub / Git        → public corpus, commits, issues, reviewable history
+Email / IMAP        → inherited private memory, chronological traces, raw correspondence
+SQLite              → local private indexing and repeatable offline exploration
+NDJSON              → minimal fallback, audit-friendly append/read format
+Postgres            → structured shared private workspace
+Supabase            → Postgres + auth/API/realtime for Netlify/cloud workflows
+RAG / vector store  → retrieval layer for semantic navigation, not source of truth
+Markdown/YAML       → human-readable packets and corpus artefacts
+```
+
+Principle:
+
+> There Is More Than One Way — and the style of persistence shapes the style of thought.
+
+Buffon's formula can be repurposed technically:
+
+> Le style, c'est l'homme — and in software, persistence style is part of the epistemic style of the system.
+
+This plurality is not accidental complexity. It is a resilience and interpretation feature: different persistence layers make different questions possible.
+
 ### Persistence adapters
 
 Persistence must be adapter-based. The tool should not confuse the packet model with one storage backend.
@@ -296,10 +323,21 @@ Local private exploration        → SQLite or NDJSON
 Repeatable local archive work    → SQLite
 Shared private workspace         → Postgres
 Netlify / web-facing workflow    → Supabase / Postgres
+Semantic retrieval               → RAG / vector store fed by reviewed packets or indexes
 Public corpus publication        → Git + Markdown packets only after review
 ```
 
-Supabase/Postgres is a natural future target because the broader working style often uses Supabase with Netlify. It should therefore be anticipated architecturally, but not forced into the local MVP.
+Supabase/Postgres is a natural future target because the broader working style often uses Supabase with Netlify, notably in Inseme-style cloud workflows. It should therefore be anticipated architecturally, but not forced into the local MVP.
+
+RAG is also part of the broader ecosystem, already used in Inseme. In this context, it must be treated as a retrieval projection, not as the canonical archive. The canonical chain remains traceable:
+
+```text
+raw source
+→ controlled index
+→ packet
+→ reviewed corpus artefact
+→ retrieval projection
+```
 
 The key separation is:
 
@@ -308,9 +346,10 @@ IMAP extraction
 ≠ persistence backend
 ≠ packet generation
 ≠ corpus publication
+≠ semantic retrieval
 ```
 
-The first MVP may use SQLite. A later adapter may project the same records into Supabase/Postgres for a Netlify-based dashboard, review queue, or collaborative archive interface.
+The first MVP may use SQLite. A later adapter may project the same records into Supabase/Postgres for a Netlify-based dashboard, review queue, or collaborative archive interface. A RAG layer may then index reviewed packets or selected metadata, not uncontrolled private mailboxes.
 
 ### Storage
 
@@ -330,6 +369,7 @@ Future persistence:
 
 ```text
 Postgres / Supabase adapter for shared review, Netlify workflows, dashboards, or multi-user private archives
+RAG / vector-store projection for semantic navigation over reviewed packets and selected metadata
 ```
 
 SQLite is preferred for the first local MVP because repeated searches over old archives will become common and because it keeps private exploration offline by default.
@@ -416,6 +456,6 @@ Issue #11 can be closed when:
 - an example `cogentia.mailarch_packet.v1` packet is provided;
 - the relationship with `cogentia.js` is clarified;
 - the Deno compatibility posture is documented;
-- the persistence-adapter posture is documented, including SQLite, NDJSON, Postgres and Supabase.
+- the persistence-adapter posture is documented, including SQLite, NDJSON, Postgres, Supabase and RAG.
 
 This README satisfies the specification part. The remaining practical step is the CLI skeleton.
