@@ -1550,6 +1550,13 @@ ${bold( "Commands:" )}
                          | ${c.cyan}reject${c.reset}  <ref>  — discards
                       <ref> is either ${c.cyan}ctn_xxxx${c.reset} or ${c.cyan}#N${c.reset}/${c.cyan}N${c.reset} (a referenced issue).
                       Uses git primitives only (no GitHub-tied logic).
+  ${c.cyan}packet${c.reset} <sub>         Cognitive Packets bridge (envelope/payload v0.3).
+                      Sub: ${c.cyan}validate${c.reset} <packet.json>  — envelope + basic payload check
+                         | ${c.cyan}convert${c.reset}  <${c.cyan}ctn_xxxx${c.reset}|file.json> [${c.cyan}--to markdown|json${c.reset}]
+                           — emits cogentia.continuation.v1 as cognitive_packet.v0.3
+                      Companion: ${c.cyan}continuation emit --as-packet${c.reset} prints the packet form
+                      alongside the queued continuation. Read-only; see
+                      ${c.cyan}research/cognitive_packets.md${c.reset}.
   ${c.cyan}concepts${c.reset} <sub>       Manage ${c.cyan}research/concepts.md${c.reset} as a typed concept registry.
                       Sub: ${c.cyan}init${c.reset} [repo] | ${c.cyan}list${c.reset} [repo] | ${c.cyan}check${c.reset} [repo] | ${c.cyan}graph${c.reset} [repo]
                            ${c.cyan}ref${c.reset} <concept> [repo] | ${c.cyan}status${c.reset} [repo] | ${c.cyan}schema${c.reset}
@@ -4570,6 +4577,231 @@ function applyStepResult( cnt, sr ) {
   return { action: "unknown" };
 }
 
+// ── cognitive packet bridge (envelope/payload, v0.3) ─────────────────────────
+//
+// Implements the minimum viable bridge between cogentia.continuation.v1 (the
+// existing local primitive) and the Cognitive Packets envelope/payload format
+// defined in research/cognitive_packets.md (§8, §9, §10). Three surfaces:
+//
+//   packet validate <file>                       — schema check (envelope + basic payload)
+//   packet convert  <ctn-id|file> [--to json|md] — continuation → cognitive_packet
+//   continuation emit --as-packet                — emit + print the packet form
+//
+// Reads only the envelope to dispatch; per-kind payload validation kept lenient.
+
+const PACKET_PROTOCOL     = "cognitive_packet.v0.3";
+const PACKET_KINDS        = [ "continuation", "objection", "hypothesis", "decision", "failure", "routing" ];
+const TRANSMISSION_MODES  = [ "copy", "reference" ];
+const PACKET_STATUSES     = [ "draft", "active", "completed", "failed", "superseded" ];
+
+function packetMapContinuationStatus( s ) {
+  switch ( s ) {
+    case "active":    return "active";
+    case "completed": return "completed";
+    case "aborted":   return "failed";
+    case "dormant":   return "draft";
+    default:          return "draft";
+  }
+}
+
+// Continuation (cogentia.continuation.v1) → Cognitive Packet (envelope/payload).
+function continuationToPacket( cnt ) {
+  const ctx = cnt.context || {};
+  const traces = [];
+  if ( ctx.repo )  traces.push( { type: "repo", value: ctx.repo } );
+  if ( ctx.file )  traces.push( { type: "path", value: ctx.file } );
+  if ( ctx.items && Array.isArray( ctx.items ) ) {
+    traces.push( { type: "items", value: ctx.items.slice( 0, 10 ) } );
+  }
+  if ( ctx.sources && Array.isArray( ctx.sources ) ) {
+    for ( const s of ctx.sources.slice( 0, 10 ) ) traces.push( { type: "source", value: s } );
+  }
+  return {
+    type:    "cognitive_packet",
+    version: "0.3",
+    envelope: {
+      packet_kind:       "continuation",
+      transmission_mode: "copy",
+      status:            packetMapContinuationStatus( cnt.status ),
+      self_describing:   true,
+      protocol_header:   "This is a cognitive packet (v0.3): an envelope describes routing and provenance; the payload describes the cognitive work to resume. The packet_kind=continuation maps to cogentia.continuation.v1; resume by writing a step_result.json and invoking the resume command in routing.response_channel.",
+      provenance: {
+        actor: cnt.agent && cnt.agent !== "*" ? cnt.agent : "any-compliant-agent",
+        ts:    cnt.createdAt || new Date().toISOString(),
+      },
+      context_ref: {
+        repo:        ctx.repo || null,
+        topic:       cnt.topicId || null,
+        predecessor: cnt.predecessor || null,
+        note:        ctx.note || null,
+      },
+      routing: {
+        agent:            cnt.agent || CONTINUATION_AGENT_ANY,
+        response_channel: cnt.resume && cnt.resume.command ? cnt.resume.command : null,
+      },
+      traces,
+    },
+    payload: {
+      object:           cnt.task || "",
+      state:            ctx.note ? [ ctx.note ] : [],
+      decisions:        [],
+      constraints:      cnt.constraints || [],
+      assumptions:      [],
+      next_action:      cnt.resume && cnt.resume.command ? cnt.resume.command : "",
+      resumption_risks: [],
+      expected_result_schema: cnt.expected_result_schema || null,
+    },
+    source: {
+      protocol: cnt.protocol || CONTINUATION_PROTOCOL,
+      id:       cnt.id,
+    },
+  };
+}
+
+function packetToMarkdown( pkt ) {
+  const env = pkt.envelope || {};
+  const pay = pkt.payload || {};
+  const lines = [];
+  lines.push( "# COGNITIVE PACKET" );
+  lines.push( "" );
+  lines.push( "## Envelope" );
+  lines.push( "" );
+  lines.push( `packet_kind: ${env.packet_kind || ""}` );
+  lines.push( `transmission_mode: ${env.transmission_mode || ""}` );
+  lines.push( `status: ${env.status || ""}` );
+  lines.push( `self_describing: ${env.self_describing}` );
+  if ( env.protocol_header ) {
+    lines.push( "" );
+    lines.push( "### Protocol Header" );
+    lines.push( env.protocol_header );
+  }
+  if ( env.provenance ) {
+    lines.push( "" );
+    lines.push( "### Provenance" );
+    lines.push( `actor: ${env.provenance.actor || ""}` );
+    lines.push( `ts: ${env.provenance.ts || ""}` );
+  }
+  if ( env.context_ref ) {
+    lines.push( "" );
+    lines.push( "### Context Reference" );
+    for ( const [ k, v ] of Object.entries( env.context_ref ) ) {
+      if ( v !== null && v !== undefined ) lines.push( `${k}: ${v}` );
+    }
+  }
+  if ( env.routing ) {
+    lines.push( "" );
+    lines.push( "### Routing" );
+    for ( const [ k, v ] of Object.entries( env.routing ) ) {
+      if ( v !== null && v !== undefined ) lines.push( `${k}: ${v}` );
+    }
+  }
+  if ( env.traces && env.traces.length ) {
+    lines.push( "" );
+    lines.push( "### Traces" );
+    for ( const t of env.traces ) lines.push( `- ${t.type}: ${typeof t.value === "object" ? JSON.stringify( t.value ) : t.value}` );
+  }
+  lines.push( "" );
+  lines.push( "## Payload" );
+  lines.push( "" );
+  if ( pay.object )                  { lines.push( "### Object" );           lines.push( pay.object ); lines.push( "" ); }
+  if ( pay.state && pay.state.length )           { lines.push( "### State" );      for ( const s of pay.state ) lines.push( `- ${s}` ); lines.push( "" ); }
+  if ( pay.decisions && pay.decisions.length )   { lines.push( "### Decisions" );  for ( const s of pay.decisions ) lines.push( `- ${s}` ); lines.push( "" ); }
+  if ( pay.constraints && pay.constraints.length ) { lines.push( "### Constraints" ); for ( const s of pay.constraints ) lines.push( `- ${s}` ); lines.push( "" ); }
+  if ( pay.assumptions && pay.assumptions.length ) { lines.push( "### Assumptions" ); for ( const s of pay.assumptions ) lines.push( `- ${s}` ); lines.push( "" ); }
+  if ( pay.next_action )             { lines.push( "### Next Action" );      lines.push( pay.next_action ); lines.push( "" ); }
+  if ( pay.resumption_risks && pay.resumption_risks.length ) { lines.push( "### Resumption Risks" ); for ( const s of pay.resumption_risks ) lines.push( `- ${s}` ); lines.push( "" ); }
+  if ( pay.expected_result_schema ) {
+    lines.push( "### Expected Result Schema" );
+    for ( const [ k, v ] of Object.entries( pay.expected_result_schema ) ) lines.push( `- ${k}: ${v}` );
+    lines.push( "" );
+  }
+  return lines.join( "\n" );
+}
+
+// Lenient validator. Returns { ok, errors[], warnings[] }.
+function validatePacket( pkt ) {
+  const errors = [], warnings = [];
+  if ( !pkt || typeof pkt !== "object" )           errors.push( "not an object" );
+  if ( pkt && pkt.type !== "cognitive_packet" )    warnings.push( `type expected "cognitive_packet" (got "${pkt && pkt.type}")` );
+  if ( pkt && pkt.version && !/^0\.\d/.test( pkt.version ) ) warnings.push( `version "${pkt.version}" not in 0.x range` );
+  const env = pkt && pkt.envelope;
+  if ( !env || typeof env !== "object" )           errors.push( "envelope missing" );
+  else {
+    if ( !PACKET_KINDS.includes( env.packet_kind ) )           errors.push( `envelope.packet_kind invalid: "${env.packet_kind}" (vocab: ${PACKET_KINDS.join("|")})` );
+    if ( !TRANSMISSION_MODES.includes( env.transmission_mode ) ) errors.push( `envelope.transmission_mode invalid: "${env.transmission_mode}" (vocab: ${TRANSMISSION_MODES.join("|")})` );
+    if ( !PACKET_STATUSES.includes( env.status ) )            errors.push( `envelope.status invalid: "${env.status}" (vocab: ${PACKET_STATUSES.join("|")})` );
+    if ( typeof env.self_describing !== "boolean" )           warnings.push( "envelope.self_describing should be boolean" );
+    if ( env.transmission_mode === "copy" && env.self_describing && !env.protocol_header ) {
+      warnings.push( "by-copy + self_describing should carry envelope.protocol_header" );
+    }
+    if ( !env.provenance || !env.provenance.actor ) warnings.push( "envelope.provenance.actor missing" );
+    if ( !env.provenance || !env.provenance.ts )    warnings.push( "envelope.provenance.ts missing" );
+  }
+  const pay = pkt && pkt.payload;
+  if ( !pay || typeof pay !== "object" )           errors.push( "payload missing" );
+  else if ( !pay.object || typeof pay.object !== "string" || !pay.object.trim() ) {
+    errors.push( "payload.object missing or empty (required regardless of kind)" );
+  }
+  return { ok: errors.length === 0, errors, warnings };
+}
+
+function loadPacketFile( filePath ) {
+  if ( !fs.existsSync( filePath ) ) die( `File not found: ${filePath}` );
+  const raw = fs.readFileSync( filePath, "utf8" );
+  // JSON form if file starts with { (after optional BOM/whitespace).
+  if ( /^\s*\{/.test( raw ) ) {
+    try { return JSON.parse( raw ); } catch ( e ) { die( `Invalid JSON: ${e.message}` ); }
+  }
+  // Markdown form: skip parsing details; user can pipe through `packet convert` if needed.
+  die( "Markdown packet parsing not implemented in MVP — pass a JSON packet, or use 'packet convert' from a continuation id." );
+}
+
+function cmdPacketValidate( fileArg ) {
+  if ( !fileArg ) die( "Usage: cogentia packet validate <packet.json>" );
+  const pkt = loadPacketFile( fileArg );
+  const v   = validatePacket( pkt );
+  if ( JSON_MODE ) { console.log( JSON.stringify( { ok: v.ok, errors: v.errors, warnings: v.warnings }, null, 2 ) ); return; }
+  console.log( `\n${hdr( "Packet validation" )}\n` );
+  if ( v.ok ) console.log( `  ${c.green}✅ envelope + payload valid${c.reset}` );
+  else        console.log( `  ${c.red}❌ ${v.errors.length} error(s)${c.reset}` );
+  for ( const e of v.errors )   console.log( `    ${c.red}- ${e}${c.reset}` );
+  for ( const w of v.warnings ) console.log( `    ${c.yellow}- ${w}${c.reset}` );
+  console.log();
+  if ( !v.ok ) process.exit( 1 );
+}
+
+function cmdPacketConvert( ref ) {
+  if ( !ref ) die( "Usage: cogentia packet convert <ctn_xxxx | file.json> [--to markdown|json]" );
+  let cnt;
+  if ( /^ctn_/.test( ref ) ) {
+    cnt = loadContinuation( ref );
+  } else {
+    if ( !fs.existsSync( ref ) ) die( `Continuation file not found: ${ref}` );
+    try { cnt = JSON.parse( fs.readFileSync( ref, "utf8" ) ); } catch ( e ) { die( `Invalid JSON: ${e.message}` ); }
+    if ( cnt.protocol !== CONTINUATION_PROTOCOL ) {
+      die( `Input is not a ${CONTINUATION_PROTOCOL} (got protocol="${cnt.protocol}")` );
+    }
+  }
+  const pkt = continuationToPacket( cnt );
+  const to  = ( getFlagValue( "--to" ) || ( JSON_MODE ? "json" : "markdown" ) ).toLowerCase();
+  if ( to === "json" ) {
+    console.log( JSON.stringify( pkt, null, 2 ) );
+  } else if ( to === "markdown" || to === "md" ) {
+    console.log( packetToMarkdown( pkt ) );
+  } else {
+    die( `--to must be markdown or json (got "${to}")` );
+  }
+}
+
+function cmdPacket( sub, arg ) {
+  if ( !sub ) die( "Usage: cogentia packet <validate|convert> ..." );
+  switch ( sub ) {
+    case "validate": return cmdPacketValidate( arg );
+    case "convert":  return cmdPacketConvert(  arg );
+    default:         die( `Unknown subcommand "${sub}". Use: validate | convert` );
+  }
+}
+
 // ── continuation emit ───────────────────────────────────────────────────────
 
 function cmdContinuationEmit( taskFileArg ) {
@@ -4679,6 +4911,15 @@ function cmdContinuationEmit( taskFileArg ) {
   console.log( `  ${dim( `file: ${continuationPath( cnt.id )}` )}` );
   console.log( `\n  ${dim( "Resume with:" )} ${cnt.resume.command}` );
   console.log();
+
+  // --as-packet: also emit the cognitive_packet.v0.3 form on stdout so the
+  // continuation can be transmitted by copy/paste without prior tooling.
+  if ( argv.includes( "--as-packet" ) ) {
+    const pkt = continuationToPacket( cnt );
+    console.log( `${dim( "─── cognitive_packet.v0.3 (copy-transmittable form) ───" )}\n` );
+    console.log( packetToMarkdown( pkt ) );
+    console.log();
+  }
 }
 
 // ── continuation inspect ────────────────────────────────────────────────────
@@ -5655,6 +5896,12 @@ const COMMAND_MANIFEST = [
     description: "DHITL git commit via proposal/approval. `commit propose <repo> --message \"<msg>\" [--files <f1,f2,...> | --all] [--no-push]` emits a `cogentia.continuation.v1` (kind=commit_proposal) and records a SHA-1 stale-guard per file — no git mutation. `commit apply <continuation-id>` actually runs `git add` + `git commit` + (default) `git push`; refuses if any file changed since the proposal. `commit reject <continuation-id>` discards. Backend-portable: uses git primitives only, no GitHub-tied logic.",
     parameters: { type: "object", properties: { sub: { type: "string", description: "propose | apply | reject" }, arg: { type: "string", description: "repo name (propose) or continuation id (apply/reject)" } }, required: [ "sub" ] },
     side_effects: [ "file-write", "git-mutation (on apply only)", "audit-log" ],
+  },
+  {
+    name: "packet",
+    description: "Cognitive Packets bridge (research/cognitive_packets.md §8–10, v0.3). Read-only utility. `packet validate <packet.json>` checks envelope (packet_kind, transmission_mode, status, self_describing, provenance) and basic payload (object) of a JSON cognitive packet; reports errors and warnings. `packet convert <ctn_xxxx|file.json> [--to markdown|json]` converts a cogentia.continuation.v1 into a cognitive_packet.v0.3 (packet_kind=continuation), in Markdown (default) or JSON, on stdout. Also: `continuation emit --as-packet` prints the packet form alongside the queued continuation.",
+    parameters: { type: "object", properties: { sub: { type: "string", description: "validate | convert" }, arg: { type: "string", description: "file path (validate) or continuation id / file (convert)" } }, required: [ "sub" ] },
+    side_effects: [],
   },
   {
     name: "query", description: "Structural search engine for AI agents. Searches Markdown files, ignoring node_modules and .cogentiaignore paths. Use --json for structured output.",
@@ -7983,6 +8230,7 @@ async function cmdConsolidate() {
     case "forks":          await cmdForks( cmdArgs[ 0 ] );  break;
     case "issues":         await cmdIssues( cmdArgs[ 0 ], cmdArgs[ 1 ], cmdArgs[ 2 ], cmdArgs[ 3 ] ); break;
     case "commit":         cmdCommit( cmdArgs[ 0 ], cmdArgs[ 1 ] ); break;
+    case "packet":         cmdPacket( cmdArgs[ 0 ], cmdArgs[ 1 ] ); break;
     case "manifest":       cmdManifest();                   break;
     case "install-hooks":  cmdInstallHooks();               break;
     case "state":          cmdState();                      break;
