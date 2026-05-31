@@ -3,7 +3,7 @@ title: "cogentia.js — Tutorial and Near-Specification"
 subtitle: "From core ideas to workflows to command reference — sufficient for a faithful re-implementation in another language, storage layer, or rendering format"
 version: "0.1"
 status: working-paper — tutorial / near-functional specification
-date: "2026-05-27"
+date: "2026-05-31"
 author: "Jean Hugues Noël Robert, baron Mariani"
 affiliation: "Institut Mariani / C.O.R.S.I.C.A., 1 cours Paoli, F-20250 Corte, Corsica"
 license: "CC BY-SA 4.0"
@@ -33,7 +33,7 @@ related_projects:
 ai_assisted_by:
   - "Claude"
 canonical_url: https://github.com/JeanHuguesRobert/cogentia/blob/main/research/cogentia_js_tutorial.md
-last_stamped_at: 2026-05-27
+last_stamped_at: 2026-05-31
 ---
 
 > **Auto-generated tutorial.** This document was produced from the live `cogentia.js v0.10.0` source, its manifest, and the corpus's existing doctrinal papers (see *Associated documents* below). It is *descriptive of the current implementation* and *prescriptive enough* to seed a faithful re-implementation in another language, persistence layer, or rendering format. Treat behaviour observed in the reference implementation as authoritative where the prose is ambiguous; treat documented invariants as load-bearing.
@@ -716,6 +716,9 @@ Side-effect taxonomy used below:
 |---|---|---|
 | `sync` | `git pull --ff-only` in every registered repo. | (file-write via git) |
 | `drift` | Fetch + report ahead/behind/diverged. `--check` for cached only; `--pull` fast-forwards behind repos; `--strict` exits non-zero on drift. | network (fetch), file-write via git |
+| `commit propose <repo>` | `--message "<m>" [--files f1,f2,…\|--all] [--no-push]`. Emits a `commit_proposal` continuation; SHA-1 stale-guard per file recorded at proposal time. Parses `Closes #N` / `Fixes #N` keywords so the proposal can later be located by issue number. Read-only on git. *DHITL ceremony — never commits on its own.* | fs-create (continuation), audit-log |
+| `commit apply <ref>` | `<ref>` is either `ctn_xxxx` or `#N`/`N` (a referenced issue). Runs `git add` + `git commit` (+ `git push` unless `--no-push` was set at proposal time). **Refuses** if any of the proposed files changed (SHA-1) since the proposal — re-propose instead of overriding. Emits a dormant Heraclitean successor. | file-write via git, network (push), audit-log |
+| `commit reject <ref>` | Discard the proposal. | file-write (continuation update), audit-log |
 
 ### 4.5 Cross-corpus graph & validation
 
@@ -772,7 +775,7 @@ Side-effect taxonomy used below:
 
 | Sub | Signature | Status semantics | Effects |
 |---|---|---|---|
-| `emit <task.json>` | Create a new continuation. Optional: `--paper <file>` (derive topicId from path), `--topic <urn>` (override), `--from <id>` (activate a dormant successor). | active | fs-create, audit-log |
+| `emit <task.json>` | Create a new continuation. Optional: `--paper <file>` (derive topicId from path), `--topic <urn>` (override), `--from <id>` (activate a dormant successor), `--as-packet` (also print the `cognitive_packet.v0.3` Markdown form on stdout — see §4.11). | active | fs-create, audit-log |
 | `inspect <id>` | Read-only view of a continuation. | (no transition) | audit-log |
 | `resume <id> <step_result.json>` | Apply a step result. `--strict` blocks on validation errors. | active → completed (success), or active stays (failed: backtrack), or active → aborted (abort). Emits dormant successor on completed/aborted. | file-write, audit-log |
 | `fail <id> <branch-id>` | Record an alternative as failed; continuation stays active. `--reason "..."` required. | active stays | file-write, audit-log |
@@ -786,7 +789,40 @@ Side-effect taxonomy used below:
 | `consult <id> [--question "..."]` | Emit a `human_judgment_on_continuation` asking for a structured opinion on an existing continuation (relevance, priority, keep / archive / delete / postpone). Includes rich default analysis instructions for AI agents. The emitted continuation contains `analysis_instructions`, `alternatives`, and an enriched `expected_result_schema`. | fs-create (new continuation), audit-log |
 | `schema` | Print canonical schema reference. | (none) | (none) |
 
-### 4.11 Scheduler
+### 4.11 Packets (`cognitive_packet.v0.3` bridge)
+
+A bridge between the local CLI primitive `cogentia.continuation.v1` and the corpus-level [`cognitive_packet.v0.3`](cognitive_packets.md) envelope/payload format. Read-only — no file mutation, no network. The packet form is what a continuation looks like when it leaves the queue and is shipped to another agent, another corpus, or simply rendered for human inspection.
+
+| Sub | Signature | Effects |
+|---|---|---|
+| `packet validate <packet.json>` | Envelope check: `protocol == "cognitive_packet.v0.3"`, `packet_kind ∈ {continuation, objection, hypothesis, decision, failure, routing}`, `transmission_mode ∈ {copy, reference}`, `status ∈ {draft, active, completed, failed, superseded}`, `self_describing` boolean. Payload check: `object` present. Errors are fatal (exit 1); warnings (e.g. missing `provenance`, missing `protocol_header`) are non-blocking. | (none) |
+| `packet convert <ctn_xxxx\|file.json> [--to markdown\|json]` | Load a continuation (by id, resolved from `.cogentia/continuations/`) or a JSON file (continuation or packet shape) and convert to `cognitive_packet.v0.3`. Default render: Markdown (envelope + payload sections, traces from context). Use `--to json` for the wire-shape JSON. | (stdout) |
+
+Companion: `continuation emit --as-packet` (§4.10) prints the packet form alongside the queued continuation file. Status mapping at conversion time:
+
+- `active` (continuation) → `active` (packet)
+- `completed` → `completed`
+- `aborted` → `failed`
+- `dormant` → `draft`
+
+See [`cognitive_packets.md`](cognitive_packets.md) §8 (envelope schema), §9 (JSON representation), §10 (kind catalogue) for the authoritative spec.
+
+### 4.12 Issues (GitHub Issues as Cogentia continuations)
+
+Couche E of the [persistence backends](persistence_backends.md) frame: work items adressable beyond the version-control layer. Today bound to GitHub Issues; the seam is identified (§3 of `persistence_backends.md`) but not yet abstracted — the day this is needed, an adapter slots in at the five GitHub-tied points.
+
+| Sub | Signature | Effects |
+|---|---|---|
+| `issues list <repo>` | `[--state=open\|closed\|all] [--limit=N]`. REST `GET /repos/{owner}/{repo}/issues`. Pull requests filtered out (GitHub returns PRs in the issues list). | network |
+| `issues packet <repo> <number>` | Export a single issue as an `issue_continuation.v1` packet — the issue payload wrapped in the same continuation shape used elsewhere. Useful for handoff to another agent. | (stdout) |
+| `issues delegate [repo]` | Emit a **grouped** continuation per repo with one-or-more open issues — the agent receives the list as a single judgement point rather than N separate items. Idempotent (existing pending delegation reused). | fs-create (continuation), network, audit-log |
+| `issues close propose <repo> <number>` | `[--reason "..."] [--comment "..."]`. Emits an `issue_close_proposal` continuation. *Read-only on GitHub* — pure proposal. | fs-create, audit-log |
+| `issues close apply <ref>` | `<ref>` is `ctn_xxxx` or `#N`/`N`. Closes the issue via REST `PATCH /repos/{owner}/{repo}/issues/{n}` (with optional comment via `POST .../comments`). Needs a GitHub token. | network (write), audit-log |
+| `issues close reject <ref>` | Discard the proposal. | audit-log |
+
+The proposal/apply pattern mirrors `commit` (§4.4): the agent surfaces judgement; the human applies the action. Both flows resolve `<ref>` symmetrically — by continuation id or by issue number (when the proposal has a `Closes #N` link). Audit entries chain proposals to closures so the trace survives in `.cogentia/audit.jsonl` regardless of GitHub's own activity feed.
+
+### 4.13 Scheduler
 
 `todo list [--global]` — per-scope or aggregated.
 `todo add "<title>"` — append to current `.cogentia/SCHEDULE.md`.
@@ -795,7 +831,7 @@ Side-effect taxonomy used below:
 `todo drop <id>` — drop without doing.
 `next [--global] [--tag <t>] [--limit <N>] [--pick]` — surface next item(s) per policy (priority → overdue → FIFO). `--pick` marks Active + audits.
 
-### 4.12 Agent context server
+### 4.14 Agent context server
 
 `query "<keyword>"` — structural keyword search (respects `.cogentiaignore`).
 `bundle --concept <name>` — compile a sub-graph into a single LLM-ready payload (the concept node, its parents/children/related, and all reference documents).
