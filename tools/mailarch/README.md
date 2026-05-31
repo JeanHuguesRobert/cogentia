@@ -264,12 +264,53 @@ Dependency discipline:
 - keep packet formatting, redaction, hashing, search result shaping and CLI orchestration dependency-light;
 - document any dependency as replaceable.
 
-If SQLite requires a dependency, keep the storage layer swappable:
+If SQLite, Postgres or Supabase requires a dependency, keep the persistence layer swappable:
 
 ```text
-storage_sqlite.js
-storage_ndjson.js   # fallback / test backend
+storage_adapter.js      # common interface
+storage_sqlite.js       # local-first MVP backend
+storage_ndjson.js       # fallback / test backend
+storage_postgres.js     # server / Supabase-compatible backend
+storage_supabase.js     # optional Supabase client adapter, if justified
 ```
+
+### Persistence adapters
+
+Persistence must be adapter-based. The tool should not confuse the packet model with one storage backend.
+
+Common adapter interface, conceptually:
+
+```js
+await storage.init();
+await storage.saveMessageHeader(header);
+await storage.searchMessages(query);
+await storage.saveResultSet(resultSet);
+await storage.loadResultSet(id);
+await storage.savePacket(packet);
+```
+
+Recommended posture:
+
+```text
+Local private exploration        → SQLite or NDJSON
+Repeatable local archive work    → SQLite
+Shared private workspace         → Postgres
+Netlify / web-facing workflow    → Supabase / Postgres
+Public corpus publication        → Git + Markdown packets only after review
+```
+
+Supabase/Postgres is a natural future target because the broader working style often uses Supabase with Netlify. It should therefore be anticipated architecturally, but not forced into the local MVP.
+
+The key separation is:
+
+```text
+IMAP extraction
+≠ persistence backend
+≠ packet generation
+≠ corpus publication
+```
+
+The first MVP may use SQLite. A later adapter may project the same records into Supabase/Postgres for a Netlify-based dashboard, review queue, or collaborative archive interface.
 
 ### Storage
 
@@ -285,7 +326,13 @@ Fallback:
 NDJSON index + local .eml raw store
 ```
 
-SQLite is preferred because repeated searches over old archives will become common.
+Future persistence:
+
+```text
+Postgres / Supabase adapter for shared review, Netlify workflows, dashboards, or multi-user private archives
+```
+
+SQLite is preferred for the first local MVP because repeated searches over old archives will become common and because it keeps private exploration offline by default.
 
 ### Auth
 
@@ -368,6 +415,7 @@ Issue #11 can be closed when:
 - the commands `folders`, `index --headers-only`, `search`, `fetch`, `packet` are specified;
 - an example `cogentia.mailarch_packet.v1` packet is provided;
 - the relationship with `cogentia.js` is clarified;
-- the Deno compatibility posture is documented.
+- the Deno compatibility posture is documented;
+- the persistence-adapter posture is documented, including SQLite, NDJSON, Postgres and Supabase.
 
 This README satisfies the specification part. The remaining practical step is the CLI skeleton.
