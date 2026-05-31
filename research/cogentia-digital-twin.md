@@ -180,6 +180,7 @@ This document is a position paper, not a product announcement. It is published i
 - [Concept Index — cogentia](concepts.md)
 - [Corpus Status — cogentia](corpus-status.md)
 - [Research Index — Cogentia](index.md)
+- [Individual and Collective Digital Twins](individual_and_collective_digital_twins.md)
 - [From Biometrics and Psychometrics to Structural Signatures](structural_signatures.md)
 - [Trail: From Method to Machine](trails/from_method_to_machine.md)
 

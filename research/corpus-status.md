@@ -3,7 +3,7 @@ title: "Corpus Status — cogentia"
 description: "Current state of the cogentia knowledge corpus — what is proved, what is open, what remains possible"
 layout: default
 nav_order: 2
-last_modified_at: 2026-05-30
+last_modified_at: 2026-05-31
 canonical_url: https://github.com/JeanHuguesRobert/cogentia/blob/main/research/corpus-status.md
 last_stamped_at: 2026-05-26
 license: CC BY-SA 4.0
@@ -36,13 +36,13 @@ creator: Jean Hugues Noël Robert, baron Mariani (généré automatiquement par 
 <!-- BEGIN_AUTO: registered_repos -->
 | Repository | research/index.md | Branch | Last commit |
 |---|---|---|---|
-| cogentia | ✅ | main | 2026-05-30 |
-| FractaVolta | ✅ | main | 2026-05-30 |
-| marenostrum | ✅ | main | 2026-05-30 |
-| barons-Mariani | ✅ | main | 2026-05-30 |
-| inseme | ✅ | main | 2026-05-29 |
-| Inox | ✅ | master | 2026-05-30 |
-| JeanHuguesRobert | ✅ | main | 2026-05-30 |
+| cogentia | ✅ | main | 2026-05-31 |
+| FractaVolta | ✅ | main | 2026-05-31 |
+| marenostrum | ✅ | main | 2026-05-31 |
+| barons-Mariani | ✅ | main | 2026-05-31 |
+| inseme | ✅ | main | 2026-05-31 |
+| Inox | ✅ | master | 2026-05-31 |
+| JeanHuguesRobert | ✅ | main | 2026-05-31 |
 <!-- END_AUTO: registered_repos -->
 
 ---
@@ -227,10 +227,13 @@ graph LR
 | [cogentia.js — Tutorial and Near-Specification](cogentia_js_tutorial.md) *(auto-generated tutorial v0.1 — core ideas, storage model, 14 workflows, command reference for v0.10.0; sufficient for a faithful re-implementation in another language)* | this repo | 2026-05-27 |
 | [Self-Contained Documents in an Interconnected Corpus](self_contained_documents.md) *(method note v0.3 — formalises the auto-portance principle: a document may cite/extend/transform other texts, but its main claims remain assessable without prior external reading; emerged from work on `traceabilite_des_actes`)* | this repo | 2026-05-27 |
 | [Traçabilité symétrique et capture relationnelle](tracabilite_symetrique_capture_relationnelle.md) *(working paper v0.4 — consolidated draft for review; concept de « capture relationnelle par architecture de canal »; email vs portails propriétaires, preuve opposable, rééquilibrage individu / personne morale; lié à Interaction Packets et Autonomie de Capacité)* | this repo | 2026-05-29 |
+| [Persistence Backends — cadre minimum suffisant (FR)](persistence_backends.md) *(working-note v0.1 — git+GitHub n'est qu'une instance ; six couches (A–F), points GitHub-tied identifiés, seam d'adapter esquissé mais non-implémenté ; trace d'antériorité, pas une roadmap)* | this repo | 2026-05-30 |
+| [Simplicité d'action — KISS, Small is beautiful, Worse is better (FR)](simplicite_action.md) *(working-note v0.1 — éthique de l'action contre la sur-ingénierie, l'analysis paralysis et les pieds qui décollent du sol ; rigueur sur la trace, simplicité sur le geste)* | this repo | 2026-05-30 |
 | [Cogentia Workflows](cogentia_workflows.md) *(private/group/public/federated workflow architecture, draft v0.2)* | this repo | 2026-05-11 |
 | [Cogentia Commons Working Paper](Cogentia_Commons_Working_Paper.md) | this repo | 2026 |
 | [Cogentia and Cogentigram](Cogentia-and-Cogentigram.md) | this repo | 2026 |
 | [The Sovereign Digital Twin — Cogentia, Cogentigram, Cogentiscope](cogentia-digital-twin.md) | this repo | 2026-04 |
+| [Individual and Collective Digital Twins](individual_and_collective_digital_twins.md) *(working paper v0.1 — dialectic between sovereign twins of natural persons (Marie-Louise case) and of legal persons (C.O.R.S.I.C.A. case); extends the twin family — Cogentigram, structural signatures, cogentigraphic distillation; addresses cogentia#14)* | this repo | 2026-05-31 |
 | [Democratic AI Safety — alias](democratic_ai_safety.md) *(canonical in barons-Mariani; this file is now a stub)* | this repo | 2026-05-18 |
 | [KYS — Psychocognitive Analysis Protocol v1.0](kys-prompt.md) | this repo | 2026 |
 | [COGENTIA v1.0 — Prompt d'analyse psychocognitive (FR)](cogentia_prompt_v1.md) | this repo | 2026 |
@@ -315,7 +318,7 @@ graph LR
 - [Democratic AI Safety — alias cogentia](democratic_ai_safety.md)
 - [Derived Products](derived_products.md)
 - [Research Index — Cogentia](index.md)
-- [kys-prompt.md](kys-prompt.md)
+- [kys prompt](kys-prompt.md)
 - [Pipeline](pipeline.md)
 - [Self-Contained Documents in an Interconnected Corpus](self_contained_documents.md)
 - [Traçabilité symétrique et capture relationnelle](tracabilite_symetrique_capture_relationnelle.md)

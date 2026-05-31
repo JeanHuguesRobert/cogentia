@@ -337,6 +337,7 @@ Robert, J. H. (2026c). *Democratic Humans in the Loop: Why Infrastructure Is All
 - [Cogentigraphic Distillation](cogentigraphic_distillation.md)
 - [Corpus Status — cogentia](corpus-status.md)
 - [Research Index — Cogentia](index.md)
+- [Individual and Collective Digital Twins](individual_and_collective_digital_twins.md)
 - [From Biometrics and Psychometrics to Structural Signatures](structural_signatures.md)
 
 <!-- END_AUTO: backlinks -->

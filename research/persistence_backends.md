@@ -115,3 +115,15 @@ continuation:
     - "cogentia/research/pipeline.md §4.13.1 — Issues as continuation packets"
     - "cogentia/scripts/cogentia.js — cmdForks, cmdIssues, cmdCheck, detectProfileRepoLocation"
 ```
+
+
+<!-- BEGIN_AUTO: backlinks -->
+### Backlinks
+
+*These documents link to this file:*
+- [Corpus Status — cogentia](corpus-status.md)
+- [Research Index — Cogentia](index.md)
+- [Pipeline](pipeline.md)
+- [Simplicité d'action](simplicite_action.md)
+
+<!-- END_AUTO: backlinks -->

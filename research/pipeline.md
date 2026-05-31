@@ -1346,6 +1346,15 @@ Possible answer:
 > Keep “pipeline” as the operational handle.  
 > Keep “packet network” as the conceptual model.
 
+### 14.8 Track post-v0.4 additions
+
+Two sections were added to this paper after the initial v0.4 release:
+
+- **§4.13.1 — Issues as continuation packets.** Now operationally supported by `cogentia issues list/packet/delegate` (read-only) and `cogentia issues close propose/apply/reject` (DHITL-gated). The next continuation is to formalise the adapter seam announced in [`persistence_backends.md`](persistence_backends.md) on the day a non-GitHub work-items backend (Gitea, file-based, SQL, …) becomes a real constraint.
+- **§4.14 — README maintenance and the reactive corpus.** Now operationally supported by `cogentia readme` (mechanical `readme_index` for opt-in READMEs; profile README delegated as a derived product via continuation). The next continuation is to track empirically whether the reactive loop becomes load-bearing in practice — i.e., whether the corpus's live surfaces stay in sync long enough for the doctrine to be confirmed beyond a short experimental window.
+
+A possible v0.5 of this paper would integrate these two sections into the main numbered structure rather than as §4.13.1 / §4.14 additions, and refresh §10 (levels of evidence) accordingly. *À chaque jour suffit sa peine* — left for when one of the two becomes the genuine load-bearing question.
+
 ---
 
 ## Final formulation

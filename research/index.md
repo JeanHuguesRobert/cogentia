@@ -136,7 +136,7 @@ This repository instantiates the **cognitive infrastructure layer** of the [DHIT
 - [Corpus Status — cogentia](corpus-status.md)
 - [Democratic AI Safety — alias cogentia](democratic_ai_safety.md)
 - [Derived Products](derived_products.md)
-- [kys-prompt.md](kys-prompt.md)
+- [kys prompt](kys-prompt.md)
 - [Pipeline](pipeline.md)
 - [Self-Contained Documents in an Interconnected Corpus](self_contained_documents.md)
 - [La trace protège](stigmergie_repressive_mouches_trace_protege_v0_1.md)

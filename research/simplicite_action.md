@@ -100,3 +100,13 @@ continuation:
     - "Worse is better — qui ship gagne."
     - "Les pieds au sol."
 ```
+
+
+<!-- BEGIN_AUTO: backlinks -->
+### Backlinks
+
+*These documents link to this file:*
+- [Corpus Status — cogentia](corpus-status.md)
+- [Research Index — Cogentia](index.md)
+
+<!-- END_AUTO: backlinks -->

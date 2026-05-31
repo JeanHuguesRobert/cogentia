@@ -893,7 +893,7 @@ The institutional conclusion is that PrivAI, or an equivalent non-extractive gua
 
 ## Continuation
 
-This working paper can be continued in four directions.
+This working paper can be continued in five directions.
 
 ### 1. Specialized literature extension
 
@@ -941,6 +941,14 @@ Produce a separate applied note connecting:
 - local-first embodied modeling;
 - semantic transmission instead of full video transmission;
 - sovereign digital twin governance.
+
+### 5. Individual / collective twin dialectic
+
+The structural-signature framework was developed primarily for the natural-person case. The companion paper [`individual_and_collective_digital_twins.md`](individual_and_collective_digital_twins.md) (v0.1, 2026-05-31) extends the twin family to the legal-person case and formalises the dialectic between the two regimes — usurpation vs irresponsibility, consultative vs imputable, posthumous regime vs dissolution regime. Future versions of the present paper should:
+
+- import the per-subject metadata block (`type: physical_person | legal_person`, `posthumous`, `rights_context`, …) into the structural-signature workflow;
+- clarify which structural-signature axes are meaningful for legal persons (institutional rhythm, decisional style, communication pattern) versus reserved to natural persons (gait, voice, embodied gesture);
+- align with `cogentigraphic_distillation.md` on the cognitive-operating-rules / biographical-memory split, now extended bilaterally.
 
 ---
 
@@ -1012,6 +1020,7 @@ Produce a separate applied note connecting:
 - [The Sovereign Digital Twin: Cogentia, Cogentigram, Cogentiscope](cogentia-digital-twin.md)
 - [Cogentigraphic Distillation](cogentigraphic_distillation.md)
 - [Research Index — Cogentia](index.md)
+- [Individual and Collective Digital Twins](individual_and_collective_digital_twins.md)
 - [From Biometrics and Psychometrics to Structural Signatures](structural_signatures.md)
 
 <!-- END_AUTO: backlinks -->

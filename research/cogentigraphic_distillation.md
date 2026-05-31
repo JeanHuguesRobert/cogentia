@@ -800,6 +800,7 @@ This v0.1 draft opens several continuations:
 4. **Inox / runtime pass**: explore whether a minimal cogentigraphic operating layer can be represented as an Inox-executable or COP-compatible rule bundle.
 5. **Cogentia Commons pass**: distinguish personal cogentigraphic distillation from collective deliberative operating rules.
 6. **Substack derived product**: derive a public-facing article from the source paper, probably around the formula: "Do not distill the encyclopedia. Distill the reader."
+7. **Individual / collective dialectic**: the cognitive-operating-rules / biographical-memory separation is developed here primarily for natural persons. Apply it bilaterally — to legal persons too — per the companion paper [`individual_and_collective_digital_twins.md`](individual_and_collective_digital_twins.md) (v0.1, 2026-05-31). Examples to develop: an institutional-operating-rules distillation for C.O.R.S.I.C.A. (statutes + recurring decisional patterns), distinct from its biographical-event memory (PVs, courriers, projects).
 
 
 <!-- BEGIN_AUTO: backlinks -->
@@ -811,6 +812,7 @@ This v0.1 draft opens several continuations:
 - [Cognitive Packets](cognitive_packets.md)
 - [Derived Products](derived_products.md)
 - [Research Index — Cogentia](index.md)
+- [Individual and Collective Digital Twins](individual_and_collective_digital_twins.md)
 - [Pipeline](pipeline.md)
 - [From Biometrics and Psychometrics to Structural Signatures](structural_signatures.md)
 

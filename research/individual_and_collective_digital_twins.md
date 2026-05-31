@@ -270,3 +270,15 @@ continuation:
     - "cogentia/issues/11 — mailarch MVP"
     - "barons-Mariani/research/traceabilite_des_actes.md"
 ```
+
+
+<!-- BEGIN_AUTO: backlinks -->
+### Backlinks
+
+*These documents link to this file:*
+- [Cogentigraphic Distillation](cogentigraphic_distillation.md)
+- [Corpus Status — cogentia](corpus-status.md)
+- [Research Index — Cogentia](index.md)
+- [From Biometrics and Psychometrics to Structural Signatures](structural_signatures.md)
+
+<!-- END_AUTO: backlinks -->

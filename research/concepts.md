@@ -452,7 +452,7 @@ Specific governance structures (private, group, public, federated) enabling syst
 - [Corpus Status — cogentia](corpus-status.md)
 - [Derived Products](derived_products.md)
 - [Research Index — Cogentia](index.md)
-- [kys-prompt.md](kys-prompt.md)
+- [kys prompt](kys-prompt.md)
 - [Pipeline](pipeline.md)
 
 <!-- END_AUTO: backlinks -->
