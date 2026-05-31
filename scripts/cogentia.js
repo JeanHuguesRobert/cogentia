@@ -83,6 +83,8 @@ import path         from "path";
 import { execSync } from "child_process";
 import https        from "https";
 import http         from "http";
+import crypto       from "crypto";
+import os           from "os";
 
 // ── Platform detection ────────────────────────────────────────────────────────
 
@@ -1421,6 +1423,45 @@ function ghFetchJson( url, token ) {
   } );
 }
 
+// Sibling helper for arbitrary methods (PATCH, POST, PUT, DELETE). Used by
+// commands that mutate GitHub state (e.g. `issues close apply`).
+function ghRequestJson( url, opts, token ) {
+  return new Promise( resolve => {
+    const u = new URL( url );
+    const headers = {
+      "User-Agent":   "cogentia.js",
+      "Accept":       "application/vnd.github+json",
+      "Content-Type": "application/json",
+    };
+    if ( token ) headers.Authorization = `Bearer ${token}`;
+    const bodyStr = opts && opts.body ? JSON.stringify( opts.body ) : null;
+    if ( bodyStr ) headers[ "Content-Length" ] = Buffer.byteLength( bodyStr );
+    try {
+      const req = https.request( {
+        hostname: u.hostname,
+        path:     u.pathname + ( u.search || "" ),
+        method:   ( opts && opts.method ) || "GET",
+        headers,
+        timeout:  10000,
+      }, res => {
+        let buf = "";
+        res.on( "data", c => buf += c );
+        res.on( "end", () => {
+          let body = null;
+          try { body = JSON.parse( buf ); } catch ( _ ) { body = buf; }
+          resolve( { status: res.statusCode, headers: res.headers, body } );
+        } );
+      } );
+      req.on( "timeout", () => { req.destroy(); resolve( { status: 0, body: null, headers: {}, error: "timeout" } ); } );
+      req.on( "error",   e  => resolve( { status: 0, body: null, headers: {}, error: e.message } ) );
+      if ( bodyStr ) req.write( bodyStr );
+      req.end();
+    } catch ( e ) {
+      resolve( { status: 0, body: null, headers: {}, error: e.message } );
+    }
+  } );
+}
+
 // ── Open in editor ────────────────────────────────────────────────────────────
 
 function openFile( filePath ) {
@@ -1490,6 +1531,25 @@ ${bold( "Commands:" )}
                       pushed date, URL). Auth resolves ${c.cyan}--github-token${c.reset} →
                       ${c.cyan}GITHUB_TOKEN${c.reset} env → ${c.cyan}gh auth token${c.reset} → anonymous
                       (60 req/h). ${c.cyan}--limit <n>${c.reset} caps page size (max 100).
+  ${c.cyan}issues${c.reset} <sub>         GitHub Issues as Cogentia continuations.
+                      Sub: ${c.cyan}list${c.reset} <repo> [${c.cyan}--state=open|closed|all${c.reset}] [${c.cyan}--limit=N${c.reset}]
+                         | ${c.cyan}packet${c.reset} <repo> <number>  — export as ${c.cyan}issue_continuation.v1${c.reset} packet
+                         | ${c.cyan}delegate${c.reset} [repo]  — emit a continuation per repo with open issues
+                         | ${c.cyan}close propose${c.reset} <repo> <number> [${c.cyan}--reason ...${c.reset}] [${c.cyan}--comment "..."${c.reset}]
+                         | ${c.cyan}close apply${c.reset}   <ref>  — closes on GitHub (needs token)
+                         | ${c.cyan}close reject${c.reset}  <ref>
+                      <ref> is either ${c.cyan}ctn_xxxx${c.reset} or ${c.cyan}#N${c.reset}/${c.cyan}N${c.reset} (issue number). list/packet/
+                      delegate/close-propose are read-only on GitHub; only
+                      ${c.cyan}close apply${c.reset} writes. Filters out PRs.
+  ${c.cyan}commit${c.reset} <sub>         DHITL git commit via propose/apply/reject.
+                      Sub: ${c.cyan}propose${c.reset} <repo> ${c.cyan}--message${c.reset} "<m>" [${c.cyan}--files${c.reset} f1,f2,…|${c.cyan}--all${c.reset}] [${c.cyan}--no-push${c.reset}]
+                           — emits a ${c.cyan}commit_proposal${c.reset}; SHA-1 stale-guard per file;
+                             parses ${c.cyan}Closes #N${c.reset}/${c.cyan}Fixes #N${c.reset} keywords for issue-ref lookup
+                         | ${c.cyan}apply${c.reset}   <ref>  — runs git add+commit[+push]; refuses
+                           if any file changed since the proposal
+                         | ${c.cyan}reject${c.reset}  <ref>  — discards
+                      <ref> is either ${c.cyan}ctn_xxxx${c.reset} or ${c.cyan}#N${c.reset}/${c.cyan}N${c.reset} (a referenced issue).
+                      Uses git primitives only (no GitHub-tied logic).
   ${c.cyan}concepts${c.reset} <sub>       Manage ${c.cyan}research/concepts.md${c.reset} as a typed concept registry.
                       Sub: ${c.cyan}init${c.reset} [repo] | ${c.cyan}list${c.reset} [repo] | ${c.cyan}check${c.reset} [repo] | ${c.cyan}graph${c.reset} [repo]
                            ${c.cyan}ref${c.reset} <concept> [repo] | ${c.cyan}status${c.reset} [repo] | ${c.cyan}schema${c.reset}
@@ -2878,6 +2938,748 @@ async function cmdForks( repoArg ) {
   console.log();
   if ( forks.length === perPage ) {
     console.log( `  ${warn( `Showing ${perPage} forks (the per-page cap). Use --limit <n> to widen, or raise to multi-page once needed.` )}\n` );
+  }
+}
+
+// ── issues ────────────────────────────────────────────────────────────────────
+//
+// `cogentia issues` brings GitHub Issues into the corpus as addressable
+// continuations (see issue cogentia#8 / #9). Read-only by default: list and
+// export ("packet") only — never close, label or modify an issue. Reuses the
+// auth + HTTP pattern from `cmdForks` (--github-token > GITHUB_TOKEN >
+// gh CLI > anonymous). Output is human-readable by default; --json for agents.
+
+const ISSUES_DEFAULT_LIMIT = 30;
+const ISSUES_MAX_LIMIT     = 100;
+
+function resolveRegisteredRepo( repoArg ) {
+  if ( !repoArg ) die( "Repo name required (a registered repo from `cogentia list`)." );
+  const { configPath, config } = loadConfig();
+  if ( !configPath ) die( "No registry found. Run: cogentia add <repo> first." );
+  const entry = config.repos.find( r => r.name === repoArg );
+  if ( !entry ) die( `"${repoArg}" is not in the registry.` );
+  const repoPath = resolveRepoPath( entry );
+  if ( !repoPath ) die( `"${repoArg}" not found on disk.` );
+  const remote = gitRemoteOwner( repoPath );
+  if ( !remote ) die( `"${repoArg}" has no usable github.com remote.` );
+  return { entry, repoPath, remote };
+}
+
+async function cmdIssuesList( repoArg ) {
+  const { remote } = resolveRegisteredRepo( repoArg );
+
+  const state = ( getFlagValue( "--state" ) || "open" ).toLowerCase();
+  if ( ![ "open", "closed", "all" ].includes( state ) ) {
+    die( `--state must be one of: open, closed, all (got "${state}")` );
+  }
+  const limitArg = parseInt( getFlagValue( "--limit" ), 10 );
+  const perPage  = Math.min(
+    Number.isFinite( limitArg ) && limitArg > 0 ? limitArg : ISSUES_DEFAULT_LIMIT,
+    ISSUES_MAX_LIMIT,
+  );
+  const token = getGitHubToken();
+  const url   = `https://api.github.com/repos/${remote.owner}/${remote.repo}/issues?state=${state}&per_page=${perPage}`;
+  const res   = await ghFetchJson( url, token );
+
+  if ( res.status !== 200 ) {
+    const msg = res.error
+      ? `network error: ${res.error}`
+      : `GitHub API returned ${res.status}` + ( res.body && res.body.message ? ` — ${res.body.message}` : "" );
+    die( msg );
+  }
+
+  // The /issues endpoint returns BOTH issues and pull requests — filter PRs out
+  // (presence of pull_request key).
+  const issues = ( Array.isArray( res.body ) ? res.body : [] )
+    .filter( i => !i.pull_request )
+    .map( i => ( {
+      number:     i.number,
+      title:      i.title,
+      state:      i.state,
+      labels:     ( i.labels || [] ).map( l => typeof l === "string" ? l : l.name ),
+      author:     i.user && i.user.login,
+      created_at: i.created_at,
+      updated_at: i.updated_at,
+      url:        i.html_url,
+      comments:   i.comments,
+    } ) );
+
+  if ( JSON_MODE ) {
+    console.log( JSON.stringify( {
+      repo:      `${remote.owner}/${remote.repo}`,
+      state,
+      authMode:  describeAuthMode( token ),
+      rateLimit: res.rateLimit,
+      total:     issues.length,
+      issues,
+    }, null, 2 ) );
+    return;
+  }
+
+  const auth     = describeAuthMode( token );
+  const rl       = res.rateLimit;
+  const rlSuffix = ( rl && rl.limit ) ? `  ${dim( `${rl.remaining}/${rl.limit} req remaining` )}` : "";
+  console.log( `\n${hdr( `Issues of ${remote.owner}/${remote.repo} (${state})` )}  ${dim( auth )}${rlSuffix}\n` );
+
+  if ( issues.length === 0 ) {
+    console.log( `  ${dim( "(no issues)" )}\n` );
+    return;
+  }
+
+  for ( const i of issues ) {
+    const stateBadge = i.state === "open"
+      ? `${c.green}OPEN  ${c.reset}`
+      : `${c.cyan}${i.state.toUpperCase().padEnd( 6 )}${c.reset}`;
+    const labels = i.labels.length ? `  ${dim( "[" + i.labels.join( ", " ) + "]" )}` : "";
+    console.log( `  ${bold( "#" + i.number )}  ${stateBadge}  ${i.title}${labels}` );
+    console.log( `       ${dim( ( i.updated_at || "" ).slice( 0, 10 ) + "  ·  @" + ( i.author || "?" ) + "  ·  " + i.url )}` );
+  }
+  console.log();
+  if ( issues.length === perPage ) {
+    console.log( `  ${warn( `Showing ${perPage} issues (per-page cap). Use --limit <n> to widen.` )}\n` );
+  }
+}
+
+async function cmdIssuesPacket( repoArg, numberArg ) {
+  if ( !numberArg ) die( "Usage: cogentia issues packet <repo-name> <issue-number>" );
+  const number = parseInt( numberArg, 10 );
+  if ( !Number.isFinite( number ) || number <= 0 ) die( "Issue number must be a positive integer." );
+
+  const { remote } = resolveRegisteredRepo( repoArg );
+
+  const token = getGitHubToken();
+  const url   = `https://api.github.com/repos/${remote.owner}/${remote.repo}/issues/${number}`;
+  const res   = await ghFetchJson( url, token );
+  if ( res.status !== 200 ) {
+    const msg = res.error
+      ? `network error: ${res.error}`
+      : `GitHub API returned ${res.status}` + ( res.body && res.body.message ? ` — ${res.body.message}` : "" );
+    die( msg );
+  }
+  const i = res.body;
+  if ( !i || i.pull_request ) die( `#${number} is a pull request, not an issue.` );
+
+  const labels = ( i.labels || [] ).map( l => typeof l === "string" ? l : l.name );
+  const packet = {
+    type:       "cogentia.issue_continuation.v1",
+    repository: `${remote.owner}/${remote.repo}`,
+    issue:      i.number,
+    title:      i.title,
+    state:      i.state,
+    labels,
+    author:     i.user && i.user.login,
+    created_at: i.created_at,
+    updated_at: i.updated_at,
+    closed_at:  i.closed_at || null,
+    url:        i.html_url,
+    body:       i.body || "",
+  };
+
+  if ( JSON_MODE ) {
+    console.log( JSON.stringify( packet, null, 2 ) );
+    return;
+  }
+
+  // Markdown form: YAML frontmatter + body. Stdout, so an agent can capture
+  // with `> packet.md` or pipe into cogentia continuation emit.
+  const fmLines = [
+    "---",
+    `type: ${packet.type}`,
+    `repository: ${packet.repository}`,
+    `issue: ${packet.issue}`,
+    `title: ${JSON.stringify( packet.title )}`,
+    `state: ${packet.state}`,
+    `labels: [${labels.map( l => JSON.stringify( l ) ).join( ", " )}]`,
+    `author: ${packet.author || ""}`,
+    `created_at: ${packet.created_at}`,
+    `updated_at: ${packet.updated_at}`,
+  ];
+  if ( packet.closed_at ) fmLines.push( `closed_at: ${packet.closed_at}` );
+  fmLines.push( `url: ${packet.url}` );
+  fmLines.push( "---" );
+
+  console.log( fmLines.join( "\n" ) );
+  console.log();
+  console.log( `# ${i.title}` );
+  console.log();
+  console.log( `> **Issue continuation packet** — ${packet.repository} #${i.number} (${i.state})` );
+  console.log( `> Labels: ${labels.length ? labels.join( ", " ) : "(none)"}  ·  @${packet.author || "?"}  ·  updated ${( packet.updated_at || "" ).slice( 0, 10 )}` );
+  console.log( `> ${packet.url}` );
+  console.log();
+  console.log( i.body || "_(empty body)_" );
+  console.log();
+}
+
+// Delegate open issues of one (or all) registered repo(s) to the agent through
+// the local continuation queue. This is the IoC half of `cogentia issues`: instead
+// of the agent having to call `issues list` from memory, cogentia.js emits one
+// `cogentia.continuation.v1` per repo that has open issues, surfacing them in
+// `cogentia continuation list` alongside README / tutorials / trails / websites.
+// Idempotent (at most one active per repo). Read-only on GitHub.
+async function cmdIssuesDelegate( repoArg ) {
+  const { configPath, config } = loadConfig();
+  if ( !configPath ) die( "No registry found." );
+
+  const token    = getGitHubToken();
+  const existing = listContinuations();
+  const repos    = repoArg
+    ? config.repos.filter( r => r.name === repoArg )
+    : config.repos;
+  if ( repoArg && repos.length === 0 ) die( `"${repoArg}" is not in the registry.` );
+
+  let scanned = 0, emitted = 0, pending = 0, no_issues = 0, no_remote = 0;
+
+  for ( const entry of repos ) {
+    const repoPath = resolveRepoPath( entry );
+    if ( !repoPath ) continue;
+    const remote = gitRemoteOwner( repoPath );
+    if ( !remote ) { no_remote++; continue; }
+    scanned++;
+
+    const url = `https://api.github.com/repos/${remote.owner}/${remote.repo}/issues?state=open&per_page=100`;
+    const res = await ghFetchJson( url, token );
+    if ( res.status !== 200 ) {
+      console.error( warn( `Skipping ${entry.name}: GitHub API ${res.status}` + ( res.body && res.body.message ? " — " + res.body.message : "" ) ) );
+      continue;
+    }
+    const items = ( Array.isArray( res.body ) ? res.body : [] )
+      .filter( i => !i.pull_request )
+      .map( i => ( {
+        number:     i.number,
+        title:      i.title,
+        labels:     ( i.labels || [] ).map( l => typeof l === "string" ? l : l.name ),
+        author:     i.user && i.user.login,
+        updated_at: i.updated_at,
+        url:        i.html_url,
+      } ) );
+
+    if ( items.length === 0 ) { no_issues++; continue; }
+
+    const repoFull = `${remote.owner}/${remote.repo}`;
+    const already = existing.find( c =>
+      c.status === "active"
+      && c.context && c.context.kind === "issues_open"
+      && c.context.repo === repoFull
+    );
+    if ( already ) { pending++; continue; }
+
+    const topicId = `urn:cop:topic:cogentia/_issues/${entry.name}`;
+    const cnt = {
+      type:     "continuation",
+      protocol: CONTINUATION_PROTOCOL,
+      id:       generateContinuationId(),
+      topicId,
+      agent:    CONTINUATION_AGENT_ANY,
+      task:     `Process the ${items.length} open GitHub issue(s) in ${repoFull} listed in context.items. For each, decide an action (addressed | deferred | wontfix | needs-info | transformed-to-pr) and record the decision with a short summary. GitHub closure (e.g. \`Closes #N\` in a commit, or manual close) stays outside cogentia.js — this continuation tracks the agent's decision-making locally. Use \`cogentia issues packet ${entry.name} <number>\` to materialize a single issue when needed.`,
+      context: {
+        kind:   "issues_open",
+        repo:   repoFull,
+        count:  items.length,
+        items,
+        note:   "GitHub issues as continuations — read-only delegation; cogentia.js never closes/labels/comments.",
+        method: "cogentia/research/pipeline.md §4.13.1 (Issues as continuation packets)",
+      },
+      expected_result_schema: {
+        processed: "array<int> — issue numbers the agent acted upon",
+        decisions: "array<{issue:int, action:'addressed'|'deferred'|'wontfix'|'needs-info'|'transformed-to-pr', commit?:string, summary:string}>",
+        deferred:  "array<int> — issue numbers explicitly left for later",
+        summary:   "string — what was done and why",
+      },
+      status:    "active",
+      createdAt: new Date().toISOString(),
+    };
+    cnt.resume = { command: `node scripts/cogentia.js continuation resume ${cnt.id} <step_result.json>` };
+
+    const v = validateContinuationShape( cnt );
+    if ( v.errs.length ) die( `Invalid issues-open continuation:\n  ${v.errs.join( "\n  " )}` );
+    saveContinuation( cnt );
+    appendAudit( {
+      command:   "issues.delegate",
+      args:      { repo: repoFull, count: items.length },
+      result:    { id: cnt.id, topicId },
+      narrative: collectNarrative(),
+    } );
+    emitted++;
+  }
+
+  if ( JSON_MODE ) {
+    console.log( JSON.stringify( { scanned, emitted, pending, no_issues, no_remote }, null, 2 ) );
+    return;
+  }
+  console.log( `\n${hdr( "Issues Delegation" )}\n` );
+  console.log( `  ${bold( scanned )} repo(s) scanned · ${bold( emitted )} delegated · ${bold( pending )} already pending · ${bold( no_issues )} without open issues${ no_remote ? ` · ${bold( no_remote )} without GitHub remote` : "" }.` );
+  console.log();
+}
+
+// ── DHITL proposal helpers (commit + issues close) ──────────────────────────
+//
+// Reference resolution: `apply` / `reject` accept either a continuation id
+// (ctn_xxxx, doctrinal) or an issue number (#N or N, ergonomic). Issue-number
+// lookup resolves to the unique active proposal of the given kind that
+// references that issue; if 0 or >1 match, refuses with a clear message.
+
+function parseReferencedIssues( message ) {
+  // GitHub closing-keyword grammar: keyword + #N, then optional comma- /
+  // "and" / "et" / whitespace-separated additional #N. Same-repo only.
+  const issues = new Set();
+  const keywordRe = /\b(?:close[ds]?|fix(?:es|ed)?|resolve[ds]?)\b/gi;
+  let m;
+  while ( ( m = keywordRe.exec( message ) ) !== null ) {
+    let i = m.index + m[ 0 ].length;
+    while ( i < message.length && /\s/.test( message[ i ] ) ) i++;
+    let first = true;
+    while ( i < message.length ) {
+      const hit = /^#(\d+)/.exec( message.slice( i ) );
+      if ( !hit ) break;
+      issues.add( parseInt( hit[ 1 ], 10 ) );
+      i += hit[ 0 ].length;
+      first = false;
+      const sep = /^(\s*,\s*|\s+and\s+|\s+et\s+|\s+)(?=#)/.exec( message.slice( i ) );
+      if ( !sep ) break;
+      i += sep[ 0 ].length;
+    }
+    void first; // (linter)
+  }
+  return [ ...issues ].sort( ( a, b ) => a - b );
+}
+
+function resolveProposalRef( ref, kind ) {
+  if ( !ref ) die( "Reference required: a continuation id (ctn_xxxx) or an issue number (#N)." );
+  if ( /^ctn_/.test( ref ) ) return ref;
+  const m = /^#?(\d+)$/.exec( ref );
+  if ( !m ) die( `Invalid reference "${ref}". Use a continuation id (ctn_xxxx) or an issue number (#N).` );
+  const issueNum = parseInt( m[ 1 ], 10 );
+  const all = listContinuations();
+  const matches = all.filter( c => {
+    if ( c.status !== "active" || !c.context || c.context.kind !== kind ) return false;
+    if ( kind === "commit_proposal" )         return Array.isArray( c.context.referenced_issues ) && c.context.referenced_issues.includes( issueNum );
+    if ( kind === "issue_close_proposal" )    return c.context.issue === issueNum;
+    return false;
+  } );
+  if ( matches.length === 0 ) die( `No active ${kind} found for issue #${issueNum}.` );
+  if ( matches.length  >  1 ) {
+    die( `Multiple active ${kind}s reference #${issueNum}:\n  ${ matches.map( c => "- " + c.id ).join( "\n  " ) }\n  Disambiguate with the ctn_xxxx id.` );
+  }
+  return matches[ 0 ].id;
+}
+
+// ── issues close propose / apply / reject ────────────────────────────────────
+//
+// DHITL: the agent PROPOSES the closure of an open GitHub issue. cogentia.js
+// emits a cogentia.continuation.v1 with kind="issue_close_proposal" — no
+// mutation on GitHub. The human reviews via `continuation inspect <id>`, then
+// runs `issues close apply <ref>` (ctn_xxxx or #N) — which POSTs the optional
+// comment + PATCHes the issue state — or `issues close reject <ref>`. Closing
+// requires a GitHub token (anonymous can't write).
+
+async function cmdIssuesClosePropose( repoArg, numberArg ) {
+  if ( !repoArg || !numberArg ) die( "Usage: cogentia issues close propose <repo-name> <issue-number> [--reason completed|not-planned|duplicate] [--comment \"<text>\"]" );
+  const number = parseInt( numberArg, 10 );
+  if ( !Number.isFinite( number ) || number <= 0 ) die( "Issue number must be a positive integer." );
+
+  const { entry, remote } = resolveRegisteredRepo( repoArg );
+  const repoFull = `${remote.owner}/${remote.repo}`;
+  const token = getGitHubToken();
+  const res = await ghFetchJson( `https://api.github.com/repos/${repoFull}/issues/${number}`, token );
+  if ( res.status !== 200 ) die( `GitHub API ${res.status}: ${ ( res.body && res.body.message ) || res.error || "" }` );
+  if ( res.body.pull_request ) die( `#${number} is a pull request, not an issue.` );
+  if ( res.body.state !== "open" ) die( `Issue #${number} is already ${res.body.state}.` );
+
+  const REASONS = { completed: "completed", "not-planned": "not_planned", duplicate: "duplicate" };
+  const reasonRaw = getFlagValue( "--reason" ) || "completed";
+  const reason = REASONS[ reasonRaw ];
+  if ( !reason ) die( `--reason must be one of: ${Object.keys( REASONS ).join( ", " )} (got "${reasonRaw}")` );
+  const comment = getFlagValue( "--comment" ) || null;
+
+  const cnt = {
+    type:     "continuation",
+    protocol: CONTINUATION_PROTOCOL,
+    id:       generateContinuationId(),
+    topicId:  `urn:cop:topic:cogentia/_proposals/issue_close/${entry.name}-${number}`,
+    agent:    CONTINUATION_AGENT_ANY,
+    task:     `Close GitHub issue ${repoFull}#${number} ("${res.body.title}") with reason "${reason}". DHITL: cogentia.js will close (and POST the optional comment) ONLY when 'cogentia issues close apply <id>' is invoked by a human.`,
+    context: {
+      kind:          "issue_close_proposal",
+      repo:          repoFull,
+      registry_repo: entry.name,
+      issue:         number,
+      title:         res.body.title,
+      reason,
+      comment,
+      note:          "Read-only on GitHub until 'apply'. No labels, no other mutations.",
+    },
+    expected_result_schema: {
+      applied:   "boolean",
+      closed_at: "string|null",
+      summary:   "string",
+    },
+    status:    "active",
+    createdAt: new Date().toISOString(),
+  };
+  cnt.resume = { command: `node scripts/cogentia.js issues close apply ${cnt.id}    # or: issues close reject ${cnt.id}` };
+
+  const v = validateContinuationShape( cnt );
+  if ( v.errs.length ) die( `Invalid issue-close proposal:\n  ${v.errs.join( "\n  " )}` );
+  saveContinuation( cnt );
+  appendAudit( {
+    command:   "issue.close.propose",
+    args:      { repo: repoFull, issue: number, reason },
+    result:    { id: cnt.id },
+    narrative: collectNarrative(),
+  } );
+
+  if ( JSON_MODE ) { console.log( JSON.stringify( cnt, null, 2 ) ); return; }
+  console.log( `\n${hdr( "Issue-close proposal emitted" )}\n` );
+  console.log( `  ${bold( "id:" )}       ${cnt.id}` );
+  console.log( `  ${bold( "issue:" )}    ${repoFull}#${number}  ${dim( "— " + res.body.title )}` );
+  console.log( `  ${bold( "reason:" )}   ${reason}` );
+  if ( comment ) console.log( `  ${bold( "comment:" )}  ${comment}` );
+  console.log( `\n  ${dim( "human approves with:" )}  cogentia issues close apply ${cnt.id}` );
+  console.log( `  ${dim( "or rejects with:" )}     cogentia issues close reject ${cnt.id}` );
+  console.log();
+}
+
+async function cmdIssuesCloseApply( idArg ) {
+  if ( !idArg ) die( "Usage: cogentia issues close apply <continuation-id-or-#N>" );
+  idArg = resolveProposalRef( idArg, "issue_close_proposal" );
+  const cnt = loadContinuation( idArg );
+  if ( !cnt.context || cnt.context.kind !== "issue_close_proposal" ) die( `Continuation ${idArg} is not an issue_close_proposal (kind="${cnt.context && cnt.context.kind}").` );
+  if ( cnt.status !== "active" ) die( `Continuation ${idArg} is not active (status="${cnt.status}").` );
+
+  const token = getGitHubToken();
+  if ( !token ) die( "Closing a GitHub issue requires a token (--github-token, GITHUB_TOKEN env, or `gh auth login`)." );
+
+  const [ owner, repo ] = cnt.context.repo.split( "/" );
+  const number = cnt.context.issue;
+
+  if ( cnt.context.comment ) {
+    const cRes = await ghRequestJson(
+      `https://api.github.com/repos/${owner}/${repo}/issues/${number}/comments`,
+      { method: "POST", body: { body: cnt.context.comment } },
+      token,
+    );
+    if ( cRes.status !== 201 && cRes.status !== 200 ) {
+      die( `Comment POST failed (${cRes.status}): ${ ( cRes.body && cRes.body.message ) || cRes.error || "" }` );
+    }
+  }
+
+  const closeRes = await ghRequestJson(
+    `https://api.github.com/repos/${owner}/${repo}/issues/${number}`,
+    { method: "PATCH", body: { state: "closed", state_reason: cnt.context.reason } },
+    token,
+  );
+  if ( closeRes.status !== 200 ) {
+    die( `Issue close PATCH failed (${closeRes.status}): ${ ( closeRes.body && closeRes.body.message ) || closeRes.error || "" }` );
+  }
+  const closedAt = ( closeRes.body && closeRes.body.closed_at ) || new Date().toISOString();
+
+  const sr = {
+    type:            "step_result",
+    continuation_id: cnt.id,
+    status:          "success",
+    applied:         true,
+    closed_at:       closedAt,
+    summary:         `Issue ${cnt.context.repo}#${number} closed (reason: ${cnt.context.reason})${ cnt.context.comment ? " with comment" : "" }.`,
+  };
+  const delta = applyStepResult( cnt, sr );
+  saveContinuation( cnt );
+  appendAudit( {
+    command:   "issue.close.applied",
+    args:      { repo: cnt.context.repo, issue: number, reason: cnt.context.reason },
+    result:    { closed_at: closedAt },
+    narrative: collectNarrative(),
+  } );
+  let successor = null;
+  if ( delta.action === "completed" ) successor = emitDormantSuccessor( cnt );
+
+  if ( JSON_MODE ) { console.log( JSON.stringify( { id: cnt.id, closed_at: closedAt, successor: successor && successor.id }, null, 2 ) ); return; }
+  console.log( `\n${hdr( "Issue closed" )}\n` );
+  console.log( `  ${bold( "issue:" )}     ${cnt.context.repo}#${number}` );
+  console.log( `  ${bold( "reason:" )}    ${cnt.context.reason}` );
+  console.log( `  ${bold( "closed_at:" )} ${closedAt}` );
+  if ( successor ) console.log( `  ${dim( `Heraclitean successor: ${successor.id} (dormant)` )}` );
+  console.log();
+}
+
+function cmdIssuesCloseReject( idArg ) {
+  if ( !idArg ) die( "Usage: cogentia issues close reject <continuation-id-or-#N> [--reason \"<text>\"]" );
+  idArg = resolveProposalRef( idArg, "issue_close_proposal" );
+  const cnt = loadContinuation( idArg );
+  if ( !cnt.context || cnt.context.kind !== "issue_close_proposal" ) die( `Continuation ${idArg} is not an issue_close_proposal.` );
+  if ( cnt.status !== "active" ) die( `Continuation ${idArg} is not active (status="${cnt.status}").` );
+
+  const reason = getFlagValue( "--reason" ) || "rejected by human";
+  const sr = {
+    type:            "step_result",
+    continuation_id: cnt.id,
+    status:          "success",
+    applied:         false,
+    summary:         `Issue-close proposal rejected: ${reason}`,
+  };
+  const delta = applyStepResult( cnt, sr );
+  saveContinuation( cnt );
+  appendAudit( {
+    command:   "issue.close.rejected",
+    args:      { id: cnt.id, reason },
+    result:    { applied: false },
+    narrative: collectNarrative(),
+  } );
+  let successor = null;
+  if ( delta.action === "completed" ) successor = emitDormantSuccessor( cnt );
+
+  if ( JSON_MODE ) { console.log( JSON.stringify( { id: cnt.id, applied: false, reason, successor: successor && successor.id }, null, 2 ) ); return; }
+  console.log( `\n${hdr( "Issue-close proposal rejected" )}\n` );
+  console.log( `  ${bold( "id:" )}      ${cnt.id}` );
+  console.log( `  ${bold( "reason:" )}  ${reason}` );
+  if ( successor ) console.log( `  ${dim( `Heraclitean successor: ${successor.id} (dormant)` )}` );
+  console.log();
+}
+
+async function cmdIssues( sub, a, b, c ) {
+  if ( !sub ) die( "Usage: cogentia issues <list|packet|delegate|close> ..." );
+  switch ( sub ) {
+    case "list":     return cmdIssuesList(     a );
+    case "packet":   return cmdIssuesPacket(   a, b );
+    case "delegate": return cmdIssuesDelegate( a );
+    case "close":
+      switch ( a ) {
+        case "propose": return cmdIssuesClosePropose( b, c );
+        case "apply":   return cmdIssuesCloseApply(   b );
+        case "reject":  return cmdIssuesCloseReject(  b );
+        default:        die( `Unknown 'close' subcommand "${a}". Use: propose | apply | reject` );
+      }
+    default: die( `Unknown subcommand "${sub}". Use: list | packet | delegate | close` );
+  }
+}
+
+// ── commit propose / apply / reject ──────────────────────────────────────────
+//
+// DHITL: the agent PROPOSES a git commit (files + message). cogentia.js emits
+// a cogentia.continuation.v1 with kind="commit_proposal" — no git mutation. The
+// human reviews via `continuation inspect <id>`, then runs `commit apply <id>`
+// (which actually runs git add + git commit [+ git push]) or `commit reject`.
+// Stale-guard: each file's SHA-1 is recorded at proposal time and re-checked at
+// apply time; any drift refuses the apply.
+
+function sha1OfFile( fullPath ) {
+  try {
+    return crypto.createHash( "sha1" ).update( fs.readFileSync( fullPath ) ).digest( "hex" );
+  } catch ( _ ) {
+    return null;
+  }
+}
+
+function gitStatusPaths( repoPath ) {
+  try {
+    const out = execSync( "git status --porcelain", { cwd: repoPath, encoding: "utf8", stdio: [ "ignore", "pipe", "ignore" ] } );
+    return out.split( /\r?\n/ ).filter( l => l.trim() ).map( l => l.slice( 3 ).trim() );
+  } catch ( _ ) {
+    return [];
+  }
+}
+
+function cmdCommitPropose( repoArg ) {
+  if ( !repoArg ) die( "Usage: cogentia commit propose <repo-name> --message \"<msg>\" [--files <f1,f2,...> | --all] [--no-push]" );
+  const { configPath, config } = loadConfig();
+  if ( !configPath ) die( "No registry found." );
+  const entry = config.repos.find( r => r.name === repoArg );
+  if ( !entry ) die( `"${repoArg}" is not in the registry.` );
+  const repoPath = resolveRepoPath( entry );
+  if ( !repoPath ) die( `"${repoArg}" not found on disk.` );
+
+  const message = getFlagValue( "--message" );
+  if ( !message || !message.trim() ) die( "--message \"<text>\" is required." );
+
+  const useAll   = argv.includes( "--all" );
+  const filesArg = getFlagValue( "--files" );
+  let files;
+  if ( useAll ) {
+    files = gitStatusPaths( repoPath );
+  } else if ( filesArg ) {
+    files = filesArg.split( "," ).map( s => s.trim() ).filter( Boolean );
+  } else {
+    die( "Provide --files <f1,f2,...> or --all" );
+  }
+  if ( files.length === 0 ) die( "No files to include in the commit." );
+
+  const fileHashes = {};
+  for ( const f of files ) {
+    const full = path.join( repoPath, f );
+    if ( !fs.existsSync( full ) ) die( `File not found: ${f}` );
+    const h = sha1OfFile( full );
+    if ( !h ) die( `Cannot hash file: ${f}` );
+    fileHashes[ f ] = h;
+  }
+
+  const noPush = argv.includes( "--no-push" );
+
+  const cnt = {
+    type:     "continuation",
+    protocol: CONTINUATION_PROTOCOL,
+    id:       generateContinuationId(),
+    topicId:  deriveTopicForRepo( entry.name ),
+    agent:    CONTINUATION_AGENT_ANY,
+    task:     `Apply (or reject) the proposed git commit on ${entry.name}. ${files.length} file(s); push: ${ !noPush }. DHITL: cogentia.js runs git add/commit[/push] only when 'cogentia commit apply <id>' is invoked by a human.`,
+    context: {
+      kind:              "commit_proposal",
+      repo:              entry.name,
+      files,
+      file_hashes:       fileHashes,
+      message,
+      push:              !noPush,
+      referenced_issues: parseReferencedIssues( message ),
+      note:              "Stale-guard active. `apply`/`reject` accept ctn_xxxx or #N (where N is one of referenced_issues).",
+    },
+    expected_result_schema: {
+      applied:    "boolean",
+      commit_sha: "string|null",
+      pushed:     "boolean",
+      summary:    "string",
+    },
+    status:    "active",
+    createdAt: new Date().toISOString(),
+  };
+  cnt.resume = { command: `node scripts/cogentia.js commit apply ${cnt.id}    # or: commit reject ${cnt.id}` };
+
+  const v = validateContinuationShape( cnt );
+  if ( v.errs.length ) die( `Invalid commit proposal:\n  ${v.errs.join( "\n  " )}` );
+  saveContinuation( cnt );
+  appendAudit( {
+    command:   "commit.propose",
+    args:      { repo: entry.name, files: files.length, push: !noPush },
+    result:    { id: cnt.id },
+    narrative: collectNarrative(),
+  } );
+
+  if ( JSON_MODE ) { console.log( JSON.stringify( cnt, null, 2 ) ); return; }
+  console.log( `\n${hdr( "Commit proposal emitted" )}\n` );
+  console.log( `  ${bold( "id:" )}      ${cnt.id}` );
+  console.log( `  ${bold( "repo:" )}    ${entry.name}` );
+  console.log( `  ${bold( "files:" )}   ${files.length}` );
+  for ( const f of files ) console.log( `              ${dim( f )}` );
+  console.log( `  ${bold( "push:" )}    ${ !noPush ? "yes" : "no (--no-push)" }` );
+  console.log( `\n  ${bold( "message:" )}` );
+  for ( const line of message.split( "\n" ) ) console.log( `    ${dim( line )}` );
+  console.log( `\n  ${dim( "human approves with:" )}  cogentia commit apply ${cnt.id}` );
+  console.log( `  ${dim( "or rejects with:" )}     cogentia commit reject ${cnt.id}` );
+  console.log();
+}
+
+function cmdCommitApply( idArg ) {
+  if ( !idArg ) die( "Usage: cogentia commit apply <continuation-id-or-#N>" );
+  idArg = resolveProposalRef( idArg, "commit_proposal" );
+  const cnt = loadContinuation( idArg );
+  if ( !cnt.context || cnt.context.kind !== "commit_proposal" ) die( `Continuation ${idArg} is not a commit_proposal (kind="${cnt.context && cnt.context.kind}").` );
+  if ( cnt.status !== "active" ) die( `Continuation ${idArg} is not active (status="${cnt.status}").` );
+
+  const { config } = loadConfig();
+  const entry = config.repos.find( r => r.name === cnt.context.repo );
+  if ( !entry ) die( `Repo "${cnt.context.repo}" no longer in registry.` );
+  const repoPath = resolveRepoPath( entry );
+  if ( !repoPath ) die( `Repo "${cnt.context.repo}" not found on disk.` );
+
+  // Stale-guard.
+  for ( const f of cnt.context.files ) {
+    const full = path.join( repoPath, f );
+    const now  = sha1OfFile( full );
+    if ( now === null ) die( `File missing since proposal: ${f}` );
+    if ( now !== cnt.context.file_hashes[ f ] ) {
+      die( `File modified since proposal: ${f}. Reject with 'cogentia commit reject ${idArg}' and re-propose.` );
+    }
+  }
+
+  // Stage + commit + (optional) push.
+  let commitSha = null;
+  let pushed    = false;
+  try {
+    const addArgs = cnt.context.files.map( f => `"${f.replace( /"/g, '\\"' )}"` ).join( " " );
+    execSync( `git add -- ${addArgs}`, { cwd: repoPath, stdio: "inherit" } );
+    const msgFile = path.join( os.tmpdir(), `cogentia_commit_msg_${cnt.id}.txt` );
+    fs.writeFileSync( msgFile, cnt.context.message, "utf8" );
+    try {
+      execSync( `git commit -F "${msgFile}"`, { cwd: repoPath, stdio: "inherit" } );
+    } finally {
+      try { fs.unlinkSync( msgFile ); } catch ( _ ) {}
+    }
+    commitSha = execSync( "git rev-parse HEAD", { cwd: repoPath, encoding: "utf8" } ).trim();
+    if ( cnt.context.push ) {
+      execSync( "git push", { cwd: repoPath, stdio: "inherit" } );
+      pushed = true;
+    }
+  } catch ( e ) {
+    die( `git operation failed: ${e.message}` );
+  }
+
+  const sr = {
+    type:            "step_result",
+    continuation_id: cnt.id,
+    status:          "success",
+    applied:         true,
+    commit_sha:      commitSha,
+    pushed,
+    summary:         `Commit ${commitSha.slice( 0, 7 )} applied on ${entry.name}${ pushed ? " and pushed" : "" }.`,
+  };
+  const delta = applyStepResult( cnt, sr );
+  saveContinuation( cnt );
+  appendAudit( {
+    command:   "commit.applied",
+    args:      { id: cnt.id, repo: entry.name },
+    result:    { commit_sha: commitSha, pushed },
+    narrative: collectNarrative(),
+  } );
+  let successor = null;
+  if ( delta.action === "completed" ) successor = emitDormantSuccessor( cnt );
+
+  if ( JSON_MODE ) { console.log( JSON.stringify( { id: cnt.id, commit_sha: commitSha, pushed, successor: successor && successor.id }, null, 2 ) ); return; }
+  console.log( `\n${hdr( "Commit applied" )}\n` );
+  console.log( `  ${bold( "sha:" )}     ${commitSha}` );
+  console.log( `  ${bold( "repo:" )}    ${entry.name}` );
+  console.log( `  ${bold( "pushed:" )}  ${pushed ? "yes" : "no"}` );
+  if ( successor ) console.log( `  ${dim( `Heraclitean successor: ${successor.id} (dormant)` )}` );
+  console.log();
+}
+
+function cmdCommitReject( idArg ) {
+  if ( !idArg ) die( "Usage: cogentia commit reject <continuation-id-or-#N> [--reason \"<text>\"]" );
+  idArg = resolveProposalRef( idArg, "commit_proposal" );
+  const cnt = loadContinuation( idArg );
+  if ( !cnt.context || cnt.context.kind !== "commit_proposal" ) die( `Continuation ${idArg} is not a commit_proposal.` );
+  if ( cnt.status !== "active" ) die( `Continuation ${idArg} is not active (status="${cnt.status}").` );
+
+  const reason = getFlagValue( "--reason" ) || "rejected by human";
+  const sr = {
+    type:            "step_result",
+    continuation_id: cnt.id,
+    status:          "success",
+    applied:         false,
+    summary:         `Commit proposal rejected: ${reason}`,
+  };
+  const delta = applyStepResult( cnt, sr );
+  saveContinuation( cnt );
+  appendAudit( {
+    command:   "commit.rejected",
+    args:      { id: cnt.id, reason },
+    result:    { applied: false },
+    narrative: collectNarrative(),
+  } );
+  let successor = null;
+  if ( delta.action === "completed" ) successor = emitDormantSuccessor( cnt );
+
+  if ( JSON_MODE ) { console.log( JSON.stringify( { id: cnt.id, applied: false, reason, successor: successor && successor.id }, null, 2 ) ); return; }
+  console.log( `\n${hdr( "Commit proposal rejected" )}\n` );
+  console.log( `  ${bold( "id:" )}      ${cnt.id}` );
+  console.log( `  ${bold( "reason:" )}  ${reason}` );
+  if ( successor ) console.log( `  ${dim( `Heraclitean successor: ${successor.id} (dormant)` )}` );
+  console.log();
+}
+
+function cmdCommit( sub, arg ) {
+  if ( !sub ) die( "Usage: cogentia commit <propose|apply|reject> ..." );
+  switch ( sub ) {
+    case "propose": return cmdCommitPropose( arg );
+    case "apply":   return cmdCommitApply(   arg );
+    case "reject":  return cmdCommitReject(  arg );
+    default:        die( `Unknown subcommand "${sub}". Use: propose | apply | reject` );
   }
 }
 
@@ -4843,6 +5645,18 @@ const COMMAND_MANIFEST = [
     side_effects: [ "file-write", "audit-log" ],
   },
   {
+    name: "issues",
+    description: "GitHub Issues as Cogentia continuations. Subcommands: `issues list <repo>`, `issues packet <repo> <number>`, `issues delegate [repo]` (read-only on GitHub — list/packet/delegate never close/label/comment). DHITL closure: `issues close propose <repo> <number> [--reason completed|not-planned|duplicate] [--comment ...]` emits a `cogentia.continuation.v1` (kind=issue_close_proposal) with NO GitHub mutation; `issues close apply <continuation-id>` POSTs the optional comment and PATCHes state=closed (requires a token); `issues close reject <continuation-id>` discards the proposal. Auth resolution same as `forks`.",
+    parameters: { type: "object", properties: { sub: { type: "string", description: "list | packet | delegate | close" }, sub2: { type: "string", description: "for close: propose | apply | reject" }, repo: { type: "string" }, number: { type: "number" } }, required: [ "sub" ] },
+    side_effects: [ "network", "file-write", "audit-log" ],
+  },
+  {
+    name: "commit",
+    description: "DHITL git commit via proposal/approval. `commit propose <repo> --message \"<msg>\" [--files <f1,f2,...> | --all] [--no-push]` emits a `cogentia.continuation.v1` (kind=commit_proposal) and records a SHA-1 stale-guard per file — no git mutation. `commit apply <continuation-id>` actually runs `git add` + `git commit` + (default) `git push`; refuses if any file changed since the proposal. `commit reject <continuation-id>` discards. Backend-portable: uses git primitives only, no GitHub-tied logic.",
+    parameters: { type: "object", properties: { sub: { type: "string", description: "propose | apply | reject" }, arg: { type: "string", description: "repo name (propose) or continuation id (apply/reject)" } }, required: [ "sub" ] },
+    side_effects: [ "file-write", "git-mutation (on apply only)", "audit-log" ],
+  },
+  {
     name: "query", description: "Structural search engine for AI agents. Searches Markdown files, ignoring node_modules and .cogentiaignore paths. Use --json for structured output.",
     parameters: { type: "object", properties: { keyword: { type: "string" }, regex: { type: "boolean", description: "Use regex matching" }, repo: { type: "string", description: "Optional repo filter" } }, required: [ "keyword" ] },
     side_effects: [],
@@ -6205,7 +7019,7 @@ function cmdLinks() {
 
 // ── refresh ───────────────────────────────────────────────────────────────────
 
-function cmdRefresh() {
+async function cmdRefresh() {
   const checkOnly = argv.includes( "--check" );
   if ( JSON_MODE ) die( "cogentia refresh does not support --json. Call individual commands with --json instead." );
 
@@ -6230,8 +7044,10 @@ function cmdRefresh() {
     cmdReadme();
     console.log( `\n${dim( "── derived products (delegated) ──" )}` );
     cmdDerived();
+    console.log( `\n${dim( "── issues (delegated; reads GitHub) ──" )}` );
+    try { await cmdIssuesDelegate(); } catch ( e ) { console.error( warn( `issues delegation skipped: ${e.message}` ) ); }
   } else {
-    console.log( `\n${dim( "── readmes / derived products — skipped in --check mode (no dry-run support) ──" )}\n` );
+    console.log( `\n${dim( "── readmes / derived products / issues — skipped in --check mode (no dry-run support) ──" )}\n` );
   }
 
   console.log( `\n${dim( "All derived views " + ( checkOnly ? "checked." : "refreshed." ) )}\n` );
@@ -7085,7 +7901,7 @@ function cmdVerify() {
 
 // ── consolidate ───────────────────────────────────────────────────────────────
 
-function cmdConsolidate() {
+async function cmdConsolidate() {
   appendAudit( {
     command:   "consolidate",
     args:      {},
@@ -7115,7 +7931,7 @@ function cmdConsolidate() {
   console.log(`\n${bold("3. Refresh --check (corpus-status, documents, etc.)")}`);
   const hadCheck = argv.includes("--check");
   if (!hadCheck) argv.push("--check");
-  cmdRefresh();
+  await cmdRefresh();
   if (!hadCheck) {
     const idx = argv.lastIndexOf("--check");
     if (idx !== -1) argv.splice(idx, 1);
@@ -7165,15 +7981,17 @@ function cmdConsolidate() {
     case "corpus-status":  cmdCorpusStatus( cmdArgs[ 0 ] ); break;
     case "documents":      cmdDocuments();                  break;
     case "forks":          await cmdForks( cmdArgs[ 0 ] );  break;
+    case "issues":         await cmdIssues( cmdArgs[ 0 ], cmdArgs[ 1 ], cmdArgs[ 2 ], cmdArgs[ 3 ] ); break;
+    case "commit":         cmdCommit( cmdArgs[ 0 ], cmdArgs[ 1 ] ); break;
     case "manifest":       cmdManifest();                   break;
     case "install-hooks":  cmdInstallHooks();               break;
     case "state":          cmdState();                      break;
     case "explain-ignore": cmdExplainIgnore( cmdArgs[ 0 ] );break;
     case "frontmatter":    cmdFrontmatter( ...cmdArgs );    break;
-    case "refresh":        cmdRefresh();                    break;
+    case "refresh":        await cmdRefresh();              break;
     case "lint":           cmdLint();                       break;
     case "links":          cmdLinks();                      break;
-    case "consolidate":    cmdConsolidate();                break;
+    case "consolidate":    await cmdConsolidate();          break;
     case "verify":         cmdVerify();                     break;
     case "todo":           cmdTodo( ...cmdArgs );           break;
     case "next":           cmdNext();                       break;

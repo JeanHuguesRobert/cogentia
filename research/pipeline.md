@@ -482,6 +482,50 @@ Continuation is the explicit preservation of unfinished work.
 
 It prevents premature closure and allows future agents or humans to resume work without rediscovering the whole context.
 
+### 4.13.1 Issues as continuation packets
+
+A GitHub Issue can function as a concrete continuation packet — distinct from both an in-flight `cogentia.continuation.v1` and a stabilized source document. It is opened when a question, objection, proposed transformation, missing source, or future task is stable enough to be tracked, but not yet ready to become a source-document change.
+
+```text
+conversation fragment
+→ issue (memory in tension)
+→ discussion / critique / evidence gathering
+→ pull request or direct commit (proposed transformation)
+→ source document update (stabilized memory)
+→ issue closure with commit reference
+```
+
+The minimal grammar is:
+
+```text
+Issue          = memory in tension
+Pull request   = proposed transformation
+Commit         = stabilized memory
+Source document = corpus anchor
+```
+
+A well-formed Cogentia Issue should carry, explicitly or implicitly:
+
+- target document(s);
+- problem or opportunity;
+- proposed change (or, at minimum, the question);
+- evidence level;
+- risks of over-interpretation;
+- expected closure condition;
+- possible derived products;
+- an agent-resumable next step.
+
+The operational tool is `cogentia issues` (read-only MVP — see [`cogentia_js_tutorial.md`](cogentia_js_tutorial.md) §4.x):
+
+- `cogentia issues list <repo>` — open / closed issues of a registered repo, pull requests filtered out;
+- `cogentia issues packet <repo> <number>` — exports an issue as a typed packet (`cogentia.issue_continuation.v1`, YAML frontmatter + Markdown body), ready to be ingested by an agent or pasted into the next continuation.
+
+The tool is strictly read-only by default: it never closes, labels or modifies an issue. The distinction between *open issue*, *closed issue*, *PR*, *commit* and *source document* is preserved by hand — `cogentia.js` only helps make the in-tension memory addressable.
+
+Minimal formula:
+
+> Issue = unresolved continuation made addressable.
+
 ### 4.14 README maintenance
 
 A repository README is not only documentation. On GitHub it is the public dashboard of a repository — or, in a subdirectory, of a subsystem. As the corpus grows, these dashboards drift out of date.
