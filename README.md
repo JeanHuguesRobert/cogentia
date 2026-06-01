@@ -109,6 +109,10 @@ All published documents live in `research/` and are catalogued in [`research/ind
   * Storage: markdown task lists with priority + tags + cross-scope refs ; readable on GitHub, editable by hand
 - **Concepts & taxonomy**
   * `cogentia concepts init` · `concepts status` · `concepts check` (orphan validation) · `concepts graph` · `concepts ref` · `concepts schema`
+- **Cognitive Packets bridge** (transport of the continuation primitive)
+  * `cogentia packet validate <packet.json>` — envelope + basic payload check
+  * `cogentia packet convert <ctn_xxxx|file.json> [--to markdown|json]` — emit `cogentia.continuation.v1` as `cognitive_packet.v0.3`
+  * `cogentia continuation emit --as-packet` — companion flag; prints the packet form alongside the queued continuation
 - **Agentic context server**
   * `cogentia bundle --concept <name>` — compile a sub-graph into a single LLM-ready payload
   * `cogentia query "keyword"` — structural search (respects `.cogentiaignore`)
