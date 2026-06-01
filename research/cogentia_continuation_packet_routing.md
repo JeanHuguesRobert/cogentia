@@ -10,7 +10,7 @@ license: "CC BY-SA 4.0 for text; MIT for associated schemas or code"
 spdx: "CC-BY-SA-4.0"
 language: "en"
 repository: "JeanHuguesRobert/cogentia"
-canonical_url: "https://github.com/JeanHuguesRobert/cogentia/blob/main/research/cogentia_continuation_packet_routing.md"
+canonical_url: https://github.com/JeanHuguesRobert/cogentia/blob/main/research/cogentia_continuation_packet_routing.md
 related_projects:
   - "Cogentia"
   - "Fractanet"
@@ -44,6 +44,7 @@ tags:
 ai_assisted_by:
   - "ChatGPT"
   - "Grok critique of v0.1 and v0.2"
+last_stamped_at: 2026-06-01
 ---
 
 # Cogentia as a Cognitive Continuation Packet Router

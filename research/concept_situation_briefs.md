@@ -27,6 +27,8 @@ related_projects:
   - "Ubikia"
 derived_products_planned:
   - "Concept Situation Brief — Cognitive Packet Switching"
+canonical_url: https://github.com/JeanHuguesRobert/cogentia/blob/main/research/concept_situation_briefs.md
+last_stamped_at: 2026-06-01
 ---
 
 # Concept Situation Briefs

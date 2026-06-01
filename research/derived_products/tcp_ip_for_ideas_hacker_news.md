@@ -22,6 +22,8 @@ tags:
   - agent-orchestration
   - hacker-news
   - derived-product
+canonical_url: https://github.com/JeanHuguesRobert/cogentia/blob/main/research/derived_products/tcp_ip_for_ideas_hacker_news.md
+last_stamped_at: 2026-06-01
 ---
 
 # TCP/IP for Ideas: Cognitive Packets for Agent Orchestration

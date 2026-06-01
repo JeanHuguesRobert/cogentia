@@ -34,6 +34,8 @@ tags:
   - tcp-ip-for-ideas
   - agent-orchestration
   - derived-product
+canonical_url: https://github.com/JeanHuguesRobert/cogentia/blob/main/research/derived_products/concept_situation_brief_cognitive_packet_switching.md
+last_stamped_at: 2026-06-01
 ---
 
 # Concept Situation Brief — Cognitive Packet Switching

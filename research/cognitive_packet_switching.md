@@ -52,6 +52,8 @@ derived_products_planned:
   - "TCP/IP for Ideas — Hacker News optimized post"
   - "TCP/IP des idées — French public note"
   - "Agent orchestration by cognitive packets — technical explainer"
+canonical_url: https://github.com/JeanHuguesRobert/cogentia/blob/main/research/cognitive_packet_switching.md
+last_stamped_at: 2026-06-01
 ---
 
 # Cognitive Packet Switching
