@@ -1376,6 +1376,7 @@ A possible v0.5 of this paper would integrate these two sections into the main n
 - [Corpus Status — cogentia](corpus-status.md)
 - [Derived Products](derived_products.md)
 - [Research Index — Cogentia](index.md)
+- [Persistence Backends](persistence_backends.md)
 - [Self-Contained Documents in an Interconnected Corpus](self_contained_documents.md)
 - [Trail: From Method to Machine](trails/from_method_to_machine.md)
 
