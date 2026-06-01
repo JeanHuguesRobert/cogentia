@@ -3,12 +3,12 @@ title: "Simplicité d'action"
 subtitle: "KISS, Small is beautiful, Worse is better — éthique de l'action contre la sur-ingénierie et l'analysis paralysis"
 author: "Jean Hugues Noël Robert, baron Mariani"
 affiliation: "Institut Mariani / C.O.R.S.I.C.A., 1 cours Paoli, F-20250 Corte, Corsica"
-date: "2026-05-30"
-status: "working-note — méthodologique v0.1"
-version: "0.1"
+date: "2026-06-01"
+status: "working-note — méthodologique v0.2 (articulation avec ideas_to_explore_as_issues)"
+version: "0.2"
 license: "CC BY-SA 4.0"
 ai_assisted_by:
-  - "Claude — articulation, 2026-05-30"
+  - "Claude — articulation, 2026-05-30 ; absorption insight anti-capture (2026-06-01)"
 canonical_url: "https://github.com/JeanHuguesRobert/cogentia/blob/main/research/simplicite_action.md"
 ---
 
@@ -81,24 +81,54 @@ Pour le code, le corpus, et les démarches publiques :
 
 ---
 
+## 5. Articulation avec la discipline du contenant
+
+Le présent note relève d'une **éthique de l'action** : *ne pas trop préparer, livrer tôt, garder les pieds au sol*. Une note sœur, écrite indépendamment dans le même corpus — [`ideas_to_explore_as_issues.md`](ideas_to_explore_as_issues.md) — articule la doctrine complémentaire, **éthique du contenant** : *ne pas sur-tracer, choisir le plus petit conteneur suffisant, vérifier au checkpoint avant de changer d'étage*. Sa hiérarchie de référence :
+
+```text
+conversation → note locale → issue → commentaire d'issue
+              → document source → commit → doctrine
+```
+
+Les deux gestes — *agir* et *tracer* — ont la même hygiène : ne pas faire le pas suivant tant que le présent suffit. *Worse is better* (ship petit, vite, traçable) et *Occam-on-containers* (n'élève pas le contenant tant que le contenant courant suffit) sont la même règle, vue depuis deux extrémités.
+
+**Insight clé absorbé** de `ideas_to_explore_as_issues.md` §15 :
+
+> *Un corpus peut être capturé non seulement par le secret ou l'autorité centrale, mais aussi par l'excès de structure, l'excès de traces, et la stabilisation prématurée.*
+
+Cela inscrit Occam dans la doctrine anti-capture globale du corpus (cf [Democratic AI Safety](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/democratic_ai_safety.md), [pathologie du secret](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/pathologie_du_secret.md)) : la simplicité d'action et l'économie de contenant ne sont pas du confort méthodologique, ce sont des **conditions d'autonomie**. Un dispositif sur-instrumenté capture ses propres utilisateurs aussi sûrement qu'un dispositif opaque.
+
+> *Rigueur sur la trace, simplicité sur le geste — et économie sur le contenant.*
+
+---
+
 ## Continuation
 
 ```yaml
 continuation:
   status: "working-note posée comme rappel méthodologique"
   references_internes:
+    - "cogentia/research/ideas_to_explore_as_issues.md (note sœur — éthique du contenant ; §15 anti-capture par excès de structure)"
     - "cogentia/research/persistence_backends.md (différer ce qui n'est pas exigé maintenant)"
     - "cogentia/research/pipeline.md §8 Objection 3 (anti-self-admiration)"
     - "cogentia/research/derived_products.md §6.7 (mécanique vs jugement)"
     - "barons-Mariani/research/methode_terrains_feconds.md (dépolariser avant d'agir)"
+    - "barons-Mariani/research/democratic_ai_safety.md (anti-capture comme finalité)"
+    - "barons-Mariani/research/pathologie_du_secret.md (anti-capture par opacité — symétrique de l'anti-capture par excès)"
+  done_v0_2:
+    - "§5 ajouté : articulation avec ideas_to_explore_as_issues (éthique action ↔ éthique contenant)."
+    - "Insight §15 absorbé : Occam comme condition d'autonomie anti-capture, pas confort méthodologique."
+    - "Formule étendue : 'Rigueur sur la trace, simplicité sur le geste — et économie sur le contenant.'"
   triggers_a_relire:
     - "ajout d'une couche d'abstraction non immédiatement nécessaire"
     - "blocage sur un choix de design sans artefact tournant"
     - "réunion qui dépasse l'enveloppe-réflexion sans produire de geste"
+    - "création d'un commit, doc, ou label quand l'étage du dessous (issue, comment, conversation) suffisait encore"
   formules_courtes:
-    - "Rigueur sur la trace, simplicité sur le geste."
+    - "Rigueur sur la trace, simplicité sur le geste — et économie sur le contenant."
     - "Worse is better — qui ship gagne."
     - "Les pieds au sol."
+    - "Occam-on-containers : n'élève pas le contenant tant que l'actuel suffit."
 ```
 
 
