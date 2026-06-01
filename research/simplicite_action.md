@@ -9,7 +9,8 @@ version: "0.2"
 license: "CC BY-SA 4.0"
 ai_assisted_by:
   - "Claude — articulation, 2026-05-30 ; absorption insight anti-capture (2026-06-01)"
-canonical_url: "https://github.com/JeanHuguesRobert/cogentia/blob/main/research/simplicite_action.md"
+canonical_url: https://github.com/JeanHuguesRobert/cogentia/blob/main/research/simplicite_action.md
+last_stamped_at: 2026-06-01
 ---
 
 # Simplicité d'action

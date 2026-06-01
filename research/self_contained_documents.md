@@ -8,7 +8,7 @@ status: "Working note — v0.3, stabilized after external review"
 version: "0.3"
 license: "CC BY-SA 4.0"
 intended_path: "research/self_contained_documents.md"
-canonical_url: "https://github.com/JeanHuguesRobert/cogentia/blob/main/research/self_contained_documents.md"
+canonical_url: https://github.com/JeanHuguesRobert/cogentia/blob/main/research/self_contained_documents.md
 method:
   - "second method"
   - "Cogentia pipeline"
@@ -31,6 +31,7 @@ reviewed_by:
   - "Grok — external AI reviewer"
 ai_assisted_by:
   - "ChatGPT — drafting, revision, consolidation"
+last_stamped_at: 2026-06-01
 ---
 
 # Self-Contained Documents in an Interconnected Corpus

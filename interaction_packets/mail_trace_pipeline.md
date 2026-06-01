@@ -5,6 +5,8 @@ license: "CC BY-SA 4.0"
 title: "Mail Trace Pipeline"
 date: "2026-05-27"
 status: "draft — auto-filled (frontmatter cleanup)"
+canonical_url: https://github.com/JeanHuguesRobert/cogentia/blob/main/interaction_packets/mail_trace_pipeline.md
+last_stamped_at: 2026-06-01
 ---
 # Mail Trace Pipeline
 

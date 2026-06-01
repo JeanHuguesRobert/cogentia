@@ -9,7 +9,8 @@ version: "0.1"
 license: "CC BY-SA 4.0"
 ai_assisted_by:
   - "Claude — first draft from issue cogentia#14, 2026-05-31"
-canonical_url: "https://github.com/JeanHuguesRobert/cogentia/blob/main/research/individual_and_collective_digital_twins.md"
+canonical_url: https://github.com/JeanHuguesRobert/cogentia/blob/main/research/individual_and_collective_digital_twins.md
+last_stamped_at: 2026-06-01
 ---
 
 # Individual and Collective Digital Twins

@@ -5,6 +5,8 @@ license: "CC BY-SA 4.0"
 title: "Frontmatter Synonym Mapping — v0.1"
 date: "2026-05-27"
 status: "working-paper — auto-filled (frontmatter cleanup)"
+canonical_url: https://github.com/JeanHuguesRobert/cogentia/blob/main/docs/frontmatter-synonym-mapping.md
+last_stamped_at: 2026-06-01
 ---
 # Frontmatter Synonym Mapping — v0.1
 

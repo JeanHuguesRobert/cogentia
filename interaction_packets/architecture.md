@@ -5,6 +5,8 @@ license: "CC BY-SA 4.0"
 title: "Interaction Packets — architecture"
 date: "2026-05-27"
 status: "draft — auto-filled (frontmatter cleanup)"
+canonical_url: https://github.com/JeanHuguesRobert/cogentia/blob/main/interaction_packets/architecture.md
+last_stamped_at: 2026-06-01
 ---
 # Interaction Packets — architecture
 

@@ -5,6 +5,8 @@ license: "CC BY-SA 4.0"
 title: "Frontmatter Migration — v0.1"
 date: "2026-05-27"
 status: "draft — auto-filled (frontmatter cleanup)"
+canonical_url: https://github.com/JeanHuguesRobert/cogentia/blob/main/docs/frontmatter-migration-v0.1.md
+last_stamped_at: 2026-06-01
 ---
 # Frontmatter Migration — v0.1
 

@@ -5,6 +5,8 @@ license: "CC BY-SA 4.0"
 title: "Extract Interaction Packet"
 date: "2026-05-27"
 status: "draft — auto-filled (frontmatter cleanup)"
+canonical_url: https://github.com/JeanHuguesRobert/cogentia/blob/main/interaction_packets/prompts/extract_interaction_packet.md
+last_stamped_at: 2026-06-01
 ---
 # Extract Interaction Packet
 

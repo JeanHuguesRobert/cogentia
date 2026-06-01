@@ -10,7 +10,7 @@ license: "CC BY-SA 4.0 for text; MIT for associated schemas or code"
 spdx: "CC-BY-SA-4.0"
 operational_prompt: cogentia/prompts/cognitive_packet.md
 canonical_url: https://github.com/JeanHuguesRobert/cogentia/blob/main/research/cognitive_packets.md
-last_stamped_at: 2026-05-26
+last_stamped_at: 2026-06-01
 ---
 
 # Cognitive Packets

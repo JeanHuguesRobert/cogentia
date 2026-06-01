@@ -8,6 +8,8 @@ version: "0.4"
 license: "CC BY-SA 4.0"
 canonical_repo: "JeanHuguesRobert/cogentia"
 canonical_path: "research/ideas_to_explore_as_issues.md"
+canonical_url: https://github.com/JeanHuguesRobert/cogentia/blob/main/research/ideas_to_explore_as_issues.md
+last_stamped_at: 2026-06-01
 ---
 
 # Ideas to Explore as GitHub Issues

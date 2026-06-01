@@ -5,6 +5,8 @@ license: "CC BY-SA 4.0"
 title: "Persistence Architecture for Cogentia Continuity Tools"
 date: "2026-05-29"
 status: "draft — auto-filled (frontmatter cleanup)"
+canonical_url: https://github.com/JeanHuguesRobert/cogentia/blob/main/tools/continuity/persistence_architecture.md
+last_stamped_at: 2026-06-01
 ---
 # Persistence Architecture for Cogentia Continuity Tools
 

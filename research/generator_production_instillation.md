@@ -16,6 +16,8 @@ related:
   - "GitHub issue #17: Instillation as complement to distillation"
   - "virteal/ephemeral"
   - "virteal/kudocracy/lib/ephemeral.js"
+canonical_url: https://github.com/JeanHuguesRobert/cogentia/blob/main/research/generator_production_instillation.md
+last_stamped_at: 2026-06-01
 ---
 
 # Generator, Production, Instillation

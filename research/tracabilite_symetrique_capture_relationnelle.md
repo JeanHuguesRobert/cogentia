@@ -17,6 +17,8 @@ related_documents:
   - "research/derived_products.md"
   - "JeanHuguesRobert/JeanHuguesRobert/interaction_packets/dashboard.md"
 license: "CC BY 4.0"
+canonical_url: https://github.com/JeanHuguesRobert/cogentia/blob/main/research/tracabilite_symetrique_capture_relationnelle.md
+last_stamped_at: 2026-06-01
 ---
 
 # Traçabilité symétrique et capture relationnelle

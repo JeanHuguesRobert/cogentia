@@ -9,7 +9,8 @@ version: "0.1"
 license: "CC BY-SA 4.0"
 ai_assisted_by:
   - "Claude — articulation, 2026-05-30"
-canonical_url: "https://github.com/JeanHuguesRobert/cogentia/blob/main/research/persistence_backends.md"
+canonical_url: https://github.com/JeanHuguesRobert/cogentia/blob/main/research/persistence_backends.md
+last_stamped_at: 2026-06-01
 ---
 
 # Persistence Backends — cadre minimum suffisant

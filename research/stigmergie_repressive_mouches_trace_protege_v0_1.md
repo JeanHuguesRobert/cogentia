@@ -9,6 +9,8 @@ version: "0.1"
 license: "CC BY-SA 4.0"
 ai_assisted_by:
   - "ChatGPT — drafting from 2026-05-29 conversation"
+canonical_url: https://github.com/JeanHuguesRobert/cogentia/blob/main/research/stigmergie_repressive_mouches_trace_protege_v0_1.md
+last_stamped_at: 2026-06-01
 ---
 # La trace protège
 

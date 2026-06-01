@@ -1,3 +1,7 @@
+---
+canonical_url: https://github.com/JeanHuguesRobert/cogentia/blob/main/AGENTS.md
+last_stamped_at: 2026-06-01
+---
 # AGENTS.md — Cogentia methodology shortcut
 
 This file gives operational instructions to AI agents and human assistants working in the `JeanHuguesRobert/cogentia` repository.

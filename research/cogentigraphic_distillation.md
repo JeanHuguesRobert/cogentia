@@ -9,6 +9,7 @@ version: "0.1"
 license: "CC BY-SA 4.0 for text; MIT for associated schemas or code"
 spdx: "CC-BY-SA-4.0"
 canonical_url: https://github.com/JeanHuguesRobert/cogentia/blob/main/research/cogentigraphic_distillation.md
+last_stamped_at: 2026-06-01
 ---
 
 # Cogentigraphic Distillation
