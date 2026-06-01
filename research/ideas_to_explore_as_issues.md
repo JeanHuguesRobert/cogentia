@@ -4,7 +4,7 @@ subtitle: "A lightweight memory category for open-ended explorations"
 author: "Jean Hugues Noël Robert"
 affiliation: "Institut Mariani / C.O.R.S.I.C.A."
 status: "working-note"
-version: "0.3"
+version: "0.4"
 license: "CC BY-SA 4.0"
 canonical_repo: "JeanHuguesRobert/cogentia"
 canonical_path: "research/ideas_to_explore_as_issues.md"
@@ -237,7 +237,78 @@ return to corpus with corrections
 
 The issue keeps the continuation open. The corpus stabilizes what has become clear enough to transmit.
 
-## 9. Status taxonomy
+## 9. Registers of openings
+
+A long conversation may produce several unfinished but fertile continuations. Creating one issue per opening too early can fragment the corpus. Creating no trace at all risks losing the continuations.
+
+In such cases, the preferred container is an **opening register**: a single GitHub Issue that gathers the open continuations produced by one conversation, investigation, document review, or conceptual checkpoint.
+
+An opening register is not a roadmap. It is a routing table for possible continuations.
+
+It should be used when:
+
+- several ideas emerge from the same conversation or checkpoint;
+- the ideas are connected but not yet mature enough for separate issues;
+- the main risk is losing the openings rather than failing to execute them;
+- the next step is routing, not implementation.
+
+Minimal format:
+
+```markdown
+---
+category: opening-register
+status: open
+corpus_area: cross-corpus
+source: conversation
+continuation_level: high
+checkpoint_policy: register-first
+---
+
+## Context
+
+## Open continuations
+
+| # | Opening | Status | Target repo | Possible artefact | Next checkpoint |
+|---|---|---|---|---|---|
+
+## Routing notes
+
+## What should decay
+
+## What should be renewed
+
+## What may deserve a dedicated issue
+
+## Continuation clause
+```
+
+The register may later split into separate issues if one opening becomes autonomous.
+
+Operational rule:
+
+```text
+long conversation
+  -> one opening register
+  -> comments for continuations
+  -> dedicated issues only when branches become autonomous
+  -> source documents only after checkpoint
+```
+
+This prevents two opposite failures:
+
+```text
+no register
+  -> loss of fertile openings
+
+too many issues
+  -> fragmentation and documentary noise
+```
+
+Formula:
+
+> An opening is not yet a task. It is an orienting trace with controlled half-life.
+
+## 10. Status taxonomy
 
 Suggested values for `status:`:
 
@@ -251,7 +322,7 @@ Suggested values for `status:`:
 | `not-now` | preserved but deliberately postponed |
 | `closed` | resolved, superseded, or rejected |
 
-## 10. Continuation levels
+## 11. Continuation levels
 
 | Level | Meaning |
 |---|---|
@@ -260,7 +331,7 @@ Suggested values for `status:`:
 | `high` | strong connection to current corpus direction |
 | `critical` | should become part of active doctrine or architecture |
 
-## 11. Commit discipline
+## 12. Commit discipline
 
 A commit should normally correspond to one of these cases:
 
@@ -281,7 +352,7 @@ In short:
 
 > Issues capture motion. Checkpoints verify routing. Commits stabilize steps.
 
-## 12. Checkpoint and judgment
+## 13. Checkpoint and judgment
 
 Some checkpoints are purely mechanical: link checks, schema validation, formatting, index regeneration.
 
@@ -306,7 +377,7 @@ No anonymous stabilization.
 No non-human final judgment where human responsibility is required.
 ```
 
-## 13. Example: circular command center
+## 14. Example: circular command center
 
 A typical issue in this category could capture the following idea:
 
@@ -320,7 +391,7 @@ This belongs to the `idea-to-explore` category because it connects:
 - Home Assistant / MQTT: pragmatic integration layer;
 - circular economy: second life for screens and interfaces.
 
-## 14. Anti-capture principle
+## 15. Anti-capture principle
 
 The issue mechanism must not become a closed managerial backlog that captures the thought process.
 
@@ -336,11 +407,11 @@ It is a trace of a possible, not a command.
 
 Occam discipline is part of anti-capture: a corpus can be captured not only by secrecy or central authority, but also by excess structure, excessive traces, and premature stabilization.
 
-## 15. Short public formulation
+## 16. Short public formulation
 
 > An “Idea to Explore” is a GitHub Issue used as a memory packet for a possible continuation: structured enough not to be lost, open enough not to become a premature commitment.
 
-## 16. Short operational formulations
+## 17. Short operational formulations
 
 ```text
 Issues capture passing ideas.
