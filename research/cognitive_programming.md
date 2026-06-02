@@ -1,7 +1,7 @@
 ---
 title: "Cognitive Programming"
 subtitle: "From Event-Driven Systems to Cognitive Packet Switching Networks"
-version: "0.1"
+version: "0.1.1"
 status: "working-paper"
 date: "2026-06-02"
 author: "Jean Hugues Noël Robert, baron Mariani"
@@ -34,6 +34,9 @@ related_documents:
   - "FractaVolta/research/fractanet.md"
   - "FractaVolta/research/generalized_packet_networks.md"
   - "Inox/README.md"
+changelog:
+  - "v0.1 — initial source concept"
+  - "v0.1.1 — added references and neighboring-work section"
 ---
 
 # Cognitive Programming
@@ -44,7 +47,7 @@ related_documents:
 Institut Mariani / C.O.R.S.I.C.A.  
 1 cours Paoli, F-20250 Corte, Corsica
 
-*Working paper — v0.1 — June 2026*
+*Working paper — v0.1.1 — June 2026*
 
 ---
 
@@ -855,11 +858,37 @@ Or:
 
 ---
 
-## 19. Continuation packet
+## 19. References and neighboring work
+
+This section is intentionally minimal. The present document is a source concept and design note, not a full survey.
+
+### 19.1 Cognitive Packet Networks
+
+The prior networking lineage must be acknowledged explicitly:
+
+- Gelenbe, E., Lent, R., Xu, Z. (2001). “Design and performance of a cognitive packet network.” *Performance Evaluation*, 46(2–3), 155–176.
+
+In that lineage, cognitive packets concern adaptive routing in communication networks. In Fractanet, the phrase is used at another layer: distributed cognition, continuations, traceable action, and corpus/runtime reintegration.
+
+### 19.2 Reactive systems
+
+The Reactive Manifesto describes reactive systems as responsive, resilient, elastic, and message-driven. Cognitive programming can use reactive techniques, but it does not reduce cognitive work to propagation. The relevant cognitive unit is the resumable packet, not only the message or signal.
+
+### 19.3 Tool protocols
+
+The Model Context Protocol (MCP) and similar tool protocols standardize access to tools, data, and external resources. Cognitive programming occupies a different layer: it defines the semantic unit of cognitive work that may circulate through such protocols.
+
+### 19.4 Workflow engines and agent frameworks
+
+Workflow engines, durable execution systems, and agent frameworks provide useful execution and orchestration substrates. Cognitive programming is not a replacement for them. It defines what must be carried through them for the work to remain routable, resumable, auditable, and correctable.
+
+---
+
+## 20. Continuation packet
 
 ```yaml
 type: cognitive_packet
-version: "0.1"
+version: "0.1.1"
 envelope:
   packet_kind: continuation
   transmission_mode: copy
@@ -874,7 +903,7 @@ envelope:
     issue: "JeanHuguesRobert/cogentia#26"
   routing:
     next_handler: "corpus_editor"
-    expected_output: "review, correction, and possible publication as v0.1 source document"
+    expected_output: "review, correction, and possible publication as v0.1.1 source document"
   traces:
     - "cogentia/research/cognitive_packets.md"
     - "cogentia/research/cognitive_packet_switching.md"
@@ -894,6 +923,7 @@ payload:
     - "Inox is positioned as the long-term execution substrate for Fractanet nodes."
     - "Fractanet can be described as a Cognitive Packet Switching Network with proper attribution to Gelenbe."
     - "Cognitive Programming must include documents and acts, theory and practice, map and territory."
+    - "v0.1.1 adds a minimal references and neighboring-work section."
   decisions:
     - "Do not reduce Cognitive Programming to document production."
     - "Define it as traceable continuity between thought, decision, action, effect, and correction."
@@ -907,7 +937,7 @@ payload:
     - "Preserve operational material effects."
     - "Do not confuse map with territory."
   next_action:
-    - "Review this v0.1 draft."
+    - "Review this v0.1.1 draft."
     - "Extract key claims as cognitive packets."
     - "Create cognitive_programming_mvp.md or COP Cognitive Programming Profile."
     - "Test on Interaction Packets."
@@ -921,14 +951,14 @@ payload:
 
 ---
 
-## 20. Status
+## 21. Status
 
-This document is a v0.1 working paper.
+This document is a v0.1.1 working paper.
 
 It should be corrected by:
 
 - tightening definitions;
-- adding references;
+- strengthening references;
 - extracting packet schemas;
 - testing the first operational use case;
 - creating a minimal implementation profile.
