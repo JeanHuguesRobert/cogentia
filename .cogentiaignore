@@ -4,3 +4,9 @@
 #   ctn_f527db66 (designer prompt) and ctn_03a87ce2 (user prompt) both resumed
 #   with chosen_alternative=ignore_with_reason on 2026-05-15.
 prompts/**
+
+# Operational / project-meta files — not research deliverables.
+AGENTS.md
+interaction_packets/**
+tools/continuity/**
+docs/frontmatter-migration-v0.1.md

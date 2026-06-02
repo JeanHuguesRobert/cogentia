@@ -54,6 +54,13 @@ This repository instantiates the **cognitive infrastructure layer** of the [DHIT
 | [Democratic AI Safety — alias](democratic_ai_safety.md) *(canonical in barons-Mariani; this file is now a stub)* | this repo | 2026-05-18 |
 | [KYS — Psychocognitive Analysis Protocol v1.0](kys-prompt.md) | this repo | 2026 |
 | [COGENTIA v1.0 — Prompt d'analyse psychocognitive (FR)](cogentia_prompt_v1.md) | this repo | 2026 |
+| [Cognitive Packet Switching — A Protocol Layer for Routable Ideas, Continuations, and Agent Orchestration](cognitive_packet_switching.md) *(published source document v1.0 — extends the cognitive packets envelope/payload model into a switching/routing layer)* | this repo | 2026-06-01 |
+| [Concept Situation Briefs — A Derived Product Category for Locating Ideas in Origin, Lineage, Neighborhood, Current Relevance, and Use](concept_situation_briefs.md) *(published source document v1.0 — defines a new derived product category)* | this repo | 2026-06-01 |
+| [Concept Situation Brief — Cognitive Packet Switching](derived_products/concept_situation_brief_cognitive_packet_switching.md) *(derived product v0.1 — first concept situation brief, applied to cognitive packet switching)* | this repo | 2026-06-01 |
+| [TCP/IP for Ideas: Cognitive Packets for Agent Orchestration](derived_products/tcp_ip_for_ideas_hacker_news.md) *(derived product v0.1 — Hacker News optimized form of Cognitive Packet Switching)* | this repo | 2026-06-01 |
+| [Cogentia Commons — Method Packets, Continuations, and the Generative Corpus](cogentia_commons_method_packets.md) *(working paper v0.1 — infrastructure for producing/transmitting/criticising method packets across humans, agents, tools, repos)* | this repo | 2026-05-22 |
+| [Generator, Production, Instillation — Discrete Propagation and Operational Expression in a Reactive Corpus](generator_production_instillation.md) *(working-note v0.2)* | this repo | 2026-05-31 |
+| [Ideas to Explore as GitHub Issues — A lightweight memory category for open-ended explorations](ideas_to_explore_as_issues.md) *(working-note v0.4)* | this repo | 2026-06-01 |
 | [Corpus Status](corpus-status.md) *(living view — auto-refreshed by `cogentia.js corpus-status`)* | this repo | refreshable |
 | [Concept Index](concepts.md) *(typed concept registry — mapped by `cogentia.js concepts`)* | this repo | refreshable |
 | [Agent Navigation Guide (Context Server)](../docs/agent_context_server.md) *(meta-prompt for AI agents — bundle, query, continuation)* | this repo | 2026-05-16 |
@@ -89,6 +96,7 @@ This repository instantiates the **cognitive infrastructure layer** of the [DHIT
 - [Cogentia Commons — Substantive Plugin Sub-Specifications](cogentia_commons_substantive_plugins.md) *(draft v0.1, 2026-05-12)* — `falsifiability_conversion`, `revision_proposer`
 - [Cogentia Commons — Workflows](cogentia_commons_workflows.md) *(draft v0.1, 2026-05-13)* — 11 end-to-end user journeys, prioritised for v1 velocity
 - [Cogentia Commons — Session Continuation Snapshot](cogentia_commons_continuation.md) *(snapshot 2026-05-13)* — handoff document; entry point for the next session
+- [Cogentia as a Cognitive Continuation Packet Router](cogentia_continuation_packet_routing.md) *(working paper v0.3 — method-governed routing of cognitive packets in the Fractanet architecture)*
 - Multi-Agent Critique Loop — formal specification
 - Cogentia × Corsica: student registration as democratic infrastructure
 - [La trace protège — Hypothèse d'une stigmergie répulsive chez les mouches (FR)](stigmergie_repressive_mouches_trace_protege_v0_1.md) *(amorce v0.1, 2026-05-29 — trace d'antériorité ; étage bas du pont [stigmergie sans limite haute](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/stigmergie_sans_limite_haute.md))*

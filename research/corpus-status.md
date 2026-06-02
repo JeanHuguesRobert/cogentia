@@ -3,7 +3,7 @@ title: "Corpus Status — cogentia"
 description: "Current state of the cogentia knowledge corpus — what is proved, what is open, what remains possible"
 layout: default
 nav_order: 2
-last_modified_at: 2026-06-01
+last_modified_at: 2026-06-02
 canonical_url: https://github.com/JeanHuguesRobert/cogentia/blob/main/research/corpus-status.md
 last_stamped_at: 2026-06-01
 license: CC BY-SA 4.0
@@ -36,13 +36,13 @@ creator: Jean Hugues Noël Robert, baron Mariani (généré automatiquement par 
 <!-- BEGIN_AUTO: registered_repos -->
 | Repository | research/index.md | Branch | Last commit |
 |---|---|---|---|
-| cogentia | ✅ | main | 2026-06-01 |
-| FractaVolta | ✅ | main | 2026-06-01 |
-| marenostrum | ✅ | main | 2026-06-01 |
-| barons-Mariani | ✅ | main | 2026-06-01 |
-| inseme | ✅ | main | 2026-06-01 |
-| Inox | ✅ | master | 2026-06-01 |
-| JeanHuguesRobert | ✅ | main | 2026-06-01 |
+| cogentia | ✅ | main | 2026-06-02 |
+| FractaVolta | ✅ | main | 2026-06-02 |
+| marenostrum | ✅ | main | 2026-06-02 |
+| barons-Mariani | ✅ | main | 2026-06-02 |
+| inseme | ✅ | main | 2026-06-02 |
+| Inox | ✅ | master | 2026-06-02 |
+| JeanHuguesRobert | ✅ | main | 2026-06-02 |
 <!-- END_AUTO: registered_repos -->
 
 ---
@@ -237,6 +237,13 @@ graph LR
 | [Democratic AI Safety — alias](democratic_ai_safety.md) *(canonical in barons-Mariani; this file is now a stub)* | this repo | 2026-05-18 |
 | [KYS — Psychocognitive Analysis Protocol v1.0](kys-prompt.md) | this repo | 2026 |
 | [COGENTIA v1.0 — Prompt d'analyse psychocognitive (FR)](cogentia_prompt_v1.md) | this repo | 2026 |
+| [Cognitive Packet Switching — A Protocol Layer for Routable Ideas, Continuations, and Agent Orchestration](cognitive_packet_switching.md) *(published source document v1.0 — extends the cognitive packets envelope/payload model into a switching/routing layer)* | this repo | 2026-06-01 |
+| [Concept Situation Briefs — A Derived Product Category for Locating Ideas in Origin, Lineage, Neighborhood, Current Relevance, and Use](concept_situation_briefs.md) *(published source document v1.0 — defines a new derived product category)* | this repo | 2026-06-01 |
+| [Concept Situation Brief — Cognitive Packet Switching](derived_products/concept_situation_brief_cognitive_packet_switching.md) *(derived product v0.1 — first concept situation brief, applied to cognitive packet switching)* | this repo | 2026-06-01 |
+| [TCP/IP for Ideas: Cognitive Packets for Agent Orchestration](derived_products/tcp_ip_for_ideas_hacker_news.md) *(derived product v0.1 — Hacker News optimized form of Cognitive Packet Switching)* | this repo | 2026-06-01 |
+| [Cogentia Commons — Method Packets, Continuations, and the Generative Corpus](cogentia_commons_method_packets.md) *(working paper v0.1 — infrastructure for producing/transmitting/criticising method packets across humans, agents, tools, repos)* | this repo | 2026-05-22 |
+| [Generator, Production, Instillation — Discrete Propagation and Operational Expression in a Reactive Corpus](generator_production_instillation.md) *(working-note v0.2)* | this repo | 2026-05-31 |
+| [Ideas to Explore as GitHub Issues — A lightweight memory category for open-ended explorations](ideas_to_explore_as_issues.md) *(working-note v0.4)* | this repo | 2026-06-01 |
 | [Corpus Status](corpus-status.md) *(living view — auto-refreshed by `cogentia.js corpus-status`)* | this repo | refreshable |
 | [Concept Index](concepts.md) *(typed concept registry — mapped by `cogentia.js concepts`)* | this repo | refreshable |
 | [Agent Navigation Guide (Context Server)](../docs/agent_context_server.md) *(meta-prompt for AI agents — bundle, query, continuation)* | this repo | 2026-05-16 |
