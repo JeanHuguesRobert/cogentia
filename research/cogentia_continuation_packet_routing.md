@@ -1053,7 +1053,7 @@ This does not replace cogentigraphic distillation. It gives it a first concrete 
 ### Weaknesses
 
 - The routing ontology remains provisional.
-- COP integration is described conceptually, not yet implemented.
+- COP integration was described conceptually in earlier versions; key elements of the routing substrate (generalized SubBus with per-topic scoping, idempotent federation for mesh propagation of interest in packet kinds / capabilities, topic-aware scheduling, and standard cop.task.* / cop.job.* events) are now implemented in `inseme/packages/cop-kernel` (see bus.js, scheduler.js, jobScheduler.js, Cop-kerneltasks.js and the bac-à-sable federation-demo + raix-obsolescence-resilience + job-scheduler-stress-test scenarios). The "COP pass" (mapping routing decisions to Events / sub-buses / federation) is actively being realized.
 - Security and malicious packet handling remain underdeveloped.
 - The capability registry is not yet specified.
 - The paper assumes familiarity with the corpus despite efforts at self-containment.
@@ -1063,7 +1063,7 @@ This does not replace cogentigraphic distillation. It gives it a first concrete 
 
 ```text
 Level A — Established in corpus:
-  cognitive packets, continuations, Cogentia pipeline, Fractanet, COP direction.
+  cognitive packets, continuations, Cogentia pipeline, Fractanet, COP direction, and the COP Bus + federation + per-topic sub-bus implementation as the decentralized switching fabric for continuation packets (see cop-kernel bus.js and related bac-à-sable scenarios exercising Fractanet mesh routing).
 
 Level B — Defensible architectural synthesis:
   Cogentia as method-governed router.

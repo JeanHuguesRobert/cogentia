@@ -96,8 +96,9 @@ This document should be read together with:
 - [`cogentia/research/pipeline.md`](pipeline.md) — method note: pipeline on the surface, packet network in depth;
 - [`cogentia/COGENTIA.md`](../COGENTIA.md) — identity document for Cogentia as framework, protocol, CLI, and open corpus;
 - [`inseme/research/COP_STATE_OF_PLAY.md`](https://github.com/JeanHuguesRobert/inseme/blob/main/research/COP_STATE_OF_PLAY.md) — state of play for COP as asynchronous orchestration and traceability substrate;
-- [`inseme/packages/cop-core/README.md`](https://github.com/JeanHuguesRobert/inseme/blob/main/packages/cop-core/README.md) — COP core specification package;
+- [`inseme/packages/cop-core/README.md`](https://github.com/JeanHuguesRobert/inseme/blob/main/packages/cop-core/README.md) — COP core specification package (normative Architecture.md and data model);
 - [`inseme/packages/cop-core/REACTIVE_COGNITIVE_EXTENSION.md`](https://github.com/JeanHuguesRobert/inseme/blob/main/packages/cop-core/REACTIVE_COGNITIVE_EXTENSION.md) — reactive cognitive extension for control-plane / data-plane packet circulation.
+- Runtime implementation of the COP Bus, per-topic sub-buses, federation, Scheduler, JobScheduler and Task/Continuation helpers lives in `inseme/packages/cop-kernel` (the active substrate for Fractanet packet routing experiments in the bac-à-sable).
 
 ---
 
@@ -916,7 +917,7 @@ If the protocol cannot work with Markdown, JSON, Git, copy/paste, and ordinary e
 | Corpus fidelity | Strong | The document integrates existing source documents without contradicting them. |
 | Technical clarity | Good | Envelope/payload, router/handler, continuation, and implementation-profile distinctions are explicit. |
 | Novelty discipline | Good | Non-claims reduce overclaiming; prior-art mapping remains incomplete. |
-| Implementation readiness | Stronger than v0.3 | Two implementation profiles are now identified: Git/corpus persistence and COP event orchestration. COP implementation remains partial but conceptually aligned. |
+| Implementation readiness | Stronger than v0.3 | Two implementation profiles are now identified: Git/corpus persistence and COP event orchestration. Key COP switching substrate (SubBus + per-topic scoping + federation + interest propagation for mesh routing of continuation packets, topic-aware COPJobScheduler and Task helpers) implemented in cop-kernel (bus.js etc.) and exercised in bac-à-sable; conceptually aligned and operationally advancing the "packet switching" layer. |
 | Public usability | Strong | “TCP/IP for Ideas” is memorable if kept as analogy, not identity. |
 | Governance relevance | Good | Capacity and obscurity links are present but do not dominate the technical paper. |
 | Risk handling | Good | Failure modes now include runtime/corpus mismatch. |
