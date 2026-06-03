@@ -1,0 +1,23 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/JeanHuguesRobert/cogentia/trace/schemas/event.schema.json",
+  "title": "Cogentia Trace Event",
+  "type": "object",
+  "required": ["id", "platform", "timestamp", "body", "visibility", "hash"],
+  "properties": {
+    "id": { "type": "string" },
+    "platform": { "type": "string", "enum": ["chatgpt", "gmail", "facebook", "other"] },
+    "source_id": { "type": "string" },
+    "timestamp": { "type": "string" },
+    "role": { "type": "string", "enum": ["user", "assistant", "system", "tool", "sender", "recipient", "unknown"] },
+    "title": { "type": "string" },
+    "body": { "type": "string" },
+    "thread_id": { "type": "string" },
+    "conversation_id": { "type": "string" },
+    "visibility": { "type": "string", "enum": ["raw_private", "private", "restricted", "public_candidate", "public", "do_not_publish"] },
+    "sensitivity": { "type": "array", "items": { "type": "string" } },
+    "hash": { "type": "string" },
+    "source_path": { "type": "string" }
+  },
+  "additionalProperties": true
+}
