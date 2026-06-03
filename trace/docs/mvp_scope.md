@@ -1,0 +1,39 @@
+# Cogentia Trace — MVP Scope
+
+## Goal
+
+The MVP creates the minimal local-first foundation for importing an official ChatGPT/OpenAI export and transforming it into normalized, classifiable and continuable traces.
+
+## Included
+
+- documentation;
+- schemas;
+- fictive examples;
+- local-first design;
+- ChatGPT/OpenAI export as first target;
+- continuation mechanism for judgment boundaries.
+
+## Excluded
+
+- Supabase;
+- RAG;
+- embeddings;
+- Gmail import;
+- Facebook import;
+- public release of personal data;
+- large binary storage;
+- automatic publication.
+
+## First implementation target
+
+A later script should be added:
+
+```text
+trace/scripts/import_chatgpt_export.py
+```
+
+It should read a local OpenAI export, extract conversations, produce `events.jsonl`, and emit continuations when visibility or sensitivity decisions cannot be safely inferred.
+
+## Success criterion
+
+The MVP succeeds when a local export can be transformed into normalized local traces without exposing private data and without pretending to automate human judgment.
