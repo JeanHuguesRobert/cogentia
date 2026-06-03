@@ -1,0 +1,20 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/JeanHuguesRobert/cogentia/trace/schemas/continuation.schema.json",
+  "title": "Cogentia Trace Continuation",
+  "type": "object",
+  "required": ["continuation_id", "tool", "reason", "question", "allowed_responses", "resume_command"],
+  "properties": {
+    "continuation_id": { "type": "string" },
+    "tool": { "type": "string" },
+    "reason": { "type": "string" },
+    "source_event_id": { "type": "string" },
+    "state_ref": { "type": "string" },
+    "question": { "type": "string" },
+    "context": { "type": "object" },
+    "allowed_responses": { "type": "array", "items": { "type": "string" } },
+    "default_response": { "type": "string" },
+    "resume_command": { "type": "string" }
+  },
+  "additionalProperties": true
+}
