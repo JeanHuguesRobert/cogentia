@@ -1,0 +1,16 @@
+id: sample-interaction-packet-001
+sources:
+  - sample-chatgpt-event-001
+participants:
+  - fictive-user
+  - fictive-assistant
+status: candidate
+type: methodological
+summary: >
+  Fictive packet showing how normalized events may become an interaction packet.
+open_loops:
+  - Decide whether this packet should remain private or become public_candidate.
+evidence_level: fictive_example
+continuation:
+  next_action: review_visibility
+  continuation_id: cont-sample-0001
