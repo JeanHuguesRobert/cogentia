@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/JeanHuguesRobert/cogentia/trace/schemas/packet.schema.json",
+  "title": "Cogentia Trace Interaction Packet",
+  "type": "object",
+  "required": ["id", "sources", "status", "summary"],
+  "properties": {
+    "id": { "type": "string" },
+    "sources": { "type": "array", "items": { "type": "string" } },
+    "participants": { "type": "array", "items": { "type": "string" } },
+    "status": { "type": "string", "enum": ["candidate", "pending", "answered", "closed", "escalated"] },
+    "type": { "type": "string" },
+    "summary": { "type": "string" },
+    "open_loops": { "type": "array", "items": { "type": "string" } },
+    "evidence_level": { "type": "string" },
+    "continuation": { "type": "object" }
+  },
+  "additionalProperties": true
+}
