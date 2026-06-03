@@ -12,7 +12,8 @@
     "personal:build": "pnpm --filter @cogentia/personal run build",
     "commons:dev": "pnpm --filter @cogentia/commons run dev",
     "commons:build": "pnpm --filter @cogentia/commons run build",
-    "cogentia": "node scripts/cogentia.js"
+    "cogentia": "node scripts/cogentia.js",
+    "trace:import:chatgpt": "node trace/scripts/import_chatgpt_export.js"
   },
   "devDependencies": {
     "turbo": "^2.0.0"
