@@ -1,0 +1,18 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/JeanHuguesRobert/cogentia/trace/schemas/manifest.schema.json",
+  "title": "Cogentia Trace Manifest",
+  "type": "object",
+  "required": ["export_id", "platform", "received_at", "original_filename", "sha256", "status"],
+  "properties": {
+    "export_id": { "type": "string" },
+    "platform": { "type": "string" },
+    "requested_at": { "type": "string" },
+    "received_at": { "type": "string" },
+    "original_filename": { "type": "string" },
+    "sha256": { "type": "string" },
+    "status": { "type": "string", "enum": ["raw_preserved", "normalized", "indexed", "archived"] },
+    "notes": { "type": "string" }
+  },
+  "additionalProperties": true
+}
