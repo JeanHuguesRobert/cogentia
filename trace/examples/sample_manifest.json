@@ -1,0 +1,10 @@
+{
+  "export_id": "sample-openai-2026-06-03",
+  "platform": "chatgpt",
+  "requested_at": "2026-06-03T00:00:00Z",
+  "received_at": "2026-06-03T00:00:00Z",
+  "original_filename": "openai-export-sample.zip",
+  "sha256": "sha256:fictive",
+  "status": "raw_preserved",
+  "notes": "Fictive manifest for documentation only."
+}
