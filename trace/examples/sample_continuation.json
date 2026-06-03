@@ -1,0 +1,17 @@
+{
+  "continuation_id": "cont-sample-0001",
+  "tool": "cogentia-trace",
+  "reason": "visibility_judgment_required",
+  "source_event_id": "sample-chatgpt-event-001",
+  "state_ref": "local-private://state/sample-state.json",
+  "question": "Can this fictive conversation be classified as public_candidate?",
+  "context": {
+    "title": "Fictive conversation",
+    "excerpt": "This is a fictive excerpt.",
+    "detected_sensitivity": ["low"],
+    "suggested_visibility": "private"
+  },
+  "allowed_responses": ["raw_private", "private", "restricted", "public_candidate", "public", "do_not_publish"],
+  "default_response": "private",
+  "resume_command": "cogentia-trace resume ./continuations/cont-sample-0001.json --decision private"
+}
