@@ -1,0 +1,1 @@
+{"id":"sample-chatgpt-event-001","platform":"chatgpt","source_id":"sample-source","timestamp":"2026-06-03T00:00:00Z","role":"user","title":"Fictive conversation","body":"This is a fictive event used only as a schema example.","conversation_id":"sample-conversation-001","visibility":"raw_private","sensitivity":["low"],"hash":"sha256:fictive","source_path":"local-private://sample"}
