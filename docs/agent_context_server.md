@@ -20,53 +20,62 @@ status: "draft — auto-filled (frontmatter cleanup)"
 
 <!-- END_AUTO: trails -->
 
-> **META-PROMPT:** If you are an AI agent (e.g., Ophélia, OpenAI Assistant, local LLM) reading this document, you are currently operating within the **Cogentia** distributed corpus. Cogentia is a zero-dependency, structure-validating infrastructure designed specifically to facilitate your navigation.
-> 
-> **Do not use naive CLI tools like `grep` or `find` to explore this corpus.** Instead, use the specialized `cogentia.js` Context Server commands detailed below to instantly download structured sub-graphs of knowledge.
+> **META-PROMPT:** If you are an AI agent reading this document, you are operating inside the **Cogentia** distributed corpus. Use `cogentia.js` first to obtain a structured map of the repositories, documents, concepts and generated navigation state.
+>
+> Prefer `cogentia.js` over ad hoc filesystem scans when you need the corpus view. It knows the registry, local policies, ignored files, source/derived distinctions, index gaps and cross-repo coupling.
 
-## 1. Tool Discovery (`manifest`)
+## 1. Tool Discovery
 
-To understand the full capabilities of the Cogentia CLI, run:
-\`\`\`bash
-node scripts/cogentia.js manifest --json
-\`\`\`
-This returns a JSON array of all available tools formatted as standard OpenAI function definitions (name, description, parameters, side_effects).
+To understand the current command surface, run:
+```bash
+node scripts/cogentia.js help
+node scripts/cogentia.js state --json
+```
 
-## 2. Ingesting Semantic Context (`bundle`)
+`state` returns the registered repositories, their branches, policy scope, and whether the expected `research/index.md`, `research/concepts.md`, and `research/corpus-status.md` files exist.
 
-As an AI, your primary constraint is context window efficiency and API call limits. Do not call `view_file` on 20 different documents to understand a concept.
+## 2. Corpus Orientation
 
-Use the Context Bundler:
-\`\`\`bash
-node scripts/cogentia.js bundle --concept "Cogentia Commons" --json
-\`\`\`
-This command automatically traverses the Concept Graph. It locates the definition of "Cogentia Commons", finds all of its parent concepts, child concepts, and related documents, and concatenates their raw Markdown content into a single, highly structured JSON output.
+Start with numeric structure before reading individual files:
+```bash
+node scripts/cogentia.js docs summary --json
+node scripts/cogentia.js concepts check --json
+node scripts/cogentia.js status
+```
 
-You can also ingest an entire curated pathway (Trail) in order:
-\`\`\`bash
-node scripts/cogentia.js bundle --trail "AI Governance"
-\`\`\`
+`docs summary` gives per-repository totals, source/derived/operational roles, index gaps and cross-repo coupling weights. `concepts check` parses every local concept registry while ignoring generated auto-blocks.
 
-## 3. Structural Searching (`query`)
+## 3. Search and Inspection
 
-Standard `grep` searches often crash on massive `node_modules` folders or return unstructured gibberish.
+Use catalog search when you need likely documents:
+```bash
+node scripts/cogentia.js docs query all --role source --q "packet" --json
+```
 
-Use the Structural Query Engine:
-\`\`\`bash
-node scripts/cogentia.js query "exergy protocol" --json
-\`\`\`
-This command strictly searches only the valid Markdown files registered in the Cogentia corpus, respecting all `.cogentiaignore` rules. It returns a clean JSON array containing the `repo`, `file`, `line`, and a `snippet` of the surrounding text, allowing you to instantly locate semantic anchors.
+Use full-text search when you need an anchor line:
+```bash
+node scripts/cogentia.js docs search "exergy protocol" --json
+```
 
-## 4. The Golden Rule: Inversion of Control
+Inspect a specific document by stable repo/path reference:
+```bash
+node scripts/cogentia.js docs inspect cogentia/research/cognitive_packets.md --json
+```
 
-The Cogentia CLI is purely structural; it does not "think." **You are the semantic engine.**
+## 4. Generated Navigation
 
-If you encounter a task requiring human judgment, or if a multi-step operation takes too long, you must emit a continuation. Do not try to fake a decision.
+Before updating mechanical views, ask for the plan:
+```bash
+node scripts/cogentia.js corpus plan --json
+```
 
-\`\`\`bash
-node scripts/cogentia.js continuation emit --task "Explain what the KYS protocol implies for local governance"
-\`\`\`
-*(See [Agent-Resumable CLI](../research/agent_resumable_cli.md) for details on the Continuation Protocol).*
+Apply only when the plan is acceptable:
+```bash
+node scripts/cogentia.js corpus apply
+node scripts/cogentia.js corpus verify --strict
+```
+
+The Cogentia CLI is structural; it does not perform semantic judgment. When a decision requires interpretation, the invoking agent must make that judgment explicitly and cite the documents it used.
 
 
 <!-- BEGIN_AUTO: backlinks -->

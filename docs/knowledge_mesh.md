@@ -14,50 +14,55 @@ status: "draft — auto-filled (frontmatter cleanup)"
 
 # The Knowledge Mesh (Decentralized Wiki)
 
-Cogentia is designed to operate as a seamless, decentralized "Wikipedia" across multiple repositories (`cogentia`, `FractaVolta`, `marenostrum`, etc.). 
+Cogentia is designed to operate as a seamless, decentralized "Wikipedia" across multiple repositories (`cogentia`, `FractaVolta`, `marenostrum`, etc.).
 
-To maintain semantic coherence without relying on external databases, `cogentia.js` automatically weaves structural connections directly into the Markdown files.
+To maintain semantic coherence without relying on external databases, `cogentia.js` v2 builds a structural map directly from the Markdown files and can refresh generated navigation views.
 
 ## 1. The Concept Registry
 
 Every repository contains a [`research/concepts.md`](../research/concepts.md) file. This is the local glossary.
-When you write a new theoretical memo, you should formally register its key concepts in this file. 
+When you write a new theoretical memo, you should formally register its key concepts in this file.
 
-The `cogentia.js concepts graph` command mathematically parses all these local registries to build a global **Mermaid Graph**, which is auto-injected into [`research/corpus-status.md`](../research/corpus-status.md).
+The `concepts check` command parses all these local registries, ignoring generated auto-blocks, and reports missing fields, duplicate names and undefined references:
+
+```bash
+node scripts/cogentia.js concepts check --json
+```
+
+The generated concept summary and graph are refreshed through the corpus plan/apply cycle:
+
+```bash
+node scripts/cogentia.js corpus plan --json
+node scripts/cogentia.js corpus apply
+```
 
 ## 2. Automatic Backlinks (Cross-References)
 
 In a true Wiki, if Document A links to Document B, Document B should proudly display "I am referenced by Document A."
 
 Cogentia automates this. By running:
-\`\`\`bash
-node scripts/cogentia.js backlinks
-\`\`\`
-The CLI scans all Markdown links across all registered repositories. It builds an inverted index and automatically injects a `<!-- BEGIN_AUTO: backlinks -->` list at the bottom of every referenced document.
+```bash
+node scripts/cogentia.js corpus plan --json
+node scripts/cogentia.js corpus apply
+```
+
+The CLI scans Markdown links across all registered repositories. It refreshes existing `<!-- BEGIN_AUTO: backlinks -->` blocks by default. Use `--create-backlinks` when you explicitly want missing backlink blocks created.
 
 ## 3. Curated Pathways (Trails)
 
 The raw concept graph can be overwhelming. To guide humans (or agents) through complex subjects step-by-step, you can create "Trails".
 
 Create a markdown file in `research/trails/`, for example `ai_governance.md`:
-\`\`\`markdown
+```markdown
 # Trail: AI Governance
 1. [Democratic AI Safety](../../cogentia/research/democratic_ai_safety.md)
 2. [Sovereign Digital Twin](../../cogentia/research/cogentia-digital-twin.md)
-\`\`\`
+```
 
-When you run:
-\`\`\`bash
-node scripts/cogentia.js trails
-\`\`\`
-The CLI will automatically inject `⬅️ Previous` and `➡️ Next` navigation headers into the actual target documents, allowing readers to seamlessly follow your curated logic.
+In v2, trails remain plain Markdown documents and are visible through `docs query` / `docs search`. Automatic previous/next trail injection belongs to the archived v1 implementation and should be reintroduced only if it becomes useful again in the smaller plan/apply/verify model.
 
 ## 4. Web Rendering (Jekyll)
 
 Because all references are standard relative Markdown links and metadata is managed as Jekyll Front-Matter, the entire corpus can be rendered instantly into a website.
 
-Run:
-\`\`\`bash
-node scripts/cogentia.js init-jekyll
-\`\`\`
-This command generates the necessary `_config.yml` files. Activating "GitHub Pages" on your repository will then transform your raw Markdown into a beautiful, searchable website using the `just-the-docs` theme.
+The v2 CLI does not generate Jekyll configuration. The repositories keep their normal GitHub Pages / Jekyll files under version control; `cogentia.js` focuses on corpus structure and generated navigation blocks.

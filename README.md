@@ -10,7 +10,7 @@ Cogentia is the **cognitive infrastructure tooling** of a six-repository corpus 
 
 One infrastructure, two scales — *I* and *we*:
 
-- **`scripts/cogentia.js`** — the zero-dependency Node.js CLI substrate. Multi-repo registry, canonical-URL stamping, link validation, scan-for-unreferenced-claims, and the **`cogentia.continuation.v1`** protocol for typed, provider-neutral, resumable judgment.
+- **`scripts/cogentia.js`** — the zero-dependency Node.js CLI substrate. Version 2 is a compact corpus navigator: multi-repo registry loading, document inventory, source/derived classification, generated navigation plans, concept checks, full-text search, and git drift reports. The historical v1 implementation is archived as [`scripts/cogentia.v1-history.js`](scripts/cogentia.v1-history.js).
 - **Cogentia Personal** — the *individual* scale. A sovereign cognitive twin: Cogentia (memory + mandate + traces), Cogentigram (structured profile of the Cogentia), Cogentiscope (navigation surface). See [`apps/personal/`](apps/personal/) and [`research/cogentia-digital-twin.md`](research/cogentia-digital-twin.md).
 - **Cogentia Commons** — the *collective* scale. The methodology of public, accountable, audit-trailed knowledge: GitHub-anchored, every objection a first-class contribution. See [`apps/commons/`](apps/commons/) and [`research/Cogentia_Commons_Working_Paper.md`](research/Cogentia_Commons_Working_Paper.md). The web GUI also ships as **`brique-cogentia-commons`** inside the [inseme](https://github.com/JeanHuguesRobert/inseme) platform (shared COP Event log + Supabase projection).
 
@@ -22,7 +22,7 @@ The architectural axiom lives in [`marenostrum/DHITL.md`](https://github.com/Jea
 
 ## The Continuation protocol
 
-Cogentia's load-bearing technical contribution is `cogentia.continuation.v1` — a typed, validated, provider-neutral resumption point for CLI tools. The protocol is specified in [`research/agent_resumable_cli.md`](research/agent_resumable_cli.md) and implemented in `scripts/cogentia.js`.
+Cogentia's load-bearing technical contribution is `cogentia.continuation.v1` — a typed, validated, provider-neutral resumption point for CLI tools. The protocol is specified in [`research/agent_resumable_cli.md`](research/agent_resumable_cli.md). The earlier CLI implementation is preserved in [`scripts/cogentia.v1-history.js`](scripts/cogentia.v1-history.js); the current v2 CLI focuses on the corpus navigation layer that agents use before issuing or resuming judgment-bearing work.
 
 The soundness test is binding:
 
@@ -50,11 +50,12 @@ apps/
 ```bash
 # From any of your registered repositories
 node scripts/cogentia.js help                      # show all commands
-node scripts/cogentia.js add ../FractaVolta        # register a sibling repo
-node scripts/cogentia.js scan                      # flag unreferenced research-grade files
-node scripts/cogentia.js check                     # validate internal links across the corpus
-node scripts/cogentia.js continuation schema       # describe the continuation protocol
-node scripts/cogentia.js continuation queue        # list active and dormant continuations
+node scripts/cogentia.js state --json              # show registered repos and policies
+node scripts/cogentia.js docs summary --json       # numeric corpus summary
+node scripts/cogentia.js docs search "exergy"      # full-text search over active markdown
+node scripts/cogentia.js corpus plan --json        # inspect generated navigation changes
+node scripts/cogentia.js corpus apply              # apply the fresh generated plan
+node scripts/cogentia.js corpus verify --strict    # verify generated views, gaps and drift
 ```
 
 The CLI has zero npm dependencies. Node 20+ recommended. MIT-licensed.
@@ -91,42 +92,25 @@ All published documents live in `research/` and are catalogued in [`research/ind
 - **[Agent Navigation Guide](docs/agent_context_server.md)** — meta-prompt for AI agents navigating the corpus.
 - **[The Knowledge Mesh](docs/knowledge_mesh.md)** — backlinks, trails, and Jekyll for human navigation.
 
-## CLI features (v0.11)
+## CLI features (v2)
 
-- **Sync & inspection**
-  * `cogentia drift` — fetch and report ahead/behind/diverged vs upstream across all repos. `--pull` fast-forwards behind repos; `--strict` exits non-zero on drift (pre-commit hook friendly)
-  * `cogentia lint` — single-table corpus health report: unreferenced, frontmatter issues, drift, in one pass. `--strict` for pre-commit semantics
-- **Derived views (refresh)**
-  * `cogentia refresh` — runs all derived-view generators in canonical order (`corpus-status` → `backlinks` → `trails` → `documents`). One command replaces 4
-  * `cogentia documents` — consolidated cross-corpus catalog with reverse-chrono activity and chrono authorship, bulk-pass commits filtered out
-  * `cogentia corpus-status` — per-repo living health view
-- **Frontmatter governance**
-  * `cogentia frontmatter check [repo]` — diagnose docs missing Level 2 fields, using deprecated names, or carrying a `status:` value outside the controlled vocabulary
-  * `cogentia frontmatter promote <file>` — add a Level 2 skeleton (placeholders for title/author/affiliation/date/license/status)
-  * `cogentia frontmatter promote --batch` — bulk-inject only the three invariants (author/affiliation/license) across substantive docs; leaves judgment fields for human edit
-  * `cogentia frontmatter schema` — canonical schema reference (Level 1/2/3, status vocabulary, deprecated fields)
-- **Personal scheduler — *fractal***
-  * `cogentia todo` — list, add, done, defer, drop. Each `.cogentia/SCHEDULE.md` is sovereign at its scope; `--global` aggregates across the workspace
-  * `cogentia next [--pick]` — apply scheduler policy (priority → overdue → FIFO) and surface the next item; `--pick` marks it Active and audits
-  * Storage: markdown task lists with priority + tags + cross-scope refs ; readable on GitHub, editable by hand
-- **Concepts & taxonomy**
-  * `cogentia concepts init` · `concepts status` · `concepts check` (orphan validation) · `concepts graph` · `concepts ref` · `concepts schema`
-- **Cognitive Packets bridge** (transport of the continuation primitive)
-  * `cogentia packet validate <packet.json>` — envelope + basic payload check
-  * `cogentia packet convert <ctn_xxxx|file.json> [--to markdown|json]` — emit `cogentia.continuation.v1` as `cognitive_packet.v0.3`
-  * `cogentia continuation emit --as-packet` — companion flag; prints the packet form alongside the queued continuation
-- **Agentic context server**
-  * `cogentia bundle --concept <name>` — compile a sub-graph into a single LLM-ready payload
-  * `cogentia query "keyword"` — structural search (respects `.cogentiaignore`)
-- **Knowledge mesh (Wiki)**
-  * `cogentia backlinks` — auto-inject "Mentioned in" lists
-  * `cogentia trails` — inject Previous/Next navigation from curated playlists; emits absolute GitHub URLs for cross-repo links (so they render on the web)
-  * `cogentia init-jekyll` — generate `_config.yml` for GitHub Pages
-- **Integrity**
-  * `cogentia install-hooks` — cross-platform pre-commit hooks (Node.js + .cmd)
-  * `cogentia check` — internal + external link validation across all `research/index.md`
+- **Corpus state**
+  * `state` — registered repositories, branches and local policies.
+  * `status` — compact health table for hooks and humans.
+  * `git verify` — ahead/behind and dirty-state report, with local dirty-ignore policies.
+- **Document navigation**
+  * `docs summary` — totals by repo and role, plus cross-repo coupling weights.
+  * `docs query [repo|all]` — catalog query by role, indexing gap, metadata text and sort order.
+  * `docs search <text>` — full-text search over active Markdown documents.
+  * `docs gaps` and `docs inspect <repo/path.md>` — focused navigation aids for agents.
+- **Generated corpus views**
+  * `corpus plan` — read-only plan for per-repo `research/corpus-status.md`, registry `research/documents.md`, and existing backlink blocks.
+  * `corpus apply` — apply exactly the fresh plan.
+  * `corpus verify` — report stale generated views, index gaps and git drift; `--strict` exits non-zero on issues.
+- **Concepts**
+  * `concepts list` and `concepts check` — parse every `research/concepts.md`, excluding generated auto-blocks and surfacing missing fields, duplicates and undefined references.
 
-The session ritual that emerges: `cogentia drift` (start of session) → work → `cogentia refresh` → `cogentia lint` (pre-commit). Three commands replace the dozen-step manual rituals that preceded.
+The current session ritual is: `status` at the start, `docs search` / `docs inspect` while navigating, `corpus plan` before mechanical refresh, then `corpus apply` and `corpus verify --strict` when the generated views should be updated.
 
 ## Ecosystem
 
