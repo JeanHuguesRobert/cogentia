@@ -37,6 +37,8 @@
  *                         every tracked repo's markdown listed reverse-chrono
  *                         on activity, chrono on authorship, with per-repo
  *                         anchors. Add --check for dry-run.
+ *                         Subcommands include list/query/summary/inspect/
+ *                         coupling/index/layout/redirects/move.
  *   forks <name>          List GitHub forks of a registered repo (owner, stars,
  *                         pushed date, URL). Auth resolves: --github-token >
  *                         GITHUB_TOKEN env > gh CLI > anonymous (60 req/h).
@@ -127,7 +129,11 @@ const VALUE_FLAGS = new Set( [
   "--registry", "--cwd",
   "--narrative-short", "--narrative-long", "--chat-url",
   "--paper", "--topic", "--from", "--reason", "--status",
-  "--github-token", "--limit",
+  "--github-token", "--limit", "--repo", "--sort", "--role",
+  "--level", "--stale-days", "--q",
+  "--min-words", "--max-words", "--min-links", "--max-links",
+  "--min-cross-repo", "--min-body-bytes", "--max-body-bytes",
+  "--updated-before", "--updated-after", "--created-before", "--created-after",
 ] );
 
 /** Return the value of a `--flag value` or `--flag=value` option. Null if absent. */
@@ -1042,7 +1048,10 @@ const FRONTMATTER_LEVEL_3 = {
   jekyll:       [ "description", "layout", "nav_order", "last_modified_at" ],
   multilingual: [ "translations", "lang" ],
   semantics:    [ "role", "related" ],
-  alias:        [ "canonical_document", "parent_document" ],
+  alias:        [
+    "canonical_document", "parent_document",
+    "redirect_to", "redirected_at", "redirect_reason", "redirect_history",
+  ],
   changelog:    [ "changelog" ],
 };
 const FRONTMATTER_STATUS_VOCABULARY = [
@@ -1067,10 +1076,30 @@ function parseFrontmatter( content ) {
   const m = content.match( /^---\r?\n([\s\S]*?)\r?\n---/ );
   if ( !m ) return null;
   const fields = {};
-  for ( const line of m[ 1 ].split( /\r?\n/ ) ) {
+  const lines = m[ 1 ].split( /\r?\n/ );
+  for ( let i = 0; i < lines.length; i++ ) {
+    const line = lines[ i ];
     const km = line.match( /^([a-zA-Z_][a-zA-Z0-9_-]*)\s*:\s*(.*)$/ );
     if ( !km ) continue;
-    fields[ km[ 1 ] ] = km[ 2 ].trim().replace( /^['"]|['"]$/g, "" );
+    const key = km[ 1 ];
+    const raw = km[ 2 ].trim();
+    if ( raw ) {
+      fields[ key ] = raw.replace( /^['"]|['"]$/g, "" );
+      continue;
+    }
+
+    const block = [];
+    let j = i + 1;
+    for ( ; j < lines.length; j++ ) {
+      if ( /^[a-zA-Z_][a-zA-Z0-9_-]*\s*:/.test( lines[ j ] ) ) break;
+      if ( lines[ j ].trim() ) block.push( lines[ j ] );
+    }
+    if ( block.length && block.every( l => /^\s*-\s+/.test( l ) ) ) {
+      fields[ key ] = block.map( l => l.replace( /^\s*-\s+/, "" ).trim().replace( /^['"]|['"]$/g, "" ) );
+    } else {
+      fields[ key ] = "";
+    }
+    i = j - 1;
   }
   return fields;
 }
@@ -1266,7 +1295,8 @@ function gitLastCommit( repoPath ) {
 
 const RECENT_WINDOW_DAYS         = 45;
 const BULK_COMMIT_FILE_THRESHOLD = 10;
-const BULK_COMMIT_SUBJECT_RE     = /\b(stamp|jekyll|frontmatter|canonical|auto[- ]?(stamp|refresh|generate)|bulk)\b/i;
+const BULK_COMMIT_SUBJECT_RE     = /\b(stamp|jekyll|frontmatter|canonical|backlinks?|trails?|readme|documents|derived[- ]?views?|generated[- ]?views?|consolidation|auto[- ]?(stamp|refresh|generate)|bulk)\b/i;
+const SEMANTIC_DATE_CHECK_RE     = /\b(maintenance|refresh|generate|generated|auto|backlinks?|trails?|readme|documents|derived[- ]?views?|generated[- ]?views?|consolidation|stamp|jekyll|frontmatter|canonical|bulk)\b/i;
 
 /**
  * Read the first YAML frontmatter and return the human-authored date if any.
@@ -1340,6 +1370,189 @@ function gitLastNonBulkCommitDate( repoPath, relPath ) {
   } catch ( _ ) {
     return null;
   }
+}
+
+const MAINTENANCE_FRONTMATTER_RE = /^(canonical_url|last_stamped_at|last_modified_at)\s*:/i;
+
+function stripAutoBlocks( content ) {
+  return String( content || "" ).replace(
+    /<!--\s*BEGIN_AUTO:\s*[^>]+-->[\s\S]*?<!--\s*END_AUTO:\s*[^>]+-->/g,
+    ""
+  );
+}
+
+function splitFrontmatterBody( content ) {
+  const raw = String( content || "" );
+  const m = raw.match( /^---\r?\n([\s\S]*?)\r?\n---\r?\n?/ );
+  if ( !m ) return { frontmatter: "", body: raw };
+  return {
+    frontmatter: m[ 1 ],
+    body:        raw.slice( m[ 0 ].length ),
+  };
+}
+
+function stripFrontmatter( content ) {
+  return splitFrontmatterBody( content ).body;
+}
+
+function normalizeSignificantDocumentContent( content ) {
+  const parts = splitFrontmatterBody( content );
+  const fm = parts.frontmatter
+    .split( /\r?\n/ )
+    .filter( line => !MAINTENANCE_FRONTMATTER_RE.test( line.trim() ) )
+    .join( "\n" )
+    .trim();
+  const body = stripAutoBlocks( parts.body ).replace( /\s+/g, " " ).trim();
+  return `${fm}\n---BODY---\n${body}`.trim();
+}
+
+function shellQuote( s ) {
+  return `"${String( s ).replace( /(["\\$`])/g, "\\$1" )}"`;
+}
+
+function gitShowFileAt( repoPath, rev, relPath ) {
+  try {
+    const spec = `${rev}:${relPath.replace( /\\/g, "/" )}`;
+    return execSync( `git show ${shellQuote( spec )}`, {
+      cwd:      repoPath,
+      encoding: "utf8",
+      timeout:  5000,
+      maxBuffer: 16 * 1024 * 1024,
+      stdio:    [ "ignore", "pipe", "ignore" ],
+    } );
+  } catch ( _ ) {
+    return null;
+  }
+}
+
+function gitCommitHasSignificantDocumentChange( repoPath, hash, relPath ) {
+  const after  = gitShowFileAt( repoPath, hash, relPath );
+  const before = gitShowFileAt( repoPath, `${hash}^`, relPath );
+  if ( after == null && before == null ) return null;
+  if ( after != null && before == null ) {
+    return normalizeSignificantDocumentContent( after ).length > 0;
+  }
+  if ( after == null ) return false;
+  return normalizeSignificantDocumentContent( after ) !== normalizeSignificantDocumentContent( before );
+}
+
+/**
+ * Most recent non-maintenance commit touching a document. This strengthens the
+ * older bulk-subject heuristic by comparing the file before/after a commit with
+ * maintenance frontmatter and auto-generated blocks removed.
+ */
+function gitLastSignificantCommitInfo( repoPath, relPath ) {
+  try {
+    const REC = "---COGENTIA-REC---";
+    const out = execSync(
+      `git log --follow --name-only --format=${REC}%n%H%n%aI%n%s -- "${relPath}"`,
+      { cwd: repoPath, encoding: "utf8", timeout: 10000, maxBuffer: 32 * 1024 * 1024 }
+    );
+    if ( !out ) return null;
+    const records = out.split( REC ).map( s => s.trim() ).filter( Boolean );
+    let fallback = null;
+    let maintenanceSkipped = 0;
+    for ( const rec of records ) {
+      const lines    = rec.split( /\r?\n/ );
+      const hash     = ( lines[ 0 ] || "" ).trim();
+      const isoDate  = ( lines[ 1 ] || "" ).trim();
+      const subject  = ( lines[ 2 ] || "" ).trim();
+      const files    = lines.slice( 3 ).filter( Boolean );
+      const isoShort = isoDate.slice( 0, 10 );
+      if ( !fallback && isoShort ) {
+        fallback = { date: isoShort, source: "git:last-commit", commit: hash.slice( 0, 12 ), subject };
+      }
+      const isBulk = files.length > BULK_COMMIT_FILE_THRESHOLD
+                  || BULK_COMMIT_SUBJECT_RE.test( subject );
+      if ( isBulk ) {
+        maintenanceSkipped++;
+        continue;
+      }
+      if ( files.length <= 1 && !SEMANTIC_DATE_CHECK_RE.test( subject ) ) {
+        if ( isoShort ) {
+          return {
+            date: isoShort,
+            source: "git:last-non-bulk",
+            commit: hash.slice( 0, 12 ),
+            subject,
+            maintenance_skipped: maintenanceSkipped,
+          };
+        }
+      }
+      const significant = gitCommitHasSignificantDocumentChange( repoPath, hash, relPath );
+      if ( significant === false ) {
+        maintenanceSkipped++;
+        continue;
+      }
+      if ( isoShort ) {
+        return {
+          date: isoShort,
+          source: significant === true ? "git:last-significant" : "git:last-non-bulk",
+          commit: hash.slice( 0, 12 ),
+          subject,
+          maintenance_skipped: maintenanceSkipped,
+        };
+      }
+    }
+    return fallback ? { ...fallback, maintenance_skipped: maintenanceSkipped } : null;
+  } catch ( _ ) {
+    return null;
+  }
+}
+
+function buildGitDocumentHistory( repoPath ) {
+  const history = new Map();
+  try {
+    const REC = "---COGENTIA-REC---";
+    const out = execSync(
+      `git log --name-only --format=${REC}%n%H%n%aI%n%s --`,
+      { cwd: repoPath, encoding: "utf8", timeout: 20000, maxBuffer: 64 * 1024 * 1024 }
+    );
+    if ( !out ) return history;
+    const records = out.split( REC ).map( s => s.trim() ).filter( Boolean );
+    for ( const rec of records ) {
+      const lines    = rec.split( /\r?\n/ );
+      const hash     = ( lines[ 0 ] || "" ).trim();
+      const isoDate  = ( lines[ 1 ] || "" ).trim();
+      const subject  = ( lines[ 2 ] || "" ).trim();
+      const files    = lines.slice( 3 ).map( s => s.trim().replace( /\\/g, "/" ) ).filter( Boolean );
+      const mdFiles  = files.filter( f => f.toLowerCase().endsWith( ".md" ) );
+      const isoShort = isoDate.slice( 0, 10 );
+      if ( !isoShort || mdFiles.length === 0 ) continue;
+      const isBulk = files.length > BULK_COMMIT_FILE_THRESHOLD
+                  || BULK_COMMIT_SUBJECT_RE.test( subject );
+      for ( const file of mdFiles ) {
+        if ( !history.has( file ) ) {
+          history.set( file, { first: null, fallback: null, last: null, maintenance_skipped: 0 } );
+        }
+        const h = history.get( file );
+        h.first = isoShort;
+        if ( !h.fallback ) {
+          h.fallback = { date: isoShort, source: "git:last-commit", commit: hash.slice( 0, 12 ), subject };
+        }
+        if ( h.last ) continue;
+        if ( isBulk ) {
+          h.maintenance_skipped++;
+          continue;
+        }
+        h.last = {
+          date: isoShort,
+          source: "git:last-non-bulk",
+          commit: hash.slice( 0, 12 ),
+          subject,
+          maintenance_skipped: h.maintenance_skipped,
+        };
+      }
+    }
+    for ( const h of history.values() ) {
+      if ( !h.last && h.fallback ) {
+        h.last = { ...h.fallback, maintenance_skipped: h.maintenance_skipped };
+      }
+    }
+  } catch ( _ ) {
+    return history;
+  }
+  return history;
 }
 
 // ── HTTP link check ───────────────────────────────────────────────────────────
@@ -1522,11 +1735,20 @@ ${bold( "Commands:" )}
                       manually-curated What Is Proved / Open Objections;
                       bootstraps the file if missing. ${c.cyan}<name>${c.reset} for one repo;
                       ${c.cyan}--check${c.reset} for dry-run.
-  ${c.cyan}documents${c.reset}            Refresh ${c.cyan}research/documents.md${c.reset} in the registry repo:
-                      one consolidated page listing every tracked repo's
-                      markdown (after .cogentiaignore), with a reverse-chrono
-                      table on activity, a chrono table on authorship, and
-                      per-repo anchored replays. ${c.cyan}--check${c.reset} for dry-run.
+  ${c.cyan}documents${c.reset}            Document inventory and catalog.
+                      No subcommand / ${c.cyan}refresh${c.reset}: refresh ${c.cyan}research/documents.md${c.reset}
+                      in the registry repo. ${c.cyan}--check${c.reset} for dry-run.
+                      ${c.cyan}list${c.reset} [repo] [${c.cyan}--source|--derived|--all${c.reset}] [${c.cyan}--sort updated|created|size|links${c.reset}]
+                      lists source documents by default, with size and dates.
+                      ${c.cyan}query${c.reset} [repo] [${c.cyan}--role source|derived|all${c.reset}] [${c.cyan}--q <text>${c.reset}]
+                      [${c.cyan}--stale-days <n>|--min-words <n>|--no-inbound|--cross-repo${c.reset}]
+                      ${c.cyan}summary${c.reset} [repo|all], ${c.cyan}inspect${c.reset} <repo/path.md>,
+                      ${c.cyan}coupling${c.reset} [${c.cyan}--json|--mermaid|--all${c.reset}], ${c.cyan}index --write${c.reset}.
+                      ${c.cyan}layout${c.reset} [repo] summarizes document directories
+                      (${c.cyan}research${c.reset}, ${c.cyan}prompts${c.reset}, ${c.cyan}docs${c.reset}, ${c.cyan}interaction_packets${c.reset}, etc.).
+                      ${c.cyan}redirects${c.reset} ${c.cyan}audit${c.reset}|${c.cyan}resolve${c.reset} <ref>|${c.cyan}consolidate --write${c.reset}
+                      manages moved-document stubs. ${c.cyan}move${c.reset} <old.md> <new-repo-relative.md>
+                      creates a permanent alias stub at the old path.
   ${c.cyan}forks${c.reset} <name>         List GitHub forks of a registered repo (owner, stars,
                       pushed date, URL). Auth resolves ${c.cyan}--github-token${c.reset} →
                       ${c.cyan}GITHUB_TOKEN${c.reset} env → ${c.cyan}gh auth token${c.reset} → anonymous
@@ -1568,7 +1790,10 @@ ${bold( "Commands:" )}
   ${c.cyan}explain-ignore${c.reset} <file>  Report whether a file is matched by .cogentiaignore,
                       and which pattern matched.
   ${c.cyan}frontmatter${c.reset} <sub>     Diagnose and harmonise document frontmatter.
-                      Sub: ${c.cyan}check${c.reset} [repo] | ${c.cyan}promote${c.reset} <file> | ${c.cyan}promote --batch${c.reset} [--repo <name>] [--check] | ${c.cyan}schema${c.reset}
+                      Sub: ${c.cyan}check${c.reset} [repo] | ${c.cyan}delegate${c.reset} <file>
+                           ${c.cyan}delegate --batch${c.reset} [--repo <name>] [--limit <n>] [--check] [--all]
+                           ${c.cyan}apply${c.reset} <ctn_id> <step_result.json>
+                           ${c.cyan}promote${c.reset} <file> | ${c.cyan}promote --batch${c.reset} [--repo <name>] [--check] | ${c.cyan}schema${c.reset}
   ${c.cyan}refresh${c.reset}             Refresh all derived views (corpus-status, backlinks, trails,
                       documents, readmes) in canonical order. ${c.cyan}--check${c.reset} for dry-run.
   ${c.cyan}readme${c.reset}              Refresh README files. A README (root or subdirectory) carrying a
@@ -2548,11 +2773,518 @@ function cmdCorpusStatus( repoArg ) {
 const DOCUMENTS_FILE           = "documents.md";
 const DOCUMENTS_OLD_N          = 20;
 const DOCUMENTS_OLD_N_PER_REPO = 10;
+const DOCUMENTS_CACHE_DIR      = path.join( AUDIT_DIR, "cache" );
+const DOCUMENTS_CACHE_FILE     = "documents.index.json";
+const DOCUMENT_ROLE_VALUES     = new Set( [
+  "source", "derived", "generated", "index", "trail", "operational", "archive", "alias", "unknown",
+] );
+const DOCUMENT_COUPLING_ROLE_VALUES = new Set( [ "source", "derived", "index", "trail" ] );
 
 function repoAnchor( name ) {
   return "repo-" + name.toLowerCase()
     .replace( /[^a-z0-9]+/g, "-" )
     .replace( /^-+|-+$/g, "" );
+}
+
+function normalizeDocumentRole( raw ) {
+  const role = String( raw || "" ).trim().toLowerCase().replace( /[\s_]+/g, "-" );
+  if ( DOCUMENT_ROLE_VALUES.has( role ) ) return role;
+  if ( role === "sovereign" || role === "source-document" || role === "source-doc" ) return "source";
+  if ( role === "derived-product" || role === "derivative" ) return "derived";
+  if ( role === "redirect" || role === "redirect-stub" || role === "moved" || role === "moved-permanently" ) return "alias";
+  if ( role === "auto" || role === "auto-generated" || role === "view" ) return "generated";
+  return null;
+}
+
+function isCouplingDocumentRole( role ) {
+  return DOCUMENT_COUPLING_ROLE_VALUES.has( role );
+}
+
+function markdownWordCount( text ) {
+  const words = String( text || "" ).match( /[A-Za-z0-9À-ÖØ-öø-ÿ]+(?:['-][A-Za-z0-9À-ÖØ-öø-ÿ]+)*/g );
+  return words ? words.length : 0;
+}
+
+function documentSizeMetrics( fileSize, content ) {
+  const body = stripAutoBlocks( stripFrontmatter( content ) );
+  const bodyBytes = Buffer.byteLength( body, "utf8" );
+  const words = markdownWordCount( body );
+  const headings = ( body.match( /^#{1,6}\s+\S/gm ) || [] ).length;
+  return {
+    bytes:           fileSize,
+    body_bytes:      bodyBytes,
+    words,
+    headings,
+    reading_minutes: words > 0 ? Math.max( 1, Math.ceil( words / 200 ) ) : 0,
+  };
+}
+
+function dateAgeDays( dateStr, now ) {
+  if ( !dateStr ) return null;
+  const d = new Date( `${dateStr}T00:00:00Z` );
+  if ( isNaN( d.getTime() ) ) return null;
+  return Math.max( 0, Math.floor( ( now.getTime() - d.getTime() ) / 86400000 ) );
+}
+
+function buildIndexSets( repoPath ) {
+  const indexPath = path.join( repoPath, "research", "index.md" );
+  const empty = { published: new Set(), referenced: new Set(), all: new Set() };
+  if ( !fs.existsSync( indexPath ) ) return empty;
+  const content = fs.readFileSync( indexPath, "utf8" );
+  const publishedBlock = extractIndexSection( content, "Published" );
+  const referencedBlock = extractIndexSection( content, "Referenced" );
+  const published = publishedBlock ? buildReferencedFileSet( indexPath, publishedBlock ) : new Set();
+  const referenced = referencedBlock ? buildReferencedFileSet( indexPath, referencedBlock ) : new Set();
+  const all = buildReferencedFileSet( indexPath, content );
+  return { published, referenced, all };
+}
+
+function classifyDocumentRole( relPath, fullPath, fm, ignored, indexSets ) {
+  if ( fm && isDocumentRedirectFrontmatter( fm ) ) {
+    return { role: "alias", role_source: "frontmatter:redirect", role_confidence: "strong" };
+  }
+  const explicit = normalizeDocumentRole( fm?.corpus_role || fm?.document_role );
+  if ( explicit ) return { role: explicit, role_source: "frontmatter:corpus_role", role_confidence: "explicit" };
+
+  const rel = relPath.replace( /\\/g, "/" );
+  if ( /(?:^|\/)research\/index\.md$/.test( rel ) ) {
+    return { role: "index", role_source: "path:research/index.md", role_confidence: "strong" };
+  }
+  if ( /(?:^|\/)research\/trails\/[^/]+\.md$/.test( rel ) ) {
+    return { role: "trail", role_source: "path:research/trails", role_confidence: "strong" };
+  }
+  if ( isAutoView( rel ) ) {
+    return { role: "generated", role_source: "path:auto-view", role_confidence: "strong" };
+  }
+  if ( /(?:^|\/)interaction_packets(?:\/|$)/i.test( rel ) ) {
+    return { role: "operational", role_source: "path:interaction_packets", role_confidence: "strong" };
+  }
+  if ( /(?:^|\/)trace\/docs\/[^/]+\.md$/i.test( rel ) ) {
+    return { role: "operational", role_source: "path:trace/docs", role_confidence: "strong" };
+  }
+  if ( ignored ) {
+    return { role: "operational", role_source: ".cogentiaignore", role_confidence: "strong" };
+  }
+  if ( /(?:^|\/)(archive|archives|old|deprecated)(?:\/|$)/i.test( rel ) ) {
+    return { role: "archive", role_source: "path:archive", role_confidence: "strong" };
+  }
+  if ( /(?:^|\/)docs\/frontmatter-[^/]+\.md$/i.test( rel ) ) {
+    return { role: "source", role_source: "path:docs/frontmatter", role_confidence: "weak" };
+  }
+  if ( /(?:^|\/)research\/derived_products\/[^/]+\.md$/i.test( rel ) ) {
+    return { role: "derived", role_source: "path:research/derived_products", role_confidence: "strong" };
+  }
+  if ( fm && ( fm.derived_from || fm.derived_product_type || fm.derived_by ) ) {
+    return { role: "derived", role_source: "frontmatter:derived", role_confidence: "strong" };
+  }
+  if ( indexSets.published.has( fullPath ) ) {
+    return { role: "source", role_source: "research/index.md:Published", role_confidence: "strong" };
+  }
+  if ( rel.startsWith( "research/" ) ) {
+    return { role: "source", role_source: "path:research", role_confidence: "weak" };
+  }
+  return { role: "unknown", role_source: "heuristic:none", role_confidence: "weak" };
+}
+
+function frontmatterFieldMarkdownRefs( value ) {
+  if ( !value ) return [];
+  const refs = [];
+  const values = Array.isArray( value ) ? value : [ value ];
+  for ( const raw of values ) {
+    const text = String( raw || "" );
+    const mdLinkRe = /\[[^\]]*]\(([^)]+\.md(?:#[^)]+)?[^)]*)\)/g;
+    let m;
+    while ( ( m = mdLinkRe.exec( text ) ) ) refs.push( m[ 1 ] );
+    const bareRe = /(?:^|[\s,;])((?:https?:\/\/github\.com\/[^\s,;]+|[A-Za-z0-9_.\/-]+)\.md(?:#[A-Za-z0-9_.\/-]+)?)/g;
+    while ( ( m = bareRe.exec( text ) ) ) refs.push( m[ 1 ] );
+  }
+  return Array.from( new Set( refs ) );
+}
+
+function frontmatterDerivationRefs( fm = {} ) {
+  return Array.from( new Set( [
+    ...frontmatterFieldMarkdownRefs( fm.derived_from ),
+    ...frontmatterFieldMarkdownRefs( fm.source_document ),
+    ...frontmatterFieldMarkdownRefs( fm.source_documents ),
+    ...frontmatterFieldMarkdownRefs( fm.canonical_source ),
+  ] ) );
+}
+
+function frontmatterMarkdownRefOrRawPath( value ) {
+  if ( value == null || value === "" ) return null;
+  const refs = frontmatterFieldMarkdownRefs( value );
+  if ( refs.length ) return refs[ 0 ];
+  const raw = String( Array.isArray( value ) ? value[ 0 ] : value ).trim().replace( /^['"]|['"]$/g, "" );
+  return /\.md(?:#|$)/i.test( raw ) ? raw : null;
+}
+
+function documentRedirectTargetRef( fm = {} ) {
+  const redirectTo = frontmatterMarkdownRefOrRawPath( fm.redirect_to );
+  if ( redirectTo ) return redirectTo;
+  if ( frontmatterCanonicalStatus( fm.status ) === "alias" ) {
+    return frontmatterMarkdownRefOrRawPath( fm.canonical_document );
+  }
+  return null;
+}
+
+function isDocumentRedirectFrontmatter( fm = {} ) {
+  return frontmatterCanonicalStatus( fm.status ) === "alias"
+      || Boolean( frontmatterMarkdownRefOrRawPath( fm.redirect_to ) );
+}
+
+function documentRedirectInfo( fm = {} ) {
+  if ( !isDocumentRedirectFrontmatter( fm ) ) return null;
+  return {
+    target:             documentRedirectTargetRef( fm ),
+    redirected_at:      fm.redirected_at || fm.moved_at || null,
+    reason:             fm.redirect_reason || null,
+    canonical_document: fm.canonical_document || null,
+    history:            fm.redirect_history || null,
+    resolved:           null,
+    broken:             false,
+  };
+}
+
+function buildRepoMetas( config, opts = {} ) {
+  const repoFilter = opts.repoFilter && opts.repoFilter !== "all" ? opts.repoFilter : null;
+  return config.repos.filter( entry => !repoFilter || entry.name === repoFilter ).map( entry => {
+    const repoPath = resolveRepoPath( entry );
+    return {
+      entry,
+      name: entry.name,
+      repoPath,
+      branch: repoPath ? gitCurrentBranch( repoPath ) : null,
+      remote: repoPath ? gitRemoteOwner( repoPath ) : null,
+      ignore: repoPath ? loadIgnore( repoPath ) : [],
+      indexSets: repoPath ? buildIndexSets( repoPath ) : { published: new Set(), referenced: new Set(), all: new Set() },
+    };
+  } );
+}
+
+function findRepoMetaForAbsPath( repoMetas, absPath ) {
+  const resolved = path.resolve( absPath );
+  return repoMetas.find( meta =>
+    meta.repoPath && ( resolved === meta.repoPath || resolved.startsWith( meta.repoPath + path.sep ) )
+  ) || null;
+}
+
+function resolveMarkdownTarget( rawUrl, sourceDoc, repoMetas, byFull ) {
+  let url = String( rawUrl || "" ).trim();
+  if ( !url || url.startsWith( "#" ) ) return null;
+  url = url.split( "#" )[ 0 ].split( "?" )[ 0 ];
+  if ( !url ) return null;
+
+  const gh = url.match( /^https?:\/\/github\.com\/([^/]+)\/([^/]+)\/blob\/[^/]+\/(.+\.md)$/i );
+  if ( gh ) {
+    const owner = gh[ 1 ];
+    const repo  = gh[ 2 ];
+    const rel   = gh[ 3 ];
+    const meta = repoMetas.find( m =>
+      m.remote && m.remote.owner.toLowerCase() === owner.toLowerCase()
+      && m.remote.repo.toLowerCase() === repo.toLowerCase()
+    ) || repoMetas.find( m => m.name.toLowerCase() === repo.toLowerCase() );
+    if ( !meta || !meta.repoPath ) return null;
+    const full = path.resolve( meta.repoPath, rel );
+    return { meta, full, doc: byFull.get( full ) || null };
+  }
+
+  if ( /^[a-z][a-z0-9+.-]*:/i.test( url ) ) return null;
+  let decoded;
+  try { decoded = decodeURIComponent( url ); } catch ( _ ) { decoded = url; }
+
+  if ( !decoded.toLowerCase().endsWith( ".md" ) ) return null;
+
+  const candidates = [];
+  const addCandidate = full => {
+    const resolved = path.resolve( full );
+    if ( !candidates.includes( resolved ) ) candidates.push( resolved );
+  };
+  const sourceMeta = sourceDoc ? findRepoMetaForAbsPath( repoMetas, sourceDoc.full ) : null;
+  const repoPrefixed = decoded.match( /^([^/\\]+)[/\\](.+\.md)$/i );
+
+  if ( path.isAbsolute( decoded ) ) addCandidate( decoded );
+  if ( repoPrefixed ) {
+    const repoName = repoPrefixed[ 1 ];
+    const rel      = repoPrefixed[ 2 ];
+    const meta = repoMetas.find( m => m.name.toLowerCase() === repoName.toLowerCase() );
+    if ( meta?.repoPath ) addCandidate( path.join( meta.repoPath, rel ) );
+  }
+  if ( sourceMeta?.repoPath && /^[/\\]/.test( decoded ) ) {
+    addCandidate( path.join( sourceMeta.repoPath, decoded.replace( /^[/\\]+/, "" ) ) );
+  }
+  if ( sourceDoc ) addCandidate( path.resolve( path.dirname( sourceDoc.full ), decoded ) );
+  if ( sourceMeta?.repoPath ) addCandidate( path.resolve( sourceMeta.repoPath, decoded ) );
+  if ( !sourceDoc ) addCandidate( path.resolve( process.cwd(), decoded ) );
+
+  let firstKnownRepo = null;
+  for ( const full of candidates ) {
+    const meta = findRepoMetaForAbsPath( repoMetas, full );
+    if ( !meta ) continue;
+    const doc = byFull.get( full ) || null;
+    if ( doc ) return { meta, full, doc };
+    if ( !firstKnownRepo ) firstKnownRepo = { meta, full, doc: null };
+  }
+  return firstKnownRepo;
+}
+
+function sanitizeDocumentRecord( d ) {
+  return {
+    repo: d.repoName,
+    path: d.relPath,
+    title: d.title,
+    role: d.role,
+    role_source: d.role_source,
+    role_confidence: d.role_confidence,
+    size: d.size,
+    created: d.authored ? { ...d.authored, age_days: d.created_age_days } : null,
+    last_significant_update: d.activity ? { ...d.activity, age_days: d.updated_age_days } : null,
+    maintenance_skipped: d.maintenanceSkipped || 0,
+    links: d.links,
+    link_occurrences: d.link_occurrences,
+    derivation: d.derivation,
+    redirect: d.redirect,
+    index: d.index,
+    full_path: d.full.replace( /\\/g, "/" ),
+    github_url: d.githubBlob,
+    github_edit_url: d.githubEdit,
+  };
+}
+
+function documentNodeKey( repoName, relPath ) {
+  return `${repoName}\0${relPath}`;
+}
+
+function documentEdgeKey( edge ) {
+  return [
+    edge.from_repo, edge.from_path,
+    edge.to_repo, edge.to_path,
+    edge.kind,
+  ].join( "\0" );
+}
+
+function dedupeDocumentEdges( edges ) {
+  const byKey = new Map();
+  for ( const edge of edges ) {
+    const key = documentEdgeKey( edge );
+    if ( !byKey.has( key ) ) {
+      byKey.set( key, { ...edge, occurrences: 0 } );
+    }
+    byKey.get( key ).occurrences++;
+  }
+  return Array.from( byKey.values() ).sort( ( a, b ) =>
+    a.from_repo.localeCompare( b.from_repo )
+    || a.from_path.localeCompare( b.from_path )
+    || a.to_repo.localeCompare( b.to_repo )
+    || a.to_path.localeCompare( b.to_path )
+    || a.kind.localeCompare( b.kind )
+  );
+}
+
+function incrementDocumentLinkCounters( fromDoc, toDoc, bucket ) {
+  if ( !fromDoc || !toDoc || !bucket || !bucket.from || !bucket.to ) return;
+  const crossRepo = fromDoc.repoName !== toDoc.repoName;
+  bucket.from.out_total++;
+  bucket.to.in_total++;
+  if ( crossRepo ) {
+    bucket.from.out_cross_repo++;
+    bucket.to.in_cross_repo++;
+  } else {
+    bucket.from.out_internal++;
+    bucket.to.in_internal++;
+  }
+}
+
+function applyDocumentLinkCounts( docs, rawEdges, uniqueEdges ) {
+  const byKey = new Map( docs.map( d => [ documentNodeKey( d.repoName, d.relPath ), d ] ) );
+  for ( const d of docs ) {
+    d.links = {
+      out_internal: 0, out_cross_repo: 0, out_total: 0,
+      in_internal:  0, in_cross_repo:  0, in_total:  0,
+    };
+    d.link_occurrences = {
+      out_internal: 0, out_cross_repo: 0, out_total: 0,
+      in_internal:  0, in_cross_repo:  0, in_total:  0,
+    };
+  }
+  for ( const edge of rawEdges ) {
+    const fromDoc = byKey.get( documentNodeKey( edge.from_repo, edge.from_path ) );
+    const toDoc   = byKey.get( documentNodeKey( edge.to_repo, edge.to_path ) );
+    incrementDocumentLinkCounters( fromDoc, toDoc, { from: fromDoc?.link_occurrences, to: toDoc?.link_occurrences } );
+  }
+  for ( const edge of uniqueEdges ) {
+    const fromDoc = byKey.get( documentNodeKey( edge.from_repo, edge.from_path ) );
+    const toDoc   = byKey.get( documentNodeKey( edge.to_repo, edge.to_path ) );
+    incrementDocumentLinkCounters( fromDoc, toDoc, { from: fromDoc?.links, to: toDoc?.links } );
+  }
+}
+
+function buildRepoCouplingFromEdges( edges ) {
+  const coupling = new Map();
+  for ( const edge of edges ) {
+    if ( edge.from_repo === edge.to_repo ) continue;
+    const key = `${edge.from_repo}->${edge.to_repo}`;
+    if ( !coupling.has( key ) ) {
+      coupling.set( key, {
+        from: edge.from_repo,
+        to: edge.to_repo,
+        weight: 0,
+        occurrences: 0,
+        kinds: {},
+        kind_occurrences: {},
+        documents: [],
+      } );
+    }
+    const cEdge = coupling.get( key );
+    cEdge.weight++;
+    cEdge.occurrences += edge.occurrences || 1;
+    cEdge.kinds[ edge.kind ] = ( cEdge.kinds[ edge.kind ] || 0 ) + 1;
+    cEdge.kind_occurrences[ edge.kind ] = ( cEdge.kind_occurrences[ edge.kind ] || 0 ) + ( edge.occurrences || 1 );
+    if ( cEdge.documents.length < 20 ) cEdge.documents.push( edge );
+  }
+  return Array.from( coupling.values() ).sort( ( a, b ) =>
+    b.weight - a.weight || a.from.localeCompare( b.from ) || a.to.localeCompare( b.to )
+  );
+}
+
+function isDefaultCouplingEdge( edge ) {
+  return edge.from_repo !== edge.to_repo
+      && isCouplingDocumentRole( edge.from_role )
+      && isCouplingDocumentRole( edge.to_role );
+}
+
+function addDocumentEdge( edges, fromDoc, toDoc, kind ) {
+  if ( !fromDoc || !toDoc ) return;
+  if ( fromDoc.full === toDoc.full ) return;
+  const edge = {
+    from_repo: fromDoc.repoName,
+    from_path: fromDoc.relPath,
+    from_role: fromDoc.role,
+    to_repo: toDoc.repoName,
+    to_path: toDoc.relPath,
+    to_role: toDoc.role,
+    kind,
+  };
+  edges.push( edge );
+}
+
+function buildDocumentInventory( config, opts = {} ) {
+  const now = opts.now || new Date();
+  const repoMetas = buildRepoMetas( config, opts );
+  const docs = [];
+  const byFull = new Map();
+
+  for ( const meta of repoMetas ) {
+    if ( !meta.repoPath ) continue;
+    const history = buildGitDocumentHistory( meta.repoPath );
+    const mdFiles = listMarkdown( meta.repoPath );
+    for ( const f of mdFiles ) {
+      const ignored = matchesIgnore( f.rel, meta.ignore );
+      let content = "";
+      try { content = fs.readFileSync( f.full, "utf8" ); } catch ( _ ) {}
+      const fm = parseFrontmatter( content ) || {};
+      const titleMatch = content.match( /^#\s+(.+)$/m );
+      const title = fm.title
+        ? String( fm.title ).replace( /^['"]|['"]$/g, "" ).trim()
+        : ( titleMatch ? titleMatch[ 1 ].trim() : path.basename( f.full, ".md" ) );
+      const dates = resolveDocumentDates( meta.repoPath, f.rel, f.mtime, content, history );
+      const role = classifyDocumentRole( f.rel, f.full, fm, ignored, meta.indexSets );
+      const redirect = documentRedirectInfo( fm );
+      const githubBlob = meta.remote
+        ? `https://github.com/${meta.remote.owner}/${meta.remote.repo}/blob/${meta.branch}/${f.rel}`
+        : null;
+      const githubEdit = meta.remote
+        ? `https://github.com/${meta.remote.owner}/${meta.remote.repo}/edit/${meta.branch}/${f.rel}`
+        : null;
+      const doc = {
+        repoName: meta.name,
+        repoPath: meta.repoPath,
+        relPath: f.rel,
+        full: path.resolve( f.full ),
+        title,
+        frontmatter: fm,
+        authored: dates.authored,
+        activity: dates.activity,
+        maintenanceSkipped: dates.maintenanceSkipped || 0,
+        created_age_days: dates.authored ? dateAgeDays( dates.authored.date, now ) : null,
+        updated_age_days: dates.activity ? dateAgeDays( dates.activity.date, now ) : null,
+        role: role.role,
+        role_source: role.role_source,
+        role_confidence: role.role_confidence,
+        size: documentSizeMetrics( f.size, content ),
+        links: {
+          out_internal: 0, out_cross_repo: 0, out_total: 0,
+          in_internal:  0, in_cross_repo:  0, in_total:  0,
+        },
+        link_occurrences: {
+          out_internal: 0, out_cross_repo: 0, out_total: 0,
+          in_internal:  0, in_cross_repo:  0, in_total:  0,
+        },
+        derivation: {
+          derived_from: frontmatterDerivationRefs( fm ),
+          derived_product_type: fm.derived_product_type || null,
+        },
+        redirect,
+        index: {
+          published:  meta.indexSets.published.has( f.full ),
+          referenced: meta.indexSets.all.has( f.full ) || f.rel === "research/index.md",
+          ignored,
+        },
+        githubBlob,
+        githubEdit,
+        _content: content,
+      };
+      docs.push( doc );
+      byFull.set( doc.full, doc );
+    }
+  }
+
+  const rawEdges = [];
+  for ( const doc of docs ) {
+    if ( doc.redirect?.target ) {
+      const target = resolveMarkdownTarget( doc.redirect.target, doc, repoMetas, byFull );
+      if ( target?.doc ) {
+        doc.redirect.resolved = { repo: target.doc.repoName, path: target.doc.relPath };
+        addDocumentEdge( rawEdges, doc, target.doc, "redirect_to" );
+      } else {
+        doc.redirect.broken = true;
+      }
+    } else if ( doc.redirect ) {
+      doc.redirect.broken = true;
+    }
+
+    if ( doc.role !== "alias" ) {
+      const linkContent = stripAutoBlocks( stripFrontmatter( doc._content ) );
+      const kind = doc.relPath === "research/index.md" ? "index_ref" : "inline_link";
+      for ( const link of extractLinks( linkContent ) ) {
+        const target = resolveMarkdownTarget( link.url, doc, repoMetas, byFull );
+        if ( target?.doc ) addDocumentEdge( rawEdges, doc, target.doc, kind );
+      }
+    }
+    for ( const ref of doc.derivation.derived_from ) {
+      const target = resolveMarkdownTarget( ref, doc, repoMetas, byFull );
+      if ( target?.doc ) addDocumentEdge( rawEdges, doc, target.doc, "derived_from" );
+    }
+  }
+  const edges = dedupeDocumentEdges( rawEdges );
+  applyDocumentLinkCounts( docs, rawEdges, edges );
+
+  docs.sort( ( a, b ) => {
+    const byDate = ( b.activity?.date || "" ).localeCompare( a.activity?.date || "" );
+    if ( byDate ) return byDate;
+    const byRepo = a.repoName.localeCompare( b.repoName );
+    if ( byRepo ) return byRepo;
+    return a.relPath.localeCompare( b.relPath );
+  } );
+
+  const crossRepoEdges = edges.filter( e => e.from_repo !== e.to_repo );
+  return {
+    timestamp: now.toISOString(),
+    documents: docs,
+    document_edges: edges,
+    document_edge_occurrences: rawEdges.length,
+    repo_coupling: buildRepoCouplingFromEdges( crossRepoEdges.filter( isDefaultCouplingEdge ) ),
+    repo_coupling_all: buildRepoCouplingFromEdges( crossRepoEdges ),
+  };
 }
 
 /**
@@ -2563,20 +3295,28 @@ function repoAnchor( name ) {
  * Activity fallback : git last non-bulk commit → fs mtime.
  * The `source` tag is rendered next to the date so the page is self-explanatory.
  */
-function resolveDocumentDates( repoPath, relPath, mtime, content ) {
+function resolveDocumentDates( repoPath, relPath, mtime, content, history ) {
   let authored = extractFrontmatterDate( content );
   if ( !authored ) {
-    const first = gitFirstCommitDate( repoPath, relPath );
+    const first = history?.get( relPath )?.first || gitFirstCommitDate( repoPath, relPath );
     if ( first ) authored = { date: first, source: "git:first-commit" };
   }
   if ( !authored && mtime ) authored = { date: fmtDate( mtime ), source: "fs:mtime" };
 
   let activity = null;
-  const last   = gitLastNonBulkCommitDate( repoPath, relPath );
-  if ( last ) activity = { date: last, source: "git:last-non-bulk" };
+  const last   = history?.get( relPath )?.last || gitLastSignificantCommitInfo( repoPath, relPath );
+  if ( last ) {
+    activity = {
+      date:    last.date,
+      source:  last.source,
+      commit:  last.commit || null,
+      subject: last.subject || null,
+    };
+  }
+  const maintenanceSkipped = last?.maintenance_skipped || 0;
   if ( !activity && mtime ) activity = { date: fmtDate( mtime ), source: "fs:mtime" };
 
-  return { authored, activity };
+  return { authored, activity, maintenanceSkipped };
 }
 
 /**
@@ -2584,44 +3324,7 @@ function resolveDocumentDates( repoPath, relPath, mtime, content ) {
  * .cogentiaignore (so README/LICENSE/TODO/etc. are excluded by default).
  */
 function collectAllDocuments( config ) {
-  const docs = [];
-  for ( const entry of config.repos ) {
-    const repoPath = resolveRepoPath( entry );
-    if ( !repoPath ) continue;
-    const remote   = gitRemoteOwner( repoPath );
-    const branch   = gitCurrentBranch( repoPath );
-    const ignore   = loadIgnore( repoPath );
-    const mdFiles  = listMarkdown( repoPath );
-    for ( const f of mdFiles ) {
-      if ( matchesIgnore( f.rel, ignore ) ) continue;
-      let content = "";
-      try { content = fs.readFileSync( f.full, "utf8" ); } catch ( _ ) {}
-      const titleMatch = content.match( /^#\s+(.+)$/m );
-      const title      = titleMatch ? titleMatch[ 1 ].trim() : path.basename( f.full, ".md" );
-      const { authored, activity } = resolveDocumentDates( repoPath, f.rel, f.mtime, content );
-      const githubBlob = remote
-        ? `https://github.com/${remote.owner}/${remote.repo}/blob/${branch}/${f.rel}`
-        : null;
-      const githubEdit = remote
-        ? `https://github.com/${remote.owner}/${remote.repo}/edit/${branch}/${f.rel}`
-        : null;
-      docs.push( {
-        repoName: entry.name,
-        repoPath,
-        relPath:  f.rel,
-        full:     f.full,
-        title,
-        authored,
-        activity,
-        githubBlob,
-        githubEdit,
-      } );
-    }
-  }
-  docs.sort( ( a, b ) =>
-    ( b.activity?.date || "" ).localeCompare( a.activity?.date || "" )
-  );
-  return docs;
+  return buildDocumentInventory( config ).documents.filter( d => !d.index.ignored );
 }
 
 function escCell( s ) {
@@ -2788,7 +3491,7 @@ function buildDocumentsPage( config, docs, now ) {
   return lines.join( "\n" );
 }
 
-function cmdDocuments() {
+function cmdDocumentsRefresh() {
   const checkOnly = argv.includes( "--check" );
   const { configPath, config } = loadConfig();
   if ( !configPath ) die( "No registry found. Run: cogentia add <repo> first." );
@@ -2849,6 +3552,943 @@ function cmdDocuments() {
     narrative: collectNarrative(),
   } );
   console.log( `  ${bold( "Action" )}      ${ok( "refreshed" )}\n` );
+}
+
+function documentsLoadInventory( repoFilter = null, opts = {} ) {
+  const { configPath, config } = loadConfig();
+  if ( !configPath ) die( "No registry found. Run: cogentia add <repo> first." );
+  if ( config.repos.length === 0 ) die( "No registered repos. Run: cogentia add <repo>." );
+  if ( repoFilter && repoFilter !== "all" && !config.repos.some( r => r.name === repoFilter ) ) {
+    die( `Repo not found: ${repoFilter}` );
+  }
+  const buildFilter = opts.full ? null : repoFilter;
+  return { configPath, config, inventory: buildDocumentInventory( config, { repoFilter: buildFilter } ) };
+}
+
+function documentsRoleFilter() {
+  if ( argv.includes( "--all" ) ) return "all";
+  if ( argv.includes( "--source" ) ) return "source";
+  if ( argv.includes( "--derived" ) ) return "derived";
+  const roleArg = getFlagValue( "--role" );
+  if ( roleArg && String( roleArg ).trim().toLowerCase() === "all" ) return "all";
+  return normalizeDocumentRole( roleArg ) || "source";
+}
+
+function sortDocumentsForList( docs, sortKey ) {
+  const key = sortKey || "updated";
+  const sorted = docs.slice();
+  sorted.sort( ( a, b ) => {
+    if ( key === "created" ) {
+      return ( b.authored?.date || "" ).localeCompare( a.authored?.date || "" )
+        || a.repoName.localeCompare( b.repoName )
+        || a.relPath.localeCompare( b.relPath );
+    }
+    if ( key === "size" ) {
+      return b.size.body_bytes - a.size.body_bytes
+        || a.repoName.localeCompare( b.repoName )
+        || a.relPath.localeCompare( b.relPath );
+    }
+    if ( key === "links" ) {
+      return ( b.links.in_total + b.links.out_total ) - ( a.links.in_total + a.links.out_total )
+        || a.repoName.localeCompare( b.repoName )
+        || a.relPath.localeCompare( b.relPath );
+    }
+    return ( b.activity?.date || "" ).localeCompare( a.activity?.date || "" )
+      || a.repoName.localeCompare( b.repoName )
+      || a.relPath.localeCompare( b.relPath );
+  } );
+  return sorted;
+}
+
+function filterDocumentsForList( docs, repoArg ) {
+  const role = documentsRoleFilter();
+  return docs.filter( d => {
+    if ( repoArg && repoArg !== "all" && d.repoName !== repoArg ) return false;
+    if ( role !== "all" && d.role !== role ) return false;
+    return true;
+  } );
+}
+
+function cmdDocumentsList( repoArg ) {
+  const role = documentsRoleFilter();
+  const sortKey = getFlagValue( "--sort" ) || "updated";
+  const needsFullGraph = sortKey === "links" || argv.includes( "--full" );
+  const { inventory } = documentsLoadInventory( repoArg || null, { full: needsFullGraph } );
+  const docs = sortDocumentsForList( filterDocumentsForList( inventory.documents, repoArg ), sortKey );
+  const records = docs.map( sanitizeDocumentRecord );
+
+  if ( JSON_MODE ) {
+    console.log( JSON.stringify( {
+      timestamp: inventory.timestamp,
+      filter: { repo: repoArg || "all", role, sort: sortKey },
+      count: records.length,
+      documents: records,
+    }, null, 2 ) );
+    return;
+  }
+
+  console.log( `\n${hdr( "Documents" )}  ${dim( `${repoArg || "all repos"} · role=${role} · sort=${sortKey}` )}\n` );
+  if ( docs.length === 0 ) {
+    console.log( `  ${dim( "(no matching documents)" )}\n` );
+    return;
+  }
+  console.log( `  ${dim( pad( "Repo", 17 ) + "  " + pad( "Role", 11 ) + "  " + pad( "Words", 7, true ) + "  " + pad( "Updated", 10 ) + "  Title" )}` );
+  console.log( `  ${dim( "─".repeat( 106 ) )}` );
+  for ( const d of docs ) {
+    const words = pad( d.size.words, 7, true );
+    const updated = d.activity?.date || "—";
+    const title = `${d.title} ${dim( `(${d.relPath})` )}`;
+    console.log( `  ${pad( d.repoName, 17 )}  ${pad( d.role, 11 )}  ${words}  ${pad( updated, 10 )}  ${title}` );
+  }
+  console.log();
+}
+
+function numberFlag( name ) {
+  const raw = getFlagValue( name );
+  if ( raw == null || raw === "" ) return null;
+  const n = Number( raw );
+  return Number.isFinite( n ) ? n : null;
+}
+
+function isoFlag( name ) {
+  const raw = getFlagValue( name );
+  if ( !raw ) return null;
+  const m = String( raw ).match( /^(\d{4}-\d{2}-\d{2})/ );
+  return m ? m[ 1 ] : null;
+}
+
+function documentTextHaystack( d ) {
+  return [
+    d.repoName, d.relPath, d.title, d.role,
+    d.frontmatter?.status,
+    d.frontmatter?.summary,
+    d.frontmatter?.description,
+    d.derivation?.derived_product_type,
+    d.redirect?.target,
+    d.redirect?.resolved ? `${d.redirect.resolved.repo}/${d.redirect.resolved.path}` : null,
+  ].filter( Boolean ).join( "\n" ).toLowerCase();
+}
+
+function documentQueryFlags( d, staleDays ) {
+  const flags = [];
+  if ( d.role === "derived" && d.derivation.derived_from.length === 0 ) flags.push( "derived-no-source" );
+  if ( d.role === "source" && d.links.in_total === 0 ) flags.push( "source-no-inbound" );
+  if ( d.role === "source" && !d.index.published && !d.index.referenced ) flags.push( "source-not-indexed" );
+  if ( Number.isFinite( staleDays ) && ( !d.activity?.date || d.updated_age_days > staleDays ) ) flags.push( `stale>${staleDays}d` );
+  if ( d.links.in_cross_repo + d.links.out_cross_repo > 0 ) flags.push( "cross-repo" );
+  return flags;
+}
+
+function documentsQueryFilters( repoArg ) {
+  const role = documentsRoleFilter();
+  const staleDays = numberFlag( "--stale-days" );
+  return {
+    repo: repoArg || getFlagValue( "--repo" ) || "all",
+    role,
+    q: ( getFlagValue( "--q" ) || "" ).trim().toLowerCase(),
+    status: ( getFlagValue( "--status" ) || "" ).trim(),
+    staleDays,
+    minWords: numberFlag( "--min-words" ),
+    maxWords: numberFlag( "--max-words" ),
+    minBodyBytes: numberFlag( "--min-body-bytes" ),
+    maxBodyBytes: numberFlag( "--max-body-bytes" ),
+    minLinks: numberFlag( "--min-links" ),
+    maxLinks: numberFlag( "--max-links" ),
+    minCrossRepo: numberFlag( "--min-cross-repo" ),
+    updatedBefore: isoFlag( "--updated-before" ),
+    updatedAfter: isoFlag( "--updated-after" ),
+    createdBefore: isoFlag( "--created-before" ),
+    createdAfter: isoFlag( "--created-after" ),
+    crossRepoOnly: argv.includes( "--cross-repo" ),
+    noInbound: argv.includes( "--no-inbound" ),
+    notIndexed: argv.includes( "--not-indexed" ),
+    missingDerivedFrom: argv.includes( "--missing-derived-from" ),
+    includeIgnored: argv.includes( "--include-ignored" ),
+    sort: getFlagValue( "--sort" ) || "updated",
+    limit: numberFlag( "--limit" ),
+  };
+}
+
+function documentMatchesQueryFilters( d, f ) {
+  if ( f.repo && f.repo !== "all" && d.repoName !== f.repo ) return false;
+  if ( f.role !== "all" && d.role !== f.role ) return false;
+  if ( d.index.ignored && d.role !== "alias" && !f.includeIgnored ) return false;
+  if ( f.q && !documentTextHaystack( d ).includes( f.q ) ) return false;
+
+  if ( f.status ) {
+    const rawStatus = String( d.frontmatter?.status || "" );
+    const canonical = frontmatterCanonicalStatus( rawStatus );
+    const wanted = f.status.toLowerCase().replace( /\s+/g, "-" );
+    if ( canonical !== wanted && rawStatus.toLowerCase() !== f.status.toLowerCase() ) return false;
+  }
+
+  if ( Number.isFinite( f.staleDays ) && d.activity?.date && d.updated_age_days <= f.staleDays ) return false;
+
+  if ( Number.isFinite( f.minWords ) && d.size.words < f.minWords ) return false;
+  if ( Number.isFinite( f.maxWords ) && d.size.words > f.maxWords ) return false;
+  if ( Number.isFinite( f.minBodyBytes ) && d.size.body_bytes < f.minBodyBytes ) return false;
+  if ( Number.isFinite( f.maxBodyBytes ) && d.size.body_bytes > f.maxBodyBytes ) return false;
+
+  const totalLinks = d.links.in_total + d.links.out_total;
+  const crossLinks = d.links.in_cross_repo + d.links.out_cross_repo;
+  if ( Number.isFinite( f.minLinks ) && totalLinks < f.minLinks ) return false;
+  if ( Number.isFinite( f.maxLinks ) && totalLinks > f.maxLinks ) return false;
+  if ( Number.isFinite( f.minCrossRepo ) && crossLinks < f.minCrossRepo ) return false;
+  if ( f.crossRepoOnly && crossLinks === 0 ) return false;
+  if ( f.noInbound && d.links.in_total !== 0 ) return false;
+  if ( f.notIndexed && ( d.index.published || d.index.referenced ) ) return false;
+  if ( f.missingDerivedFrom && !( d.role === "derived" && d.derivation.derived_from.length === 0 ) ) return false;
+
+  if ( f.updatedBefore && ( !d.activity?.date || d.activity.date >= f.updatedBefore ) ) return false;
+  if ( f.updatedAfter && ( !d.activity?.date || d.activity.date <= f.updatedAfter ) ) return false;
+  if ( f.createdBefore && ( !d.authored?.date || d.authored.date >= f.createdBefore ) ) return false;
+  if ( f.createdAfter && ( !d.authored?.date || d.authored.date <= f.createdAfter ) ) return false;
+
+  return true;
+}
+
+function cmdDocumentsQuery( repoArg ) {
+  const filters = documentsQueryFilters( repoArg );
+  const { inventory } = documentsLoadInventory( filters.repo !== "all" ? filters.repo : null, { full: true } );
+  let docs = inventory.documents.filter( d => documentMatchesQueryFilters( d, filters ) );
+  docs = sortDocumentsForList( docs, filters.sort );
+  if ( Number.isFinite( filters.limit ) && filters.limit > 0 ) docs = docs.slice( 0, filters.limit );
+  const records = docs.map( d => ( {
+    ...sanitizeDocumentRecord( d ),
+    query_flags: documentQueryFlags( d, filters.staleDays ),
+  } ) );
+
+  if ( JSON_MODE ) {
+    console.log( JSON.stringify( {
+      timestamp: inventory.timestamp,
+      filter: filters,
+      count: records.length,
+      documents: records,
+    }, null, 2 ) );
+    return;
+  }
+
+  console.log( `\n${hdr( "Document Query" )}  ${dim( `${filters.repo} · role=${filters.role} · sort=${filters.sort}` )}\n` );
+  if ( records.length === 0 ) {
+    console.log( `  ${dim( "(no matching documents)" )}\n` );
+    return;
+  }
+  console.log( `  ${dim( pad( "Repo", 17 ) + "  " + pad( "Role", 10 ) + "  " + pad( "Words", 7, true ) + "  " + pad( "Links", 7, true ) + "  " + pad( "XRepo", 7, true ) + "  " + pad( "Updated", 10 ) + "  Title" )}` );
+  console.log( `  ${dim( "─".repeat( 118 ) )}` );
+  for ( const r of records ) {
+    const totalLinks = r.links.in_total + r.links.out_total;
+    const crossLinks = r.links.in_cross_repo + r.links.out_cross_repo;
+    const title = `${r.title} ${dim( `(${r.path})` )}`;
+    console.log( `  ${pad( r.repo, 17 )}  ${pad( r.role, 10 )}  ${pad( r.size.words, 7, true )}  ${pad( totalLinks, 7, true )}  ${pad( crossLinks, 7, true )}  ${pad( r.last_significant_update?.date || "—", 10 )}  ${title}` );
+    if ( r.query_flags.length ) console.log( `    ${dim( r.query_flags.join( " · " ) )}` );
+  }
+  console.log();
+}
+
+function percentile( values, p ) {
+  if ( values.length === 0 ) return null;
+  const sorted = values.slice().sort( ( a, b ) => a - b );
+  const idx = Math.min( sorted.length - 1, Math.max( 0, Math.ceil( ( p / 100 ) * sorted.length ) - 1 ) );
+  return sorted[ idx ];
+}
+
+function documentsSummaryFor( docs, repoName, staleDays, now ) {
+  const roles = {};
+  for ( const r of DOCUMENT_ROLE_VALUES ) roles[ r ] = 0;
+  let bytes = 0, bodyBytes = 0, words = 0;
+  let missingDerivedFrom = 0, sourceNoInbound = 0, sourceNotIndexed = 0;
+  const sourceSizes = [];
+  const recentCutoff = fmtDate( new Date( now.getTime() - RECENT_WINDOW_DAYS * 86400000 ) );
+  const staleCutoff = fmtDate( new Date( now.getTime() - staleDays * 86400000 ) );
+  let recentSource = 0, staleSource = 0;
+
+  for ( const d of docs ) {
+    roles[ d.role ] = ( roles[ d.role ] || 0 ) + 1;
+    bytes += d.size.bytes;
+    bodyBytes += d.size.body_bytes;
+    words += d.size.words;
+    if ( d.role === "source" ) {
+      sourceSizes.push( d.size.body_bytes );
+      if ( d.activity?.date && d.activity.date >= recentCutoff ) recentSource++;
+      if ( !d.activity?.date || d.activity.date < staleCutoff ) staleSource++;
+      if ( d.links.in_total === 0 ) sourceNoInbound++;
+      if ( !d.index.published && !d.index.referenced ) sourceNotIndexed++;
+    }
+    if ( d.role === "derived" && d.derivation.derived_from.length === 0 ) missingDerivedFrom++;
+  }
+
+  const authored = docs.filter( d => d.authored ).slice().sort( ( a, b ) => a.authored.date.localeCompare( b.authored.date ) );
+  const updated = docs.filter( d => d.activity ).slice().sort( ( a, b ) => b.activity.date.localeCompare( a.activity.date ) );
+  return {
+    repo: repoName,
+    documents: docs.length,
+    roles,
+    size: {
+      bytes,
+      body_bytes: bodyBytes,
+      words,
+      source_body_bytes_median: percentile( sourceSizes, 50 ),
+      source_body_bytes_p95: percentile( sourceSizes, 95 ),
+    },
+    activity: {
+      recent_source_documents: recentSource,
+      stale_source_documents: staleSource,
+      stale_days: staleDays,
+      oldest_document: authored[ 0 ] ? `${authored[ 0 ].repoName}/${authored[ 0 ].relPath}` : null,
+      oldest_date: authored[ 0 ]?.authored?.date || null,
+      newest_document: updated[ 0 ] ? `${updated[ 0 ].repoName}/${updated[ 0 ].relPath}` : null,
+      newest_update: updated[ 0 ]?.activity?.date || null,
+    },
+    quality: {
+      derived_missing_derived_from: missingDerivedFrom,
+      source_without_inbound_links: sourceNoInbound,
+      source_not_indexed: sourceNotIndexed,
+    },
+  };
+}
+
+function cmdDocumentsSummary( repoArg ) {
+  const scopedRepo = repoArg && repoArg !== "--all" && repoArg !== "all" ? repoArg : null;
+  const { inventory, config } = documentsLoadInventory( scopedRepo, { full: true } );
+  const staleArg = parseInt( getFlagValue( "--stale-days" ), 10 );
+  const staleDays = Number.isFinite( staleArg ) && staleArg > 0 ? staleArg : 180;
+  const now = new Date( inventory.timestamp );
+  const repos = repoArg && repoArg !== "--all" && repoArg !== "all"
+    ? config.repos.filter( r => r.name === repoArg ).map( r => r.name )
+    : config.repos.map( r => r.name );
+  if ( repoArg && repoArg !== "--all" && repoArg !== "all" && repos.length === 0 ) die( `Repo not found: ${repoArg}` );
+
+  const perRepo = repos.map( name =>
+    documentsSummaryFor( inventory.documents.filter( d => d.repoName === name ), name, staleDays, now )
+  );
+  const global = documentsSummaryFor( inventory.documents, "all", staleDays, now );
+
+  if ( JSON_MODE ) {
+    console.log( JSON.stringify( { timestamp: inventory.timestamp, global, repos: perRepo }, null, 2 ) );
+    return;
+  }
+
+  console.log( `\n${hdr( "Document Summary" )}  ${dim( `stale>${staleDays}d` )}\n` );
+  console.log( `  ${dim( pad( "Repository", 17 ) + "  " + pad( "Docs", 5, true ) + "  " + pad( "Source", 7, true ) + "  " + pad( "Derived", 7, true ) + "  " + pad( "Words", 9, true ) + "  Issues" )}` );
+  console.log( `  ${dim( "─".repeat( 96 ) )}` );
+  for ( const s of perRepo ) {
+    const issues = [];
+    if ( s.quality.derived_missing_derived_from ) issues.push( `${s.quality.derived_missing_derived_from} derived-no-source` );
+    if ( s.quality.source_without_inbound_links ) issues.push( `${s.quality.source_without_inbound_links} source-no-inbound` );
+    if ( s.quality.source_not_indexed ) issues.push( `${s.quality.source_not_indexed} source-not-indexed` );
+    console.log(
+      `  ${pad( s.repo, 17 )}  ${pad( s.documents, 5, true )}  ${pad( s.roles.source, 7, true )}  ${pad( s.roles.derived, 7, true )}  ${pad( s.size.words, 9, true )}  ${issues.join( " · " ) || dim( "clean" )}`
+    );
+  }
+  console.log( `\n  ${bold( "Global" )}: ${global.documents} docs · ${global.roles.source} source · ${global.roles.derived} derived · ${global.size.words} words\n` );
+}
+
+function documentsFindDocumentByRef( inventory, ref ) {
+  if ( !ref ) return null;
+  const norm = String( ref ).replace( /\\/g, "/" );
+  const abs  = path.resolve( ref ).replace( /\\/g, "/" );
+  return inventory.documents.find( d => `${d.repoName}/${d.relPath}` === norm )
+      || inventory.documents.find( d => d.relPath === norm )
+      || inventory.documents.find( d => d.full.replace( /\\/g, "/" ) === abs )
+      || null;
+}
+
+function cmdDocumentsInspect( ref ) {
+  if ( !ref ) die( "Usage: cogentia documents inspect <repo/path.md>" );
+  const norm = ref.replace( /\\/g, "/" );
+  const firstSlash = norm.indexOf( "/" );
+  const { config } = loadConfig();
+  const possibleRepo = firstSlash > 0 ? norm.slice( 0, firstSlash ) : null;
+  const repoFilter = possibleRepo && config.repos.some( r => r.name === possibleRepo ) ? possibleRepo : null;
+  const { inventory } = documentsLoadInventory( repoFilter, { full: true } );
+  const doc = documentsFindDocumentByRef( inventory, ref );
+  if ( !doc ) die( `Document not found: ${ref}` );
+  const record = sanitizeDocumentRecord( doc );
+  if ( JSON_MODE ) {
+    console.log( JSON.stringify( record, null, 2 ) );
+    return;
+  }
+  console.log( `\n${hdr( `${doc.repoName}/${doc.relPath}` )}\n` );
+  console.log( `  ${bold( "Title" )}       ${doc.title}` );
+  console.log( `  ${bold( "Role" )}        ${doc.role} ${dim( `${doc.role_source}, ${doc.role_confidence}` )}` );
+  console.log( `  ${bold( "Created" )}     ${doc.authored ? `${doc.authored.date} (${doc.authored.source})` : "—"}` );
+  console.log( `  ${bold( "Updated" )}     ${doc.activity ? `${doc.activity.date} (${doc.activity.source})` : "—"}` );
+  console.log( `  ${bold( "Size" )}        ${doc.size.words} words · ${doc.size.body_bytes} body bytes · ${doc.size.reading_minutes} min` );
+  console.log( `  ${bold( "Links" )}       out ${doc.links.out_total} (${doc.links.out_cross_repo} cross-repo) · in ${doc.links.in_total} (${doc.links.in_cross_repo} cross-repo)` );
+  console.log( `  ${bold( "Indexed" )}     published=${doc.index.published} referenced=${doc.index.referenced} ignored=${doc.index.ignored}` );
+  if ( doc.derivation.derived_from.length ) console.log( `  ${bold( "Derived from" )} ${doc.derivation.derived_from.join( ", " )}` );
+  if ( doc.redirect ) {
+    const resolved = doc.redirect.resolved ? `${doc.redirect.resolved.repo}/${doc.redirect.resolved.path}` : "—";
+    console.log( `  ${bold( "Redirect" )}    ${doc.redirect.target || "—"} ${dim( `resolved=${resolved}` )}` );
+  }
+  console.log();
+}
+
+function cmdDocumentsCoupling() {
+  const { inventory, config } = documentsLoadInventory();
+  const level = getFlagValue( "--level" ) || "repo";
+  const allMode = argv.includes( "--all" );
+  const nodes = config.repos.map( r => r.name );
+  const repoEdges = allMode ? inventory.repo_coupling_all : inventory.repo_coupling;
+  const documentEdges = inventory.document_edges.filter( e =>
+    e.from_repo !== e.to_repo && ( allMode || isDefaultCouplingEdge( e ) )
+  );
+  const edges = level === "document" ? documentEdges : repoEdges;
+
+  if ( JSON_MODE ) {
+    console.log( JSON.stringify( {
+      timestamp: inventory.timestamp,
+      level,
+      scope: allMode ? "all-documents" : "corpus-documents",
+      repo_count: nodes.length,
+      edge_count: edges.length,
+      density: nodes.length > 1 ? repoEdges.length / ( nodes.length * ( nodes.length - 1 ) ) : 0,
+      edges,
+    }, null, 2 ) );
+    return;
+  }
+
+  if ( argv.includes( "--mermaid" ) ) {
+    const lines = [ "```mermaid", "graph LR" ];
+    for ( const n of nodes ) lines.push( `  ${n}["${n}"]` );
+    for ( const e of repoEdges ) lines.push( `  ${e.from} -->|${e.weight}| ${e.to}` );
+    lines.push( "```" );
+    console.log( lines.join( "\n" ) );
+    return;
+  }
+
+  console.log( `\n${hdr( "Inter-Repository Coupling" )}\n` );
+  if ( repoEdges.length === 0 ) {
+    console.log( `  ${dim( "(no cross-repo document links detected)" )}\n` );
+    return;
+  }
+  console.log( `  ${dim( pad( "From", 17 ) + "  " + pad( "To", 17 ) + "  " + pad( "Weight", 6, true ) + "  Kinds" )}` );
+  console.log( `  ${dim( "─".repeat( 88 ) )}` );
+  for ( const e of repoEdges ) {
+    const kinds = Object.entries( e.kinds ).map( ( [ k, v ] ) => `${k}:${v}` ).join( " · " );
+    console.log( `  ${pad( e.from, 17 )}  ${pad( e.to, 17 )}  ${pad( e.weight, 6, true )}  ${kinds}` );
+  }
+  console.log();
+}
+
+function cmdDocumentsIndex() {
+  const { configPath, inventory } = documentsLoadInventory();
+  const registryDir = path.dirname( configPath );
+  const cacheDir = path.join( registryDir, DOCUMENTS_CACHE_DIR );
+  const target = path.join( cacheDir, DOCUMENTS_CACHE_FILE );
+  const payload = {
+    timestamp: inventory.timestamp,
+    documents: inventory.documents.map( sanitizeDocumentRecord ),
+    document_edges: inventory.document_edges,
+    document_edge_occurrences: inventory.document_edge_occurrences,
+    repo_coupling: inventory.repo_coupling,
+    repo_coupling_all: inventory.repo_coupling_all,
+  };
+
+  if ( argv.includes( "--write" ) ) {
+    if ( !fs.existsSync( cacheDir ) ) fs.mkdirSync( cacheDir, { recursive: true } );
+    fs.writeFileSync( target, JSON.stringify( payload, null, 2 ) + "\n", "utf8" );
+    appendAudit( {
+      command: "documents.index",
+      args:    { write: true },
+      result:  { target, totalDocs: payload.documents.length },
+      narrative: collectNarrative(),
+    } );
+  }
+
+  if ( JSON_MODE ) {
+    console.log( JSON.stringify( { target, written: argv.includes( "--write" ), ...payload }, null, 2 ) );
+    return;
+  }
+  console.log( `\n${hdr( "Document Index" )}\n` );
+  console.log( `  ${bold( "Target" )}      ${dim( target )}` );
+  console.log( `  ${bold( "Documents" )}   ${payload.documents.length}` );
+  console.log( `  ${bold( "Action" )}      ${argv.includes( "--write" ) ? ok( "written" ) : dim( "preview; add --write to save" )}\n` );
+}
+
+function isPathInside( parent, child ) {
+  const rel = path.relative( path.resolve( parent ), path.resolve( child ) );
+  return rel === "" || ( !rel.startsWith( ".." ) && !path.isAbsolute( rel ) );
+}
+
+function repoRelPath( repoPath, fullPath ) {
+  return path.relative( repoPath, fullPath ).replace( /\\/g, "/" );
+}
+
+function documentsResolveExistingMarkdownFile( config, ref ) {
+  if ( !ref ) die( "Missing markdown file reference." );
+  const raw = String( ref );
+  const norm = raw.replace( /\\/g, "/" );
+  const repoPrefix = norm.match( /^([^/]+)\/(.+\.md)$/i );
+
+  const fromFull = full => {
+    const abs = path.resolve( full );
+    if ( !fs.existsSync( abs ) ) return null;
+    const stat = fs.statSync( abs );
+    if ( !stat.isFile() || !abs.toLowerCase().endsWith( ".md" ) ) return null;
+    const owner = findOwnerRepo( abs, config );
+    if ( !owner ) return null;
+    return {
+      entry: owner.entry,
+      repoPath: owner.repoPath,
+      full: abs,
+      relPath: repoRelPath( owner.repoPath, abs ),
+    };
+  };
+
+  if ( repoPrefix ) {
+    const entry = config.repos.find( r => r.name.toLowerCase() === repoPrefix[ 1 ].toLowerCase() );
+    if ( entry ) {
+      const repoPath = resolveRepoPath( entry );
+      if ( !repoPath ) die( `Repo not found on disk: ${entry.name}` );
+      const found = fromFull( path.join( repoPath, repoPrefix[ 2 ] ) );
+      if ( found ) return found;
+      die( `Document not found: ${ref}` );
+    }
+  }
+
+  const direct = fromFull( raw );
+  if ( direct ) return direct;
+
+  const matches = [];
+  for ( const entry of config.repos ) {
+    const repoPath = resolveRepoPath( entry );
+    if ( !repoPath ) continue;
+    const found = fromFull( path.join( repoPath, norm ) );
+    if ( found ) matches.push( found );
+  }
+  if ( matches.length === 1 ) return matches[ 0 ];
+  if ( matches.length > 1 ) {
+    die( `Ambiguous document reference: ${ref}. Use repo/path.md.` );
+  }
+  die( `Document not found: ${ref}` );
+}
+
+function documentsResolveMoveTarget( from, newRef, config ) {
+  if ( !newRef ) die( "Usage: cogentia documents move <old.md> <new-repo-relative.md> [--reason <text>] [--check]" );
+  const norm = String( newRef ).replace( /\\/g, "/" );
+  let full = null;
+
+  if ( path.isAbsolute( newRef ) ) {
+    full = path.resolve( newRef );
+  } else {
+    const repoPrefix = norm.match( /^([^/]+)\/(.+\.md)$/i );
+    if ( repoPrefix && config.repos.some( r => r.name.toLowerCase() === repoPrefix[ 1 ].toLowerCase() ) ) {
+      if ( repoPrefix[ 1 ].toLowerCase() !== from.entry.name.toLowerCase() ) {
+        die( "documents move only supports moves inside the same registered repo in this version." );
+      }
+      full = path.resolve( from.repoPath, repoPrefix[ 2 ] );
+    } else {
+      full = path.resolve( from.repoPath, norm.replace( /^\/+/, "" ) );
+    }
+  }
+
+  if ( !isPathInside( from.repoPath, full ) ) {
+    die( `Move target is outside repo ${from.entry.name}: ${newRef}` );
+  }
+  if ( !full.toLowerCase().endsWith( ".md" ) ) {
+    die( `Move target must be a markdown file: ${newRef}` );
+  }
+  if ( path.resolve( full ) === path.resolve( from.full ) ) {
+    die( "Move target is identical to source." );
+  }
+  if ( fs.existsSync( full ) ) {
+    die( `Move target already exists: ${repoRelPath( from.repoPath, full )}` );
+  }
+  return { full, relPath: repoRelPath( from.repoPath, full ) };
+}
+
+function markdownRelativeLink( fromRelPath, toRelPath ) {
+  const rel = path.relative( path.dirname( fromRelPath ), toRelPath ).replace( /\\/g, "/" );
+  return rel || path.basename( toRelPath );
+}
+
+function titleFromMarkdownContent( content, fallback ) {
+  const fm = parseFrontmatter( content ) || {};
+  if ( fm.title ) return String( fm.title ).replace( /^['"]|['"]$/g, "" ).trim();
+  const m = stripFrontmatter( content ).match( /^#\s+(.+)$/m );
+  return m ? m[ 1 ].trim() : fallback;
+}
+
+function buildDocumentRedirectStub( oldRelPath, newRelPath, oldContent, reason, dateStr ) {
+  const title = titleFromMarkdownContent( oldContent, path.basename( oldRelPath, ".md" ) );
+  const link  = markdownRelativeLink( oldRelPath, newRelPath );
+  const fm = {
+    title,
+    status: "alias",
+    corpus_role: "alias",
+    canonical_document: newRelPath,
+    redirect_to: newRelPath,
+    redirected_at: dateStr,
+    redirect_reason: reason,
+  };
+  return replaceMarkdownFrontmatter( "", fm )
+    + `# Document deplace\n\n`
+    + `Ce document a ete deplace le ${dateStr}.\n\n`
+    + `Voir desormais : [${newRelPath}](${link}).\n`;
+}
+
+function documentDirectoryBucket( relPath ) {
+  const p = relPath.replace( /\\/g, "/" );
+  if ( /^research\/derived_products\//i.test( p ) ) return "research/derived_products";
+  if ( /^research\/trails\//i.test( p ) ) return "research/trails";
+  if ( /^research\//i.test( p ) ) return "research";
+  if ( /(^|\/)prompts\//i.test( p ) ) return "prompts";
+  if ( /(^|\/)docs\//i.test( p ) ) return "docs";
+  if ( /^interaction_packets\//i.test( p ) ) return "interaction_packets";
+  if ( /^\.cogentia\//i.test( p ) ) return ".cogentia";
+  if ( /^README\.md$/i.test( p ) || /\/README\.md$/i.test( p ) ) return "readme";
+  if ( !p.includes( "/" ) ) return "root";
+  return p.split( "/" )[ 0 ];
+}
+
+function documentsLayoutRecords( docs ) {
+  const groups = new Map();
+  for ( const d of docs ) {
+    const bucket = documentDirectoryBucket( d.relPath );
+    const key = `${d.repoName}\0${bucket}`;
+    if ( !groups.has( key ) ) {
+      const roles = {};
+      for ( const r of DOCUMENT_ROLE_VALUES ) roles[ r ] = 0;
+      groups.set( key, {
+        repo: d.repoName,
+        directory: bucket,
+        documents: 0,
+        ignored: 0,
+        words: 0,
+        roles,
+        examples: [],
+      } );
+    }
+    const g = groups.get( key );
+    g.documents++;
+    if ( d.index.ignored ) g.ignored++;
+    g.words += d.size.words;
+    g.roles[ d.role ] = ( g.roles[ d.role ] || 0 ) + 1;
+    if ( g.examples.length < 3 ) g.examples.push( d.relPath );
+  }
+  return Array.from( groups.values() ).sort( ( a, b ) =>
+    a.repo.localeCompare( b.repo )
+    || a.directory.localeCompare( b.directory )
+  );
+}
+
+function cmdDocumentsLayout( repoArg ) {
+  const repo = repoArg || getFlagValue( "--repo" ) || "all";
+  const { inventory } = documentsLoadInventory( repo !== "all" ? repo : null, { full: true } );
+  const docs = inventory.documents.filter( d => repo === "all" || d.repoName === repo );
+  const records = documentsLayoutRecords( docs );
+
+  if ( JSON_MODE ) {
+    console.log( JSON.stringify( {
+      timestamp: inventory.timestamp,
+      repo,
+      directories: records,
+    }, null, 2 ) );
+    return;
+  }
+
+  console.log( `\n${hdr( "Document Layout" )}  ${dim( repo )}\n` );
+  console.log( `  ${dim( pad( "Repo", 17 ) + "  " + pad( "Directory", 26 ) + "  " + pad( "Docs", 5, true ) + "  " + pad( "Ignored", 7, true ) + "  " + pad( "Source", 7, true ) + "  " + pad( "Derived", 7, true ) + "  " + pad( "Alias", 5, true ) )}` );
+  console.log( `  ${dim( "─".repeat( 96 ) )}` );
+  for ( const r of records ) {
+    console.log(
+      `  ${pad( r.repo, 17 )}  ${pad( r.directory, 26 )}  ${pad( r.documents, 5, true )}  ${pad( r.ignored, 7, true )}  ${pad( r.roles.source, 7, true )}  ${pad( r.roles.derived, 7, true )}  ${pad( r.roles.alias, 5, true )}`
+    );
+  }
+  console.log();
+}
+
+function redirectChainNode( d ) {
+  return {
+    repo: d.repoName,
+    path: d.relPath,
+    title: d.title,
+    role: d.role,
+    redirect_to: d.redirect?.target || null,
+    resolved_to: d.redirect?.resolved ? `${d.redirect.resolved.repo}/${d.redirect.resolved.path}` : null,
+  };
+}
+
+function resolveDocumentRedirectChain( doc, inventory ) {
+  const byKey = new Map( inventory.documents.map( d => [ documentNodeKey( d.repoName, d.relPath ), d ] ) );
+  const chain = [];
+  const seen = new Set();
+  let current = doc;
+
+  while ( current ) {
+    const key = documentNodeKey( current.repoName, current.relPath );
+    if ( seen.has( key ) ) {
+      chain.push( redirectChainNode( current ) );
+      return { status: "loop", chain, final: null, needs_consolidation: false };
+    }
+    seen.add( key );
+    chain.push( redirectChainNode( current ) );
+
+    if ( !current.redirect ) {
+      return {
+        status: current === doc ? "canonical" : "resolved",
+        chain,
+        final: chain[ chain.length - 1 ],
+        needs_consolidation: false,
+      };
+    }
+    if ( !current.redirect.target || !current.redirect.resolved ) {
+      return {
+        status: "broken",
+        chain,
+        final: null,
+        broken_target: current.redirect.target || null,
+        needs_consolidation: false,
+      };
+    }
+
+    current = byKey.get( documentNodeKey( current.redirect.resolved.repo, current.redirect.resolved.path ) );
+    if ( !current ) {
+      return {
+        status: "broken",
+        chain,
+        final: null,
+        broken_target: chain[ chain.length - 1 ].resolved_to,
+        needs_consolidation: false,
+      };
+    }
+  }
+
+  return { status: "broken", chain, final: null, needs_consolidation: false };
+}
+
+function redirectFinalRefForDoc( doc, finalNode ) {
+  if ( !finalNode ) return null;
+  return finalNode.repo === doc.repoName ? finalNode.path : `${finalNode.repo}/${finalNode.path}`;
+}
+
+function annotateRedirectResolution( doc, resolution ) {
+  const finalRef = redirectFinalRefForDoc( doc, resolution.final );
+  const needsConsolidation = resolution.status === "resolved"
+    && resolution.chain.length > 2
+    && finalRef
+    && doc.redirect?.target !== finalRef;
+  return {
+    document: sanitizeDocumentRecord( doc ),
+    status: resolution.status,
+    chain: resolution.chain,
+    final: resolution.final,
+    final_ref: finalRef,
+    broken_target: resolution.broken_target || null,
+    needs_consolidation: needsConsolidation,
+  };
+}
+
+function redirectDocumentsInInventory( inventory, repo = "all" ) {
+  return inventory.documents.filter( d =>
+    ( repo === "all" || d.repoName === repo )
+    && ( d.redirect || d.role === "alias" )
+  );
+}
+
+function cmdDocumentsRedirectsAudit( repoArg ) {
+  const repo = repoArg || getFlagValue( "--repo" ) || "all";
+  const { inventory } = documentsLoadInventory( repo !== "all" ? repo : null, { full: true } );
+  const records = redirectDocumentsInInventory( inventory, repo )
+    .map( d => annotateRedirectResolution( d, resolveDocumentRedirectChain( d, inventory ) ) );
+  const summary = {
+    total: records.length,
+    broken: records.filter( r => r.status === "broken" ).length,
+    loops: records.filter( r => r.status === "loop" ).length,
+    needs_consolidation: records.filter( r => r.needs_consolidation ).length,
+  };
+
+  if ( JSON_MODE ) {
+    console.log( JSON.stringify( { timestamp: inventory.timestamp, repo, summary, redirects: records }, null, 2 ) );
+    return;
+  }
+
+  console.log( `\n${hdr( "Document Redirects" )}  ${dim( repo )}\n` );
+  if ( records.length === 0 ) {
+    console.log( `  ${dim( "(no redirect stubs detected)" )}\n` );
+    return;
+  }
+  console.log( `  ${dim( pad( "Status", 12 ) + "  " + pad( "Document", 52 ) + "  Target" )}` );
+  console.log( `  ${dim( "─".repeat( 112 ) )}` );
+  for ( const r of records ) {
+    const doc = `${r.document.repo}/${r.document.path}`;
+    const target = r.final_ref || r.broken_target || r.document.redirect?.target || "—";
+    const status = r.needs_consolidation ? "chain" : r.status;
+    console.log( `  ${pad( status, 12 )}  ${pad( doc, 52 )}  ${target}` );
+  }
+  console.log( `\n  ${bold( "Summary" )}: ${summary.total} redirects · ${summary.broken} broken · ${summary.loops} loops · ${summary.needs_consolidation} chains\n` );
+}
+
+function cmdDocumentsRedirectsResolve( ref ) {
+  if ( !ref ) die( "Usage: cogentia documents redirects resolve <repo/path.md>" );
+  const norm = String( ref ).replace( /\\/g, "/" );
+  const firstSlash = norm.indexOf( "/" );
+  const { config } = loadConfig();
+  const possibleRepo = firstSlash > 0 ? norm.slice( 0, firstSlash ) : null;
+  const repoFilter = possibleRepo && config.repos.some( r => r.name === possibleRepo ) ? possibleRepo : null;
+  const { inventory } = documentsLoadInventory( repoFilter, { full: true } );
+  const doc = documentsFindDocumentByRef( inventory, ref );
+  if ( !doc ) die( `Document not found: ${ref}` );
+  const record = annotateRedirectResolution( doc, resolveDocumentRedirectChain( doc, inventory ) );
+
+  if ( JSON_MODE ) {
+    console.log( JSON.stringify( record, null, 2 ) );
+    return;
+  }
+
+  console.log( `\n${hdr( "Redirect Resolution" )}\n` );
+  console.log( `  ${bold( "Status" )}  ${record.needs_consolidation ? "chain" : record.status}` );
+  console.log( `  ${bold( "Final" )}   ${record.final_ref || record.broken_target || "—"}` );
+  console.log( `\n  ${bold( "Chain" )}` );
+  for ( const node of record.chain ) {
+    const target = node.redirect_to ? ` -> ${node.redirect_to}` : "";
+    console.log( `  - ${node.repo}/${node.path}${target}` );
+  }
+  console.log();
+}
+
+function appendRedirectHistoryValue( existing, entry ) {
+  const prior = Array.isArray( existing ) ? existing.join( " ; " ) : String( existing || "" ).trim();
+  return prior ? `${prior} ; ${entry}` : entry;
+}
+
+function cmdDocumentsRedirectsConsolidate( repoArg ) {
+  const repo = repoArg || getFlagValue( "--repo" ) || "all";
+  const write = argv.includes( "--write" );
+  const { inventory } = documentsLoadInventory( repo !== "all" ? repo : null, { full: true } );
+  const dateStr = fmtDate( new Date() );
+  const changes = [];
+
+  for ( const doc of redirectDocumentsInInventory( inventory, repo ) ) {
+    const record = annotateRedirectResolution( doc, resolveDocumentRedirectChain( doc, inventory ) );
+    if ( !record.needs_consolidation || !record.final_ref ) continue;
+    changes.push( {
+      repo: doc.repoName,
+      path: doc.relPath,
+      from: doc.redirect?.target || null,
+      to: record.final_ref,
+      chain: record.chain.map( n => `${n.repo}/${n.path}` ),
+      full: doc.full,
+    } );
+  }
+
+  if ( write ) {
+    for ( const change of changes ) {
+      const content = fs.readFileSync( change.full, "utf8" );
+      const fm = parseFrontmatter( content ) || {};
+      const historyEntry = `${change.from || "missing-target"} -> ${change.to} (consolidated ${dateStr})`;
+      const patched = replaceMarkdownFrontmatterFields( content, {
+        redirect_to: change.to,
+        canonical_document: change.to,
+        redirect_history: appendRedirectHistoryValue( fm.redirect_history, historyEntry ),
+      } );
+      fs.writeFileSync( change.full, patched, "utf8" );
+    }
+    if ( changes.length ) {
+      appendAudit( {
+        command: "documents.redirects.consolidate",
+        args: { repo, write },
+        result: { changes: changes.map( c => ( { repo: c.repo, path: c.path, from: c.from, to: c.to } ) ) },
+        narrative: collectNarrative(),
+      } );
+    }
+  }
+
+  if ( JSON_MODE ) {
+    console.log( JSON.stringify( { repo, written: write, count: changes.length, changes }, null, 2 ) );
+    return;
+  }
+
+  console.log( `\n${hdr( "Redirect Consolidation" )}  ${dim( repo )}\n` );
+  if ( changes.length === 0 ) {
+    console.log( `  ${dim( "(no multi-hop redirect chains to consolidate)" )}\n` );
+    return;
+  }
+  for ( const ch of changes ) {
+    console.log( `  ${write ? ok( "updated" ) : dim( "preview" )} ${ch.repo}/${ch.path}` );
+    console.log( `    ${ch.from} -> ${ch.to}` );
+  }
+  console.log( `\n  ${bold( "Action" )} ${write ? ok( "written" ) : dim( "preview; add --write to save" )}\n` );
+}
+
+function cmdDocumentsRedirects( sub, refOrRepo ) {
+  switch ( sub || "audit" ) {
+    case "audit":       cmdDocumentsRedirectsAudit( refOrRepo ); break;
+    case "resolve":     cmdDocumentsRedirectsResolve( refOrRepo ); break;
+    case "consolidate": cmdDocumentsRedirectsConsolidate( refOrRepo ); break;
+    default:
+      die( `Unknown documents redirects subcommand: "${sub}". Use audit, resolve, or consolidate.` );
+  }
+}
+
+function cmdDocumentsMove( oldRef, newRef ) {
+  const { configPath, config } = loadConfig();
+  if ( !configPath ) die( "No registry found. Run: cogentia add <repo> first." );
+  const from = documentsResolveExistingMarkdownFile( config, oldRef );
+  const to = documentsResolveMoveTarget( from, newRef, config );
+  const checkOnly = argv.includes( "--check" );
+  const reason = getFlagValue( "--reason" ) || "corpus consolidation";
+  const dateStr = fmtDate( new Date() );
+  const oldContent = fs.readFileSync( from.full, "utf8" );
+  const stub = buildDocumentRedirectStub( from.relPath, to.relPath, oldContent, reason, dateStr );
+  const result = {
+    repo: from.entry.name,
+    from: from.relPath,
+    to: to.relPath,
+    check: checkOnly,
+    redirect_stub: {
+      path: from.relPath,
+      redirect_to: to.relPath,
+      redirected_at: dateStr,
+      reason,
+    },
+  };
+
+  if ( !checkOnly ) {
+    fs.mkdirSync( path.dirname( to.full ), { recursive: true } );
+    fs.renameSync( from.full, to.full );
+    fs.writeFileSync( from.full, stub, "utf8" );
+    appendAudit( {
+      command: "documents.move",
+      args: { from: `${from.entry.name}/${from.relPath}`, to: to.relPath, reason },
+      result,
+      narrative: collectNarrative(),
+    } );
+  }
+
+  if ( JSON_MODE ) {
+    console.log( JSON.stringify( result, null, 2 ) );
+    return;
+  }
+
+  console.log( `\n${hdr( "Document Move" )}\n` );
+  console.log( `  ${bold( "Repo" )}      ${from.entry.name}` );
+  console.log( `  ${bold( "From" )}      ${from.relPath}` );
+  console.log( `  ${bold( "To" )}        ${to.relPath}` );
+  console.log( `  ${bold( "Stub" )}      ${from.relPath} -> ${to.relPath}` );
+  console.log( `  ${bold( "Action" )}    ${checkOnly ? dim( "preview; remove --check to move" ) : ok( "moved" )}\n` );
+}
+
+function cmdDocuments( sub, ...rest ) {
+  if ( !sub || sub === "refresh" || sub === "--check" ) {
+    cmdDocumentsRefresh();
+    return;
+  }
+  switch ( sub ) {
+    case "list":      cmdDocumentsList( rest[ 0 ] || getFlagValue( "--repo" ) ); break;
+    case "query":     cmdDocumentsQuery( rest[ 0 ] || getFlagValue( "--repo" ) ); break;
+    case "summary":   cmdDocumentsSummary( rest[ 0 ] || getFlagValue( "--repo" ) || "all" ); break;
+    case "inspect":   cmdDocumentsInspect( rest[ 0 ] ); break;
+    case "coupling":  cmdDocumentsCoupling(); break;
+    case "index":     cmdDocumentsIndex(); break;
+    case "layout":    cmdDocumentsLayout( rest[ 0 ] ); break;
+    case "dirs":      cmdDocumentsLayout( rest[ 0 ] ); break;
+    case "redirects": cmdDocumentsRedirects( rest[ 0 ], rest[ 1 ] ); break;
+    case "move":      cmdDocumentsMove( rest[ 0 ], rest[ 1 ] ); break;
+    default:
+      die( `Unknown documents subcommand: "${sub}". Use refresh, list, query, summary, inspect, coupling, index, layout, redirects, or move.` );
+  }
 }
 
 // ── forks ─────────────────────────────────────────────────────────────────────
@@ -5803,6 +7443,39 @@ const COMMAND_MANIFEST = [
     side_effects: [ "file-write", "audit-log" ],
   },
   {
+    name: "documents",
+    description: "Document inventory and catalog. No subcommand or `refresh` regenerates research/documents.md. `list` returns documents (source by default) with role, size, created date and last significant update. `query` filters documents for agents by role, repo, text, size, age, link topology, indexing and derived-source quality. `summary` emits numeric corpus summaries. `inspect` returns one document record. `coupling` reports inter-repository coupling from markdown links, derivation edges, and redirect edges, scoped to corpus roles by default; pass --all for operational/generated/alias documents too. `index --write` writes .cogentia/cache/documents.index.json for agents. `layout` summarizes document directories. `redirects` audits/resolves/consolidates moved-document stubs. `move` moves a markdown file inside a repo and leaves a permanent alias stub at the old path.",
+    parameters: { type: "object", properties: {
+      subcommand: { type: "string", enum: [ "refresh", "list", "query", "summary", "inspect", "coupling", "index", "layout", "dirs", "redirects", "move" ], description: "Document operation. Omit for refresh." },
+      redirect_subcommand: { type: "string", enum: [ "audit", "resolve", "consolidate" ], description: "When subcommand=redirects: audit all stubs, resolve one ref, or consolidate multi-hop chains." },
+      repo:       { type: "string", description: "Optional registered repo for list/query/summary." },
+      ref:        { type: "string", description: "repo/path.md for inspect." },
+      old_ref:    { type: "string", description: "For move: existing markdown ref, preferably repo/path.md." },
+      new_ref:    { type: "string", description: "For move: new markdown path, repo-relative inside the same registered repo." },
+      reason:     { type: "string", description: "For move: redirect_reason written into the alias stub." },
+      role:       { type: "string", enum: [ "source", "derived", "generated", "index", "trail", "operational", "archive", "alias", "unknown", "all" ], description: "Role filter for list/query. Default: source." },
+      q:          { type: "string", description: "Text filter for query over repo, path, title, status, summary and derived product type." },
+      status:     { type: "string", description: "Query: raw or canonical frontmatter status filter." },
+      limit:      { type: "integer", description: "Query: maximum records returned." },
+      sort:       { type: "string", enum: [ "updated", "created", "size", "links" ], description: "Sort for list/query." },
+      min_words:  { type: "integer", description: "Query: minimum word count." },
+      max_words:  { type: "integer", description: "Query: maximum word count." },
+      min_links:  { type: "integer", description: "Query: minimum unique in+out document links." },
+      max_links:  { type: "integer", description: "Query: maximum unique in+out document links." },
+      min_cross_repo: { type: "integer", description: "Query: minimum unique cross-repo in+out document links." },
+      stale_days: { type: "integer", description: "Query/summary: documents older than this many days are stale." },
+      no_inbound: { type: "boolean", description: "Query: only documents with zero unique inbound links." },
+      not_indexed:{ type: "boolean", description: "Query: only documents not published or referenced in research/index.md." },
+      cross_repo: { type: "boolean", description: "Query: only documents with cross-repo links." },
+      missing_derived_from: { type: "boolean", description: "Query: only derived documents missing derived_from." },
+      level:      { type: "string", enum: [ "repo", "document" ], description: "Coupling detail level." },
+      all:        { type: "boolean", description: "For coupling, include operational/generated/unknown documents instead of the corpus-role default." },
+      check:      { type: "boolean", description: "Dry-run for refresh." },
+      write:      { type: "boolean", description: "Write cache for index, or rewrite redirect chains for redirects consolidate." }
+    } },
+    side_effects: [ "file-write and audit-log only for refresh without --check, index --write, redirects consolidate --write, or move without --check" ],
+  },
+  {
     name: "state", description: "Denormalised JSON snapshot combining registry + status + identity (one call replaces list + status + whoami).",
     parameters: { type: "object", properties: {} },
     side_effects: [],
@@ -5811,6 +7484,23 @@ const COMMAND_MANIFEST = [
     name: "explain-ignore", description: "Test a file path against the resolved .cogentiaignore patterns for its owning repo. Report which pattern (if any) matched.",
     parameters: { type: "object", properties: { file: { type: "string" } }, required: [ "file" ] },
     side_effects: [],
+  },
+  {
+    name: "frontmatter",
+    description: "Diagnose frontmatter and route semantic metadata decisions through continuations. `check` reports structural issues. `delegate` emits a frontmatter_review continuation for one file, or for a capped batch with --batch. `apply` consumes an agent step_result, validates vocabulary and stale guards, then writes the proposed flat YAML patch. `promote` remains the legacy mechanical skeleton/invariant writer. `schema` prints the canonical field vocabulary.",
+    parameters: { type: "object", properties: {
+      subcommand:       { type: "string", enum: [ "check", "delegate", "apply", "promote", "schema" ], description: "Frontmatter operation." },
+      repo:             { type: "string", description: "Optional repo for check/delegate --batch/promote --batch." },
+      file:             { type: "string", description: "Markdown file for delegate/promote." },
+      id:               { type: "string", description: "Continuation id for apply." },
+      step_result_file: { type: "string", description: "Agent step_result JSON for apply." },
+      batch:            { type: "boolean", description: "Batch mode for delegate/promote." },
+      limit:            { type: "integer", description: "Maximum continuations to emit in delegate --batch. 0 means unlimited." },
+      check:            { type: "boolean", description: "Dry-run for delegate --batch or promote --batch." },
+      all:              { type: "boolean", description: "For delegate --batch, include files without detected frontmatter issues." },
+      partial:          { type: "boolean", description: "For apply, allow writing a result that still lacks required Level 2 fields." }
+    }, required: [ "subcommand" ] },
+    side_effects: [ "delegate writes continuation + audit-log unless --check; apply writes markdown + completes continuation + audit-log; promote may write markdown" ],
   },
   {
     name: "concepts", description: "Manage research/concepts.md as a typed concept registry. The CLI validates structure and links; semantic interpretation remains the responsibility of the human or AI agent using it.",
@@ -6117,6 +7807,265 @@ function cmdFrontmatterSchema() {
   console.log();
 }
 
+const FRONTMATTER_REVIEW_KIND = "frontmatter_review";
+const FRONTMATTER_DELEGATE_DEFAULT_LIMIT = 20;
+const FRONTMATTER_MECHANICAL_FIELDS = new Set( [
+  "canonical_url", "last_stamped_at", "last_modified_at",
+] );
+const FRONTMATTER_AGENT_RECOMMENDED_FIELDS = [
+  "title", "date", "status", "version", "corpus_role",
+  "derived_from", "derived_product_type", "keywords", "summary",
+];
+
+function frontmatterDiagnosticsForContent( relPath, content ) {
+  const fm = parseFrontmatter( content );
+  const auto = isAutoView( relPath );
+  const deprecated = [];
+  let statusBad = null, state = "complete", missingL2 = [];
+
+  if ( !fm ) {
+    state = auto ? "no-frontmatter-auto" : "no-frontmatter";
+  } else {
+    for ( const k of FRONTMATTER_DEPRECATED ) if ( k in fm ) deprecated.push( k );
+    if ( fm.status && !frontmatterCanonicalStatus( fm.status ) ) statusBad = fm.status;
+    if ( !auto && !isDocumentRedirectFrontmatter( fm ) ) {
+      for ( const k of FRONTMATTER_LEVEL_2_REQUIRED ) if ( !( k in fm ) ) missingL2.push( k );
+      if ( missingL2.length === FRONTMATTER_LEVEL_2_REQUIRED.length ) state = "level-1-only";
+      else if ( missingL2.length > 0 )                                state = "partial";
+    }
+  }
+
+  return { state, auto, missingL2, deprecated, statusBad };
+}
+
+function frontmatterReviewReasons( relPath, fm, diagnostics, role ) {
+  const reasons = [];
+  if ( diagnostics.state === "no-frontmatter" ) reasons.push( "missing frontmatter" );
+  if ( diagnostics.state === "level-1-only" )   reasons.push( "level-1-only frontmatter" );
+  if ( diagnostics.state === "partial" )        reasons.push( `missing required fields: ${diagnostics.missingL2.join( ", " )}` );
+  if ( diagnostics.deprecated.length )          reasons.push( `deprecated fields: ${diagnostics.deprecated.join( ", " )}` );
+  if ( diagnostics.statusBad )                  reasons.push( `status outside vocabulary: ${diagnostics.statusBad}` );
+
+  const corpusRole = normalizeDocumentRole( fm?.corpus_role || fm?.document_role );
+  if ( role?.role === "derived" && frontmatterDerivationRefs( fm ).length === 0 ) {
+    reasons.push( "derived document lacks derived_from" );
+  }
+  if ( [ "source", "derived" ].includes( role?.role ) && !corpusRole && relPath.startsWith( "research/" ) ) {
+    reasons.push( `corpus_role inferred as ${role.role} but not explicit` );
+  }
+  return reasons;
+}
+
+function frontmatterIsSimpleFlatYaml( content ) {
+  const parts = splitFrontmatterBody( content );
+  if ( !parts.frontmatter ) return true;
+  for ( const line of parts.frontmatter.split( /\r?\n/ ) ) {
+    const trimmed = line.trim();
+    if ( !trimmed || trimmed.startsWith( "#" ) ) continue;
+    if ( /^[A-Za-z_][A-Za-z0-9_-]*\s*:.*$/.test( line ) ) continue;
+    return false;
+  }
+  return true;
+}
+
+function frontmatterYamlValue( value ) {
+  if ( value === null ) return "null";
+  if ( typeof value === "number" || typeof value === "boolean" ) return String( value );
+  if ( Array.isArray( value ) ) return `[${value.map( frontmatterYamlValue ).join( ", " )}]`;
+  if ( typeof value === "object" ) return JSON.stringify( value );
+  return JSON.stringify( String( value ) );
+}
+
+function frontmatterFieldOrder( fm ) {
+  const preferred = [
+    "title", "subtitle", "author", "affiliation", "date", "created", "license",
+    "status", "version", "corpus_role", "document_role", "derived_from",
+    "derived_product_type", "derived_by", "keywords", "summary",
+    ...FRONTMATTER_LEVEL_1,
+    ...FRONTMATTER_LEVEL_3.jekyll,
+    ...FRONTMATTER_LEVEL_3.multilingual,
+    ...FRONTMATTER_LEVEL_3.semantics,
+    ...FRONTMATTER_LEVEL_3.alias,
+    ...FRONTMATTER_LEVEL_3.changelog,
+  ];
+  const keys = Object.keys( fm );
+  const ordered = [];
+  for ( const k of preferred ) if ( keys.includes( k ) && !ordered.includes( k ) ) ordered.push( k );
+  for ( const k of keys.sort() ) if ( !ordered.includes( k ) ) ordered.push( k );
+  return ordered;
+}
+
+function renderFrontmatterObject( fm ) {
+  const lines = [ "---" ];
+  for ( const k of frontmatterFieldOrder( fm ) ) {
+    if ( fm[ k ] === undefined ) continue;
+    lines.push( `${k}: ${frontmatterYamlValue( fm[ k ] )}` );
+  }
+  lines.push( "---", "" );
+  return lines.join( "\n" );
+}
+
+function replaceMarkdownFrontmatter( content, fm ) {
+  const rendered = renderFrontmatterObject( fm );
+  const m = content.match( /^---\r?\n[\s\S]*?\r?\n---\r?\n?/ );
+  if ( !m ) return rendered + content.replace( /^\uFEFF/, "" );
+  return rendered + content.slice( m[ 0 ].length );
+}
+
+function replaceMarkdownFrontmatterFields( content, proposed, removeFields = [] ) {
+  const parts = splitFrontmatterBody( content );
+  if ( !parts.frontmatter ) return replaceMarkdownFrontmatter( content, proposed );
+  const updates = new Map();
+  for ( const k of removeFields ) updates.set( k, null );
+  for ( const [ k, v ] of Object.entries( proposed ) ) {
+    if ( v !== undefined ) updates.set( k, v );
+  }
+
+  const lines = parts.frontmatter.split( /\r?\n/ );
+  const out = [];
+  const seen = new Set();
+  for ( let i = 0; i < lines.length; i++ ) {
+    const km = lines[ i ].match( /^([A-Za-z_][A-Za-z0-9_-]*)\s*:/ );
+    if ( !km || !updates.has( km[ 1 ] ) ) {
+      out.push( lines[ i ] );
+      continue;
+    }
+
+    const key = km[ 1 ];
+    seen.add( key );
+    const value = updates.get( key );
+    if ( value !== null ) out.push( `${key}: ${frontmatterYamlValue( value )}` );
+
+    while ( i + 1 < lines.length && !/^[A-Za-z_][A-Za-z0-9_-]*\s*:/.test( lines[ i + 1 ] ) ) {
+      i++;
+    }
+  }
+
+  for ( const [ key, value ] of updates.entries() ) {
+    if ( seen.has( key ) || value === null ) continue;
+    out.push( `${key}: ${frontmatterYamlValue( value )}` );
+  }
+
+  return `---\n${out.join( "\n" )}\n---\n` + parts.body;
+}
+
+function frontmatterOwnerForFile( fileArg ) {
+  const { configPath, config } = loadConfig();
+  if ( !configPath ) die( "No registry found." );
+  const absPath = path.resolve( fileArg );
+  if ( !fs.existsSync( absPath ) ) die( `File not found: ${fileArg}` );
+  const owner = findOwnerRepo( absPath, config );
+  if ( !owner ) die( `File is not inside a registered repo: ${fileArg}` );
+  const relPath = path.relative( owner.repoPath, absPath ).replace( /\\/g, "/" );
+  return { configPath, config, absPath, relPath, entry: owner.entry, repoPath: owner.repoPath };
+}
+
+function frontmatterActiveReviewMap() {
+  const map = new Map();
+  for ( const ctn of listContinuations() ) {
+    if ( ctn.status !== "active" || ctn.context?.kind !== FRONTMATTER_REVIEW_KIND ) continue;
+    map.set( `${ctn.context.repo}\0${ctn.context.file}`, ctn );
+  }
+  return map;
+}
+
+function frontmatterFileContext( entry, repoPath, relPath, fullPath, content, repoContext = {} ) {
+  const ignore = repoContext.ignore || loadIgnore( repoPath );
+  const indexSets = repoContext.indexSets || buildIndexSets( repoPath );
+  const fm = parseFrontmatter( content ) || {};
+  const diagnostics = frontmatterDiagnosticsForContent( relPath, content );
+  const role = classifyDocumentRole( relPath, fullPath, fm, matchesIgnore( relPath, ignore ), indexSets );
+  const body = stripAutoBlocks( stripFrontmatter( content ) );
+  const titleMatch = body.match( /^#\s+(.+)$/m );
+  const headings = ( body.match( /^#{1,3}\s+.+$/gm ) || [] ).slice( 0, 20 );
+  const markdownLinks = extractLinks( body )
+    .filter( l => /\.md(?:#|\?|$)/i.test( l.url ) )
+    .slice( 0, 30 );
+  const excerpt = body
+    .replace( /```[\s\S]*?```/g, "" )
+    .replace( /\s+/g, " " )
+    .trim()
+    .slice( 0, 2400 );
+  const stat = fs.statSync( fullPath );
+  const reasons = frontmatterReviewReasons( relPath, fm, diagnostics, role );
+
+  return {
+    repo: entry.name,
+    repoPath,
+    relPath,
+    fullPath,
+    fileHash: sha1OfFile( fullPath ),
+    frontmatter: fm,
+    diagnostics,
+    role,
+    reasons,
+    document: {
+      title_hint: fm.title || ( titleMatch ? titleMatch[ 1 ].trim() : path.basename( relPath, ".md" ) ),
+      headings,
+      markdown_links: markdownLinks,
+      size: documentSizeMetrics( stat.size, content ),
+      excerpt,
+    },
+  };
+}
+
+function buildFrontmatterReviewContinuation( ctx ) {
+  return {
+    type:     "continuation",
+    protocol: CONTINUATION_PROTOCOL,
+    id:       generateContinuationId(),
+    topicId:  deriveTopicForFile( ctx.fullPath ) || deriveTopicForRepo( ctx.repo ),
+    agent:    CONTINUATION_AGENT_ANY,
+    task:     `Review and propose semantic frontmatter for ${ctx.repo}/${ctx.relPath}. Do not edit the file directly; return a step_result consumed by 'cogentia frontmatter apply'.`,
+    context: {
+      kind:               FRONTMATTER_REVIEW_KIND,
+      repo:               ctx.repo,
+      file:               ctx.relPath,
+      file_hash:          ctx.fileHash,
+      current_frontmatter: ctx.frontmatter,
+      diagnostics:        ctx.diagnostics,
+      inferred_role:      ctx.role,
+      reasons:            ctx.reasons,
+      document:           ctx.document,
+      schema: {
+        required:           FRONTMATTER_LEVEL_2_REQUIRED,
+        optional:           FRONTMATTER_LEVEL_2_OPTIONAL,
+        extensions:         FRONTMATTER_LEVEL_3,
+        status_vocabulary:  FRONTMATTER_STATUS_VOCABULARY,
+        role_vocabulary:    Array.from( DOCUMENT_ROLE_VALUES ),
+        recommended_fields: FRONTMATTER_AGENT_RECOMMENDED_FIELDS,
+        mechanical_fields:  Array.from( FRONTMATTER_MECHANICAL_FIELDS ),
+      },
+      note: "Return only metadata you can justify from the document and corpus context. Do not invent sources. Mechanical fields are preserved by apply unless explicitly allowed.",
+    },
+    alternatives: [
+      { id: "propose_frontmatter", description: "Return a frontmatter patch plus rationale." },
+      { id: "needs_more_context",  description: "Ask for clarification instead of guessing." },
+      { id: "reject_change",       description: "Explain why the current frontmatter should not change." },
+    ],
+    expected_result_schema: {
+      continuation_id: "string",
+      status:          "success|failed|aborted|needs_more_context",
+      frontmatter:     "object: flat YAML fields to add/update; omit unchanged fields",
+      remove_fields:   "array<string>: optional fields to remove, typically deprecated names",
+      rationale:       "string: why these values are justified",
+      confidence:      "number|string",
+      summary:         "string",
+    },
+    constraints: [
+      "Prefer source text, headings, declared links, and existing corpus conventions over invention.",
+      "Keep canonical_url, last_stamped_at, and last_modified_at unchanged unless a human explicitly allows mechanical fields.",
+      "Use status values from the declared vocabulary.",
+      "Use corpus_role when the source/derived distinction is clear.",
+    ],
+    status:    "active",
+    createdAt: new Date().toISOString(),
+    resume: {
+      command: "node scripts/cogentia.js frontmatter apply <continuation-id> <step_result.json>",
+    },
+  };
+}
+
 function cmdFrontmatterCheck( repoArg ) {
   const { configPath, config } = loadConfig();
   if ( !configPath ) die( "No registry found. Run: cogentia add <repo> first." );
@@ -6135,22 +8084,8 @@ function cmdFrontmatterCheck( repoArg ) {
       if ( matchesIgnore( f.rel, ignore ) ) continue;
       let content = "";
       try { content = fs.readFileSync( f.full, "utf8" ); } catch ( _ ) { continue; }
-      const fm   = parseFrontmatter( content );
-      const auto = isAutoView( f.rel );
-      const deprecated = [];
-      let statusBad = null, state = "complete", missingL2 = [];
-      if ( !fm ) {
-        state = auto ? "no-frontmatter-auto" : "no-frontmatter";
-      } else {
-        for ( const k of FRONTMATTER_DEPRECATED ) if ( k in fm ) deprecated.push( k );
-        if ( fm.status && !frontmatterCanonicalStatus( fm.status ) ) statusBad = fm.status;
-        if ( !auto ) {
-          for ( const k of FRONTMATTER_LEVEL_2_REQUIRED ) if ( !( k in fm ) ) missingL2.push( k );
-          if ( missingL2.length === FRONTMATTER_LEVEL_2_REQUIRED.length ) state = "level-1-only";
-          else if ( missingL2.length > 0 )                                state = "partial";
-        }
-      }
-      files.push( { path: f.rel, state, auto, missingL2, deprecated, statusBad } );
+      const diagnostics = frontmatterDiagnosticsForContent( f.rel, content );
+      files.push( { path: f.rel, ...diagnostics } );
     }
     result.repos.push( { name: entry.name, files } );
   }
@@ -6348,13 +8283,285 @@ function cmdFrontmatterPromote( fileArg ) {
   } );
 }
 
+function cmdFrontmatterDelegateOne( fileArg, opts = {} ) {
+  const checkOnly = opts.checkOnly || argv.includes( "--check" );
+  const owner = frontmatterOwnerForFile( fileArg );
+  const content = fs.readFileSync( owner.absPath, "utf8" );
+  const ctx = frontmatterFileContext( owner.entry, owner.repoPath, owner.relPath, owner.absPath, content );
+  const existing = frontmatterActiveReviewMap().get( `${ctx.repo}\0${ctx.relPath}` );
+  if ( existing ) {
+    const result = { action: "existing", id: existing.id, repo: ctx.repo, file: ctx.relPath, reasons: ctx.reasons };
+    if ( JSON_MODE ) console.log( JSON.stringify( result, null, 2 ) );
+    else {
+      console.log( `\n${hdr( "Frontmatter review already active" )}\n` );
+      console.log( `  ${bold( "id:" )}    ${existing.id}` );
+      console.log( `  ${bold( "file:" )}  ${ctx.repo}/${ctx.relPath}` );
+      console.log();
+    }
+    return result;
+  }
+
+  const cnt = buildFrontmatterReviewContinuation( ctx );
+  const result = { action: checkOnly ? "would_emit" : "emitted", id: cnt.id, repo: ctx.repo, file: ctx.relPath, reasons: ctx.reasons };
+  if ( !checkOnly ) {
+    saveContinuation( cnt );
+    appendAudit( {
+      command:   "frontmatter.delegate",
+      args:      { repo: ctx.repo, file: ctx.relPath },
+      result:    { id: cnt.id, reasons: ctx.reasons },
+      narrative: collectNarrative(),
+    } );
+  }
+
+  if ( JSON_MODE && !opts.silent ) {
+    console.log( JSON.stringify( checkOnly ? { ...result, continuation: cnt } : { ...result, continuation: cnt }, null, 2 ) );
+  } else if ( !opts.silent ) {
+    console.log( `\n${hdr( checkOnly ? "Frontmatter review candidate" : "Frontmatter review emitted" )}\n` );
+    console.log( `  ${bold( "id:" )}      ${cnt.id}` );
+    console.log( `  ${bold( "file:" )}    ${ctx.repo}/${ctx.relPath}` );
+    console.log( `  ${bold( "role:" )}    ${ctx.role.role} ${dim( ctx.role.role_source )}` );
+    console.log( `  ${bold( "reasons:" )} ${ctx.reasons.join( " · " ) || dim( "explicit request" )}` );
+    console.log( `\n  ${dim( "agent answers with a step_result, then apply with:" )}` );
+    console.log( `  cogentia frontmatter apply ${cnt.id} <step_result.json>` );
+    console.log();
+  }
+  return result;
+}
+
+function cmdFrontmatterDelegateBatch() {
+  const checkOnly = argv.includes( "--check" );
+  const repoArg = getFlagValue( "--repo" );
+  const allMode = argv.includes( "--all" );
+  const limitArg = parseInt( getFlagValue( "--limit" ), 10 );
+  const limit = Number.isFinite( limitArg )
+    ? ( limitArg <= 0 ? Infinity : limitArg )
+    : FRONTMATTER_DELEGATE_DEFAULT_LIMIT;
+
+  const { configPath, config } = loadConfig();
+  if ( !configPath ) die( "No registry found." );
+  const repos = repoArg ? config.repos.filter( r => r.name === repoArg ) : config.repos;
+  if ( repoArg && repos.length === 0 ) die( `Repo not found: ${repoArg}` );
+
+  const active = frontmatterActiveReviewMap();
+  const summary = {
+    timestamp: fmtNow(),
+    checkOnly,
+    all: allMode,
+    limit: Number.isFinite( limit ) ? limit : null,
+    emitted: 0,
+    would_emit: 0,
+    candidates: 0,
+    skipped_existing: 0,
+    repos: [],
+  };
+
+  for ( const entry of repos ) {
+    if ( summary.emitted + summary.would_emit >= limit ) break;
+    const repoPath = resolveRepoPath( entry );
+    if ( !repoPath ) continue;
+    const ignore = loadIgnore( repoPath );
+    const indexSets = buildIndexSets( repoPath );
+    const repoReport = { name: entry.name, files: [] };
+
+    for ( const f of listMarkdown( repoPath ) ) {
+      if ( summary.emitted + summary.would_emit >= limit ) break;
+      if ( matchesIgnore( f.rel, ignore ) ) continue;
+      let content;
+      try { content = fs.readFileSync( f.full, "utf8" ); } catch ( _ ) { continue; }
+      const ctx = frontmatterFileContext( entry, repoPath, f.rel, f.full, content, { ignore, indexSets } );
+      if ( ctx.diagnostics.auto && !allMode ) continue;
+      if ( !allMode && ctx.reasons.length === 0 ) continue;
+      summary.candidates++;
+
+      const key = `${ctx.repo}\0${ctx.relPath}`;
+      const existing = active.get( key );
+      if ( existing ) {
+        summary.skipped_existing++;
+        repoReport.files.push( { path: ctx.relPath, action: "existing", id: existing.id, reasons: ctx.reasons } );
+        continue;
+      }
+
+      const cnt = buildFrontmatterReviewContinuation( ctx );
+      active.set( key, cnt );
+      if ( checkOnly ) {
+        summary.would_emit++;
+        repoReport.files.push( { path: ctx.relPath, action: "would_emit", id: cnt.id, reasons: ctx.reasons } );
+      } else {
+        saveContinuation( cnt );
+        summary.emitted++;
+        repoReport.files.push( { path: ctx.relPath, action: "emitted", id: cnt.id, reasons: ctx.reasons } );
+        appendAudit( {
+          command:   "frontmatter.delegate",
+          args:      { repo: ctx.repo, file: ctx.relPath, batch: true },
+          result:    { id: cnt.id, reasons: ctx.reasons },
+          narrative: collectNarrative(),
+        } );
+      }
+    }
+    if ( repoReport.files.length ) summary.repos.push( repoReport );
+  }
+
+  if ( JSON_MODE ) { console.log( JSON.stringify( summary, null, 2 ) ); return; }
+  console.log( `\n${hdr( checkOnly ? "Frontmatter delegation (check)" : "Frontmatter delegation" )}  ${dim( summary.timestamp )}\n` );
+  console.log( `  ${bold( "Limit" )}       ${Number.isFinite( limit ) ? limit : "unlimited"}` );
+  console.log( `  ${bold( "Candidates" )}  ${summary.candidates}` );
+  console.log( `  ${bold( checkOnly ? "Would emit" : "Emitted" )}  ${checkOnly ? summary.would_emit : summary.emitted}` );
+  if ( summary.skipped_existing ) console.log( `  ${bold( "Existing" )}    ${summary.skipped_existing}` );
+  console.log();
+  for ( const r of summary.repos ) {
+    console.log( `  ${bold( r.name )}` );
+    for ( const f of r.files ) {
+      const tag = f.action === "existing" ? dim( "existing" ) : ( f.action === "would_emit" ? warn( "would emit" ) : ok( "emitted" ) );
+      console.log( `    ${dim( pad( f.path, 58 ) )} ${tag} ${dim( f.id )}` );
+    }
+    console.log();
+  }
+}
+
+function cmdFrontmatterDelegate( fileArg ) {
+  if ( argv.includes( "--batch" ) ) return cmdFrontmatterDelegateBatch();
+  if ( !fileArg ) die( "Usage: cogentia frontmatter delegate <file> | delegate --batch [--repo <name>] [--limit <n>] [--check] [--all]" );
+  return cmdFrontmatterDelegateOne( fileArg );
+}
+
+function frontmatterStepResultPatch( sr ) {
+  const proposed = sr.frontmatter || sr.proposed_frontmatter || sr.metadata;
+  if ( !proposed || typeof proposed !== "object" || Array.isArray( proposed ) ) {
+    die( "Step result must include a frontmatter object (or proposed_frontmatter / metadata)." );
+  }
+  const removeFields = Array.isArray( sr.remove_fields ) ? sr.remove_fields : [];
+  const invalidKeys = [ ...Object.keys( proposed ), ...removeFields ].filter( k =>
+    !/^[A-Za-z_][A-Za-z0-9_-]*$/.test( String( k ) )
+  );
+  if ( invalidKeys.length ) die( `Invalid frontmatter field name(s): ${invalidKeys.join( ", " )}` );
+  return { proposed, removeFields };
+}
+
+function validateFrontmatterPatch( proposed, removeFields, currentFm, mergedFm, relPath ) {
+  const allowMechanical = argv.includes( "--allow-mechanical" );
+  if ( !allowMechanical ) {
+    for ( const k of Object.keys( proposed ) ) {
+      if ( !FRONTMATTER_MECHANICAL_FIELDS.has( k ) ) continue;
+      if ( String( proposed[ k ] ?? "" ) !== String( currentFm[ k ] ?? "" ) ) {
+        die( `Refusing to change mechanical field "${k}" without --allow-mechanical.` );
+      }
+    }
+    const removedMechanical = removeFields.filter( k => FRONTMATTER_MECHANICAL_FIELDS.has( k ) );
+    if ( removedMechanical.length ) {
+      die( `Refusing to remove mechanical field(s) without --allow-mechanical: ${removedMechanical.join( ", " )}` );
+    }
+  }
+  if ( mergedFm.status && !frontmatterCanonicalStatus( mergedFm.status ) ) {
+    die( `Invalid status "${mergedFm.status}". Expected one of: ${FRONTMATTER_STATUS_VOCABULARY.join( ", " )}` );
+  }
+  const roleValue = mergedFm.corpus_role || mergedFm.document_role;
+  if ( roleValue && !normalizeDocumentRole( roleValue ) ) {
+    die( `Invalid corpus_role/document_role "${roleValue}". Expected one of: ${Array.from( DOCUMENT_ROLE_VALUES ).join( ", " )}` );
+  }
+  if ( !argv.includes( "--partial" ) && !isAutoView( relPath ) ) {
+    const missing = FRONTMATTER_LEVEL_2_REQUIRED.filter( k => !( k in mergedFm ) || mergedFm[ k ] === "" || mergedFm[ k ] == null );
+    if ( missing.length ) die( `Result still lacks required field(s): ${missing.join( ", " )}. Use --partial to apply anyway.` );
+  }
+}
+
+function cmdFrontmatterApply( idArg, stepResultFileArg ) {
+  if ( !idArg || !stepResultFileArg ) {
+    die( "Usage: cogentia frontmatter apply <continuation-id> <step_result.json> [--partial] [--allow-mechanical]" );
+  }
+  const cnt = loadContinuation( idArg );
+  if ( cnt.context?.kind !== FRONTMATTER_REVIEW_KIND ) {
+    die( `Continuation ${idArg} is not a ${FRONTMATTER_REVIEW_KIND} (kind="${cnt.context && cnt.context.kind}").` );
+  }
+  if ( cnt.status !== "active" ) die( `Continuation ${idArg} is not active (status="${cnt.status}").` );
+  if ( !fs.existsSync( stepResultFileArg ) ) die( `Step result file not found: ${stepResultFileArg}` );
+
+  let sr;
+  try { sr = JSON.parse( fs.readFileSync( stepResultFileArg, "utf8" ) ); }
+  catch ( e ) { die( `Cannot parse ${stepResultFileArg}: ${e.message}` ); }
+  if ( !sr.continuation_id ) sr.continuation_id = cnt.id;
+  if ( sr.continuation_id !== cnt.id ) die( `continuation_id mismatch: got "${sr.continuation_id}", expected "${cnt.id}"` );
+  if ( sr.status && sr.status !== "success" ) {
+    die( `frontmatter apply only accepts successful metadata proposals. Use 'cogentia continuation resume ${cnt.id} ${stepResultFileArg}' for status="${sr.status}".` );
+  }
+  sr.status = "success";
+  sr.type = sr.type || "step_result";
+
+  const { proposed, removeFields } = frontmatterStepResultPatch( sr );
+  const { config } = loadConfig();
+  const entry = config.repos.find( r => r.name === cnt.context.repo );
+  if ( !entry ) die( `Repo "${cnt.context.repo}" no longer in registry.` );
+  const repoPath = resolveRepoPath( entry );
+  if ( !repoPath ) die( `Repo "${cnt.context.repo}" not found on disk.` );
+  const fullPath = path.join( repoPath, cnt.context.file );
+  if ( !fs.existsSync( fullPath ) ) die( `File no longer exists: ${cnt.context.repo}/${cnt.context.file}` );
+  const currentHash = sha1OfFile( fullPath );
+  if ( currentHash !== cnt.context.file_hash ) {
+    die( `File modified since frontmatter delegation: ${cnt.context.repo}/${cnt.context.file}. Re-run delegate to refresh the stale guard.` );
+  }
+
+  const content = fs.readFileSync( fullPath, "utf8" );
+  const patchInPlace = !frontmatterIsSimpleFlatYaml( content ) && !argv.includes( "--rewrite-frontmatter" );
+  const currentFm = parseFrontmatter( content ) || {};
+  const mergedFm = { ...currentFm };
+  for ( const k of removeFields ) delete mergedFm[ k ];
+  for ( const [ k, v ] of Object.entries( proposed ) ) {
+    if ( v === undefined ) continue;
+    if ( v === null && removeFields.includes( k ) ) delete mergedFm[ k ];
+    else mergedFm[ k ] = v;
+  }
+
+  validateFrontmatterPatch( proposed, removeFields, currentFm, mergedFm, cnt.context.file );
+
+  const newContent = patchInPlace
+    ? replaceMarkdownFrontmatterFields( content, proposed, removeFields )
+    : replaceMarkdownFrontmatter( content, mergedFm );
+  fs.writeFileSync( fullPath, newContent, "utf8" );
+
+  sr.applied = true;
+  sr.applied_fields = Object.keys( proposed );
+  sr.removed_fields = removeFields;
+  sr.summary = sr.summary || `Applied frontmatter proposal to ${cnt.context.repo}/${cnt.context.file}.`;
+  const delta = applyStepResult( cnt, sr );
+  saveContinuation( cnt );
+  const successor = delta.action === "completed" ? emitDormantSuccessor( cnt ) : null;
+  if ( successor ) {
+    cnt.successor = successor.id;
+    saveContinuation( cnt );
+  }
+
+  appendAudit( {
+    command:   "frontmatter.apply",
+    args:      { id: cnt.id, repo: cnt.context.repo, file: cnt.context.file, step_result_file: stepResultFileArg },
+    result:    { applied_fields: sr.applied_fields, removed_fields: removeFields, successor: successor?.id || null },
+    narrative: collectNarrative(),
+  } );
+
+  const result = {
+    id: cnt.id,
+    repo: cnt.context.repo,
+    file: cnt.context.file,
+    applied_fields: sr.applied_fields,
+    removed_fields: removeFields,
+    successor: successor?.id || null,
+  };
+  if ( JSON_MODE ) { console.log( JSON.stringify( result, null, 2 ) ); return; }
+  console.log( `\n${hdr( "Frontmatter applied" )}\n` );
+  console.log( `  ${bold( "file:" )}    ${cnt.context.repo}/${cnt.context.file}` );
+  console.log( `  ${bold( "fields:" )}  ${sr.applied_fields.join( ", " ) || dim( "(none)" )}` );
+  if ( removeFields.length ) console.log( `  ${bold( "removed:" )} ${removeFields.join( ", " )}` );
+  if ( successor ) console.log( `  ${dim( `Heraclitean successor: ${successor.id} (dormant)` )}` );
+  console.log();
+}
+
 function cmdFrontmatter( sub, ...rest ) {
   switch ( sub ) {
-    case "check":   cmdFrontmatterCheck( rest[ 0 ] ); break;
-    case "promote": cmdFrontmatterPromote( rest[ 0 ] ); break;
-    case "schema":  cmdFrontmatterSchema(); break;
+    case "check":    cmdFrontmatterCheck( rest[ 0 ] ); break;
+    case "delegate": cmdFrontmatterDelegate( rest[ 0 ] ); break;
+    case "apply":    cmdFrontmatterApply( rest[ 0 ], rest[ 1 ] ); break;
+    case "promote":  cmdFrontmatterPromote( rest[ 0 ] ); break;
+    case "schema":   cmdFrontmatterSchema(); break;
     default:
-      die( "Usage: cogentia frontmatter <check [repo] | promote <file> | promote --batch [--repo <name>] [--check] | schema>" );
+      die( "Usage: cogentia frontmatter <check [repo] | delegate <file> | delegate --batch [--repo <name>] [--limit <n>] [--check] [--all] | apply <id> <step_result.json> | promote <file> | promote --batch [--repo <name>] [--check] | schema>" );
   }
 }
 
@@ -8226,7 +10433,7 @@ async function cmdConsolidate() {
     case "whoami":         cmdWhoami();                    break;
     case "stamp":          cmdStamp(  cmdArgs[ 0 ] );       break;
     case "corpus-status":  cmdCorpusStatus( cmdArgs[ 0 ] ); break;
-    case "documents":      cmdDocuments();                  break;
+    case "documents":      cmdDocuments( ...cmdArgs ); break;
     case "forks":          await cmdForks( cmdArgs[ 0 ] );  break;
     case "issues":         await cmdIssues( cmdArgs[ 0 ], cmdArgs[ 1 ], cmdArgs[ 2 ], cmdArgs[ 3 ] ); break;
     case "commit":         cmdCommit( cmdArgs[ 0 ], cmdArgs[ 1 ] ); break;

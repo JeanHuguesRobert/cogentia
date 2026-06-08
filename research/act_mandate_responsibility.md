@@ -1,10 +1,11 @@
 ---
+title: "Act, mandate and responsibility"
 author: "Jean Hugues Noël Robert, baron Mariani"
 affiliation: "Institut Mariani / C.O.R.S.I.C.A."
-license: "CC BY-SA 4.0"
-title: "Act, mandate and responsibility"
 date: "2026-06-05"
+license: "CC BY-SA 4.0"
 status: "working-note"
+corpus_role: "source"
 ---
 
 # Act, mandate and responsibility

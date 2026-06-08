@@ -37,6 +37,7 @@ This repository instantiates the **cognitive infrastructure layer** of the [DHIT
 | Title | Location | Date |
 |---|---|---|
 | [**Cogentia — the framework, in five distinctive moves**](../COGENTIA.md) *(identity document; entry point)* | this repo | 2026-05-13 |
+| [Lien avec C.O.R.S.I.C.A., l’Institut Mariani et PrivAI](acorsica-institut-mariani.md) *(institutional boundary note — documentary links without institutional confusion)* | this repo | 2026-06-03 |
 | [Agent-Resumable CLI — Externalized Judgment, Continuations, and Provider-Neutral Resumption for AI-Compatible CLI Tools](agent_resumable_cli.md) *(defines `cogentia.continuation.v1`, implemented by `scripts/cogentia.js continuation`)* | this repo | 2026-05-14 |
 | [Cognitive Packets — An Envelope and Payload Format for Human–AI and Multi-Agent Cooperation](cognitive_packets.md) *(working paper v0.3 — envelope/payload split ; paired operational prompt in [`prompts/cognitive_packet.md`](../prompts/cognitive_packet.md))* | this repo | 2026-05-21 |
 | [Pipeline — From cognitive packets to source documents and derived products](pipeline.md) *(method note v0.4 — packet-switched, self-applicative; canonical operational method of the corpus)* | this repo | 2026-05-25 |
@@ -56,6 +57,8 @@ This repository instantiates the **cognitive infrastructure layer** of the [DHIT
 | [COGENTIA v1.0 — Prompt d'analyse psychocognitive (FR)](cogentia_prompt_v1.md) | this repo | 2026 |
 | [Cognitive Packet Switching — A Protocol Layer for Routable Ideas, Continuations, and Agent Orchestration](cognitive_packet_switching.md) *(published source document v1.0 — extends the cognitive packets envelope/payload model into a switching/routing layer)* | this repo | 2026-06-01 |
 | [Concept Situation Briefs — A Derived Product Category for Locating Ideas in Origin, Lineage, Neighborhood, Current Relevance, and Use](concept_situation_briefs.md) *(published source document v1.0 — defines a new derived product category)* | this repo | 2026-06-01 |
+| [Cognitive Programming](cognitive_programming.md) *(working paper v0.1.1 — programming model for cognitive operations, packetized work, and reviewable source artifacts)* | this repo | 2026-06-02 |
+| [Act, mandate and responsibility](act_mandate_responsibility.md) *(working note — compact doctrine linking action, delegated mandate, and accountability)* | this repo | 2026-06-05 |
 | [Concept Situation Brief — Cognitive Packet Switching](derived_products/concept_situation_brief_cognitive_packet_switching.md) *(derived product v0.1 — first concept situation brief, applied to cognitive packet switching)* | this repo | 2026-06-01 |
 | [TCP/IP for Ideas: Cognitive Packets for Agent Orchestration](derived_products/tcp_ip_for_ideas_hacker_news.md) *(derived product v0.1 — Hacker News optimized form of Cognitive Packet Switching)* | this repo | 2026-06-01 |
 | [Cogentia Commons — Method Packets, Continuations, and the Generative Corpus](cogentia_commons_method_packets.md) *(working paper v0.1 — infrastructure for producing/transmitting/criticising method packets across humans, agents, tools, repos)* | this repo | 2026-05-22 |
