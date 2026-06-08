@@ -9,7 +9,6 @@ version: "0.3"
 license: "CC BY-SA 4.0 for text; MIT for associated schemas or code"
 spdx: "CC-BY-SA-4.0"
 language: "en"
-repository: "JeanHuguesRobert/cogentia"
 canonical_url: https://github.com/JeanHuguesRobert/cogentia/blob/main/research/cogentia_continuation_packet_routing.md
 related_projects:
   - "Cogentia"
@@ -45,6 +44,7 @@ ai_assisted_by:
   - "ChatGPT"
   - "Grok critique of v0.1 and v0.2"
 last_stamped_at: 2026-06-01
+corpus_role: "source"
 ---
 
 # Cogentia as a Cognitive Continuation Packet Router
@@ -1053,9 +1053,9 @@ This does not replace cogentigraphic distillation. It gives it a first concrete 
 ### Weaknesses
 
 - The routing ontology remains provisional.
-- COP integration was described conceptually in earlier versions; key elements of the routing substrate (generalized SubBus with per-topic scoping, idempotent federation for mesh propagation of interest in packet kinds / capabilities, topic-aware scheduling, and standard cop.task.* / cop.job.* events) are now implemented in `inseme/packages/cop-kernel` (see bus.js, scheduler.js, jobScheduler.js, Cop-kerneltasks.js and the bac-à-sable federation-demo + raix-obsolescence-resilience + job-scheduler-stress-test scenarios). The "COP pass" (mapping routing decisions to Events / sub-buses / federation) is actively being realized.
+- COP integration was described conceptually in earlier versions; key elements of the routing substrate (generalized SubBus with per-topic scoping, idempotent federation for mesh propagation of interest in packet kinds / capabilities, topic-aware scheduling, and standard cop.task.* / cop.job.* events) are now implemented in `inseme/packages/cop-kernel` (see bus.js, scheduler.js, jobScheduler.js, Cop-kerneltasks.js, capabilityRegistry.js and the bac-à-sable cognitive-packet-router-demo + federation-demo + raix-obsolescence-resilience scenarios). The "COP pass" (mapping routing decisions to Events / sub-buses / federation) is actively being realized. Additional 2026-06 restart work included SubBus listener hygiene (once-per-type parent registration + proper unsub on last handler + clear) and async handler delivery for reliable routed publish chains, plus `resetForTest()` + pipeline auto-reset for schedulers/jobSchedulers/registry to prevent timer/pending accumulation across repeated heavy router+mesh scenarios.
 - Security and malicious packet handling remain underdeveloped.
-- The capability registry is not yet specified.
+- A lightweight in-memory `CapabilityRegistry` stub (register/has/canSatisfy/list/resetForTest) is now implemented and wired into the reactive router agent demo in the bac-à-sable (the agent consults it for `requiredCapability` while still reading *only the envelope*). This provides a first concrete "method-governed routing policy" layer / capability registry. A production backing could delegate to `agentRegistry` + capabilities from cop_agents. See `inseme/packages/cop-kernel/src/capabilityRegistry.js` and the updated `cognitive-packet-router-demo.js`.
 - The paper assumes familiarity with the corpus despite efforts at self-containment.
 - The political consequences are only sketched.
 
@@ -1063,7 +1063,7 @@ This does not replace cogentigraphic distillation. It gives it a first concrete 
 
 ```text
 Level A — Established in corpus:
-  cognitive packets, continuations, Cogentia pipeline, Fractanet, COP direction, and the COP Bus + federation + per-topic sub-bus implementation as the decentralized switching fabric for continuation packets (see cop-kernel bus.js and related bac-à-sable scenarios exercising Fractanet mesh routing).
+  cognitive packets, continuations, Cogentia pipeline, Fractanet, COP direction, the COP Bus + federation + per-topic sub-bus implementation as the decentralized switching fabric for continuation packets (see cop-kernel bus.js, scheduler.js, capabilityRegistry.js and bac-à-sable scenarios including the cognitive-packet-router-demo which now exercises a reactive subscribing router agent + capability stub on top of the envelope), plus hygiene work (SubBus unsub hygiene + async delivery, resetForTest + auto-reset for schedulers/registry to keep long-running router+mesh experiments stable).
 
 Level B — Defensible architectural synthesis:
   Cogentia as method-governed router.
@@ -1172,13 +1172,15 @@ This v0.3 publication candidate opens the following continuations:
    Extract `cogentia.routing_decision.v0.1.schema.json` and `cogentia.routing_packet_projection.v0.1.schema.json`.
 
 4. **Capability registry pass**  
-   Define a minimal capability ontology: `source_inventory`, `legal_caution`, `ocr_quality_review`, `public_formulation`, etc.
+   (Partially complete) A lightweight in-memory stub + resetForTest + integration into a reactive router agent demo now exists in `inseme/packages/cop-kernel/src/capabilityRegistry.js` and the bac-à-sable `cognitive-packet-router-demo.js`. Next: richer `canSatisfy` logic (providers, risk, method constraints), minimal ontology examples, and possible backing via agentRegistry.
 
 5. **Dataset pass**  
    Generate synthetic training examples for a routing model: input packet -> routing decision -> evaluation criteria.
 
 6. **COP pass**  
-   Map the routing decision schema to COP Events, Artifacts, Continuations, Scheduler behavior, and sub-bus federation.
+   (Actively advancing) Core substrate (SubBus, federation, per-topic, topic-aware schedulers, Cop-kerneltasks helpers, asCognitivePacket + cop.packet.* emission) implemented and exercised. Hygiene (listener cleanup, async delivery, resets) added in 2026-06 restart. The cognitive-packet-router-demo now demonstrates a full envelope-only reactive agent + capability stub loop on federated topic sub-buses. See `inseme/packages/cop-kernel/docs/SESSION_RESUME_cognitive-packet-router-2026-06.md` and `cognitive-packet-switching-compatibility.md` for status. Next: tighter mapping of routing decisions into cop.task.* / cop.job.* / cop.packet.* events and JobScheduler policies.
+
+   **Real adoption:** The Ophelia agent (inseme `brique-ophelia` / the civic assembly mediator) now uses COP from now on for its core orchestration (per user: "I believe we should have the Ophelia agent use COP from now on"). runOperator creates COP Tasks/Steps for sessions+turns, populates CapabilityRegistry from its ROLES, consults cogentiaRoutePacket per iteration (envelope-only hybrid policy), emits cop.packet.created via asCognitivePacket, and completes lifecycle. Cleans (aliases, shape fixes, scope bugs) done first. This makes the "higher true router" agent a first-class live user of the packet routing substrate. See resume "Picked: Ophelia..." section.
 
 7. **Security pass**  
    Define validation against malicious packets, forged provenance, prompt injection, and poisoned continuations.

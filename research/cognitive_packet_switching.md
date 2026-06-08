@@ -2,13 +2,12 @@
 title: "Cognitive Packet Switching"
 subtitle: "A Protocol Layer for Routable Ideas, Continuations, and Agent Orchestration"
 version: "1.0"
-status: "published source document"
+status: "published"
 date: "2026-06-01"
 author: "Jean Hugues Noël Robert, baron Mariani"
 affiliation: "Institut Mariani / C.O.R.S.I.C.A., 1 cours Paoli, F-20250 Corte, Corsica"
 license: "CC BY-SA 4.0"
 language: "en"
-repository: "JeanHuguesRobert/cogentia"
 intended_path: "research/cognitive_packet_switching.md"
 tags:
   - cogentia
@@ -54,6 +53,7 @@ derived_products_planned:
   - "Agent orchestration by cognitive packets — technical explainer"
 canonical_url: https://github.com/JeanHuguesRobert/cogentia/blob/main/research/cognitive_packet_switching.md
 last_stamped_at: 2026-06-01
+corpus_role: "source"
 ---
 
 # Cognitive Packet Switching
@@ -917,7 +917,7 @@ If the protocol cannot work with Markdown, JSON, Git, copy/paste, and ordinary e
 | Corpus fidelity | Strong | The document integrates existing source documents without contradicting them. |
 | Technical clarity | Good | Envelope/payload, router/handler, continuation, and implementation-profile distinctions are explicit. |
 | Novelty discipline | Good | Non-claims reduce overclaiming; prior-art mapping remains incomplete. |
-| Implementation readiness | Stronger than v0.3 | Two implementation profiles are now identified: Git/corpus persistence and COP event orchestration. Key COP switching substrate (SubBus + per-topic scoping + federation + interest propagation for mesh routing of continuation packets, topic-aware COPJobScheduler and Task helpers) implemented in cop-kernel (bus.js etc.) and exercised in bac-à-sable; conceptually aligned and operationally advancing the "packet switching" layer. |
+| Implementation readiness | Stronger (2026-06 restart) | Two implementation profiles identified: Git/corpus and COP event. Key COP switching substrate (SubBus + per-topic + federation + interest propagation, topic-aware COPJobScheduler/Task helpers) in cop-kernel and exercised in bac-à-sable. 2026-06 work: SubBus listener hygiene + proper async delivery (no leaks, reliable routed chains), `resetForTest()` + auto-reset in pipeline (schedulers, jobSchedulers, new CapabilityRegistry) to prevent timer/pending accumulation, `asCognitivePacket` improvements (defaults, validation, cop.packet.created emission), reactive subscribing "Cogentia router agent" demo (`cognitive-packet-router-demo.js`) that also wires a lightweight `CapabilityRegistry` stub for `requiredCapability` decisions (still envelope-only). See `inseme/packages/cop-kernel/docs/SESSION_RESUME_cognitive-packet-router-2026-06.md` + compatibility report. Conceptually aligned and operationally advancing the switching layer while actively avoiding technical debt. |
 | Public usability | Strong | “TCP/IP for Ideas” is memorable if kept as analogy, not identity. |
 | Governance relevance | Good | Capacity and obscurity links are present but do not dominate the technical paper. |
 | Risk handling | Good | Failure modes now include runtime/corpus mismatch. |

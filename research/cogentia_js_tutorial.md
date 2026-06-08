@@ -10,7 +10,7 @@ license: "CC BY-SA 4.0"
 language: "en"
 target_implementation: "cogentia.js v0.10.0"
 derived_by: agent
-derived_from: "scripts/cogentia.js source + manifest; corpus doctrinal papers (see Associated documents)"
+derived_from: "scripts/cogentia.js source and manifest; research/agent_resumable_cli.md; research/cognitive_packets.md; research/pipeline.md; research/derived_products.md"
 tags:
   - cogentia
   - cogentia.js
@@ -34,6 +34,8 @@ ai_assisted_by:
   - "Claude"
 canonical_url: https://github.com/JeanHuguesRobert/cogentia/blob/main/research/cogentia_js_tutorial.md
 last_stamped_at: 2026-06-01
+corpus_role: "derived"
+derived_product_type: "tutorial"
 ---
 
 > **Auto-generated tutorial.** This document was produced from the live `cogentia.js v0.10.0` source, its manifest, and the corpus's existing doctrinal papers (see *Associated documents* below). It is *descriptive of the current implementation* and *prescriptive enough* to seed a faithful re-implementation in another language, persistence layer, or rendering format. Treat behaviour observed in the reference implementation as authoritative where the prose is ambiguous; treat documented invariants as load-bearing.
