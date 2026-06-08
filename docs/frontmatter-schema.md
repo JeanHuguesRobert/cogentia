@@ -206,7 +206,6 @@ L’objectif est que chaque nouveau dépôt ingéré rende les suivants un peu p
 ### Backlinks
 
 *These documents link to this file:*
-- [Frontmatter Migration — v0.1](frontmatter-migration-v0.1.md)
 - [Frontmatter Synonym Mapping — v0.1](frontmatter-synonym-mapping.md)
 - [Concept Index — cogentia](../research/concepts.md)
 - [Corpus Status — cogentia](../research/corpus-status.md)

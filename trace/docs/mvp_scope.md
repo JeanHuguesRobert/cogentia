@@ -37,3 +37,12 @@ It should read a local OpenAI export, extract conversations, produce `events.jso
 ## Success criterion
 
 The MVP succeeds when a local export can be transformed into normalized local traces without exposing private data and without pretending to automate human judgment.
+
+
+<!-- BEGIN_AUTO: backlinks -->
+### Backlinks
+
+*These documents link to this file:*
+- [Research Index — Cogentia](../../research/index.md)
+
+<!-- END_AUTO: backlinks -->

@@ -32,3 +32,12 @@ Typical cases:
 The tool suggests and prepares. The human judges and decides.
 
 This follows the pattern already explored in `cogentia.js`: externalized judgment through continuations.
+
+
+<!-- BEGIN_AUTO: backlinks -->
+### Backlinks
+
+*These documents link to this file:*
+- [Research Index — Cogentia](../../research/index.md)
+
+<!-- END_AUTO: backlinks -->

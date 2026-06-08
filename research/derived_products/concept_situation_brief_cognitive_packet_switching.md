@@ -486,3 +486,13 @@ Its central insight is that the stability problem in AI-assisted work may not be
 It may require a better unit of circulation.
 
 That unit is the cognitive packet.
+
+
+<!-- BEGIN_AUTO: backlinks -->
+### Backlinks
+
+*These documents link to this file:*
+- [Corpus Status — cogentia](../corpus-status.md)
+- [Research Index — Cogentia](../index.md)
+
+<!-- END_AUTO: backlinks -->

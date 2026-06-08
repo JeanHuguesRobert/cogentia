@@ -149,6 +149,7 @@ The framework exists to be argued against, in the form it itself defined.
 - [Cogentia Commons — Substantive Plugin Sub-Specifications](research/cogentia_commons_substantive_plugins.md)
 - [cogentia.js — Tutorial and Near-Specification](research/cogentia_js_tutorial.md)
 - [The Sovereign Digital Twin: Cogentia, Cogentigram, Cogentiscope](research/cogentia-digital-twin.md)
+- [Cognitive Packet Switching](research/cognitive_packet_switching.md)
 - [Corpus Status — cogentia](research/corpus-status.md)
 - [Research Index — Cogentia](research/index.md)
 - [Pipeline](research/pipeline.md)

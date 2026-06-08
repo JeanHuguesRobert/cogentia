@@ -1502,6 +1502,7 @@ The novelty of cognitive packets is therefore not the existence of the pattern, 
 - [cogentia.js — Tutorial and Near-Specification](cogentia_js_tutorial.md)
 - [The Sovereign Digital Twin: Cogentia, Cogentigram, Cogentiscope](cogentia-digital-twin.md)
 - [Cogentigraphic Distillation](cogentigraphic_distillation.md)
+- [Cognitive Packet Switching](cognitive_packet_switching.md)
 - [Concept Index — cogentia](concepts.md)
 - [Corpus Status — cogentia](corpus-status.md)
 - [Research Index — Cogentia](index.md)

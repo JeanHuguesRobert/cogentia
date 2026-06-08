@@ -372,3 +372,13 @@ It answers a recurring need:
 It makes an idea easier to criticize, compare, publish, implement, and transform.
 
 In the Cogentia method, it should become one of the standard products generated after a significant source document is stabilized.
+
+
+<!-- BEGIN_AUTO: backlinks -->
+### Backlinks
+
+*These documents link to this file:*
+- [Corpus Status — cogentia](corpus-status.md)
+- [Research Index — Cogentia](index.md)
+
+<!-- END_AUTO: backlinks -->

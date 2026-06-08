@@ -974,3 +974,13 @@ or:
 ```text
 inseme/packages/cop-core/COGNITIVE_PROGRAMMING_PROFILE.md
 ```
+
+
+<!-- BEGIN_AUTO: backlinks -->
+### Backlinks
+
+*These documents link to this file:*
+- [Corpus Status — cogentia](corpus-status.md)
+- [Research Index — Cogentia](index.md)
+
+<!-- END_AUTO: backlinks -->

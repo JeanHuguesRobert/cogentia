@@ -703,3 +703,13 @@ Productions manifest.
 Traces decay or are renewed.
 Archives allow re-distillation.
 ```
+
+
+<!-- BEGIN_AUTO: backlinks -->
+### Backlinks
+
+*These documents link to this file:*
+- [Corpus Status — cogentia](corpus-status.md)
+- [Research Index — Cogentia](index.md)
+
+<!-- END_AUTO: backlinks -->

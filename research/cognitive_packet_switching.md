@@ -967,3 +967,13 @@ The continuation gives future.
 The trace gives accountability.  
 The corpus gives memory.  
 The event substrate gives causality.
+
+
+<!-- BEGIN_AUTO: backlinks -->
+### Backlinks
+
+*These documents link to this file:*
+- [Corpus Status — cogentia](corpus-status.md)
+- [Research Index — Cogentia](index.md)
+
+<!-- END_AUTO: backlinks -->

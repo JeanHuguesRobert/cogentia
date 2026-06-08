@@ -1121,6 +1121,7 @@ A compliant CLI does not hide judgment. It exposes judgment as a continuation, c
 - [Agent-Resumable CLI](agent_resumable_cli.md)
 - [cogentia.js — Tutorial and Near-Specification](cogentia_js_tutorial.md)
 - [The Sovereign Digital Twin: Cogentia, Cogentigram, Cogentiscope](cogentia-digital-twin.md)
+- [Cognitive Packet Switching](cognitive_packet_switching.md)
 - [Cognitive Packets](cognitive_packets.md)
 - [Concept Index — cogentia](concepts.md)
 - [Corpus Status — cogentia](corpus-status.md)

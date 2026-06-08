@@ -1371,6 +1371,7 @@ A possible v0.5 of this paper would integrate these two sections into the main n
 - [Agent-Resumable CLI](agent_resumable_cli.md)
 - [cogentia.js — Tutorial and Near-Specification](cogentia_js_tutorial.md)
 - [Cogentigraphic Distillation](cogentigraphic_distillation.md)
+- [Cognitive Packet Switching](cognitive_packet_switching.md)
 - [Cognitive Packets](cognitive_packets.md)
 - [Concept Index — cogentia](concepts.md)
 - [Corpus Status — cogentia](corpus-status.md)

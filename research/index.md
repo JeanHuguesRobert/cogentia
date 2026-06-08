@@ -3,7 +3,7 @@ title: "Research Index — Cogentia"
 description: "A map of what is, what is in progress, and what could be."
 layout: default
 nav_order: 1
-last_modified_at: 2026-05-22
+last_modified_at: 2026-06-08
 license: CC BY-SA 4.0
 affiliation: Institut Mariani / C.O.R.S.I.C.A., 1 cours Paoli, F-20250 Corte, Corsica
 date: 2026-05-22
@@ -87,6 +87,20 @@ This repository instantiates the **cognitive infrastructure layer** of the [DHIT
 | [Packetized Gravity Networks](https://github.com/JeanHuguesRobert/FractaVolta/blob/main/PGN.md) | FractaVolta |
 | [Inseme — deployable platform + COP runtime](https://github.com/JeanHuguesRobert/inseme/blob/main/research/index.md) *(targets brique-cogentia-commons in v1)* | inseme |
 | [Inox — language and runtime substrate](https://github.com/JeanHuguesRobert/Inox/blob/master/research/inox-spec.md) *(concatenative stack VM; long-term Fractanet node runtime; cognitive-infrastructure tooling may eventually compile/run on Inox)* | Inox |
+
+---
+
+## Operational Trace Documents
+
+*Implementation notes for Cogentia Trace. These documents are indexed for navigation, without promoting them to source doctrine.*
+
+| Title | Location | Date |
+|---|---|---|
+| [Cogentia Trace — Architecture](../trace/docs/architecture.md) *(local-first architecture for raw preservation, normalized events, continuations and derived outputs)* | this repo | 2026-06-03 |
+| [Cogentia Trace — Continuations](../trace/docs/continuations.md) *(judgment boundaries and resumable processing for trace import/classification)* | this repo | 2026-06-03 |
+| [Cogentia Trace — Inversion of Control](../trace/docs/inversion_of_control.md) *(control-flow note for agent/tool cooperation around trace processing)* | this repo | 2026-06-03 |
+| [Cogentia Trace — MVP Scope](../trace/docs/mvp_scope.md) *(minimum local-first scope for importing and normalizing ChatGPT/OpenAI exports)* | this repo | 2026-06-03 |
+| [Cogentia Trace — Visibility Policy](../trace/docs/visibility_policy.md) *(public/private boundary rules for trace material)* | this repo | 2026-06-03 |
 
 ---
 

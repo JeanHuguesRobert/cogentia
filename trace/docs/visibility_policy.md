@@ -32,3 +32,12 @@ Classification is not a purely technical operation. When the classifier cannot d
 ## Safety maxim
 
 Everything may be preserved; not everything should be indexed; not everything indexed should be vectorized; not everything vectorized should be published.
+
+
+<!-- BEGIN_AUTO: backlinks -->
+### Backlinks
+
+*These documents link to this file:*
+- [Research Index — Cogentia](../../research/index.md)
+
+<!-- END_AUTO: backlinks -->

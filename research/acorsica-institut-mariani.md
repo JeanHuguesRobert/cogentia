@@ -58,3 +58,14 @@ Les liens entre Cogentia, C.O.R.S.I.C.A., l’Institut Mariani, PrivAI et les au
 Ils ne valent ni fusion institutionnelle, ni transfert de données, ni portage juridique, ni financement, ni endorsement politique.
 
 > L’interconnexion documentaire ne vaut pas confusion institutionnelle.
+
+
+<!-- BEGIN_AUTO: backlinks -->
+### Backlinks
+
+*These documents link to this file:*
+- [Lien avec C.O.R.S.I.C.A., l’Institut Mariani et PrivAI](../acorsica-institut-mariani.md)
+- [Corpus Status — cogentia](corpus-status.md)
+- [Research Index — Cogentia](index.md)
+
+<!-- END_AUTO: backlinks -->

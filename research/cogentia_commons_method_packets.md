@@ -792,5 +792,7 @@ This draft should be continued in four directions:
 *These documents link to this file:*
 - [cogentia.js — Tutorial and Near-Specification](cogentia_js_tutorial.md)
 - [Cognitive Packets](cognitive_packets.md)
+- [Corpus Status — cogentia](corpus-status.md)
+- [Research Index — Cogentia](index.md)
 
 <!-- END_AUTO: backlinks -->

@@ -143,3 +143,13 @@ It preserves the structured facts and ambiguities needed to analyse responsibili
 Do not wait for the perfect future protocol.
 
 Every trace created now should already move toward explicit act, role, mandate and responsibility metadata.
+
+
+<!-- BEGIN_AUTO: backlinks -->
+### Backlinks
+
+*These documents link to this file:*
+- [Corpus Status — cogentia](corpus-status.md)
+- [Research Index — Cogentia](index.md)
+
+<!-- END_AUTO: backlinks -->

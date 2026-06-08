@@ -433,3 +433,14 @@ Checkpoint for routing.
 Commit for stabilized memory.
 Source document for corpus anchoring.
 ```
+
+
+<!-- BEGIN_AUTO: backlinks -->
+### Backlinks
+
+*These documents link to this file:*
+- [Corpus Status — cogentia](corpus-status.md)
+- [Research Index — Cogentia](index.md)
+- [Simplicité d'action](simplicite_action.md)
+
+<!-- END_AUTO: backlinks -->
