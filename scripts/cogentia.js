@@ -2125,7 +2125,7 @@ function cmdStatus() {
     const ignored        = mdFiles.filter( f => matchesIgnore( f.rel, ignorePatterns ) );
     const ignoredSet     = new Set( ignored.map( f => f.rel ) );
     const unreferenced   = mdFiles.filter( f => {
-      if ( f.rel === "research/index.md" ) return false;
+      if ( isIndexReferenceExemptMarkdownFile( f ) ) return false;
       if ( ignoredSet.has( f.rel ) ) return false;
       return !referenced.has( f.full );
     } );
@@ -2221,7 +2221,7 @@ function cmdScan() {
     const ignored        = mdFiles.filter( f => matchesIgnore( f.rel, ignorePatterns ) );
     const ignoredSet     = new Set( ignored.map( f => f.rel ) );
     const unreferenced   = mdFiles.filter( f => {
-      if ( f.rel === "research/index.md" ) return false;
+      if ( isIndexReferenceExemptMarkdownFile( f ) ) return false;
       if ( ignoredSet.has( f.rel ) ) return false;
       return !referenced.has( f.full );
     } );
@@ -3011,6 +3011,16 @@ function documentRedirectTargetRef( fm = {} ) {
 function isDocumentRedirectFrontmatter( fm = {} ) {
   return frontmatterCanonicalStatus( fm.status ) === "alias"
       || Boolean( frontmatterMarkdownRefOrRawPath( fm.redirect_to ) );
+}
+
+function isIndexReferenceExemptMarkdownFile( f ) {
+  const rel = f.rel.replace( /\\/g, "/" );
+  if ( rel === "research/index.md" ) return true;
+
+  let content = "";
+  try { content = fs.readFileSync( f.full, "utf8" ); } catch ( _ ) { return false; }
+  const fm = parseFrontmatter( content );
+  return Boolean( fm && isDocumentRedirectFrontmatter( fm ) );
 }
 
 function documentRedirectInfo( fm = {} ) {
@@ -3817,6 +3827,7 @@ function documentMatchesQueryFilters( d, f ) {
   if ( Number.isFinite( f.minCrossRepo ) && crossLinks < f.minCrossRepo ) return false;
   if ( f.crossRepoOnly && crossLinks === 0 ) return false;
   if ( f.noInbound && d.links.in_total !== 0 ) return false;
+  if ( f.notIndexed && d.role === "alias" ) return false;
   if ( f.notIndexed && ( d.index.published || d.index.referenced ) ) return false;
   if ( f.missingDerivedFrom && !( d.role === "derived" && d.derivation.derived_from.length === 0 ) ) return false;
 
@@ -7798,7 +7809,7 @@ function cmdState() {
         const ignored        = mdFiles.filter( f => matchesIgnore( f.rel, ignorePatterns ) );
         const ignoredSet     = new Set( ignored.map( f => f.rel ) );
         const unreferenced   = mdFiles.filter( f => {
-          if ( f.rel === "research/index.md" ) return false;
+          if ( isIndexReferenceExemptMarkdownFile( f ) ) return false;
           if ( ignoredSet.has( f.rel ) )       return false;
           return !referenced.has( f.full );
         } );
@@ -9615,7 +9626,7 @@ function cmdLint() {
       const referenced   = buildReferencedFileSet( indexPath, indexContent );
       const ignoredSet   = new Set( mdFiles.filter( f => matchesIgnore( f.rel, ignore ) ).map( f => f.rel ) );
       for ( const f of mdFiles ) {
-        if ( f.rel === "research/index.md" ) continue;
+        if ( isIndexReferenceExemptMarkdownFile( f ) ) continue;
         if ( ignoredSet.has( f.rel ) ) continue;
         if ( !referenced.has( f.full ) ) unrefCount++;
       }
