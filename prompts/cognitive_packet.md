@@ -3,12 +3,24 @@ title: "Cognitive Packet Prompt Contract"
 subtitle: "Envelope and Payload — Continuations by Copy or by Reference"
 author: "Jean Hugues Noël Robert, baron Mariani"
 date: "2026-05-21"
-status: "Prompt contract"
+status: "prompt-contract — working"
 version: "0.3"
 license: "CC BY-SA 4.0"
 canonical_path: "cogentia/prompts/cognitive_packet.md"
-related_research: "cogentia/research/cognitive_packets.md"
 canonical_url: https://github.com/JeanHuguesRobert/cogentia/blob/main/prompts/cognitive_packet.md
+related_research: "cogentia/research/cognitive_packets.md"
+related_prompts:
+  - "cogentia/prompts/document_conversation_frame.md"
+  - "cogentia/prompts/redactor.md"
+  - "cogentia/prompts/reviewer.md"
+  - "cogentia/prompts/conversation_closure.md"
+related_research:
+  - "cogentia/research/cognitive_packets.md"
+  - "cogentia/research/pipeline.md"
+  - "cogentia/research/derived_products.md"
+  - "barons-Mariani/research/second_method.md"
+agent_neutral: true
+human_validation_required: true
 last_stamped_at: 2026-05-21
 ---
 
