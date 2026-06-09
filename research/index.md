@@ -3,7 +3,7 @@ title: "Research Index — Cogentia"
 description: "A map of what is, what is in progress, and what could be."
 layout: default
 nav_order: 1
-last_modified_at: 2026-06-08
+last_modified_at: 2026-06-09
 license: CC BY-SA 4.0
 affiliation: Institut Mariani / C.O.R.S.I.C.A., 1 cours Paoli, F-20250 Corte, Corsica
 date: 2026-05-22
@@ -49,6 +49,7 @@ This repository instantiates the **cognitive infrastructure layer** of the [DHIT
 | [Simplicité d'action — KISS, Small is beautiful, Worse is better (FR)](simplicite_action.md) *(working-note v0.1 — éthique de l'action contre la sur-ingénierie, l'analysis paralysis et les pieds qui décollent du sol ; rigueur sur la trace, simplicité sur le geste)* | this repo | 2026-05-30 |
 | [Cogentia Workflows](cogentia_workflows.md) *(private/group/public/federated workflow architecture, draft v0.2)* | this repo | 2026-05-11 |
 | [Cogentia Commons Working Paper](Cogentia_Commons_Working_Paper.md) | this repo | 2026 |
+| [Cogentia Commons — Public by Default, Private by Exception](cogentia_commons_visibility_and_private_modes.md) *(source document v0.1 — visibility modes, private communities, patent-oriented exploration, and private-use financing of the commons; addresses cogentia#34)* | this repo | 2026-06-09 |
 | [Cogentia and Cogentigram](Cogentia-and-Cogentigram.md) | this repo | 2026 |
 | [The Sovereign Digital Twin — Cogentia, Cogentigram, Cogentiscope](cogentia-digital-twin.md) | this repo | 2026-04 |
 | [Individual and Collective Digital Twins](individual_and_collective_digital_twins.md) *(working paper v0.1 — dialectic between sovereign twins of natural persons (Marie-Louise case) and of legal persons (C.O.R.S.I.C.A. case); extends the twin family — Cogentigram, structural signatures, cogentigraphic distillation; addresses cogentia#14)* | this repo | 2026-05-31 |
