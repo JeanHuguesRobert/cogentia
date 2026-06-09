@@ -955,6 +955,8 @@ payload:
 
 This document is a v0.1.1 working paper.
 
+Consolidation note, 2026-06-09: the document is now indexed as a Cogentia source document and the neighboring packet/continuation papers have been aligned with the current `cogentia.continuation.v2` CLI surface. No `research/cognitive_programming_mvp.md` and no `COGNITIVE_PROGRAMMING_PROFILE.md` were found in the local corpus. The profile/MVP continuation therefore remains open.
+
 It should be corrected by:
 
 - tightening definitions;

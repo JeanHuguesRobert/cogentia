@@ -25,8 +25,8 @@ related_projects:
   - "Cognitive Packets"
   - "Cognitive Packet Switching"
   - "Ubikia"
-derived_products_planned:
-  - "Concept Situation Brief — Cognitive Packet Switching"
+derived_products_created:
+  - "research/derived_products/concept_situation_brief_cognitive_packet_switching.md"
 canonical_url: https://github.com/JeanHuguesRobert/cogentia/blob/main/research/concept_situation_briefs.md
 last_stamped_at: 2026-06-01
 ---
@@ -372,6 +372,16 @@ It answers a recurring need:
 It makes an idea easier to criticize, compare, publish, implement, and transform.
 
 In the Cogentia method, it should become one of the standard products generated after a significant source document is stabilized.
+
+## 15. Consolidation note, 2026-06-09
+
+The first instance of this category now exists: [Concept Situation Brief — Cognitive Packet Switching](derived_products/concept_situation_brief_cognitive_packet_switching.md). The category is therefore no longer merely planned.
+
+Open continuations:
+
+1. Use the first instance as the review specimen for the product category.
+2. Decide whether future briefs should be scheduled by generic `continuation` objects, a restored grouped derived-product scheduler, or the future Web workspace.
+3. Keep current-relevance sections explicitly dated, because this derived product category is intentionally exposed to temporal drift.
 
 
 <!-- BEGIN_AUTO: backlinks -->

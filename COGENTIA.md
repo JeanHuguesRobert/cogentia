@@ -3,14 +3,14 @@ title: "Cogentia"
 description: "Knowledge production under AI conditions, in five distinctive moves"
 layout: default
 nav_order: 0
-last_modified_at: 2026-05-31
+last_modified_at: 2026-06-09
 author: "Jean Hugues Noël Robert, baron Mariani"
 affiliation: "Institut Mariani / C.O.R.S.I.C.A., 1 cours Paoli, F-20250 Corte, Corsica"
 license: "CC BY-SA 4.0"
 canonical_url: https://github.com/JeanHuguesRobert/cogentia/blob/main/COGENTIA.md
 last_stamped_at: 2026-06-01
 date: "2026-05-13"
-status: "draft — auto-filled (frontmatter cleanup)"
+status: "published identity document — v2 CLI consolidation"
 ---
 
 # Cogentia
@@ -41,7 +41,7 @@ The commitment, in five distinctive moves:
 
 Cogentia does not claim the method works. It runs the method on its own published corpus, in public, with every commit timestamped and every objection recorded. The corpus is the demonstration. The git history is the proof.
 
-In operation: `cogentia.js scan` makes every unanchored claim visible. `cogentia.js corpus-status` auto-regenerates the *"what is currently demonstrated"* view of each registered repo. This document is itself in the corpus it describes — fork it, object to it, propose a Revision: the protocol applies to itself before it applies to anyone else.
+In operation, the current `scripts/cogentia.js` v2 surface lets agents query and inspect documents, detect index gaps, plan/apply/verify generated corpus views, and check git drift. Earlier command names such as `scan` and `corpus-status` are part of the tool's design history; the current stable entry points are `docs`, `corpus`, `state`, `git`, and `continuation`. This document is itself in the corpus it describes — fork it, object to it, propose a Revision: the protocol applies to itself before it applies to anyone else.
 
 GitHub Issues serve as the Commons’ procedural memory in tension: they record objections, continuations, missing sources and proposed transformations before these are ready to become commits. They do not replace the corpus; they protect unfinished work from disappearing before it can be reviewed, transformed or deliberately rejected.
 
@@ -77,7 +77,7 @@ Within Layer 4 (cognitive infrastructure, where Cogentia lives), skin-in-the-gam
 
 *A typed protocol object, not a prompt.*
 
-A Continuation in Cogentia carries `task`, `context`, `alternatives`, `expected_result_schema`, `constraints.skin_in_the_game`, `resume` metadata, and a state machine with explicit `failed_alternatives` for backtracking. Resumption is validated against the schema before any state mutation. Failed branches are recorded, not erased.
+A Continuation in Cogentia is the explicit object created when deterministic tooling reaches a judgment boundary. The fuller `cogentia.continuation.v1` research pattern carried `task`, `context`, `alternatives`, `expected_result_schema`, constraints, resume metadata, and failed-branch history. The current `scripts/cogentia.js` v2 object is deliberately smaller: `id`, `status`, `kind`, `title`, `question`, `subject`, `context`, `expected_response`, `resume`, and resolution/history metadata. The invariant is unchanged: the tool exposes missing judgment instead of hiding it inside an embedded provider.
 
 The soundness test is binding:
 
@@ -86,6 +86,8 @@ The soundness test is binding:
 > *If yes, the protocol is sound. If no, the protocol is contaminated.*
 
 No vendor-typed fields. Agents are replaceable; the reasoning trace is not.
+
+Consolidation note, 2026-06-09: the identity claim is stable, but the operational CLI has been narrowed since the earlier v0.10/v1 documentation. Treat current behavior as the v2 CLI plus open continuation paths, not as the whole historical command surface.
 
 → [`scripts/cogentia.js continuation ...`](scripts/cogentia.js); [`inseme/packages/cop-core/Architecture.md`](https://github.com/JeanHuguesRobert/inseme/blob/main/packages/cop-core/Architecture.md) §2.7 (COP inheritance).
 

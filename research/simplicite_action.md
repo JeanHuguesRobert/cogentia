@@ -108,6 +108,10 @@ Cela inscrit Occam dans la doctrine anti-capture globale du corpus (cf [Democrat
 ```yaml
 continuation:
   status: "working-note posée comme rappel méthodologique"
+  etat_consolide_2026_06_09:
+    - "La note reste active comme garde-fou contre la sur-ingénierie du corpus et du CLI."
+    - "Elle est désormais cohérente avec la consolidation v2 : garder les continuations génériques et ne réintroduire des surfaces spécialisées que lorsqu'elles deviennent réellement portantes."
+    - "Aucune nouvelle structure n'est nécessaire pour cette note ; elle doit surtout être relue quand une abstraction, un conteneur ou un workflow supplémentaire semble séduisant mais non exigé."
   references_internes:
     - "cogentia/research/ideas_to_explore_as_issues.md (note sœur — éthique du contenant ; §15 anti-capture par excès de structure)"
     - "cogentia/research/persistence_backends.md (différer ce qui n'est pas exigé maintenant)"

@@ -434,6 +434,16 @@ Commit for stabilized memory.
 Source document for corpus anchoring.
 ```
 
+## 18. Consolidation note, 2026-06-09
+
+This note remains doctrinally current. It should not be read as a requirement to convert every opening into a GitHub Issue. The current `scripts/cogentia.js` v2 CLI exposes generic continuations, document queries, generated-view verification, and git drift checks; it does not currently expose a full `issues` command group. GitHub Issues remain a valid container for memory in tension when they are the smallest sufficient public container.
+
+Open continuations:
+
+1. Decide whether issue adapters return as CLI commands, move to the future Web workspace, or stay as GitHub-native work handled by agents.
+2. Keep opening registers available for long conversations so the corpus does not fragment into premature micro-issues.
+3. Periodically close, merge, or downgrade issues whose possible has decayed.
+
 
 <!-- BEGIN_AUTO: backlinks -->
 ### Backlinks
