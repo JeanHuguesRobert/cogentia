@@ -21,6 +21,22 @@ status: "published identity document — v2 CLI consolidation"
 
 <!-- END_AUTO: trails -->
 
+## Orientation
+
+Statut : document source d'identité pour Cogentia.
+
+Fonction dans le corpus : expliquer ce qu'est Cogentia comme protocole, CLI, brique logicielle et méthode publique de production de connaissance.
+
+À lire avant : [Carte globale du Corpus](https://github.com/JeanHuguesRobert/JeanHuguesRobert/blob/main/research/corpus-map.md) et [Discours de la seconde méthode](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/second_method.md).
+
+À lire après : [The Cogentia Commons Living Corpus](research/cogentia_commons_living_corpus.md), [Agent-Resumable CLI](research/agent_resumable_cli.md), [Cognitive Packets](research/cognitive_packets.md).
+
+Dépend de : la seconde méthode, le principe que le corpus est sa propre preuve, et l'exigence de décisions humaines traçables.
+
+Continuation : maintenir ce document comme point d'identité stable pendant que `scripts/cogentia.js`, les continuations et les produits dérivés évoluent.
+
+Dernière consolidation : 2026-06-09 — ajout de la fiche d'orientation.
+
 > *Cogito ergo sum.*
 > *Cogentia ergo scimus.*
 

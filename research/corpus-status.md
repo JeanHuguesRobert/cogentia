@@ -59,48 +59,48 @@ graph LR
   r_inseme["inseme"]
   r_inox["Inox"]
   r_jeanhuguesrobert["JeanHuguesRobert"]
-  r_jeanhuguesrobert -->|195| r_barons_mariani
-  r_jeanhuguesrobert -->|135| r_cogentia
-  r_cogentia -->|102| r_barons_mariani
-  r_jeanhuguesrobert -->|63| r_marenostrum
-  r_jeanhuguesrobert -->|62| r_fractavolta
-  r_jeanhuguesrobert -->|60| r_inseme
-  r_jeanhuguesrobert -->|55| r_inox
+  r_jeanhuguesrobert -->|149| r_barons_mariani
+  r_cogentia -->|104| r_barons_mariani
+  r_jeanhuguesrobert -->|91| r_cogentia
+  r_jeanhuguesrobert -->|40| r_marenostrum
+  r_jeanhuguesrobert -->|34| r_fractavolta
+  r_fractavolta -->|33| r_marenostrum
+  r_jeanhuguesrobert -->|33| r_inox
   r_fractavolta -->|32| r_cogentia
-  r_fractavolta -->|31| r_marenostrum
+  r_barons_mariani -->|29| r_cogentia
   r_cogentia -->|21| r_inseme
-  r_barons_mariani -->|20| r_cogentia
   r_cogentia -->|20| r_marenostrum
   r_fractavolta -->|18| r_barons_mariani
+  r_jeanhuguesrobert -->|17| r_inseme
   r_inseme -->|14| r_cogentia
-  r_barons_mariani -->|12| r_marenostrum
+  r_barons_mariani -->|13| r_marenostrum
+  r_marenostrum -->|13| r_fractavolta
   r_fractavolta -->|12| r_inseme
-  r_marenostrum -->|12| r_fractavolta
+  r_marenostrum -->|12| r_barons_mariani
   r_inox -->|11| r_barons_mariani
   r_inox -->|11| r_cogentia
-  r_marenostrum -->|10| r_barons_mariani
-  r_inox -->|9| r_fractavolta
-  r_marenostrum -->|9| r_cogentia
-  r_inox -->|7| r_marenostrum
+  r_inox -->|10| r_fractavolta
+  r_marenostrum -->|10| r_cogentia
+  r_inox -->|8| r_marenostrum
   r_inox -->|7| r_inseme
   r_inseme -->|7| r_inox
+  r_barons_mariani -->|6| r_fractavolta
   r_cogentia -->|6| r_fractavolta
-  r_barons_mariani -->|5| r_fractavolta
+  r_cogentia -->|5| r_jeanhuguesrobert
   r_barons_mariani -->|4| r_inox
+  r_barons_mariani -->|4| r_jeanhuguesrobert
   r_fractavolta -->|4| r_inox
-  r_cogentia -->|3| r_jeanhuguesrobert
   r_inseme -->|3| r_barons_mariani
   r_inseme -->|3| r_jeanhuguesrobert
-  r_barons_mariani -->|2| r_jeanhuguesrobert
   r_barons_mariani -->|2| r_inseme
   r_cogentia -->|2| r_inox
+  r_fractavolta -->|2| r_jeanhuguesrobert
+  r_inox -->|2| r_jeanhuguesrobert
   r_inseme -->|2| r_marenostrum
   r_inseme -->|2| r_fractavolta
+  r_marenostrum -->|2| r_jeanhuguesrobert
   r_marenostrum -->|2| r_inseme
   r_marenostrum -->|2| r_inox
-  r_fractavolta -->|1| r_jeanhuguesrobert
-  r_inox -->|1| r_jeanhuguesrobert
-  r_marenostrum -->|1| r_jeanhuguesrobert
 ```
 <!-- END_AUTO: graph -->
 

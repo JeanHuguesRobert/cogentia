@@ -31,6 +31,22 @@ related_documents:
 
 # The Cogentia Commons Living Corpus
 
+## Orientation
+
+Status: sovereign source document in working-paper form.
+
+Function in the corpus: state the expected behavior of the Living Corpus, including source/derived distinction, multi-repository navigation, continuations, generated views, GitHub compatibility, and the future Web interface.
+
+Read before: [Cogentia](../COGENTIA.md), [Discours de la seconde méthode](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/second_method.md), and [Carte globale du Corpus](https://github.com/JeanHuguesRobert/JeanHuguesRobert/blob/main/research/corpus-map.md).
+
+Read after: [Agent-Resumable CLI](agent_resumable_cli.md), [Derived Products](derived_products.md), [Cognitive Packets](cognitive_packets.md), and [The Knowledge Mesh](../docs/knowledge_mesh.md).
+
+Depends on: the current `scripts/cogentia.js` CLI, the registry of tracked repositories, the continuation model, and Git as the public source of truth.
+
+Continuation: refine this document into a sharper behavioral specification as the CLI and future Web surface stabilize.
+
+Last consolidation: 2026-06-09 — orientation block added during corpus digestion.
+
 ## Status
 
 This document is a first consolidation draft.
