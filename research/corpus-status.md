@@ -61,7 +61,7 @@ graph LR
   r_jeanhuguesrobert["JeanHuguesRobert"]
   r_jeanhuguesrobert -->|194| r_barons_mariani
   r_jeanhuguesrobert -->|134| r_cogentia
-  r_cogentia -->|103| r_barons_mariani
+  r_cogentia -->|102| r_barons_mariani
   r_jeanhuguesrobert -->|62| r_marenostrum
   r_jeanhuguesrobert -->|61| r_fractavolta
   r_jeanhuguesrobert -->|59| r_inseme

@@ -642,7 +642,7 @@ Cogentia is a framework for distributed knowledge production under AI conditions
 
 Cogentia’s operating environment is Git-based knowledge production. Repositories contain research documents, indexes, objections, revisions, canonical URLs, and cross-references. The corpus is not merely a publication output; it is the evidentiary substrate. The git history is part of the proof.
 
-The current `cogentia.js` CLI is described as infrastructure for traceable, auditable, AI-connectable distributed knowledge production across git repositories. It maintains repository registries, supports [`research/index.md`](index.md), scans markdown files, flags unreferenced work, generates cross-reference graphs, validates links, and stamps canonical URLs. It is implemented as a zero-dependency Node.js CLI under the MIT license.
+The current `cogentia.js` CLI is described as infrastructure for traceable, auditable, AI-connectable distributed knowledge production across git repositories. Its 2026-06 v2 surface focuses on repository state, document inventory/query/inspection, generated corpus views, gaps, git drift, and explicit external-judgment continuations. Older surfaces also explored scan/status/graph/check/stamp/link/readme/issue/derived commands; those remain useful design history, but not all are present in the narrowed v2 CLI.
 
 This makes Cogentia a natural testbed for Agent-Resumable CLI.
 
@@ -666,6 +666,8 @@ The correct architecture is therefore continuation-based.
 ## 13. Cogentia Continuation as a Typed Object
 
 In Cogentia, a continuation should include:
+
+Consolidation note, 2026-06-09: the object below is the original `cogentia.continuation.v1` research shape. The current CLI serializes `cogentia.continuation.v2` operational objects with a smaller surface (`id`, `status`, `kind`, `title`, `question`, `subject`, `context`, `expected_response`, `resume`, history/resolution metadata). The architectural claim is unchanged: the tool exposes missing judgment instead of embedding an AI provider.
 
 ```json
 {
@@ -734,36 +736,34 @@ If yes, the protocol is sound. If no, the protocol is contaminated.
 
 ## 14. Cogentia CLI Surface
 
-The continuation support is additive. Existing commands such as `scan`, `status`, `graph`, `check`, `stamp`, and `corpus-status` are not broken.
+The continuation support is additive at the architectural level, but the operational surface has been consolidated since the original v0.5/v0.10 prototypes.
 
-The minimal command surface is implemented (`cogentia.js` v0.5.0+):
+Current v2 continuation surface:
 
 ```bash
-node scripts/cogentia.js continuation emit <task-file>
+node scripts/cogentia.js continuation emit --question <text> [--kind <kind>] [--title <title>]
+node scripts/cogentia.js continuation list --status active|resolved|cancelled|all
 node scripts/cogentia.js continuation inspect <id>
-node scripts/cogentia.js continuation resume <id> <step_result.json> [--strict]
+node scripts/cogentia.js continuation resolve <id> [result.json] --decision <text> --reason <text>
+node scripts/cogentia.js continuation resume <id> [result.json]
+node scripts/cogentia.js continuation cancel <id> --reason <text>
+node scripts/cogentia.js continuation schema
+```
+
+The older prototype surface included additional operations:
+
+```bash
 node scripts/cogentia.js continuation fail <id> <branch-id> --reason "<reason>"
 node scripts/cogentia.js continuation queue [--status active|completed|aborted|dormant]
 node scripts/cogentia.js continuation abort <id> --reason "<reason>"
-```
-
-The additional commands are implemented (`cogentia.js` v0.10.0+):
-
-```bash
 node scripts/cogentia.js continuation prioritize <id> [--priority <N>]
 node scripts/cogentia.js continuation validate <id> [<step_result.json>]
 node scripts/cogentia.js continuation export <id> [-o <file>] [--bundle]
 node scripts/cogentia.js continuation log <id>
-```
-
-Two operational commands round out the surface:
-
-```bash
 node scripts/cogentia.js continuation prune [--days <N>]
-node scripts/cogentia.js continuation schema
 ```
 
-`prioritize` writes a `priority` integer (default 0) on the continuation; `queue` then sorts higher priority first, then older `createdAt` first. `validate` runs the same shape checks as `resume`, but as a read-only pre-flight (exit 1 on errors). `export` serializes the continuation (optionally with its predecessor and successor via `--bundle`) for copy/paste handoffs across agents, tools, or process boundaries. `log` reads `.cogentia/audit.jsonl` and replays every audit event referencing the continuation id, in chronological order.
+Those commands should be treated as design candidates to reintroduce deliberately if they become load-bearing again. The v2 consolidation intentionally keeps the continuation primitive small: emit a judgment request, list it, inspect it, resolve/resume it, cancel it, and expose its schema.
 
 ## 15. Storage Model
 

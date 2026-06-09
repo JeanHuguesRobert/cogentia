@@ -2,7 +2,7 @@
 title: "cogentia.js — Tutorial and Near-Specification"
 subtitle: "From core ideas to workflows to command reference — sufficient for a faithful re-implementation in another language, storage layer, or rendering format"
 version: "0.1"
-status: working-paper — tutorial / near-functional specification
+status: "historical-derived — v0.10/v1 tutorial pending v2 refresh"
 date: "2026-05-31"
 author: "Jean Hugues Noël Robert, baron Mariani"
 affiliation: "Institut Mariani / C.O.R.S.I.C.A., 1 cours Paoli, F-20250 Corte, Corsica"
@@ -38,7 +38,7 @@ corpus_role: "derived"
 derived_product_type: "tutorial"
 ---
 
-> **Auto-generated tutorial.** This document was produced from the live `cogentia.js v0.10.0` source, its manifest, and the corpus's existing doctrinal papers (see *Associated documents* below). It is *descriptive of the current implementation* and *prescriptive enough* to seed a faithful re-implementation in another language, persistence layer, or rendering format. Treat behaviour observed in the reference implementation as authoritative where the prose is ambiguous; treat documented invariants as load-bearing.
+> **Historical auto-generated tutorial.** This document was produced from the live `cogentia.js v0.10.0` source, its manifest, and the corpus's existing doctrinal papers (see *Associated documents* below). It is no longer descriptive of the current `scripts/cogentia.js` v2 CLI. Treat it as a historical derived product and near-specification for the older v0.10/v1 surface until a refreshed v2 tutorial is generated from the current source.
 
 ---
 
@@ -55,10 +55,10 @@ The document follows the corpus's [`## Object and associated documents`](https:/
 This tutorial should be read together with:
 
 - [Discours de la seconde méthode](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/second_method.md) — founding methodological doctrine v1.0; names `cogentia.js` as canonical tooling;
-- [Agent-Resumable CLI](agent_resumable_cli.md) — the continuation-protocol paper; defines `cogentia.continuation.v1` and the 12 sub-commands documented in §4.10 below;
+- [Agent-Resumable CLI](agent_resumable_cli.md) — the continuation-protocol paper; defines the v1 research pattern and documents which parts were consolidated into the current v2 surface;
 - [Cognitive Packets](cognitive_packets.md) — envelope + payload format that generalises the continuation pattern beyond the CLI;
 - [Pipeline](pipeline.md) — operational method note: *pipeline on the surface, packet network in depth*; the working method this tutorial describes the tooling for;
-- [Derived Products](derived_products.md) — source ↔ derived split; this tutorial is itself a *source* document, by the pipeline's own typology;
+- [Derived Products](derived_products.md) — source ↔ derived split; this tutorial is a derived product whose v2 refresh requires agent judgment;
 - [Cogentia Commons Working Paper](Cogentia_Commons_Working_Paper.md) — collective-scale foundation; the methodology layer the CLI implements;
 - [Cogentia Commons — MVP Specification](cogentia_commons_mvp_spec.md) — the v1 architecture; lists the new subcommands (`manifest`, `kernel`, `objection`, `publish`, `audit`, `sanction`, `rebuild`) that extend the v0.10.0 surface;
 - [Cogentia Commons — Method Packets](cogentia_commons_method_packets.md) — infrastructure for producing, transmitting, criticising and improving packets;
@@ -914,4 +914,4 @@ A useful minimum test matrix per command:
 
 ---
 
-*End of tutorial. This document is a member of the corpus it describes. Per [Pipeline](pipeline.md), treat it as a source document; derived products (blogposts, README snippets, slide decks) should reference it rather than re-paraphrase it. Per [Discours de la seconde méthode](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/second_method.md) Rule 4, it is itself evidence: any divergence between this prose and the live `cogentia.js v0.10.0` surface is a defect to be filed as an issue.*
+*End of historical tutorial. This document is evidence of the v0.10/v1 implementation surface, not the current v2 CLI contract. Per [Pipeline](pipeline.md) and [Derived Products](derived_products.md), the next continuation is to regenerate or supersede it from the current `scripts/cogentia.js` source, citing the current source documents and inventing nothing.*

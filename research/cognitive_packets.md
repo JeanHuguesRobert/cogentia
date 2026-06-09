@@ -38,7 +38,7 @@ Institut Mariani / C.O.R.S.I.C.A.
 - an **envelope** carrying kind-agnostic metadata (protocol header, provenance, context reference, transmission mode, routing, traces) that any agent — human or machine — can read without interpreting the inner work;
 - a **payload** carrying the kind-specific cognitive content (continuation, objection, hypothesis, decision, failure, or routing), validated by an agent that understands the declared kind.
 
-Continuations are no longer one *kind of packet*; they are the canonical *payload* of a packet whose `packet_kind = continuation`. The earlier `cogentia.continuation.v1` protocol maps directly to this payload — no semantic change to the existing CLI primitive, only a clearer transport story.
+Continuations are no longer one *kind of packet*; they are the canonical *payload* of a packet whose `packet_kind = continuation`. The earlier `cogentia.continuation.v1` protocol maps directly to this payload as the research pattern. The current `scripts/cogentia.js` implementation uses a smaller `cogentia.continuation.v2` operational object; this changes the exact fields, not the transport story.
 
 **v0.2** added **self-describing cognitive packets**. A packet transmitted by copy may include a minimal protocol header explaining how to interpret the packet and how to produce another one. From v0.3, that protocol header lives in the envelope (it travels with every kind, not just continuations). The rule still holds: **self-describing does not mean self-validating**.
 
@@ -628,7 +628,7 @@ Required payload emphasis:
 - constraints;
 - next action.
 
-This is the canonical payload of `cogentia.continuation.v1` — see §12.
+A `cogentia.continuation.*` object is the canonical payload for this kind — see §12.
 
 ## 10.2 Objection payload — `packet_kind: objection`
 
@@ -812,11 +812,11 @@ A by-reference continuation packet is valid only if the context reference is der
 
 Agent-Resumable CLI is a concrete technical pattern for command-line tools that need external judgment. A CLI tool reaches a point where deterministic execution is insufficient. Instead of embedding an AI provider, it emits a typed continuation object. A surrounding actor supplies a structured result. The tool validates the result against an expected schema and resumes.
 
-The protocol that formalises this is `cogentia.continuation.v1`, specified in [Agent-Resumable CLI](agent_resumable_cli.md) and implemented in `scripts/cogentia.js continuation`.
+The research protocol that formalised this was `cogentia.continuation.v1`, specified in [Agent-Resumable CLI](agent_resumable_cli.md). The current `scripts/cogentia.js continuation` surface implements the same inversion-of-control principle through `cogentia.continuation.v2`.
 
 ## 12.1 Mapping
 
-In v0.3 terms, the `cogentia.continuation.v1` object **is the canonical payload** of a cognitive packet whose `envelope.packet_kind = continuation`. The two are aligned by construction:
+In v0.3 terms, a `cogentia.continuation.*` object is the canonical payload of a cognitive packet whose `envelope.packet_kind = continuation`. The v1 object remains the fuller research illustration; the v2 object is the current compact CLI form. The two are aligned by construction:
 
 ```text
 .cogentia/continuations/<id>.json    ← strict CLI continuation (payload only)
@@ -843,12 +843,12 @@ When transported (copy/paste, GitHub issue, prompt, file):
 }
 ```
 
-No semantic change to `cogentia.continuation.v1`. The wrapper provides a transport envelope when the continuation leaves the CLI runtime.
+No semantic change to the continuation pattern is implied by the v1 -> v2 operational consolidation. The wrapper provides a transport envelope when the continuation leaves the CLI runtime.
 
 ## 12.2 Two surfaces, one protocol
 
 ```text
-Agent-Resumable CLI (cogentia.continuation.v1):
+Agent-Resumable CLI (`cogentia.continuation.v1` pattern, `cogentia.continuation.v2` current CLI object):
   tool emits continuation → judge supplies step_result → tool resumes
 
 Cognitive Packets (this paper, v0.3):
@@ -1290,6 +1290,8 @@ cogentia packet index
 cogentia packet convert
 cogentia packet route
 ```
+
+Consolidation note, 2026-06-09: these `packet` commands are still future integration targets. The current v2 CLI exposes document/corpus inspection and continuation commands, but no packet-facing command group. A future packet layer should be added only after the continuation payload mapping, packet schema, routing semantics, and security policy are stable.
 
 ## 22.4 GitHub issue templates
 

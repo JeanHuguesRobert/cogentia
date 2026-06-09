@@ -187,7 +187,7 @@ A cogentigram is a structured, partial, auditable and revisable representation o
 **Status:** Operational
 
 **Short definition:**
-The foundational system allowing AI agents to pause execution, seek human judgment, and safely resume CLI tools without being hard-coded to any single provider. Known as `cogentia.continuation.v1`. In the broader COP context, continuations are first-class Artifacts (`cop/continuation`) that suspend work at the boundary between deterministic protocol mechanics and non-deterministic agentic cognition.
+The foundational system allowing AI agents to pause execution, seek human judgment, and safely resume CLI tools without being hard-coded to any single provider. The original research pattern was `cogentia.continuation.v1`; the current `scripts/cogentia.js` CLI serializes the smaller operational `cogentia.continuation.v2` form. In the broader COP context, continuations are first-class Artifacts (`cop/continuation`) that suspend work at the boundary between deterministic protocol mechanics and non-deterministic agentic cognition.
 
 **Parent concepts:**
 - Agent-Resumable CLI
@@ -274,7 +274,7 @@ The foundational system allowing AI agents to pause execution, seek human judgme
 **Status:** Defined
 
 **Short definition:**
-A minimal, transport-neutral, human-readable and machine-readable unit of cognitive work composed of two layers: an **envelope** carrying kind-agnostic metadata that any receiver can route, queue, archive, or acknowledge without interpreting the inner work; and a **payload** carrying kind-specific cognitive content (continuation, objection, hypothesis, decision, failure, routing) that an agent capable of handling the declared kind interprets. The `cogentia.continuation.v1` object is the canonical payload of `packet_kind = continuation`.
+A minimal, transport-neutral, human-readable and machine-readable unit of cognitive work composed of two layers: an **envelope** carrying kind-agnostic metadata that any receiver can route, queue, archive, or acknowledge without interpreting the inner work; and a **payload** carrying kind-specific cognitive content (continuation, objection, hypothesis, decision, failure, routing) that an agent capable of handling the declared kind interprets. A `cogentia.continuation.*` object is the canonical payload of `packet_kind = continuation`: v1 is the fuller research shape, v2 is the compact current CLI shape.
 
 **Parent concepts:**
 - Continuation Protocol
