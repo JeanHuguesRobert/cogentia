@@ -11,6 +11,7 @@ related_prompts:
   - "cogentia/prompts/reviewer.md"
   - "cogentia/prompts/redactor.md"
   - "cogentia/prompts/cognitive_packet.md"
+  - "cogentia/prompts/conversation_closure.md"
 related_research:
   - "cogentia/research/pipeline.md"
   - "cogentia/research/derived_products.md"
