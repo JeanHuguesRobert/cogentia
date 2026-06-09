@@ -62,7 +62,26 @@ Inspect a specific document by stable repo/path reference:
 node scripts/cogentia.js docs inspect cogentia/research/cognitive_packets.md --json
 ```
 
-## 4. Generated Navigation
+## 4. Judgment and Continuations
+
+The Cogentia CLI is structural; it must not perform semantic judgment by guesswork. When a command encounters an interpretive decision, materialize that decision as a continuation:
+
+```bash
+node scripts/cogentia.js docs judgments all --json
+node scripts/cogentia.js docs judgments all --emit-continuations --json
+node scripts/cogentia.js continuation list --json
+node scripts/cogentia.js continuation inspect <ctn_id> --json
+```
+
+For document-role review, answer with a small JSON result and resolve the continuation:
+
+```bash
+node scripts/cogentia.js continuation resolve <ctn_id> result.json
+```
+
+The result should state the decision and reason, and may include a proposed frontmatter patch or index action. This keeps `cogentia.js` provider-neutral: the tool creates the continuation, but the invoking agent or human supplies the judgment.
+
+## 5. Generated Navigation
 
 Before updating mechanical views, ask for the plan:
 ```bash
@@ -75,7 +94,7 @@ node scripts/cogentia.js corpus apply
 node scripts/cogentia.js corpus verify --strict
 ```
 
-The Cogentia CLI is structural; it does not perform semantic judgment. When a decision requires interpretation, the invoking agent must make that judgment explicitly and cite the documents it used.
+Mechanical generated views can be applied by the tool after review. Interpretive changes should pass through continuations first.
 
 
 <!-- BEGIN_AUTO: backlinks -->

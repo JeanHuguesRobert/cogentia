@@ -53,6 +53,8 @@ node scripts/cogentia.js help                      # show all commands
 node scripts/cogentia.js state --json              # show registered repos and policies
 node scripts/cogentia.js docs summary --json       # numeric corpus summary
 node scripts/cogentia.js docs search "exergy"      # full-text search over active markdown
+node scripts/cogentia.js docs judgments --json     # list cases needing external judgment
+node scripts/cogentia.js continuation list          # inspect active judgment requests
 node scripts/cogentia.js corpus plan --json        # inspect generated navigation changes
 node scripts/cogentia.js corpus apply              # apply the fresh generated plan
 node scripts/cogentia.js corpus verify --strict    # verify generated views, gaps and drift
@@ -103,6 +105,11 @@ All published documents live in `research/` and are catalogued in [`research/ind
   * `docs query [repo|all]` — catalog query by role, indexing gap, metadata text and sort order.
   * `docs search <text>` — full-text search over active Markdown documents.
   * `docs gaps` and `docs inspect <repo/path.md>` — focused navigation aids for agents.
+  * `docs judgments [repo|all]` — list document-role cases where the tool should ask for external judgment; `--emit-continuations` writes the requests.
+- **Continuations**
+  * `continuation emit` — create a typed external judgment request.
+  * `continuation list` / `inspect` — inspect active or historical requests.
+  * `continuation resolve` / `resume` / `cancel` — record the agent or human decision without embedding that judgment inside the mechanical command.
 - **Generated corpus views**
   * `corpus plan` — read-only plan for per-repo `research/corpus-status.md`, registry `research/documents.md`, and existing backlink blocks.
   * `corpus apply` — apply exactly the fresh plan.
@@ -110,7 +117,7 @@ All published documents live in `research/` and are catalogued in [`research/ind
 - **Concepts**
   * `concepts list` and `concepts check` — parse every `research/concepts.md`, excluding generated auto-blocks and surfacing missing fields, duplicates and undefined references.
 
-The current session ritual is: `status` at the start, `docs search` / `docs inspect` while navigating, `corpus plan` before mechanical refresh, then `corpus apply` and `corpus verify --strict` when the generated views should be updated.
+The current session ritual is: `status` at the start, `docs search` / `docs inspect` while navigating, `docs judgments --emit-continuations` when classification needs interpretation, `corpus plan` before mechanical refresh, then `corpus apply` and `corpus verify --strict` when the generated views should be updated.
 
 ## Ecosystem
 
