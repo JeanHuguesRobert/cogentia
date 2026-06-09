@@ -62,7 +62,29 @@ Inspect a specific document by stable repo/path reference:
 node scripts/cogentia.js docs inspect cogentia/research/cognitive_packets.md --json
 ```
 
-## 4. Judgment and Continuations
+## 4. Consolidation and Stabilization
+
+When asked to consolidate or stabilize the corpus, work from the most recent significant updates backward:
+
+```bash
+node scripts/cogentia.js docs query all --role source --sort updated --limit 30 --json
+```
+
+For each candidate, inspect the document before editing:
+
+```bash
+node scripts/cogentia.js docs inspect <repo/path.md> --json
+```
+
+Then update only what has become stale. The preferred target is the document's continuation, status, or open-questions section. The update should distinguish:
+
+- what has been completed since the last semantic update;
+- what remains open as a rational path of exploration;
+- what has moved to another container, such as a GitHub Issue, continuation, source document, derived product, or redirect.
+
+Do not treat every old continuation as a task to execute. Some continuations should be closed, narrowed, renamed, or moved. Stabilization is an anti-Ubik operation: it preserves traceability and resumability without pretending the corpus is finished.
+
+## 5. Judgment and Continuations
 
 The Cogentia CLI is structural; it must not perform semantic judgment by guesswork. When a command encounters an interpretive decision, materialize that decision as a continuation:
 
@@ -81,7 +103,7 @@ node scripts/cogentia.js continuation resolve <ctn_id> result.json
 
 The result should state the decision and reason, and may include a proposed frontmatter patch or index action. This keeps `cogentia.js` provider-neutral: the tool creates the continuation, but the invoking agent or human supplies the judgment.
 
-## 5. Generated Navigation
+## 6. Generated Navigation
 
 Before updating mechanical views, ask for the plan:
 ```bash

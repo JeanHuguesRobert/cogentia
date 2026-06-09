@@ -105,6 +105,30 @@ A Living Corpus is not:
 
 The corpus is alive because its relationships, roles, continuations, and public surfaces are maintained. It is not alive because an AI model is continuously rewriting it.
 
+### Stabilization note: the anti-Ubik function
+
+In this document, **stabilization** does not mean freezing the corpus. It means reducing dislocation while preserving revision.
+
+The Living Corpus is a procedural stabilizer against the **Effet Ubik**: the situation where signs, documents, institutions, identities, sources, and time references still exist, but become increasingly costly to hold together as a shared reality. A stabilizer in this sense is not an authority that declares final truth. It is an infrastructure that lets a claim remain traceable, contestable, versioned, resumable, and reconnectable to its sources.
+
+The anti-Ubik stabilizers of the corpus are practical:
+
+- Git history;
+- source/derived distinctions;
+- explicit redirects after moves;
+- backlinks and indexes;
+- concept registries;
+- continuations;
+- GitHub Issues as memory in tension;
+- generated status views;
+- human arbitration of semantic decisions.
+
+The test is simple:
+
+> Does this mechanism make it easier for a future human or agent to reconstruct what changed, what was decided, what remains open, and where to resume?
+
+If yes, it stabilizes. If it merely hides uncertainty, imposes closure, or replaces judgment by authority, it does not.
+
 ## 2. The Methodological Boundary
 
 The Living Corpus inherits the boundary of the second method:
@@ -730,7 +754,13 @@ The Living Corpus can fail in several recognizable ways.
 
 ## 17. Open Continuations
 
-This first draft leaves several continuations open:
+This first draft leaves several continuations open. A first consolidation rule has now been chosen: traverse the corpus from the most recent semantic updates backward, and update each document's continuation section only where the real situation has changed. Each update should distinguish:
+
+- what has been done since the last significant semantic update;
+- which paths of rational exploration remain open;
+- which apparent tasks are no longer open because they were completed, superseded, or transformed into another container.
+
+Current open continuations:
 
 1. **CLI issue integration** — decide whether `cogentia.js` v2 should regain read-only GitHub Issue commands or leave issue work to a Web/GitHub layer.
 2. **Significant-update metric** — implement a more reliable distinction between maintenance changes and semantic updates.
@@ -739,6 +769,7 @@ This first draft leaves several continuations open:
 5. **Web workspace model** — specify the per-document Redactor/Reviewer/Document session state and how it maps to local files and GitHub branches.
 6. **Exploration path query** — add a command or view that lists open possibilities, active continuations, issues, work-in-progress docs, and unresolved objections together.
 7. **Tutorial refresh** — update or supersede the older `cogentia_js_tutorial.md` so it describes the current v2 CLI rather than the archived v0.10/v1 surface.
+8. **Stabilizer concept consolidation** — connect the Living Corpus, Cogentia CLI, COP, DHITL, and source/derived workflow explicitly as procedural anti-Ubik stabilizers.
 
 These should not all become immediate implementation work. They are paths of exploration. The user chooses the order.
 
