@@ -7,6 +7,11 @@ version: "0.1"
 license: "CC BY-SA 4.0"
 language: "en"
 canonical_path: "cogentia/prompts/redactor.md"
+related_prompts:
+  - "cogentia/prompts/document_conversation_frame.md"
+  - "cogentia/prompts/reviewer.md"
+  - "cogentia/prompts/cognitive_packet.md"
+  - "cogentia/prompts/conversation_closure.md"
 related_research:
   - "cogentia/research/pipeline.md"
   - "cogentia/research/derived_products.md"
