@@ -12,7 +12,7 @@ One infrastructure, two scales — *I* and *we*:
 
 - **`scripts/cogentia.js`** — the zero-dependency Node.js CLI substrate. Version 2 is a compact corpus navigator: multi-repo registry loading, document inventory, source/derived classification, generated navigation plans, concept checks, full-text search, and git drift reports. The historical v1 implementation is archived as [`scripts/cogentia.v1-history.js`](scripts/cogentia.v1-history.js).
 - **Cogentia Personal** — the *individual* scale. A sovereign cognitive twin: Cogentia (memory + mandate + traces), Cogentigram (structured profile of the Cogentia), Cogentiscope (navigation surface). See [`apps/personal/`](apps/personal/) and [`research/cogentia-digital-twin.md`](research/cogentia-digital-twin.md).
-- **Cogentia Commons** — the *collective* scale. The methodology of public, accountable, audit-trailed knowledge: GitHub-anchored, every objection a first-class contribution. See [`apps/commons/`](apps/commons/) and [`research/Cogentia_Commons_Working_Paper.md`](research/Cogentia_Commons_Working_Paper.md). The web GUI also ships as **`brique-cogentia-commons`** inside the [inseme](https://github.com/JeanHuguesRobert/inseme) platform (shared COP Event log + Supabase projection).
+- **Cogentia Commons** — the *collective* scale. The methodology of public, accountable, audit-trailed knowledge: GitHub-anchored, every objection a first-class contribution. It is **public by default, private by exception**: private or restricted community spaces are visibility modes for sensitive, strategic or patent-oriented exploration, not separate product cores. See [`apps/commons/`](apps/commons/), [`research/Cogentia_Commons_Working_Paper.md`](research/Cogentia_Commons_Working_Paper.md), and [`research/cogentia_commons_visibility_and_private_modes.md`](research/cogentia_commons_visibility_and_private_modes.md). The web GUI also ships as **`brique-cogentia-commons`** inside the [inseme](https://github.com/JeanHuguesRobert/inseme) platform (shared COP Event log + Supabase projection).
 
 The CLI is the substrate both scales sit on; Personal and Commons are the two faces of the same cognitive infrastructure, applied to one person or to a community.
 
@@ -90,6 +90,7 @@ All published documents live in `research/` and are catalogued in [`research/ind
 - **[The Sovereign Digital Twin](research/cogentia-digital-twin.md)** — Personal Cogentia: Cogentia, Cogentigram, Cogentiscope. The individual-scale foundation.
 - **[Cogentia Commons Working Paper](research/Cogentia_Commons_Working_Paper.md)** — Commons methodology, formal specification. The collective-scale foundation.
 - **[Cogentia Commons MVP Spec](research/cogentia_commons_mvp_spec.md)** — the v1 architecture for `brique-cogentia-commons`.
+- **[Cogentia Commons Visibility Modes](research/cogentia_commons_visibility_and_private_modes.md)** — public by default, private by exception; private spaces as visibility modes for sensitive, strategic or patent-oriented exploration.
 - **[Democratic AI Safety](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/democratic_ai_safety.md)** — the political thesis on which both scales rest (canonical in barons-Mariani).
 - **[Agent Navigation Guide](docs/agent_context_server.md)** — meta-prompt for AI agents navigating the corpus.
 - **[The Knowledge Mesh](docs/knowledge_mesh.md)** — backlinks, trails, and Jekyll for human navigation.
@@ -112,7 +113,7 @@ All published documents live in `research/` and are catalogued in [`research/ind
   * `continuation resolve` / `resume` / `cancel` — record the agent or human decision without embedding that judgment inside the mechanical command.
 - **Generated corpus views**
   * `corpus plan` — read-only plan for per-repo `research/corpus-status.md`, registry `research/documents.md`, and existing backlink blocks.
-  * `corpus apply` — apply exactly the fresh plan.
+  * `corpus apply` — apply exactly the fresh generated plan.
   * `corpus verify` — report stale generated views, index gaps and git drift; `--strict` exits non-zero on issues.
 - **Concepts**
   * `concepts list` and `concepts check` — parse every `research/concepts.md`, excluding generated auto-blocks and surfacing missing fields, duplicates and undefined references.
