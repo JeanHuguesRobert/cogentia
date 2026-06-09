@@ -106,6 +106,7 @@ This repository instantiates the **cognitive infrastructure layer** of the [DHIT
 
 ## In Progress
 
+- [The Cogentia Commons Living Corpus](cogentia_commons_living_corpus.md) *(working paper v0.1, 2026-06-09 — consolidation draft for the multi-repository Living Corpus, current `cogentia.js` CLI contract, continuation model, source/derived roles, exploration paths, and future Web workspace)*
 - [Cogentia Commons — MVP Specification](cogentia_commons_mvp_spec.md) *(draft v0.10.2, 2026-05-13)*
 - [Cogentia Commons — COMMUNITY.md Sub-Specification](cogentia_commons_community_manifest.md) *(draft v0.2, 2026-05-13)*
 - [Cogentia Commons — `kernel_extractor` Plugin Sub-Specification](cogentia_commons_kernel_extractor.md) *(draft v0.1, 2026-05-12)*

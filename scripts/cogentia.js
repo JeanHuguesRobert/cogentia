@@ -647,7 +647,7 @@ function classifyRole(repo, relPath, full, fm, ignored, indexSets) {
   if (/\balias\b/.test(explicit) || fm.redirect_to || /^see\s+/i.test(readFileIfExists(full).trim())) {
     return { role: "alias", source: "frontmatter/path", confidence: "medium" };
   }
-  if (explicit.includes("symmetric") || explicit.includes("souverain")) {
+  if (explicit.includes("source") || explicit.includes("sovereign") || explicit.includes("symmetric") || explicit.includes("souverain")) {
     return { role: "source", source: "frontmatter:document_role", confidence: "strong" };
   }
   if (derivedFrom || explicit.includes("derived") || r.includes("/derived_products/")) {
