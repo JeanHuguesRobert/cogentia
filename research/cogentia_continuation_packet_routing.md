@@ -6,6 +6,7 @@ affiliation: "Institut Mariani / C.O.R.S.I.C.A., 1 cours Paoli, F-20250 Corte, C
 date: "2026-06-01"
 status: "working-paper — v0.3"
 version: "0.3"
+document_role: "source"
 license: "CC BY-SA 4.0 for text; MIT for associated schemas or code"
 spdx: "CC-BY-SA-4.0"
 language: "en"
@@ -895,6 +896,8 @@ cogentia packet resume <packet.yml> --step-result result.yml
 cogentia packet critique <packet.yml>
 ```
 
+Consolidation note, 2026-06-09: these `packet` commands are still a design target. The current `scripts/cogentia.js` v2 surface implements the corpus/document layer (`docs`, `corpus`, `state`, `git`) and the external-judgment layer (`continuation`). Packet routing should therefore be introduced as a new prototype, not treated as already available CLI behavior.
+
 ### 14.6 Inox integration
 
 Inox may eventually provide the runtime substrate for:
@@ -1163,10 +1166,10 @@ Or, more analytically:
 This v0.3 publication candidate opens the following continuations:
 
 1. **Corpus integration pass**  
-   Add backlinks or references from `cognitive_packets.md`, `pipeline.md`, `agent_resumable_cli.md`, and `cogentigraphic_distillation.md`.
+   Partially open. This document already declares those documents as sources. Reverse references from `cognitive_packets.md`, `pipeline.md`, `agent_resumable_cli.md`, and `cogentigraphic_distillation.md` remain sparse and should be added only when those documents are otherwise substantively revised.
 
 2. **Index pass**  
-   Add this document to `cogentia/research/index.md`.
+   Complete. The document is listed in `cogentia/research/index.md` as a working paper. A future index edit is needed only if the document is promoted from working paper to published source.
 
 3. **Schema pass**  
    Extract `cogentia.routing_decision.v0.1.schema.json` and `cogentia.routing_packet_projection.v0.1.schema.json`.
@@ -1186,7 +1189,7 @@ This v0.3 publication candidate opens the following continuations:
    Define validation against malicious packets, forged provenance, prompt injection, and poisoned continuations.
 
 8. **MVP pass**  
-   Implement a prompt-level `cogentia packet route` prototype before any model fine-tuning.
+   Still open. Current `cogentia.js` v2 does not expose `packet` commands; it exposes corpus navigation, generated-view verification, and `cogentia.continuation.v2` external judgment. The first MVP should therefore be a deliberately small `packet route` prototype layered on top of existing continuation and document-query primitives.
 
 9. **RFC-style derived product pass**  
    Produce an ASCII RFC-style draft after the routing schema and capability registry stabilize. This should be presented as an experimental derived product, not as an IETF standard claim.

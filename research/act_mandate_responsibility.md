@@ -144,6 +144,16 @@ Do not wait for the perfect future protocol.
 
 Every trace created now should already move toward explicit act, role, mandate and responsibility metadata.
 
+## Continuation
+
+Etat consolidé au 2026-06-09: this note is a compact source doctrine for DHITL traceability, continuation resolution, issue/commit proposals, interaction packets, and future packet-routing decisions. It is not yet a complete schema. Its practical role is to prevent traces from collapsing `actor` into `responsible person` when mandate, role, beneficiary, and validation are materially distinct.
+
+Open continuations:
+
+1. Align the minimal metadata with [Interaction Packets](../interaction_packets/README.md), [Agent-Resumable CLI](agent_resumable_cli.md), and [Cognitive Packets](cognitive_packets.md), without overloading every ordinary trace.
+2. Decide which `cogentia.continuation.v2` or future `packet route` decisions require mandate/responsibility metadata by default.
+3. Produce a French legal/practical derived note if this doctrine becomes load-bearing for public or institutional documents.
+
 
 <!-- BEGIN_AUTO: backlinks -->
 ### Backlinks

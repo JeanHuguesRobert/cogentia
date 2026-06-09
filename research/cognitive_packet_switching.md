@@ -822,6 +822,8 @@ cogentia packet derive
 cogentia packet reintegrate
 ```
 
+Consolidation note, 2026-06-09: these `packet` commands describe a possible packet-facing CLI layer, not the current `scripts/cogentia.js` v2 surface. The current CLI implements corpus navigation and verification (`docs`, `corpus`, `state`, `git`) plus explicit external judgment through `cogentia.continuation.v2`. Packet commands should be introduced only after the minimal routing schema and resumption contract stabilize.
+
 ## 18.2 Operational/event implementation
 
 A first operational implementation can use:
@@ -888,6 +890,13 @@ If the protocol cannot work with Markdown, JSON, Git, copy/paste, and ordinary e
 12. Can a Git-based implementation scale far enough before a dedicated runtime is needed?
 13. How should human responsibility be preserved when agents route or transform packets?
 14. Can derived products reliably produce feedback packets for corpus reintegration?
+
+Consolidation note, 2026-06-09:
+
+- The Git/corpus profile is now materially implemented through `scripts/cogentia.js` v2 for document inventory, source/derived role inspection, generated navigation views, gaps, corpus verification, and external-judgment continuations.
+- The operational/event profile is being exercised in `inseme/packages/cop-kernel` through SubBus, federation, topic-aware scheduling, packet creation, and a reactive router-agent demo with a lightweight capability registry.
+- The missing bridge is still the packet-facing layer: schema validation, `packet route`, failed-continuation semantics, security policy, and reintegration from operational packets back into the long-memory corpus.
+- The open questions above should therefore be read as stabilization targets for that bridge, not as evidence that the corpus/document layer is unimplemented.
 
 ---
 
