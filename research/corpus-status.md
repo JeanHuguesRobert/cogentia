@@ -59,13 +59,13 @@ graph LR
   r_inseme["inseme"]
   r_inox["Inox"]
   r_jeanhuguesrobert["JeanHuguesRobert"]
-  r_jeanhuguesrobert -->|194| r_barons_mariani
-  r_jeanhuguesrobert -->|134| r_cogentia
+  r_jeanhuguesrobert -->|195| r_barons_mariani
+  r_jeanhuguesrobert -->|135| r_cogentia
   r_cogentia -->|102| r_barons_mariani
-  r_jeanhuguesrobert -->|62| r_marenostrum
-  r_jeanhuguesrobert -->|61| r_fractavolta
-  r_jeanhuguesrobert -->|59| r_inseme
-  r_jeanhuguesrobert -->|54| r_inox
+  r_jeanhuguesrobert -->|63| r_marenostrum
+  r_jeanhuguesrobert -->|62| r_fractavolta
+  r_jeanhuguesrobert -->|60| r_inseme
+  r_jeanhuguesrobert -->|55| r_inox
   r_fractavolta -->|32| r_cogentia
   r_fractavolta -->|31| r_marenostrum
   r_cogentia -->|21| r_inseme
@@ -88,16 +88,19 @@ graph LR
   r_barons_mariani -->|5| r_fractavolta
   r_barons_mariani -->|4| r_inox
   r_fractavolta -->|4| r_inox
+  r_cogentia -->|3| r_jeanhuguesrobert
   r_inseme -->|3| r_barons_mariani
+  r_inseme -->|3| r_jeanhuguesrobert
+  r_barons_mariani -->|2| r_jeanhuguesrobert
   r_barons_mariani -->|2| r_inseme
-  r_cogentia -->|2| r_jeanhuguesrobert
   r_cogentia -->|2| r_inox
   r_inseme -->|2| r_marenostrum
   r_inseme -->|2| r_fractavolta
-  r_inseme -->|2| r_jeanhuguesrobert
   r_marenostrum -->|2| r_inseme
   r_marenostrum -->|2| r_inox
-  r_barons_mariani -->|1| r_jeanhuguesrobert
+  r_fractavolta -->|1| r_jeanhuguesrobert
+  r_inox -->|1| r_jeanhuguesrobert
+  r_marenostrum -->|1| r_jeanhuguesrobert
 ```
 <!-- END_AUTO: graph -->
 

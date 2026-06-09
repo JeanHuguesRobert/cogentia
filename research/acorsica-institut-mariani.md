@@ -59,6 +59,10 @@ Ils ne valent ni fusion institutionnelle, ni transfert de données, ni portage j
 
 > L’interconnexion documentaire ne vaut pas confusion institutionnelle.
 
+## Référence transversale
+
+État consolidé au 2026-06-09 : cette note est la déclinaison locale, pour Cogentia, de la clarification globale [C.O.R.S.I.C.A., Institut Mariani et corpus personnel](https://github.com/JeanHuguesRobert/JeanHuguesRobert/blob/main/research/acorsica-et-corpus.md). En cas de divergence apparente, lire d'abord la note globale, puis la présente note pour les implications propres à Cogentia.
+
 
 <!-- BEGIN_AUTO: backlinks -->
 ### Backlinks
