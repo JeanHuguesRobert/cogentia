@@ -1,0 +1,97 @@
+# Cogentia Personal Data Portability — Media Reference Schema
+
+schema_id: cogentia_personal.data_portability.media_reference.v0
+schema_kind: frontmatter_contract
+status: draft
+
+required_fields:
+  - id
+  - type
+  - source_provider
+  - source_export
+  - stored_in_git
+  - sensitivity
+  - verification_status
+
+recommended_fields:
+  - original_filename
+  - date_or_period
+  - contains_third_party_data
+  - checksum
+  - file_size
+  - locations
+
+field_definitions:
+  id:
+    type: string
+    description: Stable media reference identifier.
+    example: media.meta.2026-06-11.000001
+  type:
+    type: enum
+    values:
+      - photo
+      - video
+      - audio
+      - scan
+      - pdf
+      - other
+  source_provider:
+    type: string
+    description: Provider or platform from which the media originates.
+  source_export:
+    type: string
+    description: Identifier of the export that referenced or contained the media.
+  original_filename:
+    type: string_or_null
+  date_or_period:
+    type: string_or_null
+  stored_in_git:
+    type: boolean
+    description: Whether the actual media object is stored in the Git repository.
+  sensitivity:
+    type: enum
+    values:
+      - public_possible
+      - private
+      - sensitive
+      - third_party
+      - critical
+  contains_third_party_data:
+    type: enum
+    values:
+      - true
+      - false
+      - unknown
+  checksum:
+    type: string_or_null
+    description: Prefer sha256 when available.
+  file_size:
+    type: string_or_integer_or_null
+  verification_status:
+    type: enum
+    values:
+      - pending
+      - partial
+      - verified
+      - failed
+  locations:
+    type: list
+    item_fields:
+      label: string
+      kind:
+        values:
+          - local_disk
+          - external_disk
+          - private_cloud
+          - encrypted_archive
+          - family_storage
+          - institutional_storage
+          - git_lfs
+          - provider_regenerable
+      reference: string_or_null
+      verified_at: datetime_or_null
+
+principles:
+  - Large media files should be referenced rather than committed by default.
+  - Redundancy is part of trace preservation.
+  - A media object and its descriptive trace must remain distinct.
