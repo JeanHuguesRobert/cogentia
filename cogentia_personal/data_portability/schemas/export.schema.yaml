@@ -1,0 +1,103 @@
+# Cogentia Personal Data Portability — Export Schema
+
+schema_id: cogentia_personal.data_portability.export.v0
+schema_kind: frontmatter_contract
+status: draft
+
+required_fields:
+  - id
+  - provider
+  - export_date
+  - received_at
+  - source_directory
+  - status
+  - sensitivity
+
+recommended_fields:
+  - markdown_directory
+  - contains_third_party_data
+  - contains_large_media
+  - large_media_policy
+  - checksum_manifest
+  - processed_by
+  - processed_at
+  - verification_status
+
+field_definitions:
+  id:
+    type: string
+    description: Stable export identifier.
+    example: export.meta.2026-06-11
+  provider:
+    type: string
+    description: Provider or platform that produced the export.
+    example: meta
+  export_date:
+    type: date
+    description: Date when the export was produced by the provider.
+  received_at:
+    type: date
+    description: Date when the user received or downloaded the export.
+  source_directory:
+    type: path
+    description: Directory where raw export files are stored or referenced.
+  markdown_directory:
+    type: path
+    description: Directory where generated Markdown traces are stored.
+  status:
+    type: enum
+    values:
+      - raw
+      - referenced
+      - normalized
+      - markdown
+      - redacted
+      - interpreted
+      - contested
+      - archived
+  sensitivity:
+    type: enum
+    values:
+      - public_possible
+      - private
+      - sensitive
+      - third_party
+      - critical
+  contains_third_party_data:
+    type: enum
+    values:
+      - true
+      - false
+      - unknown
+  contains_large_media:
+    type: enum
+    values:
+      - true
+      - false
+      - unknown
+  large_media_policy:
+    type: enum
+    values:
+      - stored_in_git
+      - stored_in_git_lfs
+      - referenced_outside_git
+      - provider_regenerable
+      - not_applicable
+  checksum_manifest:
+    type: path_or_null
+  processed_by:
+    type: string_or_null
+  processed_at:
+    type: datetime_or_null
+  verification_status:
+    type: enum
+    values:
+      - pending
+      - partial
+      - verified
+      - failed
+
+principles:
+  - Raw exports remain sources.
+  - Markdown is a navigable map, not a replacement for raw data.
+  - Real private data must not be used in public examples.
