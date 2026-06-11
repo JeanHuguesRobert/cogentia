@@ -1,0 +1,101 @@
+# Cogentia Personal Data Portability — Trace Schema
+
+schema_id: cogentia_personal.data_portability.trace.v0
+schema_kind: frontmatter_contract
+status: draft
+
+required_fields:
+  - id
+  - source_provider
+  - source_export
+  - status
+  - sensitivity
+  - evidence_level
+
+recommended_fields:
+  - source_file
+  - source_record_id
+  - captured_at
+  - exported_at
+  - normalized_at
+  - contains_third_party_data
+  - related_people
+  - related_organizations
+  - related_projects
+  - related_concepts
+  - related_places
+  - related_media
+
+field_definitions:
+  id:
+    type: string
+    description: Stable trace identifier.
+    example: trace.meta.2026-06-11.000001
+  source_provider:
+    type: string
+    description: Provider or platform from which the source trace originates.
+  source_export:
+    type: string
+    description: Identifier of the export containing or referencing the source trace.
+  source_file:
+    type: path_or_null
+  source_record_id:
+    type: string_or_null
+  captured_at:
+    type: datetime_or_null
+  exported_at:
+    type: date_or_null
+  normalized_at:
+    type: datetime_or_null
+  status:
+    type: enum
+    values:
+      - raw
+      - referenced
+      - normalized
+      - markdown
+      - redacted
+      - interpreted
+      - contested
+      - archived
+  sensitivity:
+    type: enum
+    values:
+      - public_possible
+      - private
+      - sensitive
+      - third_party
+      - critical
+  evidence_level:
+    type: enum
+    values:
+      - raw_export
+      - provider_metadata
+      - user_assertion
+      - inferred
+      - agent_interpretation
+      - externally_verified
+  contains_third_party_data:
+    type: enum
+    values:
+      - true
+      - false
+      - unknown
+  related_people:
+    type: list
+  related_organizations:
+    type: list
+  related_projects:
+    type: list
+  related_concepts:
+    type: list
+  related_places:
+    type: list
+  related_media:
+    type: list
+
+principles:
+  - A trace is not truth by itself.
+  - Evidence level must be explicit.
+  - Interpretation must never be silently merged into raw-source representation.
+  - Markdown is a map over the source, not the source itself.
