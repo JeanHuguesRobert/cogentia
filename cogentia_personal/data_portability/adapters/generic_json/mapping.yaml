@@ -1,0 +1,65 @@
+adapter_id: adapter_generic_json
+adapter_version: 0.1.0
+status: draft
+confidence: experimental
+
+purpose: >
+  Inspect JSON and JSON Lines files conservatively and identify candidate records.
+
+input_kinds:
+  - json
+  - jsonl
+
+outputs:
+  - structure_summary
+  - candidate_records
+  - candidate_text_fields
+  - candidate_timestamp_fields
+  - candidate_id_fields
+  - candidate_media_references
+  - processing_report
+
+candidate_field_patterns:
+  identifiers:
+    - id
+    - uuid
+    - message_id
+    - conversation_id
+    - thread_id
+  timestamps:
+    - created_at
+    - updated_at
+    - timestamp
+    - date
+    - time
+    - sent_at
+    - captured_at
+  text:
+    - text
+    - body
+    - content
+    - message
+    - title
+    - description
+    - caption
+  media:
+    - media
+    - attachments
+    - files
+    - images
+    - videos
+    - audio
+    - url
+    - uri
+    - path
+
+mapping_policy:
+  - Field names are only candidates, not proof of semantics.
+  - Provider-specific meaning must be supplied by provider adapters.
+  - Ambiguous records should be reported rather than normalized silently.
+
+principles:
+  - Preserve raw JSON.
+  - Do not overwrite source files.
+  - Mark uncertainty explicitly.
+  - Generate Markdown traces only when the record structure is sufficiently clear.
