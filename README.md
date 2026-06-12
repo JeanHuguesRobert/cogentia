@@ -50,17 +50,22 @@ apps/
 ```bash
 # From any of your registered repositories
 node scripts/cogentia.js help                      # show all commands
+node scripts/cogentia.js version                   # show the CLI version
 node scripts/cogentia.js state --json              # show registered repos and policies
+node scripts/cogentia.js status                    # compact corpus health table
+node scripts/cogentia.js grep "exergy" --json     # full-text search over active markdown
 node scripts/cogentia.js docs summary --json       # numeric corpus summary
-node scripts/cogentia.js docs search "exergy"      # full-text search over active markdown
 node scripts/cogentia.js docs judgments --json     # list cases needing external judgment
 node scripts/cogentia.js continuation list          # inspect active judgment requests
 node scripts/cogentia.js corpus plan --json        # inspect generated navigation changes
 node scripts/cogentia.js corpus apply              # apply the fresh generated plan
 node scripts/cogentia.js corpus verify --strict    # verify generated views, gaps and drift
+node scripts/cogentia.js daemon --port 8790        # start the local daemon
 ```
 
 The CLI has zero npm dependencies. Node 20+ recommended. MIT-licensed.
+
+Note: `docs` and `documents` are equivalent top-level commands in this version of `cogentia.js`.
 
 ## Run the apps (optional)
 
@@ -97,11 +102,17 @@ All published documents live in `research/` and are catalogued in [`research/ind
 
 ## CLI features (v2)
 
+- **Tooling**
+  * `help`, `-h`, `--help` — show command usage and available commands.
+  * `version`, `--version` — show the current CLI version.
+  * `daemon` — start the local HTTP daemon for plugins and browser UI.
+  * `documents` — alias for `docs`.
 - **Corpus state**
   * `state` — registered repositories, branches and local policies.
   * `status` — compact health table for hooks and humans.
   * `git verify` — ahead/behind and dirty-state report, with local dirty-ignore policies.
 - **Document navigation**
+  * `grep <text>` — full-text search over active Markdown documents.
   * `docs summary` — totals by repo and role, plus cross-repo coupling weights.
   * `docs query [repo|all]` — catalog query by role, indexing gap, metadata text and sort order.
   * `docs search <text>` — full-text search over active Markdown documents.
@@ -118,7 +129,7 @@ All published documents live in `research/` and are catalogued in [`research/ind
 - **Concepts**
   * `concepts list` and `concepts check` — parse every `research/concepts.md`, excluding generated auto-blocks and surfacing missing fields, duplicates and undefined references.
 
-The current session ritual is: `status` at the start, `docs search` / `docs inspect` while navigating, `docs judgments --emit-continuations` when classification needs interpretation, `corpus plan` before mechanical refresh, then `corpus apply` and `corpus verify --strict` when the generated views should be updated.
+The current session ritual is: `status` at the start, `grep` or `docs search` / `docs inspect` while navigating, `docs judgments --emit-continuations` when classification needs interpretation, `corpus plan` before mechanical refresh, then `corpus apply` and `corpus verify --strict` when the generated views should be updated.
 
 ## Ecosystem
 

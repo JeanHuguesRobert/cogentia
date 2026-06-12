@@ -1,0 +1,16 @@
+{
+  "name": "cmd",
+  "class": "terminal",
+  "title": "Terminal Command Runner",
+  "description": "Run predefined local commands from the daemon (whitelisted).",
+  "config": {
+    "commands": [
+      { "name": "ls", "cmd": ["ls", "-la"] },
+      { "name": "pwd", "cmd": ["pwd"] }
+    ]
+  },
+  "routes": [
+    { "method": "GET", "path": "/api/cmd/list" },
+    { "method": "GET", "path": "/api/cmd/run" }
+  ]
+}

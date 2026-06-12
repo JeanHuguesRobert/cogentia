@@ -1,0 +1,10 @@
+{
+  "name": "ui",
+  "class": "ui",
+  "title": "Document Navigator UI",
+  "description": "Provides a minimal web-based document navigator and markdown preview.",
+  "routes": [
+    { "method": "GET", "path": "/ui" },
+    { "method": "GET", "path": "/ui/static/*" }
+  ]
+}

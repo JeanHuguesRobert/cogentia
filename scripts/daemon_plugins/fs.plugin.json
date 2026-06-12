@@ -1,0 +1,10 @@
+{
+  "name": "fs",
+  "class": "filesystem",
+  "title": "Filesystem Navigator",
+  "description": "Browse repository directories and fetch files via daemon endpoints.",
+  "routes": [
+    { "method": "GET", "path": "/api/fs/list" },
+    { "method": "GET", "path": "/api/fs/file" }
+  ]
+}

@@ -29,10 +29,16 @@ status: "draft — auto-filled (frontmatter cleanup)"
 To understand the current command surface, run:
 ```bash
 node scripts/cogentia.js help
+node scripts/cogentia.js version
 node scripts/cogentia.js state --json
+node scripts/cogentia.js status
+node scripts/cogentia.js grep "search term" --json
+node scripts/cogentia.js daemon --port 8790
 ```
 
-`state` returns the registered repositories, their branches, policy scope, and whether the expected `research/index.md`, `research/concepts.md`, and `research/corpus-status.md` files exist.
+`help` shows the CLI surface and aliases. `state` returns the registered repositories, their branches, policy scope, and whether the expected `research/index.md`, `research/concepts.md`, and `research/corpus-status.md` files exist. `status` prints a compact local health table used for git-hook validation. `daemon` starts a local HTTP daemon on `127.0.0.1` for programmatic inspection and plugin-driven UI.
+
+`docs` and `documents` are equivalent top-level commands in the current CLI.
 
 ## 2. Corpus Orientation
 
@@ -53,6 +59,11 @@ node scripts/cogentia.js docs query all --role source --q "packet" --json
 ```
 
 Use full-text search when you need an anchor line:
+```bash
+node scripts/cogentia.js grep "exergy protocol" --json
+```
+
+`docs search` is also available as an alias for the same indexed-document search:
 ```bash
 node scripts/cogentia.js docs search "exergy protocol" --json
 ```

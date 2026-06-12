@@ -1,5 +1,4 @@
-#!/usr/bin/env node
-/*
+﻿/*
  * cogentia.js v2
  *
  * Design rule:
@@ -12,9 +11,12 @@
  */
 
 import fs from "node:fs";
+import http from "node:http";
 import path from "node:path";
 import { execFileSync } from "node:child_process";
 import { createHash, randomBytes } from "node:crypto";
+import { pathToFileURL } from "node:url";
+import { DAEMON_PLUGINS, DAEMON_PLUGIN_ROUTES, loadDaemonPlugins, dispatchPluginRoute } from "./daemon_plugins/registry.js";
 
 const VERSION = "2.1.0";
 const CONFIG_FILE = ".cogentia.json";
@@ -83,6 +85,8 @@ async function main() {
       return cmdState();
     case "status":
       return cmdStatus();
+    case "grep":
+      return cmdGrep();
     case "corpus":
       return cmdCorpus(argv.shift() || "plan");
     case "docs":
@@ -94,6 +98,8 @@ async function main() {
       return cmdContinuation(argv.shift() || "list");
     case "git":
       return cmdGit(argv.shift() || "verify");
+    case "daemon":
+      return cmdDaemon();
     default:
       throw new Error(`Unknown command "${command}". Run: node scripts/cogentia.js help`);
   }
@@ -111,6 +117,7 @@ Core commands:
   corpus apply             Apply generated navigation changes from a fresh plan.
   corpus verify            Verify generated views, gaps and git drift.
   status                   Local health table used by the git hook.
+  grep <text>              Full-text search over active markdown documents.
 
 Document commands:
   docs summary             Numeric corpus summaries.
@@ -151,8 +158,7 @@ Plan/apply flags:
   --strict                 Non-zero exit when verify finds issues.
 
 Registry:
-  Uses --registry <path>, COGENTIA_REGISTRY, nearest .cogentia.json, or
-  C:/tweesic/JeanHuguesRobert/.cogentia.json.
+  Uses --registry <path>, COGENTIA_REGISTRY, or nearest .cogentia.json.
 `;
   console.log(text.trimStart());
 }
@@ -170,6 +176,12 @@ function cmdState() {
     corpus_status: fileExists(repo.path, "research", CORPUS_STATUS_FILE),
   }));
   output({ ok: true, version: VERSION, registry: ctx.configPath, repos }, formatState(repos));
+}
+
+function cmdGrep() {
+  const ctx = loadContext();
+  const inventory = buildInventory(ctx);
+  return cmdDocsSearch(inventory);
 }
 
 function cmdStatus() {
@@ -190,10 +202,19 @@ function cmdStatus() {
       behind: g.behind,
     };
   });
-  if (JSON_MODE) return output({ ok: true, rows });
+  const statusPayload = {
+    ok: true,
+    registry: ctx.configPath,
+    registryRoot: ctx.registryRoot,
+    rows,
+  };
+  if (JSON_MODE) return output(statusPayload);
+
   console.log("\nCorpus status\n");
-  console.log(`${pad("Repository", 18)} ${pad("Branch", 8)} ${pad("Docs", 6, true)} ${pad("Gaps", 6, true)} ${pad("Dirty", 6, true)} Drift`);
-  console.log("-".repeat(70));
+  console.log(`Registry: ${ctx.configPath}`);
+  console.log(`Registry root: ${ctx.registryRoot}`);
+  console.log(`\n${pad("Repository", 18)} ${pad("Branch", 8)} ${pad("Docs", 6, true)} ${pad("Gaps", 6, true)} ${pad("Dirty", 6, true)} Drift`);
+  console.log("-".repeat(90));
   for (const r of rows) {
     const drift = r.behind || r.ahead ? `${r.behind} behind / ${r.ahead} ahead` : "ok";
     console.log(`${pad(r.repo, 18)} ${pad(r.branch, 8)} ${pad(r.docs, 6, true)} ${pad(r.unindexed, 6, true)} ${pad(r.dirty, 6, true)} ${drift}`);
@@ -386,6 +407,380 @@ function cmdGit(sub) {
   output({ ok: true, repos: result }, formatGit(result));
 }
 
+async function cmdDaemon() {
+  const host = valueFlag("--host") || "127.0.0.1";
+  const port = Number(valueFlag("--port") || process.env.COGENTIA_PORT || 8787);
+  if (!Number.isInteger(port) || port < 1 || port > 65535) {
+    throw new Error(`Invalid daemon port: ${port}`);
+  }
+  const ctx = loadContext();
+  // load plugins which may register additional HTTP routes
+  try {
+    await loadDaemonPlugins(ctx);
+  } catch (e) {
+    console.error(`Failed to load daemon plugins: ${e.message}`);
+  }
+
+  const server = http.createServer((req, res) => {
+    handleDaemonRequest(req, res).catch(err => {
+      daemonJson(res, 500, {
+        ok: false,
+        error: err.message,
+      });
+    });
+  });
+  server.listen(port, host, () => {
+    console.log(`Cogentia Local daemon listening on http://${host}:${port}`);
+  });
+}
+async function handleDaemonRequest(req, res) {
+  const url = new URL(req.url || "/", "http://127.0.0.1");
+  // load context early and give plugins a chance to handle the request
+  let ctx = null;
+  try {
+    ctx = loadContext();
+  } catch (e) {
+    // context may be unavailable for some operations; plugins should handle absence
+    ctx = null;
+  }
+  if (await dispatchPluginRoute(req, res, ctx, url)) return;
+  if (req.method === "OPTIONS") {
+    res.writeHead(204, daemonHeaders());
+    res.end();
+    return;
+  }
+  if (req.method === "GET" && url.pathname === "/api/status") {
+    return daemonJson(res, 200, daemonStatus());
+  }
+  if (req.method === "GET" && url.pathname === "/api/state") {
+    const effectiveCtx = ctx || loadContext();
+    return daemonJson(res, 200, {
+      ok: true,
+      version: VERSION,
+      registry: effectiveCtx.configPath,
+      registry_root: effectiveCtx.registryRoot,
+      repos: effectiveCtx.repos.map(repo => daemonRepoState(repo)),
+    });
+  }
+  if (req.method === "GET" && url.pathname === "/api/repos") {
+    const effectiveCtx = ctx || loadContext();
+    return daemonJson(res, 200, {
+      ok: true,
+      repos: effectiveCtx.repos.map(repo => daemonRepoState(repo)),
+    });
+  }
+  if (req.method === "GET" && url.pathname === "/api/git/verify") {
+    const effectiveCtx = ctx || loadContext();
+    return daemonJson(res, 200, {
+      ok: true,
+      repos: verifyGit(effectiveCtx),
+    });
+  }
+  if (req.method === "GET" && url.pathname === "/api/plugins") {
+    return daemonJson(res, 200, {
+      ok: true,
+      plugins: DAEMON_PLUGINS.map(p => ({
+        name: p.name,
+        class: p.class,
+        title: p.title,
+        description: p.description,
+        source: p.source,
+        routes: p.routes.map(r => ({ method: r.method || 'GET', path: r.path })),
+      })),
+    });
+  }
+  if (req.method === "GET" && url.pathname === "/api/cli") {
+    return daemonJson(res, 200, {
+      ok: true,
+      version: VERSION,
+      docs: "Unified CLI endpoints are available under /api/cli/*",
+      endpoints: [
+        "/api/cli/state",
+        "/api/cli/status",
+        "/api/cli/grep",
+        "/api/cli/docs/summary",
+        "/api/cli/docs/query",
+        "/api/cli/docs/search",
+        "/api/cli/docs/gaps",
+        "/api/cli/docs/inspect",
+        "/api/cli/concepts/list",
+        "/api/cli/concepts/check",
+        "/api/cli/git/verify",
+        "/api/cli/continuation/list",
+        "/api/cli/continuation/inspect",
+      ],
+    });
+  }
+  if (req.method === "GET" && url.pathname === "/api/cli/state") {
+    const effectiveCtx = ctx || loadContext();
+    return daemonJson(res, 200, daemonCliState(effectiveCtx));
+  }
+  if (req.method === "GET" && url.pathname === "/api/cli/status") {
+    const effectiveCtx = ctx || loadContext();
+    return daemonJson(res, 200, daemonCliStatus(effectiveCtx));
+  }
+  if (req.method === "GET" && url.pathname === "/api/cli/grep") {
+    const effectiveCtx = ctx || loadContext();
+    return daemonJson(res, 200, daemonCliGrep(effectiveCtx, url));
+  }
+  if (req.method === "GET" && url.pathname === "/api/cli/docs/summary") {
+    const effectiveCtx = ctx || loadContext();
+    return daemonJson(res, 200, daemonCliDocsSummary(effectiveCtx));
+  }
+  if (req.method === "GET" && url.pathname === "/api/cli/docs/query") {
+    const effectiveCtx = ctx || loadContext();
+    return daemonJson(res, 200, daemonCliDocsQuery(effectiveCtx, url));
+  }
+  if (req.method === "GET" && url.pathname === "/api/cli/docs/search") {
+    const effectiveCtx = ctx || loadContext();
+    return daemonJson(res, 200, daemonCliDocsSearch(effectiveCtx, url));
+  }
+  if (req.method === "GET" && url.pathname === "/api/cli/docs/gaps") {
+    const effectiveCtx = ctx || loadContext();
+    return daemonJson(res, 200, daemonCliDocsGaps(effectiveCtx));
+  }
+  if (req.method === "GET" && url.pathname === "/api/cli/docs/inspect") {
+    const effectiveCtx = ctx || loadContext();
+    return daemonJson(res, 200, daemonCliDocsInspect(effectiveCtx, url));
+  }
+  if (req.method === "GET" && url.pathname === "/api/cli/docs/snippet") {
+    const effectiveCtx = ctx || loadContext();
+    return daemonJson(res, 200, daemonCliDocsSnippet(effectiveCtx, url));
+  }
+  if (req.method === "GET" && url.pathname === "/api/cli/concepts/list") {
+    const effectiveCtx = ctx || loadContext();
+    return daemonJson(res, 200, daemonCliConceptsList(effectiveCtx, url));
+  }
+  if (req.method === "GET" && url.pathname === "/api/cli/concepts/check") {
+    const effectiveCtx = ctx || loadContext();
+    return daemonJson(res, 200, daemonCliConceptsCheck(effectiveCtx, url));
+  }
+  if (req.method === "GET" && url.pathname === "/api/cli/git/verify") {
+    const effectiveCtx = ctx || loadContext();
+    return daemonJson(res, 200, { ok: true, repos: verifyGit(effectiveCtx) });
+  }
+  if (req.method === "GET" && url.pathname === "/api/cli/continuation/list") {
+    const effectiveCtx = ctx || loadContext();
+    return daemonJson(res, 200, daemonCliContinuationList(effectiveCtx, url));
+  }
+  if (req.method === "GET" && url.pathname === "/api/cli/continuation/inspect") {
+    const effectiveCtx = ctx || loadContext();
+    return daemonJson(res, 200, daemonCliContinuationInspect(effectiveCtx, url));
+  }
+  return daemonJson(res, 404, {
+    ok: false,
+    error: "not_found",
+    path: url.pathname,
+  });
+}
+function daemonStatus() {
+  return {
+    ok: true,
+    service: "cogentia-local",
+    version: VERSION,
+    pid: process.pid,
+    cwd: process.cwd(),
+  };
+}
+function daemonRepoState(repo) {
+  return {
+    name: repo.name,
+    path: repo.path,
+    branch: repo.branch,
+    exists: fs.existsSync(repo.path),
+    policy: repo.policy,
+  };
+}
+function daemonHeaders() {
+  return {
+    "Content-Type": "application/json; charset=utf-8",
+    "Access-Control-Allow-Origin": "http://127.0.0.1:8787",
+    "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+    "Access-Control-Allow-Headers": "Content-Type, Authorization",
+    "Cache-Control": "no-store",
+  };
+}
+function daemonJson(res, status, body) {
+  res.writeHead(status, daemonHeaders());
+  res.end(`${JSON.stringify(body, null, 2)}\n`);
+}
+
+function parseBoolean(value) {
+  return value !== null && ['1', 'true', 'yes', 'on'].includes(String(value).toLowerCase());
+}
+
+function daemonCliState(ctx) {
+  return {
+    ok: true,
+    version: VERSION,
+    registry: ctx.configPath,
+    registry_root: ctx.registryRoot,
+    repos: ctx.repos.map(daemonRepoState),
+  };
+}
+
+function daemonCliStatus(ctx) {
+  const inventory = buildInventory(ctx);
+  const git = verifyGit(ctx);
+  const rows = ctx.repos.map(repo => {
+    const docs = inventory.documents.filter(d => d.repo === repo.name && !d.index.ignored);
+    const unindexed = docs.filter(isIndexGap).length;
+    const g = git.find(x => x.repo === repo.name);
+    return {
+      repo: repo.name,
+      branch: repo.branch,
+      docs: docs.length,
+      unindexed,
+      dirty: g.dirty_count,
+      ahead: g.ahead,
+      behind: g.behind,
+    };
+  });
+  return {
+    ok: true,
+    registry: ctx.configPath,
+    registry_root: ctx.registryRoot,
+    rows,
+  };
+}
+
+function daemonCliGrep(ctx, url) {
+  const inventory = buildInventory(ctx);
+  const q = url.searchParams.get('q') || '';
+  const repo = url.searchParams.get('repo') || 'all';
+  const limit = parseInt(url.searchParams.get('limit'), 10) || 25;
+  const includeGenerated = parseBoolean(url.searchParams.get('include-generated'));
+  return daemonCliDocsSearchFromInventory(inventory, q, repo, limit, includeGenerated);
+}
+
+function daemonCliDocsSummary(ctx) {
+  const inventory = buildInventory(ctx);
+  return docSummary(inventory);
+}
+
+function daemonCliDocsQuery(ctx, url) {
+  const inventory = buildInventory(ctx);
+  const filter = {
+    repo: url.searchParams.get('repo') || 'all',
+    role: url.searchParams.get('role') || 'all',
+    q: url.searchParams.get('q') || '',
+    notIndexed: parseBoolean(url.searchParams.get('not-indexed')),
+    includeIgnored: parseBoolean(url.searchParams.get('include-ignored')),
+    sort: url.searchParams.get('sort') || 'updated',
+    limit: parseInt(url.searchParams.get('limit'), 10) || null,
+  };
+  const docs = filterDocuments(inventory.documents, filter).map(sanitizeDoc);
+  return { ok: true, filter, count: docs.length, documents: docs };
+}
+
+function daemonCliDocsSearch(ctx, url) {
+  const inventory = buildInventory(ctx);
+  const q = url.searchParams.get('q') || '';
+  const repo = url.searchParams.get('repo') || 'all';
+  const limit = parseInt(url.searchParams.get('limit'), 10) || 25;
+  const includeGenerated = parseBoolean(url.searchParams.get('include-generated'));
+  return daemonCliDocsSearchFromInventory(inventory, q, repo, limit, includeGenerated);
+}
+
+function daemonCliDocsSearchFromInventory(inventory, q, repo, limit, includeGenerated) {
+  if (!q) return { ok: false, error: 'missing_query' };
+  const needle = q.toLowerCase();
+  const docs = inventory.documents
+    .filter(d => !d.index.ignored)
+    .filter(d => includeGenerated || !isGeneratedNavigationDoc(d))
+    .filter(d => repo === 'all' || d.repo === repo)
+    .sort(compareDocs('repo'));
+  const matches = [];
+  for (const doc of docs) {
+    const lines = readFileIfExists(doc.full_path).split(/\r?\n/);
+    for (let i = 0; i < lines.length; i++) {
+      if (!lines[i].toLowerCase().includes(needle)) continue;
+      matches.push({
+        repo: doc.repo,
+        path: doc.rel,
+        title: doc.title,
+        line: i + 1,
+        snippet: snippet(lines, i),
+        github_url: `${doc.github_url}#L${i + 1}`,
+      });
+      if (matches.length >= limit) break;
+    }
+    if (matches.length >= limit) break;
+  }
+  return { ok: true, query: q, repo, include_generated: includeGenerated, count: matches.length, matches };
+}
+
+function daemonCliDocsGaps(ctx) {
+  const inventory = buildInventory(ctx);
+  const docs = inventory.documents.filter(isIndexGap).sort(compareDocs('repo')).map(sanitizeDoc);
+  return { ok: true, count: docs.length, documents: docs };
+}
+
+function daemonCliDocsInspect(ctx, url) {
+  const inventory = buildInventory(ctx);
+  const ref = url.searchParams.get('ref') || '';
+  if (!ref) return { ok: false, error: 'missing_ref' };
+  const doc = resolveDocRef(inventory, ref);
+  if (!doc) return { ok: false, error: 'document_not_found', ref };
+  return { ok: true, document: sanitizeDoc(doc) };
+}
+
+function daemonCliDocsSnippet(ctx, url) {
+  const inventory = buildInventory(ctx);
+  const ref = url.searchParams.get('ref') || '';
+  const q = url.searchParams.get('q') || '';
+  if (!ref) return { ok: false, error: 'missing_ref' };
+  if (!q) return { ok: false, error: 'missing_query' };
+  const doc = resolveDocRef(inventory, ref);
+  if (!doc) return { ok: false, error: 'document_not_found', ref };
+  const lines = readFileIfExists(doc.full_path).split(/\r?\n/);
+  const needle = q.toLowerCase();
+  const matches = [];
+  for (let i = 0; i < lines.length; i++) {
+    if (!lines[i].toLowerCase().includes(needle)) continue;
+    matches.push({ line: i + 1, snippet: snippet(lines, i) });
+    if (matches.length >= 10) break;
+  }
+  return { ok: true, ref, q, count: matches.length, matches };
+}
+
+function daemonCliConceptsList(ctx, url) {
+  const repoArg = url.searchParams.get('repo') || 'all';
+  const concepts = loadConcepts(ctx);
+  const selected = repoArg === 'all' ? concepts : concepts.filter(r => r.repo === repoArg);
+  if (!selected.length && repoArg !== 'all') return { ok: false, error: 'unknown_repo_or_no_concepts', repo: repoArg };
+  return { ok: true, repos: selected };
+}
+
+function daemonCliConceptsCheck(ctx, url) {
+  const repoArg = url.searchParams.get('repo') || 'all';
+  const concepts = loadConcepts(ctx);
+  const selected = repoArg === 'all' ? concepts : concepts.filter(r => r.repo === repoArg);
+  if (!selected.length && repoArg !== 'all') return { ok: false, error: 'unknown_repo_or_no_concepts', repo: repoArg };
+  return { ok: true, results: checkConcepts(selected, concepts) };
+}
+
+function daemonCliContinuationList(ctx, url) {
+  const status = url.searchParams.get('status') || 'active';
+  const kind = url.searchParams.get('kind') || '';
+  const continuations = loadContinuations(ctx)
+    .filter(c => status === 'all' || c.status === status)
+    .filter(c => !kind || c.kind === kind)
+    .sort(compareContinuations);
+  return { ok: true, status, kind: kind || 'all', continuations: continuations.map(stripContinuationBody) };
+}
+
+function daemonCliContinuationInspect(ctx, url) {
+  const id = url.searchParams.get('id') || '';
+  if (!id) return { ok: false, error: 'missing_id' };
+  try {
+    const continuation = loadContinuation(ctx, id);
+    return { ok: true, continuation };
+  } catch (e) {
+    return { ok: false, error: 'continuation_not_found', message: e.message, id };
+  }
+}
+// plugin registry and dispatcher are implemented in scripts/daemon_plugins/registry.js
 function cmdContinuation(sub) {
   const ctx = loadContext();
   switch (sub) {
@@ -1028,8 +1423,16 @@ function gitStatusPath(line) {
 }
 
 function loadContext() {
-  const configPath = findConfig();
-  if (!configPath) throw new Error("No .cogentia.json found. Use --registry <path> or COGENTIA_REGISTRY.");
+  const { configPath, triedPaths } = findConfig();
+  if (!configPath) {
+    const message = [
+      `No ${CONFIG_FILE} found.`,
+      `Searched:`,
+      ...triedPaths.map(p => `  ${p}`),
+      `Use --registry <path> or COGENTIA_REGISTRY.`,
+    ].join("\n");
+    throw new Error(message);
+  }
   const raw = JSON.parse(fs.readFileSync(configPath, "utf8"));
   const repos = (raw.repos || []).map(r => {
     const policy = {
@@ -1048,22 +1451,28 @@ function loadContext() {
 }
 
 function findConfig() {
+  const trials = [];
   const explicit = valueFlag("--registry") || process.env.COGENTIA_REGISTRY;
   if (explicit) {
     const p = path.resolve(explicit);
-    if (fs.existsSync(p) && fs.statSync(p).isDirectory()) return path.join(p, CONFIG_FILE);
-    return p;
+    if (fs.existsSync(p) && fs.statSync(p).isDirectory()) {
+      const candidate = path.join(p, CONFIG_FILE);
+      trials.push(candidate);
+      return { configPath: candidate, triedPaths: trials };
+    }
+    trials.push(p);
+    return { configPath: p, triedPaths: trials };
   }
   let cur = process.cwd();
   while (true) {
     const p = path.join(cur, CONFIG_FILE);
-    if (fs.existsSync(p)) return p;
+    trials.push(p);
+    if (fs.existsSync(p)) return { configPath: p, triedPaths: trials };
     const parent = path.dirname(cur);
     if (parent === cur) break;
     cur = parent;
   }
-  const known = "C:\\tweesic\\JeanHuguesRobert\\.cogentia.json";
-  return fs.existsSync(known) ? known : null;
+  return { configPath: null, triedPaths: trials };
 }
 
 function continuationsDir(ctx) {
@@ -1901,3 +2310,4 @@ function escapeTable(s) {
 function escapeRegExp(s) {
   return String(s).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
+
