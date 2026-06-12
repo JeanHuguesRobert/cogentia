@@ -1,0 +1,55 @@
+adapter_id: adapter_generic_html
+adapter_version: 0.1.0
+status: draft
+confidence: experimental
+
+purpose: >
+  Extract visible text and basic references from HTML files without assuming provider-specific semantics.
+
+input_kinds:
+  - html
+  - htm
+
+outputs:
+  - visible_text
+  - candidate_title
+  - candidate_headings
+  - candidate_links
+  - candidate_image_references
+  - candidate_timestamps
+  - processing_report
+
+ignored_by_default:
+  - script
+  - style
+  - noscript
+  - tracking_pixel
+  - hidden_elements
+  - layout_only_navigation
+
+candidate_selectors:
+  title:
+    - title
+    - h1
+  headings:
+    - h1
+    - h2
+    - h3
+  links:
+    - a[href]
+  images:
+    - img[src]
+  time:
+    - time
+    - '*[datetime]'
+
+mapping_policy:
+  - HTML structure is presentation, not proof of semantic meaning.
+  - Visible text extraction may be useful even when strong normalization is unsafe.
+  - Provider-specific selectors belong in provider adapters, not in the generic HTML adapter.
+
+principles:
+  - Preserve the source HTML.
+  - Extract text conservatively.
+  - Mark uncertainty explicitly.
+  - Do not infer factual meaning from layout alone.
