@@ -16,7 +16,7 @@ reply_detected: false
 reply_date: null
 status: "no_response_detected"
 followup_number: 0
-elapsed_days_as_of_last_registry_update: 61
+elapsed_days_as_of_last_registry_update: 62
 disclosure: "D2"
 public_summary: >
   MareNostrum message sent to a PRIMA France / ANR contact regarding project
