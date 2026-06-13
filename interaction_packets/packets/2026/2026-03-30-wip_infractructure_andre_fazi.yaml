@@ -14,7 +14,7 @@ reply_detected: false
 reply_date: null
 status: "no_response_detected"
 followup_number: 0
-elapsed_days_as_of_last_registry_update: 74
+elapsed_days_as_of_last_registry_update: 75
 disclosure: "D2"
 public_summary: >
   WIP draft titled \"Infractructure is all you need\" sent to André Fazi,
