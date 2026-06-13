@@ -3,12 +3,12 @@ type: "interaction_packet"
 channel: "email"
 date: 2026-06-12
 sent_time: "16:59:48+02:00"
-subject: "Démocratie de capacité, publics capables et IA sous mandat"
-from: "Jean Hugues Noël Robert"
+subject: "Democratie de capacite, publics capables et IA sous mandat"
+from: "Jean Hugues Noel Robert"
 acting_as:
   - "Institut Mariani / C.O.R.S.I.C.A."
 to:
-  - "Hélène Landemore"
+  - "Helene Landemore"
   - "Barbara Stiegler"
 cc:
   - "Institut Mariani"
@@ -17,16 +17,13 @@ reply_detected: false
 reply_date: null
 status: "sent_awaiting_reply"
 followup_number: 0
-elapsed_days_as_of_last_registry_update: 0
+elapsed_days_as_of_last_registry_update: 1
 disclosure: "D2"
 public_summary: >
-  Joint email sent to Hélène Landemore and Barbara Stiegler regarding democracy
-  of capability, capable publics and AI under mandate. Awaiting reply.
-expected_continuation: >
-  Possible reply, redirection, conversation, or no response.
+  Joint email sent regarding democracy of capability, capable publics and AI
+  under mandate. Awaiting reply.
+expected_continuation: "Possible reply, redirection, conversation, or no response."
 observed_continuation: "Sent; awaiting reply."
-related_documents:
-  - "https://github.com/JeanHuguesRobert/cogentia/blob/main/research/democracy_of_capability.md"
 notes:
   - "Sent message retrieved from Gmail during the 2026-06-13 backlog pass."
-  - "Public trace remains minimal; substantive arguments live in the linked research document."
+  - "Public trace remains minimal."
