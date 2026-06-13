@@ -1,0 +1,47 @@
+id: 2026-06-13-001
+type: "interaction_packet"
+channel: "email"
+date: 2026-06-13
+sent_time: "18:55:31+02:00"
+subject: "Demande de cadrage territorial — Préfiguration d’un point d’autonomie numérique et administrative à Corte"
+from: "Jean Hugues Noël Robert"
+acting_as:
+  - "Président de l’association C.O.R.S.I.C.A."
+to:
+  - "Sous-préfecture de Corte"
+cc:
+  - "Mme Volpi"
+  - "Institut Mariani"
+thread_detected: true
+reply_detected: false
+reply_date: null
+status: "sent_awaiting_reply"
+followup_number: 0
+elapsed_days_as_of_last_registry_update: 0
+disclosure: "D2"
+public_summary: >
+  Request sent to the sous-préfecture of Corte for territorial framing of a
+  possible local point for digital and administrative autonomy, compatible with
+  a future France Services antenna or house, and connected to the Serenia
+  programme.
+expected_continuation: >
+  Reply from the sous-préfecture, appointment proposal, redirection to the
+  competent service, request for supporting documents, or no response detected.
+observed_continuation: "Sent; awaiting reply."
+main_request:
+  - "Identify the competent service for instruction or orientation."
+  - "Clarify required documents for an initial assessment."
+  - "Assess whether a technical visit of the 1 cours Paoli premises is useful."
+  - "Identify realistic formats: autonomy point, France Services antenna, France Services house, or multisite device."
+  - "Identify financing options for a digital and administrative mediator position."
+assets_declared:
+  - "Central premises at 1 cours Paoli, Corte."
+  - "Recent lift."
+  - "Wide entrance."
+  - "Available office for a second agent."
+  - "Possible complementary improvements."
+  - "Volunteer digital expertise."
+  - "Serenia programme for administrative, digital and cognitive autonomy assisted by AI."
+notes:
+  - "Sent message retrieved from Gmail during packet creation."
+  - "The packet records the institutional approach without attributing motives to local actors."
