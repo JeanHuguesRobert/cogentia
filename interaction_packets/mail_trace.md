@@ -6,7 +6,7 @@ title: "Mail Trace Register"
 date: "2026-05-27"
 status: "draft — auto-filled (frontmatter cleanup)"
 canonical_url: https://github.com/JeanHuguesRobert/cogentia/blob/main/interaction_packets/mail_trace.md
-last_stamped_at: 2026-06-12
+last_stamped_at: 2026-06-13
 ---
 # Mail Trace Register
 
@@ -22,6 +22,7 @@ last_stamped_at: 2026-06-12
 | 2026-04-17-001 | 2026-04-17 | Thèse droit & forêt corse | Andrea Gavini | 0 | 0 | Delivery failed | D2 |
 | 2026-05-04-001 | 2026-05-04 | Session MareNostrum | Université de Corse | 0 | 1 | Reply received: negative | D2 |
 | 2026-06-12-001 | 2026-06-12 | Démocratie de capacité, publics capables et IA sous mandat | Hélène Landemore; Barbara Stiegler | 0 | 0 | Sent — awaiting reply | D2 |
+| 2026-06-13-001 | 2026-06-13 | Demande de cadrage territorial — Préfiguration d’un point d’autonomie numérique et administrative à Corte | Sous-préfecture de Corte; Mme Volpi; Institut Mariani | 0 | 0 | Sent — awaiting reply | D2 |
 
 
 <!-- BEGIN_AUTO: backlinks -->
