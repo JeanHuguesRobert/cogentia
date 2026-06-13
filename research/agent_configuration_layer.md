@@ -1,7 +1,7 @@
 ---
 title: "Agent Configuration Layer"
 subtitle: "From AGENTS.md to governed corpus projections"
-version: "0.1"
+version: "0.2"
 status: "working-paper — method note"
 date: "2026-06-13"
 author: "Jean Hugues Noël Robert"
@@ -25,8 +25,18 @@ related_research:
   - "cogentia/COGENTIA.md"
   - "barons-Mariani/research/traceabilite_des_actes.md"
   - "barons-Mariani/research/second_method.md"
+related_repositories:
+  - "cogentia"
+  - "barons-Mariani"
+  - "FractaVolta"
+  - "marenostrum"
+  - "inseme"
+  - "Inox"
+  - "registre-mariani"
+  - "ubikia"
 continuations:
-  - "homogenize AGENTS.md files across the six structural repositories"
+  - "homogenize AGENTS.md files across the current structural repository map"
+  - "integrate private/transmission repositories without leaking private data"
   - "test .agents/ as an experimental container, not as corpus memory"
   - "define machine-checkable conformance rules for repository-local agent mandates"
 ---
@@ -35,9 +45,9 @@ continuations:
 
 ## From AGENTS.md to governed corpus projections
 
-**Version 0.1 — 2026-06-13**  
+**Version 0.2 — 2026-06-13**  
 **Repository:** `JeanHuguesRobert/cogentia`  
-**Proposed path:** `research/agent_configuration_layer.md`
+**Path:** `research/agent_configuration_layer.md`
 
 ---
 
@@ -101,7 +111,7 @@ Never allow hidden agent memory to outrank the versioned corpus.
 
 A **source document** is part of the corpus. It carries concepts, claims, genealogy, objections, references, and revision history.
 
-It may be doctrinal, technical, legal, political, patrimonial, methodological, or experimental.
+It may be doctrinal, technical, legal, political, patrimonial, methodological, personal, private, or experimental.
 
 It is meant to remain evaluable beyond one tool, one prompt, one model, or one moment.
 
@@ -126,9 +136,11 @@ It is a projection of the corpus into action constraints.
 
 ### 3.3 Derived products / produits déclinés
 
-A public article, memo, letter, prompt, slide deck, or social-media post may be a **derived product** from the corpus.
+A public article, memo, letter, prompt, slide deck, social-media post, publication package, or platform-specific version may be a **derived product** from the corpus.
 
 An agent configuration file is different. It is not primarily a product for a public audience. It is a control surface for human-agent cooperation.
+
+Ubikia is the dedicated repository for progressively automating and governing those derived products.
 
 ---
 
@@ -169,6 +181,18 @@ conversation
 → action
 → trace
 → control
+→ feedback
+→ corpus
+```
+
+For publication and derivation, Ubikia adds another explicit loop:
+
+```text
+source corpus
+→ derivation constraints
+→ persona / audience / platform
+→ derived product
+→ publication record
 → feedback
 → corpus
 ```
@@ -223,13 +247,14 @@ Human validation needed: yes/no
 
 ## 6. Corpus-wide invariants
 
-The following invariants should appear, in repository-specific form, across the six structural repositories:
+The following invariants should appear, in repository-specific form, across the current structural repository map:
 
 ```text
 The corpus is the source of truth.
 AGENTS.md is an operational projection, not doctrine itself.
 Use the smallest sufficient container.
 Distinguish source document, derived product, issue, prompt, script, and temporary trace.
+Distinguish public corpus, private register, and derived publication layer.
 Do not invent facts, references, commitments, partners, legal positions, or institutional mandates.
 Do not stabilize anything without explicit scoped authorization.
 Report uncertainty instead of hiding it.
@@ -263,6 +288,7 @@ Rules for any `.agents/` experiment:
 3. Every durable claim in `.agents/` must point back to a corpus source or be marked as temporary.
 4. Tool-specific instructions must remain subordinate to repository-level and corpus-level instructions.
 5. No agent memory should outrank a signed, versioned, human-owned corpus document.
+6. Private or sensitive material must remain governed by its repository-specific confidentiality rules.
 
 Recommended initial posture:
 
@@ -270,21 +296,27 @@ Recommended initial posture:
 AGENTS.md = adopted convention.
 .agents/ = experimental container.
 Corpus = authority.
+Private register = governed sensitive memory, not default public corpus.
+Ubikia = governed derivation and publication layer.
 Human mandate = final authorization.
 ```
 
 ---
 
-## 8. Six-repository implementation map
+## 8. Structural repository implementation map
 
-| Repository | Agent configuration role |
-|---|---|
-| `cogentia` | Method, pipeline, corpus governance, continuations, agent-resumable knowledge production. |
-| `barons-Mariani` | Source doctrine, patrimonial memory, political and legal method, public long-form texts. |
-| `FractaVolta` | Energy, compute, packetization, operational design, anti-capture infrastructure. |
-| `marenostrum` | Mediterranean capacity, consortium logic, solar-to-inference sovereignty, long-term doctrine. |
-| `inseme` | Platform, COP, Conversia, Cellula, coordination, events, traces, implementation discipline. |
-| `Inox` | Language/runtime layer, capabilities, controlled execution, programmable composition, gateway logic. |
+This map is current, extensible, and not closed. It replaces the earlier six-repository formulation.
+
+| Repository | Visibility | Agent configuration role |
+|---|---:|---|
+| `cogentia` | public | Method, pipeline, corpus governance, continuations, agent-resumable knowledge production. |
+| `barons-Mariani` | public | Source doctrine, patrimonial memory, political and legal method, public long-form texts. |
+| `FractaVolta` | public | Energy, compute, packetization, operational design, anti-capture infrastructure. |
+| `marenostrum` | public | Mediterranean capacity, consortium logic, solar-to-inference sovereignty, long-term doctrine. |
+| `inseme` | public | Platform, COP, Conversia, Cellula, coordination, events, traces, implementation discipline. |
+| `Inox` | public | Language/runtime layer, capabilities, controlled execution, programmable composition, gateway logic. |
+| `registre-mariani` | private | Private register, sensitive memory, patrimonial/successoral continuity, controlled future transmission. |
+| `ubikia` | public | Derived products, publication layer, provenance, persona/platform packaging, reduction of manual publication drift. |
 
 Each repository should have a short `AGENTS.md` reflecting its role.
 
@@ -294,7 +326,64 @@ Uniformity is useful at the invariant level, not at the content level.
 
 ---
 
-## 9. Anti-capture rule
+## 9. Special rule for `registre-mariani`
+
+`registre-mariani` is not simply another public corpus repository.
+
+It is private because it may contain information that cannot yet be made public: personal, patrimonial, family, legal, operational, sensitive, or third-party material.
+
+Its long-term function includes controlled transmission. Some contents may become public or transmissible after Jean Hugues Noël Robert’s death, if and only if the relevant legal, testamentary, patrimonial, and ethical instruments have been properly prepared.
+
+Agent rule:
+
+```text
+Do not leak private register contents into public repositories.
+Do not summarize sensitive private material into public documents unless explicitly instructed.
+Do not treat future publication as already authorized.
+Mark testamentary or posthumous publication requirements as legal/to-verify unless a valid instrument exists.
+```
+
+Strategic continuation:
+
+```text
+Prepare the legal and testamentary framework for the controlled posthumous opening, transfer, or publication of the appropriate parts of the private register.
+```
+
+---
+
+## 10. Special rule for `ubikia`
+
+`ubikia` is the publication and derivation layer.
+
+Its problem is practical and strategic:
+
+```text
+The corpus produces more valuable material than can be manually adapted, formatted, published, tracked, and re-integrated without drift.
+```
+
+Ubikia must therefore govern:
+
+- source-to-product derivation;
+- product-to-platform adaptation;
+- persona and audience selection;
+- publication packages;
+- metadata;
+- provenance;
+- publication ledger;
+- feedback return to corpus.
+
+Agent rule:
+
+```text
+Do not optimize for volume.
+Optimize for faithful derivation, provenance, and reduction of manual drift.
+```
+
+Ubikia should help publish more efficiently without allowing publication automation to capture the corpus.
+
+---
+
+## 11. Anti-capture rule
 
 A configuration file can capture a corpus if it silently changes what agents are allowed to see, do, or ignore.
 
@@ -302,6 +391,8 @@ Capture patterns:
 
 ```text
 - hidden memory outranking public corpus;
+- private register contents leaking into public outputs;
+- publication automation becoming authorship;
 - tool-specific prompt overriding doctrine;
 - stale AGENTS.md contradicting updated source documents;
 - generated summaries treated as sources;
@@ -317,7 +408,7 @@ Counter-rule:
 
 ---
 
-## 10. Review checklist for future agents
+## 12. Review checklist for future agents
 
 Before acting in any structural repository, an agent should answer:
 
@@ -326,33 +417,38 @@ Before acting in any structural repository, an agent should answer:
 2. What role does this repository play in the corpus ecosystem?
 3. Have I read the root AGENTS.md?
 4. Is there a local AGENTS.md closer to the files I will change?
-5. Am I touching a source document, a derived product, code, prompt, issue, or temporary trace?
+5. Am I touching a source document, a derived product, code, prompt, issue, temporary trace, or private register entry?
 6. What authority allows the change?
 7. What uncertainty remains?
 8. What validation can be performed?
 9. What must be reported back to the human author?
 10. Is this a reversible trace or a stabilization?
+11. Is the material public, private, sensitive, or intended for posthumous transmission?
 ```
 
 If the agent cannot answer, it should prepare a proposal rather than act.
 
 ---
 
-## 11. Minimal prompt
+## 13. Minimal prompt
 
 Reusable prompt:
 
 ```text
-Respect the Cogentia Agent Configuration Layer. Treat AGENTS.md as a bounded operational mandate, not as the corpus itself. Use the smallest sufficient container. Distinguish source document, derived product, issue, prompt, script, and temporary trace. Do not stabilize anything without explicit scoped authorization. Report uncertainty, validation, known risks, and the next reversible step.
+Respect the Cogentia Agent Configuration Layer. Treat AGENTS.md as a bounded operational mandate, not as the corpus itself. Use the smallest sufficient container. Distinguish source document, derived product, issue, prompt, script, private register entry, and temporary trace. Do not stabilize anything without explicit scoped authorization. Do not leak private register material into public corpus outputs. Report uncertainty, validation, known risks, and the next reversible step.
 ```
 
 ---
 
-## 12. Conclusion
+## 14. Conclusion
 
 `AGENTS.md` can become the local mandate of the agent.
 
 `.agents/` can become the agent's tool bag.
+
+`registre-mariani` can become the governed private register and transmission layer.
+
+`ubikia` can become the governed derivation and publication layer.
 
 Cogentia must remain the constitution of the system:
 
