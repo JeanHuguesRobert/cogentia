@@ -6,7 +6,7 @@ title: "Jean Hugues Robert — Tableau de bord Interaction Packets"
 date: "2026-05-27"
 status: "draft — auto-filled (frontmatter cleanup)"
 canonical_url: https://github.com/JeanHuguesRobert/cogentia/blob/main/interaction_packets/dashboard.md
-last_stamped_at: 2026-06-01
+last_stamped_at: 2026-06-13
 ---
 # Jean Hugues Robert — Tableau de bord Interaction Packets
 
@@ -48,6 +48,7 @@ Registre principal :
 | ID | Date | Sujet | Interlocuteur | Statut | Divulgation | Paquet |
 |---|---:|---|---|---|---|---|
 | 2026-05-04-001 | 2026-05-04 | Session MareNostrum | Université de Corse | Réponse reçue : négative | D2 | [YAML](./packets/2026/2026-05-04-session_marenostrum.yaml) |
+| 2026-06-13-001 | 2026-06-13 | Préfiguration d’un point d’autonomie numérique et administrative à Corte | Sous-préfecture de Corte | Envoyé — en attente de réponse | D2 | — |
 
 ## Cas 2026-05-04-001 — MareNostrum / Université de Corse
 
@@ -90,6 +91,40 @@ L’inspection du fil a montré qu’une réponse avait bien été reçue.
 Le registre a été corrigé en conséquence.
 
 Cette correction est méthodologiquement importante : le système doit tracer les faits, et non simplement confirmer des impressions.
+
+## Cas 2026-06-13-001 — France Services / Serenia / Sous-préfecture de Corte
+
+### Demande
+
+Une demande de cadrage territorial a été envoyée à la sous-préfecture de Corte au nom de l’association C.O.R.S.I.C.A.
+
+Le sujet est la préfiguration, à Corte, d’un point d’autonomie numérique et administrative compatible avec une future antenne ou maison France Services.
+
+La demande s’appuie notamment sur :
+
+- la centralité administrative, universitaire, sociale et territoriale de Corte ;
+- l’existence d’une France Services proche à Venaco, mais l’absence de structure équivalente à Corte ;
+- la disponibilité d’un local associatif au 1 cours Paoli ;
+- l’accessibilité du local par ascenseur récent ;
+- l’existence d’un bureau disponible pour un second agent ;
+- la compétence numérique bénévole apportée par le président de C.O.R.S.I.C.A. ;
+- le programme Serenia d’accompagnement à l’autonomie administrative, numérique et cognitive assistée par IA.
+
+### Point demandé
+
+La demande vise un rendez-vous de cadrage afin d’identifier :
+
+- le service compétent pour instruire ou orienter la démarche ;
+- les pièces nécessaires à une première étude ;
+- les modalités éventuelles d’une visite technique du local ;
+- les formes les plus réalistes de préfiguration ;
+- les financements mobilisables pour un poste de médiateur numérique et administratif.
+
+### Statut
+
+Le message a été envoyé le 2026-06-13.
+
+Aucune réponse n’est encore attendue à ce stade.
 
 ## Couche interprétative
 
@@ -138,5 +173,4 @@ Les corrections doivent rester visibles lorsqu’elles sont importantes.
 - [Interaction Packets — readable overview](overview.md)
 - [Interaction Packets — public-use package](PACKAGE.md)
 - [Extract Interaction Packet](prompts/extract_interaction_packet.md)
-
 <!-- END_AUTO: backlinks -->
