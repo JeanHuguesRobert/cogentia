@@ -1,0 +1,29 @@
+id: 2026-04-12-001
+type: "interaction_packet"
+channel: "email"
+date: 2026-04-12
+sent_time: "07:07:50+02:00"
+subject: "Projet MareNostrum — PRIMA France / ANR"
+from: "Jean Hugues Noël Robert"
+acting_as:
+  - "Institut Mariani / C.O.R.S.I.C.A."
+to:
+  - "PRIMA France / ANR"
+cc:
+  - "Institut Mariani"
+thread_detected: true
+reply_detected: false
+reply_date: null
+status: "no_response_detected"
+followup_number: 0
+elapsed_days_as_of_last_registry_update: 61
+disclosure: "D2"
+public_summary: >
+  MareNostrum message sent to a PRIMA France / ANR contact regarding project
+  eligibility and possible connection with ICOME26. No response detected at
+  the time of registry update.
+expected_continuation: "Eligibility indication, redirection, or no response."
+observed_continuation: "No response detected in the register."
+notes:
+  - "Sent message retrieved from Gmail during the 2026-06-13 backlog pass."
+  - "This packet records the observable trace only."
