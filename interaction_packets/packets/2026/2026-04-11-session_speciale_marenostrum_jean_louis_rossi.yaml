@@ -1,0 +1,33 @@
+id: 2026-04-11-001
+type: "interaction_packet"
+channel: "email"
+date: 2026-04-11
+sent_time: "09:04:39+02:00"
+subject: "Session spéciale MareNostrum — ICOME'26"
+from: "Jean Hugues Noël Robert"
+acting_as:
+  - "Institut Mariani / C.O.R.S.I.C.A."
+to:
+  - "Jean-Louis Rossi"
+cc:
+  - "Institut Mariani"
+  - "C.O.R.S.I.C.A. / Barons Mariani archive"
+thread_detected: true
+reply_detected: "unknown"
+reply_date: null
+status: "followed_up"
+followup_number: 1
+followup_date: 2026-05-04
+elapsed_days_until_followup: 23
+disclosure: "D2"
+public_summary: >
+  MareNostrum / ICOME’26 message sent to Jean-Louis Rossi. Follow-up sent on
+  2026-05-04.
+expected_continuation: >
+  Possible reply or redirection regarding the ICOME’26 MareNostrum proposal.
+observed_continuation: "Followed up on 2026-05-04 according to mail_trace.md."
+notes:
+  - "Sent message retrieved from Gmail during the 2026-06-13 backlog pass."
+  - "This packet links historically to the consolidated 2026-05-04 MareNostrum case."
+related_packets:
+  - "interaction_packets/packets/2026/2026-05-04-session_marenostrum.yaml"
