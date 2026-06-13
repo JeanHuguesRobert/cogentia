@@ -15,7 +15,7 @@ reply_detected: false
 reply_date: null
 status: "no_response_detected"
 followup_number: 0
-elapsed_days_as_of_last_registry_update: 77
+elapsed_days_as_of_last_registry_update: 78
 disclosure: "D2"
 public_summary: >
   FractaVolta / Constellia message related to ICOME26 sent to HyFit and
