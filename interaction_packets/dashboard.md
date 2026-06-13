@@ -47,8 +47,19 @@ Registre principal :
 
 | ID | Date | Sujet | Interlocuteur | Statut | Divulgation | Paquet |
 |---|---:|---|---|---|---|---|
+| 2026-03-27-001 | 2026-03-27 | FractaVolta / Constellia ICOME26 | HyFit; Corsica Sole | Envoyé — aucune réponse détectée | D2 | [YAML](./packets/2026/2026-03-27-fractavolta_constellia_icome26.yaml) |
+| 2026-03-30-001 | 2026-03-30 | WIP Draft "Infractructure is all you need" | André Fazi | Envoyé — aucune réponse détectée | D2 | [YAML](./packets/2026/2026-03-30-wip_infractructure_andre_fazi.yaml) |
+| 2026-03-31-001 | 2026-03-31 | Proposition de session spéciale MareNostrum en lien avec ICOME’26 | Université de Corse; ICOME; Collectivité de Corse | Réponse reçue; échec partiel de distribution observé | D2 | [YAML](./packets/2026/2026-03-31-proposition_session_marenostrum_icome26.yaml) |
+| 2026-04-11-001 | 2026-04-11 | Session spéciale MareNostrum — ICOME'26 | Jean-Louis Rossi | Relancé le 2026-05-04 | D2 | [YAML](./packets/2026/2026-04-11-session_speciale_marenostrum_jean_louis_rossi.yaml) |
+| 2026-04-11-002 | 2026-04-11 | Expression of interest — Mediterranean solar & compute sovereignty session, ICOME'26 Corte | PRIMA Secretariat | Échec de distribution | D2 | [YAML](./packets/2026/2026-04-11-prima_secretariat_eoi.yaml) |
+| 2026-04-12-001 | 2026-04-12 | Projet MareNostrum — PRIMA France / ANR | PRIMA France / ANR | Envoyé — aucune réponse détectée | D2 | [YAML](./packets/2026/2026-04-12-projet_marenostrum_prima_anr.yaml) |
+| 2026-04-12-002 | 2026-04-12 | Contact François Casabianca — autonomie alimentaire | François Casabianca | Réponse reçue; rapport envoyé | D2 | [YAML](./packets/2026/2026-04-12-contact_francois_casabianca_autonomie_alimentaire.yaml) |
+| 2026-04-17-001 | 2026-04-17 | Thèse droit & forêt corse | Andrea Gavini | Échec de distribution | D2 | [YAML](./packets/2026/2026-04-17-these_droit_foret_corse_andrea_gavini.yaml) |
 | 2026-05-04-001 | 2026-05-04 | Session MareNostrum | Université de Corse | Réponse reçue : négative | D2 | [YAML](./packets/2026/2026-05-04-session_marenostrum.yaml) |
-| 2026-06-13-001 | 2026-06-13 | Préfiguration d’un point d’autonomie numérique et administrative à Corte | Sous-préfecture de Corte | Envoyé — en attente de réponse | D2 | — |
+| 2026-06-12-001 | 2026-06-12 | Démocratie de capacité, publics capables et IA sous mandat | Hélène Landemore; Barbara Stiegler | Envoyé — en attente de réponse | D2 | [YAML](./packets/2026/2026-06-12-democratie_capacite_landemore_stiegler.yaml) |
+| 2026-06-13-001 | 2026-06-13 | Préfiguration d’un point d’autonomie numérique et administrative à Corte | Sous-préfecture de Corte | Envoyé — en attente de réponse | D2 | [YAML](./packets/2026/2026-06-13-france_services_corte_serenia.yaml) |
+
+Note — backlog traité le 2026-06-13 : les lignes présentes dans `mail_trace.md` mais absentes de ce tableau de bord ont été converties en paquets YAML minimaux. Le cas `2026-03-27-001` a été reconstruit depuis le registre, le message source exact n’ayant pas été retrouvé lors de cette passe.
 
 ## Cas 2026-05-04-001 — MareNostrum / Université de Corse
 
