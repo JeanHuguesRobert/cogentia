@@ -1275,8 +1275,10 @@ It is to make a corpus appear without losing itself.
 ### Backlinks
 
 *These documents link to this file:*
+- [Alien, l’IA et les intelligences xénoformes](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/alien_blogpost.md)
 - [Corsica2038 — De la prospective subie à l’autonomie de capacité](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/autonomia/corsica2038_contre_rapport_pruspettiva2050.md)
 - [Incremental Transmissible Corpus Model](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/modele_corpus_transmissible_incremental.md)
+- [Mauvaise calibration métacognitive face aux intelligences xénoformes](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/alien_academic.md)
 - [Projet #1755](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/autonomia/projet_1755.md)
 - [Cogentia](../README.md)
 - [cogentia.js — Tutorial and Near-Specification](cogentia_js_tutorial.md)

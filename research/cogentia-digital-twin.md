@@ -171,17 +171,13 @@ This document is a position paper, not a product announcement. It is published i
 ### Backlinks
 
 *These documents link to this file:*
-- [Cogentia](../COGENTIA.md)
-- [The Knowledge Mesh (Decentralized Wiki)](../docs/knowledge_mesh.md)
-- [Agent-Resumable CLI](agent_resumable_cli.md)
-- [Cogentia and Cogentigrams](Cogentia-and-Cogentigram.md)
+- [Cogentia](../README.md)
 - [Cogentigraphic Distillation](cogentigraphic_distillation.md)
-- [Cognitive Packets](cognitive_packets.md)
 - [Concept Index — cogentia](concepts.md)
-- [Corpus Status — cogentia](corpus-status.md)
-- [Research Index — Cogentia](index.md)
-- [Individual and Collective Digital Twins](individual_and_collective_digital_twins.md)
 - [From Biometrics and Psychometrics to Structural Signatures](structural_signatures.md)
+- [Individual and Collective Digital Twins](individual_and_collective_digital_twins.md)
+- [Research Index — Cogentia](index.md)
 - [Trail: From Method to Machine](trails/from_method_to_machine.md)
-
+- [Documents - All Tracked Repos](https://github.com/JeanHuguesRobert/JeanHuguesRobert/blob/main/research/documents.md)
+- [Project Context — Jean Hugues Noël Robert, baron Mariani](https://github.com/JeanHuguesRobert/JeanHuguesRobert/blob/main/CONTEXT.md)
 <!-- END_AUTO: backlinks -->

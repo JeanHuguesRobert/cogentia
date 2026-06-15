@@ -348,7 +348,7 @@ Markdown with an ordered list. Each item starts with a numbered bullet, contains
 1. [Discours de la seconde méthode](https://...)
    *The founding doctrine. ...*
 
-2. [Pipeline — From cognitive packets to source documents and derived products](../pipeline.md)
+2. [Pipeline — From cognitive packets to source documents and derived products](pipeline.md)
    *The operational counterpart of the Discours. ...*
 ```
 

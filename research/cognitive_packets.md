@@ -1498,7 +1498,9 @@ The novelty of cognitive packets is therefore not the existence of the pattern, 
 ### Backlinks
 
 *These documents link to this file:*
+- [Alien, l’IA et les intelligences xénoformes](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/alien_blogpost.md)
 - [Incremental Transmissible Corpus Model](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/modele_corpus_transmissible_incremental.md)
+- [Mauvaise calibration métacognitive face aux intelligences xénoformes](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/alien_academic.md)
 - [Act, mandate and responsibility](act_mandate_responsibility.md)
 - [Cogentia](../COGENTIA.md)
 - [Cogentia](../README.md)
