@@ -34,15 +34,17 @@ creator: Jean Hugues Noël Robert, baron Mariani (généré automatiquement par 
 ## Registered Repositories
 
 <!-- BEGIN_AUTO: registered_repos -->
-| Repository | research/index.md | Branch | Policy |
-|---|---|---|---|
-| cogentia | yes | main | all |
-| FractaVolta | yes | main | all |
-| marenostrum | yes | main | all |
-| barons-Mariani | yes | main | all |
-| inseme | yes | main | research |
-| Inox | yes | master | all |
-| JeanHuguesRobert | yes | main | all |
+| Repository | research/index.md | Branch | Policy | Visibility | Public presence |
+|---|---|---|---|---|---|
+| cogentia | yes | main | all | public | full |
+| FractaVolta | yes | main | all | public | full |
+| marenostrum | yes | main | all | public | full |
+| barons-Mariani | yes | main | all | public | full |
+| inseme | yes | main | research | public | full |
+| Inox | yes | master | all | public | full |
+| registre-mariani | yes | main | all | private | stub |
+| ubikia | yes | main | all | public | full |
+| JeanHuguesRobert | yes | main | all | public | full |
 <!-- END_AUTO: registered_repos -->
 
 ---
@@ -58,38 +60,41 @@ graph LR
   r_barons_mariani["barons-Mariani"]
   r_inseme["inseme"]
   r_inox["Inox"]
+  r_registre_mariani["registre-mariani"]
+  r_ubikia["ubikia"]
   r_jeanhuguesrobert["JeanHuguesRobert"]
-  r_jeanhuguesrobert -->|149| r_barons_mariani
-  r_cogentia -->|104| r_barons_mariani
-  r_jeanhuguesrobert -->|91| r_cogentia
-  r_jeanhuguesrobert -->|40| r_marenostrum
-  r_jeanhuguesrobert -->|34| r_fractavolta
-  r_fractavolta -->|33| r_marenostrum
-  r_jeanhuguesrobert -->|33| r_inox
-  r_fractavolta -->|32| r_cogentia
-  r_barons_mariani -->|29| r_cogentia
-  r_cogentia -->|21| r_inseme
-  r_cogentia -->|20| r_marenostrum
+  r_jeanhuguesrobert -->|143| r_barons_mariani
+  r_cogentia -->|101| r_barons_mariani
+  r_jeanhuguesrobert -->|99| r_cogentia
+  r_jeanhuguesrobert -->|43| r_marenostrum
+  r_fractavolta -->|40| r_cogentia
+  r_fractavolta -->|37| r_marenostrum
+  r_jeanhuguesrobert -->|36| r_fractavolta
+  r_jeanhuguesrobert -->|30| r_inox
+  r_barons_mariani -->|27| r_cogentia
+  r_cogentia -->|22| r_inseme
+  r_cogentia -->|19| r_marenostrum
+  r_fractavolta -->|18| r_inseme
   r_fractavolta -->|18| r_barons_mariani
-  r_jeanhuguesrobert -->|17| r_inseme
+  r_jeanhuguesrobert -->|16| r_inseme
   r_inseme -->|14| r_cogentia
-  r_barons_mariani -->|13| r_marenostrum
-  r_marenostrum -->|13| r_fractavolta
-  r_fractavolta -->|12| r_inseme
-  r_marenostrum -->|12| r_barons_mariani
+  r_marenostrum -->|12| r_fractavolta
+  r_marenostrum -->|12| r_cogentia
+  r_barons_mariani -->|11| r_marenostrum
   r_inox -->|11| r_barons_mariani
   r_inox -->|11| r_cogentia
+  r_marenostrum -->|11| r_barons_mariani
   r_inox -->|10| r_fractavolta
-  r_marenostrum -->|10| r_cogentia
+  r_fractavolta -->|8| r_inox
   r_inox -->|8| r_marenostrum
   r_inox -->|7| r_inseme
   r_inseme -->|7| r_inox
+  r_jeanhuguesrobert -->|7| r_ubikia
   r_barons_mariani -->|6| r_fractavolta
-  r_cogentia -->|6| r_fractavolta
-  r_cogentia -->|5| r_jeanhuguesrobert
+  r_cogentia -->|5| r_fractavolta
   r_barons_mariani -->|4| r_inox
   r_barons_mariani -->|4| r_jeanhuguesrobert
-  r_fractavolta -->|4| r_inox
+  r_cogentia -->|4| r_jeanhuguesrobert
   r_inseme -->|3| r_barons_mariani
   r_inseme -->|3| r_jeanhuguesrobert
   r_barons_mariani -->|2| r_inseme
@@ -501,8 +506,12 @@ graph LR
 | [Simplicité d'action — KISS, Small is beautiful, Worse is better (FR)](simplicite_action.md) *(working-note v0.1 — éthique de l'action contre la sur-ingénierie, l'analysis paralysis et les pieds qui décollent du sol ; rigueur sur la trace, simplicité sur le geste)* | this repo | 2026-05-30 |
 | [Cogentia Workflows](cogentia_workflows.md) *(private/group/public/federated workflow architecture, draft v0.2)* | this repo | 2026-05-11 |
 | [Cogentia Commons Working Paper](Cogentia_Commons_Working_Paper.md) | this repo | 2026 |
+| [Cogentia Commons — Public by Default, Private by Exception](cogentia_commons_visibility_and_private_modes.md) *(source document v0.1 — visibility modes, private communities, patent-oriented exploration, and private-use financing of the commons; addresses cogentia#34)* | this repo | 2026-06-09 |
 | [Cogentia and Cogentigram](Cogentia-and-Cogentigram.md) | this repo | 2026 |
 | [The Sovereign Digital Twin — Cogentia, Cogentigram, Cogentiscope](cogentia-digital-twin.md) | this repo | 2026-04 |
+| [Cogentia Personal Data Portability](cogentia_personal_data_portability.md) *(generic reusable layer for schemas, templates, normalizers and redacted/fictitious examples; explicitly separated from any private personal register)* | this repo | 2026-06-11 |
+| [From Biometrics and Psychometrics to Structural Signatures](structural_signatures.md) *(working paper v0.9 — non-biographical identifying structures, Cogentigrams and consent-based sovereign digital twins)* | this repo | 2026-05-22 |
+| [Cogentigraphic Distillation](cogentigraphic_distillation.md) *(working paper v0.1 — separating cognitive operating rules from biographical and factual memory in corpus-grounded AI agents)* | this repo | 2026-05-30 |
 | [Individual and Collective Digital Twins](individual_and_collective_digital_twins.md) *(working paper v0.1 — dialectic between sovereign twins of natural persons (Marie-Louise case) and of legal persons (C.O.R.S.I.C.A. case); extends the twin family — Cogentigram, structural signatures, cogentigraphic distillation; addresses cogentia#14)* | this repo | 2026-05-31 |
 | [Democratic AI Safety — alias](democratic_ai_safety.md) *(canonical in barons-Mariani; this file is now a stub)* | this repo | 2026-05-18 |
 | [KYS — Psychocognitive Analysis Protocol v1.0](kys-prompt.md) | this repo | 2026 |
@@ -563,41 +572,24 @@ graph LR
 - Cogentia Commons as methodology for any distributed peer-review process
 - Cogentigram as visual language for knowledge graph navigation
 - PrivAI governance model — from non-profit to cooperative structure
-- [Cogentia](../COGENTIA.md)
-- [Agent Navigation Guide (Context Server)](../docs/agent_context_server.md)
+- [Research Index — barons-Mariani](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/index.md)
+- [Agent-Resumable CLI](agent_resumable_cli.md)
+- [Cogentia](../README.md)
+- [Cogentia Commons — MVP Specification](cogentia_commons_mvp_spec.md)
+- [Cogentia Commons — Public by Default, Private by Exception](cogentia_commons_visibility_and_private_modes.md)
+- [Cogentia Commons — Session Continuation Snapshot](cogentia_commons_continuation.md)
+- [cogentia.js — Tutorial and Near-Specification](cogentia_js_tutorial.md)
+- [Cogentigraphic Distillation](cogentigraphic_distillation.md)
+- [Corpus Status — cogentia](corpus-status.md)
+- [From Biometrics and Psychometrics to Structural Signatures](structural_signatures.md)
 - [Frontmatter Schema — v0.1 (Corpus)](../docs/frontmatter-schema.md)
 - [Frontmatter Synonym Mapping — v0.1](../docs/frontmatter-synonym-mapping.md)
-- [Agent-Resumable CLI](agent_resumable_cli.md)
-- [Cogentia Commons — COMMUNITY.md Sub-Specification](cogentia_commons_community_manifest.md)
-- [Cogentia Commons — Session Continuation Snapshot](cogentia_commons_continuation.md)
-- [Cogentia Commons — `kernel_extractor` Plugin Sub-Specification](cogentia_commons_kernel_extractor.md)
-- [Cogentia Commons — MVP Specification](cogentia_commons_mvp_spec.md)
-- [Cogentia Commons — Structural Plugin Sub-Specifications](cogentia_commons_structural_plugins.md)
-- [Cogentia Commons — Substantive Plugin Sub-Specifications](cogentia_commons_substantive_plugins.md)
-- [Cogentia Commons — Workflows](cogentia_commons_workflows.md)
-- [Cogentia Commons: A Platform Architecture for Collaborative Possibility Exploration Under Scientific Constraint](Cogentia_Commons_Working_Paper.md)
-- [cogentia.js — Tutorial and Near-Specification](cogentia_js_tutorial.md)
-- [COGENTIA v1.0 — Prompt d'analyse psychocognitive](cogentia_prompt_v1.md)
-- [Cogentia Workflows](cogentia_workflows.md)
-- [Cogentia and Cogentigrams](Cogentia-and-Cogentigram.md)
-- [The Sovereign Digital Twin: Cogentia, Cogentigram, Cogentiscope](cogentia-digital-twin.md)
-- [Cogentigraphic Distillation](cogentigraphic_distillation.md)
-- [Cognitive Packets](cognitive_packets.md)
-- [Concept Index — cogentia](concepts.md)
-- [Corpus Status — cogentia](corpus-status.md)
-- [Democratic AI Safety — alias cogentia](democratic_ai_safety.md)
-- [Derived Products](derived_products.md)
-- [Individual and Collective Digital Twins](individual_and_collective_digital_twins.md)
-- [kys prompt](kys-prompt.md)
-- [Persistence Backends](persistence_backends.md)
-- [Pipeline](pipeline.md)
-- [Self-Contained Documents in an Interconnected Corpus](self_contained_documents.md)
-- [Simplicité d'action](simplicite_action.md)
-- [La trace protège](stigmergie_repressive_mouches_trace_protege_v0_1.md)
-- [From Biometrics and Psychometrics to Structural Signatures](structural_signatures.md)
-- [Traçabilité symétrique et capture relationnelle](tracabilite_symetrique_capture_relationnelle.md)
-- [Trail: From Autonomia to DHITL](trails/from_autonomia_to_dhitl.md)
-- [Trail: From Method to Machine](trails/from_method_to_machine.md)
+- [Research Index — FractaVolta](https://github.com/JeanHuguesRobert/FractaVolta/blob/main/research/index.md)
+- [Research Index — Inox](https://github.com/JeanHuguesRobert/Inox/blob/master/research/index.md)
+- [Research Index — Inseme](https://github.com/JeanHuguesRobert/inseme/blob/main/research/index.md)
+- [Documents - All Tracked Repos](https://github.com/JeanHuguesRobert/JeanHuguesRobert/blob/main/research/documents.md)
+- [Research Index — Jean Hugues Noël Robert (Profile / Entry Point)](https://github.com/JeanHuguesRobert/JeanHuguesRobert/blob/main/research/index.md)
+- [Research Index — MareNostrum](https://github.com/JeanHuguesRobert/marenostrum/blob/main/research/index.md)
 <!-- END_AUTO: possibilities -->
 
 ---
@@ -611,35 +603,9 @@ graph LR
 
 *These documents link to this file:*
 - [Cogentia](../COGENTIA.md)
-- [Agent Navigation Guide (Context Server)](../docs/agent_context_server.md)
+- [cogentia.js — Tutorial and Near-Specification](cogentia_js_tutorial.md)
 - [Frontmatter Schema — v0.1 (Corpus)](../docs/frontmatter-schema.md)
 - [Frontmatter Synonym Mapping — v0.1](../docs/frontmatter-synonym-mapping.md)
-- [The Knowledge Mesh (Decentralized Wiki)](../docs/knowledge_mesh.md)
-- [Agent-Resumable CLI](agent_resumable_cli.md)
-- [Cogentia Commons — COMMUNITY.md Sub-Specification](cogentia_commons_community_manifest.md)
-- [Cogentia Commons — Session Continuation Snapshot](cogentia_commons_continuation.md)
-- [Cogentia Commons — MVP Specification](cogentia_commons_mvp_spec.md)
-- [Cogentia Commons — Workflows](cogentia_commons_workflows.md)
-- [Cogentia Commons: A Platform Architecture for Collaborative Possibility Exploration Under Scientific Constraint](Cogentia_Commons_Working_Paper.md)
-- [cogentia.js — Tutorial and Near-Specification](cogentia_js_tutorial.md)
-- [COGENTIA v1.0 — Prompt d'analyse psychocognitive](cogentia_prompt_v1.md)
-- [Cogentia Workflows](cogentia_workflows.md)
-- [Cogentia and Cogentigrams](Cogentia-and-Cogentigram.md)
-- [The Sovereign Digital Twin: Cogentia, Cogentigram, Cogentiscope](cogentia-digital-twin.md)
-- [Cognitive Packets](cognitive_packets.md)
-- [Concept Index — cogentia](concepts.md)
-- [Corpus Status — cogentia](corpus-status.md)
-- [Democratic AI Safety — alias cogentia](democratic_ai_safety.md)
-- [Derived Products](derived_products.md)
 - [Research Index — Cogentia](index.md)
-- [Individual and Collective Digital Twins](individual_and_collective_digital_twins.md)
-- [kys prompt](kys-prompt.md)
-- [Persistence Backends](persistence_backends.md)
-- [Pipeline](pipeline.md)
-- [Self-Contained Documents in an Interconnected Corpus](self_contained_documents.md)
-- [Simplicité d'action](simplicite_action.md)
-- [Traçabilité symétrique et capture relationnelle](tracabilite_symetrique_capture_relationnelle.md)
-- [Trail: From Autonomia to DHITL](trails/from_autonomia_to_dhitl.md)
-- [Trail: From Method to Machine](trails/from_method_to_machine.md)
-
+- [Documents - All Tracked Repos](https://github.com/JeanHuguesRobert/JeanHuguesRobert/blob/main/research/documents.md)
 <!-- END_AUTO: backlinks -->
