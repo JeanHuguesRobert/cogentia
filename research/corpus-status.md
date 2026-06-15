@@ -67,7 +67,7 @@ graph LR
   r_cogentia -->|101| r_barons_mariani
   r_jeanhuguesrobert -->|99| r_cogentia
   r_jeanhuguesrobert -->|43| r_marenostrum
-  r_fractavolta -->|40| r_cogentia
+  r_fractavolta -->|41| r_cogentia
   r_fractavolta -->|37| r_marenostrum
   r_jeanhuguesrobert -->|36| r_fractavolta
   r_jeanhuguesrobert -->|30| r_inox
@@ -78,8 +78,8 @@ graph LR
   r_fractavolta -->|18| r_barons_mariani
   r_jeanhuguesrobert -->|16| r_inseme
   r_inseme -->|14| r_cogentia
+  r_marenostrum -->|13| r_cogentia
   r_marenostrum -->|12| r_fractavolta
-  r_marenostrum -->|12| r_cogentia
   r_barons_mariani -->|11| r_marenostrum
   r_inox -->|11| r_barons_mariani
   r_inox -->|11| r_cogentia
@@ -106,6 +106,7 @@ graph LR
   r_marenostrum -->|2| r_jeanhuguesrobert
   r_marenostrum -->|2| r_inseme
   r_marenostrum -->|2| r_inox
+  r_ubikia -->|1| r_cogentia
 ```
 <!-- END_AUTO: graph -->
 
@@ -510,6 +511,10 @@ graph LR
 | [Cogentia and Cogentigram](Cogentia-and-Cogentigram.md) | this repo | 2026 |
 | [The Sovereign Digital Twin — Cogentia, Cogentigram, Cogentiscope](cogentia-digital-twin.md) | this repo | 2026-04 |
 | [Cogentia Personal Data Portability](cogentia_personal_data_portability.md) *(generic reusable layer for schemas, templates, normalizers and redacted/fictitious examples; explicitly separated from any private personal register)* | this repo | 2026-06-11 |
+| [Agent Configuration Layer](agent_configuration_layer.md) *(method note v0.2 — AGENTS.md, `.agents/`, and governed operational projections of the corpus)* | this repo | 2026-06-13 |
+| [Pipeline Conversation vers Corpus (Conversia)](conversation_to_corpus_pipeline.md) *(source document v0.4 — progressive transformation of conversations into living corpus, models, agents, mandates and traces)* | this repo | 2026-06-12 |
+| [Démocratie de capacité](democracy_of_capability.md) *(structured hypothesis — publics capables, open democracy and AI under mandate)* | this repo | 2026-06-12 |
+| [Démocratie rapide mandatée](mandated_fast_democracy.md) *(short conceptual synthesis — deciding quickly without abandoning democratic principles)* | this repo | 2026-06-12 |
 | [From Biometrics and Psychometrics to Structural Signatures](structural_signatures.md) *(working paper v0.9 — non-biographical identifying structures, Cogentigrams and consent-based sovereign digital twins)* | this repo | 2026-05-22 |
 | [Cogentigraphic Distillation](cogentigraphic_distillation.md) *(working paper v0.1 — separating cognitive operating rules from biographical and factual memory in corpus-grounded AI agents)* | this repo | 2026-05-30 |
 | [Individual and Collective Digital Twins](individual_and_collective_digital_twins.md) *(working paper v0.1 — dialectic between sovereign twins of natural persons (Marie-Louise case) and of legal persons (C.O.R.S.I.C.A. case); extends the twin family — Cogentigram, structural signatures, cogentigraphic distillation; addresses cogentia#14)* | this repo | 2026-05-31 |
