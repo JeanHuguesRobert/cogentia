@@ -58,6 +58,11 @@ const DEFAULT_REPO_POLICIES = {
     role: "registry",
   },
 };
+const VISIBILITY_LEVELS = new Set(["public", "internal", "private", "confidential", "secret"]);
+const PUBLIC_PRESENCE = new Set(["full", "stub", "hidden"]);
+const TRACE_LEVELS = new Set(["loose", "standard", "high", "regulated"]);
+const PUBLIC_VIEW = "public";
+const PRIVATE_VIEW = "private";
 
 const argv = process.argv.slice(2);
 const JSON_MODE = takeFlag("--json");
@@ -116,6 +121,7 @@ Core commands:
   corpus plan              Read-only plan of generated navigation changes.
   corpus apply             Apply generated navigation changes from a fresh plan.
   corpus verify            Verify generated views, gaps and git drift.
+  corpus privacy           Check public views for private/confidential leaks.
   status                   Local health table used by the git hook.
   grep <text>              Full-text search over active markdown documents.
 
@@ -155,6 +161,7 @@ Plan/apply flags:
   --no-corpus-status       Skip per-repo research/corpus-status.md.
   --create-backlinks       Create missing backlink blocks in linked markdown files.
   --include-content        Include before/after bodies in JSON plans.
+  --view public|private    Visibility view override. Corpus default: auto; docs default: public.
   --strict                 Non-zero exit when verify finds issues.
 
 Registry:
@@ -189,7 +196,7 @@ function cmdStatus() {
   const inventory = buildInventory(ctx);
   const git = verifyGit(ctx);
   const rows = ctx.repos.map(repo => {
-    const docs = inventory.documents.filter(d => d.repo === repo.name && !d.index.ignored);
+    const docs = visibleDocs(inventory, PUBLIC_VIEW).filter(d => d.repo === repo.name);
     const unindexed = docs.filter(isIndexGap).length;
     const g = git.find(x => x.repo === repo.name);
     return {
@@ -229,8 +236,10 @@ function cmdCorpus(sub) {
       return cmdCorpusApply();
     case "verify":
       return cmdCorpusVerify();
+    case "privacy":
+      return cmdCorpusPrivacy();
     default:
-      throw new Error(`Unknown corpus subcommand "${sub}". Use plan, apply, or verify.`);
+      throw new Error(`Unknown corpus subcommand "${sub}". Use plan, apply, verify, or privacy.`);
   }
 }
 
@@ -266,10 +275,12 @@ function cmdCorpusVerify() {
   const plan = buildPlan(ctx, { ...planOptions(), quiet: true });
   const inventory = buildInventory(ctx);
   const git = verifyGit(ctx);
-  const gaps = inventory.documents.filter(isIndexGap);
+  const privacy = verifyPrivacy(ctx, inventory, PUBLIC_VIEW);
+  const gaps = visibleDocs(inventory, PUBLIC_VIEW).filter(isIndexGap);
   const issues = [];
   if (plan.changes.length) issues.push(`${plan.changes.length} generated view(s) stale`);
   if (gaps.length) issues.push(`${gaps.length} document(s) not indexed`);
+  if (privacy.leaks.length) issues.push(`${privacy.leaks.length} public privacy leak(s)`);
   for (const g of git) {
     if (g.behind) issues.push(`${g.repo} behind upstream`);
     if (g.ahead) issues.push(`${g.repo} ahead upstream`);
@@ -278,7 +289,8 @@ function cmdCorpusVerify() {
     ok: issues.length === 0,
     issues,
     stale_views: plan.changes.map(stripChangeBody),
-    gaps: gaps.map(sanitizeDoc),
+    gaps: gaps.map(d => sanitizeDoc(d, inventory, PUBLIC_VIEW)),
+    privacy,
     git,
   };
   if (JSON_MODE) {
@@ -291,12 +303,26 @@ function cmdCorpusVerify() {
   if (strict && issues.length) process.exit(2);
 }
 
+function cmdCorpusPrivacy() {
+  const ctx = loadContext();
+  const strict = hasFlag("--strict");
+  const inventory = buildInventory(ctx);
+  const view = normalizeView(valueFlag("--view") || PUBLIC_VIEW);
+  const result = verifyPrivacy(ctx, inventory, view);
+  output(result, formatPrivacy(result));
+  if (strict && result.leaks.length) process.exit(2);
+}
+
 function cmdDocs(sub) {
   const ctx = loadContext();
   const inventory = buildInventory(ctx);
   switch (sub) {
     case "summary":
-      return output(docSummary(inventory), formatDocSummary(docSummary(inventory)));
+      {
+        const view = normalizeView(valueFlag("--view") || PUBLIC_VIEW);
+        const summary = docSummary(inventory, view);
+        return output(summary, formatDocSummary(summary));
+      }
     case "query":
       return cmdDocsQuery(inventory, optionalPositional("all"));
     case "search":
@@ -314,7 +340,7 @@ function cmdDocs(sub) {
 
 function cmdDocsQuery(inventory, repoArg) {
   const filter = docsFilter(repoArg);
-  const docs = filterDocuments(inventory.documents, filter).map(sanitizeDoc);
+  const docs = filterDocuments(inventory.documents, filter, inventory).map(d => sanitizeDoc(d, inventory, filter.view));
   output({ ok: true, filter, count: docs.length, documents: docs }, formatDocs(docs));
 }
 
@@ -326,7 +352,7 @@ function cmdDocsSearch(inventory) {
   if (!q) throw new Error("Usage: docs search <text> [--repo <name>] [--limit <n>]");
   const needle = q.toLowerCase();
   const docs = inventory.documents
-    .filter(d => !d.index.ignored)
+    .filter(d => canSeeDoc(d, PUBLIC_VIEW))
     .filter(d => includeGenerated || !isGeneratedNavigationDoc(d))
     .filter(d => repo === "all" || d.repo === repo)
     .sort(compareDocs("repo"));
@@ -351,18 +377,21 @@ function cmdDocsSearch(inventory) {
 }
 
 function cmdDocsGaps(inventory) {
+  const view = normalizeView(valueFlag("--view") || PUBLIC_VIEW);
   const docs = inventory.documents
+    .filter(d => canSeeDoc(d, view))
     .filter(isIndexGap)
     .sort(compareDocs("repo"))
-    .map(sanitizeDoc);
-  output({ ok: true, count: docs.length, documents: docs }, formatDocs(docs));
+    .map(d => sanitizeDoc(d, inventory, view));
+  output({ ok: true, view, count: docs.length, documents: docs }, formatDocs(docs));
 }
 
 function cmdDocsInspect(inventory, ref) {
   if (!ref) throw new Error("Usage: docs inspect <repo/path.md>");
   const doc = resolveDocRef(inventory, ref);
   if (!doc) throw new Error(`Document not found: ${ref}`);
-  output({ ok: true, document: sanitizeDoc(doc) }, formatDoc(doc));
+  const view = normalizeView(valueFlag("--view") || PUBLIC_VIEW);
+  output({ ok: true, view, document: sanitizeDoc(doc, inventory, view) }, formatDoc(doc));
 }
 
 function cmdDocsJudgments(ctx, inventory, repoArg) {
@@ -623,7 +652,7 @@ function daemonCliStatus(ctx) {
   const inventory = buildInventory(ctx);
   const git = verifyGit(ctx);
   const rows = ctx.repos.map(repo => {
-    const docs = inventory.documents.filter(d => d.repo === repo.name && !d.index.ignored);
+    const docs = visibleDocs(inventory, PUBLIC_VIEW).filter(d => d.repo === repo.name);
     const unindexed = docs.filter(isIndexGap).length;
     const g = git.find(x => x.repo === repo.name);
     return {
@@ -655,13 +684,14 @@ function daemonCliGrep(ctx, url) {
 
 function daemonCliDocsSummary(ctx) {
   const inventory = buildInventory(ctx);
-  return docSummary(inventory);
+  return docSummary(inventory, PUBLIC_VIEW);
 }
 
 function daemonCliDocsQuery(ctx, url) {
   const inventory = buildInventory(ctx);
   const filter = {
     repo: url.searchParams.get('repo') || 'all',
+    view: normalizeView(url.searchParams.get('view') || PUBLIC_VIEW),
     role: url.searchParams.get('role') || 'all',
     q: url.searchParams.get('q') || '',
     notIndexed: parseBoolean(url.searchParams.get('not-indexed')),
@@ -669,7 +699,7 @@ function daemonCliDocsQuery(ctx, url) {
     sort: url.searchParams.get('sort') || 'updated',
     limit: parseInt(url.searchParams.get('limit'), 10) || null,
   };
-  const docs = filterDocuments(inventory.documents, filter).map(sanitizeDoc);
+  const docs = filterDocuments(inventory.documents, filter, inventory).map(d => sanitizeDoc(d, inventory, filter.view));
   return { ok: true, filter, count: docs.length, documents: docs };
 }
 
@@ -686,7 +716,7 @@ function daemonCliDocsSearchFromInventory(inventory, q, repo, limit, includeGene
   if (!q) return { ok: false, error: 'missing_query' };
   const needle = q.toLowerCase();
   const docs = inventory.documents
-    .filter(d => !d.index.ignored)
+    .filter(d => canSeeDoc(d, PUBLIC_VIEW))
     .filter(d => includeGenerated || !isGeneratedNavigationDoc(d))
     .filter(d => repo === 'all' || d.repo === repo)
     .sort(compareDocs('repo'));
@@ -712,8 +742,8 @@ function daemonCliDocsSearchFromInventory(inventory, q, repo, limit, includeGene
 
 function daemonCliDocsGaps(ctx) {
   const inventory = buildInventory(ctx);
-  const docs = inventory.documents.filter(isIndexGap).sort(compareDocs('repo')).map(sanitizeDoc);
-  return { ok: true, count: docs.length, documents: docs };
+  const docs = visibleDocs(inventory, PUBLIC_VIEW).filter(isIndexGap).sort(compareDocs('repo')).map(d => sanitizeDoc(d, inventory, PUBLIC_VIEW));
+  return { ok: true, view: PUBLIC_VIEW, count: docs.length, documents: docs };
 }
 
 function daemonCliDocsInspect(ctx, url) {
@@ -722,7 +752,7 @@ function daemonCliDocsInspect(ctx, url) {
   if (!ref) return { ok: false, error: 'missing_ref' };
   const doc = resolveDocRef(inventory, ref);
   if (!doc) return { ok: false, error: 'document_not_found', ref };
-  return { ok: true, document: sanitizeDoc(doc) };
+  return { ok: true, document: sanitizeDoc(doc, inventory, PUBLIC_VIEW) };
 }
 
 function daemonCliDocsSnippet(ctx, url) {
@@ -893,7 +923,7 @@ function buildPlan(ctx, options) {
       if (!repoSelected(repo, options)) continue;
       const full = path.join(repo.path, "research", CORPUS_STATUS_FILE);
       const before = readFileIfExists(full);
-      const after = renderCorpusStatus(repo, ctx, inventory, before);
+      const after = renderCorpusStatus(repo, ctx, inventory, before, viewForRepo(repo, options));
       addChange(changes, repo, full, "corpus-status", before, after, true, "refresh structural status blocks");
     }
   }
@@ -902,7 +932,7 @@ function buildPlan(ctx, options) {
     if (registryRepo && repoSelected(registryRepo, options)) {
       const full = path.join(registryRepo.path, "research", DOCUMENTS_FILE);
       const before = readFileIfExists(full);
-      const after = renderDocuments(inventory, ctx);
+      const after = renderDocuments(inventory, ctx, outputView(options));
       addChange(changes, registryRepo, full, "documents", before, after, true, "refresh consolidated document catalog");
     }
   }
@@ -916,7 +946,7 @@ function buildPlan(ctx, options) {
     version: VERSION,
     registry: ctx.configPath,
     options,
-    summary: summarizePlan(clean, inventory),
+    summary: summarizePlan(clean, inventory, outputView(options)),
     changes: clean,
   };
 }
@@ -950,8 +980,11 @@ function addChange(changes, repo, full, type, before, after, allowed, reason) {
 function planOptions() {
   const repo = valueFlag("--repo");
   const scope = repo ? `repo:${repo}` : (valueFlag("--scope") || "configured");
+  const rawView = valueFlag("--view");
+  const view = rawView ? normalizeView(rawView) : "auto";
   return {
     scope,
+    view,
     backlinks: !hasFlag("--no-backlinks"),
     corpusStatus: !hasFlag("--no-corpus-status"),
     documents: !hasFlag("--no-documents"),
@@ -977,6 +1010,7 @@ function buildInventory(ctx) {
       const title = extractTitle(raw, file, fm.data);
       const dates = gitDates(gitIndex, relPath);
       const role = classifyRole(repo, relPath, file, fm.data, ignored, indexSets);
+      const visibility = documentVisibility(repo, relPath, fm.data);
       documents.push({
         repo: repo.name,
         repo_path: repo.path,
@@ -988,6 +1022,7 @@ function buildInventory(ctx) {
         role: role.role,
         role_source: role.source,
         role_confidence: role.confidence,
+        visibility,
         frontmatter: fm.data,
         size: {
           bytes: Buffer.byteLength(raw),
@@ -1059,14 +1094,214 @@ function classifyRole(repo, relPath, full, fm, ignored, indexSets) {
   return { role: "unknown", source: "fallback", confidence: "weak" };
 }
 
-function renderCorpusStatus(repo, ctx, inventory, before) {
+function normalizeView(view) {
+  const clean = String(view || PUBLIC_VIEW).trim().toLowerCase();
+  if (clean === PUBLIC_VIEW || clean === PRIVATE_VIEW) return clean;
+  return PUBLIC_VIEW;
+}
+
+function normalizeVisibility(value, fallback = "public") {
+  const clean = String(value || "").trim().toLowerCase();
+  if (VISIBILITY_LEVELS.has(clean)) return clean;
+  if (clean === "true") return "private";
+  if (clean === "false") return fallback;
+  return fallback;
+}
+
+function normalizePublicPresence(value, fallback) {
+  const clean = String(value || "").trim().toLowerCase();
+  return PUBLIC_PRESENCE.has(clean) ? clean : fallback;
+}
+
+function normalizeTraceLevel(value, fallback = "standard") {
+  const clean = String(value || "").trim().toLowerCase();
+  return TRACE_LEVELS.has(clean) ? clean : fallback;
+}
+
+function repoVisibility(repo) {
+  return normalizeVisibility(repo.policy.visibility || repo.policy.privacy, "public");
+}
+
+function repoPublicPresence(repo) {
+  const level = repoVisibility(repo);
+  const fallback = level === "public" ? "full" : "hidden";
+  return normalizePublicPresence(repo.policy.public_presence, fallback);
+}
+
+function documentVisibility(repo, relPath, fm = {}) {
+  const repoLevel = repoVisibility(repo);
+  const explicitLevel = fm.visibility || fm.privacy_level || fm.confidentiality || "";
+  const level = normalizeVisibility(explicitLevel, repoLevel);
+  const publicPresence = normalizePublicPresence(
+    fm.public_presence || fm.publicPresence || repo.policy.public_presence,
+    level === "public" ? "full" : "hidden",
+  );
+  return {
+    level,
+    public_presence: publicPresence,
+    trace_level: normalizeTraceLevel(fm.trace_level || fm.traceLevel || repo.policy.trace_level),
+    source: explicitLevel ? "frontmatter" : (repoLevel === "public" ? "default" : "repo_policy"),
+    owner_kind: repo.policy.owner_kind || repo.policy.owner?.kind || "",
+    mandate: fm.mandate || repo.policy.mandate || "",
+  };
+}
+
+function isPublicView(view) {
+  return normalizeView(view) === PUBLIC_VIEW;
+}
+
+function canSeeRepo(repo, view = PUBLIC_VIEW) {
+  const clean = normalizeView(view);
+  if (clean === PRIVATE_VIEW) return repoVisibility(repo) !== "secret";
+  const visibility = repoVisibility(repo);
+  if (visibility === "public") return true;
+  return repoPublicPresence(repo) !== "hidden";
+}
+
+function canSeeDoc(doc, view = PUBLIC_VIEW, options = {}) {
+  if (!options.includeIgnored && doc.index?.ignored) return false;
+  const clean = normalizeView(view);
+  const level = doc.visibility?.level || "public";
+  if (level === "secret") return false;
+  if (clean === PRIVATE_VIEW) return true;
+  return level === "public" && (doc.visibility?.public_presence || "full") === "full";
+}
+
+function isNonPublicDoc(doc) {
+  return (doc.visibility?.level || "public") !== "public";
+}
+
+function viewForRepo(repo, options = {}) {
+  if (options.view && options.view !== "auto") return normalizeView(options.view);
+  return repoVisibility(repo) === "public" ? PUBLIC_VIEW : PRIVATE_VIEW;
+}
+
+function outputView(options = {}) {
+  return options.view && options.view !== "auto" ? normalizeView(options.view) : PUBLIC_VIEW;
+}
+
+function visibleDocs(inventory, view = PUBLIC_VIEW) {
+  return inventory.documents.filter(d => canSeeDoc(d, view));
+}
+
+function visibleEdges(inventory, view = PUBLIC_VIEW) {
+  return inventory.edges.filter(edge => canExposeEdge(edge, inventory, view));
+}
+
+function canExposeEdge(edge, inventory, view = PUBLIC_VIEW) {
+  const docsByFull = docsByFullPath(inventory);
+  const source = docsByFull.get(path.resolve(edge.from));
+  const target = docsByFull.get(path.resolve(edge.to));
+  if (!source || !target) return false;
+  return canSeeDoc(source, view, { includeIgnored: true }) && canSeeDoc(target, view, { includeIgnored: true });
+}
+
+function docsByFullPath(inventory) {
+  if (!inventory._docsByFull) {
+    inventory._docsByFull = new Map(inventory.documents.map(d => [path.resolve(d.full_path), d]));
+  }
+  return inventory._docsByFull;
+}
+
+function linksForDocInView(doc, inventory, view = PUBLIC_VIEW) {
+  if (!inventory) return doc.links;
+  const edges = visibleEdges(inventory, view);
+  const full = path.resolve(doc.full_path);
+  const links = { out_internal: 0, out_cross_repo: 0, in_internal: 0, in_cross_repo: 0 };
+  for (const edge of edges) {
+    if (path.resolve(edge.from) === full) {
+      if (edge.to_repo === doc.repo) links.out_internal++;
+      else links.out_cross_repo++;
+    }
+    if (path.resolve(edge.to) === full) {
+      if (edge.from_repo === doc.repo) links.in_internal++;
+      else links.in_cross_repo++;
+    }
+  }
+  return links;
+}
+
+function docHref(doc, view = PUBLIC_VIEW) {
+  if (isPublicView(view) && !canSeeDoc(doc, view)) return "";
+  return doc.github_url || "";
+}
+
+function publishedRowVisible(repo, ctx, inventory, indexFull, row, view = PUBLIC_VIEW) {
+  const links = extractMarkdownLinks(row);
+  if (!links.length) return true;
+  const docsByFull = docsByFullPath(inventory);
+  for (const link of links) {
+    const target = resolveMarkdownLink(ctx, {
+      repo: repo.name,
+      full_path: indexFull,
+    }, link.url);
+    if (!target) continue;
+    const targetDoc = docsByFull.get(path.resolve(target.full_path));
+    if (targetDoc && !canSeeDoc(targetDoc, view, { includeIgnored: true })) return false;
+  }
+  return true;
+}
+
+function verifyPrivacy(ctx, inventory, view = PUBLIC_VIEW) {
+  const cleanView = normalizeView(view);
+  const leaks = [];
+  if (!isPublicView(cleanView)) {
+    return { ok: true, view: cleanView, leaks: [], summary: { public_to_private_links: 0, generated_mentions: 0 } };
+  }
+  const docsByFull = docsByFullPath(inventory);
+  for (const edge of inventory.edges) {
+    const source = docsByFull.get(path.resolve(edge.from));
+    const target = docsByFull.get(path.resolve(edge.to));
+    if (!source || !target) continue;
+    if (canSeeDoc(source, PUBLIC_VIEW, { includeIgnored: true }) && isNonPublicDoc(target)) {
+      leaks.push({
+        type: "public_to_private_link",
+        from: `${source.repo}/${source.rel}`,
+        to: `${target.repo}/${target.rel}`,
+        url: edge.url,
+      });
+    }
+  }
+  const hiddenDocs = inventory.documents.filter(isNonPublicDoc);
+  const publicGeneratedDocs = inventory.documents
+    .filter(d => canSeeDoc(d, PUBLIC_VIEW))
+    .filter(d => isGeneratedNavigationDoc(d) || readFileIfExists(d.full_path).includes("<!-- BEGIN_AUTO: backlinks -->"));
+  for (const generated of publicGeneratedDocs) {
+    const generatedRaw = readFileIfExists(generated.full_path);
+    const generatedAuto = extractAutoSections(generatedRaw);
+    if (!generatedAuto) continue;
+    for (const hidden of hiddenDocs) {
+      const needles = [
+        hidden.github_url,
+        `${hidden.repo}/${hidden.rel}`,
+      ].filter(Boolean);
+      if (!needles.some(needle => generatedAuto.includes(needle))) continue;
+      leaks.push({
+        type: "generated_private_reference",
+        file: `${generated.repo}/${generated.rel}`,
+        target: `${hidden.repo}/${hidden.rel}`,
+      });
+    }
+  }
+  return {
+    ok: leaks.length === 0,
+    view: cleanView,
+    leaks,
+    summary: {
+      public_to_private_links: leaks.filter(l => l.type === "public_to_private_link").length,
+      generated_mentions: leaks.filter(l => l.type === "generated_private_reference").length,
+    },
+  };
+}
+
+function renderCorpusStatus(repo, ctx, inventory, before, view = PUBLIC_VIEW) {
   const original = before || bootstrapCorpusStatus(repo);
   let content = original;
-  content = replaceSection(content, "registered_repos", renderRegisteredRepos(ctx));
-  content = replaceSection(content, "graph", renderRepoGraph(inventory, ctx));
+  content = replaceSection(content, "registered_repos", renderRegisteredRepos(ctx, view));
+  content = replaceSection(content, "graph", renderRepoGraph(inventory, ctx, view));
   content = replaceSection(content, "concepts", renderConceptSummary(repo, loadConcepts(ctx)));
   content = replaceSection(content, "concept_graph", renderConceptGraph(loadConcepts(ctx), ctx));
-  content = replaceSection(content, "published", renderPublishedBlock(repo));
+  content = replaceSection(content, "published", renderPublishedBlock(repo, ctx, inventory, view));
   content = replaceSection(content, "possibilities", renderPossibilitiesBlock(repo));
   return ensureFinalNewline(content);
 }
@@ -1075,33 +1310,39 @@ function bootstrapCorpusStatus(repo) {
   return `---\ntitle: "Corpus Status - ${repo.name}"\ndate: ${today()}\n---\n\n# Corpus Status - ${repo.name}\n\n## Registered Repositories\n\n<!-- BEGIN_AUTO: registered_repos -->\n<!-- END_AUTO: registered_repos -->\n\n---\n\n## Cross-Reference Graph\n\n<!-- BEGIN_AUTO: graph -->\n<!-- END_AUTO: graph -->\n\n---\n\n## Concepts\n\n<!-- BEGIN_AUTO: concepts -->\n<!-- END_AUTO: concepts -->\n\n## Concept Graph\n\n<!-- BEGIN_AUTO: concept_graph -->\n<!-- END_AUTO: concept_graph -->\n\n---\n\n## Published\n\n<!-- BEGIN_AUTO: published -->\n<!-- END_AUTO: published -->\n\n---\n\n## What Is Proved\n\n_Manually curated._\n\n## Open Objections\n\n_Manually curated._\n\n## What Remains Possible\n\n<!-- BEGIN_AUTO: possibilities -->\n<!-- END_AUTO: possibilities -->\n\n`;
 }
 
-function renderRegisteredRepos(ctx) {
+function renderRegisteredRepos(ctx, view = PUBLIC_VIEW) {
   const lines = [
-    "| Repository | research/index.md | Branch | Policy |",
-    "|---|---|---|---|",
+    "| Repository | research/index.md | Branch | Policy | Visibility | Public presence |",
+    "|---|---|---|---|---|---|",
   ];
   for (const repo of ctx.repos) {
+    if (!canSeeRepo(repo, view)) continue;
     const hasIndex = fileExists(repo.path, "research", INDEX_FILE) ? "yes" : "no";
-    lines.push(`| ${repo.name} | ${hasIndex} | ${repo.branch} | ${repo.policy.default_scope || "all"} |`);
+    lines.push(`| ${repo.name} | ${hasIndex} | ${repo.branch} | ${repo.policy.default_scope || "all"} | ${repoVisibility(repo)} | ${repoPublicPresence(repo)} |`);
   }
   return lines.join("\n");
 }
 
-function renderRepoGraph(inventory, ctx) {
-  const edges = inventory.coupling.repo_edges.filter(e => e.weight > 0);
+function renderRepoGraph(inventory, ctx, view = PUBLIC_VIEW) {
+  const edges = summarizeCoupling(visibleEdges(inventory, view)).repo_edges.filter(e => e.weight > 0);
   const lines = ["```mermaid", "graph LR"];
-  for (const repo of ctx.repos) lines.push(`  ${mermaidId(repo.name)}["${escapeMermaid(repo.name)}"]`);
+  for (const repo of ctx.repos.filter(r => canSeeRepo(r, view))) lines.push(`  ${mermaidId(repo.name)}["${escapeMermaid(repo.name)}"]`);
   for (const e of edges) lines.push(`  ${mermaidId(e.from)} -->|${e.weight}| ${mermaidId(e.to)}`);
   lines.push("```");
   if (!edges.length) lines.push("\n*(No cross-repo links detected.)*");
   return lines.join("\n");
 }
 
-function renderPublishedBlock(repo) {
+function renderPublishedBlock(repo, ctx, inventory, view = PUBLIC_VIEW) {
   const index = path.join(repo.path, "research", INDEX_FILE);
   if (!fs.existsSync(index)) return "*(No research/index.md found.)*";
   const section = extractHeadingSection(fs.readFileSync(index, "utf8"), "Published");
   const rows = section.split(/\r?\n/).filter(line => /^\|.+\|$/.test(line.trim()));
+  if (isPublicView(view)) {
+    const filtered = rows.filter((row, i) => i < 2 || publishedRowVisible(repo, ctx, inventory, index, row, view));
+    if (filtered.length >= 2) return filtered.join("\n");
+    return "*(No public Published table rows.)*";
+  }
   if (rows.length >= 2) return rows.join("\n");
   return "*(No Published table found.)*";
 }
@@ -1114,8 +1355,8 @@ function renderPossibilitiesBlock(repo) {
   return bullets.length ? bullets.join("\n") : "*(No open possibilities listed.)*";
 }
 
-function renderDocuments(inventory, ctx) {
-  const docs = inventory.documents.filter(d => !d.index.ignored);
+function renderDocuments(inventory, ctx, view = PUBLIC_VIEW) {
+  const docs = visibleDocs(inventory, view);
   const byRepo = groupBy(docs, d => d.repo);
   const gaps = docs.filter(isIndexGap);
   const recent = [...docs].sort(compareDocs("updated")).slice(0, 80);
@@ -1128,7 +1369,7 @@ function renderDocuments(inventory, ctx) {
   lines.push("");
   lines.push("# Documents - All Tracked Repos");
   lines.push("");
-  lines.push(`_${GENERATED_NOTE} Registry: \`${ctx.configPath}\`._`);
+  lines.push(`_${GENERATED_NOTE} Registry: \`${ctx.configPath}\`. View: \`${view}\`._`);
   lines.push("");
   lines.push("## Summary");
   lines.push("");
@@ -1150,23 +1391,25 @@ function renderDocuments(inventory, ctx) {
   lines.push("");
   lines.push("## Recent Activity");
   lines.push("");
-  lines.push(renderDocTable(recent));
+  lines.push(renderDocTable(recent, inventory, view));
   lines.push("");
   lines.push("## Source Documents");
   lines.push("");
-  lines.push(renderDocTable(sources));
+  lines.push(renderDocTable(sources, inventory, view));
   lines.push("");
   lines.push("## Index Gaps");
   lines.push("");
-  lines.push(gaps.length ? renderDocTable(gaps.sort(compareDocs("repo"))) : "No unindexed documents.");
+  lines.push(gaps.length ? renderDocTable(gaps.sort(compareDocs("repo")), inventory, view) : "No unindexed documents.");
   lines.push("");
   return lines.join("\n");
 }
 
-function renderDocTable(docs) {
+function renderDocTable(docs, inventory = null, view = PUBLIC_VIEW) {
   const lines = ["| Title | Repo | Role | Updated | Created | Local |", "|---|---|---|---|---|---|"];
   for (const d of docs) {
-    lines.push(`| [${escapeTable(d.title)}](${d.github_url || "#"}) | ${d.repo} | ${d.role} | ${d.updated.date || "-"} | ${d.created.date || "-"} | \`${d.rel}\` |`);
+    const href = docHref(d, view);
+    const title = href ? `[${escapeTable(d.title)}](${href})` : escapeTable(d.title);
+    lines.push(`| ${title} | ${d.repo} | ${d.role} | ${d.updated.date || "-"} | ${d.created.date || "-"} | \`${d.rel}\` |`);
   }
   return lines.join("\n");
 }
@@ -1184,13 +1427,18 @@ function planBacklinks(ctx, inventory, options) {
     if (!target) continue;
     const repo = ctx.repos.find(r => r.name === target.repo);
     if (!repo || !repoSelected(repo, options)) continue;
+    const view = viewForRepo(repo, options);
+    if (!canSeeDoc(target, view, { includeIgnored: true })) continue;
     const allowed = pathAllowedByScope(repo, target.rel, options);
     if (!allowed) continue;
     const before = readFileIfExists(targetFull);
     const hasBlock = before.includes("<!-- BEGIN_AUTO: backlinks -->");
     if (!hasBlock && !options.createBacklinks) continue;
-    const sourceDocs = sourceFulls.map(f => docsByFull.get(path.resolve(f))).filter(Boolean);
-    const block = renderBacklinkBlock(repo, target, sourceDocs);
+    const sourceDocs = sourceFulls
+      .map(f => docsByFull.get(path.resolve(f)))
+      .filter(Boolean)
+      .filter(source => canExposeEdge({ from: source.full_path, to: target.full_path }, inventory, view));
+    const block = renderBacklinkBlock(repo, target, sourceDocs, view);
     const after = hasBlock
       ? replaceSection(before, "backlinks", block)
       : ensureFinalNewline(before) + `\n<!-- BEGIN_AUTO: backlinks -->\n${block}\n<!-- END_AUTO: backlinks -->\n`;
@@ -1199,15 +1447,19 @@ function planBacklinks(ctx, inventory, options) {
   return changes;
 }
 
-function renderBacklinkBlock(repo, target, sourceDocs) {
+function renderBacklinkBlock(repo, target, sourceDocs, view = PUBLIC_VIEW) {
   const unique = [...new Map(sourceDocs.map(d => [d.full_path, d])).values()]
     .sort((a, b) => a.repo.localeCompare(b.repo) || a.title.localeCompare(b.title));
   const lines = ["### Backlinks", "", "*These documents link to this file:*"];
+  if (!unique.length) {
+    lines.push("- *(No visible backlinks in this view.)*");
+    return lines.join("\n");
+  }
   for (const source of unique) {
     const href = source.repo === target.repo
       ? rel(path.dirname(target.full_path), source.full_path)
-      : source.github_url;
-    lines.push(`- [${source.title}](${href})`);
+      : docHref(source, view);
+    lines.push(href ? `- [${source.title}](${href})` : `- ${source.title}`);
   }
   return lines.join("\n");
 }
@@ -1353,7 +1605,7 @@ function resolveLinksInText(repo, fromFile, text) {
 }
 
 function extractMarkdownLinks(raw) {
-  const text = stripFencedCode(raw);
+  const text = stripFencedCode(stripAutoSections(raw));
   const links = [];
   const re = /\[[^\]]+\]\(([^)\s]+)(?:\s+"[^"]*")?\)/g;
   let m;
@@ -1725,10 +1977,11 @@ function gitDates(gitIndex, relPath) {
   };
 }
 
-function filterDocuments(docs, filter) {
+function filterDocuments(docs, filter, inventory = null) {
   let list = docs;
   if (filter.repo !== "all") list = list.filter(d => d.repo === filter.repo);
-  if (!filter.includeIgnored) list = list.filter(d => !d.index.ignored);
+  if (!filter.includeIgnored) list = list.filter(d => canSeeDoc(d, filter.view));
+  else if (filter.view !== PRIVATE_VIEW) list = list.filter(d => canSeeDoc(d, filter.view, { includeIgnored: true }));
   if (filter.role && filter.role !== "all") list = list.filter(d => d.role === filter.role);
   if (filter.notIndexed) list = list.filter(isIndexGap);
   if (filter.q) {
@@ -1807,6 +2060,7 @@ function documentJudgmentRequests(inventory, repoArg, options = {}) {
 function docsFilter(repoArg) {
   return {
     repo: repoArg || "all",
+    view: normalizeView(valueFlag("--view") || PUBLIC_VIEW),
     role: valueFlag("--role") || "all",
     q: valueFlag("--q") || "",
     notIndexed: hasFlag("--not-indexed"),
@@ -1816,11 +2070,12 @@ function docsFilter(repoArg) {
   };
 }
 
-function docSummary(inventory) {
-  const docs = inventory.documents.filter(d => !d.index.ignored);
+function docSummary(inventory, view = PUBLIC_VIEW) {
+  const docs = visibleDocs(inventory, view);
   const byRepo = groupBy(docs, d => d.repo);
   return {
     ok: true,
+    view,
     total: docs.length,
     roles: countBy(docs, d => d.role),
     repos: [...byRepo.entries()].map(([repo, list]) => ({
@@ -1835,7 +2090,7 @@ function docSummary(inventory) {
   };
 }
 
-function sanitizeDoc(d) {
+function sanitizeDoc(d, inventory = null, view = PUBLIC_VIEW) {
   const repo = d.repo;
   const branch = d.branch || "main";
   const github = d.github_url || `https://github.com/JeanHuguesRobert/${repo}/blob/${branch}/${d.rel}`;
@@ -1846,13 +2101,14 @@ function sanitizeDoc(d) {
     role: d.role,
     role_source: d.role_source,
     role_confidence: d.role_confidence,
+    visibility: d.visibility,
     size: d.size,
     created: d.created,
     last_significant_update: d.updated,
-    links: d.links,
+    links: linksForDocInView(d, inventory, view),
     index: d.index,
     full_path: d.full_path,
-    github_url: github,
+    github_url: isPublicView(view) && !canSeeDoc(d, view) ? "" : github,
   };
 }
 
@@ -1878,8 +2134,8 @@ function summarizeCoupling(edges) {
   };
 }
 
-function summarizePlan(changes, inventory) {
-  const activeDocs = inventory.documents.filter(d => !d.index.ignored);
+function summarizePlan(changes, inventory, view = PUBLIC_VIEW) {
+  const activeDocs = visibleDocs(inventory, view);
   return {
     changes: changes.length,
     by_type: countBy(changes, c => c.type),
@@ -1920,6 +2176,12 @@ function replaceSection(content, name, body) {
 
 function stripAutoSections(raw) {
   return String(raw).replace(/<!--\s*BEGIN_AUTO:[\s\S]*?<!--\s*END_AUTO:[\s\S]*?-->/g, "");
+}
+
+function extractAutoSections(raw) {
+  return [...String(raw).matchAll(/<!--\s*BEGIN_AUTO:[\s\S]*?<!--\s*END_AUTO:[\s\S]*?-->/g)]
+    .map(m => m[0])
+    .join("\n");
 }
 
 function extractHeadingSection(raw, title) {
@@ -2128,6 +2390,21 @@ function formatGit(results) {
   return lines.join("\n");
 }
 
+function formatPrivacy(result) {
+  const lines = [`\nPrivacy check (${result.view})\n`];
+  if (!result.leaks.length) {
+    lines.push("ok");
+    return lines.join("\n");
+  }
+  lines.push(`${result.leaks.length} leak(s):`);
+  for (const leak of result.leaks) {
+    if (leak.type === "public_to_private_link") lines.push(`- public link: ${leak.from} -> ${leak.to}`);
+    else if (leak.type === "generated_private_reference") lines.push(`- generated reference: ${leak.file} mentions ${leak.target}`);
+    else lines.push(`- ${JSON.stringify(leak)}`);
+  }
+  return lines.join("\n");
+}
+
 function formatContinuationEmit(result) {
   const c = result.continuation;
   const verb = result.created ? "Emitted" : "Already active";
@@ -2310,4 +2587,3 @@ function escapeTable(s) {
 function escapeRegExp(s) {
   return String(s).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
-
