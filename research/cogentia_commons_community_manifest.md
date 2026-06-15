@@ -389,8 +389,8 @@ manifest_commit: "pending"
 
 ## 1. Membership
 
-This community hosts the documents of the six-repo corpus (barons-Mariani,
-marenostrum, cogentia, FractaVolta, inseme, Inox) and welcomes objections and revisions from
+This community hosts the documents of the public corpus (barons-Mariani,
+marenostrum, cogentia, FractaVolta, inseme, Inox, ubikia) and welcomes objections and revisions from
 any verified GitHub identity. Membership is open; participation is signed.
 
 ```yaml
@@ -564,12 +564,13 @@ The `cogentia.js manifest` subcommand and its fixtures: **MIT**.
 ### Backlinks
 
 *These documents link to this file:*
-- [Cogentia Commons — Session Continuation Snapshot](cogentia_commons_continuation.md)
+- [Agent-Resumable CLI](agent_resumable_cli.md)
 - [Cogentia Commons — `kernel_extractor` Plugin Sub-Specification](cogentia_commons_kernel_extractor.md)
 - [Cogentia Commons — MVP Specification](cogentia_commons_mvp_spec.md)
+- [Cogentia Commons — Session Continuation Snapshot](cogentia_commons_continuation.md)
 - [Cogentia Commons — Structural Plugin Sub-Specifications](cogentia_commons_structural_plugins.md)
 - [Cogentia Commons — Workflows](cogentia_commons_workflows.md)
 - [Corpus Status — cogentia](corpus-status.md)
 - [Research Index — Cogentia](index.md)
-
+- [Documents - All Tracked Repos](https://github.com/JeanHuguesRobert/JeanHuguesRobert/blob/main/research/documents.md)
 <!-- END_AUTO: backlinks -->

@@ -6,7 +6,7 @@
 
 ---
 
-Cogentia is the **cognitive infrastructure tooling** of a six-repository corpus that operationalizes the [DHITL](https://github.com/JeanHuguesRobert/marenostrum/blob/main/DHITL.md) AI Safety anti-capture proposal.
+Cogentia is the **cognitive infrastructure tooling** of a multi-repository public corpus that operationalizes the [DHITL](https://github.com/JeanHuguesRobert/marenostrum/blob/main/DHITL.md) AI Safety anti-capture proposal.
 
 One infrastructure, two scales — *I* and *we*:
 
@@ -133,7 +133,7 @@ The current session ritual is: `status` at the start, `grep` or `docs search` / 
 
 ## Ecosystem
 
-Cogentia is one node in a six-repository corpus:
+Cogentia is one node in the public corpus:
 
 | Repository | Role |
 |---|---|
@@ -143,6 +143,7 @@ Cogentia is one node in a six-repository corpus:
 | [inseme](https://github.com/JeanHuguesRobert/inseme) | Platform — COP runtime, briques, Kudocracy.Survey, Inseme Agora, Ophélia AI mediator, Atlas of Biodiversity. |
 | [barons-Mariani](https://github.com/JeanHuguesRobert/barons-Mariani) | Political and institutional framework. Plan 2038, *Discours de la seconde méthode*. |
 | [Inox](https://github.com/JeanHuguesRobert/Inox) | Language and runtime substrate. Concatenative stack VM, strict control/data plane separation, designed for nodes of the future *Fractanet*. JS today, WASM and C/C++ next, ESP32 bare-metal eventually. |
+| [Ubikia](https://github.com/JeanHuguesRobert/ubikia) | Editorial derivation and publication layer. Source-first derived products, personas, platform packages, and publication ledger. |
 
 Mapped onto the [FractaVolta four-layer stack](https://fractavolta.com): Cogentia tools the **cognition layer**.
 
