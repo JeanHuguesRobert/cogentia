@@ -52,6 +52,13 @@ This repository instantiates the **cognitive infrastructure layer** of the [DHIT
 | [Cogentia Commons — Public by Default, Private by Exception](cogentia_commons_visibility_and_private_modes.md) *(source document v0.1 — visibility modes, private communities, patent-oriented exploration, and private-use financing of the commons; addresses cogentia#34)* | this repo | 2026-06-09 |
 | [Cogentia and Cogentigram](Cogentia-and-Cogentigram.md) | this repo | 2026 |
 | [The Sovereign Digital Twin — Cogentia, Cogentigram, Cogentiscope](cogentia-digital-twin.md) | this repo | 2026-04 |
+| [Cogentia Personal Data Portability](cogentia_personal_data_portability.md) *(generic reusable layer for schemas, templates, normalizers and redacted/fictitious examples; explicitly separated from any private personal register)* | this repo | 2026-06-11 |
+| [Agent Configuration Layer](agent_configuration_layer.md) *(method note v0.2 — AGENTS.md, `.agents/`, and governed operational projections of the corpus)* | this repo | 2026-06-13 |
+| [Pipeline Conversation vers Corpus (Conversia)](conversation_to_corpus_pipeline.md) *(source document v0.4 — progressive transformation of conversations into living corpus, models, agents, mandates and traces)* | this repo | 2026-06-12 |
+| [Démocratie de capacité](democracy_of_capability.md) *(structured hypothesis — publics capables, open democracy and AI under mandate)* | this repo | 2026-06-12 |
+| [Démocratie rapide mandatée](mandated_fast_democracy.md) *(short conceptual synthesis — deciding quickly without abandoning democratic principles)* | this repo | 2026-06-12 |
+| [From Biometrics and Psychometrics to Structural Signatures](structural_signatures.md) *(working paper v0.9 — non-biographical identifying structures, Cogentigrams and consent-based sovereign digital twins)* | this repo | 2026-05-22 |
+| [Cogentigraphic Distillation](cogentigraphic_distillation.md) *(working paper v0.1 — separating cognitive operating rules from biographical and factual memory in corpus-grounded AI agents)* | this repo | 2026-05-30 |
 | [Individual and Collective Digital Twins](individual_and_collective_digital_twins.md) *(working paper v0.1 — dialectic between sovereign twins of natural persons (Marie-Louise case) and of legal persons (C.O.R.S.I.C.A. case); extends the twin family — Cogentigram, structural signatures, cogentigraphic distillation; addresses cogentia#14)* | this repo | 2026-05-31 |
 | [Democratic AI Safety — alias](democratic_ai_safety.md) *(canonical in barons-Mariani; this file is now a stub)* | this repo | 2026-05-18 |
 | [KYS — Psychocognitive Analysis Protocol v1.0](kys-prompt.md) | this repo | 2026 |
@@ -105,6 +112,29 @@ This repository instantiates the **cognitive infrastructure layer** of the [DHIT
 
 ---
 
+## Operational Implementation Documents
+
+*Implementation and tooling documents indexed for navigation, without promoting them to source doctrine.*
+
+| Title | Location | Date |
+|---|---|---|
+| [Frontmatter Schema — v0.1](../docs/frontmatter-schema.md) *(canonical metadata fields for corpus documents)* | this repo | 2026-05-27 |
+| [Frontmatter Synonym Mapping — v0.1](../docs/frontmatter-synonym-mapping.md) *(normalization map for frontmatter variants across the corpus)* | this repo | 2026-05-27 |
+| [Cogentia Local Daemon — Features Tutorial](../docs/daemon-features-tutorial.md) *(daemon feature walkthrough for local API and HTML UX)* | this repo | 2026-06-12 |
+| [Cogentia daemon & plugin tutorial](../docs/daemon-plugin-tutorial.md) *(plugin authoring and daemon extension note)* | this repo | 2026-06-12 |
+| [Cogentia Daemon Plugin API](../docs/plugins.md) *(local daemon plugin API reference)* | this repo | 2026-06-12 |
+| [Cogentia Personal Data Portability — Architecture](../cogentia_personal/data_portability/ARCHITECTURE.md) *(generic architecture for reusable data portability tooling)* | this repo | 2026-06-11 |
+| [Cogentia Personal Data Portability — Provider Adapters](../cogentia_personal/data_portability/ADAPTERS.md) *(provider adapter architecture note for unstable, heterogeneous exports)* | this repo | 2026-06-13 |
+| [Cogentia Personal Data Portability — Formats](../cogentia_personal/data_portability/FORMATS.md) *(format policy for durable, navigable and agent-processable exports)* | this repo | 2026-06-13 |
+| [OpenAI Export Adapter — MVP Framing](../cogentia_personal/data_portability/adapters/openai/MVP.md) *(generic reusable MVP framing for local OpenAI/ChatGPT data exports)* | this repo | 2026-06-13 |
+| [Normalize Export — Specification](../cogentia_personal/data_portability/tools/normalize_export_spec.md) *(normalizer specification for imported personal data exports)* | this repo | 2026-06-11 |
+| [Data Export — Provider — YYYY-MM-DD](../cogentia_personal/data_portability/templates/export.md) *(generic export template)* | this repo | 2026-06-11 |
+| [Media Reference — Provider — YYYY-MM-DD — 000001](../cogentia_personal/data_portability/templates/media_reference.md) *(generic media-reference template)* | this repo | 2026-06-11 |
+| [Trace — Provider — YYYY-MM-DD — 000001](../cogentia_personal/data_portability/templates/trace.md) *(generic trace template)* | this repo | 2026-06-11 |
+| [Fictitious Data Export — Example Social — 2026-06-11](../cogentia_personal/data_portability/examples/fictitious_export.md) *(fictitious example export for testing and documentation)* | this repo | 2026-06-11 |
+
+---
+
 ## In Progress
 
 - [The Cogentia Commons Living Corpus](cogentia_commons_living_corpus.md) *(working paper v0.1, 2026-06-09 — consolidation draft for the multi-repository Living Corpus, current `cogentia.js` CLI contract, continuation model, source/derived roles, exploration paths, and future Web workspace)*
@@ -139,40 +169,22 @@ This repository instantiates the **cognitive infrastructure layer** of the [DHIT
 ### Backlinks
 
 *These documents link to this file:*
-- [Cogentia](../COGENTIA.md)
-- [Agent Navigation Guide (Context Server)](../docs/agent_context_server.md)
+- [Research Index — barons-Mariani](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/index.md)
+- [Agent-Resumable CLI](agent_resumable_cli.md)
+- [Cogentia](../README.md)
+- [Cogentia Commons — MVP Specification](cogentia_commons_mvp_spec.md)
+- [Cogentia Commons — Public by Default, Private by Exception](cogentia_commons_visibility_and_private_modes.md)
+- [Cogentia Commons — Session Continuation Snapshot](cogentia_commons_continuation.md)
+- [cogentia.js — Tutorial and Near-Specification](cogentia_js_tutorial.md)
+- [Cogentigraphic Distillation](cogentigraphic_distillation.md)
+- [Corpus Status — cogentia](corpus-status.md)
+- [From Biometrics and Psychometrics to Structural Signatures](structural_signatures.md)
 - [Frontmatter Schema — v0.1 (Corpus)](../docs/frontmatter-schema.md)
 - [Frontmatter Synonym Mapping — v0.1](../docs/frontmatter-synonym-mapping.md)
-- [Agent-Resumable CLI](agent_resumable_cli.md)
-- [Cogentia Commons — COMMUNITY.md Sub-Specification](cogentia_commons_community_manifest.md)
-- [Cogentia Commons — Session Continuation Snapshot](cogentia_commons_continuation.md)
-- [Cogentia Commons — `kernel_extractor` Plugin Sub-Specification](cogentia_commons_kernel_extractor.md)
-- [Cogentia Commons — MVP Specification](cogentia_commons_mvp_spec.md)
-- [Cogentia Commons — Structural Plugin Sub-Specifications](cogentia_commons_structural_plugins.md)
-- [Cogentia Commons — Substantive Plugin Sub-Specifications](cogentia_commons_substantive_plugins.md)
-- [Cogentia Commons — Workflows](cogentia_commons_workflows.md)
-- [Cogentia Commons: A Platform Architecture for Collaborative Possibility Exploration Under Scientific Constraint](Cogentia_Commons_Working_Paper.md)
-- [cogentia.js — Tutorial and Near-Specification](cogentia_js_tutorial.md)
-- [COGENTIA v1.0 — Prompt d'analyse psychocognitive](cogentia_prompt_v1.md)
-- [Cogentia Workflows](cogentia_workflows.md)
-- [Cogentia and Cogentigrams](Cogentia-and-Cogentigram.md)
-- [The Sovereign Digital Twin: Cogentia, Cogentigram, Cogentiscope](cogentia-digital-twin.md)
-- [Cogentigraphic Distillation](cogentigraphic_distillation.md)
-- [Cognitive Packets](cognitive_packets.md)
-- [Concept Index — cogentia](concepts.md)
-- [Corpus Status — cogentia](corpus-status.md)
-- [Democratic AI Safety — alias cogentia](democratic_ai_safety.md)
-- [Derived Products](derived_products.md)
-- [Individual and Collective Digital Twins](individual_and_collective_digital_twins.md)
-- [kys prompt](kys-prompt.md)
-- [Persistence Backends](persistence_backends.md)
-- [Pipeline](pipeline.md)
-- [Self-Contained Documents in an Interconnected Corpus](self_contained_documents.md)
-- [Simplicité d'action](simplicite_action.md)
-- [La trace protège](stigmergie_repressive_mouches_trace_protege_v0_1.md)
-- [From Biometrics and Psychometrics to Structural Signatures](structural_signatures.md)
-- [Traçabilité symétrique et capture relationnelle](tracabilite_symetrique_capture_relationnelle.md)
-- [Trail: From Autonomia to DHITL](trails/from_autonomia_to_dhitl.md)
-- [Trail: From Method to Machine](trails/from_method_to_machine.md)
-
+- [Research Index — FractaVolta](https://github.com/JeanHuguesRobert/FractaVolta/blob/main/research/index.md)
+- [Research Index — Inox](https://github.com/JeanHuguesRobert/Inox/blob/master/research/index.md)
+- [Research Index — Inseme](https://github.com/JeanHuguesRobert/inseme/blob/main/research/index.md)
+- [Documents - All Tracked Repos](https://github.com/JeanHuguesRobert/JeanHuguesRobert/blob/main/research/documents.md)
+- [Research Index — Jean Hugues Noël Robert (Profile / Entry Point)](https://github.com/JeanHuguesRobert/JeanHuguesRobert/blob/main/research/index.md)
+- [Research Index — MareNostrum](https://github.com/JeanHuguesRobert/marenostrum/blob/main/research/index.md)
 <!-- END_AUTO: backlinks -->
