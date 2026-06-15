@@ -1498,17 +1498,32 @@ The novelty of cognitive packets is therefore not the existence of the pattern, 
 ### Backlinks
 
 *These documents link to this file:*
-- [Agent Navigation Guide (Context Server)](../docs/agent_context_server.md)
-- [Agent-Resumable CLI](agent_resumable_cli.md)
+- [Incremental Transmissible Corpus Model](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/modele_corpus_transmissible_incremental.md)
+- [Act, mandate and responsibility](act_mandate_responsibility.md)
+- [Cogentia](../COGENTIA.md)
+- [Cogentia](../README.md)
 - [Cogentia Commons](cogentia_commons_method_packets.md)
 - [cogentia.js — Tutorial and Near-Specification](cogentia_js_tutorial.md)
-- [The Sovereign Digital Twin: Cogentia, Cogentigram, Cogentiscope](cogentia-digital-twin.md)
 - [Cogentigraphic Distillation](cogentigraphic_distillation.md)
 - [Cognitive Packet Switching](cognitive_packet_switching.md)
 - [Concept Index — cogentia](concepts.md)
-- [Corpus Status — cogentia](corpus-status.md)
-- [Research Index — Cogentia](index.md)
 - [Pipeline](pipeline.md)
+- [Research Index — Cogentia](index.md)
+- [The Cogentia Commons Living Corpus](cogentia_commons_living_corpus.md)
 - [Trail: From Method to Machine](trails/from_method_to_machine.md)
-
+- For researchers
+- [Fractanet — Generalized Control Planes for Heterogeneous Packet Networks](https://github.com/JeanHuguesRobert/FractaVolta/blob/main/research/fractanet.md)
+- FractaVolta
+- [Le Réseau Inconscient](https://github.com/JeanHuguesRobert/FractaVolta/blob/main/LE_RESEAU_INCONSCIENT.md)
+- Methodology
+- [The Unconscious Grid](https://github.com/JeanHuguesRobert/FractaVolta/blob/main/UNCONSCIOUS_GRID.md)
+- [Library packets — when the library is a specification, not code](https://github.com/JeanHuguesRobert/Inox/blob/master/research/library_packets.md)
+- [Reactive Sets in Inox — Native Implementation Path](https://github.com/JeanHuguesRobert/Inox/blob/master/research/reactive_sets_inox_cop_implementation.md)
+- [Research Index — Inox](https://github.com/JeanHuguesRobert/Inox/blob/master/research/index.md)
+- COP Reactive Cognitive Extension
+- [Reactive Cognitive COP Extension](https://github.com/JeanHuguesRobert/inseme/blob/main/research/reactive_cognitive_cop_extension.md)
+- [Research Index — Inseme](https://github.com/JeanHuguesRobert/inseme/blob/main/research/index.md)
+- [Carte globale du Corpus](https://github.com/JeanHuguesRobert/JeanHuguesRobert/blob/main/research/corpus-map.md)
+- [Documents - All Tracked Repos](https://github.com/JeanHuguesRobert/JeanHuguesRobert/blob/main/research/documents.md)
+- Jean Hugues Noël Robert, baron Mariani
 <!-- END_AUTO: backlinks -->
