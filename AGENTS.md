@@ -95,6 +95,7 @@ When authorization is ambiguous, prepare the batch and ask before acting.
 - [`research/pipeline.md`](research/pipeline.md) — general Cogentia pipeline from cognitive packets to source documents and derived products.
 - [`docs/agent_context_server.md`](docs/agent_context_server.md) — navigation guide for agents using Cogentia as a context server.
 - [`COGENTIA.md`](COGENTIA.md) — high-level framework in five distinctive moves.
+- [`cogentia/research/agent_configuration_layer.md`](https://github.com/JeanHuguesRobert/cogentia/blob/main/research/agent_configuration_layer.md) — AGENTS.md, `.agents/`, and governed operational projections of the corpus.
 
 ## Minimal prompt to use with an agent
 

@@ -1,0 +1,25 @@
+id: 2026-04-17-001
+type: "interaction_packet"
+channel: "email"
+date: 2026-04-17
+sent_time: "16:28:45+02:00"
+subject: "Thèse droit & forêt corse"
+from: "Jean Hugues Noël Robert"
+to:
+  - "Andrea Gavini"
+cc: []
+thread_detected: true
+reply_detected: false
+reply_date: null
+status: "delivery_failed"
+followup_number: 0
+elapsed_days_until_observed_failure: 0
+disclosure: "D2"
+public_summary: >
+  Message sent regarding droit et forêt corse, with a link to a related
+  MareNostrum document. Delivery failed according to the register.
+expected_continuation: "Message delivery, reply, or correction of the contact channel."
+observed_continuation: "Delivery failed."
+notes:
+  - "Sent message retrieved from Gmail during the 2026-06-13 backlog pass."
+  - "This packet records delivery failure only."

@@ -1,0 +1,27 @@
+id: 2026-04-12-002
+type: "interaction_packet"
+channel: "email"
+date: 2026-04-12
+sent_time: "06:55:33+02:00"
+subject: "Contact François Casabianca — autonomie alimentaire"
+from: "Jean Hugues Noël Robert"
+to:
+  - "François Casabianca contact channel"
+cc:
+  - "Institut Mariani"
+  - "C.O.R.S.I.C.A. / Barons Mariani archive"
+thread_detected: true
+reply_detected: true
+reply_summary: "Reply received; report sent."
+status: "reply_received_report_sent"
+followup_number: 0
+elapsed_days_until_observed_update: 10
+disclosure: "D2"
+public_summary: >
+  Contact initiated after a meeting around autonomy alimentaire. Reply received;
+  report sent according to the register.
+expected_continuation: "Exchange around autonomy alimentaire and possible report review."
+observed_continuation: "Reply received; report sent."
+notes:
+  - "Sent and later reply-thread messages were found in Gmail during the 2026-06-13 backlog pass."
+  - "The packet keeps the public trace minimal."

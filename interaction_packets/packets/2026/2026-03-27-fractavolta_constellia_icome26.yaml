@@ -1,0 +1,29 @@
+id: 2026-03-27-001
+type: "interaction_packet"
+channel: "email"
+date: 2026-03-27
+subject: "FractaVolta / Constellia ICOME26"
+from: "Jean Hugues Noël Robert"
+acting_as:
+  - "Institut Mariani / C.O.R.S.I.C.A."
+to:
+  - "HyFit"
+  - "Corsica Sole"
+cc: []
+thread_detected: "unknown"
+reply_detected: false
+reply_date: null
+status: "no_response_detected"
+followup_number: 0
+elapsed_days_as_of_last_registry_update: 78
+disclosure: "D2"
+public_summary: >
+  FractaVolta / Constellia message related to ICOME26 sent to HyFit and
+  Corsica Sole. No response detected at the time of registry update.
+expected_continuation: >
+  Possible reply, meeting, redirection or later follow-up regarding
+  FractaVolta / Constellia and ICOME26.
+observed_continuation: "No response detected in the register."
+notes:
+  - "Source email was not retrieved during the 2026-06-13 backlog pass; packet created from mail_trace.md facts only."
+  - "Do not infer refusal or bad faith from the absence of detected response."

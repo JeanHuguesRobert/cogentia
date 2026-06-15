@@ -1,0 +1,36 @@
+id: 2026-03-31-001
+type: "interaction_packet"
+channel: "email"
+date: 2026-03-31
+sent_time: "12:04:11+02:00"
+subject: "Proposition de session spéciale MareNostrum en lien avec ICOME’26"
+from: "Jean Hugues Noël Robert"
+acting_as:
+  - "Institut Mariani / C.O.R.S.I.C.A."
+to:
+  - "Université de Corse — présidence et vice-présidences"
+cc:
+  - "Institut Mariani"
+  - "C.O.R.S.I.C.A. / Barons Mariani archive"
+  - "Collectivité de Corse"
+  - "ICOME’26 contacts"
+thread_detected: true
+reply_detected: true
+reply_summary: "Reply received; partial delivery failure observed according to the register."
+status: "reply_received_partial_delivery_failure_observed"
+followup_number: 0
+elapsed_days_until_reply_or_observed_update: 2
+disclosure: "D2"
+public_summary: >
+  Proposal for a special MareNostrum session linked to ICOME’26 sent to
+  Université de Corse and related contacts. Reply received; partial delivery
+  failure observed.
+expected_continuation: >
+  Institutional assessment of the proposed special session or redirection to
+  appropriate ICOME’26 contacts.
+observed_continuation: >
+  Reply received and partial delivery failure observed, as recorded in
+  mail_trace.md.
+notes:
+  - "Sent message retrieved from Gmail during the 2026-06-13 backlog pass."
+  - "Detailed delivery-failure metadata was not reconstructed in this backlog packet."

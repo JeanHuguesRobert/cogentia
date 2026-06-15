@@ -1,0 +1,50 @@
+adapter_id: adapter_generic_zip
+adapter_version: 0.1.0
+status: draft
+confidence: experimental
+
+purpose: >
+  Inspect ZIP archives or extracted ZIP directories without assuming provider-specific semantics.
+
+input_kinds:
+  - zip_archive
+  - extracted_directory
+
+outputs:
+  - file_manifest
+  - archive_descriptor
+  - checksum_manifest_optional
+  - processing_report
+  - candidate_text_files
+  - candidate_media_files
+
+file_categories:
+  text:
+    extensions: [.txt, .md]
+  json:
+    extensions: [.json, .jsonl]
+  csv:
+    extensions: [.csv, .tsv]
+  html:
+    extensions: [.html, .htm]
+  xml:
+    extensions: [.xml]
+  image:
+    extensions: [.jpg, .jpeg, .png, .gif, .webp, .avif, .tif, .tiff]
+  video:
+    extensions: [.mp4, .m4v, .mov, .avi, .mkv]
+  audio:
+    extensions: [.mp3, .aac, .m4a, .wav, .flac, .ogg]
+  pdf:
+    extensions: [.pdf]
+  archive:
+    extensions: [.zip, .tar, .gz, .tgz, .zst, .7z]
+  unknown:
+    extensions: []
+
+principles:
+  - Do not modify the archive.
+  - Do not infer provider semantics.
+  - Detect file kinds conservatively.
+  - Delegate candidate files to more specific adapters when available.
+  - Report uncertainty explicitly.
