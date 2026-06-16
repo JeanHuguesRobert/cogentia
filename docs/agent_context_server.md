@@ -134,12 +134,11 @@ Mechanical generated views can be applied by the tool after review. Interpretive
 ### Backlinks
 
 *These documents link to this file:*
-- [Agent Navigation Guide (Context Server)](agent_context_server.md)
-- [Agent-Resumable CLI](../research/agent_resumable_cli.md)
+- [AGENTS.md — Cogentia methodology shortcut](../AGENTS.md)
+- [Cogentia](../README.md)
 - [cogentia.js — Tutorial and Near-Specification](../research/cogentia_js_tutorial.md)
-- [Cognitive Packets](../research/cognitive_packets.md)
-- [Corpus Status — cogentia](../research/corpus-status.md)
 - [Research Index — Cogentia](../research/index.md)
+- [The Cogentia Commons Living Corpus](../research/cogentia_commons_living_corpus.md)
 - [Trail: From Method to Machine](../research/trails/from_method_to_machine.md)
-
+- [Documents - All Tracked Repos](https://github.com/JeanHuguesRobert/JeanHuguesRobert/blob/main/research/documents.md)
 <!-- END_AUTO: backlinks -->

@@ -55,5 +55,4 @@ Constraints:
 
 *These documents link to this file:*
 - [Jean Hugues Robert — Tableau de bord Interaction Packets](../dashboard.md)
-
 <!-- END_AUTO: backlinks -->

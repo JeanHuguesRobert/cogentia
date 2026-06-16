@@ -1116,17 +1116,21 @@ A compliant CLI does not hide judgment. It exposes judgment as a continuation, c
 ### Backlinks
 
 *These documents link to this file:*
+- [Test du critère Rossignol](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/test_critere_rossignol.md)
+- [Act, mandate and responsibility](act_mandate_responsibility.md)
 - [Cogentia](../COGENTIA.md)
-- [Agent Navigation Guide (Context Server)](../docs/agent_context_server.md)
-- [Agent-Resumable CLI](agent_resumable_cli.md)
+- [Cogentia](../README.md)
 - [cogentia.js — Tutorial and Near-Specification](cogentia_js_tutorial.md)
-- [The Sovereign Digital Twin: Cogentia, Cogentigram, Cogentiscope](cogentia-digital-twin.md)
 - [Cognitive Packet Switching](cognitive_packet_switching.md)
 - [Cognitive Packets](cognitive_packets.md)
 - [Concept Index — cogentia](concepts.md)
-- [Corpus Status — cogentia](corpus-status.md)
-- [Research Index — Cogentia](index.md)
 - [Pipeline](pipeline.md)
+- [Research Index — Cogentia](index.md)
+- [The Cogentia Commons Living Corpus](cogentia_commons_living_corpus.md)
 - [Trail: From Method to Machine](trails/from_method_to_machine.md)
-
+- For researchers
+- FractaVolta
+- Methodology
+- [Carte globale du Corpus](https://github.com/JeanHuguesRobert/JeanHuguesRobert/blob/main/research/corpus-map.md)
+- [Documents - All Tracked Repos](https://github.com/JeanHuguesRobert/JeanHuguesRobert/blob/main/research/documents.md)
 <!-- END_AUTO: backlinks -->

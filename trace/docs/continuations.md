@@ -44,5 +44,4 @@ It should contain hashes, identifiers and limited excerpts when possible, rather
 
 *These documents link to this file:*
 - [Research Index — Cogentia](../../research/index.md)
-
 <!-- END_AUTO: backlinks -->

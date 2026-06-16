@@ -39,5 +39,4 @@ This follows the pattern already explored in `cogentia.js`: externalized judgmen
 
 *These documents link to this file:*
 - [Research Index — Cogentia](../../research/index.md)
-
 <!-- END_AUTO: backlinks -->

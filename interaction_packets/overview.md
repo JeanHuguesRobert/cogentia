@@ -197,5 +197,4 @@ The system should remain simple until repeated use proves what deserves automati
 
 *These documents link to this file:*
 - [Jean Hugues Robert — Tableau de bord Interaction Packets](dashboard.md)
-
 <!-- END_AUTO: backlinks -->

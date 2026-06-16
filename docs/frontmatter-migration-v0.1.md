@@ -103,5 +103,4 @@ Prochaines étapes :
 
 *These documents link to this file:*
 - [Frontmatter Schema — v0.1 (Corpus)](frontmatter-schema.md)
-
 <!-- END_AUTO: backlinks -->

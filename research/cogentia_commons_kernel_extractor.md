@@ -631,14 +631,12 @@ The plugin's input/output JSON Schema files, fixtures, and any reference impleme
 ### Backlinks
 
 *These documents link to this file:*
-- [Cogentia Commons — COMMUNITY.md Sub-Specification](cogentia_commons_community_manifest.md)
-- [Cogentia Commons — Session Continuation Snapshot](cogentia_commons_continuation.md)
 - [Cogentia Commons — MVP Specification](cogentia_commons_mvp_spec.md)
+- [Cogentia Commons — Session Continuation Snapshot](cogentia_commons_continuation.md)
 - [Cogentia Commons — Structural Plugin Sub-Specifications](cogentia_commons_structural_plugins.md)
 - [Cogentia Commons — Substantive Plugin Sub-Specifications](cogentia_commons_substantive_plugins.md)
 - [Cogentia Commons — Workflows](cogentia_commons_workflows.md)
-- [Cogentia Commons: A Platform Architecture for Collaborative Possibility Exploration Under Scientific Constraint](Cogentia_Commons_Working_Paper.md)
 - [Concept Index — cogentia](concepts.md)
 - [Research Index — Cogentia](index.md)
-
+- [Documents - All Tracked Repos](https://github.com/JeanHuguesRobert/JeanHuguesRobert/blob/main/research/documents.md)
 <!-- END_AUTO: backlinks -->

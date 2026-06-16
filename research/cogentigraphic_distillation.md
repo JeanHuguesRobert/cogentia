@@ -808,13 +808,7 @@ This v0.1 draft opens several continuations:
 ### Backlinks
 
 *These documents link to this file:*
-- [Cogentia and Cogentigrams](Cogentia-and-Cogentigram.md)
-- [The Sovereign Digital Twin: Cogentia, Cogentigram, Cogentiscope](cogentia-digital-twin.md)
-- [Cognitive Packets](cognitive_packets.md)
-- [Derived Products](derived_products.md)
-- [Research Index — Cogentia](index.md)
 - [Individual and Collective Digital Twins](individual_and_collective_digital_twins.md)
-- [Pipeline](pipeline.md)
-- [From Biometrics and Psychometrics to Structural Signatures](structural_signatures.md)
-
+- [Research Index — Cogentia](index.md)
+- [Documents - All Tracked Repos](https://github.com/JeanHuguesRobert/JeanHuguesRobert/blob/main/research/documents.md)
 <!-- END_AUTO: backlinks -->

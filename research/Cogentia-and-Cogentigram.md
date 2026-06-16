@@ -333,11 +333,11 @@ Robert, J. H. (2026c). *Democratic Humans in the Loop: Why Infrastructure Is All
 *These documents link to this file:*
 - [Cogentia Commons — MVP Specification](cogentia_commons_mvp_spec.md)
 - [Cogentia Workflows](cogentia_workflows.md)
-- [The Sovereign Digital Twin: Cogentia, Cogentigram, Cogentiscope](cogentia-digital-twin.md)
 - [Cogentigraphic Distillation](cogentigraphic_distillation.md)
-- [Corpus Status — cogentia](corpus-status.md)
-- [Research Index — Cogentia](index.md)
-- [Individual and Collective Digital Twins](individual_and_collective_digital_twins.md)
 - [From Biometrics and Psychometrics to Structural Signatures](structural_signatures.md)
-
+- [Individual and Collective Digital Twins](individual_and_collective_digital_twins.md)
+- [Research Index — Cogentia](index.md)
+- [The Sovereign Digital Twin: Cogentia, Cogentigram, Cogentiscope](cogentia-digital-twin.md)
+- [Documents - All Tracked Repos](https://github.com/JeanHuguesRobert/JeanHuguesRobert/blob/main/research/documents.md)
+- [DHITL, Democratic Humans In The Loop](https://github.com/JeanHuguesRobert/marenostrum/blob/main/DHITL.md)
 <!-- END_AUTO: backlinks -->

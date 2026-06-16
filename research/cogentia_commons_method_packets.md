@@ -790,9 +790,10 @@ This draft should be continued in four directions:
 ### Backlinks
 
 *These documents link to this file:*
+- [Cogentia](../README.md)
 - [cogentia.js — Tutorial and Near-Specification](cogentia_js_tutorial.md)
-- [Cognitive Packets](cognitive_packets.md)
-- [Corpus Status — cogentia](corpus-status.md)
 - [Research Index — Cogentia](index.md)
-
+- [The Cogentia Commons Living Corpus](cogentia_commons_living_corpus.md)
+- [Library packets — when the library is a specification, not code](https://github.com/JeanHuguesRobert/Inox/blob/master/research/library_packets.md)
+- [Documents - All Tracked Repos](https://github.com/JeanHuguesRobert/JeanHuguesRobert/blob/main/research/documents.md)
 <!-- END_AUTO: backlinks -->

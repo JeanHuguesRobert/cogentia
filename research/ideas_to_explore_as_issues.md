@@ -449,8 +449,9 @@ Open continuations:
 ### Backlinks
 
 *These documents link to this file:*
-- [Corpus Status — cogentia](corpus-status.md)
+- [AGENTS.md — Cogentia methodology shortcut](../AGENTS.md)
 - [Research Index — Cogentia](index.md)
 - [Simplicité d'action](simplicite_action.md)
-
+- [The Cogentia Commons Living Corpus](cogentia_commons_living_corpus.md)
+- [Documents - All Tracked Repos](https://github.com/JeanHuguesRobert/JeanHuguesRobert/blob/main/research/documents.md)
 <!-- END_AUTO: backlinks -->

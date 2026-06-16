@@ -122,10 +122,8 @@ continuation:
 ### Backlinks
 
 *These documents link to this file:*
-- [cogentia.js — Tutorial and Near-Specification](cogentia_js_tutorial.md)
-- [Corpus Status — cogentia](corpus-status.md)
+- [Cogentia Commons — Public by Default, Private by Exception](cogentia_commons_visibility_and_private_modes.md)
 - [Research Index — Cogentia](index.md)
-- [Pipeline](pipeline.md)
 - [Simplicité d'action](simplicite_action.md)
-
+- [Documents - All Tracked Repos](https://github.com/JeanHuguesRobert/JeanHuguesRobert/blob/main/research/documents.md)
 <!-- END_AUTO: backlinks -->

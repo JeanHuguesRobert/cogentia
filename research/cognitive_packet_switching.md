@@ -982,7 +982,13 @@ The event substrate gives causality.
 ### Backlinks
 
 *These documents link to this file:*
-- [Corpus Status — cogentia](corpus-status.md)
+- [Cogentia](../README.md)
 - [Research Index — Cogentia](index.md)
-
+- [The Cogentia Commons Living Corpus](cogentia_commons_living_corpus.md)
+- For researchers
+- [Fractanet — Generalized Control Planes for Heterogeneous Packet Networks](https://github.com/JeanHuguesRobert/FractaVolta/blob/main/research/fractanet.md)
+- [COOP — Tutorial and Near-Specification](https://github.com/JeanHuguesRobert/inseme/blob/main/research/coop_tutorial.md)
+- [Carte globale du Corpus](https://github.com/JeanHuguesRobert/JeanHuguesRobert/blob/main/research/corpus-map.md)
+- [Documents - All Tracked Repos](https://github.com/JeanHuguesRobert/JeanHuguesRobert/blob/main/research/documents.md)
+- Jean Hugues Noël Robert, baron Mariani
 <!-- END_AUTO: backlinks -->

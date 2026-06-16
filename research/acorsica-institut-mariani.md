@@ -69,7 +69,7 @@ Ils ne valent ni fusion institutionnelle, ni transfert de données, ni portage j
 
 *These documents link to this file:*
 - [Lien avec C.O.R.S.I.C.A., l’Institut Mariani et PrivAI](../acorsica-institut-mariani.md)
-- [Corpus Status — cogentia](corpus-status.md)
 - [Research Index — Cogentia](index.md)
-
+- [C.O.R.S.I.C.A., Institut Mariani et corpus personnel](https://github.com/JeanHuguesRobert/JeanHuguesRobert/blob/main/research/acorsica-et-corpus.md)
+- [Documents - All Tracked Repos](https://github.com/JeanHuguesRobert/JeanHuguesRobert/blob/main/research/documents.md)
 <!-- END_AUTO: backlinks -->

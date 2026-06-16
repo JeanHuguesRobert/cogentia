@@ -329,9 +329,8 @@ continuation:
 ### Backlinks
 
 *These documents link to this file:*
-- [Corpus Status — cogentia](corpus-status.md)
-- [Democratic AI Safety — alias cogentia](democratic_ai_safety.md)
 - [Research Index — Cogentia](index.md)
-- [Pipeline](pipeline.md)
-
+- [The Cogentia Commons Living Corpus](cogentia_commons_living_corpus.md)
+- [Agent Brief — Representing Jean Hugues Noël Robert](https://github.com/JeanHuguesRobert/JeanHuguesRobert/blob/main/research/agent_brief.md)
+- [Documents - All Tracked Repos](https://github.com/JeanHuguesRobert/JeanHuguesRobert/blob/main/research/documents.md)
 <!-- END_AUTO: backlinks -->

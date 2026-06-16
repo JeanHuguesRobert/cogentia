@@ -39,5 +39,4 @@ Everything may be preserved; not everything should be indexed; not everything in
 
 *These documents link to this file:*
 - [Research Index — Cogentia](../../research/index.md)
-
 <!-- END_AUTO: backlinks -->

@@ -1294,17 +1294,18 @@ Reference implementation contracts (schemas, plugin manifests, resolver code): *
 
 *These documents link to this file:*
 - [Cogentia](../COGENTIA.md)
-- [Cogentia Commons — COMMUNITY.md Sub-Specification](cogentia_commons_community_manifest.md)
-- [Cogentia Commons — Session Continuation Snapshot](cogentia_commons_continuation.md)
+- [Cogentia](../README.md)
 - [Cogentia Commons — `kernel_extractor` Plugin Sub-Specification](cogentia_commons_kernel_extractor.md)
+- [Cogentia Commons — COMMUNITY.md Sub-Specification](cogentia_commons_community_manifest.md)
+- [Cogentia Commons — Public by Default, Private by Exception](cogentia_commons_visibility_and_private_modes.md)
+- [Cogentia Commons — Session Continuation Snapshot](cogentia_commons_continuation.md)
 - [Cogentia Commons — Structural Plugin Sub-Specifications](cogentia_commons_structural_plugins.md)
 - [Cogentia Commons — Substantive Plugin Sub-Specifications](cogentia_commons_substantive_plugins.md)
 - [Cogentia Commons — Workflows](cogentia_commons_workflows.md)
-- [Cogentia Commons: A Platform Architecture for Collaborative Possibility Exploration Under Scientific Constraint](Cogentia_Commons_Working_Paper.md)
-- [cogentia.js — Tutorial and Near-Specification](cogentia_js_tutorial.md)
 - [Cogentia Workflows](cogentia_workflows.md)
-- [Cogentia and Cogentigrams](Cogentia-and-Cogentigram.md)
+- [cogentia.js — Tutorial and Near-Specification](cogentia_js_tutorial.md)
 - [Corpus Status — cogentia](corpus-status.md)
 - [Research Index — Cogentia](index.md)
-
+- [Research Index — Inseme](https://github.com/JeanHuguesRobert/inseme/blob/main/research/index.md)
+- [Documents - All Tracked Repos](https://github.com/JeanHuguesRobert/JeanHuguesRobert/blob/main/research/documents.md)
 <!-- END_AUTO: backlinks -->

@@ -133,8 +133,5 @@ Objectif : après 2-3 dépôts traités de cette façon, l’ingestion d’un no
 
 *These documents link to this file:*
 - [Frontmatter Schema — v0.1 (Corpus)](frontmatter-schema.md)
-- [Concept Index — cogentia](../research/concepts.md)
-- [Corpus Status — cogentia](../research/corpus-status.md)
 - [Research Index — Cogentia](../research/index.md)
-
 <!-- END_AUTO: backlinks -->

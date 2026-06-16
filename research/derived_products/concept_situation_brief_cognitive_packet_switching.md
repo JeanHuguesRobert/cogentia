@@ -492,7 +492,8 @@ That unit is the cognitive packet.
 ### Backlinks
 
 *These documents link to this file:*
-- [Corpus Status — cogentia](../corpus-status.md)
+- [Cogentia](../../README.md)
+- [Concept Situation Briefs](../concept_situation_briefs.md)
 - [Research Index — Cogentia](../index.md)
-
+- Jean Hugues Noël Robert, baron Mariani
 <!-- END_AUTO: backlinks -->

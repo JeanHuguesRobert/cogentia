@@ -138,7 +138,7 @@ Or, less catchy but more precise:
 ### Backlinks
 
 *These documents link to this file:*
-- [Corpus Status — cogentia](../corpus-status.md)
+- [Cogentia](../../README.md)
 - [Research Index — Cogentia](../index.md)
-
+- Jean Hugues Noël Robert, baron Mariani
 <!-- END_AUTO: backlinks -->

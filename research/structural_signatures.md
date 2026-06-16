@@ -1016,11 +1016,8 @@ The structural-signature framework was developed primarily for the natural-perso
 ### Backlinks
 
 *These documents link to this file:*
-- [Cogentia and Cogentigrams](Cogentia-and-Cogentigram.md)
-- [The Sovereign Digital Twin: Cogentia, Cogentigram, Cogentiscope](cogentia-digital-twin.md)
 - [Cogentigraphic Distillation](cogentigraphic_distillation.md)
-- [Research Index — Cogentia](index.md)
 - [Individual and Collective Digital Twins](individual_and_collective_digital_twins.md)
-- [From Biometrics and Psychometrics to Structural Signatures](structural_signatures.md)
-
+- [Research Index — Cogentia](index.md)
+- [Documents - All Tracked Repos](https://github.com/JeanHuguesRobert/JeanHuguesRobert/blob/main/research/documents.md)
 <!-- END_AUTO: backlinks -->

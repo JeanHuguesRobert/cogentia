@@ -438,21 +438,11 @@ Specific governance structures (private, group, public, federated) enabling syst
 ### Backlinks
 
 *These documents link to this file:*
+- [cogentia.js — Tutorial and Near-Specification](cogentia_js_tutorial.md)
 - [Frontmatter Schema — v0.1 (Corpus)](../docs/frontmatter-schema.md)
 - [Frontmatter Synonym Mapping — v0.1](../docs/frontmatter-synonym-mapping.md)
-- [The Knowledge Mesh (Decentralized Wiki)](../docs/knowledge_mesh.md)
-- [Agent-Resumable CLI](agent_resumable_cli.md)
-- [Cogentia Commons — `kernel_extractor` Plugin Sub-Specification](cogentia_commons_kernel_extractor.md)
-- [Cogentia Commons: A Platform Architecture for Collaborative Possibility Exploration Under Scientific Constraint](Cogentia_Commons_Working_Paper.md)
-- [cogentia.js — Tutorial and Near-Specification](cogentia_js_tutorial.md)
-- [COGENTIA v1.0 — Prompt d'analyse psychocognitive](cogentia_prompt_v1.md)
-- [Cogentia Workflows](cogentia_workflows.md)
-- [The Sovereign Digital Twin: Cogentia, Cogentigram, Cogentiscope](cogentia-digital-twin.md)
-- [Cognitive Packets](cognitive_packets.md)
-- [Corpus Status — cogentia](corpus-status.md)
-- [Derived Products](derived_products.md)
 - [Research Index — Cogentia](index.md)
-- [kys prompt](kys-prompt.md)
-- [Pipeline](pipeline.md)
-
+- [The Knowledge Mesh (Decentralized Wiki)](../docs/knowledge_mesh.md)
+- [Documents - All Tracked Repos](https://github.com/JeanHuguesRobert/JeanHuguesRobert/blob/main/research/documents.md)
+- [MareNostrum — Tableau de bord](https://github.com/JeanHuguesRobert/marenostrum/blob/main/dashboard.md)
 <!-- END_AUTO: backlinks -->

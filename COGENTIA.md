@@ -162,15 +162,18 @@ The framework exists to be argued against, in the form it itself defined.
 ### Backlinks
 
 *These documents link to this file:*
+- [Discours de la seconde méthode](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/second_method.md)
+- [Test du critère Rossignol](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/test_critere_rossignol.md)
 - [Agent-Resumable CLI](research/agent_resumable_cli.md)
-- [Cogentia Commons — MVP Specification](research/cogentia_commons_mvp_spec.md)
-- [Cogentia Commons — Substantive Plugin Sub-Specifications](research/cogentia_commons_substantive_plugins.md)
+- [AGENTS.md — Cogentia methodology shortcut](AGENTS.md)
+- [Cogentia](README.md)
 - [cogentia.js — Tutorial and Near-Specification](research/cogentia_js_tutorial.md)
-- [The Sovereign Digital Twin: Cogentia, Cogentigram, Cogentiscope](research/cogentia-digital-twin.md)
 - [Cognitive Packet Switching](research/cognitive_packet_switching.md)
-- [Corpus Status — cogentia](research/corpus-status.md)
-- [Research Index — Cogentia](research/index.md)
 - [Pipeline](research/pipeline.md)
+- [Research Index — Cogentia](research/index.md)
+- [The Cogentia Commons Living Corpus](research/cogentia_commons_living_corpus.md)
 - [Trail: From Method to Machine](research/trails/from_method_to_machine.md)
-
+- [Carte globale du Corpus](https://github.com/JeanHuguesRobert/JeanHuguesRobert/blob/main/research/corpus-map.md)
+- [Documents - All Tracked Repos](https://github.com/JeanHuguesRobert/JeanHuguesRobert/blob/main/research/documents.md)
+- [DHITL, Democratic Humans In The Loop](https://github.com/JeanHuguesRobert/marenostrum/blob/main/DHITL.md)
 <!-- END_AUTO: backlinks -->
