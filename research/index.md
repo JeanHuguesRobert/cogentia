@@ -169,6 +169,7 @@ This repository instantiates the **cognitive infrastructure layer** of the [DHIT
 ### Backlinks
 
 *These documents link to this file:*
+- [Rendre capable — noyau doctrinal provisoire](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/noyau_doctrinal_rendre_capable.md)
 - [Research Index — barons-Mariani](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/index.md)
 - [Agent-Resumable CLI](agent_resumable_cli.md)
 - [Cogentia](../README.md)
