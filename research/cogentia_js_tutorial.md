@@ -1,19 +1,19 @@
 ---
 title: "cogentia.js - Tutorial and Near-Specification"
 subtitle: "Generated automatically from the current v2 CLI source and corpus doctrine"
-version: "2.1.0"
+version: "2.2.0"
 status: "generated automatically - current v2 tutorial"
-date: "2026-06-16"
+date: "2026-06-17"
 author: "Jean Hugues Noel Robert, baron Mariani"
 affiliation: "Institut Mariani / C.O.R.S.I.C.A., 1 cours Paoli, F-20250 Corte, Corsica"
 license: "CC BY-SA 4.0"
 language: "en"
-target_implementation: "cogentia.js v2.1.0"
+target_implementation: "cogentia.js v2.2.0"
 generated_automatically: true
 derived_by: agent
 derived_from: "scripts/cogentia.js; COGENTIA.md; docs/knowledge_mesh.md; research/agent_resumable_cli.md; research/cognitive_packets.md; research/pipeline.md; research/derived_products.md"
 canonical_url: https://github.com/JeanHuguesRobert/cogentia/blob/main/research/cogentia_js_tutorial.md
-last_stamped_at: 2026-06-16
+last_stamped_at: 2026-06-17
 corpus_role: "derived"
 derived_product_type: "tutorial"
 ai_assisted_by: "Codex"
@@ -213,12 +213,18 @@ corpus plan
 corpus apply
 corpus verify
 corpus privacy
+corpus commit-generated
+agent start
 consolidate
 status
 grep <text>
 ```
 
 Use these when the goal is corpus orientation or mechanical refresh.
+
+`agent start` is the preferred first command for human and AI agents. It produces a read-only session summary: registry, repositories, document count, generated drift, gaps, privacy leaks, active continuations, trail issues, git drift, dirty worktree summary, and recommended next actions.
+
+`corpus commit-generated` plans generated-only commits for already-dirty generated files such as `research/corpus-status.md` and the registry `research/documents.md`. It is dry-run by default. Add `--apply` to stage and commit only generated files, and use `--message <text>` to override the commit message.
 
 ### 4.2 Document commands
 
@@ -286,6 +292,7 @@ This command family restores the operational part of the doctrine described in [
 ```text
 git verify
 git classify
+git noise plan
 ```
 
 `git verify` reports ahead/behind and dirty state for each registered repo.
@@ -301,6 +308,13 @@ git classify
 - `missing`
 
 This is particularly useful during consolidation, because it separates real content drift from mechanical noise.
+
+`git noise plan` adds conservative action suggestions on top of classification:
+
+- `ignore_candidate` for obvious untracked local scratch files;
+- `skip_worktree_candidate` for tracked generated logs or runtime artifacts that should usually not become corpus changes;
+- `commit_generated` for generated navigation files;
+- `review_manually` when the tool should not guess.
 
 ### 4.6 Daemon command
 
@@ -345,6 +359,7 @@ Practical meaning:
 
 ```bash
 node scripts/cogentia.js status
+node scripts/cogentia.js agent start
 node scripts/cogentia.js docs summary
 node scripts/cogentia.js docs query all --role trail
 node scripts/cogentia.js docs search "continuation"
@@ -364,6 +379,26 @@ node scripts/cogentia.js corpus apply --json
 ```
 
 This rewrites only the planned generated surfaces.
+
+If generated files are already dirty and ready to commit, inspect the generated-only commit plan:
+
+```bash
+node scripts/cogentia.js corpus commit-generated --dry-run
+```
+
+Apply it only when blocked files are zero:
+
+```bash
+node scripts/cogentia.js corpus commit-generated --apply --message "Refresh generated corpus views"
+```
+
+### 6.3.1 Classify local scratch/noise
+
+```bash
+node scripts/cogentia.js git noise plan
+```
+
+Use this before deciding whether a dirty file should be ignored locally, skipped as generated runtime churn, committed as generated corpus maintenance, or reviewed as substantive work.
 
 ### 6.4 Find documents that still need judgment
 

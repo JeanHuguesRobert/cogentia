@@ -59,6 +59,7 @@ apps/
 node scripts/cogentia.js help                      # show all commands
 node scripts/cogentia.js version                   # show the CLI version
 node scripts/cogentia.js state --json              # show registered repos and policies
+node scripts/cogentia.js agent start               # read-only start summary for humans/agents
 node scripts/cogentia.js status                    # compact corpus health table
 node scripts/cogentia.js grep "exergy" --json     # full-text search over active markdown
 node scripts/cogentia.js docs summary --json       # numeric corpus summary
@@ -67,6 +68,8 @@ node scripts/cogentia.js continuation list          # inspect active judgment re
 node scripts/cogentia.js corpus plan --json        # inspect generated navigation changes
 node scripts/cogentia.js corpus apply              # apply the fresh generated plan
 node scripts/cogentia.js corpus verify --strict    # verify generated views, gaps and drift
+node scripts/cogentia.js git noise plan            # classify scratch/noise vs substantive edits
+node scripts/cogentia.js corpus commit-generated   # dry-run generated-only commit plan
 node scripts/cogentia.js daemon --port 8790        # start the local daemon
 ```
 
@@ -114,10 +117,12 @@ All published documents live in `research/` and are catalogued in [`research/ind
   * `version`, `--version` — show the current CLI version.
   * `daemon` — start the local HTTP daemon for plugins and browser UI.
   * `documents` — alias for `docs`.
+  * `agent start` — read-only session summary and next-action hints for human and AI agents.
 - **Corpus state**
   * `state` — registered repositories, branches and local policies.
   * `status` — compact health table for hooks and humans.
   * `git verify` — ahead/behind and dirty-state report, with local dirty-ignore policies.
+  * `git noise plan` — conservative action suggestions for scratch, generated, and substantive dirty files.
 - **Document navigation**
   * `grep <text>` — full-text search over active Markdown documents.
   * `docs summary` — totals by repo and role, plus cross-repo coupling weights.
@@ -136,10 +141,11 @@ All published documents live in `research/` and are catalogued in [`research/ind
   * `corpus plan` — read-only plan for per-repo `research/corpus-status.md`, registry `research/documents.md`, and existing backlink blocks.
   * `corpus apply` — apply exactly the fresh generated plan.
   * `corpus verify` — report stale generated views, index gaps and git drift; `--strict` exits non-zero on issues.
+  * `corpus commit-generated` — dry-run generated-only commit planner; add `--apply` to stage and commit generated files when no substantive dirty files block the repo.
 - **Concepts**
   * `concepts list` and `concepts check` — parse every `research/concepts.md`, excluding generated auto-blocks and surfacing missing fields, duplicates and undefined references.
 
-The current session ritual is: `status` at the start, `grep` or `docs search` / `docs inspect` while navigating, `issues packet` or `docs judgments --emit-continuations` when work must become resumable, `corpus plan` before mechanical refresh, then `corpus apply` and `corpus verify --strict` when the generated views should be updated.
+The current session ritual is: `agent start` at the start, `grep` or `docs search` / `docs inspect` while navigating, `issues packet` or `docs judgments --emit-continuations` when work must become resumable, `git noise plan` before deciding what dirty files mean, `corpus plan` before mechanical refresh, then `corpus apply`, `corpus commit-generated`, and `corpus verify --strict` when the generated views should be updated.
 
 ## Ecosystem
 

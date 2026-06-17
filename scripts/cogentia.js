@@ -18,7 +18,7 @@ import { createHash, randomBytes } from "node:crypto";
 import { pathToFileURL } from "node:url";
 import { DAEMON_PLUGINS, DAEMON_PLUGIN_ROUTES, loadDaemonPlugins, dispatchPluginRoute } from "./daemon_plugins/registry.js";
 
-const VERSION = "2.1.0";
+const VERSION = "2.2.0";
 const CONFIG_FILE = ".cogentia.json";
 const DOCUMENTS_FILE = "documents.md";
 const CORPUS_STATUS_FILE = "corpus-status.md";
@@ -105,6 +105,8 @@ async function main() {
       return cmdIssues(argv.shift() || "list");
     case "git":
       return cmdGit(argv.shift() || "verify");
+    case "agent":
+      return cmdAgent(argv.shift() || "start");
     case "consolidate":
       return cmdConsolidate();
     case "daemon":
@@ -125,6 +127,7 @@ Tutorial:
   research/cogentia_js_tutorial.md   Generated automatically from the current v2 CLI and corpus docs.
 
 Core commands:
+  agent start              Read-only session start summary for human and AI agents.
   corpus plan              Read-only plan of generated navigation changes.
   corpus apply             Apply generated navigation changes from a fresh plan.
   corpus verify            Verify generated views, gaps and git drift.
@@ -169,6 +172,10 @@ Issue commands:
 Git:
   git verify               Ahead/behind and dirty state for all repos.
   git classify             Classify dirty files as text, line-endings-only, untracked, etc.
+  git noise plan           Classify dirty files and suggest local scratch/noise actions.
+
+Agent/publish helpers:
+  corpus commit-generated  Plan generated-only commits. Add --apply to stage and commit.
 
 Plan/apply flags:
   --scope configured|all|research|repo:<name>
@@ -256,8 +263,10 @@ function cmdCorpus(sub) {
       return cmdCorpusVerify();
     case "privacy":
       return cmdCorpusPrivacy();
+    case "commit-generated":
+      return cmdCorpusCommitGenerated();
     default:
-      throw new Error(`Unknown corpus subcommand "${sub}". Use plan, apply, verify, or privacy.`);
+      throw new Error(`Unknown corpus subcommand "${sub}". Use plan, apply, verify, privacy, or commit-generated.`);
   }
 }
 
@@ -333,6 +342,15 @@ function cmdCorpusPrivacy() {
   const result = verifyPrivacy(ctx, inventory, view);
   output(result, formatPrivacy(result));
   if (strict && result.leaks.length) process.exit(2);
+}
+
+function cmdCorpusCommitGenerated() {
+  const ctx = loadContext();
+  const apply = hasFlag("--apply");
+  const message = valueFlag("--message") || valueFlag("-m") || "Refresh generated corpus views";
+  const result = planGeneratedCommits(ctx, { apply, message });
+  if (apply) applyGeneratedCommits(ctx, result, message);
+  output(result, formatGeneratedCommitPlan(result));
 }
 
 function cmdDocs(sub) {
@@ -468,15 +486,64 @@ function cmdGit(sub) {
         return output({ ok: true, repos: result }, formatGit(result));
       }
     case "classify":
-    case "noise":
       {
         const repoArg = optionalPositional("all");
         const result = classifyGitWorktree(ctx, repoArg);
         return output(result, formatGitClassify(result));
       }
+    case "noise":
+      {
+        const noiseSub = argv[0] === "plan" ? argv.shift() : "plan";
+        if (noiseSub !== "plan") throw new Error(`Unknown git noise subcommand "${noiseSub}". Use plan.`);
+        const repoArg = optionalPositional("all");
+        const result = planGitNoise(ctx, repoArg);
+        return output(result, formatGitNoisePlan(result));
+      }
     default:
-      throw new Error(`Unknown git subcommand "${sub}". Use verify or classify.`);
+      throw new Error(`Unknown git subcommand "${sub}". Use verify, classify, or noise plan.`);
   }
+}
+
+function cmdAgent(sub) {
+  switch (sub) {
+    case "start":
+      return cmdAgentStart();
+    default:
+      throw new Error(`Unknown agent subcommand "${sub}". Use start.`);
+  }
+}
+
+function cmdAgentStart() {
+  const ctx = loadContext();
+  const inventory = buildInventory(ctx);
+  const plan = buildPlan(ctx, { ...planOptions(), quiet: true });
+  const git = verifyGit(ctx);
+  const worktree = classifyGitWorktree(ctx, "all");
+  const privacy = verifyPrivacy(ctx, inventory, PUBLIC_VIEW);
+  const gaps = visibleDocs(inventory, PUBLIC_VIEW).filter(isIndexGap);
+  const continuations = loadContinuations(ctx).filter(c => c.status === "active");
+  const trail_lint = lintTrails(ctx, inventory, PUBLIC_VIEW);
+  const summary = docSummary(inventory, PUBLIC_VIEW);
+  const result = {
+    ok: !plan.changes.length
+      && !gaps.length
+      && !privacy.leaks.length
+      && !continuations.length
+      && !git.some(r => r.behind || r.ahead || r.dirty_count)
+      && !trail_lint.issues.length,
+    registry: ctx.configPath,
+    repos: ctx.repos.map(repo => repo.name),
+    documents: summary.total,
+    generated_pending: plan.changes.length,
+    gaps: gaps.length,
+    privacy_leaks: privacy.leaks.length,
+    active_continuations: continuations.length,
+    trail_issues: trail_lint.issues.length,
+    git,
+    worktree_summary: worktree.summary,
+    recommended_next_actions: agentStartRecommendations({ plan, gaps, privacy, continuations, git, trail_lint, worktree }),
+  };
+  output(result, formatAgentStart(result));
 }
 
 function cmdConsolidate() {
@@ -2068,6 +2135,173 @@ function classifyDirtyPath(repo, relPath, xy, full) {
   return "modified";
 }
 
+function planGitNoise(ctx, repoArg = "all") {
+  const classified = classifyGitWorktree(ctx, repoArg);
+  const repos = classified.repos.map(repo => ({
+    ...repo,
+    entries: repo.entries.map(entry => ({
+      ...entry,
+      noise: classifyNoiseAction(repo.repo, entry),
+    })),
+  }));
+  const actions = countBy(repos.flatMap(r => r.entries), entry => entry.noise.action);
+  return {
+    ok: true,
+    repo: repoArg,
+    summary: classified.summary,
+    actions,
+    repos,
+  };
+}
+
+function classifyNoiseAction(repoName, entry) {
+  const p = entry.path.replace(/\\/g, "/");
+  const base = path.basename(p).toLowerCase();
+  if (isGeneratedPath(repoName, p)) {
+    return {
+      action: "commit_generated",
+      confidence: "high",
+      reason: "generated corpus/navigation file",
+    };
+  }
+  if (entry.classification === "line_endings_only") {
+    return {
+      action: "review_line_endings",
+      confidence: "medium",
+      reason: "content matches HEAD after EOL normalization",
+    };
+  }
+  if (entry.xy === "??" && isScratchPath(p)) {
+    return {
+      action: "ignore_candidate",
+      confidence: "high",
+      reason: "untracked local scratch artefact pattern",
+    };
+  }
+  if (entry.classification === "modified" && isGeneratedLogPath(p)) {
+    return {
+      action: "skip_worktree_candidate",
+      confidence: "medium",
+      reason: "tracked generated log or runtime artefact",
+    };
+  }
+  if (entry.xy === "??") {
+    return {
+      action: "review_untracked",
+      confidence: "low",
+      reason: "untracked file not recognized as scratch",
+    };
+  }
+  return {
+    action: "review_manually",
+    confidence: "low",
+    reason: "substantive or unknown worktree change",
+  };
+}
+
+function isScratchPath(relPath) {
+  const p = relPath.replace(/\\/g, "/").toLowerCase();
+  const base = path.basename(p);
+  return p.startsWith(".cogentia/")
+    || p.includes("/tmp_")
+    || p.includes("/test_swap.")
+    || p.includes("/minimal-hierarchy.nox.bak")
+    || base.endsWith(".bak")
+    || base.endsWith(".tmp")
+    || base.endsWith(".diff")
+    || base.endsWith(".baseline")
+    || base.endsWith(".log")
+    || base.startsWith("tmp-")
+    || base.startsWith("test_");
+}
+
+function isGeneratedLogPath(relPath) {
+  const p = relPath.replace(/\\/g, "/").toLowerCase();
+  return p.endsWith("audit_logs.jsonl")
+    || p.endsWith(".log")
+    || p.includes("/logs/")
+    || p.includes("/.logs/");
+}
+
+function isGeneratedPath(repoName, relPath) {
+  const p = relPath.replace(/\\/g, "/");
+  if (p === `research/${CORPUS_STATUS_FILE}`) return true;
+  if (repoName === "JeanHuguesRobert" && p === `research/${DOCUMENTS_FILE}`) return true;
+  return false;
+}
+
+function planGeneratedCommits(ctx, options = {}) {
+  const worktree = classifyGitWorktree(ctx, "all");
+  const repos = [];
+  for (const repo of worktree.repos) {
+    const generated = repo.entries.filter(entry => isGeneratedPath(repo.repo, entry.path));
+    const blocked = repo.entries.filter(entry => !isGeneratedPath(repo.repo, entry.path));
+    if (!generated.length && !blocked.length) continue;
+    repos.push({
+      repo: repo.repo,
+      branch: repo.branch,
+      generated,
+      blocked,
+      can_commit: generated.length > 0 && blocked.length === 0,
+      message: options.message || "Refresh generated corpus views",
+      applied: false,
+      commit: null,
+      error: null,
+    });
+  }
+  return {
+    ok: repos.every(repo => !repo.blocked.length),
+    dry_run: !options.apply,
+    message: options.message || "Refresh generated corpus views",
+    repos,
+    summary: {
+      repos: repos.length,
+      committable: repos.filter(repo => repo.can_commit).length,
+      generated_files: repos.reduce((n, repo) => n + repo.generated.length, 0),
+      blocked_files: repos.reduce((n, repo) => n + repo.blocked.length, 0),
+    },
+  };
+}
+
+function applyGeneratedCommits(ctx, result, message) {
+  for (const planned of result.repos) {
+    if (!planned.can_commit) continue;
+    const repo = ctx.repos.find(r => r.name === planned.repo);
+    if (!repo) continue;
+    try {
+      for (const entry of planned.generated) {
+        git(repo.path, ["add", "--", entry.path]);
+      }
+      const env = { ...process.env, COGENTIA_REGISTRY: ctx.configPath };
+      execFileSync("git", ["commit", "-m", message], {
+        cwd: repo.path,
+        encoding: "utf8",
+        stdio: ["ignore", "pipe", "pipe"],
+        env,
+      });
+      planned.applied = true;
+      planned.commit = git(repo.path, ["rev-parse", "--short", "HEAD"], { ok: true }).trim() || null;
+    } catch (e) {
+      planned.error = String(e.stderr || e.message || e);
+      result.ok = false;
+    }
+  }
+  result.dry_run = false;
+}
+
+function agentStartRecommendations(state) {
+  const actions = [];
+  if (state.git.some(r => r.behind)) actions.push("Run git fetch/pull for repos behind upstream before editing.");
+  if (state.worktree.repos.some(r => r.count)) actions.push("Inspect dirty worktrees with `git noise plan` before making substantive edits.");
+  if (state.plan.changes.length) actions.push("Run `corpus apply` or inspect `corpus plan` before publishing.");
+  if (state.gaps.length) actions.push("Index missing documents in their repo `research/index.md`.");
+  if (state.privacy.leaks.length) actions.push("Fix public/private visibility leaks before pushing public generated views.");
+  if (state.continuations.length) actions.push("Inspect active continuations before starting new judgment-bearing work.");
+  if (state.trail_lint.issues.length) actions.push("Fix trail lint issues before relying on curated trails.");
+  if (!actions.length) actions.push("Corpus is mechanically clean; choose the next issue or navigation improvement.");
+  return actions;
+}
+
 function gitHeadFile(cwd, relPath) {
   const pathArg = String(relPath).replace(/\\/g, "/");
   try {
@@ -2998,6 +3232,68 @@ function formatGitClassify(result) {
       lines.push(`  - ${entry.path} [${entry.xy}] ${entry.classification}`);
     }
   }
+  return lines.join("\n");
+}
+
+function formatGitNoisePlan(result) {
+  const lines = ["\nGit noise plan\n"];
+  lines.push(`Repo scope: ${result.repo}`);
+  lines.push(`Dirty summary: ${formatCounts(result.summary) || "clean"}`);
+  lines.push(`Suggested actions: ${formatCounts(result.actions) || "none"}`);
+  for (const repo of result.repos) {
+    lines.push("");
+    lines.push(`${repo.repo} (${repo.count})`);
+    if (!repo.entries.length) {
+      lines.push("  clean");
+      continue;
+    }
+    for (const entry of repo.entries) {
+      lines.push(`  - ${entry.path} [${entry.xy}] ${entry.classification} -> ${entry.noise.action} (${entry.noise.confidence}): ${entry.noise.reason}`);
+    }
+  }
+  return lines.join("\n");
+}
+
+function formatGeneratedCommitPlan(result) {
+  const lines = ["\nCorpus commit-generated\n"];
+  lines.push(result.dry_run ? "Mode: dry-run (pass --apply to commit)" : "Mode: apply");
+  lines.push(`Message: ${result.message}`);
+  lines.push(`Summary: repos=${result.summary.repos}, committable=${result.summary.committable}, generated_files=${result.summary.generated_files}, blocked_files=${result.summary.blocked_files}`);
+  if (!result.repos.length) {
+    lines.push("");
+    lines.push("No dirty generated files.");
+    return lines.join("\n");
+  }
+  for (const repo of result.repos) {
+    lines.push("");
+    lines.push(`${repo.repo}: ${repo.can_commit ? "committable" : "blocked"}`);
+    for (const entry of repo.generated) lines.push(`  generated: ${entry.path} [${entry.xy}]`);
+    for (const entry of repo.blocked) lines.push(`  blocked:   ${entry.path} [${entry.xy}] ${entry.classification}`);
+    if (repo.applied) lines.push(`  committed: ${repo.commit || "yes"}`);
+    if (repo.error) lines.push(`  error: ${repo.error.trim()}`);
+  }
+  return lines.join("\n");
+}
+
+function formatAgentStart(result) {
+  const lines = ["\nAgent start\n"];
+  lines.push(result.ok ? "Status: clean" : "Status: attention needed");
+  lines.push(`Registry: ${result.registry}`);
+  lines.push(`Repos: ${result.repos.length}`);
+  lines.push(`Documents: ${result.documents}`);
+  lines.push(`Generated pending: ${result.generated_pending}`);
+  lines.push(`Gaps: ${result.gaps}`);
+  lines.push(`Privacy leaks: ${result.privacy_leaks}`);
+  lines.push(`Active continuations: ${result.active_continuations}`);
+  lines.push(`Trail issues: ${result.trail_issues}`);
+  lines.push(`Worktree: ${formatCounts(result.worktree_summary) || "clean"}`);
+  const drift = result.git
+    .filter(repo => repo.behind || repo.ahead || repo.dirty_count)
+    .map(repo => `${repo.repo}=${repo.behind} behind/${repo.ahead} ahead/${repo.dirty_count} dirty`);
+  lines.push(`Git drift: ${drift.length ? drift.join(", ") : "clean"}`);
+  lines.push("");
+  lines.push("Recommended next actions:");
+  for (const action of result.recommended_next_actions) lines.push(`- ${action}`);
   return lines.join("\n");
 }
 
