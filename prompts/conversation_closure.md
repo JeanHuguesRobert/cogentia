@@ -2,11 +2,12 @@
 title: "Conversation Closure Prompt Contract"
 subtitle: "Closing a structured document-production conversation with summary, open pistes, artifacts, and optional share link"
 author: "Jean Hugues Noël Robert"
-status: "prompt-contract — seed"
+status: "prompt-contract — working"
 version: "0.1"
 license: "CC BY-SA 4.0"
 language: "en"
 canonical_path: "cogentia/prompts/conversation_closure.md"
+canonical_url: https://github.com/JeanHuguesRobert/cogentia/blob/main/prompts/conversation_closure.md
 related_prompts:
   - "cogentia/prompts/document_conversation_frame.md"
   - "cogentia/prompts/cognitive_packet.md"
@@ -19,10 +20,25 @@ related_research:
   - "barons-Mariani/research/second_method.md"
 agent_neutral: true
 human_validation_required: true
-last_stamped_at: 2026-06-05
+last_stamped_at: 2026-06-17
 ---
 
 # Conversation Closure Prompt Contract
+
+## Object
+
+This prompt contract defines the closure role for structured document-production conversations. It converts a working conversation into a concise, resumable, non-transcript closure summary while preserving the distinction between corpus material, atelier material, and candidate material.
+
+## Associated documents
+
+- [Document Conversation Frame](document_conversation_frame.md) — frames the conversation at the beginning.
+- [Redactor](redactor.md) — drafts and consolidates source documents or derived products.
+- [Reviewer](reviewer.md) — produces constructive external critique.
+- [Cognitive Packet](cognitive_packet.md) — produces resumable continuation packets when needed.
+
+## Update method
+
+Update this contract through the structured document-production frame. Any change affecting closure/revisability, share-link handling, or corpus/atelier distinction should be reviewed before stabilization.
 
 ## Purpose
 

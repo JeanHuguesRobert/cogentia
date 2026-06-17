@@ -8,7 +8,6 @@ version: "0.3"
 license: "CC BY-SA 4.0"
 canonical_path: "cogentia/prompts/cognitive_packet.md"
 canonical_url: https://github.com/JeanHuguesRobert/cogentia/blob/main/prompts/cognitive_packet.md
-related_research: "cogentia/research/cognitive_packets.md"
 related_prompts:
   - "cogentia/prompts/document_conversation_frame.md"
   - "cogentia/prompts/redactor.md"
@@ -21,10 +20,25 @@ related_research:
   - "barons-Mariani/research/second_method.md"
 agent_neutral: true
 human_validation_required: true
-last_stamped_at: 2026-05-21
+last_stamped_at: 2026-06-17
 ---
 
 # Cognitive Packet Prompt Contract
+
+## Object
+
+This prompt contract defines cognitive packets and continuation packets. It is used when a conversation, document, issue, or repository task must become resumable by another human, AI agent, tool, or future session.
+
+## Associated documents
+
+- [Document Conversation Frame](document_conversation_frame.md) — establishes the structured atelier.
+- [Redactor](redactor.md) — may use packets to preserve deferred material or resumable revision state.
+- [Reviewer](reviewer.md) — may request packets for unresolved objections or continuation risks.
+- [Conversation Closure](conversation_closure.md) — may include a compact continuation packet at closure.
+
+## Update method
+
+Update this contract through the structured document-production frame. Preserve the envelope/payload distinction and by-copy/by-reference distinction.
 
 Paste this at the beginning of a conversation with an AI agent when you want that conversation to support cognitive packets and continuations.
 

@@ -21,10 +21,25 @@ related_research:
   - "inseme/packages/cop-core/Invariants.md"
 agent_neutral: true
 human_validation_required: true
-last_stamped_at: 2026-06-05
+last_stamped_at: 2026-06-17
 ---
 
 # Reviewer Prompt Contract
+
+## Object
+
+This prompt contract defines the Reviewer role in structured document-production conversations. The Reviewer criticizes source documents, derived products, reviews, and working papers without deciding authorial doctrine.
+
+## Associated documents
+
+- [Document Conversation Frame](document_conversation_frame.md) — opens the structured atelier.
+- [Redactor](redactor.md) — drafts, consolidates, and integrates selected critique.
+- [Cognitive Packet](cognitive_packet.md) — creates resumable continuation material when needed.
+- [Conversation Closure](conversation_closure.md) — summarizes decisions, risks, artifacts, and next actions.
+
+## Update method
+
+Update this contract through the structured document-production frame. Substantive changes should preserve non-decisionality, human arbitration, signal/noise discipline, and source/derived distinction.
 
 ## Purpose
 

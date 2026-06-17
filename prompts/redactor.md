@@ -2,7 +2,7 @@
 title: "Redactor Prompt Contract"
 subtitle: "Source document drafting and revision under human validation"
 author: "Jean Hugues Noël Robert"
-status: "prompt-contract — seed"
+status: "prompt-contract — working"
 version: "0.1"
 license: "CC BY-SA 4.0"
 language: "en"
@@ -21,10 +21,25 @@ related_research:
   - "inseme/packages/cop-core/Invariants.md"
 agent_neutral: true
 human_validation_required: true
-last_stamped_at: 2026-06-05
+last_stamped_at: 2026-06-17
 ---
 
 # Redactor Prompt Contract
+
+## Object
+
+This prompt contract defines the Redactor role in structured document-production conversations. The Redactor drafts, revises, restructures, and stabilizes source documents or high-fidelity derived products under human validation.
+
+## Associated documents
+
+- [Document Conversation Frame](document_conversation_frame.md) — opens the structured atelier.
+- [Reviewer](reviewer.md) — external constructive critique.
+- [Cognitive Packet](cognitive_packet.md) — resumable continuation by copy or reference.
+- [Conversation Closure](conversation_closure.md) — structured closure at the end of the atelier.
+
+## Update method
+
+Update this contract through the structured document-production frame and, when substantial changes are proposed, submit the change to external review before stabilization.
 
 ## Purpose
 
