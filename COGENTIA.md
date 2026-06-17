@@ -169,7 +169,7 @@ The framework exists to be argued against, in the form it itself defined.
 - [Research Index — Cogentia](research/index.md)
 - [The Cogentia Commons Living Corpus](research/cogentia_commons_living_corpus.md)
 - [Trail: From Method to Machine](research/trails/from_method_to_machine.md)
-- [Carte globale du Corpus](https://github.com/JeanHuguesRobert/JeanHuguesRobert/blob/main/research/corpus-map.md)
+- [Corpus Start Here — Carte globale du Corpus](https://github.com/JeanHuguesRobert/JeanHuguesRobert/blob/main/research/corpus-map.md)
 - [Documents - All Tracked Repos](https://github.com/JeanHuguesRobert/JeanHuguesRobert/blob/main/research/documents.md)
 - [DHITL, Democratic Humans In The Loop](https://github.com/JeanHuguesRobert/marenostrum/blob/main/DHITL.md)
 <!-- END_AUTO: backlinks -->

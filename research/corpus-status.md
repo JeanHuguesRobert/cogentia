@@ -54,7 +54,7 @@ graph LR
   r_ubikia["ubikia"]
   r_jeanhuguesrobert["JeanHuguesRobert"]
   r_jeanhuguesrobert -->|159| r_barons_mariani
-  r_jeanhuguesrobert -->|106| r_cogentia
+  r_jeanhuguesrobert -->|107| r_cogentia
   r_cogentia -->|98| r_barons_mariani
   r_barons_mariani -->|62| r_cogentia
   r_jeanhuguesrobert -->|46| r_marenostrum
