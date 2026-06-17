@@ -379,14 +379,11 @@ The conversation itself is the chat URL the next session may wish to consult, pe
 *Institut Mariani — C.O.R.S.I.C.A., 1 cours Paoli, F-20250 Corte, Corsica*
 
 *— the next session begins by reading this document.*
-
-
 <!-- BEGIN_AUTO: backlinks -->
 ### Backlinks
 
 *These documents link to this file:*
 - [Cogentia Commons — Session Continuation Snapshot](cogentia_commons_continuation.md)
-- [cogentia.js — Tutorial and Near-Specification](cogentia_js_tutorial.md)
 - [Corpus Status — cogentia](corpus-status.md)
 - [Research Index — Cogentia](index.md)
 - [Documents - All Tracked Repos](https://github.com/JeanHuguesRobert/JeanHuguesRobert/blob/main/research/documents.md)

@@ -34,13 +34,10 @@ last_stamped_at: 2026-06-01
 ---
 
 # Pipeline
-
 <!-- BEGIN_AUTO: trails -->
 > 🧭 **Trail: From Method to Machine**
-> ⬅️ Previous: [Discours de la seconde méthode](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/second_method.md) | ➡️ Next: [Cogentia — the framework, in five distinctive moves](../COGENTIA.md)
-
+> ⬅️ Previous: [Discours de la seconde méthode](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/second_method.md) | ➡️ Next: [Cogentia](../COGENTIA.md)
 <!-- END_AUTO: trails -->
-
 ## From cognitive packets to source documents and derived products
 
 **Version 0.4 — 2026-05-25**  
@@ -515,12 +512,12 @@ A well-formed Cogentia Issue should carry, explicitly or implicitly:
 - possible derived products;
 - an agent-resumable next step.
 
-Earlier prototypes described an operational `cogentia issues` tool (read-only MVP — see the historical [`cogentia_js_tutorial.md`](cogentia_js_tutorial.md)):
+The current `cogentia.js` v2 surface exposes a deliberately narrow read-only issue adapter:
 
 - `cogentia issues list <repo>` — open / closed issues of a registered repo, pull requests filtered out;
 - `cogentia issues packet <repo> <number>` — exports an issue as a typed packet (`cogentia.issue_continuation.v1`, YAML frontmatter + Markdown body), ready to be ingested by an agent or pasted into the next continuation.
 
-Consolidation note, 2026-06-09: the current narrowed `cogentia.js` v2 surface does not expose `issues` commands. The doctrine remains valid: issues can be memory packets for continuation. Reintroducing issue commands should be done deliberately, probably as a read-only or DHITL-gated adapter, without making GitHub the only possible work-item backend.
+Consolidation note, 2026-06-17: this adapter is read-only and GitHub-specific. It does not close, label, comment on, or otherwise mutate issues. That preserves the doctrine: GitHub Issues can be memory packets for continuation, but they do not become the only possible work-item backend and they do not replace human/DHITL arbitration.
 
 Minimal formula:
 
@@ -1350,7 +1347,7 @@ Possible answer:
 
 Two sections were added to this paper after the initial v0.4 release:
 
-- **§4.13.1 — Issues as continuation packets.** Earlier prototypes described `cogentia issues list/packet/delegate` (read-only) and `cogentia issues close propose/apply/reject` (DHITL-gated). The current v2 CLI no longer exposes them. The next continuation is to decide whether issue adapters return as GitHub-specific commands, as a generic work-item backend, or as a Web/GitHub layer outside the CLI.
+- **§4.13.1 — Issues as continuation packets.** Earlier prototypes described `cogentia issues list/packet/delegate` (read-only) and `cogentia issues close propose/apply/reject` (DHITL-gated). The current v2 CLI exposes only the read-only GitHub-specific core: `issues list` and `issues packet`. The next continuation, if needed, is to decide whether issue adapters should generalize to non-GitHub work-item backends or stay as a thin bridge to GitHub.
 - **§4.14 — README maintenance and the reactive corpus.** Earlier prototypes described `cogentia readme` (mechanical `readme_index` for opt-in READMEs; profile README delegated as a derived product via continuation). The current v2 CLI no longer exposes it. The next continuation is to decide which reactive surfaces belong in the CLI and which belong in the future Web workspace.
 
 A possible v0.5 of this paper would integrate these two sections into the main numbered structure rather than as §4.13.1 / §4.14 additions, and refresh §10 (levels of evidence) accordingly. *À chaque jour suffit sa peine* — left for when one of the two becomes the genuine load-bearing question.
@@ -1361,8 +1358,6 @@ A possible v0.5 of this paper would integrate these two sections into the main n
 
 > The Cogentia pipeline is not a pipe.  
 > It is a packet-based transformation network for turning latent possibilities into source documents, derived products, public artifacts, and reusable cognitive structures.
-
-
 <!-- BEGIN_AUTO: backlinks -->
 ### Backlinks
 
@@ -1377,7 +1372,7 @@ A possible v0.5 of this paper would integrate these two sections into the main n
 - [AGENTS.md — Cogentia methodology shortcut](../AGENTS.md)
 - [Cogentia](../README.md)
 - [Cogentia Commons — Public by Default, Private by Exception](cogentia_commons_visibility_and_private_modes.md)
-- [cogentia.js — Tutorial and Near-Specification](cogentia_js_tutorial.md)
+- [cogentia.js - Tutorial and Near-Specification](cogentia_js_tutorial.md)
 - [Cogentigraphic Distillation](cogentigraphic_distillation.md)
 - [Cognitive Packet Switching](cognitive_packet_switching.md)
 - [Concept Index — cogentia](concepts.md)

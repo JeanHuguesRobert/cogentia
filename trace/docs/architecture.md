@@ -34,8 +34,6 @@ The first importer targets the official ChatGPT/OpenAI export. Gmail and Faceboo
 - GitHub: public method, schemas, examples and documentation.
 - Supabase: optional later adapter, not part of the MVP.
 - RAG/vector search: optional later layer, only after classification.
-
-
 <!-- BEGIN_AUTO: backlinks -->
 ### Backlinks
 

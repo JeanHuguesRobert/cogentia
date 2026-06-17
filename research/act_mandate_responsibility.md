@@ -153,8 +153,6 @@ Open continuations:
 1. Align the minimal metadata with [Interaction Packets](../interaction_packets/README.md), [Agent-Resumable CLI](agent_resumable_cli.md), and [Cognitive Packets](cognitive_packets.md), without overloading every ordinary trace.
 2. Decide which `cogentia.continuation.v2` or future `packet route` decisions require mandate/responsibility metadata by default.
 3. Produce a French legal/practical derived note if this doctrine becomes load-bearing for public or institutional documents.
-
-
 <!-- BEGIN_AUTO: backlinks -->
 ### Backlinks
 

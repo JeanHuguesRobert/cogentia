@@ -4,6 +4,13 @@
 
 📖 **Start here →** [**COGENTIA.md**](COGENTIA.md) — the framework in five distinctive moves (entry-point document, ~5 minute read).
 
+## Quick Orientation
+
+- [`research/index.md`](research/index.md) — generated document catalog
+- [`research/corpus-status.md`](research/corpus-status.md) — generated status, backlinks, and navigation checks
+- [`research/agent_resumable_cli.md`](research/agent_resumable_cli.md) — continuation protocol
+- [`research/cognitive_packets.md`](research/cognitive_packets.md) — packet layer above continuations
+
 ---
 
 Cogentia is the **cognitive infrastructure tooling** of a multi-repository public corpus that operationalizes the [DHITL](https://github.com/JeanHuguesRobert/marenostrum/blob/main/DHITL.md) AI Safety anti-capture proposal.
@@ -90,7 +97,7 @@ All published documents live in `research/` and are catalogued in [`research/ind
 - **[Concept Situation Briefs](research/concept_situation_briefs.md)** — *A Derived Product Category for Locating Ideas in Origin, Lineage, Neighborhood, Current Relevance, and Use* (published source document v1.0). Defines a new derived product category for orienting readers around a concept.
 - **[Pipeline](research/pipeline.md)** — *From cognitive packets to source documents and derived products* (method note v0.4). The corpus's operational method: *pipeline on the surface, packet network in depth*. Self-applicative — the document follows the method it describes. Operational counterpart of *Discours de la seconde méthode*.
 - **[Derived Products](research/derived_products.md)** — *Versioned Source Corpora, Situated Forms, and Publication Agents* (v0.2). Source ↔ derived split: academic papers, blogposts, parliamentary notes, social posts are *all* derived forms of equal status, each adapted to a specific scene. *Do not popularize from the academic paper; derive from the corpus.*
-- **[cogentia.js — Tutorial and Near-Specification](research/cogentia_js_tutorial.md)** — *Auto-generated tutorial v0.1* covering core ideas, storage model, 14 workflows, and a command reference for `cogentia.js v0.10.0`. Sufficient detail to seed a faithful re-implementation in another language, persistence layer, or rendering format.
+- **[cogentia.js — Tutorial and Near-Specification](research/cogentia_js_tutorial.md)** — generated v2 tutorial covering current corpus navigation, continuations, trails, GitHub issue packets, consolidation, and command reference. Sufficient detail to orient human and AI agents before operating on the corpus.
 - **[Cogentia Commons — Method Packets](research/cogentia_commons_method_packets.md)** — *Method Packets, Continuations, and the Generative Corpus.* Infrastructure for producing, transmitting, criticising, and improving cognitive packets, method packets, and corpus-based continuations across humans, AI agents, tools, and repositories.
 - **[The Sovereign Digital Twin](research/cogentia-digital-twin.md)** — Personal Cogentia: Cogentia, Cogentigram, Cogentiscope. The individual-scale foundation.
 - **[Cogentia Commons Working Paper](research/Cogentia_Commons_Working_Paper.md)** — Commons methodology, formal specification. The collective-scale foundation.
@@ -122,6 +129,9 @@ All published documents live in `research/` and are catalogued in [`research/ind
   * `continuation emit` — create a typed external judgment request.
   * `continuation list` / `inspect` — inspect active or historical requests.
   * `continuation resolve` / `resume` / `cancel` — record the agent or human decision without embedding that judgment inside the mechanical command.
+- **GitHub issue packets**
+  * `issues list <repo>` — read live GitHub issues for a registered repository or explicit `owner/name`.
+  * `issues packet <repo> <number>` — export one issue as a read-only `cogentia.issue_continuation.v1` packet.
 - **Generated corpus views**
   * `corpus plan` — read-only plan for per-repo `research/corpus-status.md`, registry `research/documents.md`, and existing backlink blocks.
   * `corpus apply` — apply exactly the fresh generated plan.
@@ -129,7 +139,7 @@ All published documents live in `research/` and are catalogued in [`research/ind
 - **Concepts**
   * `concepts list` and `concepts check` — parse every `research/concepts.md`, excluding generated auto-blocks and surfacing missing fields, duplicates and undefined references.
 
-The current session ritual is: `status` at the start, `grep` or `docs search` / `docs inspect` while navigating, `docs judgments --emit-continuations` when classification needs interpretation, `corpus plan` before mechanical refresh, then `corpus apply` and `corpus verify --strict` when the generated views should be updated.
+The current session ritual is: `status` at the start, `grep` or `docs search` / `docs inspect` while navigating, `issues packet` or `docs judgments --emit-continuations` when work must become resumable, `corpus plan` before mechanical refresh, then `corpus apply` and `corpus verify --strict` when the generated views should be updated.
 
 ## Ecosystem
 

@@ -127,7 +127,6 @@ Quand on ajoute un nouveau dépôt au corpus, faire rapidement :
 5. Noter ici les nouveaux patterns observés pour les prochaines ingestions.
 
 Objectif : après 2-3 dépôts traités de cette façon, l’ingestion d’un nouveau dépôt doit devenir de plus en plus mécanique sur les 80 % des cas.
-
 <!-- BEGIN_AUTO: backlinks -->
 ### Backlinks
 

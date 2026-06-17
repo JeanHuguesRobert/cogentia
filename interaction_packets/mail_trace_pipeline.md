@@ -92,8 +92,6 @@ The objective is a general protocol for:
 - transparent public interaction.
 
 Email is only the first interaction packet type.
-
-
 <!-- BEGIN_AUTO: backlinks -->
 ### Backlinks
 

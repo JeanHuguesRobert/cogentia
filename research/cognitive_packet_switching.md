@@ -976,8 +976,6 @@ The continuation gives future.
 The trace gives accountability.  
 The corpus gives memory.  
 The event substrate gives causality.
-
-
 <!-- BEGIN_AUTO: backlinks -->
 ### Backlinks
 

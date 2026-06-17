@@ -201,7 +201,6 @@ L’objectif est que chaque nouveau dépôt ingéré rende les suivants un peu p
 ---
 
 *Version : 0.1 — Brouillon de travail*
-
 <!-- BEGIN_AUTO: backlinks -->
 ### Backlinks
 

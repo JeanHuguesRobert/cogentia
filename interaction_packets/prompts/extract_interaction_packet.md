@@ -48,8 +48,6 @@ Constraints:
 - avoid automatic accusations;
 - preserve confidentiality according to the selected disclosure level;
 - mark unknown fields explicitly as `unknown` rather than inventing them.
-
-
 <!-- BEGIN_AUTO: backlinks -->
 ### Backlinks
 

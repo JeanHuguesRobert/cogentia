@@ -443,8 +443,6 @@ Open continuations:
 1. Decide whether issue adapters return as CLI commands, move to the future Web workspace, or stay as GitHub-native work handled by agents.
 2. Keep opening registers available for long conversations so the corpus does not fragment into premature micro-issues.
 3. Periodically close, merge, or downgrade issues whose possible has decayed.
-
-
 <!-- BEGIN_AUTO: backlinks -->
 ### Backlinks
 

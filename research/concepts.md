@@ -13,7 +13,10 @@ creator: Jean Hugues Noël Robert, baron Mariani
 ---
 
 # Concept Index — cogentia
-
+<!-- BEGIN_AUTO: trails -->
+> 🧭 **Trail: From Method to Machine**
+> ⬅️ Previous: [Agent Navigation Guide (Context Server)](../docs/agent_context_server.md)
+<!-- END_AUTO: trails -->
 This file maps concepts used across the corpus.
 
 `cogentia.js` maintains structure, links, scopes, status and graphs. It does not infer semantic truth.
@@ -432,17 +435,15 @@ Specific governance structures (private, group, public, federated) enabling syst
 
 **Reference documents:**
 - [`research/cogentia_workflows.md`](cogentia_workflows.md)
-
-
 <!-- BEGIN_AUTO: backlinks -->
 ### Backlinks
 
 *These documents link to this file:*
-- [cogentia.js — Tutorial and Near-Specification](cogentia_js_tutorial.md)
 - [Frontmatter Schema — v0.1 (Corpus)](../docs/frontmatter-schema.md)
 - [Frontmatter Synonym Mapping — v0.1](../docs/frontmatter-synonym-mapping.md)
 - [Research Index — Cogentia](index.md)
 - [The Knowledge Mesh (Decentralized Wiki)](../docs/knowledge_mesh.md)
+- [Trail: From Method to Machine](trails/from_method_to_machine.md)
 - [Documents - All Tracked Repos](https://github.com/JeanHuguesRobert/JeanHuguesRobert/blob/main/research/documents.md)
 - [MareNostrum — Tableau de bord](https://github.com/JeanHuguesRobert/marenostrum/blob/main/dashboard.md)
 <!-- END_AUTO: backlinks -->

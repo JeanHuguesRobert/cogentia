@@ -703,8 +703,6 @@ Productions manifest.
 Traces decay or are renewed.
 Archives allow re-distillation.
 ```
-
-
 <!-- BEGIN_AUTO: backlinks -->
 ### Backlinks
 

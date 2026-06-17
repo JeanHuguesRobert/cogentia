@@ -43,13 +43,10 @@ AI agents; command-line interfaces; continuations; `call/cc`; continuation-passi
 ---
 
 # Part I — The General Principle
-
 <!-- BEGIN_AUTO: trails -->
 > 🧭 **Trail: From Method to Machine**
-> ⬅️ Previous: [The Sovereign Digital Twin](cogentia-digital-twin.md) | ➡️ Next: [Cognitive Packets](cognitive_packets.md)
-
+> ⬅️ Previous: [The Sovereign Digital Twin: Cogentia, Cogentigram, Cogentiscope](cogentia-digital-twin.md) | ➡️ Next: [Cognitive Packets](cognitive_packets.md)
 <!-- END_AUTO: trails -->
-
 ## 1. Introduction
 
 The command line remains one of the most durable interfaces in computing. It is composable, scriptable, automatable, inspectable, and compatible with many forms of orchestration. It is also increasingly becoming the natural execution surface for AI agents: agents read files, run tests, inspect repositories, call tools, propose changes, and invoke command-line programs.
@@ -1110,8 +1107,6 @@ Preserve the possibility of resumption.
 ## Appendix C — Minimal Designer Rule
 
 A compliant CLI does not hide judgment. It exposes judgment as a continuation, constrains it, assigns accountability, validates the response, records the decision, and resumes.
-
-
 <!-- BEGIN_AUTO: backlinks -->
 ### Backlinks
 
@@ -1120,7 +1115,7 @@ A compliant CLI does not hide judgment. It exposes judgment as a continuation, c
 - [Act, mandate and responsibility](act_mandate_responsibility.md)
 - [Cogentia](../COGENTIA.md)
 - [Cogentia](../README.md)
-- [cogentia.js — Tutorial and Near-Specification](cogentia_js_tutorial.md)
+- [cogentia.js - Tutorial and Near-Specification](cogentia_js_tutorial.md)
 - [Cognitive Packet Switching](cognitive_packet_switching.md)
 - [Cognitive Packets](cognitive_packets.md)
 - [Concept Index — cogentia](concepts.md)

@@ -44,8 +44,6 @@ status: "draft — auto-filled (frontmatter cleanup)"
 
 10. [Infrastructure is All You Need](https://github.com/JeanHuguesRobert/marenostrum/blob/main/infrastructure_is_all_you_need.md)
     *The loop closes. From the democratic axiom back to the Corsican infrastructure that makes it real — energy, compute, governance held in common.*
-
-
 <!-- BEGIN_AUTO: backlinks -->
 ### Backlinks
 

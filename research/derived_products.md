@@ -1269,8 +1269,6 @@ Publication agents manage distribution and traceability.
 The task is therefore not to multiply content.
 
 It is to make a corpus appear without losing itself.
-
-
 <!-- BEGIN_AUTO: backlinks -->
 ### Backlinks
 
@@ -1282,7 +1280,7 @@ It is to make a corpus appear without losing itself.
 - [Projet #1755](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/autonomia/projet_1755.md)
 - [Rendre capable — noyau doctrinal provisoire](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/noyau_doctrinal_rendre_capable.md)
 - [Cogentia](../README.md)
-- [cogentia.js — Tutorial and Near-Specification](cogentia_js_tutorial.md)
+- [cogentia.js - Tutorial and Near-Specification](cogentia_js_tutorial.md)
 - [Cogentigraphic Distillation](cogentigraphic_distillation.md)
 - [Concept Index — cogentia](concepts.md)
 - [Pipeline](pipeline.md)

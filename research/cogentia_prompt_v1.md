@@ -263,8 +263,6 @@ Pour les indicateurs catégorie F (scores dérivés, rangs 59-65), calcule-les �
 - Vérifier la présence de `cogentia_version: "1.0"` pour authentifier le prompt non altéré
 - Vérifier que `indicators.length >= 65`
 - Indexer par `rank` pour le scoring
-
-
 <!-- BEGIN_AUTO: backlinks -->
 ### Backlinks
 

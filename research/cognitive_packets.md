@@ -14,13 +14,10 @@ last_stamped_at: 2026-06-01
 ---
 
 # Cognitive Packets
-
 <!-- BEGIN_AUTO: trails -->
 > 🧭 **Trail: From Method to Machine**
-> ⬅️ Previous: [Agent-Resumable CLI](agent_resumable_cli.md) | ➡️ Next: [Agent Navigation Guide](../docs/agent_context_server.md)
-
+> ⬅️ Previous: [Agent-Resumable CLI](agent_resumable_cli.md) | ➡️ Next: [Agent Navigation Guide (Context Server)](../docs/agent_context_server.md)
 <!-- END_AUTO: trails -->
-
 ## An Envelope and Payload Format for Human–AI and Multi-Agent Cooperation
 
 **Jean Hugues Noël Robert, baron Mariani**  
@@ -1492,8 +1489,6 @@ All seven cases share:
 Cognitive packets generalize this family to the case where the receiver may be an AI agent and the producer may be an AI agent, while keeping the same minimal commitment: structured fields, sufficient state, named cost for skipping.
 
 The novelty of cognitive packets is therefore not the existence of the pattern, but two specific extensions: the **Resumption Risks** field (absent from SBAR, AAR, ADR, OPORD) and the **self-describing protocol header** that makes the convention propagable by copy/paste to receivers who do not yet know it.
-
-
 <!-- BEGIN_AUTO: backlinks -->
 ### Backlinks
 
@@ -1506,7 +1501,7 @@ The novelty of cognitive packets is therefore not the existence of the pattern, 
 - [Cogentia](../COGENTIA.md)
 - [Cogentia](../README.md)
 - [Cogentia Commons](cogentia_commons_method_packets.md)
-- [cogentia.js — Tutorial and Near-Specification](cogentia_js_tutorial.md)
+- [cogentia.js - Tutorial and Near-Specification](cogentia_js_tutorial.md)
 - [Cogentigraphic Distillation](cogentigraphic_distillation.md)
 - [Cognitive Packet Switching](cognitive_packet_switching.md)
 - [Concept Index — cogentia](concepts.md)

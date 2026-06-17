@@ -29,8 +29,6 @@ In draft v0.5 (2026-05-18) of the canonical paper, the three substantive contrib
 - the Coherence Kernel articulating the relationship to DHITL (now §11.5).
 
 The earlier French Cogentia-format draft is preserved in the git history of this file.
-
-
 <!-- BEGIN_AUTO: backlinks -->
 ### Backlinks
 

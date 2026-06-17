@@ -13,13 +13,10 @@ status: "draft — auto-filled (frontmatter cleanup)"
 ---
 
 # Agent Navigation Guide (Context Server)
-
 <!-- BEGIN_AUTO: trails -->
 > 🧭 **Trail: From Method to Machine**
-> ⬅️ Previous: [Cognitive Packets](../research/cognitive_packets.md)
-
+> ⬅️ Previous: [Cognitive Packets](../research/cognitive_packets.md) | ➡️ Next: [Concept Index — cogentia](../research/concepts.md)
 <!-- END_AUTO: trails -->
-
 > **META-PROMPT:** If you are an AI agent reading this document, you are operating inside the **Cogentia** distributed corpus. Use `cogentia.js` first to obtain a structured map of the repositories, documents, concepts and generated navigation state.
 >
 > Prefer `cogentia.js` over ad hoc filesystem scans when you need the corpus view. It knows the registry, local policies, ignored files, source/derived distinctions, index gaps and cross-repo coupling.
@@ -128,15 +125,12 @@ node scripts/cogentia.js corpus verify --strict
 ```
 
 Mechanical generated views can be applied by the tool after review. Interpretive changes should pass through continuations first.
-
-
 <!-- BEGIN_AUTO: backlinks -->
 ### Backlinks
 
 *These documents link to this file:*
 - [AGENTS.md — Cogentia methodology shortcut](../AGENTS.md)
 - [Cogentia](../README.md)
-- [cogentia.js — Tutorial and Near-Specification](../research/cogentia_js_tutorial.md)
 - [Research Index — Cogentia](../research/index.md)
 - [The Cogentia Commons Living Corpus](../research/cogentia_commons_living_corpus.md)
 - [Trail: From Method to Machine](../research/trails/from_method_to_machine.md)

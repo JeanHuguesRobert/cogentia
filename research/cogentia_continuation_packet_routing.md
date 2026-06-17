@@ -1196,8 +1196,6 @@ This v0.3 publication candidate opens the following continuations:
 
 10. **Public derived product pass**  
     Produce a short public-facing explanation: “Fractanet commutes, Cogentia routes.”
-
-
 <!-- BEGIN_AUTO: backlinks -->
 ### Backlinks
 

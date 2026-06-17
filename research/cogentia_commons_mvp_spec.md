@@ -1287,8 +1287,6 @@ Reference implementation contracts (schemas, plugin manifests, resolver code): *
 
 *Premier commit : 2026-05-11 — Corte. Draft v0.1.*
 *Institut Mariani — C.O.R.S.I.C.A., 1 cours Paoli, F-20250 Corte, Corsica*
-
-
 <!-- BEGIN_AUTO: backlinks -->
 ### Backlinks
 
@@ -1304,7 +1302,6 @@ Reference implementation contracts (schemas, plugin manifests, resolver code): *
 - [Cogentia Commons — Substantive Plugin Sub-Specifications](cogentia_commons_substantive_plugins.md)
 - [Cogentia Commons — Workflows](cogentia_commons_workflows.md)
 - [Cogentia Workflows](cogentia_workflows.md)
-- [cogentia.js — Tutorial and Near-Specification](cogentia_js_tutorial.md)
 - [Corpus Status — cogentia](corpus-status.md)
 - [Research Index — Cogentia](index.md)
 - [Research Index — Inseme](https://github.com/JeanHuguesRobert/inseme/blob/main/research/index.md)

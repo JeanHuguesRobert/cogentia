@@ -784,14 +784,11 @@ This draft should be continued in four directions:
 2. Produce a stricter technical specification for continuation payloads.
 3. Define the role of `cogentia.js` in stamping, indexing, validating, and routing cognitive packets.
 4. Apply the Seconde méthode to this paper itself, with special attention to risks of corpus bloat, method bureaucracy, hallucinated coherence, and overclaiming about digital twins.
-
-
 <!-- BEGIN_AUTO: backlinks -->
 ### Backlinks
 
 *These documents link to this file:*
 - [Cogentia](../README.md)
-- [cogentia.js — Tutorial and Near-Specification](cogentia_js_tutorial.md)
 - [Research Index — Cogentia](index.md)
 - [The Cogentia Commons Living Corpus](cogentia_commons_living_corpus.md)
 - [Library packets — when the library is a specification, not code](https://github.com/JeanHuguesRobert/Inox/blob/master/research/library_packets.md)

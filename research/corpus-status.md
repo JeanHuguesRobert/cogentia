@@ -13,16 +13,9 @@ creator: Jean Hugues Noël Robert, baron Mariani (généré automatiquement par 
 ---
 
 # Corpus Status — cogentia
-
 <!-- BEGIN_AUTO: trails -->
-> 🧭 **Trail: From Autonomia to DHITL**
-> ⬅️ Previous: [Infrastructure is All You Need](https://github.com/JeanHuguesRobert/marenostrum/blob/main/infrastructure_is_all_you_need.md) | ➡️ Next: [Research Index — Cogentia](index.md)
-
-> 🧭 **Trail: From Method to Machine**
-> ⬅️ Previous: [The Sovereign Digital Twin: Cogentia, Cogentigram, Cogentiscope](cogentia-digital-twin.md) | ➡️ Next: [Research Index — Cogentia](index.md)
 
 <!-- END_AUTO: trails -->
-
 *Auto-refreshed by `cogentia.js corpus-status`. The structural sections* —
 *Registered Repositories, Cross-Reference Graph, Published, What Remains Possible* —
 *are regenerated from the registry and from [`research/index.md`](index.md) on every run.*
@@ -32,7 +25,6 @@ creator: Jean Hugues Noël Robert, baron Mariani (généré automatiquement par 
 ---
 
 ## Registered Repositories
-
 <!-- BEGIN_AUTO: registered_repos -->
 | Repository | research/index.md | Branch | Policy | Visibility | Public presence |
 |---|---|---|---|---|---|
@@ -46,11 +38,9 @@ creator: Jean Hugues Noël Robert, baron Mariani (généré automatiquement par 
 | ubikia | yes | main | all | public | full |
 | JeanHuguesRobert | yes | main | all | public | full |
 <!-- END_AUTO: registered_repos -->
-
 ---
 
 ## Cross-Reference Graph
-
 <!-- BEGIN_AUTO: graph -->
 ```mermaid
 graph LR
@@ -65,9 +55,9 @@ graph LR
   r_jeanhuguesrobert["JeanHuguesRobert"]
   r_jeanhuguesrobert -->|155| r_barons_mariani
   r_jeanhuguesrobert -->|110| r_cogentia
-  r_cogentia -->|101| r_barons_mariani
+  r_cogentia -->|98| r_barons_mariani
   r_barons_mariani -->|62| r_cogentia
-  r_jeanhuguesrobert -->|45| r_marenostrum
+  r_jeanhuguesrobert -->|46| r_marenostrum
   r_fractavolta -->|41| r_cogentia
   r_fractavolta -->|37| r_marenostrum
   r_jeanhuguesrobert -->|36| r_fractavolta
@@ -81,10 +71,10 @@ graph LR
   r_barons_mariani -->|16| r_inseme
   r_inseme -->|15| r_cogentia
   r_marenostrum -->|13| r_cogentia
-  r_jeanhuguesrobert -->|12| r_inseme
   r_marenostrum -->|12| r_fractavolta
   r_inox -->|11| r_barons_mariani
   r_inox -->|11| r_cogentia
+  r_jeanhuguesrobert -->|11| r_inseme
   r_marenostrum -->|11| r_barons_mariani
   r_inox -->|10| r_fractavolta
   r_jeanhuguesrobert -->|9| r_ubikia
@@ -95,10 +85,10 @@ graph LR
   r_barons_mariani -->|5| r_inox
   r_barons_mariani -->|5| r_jeanhuguesrobert
   r_cogentia -->|5| r_fractavolta
+  r_barons_mariani -->|4| r_ubikia
   r_cogentia -->|4| r_jeanhuguesrobert
   r_inseme -->|3| r_barons_mariani
   r_inseme -->|3| r_jeanhuguesrobert
-  r_barons_mariani -->|2| r_ubikia
   r_cogentia -->|2| r_inox
   r_fractavolta -->|2| r_jeanhuguesrobert
   r_inox -->|2| r_jeanhuguesrobert
@@ -111,11 +101,9 @@ graph LR
   r_ubikia -->|1| r_cogentia
 ```
 <!-- END_AUTO: graph -->
-
 ---
 
 ## Concepts
-
 <!-- BEGIN_AUTO: concepts -->
 | Concept | Scope | Status | Type |
 |---|---|---|---|
@@ -140,9 +128,7 @@ graph LR
 | [KYS (Know Your System) / Psychocognitive Analysis](./concepts.md#kys-know-your-system-psychocognitive-analysis) | project-specific | Working | protocol |
 | [Cogentia Workflows](./concepts.md#cogentia-workflows) | repository-specific | Defined | system model |
 <!-- END_AUTO: concepts -->
-
 ## Concept Graph
-
 <!-- BEGIN_AUTO: concept_graph -->
 ```mermaid
 graph LR
@@ -488,11 +474,9 @@ graph LR
 
 *Referenced but undefined: `Democratic AI Safety`, `Cogentia Commons (déclinaison manuelle)`, `Fractanet / COP (déclinaison automatisée)`, `Stabilisateurs (anti-Ubik)`, `DHITL (couches 4/5)`, `Effet Ubik (opposé)`, `Machine à explorer (opposé symétrique)`, `FM-11 (outer optimizer capture)`, `Concentration de compute (85% frontier)`, `Invidia (densité sociale destructrice)`, `DHITL (Compute Exergy comme unité traçable)`, `Map vs territory`, `Operational memory`, `Traceable agency`, `Non-deterministic Cognitive Step`, `Causal Trace Replay`, `COP/HITL Profile`, `Rule 0 (seconde méthode)`, `DHITL Layer 5`, `Envelope (kind-agnostic metadata layer)`, `Payload (kind-specific content layer)`, `Continuation payload`, `Objection payload`, `Hypothesis payload`, `Decision payload`, `Failure payload`, `Routing payload`, `Source Document`, `DHITL`, `Capabilities approach (Sen, Nussbaum)`, `Spécificité de phase`, `Flexibilité d'usage (redistributive vs. predatory)`, `Auto-institution démocratique (Castoriadis)`, `Communs (Ostrom)`, `Mauss — gift / counter-gift`, `Democratic AI Safety (thesis kernel)`, `DHITL — Democratic Humans in the Loop`, `Cogentia Commons (auditable knowledge)`, `Traçabilité civique anti-mafieuse`, `Deterministic Replay (protocol layer only)`, `Energy Packet Network (FractaVolta)`, `Cognitive Packet envelope/payload (Cogentia)`, `Auxilia (Inseme brique — human-scale Fractanet exchange)`.*
 <!-- END_AUTO: concept_graph -->
-
 ---
 
 ## Published in this repo
-
 <!-- BEGIN_AUTO: published -->
 | Title | Location | Date |
 |---|---|---|
@@ -502,7 +486,7 @@ graph LR
 | [Cognitive Packets — An Envelope and Payload Format for Human–AI and Multi-Agent Cooperation](cognitive_packets.md) *(working paper v0.3 — envelope/payload split ; paired operational prompt in [`prompts/cognitive_packet.md`](../prompts/cognitive_packet.md))* | this repo | 2026-05-21 |
 | [Pipeline — From cognitive packets to source documents and derived products](pipeline.md) *(method note v0.4 — packet-switched, self-applicative; canonical operational method of the corpus)* | this repo | 2026-05-25 |
 | [Derived Products — Versioned Source Corpora, Situated Forms, and Publication Agents](derived_products.md) *(working paper v0.2 — source ↔ derived split; companion to [`pipeline.md`](pipeline.md))* | this repo | 2026-05-23 |
-| [cogentia.js — Tutorial and Near-Specification](cogentia_js_tutorial.md) *(historical auto-generated tutorial v0.1 for the older v0.10/v1 surface; kept as a derived product pending refresh for the current v2 CLI)* | this repo | 2026-05-27 |
+| [cogentia.js - Tutorial and Near-Specification](cogentia_js_tutorial.md) *(generated automatically from the current v2 CLI and corpus docs; derived operational walkthrough, not a sovereign source document)* | this repo | 2026-06-16 |
 | [Self-Contained Documents in an Interconnected Corpus](self_contained_documents.md) *(method note v0.3 — formalises the auto-portance principle: a document may cite/extend/transform other texts, but its main claims remain assessable without prior external reading; emerged from work on `traceabilite_des_actes`)* | this repo | 2026-05-27 |
 | [Traçabilité symétrique et capture relationnelle](tracabilite_symetrique_capture_relationnelle.md) *(working paper v0.4 — consolidated draft for review; concept de « capture relationnelle par architecture de canal »; email vs portails propriétaires, preuve opposable, rééquilibrage individu / personne morale; lié à Interaction Packets et Autonomie de Capacité)* | this repo | 2026-05-29 |
 | [Persistence Backends — cadre minimum suffisant (FR)](persistence_backends.md) *(working-note v0.1 — git+GitHub n'est qu'une instance ; six couches (A–F), points GitHub-tied identifiés, seam d'adapter esquissé mais non-implémenté ; trace d'antériorité, pas une roadmap)* | this repo | 2026-05-30 |
@@ -539,7 +523,6 @@ graph LR
 | [Trail — From Method to Machine](trails/from_method_to_machine.md) *(curated reading path for newcomers — technical / cognitive infrastructure entry)* | this repo | 2026-05 |
 | [Trail — From Autonomia to DHITL](trails/from_autonomia_to_dhitl.md) *(curated reading path for the political / territorial entry into the Democratic AI Safety thesis)* | this repo | 2026-05-18 |
 <!-- END_AUTO: published -->
-
 ---
 
 ## What Is Proved
@@ -574,7 +557,6 @@ graph LR
 ---
 
 ## What Remains Possible
-
 <!-- BEGIN_AUTO: possibilities -->
 - Cogentia Commons as methodology for any distributed peer-review process
 - Cogentigram as visual language for knowledge graph navigation
@@ -586,7 +568,7 @@ graph LR
 - [Cogentia Commons — MVP Specification](cogentia_commons_mvp_spec.md)
 - [Cogentia Commons — Public by Default, Private by Exception](cogentia_commons_visibility_and_private_modes.md)
 - [Cogentia Commons — Session Continuation Snapshot](cogentia_commons_continuation.md)
-- [cogentia.js — Tutorial and Near-Specification](cogentia_js_tutorial.md)
+- [cogentia.js - Tutorial and Near-Specification](cogentia_js_tutorial.md)
 - [Cogentigraphic Distillation](cogentigraphic_distillation.md)
 - [Corpus Status — cogentia](corpus-status.md)
 - [From Biometrics and Psychometrics to Structural Signatures](structural_signatures.md)
@@ -599,19 +581,16 @@ graph LR
 - [Research Index — Jean Hugues Noël Robert (Profile / Entry Point)](https://github.com/JeanHuguesRobert/JeanHuguesRobert/blob/main/research/index.md)
 - [Research Index — MareNostrum](https://github.com/JeanHuguesRobert/marenostrum/blob/main/research/index.md)
 <!-- END_AUTO: possibilities -->
-
 ---
 
 *Generated with `cogentia.js corpus-status` — [scripts/cogentia.js](https://github.com/JeanHuguesRobert/cogentia/blob/main/scripts/cogentia.js)*
 *Challenge via issues. Fork to explore alternatives.*
-
-
 <!-- BEGIN_AUTO: backlinks -->
 ### Backlinks
 
 *These documents link to this file:*
 - [Cogentia](../COGENTIA.md)
-- [cogentia.js — Tutorial and Near-Specification](cogentia_js_tutorial.md)
+- [Cogentia](../README.md)
 - [Frontmatter Schema — v0.1 (Corpus)](../docs/frontmatter-schema.md)
 - [Frontmatter Synonym Mapping — v0.1](../docs/frontmatter-synonym-mapping.md)
 - [Research Index — Cogentia](index.md)

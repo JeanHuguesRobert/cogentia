@@ -46,7 +46,7 @@ node scripts/cogentia.js corpus plan --json
 node scripts/cogentia.js corpus apply
 ```
 
-The CLI scans Markdown links across all registered repositories. It refreshes existing `<!-- BEGIN_AUTO: backlinks -->` blocks by default. Use `--create-backlinks` when you explicitly want missing backlink blocks created.
+The CLI scans Markdown links across all registered repositories. It refreshes existing managed backlink blocks by default. Use `--create-backlinks` when you explicitly want missing backlink blocks created.
 
 ## 3. Curated Pathways (Trails)
 
@@ -59,7 +59,14 @@ Create a markdown file in `research/trails/`, for example `ai_governance.md`:
 2. [Sovereign Digital Twin](../../cogentia/research/cogentia-digital-twin.md)
 ```
 
-In v2, trails remain plain Markdown documents and are visible through `docs query` / `docs search`. Automatic previous/next trail injection belongs to the archived v1 implementation and should be reintroduced only if it becomes useful again in the smaller plan/apply/verify model.
+In v2, trails remain plain Markdown documents and are visible through `docs query --role trail` / `docs search`. Their navigation banners are refreshed through the normal corpus cycle:
+
+```bash
+node scripts/cogentia.js corpus plan --json
+node scripts/cogentia.js corpus apply
+```
+
+This keeps trail handling inside the same smaller `plan/apply/verify` model as backlinks and corpus status, instead of reviving a separate legacy command surface.
 
 ## 4. Web Rendering (Jekyll)
 

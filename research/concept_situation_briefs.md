@@ -382,8 +382,6 @@ Open continuations:
 1. Use the first instance as the review specimen for the product category.
 2. Decide whether future briefs should be scheduled by generic `continuation` objects, a restored grouped derived-product scheduler, or the future Web workspace.
 3. Keep current-relevance sections explicitly dated, because this derived product category is intentionally exposed to temporal drift.
-
-
 <!-- BEGIN_AUTO: backlinks -->
 ### Backlinks
 

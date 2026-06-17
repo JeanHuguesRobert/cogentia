@@ -323,8 +323,6 @@ continuation:
     - "how to distinguish legitimate conceptual dependency from circularity?"
     - "how should self-containment apply to very short derived products?"
 ```
-
-
 <!-- BEGIN_AUTO: backlinks -->
 ### Backlinks
 

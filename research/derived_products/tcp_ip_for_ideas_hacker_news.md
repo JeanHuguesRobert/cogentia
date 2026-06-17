@@ -132,8 +132,6 @@ The compact formulation:
 Or, less catchy but more precise:
 
 > Cognitive Packet Switching: a packet-switched model of knowledge work where ideas become bounded cognitive packets, envelopes make them routable, payloads preserve meaning, continuations make them resumable, traces make them auditable, and durable substrates make them cumulative.
-
-
 <!-- BEGIN_AUTO: backlinks -->
 ### Backlinks
 

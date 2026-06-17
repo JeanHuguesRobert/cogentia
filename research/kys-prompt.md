@@ -289,8 +289,6 @@ PRESENTATION INSTRUCTIONS (important for data collection):
 ```
 
 [END OF COGENTIA PROTOCOL v1.0]
-
-
 <!-- BEGIN_AUTO: backlinks -->
 ### Backlinks
 

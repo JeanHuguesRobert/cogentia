@@ -1250,8 +1250,6 @@ Together, they form an infrastructure for collective intelligence.
 
 *Draft v0.2 — Corte, 2026-05-11*  
 *Institut Mariani — C.O.R.S.I.C.A.*
-
-
 <!-- BEGIN_AUTO: backlinks -->
 ### Backlinks
 

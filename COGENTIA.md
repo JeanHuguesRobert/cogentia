@@ -14,13 +14,10 @@ status: "published identity document — v2 CLI consolidation"
 ---
 
 # Cogentia
-
 <!-- BEGIN_AUTO: trails -->
 > 🧭 **Trail: From Method to Machine**
-> ⬅️ Previous: [Pipeline — From cognitive packets to source documents and derived products](research/pipeline.md) | ➡️ Next: [Democratic AI Safety](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/democratic_ai_safety.md)
-
+> ⬅️ Previous: [Pipeline](research/pipeline.md) | ➡️ Next: [Democratic AI Safety](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/democratic_ai_safety.md)
 <!-- END_AUTO: trails -->
-
 ## Orientation
 
 Statut : document source d'identité pour Cogentia.
@@ -57,7 +54,7 @@ The commitment, in five distinctive moves:
 
 Cogentia does not claim the method works. It runs the method on its own published corpus, in public, with every commit timestamped and every objection recorded. The corpus is the demonstration. The git history is the proof.
 
-In operation, the current `scripts/cogentia.js` v2 surface lets agents query and inspect documents, detect index gaps, plan/apply/verify generated corpus views, and check git drift. Earlier command names such as `scan` and `corpus-status` are part of the tool's design history; the current stable entry points are `docs`, `corpus`, `state`, `git`, and `continuation`. This document is itself in the corpus it describes — fork it, object to it, propose a Revision: the protocol applies to itself before it applies to anyone else.
+In operation, the current `scripts/cogentia.js` v2 surface lets agents query and inspect documents, detect index gaps, plan/apply/verify generated corpus views, packetize GitHub issues, and check git drift. Earlier command names such as `scan` and `corpus-status` are part of the tool's design history; the current stable entry points are `docs`, `corpus`, `state`, `issues`, `git`, and `continuation`. This document is itself in the corpus it describes — fork it, object to it, propose a Revision: the protocol applies to itself before it applies to anyone else.
 
 GitHub Issues serve as the Commons’ procedural memory in tension: they record objections, continuations, missing sources and proposed transformations before these are ready to become commits. They do not replace the corpus; they protect unfinished work from disappearing before it can be reviewed, transformed or deliberately rejected.
 
@@ -156,8 +153,6 @@ The framework exists to be argued against, in the form it itself defined.
 
 *— Jean Hugues Noël Robert, baron Mariani*
 *Institut Mariani / C.O.R.S.I.C.A., 1 cours Paoli, F-20250 Corte, Corsica*
-
-
 <!-- BEGIN_AUTO: backlinks -->
 ### Backlinks
 
@@ -168,7 +163,7 @@ The framework exists to be argued against, in the form it itself defined.
 - [Agent-Resumable CLI](research/agent_resumable_cli.md)
 - [AGENTS.md — Cogentia methodology shortcut](AGENTS.md)
 - [Cogentia](README.md)
-- [cogentia.js — Tutorial and Near-Specification](research/cogentia_js_tutorial.md)
+- [cogentia.js - Tutorial and Near-Specification](research/cogentia_js_tutorial.md)
 - [Cognitive Packet Switching](research/cognitive_packet_switching.md)
 - [Pipeline](research/pipeline.md)
 - [Research Index — Cogentia](research/index.md)

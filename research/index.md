@@ -11,14 +11,8 @@ creator: Jean Hugues Noël Robert, baron Mariani
 canonical_url: https://github.com/JeanHuguesRobert/cogentia/blob/main/research/index.md
 ---
 <!-- BEGIN_AUTO: trails -->
-> 🧭 **Trail: From Autonomia to DHITL**
-> ⬅️ Previous: [Corpus Status — cogentia](corpus-status.md)
-
-> 🧭 **Trail: From Method to Machine**
-> ⬅️ Previous: [Corpus Status — cogentia](corpus-status.md)
 
 <!-- END_AUTO: trails -->
-
 # Research Index — Cogentia
 
 ## Foundation
@@ -42,7 +36,7 @@ This repository instantiates the **cognitive infrastructure layer** of the [DHIT
 | [Cognitive Packets — An Envelope and Payload Format for Human–AI and Multi-Agent Cooperation](cognitive_packets.md) *(working paper v0.3 — envelope/payload split ; paired operational prompt in [`prompts/cognitive_packet.md`](../prompts/cognitive_packet.md))* | this repo | 2026-05-21 |
 | [Pipeline — From cognitive packets to source documents and derived products](pipeline.md) *(method note v0.4 — packet-switched, self-applicative; canonical operational method of the corpus)* | this repo | 2026-05-25 |
 | [Derived Products — Versioned Source Corpora, Situated Forms, and Publication Agents](derived_products.md) *(working paper v0.2 — source ↔ derived split; companion to [`pipeline.md`](pipeline.md))* | this repo | 2026-05-23 |
-| [cogentia.js — Tutorial and Near-Specification](cogentia_js_tutorial.md) *(historical auto-generated tutorial v0.1 for the older v0.10/v1 surface; kept as a derived product pending refresh for the current v2 CLI)* | this repo | 2026-05-27 |
+| [cogentia.js - Tutorial and Near-Specification](cogentia_js_tutorial.md) *(generated automatically from the current v2 CLI and corpus docs; derived operational walkthrough, not a sovereign source document)* | this repo | 2026-06-16 |
 | [Self-Contained Documents in an Interconnected Corpus](self_contained_documents.md) *(method note v0.3 — formalises the auto-portance principle: a document may cite/extend/transform other texts, but its main claims remain assessable without prior external reading; emerged from work on `traceabilite_des_actes`)* | this repo | 2026-05-27 |
 | [Traçabilité symétrique et capture relationnelle](tracabilite_symetrique_capture_relationnelle.md) *(working paper v0.4 — consolidated draft for review; concept de « capture relationnelle par architecture de canal »; email vs portails propriétaires, preuve opposable, rééquilibrage individu / personne morale; lié à Interaction Packets et Autonomie de Capacité)* | this repo | 2026-05-29 |
 | [Persistence Backends — cadre minimum suffisant (FR)](persistence_backends.md) *(working-note v0.1 — git+GitHub n'est qu'une instance ; six couches (A–F), points GitHub-tied identifiés, seam d'adapter esquissé mais non-implémenté ; trace d'antériorité, pas une roadmap)* | this repo | 2026-05-30 |
@@ -164,7 +158,6 @@ This repository instantiates the **cognitive infrastructure layer** of the [DHIT
 
 *Priority established by first public commit. License: CC BY-SA 4.0 (research) / MIT (code, via PrivAI).*
 *Fork to explore alternatives. Challenge via issues.*
-
 <!-- BEGIN_AUTO: backlinks -->
 ### Backlinks
 
@@ -176,7 +169,7 @@ This repository instantiates the **cognitive infrastructure layer** of the [DHIT
 - [Cogentia Commons — MVP Specification](cogentia_commons_mvp_spec.md)
 - [Cogentia Commons — Public by Default, Private by Exception](cogentia_commons_visibility_and_private_modes.md)
 - [Cogentia Commons — Session Continuation Snapshot](cogentia_commons_continuation.md)
-- [cogentia.js — Tutorial and Near-Specification](cogentia_js_tutorial.md)
+- [cogentia.js - Tutorial and Near-Specification](cogentia_js_tutorial.md)
 - [Cogentigraphic Distillation](cogentigraphic_distillation.md)
 - [Corpus Status — cogentia](corpus-status.md)
 - [From Biometrics and Psychometrics to Structural Signatures](structural_signatures.md)

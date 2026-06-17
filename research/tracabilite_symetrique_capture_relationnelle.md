@@ -1295,8 +1295,6 @@ Une personne morale peut imposer un canal. Mais si elle impose son canal, elle d
 - CNIL, recommandations relatives aux données personnelles, à l’exercice des droits et à la portabilité.
 - Travaux internationaux sur les *dark patterns*, *administrative burden*, *vendor lock-in*, interopérabilité et accès effectif aux droits.
 - Jean Hugues Robert, `interaction_packets/dashboard.md`, dépôt `JeanHuguesRobert/JeanHuguesRobert`.
-
-
 <!-- BEGIN_AUTO: backlinks -->
 ### Backlinks
 

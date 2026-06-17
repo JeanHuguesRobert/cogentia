@@ -295,8 +295,6 @@ continuation:
     - "Faire une revue bibliographique rapide mais sérieuse sur les signaux d'évitement chez les diptères."
     - "Créer un tableau : espèce / signal / effet / niveau de preuve / applicabilité."
 ```
-
-
 <!-- BEGIN_AUTO: backlinks -->
 ### Backlinks
 

@@ -23,8 +23,6 @@ last_stamped_at: 2026-06-13
 | 2026-05-04-001 | 2026-05-04 | Session MareNostrum | Université de Corse | 0 | 1 | Reply received: negative | D2 |
 | 2026-06-12-001 | 2026-06-12 | Démocratie de capacité, publics capables et IA sous mandat | Hélène Landemore; Barbara Stiegler | 0 | 1 | Sent — awaiting reply | D2 |
 | 2026-06-13-001 | 2026-06-13 | Demande de cadrage territorial — Préfiguration d’un point d’autonomie numérique et administrative à Corte | Sous-préfecture de Corte; Mme Volpi; Institut Mariani | 0 | 0 | Sent — awaiting reply | D2 |
-
-
 <!-- BEGIN_AUTO: backlinks -->
 ### Backlinks
 

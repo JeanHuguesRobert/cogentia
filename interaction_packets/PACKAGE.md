@@ -346,8 +346,6 @@ First stabilize the protocol manually with:
 - Git commits.
 
 Automation should come only after repeated use shows what is stable.
-
-
 <!-- BEGIN_AUTO: backlinks -->
 ### Backlinks
 

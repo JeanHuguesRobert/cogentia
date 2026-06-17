@@ -1010,8 +1010,6 @@ The structural-signature framework was developed primarily for the natural-perso
 [^cogentia-cogentigram]: Robert, J. H. N. *Cogentia and Cogentigrams: A Framework for Structured Representation of Persistent Cognitive Signatures in AI Systems*. Cogentia repository, 2026. https://github.com/JeanHuguesRobert/cogentia/blob/main/research/Cogentia-and-Cogentigram.md
 
 [^cognitive-packets]: Robert, J. H. N. *Cognitive Packets: An Envelope and Payload Format for Human–AI and Multi-Agent Cooperation*. Cogentia repository, 2026. https://github.com/JeanHuguesRobert/cogentia/blob/main/research/cognitive_packets.md
-
-
 <!-- BEGIN_AUTO: backlinks -->
 ### Backlinks
 

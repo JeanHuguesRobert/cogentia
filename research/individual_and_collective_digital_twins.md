@@ -271,8 +271,6 @@ continuation:
     - "cogentia/issues/11 — mailarch MVP"
     - "barons-Mariani/research/traceabilite_des_actes.md"
 ```
-
-
 <!-- BEGIN_AUTO: backlinks -->
 ### Backlinks
 

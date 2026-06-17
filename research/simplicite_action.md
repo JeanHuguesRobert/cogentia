@@ -135,8 +135,6 @@ continuation:
     - "Les pieds au sol."
     - "Occam-on-containers : n'élève pas le contenant tant que l'actuel suffit."
 ```
-
-
 <!-- BEGIN_AUTO: backlinks -->
 ### Backlinks
 

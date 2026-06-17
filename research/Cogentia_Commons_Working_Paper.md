@@ -368,8 +368,6 @@ Robert, J. H. (2026c). *Infrastructure Is All You Need: Toward a structural theo
 *This paper is a living document. Objections, revisions, and critique records will be hosted at the Cogentia Commons platform upon instantiation. The paper itself constitutes the inaugural Thesis Kernel of the system it describes.*
 
 *Jean Hugues Robert — Institut Mariani R&D, 1 cours Paoli, F-20250 Corte, Corsica. jhr@baronsmariani.org*
-
-
 <!-- BEGIN_AUTO: backlinks -->
 ### Backlinks
 
@@ -384,7 +382,6 @@ Robert, J. H. (2026c). *Infrastructure Is All You Need: Toward a structural theo
 - [Cogentia Commons — Substantive Plugin Sub-Specifications](cogentia_commons_substantive_plugins.md)
 - [Cogentia Commons — Workflows](cogentia_commons_workflows.md)
 - [Cogentia Workflows](cogentia_workflows.md)
-- [cogentia.js — Tutorial and Near-Specification](cogentia_js_tutorial.md)
 - [Concept Index — cogentia](concepts.md)
 - [Research Index — Cogentia](index.md)
 - For researchers

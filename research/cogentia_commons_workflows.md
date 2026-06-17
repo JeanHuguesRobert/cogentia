@@ -491,8 +491,6 @@ This sub-specification: **CC BY-SA 4.0**.
 
 *Premier commit : 2026-05-12 — Corte. Sub-spec draft v0.1.*
 *Institut Mariani — C.O.R.S.I.C.A., 1 cours Paoli, F-20250 Corte, Corsica*
-
-
 <!-- BEGIN_AUTO: backlinks -->
 ### Backlinks
 

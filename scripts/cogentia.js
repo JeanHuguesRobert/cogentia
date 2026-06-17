@@ -101,8 +101,12 @@ async function main() {
       return cmdConcepts(argv.shift() || "check");
     case "continuation":
       return cmdContinuation(argv.shift() || "list");
+    case "issues":
+      return cmdIssues(argv.shift() || "list");
     case "git":
       return cmdGit(argv.shift() || "verify");
+    case "consolidate":
+      return cmdConsolidate();
     case "daemon":
       return cmdDaemon();
     default:
@@ -117,11 +121,16 @@ cogentia.js v${VERSION}
 Usage:
   node scripts/cogentia.js <command> [args] [--json]
 
+Tutorial:
+  research/cogentia_js_tutorial.md   Generated automatically from the current v2 CLI and corpus docs.
+
 Core commands:
   corpus plan              Read-only plan of generated navigation changes.
   corpus apply             Apply generated navigation changes from a fresh plan.
   corpus verify            Verify generated views, gaps and git drift.
   corpus privacy           Check public views for private/confidential leaks.
+  consolidate              Read-only publish-readiness check across corpus, privacy,
+                           git drift, worktree noise, continuations, and auto-block safety.
   status                   Local health table used by the git hook.
   grep <text>              Full-text search over active markdown documents.
 
@@ -133,6 +142,7 @@ Document commands:
                            Flags: --repo <name> --limit <n> --include-generated
   docs gaps                Documents not referenced by their repo research/index.md.
   docs inspect <repo/path.md>
+  docs trails              Lint curated trail documents and their linked steps.
   docs judgments [repo|all]
                            List document-role cases requiring external judgment.
                            Add --emit-continuations to create judgment requests.
@@ -150,12 +160,20 @@ Continuation commands:
   continuation cancel <id> --reason <text>
   continuation schema
 
+Issue commands:
+  issues list <repo>       List GitHub issues for a registered repo using gh.
+                           Flags: --state open|closed|all --limit <n>
+  issues packet <repo> <number>
+                           Export one GitHub issue as a read-only continuation packet.
+
 Git:
   git verify               Ahead/behind and dirty state for all repos.
+  git classify             Classify dirty files as text, line-endings-only, untracked, etc.
 
 Plan/apply flags:
   --scope configured|all|research|repo:<name>
   --repo <name>            Equivalent to --scope repo:<name>
+  --no-trails              Skip trail navigation blocks.
   --no-backlinks           Skip backlink blocks.
   --no-documents           Skip registry research/documents.md.
   --no-corpus-status       Skip per-repo research/corpus-status.md.
@@ -255,16 +273,20 @@ function cmdCorpusApply() {
   const ctx = loadContext();
   const options = planOptions();
   const plan = buildPlan(ctx, options);
-  for (const change of plan.changes) {
-    if (!change.allowed) continue;
-    ensureDir(path.dirname(change.full_path));
-    fs.writeFileSync(change.full_path, change.after, "utf8");
+  const writes = mergePlanWrites(plan.changes);
+  for (const write of writes) {
+    if (!write.allowed) continue;
+    ensureDir(path.dirname(write.full_path));
+    fs.writeFileSync(write.full_path, write.after, "utf8");
   }
   const result = {
     ok: true,
-    applied: plan.changes.filter(c => c.allowed).map(stripChangeBody),
-    skipped: plan.changes.filter(c => !c.allowed).map(stripChangeBody),
-    summary: plan.summary,
+    applied: writes.filter(c => c.allowed).map(stripChangeBody),
+    skipped: writes.filter(c => !c.allowed).map(stripChangeBody),
+    summary: {
+      ...plan.summary,
+      write_files: writes.filter(c => c.allowed).length,
+    },
   };
   output(result, formatApply(result));
 }
@@ -331,10 +353,12 @@ function cmdDocs(sub) {
       return cmdDocsGaps(inventory);
     case "inspect":
       return cmdDocsInspect(inventory, argv.shift());
+    case "trails":
+      return cmdDocsTrails(ctx, inventory);
     case "judgments":
       return cmdDocsJudgments(ctx, inventory, optionalPositional("all"));
     default:
-      throw new Error(`Unknown docs subcommand "${sub}". Use summary, query, search, gaps, inspect, or judgments.`);
+      throw new Error(`Unknown docs subcommand "${sub}". Use summary, query, search, gaps, inspect, trails, or judgments.`);
   }
 }
 
@@ -394,6 +418,12 @@ function cmdDocsInspect(inventory, ref) {
   output({ ok: true, view, document: sanitizeDoc(doc, inventory, view) }, formatDoc(doc));
 }
 
+function cmdDocsTrails(ctx, inventory) {
+  const view = normalizeView(valueFlag("--view") || PUBLIC_VIEW);
+  const result = lintTrails(ctx, inventory, view);
+  output(result, formatTrailLint(result));
+}
+
 function cmdDocsJudgments(ctx, inventory, repoArg) {
   const emit = takeFlag("--emit-continuations");
   const includeInferredSource = takeFlag("--include-inferred-source");
@@ -430,10 +460,81 @@ function cmdConcepts(sub) {
 }
 
 function cmdGit(sub) {
-  if (sub !== "verify") throw new Error(`Unknown git subcommand "${sub}". Use verify.`);
   const ctx = loadContext();
-  const result = verifyGit(ctx);
-  output({ ok: true, repos: result }, formatGit(result));
+  switch (sub) {
+    case "verify":
+      {
+        const result = verifyGit(ctx);
+        return output({ ok: true, repos: result }, formatGit(result));
+      }
+    case "classify":
+    case "noise":
+      {
+        const repoArg = optionalPositional("all");
+        const result = classifyGitWorktree(ctx, repoArg);
+        return output(result, formatGitClassify(result));
+      }
+    default:
+      throw new Error(`Unknown git subcommand "${sub}". Use verify or classify.`);
+  }
+}
+
+function cmdConsolidate() {
+  const ctx = loadContext();
+  const strict = hasFlag("--strict");
+  const plan = buildPlan(ctx, { ...planOptions(), quiet: true });
+  const inventory = buildInventory(ctx);
+  const privacy = verifyPrivacy(ctx, inventory, PUBLIC_VIEW);
+  const gaps = visibleDocs(inventory, PUBLIC_VIEW).filter(isIndexGap);
+  const git = verifyGit(ctx);
+  const worktree = classifyGitWorktree(ctx, "all");
+  const continuations = loadContinuations(ctx).filter(c => c.status === "active");
+  const auto_sections = verifyAutoSections(ctx);
+  const trail_lint = lintTrails(ctx, inventory, PUBLIC_VIEW);
+  const issues = [];
+  const noiseSummary = countBy(worktree.repos.flatMap(r => r.entries), entry => entry.classification);
+  const substantiveDirty = (noiseSummary.modified || 0)
+    + (noiseSummary.untracked || 0)
+    + (noiseSummary.added || 0)
+    + (noiseSummary.deleted || 0)
+    + (noiseSummary.renamed || 0)
+    + (noiseSummary.missing || 0);
+  if (plan.changes.length) issues.push(`${plan.changes.length} generated change(s) pending`);
+  if (gaps.length) issues.push(`${gaps.length} document gap(s)`);
+  if (privacy.leaks.length) issues.push(`${privacy.leaks.length} privacy leak(s)`);
+  if (continuations.length) issues.push(`${continuations.length} active continuation(s)`);
+  if (auto_sections.issues.length) issues.push(`${auto_sections.issues.length} auto-section safety issue(s)`);
+  if (trail_lint.issues.length) issues.push(`${trail_lint.issues.length} trail lint issue(s)`);
+  if (substantiveDirty) issues.push(`${substantiveDirty} substantive worktree change(s)`);
+  if (noiseSummary.line_endings_only) issues.push(`${noiseSummary.line_endings_only} line-ending-only worktree change(s)`);
+  for (const repo of git) {
+    if (repo.behind) issues.push(`${repo.repo} behind upstream`);
+    if (repo.ahead) issues.push(`${repo.repo} ahead upstream`);
+  }
+  const result = {
+    ok: issues.length === 0,
+    issues,
+    generated: {
+      changes: plan.summary.changes,
+      files: uniqueCount(plan.changes.map(c => c.full_path)),
+      by_type: plan.summary.by_type,
+      by_repo: plan.summary.by_repo,
+    },
+    gaps: gaps.map(d => sanitizeDoc(d, inventory, PUBLIC_VIEW)),
+    privacy,
+    git,
+    worktree,
+    continuations: continuations.map(stripContinuationBody),
+    auto_sections,
+    trail_lint,
+    noise_summary: noiseSummary,
+  };
+  if (JSON_MODE) {
+    console.log(JSON.stringify(result, null, 2));
+  } else {
+    console.log(formatConsolidate(result));
+  }
+  if (strict && issues.length) process.exit(2);
 }
 
 async function cmdDaemon() {
@@ -811,6 +912,49 @@ function daemonCliContinuationInspect(ctx, url) {
   }
 }
 // plugin registry and dispatcher are implemented in scripts/daemon_plugins/registry.js
+function cmdIssues(sub) {
+  const ctx = loadContext();
+  switch (sub) {
+    case "list":
+      return cmdIssuesList(ctx);
+    case "packet":
+      return cmdIssuesPacket(ctx);
+    default:
+      throw new Error(`Unknown issues subcommand "${sub}". Use list or packet.`);
+  }
+}
+
+function cmdIssuesList(ctx) {
+  const repoArg = argv.shift();
+  if (!repoArg) throw new Error("Usage: issues list <repo> [--state open|closed|all] [--limit <n>]");
+  const state = valueFlag("--state") || "open";
+  const limit = String(Number(valueFlag("--limit") || 50) || 50);
+  const repo = resolveIssueRepo(ctx, repoArg);
+  const issues = ghJson([
+    "issue", "list",
+    "--repo", repo.full_name,
+    "--state", state,
+    "--limit", limit,
+    "--json", "number,title,state,stateReason,updatedAt,closedAt,url,labels,author",
+  ]);
+  const normalized = issues.map(normalizeGitHubIssue);
+  output({ ok: true, repo: repo.full_name, state, issues: normalized }, formatIssueList(repo.full_name, normalized, state));
+}
+
+function cmdIssuesPacket(ctx) {
+  const repoArg = argv.shift();
+  const number = argv.shift();
+  if (!repoArg || !number) throw new Error("Usage: issues packet <repo> <number>");
+  const repo = resolveIssueRepo(ctx, repoArg);
+  const issue = normalizeGitHubIssue(ghJson([
+    "issue", "view", String(number),
+    "--repo", repo.full_name,
+    "--json", "number,title,state,stateReason,updatedAt,closedAt,url,labels,author,body,comments",
+  ]));
+  const packet = buildIssuePacket(repo, issue);
+  output(packet, renderIssuePacket(packet));
+}
+
 function cmdContinuation(sub) {
   const ctx = loadContext();
   switch (sub) {
@@ -936,6 +1080,10 @@ function buildPlan(ctx, options) {
       addChange(changes, registryRepo, full, "documents", before, after, true, "refresh consolidated document catalog");
     }
   }
+  if (options.trails) {
+    const trailChanges = planTrails(ctx, inventory, options);
+    for (const change of trailChanges) changes.push(change);
+  }
   if (options.backlinks) {
     const backlinkChanges = planBacklinks(ctx, inventory, options);
     for (const change of backlinkChanges) changes.push(change);
@@ -985,6 +1133,7 @@ function planOptions() {
   return {
     scope,
     view,
+    trails: !hasFlag("--no-trails"),
     backlinks: !hasFlag("--no-backlinks"),
     corpusStatus: !hasFlag("--no-corpus-status"),
     documents: !hasFlag("--no-documents"),
@@ -1083,10 +1232,10 @@ function classifyRole(repo, relPath, full, fm, ignored, indexSets) {
   if (derivedFrom || explicit.includes("derived") || r.includes("/derived_products/")) {
     return { role: "derived", source: "frontmatter/path:derived", confidence: "strong" };
   }
+  if (r.startsWith("research/trails/")) return { role: "trail", source: "path:research/trails", confidence: "strong" };
   if (indexSets.published.has(path.resolve(full))) {
     return { role: "source", source: "research/index.md:Published", confidence: "strong" };
   }
-  if (r.startsWith("research/trails/")) return { role: "trail", source: "path:research/trails", confidence: "strong" };
   if (r.startsWith("research/")) return { role: "source", source: "path:research", confidence: "medium" };
   if (r.startsWith("trace/docs/") || r.startsWith("docs/") || r.startsWith("interaction_packets/") || r.startsWith("prompts/")) {
     return { role: "operational", source: "path:operational", confidence: "strong" };
@@ -1361,6 +1510,7 @@ function renderDocuments(inventory, ctx, view = PUBLIC_VIEW) {
   const gaps = docs.filter(isIndexGap);
   const recent = [...docs].sort(compareDocs("updated")).slice(0, 80);
   const sources = docs.filter(d => d.role === "source").sort(compareDocs("repo"));
+  const trails = docs.filter(d => d.role === "trail").sort(compareDocs("repo"));
   const lines = [];
   lines.push("---");
   lines.push('title: "Documents - All Tracked Repos"');
@@ -1378,15 +1528,16 @@ function renderDocuments(inventory, ctx, view = PUBLIC_VIEW) {
   lines.push(`| Repositories | ${ctx.repos.length} |`);
   lines.push(`| Documents | ${docs.length} |`);
   lines.push(`| Source documents | ${sources.length} |`);
+  lines.push(`| Trail documents | ${trails.length} |`);
   lines.push(`| Unindexed documents | ${gaps.length} |`);
   lines.push("");
   lines.push("## Per Repository");
   lines.push("");
-  lines.push("| Repository | Documents | Source | Derived | Operational | Gaps |");
-  lines.push("|---|---:|---:|---:|---:|---:|");
+  lines.push("| Repository | Documents | Source | Trail | Derived | Operational | Gaps |");
+  lines.push("|---|---:|---:|---:|---:|---:|---:|");
   for (const repo of ctx.repos) {
     const list = byRepo.get(repo.name) || [];
-    lines.push(`| ${repo.name} | ${list.length} | ${list.filter(d => d.role === "source").length} | ${list.filter(d => d.role === "derived").length} | ${list.filter(d => d.role === "operational").length} | ${list.filter(isIndexGap).length} |`);
+    lines.push(`| ${repo.name} | ${list.length} | ${list.filter(d => d.role === "source").length} | ${list.filter(d => d.role === "trail").length} | ${list.filter(d => d.role === "derived").length} | ${list.filter(d => d.role === "operational").length} | ${list.filter(isIndexGap).length} |`);
   }
   lines.push("");
   lines.push("## Recent Activity");
@@ -1396,6 +1547,10 @@ function renderDocuments(inventory, ctx, view = PUBLIC_VIEW) {
   lines.push("## Source Documents");
   lines.push("");
   lines.push(renderDocTable(sources, inventory, view));
+  lines.push("");
+  lines.push("## Trail Documents");
+  lines.push("");
+  lines.push(trails.length ? renderDocTable(trails, inventory, view) : "No trail documents.");
   lines.push("");
   lines.push("## Index Gaps");
   lines.push("");
@@ -1412,6 +1567,198 @@ function renderDocTable(docs, inventory = null, view = PUBLIC_VIEW) {
     lines.push(`| ${title} | ${d.repo} | ${d.role} | ${d.updated.date || "-"} | ${d.created.date || "-"} | \`${d.rel}\` |`);
   }
   return lines.join("\n");
+}
+
+function planTrails(ctx, inventory, options) {
+  const trailDocs = inventory.documents
+    .filter(d => d.role === "trail")
+    .sort((a, b) => a.repo.localeCompare(b.repo) || a.rel.localeCompare(b.rel));
+  const trailBlocksByTarget = new Map();
+
+  for (const trailDoc of trailDocs) {
+    const trail = parseTrailDocument(ctx, inventory, trailDoc);
+    if (!trail || !trail.items.length) continue;
+    for (let i = 0; i < trail.items.length; i++) {
+      const target = trail.items[i];
+      const repo = ctx.repos.find(r => r.name === target.repo);
+      if (!repo || !repoSelected(repo, options)) continue;
+      if (!pathAllowedByScope(repo, target.rel, options)) continue;
+      const view = viewForRepo(repo, options);
+      if (!canSeeDoc(trailDoc, view, { includeIgnored: true })) continue;
+      if (!canSeeDoc(target, view, { includeIgnored: true })) continue;
+      const prev = nearestVisibleTrailNeighbor(trail.items, i, -1, view);
+      const next = nearestVisibleTrailNeighbor(trail.items, i, 1, view);
+      const block = renderTrailBanner(trail, target, prev, next, view);
+      if (!trailBlocksByTarget.has(target.full_path)) trailBlocksByTarget.set(target.full_path, []);
+      trailBlocksByTarget.get(target.full_path).push(block);
+    }
+  }
+
+  const candidates = new Map();
+  for (const doc of inventory.documents) {
+    if (readFileIfExists(doc.full_path).includes("<!-- BEGIN_AUTO: trails -->")) {
+      candidates.set(doc.full_path, doc);
+    }
+  }
+  for (const fullPath of trailBlocksByTarget.keys()) {
+    const doc = docsByFullPath(inventory).get(path.resolve(fullPath));
+    if (doc) candidates.set(doc.full_path, doc);
+  }
+
+  const changes = [];
+  for (const doc of candidates.values()) {
+    const repo = ctx.repos.find(r => r.name === doc.repo);
+    if (!repo || !repoSelected(repo, options)) continue;
+    if (!pathAllowedByScope(repo, doc.rel, options)) continue;
+    const view = viewForRepo(repo, options);
+    if (!canSeeDoc(doc, view, { includeIgnored: true })) continue;
+    const before = readFileIfExists(doc.full_path);
+    const hasBlock = before.includes("<!-- BEGIN_AUTO: trails -->");
+    const blocks = trailBlocksByTarget.get(doc.full_path) || [];
+    if (!hasBlock && !blocks.length) continue;
+    const ensured = hasBlock ? before : ensureAutoSection(before, "trails");
+    const after = replaceSection(ensured, "trails", blocks.join("\n\n"));
+    addChange(changes, repo, doc.full_path, "trails", before, after, true, "refresh trail navigation block");
+  }
+  return changes;
+}
+
+function parseTrailDocument(ctx, inventory, trailDoc) {
+  const content = trailContent(trailDoc);
+  const titleMatch = content.match(/^#\s+Trail:\s*(.+)$/m);
+  if (!titleMatch) return null;
+  const items = parseTrailSteps(ctx, inventory, trailDoc)
+    .map(step => step.target)
+    .filter(Boolean);
+  return { title: titleMatch[1].trim(), source: trailDoc, items };
+}
+
+function lintTrails(ctx, inventory, view = PUBLIC_VIEW) {
+  const trailDocs = inventory.documents
+    .filter(d => d.role === "trail")
+    .sort((a, b) => a.repo.localeCompare(b.repo) || a.rel.localeCompare(b.rel));
+  const issues = [];
+  const trails = [];
+  for (const trailDoc of trailDocs) {
+    const content = trailContent(trailDoc);
+    const titleMatch = content.match(/^#\s+Trail:\s*(.+)$/m);
+    const steps = parseTrailSteps(ctx, inventory, trailDoc);
+    const visibleSteps = steps.filter(step => step.target && canSeeDoc(step.target, view, { includeIgnored: true }));
+    const linkedSteps = steps.filter(step => step.url);
+    const seenTargets = new Map();
+    if (!titleMatch) {
+      issues.push(trailIssue(trailDoc, "missing_title", 1, "Trail document should contain a '# Trail: ...' heading."));
+    }
+    if (!steps.length) {
+      issues.push(trailIssue(trailDoc, "no_steps", 1, "Trail document contains no top-level numbered or bulleted steps."));
+    }
+    if (!linkedSteps.length && steps.length) {
+      issues.push(trailIssue(trailDoc, "no_linked_steps", 1, "Trail contains steps but no resolvable markdown links."));
+    }
+    for (const step of steps) {
+      if (!step.url) {
+        issues.push(trailIssue(trailDoc, "placeholder_step", step.line, `Step ${step.index} is not linked: ${step.text}`));
+        continue;
+      }
+      if (!step.target) {
+        issues.push(trailIssue(trailDoc, "unresolved_step_link", step.line, `Step ${step.index} does not resolve: ${step.url}`));
+        continue;
+      }
+      if (!canSeeDoc(step.target, view, { includeIgnored: true })) {
+        issues.push(trailIssue(trailDoc, "hidden_step", step.line, `Step ${step.index} is not visible in ${view} view: ${step.target.repo}/${step.target.rel}`));
+      }
+      if (isPublicView(view) && canSeeDoc(trailDoc, view, { includeIgnored: true }) && !canSeeDoc(step.target, view, { includeIgnored: true })) {
+        issues.push(trailIssue(trailDoc, "public_to_private_step", step.line, `Public trail step points to non-public document: ${step.target.repo}/${step.target.rel}`));
+      }
+      const key = path.resolve(step.target.full_path);
+      if (seenTargets.has(key)) {
+        issues.push(trailIssue(trailDoc, "duplicate_step", step.line, `Step ${step.index} repeats step ${seenTargets.get(key)}: ${step.target.repo}/${step.target.rel}`));
+      } else {
+        seenTargets.set(key, step.index);
+      }
+    }
+    if (steps.length && visibleSteps.length <= 1) {
+      issues.push(trailIssue(trailDoc, "single_visible_step", 1, `Only ${visibleSteps.length} step(s) are visible in ${view} view.`));
+    }
+    trails.push({
+      repo: trailDoc.repo,
+      path: trailDoc.rel,
+      title: titleMatch?.[1]?.trim() || trailDoc.title,
+      steps: steps.length,
+      linked_steps: linkedSteps.length,
+      visible_steps: visibleSteps.length,
+      issues: issues.filter(issue => issue.repo === trailDoc.repo && issue.path === trailDoc.rel).length,
+    });
+  }
+  return { ok: issues.length === 0, view, count: trailDocs.length, trails, issues };
+}
+
+function parseTrailSteps(ctx, inventory, trailDoc) {
+  const docsByFull = docsByFullPath(inventory);
+  const steps = [];
+  const lines = trailContent(trailDoc).split(/\r?\n/);
+  for (let i = 0; i < lines.length; i++) {
+    const m = lines[i].match(/^\s{0,2}(?:\d+\.|\*|-)\s+(.+)$/);
+    if (!m) continue;
+    const text = m[1].trim();
+    const link = text.match(/\[([^\]]+)\]\(([^)]+)\)/);
+    let url = "";
+    let targetDoc = null;
+    if (link) {
+      url = decodeURIComponent(link[2].trim()).split(/\s+"/)[0].split("#")[0];
+      const target = url ? resolveMarkdownLink(ctx, trailDoc, url) : null;
+      targetDoc = target ? docsByFull.get(path.resolve(target.full_path)) || null : null;
+    }
+    steps.push({
+      index: steps.length + 1,
+      line: i + 1,
+      text,
+      label: link?.[1] || "",
+      url,
+      target: targetDoc,
+    });
+  }
+  return steps;
+}
+
+function trailContent(trailDoc) {
+  return stripAutoSections(readFileIfExists(trailDoc.full_path));
+}
+
+function trailIssue(trailDoc, type, line, message) {
+  return {
+    repo: trailDoc.repo,
+    path: trailDoc.rel,
+    line,
+    type,
+    message,
+  };
+}
+
+function nearestVisibleTrailNeighbor(items, index, step, view) {
+  for (let i = index + step; i >= 0 && i < items.length; i += step) {
+    if (canSeeDoc(items[i], view, { includeIgnored: true })) return items[i];
+  }
+  return null;
+}
+
+function renderTrailBanner(trail, target, prev, next, view = PUBLIC_VIEW) {
+  const parts = [];
+  if (prev) {
+    const href = trailNeighborHref(target, prev, view);
+    parts.push(href ? `⬅️ Previous: [${prev.title}](${href})` : `⬅️ Previous: ${prev.title}`);
+  }
+  if (next) {
+    const href = trailNeighborHref(target, next, view);
+    parts.push(href ? `➡️ Next: [${next.title}](${href})` : `➡️ Next: ${next.title}`);
+  }
+  const detail = parts.length ? parts.join(" | ") : "*(Single visible stop in this trail for this view.)*";
+  return `> 🧭 **Trail: ${trail.title}**\n> ${detail}`;
+}
+
+function trailNeighborHref(fromDoc, toDoc, view = PUBLIC_VIEW) {
+  if (fromDoc.repo === toDoc.repo) return rel(path.dirname(fromDoc.full_path), toDoc.full_path);
+  return docHref(toDoc, view);
 }
 
 function planBacklinks(ctx, inventory, options) {
@@ -1666,6 +2013,139 @@ function verifyGit(ctx) {
     const dirty = status.filter(line => !ignored.some(pattern => globMatch(gitStatusPath(line), pattern)));
     return { repo: repo.name, branch: repo.branch, behind, ahead, dirty_count: dirty.length, dirty };
   });
+}
+
+function classifyGitWorktree(ctx, repoArg = "all") {
+  const repos = ctx.repos.filter(repo => repoArg === "all" || repo.name === repoArg);
+  if (!repos.length && repoArg !== "all") throw new Error(`Unknown repo: ${repoArg}`);
+  const results = repos.map(classifyRepoWorktree);
+  return {
+    ok: true,
+    repo: repoArg,
+    repos: results,
+    summary: countBy(results.flatMap(r => r.entries), entry => entry.classification),
+  };
+}
+
+function classifyRepoWorktree(repo) {
+  const status = git(repo.path, ["status", "--porcelain"], { ok: true }).split(/\r?\n/).filter(line => line.trim());
+  const ignored = repo.policy.ignore_dirty || [];
+  const dirty = status.filter(line => !ignored.some(pattern => globMatch(gitStatusPath(line), pattern)));
+  const entries = dirty.map(line => classifyGitStatusLine(repo, line));
+  return {
+    repo: repo.name,
+    branch: repo.branch,
+    count: entries.length,
+    summary: countBy(entries, entry => entry.classification),
+    entries,
+  };
+}
+
+function classifyGitStatusLine(repo, line) {
+  const xy = String(line).slice(0, 2);
+  const clean = gitStatusPath(line);
+  const full = path.join(repo.path, clean);
+  const classification = classifyDirtyPath(repo, clean, xy, full);
+  return {
+    path: clean,
+    xy,
+    classification,
+    exists: fs.existsSync(full),
+  };
+}
+
+function classifyDirtyPath(repo, relPath, xy, full) {
+  if (xy === "??") return "untracked";
+  if (xy.includes("R") || String(relPath).includes(" -> ")) return "renamed";
+  if (xy.includes("D")) return "deleted";
+  if (xy.includes("A")) return "added";
+  const head = gitHeadFile(repo.path, relPath);
+  if (head == null) return fs.existsSync(full) ? "modified" : "missing";
+  if (!fs.existsSync(full)) return "deleted";
+  const working = readTextFile(full);
+  if (working == null || head == null) return "modified";
+  if (normalizeEol(head) === normalizeEol(working) && head !== working) return "line_endings_only";
+  return "modified";
+}
+
+function gitHeadFile(cwd, relPath) {
+  const pathArg = String(relPath).replace(/\\/g, "/");
+  try {
+    return execFileSync("git", ["show", `HEAD:${pathArg}`], { cwd, encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] });
+  } catch {
+    return null;
+  }
+}
+
+function readTextFile(full) {
+  if (!fs.existsSync(full)) return null;
+  const buf = fs.readFileSync(full);
+  if (buf.includes(0)) return null;
+  return buf.toString("utf8");
+}
+
+function normalizeEol(s) {
+  return String(s).replace(/\r\n/g, "\n").replace(/\r/g, "\n");
+}
+
+function verifyAutoSections(ctx) {
+  const issues = [];
+  for (const repo of ctx.repos) {
+    for (const full of listMarkdown(repo.path)) {
+      const relPath = rel(repo.path, full);
+      const found = inspectAutoSections(readFileIfExists(full));
+      for (const issue of found) {
+        issues.push({ repo: repo.name, path: relPath, ...issue });
+      }
+    }
+  }
+  return { ok: issues.length === 0, issues };
+}
+
+function inspectAutoSections(raw) {
+  const issues = [];
+  const lines = normalizeEol(String(raw)).split("\n");
+  const stack = [];
+  let inFence = false;
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+    if (/^\s*```/.test(line)) {
+      inFence = !inFence;
+      continue;
+    }
+    if (inFence) continue;
+    if (!/(BEGIN|END)_AUTO:/.test(line)) continue;
+    const marker = line.match(/^\s*<!--\s*(BEGIN|END)_AUTO:\s*([A-Za-z0-9_-]+)\s*-->\s*$/);
+    if (!marker) {
+      issues.push({ type: "inline_marker_text", line: i + 1, detail: line.trim().slice(0, 120) });
+      continue;
+    }
+    const kind = marker[1];
+    const name = marker[2];
+    if (kind === "BEGIN") {
+      if (stack.some(entry => entry.name === name)) {
+        issues.push({ type: "duplicate_begin", line: i + 1, name });
+      }
+      stack.push({ name, line: i + 1 });
+      continue;
+    }
+    const top = stack[stack.length - 1];
+    if (!top) {
+      issues.push({ type: "end_without_begin", line: i + 1, name });
+      continue;
+    }
+    if (top.name !== name) {
+      issues.push({ type: "misnested_section", line: i + 1, name, expected: top.name });
+      const matchingIndex = stack.map(entry => entry.name).lastIndexOf(name);
+      if (matchingIndex >= 0) stack.splice(matchingIndex, 1);
+      continue;
+    }
+    stack.pop();
+  }
+  for (const open of stack) {
+    issues.push({ type: "unclosed_section", line: open.line, name: open.name });
+  }
+  return issues;
 }
 
 function gitStatusPath(line) {
@@ -2082,6 +2562,7 @@ function docSummary(inventory, view = PUBLIC_VIEW) {
       repo,
       documents: list.length,
       source: list.filter(d => d.role === "source").length,
+      trail: list.filter(d => d.role === "trail").length,
       derived: list.filter(d => d.role === "derived").length,
       operational: list.filter(d => d.role === "operational").length,
       gaps: list.filter(isIndexGap).length,
@@ -2166,22 +2647,118 @@ function stripChangeBody(change) {
   return rest;
 }
 
+function mergePlanWrites(changes) {
+  const byFile = groupBy(changes, change => change.full_path);
+  const writes = [];
+  for (const group of byFile.values()) {
+    const ordered = [...group].sort(comparePlanChangesForApply);
+    const original = ordered[0]?.before || "";
+    let current = original;
+    const types = [];
+    const reasons = [];
+    let action = ordered[0]?.action || "update";
+    let allowed = true;
+    for (const change of ordered) {
+      allowed = allowed && change.allowed;
+      action = action === "create" || change.action === "create" ? "create" : "update";
+      types.push(change.type);
+      reasons.push(change.reason);
+      current = applyPlannedChange(current, change);
+    }
+    if (current === original) continue;
+    const first = ordered[0];
+    writes.push({
+      repo: first.repo,
+      path: first.path,
+      full_path: first.full_path,
+      type: types.length === 1 ? types[0] : "merged",
+      types: [...new Set(types)],
+      action,
+      allowed,
+      reason: [...new Set(reasons)].join("; "),
+      before_hash: sha(original),
+      after_hash: sha(current),
+      bytes_delta: Buffer.byteLength(current) - Buffer.byteLength(original),
+      before: original,
+      after: current,
+      merged_from: ordered.map(stripChangeBody),
+    });
+  }
+  return writes.sort((a, b) => a.repo.localeCompare(b.repo) || a.path.localeCompare(b.path));
+}
+
+function comparePlanChangesForApply(a, b) {
+  const weight = change => {
+    if (change.type === "documents" || change.type === "corpus-status") return 0;
+    if (change.type === "trails") return 1;
+    if (change.type === "backlinks") return 2;
+    return 3;
+  };
+  return weight(a) - weight(b) || a.type.localeCompare(b.type);
+}
+
+function applyPlannedChange(current, change) {
+  if (change.type === "documents" || change.type === "corpus-status") return ensureFinalNewline(normalizeEol(change.after));
+  if (change.type === "trails" || change.type === "backlinks") {
+    const body = extractSectionBody(change.after, change.type);
+    if (body == null) return current;
+    return replaceSection(ensureAutoSection(current, change.type), change.type, body);
+  }
+  return ensureFinalNewline(normalizeEol(change.after));
+}
+
 function replaceSection(content, name, body) {
+  const normalized = normalizeEol(content);
+  const match = matchAutoSection(normalized, name);
+  if (!match) return content;
   const begin = `<!-- BEGIN_AUTO: ${name} -->`;
   const end = `<!-- END_AUTO: ${name} -->`;
-  if (!content.includes(begin) || !content.includes(end)) return content;
-  const re = new RegExp(`${escapeRegExp(begin)}[\\s\\S]*?${escapeRegExp(end)}`, "m");
-  return content.replace(re, `${begin}\n${body.trim()}\n${end}`);
+  return ensureFinalNewline(
+    `${normalized.slice(0, match.index)}${begin}\n${body.trim()}\n${end}${normalized.slice(match.index + match[0].length)}`,
+  );
+}
+
+function extractSectionBody(content, name) {
+  const match = matchAutoSection(normalizeEol(content), name);
+  return match ? match[1].trim() : null;
+}
+
+function ensureAutoSection(content, name) {
+  content = normalizeEol(content);
+  if (matchAutoSection(content, name)) return content;
+  const begin = `<!-- BEGIN_AUTO: ${name} -->`;
+  const end = `<!-- END_AUTO: ${name} -->`;
+  const block = `${begin}\n${end}\n\n`;
+  const fmTitleMatch = content.match(/^---\r?\n[\s\S]*?\r?\n---\r?\n\r?\n#\s+[^\r\n]+\r?\n\r?\n/);
+  if (fmTitleMatch) return content.slice(0, fmTitleMatch[0].length) + block + content.slice(fmTitleMatch[0].length);
+  const titleMatch = content.match(/^#\s+[^\r\n]+\r?\n\r?\n/);
+  if (titleMatch) return content.slice(0, titleMatch[0].length) + block + content.slice(titleMatch[0].length);
+  return block + content;
 }
 
 function stripAutoSections(raw) {
-  return String(raw).replace(/<!--\s*BEGIN_AUTO:[\s\S]*?<!--\s*END_AUTO:[\s\S]*?-->/g, "");
+  return normalizeEol(String(raw)).replace(autoSectionGlobalRegex(), "");
 }
 
 function extractAutoSections(raw) {
-  return [...String(raw).matchAll(/<!--\s*BEGIN_AUTO:[\s\S]*?<!--\s*END_AUTO:[\s\S]*?-->/g)]
+  return [...normalizeEol(String(raw)).matchAll(autoSectionGlobalRegex())]
     .map(m => m[0])
     .join("\n");
+}
+
+function matchAutoSection(content, name) {
+  return autoSectionRegex(name).exec(String(content));
+}
+
+function autoSectionRegex(name) {
+  return new RegExp(
+    `^\\s*<!--\\s*BEGIN_AUTO:\\s*${escapeRegExp(name)}\\s*-->\\s*$\\r?\\n?([\\s\\S]*?)^\\s*<!--\\s*END_AUTO:\\s*${escapeRegExp(name)}\\s*-->\\s*$`,
+    "m",
+  );
+}
+
+function autoSectionGlobalRegex() {
+  return /^\s*<!--\s*BEGIN_AUTO:\s*([A-Za-z0-9_-]+)\s*-->\s*$\r?\n?[\s\S]*?^\s*<!--\s*END_AUTO:\s*\1\s*-->\s*$/gm;
 }
 
 function extractHeadingSection(raw, title) {
@@ -2314,8 +2891,8 @@ function formatPlan(plan) {
 }
 
 function formatApply(result) {
-  const lines = ["\nCorpus apply\n", `Applied: ${result.applied.length}`];
-  for (const c of result.applied) lines.push(`- ${c.repo}: ${c.path} (${c.type})`);
+  const lines = ["\nCorpus apply\n", `Applied: ${result.applied.length} file(s)`];
+  for (const c of result.applied) lines.push(`- ${c.repo}: ${c.path} (${formatChangeKinds(c)})`);
   if (result.skipped.length) {
     lines.push(`Skipped: ${result.skipped.length}`);
     for (const c of result.skipped) lines.push(`- ${c.repo}: ${c.path} (${c.reason})`);
@@ -2341,9 +2918,28 @@ function formatDoc(d) {
   return `\n${d.repo}/${d.rel}\n${d.title}\nrole: ${d.role}\nupdated: ${d.updated.date || "-"}\nindexed: ${d.index.referenced}\n`;
 }
 
+function formatTrailLint(result) {
+  const lines = [`\nTrail lint (${result.view})\n`];
+  lines.push(`Trails: ${result.count}`);
+  for (const trail of result.trails) {
+    lines.push(`- ${trail.repo}/${trail.path}: steps=${trail.steps}, linked=${trail.linked_steps}, visible=${trail.visible_steps}, issues=${trail.issues}`);
+  }
+  if (!result.issues.length) {
+    lines.push("");
+    lines.push("ok");
+    return lines.join("\n");
+  }
+  lines.push("");
+  lines.push(`${result.issues.length} issue(s):`);
+  for (const issue of result.issues) {
+    lines.push(`- ${issue.repo}/${issue.path}:${issue.line} [${issue.type}] ${issue.message}`);
+  }
+  return lines.join("\n");
+}
+
 function formatDocSummary(summary) {
   const lines = ["\nDocument summary\n", `Total: ${summary.total}`, ""];
-  for (const r of summary.repos) lines.push(`${pad(r.repo, 18)} docs=${r.documents} source=${r.source} derived=${r.derived} operational=${r.operational} gaps=${r.gaps}`);
+  for (const r of summary.repos) lines.push(`${pad(r.repo, 18)} docs=${r.documents} source=${r.source} trail=${r.trail} derived=${r.derived} operational=${r.operational} gaps=${r.gaps}`);
   return lines.join("\n");
 }
 
@@ -2387,6 +2983,42 @@ function formatGit(results) {
   const lines = ["\nGit verify\n", `${pad("Repository", 18)} ${pad("Behind", 8, true)} ${pad("Ahead", 8, true)} ${pad("Dirty", 8, true)}`];
   lines.push("-".repeat(55));
   for (const r of results) lines.push(`${pad(r.repo, 18)} ${pad(r.behind, 8, true)} ${pad(r.ahead, 8, true)} ${pad(r.dirty_count, 8, true)}`);
+  return lines.join("\n");
+}
+
+function formatGitClassify(result) {
+  const lines = ["\nGit classify\n"];
+  lines.push(`Repo scope: ${result.repo}`);
+  lines.push(`Summary: ${formatCounts(result.summary) || "clean"}`);
+  for (const repo of result.repos) {
+    lines.push("");
+    lines.push(`${repo.repo} (${repo.count})`);
+    lines.push(`  ${formatCounts(repo.summary) || "clean"}`);
+    for (const entry of repo.entries) {
+      lines.push(`  - ${entry.path} [${entry.xy}] ${entry.classification}`);
+    }
+  }
+  return lines.join("\n");
+}
+
+function formatConsolidate(result) {
+  const lines = ["\nConsolidate\n"];
+  lines.push(result.ok ? "ok" : "issues:");
+  if (result.issues.length) {
+    for (const issue of result.issues) lines.push(`- ${issue}`);
+  }
+  lines.push("");
+  lines.push(`Generated: ${result.generated.changes} change(s) across ${result.generated.files} file(s)`);
+  lines.push(`Gaps: ${result.gaps.length}`);
+  lines.push(`Privacy leaks: ${result.privacy.leaks.length}`);
+  lines.push(`Active continuations: ${result.continuations.length}`);
+  lines.push(`Auto-section issues: ${result.auto_sections.issues.length}`);
+  lines.push(`Trail lint issues: ${result.trail_lint.issues.length}`);
+  lines.push(`Worktree: ${formatCounts(result.noise_summary) || "clean"}`);
+  const drift = result.git
+    .filter(repo => repo.behind || repo.ahead || repo.dirty_count)
+    .map(repo => `${repo.repo}=${repo.behind} behind/${repo.ahead} ahead/${repo.dirty_count} dirty`);
+  lines.push(`Git drift: ${drift.length ? drift.join(", ") : "clean"}`);
   return lines.join("\n");
 }
 
@@ -2438,6 +3070,20 @@ function formatContinuationSchema() {
   return `\n${CONTINUATION_PROTOCOL}\n\nRequired fields: id, status, kind, title, question, subject, context, expected_response.\nResolution is written by continuation resolve/cancel.\n`;
 }
 
+function formatIssueList(repo, issues, state) {
+  const lines = [`\nGitHub issues (${repo}, ${state})\n`];
+  if (!issues.length) {
+    lines.push("No issues match.");
+    return lines.join("\n");
+  }
+  lines.push(`${pad("#", 6, true)} ${pad("State", 10)} ${pad("Updated", 20)} Title`);
+  lines.push("-".repeat(90));
+  for (const issue of issues) {
+    lines.push(`${pad(issue.number, 6, true)} ${pad(issue.state || "-", 10)} ${pad((issue.updated_at || "").slice(0, 19), 20)} ${issue.title}`);
+  }
+  return lines.join("\n");
+}
+
 function continuationSchema() {
   return {
     protocol: CONTINUATION_PROTOCOL,
@@ -2453,6 +3099,197 @@ function continuationSchema() {
       "continuation cancel <id> --reason <text>",
     ],
   };
+}
+
+function resolveIssueRepo(ctx, repoArg) {
+  if (repoArg.includes("/")) return { name: repoArg.split("/").pop(), full_name: repoArg, path: "" };
+  const repo = ctx.repos.find(r => r.name === repoArg);
+  if (!repo) throw new Error(`Unknown registered repo: ${repoArg}`);
+  const fullName = repo.policy?.github || repo.policy?.github_repo || githubFullNameFromRemote(repo);
+  if (!fullName) throw new Error(`Cannot determine GitHub repository for ${repo.name}. Pass owner/name explicitly.`);
+  return { name: repo.name, full_name: fullName, path: repo.path };
+}
+
+function githubFullNameFromRemote(repo) {
+  try {
+    const remote = execFileSync("git", ["-C", repo.path, "remote", "get-url", "origin"], { encoding: "utf8" }).trim();
+    return parseGitHubFullName(remote);
+  } catch {
+    return "";
+  }
+}
+
+function parseGitHubFullName(remote) {
+  const clean = String(remote || "").trim().replace(/\.git$/i, "");
+  let m = clean.match(/github\.com[:/](.+\/.+)$/i);
+  if (!m) m = clean.match(/^https?:\/\/[^/]+\/(.+\/.+)$/i);
+  return m ? m[1].replace(/^\/+/, "") : "";
+}
+
+function ghJson(args) {
+  try {
+    const raw = execFileSync("gh", args, { encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] });
+    return parseJsonText(raw || "null", `gh ${args.join(" ")}`);
+  } catch (e) {
+    const stderr = e.stderr ? String(e.stderr).trim() : "";
+    const detail = stderr || e.message || "unknown gh error";
+    throw new Error(`gh failed: ${detail}`);
+  }
+}
+
+function normalizeGitHubIssue(issue) {
+  const labels = Array.isArray(issue.labels) ? issue.labels.map(label => typeof label === "string" ? label : label.name).filter(Boolean) : [];
+  const author = typeof issue.author === "string" ? issue.author : issue.author?.login || "";
+  return {
+    number: Number(issue.number || 0),
+    title: issue.title || "",
+    state: issue.state || "",
+    state_reason: issue.stateReason || "",
+    labels,
+    author,
+    updated_at: issue.updatedAt || "",
+    closed_at: issue.closedAt || "",
+    url: issue.url || "",
+    body: issue.body || "",
+    comments: Array.isArray(issue.comments) ? issue.comments : [],
+  };
+}
+
+function buildIssuePacket(repo, issue) {
+  const body = issue.body || "";
+  const targetDocs = extractIssueTargetDocuments(body);
+  const closure = extractIssueSection(body, [
+    "Expected closure condition",
+    "Critères de clôture",
+    "Critere de cloture",
+    "Closure condition",
+  ]);
+  const nextStep = extractIssueSection(body, [
+    "Agent-resumable next step",
+    "Agent-resumable next steps",
+    "Next exploration step",
+    "Prochaine continuation",
+  ]);
+  const risks = extractIssueSection(body, ["Risks", "Risques", "Risks / objections", "Risks of over-interpretation"]);
+  return {
+    ok: true,
+    type: "cogentia.issue_continuation.v1",
+    repository: repo.full_name,
+    issue: issue.number,
+    title: issue.title,
+    status: String(issue.state || "").toLowerCase(),
+    state_reason: issue.state_reason || "",
+    labels: issue.labels,
+    url: issue.url,
+    updated_at: issue.updated_at,
+    closed_at: issue.closed_at,
+    target_documents: targetDocs,
+    closure_condition: closure,
+    risks,
+    agent_task: nextStep || "Review the issue and decide whether it should be addressed, deferred, transformed, or closed as already handled.",
+    issue_body: body,
+  };
+}
+
+function extractIssueTargetDocuments(body) {
+  const out = new Set();
+  const targetSection = extractIssueSection(body, ["Target documents", "Target files", "Emplacement proposé"]);
+  const haystack = targetSection || body;
+  const pathRe = /`([^`\n]+\.(?:md|js|ts|json|yml|yaml))`/gi;
+  let m;
+  while ((m = pathRe.exec(haystack))) out.add(m[1].replace(/\\/g, "/"));
+  for (const line of haystack.split(/\r?\n/)) {
+    const bullet = line.match(/^\s*[-*]\s+([^`#\n]+\.(?:md|js|ts|json|yml|yaml))\s*$/i);
+    if (bullet) out.add(bullet[1].trim().replace(/\\/g, "/"));
+  }
+  return [...out];
+}
+
+function extractIssueSection(body, headings) {
+  if (!body) return "";
+  const lines = body.split(/\r?\n/);
+  const wanted = new Set(headings.map(normalizeHeading));
+  let start = -1;
+  let startLevel = 0;
+  for (let i = 0; i < lines.length; i++) {
+    const m = lines[i].match(/^(#{2,6})\s+(.+?)\s*$/);
+    if (!m) continue;
+    if (wanted.has(normalizeHeading(m[2]))) {
+      start = i + 1;
+      startLevel = m[1].length;
+      break;
+    }
+  }
+  if (start < 0) return "";
+  const chunk = [];
+  for (let i = start; i < lines.length; i++) {
+    const m = lines[i].match(/^(#{2,6})\s+/);
+    if (m && m[1].length <= startLevel) break;
+    chunk.push(lines[i]);
+  }
+  return chunk.join("\n").trim();
+}
+
+function normalizeHeading(s) {
+  return String(s || "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^\p{L}\p{N}]+/gu, " ")
+    .trim()
+    .toLowerCase();
+}
+
+function renderIssuePacket(packet) {
+  const lines = [
+    "---",
+    `type: ${yamlScalar(packet.type)}`,
+    `repository: ${yamlScalar(packet.repository)}`,
+    `issue: ${packet.issue}`,
+    `title: ${yamlScalar(packet.title)}`,
+    `status: ${yamlScalar(packet.status)}`,
+    `state_reason: ${yamlScalar(packet.state_reason || "")}`,
+    `url: ${yamlScalar(packet.url)}`,
+    `updated_at: ${yamlScalar(packet.updated_at || "")}`,
+    `closed_at: ${yamlScalar(packet.closed_at || "")}`,
+    "labels:",
+    ...yamlList(packet.labels),
+    "target_documents:",
+    ...yamlList(packet.target_documents),
+    "---",
+    "",
+    `# Issue #${packet.issue} - ${packet.title}`,
+    "",
+    `Repository: ${packet.repository}`,
+    `Status: ${packet.status}${packet.state_reason ? ` (${packet.state_reason})` : ""}`,
+    `URL: ${packet.url}`,
+    "",
+    "## Agent task",
+    "",
+    packet.agent_task || "-",
+    "",
+    "## Closure condition",
+    "",
+    packet.closure_condition || "-",
+    "",
+    "## Risks",
+    "",
+    packet.risks || "-",
+    "",
+    "## Issue body",
+    "",
+    packet.issue_body || "-",
+  ];
+  return lines.join("\n");
+}
+
+function yamlScalar(value) {
+  const s = String(value ?? "");
+  return JSON.stringify(s);
+}
+
+function yamlList(values) {
+  if (!values || !values.length) return ["  []"];
+  return values.map(value => `  - ${yamlScalar(value)}`);
 }
 
 function compareContinuations(a, b) {
@@ -2488,6 +3325,10 @@ function groupBy(list, fn) {
     map.get(key).push(x);
   }
   return map;
+}
+
+function uniqueCount(list) {
+  return new Set(list).size;
 }
 
 function takeFlag(flag) {
@@ -2562,6 +3403,19 @@ function today() {
 function pad(s, n, left = false) {
   s = String(s);
   return left ? s.padStart(n) : s.padEnd(n);
+}
+
+function formatCounts(counts) {
+  return Object.entries(counts || {})
+    .filter(([, value]) => value)
+    .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
+    .map(([key, value]) => `${key}=${value}`)
+    .join(", ");
+}
+
+function formatChangeKinds(change) {
+  if (Array.isArray(change.types) && change.types.length) return change.types.join("+");
+  return change.type || "update";
 }
 
 function slug(s) {

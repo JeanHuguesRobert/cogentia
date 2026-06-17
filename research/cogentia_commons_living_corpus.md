@@ -784,7 +784,7 @@ Current open continuations:
 4. **Symmetric-derived policy** — define a short decision schema for documents that are derived but temporarily sovereign.
 5. **Web workspace model** — specify the per-document Redactor/Reviewer/Document session state and how it maps to local files and GitHub branches.
 6. **Exploration path query** — add a command or view that lists open possibilities, active continuations, issues, work-in-progress docs, and unresolved objections together.
-7. **Tutorial refresh** — update or supersede the older `cogentia_js_tutorial.md` so it describes the current v2 CLI rather than the archived v0.10/v1 surface.
+7. **Tutorial upkeep** — keep `cogentia_js_tutorial.md` regenerated from the current v2 CLI source and associated doctrine as the command surface evolves.
 8. **Stabilizer concept consolidation** — connect the Living Corpus, Cogentia CLI, COP, DHITL, and source/derived workflow explicitly as procedural anti-Ubik stabilizers.
 
 These should not all become immediate implementation work. They are paths of exploration. The user chooses the order.
@@ -809,7 +809,6 @@ Humans give arbitration.
 And the operational rule:
 
 > `cogentia.js` should make the corpus visible, navigable, checkable, and resumable; it should not pretend that mechanical structure is semantic judgment.
-
 <!-- BEGIN_AUTO: backlinks -->
 ### Backlinks
 

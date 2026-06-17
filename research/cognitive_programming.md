@@ -976,8 +976,6 @@ or:
 ```text
 inseme/packages/cop-core/COGNITIVE_PROGRAMMING_PROFILE.md
 ```
-
-
 <!-- BEGIN_AUTO: backlinks -->
 ### Backlinks
 

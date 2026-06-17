@@ -37,8 +37,6 @@ cogentia-trace resume ./continuations/cont-0001.json --decision private
 The continuation is not a chat transcript. It is a compact resumption packet.
 
 It should contain hashes, identifiers and limited excerpts when possible, rather than raw private content.
-
-
 <!-- BEGIN_AUTO: backlinks -->
 ### Backlinks
 
