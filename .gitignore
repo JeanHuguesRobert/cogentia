@@ -31,3 +31,9 @@ package-lock.json
 
 # Cogentia Commons registry — lives in the user's repo (JeanHuguesRobert/)
 .cogentia.json
+
+# Local Cogentia runtime/scratch artefacts
+.cogentia/
+scripts/*.bak
+scripts/plugin_api_test.js
+scripts/tmp_*.mjs
