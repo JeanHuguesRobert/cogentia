@@ -1512,7 +1512,7 @@ function verifyPrivacy(ctx, inventory, view = PUBLIC_VIEW) {
 
 function renderCorpusStatus(repo, ctx, inventory, before, view = PUBLIC_VIEW) {
   const original = before || bootstrapCorpusStatus(repo);
-  let content = original;
+  let content = normalizeAutoMarkers(original);
   content = replaceSection(content, "registered_repos", renderRegisteredRepos(ctx, view));
   content = replaceSection(content, "graph", renderRepoGraph(inventory, ctx, view));
   content = replaceSection(content, "concepts", renderConceptSummary(repo, loadConcepts(ctx)));
@@ -2942,7 +2942,7 @@ function applyPlannedChange(current, change) {
 }
 
 function replaceSection(content, name, body) {
-  const normalized = normalizeEol(content);
+  const normalized = normalizeAutoMarkers(content);
   const match = matchAutoSection(normalized, name);
   if (!match) return content;
   const begin = `<!-- BEGIN_AUTO: ${name} -->`;
@@ -2953,12 +2953,12 @@ function replaceSection(content, name, body) {
 }
 
 function extractSectionBody(content, name) {
-  const match = matchAutoSection(normalizeEol(content), name);
+  const match = matchAutoSection(normalizeAutoMarkers(content), name);
   return match ? match[1].trim() : null;
 }
 
 function ensureAutoSection(content, name) {
-  content = normalizeEol(content);
+  content = normalizeAutoMarkers(content);
   if (matchAutoSection(content, name)) return content;
   const begin = `<!-- BEGIN_AUTO: ${name} -->`;
   const end = `<!-- END_AUTO: ${name} -->`;
@@ -2971,17 +2971,22 @@ function ensureAutoSection(content, name) {
 }
 
 function stripAutoSections(raw) {
-  return normalizeEol(String(raw)).replace(autoSectionGlobalRegex(), "");
+  return normalizeAutoMarkers(String(raw)).replace(autoSectionGlobalRegex(), "");
 }
 
 function extractAutoSections(raw) {
-  return [...normalizeEol(String(raw)).matchAll(autoSectionGlobalRegex())]
+  return [...normalizeAutoMarkers(String(raw)).matchAll(autoSectionGlobalRegex())]
     .map(m => m[0])
     .join("\n");
 }
 
+function normalizeAutoMarkers(raw) {
+  return normalizeEol(String(raw))
+    .replace(/^#{1,6}\s*(<!--\s*(?:BEGIN|END)_AUTO:\s*[A-Za-z0-9_-]+\s*-->)\s*$/gm, "$1");
+}
+
 function matchAutoSection(content, name) {
-  return autoSectionRegex(name).exec(String(content));
+  return autoSectionRegex(name).exec(normalizeAutoMarkers(content));
 }
 
 function autoSectionRegex(name) {
