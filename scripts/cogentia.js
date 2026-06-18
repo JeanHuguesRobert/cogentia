@@ -105,6 +105,8 @@ async function main() {
       return cmdIssues(argv.shift() || "list");
     case "git":
       return cmdGit(argv.shift() || "verify");
+    case "repos":
+      return cmdRepos(argv.shift() || "status");
     case "agent":
       return cmdAgent(argv.shift() || "start");
     case "consolidate":
@@ -173,6 +175,12 @@ Git:
   git verify               Ahead/behind and dirty state for all repos.
   git classify             Classify dirty files as text, line-endings-only, untracked, etc.
   git noise plan           Classify dirty files and suggest local scratch/noise actions.
+
+Repository batch helpers:
+  repos status [repo|all]  Git status for configured corpus repositories.
+  repos fetch [repo|all]   Run git fetch --dry-run by default; pass --apply to update refs.
+  repos push [repo|all]    Run git push --dry-run by default; pass --apply to push.
+                           Dirty or behind repositories are skipped unless explicitly safe.
 
 Agent/publish helpers:
   corpus commit-generated  Plan generated-only commits. Add --apply to stage and commit.
@@ -501,6 +509,30 @@ function cmdGit(sub) {
       }
     default:
       throw new Error(`Unknown git subcommand "${sub}". Use verify, classify, or noise plan.`);
+  }
+}
+
+function cmdRepos(sub) {
+  const ctx = loadContext();
+  const repoArg = valueFlag("--repo") || optionalPositional("all");
+  switch (sub) {
+    case "status":
+      {
+        const result = batchRepoStatus(ctx, repoArg);
+        return output(result, formatRepoBatch(result));
+      }
+    case "fetch":
+      {
+        const result = batchRepoFetch(ctx, repoArg, { apply: hasFlag("--apply") });
+        return output(result, formatRepoBatch(result));
+      }
+    case "push":
+      {
+        const result = batchRepoPush(ctx, repoArg, { apply: hasFlag("--apply"), allowDirty: hasFlag("--allow-dirty") });
+        return output(result, formatRepoBatch(result));
+      }
+    default:
+      throw new Error(`Unknown repos subcommand "${sub}". Use status, fetch, or push.`);
   }
 }
 
@@ -2097,9 +2129,139 @@ function verifyGit(ctx) {
   });
 }
 
-function classifyGitWorktree(ctx, repoArg = "all") {
+function selectRepos(ctx, repoArg = "all") {
   const repos = ctx.repos.filter(repo => repoArg === "all" || repo.name === repoArg);
   if (!repos.length && repoArg !== "all") throw new Error(`Unknown repo: ${repoArg}`);
+  return repos;
+}
+
+function repoGitStatus(repo) {
+  const status = git(repo.path, ["status", "--porcelain"], { ok: true }).split(/\r?\n/).filter(line => line.trim());
+  let behind = 0;
+  let ahead = 0;
+  const counts = git(repo.path, ["rev-list", "--left-right", "--count", "@{upstream}...HEAD"], { ok: true }).trim().split(/\s+/);
+  if (counts.length === 2) {
+    behind = Number(counts[0]) || 0;
+    ahead = Number(counts[1]) || 0;
+  }
+  const ignored = repo.policy.ignore_dirty || [];
+  const dirty = status.filter(line => !ignored.some(pattern => globMatch(gitStatusPath(line), pattern)));
+  const remote = git(repo.path, ["remote", "get-url", "origin"], { ok: true }).trim();
+  return {
+    repo: repo.name,
+    path: repo.path,
+    branch: repo.branch,
+    remote,
+    behind,
+    ahead,
+    dirty_count: dirty.length,
+    dirty,
+  };
+}
+
+function batchRepoStatus(ctx, repoArg = "all") {
+  const repos = selectRepos(ctx, repoArg);
+  const results = repos.map(repo => ({ ...repoGitStatus(repo), action: "status", ok: true, skipped: false }));
+  return {
+    ok: true,
+    command: "status",
+    repo: repoArg,
+    dry_run: true,
+    repos: results,
+    summary: summarizeRepoBatch(results),
+  };
+}
+
+function batchRepoFetch(ctx, repoArg = "all", options = {}) {
+  const repos = selectRepos(ctx, repoArg);
+  const dryRun = !options.apply;
+  const results = repos.map(repo => {
+    const before = repoGitStatus(repo);
+    const args = dryRun ? ["fetch", "--dry-run"] : ["fetch"];
+    const run = gitRun(repo.path, args);
+    const after = dryRun ? before : repoGitStatus(repo);
+    return {
+      ...after,
+      before,
+      action: dryRun ? "fetch_dry_run" : "fetch",
+      skipped: false,
+      ok: run.ok,
+      stdout: run.stdout.trim(),
+      stderr: run.stderr.trim(),
+      error: run.ok ? "" : run.error,
+    };
+  });
+  return {
+    ok: results.every(r => r.ok),
+    command: "fetch",
+    repo: repoArg,
+    dry_run: dryRun,
+    repos: results,
+    summary: summarizeRepoBatch(results),
+  };
+}
+
+function batchRepoPush(ctx, repoArg = "all", options = {}) {
+  const repos = selectRepos(ctx, repoArg);
+  const dryRun = !options.apply;
+  const results = repos.map(repo => {
+    const before = repoGitStatus(repo);
+    const base = {
+      ...before,
+      before,
+      ok: true,
+      stdout: "",
+      stderr: "",
+      error: "",
+    };
+    if (before.dirty_count && !options.allowDirty) {
+      return { ...base, action: "skip_dirty", skipped: true, ok: false, error: "dirty worktree; pass --allow-dirty to attempt push anyway" };
+    }
+    if (before.behind) {
+      return { ...base, action: "skip_behind", skipped: true, ok: false, error: "behind upstream; fetch/rebase before pushing" };
+    }
+    if (!before.ahead) {
+      return { ...base, action: "skip_no_ahead", skipped: true };
+    }
+    const args = dryRun ? ["push", "--dry-run"] : ["push"];
+    const run = gitRun(repo.path, args);
+    const after = dryRun ? before : repoGitStatus(repo);
+    return {
+      ...after,
+      before,
+      action: dryRun ? "push_dry_run" : "push",
+      skipped: false,
+      ok: run.ok,
+      stdout: run.stdout.trim(),
+      stderr: run.stderr.trim(),
+      error: run.ok ? "" : run.error,
+    };
+  });
+  return {
+    ok: results.every(r => r.ok || r.action === "skip_no_ahead"),
+    command: "push",
+    repo: repoArg,
+    dry_run: dryRun,
+    repos: results,
+    summary: summarizeRepoBatch(results),
+  };
+}
+
+function summarizeRepoBatch(results) {
+  return {
+    repos: results.length,
+    ok: results.filter(r => r.ok).length,
+    skipped: results.filter(r => r.skipped).length,
+    failed: results.filter(r => !r.ok && !r.skipped).length,
+    dirty: results.filter(r => r.dirty_count).length,
+    ahead: results.filter(r => r.ahead).length,
+    behind: results.filter(r => r.behind).length,
+    actions: countBy(results, r => r.action || "status"),
+  };
+}
+
+function classifyGitWorktree(ctx, repoArg = "all") {
+  const repos = selectRepos(ctx, repoArg);
   const results = repos.map(classifyRepoWorktree);
   return {
     ok: true,
@@ -3117,6 +3279,20 @@ function git(cwd, args, options = {}) {
   }
 }
 
+function gitRun(cwd, args) {
+  try {
+    const stdout = execFileSync("git", args, { cwd, encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] });
+    return { ok: true, stdout, stderr: "", error: "" };
+  } catch (e) {
+    return {
+      ok: false,
+      stdout: String(e.stdout || ""),
+      stderr: String(e.stderr || ""),
+      error: String(e.stderr || e.message || "git command failed").trim(),
+    };
+  }
+}
+
 function output(json, text) {
   if (JSON_MODE) console.log(JSON.stringify(json, null, 2));
   else console.log(text);
@@ -3252,6 +3428,29 @@ function formatGit(results) {
   const lines = ["\nGit verify\n", `${pad("Repository", 18)} ${pad("Behind", 8, true)} ${pad("Ahead", 8, true)} ${pad("Dirty", 8, true)}`];
   lines.push("-".repeat(55));
   for (const r of results) lines.push(`${pad(r.repo, 18)} ${pad(r.behind, 8, true)} ${pad(r.ahead, 8, true)} ${pad(r.dirty_count, 8, true)}`);
+  return lines.join("\n");
+}
+
+function formatRepoBatch(result) {
+  const mode = result.dry_run ? "dry-run" : "apply";
+  const lines = [`\nRepos ${result.command}\n`, `Mode: ${mode}`, `Repo scope: ${result.repo}`];
+  lines.push(`Summary: repos=${result.summary.repos}, ok=${result.summary.ok}, skipped=${result.summary.skipped}, failed=${result.summary.failed}, dirty=${result.summary.dirty}, ahead=${result.summary.ahead}, behind=${result.summary.behind}`);
+  lines.push("");
+  lines.push(`${pad("Repository", 18)} ${pad("Action", 14)} ${pad("Behind", 7, true)} ${pad("Ahead", 7, true)} ${pad("Dirty", 7, true)} Result`);
+  lines.push("-".repeat(82));
+  for (const repo of result.repos) {
+    const action = repo.action || "status";
+    const status = repo.skipped ? `skipped: ${repo.error || action}` : (repo.ok ? "ok" : `failed: ${repo.error || "git command failed"}`);
+    lines.push(`${pad(repo.repo, 18)} ${pad(action, 14)} ${pad(repo.behind, 7, true)} ${pad(repo.ahead, 7, true)} ${pad(repo.dirty_count, 7, true)} ${status}`);
+  }
+  if (result.command === "push" && result.dry_run) {
+    lines.push("");
+    lines.push("Pass --apply to push. Dirty repos are skipped unless --allow-dirty is also passed.");
+  }
+  if (result.command === "fetch" && result.dry_run) {
+    lines.push("");
+    lines.push("Pass --apply to update local remote-tracking refs.");
+  }
   return lines.join("\n");
 }
 

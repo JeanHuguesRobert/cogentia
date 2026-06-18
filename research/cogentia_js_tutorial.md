@@ -305,6 +305,9 @@ This command family restores the operational part of the doctrine described in [
 git verify
 git classify
 git noise plan
+repos status [repo|all]
+repos fetch [repo|all]
+repos push [repo|all]
 ```
 
 `git verify` reports ahead/behind and dirty state for each registered repo.
@@ -328,7 +331,26 @@ This is particularly useful during consolidation, because it separates real cont
 - `commit_generated` for generated navigation files;
 - `review_manually` when the tool should not guess.
 
-### 4.6 Daemon command
+`repos` is the constrained batch helper for Git operations across the configured corpus
+repositories. It is intentionally not an arbitrary shell runner.
+
+- `repos status` reports remote URL, ahead/behind, dirty count and ignored-policy-aware dirty
+  files for every configured repo.
+- `repos fetch` runs `git fetch --dry-run` by default. Add `--apply` to update remote-tracking
+  refs.
+- `repos push` runs `git push --dry-run` by default. Add `--apply` to push. Dirty repositories
+  are skipped unless `--allow-dirty` is passed, and repositories behind upstream are skipped.
+
+Typical use:
+
+```bash
+node scripts/cogentia.js repos status --json
+node scripts/cogentia.js repos push --json
+node scripts/cogentia.js repos push --apply --json
+node scripts/cogentia.js repos fetch cogentia --json
+```
+
+### 4.7 Daemon command
 
 ```text
 daemon
