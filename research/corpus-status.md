@@ -53,17 +53,17 @@ graph LR
   r_registre_mariani["registre-mariani"]
   r_ubikia["ubikia"]
   r_jeanhuguesrobert["JeanHuguesRobert"]
-  r_jeanhuguesrobert -->|161| r_barons_mariani
-  r_jeanhuguesrobert -->|105| r_cogentia
+  r_jeanhuguesrobert -->|160| r_barons_mariani
+  r_jeanhuguesrobert -->|110| r_cogentia
   r_cogentia -->|98| r_barons_mariani
   r_barons_mariani -->|62| r_cogentia
-  r_jeanhuguesrobert -->|46| r_marenostrum
+  r_jeanhuguesrobert -->|45| r_marenostrum
   r_fractavolta -->|41| r_cogentia
   r_fractavolta -->|37| r_marenostrum
-  r_jeanhuguesrobert -->|33| r_fractavolta
+  r_jeanhuguesrobert -->|32| r_fractavolta
   r_barons_mariani -->|23| r_marenostrum
   r_cogentia -->|22| r_inseme
-  r_jeanhuguesrobert -->|22| r_inox
+  r_jeanhuguesrobert -->|21| r_inox
   r_cogentia -->|19| r_marenostrum
   r_fractavolta -->|18| r_inseme
   r_fractavolta -->|18| r_barons_mariani
@@ -77,9 +77,9 @@ graph LR
   r_inox -->|11| r_cogentia
   r_marenostrum -->|11| r_barons_mariani
   r_inox -->|10| r_fractavolta
-  r_jeanhuguesrobert -->|9| r_ubikia
   r_fractavolta -->|8| r_inox
   r_inox -->|8| r_marenostrum
+  r_jeanhuguesrobert -->|8| r_ubikia
   r_inox -->|7| r_inseme
   r_inseme -->|7| r_inox
   r_barons_mariani -->|5| r_inox
