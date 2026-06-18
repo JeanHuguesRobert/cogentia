@@ -1284,20 +1284,35 @@ function buildInventory(ctx) {
 
 function classifyRole(repo, relPath, full, fm, ignored, indexSets) {
   const r = relPath.replace(/\\/g, "/");
-  const explicit = String(fm.document_role || fm.role || "").toLowerCase();
+  const explicit = String(fm.document_role || fm.corpus_role || fm.role || "").toLowerCase();
   const derivedFrom = fm.derived_from || fm.derived_by;
   if (ignored) return { role: "archive", source: "ignore", confidence: "strong" };
   if (/^research\/(index|concepts|corpus-status|documents)\.md$/i.test(r)) {
     return { role: "index", source: "path:research", confidence: "strong" };
   }
+  if (r === "AGENTS.md" || r.includes("/AGENTS.md")) {
+    return { role: "operational", source: "path:AGENTS.md", confidence: "strong" };
+  }
+  if (r.includes("/templates/")) {
+    return { role: "template", source: "path:templates", confidence: "strong" };
+  }
+  if (r.includes("/examples/") || r.includes("/example_") || r.includes("fictitious_")) {
+    return { role: "example", source: "path:examples", confidence: "strong" };
+  }
   if (/\balias\b/.test(explicit) || fm.redirect_to || /^see\s+/i.test(readFileIfExists(full).trim())) {
     return { role: "alias", source: "frontmatter/path", confidence: "medium" };
   }
+  if (explicit.includes("operational")) return { role: "operational", source: "frontmatter:document_role", confidence: "strong" };
+  if (explicit.includes("template")) return { role: "template", source: "frontmatter:document_role", confidence: "strong" };
+  if (explicit.includes("example")) return { role: "example", source: "frontmatter:document_role", confidence: "strong" };
   if (explicit.includes("source") || explicit.includes("sovereign") || explicit.includes("symmetric") || explicit.includes("souverain")) {
     return { role: "source", source: "frontmatter:document_role", confidence: "strong" };
   }
   if (derivedFrom || explicit.includes("derived") || r.includes("/derived_products/")) {
     return { role: "derived", source: "frontmatter/path:derived", confidence: "strong" };
+  }
+  if (r.startsWith("cogentia_personal/data_portability/")) {
+    return { role: "source", source: "path:data_portability", confidence: "strong" };
   }
   if (r.startsWith("research/trails/")) return { role: "trail", source: "path:research/trails", confidence: "strong" };
   if (indexSets.published.has(path.resolve(full))) {
@@ -2731,7 +2746,7 @@ function documentJudgmentRequests(inventory, repoArg, options = {}) {
     if (doc.role === "unknown" || doc.role_confidence === "weak") {
       reasons.push("document role is unknown or weakly inferred");
     }
-    if (doc.role === "derived") {
+    if (doc.role === "derived" && derivedNeedsJudgment(doc)) {
       reasons.push("derived document may need judgment: asymmetric derived product or symmetric sovereign source");
     }
     if (options.includeInferredSource && doc.role === "source" && doc.role_confidence === "medium" && doc.rel.startsWith("research/")) {
@@ -2769,6 +2784,21 @@ function documentJudgmentRequests(inventory, repoArg, options = {}) {
     });
   }
   return requests;
+}
+
+function derivedNeedsJudgment(doc) {
+  const fm = doc.frontmatter || {};
+  const explicit = [
+    fm.derivation_type,
+    fm.derived_product_type,
+    fm.document_role,
+    fm.corpus_role,
+    fm.role,
+    fm.status,
+  ].map(v => String(v || "").toLowerCase()).join(" ");
+  if (explicit.includes("asym") || explicit.includes("asymétr")) return false;
+  if (fm.generated_automatically && fm.derived_from) return false;
+  return true;
 }
 
 function docsFilter(repoArg) {

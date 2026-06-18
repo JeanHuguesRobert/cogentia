@@ -139,6 +139,8 @@ The important current roles are:
 - `derived`
 - `index`
 - `operational`
+- `template`
+- `example`
 - `alias`
 - `archive`
 - `unknown`
@@ -146,9 +148,19 @@ The important current roles are:
 Role inference is intentionally conservative:
 
 - `research/trails/*.md` => `trail`
+- explicit `document_role`, `corpus_role` or `role` frontmatter wins
+- root or nested `AGENTS.md` => `operational`
+- `/templates/` paths => `template`
+- `/examples/`, `example_` or `fictitious_` paths => `example`
 - explicit `derived_from` / `derived_by` => `derived`
+- public `cogentia_personal/data_portability/` architecture notes => `source`
 - `research/index.md` publication membership often => `source`
 - generated navigation docs => `index`
+
+`docs judgments` deliberately stays conservative. It no longer asks for obvious operational,
+template, example, or explicitly asymmetric generated-derived cases, but it still asks for human
+judgment when a derived product could have become a symmetric source, or when private-register
+documents need an ownership/privacy decision.
 
 ---
 
