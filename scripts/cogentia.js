@@ -18,7 +18,7 @@ import { createHash, randomBytes } from "node:crypto";
 import { pathToFileURL } from "node:url";
 import { DAEMON_PLUGINS, DAEMON_PLUGIN_ROUTES, loadDaemonPlugins, dispatchPluginRoute } from "./daemon_plugins/registry.js";
 
-const VERSION = "2.2.0";
+const VERSION = "2.3.0";
 const CONFIG_FILE = ".cogentia.json";
 const DOCUMENTS_FILE = "documents.md";
 const CORPUS_STATUS_FILE = "corpus-status.md";
@@ -181,6 +181,12 @@ Repository batch helpers:
   repos fetch [repo|all]   Run git fetch --dry-run by default; pass --apply to update refs.
   repos push [repo|all]    Run git push --dry-run by default; pass --apply to push.
                            Dirty or behind repositories are skipped unless explicitly safe.
+  repos import-owner <github-owner>
+                           Plan importing all visible repositories for a GitHub user or
+                           organization. Flags: --apply --clone-missing --include-private
+                           --root <path> --owner-kind <kind> --only <names>
+                           --exclude <names>
+                           --relation own|mandate|contributor|unknown --mandate <text>
 
 Agent/publish helpers:
   corpus commit-generated  Plan generated-only commits. Add --apply to stage and commit.
@@ -514,25 +520,47 @@ function cmdGit(sub) {
 
 function cmdRepos(sub) {
   const ctx = loadContext();
-  const repoArg = valueFlag("--repo") || optionalPositional("all");
   switch (sub) {
     case "status":
       {
+        const repoArg = valueFlag("--repo") || optionalPositional("all");
         const result = batchRepoStatus(ctx, repoArg);
         return output(result, formatRepoBatch(result));
       }
     case "fetch":
       {
+        const repoArg = valueFlag("--repo") || optionalPositional("all");
         const result = batchRepoFetch(ctx, repoArg, { apply: hasFlag("--apply") });
         return output(result, formatRepoBatch(result));
       }
     case "push":
       {
+        const repoArg = valueFlag("--repo") || optionalPositional("all");
         const result = batchRepoPush(ctx, repoArg, { apply: hasFlag("--apply"), allowDirty: hasFlag("--allow-dirty") });
         return output(result, formatRepoBatch(result));
       }
+    case "import-owner":
+    case "import-github-owner":
+      {
+        const owner = optionalPositional("");
+        if (!owner) throw new Error("Missing GitHub owner. Use: repos import-owner <github-user-or-org>");
+        const result = importGithubOwner(ctx, owner, {
+          apply: hasFlag("--apply"),
+          cloneMissing: hasFlag("--clone-missing"),
+          includePrivate: hasFlag("--include-private"),
+          root: valueFlag("--root") || path.dirname(ctx.registryRoot || path.dirname(ctx.configPath)),
+          ownerKind: valueFlag("--owner-kind") || "unknown",
+          relation: valueFlag("--relation") || valueFlag("--ownership") || "unknown",
+          mandate: valueFlag("--mandate") || "",
+          traceLevel: valueFlag("--trace-level") || "standard",
+          only: parseNameList(valueFlag("--only")),
+          exclude: parseNameList(valueFlag("--exclude")),
+          limit: Number(valueFlag("--limit") || 200),
+        });
+        return output(result, formatRepoImport(result));
+      }
     default:
-      throw new Error(`Unknown repos subcommand "${sub}". Use status, fetch, or push.`);
+      throw new Error(`Unknown repos subcommand "${sub}". Use status, fetch, push, or import-owner.`);
   }
 }
 
@@ -2082,7 +2110,11 @@ function extractMarkdownLinks(raw) {
 function resolveMarkdownLink(ctx, doc, url) {
   const github = parseGithubBlob(url);
   if (github) {
-    const repo = ctx.repos.find(r => r.name.toLowerCase() === github.repo.toLowerCase());
+    const fullName = normalizeGitHubFullName(`${github.owner}/${github.repo}`);
+    const repo = ctx.repos.find(r =>
+      sameGitHubFullName(r.github_full_name, fullName)
+      || (!r.github_full_name && r.name.toLowerCase() === github.repo.toLowerCase())
+    );
     if (!repo) return null;
     const full = path.join(repo.path, github.path);
     return fs.existsSync(full) ? { repo: repo.name, full_path: path.resolve(full) } : null;
@@ -2110,7 +2142,8 @@ function parseGithubBlob(url) {
 
 function githubUrl(repo, relPath) {
   const branch = repo.branch || "main";
-  return `https://github.com/JeanHuguesRobert/${repo.name}/blob/${branch}/${relPath}`;
+  const fullName = repo.github_full_name || repo.policy?.github || repo.policy?.github_repo || `JeanHuguesRobert/${repo.name}`;
+  return `https://github.com/${fullName}/blob/${branch}/${relPath}`;
 }
 
 function verifyGit(ctx) {
@@ -2130,7 +2163,12 @@ function verifyGit(ctx) {
 }
 
 function selectRepos(ctx, repoArg = "all") {
-  const repos = ctx.repos.filter(repo => repoArg === "all" || repo.name === repoArg);
+  const needle = String(repoArg || "all").toLowerCase();
+  const repos = ctx.repos.filter(repo =>
+    repoArg === "all"
+    || repo.name.toLowerCase() === needle
+    || String(repo.github_full_name || "").toLowerCase() === needle
+  );
   if (!repos.length && repoArg !== "all") throw new Error(`Unknown repo: ${repoArg}`);
   return repos;
 }
@@ -2149,6 +2187,9 @@ function repoGitStatus(repo) {
   const remote = git(repo.path, ["remote", "get-url", "origin"], { ok: true }).trim();
   return {
     repo: repo.name,
+    github: repo.github_full_name || "",
+    owner: repo.owner || "",
+    ownership: repo.ownership || "",
     path: repo.path,
     branch: repo.branch,
     remote,
@@ -2244,6 +2285,181 @@ function batchRepoPush(ctx, repoArg = "all", options = {}) {
     dry_run: dryRun,
     repos: results,
     summary: summarizeRepoBatch(results),
+  };
+}
+
+function importGithubOwner(ctx, owner, options = {}) {
+  const root = path.resolve(options.root || path.dirname(ctx.registryRoot || path.dirname(ctx.configPath)));
+  const limit = Number.isFinite(options.limit) && options.limit > 0 ? Math.floor(options.limit) : 200;
+  const repos = ghJson([
+    "repo",
+    "list",
+    owner,
+    "--limit",
+    String(limit),
+    "--json",
+    "name,nameWithOwner,visibility,isPrivate,defaultBranchRef,url,description,updatedAt",
+  ]);
+  const visible = Array.isArray(repos) ? repos : [];
+  const filtered = visible.filter(repo => githubOwnerRepoSelected(repo, options));
+  const now = new Date().toISOString();
+  const plan = filtered.map(repo => planGithubOwnerRepo(ctx, repo, root, options, now));
+  const applied = [];
+  if (options.apply) {
+    for (const item of plan) {
+      const appliedItem = applyGithubOwnerImportItem(ctx, item, options);
+      applied.push(appliedItem);
+    }
+    const additions = applied.filter(item => item.registry_entry).map(item => item.registry_entry);
+    if (additions.length) {
+      const raw = {
+        ...ctx.config,
+        repos: [...(ctx.config.repos || []), ...additions],
+        updated: now,
+      };
+      fs.writeFileSync(ctx.configPath, `${JSON.stringify(raw, null, 2)}\n`, "utf8");
+    }
+  }
+  const actions = options.apply ? applied : plan;
+  return {
+    ok: actions.every(item => item.ok || item.skipped),
+    command: "import-owner",
+    owner,
+    root,
+    discovered: visible.length,
+    dry_run: !options.apply,
+    clone_missing: !!options.cloneMissing,
+    include_private: !!options.includePrivate,
+    owner_kind: options.ownerKind || "unknown",
+    relation: options.relation || "unknown",
+    mandate: options.mandate || "",
+    repositories: actions.map(stripRegistryEntry),
+    summary: summarizeRepoImport(actions),
+  };
+}
+
+function githubOwnerRepoSelected(repo, options = {}) {
+  const name = String(repo.name || "").toLowerCase();
+  const fullName = normalizeGitHubFullName(repo.nameWithOwner || "").toLowerCase();
+  const only = new Set((options.only || []).map(x => x.toLowerCase()));
+  const exclude = new Set((options.exclude || []).map(x => x.toLowerCase()));
+  if (only.size && !only.has(name) && !only.has(fullName)) return false;
+  if (exclude.has(name) || exclude.has(fullName)) return false;
+  return true;
+}
+
+function planGithubOwnerRepo(ctx, repo, root, options, now) {
+  const fullName = normalizeGitHubFullName(repo.nameWithOwner || "");
+  const name = repo.name || (fullName ? fullName.split("/")[1] : "");
+  const branch = repo.defaultBranchRef?.name || "main";
+  const localPath = path.join(root, name);
+  const registered = ctx.repos.find(r => sameGitHubFullName(r.github_full_name, fullName));
+  const existingAtPath = fs.existsSync(localPath);
+  const localRemote = existingAtPath ? githubFullNameFromRemote({ path: localPath }) : "";
+  const privateRepo = !!repo.isPrivate || String(repo.visibility || "").toUpperCase() === "PRIVATE";
+  const visibility = privateRepo ? "private" : "public";
+  const entry = makeRegistryEntry({
+    name,
+    localPath,
+    branch,
+    fullName,
+    ownerKind: options.ownerKind,
+    relation: options.relation,
+    mandate: options.mandate,
+    visibility,
+    traceLevel: options.traceLevel,
+    now,
+  });
+  const base = {
+    ok: true,
+    skipped: false,
+    repo: name,
+    github: fullName,
+    url: repo.url || `https://github.com/${fullName}`,
+    path: localPath,
+    branch,
+    visibility,
+    is_private: privateRepo,
+    owner_kind: options.ownerKind || "unknown",
+    relation: options.relation || "unknown",
+    mandate: options.mandate || "",
+    registered: !!registered,
+    local_exists: existingAtPath,
+    local_remote: localRemote,
+    registry_entry: entry,
+    error: "",
+  };
+  if (!fullName || !name) return { ...base, ok: false, action: "invalid_github_repo", error: "missing repository nameWithOwner" };
+  if (privateRepo && !options.includePrivate) {
+    return { ...base, skipped: true, action: "skip_private", registry_entry: null, error: "private repository requires --include-private" };
+  }
+  if (registered) {
+    return { ...base, skipped: true, action: "already_registered", path: registered.path, registry_entry: null };
+  }
+  if (existingAtPath && sameGitHubFullName(localRemote, fullName)) {
+    return { ...base, action: "register_existing_clone" };
+  }
+  if (existingAtPath) {
+    return {
+      ...base,
+      ok: false,
+      skipped: true,
+      action: "path_conflict",
+      registry_entry: null,
+      error: localRemote ? `path belongs to ${localRemote}` : "path exists but is not a GitHub clone",
+    };
+  }
+  if (options.cloneMissing) return { ...base, action: "clone_and_register" };
+  return { ...base, skipped: true, action: "missing_local_clone", registry_entry: null, error: "pass --clone-missing to clone and register" };
+}
+
+function applyGithubOwnerImportItem(ctx, item, options = {}) {
+  if (item.skipped || !item.registry_entry) return item;
+  if (item.action === "clone_and_register") {
+    ensureDir(path.dirname(item.path));
+    const run = gitRun(path.dirname(item.path), ["clone", item.url, item.path]);
+    if (!run.ok) {
+      return { ...item, ok: false, skipped: false, registry_entry: null, stdout: run.stdout, stderr: run.stderr, error: run.error };
+    }
+    return { ...item, action: "cloned_and_registered", stdout: run.stdout, stderr: run.stderr };
+  }
+  return item;
+}
+
+function makeRegistryEntry(data) {
+  const entry = {
+    name: data.name,
+    path: data.localPath,
+    branch: data.branch || "main",
+    github: data.fullName,
+    owner: data.fullName ? data.fullName.split("/")[0] : "",
+    owner_kind: data.ownerKind || "unknown",
+    ownership: data.relation || "unknown",
+    visibility: data.visibility || "public",
+    public_presence: data.visibility === "public" ? "full" : "stub",
+    trace_level: data.traceLevel || "standard",
+    added: data.now,
+  };
+  if (data.mandate) entry.mandate = data.mandate;
+  return entry;
+}
+
+function stripRegistryEntry(item) {
+  const { registry_entry, ...rest } = item;
+  return {
+    ...rest,
+    would_register: !!registry_entry,
+  };
+}
+
+function summarizeRepoImport(items) {
+  return {
+    repos: items.length,
+    ok: items.filter(item => item.ok).length,
+    skipped: items.filter(item => item.skipped).length,
+    failed: items.filter(item => !item.ok && !item.skipped).length,
+    would_register: items.filter(item => item.registry_entry).length,
+    actions: countBy(items, item => item.action || "unknown"),
   };
 }
 
@@ -2580,17 +2796,51 @@ function loadContext() {
   const repos = (raw.repos || []).map(r => {
     const policy = {
       ...(DEFAULT_REPO_POLICIES[r.name] || {}),
+      ...policyFromRepoEntry(r),
       ...(raw.policies?.[r.name] || raw.repo_policies?.[r.name] || {}),
     };
+    const repoPath = path.resolve(r.path);
+    const githubFullName = normalizeGitHubFullName(
+      policy.github
+      || policy.github_repo
+      || githubFullNameFromRemote({ path: repoPath })
+      || `JeanHuguesRobert/${r.name}`
+    );
     return {
       name: r.name,
-      path: path.resolve(r.path),
+      path: repoPath,
       branch: r.branch || "main",
       added: r.added,
+      github_full_name: githubFullName,
+      owner: policy.owner || (githubFullName ? githubFullName.split("/")[0] : ""),
+      owner_kind: policy.owner_kind || "unknown",
+      ownership: policy.ownership || policy.relation || "unknown",
+      mandate: policy.mandate || "",
       policy: { default_scope: "all", ...policy },
     };
   });
   return { configPath, registryRoot: path.dirname(configPath), config: raw, repos };
+}
+
+function policyFromRepoEntry(r) {
+  const policy = {};
+  for (const key of [
+    "github",
+    "github_repo",
+    "owner",
+    "owner_kind",
+    "ownership",
+    "relation",
+    "mandate",
+    "visibility",
+    "privacy",
+    "public_presence",
+    "trace_level",
+    "default_scope",
+  ]) {
+    if (r[key] != null && r[key] !== "") policy[key] = r[key];
+  }
+  return policy;
 }
 
 function findConfig() {
@@ -3454,6 +3704,25 @@ function formatRepoBatch(result) {
   return lines.join("\n");
 }
 
+function formatRepoImport(result) {
+  const mode = result.dry_run ? "dry-run" : "apply";
+  const lines = [`\nRepos import-owner\n`, `Mode: ${mode}`, `GitHub owner: ${result.owner}`, `Root: ${result.root}`];
+  lines.push(`Owner kind: ${result.owner_kind}; relation: ${result.relation}${result.mandate ? `; mandate: ${result.mandate}` : ""}`);
+  lines.push(`Summary: repos=${result.summary.repos}, would_register=${result.summary.would_register}, skipped=${result.summary.skipped}, failed=${result.summary.failed}`);
+  lines.push("");
+  lines.push(`${pad("GitHub", 28)} ${pad("Action", 24)} ${pad("Visibility", 10)} Local path / result`);
+  lines.push("-".repeat(100));
+  for (const repo of result.repositories) {
+    const status = repo.error ? `${repo.path} (${repo.error})` : repo.path;
+    lines.push(`${pad(repo.github || repo.repo, 28)} ${pad(repo.action, 24)} ${pad(repo.visibility || "-", 10)} ${status}`);
+  }
+  if (result.dry_run) {
+    lines.push("");
+    lines.push("Pass --apply to update the registry. Add --clone-missing to clone absent repositories before registering them.");
+  }
+  return lines.join("\n");
+}
+
 function formatGitClassify(result) {
   const lines = ["\nGit classify\n"];
   lines.push(`Repo scope: ${result.repo}`);
@@ -3635,7 +3904,7 @@ function resolveIssueRepo(ctx, repoArg) {
   if (repoArg.includes("/")) return { name: repoArg.split("/").pop(), full_name: repoArg, path: "" };
   const repo = ctx.repos.find(r => r.name === repoArg);
   if (!repo) throw new Error(`Unknown registered repo: ${repoArg}`);
-  const fullName = repo.policy?.github || repo.policy?.github_repo || githubFullNameFromRemote(repo);
+  const fullName = repo.github_full_name || repo.policy?.github || repo.policy?.github_repo || githubFullNameFromRemote(repo);
   if (!fullName) throw new Error(`Cannot determine GitHub repository for ${repo.name}. Pass owner/name explicitly.`);
   return { name: repo.name, full_name: fullName, path: repo.path };
 }
@@ -3653,7 +3922,20 @@ function parseGitHubFullName(remote) {
   const clean = String(remote || "").trim().replace(/\.git$/i, "");
   let m = clean.match(/github\.com[:/](.+\/.+)$/i);
   if (!m) m = clean.match(/^https?:\/\/[^/]+\/(.+\/.+)$/i);
-  return m ? m[1].replace(/^\/+/, "") : "";
+  return m ? normalizeGitHubFullName(m[1].replace(/^\/+/, "")) : "";
+}
+
+function normalizeGitHubFullName(value) {
+  const clean = String(value || "").trim().replace(/\.git$/i, "").replace(/^https:\/\/github\.com\//i, "");
+  const parts = clean.split("/").filter(Boolean);
+  if (parts.length < 2) return "";
+  return `${parts[0]}/${parts[1]}`;
+}
+
+function sameGitHubFullName(a, b) {
+  const left = normalizeGitHubFullName(a).toLowerCase();
+  const right = normalizeGitHubFullName(b).toLowerCase();
+  return !!left && !!right && left === right;
 }
 
 function ghJson(args) {
@@ -3878,6 +4160,13 @@ function valueFlag(flag) {
   const value = argv[i + 1];
   argv.splice(i, 2);
   return value;
+}
+
+function parseNameList(value) {
+  return String(value || "")
+    .split(",")
+    .map(x => x.trim())
+    .filter(Boolean);
 }
 
 function optionalPositional(defaultValue = "") {

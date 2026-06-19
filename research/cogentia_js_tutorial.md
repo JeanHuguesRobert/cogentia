@@ -1,19 +1,19 @@
 ---
 title: "cogentia.js - Tutorial and Near-Specification"
 subtitle: "Generated automatically from the current v2 CLI source and corpus doctrine"
-version: "2.2.0"
+version: "2.3.0"
 status: "generated automatically - current v2 tutorial"
-date: "2026-06-17"
+date: "2026-06-18"
 author: "Jean Hugues Noel Robert, baron Mariani"
 affiliation: "Institut Mariani / C.O.R.S.I.C.A., 1 cours Paoli, F-20250 Corte, Corsica"
 license: "CC BY-SA 4.0"
 language: "en"
-target_implementation: "cogentia.js v2.2.0"
+target_implementation: "cogentia.js v2.3.0"
 generated_automatically: true
 derived_by: agent
 derived_from: "scripts/cogentia.js; COGENTIA.md; docs/knowledge_mesh.md; research/agent_resumable_cli.md; research/cognitive_packets.md; research/pipeline.md; research/derived_products.md"
 canonical_url: https://github.com/JeanHuguesRobert/cogentia/blob/main/research/cogentia_js_tutorial.md
-last_stamped_at: 2026-06-17
+last_stamped_at: 2026-06-18
 corpus_role: "derived"
 derived_product_type: "tutorial"
 ai_assisted_by: "Codex"
@@ -308,6 +308,7 @@ git noise plan
 repos status [repo|all]
 repos fetch [repo|all]
 repos push [repo|all]
+repos import-owner <github-owner>
 ```
 
 `git verify` reports ahead/behind and dirty state for each registered repo.
@@ -340,6 +341,25 @@ repositories. It is intentionally not an arbitrary shell runner.
   refs.
 - `repos push` runs `git push --dry-run` by default. Add `--apply` to push. Dirty repositories
   are skipped unless `--allow-dirty` is passed, and repositories behind upstream are skipped.
+- `repos import-owner` plans registration of all GitHub repositories visible under a user or
+  organization account. It compares GitHub `owner/name`, local clones, and registry entries,
+  then classifies each repository as already registered, registerable from an existing clone,
+  missing locally, clone-and-register, private-skipped, or path-conflicted.
+- Add `--only name[,owner/name]` or `--exclude name[,owner/name]` when only part of a GitHub
+  owner's repository set belongs in the corpus. This is especially useful for contributor
+  scenarios where the user neither owns nor controls the whole account.
+
+Repository import is designed for ownership and mandate clarity. New entries can record:
+
+- `github`, the canonical `owner/name` used for generated links and issue commands;
+- `owner` and `owner_kind`, such as `person`, `organization`, `non_profit_organization`,
+  `for_profit_organization`, or `unknown`;
+- `ownership`, usually `own`, `mandate`, `contributor`, or `unknown`;
+- `mandate`, a short human-readable reason for delegated work;
+- `visibility`, `public_presence`, and `trace_level` for privacy-aware public/private views.
+
+Private repositories are not imported by default. Add `--include-private` when the registry
+should know about them; they are registered with private/stub visibility defaults.
 
 Typical use:
 
@@ -348,6 +368,9 @@ node scripts/cogentia.js repos status --json
 node scripts/cogentia.js repos push --json
 node scripts/cogentia.js repos push --apply --json
 node scripts/cogentia.js repos fetch cogentia --json
+node scripts/cogentia.js repos import-owner acorsica --owner-kind non_profit_organization --relation mandate --json
+node scripts/cogentia.js repos import-owner acorsica --owner-kind non_profit_organization --relation mandate --clone-missing --apply --json
+node scripts/cogentia.js repos import-owner some-owner --only some-repo --relation contributor --json
 ```
 
 ### 4.7 Daemon command
