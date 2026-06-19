@@ -12,6 +12,14 @@ status: "working-paper"
 canonical_url: https://github.com/JeanHuguesRobert/cogentia/blob/main/research/cogentia_commons_continuation.md
 last_stamped_at: 2026-06-01
 date: "2026-05-13"
+document_role: "source"
+document_kind: "research-paper"
+visibility: "public"
+lifecycle_state: "working"
+classification_source: "cogentia.js"
+classification_version: "1"
+classification_rule: "research-paper"
+classification_confidence: "medium"
 ---
 
 # Cogentia Commons — Session Continuation Snapshot
@@ -36,7 +44,7 @@ The user's style is terse, elliptical, bilingual (FR/EN). Expect short directive
 
 ## 1. What this project is — one paragraph
 
-Cogentia Commons is a public-by-default infrastructure for collaborative epistemic exploration — a platform where AI agents help humans surface, contest, and refine ideas under explicit scientific constraints, with every action signed, attributable, and reversible. It is **Layer 4 (Cognitive Infrastructure)** of the [DHITL framework](https://github.com/JeanHuguesRobert/marenostrum/blob/main/DHITL.md) — open to agents, never sovereign. It operationalizes the [*Discours de la seconde méthode*](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/second_method.md). The first Document it will host is [`second_method.md`](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/second_method.md) itself.
+Cogentia Commons is a public-by-default infrastructure for collaborative epistemic exploration — a platform where AI agents help humans surface, contest, and refine ideas under explicit scientific constraints, with every action signed, attributable, and reversible. It is **Layer 4 (Cognitive Infrastructure)** of the [DHITL framework](https://github.com/JeanHuguesRobert/marenostrum/blob/main/research/DHITL.md) — open to agents, never sovereign. It operationalizes the [*Discours de la seconde méthode*](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/second_method.md). The first Document it will host is [`second_method.md`](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/second_method.md) itself.
 
 **Cogentia Commons already exists as a CLI.** [`cogentia/scripts/cogentia.js`](../scripts/cogentia.js) — publicly named in [`second_method.md`](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/second_method.md) Coda — declares itself in its own docstring as *"cogentia.js — Cogentia Commons CLI. Infrastructure for traceable, auditable, AI-connectable distributed knowledge production across git repositories."* The CLI is operational today with 12 commands (§14) managing registered repositories' [`research/index.md`](index.md) files. The v1 work specified in the parent spec **extends** this CLI (new subcommands for manifest validation, audit-plugin runs, kernel extraction, round mechanics, sanction tooling) and **complements** it with a web GUI shipped as `@inseme/brique-cogentia-commons` (§12). CLI and brique are two surfaces of the same Commons, sharing the same backing state (COP Event log + Supabase projection).
 
@@ -46,7 +54,7 @@ Cogentia Commons is a public-by-default infrastructure for collaborative epistem
 
 | Repo | Role |
 |---|---|
-| `barons-Mariani` | Methodological doctrine. Hosts [`research/second_method.md`](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/second_method.md) (the five rules), [`mimetic_desynchronization.md`](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/mimetic_desynchronization.md) (DRSJ + indirect action), [`invidia.md`](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/invidia.md), [`toy_story.md`](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/toy_story.md). |
+| `barons-Mariani` | Methodological doctrine. Hosts [`research/second_method.md`](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/second_method.md) (the five rules), [`mimetic_desynchronization.md`](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/mimetic_desynchronization.md) (DRSJ + indirect action), [`invidia.md`](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/invidia.md), [`toy_story.md`](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/toy_story.md). |
 | `marenostrum` | Energy commons + DHITL load-bearing axiom + CXU spec + Constellia (ICOME'26). |
 | `cogentia` | **Meta-node** — methodology + `scripts/cogentia.js` CLI + the Cogentia Commons specification set lives in `research/`. |
 | `FractaVolta` | Physical infrastructure layer (PGN, traceable_governance). |
@@ -298,8 +306,8 @@ The Working Paper §10.5 names ICOME'26 (Université de Corse, June 2026) as the
 | **COP** | Cognitive Orchestration Protocol. Specified in [`inseme/packages/cop-core/Architecture.md`](https://github.com/JeanHuguesRobert/inseme/blob/main/packages/cop-core/Architecture.md). Six primitives: Event, Topic, Task, Step, Artifact, Continuation. |
 | **COP/HITL** | Human-in-the-Loop COP profile. Commons is a declared consumer. |
 | **Continuation** | A COP `cop/continuation` Artifact — suspended reasoning state with a named resumer and resumption conditions. Commons attaches them to any artefact for the "what's next" property. |
-| **DHITL** | Democratic Humans in the Loop. The load-bearing AI Safety axiom in [`marenostrum/DHITL.md`](https://github.com/JeanHuguesRobert/marenostrum/blob/main/DHITL.md). Five-layer architecture; Commons sits at Layer 4. |
-| **DRSJ** | Denial → Reattribution → Suspicion → Justification. The four-stage cycle of interpretive stabilisation, named in [`barons-Mariani/mimetic_desynchronization.md`](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/mimetic_desynchronization.md). Resistance mechanism the v1 rollout posture (§11.3) is designed to delay. |
+| **DHITL** | Democratic Humans in the Loop. The load-bearing AI Safety axiom in [`marenostrum/DHITL.md`](https://github.com/JeanHuguesRobert/marenostrum/blob/main/research/DHITL.md). Five-layer architecture; Commons sits at Layer 4. |
+| **DRSJ** | Denial → Reattribution → Suspicion → Justification. The four-stage cycle of interpretive stabilisation, named in [`barons-Mariani/mimetic_desynchronization.md`](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/mimetic_desynchronization.md). Resistance mechanism the v1 rollout posture (§11.3) is designed to delay. |
 | **Burton conversion** | Robert Burton's *On Being Certain* (2008) showed certainty is a brain state. Rule 2 of second_method requires objections be distinguishable from feelings — converted into falsifiable claims. The `falsifiability_conversion` plugin operationalises this. |
 | **Kudocracy** | The complementary-currency concept from `Kudos/concept.md` — Mauss gift-economy semantics. Deferred reward primitive. |
 | **Mark** | A typed primitive in §4.5 rung 2 — `un-falsifiable`, `out-of-eligibility`, `withdrawn`, `new_editor`. Attaches to contributions, not users. |

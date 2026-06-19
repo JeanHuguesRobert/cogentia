@@ -1,3 +1,14 @@
+---
+document_role: "operational"
+document_kind: "guide"
+visibility: "public"
+lifecycle_state: "active"
+classification_source: "cogentia.js"
+classification_version: "1"
+classification_rule: "guide"
+classification_confidence: "medium"
+---
+
 # Cogentia Local Daemon — Features Tutorial
 
 This document explains the features and usage of the `cogentia.js` local daemon, focusing on the daemon's observable behavior, configuration, plugin system, APIs, security considerations, and development workflow.

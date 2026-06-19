@@ -67,9 +67,9 @@ graph LR
   r_kudos["Kudos"]
   r_github[".github"]
   r_acorsica_org["acorsica.org"]
-  r_jeanhuguesrobert -->|166| r_barons_mariani
-  r_jeanhuguesrobert -->|100| r_cogentia
+  r_jeanhuguesrobert -->|165| r_barons_mariani
   r_cogentia -->|98| r_barons_mariani
+  r_jeanhuguesrobert -->|96| r_cogentia
   r_barons_mariani -->|62| r_cogentia
   r_jeanhuguesrobert -->|45| r_marenostrum
   r_fractavolta -->|41| r_cogentia
@@ -121,6 +121,7 @@ graph LR
   r_institut_mariani -->|2| r_barons_mariani
   r_institut_mariani -->|2| r_fractavolta
   r_jeanhuguesrobert -->|2| r_github
+  r_jeanhuguesrobert -->|2| r_acorsica_org
   r_marenostrum -->|2| r_jeanhuguesrobert
   r_marenostrum -->|2| r_inseme
   r_marenostrum -->|2| r_inox
@@ -544,6 +545,7 @@ graph LR
 | [Cogentia Personal Data Portability](cogentia_personal_data_portability.md) *(generic reusable layer for schemas, templates, normalizers and redacted/fictitious examples; explicitly separated from any private personal register)* | this repo | 2026-06-11 |
 | [Agent Configuration Layer](agent_configuration_layer.md) *(method note v0.2 — AGENTS.md, `.agents/`, and governed operational projections of the corpus)* | this repo | 2026-06-13 |
 | [Pipeline Conversation vers Corpus (Conversia)](conversation_to_corpus_pipeline.md) *(source document v0.4 — progressive transformation of conversations into living corpus, models, agents, mandates and traces)* | this repo | 2026-06-12 |
+| [Open Knowledge Format and Cogentia](open_knowledge_format_alignment.md) *(working-note v0.1 — Google OKF v0.1 as external confirmation of the Markdown/YAML/git/index/link substrate; proposes `okf check` and `okf export` as Cogentia compatibility layer)* | this repo | 2026-06-19 |
 | [Démocratie de capacité](democracy_of_capability.md) *(structured hypothesis — publics capables, open democracy and AI under mandate)* | this repo | 2026-06-12 |
 | [Démocratie rapide mandatée](mandated_fast_democracy.md) *(short conceptual synthesis — deciding quickly without abandoning democratic principles)* | this repo | 2026-06-12 |
 | [From Biometrics and Psychometrics to Structural Signatures](structural_signatures.md) *(working paper v0.9 — non-biographical identifying structures, Cogentigrams and consent-based sovereign digital twins)* | this repo | 2026-05-22 |

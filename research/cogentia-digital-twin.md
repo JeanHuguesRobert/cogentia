@@ -7,10 +7,18 @@ last_stamped_at: 2026-06-01
 title: "The Sovereign Digital Twin: Cogentia, Cogentigram, Cogentiscope"
 date: "2026-04-19"
 status: "draft — auto-filled (frontmatter cleanup)"
+document_role: "source"
+document_kind: "research-paper"
+visibility: "public"
+lifecycle_state: "working"
+classification_source: "cogentia.js"
+classification_version: "1"
+classification_rule: "research-paper"
+classification_confidence: "medium"
 ---
 <!-- BEGIN_AUTO: trails -->
 > 🧭 **Trail: From Method to Machine**
-> ⬅️ Previous: [FractaVolta](https://github.com/JeanHuguesRobert/FractaVolta/blob/main/fractavolta_paper.md) | ➡️ Next: [Agent-Resumable CLI](agent_resumable_cli.md)
+> ⬅️ Previous: [FractaVolta](https://github.com/JeanHuguesRobert/FractaVolta/blob/main/research/fractavolta_paper.md) | ➡️ Next: [Agent-Resumable CLI](agent_resumable_cli.md)
 <!-- END_AUTO: trails -->
 ---
 canonical_url: https://github.com/JeanHuguesRobert/cogentia/blob/main/research/cogentia-digital-twin.md
@@ -120,7 +128,7 @@ The question of who owns a posthumous twin, who can activate it, who can contest
 
 ## The Triptych in the Broader Architecture
 
-Cogentia is the personal-scale instantiation of the cognitive infrastructure layer in the DHITL architecture — the layer that mediates between the individual and collective governance. The Cogentiscope produces the Cogentigram (the personal data object). Cognitive impedance is the interface concept across the boundary between cognitive infrastructure and democratic deliberation. PrivAI is the institutional governance for sovereign twins; MareNostrum the collective governance of shared infrastructure. Refer to [DHITL](https://github.com/JeanHuguesRobert/marenostrum/blob/main/DHITL.md) for the canonical layer specification.
+Cogentia is the personal-scale instantiation of the cognitive infrastructure layer in the DHITL architecture — the layer that mediates between the individual and collective governance. The Cogentiscope produces the Cogentigram (the personal data object). Cognitive impedance is the interface concept across the boundary between cognitive infrastructure and democratic deliberation. PrivAI is the institutional governance for sovereign twins; MareNostrum the collective governance of shared infrastructure. Refer to [DHITL](https://github.com/JeanHuguesRobert/marenostrum/blob/main/research/DHITL.md) for the canonical layer specification.
 
 The triptych is not a psychometric product. It is the personal-scale instantiation of cognitive infrastructure — the layer that makes the human side of the human-AI interface legible, auditable, and sovereign.
 
@@ -158,10 +166,10 @@ This document is a position paper, not a product announcement. It is published i
 
 ## Related work
 
-- [DHITL — Democratic Humans in the Loop](https://github.com/JeanHuguesRobert/marenostrum/blob/main/DHITL.md)
+- [DHITL — Democratic Humans in the Loop](https://github.com/JeanHuguesRobert/marenostrum/blob/main/research/DHITL.md)
 - [MareNostrum — Mediterranean AI Governance Framework](https://github.com/JeanHuguesRobert/marenostrum)
 - [Cogentia MVP](https://github.com/JeanHuguesRobert/cogentia)
-- [The Generalized Tocqueville Law](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/tocqueville_law.md)
+- [The Generalized Tocqueville Law](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/tocqueville_law.md)
 - [Inox](https://github.com/virteal/Inox) — intended edge runtime for Layer 3 of DHITL
 <!-- BEGIN_AUTO: backlinks -->
 ### Backlinks

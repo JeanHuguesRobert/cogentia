@@ -3,7 +3,7 @@ title: "cogentia.js - Tutorial and Near-Specification"
 subtitle: "Generated automatically from the current v2 CLI source and corpus doctrine"
 version: "2.3.0"
 status: "generated automatically - current v2 tutorial"
-date: "2026-06-18"
+date: "2026-06-19"
 author: "Jean Hugues Noel Robert, baron Mariani"
 affiliation: "Institut Mariani / C.O.R.S.I.C.A., 1 cours Paoli, F-20250 Corte, Corsica"
 license: "CC BY-SA 4.0"
@@ -13,10 +13,18 @@ generated_automatically: true
 derived_by: agent
 derived_from: "scripts/cogentia.js; COGENTIA.md; docs/knowledge_mesh.md; research/agent_resumable_cli.md; research/cognitive_packets.md; research/pipeline.md; research/derived_products.md"
 canonical_url: https://github.com/JeanHuguesRobert/cogentia/blob/main/research/cogentia_js_tutorial.md
-last_stamped_at: 2026-06-18
+last_stamped_at: 2026-06-19
 corpus_role: "derived"
 derived_product_type: "tutorial"
 ai_assisted_by: "Codex"
+document_role: "derived"
+document_kind: "derived-product"
+visibility: "public"
+lifecycle_state: "generated"
+classification_source: "cogentia.js"
+classification_version: "1"
+classification_rule: "derived-product"
+classification_confidence: "strong"
 ---
 
 # cogentia.js - Tutorial and Near-Specification
@@ -226,6 +234,10 @@ corpus apply
 corpus verify
 corpus privacy
 corpus commit-generated
+classify plan
+classify apply
+classify verify
+classify explain <repo/path.md>
 agent start
 consolidate
 status
@@ -237,6 +249,18 @@ Use these when the goal is corpus orientation or mechanical refresh.
 `agent start` is the preferred first command for human and AI agents. It produces a read-only session summary: registry, repositories, document count, generated drift, gaps, privacy leaks, active continuations, trail issues, git drift, dirty worktree summary, and recommended next actions.
 
 `corpus commit-generated` plans generated-only commits for already-dirty generated files such as `research/corpus-status.md` and the registry `research/documents.md`. It is dry-run by default. Add `--apply` to stage and commit only generated files, and use `--message <text>` to override the commit message.
+
+`classify` manages normalized frontmatter classification across the corpus. It writes deterministic fields such as `document_role`, `document_kind`, `visibility`, `lifecycle_state`, `classification_rule`, and `classification_confidence`. Legacy free-text role labels are preserved as `legacy_document_role`, `legacy_corpus_role`, or `legacy_role` instead of being discarded.
+
+Use `classify plan` first. It is read-only and reports changes, conflicts, ambiguous cases, and kind counts. Use `classify explain <repo/path.md>` when one document looks surprising. Use `classify apply` only when the plan is conflict-free, then use `classify verify`.
+
+Useful flags:
+
+- `--repo <name>` limits the scan to one registered repository;
+- `--view public|private` selects the visibility view;
+- `--include-generated`, `--include-aliases`, and `--include-ignored` widen the scan;
+- `--include-ambiguous` permits weak classifications to be written;
+- `--fix-conflicts` deliberately overwrites conflicting explicit fields.
 
 ### 4.2 Document commands
 
@@ -457,6 +481,17 @@ node scripts/cogentia.js git noise plan
 
 Use this before deciding whether a dirty file should be ignored locally, skipped as generated runtime churn, committed as generated corpus maintenance, or reviewed as substantive work.
 
+### 6.3.2 Normalize document classification
+
+```bash
+node scripts/cogentia.js classify plan --json
+node scripts/cogentia.js classify explain cogentia/research/pipeline.md
+node scripts/cogentia.js classify apply --json
+node scripts/cogentia.js classify verify --json
+```
+
+Use this when the corpus has grown and navigation depends on consistent metadata. The classifier is deterministic and idempotent: after a clean apply, a fresh plan should report no changes, no conflicts, and no ambiguous cases.
+
 ### 6.4 Find documents that still need judgment
 
 ```bash
@@ -523,7 +558,7 @@ That is the stable core.
 
 ---
 
-*Generated automatically on 2026-06-16 from the current v2 CLI and associated corpus documents.*
+*Generated automatically on 2026-06-19 from the current v2 CLI and associated corpus documents.*
 <!-- BEGIN_AUTO: backlinks -->
 ### Backlinks
 

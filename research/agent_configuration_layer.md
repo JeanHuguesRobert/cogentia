@@ -39,6 +39,14 @@ continuations:
   - "integrate private/transmission repositories without leaking private data"
   - "test .agents/ as an experimental container, not as corpus memory"
   - "define machine-checkable conformance rules for repository-local agent mandates"
+document_role: "source"
+document_kind: "research-paper"
+visibility: "public"
+lifecycle_state: "working"
+classification_source: "cogentia.js"
+classification_version: "1"
+classification_rule: "research-paper"
+classification_confidence: "medium"
 ---
 
 # Agent Configuration Layer

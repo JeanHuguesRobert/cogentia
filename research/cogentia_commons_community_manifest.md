@@ -12,6 +12,14 @@ status: "working-paper"
 canonical_url: https://github.com/JeanHuguesRobert/cogentia/blob/main/research/cogentia_commons_community_manifest.md
 last_stamped_at: 2026-06-01
 date: "2026-05-13"
+document_role: "source"
+document_kind: "spec"
+visibility: "public"
+lifecycle_state: "working"
+classification_source: "cogentia.js"
+classification_version: "1"
+classification_rule: "spec"
+classification_confidence: "medium"
 ---
 
 # Cogentia Commons — COMMUNITY.md Sub-Specification
@@ -544,7 +552,7 @@ amendment may tighten to `required-for-publications`.
 
 - [`cogentia_commons_mvp_spec.md`](cogentia_commons_mvp_spec.md) — parent spec. This sub-spec implements §4.1, §4.4 overrides, §4.5 accountability declarations, and the §5.7.4 manifest Event types.
 - [`second_method.md`](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/second_method.md) — anchors `cogentia.js` as canonical tooling; the new `manifest` subcommand inherits the same surface-stability commitment.
-- [`mimetic_desynchronization.md`](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/mimetic_desynchronization.md) — non-retroactivity by default is itself a form of *interpretive buffering* (§7 of that paper): it prevents a manifest amendment from suddenly recasting members' past actions in a new moral frame.
+- [`mimetic_desynchronization.md`](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/mimetic_desynchronization.md) — non-retroactivity by default is itself a form of *interpretive buffering* (§7 of that paper): it prevents a manifest amendment from suddenly recasting members' past actions in a new moral frame.
 - [`inseme/packages/cop-core/Architecture.md`](https://github.com/JeanHuguesRobert/inseme/blob/main/packages/cop-core/Architecture.md) — the manifest itself is a `cogentia/manifest` Artifact (§2.6) in the community manifest Topic (§5.7.3 of the parent spec).
 
 ---

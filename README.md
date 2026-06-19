@@ -13,7 +13,7 @@
 
 ---
 
-Cogentia is the **cognitive infrastructure tooling** of a multi-repository public corpus that operationalizes the [DHITL](https://github.com/JeanHuguesRobert/marenostrum/blob/main/DHITL.md) AI Safety anti-capture proposal.
+Cogentia is the **cognitive infrastructure tooling** of a multi-repository public corpus that operationalizes the [DHITL](https://github.com/JeanHuguesRobert/marenostrum/blob/main/research/DHITL.md) AI Safety anti-capture proposal.
 
 One infrastructure, two scales — *I* and *we*:
 
@@ -25,7 +25,7 @@ The CLI is the substrate both scales sit on; Personal and Commons are the two fa
 
 Cogentia implements **Layer 4** of the DHITL architecture (cognitive infrastructure, open to agents, auditable). It is the substrate on which Layer 5 — democratic deliberation reserved for living humans — operates.
 
-The architectural axiom lives in [`marenostrum/DHITL.md`](https://github.com/JeanHuguesRobert/marenostrum/blob/main/DHITL.md). The method by which the proposal develops lives in [`barons-Mariani/research/second_method.md`](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/second_method.md).
+The architectural axiom lives in [`marenostrum/DHITL.md`](https://github.com/JeanHuguesRobert/marenostrum/blob/main/research/DHITL.md). The method by which the proposal develops lives in [`barons-Mariani/research/second_method.md`](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/second_method.md).
 
 ## The Continuation protocol
 

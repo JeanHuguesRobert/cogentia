@@ -20,6 +20,7 @@ import { DAEMON_PLUGINS, DAEMON_PLUGIN_ROUTES, loadDaemonPlugins, dispatchPlugin
 
 const VERSION = "2.3.0";
 const CONFIG_FILE = ".cogentia.json";
+const CLASSIFICATION_VERSION = "1";
 const DOCUMENTS_FILE = "documents.md";
 const CORPUS_STATUS_FILE = "corpus-status.md";
 const CONCEPTS_FILE = "concepts.md";
@@ -111,6 +112,8 @@ async function main() {
       return cmdAgent(argv.shift() || "start");
     case "consolidate":
       return cmdConsolidate();
+    case "classify":
+      return cmdClassify(argv.shift() || "plan");
     case "daemon":
       return cmdDaemon();
     default:
@@ -136,6 +139,13 @@ Core commands:
   corpus privacy           Check public views for private/confidential leaks.
   consolidate              Read-only publish-readiness check across corpus, privacy,
                            git drift, worktree noise, continuations, and auto-block safety.
+  classify plan            Plan idempotent frontmatter classification patches.
+  classify apply           Apply missing classification fields from a fresh plan.
+  classify verify          Verify classification is complete and conflict-free.
+  classify explain <ref>   Explain deterministic classification for one document.
+                           Flags: --repo <name>, --view public|private,
+                           --include-generated, --include-aliases,
+                           --include-ambiguous, --fix-conflicts.
   status                   Local health table used by the git hook.
   grep <text>              Full-text search over active markdown documents.
 
@@ -473,6 +483,48 @@ function cmdDocsJudgments(ctx, inventory, repoArg) {
     continuations: continuations.map(x => stripContinuationBody(x.continuation)),
   };
   output(result, formatJudgments(result));
+}
+
+function cmdClassify(sub) {
+  const ctx = loadContext();
+  const inventory = buildInventory(ctx);
+  switch (sub) {
+    case "plan":
+      return cmdClassifyPlan(inventory, { apply: false, verify: false });
+    case "apply":
+      return cmdClassifyPlan(inventory, { apply: true, verify: false });
+    case "verify":
+      return cmdClassifyPlan(inventory, { apply: false, verify: true });
+    case "explain":
+      return cmdClassifyExplain(inventory, argv.shift());
+    default:
+      throw new Error(`Unknown classify subcommand "${sub}". Use plan, apply, verify, or explain.`);
+  }
+}
+
+function cmdClassifyPlan(inventory, options) {
+  const plan = classificationPlan(inventory, classificationOptions());
+  const blockingConflicts = plan.conflicts.length > 0 && !plan.options.fixConflicts;
+  const blockingAmbiguous = plan.ambiguous.length > 0 && !plan.options.includeAmbiguous;
+  const canApply = !blockingConflicts && !blockingAmbiguous;
+  if (options.apply && canApply) applyClassificationPlan(plan);
+  const result = {
+    ok: options.verify
+      ? plan.changes.length === 0 && plan.conflicts.length === 0 && plan.ambiguous.length === 0
+      : canApply,
+    mode: options.apply ? "apply" : (options.verify ? "verify" : "plan"),
+    ...stripClassificationPlan(plan),
+    applied: options.apply && canApply ? plan.changes.length : 0,
+  };
+  output(result, formatClassificationPlan(result));
+}
+
+function cmdClassifyExplain(inventory, ref) {
+  if (!ref) throw new Error("Usage: classify explain <repo/path.md>");
+  const doc = resolveDocRef(inventory, ref);
+  if (!doc) throw new Error(`Document not found: ${ref}`);
+  const item = classifyDocumentForFrontmatter(doc);
+  output({ ok: true, document: sanitizeDoc(doc, inventory, PUBLIC_VIEW), classification: item }, formatClassificationExplain(doc, item));
 }
 
 function cmdConcepts(sub) {
@@ -1359,7 +1411,7 @@ function classifyRole(repo, relPath, full, fm, ignored, indexSets) {
   if (r.includes("/examples/") || r.includes("/example_") || r.includes("fictitious_")) {
     return { role: "example", source: "path:examples", confidence: "strong" };
   }
-  if (/\balias\b/.test(explicit) || fm.redirect_to || /^see\s+/i.test(readFileIfExists(full).trim())) {
+  if (/\balias\b/.test(explicit) || /\balias\b/i.test(String(fm.status || "")) || fm.redirect_to || fm.canonical_document || /^see\s+/i.test(readFileIfExists(full).trim())) {
     return { role: "alias", source: "frontmatter/path", confidence: "medium" };
   }
   if (explicit.includes("operational")) return { role: "operational", source: "frontmatter:document_role", confidence: "strong" };
@@ -3213,6 +3265,344 @@ function derivedNeedsJudgment(doc) {
   return true;
 }
 
+function classificationOptions() {
+  return {
+    repo: valueFlag("--repo") || optionalPositional("all"),
+    view: normalizeView(valueFlag("--view") || PUBLIC_VIEW),
+    includeIgnored: hasFlag("--include-ignored"),
+    includeGenerated: hasFlag("--include-generated"),
+    includeAliases: hasFlag("--include-aliases"),
+    includeAmbiguous: hasFlag("--include-ambiguous"),
+    fixConflicts: hasFlag("--fix-conflicts"),
+    includeContent: hasFlag("--include-content"),
+  };
+}
+
+function classificationPlan(inventory, options = {}) {
+  const repoFilter = options.repo || "all";
+  const docs = inventory.documents
+    .filter(d => repoFilter === "all" || d.repo === repoFilter)
+    .filter(d => options.includeIgnored || canSeeDoc(d, options.view))
+    .filter(d => options.includeGenerated || !isGeneratedNavigationDoc(d))
+    .filter(d => options.includeAliases || d.role !== "alias")
+    .sort(compareDocs("repo"));
+  const changes = [];
+  const conflicts = [];
+  const ambiguous = [];
+  const unchanged = [];
+  for (const doc of docs) {
+    const item = classifyDocumentForFrontmatter(doc);
+    if (item.confidence === "weak") ambiguous.push(item);
+    if (item.conflicts.length) conflicts.push(item);
+    const change = planClassificationPatch(doc, item, options);
+    if (change) changes.push(change);
+    else unchanged.push({ repo: doc.repo, path: doc.rel, rule: item.rule, confidence: item.confidence });
+  }
+  return {
+    ok: conflicts.length === 0,
+    options,
+    scanned: docs.length,
+    changes,
+    conflicts,
+    ambiguous,
+    unchanged_count: unchanged.length,
+    summary: {
+      by_kind: countBy(docs.map(d => classifyDocumentForFrontmatter(d)), x => x.document_kind),
+      by_role: countBy(docs, d => d.role),
+      changes: changes.length,
+      conflicts: conflicts.length,
+      ambiguous: ambiguous.length,
+    },
+  };
+}
+
+function stripClassificationPlan(plan) {
+  const stripChange = change => {
+    const clean = { ...change };
+    if (!plan.options.includeContent) {
+      delete clean.before;
+      delete clean.after;
+    }
+    return clean;
+  };
+  return {
+    options: plan.options,
+    scanned: plan.scanned,
+    summary: plan.summary,
+    changes: plan.changes.map(stripChange),
+    conflicts: plan.conflicts,
+    ambiguous: plan.ambiguous,
+    unchanged_count: plan.unchanged_count,
+  };
+}
+
+function classifyDocumentForFrontmatter(doc) {
+  const fm = doc.frontmatter || {};
+  const kind = inferDocumentKind(doc);
+  const inferredRole = kind.kind === "redirect-alias" ? "alias" : (doc.role === "archive" ? "operational" : doc.role);
+  const explicitRole = explicitDocumentRole(fm);
+  const role = explicitRole || inferredRole;
+  const lifecycle = inferLifecycleState(doc, kind);
+  const visibility = doc.visibility?.level || "public";
+  const rule = kind.rule;
+  const confidence = weakestConfidence([doc.role_confidence || "medium", kind.confidence]);
+  const legacyDocumentRole = legacyFreeTextRole(fm.document_role);
+  const legacyCorpusRole = legacyFreeTextRole(fm.corpus_role);
+  const legacyRole = legacyFreeTextRole(fm.role);
+  const desired = {
+    document_role: role,
+    document_kind: kind.kind,
+    visibility,
+    lifecycle_state: lifecycle.state,
+    classification_source: "cogentia.js",
+    classification_version: CLASSIFICATION_VERSION,
+    classification_rule: rule,
+    classification_confidence: confidence,
+  };
+  if (legacyDocumentRole) desired.legacy_document_role = legacyDocumentRole;
+  if (legacyCorpusRole) desired.legacy_corpus_role = legacyCorpusRole;
+  if (legacyRole) desired.legacy_role = legacyRole;
+  const explicit = {
+    document_role: explicitDocumentRole(fm),
+    document_kind: fm.document_kind || "",
+    visibility: fm.visibility || fm.privacy_level || fm.confidentiality || "",
+    lifecycle_state: fm.lifecycle_state || "",
+  };
+  const conflicts = [];
+  for (const [key, actual] of Object.entries(explicit)) {
+    if (!actual) continue;
+    if (!classificationEquivalent(key, actual, desired[key])) {
+      conflicts.push({
+        field: key,
+        explicit: String(actual),
+        inferred: desired[key],
+        rule,
+      });
+    }
+  }
+  return {
+    repo: doc.repo,
+    path: doc.rel,
+    title: doc.title,
+    role: doc.role,
+    document_role: desired.document_role,
+    document_kind: desired.document_kind,
+    visibility: desired.visibility,
+    lifecycle_state: desired.lifecycle_state,
+    rule,
+    confidence,
+    desired,
+    explicit,
+    conflicts,
+    reason: kind.reason,
+  };
+}
+
+function inferDocumentKind(doc) {
+  const r = doc.rel.replace(/\\/g, "/");
+  const title = String(doc.title || "").toLowerCase();
+  const fm = doc.frontmatter || {};
+  const text = `${title} ${r.toLowerCase()} ${String(fm.type || "")} ${String(fm.status || "")} ${String(fm.document_role || "")} ${String(fm.corpus_role || "")}`;
+  if (doc.role === "alias" || fm.redirect_to || fm.canonical_document) {
+    return kind("redirect-alias", "alias-redirect", "strong", "Alias or redirect metadata is present.");
+  }
+  if (isGeneratedNavigationDoc(doc)) {
+    return kind("generated-view", "generated-navigation", "strong", "Generated corpus navigation path.");
+  }
+  if (/^research\/index\.md$/i.test(r)) return kind("research-index", "research-index", "strong", "Repository research index.");
+  if (/^research\/concepts\.md$/i.test(r)) return kind("concept-index", "concept-index", "strong", "Repository concept index.");
+  if (/^research\/documents\.md$/i.test(r)) return kind("document-catalog", "document-catalog", "strong", "Consolidated document catalog.");
+  if (r === "README.md") return kind("readme", "navigation", "strong", "Repository README.");
+  if (r === "AGENTS.md" || r.endsWith("/AGENTS.md")) return kind("agent-mandate", "agent-mandate", "strong", "Agent mandate file.");
+  if (r.startsWith("research/trails/")) return kind("trail", "trail", "strong", "Curated trail path.");
+  if (r.includes("/templates/")) return kind("template", "template", "strong", "Template path.");
+  if (r.includes("/examples/") || r.includes("/example_") || r.includes("fictitious_")) return kind("example", "example", "strong", "Example path or filename.");
+  if (r === "COGENTIA.md") return kind("identity-document", "identity-document", "strong", "Framework identity document.");
+  if (r.startsWith("cogentia_personal/data_portability/")) return inferDataPortabilityKind(doc, text);
+  if (r.startsWith("prompts/")) return kind("prompt", "prompt", "strong", "Prompt path.");
+  if (r.startsWith("interaction_packets/") || r.startsWith("continuations/")) return kind("continuation-packet", "continuation-packet", "strong", "Continuation or interaction packet path.");
+  if (r.startsWith("profiles/")) return kind("profile", "profile", "strong", "Profile path.");
+  if (r.startsWith("packages/") || r.startsWith("apps/")) return kind("software-doc", "software-doc", "strong", "Software package or application path.");
+  if (r.startsWith("docs/")) return inferDocsKind(doc, text);
+  if (r.startsWith("chapitres/")) return kind("book-chapter", "book-chapter", "strong", "Book chapter path.");
+  if (r.startsWith("annexes/")) return kind("book-annex", "book-annex", "strong", "Book annex path.");
+  if (r.startsWith("dossier-de-soumission/")) return kind("submission-material", "submission-material", "strong", "Submission dossier path.");
+  if (explicitDocumentRole(fm) === "index" && /index|map|start here|carte/.test(text)) return kind("explicit-index", "navigation", "medium", "Explicit index role with map/index keyword.");
+  if (/^index\.md$/i.test(r)) return kind("root-index", "navigation", "medium", "Root index document.");
+  if (/^statut\.md$/i.test(r)) return kind("repository-status", "operational-note", "medium", "Repository status document.");
+  if (/^context\.md$/i.test(r)) return kind("context-note", "context-note", "medium", "Root context document.");
+  if (/^projects?\.md$/i.test(r)) return kind("project-map", "project-map", "medium", "Root project map.");
+  if (/^timeline\.md$/i.test(r)) return kind("timeline", "timeline", "medium", "Root timeline document.");
+  if (/possibilism|concept/.test(text)) return kind("concept-note", "concept-note", "medium", "Concept keyword.");
+  if (/charte|charter/.test(text)) return kind("charter", "charter", "medium", "Charter keyword.");
+  if (/introduction/.test(text)) return kind("introduction", "introduction", "medium", "Introduction keyword.");
+  if (/auteur|author|à propos/.test(text)) return kind("profile", "profile", "medium", "Author/profile keyword.");
+  if (/extrait|excerpt/.test(text)) return kind("book-excerpt", "book-excerpt", "medium", "Excerpt keyword.");
+  if (/expérimentation|experimentation|experiment/.test(text)) return kind("experiment-log", "experiment-log", "medium", "Experiment keyword.");
+  if (/(^|\/)cas_|case study|case_stud|cas edf|retour d.exp[ée]rience/.test(text)) return kind("case-study", "case-study", "medium", "Case-study keyword.");
+  if (doc.role === "derived") return kind("derived-product", "derived-product", "strong", "Derived role.");
+  if (doc.repo === "gouvernance" || doc.repo === "institut-mariani" || doc.repo === "marianivillage") {
+    return kind("institutional-document", "institutional-document", "medium", "Institutional repository.");
+  }
+  if (/tutorial|guide|walkthrough/.test(text)) return kind("tutorial", "tutorial", "medium", "Tutorial or guide keyword.");
+  if (/working[- ]note|note de travail|process note|note de process/.test(text)) return kind("working-note", "working-note", "medium", "Working-note keyword.");
+  if (/\bspec\b|specification/.test(text)) return kind("spec", "spec", "medium", "Specification keyword.");
+  if (/protocol|protocole/.test(text)) return kind("protocol", "protocol", "medium", "Protocol keyword.");
+  if (/architecture/.test(text)) return kind("architecture", "architecture", "medium", "Architecture keyword.");
+  if (/dashboard|tableau de bord/.test(text)) return kind("dashboard", "dashboard", "medium", "Dashboard keyword.");
+  if (/journal/.test(text) || r.includes("/journal/")) return kind("journal", "journal", "medium", "Journal path or keyword.");
+  if (doc.role === "operational") return kind("operational-note", "operational-note", "medium", "Operational role.");
+  if (doc.role === "source" && r.startsWith("research/")) {
+    return kind("research-paper", "research-paper", "medium", "Source document under research/.");
+  }
+  if (doc.role === "source") return kind("source-document", "source-document", "weak", "Source role without stronger kind signal.");
+  return kind("unknown", "unknown", "weak", "No deterministic kind rule matched.");
+}
+
+function inferDataPortabilityKind(doc, text) {
+  if (/\bspec\b|specification/.test(text)) return kind("spec", "spec", "medium", "Data portability specification keyword.");
+  if (/architecture/.test(text)) return kind("architecture", "architecture", "medium", "Data portability architecture keyword.");
+  return kind("data-portability", "data-portability", "medium", "Cogentia Personal data portability path.");
+}
+
+function inferDocsKind(doc, text) {
+  if (doc.repo === "FractaVolta" || doc.repo === "acorsica.org") return kind("website-page", "website-page", "strong", "Website docs path.");
+  if (/tutorial|guide|navigation|knowledge mesh|context server/.test(text)) return kind("guide", "guide", "medium", "Guide keyword in docs path.");
+  return kind("documentation", "documentation", "medium", "Docs path.");
+}
+
+function inferLifecycleState(doc, kindInfo) {
+  const fm = doc.frontmatter || {};
+  const text = `${String(fm.status || "")} ${String(doc.title || "")}`.toLowerCase();
+  if (doc.role === "alias" || kindInfo.kind === "redirect-alias") return { state: "moved", rule: "alias" };
+  if (kindInfo.kind === "generated-view") return { state: "generated", rule: "generated-view" };
+  if (/generated automatically/.test(text)) return { state: "generated", rule: "status" };
+  if (/deprecated|abandoned|obsolete/.test(text)) return { state: "deprecated", rule: "status" };
+  if (/draft|v0\.|working|work in progress|provisoire/.test(text)) return { state: "working", rule: "status" };
+  if (/published|stable|stabilized|stabilised/.test(text)) return { state: "stable", rule: "status" };
+  return { state: "active", rule: "default" };
+}
+
+function kind(rule, kindValue, confidence, reason) {
+  return { rule, kind: kindValue, confidence, reason };
+}
+
+function weakestConfidence(values) {
+  const order = { strong: 3, medium: 2, weak: 1 };
+  return values.reduce((min, value) => (order[value] < order[min] ? value : min), "strong");
+}
+
+function classificationEquivalent(field, actual, expected) {
+  const a = String(actual || "").trim().toLowerCase();
+  const e = String(expected || "").trim().toLowerCase();
+  if (!a || !e) return true;
+  if (a === e) return true;
+  if (field === "document_role") {
+    if (a.includes(e) || e.includes(a)) return true;
+    if (e === "alias" && a.includes("alias")) return true;
+    if (e === "source" && (a.includes("source") || a.includes("souverain") || a.includes("sovereign"))) return true;
+    if (e === "operational" && a.includes("operational")) return true;
+  }
+  if (field === "visibility") return normalizeVisibility(a, e) === e;
+  if (field === "lifecycle_state") {
+    if (a.includes(e) || e.includes(a)) return true;
+    if (e === "working" && /draft|working|v0|provisoire/.test(a)) return true;
+  }
+  if (field === "document_kind") return a === e || a.includes(e) || e.includes(a);
+  return false;
+}
+
+function planClassificationPatch(doc, item, options = {}) {
+  if (item.conflicts.length && !options.fixConflicts) return null;
+  if (item.confidence === "weak" && !options.includeAmbiguous) return null;
+  const raw = fs.readFileSync(doc.full_path, "utf8");
+  const patch = {};
+  for (const [field, value] of Object.entries(item.desired)) {
+    if (!value || value === "unknown") continue;
+    const existing = explicitClassificationValue(doc.frontmatter || {}, field);
+    if (field === "document_role" && legacyFreeTextRole(existing)) {
+      patch[field] = value;
+      continue;
+    }
+    if (existing && !options.fixConflicts) continue;
+    if (existing && classificationEquivalent(field, existing, value)) continue;
+    patch[field] = value;
+  }
+  if (!Object.keys(patch).length) return null;
+  const after = applyFrontmatterPatch(raw, patch);
+  return {
+    repo: doc.repo,
+    path: doc.rel,
+    full_path: doc.full_path,
+    title: doc.title,
+    action: "update-frontmatter",
+    fields: patch,
+    rule: item.rule,
+    confidence: item.confidence,
+    before_hash: sha(raw),
+    after_hash: sha(after),
+    bytes_delta: Buffer.byteLength(after) - Buffer.byteLength(raw),
+    before: raw,
+    after,
+  };
+}
+
+function explicitClassificationValue(fm, field) {
+  if (field === "document_role") return fm.document_role || "";
+  if (field === "document_kind") return fm.document_kind || "";
+  if (field === "visibility") return fm.visibility || "";
+  if (field === "lifecycle_state") return fm.lifecycle_state || "";
+  return fm[field] || "";
+}
+
+function explicitDocumentRole(fm) {
+  if (fm.document_role && !legacyFreeTextRole(fm.document_role)) return fm.document_role;
+  if (fm.corpus_role && !legacyFreeTextRole(fm.corpus_role)) return fm.corpus_role;
+  if (fm.role && normalizedDocumentRole(fm.role)) return fm.role;
+  return "";
+}
+
+function normalizedDocumentRole(value) {
+  const v = String(value || "").trim().toLowerCase();
+  return ["source", "derived", "trail", "index", "operational", "template", "example", "alias", "archive", "unknown"].includes(v) ? v : "";
+}
+
+function legacyFreeTextRole(value) {
+  if (!value) return "";
+  return normalizedDocumentRole(value) ? "" : String(value);
+}
+
+function applyFrontmatterPatch(raw, patch) {
+  const entries = Object.entries(patch);
+  const lines = entries.map(([key, value]) => `${key}: ${yamlScalar(value)}`);
+  if (!raw.startsWith("---")) {
+    return `---\n${lines.join("\n")}\n---\n\n${raw}`;
+  }
+  const end = raw.indexOf("\n---", 3);
+  if (end < 0) return `---\n${lines.join("\n")}\n---\n\n${raw}`;
+  const frontmatter = raw.slice(0, end);
+  const rest = raw.slice(end);
+  const existing = new Set();
+  const updated = frontmatter.split(/\r?\n/).map(line => {
+    const m = line.match(/^([A-Za-z0-9_-]+):\s*(.*)$/);
+    if (!m) return line;
+    const found = entries.find(([key]) => key === m[1]);
+    if (!found) return line;
+    existing.add(found[0]);
+    return `${found[0]}: ${yamlScalar(found[1])}`;
+  });
+  for (const [key, value] of entries) {
+    if (!existing.has(key)) updated.push(`${key}: ${yamlScalar(value)}`);
+  }
+  return `${updated.join("\n").trimEnd()}${rest}`;
+}
+
+function applyClassificationPlan(plan) {
+  for (const change of plan.changes) {
+    fs.writeFileSync(change.full_path, change.after, "utf8");
+  }
+}
+
 function docsFilter(repoArg) {
   return {
     repo: repoArg || "all",
@@ -3599,6 +3989,64 @@ function formatDocs(docs) {
   if (!docs.length) return "No documents.";
   const lines = [`\nDocuments (${docs.length})\n`];
   for (const d of docs) lines.push(`- ${d.repo}/${d.path} - ${d.title} [${d.role}]`);
+  return lines.join("\n");
+}
+
+function formatClassificationPlan(result) {
+  const lines = [
+    `\nClassification ${result.mode}\n`,
+    `Scanned: ${result.scanned}`,
+    `Changes: ${result.changes.length}`,
+    `Conflicts: ${result.conflicts.length}`,
+    `Ambiguous: ${result.ambiguous.length}`,
+  ];
+  if (result.applied) lines.push(`Applied: ${result.applied}`);
+  if (result.changes.length) {
+    lines.push("");
+    lines.push("Planned changes:");
+    for (const change of result.changes.slice(0, 40)) {
+      const fields = Object.keys(change.fields).join(", ");
+      lines.push(`- ${change.repo}/${change.path}: ${fields} (${change.rule}, ${change.confidence})`);
+    }
+    if (result.changes.length > 40) lines.push(`- ... ${result.changes.length - 40} more`);
+  }
+  if (result.conflicts.length) {
+    lines.push("");
+    lines.push("Conflicts:");
+    for (const item of result.conflicts.slice(0, 30)) {
+      const conflicts = item.conflicts.map(c => `${c.field}: ${c.explicit} != ${c.inferred}`).join("; ");
+      lines.push(`- ${item.repo}/${item.path}: ${conflicts}`);
+    }
+    if (result.conflicts.length > 30) lines.push(`- ... ${result.conflicts.length - 30} more`);
+  }
+  if (result.ambiguous.length) {
+    lines.push("");
+    lines.push("Ambiguous:");
+    for (const item of result.ambiguous.slice(0, 30)) {
+      lines.push(`- ${item.repo}/${item.path}: ${item.reason}`);
+    }
+    if (result.ambiguous.length > 30) lines.push(`- ... ${result.ambiguous.length - 30} more`);
+  }
+  return lines.join("\n");
+}
+
+function formatClassificationExplain(doc, item) {
+  const lines = [
+    `\nClassification for ${doc.repo}/${doc.rel}\n`,
+    `Title: ${doc.title}`,
+    `Role: ${item.document_role}`,
+    `Kind: ${item.document_kind}`,
+    `Visibility: ${item.visibility}`,
+    `Lifecycle: ${item.lifecycle_state}`,
+    `Rule: ${item.rule}`,
+    `Confidence: ${item.confidence}`,
+    `Reason: ${item.reason}`,
+  ];
+  if (item.conflicts.length) {
+    lines.push("");
+    lines.push("Conflicts:");
+    for (const conflict of item.conflicts) lines.push(`- ${conflict.field}: ${conflict.explicit} != ${conflict.inferred}`);
+  }
   return lines.join("\n");
 }
 

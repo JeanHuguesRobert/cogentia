@@ -7,6 +7,14 @@ last_stamped_at: 2026-06-01
 title: "Cogentia Commons: A Platform Architecture for Collaborative Possibility Exploration Under Scientific Constraint"
 date: "2026-04-29"
 status: "working-paper — auto-filled (frontmatter cleanup)"
+document_role: "source"
+document_kind: "architecture"
+visibility: "public"
+lifecycle_state: "working"
+classification_source: "cogentia.js"
+classification_version: "1"
+classification_rule: "architecture"
+classification_confidence: "medium"
 ---
 # Cogentia Commons: A Platform Architecture for Collaborative Possibility Exploration Under Scientific Constraint
 
@@ -359,9 +367,9 @@ Popper, K. R. (1959). *The logic of scientific discovery*. Hutchinson.
 
 Robert, J. H. (2026a). *Cogentia and Cogentigrams: A framework for structured representation of persistent cognitive signatures in AI systems*. Cogentia/PrivAI, MIT License. https://github.com/JeanHuguesRobert/cogentia/blob/main/Cogentia-and-Cogentigram.md
 
-Robert, J. H. (2026b). *Democratic Humans in the Loop: Why Infrastructure Is All You Need for AI Safety* (DHITL). MareNostrum Working Paper Series. https://github.com/JeanHuguesRobert/marenostrum/blob/main/DHITL.md
+Robert, J. H. (2026b). *Democratic Humans in the Loop: Why Infrastructure Is All You Need for AI Safety* (DHITL). MareNostrum Working Paper Series. https://github.com/JeanHuguesRobert/marenostrum/blob/main/research/DHITL.md
 
-Robert, J. H. (2026c). *Infrastructure Is All You Need: Toward a structural theory of AI safety grounded in compute sovereignty and democratic energy governance*. MareNostrum Working Paper Series. https://github.com/JeanHuguesRobert/marenostrum/blob/main/infrastructure_is_all_you_need.md
+Robert, J. H. (2026c). *Infrastructure Is All You Need: Toward a structural theory of AI safety grounded in compute sovereignty and democratic energy governance*. MareNostrum Working Paper Series. https://github.com/JeanHuguesRobert/marenostrum/blob/main/research/infrastructure_is_all_you_need.md
 
 ---
 

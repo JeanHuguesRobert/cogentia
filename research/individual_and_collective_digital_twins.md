@@ -11,6 +11,14 @@ ai_assisted_by:
   - "Claude — first draft from issue cogentia#14, 2026-05-31"
 canonical_url: https://github.com/JeanHuguesRobert/cogentia/blob/main/research/individual_and_collective_digital_twins.md
 last_stamped_at: 2026-06-01
+document_role: "source"
+document_kind: "research-paper"
+visibility: "public"
+lifecycle_state: "working"
+classification_source: "cogentia.js"
+classification_version: "1"
+classification_rule: "research-paper"
+classification_confidence: "medium"
 ---
 
 # Individual and Collective Digital Twins

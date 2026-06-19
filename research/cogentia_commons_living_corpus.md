@@ -27,6 +27,13 @@ related_documents:
   - "docs/agent_context_server.md"
   - "docs/knowledge_mesh.md"
   - "barons-Mariani/research/second_method.md"
+document_kind: "research-paper"
+visibility: "public"
+lifecycle_state: "working"
+classification_source: "cogentia.js"
+classification_version: "1"
+classification_rule: "research-paper"
+classification_confidence: "medium"
 ---
 
 # The Cogentia Commons Living Corpus

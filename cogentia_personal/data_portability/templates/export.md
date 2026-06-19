@@ -14,6 +14,14 @@ checksum_manifest: null
 processed_by: null
 processed_at: null
 verification_status: pending
+document_role: "template"
+document_kind: "template"
+visibility: "public"
+lifecycle_state: "active"
+classification_source: "cogentia.js"
+classification_version: "1"
+classification_rule: "template"
+classification_confidence: "strong"
 ---
 
 # Data Export — Provider — YYYY-MM-DD

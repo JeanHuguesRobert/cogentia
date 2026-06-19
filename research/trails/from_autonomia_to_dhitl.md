@@ -7,6 +7,14 @@ creator: Jean Hugues Noël Robert, baron Mariani
 title: "Trail: From Autonomia to DHITL"
 date: "2026-05-18"
 status: "draft — auto-filled (frontmatter cleanup)"
+document_role: "trail"
+document_kind: "trail"
+visibility: "public"
+lifecycle_state: "working"
+classification_source: "cogentia.js"
+classification_version: "1"
+classification_rule: "trail"
+classification_confidence: "strong"
 ---
 # Trail: From Autonomia to DHITL
 
@@ -18,7 +26,7 @@ status: "draft — auto-filled (frontmatter cleanup)"
 1. [Autonomia](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/autonomia.md)
    *The territorial doctrine. Autonomy of capacity, collective capabilities, phase specificity — what a territory becomes able to do, beyond formal sovereignty.*
 
-2. [The Generalized Tocqueville Law](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/tocqueville_law.md)
+2. [The Generalized Tocqueville Law](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/tocqueville_law.md)
    *The diagnostic. Why status without capacity produces rising expectations and structural dissatisfaction.*
 
 3. [GR20 : du quota à l'autonomie de capacité](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/gr20_autonomie_de_capacite.md)
@@ -30,7 +38,7 @@ status: "draft — auto-filled (frontmatter cleanup)"
 5. [Traçabilité civique anti-mafieuse](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/traceabilite_civique_antimafia.md)
    *Application — governance. Documenting capture without building a surveillance society.*
 
-6. [The Republic of Donkeys](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/the_republic_of_donkeys.md)
+6. [The Republic of Donkeys](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/the_republic_of_donkeys.md)
    *A situated micro-experiment in Ostrom-style commons governance. Capabilities, not slogans.*
 
 7. [Democratic AI Safety](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/democratic_ai_safety.md)
@@ -39,10 +47,10 @@ status: "draft — auto-filled (frontmatter cleanup)"
 8. [La pathologie du secret](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/pathologie_du_secret.md)
    *The legal-doctrinal anchor. The human-imputability requirement courts and patent offices already enforce for private rights must apply, more strongly, to public acts. Algorithmic opacity is a democratic pathology, not an inconvenience.*
 
-9. [DHITL — Democratic Humans in the Loop](https://github.com/JeanHuguesRobert/marenostrum/blob/main/DHITL.md)
+9. [DHITL — Democratic Humans in the Loop](https://github.com/JeanHuguesRobert/marenostrum/blob/main/research/DHITL.md)
    *The axiom. AI Safety requires democratically accountable humans, not subordinated operators clicking approval inside a corporate process.*
 
-10. [Infrastructure is All You Need](https://github.com/JeanHuguesRobert/marenostrum/blob/main/infrastructure_is_all_you_need.md)
+10. [Infrastructure is All You Need](https://github.com/JeanHuguesRobert/marenostrum/blob/main/research/infrastructure_is_all_you_need.md)
     *The loop closes. From the democratic axiom back to the Corsican infrastructure that makes it real — energy, compute, governance held in common.*
 <!-- BEGIN_AUTO: backlinks -->
 ### Backlinks

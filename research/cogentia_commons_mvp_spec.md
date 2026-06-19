@@ -12,6 +12,14 @@ status: "working-paper"
 canonical_url: https://github.com/JeanHuguesRobert/cogentia/blob/main/research/cogentia_commons_mvp_spec.md
 last_stamped_at: 2026-06-01
 date: "2026-05-11"
+document_role: "source"
+document_kind: "spec"
+visibility: "public"
+lifecycle_state: "working"
+classification_source: "cogentia.js"
+classification_version: "1"
+classification_rule: "spec"
+classification_confidence: "medium"
 ---
 
 # Cogentia Commons — MVP Specification
@@ -1034,7 +1042,7 @@ If any of these fails on the acceptance test, the design is defective. Per the W
 
 ### 11.3 Rollout posture under mimetic constraints
 
-A Cogentia Commons instance does not enter a host community on a neutral substrate. It enters under the structural conditions identified by Working Paper §10.4 (prestige coupling, monopoly of legitimation, island insularity premium), which are themselves expressions of the DRSJ cycle named in [`Indirect Action Under Mimetic Constraints`](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/mimetic_desynchronization.md): *Denial of competence → causal Reattribution → moral Suspicion → Justification of sanction*. The MVP rollout assumes resistance is structural and intrinsic, not anomalous, and is designed to delay or diffuse the cycle long enough for the platform to cross its irreversibility threshold inside the host community.
+A Cogentia Commons instance does not enter a host community on a neutral substrate. It enters under the structural conditions identified by Working Paper §10.4 (prestige coupling, monopoly of legitimation, island insularity premium), which are themselves expressions of the DRSJ cycle named in [`Indirect Action Under Mimetic Constraints`](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/mimetic_desynchronization.md): *Denial of competence → causal Reattribution → moral Suspicion → Justification of sanction*. The MVP rollout assumes resistance is structural and intrinsic, not anomalous, and is designed to delay or diffuse the cycle long enough for the platform to cross its irreversibility threshold inside the host community.
 
 The six mechanisms of mimetic desynchronization map onto concrete v1 design choices:
 
@@ -1263,13 +1271,13 @@ This spec is a refinement of, and is bound by:
 
 - [`Cogentia_Commons_Working_Paper.md`](Cogentia_Commons_Working_Paper.md) §4–§5 (entity model), §6 (recursive first use case), §7 (failure modes).
 - [`second_method.md`](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/second_method.md) — the five rules. Rule 0 and Rule 2 are load-bearing on every section here.
-- [`DHITL.md`](https://github.com/JeanHuguesRobert/marenostrum/blob/main/DHITL.md) — Cogentia Commons is Layer 4. By design, no Layer 3 capability lives here.
+- [`DHITL.md`](https://github.com/JeanHuguesRobert/marenostrum/blob/main/research/DHITL.md) — Cogentia Commons is Layer 4. By design, no Layer 3 capability lives here.
 - [`Cogentia-and-Cogentigram.md`](Cogentia-and-Cogentigram.md) — Personal Cogentia is the individual analogue; the paste-bridge UX is shared.
 - [`inseme/packages/cop-core/Architecture.md`](https://github.com/JeanHuguesRobert/inseme/blob/main/packages/cop-core/Architecture.md) — COP (Cognitive Orchestration Protocol). Commons is a COP/HITL profile consumer. The Continuation primitive (§1.8, §2.7, §5.5) is inherited verbatim.
 - [`inseme/docs/MODULAR_SYSTEM.md`](https://github.com/JeanHuguesRobert/inseme/blob/main/docs/MODULAR_SYSTEM.md) — the brique pattern. Commons ships as `@inseme/brique-cogentia-commons` (§12).
 - [`inseme/packages/cop-host/BRIQUE_SPEC.md`](https://github.com/JeanHuguesRobert/inseme/blob/main/packages/cop-host/BRIQUE_SPEC.md) — the `brique.config.js` contract Commons's manifest implements (§12.3).
 - [`inseme/apps/platform/supabase/migrations/20251206_add_cop_core.sql`](https://github.com/JeanHuguesRobert/inseme/blob/main/apps/platform/supabase/migrations/20251206_add_cop_core.sql) — the `cop_topic` / `cop_task` / `cop_step` / `cop_event` / `cop_artifact` tables Commons projects onto (§12.4).
-- [`mimetic_desynchronization.md`](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/mimetic_desynchronization.md) — the DRSJ cycle and the six mechanisms of indirect action. Shapes the v1 in-scope/out-of-scope list (§1) and the rollout posture (§11.3).
+- [`mimetic_desynchronization.md`](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/mimetic_desynchronization.md) — the DRSJ cycle and the six mechanisms of indirect action. Shapes the v1 in-scope/out-of-scope list (§1) and the rollout posture (§11.3).
 - The Kudos book (`C:\tweesic\Kudos`) — anchors the deferred reward primitive.
 
 It supersedes nothing. If a contradiction is identified between this spec and any of the above, the above wins until this spec is revised through the method it describes.

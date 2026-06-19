@@ -19,6 +19,14 @@ related_documents:
 license: "CC BY 4.0"
 canonical_url: https://github.com/JeanHuguesRobert/cogentia/blob/main/research/tracabilite_symetrique_capture_relationnelle.md
 last_stamped_at: 2026-06-01
+document_role: "source"
+document_kind: "research-paper"
+visibility: "public"
+lifecycle_state: "working"
+classification_source: "cogentia.js"
+classification_version: "1"
+classification_rule: "research-paper"
+classification_confidence: "medium"
 ---
 
 # Traçabilité symétrique et capture relationnelle

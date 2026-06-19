@@ -7,6 +7,14 @@ creator: Jean Hugues Noël Robert, baron Mariani
 title: "Trail: From Method to Machine"
 date: "2026-05-16"
 status: "draft — auto-filled (frontmatter cleanup)"
+document_role: "trail"
+document_kind: "trail"
+visibility: "public"
+lifecycle_state: "working"
+classification_source: "cogentia.js"
+classification_version: "1"
+classification_rule: "trail"
+classification_confidence: "strong"
 ---
 # Trail: From Method to Machine
 
@@ -27,13 +35,13 @@ status: "draft — auto-filled (frontmatter cleanup)"
 4. [Democratic AI Safety](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/democratic_ai_safety.md)
    *The political thesis. Why AI safety must protect human sovereignty against AI-augmented legal persons.*
 
-5. [DHITL — Democratic Humans in the Loop](https://github.com/JeanHuguesRobert/marenostrum/blob/main/DHITL.md)
+5. [DHITL — Democratic Humans in the Loop](https://github.com/JeanHuguesRobert/marenostrum/blob/main/research/DHITL.md)
    *The axiom. The formal definition of Layer 4 — where cognition meets governance.*
 
-6. [Infrastructure is All You Need](https://github.com/JeanHuguesRobert/marenostrum/blob/main/infrastructure_is_all_you_need.md)
+6. [Infrastructure is All You Need](https://github.com/JeanHuguesRobert/marenostrum/blob/main/research/infrastructure_is_all_you_need.md)
    *The implementation thesis. From abstract governance to concrete Corsican infrastructure.*
 
-7. [FractaVolta — Energy Packet Networks](https://github.com/JeanHuguesRobert/FractaVolta/blob/main/fractavolta_paper.md)
+7. [FractaVolta — Energy Packet Networks](https://github.com/JeanHuguesRobert/FractaVolta/blob/main/research/fractavolta_paper.md)
    *The engineering layer. How distributed energy and compute become the physical substrate.*
 
 8. [The Sovereign Digital Twin](../cogentia-digital-twin.md)

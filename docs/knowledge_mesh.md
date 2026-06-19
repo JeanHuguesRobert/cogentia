@@ -10,6 +10,14 @@ license: "CC BY-SA 4.0"
 last_stamped_at: 2026-06-01
 date: "2026-05-16"
 status: "draft — auto-filled (frontmatter cleanup)"
+document_role: "source"
+document_kind: "guide"
+visibility: "public"
+lifecycle_state: "working"
+classification_source: "cogentia.js"
+classification_version: "1"
+classification_rule: "guide"
+classification_confidence: "medium"
 ---
 
 # The Knowledge Mesh (Decentralized Wiki)

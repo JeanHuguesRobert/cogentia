@@ -37,6 +37,14 @@ related_documents:
 changelog:
   - "v0.1 — initial source concept"
   - "v0.1.1 — added references and neighboring-work section"
+document_role: "source"
+document_kind: "research-paper"
+visibility: "public"
+lifecycle_state: "working"
+classification_source: "cogentia.js"
+classification_version: "1"
+classification_rule: "research-paper"
+classification_confidence: "medium"
 ---
 
 # Cognitive Programming

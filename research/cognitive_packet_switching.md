@@ -54,6 +54,14 @@ derived_products_planned:
 canonical_url: https://github.com/JeanHuguesRobert/cogentia/blob/main/research/cognitive_packet_switching.md
 last_stamped_at: 2026-06-01
 corpus_role: "source"
+document_role: "source"
+document_kind: "research-paper"
+visibility: "public"
+lifecycle_state: "stable"
+classification_source: "cogentia.js"
+classification_version: "1"
+classification_rule: "research-paper"
+classification_confidence: "medium"
 ---
 
 # Cognitive Packet Switching

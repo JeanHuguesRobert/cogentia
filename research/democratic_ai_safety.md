@@ -35,5 +35,4 @@ The earlier French Cogentia-format draft is preserved in the git history of this
 *These documents link to this file:*
 - [Research Index — Cogentia](index.md)
 - [Self-Contained Documents in an Interconnected Corpus](self_contained_documents.md)
-- [Documents - All Tracked Repos](https://github.com/JeanHuguesRobert/JeanHuguesRobert/blob/main/research/documents.md)
 <!-- END_AUTO: backlinks -->

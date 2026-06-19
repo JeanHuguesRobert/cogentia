@@ -11,6 +11,14 @@ canonical_url: https://github.com/JeanHuguesRobert/cogentia/blob/main/COGENTIA.m
 last_stamped_at: 2026-06-01
 date: "2026-05-13"
 status: "published identity document — v2 CLI consolidation"
+document_role: "source"
+document_kind: "identity-document"
+visibility: "public"
+lifecycle_state: "stable"
+classification_source: "cogentia.js"
+classification_version: "1"
+classification_rule: "identity-document"
+classification_confidence: "strong"
 ---
 
 # Cogentia
@@ -82,7 +90,7 @@ The second method rejects skin-in-the-game as a *governance* boundary — it wou
 
 Within Layer 4 (cognitive infrastructure, where Cogentia lives), skin-in-the-game is appropriate and adopted: every action is signed; every signature is the actor staking their reputation. Recursive: a moderator who issues a frivolous ban signs the ban; their issuance carries reputational cost too. Accountability is symmetric — it does not flow only downward.
 
-→ [`marenostrum/DHITL.md`](https://github.com/JeanHuguesRobert/marenostrum/blob/main/DHITL.md) for the five-layer scheme; [`research/cogentia_commons_mvp_spec.md`](research/cogentia_commons_mvp_spec.md) §1.1 for the carve-out.
+→ [`marenostrum/DHITL.md`](https://github.com/JeanHuguesRobert/marenostrum/blob/main/research/DHITL.md) for the five-layer scheme; [`research/cogentia_commons_mvp_spec.md`](research/cogentia_commons_mvp_spec.md) §1.1 for the carve-out.
 
 ---
 
@@ -171,5 +179,5 @@ The framework exists to be argued against, in the form it itself defined.
 - [Trail: From Method to Machine](research/trails/from_method_to_machine.md)
 - [Corpus Start Here — Carte globale du Corpus](https://github.com/JeanHuguesRobert/JeanHuguesRobert/blob/main/research/corpus-map.md)
 - [Documents - All Tracked Repos](https://github.com/JeanHuguesRobert/JeanHuguesRobert/blob/main/research/documents.md)
-- [DHITL, Democratic Humans In The Loop](https://github.com/JeanHuguesRobert/marenostrum/blob/main/DHITL.md)
+- [DHITL, Democratic Humans In The Loop](https://github.com/JeanHuguesRobert/marenostrum/blob/main/research/DHITL.md)
 <!-- END_AUTO: backlinks -->

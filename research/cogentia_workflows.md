@@ -12,6 +12,14 @@ status: working-paper — companion to Cogentia Commons MVP Specification
 canonical_url: https://github.com/JeanHuguesRobert/cogentia/blob/main/research/cogentia_workflows.md
 last_stamped_at: 2026-06-01
 date: "2026-05-11"
+document_role: "source"
+document_kind: "research-paper"
+visibility: "public"
+lifecycle_state: "working"
+classification_source: "cogentia.js"
+classification_version: "1"
+classification_rule: "research-paper"
+classification_confidence: "medium"
 ---
 
 # Cogentia Workflows
@@ -1207,7 +1215,7 @@ This document complements:
 - [`second_method.md`](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/second_method.md) — methodological rules for knowledge production under AI conditions.
 - [`cognitive_waves.md`](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/cognitive_waves.md) — theoretical framework for navigating dynamic cognitive terrains.
 - [`potentics.md`](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/potentics.md) — general framework for the rational exploration of possibilities.
-- [`DHITL.md`](https://github.com/JeanHuguesRobert/marenostrum/blob/main/DHITL.md) — democratic human-in-the-loop architecture.
+- [`DHITL.md`](https://github.com/JeanHuguesRobert/marenostrum/blob/main/research/DHITL.md) — democratic human-in-the-loop architecture.
 - [`Cogentia-and-Cogentigram.md`](Cogentia-and-Cogentigram.md) — personal layer and digital twin continuity.
 - the Kudos book — future reputation and recognition substrate.
 - the COP — Cognitive Orchestration Protocol — as the natural substrate for continuations.

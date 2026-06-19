@@ -1,3 +1,14 @@
+---
+document_role: "operational"
+document_kind: "architecture"
+visibility: "public"
+lifecycle_state: "active"
+classification_source: "cogentia.js"
+classification_version: "1"
+classification_rule: "architecture"
+classification_confidence: "medium"
+---
+
 # Cogentia Trace — Architecture
 
 Cogentia Trace separates four layers that must not be collapsed:

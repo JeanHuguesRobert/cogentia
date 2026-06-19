@@ -1,3 +1,14 @@
+---
+document_role: "operational"
+document_kind: "guide"
+visibility: "public"
+lifecycle_state: "active"
+classification_source: "cogentia.js"
+classification_version: "1"
+classification_rule: "guide"
+classification_confidence: "medium"
+---
+
 # Cogentia daemon & plugin tutorial
 
 This short tutorial shows how to run the local Cogentia daemon, inspect plugins, use the built-in UI, and create a minimal plugin.

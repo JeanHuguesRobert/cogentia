@@ -38,6 +38,14 @@ continuations:
   - "inseme/docs/architecture/cellula_data_model.md"
   - "inseme/docs/architecture/cellula_markdown_export.md"
   - "cogentia/research/conversia_agent.md"
+document_role: "source"
+document_kind: "concept-note"
+visibility: "public"
+lifecycle_state: "working"
+classification_source: "cogentia.js"
+classification_version: "1"
+classification_rule: "concept-note"
+classification_confidence: "medium"
 ---
 # Pipeline Conversation vers Corpus (Conversia)
 

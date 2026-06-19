@@ -32,6 +32,14 @@ reviewed_by:
 ai_assisted_by:
   - "ChatGPT — drafting, revision, consolidation"
 last_stamped_at: 2026-06-01
+document_role: "source"
+document_kind: "research-paper"
+visibility: "public"
+lifecycle_state: "working"
+classification_source: "cogentia.js"
+classification_version: "1"
+classification_rule: "research-paper"
+classification_confidence: "medium"
 ---
 
 # Self-Contained Documents in an Interconnected Corpus

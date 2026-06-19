@@ -9,6 +9,14 @@ license: "CC BY-SA 4.0 for text; MIT for associated code"
 spdx: "CC-BY-SA-4.0"
 canonical_url: https://github.com/JeanHuguesRobert/cogentia/blob/main/research/agent_resumable_cli.md
 last_stamped_at: 2026-06-01
+document_role: "source"
+document_kind: "research-paper"
+visibility: "public"
+lifecycle_state: "working"
+classification_source: "cogentia.js"
+classification_version: "1"
+classification_rule: "research-paper"
+classification_confidence: "medium"
 ---
 --------------------------------------------------------------------------------------------------------------
 

@@ -9,6 +9,14 @@ affiliation: Institut Mariani / C.O.R.S.I.C.A., 1 cours Paoli, F-20250 Corte, Co
 date: 2026-05-22
 creator: Jean Hugues Noël Robert, baron Mariani
 canonical_url: https://github.com/JeanHuguesRobert/cogentia/blob/main/research/index.md
+document_role: "index"
+document_kind: "research-index"
+visibility: "public"
+lifecycle_state: "active"
+classification_source: "cogentia.js"
+classification_version: "1"
+classification_rule: "research-index"
+classification_confidence: "strong"
 ---
 <!-- BEGIN_AUTO: trails -->
 
@@ -17,7 +25,7 @@ canonical_url: https://github.com/JeanHuguesRobert/cogentia/blob/main/research/i
 
 ## Foundation
 
-This repository instantiates the **cognitive infrastructure layer** of the [DHITL](https://github.com/JeanHuguesRobert/marenostrum/blob/main/DHITL.md) AI Safety anti-capture proposal — at both the individual scale (*Personal Cogentia*) and the collective scale (*Cogentia Commons*). The architectural axiom lives in [`marenostrum/DHITL.md`](https://github.com/JeanHuguesRobert/marenostrum/blob/main/DHITL.md). The method by which the proposal develops lives in [`barons-Mariani/research/second_method.md`](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/second_method.md).
+This repository instantiates the **cognitive infrastructure layer** of the [DHITL](https://github.com/JeanHuguesRobert/marenostrum/blob/main/research/DHITL.md) AI Safety anti-capture proposal — at both the individual scale (*Personal Cogentia*) and the collective scale (*Cogentia Commons*). The architectural axiom lives in [`marenostrum/DHITL.md`](https://github.com/JeanHuguesRobert/marenostrum/blob/main/research/DHITL.md). The method by which the proposal develops lives in [`barons-Mariani/research/second_method.md`](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/second_method.md).
 
 ---
 
@@ -49,6 +57,7 @@ This repository instantiates the **cognitive infrastructure layer** of the [DHIT
 | [Cogentia Personal Data Portability](cogentia_personal_data_portability.md) *(generic reusable layer for schemas, templates, normalizers and redacted/fictitious examples; explicitly separated from any private personal register)* | this repo | 2026-06-11 |
 | [Agent Configuration Layer](agent_configuration_layer.md) *(method note v0.2 — AGENTS.md, `.agents/`, and governed operational projections of the corpus)* | this repo | 2026-06-13 |
 | [Pipeline Conversation vers Corpus (Conversia)](conversation_to_corpus_pipeline.md) *(source document v0.4 — progressive transformation of conversations into living corpus, models, agents, mandates and traces)* | this repo | 2026-06-12 |
+| [Open Knowledge Format and Cogentia](open_knowledge_format_alignment.md) *(working-note v0.1 — Google OKF v0.1 as external confirmation of the Markdown/YAML/git/index/link substrate; proposes `okf check` and `okf export` as Cogentia compatibility layer)* | this repo | 2026-06-19 |
 | [Démocratie de capacité](democracy_of_capability.md) *(structured hypothesis — publics capables, open democracy and AI under mandate)* | this repo | 2026-06-12 |
 | [Démocratie rapide mandatée](mandated_fast_democracy.md) *(short conceptual synthesis — deciding quickly without abandoning democratic principles)* | this repo | 2026-06-12 |
 | [From Biometrics and Psychometrics to Structural Signatures](structural_signatures.md) *(working paper v0.9 — non-biographical identifying structures, Cogentigrams and consent-based sovereign digital twins)* | this repo | 2026-05-22 |
@@ -83,10 +92,10 @@ This repository instantiates the **cognitive infrastructure layer** of the [DHIT
 |---|---|
 | [Discours de la seconde méthode](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/second_method.md) *(founding doctrine — names cogentia.js as canonical tooling)* | barons-Mariani |
 | [Democratic AI Safety — Why AI Safety Must Protect Human Sovereignty Against AI-Augmented Legal Persons](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/democratic_ai_safety.md) *(canonical paper, draft v0.5)* | barons-Mariani |
-| [DHITL — Democratic Humans in the Loop](https://github.com/JeanHuguesRobert/marenostrum/blob/main/DHITL.md) *(Cogentia = Layer 4)* | marenostrum |
-| [CXU Specification](https://github.com/JeanHuguesRobert/marenostrum/blob/main/CXU_SPEC.md) | marenostrum |
-| [Constellia](https://github.com/JeanHuguesRobert/marenostrum/blob/main/constellia.md) *(ICOME'26, avec Guillermo Valdes)* | marenostrum |
-| [Packetized Gravity Networks](https://github.com/JeanHuguesRobert/FractaVolta/blob/main/PGN.md) | FractaVolta |
+| [DHITL — Democratic Humans in the Loop](https://github.com/JeanHuguesRobert/marenostrum/blob/main/research/DHITL.md) *(Cogentia = Layer 4)* | marenostrum |
+| [CXU Specification](https://github.com/JeanHuguesRobert/marenostrum/blob/main/research/CXU_SPEC.md) | marenostrum |
+| [Constellia](https://github.com/JeanHuguesRobert/marenostrum/blob/main/research/constellia.md) *(ICOME'26, avec Guillermo Valdes)* | marenostrum |
+| [Packetized Gravity Networks](https://github.com/JeanHuguesRobert/FractaVolta/blob/main/research/PGN.md) | FractaVolta |
 | [Inseme — deployable platform + COP runtime](https://github.com/JeanHuguesRobert/inseme/blob/main/research/index.md) *(targets brique-cogentia-commons in v1)* | inseme |
 | [Inox — language and runtime substrate](https://github.com/JeanHuguesRobert/Inox/blob/master/research/inox-spec.md) *(concatenative stack VM; long-term Fractanet node runtime; cognitive-infrastructure tooling may eventually compile/run on Inox)* | Inox |
 

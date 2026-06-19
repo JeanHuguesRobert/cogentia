@@ -1,3 +1,14 @@
+---
+document_role: "source"
+document_kind: "data-portability"
+visibility: "public"
+lifecycle_state: "active"
+classification_source: "cogentia.js"
+classification_version: "1"
+classification_rule: "data-portability"
+classification_confidence: "medium"
+---
+
 # Cogentia Personal Data Portability — Formats
 
 ## Status

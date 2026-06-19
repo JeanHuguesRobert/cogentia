@@ -14,6 +14,14 @@ checksum_manifest: personal_data/sources/example_social/2026-06-11/SHA256SUMS.tx
 processed_by: null
 processed_at: null
 verification_status: pending
+document_role: "example"
+document_kind: "example"
+visibility: "public"
+lifecycle_state: "active"
+classification_source: "cogentia.js"
+classification_version: "1"
+classification_rule: "example"
+classification_confidence: "strong"
 ---
 
 # Fictitious Data Export — Example Social — 2026-06-11

@@ -7,6 +7,14 @@ date: "2026-05-27"
 status: "working-paper — auto-filled (frontmatter cleanup)"
 canonical_url: https://github.com/JeanHuguesRobert/cogentia/blob/main/docs/frontmatter-schema.md
 last_stamped_at: 2026-06-01
+document_role: "operational"
+document_kind: "documentation"
+visibility: "public"
+lifecycle_state: "working"
+classification_source: "cogentia.js"
+classification_version: "1"
+classification_rule: "documentation"
+classification_confidence: "medium"
 ---
 # Frontmatter Schema — v0.1 (Corpus)
 

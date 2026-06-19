@@ -24,6 +24,14 @@ tags:
   - derived-product
 canonical_url: https://github.com/JeanHuguesRobert/cogentia/blob/main/research/derived_products/tcp_ip_for_ideas_hacker_news.md
 last_stamped_at: 2026-06-01
+document_role: "derived"
+document_kind: "derived-product"
+visibility: "public"
+lifecycle_state: "active"
+classification_source: "cogentia.js"
+classification_version: "1"
+classification_rule: "derived-product"
+classification_confidence: "strong"
 ---
 
 # TCP/IP for Ideas: Cognitive Packets for Agent Orchestration

@@ -8,6 +8,14 @@ status: "published"
 corpus_role: "source"
 keywords: "Cogentia, C.O.R.S.I.C.A., Institut Mariani, PrivAI, séparation institutionnelle"
 summary: "Note de clarification institutionnelle reliant Cogentia, C.O.R.S.I.C.A., l’Institut Mariani et PrivAI sans confusion juridique ou politique."
+document_role: "source"
+document_kind: "research-paper"
+visibility: "public"
+lifecycle_state: "stable"
+classification_source: "cogentia.js"
+classification_version: "1"
+classification_rule: "research-paper"
+classification_confidence: "medium"
 ---
 # Lien avec C.O.R.S.I.C.A., l’Institut Mariani et PrivAI
 

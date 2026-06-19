@@ -6,6 +6,14 @@ date: "2026-06-05"
 license: "CC BY-SA 4.0"
 status: "working-note"
 corpus_role: "source"
+document_role: "source"
+document_kind: "working-note"
+visibility: "public"
+lifecycle_state: "working"
+classification_source: "cogentia.js"
+classification_version: "1"
+classification_rule: "working-note"
+classification_confidence: "medium"
 ---
 
 # Act, mandate and responsibility

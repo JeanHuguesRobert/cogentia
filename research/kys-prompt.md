@@ -7,6 +7,14 @@ last_stamped_at: 2026-06-01
 title: "kys prompt"
 date: "2026-03-03"
 status: "draft — auto-filled (frontmatter cleanup)"
+document_role: "source"
+document_kind: "research-paper"
+visibility: "public"
+lifecycle_state: "working"
+classification_source: "cogentia.js"
+classification_version: "1"
+classification_rule: "research-paper"
+classification_confidence: "medium"
 ---
 [COGENTIA — PSYCHOCOGNITIVE ANALYSIS PROTOCOL v1.0 | PrivAI]
 

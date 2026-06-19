@@ -1,3 +1,14 @@
+---
+document_role: "source"
+document_kind: "spec"
+visibility: "public"
+lifecycle_state: "active"
+classification_source: "cogentia.js"
+classification_version: "1"
+classification_rule: "spec"
+classification_confidence: "medium"
+---
+
 # Normalize Export — Specification
 
 ## Status
