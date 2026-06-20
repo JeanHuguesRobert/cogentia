@@ -3339,13 +3339,18 @@ function stripClassificationPlan(plan) {
 function classifyDocumentForFrontmatter(doc) {
   const fm = doc.frontmatter || {};
   const kind = inferDocumentKind(doc);
-  const inferredRole = kind.kind === "redirect-alias" ? "alias" : (doc.role === "archive" ? "operational" : doc.role);
+  let inferredRole = kind.kind === "redirect-alias" ? "alias" : (doc.role === "archive" ? "operational" : doc.role);
+  let roleConfidence = doc.role_confidence || "medium";
+  if ((!inferredRole || inferredRole === "unknown") && kind.kind === "identity-document") {
+    inferredRole = "operational";
+    roleConfidence = kind.confidence;
+  }
   const explicitRole = explicitDocumentRole(fm);
   const role = explicitRole || inferredRole;
   const lifecycle = inferLifecycleState(doc, kind);
   const visibility = doc.visibility?.level || "public";
   const rule = kind.rule;
-  const confidence = weakestConfidence([doc.role_confidence || "medium", kind.confidence]);
+  const confidence = weakestConfidence([roleConfidence, kind.confidence]);
   const legacyDocumentRole = legacyFreeTextRole(fm.document_role);
   const legacyCorpusRole = legacyFreeTextRole(fm.corpus_role);
   const legacyRole = legacyFreeTextRole(fm.role);
@@ -3418,6 +3423,7 @@ function inferDocumentKind(doc) {
   if (r.includes("/templates/")) return kind("template", "template", "strong", "Template path.");
   if (r.includes("/examples/") || r.includes("/example_") || r.includes("fictitious_")) return kind("example", "example", "strong", "Example path or filename.");
   if (r === "COGENTIA.md") return kind("identity-document", "identity-document", "strong", "Framework identity document.");
+  if (/^identity\/intent_kernel\.md$/i.test(r)) return kind("intent-kernel", "identity-document", "strong", "Operational intent kernel path.");
   if (r.startsWith("cogentia_personal/data_portability/")) return inferDataPortabilityKind(doc, text);
   if (r.startsWith("prompts/")) return kind("prompt", "prompt", "strong", "Prompt path.");
   if (r.startsWith("interaction_packets/") || r.startsWith("continuations/")) return kind("continuation-packet", "continuation-packet", "strong", "Continuation or interaction packet path.");
