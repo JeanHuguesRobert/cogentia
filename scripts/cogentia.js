@@ -66,6 +66,7 @@ const PUBLIC_PRESENCE = new Set(["full", "stub", "hidden"]);
 const TRACE_LEVELS = new Set(["loose", "standard", "high", "regulated"]);
 const PUBLIC_VIEW = "public";
 const PRIVATE_VIEW = "private";
+const FULL_VIEW = "full";
 
 const argv = process.argv.slice(2);
 const JSON_MODE = takeFlag("--json");
@@ -200,6 +201,9 @@ Git:
 Repository batch helpers:
   repos status [repo|all]  Git status for configured corpus repositories.
   repos fetch [repo|all]   Run git fetch --dry-run by default; pass --apply to update refs.
+  repos sync [repo|all]    Clone or fast-forward configured repositories. Dirty repos are
+                           fetched but never checked out or pulled. Flags: --dry-run
+                           --include-private
   repos push [repo|all]    Run git push --dry-run by default; pass --apply to push.
                            Dirty or behind repositories are skipped unless explicitly safe.
   repos import-owner <github-owner>
@@ -226,6 +230,7 @@ Plan/apply flags:
 
 Registry:
   Uses --registry <path>, COGENTIA_REGISTRY, or nearest .cogentia.json.
+  Index cache root can be overridden with --data-dir <path> or COGENTIA_DATA_DIR.
 `;
   console.log(text.trimStart());
 }
@@ -596,6 +601,15 @@ function cmdRepos(sub) {
         const result = batchRepoFetch(ctx, repoArg, { apply: hasFlag("--apply") });
         return output(result, formatRepoBatch(result));
       }
+    case "sync":
+      {
+        const repoArg = valueFlag("--repo") || optionalPositional("all");
+        const result = batchRepoSync(ctx, repoArg, {
+          dryRun: hasFlag("--dry-run"),
+          includePrivate: hasFlag("--include-private"),
+        });
+        return output(result, formatRepoBatch(result));
+      }
     case "push":
       {
         const repoArg = valueFlag("--repo") || optionalPositional("all");
@@ -623,7 +637,7 @@ function cmdRepos(sub) {
         return output(result, formatRepoImport(result));
       }
     default:
-      throw new Error(`Unknown repos subcommand "${sub}". Use status, fetch, push, or import-owner.`);
+      throw new Error(`Unknown repos subcommand "${sub}". Use status, fetch, sync, push, or import-owner.`);
   }
 }
 
@@ -755,6 +769,7 @@ async function cmdDaemon() {
 }
 async function handleDaemonRequest(req, res) {
   const url = new URL(req.url || "/", "http://127.0.0.1");
+  const view = daemonRequestView(req, url);
   // load context early and give plugins a chance to handle the request
   let ctx = null;
   try {
@@ -763,6 +778,9 @@ async function handleDaemonRequest(req, res) {
     // context may be unavailable for some operations; plugins should handle absence
     ctx = null;
   }
+  if (daemonPublicApiBlocked(req, url, view)) {
+    return daemonJson(res, 403, daemonForbiddenPublicView(url.pathname));
+  }
   if (await dispatchPluginRoute(req, res, ctx, url)) return;
   if (req.method === "OPTIONS") {
     res.writeHead(204, daemonHeaders());
@@ -770,23 +788,18 @@ async function handleDaemonRequest(req, res) {
     return;
   }
   if (req.method === "GET" && url.pathname === "/api/status") {
-    return daemonJson(res, 200, daemonStatus());
+    return daemonJson(res, 200, daemonStatus(view));
   }
   if (req.method === "GET" && url.pathname === "/api/state") {
     const effectiveCtx = ctx || loadContext();
-    return daemonJson(res, 200, {
-      ok: true,
-      version: VERSION,
-      registry: effectiveCtx.configPath,
-      registry_root: effectiveCtx.registryRoot,
-      repos: effectiveCtx.repos.map(repo => daemonRepoState(repo)),
-    });
+    return daemonJson(res, 200, daemonState(effectiveCtx, view));
   }
   if (req.method === "GET" && url.pathname === "/api/repos") {
     const effectiveCtx = ctx || loadContext();
     return daemonJson(res, 200, {
       ok: true,
-      repos: effectiveCtx.repos.map(repo => daemonRepoState(repo)),
+      view,
+      repos: daemonReposForView(effectiveCtx, view).map(repo => daemonRepoState(repo, view)),
     });
   }
   if (req.method === "GET" && url.pathname === "/api/git/verify") {
@@ -804,7 +817,7 @@ async function handleDaemonRequest(req, res) {
         class: p.class,
         title: p.title,
         description: p.description,
-        source: p.source,
+        ...(view === FULL_VIEW ? { source: p.source } : {}),
         routes: p.routes.map(r => ({ method: r.method || 'GET', path: r.path })),
       })),
     });
@@ -833,11 +846,11 @@ async function handleDaemonRequest(req, res) {
   }
   if (req.method === "GET" && url.pathname === "/api/cli/state") {
     const effectiveCtx = ctx || loadContext();
-    return daemonJson(res, 200, daemonCliState(effectiveCtx));
+    return daemonJson(res, 200, daemonCliState(effectiveCtx, view));
   }
   if (req.method === "GET" && url.pathname === "/api/cli/status") {
     const effectiveCtx = ctx || loadContext();
-    return daemonJson(res, 200, daemonCliStatus(effectiveCtx));
+    return daemonJson(res, 200, daemonCliStatus(effectiveCtx, view));
   }
   if (req.method === "GET" && url.pathname === "/api/cli/grep") {
     const effectiveCtx = ctx || loadContext();
@@ -849,7 +862,7 @@ async function handleDaemonRequest(req, res) {
   }
   if (req.method === "GET" && url.pathname === "/api/cli/docs/query") {
     const effectiveCtx = ctx || loadContext();
-    return daemonJson(res, 200, daemonCliDocsQuery(effectiveCtx, url));
+    return daemonJson(res, 200, daemonCliDocsQuery(effectiveCtx, url, view));
   }
   if (req.method === "GET" && url.pathname === "/api/cli/docs/search") {
     const effectiveCtx = ctx || loadContext();
@@ -889,7 +902,7 @@ async function handleDaemonRequest(req, res) {
   }
   if (req.method === "GET" && url.pathname === "/api/index/status") {
     const effectiveCtx = ctx || loadContext();
-    return daemonJson(res, 200, await indexStatus(effectiveCtx));
+    return daemonJson(res, 200, sanitizeIndexStatus(await indexStatus(effectiveCtx), view));
   }
   if (req.method === "POST" && url.pathname === "/api/index/rebuild") {
     const effectiveCtx = ctx || loadContext();
@@ -904,7 +917,7 @@ async function handleDaemonRequest(req, res) {
     const q = url.searchParams.get("q") || "";
     const repo = url.searchParams.get("repo") || "all";
     const limit = parseInt(url.searchParams.get("limit"), 10) || 25;
-    return daemonJson(res, 200, await indexSearch(effectiveCtx, q, { repo, limit }));
+    return daemonJson(res, 200, sanitizeIndexSearch(await indexSearch(effectiveCtx, q, { repo, limit }), view));
   }
   return daemonJson(res, 404, {
     ok: false,
@@ -912,30 +925,58 @@ async function handleDaemonRequest(req, res) {
     path: url.pathname,
   });
 }
-function daemonStatus() {
-  return {
+function daemonStatus(view = PUBLIC_VIEW) {
+  const status = {
     ok: true,
     service: "cogentia-local",
     version: VERSION,
-    pid: process.pid,
-    cwd: process.cwd(),
   };
+  if (view === FULL_VIEW) {
+    status.pid = process.pid;
+    status.cwd = process.cwd();
+  }
+  return status;
 }
-function daemonRepoState(repo) {
-  return {
+function daemonState(ctx, view = PUBLIC_VIEW) {
+  const state = {
+    ok: true,
+    version: VERSION,
+    view,
+    repos: daemonReposForView(ctx, view).map(repo => daemonRepoState(repo, view)),
+  };
+  if (view === FULL_VIEW) {
+    state.registry = ctx.configPath;
+    state.registry_root = ctx.registryRoot;
+  }
+  return state;
+}
+
+function daemonReposForView(ctx, view = PUBLIC_VIEW) {
+  if (view === FULL_VIEW) return ctx.repos;
+  return ctx.repos.filter(repo => repoVisibility(repo) === "public" && repoPublicPresence(repo) === "full");
+}
+
+function daemonRepoState(repo, view = PUBLIC_VIEW) {
+  const state = {
     name: repo.name,
-    path: repo.path,
     branch: repo.branch,
     exists: fs.existsSync(repo.path),
-    policy: repo.policy,
+    visibility: repoVisibility(repo),
+    public_presence: repoPublicPresence(repo),
+    github: repo.github_full_name || "",
   };
+  if (view === FULL_VIEW) {
+    state.path = repo.path;
+    state.policy = repo.policy;
+  }
+  return state;
 }
 function daemonHeaders() {
   return {
     "Content-Type": "application/json; charset=utf-8",
     "Access-Control-Allow-Origin": "http://127.0.0.1:8787",
     "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
-    "Access-Control-Allow-Headers": "Content-Type, Authorization",
+    "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Cogentia-Entry",
     "Cache-Control": "no-store",
   };
 }
@@ -944,24 +985,72 @@ function daemonJson(res, status, body) {
   res.end(`${JSON.stringify(body, null, 2)}\n`);
 }
 
+function daemonRequestView(req, url) {
+  const queryView = normalizeDaemonView(url.searchParams.get("view"));
+  if (queryView) return queryView;
+  const headerEntry = String(req.headers["x-cogentia-entry"] || "").trim().toLowerCase();
+  if (headerEntry === PUBLIC_VIEW) return PUBLIC_VIEW;
+  const envView = normalizeDaemonView(process.env.COGENTIA_DAEMON_VIEW || "");
+  return envView || PUBLIC_VIEW;
+}
+
+function normalizeDaemonView(view) {
+  const clean = String(view || "").trim().toLowerCase();
+  if (clean === PUBLIC_VIEW) return PUBLIC_VIEW;
+  if (clean === FULL_VIEW || clean === PRIVATE_VIEW || clean === "admin") return FULL_VIEW;
+  return "";
+}
+
+function daemonPublicApiBlocked(req, url, view) {
+  if (view === FULL_VIEW) return false;
+  if (req.method === "OPTIONS") return false;
+  if (req.method !== "GET" && url.pathname.startsWith("/api/")) return true;
+  return [
+    "/api/git/verify",
+    "/api/cli/git/verify",
+    "/api/cli/docs/inspect",
+    "/api/cli/docs/snippet",
+  ].includes(url.pathname)
+    || url.pathname.startsWith("/api/cli/concepts")
+    || url.pathname.startsWith("/api/cli/continuation")
+    || url.pathname.startsWith("/api/fs")
+    || url.pathname.startsWith("/api/cmd")
+    || url.pathname.startsWith("/api/command");
+}
+
+function daemonForbiddenPublicView(pathname) {
+  return {
+    ok: false,
+    error: "forbidden_public_view",
+    path: pathname,
+    hint: "Use view=full only for local/admin access behind a trusted boundary.",
+  };
+}
+
+function sanitizeIndexStatus(status, view = PUBLIC_VIEW) {
+  if (view === FULL_VIEW) return status;
+  const { path: _path, registry: _registry, ...safe } = status || {};
+  return { ...safe, view: PUBLIC_VIEW };
+}
+
+function sanitizeIndexSearch(result, view = PUBLIC_VIEW) {
+  if (view === FULL_VIEW) return result;
+  const { path: _path, ...safe } = result || {};
+  return { ...safe, view: PUBLIC_VIEW };
+}
+
 function parseBoolean(value) {
   return value !== null && ['1', 'true', 'yes', 'on'].includes(String(value).toLowerCase());
 }
 
-function daemonCliState(ctx) {
-  return {
-    ok: true,
-    version: VERSION,
-    registry: ctx.configPath,
-    registry_root: ctx.registryRoot,
-    repos: ctx.repos.map(daemonRepoState),
-  };
+function daemonCliState(ctx, view = PUBLIC_VIEW) {
+  return daemonState(ctx, view);
 }
 
-function daemonCliStatus(ctx) {
+function daemonCliStatus(ctx, view = PUBLIC_VIEW) {
   const inventory = buildInventory(ctx);
   const git = verifyGit(ctx);
-  const rows = ctx.repos.map(repo => {
+  const rows = daemonReposForView(ctx, view).map(repo => {
     const docs = visibleDocs(inventory, PUBLIC_VIEW).filter(d => d.repo === repo.name);
     const unindexed = docs.filter(isIndexGap).length;
     const g = git.find(x => x.repo === repo.name);
@@ -975,12 +1064,16 @@ function daemonCliStatus(ctx) {
       behind: g.behind,
     };
   });
-  return {
+  const result = {
     ok: true,
-    registry: ctx.configPath,
-    registry_root: ctx.registryRoot,
+    view,
     rows,
   };
+  if (view === FULL_VIEW) {
+    result.registry = ctx.configPath;
+    result.registry_root = ctx.registryRoot;
+  }
+  return result;
 }
 
 function daemonCliGrep(ctx, url) {
@@ -997,11 +1090,11 @@ function daemonCliDocsSummary(ctx) {
   return docSummary(inventory, PUBLIC_VIEW);
 }
 
-function daemonCliDocsQuery(ctx, url) {
+function daemonCliDocsQuery(ctx, url, daemonView = PUBLIC_VIEW) {
   const inventory = buildInventory(ctx);
   const filter = {
     repo: url.searchParams.get('repo') || 'all',
-    view: normalizeView(url.searchParams.get('view') || PUBLIC_VIEW),
+    view: daemonView === FULL_VIEW ? normalizeView(url.searchParams.get('view') || PRIVATE_VIEW) : PUBLIC_VIEW,
     role: url.searchParams.get('role') || 'all',
     q: url.searchParams.get('q') || '',
     notIndexed: parseBoolean(url.searchParams.get('not-indexed')),
@@ -1298,7 +1391,12 @@ async function cmdIndex(sub) {
 }
 
 function indexDbPath() {
-  return path.join(process.cwd(), ...INDEX_DB_REL);
+  return path.join(cogentiaDataRoot(), ...INDEX_DB_REL);
+}
+
+function cogentiaDataRoot() {
+  const configured = peekValueFlag("--data-dir") || process.env.COGENTIA_DATA_DIR || "";
+  return configured ? path.resolve(configured) : process.cwd();
 }
 
 async function openIndexDatabase(options = {}) {
@@ -2827,6 +2925,198 @@ function batchRepoFetch(ctx, repoArg = "all", options = {}) {
   };
 }
 
+function batchRepoSync(ctx, repoArg = "all", options = {}) {
+  const repos = selectRepos(ctx, repoArg);
+  const dryRun = !!options.dryRun;
+  const ghAvailable = commandAvailable("gh");
+  const results = repos.map(repo => syncDeclaredRepo(repo, {
+    dryRun,
+    includePrivate: !!options.includePrivate,
+    ghAvailable,
+  }));
+  return {
+    ok: results.every(r => r.ok || r.skipped),
+    command: "sync",
+    repo: repoArg,
+    dry_run: dryRun,
+    include_private: !!options.includePrivate,
+    repos: results,
+    summary: summarizeRepoBatch(results),
+  };
+}
+
+function syncDeclaredRepo(repo, options = {}) {
+  const base = repoBatchBase(repo);
+  if (repoRequiresPrivateOption(repo) && !options.includePrivate) {
+    return {
+      ...base,
+      action: "skip_private",
+      skipped: true,
+      ok: true,
+      error: "private/confidential repository requires --include-private",
+    };
+  }
+  if (!fs.existsSync(repo.path)) {
+    return cloneMissingDeclaredRepo(repo, options, base);
+  }
+  if (!fs.existsSync(path.join(repo.path, ".git"))) {
+    return {
+      ...base,
+      action: "path_not_git",
+      skipped: false,
+      ok: false,
+      error: "path exists but does not contain .git",
+    };
+  }
+
+  const before = repoGitStatus(repo);
+  if (options.dryRun) {
+    return {
+      ...before,
+      before,
+      action: before.dirty_count ? "sync_dry_run_dirty" : "sync_dry_run",
+      skipped: false,
+      ok: true,
+      stdout: "",
+      stderr: "",
+      error: "",
+    };
+  }
+
+  const fetch = gitRun(repo.path, ["fetch", "--prune"]);
+  if (!fetch.ok) {
+    return {
+      ...before,
+      before,
+      action: "fetch_failed",
+      skipped: false,
+      ok: false,
+      stdout: fetch.stdout.trim(),
+      stderr: fetch.stderr.trim(),
+      error: fetch.error,
+    };
+  }
+
+  if (before.dirty_count) {
+    return {
+      ...before,
+      before,
+      action: "fetched_dirty_skip_pull",
+      skipped: true,
+      ok: true,
+      stdout: fetch.stdout.trim(),
+      stderr: fetch.stderr.trim(),
+      error: "dirty worktree; checkout and pull skipped",
+    };
+  }
+
+  const currentBranch = git(repo.path, ["rev-parse", "--abbrev-ref", "HEAD"], { ok: true }).trim();
+  let checkout = { ok: true, stdout: "", stderr: "", error: "" };
+  if (repo.branch && currentBranch && currentBranch !== repo.branch) {
+    checkout = gitRun(repo.path, ["checkout", repo.branch]);
+    if (!checkout.ok) {
+      return {
+        ...before,
+        before,
+        action: "checkout_failed",
+        skipped: false,
+        ok: false,
+        stdout: [fetch.stdout, checkout.stdout].filter(Boolean).join("\n").trim(),
+        stderr: [fetch.stderr, checkout.stderr].filter(Boolean).join("\n").trim(),
+        error: checkout.error,
+      };
+    }
+  }
+
+  const pull = gitRun(repo.path, ["pull", "--ff-only"]);
+  const after = repoGitStatus(repo);
+  return {
+    ...after,
+    before,
+    action: pull.ok ? "synced" : "pull_ff_only_failed",
+    skipped: false,
+    ok: pull.ok,
+    stdout: [fetch.stdout, checkout.stdout, pull.stdout].filter(Boolean).join("\n").trim(),
+    stderr: [fetch.stderr, checkout.stderr, pull.stderr].filter(Boolean).join("\n").trim(),
+    error: pull.ok ? "" : pull.error,
+  };
+}
+
+function cloneMissingDeclaredRepo(repo, options = {}, base = repoBatchBase(repo)) {
+  const fullName = repo.github_full_name || `JeanHuguesRobert/${repo.name}`;
+  const url = `https://github.com/${fullName}.git`;
+  const cloneTool = options.ghAvailable ? "gh" : "git";
+  if (!fullName || !fullName.includes("/")) {
+    return { ...base, action: "missing_clone_source", skipped: false, ok: false, error: "missing GitHub owner/repository" };
+  }
+  if (options.dryRun) {
+    return {
+      ...base,
+      action: "clone_dry_run",
+      skipped: false,
+      ok: true,
+      clone_tool: cloneTool,
+      url,
+    };
+  }
+  ensureDir(path.dirname(repo.path));
+  const run = options.ghAvailable
+    ? runProcess("gh", ["repo", "clone", fullName, repo.path], path.dirname(repo.path))
+    : gitRun(path.dirname(repo.path), ["clone", url, repo.path]);
+  if (!run.ok) {
+    return {
+      ...base,
+      action: "clone_failed",
+      skipped: false,
+      ok: false,
+      clone_tool: cloneTool,
+      url,
+      stdout: run.stdout.trim(),
+      stderr: run.stderr.trim(),
+      error: run.error,
+    };
+  }
+  let checkout = { ok: true, stdout: "", stderr: "", error: "" };
+  if (repo.branch) checkout = gitRun(repo.path, ["checkout", repo.branch]);
+  const after = fs.existsSync(path.join(repo.path, ".git")) ? repoGitStatus(repo) : base;
+  return {
+    ...after,
+    action: checkout.ok ? "cloned" : "cloned_checkout_failed",
+    skipped: false,
+    ok: checkout.ok,
+    clone_tool: cloneTool,
+    url,
+    stdout: [run.stdout, checkout.stdout].filter(Boolean).join("\n").trim(),
+    stderr: [run.stderr, checkout.stderr].filter(Boolean).join("\n").trim(),
+    error: checkout.ok ? "" : checkout.error,
+  };
+}
+
+function repoBatchBase(repo) {
+  return {
+    repo: repo.name,
+    github: repo.github_full_name || "",
+    owner: repo.owner || "",
+    ownership: repo.ownership || "",
+    path: repo.path,
+    branch: repo.branch || "main",
+    visibility: repoVisibility(repo),
+    public_presence: repoPublicPresence(repo),
+    remote: "",
+    behind: 0,
+    ahead: 0,
+    dirty_count: 0,
+    dirty: [],
+    stdout: "",
+    stderr: "",
+    error: "",
+  };
+}
+
+function repoRequiresPrivateOption(repo) {
+  return ["private", "confidential", "secret"].includes(repoVisibility(repo));
+}
+
 function batchRepoPush(ctx, repoArg = "all", options = {}) {
   const repos = selectRepos(ctx, repoArg);
   const dryRun = !options.apply;
@@ -2888,7 +3178,13 @@ function importGithubOwner(ctx, owner, options = {}) {
   const visible = Array.isArray(repos) ? repos : [];
   const filtered = visible.filter(repo => githubOwnerRepoSelected(repo, options));
   const now = new Date().toISOString();
-  const plan = filtered.map(repo => planGithubOwnerRepo(ctx, repo, root, options, now));
+  const plan = appendRegisteredMissingImportPlans(
+    ctx,
+    owner,
+    filtered.map(repo => planGithubOwnerRepo(ctx, repo, root, options, now)),
+    options,
+    now
+  );
   const applied = [];
   if (options.apply) {
     for (const item of plan) {
@@ -2979,6 +3275,19 @@ function planGithubOwnerRepo(ctx, repo, root, options, now) {
     return { ...base, skipped: true, action: "skip_private", registry_entry: null, error: "private repository requires --include-private" };
   }
   if (registered) {
+    const registeredMissing = !fs.existsSync(registered.path);
+    if (registeredMissing) {
+      return registeredMissingImportPlan(registered, options, now, {
+        repo: name,
+        github: fullName,
+        url: repo.url || `https://github.com/${fullName}`,
+        branch,
+        visibility,
+        is_private: privateRepo,
+        actionWhenCloneMissing: "clone_registered_missing",
+        actionWhenNotCloneMissing: "registered_missing_local_clone",
+      });
+    }
     return { ...base, skipped: true, action: "already_registered", path: registered.path, registry_entry: null };
   }
   if (existingAtPath && sameGitHubFullName(localRemote, fullName)) {
@@ -2999,16 +3308,95 @@ function planGithubOwnerRepo(ctx, repo, root, options, now) {
 }
 
 function applyGithubOwnerImportItem(ctx, item, options = {}) {
-  if (item.skipped || !item.registry_entry) return item;
-  if (item.action === "clone_and_register") {
-    ensureDir(path.dirname(item.path));
-    const run = gitRun(path.dirname(item.path), ["clone", item.url, item.path]);
-    if (!run.ok) {
-      return { ...item, ok: false, skipped: false, registry_entry: null, stdout: run.stdout, stderr: run.stderr, error: run.error };
-    }
-    return { ...item, action: "cloned_and_registered", stdout: run.stdout, stderr: run.stderr };
+  if (item.skipped) return item;
+  if (item.action === "clone_and_register" || item.action === "clone_registered_missing") {
+    const repo = repoFromImportItem(item);
+    const cloned = cloneMissingDeclaredRepo(repo, {
+      dryRun: false,
+      includePrivate: true,
+      ghAvailable: commandAvailable("gh"),
+    });
+    const action = item.action === "clone_and_register" ? "cloned_and_registered" : "cloned_registered_missing";
+    return {
+      ...item,
+      action: cloned.ok ? action : "clone_failed",
+      ok: cloned.ok,
+      skipped: false,
+      registry_entry: cloned.ok ? item.registry_entry : null,
+      clone_tool: cloned.clone_tool,
+      stdout: cloned.stdout || "",
+      stderr: cloned.stderr || "",
+      error: cloned.error || "",
+    };
   }
+  if (!item.registry_entry) return item;
   return item;
+}
+
+function appendRegisteredMissingImportPlans(ctx, owner, plan, options, now) {
+  const planned = new Set(plan.map(item => normalizeGitHubFullName(item.github).toLowerCase()).filter(Boolean));
+  const ownerLower = String(owner || "").toLowerCase();
+  const additions = ctx.repos
+    .filter(repo => {
+      const fullName = normalizeGitHubFullName(repo.github_full_name || `JeanHuguesRobert/${repo.name}`);
+      const repoOwner = (repo.owner || (fullName ? fullName.split("/")[0] : "")).toLowerCase();
+      return repoOwner === ownerLower
+        && !fs.existsSync(repo.path)
+        && !planned.has(fullName.toLowerCase())
+        && githubOwnerRepoSelected({ name: repo.name, nameWithOwner: fullName }, options);
+    })
+    .map(repo => registeredMissingImportPlan(repo, options, now));
+  return [...plan, ...additions];
+}
+
+function registeredMissingImportPlan(repo, options = {}, now = new Date().toISOString(), overrides = {}) {
+  const fullName = normalizeGitHubFullName(overrides.github || repo.github_full_name || `JeanHuguesRobert/${repo.name}`);
+  const visibility = overrides.visibility || repoVisibility(repo);
+  const privateRepo = overrides.is_private != null ? !!overrides.is_private : repoRequiresPrivateOption(repo);
+  const actionWhenCloneMissing = overrides.actionWhenCloneMissing || "clone_registered_missing";
+  const actionWhenNotCloneMissing = overrides.actionWhenNotCloneMissing || "registered_missing_local_clone";
+  const base = {
+    ok: true,
+    skipped: false,
+    repo: overrides.repo || repo.name,
+    github: fullName,
+    url: overrides.url || `https://github.com/${fullName}`,
+    path: repo.path,
+    branch: overrides.branch || repo.branch || "main",
+    visibility,
+    is_private: privateRepo,
+    owner_kind: repo.owner_kind || options.ownerKind || "unknown",
+    relation: repo.ownership || options.relation || "unknown",
+    mandate: repo.mandate || options.mandate || "",
+    registered: true,
+    local_exists: false,
+    local_remote: "",
+    registry_entry: null,
+    error: "",
+    added: now,
+  };
+  if (privateRepo && !options.includePrivate) {
+    return { ...base, skipped: true, action: "skip_private", error: "private repository requires --include-private" };
+  }
+  if (options.cloneMissing) return { ...base, action: actionWhenCloneMissing };
+  return { ...base, skipped: true, action: actionWhenNotCloneMissing, error: "pass --clone-missing to clone declared missing repository" };
+}
+
+function repoFromImportItem(item) {
+  return {
+    name: item.repo,
+    path: item.path,
+    branch: item.branch || "main",
+    github_full_name: normalizeGitHubFullName(item.github),
+    owner: item.github ? item.github.split("/")[0] : "",
+    owner_kind: item.owner_kind || "unknown",
+    ownership: item.relation || "unknown",
+    mandate: item.mandate || "",
+    policy: {
+      visibility: item.visibility || "public",
+      public_presence: item.visibility === "public" ? "full" : "hidden",
+    },
+  };
 }
 
 function makeRegistryEntry(data) {
@@ -3385,9 +3773,7 @@ function loadContext() {
       ...policyFromRepoEntry(r),
       ...(raw.policies?.[r.name] || raw.repo_policies?.[r.name] || {}),
     };
-    const repoPath = path.isAbsolute(r.path)
-      ? path.resolve(r.path)
-      : path.resolve(registryRoot, r.path);
+    const repoPath = resolveRegistryPath(registryRoot, r.path || ".");
     const githubFullName = normalizeGitHubFullName(
       policy.github
       || policy.github_repo
@@ -3408,6 +3794,11 @@ function loadContext() {
     };
   });
   return { configPath, registryRoot, config: raw, repos };
+}
+
+function resolveRegistryPath(registryRoot, targetPath) {
+  const raw = String(targetPath || ".");
+  return path.isAbsolute(raw) ? path.resolve(raw) : path.resolve(registryRoot, raw);
 }
 
 function policyFromRepoEntry(r) {
@@ -4183,7 +4574,7 @@ function sanitizeDoc(d, inventory = null, view = PUBLIC_VIEW) {
   const repo = d.repo;
   const branch = d.branch || "main";
   const github = d.github_url || `https://github.com/JeanHuguesRobert/${repo}/blob/${branch}/${d.rel}`;
-  return {
+  const result = {
     repo: d.repo,
     path: d.rel,
     title: d.title,
@@ -4196,9 +4587,10 @@ function sanitizeDoc(d, inventory = null, view = PUBLIC_VIEW) {
     last_significant_update: d.updated,
     links: linksForDocInView(d, inventory, view),
     index: d.index,
-    full_path: d.full_path,
     github_url: isPublicView(view) && !canSeeDoc(d, view) ? "" : github,
   };
+  if (!isPublicView(view)) result.full_path = d.full_path;
+  return result;
 }
 
 function resolveDocRef(inventory, ref) {
@@ -4462,16 +4854,29 @@ function git(cwd, args, options = {}) {
 }
 
 function gitRun(cwd, args) {
+  return runProcess("git", args, cwd);
+}
+
+function runProcess(commandName, args, cwd = process.cwd()) {
   try {
-    const stdout = execFileSync("git", args, { cwd, encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] });
+    const stdout = execFileSync(commandName, args, { cwd, encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] });
     return { ok: true, stdout, stderr: "", error: "" };
   } catch (e) {
     return {
       ok: false,
       stdout: String(e.stdout || ""),
       stderr: String(e.stderr || ""),
-      error: String(e.stderr || e.message || "git command failed").trim(),
+      error: String(e.stderr || e.message || `${commandName} command failed`).trim(),
     };
+  }
+}
+
+function commandAvailable(commandName) {
+  try {
+    execFileSync(commandName, ["--version"], { encoding: "utf8", stdio: ["ignore", "ignore", "ignore"] });
+    return true;
+  } catch {
+    return false;
   }
 }
 
@@ -5192,6 +5597,12 @@ function valueFlag(flag) {
   const value = argv[i + 1];
   argv.splice(i, 2);
   return value;
+}
+
+function peekValueFlag(flag) {
+  const i = argv.indexOf(flag);
+  if (i < 0) return null;
+  return argv[i + 1];
 }
 
 function parseNameList(value) {

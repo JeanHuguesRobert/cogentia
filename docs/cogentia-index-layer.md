@@ -38,6 +38,18 @@ C:\tweesic\cogentia\.cogentia\index\corpus.sqlite
 
 The `.cogentia/` directory is ignored by Git. The database is safe to delete. Rebuild it from canonical sources when needed.
 
+For node deployments, set `COGENTIA_DATA_DIR` to keep the cache outside the Git checkout:
+
+```bash
+COGENTIA_DATA_DIR=/var/lib/cogentia node scripts/cogentia.js index status
+```
+
+With that environment, the database resolves to:
+
+```text
+/var/lib/cogentia/.cogentia/index/corpus.sqlite
+```
+
 ## What Is Indexed
 
 The index stores document metadata for the configured corpus and full-text chunks for public searchable documents.
@@ -112,6 +124,14 @@ Start the daemon:
 node scripts/cogentia.js daemon --port 8790
 ```
 
+For a node such as `fracta`, keep the daemon local and place the cache under `/var/lib/cogentia`:
+
+```bash
+COGENTIA_REGISTRY=/srv/cogentia/repos/JeanHuguesRobert/.cogentia.json \
+COGENTIA_DATA_DIR=/var/lib/cogentia \
+node scripts/cogentia.js daemon --host 127.0.0.1 --port 8790
+```
+
 Routes:
 
 ```text
@@ -120,6 +140,8 @@ POST /api/index/rebuild
 POST /api/index/update
 GET  /api/index/search?q=autonomie%20de%20capacité&repo=all&limit=25
 ```
+
+Public HTTP view sanitizes status output and blocks state-changing index routes. Use `view=full` only for local/admin calls behind a trusted boundary.
 
 The daemon returns compact JSON. It does not expose raw SQL.
 
