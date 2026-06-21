@@ -127,6 +127,7 @@ This repository instantiates the **cognitive infrastructure layer** of the [DHIT
 | [Cogentia Local Daemon — Features Tutorial](../docs/daemon-features-tutorial.md) *(daemon feature walkthrough for local API and HTML UX)* | this repo | 2026-06-12 |
 | [Cogentia daemon & plugin tutorial](../docs/daemon-plugin-tutorial.md) *(plugin authoring and daemon extension note)* | this repo | 2026-06-12 |
 | [Cogentia Daemon Plugin API](../docs/plugins.md) *(local daemon plugin API reference)* | this repo | 2026-06-12 |
+| [Cogentia Index Layer v0.1](../docs/cogentia-index-layer.md) *(local SQLite/FTS5 cache for fast corpus search; Git and Markdown remain canonical)* | this repo | 2026-06-21 |
 | [Cogentia Personal Data Portability — Architecture](../cogentia_personal/data_portability/ARCHITECTURE.md) *(generic architecture for reusable data portability tooling)* | this repo | 2026-06-11 |
 | [Cogentia Personal Data Portability — Provider Adapters](../cogentia_personal/data_portability/ADAPTERS.md) *(provider adapter architecture note for unstable, heterogeneous exports)* | this repo | 2026-06-13 |
 | [Cogentia Personal Data Portability — Formats](../cogentia_personal/data_portability/FORMATS.md) *(format policy for durable, navigable and agent-processable exports)* | this repo | 2026-06-13 |
@@ -188,6 +189,7 @@ This repository instantiates the **cognitive infrastructure layer** of the [DHIT
 - [Research Index — FractaVolta](https://github.com/JeanHuguesRobert/FractaVolta/blob/main/research/index.md)
 - [Research Index — Inox](https://github.com/JeanHuguesRobert/Inox/blob/master/research/index.md)
 - [Research Index — Inseme](https://github.com/JeanHuguesRobert/inseme/blob/main/research/index.md)
+- [Documents - All Tracked Repos](https://github.com/JeanHuguesRobert/JeanHuguesRobert/blob/main/research/documents.md)
 - [Research Index — Jean Hugues Noël Robert (Profile / Entry Point)](https://github.com/JeanHuguesRobert/JeanHuguesRobert/blob/main/research/index.md)
 - [Research Index — MareNostrum](https://github.com/JeanHuguesRobert/marenostrum/blob/main/research/index.md)
 <!-- END_AUTO: backlinks -->
