@@ -1,4 +1,4 @@
-﻿/*
+/*
  * cogentia.js v2
  *
  * Design rule:
@@ -3378,13 +3378,16 @@ function loadContext() {
     throw new Error(message);
   }
   const raw = JSON.parse(fs.readFileSync(configPath, "utf8"));
+  const registryRoot = path.dirname(configPath);
   const repos = (raw.repos || []).map(r => {
     const policy = {
       ...(DEFAULT_REPO_POLICIES[r.name] || {}),
       ...policyFromRepoEntry(r),
       ...(raw.policies?.[r.name] || raw.repo_policies?.[r.name] || {}),
     };
-    const repoPath = path.resolve(r.path);
+    const repoPath = path.isAbsolute(r.path)
+      ? path.resolve(r.path)
+      : path.resolve(registryRoot, r.path);
     const githubFullName = normalizeGitHubFullName(
       policy.github
       || policy.github_repo
@@ -3404,7 +3407,7 @@ function loadContext() {
       policy: { default_scope: "all", ...policy },
     };
   });
-  return { configPath, registryRoot: path.dirname(configPath), config: raw, repos };
+  return { configPath, registryRoot, config: raw, repos };
 }
 
 function policyFromRepoEntry(r) {
