@@ -1918,7 +1918,7 @@ function displayPlan(plan, options) {
 }
 
 function addChange(changes, repo, full, type, before, after, allowed, reason) {
-  if (before === after) return;
+  if (normalizeEol(before) === normalizeEol(after)) return;
   changes.push({
     repo: repo.name,
     path: rel(repo.path, full),
