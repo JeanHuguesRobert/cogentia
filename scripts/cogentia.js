@@ -14,11 +14,11 @@ import fs from "node:fs";
 import http from "node:http";
 import path from "node:path";
 import { execFileSync } from "node:child_process";
-import { createHash, randomBytes } from "node:crypto";
+import { createHash, randomBytes, timingSafeEqual } from "node:crypto";
 import { pathToFileURL } from "node:url";
 import { DAEMON_PLUGINS, DAEMON_PLUGIN_ROUTES, loadDaemonPlugins, dispatchPluginRoute } from "./daemon_plugins/registry.js";
 
-const VERSION = "2.3.0";
+const VERSION = "2.4.0";
 const CONFIG_FILE = ".cogentia.json";
 const CLASSIFICATION_VERSION = "1";
 const DOCUMENTS_FILE = "documents.md";
@@ -67,6 +67,33 @@ const TRACE_LEVELS = new Set(["loose", "standard", "high", "regulated"]);
 const PUBLIC_VIEW = "public";
 const PRIVATE_VIEW = "private";
 const FULL_VIEW = "full";
+const CONTEXT_RETRIEVAL_POLICY_VERSION = "keyword-v1";
+const DEFAULT_CONTEXT_BUDGET = 12000;
+const MAX_CONTEXT_BUDGET = 50000;
+const MAX_CONTEXT_LINES = 200;
+const DEFAULT_INDEXING_POLICY = Object.freeze({
+  markdown: true,
+  text_files: false,
+  binary_files: false,
+  max_file_bytes: 250000,
+  excluded_dirs: [".git", "node_modules", "dist", "build", ".cache", ".next", "coverage"],
+  excluded_extensions: [
+    ".png", ".jpg", ".jpeg", ".gif", ".webp", ".pdf", ".docx", ".zip",
+    ".sqlite", ".db", ".env", ".key", ".pem",
+  ],
+});
+const PUBLIC_DAEMON_GET_ROUTES = new Set([
+  "/api/status",
+  "/api/index/status",
+  "/api/index/search",
+  "/api/context/health",
+  "/api/context/search",
+  "/api/context/pack",
+  "/api/context/doc",
+  "/api/context/lines",
+  "/api/context/explain",
+]);
+const daemonRateLimits = new Map();
 
 const argv = process.argv.slice(2);
 const JSON_MODE = takeFlag("--json");
@@ -177,6 +204,14 @@ Index commands:
   index update             Refresh the local index cache from canonical sources.
   index search <query>     Search the local FTS5 index. Flags: --repo <name|all>
                            --limit <n>
+
+Context Gateway:
+  daemon                   Start the HTTP daemon. Defaults to 127.0.0.1 and public view.
+                           Flags: --host <host> --port <port>
+  GET /api/context/search  Short citable retrieval over the Markdown index.
+  GET /api/context/pack    Deterministic, budgeted context for agents.
+  scripts/cogentia-mcp.js  MCP stdio adapter; calls the daemon and never SQLite directly.
+  Docs: docs/cogentia-context-gateway.md and docs/cogentia-mcp.md
 
 Continuation commands:
   continuation emit        Emit an external judgment request.
@@ -756,10 +791,12 @@ async function cmdDaemon() {
   }
 
   const server = http.createServer((req, res) => {
+    res.cogentiaOrigin = daemonCorsOrigin(req);
     handleDaemonRequest(req, res).catch(err => {
       daemonJson(res, 500, {
         ok: false,
-        error: err.message,
+        error: "internal_error",
+        ...(res.cogentiaView === FULL_VIEW ? { message: err.message } : {}),
       });
     });
   });
@@ -770,6 +807,20 @@ async function cmdDaemon() {
 async function handleDaemonRequest(req, res) {
   const url = new URL(req.url || "/", "http://127.0.0.1");
   const view = daemonRequestView(req, url);
+  res.cogentiaView = view;
+  if (req.method !== "OPTIONS" && !daemonRateLimitAllows(req)) {
+    return daemonJson(res, 429, { ok: false, error: "rate_limit_exceeded" }, {
+      "Retry-After": String(Math.ceil(daemonRateLimitWindowMs() / 1000)),
+    });
+  }
+  if (req.method === "OPTIONS") {
+    res.writeHead(204, daemonHeaders(res));
+    res.end();
+    return;
+  }
+  if (daemonPublicApiBlocked(req, url, view)) {
+    return daemonJson(res, 403, daemonForbiddenPublicView(url.pathname));
+  }
   // load context early and give plugins a chance to handle the request
   let ctx = null;
   try {
@@ -778,15 +829,7 @@ async function handleDaemonRequest(req, res) {
     // context may be unavailable for some operations; plugins should handle absence
     ctx = null;
   }
-  if (daemonPublicApiBlocked(req, url, view)) {
-    return daemonJson(res, 403, daemonForbiddenPublicView(url.pathname));
-  }
   if (await dispatchPluginRoute(req, res, ctx, url)) return;
-  if (req.method === "OPTIONS") {
-    res.writeHead(204, daemonHeaders());
-    res.end();
-    return;
-  }
   if (req.method === "GET" && url.pathname === "/api/status") {
     return daemonJson(res, 200, daemonStatus(view));
   }
@@ -917,7 +960,57 @@ async function handleDaemonRequest(req, res) {
     const q = url.searchParams.get("q") || "";
     const repo = url.searchParams.get("repo") || "all";
     const limit = parseInt(url.searchParams.get("limit"), 10) || 25;
-    return daemonJson(res, 200, sanitizeIndexSearch(await indexSearch(effectiveCtx, q, { repo, limit }), view));
+    return daemonJson(res, 200, sanitizeIndexSearch(await indexSearch(effectiveCtx, q, { repo, limit, view }), view));
+  }
+  if (req.method === "GET" && url.pathname === "/api/context/health") {
+    const effectiveCtx = ctx || loadContext();
+    return daemonJson(res, 200, await contextHealth(effectiveCtx));
+  }
+  if (req.method === "GET" && url.pathname === "/api/context/search") {
+    const effectiveCtx = ctx || loadContext();
+    const result = await contextSearch(effectiveCtx, url.searchParams.get("q") || "", {
+      repo: url.searchParams.get("repo") || "all",
+      limit: boundedInteger(url.searchParams.get("limit"), 10, 1, 50),
+      view,
+      mode: url.searchParams.get("mode") || "keyword",
+      includeText: parseBoolean(url.searchParams.get("include_text")),
+    });
+    return daemonJson(res, result.ok ? 200 : contextErrorStatus(result), result);
+  }
+  if (req.method === "GET" && url.pathname === "/api/context/pack") {
+    const effectiveCtx = ctx || loadContext();
+    const format = url.searchParams.get("format") || "json";
+    const result = await contextPack(effectiveCtx, url.searchParams.get("q") || "", {
+      repo: url.searchParams.get("repo") || "all",
+      budget: boundedInteger(url.searchParams.get("budget"), DEFAULT_CONTEXT_BUDGET, 256, MAX_CONTEXT_BUDGET),
+      limit: boundedInteger(url.searchParams.get("limit"), 12, 1, 50),
+      view,
+      mode: url.searchParams.get("mode") || "keyword",
+    });
+    if (format === "markdown" && result.ok) return daemonText(res, 200, contextPackMarkdown(result), "text/markdown; charset=utf-8");
+    if (format !== "json" && format !== "markdown") {
+      return daemonJson(res, 400, { ok: false, error: "invalid_format", allowed: ["json", "markdown"] });
+    }
+    return daemonJson(res, result.ok ? 200 : contextErrorStatus(result), result);
+  }
+  if (req.method === "GET" && url.pathname === "/api/context/doc") {
+    const effectiveCtx = ctx || loadContext();
+    const result = contextDocument(effectiveCtx, url.searchParams.get("ref") || "", view);
+    return daemonJson(res, result.ok ? 200 : contextErrorStatus(result), result);
+  }
+  if (req.method === "GET" && url.pathname === "/api/context/lines") {
+    const effectiveCtx = ctx || loadContext();
+    const result = contextLines(effectiveCtx, url.searchParams.get("ref") || "", {
+      start: url.searchParams.get("start"),
+      end: url.searchParams.get("end"),
+      view,
+    });
+    return daemonJson(res, result.ok ? 200 : contextErrorStatus(result), result);
+  }
+  if (req.method === "GET" && url.pathname === "/api/context/explain") {
+    const effectiveCtx = ctx || loadContext();
+    const result = await contextExplain(effectiveCtx, url.searchParams.get("result_id") || "", view);
+    return daemonJson(res, result.ok ? 200 : contextErrorStatus(result), result);
   }
   return daemonJson(res, 404, {
     ok: false,
@@ -971,27 +1064,41 @@ function daemonRepoState(repo, view = PUBLIC_VIEW) {
   }
   return state;
 }
-function daemonHeaders() {
-  return {
+function daemonHeaders(res, extra = {}) {
+  const headers = {
     "Content-Type": "application/json; charset=utf-8",
-    "Access-Control-Allow-Origin": "http://127.0.0.1:8787",
-    "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
-    "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Cogentia-Entry",
+    "Access-Control-Allow-Methods": res?.cogentiaView === FULL_VIEW ? "GET, POST, OPTIONS" : "GET, OPTIONS",
+    "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Cogentia-Entry, X-Cogentia-Admin-Token",
     "Cache-Control": "no-store",
+    "X-Content-Type-Options": "nosniff",
+    ...extra,
   };
+  if (res?.cogentiaOrigin) {
+    headers["Access-Control-Allow-Origin"] = res.cogentiaOrigin;
+    headers.Vary = "Origin";
+  }
+  return headers;
 }
-function daemonJson(res, status, body) {
-  res.writeHead(status, daemonHeaders());
+function daemonJson(res, status, body, extraHeaders = {}) {
+  res.writeHead(status, daemonHeaders(res, extraHeaders));
   res.end(`${JSON.stringify(body, null, 2)}\n`);
 }
 
+function daemonText(res, status, body, contentType) {
+  res.writeHead(status, daemonHeaders(res, { "Content-Type": contentType }));
+  res.end(body.endsWith("\n") ? body : `${body}\n`);
+}
+
 function daemonRequestView(req, url) {
-  const queryView = normalizeDaemonView(url.searchParams.get("view"));
-  if (queryView) return queryView;
   const headerEntry = String(req.headers["x-cogentia-entry"] || "").trim().toLowerCase();
   if (headerEntry === PUBLIC_VIEW) return PUBLIC_VIEW;
   const envView = normalizeDaemonView(process.env.COGENTIA_DAEMON_VIEW || "");
-  return envView || PUBLIC_VIEW;
+  if (envView === PUBLIC_VIEW) return PUBLIC_VIEW;
+  if (envView === FULL_VIEW) return FULL_VIEW;
+  const queryView = normalizeDaemonView(url.searchParams.get("view"));
+  if (queryView !== FULL_VIEW) return PUBLIC_VIEW;
+  if (daemonIsLoopback(req) || daemonHasAdminToken(req)) return FULL_VIEW;
+  return PUBLIC_VIEW;
 }
 
 function normalizeDaemonView(view) {
@@ -1004,18 +1111,8 @@ function normalizeDaemonView(view) {
 function daemonPublicApiBlocked(req, url, view) {
   if (view === FULL_VIEW) return false;
   if (req.method === "OPTIONS") return false;
-  if (req.method !== "GET" && url.pathname.startsWith("/api/")) return true;
-  return [
-    "/api/git/verify",
-    "/api/cli/git/verify",
-    "/api/cli/docs/inspect",
-    "/api/cli/docs/snippet",
-  ].includes(url.pathname)
-    || url.pathname.startsWith("/api/cli/concepts")
-    || url.pathname.startsWith("/api/cli/continuation")
-    || url.pathname.startsWith("/api/fs")
-    || url.pathname.startsWith("/api/cmd")
-    || url.pathname.startsWith("/api/command");
+  if (!url.pathname.startsWith("/api/")) return false;
+  return req.method !== "GET" || !PUBLIC_DAEMON_GET_ROUTES.has(url.pathname);
 }
 
 function daemonForbiddenPublicView(pathname) {
@@ -1023,19 +1120,107 @@ function daemonForbiddenPublicView(pathname) {
     ok: false,
     error: "forbidden_public_view",
     path: pathname,
-    hint: "Use view=full only for local/admin access behind a trusted boundary.",
+    hint: "Full access requires localhost, explicit daemon configuration, or a valid admin token.",
   };
+}
+
+function daemonIsLoopback(req) {
+  const address = String(req.socket?.remoteAddress || "").toLowerCase();
+  return address === "127.0.0.1" || address === "::1" || address.startsWith("::ffff:127.");
+}
+
+function daemonHasAdminToken(req) {
+  const expected = String(process.env.COGENTIA_ADMIN_TOKEN || "");
+  if (!expected) return false;
+  const authorization = String(req.headers.authorization || "");
+  const bearer = authorization.match(/^Bearer\s+(.+)$/i)?.[1] || "";
+  const supplied = bearer || String(req.headers["x-cogentia-admin-token"] || "");
+  const left = Buffer.from(expected);
+  const right = Buffer.from(supplied);
+  return left.length === right.length && left.length > 0 && timingSafeEqual(left, right);
+}
+
+function daemonCorsOrigin(req) {
+  const configured = String(process.env.COGENTIA_CORS_ORIGIN || "").trim();
+  const origin = String(req.headers.origin || "").trim();
+  if (!configured || !origin) return "";
+  const allowed = configured.split(",").map(value => value.trim()).filter(Boolean);
+  return allowed.includes(origin) ? origin : "";
+}
+
+function daemonRateLimitWindowMs() {
+  return boundedInteger(process.env.COGENTIA_RATE_LIMIT_WINDOW_MS, 60000, 1000, 3600000);
+}
+
+function daemonRateLimitAllows(req) {
+  const max = boundedInteger(process.env.COGENTIA_RATE_LIMIT_MAX, 60, 1, 100000);
+  const windowMs = daemonRateLimitWindowMs();
+  const now = Date.now();
+  const key = daemonClientIp(req);
+  const current = daemonRateLimits.get(key);
+  if (!current || now - current.started >= windowMs) {
+    daemonRateLimits.set(key, { started: now, count: 1 });
+    if (daemonRateLimits.size > 10000) {
+      for (const [ip, entry] of daemonRateLimits) {
+        if (now - entry.started >= windowMs) daemonRateLimits.delete(ip);
+      }
+    }
+    return true;
+  }
+  current.count++;
+  return current.count <= max;
+}
+
+function daemonClientIp(req) {
+  const remote = String(req.socket?.remoteAddress || "unknown");
+  const entry = String(req.headers["x-cogentia-entry"] || "").trim().toLowerCase();
+  if (entry === PUBLIC_VIEW && daemonIsLoopback(req)) {
+    const forwarded = String(req.headers["x-forwarded-for"] || "").split(",")[0].trim();
+    if (forwarded && forwarded.length <= 64 && /^[0-9a-f:.]+$/i.test(forwarded)) return forwarded;
+  }
+  return remote;
+}
+
+function boundedInteger(value, fallback, min, max) {
+  const parsed = Number.parseInt(value, 10);
+  return Number.isFinite(parsed) ? Math.max(min, Math.min(parsed, max)) : fallback;
+}
+
+function contextErrorStatus(result) {
+  if (["missing_query", "missing_ref", "invalid_range", "invalid_mode"].includes(result.error)) return 400;
+  if (["document_not_found", "result_not_found"].includes(result.error)) return 404;
+  if (["forbidden_document", "full_view_not_authorized"].includes(result.error)) return 403;
+  if (result.error === "semantic_not_available") return 501;
+  return 503;
 }
 
 function sanitizeIndexStatus(status, view = PUBLIC_VIEW) {
   if (view === FULL_VIEW) return status;
-  const { path: _path, registry: _registry, ...safe } = status || {};
-  return { ...safe, view: PUBLIC_VIEW };
+  const {
+    path: _path,
+    registry: _registry,
+    documents: _documents,
+    chunks: _chunks,
+    edges: _edges,
+    documents_public,
+    searchable_public,
+    error: _error,
+    ...safe
+  } = status || {};
+  return {
+    ...safe,
+    documents: documents_public || 0,
+    chunks: searchable_public || 0,
+    searchable_public: searchable_public || 0,
+    ...(status?.ok === false ? { error: status.code || "index_unavailable" } : {}),
+    view: PUBLIC_VIEW,
+  };
 }
 
 function sanitizeIndexSearch(result, view = PUBLIC_VIEW) {
   if (view === FULL_VIEW) return result;
-  const { path: _path, ...safe } = result || {};
+  const { path: _path, message: _message, ...safe } = result || {};
+  if (safe.ok === false) safe.error = safe.code || "index_search_failed";
   return { ...safe, view: PUBLIC_VIEW };
 }
 
@@ -1439,6 +1624,7 @@ async function indexStatus(ctx) {
     const hasFts = tables.includes("chunks_fts");
     const state = hasDocuments ? readIndexState(db) : {};
     const documents = hasDocuments ? scalar(db, "SELECT count(*) FROM documents") : 0;
+    const documentsPublic = hasDocuments ? scalar(db, "SELECT count(*) FROM documents WHERE searchable_public = 1") : 0;
     const chunks = hasChunks ? scalar(db, "SELECT count(*) FROM chunks") : 0;
     const searchablePublic = hasChunks ? scalar(db, "SELECT count(*) FROM chunks WHERE searchable_public = 1") : 0;
     const edges = tables.includes("document_edges") ? scalar(db, "SELECT count(*) FROM document_edges") : 0;
@@ -1449,10 +1635,13 @@ async function indexStatus(ctx) {
       sqlite_available: true,
       fts5_available: hasFts,
       schema_version: state.schema_version || "",
+      index_hash: state.index_hash || "",
+      indexing_policy_version: state.indexing_policy_version || "",
       updated_at: state.updated_at || "",
       mode: state.mode || "",
       registry: state.registry || ctx.configPath,
       documents,
+      documents_public: documentsPublic,
       chunks,
       searchable_public: searchablePublic,
       edges,
@@ -1512,6 +1701,7 @@ async function indexRebuild(ctx, options = {}) {
       for (const doc of inventory.documents.sort(compareDocs("repo"))) {
         const raw = readFileIfExists(doc.full_path);
         const repo = repoByName.get(doc.repo);
+        const fileClass = classifyIndexableFile(doc.full_path, repo?.policy?.indexing, DEFAULT_INDEXING_POLICY);
         const searchablePublic = Boolean(repo && canIndexDocForPublic(repo, doc) && !boundaryKeys.has(`${doc.repo}/${doc.rel}`));
         const result = insertDocument.run(
           doc.repo,
@@ -1534,7 +1724,7 @@ async function indexRebuild(ctx, options = {}) {
         const documentId = Number(result.lastInsertRowid);
         documentIds.set(path.resolve(doc.full_path), documentId);
         indexedDocuments++;
-        if (doc.index?.ignored || boundaryKeys.has(`${doc.repo}/${doc.rel}`) || !searchablePublic) continue;
+        if (!fileClass.indexable || doc.index?.ignored || boundaryKeys.has(`${doc.repo}/${doc.rel}`)) continue;
         for (const chunk of chunkMarkdown(raw, doc.title)) {
           const chunkHash = sha(`${doc.repo}\n${doc.rel}\n${chunk.heading_path}\n${chunk.start_line}\n${chunk.text}`);
           const chunkResult = insertChunk.run(
@@ -1566,8 +1756,11 @@ async function indexRebuild(ctx, options = {}) {
         if (!from || !to) continue;
         insertEdge.run(from.repo, from.rel, to.repo, to.rel, edge.url || "");
       }
+      const indexHash = computeIndexHash(db);
       writeIndexState(db, {
         schema_version: INDEX_SCHEMA_VERSION,
+        index_hash: indexHash,
+        indexing_policy_version: "markdown-v1",
         updated_at: startedAt,
         mode,
         registry: ctx.configPath,
@@ -1583,6 +1776,7 @@ async function indexRebuild(ctx, options = {}) {
         mode,
         path: dbPath,
         schema_version: INDEX_SCHEMA_VERSION,
+        index_hash: indexHash,
         updated_at: startedAt,
         documents: indexedDocuments,
         chunks: indexedChunks,
@@ -1616,6 +1810,7 @@ async function indexSearch(ctx, query, options = {}) {
     if (!ftsQuery) return { ok: false, query: q, error: "empty_fts_query" };
     const limit = Math.max(1, Math.min(Number(options.limit || 25) || 25, 100));
     const repo = options.repo || "all";
+    const includeNonPublic = normalizeDaemonView(options.view) === FULL_VIEW ? 1 : 0;
     const rows = db.prepare(`
       SELECT
         c.repo, c.path, c.title, c.heading_path, c.start_line, c.end_line,
@@ -1625,11 +1820,11 @@ async function indexSearch(ctx, query, options = {}) {
       FROM chunks_fts
       JOIN chunks c ON c.id = chunks_fts.chunk_id
       WHERE chunks_fts MATCH ?
-        AND c.searchable_public = 1
+        AND (? = 1 OR c.searchable_public = 1)
         AND (? = 'all' OR c.repo = ?)
       ORDER BY score
       LIMIT ?
-    `).all(ftsQuery, repo, repo, limit);
+    `).all(ftsQuery, includeNonPublic, repo, repo, limit);
     const results = rows.map(row => ({
       repo: row.repo,
       path: row.path,
@@ -1644,7 +1839,7 @@ async function indexSearch(ctx, query, options = {}) {
       visibility: row.visibility,
       github_url: row.github_url ? `${row.github_url}#L${row.start_line}` : "",
     }));
-    return { ok: true, query: q, repo, limit, path: dbPath, count: results.length, results };
+    return { ok: true, query: q, repo, limit, view: includeNonPublic ? FULL_VIEW : PUBLIC_VIEW, path: dbPath, count: results.length, results };
   } catch (e) {
     return { ok: false, query: q, path: dbPath, error: e.message, code: "index_search_failed" };
   } finally {
@@ -1755,6 +1950,55 @@ function scalar(db, sql) {
   const row = db.prepare(sql).get();
   if (!row) return 0;
   return Number(Object.values(row)[0] || 0);
+}
+
+function computeIndexHash(db) {
+  const rows = db.prepare(`
+    SELECT repo, branch, path, title, role, visibility, public_presence,
+           trace_level, github_url, content_hash, searchable_public, ignored
+    FROM documents
+    ORDER BY repo, path
+  `).all();
+  return sha256(stableJson(rows));
+}
+
+function classifyIndexableFile(filePath, repoPolicy = {}, globalPolicy = DEFAULT_INDEXING_POLICY) {
+  const policy = { ...globalPolicy, ...(repoPolicy || {}) };
+  const normalized = String(filePath || "").replace(/\\/g, "/");
+  const segments = normalized.split("/").filter(Boolean);
+  const extension = path.extname(normalized).toLowerCase();
+  const base = path.basename(normalized).toLowerCase();
+  const excludedDirs = new Set(policy.excluded_dirs || globalPolicy.excluded_dirs);
+  const excludedExtensions = new Set(policy.excluded_extensions || globalPolicy.excluded_extensions);
+  if (segments.some(segment => excludedDirs.has(segment))) {
+    return { indexable: false, kind: "ignored", reason: "excluded_directory", parser: "none" };
+  }
+  if (base === ".env" || base.startsWith(".env.") || excludedExtensions.has(extension)) {
+    const kind = [".env", ".key", ".pem"].includes(extension) || base.startsWith(".env") ? "secret" : "binary";
+    return { indexable: false, kind, reason: "excluded_extension", parser: "none" };
+  }
+  if (fs.existsSync(filePath) && fs.statSync(filePath).size > Number(policy.max_file_bytes || 250000)) {
+    return { indexable: false, kind: "ignored", reason: "file_too_large", parser: "none" };
+  }
+  if (extension === ".md") {
+    return policy.markdown === false
+      ? { indexable: false, kind: "markdown", reason: "markdown_disabled", parser: "none" }
+      : { indexable: true, kind: "markdown", reason: "markdown_enabled", parser: "markdown" };
+  }
+  const textParsers = new Map([
+    [".txt", "plain_text"], [".yaml", "yaml"], [".yml", "yaml"], [".json", "json"],
+    [".csv", "plain_text"], [".js", "code"], [".ts", "code"], [".py", "code"],
+    [".html", "plain_text"], [".css", "code"],
+  ]);
+  if (textParsers.has(extension)) {
+    return {
+      indexable: Boolean(policy.text_files),
+      kind: [".js", ".ts", ".py", ".css"].includes(extension) ? "code" : ([".json", ".yaml", ".yml", ".csv"].includes(extension) ? "data" : "text"),
+      reason: policy.text_files ? "text_files_enabled" : "text_files_disabled",
+      parser: policy.text_files ? textParsers.get(extension) : "none",
+    };
+  }
+  return { indexable: false, kind: "binary", reason: "unsupported_extension", parser: "none" };
 }
 
 function canIndexDocForPublic(repo, doc) {
@@ -4871,6 +5115,325 @@ function runProcess(commandName, args, cwd = process.cwd()) {
   }
 }
 
+async function contextSearch(ctx, query, options = {}) {
+  const q = normalizeContextQuery(query);
+  const view = normalizeDaemonView(options.view) === FULL_VIEW ? FULL_VIEW : PUBLIC_VIEW;
+  const mode = String(options.mode || "keyword").toLowerCase();
+  if (!q) return { ok: false, error: "missing_query", query: q };
+  if (mode === "semantic") {
+    return { ok: false, error: "semantic_not_available", query: q, mode, available_modes: ["keyword", "hybrid"] };
+  }
+  if (!new Set(["keyword", "hybrid"]).has(mode)) {
+    return { ok: false, error: "invalid_mode", query: q, mode, available_modes: ["keyword", "hybrid"] };
+  }
+  const opened = await openIndexDatabase({ create: false });
+  if (!opened.ok) return { ok: false, error: opened.error || opened.code, code: opened.code, query: q };
+  const { db } = opened;
+  try {
+    const ftsQuery = ftsQueryFromText(q);
+    if (!ftsQuery) return { ok: false, error: "empty_fts_query", query: q };
+    const repo = String(options.repo || "all");
+    const limit = boundedInteger(options.limit, 10, 1, 50);
+    const includeNonPublic = view === FULL_VIEW ? 1 : 0;
+    const rows = db.prepare(`
+      SELECT
+        c.repo, c.path, c.title, c.heading_path, c.start_line, c.end_line,
+        c.text, snippet(chunks_fts, -1, '[', ']', '...', 24) AS snippet,
+        bm25(chunks_fts) AS raw_rank, c.role, c.visibility, c.public_presence,
+        c.github_url, c.searchable_public
+      FROM chunks_fts
+      JOIN chunks c ON c.id = chunks_fts.chunk_id
+      WHERE chunks_fts MATCH ?
+        AND (? = 1 OR c.searchable_public = 1)
+        AND (? = 'all' OR c.repo = ?)
+      ORDER BY raw_rank, c.repo, c.path, c.start_line
+      LIMIT ?
+    `).all(ftsQuery, includeNonPublic, repo, repo, Math.min(limit * 3, 150));
+    const maxRelevance = Math.max(...rows.map(row => Math.abs(Number(row.raw_rank) || 0)), 1e-9);
+    const terms = contextQueryTerms(q);
+    const ranked = rows.map(row => {
+      const base = 0.7 * (Math.abs(Number(row.raw_rank) || 0) / maxRelevance);
+      const boosts = contextMetadataBoosts(row, terms, repo, mode);
+      return {
+        id: contextSourceId(row),
+        repo: row.repo,
+        path: row.path,
+        title: row.title,
+        heading_path: row.heading_path,
+        start_line: row.start_line,
+        end_line: row.end_line,
+        role: row.role,
+        visibility: row.visibility,
+        score: Number(Math.min(1, base + boosts.total).toFixed(6)),
+        github_url: row.github_url ? `${row.github_url}#L${row.start_line}-L${row.end_line}` : "",
+        snippet: row.snippet,
+        ...(options.includeText ? { text: row.text } : {}),
+        _raw_rank: Number(row.raw_rank) || 0,
+        _reasons: ["matched_terms", ...boosts.reasons],
+      };
+    }).sort((a, b) => b.score - a.score || a._raw_rank - b._raw_rank || a.id.localeCompare(b.id));
+    const results = ranked.slice(0, limit).map(({ _raw_rank, _reasons, ...result }) => result);
+    return {
+      ok: true,
+      query: q,
+      mode,
+      view,
+      count: results.length,
+      results,
+      warnings: mode === "hybrid" ? ["Hybrid phase 1 uses FTS5 plus deterministic metadata boosts; semantic embeddings are not enabled."] : [],
+    };
+  } catch (e) {
+    return { ok: false, error: "context_search_failed", ...(view === FULL_VIEW ? { message: e.message } : {}), query: q };
+  } finally {
+    db.close();
+  }
+}
+
+async function contextPack(ctx, query, options = {}) {
+  const q = normalizeContextQuery(query);
+  const budget = boundedInteger(options.budget, DEFAULT_CONTEXT_BUDGET, 256, MAX_CONTEXT_BUDGET);
+  const view = normalizeDaemonView(options.view) === FULL_VIEW ? FULL_VIEW : PUBLIC_VIEW;
+  const search = await contextSearch(ctx, q, { ...options, view, includeText: true });
+  if (!search.ok) return search;
+  const status = await indexStatus(ctx);
+  const context = [];
+  const sources = [];
+  const warnings = [...search.warnings];
+  let used = 0;
+  for (const result of search.results) {
+    if (used >= budget) break;
+    const available = budget - used;
+    const originalText = result.text || "";
+    const originalEstimate = estimateTokens(originalText);
+    let text = originalText;
+    let endLine = result.end_line;
+    if (originalEstimate > available) {
+      text = truncateToTokenBudget(originalText, available);
+      if (!text) continue;
+      endLine = result.start_line + (text.match(/\n/g) || []).length;
+      warnings.push(`Context truncated to budget at ${result.repo}:${result.path}#L${result.start_line}.`);
+    }
+    const estimate = estimateTokens(text);
+    const sourceId = `${result.repo}:${result.path}#L${result.start_line}-L${endLine}`;
+    sources.push({
+      source_id: sourceId,
+      repo: result.repo,
+      path: result.path,
+      title: result.title,
+      heading_path: result.heading_path,
+      start_line: result.start_line,
+      end_line: endLine,
+      role: result.role,
+      visibility: result.visibility,
+      github_url: result.github_url ? `${result.github_url.replace(/#.*$/, "")}#L${result.start_line}-L${endLine}` : "",
+    });
+    context.push({ source_id: sourceId, text });
+    used += estimate;
+  }
+  const queryHash = sha256(q);
+  const indexHash = status.index_hash || "";
+  const logical = {
+    query: q,
+    repo: options.repo || "all",
+    mode: options.mode || "keyword",
+    view,
+    budget,
+    retrieval_policy_version: CONTEXT_RETRIEVAL_POLICY_VERSION,
+    index_hash: indexHash,
+    sources,
+    context,
+  };
+  return {
+    ok: true,
+    query: q,
+    strategy: CONTEXT_RETRIEVAL_POLICY_VERSION,
+    retrieval_policy_version: CONTEXT_RETRIEVAL_POLICY_VERSION,
+    view,
+    budget: { max_tokens: budget, used_tokens_estimate: used },
+    index: { schema_version: status.schema_version || INDEX_SCHEMA_VERSION, index_hash: indexHash },
+    query_hash: queryHash,
+    index_hash: indexHash,
+    pack_hash: sha256(stableJson(logical)),
+    sources,
+    context,
+    instructions_for_model: [
+      "Answer from the supplied sources when the question concerns the corpus.",
+      "Distinguish facts, hypotheses, interpretations, and items requiring verification.",
+      "Report missing context instead of inventing information.",
+      "Cite the relevant source_id values.",
+    ],
+    warnings,
+  };
+}
+
+function contextPackMarkdown(pack) {
+  const lines = [
+    "# Cogentia context pack",
+    "",
+    `Query: ${pack.query}`,
+    `Strategy: ${pack.strategy}`,
+    `View: ${pack.view}`,
+    `Pack hash: ${pack.pack_hash}`,
+    "",
+    "## Instructions for model",
+    "",
+    ...pack.instructions_for_model.map(item => `- ${item}`),
+    "",
+    "## Sources",
+    "",
+  ];
+  pack.sources.forEach((source, index) => {
+    lines.push(`[${index + 1}] ${source.source_id}`, `Title: ${source.title}`, `Role: ${source.role}`, `URL: ${source.github_url || "n/a"}`, "");
+  });
+  lines.push("## Context", "");
+  pack.context.forEach((item, index) => lines.push(`### [${index + 1}] ${item.source_id}`, "", item.text, ""));
+  if (pack.warnings.length) lines.push("## Warnings", "", ...pack.warnings.map(item => `- ${item}`), "");
+  return lines.join("\n");
+}
+
+function contextDocument(ctx, ref, view = PUBLIC_VIEW) {
+  if (!ref) return { ok: false, error: "missing_ref" };
+  const inventory = buildInventory(ctx);
+  const doc = resolveContextDoc(inventory, ref);
+  if (!doc) return { ok: false, error: "document_not_found", ref };
+  const repo = ctx.repos.find(item => item.name === doc.repo);
+  if (view !== FULL_VIEW && (!repo || !canIndexDocForPublic(repo, doc))) {
+    return { ok: false, error: "document_not_found", ref };
+  }
+  const document = sanitizeDoc(doc, inventory, view === FULL_VIEW ? PRIVATE_VIEW : PUBLIC_VIEW);
+  if (view !== FULL_VIEW) delete document.full_path;
+  return { ok: true, view, ref: `${doc.repo}:${doc.rel}`, document };
+}
+
+function contextLines(ctx, ref, options = {}) {
+  if (!ref) return { ok: false, error: "missing_ref" };
+  const start = Number.parseInt(options.start, 10);
+  const end = Number.parseInt(options.end, 10);
+  if (!Number.isInteger(start) || !Number.isInteger(end) || start < 1 || end < start || end - start + 1 > MAX_CONTEXT_LINES) {
+    return { ok: false, error: "invalid_range", max_lines: MAX_CONTEXT_LINES };
+  }
+  const view = normalizeDaemonView(options.view) === FULL_VIEW ? FULL_VIEW : PUBLIC_VIEW;
+  const inventory = buildInventory(ctx);
+  const doc = resolveContextDoc(inventory, ref);
+  if (!doc) return { ok: false, error: "document_not_found", ref };
+  const repo = ctx.repos.find(item => item.name === doc.repo);
+  if (view !== FULL_VIEW && (!repo || !canIndexDocForPublic(repo, doc))) {
+    return { ok: false, error: "document_not_found", ref };
+  }
+  if (!repo || !isInside(repo.path, doc.full_path)) return { ok: false, error: "forbidden_document", ref };
+  const lines = readFileIfExists(doc.full_path).split(/\r?\n/);
+  if (start > lines.length) return { ok: false, error: "invalid_range", line_count: lines.length };
+  const actualEnd = Math.min(end, lines.length);
+  const sourceId = `${doc.repo}:${doc.rel}#L${start}-L${actualEnd}`;
+  return {
+    ok: true,
+    view,
+    ref: `${doc.repo}:${doc.rel}`,
+    source_id: sourceId,
+    start_line: start,
+    end_line: actualEnd,
+    text: lines.slice(start - 1, actualEnd).join("\n"),
+    github_url: doc.github_url ? `${doc.github_url}#L${start}-L${actualEnd}` : "",
+  };
+}
+
+async function contextExplain(ctx, resultId, view = PUBLIC_VIEW) {
+  if (!resultId) return { ok: false, error: "missing_ref" };
+  const parsed = parseContextSourceId(resultId);
+  if (!parsed) return { ok: false, error: "result_not_found", result_id: resultId };
+  const opened = await openIndexDatabase({ create: false });
+  if (!opened.ok) return { ok: false, error: opened.error || opened.code, code: opened.code };
+  const { db } = opened;
+  try {
+    const row = db.prepare(`
+      SELECT repo, path, role, title, heading_path, searchable_public
+      FROM chunks WHERE repo = ? AND path = ? AND start_line = ? AND end_line >= ?
+      ORDER BY end_line LIMIT 1
+    `).get(parsed.repo, parsed.path, parsed.start, parsed.end);
+    if (!row || (view !== FULL_VIEW && !row.searchable_public)) {
+      return { ok: false, error: "result_not_found", result_id: resultId };
+    }
+    const why = ["matched_terms"];
+    if (row.role === "source") why.push("source_role_boost");
+    if (row.heading_path) why.push("heading_available_for_matching");
+    return {
+      ok: true,
+      result_id: resultId,
+      why,
+      limits: ["semantic embeddings not enabled yet", "exact term contribution is not persisted between requests"],
+      retrieval_policy_version: CONTEXT_RETRIEVAL_POLICY_VERSION,
+    };
+  } finally {
+    db.close();
+  }
+}
+
+async function contextHealth(ctx) {
+  const status = await indexStatus(ctx);
+  return {
+    ok: true,
+    service: "cogentia-context-gateway",
+    public: true,
+    version: VERSION,
+    index_available: Boolean(status.built && status.ok),
+    modes: ["keyword", "hybrid"],
+    write_routes_public: false,
+  };
+}
+
+function normalizeContextQuery(query) {
+  return String(query || "").normalize("NFC").trim().replace(/\s+/g, " ");
+}
+
+function contextQueryTerms(query) {
+  return (query.toLowerCase().match(/[\p{L}\p{N}_'-]+/gu) || []).filter(Boolean);
+}
+
+function contextMetadataBoosts(row, terms, requestedRepo, mode) {
+  if (mode !== "hybrid") return { total: 0, reasons: [] };
+  let total = 0;
+  const reasons = [];
+  const roleBoost = { source: 0.15, derived: 0.05, operational: 0.02 }[row.role] || 0;
+  if (roleBoost) { total += roleBoost; reasons.push(`${row.role}_role_boost`); }
+  const title = String(row.title || "").toLowerCase();
+  const heading = String(row.heading_path || "").toLowerCase();
+  if (terms.length && terms.every(term => title.includes(term))) { total += 0.10; reasons.push("title_match"); }
+  if (terms.length && terms.every(term => heading.includes(term))) { total += 0.10; reasons.push("heading_match"); }
+  if (requestedRepo !== "all" && row.repo === requestedRepo) { total += 0.05; reasons.push("same_repo"); }
+  return { total, reasons };
+}
+
+function contextSourceId(row) {
+  return `${row.repo}:${row.path}#L${row.start_line}-L${row.end_line}`;
+}
+
+function parseContextSourceId(value) {
+  const match = String(value || "").match(/^([^:]+):(.+?)#L(\d+)(?:-L(\d+))?$/);
+  return match ? { repo: match[1], path: match[2], start: Number(match[3]), end: Number(match[4] || match[3]) } : null;
+}
+
+function resolveContextDoc(inventory, ref) {
+  const clean = String(ref || "").replace(/\\/g, "/");
+  const colon = clean.indexOf(":");
+  if (colon > 0) {
+    const repo = clean.slice(0, colon);
+    const relPath = clean.slice(colon + 1).replace(/#L\d+(?:-L\d+)?$/, "");
+    return inventory.documents.find(doc => doc.repo === repo && doc.rel === relPath);
+  }
+  return resolveDocRef(inventory, clean);
+}
+
+function estimateTokens(text) {
+  return Math.max(1, Math.ceil(String(text || "").length / 4));
+}
+
+function truncateToTokenBudget(text, budget) {
+  if (budget < 1) return "";
+  const slice = String(text || "").slice(0, budget * 4);
+  const lastNewline = slice.lastIndexOf("\n");
+  return (lastNewline > 0 ? slice.slice(0, lastNewline) : slice).trim();
+}
+
 function commandAvailable(commandName) {
   try {
     execFileSync(commandName, ["--version"], { encoding: "utf8", stdio: ["ignore", "ignore", "ignore"] });
@@ -5640,6 +6203,18 @@ function isInside(root, child) {
 
 function sha(s) {
   return createHash("sha1").update(String(s)).digest("hex").slice(0, 12);
+}
+
+function sha256(s) {
+  return createHash("sha256").update(String(s)).digest("hex");
+}
+
+function stableJson(value) {
+  if (Array.isArray(value)) return `[${value.map(stableJson).join(",")}]`;
+  if (value && typeof value === "object") {
+    return `{${Object.keys(value).sort().map(key => `${JSON.stringify(key)}:${stableJson(value[key])}`).join(",")}}`;
+  }
+  return JSON.stringify(value);
 }
 
 function wordCount(s) {

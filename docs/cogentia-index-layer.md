@@ -52,7 +52,9 @@ With that environment, the database resolves to:
 
 ## What Is Indexed
 
-The index stores document metadata for the configured corpus and full-text chunks for public searchable documents.
+The index stores document metadata and full-text chunks for locally available,
+indexable corpus documents. Each chunk carries a `searchable_public` decision;
+the daemon and CLI apply that boundary before returning public results.
 
 Document metadata includes:
 
@@ -80,7 +82,11 @@ Chunks are built from Markdown headings and include:
 - word estimate;
 - content hash.
 
-Private, confidential, or secret documents are not exposed by default search. In v0.1, non-public documents are not inserted into the FTS table.
+Private, confidential, or secret documents are never exposed by default search.
+Since Context Gateway Phase 1, their chunks may exist in the local cache so an
+authorized local/full view can retrieve them. They remain excluded from public
+queries by `searchable_public`. The cache must therefore stay local and inherit
+the filesystem protections of the corpus it indexes.
 
 ## CLI
 

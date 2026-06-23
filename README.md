@@ -70,7 +70,9 @@ node scripts/cogentia.js corpus apply              # apply the fresh generated p
 node scripts/cogentia.js corpus verify --strict    # verify generated views, gaps and drift
 node scripts/cogentia.js git noise plan            # classify scratch/noise vs substantive edits
 node scripts/cogentia.js corpus commit-generated   # dry-run generated-only commit plan
+node scripts/cogentia.js index rebuild --json      # rebuild the local SQLite/FTS5 cache
 node scripts/cogentia.js daemon --port 8790        # start the local daemon
+node scripts/test-context-gateway.js                # verify public RAG and MCP boundaries
 ```
 
 The CLI has zero npm dependencies. Node 20+ recommended. MIT-licensed.
@@ -108,6 +110,8 @@ All published documents live in `research/` and are catalogued in [`research/ind
 - **[Cogentia Commons Visibility Modes](research/cogentia_commons_visibility_and_private_modes.md)** — public by default, private by exception; private spaces as visibility modes for sensitive, strategic or patent-oriented exploration.
 - **[Democratic AI Safety](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/democratic_ai_safety.md)** — the political thesis on which both scales rest (canonical in barons-Mariani).
 - **[Agent Navigation Guide](docs/agent_context_server.md)** — meta-prompt for AI agents navigating the corpus.
+- **[Context Gateway](docs/cogentia-context-gateway.md)** — governed public Markdown RAG routes, citations, visibility and deployment controls.
+- **[MCP adapter](docs/cogentia-mcp.md)** — model-facing tools that call the daemon without direct SQLite or filesystem access.
 - **[The Knowledge Mesh](docs/knowledge_mesh.md)** — backlinks, trails, and Jekyll for human navigation.
 
 ## CLI features (v2)
@@ -115,7 +119,7 @@ All published documents live in `research/` and are catalogued in [`research/ind
 - **Tooling**
   * `help`, `-h`, `--help` — show command usage and available commands.
   * `version`, `--version` — show the current CLI version.
-  * `daemon` — start the local HTTP daemon for plugins and browser UI.
+  * `daemon` — start the local HTTP daemon, including the public read-only Context Gateway.
   * `documents` — alias for `docs`.
   * `agent start` — read-only session summary and next-action hints for human and AI agents.
 - **Corpus state**

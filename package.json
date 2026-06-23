@@ -13,6 +13,7 @@
     "commons:dev": "pnpm --filter @cogentia/commons run dev",
     "commons:build": "pnpm --filter @cogentia/commons run build",
     "cogentia": "node scripts/cogentia.js",
+    "test:context": "node scripts/test-context-gateway.js",
     "trace:import:chatgpt": "node trace/scripts/import_chatgpt_export.js"
   },
   "devDependencies": {

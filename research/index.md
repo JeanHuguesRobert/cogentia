@@ -128,6 +128,8 @@ This repository instantiates the **cognitive infrastructure layer** of the [DHIT
 | [Cogentia daemon & plugin tutorial](../docs/daemon-plugin-tutorial.md) *(plugin authoring and daemon extension note)* | this repo | 2026-06-12 |
 | [Cogentia Daemon Plugin API](../docs/plugins.md) *(local daemon plugin API reference)* | this repo | 2026-06-12 |
 | [Cogentia Index Layer v0.1](../docs/cogentia-index-layer.md) *(local SQLite/FTS5 cache for fast corpus search; Git and Markdown remain canonical)* | this repo | 2026-06-21 |
+| [Cogentia Context Gateway](../docs/cogentia-context-gateway.md) *(governed public Markdown RAG facade with deterministic context packs, citations and strict public/admin separation)* | this repo | 2026-06-23 |
+| [Cogentia MCP adapter](../docs/cogentia-mcp.md) *(stdio tools that retrieve through the daemon HTTP boundary and never access SQLite directly)* | this repo | 2026-06-23 |
 | [Cogentia/Fractanet node: fracta](../docs/fracta-node.md) *(operational deployment guide for a local VPS node, portable registry, local data directory and public/full daemon views)* | this repo | 2026-06-21 |
 | [Cogentia Personal Data Portability — Architecture](../cogentia_personal/data_portability/ARCHITECTURE.md) *(generic architecture for reusable data portability tooling)* | this repo | 2026-06-11 |
 | [Cogentia Personal Data Portability — Provider Adapters](../cogentia_personal/data_portability/ADAPTERS.md) *(provider adapter architecture note for unstable, heterogeneous exports)* | this repo | 2026-06-13 |
