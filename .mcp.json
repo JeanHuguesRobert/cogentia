@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "cogentia": {
+      "command": "node",
+      "args": ["scripts/cogentia-mcp.js"],
+      "env": {
+        "COGENTIA_DAEMON_URL": "http://127.0.0.1:8790",
+        "COGENTIA_MCP_VIEW": "public"
+      }
+    }
+  }
+}

@@ -146,6 +146,8 @@ async function main() {
       return cmdClassify(argv.shift() || "plan");
     case "index":
       return cmdIndex(argv.shift() || "status");
+    case "embeddings":
+      return cmdEmbeddings(argv.shift() || "status");
     case "daemon":
       return cmdDaemon();
     default:
@@ -204,6 +206,17 @@ Index commands:
   index update             Refresh the local index cache from canonical sources.
   index search <query>     Search the local FTS5 index. Flags: --repo <name|all>
                            --limit <n>
+
+Semantic search (continuation-based):
+  embeddings status        Check if embeddings are indexed and model info.
+  embeddings index         Emit continuation to generate embeddings for chunks.
+                           Flags: --repo <name|all> --limit <n> --force --view public|full
+  embeddings store <json>  Store embeddings provided by external agent.
+  embeddings search <q>   Emit continuation for semantic search with query.
+                           Flags: --repo <name|all> --limit <n>
+  embeddings search-with <json>
+                           Execute search with provided query embedding.
+                           Flags: --query <text> --repo <name|all> --limit <n>
 
 Context Gateway:
   daemon                   Start the HTTP daemon. Defaults to 127.0.0.1 and public view.
@@ -1572,6 +1585,103 @@ async function cmdIndex(sub) {
     }
     default:
       throw new Error(`Unknown index subcommand "${sub}". Use status, rebuild, update, or search.`);
+  }
+}
+
+async function cmdEmbeddings(sub) {
+  const ctx = loadContext();
+  switch (sub) {
+    case "status": {
+      const result = await embeddingsStatus(ctx);
+      return output(result, formatEmbeddingsStatus(result));
+    }
+    case "index": {
+      const result = await indexEmbeddings(ctx, {
+        repo: valueFlag("--repo") || "all",
+        limit: Number(valueFlag("--limit") || 1000) || 1000,
+        force: takeFlag("--force"),
+        view: valueFlag("--view") || "public",
+      });
+      return output(result, result.ok ? formatEmbeddingContinuation(result) : formatEmbeddingsIndex(result));
+    }
+    case "store": {
+      // Store embeddings provided by external agent (after continuation resolution)
+      const payloadPath = argv.shift();
+      if (!payloadPath) throw new Error("Usage: embeddings store <embeddings.json>");
+      const payload = JSON.parse(fs.readFileSync(payloadPath, "utf8"));
+      const result = await storeEmbeddings(ctx, payload.embeddings || []);
+      return output(result, formatEmbeddingsStore(result));
+    }
+    case "search": {
+      const query = argv.shift() || "";
+      if (!query) throw new Error('Usage: embeddings search "<query>" [--repo <name|all>] [--limit <n>] [--json]');
+      const result = await semanticSearch(ctx, query, {
+        repo: valueFlag("--repo") || "all",
+        limit: Number(valueFlag("--limit") || 10) || 10,
+      });
+      return output(result, result.ok ? formatEmbeddingContinuation(result) : formatEmbeddingsSearch(result));
+    }
+    case "search-with": {
+      // Execute semantic search with provided query embedding (after continuation resolution)
+      const embeddingPath = argv.shift();
+      if (!embeddingPath) throw new Error("Usage: embeddings search-with <query_embedding.json>");
+      const payload = JSON.parse(fs.readFileSync(embeddingPath, "utf8"));
+      const result = await semanticSearchWithEmbedding(ctx, payload.query_embedding, {
+        query: valueFlag("--query") || payload.query || "",
+        repo: valueFlag("--repo") || "all",
+        limit: Number(valueFlag("--limit") || 10) || 10,
+        view: valueFlag("--view") || "public",
+      });
+      return output(result, formatEmbeddingsSearch(result));
+    }
+    default:
+      throw new Error(`Unknown embeddings subcommand "${sub}". Use status, index, store, search, or search-with.`);
+  }
+}
+
+async function embeddingsStatus(ctx) {
+  const opened = await openIndexDatabase({ create: false });
+  if (!opened.ok) {
+    return {
+      ok: false,
+      built: false,
+      path: opened.path,
+      message: opened.code === "index_not_built" ? "Index not built. Run: cogentia.js index rebuild" : opened.error,
+    };
+  }
+  const { db, path: dbPath } = opened;
+  try {
+    const tables = db.prepare("SELECT name FROM sqlite_master WHERE type='table'").all().map(r => r.name);
+    const hasEmbeddings = tables.includes("embeddings");
+    let count = 0;
+    let model = null;
+    let dimensions = null;
+    let created = null;
+    let repos = [];
+    if (hasEmbeddings) {
+      count = scalar(db, "SELECT count(*) FROM embeddings");
+      const meta = db.prepare("SELECT DISTINCT model_name, dimensions, created_at FROM embeddings LIMIT 1").get();
+      if (meta) {
+        model = meta.model_name;
+        dimensions = meta.dimensions;
+        created = meta.created_at;
+      }
+      repos = db.prepare("SELECT DISTINCT repo FROM embeddings ORDER BY repo").all().map(r => r.repo);
+    }
+    return {
+      ok: hasEmbeddings,
+      built: hasEmbeddings,
+      path: dbPath,
+      count,
+      model,
+      dimensions,
+      created_at: created,
+      repos,
+    };
+  } catch (e) {
+    return { ok: false, built: false, path: dbPath, error: e.message };
+  } finally {
+    db.close();
   }
 }
 
@@ -5115,13 +5225,306 @@ function runProcess(commandName, args, cwd = process.cwd()) {
   }
 }
 
+// ===== SEMANTIC SEARCH (continuation-based) =====
+
+// Embeddings are generated by external agents via continuations, not direct API calls.
+// This maintains inversion of control and provider neutrality.
+
+const EMBEDDINGS_TABLE_SCHEMA = `
+CREATE TABLE IF NOT EXISTS embeddings (
+  chunk_id INTEGER PRIMARY KEY,
+  content_hash TEXT UNIQUE NOT NULL,
+  repo TEXT NOT NULL,
+  path TEXT NOT NULL,
+  start_line INTEGER NOT NULL,
+  end_line INTEGER NOT NULL,
+  embedding JSON NOT NULL,
+  model_name TEXT NOT NULL,
+  dimensions INTEGER NOT NULL,
+  created_at TEXT NOT NULL,
+  FOREIGN KEY (chunk_id) REFERENCES chunks(id) ON DELETE CASCADE
+);
+
+CREATE INDEX IF NOT EXISTS idx_embeddings_content_hash ON embeddings(content_hash);
+CREATE INDEX IF NOT EXISTS idx_embeddings_repo_path ON embeddings(repo, path);
+`;
+
+// Provider-neutral cosine similarity for vector comparison
+function cosineSimilarity(vecA, vecB) {
+  if (vecA.length !== vecB.length) return 0;
+  let dotProduct = 0;
+  let normA = 0;
+  let normB = 0;
+  for (let i = 0; i < vecA.length; i++) {
+    dotProduct += vecA[i] * vecB[i];
+    normA += vecA[i] * vecA[i];
+    normB += vecB[i] * vecB[i];
+  }
+  return normA === 0 || normB === 0 ? 0 : dotProduct / (Math.sqrt(normA) * Math.sqrt(normB));
+}
+
+async function ensureEmbeddingsTable(db) {
+  const tables = db.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='embeddings'").all();
+  if (!tables.length) {
+    db.exec(EMBEDDINGS_TABLE_SCHEMA);
+    return true;
+  }
+  return false;
+}
+
+// Continuation-based embeddings indexing
+// Instead of calling OpenAI directly, emit a continuation for external agent
+async function indexEmbeddings(ctx, options = {}) {
+  const opened = await openIndexDatabase({ create: false });
+  if (!opened.ok) return { ok: false, error: opened.code };
+  const { db } = opened;
+
+  try {
+    await ensureEmbeddingsTable(db);
+
+    const view = normalizeDaemonView(options.view || "") === FULL_VIEW ? FULL_VIEW : PUBLIC_VIEW;
+    const repoFilter = String(options.repo || "all");
+    const limit = boundedInteger(options.limit, 1000, 1, 5000);
+    const force = Boolean(options.force);
+
+    const repoClause = repoFilter === "all" ? "" : "AND c.repo = ?";
+    const publicClause = view === FULL_VIEW ? "" : "AND c.searchable_public = 1";
+
+    const chunksToEmbed = db.prepare(`
+      SELECT c.id, c.repo, c.path, c.start_line, c.end_line, c.text, c.content_hash
+      FROM chunks c
+      WHERE c.text IS NOT NULL AND c.text != ''
+        AND c.text != 'null'
+        ${publicClause}
+        ${repoClause}
+      ORDER BY c.repo, c.path, c.start_line
+      LIMIT ?
+    `).all(...(repoFilter !== "all" ? [repoFilter, limit] : [limit]));
+
+    const existingHashes = new Set(
+      db.prepare("SELECT content_hash FROM embeddings").all().map(r => r.content_hash)
+    );
+
+    const toProcess = chunksToEmbed.filter(c => force || !existingHashes.has(c.content_hash));
+
+    db.close();
+
+    // Emit a continuation for the external agent
+    const chunksData = toProcess.map(c => ({
+      chunk_id: c.id,
+      content_hash: c.content_hash,
+      repo: c.repo,
+      path: c.path,
+      start_line: c.start_line,
+      end_line: c.end_line,
+      text: c.text,
+    }));
+
+    return emitContinuation(ctx, {
+      kind: "embeddings-index",
+      title: `Generate embeddings for ${chunksData.length} chunks`,
+      question: `Generate vector embeddings for ${chunksData.length} text chunks using a text embedding model (e.g., OpenAI text-embedding-3-small, 1536 dimensions). Return embeddings as JSON array.`,
+      priority: 1,
+      dedupe_key: `embeddings-${repoFilter}-${view}-${limit}`,
+      subject: { repo: repoFilter, path: "" },
+      context: {
+        chunks: chunksData,
+        view,
+        repo: repoFilter,
+        limit,
+        force,
+      },
+      expected_response: {
+        format: "json",
+        required: ["embeddings"],
+        schema: {
+          embeddings: [
+            {
+              chunk_id: "integer",
+              content_hash: "string",
+              embedding: "number[]",
+              model_name: "string",
+              dimensions: "integer",
+            },
+          ],
+        },
+      },
+    });
+  } catch (e) {
+    db?.close();
+    return { ok: false, error: "embeddings_failed", message: e.message };
+  }
+}
+
+// Store embeddings provided by external agent (via continuation resolution)
+async function storeEmbeddings(ctx, embeddings) {
+  const opened = await openIndexDatabase({ create: false });
+  if (!opened.ok) return { ok: false, error: opened.code };
+  const { db } = opened;
+
+  try {
+    await ensureEmbeddingsTable(db);
+
+    let stored = 0;
+    for (const item of embeddings) {
+      const chunk = db.prepare("SELECT repo, path, start_line, end_line FROM chunks WHERE id = ?").get(item.chunk_id);
+      if (!chunk) continue;
+
+      const stmt = db.prepare(`
+        INSERT OR REPLACE INTO embeddings
+        (chunk_id, content_hash, repo, path, start_line, end_line, embedding, model_name, dimensions, created_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))
+      `);
+
+      stmt.run(
+        item.chunk_id,
+        item.content_hash,
+        chunk.repo,
+        chunk.path,
+        chunk.start_line,
+        chunk.end_line,
+        JSON.stringify(item.embedding),
+        item.model_name || "unknown",
+        item.dimensions || item.embedding?.length || 0
+      );
+      stored++;
+    }
+
+    db.close();
+    return { ok: true, stored };
+  } catch (e) {
+    db?.close();
+    return { ok: false, error: "store_failed", message: e.message };
+  }
+}
+
+// Semantic search using cosine similarity on stored embeddings
+async function semanticSearch(ctx, query, options = {}) {
+  const q = normalizeContextQuery(query);
+  const view = normalizeDaemonView(options.view) === FULL_VIEW ? FULL_VIEW : PUBLIC_VIEW;
+  const repo = String(options.repo || "all");
+  const limit = boundedInteger(options.limit, 10, 1, 50);
+
+  const opened = await openIndexDatabase({ create: false });
+  if (!opened.ok) return { ok: false, error: opened.code, query: q, mode: "semantic" };
+  const { db } = opened;
+
+  try {
+    const hasEmbeddings = db.prepare("SELECT count(*) as count FROM embeddings").get();
+    if (!hasEmbeddings || hasEmbeddings.count === 0) {
+      db.close();
+      return {
+        ok: false,
+        error: "no_embeddings",
+        query: q,
+        mode: "semantic",
+        message: "No embeddings indexed. Run: cogentia.js embeddings index",
+      };
+    }
+
+    // Emit a continuation for query embedding
+    db.close();
+    return emitContinuation(ctx, {
+      kind: "semantic-search",
+      title: `Semantic search for "${q}"`,
+      question: `Generate a vector embedding for the query "${q}" and return it for semantic similarity search against ${hasEmbeddings.count} indexed chunks.`,
+      priority: 1,
+      dedupe_key: `semantic-${q.slice(0, 50)}`,
+      subject: { repo, path: "" },
+      context: {
+        query: q,
+        view,
+        repo,
+        limit,
+        indexed_count: hasEmbeddings.count,
+      },
+      expected_response: {
+        format: "json",
+        required: ["query_embedding"],
+        schema: {
+          query_embedding: "number[]",
+          model_name: "string",
+          dimensions: "integer",
+        },
+      },
+    });
+  } catch (e) {
+    db?.close();
+    return { ok: false, error: "semantic_search_failed", query: q, mode: "semantic", ...(view === FULL_VIEW ? { message: e.message } : {}) };
+  }
+}
+
+// Execute semantic search with provided query embedding
+async function semanticSearchWithEmbedding(ctx, queryEmbedding, options = {}) {
+  const q = normalizeContextQuery(options.query || "");
+  const view = normalizeDaemonView(options.view) === FULL_VIEW ? FULL_VIEW : PUBLIC_VIEW;
+  const repo = String(options.repo || "all");
+  const limit = boundedInteger(options.limit, 10, 1, 50);
+
+  const opened = await openIndexDatabase({ create: false });
+  if (!opened.ok) return { ok: false, error: opened.code, query: q, mode: "semantic" };
+  const { db } = opened;
+
+  try {
+    const repoClause = repo === "all" ? "" : "AND e.repo = ?";
+    const publicClause = view === FULL_VIEW ? "" : "AND c.searchable_public = 1";
+
+    const embeddings = db.prepare(`
+      SELECT e.chunk_id, e.repo, e.path, e.start_line, e.end_line, e.embedding,
+             c.title, c.heading_path, c.role, c.visibility, c.public_presence, c.github_url, c.text
+      FROM embeddings e
+      JOIN chunks c ON e.chunk_id = c.id
+      WHERE 1=1 ${publicClause} ${repoClause}
+    `).all(...(repo !== "all" ? [repo] : []));
+
+    const similarities = embeddings.map(row => {
+      const embedding = JSON.parse(row.embedding);
+      const similarity = cosineSimilarity(queryEmbedding, embedding);
+      const snippet = row.text ? row.text.slice(0, 200).replace(/\n/g, " ") + "..." : "";
+      return {
+        id: `${row.repo}:${row.path}#L${row.start_line}-L${row.end_line}`,
+        repo: row.repo,
+        path: row.path,
+        title: row.title,
+        heading_path: row.heading_path,
+        start_line: row.start_line,
+        end_line: row.end_line,
+        role: row.role,
+        visibility: row.visibility,
+        score: similarity,
+        snippet,
+        github_url: row.github_url ? `${row.github_url}#L${row.start_line}-L${row.end_line}` : "",
+        _reasons: ["semantic_similarity"],
+      };
+    });
+
+    similarities.sort((a, b) => b.score - a.score);
+    const results = similarities.slice(0, limit);
+
+    db.close();
+
+    return {
+      ok: true,
+      query: q,
+      mode: "semantic",
+      view,
+      count: results.length,
+      results: results.map(({ text, ...r }) => r),
+      warnings: [],
+    };
+  } catch (e) {
+    db?.close();
+    return { ok: false, error: "semantic_search_failed", query: q, mode: "semantic", ...(view === FULL_VIEW ? { message: e.message } : {}) };
+  }
+}
+
 async function contextSearch(ctx, query, options = {}) {
   const q = normalizeContextQuery(query);
   const view = normalizeDaemonView(options.view) === FULL_VIEW ? FULL_VIEW : PUBLIC_VIEW;
   const mode = String(options.mode || "keyword").toLowerCase();
   if (!q) return { ok: false, error: "missing_query", query: q };
   if (mode === "semantic") {
-    return { ok: false, error: "semantic_not_available", query: q, mode, available_modes: ["keyword", "hybrid"] };
+    return await semanticSearch(ctx, query, { ...options, view });
   }
   if (!new Set(["keyword", "hybrid"]).has(mode)) {
     return { ok: false, error: "invalid_mode", query: q, mode, available_modes: ["keyword", "hybrid"] };
@@ -5607,6 +6010,70 @@ function formatIndexSearch(result) {
     lines.push(`- ${m.repo}/${m.path}:${m.start_line}-${m.end_line} [${m.heading_path}] ${m.snippet}`);
   }
   return lines.join("\n");
+}
+
+function formatEmbeddingsStatus(result) {
+  const lines = ["\nEmbeddings (semantic search)\n"];
+  lines.push(`Path: ${result.path || "-"}`);
+  if (!result.built) {
+    lines.push(result.ok ? "Status: not built" : `Status: unavailable (${result.message || result.error || "unknown"})`);
+    return lines.join("\n");
+  }
+  lines.push(result.ok ? "Status: ok" : "Status: incomplete");
+  lines.push(`Count: ${result.count}`);
+  lines.push(`Model: ${result.model || "-"}`);
+  lines.push(`Dimensions: ${result.dimensions || "-"}`);
+  lines.push(`Created: ${result.created_at || "-"}`);
+  if (result.repos.length) {
+    lines.push(`Repos: ${result.repos.join(", ")}`);
+  }
+  return lines.join("\n");
+}
+
+function formatEmbeddingsIndex(result) {
+  if (!result.ok) return `Embeddings index failed: ${result.error || result.code || "unknown error"}`;
+  const lines = [`\nEmbeddings indexed\n`];
+  lines.push(`Indexed: ${result.indexed}`);
+  lines.push(`Skipped: ${result.skipped}`);
+  lines.push(`Total: ${result.total}`);
+  if (result.elapsed_seconds) lines.push(`Elapsed: ${result.elapsed_seconds}s`);
+  if (result.message) lines.push(`Message: ${result.message}`);
+  if (result.errors?.length) {
+    lines.push(`Errors: ${result.errors.length}`);
+    result.errors.slice(0, 5).forEach(e => lines.push(`  - Batch ${e.batch}: ${e.error}`));
+    if (result.errors.length > 5) lines.push(`  - ... ${result.errors.length - 5} more`);
+  }
+  return lines.join("\n");
+}
+
+function formatEmbeddingsSearch(result) {
+  if (!result.ok) return `Semantic search failed: ${result.error || result.code || "unknown error"}`;
+  if (!result.results?.length) return `No semantic matches for "${result.query}".`;
+  const lines = [`\nSemantic search for "${result.query}" (${result.count})\n`];
+  for (const m of result.results) {
+    const score = m.score ? ` [${(m.score * 100).toFixed(1)}%]` : "";
+    lines.push(`- ${m.repo}/${m.path}:${m.start_line}-${m.end_line}${score} [${m.heading_path}] ${m.snippet || ""}`);
+  }
+  return lines.join("\n");
+}
+
+function formatEmbeddingContinuation(result) {
+  const lines = ["\nContinuation emitted\n"];
+  lines.push(`ID: ${result.continuation?.id || "unknown"}`);
+  lines.push(`Kind: ${result.continuation?.kind || "unknown"}`);
+  lines.push(`Title: ${result.continuation?.title || "unknown"}`);
+  lines.push(`Question: ${result.continuation?.question || "unknown"}`);
+  lines.push(`Path: ${result.path || "unknown"}`);
+  lines.push("");
+  lines.push("Next steps:");
+  lines.push(`1. An external agent processes the continuation`);
+  lines.push(`2. Resolve with: node scripts/cogentia.js continuation resolve ${result.continuation?.id || "<id>"} <result.json>`);
+  return lines.join("\n");
+}
+
+function formatEmbeddingsStore(result) {
+  if (!result.ok) return `Failed to store embeddings: ${result.message || "unknown error"}`;
+  return `\nEmbeddings stored: ${result.stored}\n`;
 }
 
 function formatDoc(d) {
