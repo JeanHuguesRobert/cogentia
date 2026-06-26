@@ -24,6 +24,20 @@ Caller mediation remains the execution boundary.
 
 An MCP capability being available does not mean it may be invoked. An authorization record does not mean execution occurred. Any actual interaction with the external world is mediated by the caller or by a later explicitly-defined execution profile.
 
+## 2.1 Compute budget and anti-gaming invariant
+
+Alan computations must not appear free. Every effectful or potentially expensive operation should be able to carry compute-budget metadata, even when the MVP only preserves it as protocol data.
+
+Additional invariant:
+
+```text
+No compute without budget.
+No budget without bearer.
+No bearer without mandate.
+No mandate without trace.
+
+```
+
 ## 3. Direct-style source, continuation-based execution
 
 Alan must not force authors or LLMs to write every computation in explicit continuation-passing style.
@@ -286,6 +300,17 @@ TraceEvent
 Suspension
 Mandate
 ResponsibilityChain
+```
+
+Accounting-oriented records should be added or left explicitly possible:
+
+```text
+ComputeBudget
+ComputeCost
+CostBearer
+BudgetRef
+AntiGamingPolicy
+
 ```
 
 ## 8. Standard library v0.1
