@@ -53,6 +53,10 @@ The caller supplies a step result. Alan resumes from the saved resume point.
 Tool availability is not authorization.
 Authorization is not execution.
 Caller mediation remains the execution boundary.
+No compute without budget.
+No budget without bearer.
+No bearer without mandate.
+No mandate without trace.
 ```
 
 Do not implement direct external MCP invocation by Alan.
@@ -62,6 +66,8 @@ Do not implement credentials.
 Do not implement real side effects.
 
 Do not let authorization imply execution.
+
+Do not let a large budget imply legitimacy. A branch, claim, proposal or conclusion does not become important merely because an agent burned many CXU on it.
 
 ## Required first implementation slice
 
@@ -202,6 +208,40 @@ destructive_action → P5 → alan.failure forbidden_in_mvp
 unknown → conservative failure or P4/P5 suspension
 ```
 
+## CXU budget and anti-gaming constraints
+
+Every future effect slot must be able to carry a compute budget and cost trace. For the MVP, it is acceptable to store these fields as metadata only, but the shape must not make them impossible later.
+
+Use this doctrine:
+
+```text
+Compute cost creates seriousness.
+It does not create truth, legitimacy or authority.
+```
+
+Minimal fields to preserve or leave room for:
+
+```json
+{
+  "compute_budget": {
+    "unit": "CXU",
+    "estimated": null,
+    "actual": null,
+    "payer_ref": null,
+    "mandate_ref": null,
+    "trace_ref": null,
+    "over_budget": "suspend|degrade|ask|abort"
+  },
+  "anti_gaming": {
+    "large_spend_is_not_legitimacy": true,
+    "detect_circular_spend": false,
+    "requires_mandate": true
+  }
+}
+```
+
+Do not implement real billing in v0.1. Do implement the vocabulary and tests so future runtime code cannot treat compute as free or unmandated.
+
 ## Required suspension shape
 
 ```json
@@ -221,6 +261,19 @@ unknown → conservative failure or P4/P5 suspension
   },
   "saved_state": {
     "query": "Alan MCP"
+  },
+  "compute_budget": {
+    "unit": "CXU",
+    "estimated": null,
+    "actual": null,
+    "payer_ref": null,
+    "mandate_ref": null,
+    "trace_ref": null,
+    "over_budget": "suspend"
+  },
+  "anti_gaming": {
+    "large_spend_is_not_legitimacy": true,
+    "requires_mandate": true
   },
   "trace": {
     "caller_mediated": true,
@@ -260,9 +313,10 @@ When resuming:
 3. Check caller_mediated = true.
 4. Check direct_invocation_by_alan = false.
 5. Check execution_performed = false.
-6. Restore saved_state.
-7. Bind resume_point.bind to step_result.value.
-8. Continue the function body at resume_point.step_index.
+6. Preserve compute_budget and anti_gaming metadata.
+7. Restore saved_state.
+8. Bind resume_point.bind to step_result.value.
+9. Continue the function body at resume_point.step_index.
 ```
 
 ## Tests to implement
@@ -279,6 +333,9 @@ reject step_result supplied_by alan
 reject direct_invocation_by_alan = true
 reject execution_performed = true
 reject destructive MCP op as forbidden_in_mvp
+preserve compute_budget metadata across suspension/resume
+reject or flag missing mandate_ref when policy later requires it
+do not treat high CXU spend as proof of truth, priority or legitimacy
 ```
 
 ## Expected command
@@ -318,6 +375,8 @@ Do not implement a full parser yet unless the AST runtime is complete.
 
 Do not mix this with the broader MCP private-read / side-effect roadmap.
 
+Do not implement accounting as a cosmetic field that can be ignored by the trace. If a cost or budget is represented, it must be represented as part of the runtime/protocol object.
+
 ## Completion criteria
 
 The task is complete when:
@@ -327,6 +386,7 @@ Alan AST validates.
 A read-only public MCP op suspends.
 The suspension records caller mediation and no execution.
 A caller-supplied step result resumes execution.
+Compute budget metadata survives suspension and resume.
 A terminal value is produced.
 Negative tests reject unsafe traces.
 The implementation remains on main.
@@ -336,4 +396,5 @@ Final rule:
 
 ```text
 Make Alan able to suspend and resume correctly before making it able to do anything externally powerful.
+Make Alan able to account for compute before making compute appear free.
 ```
