@@ -55,6 +55,10 @@ direct-style Alan source
 Tool availability is not authorization.
 Authorization is not execution.
 Caller mediation remains the execution boundary.
+No compute without budget.
+No budget without bearer.
+No bearer without mandate.
+No mandate without trace.
 ```
 
 The implementation must not add real side-effect execution.
@@ -62,6 +66,8 @@ The implementation must not add real side-effect execution.
 The implementation must not add credentials.
 
 The implementation must not allow Alan to directly invoke external MCP tools.
+
+The implementation must not treat high compute spend as truth, legitimacy or priority. CXU-style cost accounting makes computation scarce and attributable; it does not let an agent buy the conclusion of the cognitive game.
 
 The MVP may simulate MCP by returning suspensions and accepting step results.
 
@@ -269,6 +275,20 @@ Example suspension:
   "saved_state": {
     "query": "Alan MCP"
   },
+  "compute_budget": {
+    "unit": "CXU",
+    "estimated": null,
+    "actual": null,
+    "payer_ref": null,
+    "mandate_ref": null,
+    "trace_ref": null,
+    "over_budget": "suspend"
+  },
+  "anti_gaming": {
+    "large_spend_is_not_legitimacy": true,
+    "requires_mandate": true,
+    "detect_circular_spend": false
+  },
   "trace": {
     "caller_mediated": true,
     "direct_invocation_by_alan": false,
@@ -278,6 +298,8 @@ Example suspension:
 ```
 
 The suspension must contain enough information to resume after the MCP operation.
+
+The `compute_budget` object is metadata-only in the MVP. It exists to prevent future implementations from treating inference, replay, cache lookup or artifact rehydration as free, unmandated work.
 
 ## 9. Phase 6 — Resume from step result
 
@@ -315,10 +337,13 @@ Resume semantics:
 
 ```text
 load saved_state
+preserve compute_budget and anti_gaming metadata
 bind suspension.resume_point.bind to step_result.value
 continue function body at resume_point.step_index
 return terminal / suspension / failure
 ```
+
+Replay/resume must not double-charge committed work. Later implementations may charge replay, cache lookup or validation separately, but that cost must be explicit and traceable.
 
 ## 10. Phase 7 — Policy-aware MCP classification
 
@@ -388,6 +413,9 @@ resume from step_result to terminal
 reject direct execution flag
 reject missing caller mediation
 reject destructive MCP op
+preserve compute_budget metadata across suspension/resume
+reject or flag missing mandate_ref when a policy requires it
+ensure large CXU spend is never interpreted as truth, priority or legitimacy
 ```
 
 Suggested npm script:
@@ -445,6 +473,8 @@ Alan source or AST
 → terminal value produced
 ```
 
+The flow must preserve compute-budget metadata and must not imply that a high cost, high token burn or high CXU spend proves the quality or legitimacy of the result.
+
 ## 15. Hard exclusions
 
 Do not implement:
@@ -458,6 +488,10 @@ file deletion
 financial/legal/institutional actions
 unmediated private access
 silent execution after authorization
+real CXU billing or token transfer
+budget-as-simple-duplicable-number
 ```
 
 Alan v0.1 should prove the language and resumable runtime, not external power.
+
+It should also prove the vocabulary of accountable compute: cost, budget, bearer, mandate, trace and anti-gaming must fit the runtime objects before they become enforceable economics.
