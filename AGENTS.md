@@ -1,6 +1,6 @@
 ---
 canonical_url: https://github.com/JeanHuguesRobert/cogentia/blob/main/AGENTS.md
-last_stamped_at: 2026-06-01
+last_stamped_at: 2026-06-26
 ---
 # AGENTS.md — Cogentia methodology shortcut
 
@@ -19,7 +19,8 @@ When working with Jean Hugues Robert, apply the Cogentia methodology:
 - use a **GitHub Issue** for memory in tension;
 - create or update a **source document** only after checkpoint;
 - derive public products from a source document or explicit draft;
-- commit only with explicit, scoped authorization.
+- commit only with explicit, scoped authorization;
+- when direct commit is authorized, prefer a small reversible commit on `main` over an unnecessary branch or PR.
 
 ## Operational formula
 
@@ -89,16 +90,36 @@ Agents must not commit, push, publish, send, sign, spend, or otherwise stabilize
 
 When authorization is ambiguous, prepare the batch and ask before acting.
 
+## Direct-main rule
+
+For Cogentia and related solo-corpus work, explicit scoped authorization may permit a direct commit to `main`.
+
+Do not create a branch or PR by default. Branches and PRs are exceptional isolation tools, not the normal proof of seriousness.
+
+A direct commit to `main` is acceptable only when the change is:
+
+```text
+small
++ scoped
++ reversible
++ inspectable by diff
++ consistent with the repository role
++ reported after completion
+```
+
+Use a branch, PR, staged patch, issue, checkpoint or human validation when the work is high-risk, multi-repository, doctrinally sensitive, legal, private, destructive, structurally invasive or institutionally committing.
+
 ## Key references
 
 - [`research/ideas_to_explore_as_issues.md`](research/ideas_to_explore_as_issues.md) — issue-level memory, smallest sufficient container, checkpoints, and opening registers.
 - [`research/pipeline.md`](research/pipeline.md) — general Cogentia pipeline from cognitive packets to source documents and derived products.
 - [`docs/agent_context_server.md`](docs/agent_context_server.md) — navigation guide for agents using Cogentia as a context server.
 - [`COGENTIA.md`](COGENTIA.md) — high-level framework in five distinctive moves.
-- [`cogentia/research/agent_configuration_layer.md`](https://github.com/JeanHuguesRobert/cogentia/blob/main/research/agent_configuration_layer.md) — AGENTS.md, `.agents/`, and governed operational projections of the corpus.
+- [`research/agent_configuration_layer.md`](research/agent_configuration_layer.md) — AGENTS.md, `.agents/`, and governed operational projections of the corpus.
+- [`research/optimistic_mainline_governance.md`](research/optimistic_mainline_governance.md) — direct agent work on `main` under trace, reversibility and scoped authorization.
 
 ## Minimal prompt to use with an agent
 
 ```text
-Respect my Cogentia methodology: smallest sufficient container, checkpoint before stabilization, opening register for long conversations, distinction between exploration, issue, source document, derived product, and commit. Do not stabilize anything without explicit scoped authorization.
+Respect my Cogentia methodology: smallest sufficient container, checkpoint before stabilization, opening register for long conversations, distinction between exploration, issue, source document, derived product, and commit. Do not stabilize anything without explicit scoped authorization. When direct commit is authorized, work on main with small reversible commits, readable diffs, validation when available, and a completion report. Do not create branches or PRs by default; use them only when risk, collaboration, repository rules or explicit instruction require isolation.
 ```
