@@ -139,6 +139,7 @@ Objectif : après 2-3 dépôts traités de cette façon, l’ingestion d’un no
 ### Backlinks
 
 *These documents link to this file:*
+- [Documents - All Tracked Repos](../research/documents.md)
 - [Frontmatter Schema — v0.1 (Corpus)](frontmatter-schema.md)
 - [Research Index — Cogentia](../research/index.md)
 <!-- END_AUTO: backlinks -->

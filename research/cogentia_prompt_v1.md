@@ -276,5 +276,7 @@ Pour les indicateurs catégorie F (scores dérivés, rangs 59-65), calcule-les �
 
 *These documents link to this file:*
 - [Concept Index — cogentia](concepts.md)
+- [Documents - All Tracked Repos](documents.md)
 - [Research Index — Cogentia](index.md)
+- [Documents - All Tracked Repos](https://github.com/JeanHuguesRobert/JeanHuguesRobert/blob/main/research/documents.md)
 <!-- END_AUTO: backlinks -->

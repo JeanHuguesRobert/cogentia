@@ -145,5 +145,8 @@ Or, less catchy but more precise:
 
 *These documents link to this file:*
 - [Cogentia](../../README.md)
+- [Documents - All Tracked Repos](../documents.md)
 - [Research Index — Cogentia](../index.md)
+- [Documents - All Tracked Repos](https://github.com/JeanHuguesRobert/JeanHuguesRobert/blob/main/research/documents.md)
+- Jean Hugues Noël Robert, baron Mariani
 <!-- END_AUTO: backlinks -->

@@ -351,4 +351,5 @@ Automation should come only after repeated use shows what is stable.
 
 *These documents link to this file:*
 - [Jean Hugues Robert — Tableau de bord Interaction Packets](dashboard.md)
+- [Interaction Packets — Tableau de bord (JHR)](https://github.com/JeanHuguesRobert/JeanHuguesRobert/blob/main/interaction_packets/dashboard.md)
 <!-- END_AUTO: backlinks -->

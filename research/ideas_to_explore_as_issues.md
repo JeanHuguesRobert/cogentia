@@ -456,7 +456,9 @@ Open continuations:
 
 *These documents link to this file:*
 - [AGENTS.md — Cogentia methodology shortcut](../AGENTS.md)
+- [Documents - All Tracked Repos](documents.md)
 - [Research Index — Cogentia](index.md)
 - [Simplicité d'action](simplicite_action.md)
 - [The Cogentia Commons Living Corpus](cogentia_commons_living_corpus.md)
+- [Documents - All Tracked Repos](https://github.com/JeanHuguesRobert/JeanHuguesRobert/blob/main/research/documents.md)
 <!-- END_AUTO: backlinks -->

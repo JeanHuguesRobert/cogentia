@@ -213,6 +213,7 @@ L’objectif est que chaque nouveau dépôt ingéré rende les suivants un peu p
 ### Backlinks
 
 *These documents link to this file:*
+- [Documents - All Tracked Repos](../research/documents.md)
 - [Frontmatter Migration — v0.1](frontmatter-migration-v0.1.md)
 - [Research Index — Cogentia](../research/index.md)
 <!-- END_AUTO: backlinks -->

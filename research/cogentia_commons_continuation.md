@@ -393,5 +393,7 @@ The conversation itself is the chat URL the next session may wish to consult, pe
 *These documents link to this file:*
 - [Cogentia Commons — Session Continuation Snapshot](cogentia_commons_continuation.md)
 - [Corpus Status — cogentia](corpus-status.md)
+- [Documents - All Tracked Repos](documents.md)
 - [Research Index — Cogentia](index.md)
+- [Documents - All Tracked Repos](https://github.com/JeanHuguesRobert/JeanHuguesRobert/blob/main/research/documents.md)
 <!-- END_AUTO: backlinks -->

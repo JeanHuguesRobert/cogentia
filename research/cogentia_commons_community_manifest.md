@@ -577,5 +577,7 @@ The `cogentia.js manifest` subcommand and its fixtures: **MIT**.
 - [Cogentia Commons — Structural Plugin Sub-Specifications](cogentia_commons_structural_plugins.md)
 - [Cogentia Commons — Workflows](cogentia_commons_workflows.md)
 - [Corpus Status — cogentia](corpus-status.md)
+- [Documents - All Tracked Repos](documents.md)
 - [Research Index — Cogentia](index.md)
+- [Documents - All Tracked Repos](https://github.com/JeanHuguesRobert/JeanHuguesRobert/blob/main/research/documents.md)
 <!-- END_AUTO: backlinks -->

@@ -53,6 +53,8 @@ This repository instantiates the **cognitive infrastructure layer** of the [DHIT
 | [Cogentia Workflows](cogentia_workflows.md) *(private/group/public/federated workflow architecture, draft v0.2)* | this repo | 2026-05-11 |
 | [Cogentia Commons Working Paper](Cogentia_Commons_Working_Paper.md) | this repo | 2026 |
 | [Cogentia Commons — Public by Default, Private by Exception](cogentia_commons_visibility_and_private_modes.md) *(source document v0.1 — visibility modes, private communities, patent-oriented exploration, and private-use financing of the commons; addresses cogentia#34)* | this repo | 2026-06-09 |
+| [Human Contribution Views](human_contribution_views.md) *(source document v0.1 — probatory derived products for AI-assisted invention, creation, institutional accountability, KYS disclosure and contribution traceability)* | this repo | 2026-06-26 |
+| [Optimistic Mainline Governance](optimistic_mainline_governance.md) *(source document v0.1 — direct agent work on main under trace, reversibility and scoped authorization)* | this repo | 2026-06-26 |
 | [Cogentia and Cogentigram](Cogentia-and-Cogentigram.md) | this repo | 2026 |
 | [The Sovereign Digital Twin — Cogentia, Cogentigram, Cogentiscope](cogentia-digital-twin.md) | this repo | 2026-04 |
 | [Cogentia Personal Data Portability](cogentia_personal_data_portability.md) *(generic reusable layer for schemas, templates, normalizers and redacted/fictitious examples; explicitly separated from any private personal register)* | this repo | 2026-06-11 |
@@ -130,6 +132,9 @@ This repository instantiates the **cognitive infrastructure layer** of the [DHIT
 | [Cogentia Index Layer v0.1](../docs/cogentia-index-layer.md) *(local SQLite/FTS5 cache for fast corpus search; Git and Markdown remain canonical)* | this repo | 2026-06-21 |
 | [Cogentia Context Gateway](../docs/cogentia-context-gateway.md) *(governed public Markdown RAG facade with deterministic context packs, citations and strict public/admin separation)* | this repo | 2026-06-23 |
 | [Cogentia MCP adapter](../docs/cogentia-mcp.md) *(stdio tools that retrieve through the daemon HTTP boundary and never access SQLite directly)* | this repo | 2026-06-23 |
+| [Alan v0.1 — Turing-complete direct-style MCP scripting language](alan_turing_mcp.md) *(direct-style MCP scripting language with resumable, policy-aware continuations and caller-mediated execution boundaries)* | this repo | 2026-06-26 |
+| [Alan Turing MCP — Implementation Plan](alan_turing_mcp_implementation_plan.md) *(implementation plan for the Alan v0.1 MCP scripting language)* | this repo | 2026-06-26 |
+| [Coding Agent Prompt — Implement Alan Turing MCP v0.1](alan_turing_mcp_coding_agent_prompt.md) *(coding-agent implementation prompt for the Alan v0.1 MCP scripting language)* | this repo | 2026-06-26 |
 | [Cogentia/Fractanet node: fracta](../docs/fracta-node.md) *(operational deployment guide for a local VPS node, portable registry, local data directory and public/full daemon views)* | this repo | 2026-06-21 |
 | [Cogentia Personal Data Portability — Architecture](../cogentia_personal/data_portability/ARCHITECTURE.md) *(generic architecture for reusable data portability tooling)* | this repo | 2026-06-11 |
 | [Cogentia Personal Data Portability — Provider Adapters](../cogentia_personal/data_portability/ADAPTERS.md) *(provider adapter architecture note for unstable, heterogeneous exports)* | this repo | 2026-06-13 |
@@ -176,6 +181,8 @@ This repository instantiates the **cognitive infrastructure layer** of the [DHIT
 ### Backlinks
 
 *These documents link to this file:*
+- [Rendre capable — noyau doctrinal provisoire](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/noyau_doctrinal_rendre_capable.md)
+- [Research Index — barons-Mariani](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/index.md)
 - [Agent-Resumable CLI](agent_resumable_cli.md)
 - [Cogentia](../README.md)
 - [Cogentia Commons — MVP Specification](cogentia_commons_mvp_spec.md)
@@ -184,7 +191,14 @@ This repository instantiates the **cognitive infrastructure layer** of the [DHIT
 - [cogentia.js - Tutorial and Near-Specification](cogentia_js_tutorial.md)
 - [Cogentigraphic Distillation](cogentigraphic_distillation.md)
 - [Corpus Status — cogentia](corpus-status.md)
+- [Documents - All Tracked Repos](documents.md)
 - [From Biometrics and Psychometrics to Structural Signatures](structural_signatures.md)
 - [Frontmatter Schema — v0.1 (Corpus)](../docs/frontmatter-schema.md)
 - [Frontmatter Synonym Mapping — v0.1](../docs/frontmatter-synonym-mapping.md)
+- [Research Index — FractaVolta](https://github.com/JeanHuguesRobert/FractaVolta/blob/main/research/index.md)
+- [Research Index — Inox](https://github.com/JeanHuguesRobert/Inox/blob/master/research/index.md)
+- [Research Index — Inseme](https://github.com/JeanHuguesRobert/inseme/blob/main/research/index.md)
+- [Documents - All Tracked Repos](https://github.com/JeanHuguesRobert/JeanHuguesRobert/blob/main/research/documents.md)
+- [Research Index — Jean Hugues Noël Robert (Profile / Entry Point)](https://github.com/JeanHuguesRobert/JeanHuguesRobert/blob/main/research/index.md)
+- [Research Index — MareNostrum](https://github.com/JeanHuguesRobert/marenostrum/blob/main/research/index.md)
 <!-- END_AUTO: backlinks -->
