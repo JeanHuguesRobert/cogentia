@@ -18,7 +18,7 @@ classification_confidence: "medium"
 ---
 <!-- BEGIN_AUTO: trails -->
 > 🧭 **Trail: From Method to Machine**
-> ⬅️ Previous: [FractaVolta](https://github.com/JeanHuguesRobert/FractaVolta/blob/main/research/fractavolta_paper.md) | ➡️ Next: [Agent-Resumable CLI](agent_resumable_cli.md)
+> ⬅️ Previous: [Cogentia](../COGENTIA.md) | ➡️ Next: [Agent-Resumable CLI](agent_resumable_cli.md)
 <!-- END_AUTO: trails -->
 ---
 canonical_url: https://github.com/JeanHuguesRobert/cogentia/blob/main/research/cogentia-digital-twin.md
@@ -182,7 +182,4 @@ This document is a position paper, not a product announcement. It is published i
 - [Individual and Collective Digital Twins](individual_and_collective_digital_twins.md)
 - [Research Index — Cogentia](index.md)
 - [Trail: From Method to Machine](trails/from_method_to_machine.md)
-- [Documents - All Tracked Repos](https://github.com/JeanHuguesRobert/JeanHuguesRobert/blob/main/research/documents.md)
-- [Operational Formulas — Representation Primitives](https://github.com/JeanHuguesRobert/JeanHuguesRobert/blob/main/research/operational_formulas.md)
-- [Project Context — Jean Hugues Noël Robert, baron Mariani](https://github.com/JeanHuguesRobert/JeanHuguesRobert/blob/main/CONTEXT.md)
 <!-- END_AUTO: backlinks -->

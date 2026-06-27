@@ -24,7 +24,7 @@ classification_confidence: "strong"
 # Cogentia
 <!-- BEGIN_AUTO: trails -->
 > 🧭 **Trail: From Method to Machine**
-> ⬅️ Previous: [Pipeline](research/pipeline.md) | ➡️ Next: [Democratic AI Safety](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/democratic_ai_safety.md)
+> ⬅️ Previous: [Pipeline](research/pipeline.md) | ➡️ Next: [The Sovereign Digital Twin: Cogentia, Cogentigram, Cogentiscope](research/cogentia-digital-twin.md)
 <!-- END_AUTO: trails -->
 ## Orientation
 
@@ -165,9 +165,6 @@ The framework exists to be argued against, in the form it itself defined.
 ### Backlinks
 
 *These documents link to this file:*
-- [Discours de la seconde méthode](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/second_method.md)
-- [Rendre capable — noyau doctrinal provisoire](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/noyau_doctrinal_rendre_capable.md)
-- [Test du critère Rossignol](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/test_critere_rossignol.md)
 - [Agent-Resumable CLI](research/agent_resumable_cli.md)
 - [AGENTS.md — Cogentia methodology shortcut](AGENTS.md)
 - [Cogentia](README.md)
@@ -177,7 +174,4 @@ The framework exists to be argued against, in the form it itself defined.
 - [Research Index — Cogentia](research/index.md)
 - [The Cogentia Commons Living Corpus](research/cogentia_commons_living_corpus.md)
 - [Trail: From Method to Machine](research/trails/from_method_to_machine.md)
-- [Corpus Start Here — Carte globale du Corpus](https://github.com/JeanHuguesRobert/JeanHuguesRobert/blob/main/research/corpus-map.md)
-- [Documents - All Tracked Repos](https://github.com/JeanHuguesRobert/JeanHuguesRobert/blob/main/research/documents.md)
-- [DHITL, Democratic Humans In The Loop](https://github.com/JeanHuguesRobert/marenostrum/blob/main/research/DHITL.md)
 <!-- END_AUTO: backlinks -->

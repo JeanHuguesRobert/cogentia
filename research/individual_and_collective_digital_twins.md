@@ -286,6 +286,4 @@ continuation:
 - [Cogentigraphic Distillation](cogentigraphic_distillation.md)
 - [From Biometrics and Psychometrics to Structural Signatures](structural_signatures.md)
 - [Research Index — Cogentia](index.md)
-- [Documents - All Tracked Repos](https://github.com/JeanHuguesRobert/JeanHuguesRobert/blob/main/research/documents.md)
-- [Operational Formulas — Representation Primitives](https://github.com/JeanHuguesRobert/JeanHuguesRobert/blob/main/research/operational_formulas.md)
 <!-- END_AUTO: backlinks -->

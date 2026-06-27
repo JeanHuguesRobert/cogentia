@@ -17,6 +17,7 @@ import { execFileSync } from "node:child_process";
 import { createHash, randomBytes, timingSafeEqual } from "node:crypto";
 import { pathToFileURL } from "node:url";
 import { DAEMON_PLUGINS, DAEMON_PLUGIN_ROUTES, loadDaemonPlugins, dispatchPluginRoute } from "./daemon_plugins/registry.js";
+import { generateOperiumEmbeddingsReport } from "./lib/operium-embeddings.js";
 
 const VERSION = "2.4.0";
 const CONFIG_FILE = ".cogentia.json";
@@ -211,12 +212,15 @@ Semantic search (continuation-based):
   embeddings status        Check if embeddings are indexed and model info.
   embeddings index         Emit continuation to generate embeddings for chunks.
                            Flags: --repo <name|all> --limit <n> --force --view public|full
+                           --provider <name> Target specific provider (openai, magistral)
   embeddings store <json>  Store embeddings provided by external agent.
   embeddings search <q>   Emit continuation for semantic search with query.
                            Flags: --repo <name|all> --limit <n>
   embeddings search-with <json>
                            Execute search with provided query embedding.
                            Flags: --query <text> --repo <name|all> --limit <n>
+                           --provider <name> Use specific provider (openai, magistral)
+                           --priority <criteria> Select provider by: price|speed|quality|balanced
 
 Context Gateway:
   daemon                   Start the HTTP daemon. Defaults to 127.0.0.1 and public view.
@@ -1601,6 +1605,7 @@ async function cmdEmbeddings(sub) {
         limit: Number(valueFlag("--limit") || 1000) || 1000,
         force: takeFlag("--force"),
         view: valueFlag("--view") || "public",
+        provider: valueFlag("--provider") || null, // NEW: target provider
       });
       return output(result, result.ok ? formatEmbeddingContinuation(result) : formatEmbeddingsIndex(result));
     }
@@ -1624,18 +1629,44 @@ async function cmdEmbeddings(sub) {
     case "search-with": {
       // Execute semantic search with provided query embedding (after continuation resolution)
       const embeddingPath = argv.shift();
-      if (!embeddingPath) throw new Error("Usage: embeddings search-with <query_embedding.json>");
+      if (!embeddingPath) throw new Error("Usage: embeddings search-with <query_embedding.json> [--provider <name>] [--priority <criteria>]");
       const payload = JSON.parse(fs.readFileSync(embeddingPath, "utf8"));
       const result = await semanticSearchWithEmbedding(ctx, payload.query_embedding, {
         query: valueFlag("--query") || payload.query || "",
         repo: valueFlag("--repo") || "all",
         limit: Number(valueFlag("--limit") || 10) || 10,
         view: valueFlag("--view") || "public",
+        provider: valueFlag("--provider") || null,
+        priority: valueFlag("--priority") || "balanced",
       });
       return output(result, formatEmbeddingsSearch(result));
     }
+    case "operium-sync": {
+      // Generate Operium-compatible YAML report for embedding metrics
+      const outputPath = valueFlag("--output") || "../operium/services/embeddings.yaml";
+      const publicView = takeFlag("--public");
+      const opened = await openIndexDatabase({ create: false });
+      if (!opened.ok) {
+        return { ok: false, error: opened.error || opened.code };
+      }
+      const { db } = opened;
+      try {
+        const result = await generateOperiumEmbeddingsReport(db, {
+          outputPath,
+          publicView,
+        });
+        return {
+          ok: true,
+          report: result.report,
+          path: result.outputPath,
+          message: `Operium report written to ${result.outputPath}`,
+        };
+      } catch (error) {
+        return { ok: false, error: error.message, stack: error.stack };
+      }
+    }
     default:
-      throw new Error(`Unknown embeddings subcommand "${sub}". Use status, index, store, search, or search-with.`);
+      throw new Error(`Unknown embeddings subcommand "${sub}". Use status, index, store, search, search-with, or operium-sync.`);
   }
 }
 
@@ -1668,6 +1699,11 @@ async function embeddingsStatus(ctx) {
       }
       repos = db.prepare("SELECT DISTINCT repo FROM embeddings ORDER BY repo").all().map(r => r.repo);
     }
+    // Get provider breakdown
+    const providers = hasEmbeddings
+      ? db.prepare("SELECT provider, model_name, dimensions, COUNT(*) as count FROM embeddings GROUP BY provider, model_name ORDER BY provider, model_name").all()
+      : [];
+
     return {
       ok: hasEmbeddings,
       built: hasEmbeddings,
@@ -1677,6 +1713,7 @@ async function embeddingsStatus(ctx) {
       dimensions,
       created_at: created,
       repos,
+      providers, // NEW: multi-provider breakdown
     };
   } catch (e) {
     return { ok: false, built: false, path: dbPath, error: e.message };
@@ -5232,8 +5269,10 @@ function runProcess(commandName, args, cwd = process.cwd()) {
 
 const EMBEDDINGS_TABLE_SCHEMA = `
 CREATE TABLE IF NOT EXISTS embeddings (
-  chunk_id INTEGER PRIMARY KEY,
-  content_hash TEXT UNIQUE NOT NULL,
+  id INTEGER PRIMARY KEY,
+  chunk_id INTEGER NOT NULL,
+  content_hash TEXT NOT NULL,
+  provider TEXT NOT NULL,
   repo TEXT NOT NULL,
   path TEXT NOT NULL,
   start_line INTEGER NOT NULL,
@@ -5242,11 +5281,13 @@ CREATE TABLE IF NOT EXISTS embeddings (
   model_name TEXT NOT NULL,
   dimensions INTEGER NOT NULL,
   created_at TEXT NOT NULL,
-  FOREIGN KEY (chunk_id) REFERENCES chunks(id) ON DELETE CASCADE
+  FOREIGN KEY (chunk_id) REFERENCES chunks(id) ON DELETE CASCADE,
+  UNIQUE(chunk_id, provider, model_name)
 );
 
-CREATE INDEX IF NOT EXISTS idx_embeddings_content_hash ON embeddings(content_hash);
-CREATE INDEX IF NOT EXISTS idx_embeddings_repo_path ON embeddings(repo, path);
+CREATE INDEX IF NOT EXISTS idx_embeddings_chunk_id ON embeddings(chunk_id);
+CREATE INDEX IF NOT EXISTS idx_embeddings_provider ON embeddings(provider);
+CREATE INDEX IF NOT EXISTS idx_embeddings_repo_path ON embeddings(provider, repo, path);
 `;
 
 // Provider-neutral cosine similarity for vector comparison
@@ -5286,6 +5327,7 @@ async function indexEmbeddings(ctx, options = {}) {
     const repoFilter = String(options.repo || "all");
     const limit = boundedInteger(options.limit, 1000, 1, 5000);
     const force = Boolean(options.force);
+    const targetProvider = options.provider || null; // NEW: target specific provider
 
     const repoClause = repoFilter === "all" ? "" : "AND c.repo = ?";
     const publicClause = view === FULL_VIEW ? "" : "AND c.searchable_public = 1";
@@ -5301,11 +5343,19 @@ async function indexEmbeddings(ctx, options = {}) {
       LIMIT ?
     `).all(...(repoFilter !== "all" ? [repoFilter, limit] : [limit]));
 
-    const existingHashes = new Set(
-      db.prepare("SELECT content_hash FROM embeddings").all().map(r => r.content_hash)
-    );
+    // Filter out chunks that already have embeddings from the target provider
+    // Deduplication is per-provider: multiple providers can embed the same chunk
+    // The UNIQUE(chunk_id, provider, model_name) constraint prevents true duplicates
+    let existingChunkIds = new Set();
+    if (targetProvider) {
+      // Only exclude chunks already embedded by this specific provider
+      existingChunkIds = new Set(
+        db.prepare("SELECT chunk_id FROM embeddings WHERE provider = ?").all(targetProvider).map(r => r.chunk_id)
+      );
+    }
+    // When targetProvider is null, don't exclude any chunks - let each provider embed independently
 
-    const toProcess = chunksToEmbed.filter(c => force || !existingHashes.has(c.content_hash));
+    const toProcess = chunksToEmbed.filter(c => force || !existingChunkIds.has(c.id));
 
     db.close();
 
@@ -5372,13 +5422,24 @@ async function storeEmbeddings(ctx, embeddings) {
 
       const stmt = db.prepare(`
         INSERT OR REPLACE INTO embeddings
-        (chunk_id, content_hash, repo, path, start_line, end_line, embedding, model_name, dimensions, created_at)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))
+        (chunk_id, content_hash, provider, repo, path, start_line, end_line, embedding, model_name, dimensions, created_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))
       `);
+
+      // Infer provider from model_name if not specified
+      let provider = item.provider || "unknown";
+      if (!item.provider) {
+        if (item.model_name?.includes("text-embedding")) {
+          provider = "openai";
+        } else if (item.model_name?.includes("mxbai")) {
+          provider = "magistral";
+        }
+      }
 
       stmt.run(
         item.chunk_id,
         item.content_hash,
+        provider,
         chunk.repo,
         chunk.path,
         chunk.start_line,
@@ -5460,22 +5521,49 @@ async function semanticSearchWithEmbedding(ctx, queryEmbedding, options = {}) {
   const view = normalizeDaemonView(options.view) === FULL_VIEW ? FULL_VIEW : PUBLIC_VIEW;
   const repo = String(options.repo || "all");
   const limit = boundedInteger(options.limit, 10, 1, 50);
+  const preferredProvider = options.provider || null;
+  const priority = options.priority || "balanced";
 
   const opened = await openIndexDatabase({ create: false });
   if (!opened.ok) return { ok: false, error: opened.code, query: q, mode: "semantic" };
   const { db } = opened;
 
   try {
-    const repoClause = repo === "all" ? "" : "AND e.repo = ?";
+    const repoClause = repo === "all" ? "" : "AND c.repo = ?";
     const publicClause = view === FULL_VIEW ? "" : "AND c.searchable_public = 1";
+
+    // Build provider clause
+    let providerClause = "";
+    let providerParams = [];
+    if (preferredProvider) {
+      providerClause = "AND e.provider = ?";
+      providerParams = [preferredProvider];
+    } else {
+      // If no provider specified, prefer the one with the most embeddings
+      const providerCounts = db.prepare(`
+        SELECT provider, COUNT(*) as count
+        FROM embeddings e
+        JOIN chunks c ON e.chunk_id = c.id
+        WHERE 1=1 ${publicClause}
+        GROUP BY provider
+        ORDER BY count DESC
+        LIMIT 1
+      `).get(...(publicClause ? [] : []));
+
+      if (providerCounts) {
+        providerClause = "AND e.provider = ?";
+        providerParams = [providerCounts.provider];
+      }
+    }
 
     const embeddings = db.prepare(`
       SELECT e.chunk_id, e.repo, e.path, e.start_line, e.end_line, e.embedding,
+             e.provider, e.model_name, e.dimensions,
              c.title, c.heading_path, c.role, c.visibility, c.public_presence, c.github_url, c.text
       FROM embeddings e
       JOIN chunks c ON e.chunk_id = c.id
-      WHERE 1=1 ${publicClause} ${repoClause}
-    `).all(...(repo !== "all" ? [repo] : []));
+      WHERE 1=1 ${publicClause} ${repoClause} ${providerClause}
+    `).all(...[...(repo !== "all" ? [repo] : []), ...providerParams]);
 
     const similarities = embeddings.map(row => {
       const embedding = JSON.parse(row.embedding);
@@ -5495,6 +5583,9 @@ async function semanticSearchWithEmbedding(ctx, queryEmbedding, options = {}) {
         snippet,
         github_url: row.github_url ? `${row.github_url}#L${row.start_line}-L${row.end_line}` : "",
         _reasons: ["semantic_similarity"],
+        _provider: row.provider,
+        _model: row.model_name,
+        _dimensions: row.dimensions,
       };
     });
 
@@ -5508,8 +5599,9 @@ async function semanticSearchWithEmbedding(ctx, queryEmbedding, options = {}) {
       query: q,
       mode: "semantic",
       view,
+      provider: preferredProvider || providerParams[0] || "unknown",
       count: results.length,
-      results: results.map(({ text, ...r }) => r),
+      results: results.map(({ text, _provider, _model, _dimensions, ...r }) => r),
       warnings: [],
     };
   } catch (e) {
@@ -6021,10 +6113,21 @@ function formatEmbeddingsStatus(result) {
   }
   lines.push(result.ok ? "Status: ok" : "Status: incomplete");
   lines.push(`Count: ${result.count}`);
-  lines.push(`Model: ${result.model || "-"}`);
-  lines.push(`Dimensions: ${result.dimensions || "-"}`);
   lines.push(`Created: ${result.created_at || "-"}`);
-  if (result.repos.length) {
+
+  // Show provider breakdown if available
+  if (result.providers && result.providers.length > 0) {
+    lines.push("\nProviders:");
+    for (const p of result.providers) {
+      lines.push(`  - ${p.provider}/${p.model_name}: ${p.count} chunks (${p.dimensions}d)`);
+    }
+  } else {
+    // Legacy single-model display
+    lines.push(`Model: ${result.model || "-"}`);
+    lines.push(`Dimensions: ${result.dimensions || "-"}`);
+  }
+
+  if (result.repos && result.repos.length) {
     lines.push(`Repos: ${result.repos.join(", ")}`);
   }
   return lines.join("\n");

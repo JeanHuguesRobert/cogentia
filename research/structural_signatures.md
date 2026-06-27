@@ -1025,5 +1025,4 @@ The structural-signature framework was developed primarily for the natural-perso
 - [Cogentigraphic Distillation](cogentigraphic_distillation.md)
 - [Individual and Collective Digital Twins](individual_and_collective_digital_twins.md)
 - [Research Index — Cogentia](index.md)
-- [Documents - All Tracked Repos](https://github.com/JeanHuguesRobert/JeanHuguesRobert/blob/main/research/documents.md)
 <!-- END_AUTO: backlinks -->

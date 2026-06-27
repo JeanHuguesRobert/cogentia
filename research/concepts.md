@@ -452,5 +452,4 @@ Specific governance structures (private, group, public, federated) enabling syst
 - [Research Index — Cogentia](index.md)
 - [The Knowledge Mesh (Decentralized Wiki)](../docs/knowledge_mesh.md)
 - [Trail: From Method to Machine](trails/from_method_to_machine.md)
-- [MareNostrum — Tableau de bord](https://github.com/JeanHuguesRobert/marenostrum/blob/main/research/dashboard.md)
 <!-- END_AUTO: backlinks -->

@@ -28,5 +28,4 @@ last_stamped_at: 2026-06-13
 
 *These documents link to this file:*
 - [Jean Hugues Robert — Tableau de bord Interaction Packets](dashboard.md)
-- [MareNostrum — Tableau de bord](https://github.com/JeanHuguesRobert/marenostrum/blob/main/research/dashboard.md)
 <!-- END_AUTO: backlinks -->

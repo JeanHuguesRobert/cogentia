@@ -1281,12 +1281,6 @@ It is to make a corpus appear without losing itself.
 ### Backlinks
 
 *These documents link to this file:*
-- [Alien, l’IA et les intelligences xénoformes](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/alien_blogpost.md)
-- [Corsica2038 — De la prospective subie à l’autonomie de capacité](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/autonomia/corsica2038_contre_rapport_pruspettiva2050.md)
-- [Incremental Transmissible Corpus Model](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/modele_corpus_transmissible_incremental.md)
-- [Mauvaise calibration métacognitive face aux intelligences xénoformes](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/alien_academic.md)
-- [Projet #1755](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/autonomia/projet_1755.md)
-- [Rendre capable — noyau doctrinal provisoire](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/noyau_doctrinal_rendre_capable.md)
 - [Cogentia](../README.md)
 - [cogentia.js - Tutorial and Near-Specification](cogentia_js_tutorial.md)
 - [Cogentigraphic Distillation](cogentigraphic_distillation.md)
@@ -1294,12 +1288,4 @@ It is to make a corpus appear without losing itself.
 - [Pipeline](pipeline.md)
 - [Research Index — Cogentia](index.md)
 - [The Cogentia Commons Living Corpus](cogentia_commons_living_corpus.md)
-- For researchers
-- FractaVolta
-- FractaVolta
-- Methodology
-- [Library packets — when the library is a specification, not code](https://github.com/JeanHuguesRobert/Inox/blob/master/research/library_packets.md)
-- [COOP — Tutorial and Near-Specification](https://github.com/JeanHuguesRobert/inseme/blob/main/research/coop_tutorial.md)
-- [Documents - All Tracked Repos](https://github.com/JeanHuguesRobert/JeanHuguesRobert/blob/main/research/documents.md)
-- Jean Hugues Noël Robert, baron Mariani
 <!-- END_AUTO: backlinks -->

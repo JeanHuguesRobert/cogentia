@@ -459,5 +459,4 @@ Open continuations:
 - [Research Index — Cogentia](index.md)
 - [Simplicité d'action](simplicite_action.md)
 - [The Cogentia Commons Living Corpus](cogentia_commons_living_corpus.md)
-- [Documents - All Tracked Repos](https://github.com/JeanHuguesRobert/JeanHuguesRobert/blob/main/research/documents.md)
 <!-- END_AUTO: backlinks -->

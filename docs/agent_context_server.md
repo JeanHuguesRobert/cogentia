@@ -142,5 +142,4 @@ Mechanical generated views can be applied by the tool after review. Interpretive
 - [Research Index — Cogentia](../research/index.md)
 - [The Cogentia Commons Living Corpus](../research/cogentia_commons_living_corpus.md)
 - [Trail: From Method to Machine](../research/trails/from_method_to_machine.md)
-- [Documents - All Tracked Repos](https://github.com/JeanHuguesRobert/JeanHuguesRobert/blob/main/research/documents.md)
 <!-- END_AUTO: backlinks -->

@@ -1265,6 +1265,4 @@ Together, they form an infrastructure for collective intelligence.
 - [Concept Index — cogentia](concepts.md)
 - [Corpus Status — cogentia](corpus-status.md)
 - [Research Index — Cogentia](index.md)
-- [Research Index — Inseme](https://github.com/JeanHuguesRobert/inseme/blob/main/research/index.md)
-- [Documents - All Tracked Repos](https://github.com/JeanHuguesRobert/JeanHuguesRobert/blob/main/research/documents.md)
 <!-- END_AUTO: backlinks -->

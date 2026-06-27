@@ -344,6 +344,4 @@ Robert, J. H. (2026c). *Democratic Humans in the Loop: Why Infrastructure Is All
 - [Individual and Collective Digital Twins](individual_and_collective_digital_twins.md)
 - [Research Index — Cogentia](index.md)
 - [The Sovereign Digital Twin: Cogentia, Cogentigram, Cogentiscope](cogentia-digital-twin.md)
-- [Documents - All Tracked Repos](https://github.com/JeanHuguesRobert/JeanHuguesRobert/blob/main/research/documents.md)
-- [DHITL, Democratic Humans In The Loop](https://github.com/JeanHuguesRobert/marenostrum/blob/main/research/DHITL.md)
 <!-- END_AUTO: backlinks -->

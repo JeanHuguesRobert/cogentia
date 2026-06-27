@@ -816,5 +816,4 @@ This v0.1 draft opens several continuations:
 *These documents link to this file:*
 - [Individual and Collective Digital Twins](individual_and_collective_digital_twins.md)
 - [Research Index — Cogentia](index.md)
-- [Documents - All Tracked Repos](https://github.com/JeanHuguesRobert/JeanHuguesRobert/blob/main/research/documents.md)
 <!-- END_AUTO: backlinks -->

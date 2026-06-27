@@ -501,5 +501,4 @@ That unit is the cognitive packet.
 - [Cogentia](../../README.md)
 - [Concept Situation Briefs](../concept_situation_briefs.md)
 - [Research Index — Cogentia](../index.md)
-- Jean Hugues Noël Robert, baron Mariani
 <!-- END_AUTO: backlinks -->
