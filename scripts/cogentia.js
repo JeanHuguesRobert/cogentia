@@ -2396,6 +2396,7 @@ function buildInventory(ctx) {
   const byFull = new Map(documents.map(d => [path.resolve(d.full_path), d]));
   const edges = [];
   for (const doc of documents) {
+    if (isGeneratedNavigationDoc(doc)) continue;
     const raw = fs.readFileSync(doc.full_path, "utf8");
     for (const link of extractMarkdownLinks(raw)) {
       const target = resolveMarkdownLink(ctx, doc, link.url);

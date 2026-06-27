@@ -52,6 +52,5 @@ It should contain hashes, identifiers and limited excerpts when possible, rather
 ### Backlinks
 
 *These documents link to this file:*
-- [Documents - All Tracked Repos](../../research/documents.md)
 - [Research Index — Cogentia](../../research/index.md)
 <!-- END_AUTO: backlinks -->

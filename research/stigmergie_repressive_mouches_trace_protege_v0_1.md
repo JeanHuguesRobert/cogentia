@@ -309,7 +309,5 @@ continuation:
 *These documents link to this file:*
 - [Sailing the Cognitive Waves](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/cognitive_waves.md)
 - [Stigmergie sans limite haute](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/stigmergie_sans_limite_haute.md)
-- [Documents - All Tracked Repos](documents.md)
 - [Research Index — Cogentia](index.md)
-- [Documents - All Tracked Repos](https://github.com/JeanHuguesRobert/JeanHuguesRobert/blob/main/research/documents.md)
 <!-- END_AUTO: backlinks -->

@@ -49,6 +49,5 @@ The first importer targets the official ChatGPT/OpenAI export. Gmail and Faceboo
 ### Backlinks
 
 *These documents link to this file:*
-- [Documents - All Tracked Repos](../../research/documents.md)
 - [Research Index — Cogentia](../../research/index.md)
 <!-- END_AUTO: backlinks -->

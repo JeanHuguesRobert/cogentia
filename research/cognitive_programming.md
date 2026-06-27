@@ -989,7 +989,5 @@ inseme/packages/cop-core/COGNITIVE_PROGRAMMING_PROFILE.md
 
 *These documents link to this file:*
 - [Rendre capable — noyau doctrinal provisoire](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/noyau_doctrinal_rendre_capable.md)
-- [Documents - All Tracked Repos](documents.md)
 - [Research Index — Cogentia](index.md)
-- [Documents - All Tracked Repos](https://github.com/JeanHuguesRobert/JeanHuguesRobert/blob/main/research/documents.md)
 <!-- END_AUTO: backlinks -->

@@ -391,12 +391,10 @@ Robert, J. H. (2026c). *Infrastructure Is All You Need: Toward a structural theo
 - [Cogentia Commons — Workflows](cogentia_commons_workflows.md)
 - [Cogentia Workflows](cogentia_workflows.md)
 - [Concept Index — cogentia](concepts.md)
-- [Documents - All Tracked Repos](documents.md)
 - [Research Index — Cogentia](index.md)
 - For researchers
 - FractaVolta
 - Methodology
 - [Research Index — FractaVolta](https://github.com/JeanHuguesRobert/FractaVolta/blob/main/research/index.md)
-- [Documents - All Tracked Repos](https://github.com/JeanHuguesRobert/JeanHuguesRobert/blob/main/research/documents.md)
 - [Research Index — MareNostrum](https://github.com/JeanHuguesRobert/marenostrum/blob/main/research/index.md)
 <!-- END_AUTO: backlinks -->

@@ -1127,7 +1127,6 @@ A compliant CLI does not hide judgment. It exposes judgment as a continuation, c
 - [Cognitive Packet Switching](cognitive_packet_switching.md)
 - [Cognitive Packets](cognitive_packets.md)
 - [Concept Index — cogentia](concepts.md)
-- [Documents - All Tracked Repos](documents.md)
 - [Pipeline](pipeline.md)
 - [Research Index — Cogentia](index.md)
 - [The Cogentia Commons Living Corpus](cogentia_commons_living_corpus.md)
@@ -1136,6 +1135,5 @@ A compliant CLI does not hide judgment. It exposes judgment as a continuation, c
 - FractaVolta
 - Methodology
 - [Corpus Start Here — Carte globale du Corpus](https://github.com/JeanHuguesRobert/JeanHuguesRobert/blob/main/research/corpus-map.md)
-- [Documents - All Tracked Repos](https://github.com/JeanHuguesRobert/JeanHuguesRobert/blob/main/research/documents.md)
 - [Public Corpus Navigation](https://github.com/JeanHuguesRobert/JeanHuguesRobert/blob/main/research/public-navigation.md)
 <!-- END_AUTO: backlinks -->

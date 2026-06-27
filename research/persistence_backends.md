@@ -129,8 +129,6 @@ continuation:
 
 *These documents link to this file:*
 - [Cogentia Commons — Public by Default, Private by Exception](cogentia_commons_visibility_and_private_modes.md)
-- [Documents - All Tracked Repos](documents.md)
 - [Research Index — Cogentia](index.md)
 - [Simplicité d'action](simplicite_action.md)
-- [Documents - All Tracked Repos](https://github.com/JeanHuguesRobert/JeanHuguesRobert/blob/main/research/documents.md)
 <!-- END_AUTO: backlinks -->

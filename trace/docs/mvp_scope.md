@@ -52,6 +52,5 @@ The MVP succeeds when a local export can be transformed into normalized local tr
 ### Backlinks
 
 *These documents link to this file:*
-- [Documents - All Tracked Repos](../../research/documents.md)
 - [Research Index — Cogentia](../../research/index.md)
 <!-- END_AUTO: backlinks -->

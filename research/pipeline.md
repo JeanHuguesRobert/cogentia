@@ -1385,7 +1385,6 @@ A possible v0.5 of this paper would integrate these two sections into the main n
 - [Cognitive Packet Switching](cognitive_packet_switching.md)
 - [Concept Index — cogentia](concepts.md)
 - [Derived Products](derived_products.md)
-- [Documents - All Tracked Repos](documents.md)
 - [Research Index — Cogentia](index.md)
 - [Self-Contained Documents in an Interconnected Corpus](self_contained_documents.md)
 - [The Cogentia Commons Living Corpus](cogentia_commons_living_corpus.md)
@@ -1401,6 +1400,5 @@ A possible v0.5 of this paper would integrate these two sections into the main n
 - [COOP — Tutorial and Near-Specification](https://github.com/JeanHuguesRobert/inseme/blob/main/research/coop_tutorial.md)
 - [Reactive Cognitive COP Extension](https://github.com/JeanHuguesRobert/inseme/blob/main/research/reactive_cognitive_cop_extension.md)
 - [Research Index — Inseme](https://github.com/JeanHuguesRobert/inseme/blob/main/research/index.md)
-- [Documents - All Tracked Repos](https://github.com/JeanHuguesRobert/JeanHuguesRobert/blob/main/research/documents.md)
 - Jean Hugues Noël Robert, baron Mariani
 <!-- END_AUTO: backlinks -->

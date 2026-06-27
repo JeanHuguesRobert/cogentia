@@ -173,13 +173,11 @@ The framework exists to be argued against, in the form it itself defined.
 - [Cogentia](README.md)
 - [cogentia.js - Tutorial and Near-Specification](research/cogentia_js_tutorial.md)
 - [Cognitive Packet Switching](research/cognitive_packet_switching.md)
-- [Documents - All Tracked Repos](research/documents.md)
 - [Pipeline](research/pipeline.md)
 - [Research Index — Cogentia](research/index.md)
 - [The Cogentia Commons Living Corpus](research/cogentia_commons_living_corpus.md)
 - [Trail: From Method to Machine](research/trails/from_method_to_machine.md)
 - [Corpus Start Here — Carte globale du Corpus](https://github.com/JeanHuguesRobert/JeanHuguesRobert/blob/main/research/corpus-map.md)
-- [Documents - All Tracked Repos](https://github.com/JeanHuguesRobert/JeanHuguesRobert/blob/main/research/documents.md)
 - [Public Corpus Navigation](https://github.com/JeanHuguesRobert/JeanHuguesRobert/blob/main/research/public-navigation.md)
 - [DHITL, Democratic Humans In The Loop](https://github.com/JeanHuguesRobert/marenostrum/blob/main/research/DHITL.md)
 <!-- END_AUTO: backlinks -->

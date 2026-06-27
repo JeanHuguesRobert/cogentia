@@ -47,6 +47,5 @@ Everything may be preserved; not everything should be indexed; not everything in
 ### Backlinks
 
 *These documents link to this file:*
-- [Documents - All Tracked Repos](../../research/documents.md)
 - [Research Index — Cogentia](../../research/index.md)
 <!-- END_AUTO: backlinks -->
