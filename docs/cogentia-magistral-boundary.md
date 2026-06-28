@@ -181,6 +181,7 @@ The first shared base is:
 The first conversational slice adds:
 
 - `POST /v1/chat/completions`;
+- `node scripts/cogentia.js ask "..."`
 - retrieval-first grounding through Cogentia context packs;
 - OpenAI-style JSON and SSE streaming responses;
 - `cogentia_context` metadata with source ids and pack hashes.

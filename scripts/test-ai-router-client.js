@@ -3,9 +3,11 @@
 import assert from "node:assert/strict";
 import http from "node:http";
 import net from "node:net";
-import { spawn } from "node:child_process";
+import { execFile, spawn } from "node:child_process";
+import { promisify } from "node:util";
 import { createAiRouterClient, aiRouterHealth } from "./lib/ai-router-client.js";
 
+const execFileAsync = promisify(execFile);
 const routerPort = await freePort();
 const routerBase = `http://127.0.0.1:${routerPort}`;
 const router = await startMockRouter(routerPort);
@@ -105,11 +107,37 @@ try {
     assert.match(streamText, /"cogentia_context"/);
     assert.match(streamText, /mock answer/);
     assert.match(streamText, /data: \[DONE\]/);
+
+    const ask = await execFileAsync(process.execPath, [
+      "scripts/cogentia.js",
+      "ask",
+      "--daemon-url",
+      `http://127.0.0.1:${daemonPort}`,
+      "--limit",
+      "3",
+      "--budget",
+      "4000",
+      "autonomie de capacité",
+    ], { cwd: process.cwd(), maxBuffer: 1024 * 1024 });
+    assert.match(ask.stdout, /mock answer/);
+    assert.match(ask.stdout, /Sources:/);
+
+    const askJson = await execFileAsync(process.execPath, [
+      "scripts/cogentia.js",
+      "--json",
+      "ask",
+      "--daemon-url",
+      `http://127.0.0.1:${daemonPort}`,
+      "autonomie de capacité",
+    ], { cwd: process.cwd(), maxBuffer: 1024 * 1024 });
+    const askBody = JSON.parse(askJson.stdout);
+    assert.equal(askBody.ok, true);
+    assert.equal(askBody.answer, "mock answer");
   } finally {
     daemon.kill();
   }
 
-  console.log(JSON.stringify({ ok: true, router: routerBase, daemon_agent_health: true, chat_completions: true }, null, 2));
+  console.log(JSON.stringify({ ok: true, router: routerBase, daemon_agent_health: true, chat_completions: true, ask_cli: true }, null, 2));
 } finally {
   await new Promise(resolve => router.close(resolve));
 }

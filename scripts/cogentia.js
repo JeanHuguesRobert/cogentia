@@ -146,6 +146,8 @@ async function main() {
       return cmdStatus();
     case "grep":
       return cmdGrep();
+    case "ask":
+      return cmdAsk();
     case "corpus":
       return cmdCorpus(argv.shift() || "plan");
     case "docs":
@@ -205,6 +207,10 @@ Core commands:
                            --include-ambiguous, --fix-conflicts.
   status                   Local health table used by the git hook.
   grep <text>              Full-text search over active markdown documents.
+  ask <question>           Ask the Cogentia corpus agent through the daemon.
+                           Flags: --daemon-url <url> --model <model>
+                           --repo <name|all> --limit <n> --budget <n>
+                           --mode keyword|hybrid --stream
 
 Document commands:
   docs summary             Numeric corpus summaries.
@@ -310,6 +316,140 @@ Registry:
   Index cache root can be overridden with --data-dir <path> or COGENTIA_DATA_DIR.
 `;
   console.log(text.trimStart());
+}
+
+async function cmdAsk() {
+  const daemonUrl = normalizeDaemonClientUrl(valueFlag("--daemon-url") || process.env.COGENTIA_DAEMON_URL || "http://127.0.0.1:8787");
+  const model = valueFlag("--model") || "cogentia-corpus";
+  const stream = takeFlag("--stream");
+  const repo = valueFlag("--repo") || "all";
+  const limit = Number(valueFlag("--limit") || 8) || 8;
+  const budget = Number(valueFlag("--budget") || DEFAULT_CONTEXT_BUDGET) || DEFAULT_CONTEXT_BUDGET;
+  const mode = valueFlag("--mode") || "hybrid";
+  const question = argv.join(" ").trim();
+  if (!question) throw new Error('Usage: ask "<question>" [--daemon-url <url>] [--stream] [--json]');
+  const payload = {
+    model,
+    stream,
+    messages: [{ role: "user", content: question }],
+    cogentia: {
+      repo,
+      limit,
+      budget,
+      mode,
+    },
+  };
+  const result = stream ? await askDaemonStream(daemonUrl, payload) : await askDaemonJson(daemonUrl, payload);
+  if (JSON_MODE) return output(result, JSON.stringify(result, null, 2));
+  return output(result, formatAskResult(result));
+}
+
+async function askDaemonJson(daemonUrl, payload) {
+  const response = await fetch(new URL("/v1/chat/completions", daemonUrl), {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Accept: "application/json" },
+    body: JSON.stringify(payload),
+    redirect: "error",
+    signal: AbortSignal.timeout(120000),
+  });
+  const body = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    return {
+      ok: false,
+      status: response.status,
+      error: body.error?.type || body.error || "daemon_chat_failed",
+      message: body.error?.message || body.message || response.statusText,
+      daemon: daemonUrl.origin,
+    };
+  }
+  return {
+    ok: true,
+    daemon: daemonUrl.origin,
+    stream: false,
+    response: body,
+    answer: extractAssistantContent(body),
+    cogentia_context: body.cogentia_context || {},
+  };
+}
+
+async function askDaemonStream(daemonUrl, payload) {
+  const response = await fetch(new URL("/v1/chat/completions", daemonUrl), {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Accept: "text/event-stream" },
+    body: JSON.stringify(payload),
+    redirect: "error",
+    signal: AbortSignal.timeout(120000),
+  });
+  if (!response.ok) {
+    const body = await response.json().catch(() => ({}));
+    return {
+      ok: false,
+      status: response.status,
+      error: body.error?.type || body.error || "daemon_chat_failed",
+      message: body.error?.message || body.message || response.statusText,
+      daemon: daemonUrl.origin,
+    };
+  }
+  const parsed = await readSseChatResponse(response);
+  return {
+    ok: true,
+    daemon: daemonUrl.origin,
+    stream: true,
+    answer: parsed.answer,
+    cogentia_context: parsed.cogentia_context || {},
+  };
+}
+
+async function readSseChatResponse(response) {
+  const reader = response.body.getReader();
+  const decoder = new TextDecoder();
+  let buffer = "";
+  let answer = "";
+  let cogentia_context = null;
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    buffer += decoder.decode(value, { stream: true });
+    const events = buffer.split("\n\n");
+    buffer = events.pop() || "";
+    for (const event of events) {
+      for (const line of event.split(/\r?\n/)) {
+        const trimmed = line.trim();
+        if (!trimmed.startsWith("data: ")) continue;
+        const data = trimmed.slice(6);
+        if (data === "[DONE]") continue;
+        try {
+          const chunk = JSON.parse(data);
+          if (chunk.cogentia_context) cogentia_context = chunk.cogentia_context;
+          answer += chunk.choices?.[0]?.delta?.content || "";
+        } catch {}
+      }
+    }
+  }
+  return { answer, cogentia_context };
+}
+
+function formatAskResult(result) {
+  if (!result.ok) return `Cogentia ask failed: ${result.message || result.error || "unknown error"}`;
+  const lines = [result.answer || "(empty answer)", ""];
+  const context = result.cogentia_context || {};
+  if (context.pack_hash) lines.push(`Pack: ${context.pack_hash}`);
+  if (Array.isArray(context.source_ids) && context.source_ids.length) {
+    lines.push("Sources:");
+    for (const sourceId of context.source_ids.slice(0, 12)) lines.push(`- ${sourceId}`);
+  }
+  return lines.join("\n");
+}
+
+function normalizeDaemonClientUrl(value) {
+  const url = new URL(String(value || "http://127.0.0.1:8787"));
+  if (!new Set(["http:", "https:"]).has(url.protocol)) {
+    throw new Error("Daemon URL must be HTTP(S)");
+  }
+  if (url.username || url.password) {
+    throw new Error("Daemon URL must not embed credentials");
+  }
+  return url;
 }
 
 function cmdState() {
