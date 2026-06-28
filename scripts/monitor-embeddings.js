@@ -4,11 +4,21 @@
  */
 import fs from "fs";
 import path from "path";
+import { fileURLToPath } from "url";
 
-const CONTINUATIONS_DIR = path.resolve(".cogentia", "continuations");
-const EMBEDDINGS_RESULT_DIR = path.resolve(".cogentia");
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const COGENTIA_DIR = path.resolve(__dirname, "..");
+const REGISTRY_PATH = process.env.COGENTIA_REGISTRY ? path.resolve(process.env.COGENTIA_REGISTRY) : "";
+const REGISTRY_ROOT = REGISTRY_PATH
+  ? (fs.existsSync(REGISTRY_PATH) && fs.statSync(REGISTRY_PATH).isDirectory() ? REGISTRY_PATH : path.dirname(REGISTRY_PATH))
+  : COGENTIA_DIR;
+const COGENTIA_STATE_DIR = process.env.COGENTIA_STATE_DIR || path.join(REGISTRY_ROOT, ".cogentia");
+const CONTINUATIONS_DIR = process.env.CONTINUATIONS_DIR || path.join(COGENTIA_STATE_DIR, "continuations");
+const EMBEDDINGS_RESULT_DIR = process.env.COGENTIA_EMBEDDINGS_RESULTS_DIR || COGENTIA_STATE_DIR;
 
 function listResultFiles() {
+  if (!fs.existsSync(EMBEDDINGS_RESULT_DIR)) return [];
   const files = fs.readdirSync(EMBEDDINGS_RESULT_DIR).filter(f => f.startsWith("embeddings_result_") && f.endsWith(".json"));
   return files.map(f => {
     const filePath = path.join(EMBEDDINGS_RESULT_DIR, f);
@@ -18,20 +28,23 @@ function listResultFiles() {
 }
 
 function getContinuationStatus() {
-  const continuationPath = path.join(CONTINUATIONS_DIR, "ctn_f78cb84f.json");
-  if (!fs.existsSync(continuationPath)) {
-    return null;
-  }
-  const cont = JSON.parse(fs.readFileSync(continuationPath, "utf-8"));
-  return {
-    id: cont.id,
-    status: cont.status,
-    title: cont.title,
-    chunks: cont.context?.chunks?.length || 0,
-    created: cont.created_at,
-    updated: cont.updated_at,
-    resolved: cont.resolution?.resolved_at
-  };
+  if (!fs.existsSync(CONTINUATIONS_DIR)) return [];
+  return fs.readdirSync(CONTINUATIONS_DIR)
+    .filter(f => f.endsWith(".json"))
+    .map(f => JSON.parse(fs.readFileSync(path.join(CONTINUATIONS_DIR, f), "utf-8")))
+    .filter(cont => cont.kind === "embeddings-index")
+    .map(cont => ({
+      id: cont.id,
+      status: cont.status,
+      title: cont.title,
+      chunks: cont.context?.chunks?.length || 0,
+      provider: cont.context?.embedding_profile?.provider || "",
+      model: cont.context?.embedding_profile?.model_name || "",
+      created: cont.created_at,
+      updated: cont.updated_at,
+      resolved: cont.resolution?.resolved_at
+    }))
+    .sort((a, b) => String(b.updated || b.created || "").localeCompare(String(a.updated || a.created || "")));
 }
 
 function formatBytes(bytes) {
@@ -42,10 +55,19 @@ function formatBytes(bytes) {
 
 function main() {
   console.log("📊 Embeddings Processing Monitor\n");
+  console.log(`State: ${COGENTIA_STATE_DIR}`);
+  console.log(`Continuations: ${CONTINUATIONS_DIR}\n`);
 
-  const cont = getContinuationStatus();
-  if (cont) {
-    console.log(`Continuation: ${cont.id}`);
+  const continuations = getContinuationStatus();
+  const cont = continuations[0] || null;
+  if (continuations.length) {
+    console.log(`Embedding continuations: ${continuations.length}`);
+    for (const item of continuations.slice(0, 10)) {
+      const profile = item.provider || item.model ? ` ${item.provider}/${item.model}` : "";
+      console.log(`  ${item.id} [${item.status}] ${item.chunks} chunks${profile}`);
+    }
+    console.log("");
+    console.log(`Latest: ${cont.id}`);
     console.log(`  Title: ${cont.title}`);
     console.log(`  Status: ${cont.status}`);
     console.log(`  Chunks: ${cont.chunks}`);

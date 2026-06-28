@@ -141,6 +141,7 @@ All published documents live in `research/` and are catalogued in [`research/ind
 - **Semantic embeddings**
   * `embeddings index` — emit a resumable continuation for chunk embeddings; `--profile`, `--provider`, and `--env-file` only describe the external resolver's model and credential location.
   * `embeddings store` and `embeddings search-with` — resume the pipeline with embeddings supplied by a human, agent, or local service.
+  * `scripts/smart-embed-worker.js` and `scripts/import-embeddings.js` — process embedding continuations through the selected provider profile, then import the result through the CLI.
 - **GitHub issue packets**
   * `issues list <repo>` — read live GitHub issues for a registered repository or explicit `owner/name`.
   * `issues packet <repo> <number>` — export one issue as a read-only `cogentia.issue_continuation.v1` packet.

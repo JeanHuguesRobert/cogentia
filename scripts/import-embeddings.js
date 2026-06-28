@@ -10,10 +10,14 @@
 
 import fs from "fs";
 import path from "path";
-import { execSync } from "child_process";
+import { execFileSync } from "child_process";
 
 const COGENTIA_DIR = process.cwd();
-const EMBEDDINGS_RESULT_DIR = path.join(COGENTIA_DIR, ".cogentia");
+const REGISTRY_PATH = process.env.COGENTIA_REGISTRY ? path.resolve(process.env.COGENTIA_REGISTRY) : "";
+const REGISTRY_ROOT = REGISTRY_PATH
+  ? (fs.existsSync(REGISTRY_PATH) && fs.statSync(REGISTRY_PATH).isDirectory() ? REGISTRY_PATH : path.dirname(REGISTRY_PATH))
+  : COGENTIA_DIR;
+const EMBEDDINGS_RESULT_DIR = process.env.COGENTIA_EMBEDDINGS_RESULTS_DIR || path.join(REGISTRY_ROOT, ".cogentia");
 
 function listResultFiles() {
   if (!fs.existsSync(EMBEDDINGS_RESULT_DIR)) {
@@ -106,10 +110,10 @@ function transformResult(resultData) {
   };
 }
 
-function exec(cmd) {
-  console.log(`$ ${cmd}`);
+function execNode(args) {
+  console.log(`$ node ${args.join(" ")}`);
   try {
-    execSync(cmd, {
+    execFileSync("node", args, {
       cwd: COGENTIA_DIR,
       stdio: "inherit",
       timeout: 60000 // 1 minute
@@ -159,7 +163,7 @@ async function main() {
 
     // Import via cogentia.js
     console.log(`   Importing...`);
-    const importOk = exec(`node scripts/cogentia.js embeddings store "${tempFile}"`);
+    const importOk = execNode(["scripts/cogentia.js", "embeddings", "store", tempFile]);
 
     if (importOk) {
       totalImported += embeddingCount;

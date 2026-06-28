@@ -38,7 +38,7 @@ const PROVIDER_MODELS = Object.freeze({
         pricePerMillion: 0.02, // $0.02/1M tokens
         speed: 8,
         quality: 8,
-        supportedDimensions: [1536],
+        supportedDimensions: [1536, 1024, 768, 512, 256],
       },
       "text-embedding-3-large": {
         dimensions: 3072,
@@ -97,7 +97,11 @@ const PROVIDER_MODELS = Object.freeze({
  * Find .env file in workspace
  * Searches in cogentia, inseme, and workspace root
  */
-function findEnvFile() {
+function findEnvFile(explicitPath = "") {
+  if (explicitPath) {
+    const resolved = path.resolve(explicitPath);
+    if (fs.existsSync(resolved)) return resolved;
+  }
   const cwd = process.cwd();
 
   // Try current directory first (usually cogentia when running scripts)
@@ -140,11 +144,32 @@ function parseEnvVars(envPath) {
     const match = trimmed.match(/^([^=]+)=(.*)$/);
     if (match) {
       const [, key, value] = match;
-      envVars[key] = value;
+      envVars[key.trim()] = unquoteEnvValue(value.trim());
     }
   }
 
   return envVars;
+}
+
+function unquoteEnvValue(value) {
+  if (
+    (value.startsWith('"') && value.endsWith('"'))
+    || (value.startsWith("'") && value.endsWith("'"))
+  ) {
+    return value.slice(1, -1);
+  }
+  return value;
+}
+
+function loadEnvFile(envPath, options = {}) {
+  const resolved = findEnvFile(envPath);
+  const envVars = parseEnvVars(resolved);
+  for (const [key, value] of Object.entries(envVars)) {
+    if (options.override || process.env[key] == null) {
+      process.env[key] = value;
+    }
+  }
+  return { path: resolved, loaded: Object.keys(envVars).length };
 }
 
 /**
@@ -156,7 +181,7 @@ function detectAvailableProviders() {
   const available = [];
 
   for (const [providerKey, provider] of Object.entries(PROVIDER_MODELS)) {
-    const apiKey = envVars[provider.apiKeyEnv];
+    const apiKey = process.env[provider.apiKeyEnv] || envVars[provider.apiKeyEnv];
 
     // Check if provider is available
     // - No auth required (like local Magistral): always available
@@ -325,4 +350,5 @@ export {
   inferProvider,
   findEnvFile,
   parseEnvVars,
+  loadEnvFile,
 };

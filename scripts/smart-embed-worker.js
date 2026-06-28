@@ -18,13 +18,21 @@ import {
   getProvider,
   getModel,
   policyVersion,
+  findEnvFile,
+  loadEnvFile,
 } from "./lib/embedding-providers.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const COGENTIA_DIR = path.resolve(process.env.COGENTIA_DIR || path.resolve(__dirname, ".."));
-const CONTINUATIONS_DIR = path.join(process.env.CONTINUATIONS_DIR || path.join(COGENTIA_DIR, ".cogentia"), "continuations");
+const REGISTRY_PATH = process.env.COGENTIA_REGISTRY ? path.resolve(process.env.COGENTIA_REGISTRY) : "";
+const REGISTRY_ROOT = REGISTRY_PATH
+  ? (fs.existsSync(REGISTRY_PATH) && fs.statSync(REGISTRY_PATH).isDirectory() ? REGISTRY_PATH : path.dirname(REGISTRY_PATH))
+  : COGENTIA_DIR;
+const COGENTIA_STATE_DIR = process.env.COGENTIA_STATE_DIR || path.join(REGISTRY_ROOT, ".cogentia");
+const CONTINUATIONS_DIR = process.env.CONTINUATIONS_DIR || path.join(COGENTIA_STATE_DIR, "continuations");
+const RESULTS_DIR = process.env.COGENTIA_EMBEDDINGS_RESULTS_DIR || COGENTIA_STATE_DIR;
 
 const MAX_CHARS_PER_CHUNK = 1500; // Safe limit for most models
 const MAX_CHARS_PER_BATCH = 10000; // Safe limit for batch
@@ -57,17 +65,16 @@ function readContinuation(id) {
 /**
  * Call OpenAI embeddings API
  */
-async function callOpenAIEmbeddings(apiKey, texts, model) {
+async function callOpenAIEmbeddings(apiKey, texts, model, dimensions) {
+  const body = { model, input: texts };
+  if (dimensions) body.dimensions = dimensions;
   const response = await fetch("https://api.openai.com/v1/embeddings", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
       "Authorization": `Bearer ${apiKey}`,
     },
-    body: JSON.stringify({
-      model,
-      input: texts,
-    }),
+    body: JSON.stringify(body),
   });
 
   if (!response.ok) {
@@ -133,6 +140,58 @@ function getApiKey(providerName) {
   return null;
 }
 
+function continuationProfile(continuation) {
+  return continuation.context?.embedding_profile || continuation.payload?.embedding_profile || null;
+}
+
+function loadCredentialHints(profile) {
+  const credentials = profile?.credentials || {};
+  const envFile = credentials.env_file_resolved || credentials.env_file || process.env.COGENTIA_EMBEDDINGS_ENV_FILE || "";
+  if (!envFile) return null;
+  const loaded = loadEnvFile(envFile);
+  if (loaded.path) {
+    console.log(`  Credentials: loaded environment from ${loaded.path} (${loaded.loaded} variable(s), values hidden)`);
+  }
+  return loaded;
+}
+
+function providersForContinuation(continuation) {
+  const profile = continuationProfile(continuation);
+  loadCredentialHints(profile);
+
+  const providerName = profile?.provider && profile.provider !== "unknown" ? profile.provider : "";
+  if (!providerName) return detectAvailableProviders();
+
+  const providerConfig = getProvider(providerName);
+  if (!providerConfig) {
+    console.log(`  ⚠️  Unknown provider in continuation profile: ${providerName}`);
+    return [];
+  }
+
+  const modelId = profile.model_name && profile.model_name !== "unspecified"
+    ? profile.model_name
+    : Object.keys(providerConfig.models)[0];
+  const modelSpec = getModel(providerName, modelId) || {};
+  const dimensions = Number(profile.dimensions || modelSpec.dimensions || 0) || null;
+
+  return [{
+    provider: providerName,
+    displayName: providerConfig.displayName,
+    baseUrl: providerConfig.baseUrl,
+    profile,
+    models: [{
+      id: modelId,
+      name: modelId,
+      dimensions,
+      pricePerMillion: modelSpec.pricePerMillion || 0,
+      speed: modelSpec.speed || 0,
+      quality: modelSpec.quality || 0,
+      maxTokens: modelSpec.maxTokens || 0,
+      supportedDimensions: modelSpec.supportedDimensions || (dimensions ? [dimensions] : []),
+    }],
+  }];
+}
+
 /**
  * Generate embeddings for a specific provider
  */
@@ -147,13 +206,11 @@ async function generateEmbeddingsForProvider(providerInfo, chunks) {
     return null;
   }
 
-  const modelSpec = getModel(provider, modelInfo.id);
-  if (!modelSpec) {
-    console.log(`  ⚠️  ${provider}: Model spec not found for ${modelInfo.id}`);
-    return null;
-  }
+  const profile = providerInfo.profile || {};
+  const modelSpec = getModel(provider, modelInfo.id) || {};
+  const dimensions = Number(profile.dimensions || modelInfo.dimensions || modelSpec.dimensions || 0) || null;
 
-  console.log(`  📡 ${providerConfig.displayName}: ${modelInfo.id} (${modelSpec.dimensions}d)`);
+  console.log(`  📡 ${providerConfig.displayName}: ${modelInfo.id}${dimensions ? ` (${dimensions}d)` : ""}`);
 
   try {
     let embeddingsResponse;
@@ -166,9 +223,9 @@ async function generateEmbeddingsForProvider(providerInfo, chunks) {
         console.log(`    ⚠️  No API key found`);
         return null;
       }
-      embeddingsResponse = await callOpenAIEmbeddings(apiKey, texts, modelInfo.id);
+      embeddingsResponse = await callOpenAIEmbeddings(apiKey, texts, modelInfo.id, dimensions);
     } else if (provider === "magistral") {
-      embeddingsResponse = await callMagistralEmbeddings(texts, modelInfo.id, modelSpec.dimensions);
+      embeddingsResponse = await callMagistralEmbeddings(texts, modelInfo.id, dimensions);
     } else {
       console.log(`    ⚠️  Provider ${provider} not implemented`);
       return null;
@@ -180,8 +237,8 @@ async function generateEmbeddingsForProvider(providerInfo, chunks) {
     }
 
     const receivedDimensions = embeddingsResponse.data[0]?.embedding?.length || 0;
-    if (receivedDimensions !== modelSpec.dimensions) {
-      console.log(`    ❌ Dimension mismatch: got ${receivedDimensions}, expected ${modelSpec.dimensions}`);
+    if (dimensions && receivedDimensions !== dimensions) {
+      console.log(`    ❌ Dimension mismatch: got ${receivedDimensions}, expected ${dimensions}`);
       return null;
     }
 
@@ -191,7 +248,8 @@ async function generateEmbeddingsForProvider(providerInfo, chunks) {
     return {
       provider,
       modelId: modelInfo.id,
-      dimensions: modelSpec.dimensions,
+      dimensions: receivedDimensions || dimensions,
+      policy: profile.policy || policyVersion(provider, modelInfo.id),
       embeddings: chunks.map((chunk, index) => ({
         chunk_id: chunk.chunk_id,
         content_hash: chunk.content_hash,
@@ -218,7 +276,7 @@ async function processContinuation(continuation) {
   }
 
   // Detect available providers
-  const availableProviders = detectAvailableProviders();
+  const availableProviders = providersForContinuation(continuation);
   console.log(`  Available providers: ${availableProviders.map(p => p.provider).join(", ") || "none"}`);
 
   if (!availableProviders.length) {
@@ -250,6 +308,7 @@ async function processContinuation(continuation) {
     provider: r.provider,
     modelId: r.modelId,
     dimensions: r.dimensions,
+    policy: r.policy,
     count: r.embeddings.length,
   }));
 
@@ -264,6 +323,7 @@ async function processContinuation(continuation) {
         model_name: result.modelId,
         dimensions: result.dimensions,
         provider: result.provider,
+        embedding_policy_version: result.policy,
       });
     }
   }
@@ -278,7 +338,8 @@ async function processContinuation(continuation) {
   };
 
   // Write result.json
-  const resultPath = path.join(COGENTIA_DIR, ".cogentia", `embeddings_result_${continuation.id}.json`);
+  fs.mkdirSync(RESULTS_DIR, { recursive: true });
+  const resultPath = path.join(RESULTS_DIR, `embeddings_result_${continuation.id}.json`);
   fs.writeFileSync(resultPath, JSON.stringify(result, null, 2));
   console.log(`  ✅ Result written to: ${resultPath}`);
 
@@ -317,8 +378,23 @@ function execCogentia(args) {
 
 async function run() {
   console.log("🔄 Multi-Provider Smart Embeddings Worker");
+  console.log(`State: ${COGENTIA_STATE_DIR}`);
+  console.log(`Continuations: ${CONTINUATIONS_DIR}`);
+
+  const files = fs.existsSync(CONTINUATIONS_DIR) ? fs.readdirSync(CONTINUATIONS_DIR).filter(f => f.endsWith(".json")) : [];
+  const activeContinuations = files
+    .map(file => readContinuation(file.replace(".json", "")))
+    .filter(cont => cont && cont.status === "active" && cont.kind === "embeddings-index");
+
+  if (!activeContinuations.length) {
+    console.log("\nNo active embedding continuations to process.");
+    console.log(`\n📊 Summary: ✅ 0 | ❌ 0`);
+    return;
+  }
 
   // Detect available providers
+  const startupEnv = findEnvFile(process.env.COGENTIA_EMBEDDINGS_ENV_FILE || "");
+  if (startupEnv) loadEnvFile(startupEnv);
   const providers = detectAvailableProviders();
   console.log(`\nAvailable providers: ${providers.map(p => `${p.displayName} (${p.provider})`).join(", ") || "none"}`);
 
@@ -343,15 +419,9 @@ async function run() {
     }
   }
 
-  // List continuations
-  const files = fs.existsSync(CONTINUATIONS_DIR) ? fs.readdirSync(CONTINUATIONS_DIR).filter(f => f.endsWith(".json")) : [];
   let successCount = 0, failCount = 0;
 
-  for (const file of files) {
-    const id = file.replace(".json", "");
-    const cont = readContinuation(id);
-    if (!cont || cont.status === "resolved" || cont.kind !== "embeddings-index") continue;
-
+  for (const cont of activeContinuations) {
     const success = await processContinuation(cont);
     if (success) successCount++; else failCount++;
   }

@@ -5,25 +5,38 @@
  * Processes embeddings in batches to avoid timeout issues.
  */
 
-import { execSync } from "child_process";
+import { execFileSync } from "child_process";
 import fs from "fs";
 import path from "path";
+import { fileURLToPath } from "url";
 
-const COGENTIA_DIR = process.cwd();
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const COGENTIA_DIR = path.resolve(__dirname, "..");
 const BATCH_SIZE = 100; // chunks per batch
 const MAX_TOTAL = 1000; // safety limit
+const TARGET_REPO = process.env.COGENTIA_EMBEDDINGS_REPO || "all";
 
-function exec(cmd) {
-  console.log(`$ ${cmd}`);
+function embeddingIndexArgs() {
+  const args = ["scripts/cogentia.js", "embeddings", "index", "--repo", TARGET_REPO, "--limit", String(BATCH_SIZE)];
+  if (process.env.COGENTIA_EMBEDDINGS_PROFILE) args.push("--profile", process.env.COGENTIA_EMBEDDINGS_PROFILE);
+  if (process.env.COGENTIA_EMBEDDINGS_PROVIDER) args.push("--provider", process.env.COGENTIA_EMBEDDINGS_PROVIDER);
+  if (process.env.COGENTIA_EMBEDDINGS_ENV_FILE) args.push("--env-file", process.env.COGENTIA_EMBEDDINGS_ENV_FILE);
+  return args;
+}
+
+function execNode(args, options = {}) {
+  console.log(`$ node ${args.join(" ")}`);
   try {
-    const result = execSync(cmd, {
+    return execFileSync("node", args, {
       cwd: COGENTIA_DIR,
-      stdio: "inherit",
+      stdio: options.capture ? ["ignore", "pipe", "pipe"] : "inherit",
+      encoding: options.capture ? "utf8" : undefined,
       timeout: 180000 // 3 minutes
     });
-    return true;
   } catch (error) {
     console.error(`Command failed: ${error.message}`);
+    if (options.capture) throw error;
     return false;
   }
 }
@@ -43,12 +56,7 @@ async function main() {
 
     // Create continuation
     console.log("1. Creating continuation...");
-    const createCmd = `node scripts/cogentia.js embeddings index --repo all --limit ${BATCH_SIZE}`;
-    const createResult = execSync(createCmd, {
-      cwd: COGENTIA_DIR,
-      encoding: "utf-8",
-      timeout: 30000
-    });
+    const createResult = execNode(embeddingIndexArgs(), { capture: true });
 
     // Check if continuation was created
     if (!createResult.includes("Continuation emitted")) {
@@ -67,17 +75,19 @@ async function main() {
 
     // Process with worker
     console.log("\n2. Processing embeddings...");
-    // Set environment and run worker
-    process.env.MAGISTRAL_URL = "http://127.0.0.1:8880";
-    const processCmd = `node scripts/cogentia-embed-worker.js run`;
-    const processOk = exec(processCmd);
+    const processOk = execNode(["scripts/smart-embed-worker.js"]);
 
     if (!processOk) {
       console.log("   ⚠️  Worker failed, but continuing...");
     }
 
     // Check result file
-    const resultFile = `.cogentia/embeddings_result_${continuationId}.json`;
+    const registryPath = process.env.COGENTIA_REGISTRY ? path.resolve(process.env.COGENTIA_REGISTRY) : "";
+    const registryRoot = registryPath
+      ? (fs.existsSync(registryPath) && fs.statSync(registryPath).isDirectory() ? registryPath : path.dirname(registryPath))
+      : COGENTIA_DIR;
+    const resultDir = process.env.COGENTIA_EMBEDDINGS_RESULTS_DIR || path.join(registryRoot, ".cogentia");
+    const resultFile = path.join(resultDir, `embeddings_result_${continuationId}.json`);
     if (fs.existsSync(resultFile)) {
       const data = JSON.parse(fs.readFileSync(resultFile, "utf-8"));
       const count = data.embeddings?.length || 0;

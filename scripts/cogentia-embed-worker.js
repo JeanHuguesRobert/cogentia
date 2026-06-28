@@ -27,13 +27,18 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const COGENTIA_DIR = path.resolve(__dirname, "..");
-const CONTINUATIONS_DIR = path.join(COGENTIA_DIR, ".cogentia", "continuations");
+const REGISTRY_PATH = process.env.COGENTIA_REGISTRY ? path.resolve(process.env.COGENTIA_REGISTRY) : "";
+const REGISTRY_ROOT = REGISTRY_PATH
+  ? (fs.existsSync(REGISTRY_PATH) && fs.statSync(REGISTRY_PATH).isDirectory() ? REGISTRY_PATH : path.dirname(REGISTRY_PATH))
+  : COGENTIA_DIR;
+const COGENTIA_STATE_DIR = process.env.COGENTIA_STATE_DIR || path.join(REGISTRY_ROOT, ".cogentia");
+const CONTINUATIONS_DIR = process.env.CONTINUATIONS_DIR || path.join(COGENTIA_STATE_DIR, "continuations");
 const MAGISTRAL_URL = process.env.MAGISTRAL_URL || "http://127.0.0.1:8880";
 
 // Configuration (default values, can be overridden by env)
-const EMBEDDING_MODEL = process.env.MAGISTRAL_EMBEDDING_MODEL || "mxbai-embed-large";
-const EMBEDDING_DIMENSIONS = parseInt(process.env.MAGISTRAL_EMBEDDING_DIMENSIONS || "1024", 10);
-const EMBEDDING_POLICY = process.env.MAGISTRAL_EMBEDDING_POLICY || "magistral-mxbai-embed-1024-v1";
+const DEFAULT_EMBEDDING_MODEL = process.env.MAGISTRAL_EMBEDDING_MODEL || "mxbai-embed-large";
+const DEFAULT_EMBEDDING_DIMENSIONS = parseInt(process.env.MAGISTRAL_EMBEDDING_DIMENSIONS || "1024", 10);
+const DEFAULT_EMBEDDING_POLICY = process.env.MAGISTRAL_EMBEDDING_POLICY || "magistral-mxbai-embed-1024-v1";
 
 /**
  * List active continuations from Cogentia
@@ -110,8 +115,7 @@ function filterEmbeddingContinuations(continuations) {
       (ctn.kind === "embeddings-index" ||
        ctn.kind === "embedding.batch_required" ||
        ctn.kind === "embeddings-index") &&
-      ctn.status !== "resolved" &&
-      ctn.status !== "completed"
+      ctn.status === "active"
     );
   });
 }
@@ -120,15 +124,24 @@ function filterEmbeddingContinuations(continuations) {
  * Call Magistral embeddings API
  */
 async function callMagistralEmbeddings(texts) {
+  return callMagistralEmbeddingsWithProfile(texts, {
+    model_name: DEFAULT_EMBEDDING_MODEL,
+    dimensions: DEFAULT_EMBEDDING_DIMENSIONS,
+  });
+}
+
+async function callMagistralEmbeddingsWithProfile(texts, profile) {
+  const model = profile?.model_name && profile.model_name !== "unspecified" ? profile.model_name : DEFAULT_EMBEDDING_MODEL;
+  const dimensions = Number(profile?.dimensions || DEFAULT_EMBEDDING_DIMENSIONS) || DEFAULT_EMBEDDING_DIMENSIONS;
   const response = await fetch(`${MAGISTRAL_URL}/v1/embeddings`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
-      model: EMBEDDING_MODEL,
+      model,
       input: texts,
-      dimensions: EMBEDDING_DIMENSIONS,
+      dimensions,
     }),
   });
 
@@ -167,12 +180,16 @@ async function processContinuation(continuation) {
   }
 
   console.log(`  Texts: ${texts.length}`);
+  const profile = continuation.context?.embedding_profile || {};
+  const embeddingModel = profile.model_name && profile.model_name !== "unspecified" ? profile.model_name : DEFAULT_EMBEDDING_MODEL;
+  const embeddingDimensions = Number(profile.dimensions || DEFAULT_EMBEDDING_DIMENSIONS) || DEFAULT_EMBEDDING_DIMENSIONS;
+  const embeddingPolicy = profile.policy || DEFAULT_EMBEDDING_POLICY;
 
   // Call Magistral for embeddings
   console.log(`  Calling Magistral embeddings API...`);
   let embeddingsResponse;
   try {
-    embeddingsResponse = await callMagistralEmbeddings(texts);
+    embeddingsResponse = await callMagistralEmbeddingsWithProfile(texts, profile);
   } catch (error) {
     console.error(`  ❌ Failed to call Magistral: ${error.message}`);
     return false;
@@ -185,8 +202,8 @@ async function processContinuation(continuation) {
   }
 
   const receivedDimensions = embeddingsResponse.data[0]?.embedding?.length || 0;
-  if (receivedDimensions !== EMBEDDING_DIMENSIONS) {
-    console.error(`  ❌ Dimension mismatch: got ${receivedDimensions}, expected ${EMBEDDING_DIMENSIONS}`);
+  if (receivedDimensions !== embeddingDimensions) {
+    console.error(`  ❌ Dimension mismatch: got ${receivedDimensions}, expected ${embeddingDimensions}`);
     return false;
   }
 
@@ -196,9 +213,9 @@ async function processContinuation(continuation) {
   const result = {
     continuation_id: continuation.id,
     provider: "magistral",
-    model: EMBEDDING_MODEL,
-    dimensions: EMBEDDING_DIMENSIONS,
-    embedding_policy_version: EMBEDDING_POLICY,
+    model: embeddingModel,
+    dimensions: embeddingDimensions,
+    embedding_policy_version: embeddingPolicy,
     embeddings: chunks.map((chunk, index) => ({
       chunk_id: chunk.chunk_id,
       content_hash: chunk.content_hash,
@@ -212,12 +229,13 @@ async function processContinuation(continuation) {
       },
     })),
     decision: "embeddings_generated",
-    reason: `Generated ${embeddingsResponse.data.length} embeddings via ${EMBEDDING_MODEL}`,
+    reason: `Generated ${embeddingsResponse.data.length} embeddings via ${embeddingModel}`,
     usage: embeddingsResponse.usage,
   };
 
   // Write result.json
-  const resultPath = path.join(COGENTIA_DIR, ".cogentia", `embeddings_result_${continuation.id}.json`);
+  fs.mkdirSync(COGENTIA_STATE_DIR, { recursive: true });
+  const resultPath = path.join(COGENTIA_STATE_DIR, `embeddings_result_${continuation.id}.json`);
   fs.writeFileSync(resultPath, JSON.stringify(result, null, 2));
   console.log(`  ✅ Result written to: ${resultPath}`);
 
@@ -277,9 +295,10 @@ function execCogentia(args) {
 async function run(options = {}) {
   console.log("🔄 Cogentia Embeddings Worker");
   console.log(`   Magistral: ${MAGISTRAL_URL}`);
-  console.log(`   Model: ${EMBEDDING_MODEL}`);
-  console.log(`   Dimensions: ${EMBEDDING_DIMENSIONS}`);
-  console.log(`   Policy: ${EMBEDDING_POLICY}`);
+  console.log(`   State: ${COGENTIA_STATE_DIR}`);
+  console.log(`   Model: ${DEFAULT_EMBEDDING_MODEL}`);
+  console.log(`   Dimensions: ${DEFAULT_EMBEDDING_DIMENSIONS}`);
+  console.log(`   Policy: ${DEFAULT_EMBEDDING_POLICY}`);
 
   // Check Magistral availability
   try {

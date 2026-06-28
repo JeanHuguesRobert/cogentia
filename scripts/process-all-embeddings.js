@@ -5,24 +5,36 @@
  * Loops until all chunks have embeddings.
  */
 
-import { execSync } from "child_process";
-import fs from "fs";
+import { execFileSync } from "child_process";
 import path from "path";
+import { fileURLToPath } from "url";
 
-const COGENTIA_DIR = process.cwd();
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const COGENTIA_DIR = path.resolve(__dirname, "..");
 const BATCH_SIZE = 200; // chunks per iteration
 const MAX_EMPTY_ITERATIONS = 3; // Stop after this many empty iterations
+const TARGET_REPO = process.env.COGENTIA_EMBEDDINGS_REPO || "all";
 
-function exec(cmd) {
+function embeddingIndexArgs() {
+  const args = ["scripts/cogentia.js", "embeddings", "index", "--repo", TARGET_REPO, "--limit", String(BATCH_SIZE)];
+  if (process.env.COGENTIA_EMBEDDINGS_PROFILE) args.push("--profile", process.env.COGENTIA_EMBEDDINGS_PROFILE);
+  if (process.env.COGENTIA_EMBEDDINGS_PROVIDER) args.push("--provider", process.env.COGENTIA_EMBEDDINGS_PROVIDER);
+  if (process.env.COGENTIA_EMBEDDINGS_ENV_FILE) args.push("--env-file", process.env.COGENTIA_EMBEDDINGS_ENV_FILE);
+  return args;
+}
+
+function execNode(args, options = {}) {
   try {
-    execSync(cmd, {
+    return execFileSync("node", args, {
       cwd: COGENTIA_DIR,
-      stdio: "inherit",
+      stdio: options.capture ? ["ignore", "pipe", "pipe"] : "inherit",
+      encoding: options.capture ? "utf8" : undefined,
       timeout: 180000
     });
-    return true;
   } catch (error) {
     console.error(`Command failed: ${error.message}`);
+    if (options.capture) throw error;
     return false;
   }
 }
@@ -42,11 +54,7 @@ async function main() {
     // Create continuation
     console.log("Creating continuation...");
     try {
-      const result = execSync(`node scripts/cogentia.js embeddings index --repo cogentia --limit ${BATCH_SIZE}`, {
-        cwd: COGENTIA_DIR,
-        encoding: "utf-8",
-        timeout: 30000
-      });
+      const result = execNode(embeddingIndexArgs(), { capture: true });
 
       if (!result.includes("Continuation emitted")) {
         console.log("No new chunks to index");
@@ -67,18 +75,15 @@ async function main() {
 
       // Process with smart worker
       console.log("Processing embeddings...");
-      exec("node scripts/smart-embed-worker.js");
+      execNode(["scripts/smart-embed-worker.js"]);
 
       // Import results
       console.log("Importing results...");
-      exec("node scripts/import-embeddings");
+      execNode(["scripts/import-embeddings.js"]);
 
       // Check status
       try {
-        const status = execSync("node scripts/cogentia.js embeddings status", {
-          cwd: COGENTIA_DIR,
-          encoding: "utf-8"
-        });
+        const status = execNode(["scripts/cogentia.js", "embeddings", "status"], { capture: true });
         const countMatch = status.match(/Count: (\d+)/);
         const count = countMatch ? parseInt(countMatch[1]) : 0;
         console.log(`Current embeddings count: ${count}`);

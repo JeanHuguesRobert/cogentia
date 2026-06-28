@@ -497,6 +497,8 @@ Use this when the corpus has grown and navigation depends on consistent metadata
 ```bash
 node scripts/cogentia.js embeddings index --provider openai --env-file ..\inseme\.env --json
 node scripts/cogentia.js continuation inspect <id> --json
+node scripts/smart-embed-worker.js
+node scripts/import-embeddings.js
 node scripts/cogentia.js embeddings store embeddings-result.json
 ```
 
@@ -511,6 +513,17 @@ Profile resolution is deliberately externalizable:
 - `.cogentia.json` may define `embeddings.default_profile` and `embeddings.profiles` for shared, non-secret defaults.
 
 The continuation path is intentional for indexing. Long embedding runs can be resumed, audited, retried, or delegated without adding a direct provider dependency to the CLI.
+
+The helper scripts beside `cogentia.js` are continuation processors, not a second indexing design:
+
+- `smart-embed-worker.js` reads active `embeddings-index` continuations, loads the hinted `.env` only inside the worker, calls the selected provider profile, and writes `embeddings_result_<id>.json`;
+- `import-embeddings.js` imports those result files through `cogentia.js embeddings store`;
+- `process-all-embeddings.js`, `batch-embeddings.js`, and `smart-batch-embeddings.js` orchestrate repeated continuation batches;
+- `monitor-embeddings.js` reports active embedding continuations and result files.
+
+All of these scripts honor `COGENTIA_REGISTRY`, so corpus-wide runs can use the profile registry rather than the local Cogentia tool-repo registry. The current `main` implementation stores embeddings as JSON arrays in the SQLite cache and ranks them with provider-neutral cosine similarity in JavaScript. A future `sqlite-vec` or SQLite vector-extension table should remain an acceleration layer over the same continuation/result contract, not a direct-provider shortcut.
+
+If the selected registry state directory is not writable in the current shell, set `COGENTIA_EMBEDDINGS_RESULTS_DIR` to a writable directory before running `smart-embed-worker.js` and `import-embeddings.js`. The continuations still live under the registry selected by `COGENTIA_REGISTRY`; only transient result files move.
 
 ### 6.5 Find documents that still need judgment
 

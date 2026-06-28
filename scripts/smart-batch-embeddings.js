@@ -9,10 +9,20 @@
 import fs from "fs";
 import path from "path";
 import { execSync } from "child_process";
+import { randomBytes } from "crypto";
+import { fileURLToPath } from "url";
 
-const COGENTIA_DIR = process.cwd();
-const CONTINUATIONS_DIR = path.join(COGENTIA_DIR, ".cogentia", "continuations");
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const COGENTIA_DIR = path.resolve(__dirname, "..");
+const REGISTRY_PATH = process.env.COGENTIA_REGISTRY ? path.resolve(process.env.COGENTIA_REGISTRY) : "";
+const REGISTRY_ROOT = REGISTRY_PATH
+  ? (fs.existsSync(REGISTRY_PATH) && fs.statSync(REGISTRY_PATH).isDirectory() ? REGISTRY_PATH : path.dirname(REGISTRY_PATH))
+  : COGENTIA_DIR;
+const COGENTIA_STATE_DIR = process.env.COGENTIA_STATE_DIR || path.join(REGISTRY_ROOT, ".cogentia");
+const CONTINUATIONS_DIR = process.env.CONTINUATIONS_DIR || path.join(COGENTIA_STATE_DIR, "continuations");
 const BATCH_SIZE = 10; // chunks per batch (very conservative for long chunks)
+const TARGET_REPO = process.env.COGENTIA_EMBEDDINGS_REPO || "all";
 
 function exec(cmd) {
   console.log(`$ ${cmd}`);
@@ -72,7 +82,7 @@ function splitContinuation(largeCtn, batchSize) {
     const batchChunks = chunks.slice(start, end);
 
     const batchCtn = {
-      id: `ctn_${largeCtn.id}_${i}`,
+      id: `ctn_${randomBytes(6).toString("hex")}`,
       kind: largeCtn.kind,
       status: "active",
       title: `${largeCtn.title} (batch ${i + 1}/${totalBatches})`,
@@ -82,7 +92,10 @@ function splitContinuation(largeCtn, batchSize) {
       updated_at: new Date().toISOString(),
       context: {
         ...largeCtn.context,
-        chunks: batchChunks
+        chunks: batchChunks,
+        parent_continuation_id: largeCtn.id,
+        batch_index: i + 1,
+        batch_count: totalBatches
       },
       expected_response: largeCtn.expected_response
     };
@@ -101,6 +114,14 @@ function cancelContinuation(id) {
   exec(`node scripts/cogentia.js continuation cancel ${id} --reason "Split into batches"`);
 }
 
+function embeddingIndexCommand() {
+  const args = ["node", "scripts/cogentia.js", "embeddings", "index", "--repo", TARGET_REPO, "--limit", String(BATCH_SIZE)];
+  if (process.env.COGENTIA_EMBEDDINGS_PROFILE) args.push("--profile", process.env.COGENTIA_EMBEDDINGS_PROFILE);
+  if (process.env.COGENTIA_EMBEDDINGS_PROVIDER) args.push("--provider", process.env.COGENTIA_EMBEDDINGS_PROVIDER);
+  if (process.env.COGENTIA_EMBEDDINGS_ENV_FILE) args.push("--env-file", `"${process.env.COGENTIA_EMBEDDINGS_ENV_FILE}"`);
+  return args.join(" ");
+}
+
 async function main() {
   console.log("🔄 Smart Batch Embeddings Processor\n");
   console.log(`Batch size: ${BATCH_SIZE} chunks\n`);
@@ -112,7 +133,7 @@ async function main() {
   for (const file of files) {
     const id = file.replace(".json", "");
     const ctn = readContinuation(id);
-    if (!ctn || ctn.status === "resolved" || ctn.status === "completed") continue;
+    if (!ctn || ctn.status !== "active") continue;
     if (ctn.kind !== "embeddings-index") continue;
 
     const chunkCount = ctn.context?.chunks?.length || 0;
@@ -126,7 +147,7 @@ async function main() {
     console.log("Processing next batch via index command...\n");
 
     // Create a new batch
-    const createCmd = `node scripts/cogentia.js embeddings index --repo cogentia --limit ${BATCH_SIZE}`;
+    const createCmd = embeddingIndexCommand();
     const createResult = execSync(createCmd, {
       cwd: COGENTIA_DIR,
       encoding: "utf-8",
@@ -166,7 +187,7 @@ async function main() {
   }
 
   console.log("\nProcessing batches...");
-  exec(`node scripts/cogentia-embed-worker.js run`);
+  exec(`node scripts/smart-embed-worker.js`);
 }
 
 main().catch(console.error);
