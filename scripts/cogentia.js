@@ -210,7 +210,7 @@ Core commands:
   ask <question>           Ask the Cogentia corpus agent through the daemon.
                            Flags: --daemon-url <url> --model <model>
                            --repo <name|all> --limit <n> --budget <n>
-                           --mode keyword|hybrid --stream
+                           --mode keyword|hybrid|semantic --stream
 
 Document commands:
   docs summary             Numeric corpus summaries.
@@ -6111,7 +6111,8 @@ async function semanticSearchWithEmbedding(ctx, queryEmbedding, options = {}) {
   const repo = String(options.repo || "all");
   const limit = boundedInteger(options.limit, 10, 1, 50);
   const preferredProvider = options.provider || null;
-  const priority = options.priority || "balanced";
+  const preferredModel = options.modelName || options.model_name || null;
+  const preferredDimensions = Number(options.dimensions || 0) || null;
 
   const opened = await openIndexDatabase({ create: false });
   if (!opened.ok) return { ok: false, error: opened.code, query: q, mode: "semantic" };
@@ -6144,6 +6145,8 @@ async function semanticSearchWithEmbedding(ctx, queryEmbedding, options = {}) {
         providerParams = [providerCounts.provider];
       }
     }
+    const modelClause = preferredModel ? "AND e.model_name = ?" : "";
+    const dimensionsClause = preferredDimensions ? "AND e.dimensions = ?" : "";
 
     const embeddings = db.prepare(`
       SELECT e.chunk_id, e.repo, e.path, e.start_line, e.end_line, e.embedding,
@@ -6151,8 +6154,13 @@ async function semanticSearchWithEmbedding(ctx, queryEmbedding, options = {}) {
              c.title, c.heading_path, c.role, c.visibility, c.public_presence, c.github_url, c.text
       FROM embeddings e
       JOIN chunks c ON e.chunk_id = c.id
-      WHERE 1=1 ${publicClause} ${repoClause} ${providerClause}
-    `).all(...[...(repo !== "all" ? [repo] : []), ...providerParams]);
+      WHERE 1=1 ${publicClause} ${repoClause} ${providerClause} ${modelClause} ${dimensionsClause}
+    `).all(...[
+      ...(repo !== "all" ? [repo] : []),
+      ...providerParams,
+      ...(preferredModel ? [preferredModel] : []),
+      ...(preferredDimensions ? [preferredDimensions] : []),
+    ]);
 
     const similarities = embeddings.map(row => {
       const embedding = JSON.parse(row.embedding);
@@ -6171,6 +6179,7 @@ async function semanticSearchWithEmbedding(ctx, queryEmbedding, options = {}) {
         score: similarity,
         snippet,
         github_url: row.github_url ? `${row.github_url}#L${row.start_line}-L${row.end_line}` : "",
+        ...(options.includeText ? { text: row.text } : {}),
         _reasons: ["semantic_similarity"],
         _provider: row.provider,
         _model: row.model_name,
@@ -6190,7 +6199,7 @@ async function semanticSearchWithEmbedding(ctx, queryEmbedding, options = {}) {
       view,
       provider: preferredProvider || providerParams[0] || "unknown",
       count: results.length,
-      results: results.map(({ text, _provider, _model, _dimensions, ...r }) => r),
+      results: results.map(({ _provider, _model, _dimensions, ...r }) => r),
       warnings: [],
     };
   } catch (e) {
@@ -6205,11 +6214,141 @@ async function contextSearch(ctx, query, options = {}) {
   const mode = String(options.mode || "keyword").toLowerCase();
   if (!q) return { ok: false, error: "missing_query", query: q };
   if (mode === "semantic") {
-    return await semanticSearch(ctx, query, { ...options, view });
+    return await contextSemanticSearch(ctx, q, { ...options, view, mode: "semantic" });
   }
   if (!new Set(["keyword", "hybrid"]).has(mode)) {
-    return { ok: false, error: "invalid_mode", query: q, mode, available_modes: ["keyword", "hybrid"] };
+    return { ok: false, error: "invalid_mode", query: q, mode, available_modes: ["keyword", "hybrid", "semantic"] };
   }
+  if (mode === "hybrid") {
+    const semantic = await contextSemanticSearch(ctx, q, { ...options, view, mode: "hybrid" });
+    if (semantic.ok && semantic.results.length) return semantic;
+    const fallback = await contextKeywordSearch(ctx, q, { ...options, view, mode: "hybrid" });
+    if (fallback.ok) {
+      return {
+        ...fallback,
+        mode: "hybrid",
+        warnings: [
+          `Semantic retrieval unavailable; fell back to keyword search (${semantic.error || "no_semantic_results"}).`,
+          ...fallback.warnings,
+        ],
+      };
+    }
+    return semantic.ok ? fallback : semantic;
+  }
+  return await contextKeywordSearch(ctx, q, { ...options, view, mode });
+}
+
+async function contextSemanticSearch(ctx, q, options = {}) {
+  const view = normalizeDaemonView(options.view) === FULL_VIEW ? FULL_VIEW : PUBLIC_VIEW;
+  const repo = String(options.repo || "all");
+  const limit = boundedInteger(options.limit, 10, 1, 50);
+  const target = await preferredContextEmbeddingTarget(ctx, { view, repo });
+  if (!target.ok) return { ok: false, error: target.error, query: q, mode: options.mode || "semantic", warnings: target.warnings || [] };
+  const queryEmbedding = await createQueryEmbedding(q, target);
+  if (!queryEmbedding.ok) {
+    return {
+      ok: false,
+      error: queryEmbedding.error || "query_embedding_failed",
+      message: queryEmbedding.message,
+      query: q,
+      mode: options.mode || "semantic",
+      warnings: [`Query embedding failed for ${target.provider}/${target.model_name}: ${queryEmbedding.message || queryEmbedding.error || "unknown error"}`],
+    };
+  }
+  if (queryEmbedding.embedding.length !== target.dimensions) {
+    return {
+      ok: false,
+      error: "query_embedding_dimension_mismatch",
+      query: q,
+      mode: options.mode || "semantic",
+      warnings: [`Query embedding dimensions ${queryEmbedding.embedding.length} do not match corpus dimensions ${target.dimensions}.`],
+    };
+  }
+  const result = await semanticSearchWithEmbedding(ctx, queryEmbedding.embedding, {
+    ...options,
+    query: q,
+    view,
+    repo,
+    limit,
+    provider: target.provider,
+    modelName: target.model_name,
+    dimensions: target.dimensions,
+  });
+  if (!result.ok) return result;
+  return {
+    ...result,
+    mode: options.mode || "semantic",
+    warnings: [
+      `Semantic retrieval used ${target.provider}/${target.model_name} (${target.dimensions}d).`,
+      ...result.warnings,
+    ],
+  };
+}
+
+async function preferredContextEmbeddingTarget(ctx, options = {}) {
+  const view = normalizeDaemonView(options.view) === FULL_VIEW ? FULL_VIEW : PUBLIC_VIEW;
+  const repo = String(options.repo || "all");
+  const opened = await openIndexDatabase({ create: false });
+  if (!opened.ok) return { ok: false, error: opened.error || opened.code };
+  const { db } = opened;
+  try {
+    const tables = db.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='embeddings'").all();
+    if (!tables.length) return { ok: false, error: "no_embeddings_table" };
+    const publicClause = view === FULL_VIEW ? "" : "AND c.searchable_public = 1";
+    const repoClause = repo === "all" ? "" : "AND c.repo = ?";
+    const preferredModel = process.env.COGENTIA_QUERY_EMBEDDING_MODEL || process.env.COGENTIA_EMBEDDING_MODEL || "";
+    const preferredProvider = process.env.COGENTIA_QUERY_EMBEDDING_PROVIDER || process.env.COGENTIA_EMBEDDINGS_PROVIDER || "";
+    const preferredClause = [
+      preferredProvider ? "AND e.provider = ?" : "",
+      preferredModel ? "AND e.model_name = ?" : "",
+    ].filter(Boolean).join(" ");
+    const preferredParams = [
+      ...(repo !== "all" ? [repo] : []),
+      ...(preferredProvider ? [preferredProvider] : []),
+      ...(preferredModel ? [preferredModel] : []),
+    ];
+    const target = db.prepare(`
+      SELECT e.provider, e.model_name, e.dimensions, COUNT(*) AS count
+      FROM embeddings e
+      JOIN chunks c ON e.chunk_id = c.id
+      WHERE 1=1 ${publicClause} ${repoClause} ${preferredClause}
+      GROUP BY e.provider, e.model_name, e.dimensions
+      ORDER BY count DESC, e.provider, e.model_name
+      LIMIT 1
+    `).get(...preferredParams) || db.prepare(`
+      SELECT e.provider, e.model_name, e.dimensions, COUNT(*) AS count
+      FROM embeddings e
+      JOIN chunks c ON e.chunk_id = c.id
+      WHERE 1=1 ${publicClause} ${repoClause}
+      GROUP BY e.provider, e.model_name, e.dimensions
+      ORDER BY count DESC, e.provider, e.model_name
+      LIMIT 1
+    `).get(...(repo !== "all" ? [repo] : []));
+    if (!target) return { ok: false, error: "no_matching_embeddings" };
+    return { ok: true, ...target };
+  } finally {
+    db.close();
+  }
+}
+
+async function createQueryEmbedding(query, target) {
+  const payload = {
+    model: process.env.COGENTIA_QUERY_EMBEDDING_MODEL || target.model_name,
+    input: query,
+    dimensions: target.dimensions,
+  };
+  const response = await createAiRouterClient().embeddings(payload);
+  if (!response.ok) return response;
+  const embedding = response.body?.data?.[0]?.embedding;
+  if (!Array.isArray(embedding)) {
+    return { ok: false, error: "invalid_embedding_response", message: "AI router did not return data[0].embedding" };
+  }
+  return { ok: true, embedding };
+}
+
+async function contextKeywordSearch(ctx, q, options = {}) {
+  const view = normalizeDaemonView(options.view) === FULL_VIEW ? FULL_VIEW : PUBLIC_VIEW;
+  const mode = String(options.mode || "keyword").toLowerCase();
   const opened = await openIndexDatabase({ create: false });
   if (!opened.ok) return { ok: false, error: opened.error || opened.code, code: opened.code, query: q };
   const { db } = opened;
@@ -6264,7 +6403,7 @@ async function contextSearch(ctx, query, options = {}) {
       view,
       count: results.length,
       results,
-      warnings: mode === "hybrid" ? ["Hybrid phase 1 uses FTS5 plus deterministic metadata boosts; semantic embeddings are not enabled."] : [],
+      warnings: [],
     };
   } catch (e) {
     return { ok: false, error: "context_search_failed", ...(view === FULL_VIEW ? { message: e.message } : {}), query: q };
@@ -6444,7 +6583,10 @@ async function contextExplain(ctx, resultId, view = PUBLIC_VIEW) {
       ok: true,
       result_id: resultId,
       why,
-      limits: ["semantic embeddings not enabled yet", "exact term contribution is not persisted between requests"],
+      limits: [
+        "semantic mode requires a compatible AI-router /v1/embeddings endpoint",
+        "exact term contribution is not persisted between requests",
+      ],
       retrieval_policy_version: CONTEXT_RETRIEVAL_POLICY_VERSION,
     };
   } finally {
@@ -6454,13 +6596,23 @@ async function contextExplain(ctx, resultId, view = PUBLIC_VIEW) {
 
 async function contextHealth(ctx) {
   const status = await indexStatus(ctx);
+  const semanticTarget = status.built && status.ok
+    ? await preferredContextEmbeddingTarget(ctx, { view: PUBLIC_VIEW, repo: "all" }).catch(error => ({ ok: false, error: error.message }))
+    : { ok: false, error: "index_not_available" };
   return {
     ok: true,
     service: "cogentia-context-gateway",
     public: true,
     version: VERSION,
     index_available: Boolean(status.built && status.ok),
-    modes: ["keyword", "hybrid"],
+    modes: ["keyword", "hybrid", "semantic"],
+    semantic_available: Boolean(semanticTarget.ok),
+    semantic_requires_ai_router_embeddings: true,
+    embedding_target: semanticTarget.ok ? {
+      provider: semanticTarget.provider,
+      model_name: semanticTarget.model_name,
+      dimensions: semanticTarget.dimensions,
+    } : null,
     write_routes_public: false,
   };
 }

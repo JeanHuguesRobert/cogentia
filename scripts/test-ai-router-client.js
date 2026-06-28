@@ -42,7 +42,7 @@ try {
     input: ["hello"],
   });
   assert.equal(embeddings.ok, true);
-  assert.deepEqual(embeddings.body.data[0].embedding, [0.1, 0.2, 0.3]);
+  assert.deepEqual(embeddings.body.data[0].embedding, [0.333333, 0.666667, 1]);
 
   assert.throws(
     () => createAiRouterClient({ baseUrl: "http://user:pass@127.0.0.1:8880" }),
@@ -170,10 +170,13 @@ function startMockRouter(port) {
       });
     }
     if (req.method === "POST" && url.pathname === "/v1/embeddings") {
+      const payload = await readJson(req);
+      const dimensions = Math.max(1, Math.min(Number(payload.dimensions || 3) || 3, 3072));
+      const embedding = Array.from({ length: dimensions }, (_, index) => Number(((index + 1) / dimensions).toFixed(6)));
       return json(res, 200, {
         object: "list",
-        data: [{ object: "embedding", index: 0, embedding: [0.1, 0.2, 0.3] }],
-        model: "mock-embed",
+        data: [{ object: "embedding", index: 0, embedding }],
+        model: payload.model || "mock-embed",
       });
     }
     return json(res, 404, { error: "not_found" });
@@ -187,6 +190,21 @@ function startMockRouter(port) {
 function json(res, status, body) {
   res.writeHead(status, { "Content-Type": "application/json" });
   res.end(`${JSON.stringify(body)}\n`);
+}
+
+function readJson(req) {
+  return new Promise((resolve, reject) => {
+    let body = "";
+    req.on("data", chunk => { body += chunk; });
+    req.on("error", reject);
+    req.on("end", () => {
+      try {
+        resolve(body ? JSON.parse(body) : {});
+      } catch (error) {
+        reject(error);
+      }
+    });
+  });
 }
 
 async function waitForDaemon(port, daemonLog) {

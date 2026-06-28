@@ -27,8 +27,11 @@ HTTP clients and cogentia-mcp
 ```
 
 Phase 1 indexes Markdown headings and text. Keyword search uses FTS5. Hybrid
-mode adds small deterministic boosts for role, title, heading, and an explicit
-repository filter. Semantic embeddings are not enabled.
+mode first tries semantic retrieval when compatible stored embeddings and an AI
+router embedding endpoint are available, then falls back to keyword search with
+small deterministic boosts for role, title, heading, and an explicit repository
+filter. Semantic mode uses the same stored corpus embedding profile and fails
+closed when a compatible query embedding cannot be produced.
 
 ## Running the gateway
 
@@ -79,9 +82,10 @@ curl "http://127.0.0.1:8790/api/context/doc?ref=cogentia:docs/cogentia-index-lay
 curl "http://127.0.0.1:8790/api/context/lines?ref=cogentia:docs/cogentia-index-layer.md&start=1&end=30"
 ```
 
-`context/search` accepts `q`, `repo`, `limit` (maximum 50), `mode` (`keyword`
-or `hybrid`), and `include_text`. `context/pack` also accepts `budget`, `limit`,
-and `format=json|markdown`. A line request is limited to 200 lines.
+`context/search` accepts `q`, `repo`, `limit` (maximum 50), `mode` (`keyword`,
+`hybrid`, or `semantic`), and `include_text`. `context/pack` also accepts
+`budget`, `limit`, and `format=json|markdown`. A line request is limited to 200
+lines.
 
 ## Admin boundary
 
@@ -146,13 +150,18 @@ The progression is deliberately separate:
 3. decide whether an indexed item may be exposed;
 4. justify each exposed result with metadata and citations.
 
-Adding non-Markdown parsers or embeddings requires an explicit policy version.
-Embeddings should be cached by content hash, model, dimensions, and embedding
-policy version. No AI provider is called by Phase 1. When semantic embeddings
-are prepared, `cogentia.js embeddings index` emits a continuation with the
-embedding profile and credential-location hints only; the external resolver
-loads any `.env` file, calls the provider, and returns embeddings through
-`embeddings store`.
+Adding non-Markdown parsers or changing embedding production requires an
+explicit policy version. Embeddings should be cached by content hash, provider,
+model, dimensions, and embedding policy version. `cogentia.js embeddings index`
+emits a continuation with the embedding profile and credential-location hints
+only; the external resolver loads any `.env` file, calls the provider, and
+returns embeddings through `embeddings store`.
+
+For retrieval, `hybrid` and `semantic` can call the configured AI router
+`/v1/embeddings` endpoint to embed the query with the same provider, model, and
+dimensions already stored for corpus chunks. If that endpoint is unavailable or
+returns an incompatible vector, `hybrid` falls back to keyword search and
+`semantic` returns an explicit error.
 
 ## Verification
 

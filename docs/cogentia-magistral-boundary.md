@@ -120,6 +120,13 @@ Chunk-level search still needs chunk ids, paths and line ranges. A future
 content-hash vector cache may deduplicate identical text across chunks while
 preserving chunk-level citations.
 
+Context retrieval uses the same policy. `semantic` mode embeds the query through
+the AI router and searches only stored vectors with the same provider, model,
+and dimensions. `hybrid` mode attempts that semantic pass first and falls back
+to keyword retrieval when the router embedding endpoint is unavailable or
+incompatible, so a missing remote provider degrades search quality rather than
+breaking corpus access.
+
 ## Local Profile
 
 Local developer machine:

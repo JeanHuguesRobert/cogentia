@@ -23,6 +23,8 @@ try {
   const health = await getJson("/api/context/health");
   assert.equal(health.service, "cogentia-context-gateway");
   assert.equal(health.write_routes_public, false);
+  assert.deepEqual(health.modes, ["keyword", "hybrid", "semantic"]);
+  assert.equal(health.semantic_requires_ai_router_embeddings, true);
   const healthResponse = await fetch(`${base}/api/context/health`, { headers: { Origin: "https://untrusted.example" } });
   assert.equal(healthResponse.headers.has("access-control-allow-origin"), false);
 
