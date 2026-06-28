@@ -1753,7 +1753,20 @@ function indexDbPath() {
 
 function cogentiaDataRoot() {
   const configured = peekValueFlag("--data-dir") || process.env.COGENTIA_DATA_DIR || "";
-  return configured ? path.resolve(configured) : process.cwd();
+  if (configured) return path.resolve(configured);
+  return registryRootFromOverride() || process.cwd();
+}
+
+function registryRootFromOverride() {
+  const explicit = peekValueFlag("--registry") || process.env.COGENTIA_REGISTRY || "";
+  if (!explicit) return "";
+  const resolved = path.resolve(explicit);
+  try {
+    if (fs.existsSync(resolved) && fs.statSync(resolved).isDirectory()) return resolved;
+  } catch {
+    return path.dirname(resolved);
+  }
+  return path.dirname(resolved);
 }
 
 async function openIndexDatabase(options = {}) {
