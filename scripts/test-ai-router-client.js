@@ -71,11 +71,45 @@ try {
     assert.equal(body.ai_router.service, "mock-magistral");
     assert.equal(body.ai_router.router.loopback, true);
     assert.equal(Object.hasOwn(body.ai_router.router, "origin"), false);
+
+    const chatResponse = await fetch(`http://127.0.0.1:${daemonPort}/v1/chat/completions`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        model: "cogentia-corpus",
+        messages: [{ role: "user", content: "autonomie de capacité" }],
+        cogentia: { limit: 3, budget: 4000 },
+      }),
+    });
+    assert.equal(chatResponse.ok, true);
+    const chatBody = await chatResponse.json();
+    assert.equal(chatBody.object, "chat.completion");
+    assert.equal(chatBody.model, "cogentia-corpus");
+    assert.equal(chatBody.choices[0].message.content, "mock answer");
+    assert.ok(chatBody.cogentia_context.source_ids.length > 0);
+
+    const streamResponse = await fetch(`http://127.0.0.1:${daemonPort}/v1/chat/completions`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        model: "cogentia-corpus",
+        stream: true,
+        messages: [{ role: "user", content: "autonomie de capacité" }],
+        cogentia: { limit: 3, budget: 4000 },
+      }),
+    });
+    assert.equal(streamResponse.ok, true);
+    assert.match(streamResponse.headers.get("content-type") || "", /text\/event-stream/);
+    const streamText = await streamResponse.text();
+    assert.match(streamText, /^data: /m);
+    assert.match(streamText, /"cogentia_context"/);
+    assert.match(streamText, /mock answer/);
+    assert.match(streamText, /data: \[DONE\]/);
   } finally {
     daemon.kill();
   }
 
-  console.log(JSON.stringify({ ok: true, router: routerBase, daemon_agent_health: true }, null, 2));
+  console.log(JSON.stringify({ ok: true, router: routerBase, daemon_agent_health: true, chat_completions: true }, null, 2));
 } finally {
   await new Promise(resolve => router.close(resolve));
 }

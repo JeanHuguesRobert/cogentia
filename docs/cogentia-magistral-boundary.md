@@ -178,9 +178,14 @@ The first shared base is:
 - `GET /api/agent/health`;
 - tests with a mock OpenAI-compatible router.
 
-After that, Cogentia can add:
+The first conversational slice adds:
 
 - `POST /v1/chat/completions`;
-- OpenAI-style SSE streaming;
+- retrieval-first grounding through Cogentia context packs;
+- OpenAI-style JSON and SSE streaming responses;
+- `cogentia_context` metadata with source ids and pack hashes.
+
+After that, Cogentia can add:
+
 - remote Streamable HTTP MCP;
 - a compact public web UI.

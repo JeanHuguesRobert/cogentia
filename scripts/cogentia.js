@@ -18,7 +18,7 @@ import { createHash, randomBytes, timingSafeEqual } from "node:crypto";
 import { pathToFileURL } from "node:url";
 import { DAEMON_PLUGINS, DAEMON_PLUGIN_ROUTES, loadDaemonPlugins, dispatchPluginRoute } from "./daemon_plugins/registry.js";
 import { generateOperiumEmbeddingsReport } from "./lib/operium-embeddings.js";
-import { aiRouterHealth } from "./lib/ai-router-client.js";
+import { aiRouterHealth, createAiRouterClient } from "./lib/ai-router-client.js";
 
 const VERSION = "2.4.0";
 const CONFIG_FILE = ".cogentia.json";
@@ -112,6 +112,9 @@ const PUBLIC_DAEMON_GET_ROUTES = new Set([
   "/api/context/lines",
   "/api/context/explain",
   "/api/agent/health",
+]);
+const PUBLIC_DAEMON_POST_ROUTES = new Set([
+  "/v1/chat/completions",
 ]);
 const daemonRateLimits = new Map();
 
@@ -847,6 +850,7 @@ async function handleDaemonRequest(req, res) {
   const url = new URL(req.url || "/", "http://127.0.0.1");
   const view = daemonRequestView(req, url);
   res.cogentiaView = view;
+  res.cogentiaPublicPostAllowed = PUBLIC_DAEMON_POST_ROUTES.has(url.pathname);
   if (req.method !== "OPTIONS" && !daemonRateLimitAllows(req)) {
     return daemonJson(res, 429, { ok: false, error: "rate_limit_exceeded" }, {
       "Retry-After": String(Math.ceil(daemonRateLimitWindowMs() / 1000)),
@@ -1054,6 +1058,10 @@ async function handleDaemonRequest(req, res) {
   if (req.method === "GET" && url.pathname === "/api/agent/health") {
     return daemonJson(res, 200, await cogentiaAgentHealth(view));
   }
+  if (req.method === "POST" && url.pathname === "/v1/chat/completions") {
+    const effectiveCtx = ctx || loadContext();
+    return daemonChatCompletions(req, res, effectiveCtx, view);
+  }
   return daemonJson(res, 404, {
     ok: false,
     error: "not_found",
@@ -1097,6 +1105,196 @@ function sanitizeAiRouterHealth(health) {
     capabilities: health.capabilities || {},
     error: health.error || undefined,
   };
+}
+
+async function daemonChatCompletions(req, res, ctx, view = PUBLIC_VIEW) {
+  let payload;
+  try {
+    payload = await readJsonRequestBody(req, { maxBytes: 1024 * 1024 });
+  } catch (error) {
+    return daemonJson(res, error.message === "request_body_too_large" ? 413 : 400, {
+      error: {
+        type: "invalid_request_error",
+        message: error.message === "request_body_too_large" ? "Request body is too large" : "Request body must be valid JSON",
+      },
+    });
+  }
+  const messages = Array.isArray(payload.messages) ? payload.messages : [];
+  const query = lastUserMessage(messages);
+  if (!query) {
+    return daemonJson(res, 400, {
+      error: {
+        type: "invalid_request_error",
+        message: "messages must include a non-empty user message",
+      },
+    });
+  }
+
+  const cogentiaOptions = payload.cogentia && typeof payload.cogentia === "object" ? payload.cogentia : {};
+  const metadata = payload.metadata && typeof payload.metadata === "object" ? payload.metadata : {};
+  const pack = await contextPack(ctx, query, {
+    repo: String(cogentiaOptions.repo || metadata.repo || "all"),
+    budget: boundedInteger(cogentiaOptions.budget || metadata.budget, DEFAULT_CONTEXT_BUDGET, 256, MAX_CONTEXT_BUDGET),
+    limit: boundedInteger(cogentiaOptions.limit || metadata.limit, 8, 1, 20),
+    view,
+    mode: String(cogentiaOptions.mode || metadata.mode || "hybrid"),
+  });
+  if (!pack.ok) {
+    return daemonJson(res, contextErrorStatus(pack), {
+      error: {
+        type: "context_error",
+        message: pack.error || "Context retrieval failed",
+      },
+      cogentia_context: { ok: false, query, error: pack.error || "context_error" },
+    });
+  }
+
+  const visibleModel = String(payload.model || "cogentia-corpus");
+  const routerModel = process.env.COGENTIA_CHAT_MODEL
+    || (visibleModel === "cogentia" || visibleModel === "cogentia-corpus" ? "magistral" : visibleModel);
+  const routerPayload = {
+    ...payload,
+    model: routerModel,
+    stream: false,
+    messages: buildGroundedChatMessages(messages, pack),
+  };
+  delete routerPayload.cogentia;
+  delete routerPayload.metadata;
+
+  const routed = await createAiRouterClient().chatCompletions(routerPayload);
+  if (!routed.ok) {
+    return daemonJson(res, 502, {
+      error: {
+        type: routed.error || "ai_router_error",
+        message: routed.message || "AI router failed",
+      },
+      cogentia_context: summarizePackForChat(pack),
+    });
+  }
+
+  const response = normalizeChatCompletion(routed.body, {
+    model: visibleModel,
+    context: summarizePackForChat(pack),
+  });
+  if (payload.stream === true) return streamChatCompletion(res, response);
+  return daemonJson(res, 200, response);
+}
+
+function buildGroundedChatMessages(messages, pack) {
+  return [
+    {
+      role: "system",
+      content: [
+        "You are Cogentia's corpus agent.",
+        "Answer the user's question using the supplied Cogentia context.",
+        "Cite source_id values in square brackets when making corpus-grounded claims.",
+        "If the supplied context is insufficient, say what is missing.",
+        "Do not invent private or unprovided context.",
+      ].join("\n"),
+    },
+    {
+      role: "system",
+      content: contextPackMarkdown(pack),
+    },
+    ...messages.map(message => ({
+      role: ["system", "user", "assistant", "tool"].includes(message?.role) ? message.role : "user",
+      content: typeof message?.content === "string" ? message.content : JSON.stringify(message?.content ?? ""),
+    })),
+  ];
+}
+
+function normalizeChatCompletion(body, options = {}) {
+  const now = Math.floor(Date.now() / 1000);
+  const completion = body && typeof body === "object" ? body : {};
+  const id = completion.id || `chatcmpl_cogentia_${sha256(`${now}:${options.context?.pack_hash || ""}`).slice(0, 16)}`;
+  const choices = Array.isArray(completion.choices) && completion.choices.length
+    ? completion.choices
+    : [{ index: 0, message: { role: "assistant", content: extractAssistantContent(completion) }, finish_reason: "stop" }];
+  return {
+    ...completion,
+    id,
+    object: "chat.completion",
+    created: Number(completion.created || now),
+    model: options.model || completion.model || "cogentia-corpus",
+    choices,
+    cogentia_context: options.context,
+  };
+}
+
+function extractAssistantContent(completion) {
+  return String(
+    completion?.choices?.[0]?.message?.content
+    || completion?.choices?.[0]?.text
+    || completion?.content
+    || ""
+  );
+}
+
+function summarizePackForChat(pack) {
+  return {
+    ok: true,
+    query: pack.query,
+    pack_hash: pack.pack_hash,
+    index_hash: pack.index_hash,
+    retrieval_policy_version: pack.retrieval_policy_version,
+    source_ids: pack.sources.map(source => source.source_id),
+    sources: pack.sources,
+    warnings: pack.warnings,
+  };
+}
+
+function streamChatCompletion(res, response) {
+  daemonSse(res);
+  const choice = response.choices?.[0] || {};
+  const content = String(choice.message?.content || choice.text || "");
+  const base = {
+    id: response.id,
+    object: "chat.completion.chunk",
+    created: response.created,
+    model: response.model,
+  };
+  writeSse(res, {
+    ...base,
+    choices: [{ index: 0, delta: { role: "assistant" }, finish_reason: null }],
+    cogentia_context: response.cogentia_context,
+  });
+  for (const chunk of chunkText(content, 240)) {
+    writeSse(res, {
+      ...base,
+      choices: [{ index: 0, delta: { content: chunk }, finish_reason: null }],
+    });
+  }
+  writeSse(res, {
+    ...base,
+    choices: [{ index: 0, delta: {}, finish_reason: choice.finish_reason || "stop" }],
+  });
+  res.write("data: [DONE]\n\n");
+  res.end();
+}
+
+function writeSse(res, value) {
+  res.write(`data: ${JSON.stringify(value)}\n\n`);
+}
+
+function chunkText(text, maxChars) {
+  const chunks = [];
+  let rest = String(text || "");
+  while (rest.length > maxChars) {
+    let index = rest.lastIndexOf(" ", maxChars);
+    if (index < Math.floor(maxChars / 2)) index = maxChars;
+    chunks.push(rest.slice(0, index));
+    rest = rest.slice(index).trimStart();
+  }
+  if (rest) chunks.push(rest);
+  return chunks;
+}
+
+function lastUserMessage(messages) {
+  for (let index = messages.length - 1; index >= 0; index--) {
+    const message = messages[index];
+    if (message?.role === "user" && typeof message.content === "string" && message.content.trim()) return message.content.trim();
+  }
+  return "";
 }
 
 function daemonStatus(view = PUBLIC_VIEW) {
@@ -1148,7 +1346,7 @@ function daemonRepoState(repo, view = PUBLIC_VIEW) {
 function daemonHeaders(res, extra = {}) {
   const headers = {
     "Content-Type": "application/json; charset=utf-8",
-    "Access-Control-Allow-Methods": res?.cogentiaView === FULL_VIEW ? "GET, POST, OPTIONS" : "GET, OPTIONS",
+    "Access-Control-Allow-Methods": (res?.cogentiaView === FULL_VIEW || res?.cogentiaPublicPostAllowed) ? "GET, POST, OPTIONS" : "GET, OPTIONS",
     "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Cogentia-Entry, X-Cogentia-Admin-Token",
     "Cache-Control": "no-store",
     "X-Content-Type-Options": "nosniff",
@@ -1168,6 +1366,40 @@ function daemonJson(res, status, body, extraHeaders = {}) {
 function daemonText(res, status, body, contentType) {
   res.writeHead(status, daemonHeaders(res, { "Content-Type": contentType }));
   res.end(body.endsWith("\n") ? body : `${body}\n`);
+}
+
+function daemonSse(res) {
+  res.writeHead(200, daemonHeaders(res, {
+    "Content-Type": "text/event-stream; charset=utf-8",
+    "Connection": "keep-alive",
+  }));
+}
+
+function readJsonRequestBody(req, options = {}) {
+  const maxBytes = Number(options.maxBytes || 1024 * 1024);
+  return new Promise((resolve, reject) => {
+    let body = "";
+    let bytes = 0;
+    req.setEncoding("utf8");
+    req.on("data", chunk => {
+      bytes += Buffer.byteLength(chunk, "utf8");
+      if (bytes > maxBytes) {
+        reject(new Error("request_body_too_large"));
+        req.destroy();
+        return;
+      }
+      body += chunk;
+    });
+    req.on("end", () => {
+      if (!body.trim()) return resolve({});
+      try {
+        resolve(JSON.parse(body));
+      } catch {
+        reject(new Error("invalid_json"));
+      }
+    });
+    req.on("error", reject);
+  });
 }
 
 function daemonRequestView(req, url) {
