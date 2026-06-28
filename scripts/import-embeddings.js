@@ -25,6 +25,7 @@ function listResultFiles() {
   }
   return fs.readdirSync(EMBEDDINGS_RESULT_DIR)
     .filter(f => f.startsWith("embeddings_result_") && f.endsWith(".json"))
+    .filter(f => !f.endsWith("_import.json") && !f.endsWith("_imported.json"))
     .map(f => path.join(EMBEDDINGS_RESULT_DIR, f));
 }
 

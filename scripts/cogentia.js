@@ -1629,7 +1629,7 @@ async function cmdEmbeddings(sub) {
         profile: valueFlag("--profile") || null,
         envFile: valueFlag("--env-file") || null,
       });
-      return output(result, result.ok ? formatEmbeddingContinuation(result) : formatEmbeddingsIndex(result));
+      return output(result, result.continuation ? formatEmbeddingContinuation(result) : formatEmbeddingsIndex(result));
     }
     case "store": {
       // Store embeddings provided by external agent (after continuation resolution)
@@ -5483,9 +5483,23 @@ async function indexEmbeddings(ctx, options = {}) {
     const force = Boolean(options.force);
     const embeddingProfile = resolveEmbeddingProfile(ctx, options);
     const targetProvider = embeddingProfile.provider && embeddingProfile.provider !== "unknown" ? embeddingProfile.provider : null;
+    const targetModel = embeddingProfile.model_name && embeddingProfile.model_name !== "unspecified" ? embeddingProfile.model_name : null;
 
     const repoClause = repoFilter === "all" ? "" : "AND c.repo = ?";
     const publicClause = view === FULL_VIEW ? "" : "AND c.searchable_public = 1";
+    const existingEmbeddingClause = targetProvider && !force
+      ? `AND NOT EXISTS (
+          SELECT 1 FROM embeddings e
+          WHERE e.chunk_id = c.id
+            AND e.provider = ?
+            ${targetModel ? "AND e.model_name = ?" : ""}
+        )`
+      : "";
+    const queryParams = [
+      ...(targetProvider && !force ? [targetProvider, ...(targetModel ? [targetModel] : [])] : []),
+      ...(repoFilter !== "all" ? [repoFilter] : []),
+      limit,
+    ];
 
     const chunksToEmbed = db.prepare(`
       SELECT c.id, c.repo, c.path, c.start_line, c.end_line, c.text, c.content_hash
@@ -5493,26 +5507,25 @@ async function indexEmbeddings(ctx, options = {}) {
       WHERE c.text IS NOT NULL AND c.text != ''
         AND c.text != 'null'
         ${publicClause}
+        ${existingEmbeddingClause}
         ${repoClause}
       ORDER BY c.repo, c.path, c.start_line
       LIMIT ?
-    `).all(...(repoFilter !== "all" ? [repoFilter, limit] : [limit]));
+    `).all(...queryParams);
 
-    // Filter out chunks that already have embeddings from the target provider
-    // Deduplication is per-provider: multiple providers can embed the same chunk
-    // The UNIQUE(chunk_id, provider, model_name) constraint prevents true duplicates
-    let existingChunkIds = new Set();
-    if (targetProvider) {
-      // Only exclude chunks already embedded by this specific provider
-      existingChunkIds = new Set(
-        db.prepare("SELECT chunk_id FROM embeddings WHERE provider = ?").all(targetProvider).map(r => r.chunk_id)
-      );
-    }
-    // When targetProvider is null, don't exclude any chunks - let each provider embed independently
-
-    const toProcess = chunksToEmbed.filter(c => force || !existingChunkIds.has(c.id));
+    const toProcess = chunksToEmbed;
 
     db.close();
+
+    if (!toProcess.length) {
+      return {
+        ok: true,
+        indexed: 0,
+        skipped: 0,
+        total: 0,
+        message: "No chunks require embeddings.",
+      };
+    }
 
     // Emit a continuation for the external agent
     const chunksData = toProcess.map(c => ({
