@@ -492,14 +492,34 @@ node scripts/cogentia.js classify verify --json
 
 Use this when the corpus has grown and navigation depends on consistent metadata. The classifier is deterministic and idempotent: after a clean apply, a fresh plan should report no changes, no conflicts, and no ambiguous cases.
 
-### 6.4 Find documents that still need judgment
+### 6.4 Build semantic embeddings by continuation
+
+```bash
+node scripts/cogentia.js embeddings index --provider openai --env-file ..\inseme\.env --json
+node scripts/cogentia.js continuation inspect <id> --json
+node scripts/cogentia.js embeddings store embeddings-result.json
+```
+
+`embeddings index` does not call OpenAI or any other provider. It emits a resumable continuation that contains chunks, the selected embedding profile, and credential-location hints such as `OPENAI_API_KEY` and an optional `.env` path. Secret values are not read or serialized by `cogentia.js`.
+
+Profile resolution is deliberately externalizable:
+
+- `--profile <name>` selects an embedding profile;
+- `--provider <name>` selects or infers a provider, such as `openai` or `magistral`;
+- `--env-file <path>` tells the external continuation resolver where it may load API-key environment variables;
+- `COGENTIA_EMBEDDINGS_PROFILE`, `COGENTIA_EMBEDDINGS_PROVIDER`, and `COGENTIA_EMBEDDINGS_ENV_FILE` provide the same hints without putting local paths in the committed registry;
+- `.cogentia.json` may define `embeddings.default_profile` and `embeddings.profiles` for shared, non-secret defaults.
+
+The continuation path is intentional for indexing. Long embedding runs can be resumed, audited, retried, or delegated without adding a direct provider dependency to the CLI.
+
+### 6.5 Find documents that still need judgment
 
 ```bash
 node scripts/cogentia.js docs judgments all
 node scripts/cogentia.js docs judgments all --emit-continuations
 ```
 
-### 6.5 Audit privacy in public view
+### 6.6 Audit privacy in public view
 
 ```bash
 node scripts/cogentia.js corpus privacy --view public --json
@@ -507,7 +527,7 @@ node scripts/cogentia.js corpus privacy --view public --json
 
 Use this after changing visibility policies, adding a private repo, or refreshing generated links.
 
-### 6.6 Hand off a decision explicitly
+### 6.7 Hand off a decision explicitly
 
 ```bash
 node scripts/cogentia.js continuation emit --kind judgment --title "Classify X" --question "..."

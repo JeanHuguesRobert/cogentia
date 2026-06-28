@@ -138,6 +138,9 @@ All published documents live in `research/` and are catalogued in [`research/ind
   * `continuation emit` — create a typed external judgment request.
   * `continuation list` / `inspect` — inspect active or historical requests.
   * `continuation resolve` / `resume` / `cancel` — record the agent or human decision without embedding that judgment inside the mechanical command.
+- **Semantic embeddings**
+  * `embeddings index` — emit a resumable continuation for chunk embeddings; `--profile`, `--provider`, and `--env-file` only describe the external resolver's model and credential location.
+  * `embeddings store` and `embeddings search-with` — resume the pipeline with embeddings supplied by a human, agent, or local service.
 - **GitHub issue packets**
   * `issues list <repo>` — read live GitHub issues for a registered repository or explicit `owner/name`.
   * `issues packet <repo> <number>` — export one issue as a read-only `cogentia.issue_continuation.v1` packet.

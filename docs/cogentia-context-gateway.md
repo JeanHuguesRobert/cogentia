@@ -148,7 +148,11 @@ The progression is deliberately separate:
 
 Adding non-Markdown parsers or embeddings requires an explicit policy version.
 Embeddings should be cached by content hash, model, dimensions, and embedding
-policy version. No AI provider is called by Phase 1.
+policy version. No AI provider is called by Phase 1. When semantic embeddings
+are prepared, `cogentia.js embeddings index` emits a continuation with the
+embedding profile and credential-location hints only; the external resolver
+loads any `.env` file, calls the provider, and returns embeddings through
+`embeddings store`.
 
 ## Verification
 
