@@ -18,6 +18,7 @@ import { createHash, randomBytes, timingSafeEqual } from "node:crypto";
 import { pathToFileURL } from "node:url";
 import { DAEMON_PLUGINS, DAEMON_PLUGIN_ROUTES, loadDaemonPlugins, dispatchPluginRoute } from "./daemon_plugins/registry.js";
 import { generateOperiumEmbeddingsReport } from "./lib/operium-embeddings.js";
+import { aiRouterHealth } from "./lib/ai-router-client.js";
 
 const VERSION = "2.4.0";
 const CONFIG_FILE = ".cogentia.json";
@@ -110,6 +111,7 @@ const PUBLIC_DAEMON_GET_ROUTES = new Set([
   "/api/context/doc",
   "/api/context/lines",
   "/api/context/explain",
+  "/api/agent/health",
 ]);
 const daemonRateLimits = new Map();
 
@@ -1049,12 +1051,54 @@ async function handleDaemonRequest(req, res) {
     const result = await contextExplain(effectiveCtx, url.searchParams.get("result_id") || "", view);
     return daemonJson(res, result.ok ? 200 : contextErrorStatus(result), result);
   }
+  if (req.method === "GET" && url.pathname === "/api/agent/health") {
+    return daemonJson(res, 200, await cogentiaAgentHealth(view));
+  }
   return daemonJson(res, 404, {
     ok: false,
     error: "not_found",
     path: url.pathname,
   });
 }
+
+async function cogentiaAgentHealth(view = PUBLIC_VIEW) {
+  try {
+    const ai_router = await aiRouterHealth();
+    return {
+      ok: true,
+      service: "cogentia-agent-gateway",
+      public: true,
+      version: VERSION,
+      ai_router: view === FULL_VIEW ? ai_router : sanitizeAiRouterHealth(ai_router),
+    };
+  } catch (error) {
+    return {
+      ok: false,
+      service: "cogentia-agent-gateway",
+      public: true,
+      version: VERSION,
+      ai_router: {
+        ok: false,
+        available: false,
+        error: "ai_router_config_error",
+        ...(view === FULL_VIEW ? { message: error.message } : {}),
+      },
+    };
+  }
+}
+
+function sanitizeAiRouterHealth(health) {
+  return {
+    ok: Boolean(health.ok),
+    available: Boolean(health.available),
+    service: health.service || "ai-router",
+    status: Number(health.status || 0),
+    router: health.router ? { loopback: Boolean(health.router.loopback) } : undefined,
+    capabilities: health.capabilities || {},
+    error: health.error || undefined,
+  };
+}
+
 function daemonStatus(view = PUBLIC_VIEW) {
   const status = {
     ok: true,
