@@ -168,6 +168,8 @@ returns an incompatible vector, `hybrid` falls back to keyword search and
 ```bash
 node scripts/cogentia.js index status --json
 node scripts/cogentia.js index search "autonomie de capacité" --json
+node scripts/cogentia.js agent health --json
+node scripts/cogentia.js agent health --check-query --json
 node scripts/test-context-gateway.js
 ```
 

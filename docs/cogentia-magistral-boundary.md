@@ -127,6 +127,11 @@ to keyword retrieval when the router embedding endpoint is unavailable or
 incompatible, so a missing remote provider degrades search quality rather than
 breaking corpus access.
 
+Use `node scripts/cogentia.js agent health --check-query --json` for the narrow
+end-to-end diagnostic. The plain health check should only verify configuration
+and advertised capabilities; the `--check-query` form is the explicit operation
+that spends one query embedding request and verifies returned dimensions.
+
 ## Local Profile
 
 Local developer machine:
@@ -183,6 +188,7 @@ The first shared base is:
 
 - `scripts/lib/ai-router-client.js`;
 - `GET /api/agent/health`;
+- `node scripts/cogentia.js agent health`;
 - tests with a mock OpenAI-compatible router.
 
 The first conversational slice adds:

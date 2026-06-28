@@ -133,6 +133,20 @@ try {
     const askBody = JSON.parse(askJson.stdout);
     assert.equal(askBody.ok, true);
     assert.equal(askBody.answer, "mock answer");
+
+    const agentHealth = await execFileAsync(process.execPath, [
+      "scripts/cogentia.js",
+      "--json",
+      "agent",
+      "health",
+      "--router-url",
+      routerBase,
+      "--check-query",
+    ], { cwd: process.cwd(), maxBuffer: 1024 * 1024 });
+    const agentHealthBody = JSON.parse(agentHealth.stdout);
+    assert.equal(agentHealthBody.ok, true);
+    assert.equal(agentHealthBody.query_embedding.ok, true);
+    assert.equal(agentHealthBody.query_embedding.actual_dimensions, agentHealthBody.query_embedding.expected_dimensions);
   } finally {
     daemon.kill();
   }

@@ -192,6 +192,8 @@ Tutorial:
 
 Core commands:
   agent start              Read-only session start summary for human and AI agents.
+  agent health             Check context index, embedding target and AI router.
+                           Flags: --router-url <url> --check-query [--query <text>]
   corpus plan              Read-only plan of generated navigation changes.
   corpus apply             Apply generated navigation changes from a fresh plan.
   corpus verify            Verify generated views, gaps and git drift.
@@ -862,8 +864,11 @@ function cmdAgent(sub) {
   switch (sub) {
     case "start":
       return cmdAgentStart();
+    case "health":
+    case "doctor":
+      return cmdAgentHealth();
     default:
-      throw new Error(`Unknown agent subcommand "${sub}". Use start.`);
+      throw new Error(`Unknown agent subcommand "${sub}". Use start or health.`);
   }
 }
 
@@ -898,6 +903,70 @@ function cmdAgentStart() {
     recommended_next_actions: agentStartRecommendations({ plan, gaps, privacy, continuations, git, trail_lint, worktree }),
   };
   output(result, formatAgentStart(result));
+}
+
+async function cmdAgentHealth() {
+  const routerUrl = valueFlag("--router-url");
+  const checkQuery = takeFlag("--check-query") || takeFlag("--smoke");
+  const query = valueFlag("--query") || "autonomie de capacité";
+  if (routerUrl) process.env.COGENTIA_AI_ROUTER_URL = normalizeDaemonClientUrl(routerUrl).toString();
+  const ctx = loadContext();
+  const context = await contextHealth(ctx);
+  const ai_router = await aiRouterHealth().catch(error => ({
+    ok: false,
+    available: false,
+    service: "ai-router",
+    error: "ai_router_config_error",
+    message: error.message,
+  }));
+  const target = context.embedding_target;
+  let query_embedding = {
+    checked: false,
+    ok: null,
+  };
+  if (checkQuery) {
+    if (!target) {
+      query_embedding = {
+        checked: true,
+        ok: false,
+        error: "no_embedding_target",
+        message: "No stored public corpus embedding target is available.",
+      };
+    } else {
+      const embedded = await createQueryEmbedding(query, target);
+      query_embedding = {
+        checked: true,
+        ok: Boolean(embedded.ok && embedded.embedding?.length === target.dimensions),
+        query,
+        expected_dimensions: target.dimensions,
+        actual_dimensions: Array.isArray(embedded.embedding) ? embedded.embedding.length : null,
+        error: embedded.ok ? null : embedded.error,
+        message: embedded.ok ? null : embedded.message,
+      };
+    }
+  }
+  const routerEmbeddings = Boolean(ai_router.capabilities?.embeddings);
+  const result = {
+    ok: Boolean(
+      context.index_available
+      && context.semantic_available
+      && ai_router.available
+      && (routerEmbeddings || query_embedding.ok)
+      && (!query_embedding.checked || query_embedding.ok)
+    ),
+    service: "cogentia-agent-health",
+    registry: ctx.configPath,
+    context: {
+      index_available: context.index_available,
+      modes: context.modes,
+      semantic_available: context.semantic_available,
+      embedding_target: target,
+    },
+    ai_router: sanitizeAiRouterHealth(ai_router),
+    query_embedding,
+    next_actions: agentHealthRecommendations({ context, ai_router, query_embedding }),
+  };
+  output(result, formatAgentHealth(result));
 }
 
 function cmdConsolidate() {
@@ -4514,6 +4583,22 @@ function agentStartRecommendations(state) {
   return actions;
 }
 
+function agentHealthRecommendations(state) {
+  const actions = [];
+  if (!state.context.index_available) actions.push("Build or update the Cogentia index before using retrieval.");
+  if (!state.context.semantic_available) actions.push("Populate stored corpus embeddings before semantic retrieval can run.");
+  if (!state.ai_router.available) actions.push("Start Magistral or set COGENTIA_AI_ROUTER_URL to a reachable AI router.");
+  if (state.ai_router.available && !state.ai_router.capabilities?.embeddings && !state.query_embedding.ok) {
+    actions.push("Enable Magistral embeddings or point Cogentia at a router with /v1/embeddings.");
+  }
+  if (state.query_embedding.checked && !state.query_embedding.ok) {
+    actions.push("Run a query embedding smoke test after configuring a matching provider, model and dimensions.");
+  }
+  if (!state.query_embedding.checked) actions.push("Run again with --check-query for a one-query embedding dimension smoke test.");
+  if (!actions.length) actions.push("Semantic retrieval path is ready for hybrid corpus queries.");
+  return actions;
+}
+
 function gitHeadFile(cwd, relPath) {
   const pathArg = String(relPath).replace(/\\/g, "/");
   try {
@@ -7114,6 +7199,30 @@ function formatAgentStart(result) {
   lines.push("");
   lines.push("Recommended next actions:");
   for (const action of result.recommended_next_actions) lines.push(`- ${action}`);
+  return lines.join("\n");
+}
+
+function formatAgentHealth(result) {
+  const lines = ["\nAgent health\n"];
+  lines.push(result.ok ? "Status: ready" : "Status: attention needed");
+  lines.push(`Registry: ${result.registry}`);
+  lines.push(`Index available: ${result.context.index_available ? "yes" : "no"}`);
+  lines.push(`Modes: ${result.context.modes.join(", ")}`);
+  lines.push(`Semantic target: ${result.context.semantic_available && result.context.embedding_target
+    ? `${result.context.embedding_target.provider}/${result.context.embedding_target.model_name} (${result.context.embedding_target.dimensions}d)`
+    : "none"}`);
+  lines.push(`AI router: ${result.ai_router.available ? "available" : "unavailable"} (${result.ai_router.service || "ai-router"})`);
+  lines.push(`Router embeddings: ${result.ai_router.capabilities?.embeddings ? "yes" : "no"}`);
+  if (result.query_embedding.checked) {
+    lines.push(`Query embedding: ${result.query_embedding.ok ? "ok" : "failed"}`
+      + (result.query_embedding.actual_dimensions ? ` (${result.query_embedding.actual_dimensions}d)` : ""));
+    if (result.query_embedding.error) lines.push(`Query embedding error: ${result.query_embedding.error}`);
+  } else {
+    lines.push("Query embedding: not checked");
+  }
+  lines.push("");
+  lines.push("Next actions:");
+  for (const action of result.next_actions) lines.push(`- ${action}`);
   return lines.join("\n");
 }
 
