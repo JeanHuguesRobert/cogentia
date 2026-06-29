@@ -59,13 +59,14 @@ function importPendingResults() {
 function usage() {
   console.log(`
 Usage:
-  node scripts/embedding-step.js [--id <continuation_id>] [--max-chunks <n>] [--max-batches <n>] [--no-import] [--no-monitor]
+  node scripts/embedding-step.js [--id <continuation_id>] [--fulfill-continuation] [--max-chunks <n>] [--max-batches <n>] [--no-import] [--no-monitor]
 
-Runs one resumable embedding step:
+Runs one continuation-safe embedding step:
   1. import pending result files first, if any exist
-  2. otherwise generate a bounded batch through smart-embed-worker
-  3. validate and import the generated result
-  4. print the embedding monitor
+  2. otherwise print the active continuation handoff without calling intelligent services
+  3. with --fulfill-continuation, run the bounded continuation worker
+  4. validate and import generated result files
+  5. print the embedding monitor
 
 Defaults to --max-chunks 1 to keep quota use explicit and small.
 `);
@@ -82,6 +83,7 @@ function main() {
     id: optionValue(args, "--id", ""),
     maxChunks: integerOption(args, "--max-chunks", 1, 0, 1000000),
     maxBatches: integerOption(args, "--max-batches", 0, 0, 10000),
+    fulfillContinuation: args.includes("--fulfill-continuation"),
     importResults: !args.includes("--no-import"),
     monitor: !args.includes("--no-monitor"),
   };
@@ -94,8 +96,13 @@ function main() {
   const alreadyPending = pendingResultFiles();
   if (alreadyPending.length) {
     console.log(`\nFound ${alreadyPending.length} pending result file(s); importing before generating more embeddings.`);
-  } else {
+  } else if (options.fulfillContinuation) {
+    console.log("\nFulfillment enabled: running the continuation worker for a bounded batch.");
     execNode(buildWorkerArgs(options));
+  } else {
+    console.log("\nNo pending result files.");
+    console.log("Direct intelligent-service fulfillment is disabled by default.");
+    console.log("Hand this continuation to an authorized continuation worker, or rerun with --fulfill-continuation from that worker context.");
   }
 
   const pending = pendingResultFiles();

@@ -171,6 +171,8 @@ function main() {
   if (latestActive && pendingResults.length === 0) {
     console.log("\nNext safe step:");
     console.log(`  node scripts/embedding-step.js --id ${latestActive.id}`);
+    console.log("\nAuthorized continuation-worker fulfillment:");
+    console.log(`  node scripts/embedding-step.js --id ${latestActive.id} --fulfill-continuation`);
   } else if (cont && cont.status === "resolved") {
     console.log("\n✅ Continuation resolved!");
   } else if (pendingResults.length > 0) {

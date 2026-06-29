@@ -25,7 +25,12 @@ try {
   fs.writeFileSync(registryPath, `${JSON.stringify({ repos: [] }, null, 2)}\n`, "utf8");
   fs.writeFileSync(path.join(continuationsDir, `${continuationId}.json`), `${JSON.stringify(testContinuation(), null, 2)}\n`, "utf8");
 
-  const first = await runStep();
+  const defaultStep = await runStep();
+  assert.match(defaultStep.stdout, /Direct intelligent-service fulfillment is disabled by default/);
+  assert.doesNotMatch(defaultStep.stdout, /smart-embed-worker\.js run/);
+  assert.equal(listResultFiles().length, 0);
+
+  const first = await runStep(["--fulfill-continuation"]);
   assert.match(first.stdout, /Embedding step/);
   assert.match(first.stdout, /smart-embed-worker\.js run/);
   assert.match(first.stdout, /Pending result file\(s\) left unimported/);
@@ -51,7 +56,7 @@ try {
   fs.rmSync(tempRoot, { recursive: true, force: true });
 }
 
-function runStep() {
+function runStep(extraArgs = []) {
   return execFileAsync(process.execPath, [
     "scripts/embedding-step.js",
     "--id",
@@ -60,6 +65,7 @@ function runStep() {
     "1",
     "--no-import",
     "--no-monitor",
+    ...extraArgs,
   ], {
     cwd: process.cwd(),
     env: {

@@ -24,7 +24,9 @@ try {
   assert.equal(health.service, "cogentia-context-gateway");
   assert.equal(health.write_routes_public, false);
   assert.deepEqual(health.modes, ["keyword", "hybrid", "semantic"]);
-  assert.equal(health.semantic_requires_ai_router_embeddings, true);
+  assert.equal(health.semantic_requires_ai_router_embeddings, false);
+  assert.equal(health.semantic_requires_continuation, true);
+  assert.equal(health.direct_query_embeddings_enabled, false);
   const healthResponse = await fetch(`${base}/api/context/health`, { headers: { Origin: "https://untrusted.example" } });
   assert.equal(healthResponse.headers.has("access-control-allow-origin"), false);
 
@@ -32,13 +34,13 @@ try {
   assert.equal(Object.hasOwn(indexStatus, "path"), false);
   assert.equal(Object.hasOwn(indexStatus, "registry"), false);
 
-  const search = await getJson("/api/context/search?q=autonomie%20de%20capacit%C3%A9&limit=3");
+  const search = await getJson("/api/context/search?q=Cogentia&limit=3");
   assert.equal(search.ok, true);
   assert.ok(search.results.length > 0);
   assert.match(search.results[0].id, /^[^:]+:.+#L\d+-L\d+$/);
   assert.equal(JSON.stringify(search).includes(`${path.parse(root).root.replace(/\\/g, "\\\\")}`), false);
 
-  const packPath = "/api/context/pack?q=autonomie%20de%20capacit%C3%A9&budget=8000&limit=3";
+  const packPath = "/api/context/pack?q=Cogentia&budget=8000&limit=3";
   const firstPack = await getJson(packPath);
   const secondPack = await getJson(packPath);
   assert.equal(firstPack.pack_hash, secondPack.pack_hash);

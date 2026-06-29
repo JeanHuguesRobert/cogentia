@@ -1758,6 +1758,7 @@ function contextErrorStatus(result) {
   if (["missing_query", "missing_ref", "invalid_range", "invalid_mode"].includes(result.error)) return 400;
   if (["document_not_found", "result_not_found"].includes(result.error)) return 404;
   if (["forbidden_document", "full_view_not_authorized"].includes(result.error)) return 403;
+  if (result.error === "semantic_continuation_required") return result.continuation_emitted ? 202 : 409;
   if (result.error === "semantic_not_available") return 501;
   return 503;
 }
@@ -6951,6 +6952,36 @@ async function contextSemanticSearch(ctx, q, options = {}) {
   const limit = boundedInteger(options.limit, 10, 1, 50);
   const target = await preferredContextEmbeddingTarget(ctx, { view, repo });
   if (!target.ok) return { ok: false, error: target.error, query: q, mode: options.mode || "semantic", warnings: target.warnings || [] };
+  if (!directQueryEmbeddingsAllowed(options)) {
+    const continuation = options.emitContinuation
+      ? emitSemanticSearchContinuation(ctx, q, {
+        view,
+        repo,
+        limit,
+        mode: options.mode || "semantic",
+        target,
+      })
+      : null;
+    return {
+      ok: false,
+      error: "semantic_continuation_required",
+      query: q,
+      mode: options.mode || "semantic",
+      view,
+      continuation_required: true,
+      continuation_emitted: Boolean(continuation),
+      ...(continuation ? {
+        continuation: stripContinuationBody(continuation.continuation),
+        path: continuation.path,
+      } : {}),
+      message: continuation
+        ? "Semantic query embedding requires continuation fulfillment; continuation emitted."
+        : "Semantic query embedding requires continuation fulfillment. Use `embeddings search` or another explicit continuation command to emit the request.",
+      warnings: [
+        "Direct query embedding is disabled; an external continuation worker must provide the query embedding.",
+      ],
+    };
+  }
   const queryEmbedding = await createQueryEmbedding(q, target);
   if (!queryEmbedding.ok) {
     return {
@@ -6990,6 +7021,52 @@ async function contextSemanticSearch(ctx, q, options = {}) {
       ...result.warnings,
     ],
   };
+}
+
+function directQueryEmbeddingsAllowed(options = {}) {
+  return Boolean(
+    options.allowDirectQueryEmbedding
+    || parseBoolean(process.env.COGENTIA_ALLOW_DIRECT_QUERY_EMBEDDINGS)
+  );
+}
+
+function emitSemanticSearchContinuation(ctx, q, options = {}) {
+  const target = options.target || {};
+  const provider = target.provider || DEFAULT_EMBEDDING_PROFILES.openai.provider;
+  const modelName = target.model_name || DEFAULT_EMBEDDING_PROFILES.openai.model_name;
+  const dimensions = Number(target.dimensions || DEFAULT_EMBEDDING_PROFILES.openai.dimensions || 0) || null;
+  const embeddingProfile = {
+    provider,
+    model_name: modelName,
+    ...(dimensions ? { dimensions } : {}),
+  };
+  return emitContinuation(ctx, {
+    kind: "semantic-search",
+    title: `Semantic search for "${q}"`,
+    question: `Generate a vector embedding for the query "${q}" using ${describeEmbeddingProfile(embeddingProfile)} and return it for semantic similarity search against ${target.count || "the"} indexed chunks.`,
+    priority: 1,
+    dedupe_key: `semantic-${q.slice(0, 50)}-${provider}-${modelName}-${dimensions || "auto"}`,
+    subject: { repo: options.repo || "all", path: "" },
+    context: {
+      query: q,
+      view: options.view || PUBLIC_VIEW,
+      repo: options.repo || "all",
+      limit: options.limit || 10,
+      mode: options.mode || "semantic",
+      indexed_count: target.count || null,
+      embedding_profile: embeddingProfile,
+    },
+    expected_response: {
+      format: "json",
+      required: ["query_embedding", "model_name", "dimensions"],
+      schema: {
+        query_embedding: "number[]",
+        provider: "string",
+        model_name: "string",
+        dimensions: "integer",
+      },
+    },
+  });
 }
 
 async function preferredContextEmbeddingTarget(ctx, options = {}) {
@@ -7318,7 +7395,9 @@ async function contextHealth(ctx) {
     index_available: Boolean(status.built && status.ok),
     modes: ["keyword", "hybrid", "semantic"],
     semantic_available: Boolean(semanticTarget.ok),
-    semantic_requires_ai_router_embeddings: true,
+    semantic_requires_ai_router_embeddings: directQueryEmbeddingsAllowed(),
+    semantic_requires_continuation: !directQueryEmbeddingsAllowed(),
+    direct_query_embeddings_enabled: directQueryEmbeddingsAllowed(),
     embedding_target: semanticTarget.ok ? {
       provider: semanticTarget.provider,
       model_name: semanticTarget.model_name,
