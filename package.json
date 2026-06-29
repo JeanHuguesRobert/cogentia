@@ -16,6 +16,8 @@
     "test:context": "node scripts/test-context-gateway.js",
     "test:ai-router": "node scripts/test-ai-router-client.js",
     "test:smart-embed": "node scripts/test-smart-embed-worker.js",
+    "test:embedding-step": "node scripts/test-embedding-step.js",
+    "embeddings:step": "node scripts/embedding-step.js",
     "embeddings:monitor": "node scripts/monitor-embeddings.js",
     "trace:import:chatgpt": "node trace/scripts/import_chatgpt_export.js"
   },
