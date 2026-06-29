@@ -170,7 +170,7 @@ function main() {
 
   if (latestActive && pendingResults.length === 0) {
     console.log("\nNext safe step:");
-    console.log(`  node scripts/smart-embed-worker.js run --id ${latestActive.id} --max-chunks 1`);
+    console.log(`  node scripts/embedding-step.js --id ${latestActive.id}`);
   } else if (cont && cont.status === "resolved") {
     console.log("\n✅ Continuation resolved!");
   } else if (pendingResults.length > 0) {
