@@ -498,6 +498,7 @@ Use this when the corpus has grown and navigation depends on consistent metadata
 node scripts/cogentia.js embeddings index --provider openai --env-file ..\inseme\.env --json
 node scripts/cogentia.js continuation inspect <id> --json
 node scripts/smart-embed-worker.js list
+node scripts/monitor-embeddings.js
 node scripts/smart-embed-worker.js run --dry-run --id <id> --max-chunks 1
 node scripts/smart-embed-worker.js run --id <id> --max-chunks 1
 node scripts/import-embeddings.js --dry-run
@@ -522,7 +523,7 @@ The helper scripts beside `cogentia.js` are continuation processors, not a secon
 - `smart-embed-worker.js` reads active `embeddings-index` continuations, loads the hinted `.env` only inside the worker, calls the selected profile through the configured AI router `/v1/embeddings` endpoint, and writes `embeddings_result_<id>.json`;
 - `import-embeddings.js` imports those result files through `cogentia.js embeddings store`;
 - `process-all-embeddings.js`, `batch-embeddings.js`, and `smart-batch-embeddings.js` orchestrate repeated continuation batches;
-- `monitor-embeddings.js` reports active embedding continuations and result files.
+- `monitor-embeddings.js` reports stored embeddings, active embedding continuations, pending/imported result files, and the next safe command.
 
 All of these scripts honor `COGENTIA_REGISTRY`, so corpus-wide runs can use the profile registry rather than the local Cogentia tool-repo registry. `smart-embed-worker.js list` and `run --dry-run` inspect active embedding continuations without requesting embeddings. A real `run` spends provider quota through Magistral or whichever AI-router endpoint is configured by `COGENTIA_AI_ROUTER_URL` or `MAGISTRAL_URL`.
 
