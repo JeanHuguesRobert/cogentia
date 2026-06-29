@@ -70,6 +70,7 @@ node scripts/cogentia.js corpus apply              # apply the fresh generated p
 node scripts/cogentia.js corpus verify --strict    # verify generated views, gaps and drift
 node scripts/cogentia.js git noise plan            # classify scratch/noise vs substantive edits
 node scripts/cogentia.js corpus commit-generated   # dry-run generated-only commit plan
+node scripts/cogentia.js index estimate            # estimate corpus size, policy, vectors and spend
 node scripts/cogentia.js index rebuild --json      # rebuild the local SQLite/FTS5 cache
 node scripts/cogentia.js daemon --port 8790        # start the local daemon
 node scripts/test-context-gateway.js                # verify public RAG and MCP boundaries
@@ -139,6 +140,7 @@ All published documents live in `research/` and are catalogued in [`research/ind
   * `continuation list` / `inspect` — inspect active or historical requests.
   * `continuation resolve` / `resume` / `cancel` — record the agent or human decision without embedding that judgment inside the mechanical command.
 - **Semantic embeddings**
+  * `index estimate` — no-spend estimate of indexable files, chunks, embedding tokens, vector storage, stable/workspace channels, and `.cogentia-index.yaml` policy effects.
   * `embeddings index` — emit a resumable continuation for chunk embeddings; `--profile`, `--provider`, and `--env-file` only describe the external resolver's model and credential location.
   * `embeddings store` and `embeddings search-with` — resume the pipeline with embeddings supplied by a human, agent, or local service.
   * `scripts/smart-embed-worker.js` and `scripts/import-embeddings.js` — process embedding continuations through the selected provider profile, then import the result through the CLI.

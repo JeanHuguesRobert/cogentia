@@ -129,7 +129,7 @@ This repository instantiates the **cognitive infrastructure layer** of the [DHIT
 | [Cogentia Local Daemon — Features Tutorial](../docs/daemon-features-tutorial.md) *(daemon feature walkthrough for local API and HTML UX)* | this repo | 2026-06-12 |
 | [Cogentia daemon & plugin tutorial](../docs/daemon-plugin-tutorial.md) *(plugin authoring and daemon extension note)* | this repo | 2026-06-12 |
 | [Cogentia Daemon Plugin API](../docs/plugins.md) *(local daemon plugin API reference)* | this repo | 2026-06-12 |
-| [Cogentia Index Layer v0.1](../docs/cogentia-index-layer.md) *(local SQLite/FTS5 cache for fast corpus search; Git and Markdown remain canonical)* | this repo | 2026-06-21 |
+| [Cogentia Index Layer v0.3](../docs/cogentia-index-layer.md) *(estimate-first retrieval index with policy files, stable/workspace channels, and local SQLite/FTS5 cache; Git and Markdown remain canonical)* | this repo | 2026-06-21 |
 | [Cogentia Context Gateway](../docs/cogentia-context-gateway.md) *(governed public Markdown RAG facade with deterministic context packs, citations and strict public/admin separation)* | this repo | 2026-06-23 |
 | [Cogentia MCP adapter](../docs/cogentia-mcp.md) *(stdio tools that retrieve through the daemon HTTP boundary and never access SQLite directly)* | this repo | 2026-06-23 |
 | [Cogentia and Magistral Boundary](../docs/cogentia-magistral-boundary.md) *(service boundary for corpus authority, model routing, AI-router APIs, embedding policy and local/public deployments)* | this repo | 2026-06-28 |
