@@ -58,6 +58,22 @@ try {
   assert.equal(partialResult.partial, true);
   assert.equal(partialResult.remaining_chunks, 1);
 
+  const importDryRun = await execFileAsync(process.execPath, [
+    "scripts/import-embeddings.js",
+    "--dry-run",
+  ], {
+    cwd: process.cwd(),
+    env: {
+      ...process.env,
+      COGENTIA_REGISTRY: registryPath,
+      COGENTIA_EMBEDDINGS_RESULTS_DIR: stateDir,
+    },
+    maxBuffer: 1024 * 1024,
+  });
+  assert.match(importDryRun.stdout, /Found 1 result files/);
+  assert.match(importDryRun.stdout, /Valid dry-run/);
+  assert.match(importDryRun.stdout, /Valid: 1 embeddings/);
+
   const activeContinuation = JSON.parse(fs.readFileSync(path.join(continuationsDir, `${continuationId}.json`), "utf8"));
   assert.equal(activeContinuation.status, "active");
   assert.equal(activeContinuation.context.chunks.length, 1);
