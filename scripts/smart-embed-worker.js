@@ -13,6 +13,7 @@ import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
 import { spawn } from "child_process";
+import { createAiRouterClient } from "./lib/ai-router-client.js";
 import {
   detectAvailableProviders,
   getProvider,
@@ -34,15 +35,55 @@ const COGENTIA_STATE_DIR = process.env.COGENTIA_STATE_DIR || path.join(REGISTRY_
 const CONTINUATIONS_DIR = process.env.CONTINUATIONS_DIR || path.join(COGENTIA_STATE_DIR, "continuations");
 const RESULTS_DIR = process.env.COGENTIA_EMBEDDINGS_RESULTS_DIR || COGENTIA_STATE_DIR;
 
-const MAX_CHARS_PER_CHUNK = 1500; // Safe limit for most models
-const MAX_CHARS_PER_BATCH = 10000; // Safe limit for batch
+const MAX_CHARS_PER_CHUNK = boundedInteger(process.env.COGENTIA_EMBEDDINGS_MAX_CHARS_PER_CHUNK, 30000, 1000, 200000);
+const MAX_CHARS_PER_BATCH = boundedInteger(process.env.COGENTIA_EMBEDDINGS_MAX_CHARS_PER_BATCH, 60000, 1000, 500000);
+const MAX_ITEMS_PER_BATCH = boundedInteger(process.env.COGENTIA_EMBEDDINGS_MAX_ITEMS_PER_BATCH, 64, 1, 2048);
 
 /**
  * Truncate text to safe length
  */
-function truncateText(text, maxLength) {
-  if (text.length <= maxLength) return text;
-  return text.substring(0, maxLength);
+function boundedInteger(value, fallback, min, max) {
+  const parsed = Number.parseInt(value, 10);
+  if (!Number.isFinite(parsed)) return fallback;
+  return Math.max(min, Math.min(parsed, max));
+}
+
+function preparedChunkText(chunk) {
+  const text = String(chunk.text || chunk.content || "");
+  if (text.length <= MAX_CHARS_PER_CHUNK) return text;
+  throw new Error(`chunk ${chunk.chunk_id || "unknown"} exceeds ${MAX_CHARS_PER_CHUNK} characters; re-chunk the index or raise COGENTIA_EMBEDDINGS_MAX_CHARS_PER_CHUNK`);
+}
+
+function buildTextBatches(chunks) {
+  const batches = [];
+  let current = [];
+  let currentChars = 0;
+
+  for (const chunk of chunks) {
+    const text = preparedChunkText(chunk);
+    const nextChars = currentChars + text.length;
+    const wouldOverflow = current.length
+      && (current.length >= MAX_ITEMS_PER_BATCH || nextChars > MAX_CHARS_PER_BATCH);
+    if (wouldOverflow) {
+      batches.push(current);
+      current = [];
+      currentChars = 0;
+    }
+    current.push({ chunk, text });
+    currentChars += text.length;
+  }
+
+  if (current.length) batches.push(current);
+  return batches;
+}
+
+function oversizedChunks(chunks) {
+  return chunks
+    .map(chunk => ({
+      chunk,
+      chars: String(chunk.text || chunk.content || "").length,
+    }))
+    .filter(item => item.chars > MAX_CHARS_PER_CHUNK);
 }
 
 /**
@@ -62,82 +103,16 @@ function readContinuation(id) {
   }
 }
 
-/**
- * Call OpenAI embeddings API
- */
-async function callOpenAIEmbeddings(apiKey, texts, model, dimensions) {
-  const body = { model, input: texts };
-  if (dimensions) body.dimensions = dimensions;
-  const response = await fetch("https://api.openai.com/v1/embeddings", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "Authorization": `Bearer ${apiKey}`,
-    },
-    body: JSON.stringify(body),
-  });
-
+async function callRouterEmbeddings(texts, model, dimensions) {
+  const baseUrl = process.env.COGENTIA_AI_ROUTER_URL || process.env.MAGISTRAL_URL || undefined;
+  const client = createAiRouterClient({ baseUrl });
+  const payload = { model, input: texts };
+  if (dimensions) payload.dimensions = dimensions;
+  const response = await client.embeddings(payload);
   if (!response.ok) {
-    const error = await response.text();
-    throw new Error(`OpenAI embeddings failed: ${response.status} ${error}`);
+    throw new Error(`${response.error || "ai_router_embeddings_failed"}: ${response.message || response.status}`);
   }
-
-  return await response.json();
-}
-
-/**
- * Call Magistral embeddings API
- */
-async function callMagistralEmbeddings(texts, model, dimensions) {
-  const magistralUrl = process.env.MAGISTRAL_URL || "http://127.0.0.1:8880";
-  const response = await fetch(`${magistralUrl}/v1/embeddings`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      model,
-      input: texts,
-      dimensions,
-    }),
-  });
-
-  if (!response.ok) {
-    const error = await response.text();
-    throw new Error(`Magistral embeddings failed: ${response.status} ${error}`);
-  }
-
-  return await response.json();
-}
-
-/**
- * Get API key from .env
- */
-function getApiKey(providerName) {
-  const provider = getProvider(providerName);
-  if (!provider || !provider.apiKeyEnv) return null;
-
-  // Try environment first
-  if (process.env[provider.apiKeyEnv]) {
-    return process.env[provider.apiKeyEnv];
-  }
-
-  // Try reading from .env files
-  const searchPaths = [
-    path.join(COGENTIA_DIR, ".env"),
-    path.join(COGENTIA_DIR, "..", "inseme", ".env"),
-    path.join(COGENTIA_DIR, "inseme", ".env"),
-  ];
-
-  for (const envPath of searchPaths) {
-    if (fs.existsSync(envPath)) {
-      const content = fs.readFileSync(envPath, "utf8");
-      const match = content.match(new RegExp(`^${provider.apiKeyEnv}=(.+)$`, "m"));
-      if (match) return match[1].trim();
-    }
-  }
-
-  return null;
+  return response.body;
 }
 
 function continuationProfile(continuation) {
@@ -211,38 +186,41 @@ async function generateEmbeddingsForProvider(providerInfo, chunks) {
   const dimensions = Number(profile.dimensions || modelInfo.dimensions || modelSpec.dimensions || 0) || null;
 
   console.log(`  📡 ${providerConfig.displayName}: ${modelInfo.id}${dimensions ? ` (${dimensions}d)` : ""}`);
+  console.log(`    Router: ${process.env.COGENTIA_AI_ROUTER_URL || process.env.MAGISTRAL_URL || "http://127.0.0.1:8880"}`);
 
   try {
-    let embeddingsResponse;
-    const texts = chunks.map(c => truncateText(c.text || c.content || "", MAX_CHARS_PER_CHUNK));
+    const batches = buildTextBatches(chunks);
+    const generated = [];
+    let receivedDimensions = 0;
+    console.log(`    Batches: ${batches.length} (max ${MAX_ITEMS_PER_BATCH} item(s), ${MAX_CHARS_PER_BATCH} chars)`);
 
-    // Call provider-specific API
-    if (provider === "openai") {
-      const apiKey = getApiKey("openai");
-      if (!apiKey) {
-        console.log(`    ⚠️  No API key found`);
+    for (let index = 0; index < batches.length; index++) {
+      const batch = batches[index];
+      const embeddingsResponse = await callRouterEmbeddings(batch.map(item => item.text), modelInfo.id, dimensions);
+      if (!embeddingsResponse.data || !Array.isArray(embeddingsResponse.data)) {
+        console.log(`    ❌ Invalid response`);
         return null;
       }
-      embeddingsResponse = await callOpenAIEmbeddings(apiKey, texts, modelInfo.id, dimensions);
-    } else if (provider === "magistral") {
-      embeddingsResponse = await callMagistralEmbeddings(texts, modelInfo.id, dimensions);
-    } else {
-      console.log(`    ⚠️  Provider ${provider} not implemented`);
-      return null;
+      if (embeddingsResponse.data.length !== batch.length) {
+        console.log(`    ❌ Response count mismatch: got ${embeddingsResponse.data.length}, expected ${batch.length}`);
+        return null;
+      }
+      for (let itemIndex = 0; itemIndex < batch.length; itemIndex++) {
+        generated.push({
+          chunk: batch[itemIndex].chunk,
+          embedding: embeddingsResponse.data[itemIndex]?.embedding || [],
+        });
+      }
+      receivedDimensions = embeddingsResponse.data[0]?.embedding?.length || receivedDimensions;
+      console.log(`    ✅ Batch ${index + 1}/${batches.length}: ${batch.length} embeddings`);
     }
 
-    if (!embeddingsResponse.data || !Array.isArray(embeddingsResponse.data)) {
-      console.log(`    ❌ Invalid response`);
-      return null;
-    }
-
-    const receivedDimensions = embeddingsResponse.data[0]?.embedding?.length || 0;
     if (dimensions && receivedDimensions !== dimensions) {
       console.log(`    ❌ Dimension mismatch: got ${receivedDimensions}, expected ${dimensions}`);
       return null;
     }
 
-    console.log(`    ✅ ${embeddingsResponse.data.length} embeddings`);
+    console.log(`    ✅ ${generated.length} embeddings`);
 
     // Return embeddings mapped to chunks
     return {
@@ -250,10 +228,10 @@ async function generateEmbeddingsForProvider(providerInfo, chunks) {
       modelId: modelInfo.id,
       dimensions: receivedDimensions || dimensions,
       policy: profile.policy || policyVersion(provider, modelInfo.id),
-      embeddings: chunks.map((chunk, index) => ({
-        chunk_id: chunk.chunk_id,
-        content_hash: chunk.content_hash,
-        embedding: embeddingsResponse.data[index]?.embedding || [],
+      embeddings: generated.map(item => ({
+        chunk_id: item.chunk.chunk_id,
+        content_hash: item.chunk.content_hash,
+        embedding: item.embedding,
       })),
     };
   } catch (error) {
@@ -265,7 +243,29 @@ async function generateEmbeddingsForProvider(providerInfo, chunks) {
 /**
  * Process a single continuation with all available providers
  */
-async function processContinuation(continuation) {
+function summarizeContinuation(continuation) {
+  const chunks = continuation.context?.chunks || [];
+  const profile = continuationProfile(continuation) || {};
+  const chars = chunks.reduce((sum, chunk) => sum + String(chunk.text || chunk.content || "").length, 0);
+  const oversized = oversizedChunks(chunks);
+  const eligible = oversized.length ? chunks.filter(chunk => String(chunk.text || chunk.content || "").length <= MAX_CHARS_PER_CHUNK) : chunks;
+  const batches = eligible.length ? buildTextBatches(eligible) : [];
+  return {
+    id: continuation.id,
+    chunks: chunks.length,
+    eligible_chunks: eligible.length,
+    oversized_chunks: oversized.length,
+    max_chunk_chars: oversized.reduce((max, item) => Math.max(max, item.chars), 0),
+    chars,
+    batches: batches.length,
+    provider: profile.provider || "auto",
+    model: profile.model_name || "auto",
+    dimensions: profile.dimensions || null,
+    router: process.env.COGENTIA_AI_ROUTER_URL || process.env.MAGISTRAL_URL || "http://127.0.0.1:8880",
+  };
+}
+
+async function processContinuation(continuation, options = {}) {
   console.log(`\n[Worker] Processing continuation: ${continuation.id}`);
   console.log(`  Chunks: ${continuation.context?.chunks?.length || 0}`);
 
@@ -273,6 +273,16 @@ async function processContinuation(continuation) {
   if (!chunks.length) {
     console.error(`  ❌ No chunks found`);
     return false;
+  }
+
+  if (options.dryRun) {
+    const summary = summarizeContinuation(continuation);
+    console.log(`  Dry run: ${summary.batches} batch(es), ${summary.chars} character(s), ${summary.provider}/${summary.model}${summary.dimensions ? ` (${summary.dimensions}d)` : ""}`);
+    if (summary.oversized_chunks) {
+      console.log(`  Oversized chunks: ${summary.oversized_chunks} over ${MAX_CHARS_PER_CHUNK} chars (max ${summary.max_chunk_chars}); eligible chunks: ${summary.eligible_chunks}`);
+    }
+    console.log(`  Router: ${summary.router}`);
+    return true;
   }
 
   // Detect available providers
@@ -376,15 +386,20 @@ function execCogentia(args) {
   });
 }
 
-async function run() {
+function activeEmbeddingContinuations(options = {}) {
+  const files = fs.existsSync(CONTINUATIONS_DIR) ? fs.readdirSync(CONTINUATIONS_DIR).filter(f => f.endsWith(".json")) : [];
+  return files
+    .map(file => readContinuation(file.replace(".json", "")))
+    .filter(cont => cont && cont.status === "active" && cont.kind === "embeddings-index")
+    .filter(cont => !options.id || cont.id === options.id);
+}
+
+async function run(options = {}) {
   console.log("🔄 Multi-Provider Smart Embeddings Worker");
   console.log(`State: ${COGENTIA_STATE_DIR}`);
   console.log(`Continuations: ${CONTINUATIONS_DIR}`);
 
-  const files = fs.existsSync(CONTINUATIONS_DIR) ? fs.readdirSync(CONTINUATIONS_DIR).filter(f => f.endsWith(".json")) : [];
-  const activeContinuations = files
-    .map(file => readContinuation(file.replace(".json", "")))
-    .filter(cont => cont && cont.status === "active" && cont.kind === "embeddings-index");
+  const activeContinuations = activeEmbeddingContinuations(options);
 
   if (!activeContinuations.length) {
     console.log("\nNo active embedding continuations to process.");
@@ -398,7 +413,7 @@ async function run() {
   const providers = detectAvailableProviders();
   console.log(`\nAvailable providers: ${providers.map(p => `${p.displayName} (${p.provider})`).join(", ") || "none"}`);
 
-  if (!providers.length) {
+  if (!providers.length && !activeContinuations.some(cont => continuationProfile(cont)?.provider)) {
     console.error("\n❌ No providers available. Check API keys in .env files.");
     console.log("   Expected keys:");
     console.log("   - OPENAI_API_KEY (for OpenAI)");
@@ -422,11 +437,44 @@ async function run() {
   let successCount = 0, failCount = 0;
 
   for (const cont of activeContinuations) {
-    const success = await processContinuation(cont);
+    const success = await processContinuation(cont, options);
     if (success) successCount++; else failCount++;
   }
 
   console.log(`\n📊 Summary: ✅ ${successCount} | ❌ ${failCount}`);
 }
 
-run().catch(console.error);
+function parseArgs() {
+  const args = process.argv.slice(2);
+  const command = args.find(arg => !arg.startsWith("-")) || "run";
+  const idIndex = args.indexOf("--id");
+  return {
+    command,
+    dryRun: args.includes("--dry-run") || command === "list",
+    id: idIndex >= 0 ? args[idIndex + 1] : "",
+  };
+}
+
+function usage() {
+  console.log(`
+Usage:
+  node scripts/smart-embed-worker.js list [--id <continuation_id>]
+  node scripts/smart-embed-worker.js run [--dry-run] [--id <continuation_id>]
+
+The worker resolves embeddings-index continuations through the configured
+AI router /v1/embeddings endpoint. It does not call provider SDKs directly.
+`);
+}
+
+const options = parseArgs();
+if (options.command === "help" || options.command === "--help" || options.command === "-h") {
+  usage();
+} else if (options.command === "run" || options.command === "list") {
+  run(options).catch(error => {
+    console.error(error);
+    process.exit(1);
+  });
+} else {
+  usage();
+  process.exit(1);
+}

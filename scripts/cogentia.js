@@ -286,6 +286,8 @@ Semantic search (continuation-based):
                            --provider <name> Target specific provider (openai, magistral)
                            --profile <name> Select registry/env embedding profile
                            --env-file <path> Hint where the external resolver loads API keys
+                           --max-chars <n> Skip oversized chunks, default 30000
+                           --include-generated Include index/operational/archive roles
   embeddings store <json>  Store embeddings provided by external agent.
   embeddings prune         Inspect or delete stale embedding cache rows.
                            Flags: --provider <name> --model <name>
@@ -2171,6 +2173,8 @@ async function cmdEmbeddings(sub) {
         provider: valueFlag("--provider") || null,
         profile: valueFlag("--profile") || null,
         envFile: valueFlag("--env-file") || null,
+        maxChars: Number(valueFlag("--max-chars") || 30000) || 30000,
+        includeGenerated: takeFlag("--include-generated"),
       });
       return output(result, result.continuation ? formatEmbeddingContinuation(result) : formatEmbeddingsIndex(result));
     }
@@ -6429,6 +6433,15 @@ CREATE INDEX IF NOT EXISTS idx_embeddings_provider ON embeddings(provider);
 CREATE INDEX IF NOT EXISTS idx_embeddings_repo_path ON embeddings(provider, repo, path);
 `;
 
+const DEFAULT_EMBEDDING_EXCLUDED_ROLES = Object.freeze([
+  "index",
+  "operational",
+  "template",
+  "example",
+  "alias",
+  "archive",
+]);
+
 // Provider-neutral cosine similarity for vector comparison
 function cosineSimilarity(vecA, vecB) {
   if (vecA.length !== vecB.length) return 0;
@@ -6581,12 +6594,16 @@ async function indexEmbeddings(ctx, options = {}) {
     const repoFilter = String(options.repo || "all");
     const limit = boundedInteger(options.limit, 1000, 1, 5000);
     const force = Boolean(options.force);
+    const maxChars = boundedInteger(options.maxChars, 30000, 1000, 200000);
+    const includeGenerated = Boolean(options.includeGenerated);
+    const excludedRoles = includeGenerated ? [] : DEFAULT_EMBEDDING_EXCLUDED_ROLES;
     const embeddingProfile = resolveEmbeddingProfile(ctx, options);
     const targetProvider = embeddingProfile.provider && embeddingProfile.provider !== "unknown" ? embeddingProfile.provider : null;
     const targetModel = embeddingProfile.model_name && embeddingProfile.model_name !== "unspecified" ? embeddingProfile.model_name : null;
 
     const repoClause = repoFilter === "all" ? "" : "AND c.repo = ?";
     const publicClause = view === FULL_VIEW ? "" : "AND c.searchable_public = 1";
+    const roleClause = excludedRoles.length ? `AND c.role NOT IN (${excludedRoles.map(() => "?").join(", ")})` : "";
     const existingEmbeddingClause = targetProvider && !force
       ? `AND NOT EXISTS (
           SELECT 1 FROM embeddings e
@@ -6597,6 +6614,8 @@ async function indexEmbeddings(ctx, options = {}) {
       : "";
     const queryParams = [
       ...(targetProvider && !force ? [targetProvider, ...(targetModel ? [targetModel] : [])] : []),
+      ...excludedRoles,
+      maxChars,
       ...(repoFilter !== "all" ? [repoFilter] : []),
       limit,
     ];
@@ -6608,6 +6627,8 @@ async function indexEmbeddings(ctx, options = {}) {
         AND c.text != 'null'
         ${publicClause}
         ${existingEmbeddingClause}
+        ${roleClause}
+        AND length(c.text) <= ?
         ${repoClause}
       ORDER BY c.repo, c.path, c.start_line
       LIMIT ?
@@ -6651,6 +6672,8 @@ async function indexEmbeddings(ctx, options = {}) {
         repo: repoFilter,
         limit,
         force,
+        max_chars_per_chunk: maxChars,
+        excluded_roles: excludedRoles,
         embedding_profile: embeddingProfile,
       },
       expected_response: {

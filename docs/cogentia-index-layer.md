@@ -232,6 +232,12 @@ For the native OpenAI `text-embedding-3-small` stable profile, the current
 target is 1536 dimensions. Use `--not-dimensions 1536` to inspect rows that do
 not match the current stable dimensionality.
 
+`embeddings index` emits semantic embedding continuations from the SQLite chunk
+cache, but it does not treat every public FTS chunk as semantic material. By
+default it skips generated/index, operational, template, example, alias and
+archive roles, and skips chunks over 30000 characters. Use `--include-generated`
+or `--max-chars <n>` only for deliberate exceptional passes.
+
 ## Daemon Routes
 
 Start the daemon:
