@@ -182,15 +182,19 @@ function providersForContinuation(continuation) {
 function selectChunksForRun(chunks, options = {}) {
   const batches = buildTextBatches(chunks);
   const maxBatches = Number(options.maxBatches || 0) || 0;
-  const selectedBatches = maxBatches > 0 ? batches.slice(0, maxBatches) : batches;
-  const selected = selectedBatches.flat().map(item => item.chunk);
+  const maxChunks = Number(options.maxChunks || 0) || 0;
+  let selected = (maxBatches > 0 ? batches.slice(0, maxBatches) : batches).flat().map(item => item.chunk);
+  if (maxChunks > 0) selected = selected.slice(0, maxChunks);
+  const selectedBatches = buildTextBatches(selected);
   const selectedIds = new Set(selected.map(chunk => chunk.chunk_id));
-  const remaining = maxBatches > 0 ? chunks.filter(chunk => !selectedIds.has(chunk.chunk_id)) : [];
+  const limited = maxBatches > 0 || maxChunks > 0;
+  const remaining = limited ? chunks.filter(chunk => !selectedIds.has(chunk.chunk_id)) : [];
   return {
     batches,
     selectedBatches,
     selected,
     remaining,
+    limited,
   };
 }
 
@@ -304,7 +308,7 @@ async function processContinuation(continuation, options = {}) {
   if (options.dryRun) {
     const summary = summarizeContinuation(continuation);
     console.log(`  Dry run: ${summary.batches} batch(es), ${summary.chars} character(s), ${summary.provider}/${summary.model}${summary.dimensions ? ` (${summary.dimensions}d)` : ""}`);
-    if (options.maxBatches) {
+    if (selection.limited) {
       console.log(`  Limited run: would process ${selection.selectedBatches.length}/${selection.batches.length} batch(es), ${selection.selected.length} chunk(s), leaving ${selection.remaining.length}`);
     }
     if (summary.oversized_chunks) {
@@ -373,22 +377,22 @@ async function processContinuation(continuation, options = {}) {
     continuation_id: continuation.id,
     providers: providerSummary,
     total_embeddings: totalEmbeddings,
-    partial: Boolean(options.maxBatches && selection.remaining.length),
+    partial: Boolean(selection.limited && selection.remaining.length),
     processed_chunks: selection.selected.length,
     remaining_chunks: selection.remaining.length,
     embeddings: allEmbeddings,
-    decision: options.maxBatches && selection.remaining.length ? "partial_embeddings_generated" : "multi_provider_embeddings_generated",
+    decision: selection.limited && selection.remaining.length ? "partial_embeddings_generated" : "multi_provider_embeddings_generated",
     reason: `Generated ${totalEmbeddings} embeddings from ${allResults.length} provider(s): ${allResults.map(r => r.provider).join(", ")}`,
   };
 
   // Write result.json
   fs.mkdirSync(RESULTS_DIR, { recursive: true });
-  const suffix = options.maxBatches ? `_part_${Date.now()}` : "";
+  const suffix = selection.limited ? `_part_${Date.now()}` : "";
   const resultPath = path.join(RESULTS_DIR, `embeddings_result_${continuation.id}${suffix}.json`);
   fs.writeFileSync(resultPath, JSON.stringify(result, null, 2));
   console.log(`  ✅ Result written to: ${resultPath}`);
 
-  if (options.maxBatches && selection.remaining.length) {
+  if (selection.limited && selection.remaining.length) {
     const now = new Date().toISOString();
     continuation.context = {
       ...(continuation.context || {}),
@@ -505,11 +509,13 @@ function parseArgs() {
   const command = args.find(arg => !arg.startsWith("-")) || "run";
   const idIndex = args.indexOf("--id");
   const maxBatchesIndex = args.indexOf("--max-batches");
+  const maxChunksIndex = args.indexOf("--max-chunks");
   return {
     command,
     dryRun: args.includes("--dry-run") || command === "list",
     id: idIndex >= 0 ? args[idIndex + 1] : "",
     maxBatches: maxBatchesIndex >= 0 ? boundedInteger(args[maxBatchesIndex + 1], 0, 0, 10000) : 0,
+    maxChunks: maxChunksIndex >= 0 ? boundedInteger(args[maxChunksIndex + 1], 0, 0, 1000000) : 0,
   };
 }
 
@@ -517,12 +523,12 @@ function usage() {
   console.log(`
 Usage:
   node scripts/smart-embed-worker.js list [--id <continuation_id>]
-  node scripts/smart-embed-worker.js run [--dry-run] [--id <continuation_id>] [--max-batches <n>]
+  node scripts/smart-embed-worker.js run [--dry-run] [--id <continuation_id>] [--max-batches <n>] [--max-chunks <n>]
 
 The worker resolves embeddings-index continuations through the configured
 AI router /v1/embeddings endpoint. It does not call provider SDKs directly.
-When --max-batches is set, it writes a partial result and leaves the
-continuation active with the remaining chunks.
+When --max-batches or --max-chunks is set, it writes a partial result and
+leaves the continuation active with the remaining chunks.
 `);
 }
 

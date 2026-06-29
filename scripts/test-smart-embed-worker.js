@@ -34,7 +34,7 @@ try {
     "run",
     "--id",
     continuationId,
-    "--max-batches",
+    "--max-chunks",
     "1",
   ], {
     cwd: process.cwd(),

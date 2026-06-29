@@ -498,8 +498,8 @@ Use this when the corpus has grown and navigation depends on consistent metadata
 node scripts/cogentia.js embeddings index --provider openai --env-file ..\inseme\.env --json
 node scripts/cogentia.js continuation inspect <id> --json
 node scripts/smart-embed-worker.js list
-node scripts/smart-embed-worker.js run --dry-run --id <id> --max-batches 1
-node scripts/smart-embed-worker.js run --id <id> --max-batches 1
+node scripts/smart-embed-worker.js run --dry-run --id <id> --max-chunks 1
+node scripts/smart-embed-worker.js run --id <id> --max-chunks 1
 node scripts/import-embeddings.js --dry-run
 node scripts/import-embeddings.js
 node scripts/cogentia.js embeddings store embeddings-result.json
@@ -526,7 +526,7 @@ The helper scripts beside `cogentia.js` are continuation processors, not a secon
 
 All of these scripts honor `COGENTIA_REGISTRY`, so corpus-wide runs can use the profile registry rather than the local Cogentia tool-repo registry. `smart-embed-worker.js list` and `run --dry-run` inspect active embedding continuations without requesting embeddings. A real `run` spends provider quota through Magistral or whichever AI-router endpoint is configured by `COGENTIA_AI_ROUTER_URL` or `MAGISTRAL_URL`.
 
-Use `--max-batches <n>` for controlled production. The worker writes a partial `embeddings_result_<id>_part_<timestamp>.json`, removes the processed chunks from the active continuation, and leaves the continuation active with the remaining chunks. This makes long embedding construction resumable without re-requesting already processed continuation chunks. Validate partial result files first with `import-embeddings.js --dry-run`, then import them with `import-embeddings.js`; final completion resolves the continuation normally.
+Use `--max-chunks <n>` for the smallest smoke tests and `--max-batches <n>` for controlled production slices. The worker writes a partial `embeddings_result_<id>_part_<timestamp>.json`, removes the processed chunks from the active continuation, and leaves the continuation active with the remaining chunks. This makes long embedding construction resumable without re-requesting already processed continuation chunks. Validate partial result files first with `import-embeddings.js --dry-run`, then import them with `import-embeddings.js`; final completion resolves the continuation normally.
 
 The current `main` implementation stores embeddings as JSON arrays in the SQLite cache and ranks them with provider-neutral cosine similarity in JavaScript. A future `sqlite-vec` or SQLite vector-extension table should remain an acceleration layer over the same continuation/result contract, not a direct-provider shortcut.
 
