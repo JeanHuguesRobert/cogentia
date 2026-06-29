@@ -34,6 +34,8 @@ try {
     "run",
     "--id",
     continuationId,
+    "--max-batches",
+    "1",
   ], {
     cwd: process.cwd(),
     env: {
@@ -46,14 +48,44 @@ try {
     maxBuffer: 1024 * 1024,
   });
 
-  assert.match(worker.stdout, /Batch 1\/2/);
-  assert.match(worker.stdout, /Batch 2\/2/);
-  assert.match(worker.stdout, /Continuation resolved/);
+  assert.match(worker.stdout, /Batch 1\/1/);
+  assert.match(worker.stdout, /Continuation kept active with 1 remaining chunks/);
 
-  const resultPath = path.join(stateDir, `embeddings_result_${continuationId}.json`);
-  assert.equal(fs.existsSync(resultPath), true);
-  const result = JSON.parse(fs.readFileSync(resultPath, "utf8"));
-  assert.equal(result.total_embeddings, 2);
+  const partialResultPath = listResultFiles()[0];
+  assert.ok(partialResultPath);
+  const partialResult = JSON.parse(fs.readFileSync(partialResultPath, "utf8"));
+  assert.equal(partialResult.total_embeddings, 1);
+  assert.equal(partialResult.partial, true);
+  assert.equal(partialResult.remaining_chunks, 1);
+
+  const activeContinuation = JSON.parse(fs.readFileSync(path.join(continuationsDir, `${continuationId}.json`), "utf8"));
+  assert.equal(activeContinuation.status, "active");
+  assert.equal(activeContinuation.context.chunks.length, 1);
+
+  const finalWorker = await execFileAsync(process.execPath, [
+    "scripts/smart-embed-worker.js",
+    "run",
+    "--id",
+    continuationId,
+  ], {
+    cwd: process.cwd(),
+    env: {
+      ...process.env,
+      COGENTIA_REGISTRY: registryPath,
+      COGENTIA_AI_ROUTER_URL: routerBase,
+      COGENTIA_EMBEDDINGS_MAX_ITEMS_PER_BATCH: "1",
+      COGENTIA_EMBEDDINGS_MAX_CHARS_PER_BATCH: "1000",
+    },
+    maxBuffer: 1024 * 1024,
+  });
+
+  assert.match(finalWorker.stdout, /Batch 1\/1/);
+  assert.match(finalWorker.stdout, /Continuation resolved/);
+
+  const finalResultPath = path.join(stateDir, `embeddings_result_${continuationId}.json`);
+  assert.equal(fs.existsSync(finalResultPath), true);
+  const result = JSON.parse(fs.readFileSync(finalResultPath, "utf8"));
+  assert.equal(result.total_embeddings, 1);
   assert.equal(result.providers[0].provider, "openai");
   assert.equal(result.providers[0].modelId, "text-embedding-3-small");
   assert.equal(result.providers[0].dimensions, 4);
@@ -63,10 +95,17 @@ try {
   assert.equal(continuation.status, "resolved");
   assert.equal(continuation.resolution.decision, "multi_provider_embeddings_generated");
 
-  console.log(JSON.stringify({ ok: true, continuation_id: continuationId, embeddings: result.total_embeddings }, null, 2));
+  console.log(JSON.stringify({ ok: true, continuation_id: continuationId, partial_embeddings: partialResult.total_embeddings, final_embeddings: result.total_embeddings }, null, 2));
 } finally {
   await new Promise(resolve => router.close(resolve));
   fs.rmSync(tempRoot, { recursive: true, force: true });
+}
+
+function listResultFiles() {
+  return fs.readdirSync(stateDir)
+    .filter(file => file.startsWith(`embeddings_result_${continuationId}`) && file.endsWith(".json"))
+    .map(file => path.join(stateDir, file))
+    .sort();
 }
 
 function testContinuation() {

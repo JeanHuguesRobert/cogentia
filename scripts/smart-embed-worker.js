@@ -103,6 +103,15 @@ function readContinuation(id) {
   }
 }
 
+function continuationPath(id) {
+  return path.join(CONTINUATIONS_DIR, `${id}.json`);
+}
+
+function saveContinuation(continuation) {
+  fs.mkdirSync(CONTINUATIONS_DIR, { recursive: true });
+  fs.writeFileSync(continuationPath(continuation.id), `${JSON.stringify(continuation, null, 2)}\n`, "utf8");
+}
+
 async function callRouterEmbeddings(texts, model, dimensions) {
   const baseUrl = process.env.COGENTIA_AI_ROUTER_URL || process.env.MAGISTRAL_URL || undefined;
   const client = createAiRouterClient({ baseUrl });
@@ -170,7 +179,22 @@ function providersForContinuation(continuation) {
 /**
  * Generate embeddings for a specific provider
  */
-async function generateEmbeddingsForProvider(providerInfo, chunks) {
+function selectChunksForRun(chunks, options = {}) {
+  const batches = buildTextBatches(chunks);
+  const maxBatches = Number(options.maxBatches || 0) || 0;
+  const selectedBatches = maxBatches > 0 ? batches.slice(0, maxBatches) : batches;
+  const selected = selectedBatches.flat().map(item => item.chunk);
+  const selectedIds = new Set(selected.map(chunk => chunk.chunk_id));
+  const remaining = maxBatches > 0 ? chunks.filter(chunk => !selectedIds.has(chunk.chunk_id)) : [];
+  return {
+    batches,
+    selectedBatches,
+    selected,
+    remaining,
+  };
+}
+
+async function generateEmbeddingsForProvider(providerInfo, chunks, options = {}) {
   const { provider, models } = providerInfo;
   const providerConfig = getProvider(provider);
 
@@ -189,7 +213,7 @@ async function generateEmbeddingsForProvider(providerInfo, chunks) {
   console.log(`    Router: ${process.env.COGENTIA_AI_ROUTER_URL || process.env.MAGISTRAL_URL || "http://127.0.0.1:8880"}`);
 
   try {
-    const batches = buildTextBatches(chunks);
+    const batches = options.selectedBatches || buildTextBatches(chunks);
     const generated = [];
     let receivedDimensions = 0;
     console.log(`    Batches: ${batches.length} (max ${MAX_ITEMS_PER_BATCH} item(s), ${MAX_CHARS_PER_BATCH} chars)`);
@@ -275,9 +299,14 @@ async function processContinuation(continuation, options = {}) {
     return false;
   }
 
+  const selection = selectChunksForRun(chunks, options);
+
   if (options.dryRun) {
     const summary = summarizeContinuation(continuation);
     console.log(`  Dry run: ${summary.batches} batch(es), ${summary.chars} character(s), ${summary.provider}/${summary.model}${summary.dimensions ? ` (${summary.dimensions}d)` : ""}`);
+    if (options.maxBatches) {
+      console.log(`  Limited run: would process ${selection.selectedBatches.length}/${selection.batches.length} batch(es), ${selection.selected.length} chunk(s), leaving ${selection.remaining.length}`);
+    }
     if (summary.oversized_chunks) {
       console.log(`  Oversized chunks: ${summary.oversized_chunks} over ${MAX_CHARS_PER_CHUNK} chars (max ${summary.max_chunk_chars}); eligible chunks: ${summary.eligible_chunks}`);
     }
@@ -299,7 +328,9 @@ async function processContinuation(continuation, options = {}) {
   let totalEmbeddings = 0;
 
   for (const providerInfo of availableProviders) {
-    const result = await generateEmbeddingsForProvider(providerInfo, chunks);
+    const result = await generateEmbeddingsForProvider(providerInfo, selection.selected, {
+      selectedBatches: selection.selectedBatches,
+    });
     if (result) {
       allResults.push(result);
       totalEmbeddings += result.embeddings.length;
@@ -342,16 +373,41 @@ async function processContinuation(continuation, options = {}) {
     continuation_id: continuation.id,
     providers: providerSummary,
     total_embeddings: totalEmbeddings,
+    partial: Boolean(options.maxBatches && selection.remaining.length),
+    processed_chunks: selection.selected.length,
+    remaining_chunks: selection.remaining.length,
     embeddings: allEmbeddings,
-    decision: "multi_provider_embeddings_generated",
+    decision: options.maxBatches && selection.remaining.length ? "partial_embeddings_generated" : "multi_provider_embeddings_generated",
     reason: `Generated ${totalEmbeddings} embeddings from ${allResults.length} provider(s): ${allResults.map(r => r.provider).join(", ")}`,
   };
 
   // Write result.json
   fs.mkdirSync(RESULTS_DIR, { recursive: true });
-  const resultPath = path.join(RESULTS_DIR, `embeddings_result_${continuation.id}.json`);
+  const suffix = options.maxBatches ? `_part_${Date.now()}` : "";
+  const resultPath = path.join(RESULTS_DIR, `embeddings_result_${continuation.id}${suffix}.json`);
   fs.writeFileSync(resultPath, JSON.stringify(result, null, 2));
   console.log(`  ✅ Result written to: ${resultPath}`);
+
+  if (options.maxBatches && selection.remaining.length) {
+    const now = new Date().toISOString();
+    continuation.context = {
+      ...(continuation.context || {}),
+      chunks: selection.remaining,
+      original_chunk_count: continuation.context?.original_chunk_count || chunks.length,
+    };
+    continuation.updated_at = now;
+    continuation.history = Array.isArray(continuation.history) ? continuation.history : [];
+    continuation.history.push({
+      at: now,
+      event: "partial_embeddings_generated",
+      result_path: resultPath,
+      processed_chunks: selection.selected.length,
+      remaining_chunks: selection.remaining.length,
+    });
+    saveContinuation(continuation);
+    console.log(`  ✅ Continuation kept active with ${selection.remaining.length} remaining chunks`);
+    return true;
+  }
 
   // Resolve continuation
   console.log(`  Resolving continuation...`);
@@ -448,10 +504,12 @@ function parseArgs() {
   const args = process.argv.slice(2);
   const command = args.find(arg => !arg.startsWith("-")) || "run";
   const idIndex = args.indexOf("--id");
+  const maxBatchesIndex = args.indexOf("--max-batches");
   return {
     command,
     dryRun: args.includes("--dry-run") || command === "list",
     id: idIndex >= 0 ? args[idIndex + 1] : "",
+    maxBatches: maxBatchesIndex >= 0 ? boundedInteger(args[maxBatchesIndex + 1], 0, 0, 10000) : 0,
   };
 }
 
@@ -459,10 +517,12 @@ function usage() {
   console.log(`
 Usage:
   node scripts/smart-embed-worker.js list [--id <continuation_id>]
-  node scripts/smart-embed-worker.js run [--dry-run] [--id <continuation_id>]
+  node scripts/smart-embed-worker.js run [--dry-run] [--id <continuation_id>] [--max-batches <n>]
 
 The worker resolves embeddings-index continuations through the configured
 AI router /v1/embeddings endpoint. It does not call provider SDKs directly.
+When --max-batches is set, it writes a partial result and leaves the
+continuation active with the remaining chunks.
 `);
 }
 
