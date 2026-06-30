@@ -2329,6 +2329,10 @@ async function cmdEmbeddings(sub) {
       const modelName = valueFlag("--model") || valueFlag("--model-name") || payload.model_name || null;
       const dimensions = Number(valueFlag("--dimensions") || payload.dimensions || 0) || null;
       const provider = valueFlag("--provider") || payload.provider || null;
+      const repo = valueFlag("--repo") || "all";
+      const limit = Number(valueFlag("--limit") || 10) || 10;
+      const view = valueFlag("--view") || "public";
+      const priority = valueFlag("--priority") || "balanced";
       let query_cache = null;
       if (takeFlag("--cache-query")) {
         query_cache = await cacheQueryEmbedding(ctx, payload, {
@@ -2342,15 +2346,22 @@ async function cmdEmbeddings(sub) {
       }
       const result = await semanticSearchWithEmbedding(ctx, payload.query_embedding, {
         query,
-        repo: valueFlag("--repo") || "all",
-        limit: Number(valueFlag("--limit") || 10) || 10,
-        view: valueFlag("--view") || "public",
+        repo,
+        limit,
+        view,
         provider,
         modelName,
         dimensions,
-        priority: valueFlag("--priority") || "balanced",
+        priority,
       });
       if (query_cache) result.query_cache = query_cache;
+      if (query_cache?.ok && result.ok) {
+        result.semantic_result_cache = await cacheSemanticQueryResults(ctx, query_cache, result, {
+          view,
+          repo,
+          limit,
+        });
+      }
       return output(result, formatEmbeddingsSearch(result));
     }
     case "cache-query": {
@@ -2364,6 +2375,13 @@ async function cmdEmbeddings(sub) {
         dimensions: Number(valueFlag("--dimensions") || payload.dimensions || 0) || null,
         source: valueFlag("--source") || "manual",
       });
+      if (result.ok && payload.search_result?.ok) {
+        result.semantic_result_cache = await cacheSemanticQueryResults(ctx, result, payload.search_result, {
+          view: payload.search_result.view || payload.context?.view || "public",
+          repo: payload.search_result.repo || payload.context?.repo || "all",
+          limit: payload.search_result.count || payload.context?.limit || 10,
+        });
+      }
       return output(result, formatQueryEmbeddingCache(result));
     }
     case "operium-sync": {
@@ -6603,6 +6621,27 @@ CREATE INDEX IF NOT EXISTS idx_query_embeddings_lookup
   ON query_embeddings(query_hash, provider, model_name, dimensions, policy);
 `;
 
+const QUERY_SEMANTIC_RESULTS_TABLE_SCHEMA = `
+CREATE TABLE IF NOT EXISTS query_semantic_results (
+  id INTEGER PRIMARY KEY,
+  query_hash TEXT NOT NULL,
+  provider TEXT NOT NULL,
+  model_name TEXT NOT NULL,
+  dimensions INTEGER NOT NULL,
+  policy TEXT NOT NULL,
+  view TEXT NOT NULL,
+  repo TEXT NOT NULL,
+  index_hash TEXT NOT NULL,
+  result_limit INTEGER NOT NULL,
+  results JSON NOT NULL,
+  created_at TEXT NOT NULL,
+  UNIQUE(query_hash, provider, model_name, dimensions, policy, view, repo, index_hash)
+);
+
+CREATE INDEX IF NOT EXISTS idx_query_semantic_results_lookup
+  ON query_semantic_results(query_hash, provider, model_name, dimensions, policy, view, repo, index_hash);
+`;
+
 const DEFAULT_EMBEDDING_EXCLUDED_ROLES = Object.freeze([
   "index",
   "operational",
@@ -6637,6 +6676,10 @@ async function ensureEmbeddingsTable(db) {
 
 async function ensureQueryEmbeddingsTable(db) {
   db.exec(QUERY_EMBEDDINGS_TABLE_SCHEMA);
+}
+
+async function ensureQuerySemanticResultsTable(db) {
+  db.exec(QUERY_SEMANTIC_RESULTS_TABLE_SCHEMA);
 }
 
 function embeddingProfilesConfig(ctx) {
@@ -7345,6 +7388,160 @@ async function loadCachedQueryEmbedding(ctx, query, target) {
   }
 }
 
+async function cacheSemanticQueryResults(ctx, queryCache, searchResult, options = {}) {
+  if (!queryCache?.ok || !searchResult?.ok) return { ok: false, error: "invalid_semantic_result_cache_input" };
+  const resultItems = (searchResult.results || [])
+    .map(result => ({
+      id: String(result.id || contextSourceId(result)),
+      score: Number(result.score || 0) || 0,
+    }))
+    .filter(result => result.id && parseContextSourceId(result.id));
+  if (!resultItems.length) return { ok: false, error: "no_semantic_results_to_cache" };
+  const opened = await openIndexDatabase({ create: false });
+  if (!opened.ok) return { ok: false, error: opened.error || opened.code, code: opened.code };
+  const { db } = opened;
+  try {
+    await ensureQuerySemanticResultsTable(db);
+    const state = readIndexState(db);
+    const index_hash = searchResult.index_hash || state.index_hash || "";
+    if (!index_hash) return { ok: false, error: "missing_index_hash" };
+    const view = normalizeDaemonView(options.view) === FULL_VIEW ? FULL_VIEW : PUBLIC_VIEW;
+    const repo = String(options.repo || "all");
+    const result_limit = boundedInteger(options.limit, resultItems.length, 1, 50);
+    db.prepare(`
+      INSERT INTO query_semantic_results
+      (query_hash, provider, model_name, dimensions, policy, view, repo, index_hash, result_limit, results, created_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      ON CONFLICT(query_hash, provider, model_name, dimensions, policy, view, repo, index_hash) DO UPDATE SET
+        result_limit = excluded.result_limit,
+        results = excluded.results,
+        created_at = excluded.created_at
+    `).run(
+      queryCache.query_hash,
+      queryCache.provider,
+      queryCache.model_name,
+      queryCache.dimensions,
+      queryCache.policy,
+      view,
+      repo,
+      index_hash,
+      Math.max(result_limit, resultItems.length),
+      JSON.stringify(resultItems),
+      new Date().toISOString()
+    );
+    return {
+      ok: true,
+      cached: true,
+      query_hash: queryCache.query_hash,
+      provider: queryCache.provider,
+      model_name: queryCache.model_name,
+      dimensions: queryCache.dimensions,
+      view,
+      repo,
+      index_hash,
+      count: resultItems.length,
+    };
+  } catch (error) {
+    return { ok: false, error: "semantic_result_cache_failed", message: error.message };
+  } finally {
+    db.close();
+  }
+}
+
+async function loadCachedSemanticQueryResults(ctx, query, target, options = {}) {
+  const q = normalizeContextQuery(query);
+  const provider = String(target.provider || "").trim();
+  const model_name = String(target.model_name || "").trim();
+  const dimensions = Number(target.dimensions || 0) || 0;
+  if (!q || !provider || !model_name || !dimensions) return { ok: false, error: "invalid_semantic_result_cache_target" };
+  const opened = await openIndexDatabase({ create: false, readOnly: true });
+  if (!opened.ok) return { ok: false, error: opened.error || opened.code, code: opened.code };
+  const { db } = opened;
+  try {
+    const table = db.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='query_semantic_results'").get();
+    if (!table) return { ok: false, error: "semantic_result_cache_miss" };
+    const state = readIndexState(db);
+    const index_hash = state.index_hash || "";
+    if (!index_hash) return { ok: false, error: "missing_index_hash" };
+    const policy = queryEmbeddingCachePolicy({ provider, model_name, dimensions });
+    const query_hash = queryEmbeddingCacheHash(q);
+    const view = normalizeDaemonView(options.view) === FULL_VIEW ? FULL_VIEW : PUBLIC_VIEW;
+    const repo = String(options.repo || "all");
+    const limit = boundedInteger(options.limit, 10, 1, 50);
+    const row = db.prepare(`
+      SELECT results, result_limit, created_at
+      FROM query_semantic_results
+      WHERE query_hash = ? AND provider = ? AND model_name = ? AND dimensions = ?
+        AND policy = ? AND view = ? AND repo = ? AND index_hash = ?
+      LIMIT 1
+    `).get(query_hash, provider, model_name, dimensions, policy, view, repo, index_hash);
+    if (!row) return { ok: false, error: "semantic_result_cache_miss", query_hash, provider, model_name, dimensions, policy, view, repo, index_hash };
+    const cachedItems = parseSemanticResultCacheItems(row.results).slice(0, limit);
+    if (!cachedItems.length) return { ok: false, error: "semantic_result_cache_empty", query_hash };
+    const includeText = Boolean(options.includeText);
+    const includeNonPublic = view === FULL_VIEW ? 1 : 0;
+    const select = db.prepare(`
+      SELECT repo, path, title, heading_path, start_line, end_line,
+             role, visibility, public_presence, github_url, searchable_public, text
+      FROM chunks
+      WHERE repo = ? AND path = ? AND start_line = ? AND end_line = ?
+        AND (? = 1 OR searchable_public = 1)
+      LIMIT 1
+    `);
+    const results = [];
+    for (const item of cachedItems) {
+      const parsed = parseContextSourceId(item.id);
+      if (!parsed) continue;
+      const chunk = select.get(parsed.repo, parsed.path, parsed.start, parsed.end, includeNonPublic);
+      if (!chunk) continue;
+      results.push({
+        id: contextSourceId(chunk),
+        repo: chunk.repo,
+        path: chunk.path,
+        title: chunk.title,
+        heading_path: chunk.heading_path,
+        start_line: chunk.start_line,
+        end_line: chunk.end_line,
+        role: chunk.role,
+        visibility: chunk.visibility,
+        score: Number(item.score || 0) || 0,
+        snippet: chunk.text ? `${chunk.text.slice(0, 200).replace(/\n/g, " ")}...` : "",
+        github_url: chunk.github_url ? `${chunk.github_url}#L${chunk.start_line}-L${chunk.end_line}` : "",
+        ...(includeText ? { text: chunk.text } : {}),
+      });
+    }
+    if (!results.length) return { ok: false, error: "semantic_result_cache_stale", query_hash, index_hash };
+    return {
+      ok: true,
+      query: q,
+      mode: options.mode || "semantic",
+      view,
+      provider,
+      count: results.length,
+      query_hash,
+      index_hash,
+      results,
+      warnings: [
+        `Semantic retrieval used cached ranked results for ${provider}/${model_name} (${dimensions}d).`,
+      ],
+    };
+  } finally {
+    db.close();
+  }
+}
+
+function parseSemanticResultCacheItems(value) {
+  try {
+    const parsed = JSON.parse(String(value || "[]"));
+    if (!Array.isArray(parsed)) return [];
+    return parsed
+      .map(item => ({ id: String(item.id || ""), score: Number(item.score || 0) || 0 }))
+      .filter(item => item.id && parseContextSourceId(item.id));
+  } catch {
+    return [];
+  }
+}
+
 function queryEmbeddingCachePolicy(row) {
   return embeddingCachePolicy(row);
 }
@@ -7503,6 +7700,7 @@ async function semanticSearchWithEmbedding(ctx, queryEmbedding, options = {}) {
   const { db } = opened;
 
   try {
+    const state = readIndexState(db);
     const repoClause = repo === "all" ? "" : "AND c.repo = ?";
     const publicClause = view === FULL_VIEW ? "" : "AND c.searchable_public = 1";
 
@@ -7581,7 +7779,9 @@ async function semanticSearchWithEmbedding(ctx, queryEmbedding, options = {}) {
       query: q,
       mode: "semantic",
       view,
+      repo,
       provider: preferredProvider || providerParams[0] || "unknown",
+      index_hash: state.index_hash || "",
       count: results.length,
       results: results.map(({ _provider, _model, _dimensions, ...r }) => r),
       warnings: [],
@@ -7628,6 +7828,8 @@ async function contextSemanticSearch(ctx, q, options = {}) {
   const limit = boundedInteger(options.limit, 10, 1, 50);
   const target = await preferredContextEmbeddingTarget(ctx, { view, repo });
   if (!target.ok) return { ok: false, error: target.error, query: q, mode: options.mode || "semantic", warnings: target.warnings || [] };
+  const cachedSemanticResults = await loadCachedSemanticQueryResults(ctx, q, target, { ...options, view, repo, limit, mode: options.mode || "semantic" });
+  if (cachedSemanticResults.ok) return cachedSemanticResults;
   const cachedQueryEmbedding = await loadCachedQueryEmbedding(ctx, q, target);
   if (cachedQueryEmbedding.ok) {
     const result = await semanticSearchWithEmbedding(ctx, cachedQueryEmbedding.embedding, {
@@ -7646,6 +7848,7 @@ async function contextSemanticSearch(ctx, q, options = {}) {
       mode: options.mode || "semantic",
       query_hash: cachedQueryEmbedding.query_hash,
       warnings: [
+        ...(cachedSemanticResults.error ? [`Semantic ranked-result cache miss (${cachedSemanticResults.error}).`] : []),
         `Semantic retrieval used cached query embedding ${cachedQueryEmbedding.provider}/${cachedQueryEmbedding.model_name} (${cachedQueryEmbedding.dimensions}d).`,
         ...result.warnings,
       ],

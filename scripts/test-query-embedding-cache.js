@@ -30,12 +30,24 @@ try {
 
   const cached = await runCogentia([
     "embeddings",
-    "cache-query",
+    "search-with",
     queryPayload,
+    "--query",
+    "alpha topic",
+    "--repo",
+    "all",
+    "--limit",
+    "2",
+    "--view",
+    "public",
+    "--cache-query",
     "--json",
   ]);
   assert.equal(cached.ok, true);
-  assert.equal(cached.dimensions, 2);
+  assert.equal(cached.query_cache.ok, true);
+  assert.equal(cached.query_cache.dimensions, 2);
+  assert.equal(cached.semantic_result_cache.ok, true);
+  assert.equal(cached.semantic_result_cache.count, 2);
 
   const daemon = spawn(process.execPath, ["scripts/cogentia.js", "daemon", "--host", "127.0.0.1", "--port", String(port)], {
     cwd: root,
@@ -60,7 +72,7 @@ try {
     assert.equal(semantic.mode, "semantic");
     assert.equal(semantic.count, 2);
     assert.equal(semantic.results[0].path, "alpha.md");
-    assert.match(semantic.warnings.join("\n"), /cached query embedding/);
+    assert.match(semantic.warnings.join("\n"), /cached ranked results/);
 
     const missResponse = await fetch(`${base}/api/context/search?q=uncached%20query&mode=semantic&limit=2`);
     const miss = await missResponse.json();
@@ -71,7 +83,7 @@ try {
     daemon.kill();
   }
 
-  console.log(JSON.stringify({ ok: true, cached: cached.query_hash }, null, 2));
+  console.log(JSON.stringify({ ok: true, cached: cached.query_cache.query_hash, result_cache: cached.semantic_result_cache.count }, null, 2));
 } finally {
   fs.rmSync(tempRoot, { recursive: true, force: true });
 }

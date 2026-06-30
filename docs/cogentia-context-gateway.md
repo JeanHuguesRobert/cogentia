@@ -165,6 +165,13 @@ chunks. Query embeddings are written by continuation replay, for example with
 not call the AI router directly: `hybrid` falls back to keyword search and
 `semantic` returns `semantic_continuation_required`.
 
+When `search-with --cache-query` runs after continuation fulfillment, Cogentia
+also stores the ranked semantic result IDs for the current `index_hash`. Later
+requests for the same query/profile/view/repo can rehydrate current chunk rows
+directly from the index, including text for context packs, without rescanning
+all vectors. If the index hash changes, that ranked-result cache is ignored and
+the query vector cache remains available for a fresh semantic scan.
+
 ## Verification
 
 ```bash
