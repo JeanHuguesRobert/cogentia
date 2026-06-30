@@ -55,6 +55,7 @@ This repository instantiates the **cognitive infrastructure layer** of the [DHIT
 | [Cogentia Commons — Public by Default, Private by Exception](cogentia_commons_visibility_and_private_modes.md) *(source document v0.1 — visibility modes, private communities, patent-oriented exploration, and private-use financing of the commons; addresses cogentia#34)* | this repo | 2026-06-09 |
 | [Human Contribution Views](human_contribution_views.md) *(source document v0.1 — probatory derived products for AI-assisted invention, creation, institutional accountability, KYS disclosure and contribution traceability)* | this repo | 2026-06-26 |
 | [Optimistic Mainline Governance](optimistic_mainline_governance.md) *(source document v0.1 — direct agent work on main under trace, reversibility and scoped authorization)* | this repo | 2026-06-26 |
+| [Digital Twin Trust Model](digital_twin_trust_model.md) *(source document v0.1 — maturity, capability, owner sovereignty, and progressive autonomy for a trustable digital twin of the owner)* | this repo | 2026-06-30 |
 | [Cogentia and Cogentigram](Cogentia-and-Cogentigram.md) | this repo | 2026 |
 | [The Sovereign Digital Twin — Cogentia, Cogentigram, Cogentiscope](cogentia-digital-twin.md) | this repo | 2026-04 |
 | [Cogentia Personal Data Portability](cogentia_personal_data_portability.md) *(generic reusable layer for schemas, templates, normalizers and redacted/fictitious examples; explicitly separated from any private personal register)* | this repo | 2026-06-11 |

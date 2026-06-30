@@ -189,6 +189,12 @@ For clients that support generic HTTP tools but not MCP, use `/tools` and
 
 ## Security boundary
 
+The security boundary is governed by the digital twin trust model: the goal is
+a trustable digital twin of the owner, with capability growing as maturity,
+trace, validation, and owner mandate grow. See
+`research/digital_twin_trust_model.md` and
+`docs/digital-twin-agile-roadmap.md`.
+
 Public model-facing clients must use the public view:
 
 ```text
@@ -210,6 +216,8 @@ The MCP adapter should remain a narrow read-only facade over the daemon.
 
 - Cogentia MCP adapter: `docs/cogentia-mcp.md`
 - Cogentia Context Gateway: `docs/cogentia-context-gateway.md`
+- Digital Twin Trust Model: `research/digital_twin_trust_model.md`
+- Trustable Digital Twin Agile Roadmap: `docs/digital-twin-agile-roadmap.md`
 - Fracta node operations: `docs/fracta-node.md`
 - OpenAI ChatGPT connector docs: https://developers.openai.com/apps-sdk/deploy/connect-chatgpt
 - OpenAI Codex MCP configuration docs: https://developers.openai.com/codex/mcp
