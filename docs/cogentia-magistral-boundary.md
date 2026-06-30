@@ -134,12 +134,14 @@ Chunk-level search still needs chunk ids, paths and line ranges. A future
 content-hash vector cache may deduplicate identical text across chunks while
 preserving chunk-level citations.
 
-Context retrieval uses the same policy. `semantic` mode embeds the query through
-the AI router and searches only stored vectors with the same provider, model,
-and dimensions. `hybrid` mode attempts that semantic pass first and falls back
-to keyword retrieval when the router embedding endpoint is unavailable or
-incompatible, so a missing remote provider degrades search quality rather than
-breaking corpus access.
+Context retrieval uses the same policy. `semantic` mode searches stored vectors
+only when the matching query vector is already cached with the same provider,
+model, dimensions, and policy. `hybrid` mode attempts that cached semantic pass
+first and falls back to keyword retrieval on a cache miss, so a missing remote
+provider degrades search quality rather than breaking corpus access. Fulfilled
+semantic continuations can populate the query cache with `embeddings
+search-with <result.json> --cache-query` or `embeddings cache-query
+<result.json>`.
 
 Use `node scripts/cogentia.js agent health --check-query --json` for the narrow
 end-to-end diagnostic. The plain health check should only verify configuration

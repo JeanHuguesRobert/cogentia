@@ -120,6 +120,7 @@ function runSearchWith(resultPath, continuation) {
     String(ctx.limit || 10),
     "--view",
     ctx.view || "public",
+    "--cache-query",
   ];
   const provider = continuation.context?.embedding_profile?.provider;
   if (provider) args.push("--provider", provider);

@@ -157,11 +157,13 @@ emits a continuation with the embedding profile and credential-location hints
 only; the external resolver loads any `.env` file, calls the provider, and
 returns embeddings through `embeddings store`.
 
-For retrieval, `hybrid` and `semantic` can call the configured AI router
-`/v1/embeddings` endpoint to embed the query with the same provider, model, and
-dimensions already stored for corpus chunks. If that endpoint is unavailable or
-returns an incompatible vector, `hybrid` falls back to keyword search and
-`semantic` returns an explicit error.
+For retrieval, `hybrid` and `semantic` first look for a cached query embedding
+with the same provider, model, dimensions, and policy as the stored corpus
+chunks. Query embeddings are written by continuation replay, for example with
+`embeddings cache-query <result.json>` or `embeddings search-with <result.json>
+--cache-query`. If no compatible query vector is cached, the public daemon does
+not call the AI router directly: `hybrid` falls back to keyword search and
+`semantic` returns `semantic_continuation_required`.
 
 ## Verification
 

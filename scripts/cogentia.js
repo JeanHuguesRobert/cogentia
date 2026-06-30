@@ -314,7 +314,12 @@ Semantic search (continuation-based):
                            Execute search with provided query embedding.
                            Flags: --query <text> --repo <name|all> --limit <n>
                            --provider <name> Use specific provider (openai, magistral)
+                           --cache-query Store the query vector for continuation-safe reuse
                            --priority <criteria> Select provider by: price|speed|quality|balanced
+  embeddings cache-query <json>
+                           Store a fulfilled semantic query embedding for later semantic search.
+                           Flags: --query <text> --provider <name> --model <name>
+                           --dimensions <n> --source <label>
 
 Context Gateway:
   daemon                   Start the HTTP daemon. Defaults to 127.0.0.1 and public view.
@@ -2318,17 +2323,48 @@ async function cmdEmbeddings(sub) {
     case "search-with": {
       // Execute semantic search with provided query embedding (after continuation resolution)
       const embeddingPath = argv.shift();
-      if (!embeddingPath) throw new Error("Usage: embeddings search-with <query_embedding.json> [--provider <name>] [--priority <criteria>]");
+      if (!embeddingPath) throw new Error("Usage: embeddings search-with <query_embedding.json> [--provider <name>] [--cache-query] [--priority <criteria>]");
       const payload = JSON.parse(fs.readFileSync(embeddingPath, "utf8"));
+      const query = valueFlag("--query") || payload.query || "";
+      const modelName = valueFlag("--model") || valueFlag("--model-name") || payload.model_name || null;
+      const dimensions = Number(valueFlag("--dimensions") || payload.dimensions || 0) || null;
+      const provider = valueFlag("--provider") || payload.provider || null;
+      let query_cache = null;
+      if (takeFlag("--cache-query")) {
+        query_cache = await cacheQueryEmbedding(ctx, payload, {
+          query,
+          provider,
+          modelName,
+          dimensions,
+          source: "search-with",
+        });
+        if (!query_cache.ok) return output(query_cache, formatQueryEmbeddingCache(query_cache));
+      }
       const result = await semanticSearchWithEmbedding(ctx, payload.query_embedding, {
-        query: valueFlag("--query") || payload.query || "",
+        query,
         repo: valueFlag("--repo") || "all",
         limit: Number(valueFlag("--limit") || 10) || 10,
         view: valueFlag("--view") || "public",
-        provider: valueFlag("--provider") || payload.provider || null,
+        provider,
+        modelName,
+        dimensions,
         priority: valueFlag("--priority") || "balanced",
       });
+      if (query_cache) result.query_cache = query_cache;
       return output(result, formatEmbeddingsSearch(result));
+    }
+    case "cache-query": {
+      const embeddingPath = argv.shift();
+      if (!embeddingPath) throw new Error("Usage: embeddings cache-query <query_embedding.json> [--query <text>] [--provider <name>] [--model <name>] [--dimensions <n>]");
+      const payload = JSON.parse(fs.readFileSync(embeddingPath, "utf8"));
+      const result = await cacheQueryEmbedding(ctx, payload, {
+        query: valueFlag("--query") || payload.query || "",
+        provider: valueFlag("--provider") || payload.provider || null,
+        modelName: valueFlag("--model") || valueFlag("--model-name") || payload.model_name || null,
+        dimensions: Number(valueFlag("--dimensions") || payload.dimensions || 0) || null,
+        source: valueFlag("--source") || "manual",
+      });
+      return output(result, formatQueryEmbeddingCache(result));
     }
     case "operium-sync": {
       // Generate Operium-compatible YAML report for embedding metrics
@@ -2355,7 +2391,7 @@ async function cmdEmbeddings(sub) {
       }
     }
     default:
-      throw new Error(`Unknown embeddings subcommand "${sub}". Use status, index, store, export-cache, import-cache, sync-plan, prune, search, search-with, or operium-sync.`);
+      throw new Error(`Unknown embeddings subcommand "${sub}". Use status, index, store, export-cache, import-cache, sync-plan, prune, search, search-with, cache-query, or operium-sync.`);
   }
 }
 
@@ -6548,6 +6584,25 @@ CREATE INDEX IF NOT EXISTS idx_embeddings_provider ON embeddings(provider);
 CREATE INDEX IF NOT EXISTS idx_embeddings_repo_path ON embeddings(provider, repo, path);
 `;
 
+const QUERY_EMBEDDINGS_TABLE_SCHEMA = `
+CREATE TABLE IF NOT EXISTS query_embeddings (
+  id INTEGER PRIMARY KEY,
+  query_hash TEXT NOT NULL,
+  provider TEXT NOT NULL,
+  model_name TEXT NOT NULL,
+  dimensions INTEGER NOT NULL,
+  policy TEXT NOT NULL,
+  embedding JSON NOT NULL,
+  source TEXT NOT NULL,
+  metadata JSON NOT NULL DEFAULT '{}',
+  created_at TEXT NOT NULL,
+  UNIQUE(query_hash, provider, model_name, dimensions, policy)
+);
+
+CREATE INDEX IF NOT EXISTS idx_query_embeddings_lookup
+  ON query_embeddings(query_hash, provider, model_name, dimensions, policy);
+`;
+
 const DEFAULT_EMBEDDING_EXCLUDED_ROLES = Object.freeze([
   "index",
   "operational",
@@ -6578,6 +6633,10 @@ async function ensureEmbeddingsTable(db) {
     return true;
   }
   return false;
+}
+
+async function ensureQueryEmbeddingsTable(db) {
+  db.exec(QUERY_EMBEDDINGS_TABLE_SCHEMA);
 }
 
 function embeddingProfilesConfig(ctx) {
@@ -7190,6 +7249,110 @@ function embeddingCacheKey(row) {
   }));
 }
 
+async function cacheQueryEmbedding(ctx, payload, options = {}) {
+  const query = normalizeContextQuery(options.query || payload.query || "");
+  if (!query) return { ok: false, error: "missing_query", message: "Query text is required to cache a query embedding." };
+  const provider = String(options.provider || payload.provider || "").trim();
+  const model_name = String(options.modelName || options.model_name || payload.model_name || payload.model || "").trim();
+  const dimensions = Number(options.dimensions || payload.dimensions || 0) || 0;
+  const embedding = parseEmbeddingVector(payload.query_embedding || payload.embedding);
+  if (!provider) return { ok: false, error: "missing_provider" };
+  if (!model_name) return { ok: false, error: "missing_model_name" };
+  if (!dimensions || !Number.isInteger(dimensions)) return { ok: false, error: "invalid_dimensions" };
+  if (embedding.length !== dimensions || embedding.some(value => !Number.isFinite(value))) {
+    return { ok: false, error: "invalid_embedding_vector", dimensions, actual_dimensions: embedding.length };
+  }
+  const policy = String(options.policy || payload.policy || queryEmbeddingCachePolicy({ provider, model_name, dimensions }));
+  const query_hash = queryEmbeddingCacheHash(query);
+  const opened = await openIndexDatabase({ create: false });
+  if (!opened.ok) return { ok: false, error: opened.error || opened.code, code: opened.code };
+  const { db, path: dbPath } = opened;
+  try {
+    await ensureQueryEmbeddingsTable(db);
+    const source = String(options.source || payload.source || "continuation").slice(0, 80) || "continuation";
+    const metadata = stableJson({
+      continuation_id: payload.continuation_id || "",
+      decision: payload.decision || "",
+      reason: payload.reason || "",
+    });
+    const insert = db.prepare(`
+      INSERT INTO query_embeddings
+      (query_hash, provider, model_name, dimensions, policy, embedding, source, metadata, created_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+      ON CONFLICT(query_hash, provider, model_name, dimensions, policy) DO UPDATE SET
+        embedding = excluded.embedding,
+        source = excluded.source,
+        metadata = excluded.metadata,
+        created_at = excluded.created_at
+    `);
+    insert.run(query_hash, provider, model_name, dimensions, policy, JSON.stringify(embedding), source, metadata, new Date().toISOString());
+    return {
+      ok: true,
+      cached: true,
+      path: dbPath,
+      query_hash,
+      provider,
+      model_name,
+      dimensions,
+      policy,
+      source,
+    };
+  } catch (error) {
+    return { ok: false, error: "query_embedding_cache_failed", message: error.message };
+  } finally {
+    db.close();
+  }
+}
+
+async function loadCachedQueryEmbedding(ctx, query, target) {
+  const q = normalizeContextQuery(query);
+  const provider = String(target.provider || "").trim();
+  const model_name = String(target.model_name || "").trim();
+  const dimensions = Number(target.dimensions || 0) || 0;
+  if (!q || !provider || !model_name || !dimensions) return { ok: false, error: "invalid_query_embedding_target" };
+  const opened = await openIndexDatabase({ create: false, readOnly: true });
+  if (!opened.ok) return { ok: false, error: opened.error || opened.code, code: opened.code };
+  const { db } = opened;
+  try {
+    const table = db.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='query_embeddings'").get();
+    if (!table) return { ok: false, error: "query_embedding_cache_miss" };
+    const policy = queryEmbeddingCachePolicy({ provider, model_name, dimensions });
+    const query_hash = queryEmbeddingCacheHash(q);
+    const row = db.prepare(`
+      SELECT embedding, source, created_at, policy
+      FROM query_embeddings
+      WHERE query_hash = ? AND provider = ? AND model_name = ? AND dimensions = ? AND policy = ?
+      LIMIT 1
+    `).get(query_hash, provider, model_name, dimensions, policy);
+    if (!row) return { ok: false, error: "query_embedding_cache_miss", query_hash, provider, model_name, dimensions, policy };
+    const embedding = parseEmbeddingVector(row.embedding);
+    if (embedding.length !== dimensions || embedding.some(value => !Number.isFinite(value))) {
+      return { ok: false, error: "query_embedding_cache_invalid", query_hash, provider, model_name, dimensions };
+    }
+    return {
+      ok: true,
+      query_hash,
+      provider,
+      model_name,
+      dimensions,
+      policy: row.policy,
+      source: row.source,
+      created_at: row.created_at,
+      embedding,
+    };
+  } finally {
+    db.close();
+  }
+}
+
+function queryEmbeddingCachePolicy(row) {
+  return embeddingCachePolicy(row);
+}
+
+function queryEmbeddingCacheHash(query) {
+  return sha256(normalizeContextQuery(query));
+}
+
 function parseEmbeddingVector(value) {
   if (Array.isArray(value)) return value.map(Number);
   try {
@@ -7301,6 +7464,7 @@ async function semanticSearch(ctx, query, options = {}) {
       subject: { repo, path: "" },
       context: {
         query: q,
+        query_hash: queryEmbeddingCacheHash(q),
         view,
         repo,
         limit,
@@ -7464,6 +7628,29 @@ async function contextSemanticSearch(ctx, q, options = {}) {
   const limit = boundedInteger(options.limit, 10, 1, 50);
   const target = await preferredContextEmbeddingTarget(ctx, { view, repo });
   if (!target.ok) return { ok: false, error: target.error, query: q, mode: options.mode || "semantic", warnings: target.warnings || [] };
+  const cachedQueryEmbedding = await loadCachedQueryEmbedding(ctx, q, target);
+  if (cachedQueryEmbedding.ok) {
+    const result = await semanticSearchWithEmbedding(ctx, cachedQueryEmbedding.embedding, {
+      ...options,
+      query: q,
+      view,
+      repo,
+      limit,
+      provider: cachedQueryEmbedding.provider,
+      modelName: cachedQueryEmbedding.model_name,
+      dimensions: cachedQueryEmbedding.dimensions,
+    });
+    if (!result.ok) return result;
+    return {
+      ...result,
+      mode: options.mode || "semantic",
+      query_hash: cachedQueryEmbedding.query_hash,
+      warnings: [
+        `Semantic retrieval used cached query embedding ${cachedQueryEmbedding.provider}/${cachedQueryEmbedding.model_name} (${cachedQueryEmbedding.dimensions}d).`,
+        ...result.warnings,
+      ],
+    };
+  }
   if (!directQueryEmbeddingsAllowed(options)) {
     const continuation = options.emitContinuation
       ? emitSemanticSearchContinuation(ctx, q, {
@@ -7490,6 +7677,7 @@ async function contextSemanticSearch(ctx, q, options = {}) {
         ? "Semantic query embedding requires continuation fulfillment; continuation emitted."
         : "Semantic query embedding requires continuation fulfillment. Use `embeddings search` or another explicit continuation command to emit the request.",
       warnings: [
+        `Query embedding cache miss (${cachedQueryEmbedding.error || "cache_miss"}).`,
         "Direct query embedding is disabled; an external continuation worker must provide the query embedding.",
       ],
     };
@@ -7561,6 +7749,7 @@ function emitSemanticSearchContinuation(ctx, q, options = {}) {
     subject: { repo: options.repo || "all", path: "" },
     context: {
       query: q,
+      query_hash: queryEmbeddingCacheHash(q),
       view: options.view || PUBLIC_VIEW,
       repo: options.repo || "all",
       limit: options.limit || 10,
@@ -8248,11 +8437,25 @@ function formatEmbeddingsSearch(result) {
   if (!result.ok) return `Semantic search failed: ${result.error || result.code || "unknown error"}`;
   if (!result.results?.length) return `No semantic matches for "${result.query}".`;
   const lines = [`\nSemantic search for "${result.query}" (${result.count})\n`];
+  if (result.query_cache?.ok) {
+    lines.push(`Query cache: ${result.query_cache.provider}/${result.query_cache.model_name} (${result.query_cache.dimensions}d)`);
+    lines.push("");
+  }
   for (const m of result.results) {
     const score = m.score ? ` [${(m.score * 100).toFixed(1)}%]` : "";
     lines.push(`- ${m.repo}/${m.path}:${m.start_line}-${m.end_line}${score} [${m.heading_path}] ${m.snippet || ""}`);
   }
   return lines.join("\n");
+}
+
+function formatQueryEmbeddingCache(result) {
+  if (!result.ok) return `Query embedding cache failed: ${result.message || result.error || result.code || "unknown error"}`;
+  return [
+    "\nQuery embedding cached\n",
+    `Hash: ${result.query_hash}`,
+    `Profile: ${result.provider}/${result.model_name} (${result.dimensions}d)`,
+    `Source: ${result.source || "-"}`,
+  ].join("\n");
 }
 
 function formatEmbeddingContinuation(result) {

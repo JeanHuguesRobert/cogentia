@@ -58,8 +58,11 @@ Expected properties:
 - `write_routes_public: false`
 
 Semantic query embeddings still follow the continuation boundary. Public
-hybrid search can report `semantic_continuation_required` and fall back to
-keyword search when no query embedding has been supplied.
+hybrid search uses a cached query vector when one has been replayed into the
+daemon cache; otherwise it can report `semantic_continuation_required` and fall
+back to keyword search. Replay fulfilled semantic continuations with
+`embeddings search-with <result.json> --cache-query` or
+`embeddings cache-query <result.json>`.
 
 ## Local Codex configuration
 
