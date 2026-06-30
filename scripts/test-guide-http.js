@@ -121,7 +121,7 @@ try {
   assert.equal(health.context.planner_enabled, true);
 
   const chat = await postJson(`${mcpBase}/guide/chat`, {
-    question: "What is FractaVolta?",
+    question: "What is the FractaVolta public Guide digital twin?",
     locale: "en",
   });
   assert.equal(chat.ok, true);
@@ -133,8 +133,9 @@ try {
   assert.equal(chat.sources[0].source_id, "mock:README.md#L1-L4");
   assert.equal(seenPlannerPayloads.length, 1);
   assert.equal(seenPlannerPayloads[0].cogentia.context, false);
-  assert.ok(seenPackQueries.includes("What is FractaVolta?"));
+  assert.ok(seenPackQueries.includes("What is the FractaVolta public Guide digital twin?"));
   assert.ok(seenPackQueries.includes("FractaVolta public Guide"));
+  assert.ok(seenPackQueries.includes("public Guide digital twin"));
   assert.ok(seenChatPayloads[0].messages.some(message => /Public Guide retrieval run/.test(message.content)));
   assert.equal(chat.context.guide_retrieval.strategy, "guide-retrieval-run-v1");
   assert.equal(chat.context.guide_retrieval.planner.source, "magistral");

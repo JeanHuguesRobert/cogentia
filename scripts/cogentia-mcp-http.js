@@ -215,11 +215,19 @@ async function guidePlanningRun(question, locale) {
   if (!parsed.queries.length) return { ...fallback, planner_error: "planner_returned_no_queries" };
 
   const heuristic = guideRetrievalQueries(question);
+  const priorityHeuristic = heuristic.filter(query =>
+    query !== question && /(public guide|digital twin|trustable|ubiquity)/i.test(query)
+  );
   return {
     strategy: "guide-planner-v1",
     source: "magistral",
     objective: parsed.objective || "",
-    queries: mergeQueries([question, ...parsed.queries, ...heuristic]).slice(0, guideQueryLimit),
+    queries: mergeQueries([
+      question,
+      ...priorityHeuristic.slice(0, 3),
+      ...parsed.queries,
+      ...heuristic,
+    ]).slice(0, guideQueryLimit),
     notes: parsed.notes,
     raw: content.slice(0, 2000),
   };
@@ -368,11 +376,14 @@ function guideRetrievalQueries(question) {
   if (/fracta\s*volta|fractavolta|\bfracta\b/.test(lower)) {
     queries.push("FractaVolta", "FractaVolta public Guide", "FractaVolta website");
   }
+  if (/(fracta\s*volta|fractavolta|\bfracta\b|guide)/.test(lower) && /digital twin|twin|jumeau/.test(lower)) {
+    queries.push("FractaVolta public Guide digital twin", "public Guide digital twin", "digital twin ubiquity");
+  }
   if (/cogentia/.test(lower)) {
     queries.push("Cogentia", "Cogentia public corpus", "Cogentia context gateway");
   }
   if (/digital twin|twin|jumeau/.test(lower)) {
-    queries.push("digital twin", "public Guide digital twin", "trustable digital twin");
+    queries.push("digital twin", "public Guide digital twin", "trustable digital twin", "digital twin trust model");
   }
   if (/\bmcp\b|model context protocol/.test(lower)) {
     queries.push("Cogentia MCP", "context gateway MCP");
