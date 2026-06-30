@@ -13,6 +13,8 @@ const mcpPort = await freePort();
 const daemonBase = `http://127.0.0.1:${daemonPort}`;
 const mcpBase = `http://127.0.0.1:${mcpPort}`;
 const seenEntries = [];
+const seenPackQueries = [];
+const seenChatPayloads = [];
 
 const daemon = http.createServer(async (req, res) => {
   const url = new URL(req.url || "/", daemonBase);
@@ -21,10 +23,12 @@ const daemon = http.createServer(async (req, res) => {
     return sendJson(res, 200, { ok: true, service: "mock-context-gateway" });
   }
   if (req.method === "GET" && url.pathname === "/api/context/pack") {
+    seenPackQueries.push(url.searchParams.get("q") || "");
     return sendJson(res, 200, mockPack(url.searchParams.get("q") || ""));
   }
   if (req.method === "POST" && url.pathname === "/v1/chat/completions") {
     const payload = JSON.parse(await readBody(req) || "{}");
+    seenChatPayloads.push(payload);
     const question = String(payload.messages?.findLast?.(message => message.role === "user")?.content || "");
     if (/fallback/i.test(question)) {
       return sendJson(res, 502, {
@@ -97,6 +101,11 @@ try {
   assert.equal(chat.mandate.surface, "web-guide");
   assert.match(chat.answer, /FractaVolta/);
   assert.equal(chat.sources[0].source_id, "mock:README.md#L1-L4");
+  assert.ok(seenPackQueries.includes("What is FractaVolta?"));
+  assert.ok(seenPackQueries.includes("FractaVolta"));
+  assert.ok(seenChatPayloads[0].messages.some(message => /Public Guide retrieval run/.test(message.content)));
+  assert.equal(chat.context.guide_retrieval.strategy, "guide-retrieval-run-v1");
+  assert.ok(chat.context.guide_retrieval.source_ids.includes("mock:README.md#L1-L4"));
 
   const fallback = await postJson(`${mcpBase}/guide/chat`, {
     question: "fallback please",
