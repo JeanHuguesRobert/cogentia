@@ -2228,7 +2228,7 @@ async function cmdEmbeddings(sub) {
       // Generate Operium-compatible YAML report for embedding metrics
       const outputPath = valueFlag("--output") || "../operium/services/embeddings.yaml";
       const publicView = takeFlag("--public");
-      const opened = await openIndexDatabase({ create: false });
+      const opened = await openIndexDatabase({ create: false, readOnly: true });
       if (!opened.ok) {
         return { ok: false, error: opened.error || opened.code };
       }
@@ -2254,7 +2254,7 @@ async function cmdEmbeddings(sub) {
 }
 
 async function embeddingsStatus(ctx) {
-  const opened = await openIndexDatabase({ create: false });
+  const opened = await openIndexDatabase({ create: false, readOnly: true });
   if (!opened.ok) {
     return {
       ok: false,
@@ -2431,15 +2431,23 @@ async function openIndexDatabase(options = {}) {
   }
   try {
     if (options.create) ensureDir(path.dirname(dbPath));
-    const db = new sqlite.DatabaseSync(dbPath);
+    const filename = options.readOnly ? immutableSqliteUri(dbPath) : dbPath;
+    const db = new sqlite.DatabaseSync(filename);
     return { ok: true, db, path: dbPath };
   } catch (e) {
     return { ok: false, code: "sqlite_open_failed", path: dbPath, error: e.message };
   }
 }
 
+function immutableSqliteUri(dbPath) {
+  const uri = pathToFileURL(path.resolve(dbPath));
+  uri.searchParams.set("mode", "ro");
+  uri.searchParams.set("immutable", "1");
+  return uri.href;
+}
+
 async function indexStatus(ctx) {
-  const opened = await openIndexDatabase({ create: false });
+  const opened = await openIndexDatabase({ create: false, readOnly: true });
   if (!opened.ok) {
     return {
       ok: opened.code === "index_not_built",
@@ -2883,7 +2891,7 @@ function gitEstimateState(repo) {
 }
 
 async function estimateExistingIndex(model, dimensions) {
-  const opened = await openIndexDatabase({ create: false });
+  const opened = await openIndexDatabase({ create: false, readOnly: true });
   if (!opened.ok) return { available: false, path: opened.path, code: opened.code, error: opened.error || "" };
   const { db, path: dbPath } = opened;
   try {
@@ -3074,7 +3082,7 @@ async function indexRebuild(ctx, options = {}) {
 async function indexSearch(ctx, query, options = {}) {
   const q = String(query || "").trim();
   if (!q) return { ok: false, error: "missing_query", query: q };
-  const opened = await openIndexDatabase({ create: false });
+  const opened = await openIndexDatabase({ create: false, readOnly: true });
   if (!opened.ok) {
     return { ok: false, query: q, path: opened.path, error: opened.error || opened.code, code: opened.code };
   }
@@ -6761,7 +6769,7 @@ async function semanticSearch(ctx, query, options = {}) {
   const limit = boundedInteger(options.limit, 10, 1, 50);
   const embeddingProfile = resolveEmbeddingProfile(ctx, options);
 
-  const opened = await openIndexDatabase({ create: false });
+  const opened = await openIndexDatabase({ create: false, readOnly: true });
   if (!opened.ok) return { ok: false, error: opened.code, query: q, mode: "semantic" };
   const { db } = opened;
 
@@ -6822,7 +6830,7 @@ async function semanticSearchWithEmbedding(ctx, queryEmbedding, options = {}) {
   const preferredModel = options.modelName || options.model_name || null;
   const preferredDimensions = Number(options.dimensions || 0) || null;
 
-  const opened = await openIndexDatabase({ create: false });
+  const opened = await openIndexDatabase({ create: false, readOnly: true });
   if (!opened.ok) return { ok: false, error: opened.code, query: q, mode: "semantic" };
   const { db } = opened;
 
@@ -7072,7 +7080,7 @@ function emitSemanticSearchContinuation(ctx, q, options = {}) {
 async function preferredContextEmbeddingTarget(ctx, options = {}) {
   const view = normalizeDaemonView(options.view) === FULL_VIEW ? FULL_VIEW : PUBLIC_VIEW;
   const repo = String(options.repo || "all");
-  const opened = await openIndexDatabase({ create: false });
+  const opened = await openIndexDatabase({ create: false, readOnly: true });
   if (!opened.ok) return { ok: false, error: opened.error || opened.code };
   const { db } = opened;
   try {
@@ -7137,7 +7145,7 @@ async function createQueryEmbedding(query, target) {
 async function contextKeywordSearch(ctx, q, options = {}) {
   const view = normalizeDaemonView(options.view) === FULL_VIEW ? FULL_VIEW : PUBLIC_VIEW;
   const mode = String(options.mode || "keyword").toLowerCase();
-  const opened = await openIndexDatabase({ create: false });
+  const opened = await openIndexDatabase({ create: false, readOnly: true });
   if (!opened.ok) return { ok: false, error: opened.error || opened.code, code: opened.code, query: q };
   const { db } = opened;
   try {
@@ -7352,7 +7360,7 @@ async function contextExplain(ctx, resultId, view = PUBLIC_VIEW) {
   if (!resultId) return { ok: false, error: "missing_ref" };
   const parsed = parseContextSourceId(resultId);
   if (!parsed) return { ok: false, error: "result_not_found", result_id: resultId };
-  const opened = await openIndexDatabase({ create: false });
+  const opened = await openIndexDatabase({ create: false, readOnly: true });
   if (!opened.ok) return { ok: false, error: opened.error || opened.code, code: opened.code };
   const { db } = opened;
   try {
