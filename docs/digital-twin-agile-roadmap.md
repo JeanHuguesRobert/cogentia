@@ -115,13 +115,15 @@ Acceptance checks:
 - semantic search uses stored embeddings and continuation-produced query
   embeddings when needed.
 
-Next useful slice:
+Observed dogfood status on 2026-06-30:
 
 ```text
-Deploy repo-owned scripts/cogentia-mcp-http.js on Fracta.
-Enable HTTPS for cogentia.fractavolta.com.
-Run ChatGPT connector smoke tests.
+Repo-owned scripts/cogentia-mcp-http.js deployed on Fracta.
+HTTPS enabled for cogentia.fractavolta.com.
+Public POST /mcp verified with initialize, tools/list and cogentia_search.
 ```
+
+Next useful slice: run ChatGPT connector smoke tests and record the result.
 
 ### 2. Child: Explain, Compare, Ask
 
@@ -270,7 +272,11 @@ Acceptance checks:
 
 ```bash
 curl -fsS https://cogentia.fractavolta.com/health
-curl -fsS https://cogentia.fractavolta.com/mcp
+curl -fsS \
+  -H 'Content-Type: application/json' \
+  -H 'Accept: application/json, text/event-stream' \
+  -d '{"jsonrpc":"2.0","id":1,"method":"tools/list"}' \
+  https://cogentia.fractavolta.com/mcp
 ```
 
 And through ChatGPT:
@@ -361,10 +367,10 @@ Use the smallest sufficient change:
 ## Current Best Next Steps
 
 1. Stabilize the trust model and this roadmap.
-2. Finish Fracta HTTPS plus `/mcp` deployment for the dogfood instance.
-3. Test ChatGPT against `cogentia_search` and `cogentia_get_lines`.
-4. Create the first command registry slice for read-only and dry-run commands.
-5. Add trust reports before exposing any operator apply capability.
+2. Test ChatGPT against `cogentia_search` and `cogentia_get_lines`.
+3. Create the first command registry slice for read-only and dry-run commands.
+4. Add trust reports before exposing any operator apply capability.
+5. Sketch the public relay protocol for fresher local-owner-node access.
 
 This order is intentionally modest. It lets the twin grow by proving itself
 before it receives sharper tools.

@@ -14,8 +14,8 @@ continuation policies remain the source of truth.
 | Local Codex or another local stdio MCP client | Ready | Starts `scripts/cogentia-mcp.js` as a local process |
 | Local HTTP callers | Ready through the daemon | `http://127.0.0.1:8790/api/context/*` |
 | Local HTTP MCP clients | Ready | Starts `scripts/cogentia-mcp-http.js`, uses `POST /mcp` |
-| Fracta public MCP HTTP facade | Deployable | `https://cogentia.fractavolta.com/mcp` after Caddy/TLS deployment |
-| ChatGPT developer connector | Target shape implemented in repo | Requires the Fracta HTTPS `/mcp` deployment |
+| Fracta public MCP HTTP facade | Running | `https://cogentia.fractavolta.com/mcp` |
+| ChatGPT developer connector | Ready for connector smoke test | Use `https://cogentia.fractavolta.com/mcp` |
 
 The Fracta service is intentionally public read-only. It exposes the public
 corpus view, not private repositories, provider keys, admin routes, raw
@@ -97,12 +97,11 @@ The Fracta VPS currently runs:
 From a workstation:
 
 ```bash
-curl http://cogentia.fractavolta.com/health
-curl http://cogentia.fractavolta.com/tools
+curl https://cogentia.fractavolta.com/health
+curl https://cogentia.fractavolta.com/tools
 ```
 
-After the ChatGPT-compatible adapter is deployed, the canonical public endpoint
-is:
+The canonical public MCP endpoint is:
 
 ```text
 https://cogentia.fractavolta.com/mcp
@@ -130,11 +129,21 @@ Call the public HTTP facade directly:
 curl -fsS \
   -H 'Content-Type: application/json' \
   -d '{"query":"Fracta VPS Caddy Cogentia MCP","limit":3,"mode":"hybrid"}' \
-  http://cogentia.fractavolta.com/tools/cogentia_search
+  https://cogentia.fractavolta.com/tools/cogentia_search
 ```
 
 This tests the public retrieval boundary. It is not a substitute for a full MCP
 protocol compatibility test.
+
+For the MCP endpoint itself:
+
+```bash
+curl -fsS \
+  -H 'Content-Type: application/json' \
+  -H 'Accept: application/json, text/event-stream' \
+  -d '{"jsonrpc":"2.0","id":1,"method":"tools/list"}' \
+  https://cogentia.fractavolta.com/mcp
+```
 
 ## ChatGPT connector path
 
@@ -153,19 +162,19 @@ ChatGPT connector
   -> SQLite cache and corpus index
 ```
 
-Current Fracta gap:
+Observed Fracta state on 2026-06-30:
 
 - The Cogentia repo now includes `scripts/cogentia-mcp-http.js`, which exposes
   `POST /mcp` for JSON-RPC MCP requests.
-- Fracta still needs to deploy that script behind Caddy.
-- Fracta still needs public HTTPS for `cogentia.fractavolta.com`.
+- Fracta runs that repo-owned script as `mcp-cogentia.service`.
+- Caddy serves `https://cogentia.fractavolta.com`.
+- Public `POST /mcp` returns the five Cogentia tools.
+- Public `tools/call` works for `cogentia_search`.
+- Public hybrid search may still fall back to keyword with
+  `semantic_continuation_required`, because direct query embeddings remain
+  disabled by design.
 
-Do not advertise Fracta as ChatGPT-ready until both are fixed:
-
-1. Caddy serves `cogentia.fractavolta.com` over HTTPS.
-2. The service behind Caddy is `scripts/cogentia-mcp-http.js`.
-
-After that, the ChatGPT developer-mode connector flow is:
+The ChatGPT developer-mode connector flow is:
 
 1. Enable developer mode in ChatGPT if the account or organization allows it.
 2. Go to Settings, Connectors, Create.
