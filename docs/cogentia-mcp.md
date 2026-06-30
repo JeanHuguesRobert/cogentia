@@ -1,8 +1,12 @@
 # Cogentia MCP adapter
 
 `scripts/cogentia-mcp.js` is a small MCP stdio server for the Cogentia Context
-Gateway. It calls the daemon over HTTP. It never opens SQLite, reads corpus
-files, rebuilds the index, executes commands, or changes the corpus.
+Gateway. `scripts/cogentia-mcp-http.js` exposes the same tools over HTTP at
+`/mcp`. Both adapters call the daemon over HTTP. They never open SQLite, read
+corpus files, rebuild the index, execute commands, or change the corpus.
+
+For client setup recipes, including local Codex and the Fracta public service,
+see [connect-mcp-clients.md](connect-mcp-clients.md).
 
 ## Configuration
 
@@ -55,6 +59,29 @@ Start it directly only when an MCP client will provide messages on stdin:
 
 ```bash
 node scripts/cogentia-mcp.js
+```
+
+Run the HTTP adapter for clients that expect a URL endpoint:
+
+```bash
+COGENTIA_DAEMON_URL=http://127.0.0.1:8790 \
+COGENTIA_MCP_VIEW=public \
+PORT=8791 \
+node scripts/cogentia-mcp-http.js
+```
+
+The primary HTTP MCP route is:
+
+```text
+POST /mcp
+```
+
+The HTTP adapter also keeps compatibility routes for operational smoke tests:
+
+```text
+GET /health
+GET /tools
+POST /tools/{name}
 ```
 
 SQLite remains a reconstructible cache behind the daemon and is not part of the

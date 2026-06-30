@@ -72,11 +72,17 @@ try {
   assert.equal(mcp[1].result.tools.length, 5);
   assert.equal(mcp[2].result.structuredContent.ok, true);
 
+  const httpMcp = await runHttpMcp(base);
+  assert.equal(httpMcp.initialize.result.serverInfo.name, "cogentia-mcp");
+  assert.equal(httpMcp.tools.result.tools.length, 5);
+  assert.equal(httpMcp.health.result.structuredContent.ok, true);
+  assert.equal(httpMcp.facadeTools.tools.length, 5);
+
   const rateStatuses = [];
   for (let request = 0; request < 25; request++) rateStatuses.push(await responseStatus("/api/context/health"));
   assert.ok(rateStatuses.includes(429));
 
-  console.log(JSON.stringify({ ok: true, port, search_results: search.count, pack_hash: firstPack.pack_hash, mcp_tools: 5, rate_limit: 429 }, null, 2));
+  console.log(JSON.stringify({ ok: true, port, search_results: search.count, pack_hash: firstPack.pack_hash, mcp_tools: 5, http_mcp: "/mcp", rate_limit: 429 }, null, 2));
 } finally {
   daemon.kill();
 }
@@ -121,6 +127,46 @@ async function runMcp(messages) {
     });
     child.stdin.end(`${messages.map(message => JSON.stringify(message)).join("\n")}\n`);
   });
+}
+
+async function runHttpMcp(daemonBase) {
+  const port = await freePort();
+  const base = `http://127.0.0.1:${port}`;
+  const child = spawn(process.execPath, ["scripts/cogentia-mcp-http.js"], {
+    cwd: root,
+    env: { ...process.env, COGENTIA_DAEMON_URL: daemonBase, PORT: String(port), COGENTIA_MCP_VIEW: "public" },
+    stdio: ["ignore", "pipe", "pipe"],
+  });
+  let stderr = "";
+  child.stderr.on("data", chunk => { stderr += chunk; });
+  child.stdout.on("data", () => {});
+  try {
+    for (let attempt = 0; attempt < 50; attempt++) {
+      try {
+        const response = await fetch(`${base}/health`);
+        if (response.ok) break;
+      } catch {}
+      await new Promise(resolve => setTimeout(resolve, 100));
+      if (attempt === 49) throw new Error(`HTTP MCP did not start: ${stderr}`);
+    }
+    const initialize = await postJson(`${base}/mcp`, { jsonrpc: "2.0", id: 1, method: "initialize", params: { protocolVersion: "2025-11-25" } });
+    const tools = await postJson(`${base}/mcp`, { jsonrpc: "2.0", id: 2, method: "tools/list" });
+    const health = await postJson(`${base}/mcp`, { jsonrpc: "2.0", id: 3, method: "tools/call", params: { name: "cogentia_health", arguments: {} } });
+    const facadeTools = await (await fetch(`${base}/tools`)).json();
+    return { initialize, tools, health, facadeTools };
+  } finally {
+    child.kill();
+  }
+}
+
+async function postJson(url, body) {
+  const response = await fetch(url, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+  if (!response.ok) assert.fail(await response.text());
+  return response.json();
 }
 
 function freePort() {
