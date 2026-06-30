@@ -15,6 +15,7 @@ const mcpBase = `http://127.0.0.1:${mcpPort}`;
 const seenEntries = [];
 const seenPackQueries = [];
 const seenChatPayloads = [];
+const seenPlannerPayloads = [];
 
 const daemon = http.createServer(async (req, res) => {
   const url = new URL(req.url || "/", daemonBase);
@@ -28,6 +29,32 @@ const daemon = http.createServer(async (req, res) => {
   }
   if (req.method === "POST" && url.pathname === "/v1/chat/completions") {
     const payload = JSON.parse(await readBody(req) || "{}");
+    if (payload.metadata?.purpose === "guide_planner") {
+      seenPlannerPayloads.push(payload);
+      return sendJson(res, 200, {
+        id: "chatcmpl_mock_planner",
+        object: "chat.completion",
+        model: payload.model,
+        choices: [{
+          index: 0,
+          message: {
+            role: "assistant",
+            content: JSON.stringify({
+              objective: "Find public FractaVolta orientation sources.",
+              queries: ["FractaVolta public Guide", "FractaVolta website"],
+              notes: ["Use public corpus only."],
+            }),
+          },
+          finish_reason: "stop",
+        }],
+        cogentia_context: {
+          query: "planner",
+          strategy: "context-disabled",
+          sources: [],
+          warnings: [],
+        },
+      });
+    }
     seenChatPayloads.push(payload);
     const question = String(payload.messages?.findLast?.(message => message.role === "user")?.content || "");
     if (/fallback/i.test(question)) {
@@ -91,6 +118,7 @@ try {
   assert.equal(health.mandate.maturity, "infant");
   assert.equal(health.mandate.corpus_view, "public");
   assert.equal(health.context.daemon.service, "mock-context-gateway");
+  assert.equal(health.context.planner_enabled, true);
 
   const chat = await postJson(`${mcpBase}/guide/chat`, {
     question: "What is FractaVolta?",
@@ -103,10 +131,13 @@ try {
   assert.match(chat.answer, /\[mock:README\.md#L1-L4\]/);
   assert.doesNotMatch(chat.answer, /\[1\]/);
   assert.equal(chat.sources[0].source_id, "mock:README.md#L1-L4");
+  assert.equal(seenPlannerPayloads.length, 1);
+  assert.equal(seenPlannerPayloads[0].cogentia.context, false);
   assert.ok(seenPackQueries.includes("What is FractaVolta?"));
-  assert.ok(seenPackQueries.includes("FractaVolta"));
+  assert.ok(seenPackQueries.includes("FractaVolta public Guide"));
   assert.ok(seenChatPayloads[0].messages.some(message => /Public Guide retrieval run/.test(message.content)));
   assert.equal(chat.context.guide_retrieval.strategy, "guide-retrieval-run-v1");
+  assert.equal(chat.context.guide_retrieval.planner.source, "magistral");
   assert.ok(chat.context.guide_retrieval.source_ids.includes("mock:README.md#L1-L4"));
 
   const fallback = await postJson(`${mcpBase}/guide/chat`, {

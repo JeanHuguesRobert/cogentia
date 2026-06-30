@@ -11,9 +11,11 @@ import { boundedInteger, createMcpCore, jsonRpcError, mcpToolResult, SERVER_NAME
 const core = createMcpCore();
 const port = boundedInteger(process.env.PORT || process.env.COGENTIA_MCP_PORT, 8791, 1, 65535);
 const host = process.env.COGENTIA_MCP_HOST || "0.0.0.0";
-const guideLimit = boundedInteger(process.env.COGENTIA_GUIDE_LIMIT, 6, 1, 12);
-const guideBudget = boundedInteger(process.env.COGENTIA_GUIDE_BUDGET, 9000, 256, 30000);
-const guideQueryLimit = boundedInteger(process.env.COGENTIA_GUIDE_QUERY_LIMIT, 4, 1, 8);
+const guideLimit = boundedInteger(process.env.COGENTIA_GUIDE_LIMIT, 8, 1, 12);
+const guideBudget = boundedInteger(process.env.COGENTIA_GUIDE_BUDGET, 14000, 256, 30000);
+const guideQueryLimit = boundedInteger(process.env.COGENTIA_GUIDE_QUERY_LIMIT, 6, 1, 10);
+const guidePlannerEnabled = parseBoolean(process.env.COGENTIA_GUIDE_PLANNER, true);
+const guidePlannerQueryLimit = boundedInteger(process.env.COGENTIA_GUIDE_PLANNER_QUERY_LIMIT, 5, 1, 8);
 const guideModel = process.env.COGENTIA_GUIDE_MODEL || "fractavolta-guide";
 const guideInstanceId = process.env.COGENTIA_GUIDE_INSTANCE_ID || "fractavolta-public-guide";
 const guideMandate = {
@@ -74,6 +76,8 @@ async function guideHealth() {
       limit: guideLimit,
       budget: guideBudget,
       query_limit: guideQueryLimit,
+      planner_enabled: guidePlannerEnabled,
+      planner_query_limit: guidePlannerQueryLimit,
       daemon,
     },
   };
@@ -126,11 +130,12 @@ async function handleGuideChat(req, res) {
   if (question.length > 1200) return sendJson(res, 413, { ok: false, error: "question_too_large" });
 
   const locale = normalizeLocale(payload.locale);
-  const retrieval = await guideRetrievalRun(question);
+  const plan = guidePlannerEnabled ? await guidePlanningRun(question, locale) : guideHeuristicPlan(question, "planner_disabled");
+  const retrieval = await guideRetrievalRun(question, plan);
   const chatPayload = {
     model: guideModel,
     temperature: 0.2,
-    max_tokens: 900,
+    max_tokens: 1200,
     messages: [
       { role: "system", content: guideSystemPrompt(locale) },
       { role: "system", content: guideRetrievalPrompt(locale, retrieval) },
@@ -182,8 +187,101 @@ async function daemonPost(route, body) {
   return { ok: response.ok, status: response.status, body: parsed };
 }
 
-async function guideRetrievalRun(question) {
-  const queries = guideRetrievalQueries(question).slice(0, guideQueryLimit);
+async function guidePlanningRun(question, locale) {
+  const fallback = guideHeuristicPlan(question, "planner_fallback");
+  const payload = {
+    model: guideModel,
+    temperature: 0.15,
+    max_tokens: 500,
+    messages: [
+      { role: "system", content: guidePlannerPrompt(locale) },
+      { role: "user", content: question },
+    ],
+    cogentia: { context: false },
+    metadata: {
+      surface: "fractavolta-public-guide",
+      purpose: "guide_planner",
+      locale,
+    },
+  };
+
+  const routed = await daemonPost("/v1/chat/completions", payload);
+  if (!routed.ok) {
+    return { ...fallback, planner_error: routed.body?.error?.type || routed.error || "planner_failed" };
+  }
+
+  const content = String(routed.body?.choices?.[0]?.message?.content || routed.body?.choices?.[0]?.text || "").trim();
+  const parsed = parseGuidePlan(content);
+  if (!parsed.queries.length) return { ...fallback, planner_error: "planner_returned_no_queries" };
+
+  const heuristic = guideRetrievalQueries(question);
+  return {
+    strategy: "guide-planner-v1",
+    source: "magistral",
+    objective: parsed.objective || "",
+    queries: mergeQueries([question, ...parsed.queries, ...heuristic]).slice(0, guideQueryLimit),
+    notes: parsed.notes,
+    raw: content.slice(0, 2000),
+  };
+}
+
+function guideHeuristicPlan(question, source = "heuristic") {
+  return {
+    strategy: "guide-planner-v1",
+    source,
+    objective: "",
+    queries: guideRetrievalQueries(question).slice(0, guideQueryLimit),
+    notes: [],
+  };
+}
+
+function guidePlannerPrompt(locale) {
+  const language = locale === "fr" ? "French" : "English";
+  return [
+    `You plan public Cogentia corpus retrieval for the FractaVolta Guide. Use ${language} only when writing notes.`,
+    "Return only strict JSON. Do not include markdown.",
+    "The Guide is public, read-only, and may search only the public corpus.",
+    "Produce high-quality search queries, not an answer.",
+    "Prefer concrete corpus terms, proper names, project names, document titles, and conceptual synonyms.",
+    "Include both narrow and broad queries when useful.",
+    `Return at most ${guidePlannerQueryLimit} queries.`,
+    JSON.stringify({
+      objective: "short retrieval objective",
+      queries: ["query 1", "query 2"],
+      notes: ["optional public retrieval note"],
+    }),
+  ].join("\n");
+}
+
+function parseGuidePlan(content) {
+  const json = extractJsonObject(content);
+  if (!json) return { objective: "", queries: [], notes: [] };
+  try {
+    const parsed = JSON.parse(json);
+    return {
+      objective: String(parsed.objective || "").trim(),
+      queries: Array.isArray(parsed.queries)
+        ? parsed.queries.map(query => String(query || "").trim()).filter(Boolean).slice(0, guidePlannerQueryLimit)
+        : [],
+      notes: Array.isArray(parsed.notes)
+        ? parsed.notes.map(note => String(note || "").trim()).filter(Boolean).slice(0, 5)
+        : [],
+    };
+  } catch {
+    return { objective: "", queries: [], notes: [] };
+  }
+}
+
+function extractJsonObject(content) {
+  const clean = String(content || "").trim().replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/i, "");
+  if (clean.startsWith("{") && clean.endsWith("}")) return clean;
+  const start = clean.indexOf("{");
+  const end = clean.lastIndexOf("}");
+  return start >= 0 && end > start ? clean.slice(start, end + 1) : "";
+}
+
+async function guideRetrievalRun(question, plan = guideHeuristicPlan(question)) {
+  const queries = mergeQueries([...(plan.queries || []), ...guideRetrievalQueries(question)]).slice(0, guideQueryLimit);
   const attempts = [];
   const sources = [];
   const context = [];
@@ -235,6 +333,13 @@ async function guideRetrievalRun(question) {
 
   return {
     strategy: "guide-retrieval-run-v1",
+    planner: {
+      strategy: plan.strategy,
+      source: plan.source,
+      objective: plan.objective,
+      notes: plan.notes || [],
+      error: plan.planner_error || undefined,
+    },
     query_limit: guideQueryLimit,
     queries,
     attempts,
@@ -242,6 +347,10 @@ async function guideRetrievalRun(question) {
     context,
     warnings: [...new Set(warnings)],
   };
+}
+
+function mergeQueries(queries) {
+  return [...new Set(queries.map(query => String(query || "").trim()).filter(Boolean))];
 }
 
 function guideRetrievalQueries(question) {
@@ -453,6 +562,11 @@ function normalizeLocale(value) {
   return clean.startsWith("fr") ? "fr" : "en";
 }
 
+function parseBoolean(value, fallback = false) {
+  if (value === undefined || value === null || value === "") return fallback;
+  return !new Set(["0", "false", "no", "off"]).has(String(value).trim().toLowerCase());
+}
+
 function summarizeGuideContext(context = {}, retrieval = null) {
   return {
     query: context.query,
@@ -464,6 +578,7 @@ function summarizeGuideContext(context = {}, retrieval = null) {
       : safeSources(context.sources).map(source => source.source_id),
     guide_retrieval: retrieval ? {
       strategy: retrieval.strategy,
+      planner: retrieval.planner,
       query_limit: retrieval.query_limit,
       queries: retrieval.queries,
       attempts: retrieval.attempts,

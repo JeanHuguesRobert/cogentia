@@ -1387,6 +1387,57 @@ async function daemonChatCompletions(req, res, ctx, view = PUBLIC_VIEW) {
 
   const cogentiaOptions = payload.cogentia && typeof payload.cogentia === "object" ? payload.cogentia : {};
   const metadata = payload.metadata && typeof payload.metadata === "object" ? payload.metadata : {};
+  const contextEnabled = cogentiaOptions.context !== false && cogentiaOptions.context !== "none";
+  if (!contextEnabled) {
+    if (!isContextDisabledChatAllowed(metadata)) {
+      return daemonJson(res, 400, {
+        error: {
+          type: "invalid_request_error",
+          message: "Disabling Cogentia context is reserved for explicit internal planner calls.",
+        },
+      });
+    }
+    const visibleModel = String(payload.model || "cogentia-corpus");
+    const routerModel = process.env.COGENTIA_CHAT_MODEL
+      || (visibleModel === "cogentia" || visibleModel === "cogentia-corpus" ? "magistral" : visibleModel);
+    const routerPayload = {
+      ...payload,
+      model: routerModel,
+      stream: false,
+      messages: messages.map(message => ({
+        role: ["system", "user", "assistant", "tool"].includes(message?.role) ? message.role : "user",
+        content: typeof message?.content === "string" ? message.content : JSON.stringify(message?.content ?? ""),
+      })),
+    };
+    delete routerPayload.cogentia;
+    delete routerPayload.metadata;
+
+    const routed = await createAiRouterClient().chatCompletions(routerPayload);
+    const context = {
+      ok: true,
+      query,
+      strategy: "context-disabled",
+      retrieval_policy_version: "context-disabled",
+      source_ids: [],
+      sources: [],
+      warnings: ["Cogentia context retrieval was explicitly disabled for this router call."],
+    };
+    if (!routed.ok) {
+      return daemonJson(res, 502, {
+        error: {
+          type: routed.error || "ai_router_error",
+          message: routed.message || "AI router failed",
+        },
+        cogentia_context: context,
+      });
+    }
+    const response = normalizeChatCompletion(routed.body, {
+      model: visibleModel,
+      context,
+    });
+    if (payload.stream === true) return streamChatCompletion(res, response);
+    return daemonJson(res, 200, response);
+  }
   const pack = await contextPack(ctx, query, {
     repo: String(cogentiaOptions.repo || metadata.repo || "all"),
     budget: boundedInteger(cogentiaOptions.budget || metadata.budget, DEFAULT_CONTEXT_BUDGET, 256, MAX_CONTEXT_BUDGET),
@@ -1433,6 +1484,10 @@ async function daemonChatCompletions(req, res, ctx, view = PUBLIC_VIEW) {
   });
   if (payload.stream === true) return streamChatCompletion(res, response);
   return daemonJson(res, 200, response);
+}
+
+function isContextDisabledChatAllowed(metadata = {}) {
+  return new Set(["guide_planner"]).has(String(metadata.purpose || ""));
 }
 
 function buildGroundedChatMessages(messages, pack) {
