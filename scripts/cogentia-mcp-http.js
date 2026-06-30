@@ -14,6 +14,15 @@ const host = process.env.COGENTIA_MCP_HOST || "0.0.0.0";
 const guideLimit = boundedInteger(process.env.COGENTIA_GUIDE_LIMIT, 6, 1, 12);
 const guideBudget = boundedInteger(process.env.COGENTIA_GUIDE_BUDGET, 9000, 256, 30000);
 const guideModel = process.env.COGENTIA_GUIDE_MODEL || "fractavolta-guide";
+const guideInstanceId = process.env.COGENTIA_GUIDE_INSTANCE_ID || "fractavolta-public-guide";
+const guideMandate = {
+  instance_id: guideInstanceId,
+  surface: "web-guide",
+  maturity: "infant",
+  corpus_view: "public",
+  allowed: ["orient", "retrieve", "cite", "explain-public-corpus"],
+  forbidden: ["private-view", "mutate", "publish", "unbounded-provider-spend", "owner-impersonation"],
+};
 const allowedOrigins = String(process.env.COGENTIA_CORS_ORIGIN || "http://localhost:*")
   .split(",")
   .map(value => value.trim())
@@ -59,6 +68,7 @@ async function guideHealth() {
     service: "fractavolta-guide",
     public: true,
     model: guideModel,
+    mandate: guideMandate,
     context: {
       limit: guideLimit,
       budget: guideBudget,
@@ -175,6 +185,7 @@ function guideChatResponse(question, locale, completion) {
     ok: true,
     service: "fractavolta-guide",
     mode: "conversational",
+    mandate: guideMandate,
     question,
     locale,
     answer: answer || guideFallbackText(locale),
@@ -202,6 +213,7 @@ async function guideFallback(question, locale, routed) {
         ok: true,
         service: "fractavolta-guide",
         mode: "extractive_fallback",
+        mandate: guideMandate,
         question,
         locale,
         answer: extractiveAnswer(locale, pack),
@@ -229,7 +241,8 @@ function guideSystemPrompt(locale) {
   const language = locale === "fr" ? "French" : "English";
   return [
     `You are the public FractaVolta Guide. Answer in ${language}.`,
-    "You are a public guide, not the private digital twin of the owner.",
+    "You are a public, low-maturity, read-only instance of the owner-rooted digital twin.",
+    "You are not the private owner-facing core and must not pretend to be the owner.",
     "Use only the supplied public Cogentia context.",
     "Cite source_id values in square brackets for corpus-grounded claims.",
     "If context is insufficient, say what is missing and suggest a next public reading.",

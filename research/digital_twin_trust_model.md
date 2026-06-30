@@ -22,6 +22,7 @@ tags:
 related_research:
   - "cogentia/research/cogentia-digital-twin.md"
   - "cogentia/research/individual_and_collective_digital_twins.md"
+  - "cogentia/research/digital_twin_ubiquity.md"
   - "cogentia/research/optimistic_mainline_governance.md"
   - "cogentia/research/agent_resumable_cli.md"
   - "cogentia/research/cognitive_packet_switching.md"
@@ -73,6 +74,12 @@ safe only because it cannot matter. The useful target is different:
 ```text
 The twin must become more capable without becoming an invisible power.
 ```
+
+The twin may have multiple concurrent instances. This is part of its usefulness:
+an immaterial twin can appear locally, remotely, publicly, privately, through
+MCP, through a website Guide, or through a background worker. Those instances
+must not be treated as unconstrained clones. Each instance needs a declared
+corpus view, maturity profile, mandate, and authority boundary.
 
 ---
 

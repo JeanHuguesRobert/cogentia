@@ -38,6 +38,7 @@ owner feedback, and correction. The roadmap itself is expected to change.
 ## Governing Documents
 
 - Trust model: `research/digital_twin_trust_model.md`
+- Ubiquity and instances: `research/digital_twin_ubiquity.md`
 - Optimistic governance: `research/optimistic_mainline_governance.md`
 - Agent-resumable CLI: `research/agent_resumable_cli.md`
 - MCP connection tutorial: `docs/connect-mcp-clients.md`
@@ -66,6 +67,12 @@ ChatGPT/Codex/other clients
   faces that invoke capabilities through MCP or CLI
 ```
 
+The same owner-rooted twin can appear through multiple instances at the same
+time. The FractaVolta public Guide is one such instance: public, low-maturity,
+read-only, and limited to the public corpus. It is not the private owner-facing
+core, and it must not inherit broader authority merely because it belongs to
+the same twin project.
+
 The public relay face must remain governed and read-only by default. In the
 dogfood instance, that public relay is Fracta. The owner-facing local twin may
 become much more capable, but only through maturity profiles, explicit scopes,
@@ -87,6 +94,7 @@ Acceptance checks:
 - sharp tools and maturity profiles are documented;
 - public/private/operator profiles are distinguished;
 - MCP/CLI work references the trust model.
+- public instances declare corpus view, maturity, mandate, and authority.
 
 Current status: started.
 

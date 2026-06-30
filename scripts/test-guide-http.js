@@ -83,6 +83,9 @@ try {
   assert.equal(healthResponse.headers.get("access-control-allow-origin"), "https://fractavolta.com");
   const health = await healthResponse.json();
   assert.equal(health.service, "fractavolta-guide");
+  assert.equal(health.mandate.instance_id, "fractavolta-public-guide");
+  assert.equal(health.mandate.maturity, "infant");
+  assert.equal(health.mandate.corpus_view, "public");
   assert.equal(health.context.daemon.service, "mock-context-gateway");
 
   const chat = await postJson(`${mcpBase}/guide/chat`, {
@@ -91,6 +94,7 @@ try {
   });
   assert.equal(chat.ok, true);
   assert.equal(chat.mode, "conversational");
+  assert.equal(chat.mandate.surface, "web-guide");
   assert.match(chat.answer, /FractaVolta/);
   assert.equal(chat.sources[0].source_id, "mock:README.md#L1-L4");
 
@@ -100,6 +104,7 @@ try {
   });
   assert.equal(fallback.ok, true);
   assert.equal(fallback.mode, "extractive_fallback");
+  assert.equal(fallback.mandate.instance_id, "fractavolta-public-guide");
   assert.ok(fallback.warnings.includes("guide_chat_backend_unavailable"));
   assert.equal(fallback.sources[0].source_id, "mock:README.md#L1-L4");
   assert.ok(seenEntries.every(entry => entry === "public"));

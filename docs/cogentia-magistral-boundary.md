@@ -73,8 +73,10 @@ COGENTIA_EMBEDDING_MODEL=text-embedding-3-small
 The default local URL is intentionally loopback. Public deployments should put a
 reverse proxy in front of Cogentia, not expose Magistral control endpoints.
 
-The public website Guide uses the same boundary. Browser code calls the
-governed Cogentia HTTP facade, not Magistral and not a model provider:
+The public website Guide uses the same boundary. It is a public, low-maturity,
+read-only instance of the owner-rooted digital twin, not the private
+owner-facing core. Browser code calls the governed Cogentia HTTP facade, not
+Magistral and not a model provider:
 
 ```text
 POST /guide/chat
