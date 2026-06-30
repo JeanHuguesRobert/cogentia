@@ -164,7 +164,11 @@ export function createMcpCore(env = process.env) {
       if (value !== undefined && value !== "") url.searchParams.set(key, String(value));
     }
     const headers = { Accept: "application/json, text/markdown" };
-    if (view === "full") headers.Authorization = `Bearer ${adminToken}`;
+    if (view === "full") {
+      headers.Authorization = `Bearer ${adminToken}`;
+    } else {
+      headers["X-Cogentia-Entry"] = "public";
+    }
     let response;
     try {
       response = await fetch(url, { method: "GET", headers, redirect: "error", signal: AbortSignal.timeout(requestTimeoutMs) });

@@ -11,7 +11,13 @@ const port = await freePort();
 const base = `http://127.0.0.1:${port}`;
 const daemon = spawn(process.execPath, ["scripts/cogentia.js", "daemon", "--host", "127.0.0.1", "--port", String(port)], {
   cwd: root,
-  env: { ...process.env, COGENTIA_DAEMON_VIEW: "public", COGENTIA_RATE_LIMIT_MAX: "20" },
+  env: {
+    ...process.env,
+    COGENTIA_DAEMON_VIEW: "public",
+    COGENTIA_RATE_LIMIT_MAX: "40",
+    COGENTIA_AI_ROUTER_URL: "http://127.0.0.1:9",
+    COGENTIA_AI_ROUTER_TIMEOUT_MS: "1000",
+  },
   stdio: ["ignore", "pipe", "pipe"],
 });
 let daemonLog = "";
@@ -77,12 +83,17 @@ try {
   assert.equal(httpMcp.tools.result.tools.length, 5);
   assert.equal(httpMcp.health.result.structuredContent.ok, true);
   assert.equal(httpMcp.facadeTools.tools.length, 5);
+  assert.equal(httpMcp.guideHealth.service, "fractavolta-guide");
+  assert.equal(httpMcp.guideCors, "https://fractavolta.com");
+  assert.equal(httpMcp.guideChat.ok, true);
+  assert.equal(httpMcp.guideChat.mode, "extractive_fallback");
+  assert.ok(httpMcp.guideChat.sources.length > 0);
 
   const rateStatuses = [];
-  for (let request = 0; request < 25; request++) rateStatuses.push(await responseStatus("/api/context/health"));
+  for (let request = 0; request < 45; request++) rateStatuses.push(await responseStatus("/api/context/health"));
   assert.ok(rateStatuses.includes(429));
 
-  console.log(JSON.stringify({ ok: true, port, search_results: search.count, pack_hash: firstPack.pack_hash, mcp_tools: 5, http_mcp: "/mcp", rate_limit: 429 }, null, 2));
+  console.log(JSON.stringify({ ok: true, port, search_results: search.count, pack_hash: firstPack.pack_hash, mcp_tools: 5, http_mcp: "/mcp", guide_chat: httpMcp.guideChat.mode, rate_limit: 429 }, null, 2));
 } finally {
   daemon.kill();
 }
@@ -134,7 +145,13 @@ async function runHttpMcp(daemonBase) {
   const base = `http://127.0.0.1:${port}`;
   const child = spawn(process.execPath, ["scripts/cogentia-mcp-http.js"], {
     cwd: root,
-    env: { ...process.env, COGENTIA_DAEMON_URL: daemonBase, PORT: String(port), COGENTIA_MCP_VIEW: "public" },
+    env: {
+      ...process.env,
+      COGENTIA_DAEMON_URL: daemonBase,
+      PORT: String(port),
+      COGENTIA_MCP_VIEW: "public",
+      COGENTIA_CORS_ORIGIN: "https://fractavolta.com,http://localhost:*",
+    },
     stdio: ["ignore", "pipe", "pipe"],
   });
   let stderr = "";
@@ -153,7 +170,14 @@ async function runHttpMcp(daemonBase) {
     const tools = await postJson(`${base}/mcp`, { jsonrpc: "2.0", id: 2, method: "tools/list" });
     const health = await postJson(`${base}/mcp`, { jsonrpc: "2.0", id: 3, method: "tools/call", params: { name: "cogentia_health", arguments: {} } });
     const facadeTools = await (await fetch(`${base}/tools`)).json();
-    return { initialize, tools, health, facadeTools };
+    const guideHealthResponse = await fetch(`${base}/guide/health`, { headers: { Origin: "https://fractavolta.com" } });
+    const guideCors = guideHealthResponse.headers.get("access-control-allow-origin");
+    const guideHealth = await guideHealthResponse.json();
+    const guideChat = await postJson(`${base}/guide/chat`, {
+      question: "What is Cogentia?",
+      locale: "en",
+    });
+    return { initialize, tools, health, facadeTools, guideHealth, guideCors, guideChat };
   } finally {
     child.kill();
   }

@@ -73,6 +73,18 @@ COGENTIA_EMBEDDING_MODEL=text-embedding-3-small
 The default local URL is intentionally loopback. Public deployments should put a
 reverse proxy in front of Cogentia, not expose Magistral control endpoints.
 
+The public website Guide uses the same boundary. Browser code calls the
+governed Cogentia HTTP facade, not Magistral and not a model provider:
+
+```text
+POST /guide/chat
+```
+
+That facade forces the public Cogentia view, builds a public context pack, then
+asks the local AI router for grounded synthesis. If the AI router is not
+available, the route degrades to an extractive answer that lists public sources
+instead of inventing a conversational response.
+
 ## Storage Boundary
 
 Cogentia SQLite stores corpus state:
@@ -164,6 +176,8 @@ The public Internet face should be read-only by default:
 - no provider-key exposure;
 - no Magistral map editing;
 - no direct Magistral metrics unless explicitly sanitized.
+- browser-facing Guide endpoints must keep provider keys server-side and force
+  `X-Cogentia-Entry: public` when calling the daemon.
 
 ## Conversational Pipeline
 

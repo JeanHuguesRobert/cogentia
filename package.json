@@ -14,6 +14,7 @@
     "commons:build": "pnpm --filter @cogentia/commons run build",
     "cogentia": "node scripts/cogentia.js",
     "test:context": "node scripts/test-context-gateway.js",
+    "test:guide": "node scripts/test-guide-http.js",
     "test:ai-router": "node scripts/test-ai-router-client.js",
     "test:smart-embed": "node scripts/test-smart-embed-worker.js",
     "test:embedding-step": "node scripts/test-embedding-step.js",
