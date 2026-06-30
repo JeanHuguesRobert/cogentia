@@ -290,6 +290,7 @@ function guideRetrievalPrompt(locale, retrieval) {
     "",
     intro,
     "Treat these passages as supplied public Cogentia context. Cite source_id values.",
+    "Do not use numeric citations such as [1]; cite exact source_id values such as [repo:path#L1-L4].",
     `Strategy: ${retrieval.strategy}`,
     "",
     "## Query attempts",
@@ -316,9 +317,12 @@ function guideRetrievalPrompt(locale, retrieval) {
 }
 
 function guideChatResponse(question, locale, completion, retrieval = null) {
-  const answer = String(completion?.choices?.[0]?.message?.content || completion?.choices?.[0]?.text || "").trim();
   const context = completion?.cogentia_context || {};
   const sources = mergeGuideSources(context.sources, retrieval?.sources);
+  const answer = normalizeGuideCitations(
+    String(completion?.choices?.[0]?.message?.content || completion?.choices?.[0]?.text || "").trim(),
+    sources
+  );
   return {
     ok: true,
     service: "fractavolta-guide",
@@ -331,6 +335,17 @@ function guideChatResponse(question, locale, completion, retrieval = null) {
     context: summarizeGuideContext(context, retrieval),
     warnings: [...new Set([...(context.warnings || []), ...(retrieval?.warnings || [])])],
   };
+}
+
+function normalizeGuideCitations(answer, sources) {
+  let text = String(answer || "").trim();
+  if (!text || !sources.length) return text;
+  text = text.replace(/\[(\d+)\]/g, (match, rawIndex) => {
+    const source = sources[Number(rawIndex) - 1];
+    return source?.source_id ? `[${source.source_id}]` : match;
+  });
+  if (sources.some(source => text.includes(`[${source.source_id}]`))) return text;
+  return `${text}\n\nSources: ${sources.slice(0, 3).map(source => `[${source.source_id}]`).join(" ")}`;
 }
 
 async function guideFallback(question, locale, routed, retrieval = null) {

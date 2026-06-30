@@ -44,7 +44,7 @@ const daemon = http.createServer(async (req, res) => {
         index: 0,
         message: {
           role: "assistant",
-          content: "FractaVolta is explained through the public corpus [mock:README.md#L1-L4].",
+          content: "FractaVolta is explained through the public corpus [1].",
         },
         finish_reason: "stop",
       }],
@@ -100,6 +100,8 @@ try {
   assert.equal(chat.mode, "conversational");
   assert.equal(chat.mandate.surface, "web-guide");
   assert.match(chat.answer, /FractaVolta/);
+  assert.match(chat.answer, /\[mock:README\.md#L1-L4\]/);
+  assert.doesNotMatch(chat.answer, /\[1\]/);
   assert.equal(chat.sources[0].source_id, "mock:README.md#L1-L4");
   assert.ok(seenPackQueries.includes("What is FractaVolta?"));
   assert.ok(seenPackQueries.includes("FractaVolta"));
