@@ -13,9 +13,13 @@
 import fs from "node:fs";
 import http from "node:http";
 import path from "node:path";
+import readline from "node:readline";
 import { execFileSync } from "node:child_process";
 import { createHash, randomBytes, timingSafeEqual } from "node:crypto";
+import { once } from "node:events";
+import { finished } from "node:stream/promises";
 import { pathToFileURL } from "node:url";
+import { createGunzip, createGzip } from "node:zlib";
 import { DAEMON_PLUGINS, DAEMON_PLUGIN_ROUTES, loadDaemonPlugins, dispatchPluginRoute } from "./daemon_plugins/registry.js";
 import { generateOperiumEmbeddingsReport } from "./lib/operium-embeddings.js";
 import { aiRouterHealth, createAiRouterClient } from "./lib/ai-router-client.js";
@@ -289,6 +293,17 @@ Semantic search (continuation-based):
                            --max-chars <n> Skip oversized chunks, default 30000
                            --include-generated Include index/operational/archive roles
   embeddings store <json>  Store embeddings provided by external agent.
+  embeddings export-cache  Export reusable embedding rows as JSONL/JSONL.GZ.
+                           Flags: --output <path> --view public|full --repo <name|all>
+                           --provider <name> --model <name> --dimensions <n>
+                           --profile <name> --limit <n>
+  embeddings import-cache <path>
+                           Import reusable embedding rows by current chunk content_hash.
+                           Flags: --dry-run --provider <name> --model <name>
+                           --dimensions <n>
+  embeddings sync-plan <path>
+                           Compare a cache artifact with the current index and report
+                           importable, already-present, and incompatible rows.
   embeddings prune         Inspect or delete stale embedding cache rows.
                            Flags: --provider <name> --model <name>
                            --dimensions <n> --not-dimensions <n> --apply
@@ -2242,6 +2257,42 @@ async function cmdEmbeddings(sub) {
       const result = await storeEmbeddings(ctx, payload.embeddings || []);
       return output(result, formatEmbeddingsStore(result));
     }
+    case "export-cache": {
+      const outputPath = valueFlag("--output") || optionalPositional("");
+      if (!outputPath) throw new Error("Usage: embeddings export-cache --output <cache.jsonl[.gz]>");
+      const result = await exportEmbeddingCache(ctx, {
+        outputPath,
+        view: valueFlag("--view") || "public",
+        repo: valueFlag("--repo") || "all",
+        provider: valueFlag("--provider") || null,
+        model: valueFlag("--model") || null,
+        dimensions: Number(valueFlag("--dimensions") || 0) || null,
+        profile: valueFlag("--profile") || null,
+        limit: Number(valueFlag("--limit") || 0) || null,
+      });
+      return output(result, formatEmbeddingCacheExport(result));
+    }
+    case "import-cache": {
+      const inputPath = argv.shift();
+      if (!inputPath) throw new Error("Usage: embeddings import-cache <cache.jsonl[.gz]>");
+      const result = await importEmbeddingCache(ctx, inputPath, {
+        dryRun: takeFlag("--dry-run"),
+        provider: valueFlag("--provider") || null,
+        model: valueFlag("--model") || null,
+        dimensions: Number(valueFlag("--dimensions") || 0) || null,
+      });
+      return output(result, formatEmbeddingCacheImport(result));
+    }
+    case "sync-plan": {
+      const inputPath = argv.shift();
+      if (!inputPath) throw new Error("Usage: embeddings sync-plan <cache.jsonl[.gz]>");
+      const result = await planEmbeddingCacheImport(ctx, inputPath, {
+        provider: valueFlag("--provider") || null,
+        model: valueFlag("--model") || null,
+        dimensions: Number(valueFlag("--dimensions") || 0) || null,
+      });
+      return output(result, formatEmbeddingCachePlan(result));
+    }
     case "prune": {
       const result = await pruneEmbeddings(ctx, {
         provider: valueFlag("--provider") || null,
@@ -2304,7 +2355,7 @@ async function cmdEmbeddings(sub) {
       }
     }
     default:
-      throw new Error(`Unknown embeddings subcommand "${sub}". Use status, index, store, prune, search, search-with, or operium-sync.`);
+      throw new Error(`Unknown embeddings subcommand "${sub}". Use status, index, store, export-cache, import-cache, sync-plan, prune, search, search-with, or operium-sync.`);
   }
 }
 
@@ -6816,6 +6867,404 @@ async function storeEmbeddings(ctx, embeddings) {
   }
 }
 
+const EMBEDDING_CACHE_SCHEMA = "cogentia.embeddings.cache.v1";
+const EMBEDDING_CACHE_ROW_SCHEMA = "cogentia.embedding.row.v1";
+
+async function exportEmbeddingCache(ctx, options = {}) {
+  const opened = await openIndexDatabase({ create: false, readOnly: true });
+  if (!opened.ok) return { ok: false, error: opened.error || opened.code, code: opened.code };
+  const { db, path: dbPath } = opened;
+  const outputPath = path.resolve(options.outputPath);
+  const view = normalizeDaemonView(options.view || "") === FULL_VIEW ? FULL_VIEW : PUBLIC_VIEW;
+  const repo = String(options.repo || "all");
+  const profile = options.profile ? resolveEmbeddingProfile(ctx, options) : null;
+  const provider = options.provider || profile?.provider || null;
+  const model = options.model || profile?.model_name || null;
+  const dimensions = Number(options.dimensions || profile?.dimensions || 0) || null;
+  const policy = profile?.policy || embeddingCachePolicy({ provider, model_name: model, dimensions });
+  const limit = Number(options.limit || 0) || null;
+
+  try {
+    const tables = db.prepare("SELECT name FROM sqlite_master WHERE type='table'").all().map(row => row.name);
+    if (!tables.includes("embeddings")) return { ok: false, error: "no_embeddings_table", path: dbPath };
+
+    const state = tables.includes("index_state") ? readIndexState(db) : {};
+    const clauses = [];
+    const params = [];
+    if (view !== FULL_VIEW) clauses.push("c.searchable_public = 1");
+    if (repo !== "all") { clauses.push("c.repo = ?"); params.push(repo); }
+    if (provider) { clauses.push("e.provider = ?"); params.push(provider); }
+    if (model) { clauses.push("e.model_name = ?"); params.push(model); }
+    if (dimensions) { clauses.push("e.dimensions = ?"); params.push(dimensions); }
+    const where = clauses.length ? `WHERE ${clauses.join(" AND ")}` : "";
+    const limitClause = limit ? "LIMIT ?" : "";
+    const queryParams = [...params, ...(limit ? [limit] : [])];
+    const count = db.prepare(`
+      SELECT COUNT(*) AS count
+      FROM embeddings e
+      JOIN chunks c ON c.id = e.chunk_id
+      ${where}
+    `).get(...params)?.count || 0;
+
+    const writer = await openEmbeddingCacheWriter(outputPath);
+    const rowsHash = createHash("sha256");
+    let exported = 0;
+    try {
+      await writer.writeJson({
+        type: "manifest",
+        schema: EMBEDDING_CACHE_SCHEMA,
+        created_at: new Date().toISOString(),
+        registry: ctx.configPath,
+        index_hash: state.index_hash || "",
+        indexing_policy_version: state.indexing_policy_version || "",
+        view,
+        repo,
+        filters: {
+          provider: provider || "",
+          model_name: model || "",
+          dimensions: dimensions || null,
+        },
+        row_count: count,
+        note: "Embedding cache rows are reusable cache data. They contain vectors and hashes, not provider secrets or raw text.",
+      });
+
+      const rows = db.prepare(`
+        SELECT e.content_hash, e.provider, e.model_name, e.dimensions, e.embedding, e.created_at,
+               c.repo, c.path, c.start_line, c.end_line, c.title, c.heading_path, c.role,
+               c.visibility, c.searchable_public, c.github_url
+        FROM embeddings e
+        JOIN chunks c ON c.id = e.chunk_id
+        ${where}
+        ORDER BY e.provider, e.model_name, e.dimensions, e.content_hash, c.repo, c.path, c.start_line
+        ${limitClause}
+      `).all(...queryParams);
+
+      for (const row of rows) {
+        const record = embeddingCacheRecord(row, policy);
+        rowsHash.update(stableJson(record));
+        await writer.writeJson(record);
+        exported++;
+      }
+      const rows_hash = rowsHash.digest("hex");
+      await writer.writeJson({ type: "summary", schema: EMBEDDING_CACHE_SCHEMA, rows: exported, rows_hash });
+      await writer.close();
+      return { ok: true, path: outputPath, source_index: dbPath, rows: exported, rows_hash, compressed: outputPath.endsWith(".gz"), view, repo };
+    } catch (error) {
+      await writer.close().catch(() => {});
+      throw error;
+    }
+  } catch (error) {
+    return { ok: false, path: outputPath, error: "embedding_cache_export_failed", message: error.message };
+  } finally {
+    db.close();
+  }
+}
+
+async function planEmbeddingCacheImport(ctx, inputPath, options = {}) {
+  return importEmbeddingCache(ctx, inputPath, { ...options, dryRun: true, planOnly: true });
+}
+
+async function importEmbeddingCache(ctx, inputPath, options = {}) {
+  const dryRun = Boolean(options.dryRun || options.planOnly);
+  const opened = await openIndexDatabase({ create: false, readOnly: dryRun });
+  if (!opened.ok) return { ok: false, error: opened.error || opened.code, code: opened.code };
+  const { db, path: dbPath } = opened;
+  const resolvedInput = path.resolve(inputPath);
+  const filters = {
+    provider: options.provider || "",
+    model_name: options.model || "",
+    dimensions: Number(options.dimensions || 0) || null,
+  };
+  const stats = {
+    seen: 0,
+    importable: 0,
+    imported: 0,
+    already_present: 0,
+    missing_content_hash: 0,
+    incompatible_existing: 0,
+    skipped_by_filter: 0,
+    invalid: 0,
+  };
+  const samples = {
+    importable: [],
+    missing_content_hash: [],
+    incompatible_existing: [],
+    invalid: [],
+  };
+  let manifest = null;
+  let summary = null;
+  const rowsHash = createHash("sha256");
+
+  try {
+    const tables = db.prepare("SELECT name FROM sqlite_master WHERE type='table'").all().map(row => row.name);
+    const hasEmbeddings = tables.includes("embeddings");
+    if (!dryRun) await ensureEmbeddingsTable(db);
+    if (!dryRun) db.exec("BEGIN");
+    const insert = dryRun
+      ? null
+      : db.prepare(`
+        INSERT OR REPLACE INTO embeddings
+        (chunk_id, content_hash, provider, repo, path, start_line, end_line, embedding, model_name, dimensions, created_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))
+      `);
+    const chunksByHash = new Map();
+    for (const chunk of db.prepare("SELECT id, content_hash, repo, path, start_line, end_line FROM chunks ORDER BY repo, path, start_line").all()) {
+      const key = String(chunk.content_hash || "");
+      if (!chunksByHash.has(key)) chunksByHash.set(key, []);
+      chunksByHash.get(key).push(chunk);
+    }
+    const existingByChunkProfile = new Map();
+    if (hasEmbeddings) {
+      for (const row of db.prepare("SELECT chunk_id, provider, model_name, dimensions FROM embeddings").all()) {
+        existingByChunkProfile.set(embeddingCacheExistingKey(row.chunk_id, row.provider, row.model_name), Number(row.dimensions || 0) || 0);
+      }
+    }
+
+    await readEmbeddingCache(inputPath, record => {
+      if (record.type === "manifest") {
+        manifest = record;
+        return;
+      }
+      if (record.type === "summary") {
+        summary = record;
+        return;
+      }
+      if (record.type !== "embedding") return;
+      stats.seen++;
+      rowsHash.update(stableJson(record));
+
+      const normalized = normalizeEmbeddingCacheRecord(record);
+      if (!normalized.ok) {
+        stats.invalid++;
+        pushSample(samples.invalid, { reason: normalized.error, embedding_key: record.embedding_key || "" });
+        return;
+      }
+      const row = normalized.row;
+      if (!embeddingCacheRecordMatches(row, filters)) {
+        stats.skipped_by_filter++;
+        return;
+      }
+      const chunks = chunksByHash.get(row.content_hash) || [];
+      if (!chunks.length) {
+        stats.missing_content_hash++;
+        pushSample(samples.missing_content_hash, { embedding_key: row.embedding_key, content_hash: row.content_hash });
+        return;
+      }
+      for (const chunk of chunks) {
+        const existingKey = embeddingCacheExistingKey(chunk.id, row.provider, row.model_name);
+        const presentDimensions = existingByChunkProfile.get(existingKey);
+        if (presentDimensions && presentDimensions !== row.dimensions) {
+          stats.incompatible_existing++;
+          pushSample(samples.incompatible_existing, { embedding_key: row.embedding_key, repo: chunk.repo, path: chunk.path, existing_dimensions: presentDimensions, incoming_dimensions: row.dimensions });
+          continue;
+        }
+        if (presentDimensions) {
+          stats.already_present++;
+          continue;
+        }
+        stats.importable++;
+        pushSample(samples.importable, { embedding_key: row.embedding_key, repo: chunk.repo, path: chunk.path, start_line: chunk.start_line, end_line: chunk.end_line });
+        if (!dryRun) {
+          insert.run(
+            chunk.id,
+            row.content_hash,
+            row.provider,
+            chunk.repo,
+            chunk.path,
+            chunk.start_line,
+            chunk.end_line,
+            JSON.stringify(row.embedding),
+            row.model_name,
+            row.dimensions
+          );
+          existingByChunkProfile.set(existingKey, row.dimensions);
+          stats.imported++;
+        }
+      }
+    });
+
+    if (!dryRun) db.exec("COMMIT");
+    const rows_hash = rowsHash.digest("hex");
+    return {
+      ok: true,
+      dry_run: dryRun,
+      plan_only: Boolean(options.planOnly),
+      path: resolvedInput,
+      target_index: dbPath,
+      manifest: summarizeEmbeddingCacheManifest(manifest),
+      summary,
+      rows_hash,
+      rows_hash_matches_summary: summary?.rows_hash ? summary.rows_hash === rows_hash : null,
+      ...stats,
+      samples,
+    };
+  } catch (error) {
+    if (!dryRun) {
+      try { db.exec("ROLLBACK"); } catch {}
+    }
+    return { ok: false, path: resolvedInput, target_index: dbPath, error: "embedding_cache_import_failed", message: error.message, ...stats, samples };
+  } finally {
+    db.close();
+  }
+}
+
+function embeddingCacheRecord(row, policy) {
+  const dimensions = Number(row.dimensions || 0) || 0;
+  const base = {
+    content_hash: String(row.content_hash || ""),
+    provider: String(row.provider || "unknown"),
+    model_name: String(row.model_name || "unknown"),
+    dimensions,
+    policy: policy || embeddingCachePolicy({ provider: row.provider, model_name: row.model_name, dimensions }),
+  };
+  return {
+    type: "embedding",
+    schema: EMBEDDING_CACHE_ROW_SCHEMA,
+    embedding_key: embeddingCacheKey(base),
+    ...base,
+    source: {
+      repo: String(row.repo || ""),
+      path: String(row.path || ""),
+      start_line: Number(row.start_line || 0) || 0,
+      end_line: Number(row.end_line || 0) || 0,
+      title: String(row.title || ""),
+      heading_path: String(row.heading_path || ""),
+      role: String(row.role || ""),
+      visibility: String(row.visibility || ""),
+      searchable_public: Boolean(row.searchable_public),
+      github_url: String(row.github_url || ""),
+    },
+    created_at: String(row.created_at || ""),
+    embedding: parseEmbeddingVector(row.embedding),
+  };
+}
+
+function normalizeEmbeddingCacheRecord(record) {
+  const provider = String(record.provider || "").trim();
+  const model_name = String(record.model_name || record.model || "").trim();
+  const dimensions = Number(record.dimensions || 0) || 0;
+  const content_hash = String(record.content_hash || "").trim();
+  const embedding = Array.isArray(record.embedding) ? record.embedding.map(Number) : [];
+  if (!content_hash) return { ok: false, error: "missing_content_hash" };
+  if (!provider) return { ok: false, error: "missing_provider" };
+  if (!model_name) return { ok: false, error: "missing_model_name" };
+  if (!dimensions || !Number.isInteger(dimensions)) return { ok: false, error: "invalid_dimensions" };
+  if (embedding.length !== dimensions || embedding.some(value => !Number.isFinite(value))) return { ok: false, error: "invalid_embedding_vector" };
+  const policy = String(record.policy || embeddingCachePolicy({ provider, model_name, dimensions }));
+  const row = {
+    embedding_key: String(record.embedding_key || embeddingCacheKey({ content_hash, provider, model_name, dimensions, policy })),
+    content_hash,
+    provider,
+    model_name,
+    dimensions,
+    policy,
+    embedding,
+  };
+  const expectedKey = embeddingCacheKey(row);
+  if (row.embedding_key !== expectedKey) return { ok: false, error: "embedding_key_mismatch" };
+  return { ok: true, row };
+}
+
+function embeddingCacheRecordMatches(row, filters = {}) {
+  if (filters.provider && row.provider !== filters.provider) return false;
+  if (filters.model_name && row.model_name !== filters.model_name) return false;
+  if (filters.dimensions && row.dimensions !== filters.dimensions) return false;
+  return true;
+}
+
+function embeddingCacheExistingKey(chunkId, provider, modelName) {
+  return `${chunkId}\u0000${provider}\u0000${modelName}`;
+}
+
+function embeddingCachePolicy(row) {
+  return `${row.provider || "unknown"}/${row.model_name || "unknown"}/${row.dimensions || "unknown"}`;
+}
+
+function embeddingCacheKey(row) {
+  return sha256(stableJson({
+    content_hash: row.content_hash,
+    provider: row.provider,
+    model_name: row.model_name,
+    dimensions: row.dimensions,
+    policy: row.policy || embeddingCachePolicy(row),
+  }));
+}
+
+function parseEmbeddingVector(value) {
+  if (Array.isArray(value)) return value.map(Number);
+  try {
+    const parsed = JSON.parse(String(value || "[]"));
+    return Array.isArray(parsed) ? parsed.map(Number) : [];
+  } catch {
+    return [];
+  }
+}
+
+async function openEmbeddingCacheWriter(outputPath) {
+  ensureDir(path.dirname(outputPath));
+  const file = fs.createWriteStream(outputPath);
+  await waitForWritableOpen(file);
+  const stream = outputPath.endsWith(".gz") ? createGzip() : null;
+  const target = stream || file;
+  if (stream) stream.pipe(file);
+  return {
+    async writeJson(value) {
+      const line = `${JSON.stringify(value)}\n`;
+      if (!target.write(line)) await once(target, "drain");
+    },
+    async close() {
+      target.end();
+      await finished(target);
+      if (stream) await finished(file);
+    },
+  };
+}
+
+async function waitForWritableOpen(stream) {
+  if (stream.fd != null) return;
+  await Promise.race([
+    once(stream, "open"),
+    once(stream, "error").then(([error]) => { throw error; }),
+  ]);
+}
+
+async function readEmbeddingCache(inputPath, onRecord) {
+  const resolved = path.resolve(inputPath);
+  let input = fs.createReadStream(resolved, { encoding: inputPath.endsWith(".gz") ? undefined : "utf8" });
+  if (inputPath.endsWith(".gz")) input = input.pipe(createGunzip()).setEncoding("utf8");
+  const rl = readline.createInterface({ input, crlfDelay: Infinity });
+  let lineNumber = 0;
+  for await (const line of rl) {
+    lineNumber++;
+    const clean = line.trim();
+    if (!clean) continue;
+    let record;
+    try {
+      record = JSON.parse(clean);
+    } catch (error) {
+      throw new Error(`Invalid JSONL at line ${lineNumber}: ${error.message}`);
+    }
+    await onRecord(record, lineNumber);
+  }
+}
+
+function summarizeEmbeddingCacheManifest(manifest) {
+  if (!manifest) return null;
+  return {
+    schema: manifest.schema || "",
+    created_at: manifest.created_at || "",
+    index_hash: manifest.index_hash || "",
+    view: manifest.view || "",
+    repo: manifest.repo || "",
+    filters: manifest.filters || {},
+    row_count: manifest.row_count ?? null,
+  };
+}
+
+function pushSample(list, value, limit = 8) {
+  if (list.length < limit) list.push(value);
+}
+
 // Semantic search using cosine similarity on stored embeddings
 async function semanticSearch(ctx, query, options = {}) {
   const q = normalizeContextQuery(query);
@@ -7829,6 +8278,55 @@ function formatEmbeddingContinuation(result) {
 function formatEmbeddingsStore(result) {
   if (!result.ok) return `Failed to store embeddings: ${result.message || "unknown error"}`;
   return `\nEmbeddings stored: ${result.stored}\n`;
+}
+
+function formatEmbeddingCacheExport(result) {
+  if (!result.ok) return `Embedding cache export failed: ${result.message || result.error || result.code || "unknown error"}`;
+  const lines = ["\nEmbedding cache export\n"];
+  lines.push(`Path: ${result.path}`);
+  lines.push(`Rows: ${result.rows}`);
+  lines.push(`View: ${result.view}`);
+  lines.push(`Repo: ${result.repo}`);
+  lines.push(`Rows hash: ${result.rows_hash}`);
+  if (result.compressed) lines.push("Compression: gzip");
+  return lines.join("\n");
+}
+
+function formatEmbeddingCacheImport(result) {
+  if (!result.ok) return `Embedding cache import failed: ${result.message || result.error || result.code || "unknown error"}`;
+  const lines = [result.dry_run ? "\nEmbedding cache import dry-run\n" : "\nEmbedding cache import\n"];
+  lines.push(`Path: ${result.path}`);
+  if (result.manifest?.index_hash) lines.push(`Source index: ${result.manifest.index_hash}`);
+  lines.push(`Rows seen: ${result.seen}`);
+  lines.push(`Importable: ${result.importable}`);
+  lines.push(`Imported: ${result.imported}`);
+  lines.push(`Already present: ${result.already_present}`);
+  lines.push(`Missing content hash: ${result.missing_content_hash}`);
+  lines.push(`Incompatible existing: ${result.incompatible_existing}`);
+  lines.push(`Skipped by filter: ${result.skipped_by_filter}`);
+  lines.push(`Invalid: ${result.invalid}`);
+  if (result.rows_hash_matches_summary === false) lines.push("Warning: rows_hash does not match artifact summary.");
+  return lines.join("\n");
+}
+
+function formatEmbeddingCachePlan(result) {
+  if (!result.ok) return `Embedding cache sync plan failed: ${result.message || result.error || result.code || "unknown error"}`;
+  const lines = ["\nEmbedding cache sync plan\n"];
+  lines.push(`Path: ${result.path}`);
+  if (result.manifest?.index_hash) lines.push(`Source index: ${result.manifest.index_hash}`);
+  lines.push(`Rows seen: ${result.seen}`);
+  lines.push(`Importable: ${result.importable}`);
+  lines.push(`Already present: ${result.already_present}`);
+  lines.push(`Missing content hash: ${result.missing_content_hash}`);
+  lines.push(`Incompatible existing: ${result.incompatible_existing}`);
+  lines.push(`Skipped by filter: ${result.skipped_by_filter}`);
+  lines.push(`Invalid: ${result.invalid}`);
+  if (result.samples?.importable?.length) {
+    lines.push("");
+    lines.push("Importable samples:");
+    for (const item of result.samples.importable) lines.push(`  - ${item.repo}/${item.path}:${item.start_line}-${item.end_line}`);
+  }
+  return lines.join("\n");
 }
 
 function formatEmbeddingsPrune(result) {
