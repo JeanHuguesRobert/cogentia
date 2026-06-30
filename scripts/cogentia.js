@@ -3394,6 +3394,12 @@ function scalar(db, sql) {
   return Number(Object.values(row)[0] || 0);
 }
 
+function checkpointIndexDatabase(db) {
+  try {
+    db.exec("PRAGMA wal_checkpoint(PASSIVE)");
+  } catch {}
+}
+
 function computeIndexHash(db) {
   const rows = db.prepare(`
     SELECT repo, branch, path, title, role, visibility, public_presence,
@@ -7329,6 +7335,7 @@ async function cacheQueryEmbedding(ctx, payload, options = {}) {
         created_at = excluded.created_at
     `);
     insert.run(query_hash, provider, model_name, dimensions, policy, JSON.stringify(embedding), source, metadata, new Date().toISOString());
+    checkpointIndexDatabase(db);
     return {
       ok: true,
       cached: true,
@@ -7429,6 +7436,7 @@ async function cacheSemanticQueryResults(ctx, queryCache, searchResult, options 
       JSON.stringify(resultItems),
       new Date().toISOString()
     );
+    checkpointIndexDatabase(db);
     return {
       ok: true,
       cached: true,
