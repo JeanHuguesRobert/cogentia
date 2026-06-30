@@ -130,6 +130,8 @@ async function handleGuideChat(req, res) {
   if (question.length > 1200) return sendJson(res, 413, { ok: false, error: "question_too_large" });
 
   const locale = normalizeLocale(payload.locale);
+  if (guideWantsStream(req, payload)) return handleGuideChatStream(res, question, locale);
+
   const plan = guidePlannerEnabled ? await guidePlanningRun(question, locale) : guideHeuristicPlan(question, "planner_disabled");
   const retrieval = await guideRetrievalRun(question, plan);
   const chatPayload = {
@@ -160,6 +162,85 @@ async function handleGuideChat(req, res) {
 
   const fallback = await guideFallback(question, locale, routed, retrieval);
   return sendJson(res, fallback.status, fallback.body);
+}
+
+async function handleGuideChatStream(res, question, locale) {
+  writeSseHeaders(res);
+  const startedAt = Date.now();
+  const emit = (event, data = {}) => sendSse(res, event, {
+    ...data,
+    at: new Date().toISOString(),
+    elapsed_ms: Date.now() - startedAt,
+  });
+
+  try {
+    emit("guide_status", guideProgress(locale, "received"));
+    emit("guide_status", guideProgress(locale, "planning"));
+    const plan = guidePlannerEnabled
+      ? await guidePlanningRun(question, locale)
+      : guideHeuristicPlan(question, "planner_disabled");
+    emit("guide_plan", {
+      stage: "planned",
+      source: plan.source,
+      objective: plan.objective,
+      queries: plan.queries || [],
+      notes: plan.notes || [],
+      error: plan.planner_error || undefined,
+      message: guideProgress(locale, "planned").message,
+    });
+
+    emit("guide_status", guideProgress(locale, "retrieval"));
+    const retrieval = await guideRetrievalRun(question, plan, { progress: emit, locale });
+    emit("guide_retrieval", {
+      stage: "retrieved",
+      query_count: retrieval.queries.length,
+      source_count: retrieval.sources.length,
+      source_ids: retrieval.sources.map(source => source.source_id),
+      warnings: retrieval.warnings,
+      message: guideProgress(locale, "retrieved").message,
+    });
+
+    emit("guide_status", guideProgress(locale, "synthesis"));
+    const chatPayload = {
+      model: guideModel,
+      temperature: 0.2,
+      max_tokens: 1200,
+      messages: [
+        { role: "system", content: guideSystemPrompt(locale) },
+        { role: "system", content: guideRetrievalPrompt(locale, retrieval) },
+        { role: "user", content: question },
+      ],
+      cogentia: {
+        repo: "all",
+        mode: "hybrid",
+        limit: guideLimit,
+        budget: guideBudget,
+      },
+      metadata: {
+        surface: "fractavolta-public-guide",
+        locale,
+      },
+    };
+
+    const routed = await daemonPost("/v1/chat/completions", chatPayload);
+    if (routed.ok) {
+      emit("guide_answer", guideChatResponse(question, locale, routed.body, retrieval));
+    } else {
+      const fallback = await guideFallback(question, locale, routed, retrieval);
+      emit(fallback.body?.ok === false ? "guide_error" : "guide_answer", fallback.body);
+    }
+    sendSse(res, "done", { ok: true, elapsed_ms: Date.now() - startedAt });
+  } catch (error) {
+    sendSse(res, "guide_error", {
+      ok: false,
+      error: "guide_stream_failed",
+      message: publicErrorMessage(locale),
+      detail: process.env.NODE_ENV === "production" ? undefined : error.message,
+      elapsed_ms: Date.now() - startedAt,
+    });
+  } finally {
+    res.end();
+  }
 }
 
 async function daemonPost(route, body) {
@@ -288,7 +369,7 @@ function extractJsonObject(content) {
   return start >= 0 && end > start ? clean.slice(start, end + 1) : "";
 }
 
-async function guideRetrievalRun(question, plan = guideHeuristicPlan(question)) {
+async function guideRetrievalRun(question, plan = guideHeuristicPlan(question), options = {}) {
   const queries = mergeQueries([...(plan.queries || []), ...guideRetrievalQueries(question)]).slice(0, guideQueryLimit);
   const attempts = [];
   const sources = [];
@@ -298,6 +379,11 @@ async function guideRetrievalRun(question, plan = guideHeuristicPlan(question)) 
   let usedTokens = 0;
 
   for (const query of queries) {
+    emitGuideProgress(options, "guide_status", {
+      stage: "retrieval_query",
+      query,
+      message: guideProgress(options.locale, "retrieval_query", { query }).message,
+    });
     let pack;
     try {
       pack = await core.callTool("cogentia_context_pack", {
@@ -319,6 +405,16 @@ async function guideRetrievalRun(question, plan = guideHeuristicPlan(question)) 
       count: packSources.length,
       pack_hash: pack.pack_hash,
       source_ids: packSources.map(source => source.source_id),
+    });
+    emitGuideProgress(options, "guide_retrieval_query", {
+      stage: "retrieval_query_done",
+      query,
+      ok: Boolean(pack.ok),
+      count: packSources.length,
+      source_ids: packSources.map(source => source.source_id),
+      pack_hash: pack.pack_hash,
+      warnings: pack.warnings || [],
+      message: guideProgress(options.locale, "retrieval_query_done", { count: packSources.length }).message,
     });
     warnings.push(...(pack.warnings || []));
 
@@ -355,6 +451,11 @@ async function guideRetrievalRun(question, plan = guideHeuristicPlan(question)) 
     context,
     warnings: [...new Set(warnings)],
   };
+}
+
+function emitGuideProgress(options, event, data) {
+  if (typeof options?.progress !== "function") return;
+  options.progress(event, data);
 }
 
 function mergeQueries(queries) {
@@ -573,6 +674,28 @@ function normalizeLocale(value) {
   return clean.startsWith("fr") ? "fr" : "en";
 }
 
+function guideWantsStream(req, payload = {}) {
+  const accept = String(req.headers.accept || "").toLowerCase();
+  return payload.stream === true || accept.includes("text/event-stream");
+}
+
+function guideProgress(locale, stage, data = {}) {
+  const fr = normalizeLocale(locale) === "fr";
+  const messages = {
+    received: fr ? "Question recue." : "Question received.",
+    planning: fr ? "Preparation des recherches publiques..." : "Planning public corpus searches...",
+    planned: fr ? "Plan de recherche pret." : "Retrieval plan ready.",
+    retrieval: fr ? "Recherche dans le corpus public..." : "Searching the public corpus...",
+    retrieval_query: fr ? `Recherche: ${data.query || ""}` : `Searching: ${data.query || ""}`,
+    retrieval_query_done: fr
+      ? `${data.count || 0} source(s) trouvee(s).`
+      : `${data.count || 0} source(s) found.`,
+    retrieved: fr ? "Sources publiques selectionnees." : "Public sources selected.",
+    synthesis: fr ? "Preparation de la reponse..." : "Preparing the answer...",
+  };
+  return { stage, message: messages[stage] || stage };
+}
+
 function parseBoolean(value, fallback = false) {
   if (value === undefined || value === null || value === "") return fallback;
   return !new Set(["0", "false", "no", "off"]).has(String(value).trim().toLowerCase());
@@ -636,11 +759,7 @@ function truncateGuideText(text, budget) {
 }
 
 function sendSseInfo(req, res) {
-  res.writeHead(200, {
-    "Content-Type": "text/event-stream",
-    "Cache-Control": "no-cache",
-    Connection: "keep-alive",
-  });
+  writeSseHeaders(res);
   sendSse(res, "endpoint", {
     protocolVersion: core.initialize({}).protocolVersion,
     capabilities: { tools: { listChanged: false } },
@@ -650,6 +769,15 @@ function sendSseInfo(req, res) {
   });
   const keepAlive = setInterval(() => sendSse(res, "keepalive", {}), 30000);
   req.on("close", () => clearInterval(keepAlive));
+}
+
+function writeSseHeaders(res) {
+  res.writeHead(200, {
+    "Content-Type": "text/event-stream; charset=utf-8",
+    "Cache-Control": "no-cache, no-transform",
+    Connection: "keep-alive",
+    "X-Accel-Buffering": "no",
+  });
 }
 
 function sendSse(res, event, data) {

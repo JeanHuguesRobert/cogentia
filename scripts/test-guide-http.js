@@ -141,6 +141,18 @@ try {
   assert.equal(chat.context.guide_retrieval.planner.source, "magistral");
   assert.ok(chat.context.guide_retrieval.source_ids.includes("mock:README.md#L1-L4"));
 
+  const stream = await postSse(`${mcpBase}/guide/chat`, {
+    question: "Stream the FractaVolta public Guide answer.",
+    locale: "en",
+    stream: true,
+  });
+  assert.ok(stream.some(event => event.name === "guide_status" && event.data.stage === "planning"));
+  assert.ok(stream.some(event => event.name === "guide_retrieval_query"));
+  const streamedAnswer = stream.find(event => event.name === "guide_answer")?.data;
+  assert.equal(streamedAnswer.ok, true);
+  assert.equal(streamedAnswer.mode, "conversational");
+  assert.match(streamedAnswer.answer, /\[mock:README\.md#L1-L4\]/);
+
   const fallback = await postJson(`${mcpBase}/guide/chat`, {
     question: "fallback please",
     locale: "en",
@@ -152,7 +164,7 @@ try {
   assert.equal(fallback.sources[0].source_id, "mock:README.md#L1-L4");
   assert.ok(seenEntries.every(entry => entry === "public"));
 
-  console.log(JSON.stringify({ ok: true, guide_chat: true, fallback: true, public_entry: true }, null, 2));
+  console.log(JSON.stringify({ ok: true, guide_chat: true, guide_stream: true, fallback: true, public_entry: true }, null, 2));
 } finally {
   child.kill();
   daemon.close();
@@ -209,6 +221,29 @@ function postJson(url, body) {
     assert.equal(response.ok, true, JSON.stringify(parsed));
     return parsed;
   });
+}
+
+async function postSse(url, body) {
+  const response = await fetch(url, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Accept: "text/event-stream" },
+    body: JSON.stringify(body),
+  });
+  if (!response.ok) assert.fail(await response.text());
+  assert.match(response.headers.get("content-type") || "", /text\/event-stream/);
+  const text = await response.text();
+  return text.trim().split(/\n\n+/).map(parseSseBlock).filter(Boolean);
+}
+
+function parseSseBlock(block) {
+  let name = "message";
+  const data = [];
+  for (const line of block.split(/\r?\n/)) {
+    if (line.startsWith("event:")) name = line.slice("event:".length).trim();
+    if (line.startsWith("data:")) data.push(line.slice("data:".length).trim());
+  }
+  if (!data.length) return null;
+  return { name, data: JSON.parse(data.join("\n")) };
 }
 
 function listen(server, port) {
