@@ -134,7 +134,9 @@ This repository instantiates the **cognitive infrastructure layer** of the [DHIT
 | [Cogentia Index Layer v0.3](../docs/cogentia-index-layer.md) *(estimate-first retrieval index with policy files, stable/workspace channels, and local SQLite/FTS5 cache; Git and Markdown remain canonical)* | this repo | 2026-06-21 |
 | [Cogentia Context Gateway](../docs/cogentia-context-gateway.md) *(governed public Markdown RAG facade with deterministic context packs, citations and strict public/admin separation)* | this repo | 2026-06-23 |
 | [Cogentia MCP adapter](../docs/cogentia-mcp.md) *(stdio tools that retrieve through the daemon HTTP boundary and never access SQLite directly)* | this repo | 2026-06-23 |
+| [Connect MCP clients to Cogentia](../docs/connect-mcp-clients.md) *(client setup guide for local stdio, local HTTP, Fracta public MCP, and ChatGPT connector smoke tests)* | this repo | 2026-06-30 |
 | [Cogentia and Magistral Boundary](../docs/cogentia-magistral-boundary.md) *(service boundary for corpus authority, model routing, AI-router APIs, embedding policy and local/public deployments)* | this repo | 2026-06-28 |
+| [Trustable Digital Twin Agile Roadmap](../docs/digital-twin-agile-roadmap.md) *(living agile plan for raising an owner-facing digital twin through reversible, traceable capability increments)* | this repo | 2026-06-30 |
 | [Alan v0.1 — Turing-complete direct-style MCP scripting language](alan_turing_mcp.md) *(direct-style MCP scripting language with resumable, policy-aware continuations and caller-mediated execution boundaries)* | this repo | 2026-06-26 |
 | [Alan Turing MCP — Implementation Plan](alan_turing_mcp_implementation_plan.md) *(implementation plan for the Alan v0.1 MCP scripting language)* | this repo | 2026-06-26 |
 | [Coding Agent Prompt — Implement Alan Turing MCP v0.1](alan_turing_mcp_coding_agent_prompt.md) *(coding-agent implementation prompt for the Alan v0.1 MCP scripting language)* | this repo | 2026-06-26 |

@@ -113,6 +113,8 @@ All published documents live in `research/` and are catalogued in [`research/ind
 - **[Agent Navigation Guide](docs/agent_context_server.md)** — meta-prompt for AI agents navigating the corpus.
 - **[Context Gateway](docs/cogentia-context-gateway.md)** — governed public Markdown RAG routes, citations, visibility and deployment controls.
 - **[MCP adapter](docs/cogentia-mcp.md)** — model-facing tools that call the daemon without direct SQLite or filesystem access.
+- **[Connect MCP clients to Cogentia](docs/connect-mcp-clients.md)** — practical setup notes for local stdio, local HTTP and Fracta-hosted MCP clients.
+- **[Trustable Digital Twin Agile Roadmap](docs/digital-twin-agile-roadmap.md)** — living roadmap for raising an owner-facing digital twin through traceable capability increments.
 - **[The Knowledge Mesh](docs/knowledge_mesh.md)** — backlinks, trails, and Jekyll for human navigation.
 
 ## CLI features (v2)
