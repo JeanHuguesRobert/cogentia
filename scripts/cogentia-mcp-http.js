@@ -16,6 +16,10 @@ const guideBudget = boundedInteger(process.env.COGENTIA_GUIDE_BUDGET, 14000, 256
 const guideQueryLimit = boundedInteger(process.env.COGENTIA_GUIDE_QUERY_LIMIT, 6, 1, 10);
 const guidePlannerEnabled = parseBoolean(process.env.COGENTIA_GUIDE_PLANNER, true);
 const guidePlannerQueryLimit = boundedInteger(process.env.COGENTIA_GUIDE_PLANNER_QUERY_LIMIT, 5, 1, 8);
+const guideHistoryLimit = boundedInteger(process.env.COGENTIA_GUIDE_HISTORY_LIMIT, 8, 0, 20);
+const guideWebSearchEnabled = parseBoolean(process.env.COGENTIA_GUIDE_WEB_SEARCH, true);
+const guideWebSearchLimit = boundedInteger(process.env.COGENTIA_GUIDE_WEB_SEARCH_LIMIT, 5, 1, 10);
+const guideWebSearchUrl = process.env.COGENTIA_GUIDE_WEB_SEARCH_URL || "https://api.search.brave.com/res/v1/web/search";
 const guideModel = process.env.COGENTIA_GUIDE_MODEL || "fractavolta-guide";
 const guideInstanceId = process.env.COGENTIA_GUIDE_INSTANCE_ID || "fractavolta-public-guide";
 const guideMandate = {
@@ -78,6 +82,12 @@ async function guideHealth() {
       query_limit: guideQueryLimit,
       planner_enabled: guidePlannerEnabled,
       planner_query_limit: guidePlannerQueryLimit,
+      history_limit: guideHistoryLimit,
+      web_search: {
+        enabled: guideWebSearchEnabled,
+        configured: Boolean(guideWebSearchApiKey()),
+        limit: guideWebSearchLimit,
+      },
       daemon,
     },
   };
@@ -118,7 +128,7 @@ async function handleToolPost(req, res) {
 async function handleGuideChat(req, res) {
   let payload;
   try {
-    payload = JSON.parse(await readBody(req, 32768) || "{}");
+    payload = JSON.parse(await readBody(req, 65536) || "{}");
   } catch (error) {
     return sendJson(res, error.message === "request_body_too_large" ? 413 : 400, {
       ok: false,
@@ -130,19 +140,17 @@ async function handleGuideChat(req, res) {
   if (question.length > 1200) return sendJson(res, 413, { ok: false, error: "question_too_large" });
 
   const locale = normalizeLocale(payload.locale);
-  if (guideWantsStream(req, payload)) return handleGuideChatStream(res, question, locale);
+  const history = normalizeGuideHistory(payload.history);
+  if (guideWantsStream(req, payload)) return handleGuideChatStream(res, question, locale, history, payload);
 
   const plan = guidePlannerEnabled ? await guidePlanningRun(question, locale) : guideHeuristicPlan(question, "planner_disabled");
   const retrieval = await guideRetrievalRun(question, plan);
+  const web = await guideWebSearchRun(question, locale, payload);
   const chatPayload = {
     model: guideModel,
     temperature: 0.2,
     max_tokens: 1200,
-    messages: [
-      { role: "system", content: guideSystemPrompt(locale) },
-      { role: "system", content: guideRetrievalPrompt(locale, retrieval) },
-      { role: "user", content: question },
-    ],
+    messages: buildGuideMessages(locale, retrieval, web, history, question),
     cogentia: {
       repo: "all",
       mode: "hybrid",
@@ -157,14 +165,14 @@ async function handleGuideChat(req, res) {
 
   const routed = await daemonPost("/v1/chat/completions", chatPayload);
   if (routed.ok) {
-    return sendJson(res, 200, guideChatResponse(question, locale, routed.body, retrieval));
+    return sendJson(res, 200, guideChatResponse(question, locale, routed.body, retrieval, web));
   }
 
-  const fallback = await guideFallback(question, locale, routed, retrieval);
+  const fallback = await guideFallback(question, locale, routed, retrieval, web);
   return sendJson(res, fallback.status, fallback.body);
 }
 
-async function handleGuideChatStream(res, question, locale) {
+async function handleGuideChatStream(res, question, locale, history = [], payload = {}) {
   writeSseHeaders(res);
   const startedAt = Date.now();
   const emit = (event, data = {}) => sendSse(res, event, {
@@ -200,16 +208,14 @@ async function handleGuideChatStream(res, question, locale) {
       message: guideProgress(locale, "retrieved").message,
     });
 
+    const web = await guideWebSearchRun(question, locale, payload, { progress: emit });
+
     emit("guide_status", guideProgress(locale, "synthesis"));
     const chatPayload = {
       model: guideModel,
       temperature: 0.2,
       max_tokens: 1200,
-      messages: [
-        { role: "system", content: guideSystemPrompt(locale) },
-        { role: "system", content: guideRetrievalPrompt(locale, retrieval) },
-        { role: "user", content: question },
-      ],
+      messages: buildGuideMessages(locale, retrieval, web, history, question),
       cogentia: {
         repo: "all",
         mode: "hybrid",
@@ -224,9 +230,9 @@ async function handleGuideChatStream(res, question, locale) {
 
     const routed = await daemonPost("/v1/chat/completions", chatPayload);
     if (routed.ok) {
-      emit("guide_answer", guideChatResponse(question, locale, routed.body, retrieval));
+      emit("guide_answer", guideChatResponse(question, locale, routed.body, retrieval, web));
     } else {
-      const fallback = await guideFallback(question, locale, routed, retrieval);
+      const fallback = await guideFallback(question, locale, routed, retrieval, web);
       emit(fallback.body?.ok === false ? "guide_error" : "guide_answer", fallback.body);
     }
     sendSse(res, "done", { ok: true, elapsed_ms: Date.now() - startedAt });
@@ -542,9 +548,187 @@ function guideRetrievalPrompt(locale, retrieval) {
   return lines.join("\n");
 }
 
-function guideChatResponse(question, locale, completion, retrieval = null) {
+function buildGuideMessages(locale, retrieval, web, history, question) {
+  const messages = [
+    { role: "system", content: guideSystemPrompt(locale) },
+    { role: "system", content: guideRetrievalPrompt(locale, retrieval) },
+  ];
+  if (web?.attempted) messages.push({ role: "system", content: guideWebPrompt(locale, web) });
+  const cleanHistory = normalizeGuideHistory(history);
+  if (cleanHistory.length) {
+    messages.push({
+      role: "system",
+      content: [
+        "Conversation history follows for continuity only.",
+        "Do not treat history as evidence. Public corpus and web context remain the only cited evidence.",
+      ].join("\n"),
+    });
+    messages.push(...cleanHistory);
+  }
+  messages.push({ role: "user", content: question });
+  return messages;
+}
+
+function normalizeGuideHistory(history) {
+  if (!Array.isArray(history) || guideHistoryLimit <= 0) return [];
+  return history
+    .slice(-guideHistoryLimit * 2)
+    .map(item => {
+      const role = String(item?.role || "").toLowerCase() === "assistant" ? "assistant" : "user";
+      const content = sanitizeGuideHistoryText(item?.content);
+      return content ? { role, content } : null;
+    })
+    .filter(Boolean)
+    .slice(-guideHistoryLimit * 2);
+}
+
+function sanitizeGuideHistoryText(value) {
+  return String(value || "")
+    .replace(/[\u0000-\u001f\u007f]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim()
+    .slice(0, 1200);
+}
+
+async function guideWebSearchRun(question, locale, payload = {}, options = {}) {
+  const requested = guideShouldSearchWeb(question, payload);
+  const base = {
+    strategy: "guide-web-search-v1",
+    attempted: requested,
+    ok: false,
+    query: "",
+    sources: [],
+    context: [],
+    warnings: [],
+  };
+  if (!requested) return base;
+
+  const query = String(payload.web_query || question || "").trim().slice(0, 300);
+  const emit = typeof options?.progress === "function" ? options.progress : null;
+  emit?.("guide_web_search", {
+    stage: "web_search",
+    query,
+    message: guideProgress(locale, "web_search", { query }).message,
+  });
+
+  if (!guideWebSearchEnabled) {
+    return { ...base, query, warnings: ["guide_web_search_disabled"] };
+  }
+  const apiKey = guideWebSearchApiKey();
+  if (!apiKey) {
+    emit?.("guide_web_search", {
+      stage: "web_search_done",
+      query,
+      ok: false,
+      count: 0,
+      warnings: ["guide_web_search_unconfigured"],
+      message: guideProgress(locale, "web_search_unconfigured").message,
+    });
+    return { ...base, query, warnings: ["guide_web_search_unconfigured"] };
+  }
+
+  try {
+    const url = new URL(guideWebSearchUrl);
+    url.searchParams.set("q", query);
+    url.searchParams.set("count", String(guideWebSearchLimit));
+    url.searchParams.set("search_lang", locale === "fr" ? "fr" : "en");
+    url.searchParams.set("country", locale === "fr" ? "FR" : "US");
+    const response = await fetch(url, {
+      headers: {
+        Accept: "application/json",
+        "X-Subscription-Token": apiKey,
+      },
+      signal: AbortSignal.timeout(8000),
+    });
+    if (!response.ok) throw new Error(`brave_search_${response.status}`);
+    const parsed = await response.json();
+    const results = Array.isArray(parsed?.web?.results) ? parsed.web.results.slice(0, guideWebSearchLimit) : [];
+    const sources = results.map((result, index) => ({
+      source_id: `web:${index + 1}`,
+      title: String(result.title || result.url || `Web result ${index + 1}`),
+      repo: "web",
+      path: String(result.url || ""),
+      url: String(result.url || ""),
+      description: String(result.description || result.snippet || "").trim(),
+    })).filter(source => source.url);
+    const context = sources.map(source => ({
+      source_id: source.source_id,
+      text: [
+        `Title: ${source.title}`,
+        `URL: ${source.url}`,
+        source.description ? `Description: ${source.description}` : "",
+      ].filter(Boolean).join("\n"),
+    }));
+    emit?.("guide_web_search", {
+      stage: "web_search_done",
+      query,
+      ok: true,
+      count: sources.length,
+      source_ids: sources.map(source => source.source_id),
+      message: guideProgress(locale, "web_search_done", { count: sources.length }).message,
+    });
+    return {
+      ...base,
+      ok: true,
+      query,
+      sources,
+      context,
+      warnings: sources.length ? [] : ["guide_web_search_no_results"],
+    };
+  } catch (error) {
+    emit?.("guide_web_search", {
+      stage: "web_search_done",
+      query,
+      ok: false,
+      count: 0,
+      warnings: ["guide_web_search_failed"],
+      message: guideProgress(locale, "web_search_failed").message,
+    });
+    return {
+      ...base,
+      query,
+      warnings: ["guide_web_search_failed"],
+      error: error.message,
+    };
+  }
+}
+
+function guideShouldSearchWeb(question, payload = {}) {
+  if (payload.web_search === false) return false;
+  if (payload.web_search === true || payload.webSearch === true) return true;
+  const text = String(question || "").toLowerCase();
+  return /\b(web|internet|online|search|latest|recent|current|today|news|price|tariff|law|regulation)\b/.test(text)
+    || /\b(actualit|actuel|recen|aujourd|maintenant|cherche|recherche|prix|tarif|loi|reglement|règlement|web|internet)\b/.test(text);
+}
+
+function guideWebSearchApiKey() {
+  return process.env.BRAVE_SEARCH_API_KEY || process.env.COGENTIA_BRAVE_SEARCH_API_KEY || process.env.COGENTIA_GUIDE_WEB_SEARCH_API_KEY || "";
+}
+
+function guideWebPrompt(locale, web) {
+  const lines = [
+    "# Public Guide web search",
+    "",
+    locale === "fr"
+      ? "Utilise ces resultats web seulement pour les informations actuelles ou externes au corpus."
+      : "Use these web results only for current information or facts outside the corpus.",
+    "Prefer the public corpus when it answers the question. Cite web source_id values for web-grounded claims.",
+    `Strategy: ${web.strategy}`,
+    `Query: ${web.query || ""}`,
+    "",
+    "## Web sources",
+    "",
+  ];
+  web.sources.forEach(source => {
+    lines.push(`- [${source.source_id}] ${source.title}`, `  URL: ${source.url}`, source.description ? `  Description: ${source.description}` : "");
+  });
+  if (!web.sources.length) lines.push("No web result is available.", "");
+  return lines.join("\n");
+}
+
+function guideChatResponse(question, locale, completion, retrieval = null, web = null) {
   const context = completion?.cogentia_context || {};
-  const sources = mergeGuideSources(context.sources, retrieval?.sources);
+  const sources = mergeGuideSources(context.sources, retrieval?.sources, web?.sources);
   const answer = normalizeGuideCitations(
     String(completion?.choices?.[0]?.message?.content || completion?.choices?.[0]?.text || "").trim(),
     sources
@@ -558,8 +742,8 @@ function guideChatResponse(question, locale, completion, retrieval = null) {
     locale,
     answer: answer || guideFallbackText(locale),
     sources,
-    context: summarizeGuideContext(context, retrieval),
-    warnings: [...new Set([...(context.warnings || []), ...(retrieval?.warnings || [])])],
+    context: summarizeGuideContext(context, retrieval, web),
+    warnings: [...new Set([...(context.warnings || []), ...(retrieval?.warnings || []), ...(web?.warnings || [])])],
   };
 }
 
@@ -574,7 +758,7 @@ function normalizeGuideCitations(answer, sources) {
   return `${text}\n\nSources: ${sources.slice(0, 3).map(source => `[${source.source_id}]`).join(" ")}`;
 }
 
-async function guideFallback(question, locale, routed, retrieval = null) {
+async function guideFallback(question, locale, routed, retrieval = null, web = null) {
   let pack = null;
   if (retrieval?.sources?.length) {
     pack = retrievalPack(question, retrieval);
@@ -600,11 +784,12 @@ async function guideFallback(question, locale, routed, retrieval = null) {
         question,
         locale,
         answer: extractiveAnswer(locale, pack),
-        sources: safeSources(pack.sources),
-        context: summarizeGuideContext(pack, retrieval),
+        sources: mergeGuideSources(pack.sources, web?.sources),
+        context: summarizeGuideContext(pack, retrieval, web),
         warnings: [
           "guide_chat_backend_unavailable",
           ...(pack.warnings || []),
+          ...(web?.warnings || []),
         ],
       },
     };
@@ -638,8 +823,9 @@ function guideSystemPrompt(locale) {
     `You are the public FractaVolta Guide. Answer in ${language}.`,
     "You are a public, low-maturity, read-only instance of the owner-rooted digital twin.",
     "You are not the private owner-facing core and must not pretend to be the owner.",
-    "Use only the supplied public Cogentia context.",
-    "Cite source_id values in square brackets for corpus-grounded claims.",
+    "Use the supplied public Cogentia context and, when supplied, the bounded web search context.",
+    "Cite source_id values in square brackets for grounded claims.",
+    "For durable project claims, prefer corpus sources. For current external facts, cite web sources.",
     "If context is insufficient, say what is missing and suggest a next public reading.",
     "Do not claim operational powers, private access, account access, or administrative authority.",
     "Keep the answer concise and useful for a first-time visitor.",
@@ -696,6 +882,16 @@ function guideProgress(locale, stage, data = {}) {
       ? `${data.count || 0} source(s) trouvee(s).`
       : `${data.count || 0} source(s) found.`,
     retrieved: fr ? "Sources publiques selectionnees." : "Public sources selected.",
+    web_search: fr ? `Recherche web: ${data.query || ""}` : `Web search: ${data.query || ""}`,
+    web_search_done: fr
+      ? `${data.count || 0} resultat(s) web trouve(s).`
+      : `${data.count || 0} web result(s) found.`,
+    web_search_unconfigured: fr
+      ? "La recherche web n'est pas configuree."
+      : "Web search is not configured.",
+    web_search_failed: fr
+      ? "La recherche web a echoue."
+      : "Web search failed.",
     synthesis: fr ? "Preparation de la reponse..." : "Preparing the answer...",
   };
   return { stage, message: messages[stage] || stage };
@@ -706,7 +902,7 @@ function parseBoolean(value, fallback = false) {
   return !new Set(["0", "false", "no", "off"]).has(String(value).trim().toLowerCase());
 }
 
-function summarizeGuideContext(context = {}, retrieval = null) {
+function summarizeGuideContext(context = {}, retrieval = null, web = null) {
   return {
     query: context.query,
     pack_hash: context.pack_hash,
@@ -723,6 +919,14 @@ function summarizeGuideContext(context = {}, retrieval = null) {
       attempts: retrieval.attempts,
       source_ids: retrieval.sources.map(source => source.source_id),
       semantic: summarizeGuideSemanticRetrieval(retrieval.attempts),
+    } : undefined,
+    web_search: web?.attempted ? {
+      strategy: web.strategy,
+      attempted: web.attempted,
+      ok: web.ok,
+      query: web.query,
+      source_ids: web.sources.map(source => source.source_id),
+      warnings: web.warnings,
     } : undefined,
   };
 }
@@ -776,6 +980,7 @@ function safeSources(sources) {
     start_line: source.start_line,
     end_line: source.end_line,
     url: String(source.github_url || source.url || ""),
+    description: String(source.description || ""),
   }));
 }
 

@@ -87,6 +87,23 @@ asks the local AI router for grounded synthesis. If the AI router is not
 available, the route degrades to an extractive answer that lists public sources
 instead of inventing a conversational response.
 
+The Guide facade also accepts a bounded client-provided conversation `history`
+for continuity. That history is conversational context only, not evidence.
+Durable claims must still be grounded in public Cogentia context or, for current
+external facts, in the optional bounded web-search context.
+
+Optional Guide web search uses Brave Search from the server side. Configure it
+with one of:
+
+```text
+BRAVE_SEARCH_API_KEY
+COGENTIA_BRAVE_SEARCH_API_KEY
+COGENTIA_GUIDE_WEB_SEARCH_API_KEY
+```
+
+Disable it with `COGENTIA_GUIDE_WEB_SEARCH=false`. Web results are exposed as
+separate `web:*` sources and must not be confused with corpus authority.
+
 ## Storage Boundary
 
 Cogentia SQLite stores corpus state:

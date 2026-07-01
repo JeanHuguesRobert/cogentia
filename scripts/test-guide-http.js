@@ -27,6 +27,17 @@ const daemon = http.createServer(async (req, res) => {
     seenPackQueries.push(url.searchParams.get("q") || "");
     return sendJson(res, 200, mockPack(url.searchParams.get("q") || ""));
   }
+  if (req.method === "GET" && url.pathname === "/brave") {
+    return sendJson(res, 200, {
+      web: {
+        results: [{
+          title: "Current FractaVolta web note",
+          url: "https://example.invalid/fractavolta-current",
+          description: "A bounded current web result for the Guide.",
+        }],
+      },
+    });
+  }
   if (req.method === "POST" && url.pathname === "/v1/chat/completions") {
     const payload = JSON.parse(await readBody(req) || "{}");
     if (payload.metadata?.purpose === "guide_planner") {
@@ -97,6 +108,8 @@ const child = spawn(process.execPath, ["scripts/cogentia-mcp-http.js"], {
     COGENTIA_DAEMON_URL: daemonBase,
     COGENTIA_MCP_VIEW: "public",
     COGENTIA_CORS_ORIGIN: "https://fractavolta.com",
+    BRAVE_SEARCH_API_KEY: "mock-brave-key",
+    COGENTIA_GUIDE_WEB_SEARCH_URL: `${daemonBase}/brave`,
     PORT: String(mcpPort),
   },
   stdio: ["ignore", "pipe", "pipe"],
@@ -137,6 +150,7 @@ try {
   assert.ok(seenPackQueries.includes("FractaVolta public Guide"));
   assert.ok(seenPackQueries.includes("public Guide digital twin"));
   assert.ok(seenChatPayloads[0].messages.some(message => /Public Guide retrieval run/.test(message.content)));
+  assert.ok(seenChatPayloads[0].messages.every(message => !/Previous visitor question/.test(message.content)));
   assert.equal(chat.context.guide_retrieval.strategy, "guide-retrieval-run-v1");
   assert.equal(chat.context.guide_retrieval.planner.source, "magistral");
   assert.ok(chat.context.guide_retrieval.source_ids.includes("mock:README.md#L1-L4"));
@@ -144,13 +158,28 @@ try {
   assert.equal(chat.context.guide_retrieval.semantic.sqlite_vec, true);
   assert.equal(chat.context.guide_retrieval.attempts[0].retrieval.sqlite_vec, true);
 
+  const webChat = await postJson(`${mcpBase}/guide/chat`, {
+    question: "What is the latest current web note about FractaVolta?",
+    locale: "en",
+    history: [
+      { role: "user", content: "Previous visitor question" },
+      { role: "assistant", content: "Previous guide answer" },
+    ],
+  });
+  assert.equal(webChat.ok, true);
+  assert.ok(webChat.sources.some(source => source.source_id === "web:1"));
+  assert.equal(webChat.context.web_search.ok, true);
+  assert.ok(seenChatPayloads.at(-1).messages.some(message => /Previous visitor question/.test(message.content)));
+  assert.ok(seenChatPayloads.at(-1).messages.some(message => /Public Guide web search/.test(message.content)));
+
   const stream = await postSse(`${mcpBase}/guide/chat`, {
-    question: "Stream the FractaVolta public Guide answer.",
+    question: "Stream the latest FractaVolta public Guide answer.",
     locale: "en",
     stream: true,
   });
   assert.ok(stream.some(event => event.name === "guide_status" && event.data.stage === "planning"));
   assert.ok(stream.some(event => event.name === "guide_retrieval_query"));
+  assert.ok(stream.some(event => event.name === "guide_web_search"));
   const streamedAnswer = stream.find(event => event.name === "guide_answer")?.data;
   assert.equal(streamedAnswer.ok, true);
   assert.equal(streamedAnswer.mode, "conversational");
@@ -165,7 +194,7 @@ try {
   assert.equal(fallback.mandate.instance_id, "fractavolta-public-guide");
   assert.ok(fallback.warnings.includes("guide_chat_backend_unavailable"));
   assert.equal(fallback.sources[0].source_id, "mock:README.md#L1-L4");
-  assert.ok(seenEntries.every(entry => entry === "public"));
+  assert.ok(seenEntries.filter(Boolean).every(entry => entry === "public"));
 
   console.log(JSON.stringify({ ok: true, guide_chat: true, guide_stream: true, fallback: true, public_entry: true }, null, 2));
 } finally {
