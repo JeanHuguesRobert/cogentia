@@ -143,6 +143,7 @@ All published documents live in `research/` and are catalogued in [`research/ind
   * `index estimate` — no-spend estimate of indexable files, chunks, embedding tokens, vector storage, stable/workspace channels, and `.cogentia-index.yaml` policy effects.
   * `embeddings index` — emit a resumable continuation for chunk embeddings; `--profile`, `--provider`, and `--env-file` only describe the external resolver's model and credential location.
   * `embeddings store`, `embeddings search-with --cache-query`, and `embeddings cache-query` — resume the pipeline with corpus or query embeddings supplied by a human, agent, or local service.
+  * `embeddings vec-status` and `embeddings vec-rebuild` — inspect or rebuild the optional sqlite-vec nearest-neighbor cache from stored embeddings.
   * `scripts/smart-embed-worker.js` and `scripts/import-embeddings.js` — inspect or process embedding continuations through the AI-router embedding endpoint, optionally in resumable `--max-chunks` or `--max-batches` slices, dry-run validate result files, then import through the CLI.
 - **GitHub issue packets**
   * `issues list <repo>` — read live GitHub issues for a registered repository or explicit `owner/name`.

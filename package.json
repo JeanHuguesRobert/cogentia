@@ -27,5 +27,8 @@
   },
   "devDependencies": {
     "turbo": "^2.0.0"
+  },
+  "dependencies": {
+    "sqlite-vec": "^0.1.9"
   }
 }

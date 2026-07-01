@@ -238,6 +238,18 @@ default it skips generated/index, operational, template, example, alias and
 archive roles, and skips chunks over 30000 characters. Use `--include-generated`
 or `--max-chars <n>` only for deliberate exceptional passes.
 
+The nearest-neighbor search table is an optional derived cache:
+
+```bash
+node scripts/cogentia.js embeddings vec-status --json
+node scripts/cogentia.js embeddings vec-rebuild --dimensions 1536
+```
+
+`sqlite-vec` tables are rebuilt from stored embeddings and tagged with the
+current `index_hash`. They are acceleration only: if the extension is absent,
+the vector cache is missing, or the hash is stale, semantic retrieval uses the
+existing JavaScript vector scan. No provider call is made by the vector layer.
+
 ## Daemon Routes
 
 Start the daemon:

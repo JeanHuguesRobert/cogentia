@@ -172,6 +172,20 @@ directly from the index, including text for context packs, without rescanning
 all vectors. If the index hash changes, that ranked-result cache is ignored and
 the query vector cache remains available for a fresh semantic scan.
 
+For uncached semantic queries with an already cached query vector, Cogentia can
+use the optional `sqlite-vec` acceleration cache instead of scanning embedding
+JSON in JavaScript. This cache is derived from the `embeddings` table and is not
+canonical data. Rebuild it after corpus embedding changes:
+
+```bash
+node scripts/cogentia.js embeddings vec-rebuild --dimensions 1536
+node scripts/cogentia.js embeddings vec-status --json
+```
+
+If `sqlite-vec` is missing or the cache is stale, semantic retrieval falls back
+to the existing JavaScript vector scan. It does not call the AI router or any
+external provider.
+
 ## Verification
 
 ```bash

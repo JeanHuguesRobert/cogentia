@@ -307,6 +307,9 @@ Semantic search (continuation-based):
   embeddings prune         Inspect or delete stale embedding cache rows.
                            Flags: --provider <name> --model <name>
                            --dimensions <n> --not-dimensions <n> --apply
+  embeddings vec-status    Inspect optional sqlite-vec acceleration cache.
+  embeddings vec-rebuild   Rebuild sqlite-vec tables from stored embeddings.
+                           Flags: --dimensions <n>
   embeddings search <q>   Emit continuation for semantic search with query.
                            Flags: --repo <name|all> --limit <n> --provider <name>
                            --profile <name> --env-file <path>
@@ -2308,6 +2311,16 @@ async function cmdEmbeddings(sub) {
       });
       return output(result, formatEmbeddingsPrune(result));
     }
+    case "vec-status": {
+      const result = await vecEmbeddingsStatus(ctx);
+      return output(result, formatVecEmbeddingsStatus(result));
+    }
+    case "vec-rebuild": {
+      const result = await rebuildVecEmbeddings(ctx, {
+        dimensions: Number(valueFlag("--dimensions") || 0) || null,
+      });
+      return output(result, formatVecEmbeddingsRebuild(result));
+    }
     case "search": {
       const query = argv.shift() || "";
       if (!query) throw new Error('Usage: embeddings search "<query>" [--repo <name|all>] [--limit <n>] [--json]');
@@ -2409,7 +2422,7 @@ async function cmdEmbeddings(sub) {
       }
     }
     default:
-      throw new Error(`Unknown embeddings subcommand "${sub}". Use status, index, store, export-cache, import-cache, sync-plan, prune, search, search-with, cache-query, or operium-sync.`);
+      throw new Error(`Unknown embeddings subcommand "${sub}". Use status, index, store, export-cache, import-cache, sync-plan, prune, vec-status, vec-rebuild, search, search-with, cache-query, or operium-sync.`);
   }
 }
 
@@ -2592,10 +2605,29 @@ async function openIndexDatabase(options = {}) {
   try {
     if (options.create) ensureDir(path.dirname(dbPath));
     const filename = options.readOnly ? immutableSqliteUri(dbPath) : dbPath;
-    const db = new sqlite.DatabaseSync(filename);
+    const dbOptions = options.allowExtension || options.loadVec ? { allowExtension: true } : undefined;
+    const db = dbOptions ? new sqlite.DatabaseSync(filename, dbOptions) : new sqlite.DatabaseSync(filename);
+    if (options.loadVec) {
+      const vec = await loadSqliteVecExtension(db);
+      if (!vec.ok) {
+        try { db.close(); } catch {}
+        return { ok: false, code: "sqlite_vec_unavailable", path: dbPath, error: vec.error, message: vec.message };
+      }
+    }
     return { ok: true, db, path: dbPath };
   } catch (e) {
     return { ok: false, code: "sqlite_open_failed", path: dbPath, error: e.message };
+  }
+}
+
+async function loadSqliteVecExtension(db) {
+  try {
+    const sqliteVec = await import("sqlite-vec");
+    sqliteVec.load(db);
+    const version = db.prepare("SELECT vec_version() AS version").get()?.version || "";
+    return { ok: true, version };
+  } catch (error) {
+    return { ok: false, error: "sqlite_vec_unavailable", message: error.message };
   }
 }
 
@@ -6648,6 +6680,19 @@ CREATE INDEX IF NOT EXISTS idx_query_semantic_results_lookup
   ON query_semantic_results(query_hash, provider, model_name, dimensions, policy, view, repo, index_hash);
 `;
 
+const VEC_EMBEDDING_INDEXES_SCHEMA = `
+CREATE TABLE IF NOT EXISTS vec_embedding_indexes (
+  table_name TEXT PRIMARY KEY,
+  dimensions INTEGER NOT NULL,
+  row_count INTEGER NOT NULL,
+  index_hash TEXT NOT NULL,
+  provider_count INTEGER NOT NULL,
+  model_count INTEGER NOT NULL,
+  sqlite_vec_version TEXT NOT NULL,
+  created_at TEXT NOT NULL
+);
+`;
+
 const DEFAULT_EMBEDDING_EXCLUDED_ROLES = Object.freeze([
   "index",
   "operational",
@@ -6686,6 +6731,10 @@ async function ensureQueryEmbeddingsTable(db) {
 
 async function ensureQuerySemanticResultsTable(db) {
   db.exec(QUERY_SEMANTIC_RESULTS_TABLE_SCHEMA);
+}
+
+async function ensureVecEmbeddingIndexesTable(db) {
+  db.exec(VEC_EMBEDDING_INDEXES_SCHEMA);
 }
 
 function embeddingProfilesConfig(ctx) {
@@ -7633,6 +7682,130 @@ function pushSample(list, value, limit = 8) {
   if (list.length < limit) list.push(value);
 }
 
+async function vecEmbeddingsStatus(ctx) {
+  const opened = await openIndexDatabase({ create: false, readOnly: true, loadVec: true });
+  if (!opened.ok) {
+    return {
+      ok: false,
+      available: false,
+      path: opened.path,
+      error: opened.code || opened.error,
+      message: opened.message || opened.error || opened.code,
+    };
+  }
+  const { db, path: dbPath } = opened;
+  try {
+    const version = db.prepare("SELECT vec_version() AS version").get()?.version || "";
+    const tables = db.prepare("SELECT name FROM sqlite_master WHERE type='table'").all().map(row => row.name);
+    const hasMeta = tables.includes("vec_embedding_indexes");
+    const indexes = hasMeta
+      ? db.prepare("SELECT table_name, dimensions, row_count, index_hash, provider_count, model_count, sqlite_vec_version, created_at FROM vec_embedding_indexes ORDER BY dimensions").all()
+      : [];
+    return {
+      ok: true,
+      available: true,
+      path: dbPath,
+      sqlite_vec_version: version,
+      built: indexes.length > 0,
+      indexes,
+    };
+  } catch (error) {
+    return { ok: false, available: true, path: dbPath, error: "vec_status_failed", message: error.message };
+  } finally {
+    db.close();
+  }
+}
+
+async function rebuildVecEmbeddings(ctx, options = {}) {
+  const opened = await openIndexDatabase({ create: false, loadVec: true });
+  if (!opened.ok) {
+    return {
+      ok: false,
+      available: false,
+      path: opened.path,
+      error: opened.code || opened.error,
+      message: opened.message || opened.error || opened.code,
+    };
+  }
+  const { db, path: dbPath } = opened;
+  const rebuilt = [];
+  try {
+    await ensureVecEmbeddingIndexesTable(db);
+    const tables = db.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='embeddings'").all();
+    if (!tables.length) return { ok: false, available: true, path: dbPath, error: "no_embeddings_table" };
+    const requestedDimensions = options.dimensions ? Number(options.dimensions) : 0;
+    const dimensions = requestedDimensions
+      ? [{ dimensions: requestedDimensions, count: Number(db.prepare("SELECT count(*) AS count FROM embeddings WHERE dimensions = ?").get(requestedDimensions)?.count || 0) }]
+      : db.prepare("SELECT dimensions, COUNT(*) AS count FROM embeddings GROUP BY dimensions ORDER BY dimensions").all();
+    const state = readIndexState(db);
+    const sqliteVecVersion = db.prepare("SELECT vec_version() AS version").get()?.version || "";
+
+    for (const group of dimensions.filter(item => Number(item.dimensions || 0) > 0 && Number(item.count || 0) > 0)) {
+      const dim = Number(group.dimensions);
+      const tableName = vecEmbeddingTableName(dim);
+      const quoted = quoteSqlIdentifier(tableName);
+      db.exec("BEGIN");
+      try {
+        db.exec(`DROP TABLE IF EXISTS ${quoted}`);
+        db.exec(`CREATE VIRTUAL TABLE ${quoted} USING vec0(embedding float[${dim}])`);
+        const rows = db.prepare("SELECT id, embedding FROM embeddings WHERE dimensions = ? ORDER BY id").all(dim);
+        const insert = db.prepare(`INSERT INTO ${quoted}(rowid, embedding) VALUES (?, ?)`);
+        let inserted = 0;
+        for (const row of rows) {
+          const vector = parseEmbeddingVector(row.embedding);
+          if (vector.length !== dim || vector.some(value => !Number.isFinite(value))) continue;
+          insert.run(BigInt(row.id), new Float32Array(vector));
+          inserted++;
+        }
+        const providerCount = Number(db.prepare("SELECT COUNT(DISTINCT provider) AS count FROM embeddings WHERE dimensions = ?").get(dim)?.count || 0);
+        const modelCount = Number(db.prepare("SELECT COUNT(DISTINCT model_name) AS count FROM embeddings WHERE dimensions = ?").get(dim)?.count || 0);
+        db.prepare(`
+          INSERT INTO vec_embedding_indexes
+          (table_name, dimensions, row_count, index_hash, provider_count, model_count, sqlite_vec_version, created_at)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+          ON CONFLICT(table_name) DO UPDATE SET
+            dimensions = excluded.dimensions,
+            row_count = excluded.row_count,
+            index_hash = excluded.index_hash,
+            provider_count = excluded.provider_count,
+            model_count = excluded.model_count,
+            sqlite_vec_version = excluded.sqlite_vec_version,
+            created_at = excluded.created_at
+        `).run(tableName, dim, inserted, state.index_hash || "", providerCount, modelCount, sqliteVecVersion, new Date().toISOString());
+        db.exec("COMMIT");
+        rebuilt.push({ table_name: tableName, dimensions: dim, row_count: inserted, source_rows: rows.length });
+      } catch (error) {
+        try { db.exec("ROLLBACK"); } catch {}
+        throw error;
+      }
+    }
+    checkpointIndexDatabase(db);
+    return {
+      ok: true,
+      available: true,
+      path: dbPath,
+      sqlite_vec_version: sqliteVecVersion,
+      rebuilt,
+    };
+  } catch (error) {
+    return { ok: false, available: true, path: dbPath, error: "vec_rebuild_failed", message: error.message, rebuilt };
+  } finally {
+    db.close();
+  }
+}
+
+function vecEmbeddingTableName(dimensions) {
+  const dim = Number(dimensions || 0) || 0;
+  if (!Number.isInteger(dim) || dim <= 0 || dim > 100000) throw new Error(`invalid vector dimensions: ${dimensions}`);
+  return `vec_embeddings_${dim}`;
+}
+
+function quoteSqlIdentifier(identifier) {
+  const clean = String(identifier || "");
+  if (!/^[A-Za-z_][A-Za-z0-9_]*$/.test(clean)) throw new Error(`invalid SQL identifier: ${identifier}`);
+  return `"${clean.replace(/"/g, '""')}"`;
+}
+
 // Semantic search using cosine similarity on stored embeddings
 async function semanticSearch(ctx, query, options = {}) {
   const q = normalizeContextQuery(query);
@@ -7702,6 +7875,20 @@ async function semanticSearchWithEmbedding(ctx, queryEmbedding, options = {}) {
   const preferredProvider = options.provider || null;
   const preferredModel = options.modelName || options.model_name || null;
   const preferredDimensions = Number(options.dimensions || 0) || null;
+  const vecResult = await semanticSearchWithVecEmbedding(ctx, queryEmbedding, {
+    ...options,
+    query: q,
+    view,
+    repo,
+    limit,
+    provider: preferredProvider,
+    modelName: preferredModel,
+    dimensions: preferredDimensions,
+  });
+  const vecWarning = !vecResult.ok
+    ? `sqlite-vec ${formatVecFallbackReason(vecResult.error)}; used JavaScript vector scan.`
+    : "";
+  if (vecResult.ok) return vecResult;
 
   const opened = await openIndexDatabase({ create: false, readOnly: true });
   if (!opened.ok) return { ok: false, error: opened.code, query: q, mode: "semantic" };
@@ -7792,11 +7979,129 @@ async function semanticSearchWithEmbedding(ctx, queryEmbedding, options = {}) {
       index_hash: state.index_hash || "",
       count: results.length,
       results: results.map(({ _provider, _model, _dimensions, ...r }) => r),
-      warnings: [],
+      warnings: vecWarning ? [vecWarning] : [],
     };
   } catch (e) {
     db?.close();
     return { ok: false, error: "semantic_search_failed", query: q, mode: "semantic", ...(view === FULL_VIEW ? { message: e.message } : {}) };
+  }
+}
+
+async function semanticSearchWithVecEmbedding(ctx, queryEmbedding, options = {}) {
+  const q = normalizeContextQuery(options.query || "");
+  const view = normalizeDaemonView(options.view) === FULL_VIEW ? FULL_VIEW : PUBLIC_VIEW;
+  const repo = String(options.repo || "all");
+  const limit = boundedInteger(options.limit, 10, 1, 50);
+  const preferredProvider = options.provider || null;
+  const preferredModel = options.modelName || options.model_name || null;
+  const preferredDimensions = Number(options.dimensions || queryEmbedding?.length || 0) || 0;
+  if (!preferredDimensions) return { ok: false, error: "missing_query_embedding_dimensions" };
+  if (!Array.isArray(queryEmbedding) || queryEmbedding.length !== preferredDimensions) {
+    return { ok: false, error: "query_embedding_dimension_mismatch" };
+  }
+  const opened = await openIndexDatabase({ create: false, readOnly: true, loadVec: true });
+  if (!opened.ok) return { ok: false, error: opened.code || opened.error, message: opened.message || opened.error };
+  const { db } = opened;
+  try {
+    const tableName = vecEmbeddingTableName(preferredDimensions);
+    const table = db.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name = ?").get(tableName);
+    if (!table) return { ok: false, error: "sqlite_vec_index_missing", dimensions: preferredDimensions };
+    const state = readIndexState(db);
+    const meta = db.prepare("SELECT index_hash, row_count FROM vec_embedding_indexes WHERE table_name = ?").get(tableName);
+    if (!meta || !meta.row_count) return { ok: false, error: "sqlite_vec_index_missing", dimensions: preferredDimensions };
+    if (meta.index_hash && state.index_hash && meta.index_hash !== state.index_hash) {
+      return { ok: false, error: "sqlite_vec_index_stale", dimensions: preferredDimensions, index_hash: state.index_hash, vec_index_hash: meta.index_hash };
+    }
+    const publicClause = view === FULL_VIEW ? "" : "AND c.searchable_public = 1";
+    const repoClause = repo === "all" ? "" : "AND c.repo = ?";
+    const providerClause = preferredProvider ? "AND e.provider = ?" : "";
+    const modelClause = preferredModel ? "AND e.model_name = ?" : "";
+    const candidateK = boundedInteger(options.vecCandidateK || process.env.COGENTIA_VEC_CANDIDATE_K, Math.min(Math.max(limit * 20, 100), 1000), limit, 5000);
+    const quoted = quoteSqlIdentifier(tableName);
+    const rows = db.prepare(`
+      WITH nearest AS (
+        SELECT rowid AS embedding_id, distance
+        FROM ${quoted}
+        WHERE embedding MATCH ? AND k = ?
+        ORDER BY distance
+      )
+      SELECT e.id AS embedding_id, e.chunk_id, e.repo, e.path, e.start_line, e.end_line,
+             e.provider, e.model_name, e.dimensions,
+             c.title, c.heading_path, c.role, c.visibility, c.public_presence, c.github_url, c.text,
+             nearest.distance
+      FROM nearest
+      JOIN embeddings e ON e.id = nearest.embedding_id
+      JOIN chunks c ON e.chunk_id = c.id
+      WHERE e.dimensions = ? ${publicClause} ${repoClause} ${providerClause} ${modelClause}
+      ORDER BY nearest.distance ASC, e.id ASC
+      LIMIT ?
+    `).all(...[
+      new Float32Array(queryEmbedding.map(Number)),
+      candidateK,
+      preferredDimensions,
+      ...(repo !== "all" ? [repo] : []),
+      ...(preferredProvider ? [preferredProvider] : []),
+      ...(preferredModel ? [preferredModel] : []),
+      limit,
+    ]);
+    if (rows.length < limit) {
+      return {
+        ok: false,
+        error: "sqlite_vec_filtered_candidates_insufficient",
+        candidate_count: rows.length,
+        requested: limit,
+      };
+    }
+    const results = rows.map(row => ({
+      id: `${row.repo}:${row.path}#L${row.start_line}-L${row.end_line}`,
+      repo: row.repo,
+      path: row.path,
+      title: row.title,
+      heading_path: row.heading_path,
+      start_line: row.start_line,
+      end_line: row.end_line,
+      role: row.role,
+      visibility: row.visibility,
+      score: Number((1 / (1 + Math.max(0, Number(row.distance || 0)))).toFixed(6)),
+      snippet: row.text ? `${row.text.slice(0, 200).replace(/\n/g, " ")}...` : "",
+      github_url: row.github_url ? `${row.github_url}#L${row.start_line}-L${row.end_line}` : "",
+      ...(options.includeText ? { text: row.text } : {}),
+    }));
+    return {
+      ok: true,
+      query: q,
+      mode: "semantic",
+      view,
+      repo,
+      provider: preferredProvider || rows[0]?.provider || "unknown",
+      index_hash: state.index_hash || "",
+      count: results.length,
+      results,
+      warnings: [
+        `Semantic retrieval used sqlite-vec (${preferredDimensions}d, ${candidateK} candidates).`,
+      ],
+    };
+  } catch (error) {
+    return { ok: false, error: "sqlite_vec_search_failed", message: error.message };
+  } finally {
+    db.close();
+  }
+}
+
+function formatVecFallbackReason(error) {
+  switch (error) {
+    case "sqlite_vec_index_missing":
+      return "index missing";
+    case "sqlite_vec_index_stale":
+      return "index stale";
+    case "sqlite_vec_filtered_candidates_insufficient":
+      return "candidate window incomplete";
+    case "sqlite_vec_search_failed":
+      return "search failed";
+    case "sqlite_vec_unavailable":
+      return "unavailable";
+    default:
+      return `unavailable (${error || "unknown"})`;
   }
 }
 
@@ -8624,6 +8929,43 @@ function formatEmbeddingsStatus(result) {
 
   if (result.repos && result.repos.length) {
     lines.push(`Repos: ${result.repos.join(", ")}`);
+  }
+  return lines.join("\n");
+}
+
+function formatVecEmbeddingsStatus(result) {
+  const lines = ["\nsqlite-vec acceleration\n"];
+  lines.push(`Path: ${result.path || "-"}`);
+  if (!result.ok) {
+    lines.push(`Status: unavailable (${result.message || result.error || result.code || "unknown error"})`);
+    return lines.join("\n");
+  }
+  lines.push("Status: available");
+  lines.push(`Version: ${result.sqlite_vec_version || "-"}`);
+  lines.push(`Built: ${result.built ? "yes" : "no"}`);
+  if (result.indexes?.length) {
+    lines.push("");
+    lines.push("Indexes:");
+    for (const item of result.indexes) {
+      lines.push(`  - ${item.table_name}: ${item.row_count} rows (${item.dimensions}d, hash ${item.index_hash || "-"})`);
+    }
+  }
+  return lines.join("\n");
+}
+
+function formatVecEmbeddingsRebuild(result) {
+  const lines = ["\nsqlite-vec acceleration rebuild\n"];
+  lines.push(`Path: ${result.path || "-"}`);
+  if (!result.ok) {
+    lines.push(`Status: failed (${result.message || result.error || result.code || "unknown error"})`);
+    if (result.rebuilt?.length) lines.push(`Partial rebuilds: ${result.rebuilt.length}`);
+    return lines.join("\n");
+  }
+  lines.push("Status: ok");
+  lines.push(`Version: ${result.sqlite_vec_version || "-"}`);
+  lines.push(`Rebuilt: ${result.rebuilt?.length || 0}`);
+  for (const item of result.rebuilt || []) {
+    lines.push(`  - ${item.table_name}: ${item.row_count}/${item.source_rows} rows (${item.dimensions}d)`);
   }
   return lines.join("\n");
 }
