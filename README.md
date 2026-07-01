@@ -144,6 +144,7 @@ All published documents live in `research/` and are catalogued in [`research/ind
   * `embeddings index` — emit a resumable continuation for chunk embeddings; `--profile`, `--provider`, and `--env-file` only describe the external resolver's model and credential location.
   * `embeddings store`, `embeddings search-with --cache-query`, and `embeddings cache-query` — resume the pipeline with corpus or query embeddings supplied by a human, agent, or local service.
   * `embeddings vec-status` and `embeddings vec-rebuild` — inspect or rebuild the optional sqlite-vec nearest-neighbor cache from stored embeddings.
+  * `embeddings benchmark --query <text>` — no-spend comparison of ranked-result cache, sqlite-vec, and exact JavaScript vector scan for an already cached query embedding.
   * `scripts/smart-embed-worker.js` and `scripts/import-embeddings.js` — inspect or process embedding continuations through the AI-router embedding endpoint, optionally in resumable `--max-chunks` or `--max-batches` slices, dry-run validate result files, then import through the CLI.
 - **GitHub issue packets**
   * `issues list <repo>` — read live GitHub issues for a registered repository or explicit `owner/name`.

@@ -186,6 +186,10 @@ If `sqlite-vec` is missing or the cache is stale, semantic retrieval falls back
 to the existing JavaScript vector scan. It does not call the AI router or any
 external provider.
 
+Use `embeddings benchmark --query <cached query>` to compare ranked-result
+cache, sqlite-vec, and exact JavaScript vector scan latency without creating a
+new query embedding.
+
 ## Verification
 
 ```bash

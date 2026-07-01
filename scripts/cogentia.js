@@ -310,6 +310,9 @@ Semantic search (continuation-based):
   embeddings vec-status    Inspect optional sqlite-vec acceleration cache.
   embeddings vec-rebuild   Rebuild sqlite-vec tables from stored embeddings.
                            Flags: --dimensions <n>
+  embeddings benchmark     Compare no-spend semantic retrieval paths for a cached query.
+                           Flags: --query <text> --repo <name|all> --limit <n>
+                           --iterations <n> --view public|full
   embeddings search <q>   Emit continuation for semantic search with query.
                            Flags: --repo <name|all> --limit <n> --provider <name>
                            --profile <name> --env-file <path>
@@ -2321,6 +2324,16 @@ async function cmdEmbeddings(sub) {
       });
       return output(result, formatVecEmbeddingsRebuild(result));
     }
+    case "benchmark": {
+      const result = await benchmarkSemanticRetrieval(ctx, {
+        query: valueFlag("--query") || argv.join(" ").trim(),
+        repo: valueFlag("--repo") || "all",
+        limit: Number(valueFlag("--limit") || 10) || 10,
+        view: valueFlag("--view") || "public",
+        iterations: Number(valueFlag("--iterations") || 5) || 5,
+      });
+      return output(result, formatSemanticBenchmark(result));
+    }
     case "search": {
       const query = argv.shift() || "";
       if (!query) throw new Error('Usage: embeddings search "<query>" [--repo <name|all>] [--limit <n>] [--json]');
@@ -2422,7 +2435,7 @@ async function cmdEmbeddings(sub) {
       }
     }
     default:
-      throw new Error(`Unknown embeddings subcommand "${sub}". Use status, index, store, export-cache, import-cache, sync-plan, prune, vec-status, vec-rebuild, search, search-with, cache-query, or operium-sync.`);
+      throw new Error(`Unknown embeddings subcommand "${sub}". Use status, index, store, export-cache, import-cache, sync-plan, prune, vec-status, vec-rebuild, benchmark, search, search-with, cache-query, or operium-sync.`);
   }
 }
 
@@ -7959,20 +7972,23 @@ async function semanticSearchWithEmbedding(ctx, queryEmbedding, options = {}) {
   const preferredProvider = options.provider || null;
   const preferredModel = options.modelName || options.model_name || null;
   const preferredDimensions = Number(options.dimensions || 0) || null;
-  const vecResult = await semanticSearchWithVecEmbedding(ctx, queryEmbedding, {
-    ...options,
-    query: q,
-    view,
-    repo,
-    limit,
-    provider: preferredProvider,
-    modelName: preferredModel,
-    dimensions: preferredDimensions,
-  });
-  const vecWarning = !vecResult.ok
-    ? `sqlite-vec ${formatVecFallbackReason(vecResult.error)}; used JavaScript vector scan.`
-    : "";
-  if (vecResult.ok) return vecResult;
+  let vecWarning = "";
+  if (!options.disableVec) {
+    const vecResult = await semanticSearchWithVecEmbedding(ctx, queryEmbedding, {
+      ...options,
+      query: q,
+      view,
+      repo,
+      limit,
+      provider: preferredProvider,
+      modelName: preferredModel,
+      dimensions: preferredDimensions,
+    });
+    vecWarning = !vecResult.ok
+      ? `sqlite-vec ${formatVecFallbackReason(vecResult.error)}; used JavaScript vector scan.`
+      : "";
+    if (vecResult.ok) return vecResult;
+  }
 
   const opened = await openIndexDatabase({ create: false, readOnly: true });
   if (!opened.ok) return { ok: false, error: opened.code, query: q, mode: "semantic" };
@@ -8187,6 +8203,110 @@ function formatVecFallbackReason(error) {
     default:
       return `unavailable (${error || "unknown"})`;
   }
+}
+
+async function benchmarkSemanticRetrieval(ctx, options = {}) {
+  const query = normalizeContextQuery(options.query || "");
+  const view = normalizeDaemonView(options.view) === FULL_VIEW ? FULL_VIEW : PUBLIC_VIEW;
+  const repo = String(options.repo || "all");
+  const limit = boundedInteger(options.limit, 10, 1, 50);
+  const iterations = boundedInteger(options.iterations, 5, 1, 25);
+  if (!query) return { ok: false, error: "missing_query", message: "Use --query <cached query text>." };
+
+  const target = await preferredContextEmbeddingTarget(ctx, { view, repo });
+  if (!target.ok) return { ok: false, error: target.error, query, view, repo };
+  const queryCache = await loadCachedQueryEmbedding(ctx, query, target);
+  if (!queryCache.ok) {
+    return {
+      ok: false,
+      error: queryCache.error || "query_embedding_cache_miss",
+      query,
+      view,
+      repo,
+      target,
+      message: "Benchmark requires an existing cached query embedding; it will not call an embedding provider.",
+    };
+  }
+
+  const trials = [];
+  trials.push(await measureSemanticStrategy("ranked-result-cache", iterations, async () => {
+    return await loadCachedSemanticQueryResults(ctx, query, target, { view, repo, limit, mode: "semantic" });
+  }));
+  trials.push(await measureSemanticStrategy("sqlite-vec", iterations, async () => {
+    return await semanticSearchWithVecEmbedding(ctx, queryCache.embedding, {
+      query,
+      view,
+      repo,
+      limit,
+      provider: queryCache.provider,
+      modelName: queryCache.model_name,
+      dimensions: queryCache.dimensions,
+    });
+  }));
+  trials.push(await measureSemanticStrategy("javascript-scan", iterations, async () => {
+    return await semanticSearchWithEmbedding(ctx, queryCache.embedding, {
+      query,
+      view,
+      repo,
+      limit,
+      provider: queryCache.provider,
+      modelName: queryCache.model_name,
+      dimensions: queryCache.dimensions,
+      disableVec: true,
+    });
+  }));
+
+  return {
+    ok: trials.some(trial => trial.ok),
+    query,
+    view,
+    repo,
+    limit,
+    iterations,
+    target: {
+      provider: target.provider,
+      model_name: target.model_name,
+      dimensions: target.dimensions,
+      count: target.count,
+    },
+    query_cache: {
+      ok: true,
+      query_hash: queryCache.query_hash,
+      provider: queryCache.provider,
+      model_name: queryCache.model_name,
+      dimensions: queryCache.dimensions,
+      policy: queryCache.policy,
+    },
+    trials,
+    warnings: trials.flatMap(trial => trial.warnings || []),
+  };
+}
+
+async function measureSemanticStrategy(name, iterations, fn) {
+  const samples_ms = [];
+  let last = null;
+  for (let i = 0; i < iterations; i++) {
+    const start = process.hrtime.bigint();
+    const result = await fn();
+    const elapsed = Number(process.hrtime.bigint() - start) / 1_000_000;
+    samples_ms.push(Number(elapsed.toFixed(3)));
+    last = result;
+  }
+  const ok = Boolean(last?.ok);
+  const sorted = [...samples_ms].sort((a, b) => a - b);
+  const avg = samples_ms.reduce((sum, value) => sum + value, 0) / Math.max(1, samples_ms.length);
+  return {
+    name,
+    ok,
+    error: ok ? "" : (last?.error || "strategy_failed"),
+    count: Number(last?.count || 0),
+    min_ms: sorted[0] ?? 0,
+    avg_ms: Number(avg.toFixed(3)),
+    max_ms: sorted[sorted.length - 1] ?? 0,
+    samples_ms,
+    first_result: last?.results?.[0]?.id || "",
+    warnings: last?.warnings || [],
+  };
 }
 
 async function contextSearch(ctx, query, options = {}) {
@@ -9065,6 +9185,30 @@ function formatVecEmbeddingsRebuild(result) {
   lines.push(`Rebuilt: ${result.rebuilt?.length || 0}`);
   for (const item of result.rebuilt || []) {
     lines.push(`  - ${item.table_name}: ${item.row_count}/${item.source_rows} rows (${item.dimensions}d)`);
+  }
+  return lines.join("\n");
+}
+
+function formatSemanticBenchmark(result) {
+  if (!result.ok) return `Semantic benchmark failed: ${result.message || result.error || "unknown error"}`;
+  const lines = [`\nSemantic retrieval benchmark\n`];
+  lines.push(`Query: ${result.query}`);
+  lines.push(`View: ${result.view}`);
+  lines.push(`Repo: ${result.repo}`);
+  lines.push(`Limit: ${result.limit}`);
+  lines.push(`Iterations: ${result.iterations}`);
+  lines.push(`Target: ${result.target.provider}/${result.target.model_name} (${result.target.dimensions}d, ${result.target.count} corpus vectors)`);
+  lines.push("");
+  lines.push(`${pad("Strategy", 22)} ${pad("Status", 10)} ${pad("Count", 7)} ${pad("Avg ms", 10)} ${pad("Min/Max ms", 16)} First result`);
+  lines.push("-".repeat(100));
+  for (const trial of result.trials || []) {
+    const status = trial.ok ? "ok" : trial.error || "failed";
+    lines.push(`${pad(trial.name, 22)} ${pad(status, 10)} ${pad(String(trial.count || 0), 7)} ${pad(String(trial.avg_ms), 10)} ${pad(`${trial.min_ms}/${trial.max_ms}`, 16)} ${trial.first_result || "-"}`);
+  }
+  if (result.warnings?.length) {
+    lines.push("");
+    lines.push("Warnings:");
+    for (const warning of [...new Set(result.warnings)].slice(0, 8)) lines.push(`- ${warning}`);
   }
   return lines.join("\n");
 }
