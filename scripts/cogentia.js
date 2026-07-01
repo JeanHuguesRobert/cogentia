@@ -2662,6 +2662,7 @@ async function indexStatus(ctx) {
     const chunks = hasChunks ? scalar(db, "SELECT count(*) FROM chunks") : 0;
     const searchablePublic = hasChunks ? scalar(db, "SELECT count(*) FROM chunks WHERE searchable_public = 1") : 0;
     const edges = tables.includes("document_edges") ? scalar(db, "SELECT count(*) FROM document_edges") : 0;
+    const vectorCache = inspectVectorCacheHealth(db, state, tables);
     return {
       ok: hasDocuments && hasChunks && hasFts,
       built: hasDocuments && hasChunks && hasFts,
@@ -2681,6 +2682,7 @@ async function indexStatus(ctx) {
       edges,
       continuations: Number(state.continuations || 0),
       partial: state.partial === "true",
+      vector_cache: vectorCache,
     };
   } catch (e) {
     return { ok: false, built: false, path: dbPath, sqlite_available: true, error: e.message, code: "index_status_failed" };
@@ -3231,7 +3233,7 @@ async function indexRebuild(ctx, options = {}) {
         insertEdge.run(from.repo, from.rel, to.repo, to.rel, edge.url || "");
       }
       const indexHash = computeIndexHash(db);
-      writeIndexState(db, {
+      const indexState = {
         schema_version: INDEX_SCHEMA_VERSION,
         index_hash: indexHash,
         indexing_policy_version: "markdown-v1",
@@ -3243,7 +3245,9 @@ async function indexRebuild(ctx, options = {}) {
         edges: String(inventory.edges.length),
         continuations: String(continuations.length),
         partial: String(boundaries.some(b => b.blocks_index)),
-      });
+      };
+      writeIndexState(db, indexState);
+      const vectorCache = inspectVectorCacheHealth(db, indexState);
       db.exec("COMMIT");
       return {
         ok: true,
@@ -3259,6 +3263,7 @@ async function indexRebuild(ctx, options = {}) {
         partial: boundaries.some(b => b.blocks_index),
         continuations: continuations.map(c => stripContinuationBody(c.continuation)),
         boundary_count: boundaries.length,
+        vector_cache: vectorCache,
       };
     } catch (e) {
       db.exec("ROLLBACK");
@@ -7682,6 +7687,85 @@ function pushSample(list, value, limit = 8) {
   if (list.length < limit) list.push(value);
 }
 
+function inspectVectorCacheHealth(db, state = null, knownTables = null) {
+  const tables = knownTables || db.prepare("SELECT name FROM sqlite_master WHERE type IN ('table','virtual')").all().map(row => row.name);
+  const tableSet = new Set(tables);
+  if (!tableSet.has("embeddings")) {
+    return {
+      ok: true,
+      status: "not_required",
+      built: false,
+      embedding_rows: 0,
+      indexes: [],
+      warnings: [],
+    };
+  }
+
+  const embeddingGroups = db.prepare(`
+    SELECT dimensions, COUNT(*) AS row_count
+    FROM embeddings
+    GROUP BY dimensions
+    ORDER BY dimensions
+  `).all();
+  const embeddingRows = embeddingGroups.reduce((total, row) => total + Number(row.row_count || 0), 0);
+  if (!embeddingRows) {
+    return {
+      ok: true,
+      status: "not_required",
+      built: false,
+      embedding_rows: 0,
+      indexes: [],
+      warnings: [],
+    };
+  }
+
+  const indexState = state || (tableSet.has("index_state") ? readIndexState(db) : {});
+  const metadata = tableSet.has("vec_embedding_indexes")
+    ? db.prepare("SELECT table_name, dimensions, row_count, index_hash, provider_count, model_count, sqlite_vec_version, created_at FROM vec_embedding_indexes ORDER BY dimensions").all()
+    : [];
+  const byDimension = new Map(metadata.map(row => [Number(row.dimensions), row]));
+  const indexes = [];
+  const warnings = [];
+
+  for (const group of embeddingGroups) {
+    const dimensions = Number(group.dimensions || 0);
+    const embeddingCount = Number(group.row_count || 0);
+    const tableName = vecEmbeddingTableName(dimensions);
+    const meta = byDimension.get(dimensions) || null;
+    const tableExists = tableSet.has(tableName);
+    const indexHash = meta?.index_hash || "";
+    const currentHash = indexState.index_hash || "";
+    const stale = Boolean(indexHash && currentHash && indexHash !== currentHash);
+    const rowMismatch = Boolean(meta && Number(meta.row_count || 0) !== embeddingCount);
+    const missing = !tableExists || !meta;
+    const status = missing ? "missing" : stale ? "stale" : rowMismatch ? "row_mismatch" : "ok";
+    if (status !== "ok") {
+      warnings.push(`sqlite-vec ${tableName} ${status}; run embeddings vec-rebuild --dimensions ${dimensions}`);
+    }
+    indexes.push({
+      table_name: tableName,
+      dimensions,
+      embedding_rows: embeddingCount,
+      vec_rows: meta ? Number(meta.row_count || 0) : 0,
+      exists: tableExists,
+      index_hash: indexHash,
+      current_index_hash: currentHash,
+      sqlite_vec_version: meta?.sqlite_vec_version || "",
+      created_at: meta?.created_at || "",
+      status,
+    });
+  }
+
+  return {
+    ok: warnings.length === 0,
+    status: warnings.length ? "needs_rebuild" : "ok",
+    built: indexes.length > 0 && indexes.every(item => item.status === "ok"),
+    embedding_rows: embeddingRows,
+    indexes,
+    warnings,
+  };
+}
+
 async function vecEmbeddingsStatus(ctx) {
   const opened = await openIndexDatabase({ create: false, readOnly: true, loadVec: true });
   if (!opened.ok) {
@@ -8824,6 +8908,10 @@ function formatIndexStatus(result) {
   lines.push(`Chunks: ${result.chunks}`);
   lines.push(`Public searchable chunks: ${result.searchable_public}`);
   lines.push(`Edges: ${result.edges}`);
+  if (result.vector_cache) {
+    lines.push(`Vector cache: ${formatVectorCacheSummary(result.vector_cache)}`);
+    for (const warning of result.vector_cache.warnings || []) lines.push(`  - ${warning}`);
+  }
   if (result.partial) lines.push(`Partial: yes (${result.continuations || 0} continuation(s))`);
   return lines.join("\n");
 }
@@ -8837,9 +8925,20 @@ function formatIndexRebuild(result) {
   lines.push(`Public searchable chunks: ${result.searchable_public}`);
   lines.push(`Edges: ${result.edges}`);
   lines.push(`Continuations: ${result.continuations.length}`);
+  if (result.vector_cache) {
+    lines.push(`Vector cache: ${formatVectorCacheSummary(result.vector_cache)}`);
+    for (const warning of result.vector_cache.warnings || []) lines.push(`  - ${warning}`);
+  }
   if (result.partial) lines.push("Status: partial; resolve active continuations before treating the index as complete.");
   else lines.push("Status: ok");
   return lines.join("\n");
+}
+
+function formatVectorCacheSummary(cache) {
+  if (!cache) return "unknown";
+  if (cache.status === "not_required") return "not required";
+  const rows = cache.embedding_rows == null ? "" : `, ${cache.embedding_rows} embedding rows`;
+  return `${cache.status}${rows}`;
 }
 
 function formatIndexEstimate(result) {

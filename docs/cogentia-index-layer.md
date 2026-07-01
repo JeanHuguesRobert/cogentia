@@ -249,6 +249,9 @@ node scripts/cogentia.js embeddings vec-rebuild --dimensions 1536
 current `index_hash`. They are acceleration only: if the extension is absent,
 the vector cache is missing, or the hash is stale, semantic retrieval uses the
 existing JavaScript vector scan. No provider call is made by the vector layer.
+`index status`, `index rebuild`, and `index update` report `vector_cache`
+metadata so operators can see when the derived cache needs a rebuild. They do
+not auto-rebuild the vector table.
 
 ## Daemon Routes
 
