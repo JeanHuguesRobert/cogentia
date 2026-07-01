@@ -399,10 +399,13 @@ async function guideRetrievalRun(question, plan = guideHeuristicPlan(question), 
     }
 
     const packSources = safeSources(pack.sources);
+    const retrieval = summarizePackRetrieval(pack);
     attempts.push({
       query,
       ok: Boolean(pack.ok),
       count: packSources.length,
+      mode: retrieval.mode,
+      retrieval,
       pack_hash: pack.pack_hash,
       source_ids: packSources.map(source => source.source_id),
     });
@@ -411,6 +414,8 @@ async function guideRetrievalRun(question, plan = guideHeuristicPlan(question), 
       query,
       ok: Boolean(pack.ok),
       count: packSources.length,
+      mode: retrieval.mode,
+      retrieval,
       source_ids: packSources.map(source => source.source_id),
       pack_hash: pack.pack_hash,
       warnings: pack.warnings || [],
@@ -717,7 +722,36 @@ function summarizeGuideContext(context = {}, retrieval = null) {
       queries: retrieval.queries,
       attempts: retrieval.attempts,
       source_ids: retrieval.sources.map(source => source.source_id),
+      semantic: summarizeGuideSemanticRetrieval(retrieval.attempts),
     } : undefined,
+  };
+}
+
+function summarizePackRetrieval(pack = {}) {
+  const retrieval = pack.retrieval || {};
+  const warnings = Array.isArray(pack.warnings) ? pack.warnings : [];
+  const joined = warnings.join("\n");
+  return {
+    requested_mode: String(retrieval.requested_mode || "hybrid"),
+    mode: String(retrieval.mode || pack.mode || ""),
+    result_count: Number(retrieval.result_count || pack.sources?.length || 0),
+    ranked_result_cache: Boolean(retrieval.ranked_result_cache) || /cached ranked results/i.test(joined),
+    query_embedding_cache: Boolean(retrieval.query_embedding_cache) || /cached query embedding/i.test(joined),
+    sqlite_vec: Boolean(retrieval.sqlite_vec) || /sqlite-vec/i.test(joined),
+    keyword_fallback: Boolean(retrieval.keyword_fallback) || /fell back to keyword/i.test(joined),
+    continuation_required: Boolean(retrieval.continuation_required) || /continuation/i.test(joined),
+  };
+}
+
+function summarizeGuideSemanticRetrieval(attempts = []) {
+  const retrievals = attempts.map(attempt => attempt.retrieval || {}).filter(Boolean);
+  return {
+    attempted: retrievals.some(item => ["semantic", "hybrid"].includes(String(item.requested_mode || item.mode || "").toLowerCase())),
+    ranked_result_cache: retrievals.some(item => item.ranked_result_cache),
+    query_embedding_cache: retrievals.some(item => item.query_embedding_cache),
+    sqlite_vec: retrievals.some(item => item.sqlite_vec),
+    keyword_fallback: retrievals.some(item => item.keyword_fallback),
+    continuation_required: retrievals.some(item => item.continuation_required),
   };
 }
 

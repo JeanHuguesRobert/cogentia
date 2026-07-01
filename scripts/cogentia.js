@@ -8672,6 +8672,7 @@ async function contextPack(ctx, query, options = {}) {
     budget,
     retrieval_policy_version: CONTEXT_RETRIEVAL_POLICY_VERSION,
     index_hash: indexHash,
+    retrieval: summarizeContextRetrieval(search, options.mode || "keyword"),
     sources,
     context,
   };
@@ -8681,6 +8682,8 @@ async function contextPack(ctx, query, options = {}) {
     strategy: CONTEXT_RETRIEVAL_POLICY_VERSION,
     retrieval_policy_version: CONTEXT_RETRIEVAL_POLICY_VERSION,
     view,
+    mode: search.mode,
+    retrieval: summarizeContextRetrieval(search, options.mode || "keyword"),
     budget: { max_tokens: budget, used_tokens_estimate: used },
     index: { schema_version: status.schema_version || INDEX_SCHEMA_VERSION, index_hash: indexHash },
     query_hash: queryHash,
@@ -8695,6 +8698,21 @@ async function contextPack(ctx, query, options = {}) {
       "Cite the relevant source_id values.",
     ],
     warnings,
+  };
+}
+
+function summarizeContextRetrieval(search, requestedMode) {
+  const warnings = Array.isArray(search?.warnings) ? search.warnings : [];
+  const joined = warnings.join("\n");
+  return {
+    requested_mode: String(requestedMode || "keyword"),
+    mode: search?.mode || "",
+    result_count: Number(search?.count || 0),
+    ranked_result_cache: /cached ranked results/i.test(joined),
+    query_embedding_cache: /cached query embedding/i.test(joined),
+    sqlite_vec: /sqlite-vec/i.test(joined),
+    keyword_fallback: /fell back to keyword/i.test(joined),
+    continuation_required: search?.error === "semantic_continuation_required" || /continuation/i.test(joined),
   };
 }
 

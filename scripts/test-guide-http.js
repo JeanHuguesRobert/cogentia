@@ -140,6 +140,9 @@ try {
   assert.equal(chat.context.guide_retrieval.strategy, "guide-retrieval-run-v1");
   assert.equal(chat.context.guide_retrieval.planner.source, "magistral");
   assert.ok(chat.context.guide_retrieval.source_ids.includes("mock:README.md#L1-L4"));
+  assert.equal(chat.context.guide_retrieval.semantic.attempted, true);
+  assert.equal(chat.context.guide_retrieval.semantic.sqlite_vec, true);
+  assert.equal(chat.context.guide_retrieval.attempts[0].retrieval.sqlite_vec, true);
 
   const stream = await postSse(`${mcpBase}/guide/chat`, {
     question: "Stream the FractaVolta public Guide answer.",
@@ -177,6 +180,17 @@ function mockPack(query) {
     strategy: "mock-v1",
     retrieval_policy_version: "mock-v1",
     view: "public",
+    mode: "hybrid",
+    retrieval: {
+      requested_mode: "hybrid",
+      mode: "hybrid",
+      result_count: 1,
+      ranked_result_cache: false,
+      query_embedding_cache: true,
+      sqlite_vec: true,
+      keyword_fallback: false,
+      continuation_required: false,
+    },
     pack_hash: "pack_mock",
     index_hash: "index_mock",
     sources: [{
