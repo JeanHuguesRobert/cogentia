@@ -101,6 +101,17 @@ COGENTIA_BRAVE_SEARCH_API_KEY
 COGENTIA_GUIDE_WEB_SEARCH_API_KEY
 ```
 
+The HTTP MCP/Guide server can load those variables from an explicit `.env` file
+before startup reads the configuration:
+
+```text
+COGENTIA_GUIDE_ENV_FILE=/path/to/.env
+COGENTIA_WEB_SEARCH_ENV_FILE=/path/to/.env
+COGENTIA_MCP_ENV_FILE=/path/to/.env
+COGENTIA_ENV_FILE=/path/to/.env
+```
+
+Existing process environment variables win over values loaded from the file.
 Disable it with `COGENTIA_GUIDE_WEB_SEARCH=false`. Web results are exposed as
 separate `web:*` sources and must not be confused with corpus authority.
 

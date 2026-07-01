@@ -6,7 +6,16 @@
  */
 
 import http from "node:http";
+import fs from "node:fs";
+import path from "node:path";
 import { boundedInteger, createMcpCore, jsonRpcError, mcpToolResult, SERVER_NAME, SERVER_VERSION } from "./lib/cogentia-mcp-core.js";
+
+loadOptionalEnvFiles([
+  process.env.COGENTIA_MCP_ENV_FILE,
+  process.env.COGENTIA_GUIDE_ENV_FILE,
+  process.env.COGENTIA_WEB_SEARCH_ENV_FILE,
+  process.env.COGENTIA_ENV_FILE,
+]);
 
 const core = createMcpCore();
 const port = boundedInteger(process.env.PORT || process.env.COGENTIA_MCP_PORT, 8791, 1, 65535);
@@ -703,6 +712,33 @@ function guideShouldSearchWeb(question, payload = {}) {
 
 function guideWebSearchApiKey() {
   return process.env.BRAVE_SEARCH_API_KEY || process.env.COGENTIA_BRAVE_SEARCH_API_KEY || process.env.COGENTIA_GUIDE_WEB_SEARCH_API_KEY || "";
+}
+
+function loadOptionalEnvFiles(files) {
+  for (const file of files) {
+    if (!file) continue;
+    const resolved = path.resolve(String(file));
+    if (!fs.existsSync(resolved)) continue;
+    const content = fs.readFileSync(resolved, "utf8");
+    for (const line of content.split(/\r?\n/)) {
+      const match = line.match(/^\s*([A-Za-z_][A-Za-z0-9_]*)\s*=\s*(.*)\s*$/);
+      if (!match || line.trimStart().startsWith("#")) continue;
+      const key = match[1];
+      if (process.env[key] != null) continue;
+      process.env[key] = unquoteEnvValue(match[2]);
+    }
+  }
+}
+
+function unquoteEnvValue(value) {
+  const trimmed = String(value || "").trim();
+  if (
+    (trimmed.startsWith('"') && trimmed.endsWith('"'))
+    || (trimmed.startsWith("'") && trimmed.endsWith("'"))
+  ) {
+    return trimmed.slice(1, -1);
+  }
+  return trimmed;
 }
 
 function guideWebPrompt(locale, web) {

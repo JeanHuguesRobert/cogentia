@@ -2,8 +2,10 @@
 
 import assert from "node:assert/strict";
 import { spawn } from "node:child_process";
+import fs from "node:fs";
 import http from "node:http";
 import net from "node:net";
+import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -101,6 +103,10 @@ const daemon = http.createServer(async (req, res) => {
 
 await listen(daemon, daemonPort);
 
+const envDir = fs.mkdtempSync(path.join(os.tmpdir(), "cogentia-guide-env-"));
+const envFile = path.join(envDir, ".env");
+fs.writeFileSync(envFile, "COGENTIA_GUIDE_WEB_SEARCH_API_KEY=mock-brave-key\n", "utf8");
+
 const child = spawn(process.execPath, ["scripts/cogentia-mcp-http.js"], {
   cwd: root,
   env: {
@@ -108,7 +114,7 @@ const child = spawn(process.execPath, ["scripts/cogentia-mcp-http.js"], {
     COGENTIA_DAEMON_URL: daemonBase,
     COGENTIA_MCP_VIEW: "public",
     COGENTIA_CORS_ORIGIN: "https://fractavolta.com",
-    BRAVE_SEARCH_API_KEY: "mock-brave-key",
+    COGENTIA_GUIDE_ENV_FILE: envFile,
     COGENTIA_GUIDE_WEB_SEARCH_URL: `${daemonBase}/brave`,
     PORT: String(mcpPort),
   },
@@ -199,6 +205,7 @@ try {
   console.log(JSON.stringify({ ok: true, guide_chat: true, guide_stream: true, fallback: true, public_entry: true }, null, 2));
 } finally {
   child.kill();
+  fs.rmSync(envDir, { recursive: true, force: true });
   daemon.close();
 }
 
