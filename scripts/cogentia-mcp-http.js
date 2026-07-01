@@ -939,6 +939,7 @@ function parseBoolean(value, fallback = false) {
 }
 
 function summarizeGuideContext(context = {}, retrieval = null, web = null) {
+  const excerpts = guideContextExcerpts(retrieval, web);
   return {
     query: context.query,
     pack_hash: context.pack_hash,
@@ -956,6 +957,7 @@ function summarizeGuideContext(context = {}, retrieval = null, web = null) {
       source_ids: retrieval.sources.map(source => source.source_id),
       semantic: summarizeGuideSemanticRetrieval(retrieval.attempts),
     } : undefined,
+    excerpts: excerpts.length ? excerpts : undefined,
     web_search: web?.attempted ? {
       strategy: web.strategy,
       attempted: web.attempted,
@@ -965,6 +967,31 @@ function summarizeGuideContext(context = {}, retrieval = null, web = null) {
       warnings: web.warnings,
     } : undefined,
   };
+}
+
+function guideContextExcerpts(retrieval = null, web = null) {
+  const rows = [];
+  const seen = new Set();
+  for (const item of [
+    ...(Array.isArray(retrieval?.context) ? retrieval.context : []),
+    ...(Array.isArray(web?.context) ? web.context : []),
+  ]) {
+    const sourceId = String(item?.source_id || "").trim();
+    if (!sourceId || seen.has(sourceId)) continue;
+    const text = compactGuideExcerpt(item?.text, 900);
+    if (!text) continue;
+    seen.add(sourceId);
+    rows.push({ source_id: sourceId, text });
+    if (rows.length >= 8) break;
+  }
+  return rows;
+}
+
+function compactGuideExcerpt(value, maxChars) {
+  const clean = String(value || "").replace(/\s+/g, " ").trim();
+  if (!clean) return "";
+  if (clean.length <= maxChars) return clean;
+  return `${clean.slice(0, Math.max(1, maxChars - 3)).trim()}...`;
 }
 
 function summarizePackRetrieval(pack = {}) {

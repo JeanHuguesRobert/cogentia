@@ -163,6 +163,8 @@ try {
   assert.equal(chat.context.guide_retrieval.semantic.attempted, true);
   assert.equal(chat.context.guide_retrieval.semantic.sqlite_vec, true);
   assert.equal(chat.context.guide_retrieval.attempts[0].retrieval.sqlite_vec, true);
+  assert.equal(chat.context.excerpts[0].source_id, "mock:README.md#L1-L4");
+  assert.equal(chat.context.excerpts[0].text, "FractaVolta public context.");
 
   const webChat = await postJson(`${mcpBase}/guide/chat`, {
     question: "What is the latest current web note about FractaVolta?",
@@ -175,6 +177,7 @@ try {
   assert.equal(webChat.ok, true);
   assert.ok(webChat.sources.some(source => source.source_id === "web:1"));
   assert.equal(webChat.context.web_search.ok, true);
+  assert.ok(webChat.context.excerpts.some(item => item.source_id === "web:1" && /Current FractaVolta/.test(item.text)));
   assert.ok(seenChatPayloads.at(-1).messages.some(message => /Previous visitor question/.test(message.content)));
   assert.ok(seenChatPayloads.at(-1).messages.some(message => /Public Guide web search/.test(message.content)));
 
