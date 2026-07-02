@@ -197,12 +197,14 @@ try {
   assert.ok(seenPackQueries.includes("FractaVolta Seconde Vie Corse agriculture"));
   assert.equal(seenPackQueries.includes("FractaVolta first visitor"), false);
 
-  await postJson(`${mcpBase}/guide/chat`, {
+  const vague = await postJson(`${mcpBase}/guide/chat`, {
     question: "Par ou commencer ?",
     locale: "fr",
   });
   assert.ok(seenPackQueries.includes("FractaVolta start here"));
   assert.ok(seenPackQueries.includes("FractaVolta first steps"));
+  assert.equal(vague.sources[0].source_id, "FractaVolta:README.md#L1-L8");
+  assert.equal(vague.context.guide_retrieval.source_ids[0], "FractaVolta:README.md#L1-L8");
 
   const stream = await postSse(`${mcpBase}/guide/chat`, {
     question: "Stream the latest FractaVolta public Guide answer.",
@@ -236,6 +238,7 @@ try {
 }
 
 function mockPack(query) {
+  const source = mockSourceForQuery(query);
   return {
     ok: true,
     query,
@@ -255,20 +258,49 @@ function mockPack(query) {
     },
     pack_hash: "pack_mock",
     index_hash: "index_mock",
-    sources: [{
-      source_id: "mock:README.md#L1-L4",
-      repo: "mock",
-      path: "README.md",
-      title: "Mock corpus",
-      start_line: 1,
-      end_line: 4,
-      github_url: "https://example.invalid/mock/README.md#L1-L4",
-    }],
+    sources: [source],
     context: [{
-      source_id: "mock:README.md#L1-L4",
-      text: "FractaVolta public context.",
+      source_id: source.source_id,
+      text: source.text,
     }],
     warnings: [],
+  };
+}
+
+function mockSourceForQuery(query) {
+  if (/^Par ou commencer \?$/i.test(query)) {
+    return {
+      source_id: "mock:research/autonomia/impunite.md#L240-L259",
+      repo: "mock",
+      path: "research/autonomia/impunite.md",
+      title: "Broad historical context",
+      start_line: 240,
+      end_line: 259,
+      github_url: "https://example.invalid/mock/research/autonomia/impunite.md#L240-L259",
+      text: "Broad political context that mentions FractaVolta but is not a good starting point.",
+    };
+  }
+  if (/FractaVolta (start here|first steps|public Guide orientation)/i.test(query)) {
+    return {
+      source_id: "FractaVolta:README.md#L1-L8",
+      repo: "FractaVolta",
+      path: "README.md",
+      title: "FractaVolta start here",
+      start_line: 1,
+      end_line: 8,
+      github_url: "https://example.invalid/FractaVolta/README.md#L1-L8",
+      text: "FractaVolta start here orientation for visitors using the public Guide.",
+    };
+  }
+  return {
+    source_id: "mock:README.md#L1-L4",
+    repo: "mock",
+    path: "README.md",
+    title: "Mock corpus",
+    start_line: 1,
+    end_line: 4,
+    github_url: "https://example.invalid/mock/README.md#L1-L4",
+    text: "FractaVolta public context.",
   };
 }
 

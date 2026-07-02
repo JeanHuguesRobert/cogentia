@@ -387,9 +387,10 @@ async function guideRetrievalRun(question, plan = guideHeuristicPlan(question), 
   const context = [];
   const warnings = [];
   const seenSources = new Set();
+  const sourceRanks = new Map();
   let usedTokens = 0;
 
-  for (const query of queries) {
+  for (const [queryIndex, query] of queries.entries()) {
     emitGuideProgress(options, "guide_status", {
       stage: "retrieval_query",
       query,
@@ -443,6 +444,11 @@ async function guideRetrievalRun(question, plan = guideHeuristicPlan(question), 
       const estimate = estimateGuideTokens(text);
       if (usedTokens + estimate > guideBudget && context.length) continue;
       seenSources.add(source.source_id);
+      sourceRanks.set(source.source_id, {
+        query,
+        query_index: queryIndex,
+        source_index: sources.length,
+      });
       sources.push(source);
       context.push({ source_id: source.source_id, text: truncateGuideText(text, Math.max(512, guideBudget - usedTokens)) });
       usedTokens += estimate;
@@ -450,6 +456,7 @@ async function guideRetrievalRun(question, plan = guideHeuristicPlan(question), 
     }
     if (sources.length >= guideLimit || usedTokens >= guideBudget) break;
   }
+  const ranked = rankGuideSources(question, queries, sources, context, sourceRanks);
 
   return {
     strategy: "guide-retrieval-run-v1",
@@ -463,10 +470,89 @@ async function guideRetrievalRun(question, plan = guideHeuristicPlan(question), 
     query_limit: guideQueryLimit,
     queries,
     attempts,
-    sources,
-    context,
+    sources: ranked.sources,
+    context: ranked.context,
     warnings: [...new Set(warnings)],
   };
+}
+
+function rankGuideSources(question, queries, sources, context, sourceRanks) {
+  if (!sources.length) return { sources, context };
+  const contextBySource = new Map(context.map(item => [item.source_id, item]));
+  const rows = sources.map((source, index) => {
+    const item = contextBySource.get(source.source_id) || { source_id: source.source_id, text: "" };
+    const rank = sourceRanks.get(source.source_id) || { query_index: 999, source_index: index };
+    return {
+      source,
+      context: item,
+      score: guideSourceScore(question, queries, source, item.text, rank),
+      index,
+    };
+  });
+  rows.sort((a, b) => b.score - a.score || a.index - b.index);
+  return {
+    sources: rows.map(row => row.source),
+    context: rows.map(row => row.context),
+  };
+}
+
+function guideSourceScore(question, queries, source, text, rank) {
+  const haystack = [
+    source.source_id,
+    source.repo,
+    source.path,
+    source.title,
+    source.description,
+    text,
+  ].join(" ").toLowerCase();
+  const questionTokens = guideScoreTokens(question);
+  const queryTokens = guideScoreTokens(queries.join(" "));
+  let score = 100 - (Number(rank.query_index || 0) * 5) - (Number(rank.source_index || 0) * 2);
+
+  for (const token of questionTokens) if (haystack.includes(token)) score += 4;
+  for (const token of queryTokens) if (haystack.includes(token)) score += 1;
+  if (String(source.repo || "").toLowerCase() === "fractavolta") score += 24;
+  if (/fractavolta/.test(haystack)) score += 10;
+
+  const intent = guideQuestionIntent(question);
+  for (const token of intent.positive) if (haystack.includes(token)) score += 12;
+  for (const token of intent.negative) if (haystack.includes(token)) score -= 12;
+  return score;
+}
+
+function guideQuestionIntent(question) {
+  const lower = String(question || "").toLowerCase();
+  const positive = [];
+  const negative = [];
+  if (/par ou commencer|start|begin|first[- ]?time|visitor|visiteur|simple|simplement/.test(lower)) {
+    positive.push("start", "orientation", "guide", "visitor", "visiteur", "partner_brief", "fractavolta_paper", "readme");
+    negative.push("impunite", "obscurite");
+  }
+  if (/commune|pilote|pilot|territor|corse|corsica/.test(lower)) {
+    positive.push("commune", "pilote", "pilot", "territory", "territoire", "corse", "corsica", "verification", "governance");
+  }
+  if (/agriculteur|agriculture|solaire|solar|ancienne installation/.test(lower)) {
+    positive.push("agriculteur", "agriculture", "solaire", "solar", "seconde_vie", "second_life", "photovoltaic");
+  }
+  if (/installateur|installer|technical|technique/.test(lower)) {
+    positive.push("installateur", "installer", "technical", "technique", "partnership", "partenariat", "seconde_vie");
+  }
+  if (/packet|paquet|electricity|electricite|flow|flux/.test(lower)) {
+    positive.push("packet", "paquet", "routing", "traceability", "storage", "dc");
+  }
+  if (/digital twin|guide|cogentia|ubiqu/.test(lower)) {
+    positive.push("digital", "twin", "guide", "cogentia", "ubiquity", "trust");
+  }
+  if (/battery|batterie|batteries|vendre|selling|objection|sceptique/.test(lower)) {
+    positive.push("battery", "batterie", "objection", "anti-capture", "governance", "limites");
+  }
+  return { positive, negative };
+}
+
+function guideScoreTokens(value) {
+  return [...new Set((String(value || "").toLowerCase().match(/[\p{L}\p{N}_'-]+/gu) || [])
+    .filter(token => token.length > 3 && !GUIDE_QUERY_STOPWORDS.has(token))
+    .slice(0, 24))];
 }
 
 function emitGuideProgress(options, event, data) {
@@ -838,7 +924,7 @@ function guideWebPrompt(locale, web) {
 
 function guideChatResponse(question, locale, completion, retrieval = null, web = null) {
   const context = completion?.cogentia_context || {};
-  const sources = mergeGuideSources(context.sources, retrieval?.sources, web?.sources);
+  const sources = mergeGuideSources(retrieval?.sources, context.sources, web?.sources);
   const answer = normalizeGuideCitations(
     String(completion?.choices?.[0]?.message?.content || completion?.choices?.[0]?.text || "").trim(),
     sources
