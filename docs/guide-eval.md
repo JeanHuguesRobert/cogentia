@@ -9,6 +9,7 @@ For day-to-day agent work, use the thin power CLI:
 node scripts/guide-cli.js ask --q "Explain FractaVolta simply." --format markdown
 node scripts/guide-cli.js advise --q "What should happen next on the Guide architecture?"
 node scripts/guide-cli.js prewarm --q "What should happen next on the Guide architecture?" --dry-run
+node scripts/guide-cli.js prewarm --questions docs/evals/guide-questions.json --dry-run
 node scripts/guide-cli.js handoff --q "Comment une commune corse peut-elle commencer ?" --locale fr
 node scripts/guide-cli.js handoff --q "Explain FractaVolta simply." --format json
 node scripts/guide-cli.js handoff --q "Explain FractaVolta simply." --format packet

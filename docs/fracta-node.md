@@ -109,6 +109,17 @@ node scripts/guide-cli.js prewarm \
   --verify
 ```
 
+Prewarm the standard evaluation questions:
+
+```bash
+COGENTIA_REGISTRY=/srv/cogentia/repos/JeanHuguesRobert/.cogentia.json \
+COGENTIA_DATA_DIR=/var/lib/cogentia \
+node scripts/guide-cli.js prewarm \
+  --url http://127.0.0.1:8791 \
+  --questions docs/evals/guide-questions.json \
+  --dry-run
+```
+
 Use `--dry-run` first when the expected provider spend or query list is unclear.
 
 ## Repository sync

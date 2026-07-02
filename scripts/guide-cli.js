@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 
 import { spawnSync } from "node:child_process";
+import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -37,6 +38,7 @@ Usage:
   node scripts/guide-cli.js ask --q "<question>" [--locale fr|en] [--format markdown|json] [--url <guide-base>]
   node scripts/guide-cli.js advise --q "<situation>" [--locale fr|en] [--format markdown|json|packet] [--url <guide-base>]
   node scripts/guide-cli.js prewarm --q "<question>" [--locale fr|en] [--format markdown|json] [--url <guide-base>] [--dry-run] [--no-run-worker] [--verify]
+  node scripts/guide-cli.js prewarm --questions docs/evals/guide-questions.json [--format markdown|json] [--dry-run] [--limit <n>]
   node scripts/guide-cli.js handoff --q "<question>" [--locale fr|en] [--format markdown|json|packet] [--url <guide-base>]
 
 Examples:
@@ -58,6 +60,71 @@ async function ask(options) {
 }
 
 async function prewarm(options) {
+  if (options.questions) {
+    return prewarmBatch(options);
+  }
+  const plan = await buildPrewarmPlan(options);
+  outputPrewarm(plan, options);
+}
+
+async function prewarmBatch(options) {
+  const questions = readQuestionFile(options.questions);
+  const limit = options.limit ? boundedInteger(options.limit, questions.length, 1, questions.length) : questions.length;
+  const selected = questions.slice(0, limit);
+  const plans = [];
+  for (const item of selected) {
+    plans.push(await buildPrewarmPlan({
+      ...options,
+      q: item.question,
+      locale: item.locale,
+      webSearch: item.web_search ?? options.webSearch,
+      runWorker: false,
+      verify: false,
+    }));
+  }
+  const batch = {
+    ok: plans.every(plan => plan.ok),
+    kind: "guide_prewarm_batch",
+    schema_version: "0.1",
+    created_at: new Date().toISOString(),
+    questions_file: path.relative(REPO_ROOT, path.resolve(options.questions)).replace(/\\/g, "/"),
+    count: plans.length,
+    dry_run: Boolean(options.dryRun),
+    run_worker: options.runWorker !== false && !options.dryRun,
+    verify: Boolean(options.verify),
+    total_queries: plans.reduce((sum, plan) => sum + plan.queries.length, 0),
+    unique_queries: uniqueStrings(plans.flatMap(plan => plan.queries)),
+    worker: null,
+    items: plans.map(plan => ({
+      ok: plan.ok,
+      question: plan.question,
+      locale: plan.locale,
+      queries: plan.queries,
+      initial_semantic: plan.initial_semantic,
+      warnings: plan.warnings,
+      emitted: plan.emitted,
+      verification: plan.verification,
+    })),
+  };
+  if (batch.run_worker) {
+    batch.worker = runWorker(options, batch.unique_queries.length);
+  }
+  if (options.verify && !options.dryRun) {
+    for (const item of batch.items) {
+      const verified = await callGuide({ ...options, q: item.question, locale: item.locale });
+      item.verification = {
+        warnings: Array.isArray(verified.warnings) ? verified.warnings.map(String) : [],
+        semantic: guideSemanticDiagnostics(verified),
+        source_ids: Array.isArray(verified.context?.guide_retrieval?.source_ids)
+          ? verified.context.guide_retrieval.source_ids.map(String)
+          : [],
+      };
+    }
+  }
+  outputPrewarm(batch, options);
+}
+
+async function buildPrewarmPlan(options) {
   const originalQuestion = String(options.q || options.question || "").trim();
   if (!originalQuestion) throw new Error("Missing --q <question>");
   const initial = await callGuide(options);
@@ -68,6 +135,7 @@ async function prewarm(options) {
     schema_version: "0.1",
     created_at: new Date().toISOString(),
     question: originalQuestion,
+    locale: String(options.locale || inferLocale(originalQuestion)).trim() || inferLocale(originalQuestion),
     guide_url: initial.cli?.guide_url || normalizeGuideUrl(DEFAULT_URL).href,
     dry_run: Boolean(options.dryRun),
     run_worker: options.runWorker !== false && !options.dryRun,
@@ -84,8 +152,7 @@ async function prewarm(options) {
   if (!queries.length) {
     plan.ok = false;
     plan.error = "no_guide_retrieval_queries";
-    outputPrewarm(plan, options);
-    return;
+    return plan;
   }
 
   if (!options.dryRun) {
@@ -107,7 +174,7 @@ async function prewarm(options) {
     }
   }
 
-  outputPrewarm(plan, options);
+  return plan;
 }
 
 async function advise(options) {
@@ -538,6 +605,7 @@ function outputPrewarm(plan, options) {
 }
 
 function renderPrewarmMarkdown(plan) {
+  if (plan.kind === "guide_prewarm_batch") return renderPrewarmBatchMarkdown(plan);
   const lines = [
     "# Guide Semantic Prewarm",
     "",
@@ -576,6 +644,47 @@ function renderPrewarmMarkdown(plan) {
   }
   if (plan.warnings.length) lines.push("## Warnings", "", ...plan.warnings.map(warning => `- ${warning}`), "");
   return `${lines.join("\n")}\n`;
+}
+
+function renderPrewarmBatchMarkdown(batch) {
+  const lines = [
+    "# Guide Semantic Prewarm Batch",
+    "",
+    `- Questions: ${batch.count}`,
+    `- Total planned queries: ${batch.total_queries}`,
+    `- Unique queries: ${batch.unique_queries.length}`,
+    `- Dry run: ${batch.dry_run ? "yes" : "no"}`,
+    `- Worker: ${batch.run_worker ? "run" : "not run"}`,
+    `- Verify: ${batch.verify ? "yes" : "no"}`,
+    "",
+    "## Questions",
+    "",
+  ];
+  for (const [index, item] of batch.items.entries()) {
+    lines.push(`${index + 1}. ${item.question}`);
+    lines.push(`   Queries: ${item.queries.length}`);
+    if (item.initial_semantic) {
+      lines.push(`   Semantic: fallback=${Boolean(item.initial_semantic.keyword_fallback)}, continuation=${Boolean(item.initial_semantic.continuation_required)}, ranked-cache=${Boolean(item.initial_semantic.ranked_result_cache)}`);
+    }
+  }
+  lines.push("", "## Unique Queries", "");
+  for (const [index, query] of batch.unique_queries.entries()) lines.push(`${index + 1}. ${query}`);
+  return `${lines.join("\n")}\n`;
+}
+
+function readQuestionFile(file) {
+  const full = path.resolve(file);
+  const parsed = JSON.parse(fs.readFileSync(full, "utf8"));
+  if (!Array.isArray(parsed)) throw new Error(`Questions file must contain an array: ${file}`);
+  return parsed.map((item, index) => {
+    const question = String(item?.question || "").trim();
+    if (!question) throw new Error(`Question ${index + 1} is missing question text`);
+    return {
+      question,
+      locale: String(item?.locale || inferLocale(question)).trim() || inferLocale(question),
+      web_search: item?.web_search,
+    };
+  });
 }
 
 function prewarmCommands(queries, options) {

@@ -2,8 +2,10 @@
 
 import assert from "node:assert/strict";
 import { spawn } from "node:child_process";
+import fs from "node:fs";
 import http from "node:http";
 import net from "node:net";
+import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -11,6 +13,12 @@ const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const port = await freePort();
 const base = `http://127.0.0.1:${port}`;
 const seenPayloads = [];
+const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), "cogentia-guide-cli-"));
+const questionsPath = path.join(tempDir, "questions.json");
+fs.writeFileSync(questionsPath, `${JSON.stringify([
+  { id: "one", locale: "en", question: "What should happen next?" },
+  { id: "two", locale: "fr", question: "Comment commencer ?" },
+], null, 2)}\n`, "utf8");
 
 const server = http.createServer(async (req, res) => {
   if (req.method !== "POST" || req.url !== "/guide/chat") {
@@ -140,13 +148,22 @@ try {
   assert.match(prewarm.commands[0], /embeddings search/);
   assert.equal(prewarm.initial_semantic.continuation_required, true);
 
-  assert.equal(seenPayloads.length, 8);
+  const prewarmBatchRaw = await run(["scripts/guide-cli.js", "prewarm", "--url", base, "--questions", questionsPath, "--dry-run", "--format", "json"]);
+  const prewarmBatch = JSON.parse(prewarmBatchRaw);
+  assert.equal(prewarmBatch.kind, "guide_prewarm_batch");
+  assert.equal(prewarmBatch.dry_run, true);
+  assert.equal(prewarmBatch.count, 2);
+  assert.equal(prewarmBatch.items[0].queries.length, 3);
+  assert.ok(prewarmBatch.unique_queries.includes("mock public guide"));
+
+  assert.equal(seenPayloads.length, 10);
   assert.equal(seenPayloads[1].web_search, true);
   assert.match(seenPayloads[5].question, /advisory mode/i);
 
   console.log(JSON.stringify({ ok: true, guide_cli_ask: true, guide_cli_handoff: true, guide_cli_advise: true, guide_cli_prewarm: true }, null, 2));
 } finally {
   server.close();
+  fs.rmSync(tempDir, { recursive: true, force: true });
 }
 
 function run(args) {
