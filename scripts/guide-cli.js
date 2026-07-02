@@ -10,6 +10,8 @@ try {
     usage();
   } else if (command === "ask") {
     await ask(args);
+  } else if (command === "advise") {
+    await advise(args);
   } else if (command === "handoff") {
     await handoff(args);
   } else {
@@ -25,10 +27,12 @@ function usage() {
 
 Usage:
   node scripts/guide-cli.js ask --q "<question>" [--locale fr|en] [--format markdown|json] [--url <guide-base>]
+  node scripts/guide-cli.js advise --q "<situation>" [--locale fr|en] [--format markdown|json|packet] [--url <guide-base>]
   node scripts/guide-cli.js handoff --q "<question>" [--locale fr|en] [--format markdown|json|packet] [--url <guide-base>]
 
 Examples:
   node scripts/guide-cli.js ask --q "Explain FractaVolta simply." --format markdown
+  node scripts/guide-cli.js advise --q "What should I do next on the Guide architecture?"
   node scripts/guide-cli.js handoff --q "Comment une commune corse peut-elle commencer ?" --locale fr
   node scripts/guide-cli.js ask --url http://127.0.0.1:8791 --q "How does the Guide relate to the corpus?"
 `);
@@ -41,6 +45,26 @@ async function ask(options) {
     return;
   }
   console.log(renderAnswerMarkdown(result));
+}
+
+async function advise(options) {
+  const originalQuestion = String(options.q || options.question || "").trim();
+  if (!originalQuestion) throw new Error("Missing --q <question>");
+  const result = await callGuide({
+    ...options,
+    q: buildAdvisoryQuestion(originalQuestion, options.locale || inferLocale(originalQuestion)),
+  });
+  result.question = originalQuestion;
+  const advice = buildStructuredAdvice(result, originalQuestion);
+  if (options.format === "json") {
+    console.log(JSON.stringify(advice, null, 2));
+    return;
+  }
+  if (options.format === "packet") {
+    console.log(JSON.stringify(buildAdvisoryPacket(advice), null, 2));
+    return;
+  }
+  console.log(renderAdviceMarkdown(advice));
 }
 
 async function handoff(options) {
@@ -116,6 +140,43 @@ function renderAnswerMarkdown(result) {
   lines.push(`- Web search: ${web ? `${web.attempted ? "attempted" : "not attempted"}${web.ok ? ", ok" : ", not ok"}` : "not attempted"}`);
   if (Array.isArray(result.warnings) && result.warnings.length) {
     lines.push(`- Warnings: ${result.warnings.join(", ")}`);
+  }
+  return `${lines.join("\n")}\n`;
+}
+
+function renderAdviceMarkdown(advice) {
+  const lines = [
+    "# Guide Advice",
+    "",
+    `**Situation:** ${advice.question}`,
+    "",
+    advice.guide_answer || "(no advice)",
+    "",
+    "## Mandate",
+    "",
+    `- Allowed: ${advice.advisory_mandate.allowed.join(", ")}`,
+    `- Forbidden: ${advice.advisory_mandate.forbidden.join(", ")}`,
+    "",
+  ];
+  if (Array.isArray(advice.sources) && advice.sources.length) {
+    lines.push("## Sources", "");
+    for (const source of advice.sources.slice(0, 8)) {
+      lines.push(`- \`${source.source_id}\` ${source.title || source.path || ""}${source.url ? ` (${source.url})` : ""}`);
+    }
+    lines.push("");
+  }
+  if (Array.isArray(advice.excerpts) && advice.excerpts.length) {
+    lines.push("## Excerpts", "");
+    for (const excerpt of advice.excerpts.slice(0, 4)) {
+      lines.push(`### ${excerpt.source_id}`, "", excerpt.text, "");
+    }
+  }
+  lines.push("## Diagnostics", "");
+  lines.push(`- Mode: ${advice.diagnostics.mode || "-"}`);
+  lines.push(`- Latency: ${advice.diagnostics.latency_ms || 0} ms`);
+  lines.push(`- Web search: ${advice.diagnostics.web_search ? `${advice.diagnostics.web_search.attempted ? "attempted" : "not attempted"}${advice.diagnostics.web_search.ok ? ", ok" : ", not ok"}` : "not attempted"}`);
+  if (Array.isArray(advice.warnings) && advice.warnings.length) {
+    lines.push(`- Warnings: ${advice.warnings.join(", ")}`);
   }
   return `${lines.join("\n")}\n`;
 }
@@ -222,6 +283,130 @@ function buildStructuredHandoff(result, prompt = buildHandoffPrompt(result)) {
       ? "Terminez en proposant une question de suivi precise que l'usager pourra recoller dans le Guide FractaVolta."
       : "End by proposing one precise follow-up question the user can paste back into the FractaVolta Guide.",
     prompt,
+  };
+}
+
+function buildAdvisoryQuestion(question, locale) {
+  const fr = String(locale || "").toLowerCase().startsWith("fr");
+  if (fr) {
+    return [
+      "Mode conseil du Guide FractaVolta.",
+      "Analysez la situation suivante sans executer d'action.",
+      "Inferez l'intention, proposez un plan court, jugez les risques, precisez les limites d'autorite, citez les sources publiques utiles, et indiquez quel paquet ou passage a un autre agent serait pertinent.",
+      "N'effectuez aucune mutation, publication, depense non bornee, exposition de donnees privees, ou decision d'autorite finale.",
+      "",
+      `Situation: ${question}`,
+    ].join("\n");
+  }
+  return [
+    "FractaVolta Guide advisory mode.",
+    "Analyze the following situation without executing any action.",
+    "Infer intent, propose a short plan, judge risks, state authority boundaries, cite useful public sources, and say what packet or handoff to another agent would be appropriate.",
+    "Do not mutate, publish, spend unbounded quota, expose private data, impersonate the owner, or decide final authority.",
+    "",
+    `Situation: ${question}`,
+  ].join("\n");
+}
+
+function buildStructuredAdvice(result, originalQuestion) {
+  const web = result.context?.web_search;
+  return {
+    ok: true,
+    kind: "guide_advice",
+    schema_version: "0.1",
+    created_at: new Date().toISOString(),
+    locale: result.locale || inferLocale(originalQuestion),
+    question: originalQuestion,
+    guide_answer: result.answer || "",
+    sources: normalizeHandoffSources(result.sources),
+    excerpts: guideSourceExcerpts(result),
+    warnings: Array.isArray(result.warnings) ? result.warnings.map(String) : [],
+    advisory_mandate: advisoryMandate(),
+    diagnostics: {
+      mode: result.mode || "",
+      guide_url: result.cli?.guide_url || normalizeGuideUrl(DEFAULT_URL).href,
+      latency_ms: result.cli?.latency_ms || 0,
+      retrieval_policy_version: result.context?.retrieval_policy_version || "",
+      web_search: web ? {
+        attempted: Boolean(web.attempted),
+        ok: Boolean(web.ok),
+        query: String(web.query || ""),
+        source_ids: Array.isArray(web.source_ids) ? web.source_ids.map(String) : [],
+        warnings: Array.isArray(web.warnings) ? web.warnings.map(String) : [],
+      } : undefined,
+    },
+  };
+}
+
+function buildAdvisoryPacket(advice) {
+  return {
+    ok: true,
+    kind: "cognitive_packet",
+    schema_version: "0.1",
+    packet_id: `guide_advice_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`,
+    created_at: advice.created_at,
+    protocol_family: "cop",
+    intent: {
+      type: "guide_advisory_review",
+      description: "Ask the Guide to infer intent, propose a plan, judge risks, and prepare a safe handoff without executing.",
+    },
+    authority: {
+      primary: "fractavolta_public_corpus",
+      instruction: "Use this as advisory grounding only. Authorized execution must happen through a separate explicit tool or workflow.",
+    },
+    permissions: {
+      corpus_view: "public",
+      may_mutate_corpus: false,
+      may_impersonate_owner: false,
+      may_execute: false,
+      may_use_external_agent: true,
+    },
+    mandate: advice.advisory_mandate,
+    evidence: {
+      sources: advice.sources,
+      excerpts: advice.excerpts,
+      warnings: advice.warnings,
+    },
+    payload: {
+      question: advice.question,
+      guide_answer: advice.guide_answer,
+    },
+    reply_route: {
+      type: "guide_advice",
+      endpoint: advice.diagnostics.guide_url,
+      instruction: "Return with an explicit proposed next action, evidence gaps, and any handoff packet updates.",
+    },
+    trace: {
+      generated_by: "cogentia-guide-cli",
+      guide_mode: advice.diagnostics.mode,
+      retrieval_policy_version: advice.diagnostics.retrieval_policy_version,
+      latency_ms: advice.diagnostics.latency_ms,
+    },
+  };
+}
+
+function advisoryMandate() {
+  return {
+    allowed: [
+      "infer_intent",
+      "propose_plan",
+      "judge_risks",
+      "cite",
+      "packetize",
+      "handoff",
+      "summarize",
+      "document",
+    ],
+    forbidden: [
+      "mutate",
+      "commit",
+      "deploy",
+      "publish",
+      "spend_unbounded_quota",
+      "expose_private_data",
+      "impersonate_owner",
+      "decide_final_authority",
+    ],
   };
 }
 

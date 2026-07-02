@@ -82,10 +82,26 @@ try {
   assert.equal(packet.evidence.excerpts[0].source_id, "mock:README.md#L1-L4");
   assert.equal(packet.reply_route.type, "fractavolta_guide");
 
-  assert.equal(seenPayloads.length, 5);
-  assert.equal(seenPayloads[1].web_search, true);
+  const adviceJsonRaw = await run(["scripts/guide-cli.js", "advise", "--url", base, "--q", "What should happen next?", "--format", "json"]);
+  const adviceJson = JSON.parse(adviceJsonRaw);
+  assert.equal(adviceJson.kind, "guide_advice");
+  assert.equal(adviceJson.question, "What should happen next?");
+  assert.ok(adviceJson.advisory_mandate.allowed.includes("propose_plan"));
+  assert.ok(adviceJson.advisory_mandate.forbidden.includes("deploy"));
+  assert.equal(adviceJson.sources[0].source_id, "mock:README.md#L1-L4");
 
-  console.log(JSON.stringify({ ok: true, guide_cli_ask: true, guide_cli_handoff: true }, null, 2));
+  const advicePacketRaw = await run(["scripts/guide-cli.js", "advise", "--url", base, "--q", "What should happen next?", "--format", "packet"]);
+  const advicePacket = JSON.parse(advicePacketRaw);
+  assert.equal(advicePacket.kind, "cognitive_packet");
+  assert.equal(advicePacket.intent.type, "guide_advisory_review");
+  assert.equal(advicePacket.permissions.may_execute, false);
+  assert.ok(advicePacket.mandate.forbidden.includes("deploy"));
+
+  assert.equal(seenPayloads.length, 7);
+  assert.equal(seenPayloads[1].web_search, true);
+  assert.match(seenPayloads[5].question, /advisory mode/i);
+
+  console.log(JSON.stringify({ ok: true, guide_cli_ask: true, guide_cli_handoff: true, guide_cli_advise: true }, null, 2));
 } finally {
   server.close();
 }

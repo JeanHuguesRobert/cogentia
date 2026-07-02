@@ -7,6 +7,7 @@ For day-to-day agent work, use the thin power CLI:
 
 ```bash
 node scripts/guide-cli.js ask --q "Explain FractaVolta simply." --format markdown
+node scripts/guide-cli.js advise --q "What should happen next on the Guide architecture?"
 node scripts/guide-cli.js handoff --q "Comment une commune corse peut-elle commencer ?" --locale fr
 node scripts/guide-cli.js handoff --q "Explain FractaVolta simply." --format json
 node scripts/guide-cli.js handoff --q "Explain FractaVolta simply." --format packet
@@ -14,6 +15,12 @@ node scripts/guide-cli.js handoff --q "Explain FractaVolta simply." --format pac
 
 The CLI calls the same `/guide/chat` contract as the website and can target a
 local or remote Guide with `--url`.
+
+`advise` is the "the Guide tells more than it does" mode. It asks the Guide to
+infer intent, propose a short plan, judge risks, state boundaries, cite public
+evidence, and suggest a packet or handoff, while explicitly forbidding mutation,
+publication, deployment, unbounded quota spend, private-data exposure,
+impersonation, or final authority decisions.
 
 Handoff formats:
 
