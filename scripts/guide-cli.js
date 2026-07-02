@@ -1,6 +1,12 @@
 #!/usr/bin/env node
 
+import { spawnSync } from "node:child_process";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+
 const DEFAULT_URL = "https://cogentia.fractavolta.com";
+const SCRIPT_DIR = path.dirname(fileURLToPath(import.meta.url));
+const REPO_ROOT = path.resolve(SCRIPT_DIR, "..");
 
 const command = process.argv[2] || "help";
 const args = parseArgs(process.argv.slice(3));
@@ -12,6 +18,8 @@ try {
     await ask(args);
   } else if (command === "advise") {
     await advise(args);
+  } else if (command === "prewarm") {
+    await prewarm(args);
   } else if (command === "handoff") {
     await handoff(args);
   } else {
@@ -28,11 +36,13 @@ function usage() {
 Usage:
   node scripts/guide-cli.js ask --q "<question>" [--locale fr|en] [--format markdown|json] [--url <guide-base>]
   node scripts/guide-cli.js advise --q "<situation>" [--locale fr|en] [--format markdown|json|packet] [--url <guide-base>]
+  node scripts/guide-cli.js prewarm --q "<question>" [--locale fr|en] [--format markdown|json] [--url <guide-base>] [--dry-run] [--no-run-worker] [--verify]
   node scripts/guide-cli.js handoff --q "<question>" [--locale fr|en] [--format markdown|json|packet] [--url <guide-base>]
 
 Examples:
   node scripts/guide-cli.js ask --q "Explain FractaVolta simply." --format markdown
   node scripts/guide-cli.js advise --q "What should I do next on the Guide architecture?"
+  node scripts/guide-cli.js prewarm --q "What should the public Guide be allowed to do?" --verify
   node scripts/guide-cli.js handoff --q "Comment une commune corse peut-elle commencer ?" --locale fr
   node scripts/guide-cli.js ask --url http://127.0.0.1:8791 --q "How does the Guide relate to the corpus?"
 `);
@@ -45,6 +55,59 @@ async function ask(options) {
     return;
   }
   console.log(renderAnswerMarkdown(result));
+}
+
+async function prewarm(options) {
+  const originalQuestion = String(options.q || options.question || "").trim();
+  if (!originalQuestion) throw new Error("Missing --q <question>");
+  const initial = await callGuide(options);
+  const queries = guideRetrievalQueries(initial);
+  const plan = {
+    ok: true,
+    kind: "guide_prewarm",
+    schema_version: "0.1",
+    created_at: new Date().toISOString(),
+    question: originalQuestion,
+    guide_url: initial.cli?.guide_url || normalizeGuideUrl(DEFAULT_URL).href,
+    dry_run: Boolean(options.dryRun),
+    run_worker: options.runWorker !== false && !options.dryRun,
+    verify: Boolean(options.verify),
+    queries,
+    initial_semantic: guideSemanticDiagnostics(initial),
+    commands: prewarmCommands(queries, options),
+    emitted: [],
+    worker: null,
+    verification: null,
+    warnings: Array.isArray(initial.warnings) ? initial.warnings.map(String) : [],
+  };
+
+  if (!queries.length) {
+    plan.ok = false;
+    plan.error = "no_guide_retrieval_queries";
+    outputPrewarm(plan, options);
+    return;
+  }
+
+  if (!options.dryRun) {
+    for (const query of queries) {
+      plan.emitted.push(runCogentiaJson(["embeddings", "search", query, "--json"], options));
+    }
+    if (plan.run_worker) {
+      plan.worker = runWorker(options, queries.length);
+    }
+    if (options.verify) {
+      const verified = await callGuide(options);
+      plan.verification = {
+        warnings: Array.isArray(verified.warnings) ? verified.warnings.map(String) : [],
+        semantic: guideSemanticDiagnostics(verified),
+        source_ids: Array.isArray(verified.context?.guide_retrieval?.source_ids)
+          ? verified.context.guide_retrieval.source_ids.map(String)
+          : [],
+      };
+    }
+  }
+
+  outputPrewarm(plan, options);
 }
 
 async function advise(options) {
@@ -334,6 +397,7 @@ function buildStructuredAdvice(result, originalQuestion) {
         source_ids: Array.isArray(web.source_ids) ? web.source_ids.map(String) : [],
         warnings: Array.isArray(web.warnings) ? web.warnings.map(String) : [],
       } : undefined,
+      guide_retrieval: normalizeGuideRetrieval(result.context?.guide_retrieval),
     },
   };
 }
@@ -465,6 +529,193 @@ function normalizeHandoffSources(sources) {
   })).filter(source => source.source_id);
 }
 
+function outputPrewarm(plan, options) {
+  if (options.format === "json") {
+    console.log(JSON.stringify(plan, null, 2));
+    return;
+  }
+  console.log(renderPrewarmMarkdown(plan));
+}
+
+function renderPrewarmMarkdown(plan) {
+  const lines = [
+    "# Guide Semantic Prewarm",
+    "",
+    `**Question:** ${plan.question}`,
+    "",
+    `- Queries: ${plan.queries.length}`,
+    `- Dry run: ${plan.dry_run ? "yes" : "no"}`,
+    `- Worker: ${plan.run_worker ? "run" : "not run"}`,
+    `- Verify: ${plan.verify ? "yes" : "no"}`,
+    "",
+  ];
+  if (plan.initial_semantic) {
+    lines.push("## Initial Semantic", "", ...semanticDiagnosticLines(plan.initial_semantic), "");
+  }
+  if (plan.queries.length) {
+    lines.push("## Queries", "");
+    for (const [index, query] of plan.queries.entries()) lines.push(`${index + 1}. ${query}`);
+    lines.push("");
+  }
+  if (plan.commands.length) {
+    lines.push("## Commands", "", "```bash", ...plan.commands, "```", "");
+  }
+  if (plan.emitted.length) {
+    lines.push("## Continuations", "");
+    for (const item of plan.emitted) {
+      lines.push(`- ${item.ok ? "ok" : "failed"} ${item.continuation_id || item.error || ""} ${item.query || ""}`.trim());
+    }
+    lines.push("");
+  }
+  if (plan.worker) {
+    lines.push("## Worker", "", "```text", plan.worker.stdout || plan.worker.stderr || "(no output)", "```", "");
+  }
+  if (plan.verification) {
+    lines.push("## Verification", "", ...semanticDiagnosticLines(plan.verification.semantic), "");
+    if (plan.verification.warnings.length) lines.push(`Warnings: ${plan.verification.warnings.join(", ")}`, "");
+  }
+  if (plan.warnings.length) lines.push("## Warnings", "", ...plan.warnings.map(warning => `- ${warning}`), "");
+  return `${lines.join("\n")}\n`;
+}
+
+function prewarmCommands(queries, options) {
+  const script = options.cogentiaScript || "scripts/cogentia.js";
+  const worker = options.semanticWorker || "scripts/semantic-search-worker.js";
+  const commands = queries.map(query => `node ${script} embeddings search ${shellQuote(query)} --json`);
+  if (options.runWorker !== false && !options.dryRun) {
+    commands.push(`node ${worker} run --limit ${queries.length}`);
+  }
+  return commands;
+}
+
+function runCogentiaJson(args, options) {
+  const command = options.cogentiaScript || path.join("scripts", "cogentia.js");
+  const result = runNodeScript(command, args, options);
+  const parsed = parseFirstJson(result.stdout);
+  return {
+    ok: result.status === 0 && Boolean(parsed?.ok),
+    status: result.status,
+    query: parsed?.continuation?.context?.query || parsed?.query || "",
+    continuation_id: parsed?.continuation?.id || parsed?.continuation_id || "",
+    created: parsed?.created,
+    path: parsed?.path || "",
+    error: parsed?.error || (result.status === 0 ? "" : result.stderr.trim()),
+  };
+}
+
+function runWorker(options, limit) {
+  const command = options.semanticWorker || path.join("scripts", "semantic-search-worker.js");
+  const result = runNodeScript(command, ["run", "--limit", String(limit)], options);
+  return {
+    ok: result.status === 0,
+    status: result.status,
+    stdout: result.stdout.trim(),
+    stderr: result.stderr.trim(),
+  };
+}
+
+function runNodeScript(script, args, options) {
+  const cwd = path.resolve(options.cwd || REPO_ROOT);
+  const result = spawnSync(process.execPath, [script, ...args], {
+    cwd,
+    env: process.env,
+    encoding: "utf8",
+    maxBuffer: 20 * 1024 * 1024,
+    timeout: boundedInteger(options.commandTimeoutMs, 300000, 1000, 900000),
+  });
+  if (result.error) {
+    return { status: 1, stdout: result.stdout || "", stderr: result.error.message };
+  }
+  return { status: result.status ?? 0, stdout: result.stdout || "", stderr: result.stderr || "" };
+}
+
+function parseFirstJson(raw) {
+  const text = String(raw || "");
+  const start = text.indexOf("{");
+  if (start < 0) return null;
+  try {
+    return JSON.parse(text.slice(start));
+  } catch {
+    return null;
+  }
+}
+
+function guideRetrievalQueries(result) {
+  return uniqueStrings(result?.context?.guide_retrieval?.queries).slice(0, 12);
+}
+
+function guideSemanticDiagnostics(result) {
+  return normalizeSemanticDiagnostics(result?.context?.guide_retrieval?.semantic);
+}
+
+function normalizeGuideRetrieval(raw) {
+  if (!raw || typeof raw !== "object") return undefined;
+  return {
+    strategy: String(raw.strategy || ""),
+    planner: raw.planner && typeof raw.planner === "object" ? {
+      strategy: String(raw.planner.strategy || ""),
+      source: String(raw.planner.source || ""),
+      objective: String(raw.planner.objective || ""),
+      notes: Array.isArray(raw.planner.notes) ? raw.planner.notes.map(String) : [],
+    } : undefined,
+    query_limit: Number(raw.query_limit || 0),
+    queries: uniqueStrings(raw.queries),
+    source_ids: uniqueStrings(raw.source_ids),
+    semantic: normalizeSemanticDiagnostics(raw.semantic),
+    attempts: Array.isArray(raw.attempts) ? raw.attempts.map(attempt => ({
+      query: String(attempt.query || ""),
+      ok: Boolean(attempt.ok),
+      count: Number(attempt.count || 0),
+      mode: String(attempt.mode || ""),
+      source_ids: uniqueStrings(attempt.source_ids),
+      retrieval: normalizeSemanticDiagnostics(attempt.retrieval),
+    })) : [],
+  };
+}
+
+function normalizeSemanticDiagnostics(raw) {
+  if (!raw || typeof raw !== "object") return undefined;
+  return {
+    attempted: Boolean(raw.attempted),
+    ranked_result_cache: Boolean(raw.ranked_result_cache),
+    query_embedding_cache: Boolean(raw.query_embedding_cache),
+    sqlite_vec: Boolean(raw.sqlite_vec),
+    keyword_fallback: Boolean(raw.keyword_fallback),
+    continuation_required: Boolean(raw.continuation_required),
+  };
+}
+
+function semanticDiagnosticLines(raw) {
+  const semantic = normalizeSemanticDiagnostics(raw) || {};
+  return [
+    `- Attempted: ${Boolean(semantic.attempted)}`,
+    `- Ranked result cache: ${Boolean(semantic.ranked_result_cache)}`,
+    `- Query embedding cache: ${Boolean(semantic.query_embedding_cache)}`,
+    `- SQLite vec: ${Boolean(semantic.sqlite_vec)}`,
+    `- Keyword fallback: ${Boolean(semantic.keyword_fallback)}`,
+    `- Continuation required: ${Boolean(semantic.continuation_required)}`,
+  ];
+}
+
+function uniqueStrings(values) {
+  if (!Array.isArray(values)) return [];
+  const seen = new Set();
+  const result = [];
+  for (const value of values) {
+    const text = String(value || "").trim();
+    if (!text || seen.has(text)) continue;
+    seen.add(text);
+    result.push(text);
+  }
+  return result;
+}
+
+function shellQuote(value) {
+  const text = String(value || "");
+  if (/^[A-Za-z0-9_./:=@+-]+$/.test(text)) return text;
+  return `"${text.replace(/(["\\$`])/g, "\\$1")}"`;
+}
+
 function guideSourceExcerpts(result) {
   const raw = Array.isArray(result?.context?.excerpts) ? result.context.excerpts : [];
   const seen = new Set();
@@ -521,6 +772,7 @@ function parseArgs(raw) {
   }
   if (!parsed.format) parsed.format = "markdown";
   if (parsed.noWebSearch) parsed.webSearch = false;
+  if (parsed.noRunWorker) parsed.runWorker = false;
   return parsed;
 }
 

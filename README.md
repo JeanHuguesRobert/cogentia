@@ -76,6 +76,7 @@ node scripts/cogentia.js daemon --port 8790        # start the local daemon
 node scripts/test-context-gateway.js                # verify public RAG and MCP boundaries
 node scripts/guide-cli.js ask --q "..."            # ask the public Guide from CLI
 node scripts/guide-cli.js advise --q "..."         # get advisory planning without execution
+node scripts/guide-cli.js prewarm --q "..."        # emit semantic continuations for Guide queries
 node scripts/guide-cli.js handoff --q "..."        # build a portable prompt for another agent
 node scripts/guide-eval.js run --label current     # capture Guide answers for model/prompt evaluation
 node scripts/guide-eval.js report --runs <a,b>     # compare Guide runs and prepare Codex review

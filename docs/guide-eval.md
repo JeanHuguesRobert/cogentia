@@ -8,6 +8,7 @@ For day-to-day agent work, use the thin power CLI:
 ```bash
 node scripts/guide-cli.js ask --q "Explain FractaVolta simply." --format markdown
 node scripts/guide-cli.js advise --q "What should happen next on the Guide architecture?"
+node scripts/guide-cli.js prewarm --q "What should happen next on the Guide architecture?" --dry-run
 node scripts/guide-cli.js handoff --q "Comment une commune corse peut-elle commencer ?" --locale fr
 node scripts/guide-cli.js handoff --q "Explain FractaVolta simply." --format json
 node scripts/guide-cli.js handoff --q "Explain FractaVolta simply." --format packet
@@ -21,6 +22,14 @@ infer intent, propose a short plan, judge risks, state boundaries, cite public
 evidence, and suggest a packet or handoff, while explicitly forbidding mutation,
 publication, deployment, unbounded quota spend, private-data exposure,
 impersonation, or final authority decisions.
+
+`prewarm` is the retrieval-maintenance mode. It calls the Guide once, extracts
+the planned public corpus queries from `context.guide_retrieval.queries`, emits
+`embeddings search` continuations for those exact query strings, and can run
+`scripts/semantic-search-worker.js` to fulfill them. Use `--dry-run` to inspect
+the planned queries and commands without emitting continuations or spending any
+provider quota. On deployed nodes, run it with the daemon's active
+`COGENTIA_DATA_DIR`; for `fracta`, that is `/var/lib/cogentia`.
 
 Handoff formats:
 

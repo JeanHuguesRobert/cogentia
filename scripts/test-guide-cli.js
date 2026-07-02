@@ -44,6 +44,39 @@ const server = http.createServer(async (req, res) => {
         source_id: "mock:README.md#L1-L4",
         text: "Mock public excerpt for the power Guide CLI.",
       }],
+      guide_retrieval: {
+        strategy: "guide-retrieval-run-v1",
+        query_limit: 3,
+        queries: [
+          payload.question,
+          "mock public guide",
+          "digital twin public guide",
+        ],
+        attempts: [{
+          query: payload.question,
+          ok: true,
+          count: 1,
+          mode: "hybrid",
+          source_ids: ["mock:README.md#L1-L4"],
+          retrieval: {
+            attempted: true,
+            ranked_result_cache: false,
+            query_embedding_cache: false,
+            sqlite_vec: false,
+            keyword_fallback: true,
+            continuation_required: true,
+          },
+        }],
+        source_ids: ["mock:README.md#L1-L4"],
+        semantic: {
+          attempted: true,
+          ranked_result_cache: false,
+          query_embedding_cache: false,
+          sqlite_vec: false,
+          keyword_fallback: true,
+          continuation_required: true,
+        },
+      },
     },
     warnings: [],
   }));
@@ -89,6 +122,8 @@ try {
   assert.ok(adviceJson.advisory_mandate.allowed.includes("propose_plan"));
   assert.ok(adviceJson.advisory_mandate.forbidden.includes("deploy"));
   assert.equal(adviceJson.sources[0].source_id, "mock:README.md#L1-L4");
+  assert.equal(adviceJson.diagnostics.guide_retrieval.semantic.continuation_required, true);
+  assert.match(adviceJson.diagnostics.guide_retrieval.queries[0], /advisory mode/i);
 
   const advicePacketRaw = await run(["scripts/guide-cli.js", "advise", "--url", base, "--q", "What should happen next?", "--format", "packet"]);
   const advicePacket = JSON.parse(advicePacketRaw);
@@ -97,11 +132,19 @@ try {
   assert.equal(advicePacket.permissions.may_execute, false);
   assert.ok(advicePacket.mandate.forbidden.includes("deploy"));
 
-  assert.equal(seenPayloads.length, 7);
+  const prewarmRaw = await run(["scripts/guide-cli.js", "prewarm", "--url", base, "--q", "What should happen next?", "--dry-run", "--format", "json"]);
+  const prewarm = JSON.parse(prewarmRaw);
+  assert.equal(prewarm.kind, "guide_prewarm");
+  assert.equal(prewarm.dry_run, true);
+  assert.equal(prewarm.queries.length, 3);
+  assert.match(prewarm.commands[0], /embeddings search/);
+  assert.equal(prewarm.initial_semantic.continuation_required, true);
+
+  assert.equal(seenPayloads.length, 8);
   assert.equal(seenPayloads[1].web_search, true);
   assert.match(seenPayloads[5].question, /advisory mode/i);
 
-  console.log(JSON.stringify({ ok: true, guide_cli_ask: true, guide_cli_handoff: true, guide_cli_advise: true }, null, 2));
+  console.log(JSON.stringify({ ok: true, guide_cli_ask: true, guide_cli_handoff: true, guide_cli_advise: true, guide_cli_prewarm: true }, null, 2));
 } finally {
   server.close();
 }

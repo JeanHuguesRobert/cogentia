@@ -95,6 +95,22 @@ COGENTIA_DATA_DIR=/var/lib/cogentia \
 node /srv/cogentia/repos/cogentia/scripts/semantic-search-worker.js run --limit 10
 ```
 
+The Guide CLI can emit and fulfill the exact semantic continuations needed by a
+Guide question:
+
+```bash
+cd /srv/cogentia/repos/cogentia
+
+COGENTIA_REGISTRY=/srv/cogentia/repos/JeanHuguesRobert/.cogentia.json \
+COGENTIA_DATA_DIR=/var/lib/cogentia \
+node scripts/guide-cli.js prewarm \
+  --url http://127.0.0.1:8791 \
+  --q "For a public Guide connected to a digital twin corpus, what should the Guide be allowed to do?" \
+  --verify
+```
+
+Use `--dry-run` first when the expected provider spend or query list is unclear.
+
 ## Repository sync
 
 Synchronize declared public repositories:
