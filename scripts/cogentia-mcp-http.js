@@ -593,8 +593,10 @@ function guideRetrievalQueries(question) {
   if (/commune|pilot|pilote|municip|demarrer|d.marrer|verifiable|v.rifiable|sobre/.test(lower)) {
     queries.push(
       "FractaVolta commune pilote Corse",
+      "FractaVolta autonomous commune infrastructure node",
+      "FractaVolta one mountain commune demonstrator",
+      "FractaVolta Boucle solaire Corte pilote",
       "FractaVolta pilot territory Corsica",
-      "FractaVolta Seconde Vie Corse",
       "FractaVolta verification governance anti-capture"
     );
   }

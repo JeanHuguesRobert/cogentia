@@ -183,6 +183,14 @@ try {
   assert.ok(seenChatPayloads.at(-1).messages.some(message => /Public Guide web search/.test(message.content)));
 
   await postJson(`${mcpBase}/guide/chat`, {
+    question: "Comment une commune corse peut-elle demarrer un pilote FractaVolta sobre et verifiable ?",
+    locale: "fr",
+  });
+  assert.ok(seenPackQueries.includes("FractaVolta autonomous commune infrastructure node"));
+  assert.ok(seenPackQueries.includes("FractaVolta one mountain commune demonstrator"));
+  assert.ok(seenPackQueries.includes("FractaVolta Boucle solaire Corte pilote"));
+
+  await postJson(`${mcpBase}/guide/chat`, {
     question: "What kind of partner should talk to FractaVolta first?",
     locale: "en",
   });
