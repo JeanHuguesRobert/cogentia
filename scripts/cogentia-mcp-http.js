@@ -311,18 +311,14 @@ async function guidePlanningRun(question, locale) {
   if (!parsed.queries.length) return { ...fallback, planner_error: "planner_returned_no_queries" };
 
   const heuristic = guideRetrievalQueries(question);
-  const priorityHeuristic = heuristic.filter(query =>
-    query !== question && /(public guide|digital twin|trustable|ubiquity)/i.test(query)
-  );
   return {
     strategy: "guide-planner-v1",
     source: "magistral",
     objective: parsed.objective || "",
     queries: mergeQueries([
       question,
-      ...priorityHeuristic.slice(0, 3),
-      ...parsed.queries,
       ...heuristic,
+      ...parsed.queries,
     ]).slice(0, guideQueryLimit),
     notes: parsed.notes,
     raw: content.slice(0, 2000),
@@ -491,14 +487,89 @@ function guideRetrievalQueries(question) {
     .filter(term => term.length > 2 && !GUIDE_QUERY_STOPWORDS.has(term.toLowerCase()))
     .slice(0, 8);
 
-  if (keyTerms.length) queries.push(keyTerms.join(" "));
-  for (const term of keyTerms.filter(term => /[A-Z]/.test(term[0] || ""))) queries.push(term);
-
-  if (/fracta\s*volta|fractavolta|\bfracta\b/.test(lower)) {
-    queries.push("FractaVolta", "FractaVolta public Guide", "FractaVolta website");
+  if (/first[- ]?time|visitor|visiteur|simple|simplement|explain|explique/.test(lower)) {
+    queries.push(
+      "FractaVolta first visitor",
+      "FractaVolta public orientation",
+      "FractaVolta partner brief",
+      "FractaVolta paper",
+      "FractaVolta energy packets local capacity"
+    );
+  }
+  if (/partner|partenaire|contact|talk to|parler|collaboration|site|territor/.test(lower)) {
+    queries.push(
+      "FractaVolta partner brief",
+      "FractaVolta partner contact",
+      "FractaVolta relevant pathways technology research territorial energy",
+      "FractaVolta deployment site territory"
+    );
+  }
+  if (/commune|pilot|pilote|municip|demarrer|d.marrer|verifiable|v.rifiable|sobre/.test(lower)) {
+    queries.push(
+      "FractaVolta commune pilote Corse",
+      "FractaVolta pilot territory Corsica",
+      "FractaVolta Seconde Vie Corse",
+      "FractaVolta verification governance anti-capture"
+    );
+  }
+  if (/agriculteur|agriculture|ancienne installation|ancienne centrale|solar|solaire/.test(lower)) {
+    queries.push(
+      "FractaVolta agriculteur Corse installation solaire ancienne",
+      "FractaVolta Seconde Vie Corse agriculture",
+      "FractaVolta photovoltaic second life",
+      "FractaVolta local value solar storage"
+    );
+  }
+  if (/installateur|installer|seconde vie/.test(lower)) {
+    queries.push(
+      "FractaVolta installateur corse Seconde Vie",
+      "FractaVolta Seconde Vie audit reconfiguration stockage",
+      "FractaVolta local installer role",
+      "FractaVolta technical partnership Corsica"
+    );
+  }
+  if (/packet|paquet|flow|flux|electricity|.lectricit|energy|.nergie/.test(lower)) {
+    queries.push(
+      "FractaVolta energy packets",
+      "FractaVolta packet transition",
+      "FractaVolta DC native energy packet network",
+      "FractaVolta traceable energy packets"
+    );
+  }
+  if (/battery|batteries|batterie|habillage|vendre|skept|scept/.test(lower)) {
+    queries.push(
+      "FractaVolta batteries objection",
+      "FractaVolta anti-capture governance",
+      "FractaVolta beyond selling batteries",
+      "FractaVolta energy packets governance"
+    );
+  }
+  if (/par ou commencer|par où commencer|where to start|start|commencer/.test(lower)) {
+    queries.push(
+      "FractaVolta start here",
+      "FractaVolta public Guide orientation",
+      "FractaVolta partner brief",
+      "FractaVolta first steps"
+    );
   }
   if (/(fracta\s*volta|fractavolta|\bfracta\b|guide)/.test(lower) && /digital twin|twin|jumeau/.test(lower)) {
-    queries.push("FractaVolta public Guide digital twin", "public Guide digital twin", "digital twin ubiquity");
+    queries.push(
+      "FractaVolta public Guide digital twin",
+      "public Guide digital twin",
+      "digital twin ubiquity",
+      "FractaVolta public Guide public instance twin",
+      "trustable digital twin public Guide"
+    );
+  }
+  if (/fracta\s*volta|fractavolta|\bfracta\b/.test(lower)) {
+    queries.push(
+      "FractaVolta",
+      "FractaVolta public Guide",
+      "FractaVolta website",
+      "FractaVolta partner brief",
+      "FractaVolta Seconde Vie Corse",
+      "FractaVolta paper"
+    );
   }
   if (/cogentia/.test(lower)) {
     queries.push("Cogentia", "Cogentia public corpus", "Cogentia context gateway");
@@ -512,6 +583,9 @@ function guideRetrievalQueries(question) {
   if (/magistral|router|openai/.test(lower)) {
     queries.push("Magistral Cogentia boundary", "Cogentia Magistral");
   }
+
+  if (keyTerms.length) queries.push(keyTerms.join(" "));
+  for (const term of keyTerms.filter(term => /[A-Z]/.test(term[0] || ""))) queries.push(term);
 
   return [...new Set(queries.map(query => query.trim()).filter(Boolean))];
 }

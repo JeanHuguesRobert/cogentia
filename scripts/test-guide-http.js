@@ -153,8 +153,9 @@ try {
   assert.equal(seenPlannerPayloads.length, 1);
   assert.equal(seenPlannerPayloads[0].cogentia.context, false);
   assert.ok(seenPackQueries.includes("What is the FractaVolta public Guide digital twin?"));
-  assert.ok(seenPackQueries.includes("FractaVolta public Guide"));
   assert.ok(seenPackQueries.includes("public Guide digital twin"));
+  assert.ok(seenPackQueries.includes("FractaVolta public Guide public instance twin"));
+  assert.equal(seenPackQueries.includes("FractaVolta public Guide"), false);
   assert.ok(seenChatPayloads[0].messages.some(message => /Public Guide retrieval run/.test(message.content)));
   assert.ok(seenChatPayloads[0].messages.every(message => !/Previous visitor question/.test(message.content)));
   assert.equal(chat.context.guide_retrieval.strategy, "guide-retrieval-run-v1");
@@ -180,6 +181,20 @@ try {
   assert.ok(webChat.context.excerpts.some(item => item.source_id === "web:1" && /Current FractaVolta/.test(item.text)));
   assert.ok(seenChatPayloads.at(-1).messages.some(message => /Previous visitor question/.test(message.content)));
   assert.ok(seenChatPayloads.at(-1).messages.some(message => /Public Guide web search/.test(message.content)));
+
+  await postJson(`${mcpBase}/guide/chat`, {
+    question: "What kind of partner should talk to FractaVolta first?",
+    locale: "en",
+  });
+  assert.ok(seenPackQueries.includes("FractaVolta partner contact"));
+  assert.ok(seenPackQueries.includes("FractaVolta deployment site territory"));
+
+  await postJson(`${mcpBase}/guide/chat`, {
+    question: "Par ou commencer ?",
+    locale: "fr",
+  });
+  assert.ok(seenPackQueries.includes("FractaVolta start here"));
+  assert.ok(seenPackQueries.includes("FractaVolta first steps"));
 
   const stream = await postSse(`${mcpBase}/guide/chat`, {
     question: "Stream the latest FractaVolta public Guide answer.",
