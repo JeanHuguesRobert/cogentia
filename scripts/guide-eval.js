@@ -29,7 +29,7 @@ function usage() {
   console.log(`Guide evaluation harness
 
 Usage:
-  node scripts/guide-eval.js run --label current [--url <guide-base>] [--questions <file>] [--out-dir <dir>]
+  node scripts/guide-eval.js run --label current [--url <guide-base>] [--questions <file>] [--out-dir <dir>] [--progress]
   node scripts/guide-eval.js report --runs <run-a.json,run-b.json> [--output <file>]
 
 Run examples:
@@ -51,8 +51,27 @@ async function runEval(options) {
   const questions = readQuestions(questionsPath).slice(0, limit || undefined);
   const startedAt = new Date().toISOString();
   const results = [];
+  fs.mkdirSync(outDir, { recursive: true });
+  const output = path.join(outDir, `${timestampForFile(startedAt)}-${sanitizeFilePart(label)}.json`);
+  const run = {
+    ok: false,
+    complete: false,
+    kind: "fractavolta-guide-eval-run",
+    label,
+    started_at: startedAt,
+    completed_at: null,
+    guide_url: guideUrl.href,
+    questions_file: relativePath(questionsPath),
+    count: questions.length,
+    completed_count: 0,
+    results,
+  };
+  writeRun(output, run);
 
-  for (const item of questions) {
+  for (const [index, item] of questions.entries()) {
+    if (options.progress) {
+      console.error(`[guide-eval] ${index + 1}/${questions.length} ${item.id}: ${item.question}`);
+    }
     const started = Date.now();
     const payload = {
       question: item.question,
@@ -61,13 +80,7 @@ async function runEval(options) {
     if (item.web_search === false || options.webSearch === false) payload.web_search = false;
     if (item.web_search === true || options.webSearch === true) payload.web_search = true;
     try {
-      const response = await fetch(guideUrl, {
-        method: "POST",
-        headers: { Accept: "application/json", "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-        signal: AbortSignal.timeout(timeoutMs),
-      });
-      const body = await readResponseBody(response);
+      const { response, body } = await fetchGuideJson(guideUrl, payload, timeoutMs);
       results.push(normalizeResult(item, response.status, Date.now() - started, body));
     } catch (error) {
       results.push({
@@ -81,26 +94,51 @@ async function runEval(options) {
         error: error.message,
       });
     }
+    run.completed_count = results.length;
+    run.ok = results.every(result => result.ok) && results.length === questions.length;
+    writeRun(output, run);
   }
 
-  const run = {
-    ok: results.every(result => result.ok),
-    kind: "fractavolta-guide-eval-run",
-    label,
-    started_at: startedAt,
-    completed_at: new Date().toISOString(),
-    guide_url: guideUrl.href,
-    questions_file: relativePath(questionsPath),
-    count: results.length,
-    results,
-  };
+  run.ok = results.every(result => result.ok);
+  run.complete = true;
+  run.completed_at = new Date().toISOString();
+  run.count = results.length;
+  run.completed_count = results.length;
+  writeRun(output, run);
 
-  fs.mkdirSync(outDir, { recursive: true });
-  const output = path.join(outDir, `${timestampForFile(startedAt)}-${sanitizeFilePart(label)}.json`);
-  fs.writeFileSync(output, `${JSON.stringify(run, null, 2)}\n`, "utf8");
   const summary = { ok: run.ok, label, output: relativePath(output), count: results.length };
   if (options.json) console.log(JSON.stringify(summary, null, 2));
   else console.log(`Wrote ${summary.output} (${summary.count} question(s), ok=${summary.ok})`);
+}
+
+function writeRun(output, run) {
+  fs.writeFileSync(output, `${JSON.stringify(run, null, 2)}\n`, "utf8");
+}
+
+async function fetchGuideJson(guideUrl, payload, timeoutMs) {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(new Error(`Guide request timed out after ${timeoutMs} ms`)), timeoutMs);
+  try {
+    const request = (async () => {
+      const response = await fetch(guideUrl, {
+        method: "POST",
+        headers: { Accept: "application/json", "Content-Type": "application/json", Connection: "close" },
+        body: JSON.stringify(payload),
+        signal: controller.signal,
+      });
+      const body = await readResponseBody(response);
+      return { response, body };
+    })();
+    const timeoutPromise = new Promise((_, reject) => {
+      timeout.unref?.();
+      controller.signal.addEventListener("abort", () => {
+        reject(controller.signal.reason || new Error(`Guide request timed out after ${timeoutMs} ms`));
+      }, { once: true });
+    });
+    return await Promise.race([request, timeoutPromise]);
+  } finally {
+    clearTimeout(timeout);
+  }
 }
 
 async function writeReport(options) {
@@ -175,13 +213,29 @@ function normalizeResult(item, status, latencyMs, body) {
       } : undefined,
       guide_retrieval: context.guide_retrieval ? {
         strategy: String(context.guide_retrieval.strategy || ""),
-        planner_source: String(context.guide_retrieval.planner?.source || ""),
+        planner: normalizePlanner(context.guide_retrieval.planner),
+        queries: normalizeStrings(context.guide_retrieval.queries).slice(0, 12),
         source_ids: Array.isArray(context.guide_retrieval.source_ids) ? context.guide_retrieval.source_ids.map(String) : [],
         semantic: context.guide_retrieval.semantic || {},
       } : undefined,
     },
     error: body?.error || body?.message || undefined,
   };
+}
+
+function normalizePlanner(planner) {
+  if (!planner || typeof planner !== "object") return undefined;
+  return {
+    strategy: String(planner.strategy || ""),
+    source: String(planner.source || ""),
+    objective: String(planner.objective || ""),
+    notes: normalizeStrings(planner.notes).slice(0, 6),
+    error: planner.error ? String(planner.error) : undefined,
+  };
+}
+
+function normalizeStrings(values) {
+  return Array.isArray(values) ? values.map(value => String(value || "").trim()).filter(Boolean) : [];
 }
 
 function normalizeSources(sources) {
@@ -249,6 +303,7 @@ function renderReport(runs) {
         `- Sources: ${(result.sources || []).length}`,
         `- Excerpts: ${(result.excerpts || []).length}`,
         `- Web search: ${renderWebSearch(result.context?.web_search)}`,
+        `- Guide retrieval: ${renderGuideRetrieval(result.context?.guide_retrieval)}`,
         "",
         "**Answer:**",
         "",
@@ -259,6 +314,13 @@ function renderReport(runs) {
         lines.push("**Sources:**", "");
         for (const source of result.sources.slice(0, 6)) {
           lines.push(`- \`${source.source_id}\` ${source.title || ""}${source.url ? ` (${source.url})` : ""}`);
+        }
+        lines.push("");
+      }
+      if (result.context?.guide_retrieval?.queries?.length) {
+        lines.push("**Planned queries:**", "");
+        for (const query of result.context.guide_retrieval.queries.slice(0, 8)) {
+          lines.push(`- ${escapeMd(query)}`);
         }
         lines.push("");
       }
@@ -289,6 +351,22 @@ function renderReport(runs) {
 function renderWebSearch(web) {
   if (!web) return "not attempted";
   return `${web.attempted ? "attempted" : "not attempted"}${web.ok ? ", ok" : ", not ok"}${web.source_ids?.length ? `, ${web.source_ids.length} source(s)` : ""}`;
+}
+
+function renderGuideRetrieval(retrieval) {
+  if (!retrieval) return "not available";
+  const semantic = retrieval.semantic || {};
+  const parts = [
+    retrieval.strategy || "unknown strategy",
+    retrieval.planner?.source ? `planner=${retrieval.planner.source}` : "",
+    retrieval.queries?.length ? `${retrieval.queries.length} queries` : "",
+    semantic.attempted ? "semantic" : "",
+    semantic.ranked_result_cache ? "ranked-cache" : "",
+    semantic.sqlite_vec ? "sqlite-vec" : "",
+    semantic.keyword_fallback ? "keyword-fallback" : "",
+    semantic.continuation_required ? "continuation-required" : "",
+  ].filter(Boolean);
+  return parts.join(", ");
 }
 
 function fenced(value) {

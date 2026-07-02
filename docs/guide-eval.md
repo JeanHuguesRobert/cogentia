@@ -61,8 +61,8 @@ visitor-facing expectations.
 ## Run
 
 ```bash
-node scripts/guide-eval.js run --label current
-node scripts/guide-eval.js run --label candidate --url http://127.0.0.1:8791
+node scripts/guide-eval.js run --label current --progress
+node scripts/guide-eval.js run --label candidate --url http://127.0.0.1:8791 --progress
 ```
 
 The default question set is:
@@ -76,6 +76,12 @@ Runs are written under:
 ```text
 .cogentia/evals/guide/
 ```
+
+The run file is created before the first question and rewritten after every
+answer. During a long or interrupted run, inspect `complete`,
+`completed_count`, and `results` in the newest JSON file to see how far the
+evaluation got. `--progress` prints the current question id to stderr while the
+JSON output stays machine-readable.
 
 ## Report
 
@@ -95,3 +101,8 @@ Recommended tuning action:
 At first, fill the review manually. Once the rubric is stable, an optional
 evaluator model can be added, but the first objective is to make the model
 choice legible and auditable.
+
+Each answer section also lists Guide retrieval diagnostics: planner source,
+planned queries, semantic/cache/fallback flags, web-search state, sources, and
+excerpt samples. Use those fields to decide whether a weak answer is caused by
+model power or by retrieval/planner/corpus coverage.

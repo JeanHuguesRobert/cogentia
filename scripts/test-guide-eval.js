@@ -50,6 +50,25 @@ const server = http.createServer(async (req, res) => {
     context: {
       source_ids: ["mock:README.md#L1-L4"],
       retrieval_policy_version: "mock-v1",
+      guide_retrieval: {
+        strategy: "guide-retrieval-run-v1",
+        planner: {
+          strategy: "guide-planner-v1",
+          source: "heuristic",
+          objective: "Explain the public FractaVolta corpus.",
+          notes: ["mock planner note"],
+        },
+        queries: ["Explain FractaVolta simply.", "FractaVolta public orientation"],
+        source_ids: ["mock:README.md#L1-L4"],
+        semantic: {
+          attempted: true,
+          ranked_result_cache: true,
+          query_embedding_cache: false,
+          sqlite_vec: true,
+          keyword_fallback: false,
+          continuation_required: false,
+        },
+      },
       excerpts: [{
         source_id: "mock:README.md#L1-L4",
         text: "Mock FractaVolta public excerpt.",
@@ -69,13 +88,21 @@ try {
 
   const firstRun = JSON.parse(fs.readFileSync(runs[0], "utf8"));
   assert.equal(firstRun.kind, "fractavolta-guide-eval-run");
+  assert.equal(firstRun.complete, true);
+  assert.equal(firstRun.completed_count, 1);
   assert.equal(firstRun.results[0].sources[0].source_id, "mock:README.md#L1-L4");
   assert.equal(firstRun.results[0].excerpts[0].text, "Mock FractaVolta public excerpt.");
+  assert.deepEqual(firstRun.results[0].context.guide_retrieval.queries, [
+    "Explain FractaVolta simply.",
+    "FractaVolta public orientation",
+  ]);
 
   await run(["scripts/guide-eval.js", "report", "--runs", runs.join(","), "--output", reportFile]);
   const report = fs.readFileSync(reportFile, "utf8");
   assert.match(report, /# FractaVolta Guide Evaluation/);
   assert.match(report, /mock_question/);
+  assert.match(report, /Guide retrieval: guide-retrieval-run-v1, planner=heuristic, 2 queries, semantic, ranked-cache, sqlite-vec/);
+  assert.match(report, /FractaVolta public orientation/);
   assert.match(report, /Codex Review/);
   assert.match(report, /Did model power help/);
 
