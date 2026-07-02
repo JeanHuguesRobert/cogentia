@@ -3,6 +3,16 @@
 `scripts/guide-eval.js` captures comparable Guide answers so model changes can
 be judged instead of guessed.
 
+For day-to-day agent work, use the thin power CLI:
+
+```bash
+node scripts/guide-cli.js ask --q "Explain FractaVolta simply." --format markdown
+node scripts/guide-cli.js handoff --q "Comment une commune corse peut-elle commencer ?" --locale fr
+```
+
+The CLI calls the same `/guide/chat` contract as the website and can target a
+local or remote Guide with `--url`.
+
 The intended comparison has three lanes:
 
 1. `current`: the deployed Guide profile.
