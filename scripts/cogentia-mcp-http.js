@@ -515,6 +515,10 @@ function guideSourceScore(question, queries, source, text, rank) {
   if (/fractavolta/.test(haystack)) score += 10;
 
   const intent = guideQuestionIntent(question);
+  if (intent.prefer_fractavolta) {
+    if (String(source.repo || "").toLowerCase() === "fractavolta") score += 40;
+    else score -= 8;
+  }
   for (const token of intent.positive) if (haystack.includes(token)) score += 12;
   for (const token of intent.negative) if (haystack.includes(token)) score -= 12;
   return score;
@@ -524,12 +528,14 @@ function guideQuestionIntent(question) {
   const lower = String(question || "").toLowerCase();
   const positive = [];
   const negative = [];
+  let preferFractaVolta = false;
   if (/par ou commencer|start|begin|first[- ]?time|visitor|visiteur|simple|simplement/.test(lower)) {
     positive.push("start", "orientation", "guide", "visitor", "visiteur", "partner_brief", "fractavolta_paper", "readme");
     negative.push("impunite", "obscurite");
   }
   if (/commune|pilote|pilot|territor|corse|corsica/.test(lower)) {
-    positive.push("commune", "pilote", "pilot", "territory", "territoire", "corse", "corsica", "verification", "governance");
+    preferFractaVolta = true;
+    positive.push("commune", "pilote", "pilot", "territory", "territoire", "corse", "corsica", "verification", "governance", "mountain", "demonstrator", "boucle", "corte");
   }
   if (/agriculteur|agriculture|solaire|solar|ancienne installation/.test(lower)) {
     positive.push("agriculteur", "agriculture", "solaire", "solar", "seconde_vie", "second_life", "photovoltaic");
@@ -546,7 +552,7 @@ function guideQuestionIntent(question) {
   if (/battery|batterie|batteries|vendre|selling|objection|sceptique/.test(lower)) {
     positive.push("battery", "batterie", "objection", "anti-capture", "governance", "limites");
   }
-  return { positive, negative };
+  return { positive, negative, prefer_fractavolta: preferFractaVolta };
 }
 
 function guideScoreTokens(value) {
