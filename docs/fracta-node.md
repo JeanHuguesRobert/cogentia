@@ -43,6 +43,58 @@ The index cache will then live under:
 
 It is a cache, not a source of truth. It can be deleted and rebuilt from Git and Markdown.
 
+## Active cache checks
+
+On `fracta`, the running daemon uses `COGENTIA_DATA_DIR=/var/lib/cogentia`.
+Do not diagnose or import the deployed cache with only `COGENTIA_REGISTRY`,
+because that targets the registry-local cache under:
+
+```text
+/srv/cogentia/repos/JeanHuguesRobert/.cogentia
+```
+
+That registry-local cache can be useful for offline work, but it is not the
+cache read by `cogentia.service`.
+
+Before exporting or transferring a full embedding cache artifact, compare the
+active daemon cache:
+
+```bash
+COGENTIA_REGISTRY=/srv/cogentia/repos/JeanHuguesRobert/.cogentia.json \
+COGENTIA_DATA_DIR=/var/lib/cogentia \
+node /srv/cogentia/repos/cogentia/scripts/cogentia.js index status --json
+
+COGENTIA_REGISTRY=/srv/cogentia/repos/JeanHuguesRobert/.cogentia.json \
+COGENTIA_DATA_DIR=/var/lib/cogentia \
+node /srv/cogentia/repos/cogentia/scripts/cogentia.js embeddings status --json
+```
+
+If an embedding artifact is already available, run a plan against the active
+cache before importing:
+
+```bash
+COGENTIA_REGISTRY=/srv/cogentia/repos/JeanHuguesRobert/.cogentia.json \
+COGENTIA_DATA_DIR=/var/lib/cogentia \
+node /srv/cogentia/repos/cogentia/scripts/cogentia.js embeddings sync-plan /tmp/cache.jsonl.gz --json
+```
+
+Only import when the plan shows missing compatible rows:
+
+```bash
+COGENTIA_REGISTRY=/srv/cogentia/repos/JeanHuguesRobert/.cogentia.json \
+COGENTIA_DATA_DIR=/var/lib/cogentia \
+node /srv/cogentia/repos/cogentia/scripts/cogentia.js embeddings import-cache /tmp/cache.jsonl.gz --json
+```
+
+For query-time semantic retrieval, continuations and `search-with --cache-query`
+must also target the active cache:
+
+```bash
+COGENTIA_REGISTRY=/srv/cogentia/repos/JeanHuguesRobert/.cogentia.json \
+COGENTIA_DATA_DIR=/var/lib/cogentia \
+node /srv/cogentia/repos/cogentia/scripts/semantic-search-worker.js run --limit 10
+```
+
 ## Repository sync
 
 Synchronize declared public repositories:
@@ -117,4 +169,3 @@ acces cognitif total != exposition publique totale != pouvoir d'action total
 ```
 
 The node may need full local cognitive access to be useful. That does not imply the public web should see the same data, and it does not imply the public web should be able to trigger state-changing actions.
-
