@@ -1,0 +1,63 @@
+[
+  {
+    "id": "fr_commune_pilot",
+    "locale": "fr",
+    "question": "Comment une commune corse peut-elle demarrer un pilote FractaVolta sobre et verifiable ?",
+    "expected": ["commune", "Corse", "capacite locale", "prudence", "sources publiques"]
+  },
+  {
+    "id": "fr_agriculteur_seconde_vie",
+    "locale": "fr",
+    "question": "Explique FractaVolta a un agriculteur corse qui possede une ancienne installation solaire.",
+    "expected": ["agriculteur", "seconde vie", "valeur locale", "reversibilite"]
+  },
+  {
+    "id": "fr_installateur_roles",
+    "locale": "fr",
+    "question": "Quel role peut jouer un installateur corse dans un projet FractaVolta Seconde Vie ?",
+    "expected": ["installateur", "role technique", "operation territoriale", "partenariat"]
+  },
+  {
+    "id": "en_first_visitor",
+    "locale": "en",
+    "question": "Explain FractaVolta simply for a first-time visitor.",
+    "expected": ["energy packets", "local capacity", "public corpus", "citations"]
+  },
+  {
+    "id": "en_energy_packets",
+    "locale": "en",
+    "question": "Why does FractaVolta talk about energy packets instead of only electricity flows ?",
+    "expected": ["packet", "storage", "routing", "traceability", "compute"]
+  },
+  {
+    "id": "en_digital_twin_guide",
+    "locale": "en",
+    "question": "How do Cogentia, FractaVolta, and the public digital twin Guide relate ?",
+    "expected": ["Cogentia", "Guide", "digital twin", "public instance", "limits"]
+  },
+  {
+    "id": "en_partner_fit",
+    "locale": "en",
+    "question": "What kind of partner should talk to FractaVolta first ?",
+    "expected": ["partner", "site", "territory", "deployment", "public sources"]
+  },
+  {
+    "id": "fr_sceptique",
+    "locale": "fr",
+    "question": "FractaVolta est-il seulement un habillage complique pour vendre des batteries ?",
+    "expected": ["objection", "limites", "preuves", "sources", "anti-capture"]
+  },
+  {
+    "id": "en_current_web",
+    "locale": "en",
+    "question": "What current public web information should I know before contacting FractaVolta ?",
+    "web_search": true,
+    "expected": ["web", "public corpus", "current", "sources"]
+  },
+  {
+    "id": "fr_question_vague",
+    "locale": "fr",
+    "question": "Par ou commencer ?",
+    "expected": ["orientation", "parcours", "Corse", "Guide"]
+  }
+]

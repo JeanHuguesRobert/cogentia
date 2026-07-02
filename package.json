@@ -15,6 +15,7 @@
     "cogentia": "node scripts/cogentia.js",
     "test:context": "node scripts/test-context-gateway.js",
     "test:guide": "node scripts/test-guide-http.js",
+    "test:guide-eval": "node scripts/test-guide-eval.js",
     "test:ai-router": "node scripts/test-ai-router-client.js",
     "test:smart-embed": "node scripts/test-smart-embed-worker.js",
     "test:embedding-step": "node scripts/test-embedding-step.js",
@@ -23,7 +24,8 @@
     "semantic:worker": "node scripts/semantic-search-worker.js",
     "embeddings:step": "node scripts/embedding-step.js",
     "embeddings:monitor": "node scripts/monitor-embeddings.js",
-    "trace:import:chatgpt": "node trace/scripts/import_chatgpt_export.js"
+    "trace:import:chatgpt": "node trace/scripts/import_chatgpt_export.js",
+    "guide:eval": "node scripts/guide-eval.js"
   },
   "devDependencies": {
     "turbo": "^2.0.0"
