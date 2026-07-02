@@ -67,7 +67,22 @@ try {
   assert.match(handoff, /## Extraits publics utiles/);
   assert.match(handoff, /question de suivi precise/);
 
-  assert.equal(seenPayloads.length, 3);
+  const handoffJsonRaw = await run(["scripts/guide-cli.js", "handoff", "--url", base, "--q", "Explain FractaVolta simply.", "--format", "json"]);
+  const handoffJson = JSON.parse(handoffJsonRaw);
+  assert.equal(handoffJson.kind, "guide_handoff");
+  assert.equal(handoffJson.intent, "deepen_guide_answer");
+  assert.equal(handoffJson.sources[0].source_id, "mock:README.md#L1-L4");
+  assert.match(handoffJson.prompt, /FractaVolta public Guide handoff/);
+
+  const packetRaw = await run(["scripts/guide-cli.js", "handoff", "--url", base, "--q", "Explain FractaVolta simply.", "--format", "packet"]);
+  const packet = JSON.parse(packetRaw);
+  assert.equal(packet.kind, "cognitive_packet");
+  assert.equal(packet.intent.type, "deepen_guide_answer");
+  assert.equal(packet.permissions.corpus_view, "public");
+  assert.equal(packet.evidence.excerpts[0].source_id, "mock:README.md#L1-L4");
+  assert.equal(packet.reply_route.type, "fractavolta_guide");
+
+  assert.equal(seenPayloads.length, 5);
   assert.equal(seenPayloads[1].web_search, true);
 
   console.log(JSON.stringify({ ok: true, guide_cli_ask: true, guide_cli_handoff: true }, null, 2));

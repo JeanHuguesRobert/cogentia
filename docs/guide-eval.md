@@ -8,10 +8,27 @@ For day-to-day agent work, use the thin power CLI:
 ```bash
 node scripts/guide-cli.js ask --q "Explain FractaVolta simply." --format markdown
 node scripts/guide-cli.js handoff --q "Comment une commune corse peut-elle commencer ?" --locale fr
+node scripts/guide-cli.js handoff --q "Explain FractaVolta simply." --format json
+node scripts/guide-cli.js handoff --q "Explain FractaVolta simply." --format packet
 ```
 
 The CLI calls the same `/guide/chat` contract as the website and can target a
 local or remote Guide with `--url`.
+
+Handoff formats:
+
+- `markdown`: human-copyable prompt for ChatGPT, Claude, Grok, or another
+  visitor-selected agent.
+- `json`: structured `guide_handoff` payload with question, Guide answer,
+  sources, excerpts, authority notes, diagnostics, and return instruction.
+- `packet`: experimental `cognitive_packet` envelope preparing future COP /
+  continuation-compatible routing. It includes intent, authority, permissions,
+  evidence, payload, reply route, and trace metadata.
+
+The current handoff is intentionally not a continuation yet. It is an informal
+or structured cognitive packet. A continuation is the stronger resumable
+workflow form that can be added later when an external agent/tool result must be
+validated and resumed by Cogentia.
 
 The intended comparison has three lanes:
 

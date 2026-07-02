@@ -25,7 +25,7 @@ function usage() {
 
 Usage:
   node scripts/guide-cli.js ask --q "<question>" [--locale fr|en] [--format markdown|json] [--url <guide-base>]
-  node scripts/guide-cli.js handoff --q "<question>" [--locale fr|en] [--format markdown|json] [--url <guide-base>]
+  node scripts/guide-cli.js handoff --q "<question>" [--locale fr|en] [--format markdown|json|packet] [--url <guide-base>]
 
 Examples:
   node scripts/guide-cli.js ask --q "Explain FractaVolta simply." --format markdown
@@ -47,7 +47,11 @@ async function handoff(options) {
   const result = await callGuide(options);
   const prompt = buildHandoffPrompt(result);
   if (options.format === "json") {
-    console.log(JSON.stringify({ ok: result.ok, prompt, guide: result }, null, 2));
+    console.log(JSON.stringify(buildStructuredHandoff(result, prompt), null, 2));
+    return;
+  }
+  if (options.format === "packet") {
+    console.log(JSON.stringify(buildCognitivePacket(result, prompt), null, 2));
     return;
   }
   console.log(prompt);
@@ -178,6 +182,102 @@ function buildHandoffPrompt(result) {
     result.cli?.guide_url || normalizeGuideUrl(DEFAULT_URL).href
   );
   return `${lines.join("\n")}\n`;
+}
+
+function buildStructuredHandoff(result, prompt = buildHandoffPrompt(result)) {
+  const sources = normalizeHandoffSources(result.sources);
+  const excerpts = guideSourceExcerpts(result);
+  const web = result.context?.web_search;
+  return {
+    ok: true,
+    kind: "guide_handoff",
+    schema_version: "0.1",
+    created_at: new Date().toISOString(),
+    locale: result.locale || "en",
+    intent: "deepen_guide_answer",
+    authority: {
+      primary: "fractavolta_public_corpus",
+      web_search: web?.attempted ? "external_current_context" : "not_used",
+      instruction: "Treat corpus sources as primary authority. Treat web results as current external context.",
+    },
+    question: result.question || "",
+    guide_answer: result.answer || "",
+    sources,
+    excerpts,
+    warnings: Array.isArray(result.warnings) ? result.warnings.map(String) : [],
+    diagnostics: {
+      mode: result.mode || "",
+      guide_url: result.cli?.guide_url || normalizeGuideUrl(DEFAULT_URL).href,
+      latency_ms: result.cli?.latency_ms || 0,
+      retrieval_policy_version: result.context?.retrieval_policy_version || "",
+      web_search: web ? {
+        attempted: Boolean(web.attempted),
+        ok: Boolean(web.ok),
+        query: String(web.query || ""),
+        source_ids: Array.isArray(web.source_ids) ? web.source_ids.map(String) : [],
+        warnings: Array.isArray(web.warnings) ? web.warnings.map(String) : [],
+      } : undefined,
+    },
+    return_instruction: result.locale?.startsWith?.("fr")
+      ? "Terminez en proposant une question de suivi precise que l'usager pourra recoller dans le Guide FractaVolta."
+      : "End by proposing one precise follow-up question the user can paste back into the FractaVolta Guide.",
+    prompt,
+  };
+}
+
+function buildCognitivePacket(result, prompt = buildHandoffPrompt(result)) {
+  const handoff = buildStructuredHandoff(result, prompt);
+  return {
+    ok: true,
+    kind: "cognitive_packet",
+    schema_version: "0.1",
+    packet_id: `guide_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`,
+    created_at: handoff.created_at,
+    protocol_family: "cop",
+    intent: {
+      type: "deepen_guide_answer",
+      description: "Deepen a FractaVolta public Guide answer with a user-selected external agent.",
+    },
+    authority: handoff.authority,
+    permissions: {
+      corpus_view: "public",
+      may_mutate_corpus: false,
+      may_impersonate_owner: false,
+      may_use_external_agent: true,
+    },
+    evidence: {
+      sources: handoff.sources,
+      excerpts: handoff.excerpts,
+      warnings: handoff.warnings,
+    },
+    payload: {
+      question: handoff.question,
+      guide_answer: handoff.guide_answer,
+      prompt: handoff.prompt,
+    },
+    reply_route: {
+      type: "fractavolta_guide",
+      endpoint: handoff.diagnostics.guide_url,
+      instruction: handoff.return_instruction,
+    },
+    trace: {
+      generated_by: "cogentia-guide-cli",
+      guide_mode: handoff.diagnostics.mode,
+      retrieval_policy_version: handoff.diagnostics.retrieval_policy_version,
+      latency_ms: handoff.diagnostics.latency_ms,
+    },
+  };
+}
+
+function normalizeHandoffSources(sources) {
+  if (!Array.isArray(sources)) return [];
+  return sources.slice(0, 12).map(source => ({
+    source_id: String(source.source_id || ""),
+    title: String(source.title || source.path || source.source_id || ""),
+    repo: String(source.repo || ""),
+    path: String(source.path || ""),
+    url: String(source.url || source.github_url || ""),
+  })).filter(source => source.source_id);
 }
 
 function guideSourceExcerpts(result) {
