@@ -190,6 +190,14 @@ try {
   assert.ok(seenPackQueries.includes("FractaVolta deployment site territory"));
 
   await postJson(`${mcpBase}/guide/chat`, {
+    question: "Explique FractaVolta a un agriculteur corse qui possede une ancienne installation solaire.",
+    locale: "fr",
+  });
+  assert.ok(seenPackQueries.includes("FractaVolta agriculteur Corse installation solaire ancienne"));
+  assert.ok(seenPackQueries.includes("FractaVolta Seconde Vie Corse agriculture"));
+  assert.equal(seenPackQueries.includes("FractaVolta first visitor"), false);
+
+  await postJson(`${mcpBase}/guide/chat`, {
     question: "Par ou commencer ?",
     locale: "fr",
   });

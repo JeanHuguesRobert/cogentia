@@ -487,7 +487,7 @@ function guideRetrievalQueries(question) {
     .filter(term => term.length > 2 && !GUIDE_QUERY_STOPWORDS.has(term.toLowerCase()))
     .slice(0, 8);
 
-  if (/first[- ]?time|visitor|visiteur|simple|simplement|explain|explique/.test(lower)) {
+  if (/first[- ]?time|visitor|visiteur|simple|simplement/.test(lower)) {
     queries.push(
       "FractaVolta first visitor",
       "FractaVolta public orientation",
