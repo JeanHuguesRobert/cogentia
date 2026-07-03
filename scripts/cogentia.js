@@ -2492,7 +2492,7 @@ async function embeddingsStatus(ctx) {
   } catch (e) {
     return { ok: false, built: false, path: dbPath, error: e.message };
   } finally {
-    db.close();
+    closeIndexDatabase(db);
   }
 }
 
@@ -2578,7 +2578,7 @@ async function pruneEmbeddings(ctx, options = {}) {
   } catch (e) {
     return { ok: false, applied: false, path: dbPath, error: e.message, code: "embeddings_prune_failed" };
   } finally {
-    db.close();
+    closeIndexDatabase(db);
   }
 }
 
@@ -2604,11 +2604,77 @@ function registryRootFromOverride() {
   return path.dirname(resolved);
 }
 
-async function openIndexDatabase(options = {}) {
-  const dbPath = indexDbPath();
-  if (!options.create && !fs.existsSync(dbPath)) {
-    return { ok: false, code: "index_not_built", path: dbPath };
+const INDEX_DB_SHARED = Symbol("cogentia.index.db.shared");
+let sharedReadIndexDb = null;
+let indexDbQueue = Promise.resolve();
+let cachedIndexStatus = null;
+let cachedEmbeddingTargets = new Map();
+const INDEX_STATUS_CACHE_MS = 30_000;
+const EMBEDDING_TARGET_CACHE_MS = 300_000;
+
+function invalidateSharedIndexDatabase() {
+  if (sharedReadIndexDb?.db) {
+    try { sharedReadIndexDb.db.close(); } catch {}
   }
+  sharedReadIndexDb = null;
+  cachedIndexStatus = null;
+  cachedEmbeddingTargets.clear();
+}
+
+function indexDatabaseMtimeMs(dbPath = indexDbPath()) {
+  try { return fs.statSync(dbPath).mtimeMs; } catch { return 0; }
+}
+
+function closeIndexDatabase(db) {
+  if (!db || db[INDEX_DB_SHARED]) return;
+  try { db.close(); } catch {}
+}
+
+function tuneIndexDatabase(db, { readOnly = false } = {}) {
+  try {
+    db.exec("PRAGMA busy_timeout = 5000");
+    db.exec("PRAGMA temp_store = MEMORY");
+    if (readOnly) db.exec("PRAGMA query_only = ON");
+    const cacheKb = Number(process.env.COGENTIA_SQLITE_CACHE_KB || 16384);
+    if (cacheKb > 0) db.exec(`PRAGMA cache_size = -${Math.max(512, cacheKb)}`);
+    const mmapBytes = Number(process.env.COGENTIA_SQLITE_MMAP_BYTES || 67108864);
+    if (mmapBytes > 0) db.exec(`PRAGMA mmap_size = ${mmapBytes}`);
+  } catch {}
+}
+
+let indexDbLockDepth = 0;
+
+function enqueueIndexDatabaseWork(fn) {
+  const job = indexDbQueue.then(() => fn());
+  indexDbQueue = job.catch(() => {});
+  return job;
+}
+
+async function withIndexDatabaseLock(fn) {
+  if (indexDbLockDepth > 0) return fn();
+  return enqueueIndexDatabaseWork(async () => {
+    indexDbLockDepth++;
+    try {
+      return await fn();
+    } finally {
+      indexDbLockDepth--;
+    }
+  });
+}
+
+async function runIndexDatabase(options, fn) {
+  return withIndexDatabaseLock(async () => {
+    const opened = await openIndexDatabase(options);
+    if (!opened.ok) return opened;
+    try {
+      return await fn(opened.db, opened);
+    } finally {
+      closeIndexDatabase(opened.db);
+    }
+  });
+}
+
+async function openEphemeralIndexDatabase(dbPath, options = {}) {
   let sqlite;
   try {
     sqlite = await import("node:sqlite");
@@ -2617,20 +2683,64 @@ async function openIndexDatabase(options = {}) {
   }
   try {
     if (options.create) ensureDir(path.dirname(dbPath));
-    const filename = options.readOnly ? immutableSqliteUri(dbPath) : dbPath;
+    const readOnly = Boolean(options.readOnly);
+    const filename = readOnly ? immutableSqliteUri(dbPath) : dbPath;
     const dbOptions = options.allowExtension || options.loadVec ? { allowExtension: true } : undefined;
     const db = dbOptions ? new sqlite.DatabaseSync(filename, dbOptions) : new sqlite.DatabaseSync(filename);
+    tuneIndexDatabase(db, { readOnly });
+    let vecLoaded = false;
     if (options.loadVec) {
       const vec = await loadSqliteVecExtension(db);
       if (!vec.ok) {
         try { db.close(); } catch {}
         return { ok: false, code: "sqlite_vec_unavailable", path: dbPath, error: vec.error, message: vec.message };
       }
+      vecLoaded = true;
     }
-    return { ok: true, db, path: dbPath };
+    return { ok: true, db, path: dbPath, vecLoaded };
   } catch (e) {
     return { ok: false, code: "sqlite_open_failed", path: dbPath, error: e.message };
   }
+}
+
+async function openIndexDatabase(options = {}) {
+  const dbPath = indexDbPath();
+  if (!options.create && !fs.existsSync(dbPath)) {
+    return { ok: false, code: "index_not_built", path: dbPath };
+  }
+  const readOnly = options.readOnly === true;
+  const wantsWrite = Boolean(options.create || !readOnly);
+  if (wantsWrite) {
+    invalidateSharedIndexDatabase();
+    return openEphemeralIndexDatabase(dbPath, { ...options, readOnly: false });
+  }
+  const mtimeMs = indexDatabaseMtimeMs(dbPath);
+  if (!sharedReadIndexDb || sharedReadIndexDb.path !== dbPath || sharedReadIndexDb.mtimeMs !== mtimeMs) {
+    invalidateSharedIndexDatabase();
+    const opened = await openEphemeralIndexDatabase(dbPath, { ...options, readOnly: true });
+    if (!opened.ok) return opened;
+    opened.db[INDEX_DB_SHARED] = true;
+    sharedReadIndexDb = {
+      db: opened.db,
+      path: dbPath,
+      mtimeMs,
+      vecLoaded: Boolean(opened.vecLoaded),
+    };
+  }
+  if (options.loadVec && !sharedReadIndexDb.vecLoaded) {
+    const vec = await loadSqliteVecExtension(sharedReadIndexDb.db);
+    if (!vec.ok) {
+      return { ok: false, code: "sqlite_vec_unavailable", path: dbPath, error: vec.error, message: vec.message };
+    }
+    sharedReadIndexDb.vecLoaded = true;
+  }
+  return {
+    ok: true,
+    db: sharedReadIndexDb.db,
+    path: dbPath,
+    shared: true,
+    vecLoaded: sharedReadIndexDb.vecLoaded,
+  };
 }
 
 async function loadSqliteVecExtension(db) {
@@ -2652,56 +2762,72 @@ function immutableSqliteUri(dbPath) {
 }
 
 async function indexStatus(ctx) {
-  const opened = await openIndexDatabase({ create: false, readOnly: true });
-  if (!opened.ok) {
-    return {
-      ok: opened.code === "index_not_built",
-      built: false,
-      path: opened.path,
-      sqlite_available: opened.code !== "sqlite_unavailable",
-      error: opened.code === "index_not_built" ? "" : opened.error,
-      code: opened.code,
-    };
+  const now = Date.now();
+  if (cachedIndexStatus && now - cachedIndexStatus.at < INDEX_STATUS_CACHE_MS) {
+    return cachedIndexStatus.status;
   }
-  const { db, path: dbPath } = opened;
-  try {
-    const tables = db.prepare("SELECT name FROM sqlite_master WHERE type IN ('table','virtual')").all().map(r => r.name);
-    const hasDocuments = tables.includes("documents");
-    const hasChunks = tables.includes("chunks");
-    const hasFts = tables.includes("chunks_fts");
-    const state = hasDocuments ? readIndexState(db) : {};
-    const documents = hasDocuments ? scalar(db, "SELECT count(*) FROM documents") : 0;
-    const documentsPublic = hasDocuments ? scalar(db, "SELECT count(*) FROM documents WHERE searchable_public = 1") : 0;
-    const chunks = hasChunks ? scalar(db, "SELECT count(*) FROM chunks") : 0;
-    const searchablePublic = hasChunks ? scalar(db, "SELECT count(*) FROM chunks WHERE searchable_public = 1") : 0;
-    const edges = tables.includes("document_edges") ? scalar(db, "SELECT count(*) FROM document_edges") : 0;
-    const vectorCache = inspectVectorCacheHealth(db, state, tables);
-    return {
-      ok: hasDocuments && hasChunks && hasFts,
-      built: hasDocuments && hasChunks && hasFts,
-      path: dbPath,
-      sqlite_available: true,
-      fts5_available: hasFts,
-      schema_version: state.schema_version || "",
-      index_hash: state.index_hash || "",
-      indexing_policy_version: state.indexing_policy_version || "",
-      updated_at: state.updated_at || "",
-      mode: state.mode || "",
-      registry: state.registry || ctx.configPath,
-      documents,
-      documents_public: documentsPublic,
-      chunks,
-      searchable_public: searchablePublic,
-      edges,
-      continuations: Number(state.continuations || 0),
-      partial: state.partial === "true",
-      vector_cache: vectorCache,
-    };
-  } catch (e) {
-    return { ok: false, built: false, path: dbPath, sqlite_available: true, error: e.message, code: "index_status_failed" };
-  } finally {
-    db.close();
-  }
+  const status = await withIndexDatabaseLock(async () => {
+    const opened = await openIndexDatabase({ create: false, readOnly: true });
+    if (!opened.ok) {
+      return {
+        ok: opened.code === "index_not_built",
+        built: false,
+        path: opened.path,
+        sqlite_available: opened.code !== "sqlite_unavailable",
+        error: opened.code === "index_not_built" ? "" : opened.error,
+        code: opened.code,
+      };
+    }
+    const { db, path: dbPath } = opened;
+    try {
+      const tables = db.prepare("SELECT name FROM sqlite_master WHERE type IN ('table','virtual')").all().map(r => r.name);
+      const hasDocuments = tables.includes("documents");
+      const hasChunks = tables.includes("chunks");
+      const hasFts = tables.includes("chunks_fts");
+      const state = hasDocuments ? readIndexState(db) : {};
+      const documents = hasDocuments ? scalar(db, "SELECT count(*) FROM documents") : 0;
+      const documentsPublic = hasDocuments ? scalar(db, "SELECT count(*) FROM documents WHERE searchable_public = 1") : 0;
+      const chunks = hasChunks ? scalar(db, "SELECT count(*) FROM chunks") : 0;
+      const searchablePublic = hasChunks ? scalar(db, "SELECT count(*) FROM chunks WHERE searchable_public = 1") : 0;
+      const edges = tables.includes("document_edges") ? scalar(db, "SELECT count(*) FROM document_edges") : 0;
+      const vectorCache = inspectVectorCacheHealth(db, state, tables);
+      return {
+        ok: hasDocuments && hasChunks && hasFts,
+        built: hasDocuments && hasChunks && hasFts,
+        path: dbPath,
+        sqlite_available: true,
+        fts5_available: hasFts,
+        schema_version: state.schema_version || "",
+        index_hash: state.index_hash || "",
+        indexing_policy_version: state.indexing_policy_version || "",
+        updated_at: state.updated_at || "",
+        mode: state.mode || "",
+        registry: state.registry || ctx.configPath,
+        documents,
+        documents_public: documentsPublic,
+        chunks,
+        searchable_public: searchablePublic,
+        edges,
+        continuations: Number(state.continuations || 0),
+        partial: state.partial === "true",
+        vector_cache: vectorCache,
+      };
+    } catch (e) {
+      return { ok: false, built: false, path: dbPath, sqlite_available: true, error: e.message, code: "index_status_failed" };
+    } finally {
+      closeIndexDatabase(db);
+    }
+  });
+  if (status?.built) cachedIndexStatus = { at: now, status };
+  return status;
+}
+
+function readIndexMetaFromDb(db) {
+  const state = readIndexState(db);
+  return {
+    index_hash: state.index_hash || "",
+    schema_version: state.schema_version || INDEX_SCHEMA_VERSION,
+  };
 }
 
 async function indexEstimate(ctx, options = {}) {
@@ -3121,7 +3247,7 @@ async function estimateExistingIndex(model, dimensions) {
   } catch (e) {
     return { available: false, path: dbPath, error: e.message };
   } finally {
-    db.close();
+    closeIndexDatabase(db);
   }
 }
 
@@ -3285,7 +3411,8 @@ async function indexRebuild(ctx, options = {}) {
   } catch (e) {
     return { ok: false, mode, path: dbPath, error: e.message, code: "index_rebuild_failed" };
   } finally {
-    db.close();
+    closeIndexDatabase(db);
+    invalidateSharedIndexDatabase();
   }
 }
 
@@ -3335,7 +3462,7 @@ async function indexSearch(ctx, query, options = {}) {
   } catch (e) {
     return { ok: false, query: q, path: dbPath, error: e.message, code: "index_search_failed" };
   } finally {
-    db.close();
+    closeIndexDatabase(db);
   }
 }
 
@@ -6926,7 +7053,7 @@ async function indexEmbeddings(ctx, options = {}) {
 
     const toProcess = chunksToEmbed;
 
-    db.close();
+    closeIndexDatabase(db);
 
     if (!toProcess.length) {
       return {
@@ -6984,7 +7111,7 @@ async function indexEmbeddings(ctx, options = {}) {
       },
     });
   } catch (e) {
-    db?.close();
+    closeIndexDatabase(db);
     return { ok: false, error: "embeddings_failed", message: e.message };
   }
 }
@@ -7034,10 +7161,10 @@ async function storeEmbeddings(ctx, embeddings) {
       stored++;
     }
 
-    db.close();
+    closeIndexDatabase(db);
     return { ok: true, stored };
   } catch (e) {
-    db?.close();
+    closeIndexDatabase(db);
     return { ok: false, error: "store_failed", message: e.message };
   }
 }
@@ -7131,7 +7258,7 @@ async function exportEmbeddingCache(ctx, options = {}) {
   } catch (error) {
     return { ok: false, path: outputPath, error: "embedding_cache_export_failed", message: error.message };
   } finally {
-    db.close();
+    closeIndexDatabase(db);
   }
 }
 
@@ -7279,7 +7406,7 @@ async function importEmbeddingCache(ctx, inputPath, options = {}) {
     }
     return { ok: false, path: resolvedInput, target_index: dbPath, error: "embedding_cache_import_failed", message: error.message, ...stats, samples };
   } finally {
-    db.close();
+    closeIndexDatabase(db);
   }
 }
 
@@ -7417,49 +7544,59 @@ async function cacheQueryEmbedding(ctx, payload, options = {}) {
   } catch (error) {
     return { ok: false, error: "query_embedding_cache_failed", message: error.message };
   } finally {
-    db.close();
+    closeIndexDatabase(db);
   }
 }
 
-async function loadCachedQueryEmbedding(ctx, query, target) {
+async function loadCachedQueryEmbedding(ctx, query, target, options = {}) {
   const q = normalizeContextQuery(query);
   const provider = String(target.provider || "").trim();
   const model_name = String(target.model_name || "").trim();
   const dimensions = Number(target.dimensions || 0) || 0;
   if (!q || !provider || !model_name || !dimensions) return { ok: false, error: "invalid_query_embedding_target" };
-  const opened = await openIndexDatabase({ create: false, readOnly: true });
-  if (!opened.ok) return { ok: false, error: opened.error || opened.code, code: opened.code };
-  const { db } = opened;
-  try {
-    const table = db.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='query_embeddings'").get();
-    if (!table) return { ok: false, error: "query_embedding_cache_miss" };
-    const policy = queryEmbeddingCachePolicy({ provider, model_name, dimensions });
-    const query_hash = queryEmbeddingCacheHash(q);
-    const row = db.prepare(`
-      SELECT embedding, source, created_at, policy
-      FROM query_embeddings
-      WHERE query_hash = ? AND provider = ? AND model_name = ? AND dimensions = ? AND policy = ?
-      LIMIT 1
-    `).get(query_hash, provider, model_name, dimensions, policy);
-    if (!row) return { ok: false, error: "query_embedding_cache_miss", query_hash, provider, model_name, dimensions, policy };
-    const embedding = parseEmbeddingVector(row.embedding);
-    if (embedding.length !== dimensions || embedding.some(value => !Number.isFinite(value))) {
-      return { ok: false, error: "query_embedding_cache_invalid", query_hash, provider, model_name, dimensions };
+  if (options.db) return loadCachedQueryEmbeddingFromDb(options.db, q, target);
+  return withIndexDatabaseLock(async () => {
+    const opened = await openIndexDatabase({ create: false, readOnly: true });
+    if (!opened.ok) return { ok: false, error: opened.error || opened.code, code: opened.code };
+    const { db } = opened;
+    try {
+      return loadCachedQueryEmbeddingFromDb(db, q, target);
+    } finally {
+      closeIndexDatabase(db);
     }
-    return {
-      ok: true,
-      query_hash,
-      provider,
-      model_name,
-      dimensions,
-      policy: row.policy,
-      source: row.source,
-      created_at: row.created_at,
-      embedding,
-    };
-  } finally {
-    db.close();
+  });
+}
+
+function loadCachedQueryEmbeddingFromDb(db, q, target) {
+  const provider = String(target.provider || "").trim();
+  const model_name = String(target.model_name || "").trim();
+  const dimensions = Number(target.dimensions || 0) || 0;
+  const table = db.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='query_embeddings'").get();
+  if (!table) return { ok: false, error: "query_embedding_cache_miss" };
+  const policy = queryEmbeddingCachePolicy({ provider, model_name, dimensions });
+  const query_hash = queryEmbeddingCacheHash(q);
+  const row = db.prepare(`
+    SELECT embedding, source, created_at, policy
+    FROM query_embeddings
+    WHERE query_hash = ? AND provider = ? AND model_name = ? AND dimensions = ? AND policy = ?
+    LIMIT 1
+  `).get(query_hash, provider, model_name, dimensions, policy);
+  if (!row) return { ok: false, error: "query_embedding_cache_miss", query_hash, provider, model_name, dimensions, policy };
+  const embedding = parseEmbeddingVector(row.embedding);
+  if (embedding.length !== dimensions || embedding.some(value => !Number.isFinite(value))) {
+    return { ok: false, error: "query_embedding_cache_invalid", query_hash, provider, model_name, dimensions };
   }
+  return {
+    ok: true,
+    query_hash,
+    provider,
+    model_name,
+    dimensions,
+    policy: row.policy,
+    source: row.source,
+    created_at: row.created_at,
+    embedding,
+  };
 }
 
 async function cacheSemanticQueryResults(ctx, queryCache, searchResult, options = {}) {
@@ -7519,7 +7656,7 @@ async function cacheSemanticQueryResults(ctx, queryCache, searchResult, options 
   } catch (error) {
     return { ok: false, error: "semantic_result_cache_failed", message: error.message };
   } finally {
-    db.close();
+    closeIndexDatabase(db);
   }
 }
 
@@ -7529,9 +7666,23 @@ async function loadCachedSemanticQueryResults(ctx, query, target, options = {}) 
   const model_name = String(target.model_name || "").trim();
   const dimensions = Number(target.dimensions || 0) || 0;
   if (!q || !provider || !model_name || !dimensions) return { ok: false, error: "invalid_semantic_result_cache_target" };
-  const opened = await openIndexDatabase({ create: false, readOnly: true });
-  if (!opened.ok) return { ok: false, error: opened.error || opened.code, code: opened.code };
-  const { db } = opened;
+  if (options.db) return loadCachedSemanticQueryResultsFromDb(options.db, q, target, options);
+  return withIndexDatabaseLock(async () => {
+    const opened = await openIndexDatabase({ create: false, readOnly: true });
+    if (!opened.ok) return { ok: false, error: opened.error || opened.code, code: opened.code };
+    const { db } = opened;
+    try {
+      return loadCachedSemanticQueryResultsFromDb(db, q, target, options);
+    } finally {
+      closeIndexDatabase(db);
+    }
+  });
+}
+
+function loadCachedSemanticQueryResultsFromDb(db, q, target, options = {}) {
+  const provider = String(target.provider || "").trim();
+  const model_name = String(target.model_name || "").trim();
+  const dimensions = Number(target.dimensions || 0) || 0;
   try {
     const table = db.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='query_semantic_results'").get();
     if (!table) return { ok: false, error: "semantic_result_cache_miss" };
@@ -7600,8 +7751,8 @@ async function loadCachedSemanticQueryResults(ctx, query, target, options = {}) 
         `Semantic retrieval used cached ranked results for ${provider}/${model_name} (${dimensions}d).`,
       ],
     };
-  } finally {
-    db.close();
+  } catch (error) {
+    return { ok: false, error: "semantic_result_cache_failed", message: error.message };
   }
 }
 
@@ -7809,7 +7960,7 @@ async function vecEmbeddingsStatus(ctx) {
   } catch (error) {
     return { ok: false, available: true, path: dbPath, error: "vec_status_failed", message: error.message };
   } finally {
-    db.close();
+    closeIndexDatabase(db);
   }
 }
 
@@ -7887,7 +8038,7 @@ async function rebuildVecEmbeddings(ctx, options = {}) {
   } catch (error) {
     return { ok: false, available: true, path: dbPath, error: "vec_rebuild_failed", message: error.message, rebuilt };
   } finally {
-    db.close();
+    closeIndexDatabase(db);
   }
 }
 
@@ -7918,7 +8069,7 @@ async function semanticSearch(ctx, query, options = {}) {
   try {
     const hasEmbeddings = db.prepare("SELECT count(*) as count FROM embeddings").get();
     if (!hasEmbeddings || hasEmbeddings.count === 0) {
-      db.close();
+      closeIndexDatabase(db);
       return {
         ok: false,
         error: "no_embeddings",
@@ -7929,7 +8080,7 @@ async function semanticSearch(ctx, query, options = {}) {
     }
 
     // Emit a continuation for query embedding
-    db.close();
+    closeIndexDatabase(db);
     return emitContinuation(ctx, {
       kind: "semantic-search",
       title: `Semantic search for "${q}"`,
@@ -7958,7 +8109,7 @@ async function semanticSearch(ctx, query, options = {}) {
       },
     });
   } catch (e) {
-    db?.close();
+    closeIndexDatabase(db);
     return { ok: false, error: "semantic_search_failed", query: q, mode: "semantic", ...(view === FULL_VIEW ? { message: e.message } : {}) };
   }
 }
@@ -8067,7 +8218,7 @@ async function semanticSearchWithEmbedding(ctx, queryEmbedding, options = {}) {
     similarities.sort((a, b) => b.score - a.score);
     const results = similarities.slice(0, limit);
 
-    db.close();
+    closeIndexDatabase(db);
 
     return {
       ok: true,
@@ -8082,7 +8233,7 @@ async function semanticSearchWithEmbedding(ctx, queryEmbedding, options = {}) {
       warnings: vecWarning ? [vecWarning] : [],
     };
   } catch (e) {
-    db?.close();
+    closeIndexDatabase(db);
     return { ok: false, error: "semantic_search_failed", query: q, mode: "semantic", ...(view === FULL_VIEW ? { message: e.message } : {}) };
   }
 }
@@ -8099,6 +8250,7 @@ async function semanticSearchWithVecEmbedding(ctx, queryEmbedding, options = {})
   if (!Array.isArray(queryEmbedding) || queryEmbedding.length !== preferredDimensions) {
     return { ok: false, error: "query_embedding_dimension_mismatch" };
   }
+  return withIndexDatabaseLock(async () => {
   const opened = await openIndexDatabase({ create: false, readOnly: true, loadVec: true });
   if (!opened.ok) return { ok: false, error: opened.code || opened.error, message: opened.message || opened.error };
   const { db } = opened;
@@ -8184,8 +8336,9 @@ async function semanticSearchWithVecEmbedding(ctx, queryEmbedding, options = {})
   } catch (error) {
     return { ok: false, error: "sqlite_vec_search_failed", message: error.message };
   } finally {
-    db.close();
+    closeIndexDatabase(db);
   }
+  });
 }
 
 function formatVecFallbackReason(error) {
@@ -8343,11 +8496,27 @@ async function contextSemanticSearch(ctx, q, options = {}) {
   const view = normalizeDaemonView(options.view) === FULL_VIEW ? FULL_VIEW : PUBLIC_VIEW;
   const repo = String(options.repo || "all");
   const limit = boundedInteger(options.limit, 10, 1, 50);
-  const target = await preferredContextEmbeddingTarget(ctx, { view, repo });
-  if (!target.ok) return { ok: false, error: target.error, query: q, mode: options.mode || "semantic", warnings: target.warnings || [] };
-  const cachedSemanticResults = await loadCachedSemanticQueryResults(ctx, q, target, { ...options, view, repo, limit, mode: options.mode || "semantic" });
-  if (cachedSemanticResults.ok) return cachedSemanticResults;
-  const cachedQueryEmbedding = await loadCachedQueryEmbedding(ctx, q, target);
+  const mode = options.mode || "semantic";
+  const bootstrap = await withIndexDatabaseLock(async () => {
+    const opened = await openIndexDatabase({ create: false, readOnly: true, loadVec: true });
+    if (!opened.ok) return { ok: false, error: opened.code, query: q, mode, code: opened.code };
+    const { db } = opened;
+    try {
+      const target = resolvePreferredContextEmbeddingTargetFromDb(db, { view, repo });
+      if (!target.ok) return { ok: false, error: target.error, query: q, mode, warnings: target.warnings || [] };
+      const cachedSemanticResults = await loadCachedSemanticQueryResults(ctx, q, target, {
+        ...options, view, repo, limit, mode, db,
+      });
+      if (cachedSemanticResults.ok) return { done: true, result: cachedSemanticResults };
+      const cachedQueryEmbedding = await loadCachedQueryEmbedding(ctx, q, target, { db });
+      return { done: false, target, cachedSemanticResults, cachedQueryEmbedding };
+    } finally {
+      closeIndexDatabase(db);
+    }
+  });
+  if (bootstrap.done) return bootstrap.result;
+  if (!bootstrap.target) return bootstrap;
+  const { target, cachedSemanticResults, cachedQueryEmbedding } = bootstrap;
   if (cachedQueryEmbedding.ok) {
     const result = await semanticSearchWithEmbedding(ctx, cachedQueryEmbedding.embedding, {
       ...options,
@@ -8490,54 +8659,67 @@ function emitSemanticSearchContinuation(ctx, q, options = {}) {
   });
 }
 
+function resolvePreferredContextEmbeddingTargetFromDb(db, options = {}) {
+  const view = normalizeDaemonView(options.view) === FULL_VIEW ? FULL_VIEW : PUBLIC_VIEW;
+  const repo = String(options.repo || "all");
+  const tables = db.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='embeddings'").all();
+  if (!tables.length) return { ok: false, error: "no_embeddings_table" };
+  const publicClause = view === FULL_VIEW ? "" : "AND c.searchable_public = 1";
+  const repoClause = repo === "all" ? "" : "AND c.repo = ?";
+  const preferredProfile = DEFAULT_EMBEDDING_PROFILES.openai;
+  const preferredModel = process.env.COGENTIA_QUERY_EMBEDDING_MODEL || process.env.COGENTIA_EMBEDDING_MODEL || preferredProfile.model_name || "";
+  const preferredProvider = process.env.COGENTIA_QUERY_EMBEDDING_PROVIDER || process.env.COGENTIA_EMBEDDINGS_PROVIDER || preferredProfile.provider || "";
+  const preferredDimensions = Number(process.env.COGENTIA_QUERY_EMBEDDING_DIMENSIONS || process.env.COGENTIA_EMBEDDING_DIMENSIONS || preferredProfile.dimensions || 0) || 0;
+  const preferredClause = [
+    preferredProvider ? "AND e.provider = ?" : "",
+    preferredModel ? "AND e.model_name = ?" : "",
+    preferredDimensions ? "AND e.dimensions = ?" : "",
+  ].filter(Boolean).join(" ");
+  const preferredParams = [
+    ...(repo !== "all" ? [repo] : []),
+    ...(preferredProvider ? [preferredProvider] : []),
+    ...(preferredModel ? [preferredModel] : []),
+    ...(preferredDimensions ? [preferredDimensions] : []),
+  ];
+  const target = db.prepare(`
+    SELECT e.provider, e.model_name, e.dimensions, COUNT(*) AS count
+    FROM embeddings e
+    JOIN chunks c ON e.chunk_id = c.id
+    WHERE 1=1 ${publicClause} ${repoClause} ${preferredClause}
+    GROUP BY e.provider, e.model_name, e.dimensions
+    ORDER BY count DESC, e.provider, e.model_name
+    LIMIT 1
+  `).get(...preferredParams) || db.prepare(`
+    SELECT e.provider, e.model_name, e.dimensions, COUNT(*) AS count
+    FROM embeddings e
+    JOIN chunks c ON e.chunk_id = c.id
+    WHERE 1=1 ${publicClause} ${repoClause}
+    GROUP BY e.provider, e.model_name, e.dimensions
+    ORDER BY count DESC, e.provider, e.model_name
+    LIMIT 1
+  `).get(...(repo !== "all" ? [repo] : []));
+  if (!target) return { ok: false, error: "no_matching_embeddings" };
+  return { ok: true, ...target };
+}
+
 async function preferredContextEmbeddingTarget(ctx, options = {}) {
   const view = normalizeDaemonView(options.view) === FULL_VIEW ? FULL_VIEW : PUBLIC_VIEW;
   const repo = String(options.repo || "all");
-  const opened = await openIndexDatabase({ create: false, readOnly: true });
-  if (!opened.ok) return { ok: false, error: opened.error || opened.code };
-  const { db } = opened;
-  try {
-    const tables = db.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='embeddings'").all();
-    if (!tables.length) return { ok: false, error: "no_embeddings_table" };
-    const publicClause = view === FULL_VIEW ? "" : "AND c.searchable_public = 1";
-    const repoClause = repo === "all" ? "" : "AND c.repo = ?";
-    const preferredProfile = DEFAULT_EMBEDDING_PROFILES.openai;
-    const preferredModel = process.env.COGENTIA_QUERY_EMBEDDING_MODEL || process.env.COGENTIA_EMBEDDING_MODEL || preferredProfile.model_name || "";
-    const preferredProvider = process.env.COGENTIA_QUERY_EMBEDDING_PROVIDER || process.env.COGENTIA_EMBEDDINGS_PROVIDER || preferredProfile.provider || "";
-    const preferredDimensions = Number(process.env.COGENTIA_QUERY_EMBEDDING_DIMENSIONS || process.env.COGENTIA_EMBEDDING_DIMENSIONS || preferredProfile.dimensions || 0) || 0;
-    const preferredClause = [
-      preferredProvider ? "AND e.provider = ?" : "",
-      preferredModel ? "AND e.model_name = ?" : "",
-      preferredDimensions ? "AND e.dimensions = ?" : "",
-    ].filter(Boolean).join(" ");
-    const preferredParams = [
-      ...(repo !== "all" ? [repo] : []),
-      ...(preferredProvider ? [preferredProvider] : []),
-      ...(preferredModel ? [preferredModel] : []),
-      ...(preferredDimensions ? [preferredDimensions] : []),
-    ];
-    const target = db.prepare(`
-      SELECT e.provider, e.model_name, e.dimensions, COUNT(*) AS count
-      FROM embeddings e
-      JOIN chunks c ON e.chunk_id = c.id
-      WHERE 1=1 ${publicClause} ${repoClause} ${preferredClause}
-      GROUP BY e.provider, e.model_name, e.dimensions
-      ORDER BY count DESC, e.provider, e.model_name
-      LIMIT 1
-    `).get(...preferredParams) || db.prepare(`
-      SELECT e.provider, e.model_name, e.dimensions, COUNT(*) AS count
-      FROM embeddings e
-      JOIN chunks c ON e.chunk_id = c.id
-      WHERE 1=1 ${publicClause} ${repoClause}
-      GROUP BY e.provider, e.model_name, e.dimensions
-      ORDER BY count DESC, e.provider, e.model_name
-      LIMIT 1
-    `).get(...(repo !== "all" ? [repo] : []));
-    if (!target) return { ok: false, error: "no_matching_embeddings" };
-    return { ok: true, ...target };
-  } finally {
-    db.close();
-  }
+  const cacheKey = `${view}:${repo}`;
+  const cached = cachedEmbeddingTargets.get(cacheKey);
+  if (cached && Date.now() - cached.at < EMBEDDING_TARGET_CACHE_MS) return cached.value;
+  const value = await withIndexDatabaseLock(async () => {
+    const opened = await openIndexDatabase({ create: false, readOnly: true });
+    if (!opened.ok) return { ok: false, error: opened.error || opened.code };
+    const { db } = opened;
+    try {
+      return resolvePreferredContextEmbeddingTargetFromDb(db, options);
+    } finally {
+      closeIndexDatabase(db);
+    }
+  });
+  if (value?.ok) cachedEmbeddingTargets.set(cacheKey, { at: Date.now(), value });
+  return value;
 }
 
 async function createQueryEmbedding(query, target) {
@@ -8558,6 +8740,7 @@ async function createQueryEmbedding(query, target) {
 async function contextKeywordSearch(ctx, q, options = {}) {
   const view = normalizeDaemonView(options.view) === FULL_VIEW ? FULL_VIEW : PUBLIC_VIEW;
   const mode = String(options.mode || "keyword").toLowerCase();
+  return withIndexDatabaseLock(async () => {
   const opened = await openIndexDatabase({ create: false, readOnly: true });
   if (!opened.ok) return { ok: false, error: opened.error || opened.code, code: opened.code, query: q };
   const { db } = opened;
@@ -8605,6 +8788,7 @@ async function contextKeywordSearch(ctx, q, options = {}) {
       };
     }).sort((a, b) => b.score - a.score || a._raw_rank - b._raw_rank || a.id.localeCompare(b.id));
     const results = ranked.slice(0, limit).map(({ _raw_rank, _reasons, ...result }) => result);
+    const state = readIndexState(db);
     return {
       ok: true,
       query: q,
@@ -8612,13 +8796,16 @@ async function contextKeywordSearch(ctx, q, options = {}) {
       view,
       count: results.length,
       results,
+      index_hash: state.index_hash || "",
+      schema_version: state.schema_version || INDEX_SCHEMA_VERSION,
       warnings: [],
     };
   } catch (e) {
     return { ok: false, error: "context_search_failed", ...(view === FULL_VIEW ? { message: e.message } : {}), query: q };
   } finally {
-    db.close();
+    closeIndexDatabase(db);
   }
+  });
 }
 
 async function contextPack(ctx, query, options = {}) {
@@ -8627,7 +8814,21 @@ async function contextPack(ctx, query, options = {}) {
   const view = normalizeDaemonView(options.view) === FULL_VIEW ? FULL_VIEW : PUBLIC_VIEW;
   const search = await contextSearch(ctx, q, { ...options, view, includeText: true });
   if (!search.ok) return search;
-  const status = await indexStatus(ctx);
+  let indexHash = search.index_hash || "";
+  let schemaVersion = search.schema_version || INDEX_SCHEMA_VERSION;
+  if (!indexHash) {
+    const meta = await withIndexDatabaseLock(async () => {
+      const opened = await openIndexDatabase({ create: false, readOnly: true });
+      if (!opened.ok) return { index_hash: "", schema_version: INDEX_SCHEMA_VERSION };
+      try {
+        return readIndexMetaFromDb(opened.db);
+      } finally {
+        closeIndexDatabase(opened.db);
+      }
+    });
+    indexHash = meta.index_hash || "";
+    schemaVersion = meta.schema_version || INDEX_SCHEMA_VERSION;
+  }
   const context = [];
   const sources = [];
   const warnings = [...search.warnings];
@@ -8663,7 +8864,6 @@ async function contextPack(ctx, query, options = {}) {
     used += estimate;
   }
   const queryHash = sha256(q);
-  const indexHash = status.index_hash || "";
   const logical = {
     query: q,
     repo: options.repo || "all",
@@ -8685,7 +8885,7 @@ async function contextPack(ctx, query, options = {}) {
     mode: search.mode,
     retrieval: summarizeContextRetrieval(search, options.mode || "keyword"),
     budget: { max_tokens: budget, used_tokens_estimate: used },
-    index: { schema_version: status.schema_version || INDEX_SCHEMA_VERSION, index_hash: indexHash },
+    index: { schema_version: schemaVersion, index_hash: indexHash },
     query_hash: queryHash,
     index_hash: indexHash,
     pack_hash: sha256(stableJson(logical)),
@@ -8817,7 +9017,7 @@ async function contextExplain(ctx, resultId, view = PUBLIC_VIEW) {
       retrieval_policy_version: CONTEXT_RETRIEVAL_POLICY_VERSION,
     };
   } finally {
-    db.close();
+    closeIndexDatabase(db);
   }
 }
 
