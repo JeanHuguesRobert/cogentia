@@ -1,0 +1,10 @@
+[Unit]
+Description=Daily proactive restart of Cogentia public Guide stack
+After=network-online.target
+
+[Service]
+Type=oneshot
+User=root
+Group=root
+Environment=COGENTIA_OPS_STATE_DIR=/var/lib/cogentia/.ops
+ExecStart=/srv/cogentia/repos/cogentia/scripts/ops/fracta-guide-stack.sh restart

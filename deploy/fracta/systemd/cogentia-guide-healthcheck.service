@@ -1,0 +1,11 @@
+[Unit]
+Description=Cogentia public Guide stack healthcheck
+After=network-online.target cogentia.service mcp-cogentia.service
+Wants=cogentia.service mcp-cogentia.service
+
+[Service]
+Type=oneshot
+User=root
+Group=root
+Environment=COGENTIA_OPS_STATE_DIR=/var/lib/cogentia/.ops
+ExecStart=/srv/cogentia/repos/cogentia/scripts/ops/fracta-guide-stack.sh ensure-healthy
