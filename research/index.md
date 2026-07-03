@@ -3,7 +3,7 @@ title: "Research Index — Cogentia"
 description: "A map of what is, what is in progress, and what could be."
 layout: default
 nav_order: 1
-last_modified_at: 2026-06-09
+last_modified_at: 2026-07-03
 license: CC BY-SA 4.0
 affiliation: Institut Mariani / C.O.R.S.I.C.A., 1 cours Paoli, F-20250 Corte, Corsica
 date: 2026-05-22
@@ -62,6 +62,7 @@ This repository instantiates the **cognitive infrastructure layer** of the [DHIT
 | [Cogentia Personal Data Portability](cogentia_personal_data_portability.md) *(generic reusable layer for schemas, templates, normalizers and redacted/fictitious examples; explicitly separated from any private personal register)* | this repo | 2026-06-11 |
 | [Agent Configuration Layer](agent_configuration_layer.md) *(method note v0.2 — AGENTS.md, `.agents/`, and governed operational projections of the corpus)* | this repo | 2026-06-13 |
 | [Pipeline Conversation vers Corpus (Conversia)](conversation_to_corpus_pipeline.md) *(source document v0.4 — progressive transformation of conversations into living corpus, models, agents, mandates and traces)* | this repo | 2026-06-12 |
+| [Memory, Working Memory, and Corpus Sleep Cycle](memory_and_corpus_sleep_cycle.md) *(working-note v0.1 — individual/collective memory, working/long-term regimes, memory temperature, consolidation and traceable forgetting)* | this repo | 2026-07-03 |
 | [Open Knowledge Format and Cogentia](open_knowledge_format_alignment.md) *(working-note v0.1 — Google OKF v0.1 as external confirmation of the Markdown/YAML/git/index/link substrate; proposes `okf check` and `okf export` as Cogentia compatibility layer)* | this repo | 2026-06-19 |
 | [Démocratie de capacité](democracy_of_capability.md) *(structured hypothesis — publics capables, open democracy and AI under mandate)* | this repo | 2026-06-12 |
 | [Démocratie rapide mandatée](mandated_fast_democracy.md) *(short conceptual synthesis — deciding quickly without abandoning democratic principles)* | this repo | 2026-06-12 |
@@ -177,6 +178,7 @@ This repository instantiates the **cognitive infrastructure layer** of the [DHIT
 - Cogentia Commons as methodology for any distributed peer-review process
 - Cogentigram as visual language for knowledge graph navigation
 - PrivAI governance model — from non-profit to cooperative structure
+- Corpus Sleep Cycle command for periodic consolidation, cooling, obsolescence and memory-temperature review
 
 ---
 
