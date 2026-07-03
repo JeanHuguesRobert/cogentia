@@ -75,7 +75,7 @@ COGENTIA_REGISTRY=/srv/cogentia/registry COGENTIA_DATA_DIR=/var/lib/cogentia \
   node scripts/sync-retrieval-supabase.js --corpus cogentia-public
 ```
 
-3. Add to `guide.env`:
+3. Add to `/srv/cogentia/secrets/guide.env` (must be readable by `ubuntu`: `chown root:ubuntu`, `chmod 640`):
 
 ```bash
 COGENTIA_RETRIEVAL_BACKEND=supabase
@@ -85,4 +85,15 @@ COGENTIA_RETRIEVAL_CORPUS_KEY=cogentia-public
 OPENAI_API_KEY=...   # query embeddings for uncached queries
 ```
 
-4. Restart MCP: `sudo systemctl restart mcp-cogentia.service`
+4. Sync corpus (uses `guide.env` via sudo):
+
+```bash
+sudo bash -c 'set -a; source /srv/cogentia/secrets/guide.env; set +a; \
+  export COGENTIA_REGISTRY=/srv/cogentia/repos/JeanHuguesRobert/.cogentia.json \
+         COGENTIA_DATA_DIR=/var/lib/cogentia; \
+  cd /srv/cogentia/repos/cogentia && node scripts/sync-retrieval-supabase.js --corpus cogentia-public'
+```
+
+5. Restart MCP: `sudo systemctl restart mcp-cogentia.service`
+
+Re-run sync after each `cogentia index update` on fracta.

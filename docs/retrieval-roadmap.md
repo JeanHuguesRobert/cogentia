@@ -26,7 +26,8 @@ Scale: `local` (canon/build) → `regional` (pgvector) → `edge` (user/SSE) →
 | Guide uses batch instead of N sequential `context_pack` | implemented |
 | Optional Supabase `retrieval_chunks` + `match_retrieval_chunks` | migration + sync script |
 | `COGENTIA_RETRIEVAL_BACKEND=supabase` on MCP | implemented when configured |
-| Deploy sync on fracta after index update | manual / cron |
+| Deploy sync on fracta after index update | done (8963 chunks, opnotbjrbphwcezaqgim) |
+| fracta `COGENTIA_RETRIEVAL_BACKEND=supabase` | live |
 
 **Env (fracta MCP / guide.env):**
 
