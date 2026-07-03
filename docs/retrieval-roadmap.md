@@ -61,12 +61,12 @@ COGENTIA_REGISTRY=... COGENTIA_DATA_DIR=/var/lib/cogentia \
 - Replace JS `vector_search` (fetch 1000 + cosine) with RPC.
 - Ingest pipelines (`ingest_file`, `rag-ingest`) write to `retrieval_chunks`.
 
-### Phase 4 — Inox + Fractanet (tracked)
+### Phase 4 — Inox + Fractanet (in progress)
 
 - GitHub issue: https://github.com/JeanHuguesRobert/cogentia/issues/42
-- Resume when a remote Inox interpreter can fulfill `retrieval.batch` mandates.
-- Mandate packet carries `.nox` retrieval verb + `corpus_key` + locality.
-- COP supervises resumable fulfillment; JS/HTTP adapters become thin faces.
+- **Proto fulfiller (Inox repo):** `inox-serve` `POST /retrieval/batch` — see `Inox/research/inox-remote-serve.md`
+- Next: point fracta MCP `COGENTIA_RETRIEVAL_URL` at inox-serve (remove Supabase secrets from VPS)
+- Later: mandate packet `.nox` + COP fulfill instead of raw HTTP
 
 ## Contracts (stable across phases)
 

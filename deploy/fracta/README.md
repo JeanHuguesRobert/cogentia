@@ -97,3 +97,7 @@ sudo bash -c 'set -a; source /srv/cogentia/secrets/guide.env; set +a; \
 5. Restart MCP: `sudo systemctl restart mcp-cogentia.service`
 
 Re-run sync after each `cogentia index update` on fracta.
+
+### Future: Inox remote fulfiller (Phase 4)
+
+When a capable host runs `inox-serve` (`POST /retrieval/batch`), fracta MCP can drop direct Supabase/OpenAI secrets and call that URL instead. See `Inox/research/inox-remote-serve.md` and cogentia issue #42.

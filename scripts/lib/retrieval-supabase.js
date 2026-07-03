@@ -57,7 +57,7 @@ export async function retrievalSupabasePackBatch(queries, options = {}) {
 
 async function hybridSearchSupabase(supabaseUrl, serviceKey, query, options) {
   const semantic = await semanticSearchSupabase(supabaseUrl, serviceKey, query, options);
-  if (semantic.ok && semantic.results?.length) return semantic;
+  if (semantic.ok && semantic.sources?.length) return semantic;
   const keyword = await keywordSearchSupabase(supabaseUrl, serviceKey, query, options);
   if (keyword.ok) {
     return {
