@@ -50,11 +50,10 @@ COGENTIA_REGISTRY=... COGENTIA_DATA_DIR=/var/lib/cogentia \
   node scripts/sync-retrieval-supabase.js --corpus cogentia-public
 ```
 
-### Phase 2 — Netlify Deno façade (abstraction)
+### Phase 2 — Netlify Deno façade (deferred)
 
-- `POST /api/retrieval/batch` on Netlify edge (same JSON contract as daemon batch).
-- fracta `COGENTIA_RETRIEVAL_URL` → Netlify; Supabase stays behind adapter.
-- Ophelia / survey reuses the same endpoint with `corpus_key=ophelia-{instance}`.
+- Skipped for now: adds deploy dependency without removing OpenAI/Supabase work.
+- Revisit only if a client needs edge HTTP without VPS secrets before Inox is ready.
 
 ### Phase 3 — Ophelia / future survey platform
 
@@ -62,8 +61,10 @@ COGENTIA_REGISTRY=... COGENTIA_DATA_DIR=/var/lib/cogentia \
 - Replace JS `vector_search` (fetch 1000 + cosine) with RPC.
 - Ingest pipelines (`ingest_file`, `rag-ingest`) write to `retrieval_chunks`.
 
-### Phase 4 — Inox + Fractanet
+### Phase 4 — Inox + Fractanet (tracked)
 
+- GitHub issue: https://github.com/JeanHuguesRobert/cogentia/issues/42
+- Resume when a remote Inox interpreter can fulfill `retrieval.batch` mandates.
 - Mandate packet carries `.nox` retrieval verb + `corpus_key` + locality.
 - COP supervises resumable fulfillment; JS/HTTP adapters become thin faces.
 
