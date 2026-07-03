@@ -16,6 +16,7 @@ const daemonBase = `http://127.0.0.1:${daemonPort}`;
 const mcpBase = `http://127.0.0.1:${mcpPort}`;
 const seenEntries = [];
 const seenPackQueries = [];
+const seenPackBatches = [];
 const seenChatPayloads = [];
 const seenPlannerPayloads = [];
 
@@ -28,6 +29,16 @@ const daemon = http.createServer(async (req, res) => {
   if (req.method === "GET" && url.pathname === "/api/context/pack") {
     seenPackQueries.push(url.searchParams.get("q") || "");
     return sendJson(res, 200, mockPack(url.searchParams.get("q") || ""));
+  }
+  if (req.method === "POST" && url.pathname === "/api/context/pack-batch") {
+    const payload = JSON.parse(await readBody(req) || "{}");
+    const queries = Array.isArray(payload.queries) ? payload.queries : [];
+    seenPackBatches.push(queries);
+    return sendJson(res, 200, {
+      ok: true,
+      strategy: "context-pack-batch-v1",
+      packs: queries.map(query => ({ query, ...mockPack(query) })),
+    });
   }
   if (req.method === "GET" && url.pathname === "/brave") {
     return sendJson(res, 200, {
@@ -152,10 +163,11 @@ try {
   assert.equal(chat.sources[0].source_id, "mock:README.md#L1-L4");
   assert.equal(seenPlannerPayloads.length, 1);
   assert.equal(seenPlannerPayloads[0].cogentia.context, false);
-  assert.ok(seenPackQueries.includes("What is the FractaVolta public Guide digital twin?"));
-  assert.ok(seenPackQueries.includes("public Guide digital twin"));
-  assert.ok(seenPackQueries.includes("FractaVolta public Guide public instance twin"));
-  assert.equal(seenPackQueries.includes("FractaVolta public Guide"), false);
+  assert.equal(seenPackQueries.length, 0, "Guide should use pack-batch, not sequential GET /pack");
+  assert.ok(batchQueryIncluded("What is the FractaVolta public Guide digital twin?"));
+  assert.ok(batchQueryIncluded("public Guide digital twin"));
+  assert.ok(batchQueryIncluded("FractaVolta public Guide public instance twin"));
+  assert.equal(batchQueryIncluded("FractaVolta public Guide"), false);
   assert.ok(seenChatPayloads[0].messages.some(message => /Public Guide retrieval run/.test(message.content)));
   assert.ok(seenChatPayloads[0].messages.every(message => !/Previous visitor question/.test(message.content)));
   assert.equal(chat.context.guide_retrieval.strategy, "guide-retrieval-run-v1");
@@ -186,31 +198,31 @@ try {
     question: "Comment une commune corse peut-elle demarrer un pilote FractaVolta sobre et verifiable ?",
     locale: "fr",
   });
-  assert.ok(seenPackQueries.includes("FractaVolta autonomous commune infrastructure node"));
-  assert.ok(seenPackQueries.includes("FractaVolta one mountain commune demonstrator"));
-  assert.ok(seenPackQueries.includes("FractaVolta Boucle solaire Corte pilote"));
+  assert.ok(batchQueryIncluded("FractaVolta autonomous commune infrastructure node"));
+  assert.ok(batchQueryIncluded("FractaVolta one mountain commune demonstrator"));
+  assert.ok(batchQueryIncluded("FractaVolta Boucle solaire Corte pilote"));
 
   await postJson(`${mcpBase}/guide/chat`, {
     question: "What kind of partner should talk to FractaVolta first?",
     locale: "en",
   });
-  assert.ok(seenPackQueries.includes("FractaVolta partner contact"));
-  assert.ok(seenPackQueries.includes("FractaVolta deployment site territory"));
+  assert.ok(batchQueryIncluded("FractaVolta partner contact"));
+  assert.ok(batchQueryIncluded("FractaVolta deployment site territory"));
 
   await postJson(`${mcpBase}/guide/chat`, {
     question: "Explique FractaVolta a un agriculteur corse qui possede une ancienne installation solaire.",
     locale: "fr",
   });
-  assert.ok(seenPackQueries.includes("FractaVolta agriculteur Corse installation solaire ancienne"));
-  assert.ok(seenPackQueries.includes("FractaVolta Seconde Vie Corse agriculture"));
-  assert.equal(seenPackQueries.includes("FractaVolta first visitor"), false);
+  assert.ok(batchQueryIncluded("FractaVolta agriculteur Corse installation solaire ancienne"));
+  assert.ok(batchQueryIncluded("FractaVolta Seconde Vie Corse agriculture"));
+  assert.equal(batchQueryIncluded("FractaVolta first visitor"), false);
 
   const vague = await postJson(`${mcpBase}/guide/chat`, {
     question: "Par ou commencer ?",
     locale: "fr",
   });
-  assert.ok(seenPackQueries.includes("FractaVolta start here"));
-  assert.ok(seenPackQueries.includes("FractaVolta first steps"));
+  assert.ok(batchQueryIncluded("FractaVolta start here"));
+  assert.ok(batchQueryIncluded("FractaVolta first steps"));
   assert.equal(vague.sources[0].source_id, "FractaVolta:README.md#L1-L8");
   assert.equal(vague.context.guide_retrieval.source_ids[0], "FractaVolta:README.md#L1-L8");
 
@@ -238,11 +250,26 @@ try {
   assert.equal(fallback.sources[0].source_id, "mock:README.md#L1-L4");
   assert.ok(seenEntries.filter(Boolean).every(entry => entry === "public"));
 
-  console.log(JSON.stringify({ ok: true, guide_chat: true, guide_stream: true, fallback: true, public_entry: true }, null, 2));
+  console.log(JSON.stringify({
+    ok: true,
+    guide_chat: true,
+    guide_stream: true,
+    fallback: true,
+    public_entry: true,
+    pack_batches: seenPackBatches.length,
+  }, null, 2));
 } finally {
   child.kill();
   fs.rmSync(envDir, { recursive: true, force: true });
   daemon.close();
+}
+
+function allBatchQueries() {
+  return seenPackBatches.flat();
+}
+
+function batchQueryIncluded(query) {
+  return allBatchQueries().includes(query);
 }
 
 function mockPack(query) {

@@ -43,3 +43,46 @@ Timers:
 - proactive restart daily at 04:30 UTC
 
 Logs: `journalctl -u cogentia-guide-healthcheck.service` and `journalctl -u cogentia-guide-restart.service`
+
+## Fast Guide retrieval (batch + optional Supabase)
+
+Roadmap: `docs/retrieval-roadmap.md`.
+
+After `git pull`, restart the stack so MCP picks up batch retrieval:
+
+```bash
+sudo scripts/ops/fracta-guide-stack.sh restart
+```
+
+### Default: local batch (no Supabase)
+
+Guide issues one `POST /api/context/pack-batch` per visitor turn (one SQLite session, vectors loaded once). In `/srv/cogentia/secrets/guide.env`:
+
+```bash
+COGENTIA_GUIDE_BATCH=1
+```
+
+Unset or `0` falls back to sequential `GET /api/context/pack` (slower on a 1GB VPS).
+
+### Optional: regional Supabase backend
+
+1. Apply migration: `deploy/supabase/001_retrieval_chunks.sql`
+2. Sync public corpus after each index rebuild:
+
+```bash
+cd /srv/cogentia/repos/cogentia
+COGENTIA_REGISTRY=/srv/cogentia/registry COGENTIA_DATA_DIR=/var/lib/cogentia \
+  node scripts/sync-retrieval-supabase.js --corpus cogentia-public
+```
+
+3. Add to `guide.env`:
+
+```bash
+COGENTIA_RETRIEVAL_BACKEND=supabase
+SUPABASE_URL=https://xxx.supabase.co
+SUPABASE_SERVICE_ROLE_KEY=...
+COGENTIA_RETRIEVAL_CORPUS_KEY=cogentia-public
+OPENAI_API_KEY=...   # query embeddings for uncached queries
+```
+
+4. Restart MCP: `sudo systemctl restart mcp-cogentia.service`

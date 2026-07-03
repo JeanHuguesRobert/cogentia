@@ -9,6 +9,8 @@ import http from "node:http";
 import fs from "node:fs";
 import path from "node:path";
 import { boundedInteger, createMcpCore, jsonRpcError, mcpToolResult, SERVER_NAME, SERVER_VERSION } from "./lib/cogentia-mcp-core.js";
+import { mergeGuideRetrievalFromPacks } from "./lib/guide-retrieval-merge.js";
+import { retrievalSupabaseConfigured, retrievalSupabasePackBatch } from "./lib/retrieval-supabase.js";
 
 loadOptionalEnvFiles([
   process.env.COGENTIA_MCP_ENV_FILE,
@@ -23,6 +25,10 @@ const host = process.env.COGENTIA_MCP_HOST || "0.0.0.0";
 const guideLimit = boundedInteger(process.env.COGENTIA_GUIDE_LIMIT, 8, 1, 12);
 const guideBudget = boundedInteger(process.env.COGENTIA_GUIDE_BUDGET, 14000, 256, 30000);
 const guideQueryLimit = boundedInteger(process.env.COGENTIA_GUIDE_QUERY_LIMIT, 6, 1, 10);
+const guideBatchEnabled = parseBoolean(process.env.COGENTIA_GUIDE_BATCH, true);
+const guideRetrievalBackend = retrievalSupabaseConfigured()
+  ? "supabase"
+  : (guideBatchEnabled ? "daemon-batch" : "daemon-sequential");
 const guidePlannerEnabled = parseBoolean(process.env.COGENTIA_GUIDE_PLANNER, true);
 const guidePlannerQueryLimit = boundedInteger(process.env.COGENTIA_GUIDE_PLANNER_QUERY_LIMIT, 5, 1, 8);
 const guideHistoryLimit = boundedInteger(process.env.COGENTIA_GUIDE_HISTORY_LIMIT, 8, 0, 20);
@@ -89,6 +95,8 @@ async function guideHealth() {
       limit: guideLimit,
       budget: guideBudget,
       query_limit: guideQueryLimit,
+      batch_enabled: guideBatchEnabled,
+      retrieval_backend: guideRetrievalBackend,
       planner_enabled: guidePlannerEnabled,
       planner_query_limit: guidePlannerQueryLimit,
       history_limit: guideHistoryLimit,
@@ -382,98 +390,84 @@ function extractJsonObject(content) {
 
 async function guideRetrievalRun(question, plan = guideHeuristicPlan(question), options = {}) {
   const queries = mergeQueries([...(plan.queries || []), ...guideRetrievalQueries(question)]).slice(0, guideQueryLimit);
-  const attempts = [];
-  const sources = [];
-  const context = [];
-  const warnings = [];
-  const seenSources = new Set();
-  const sourceRanks = new Map();
-  let usedTokens = 0;
+  const perQueryLimit = Math.max(1, Math.min(guideLimit, Math.ceil(guideLimit / 2)));
+  const perQueryBudget = Math.max(512, Math.floor(guideBudget / Math.max(1, queries.length)));
+  const packOptions = {
+    mode: "hybrid",
+    limit: perQueryLimit,
+    budget: perQueryBudget,
+  };
 
-  for (const [queryIndex, query] of queries.entries()) {
-    emitGuideProgress(options, "guide_status", {
-      stage: "retrieval_query",
-      query,
-      message: guideProgress(options.locale, "retrieval_query", { query }).message,
-    });
-    let pack;
+  emitGuideProgress(options, "guide_status", {
+    stage: "retrieval_batch",
+    backend: guideRetrievalBackend,
+    query_count: queries.length,
+    message: guideProgress(options.locale, "retrieval_batch", { count: queries.length }).message,
+  });
+
+  const packs = await fetchGuideRetrievalPacks(queries, packOptions);
+  const result = mergeGuideRetrievalFromPacks({
+    question,
+    plan,
+    queries,
+    packs,
+    guideLimit,
+    guideBudget,
+    guideQueryLimit,
+    options,
+    helpers: {
+      emitGuideProgress,
+      guideProgress,
+      safeSources,
+      summarizePackRetrieval,
+      estimateGuideTokens,
+      truncateGuideText,
+      rankGuideSources,
+    },
+  });
+  return {
+    ...result,
+    retrieval_backend: guideRetrievalBackend,
+    batch: true,
+  };
+}
+
+async function fetchGuideRetrievalPacks(queries, packOptions) {
+  const packs = new Map();
+  if (guideRetrievalBackend === "supabase") {
+    const batch = await retrievalSupabasePackBatch(queries, packOptions);
+    for (const item of batch.packs || []) {
+      packs.set(item.query, item);
+    }
+    return packs;
+  }
+
+  if (guideBatchEnabled) {
     try {
-      pack = await core.callTool("cogentia_context_pack", {
+      const batch = await core.callPackBatch(queries, packOptions);
+      for (const item of batch.packs || []) {
+        packs.set(item.query, item);
+      }
+      return packs;
+    } catch (error) {
+      for (const query of queries) packs.set(query, { ok: false, error: error.message, query });
+      return packs;
+    }
+  }
+
+  for (const query of queries) {
+    try {
+      const pack = await core.callTool("cogentia_context_pack", {
         query,
-        mode: "hybrid",
-        limit: Math.max(1, Math.min(guideLimit, Math.ceil(guideLimit / 2))),
-        budget: Math.max(512, Math.floor(guideBudget / Math.max(1, queries.length))),
+        ...packOptions,
         format: "json",
       });
+      packs.set(query, pack);
     } catch (error) {
-      attempts.push({ query, ok: false, error: error.message });
-      continue;
+      packs.set(query, { ok: false, error: error.message, query });
     }
-
-    const packSources = safeSources(pack.sources);
-    const retrieval = summarizePackRetrieval(pack);
-    attempts.push({
-      query,
-      ok: Boolean(pack.ok),
-      count: packSources.length,
-      mode: retrieval.mode,
-      retrieval,
-      pack_hash: pack.pack_hash,
-      source_ids: packSources.map(source => source.source_id),
-    });
-    emitGuideProgress(options, "guide_retrieval_query", {
-      stage: "retrieval_query_done",
-      query,
-      ok: Boolean(pack.ok),
-      count: packSources.length,
-      mode: retrieval.mode,
-      retrieval,
-      source_ids: packSources.map(source => source.source_id),
-      pack_hash: pack.pack_hash,
-      warnings: pack.warnings || [],
-      message: guideProgress(options.locale, "retrieval_query_done", { count: packSources.length }).message,
-    });
-    warnings.push(...(pack.warnings || []));
-
-    const contextBySource = new Map((Array.isArray(pack.context) ? pack.context : []).map(item => [String(item.source_id || ""), item]));
-    for (const source of packSources) {
-      if (!source.source_id || seenSources.has(source.source_id)) continue;
-      const item = contextBySource.get(source.source_id);
-      const text = String(item?.text || "").trim();
-      if (!text) continue;
-      const estimate = estimateGuideTokens(text);
-      if (usedTokens + estimate > guideBudget && context.length) continue;
-      seenSources.add(source.source_id);
-      sourceRanks.set(source.source_id, {
-        query,
-        query_index: queryIndex,
-        source_index: sources.length,
-      });
-      sources.push(source);
-      context.push({ source_id: source.source_id, text: truncateGuideText(text, Math.max(512, guideBudget - usedTokens)) });
-      usedTokens += estimate;
-      if (sources.length >= guideLimit || usedTokens >= guideBudget) break;
-    }
-    if (sources.length >= guideLimit || usedTokens >= guideBudget) break;
   }
-  const ranked = rankGuideSources(question, queries, sources, context, sourceRanks);
-
-  return {
-    strategy: "guide-retrieval-run-v1",
-    planner: {
-      strategy: plan.strategy,
-      source: plan.source,
-      objective: plan.objective,
-      notes: plan.notes || [],
-      error: plan.planner_error || undefined,
-    },
-    query_limit: guideQueryLimit,
-    queries,
-    attempts,
-    sources: ranked.sources,
-    context: ranked.context,
-    warnings: [...new Set(warnings)],
-  };
+  return packs;
 }
 
 function rankGuideSources(question, queries, sources, context, sourceRanks) {
@@ -1081,6 +1075,9 @@ function guideProgress(locale, stage, data = {}) {
     planning: fr ? "Preparation des recherches publiques..." : "Planning public corpus searches...",
     planned: fr ? "Plan de recherche pret." : "Retrieval plan ready.",
     retrieval: fr ? "Recherche dans le corpus public..." : "Searching the public corpus...",
+    retrieval_batch: fr
+      ? `Recherche groupée (${data.count || 0} requête(s))...`
+      : `Batch retrieval (${data.count || 0} quer${data.count === 1 ? "y" : "ies"})...`,
     retrieval_query: fr ? `Recherche: ${data.query || ""}` : `Searching: ${data.query || ""}`,
     retrieval_query_done: fr
       ? `${data.count || 0} source(s) trouvee(s).`

@@ -147,6 +147,7 @@ const PUBLIC_DAEMON_GET_ROUTES = new Set([
   "/api/context/health",
   "/api/context/search",
   "/api/context/pack",
+  "/api/context/pack-batch",
   "/api/context/doc",
   "/api/context/lines",
   "/api/context/explain",
@@ -154,6 +155,7 @@ const PUBLIC_DAEMON_GET_ROUTES = new Set([
 ]);
 const PUBLIC_DAEMON_POST_ROUTES = new Set([
   "/v1/chat/completions",
+  "/api/context/pack-batch",
 ]);
 const daemonRateLimits = new Map();
 
@@ -1315,6 +1317,28 @@ async function handleDaemonRequest(req, res) {
     if (format !== "json" && format !== "markdown") {
       return daemonJson(res, 400, { ok: false, error: "invalid_format", allowed: ["json", "markdown"] });
     }
+    return daemonJson(res, result.ok ? 200 : contextErrorStatus(result), result);
+  }
+  if (req.method === "POST" && url.pathname === "/api/context/pack-batch") {
+    const effectiveCtx = ctx || loadContext();
+    let payload;
+    try {
+      payload = await readJsonRequestBody(req, { maxBytes: 256 * 1024 });
+    } catch (error) {
+      const status = error.message === "request_body_too_large" ? 413 : 400;
+      return daemonJson(res, status, { ok: false, error: error.message });
+    }
+    const queries = Array.isArray(payload.queries)
+      ? payload.queries.map(item => String(item || "").trim()).filter(Boolean).slice(0, 12)
+      : [];
+    if (!queries.length) return daemonJson(res, 400, { ok: false, error: "missing_queries" });
+    const result = await contextPackBatch(effectiveCtx, queries, {
+      repo: payload.repo || "all",
+      budget: boundedInteger(payload.budget, DEFAULT_CONTEXT_BUDGET, 256, MAX_CONTEXT_BUDGET),
+      limit: boundedInteger(payload.limit, 12, 1, 50),
+      view,
+      mode: payload.mode || "keyword",
+    });
     return daemonJson(res, result.ok ? 200 : contextErrorStatus(result), result);
   }
   if (req.method === "GET" && url.pathname === "/api/context/doc") {
@@ -8805,6 +8829,29 @@ async function contextKeywordSearch(ctx, q, options = {}) {
   } finally {
     closeIndexDatabase(db);
   }
+  });
+}
+
+async function contextPackBatch(ctx, queries, options = {}) {
+  const list = Array.isArray(queries)
+    ? queries.map(item => normalizeContextQuery(item)).filter(Boolean)
+    : [];
+  if (!list.length) return { ok: false, error: "missing_queries", queries: [] };
+  return withIndexDatabaseLock(async () => {
+    const packs = [];
+    for (const query of list) {
+      const pack = await contextPack(ctx, query, { ...options, _batchSession: true });
+      packs.push({ query, ...pack });
+      if (!pack.ok) break;
+    }
+    return {
+      ok: true,
+      strategy: "context-pack-batch-v1",
+      mode: options.mode || "keyword",
+      view: normalizeDaemonView(options.view) === FULL_VIEW ? FULL_VIEW : PUBLIC_VIEW,
+      count: packs.length,
+      packs,
+    };
   });
 }
 

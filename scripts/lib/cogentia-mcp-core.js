@@ -74,16 +74,6 @@ export function createMcpCore(env = process.env) {
   const adminToken = String(env.COGENTIA_ADMIN_TOKEN || "");
   const view = requestedView === "full" && adminToken ? "full" : "public";
 
-  return {
-    daemonUrl,
-    requestTimeoutMs,
-    view,
-    tools: TOOLS,
-    initialize,
-    callTool,
-    handleJsonRpc,
-  };
-
   function initialize(params = {}) {
     const requested = String(params.protocolVersion || "");
     return {
@@ -140,6 +130,15 @@ export function createMcpCore(env = process.env) {
           format: enumOptional(args.format, ["json", "markdown"], "format"),
           mode: enumOptional(args.mode, ["keyword", "hybrid", "semantic"], "mode"),
         });
+      case "cogentia_context_pack_batch":
+        if (!Array.isArray(args.queries) || !args.queries.length) throw new Error("queries must be a non-empty array");
+        return daemonPost("/api/context/pack-batch", {
+          queries: args.queries,
+          repo: args.repo,
+          budget: boundedOptional(args.budget, 256, 50000),
+          limit: boundedOptional(args.limit, 1, 50),
+          mode: enumOptional(args.mode, ["keyword", "hybrid", "semantic"], "mode") || "hybrid",
+        });
       case "cogentia_get_lines":
         requireString(args.ref, "ref");
         return daemonGet("/api/context/lines", {
@@ -183,6 +182,57 @@ export function createMcpCore(env = process.env) {
     }
     return body;
   }
+
+  async function daemonPost(route, body) {
+    const url = new URL(route, daemonUrl);
+    const headers = {
+      Accept: "application/json",
+      "Content-Type": "application/json",
+    };
+    if (view === "full") {
+      headers.Authorization = `Bearer ${adminToken}`;
+    } else {
+      headers["X-Cogentia-Entry"] = "public";
+    }
+    let response;
+    try {
+      response = await fetch(url, {
+        method: "POST",
+        headers,
+        body: JSON.stringify(body),
+        redirect: "error",
+        signal: AbortSignal.timeout(requestTimeoutMs),
+      });
+    } catch (error) {
+      throw new Error(`Cogentia daemon unavailable at ${daemonUrl.origin}: ${error.message}`);
+    }
+    const contentType = response.headers.get("content-type") || "";
+    const parsed = contentType.includes("application/json") ? await response.json() : await response.text();
+    if (!response.ok) {
+      const detail = typeof parsed === "object" ? (parsed.message || parsed.error) : parsed;
+      throw new Error(`Cogentia daemon returned HTTP ${response.status}: ${detail || "request failed"}`);
+    }
+    return parsed;
+  }
+
+  return {
+    daemonUrl,
+    requestTimeoutMs,
+    view,
+    tools: TOOLS,
+    initialize,
+    handleJsonRpc,
+    callTool,
+    callPackBatch(queries, options = {}) {
+      return callTool("cogentia_context_pack_batch", {
+        queries,
+        repo: options.repo,
+        budget: options.budget,
+        limit: options.limit,
+        mode: options.mode || "hybrid",
+      });
+    },
+  };
 }
 
 export function mcpToolResult(data) {
