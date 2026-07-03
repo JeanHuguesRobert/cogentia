@@ -91,6 +91,51 @@ record_restart() {
   date +%s > "${LAST_RESTART_FILE}"
 }
 
+unit_main_pid() {
+  systemctl show -p MainPID --value "$1" 2>/dev/null || true
+}
+
+unit_main_state() {
+  local pid="$1"
+  [[ -n "${pid}" && "${pid}" != "0" ]] || return 0
+  ps -p "${pid}" -o stat= 2>/dev/null || true
+}
+
+stop_unit_hard() {
+  local unit="$1"
+  local pid state waited=0
+
+  if ! systemctl is-active --quiet "${unit}"; then
+    return 0
+  fi
+
+  pid="$(unit_main_pid "${unit}")"
+  state="$(unit_main_state "${pid}")"
+  if [[ "${state}" == D* ]]; then
+    log "${unit} PID ${pid} is in uninterruptible I/O wait (${state}); sending SIGKILL"
+    systemctl kill -s SIGKILL "${unit}" || true
+    sleep 2
+    return 0
+  fi
+
+  systemctl stop "${unit}" || true
+  while systemctl is-active --quiet "${unit}" && (( waited < 15 )); do
+    sleep 1
+    waited=$((waited + 1))
+  done
+
+  if systemctl is-active --quiet "${unit}"; then
+    log "${unit} stop timed out; sending SIGKILL"
+    systemctl kill -s SIGKILL "${unit}" || true
+    sleep 2
+  fi
+}
+
+start_unit() {
+  local unit="$1"
+  systemctl start "${unit}"
+}
+
 cooldown_active() {
   local now last elapsed
   [[ -f "${LAST_RESTART_FILE}" ]] || return 1
@@ -105,24 +150,15 @@ cooldown_active() {
 }
 
 restart_stack() {
-  if systemctl is-active --quiet "${DAEMON_UNIT}"; then
-    local pid
-    pid="$(systemctl show -p MainPID --value "${DAEMON_UNIT}")"
-    if [[ -n "${pid}" && "${pid}" != "0" ]]; then
-      local state
-      state="$(ps -p "${pid}" -o stat= 2>/dev/null || true)"
-      if [[ "${state}" == D* ]]; then
-        log "Daemon PID ${pid} is in uninterruptible I/O wait (${state}); sending SIGKILL"
-        systemctl kill -s SIGKILL "${DAEMON_UNIT}" || true
-        sleep 2
-      fi
-    fi
-  fi
-  log "Restarting ${DAEMON_UNIT}"
-  systemctl restart "${DAEMON_UNIT}"
+  log "Stopping ${DAEMON_UNIT}"
+  stop_unit_hard "${DAEMON_UNIT}"
+  log "Starting ${DAEMON_UNIT}"
+  start_unit "${DAEMON_UNIT}"
   wait_for_daemon
-  log "Restarting ${MCP_UNIT}"
-  systemctl restart "${MCP_UNIT}"
+  log "Stopping ${MCP_UNIT}"
+  stop_unit_hard "${MCP_UNIT}"
+  log "Starting ${MCP_UNIT}"
+  start_unit "${MCP_UNIT}"
   wait_for_guide
   healthcheck
   record_restart
