@@ -10,6 +10,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { boundedInteger, createMcpCore, jsonRpcError, mcpToolResult, SERVER_NAME, SERVER_VERSION } from "./lib/cogentia-mcp-core.js";
 import { mergeGuideRetrievalFromPacks } from "./lib/guide-retrieval-merge.js";
+import { retrievalInoxConfigured, retrievalInoxPackBatch, inoxRetrievalBaseUrl } from "./lib/retrieval-inox-session.js";
 import { retrievalSupabaseConfigured, retrievalSupabasePackBatch } from "./lib/retrieval-supabase.js";
 
 loadOptionalEnvFiles([
@@ -26,9 +27,12 @@ const guideLimit = boundedInteger(process.env.COGENTIA_GUIDE_LIMIT, 8, 1, 12);
 const guideBudget = boundedInteger(process.env.COGENTIA_GUIDE_BUDGET, 14000, 256, 30000);
 const guideQueryLimit = boundedInteger(process.env.COGENTIA_GUIDE_QUERY_LIMIT, 6, 1, 10);
 const guideBatchEnabled = parseBoolean(process.env.COGENTIA_GUIDE_BATCH, true);
-const guideRetrievalBackend = retrievalSupabaseConfigured()
-  ? "supabase"
-  : (guideBatchEnabled ? "daemon-batch" : "daemon-sequential");
+function resolveGuideRetrievalBackend() {
+  if (retrievalInoxConfigured()) return "inox-session";
+  if (retrievalSupabaseConfigured()) return "supabase";
+  return guideBatchEnabled ? "daemon-batch" : "daemon-sequential";
+}
+const guideRetrievalBackend = resolveGuideRetrievalBackend();
 const guidePlannerEnabled = parseBoolean(process.env.COGENTIA_GUIDE_PLANNER, true);
 const guidePlannerQueryLimit = boundedInteger(process.env.COGENTIA_GUIDE_PLANNER_QUERY_LIMIT, 5, 1, 8);
 const guideHistoryLimit = boundedInteger(process.env.COGENTIA_GUIDE_HISTORY_LIMIT, 8, 0, 20);
@@ -97,6 +101,11 @@ async function guideHealth() {
       query_limit: guideQueryLimit,
       batch_enabled: guideBatchEnabled,
       retrieval_backend: guideRetrievalBackend,
+      inox_retrieval: {
+        configured: retrievalInoxConfigured(),
+        url: retrievalInoxConfigured() ? inoxRetrievalBaseUrl() : null,
+        transport: "inox.session.v1",
+      },
       planner_enabled: guidePlannerEnabled,
       planner_query_limit: guidePlannerQueryLimit,
       history_limit: guideHistoryLimit,
@@ -434,6 +443,30 @@ async function guideRetrievalRun(question, plan = guideHeuristicPlan(question), 
 
 async function fetchGuideRetrievalPacks(queries, packOptions) {
   const packs = new Map();
+  if (guideRetrievalBackend === "inox-session") {
+    try {
+      const batch = await retrievalInoxPackBatch(queries, packOptions);
+      if (!batch.ok) {
+        for (const query of queries) {
+          packs.set(query, {
+            ok: false,
+            error: batch.error || "inox_retrieval_failed",
+            message: batch.message,
+            query,
+            continuation_required: batch.error === "continuation_fulfillment_required",
+          });
+        }
+        return packs;
+      }
+      for (const item of batch.packs || []) {
+        packs.set(item.query, item);
+      }
+      return packs;
+    } catch (error) {
+      for (const query of queries) packs.set(query, { ok: false, error: error.message, query });
+      return packs;
+    }
+  }
   if (guideRetrievalBackend === "supabase") {
     const batch = await retrievalSupabasePackBatch(queries, packOptions);
     for (const item of batch.packs || []) {

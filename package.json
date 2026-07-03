@@ -15,6 +15,7 @@
     "cogentia": "node scripts/cogentia.js",
     "test:context": "node scripts/test-context-gateway.js",
     "test:guide": "node scripts/test-guide-http.js",
+    "test:retrieval-inox": "node scripts/test-retrieval-inox-session.js",
     "test:guide-cli": "node scripts/test-guide-cli.js",
     "test:guide-eval": "node scripts/test-guide-eval.js",
     "test:ai-router": "node scripts/test-ai-router-client.js",

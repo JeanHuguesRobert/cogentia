@@ -64,9 +64,10 @@ COGENTIA_REGISTRY=... COGENTIA_DATA_DIR=/var/lib/cogentia \
 ### Phase 4 — Inox + Fractanet (in progress)
 
 - GitHub issue: https://github.com/JeanHuguesRobert/cogentia/issues/42
-- **Proto fulfiller (Inox repo):** `inox-serve` `POST /retrieval/batch` — see `Inox/research/inox-remote-serve.md`
-- Next: point fracta MCP `COGENTIA_RETRIEVAL_URL` at inox-serve (remove Supabase secrets from VPS)
-- Later: mandate packet `.nox` + COP fulfill instead of raw HTTP
+- **Proto fulfiller (Inox repo):** `inox-serve` — `POST /session/turn` (`inox.session.v1`) with continuation loop; legacy `POST /retrieval/batch`
+- **Guide client (cogentia):** `COGENTIA_INOX_RETRIEVAL_URL` + optional `COGENTIA_INOX_SERVE_TOKEN` → `scripts/lib/retrieval-inox-session.js`
+- Next ops: point fracta `guide.env` at capable-host inox-serve; remove Supabase/OpenAI secrets from VPS when inline fulfill works remotely
+- Later: mandate packet `.nox` + COP stream instead of HTTP per turn
 
 ## Contracts (stable across phases)
 
