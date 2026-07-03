@@ -12,6 +12,12 @@ import { boundedInteger, createMcpCore, jsonRpcError, mcpToolResult, SERVER_NAME
 import { mergeGuideRetrievalFromPacks } from "./lib/guide-retrieval-merge.js";
 import { retrievalInoxConfigured, retrievalInoxPackBatch, inoxRetrievalBaseUrl } from "./lib/retrieval-inox-session.js";
 import { retrievalSupabaseConfigured, retrievalSupabasePackBatch } from "./lib/retrieval-supabase.js";
+import {
+  BLACKBOARD_EVENTS,
+  createBlackboardStore,
+  hasBlackboardUpsertAuth,
+  parseBlackboardUpsertBody,
+} from "./lib/packet-attractor-blackboard.js";
 
 loadOptionalEnvFiles([
   process.env.COGENTIA_MCP_ENV_FILE,
@@ -21,6 +27,7 @@ loadOptionalEnvFiles([
 ]);
 
 const core = createMcpCore();
+const blackboard = createBlackboardStore();
 const port = boundedInteger(process.env.PORT || process.env.COGENTIA_MCP_PORT, 8791, 1, 65535);
 const host = process.env.COGENTIA_MCP_HOST || "0.0.0.0";
 const guideLimit = boundedInteger(process.env.COGENTIA_GUIDE_LIMIT, 8, 1, 12);
@@ -62,6 +69,8 @@ const server = http.createServer(async (req, res) => {
     if (req.method === "HEAD" && req.url === "/health") return sendNoContent(res, 200);
     if (req.method === "GET" && req.url === "/tools") return sendJson(res, 200, { tools: core.tools });
     if (req.method === "GET" && req.url === "/guide/health") return sendJson(res, 200, await guideHealth());
+    if (req.method === "GET" && req.url?.startsWith("/ops/blackboard")) return handleBlackboardGet(req, res);
+    if (req.method === "POST" && req.url === "/ops/blackboard/upsert") return handleBlackboardUpsert(req, res);
     if (req.method === "POST" && req.url === "/guide/chat") return handleGuideChat(req, res);
     if (req.method === "GET" && req.url === "/sse") return sendSseInfo(req, res);
     if (req.method === "GET" && req.url === "/mcp") return sendSseInfo(req, res);
@@ -80,6 +89,7 @@ server.listen(port, host, () => {
   console.error(`Cogentia MCP HTTP server listening on ${host}:${port}`);
   console.error(`Daemon: ${core.daemonUrl.href}`);
   console.error("Endpoints: POST /mcp, GET /mcp, GET /health, GET /tools, POST /tools/{name}");
+  console.error("Blackboard: GET /ops/blackboard, POST /ops/blackboard/upsert");
 });
 
 async function health() {
@@ -114,9 +124,53 @@ async function guideHealth() {
         configured: Boolean(guideWebSearchApiKey()),
         limit: guideWebSearchLimit,
       },
+      blackboard: summarizeBlackboardHealth(),
       daemon,
     },
   };
+}
+
+function summarizeBlackboardHealth() {
+  const snapshot = blackboard.snapshot({ fresh: false });
+  const fresh = blackboard.snapshot({ fresh: true });
+  return {
+    store_path: blackboard.storePath,
+    snapshot_at: snapshot.snapshot_at,
+    attractor_count: snapshot.count,
+    fresh_attractor_count: fresh.count,
+    upsert_auth_configured: Boolean(String(process.env.COGENTIA_BLACKBOARD_UPSERT_TOKEN || process.env.COGENTIA_ADMIN_TOKEN || "").trim()),
+  };
+}
+
+async function handleBlackboardGet(req, res) {
+  const url = new URL(req.url || "/ops/blackboard", "http://127.0.0.1");
+  const capability = url.searchParams.get("capability") || "";
+  const fresh = url.searchParams.get("fresh") !== "0";
+  return sendJson(res, 200, blackboard.snapshot({ capability, fresh }));
+}
+
+async function handleBlackboardUpsert(req, res) {
+  if (!hasBlackboardUpsertAuth(req)) {
+    return sendJson(res, 401, { ok: false, error: "unauthorized_blackboard_upsert" });
+  }
+  let body;
+  try {
+    body = JSON.parse(await readBody(req) || "{}");
+  } catch {
+    return sendJson(res, 400, { ok: false, error: "invalid_json" });
+  }
+  const parsed = parseBlackboardUpsertBody(body);
+  if (!parsed.ok) {
+    return sendJson(res, 400, { ok: false, error: parsed.error, event: parsed.event });
+  }
+  if (parsed.event === BLACKBOARD_EVENTS.WITHDRAWN) {
+    const result = blackboard.withdrawAttractor(parsed.attractor_id, { reason: parsed.reason });
+    return sendJson(res, result.ok ? 200 : 404, result);
+  }
+  const result = blackboard.upsertAdvertised(parsed.attractor, {
+    advertised_by: String(body.advertised_by || req.headers["x-cogentia-node"] || "").trim(),
+  });
+  return sendJson(res, result.ok ? 200 : 400, result);
 }
 
 async function handleMcpPost(req, res) {
