@@ -98,6 +98,17 @@ sudo bash -c 'set -a; source /srv/cogentia/secrets/guide.env; set +a; \
 
 Re-run sync after each `cogentia index update` on fracta.
 
-### Future: Inox remote fulfiller (Phase 4)
+### Phase 4: Inox session retrieval (preferred on capable host)
 
-When a capable host runs `inox-serve` (`POST /retrieval/batch`), fracta MCP can drop direct Supabase/OpenAI secrets and call that URL instead. See `Inox/research/inox-remote-serve.md` and cogentia issue #42.
+In `guide.env` on fracta (secrets **never** in git — see `operium/docs/fracta-trust-perimeter.md`):
+
+```bash
+COGENTIA_INOX_RETRIEVAL_URL=https://<capable-host>:8792
+COGENTIA_INOX_SERVE_TOKEN=...
+# Remove COGENTIA_RETRIEVAL_BACKEND, SUPABASE_*, OPENAI_API_KEY when inline fulfill runs on capable host
+```
+
+Guide uses `POST /session/turn` (`inox.session.v1`) via `scripts/lib/retrieval-inox-session.js`.
+Restart: `sudo systemctl restart mcp-cogentia.service`
+
+See `Inox/research/inox-session-packets.md`, `cogentia/docs/retrieval-roadmap.md`, issue #42.
