@@ -8,8 +8,8 @@ DAEMON_HEALTH_URL="${COGENTIA_DAEMON_HEALTH_URL:-http://127.0.0.1:8790/api/conte
 GUIDE_HEALTH_URL="${COGENTIA_GUIDE_HEALTH_URL:-http://127.0.0.1:8791/guide/health}"
 DAEMON_UNIT="${COGENTIA_DAEMON_UNIT:-cogentia.service}"
 MCP_UNIT="${COGENTIA_MCP_UNIT:-mcp-cogentia.service}"
-TIMEOUT_SEC="${COGENTIA_HEALTH_TIMEOUT_SEC:-20}"
-WAIT_ATTEMPTS="${COGENTIA_HEALTH_WAIT_ATTEMPTS:-30}"
+PROBE_TIMEOUT_SEC="${COGENTIA_HEALTH_PROBE_TIMEOUT_SEC:-5}"
+WAIT_ATTEMPTS="${COGENTIA_HEALTH_WAIT_ATTEMPTS:-24}"
 WAIT_SLEEP_SEC="${COGENTIA_HEALTH_WAIT_SLEEP_SEC:-2}"
 COOLDOWN_SEC="${COGENTIA_RESTART_COOLDOWN_SEC:-1800}"
 STATE_DIR="${COGENTIA_OPS_STATE_DIR:-/var/lib/cogentia/.ops}"
@@ -33,7 +33,8 @@ EOF
 
 fetch_json() {
   local url="$1"
-  curl -fsS -m "${TIMEOUT_SEC}" -H "Accept: application/json" "$url"
+  local timeout="${2:-${PROBE_TIMEOUT_SEC}}"
+  curl -fsS -m "${timeout}" -H "Accept: application/json" "$url"
 }
 
 daemon_healthy() {
@@ -104,6 +105,19 @@ cooldown_active() {
 }
 
 restart_stack() {
+  if systemctl is-active --quiet "${DAEMON_UNIT}"; then
+    local pid
+    pid="$(systemctl show -p MainPID --value "${DAEMON_UNIT}")"
+    if [[ -n "${pid}" && "${pid}" != "0" ]]; then
+      local state
+      state="$(ps -p "${pid}" -o stat= 2>/dev/null || true)"
+      if [[ "${state}" == D* ]]; then
+        log "Daemon PID ${pid} is in uninterruptible I/O wait (${state}); sending SIGKILL"
+        systemctl kill -s SIGKILL "${DAEMON_UNIT}" || true
+        sleep 2
+      fi
+    fi
+  fi
   log "Restarting ${DAEMON_UNIT}"
   systemctl restart "${DAEMON_UNIT}"
   wait_for_daemon

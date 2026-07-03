@@ -7,4 +7,5 @@ Type=oneshot
 User=root
 Group=root
 Environment=COGENTIA_OPS_STATE_DIR=/var/lib/cogentia/.ops
+Environment=COGENTIA_HEALTH_PROBE_TIMEOUT_SEC=5
 ExecStart=/srv/cogentia/repos/cogentia/scripts/ops/fracta-guide-stack.sh restart
