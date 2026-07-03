@@ -68,6 +68,16 @@ try {
   assert.equal(await responseStatus("/api/state"), 403);
   assert.equal(await responseStatus("/api/state?view=full", { headers: { "X-Cogentia-Entry": "public" } }), 403);
 
+  const packBatchResponse = await fetch(`${base}/api/context/pack-batch`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", "X-Cogentia-Entry": "public" },
+    body: JSON.stringify({ queries: ["Cogentia"], mode: "keyword", limit: 2, budget: 1000 }),
+  });
+  const packBatch = await packBatchResponse.json();
+  assert.equal(packBatchResponse.status, 200, JSON.stringify(packBatch));
+  assert.equal(packBatch.strategy, "context-pack-batch-v1");
+  assert.equal(packBatch.packs[0].query, "Cogentia");
+
   const mcp = await runMcp([
     { jsonrpc: "2.0", id: 1, method: "initialize", params: { protocolVersion: "2025-11-25", capabilities: {}, clientInfo: { name: "test", version: "1" } } },
     { jsonrpc: "2.0", method: "notifications/initialized" },

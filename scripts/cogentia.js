@@ -1785,6 +1785,7 @@ function daemonPublicApiBlocked(req, url, view) {
   if (view === FULL_VIEW) return false;
   if (req.method === "OPTIONS") return false;
   if (!url.pathname.startsWith("/api/")) return false;
+  if (req.method === "POST" && PUBLIC_DAEMON_POST_ROUTES.has(url.pathname)) return false;
   return req.method !== "GET" || !PUBLIC_DAEMON_GET_ROUTES.has(url.pathname);
 }
 
