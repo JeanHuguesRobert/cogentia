@@ -33,7 +33,7 @@ sudo scripts/ops/fracta-guide-stack.sh ensure-healthy
 
 ## Behavior
 
-- `healthcheck`: verifies daemon index health and Guide MCP health.
+- `healthcheck`: verifies lightweight daemon and MCP liveness (`/api/status`, `/tools`).
 - `restart`: restarts `cogentia.service`, waits, restarts `mcp-cogentia.service`, verifies.
 - `ensure-healthy`: healthcheck; on failure, restart unless cooldown is active (default 30 min).
 

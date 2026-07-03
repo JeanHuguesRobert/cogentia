@@ -4,8 +4,8 @@
 
 set -euo pipefail
 
-DAEMON_HEALTH_URL="${COGENTIA_DAEMON_HEALTH_URL:-http://127.0.0.1:8790/api/context/health}"
-GUIDE_HEALTH_URL="${COGENTIA_GUIDE_HEALTH_URL:-http://127.0.0.1:8791/guide/health}"
+DAEMON_HEALTH_URL="${COGENTIA_DAEMON_HEALTH_URL:-http://127.0.0.1:8790/api/status}"
+MCP_HEALTH_URL="${COGENTIA_MCP_HEALTH_URL:-http://127.0.0.1:8791/tools}"
 DAEMON_UNIT="${COGENTIA_DAEMON_UNIT:-cogentia.service}"
 MCP_UNIT="${COGENTIA_MCP_UNIT:-mcp-cogentia.service}"
 PROBE_TIMEOUT_SEC="${COGENTIA_HEALTH_PROBE_TIMEOUT_SEC:-5}"
@@ -40,22 +40,22 @@ fetch_json() {
 daemon_healthy() {
   local body
   body="$(fetch_json "${DAEMON_HEALTH_URL}")"
-  echo "${body}" | jq -e '.ok == true and .index_available == true' >/dev/null
+  echo "${body}" | jq -e '.ok == true' >/dev/null
 }
 
-guide_healthy() {
+mcp_healthy() {
   local body
-  body="$(fetch_json "${GUIDE_HEALTH_URL}")"
-  echo "${body}" | jq -e '.ok == true and (.context.daemon.ok == true)' >/dev/null
+  body="$(fetch_json "${MCP_HEALTH_URL}")"
+  echo "${body}" | jq -e '(.tools | type) == "array" and (.tools | length) > 0' >/dev/null
 }
 
 healthcheck() {
   log "Checking daemon at ${DAEMON_HEALTH_URL}"
   daemon_healthy
   log "Daemon healthy"
-  log "Checking Guide MCP at ${GUIDE_HEALTH_URL}"
-  guide_healthy
-  log "Guide MCP healthy"
+  log "Checking MCP adapter at ${MCP_HEALTH_URL}"
+  mcp_healthy
+  log "MCP adapter healthy"
 }
 
 wait_for_daemon() {
@@ -72,17 +72,17 @@ wait_for_daemon() {
   return 1
 }
 
-wait_for_guide() {
+wait_for_mcp() {
   local attempt=1
   while (( attempt <= WAIT_ATTEMPTS )); do
-    if guide_healthy >/dev/null 2>&1; then
-      log "Guide MCP ready after ${attempt} attempt(s)"
+    if mcp_healthy >/dev/null 2>&1; then
+      log "MCP adapter ready after ${attempt} attempt(s)"
       return 0
     fi
     sleep "${WAIT_SLEEP_SEC}"
     attempt=$((attempt + 1))
   done
-  log "Guide MCP did not become healthy in time"
+  log "MCP adapter did not become healthy in time"
   return 1
 }
 
@@ -159,7 +159,7 @@ restart_stack() {
   stop_unit_hard "${MCP_UNIT}"
   log "Starting ${MCP_UNIT}"
   start_unit "${MCP_UNIT}"
-  wait_for_guide
+  wait_for_mcp
   healthcheck
   record_restart
   log "Guide stack restart completed"
