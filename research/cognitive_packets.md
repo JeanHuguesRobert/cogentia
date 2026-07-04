@@ -1527,6 +1527,7 @@ The novelty of cognitive packets is therefore not the existence of the pattern, 
 - [Reactive Sets in Inox — Native Implementation Path](https://github.com/JeanHuguesRobert/Inox/blob/master/research/reactive_sets_inox_cop_implementation.md)
 - [Research Index — Inox](https://github.com/JeanHuguesRobert/Inox/blob/master/research/index.md)
 - COP Reactive Cognitive Extension
+- [Packet Attractor — Fractanet Distributed Demand and Capability Routing](https://github.com/JeanHuguesRobert/inseme/blob/main/research/packet_attractor_fractanet.md)
 - [Reactive Cognitive COP Extension](https://github.com/JeanHuguesRobert/inseme/blob/main/research/reactive_cognitive_cop_extension.md)
 - [Research Index — Inseme](https://github.com/JeanHuguesRobert/inseme/blob/main/research/index.md)
 - [Corpus Start Here — Carte globale du Corpus](https://github.com/JeanHuguesRobert/JeanHuguesRobert/blob/main/research/corpus-map.md)

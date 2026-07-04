@@ -1211,4 +1211,5 @@ This v0.3 publication candidate opens the following continuations:
 - [Research Index — Cogentia](index.md)
 - [Fractanet — Generalized Control Planes for Heterogeneous Packet Networks](https://github.com/JeanHuguesRobert/FractaVolta/blob/main/research/fractanet.md)
 - [COOP — Tutorial and Near-Specification](https://github.com/JeanHuguesRobert/inseme/blob/main/research/coop_tutorial.md)
+- [Packet Attractor — Fractanet Distributed Demand and Capability Routing](https://github.com/JeanHuguesRobert/inseme/blob/main/research/packet_attractor_fractanet.md)
 <!-- END_AUTO: backlinks -->

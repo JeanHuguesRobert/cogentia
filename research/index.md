@@ -63,6 +63,10 @@ This repository instantiates the **cognitive infrastructure layer** of the [DHIT
 | [Agent Configuration Layer](agent_configuration_layer.md) *(method note v0.2 — AGENTS.md, `.agents/`, and governed operational projections of the corpus)* | this repo | 2026-06-13 |
 | [Pipeline Conversation vers Corpus (Conversia)](conversation_to_corpus_pipeline.md) *(source document v0.4 — progressive transformation of conversations into living corpus, models, agents, mandates and traces)* | this repo | 2026-06-12 |
 | [Memory, Working Memory, and Corpus Sleep Cycle](memory_and_corpus_sleep_cycle.md) *(working-note v0.1 — individual/collective memory, working/long-term regimes, memory temperature, consolidation and traceable forgetting)* | this repo | 2026-07-03 |
+| [Snapshot — Deux mois de transformation du corpus en infrastructure de délégation contrôlée](snapshots/2026-07-04_github_activity_and_digital_twin_progress.md) *(snapshot — GitHub activity, corpus consolidation and digital twin trajectory toward controlled delegation)* | this repo | 2026-07-04 |
+| [Trajectoire stratégique — Du snapshot GitHub au 27 septembre 2026](strategy/2026-07-04_trajectory_to_2026-09-27.md) *(campaign and digital-twin trajectory note for the 2026-09-27 deadline)* | this repo | 2026-07-04 |
+| [Mémoire de campagne — Sénatoriales 2026](campaign/2026_senatoriales_memory.md) *(living campaign memory for public interactions, publications, positions and weekly snapshots)* | this repo | 2026-07-04 |
+| [Construire mon jumeau numérique avant le 27 septembre](publications/2026-07-04_construire_mon_jumeau_numerique_avant_le_27_septembre.md) *(public-facing publication draft derived from the digital-twin/campaign trajectory)* | this repo | 2026-07-04 |
 | [Open Knowledge Format and Cogentia](open_knowledge_format_alignment.md) *(working-note v0.1 — Google OKF v0.1 as external confirmation of the Markdown/YAML/git/index/link substrate; proposes `okf check` and `okf export` as Cogentia compatibility layer)* | this repo | 2026-06-19 |
 | [Démocratie de capacité](democracy_of_capability.md) *(structured hypothesis — publics capables, open democracy and AI under mandate)* | this repo | 2026-06-12 |
 | [Démocratie rapide mandatée](mandated_fast_democracy.md) *(short conceptual synthesis — deciding quickly without abandoning democratic principles)* | this repo | 2026-06-12 |
@@ -137,6 +141,8 @@ This repository instantiates the **cognitive infrastructure layer** of the [DHIT
 | [Cogentia MCP adapter](../docs/cogentia-mcp.md) *(stdio tools that retrieve through the daemon HTTP boundary and never access SQLite directly)* | this repo | 2026-06-23 |
 | [Connect MCP clients to Cogentia](../docs/connect-mcp-clients.md) *(client setup guide for local stdio, local HTTP, Fracta public MCP, and ChatGPT connector smoke tests)* | this repo | 2026-06-30 |
 | [Cogentia and Magistral Boundary](../docs/cogentia-magistral-boundary.md) *(service boundary for corpus authority, model routing, AI-router APIs, embedding policy and local/public deployments)* | this repo | 2026-06-28 |
+| [FractaVolta Guide Eval](../docs/guide-eval.md) *(operational evaluation runs for Guide answers and prompt/model regressions)* | this repo | 2026-07-02 |
+| [Retrieval roadmap — Guide, Ophelia, Fractanet](../docs/retrieval-roadmap.md) *(operational roadmap for embedding serving, public Guide retrieval and Fractanet/Inox integration)* | this repo | 2026-07-03 |
 | [Trustable Digital Twin Agile Roadmap](../docs/digital-twin-agile-roadmap.md) *(living agile plan for raising an owner-facing digital twin through reversible, traceable capability increments)* | this repo | 2026-06-30 |
 | [Alan v0.1 — Turing-complete direct-style MCP scripting language](alan_turing_mcp.md) *(direct-style MCP scripting language with resumable, policy-aware continuations and caller-mediated execution boundaries)* | this repo | 2026-06-26 |
 | [Alan Turing MCP — Implementation Plan](alan_turing_mcp_implementation_plan.md) *(implementation plan for the Alan v0.1 MCP scripting language)* | this repo | 2026-06-26 |
@@ -165,6 +171,7 @@ This repository instantiates the **cognitive infrastructure layer** of the [DHIT
 - [Cogentia Commons — Workflows](cogentia_commons_workflows.md) *(draft v0.1, 2026-05-13)* — 11 end-to-end user journeys, prioritised for v1 velocity
 - [Cogentia Commons — Session Continuation Snapshot](cogentia_commons_continuation.md) *(snapshot 2026-05-13)* — handoff document; entry point for the next session
 - [Cogentia as a Cognitive Continuation Packet Router](cogentia_continuation_packet_routing.md) *(working paper v0.3 — method-governed routing of cognitive packets in the Fractanet architecture)*
+- [Snapshot hebdomadaire — Campagne sénatoriale 2026 — 2026-07-11](campaign/weekly_snapshots/2026-07-11_template.md) *(first weekly campaign snapshot template; operational cadence until the 2026-09-27 deadline)*
 - Multi-Agent Critique Loop — formal specification
 - Cogentia × Corsica: student registration as democratic infrastructure
 - [La trace protège — Hypothèse d'une stigmergie répulsive chez les mouches (FR)](stigmergie_repressive_mouches_trace_protege_v0_1.md) *(amorce v0.1, 2026-05-29 — trace d'antériorité ; étage bas du pont [stigmergie sans limite haute](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/stigmergie_sans_limite_haute.md))*
