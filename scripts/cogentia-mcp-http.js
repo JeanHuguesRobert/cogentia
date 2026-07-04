@@ -8,6 +8,7 @@
 import http from "node:http";
 import fs from "node:fs";
 import path from "node:path";
+import { fileURLToPath } from "node:url";
 import { boundedInteger, createMcpCore, jsonRpcError, mcpToolResult, SERVER_NAME, SERVER_VERSION } from "./lib/cogentia-mcp-core.js";
 import { mergeGuideRetrievalFromPacks } from "./lib/guide-retrieval-merge.js";
 import { retrievalInoxConfigured, retrievalInoxPackBatch, inoxRetrievalBaseUrl } from "./lib/retrieval-inox-session.js";
@@ -18,6 +19,10 @@ import {
   hasBlackboardUpsertAuth,
   parseBlackboardUpsertBody,
 } from "./lib/packet-attractor-blackboard.js";
+import { buildFractanetOpsStatus } from "./lib/fractanet-ops-status.js";
+
+const moduleDir = path.dirname(fileURLToPath(import.meta.url));
+const fractanetDashboardPath = path.join(moduleDir, "ops", "fractanet-dashboard.html");
 
 loadOptionalEnvFiles([
   process.env.COGENTIA_MCP_ENV_FILE,
@@ -71,6 +76,8 @@ const server = http.createServer(async (req, res) => {
     if (req.method === "GET" && req.url === "/guide/health") return sendJson(res, 200, await guideHealth());
     if (req.method === "GET" && req.url?.startsWith("/ops/blackboard")) return handleBlackboardGet(req, res);
     if (req.method === "POST" && req.url === "/ops/blackboard/upsert") return handleBlackboardUpsert(req, res);
+    if (req.method === "GET" && req.url === "/ops/status") return handleOpsStatus(req, res);
+    if (req.method === "GET" && req.url === "/ops/dashboard") return handleOpsDashboard(req, res);
     if (req.method === "POST" && req.url === "/guide/chat") return handleGuideChat(req, res);
     if (req.method === "GET" && req.url === "/sse") return sendSseInfo(req, res);
     if (req.method === "GET" && req.url === "/mcp") return sendSseInfo(req, res);
@@ -90,6 +97,7 @@ server.listen(port, host, () => {
   console.error(`Daemon: ${core.daemonUrl.href}`);
   console.error("Endpoints: POST /mcp, GET /mcp, GET /health, GET /tools, POST /tools/{name}");
   console.error("Blackboard: GET /ops/blackboard, POST /ops/blackboard/upsert");
+  console.error("Ops: GET /ops/status, GET /ops/dashboard");
 });
 
 async function health() {
@@ -140,6 +148,24 @@ function summarizeBlackboardHealth() {
     fresh_attractor_count: fresh.count,
     upsert_auth_configured: Boolean(String(process.env.COGENTIA_BLACKBOARD_UPSERT_TOKEN || process.env.COGENTIA_ADMIN_TOKEN || "").trim()),
   };
+}
+
+async function handleOpsStatus(_req, res) {
+  const status = await buildFractanetOpsStatus({
+    blackboard,
+    health,
+    guideHealth,
+  });
+  return sendJson(res, 200, status);
+}
+
+function handleOpsDashboard(_req, res) {
+  if (!fs.existsSync(fractanetDashboardPath)) {
+    return sendJson(res, 404, { ok: false, error: "dashboard_not_found" });
+  }
+  const html = fs.readFileSync(fractanetDashboardPath, "utf8");
+  res.writeHead(200, { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "no-store" });
+  res.end(html);
 }
 
 async function handleBlackboardGet(req, res) {

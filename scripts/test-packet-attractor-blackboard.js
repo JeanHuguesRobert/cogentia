@@ -119,6 +119,15 @@ try {
   assert.equal(afterWithdraw.count, 1);
   assert.equal(afterWithdraw.attractors[0].id, stale.id);
 
+  const opsStatus = await getJson(`${mcpBase}/ops/status`);
+  assert.equal(opsStatus.ok, true);
+  assert.equal(opsStatus.service, "fractanet-ops");
+  assert.equal(opsStatus.blackboard.attractor_count >= 1, true);
+
+  const dashboard = await fetch(`${mcpBase}/ops/dashboard`);
+  assert.equal(dashboard.status, 200);
+  assert.match(await dashboard.text(), /Fractanet Ops/);
+
   const invalid = await fetch(`${mcpBase}/ops/blackboard/upsert`, {
     method: "POST",
     headers: {

@@ -8,7 +8,18 @@ Operational scripts for the public Guide on the `fracta` node.
 cogentia.service (127.0.0.1:8790)
   -> mcp-cogentia.service (8791)
   -> https://cogentia.fractavolta.com/guide/chat
+  -> https://cogentia.fractavolta.com/ops/dashboard   (Fractanet ops UI)
 ```
+
+### Fractanet ops dashboard
+
+Public operator UI (blackboard attractors, Guide/MCP health):
+
+- HTML: `https://cogentia.fractavolta.com/ops/dashboard`
+- JSON: `https://cogentia.fractavolta.com/ops/status`
+
+Caddy must allow `/ops/status` and `/ops/dashboard` — see `deploy/fracta/Caddyfile.snippet`.
+After `git pull`, restart MCP: `sudo scripts/ops/fracta-guide-stack.sh restart`.
 
 ## Install on fracta
 

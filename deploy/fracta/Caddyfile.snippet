@@ -1,0 +1,10 @@
+# cogentia.fractavolta.com — paste into /etc/caddy/Caddyfile on fracta.
+# Reload: sudo systemctl reload caddy
+
+cogentia.fractavolta.com {
+	@allowed_paths path /health /mcp /sse /tools /tools/* /guide/health /guide/chat /guide/* /ops/blackboard /ops/blackboard/* /ops/status /ops/dashboard
+	handle @allowed_paths {
+		reverse_proxy 127.0.0.1:8791
+	}
+	respond "Not found" 404
+}
