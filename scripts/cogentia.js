@@ -163,15 +163,6 @@ const argv = process.argv.slice(2);
 const JSON_MODE = takeFlag("--json");
 const command = argv.shift() || "help";
 
-main().catch(err => {
-  if (JSON_MODE) {
-    console.error(JSON.stringify({ ok: false, error: err.message, stack: err.stack }, null, 2));
-  } else {
-    console.error(`cogentia: ${err.message}`);
-  }
-  process.exit(1);
-});
-
 async function main() {
   switch (command) {
     case "help":
@@ -10358,3 +10349,12 @@ function escapeTable(s) {
 function escapeRegExp(s) {
   return String(s).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
+
+main().catch(err => {
+  if (JSON_MODE) {
+    console.error(JSON.stringify({ ok: false, error: err.message, stack: err.stack }, null, 2));
+  } else {
+    console.error(`cogentia: ${err.message}`);
+  }
+  process.exit(1);
+});
