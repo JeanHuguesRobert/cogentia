@@ -1290,7 +1290,8 @@ async function handleDaemonRequest(req, res) {
   }
   if (req.method === "GET" && url.pathname === "/api/context/health") {
     const effectiveCtx = ctx || loadContext();
-    return daemonJson(res, 200, await contextHealth(effectiveCtx));
+    const quick = parseBoolean(url.searchParams.get("quick"));
+    return daemonJson(res, 200, await contextHealth(effectiveCtx, { quick }));
   }
   if (req.method === "GET" && url.pathname === "/api/context/search") {
     const effectiveCtx = ctx || loadContext();
@@ -9069,7 +9070,20 @@ async function contextExplain(ctx, resultId, view = PUBLIC_VIEW) {
   }
 }
 
-async function contextHealth(ctx) {
+async function contextHealth(ctx, options = {}) {
+  if (options.quick) {
+    return {
+      ok: true,
+      service: "cogentia-context-gateway",
+      public: true,
+      version: VERSION,
+      quick: true,
+      index_available: null,
+      modes: ["keyword", "hybrid", "semantic"],
+      semantic_available: null,
+      write_routes_public: false,
+    };
+  }
   const status = await indexStatus(ctx);
   const semanticTarget = status.built && status.ok
     ? await preferredContextEmbeddingTarget(ctx, { view: PUBLIC_VIEW, repo: "all" }).catch(error => ({ ok: false, error: error.message }))

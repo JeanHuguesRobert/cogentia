@@ -17,19 +17,10 @@ export async function buildFractanetOpsStatus(deps = {}) {
   if (!blackboard) throw new Error("blackboard_required");
 
   const generatedAt = new Date().toISOString();
-  let mcp = { ok: false };
   let guide = { ok: false };
-  let mcpError = null;
   let guideError = null;
 
-  if (typeof deps.health === "function") {
-    try {
-      mcp = await deps.health();
-    } catch (error) {
-      mcpError = error?.message || String(error);
-    }
-  }
-
+  // Single daemon probe — avoid duplicate cogentia_health calls (cold path can exceed 15s).
   if (typeof deps.guideHealth === "function") {
     try {
       guide = await deps.guideHealth();
@@ -40,11 +31,17 @@ export async function buildFractanetOpsStatus(deps = {}) {
 
   const blackboardSummary = summarizeBlackboardSnapshots(blackboard);
   const guideContext = guideError ? {} : (guide.context || {});
+  const daemon = guideError ? null : (guide.context?.daemon || null);
+  const daemonOk = Boolean(daemon?.ok);
+  const mcp = guideError
+    ? { ok: false, error: guideError }
+    : { ok: true, mcp: "cogentia-mcp", version: deps.mcpVersion || null, daemon };
+
   const legacy = {
     ok: true,
     service: "fractanet-ops",
     generated_at: generatedAt,
-    mcp: mcpError ? { ok: false, error: mcpError } : mcp,
+    mcp,
     guide: guideError ? { ok: false, error: guideError } : guide,
     blackboard: blackboardSummary,
   };
@@ -57,9 +54,9 @@ export async function buildFractanetOpsStatus(deps = {}) {
       services: {
         fracta: {
           mcp: {
-            ok: !mcpError && mcp.ok === true,
-            error: mcpError || mcp.error || null,
-            version: mcp.version || null,
+            ok: !guideError && daemonOk,
+            error: guideError || (daemonOk ? null : daemon?.error || "daemon_unhealthy"),
+            version: deps.mcpVersion || null,
           },
           guide: {
             ok: !guideError && guide.ok === true,

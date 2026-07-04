@@ -150,7 +150,7 @@ export function createMcpCore(env = process.env) {
         requireString(args.result_id, "result_id");
         return daemonGet("/api/context/explain", { result_id: args.result_id });
       case "cogentia_health":
-        return daemonGet("/api/context/health", {});
+        return daemonGet("/api/context/health", { quick: "1" });
       default:
         throw new Error(`Unknown tool: ${name}`);
     }

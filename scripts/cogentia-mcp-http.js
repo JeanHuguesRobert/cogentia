@@ -153,8 +153,8 @@ function summarizeBlackboardHealth() {
 async function handleOpsStatus(_req, res) {
   const status = await buildFractanetOpsStatus({
     blackboard,
-    health,
     guideHealth,
+    mcpVersion: SERVER_VERSION,
   });
   return sendJson(res, 200, status);
 }
