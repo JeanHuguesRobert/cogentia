@@ -121,8 +121,11 @@ try {
 
   const opsStatus = await getJson(`${mcpBase}/ops/status`);
   assert.equal(opsStatus.ok, true);
+  assert.equal(opsStatus.schema, "operium.up.v1");
+  assert.equal(opsStatus.role, "runtime-aggregator");
   assert.equal(opsStatus.service, "fractanet-ops");
-  assert.equal(opsStatus.blackboard.attractor_count >= 1, true);
+  assert.equal(opsStatus.layers.blackboard.attractor_count >= 1, true);
+  assert.equal(opsStatus.layers.retrieval.phase2_wired, false);
 
   const dashboard = await fetch(`${mcpBase}/ops/dashboard`);
   assert.equal(dashboard.status, 200);
