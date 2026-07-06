@@ -4,6 +4,7 @@
 # Prerequisites (outside this script):
 #   - Tailscale app joined to tailnet (hostname e.g. poco-jhr)
 #   - Termux: pkg install openssh; sshd on port 8022; password or key for first inbound SSH
+#   - Termux:Boot (com.termux.boot) for sshd at Android boot — install-termux-boot.ps1
 #
 # Run ON the device (or via ssh poco-jhr from ThinkPad):
 #   FRACTANET_MESH_PUBKEY="ssh-ed25519 ..." bash fractanet-termux-bootstrap.sh

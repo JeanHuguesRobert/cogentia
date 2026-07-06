@@ -1,5 +1,8 @@
 # Bootstrap poco-jhr (Termux on Android) onto Fractanet SSH mesh from the ThinkPad.
 #
+# Full mobile provisioning (mesh + Termux:Boot + dev stack):
+#   pwsh -File provision-fractanet-mobile.ps1
+#
 # Prerequisites:
 #   - Tailscale app on phone; hostname poco-jhr on tailnet
 #   - Termux sshd on port 8022; inbound SSH works (password or fractanet-mesh key)

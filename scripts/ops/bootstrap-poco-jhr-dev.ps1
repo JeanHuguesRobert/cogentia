@@ -32,8 +32,10 @@ if (-not $SkipRsync) {
     Invoke-Poco 'bash ~/fractanet-sync-repos-from-fracta.sh'
 }
 
-Write-Host '[poco-jhr] installing coding agents...'
+Write-Host '[poco-jhr] installing coding agents (Grok native + Codex/Claude via proot)...'
 Invoke-Poco 'bash ~/fractanet-mobile-dev-setup.sh'
+Copy-Poco (Join-Path $ops 'fractanet-mobile-proot-agents.sh') '~/' 
+Invoke-Poco 'chmod +x ~/fractanet-mobile-proot-agents.sh; bash ~/fractanet-mobile-proot-agents.sh'
 
 Write-Host '[poco-jhr] verify:'
 Invoke-Poco 'export PATH=$HOME/.grok/bin:$HOME/.npm-global/bin:$PATH; which codex claude grok; du -sh ~/srv/cogentia/repos 2>/dev/null || echo no-repos-yet'

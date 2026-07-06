@@ -26,8 +26,9 @@ export PATH="$HOME/.npm-global/bin:$PATH"
 EOF
 }
 
-echo "[mobile-dev] installing @openai/codex @anthropic-ai/claude-code..."
-npm install -g @openai/codex @anthropic-ai/claude-code
+# Codex/Claude have no working Termux native binaries (linux-arm64-android).
+# They run in Ubuntu proot via fractanet-mobile-proot-agents.sh → agent-codex, agent-claude.
+echo "[mobile-dev] skipping native codex/claude on Termux (use agent-codex / agent-claude after proot setup)"
 
 echo "[mobile-dev] installing Grok Build (linux-aarch64)..."
 if command -v grok >/dev/null 2>&1; then
@@ -38,9 +39,22 @@ fi
 
 export PATH="${HOME}/.grok/bin:${HOME}/.npm-global/bin:${PATH}"
 
-echo "[mobile-dev] versions:"
-command -v codex >/dev/null && codex --version 2>/dev/null || echo "  codex: install ok, run 'codex login'"
-command -v claude >/dev/null && claude --version 2>/dev/null || echo "  claude: install ok, run 'claude login'"
-command -v grok >/dev/null && grok --version 2>/dev/null || echo "  grok: install ok, run 'grok login'"
+grep -q 'source.*bashrc' "${HOME}/.profile" 2>/dev/null || cat > "${HOME}/.profile" <<'EOF'
+# Termux login shell — source interactive config
+if [ -f "$HOME/.bashrc" ]; then
+    . "$HOME/.bashrc"
+fi
+EOF
 
-echo "[mobile-dev] done"
+grep -q 'Fractanet mobile dev' "${HOME}/.bashrc" 2>/dev/null || cat >> "${HOME}/.bashrc" <<'EOF'
+
+# Fractanet mobile dev (proot wrappers + grok native)
+export PATH="$HOME/.local/bin:$HOME/.grok/bin:$PATH"
+EOF
+
+echo "[mobile-dev] versions:"
+command -v grok >/dev/null && grok --version 2>/dev/null || echo "  grok: missing — rerun install.sh"
+command -v agent-codex >/dev/null && agent-codex --version 2>/dev/null || echo "  agent-codex: run fractanet-mobile-proot-agents.sh first"
+command -v agent-claude >/dev/null && agent-claude --version 2>/dev/null || echo "  agent-claude: run fractanet-mobile-proot-agents.sh first"
+
+echo "[mobile-dev] done — open a new Termux session or: source ~/.bashrc"
