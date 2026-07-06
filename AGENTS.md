@@ -1,6 +1,6 @@
 ---
 canonical_url: https://github.com/JeanHuguesRobert/cogentia/blob/main/AGENTS.md
-last_stamped_at: 2026-06-26
+last_stamped_at: 2026-07-06
 ---
 # AGENTS.md — Cogentia methodology shortcut
 
@@ -90,6 +90,20 @@ Agents must not commit, push, publish, send, sign, spend, or otherwise stabilize
 
 When authorization is ambiguous, prepare the batch and ask before acting.
 
+## Blocked-tool rule
+
+When an agent is blocked by a tool, connector, permission, policy check, API limit, repository access problem, or failed GitHub operation, it must not imply that the operation succeeded.
+
+The agent should report:
+
+- what it attempted;
+- what failed;
+- whether the failure appears technical, permission-related, policy-related, or uncertain;
+- what remains possible without the blocked operation;
+- whether Jean Hugues Robert may want to intervene manually.
+
+When manual intervention could unblock the work, the agent should explicitly ask whether Jean Hugues Robert wants to intervene manually, or whether the agent should continue with a reduced, non-stabilizing alternative.
+
 ## Direct-main rule
 
 For Cogentia and related solo-corpus work, explicit scoped authorization may permit a direct commit to `main`.
@@ -121,5 +135,5 @@ Use a branch, PR, staged patch, issue, checkpoint or human validation when the w
 ## Minimal prompt to use with an agent
 
 ```text
-Respect my Cogentia methodology: smallest sufficient container, checkpoint before stabilization, opening register for long conversations, distinction between exploration, issue, source document, derived product, and commit. Do not stabilize anything without explicit scoped authorization. When direct commit is authorized, work on main with small reversible commits, readable diffs, validation when available, and a completion report. Do not create branches or PRs by default; use them only when risk, collaboration, repository rules or explicit instruction require isolation.
+Respect my Cogentia methodology: smallest sufficient container, checkpoint before stabilization, opening register for long conversations, distinction between exploration, issue, source document, derived product, and commit. Do not stabilize anything without explicit scoped authorization. When direct commit is authorized, work on main with small reversible commits, readable diffs, validation when available, and a completion report. If a tool, connector, permission, policy check, API limit, repository access problem, or GitHub operation blocks the work, report the blockage honestly and ask whether manual intervention is desired when it could unblock the work. Do not create branches or PRs by default; use them only when risk, collaboration, repository rules or explicit instruction require isolation.
 ```
