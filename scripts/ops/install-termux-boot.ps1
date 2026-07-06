@@ -9,6 +9,11 @@
 #   adb   — adb install (phone USB + USB debugging authorized)
 #   ssh   — copy fractanet-termux-install-boot.sh, download APK on device, open installer
 #   manual — print F-Droid / APK instructions only
+#   fallback — MIUI autostart instructions when Termux:Boot cannot install (Android 16+)
+#
+# Important: Termux and Termux:Boot must use the SAME channel (F-Droid vs GitHub).
+# poco-jhr has TERMUX_APK_RELEASE=F_DROID — use F-Droid APK, not GitHub debug.
+# F-Droid *client* may show "incompatible" on Android 16; sideload the APK instead.
 #
 # Usage:
 #   pwsh -File install-termux-boot.ps1
@@ -16,7 +21,7 @@
 #   pwsh -File install-termux-boot.ps1 -Method ssh -PocoHost poco-jhr
 
 param(
-    [ValidateSet('auto', 'adb', 'ssh', 'manual')]
+    [ValidateSet('auto', 'adb', 'ssh', 'manual', 'fallback')]
     [string]$Method = 'auto',
     [string]$PocoHost = 'poco-jhr',
     [string]$TermuxUser = 'jh',
@@ -27,6 +32,7 @@ param(
     [string]$ApkUrl = 'https://github.com/termux/termux-boot/releases/download/v0.8.1/termux-boot-app_v0.8.1%2Bgithub.debug.apk',
     [string]$ApkFileName = 'termux-boot-app_v0.8.1+github.debug.apk',
     [string]$InstallScript = "$PSScriptRoot\fractanet-termux-install-boot.sh",
+    [string]$AutostartScript = "$PSScriptRoot\fractanet-termux-autostart.sh",
     [switch]$SkipPostSteps
 )
 
@@ -137,13 +143,23 @@ function Show-ManualSteps {
     Write-Host @'
 
 [termux-boot] Manual install (one-time on the phone):
-  1. F-Droid: install "Termux:Boot" (com.termux.boot)
-     or open: https://f-droid.org/packages/com.termux.boot/
-  2. Launch Termux:Boot once — grant boot permission if asked
-  3. Android settings → Termux → Battery → Unrestricted
-  4. Reboot phone; verify: ssh poco-jhr hostname (without opening Termux first)
+  1. Termux channel must match Termux:Boot (check: termux-info | grep TERMUX_APK_RELEASE)
+  2. F-Droid Termux → sideload APK (not F-Droid app if "incompatible"):
+       https://f-droid.org/repo/com.termux.boot_1000.apk
+     GitHub Termux → GitHub termux-boot release APK only
+  3. Launch Termux:Boot once — grant boot permission if asked
+  4. Android settings → Termux → Battery → Unrestricted
+  5. Reboot phone; verify: ssh poco-jhr hostname (without opening Termux first)
+  6. If install still fails (Android 16+): -Method fallback
 
 '@
+}
+
+function Install-FallbackAutostart {
+    if (-not (Test-Path $AutostartScript)) { throw "Missing: $AutostartScript" }
+    Write-Host '[termux-boot] Termux:Boot unavailable — deploying MIUI autostart fallback...'
+    Invoke-PocoScp -Local $AutostartScript -Remote '~/fractanet-termux-autostart.sh'
+    Invoke-PocoSsh -Command 'chmod +x ~/fractanet-termux-autostart.sh && bash ~/fractanet-termux-autostart.sh'
 }
 
 function Show-PostSteps {
@@ -177,6 +193,7 @@ switch ($resolved) {
     'adb' { Install-ViaAdb | Out-Null; Show-PostSteps }
     'ssh' { Install-ViaSsh | Out-Null; Show-PostSteps }
     'manual' { Show-ManualSteps }
+    'fallback' { Install-FallbackAutostart }
     default { throw "unknown method: $resolved" }
 }
 
