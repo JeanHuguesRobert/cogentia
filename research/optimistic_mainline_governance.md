@@ -212,6 +212,8 @@ authorized operation
   -> continue only within a reduced non-stabilizing scope unless re-authorized
 ```
 
+This section is governed by [`blocked_tool_rule.md`](blocked_tool_rule.md).
+
 ---
 
 ## 9. Minimal pre-commit check
@@ -286,7 +288,7 @@ Do not allow direct-main work to become:
 - commit messages that conceal what changed;
 - generated files mixed with semantic edits without explanation;
 - agent confidence replacing validation;
-- speed becoming a substitute for judgment.
+- speed becoming a substitute for judgment;
 - blocked-tool failure hidden as if the work had succeeded;
 - bypass escalation disguised as persistence.
 ```
