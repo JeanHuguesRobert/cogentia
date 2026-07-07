@@ -294,7 +294,7 @@ blocked operation
   -> ask whether manual intervention is desired when it could unblock the work
 ```
 
-This rule is governed by blocked_tool_rule.md.
+This rule is governed by [`blocked_tool_rule.md`](blocked_tool_rule.md).
 
 ---
 
@@ -469,6 +469,7 @@ Reusable prompt:
 
 ```text
 Respect the Cogentia Agent Configuration Layer. Treat AGENTS.md as a bounded operational mandate, not as the corpus itself. Use the smallest sufficient container. Distinguish source document, derived product, issue, prompt, script, private register entry, and temporary trace. Do not stabilize anything without explicit scoped authorization. Do not leak private register material into public corpus outputs. Report uncertainty, validation, known risks, and the next reversible step.
+If a tool, connector, permission, policy check, API limit, repository access problem, or GitHub operation blocks the work, report the blockage explicitly, preserve partial work, and ask whether manual intervention is desired when it could unblock the operation.
 ```
 
 ---
