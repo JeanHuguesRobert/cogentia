@@ -267,6 +267,173 @@ unless `metadata.preserve_ansi: true`.
 If the HTTP client disconnects, the gateway sends SIGTERM to the child, then SIGKILL after
 `AGENT_GATEWAY_KILL_GRACE_MS` (default 3000).
 
+### 7.4 Expect-equivalent semantics (phase 2 REPL)
+
+The classic Tcl tool **Expect** (Don Libes) automates interactive programs: `spawn` with a
+PTY, `send` to stdin, `expect` until stdout matches a pattern or a **timeout** fires. Phase 2
+REPL mode implements the same semantics inside the gateway — not necessarily by shelling out to
+Tcl `expect`.
+
+#### 7.4.1 Mapping Expect → Agent CLI Gateway
+
+| Expect (Tcl) | Gateway component | Notes |
+|--------------|-------------------|-------|
+| `spawn cmd` | `adapter.buildReplInvocation()` + `node-pty` | PTY required; plain pipes buffer differently |
+| `send "text\r"` | `adapter.writeReplTurn(stdin, turn)` | `\r` (CR) is default line ending unless adapter overrides |
+| `expect "pattern"` | `adapter.isReplTurnComplete(buffer)` | Regex on accumulated PTY output (ANSI-stripped) |
+| `expect timeout` | StreamEngine strategy `inactivity` | Debounce after last byte (default 300 ms) |
+| `expect eof` | Child process `exit` event | REPL crash or explicit quit |
+| `exp_continue` | Internal state `ParseState.turnPhase` | Assistant still streaming; do not close SSE yet |
+| `interact` | *Not in v1* | User TUI handoff; gateway always proxies to HTTP SSE |
+
+**Turn lifecycle (REPL):**
+
+```text
+idle
+  -> HTTP request arrives
+  -> writeReplTurn (send + CR)
+  -> streaming (emit SSE on line breaks and/or partial buffer)
+  -> isReplTurnComplete OR inactivity timeout
+  -> emit [DONE], return ReplSession to idle (child stays alive)
+```
+
+**Completion rule (unchanged from §7.1):** first satisfied signal wins among `prompt`,
+`inactivity`, and `eof`. During assistant output, `exp_continue`-style logic prevents premature
+prompt matches inside the answer text.
+
+#### 7.4.2 Implementation choice
+
+| Approach | Use when |
+|----------|----------|
+| **Headless** (`-p`, `exec`, `streaming-json`) | Default — no Expect semantics needed |
+| **`node-pty` + JS pattern engine** | Production REPL in the Node daemon (recommended) |
+| **Tcl `expect` helper script** | Calibration only — capture real prompts per CLI version, then port regex to adapter YAML |
+| **Python `pexpect`** | Avoid on Termux unless Python is already a fleet standard |
+
+Do **not** depend on the Tcl `expect` package in the production daemon path: extra dependency,
+second process, awkward SSE bridging. Use it as a **reference implementation** for pattern
+discovery.
+
+Example calibration script (developer machine, not shipped):
+
+```tcl
+#!/usr/bin/expect -f
+set timeout 120
+spawn grok
+expect {
+  -re {(?i)grok build} { exp_continue }
+  -re {[›>]\s*$} {
+    send "say hello\r"
+    exp_continue
+  }
+  timeout { exit 1 }
+}
+expect -re {[›>]\s*$}
+send "\x04"
+expect eof
+```
+
+#### 7.4.3 Pattern engine (JavaScript)
+
+Proposed module: `stream-engine/expect-loop.js`
+
+```typescript
+interface ExpectRule {
+  id: string;
+  /** Match on ANSI-stripped PTY tail window (last N KB) */
+  pattern: RegExp;
+  action: "emit" | "complete" | "continue" | "error";
+  priority: number;
+}
+
+interface ExpectConfig {
+  rules: ExpectRule[];
+  inactivityMs: number;
+  stripAnsi: boolean;
+  tailWindowBytes: number;   // default 65536
+}
+```
+
+Evaluation order each time bytes arrive:
+
+1. Append to `buffer`, strip ANSI for matching.
+2. If adapter emits **assistant text** since last `send`, stream deltas (line or chunk).
+3. Test `rules` by ascending `priority` (lower = earlier).
+4. On `complete` rule match **and** `state.assistantStarted` → end SSE turn.
+5. If no bytes for `inactivityMs` **and** `assistantStarted` → end SSE turn (fallback).
+6. On child `exit` → end SSE turn or error if exit code ≠ 0.
+
+**Guard:** ignore prompt patterns until at least one byte of assistant output was forwarded
+(post-`send`), to avoid matching prompts echoed in user context.
+
+#### 7.4.4 Candidate patterns per adapter (draft — calibrate before prod)
+
+Stored in `adapters/<id>.expect.yaml`, versioned with observed CLI `--version`.
+
+**Grok Build REPL** (`grok` TUI, no `-p`):
+
+| Rule id | Pattern (regex, ANSI-stripped) | Action | Notes |
+|---------|----------------------------------|--------|-------|
+| `grok-banner` | `grok\s+[\d.]+` | continue | Startup banner |
+| `grok-ready` | `(?:^|\n)[›>❯]\s*$` | complete | Input prompt idle |
+| `grok-thinking` | `(?i)thinking|working` | continue | Optional spinner text |
+
+**Claude Code REPL** (`claude` TUI):
+
+| Rule id | Pattern | Action | Notes |
+|---------|---------|--------|-------|
+| `claude-version` | `Claude Code\s+[\d.]+` | continue | Version line on start |
+| `claude-ready` | `(?:^|\n)(?:›|>)\s*$` | complete | Primary prompt |
+| `claude-tool` | `(?i)running|executing|tool` | continue | Tool invocation in progress |
+
+**OpenAI Codex REPL** (`codex` TUI):
+
+| Rule id | Pattern | Action | Notes |
+|---------|---------|--------|-------|
+| `codex-ready` | `(?:^|\n)codex>\s*$` | complete | Hypothesis — verify on installed 0.142.x |
+| `codex-exec` | `(?i)exec|command` | continue | May overlap; tune after capture |
+
+**Shared fallback:**
+
+| Rule id | Condition | Action |
+|---------|-----------|--------|
+| `idle-timeout` | no bytes ≥ `inactivityMs` after `assistantStarted` | complete |
+| `child-exit` | process exit | complete or error |
+
+Patterns are **hypotheses** until validated with Expect or scripted PTY capture on each target
+host (`poco-jhr`, `i7-thinkpad-jhr`). Record calibrated patterns in
+`adapters/<id>.expect.yaml` with `cli_version_observed` field.
+
+#### 7.4.5 Adapter hook for Expect rules
+
+Extend `AgentAdapter` (phase 2):
+
+```typescript
+interface AgentAdapter {
+  // ...existing fields...
+  /** REPL Expect rules; merged with shared fallback rules */
+  getExpectConfig?(ctx: HostContext): ExpectConfig;
+  /** Optional: strip spinner lines before SSE emit */
+  filterReplNoise?(line: string): string | null;
+}
+```
+
+`filterReplNoise` drops TUI chrome (spinners, status bars) so clients receive assistant prose
+only.
+
+#### 7.4.6 When Expect semantics are unnecessary
+
+Prefer **headless** adapters and skip PTY entirely when the CLI exposes:
+
+| CLI | Headless escape hatch |
+|-----|----------------------|
+| Grok | `-p` + `--output-format streaming-json` (structured events, no prompt detection) |
+| Claude | `-p` / `--print` style single-turn |
+| Codex | `codex exec` |
+
+Expect-equivalent logic is a **fallback for true REPL sessions** (`metadata.session_id`,
+multi-turn without respawning the child), not the default path.
+
 ## 8. Adapter profiles (observed 2026-07)
 
 ### 8.1 Grok Build (`grok-build`)
@@ -423,3 +590,4 @@ CLI entry: `node scripts/agent-gateway.js --host 127.0.0.1 --port 8793`
 | Date | Change |
 |------|--------|
 | 2026-07-07 | Initial specification draft |
+| 2026-07-07 | §7.4 Expect-equivalent semantics, pattern tables, calibration workflow |
