@@ -18,6 +18,8 @@ tags:
   - pipeline
   - traceability
   - anti-capture
+  - blocked-tools
+  - tool-failure
 related_research:
   - "cogentia/AGENTS.md"
   - "cogentia/research/pipeline.md"
@@ -25,6 +27,7 @@ related_research:
   - "cogentia/COGENTIA.md"
   - "barons-Mariani/research/traceabilite_des_actes.md"
   - "barons-Mariani/research/second_method.md"
+  - "cogentia/research/blocked_tool_rule.md"
 related_repositories:
   - "cogentia"
   - "barons-Mariani"
@@ -267,9 +270,31 @@ Do not invent facts, references, commitments, partners, legal positions, or inst
 Do not stabilize anything without explicit scoped authorization.
 Report uncertainty instead of hiding it.
 Prefer reversible, traceable changes.
+Do not imply that a tool operation succeeded when it was blocked.
+Report blocked tools, preserve partial work, and ask for manual intervention when it could unblock the work.
 ```
 
 These are not stylistic preferences. They are anti-capture rules.
+
+### 6.1 Blocked-tool invariant
+
+A blocked tool, connector, permission denial, API limit, repository access problem, policy check, or failed GitHub operation is a first-class operational signal.
+
+It must not be hidden, minimized, or reinterpreted as success.
+
+The correct behavior is:
+
+```text
+blocked operation
+  -> report what was attempted
+  -> report what failed
+  -> classify the failure when possible
+  -> preserve partial work
+  -> propose the smallest safe continuation
+  -> ask whether manual intervention is desired when it could unblock the work
+```
+
+This rule is governed by blocked_tool_rule.md.
 
 ---
 
