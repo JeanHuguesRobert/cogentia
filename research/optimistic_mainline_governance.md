@@ -1,10 +1,10 @@
 ---
 title: "Optimistic Mainline Governance"
 subtitle: "Direct agent work on main under trace, reversibility and scoped authorization"
-version: "0.1"
+version: "0.2"
 status: "source document — operational doctrine"
-date: "2026-06-26"
-author: "Jean Hugues Noël Robert"
+date: "2026-07-07"
+author: "Jean Hugues Noël Robert, baron Mariani"
 license: "CC BY-SA 4.0"
 language: "en"
 repository: "cogentia"
@@ -18,12 +18,14 @@ tags:
   - traceability
   - authorization
   - corpus-governance
+  - blocked-tools
 related_research:
   - "cogentia/AGENTS.md"
   - "cogentia/research/agent_configuration_layer.md"
   - "cogentia/research/conversation_to_corpus_pipeline.md"
   - "cogentia/research/alan_turing_mcp_v0_1.md"
   - "cogentia/research/alan_turing_mcp_coding_agent_prompt.md"
+  - "cogentia/research/blocked_tool_rule.md"
   - "inseme/AGENTS.md"
 document_role: "source"
 document_kind: "method-note"
@@ -35,9 +37,6 @@ lifecycle_state: "working"
 
 ## Direct agent work on main under trace, reversibility and scoped authorization
 
-**Version 0.1 — 2026-06-26**  
-**Repository:** `JeanHuguesRobert/cogentia`  
-**Path:** `research/optimistic_mainline_governance.md`
 
 ---
 
@@ -194,7 +193,28 @@ For GitHub, caller mediation may take the form of explicit user instruction, rep
 
 ---
 
-## 8. Minimal pre-commit check
+## 8. Blocked operations
+
+A blocked operation is not a failed mandate. It is an operational signal.
+
+When a direct-main operation is blocked by tooling, connector failure, permission denial, policy check, API limit, repository rule, file conflict, safety control, or unknown GitHub failure, the agent must not imply that the operation succeeded.
+
+The correct behavior is:
+
+```text
+authorized operation
+  -> attempt operation
+  -> if blocked, stop the external effect
+  -> report the blockage
+  -> preserve partial work as draft, patch, note, or issue
+  -> classify the failure when possible
+  -> ask whether manual intervention is desired when it could unblock the work
+  -> continue only within a reduced non-stabilizing scope unless re-authorized
+```
+
+---
+
+## 9. Minimal pre-commit check
 
 Before committing directly to `main`, an agent should answer:
 
@@ -210,13 +230,16 @@ Validation available:
 Risk class:
 Reversibility:
 Human validation needed before commit: yes/no
+Blocked operation, if any:
+Partial work preserved, if any:
+Manual intervention useful, if any: yes/no
 ```
 
 If the answer to the last line is `yes`, the agent should not commit yet.
 
 ---
 
-## 9. Minimal completion report
+## 10. Minimal completion report
 
 Every substantial direct-main contribution should end with:
 
@@ -229,23 +252,27 @@ Known risks:
 Reversibility:
 Next step:
 Human validation needed: yes/no
+Blocked operation, if any:
+Partial work preserved, if any:
+Manual intervention useful, if any: yes/no
 ```
 
 This report is not ceremony. It is the operational trace that makes optimistic mainline work non-reckless.
 
 ---
 
-## 10. Prompt fragment for agents
+## 11. Prompt fragment for agents
 
 Reusable instruction:
 
 ```text
 Work directly on the default branch unless I explicitly ask for a branch or PR, or unless the risk profile requires isolation. Apply Optimistic Mainline Governance: small scoped acts, readable diffs, sober commits, no destructive changes, no private leakage, no invented facts or mandates, validation when available, and a completion report with files changed, reason, validation, known risks, reversibility and next step. If the change is high-risk, multi-repository, doctrinal, legal, private, destructive or institutionally committing, suspend and ask.
+If a tool, connector, permission, policy check, API limit, repository rule, file conflict, safety control, or GitHub operation blocks the work, report it explicitly, preserve partial work, and ask whether manual intervention is desired when it could unblock the operation.
 ```
 
 ---
 
-## 11. Anti-patterns
+## 12. Anti-patterns
 
 Do not allow direct-main work to become:
 
@@ -260,13 +287,15 @@ Do not allow direct-main work to become:
 - generated files mixed with semantic edits without explanation;
 - agent confidence replacing validation;
 - speed becoming a substitute for judgment.
+- blocked-tool failure hidden as if the work had succeeded;
+- bypass escalation disguised as persistence.
 ```
 
 The method is optimistic, not blind.
 
 ---
 
-## 12. Stabilized formula
+## 13. Stabilized formula
 
 ```text
 Agents may work on main.
@@ -277,6 +306,9 @@ Small direct commits are the normal learning path.
 
 The guardrails are:
 mandate, scope, diff, validation, trace, report, reversibility.
+
+When a tool is blocked:
+report, preserve, degrade, ask.
 ```
 
 Final formula:
