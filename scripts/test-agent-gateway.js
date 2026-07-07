@@ -37,8 +37,9 @@ try {
 
   const models = await getJson("/v1/models");
   assert.equal(models.object, "list");
-  assert.equal(models.data.length, 1);
-  assert.equal(models.data[0].id, "mock-agent");
+  assert.equal(models.data.length, 3);
+  const modelIds = models.data.map(m => m.id).sort();
+  assert.deepEqual(modelIds, ["claude-code", "codex", "grok-build"]);
 
   const noAuth = await fetch(`${base}/v1/models`);
   assert.equal(noAuth.status, 401);
@@ -46,8 +47,18 @@ try {
   const cors = await fetch(`${base}/health`, { headers: { Origin: "https://example.test" } });
   assert.equal(cors.headers.get("access-control-allow-origin"), "https://example.test");
 
+  for (const model of ["grok-build", "claude-code", "codex"]) {
+    const res = await postJson("/v1/chat/completions", {
+      model,
+      stream: false,
+      messages: [{ role: "user", content: `hello ${model}` }],
+    }, { Authorization: `Bearer ${token}` });
+    assert.equal(res.status, 200, model);
+    assert.match(res.body.choices[0].message.content, /^mock:hello /, model);
+  }
+
   const completionRes = await postJson("/v1/chat/completions", {
-    model: "mock-agent",
+    model: "grok-build",
     stream: false,
     messages: [{ role: "user", content: "hello gateway" }],
   }, { Authorization: `Bearer ${token}` });
@@ -55,11 +66,11 @@ try {
   const completion = completionRes.body;
   assert.match(completion.id, /^agw-/);
   assert.equal(completion.object, "chat.completion");
-  assert.equal(completion.model, "mock-agent");
+  assert.equal(completion.model, "grok-build");
   assert.match(completion.choices[0].message.content, /^mock:hello gateway/);
 
   const streamText = await streamCompletion({
-    model: "mock-agent",
+    model: "claude-code",
     stream: true,
     messages: [{ role: "user", content: "stream test" }],
   });
@@ -73,7 +84,7 @@ try {
   assert.equal(unknown.body.error.code, "model_not_found");
 
   const blocked = await postJson("/v1/chat/completions", {
-    model: "mock-agent",
+    model: "codex",
     messages: [{ role: "user", content: "slow" }],
     metadata: { cwd: "C:\\outside\\repos" },
   }, { Authorization: `Bearer ${token}` }, { AGENT_GATEWAY_ALLOW_ANY_CWD: "0" });
@@ -81,13 +92,13 @@ try {
   assert.equal(blocked.body.error.code, "cwd_forbidden");
 
   const slow = postJson("/v1/chat/completions", {
-    model: "mock-agent",
+    model: "grok-build",
     stream: false,
     messages: [{ role: "user", content: "hold" }],
   }, { Authorization: `Bearer ${token}` });
   await new Promise(resolve => setTimeout(resolve, 100));
   const busy = await postJson("/v1/chat/completions", {
-    model: "mock-agent",
+    model: "claude-code",
     stream: false,
     messages: [{ role: "user", content: "second" }],
   }, { Authorization: `Bearer ${token}` });

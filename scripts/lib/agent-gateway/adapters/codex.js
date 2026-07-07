@@ -1,16 +1,16 @@
 import { formatMessagesAsPrompt } from "../util.js";
 import { buildChildEnv } from "../host-context.js";
 
-export const grokAdapter = {
-  id: "grok",
-  models: ["grok-build"],
+export const codexAdapter = {
+  id: "codex",
+  models: ["codex"],
   defaultMode: "headless",
 
   async probe(ctx) {
     const { spawnResolved } = await import("../spawn-util.js");
     return new Promise(resolve => {
       const child = spawnResolved(
-        { command: ctx.grokCommand, args: ["--version"] },
+        { command: ctx.codexCommand, args: ["--version"] },
         { env: buildChildEnv(ctx) },
       );
       let out = "";
@@ -21,7 +21,7 @@ export const grokAdapter = {
         resolve({
           ok: code === 0,
           version: out.trim().split("\n")[0] || null,
-          output_format: ctx.grokOutputFormat,
+          output_format: "jsonl",
         });
       });
     });
@@ -32,10 +32,9 @@ export const grokAdapter = {
   },
 
   buildHeadlessInvocation(turn, ctx) {
-    const prompt = turn.prompt;
-    const args = ["-p", prompt, "--output-format", ctx.grokOutputFormat];
+    const args = ["exec", "--json", "--skip-git-repo-check", turn.prompt];
     return {
-      command: ctx.grokCommand,
+      command: ctx.codexCommand,
       args,
       cwd: turn.cwd,
       env: buildChildEnv(ctx),
@@ -44,36 +43,27 @@ export const grokAdapter = {
   },
 
   createParseState() {
-    return { lineBuffer: "", done: false, plainBuffer: "" };
+    return { lineBuffer: "", done: false };
   },
 
-  parseHeadlessChunk(chunk, state, ctx) {
-    const text = chunk.toString("utf8");
-    if (ctx.grokOutputFormat === "plain") {
-      state.plainBuffer += text;
-      return [];
-    }
-    state.lineBuffer += text;
+  parseHeadlessChunk(chunk, state) {
+    state.lineBuffer += chunk.toString("utf8");
     const deltas = [];
     let idx;
     while ((idx = state.lineBuffer.indexOf("\n")) >= 0) {
       const line = state.lineBuffer.slice(0, idx).trim();
       state.lineBuffer = state.lineBuffer.slice(idx + 1);
-      const parsed = parseStreamingJsonLine(line, ctx);
+      const parsed = parseCodexJsonLine(line);
       if (parsed) deltas.push(parsed);
       if (parsed?.complete) state.done = true;
     }
     return deltas;
   },
 
-  flushHeadless(state, ctx) {
-    if (ctx.grokOutputFormat === "plain") {
-      const content = state.plainBuffer.trim();
-      return content ? [{ content, complete: true }] : [{ content: "", complete: true }];
-    }
+  flushHeadless(state) {
     const line = state.lineBuffer.trim();
-    if (!line) return [];
-    const parsed = parseStreamingJsonLine(line, ctx);
+    if (!line) return state.done ? [] : [{ content: "", complete: true }];
+    const parsed = parseCodexJsonLine(line);
     return parsed ? [parsed] : [];
   },
 
@@ -83,22 +73,19 @@ export const grokAdapter = {
   },
 };
 
-function parseStreamingJsonLine(line, ctx) {
-  if (!line) return null;
+function parseCodexJsonLine(line) {
+  if (!line || !line.startsWith("{")) return null;
   let event;
   try {
     event = JSON.parse(line);
   } catch {
     return null;
   }
-  if (event.type === "end") {
+  if (event.type === "turn.completed") {
     return { content: "", complete: true };
   }
-  if (event.type === "text" && event.data) {
-    return { content: String(event.data), complete: false };
-  }
-  if (event.type === "thought" && event.data && ctx.includeThoughts) {
-    return { content: String(event.data), complete: false, thought: true };
+  if (event.type === "item.completed" && event.item?.type === "agent_message" && event.item.text) {
+    return { content: String(event.item.text), complete: false };
   }
   return null;
 }

@@ -38,17 +38,23 @@ export function loadHostContext(env = process.env) {
     pathExtra.push(path.join(home, ".grok", "bin"));
   }
 
+  const termuxProot = platform === "termux";
+
   return {
     hostname: os.hostname(),
     platform,
     home,
+    termuxProot,
     pathExtra: [...new Set(pathExtra)],
     repoRoots: existingRoots.length ? existingRoots : roots,
     defaultCwd: path.resolve(env.AGENT_GATEWAY_DEFAULT_CWD || existingRoots[0] || process.cwd()),
     allowAnyCwd: env.AGENT_GATEWAY_ALLOW_ANY_CWD === "1",
     grokCommand: env.AGENT_GATEWAY_GROK_COMMAND || "grok",
     grokOutputFormat: env.AGENT_GATEWAY_GROK_OUTPUT_FORMAT || "streaming-json",
-    maxConcurrent: Number(env.AGENT_GATEWAY_MAX_CONCURRENT || (platform === "termux" ? 2 : 4)),
+    claudeCommand: env.AGENT_GATEWAY_CLAUDE_COMMAND || (termuxProot ? "agent-claude" : "claude"),
+    claudeOutputFormat: env.AGENT_GATEWAY_CLAUDE_OUTPUT_FORMAT || "stream-json",
+    codexCommand: env.AGENT_GATEWAY_CODEX_COMMAND || (termuxProot ? "agent-codex" : "codex"),
+    maxConcurrent: Number(env.AGENT_GATEWAY_MAX_CONCURRENT || (termuxProot ? 2 : 4)),
     includeThoughts: env.AGENT_GATEWAY_INCLUDE_THOUGHTS === "1",
   };
 }

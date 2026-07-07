@@ -1,17 +1,16 @@
-import { spawn } from "node:child_process";
+import { spawnResolved } from "./spawn-util.js";
 import { stripAnsi } from "./util.js";
 
 export function runHeadlessTurn(adapter, turn, ctx, options = {}) {
   const onDelta = typeof options.onDelta === "function" ? options.onDelta : null;
   const spec = adapter.buildHeadlessInvocation(turn, ctx);
-  const state = adapter.createParseState?.() || {};
+  const state = adapter.createParseState?.(turn, ctx) ?? adapter.createParseState?.() ?? {};
   const parseCtx = ctx;
 
   return new Promise((resolve, reject) => {
-    const child = spawn(spec.command, spec.args, {
+    const child = spawnResolved(spec, {
       cwd: spec.cwd,
       env: spec.env || process.env,
-      shell: false,
       stdio: ["ignore", "pipe", "pipe"],
     });
 

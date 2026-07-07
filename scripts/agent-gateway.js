@@ -32,6 +32,9 @@ Environment:
   AGENT_GATEWAY_TEST_MOCK=1       Use mock adapter instead of grok
   AGENT_GATEWAY_GROK_COMMAND      Grok binary (default grok)
   AGENT_GATEWAY_GROK_OUTPUT_FORMAT  streaming-json | plain
+  AGENT_GATEWAY_CLAUDE_COMMAND    Claude binary (agent-claude on Termux)
+  AGENT_GATEWAY_CLAUDE_OUTPUT_FORMAT  stream-json | plain
+  AGENT_GATEWAY_CODEX_COMMAND     Codex binary (agent-codex on Termux)
 
 Endpoints:
   GET  /health
@@ -51,6 +54,6 @@ if (!Number.isInteger(port) || port < 1 || port > 65535) {
 
 const { server, ctx } = createAgentGateway();
 server.listen(port, host, () => {
-  const models = ctx.useMock ? "mock-agent" : "grok-build";
+  const models = ctx.useMock ? "grok-build,claude-code,codex (mock)" : "grok-build,claude-code,codex";
   console.error(`Agent CLI Gateway listening on http://${host}:${port} (${ctx.platform}, models: ${models})`);
 });

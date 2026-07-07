@@ -1,7 +1,9 @@
 import { grokAdapter } from "./adapters/grok.js";
+import { claudeAdapter } from "./adapters/claude.js";
+import { codexAdapter } from "./adapters/codex.js";
 import { mockAdapter } from "./adapters/mock.js";
 
-const ADAPTERS = [grokAdapter, mockAdapter];
+const ADAPTERS = [grokAdapter, claudeAdapter, codexAdapter, mockAdapter];
 
 export function listAdapters(ctx) {
   if (ctx.useMock) return [mockAdapter];
