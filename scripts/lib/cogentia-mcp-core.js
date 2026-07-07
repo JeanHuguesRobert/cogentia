@@ -37,6 +37,27 @@ export const TOOLS = [
     },
   },
   {
+    name: "cogentia_context_pack_batch",
+    description: "Build deterministic, budgeted context packs for multiple corpus queries in one read-only batch.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        queries: {
+          type: "array",
+          minItems: 1,
+          maxItems: 20,
+          items: { type: "string", minLength: 1 },
+        },
+        repo: { type: "string" },
+        budget: { type: "integer", minimum: 256, maximum: 50000 },
+        limit: { type: "integer", minimum: 1, maximum: 50 },
+        mode: { type: "string", enum: ["keyword", "hybrid", "semantic"] },
+      },
+      required: ["queries"],
+      additionalProperties: false,
+    },
+  },
+  {
     name: "cogentia_get_lines",
     description: "Retrieve a bounded, citable line interval from an allowed corpus document.",
     inputSchema: {
