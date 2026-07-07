@@ -11,7 +11,7 @@ export function runHeadlessTurn(adapter, turn, ctx, options = {}) {
     const child = spawn(spec.command, spec.args, {
       cwd: spec.cwd,
       env: spec.env || process.env,
-      shell: process.platform === "win32" && !spec.command.includes(pathSep()),
+      shell: false,
       stdio: ["ignore", "pipe", "pipe"],
     });
 
@@ -54,6 +54,3 @@ export function runHeadlessTurn(adapter, turn, ctx, options = {}) {
   });
 }
 
-function pathSep() {
-  return process.platform === "win32" ? "\\" : "/";
-}

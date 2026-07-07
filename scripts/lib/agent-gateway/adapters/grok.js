@@ -11,7 +11,7 @@ export const grokAdapter = {
     return new Promise(resolve => {
       const child = spawn(ctx.grokCommand, ["--version"], {
         env: buildChildEnv(ctx),
-        shell: process.platform === "win32",
+        shell: false,
       });
       let out = "";
       child.stdout.on("data", c => { out += c; });
