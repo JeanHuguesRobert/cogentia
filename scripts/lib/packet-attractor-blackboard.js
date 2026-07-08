@@ -247,13 +247,29 @@ export function buildAgentCliGatewayAttractor(options = {}) {
   const resourceId = String(options.resourceId || "resource://poco-jhr").trim();
   const endpointRef = String(options.endpointRef || "http://poco-jhr:8793").trim();
   const ttlSeconds = Number(options.ttlSeconds || 300);
-  const models = Array.isArray(options.models) && options.models.length
-    ? options.models.map(value => String(value || "").trim()).filter(Boolean)
-    : ["grok-build", "claude-code", "codex"];
-  const toolCategories = Array.isArray(options.toolCategories) && options.toolCategories.length
-    ? options.toolCategories.map(value => String(value || "").trim()).filter(Boolean)
-    : [];
+  const minimal = options.minimal === true || String(options.status || "").trim() === "degraded" && options.models == null;
+  const models = minimal
+    ? []
+    : Array.isArray(options.models)
+      ? options.models.map(value => String(value || "").trim()).filter(Boolean)
+      : ["grok-build", "claude-code", "codex"];
+  const toolCategories = minimal
+    ? []
+    : Array.isArray(options.toolCategories) && options.toolCategories.length
+      ? options.toolCategories.map(value => String(value || "").trim()).filter(Boolean)
+      : [];
   const status = String(options.status || "online").trim() || "online";
+
+  const capabilities = minimal
+    ? ["agent.cli.gateway"]
+    : [
+      "agent.cli.gateway",
+      "openai.chat.completions",
+      ...(toolCategories.length ? ["session.repl", "dev.tools"] : []),
+      ...toolCategories.map(category => `dev.tools.${category}`),
+      ...models.map(model => `coding-agents.${model.split("-")[0]}`),
+      ...models.map(model => `model.${model}`),
+    ];
 
   return {
     artifactType: ARTIFACT_TYPE,
@@ -264,14 +280,7 @@ export function buildAgentCliGatewayAttractor(options = {}) {
     },
     matches: {
       packetKind: ["mandate", "cognitive-packet", "continuation"],
-      capabilities: [
-        "agent.cli.gateway",
-        "openai.chat.completions",
-        ...(toolCategories.length ? ["session.repl", "dev.tools"] : []),
-        ...toolCategories.map(category => `dev.tools.${category}`),
-        ...models.map(model => `coding-agents.${model.split("-")[0]}`),
-        ...models.map(model => `model.${model}`),
-      ],
+      capabilities,
       query: models.map(model => ({ model, transport: "openai.chat.completions.sse" })),
       verbs: ["chat.completions@v1"],
     },

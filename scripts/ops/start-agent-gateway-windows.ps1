@@ -50,9 +50,9 @@ $existing = Get-CimInstance Win32_Process -Filter "Name = 'node.exe'" -ErrorActi
     Where-Object { $_.CommandLine -match 'scripts[\\/]agent-gateway\.js' } |
     Select-Object -ExpandProperty ProcessId -Unique
 
-foreach ($pid in $existing) {
-    Write-Host "[agent-gateway] stopping pid $pid"
-    Stop-Process -Id $pid -Force -ErrorAction SilentlyContinue
+foreach ($procId in $existing) {
+    Write-Host "[agent-gateway] stopping pid $procId"
+    Stop-Process -Id $procId -Force -ErrorAction SilentlyContinue
 }
 if ($existing) { Start-Sleep -Seconds 1 }
 

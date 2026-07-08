@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 /**
  * Publish cop/attractor.advertised for agent-cli-gateway after probing local /health.
+ * Watchdog: restart gateway once when health fails, then re-probe; advertise degraded if still down.
  *
  * Env:
  *   COGENTIA_BLACKBOARD_URL
@@ -11,12 +12,14 @@
  *   AGENT_GATEWAY_ATTRACTOR_NODE_ID  default resource://<hostname>
  *   AGENT_GATEWAY_ATTRACTOR_ENDPOINT default http://<hostname>:8793
  *   AGENT_GATEWAY_ATTRACTOR_TTL_SECONDS default 300
- *   AGENT_GATEWAY_ATTRACTOR_ENV_FILE optional dotenv (e.g. ~/srv/cogentia/secrets/agent-gateway.env)
+ *   AGENT_GATEWAY_WATCHDOG          default 1 — restart gateway when health fails
+ *   AGENT_GATEWAY_WATCHDOG_RESTART_SCRIPT optional override
  */
 
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
+import { restartAgentGateway, watchdogEnabled } from "../lib/agent-gateway-watchdog.js";
 import { buildAgentCliGatewayAttractor } from "../lib/packet-attractor-blackboard.js";
 
 loadOptionalEnvFiles([
@@ -48,29 +51,24 @@ if (!upsertToken) {
 }
 
 let health = null;
+let watchdog = null;
+
 if (!withdraw) {
-  health = await probeGatewayHealth(healthUrl, gatewayToken);
-  if (!health?.ok) {
-    console.error(JSON.stringify({
-      ok: false,
-      error: "gateway_health_failed",
-      health_url: healthUrl,
-      detail: health,
-    }, null, 2));
-    process.exit(1);
-  }
+  ({ health, watchdog } = await ensureGatewayHealth(healthUrl, gatewayToken));
 }
 
-const models = listModelsFromHealth(health);
-const toolCategories = listToolCategoriesFromHealth(health);
+const degraded = !withdraw && !health?.ok;
+const models = degraded ? [] : listModelsFromHealth(health);
+const toolCategories = degraded ? [] : listToolCategoriesFromHealth(health);
 const attractor = buildAgentCliGatewayAttractor({
   id: process.env.AGENT_GATEWAY_ATTRACTOR_ID || `attractor:${hostname}:agent-cli-gateway`,
   resourceId: process.env.AGENT_GATEWAY_ATTRACTOR_NODE_ID || defaultResourceId,
   endpointRef: process.env.AGENT_GATEWAY_ATTRACTOR_ENDPOINT
     || `http://${hostname}:${process.env.AGENT_GATEWAY_PORT || 8793}`,
   ttlSeconds: Number(process.env.AGENT_GATEWAY_ATTRACTOR_TTL_SECONDS || 300),
-  models: models.length ? models : undefined,
-  toolCategories: toolCategories.length ? toolCategories : undefined,
+  models: degraded ? [] : (models.length ? models : undefined),
+  toolCategories: degraded ? [] : (toolCategories.length ? toolCategories : undefined),
+  minimal: degraded,
   status: health?.ok ? "online" : "degraded",
   trustPerimeter: process.env.AGENT_GATEWAY_ATTRACTOR_TRUST_PERIMETER,
 });
@@ -116,17 +114,40 @@ if (!response.ok || body.ok === false) {
   process.exit(1);
 }
 
-console.log(JSON.stringify({
+const result = {
   ok: true,
   event: payload.event,
   attractor_id: attractor.id,
   endpoint_ref: attractor.transport.endpoint_ref,
+  availability_status: attractor.availability.status,
   capabilities: attractor.matches.capabilities,
-  models: models,
+  models,
   tool_categories: toolCategories,
   ttl_seconds: attractor.availability.ttl_seconds,
   snapshot_at: body.snapshot_at,
-}, null, 2));
+  watchdog,
+};
+
+console.log(JSON.stringify(result, null, 2));
+if (degraded) process.exit(1);
+
+async function ensureGatewayHealth(url, token) {
+  let health = await probeGatewayHealth(url, token);
+  if (health?.ok) {
+    return { health, watchdog: { attempted: false, ok: true } };
+  }
+
+  let watchdog = { attempted: false, ok: false, detail: "health_failed" };
+  if (watchdogEnabled()) {
+    watchdog = await restartAgentGateway();
+    const settleMs = Number(process.env.AGENT_GATEWAY_WATCHDOG_SETTLE_MS || 3000);
+    if (settleMs > 0) await sleep(settleMs);
+    health = await probeGatewayHealth(url, token);
+    watchdog.health_ok_after_restart = health?.ok === true;
+  }
+
+  return { health, watchdog };
+}
 
 async function probeGatewayHealth(url, token) {
   const headers = { Accept: "application/json" };
@@ -203,4 +224,8 @@ function parseBoolean(value, fallback) {
   if (["1", "true", "yes", "on"].includes(clean)) return true;
   if (["0", "false", "no", "off"].includes(clean)) return false;
   return fallback;
+}
+
+function sleep(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
 }
