@@ -115,21 +115,28 @@ export function createExpectLoop(options) {
     }
   }
 
+  function isPromptEcho(text) {
+    const prompt = turn.prompt.trim();
+    const chunk = String(text).trim();
+    if (!chunk || !prompt) return false;
+    return chunk === prompt || prompt.startsWith(chunk) || chunk.startsWith(prompt);
+  }
+
+  /** Inline TUI chunks (no newlines) — line-oriented REPL defers to emitLines. */
   function emitPostSendTail() {
     if (!turnSent) return;
     const norm = strippedTail();
     if (norm.length <= lastEmittedLen) return;
     const slice = norm.slice(lastEmittedLen);
     lastEmittedLen = norm.length;
-    if (!slice.trim()) return;
+    if (!slice.trim() || slice.includes("\n")) return;
+    if (isPromptEcho(slice)) return;
     if (adapter.filterReplNoise) {
-      for (const line of slice.split("\n")) {
-        const filtered = adapter.filterReplNoise(line);
-        if (filtered) emitContent(filtered.endsWith("\n") ? filtered : `${filtered}\n`);
-      }
-    } else {
-      emitContent(slice);
+      const filtered = adapter.filterReplNoise(slice);
+      if (filtered) emitContent(filtered.endsWith("\n") ? filtered : `${filtered}\n`);
+      return;
     }
+    emitContent(slice);
   }
 
   return {

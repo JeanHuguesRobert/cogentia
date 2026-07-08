@@ -56,6 +56,7 @@ export function loadHostContext(env = process.env) {
     codexCommand: env.AGENT_GATEWAY_CODEX_COMMAND || (termuxProot ? "agent-codex" : "codex"),
     maxConcurrent: Number(env.AGENT_GATEWAY_MAX_CONCURRENT || (termuxProot ? 2 : 4)),
     includeThoughts: env.AGENT_GATEWAY_INCLUDE_THOUGHTS === "1",
+    replBootstrapTimeoutMs: Number(env.AGENT_GATEWAY_REPL_BOOTSTRAP_TIMEOUT_MS || 120_000),
     replTurnTimeoutMs: Number(env.AGENT_GATEWAY_REPL_TURN_TIMEOUT_MS || 180_000),
   };
 }

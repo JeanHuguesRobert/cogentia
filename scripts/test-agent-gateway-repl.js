@@ -18,6 +18,8 @@ const daemon = spawn(process.execPath, ["scripts/agent-gateway.js", "--host", "1
     AGENT_GATEWAY_TEST_MOCK: "1",
     AGENT_GATEWAY_ALLOW_ANY_CWD: "1",
     AGENT_GATEWAY_MAX_CONCURRENT: "4",
+    AGENT_GATEWAY_REPL_BOOTSTRAP_TIMEOUT_MS: "15000",
+    AGENT_GATEWAY_REPL_TURN_TIMEOUT_MS: "30000",
     AGENT_GATEWAY_TOKEN: token,
   },
   stdio: ["ignore", "pipe", "pipe"],

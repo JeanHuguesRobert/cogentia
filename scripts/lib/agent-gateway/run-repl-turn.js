@@ -67,6 +67,7 @@ export async function runReplTurn(adapter, turn, ctx, registry, options = {}) {
       await waitForReplReady({
         adapter,
         config: expectConfig,
+        timeoutMs: ctx.replBootstrapTimeoutMs,
         getBuffer: () => session.buffer,
         onData(handler) {
           session.pendingWaiters = session.pendingWaiters || [];
