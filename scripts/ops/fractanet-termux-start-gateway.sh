@@ -15,8 +15,9 @@ export AGENT_GATEWAY_BIND="${AGENT_GATEWAY_BIND:-all}"
 export PATH="${HOME}/.local/bin:${HOME}/.grok/bin:${PATH}"
 
 if ps aux 2>/dev/null | grep -q '[n]ode scripts/agent-gateway.js'; then
-  echo "[agent-gateway] already running"
-  exit 0
+  echo "[agent-gateway] stopping existing gateway for restart..."
+  pkill -f 'node scripts/agent-gateway.js' 2>/dev/null || true
+  sleep 1
 fi
 
 cd "${COGENTIA_ROOT}"

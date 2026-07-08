@@ -24,6 +24,16 @@ if [ ! -f "${COGENTIA_ROOT}/scripts/agent-gateway.js" ]; then
   exit 1
 fi
 
+if [ -f "${COGENTIA_ROOT}/package.json" ] && command -v pnpm >/dev/null 2>&1; then
+  echo "[agent-gateway] installing deps (node-pty for REPL mode)..."
+  (
+    cd "${COGENTIA_ROOT}"
+    pnpm config set onlyBuiltDependencies "node-pty" 2>/dev/null || true
+    pnpm install --frozen-lockfile 2>/dev/null || pnpm install
+    pnpm rebuild node-pty 2>/dev/null || true
+  )
+fi
+
 mkdir -p "${SECRETS_DIR}" "${BOOT_DIR}" "${LOG_DIR}"
 chmod 700 "${SECRETS_DIR}"
 
