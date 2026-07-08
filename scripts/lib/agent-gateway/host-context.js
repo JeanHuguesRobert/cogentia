@@ -58,6 +58,10 @@ export function loadHostContext(env = process.env) {
     includeThoughts: env.AGENT_GATEWAY_INCLUDE_THOUGHTS === "1",
     replBootstrapTimeoutMs: Number(env.AGENT_GATEWAY_REPL_BOOTSTRAP_TIMEOUT_MS || 120_000),
     replTurnTimeoutMs: Number(env.AGENT_GATEWAY_REPL_TURN_TIMEOUT_MS || 180_000),
+    pythonCommand: env.AGENT_GATEWAY_PYTHON_COMMAND || "python",
+    nodejsCommand: env.AGENT_GATEWAY_NODEJS_COMMAND || "node",
+    inoxCommand: env.AGENT_GATEWAY_INOX_COMMAND || "inox",
+    inoxCommandArgs: splitPaths(env.AGENT_GATEWAY_INOX_COMMAND_ARGS || ""),
   };
 }
 

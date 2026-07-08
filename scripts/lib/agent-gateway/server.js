@@ -1,7 +1,8 @@
 import http from "node:http";
 import path from "node:path";
 import { loadHostContext } from "./host-context.js";
-import { listAdapters, listModels, resolveAdapter } from "./adapter-registry.js";
+import { listAdapters, listModels, resolveAdapter, resolveAdapterById } from "./adapter-registry.js";
+import { listBuiltinSignals } from "./session-signals.js";
 import { runHeadlessTurn } from "./run-headless.js";
 import { runReplTurn } from "./run-repl-turn.js";
 import { ReplSessionRegistry } from "./repl-session-registry.js";
@@ -254,6 +255,8 @@ export function createAgentGateway(options = {}) {
           metadata: {
             session_id: result.sessionId,
             repl_reason: result.reason,
+            stderr: result.stderr || undefined,
+            transport: result.timing?.transport || undefined,
             timing: timing.report,
           },
           choices: [{
@@ -295,14 +298,22 @@ export function createAgentGateway(options = {}) {
         model,
         trace,
         onDelta(delta) {
-          if (!delta.content) return;
-          sseWrite(res, {
+          if (!delta.content && !delta.stderr) return;
+          const chunk = {
             id: completionId,
             object: "chat.completion.chunk",
             created,
             model,
-            choices: [{ index: 0, delta: { content: delta.content }, finish_reason: null }],
-          });
+            choices: [{
+              index: 0,
+              delta: delta.content ? { content: delta.content } : {},
+              finish_reason: null,
+            }],
+          };
+          if (delta.stderr) {
+            chunk.metadata = { stderr: delta.stderr };
+          }
+          sseWrite(res, chunk);
         },
       });
 
@@ -316,6 +327,8 @@ export function createAgentGateway(options = {}) {
         metadata: {
           session_id: result.sessionId,
           repl_reason: result.reason,
+          stderr: result.stderr || undefined,
+          transport: result.timing?.transport || undefined,
           timing: timing.report,
         },
         choices: [{ index: 0, delta: {}, finish_reason: finishReason }],
@@ -342,6 +355,32 @@ export function createAgentGateway(options = {}) {
         return jsonResponse(res, err.status, err.body, req, timing.headers);
       }
       res.end();
+    }
+  }
+
+  async function handleSessionSignal(req, res, sessionId, payload) {
+    const session = replRegistry.get(sessionId);
+    if (!session) {
+      const err = openAiError("invalid_request_error", `Unknown session_id: ${sessionId}`, "session_not_found", 404);
+      return jsonResponse(res, err.status, err.body, req);
+    }
+    const adapter = resolveAdapterById(session.adapterId, ctx);
+    try {
+      const applied = replRegistry.sendSignal(sessionId, payload, adapter);
+      return jsonResponse(res, 200, {
+        ok: true,
+        session_id: sessionId,
+        adapter_id: session.adapterId,
+        signal: applied,
+        supported_signals: listBuiltinSignals(),
+      }, req);
+    } catch (error) {
+      if (error?.code === "signal_unknown") {
+        const err = openAiError("invalid_request_error", error.message, error.code, error.status || 400);
+        return jsonResponse(res, err.status, err.body, req);
+      }
+      const err = openAiError("server_error", error.message || "signal_failed", "signal_failed", 502);
+      return jsonResponse(res, err.status, err.body, req);
     }
   }
 
@@ -383,6 +422,21 @@ export function createAgentGateway(options = {}) {
           return jsonResponse(res, err.status, err.body, req);
         }
         return await handleChatCompletions(req, res, payload);
+      }
+
+      const sessionSignalMatch = url.pathname.match(/^\/v1\/sessions\/([^/]+)\/signal$/);
+      if (req.method === "POST" && sessionSignalMatch) {
+        let payload;
+        try {
+          payload = await readJsonBody(req);
+        } catch (error) {
+          const err = openAiError(
+            "invalid_request_error",
+            error.message === "request_body_too_large" ? "Request body is too large" : "Invalid JSON body",
+          );
+          return jsonResponse(res, err.status, err.body, req);
+        }
+        return await handleSessionSignal(req, res, decodeURIComponent(sessionSignalMatch[1]), payload || {});
       }
 
       return jsonResponse(res, 404, { error: { type: "not_found", message: url.pathname } }, req);

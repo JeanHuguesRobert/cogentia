@@ -24,7 +24,7 @@
     "test:embedding-step": "node scripts/test-embedding-step.js",
     "test:semantic-worker": "node scripts/test-semantic-search-worker.js",
     "test:query-cache": "node scripts/test-query-embedding-cache.js",
-    "test:agent-gateway": "node scripts/test-agent-gateway-bind.js && node scripts/test-agent-gateway-attractor.js && node scripts/test-agent-gateway.js && node scripts/test-agent-gateway-repl.js",
+    "test:agent-gateway": "node scripts/test-agent-gateway-bind.js && node scripts/test-agent-gateway-attractor.js && node scripts/test-agent-gateway.js && node scripts/test-agent-gateway-repl.js && node scripts/test-agent-gateway-session-entities.js",
     "agent-gateway": "node scripts/agent-gateway.js",
     "semantic:worker": "node scripts/semantic-search-worker.js",
     "embeddings:step": "node scripts/embedding-step.js",

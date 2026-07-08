@@ -1,5 +1,6 @@
 import path from "node:path";
 import { randomBytes } from "node:crypto";
+import { applySessionSignal } from "./session-signals.js";
 
 const DEFAULT_TTL_MS = 30 * 60 * 1000;
 
@@ -41,7 +42,7 @@ export class ReplSessionRegistry {
       if (session.busy) continue;
       if (session.adapterId !== adapterId) continue;
       if (path.resolve(session.cwd) !== resolvedCwd) continue;
-      if (!session.pty) continue;
+      if (!session.handle && !session.pty) continue;
       return session;
     }
     return null;
@@ -51,7 +52,8 @@ export class ReplSessionRegistry {
    * Acquire mutex and return session. Creates session when id is unknown.
    * @throws {{ code: string, message: string, status: number }}
    */
-  async acquireSession({ sessionId, adapter, model, turn, ctx, spawnPty }) {
+  async acquireSession({ sessionId, adapter, model, turn, ctx, spawnRepl, spawnPty }) {
+    const spawn = spawnRepl || spawnPty;
     this.pruneExpired();
     const requestedId = String(sessionId || "").trim();
     let session = requestedId ? this.sessions.get(requestedId) : null;
@@ -90,6 +92,8 @@ export class ReplSessionRegistry {
         model,
         cwd: path.resolve(turn.cwd),
         pty: null,
+        handle: null,
+        stderrBuffer: "",
         busy: false,
         createdAt: Date.now(),
         lastActivity: Date.now(),
@@ -98,7 +102,8 @@ export class ReplSessionRegistry {
         pendingWaiters: [],
         dataDisposable: null,
       };
-      session.pty = await spawnPty(session);
+      session.handle = await spawn(session);
+      session.pty = session.handle;
       this.sessions.set(id, session);
       sessionSpawned = true;
       sessionReused = false;
@@ -125,6 +130,25 @@ export class ReplSessionRegistry {
     return { session, sessionSpawned, sessionReused };
   }
 
+  /**
+   * Send an out-of-band signal to a live session (works while busy).
+   * @param {string} sessionId
+   * @param {{ signal?: string, bytes?: string, kill?: string }} payload
+   * @param {object|null} adapter
+   */
+  sendSignal(sessionId, payload, adapter = null) {
+    const session = this.sessions.get(sessionId);
+    if (!session) {
+      throw {
+        code: "session_not_found",
+        message: `Unknown session_id: ${sessionId}`,
+        status: 404,
+      };
+    }
+    const handle = session.handle || session.pty;
+    return applySessionSignal(handle, payload, adapter);
+  }
+
   releaseSession(sessionId) {
     const session = this.sessions.get(sessionId);
     if (!session) return;
@@ -142,7 +166,8 @@ export class ReplSessionRegistry {
     if (!session) return;
     session.dataDisposable?.dispose?.();
     try {
-      session.pty?.kill?.();
+      const handle = session.handle || session.pty;
+      handle?.kill?.("SIGTERM");
     } catch {}
     this.sessions.delete(sessionId);
   }

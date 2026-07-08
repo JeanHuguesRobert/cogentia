@@ -1,5 +1,5 @@
 import { createExpectLoop, waitForReplReady } from "./expect-loop.js";
-import { resolveSpawnSpec } from "./spawn-util.js";
+import { createReplHandle } from "./repl-handle.js";
 
 let ptyModulePromise = null;
 
@@ -18,28 +18,15 @@ async function loadPty() {
   }
 }
 
-export async function spawnReplPty(adapter, turn, ctx, session = null) {
+export async function spawnReplProcess(adapter, turn, ctx, session = null) {
   if (!adapter.buildReplInvocation) {
     throw Object.assign(new Error("adapter_repl_unsupported"), { code: "repl_unsupported" });
   }
-  const pty = await loadPty();
   const spec = adapter.buildReplInvocation(turn, ctx);
-  const resolved = resolveSpawnSpec(spec);
-  const ptyProcess = pty.spawn(resolved.command, resolved.args, {
-    name: "xterm-color",
-    cols: 120,
-    rows: 30,
-    cwd: spec.cwd,
-    env: spec.env || process.env,
-  });
-  if (session) {
-    ptyProcess.onData(data => {
-      session.buffer += data;
-      session.lastActivity = Date.now();
-      session.pendingWaiters?.forEach(waiter => waiter(data));
-    });
+  if (spec.transport === "pipe") {
+    return createReplHandle(spec, session, loadPty);
   }
-  return ptyProcess;
+  return createReplHandle({ ...spec, transport: "pty" }, session, loadPty);
 }
 
 export async function runReplTurn(adapter, turn, ctx, registry, options = {}) {
@@ -61,7 +48,7 @@ export async function runReplTurn(adapter, turn, ctx, registry, options = {}) {
     model: options.model,
     turn,
     ctx,
-    spawnPty: shell => spawnReplPty(adapter, turn, ctx, shell),
+    spawnRepl: shell => spawnReplProcess(adapter, turn, ctx, shell),
   });
   trace?.mark("repl_acquired", { session_spawned: sessionSpawned, session_reused: sessionReused });
 
@@ -69,6 +56,7 @@ export async function runReplTurn(adapter, turn, ctx, registry, options = {}) {
     session_spawned: sessionSpawned,
     session_reused: sessionReused,
     bootstrap_ms: 0,
+    transport: session.handle?.transport || session.pty?.transport || "pty",
   };
 
   try {
@@ -92,10 +80,6 @@ export async function runReplTurn(adapter, turn, ctx, registry, options = {}) {
       trace?.mark("repl_bootstrap_done");
     }
 
-    if (!adapter.writeReplTurn) {
-      throw new Error("adapter_write_repl_missing");
-    }
-
     const turnTimeoutMs = Number(ctx.replTurnTimeoutMs || 180_000);
 
     return await new Promise((resolve, reject) => {
@@ -104,6 +88,8 @@ export async function runReplTurn(adapter, turn, ctx, registry, options = {}) {
         registry.releaseSession(session.id);
         reject(Object.assign(new Error("repl_turn_timeout"), { code: "repl_turn_timeout", status: 504 }));
       }, turnTimeoutMs);
+
+      const stderrChunks = [];
 
       const loop = createExpectLoop({
         adapter,
@@ -121,6 +107,7 @@ export async function runReplTurn(adapter, turn, ctx, registry, options = {}) {
             error: Boolean(result.error),
             exitCode: result.exitCode ?? null,
             deltas: loop.deltas,
+            stderr: stderrChunks.join("").trim() || null,
             timing: replTiming,
           });
         },
@@ -133,16 +120,20 @@ export async function runReplTurn(adapter, turn, ctx, registry, options = {}) {
       });
 
       let exitDisposable = null;
+      let stderrDisposable = null;
 
       function cleanup() {
         clearTimeout(turnTimer);
         loop.dispose();
         session.dataDisposable?.dispose?.();
         session.dataDisposable = null;
+        stderrDisposable?.dispose?.();
+        stderrDisposable = null;
         exitDisposable?.dispose?.();
         exitDisposable = null;
       }
 
+      const handle = session.handle || session.pty;
       const onTurnData = data => loop.append(data);
       session.pendingWaiters = session.pendingWaiters || [];
       session.pendingWaiters.push(onTurnData);
@@ -152,7 +143,13 @@ export async function runReplTurn(adapter, turn, ctx, registry, options = {}) {
         },
       };
 
-      exitDisposable = session.pty.onExit(({ exitCode }) => {
+      stderrDisposable = handle.onStderr?.(data => {
+        const text = data.toString("utf8");
+        stderrChunks.push(text);
+        onDelta?.({ stderr: text });
+      });
+
+      exitDisposable = handle.onExit(({ exitCode }) => {
         loop.onChildExit(exitCode);
         if (!loop.completed) {
           registry.destroySession(session.id);
@@ -161,7 +158,7 @@ export async function runReplTurn(adapter, turn, ctx, registry, options = {}) {
 
       try {
         trace?.mark("repl_turn_sent");
-        adapter.writeReplTurn(session.pty, turn);
+        adapter.writeReplTurn(handle, turn);
         loop.signalSent();
       } catch (error) {
         cleanup();
