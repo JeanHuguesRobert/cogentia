@@ -22,6 +22,9 @@ export function createExpectLoop(options) {
 
   let buffer = "";
   let assistantStarted = false;
+  let turnSent = false;
+  let postSendBytes = 0;
+  let lastEmittedLen = 0;
   let lineRemainder = "";
   let completed = false;
   let inactivityTimer = null;
@@ -112,6 +115,23 @@ export function createExpectLoop(options) {
     }
   }
 
+  function emitPostSendTail() {
+    if (!turnSent) return;
+    const norm = strippedTail();
+    if (norm.length <= lastEmittedLen) return;
+    const slice = norm.slice(lastEmittedLen);
+    lastEmittedLen = norm.length;
+    if (!slice.trim()) return;
+    if (adapter.filterReplNoise) {
+      for (const line of slice.split("\n")) {
+        const filtered = adapter.filterReplNoise(line);
+        if (filtered) emitContent(filtered.endsWith("\n") ? filtered : `${filtered}\n`);
+      }
+    } else {
+      emitContent(slice);
+    }
+  }
+
   return {
     get completed() {
       return completed;
@@ -119,11 +139,21 @@ export function createExpectLoop(options) {
     get deltas() {
       return deltas;
     },
+    signalSent() {
+      turnSent = true;
+      postSendBytes = 0;
+      lastEmittedLen = strippedTail().length;
+    },
     append(chunk) {
       if (completed) return;
       const text = typeof chunk === "string" ? chunk : chunk.toString("utf8");
       buffer += text;
+      if (turnSent) {
+        postSendBytes += text.length;
+        if (postSendBytes > 40) assistantStarted = true;
+      }
       emitLines(text);
+      emitPostSendTail();
       evaluateRules();
       if (!completed) scheduleInactivity();
     },
@@ -145,9 +175,8 @@ export function createExpectLoop(options) {
 /** Wait until a REPL shows its initial ready prompt before the first send. */
 export function waitForReplReady({ config, getBuffer, onData, timeoutMs = 120_000 }) {
   const rules = [...(config.rules || [])].sort((a, b) => a.priority - b.priority);
-  const readyRule = rules.find(r => r.action === "complete" && /ready/.test(r.id))
-    || rules.find(r => r.action === "complete");
-  if (!readyRule) {
+  const readyRules = rules.filter(r => r.action === "complete");
+  if (!readyRules.length) {
     return Promise.reject(new Error("repl_ready_rule_missing"));
   }
 
@@ -159,7 +188,7 @@ export function waitForReplReady({ config, getBuffer, onData, timeoutMs = 120_00
       ? normalizePtyText(getBuffer())
       : getBuffer().replace(/\r\n/g, "\n").replace(/\r/g, "\n");
     const tail = text.slice(-tailWindowBytes);
-    return readyRule.pattern.test(tail);
+    return readyRules.some(rule => rule.pattern.test(tail));
   };
 
   if (isReady()) return Promise.resolve();

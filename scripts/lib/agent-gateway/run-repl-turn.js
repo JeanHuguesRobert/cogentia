@@ -146,6 +146,7 @@ export async function runReplTurn(adapter, turn, ctx, registry, options = {}) {
 
       try {
         adapter.writeReplTurn(session.pty, turn);
+        loop.signalSent();
       } catch (error) {
         cleanup();
         registry.releaseSession(session.id);

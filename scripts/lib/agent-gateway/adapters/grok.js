@@ -99,11 +99,14 @@ export const grokAdapter = {
   getExpectConfig() {
     return {
       rules: [
-        { id: "grok-banner", pattern: /grok\s+[\d.]+/i, action: "continue", priority: 10 },
-        { id: "grok-thinking", pattern: /(?:^|\n).*(?:thinking|working).*$/im, action: "continue", priority: 20 },
-        { id: "grok-ready", pattern: /(?:^|\n)[›>❯]\s*$/m, action: "complete", priority: 30 },
+        { id: "grok-banner", pattern: /Grok Build/i, action: "continue", priority: 10 },
+        { id: "grok-thinking", pattern: /(?:^|\n).*(?:thinking|working|Starting session).*$/im, action: "continue", priority: 20 },
+        // Calibrated on grok 0.2.87 Windows TUI — box prompt with ❯ (spec §7.4.4)
+        { id: "grok-ready", pattern: /│\s*❯\s*│/m, action: "complete", priority: 30 },
+        // Fallback for plain prompt variants (Termux / older builds)
+        { id: "grok-ready-alt", pattern: /(?:^|\n)[›>❯]\s*$/m, action: "complete", priority: 35 },
       ],
-      inactivityMs: 300,
+      inactivityMs: 500,
       stripAnsi: true,
       tailWindowBytes: 65536,
     };
@@ -113,8 +116,12 @@ export const grokAdapter = {
     const trimmed = String(line).trim();
     if (!trimmed) return null;
     if (/^grok\s+[\d.]+/i.test(trimmed)) return null;
+    if (/^Grok Build/i.test(trimmed)) return null;
     if (/^(?:›|>|❯)\s*$/.test(trimmed)) return null;
-    if (/^(?:thinking|working)\b/i.test(trimmed)) return null;
+    if (/^│\s*❯\s*│$/.test(trimmed)) return null;
+    if (/^[╭╰│─]+$/.test(trimmed)) return null;
+    if (/^(?:thinking|working|Composer|Changelog|Quit|Resume|Tip:)\b/i.test(trimmed)) return null;
+    if (/^[⠀\s]+$/.test(trimmed)) return null;
     return `${trimmed}\n`;
   },
 };
