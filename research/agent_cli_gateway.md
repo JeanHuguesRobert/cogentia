@@ -598,6 +598,7 @@ CLI entry: `node scripts/agent-gateway.js --host 127.0.0.1 --port 8793`
 ## 15. References
 
 - [Cogentia Context Gateway](../docs/cogentia-context-gateway.md) — read plane
+- [Agent Gateway invocation runbook](../docs/agent-gateway-invocation.md) — blackboard-routed invocation and Fractanet acceptance commands
 - [Trusted Boundaries](trusted_boundaries.md) — fractal trust and action-boundary doctrine
 - [Agent-Resumable CLI](agent_resumable_cli.md) — continuation protocol (orthogonal)
 - [Fractanet mesh](../../operium/docs/fractanet-mesh.md) — node capabilities, `poco-jhr` dev stack
@@ -610,3 +611,4 @@ CLI entry: `node scripts/agent-gateway.js --host 127.0.0.1 --port 8793`
 |------|--------|
 | 2026-07-07 | Initial specification draft |
 | 2026-07-07 | §7.4 Expect-equivalent semantics, pattern tables, calibration workflow |
+| 2026-07-08 | Added invocation runbook reference |

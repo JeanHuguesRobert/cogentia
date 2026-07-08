@@ -141,6 +141,7 @@ This repository instantiates the **cognitive infrastructure layer** of the [DHIT
 | [Cogentia Context Gateway](../docs/cogentia-context-gateway.md) *(governed public Markdown RAG facade with deterministic context packs, citations and strict public/admin separation)* | this repo | 2026-06-23 |
 | [Cogentia MCP adapter](../docs/cogentia-mcp.md) *(stdio tools that retrieve through the daemon HTTP boundary and never access SQLite directly)* | this repo | 2026-06-23 |
 | [Connect MCP clients to Cogentia](../docs/connect-mcp-clients.md) *(client setup guide for local stdio, local HTTP, Fracta public MCP, and ChatGPT connector smoke tests)* | this repo | 2026-06-30 |
+| [Agent Gateway invocation runbook](../docs/agent-gateway-invocation.md) *(blackboard-routed invocation commands, Fractanet acceptance checks, and action-boundary usage rules for the Agent CLI Gateway)* | this repo | 2026-07-08 |
 | [Cogentia and Magistral Boundary](../docs/cogentia-magistral-boundary.md) *(service boundary for corpus authority, model routing, AI-router APIs, embedding policy and local/public deployments)* | this repo | 2026-06-28 |
 | [FractaVolta Guide Eval](../docs/guide-eval.md) *(operational evaluation runs for Guide answers and prompt/model regressions)* | this repo | 2026-07-02 |
 | [Retrieval roadmap — Guide, Ophelia, Fractanet](../docs/retrieval-roadmap.md) *(operational roadmap for embedding serving, public Guide retrieval and Fractanet/Inox integration)* | this repo | 2026-07-03 |
