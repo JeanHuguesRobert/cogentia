@@ -20,6 +20,12 @@ import {
   parseBlackboardUpsertBody,
 } from "./lib/packet-attractor-blackboard.js";
 import { buildFractanetOpsStatus } from "./lib/fractanet-ops-status.js";
+import {
+  actionRouteToken,
+  hasActionRouteAuth,
+  parseActionRouteBody,
+  routeActionThroughGateway,
+} from "./lib/agent-gateway-route.js";
 
 const moduleDir = path.dirname(fileURLToPath(import.meta.url));
 const fractanetDashboardPath = path.join(moduleDir, "ops", "fractanet-dashboard.html");
@@ -78,6 +84,7 @@ const server = http.createServer(async (req, res) => {
     if (req.method === "POST" && req.url === "/ops/blackboard/upsert") return handleBlackboardUpsert(req, res);
     if (req.method === "GET" && req.url === "/ops/status") return handleOpsStatus(req, res);
     if (req.method === "GET" && req.url === "/ops/dashboard") return handleOpsDashboard(req, res);
+    if (req.method === "POST" && req.url === "/ops/route/action") return handleOpsRouteAction(req, res);
     if (req.method === "POST" && req.url === "/guide/chat") return handleGuideChat(req, res);
     if (req.method === "GET" && req.url === "/sse") return sendSseInfo(req, res);
     if (req.method === "GET" && req.url === "/mcp") return sendSseInfo(req, res);
@@ -97,7 +104,7 @@ server.listen(port, host, () => {
   console.error(`Daemon: ${core.daemonUrl.href}`);
   console.error("Endpoints: POST /mcp, GET /mcp, GET /health, GET /tools, POST /tools/{name}");
   console.error("Blackboard: GET /ops/blackboard, POST /ops/blackboard/upsert");
-  console.error("Ops: GET /ops/status, GET /ops/dashboard");
+  console.error("Ops: GET /ops/status, GET /ops/dashboard, POST /ops/route/action");
 });
 
 async function health() {
@@ -133,6 +140,17 @@ async function guideHealth() {
         limit: guideWebSearchLimit,
       },
       blackboard: summarizeBlackboardHealth(),
+      action_route: {
+        configured: Boolean(actionRouteToken()),
+        gateway_token_configured: Boolean(
+          String(
+            process.env.AGENT_GATEWAY_INVOKE_TOKEN
+            || process.env.AGENT_GATEWAY_ACCEPT_TOKEN
+            || process.env.AGENT_GATEWAY_TOKEN
+            || "",
+          ).trim(),
+        ),
+      },
       daemon,
     },
   };
@@ -173,6 +191,33 @@ async function handleBlackboardGet(req, res) {
   const capability = url.searchParams.get("capability") || "";
   const fresh = url.searchParams.get("fresh") !== "0";
   return sendJson(res, 200, blackboard.snapshot({ capability, fresh }));
+}
+
+async function handleOpsRouteAction(req, res) {
+  if (!hasActionRouteAuth(req)) {
+    return sendJson(res, 401, { ok: false, error: "unauthorized_action_route" });
+  }
+  let body;
+  try {
+    body = JSON.parse(await readBody(req, 256 * 1024) || "{}");
+  } catch (error) {
+    return sendJson(res, error.message === "request_body_too_large" ? 413 : 400, {
+      ok: false,
+      error: error.message === "request_body_too_large" ? "request_body_too_large" : "invalid_json",
+    });
+  }
+  const parsed = parseActionRouteBody(body);
+  if (!parsed.ok) {
+    return sendJson(res, 400, { ok: false, error: parsed.error });
+  }
+  const result = await routeActionThroughGateway(blackboard, parsed);
+  if (!result.ok) {
+    const status = result.error === "attractor_not_found" ? 404
+      : result.error === "attractor_degraded" ? 503
+      : 502;
+    return sendJson(res, status, result);
+  }
+  return sendJson(res, 200, result);
 }
 
 async function handleBlackboardUpsert(req, res) {
@@ -1400,5 +1445,5 @@ function applyCors(req, res) {
   if (!allowed) return;
   res.setHeader("Access-Control-Allow-Origin", origin || "*");
   res.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
-  res.setHeader("Access-Control-Allow-Headers", "Content-Type, MCP-Protocol-Version, Mcp-Session-Id");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization, MCP-Protocol-Version, Mcp-Session-Id");
 }

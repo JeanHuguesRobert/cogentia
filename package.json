@@ -24,7 +24,7 @@
     "test:embedding-step": "node scripts/test-embedding-step.js",
     "test:semantic-worker": "node scripts/test-semantic-search-worker.js",
     "test:query-cache": "node scripts/test-query-embedding-cache.js",
-    "test:agent-gateway": "node scripts/test-agent-gateway-bind.js && node scripts/test-agent-gateway-attractor.js && node scripts/test-agent-gateway.js && node scripts/test-agent-gateway-repl.js && node scripts/test-agent-gateway-session-entities.js && node scripts/test-agent-gateway-resolve.js && node scripts/test-agent-gateway-watchdog.js && node scripts/test-agent-gateway-client.js",
+    "test:agent-gateway": "node scripts/test-agent-gateway-bind.js && node scripts/test-agent-gateway-attractor.js && node scripts/test-agent-gateway.js && node scripts/test-agent-gateway-repl.js && node scripts/test-agent-gateway-session-entities.js && node scripts/test-agent-gateway-resolve.js && node scripts/test-agent-gateway-watchdog.js && node scripts/test-agent-gateway-client.js && node scripts/test-agent-gateway-route.js",
     "bench:repl-reuse": "node scripts/bench-agent-gateway-repl-reuse.js",
     "accept:agent-gateway": "node scripts/ops/accept-agent-gateway-fractanet.js",
     "invoke:agent-gateway": "node scripts/agent-gateway-invoke.js",

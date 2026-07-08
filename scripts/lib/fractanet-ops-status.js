@@ -1,3 +1,5 @@
+import { summarizeActionLayer } from "./agent-gateway-route.js";
+
 export function summarizeBlackboardSnapshots(blackboard, options = {}) {
   const all = blackboard.snapshot({ fresh: false, ...options });
   const fresh = blackboard.snapshot({ fresh: true, ...options });
@@ -74,6 +76,7 @@ export async function buildFractanetOpsStatus(deps = {}) {
         transport: guideContext.inox_retrieval?.transport || null,
         phase2_wired: false,
       },
+      action: summarizeActionLayer(blackboardSummary),
       public_face: {
         guide_url: "https://cogentia.fractavolta.com",
         dashboard_url: "https://cogentia.fractavolta.com/ops/dashboard",
