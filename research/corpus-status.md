@@ -81,11 +81,11 @@ graph LR
   r_jeanhuguesrobert -->|34| r_cogentia
   r_barons_mariani -->|22| r_marenostrum
   r_cogentia -->|22| r_inseme
-  r_fractavolta -->|20| r_inseme
+  r_fractavolta -->|22| r_inseme
   r_inseme -->|20| r_cogentia
   r_cogentia -->|19| r_marenostrum
+  r_fractavolta -->|18| r_barons_mariani
   r_barons_mariani -->|17| r_fractavolta
-  r_fractavolta -->|17| r_barons_mariani
   r_barons_mariani -->|16| r_inseme
   r_jeanhuguesrobert -->|16| r_marenostrum
   r_marenostrum -->|14| r_cogentia
@@ -99,7 +99,7 @@ graph LR
   r_jeanhuguesrobert -->|9| r_fractavolta
   r_fractavolta -->|8| r_inox
   r_inox -->|8| r_marenostrum
-  r_inseme -->|6| r_fractavolta
+  r_inseme -->|8| r_fractavolta
   r_jeanhuguesrobert -->|6| r_inseme
   r_jeanhuguesrobert -->|6| r_inox
   r_barons_mariani -->|5| r_inox
