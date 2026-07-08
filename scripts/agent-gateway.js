@@ -71,7 +71,7 @@ if (bind.warning) {
   console.error(`Warning: ${bind.warning} — binding 0.0.0.0 instead`);
 }
 
-const { server, ctx } = createAgentGateway();
+const { server, ctx } = createAgentGateway({ bind });
 server.listen(port, bind.host, () => {
   const models = ctx.useMock ? "grok-build,claude-code,codex (mock)" : "grok-build,claude-code,codex";
   const tailscaleNote = bind.tailscale_ip ? `, tailscale=${bind.tailscale_ip}` : "";

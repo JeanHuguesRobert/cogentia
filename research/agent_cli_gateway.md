@@ -495,6 +495,24 @@ No proot wrappers; `HostContext.platform = "windows"`.
 
 ## 10. Security and trust
 
+The Agent CLI Gateway is an **action boundary**, not a public context boundary.
+
+It follows the [`Trusted Boundaries`](trusted_boundaries.md) invariant:
+
+```text
+cognitive access != public exposure != action power
+```
+
+Default policy:
+
+| Exposure | Policy |
+|----------|--------|
+| Public Internet | Not a supported default exposure |
+| Localhost | Allowed for owner/admin operation |
+| Tailnet | Allowed with bearer token and node-level trust |
+| Shell / database / interpreter tools | Admin-only action tools |
+| Context retrieval | Use the Context Gateway, not this action daemon |
+
 | Concern | Policy |
 |---------|--------|
 | Bind address | `127.0.0.1` default; Tailscale exposure via explicit config |
@@ -580,6 +598,7 @@ CLI entry: `node scripts/agent-gateway.js --host 127.0.0.1 --port 8793`
 ## 15. References
 
 - [Cogentia Context Gateway](../docs/cogentia-context-gateway.md) — read plane
+- [Trusted Boundaries](trusted_boundaries.md) — fractal trust and action-boundary doctrine
 - [Agent-Resumable CLI](agent_resumable_cli.md) — continuation protocol (orthogonal)
 - [Fractanet mesh](../../operium/docs/fractanet-mesh.md) — node capabilities, `poco-jhr` dev stack
 - [Packet Attractor](../../inseme/research/packet_attractor_fractanet.md) — attractor routing

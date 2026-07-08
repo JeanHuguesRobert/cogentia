@@ -33,6 +33,11 @@ try {
   assert.equal(health.ok, true);
   assert.equal(health.service, "agent-cli-gateway");
   assert.equal(health.schema, "agent-gateway.health.v1");
+  assert.equal(health.trust_boundary.schema, "agent-gateway.trust-boundary.v1");
+  assert.equal(health.trust_boundary.plane, "action");
+  assert.equal(health.trust_boundary.public_internet, false);
+  assert.equal(health.trust_boundary.default_exposure, "local");
+  assert.equal(health.trust_boundary.authority, "admin");
   assert.equal(health.adapters.mock.ok, true);
 
   const models = await getJson("/v1/models");

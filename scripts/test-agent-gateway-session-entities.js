@@ -37,7 +37,16 @@ try {
   const health = await getJson("/health");
   const tools = await getJson("/v1/tools");
   assert.equal(tools.schema, "agent-gateway.tools.v1");
+  assert.equal(health.trust_boundary.plane, "action");
+  assert.equal(health.trust_boundary.public_internet, false);
+  assert.equal(health.trust_boundary.authority, "admin");
   results.tool_count = tools.data.length;
+  for (const tool of tools.data) {
+    assert.equal(tool.trust_boundary.plane, "action", tool.id);
+    assert.equal(tool.trust_boundary.authority, "admin", tool.id);
+    assert.equal(tool.trust_boundary.public_internet, false, tool.id);
+    assert.equal(tool.trust_boundary.requires_cwd_policy, true, tool.id);
+  }
 
   for (const entity of ["python", "nodejs", "inox", "shell", "sqlite", "psql", "ipython"]) {
     results.entities[entity] = { probe: health.adapters?.[entity] || null };

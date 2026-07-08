@@ -53,6 +53,7 @@ export function createAgentGateway(options = {}) {
     useMock: env.AGENT_GATEWAY_TEST_MOCK === "1",
   };
   const token = env.AGENT_GATEWAY_TOKEN || "";
+  const trustBoundary = buildTrustBoundary(ctx, token, options.bind);
   const gate = new ConcurrencyGate(ctx.maxConcurrent);
   const replRegistry = new ReplSessionRegistry({ maxSessions: ctx.maxConcurrent });
 
@@ -68,11 +69,13 @@ export function createAgentGateway(options = {}) {
       hostname: ctx.hostname,
       platform: ctx.platform,
       repl_sessions: replRegistry.size(),
+      trust_boundary: trustBoundary,
       adapters: probes,
       tools: listSessionTools(ctx).map(adapter => ({
         id: adapter.id,
         models: adapter.models,
         tool_category: adapter.toolCategory || null,
+        trust_boundary: toolTrustBoundary(adapter),
         probe: probes[adapter.id] || null,
       })),
     };
@@ -88,6 +91,7 @@ export function createAgentGateway(options = {}) {
         models: adapter.models,
         tool_category: adapter.toolCategory || null,
         default_mode: adapter.defaultMode || "repl",
+        trust_boundary: toolTrustBoundary(adapter),
         probe,
         signals: adapter.signals ? Object.keys(adapter.signals) : ["interrupt", "eof", "terminate"],
       });
@@ -485,6 +489,42 @@ export function createAgentGateway(options = {}) {
   });
 
   return { server, ctx, replRegistry };
+}
+
+function buildTrustBoundary(ctx, token, bind = null) {
+  const bindMode = bind?.mode || "unknown";
+  return {
+    schema: "agent-gateway.trust-boundary.v1",
+    plane: "action",
+    public_internet: false,
+    default_exposure: bindMode === "loopback" ? "local" : bindMode,
+    bind_mode: bindMode,
+    token_required: bindMode !== "loopback",
+    token_configured: Boolean(String(token || "").trim()),
+    cwd_policy: ctx.allowAnyCwd ? "dev-allow-any" : "repo-roots",
+    source_of_truth: "git+filesystem",
+    context_boundary: "not-a-context-gateway",
+    authority: "admin",
+  };
+}
+
+function toolTrustBoundary(adapter) {
+  return {
+    plane: "action",
+    authority: "admin",
+    exposure: "local-or-tailnet",
+    public_internet: false,
+    action_power: actionPowerFor(adapter),
+    requires_cwd_policy: true,
+  };
+}
+
+function actionPowerFor(adapter) {
+  const category = adapter.toolCategory || "agent";
+  if (category === "shell") return "command-execution";
+  if (category === "database") return "database-session";
+  if (category === "interpreter") return "interpreter-session";
+  return "agent-session";
 }
 
 function resolveAdapterMode(payload, adapter) {
