@@ -62,6 +62,17 @@ export function loadHostContext(env = process.env) {
     nodejsCommand: env.AGENT_GATEWAY_NODEJS_COMMAND || "node",
     inoxCommand: env.AGENT_GATEWAY_INOX_COMMAND || "inox",
     inoxCommandArgs: splitPaths(env.AGENT_GATEWAY_INOX_COMMAND_ARGS || ""),
+    shellCommand: env.AGENT_GATEWAY_SHELL_COMMAND || (detectPlatform() === "windows" ? "pwsh" : "bash"),
+    shellMode: env.AGENT_GATEWAY_SHELL_MODE || "fixture",
+    sqliteCommand: env.AGENT_GATEWAY_SQLITE_COMMAND || "sqlite3",
+    sqliteDatabase: env.AGENT_GATEWAY_SQLITE_DATABASE || ":memory:",
+    psqlCommand: env.AGENT_GATEWAY_PSQL_COMMAND || "psql",
+    psqlDatabase: env.AGENT_GATEWAY_PSQL_DATABASE || "postgres",
+    psqlArgsEnv: env.AGENT_GATEWAY_PSQL_ARGS || "",
+    ipythonCommand: env.AGENT_GATEWAY_IPYTHON_COMMAND || (detectPlatform() === "windows" ? "python" : "python3"),
+    ipythonArgsPrefix: env.AGENT_GATEWAY_IPYTHON_ARGS_PREFIX
+      ? String(env.AGENT_GATEWAY_IPYTHON_ARGS_PREFIX).split(/\s+/).filter(Boolean)
+      : ["-m", "IPython"],
   };
 }
 

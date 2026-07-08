@@ -62,22 +62,28 @@ export async function runReplTurn(adapter, turn, ctx, registry, options = {}) {
   try {
     if (session.needsBootstrap) {
       const bootstrapStart = Date.now();
-      await waitForReplReady({
-        adapter,
-        config: expectConfig,
-        timeoutMs: ctx.replBootstrapTimeoutMs,
-        getBuffer: () => session.buffer,
-        onData(handler) {
-          session.pendingWaiters = session.pendingWaiters || [];
-          session.pendingWaiters.push(handler);
-          return () => {
-            session.pendingWaiters = session.pendingWaiters.filter(w => w !== handler);
-          };
-        },
-      });
-      session.needsBootstrap = false;
-      replTiming.bootstrap_ms = Date.now() - bootstrapStart;
-      trace?.mark("repl_bootstrap_done");
+      if (expectConfig.bootstrapMode === "immediate") {
+        session.needsBootstrap = false;
+        replTiming.bootstrap_ms = 0;
+        trace?.mark("repl_bootstrap_done", { mode: "immediate" });
+      } else {
+        await waitForReplReady({
+          adapter,
+          config: expectConfig,
+          timeoutMs: ctx.replBootstrapTimeoutMs,
+          getBuffer: () => session.buffer,
+          onData(handler) {
+            session.pendingWaiters = session.pendingWaiters || [];
+            session.pendingWaiters.push(handler);
+            return () => {
+              session.pendingWaiters = session.pendingWaiters.filter(w => w !== handler);
+            };
+          },
+        });
+        session.needsBootstrap = false;
+        replTiming.bootstrap_ms = Date.now() - bootstrapStart;
+        trace?.mark("repl_bootstrap_done");
+      }
     }
 
     const turnTimeoutMs = Number(ctx.replTurnTimeoutMs || 180_000);

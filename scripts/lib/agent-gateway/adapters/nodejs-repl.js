@@ -13,6 +13,7 @@ export const nodejsReplEntity = {
   models: ["nodejs-repl"],
   defaultMode: "repl",
   entityKind: "session",
+  toolCategory: "interpreter",
 
   async probe(ctx) {
     const { spawnResolved } = await import("../spawn-util.js");

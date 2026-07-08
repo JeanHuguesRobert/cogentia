@@ -6,6 +6,7 @@ export const pythonReplEntity = {
   models: ["python-repl"],
   defaultMode: "repl",
   entityKind: "session",
+  toolCategory: "interpreter",
 
   async probe(ctx) {
     const { spawnResolved } = await import("../spawn-util.js");

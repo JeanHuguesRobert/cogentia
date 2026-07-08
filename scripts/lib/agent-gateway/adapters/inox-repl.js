@@ -30,6 +30,7 @@ export const inoxReplEntity = {
   models: ["inox-repl"],
   defaultMode: "repl",
   entityKind: "session",
+  toolCategory: "interpreter",
 
   async probe(ctx) {
     const { spawnResolved } = await import("../spawn-util.js");

@@ -18,7 +18,7 @@ const daemon = spawn(process.execPath, ["scripts/agent-gateway.js", "--host", "1
     ...process.env,
     AGENT_GATEWAY_ALLOW_ANY_CWD: "1",
     AGENT_GATEWAY_REPO_ROOTS: workspace,
-    AGENT_GATEWAY_MAX_CONCURRENT: "4",
+    AGENT_GATEWAY_MAX_CONCURRENT: "12",
     AGENT_GATEWAY_REPL_BOOTSTRAP_TIMEOUT_MS: "60000",
     AGENT_GATEWAY_REPL_TURN_TIMEOUT_MS: "60000",
     AGENT_GATEWAY_TOKEN: token,
@@ -35,7 +35,11 @@ try {
   await waitForHealth();
 
   const health = await getJson("/health");
-  for (const entity of ["python", "nodejs", "inox"]) {
+  const tools = await getJson("/v1/tools");
+  assert.equal(tools.schema, "agent-gateway.tools.v1");
+  results.tool_count = tools.data.length;
+
+  for (const entity of ["python", "nodejs", "inox", "shell", "sqlite", "psql", "ipython"]) {
     results.entities[entity] = { probe: health.adapters?.[entity] || null };
   }
 
@@ -75,7 +79,37 @@ try {
     results.entities.inox.skipped = "probe_failed";
   }
 
-  const ran = ["python", "nodejs", "inox"].some(id => !results.entities[id].skipped);
+  if (health.adapters?.shell?.ok) {
+    const sh = await replTurn("shell-repl", "echo shell-tool-ok", /shell-tool-ok/);
+    results.entities.shell.turn1_ms = sh.wall_ms;
+  } else {
+    results.entities.shell.skipped = "probe_failed";
+  }
+
+  if (health.adapters?.sqlite?.ok) {
+    const sql = await replTurn("sqlite-repl", "select 42;", /42/);
+    results.entities.sqlite.turn1_ms = sql.wall_ms;
+    const sql2 = await replTurn("sqlite-repl", "select 43;", /43/, sql.session_id);
+    results.entities.sqlite.turn2_ms = sql2.wall_ms;
+    assert.equal(sql2.headers.get("x-agent-gateway-timing-session-reused"), "1");
+  } else {
+    results.entities.sqlite.skipped = "probe_failed";
+  }
+
+  if (health.adapters?.psql?.ok) {
+    results.entities.psql.skipped = "probe_only";
+  } else {
+    results.entities.psql.skipped = "probe_failed";
+  }
+
+  if (health.adapters?.ipython?.ok) {
+    const ipy = await replTurn("ipython-repl", "print(99)", /99/);
+    results.entities.ipython.turn1_ms = ipy.wall_ms;
+  } else {
+    results.entities.ipython.skipped = "probe_failed";
+  }
+
+  const ran = ["python", "nodejs", "inox", "shell", "sqlite"].some(id => !results.entities[id].skipped);
   assert.ok(ran, `no session entities available: ${daemonLog}`);
 
   console.log(JSON.stringify(results, null, 2));

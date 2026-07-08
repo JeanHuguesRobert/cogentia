@@ -1,7 +1,13 @@
 import http from "node:http";
 import path from "node:path";
 import { loadHostContext } from "./host-context.js";
-import { listAdapters, listModels, resolveAdapter, resolveAdapterById } from "./adapter-registry.js";
+import {
+  listAdapters,
+  listModels,
+  listSessionTools,
+  resolveAdapter,
+  resolveAdapterById,
+} from "./adapter-registry.js";
 import { listBuiltinSignals } from "./session-signals.js";
 import { runHeadlessTurn } from "./run-headless.js";
 import { runReplTurn } from "./run-repl-turn.js";
@@ -63,6 +69,33 @@ export function createAgentGateway(options = {}) {
       platform: ctx.platform,
       repl_sessions: replRegistry.size(),
       adapters: probes,
+      tools: listSessionTools(ctx).map(adapter => ({
+        id: adapter.id,
+        models: adapter.models,
+        tool_category: adapter.toolCategory || null,
+        probe: probes[adapter.id] || null,
+      })),
+    };
+  }
+
+  async function handleToolsList() {
+    const tools = [];
+    for (const adapter of listSessionTools(ctx)) {
+      const probe = await adapter.probe(ctx);
+      tools.push({
+        id: adapter.id,
+        object: "session_tool",
+        models: adapter.models,
+        tool_category: adapter.toolCategory || null,
+        default_mode: adapter.defaultMode || "repl",
+        probe,
+        signals: adapter.signals ? Object.keys(adapter.signals) : ["interrupt", "eof", "terminate"],
+      });
+    }
+    return {
+      object: "list",
+      schema: "agent-gateway.tools.v1",
+      data: tools,
     };
   }
 
@@ -408,6 +441,10 @@ export function createAgentGateway(options = {}) {
           object: "list",
           data: listModels(ctx),
         }, req);
+      }
+
+      if (req.method === "GET" && url.pathname === "/v1/tools") {
+        return jsonResponse(res, 200, await handleToolsList(), req);
       }
 
       if (req.method === "POST" && url.pathname === "/v1/chat/completions") {
