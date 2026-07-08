@@ -26,6 +26,8 @@ loadOptionalEnvFiles([
   process.env.COGENTIA_ENV_FILE,
   path.join(os.homedir(), "srv", "cogentia", "secrets", "agent-gateway.env"),
   path.join(os.homedir(), "srv", "cogentia", "secrets", "agent-gateway-blackboard.env"),
+  path.join(os.homedir(), ".cogentia", "secrets", "agent-gateway.env"),
+  path.join(os.homedir(), ".cogentia", "secrets", "agent-gateway-blackboard.env"),
 ]);
 
 const blackboardUrl = String(process.env.COGENTIA_BLACKBOARD_URL || "").trim().replace(/\/$/, "");
@@ -60,6 +62,7 @@ if (!withdraw) {
 }
 
 const models = listModelsFromHealth(health);
+const toolCategories = listToolCategoriesFromHealth(health);
 const attractor = buildAgentCliGatewayAttractor({
   id: process.env.AGENT_GATEWAY_ATTRACTOR_ID || `attractor:${hostname}:agent-cli-gateway`,
   resourceId: process.env.AGENT_GATEWAY_ATTRACTOR_NODE_ID || defaultResourceId,
@@ -67,6 +70,7 @@ const attractor = buildAgentCliGatewayAttractor({
     || `http://${hostname}:${process.env.AGENT_GATEWAY_PORT || 8793}`,
   ttlSeconds: Number(process.env.AGENT_GATEWAY_ATTRACTOR_TTL_SECONDS || 300),
   models: models.length ? models : undefined,
+  toolCategories: toolCategories.length ? toolCategories : undefined,
   status: health?.ok ? "online" : "degraded",
   trustPerimeter: process.env.AGENT_GATEWAY_ATTRACTOR_TRUST_PERIMETER,
 });
@@ -119,6 +123,7 @@ console.log(JSON.stringify({
   endpoint_ref: attractor.transport.endpoint_ref,
   capabilities: attractor.matches.capabilities,
   models: models,
+  tool_categories: toolCategories,
   ttl_seconds: attractor.availability.ttl_seconds,
   snapshot_at: body.snapshot_at,
 }, null, 2));
@@ -127,7 +132,8 @@ async function probeGatewayHealth(url, token) {
   const headers = { Accept: "application/json" };
   if (token) headers.Authorization = `Bearer ${token}`;
   try {
-    const response = await fetch(url, { headers, signal: AbortSignal.timeout(8000) });
+    const timeoutMs = Number(process.env.AGENT_GATEWAY_HEARTBEAT_TIMEOUT_MS || 45_000);
+    const response = await fetch(url, { headers, signal: AbortSignal.timeout(timeoutMs) });
     const body = await response.json();
     return { ok: response.ok && body.ok === true, ...body };
   } catch (error) {
@@ -142,7 +148,24 @@ function listModelsFromHealth(health) {
   if (adapters.grok?.ok) models.push("grok-build");
   if (adapters.claude?.ok) models.push("claude-code");
   if (adapters.codex?.ok) models.push("codex");
-  return models;
+  for (const tool of listHealthyTools(health)) {
+    if (Array.isArray(tool.models)) models.push(...tool.models);
+  }
+  return [...new Set(models.map(value => String(value || "").trim()).filter(Boolean))];
+}
+
+function listToolCategoriesFromHealth(health) {
+  const categories = new Set();
+  for (const tool of listHealthyTools(health)) {
+    const category = String(tool.tool_category || "").trim();
+    if (category) categories.add(category);
+  }
+  return [...categories];
+}
+
+function listHealthyTools(health) {
+  if (!health || !Array.isArray(health.tools)) return [];
+  return health.tools.filter(tool => tool?.probe?.ok === true);
 }
 
 function loadOptionalEnvFiles(files) {

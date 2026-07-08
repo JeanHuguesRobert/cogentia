@@ -250,6 +250,9 @@ export function buildAgentCliGatewayAttractor(options = {}) {
   const models = Array.isArray(options.models) && options.models.length
     ? options.models.map(value => String(value || "").trim()).filter(Boolean)
     : ["grok-build", "claude-code", "codex"];
+  const toolCategories = Array.isArray(options.toolCategories) && options.toolCategories.length
+    ? options.toolCategories.map(value => String(value || "").trim()).filter(Boolean)
+    : [];
   const status = String(options.status || "online").trim() || "online";
 
   return {
@@ -264,6 +267,8 @@ export function buildAgentCliGatewayAttractor(options = {}) {
       capabilities: [
         "agent.cli.gateway",
         "openai.chat.completions",
+        ...(toolCategories.length ? ["session.repl", "dev.tools"] : []),
+        ...toolCategories.map(category => `dev.tools.${category}`),
         ...models.map(model => `coding-agents.${model.split("-")[0]}`),
         ...models.map(model => `model.${model}`),
       ],
