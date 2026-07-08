@@ -24,13 +24,20 @@ if [ ! -f "${COGENTIA_ROOT}/scripts/agent-gateway.js" ]; then
   exit 1
 fi
 
-if [ -f "${COGENTIA_ROOT}/package.json" ] && command -v pnpm >/dev/null 2>&1; then
-  echo "[agent-gateway] installing deps (node-pty for REPL mode)..."
+if [ -f "${COGENTIA_ROOT}/package.json" ]; then
+  echo "[agent-gateway] installing node-pty for REPL mode..."
+  if ! command -v make >/dev/null 2>&1 || ! command -v clang >/dev/null 2>&1; then
+    pkg install -y make clang 2>/dev/null || true
+  fi
   (
     cd "${COGENTIA_ROOT}"
-    pnpm config set onlyBuiltDependencies "node-pty" 2>/dev/null || true
-    pnpm install --frozen-lockfile 2>/dev/null || pnpm install
-    pnpm rebuild node-pty 2>/dev/null || true
+    if command -v pnpm >/dev/null 2>&1; then
+      pnpm config set onlyBuiltDependencies "node-pty" 2>/dev/null || true
+      pnpm install --frozen-lockfile 2>/dev/null || pnpm install
+      pnpm rebuild node-pty 2>/dev/null || true
+    elif command -v npm >/dev/null 2>&1; then
+      npm install node-pty --no-save 2>/dev/null || npm install node-pty
+    fi
   )
 fi
 

@@ -1,11 +1,28 @@
-import pty from "node-pty";
 import { createExpectLoop, waitForReplReady } from "./expect-loop.js";
 import { resolveSpawnSpec } from "./spawn-util.js";
 
-export function spawnReplPty(adapter, turn, ctx, session = null) {
+let ptyModulePromise = null;
+
+async function loadPty() {
+  if (!ptyModulePromise) {
+    ptyModulePromise = import("node-pty").then(mod => mod.default);
+  }
+  try {
+    return await ptyModulePromise;
+  } catch (error) {
+    ptyModulePromise = null;
+    throw Object.assign(new Error("node_pty_unavailable"), {
+      code: "repl_unavailable",
+      cause: error,
+    });
+  }
+}
+
+export async function spawnReplPty(adapter, turn, ctx, session = null) {
   if (!adapter.buildReplInvocation) {
     throw Object.assign(new Error("adapter_repl_unsupported"), { code: "repl_unsupported" });
   }
+  const pty = await loadPty();
   const spec = adapter.buildReplInvocation(turn, ctx);
   const resolved = resolveSpawnSpec(spec);
   const ptyProcess = pty.spawn(resolved.command, resolved.args, {

@@ -72,7 +72,7 @@ export class ReplSessionRegistry {
         pendingWaiters: [],
         dataDisposable: null,
       };
-      session.pty = spawnPty(session);
+      session.pty = await spawnPty(session);
       this.sessions.set(id, session);
     }
 
