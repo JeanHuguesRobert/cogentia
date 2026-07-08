@@ -1121,6 +1121,7 @@ A compliant CLI does not hide judgment. It exposes judgment as a continuation, c
 *These documents link to this file:*
 - [Test du critère Rossignol](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/test_critere_rossignol.md)
 - [Act, mandate and responsibility](act_mandate_responsibility.md)
+- [Agent CLI Gateway](agent_cli_gateway.md)
 - [Cogentia](../COGENTIA.md)
 - [Cogentia](../README.md)
 - [cogentia.js - Tutorial and Near-Specification](cogentia_js_tutorial.md)

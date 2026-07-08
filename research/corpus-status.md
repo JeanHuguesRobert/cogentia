@@ -38,6 +38,7 @@ creator: Jean Hugues Noël Robert, baron Mariani (généré automatiquement par 
 | registre-mariani | yes | main | all | private | stub |
 | ubikia | yes | main | all | public | full |
 | operium | yes | main | all | public | full |
+| serra | no | main | all | public | full |
 | JeanHuguesRobert | yes | main | all | public | full |
 | privai | yes | main | all | public | full |
 | gouvernance | yes | main | all | public | full |
@@ -63,6 +64,7 @@ graph LR
   r_registre_mariani["registre-mariani"]
   r_ubikia["ubikia"]
   r_operium["operium"]
+  r_serra["serra"]
   r_jeanhuguesrobert["JeanHuguesRobert"]
   r_privai["privai"]
   r_gouvernance["gouvernance"]
