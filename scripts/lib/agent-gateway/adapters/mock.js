@@ -7,6 +7,10 @@ const fixturePath = path.resolve(
   path.dirname(fileURLToPath(import.meta.url)),
   "../../../fixtures/agent-gateway-mock-headless.js",
 );
+const replFixturePath = path.resolve(
+  path.dirname(fileURLToPath(import.meta.url)),
+  "../../../fixtures/agent-gateway-mock-repl.js",
+);
 
 /** Test-only adapter — streams NDJSON like grok streaming-json. */
 export const mockAdapter = {
@@ -38,4 +42,18 @@ export const mockAdapter = {
   },
   flushHeadless: grokAdapter.flushHeadless,
   isHeadlessComplete: grokAdapter.isHeadlessComplete,
+
+  buildReplInvocation(turn) {
+    return {
+      command: process.execPath,
+      args: [replFixturePath],
+      cwd: turn.cwd,
+      env: process.env,
+      pty: true,
+    };
+  },
+
+  writeReplTurn: grokAdapter.writeReplTurn,
+  getExpectConfig: grokAdapter.getExpectConfig,
+  filterReplNoise: grokAdapter.filterReplNoise,
 };

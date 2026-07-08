@@ -46,7 +46,14 @@ export function formatMessagesAsPrompt(messages) {
 }
 
 export function stripAnsi(text) {
-  return String(text).replace(/\x1b\[[0-9;]*[A-Za-z]/g, "");
+  return String(text)
+    .replace(/\x1b\[[0-9;?]*[A-Za-z]/g, "")
+    .replace(/\x1b\][^\x07]*\x07/g, "");
+}
+
+/** Strip ANSI escapes and normalize PTY CRLF for regex matching. */
+export function normalizePtyText(text) {
+  return stripAnsi(text).replace(/\r\n/g, "\n").replace(/\r/g, "\n");
 }
 
 export function newCompletionId() {

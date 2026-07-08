@@ -3,6 +3,8 @@ import path from "node:path";
 import { loadHostContext } from "./host-context.js";
 import { listAdapters, listModels, resolveAdapter } from "./adapter-registry.js";
 import { runHeadlessTurn } from "./run-headless.js";
+import { runReplTurn } from "./run-repl-turn.js";
+import { ReplSessionRegistry } from "./repl-session-registry.js";
 import {
   readJsonBody,
   lastUserMessage,
@@ -38,6 +40,7 @@ export function createAgentGateway(options = {}) {
   };
   const token = env.AGENT_GATEWAY_TOKEN || "";
   const gate = new ConcurrencyGate(ctx.maxConcurrent);
+  const replRegistry = new ReplSessionRegistry({ maxSessions: ctx.maxConcurrent });
 
   async function handleHealth() {
     const probes = {};
@@ -50,6 +53,7 @@ export function createAgentGateway(options = {}) {
       schema: "agent-gateway.health.v1",
       hostname: ctx.hostname,
       platform: ctx.platform,
+      repl_sessions: replRegistry.size(),
       adapters: probes,
     };
   }
@@ -88,6 +92,33 @@ export function createAgentGateway(options = {}) {
       return jsonResponse(res, err.status, err.body, req);
     }
 
+    const mode = resolveAdapterMode(payload, adapter);
+    if (mode === "repl" && !supportsRepl(adapter)) {
+      const err = openAiError(
+        "invalid_request_error",
+        `Adapter ${adapter.id} does not support REPL mode`,
+        "repl_unsupported",
+      );
+      return jsonResponse(res, err.status, err.body, req);
+    }
+
+    const turn = {
+      messages,
+      prompt: adapter.formatTurn(messages, ctx),
+      stream: Boolean(payload.stream),
+      cwd,
+      metadata: payload.metadata || {},
+    };
+
+    if (mode === "repl") {
+      return handleReplCompletions(req, res, {
+        adapter,
+        model,
+        turn,
+        sessionId: payload.metadata?.session_id || null,
+      });
+    }
+
     if (!gate.tryAcquire()) {
       const err = openAiError(
         "rate_limit_error",
@@ -98,21 +129,90 @@ export function createAgentGateway(options = {}) {
       return jsonResponse(res, err.status, err.body, req);
     }
 
-    const turn = {
-      messages,
-      prompt: adapter.formatTurn(messages, ctx),
-      stream: Boolean(payload.stream),
-      cwd,
-    };
+    try {
+      return await handleHeadlessCompletions(req, res, { adapter, model, turn });
+    } finally {
+      gate.release();
+    }
+  }
+
+  async function handleHeadlessCompletions(req, res, { adapter, model, turn }) {
+    const completionId = newCompletionId();
+    const created = Math.floor(Date.now() / 1000);
+
+    if (!turn.stream) {
+      const result = await runHeadlessTurn(adapter, turn, ctx);
+      if (result.exitCode !== 0 && !adapter.isHeadlessComplete(result.exitCode, result.state)) {
+        const err = openAiError("server_error", result.stderr || `child exit ${result.exitCode}`, "child_failed", 502);
+        return jsonResponse(res, err.status, err.body, req);
+      }
+      const content = result.deltas.filter(d => d.content).map(d => d.content).join("");
+      return jsonResponse(res, 200, {
+        id: completionId,
+        object: "chat.completion",
+        created,
+        model,
+        choices: [{
+          index: 0,
+          message: { role: "assistant", content },
+          finish_reason: "stop",
+        }],
+      }, req);
+    }
+
+    res.writeHead(200, {
+      "Content-Type": "text/event-stream; charset=utf-8",
+      "Cache-Control": "no-cache, no-transform",
+      Connection: "keep-alive",
+    });
+
+    sseWrite(res, {
+      id: completionId,
+      object: "chat.completion.chunk",
+      created,
+      model,
+      choices: [{ index: 0, delta: { role: "assistant" }, finish_reason: null }],
+    });
+
+    const result = await runHeadlessTurn(adapter, turn, ctx, {
+      onDelta(delta) {
+        if (!delta.content) return;
+        sseWrite(res, {
+          id: completionId,
+          object: "chat.completion.chunk",
+          created,
+          model,
+          choices: [{ index: 0, delta: { content: delta.content }, finish_reason: null }],
+        });
+      },
+    });
+
+    const finishReason = result.exitCode === 0 || adapter.isHeadlessComplete(result.exitCode, result.state)
+      ? "stop"
+      : "error";
+    sseWrite(res, {
+      id: completionId,
+      object: "chat.completion.chunk",
+      created,
+      model,
+      choices: [{ index: 0, delta: {}, finish_reason: finishReason }],
+    });
+    sseDone(res);
+    res.end();
+  }
+
+  async function handleReplCompletions(req, res, { adapter, model, turn, sessionId }) {
+    const completionId = newCompletionId();
+    const created = Math.floor(Date.now() / 1000);
 
     try {
-      const completionId = newCompletionId();
-      const created = Math.floor(Date.now() / 1000);
-
       if (!turn.stream) {
-        const result = await runHeadlessTurn(adapter, turn, ctx);
-        if (result.exitCode !== 0 && !adapter.isHeadlessComplete(result.exitCode, result.state)) {
-          const err = openAiError("server_error", result.stderr || `child exit ${result.exitCode}`, "child_failed", 502);
+        const result = await runReplTurn(adapter, turn, ctx, replRegistry, {
+          sessionId,
+          model,
+        });
+        if (result.error) {
+          const err = openAiError("server_error", `REPL turn failed: ${result.reason}`, "repl_failed", 502);
           return jsonResponse(res, err.status, err.body, req);
         }
         const content = result.deltas.filter(d => d.content).map(d => d.content).join("");
@@ -121,6 +221,7 @@ export function createAgentGateway(options = {}) {
           object: "chat.completion",
           created,
           model,
+          metadata: { session_id: result.sessionId, repl_reason: result.reason },
           choices: [{
             index: 0,
             message: { role: "assistant", content },
@@ -140,10 +241,13 @@ export function createAgentGateway(options = {}) {
         object: "chat.completion.chunk",
         created,
         model,
+        metadata: { session_id: sessionId || null },
         choices: [{ index: 0, delta: { role: "assistant" }, finish_reason: null }],
       });
 
-      const result = await runHeadlessTurn(adapter, turn, ctx, {
+      const result = await runReplTurn(adapter, turn, ctx, replRegistry, {
+        sessionId,
+        model,
         onDelta(delta) {
           if (!delta.content) return;
           sseWrite(res, {
@@ -156,25 +260,36 @@ export function createAgentGateway(options = {}) {
         },
       });
 
-      const finishReason = result.exitCode === 0 || adapter.isHeadlessComplete(result.exitCode, result.state)
-        ? "stop"
-        : "error";
+      const finishReason = result.error ? "error" : "stop";
       sseWrite(res, {
         id: completionId,
         object: "chat.completion.chunk",
         created,
         model,
+        metadata: { session_id: result.sessionId, repl_reason: result.reason },
         choices: [{ index: 0, delta: {}, finish_reason: finishReason }],
       });
       sseDone(res);
       res.end();
-
-      if (finishReason === "error") {
+    } catch (error) {
+      if (error?.code && error?.status) {
+        const err = openAiError(
+          error.status === 409 ? "rate_limit_error" : "invalid_request_error",
+          error.message,
+          error.code,
+          error.status,
+        );
+        if (!res.headersSent) {
+          return jsonResponse(res, err.status, err.body, req);
+        }
+        res.end();
         return;
       }
-      return;
-    } finally {
-      gate.release();
+      if (!res.headersSent) {
+        const err = openAiError("server_error", error.message || "repl error", "repl_failed", 502);
+        return jsonResponse(res, err.status, err.body, req);
+      }
+      res.end();
     }
   }
 
@@ -226,7 +341,20 @@ export function createAgentGateway(options = {}) {
     }
   });
 
-  return { server, ctx };
+  return { server, ctx, replRegistry };
+}
+
+function resolveAdapterMode(payload, adapter) {
+  const forced = payload.metadata?.adapter_mode;
+  if (forced === "repl" || forced === "headless") return forced;
+  if (payload.metadata?.session_id) return "repl";
+  return adapter.defaultMode || "headless";
+}
+
+function supportsRepl(adapter) {
+  return typeof adapter.buildReplInvocation === "function"
+    && typeof adapter.writeReplTurn === "function"
+    && typeof adapter.getExpectConfig === "function";
 }
 
 function jsonResponse(res, status, body, req) {

@@ -89,6 +89,42 @@ export const claudeAdapter = {
     if (state.mode === "stream-json" && state.done) return true;
     return isPlainTextComplete(exitCode);
   },
+
+  buildReplInvocation(turn, ctx) {
+    return {
+      command: ctx.claudeCommand,
+      args: [],
+      cwd: turn.cwd,
+      env: buildChildEnv(ctx),
+      pty: true,
+    };
+  },
+
+  writeReplTurn(pty, turn) {
+    pty.write(`${turn.prompt}\r`);
+  },
+
+  getExpectConfig() {
+    return {
+      rules: [
+        { id: "claude-version", pattern: /Claude Code\s+[\d.]+/i, action: "continue", priority: 10 },
+        { id: "claude-tool", pattern: /(?:^|\n).*(?:running|executing|tool).*$/im, action: "continue", priority: 20 },
+        { id: "claude-ready", pattern: /(?:^|\n)(?:›|>)\s*$/m, action: "complete", priority: 30 },
+      ],
+      inactivityMs: 300,
+      stripAnsi: true,
+      tailWindowBytes: 65536,
+    };
+  },
+
+  filterReplNoise(line) {
+    const trimmed = String(line).trim();
+    if (!trimmed) return null;
+    if (/^Claude Code\s+[\d.]+/i.test(trimmed)) return null;
+    if (/^(?:›|>)\s*$/.test(trimmed)) return null;
+    if (/^(?:running|executing|tool)\b/i.test(trimmed)) return null;
+    return `${trimmed}\n`;
+  },
 };
 
 function useClaudeStreamJson(turn, ctx) {

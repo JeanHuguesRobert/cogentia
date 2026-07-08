@@ -37,6 +37,11 @@ Environment:
   AGENT_GATEWAY_CLAUDE_COMMAND    Claude binary (agent-claude on Termux)
   AGENT_GATEWAY_CLAUDE_OUTPUT_FORMAT  stream-json | plain
   AGENT_GATEWAY_CODEX_COMMAND     Codex binary (agent-codex on Termux)
+  AGENT_GATEWAY_REPL_TURN_TIMEOUT_MS  REPL turn timeout (default 180000)
+
+REPL mode (phase 2):
+  metadata.adapter_mode: "repl"   Force PTY REPL (default: headless)
+  metadata.session_id: "<id>"      Reuse an existing REPL session
 
 Endpoints:
   GET  /health

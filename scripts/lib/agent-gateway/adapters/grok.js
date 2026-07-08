@@ -81,6 +81,42 @@ export const grokAdapter = {
     if (state.done) return true;
     return exitCode !== null;
   },
+
+  buildReplInvocation(turn, ctx) {
+    return {
+      command: ctx.grokCommand,
+      args: [],
+      cwd: turn.cwd,
+      env: buildChildEnv(ctx),
+      pty: true,
+    };
+  },
+
+  writeReplTurn(pty, turn) {
+    pty.write(`${turn.prompt}\r`);
+  },
+
+  getExpectConfig() {
+    return {
+      rules: [
+        { id: "grok-banner", pattern: /grok\s+[\d.]+/i, action: "continue", priority: 10 },
+        { id: "grok-thinking", pattern: /(?:^|\n).*(?:thinking|working).*$/im, action: "continue", priority: 20 },
+        { id: "grok-ready", pattern: /(?:^|\n)[›>❯]\s*$/m, action: "complete", priority: 30 },
+      ],
+      inactivityMs: 300,
+      stripAnsi: true,
+      tailWindowBytes: 65536,
+    };
+  },
+
+  filterReplNoise(line) {
+    const trimmed = String(line).trim();
+    if (!trimmed) return null;
+    if (/^grok\s+[\d.]+/i.test(trimmed)) return null;
+    if (/^(?:›|>|❯)\s*$/.test(trimmed)) return null;
+    if (/^(?:thinking|working)\b/i.test(trimmed)) return null;
+    return `${trimmed}\n`;
+  },
 };
 
 function parseStreamingJsonLine(line, ctx) {

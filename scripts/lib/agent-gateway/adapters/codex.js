@@ -71,6 +71,40 @@ export const codexAdapter = {
     if (state.done) return true;
     return exitCode !== null;
   },
+
+  buildReplInvocation(turn, ctx) {
+    return {
+      command: ctx.codexCommand,
+      args: [],
+      cwd: turn.cwd,
+      env: buildChildEnv(ctx),
+      pty: true,
+    };
+  },
+
+  writeReplTurn(pty, turn) {
+    pty.write(`${turn.prompt}\r`);
+  },
+
+  getExpectConfig() {
+    return {
+      rules: [
+        { id: "codex-exec", pattern: /(?:^|\n).*(?:exec|command).*$/im, action: "continue", priority: 10 },
+        { id: "codex-ready", pattern: /(?:^|\n)codex>\s*$/m, action: "complete", priority: 30 },
+      ],
+      inactivityMs: 300,
+      stripAnsi: true,
+      tailWindowBytes: 65536,
+    };
+  },
+
+  filterReplNoise(line) {
+    const trimmed = String(line).trim();
+    if (!trimmed) return null;
+    if (/^codex>\s*$/i.test(trimmed)) return null;
+    if (/^(?:exec|command)\b/i.test(trimmed)) return null;
+    return `${trimmed}\n`;
+  },
 };
 
 function parseCodexJsonLine(line) {
