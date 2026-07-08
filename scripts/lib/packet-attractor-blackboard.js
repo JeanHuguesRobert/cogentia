@@ -241,6 +241,63 @@ export function attractorHasCapability(attractor = {}, capability = "") {
   return capabilities.some(value => String(value || "").trim().toLowerCase() === needle);
 }
 
+export function buildAgentCliGatewayAttractor(options = {}) {
+  const now = options.now instanceof Date ? options.now : new Date();
+  const id = String(options.id || "attractor:poco-jhr:agent-cli-gateway").trim();
+  const resourceId = String(options.resourceId || "resource://poco-jhr").trim();
+  const endpointRef = String(options.endpointRef || "http://poco-jhr:8793").trim();
+  const ttlSeconds = Number(options.ttlSeconds || 300);
+  const models = Array.isArray(options.models) && options.models.length
+    ? options.models.map(value => String(value || "").trim()).filter(Boolean)
+    : ["grok-build", "claude-code", "codex"];
+  const status = String(options.status || "online").trim() || "online";
+
+  return {
+    artifactType: ARTIFACT_TYPE,
+    id,
+    node: {
+      resource_id: resourceId,
+      trust_perimeter: String(options.trustPerimeter || "owner-operated").trim() || "owner-operated",
+    },
+    matches: {
+      packetKind: ["mandate", "cognitive-packet", "continuation"],
+      capabilities: [
+        "agent.cli.gateway",
+        "openai.chat.completions",
+        ...models.map(model => `coding-agents.${model.split("-")[0]}`),
+        ...models.map(model => `model.${model}`),
+      ],
+      query: models.map(model => ({ model, transport: "openai.chat.completions.sse" })),
+      verbs: ["chat.completions@v1"],
+    },
+    legitimacy: {
+      mandate_surfaces: ["owner-cli", "web-guide", "orchestrator"],
+      forbidden: ["public-internet", "unbounded-provider-spend"],
+    },
+    pressure: {
+      accepted: ["best-effort", "ttl", "bounded"],
+      default: "ttl",
+    },
+    regime: {
+      current: status === "degraded" ? "degraded" : "normal",
+      accepts: ["normal", "degraded"],
+    },
+    availability: {
+      status,
+      last_seen: now.toISOString(),
+      ttl_seconds: ttlSeconds,
+    },
+    transport: {
+      profile: "agent-gateway.v1",
+      endpoint_ref: endpointRef,
+    },
+    trace: {
+      advertised_event_required: true,
+      matched_event_required: true,
+    },
+  };
+}
+
 export function buildRetrievalInlineAttractor(options = {}) {
   const now = options.now instanceof Date ? options.now : new Date();
   const id = String(options.id || "attractor:jhr-laptop:retrieval-inline").trim();

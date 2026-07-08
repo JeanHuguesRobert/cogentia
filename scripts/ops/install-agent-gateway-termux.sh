@@ -59,6 +59,32 @@ export PATH="${HOME}/.local/bin:${HOME}/.grok/bin:\${PATH}"
 EOF
 chmod 600 "${ENV_FILE}"
 
+BLACKBOARD_ENV="${SECRETS_DIR}/agent-gateway-blackboard.env"
+if [ ! -f "${BLACKBOARD_ENV}" ]; then
+  cat > "${BLACKBOARD_ENV}" <<'BBEOF'
+# Fracta blackboard upsert for agent-cli-gateway (fill after ThinkPad attractor env is available)
+# export COGENTIA_BLACKBOARD_URL=https://cogentia.fractavolta.com
+# export COGENTIA_BLACKBOARD_UPSERT_TOKEN=
+export AGENT_GATEWAY_ATTRACTOR_ID=attractor:poco-jhr:agent-cli-gateway
+export AGENT_GATEWAY_ATTRACTOR_NODE_ID=resource://poco-jhr
+export AGENT_GATEWAY_ATTRACTOR_ENDPOINT=http://poco-jhr:8793
+export AGENT_GATEWAY_ATTRACTOR_TTL_SECONDS=300
+BBEOF
+  chmod 600 "${BLACKBOARD_ENV}"
+fi
+
+HEARTBEAT_BOOT="${BOOT_DIR}/agent-gateway-heartbeat"
+cat > "${HEARTBEAT_BOOT}" <<'HBBOOT'
+#!/data/data/com.termux/files/usr/bin/bash
+(
+  while true; do
+    bash "$HOME/fractanet-termux-gateway-heartbeat.sh" >>"$HOME/.cogentia/var/agent-gateway-heartbeat.log" 2>&1 || true
+    sleep 300
+  done
+) &
+HBBOOT
+chmod +x "${HEARTBEAT_BOOT}"
+
 cat > "${BOOT_SCRIPT}" <<'BOOT'
 #!/data/data/com.termux/files/usr/bin/bash
 termux-wake-lock 2>/dev/null || true
@@ -89,7 +115,9 @@ alias agent-gateway='cd "${COGENTIA_ROOT}" && node scripts/agent-gateway.js'
 EOF
 
 echo "[agent-gateway] env: ${ENV_FILE}"
+echo "[agent-gateway] blackboard env: ${BLACKBOARD_ENV}"
 echo "[agent-gateway] boot: ${BOOT_SCRIPT}"
+echo "[agent-gateway] heartbeat boot: ${HEARTBEAT_BOOT} (every 5m when Termux starts)"
 echo "[agent-gateway] token: (in env file — use Authorization: Bearer ...)"
 if [ -n "${TS_IP}" ]; then
   echo "[agent-gateway] tailscale: http://${TS_IP}:${GATEWAY_PORT}/health"
