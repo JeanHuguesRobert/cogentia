@@ -34,8 +34,11 @@ cd ~/srv/cogentia/repos/cogentia && git fetch origin main && git switch main 2>/
 '@
 }
 
-Copy-Poco (Join-Path $ops 'install-agent-gateway-termux.sh') '~/install-agent-gateway-termux.sh'
-Invoke-Poco 'chmod +x ~/install-agent-gateway-termux.sh && bash ~/install-agent-gateway-termux.sh'
+foreach ($script in @('install-agent-gateway-termux.sh', 'fractanet-termux-start-gateway.sh')) {
+    Copy-Poco (Join-Path $ops $script) "~/$script"
+    Invoke-Poco "chmod +x ~/$script"
+}
+Invoke-Poco 'bash ~/install-agent-gateway-termux.sh'
 
 if ($Start) {
     Write-Host '[poco-jhr] starting gateway...'
@@ -45,8 +48,7 @@ cd ~/srv/cogentia/repos/cogentia
 pgrep -f "scripts/agent-gateway.js" >/dev/null || nohup node scripts/agent-gateway.js >> ~/.cogentia/var/agent-gateway.log 2>&1 &
 sleep 2
 source ~/srv/cogentia/secrets/agent-gateway.env
-TS=$(tailscale ip -4 2>/dev/null | head -1)
-curl -sf -H "Authorization: Bearer $AGENT_GATEWAY_TOKEN" "http://${TS}:8793/health" && echo OK || echo FAIL
+curl -sf -H "Authorization: Bearer $AGENT_GATEWAY_TOKEN" "http://127.0.0.1:8793/health" && echo OK || echo FAIL
 '@
 }
 

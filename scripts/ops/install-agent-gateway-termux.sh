@@ -37,11 +37,20 @@ if [ -z "${AGENT_GATEWAY_TOKEN:-}" ]; then
   echo "[agent-gateway] generated new bearer token"
 fi
 
-TS_IP="$(tailscale ip -4 2>/dev/null | head -1 || true)"
+TS_IP=""
+BIND_MODE="all"
+if command -v tailscale >/dev/null 2>&1; then
+  TS_IP="$(tailscale ip -4 2>/dev/null | head -1 || true)"
+  if [ -n "${TS_IP}" ]; then
+    BIND_MODE="tailscale"
+  fi
+else
+  echo "[agent-gateway] tailscale CLI not in Termux PATH — bind=all (reachable over tailnet)"
+fi
 
 cat > "${ENV_FILE}" <<EOF
 # Agent CLI Gateway — sourced by ~/.termux/boot/agent-gateway
-export AGENT_GATEWAY_BIND=tailscale
+export AGENT_GATEWAY_BIND=${BIND_MODE}
 export AGENT_GATEWAY_PORT=${GATEWAY_PORT}
 export AGENT_GATEWAY_TOKEN=${AGENT_GATEWAY_TOKEN}
 export AGENT_GATEWAY_REPO_ROOTS="${HOME}/srv/cogentia/repos"
