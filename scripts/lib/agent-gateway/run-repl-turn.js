@@ -53,7 +53,9 @@ export async function runReplTurn(adapter, turn, ctx, registry, options = {}) {
     throw Object.assign(new Error("adapter_write_repl_missing"), { code: "repl_unsupported" });
   }
 
-  const session = await registry.acquireSession({
+  const trace = options.trace || null;
+  trace?.mark("repl_acquire_start");
+  const { session, sessionSpawned, sessionReused } = await registry.acquireSession({
     sessionId,
     adapter,
     model: options.model,
@@ -61,9 +63,17 @@ export async function runReplTurn(adapter, turn, ctx, registry, options = {}) {
     ctx,
     spawnPty: shell => spawnReplPty(adapter, turn, ctx, shell),
   });
+  trace?.mark("repl_acquired", { session_spawned: sessionSpawned, session_reused: sessionReused });
+
+  const replTiming = {
+    session_spawned: sessionSpawned,
+    session_reused: sessionReused,
+    bootstrap_ms: 0,
+  };
 
   try {
     if (session.needsBootstrap) {
+      const bootstrapStart = Date.now();
       await waitForReplReady({
         adapter,
         config: expectConfig,
@@ -78,6 +88,8 @@ export async function runReplTurn(adapter, turn, ctx, registry, options = {}) {
         },
       });
       session.needsBootstrap = false;
+      replTiming.bootstrap_ms = Date.now() - bootstrapStart;
+      trace?.mark("repl_bootstrap_done");
     }
 
     if (!adapter.writeReplTurn) {
@@ -102,12 +114,14 @@ export async function runReplTurn(adapter, turn, ctx, registry, options = {}) {
           clearTimeout(turnTimer);
           cleanup();
           registry.releaseSession(session.id);
+          trace?.mark("repl_turn_complete", { reason: result.reason });
           resolve({
             sessionId: session.id,
             reason: result.reason,
             error: Boolean(result.error),
             exitCode: result.exitCode ?? null,
             deltas: loop.deltas,
+            timing: replTiming,
           });
         },
         onError(err) {
@@ -146,6 +160,7 @@ export async function runReplTurn(adapter, turn, ctx, registry, options = {}) {
       });
 
       try {
+        trace?.mark("repl_turn_sent");
         adapter.writeReplTurn(session.pty, turn);
         loop.signalSent();
       } catch (error) {

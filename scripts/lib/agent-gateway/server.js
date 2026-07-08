@@ -14,6 +14,13 @@ import {
   openAiError,
   checkBearerAuth,
 } from "./util.js";
+import {
+  readClientSentMs,
+  createTimingTrace,
+  buildTimingReport,
+  timingResponseHeaders,
+  TIMING_EXPOSE_HEADERS,
+} from "./timing-telemetry.js";
 
 class ConcurrencyGate {
   constructor(max) {
@@ -110,12 +117,15 @@ export function createAgentGateway(options = {}) {
       metadata: payload.metadata || {},
     };
 
+    const clientSentMs = readClientSentMs(req);
+
     if (mode === "repl") {
       return handleReplCompletions(req, res, {
         adapter,
         model,
         turn,
         sessionId: payload.metadata?.session_id || null,
+        clientSentMs,
       });
     }
 
@@ -130,21 +140,23 @@ export function createAgentGateway(options = {}) {
     }
 
     try {
-      return await handleHeadlessCompletions(req, res, { adapter, model, turn });
+      return await handleHeadlessCompletions(req, res, { adapter, model, turn, clientSentMs });
     } finally {
       gate.release();
     }
   }
 
-  async function handleHeadlessCompletions(req, res, { adapter, model, turn }) {
+  async function handleHeadlessCompletions(req, res, { adapter, model, turn, clientSentMs }) {
     const completionId = newCompletionId();
     const created = Math.floor(Date.now() / 1000);
+    const trace = createTimingTrace("headless", clientSentMs);
 
     if (!turn.stream) {
-      const result = await runHeadlessTurn(adapter, turn, ctx);
+      const result = await runHeadlessTurn(adapter, turn, ctx, { trace });
+      const timing = finishHeadlessTiming(trace, result.timing);
       if (result.exitCode !== 0 && !adapter.isHeadlessComplete(result.exitCode, result.state)) {
         const err = openAiError("server_error", result.stderr || `child exit ${result.exitCode}`, "child_failed", 502);
-        return jsonResponse(res, err.status, err.body, req);
+        return jsonResponse(res, err.status, err.body, req, timing.headers);
       }
       const content = result.deltas.filter(d => d.content).map(d => d.content).join("");
       return jsonResponse(res, 200, {
@@ -152,18 +164,30 @@ export function createAgentGateway(options = {}) {
         object: "chat.completion",
         created,
         model,
+        metadata: { timing: timing.report },
         choices: [{
           index: 0,
           message: { role: "assistant", content },
           finish_reason: "stop",
         }],
-      }, req);
+      }, req, timing.headers);
     }
+
+    const timingPartial = timingResponseHeaders({
+      server_received_ms: trace.receivedMs,
+      server_completed_ms: trace.receivedMs,
+      total_ms: 0,
+      mode: "headless",
+      client_sent_ms: clientSentMs ?? undefined,
+      rtt_estimate_ms: clientSentMs != null ? trace.receivedMs - clientSentMs : undefined,
+    });
 
     res.writeHead(200, {
       "Content-Type": "text/event-stream; charset=utf-8",
       "Cache-Control": "no-cache, no-transform",
       Connection: "keep-alive",
+      ...timingPartial,
+      ...corsHeaders(req),
     });
 
     sseWrite(res, {
@@ -175,6 +199,7 @@ export function createAgentGateway(options = {}) {
     });
 
     const result = await runHeadlessTurn(adapter, turn, ctx, {
+      trace,
       onDelta(delta) {
         if (!delta.content) return;
         sseWrite(res, {
@@ -187,6 +212,7 @@ export function createAgentGateway(options = {}) {
       },
     });
 
+    const timing = finishHeadlessTiming(trace, result.timing);
     const finishReason = result.exitCode === 0 || adapter.isHeadlessComplete(result.exitCode, result.state)
       ? "stop"
       : "error";
@@ -195,25 +221,29 @@ export function createAgentGateway(options = {}) {
       object: "chat.completion.chunk",
       created,
       model,
+      metadata: { timing: timing.report },
       choices: [{ index: 0, delta: {}, finish_reason: finishReason }],
     });
     sseDone(res);
     res.end();
   }
 
-  async function handleReplCompletions(req, res, { adapter, model, turn, sessionId }) {
+  async function handleReplCompletions(req, res, { adapter, model, turn, sessionId, clientSentMs }) {
     const completionId = newCompletionId();
     const created = Math.floor(Date.now() / 1000);
+    const trace = createTimingTrace("repl", clientSentMs);
 
     try {
       if (!turn.stream) {
         const result = await runReplTurn(adapter, turn, ctx, replRegistry, {
           sessionId,
           model,
+          trace,
         });
+        const timing = finishReplTiming(trace, result.timing);
         if (result.error) {
           const err = openAiError("server_error", `REPL turn failed: ${result.reason}`, "repl_failed", 502);
-          return jsonResponse(res, err.status, err.body, req);
+          return jsonResponse(res, err.status, err.body, req, timing.headers);
         }
         const content = result.deltas.filter(d => d.content).map(d => d.content).join("");
         return jsonResponse(res, 200, {
@@ -221,19 +251,34 @@ export function createAgentGateway(options = {}) {
           object: "chat.completion",
           created,
           model,
-          metadata: { session_id: result.sessionId, repl_reason: result.reason },
+          metadata: {
+            session_id: result.sessionId,
+            repl_reason: result.reason,
+            timing: timing.report,
+          },
           choices: [{
             index: 0,
             message: { role: "assistant", content },
             finish_reason: "stop",
           }],
-        }, req);
+        }, req, timing.headers);
       }
+
+      const timingPartial = timingResponseHeaders({
+        server_received_ms: trace.receivedMs,
+        server_completed_ms: trace.receivedMs,
+        total_ms: 0,
+        mode: "repl",
+        client_sent_ms: clientSentMs ?? undefined,
+        rtt_estimate_ms: clientSentMs != null ? trace.receivedMs - clientSentMs : undefined,
+      });
 
       res.writeHead(200, {
         "Content-Type": "text/event-stream; charset=utf-8",
         "Cache-Control": "no-cache, no-transform",
         Connection: "keep-alive",
+        ...timingPartial,
+        ...corsHeaders(req),
       });
 
       sseWrite(res, {
@@ -248,6 +293,7 @@ export function createAgentGateway(options = {}) {
       const result = await runReplTurn(adapter, turn, ctx, replRegistry, {
         sessionId,
         model,
+        trace,
         onDelta(delta) {
           if (!delta.content) return;
           sseWrite(res, {
@@ -260,18 +306,24 @@ export function createAgentGateway(options = {}) {
         },
       });
 
+      const timing = finishReplTiming(trace, result.timing);
       const finishReason = result.error ? "error" : "stop";
       sseWrite(res, {
         id: completionId,
         object: "chat.completion.chunk",
         created,
         model,
-        metadata: { session_id: result.sessionId, repl_reason: result.reason },
+        metadata: {
+          session_id: result.sessionId,
+          repl_reason: result.reason,
+          timing: timing.report,
+        },
         choices: [{ index: 0, delta: {}, finish_reason: finishReason }],
       });
       sseDone(res);
       res.end();
     } catch (error) {
+      const timing = finishReplTiming(trace, {});
       if (error?.code && error?.status) {
         const err = openAiError(
           error.status === 409 ? "rate_limit_error" : "invalid_request_error",
@@ -280,14 +332,14 @@ export function createAgentGateway(options = {}) {
           error.status,
         );
         if (!res.headersSent) {
-          return jsonResponse(res, err.status, err.body, req);
+          return jsonResponse(res, err.status, err.body, req, timing.headers);
         }
         res.end();
         return;
       }
       if (!res.headersSent) {
         const err = openAiError("server_error", error.message || "repl error", "repl_failed", 502);
-        return jsonResponse(res, err.status, err.body, req);
+        return jsonResponse(res, err.status, err.body, req, timing.headers);
       }
       res.end();
     }
@@ -357,8 +409,36 @@ function supportsRepl(adapter) {
     && typeof adapter.getExpectConfig === "function";
 }
 
-function jsonResponse(res, status, body, req) {
-  res.writeHead(status, { "Content-Type": "application/json; charset=utf-8", ...corsHeaders(req) });
+function finishHeadlessTiming(trace, childTiming = {}) {
+  const childMs = childTiming.child_ms ?? 0;
+  const report = trace.finish({
+    child_ms: childMs,
+    first_byte_ms: childTiming.first_byte_ms ?? undefined,
+  });
+  report.gateway_ms = Math.max(0, report.total_ms - childMs);
+  return { report, headers: timingResponseHeaders(report) };
+}
+
+function finishReplTiming(trace, replTiming = {}) {
+  const report = trace.finish({
+    bootstrap_ms: replTiming.bootstrap_ms ?? 0,
+    session_reused: replTiming.session_reused ?? false,
+    session_spawned: replTiming.session_spawned ?? false,
+  });
+  const preReplMs = report.repl_acquired_ms ?? 0;
+  const postReplMs = report.repl_turn_complete_ms != null
+    ? Math.max(0, report.total_ms - report.repl_turn_complete_ms)
+    : 0;
+  report.gateway_ms = preReplMs + postReplMs;
+  return { report, headers: timingResponseHeaders(report) };
+}
+
+function jsonResponse(res, status, body, req, extraHeaders = {}) {
+  res.writeHead(status, {
+    "Content-Type": "application/json; charset=utf-8",
+    ...extraHeaders,
+    ...corsHeaders(req),
+  });
   res.end(`${JSON.stringify(body)}\n`);
 }
 
@@ -366,6 +446,7 @@ function corsHeaders(req) {
   return {
     "Access-Control-Allow-Origin": req?.headers?.origin || "*",
     "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
-    "Access-Control-Allow-Headers": "Content-Type, Authorization",
+    "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Agent-Gateway-Client-Sent-Ms",
+    "Access-Control-Expose-Headers": TIMING_EXPOSE_HEADERS,
   };
 }

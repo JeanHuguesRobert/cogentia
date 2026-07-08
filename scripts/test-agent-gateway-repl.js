@@ -43,6 +43,7 @@ try {
   assert.equal(first.status, 200, JSON.stringify(first.body));
   assert.match(first.body.metadata.session_id, /^agw-sess-/);
   assert.match(first.body.choices[0].message.content, /repl-mock:turn one/);
+  assertTiming(first, { mode: "repl", sessionSpawned: "1", sessionReused: "0" });
   const sessionId = first.body.metadata.session_id;
 
   const healthAfter = await getJson("/health");
@@ -57,6 +58,20 @@ try {
   assert.equal(second.status, 200);
   assert.equal(second.body.metadata.session_id, sessionId);
   assert.match(second.body.choices[0].message.content, /repl-mock:turn two/);
+  assertTiming(second, { mode: "repl", sessionSpawned: "0", sessionReused: "1" });
+
+  const implicitReuse = await postJson("/v1/chat/completions", {
+    model: "grok-build",
+    stream: false,
+    metadata: { adapter_mode: "repl" },
+    messages: [{ role: "user", content: "turn three implicit" }],
+  });
+  assert.equal(implicitReuse.status, 200);
+  assert.equal(implicitReuse.body.metadata.session_id, sessionId);
+  assert.match(implicitReuse.body.choices[0].message.content, /repl-mock:turn three implicit/);
+  assertTiming(implicitReuse, { mode: "repl", sessionSpawned: "0", sessionReused: "1" });
+  assert.equal(implicitReuse.body.metadata.timing.session_reused, true);
+  assert.equal(implicitReuse.body.metadata.timing.session_spawned, false);
 
   const streamText = await streamCompletion({
     model: "grok-build",
@@ -104,6 +119,8 @@ try {
     ok: true,
     port,
     multi_turn: true,
+    implicit_session_reuse: true,
+    timing_headers: true,
     stream_repl: streamText.slice(0, 32),
     session_busy_409: true,
   }, null, 2));
@@ -134,16 +151,38 @@ async function getJson(route) {
 }
 
 async function postJson(route, payload) {
+  const clientSentMs = Date.now();
   const response = await fetch(`${base}${route}`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
       Authorization: `Bearer ${token}`,
+      "X-Agent-Gateway-Client-Sent-Ms": String(clientSentMs),
     },
     body: JSON.stringify(payload),
   });
   const body = await response.json();
-  return { status: response.status, body };
+  return {
+    status: response.status,
+    body,
+    headers: response.headers,
+    clientSentMs,
+  };
+}
+
+function assertTiming(result, { mode, sessionSpawned, sessionReused }) {
+  assert.equal(result.headers.get("x-agent-gateway-timing-mode"), mode);
+  assert.equal(result.headers.get("x-agent-gateway-timing-session-spawned"), sessionSpawned);
+  assert.equal(result.headers.get("x-agent-gateway-timing-session-reused"), sessionReused);
+  assert.ok(result.headers.get("x-agent-gateway-server-received-ms"));
+  assert.ok(result.headers.get("x-agent-gateway-server-completed-ms"));
+  assert.ok(result.headers.get("x-agent-gateway-timing-total-ms"));
+  const timingJson = JSON.parse(result.headers.get("x-agent-gateway-timing"));
+  assert.equal(timingJson.mode, mode);
+  assert.equal(timingJson.client_sent_ms, result.clientSentMs);
+  assert.ok(typeof timingJson.rtt_estimate_ms === "number");
+  assert.ok(timingJson.rtt_estimate_ms >= 0 && timingJson.rtt_estimate_ms < 5000);
+  assert.equal(result.body.metadata?.timing?.mode, mode);
 }
 
 async function streamCompletion(payload) {

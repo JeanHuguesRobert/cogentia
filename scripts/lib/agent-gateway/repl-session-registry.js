@@ -1,3 +1,4 @@
+import path from "node:path";
 import { randomBytes } from "node:crypto";
 
 const DEFAULT_TTL_MS = 30 * 60 * 1000;
@@ -32,6 +33,20 @@ export class ReplSessionRegistry {
     return this.sessions.get(sessionId) || null;
   }
 
+  /** Reuse idle REPL for same adapter+cwd — avoids respawning TUI. */
+  findIdleSession({ adapterId, cwd }) {
+    this.pruneExpired();
+    const resolvedCwd = path.resolve(cwd);
+    for (const session of this.sessions.values()) {
+      if (session.busy) continue;
+      if (session.adapterId !== adapterId) continue;
+      if (path.resolve(session.cwd) !== resolvedCwd) continue;
+      if (!session.pty) continue;
+      return session;
+    }
+    return null;
+  }
+
   /**
    * Acquire mutex and return session. Creates session when id is unknown.
    * @throws {{ code: string, message: string, status: number }}
@@ -40,6 +55,8 @@ export class ReplSessionRegistry {
     this.pruneExpired();
     const requestedId = String(sessionId || "").trim();
     let session = requestedId ? this.sessions.get(requestedId) : null;
+    let sessionSpawned = false;
+    let sessionReused = false;
 
     if (requestedId && !session) {
       throw {
@@ -47,6 +64,15 @@ export class ReplSessionRegistry {
         message: `Unknown session_id: ${requestedId}`,
         status: 404,
       };
+    }
+
+    if (!session) {
+      session = this.findIdleSession({ adapterId: adapter.id, cwd: turn.cwd });
+      if (session) {
+        sessionReused = true;
+      }
+    } else {
+      sessionReused = true;
     }
 
     if (!session) {
@@ -62,7 +88,7 @@ export class ReplSessionRegistry {
         id,
         adapterId: adapter.id,
         model,
-        cwd: turn.cwd,
+        cwd: path.resolve(turn.cwd),
         pty: null,
         busy: false,
         createdAt: Date.now(),
@@ -74,6 +100,8 @@ export class ReplSessionRegistry {
       };
       session.pty = await spawnPty(session);
       this.sessions.set(id, session);
+      sessionSpawned = true;
+      sessionReused = false;
     }
 
     if (session.busy) {
@@ -94,7 +122,7 @@ export class ReplSessionRegistry {
 
     session.busy = true;
     session.lastActivity = Date.now();
-    return session;
+    return { session, sessionSpawned, sessionReused };
   }
 
   releaseSession(sessionId) {
