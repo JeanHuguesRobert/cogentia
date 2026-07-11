@@ -93,6 +93,24 @@ try {
   assert.equal(health.context.blackboard.fresh_attractor_count, 1);
   assert.equal(health.context.blackboard.attractor_count, 1);
 
+  const onaAttractor = {
+    artifactType: "cop/packet-attractor",
+    id: "attractor:test-node:operium-node",
+    node: { resource_id: "resource://test-node", hostname: "test-node" },
+    matches: { capabilities: ["operium.node.v1"] },
+    availability: {
+      status: "online",
+      last_seen: new Date().toISOString(),
+      ttl_seconds: 300,
+    },
+    transport: {
+      profile: "operium.node.v1",
+      endpoint_ref: "http://127.0.0.1:8794",
+    },
+    metadata: { health_score: 4, ona_version: "0.1.0" },
+  };
+  store.upsertAdvertised(onaAttractor);
+
   const stale = buildRetrievalInlineAttractor({
     id: "attractor:test-node:stale",
     resourceId: "resource://test-node",
@@ -103,9 +121,9 @@ try {
   store.upsertAdvertised(stale);
 
   const freshOnly = await getJson(`${mcpBase}/ops/blackboard?fresh=1`);
-  assert.equal(freshOnly.count, 1);
+  assert.equal(freshOnly.count, 2);
   const includeExpired = await getJson(`${mcpBase}/ops/blackboard?fresh=0`);
-  assert.equal(includeExpired.count, 2);
+  assert.equal(includeExpired.count, 3);
 
   const withdrawn = await postJson(`${mcpBase}/ops/blackboard/upsert`, {
     event: "cop/attractor.withdrawn",
@@ -116,8 +134,9 @@ try {
   assert.equal(withdrawn.event, "cop/attractor.withdrawn");
 
   const afterWithdraw = await getJson(`${mcpBase}/ops/blackboard?fresh=0`);
-  assert.equal(afterWithdraw.count, 1);
-  assert.equal(afterWithdraw.attractors[0].id, stale.id);
+  assert.equal(afterWithdraw.count, 2);
+  assert.equal(afterWithdraw.attractors.some(item => item.id === stale.id), true);
+  assert.equal(afterWithdraw.attractors.some(item => item.id === onaAttractor.id), true);
 
   const opsStatus = await getJson(`${mcpBase}/ops/status`);
   assert.equal(opsStatus.ok, true);
@@ -126,6 +145,12 @@ try {
   assert.equal(opsStatus.service, "fractanet-ops");
   assert.equal(opsStatus.layers.blackboard.attractor_count >= 1, true);
   assert.equal(opsStatus.layers.retrieval.phase2_wired, false);
+  assert.equal(opsStatus.layers.node_agents.capability, "operium.node.v1");
+  assert.equal(opsStatus.layers.node_agents.fresh_count >= 1, true);
+  assert.equal(
+    opsStatus.layers.node_agents.attractors.some(item => item.id === onaAttractor.id),
+    true,
+  );
 
   const dashboard = await fetch(`${mcpBase}/ops/dashboard`);
   assert.equal(dashboard.status, 200);

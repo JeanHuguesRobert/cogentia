@@ -1,8 +1,9 @@
-import { spawn } from "node:child_process";
+import { pathToFileURL } from "node:url";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { spawnHeadless } from "./spawn-headless.js";
 
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
 
@@ -12,7 +13,7 @@ export function watchdogEnabled(env = process.env) {
 
 /**
  * Attempt a one-shot gateway restart (platform-specific start script).
- * @returns {Promise<{ attempted: boolean, ok: boolean, command?: string, detail?: string }>}
+ * On Windows prefers in-process runGatewayStart() — no child node.exe console flash.
  */
 export async function restartAgentGateway(options = {}) {
   const env = options.env || process.env;
@@ -30,12 +31,36 @@ export async function restartAgentGateway(options = {}) {
   }
 
   if (process.platform === "win32") {
-    const script = path.join(repoRoot, "scripts", "ops", "start-agent-gateway-windows.ps1");
+    const script = path.join(repoRoot, "scripts", "ops", "start-agent-gateway-windows.js");
     if (!fs.existsSync(script)) {
       return { attempted: true, ok: false, detail: "start_script_missing", command: script };
     }
-    const pwsh = resolvePwsh(env);
-    return runProcess(pwsh, ["-NoProfile", "-File", script], {
+    try {
+      const mod = await import(pathToFileURL(script).href);
+      if (typeof mod.runGatewayStart === "function") {
+        const result = await mod.runGatewayStart({
+          env,
+          cli: {
+            envFile: env.AGENT_GATEWAY_ENV_FILE
+              || path.join(os.homedir(), ".cogentia", "secrets", "agent-gateway.env"),
+          },
+        });
+        return {
+          attempted: true,
+          ok: result.ok === true,
+          command: "in_process:runGatewayStart",
+          detail: result.ok ? "ok" : (result.error || "gateway_start_failed"),
+        };
+      }
+    } catch (error) {
+      return {
+        attempted: true,
+        ok: false,
+        command: "in_process:runGatewayStart",
+        detail: error.message || "gateway_start_failed",
+      };
+    }
+    return runProcess(process.execPath, [script], {
       timeoutMs: Number(env.AGENT_GATEWAY_WATCHDOG_TIMEOUT_MS || 120_000),
       cwd: repoRoot,
       env,
@@ -55,37 +80,20 @@ export async function restartAgentGateway(options = {}) {
   });
 }
 
-function resolvePwsh(env) {
-  const configured = String(env.AGENT_GATEWAY_WATCHDOG_PWSH || "").trim();
-  if (configured && fs.existsSync(configured)) return configured;
-  const candidates = [
-    "C:\\Program Files\\PowerShell\\7\\pwsh.exe",
-    "C:\\Program Files (x86)\\PowerShell\\7\\pwsh.exe",
-  ];
-  for (const candidate of candidates) {
-    if (fs.existsSync(candidate)) return candidate;
-  }
-  return "pwsh";
-}
-
 function runShellCommand(command, options) {
   return new Promise(resolve => {
-    const child = spawn(command, {
+    const child = spawnHeadless(command, [], {
       shell: true,
       cwd: options.cwd,
       env: { ...process.env, ...options.env },
-      stdio: ["ignore", "pipe", "pipe"],
     });
-    let detail = "";
-    child.stdout?.on("data", chunk => { detail += chunk; });
-    child.stderr?.on("data", chunk => { detail += chunk; });
     const timer = setTimeout(() => {
       child.kill("SIGTERM");
       resolve({
         attempted: true,
         ok: false,
         command,
-        detail: trimTail(detail) || "watchdog_timeout",
+        detail: "watchdog_timeout",
       });
     }, options.timeoutMs);
     child.on("error", error => {
@@ -98,7 +106,7 @@ function runShellCommand(command, options) {
         attempted: true,
         ok: code === 0,
         command,
-        detail: trimTail(detail) || (code === 0 ? "ok" : `exit_${code}`),
+        detail: code === 0 ? "ok" : `exit_${code}`,
       });
     });
   });
@@ -106,22 +114,17 @@ function runShellCommand(command, options) {
 
 function runProcess(command, args, options) {
   return new Promise(resolve => {
-    const child = spawn(command, args, {
+    const child = spawnHeadless(command, args, {
       cwd: options.cwd,
       env: { ...process.env, ...options.env },
-      stdio: ["ignore", "pipe", "pipe"],
-      windowsHide: true,
     });
-    let detail = "";
-    child.stdout?.on("data", chunk => { detail += chunk; });
-    child.stderr?.on("data", chunk => { detail += chunk; });
     const timer = setTimeout(() => {
       child.kill("SIGTERM");
       resolve({
         attempted: true,
         ok: false,
         command: [command, ...args].join(" "),
-        detail: trimTail(detail) || "watchdog_timeout",
+        detail: "watchdog_timeout",
       });
     }, options.timeoutMs);
     child.on("error", error => {
@@ -139,16 +142,10 @@ function runProcess(command, args, options) {
         attempted: true,
         ok: code === 0,
         command: [command, ...args].join(" "),
-        detail: trimTail(detail) || (code === 0 ? "ok" : `exit_${code}`),
+        detail: code === 0 ? "ok" : `exit_${code}`,
       });
     });
   });
-}
-
-function trimTail(text, max = 400) {
-  const clean = String(text || "").trim();
-  if (clean.length <= max) return clean;
-  return clean.slice(-max);
 }
 
 function parseBoolean(value, fallback) {

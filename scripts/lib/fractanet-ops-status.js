@@ -1,4 +1,5 @@
 import { summarizeActionLayer } from "./agent-gateway-route.js";
+import { summarizeNodeAgentsLayer } from "./ona-proxy.js";
 
 export function summarizeBlackboardSnapshots(blackboard, options = {}) {
   const all = blackboard.snapshot({ fresh: false, ...options });
@@ -77,6 +78,10 @@ export async function buildFractanetOpsStatus(deps = {}) {
         phase2_wired: false,
       },
       action: summarizeActionLayer(blackboardSummary),
+      node_agents: summarizeNodeAgentsLayer(blackboardSummary, {
+        env: deps.env,
+        now: deps.now,
+      }),
       public_face: {
         guide_url: "https://cogentia.fractavolta.com",
         dashboard_url: "https://cogentia.fractavolta.com/ops/dashboard",

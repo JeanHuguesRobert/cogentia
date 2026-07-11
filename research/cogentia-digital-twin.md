@@ -175,6 +175,7 @@ This document is a position paper, not a product announcement. It is published i
 ### Backlinks
 
 *These documents link to this file:*
+- [On n’est jamais si bien servi que par soi-même ; demain, cela fera beaucoup de monde](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/se_demultiplier_pour_explorer_le_possible_blogpost.md)
 - [Cogentia](../README.md)
 - [Cogentigraphic Distillation](cogentigraphic_distillation.md)
 - [Concept Index — cogentia](concepts.md)

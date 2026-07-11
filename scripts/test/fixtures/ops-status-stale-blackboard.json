@@ -1,0 +1,60 @@
+{
+  "ops_status": {
+    "ok": true,
+    "generated_at": "2026-07-10T12:00:00.000Z",
+    "mcp": {
+      "ok": true,
+      "version": "0.1.0"
+    },
+    "guide": {
+      "ok": true,
+      "service": "guide-mcp",
+      "context": {
+        "retrieval_backend": "inox-session",
+        "inox_retrieval": {
+          "configured": true,
+          "url": "http://100.122.121.68:8792",
+          "transport": "inox.session.v1"
+        }
+      }
+    },
+    "blackboard": {
+      "store_path": "/var/lib/cogentia/blackboard.json",
+      "snapshot_at": "2026-07-10T11:00:00.000Z",
+      "attractor_count": 2,
+      "fresh_attractor_count": 0,
+      "attractors": [],
+      "recent_events": []
+    }
+  },
+  "blackboard": {
+    "ok": true,
+    "snapshot_at": "2026-07-10T11:00:00.000Z",
+    "count": 0,
+    "attractors": [
+      {
+        "id": "attractor:i7-thinkpad-jhr:retrieval",
+        "node": {
+          "resource_id": "resource://i7-thinkpad-jhr",
+          "hostname": "i7-thinkpad-jhr"
+        },
+        "matches": {
+          "capabilities": ["retrieval.inline"]
+        },
+        "availability": {
+          "status": "degraded",
+          "last_seen": "2026-07-01T00:00:00.000Z",
+          "ttl_seconds": 300
+        },
+        "transport": {
+          "profile": "inox.session.v1",
+          "endpoint_ref": "http://100.122.121.68:8792"
+        },
+        "metadata": {
+          "note": "stale fixture — attractor TTL expired"
+        }
+      }
+    ],
+    "recent_events": []
+  }
+}

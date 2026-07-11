@@ -57,7 +57,21 @@ export function createAgentGateway(options = {}) {
   const gate = new ConcurrencyGate(ctx.maxConcurrent);
   const replRegistry = new ReplSessionRegistry({ maxSessions: ctx.maxConcurrent });
 
-  async function handleHealth() {
+  async function handleHealth(options = {}) {
+    const quick = options.quick === true;
+    if (quick) {
+      return {
+        ok: true,
+        service: "agent-cli-gateway",
+        schema: "agent-gateway.health.v1",
+        quick: true,
+        hostname: ctx.hostname,
+        platform: ctx.platform,
+        repl_sessions: replRegistry.size(),
+        trust_boundary: trustBoundary,
+      };
+    }
+
     const probes = {};
     for (const adapter of listAdapters(ctx)) {
       probes[adapter.id] = await adapter.probe(ctx);
@@ -437,7 +451,8 @@ export function createAgentGateway(options = {}) {
       const url = new URL(req.url || "/", `http://${req.headers.host || "127.0.0.1"}`);
 
       if (req.method === "GET" && url.pathname === "/health") {
-        return jsonResponse(res, 200, await handleHealth(), req);
+        const quick = url.searchParams.get("quick") === "1";
+        return jsonResponse(res, 200, await handleHealth({ quick }), req);
       }
 
       if (req.method === "GET" && url.pathname === "/v1/models") {

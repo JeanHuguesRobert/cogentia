@@ -1,146 +1,128 @@
 #!/usr/bin/env node
 /**
  * Publish cop/attractor.advertised for agent-cli-gateway after probing local /health.
- * Watchdog: restart gateway once when health fails, then re-probe; advertise degraded if still down.
- *
- * Env:
- *   COGENTIA_BLACKBOARD_URL
- *   COGENTIA_BLACKBOARD_UPSERT_TOKEN
- *   AGENT_GATEWAY_HEARTBEAT_URL     default http://127.0.0.1:8793/health
- *   AGENT_GATEWAY_TOKEN             local gateway bearer (for /health when required)
- *   AGENT_GATEWAY_ATTRACTOR_ID      default attractor:<hostname>:agent-cli-gateway
- *   AGENT_GATEWAY_ATTRACTOR_NODE_ID  default resource://<hostname>
- *   AGENT_GATEWAY_ATTRACTOR_ENDPOINT default http://<hostname>:8793
- *   AGENT_GATEWAY_ATTRACTOR_TTL_SECONDS default 300
- *   AGENT_GATEWAY_WATCHDOG          default 1 — restart gateway when health fails
- *   AGENT_GATEWAY_WATCHDOG_RESTART_SCRIPT optional override
+ * Export runScheduledHeartbeat() for in-process ONA jobs (no child node.exe on Windows).
  */
 
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
+import { fileURLToPath } from "node:url";
 import { restartAgentGateway, watchdogEnabled } from "../lib/agent-gateway-watchdog.js";
 import { buildAgentCliGatewayAttractor } from "../lib/packet-attractor-blackboard.js";
 
-loadOptionalEnvFiles([
-  process.env.AGENT_GATEWAY_ATTRACTOR_ENV_FILE,
-  process.env.AGENT_GATEWAY_ENV_FILE,
-  process.env.COGENTIA_ATTRACTOR_ENV_FILE,
-  process.env.COGENTIA_ENV_FILE,
-  path.join(os.homedir(), "srv", "cogentia", "secrets", "agent-gateway.env"),
-  path.join(os.homedir(), "srv", "cogentia", "secrets", "agent-gateway-blackboard.env"),
-  path.join(os.homedir(), ".cogentia", "secrets", "agent-gateway.env"),
-  path.join(os.homedir(), ".cogentia", "secrets", "agent-gateway-blackboard.env"),
-]);
+export async function runScheduledHeartbeat(options = {}) {
+  const env = options.env || process.env;
+  const fetchImpl = options.fetch || globalThis.fetch;
+  const blackboardUrl = String(env.COGENTIA_BLACKBOARD_URL || "").trim().replace(/\/$/, "");
+  const upsertToken = String(env.COGENTIA_BLACKBOARD_UPSERT_TOKEN || env.COGENTIA_ADMIN_TOKEN || "").trim();
+  const withdraw = parseBoolean(env.AGENT_GATEWAY_ATTRACTOR_WITHDRAW, false);
+  const hostname = String(env.ONA_HOSTNAME || os.hostname()).trim().toLowerCase();
+  const defaultResourceId = `resource://${hostname}`;
+  const healthUrl = appendQuickHealthParam(String(
+    env.AGENT_GATEWAY_HEARTBEAT_URL || `http://127.0.0.1:${env.AGENT_GATEWAY_PORT || 8793}/health`,
+  ).trim());
+  const gatewayToken = String(env.AGENT_GATEWAY_TOKEN || "").trim();
 
-const blackboardUrl = String(process.env.COGENTIA_BLACKBOARD_URL || "").trim().replace(/\/$/, "");
-const upsertToken = String(process.env.COGENTIA_BLACKBOARD_UPSERT_TOKEN || process.env.COGENTIA_ADMIN_TOKEN || "").trim();
-const withdraw = parseBoolean(process.env.AGENT_GATEWAY_ATTRACTOR_WITHDRAW, false);
-const hostname = os.hostname().toLowerCase();
-const defaultResourceId = `resource://${hostname}`;
-const healthUrl = String(process.env.AGENT_GATEWAY_HEARTBEAT_URL || `http://127.0.0.1:${process.env.AGENT_GATEWAY_PORT || 8793}/health`).trim();
-const gatewayToken = String(process.env.AGENT_GATEWAY_TOKEN || "").trim();
-
-if (!blackboardUrl) {
-  console.error(JSON.stringify({ ok: false, error: "missing_blackboard_url" }));
-  process.exit(2);
-}
-if (!upsertToken) {
-  console.error(JSON.stringify({ ok: false, error: "missing_blackboard_upsert_token" }));
-  process.exit(2);
-}
-
-let health = null;
-let watchdog = null;
-
-if (!withdraw) {
-  ({ health, watchdog } = await ensureGatewayHealth(healthUrl, gatewayToken));
-}
-
-const degraded = !withdraw && !health?.ok;
-const models = degraded ? [] : listModelsFromHealth(health);
-const toolCategories = degraded ? [] : listToolCategoriesFromHealth(health);
-const attractor = buildAgentCliGatewayAttractor({
-  id: process.env.AGENT_GATEWAY_ATTRACTOR_ID || `attractor:${hostname}:agent-cli-gateway`,
-  resourceId: process.env.AGENT_GATEWAY_ATTRACTOR_NODE_ID || defaultResourceId,
-  endpointRef: process.env.AGENT_GATEWAY_ATTRACTOR_ENDPOINT
-    || `http://${hostname}:${process.env.AGENT_GATEWAY_PORT || 8793}`,
-  ttlSeconds: Number(process.env.AGENT_GATEWAY_ATTRACTOR_TTL_SECONDS || 300),
-  models: degraded ? [] : (models.length ? models : undefined),
-  toolCategories: degraded ? [] : (toolCategories.length ? toolCategories : undefined),
-  minimal: degraded,
-  status: health?.ok ? "online" : "degraded",
-  trustPerimeter: process.env.AGENT_GATEWAY_ATTRACTOR_TRUST_PERIMETER,
-});
-
-const payload = withdraw
-  ? {
-    event: "cop/attractor.withdrawn",
-    attractor_id: attractor.id,
-    reason: String(process.env.AGENT_GATEWAY_ATTRACTOR_WITHDRAW_REASON || "host_shutdown").trim(),
+  if (!blackboardUrl) {
+    return { ok: false, exitCode: 2, error: "missing_blackboard_url" };
   }
-  : {
-    event: "cop/attractor.advertised",
-    advertised_by: attractor.node.resource_id,
-    attractor,
-  };
+  if (!upsertToken) {
+    return { ok: false, exitCode: 2, error: "missing_blackboard_upsert_token" };
+  }
 
-const response = await fetch(`${blackboardUrl}/ops/blackboard/upsert`, {
-  method: "POST",
-  headers: {
-    "Content-Type": "application/json",
-    Authorization: `Bearer ${upsertToken}`,
-    "X-Cogentia-Node": attractor.node.resource_id,
-  },
-  body: JSON.stringify(payload),
-});
+  let health = null;
+  let watchdog = null;
 
-let body;
-try {
-  body = await response.json();
-} catch {
-  body = { ok: false, error: "non_json_response", status: response.status };
-}
+  if (!withdraw) {
+    ({ health, watchdog } = await ensureGatewayHealth(healthUrl, gatewayToken, env));
+  }
 
-if (!response.ok || body.ok === false) {
-  console.error(JSON.stringify({
-    ok: false,
-    status: response.status,
-    body,
-    blackboard_url: blackboardUrl,
+  const degraded = !withdraw && !health?.ok;
+  const models = degraded ? [] : listModelsFromHealth(health);
+  const toolCategories = degraded ? [] : listToolCategoriesFromHealth(health);
+  const attractor = buildAgentCliGatewayAttractor({
+    id: env.AGENT_GATEWAY_ATTRACTOR_ID || `attractor:${hostname}:agent-cli-gateway`,
+    resourceId: env.AGENT_GATEWAY_ATTRACTOR_NODE_ID || defaultResourceId,
+    endpointRef: env.AGENT_GATEWAY_ATTRACTOR_ENDPOINT
+      || `http://${hostname}:${env.AGENT_GATEWAY_PORT || 8793}`,
+    ttlSeconds: Number(env.AGENT_GATEWAY_ATTRACTOR_TTL_SECONDS || 300),
+    models: degraded ? [] : (models.length ? models : undefined),
+    toolCategories: degraded ? [] : (toolCategories.length ? toolCategories : undefined),
+    minimal: degraded,
+    status: health?.ok ? "online" : "degraded",
+    trustPerimeter: env.AGENT_GATEWAY_ATTRACTOR_TRUST_PERIMETER,
+  });
+
+  const payload = withdraw
+    ? {
+      event: "cop/attractor.withdrawn",
+      attractor_id: attractor.id,
+      reason: String(env.AGENT_GATEWAY_ATTRACTOR_WITHDRAW_REASON || "host_shutdown").trim(),
+    }
+    : {
+      event: "cop/attractor.advertised",
+      advertised_by: attractor.node.resource_id,
+      attractor,
+    };
+
+  const response = await fetchImpl(`${blackboardUrl}/ops/blackboard/upsert`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${upsertToken}`,
+      "X-Cogentia-Node": attractor.node.resource_id,
+    },
+    body: JSON.stringify(payload),
+  });
+
+  let body;
+  try {
+    body = await response.json();
+  } catch {
+    body = { ok: false, error: "non_json_response", status: response.status };
+  }
+
+  if (!response.ok || body.ok === false) {
+    return {
+      ok: false,
+      exitCode: 1,
+      error: "blackboard_upsert_failed",
+      status: response.status,
+      body,
+      blackboard_url: blackboardUrl,
+      attractor_id: attractor.id,
+      withdraw,
+    };
+  }
+
+  return {
+    ok: !degraded,
+    exitCode: degraded ? 1 : 0,
+    event: payload.event,
     attractor_id: attractor.id,
-    withdraw,
-  }, null, 2));
-  process.exit(1);
+    endpoint_ref: attractor.transport.endpoint_ref,
+    availability_status: attractor.availability.status,
+    capabilities: attractor.matches.capabilities,
+    models,
+    tool_categories: toolCategories,
+    ttl_seconds: attractor.availability.ttl_seconds,
+    snapshot_at: body.snapshot_at,
+    watchdog,
+    error: degraded ? "gateway_degraded" : null,
+  };
 }
 
-const result = {
-  ok: true,
-  event: payload.event,
-  attractor_id: attractor.id,
-  endpoint_ref: attractor.transport.endpoint_ref,
-  availability_status: attractor.availability.status,
-  capabilities: attractor.matches.capabilities,
-  models,
-  tool_categories: toolCategories,
-  ttl_seconds: attractor.availability.ttl_seconds,
-  snapshot_at: body.snapshot_at,
-  watchdog,
-};
-
-console.log(JSON.stringify(result, null, 2));
-if (degraded) process.exit(1);
-
-async function ensureGatewayHealth(url, token) {
+async function ensureGatewayHealth(url, token, env) {
   let health = await probeGatewayHealth(url, token);
   if (health?.ok) {
     return { health, watchdog: { attempted: false, ok: true } };
   }
 
   let watchdog = { attempted: false, ok: false, detail: "health_failed" };
-  if (watchdogEnabled()) {
-    watchdog = await restartAgentGateway();
-    const settleMs = Number(process.env.AGENT_GATEWAY_WATCHDOG_SETTLE_MS || 3000);
+  if (watchdogEnabled(env)) {
+    watchdog = await restartAgentGateway({ env });
+    const settleMs = Number(env.AGENT_GATEWAY_WATCHDOG_SETTLE_MS || 3000);
     if (settleMs > 0) await sleep(settleMs);
     health = await probeGatewayHealth(url, token);
     watchdog.health_ok_after_restart = health?.ok === true;
@@ -228,4 +210,49 @@ function parseBoolean(value, fallback) {
 
 function sleep(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+function appendQuickHealthParam(url) {
+  if (!url || url.includes("quick=1")) return url;
+  if (!/\/health\/?$/i.test(url.replace(/\?.*$/, ""))) return url;
+  return url.includes("?") ? `${url}&quick=1` : `${url}?quick=1`;
+}
+
+function isCliInvocation() {
+  const entry = process.argv[1];
+  if (!entry) return false;
+  return path.resolve(entry) === path.resolve(fileURLToPath(import.meta.url));
+}
+
+function parseCliEnvFiles(argv) {
+  const gateway = argv.includes("--gateway-env-file")
+    ? String(argv[argv.indexOf("--gateway-env-file") + 1] || "").trim()
+    : "";
+  const blackboard = argv.includes("--blackboard-env-file")
+    ? String(argv[argv.indexOf("--blackboard-env-file") + 1] || "").trim()
+    : "";
+  return { gateway, blackboard };
+}
+
+if (isCliInvocation()) {
+  const cliEnv = parseCliEnvFiles(process.argv);
+  if (cliEnv.gateway) process.env.AGENT_GATEWAY_ENV_FILE = cliEnv.gateway;
+  if (cliEnv.blackboard) process.env.AGENT_GATEWAY_ATTRACTOR_ENV_FILE = cliEnv.blackboard;
+  loadOptionalEnvFiles([
+    process.env.AGENT_GATEWAY_ATTRACTOR_ENV_FILE,
+    process.env.AGENT_GATEWAY_ENV_FILE,
+    process.env.COGENTIA_ATTRACTOR_ENV_FILE,
+    process.env.COGENTIA_ENV_FILE,
+    path.join(os.homedir(), "srv", "cogentia", "secrets", "agent-gateway.env"),
+    path.join(os.homedir(), "srv", "cogentia", "secrets", "agent-gateway-blackboard.env"),
+    path.join(os.homedir(), ".cogentia", "secrets", "agent-gateway.env"),
+    path.join(os.homedir(), ".cogentia", "secrets", "agent-gateway-blackboard.env"),
+  ]);
+
+  const result = await runScheduledHeartbeat({ env: process.env });
+  if (!result.ok) {
+    console.error(JSON.stringify(result, null, 2));
+    process.exit(result.exitCode || 1);
+  }
+  console.log(JSON.stringify(result, null, 2));
 }

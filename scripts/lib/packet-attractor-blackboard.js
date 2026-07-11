@@ -364,6 +364,55 @@ export function buildRetrievalInlineAttractor(options = {}) {
   };
 }
 
+export function buildSiteEdgeAttractor(options = {}) {
+  const now = options.now instanceof Date ? options.now : new Date();
+  const id = String(options.id || "attractor:rpi3-view:site-edge").trim();
+  const resourceId = String(options.resourceId || "resource://rpi3-view").trim();
+  const hostname = String(options.hostname || "rpi3-view").trim();
+  const endpointRef = String(options.endpointRef || `http://${hostname}.bigscale-pythagorean.ts.net:22`).trim();
+  const ttlSeconds = Number(options.ttlSeconds || 300);
+
+  return {
+    artifactType: ARTIFACT_TYPE,
+    id,
+    node: {
+      resource_id: resourceId,
+      hostname,
+      trust_perimeter: String(options.trustPerimeter || "owner-operated").trim() || "owner-operated",
+    },
+    matches: {
+      packetKind: ["continuation", "cognitive-packet", "mandate"],
+      capabilities: ["site.edge.v1", "domotics.degraded-local"],
+      verbs: ["site.status@v1"],
+    },
+    legitimacy: {
+      mandate_surfaces: ["owner-cli", "local-panel"],
+      forbidden: ["unbounded-provider-spend"],
+    },
+    pressure: {
+      accepted: ["best-effort", "ttl", "bounded", "store-forward"],
+      default: "store-forward",
+    },
+    regime: {
+      current: "normal",
+      accepts: ["normal", "degraded"],
+    },
+    availability: {
+      status: "online",
+      last_seen: now.toISOString(),
+      ttl_seconds: ttlSeconds,
+    },
+    transport: {
+      profile: "mesh.ssh.v1",
+      endpoint_ref: endpointRef,
+    },
+    trace: {
+      advertised_event_required: true,
+      matched_event_required: false,
+    },
+  };
+}
+
 function emptyState() {
   return {
     version: 1,

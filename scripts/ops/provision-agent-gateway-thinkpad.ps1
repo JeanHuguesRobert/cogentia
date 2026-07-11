@@ -57,13 +57,13 @@ $gatewayEnv = Join-Path $secretsDir 'agent-gateway.env'
 Import-AgentGatewayEnv $gatewayEnv
 $token = $env:AGENT_GATEWAY_TOKEN
 
-$heartbeatUrl = "http://${Hostname}:$Port/health"
+$heartbeatUrl = "http://${Hostname}:$Port/health?quick=1"
 $tsBin = 'C:\Program Files\Tailscale\tailscale.exe'
 if (Test-Path $tsBin) {
     try {
         $tsIp = (& $tsBin ip -4 2>$null | Select-Object -First 1).Trim()
         if ($tsIp -match '^\d+\.\d+\.\d+\.\d+$') {
-            $heartbeatUrl = "http://${tsIp}:$Port/health"
+            $heartbeatUrl = "http://${tsIp}:$Port/health?quick=1"
         }
     } catch { }
 }
@@ -81,7 +81,7 @@ Write-Host "[$nodeSlug] wrote $bbFile"
 
 if (-not $SkipStart) {
     Write-Host "[$nodeSlug] starting gateway..."
-    & (Join-Path $ops 'start-agent-gateway-windows.ps1') -EnvFile $gatewayEnv -Port $Port
+    & node (Join-Path $ops 'start-agent-gateway-windows.js') --env-file $gatewayEnv --port $Port
 }
 
 if (-not $SkipHeartbeat) {

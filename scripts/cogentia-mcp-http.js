@@ -26,6 +26,8 @@ import {
   parseActionRouteBody,
   routeActionThroughGateway,
 } from "./lib/agent-gateway-route.js";
+import { handleOpsNodeProxyRequest } from "./lib/ona-proxy.js";
+import { handleEdgeTrapPost, handleEdgeTrapsGet } from "./lib/edge-trap-ops.js";
 
 const moduleDir = path.dirname(fileURLToPath(import.meta.url));
 const fractanetDashboardPath = path.join(moduleDir, "ops", "fractanet-dashboard.html");
@@ -85,6 +87,9 @@ const server = http.createServer(async (req, res) => {
     if (req.method === "GET" && req.url === "/ops/status") return handleOpsStatus(req, res);
     if (req.method === "GET" && req.url === "/ops/dashboard") return handleOpsDashboard(req, res);
     if (req.method === "POST" && req.url === "/ops/route/action") return handleOpsRouteAction(req, res);
+    if (req.method === "GET" && req.url?.startsWith("/ops/node/")) return handleOpsNodeProxy(req, res);
+    if (req.method === "POST" && req.url === "/ops/edge/trap") return handleEdgeTrap(req, res);
+    if (req.method === "GET" && req.url?.startsWith("/ops/edge/traps")) return handleEdgeTrapsList(req, res);
     if (req.method === "POST" && req.url === "/guide/chat") return handleGuideChat(req, res);
     if (req.method === "GET" && req.url === "/sse") return sendSseInfo(req, res);
     if (req.method === "GET" && req.url === "/mcp") return sendSseInfo(req, res);
@@ -104,7 +109,8 @@ server.listen(port, host, () => {
   console.error(`Daemon: ${core.daemonUrl.href}`);
   console.error("Endpoints: POST /mcp, GET /mcp, GET /health, GET /tools, POST /tools/{name}");
   console.error("Blackboard: GET /ops/blackboard, POST /ops/blackboard/upsert");
-  console.error("Ops: GET /ops/status, GET /ops/dashboard, POST /ops/route/action");
+  console.error("Ops: GET /ops/status, GET /ops/dashboard, POST /ops/route/action, GET /ops/node/:node_id/{status,drift}");
+  console.error("Edge: POST /ops/edge/trap, GET /ops/edge/traps (trap-directed polling)");
 });
 
 async function health() {
@@ -193,6 +199,13 @@ async function handleBlackboardGet(req, res) {
   return sendJson(res, 200, blackboard.snapshot({ capability, fresh }));
 }
 
+async function handleOpsNodeProxy(req, res) {
+  const result = await handleOpsNodeProxyRequest(req, blackboard, {
+    timeoutMs: boundedInteger(process.env.ONA_PROXY_TIMEOUT_MS, 10_000, 1000, 60_000),
+  });
+  return sendJson(res, result.status, result.body);
+}
+
 async function handleOpsRouteAction(req, res) {
   if (!hasActionRouteAuth(req)) {
     return sendJson(res, 401, { ok: false, error: "unauthorized_action_route" });
@@ -218,6 +231,27 @@ async function handleOpsRouteAction(req, res) {
     return sendJson(res, status, result);
   }
   return sendJson(res, 200, result);
+}
+
+async function handleEdgeTrap(req, res) {
+  if (!hasBlackboardUpsertAuth(req)) {
+    return sendJson(res, 401, { ok: false, error: "unauthorized_edge_trap" });
+  }
+  let body;
+  try {
+    body = JSON.parse(await readBody(req) || "{}");
+  } catch {
+    return sendJson(res, 400, { ok: false, error: "invalid_json" });
+  }
+  const result = await handleEdgeTrapPost(body);
+  return sendJson(res, result.ok ? 200 : 400, result);
+}
+
+async function handleEdgeTrapsList(req, res) {
+  if (!hasBlackboardUpsertAuth(req)) {
+    return sendJson(res, 401, { ok: false, error: "unauthorized_edge_traps" });
+  }
+  return sendJson(res, 200, handleEdgeTrapsGet(req.url || "/ops/edge/traps"));
 }
 
 async function handleBlackboardUpsert(req, res) {

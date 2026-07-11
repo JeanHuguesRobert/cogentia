@@ -60,7 +60,7 @@ Start (foreground):
   node scripts/agent-gateway.js --port $Port
 
 Start (background):
-  pwsh -File $($PSScriptRoot)\start-agent-gateway-windows.ps1
+  node $($PSScriptRoot)\start-agent-gateway-windows.js
 
 Health:
   curl http://127.0.0.1:$Port/health -H "Authorization: Bearer <token>"
@@ -69,19 +69,18 @@ Health:
 
 if ($RegisterStartupTask) {
     $taskName = 'CogentiaAgentGateway'
-    $launcher = Join-Path $secretsDir "boot-agent-gateway-$nodeSlug.ps1"
-    @"
-`$ErrorActionPreference = 'Stop'
-& '$($PSScriptRoot)\start-agent-gateway-windows.ps1' -EnvFile '$envFile' -Port $Port
-"@ | Set-Content -Encoding utf8 $launcher
-
-    $nodeExe = (Get-Command pwsh).Source
-    $action = New-ScheduledTaskAction -Execute $nodeExe -Argument "-NoProfile -File `"$launcher`""
+    $startScript = Join-Path $PSScriptRoot 'start-agent-gateway-windows.js'
+    $helper = Join-Path $PSScriptRoot 'lib\register-hidden-node-task.ps1'
+    . $helper
     $trigger = New-ScheduledTaskTrigger -AtLogOn -User $env:USERNAME
-    $settings = New-ScheduledTaskSettingsSet -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries -StartWhenAvailable
-    Register-ScheduledTask -TaskName $taskName -Action $action -Trigger $trigger -Settings $settings `
-        -Description "Start agent-cli-gateway on logon ($nodeSlug)" -Force | Out-Null
-    Write-Host "[agent-gateway] registered startup task: $taskName"
+    Register-HiddenNodeTask `
+        -TaskName $taskName `
+        -ScriptPath $startScript `
+        -WorkingDirectory $root `
+        -ScriptArguments "--env-file `"$envFile`" --port $Port" `
+        -Triggers @($trigger) `
+        -Description "Start agent-cli-gateway on logon ($nodeSlug)"
+    Write-Host "[agent-gateway] registered startup task: $taskName (node.exe -Hidden)"
 }
 
 if ($Start) {

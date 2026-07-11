@@ -1,6 +1,7 @@
-import { execFileSync, spawn } from "node:child_process";
+import { execFileSync } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
+import { spawnHeadless } from "../spawn-headless.js";
 
 /** Resolve spawn invocation — Windows npm globals use native .exe or node + .js, not fragile .cmd shims. */
 export function resolveSpawnSpec(spec) {
@@ -21,7 +22,7 @@ export function resolveSpawnSpec(spec) {
   let exePath = null;
   let cmdPath = null;
   try {
-    const hits = execFileSync("where.exe", [spec.command], { encoding: "utf8" })
+    const hits = execFileSync("where.exe", [spec.command], { encoding: "utf8", windowsHide: true })
       .trim()
       .split(/\r?\n/)
       .map(s => s.trim())
@@ -71,7 +72,7 @@ function resolveWindowsNpmShim(name) {
 
 export function spawnResolved(spec, options = {}) {
   const resolved = resolveSpawnSpec(spec);
-  return spawn(resolved.command, resolved.args, {
+  return spawnHeadless(resolved.command, resolved.args, {
     cwd: options.cwd,
     env: options.env || process.env,
     shell: resolved.shell,

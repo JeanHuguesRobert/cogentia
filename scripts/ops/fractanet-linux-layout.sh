@@ -36,7 +36,7 @@ if [[ ! -f /srv/cogentia/secrets/README.txt ]]; then
   sudo tee /srv/cogentia/secrets/README.txt >/dev/null <<'EOF'
 Fractanet node secrets — never commit values to git.
   publisher (fracta): guide.env, corpus sync keys
-  edge-kiosk (rpi3-view): viewer.env, domotics.env (degraded local)
+  edge-appliance (rpi3-view): viewer.env, domotics.env (local manual backup when FractaNet down)
 EOF
   sudo chown root:"${NODE_USER}" /srv/cogentia/secrets/README.txt
   sudo chmod 640 /srv/cogentia/secrets/README.txt

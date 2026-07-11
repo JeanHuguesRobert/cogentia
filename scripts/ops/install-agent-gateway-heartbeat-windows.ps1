@@ -1,8 +1,8 @@
 # Register scheduled task to publish agent-cli-gateway attractor to fracta blackboard.
+# Runs node.exe directly with -Hidden (no cmd.exe console flash).
 param(
     [string]$GatewayEnvFile = "",
     [string]$BlackboardEnvFile = "",
-    [string]$LauncherScript = "",
     [int]$IntervalMinutes = 3
 )
 
@@ -22,52 +22,32 @@ if (-not (Test-Path $GatewayEnvFile)) {
 if (-not (Test-Path $BlackboardEnvFile)) {
     throw "Blackboard env not found: $BlackboardEnvFile"
 }
-if (-not $LauncherScript) {
-    $LauncherScript = Join-Path $secretsDir "run-agent-gateway-heartbeat-$nodeSlug.ps1"
-}
 
 $repoRoot = Resolve-Path (Join-Path $PSScriptRoot '..\..')
 $heartbeat = Join-Path $repoRoot 'scripts\ops\agent-gateway-heartbeat.js'
 $taskName = 'CogentiaAgentGatewayHeartbeat'
-$nodeExe = (Get-Command pwsh).Source
-
-@"
-`$ErrorActionPreference = 'Stop'
-`$env:AGENT_GATEWAY_ENV_FILE = '$GatewayEnvFile'
-`$env:AGENT_GATEWAY_ATTRACTOR_ENV_FILE = '$BlackboardEnvFile'
-& node '$heartbeat'
-exit `$LASTEXITCODE
-"@ | Set-Content -Encoding utf8 $LauncherScript
-
-$action = New-ScheduledTaskAction `
-    -Execute $nodeExe `
-    -Argument "-NoProfile -File `"$LauncherScript`""
+$helper = Join-Path $PSScriptRoot 'lib\register-hidden-node-task.ps1'
+. $helper
 
 $logonTrigger = New-ScheduledTaskTrigger -AtLogOn -User $env:USERNAME
 $repeatTrigger = New-ScheduledTaskTrigger -Once -At (Get-Date) `
     -RepetitionInterval (New-TimeSpan -Minutes $IntervalMinutes) `
     -RepetitionDuration (New-TimeSpan -Days 3650)
 
-$settings = New-ScheduledTaskSettingsSet `
-    -AllowStartIfOnBatteries `
-    -DontStopIfGoingOnBatteries `
-    -StartWhenAvailable `
-    -MultipleInstances IgnoreNew
-
-Register-ScheduledTask `
+Register-HiddenNodeTask `
     -TaskName $taskName `
-    -Action $action `
-    -Trigger @($logonTrigger, $repeatTrigger) `
-    -Settings $settings `
-    -Description "Publish cop/attractor.advertised for agent-cli-gateway ($nodeSlug)" `
-    -Force | Out-Null
+    -ScriptPath $heartbeat `
+    -WorkingDirectory $repoRoot `
+    -ScriptArguments "--gateway-env-file `"$GatewayEnvFile`" --blackboard-env-file `"$BlackboardEnvFile`"" `
+    -Triggers @($logonTrigger, $repeatTrigger) `
+    -Description "Publish cop/attractor.advertised for agent-cli-gateway ($nodeSlug)"
 
-& $nodeExe -NoProfile -File $LauncherScript
+& node $heartbeat --gateway-env-file $GatewayEnvFile --blackboard-env-file $BlackboardEnvFile
 if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
 Write-Host "Registered scheduled task: $taskName"
-Write-Host "  launcher: $LauncherScript"
-Write-Host "  gateway:  $GatewayEnvFile"
+Write-Host "  runtime:    node.exe -Hidden (no cmd.exe)"
+Write-Host "  gateway:    $GatewayEnvFile"
 Write-Host "  blackboard: $BlackboardEnvFile"
-Write-Host "  every:    ${IntervalMinutes}m + at logon"
+Write-Host "  every:      ${IntervalMinutes}m + at logon"
 Write-Host 'Initial gateway heartbeat OK'
