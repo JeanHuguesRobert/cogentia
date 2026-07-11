@@ -215,3 +215,11 @@ This repository instantiates the **cognitive infrastructure layer** of the [DHIT
 - [Research Index — Jean Hugues Noël Robert (Profile / Entry Point)](https://github.com/JeanHuguesRobert/JeanHuguesRobert/blob/main/research/index.md)
 - [Research Index — MareNostrum](https://github.com/JeanHuguesRobert/marenostrum/blob/main/research/index.md)
 <!-- END_AUTO: backlinks -->
+## Newly indexed working corpus (July 2026)
+
+- [Edge trap-directed polling](../docs/edge-trap-directed-polling.md)
+- [Agent CLI Gateway](agent_cli_gateway.md)
+- [Agents JHN et démocratisation démocratique des réseaux sociaux](agents_jhn_democratisation_reseaux_sociaux.md)
+- [Blocked Tool Rule](blocked_tool_rule.md)
+- Corpus consistency: [global index](corpus-consistency/global-index.md), [implementation summary](corpus-consistency/IMPLEMENTATION_SUMMARY.md), and [scanner design](corpus-consistency/scanner-design.md)
+- [Deploy and verify POST /ops/route/action](../scripts/ops/deploy-route-action.md)
