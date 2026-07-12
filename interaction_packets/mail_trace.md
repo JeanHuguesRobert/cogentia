@@ -6,12 +6,13 @@ title: "Mail Trace Register"
 date: "2026-05-27"
 status: "draft — auto-filled (frontmatter cleanup)"
 canonical_url: https://github.com/JeanHuguesRobert/cogentia/blob/main/interaction_packets/mail_trace.md
-last_stamped_at: 2026-06-13
+last_stamped_at: 2026-07-12
 ---
 # Mail Trace Register
 
 | ID | Date | Subject | To | Follow-up | Days elapsed | Status | Disclosure |
 |---|---:|---|---|---:|---:|---|---|
+| 2026-03-23-001 | 2026-03-23 | Constellia paper submission — ICOME'26 | ICOME'26 | 0 | 81 | No decision notice detected; conference concluded without participation; operationally not accepted | D2 |
 | 2026-03-27-001 | 2026-03-27 | FractaVolta / Constellia ICOME26 | HyFit; Corsica Sole | 0 | 78 | Sent — no response detected | D2 |
 | 2026-03-30-001 | 2026-03-30 | WIP Draft "Infractructure is all you need" | André Fazi | 0 | 75 | Sent — no response detected | D2 |
 | 2026-03-31-001 | 2026-03-31 | Proposition de session spéciale MareNostrum en lien avec ICOME’26 | Université de Corse; ICOME; Collectivité de Corse | 0 | 2 | Reply received; partial delivery failure observed | D2 |

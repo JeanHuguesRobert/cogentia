@@ -6,7 +6,7 @@ title: "Jean Hugues Robert — Tableau de bord Interaction Packets"
 date: "2026-05-27"
 status: "draft — auto-filled (frontmatter cleanup)"
 canonical_url: https://github.com/JeanHuguesRobert/cogentia/blob/main/interaction_packets/dashboard.md
-last_stamped_at: 2026-06-13
+last_stamped_at: 2026-07-12
 ---
 # Jean Hugues Robert — Tableau de bord Interaction Packets
 
@@ -47,6 +47,7 @@ Registre principal :
 
 | ID | Date | Sujet | Interlocuteur | Statut | Divulgation | Paquet |
 |---|---:|---|---|---|---|---|
+| 2026-03-23-001 | 2026-03-23 | Soumission de l'article Constellia — ICOME'26 | ICOME'26 | Aucun avis de décision détecté ; conférence achevée sans participation ; traité opérationnellement comme non accepté | D2 | [YAML](./packets/2026/2026-03-23-constellia_icome26_submission.yaml) |
 | 2026-03-27-001 | 2026-03-27 | FractaVolta / Constellia ICOME26 | HyFit; Corsica Sole | Envoyé — aucune réponse détectée | D2 | [YAML](./packets/2026/2026-03-27-fractavolta_constellia_icome26.yaml) |
 | 2026-03-30-001 | 2026-03-30 | WIP Draft "Infractructure is all you need" | André Fazi | Envoyé — aucune réponse détectée | D2 | [YAML](./packets/2026/2026-03-30-wip_infractructure_andre_fazi.yaml) |
 | 2026-03-31-001 | 2026-03-31 | Proposition de session spéciale MareNostrum en lien avec ICOME’26 | Université de Corse; ICOME; Collectivité de Corse | Réponse reçue; échec partiel de distribution observé | D2 | [YAML](./packets/2026/2026-03-31-proposition_session_marenostrum_icome26.yaml) |

@@ -1,0 +1,39 @@
+id: 2026-03-23-001
+type: "interaction_packet"
+channel: "conference_submission"
+date: 2026-03-23
+subject: "Constellia paper submission — ICOME'26"
+from:
+  - "Jean Hugues Noël Robert"
+  - "Guillermo Valdes"
+acting_as:
+  - "authors"
+to:
+  - "ICOME'26"
+thread_detected: false
+reply_detected: false
+reply_date: null
+status: "closed_without_decision_notice"
+followup_number: 0
+conference_start_date: 2026-06-10
+conference_end_date: 2026-06-12
+elapsed_days_until_conference_end: 81
+disclosure: "D2"
+public_summary: >
+  Constellia was submitted to ICOME'26. No acceptance or rejection notice was
+  detected, and the conference concluded without the authors' participation.
+  The submission is treated operationally as not accepted, without asserting
+  that a formal rejection was issued.
+expected_continuation: >
+  A submission decision communicated to the authors before the conference.
+observed_continuation: >
+  No decision notice detected. ICOME'26 took place on 2026-06-10 through
+  2026-06-12 without the authors' participation.
+evidence_basis:
+  - "Public Constellia manuscript records submission to ICOME'26."
+  - "Author attestation recorded on 2026-07-12: zero response received and no participation."
+notes:
+  - "This records an observed absence of notification, not proof of a formal rejection."
+related_documents:
+  - "marenostrum/research/constellia.md"
+  - "marenostrum/research/journal/2026-06-12-post-icome26.md"
