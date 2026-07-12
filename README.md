@@ -122,6 +122,7 @@ All published documents live in `research/` and are catalogued in [`research/ind
 - **[MCP adapter](docs/cogentia-mcp.md)** — model-facing tools that call the daemon without direct SQLite or filesystem access.
 - **[Connect MCP clients to Cogentia](docs/connect-mcp-clients.md)** — practical setup notes for local stdio, local HTTP and Fracta-hosted MCP clients.
 - **[Agent Gateway invocation runbook](docs/agent-gateway-invocation.md)** — blackboard-routed action-plane invocation and Fractanet acceptance checks.
+- **[Secret-safe operational inspection](docs/secret-safe-inspection.md)** — inspect credential metadata, presence and scope without reading or printing secret values.
 - **[Trustable Digital Twin Agile Roadmap](docs/digital-twin-agile-roadmap.md)** — living roadmap for raising an owner-facing digital twin through traceable capability increments.
 - **[The Knowledge Mesh](docs/knowledge_mesh.md)** — backlinks, trails, and Jekyll for human navigation.
 
