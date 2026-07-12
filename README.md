@@ -17,7 +17,7 @@ Cogentia is the **cognitive infrastructure tooling** of a multi-repository publi
 
 One infrastructure, two scales — *I* and *we*:
 
-- **`scripts/cogentia.js`** — the zero-dependency Node.js CLI substrate. Version 2 is a compact corpus navigator: multi-repo registry loading, document inventory, source/derived classification, generated navigation plans, concept checks, full-text search, and git drift reports. The historical v1 implementation is archived as [`scripts/cogentia.v1-history.js`](scripts/cogentia.v1-history.js).
+- **`scripts/cogentia.js`** — the zero-dependency Node.js operational substrate. Version 2 now governs a multi-repository corpus end to end: registry loading, document and role classification, generated navigation, continuations, consolidation, Git/GitHub drift, local search and indexing, daemon-backed context retrieval, and agent-facing gateways. The historical v1 implementation is archived as [`scripts/cogentia.v1-history.js`](scripts/cogentia.v1-history.js).
 - **Cogentia Personal** — the *individual* scale. A sovereign cognitive twin: Cogentia (memory + mandate + traces), Cogentigram (structured profile of the Cogentia), Cogentiscope (navigation surface). See [`apps/personal/`](apps/personal/) and [`research/cogentia-digital-twin.md`](research/cogentia-digital-twin.md).
 - **Cogentia Commons** — the *collective* scale. The methodology of public, accountable, audit-trailed knowledge: GitHub-anchored, every objection a first-class contribution. It is **public by default, private by exception**: private or restricted community spaces are visibility modes for sensitive, strategic or patent-oriented exploration, not separate product cores. See [`apps/commons/`](apps/commons/), [`research/Cogentia_Commons_Working_Paper.md`](research/Cogentia_Commons_Working_Paper.md), and [`research/cogentia_commons_visibility_and_private_modes.md`](research/cogentia_commons_visibility_and_private_modes.md). The web GUI also ships as **`brique-cogentia-commons`** inside the [inseme](https://github.com/JeanHuguesRobert/inseme) platform (shared COP Event log + Supabase projection).
 
@@ -29,7 +29,7 @@ The architectural axiom lives in [`marenostrum/DHITL.md`](https://github.com/Jea
 
 ## The Continuation protocol
 
-Cogentia's load-bearing technical contribution is `cogentia.continuation.v1` — a typed, validated, provider-neutral resumption point for CLI tools. The protocol is specified in [`research/agent_resumable_cli.md`](research/agent_resumable_cli.md). The earlier CLI implementation is preserved in [`scripts/cogentia.v1-history.js`](scripts/cogentia.v1-history.js); the current v2 CLI focuses on the corpus navigation layer that agents use before issuing or resuming judgment-bearing work.
+Cogentia's load-bearing technical contribution is `cogentia.continuation.v1` — a typed, validated, provider-neutral resumption point for CLI tools. The protocol is specified in [`research/agent_resumable_cli.md`](research/agent_resumable_cli.md). The earlier CLI implementation is preserved in [`scripts/cogentia.v1-history.js`](scripts/cogentia.v1-history.js); the current v2 system combines corpus governance with the indexed, daemon-mediated context layer agents use before issuing or resuming judgment-bearing work.
 
 The soundness test is binding:
 
