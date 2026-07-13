@@ -11,7 +11,6 @@ function Layout({ children }) {
   const links = [
     { to: '/', label: 'Accueil' },
     { to: '/snapshot', label: 'Mon miroir' },
-    { to: '/history', label: 'Historique' },
     { to: '/docs', label: 'Comprendre' },
   ]
 
@@ -44,7 +43,7 @@ export default function App() {
       <Route path="/" element={<Layout><Home /></Layout>} />
       <Route path="/snapshot" element={<Layout><Snapshot /></Layout>} />
 
-      {/* Parcours avancé historique, conservé pendant la transition du MVP. */}
+      {/* Parcours avancé historique, conservé mais non exposé pendant la transition. */}
       <Route path="/submit" element={<Layout><Submit /></Layout>} />
       <Route path="/results/:id" element={<Layout><Results /></Layout>} />
       <Route path="/history" element={<Layout><History /></Layout>} />
