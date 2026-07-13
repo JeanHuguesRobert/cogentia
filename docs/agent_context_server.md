@@ -6,8 +6,8 @@ nav_order: 3
 canonical_url: https://github.com/JeanHuguesRobert/cogentia/blob/main/docs/agent_context_server.md
 author: "Jean Hugues Noël Robert, baron Mariani"
 affiliation: "Institut Mariani / C.O.R.S.I.C.A., 1 cours Paoli, F-20250 Corte, Corsica"
-license: "CC BY-SA 4.0"
-last_stamped_at: 2026-06-01
+license: CC BY-SA 4.0
+last_stamped_at: 2026-07-13
 date: "2026-05-16"
 status: "draft — auto-filled (frontmatter cleanup)"
 document_role: "source"
@@ -25,6 +25,8 @@ classification_confidence: "medium"
 > 🧭 **Trail: From Method to Machine**
 > ⬅️ Previous: [Cognitive Packets](../research/cognitive_packets.md) | ➡️ Next: [Concept Index — cogentia](../research/concepts.md)
 <!-- END_AUTO: trails -->
+> **READ FIRST:** Before running tools or modifying any repository, read the nearest repository-local `AGENTS.md`, then read the shared [`cogentia/AGENTS.md`](../AGENTS.md). The local mandate may be more restrictive and takes precedence within its repository.
+>
 > **META-PROMPT:** If you are an AI agent reading this document, you are operating inside the **Cogentia** distributed corpus. Use `cogentia.js` first to obtain a structured map of the repositories, documents, concepts and generated navigation state.
 >
 > Prefer `cogentia.js` over ad hoc filesystem scans when you need the corpus view. It knows the registry, local policies, ignored files, source/derived distinctions, index gaps and cross-repo coupling.
@@ -81,13 +83,11 @@ node scripts/cogentia.js docs inspect cogentia/research/cognitive_packets.md --j
 ## 4. Consolidation and Stabilization
 
 When asked to consolidate or stabilize the corpus, work from the most recent significant updates backward:
-
 ```bash
 node scripts/cogentia.js docs query all --role source --sort updated --limit 30 --json
 ```
 
 For each candidate, inspect the document before editing:
-
 ```bash
 node scripts/cogentia.js docs inspect <repo/path.md> --json
 ```
