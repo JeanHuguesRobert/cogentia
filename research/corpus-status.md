@@ -74,22 +74,22 @@ graph LR
   r_github[".github"]
   r_acorsica_org["acorsica.org"]
   r_cogentia -->|97| r_barons_mariani
+  r_barons_mariani -->|67| r_cogentia
   r_jeanhuguesrobert -->|66| r_barons_mariani
-  r_barons_mariani -->|65| r_cogentia
-  r_fractavolta -->|45| r_cogentia
+  r_fractavolta -->|47| r_cogentia
   r_fractavolta -->|37| r_marenostrum
   r_jeanhuguesrobert -->|34| r_cogentia
+  r_inseme -->|23| r_cogentia
   r_barons_mariani -->|22| r_marenostrum
   r_cogentia -->|22| r_inseme
   r_fractavolta -->|22| r_inseme
-  r_inseme -->|20| r_cogentia
   r_cogentia -->|19| r_marenostrum
   r_fractavolta -->|18| r_barons_mariani
   r_barons_mariani -->|17| r_fractavolta
   r_barons_mariani -->|16| r_inseme
+  r_inox -->|16| r_cogentia
   r_jeanhuguesrobert -->|16| r_marenostrum
-  r_marenostrum -->|14| r_cogentia
-  r_inox -->|12| r_cogentia
+  r_marenostrum -->|16| r_cogentia
   r_inseme -->|12| r_inox
   r_marenostrum -->|12| r_fractavolta
   r_inox -->|11| r_barons_mariani
@@ -110,9 +110,11 @@ graph LR
   r_inseme -->|4| r_barons_mariani
   r_marianivillage -->|4| r_fractavolta
   r_operium -->|4| r_marenostrum
+  r_ubikia -->|4| r_cogentia
   r_github -->|3| r_gouvernance
   r_inseme -->|3| r_jeanhuguesrobert
   r_kudos -->|3| r_barons_mariani
+  r_operium -->|3| r_cogentia
   r_operium -->|3| r_inseme
   r_cogentia -->|2| r_inox
   r_fractavolta -->|2| r_jeanhuguesrobert
@@ -126,10 +128,8 @@ graph LR
   r_marenostrum -->|2| r_jeanhuguesrobert
   r_marenostrum -->|2| r_inseme
   r_marenostrum -->|2| r_inox
-  r_operium -->|2| r_cogentia
   r_operium -->|2| r_barons_mariani
   r_privai -->|2| r_institut_mariani
-  r_ubikia -->|2| r_cogentia
   r_github -->|1| r_institut_mariani
   r_gouvernance -->|1| r_jeanhuguesrobert
   r_gouvernance -->|1| r_cogentia
@@ -590,6 +590,7 @@ graph LR
 | [Open Knowledge Format and Cogentia](open_knowledge_format_alignment.md) *(working-note v0.1 — Google OKF v0.1 as external confirmation of the Markdown/YAML/git/index/link substrate; proposes `okf check` and `okf export` as Cogentia compatibility layer)* | this repo | 2026-06-19 |
 | [Démocratie de capacité](democracy_of_capability.md) *(structured hypothesis — publics capables, open democracy and AI under mandate)* | this repo | 2026-06-12 |
 | [Démocratie rapide mandatée](mandated_fast_democracy.md) *(short conceptual synthesis — deciding quickly without abandoning democratic principles)* | this repo | 2026-06-12 |
+| [Artificial Representation and Mandated Voice](artificial_representation_and_mandated_voice.md) *(source document — distinguishes inference, representation and action under explicit mandate for digital twins and public-facing agents)* | this repo | 2026-07-13 |
 | [From Biometrics and Psychometrics to Structural Signatures](structural_signatures.md) *(working paper v0.9 — non-biographical identifying structures, Cogentigrams and consent-based sovereign digital twins)* | this repo | 2026-05-22 |
 | [Cogentigraphic Distillation](cogentigraphic_distillation.md) *(working paper v0.1 — separating cognitive operating rules from biographical and factual memory in corpus-grounded AI agents)* | this repo | 2026-05-30 |
 | [Individual and Collective Digital Twins](individual_and_collective_digital_twins.md) *(working paper v0.1 — dialectic between sovereign twins of natural persons (Marie-Louise case) and of legal persons (C.O.R.S.I.C.A. case); extends the twin family — Cogentigram, structural signatures, cogentigraphic distillation; addresses cogentia#14)* | this repo | 2026-05-31 |
