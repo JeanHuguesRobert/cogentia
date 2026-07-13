@@ -42,9 +42,9 @@ try {
 
   const models = await getJson("/v1/models");
   assert.equal(models.object, "list");
-  assert.equal(models.data.length, 3);
+  assert.equal(models.data.length, 7);
   const modelIds = models.data.map(m => m.id).sort();
-  assert.deepEqual(modelIds, ["claude-code", "codex", "grok-build"]);
+  assert.deepEqual(modelIds, ["agy", "antigravity", "claude", "claude-code", "codex", "grok", "grok-build"]);
 
   const noAuth = await fetch(`${base}/v1/models`);
   assert.equal(noAuth.status, 401);
@@ -52,7 +52,7 @@ try {
   const cors = await fetch(`${base}/health`, { headers: { Origin: "https://example.test" } });
   assert.equal(cors.headers.get("access-control-allow-origin"), "https://example.test");
 
-  for (const model of ["grok-build", "claude-code", "codex"]) {
+  for (const model of ["grok-build", "grok", "claude-code", "claude", "codex", "antigravity", "agy"]) {
     const res = await postJson("/v1/chat/completions", {
       model,
       stream: false,

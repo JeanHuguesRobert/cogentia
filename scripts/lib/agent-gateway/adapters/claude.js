@@ -9,7 +9,7 @@ import {
 
 export const claudeAdapter = {
   id: "claude",
-  models: ["claude-code"],
+  models: ["claude-code", "claude"],
   defaultMode: "headless",
 
   async probe(ctx) {

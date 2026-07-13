@@ -73,7 +73,7 @@ if (bind.warning) {
 
 const { server, ctx } = createAgentGateway({ bind });
 server.listen(port, bind.host, () => {
-  const models = ctx.useMock ? "grok-build,claude-code,codex (mock)" : "grok-build,claude-code,codex";
+  const models = ctx.useMock ? "grok-build,claude-code,codex,antigravity,agy (mock)" : "grok-build,claude-code,codex,antigravity,agy";
   const tailscaleNote = bind.tailscale_ip ? `, tailscale=${bind.tailscale_ip}` : "";
   console.error(`Agent CLI Gateway listening on http://${bind.host}:${port} (${bind.mode}${tailscaleNote}, ${ctx.platform}, models: ${models})`);
 });

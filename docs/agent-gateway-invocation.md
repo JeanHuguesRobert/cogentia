@@ -183,6 +183,25 @@ reading into action. If a future public facade is needed, it should be a separat
 read-only or tightly mediated service, not the raw `/v1/chat/completions`
 action endpoint.
 
+## Mobile Setup (poco-jhr)
+
+For mobile-attractor nodes running Termux on Android:
+
+1. **proot-distro containment**: Because the Google `agy` dynamic binary requires glibc (unavailable natively on Termux Bionic libc), `agy` is installed inside the Ubuntu proot container under `/root/.local/bin/agy`.
+2. **Interactive Auth Step**: The Bubble Tea framework inside `agy` requires a TTY to initialize. Before running headlessly, log into the container manually once over SSH:
+   ```bash
+   ssh poco-jhr
+   proot-distro login ubuntu
+   agy
+   ```
+   Follow the Google OAuth sign-in flow (copy the login URL and complete it in your browser).
+3. **Headless Wrapper**: A Termux wrapper `~/.local/bin/agy` delegates directly to the container using:
+   ```bash
+   exec proot-distro run ubuntu -- /root/.local/bin/agy "$@"
+   ```
+   Using `proot-distro run` instead of `login` avoids hanging waiting for TTY resource allocations.
+4. **Heartbeat Config**: The mobile daemon reads `~/srv/cogentia/secrets/agent-gateway-blackboard.env` to push heartbeat snapshots (containing the mobile's capability list and models `"agy"`, `"antigravity"`, `"claude"`, `"grok"`) to the `fracta` VPS.
+
 ## Verification
 
 Local deterministic checks:

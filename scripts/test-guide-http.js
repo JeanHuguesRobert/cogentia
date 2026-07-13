@@ -79,6 +79,34 @@ const daemon = http.createServer(async (req, res) => {
         },
       });
     }
+    if (payload.response_format?.type === "json_object") {
+      const userPrompt = payload.messages?.findLast?.(m => m.role === "user")?.content || "";
+      let intent = "search";
+      let resolved_search_query = userPrompt;
+      let visitor_name = null;
+      if (/retry/i.test(userPrompt)) {
+        intent = "control";
+        resolved_search_query = "What is the FractaVolta public Guide digital twin?";
+      }
+      if (/name is/i.test(userPrompt) || /my name/i.test(userPrompt)) {
+        intent = "conversational";
+        resolved_search_query = null;
+        visitor_name = "JHR";
+      }
+      return sendJson(res, 200, {
+        id: "chatcmpl_mock_intent",
+        object: "chat.completion",
+        model: payload.model,
+        choices: [{
+          index: 0,
+          message: {
+            role: "assistant",
+            content: JSON.stringify({ intent, resolved_search_query, visitor_name, detected_language: "en" }),
+          },
+          finish_reason: "stop",
+        }],
+      });
+    }
     seenChatPayloads.push(payload);
     const question = String(payload.messages?.findLast?.(message => message.role === "user")?.content || "");
     if (/fallback/i.test(question)) {

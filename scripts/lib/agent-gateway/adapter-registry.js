@@ -1,6 +1,7 @@
 import { grokAdapter } from "./adapters/grok.js";
 import { claudeAdapter } from "./adapters/claude.js";
 import { codexAdapter } from "./adapters/codex.js";
+import { antigravityAdapter } from "./adapters/antigravity.js";
 import { mockAdapter } from "./adapters/mock.js";
 import { pythonReplEntity } from "./adapters/python-repl.js";
 import { nodejsReplEntity } from "./adapters/nodejs-repl.js";
@@ -14,6 +15,7 @@ const ADAPTERS = [
   grokAdapter,
   claudeAdapter,
   codexAdapter,
+  antigravityAdapter,
   pythonReplEntity,
   nodejsReplEntity,
   inoxReplEntity,
