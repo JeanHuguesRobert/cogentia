@@ -207,6 +207,13 @@ Antigravity headless calls preserve the CLI permission boundary by default. The
 sets `AGENT_GATEWAY_AGY_SKIP_PERMISSIONS=1` in a protected, non-public runtime
 environment. Do not enable it on a public or broadly delegated gateway.
 
+Before installing the persistent peer watchdog, validate its real coordinator
+route without creating a scheduled task:
+
+```bash
+node scripts/ops/fractanet-peer-watchdog.js --once
+```
+
 ## Verification
 
 Local deterministic checks:

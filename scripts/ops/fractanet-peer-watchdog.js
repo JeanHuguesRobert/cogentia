@@ -12,6 +12,7 @@ import { execFile } from "node:child_process";
 // Parse CLI arguments for env files
 const args = process.argv.slice(2);
 const envFiles = [];
+const runOnce = args.includes("--once");
 for (let i = 0; i < args.length; i++) {
   if (args[i] === "--blackboard-env-file" && args[i + 1]) {
     envFiles.push(args[i + 1]);
@@ -154,5 +155,7 @@ function unquoteEnvValue(value) {
 logMessage(`Peer Watchdog active. Target coordinator: ${BLACKBOARD_URL}`);
 logMessage(`Log path: ${logPath}`);
 
-checkHealth();
-setInterval(checkHealth, INTERVAL_MS);
+await checkHealth();
+if (!runOnce) {
+  setInterval(checkHealth, INTERVAL_MS);
+}
