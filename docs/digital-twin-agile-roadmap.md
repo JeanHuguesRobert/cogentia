@@ -4,7 +4,7 @@ description: "Living roadmap for raising a trustable owner-facing digital twin t
 layout: default
 nav_order: 7
 date: 2026-06-30
-last_modified_at: 2026-06-30
+last_modified_at: 2026-07-13
 license: CC BY-SA 4.0
 canonical_url: https://github.com/JeanHuguesRobert/cogentia/blob/main/docs/digital-twin-agile-roadmap.md
 document_role: "operational"
@@ -38,6 +38,8 @@ owner feedback, and correction. The roadmap itself is expected to change.
 ## Governing Documents
 
 - Trust model: `research/digital_twin_trust_model.md`
+- Artificial representation and mandated voice: `research/artificial_representation_and_mandated_voice.md`
+- Individual and collective twins: `research/individual_and_collective_digital_twins.md`
 - Ubiquity and instances: `research/digital_twin_ubiquity.md`
 - Optimistic governance: `research/optimistic_mainline_governance.md`
 - Agent-resumable CLI: `research/agent_resumable_cli.md`
@@ -68,19 +70,79 @@ ChatGPT/Codex/other clients
 ```
 
 The same owner-rooted twin can appear through multiple instances at the same
-time. The FractaVolta public Guide is one such instance: public, low-maturity,
-read-only, and limited to the public corpus. It is not the private owner-facing
-core, and it must not inherit broader authority merely because it belongs to
-the same twin project.
+time. The FractaVolta public Guide is one such instance: public, initially
+read-only at the infrastructure layer, and limited to the public corpus. It is
+not the private owner-facing core, and it must not inherit broader authority
+merely because it belongs to the same twin project.
 
-The public relay face must remain governed and read-only by default. In the
-dogfood instance, that public relay is Fracta. The owner-facing local twin may
-become much more capable, but only through maturity profiles, explicit scopes,
-trace, and reversible action.
+The Guide is nevertheless intended to be more than a passive search box. Within
+its declared public mandate, it is an **artificial representative of
+FractaVolta**. It may explain and defend documented doctrine, present projects
+and legitimate offers, compare sources, expose uncertainty, and generate
+qualified continuations consistent with the public corpus.
+
+Because FractaVolta's doctrine is currently strongly rooted in the work of its
+creator, the Guide may use a voice and reasoning pattern informed by Jean Hugues
+Robert's documented corpus. This is a fidelity objective, not an identity claim.
+The Guide must not claim to be Jean Hugues Robert, claim consciousness, or imply
+that every generated sentence is an authentic personal statement by him.
+
+The public relay face must remain governed and read-only by default at the
+infrastructure level. In the dogfood instance, that public relay is Fracta. The
+owner-facing local twin may become much more capable, but only through maturity
+profiles, explicit scopes, trace, and reversible action.
 
 In the generic product, "Fracta" becomes a deployable node role, not a hard
-dependency. The same roadmap should work for another owner using another
-public relay or using only a local node.
+dependency. The same roadmap should work for another owner using another public
+relay or using only a local node.
+
+## Representation Boundary
+
+The roadmap separates five operations that must not be collapsed:
+
+```text
+source-grounded interpretation
+  retrieve, compare, cite, and synthesise corpus material
+
+personal approximation
+  infer how the owner would probably frame or continue an argument
+
+stylistic alignment
+  express an answer in a voice informed by the owner's documented corpus
+
+artificial representation
+  present the doctrine, projects, offers, and mandates of a legal person
+
+delegated authority
+  publish, commit, spend, negotiate, sign, vote, or mutate state
+```
+
+The first four may be available in bounded public form. The fifth always
+requires a separate explicit mandate and capability check.
+
+Compact rule:
+
+```text
+Fidelity is not identity.
+Representation is not impersonation.
+Style is not authority.
+A mandate grants capacity, not personhood.
+```
+
+The phrase "answer as if the owner were answering" is accepted only as an
+operational shorthand for a bounded approximation objective. It means:
+
+- use the owner's documented positions, reasoning patterns, vocabulary, and
+  corrections when relevant;
+- distinguish quotation, documented position, inference, style transformation,
+  and new extrapolation;
+- report uncertainty and contradiction;
+- never claim to be the owner;
+- never infer legal or operational authority from stylistic fidelity.
+
+For a legal person such as FractaVolta, the Guide may speak in an institutional
+voice under mandate. That voice is a governed projection of doctrine, acts,
+decisions, offers, and current policy. It is not a simulated consciousness.
 
 ## Maturity Path
 
@@ -93,8 +155,14 @@ Acceptance checks:
 - the trust model exists and names the goal explicitly;
 - sharp tools and maturity profiles are documented;
 - public/private/operator profiles are distinguished;
-- MCP/CLI work references the trust model.
-- public instances declare corpus view, maturity, mandate, and authority.
+- MCP/CLI work references the trust model;
+- public instances declare corpus view, maturity, mandate, and authority;
+- personal approximation, artificial representation, identity, and delegated
+  authority are explicitly distinguished;
+- the public Guide discloses that it is artificial and names the entity it
+  represents;
+- founder doctrine and formally adopted organisational doctrine remain
+  distinguishable in provenance.
 
 Current status: started.
 
@@ -133,9 +201,10 @@ Public POST /mcp verified with initialize, tools/list and cogentia_search.
 
 Next useful slice: run ChatGPT connector smoke tests and record the result.
 
-### 2. Child: Explain, Compare, Ask
+### 2. Child: Explain, Compare, Ask, Represent
 
-Purpose: the twin can reason over retrieved material while remaining grounded.
+Purpose: the twin can reason over retrieved material and present a bounded
+institutional position while remaining grounded.
 
 Capabilities:
 
@@ -144,7 +213,12 @@ Capabilities:
 - ask clarifying questions;
 - identify missing corpus material;
 - propose corpus improvements;
-- capture owner corrections as feedback events.
+- capture owner corrections as feedback events;
+- explain documented FractaVolta doctrine and projects;
+- distinguish personal, organisational, inferred, and proposed positions;
+- produce labelled, corpus-consistent extrapolations;
+- use bounded founder-informed stylistic alignment without claiming identity;
+- route questions that exceed the public mandate.
 
 Acceptance checks:
 
@@ -152,13 +226,22 @@ Acceptance checks:
 - the twin can say "not enough corpus evidence";
 - corrections are logged as teachable events;
 - repeated retrieval tests improve or at least remain stable;
-- no mutation occurs without owner approval.
+- no mutation occurs without owner approval;
+- the Guide identifies itself as an artificial representative of FractaVolta;
+- output provenance can distinguish source, interpretation, style, extrapolation,
+  proposal, and authorised act;
+- the Guide does not silently convert the founder's personal position into an
+  organisational commitment;
+- advocacy and commercial claims remain traceable to the corpus or a current
+  authorised offer.
 
 Next useful slices:
 
 - add a lightweight owner feedback log;
 - add retrieval evaluation prompts for recurring questions;
-- add a `trust report` format to context-pack answers.
+- add a `trust report` format to context-pack answers;
+- add a persistent Guide disclosure and role manifest;
+- add output provenance classes to the synthesis contract.
 
 ### 3. Teenager: Dry-Run Operator
 
@@ -361,6 +444,56 @@ Acceptance checks:
 - maturity never grants authority by itself;
 - owner can downgrade or freeze a domain.
 
+### G. Public Artificial Representative
+
+Goal: turn the FractaVolta Guide into a useful, declared, corpus-grounded
+artificial representative rather than either an unrestricted impersonator or a
+powerless retrieval widget.
+
+Required manifest:
+
+```yaml
+instance: FractaVolta public Guide
+artificial_identity: true
+represented_entity:
+  type: legal_person_or_project
+  name: FractaVolta
+founder_context:
+  name: Jean Hugues Robert
+  role: principal documented source of current doctrine
+corpus_view: public
+mandate:
+  - retrieve_and_cite
+  - explain_doctrine
+  - compare_sources
+  - qualify_uncertainty
+  - produce_labelled_extrapolations
+  - advocate_projects
+  - present_authorised_offers
+  - route_escalations
+forbidden_without_additional_mandate:
+  - claim_human_identity
+  - attribute_generated_text_as_authentic_founder_statement
+  - create_legal_commitment
+  - spend
+  - sign
+  - vote
+  - mutate_canonical_records
+```
+
+Acceptance checks:
+
+- disclosure is visible at first interaction and available thereafter;
+- the Guide can answer a doctrinal question without reducing itself to search
+  results;
+- the Guide can explain whether an answer is a quotation, documented position,
+  inference, reformulation, extrapolation, or proposal;
+- founder-informed answers remain distinguishable from formally adopted
+  FractaVolta positions;
+- sales and advocacy claims are traceable and do not exceed authorised offers;
+- escalation paths identify the responsible human or governance process;
+- no increase in expressive fidelity silently increases operational authority.
+
 ## Change Rule
 
 This roadmap should be changed when an iteration teaches something material.
@@ -374,14 +507,19 @@ Use the smallest sufficient change:
 
 ## Current Best Next Steps
 
-1. Stabilize the trust model and this roadmap.
-2. Test ChatGPT against `cogentia_search` and `cogentia_get_lines`.
-3. Create the first command registry slice for read-only and dry-run commands.
-4. Add trust reports before exposing any operator apply capability.
-5. Sketch the public relay protocol for fresher local-owner-node access.
+1. Stabilize the trust model, the artificial-representation doctrine, and this
+   roadmap.
+2. Implement the public Guide role manifest and persistent disclosure.
+3. Add output provenance classes to the Guide synthesis contract.
+4. Test ChatGPT against `cogentia_search` and `cogentia_get_lines`.
+5. Create the first command registry slice for read-only and dry-run commands.
+6. Add trust reports before exposing any operator apply capability.
+7. Sketch the public relay protocol for fresher local-owner-node access.
 
-This order is intentionally modest. It lets the twin grow by proving itself
-before it receives sharper tools.
+This order remains intentionally modest in operational authority, but no longer
+confuses modest authority with weak expression. It lets the twin grow by proving
+itself before it receives sharper tools, while allowing the public Guide to
+become doctrinally useful from an early stage.
 
 The dogfood instance is allowed to be specific. The architecture it proves must
-remain portable to other owners.
+remain portable to other owners and other represented organisations.
