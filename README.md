@@ -6,6 +6,7 @@
 
 ## Quick Orientation
 
+- [`AGENTS.md`](AGENTS.md) — **read before modifying this repository**; when working across repositories, also read the target repository's local `AGENTS.md`
 - [`research/index.md`](research/index.md) — generated document catalog
 - [`research/corpus-status.md`](research/corpus-status.md) — generated status, backlinks, and navigation checks
 - [`research/agent_resumable_cli.md`](research/agent_resumable_cli.md) — continuation protocol
@@ -44,6 +45,7 @@ It rides inside COP's `cop/continuation` Artifact (in `inseme/packages/cop-core`
 
 ```
 COGENTIA.md         # Entry-point document — the framework in five moves
+AGENTS.md           # Shared operational baseline — read before repository work
 scripts/            # cogentia.js — the operational CLI
 research/           # Research-grade documents + index.md + corpus-status.md
 prompts/            # Operational artefacts (designer + user prompts for the continuation protocol)
@@ -130,13 +132,13 @@ All published documents live in `research/` and are catalogued in [`research/ind
 
 - **Tooling**
   * `help`, `-h`, `--help` — show command usage and available commands.
-  * `version`, `--version` — show the current CLI version.
+  * `version`, `--version` — show the CLI version.
   * `daemon` — start the local HTTP daemon, including the public read-only Context Gateway.
   * `documents` — alias for `docs`.
   * `agent start` — read-only session summary and next-action hints for human and AI agents.
 - **Corpus state**
   * `state` — registered repositories, branches and local policies.
-  * `status` — compact health table for hooks and humans.
+  * `status` — compact health table used for hooks and humans.
   * `git verify` — ahead/behind and dirty-state report, with local dirty-ignore policies.
   * `git noise plan` — conservative action suggestions for scratch, generated, and substantive dirty files.
 - **Document navigation**
@@ -169,7 +171,7 @@ All published documents live in `research/` and are catalogued in [`research/ind
 - **Concepts**
   * `concepts list` and `concepts check` — parse every `research/concepts.md`, excluding generated auto-blocks and surfacing missing fields, duplicates and undefined references.
 
-The current session ritual is: `agent start` at the start, `grep` or `docs search` / `docs inspect` while navigating, `issues packet` or `docs judgments --emit-continuations` when work must become resumable, `git noise plan` before deciding what dirty files mean, `corpus plan` before mechanical refresh, then `corpus apply`, `corpus commit-generated`, and `corpus verify --strict` when the generated views should be updated.
+The current session ritual is: read the nearest local `AGENTS.md` and the shared `cogentia/AGENTS.md`, then `agent start`; use `grep` or `docs search` / `docs inspect` while navigating, `issues packet` or `docs judgments --emit-continuations` when work must become resumable, `git noise plan` before deciding what dirty files mean, `corpus plan` before mechanical refresh, then `corpus apply`, `corpus commit-generated`, and `corpus verify --strict` when the generated views should be updated.
 
 ## Ecosystem
 
