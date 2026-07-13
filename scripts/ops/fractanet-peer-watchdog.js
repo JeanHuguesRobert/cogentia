@@ -7,7 +7,7 @@
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
-import { exec } from "node:child_process";
+import { execFile } from "node:child_process";
 
 // Parse CLI arguments for env files
 const args = process.argv.slice(2);
@@ -54,24 +54,20 @@ function triggerAlert(message) {
 
   const platform = os.platform();
   if (platform === "win32") {
-    // Windows: Show MessageBox using basic PowerShell Reflection (no modules required)
-    const escapedMsg = message.replace(/'/g, "''");
-    const cmd = `powershell.exe -Command "[System.Reflection.Assembly]::LoadWithPartialName('System.Windows.Forms') | Out-Null; [System.Windows.Forms.MessageBox]::Show('${escapedMsg}', 'Fractanet Peer Watchdog', 0, 48)"`;
-    exec(cmd, (err) => {
+    const script = "Add-Type -AssemblyName System.Windows.Forms; [System.Windows.Forms.MessageBox]::Show($env:FRACTANET_ALERT_MESSAGE, 'Fractanet Peer Watchdog', 0, 48) | Out-Null";
+    execFile("powershell.exe", ["-NoProfile", "-NonInteractive", "-Command", script], {
+      env: { ...process.env, FRACTANET_ALERT_MESSAGE: message },
+    }, (err) => {
       if (err) logMessage(`Failed to display Windows alert: ${err.message}`);
     });
   } else if (platform === "android" || fs.existsSync("/data/data/com.termux")) {
-    // Android/Termux: Show native Termux notification
-    const cmd = `termux-notification --title "Fractanet Alert" --content "${message}" --priority high`;
-    exec(cmd, (err) => {
+    execFile("termux-notification", ["--title", "Fractanet Alert", "--content", message, "--priority", "high"], (err) => {
       if (err) logMessage(`Failed to trigger Termux notification: ${err.message}`);
     });
   } else if (platform === "linux") {
-    // Generic Linux: Try notify-send
-    exec(`notify-send -u critical "Fractanet Alert" "${message}"`, (err) => {
+    execFile("notify-send", ["-u", "critical", "Fractanet Alert", message], (err) => {
       if (err) {
-        // Fallback to wall
-        exec(`echo "FRACTANET ALERT: ${message}" | wall`);
+        execFile("wall", [`FRACTANET ALERT: ${message}`], () => {});
       }
     });
   }
@@ -120,6 +116,11 @@ async function checkHealth() {
 }
 
 function loadOptionalEnvFiles(files) {
+  const allowedKeys = new Set([
+    "COGENTIA_BLACKBOARD_URL",
+    "FRACTANET_WATCHDOG_INTERVAL_MS",
+    "FRACTANET_WATCHDOG_FAIL_THRESHOLD",
+  ]);
   for (const file of files) {
     if (!file) continue;
     const resolved = path.resolve(String(file));
@@ -131,6 +132,7 @@ function loadOptionalEnvFiles(files) {
       const match = trimmed.match(/^(?:export\s+)?([A-Za-z_][A-Za-z0-9_]*)\s*=\s*(.*)$/);
       if (!match) continue;
       const key = match[1];
+      if (!allowedKeys.has(key)) continue;
       if (process.env[key] != null) continue;
       process.env[key] = unquoteEnvValue(match[2]);
     }

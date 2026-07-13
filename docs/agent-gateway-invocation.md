@@ -202,6 +202,11 @@ For mobile-attractor nodes running Termux on Android:
    Using `proot-distro run` instead of `login` avoids hanging waiting for TTY resource allocations.
 4. **Heartbeat Config**: The mobile daemon reads `~/srv/cogentia/secrets/agent-gateway-blackboard.env` to push heartbeat snapshots (containing the mobile's capability list and models `"agy"`, `"antigravity"`, `"claude"`, `"grok"`) to the `fracta` VPS.
 
+Antigravity headless calls preserve the CLI permission boundary by default. The
+`--dangerously-skip-permissions` flag is added only when the operator explicitly
+sets `AGENT_GATEWAY_AGY_SKIP_PERMISSIONS=1` in a protected, non-public runtime
+environment. Do not enable it on a public or broadly delegated gateway.
+
 ## Verification
 
 Local deterministic checks:

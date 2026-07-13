@@ -38,7 +38,10 @@ export const antigravityAdapter = {
   },
 
   buildHeadlessInvocation(turn, ctx) {
-    const args = ["--dangerously-skip-permissions", "--print", turn.prompt];
+    const args = ["--print", turn.prompt];
+    if (ctx.agySkipPermissions) {
+      args.unshift("--dangerously-skip-permissions");
+    }
     return {
       command: ctx.agyCommand,
       args,

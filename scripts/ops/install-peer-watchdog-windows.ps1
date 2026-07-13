@@ -12,26 +12,14 @@ if (-not $BlackboardEnvFile) {
     $BlackboardEnvFile = Join-Path $secretsDir 'agent-gateway-blackboard.env'
 }
 
+if (-not (Test-Path -LiteralPath $BlackboardEnvFile)) {
+    throw "Blackboard env not found: $BlackboardEnvFile"
+}
+
 $repoRoot = Resolve-Path (Join-Path $PSScriptRoot '..\..')
 $watchdog = Join-Path $repoRoot 'scripts\ops\fractanet-peer-watchdog.js'
 $taskName = 'CogentiaPeerWatchdog'
 $helper = Join-Path $PSScriptRoot 'lib\register-hidden-node-task.ps1'
-
-# Read Env file if it exists to set variables for initial test run
-$envVars = @{}
-if (Test-Path $BlackboardEnvFile) {
-    Get-Content $BlackboardEnvFile | ForEach-Object {
-        $trimmed = $_.Trim()
-        if ($trimmed -and -not $trimmed.StartsWith('#')) {
-            if ($trimmed -match '^([^=]+)=(.*)$') {
-                $key = $Matches[1].Trim()
-                $val = $Matches[2].Trim()
-                $envVars[$key] = $val
-                [Environment]::SetEnvironmentVariable($key, $val, 'Process')
-            }
-        }
-    }
-}
 
 . $helper
 
