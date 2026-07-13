@@ -1,6 +1,6 @@
 ---
 canonical_url: https://github.com/JeanHuguesRobert/cogentia/blob/main/AGENTS.md
-last_stamped_at: 2026-07-06
+last_stamped_at: 2026-07-13
 ---
 # AGENTS.md — Cogentia methodology shortcut
 
@@ -21,6 +21,27 @@ When working with Jean Hugues Robert, apply the Cogentia methodology:
 - derive public products from a source document or explicit draft;
 - commit only with explicit, scoped authorization;
 - when direct commit is authorized, prefer a small reversible commit on `main` over an unnecessary branch or PR.
+
+## Read order and controlled redundancy
+
+Before modifying any repository in the corpus:
+
+1. read the nearest repository-local `AGENTS.md`;
+2. read this `cogentia/AGENTS.md` as the shared operational baseline;
+3. apply the local file wherever it is more specific or more restrictive;
+4. follow the linked source doctrine when interpretation is needed.
+
+A local `AGENTS.md` may narrow this baseline. It must not silently widen permissions, erase authorization gates, or contradict the source corpus.
+
+The pointer to `AGENTS.md` should be repeated at high-attention entry points such as repository READMEs, agent navigation guides, coding prompts, and operational runbooks. Repeat the **pointer and read order**, not uncontrolled copies of the complete doctrine.
+
+Compact rule:
+
+```text
+Repeat the signpost.
+Keep one governed source of doctrine.
+Let local mandates specialize without silently overriding.
+```
 
 ## Operational formula
 
@@ -135,5 +156,5 @@ Use a branch, PR, staged patch, issue, checkpoint or human validation when the w
 ## Minimal prompt to use with an agent
 
 ```text
-Respect my Cogentia methodology: smallest sufficient container, checkpoint before stabilization, opening register for long conversations, distinction between exploration, issue, source document, derived product, and commit. Do not stabilize anything without explicit scoped authorization. When direct commit is authorized, work on main with small reversible commits, readable diffs, validation when available, and a completion report. If a tool, connector, permission, policy check, API limit, repository access problem, or GitHub operation blocks the work, report the blockage honestly and ask whether manual intervention is desired when it could unblock the work. Do not create branches or PRs by default; use them only when risk, collaboration, repository rules or explicit instruction require isolation.
+Respect my Cogentia methodology: read the nearest repository-local AGENTS.md and the shared cogentia/AGENTS.md before acting; smallest sufficient container; checkpoint before stabilization; opening register for long conversations; distinction between exploration, issue, source document, derived product, and commit. Do not stabilize anything without explicit scoped authorization. When direct commit is authorized, work on the default branch with small reversible commits, readable diffs, validation when available, and a completion report. If a tool, connector, permission, policy check, API limit, repository access problem, or GitHub operation blocks the work, report the blockage honestly and ask whether manual intervention is desired when it could unblock the work. Do not create branches or PRs by default; use them only when risk, collaboration, repository rules or explicit instruction require isolation.
 ```
