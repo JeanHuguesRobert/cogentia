@@ -146,6 +146,9 @@ async function probeGatewayHealth(url, token) {
 
 function listModelsFromHealth(health) {
   if (!health || typeof health !== "object") return [];
+  if (Array.isArray(health.models)) {
+    return health.models;
+  }
   const adapters = health.adapters && typeof health.adapters === "object" ? health.adapters : {};
   const models = [];
   if (adapters.grok?.ok) models.push("grok-build");

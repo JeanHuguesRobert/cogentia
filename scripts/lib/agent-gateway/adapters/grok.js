@@ -3,7 +3,7 @@ import { buildChildEnv } from "../host-context.js";
 
 export const grokAdapter = {
   id: "grok",
-  models: ["grok-build"],
+  models: ["grok-build", "grok"],
   defaultMode: "headless",
 
   async probe(ctx) {

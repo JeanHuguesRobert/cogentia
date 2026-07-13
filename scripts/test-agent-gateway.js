@@ -5,11 +5,25 @@ import { spawn } from "node:child_process";
 import net from "node:net";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { antigravityAdapter } from "./lib/agent-gateway/adapters/antigravity.js";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const port = await freePort();
 const base = `http://127.0.0.1:${port}`;
 const token = "test-gateway-token";
+
+const antigravityTurn = { prompt: "permission test", cwd: root };
+const antigravityContext = { agyCommand: "agy", pathExtra: [] };
+const safeAntigravity = antigravityAdapter.buildHeadlessInvocation(antigravityTurn, {
+  ...antigravityContext,
+  agySkipPermissions: false,
+});
+const privilegedAntigravity = antigravityAdapter.buildHeadlessInvocation(antigravityTurn, {
+  ...antigravityContext,
+  agySkipPermissions: true,
+});
+assert.equal(safeAntigravity.args.includes("--dangerously-skip-permissions"), false);
+assert.equal(privilegedAntigravity.args[0], "--dangerously-skip-permissions");
 
 const daemon = spawn(process.execPath, ["scripts/agent-gateway.js", "--host", "127.0.0.1", "--port", String(port)], {
   cwd: root,
@@ -42,9 +56,9 @@ try {
 
   const models = await getJson("/v1/models");
   assert.equal(models.object, "list");
-  assert.equal(models.data.length, 3);
+  assert.equal(models.data.length, 7);
   const modelIds = models.data.map(m => m.id).sort();
-  assert.deepEqual(modelIds, ["claude-code", "codex", "grok-build"]);
+  assert.deepEqual(modelIds, ["agy", "antigravity", "claude", "claude-code", "codex", "grok", "grok-build"]);
 
   const noAuth = await fetch(`${base}/v1/models`);
   assert.equal(noAuth.status, 401);
@@ -52,7 +66,7 @@ try {
   const cors = await fetch(`${base}/health`, { headers: { Origin: "https://example.test" } });
   assert.equal(cors.headers.get("access-control-allow-origin"), "https://example.test");
 
-  for (const model of ["grok-build", "claude-code", "codex"]) {
+  for (const model of ["grok-build", "grok", "claude-code", "claude", "codex", "antigravity", "agy"]) {
     const res = await postJson("/v1/chat/completions", {
       model,
       stream: false,

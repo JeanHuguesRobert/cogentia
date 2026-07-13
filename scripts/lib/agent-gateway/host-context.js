@@ -54,6 +54,8 @@ export function loadHostContext(env = process.env) {
     claudeCommand: env.AGENT_GATEWAY_CLAUDE_COMMAND || (termuxProot ? "agent-claude" : "claude"),
     claudeOutputFormat: env.AGENT_GATEWAY_CLAUDE_OUTPUT_FORMAT || "stream-json",
     codexCommand: env.AGENT_GATEWAY_CODEX_COMMAND || (termuxProot ? "agent-codex" : "codex"),
+    agyCommand: env.AGENT_GATEWAY_AGY_COMMAND || "agy",
+    agySkipPermissions: env.AGENT_GATEWAY_AGY_SKIP_PERMISSIONS === "1",
     maxConcurrent: Number(env.AGENT_GATEWAY_MAX_CONCURRENT || (termuxProot ? 2 : 4)),
     includeThoughts: env.AGENT_GATEWAY_INCLUDE_THOUGHTS === "1",
     replBootstrapTimeoutMs: Number(env.AGENT_GATEWAY_REPL_BOOTSTRAP_TIMEOUT_MS || 120_000),

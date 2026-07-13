@@ -310,6 +310,94 @@ async function handleToolPost(req, res) {
   }
 }
 
+function checkSystemControlLocal(question, history) {
+  const q = String(question || "").trim().toLowerCase();
+  const isRetry = q === "retry" || q === "try again" || q === "please try again" || q === "recommencer" || q === "réessayer";
+  if (isRetry && Array.isArray(history)) {
+    for (let i = history.length - 1; i >= 0; i--) {
+      const turn = history[i];
+      if (turn && turn.role === "user") {
+        const content = String(turn.content || "").trim().toLowerCase();
+        const isTurnRetry = content === "retry" || content === "try again" || content === "please try again" || content === "recommencer" || content === "réessayer";
+        if (!isTurnRetry) {
+          return turn.content;
+        }
+      }
+    }
+  }
+  return null;
+}
+
+async function parseUserIntent(question, history, defaultLocale = "en") {
+  const localControl = checkSystemControlLocal(question, history);
+  if (localControl) {
+    return {
+      intent: "control",
+      resolved_search_query: localControl,
+      visitor_name: null,
+      detected_language: defaultLocale
+    };
+  }
+
+  const messages = [
+    {
+      role: "system",
+      content: [
+        "You are the intent parsing judgment layer for the FractaVolta public Guide.",
+        "Analyze the incoming question and the conversation history to determine the user's intent.",
+        "",
+        "Respond with a JSON object ONLY, in this format:",
+        "{",
+        '  "intent": "search" | "conversational" | "control",',
+        '  "resolved_search_query": "The clean, semantic query to search the public corpus for (null if no search is needed)",',
+        '  "visitor_name": "extracted visitor name if known from history or question (null if unknown)",',
+        '  "detected_language": "fr" | "en" (the language of the conversation, defaulting to defaultLocale if unclear)',
+        "}",
+        "",
+        "Rules:",
+        "1. If the user's question is a meta-action like 'retry', 'try again', or refers back to the last question, set 'intent' to 'control' and resolve 'resolved_search_query' to the last actual question the user asked.",
+        "2. If the user's question is a conversational greeting or query (e.g. 'hello', 'hi', 'my name is JHR', 'what is my name?'), set 'intent' to 'conversational' and 'resolved_search_query' to null.",
+        "3. If the user's question is a semantic question about the domain (e.g. solar, FractaVolta, twin, Cogentia), set 'intent' to 'search' and 'resolved_search_query' to the question itself.",
+        "4. Extract the visitor's name if they have introduced themselves or if it's in the history.",
+        `5. Detect the language. The default is "${defaultLocale}".`
+      ].join("\n")
+    }
+  ];
+
+  if (Array.isArray(history) && history.length) {
+    messages.push(...history.slice(-6));
+  }
+  messages.push({ role: "user", content: question });
+
+  try {
+    const res = await daemonPost("/v1/chat/completions", {
+      model: "magistral",
+      temperature: 0,
+      response_format: { type: "json_object" },
+      messages
+    });
+    if (res.ok && res.body && res.body.choices && res.body.choices[0]) {
+      const content = res.body.choices[0].message.content.trim();
+      const parsed = JSON.parse(content);
+      return {
+        intent: parsed.intent || "search",
+        resolved_search_query: parsed.resolved_search_query || question,
+        visitor_name: parsed.visitor_name || null,
+        detected_language: parsed.detected_language || defaultLocale
+      };
+    }
+  } catch (error) {
+    // Silently fallback on failure
+  }
+
+  return {
+    intent: "search",
+    resolved_search_query: question,
+    visitor_name: null,
+    detected_language: defaultLocale
+  };
+}
+
 async function handleGuideChat(req, res) {
   let payload;
   try {
@@ -324,18 +412,31 @@ async function handleGuideChat(req, res) {
   if (!question) return sendJson(res, 400, { ok: false, error: "missing_question" });
   if (question.length > 1200) return sendJson(res, 413, { ok: false, error: "question_too_large" });
 
-  const locale = normalizeLocale(payload.locale);
+  const defaultLocale = normalizeLocale(payload.locale);
   const history = normalizeGuideHistory(payload.history);
-  if (guideWantsStream(req, payload)) return handleGuideChatStream(res, question, locale, history, payload);
 
-  const plan = guidePlannerEnabled ? await guidePlanningRun(question, locale) : guideHeuristicPlan(question, "planner_disabled");
-  const retrieval = await guideRetrievalRun(question, plan);
-  const web = await guideWebSearchRun(question, locale, payload);
+  const intentResult = await parseUserIntent(question, history, defaultLocale);
+  const activeLocale = intentResult.detected_language || defaultLocale;
+  const resolvedQuestion = intentResult.resolved_search_query || question;
+
+  if (guideWantsStream(req, payload)) return handleGuideChatStream(res, question, activeLocale, history, payload, intentResult);
+
+  let plan, retrieval, web;
+  if (intentResult.intent === "conversational") {
+    plan = guideHeuristicPlan(question, "conversational_skip");
+    retrieval = { sources: [], warnings: [] };
+    web = { attempted: false, ok: false, sources: [] };
+  } else {
+    plan = guidePlannerEnabled ? await guidePlanningRun(resolvedQuestion, activeLocale) : guideHeuristicPlan(resolvedQuestion, "planner_disabled");
+    retrieval = await guideRetrievalRun(resolvedQuestion, plan);
+    web = await guideWebSearchRun(resolvedQuestion, activeLocale, payload);
+  }
+
   const chatPayload = {
     model: guideModel,
     temperature: 0.2,
     max_tokens: 1200,
-    messages: buildGuideMessages(locale, retrieval, web, history, question),
+    messages: buildGuideMessages(activeLocale, retrieval, web, history, resolvedQuestion, intentResult.visitor_name),
     cogentia: {
       repo: "all",
       mode: "hybrid",
@@ -344,20 +445,25 @@ async function handleGuideChat(req, res) {
     },
     metadata: {
       surface: "fractavolta-public-guide",
-      locale,
+      locale: activeLocale,
     },
   };
 
   const routed = await daemonPost("/v1/chat/completions", chatPayload);
   if (routed.ok) {
-    return sendJson(res, 200, guideChatResponse(question, locale, routed.body, retrieval, web));
+    return sendJson(res, 200, guideChatResponse(question, activeLocale, routed.body, retrieval, web));
   }
 
-  const fallback = await guideFallback(question, locale, routed, retrieval, web);
+  const fallback = await guideFallback(question, activeLocale, routed, retrieval, web);
   return sendJson(res, fallback.status, fallback.body);
 }
 
-async function handleGuideChatStream(res, question, locale, history = [], payload = {}) {
+async function handleGuideChatStream(res, question, locale, history = [], payload = {}, intentResult = null) {
+  if (!intentResult) {
+    intentResult = await parseUserIntent(question, history);
+  }
+  const resolvedQuestion = intentResult.resolved_search_query || question;
+
   writeSseHeaders(res);
   const startedAt = Date.now();
   const emit = (event, data = {}) => sendSse(res, event, {
@@ -368,39 +474,47 @@ async function handleGuideChatStream(res, question, locale, history = [], payloa
 
   try {
     emit("guide_status", guideProgress(locale, "received"));
-    emit("guide_status", guideProgress(locale, "planning"));
-    const plan = guidePlannerEnabled
-      ? await guidePlanningRun(question, locale)
-      : guideHeuristicPlan(question, "planner_disabled");
-    emit("guide_plan", {
-      stage: "planned",
-      source: plan.source,
-      objective: plan.objective,
-      queries: plan.queries || [],
-      notes: plan.notes || [],
-      error: plan.planner_error || undefined,
-      message: guideProgress(locale, "planned").message,
-    });
 
-    emit("guide_status", guideProgress(locale, "retrieval"));
-    const retrieval = await guideRetrievalRun(question, plan, { progress: emit, locale });
-    emit("guide_retrieval", {
-      stage: "retrieved",
-      query_count: retrieval.queries.length,
-      source_count: retrieval.sources.length,
-      source_ids: retrieval.sources.map(source => source.source_id),
-      warnings: retrieval.warnings,
-      message: guideProgress(locale, "retrieved").message,
-    });
+    let plan, retrieval, web;
+    if (intentResult.intent === "conversational") {
+      plan = guideHeuristicPlan(question, "conversational_skip");
+      retrieval = { sources: [], warnings: [] };
+      web = { attempted: false, ok: false, sources: [] };
+    } else {
+      emit("guide_status", guideProgress(locale, "planning"));
+      plan = guidePlannerEnabled
+        ? await guidePlanningRun(resolvedQuestion, locale)
+        : guideHeuristicPlan(resolvedQuestion, "planner_disabled");
+      emit("guide_plan", {
+        stage: "planned",
+        source: plan.source,
+        objective: plan.objective,
+        queries: plan.queries || [],
+        notes: plan.notes || [],
+        error: plan.planner_error || undefined,
+        message: guideProgress(locale, "planned").message,
+      });
 
-    const web = await guideWebSearchRun(question, locale, payload, { progress: emit });
+      emit("guide_status", guideProgress(locale, "retrieval"));
+      retrieval = await guideRetrievalRun(resolvedQuestion, plan, { progress: emit, locale });
+      emit("guide_retrieval", {
+        stage: "retrieved",
+        query_count: retrieval.queries.length,
+        source_count: retrieval.sources.length,
+        source_ids: retrieval.sources.map(source => source.source_id),
+        warnings: retrieval.warnings,
+        message: guideProgress(locale, "retrieved").message,
+      });
+
+      web = await guideWebSearchRun(resolvedQuestion, locale, payload, { progress: emit });
+    }
 
     emit("guide_status", guideProgress(locale, "synthesis"));
     const chatPayload = {
       model: guideModel,
       temperature: 0.2,
       max_tokens: 1200,
-      messages: buildGuideMessages(locale, retrieval, web, history, question),
+      messages: buildGuideMessages(locale, retrieval, web, history, resolvedQuestion, intentResult.visitor_name),
       cogentia: {
         repo: "all",
         mode: "hybrid",
@@ -911,9 +1025,13 @@ function guideRetrievalPrompt(locale, retrieval) {
   return lines.join("\n");
 }
 
-function buildGuideMessages(locale, retrieval, web, history, question) {
+function buildGuideMessages(locale, retrieval, web, history, question, visitorName = null) {
+  let systemPrompt = guideSystemPrompt(locale);
+  if (visitorName) {
+    systemPrompt += `\nThe visitor's name is "${visitorName}". Address them by name when appropriate (e.g. greeting or direct reference).`;
+  }
   const messages = [
-    { role: "system", content: guideSystemPrompt(locale) },
+    { role: "system", content: systemPrompt },
     { role: "system", content: guideRetrievalPrompt(locale, retrieval) },
   ];
   if (web?.attempted) messages.push({ role: "system", content: guideWebPrompt(locale, web) });

@@ -1441,7 +1441,7 @@ async function daemonChatCompletions(req, res, ctx, view = PUBLIC_VIEW) {
     }
     const visibleModel = String(payload.model || "cogentia-corpus");
     const routerModel = process.env.COGENTIA_CHAT_MODEL
-      || (visibleModel === "cogentia" || visibleModel === "cogentia-corpus" ? "magistral" : visibleModel);
+      || (visibleModel === "cogentia" || visibleModel === "cogentia-corpus" || visibleModel === "fractavolta-guide" ? "magistral" : visibleModel);
     const routerPayload = {
       ...payload,
       model: routerModel,
@@ -1499,7 +1499,7 @@ async function daemonChatCompletions(req, res, ctx, view = PUBLIC_VIEW) {
 
   const visibleModel = String(payload.model || "cogentia-corpus");
   const routerModel = process.env.COGENTIA_CHAT_MODEL
-    || (visibleModel === "cogentia" || visibleModel === "cogentia-corpus" ? "magistral" : visibleModel);
+    || (visibleModel === "cogentia" || visibleModel === "cogentia-corpus" || visibleModel === "fractavolta-guide" ? "magistral" : visibleModel);
   const routerPayload = {
     ...payload,
     model: routerModel,

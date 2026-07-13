@@ -69,6 +69,7 @@ export function createAgentGateway(options = {}) {
         platform: ctx.platform,
         repl_sessions: replRegistry.size(),
         trust_boundary: trustBoundary,
+        models: listModels(ctx).map(m => m.id),
       };
     }
 
@@ -85,6 +86,7 @@ export function createAgentGateway(options = {}) {
       repl_sessions: replRegistry.size(),
       trust_boundary: trustBoundary,
       adapters: probes,
+      models: listModels(ctx).map(m => m.id),
       tools: listSessionTools(ctx).map(adapter => ({
         id: adapter.id,
         models: adapter.models,

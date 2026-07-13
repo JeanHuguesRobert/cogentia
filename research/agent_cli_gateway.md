@@ -80,14 +80,14 @@ We need a **stable adapter layer** that:
                                |
                     AdapterRegistry.get(model)
                                |
-         +---------------------+---------------------+
-         |                     |                     |
-    GrokAdapter           CodexAdapter          ClaudeAdapter
-         |                     |                     |
-    spawn child           spawn child           spawn child
-    (headless/pty)        (headless/pty)        (headless/pty)
-         |                     |                     |
-    grok -p …             agent-codex …         agent-claude …
+         +---------+-----------+-----------+---------+
+         |         |           |           |         |
+    GrokAdapter CodexAdapter ClaudeAdapter AntigravityAdapter
+         |         |           |           |         |
+    spawn child spawn child spawn child   spawn child
+    (headless)  (headless)  (headless)    (headless)
+         |         |           |           |         |
+    grok -p …   codex …     claude …      agy --print …
 ```
 
 ### 4.1 Process model (phase 1 — headless)
@@ -578,6 +578,8 @@ cogentia/scripts/lib/agent-gateway/
     grok.js
     claude.js
     codex.js
+    antigravity.js
+    plain-text.js
   host-context.js
 cogentia/scripts/ops/install-agent-gateway-termux.sh
 cogentia/scripts/ops/install-agent-gateway-windows.ps1

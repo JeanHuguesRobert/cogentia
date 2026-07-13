@@ -56,6 +56,7 @@ export function createAgentGatewayClient(options = {}) {
 
     const resolved = await resolveAgentGatewayAttractor({
       blackboardUrl,
+      token: merged.token,
       attractorId: merged.attractorId || undefined,
       capability: merged.capability || undefined,
       model: merged.model || undefined,
@@ -85,7 +86,7 @@ export function createAgentGatewayClient(options = {}) {
       status: resolved.status,
       fresh: resolved.fresh,
       snapshot_at: resolved.snapshot_at,
-      routed_via: "blackboard",
+      routed_via: resolved.routed_via || "blackboard",
     };
     return cachedResolve;
   }

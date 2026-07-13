@@ -15,7 +15,7 @@ const replFixturePath = path.resolve(
 /** Test-only adapter — streams NDJSON like grok streaming-json. */
 export const mockAdapter = {
   id: "mock",
-  models: ["grok-build", "claude-code", "codex"],
+  models: ["grok-build", "grok", "claude-code", "claude", "codex", "antigravity", "agy"],
   defaultMode: "headless",
 
   async probe() {
