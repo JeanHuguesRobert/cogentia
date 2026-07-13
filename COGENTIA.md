@@ -3,12 +3,12 @@ title: "Cogentia"
 description: "Knowledge production under AI conditions, in five distinctive moves"
 layout: default
 nav_order: 0
-last_modified_at: 2026-06-09
+last_modified_at: 2026-07-13
 author: "Jean Hugues Noël Robert, baron Mariani"
 affiliation: "Institut Mariani / C.O.R.S.I.C.A., 1 cours Paoli, F-20250 Corte, Corsica"
-license: "CC BY-SA 4.0"
+license: CC BY-SA 4.0
 canonical_url: https://github.com/JeanHuguesRobert/cogentia/blob/main/COGENTIA.md
-last_stamped_at: 2026-06-01
+last_stamped_at: 2026-07-13
 date: "2026-05-13"
 status: "published identity document — v2 CLI consolidation"
 document_role: "source"
@@ -34,13 +34,15 @@ Fonction dans le corpus : expliquer ce qu'est Cogentia comme protocole, CLI, bri
 
 À lire avant : [Carte globale du Corpus](https://github.com/JeanHuguesRobert/JeanHuguesRobert/blob/main/research/corpus-map.md) et [Discours de la seconde méthode](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/second_method.md).
 
+À lire avant toute action dans le dépôt : [`AGENTS.md`](AGENTS.md), projection opérationnelle courte de la méthode, puis le `AGENTS.md` local du dépôt effectivement modifié lorsque le travail traverse plusieurs dépôts.
+
 À lire après : [The Cogentia Commons Living Corpus](research/cogentia_commons_living_corpus.md), [Agent-Resumable CLI](research/agent_resumable_cli.md), [Cognitive Packets](research/cognitive_packets.md).
 
 Dépend de : la seconde méthode, le principe que le corpus est sa propre preuve, et l'exigence de décisions humaines traçables.
 
 Continuation : maintenir ce document comme point d'identité stable pendant que `scripts/cogentia.js`, les continuations et les produits dérivés évoluent.
 
-Dernière consolidation : 2026-06-09 — ajout de la fiche d'orientation.
+Dernière consolidation : 2026-07-13 — ajout du point d’entrée opérationnel `AGENTS.md` et de son ordre de lecture.
 
 > *Cogito ergo sum.*
 > *Cogentia ergo scimus.*
