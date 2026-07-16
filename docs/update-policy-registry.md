@@ -8,10 +8,11 @@ document_role: "operational"
 document_kind: "policy-registry"
 visibility: "public"
 lifecycle_state: "working"
+update_policy: "UP-DECISION-REVIEW"
 provenance:
   origin_type: "repository"
   origin_repository: "JeanHuguesRobert/cogentia"
-  origin_ref: "working-tree"
+  origin_ref: "unknown"
   origin_date: "2026-07-16"
   derived_from: []
 review:
