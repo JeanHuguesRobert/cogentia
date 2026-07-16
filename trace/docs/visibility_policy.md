@@ -1,12 +1,24 @@
 ---
-document_role: "operational"
-document_kind: "operational-note"
-visibility: "public"
-lifecycle_state: "active"
-classification_source: "cogentia.js"
-classification_version: "1"
-classification_rule: "operational-note"
-classification_confidence: "medium"
+document_role: operational
+document_kind: operational-note
+visibility: public
+lifecycle_state: active
+classification_source: cogentia.js
+classification_version: '1'
+classification_rule: operational-note
+classification_confidence: medium
+author: unknown
+date: unknown
+provenance:
+  origin_type: unknown
+  origin_repository: unknown
+  origin_ref: unknown
+  origin_date: unknown
+  derived_from: []
+review:
+  status: unreviewed
+  reviewed_by: []
+update_policy: UP-DEFAULT-REVIEWED
 ---
 
 # Cogentia Trace — Visibility Policy

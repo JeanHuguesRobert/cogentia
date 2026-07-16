@@ -1,25 +1,35 @@
 ---
-title: "Cogentia Commons — MVP Specification"
-description: "Exchanges, formats, and results for the first operational instance of the Cogentia Commons platform"
+title: Cogentia Commons — MVP Specification
+description: Exchanges, formats, and results for the first operational instance of the Cogentia Commons platform
 layout: default
 nav_order: 5
-version: "draft-0.10.2"
-last_modified_at: 2026-05-13
-author: "Jean Hugues Noël Robert, baron Mariani"
-affiliation: "Institut Mariani — C.O.R.S.I.C.A., 1 cours Paoli, F-20250 Corte, Corsica"
-license: "CC BY-SA 4.0 (text), MIT (reference code contracts)"
-status: "working-paper"
+version: draft-0.10.2
+last_modified_at: 2026-05-13T00:00:00.000Z
+author: Jean Hugues Noël Robert, baron Mariani
+affiliation: Institut Mariani — C.O.R.S.I.C.A., 1 cours Paoli, F-20250 Corte, Corsica
+license: CC BY-SA 4.0 (text), MIT (reference code contracts)
+status: working-paper
 canonical_url: https://github.com/JeanHuguesRobert/cogentia/blob/main/research/cogentia_commons_mvp_spec.md
-last_stamped_at: 2026-06-01
-date: "2026-05-11"
-document_role: "source"
-document_kind: "spec"
-visibility: "public"
-lifecycle_state: "working"
-classification_source: "cogentia.js"
-classification_version: "1"
-classification_rule: "spec"
-classification_confidence: "medium"
+last_stamped_at: 2026-06-01T00:00:00.000Z
+date: '2026-05-11'
+document_role: source
+document_kind: spec
+visibility: public
+lifecycle_state: working
+classification_source: cogentia.js
+classification_version: '1'
+classification_rule: spec
+classification_confidence: medium
+provenance:
+  origin_type: unknown
+  origin_repository: unknown
+  origin_ref: unknown
+  origin_date: unknown
+  derived_from: []
+review:
+  status: unreviewed
+  reviewed_by: []
+update_policy: UP-DEFAULT-REVIEWED
 ---
 
 # Cogentia Commons — MVP Specification

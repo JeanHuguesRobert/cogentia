@@ -1,45 +1,55 @@
 ---
-title: "Démocratie rapide mandatée"
-subtitle: "Synthèse conceptuelle — décider vite sans abandonner les principes démocratiques"
-author: "Jean Hugues Noël Robert"
-status: "document source — synthèse conceptuelle — introduction"
-version: "0.3"
-date: "2026-06-12"
-license: "CC BY-SA 4.0"
-language: "fr"
-repository: "cogentia"
-canonical_path: "cogentia/research/mandated_fast_democracy.md"
+title: Démocratie rapide mandatée
+subtitle: Synthèse conceptuelle — décider vite sans abandonner les principes démocratiques
+author: Jean Hugues Noël Robert
+status: document source — synthèse conceptuelle — introduction
+version: '0.3'
+date: '2026-06-12'
+license: CC BY-SA 4.0
+language: fr
+repository: cogentia
+canonical_path: cogentia/research/mandated_fast_democracy.md
 corpus_hierarchy:
-  role: "synthèse conceptuelle courte"
+  role: synthèse conceptuelle courte
   level: 3
-  scope: "entrée brève vers la démocratie rapide mandatée"
+  scope: entrée brève vers la démocratie rapide mandatée
   sovereign_reference:
-    - "barons-Mariani/research/democratie_crise_mandats_express.md"
+    - barons-Mariani/research/democratie_crise_mandats_express.md
   upstream_method:
-    - "cogentia/research/conversation_to_corpus_pipeline.md"
+    - cogentia/research/conversation_to_corpus_pipeline.md
 related_research:
-  - "barons-Mariani/research/democratie_crise_mandats_express.md"
-  - "cogentia/research/conversation_to_corpus_pipeline.md"
-  - "cogentia/research/pipeline.md"
-  - "cogentia/research/derived_products.md"
-  - "barons-Mariani/research/second_method.md"
-  - "barons-Mariani/research/traceabilite_des_actes.md"
+  - barons-Mariani/research/democratie_crise_mandats_express.md
+  - cogentia/research/conversation_to_corpus_pipeline.md
+  - cogentia/research/pipeline.md
+  - cogentia/research/derived_products.md
+  - barons-Mariani/research/second_method.md
+  - barons-Mariani/research/traceabilite_des_actes.md
 related_projects:
-  - "Inseme"
-  - "Conversia"
-  - "Cellula"
-  - "Kudocracy"
-  - "Actarchia"
-  - "Cogentia"
-  - "Autonomie de Capacité"
-document_role: "source"
-document_kind: "concept-note"
-visibility: "public"
-lifecycle_state: "active"
-classification_source: "cogentia.js"
-classification_version: "1"
-classification_rule: "concept-note"
-classification_confidence: "medium"
+  - Inseme
+  - Conversia
+  - Cellula
+  - Kudocracy
+  - Actarchia
+  - Cogentia
+  - Autonomie de Capacité
+document_role: source
+document_kind: concept-note
+visibility: public
+lifecycle_state: active
+classification_source: cogentia.js
+classification_version: '1'
+classification_rule: concept-note
+classification_confidence: medium
+provenance:
+  origin_type: unknown
+  origin_repository: unknown
+  origin_ref: unknown
+  origin_date: unknown
+  derived_from: []
+review:
+  status: unreviewed
+  reviewed_by: []
+update_policy: UP-DEFAULT-REVIEWED
 ---
 
 # Démocratie rapide mandatée

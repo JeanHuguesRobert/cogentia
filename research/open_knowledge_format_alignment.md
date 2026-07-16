@@ -1,23 +1,40 @@
 ---
-title: "Open Knowledge Format and Cogentia"
-description: "Alignment note after Google's publication of Open Knowledge Format v0.1: what Cogentia already shares, where it differs, and what cogentia.js should consider next."
-date: 2026-06-19
-source_date: 2026-06-12
-status: "working-note v0.1"
-document_role: "source"
-type: "Research Note"
-tags: [okf, open-knowledge-format, corpus, interoperability, frontmatter, agents]
+title: Open Knowledge Format and Cogentia
+description: 'Alignment note after Google''s publication of Open Knowledge Format v0.1: what Cogentia already shares, where it differs, and what cogentia.js should consider next.'
+date: 2026-06-19T00:00:00.000Z
+source_date: 2026-06-12T00:00:00.000Z
+status: working-note v0.1
+document_role: source
+type: Research Note
+tags:
+  - okf
+  - open-knowledge-format
+  - corpus
+  - interoperability
+  - frontmatter
+  - agents
 license: CC BY-SA 4.0
 creator: Jean Hugues Noël Robert, baron Mariani
 affiliation: Institut Mariani / C.O.R.S.I.C.A., 1 cours Paoli, F-20250 Corte, Corsica
 canonical_url: https://github.com/JeanHuguesRobert/cogentia/blob/main/research/open_knowledge_format_alignment.md
-document_kind: "working-note"
-visibility: "public"
-lifecycle_state: "working"
-classification_source: "cogentia.js"
-classification_version: "1"
-classification_rule: "working-note"
-classification_confidence: "medium"
+document_kind: working-note
+visibility: public
+lifecycle_state: working
+classification_source: cogentia.js
+classification_version: '1'
+classification_rule: working-note
+classification_confidence: medium
+author: unknown
+provenance:
+  origin_type: unknown
+  origin_repository: unknown
+  origin_ref: unknown
+  origin_date: unknown
+  derived_from: []
+review:
+  status: unreviewed
+  reviewed_by: []
+update_policy: UP-DEFAULT-REVIEWED
 ---
 
 # Open Knowledge Format and Cogentia

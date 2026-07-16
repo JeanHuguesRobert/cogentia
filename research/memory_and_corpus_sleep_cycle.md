@@ -1,33 +1,33 @@
 ---
-title: "Memory, Working Memory, and Corpus Sleep Cycle"
-subtitle: "Individual/collective memory, ephemeral working state, long-term consolidation and traceable forgetting"
-author: "Jean Hugues Noël Robert, baron Mariani"
-affiliation: "Institut Mariani / C.O.R.S.I.C.A."
-date: "2026-07-03"
-status: "working-note — source seed"
-version: "0.1"
-license: "CC BY-SA 4.0"
-language: "en"
-repository: "JeanHuguesRobert/cogentia"
-canonical_path: "cogentia/research/memory_and_corpus_sleep_cycle.md"
-canonical_url: "https://github.com/JeanHuguesRobert/cogentia/blob/main/research/memory_and_corpus_sleep_cycle.md"
-document_role: "source"
-document_kind: "working-note"
-visibility: "public"
-lifecycle_state: "working"
-source_or_derived: "source-document"
+title: Memory, Working Memory, and Corpus Sleep Cycle
+subtitle: Individual/collective memory, ephemeral working state, long-term consolidation and traceable forgetting
+author: Jean Hugues Noël Robert, baron Mariani
+affiliation: Institut Mariani / C.O.R.S.I.C.A.
+date: '2026-07-03'
+status: working-note — source seed
+version: '0.1'
+license: CC BY-SA 4.0
+language: en
+repository: JeanHuguesRobert/cogentia
+canonical_path: cogentia/research/memory_and_corpus_sleep_cycle.md
+canonical_url: https://github.com/JeanHuguesRobert/cogentia/blob/main/research/memory_and_corpus_sleep_cycle.md
+document_role: source
+document_kind: working-note
+visibility: public
+lifecycle_state: working
+source_or_derived: source-document
 human_validation_required: true
 related_documents:
-  - "cogentia/research/pipeline.md"
-  - "cogentia/research/conversation_to_corpus_pipeline.md"
-  - "cogentia/research/cogentigraphic_distillation.md"
-  - "cogentia/research/cognitive_packets.md"
-  - "cogentia/research/cognitive_packet_switching.md"
-  - "cogentia/research/digital_twin_trust_model.md"
-  - "cogentia/research/digital_twin_ubiquity.md"
-  - "cogentia/research/cogentia_commons_living_corpus.md"
-  - "inseme/packages/cop-core/Invariants.md"
-  - "Inox/research/fractanet_language_abstractions.md"
+  - cogentia/research/pipeline.md
+  - cogentia/research/conversation_to_corpus_pipeline.md
+  - cogentia/research/cogentigraphic_distillation.md
+  - cogentia/research/cognitive_packets.md
+  - cogentia/research/cognitive_packet_switching.md
+  - cogentia/research/digital_twin_trust_model.md
+  - cogentia/research/digital_twin_ubiquity.md
+  - cogentia/research/cogentia_commons_living_corpus.md
+  - inseme/packages/cop-core/Invariants.md
+  - Inox/research/fractanet_language_abstractions.md
 tags:
   - cogentia
   - memory
@@ -39,6 +39,16 @@ tags:
   - forgetting
   - traceability
   - digital-twin
+provenance:
+  origin_type: unknown
+  origin_repository: unknown
+  origin_ref: unknown
+  origin_date: unknown
+  derived_from: []
+review:
+  status: unreviewed
+  reviewed_by: []
+update_policy: UP-DEFAULT-REVIEWED
 ---
 
 # Memory, Working Memory, and Corpus Sleep Cycle

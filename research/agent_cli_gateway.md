@@ -1,14 +1,24 @@
 ---
-title: "Agent CLI Gateway"
-subtitle: "OpenAI-compatible SSE gateway over coding-agent child processes"
-author: "Jean Hugues Noël Robert, baron Mariani"
-date: "2026-07-07"
+title: Agent CLI Gateway
+subtitle: OpenAI-compatible SSE gateway over coding-agent child processes
+author: Jean Hugues Noël Robert, baron Mariani
+date: '2026-07-07'
 status: specification — draft
-license: "CC BY-SA 4.0 for text; MIT for associated code"
-document_role: "source"
-document_kind: "specification"
-visibility: "public"
-lifecycle_state: "draft"
+license: CC BY-SA 4.0 for text; MIT for associated code
+document_role: source
+document_kind: specification
+visibility: public
+lifecycle_state: draft
+provenance:
+  origin_type: unknown
+  origin_repository: unknown
+  origin_ref: unknown
+  origin_date: unknown
+  derived_from: []
+review:
+  status: unreviewed
+  reviewed_by: []
+update_policy: UP-DEFAULT-REVIEWED
 ---
 
 # Agent CLI Gateway — specification (draft)

@@ -1,19 +1,19 @@
 ---
-title: "Self-Contained Documents in an Interconnected Corpus"
-subtitle: "A methodological principle for interconnected corpora without circular self-reference"
-author: "Jean Hugues Noël Robert"
-affiliation: "Institut Mariani / C.O.R.S.I.C.A., 1 cours Paoli, F-20250 Corte, Corsica"
-date: "2026-05-27"
-status: "Working note — v0.3, stabilized after external review"
-version: "0.3"
-license: "CC BY-SA 4.0"
-intended_path: "research/self_contained_documents.md"
+title: Self-Contained Documents in an Interconnected Corpus
+subtitle: A methodological principle for interconnected corpora without circular self-reference
+author: Jean Hugues Noël Robert
+affiliation: Institut Mariani / C.O.R.S.I.C.A., 1 cours Paoli, F-20250 Corte, Corsica
+date: '2026-05-27'
+status: Working note — v0.3, stabilized after external review
+version: '0.3'
+license: CC BY-SA 4.0
+intended_path: research/self_contained_documents.md
 canonical_url: https://github.com/JeanHuguesRobert/cogentia/blob/main/research/self_contained_documents.md
 method:
-  - "second method"
-  - "Cogentia pipeline"
-  - "derived products"
-  - "versioned source corpus"
+  - second method
+  - Cogentia pipeline
+  - derived products
+  - versioned source corpus
 tags:
   - self-contained document
   - corpus
@@ -24,22 +24,32 @@ tags:
   - pipeline
   - traceability
 related_documents:
-  - "cogentia/research/pipeline.md"
-  - "barons-Mariani/research/traceabilite_des_actes.md"
-  - "cogentia/research/derived_products.md"
+  - cogentia/research/pipeline.md
+  - barons-Mariani/research/traceabilite_des_actes.md
+  - cogentia/research/derived_products.md
 reviewed_by:
-  - "Grok — external AI reviewer"
+  - Grok — external AI reviewer
 ai_assisted_by:
-  - "ChatGPT — drafting, revision, consolidation"
-last_stamped_at: 2026-06-01
-document_role: "source"
-document_kind: "research-paper"
-visibility: "public"
-lifecycle_state: "working"
-classification_source: "cogentia.js"
-classification_version: "1"
-classification_rule: "research-paper"
-classification_confidence: "medium"
+  - ChatGPT — drafting, revision, consolidation
+last_stamped_at: 2026-06-01T00:00:00.000Z
+document_role: source
+document_kind: research-paper
+visibility: public
+lifecycle_state: working
+classification_source: cogentia.js
+classification_version: '1'
+classification_rule: research-paper
+classification_confidence: medium
+provenance:
+  origin_type: unknown
+  origin_repository: unknown
+  origin_ref: unknown
+  origin_date: unknown
+  derived_from: []
+review:
+  status: unreviewed
+  reviewed_by: []
+update_policy: UP-DEFAULT-REVIEWED
 ---
 
 # Self-Contained Documents in an Interconnected Corpus

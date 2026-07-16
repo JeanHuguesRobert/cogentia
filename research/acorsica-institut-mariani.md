@@ -1,21 +1,31 @@
 ---
-title: "Lien avec C.O.R.S.I.C.A., l’Institut Mariani et PrivAI"
-author: "Jean Hugues Noël Robert, baron Mariani"
-affiliation: "Institut Mariani / C.O.R.S.I.C.A."
-date: "2026-06-03"
-license: "CC BY-SA 4.0"
-status: "published"
-corpus_role: "source"
-keywords: "Cogentia, C.O.R.S.I.C.A., Institut Mariani, PrivAI, séparation institutionnelle"
-summary: "Note de clarification institutionnelle reliant Cogentia, C.O.R.S.I.C.A., l’Institut Mariani et PrivAI sans confusion juridique ou politique."
-document_role: "source"
-document_kind: "research-paper"
-visibility: "public"
-lifecycle_state: "stable"
-classification_source: "cogentia.js"
-classification_version: "1"
-classification_rule: "research-paper"
-classification_confidence: "medium"
+title: Lien avec C.O.R.S.I.C.A., l’Institut Mariani et PrivAI
+author: Jean Hugues Noël Robert, baron Mariani
+affiliation: Institut Mariani / C.O.R.S.I.C.A.
+date: '2026-06-03'
+license: CC BY-SA 4.0
+status: published
+corpus_role: source
+keywords: Cogentia, C.O.R.S.I.C.A., Institut Mariani, PrivAI, séparation institutionnelle
+summary: Note de clarification institutionnelle reliant Cogentia, C.O.R.S.I.C.A., l’Institut Mariani et PrivAI sans confusion juridique ou politique.
+document_role: source
+document_kind: research-paper
+visibility: public
+lifecycle_state: stable
+classification_source: cogentia.js
+classification_version: '1'
+classification_rule: research-paper
+classification_confidence: medium
+provenance:
+  origin_type: unknown
+  origin_repository: unknown
+  origin_ref: unknown
+  origin_date: unknown
+  derived_from: []
+review:
+  status: unreviewed
+  reviewed_by: []
+update_policy: UP-DEFAULT-REVIEWED
 ---
 # Lien avec C.O.R.S.I.C.A., l’Institut Mariani et PrivAI
 

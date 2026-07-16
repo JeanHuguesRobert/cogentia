@@ -1,14 +1,14 @@
 ---
-title: "Blocked Tool Rule"
-subtitle: "How agents should report, degrade, and escalate failed tool operations"
-version: "0.1"
-status: "source document — operational doctrine"
-date: "2026-07-06"
-author: "Jean Hugues Noël Robert"
-license: "CC BY-SA 4.0"
-language: "en"
-repository: "cogentia"
-canonical_path: "cogentia/research/blocked_tool_rule.md"
+title: Blocked Tool Rule
+subtitle: How agents should report, degrade, and escalate failed tool operations
+version: '0.1'
+status: source document — operational doctrine
+date: '2026-07-06'
+author: Jean Hugues Noël Robert
+license: CC BY-SA 4.0
+language: en
+repository: cogentia
+canonical_path: cogentia/research/blocked_tool_rule.md
 tags:
   - cogentia
   - agents
@@ -20,14 +20,24 @@ tags:
   - authorization
   - corpus-governance
 related_research:
-  - "cogentia/AGENTS.md"
-  - "cogentia/research/agent_configuration_layer.md"
-  - "cogentia/research/optimistic_mainline_governance.md"
-  - "FractaVolta/AGENTS.md"
-document_role: "source"
-document_kind: "method-note"
-visibility: "public"
-lifecycle_state: "working"
+  - cogentia/AGENTS.md
+  - cogentia/research/agent_configuration_layer.md
+  - cogentia/research/optimistic_mainline_governance.md
+  - FractaVolta/AGENTS.md
+document_role: source
+document_kind: method-note
+visibility: public
+lifecycle_state: working
+provenance:
+  origin_type: unknown
+  origin_repository: unknown
+  origin_ref: unknown
+  origin_date: unknown
+  derived_from: []
+review:
+  status: unreviewed
+  reviewed_by: []
+update_policy: UP-DEFAULT-REVIEWED
 ---
 
 # Blocked Tool Rule

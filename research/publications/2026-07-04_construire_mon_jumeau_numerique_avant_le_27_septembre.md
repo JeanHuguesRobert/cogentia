@@ -1,12 +1,23 @@
 ---
-title: "Construire mon jumeau numérique avant le 27 septembre"
-date: 2026-07-04
+title: Construire mon jumeau numérique avant le 27 septembre
+date: 2026-07-04T00:00:00.000Z
 status: draft-publication
 audience: public-blog
 platform_candidates: Substack, blog, LinkedIn-long-form
 related:
   - research/snapshots/2026-07-04_github_activity_and_digital_twin_progress.md
   - research/strategy/2026-07-04_trajectory_to_2026-09-27.md
+author: unknown
+provenance:
+  origin_type: unknown
+  origin_repository: unknown
+  origin_ref: unknown
+  origin_date: unknown
+  derived_from: []
+review:
+  status: unreviewed
+  reviewed_by: []
+update_policy: UP-DEFAULT-REVIEWED
 ---
 
 # Construire mon jumeau numérique avant le 27 septembre

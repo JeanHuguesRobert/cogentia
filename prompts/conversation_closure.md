@@ -1,26 +1,37 @@
 ---
-title: "Conversation Closure Prompt Contract"
-subtitle: "Closing a structured document-production conversation with summary, open pistes, artifacts, and optional share link"
-author: "Jean Hugues Noël Robert"
-status: "prompt-contract — working"
-version: "0.1"
-license: "CC BY-SA 4.0"
-language: "en"
-canonical_path: "cogentia/prompts/conversation_closure.md"
+title: Conversation Closure Prompt Contract
+subtitle: Closing a structured document-production conversation with summary, open pistes, artifacts, and optional share link
+author: Jean Hugues Noël Robert
+status: prompt-contract — working
+version: '0.1'
+license: CC BY-SA 4.0
+language: en
+canonical_path: cogentia/prompts/conversation_closure.md
 canonical_url: https://github.com/JeanHuguesRobert/cogentia/blob/main/prompts/conversation_closure.md
 related_prompts:
-  - "cogentia/prompts/document_conversation_frame.md"
-  - "cogentia/prompts/cognitive_packet.md"
-  - "cogentia/prompts/reviewer.md"
-  - "cogentia/prompts/redactor.md"
+  - cogentia/prompts/document_conversation_frame.md
+  - cogentia/prompts/cognitive_packet.md
+  - cogentia/prompts/reviewer.md
+  - cogentia/prompts/redactor.md
 related_research:
-  - "cogentia/research/pipeline.md"
-  - "cogentia/research/derived_products.md"
-  - "cogentia/research/cognitive_packets.md"
-  - "barons-Mariani/research/second_method.md"
+  - cogentia/research/pipeline.md
+  - cogentia/research/derived_products.md
+  - cogentia/research/cognitive_packets.md
+  - barons-Mariani/research/second_method.md
 agent_neutral: true
 human_validation_required: true
-last_stamped_at: 2026-06-17
+last_stamped_at: 2026-06-17T00:00:00.000Z
+date: unknown
+provenance:
+  origin_type: unknown
+  origin_repository: unknown
+  origin_ref: unknown
+  origin_date: unknown
+  derived_from: []
+review:
+  status: unreviewed
+  reviewed_by: []
+update_policy: UP-DEFAULT-REVIEWED
 ---
 
 # Conversation Closure Prompt Contract

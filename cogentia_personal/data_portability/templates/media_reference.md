@@ -24,14 +24,26 @@ locations:
     kind: private_cloud_or_archive
     reference: null
     verified_at: null
-document_role: "template"
-document_kind: "template"
-visibility: "public"
-lifecycle_state: "active"
-classification_source: "cogentia.js"
-classification_version: "1"
-classification_rule: "template"
-classification_confidence: "strong"
+document_role: template
+document_kind: template
+visibility: public
+lifecycle_state: active
+classification_source: cogentia.js
+classification_version: '1'
+classification_rule: template
+classification_confidence: strong
+author: unknown
+date: unknown
+provenance:
+  origin_type: unknown
+  origin_repository: unknown
+  origin_ref: unknown
+  origin_date: unknown
+  derived_from: []
+review:
+  status: unreviewed
+  reviewed_by: []
+update_policy: UP-DEFAULT-REVIEWED
 ---
 
 # Media Reference — Provider — YYYY-MM-DD — 000001

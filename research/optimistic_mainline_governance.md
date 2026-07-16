@@ -1,14 +1,14 @@
 ---
-title: "Optimistic Mainline Governance"
-subtitle: "Direct agent work on main under trace, reversibility and scoped authorization"
-version: "0.2"
-status: "source document — operational doctrine"
-date: "2026-07-07"
-author: "Jean Hugues Noël Robert, baron Mariani"
-license: "CC BY-SA 4.0"
-language: "en"
-repository: "cogentia"
-canonical_path: "cogentia/research/optimistic_mainline_governance.md"
+title: Optimistic Mainline Governance
+subtitle: Direct agent work on main under trace, reversibility and scoped authorization
+version: '0.2'
+status: source document — operational doctrine
+date: '2026-07-07'
+author: Jean Hugues Noël Robert, baron Mariani
+license: CC BY-SA 4.0
+language: en
+repository: cogentia
+canonical_path: cogentia/research/optimistic_mainline_governance.md
 tags:
   - cogentia
   - agents
@@ -20,17 +20,27 @@ tags:
   - corpus-governance
   - blocked-tools
 related_research:
-  - "cogentia/AGENTS.md"
-  - "cogentia/research/agent_configuration_layer.md"
-  - "cogentia/research/conversation_to_corpus_pipeline.md"
-  - "cogentia/research/alan_turing_mcp_v0_1.md"
-  - "cogentia/research/alan_turing_mcp_coding_agent_prompt.md"
-  - "cogentia/research/blocked_tool_rule.md"
-  - "inseme/AGENTS.md"
-document_role: "source"
-document_kind: "method-note"
-visibility: "public"
-lifecycle_state: "working"
+  - cogentia/AGENTS.md
+  - cogentia/research/agent_configuration_layer.md
+  - cogentia/research/conversation_to_corpus_pipeline.md
+  - cogentia/research/alan_turing_mcp_v0_1.md
+  - cogentia/research/alan_turing_mcp_coding_agent_prompt.md
+  - cogentia/research/blocked_tool_rule.md
+  - inseme/AGENTS.md
+document_role: source
+document_kind: method-note
+visibility: public
+lifecycle_state: working
+provenance:
+  origin_type: unknown
+  origin_repository: unknown
+  origin_ref: unknown
+  origin_date: unknown
+  derived_from: []
+review:
+  status: unreviewed
+  reviewed_by: []
+update_policy: UP-DEFAULT-REVIEWED
 ---
 
 # Optimistic Mainline Governance

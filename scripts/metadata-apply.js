@@ -30,7 +30,19 @@ for (const item of report.plans || []) {
   const after = before.replace(/^---\r?\n[\s\S]*?\r?\n---(?:\r?\n|$)/, block);
   if (args.has("--apply")) {
     const temp = `${target}.metadata-tmp-${process.pid}`;
-    fs.writeFileSync(temp, after, "utf8"); fs.renameSync(temp, target);
+    fs.writeFileSync(temp, after, "utf8");
+    try { fs.renameSync(temp, target); }
+    catch (error) {
+      if (error.code !== "EPERM" && error.code !== "EEXIST") throw error;
+      // Windows can deny replacement of an existing file; preserve the same
+      // hash-guarded semantics with an overwrite copy, then remove the temp.
+      try { fs.copyFileSync(temp, target); fs.unlinkSync(temp); }
+      catch (copyError) {
+        try { fs.unlinkSync(temp); } catch {}
+        results.push({ path: item.path, state: "blocked", reason: copyError.code || copyError.message });
+        continue;
+      }
+    }
     results.push({ path: item.path, state: "applied", after_hash: sha(after) });
   } else results.push({ path: item.path, state: "planned", after_hash: sha(after) });
 }

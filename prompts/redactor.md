@@ -1,27 +1,38 @@
 ---
-title: "Redactor Prompt Contract"
-subtitle: "Source document drafting and revision under human validation"
-author: "Jean Hugues Noël Robert"
-status: "prompt-contract — working"
-version: "0.1"
-license: "CC BY-SA 4.0"
-language: "en"
-canonical_path: "cogentia/prompts/redactor.md"
+title: Redactor Prompt Contract
+subtitle: Source document drafting and revision under human validation
+author: Jean Hugues Noël Robert
+status: prompt-contract — working
+version: '0.1'
+license: CC BY-SA 4.0
+language: en
+canonical_path: cogentia/prompts/redactor.md
 related_prompts:
-  - "cogentia/prompts/document_conversation_frame.md"
-  - "cogentia/prompts/reviewer.md"
-  - "cogentia/prompts/cognitive_packet.md"
-  - "cogentia/prompts/conversation_closure.md"
+  - cogentia/prompts/document_conversation_frame.md
+  - cogentia/prompts/reviewer.md
+  - cogentia/prompts/cognitive_packet.md
+  - cogentia/prompts/conversation_closure.md
 related_research:
-  - "cogentia/research/pipeline.md"
-  - "cogentia/research/derived_products.md"
-  - "cogentia/research/cognitive_packets.md"
-  - "barons-Mariani/research/second_method.md"
-  - "inseme/AGENTS.md"
-  - "inseme/packages/cop-core/Invariants.md"
+  - cogentia/research/pipeline.md
+  - cogentia/research/derived_products.md
+  - cogentia/research/cognitive_packets.md
+  - barons-Mariani/research/second_method.md
+  - inseme/AGENTS.md
+  - inseme/packages/cop-core/Invariants.md
 agent_neutral: true
 human_validation_required: true
-last_stamped_at: 2026-06-17
+last_stamped_at: 2026-06-17T00:00:00.000Z
+date: unknown
+provenance:
+  origin_type: unknown
+  origin_repository: unknown
+  origin_ref: unknown
+  origin_date: unknown
+  derived_from: []
+review:
+  status: unreviewed
+  reviewed_by: []
+update_policy: UP-DEFAULT-REVIEWED
 ---
 
 # Redactor Prompt Contract

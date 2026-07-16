@@ -1,6 +1,6 @@
 ---
-title: "Mémoire de campagne — Sénatoriales 2026"
-date_created: 2026-07-04
+title: Mémoire de campagne — Sénatoriales 2026
+date_created: 2026-07-04T00:00:00.000Z
 status: living-memory
 scope: 2026-senatoriales-haute-corse
 related:
@@ -10,6 +10,18 @@ related:
   - https://github.com/JeanHuguesRobert/cogentia/issues/43
 checkpoint_policy: human-final-word
 visibility: public-source-unless-sensitive
+author: unknown
+date: unknown
+provenance:
+  origin_type: unknown
+  origin_repository: unknown
+  origin_ref: unknown
+  origin_date: unknown
+  derived_from: []
+review:
+  status: unreviewed
+  reviewed_by: []
+update_policy: UP-DEFAULT-REVIEWED
 ---
 
 # Mémoire de campagne — Sénatoriales 2026

@@ -1,14 +1,14 @@
 ---
-title: "Trusted Boundaries"
-subtitle: "A fractal doctrine for public, private, local, and agentic access"
-version: "0.1"
-status: "source document — operational doctrine"
-date: "2026-07-08"
-author: "Jean Hugues Noël Robert"
-license: "CC BY-SA 4.0"
-language: "en"
-repository: "cogentia"
-canonical_path: "cogentia/research/trusted_boundaries.md"
+title: Trusted Boundaries
+subtitle: A fractal doctrine for public, private, local, and agentic access
+version: '0.1'
+status: source document — operational doctrine
+date: '2026-07-08'
+author: Jean Hugues Noël Robert
+license: CC BY-SA 4.0
+language: en
+repository: cogentia
+canonical_path: cogentia/research/trusted_boundaries.md
 tags:
   - cogentia
   - fractanet
@@ -19,10 +19,20 @@ tags:
   - public-private
   - traceability
   - authorization
-document_role: "source"
-document_kind: "method-note"
-visibility: "public"
-lifecycle_state: "working"
+document_role: source
+document_kind: method-note
+visibility: public
+lifecycle_state: working
+provenance:
+  origin_type: unknown
+  origin_repository: unknown
+  origin_ref: unknown
+  origin_date: unknown
+  derived_from: []
+review:
+  status: unreviewed
+  reviewed_by: []
+update_policy: UP-DEFAULT-REVIEWED
 ---
 
 # Trusted Boundaries

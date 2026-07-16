@@ -1,20 +1,31 @@
 ---
 canonical_url: https://github.com/JeanHuguesRobert/cogentia/blob/main/research/trails/from_autonomia_to_dhitl.md
-last_stamped_at: 2026-06-01
+last_stamped_at: 2026-06-01T00:00:00.000Z
 license: CC BY-SA 4.0
 affiliation: Institut Mariani / C.O.R.S.I.C.A., 1 cours Paoli, F-20250 Corte, Corsica
 creator: Jean Hugues Noël Robert, baron Mariani
-title: "Trail: From Autonomia to DHITL"
-date: "2026-05-18"
-status: "draft — auto-filled (frontmatter cleanup)"
-document_role: "trail"
-document_kind: "trail"
-visibility: "public"
-lifecycle_state: "working"
-classification_source: "cogentia.js"
-classification_version: "1"
-classification_rule: "trail"
-classification_confidence: "strong"
+title: 'Trail: From Autonomia to DHITL'
+date: '2026-05-18'
+status: draft — auto-filled (frontmatter cleanup)
+document_role: trail
+document_kind: trail
+visibility: public
+lifecycle_state: working
+classification_source: cogentia.js
+classification_version: '1'
+classification_rule: trail
+classification_confidence: strong
+author: unknown
+provenance:
+  origin_type: unknown
+  origin_repository: unknown
+  origin_ref: unknown
+  origin_date: unknown
+  derived_from: []
+review:
+  status: unreviewed
+  reviewed_by: []
+update_policy: UP-DEFAULT-REVIEWED
 ---
 # Trail: From Autonomia to DHITL
 

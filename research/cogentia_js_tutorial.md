@@ -1,30 +1,40 @@
 ---
-title: "cogentia.js - Tutorial and Near-Specification"
-subtitle: "Generated automatically from the current v2 CLI source and corpus doctrine"
-version: "2.3.0"
-status: "generated automatically - current v2 tutorial"
-date: "2026-06-19"
-author: "Jean Hugues Noel Robert, baron Mariani"
-affiliation: "Institut Mariani / C.O.R.S.I.C.A., 1 cours Paoli, F-20250 Corte, Corsica"
-license: "CC BY-SA 4.0"
-language: "en"
-target_implementation: "cogentia.js v2.3.0"
+title: cogentia.js - Tutorial and Near-Specification
+subtitle: Generated automatically from the current v2 CLI source and corpus doctrine
+version: 2.3.0
+status: generated automatically - current v2 tutorial
+date: '2026-06-19'
+author: Jean Hugues Noel Robert, baron Mariani
+affiliation: Institut Mariani / C.O.R.S.I.C.A., 1 cours Paoli, F-20250 Corte, Corsica
+license: CC BY-SA 4.0
+language: en
+target_implementation: cogentia.js v2.3.0
 generated_automatically: true
 derived_by: agent
-derived_from: "scripts/cogentia.js; COGENTIA.md; docs/knowledge_mesh.md; research/agent_resumable_cli.md; research/cognitive_packets.md; research/pipeline.md; research/derived_products.md"
+derived_from: scripts/cogentia.js; COGENTIA.md; docs/knowledge_mesh.md; research/agent_resumable_cli.md; research/cognitive_packets.md; research/pipeline.md; research/derived_products.md
 canonical_url: https://github.com/JeanHuguesRobert/cogentia/blob/main/research/cogentia_js_tutorial.md
-last_stamped_at: 2026-06-19
-corpus_role: "derived"
-derived_product_type: "tutorial"
-ai_assisted_by: "Codex"
-document_role: "derived"
-document_kind: "derived-product"
-visibility: "public"
-lifecycle_state: "generated"
-classification_source: "cogentia.js"
-classification_version: "1"
-classification_rule: "derived-product"
-classification_confidence: "strong"
+last_stamped_at: 2026-06-19T00:00:00.000Z
+corpus_role: derived
+derived_product_type: tutorial
+ai_assisted_by: Codex
+document_role: derived
+document_kind: derived-product
+visibility: public
+lifecycle_state: generated
+classification_source: cogentia.js
+classification_version: '1'
+classification_rule: derived-product
+classification_confidence: strong
+provenance:
+  origin_type: unknown
+  origin_repository: unknown
+  origin_ref: unknown
+  origin_date: unknown
+  derived_from: []
+review:
+  status: unreviewed
+  reviewed_by: []
+update_policy: UP-DEFAULT-REVIEWED
 ---
 
 # cogentia.js - Tutorial and Near-Specification

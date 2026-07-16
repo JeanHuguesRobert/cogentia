@@ -1,10 +1,22 @@
 ---
-title: "Agentic Commit Transparency"
-subtitle: "Mandate, Provenance, Human Review, and Reversibility for AI-Assisted Corpus Work"
+title: Agentic Commit Transparency
+subtitle: Mandate, Provenance, Human Review, and Reversibility for AI-Assisted Corpus Work
 status: draft
 version: 0.1
-last_stamped_at: 2026-07-15
+last_stamped_at: 2026-07-15T00:00:00.000Z
 canonical_url: https://github.com/JeanHuguesRobert/cogentia/blob/main/research/agentic_commit_transparency.md
+author: unknown
+date: unknown
+provenance:
+  origin_type: unknown
+  origin_repository: unknown
+  origin_ref: unknown
+  origin_date: unknown
+  derived_from: []
+review:
+  status: unreviewed
+  reviewed_by: []
+update_policy: UP-DEFAULT-REVIEWED
 ---
 
 # Agentic Commit Transparency

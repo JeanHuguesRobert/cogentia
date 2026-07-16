@@ -1,13 +1,25 @@
 ---
-title: "Cogentia Index Layer v0.3"
-document_role: "operational"
-document_kind: "guide"
-visibility: "public"
-lifecycle_state: "active"
-classification_source: "cogentia.js"
-classification_version: "1"
-classification_rule: "guide"
-classification_confidence: "strong"
+title: Cogentia Index Layer v0.3
+document_role: operational
+document_kind: guide
+visibility: public
+lifecycle_state: active
+classification_source: cogentia.js
+classification_version: '1'
+classification_rule: guide
+classification_confidence: strong
+author: unknown
+date: unknown
+provenance:
+  origin_type: unknown
+  origin_repository: unknown
+  origin_ref: unknown
+  origin_date: unknown
+  derived_from: []
+review:
+  status: unreviewed
+  reviewed_by: []
+update_policy: UP-DEFAULT-REVIEWED
 ---
 
 # Cogentia Index Layer v0.3

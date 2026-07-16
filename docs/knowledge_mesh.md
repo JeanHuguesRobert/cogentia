@@ -1,23 +1,33 @@
 ---
-title: "The Knowledge Mesh (Decentralized Wiki)"
-description: "How humans and agents curate, cross-reference, and navigate the Cogentia corpus."
+title: The Knowledge Mesh (Decentralized Wiki)
+description: How humans and agents curate, cross-reference, and navigate the Cogentia corpus.
 layout: default
 nav_order: 4
 canonical_url: https://github.com/JeanHuguesRobert/cogentia/blob/main/docs/knowledge_mesh.md
-author: "Jean Hugues Noël Robert, baron Mariani"
-affiliation: "Institut Mariani / C.O.R.S.I.C.A., 1 cours Paoli, F-20250 Corte, Corsica"
-license: "CC BY-SA 4.0"
-last_stamped_at: 2026-06-01
-date: "2026-05-16"
-status: "draft — auto-filled (frontmatter cleanup)"
-document_role: "source"
-document_kind: "guide"
-visibility: "public"
-lifecycle_state: "working"
-classification_source: "cogentia.js"
-classification_version: "1"
-classification_rule: "guide"
-classification_confidence: "medium"
+author: Jean Hugues Noël Robert, baron Mariani
+affiliation: Institut Mariani / C.O.R.S.I.C.A., 1 cours Paoli, F-20250 Corte, Corsica
+license: CC BY-SA 4.0
+last_stamped_at: 2026-06-01T00:00:00.000Z
+date: '2026-05-16'
+status: draft — auto-filled (frontmatter cleanup)
+document_role: source
+document_kind: guide
+visibility: public
+lifecycle_state: working
+classification_source: cogentia.js
+classification_version: '1'
+classification_rule: guide
+classification_confidence: medium
+provenance:
+  origin_type: unknown
+  origin_repository: unknown
+  origin_ref: unknown
+  origin_date: unknown
+  derived_from: []
+review:
+  status: unreviewed
+  reviewed_by: []
+update_policy: UP-DEFAULT-REVIEWED
 ---
 
 # The Knowledge Mesh (Decentralized Wiki)

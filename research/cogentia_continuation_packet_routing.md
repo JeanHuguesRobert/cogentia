@@ -1,33 +1,33 @@
 ---
-title: "Cogentia as a Cognitive Continuation Packet Router"
-subtitle: "Method-Governed Routing of Cognitive Packets in the Fractanet Architecture"
-author: "Jean Hugues Noël Robert, baron Mariani"
-affiliation: "Institut Mariani / C.O.R.S.I.C.A., 1 cours Paoli, F-20250 Corte, Corsica"
-date: "2026-06-01"
-status: "working-paper — v0.3"
-version: "0.3"
-document_role: "source"
-license: "CC BY-SA 4.0 for text; MIT for associated schemas or code"
-spdx: "CC-BY-SA-4.0"
-language: "en"
+title: Cogentia as a Cognitive Continuation Packet Router
+subtitle: Method-Governed Routing of Cognitive Packets in the Fractanet Architecture
+author: Jean Hugues Noël Robert, baron Mariani
+affiliation: Institut Mariani / C.O.R.S.I.C.A., 1 cours Paoli, F-20250 Corte, Corsica
+date: '2026-06-01'
+status: working-paper — v0.3
+version: '0.3'
+document_role: source
+license: CC BY-SA 4.0 for text; MIT for associated schemas or code
+spdx: CC-BY-SA-4.0
+language: en
 canonical_url: https://github.com/JeanHuguesRobert/cogentia/blob/main/research/cogentia_continuation_packet_routing.md
 related_projects:
-  - "Cogentia"
-  - "Fractanet"
-  - "FractaVolta"
-  - "COP"
-  - "Inseme"
-  - "Inox"
-  - "Cogentigraphic Distillation"
+  - Cogentia
+  - Fractanet
+  - FractaVolta
+  - COP
+  - Inseme
+  - Inox
+  - Cogentigraphic Distillation
 related_documents:
-  - "cogentia/research/cognitive_packets.md"
-  - "cogentia/research/agent_resumable_cli.md"
-  - "cogentia/research/pipeline.md"
-  - "cogentia/research/cogentigraphic_distillation.md"
-  - "FractaVolta/research/fractanet.md"
-  - "FractaVolta/research/generalized_packet_networks.md"
-  - "inseme/research/reactive_cognitive_cop_extension.md"
-  - "inseme/packages/cop-kernel/docs/task-step-continuation-lineage.md"
+  - cogentia/research/cognitive_packets.md
+  - cogentia/research/agent_resumable_cli.md
+  - cogentia/research/pipeline.md
+  - cogentia/research/cogentigraphic_distillation.md
+  - FractaVolta/research/fractanet.md
+  - FractaVolta/research/generalized_packet_networks.md
+  - inseme/research/reactive_cognitive_cop_extension.md
+  - inseme/packages/cop-kernel/docs/task-step-continuation-lineage.md
 tags:
   - cogentia
   - cognitive-packets
@@ -42,17 +42,27 @@ tags:
   - autonomie-de-capacite
   - traceability
 ai_assisted_by:
-  - "ChatGPT"
-  - "Grok critique of v0.1 and v0.2"
-last_stamped_at: 2026-06-01
-corpus_role: "source"
-document_kind: "research-paper"
-visibility: "public"
-lifecycle_state: "working"
-classification_source: "cogentia.js"
-classification_version: "1"
-classification_rule: "research-paper"
-classification_confidence: "medium"
+  - ChatGPT
+  - Grok critique of v0.1 and v0.2
+last_stamped_at: 2026-06-01T00:00:00.000Z
+corpus_role: source
+document_kind: research-paper
+visibility: public
+lifecycle_state: working
+classification_source: cogentia.js
+classification_version: '1'
+classification_rule: research-paper
+classification_confidence: medium
+provenance:
+  origin_type: unknown
+  origin_repository: unknown
+  origin_ref: unknown
+  origin_date: unknown
+  derived_from: []
+review:
+  status: unreviewed
+  reviewed_by: []
+update_policy: UP-DEFAULT-REVIEWED
 ---
 
 # Cogentia as a Cognitive Continuation Packet Router

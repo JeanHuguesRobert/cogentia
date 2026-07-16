@@ -1,20 +1,20 @@
 ---
-title: "TCP/IP for Ideas: Cognitive Packets for Agent Orchestration"
-version: "0.1"
-status: "derived product — Hacker News optimized"
-date: "2026-06-01"
-author: "Jean Hugues Noël Robert, baron Mariani"
-language: "en"
-repository: "JeanHuguesRobert/cogentia"
-intended_path: "research/derived_products/tcp_ip_for_ideas_hacker_news.md"
-source_document: "research/cognitive_packet_switching.md"
+title: 'TCP/IP for Ideas: Cognitive Packets for Agent Orchestration'
+version: '0.1'
+status: derived product — Hacker News optimized
+date: '2026-06-01'
+author: Jean Hugues Noël Robert, baron Mariani
+language: en
+repository: JeanHuguesRobert/cogentia
+intended_path: research/derived_products/tcp_ip_for_ideas_hacker_news.md
+source_document: research/cognitive_packet_switching.md
 derived_from:
-  - "Cognitive Packet Switching — v1.0"
+  - Cognitive Packet Switching — v1.0
 audience:
-  - "Hacker News"
-  - "AI agents / workflows"
-  - "distributed systems"
-  - "software architecture"
+  - Hacker News
+  - AI agents / workflows
+  - distributed systems
+  - software architecture
 tags:
   - tcp-ip-for-ideas
   - cognitive-packets
@@ -23,15 +23,25 @@ tags:
   - hacker-news
   - derived-product
 canonical_url: https://github.com/JeanHuguesRobert/cogentia/blob/main/research/derived_products/tcp_ip_for_ideas_hacker_news.md
-last_stamped_at: 2026-06-01
-document_role: "derived"
-document_kind: "derived-product"
-visibility: "public"
-lifecycle_state: "active"
-classification_source: "cogentia.js"
-classification_version: "1"
-classification_rule: "derived-product"
-classification_confidence: "strong"
+last_stamped_at: 2026-06-01T00:00:00.000Z
+document_role: derived
+document_kind: derived-product
+visibility: public
+lifecycle_state: active
+classification_source: cogentia.js
+classification_version: '1'
+classification_rule: derived-product
+classification_confidence: strong
+provenance:
+  origin_type: unknown
+  origin_repository: unknown
+  origin_ref: unknown
+  origin_date: unknown
+  derived_from: []
+review:
+  status: unreviewed
+  reviewed_by: []
+update_policy: UP-DEFAULT-REVIEWED
 ---
 
 # TCP/IP for Ideas: Cognitive Packets for Agent Orchestration

@@ -1,14 +1,14 @@
 ---
-title: "Digital Twin Trust Model"
-subtitle: "Maturity, capability, owner sovereignty, and the right to grow safely"
-version: "0.1"
-status: "source document — trust architecture"
-date: "2026-06-30"
-author: "Jean Hugues Noël Robert"
-license: "CC BY-SA 4.0"
-language: "en"
-repository: "cogentia"
-canonical_path: "cogentia/research/digital_twin_trust_model.md"
+title: Digital Twin Trust Model
+subtitle: Maturity, capability, owner sovereignty, and the right to grow safely
+version: '0.1'
+status: source document — trust architecture
+date: '2026-06-30'
+author: Jean Hugues Noël Robert
+license: CC BY-SA 4.0
+language: en
+repository: cogentia
+canonical_path: cogentia/research/digital_twin_trust_model.md
 tags:
   - cogentia
   - digital-twin
@@ -20,18 +20,28 @@ tags:
   - owner-sovereignty
   - optimistic-governance
 related_research:
-  - "cogentia/research/cogentia-digital-twin.md"
-  - "cogentia/research/individual_and_collective_digital_twins.md"
-  - "cogentia/research/digital_twin_ubiquity.md"
-  - "cogentia/research/optimistic_mainline_governance.md"
-  - "cogentia/research/agent_resumable_cli.md"
-  - "cogentia/research/cognitive_packet_switching.md"
+  - cogentia/research/cogentia-digital-twin.md
+  - cogentia/research/individual_and_collective_digital_twins.md
+  - cogentia/research/digital_twin_ubiquity.md
+  - cogentia/research/optimistic_mainline_governance.md
+  - cogentia/research/agent_resumable_cli.md
+  - cogentia/research/cognitive_packet_switching.md
 related_operations:
-  - "cogentia/docs/digital-twin-agile-roadmap.md"
-document_role: "source"
-document_kind: "trust-model"
-visibility: "public"
-lifecycle_state: "working"
+  - cogentia/docs/digital-twin-agile-roadmap.md
+document_role: source
+document_kind: trust-model
+visibility: public
+lifecycle_state: working
+provenance:
+  origin_type: unknown
+  origin_repository: unknown
+  origin_ref: unknown
+  origin_date: unknown
+  derived_from: []
+review:
+  status: unreviewed
+  reviewed_by: []
+update_policy: UP-DEFAULT-REVIEWED
 ---
 
 # Digital Twin Trust Model

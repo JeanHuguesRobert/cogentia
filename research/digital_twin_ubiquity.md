@@ -1,14 +1,14 @@
 ---
-title: "Digital Twin Ubiquity"
-subtitle: "Instances, appearances, mandates, and COP coordination"
-version: "0.1"
-status: "source document — architectural implication study"
-date: "2026-06-30"
-author: "Jean Hugues Noël Robert"
-license: "CC BY-SA 4.0"
-language: "en"
-repository: "cogentia"
-canonical_path: "cogentia/research/digital_twin_ubiquity.md"
+title: Digital Twin Ubiquity
+subtitle: Instances, appearances, mandates, and COP coordination
+version: '0.1'
+status: source document — architectural implication study
+date: '2026-06-30'
+author: Jean Hugues Noël Robert
+license: CC BY-SA 4.0
+language: en
+repository: cogentia
+canonical_path: cogentia/research/digital_twin_ubiquity.md
 tags:
   - cogentia
   - digital-twin
@@ -18,16 +18,26 @@ tags:
   - society-of-mind
   - mandate
 related_research:
-  - "cogentia/research/digital_twin_trust_model.md"
-  - "cogentia/research/cognitive_packet_switching.md"
-  - "cogentia/docs/digital-twin-agile-roadmap.md"
-  - "ubikia/README.md"
-  - "ubikia/docs/concepts.md"
-  - "inseme/packages/cop-cli/README.md"
-document_role: "source"
-document_kind: "architecture-note"
-visibility: "public"
-lifecycle_state: "working"
+  - cogentia/research/digital_twin_trust_model.md
+  - cogentia/research/cognitive_packet_switching.md
+  - cogentia/docs/digital-twin-agile-roadmap.md
+  - ubikia/README.md
+  - ubikia/docs/concepts.md
+  - inseme/packages/cop-cli/README.md
+document_role: source
+document_kind: architecture-note
+visibility: public
+lifecycle_state: working
+provenance:
+  origin_type: unknown
+  origin_repository: unknown
+  origin_ref: unknown
+  origin_date: unknown
+  derived_from: []
+review:
+  status: unreviewed
+  reviewed_by: []
+update_policy: UP-DEFAULT-REVIEWED
 ---
 
 # Digital Twin Ubiquity

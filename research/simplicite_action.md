@@ -1,24 +1,34 @@
 ---
-title: "Simplicité d'action"
-subtitle: "KISS, Small is beautiful, Worse is better — éthique de l'action contre la sur-ingénierie et l'analysis paralysis"
-author: "Jean Hugues Noël Robert, baron Mariani"
-affiliation: "Institut Mariani / C.O.R.S.I.C.A., 1 cours Paoli, F-20250 Corte, Corsica"
-date: "2026-06-01"
-status: "working-note — méthodologique v0.2 (articulation avec ideas_to_explore_as_issues)"
-version: "0.2"
-license: "CC BY-SA 4.0"
+title: Simplicité d'action
+subtitle: KISS, Small is beautiful, Worse is better — éthique de l'action contre la sur-ingénierie et l'analysis paralysis
+author: Jean Hugues Noël Robert, baron Mariani
+affiliation: Institut Mariani / C.O.R.S.I.C.A., 1 cours Paoli, F-20250 Corte, Corsica
+date: '2026-06-01'
+status: working-note — méthodologique v0.2 (articulation avec ideas_to_explore_as_issues)
+version: '0.2'
+license: CC BY-SA 4.0
 ai_assisted_by:
-  - "Claude — articulation, 2026-05-30 ; absorption insight anti-capture (2026-06-01)"
+  - Claude — articulation, 2026-05-30 ; absorption insight anti-capture (2026-06-01)
 canonical_url: https://github.com/JeanHuguesRobert/cogentia/blob/main/research/simplicite_action.md
-last_stamped_at: 2026-06-01
-document_role: "source"
-document_kind: "working-note"
-visibility: "public"
-lifecycle_state: "working"
-classification_source: "cogentia.js"
-classification_version: "1"
-classification_rule: "working-note"
-classification_confidence: "medium"
+last_stamped_at: 2026-06-01T00:00:00.000Z
+document_role: source
+document_kind: working-note
+visibility: public
+lifecycle_state: working
+classification_source: cogentia.js
+classification_version: '1'
+classification_rule: working-note
+classification_confidence: medium
+provenance:
+  origin_type: unknown
+  origin_repository: unknown
+  origin_ref: unknown
+  origin_date: unknown
+  derived_from: []
+review:
+  status: unreviewed
+  reviewed_by: []
+update_policy: UP-DEFAULT-REVIEWED
 ---
 
 # Simplicité d'action

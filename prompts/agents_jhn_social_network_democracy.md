@@ -1,18 +1,28 @@
 ---
-title: "Prompt — Agents JHN pour démocratisation démocratique des réseaux sociaux"
-author: "Jean Hugues Noël Robert, assisté par ChatGPT"
-status: "prompt opératoire — version initiale sécurisée"
-version: "0.1"
-date: "2026-07-06"
-license: "CC BY-SA 4.0"
-language: "fr"
-repository: "cogentia"
-canonical_path: "cogentia/prompts/agents_jhn_social_network_democracy.md"
-source_conversation: "ChatGPT — 2026-07-06"
-related_issue: "JeanHuguesRobert/cogentia#45"
+title: Prompt — Agents JHN pour démocratisation démocratique des réseaux sociaux
+author: Jean Hugues Noël Robert, assisté par ChatGPT
+status: prompt opératoire — version initiale sécurisée
+version: '0.1'
+date: '2026-07-06'
+license: CC BY-SA 4.0
+language: fr
+repository: cogentia
+canonical_path: cogentia/prompts/agents_jhn_social_network_democracy.md
+source_conversation: ChatGPT — 2026-07-06
+related_issue: JeanHuguesRobert/cogentia#45
 related_research:
-  - "cogentia/research/agents_jhn_democratisation_reseaux_sociaux.md"
-  - "barons-Mariani/research/democratisation_democratique_reseaux_sociaux.md"
+  - cogentia/research/agents_jhn_democratisation_reseaux_sociaux.md
+  - barons-Mariani/research/democratisation_democratique_reseaux_sociaux.md
+provenance:
+  origin_type: unknown
+  origin_repository: unknown
+  origin_ref: unknown
+  origin_date: unknown
+  derived_from: []
+review:
+  status: unreviewed
+  reviewed_by: []
+update_policy: UP-DEFAULT-REVIEWED
 ---
 
 # Prompt — Agents JHN pour démocratisation démocratique des réseaux sociaux

@@ -1,8 +1,8 @@
 ---
 id: export.example_social.2026-06-11
 provider: example_social
-export_date: 2026-06-11
-received_at: 2026-06-11
+export_date: 2026-06-11T00:00:00.000Z
+received_at: 2026-06-11T00:00:00.000Z
 source_directory: personal_data/sources/example_social/2026-06-11/raw/
 markdown_directory: personal_data/markdown/example_social/2026-06-11/
 status: raw
@@ -14,14 +14,26 @@ checksum_manifest: personal_data/sources/example_social/2026-06-11/SHA256SUMS.tx
 processed_by: null
 processed_at: null
 verification_status: pending
-document_role: "example"
-document_kind: "example"
-visibility: "public"
-lifecycle_state: "active"
-classification_source: "cogentia.js"
-classification_version: "1"
-classification_rule: "example"
-classification_confidence: "strong"
+document_role: example
+document_kind: example
+visibility: public
+lifecycle_state: active
+classification_source: cogentia.js
+classification_version: '1'
+classification_rule: example
+classification_confidence: strong
+author: unknown
+date: unknown
+provenance:
+  origin_type: unknown
+  origin_repository: unknown
+  origin_ref: unknown
+  origin_date: unknown
+  derived_from: []
+review:
+  status: unreviewed
+  reviewed_by: []
+update_policy: UP-DEFAULT-REVIEWED
 ---
 
 # Fictitious Data Export — Example Social — 2026-06-11

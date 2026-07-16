@@ -1,51 +1,61 @@
 ---
-title: "Pipeline Conversation vers Corpus (Conversia)"
-subtitle: "Transformation progressive des conversations en corpus vivant, modèles, agents, mandats et traces"
-author: "Jean Hugues Noël Robert (conceptuel, pour intégration dans le corpus)"
-status: "document source — méta-pipeline — conceptuel — conclusions provisoires"
-version: "0.4"
-date: "2026-06-12"
-license: "CC BY-SA 4.0"
-language: "fr"
-repository: "cogentia"
-canonical_path: "cogentia/research/conversation_to_corpus_pipeline.md"
+title: Pipeline Conversation vers Corpus (Conversia)
+subtitle: Transformation progressive des conversations en corpus vivant, modèles, agents, mandats et traces
+author: Jean Hugues Noël Robert (conceptuel, pour intégration dans le corpus)
+status: document source — méta-pipeline — conceptuel — conclusions provisoires
+version: '0.4'
+date: '2026-06-12'
+license: CC BY-SA 4.0
+language: fr
+repository: cogentia
+canonical_path: cogentia/research/conversation_to_corpus_pipeline.md
 corpus_hierarchy:
-  role: "document méta sur Conversia / Cellula"
+  role: document méta sur Conversia / Cellula
   level: 1
-  scope: "conversation vers corpus, décisions candidates, mandats, traces, retours d’expérience"
+  scope: conversation vers corpus, décisions candidates, mandats, traces, retours d’expérience
   delegates_crisis_doctrine_to:
-    - "barons-Mariani/research/democratie_crise_mandats_express.md"
+    - barons-Mariani/research/democratie_crise_mandats_express.md
   synthetic_companion:
-    - "cogentia/research/mandated_fast_democracy.md"
+    - cogentia/research/mandated_fast_democracy.md
 related_prompts:
-  - "cogentia/prompts/document_conversation_frame.md"
-  - "cogentia/prompts/redactor.md"
-  - "cogentia/prompts/reviewer.md"
-  - "cogentia/prompts/pipeline.md"
+  - cogentia/prompts/document_conversation_frame.md
+  - cogentia/prompts/redactor.md
+  - cogentia/prompts/reviewer.md
+  - cogentia/prompts/pipeline.md
 related_research:
-  - "barons-Mariani/research/democratie_crise_mandats_express.md"
-  - "cogentia/research/mandated_fast_democracy.md"
-  - "cogentia/research/pipeline.md"
-  - "cogentia/research/derived_products.md"
-  - "barons-Mariani/research/second_method.md"
-  - "barons-Mariani/research/methode_terrains_feconds.md"
-  - "barons-Mariani/research/traceabilite_des_actes.md"
+  - barons-Mariani/research/democratie_crise_mandats_express.md
+  - cogentia/research/mandated_fast_democracy.md
+  - cogentia/research/pipeline.md
+  - cogentia/research/derived_products.md
+  - barons-Mariani/research/second_method.md
+  - barons-Mariani/research/methode_terrains_feconds.md
+  - barons-Mariani/research/traceabilite_des_actes.md
 continuations:
-  - "barons-Mariani/research/democratie_crise_mandats_express.md"
-  - "inseme/docs/concepts/conversia.md"
-  - "inseme/docs/concepts/cellula.md"
-  - "inseme/docs/mvp/conversia_cellula_mvp.md"
-  - "inseme/docs/architecture/cellula_data_model.md"
-  - "inseme/docs/architecture/cellula_markdown_export.md"
-  - "cogentia/research/conversia_agent.md"
-document_role: "source"
-document_kind: "concept-note"
-visibility: "public"
-lifecycle_state: "working"
-classification_source: "cogentia.js"
-classification_version: "1"
-classification_rule: "concept-note"
-classification_confidence: "medium"
+  - barons-Mariani/research/democratie_crise_mandats_express.md
+  - inseme/docs/concepts/conversia.md
+  - inseme/docs/concepts/cellula.md
+  - inseme/docs/mvp/conversia_cellula_mvp.md
+  - inseme/docs/architecture/cellula_data_model.md
+  - inseme/docs/architecture/cellula_markdown_export.md
+  - cogentia/research/conversia_agent.md
+document_role: source
+document_kind: concept-note
+visibility: public
+lifecycle_state: working
+classification_source: cogentia.js
+classification_version: '1'
+classification_rule: concept-note
+classification_confidence: medium
+provenance:
+  origin_type: unknown
+  origin_repository: unknown
+  origin_ref: unknown
+  origin_date: unknown
+  derived_from: []
+review:
+  status: unreviewed
+  reviewed_by: []
+update_policy: UP-DEFAULT-REVIEWED
 ---
 # Pipeline Conversation vers Corpus (Conversia)
 

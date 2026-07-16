@@ -1,6 +1,6 @@
 ---
-title: "Snapshot — Deux mois de transformation du corpus en infrastructure de délégation contrôlée"
-date: 2026-07-04
+title: Snapshot — Deux mois de transformation du corpus en infrastructure de délégation contrôlée
+date: 2026-07-04T00:00:00.000Z
 status: snapshot
 scope: github-activity-60d
 corpus_area: digital-twin, cogentia, controlled-delegation, senatorial-2026
@@ -9,6 +9,17 @@ sources:
   - analyse_qualitative_github_60j.md
   - assistant_github_review_2026-07-04
 checkpoint_policy: source-derived-distinction
+author: unknown
+provenance:
+  origin_type: unknown
+  origin_repository: unknown
+  origin_ref: unknown
+  origin_date: unknown
+  derived_from: []
+review:
+  status: unreviewed
+  reviewed_by: []
+update_policy: UP-DEFAULT-REVIEWED
 ---
 
 # Snapshot — Deux mois de transformation du corpus en infrastructure de délégation contrôlée

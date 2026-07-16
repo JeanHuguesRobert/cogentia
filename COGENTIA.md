@@ -1,24 +1,34 @@
 ---
-title: "Cogentia"
-description: "Knowledge production under AI conditions, in five distinctive moves"
+title: Cogentia
+description: Knowledge production under AI conditions, in five distinctive moves
 layout: default
 nav_order: 0
-last_modified_at: 2026-07-13
-author: "Jean Hugues Noël Robert, baron Mariani"
-affiliation: "Institut Mariani / C.O.R.S.I.C.A., 1 cours Paoli, F-20250 Corte, Corsica"
+last_modified_at: 2026-07-13T00:00:00.000Z
+author: Jean Hugues Noël Robert, baron Mariani
+affiliation: Institut Mariani / C.O.R.S.I.C.A., 1 cours Paoli, F-20250 Corte, Corsica
 license: CC BY-SA 4.0
 canonical_url: https://github.com/JeanHuguesRobert/cogentia/blob/main/COGENTIA.md
-last_stamped_at: 2026-07-13
-date: "2026-05-13"
-status: "published identity document — v2 CLI consolidation"
-document_role: "source"
-document_kind: "identity-document"
-visibility: "public"
-lifecycle_state: "stable"
-classification_source: "cogentia.js"
-classification_version: "1"
-classification_rule: "identity-document"
-classification_confidence: "strong"
+last_stamped_at: 2026-07-13T00:00:00.000Z
+date: '2026-05-13'
+status: published identity document — v2 CLI consolidation
+document_role: source
+document_kind: identity-document
+visibility: public
+lifecycle_state: stable
+classification_source: cogentia.js
+classification_version: '1'
+classification_rule: identity-document
+classification_confidence: strong
+provenance:
+  origin_type: unknown
+  origin_repository: unknown
+  origin_ref: unknown
+  origin_date: unknown
+  derived_from: []
+review:
+  status: unreviewed
+  reviewed_by: []
+update_policy: UP-DEFAULT-REVIEWED
 ---
 
 # Cogentia

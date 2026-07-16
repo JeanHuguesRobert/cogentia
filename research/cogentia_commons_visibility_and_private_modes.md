@@ -1,14 +1,14 @@
 ---
-title: "Cogentia Commons — Public by Default, Private by Exception"
-subtitle: "Visibility modes, private communities, patent-oriented exploration, and commons financing"
-version: "0.1"
-status: "working-paper — source document"
-date: "2026-06-09"
-author: "Jean Hugues Noël Robert"
-repository: "JeanHuguesRobert/cogentia"
-intended_path: "research/cogentia_commons_visibility_and_private_modes.md"
-license: "CC BY-SA 4.0"
-language: "en"
+title: Cogentia Commons — Public by Default, Private by Exception
+subtitle: Visibility modes, private communities, patent-oriented exploration, and commons financing
+version: '0.1'
+status: working-paper — source document
+date: '2026-06-09'
+author: Jean Hugues Noël Robert
+repository: JeanHuguesRobert/cogentia
+intended_path: research/cogentia_commons_visibility_and_private_modes.md
+license: CC BY-SA 4.0
+language: en
 tags:
   - cogentia
   - cogentia-commons
@@ -19,29 +19,39 @@ tags:
   - anti-capture
   - pipeline
 related_documents:
-  - "cogentia/research/pipeline.md"
-  - "cogentia/research/cogentia_commons_mvp_spec.md"
-  - "cogentia/research/Cogentia_Commons_Working_Paper.md"
-  - "cogentia/research/cogentia_commons_living_corpus.md"
-  - "cogentia/research/persistence_backends.md"
-  - "cogentia/prompts/document_conversation_frame.md"
-  - "cogentia/prompts/redactor.md"
-  - "cogentia/prompts/reviewer.md"
-  - "cogentia/prompts/cognitive_packet.md"
-  - "inseme/AGENTS.md"
-  - "JeanHuguesRobert/registre-mariani"
-issue: "cogentia#34"
+  - cogentia/research/pipeline.md
+  - cogentia/research/cogentia_commons_mvp_spec.md
+  - cogentia/research/Cogentia_Commons_Working_Paper.md
+  - cogentia/research/cogentia_commons_living_corpus.md
+  - cogentia/research/persistence_backends.md
+  - cogentia/prompts/document_conversation_frame.md
+  - cogentia/prompts/redactor.md
+  - cogentia/prompts/reviewer.md
+  - cogentia/prompts/cognitive_packet.md
+  - inseme/AGENTS.md
+  - JeanHuguesRobert/registre-mariani
+issue: cogentia#34
 ai_assisted_by:
-  - "ChatGPT"
+  - ChatGPT
 human_validation_required: true
-document_role: "source"
-document_kind: "research-paper"
-visibility: "public"
-lifecycle_state: "working"
-classification_source: "cogentia.js"
-classification_version: "1"
-classification_rule: "research-paper"
-classification_confidence: "medium"
+document_role: source
+document_kind: research-paper
+visibility: public
+lifecycle_state: working
+classification_source: cogentia.js
+classification_version: '1'
+classification_rule: research-paper
+classification_confidence: medium
+provenance:
+  origin_type: unknown
+  origin_repository: unknown
+  origin_ref: unknown
+  origin_date: unknown
+  derived_from: []
+review:
+  status: unreviewed
+  reviewed_by: []
+update_policy: UP-DEFAULT-REVIEWED
 ---
 
 # Cogentia Commons — Public by Default, Private by Exception

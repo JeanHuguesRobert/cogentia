@@ -1,34 +1,35 @@
 ---
-author: "Jean Hugues Noël Robert, baron Mariani"
-affiliation: "Institut Mariani / C.O.R.S.I.C.A., 1 cours Paoli, F-20250 Corte, Corsica"
-license: "CC BY-SA 4.0"
-language: "en"
-title: "Frontmatter Migration — v0.1"
-date: "2026-05-27"
-last_modified_at: "2026-07-16"
-status: "working-paper — operational migration note aligned with current tooling"
+author: Jean Hugues Noël Robert, baron Mariani
+affiliation: Institut Mariani / C.O.R.S.I.C.A., 1 cours Paoli, F-20250 Corte, Corsica
+license: CC BY-SA 4.0
+language: en
+title: Frontmatter Migration — v0.1
+date: '2026-05-27'
+last_modified_at: '2026-07-16'
+status: working-paper — operational migration note aligned with current tooling
 canonical_url: https://github.com/JeanHuguesRobert/cogentia/blob/main/docs/frontmatter-migration-v0.1.md
-last_stamped_at: 2026-06-01
+last_stamped_at: 2026-06-01T00:00:00.000Z
 ai_assisted_by:
-  - "GPT-5.6 Thinking (English translation + operational alignment)"
-document_role: "operational"
-document_kind: "documentation"
-visibility: "public"
-lifecycle_state: "working"
-classification_source: "cogentia.js"
-classification_version: "1"
-classification_rule: "documentation"
-classification_confidence: "medium"
+  - GPT-5.6 Thinking (English translation + operational alignment)
+document_role: operational
+document_kind: documentation
+visibility: public
+lifecycle_state: working
+classification_source: cogentia.js
+classification_version: '1'
+classification_rule: documentation
+classification_confidence: medium
 provenance:
-  origin_type: "repository"
-  origin_repository: "JeanHuguesRobert/cogentia"
-  origin_ref: "unknown"
-  origin_date: "2026-05-27"
+  origin_type: repository
+  origin_repository: JeanHuguesRobert/cogentia
+  origin_ref: unknown
+  origin_date: '2026-05-27'
   derived_from:
-    - "cogentia/docs/frontmatter-migration-v0.1.md (French source version)"
+    - cogentia/docs/frontmatter-migration-v0.1.md (French source version)
 review:
-  status: "unreviewed"
+  status: unreviewed
   reviewed_by: []
+update_policy: UP-DEFAULT-REVIEWED
 ---
 
 # Frontmatter Migration — v0.1

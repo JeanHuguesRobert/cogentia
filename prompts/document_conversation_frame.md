@@ -1,28 +1,39 @@
 ---
-title: "Document Production Conversation Frame Prompt Contract"
-subtitle: "Framing a serious conversation intended to produce, revise, or stabilize a document"
-author: "Jean Hugues Noël Robert"
-status: "prompt-contract — revised"
-version: "0.2"
-license: "CC BY-SA 4.0"
-language: "en"
-canonical_path: "cogentia/prompts/document_conversation_frame.md"
+title: Document Production Conversation Frame Prompt Contract
+subtitle: Framing a serious conversation intended to produce, revise, or stabilize a document
+author: Jean Hugues Noël Robert
+status: prompt-contract — revised
+version: '0.2'
+license: CC BY-SA 4.0
+language: en
+canonical_path: cogentia/prompts/document_conversation_frame.md
 related_prompts:
-  - "cogentia/prompts/reviewer.md"
-  - "cogentia/prompts/redactor.md"
-  - "cogentia/prompts/cognitive_packet.md"
-  - "cogentia/prompts/conversation_closure.md"
+  - cogentia/prompts/reviewer.md
+  - cogentia/prompts/redactor.md
+  - cogentia/prompts/cognitive_packet.md
+  - cogentia/prompts/conversation_closure.md
 related_research:
-  - "cogentia/research/pipeline.md"
-  - "cogentia/research/derived_products.md"
-  - "cogentia/research/cognitive_packets.md"
-  - "barons-Mariani/research/second_method.md"
+  - cogentia/research/pipeline.md
+  - cogentia/research/derived_products.md
+  - cogentia/research/cognitive_packets.md
+  - barons-Mariani/research/second_method.md
 agent_neutral: true
 human_validation_required: true
-last_stamped_at: 2026-06-06
+last_stamped_at: 2026-06-06T00:00:00.000Z
 changelog:
-  - "v0.1 (2026-06-05) — seed contract for structured document-production conversations."
-  - "v0.2 (2026-06-06) — added standard document header requirements, clickable-reference rule outside frontmatter, and update-method link requirements."
+  - v0.1 (2026-06-05) — seed contract for structured document-production conversations.
+  - v0.2 (2026-06-06) — added standard document header requirements, clickable-reference rule outside frontmatter, and update-method link requirements.
+date: unknown
+provenance:
+  origin_type: unknown
+  origin_repository: unknown
+  origin_ref: unknown
+  origin_date: unknown
+  derived_from: []
+review:
+  status: unreviewed
+  reviewed_by: []
+update_policy: UP-DEFAULT-REVIEWED
 ---
 
 # Document Production Conversation Frame Prompt Contract

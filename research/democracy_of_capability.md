@@ -1,25 +1,25 @@
 ---
-title: "Démocratie de capacité"
-subtitle: "Publics capables, démocratie ouverte et IA sous mandat"
-version: "0.1"
-status: "draft"
-date: "2026-06-12"
-author: "Jean Hugues Robert"
-repository: "cogentia"
-path: "research/democracy_of_capability.md"
-language: "fr"
-purpose: "Document-pont destiné à ouvrir une conversation entre les travaux de Barbara Stiegler, Hélène Landemore et l'hypothèse d'une démocratie assistée par ordinateur, sans gouvernement algorithmique."
+title: Démocratie de capacité
+subtitle: Publics capables, démocratie ouverte et IA sous mandat
+version: '0.1'
+status: draft
+date: '2026-06-12'
+author: Jean Hugues Robert
+repository: cogentia
+path: research/democracy_of_capability.md
+language: fr
+purpose: Document-pont destiné à ouvrir une conversation entre les travaux de Barbara Stiegler, Hélène Landemore et l'hypothèse d'une démocratie assistée par ordinateur, sans gouvernement algorithmique.
 methodology:
-  source_type: "document source"
+  source_type: document source
   derivative_products:
-    - "courrier court à Barbara Stiegler et Hélène Landemore"
-    - "note de convergence"
-    - "éventuel manifeste ultérieur"
-  epistemic_status: "hypothèse structurée"
+    - courrier court à Barbara Stiegler et Hélène Landemore
+    - note de convergence
+    - éventuel manifeste ultérieur
+  epistemic_status: hypothèse structurée
   caution:
-    - "ne pas confondre IA civique et gouvernement algorithmique"
-    - "ne pas présupposer l'accord des autrices citées"
-    - "présenter Cogentia comme outil d'enquête et de capacité, non comme doctrine imposée"
+    - ne pas confondre IA civique et gouvernement algorithmique
+    - ne pas présupposer l'accord des autrices citées
+    - présenter Cogentia comme outil d'enquête et de capacité, non comme doctrine imposée
 tags:
   - democracy
   - political-capacity
@@ -30,14 +30,24 @@ tags:
   - stiegler
   - cogentia
   - ai-under-mandate
-document_role: "source"
-document_kind: "research-paper"
-visibility: "public"
-lifecycle_state: "working"
-classification_source: "cogentia.js"
-classification_version: "1"
-classification_rule: "research-paper"
-classification_confidence: "medium"
+document_role: source
+document_kind: research-paper
+visibility: public
+lifecycle_state: working
+classification_source: cogentia.js
+classification_version: '1'
+classification_rule: research-paper
+classification_confidence: medium
+provenance:
+  origin_type: unknown
+  origin_repository: unknown
+  origin_ref: unknown
+  origin_date: unknown
+  derived_from: []
+review:
+  status: unreviewed
+  reviewed_by: []
+update_policy: UP-DEFAULT-REVIEWED
 ---
 
 # Démocratie de capacité

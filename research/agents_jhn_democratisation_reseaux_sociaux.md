@@ -1,28 +1,38 @@
 ---
-title: "Agents JHN et démocratisation démocratique des réseaux sociaux"
-subtitle: "Doctrine d’agents auxiliaires pour audit, traçabilité, recours et interopérabilité"
-author: "Jean Hugues Noël Robert, assisté par ChatGPT"
-status: "document source — agents — conclusions provisoires"
-version: "0.1"
-date: "2026-07-06"
-license: "CC BY-SA 4.0"
-language: "fr"
-repository: "cogentia"
-canonical_path: "cogentia/research/agents_jhn_democratisation_reseaux_sociaux.md"
-source_conversation: "ChatGPT — 2026-07-06"
-related_issue: "JeanHuguesRobert/cogentia#45"
+title: Agents JHN et démocratisation démocratique des réseaux sociaux
+subtitle: Doctrine d’agents auxiliaires pour audit, traçabilité, recours et interopérabilité
+author: Jean Hugues Noël Robert, assisté par ChatGPT
+status: document source — agents — conclusions provisoires
+version: '0.1'
+date: '2026-07-06'
+license: CC BY-SA 4.0
+language: fr
+repository: cogentia
+canonical_path: cogentia/research/agents_jhn_democratisation_reseaux_sociaux.md
+source_conversation: ChatGPT — 2026-07-06
+related_issue: JeanHuguesRobert/cogentia#45
 related_research:
-  - "cogentia/research/conversation_to_corpus_pipeline.md"
-  - "cogentia/research/mandated_fast_democracy.md"
-  - "cogentia/research/democracy_of_capability.md"
-  - "barons-Mariani/research/democratisation_democratique_reseaux_sociaux.md"
-  - "barons-Mariani/research/never_complain_never_explain_accountability.md"
+  - cogentia/research/conversation_to_corpus_pipeline.md
+  - cogentia/research/mandated_fast_democracy.md
+  - cogentia/research/democracy_of_capability.md
+  - barons-Mariani/research/democratisation_democratique_reseaux_sociaux.md
+  - barons-Mariani/research/never_complain_never_explain_accountability.md
 related_prompts:
-  - "cogentia/prompts/agents_jhn_social_network_democracy.md"
-document_role: "source"
-document_kind: "agent-doctrine"
-visibility: "public"
-lifecycle_state: "working"
+  - cogentia/prompts/agents_jhn_social_network_democracy.md
+document_role: source
+document_kind: agent-doctrine
+visibility: public
+lifecycle_state: working
+provenance:
+  origin_type: unknown
+  origin_repository: unknown
+  origin_ref: unknown
+  origin_date: unknown
+  derived_from: []
+review:
+  status: unreviewed
+  reviewed_by: []
+update_policy: UP-DEFAULT-REVIEWED
 ---
 
 # Agents JHN et démocratisation démocratique des réseaux sociaux

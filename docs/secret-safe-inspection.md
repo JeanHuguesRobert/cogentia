@@ -1,12 +1,23 @@
 ---
-title: "Secret-safe operational inspection"
-description: "A general rule for diagnosing systems without reading, printing or serializing secret values."
-date: 2026-07-12
+title: Secret-safe operational inspection
+description: A general rule for diagnosing systems without reading, printing or serializing secret values.
+date: 2026-07-12T00:00:00.000Z
 license: MIT
 document_role: operational
 document_kind: security-method
 visibility: public
 lifecycle_state: active
+author: unknown
+provenance:
+  origin_type: unknown
+  origin_repository: unknown
+  origin_ref: unknown
+  origin_date: unknown
+  derived_from: []
+review:
+  status: unreviewed
+  reviewed_by: []
+update_policy: UP-DEFAULT-REVIEWED
 ---
 
 # Secret-safe operational inspection

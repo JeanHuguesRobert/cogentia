@@ -1,8 +1,20 @@
 ---
-title: "Deploy and verify POST /ops/route/action (Fracta action plane)"
+title: Deploy and verify POST /ops/route/action (Fracta action plane)
 document_role: operational
 status: working-paper
 visibility: public
+author: unknown
+date: unknown
+provenance:
+  origin_type: unknown
+  origin_repository: unknown
+  origin_ref: unknown
+  origin_date: unknown
+  derived_from: []
+review:
+  status: unreviewed
+  reviewed_by: []
+update_policy: UP-DEFAULT-REVIEWED
 ---
 
 # Deploy and verify `POST /ops/route/action` (Fracta action plane)

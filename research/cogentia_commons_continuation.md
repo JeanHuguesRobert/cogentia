@@ -1,25 +1,35 @@
 ---
-title: "Cogentia Commons — Session Continuation Snapshot"
-description: "Handoff document for continuing the Cogentia Commons MVP specification work in another conversation. Designed to be readable by any AI agent or human picking up where we left off."
+title: Cogentia Commons — Session Continuation Snapshot
+description: Handoff document for continuing the Cogentia Commons MVP specification work in another conversation. Designed to be readable by any AI agent or human picking up where we left off.
 layout: default
 nav_order: 11
-version: "snapshot-2026-05-13"
-last_modified_at: 2026-05-13
-author: "Jean Hugues Noël Robert, baron Mariani (with AI co-drafting)"
-affiliation: "Institut Mariani — C.O.R.S.I.C.A., 1 cours Paoli, F-20250 Corte, Corsica"
-license: "CC BY-SA 4.0"
-status: "working-paper"
+version: snapshot-2026-05-13
+last_modified_at: 2026-05-13T00:00:00.000Z
+author: Jean Hugues Noël Robert, baron Mariani (with AI co-drafting)
+affiliation: Institut Mariani — C.O.R.S.I.C.A., 1 cours Paoli, F-20250 Corte, Corsica
+license: CC BY-SA 4.0
+status: working-paper
 canonical_url: https://github.com/JeanHuguesRobert/cogentia/blob/main/research/cogentia_commons_continuation.md
-last_stamped_at: 2026-06-01
-date: "2026-05-13"
-document_role: "source"
-document_kind: "research-paper"
-visibility: "public"
-lifecycle_state: "working"
-classification_source: "cogentia.js"
-classification_version: "1"
-classification_rule: "research-paper"
-classification_confidence: "medium"
+last_stamped_at: 2026-06-01T00:00:00.000Z
+date: '2026-05-13'
+document_role: source
+document_kind: research-paper
+visibility: public
+lifecycle_state: working
+classification_source: cogentia.js
+classification_version: '1'
+classification_rule: research-paper
+classification_confidence: medium
+provenance:
+  origin_type: unknown
+  origin_repository: unknown
+  origin_ref: unknown
+  origin_date: unknown
+  derived_from: []
+review:
+  status: unreviewed
+  reviewed_by: []
+update_policy: UP-DEFAULT-REVIEWED
 ---
 
 # Cogentia Commons — Session Continuation Snapshot

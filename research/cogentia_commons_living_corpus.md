@@ -1,39 +1,49 @@
 ---
-title: "The Cogentia Commons Living Corpus"
-subtitle: "Expected behavior of a multi-repository, agent-readable, versioned corpus"
-description: "First consolidation draft for the Living Corpus: the CLI substrate, navigation model, continuation model, source/derived distinction, exploration paths, and future Web interface of Cogentia Commons."
-author: "Jean Hugues Noël Robert, baron Mariani"
-affiliation: "Institut Mariani / C.O.R.S.I.C.A., 1 cours Paoli, F-20250 Corte, Corsica"
-date: "2026-06-09"
-status: "working-paper — first draft for stabilization"
-version: "0.1"
-license: "CC BY-SA 4.0"
-language: "en"
+title: The Cogentia Commons Living Corpus
+subtitle: Expected behavior of a multi-repository, agent-readable, versioned corpus
+description: 'First consolidation draft for the Living Corpus: the CLI substrate, navigation model, continuation model, source/derived distinction, exploration paths, and future Web interface of Cogentia Commons.'
+author: Jean Hugues Noël Robert, baron Mariani
+affiliation: Institut Mariani / C.O.R.S.I.C.A., 1 cours Paoli, F-20250 Corte, Corsica
+date: '2026-06-09'
+status: working-paper — first draft for stabilization
+version: '0.1'
+license: CC BY-SA 4.0
+language: en
 canonical_url: https://github.com/JeanHuguesRobert/cogentia/blob/main/research/cogentia_commons_living_corpus.md
-document_role: "source"
+document_role: source
 generated_by:
-  - "OpenAI Codex — first drafting and consolidation from local corpus sources and user brief"
-human_arbitration_by: "pending"
+  - OpenAI Codex — first drafting and consolidation from local corpus sources and user brief
+human_arbitration_by: pending
 related_documents:
-  - "COGENTIA.md"
-  - "research/pipeline.md"
-  - "research/derived_products.md"
-  - "research/agent_resumable_cli.md"
-  - "research/cognitive_packets.md"
-  - "research/cognitive_packet_switching.md"
-  - "research/cogentia_commons_method_packets.md"
-  - "research/ideas_to_explore_as_issues.md"
-  - "research/self_contained_documents.md"
-  - "docs/agent_context_server.md"
-  - "docs/knowledge_mesh.md"
-  - "barons-Mariani/research/second_method.md"
-document_kind: "research-paper"
-visibility: "public"
-lifecycle_state: "working"
-classification_source: "cogentia.js"
-classification_version: "1"
-classification_rule: "research-paper"
-classification_confidence: "medium"
+  - COGENTIA.md
+  - research/pipeline.md
+  - research/derived_products.md
+  - research/agent_resumable_cli.md
+  - research/cognitive_packets.md
+  - research/cognitive_packet_switching.md
+  - research/cogentia_commons_method_packets.md
+  - research/ideas_to_explore_as_issues.md
+  - research/self_contained_documents.md
+  - docs/agent_context_server.md
+  - docs/knowledge_mesh.md
+  - barons-Mariani/research/second_method.md
+document_kind: research-paper
+visibility: public
+lifecycle_state: working
+classification_source: cogentia.js
+classification_version: '1'
+classification_rule: research-paper
+classification_confidence: medium
+provenance:
+  origin_type: unknown
+  origin_repository: unknown
+  origin_ref: unknown
+  origin_date: unknown
+  derived_from: []
+review:
+  status: unreviewed
+  reviewed_by: []
+update_policy: UP-DEFAULT-REVIEWED
 ---
 
 # The Cogentia Commons Living Corpus

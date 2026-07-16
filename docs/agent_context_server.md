@@ -1,23 +1,33 @@
 ---
-title: "Agent Navigation Guide (Context Server)"
-description: "Meta-prompt and guide for autonomous AI agents navigating the Cogentia corpus."
+title: Agent Navigation Guide (Context Server)
+description: Meta-prompt and guide for autonomous AI agents navigating the Cogentia corpus.
 layout: default
 nav_order: 3
 canonical_url: https://github.com/JeanHuguesRobert/cogentia/blob/main/docs/agent_context_server.md
-author: "Jean Hugues Noël Robert, baron Mariani"
-affiliation: "Institut Mariani / C.O.R.S.I.C.A., 1 cours Paoli, F-20250 Corte, Corsica"
+author: Jean Hugues Noël Robert, baron Mariani
+affiliation: Institut Mariani / C.O.R.S.I.C.A., 1 cours Paoli, F-20250 Corte, Corsica
 license: CC BY-SA 4.0
-last_stamped_at: 2026-07-13
-date: "2026-05-16"
-status: "draft — auto-filled (frontmatter cleanup)"
-document_role: "source"
-document_kind: "guide"
-visibility: "public"
-lifecycle_state: "working"
-classification_source: "cogentia.js"
-classification_version: "1"
-classification_rule: "guide"
-classification_confidence: "medium"
+last_stamped_at: 2026-07-13T00:00:00.000Z
+date: '2026-05-16'
+status: draft — auto-filled (frontmatter cleanup)
+document_role: source
+document_kind: guide
+visibility: public
+lifecycle_state: working
+classification_source: cogentia.js
+classification_version: '1'
+classification_rule: guide
+classification_confidence: medium
+provenance:
+  origin_type: unknown
+  origin_repository: unknown
+  origin_ref: unknown
+  origin_date: unknown
+  derived_from: []
+review:
+  status: unreviewed
+  reviewed_by: []
+update_policy: UP-DEFAULT-REVIEWED
 ---
 
 # Agent Navigation Guide (Context Server)

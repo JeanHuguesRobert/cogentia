@@ -1,16 +1,16 @@
 ---
-title: "Cognitive Programming"
-subtitle: "From Event-Driven Systems to Cognitive Packet Switching Networks"
-version: "0.1.1"
-status: "working-paper"
-date: "2026-06-02"
-author: "Jean Hugues Noël Robert, baron Mariani"
-affiliation: "Institut Mariani / C.O.R.S.I.C.A., 1 cours Paoli, F-20250 Corte, Corsica"
-repository: "JeanHuguesRobert/cogentia"
-intended_path: "research/cognitive_programming.md"
-issue: "JeanHuguesRobert/cogentia#26"
-license: "CC BY-SA 4.0"
-language: "en"
+title: Cognitive Programming
+subtitle: From Event-Driven Systems to Cognitive Packet Switching Networks
+version: 0.1.1
+status: working-paper
+date: '2026-06-02'
+author: Jean Hugues Noël Robert, baron Mariani
+affiliation: Institut Mariani / C.O.R.S.I.C.A., 1 cours Paoli, F-20250 Corte, Corsica
+repository: JeanHuguesRobert/cogentia
+intended_path: research/cognitive_programming.md
+issue: JeanHuguesRobert/cogentia#26
+license: CC BY-SA 4.0
+language: en
 tags:
   - cogentia
   - cognitive-programming
@@ -25,26 +25,36 @@ tags:
   - map-and-territory
   - operational-cognition
 related_documents:
-  - "cogentia/research/cognitive_packets.md"
-  - "cogentia/research/cognitive_packet_switching.md"
-  - "cogentia/research/pipeline.md"
-  - "cogentia/research/agent_resumable_cli.md"
-  - "inseme/packages/cop-core/README.md"
-  - "inseme/packages/cop-core/Architecture.md"
-  - "FractaVolta/research/fractanet.md"
-  - "FractaVolta/research/generalized_packet_networks.md"
-  - "Inox/README.md"
+  - cogentia/research/cognitive_packets.md
+  - cogentia/research/cognitive_packet_switching.md
+  - cogentia/research/pipeline.md
+  - cogentia/research/agent_resumable_cli.md
+  - inseme/packages/cop-core/README.md
+  - inseme/packages/cop-core/Architecture.md
+  - FractaVolta/research/fractanet.md
+  - FractaVolta/research/generalized_packet_networks.md
+  - Inox/README.md
 changelog:
-  - "v0.1 — initial source concept"
-  - "v0.1.1 — added references and neighboring-work section"
-document_role: "source"
-document_kind: "research-paper"
-visibility: "public"
-lifecycle_state: "working"
-classification_source: "cogentia.js"
-classification_version: "1"
-classification_rule: "research-paper"
-classification_confidence: "medium"
+  - v0.1 — initial source concept
+  - v0.1.1 — added references and neighboring-work section
+document_role: source
+document_kind: research-paper
+visibility: public
+lifecycle_state: working
+classification_source: cogentia.js
+classification_version: '1'
+classification_rule: research-paper
+classification_confidence: medium
+provenance:
+  origin_type: unknown
+  origin_repository: unknown
+  origin_ref: unknown
+  origin_date: unknown
+  derived_from: []
+review:
+  status: unreviewed
+  reviewed_by: []
+update_policy: UP-DEFAULT-REVIEWED
 ---
 
 # Cognitive Programming

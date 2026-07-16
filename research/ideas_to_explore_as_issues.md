@@ -1,23 +1,34 @@
 ---
-title: "Ideas to Explore as GitHub Issues"
-subtitle: "A lightweight memory category for open-ended explorations"
-author: "Jean Hugues Noël Robert"
-affiliation: "Institut Mariani / C.O.R.S.I.C.A."
-status: "working-note"
-version: "0.4"
-license: "CC BY-SA 4.0"
-canonical_repo: "JeanHuguesRobert/cogentia"
-canonical_path: "research/ideas_to_explore_as_issues.md"
+title: Ideas to Explore as GitHub Issues
+subtitle: A lightweight memory category for open-ended explorations
+author: Jean Hugues Noël Robert
+affiliation: Institut Mariani / C.O.R.S.I.C.A.
+status: working-note
+version: '0.4'
+license: CC BY-SA 4.0
+canonical_repo: JeanHuguesRobert/cogentia
+canonical_path: research/ideas_to_explore_as_issues.md
 canonical_url: https://github.com/JeanHuguesRobert/cogentia/blob/main/research/ideas_to_explore_as_issues.md
-last_stamped_at: 2026-06-01
-document_role: "source"
-document_kind: "working-note"
-visibility: "public"
-lifecycle_state: "working"
-classification_source: "cogentia.js"
-classification_version: "1"
-classification_rule: "working-note"
-classification_confidence: "medium"
+last_stamped_at: 2026-06-01T00:00:00.000Z
+document_role: source
+document_kind: working-note
+visibility: public
+lifecycle_state: working
+classification_source: cogentia.js
+classification_version: '1'
+classification_rule: working-note
+classification_confidence: medium
+date: unknown
+provenance:
+  origin_type: unknown
+  origin_repository: unknown
+  origin_ref: unknown
+  origin_date: unknown
+  derived_from: []
+review:
+  status: unreviewed
+  reviewed_by: []
+update_policy: UP-DEFAULT-REVIEWED
 ---
 
 # Ideas to Explore as GitHub Issues

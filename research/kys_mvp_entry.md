@@ -1,14 +1,14 @@
 ---
-title: "KYS Snapshot — MVP d’entrée"
-subtitle: "Rendre visible, contestable et portable la représentation produite par un agent"
-author: "Jean Hugues Noël Robert"
-status: "working"
-version: "0.1"
-date: "2026-07-13"
-repository: "cogentia"
-path: "research/kys_mvp_entry.md"
-type: "source_note"
-language: "fr"
+title: KYS Snapshot — MVP d’entrée
+subtitle: Rendre visible, contestable et portable la représentation produite par un agent
+author: Jean Hugues Noël Robert
+status: working
+version: '0.1'
+date: '2026-07-13'
+repository: cogentia
+path: research/kys_mvp_entry.md
+type: source_note
+language: fr
 tags:
   - KYS
   - KYS Snapshot
@@ -20,17 +20,27 @@ tags:
   - Mariani School of Autonomy
   - local-first
 related_documents:
-  - "research/Cogentia-and-Cogentigram.md"
-  - "research/cogentia_workflows.md"
-  - "research/cogentia-digital-twin.md"
-  - "research/kys-prompt.md"
+  - research/Cogentia-and-Cogentigram.md
+  - research/cogentia_workflows.md
+  - research/cogentia-digital-twin.md
+  - research/kys-prompt.md
 related_repositories:
-  - "acorsica/privai"
-  - "JeanHuguesRobert/barons-Mariani"
-document_role: "source"
-document_kind: "product-specification"
-visibility: "public"
-lifecycle_state: "working"
+  - acorsica/privai
+  - JeanHuguesRobert/barons-Mariani
+document_role: source
+document_kind: product-specification
+visibility: public
+lifecycle_state: working
+provenance:
+  origin_type: unknown
+  origin_repository: unknown
+  origin_ref: unknown
+  origin_date: unknown
+  derived_from: []
+review:
+  status: unreviewed
+  reviewed_by: []
+update_policy: UP-DEFAULT-REVIEWED
 ---
 
 # KYS Snapshot — MVP d’entrée

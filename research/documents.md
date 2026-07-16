@@ -1,6 +1,18 @@
 ---
-title: "Documents - All Tracked Repos"
-last_modified_at: 2026-06-24
+title: Documents - All Tracked Repos
+last_modified_at: 2026-06-24T00:00:00.000Z
+author: unknown
+date: unknown
+provenance:
+  origin_type: unknown
+  origin_repository: unknown
+  origin_ref: unknown
+  origin_date: unknown
+  derived_from: []
+review:
+  status: unreviewed
+  reviewed_by: []
+update_policy: UP-DEFAULT-REVIEWED
 ---
 
 # Documents - All Tracked Repos

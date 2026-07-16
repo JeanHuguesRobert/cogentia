@@ -1,6 +1,18 @@
 ---
 canonical_url: https://github.com/JeanHuguesRobert/cogentia/blob/main/AGENTS.md
-last_stamped_at: 2026-07-15
+last_stamped_at: 2026-07-15T00:00:00.000Z
+author: unknown
+date: unknown
+provenance:
+  origin_type: unknown
+  origin_repository: unknown
+  origin_ref: unknown
+  origin_date: unknown
+  derived_from: []
+review:
+  status: unreviewed
+  reviewed_by: []
+update_policy: UP-DEFAULT-REVIEWED
 ---
 # AGENTS.md — Cogentia methodology shortcut
 

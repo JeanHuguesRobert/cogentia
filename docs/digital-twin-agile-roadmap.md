@@ -1,16 +1,27 @@
 ---
-title: "Trustable Digital Twin Agile Roadmap"
-description: "Living roadmap for raising a trustable owner-facing digital twin through reversible, traceable capability increments."
+title: Trustable Digital Twin Agile Roadmap
+description: Living roadmap for raising a trustable owner-facing digital twin through reversible, traceable capability increments.
 layout: default
 nav_order: 7
-date: 2026-06-30
-last_modified_at: 2026-07-13
+date: 2026-06-30T00:00:00.000Z
+last_modified_at: 2026-07-13T00:00:00.000Z
 license: CC BY-SA 4.0
 canonical_url: https://github.com/JeanHuguesRobert/cogentia/blob/main/docs/digital-twin-agile-roadmap.md
-document_role: "operational"
-document_kind: "roadmap"
-visibility: "public"
-lifecycle_state: "active"
+document_role: operational
+document_kind: roadmap
+visibility: public
+lifecycle_state: active
+author: unknown
+provenance:
+  origin_type: unknown
+  origin_repository: unknown
+  origin_ref: unknown
+  origin_date: unknown
+  derived_from: []
+review:
+  status: unreviewed
+  reviewed_by: []
+update_policy: UP-DEFAULT-REVIEWED
 ---
 
 # Trustable Digital Twin Agile Roadmap

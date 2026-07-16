@@ -1,11 +1,23 @@
 ---
-title: "Cogentia and Magistral Boundary"
-created: 2026-06-28
-last_modified_at: 2026-06-28
+title: Cogentia and Magistral Boundary
+created: 2026-06-28T00:00:00.000Z
+last_modified_at: 2026-06-28T00:00:00.000Z
 role: operational
 visibility: public
 public_presence: full
 trace_level: standard
+author: unknown
+date: unknown
+provenance:
+  origin_type: unknown
+  origin_repository: unknown
+  origin_ref: unknown
+  origin_date: unknown
+  derived_from: []
+review:
+  status: unreviewed
+  reviewed_by: []
+update_policy: UP-DEFAULT-REVIEWED
 ---
 
 # Cogentia and Magistral Boundary

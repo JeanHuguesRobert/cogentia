@@ -1,24 +1,34 @@
 ---
-title: "Persistence Backends"
-subtitle: "Cadre minimum suffisant — git + GitHub est *une* infrastructure parmi d'autres"
-author: "Jean Hugues Noël Robert, baron Mariani"
-affiliation: "Institut Mariani / C.O.R.S.I.C.A., 1 cours Paoli, F-20250 Corte, Corsica"
-date: "2026-05-30"
-status: "working-note — trace d'antériorité, pas une roadmap v0.1"
-version: "0.1"
-license: "CC BY-SA 4.0"
+title: Persistence Backends
+subtitle: Cadre minimum suffisant — git + GitHub est *une* infrastructure parmi d'autres
+author: Jean Hugues Noël Robert, baron Mariani
+affiliation: Institut Mariani / C.O.R.S.I.C.A., 1 cours Paoli, F-20250 Corte, Corsica
+date: '2026-05-30'
+status: working-note — trace d'antériorité, pas une roadmap v0.1
+version: '0.1'
+license: CC BY-SA 4.0
 ai_assisted_by:
-  - "Claude — articulation, 2026-05-30"
+  - Claude — articulation, 2026-05-30
 canonical_url: https://github.com/JeanHuguesRobert/cogentia/blob/main/research/persistence_backends.md
-last_stamped_at: 2026-06-01
-document_role: "source"
-document_kind: "working-note"
-visibility: "public"
-lifecycle_state: "working"
-classification_source: "cogentia.js"
-classification_version: "1"
-classification_rule: "working-note"
-classification_confidence: "medium"
+last_stamped_at: 2026-06-01T00:00:00.000Z
+document_role: source
+document_kind: working-note
+visibility: public
+lifecycle_state: working
+classification_source: cogentia.js
+classification_version: '1'
+classification_rule: working-note
+classification_confidence: medium
+provenance:
+  origin_type: unknown
+  origin_repository: unknown
+  origin_ref: unknown
+  origin_date: unknown
+  derived_from: []
+review:
+  status: unreviewed
+  reviewed_by: []
+update_policy: UP-DEFAULT-REVIEWED
 ---
 
 # Persistence Backends — cadre minimum suffisant

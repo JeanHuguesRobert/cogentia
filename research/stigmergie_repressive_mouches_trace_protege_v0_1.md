@@ -1,24 +1,34 @@
 ---
-title: "La trace protège"
-subtitle: "Hypothèse d'une stigmergie répulsive chez les mouches"
-author: "Jean Hugues Noël Robert, baron Mariani"
-affiliation: "Institut Mariani / C.O.R.S.I.C.A., 1 cours Paoli, F-20250 Corte, Corsica"
-date: "2026-05-29"
-status: "draft — trace d'antériorité, hypothèse de stigmergie répulsive v0.1"
-version: "0.1"
-license: "CC BY-SA 4.0"
+title: La trace protège
+subtitle: Hypothèse d'une stigmergie répulsive chez les mouches
+author: Jean Hugues Noël Robert, baron Mariani
+affiliation: Institut Mariani / C.O.R.S.I.C.A., 1 cours Paoli, F-20250 Corte, Corsica
+date: '2026-05-29'
+status: draft — trace d'antériorité, hypothèse de stigmergie répulsive v0.1
+version: '0.1'
+license: CC BY-SA 4.0
 ai_assisted_by:
-  - "ChatGPT — drafting from 2026-05-29 conversation"
+  - ChatGPT — drafting from 2026-05-29 conversation
 canonical_url: https://github.com/JeanHuguesRobert/cogentia/blob/main/research/stigmergie_repressive_mouches_trace_protege_v0_1.md
-last_stamped_at: 2026-06-01
-document_role: "source"
-document_kind: "research-paper"
-visibility: "public"
-lifecycle_state: "working"
-classification_source: "cogentia.js"
-classification_version: "1"
-classification_rule: "research-paper"
-classification_confidence: "medium"
+last_stamped_at: 2026-06-01T00:00:00.000Z
+document_role: source
+document_kind: research-paper
+visibility: public
+lifecycle_state: working
+classification_source: cogentia.js
+classification_version: '1'
+classification_rule: research-paper
+classification_confidence: medium
+provenance:
+  origin_type: unknown
+  origin_repository: unknown
+  origin_ref: unknown
+  origin_date: unknown
+  derived_from: []
+review:
+  status: unreviewed
+  reviewed_by: []
+update_policy: UP-DEFAULT-REVIEWED
 ---
 # La trace protège
 

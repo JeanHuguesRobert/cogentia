@@ -1,9 +1,20 @@
 ---
 canonical_url: https://github.com/JeanHuguesRobert/cogentia/blob/main/prompts/continuation_user_prompt.md
-last_stamped_at: 2026-05-15
-title: "Cogentia Continuation User Prompt"
-date: "2026-05-14"
-status: "draft — auto-filled (frontmatter cleanup)"
+last_stamped_at: 2026-05-15T00:00:00.000Z
+title: Cogentia Continuation User Prompt
+date: '2026-05-14'
+status: draft — auto-filled (frontmatter cleanup)
+author: unknown
+provenance:
+  origin_type: unknown
+  origin_repository: unknown
+  origin_ref: unknown
+  origin_date: unknown
+  derived_from: []
+review:
+  status: unreviewed
+  reviewed_by: []
+update_policy: UP-DEFAULT-REVIEWED
 ---
 # Cogentia Continuation User Prompt
 

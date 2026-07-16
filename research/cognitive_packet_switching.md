@@ -1,14 +1,14 @@
 ---
-title: "Cognitive Packet Switching"
-subtitle: "A Protocol Layer for Routable Ideas, Continuations, and Agent Orchestration"
-version: "1.0"
-status: "published"
-date: "2026-06-01"
-author: "Jean Hugues Noël Robert, baron Mariani"
-affiliation: "Institut Mariani / C.O.R.S.I.C.A., 1 cours Paoli, F-20250 Corte, Corsica"
-license: "CC BY-SA 4.0"
-language: "en"
-intended_path: "research/cognitive_packet_switching.md"
+title: Cognitive Packet Switching
+subtitle: A Protocol Layer for Routable Ideas, Continuations, and Agent Orchestration
+version: '1.0'
+status: published
+date: '2026-06-01'
+author: Jean Hugues Noël Robert, baron Mariani
+affiliation: Institut Mariani / C.O.R.S.I.C.A., 1 cours Paoli, F-20250 Corte, Corsica
+license: CC BY-SA 4.0
+language: en
+intended_path: research/cognitive_packet_switching.md
 tags:
   - cogentia
   - cognitive-packets
@@ -24,44 +24,54 @@ tags:
   - cop
   - cognitive-orchestration-protocol
   - cogentia-commons
-changelog_policy: "omitted from published document; reconstruct from conversation or Git history if needed"
+changelog_policy: omitted from published document; reconstruct from conversation or Git history if needed
 last_reviewed_by:
-  - "Grok — v0.1 critique"
-  - "Grok — v0.2 critique"
+  - Grok — v0.1 critique
+  - Grok — v0.2 critique
 related_projects:
-  - "Cogentia"
-  - "Cogentia Commons"
-  - "Fractanet"
-  - "Generalized Packet Networks"
-  - "Cognitive Packets"
-  - "Agent-Resumable CLI"
-  - "Cogentia Pipeline"
-  - "COP — Cognitive Orchestration Protocol"
-  - "Ubikia"
+  - Cogentia
+  - Cogentia Commons
+  - Fractanet
+  - Generalized Packet Networks
+  - Cognitive Packets
+  - Agent-Resumable CLI
+  - Cogentia Pipeline
+  - COP — Cognitive Orchestration Protocol
+  - Ubikia
 derived_from:
-  - "FractaVolta/research/generalized_packet_networks.md"
-  - "cogentia/research/cognitive_packets.md"
-  - "cogentia/research/agent_resumable_cli.md"
-  - "cogentia/research/pipeline.md"
-  - "cogentia/COGENTIA.md"
-  - "inseme/research/COP_STATE_OF_PLAY.md"
-  - "inseme/packages/cop-core/README.md"
-  - "inseme/packages/cop-core/REACTIVE_COGNITIVE_EXTENSION.md"
+  - FractaVolta/research/generalized_packet_networks.md
+  - cogentia/research/cognitive_packets.md
+  - cogentia/research/agent_resumable_cli.md
+  - cogentia/research/pipeline.md
+  - cogentia/COGENTIA.md
+  - inseme/research/COP_STATE_OF_PLAY.md
+  - inseme/packages/cop-core/README.md
+  - inseme/packages/cop-core/REACTIVE_COGNITIVE_EXTENSION.md
 derived_products_planned:
-  - "TCP/IP for Ideas — Hacker News optimized post"
-  - "TCP/IP des idées — French public note"
-  - "Agent orchestration by cognitive packets — technical explainer"
+  - TCP/IP for Ideas — Hacker News optimized post
+  - TCP/IP des idées — French public note
+  - Agent orchestration by cognitive packets — technical explainer
 canonical_url: https://github.com/JeanHuguesRobert/cogentia/blob/main/research/cognitive_packet_switching.md
-last_stamped_at: 2026-06-01
-corpus_role: "source"
-document_role: "source"
-document_kind: "research-paper"
-visibility: "public"
-lifecycle_state: "stable"
-classification_source: "cogentia.js"
-classification_version: "1"
-classification_rule: "research-paper"
-classification_confidence: "medium"
+last_stamped_at: 2026-06-01T00:00:00.000Z
+corpus_role: source
+document_role: source
+document_kind: research-paper
+visibility: public
+lifecycle_state: stable
+classification_source: cogentia.js
+classification_version: '1'
+classification_rule: research-paper
+classification_confidence: medium
+provenance:
+  origin_type: unknown
+  origin_repository: unknown
+  origin_ref: unknown
+  origin_date: unknown
+  derived_from: []
+review:
+  status: unreviewed
+  reviewed_by: []
+update_policy: UP-DEFAULT-REVIEWED
 ---
 
 # Cognitive Packet Switching

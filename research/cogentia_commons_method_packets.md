@@ -1,19 +1,19 @@
 ---
-title: "Cogentia Commons"
-subtitle: "Method Packets, Continuations, and the Generative Corpus"
-description: "Working paper defining Cogentia Commons as an infrastructure for producing, transmitting, criticizing, and improving cognitive packets, method packets, and corpus-based continuations across humans, AI agents, tools, and repositories."
-author: "Jean Hugues Noël Robert, baron Mariani"
-affiliation: "Institut Mariani / C.O.R.S.I.C.A."
-x-address: "1 cours Paoli, F-20250 Corte, Corsica, France"
-x-email: "jhr@baronsmariani.org"
-x-website: "https://fractavolta.com"
+title: Cogentia Commons
+subtitle: Method Packets, Continuations, and the Generative Corpus
+description: Working paper defining Cogentia Commons as an infrastructure for producing, transmitting, criticizing, and improving cognitive packets, method packets, and corpus-based continuations across humans, AI agents, tools, and repositories.
+author: Jean Hugues Noël Robert, baron Mariani
+affiliation: Institut Mariani / C.O.R.S.I.C.A.
+x-address: 1 cours Paoli, F-20250 Corte, Corsica, France
+x-email: jhr@baronsmariani.org
+x-website: https://fractavolta.com
 canonical_url: https://github.com/JeanHuguesRobert/cogentia/blob/main/research/cogentia_commons_method_packets.md
-version: "0.1"
-status: "working-paper"
-date: "2026-05-22"
-last_modified_at: "2026-05-22"
-last_stamped_at: 2026-06-01
-license: "CC BY-SA 4.0"
+version: '0.1'
+status: working-paper
+date: '2026-05-22'
+last_modified_at: '2026-05-22'
+last_stamped_at: 2026-06-01T00:00:00.000Z
+license: CC BY-SA 4.0
 layout: default
 tags:
   - cogentia
@@ -36,14 +36,24 @@ x-keywords:
   - Seconde méthode
   - Cogentia
   - Generalized Packet Networks
-document_role: "source"
-document_kind: "research-paper"
-visibility: "public"
-lifecycle_state: "working"
-classification_source: "cogentia.js"
-classification_version: "1"
-classification_rule: "research-paper"
-classification_confidence: "medium"
+document_role: source
+document_kind: research-paper
+visibility: public
+lifecycle_state: working
+classification_source: cogentia.js
+classification_version: '1'
+classification_rule: research-paper
+classification_confidence: medium
+provenance:
+  origin_type: unknown
+  origin_repository: unknown
+  origin_ref: unknown
+  origin_date: unknown
+  derived_from: []
+review:
+  status: unreviewed
+  reviewed_by: []
+update_policy: UP-DEFAULT-REVIEWED
 ---
 
 # Cogentia Commons

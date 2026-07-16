@@ -1,32 +1,32 @@
 ---
-title: "Concept Situation Brief — Cognitive Packet Switching"
-subtitle: "Situating Cognitive Packet Switching in Origin, Lineage, Neighboring Ideas, Current Relevance, and Use"
-version: "0.1"
-status: "derived product"
-date: "2026-06-01"
-author: "Jean Hugues Noël Robert, baron Mariani"
-affiliation: "Institut Mariani / C.O.R.S.I.C.A., 1 cours Paoli, F-20250 Corte, Corsica"
-license: "CC BY-SA 4.0"
-language: "en"
-repository: "JeanHuguesRobert/cogentia"
-intended_path: "research/derived_products/concept_situation_brief_cognitive_packet_switching.md"
+title: Concept Situation Brief — Cognitive Packet Switching
+subtitle: Situating Cognitive Packet Switching in Origin, Lineage, Neighboring Ideas, Current Relevance, and Use
+version: '0.1'
+status: derived product
+date: '2026-06-01'
+author: Jean Hugues Noël Robert, baron Mariani
+affiliation: Institut Mariani / C.O.R.S.I.C.A., 1 cours Paoli, F-20250 Corte, Corsica
+license: CC BY-SA 4.0
+language: en
+repository: JeanHuguesRobert/cogentia
+intended_path: research/derived_products/concept_situation_brief_cognitive_packet_switching.md
 source_documents:
-  - "research/cognitive_packet_switching.md"
-  - "research/concept_situation_briefs.md"
+  - research/cognitive_packet_switching.md
+  - research/concept_situation_briefs.md
 derived_from:
-  - "Cognitive Packet Switching — v1.0"
-  - "Concept Situation Briefs — v1.0"
+  - Cognitive Packet Switching — v1.0
+  - Concept Situation Briefs — v1.0
 concept:
-  name: "Cognitive Packet Switching"
+  name: Cognitive Packet Switching
   aliases:
-    - "TCP/IP for Ideas"
-    - "Cognitive Packets for Agent Orchestration"
+    - TCP/IP for Ideas
+    - Cognitive Packets for Agent Orchestration
 audience:
-  - "internal corpus"
-  - "AI workflow researchers"
-  - "agent framework developers"
-  - "distributed systems readers"
-  - "Hacker News readers"
+  - internal corpus
+  - AI workflow researchers
+  - agent framework developers
+  - distributed systems readers
+  - Hacker News readers
 tags:
   - concept-situation-brief
   - cognitive-packet-switching
@@ -35,15 +35,25 @@ tags:
   - agent-orchestration
   - derived-product
 canonical_url: https://github.com/JeanHuguesRobert/cogentia/blob/main/research/derived_products/concept_situation_brief_cognitive_packet_switching.md
-last_stamped_at: 2026-06-01
-document_role: "derived"
-document_kind: "concept-note"
-visibility: "public"
-lifecycle_state: "active"
-classification_source: "cogentia.js"
-classification_version: "1"
-classification_rule: "concept-note"
-classification_confidence: "medium"
+last_stamped_at: 2026-06-01T00:00:00.000Z
+document_role: derived
+document_kind: concept-note
+visibility: public
+lifecycle_state: active
+classification_source: cogentia.js
+classification_version: '1'
+classification_rule: concept-note
+classification_confidence: medium
+provenance:
+  origin_type: unknown
+  origin_repository: unknown
+  origin_ref: unknown
+  origin_date: unknown
+  derived_from: []
+review:
+  status: unreviewed
+  reviewed_by: []
+update_policy: UP-DEFAULT-REVIEWED
 ---
 
 # Concept Situation Brief — Cognitive Packet Switching

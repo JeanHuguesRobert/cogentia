@@ -1,15 +1,15 @@
 ---
-title: "Artificial Representation and Mandated Voice"
-subtitle: "Distinguishing approximation, doctrinal fidelity, institutional representation, identity, and authority"
-author: "Jean Hugues Noël Robert, baron Mariani"
-affiliation: "Institut Mariani / C.O.R.S.I.C.A., 1 cours Paoli, F-20250 Corte, Corsica"
-date: "2026-07-13"
-version: "0.1"
-status: "source document — working doctrine"
-license: "CC BY-SA 4.0"
-language: "en"
-repository: "cogentia"
-canonical_path: "cogentia/research/artificial_representation_and_mandated_voice.md"
+title: Artificial Representation and Mandated Voice
+subtitle: Distinguishing approximation, doctrinal fidelity, institutional representation, identity, and authority
+author: Jean Hugues Noël Robert, baron Mariani
+affiliation: Institut Mariani / C.O.R.S.I.C.A., 1 cours Paoli, F-20250 Corte, Corsica
+date: '2026-07-13'
+version: '0.1'
+status: source document — working doctrine
+license: CC BY-SA 4.0
+language: en
+repository: cogentia
+canonical_path: cogentia/research/artificial_representation_and_mandated_voice.md
 tags:
   - cogentia
   - digital-twin
@@ -19,15 +19,25 @@ tags:
   - institutional-voice
   - provenance
 related_research:
-  - "cogentia/research/cogentia-digital-twin.md"
-  - "cogentia/research/individual_and_collective_digital_twins.md"
-  - "cogentia/research/digital_twin_trust_model.md"
+  - cogentia/research/cogentia-digital-twin.md
+  - cogentia/research/individual_and_collective_digital_twins.md
+  - cogentia/research/digital_twin_trust_model.md
 related_operations:
-  - "cogentia/docs/digital-twin-agile-roadmap.md"
-document_role: "source"
-document_kind: "doctrine"
-visibility: "public"
-lifecycle_state: "working"
+  - cogentia/docs/digital-twin-agile-roadmap.md
+document_role: source
+document_kind: doctrine
+visibility: public
+lifecycle_state: working
+provenance:
+  origin_type: unknown
+  origin_repository: unknown
+  origin_ref: unknown
+  origin_date: unknown
+  derived_from: []
+review:
+  status: unreviewed
+  reviewed_by: []
+update_policy: UP-DEFAULT-REVIEWED
 ---
 
 # Artificial Representation and Mandated Voice

@@ -1,35 +1,35 @@
 ---
-title: "Human Contribution Views"
-subtitle: "Probatory derived products for AI-assisted invention, creation, and institutional accountability"
-version: "0.1"
-status: "working-paper — source document"
-date: "2026-06-26"
-author: "Jean Hugues Noël Robert"
-repository: "JeanHuguesRobert/cogentia"
-intended_path: "research/human_contribution_views.md"
-license: "CC BY-SA 4.0"
-language: "en"
-document_role: "source"
-document_kind: "research-paper"
-visibility: "public"
-lifecycle_state: "working"
+title: Human Contribution Views
+subtitle: Probatory derived products for AI-assisted invention, creation, and institutional accountability
+version: '0.1'
+status: working-paper — source document
+date: '2026-06-26'
+author: Jean Hugues Noël Robert
+repository: JeanHuguesRobert/cogentia
+intended_path: research/human_contribution_views.md
+license: CC BY-SA 4.0
+language: en
+document_role: source
+document_kind: research-paper
+visibility: public
+lifecycle_state: working
 human_validation_required: true
 related_documents:
-  - "research/derived_products.md"
-  - "research/cogentia_commons_visibility_and_private_modes.md"
-  - "research/Cogentia-and-Cogentigram.md"
-  - "research/cogentia-digital-twin.md"
-  - "research/individual_and_collective_digital_twins.md"
-  - "barons-Mariani/research/traceabilite_des_actes.md"
-  - "FractaVolta/research/fractavolta_paper.md"
+  - research/derived_products.md
+  - research/cogentia_commons_visibility_and_private_modes.md
+  - research/Cogentia-and-Cogentigram.md
+  - research/cogentia-digital-twin.md
+  - research/individual_and_collective_digital_twins.md
+  - barons-Mariani/research/traceabilite_des_actes.md
+  - FractaVolta/research/fractavolta_paper.md
 related_projects:
-  - "Cogentia"
-  - "Cogentia Commons"
-  - "PrivaAI"
-  - "KYS"
-  - "FractaVolta"
-  - "Inseme"
-  - "Actarchia"
+  - Cogentia
+  - Cogentia Commons
+  - PrivaAI
+  - KYS
+  - FractaVolta
+  - Inseme
+  - Actarchia
 tags:
   - cogentia
   - derived-products
@@ -40,10 +40,20 @@ tags:
   - kys
   - privai
   - commons-financing
-classification_source: "manual"
-classification_version: "1"
-classification_rule: "research-paper"
-classification_confidence: "strong"
+classification_source: manual
+classification_version: '1'
+classification_rule: research-paper
+classification_confidence: strong
+provenance:
+  origin_type: unknown
+  origin_repository: unknown
+  origin_ref: unknown
+  origin_date: unknown
+  derived_from: []
+review:
+  status: unreviewed
+  reviewed_by: []
+update_policy: UP-DEFAULT-REVIEWED
 ---
 
 # Human Contribution Views

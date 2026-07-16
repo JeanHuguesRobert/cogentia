@@ -1,14 +1,14 @@
 ---
-title: "Agent Configuration Layer"
-subtitle: "From AGENTS.md to governed corpus projections"
-version: "0.2"
-status: "working-paper — method note"
-date: "2026-06-13"
-author: "Jean Hugues Noël Robert"
-license: "CC BY-SA 4.0"
-language: "en"
-repository: "cogentia"
-canonical_path: "cogentia/research/agent_configuration_layer.md"
+title: Agent Configuration Layer
+subtitle: From AGENTS.md to governed corpus projections
+version: '0.2'
+status: working-paper — method note
+date: '2026-06-13'
+author: Jean Hugues Noël Robert
+license: CC BY-SA 4.0
+language: en
+repository: cogentia
+canonical_path: cogentia/research/agent_configuration_layer.md
 tags:
   - cogentia
   - agent-configuration
@@ -21,35 +21,45 @@ tags:
   - blocked-tools
   - tool-failure
 related_research:
-  - "cogentia/AGENTS.md"
-  - "cogentia/research/pipeline.md"
-  - "cogentia/research/conversation_to_corpus_pipeline.md"
-  - "cogentia/COGENTIA.md"
-  - "barons-Mariani/research/traceabilite_des_actes.md"
-  - "barons-Mariani/research/second_method.md"
-  - "cogentia/research/blocked_tool_rule.md"
+  - cogentia/AGENTS.md
+  - cogentia/research/pipeline.md
+  - cogentia/research/conversation_to_corpus_pipeline.md
+  - cogentia/COGENTIA.md
+  - barons-Mariani/research/traceabilite_des_actes.md
+  - barons-Mariani/research/second_method.md
+  - cogentia/research/blocked_tool_rule.md
 related_repositories:
-  - "cogentia"
-  - "barons-Mariani"
-  - "FractaVolta"
-  - "marenostrum"
-  - "inseme"
-  - "Inox"
-  - "registre-mariani"
-  - "ubikia"
+  - cogentia
+  - barons-Mariani
+  - FractaVolta
+  - marenostrum
+  - inseme
+  - Inox
+  - registre-mariani
+  - ubikia
 continuations:
-  - "homogenize AGENTS.md files across the current structural repository map"
-  - "integrate private/transmission repositories without leaking private data"
-  - "test .agents/ as an experimental container, not as corpus memory"
-  - "define machine-checkable conformance rules for repository-local agent mandates"
-document_role: "source"
-document_kind: "research-paper"
-visibility: "public"
-lifecycle_state: "working"
-classification_source: "cogentia.js"
-classification_version: "1"
-classification_rule: "research-paper"
-classification_confidence: "medium"
+  - homogenize AGENTS.md files across the current structural repository map
+  - integrate private/transmission repositories without leaking private data
+  - test .agents/ as an experimental container, not as corpus memory
+  - define machine-checkable conformance rules for repository-local agent mandates
+document_role: source
+document_kind: research-paper
+visibility: public
+lifecycle_state: working
+classification_source: cogentia.js
+classification_version: '1'
+classification_rule: research-paper
+classification_confidence: medium
+provenance:
+  origin_type: unknown
+  origin_repository: unknown
+  origin_ref: unknown
+  origin_date: unknown
+  derived_from: []
+review:
+  status: unreviewed
+  reviewed_by: []
+update_policy: UP-DEFAULT-REVIEWED
 ---
 
 # Agent Configuration Layer
