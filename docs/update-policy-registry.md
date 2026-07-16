@@ -94,6 +94,15 @@ npm run metadata:audit > metadata-audit.json
 The report declares schema `cogentia.metadata-audit.v1`, includes every tracked Markdown/YAML/JSON
 artifact in scope, and is safe to run repeatedly. It is an audit baseline, not an apply operation.
 
+For bounded one-shot maintenance triage, use:
+
+```text
+node scripts/metadata-maintain.js --changed --max-files 100 --max-ms 30000 --json --no-network
+```
+
+This command inspects changed Markdown files only, reports a resumable cursor, and never writes
+content. Dry-run migration and apply remain separate future operations.
+
 ## Scope
 
 This registry defines policy identifiers and minimum expectations. It does not authorize publication,

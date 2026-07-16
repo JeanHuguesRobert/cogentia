@@ -14,6 +14,7 @@
     "commons:build": "pnpm --filter @cogentia/commons run build",
     "cogentia": "node scripts/cogentia.js",
     "metadata:audit": "node scripts/metadata-audit.js",
+    "metadata:maintain": "node scripts/metadata-maintain.js",
     "test:context": "node scripts/test-context-gateway.js",
     "test:guide": "node scripts/test-guide-http.js",
     "test:retrieval-inox": "node scripts/test-retrieval-inox-session.js",
