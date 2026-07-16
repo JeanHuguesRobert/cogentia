@@ -2,11 +2,15 @@
 author: "Jean Hugues Noël Robert, baron Mariani"
 affiliation: "Institut Mariani / C.O.R.S.I.C.A., 1 cours Paoli, F-20250 Corte, Corsica"
 license: "CC BY-SA 4.0"
+language: "en"
 title: "Frontmatter Synonym Mapping — v0.1"
 date: "2026-05-27"
+last_modified_at: "2026-07-16"
 status: "working-paper — auto-filled (frontmatter cleanup)"
 canonical_url: https://github.com/JeanHuguesRobert/cogentia/blob/main/docs/frontmatter-synonym-mapping.md
 last_stamped_at: 2026-06-01
+ai_assisted_by:
+  - "GPT-5.6 Thinking (English translation)"
 document_role: "operational"
 document_kind: "documentation"
 visibility: "public"
@@ -18,123 +22,123 @@ classification_confidence: "medium"
 ---
 # Frontmatter Synonym Mapping — v0.1
 
-Ce document liste les synonymes observés dans le corpus et les règles d’équivalence associées.
+This document lists synonyms observed across the corpus and their associated equivalence rules.
 
-## Principes
+## Principles
 
-- Les synonymes sont **tolérés** tant qu’une règle d’équivalence est documentée ici.
-- Il n’y a **pas de date limite** d’utilisation des formes anciennes (sauf décision explicite de dépréciation).
-- Quand un synonyme sera déprécié, il sera marqué `deprecated` dans ce document.
+- Synonyms are **tolerated** when an equivalence rule is documented here.
+- There is **no deadline** for the use of legacy forms unless an explicit deprecation decision is made.
+- When a synonym is deprecated, it will be marked `deprecated` in this document.
 
-## Mapping des synonymes
+## Synonym Mapping
 
 ### 1. Core Fields
 
-| Clés observées                              | Nom canonique recommandé      | Règle d’équivalence |
-|---------------------------------------------|-------------------------------|---------------------|
-| `author`, `authors`                         | `author` ou `creator`         | Voir règle détaillée plus bas |
-| `creator`                                   | `creator`                     | Production majoritairement mécanique |
-| `affiliation`, `affiliations`               | `affiliation`                 | Équivalents |
-| `date`, `created`                           | `date`                        | Date sémantique principale du document |
-| `last_modified_at`, `updated`, `last_updated` | `last_modified_at`          | Date de dernière modification réelle |
-| `license`, `licence`, `spdx-license-identifier` | `license`                  | `license` est la forme préférée |
-| `language`, `lang`                          | `language`                    | Équivalents |
-| `version`, `input_version`                  | `version`                     | Équivalents |
+| Observed keys                                | Recommended canonical name | Equivalence rule |
+|----------------------------------------------|----------------------------|------------------|
+| `author`, `authors`                          | `author` or `creator`      | See the detailed rule below |
+| `creator`                                    | `creator`                  | Predominantly mechanical production |
+| `affiliation`, `affiliations`                | `affiliation`              | Equivalent |
+| `date`, `created`                            | `date`                     | Primary semantic date of the document |
+| `last_modified_at`, `updated`, `last_updated` | `last_modified_at`        | Date of the latest actual modification |
+| `license`, `licence`, `spdx-license-identifier` | `license`               | `license` is the preferred form |
+| `language`, `lang`                           | `language`                 | Equivalent |
+| `version`, `input_version`                   | `version`                  | Equivalent |
 
 ### 2. Provenance & Process
 
-| Clés observées                              | Nom canonique recommandé      | Règle d’équivalence |
-|---------------------------------------------|-------------------------------|---------------------|
-| `source_document`, `derived_from`, `predecessor` | `source_document`          | Document source principal |
-| `ai_assisted_by`, `chatgpt`, `grok`, `claude`, `gemini`, `agent`, `agent_last` | `ai_assisted_by` | Liste d’agents IA (ordonner par importance si possible) |
-| `reviewed_by`, `review_context`             | `reviewed_by`                 | Équivalents pour les relecteurs humains |
-| `human_arbitration_by`                      | `human_arbitration_by`        | Personne ayant fait l’arbitrage final |
-| `version_history`, `changelog`              | `version_history`             | Historique des versions |
+| Observed keys                                | Recommended canonical name | Equivalence rule |
+|----------------------------------------------|----------------------------|------------------|
+| `source_document`, `derived_from`, `predecessor` | `source_document`       | Primary source document |
+| `ai_assisted_by`, `chatgpt`, `grok`, `claude`, `gemini`, `agent`, `agent_last` | `ai_assisted_by` | List of AI agents; order by importance where possible |
+| `reviewed_by`, `review_context`              | `reviewed_by`              | Equivalent for human reviewers |
+| `human_arbitration_by`                       | `human_arbitration_by`     | Person who made the final arbitration |
+| `version_history`, `changelog`               | `version_history`          | Version history |
 
 ### 3. Navigation & Jekyll
 
-| Clés observées          | Nom canonique | Notes |
-|-------------------------|---------------|-------|
-| `nav_order`             | `nav_order`   | Standard Jekyll |
-| `parent`, `grand_parent`| `parent`      | Hiérarchie de navigation |
-| `layout`                | `layout`      | Standard Jekyll |
+| Observed keys           | Canonical name | Notes |
+|-------------------------|----------------|-------|
+| `nav_order`             | `nav_order`    | Standard Jekyll field |
+| `parent`, `grand_parent`| `parent`       | Navigation hierarchy |
+| `layout`                | `layout`       | Standard Jekyll field |
 
-### 4. Champs legacy / à supprimer
+### 4. Legacy Fields / Fields to Remove
 
-| Clés obsolètes                                      | Action recommandée |
-|-----------------------------------------------------|--------------------|
-| `repository`, `path`, `intended_path`, `canonical_path`, `canonical_slug`, `repository_candidate` | Supprimer. Remplacer par `canonical_url` si nécessaire |
-| `en`, `fr` (liens de traduction)                    | Remplacer par `translations` (array d’objets ou de liens) |
+| Obsolete keys                                        | Recommended action |
+|------------------------------------------------------|--------------------|
+| `repository`, `path`, `intended_path`, `canonical_path`, `canonical_slug`, `repository_candidate` | Remove. Replace with `canonical_url` where necessary |
+| `en`, `fr` translation links                         | Replace with `translations`, represented as an array of objects or links |
 
-### 5. Règle author / creator (importante)
+### 5. `author` / `creator` Rule (important)
 
-- **Utiliser `author`** quand il existe un auteur humain identifiable (respect du Droit d’Auteur).
-- **Utiliser `creator`** quand la production est majoritairement ou entièrement mécanique (pas d’auteur humain immédiat, ex: génération automatique complète par IA).
+- Use **`author`** when an identifiable human author exists, in accordance with copyright law.
+- Use **`creator`** when production is predominantly or entirely mechanical, with no immediate human author—for example, complete automated generation by an AI system.
 
-Exemple :
-- Document écrit principalement par un humain → `author: "Jean Hugues Noël Robert, baron Mariani"`
-- Document généré automatiquement par IA sans intervention humaine significative → `creator: "Claude 4.3 (génération automatique)"`
+Examples:
+- Document written primarily by a human → `author: "Jean Hugues Noël Robert, baron Mariani"`
+- Document generated automatically by AI without significant human intervention → `creator: "Claude 4.3 (automated generation)"`
 
-### 6. Champs expérimentaux / spécifiques
+### 6. Experimental / Specific Fields
 
-De très nombreux champs n’apparaissent qu’une ou deux fois (surtout dans barons-Mariani). Exemples :
-- `merge_audit`, `decision_stack`, `vector_clock`, `claimed_ops`, `ghost_ops`, etc.
+Many fields appear only once or twice, particularly in `barons-Mariani`. Examples include:
+- `merge_audit`, `decision_stack`, `vector_clock`, `claimed_ops`, `ghost_ops`, and others.
 
-**Règle** : Ces champs peuvent rester pour l’instant. S’ils se multiplient, on les examinera pour voir s’ils méritent d’être normalisés ou transformés en extensions `x-`.
+**Rule:** These fields may remain for now. If their use expands, they will be reviewed to determine whether they should be normalized or converted into `x-` extensions.
 
-### 7. Patterns observés lors de l’ingestion de nouveaux dépôts (2026-05)
+### 7. Patterns Observed During the Ingestion of New Repositories (2026-05)
 
-Lors des passes de migration large (barons-Mariani, cogentia, FractaVolta, etc.), certains clusters de champs expérimentaux sont revenus régulièrement. Voici comment on les a traités pour aller plus vite à l’avenir :
+During broad migration passes across `barons-Mariani`, `cogentia`, `FractaVolta`, and other repositories, several clusters of experimental fields recurred. The following treatment was used to accelerate future ingestion.
 
-**a. Projets "packet" / description de réseau (FractaVolta style, certains cogentia)**
-- Champs fréquents : `address`, `email`, `website`, `keywords`
-- Traitement observé : souvent transformés en `x-address`, `x-email`, etc. ou regroupés sous un `x-contact`.
-- Conseil pour ingestion : dès qu’on voit plusieurs de ces champs sur des fichiers de description de projet, les passer en `x-` en une passe mécanique.
+**a. “Packet” projects and network descriptions—FractaVolta style and some Cogentia documents**
+- Frequent fields: `address`, `email`, `website`, `keywords`.
+- Observed treatment: often converted to `x-address`, `x-email`, and similar fields, or grouped under `x-contact`.
+- Ingestion guidance: when several of these fields appear in project-description files, convert them to `x-` fields in one mechanical pass.
 
-**b. Travail politique / autonomie de capacité (barons-Mariani / autonomia)**
-- Champs fréquents : `type`, `branch`, `source_file`, `date_creation`, `date_derniere_entee`, `institutional_frame`, `public_dashboard`, etc.
-- Ces documents sont souvent du "source material", "campaign rhetoric" ou "working stock".
-- Traitement observé : beaucoup ont été préfixés en `x-` (surtout `type`, `branch`, `source_file`). Le status est souvent très descriptif et légitime.
-- Conseil : ne pas chercher à tout normaliser trop vite. Ces dépôts ont un style propre. Préfixer en `x-` les champs structurels récurrents et garder les statuts riches.
+**b. Political work and Autonomy of Capacity—`barons-Mariani` / `autonomia`**
+- Frequent fields: `type`, `branch`, `source_file`, `date_creation`, `date_derniere_entee`, `institutional_frame`, `public_dashboard`, and others.
+- These documents are often “source material,” “campaign rhetoric,” or “working stock.”
+- Observed treatment: many fields were prefixed with `x-`, especially `type`, `branch`, and `source_file`. Rich descriptive status values were legitimately retained.
+- Guidance: do not normalize everything too quickly. These repositories have their own style. Prefix recurring structural fields with `x-` and preserve rich statuses.
 
-**c. Fichiers structurels du corpus (index.md, concepts.md, corpus-status.md)**
-- Ces fichiers apparaissent dans presque tous les dépôts.
-- Ils sont souvent maintenus par les outils (générés ou mis à jour automatiquement).
-- Traitement observé : on leur met généralement `creator` (plutôt que `author`), `status: working-paper`, license + affiliation, et on les laisse relativement légers.
-- Conseil ingestion : repérer rapidement ces 3 types de fichiers et leur appliquer un traitement "maintenance" standardisé.
+**c. Structural corpus files—`index.md`, `concepts.md`, `corpus-status.md`**
+- These files occur in nearly every repository.
+- They are often maintained by tools, either generated or automatically updated.
+- Observed treatment: they generally receive `creator` rather than `author`, `status: working-paper`, the license and affiliation fields, while otherwise remaining relatively light.
+- Ingestion guidance: identify these three file types early and apply the standardized “maintenance” treatment.
 
-**d. Règle pratique pour un nouveau dépôt**
-1. Lancer `migrate-frontmatter.js --dry-run --broad` (ou équivalent) sur le research/.
-2. Regrouper les `unknown_non_x_field_*` par similarité.
-3. Pour les clusters qui reviennent sur >3-4 fichiers → proposer un préfixe `x-` commun.
-4. Pour les statuts très descriptifs → les garder tels quels (sauf s’ils sont vraiment incohérents).
-5. Pour les fichiers `index.md / concepts.md / corpus-status.md` → appliquer le traitement "structural" (creator + champs de base).
+**d. Practical rule for a new repository**
+1. Run `migrate-frontmatter.js --dry-run --broad`, or its equivalent, on `research/`.
+2. Group `unknown_non_x_field_*` entries by similarity.
+3. For clusters recurring across more than three or four files, propose a common `x-` prefix.
+4. Preserve highly descriptive status values unless they are genuinely inconsistent.
+5. Apply the “structural” treatment—`creator` plus the base fields—to `index.md`, `concepts.md`, and `corpus-status.md`.
 
-## Règles d’équivalence générales
+## General Equivalence Rules
 
-- Les synonymes sont acceptés tant qu’une règle d’équivalence est documentée ici.
-- Il n’y a **pas de date limite** d’utilisation des formes anciennes (sauf décision explicite de dépréciation, qui sera alors indiquée avec `deprecated` dans ce document).
-- La tolérance aux différents styles est volontaire (personnalité de l’auteur + agents IA).
+- Synonyms are accepted when an equivalence rule is documented here.
+- There is **no deadline** for using legacy forms unless an explicit deprecation decision is made and marked `deprecated` in this document.
+- Tolerance for different styles is intentional and reflects the personality of human authors and AI agents.
 
-## Prochaines mises à jour
+## Future Updates
 
-Ce document sera enrichi après chaque passe de migration ou quand de nouveaux synonymes significatifs apparaîtront.
+This document will be extended after each migration pass or whenever significant new synonyms are observed.
 
 ---
 
-## Checklist pratique : ingérer un nouveau dépôt rapidement
+## Practical Checklist: Quickly Ingesting a New Repository
 
-Quand on ajoute un nouveau dépôt au corpus, faire rapidement :
+When adding a repository to the corpus:
 
-1. Scanner avec l’outil en mode large (`--broad` ou équivalent) pour voir les `unknown_non_x_field_*` et les statuts problématiques.
-2. Identifier les 3 types de fichiers structurels ([`index.md`](../research/index.md), [`concepts.md`](../research/concepts.md), [`corpus-status.md`](../research/corpus-status.md)) et leur appliquer le traitement standard "maintenance" (creator + champs de base + working-paper).
-3. Regrouper les champs expérimentaux qui reviennent sur plusieurs fichiers :
-   - Packet/project description → souvent `x-` (address, email, website, keywords)
-   - Travail politique/autonomie → souvent `x-` sur type/branch/source_file + tolérance sur les statuts très descriptifs
-4. Ne pas tout normaliser en une passe. Priorité : supprimer les vrais legacy + préfixer les clusters expérimentaux récurrents.
-5. Noter ici les nouveaux patterns observés pour les prochaines ingestions.
+1. Scan it using the broad mode, such as `--broad`, to identify `unknown_non_x_field_*` entries and problematic statuses.
+2. Identify the three structural file types—[`index.md`](../research/index.md), [`concepts.md`](../research/concepts.md), and [`corpus-status.md`](../research/corpus-status.md)—and apply the standard “maintenance” treatment: `creator`, base fields, and `working-paper`.
+3. Group experimental fields that recur across several files:
+   - Packet or project descriptions → often use `x-` for `address`, `email`, `website`, and `keywords`.
+   - Political or autonomy-related work → often use `x-` for `type`, `branch`, and `source_file`, while tolerating highly descriptive statuses.
+4. Do not normalize everything in one pass. Priority should be given to removing genuinely legacy fields and prefixing recurrent experimental clusters.
+5. Record new observed patterns here for use in subsequent ingestion passes.
 
-Objectif : après 2-3 dépôts traités de cette façon, l’ingestion d’un nouveau dépôt doit devenir de plus en plus mécanique sur les 80 % des cas.
+Objective: after two or three repositories have been processed this way, ingestion of a new repository should become increasingly mechanical for roughly 80% of cases.
 <!-- BEGIN_AUTO: backlinks -->
 ### Backlinks
 

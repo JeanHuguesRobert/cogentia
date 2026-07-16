@@ -1,0 +1,67 @@
+# cogentia.agentic_commit_manifest.v1
+#
+# Purpose:
+#   Attach a structured, inspectable trace to a commit produced wholly or partly
+#   by an AI agent under explicit human mandate.
+#
+# Canonical doctrine:
+#   research/agentic_commit_transparency.md
+
+schema: cogentia.agentic_commit_manifest.v1
+
+agent:
+  name: ""
+  provider: ""
+  version: ""
+  runtime: ""
+
+principal:
+  name: Jean Hugues Robert
+  identity_ref: ""
+
+mandate:
+  source: ""          # issue, continuation, prompt, conversation checkpoint, written instruction
+  scope: ""           # files, directories, repositories, or bounded task
+  issued_at: ""       # ISO 8601 when known
+  limits: ""          # explicit prohibitions, risk limits, or validation gates
+  authorization_level: propose|draft|commit|push|publish|other
+
+work:
+  repository: ""
+  branch: ""
+  commit: ""
+  files_changed: []
+  summary: ""
+  risk_level: low|medium|high|unknown
+  reversible: true
+
+checks:
+  tests_run: []
+  lint_run: []
+  manual_checks: []
+  not_run: []
+  known_limits: ""
+
+review:
+  human_reviewed: false
+  reviewer: ""
+  reviewed_at: ""
+  review_notes: ""
+
+trace:
+  issue: ""
+  continuation: ""
+  packet: ""
+  content_hash: ""
+  parent_trace: ""
+  related_commits: []
+
+public_disclosure:
+  commit_trailer_required: true
+  minimal_trailer: |
+    Agent-Assisted: yes
+    Agent: <agent/tool name>
+    Principal: Jean Hugues Robert
+    Mandate: <short mandate or issue/continuation reference>
+    Human-Reviewed: yes|no
+    Trace: <issue|continuation|packet|file|hash|conversation checkpoint>

@@ -2,11 +2,15 @@
 author: "Jean Hugues Noël Robert, baron Mariani"
 affiliation: "Institut Mariani / C.O.R.S.I.C.A., 1 cours Paoli, F-20250 Corte, Corsica"
 license: "CC BY-SA 4.0"
+language: "en"
 title: "Frontmatter Schema — v0.1 (Corpus)"
 date: "2026-05-27"
+last_modified_at: "2026-07-16"
 status: "working-paper — auto-filled (frontmatter cleanup)"
 canonical_url: https://github.com/JeanHuguesRobert/cogentia/blob/main/docs/frontmatter-schema.md
 last_stamped_at: 2026-06-01
+ai_assisted_by:
+  - "GPT-5.6 Thinking (English translation)"
 document_role: "operational"
 document_kind: "documentation"
 visibility: "public"
@@ -18,60 +22,60 @@ classification_confidence: "medium"
 ---
 # Frontmatter Schema — v0.1 (Corpus)
 
-Ce document définit le schéma de métadonnées (frontmatter) utilisé dans le corpus multi-dépôts.
+This document defines the metadata schema (frontmatter) used across the multi-repository corpus.
 
-## Philosophie
+## Philosophy
 
-- **Champs plats** par défaut (lisibilité + simplicité).
-- Mélange assumé de **formel** et de **natural language** (surtout pour les agents IA).
-- **Règles d’équivalence** plutôt qu’interdiction des synonymes (esprit TIMTOWTDI : "There Is More Than One Way").
-- Priorité à la **traçabilité**, la **portabilité** et la **protection de la vie privée**.
-- Le schéma doit rester **évolutif** et **pragmatique**. On évite l’usine à gaz : on préfère des règles claires d’équivalence à une rigidité excessive.
+- **Flat fields** by default, for readability and simplicity.
+- A deliberate mixture of **formal structure** and **natural language**, especially for AI agents.
+- **Equivalence rules** rather than a prohibition on synonyms, in the TIMTOWTDI spirit: “There Is More Than One Way.”
+- Priority is given to **traceability**, **portability**, and **privacy protection**.
+- The schema must remain **evolvable** and **pragmatic**. We avoid needless complexity: clear equivalence rules are preferred to excessive rigidity.
 
-## Règles générales
+## General Rules
 
-- Tous les documents de fond (research, specs, notes importantes) doivent avoir un frontmatter.
+- All substantive documents—research, specifications, and important notes—must carry frontmatter.
 - Every tracked corpus document must carry minimum traceability metadata, regardless of repository or directory. Missing information must be declared explicitly (`unknown`, `unreviewed`, or `[]`), never filled by assumption.
-- Les valeurs par défaut sont à privilégier pour alléger l’écriture.
-- Les synonymes sont tolérés **si et seulement si** une règle d’équivalence est documentée dans [`frontmatter-synonym-mapping.md`](frontmatter-synonym-mapping.md).
-- `privacy` est `public` par défaut. On ne le précise que si on sort de ce régime.
-- Un document **entièrement automatisé** (aucun contributeur humain) doit être identifiable facilement via le champ `generated_by`.
+- Default values should be preferred to reduce writing overhead.
+- Synonyms are tolerated **if and only if** an equivalence rule is documented in [`frontmatter-synonym-mapping.md`](frontmatter-synonym-mapping.md).
+- `privacy` defaults to `public`. It only needs to be specified when the document falls outside that regime.
+- A document that is **entirely automated**, with no human contributor, must be readily identifiable through the `generated_by` field.
 
 ---
 
-## Schéma des champs (v0.1)
+## Field Schema (v0.1)
 
-### 1. Core (obligatoires sur tout document suivi)
+### 1. Core Fields (required for every tracked document)
 
-| Champ                | Type                  | Défaut                              | Obligatoire ? | Notes |
-|----------------------|-----------------------|-------------------------------------|---------------|-------|
-| `title`              | string                | —                                   | Oui           | — |
-| `subtitle`           | string                | —                                   | Non           | — |
-| `description`        | string                | —                                   | Recommandé    | Résumé court |
-| `author`             | string                | —                                        | Oui      | Auteur humain connu, sinon `unknown` |
-| `creator`            | string                | "Jean Hugues Noël Robert, baron Mariani" | Non      | À utiliser quand la production est majoritairement ou entièrement mécanique. Règle d’équivalence : `author` et `creator` ne sont pas automatiquement équivalents. |
-| `affiliation`        | string                | "Institut Mariani / C.O.R.S.I.C.A., 1 cours Paoli, F-20250 Corte, Corsica" | Oui | — |
-| `date`               | string (ISO 8601)     | —                                   | Oui           | Date sémantique principale, sinon `unknown` |
-| `last_modified_at`   | string (ISO 8601)     | —                                   | Non           | Date de dernière modification réelle |
-| `license`            | string                | "CC BY-SA 4.0"                      | Oui           | — |
-| `language`           | string                | "fr"                                | Oui           | — |
+| Field                | Type                  | Default                              | Required? | Notes |
+|----------------------|-----------------------|--------------------------------------|-----------|-------|
+| `title`              | string                | —                                    | Yes       | — |
+| `subtitle`           | string                | —                                    | No        | — |
+| `description`        | string                | —                                    | Recommended | Short summary |
+| `author`             | string                | —                                    | Yes       | Known human author, otherwise `unknown` |
+| `creator`            | string                | "Jean Hugues Noël Robert, baron Mariani" | No | Use when production is predominantly or entirely mechanical. Equivalence rule: `author` and `creator` are not automatically equivalent. |
+| `affiliation`        | string                | "Institut Mariani / C.O.R.S.I.C.A., 1 cours Paoli, F-20250 Corte, Corsica" | Yes | — |
+| `date`               | string (ISO 8601)     | —                                    | Yes       | Primary semantic date, otherwise `unknown` |
+| `last_modified_at`   | string (ISO 8601)     | —                                    | No        | Date of the latest actual modification |
+| `license`            | string                | "CC BY-SA 4.0"                       | Yes       | — |
+| `language`           | string                | "fr"                                 | Yes       | — |
 
-### 2. Provenance & Traçabilité (obligatoires sur tout document suivi)
+### 2. Provenance & Traceability (required for every tracked document)
 
-| Champ                    | Type                    | Défaut | Notes |
-|--------------------------|-------------------------|--------|-------|
-| `canonical_url`          | string                  | —      | Obligatoire sur les documents de fond |
-| `last_stamped_at`        | string (ISO 8601)       | —      | Généré automatiquement |
-| `version`                | string                  | —      | — |
-| `status`                 | string ou liste         | —      | Liste cadrée + complément libre. Voir règles ci-dessous. |
-| `methodology`            | string ou array         | —      | Implémentation de méthode (ex: "Cogentia Commons"). La "seconde méthode" est implicite. |
-| `generated_by`           | string ou liste         | —      | Liste ordonnée par importance décroissante. Un seul champ. |
-| `ai_assisted_by`         | array                   | —      | Liste des IA ayant participé |
-| `reviewed_by`            | array                   | —      | — |
-| `human_arbitration_by`   | string                  | —      | Personne ayant fait l’arbitrage final |
-| `version_history`        | array                   | —      | — |
+| Field                    | Type                    | Default | Notes |
+|--------------------------|-------------------------|---------|-------|
+| `canonical_url`          | string                  | —       | Required for substantive documents |
+| `last_stamped_at`        | string (ISO 8601)       | —       | Generated automatically |
+| `version`                | string                  | —       | — |
+| `status`                 | string or list          | —       | Controlled base list plus free-form qualifier. See the rules below. |
+| `methodology`            | string or array         | —       | Method implementation, for example “Cogentia Commons.” The Second Method is implicit. |
+| `generated_by`           | string or list          | —       | Ordered by decreasing importance. Use a single field. |
+| `ai_assisted_by`         | array                   | —       | List of participating AI systems |
+| `reviewed_by`            | array                   | —       | — |
+| `human_arbitration_by`   | string                  | —       | Person who made the final arbitration |
+| `version_history`        | array                   | —       | — |
 
-### 2 bis. Minimum provenance (required)
+### 2 bis. Minimum Provenance (required)
 
 Each document must also declare a `provenance` block and a `review` block:
 
@@ -87,48 +91,46 @@ review:
   reviewed_by: []
 ```
 
-`origin_ref` must be immutable or externally verifiable. A current branch name alone is not
-sufficient. For generated documents, also record `generated_by` and the input documents. For
-historical or unattributed material, use `unknown` explicitly and preserve the uncertainty.
+`origin_ref` must be immutable or externally verifiable. A current branch name alone is not sufficient. For generated documents, also record `generated_by` and the input documents. For historical or unattributed material, use `unknown` explicitly and preserve the uncertainty.
 
-### 3. Provenance documentaire
+### 3. Documentary Provenance
 
-| Champ                    | Type          | Défaut | Notes |
-|--------------------------|---------------|--------|-------|
-| `source_document`        | string        | —      | **Document source principal** (quand il existe clairement) |
-| `additional_sources`     | array         | —      | Documents sources complémentaires (si pertinent) |
-| `derived_from`           | string        | —      | **Règle d’équivalence** : synonyme toléré de `source_document` |
+| Field                    | Type          | Default | Notes |
+|--------------------------|---------------|---------|-------|
+| `source_document`        | string        | —       | **Primary source document**, when one clearly exists |
+| `additional_sources`     | array         | —       | Complementary source documents, where relevant |
+| `derived_from`           | string        | —       | **Equivalence rule:** tolerated synonym of `source_document` |
 
-**Règle importante** :
-- On ne met `source_document` que s’il existe un document source **clair et identifiable**.
-- S’il n’y a pas de document source souverain clair (cas fréquent en transdisciplinarité), on ne force pas ce champ. On met alors des références dans le corps du document.
-- On ne spécifie pas de "type" (souverain / symétrique) dans le frontmatter : c’est redondant et subjectif.
+**Important rule:**
+- Use `source_document` only when there is a **clear and identifiable** source document.
+- When no clear sovereign source document exists, as is often the case in transdisciplinary work, do not force this field. Put references in the document body instead.
+- Do not specify a source “type” such as sovereign or symmetric in frontmatter; doing so would be redundant and subjective.
 
 ### 4. Navigation & Publication (Jekyll)
 
-Champs standards Jekyll (`layout`, `permalink`, `nav_order`, `parent`, `has_children`, etc.) restent autorisés.
+Standard Jekyll fields such as `layout`, `permalink`, `nav_order`, `parent`, and `has_children` remain permitted.
 
-### 5. Sémantique & Traçabilité future (préparation Solid / Linked Data)
+### 5. Semantics & Future Traceability (preparation for Solid / Linked Data)
 
-| Champ            | Type   | Notes |
-|------------------|--------|-------|
-| `webid`          | string | Prévu pour plus tard (pointeur GitHub acceptable actuellement) |
-| `rights`         | string | Plus fin que `license` si nécessaire |
-| `tags`           | array  | — |
-| `related_documents` | array | — |
-| `related_projects`  | array | — |
-| `document_role`  | string | Exemples : `source`, `symmetric-derived`, `synthesis`, `operational-note`, `translation` |
+| Field               | Type   | Notes |
+|---------------------|--------|-------|
+| `webid`             | string | Planned for later; a GitHub pointer is currently acceptable |
+| `rights`            | string | More granular than `license`, when needed |
+| `tags`              | array  | — |
+| `related_documents` | array  | — |
+| `related_projects`  | array  | — |
+| `document_role`     | string | Examples: `source`, `symmetric-derived`, `synthesis`, `operational-note`, `translation` |
 
 ---
 
-## Règles spécifiques
+## Specific Rules
 
-### Règle sur `status`
+### Rule for `status`
 
-- Le champ `status` repose sur une **liste cadrée** de valeurs de base.
-- Un document peut avoir **plusieurs statuts simultanément**.
-- On peut ajouter un **complément qualificatif** en langage naturel (après un tiret ou sous forme de phrase).
-- Valeurs de base officielles (pour l’instant) :
+- The `status` field is based on a **controlled list** of base values.
+- A document may have **multiple simultaneous statuses**.
+- A **natural-language qualifier** may be added after a dash or as a sentence.
+- Current official base values:
   - `draft`
   - `working-paper`
   - `stable`
@@ -136,71 +138,71 @@ Champs standards Jekyll (`layout`, `permalink`, `nav_order`, `parent`, `has_chil
   - `deprecated`
   - `superceded`
 
-Exemples acceptés :
+Accepted examples:
 - `status: "working-paper"`
 - `status: "working-paper, superceded"`
-- `status: "working-paper — version revue après objections du 27/05"`
+- `status: "working-paper — version revised after objections raised on 2026-05-27"`
 - `status: ["working-paper", "under-review"]`
 
-### Règle sur `generated_by`
+### Rule for `generated_by`
 
-- Le champ `generated_by` est **une seule liste** (ou une chaîne si un seul agent).
-- La liste est **ordonnée par importance décroissante** : l’agent le plus impliqué en premier, les moins impliqués à la fin.
-- On met ce qu’on peut de plus précis (agent + rôle quand c’est utile).
-- Si le document est **entièrement automatisé** (aucun agent humain), cela doit être facilement visible (par exemple en commençant la liste par un agent IA ou en le précisant clairement).
+- `generated_by` is a **single list**, or a string when there is only one agent.
+- The list is **ordered by decreasing importance**: the most involved agent comes first and the least involved comes last.
+- Use the most precise description available, including the agent and its role where useful.
+- If the document is **entirely automated**, with no human agent, this must be immediately visible—for example by placing an AI agent first or stating the fact explicitly.
 
-Exemple :
+Example:
 ```yaml
 generated_by:
   - "Jean Hugues Noël Robert"
-  - "Claude 4.3 (rédaction + structuration)"
-  - "Grok 4.3 (revue critique)"
+  - "Claude 4.3 (drafting + structuring)"
+  - "Grok 4.3 (critical review)"
 ```
 
-Exemple entièrement automatisé :
+Entirely automated example:
 ```yaml
-generated_by: "Claude 4.3 (génération automatique complète)"
+generated_by: "Claude 4.3 (complete automated generation)"
 ```
 
-### Règle sur les synonymes et la tolérance aux styles
+### Rule for Synonyms and Stylistic Tolerance
 
-- Les synonymes sont **tolérés** tant qu’une règle d’équivalence claire est documentée dans [`frontmatter-synonym-mapping.md`](frontmatter-synonym-mapping.md).
-- Il n’y a **pas de date limite** d’utilisation des formes alternatives (sauf décision explicite de dépréciation, qui sera alors marquée `deprecated` dans le fichier de mapping).
-- Le « style » fait partie de la personnalité de l’auteur (humain ou agent). On n’essaie pas d’uniformiser de façon excessive.
+- Synonyms are **tolerated** when a clear equivalence rule is documented in [`frontmatter-synonym-mapping.md`](frontmatter-synonym-mapping.md).
+- There is **no deadline** for the use of alternative forms unless an explicit deprecation decision is made and marked `deprecated` in the mapping file.
+- “Style” is part of the personality of the author, whether human or agent. Excessive uniformity is not a goal.
 
-Règles d’équivalence principales (voir le fichier de mapping pour la liste complète) :
-- `author` / `authors` ↔ `creator` (avec la règle Droit d’Auteur expliquée dans le mapping)
-- `date` / `created` → équivalents
-- `last_modified_at` / `updated` → équivalents
-- `source_document` / `derived_from` → `source_document` préféré
-- `tags` / `keywords` → `tags` préféré
+Main equivalence rules—see the mapping file for the complete list:
+- `author` / `authors` ↔ `creator`, subject to the copyright rule explained in the mapping;
+- `date` / `created` → equivalent;
+- `last_modified_at` / `updated` → equivalent;
+- `source_document` / `derived_from` → `source_document` preferred;
+- `tags` / `keywords` → `tags` preferred.
 
-### Règle sur les extensions
+### Rule for Extensions
 
-- Les champs d’extension doivent commencer par le préfixe `x-` (ex: `x-my-experiment`, `x-internal-note`).
-- Ces champs sont libres.
-- Philosophie : **flexible à l’entrée, strict à la sortie** (inspiré des principes IETF).
+- Extension fields must begin with the `x-` prefix, for example `x-my-experiment` or `x-internal-note`.
+- These fields are unrestricted.
+- Philosophy: **flexible at input, strict at output**, inspired by IETF principles.
 
-**Conseil pratique issu des ingestions 2026** :
-- Quand un même champ expérimental apparaît sur plusieurs fichiers d’un même dépôt (ex: `address`, `type`, `branch`, `source_file`), le passer rapidement en `x-` pour ne pas polluer le schéma principal.
-- Les clusters récurrents observés :
-  - Projets "packet" / description de réseau → `address`, `email`, `website`, `keywords`
-  - Travail politique / source material → `type`, `branch`, `source_file`, dates de création spécifiques
-- On ne force pas tout de suite une normalisation sémantique. On préfixe d’abord pour garder la lisibilité.
+**Practical guidance from the 2026 ingestion passes:**
+- When the same experimental field appears in several files within one repository—for example `address`, `type`, `branch`, or `source_file`—move it quickly under an `x-` prefix to avoid polluting the primary schema.
+- Recurring observed clusters include:
+  - “Packet” projects and network descriptions: `address`, `email`, `website`, `keywords`;
+  - Political work and source material: `type`, `branch`, `source_file`, and specific creation dates.
+- Do not force immediate semantic normalization. Prefix first in order to preserve readability.
 
-D’autres synonymes pourront être ajoutés à condition qu’une règle d’équivalence soit documentée dans ce fichier.
+Additional synonyms may be introduced provided that an equivalence rule is documented in this file.
 
-### Règle sur la vie privée
+### Rule for Privacy
 
-- Par défaut, tout document est considéré **public**.
-- Il n’est **pas nécessaire** d’ajouter `privacy: public`.
-- D’autres valeurs ne seront introduites que lorsque le besoin apparaîtra.
+- By default, every document is considered **public**.
+- It is not necessary to add `privacy: public`.
+- Other values will be introduced only when a concrete need arises.
 
 ---
 
-## Champs à supprimer (lors de la migration)
+## Fields to Remove During Migration
 
-Ces champs sont considérés comme legacy et ne doivent plus être utilisés dans les nouveaux documents :
+The following fields are considered legacy and must no longer be used in new documents:
 
 - `repository`
 - `path`
@@ -213,23 +215,23 @@ Ces champs sont considérés comme legacy et ne doivent plus être utilisés dan
 
 ## Notes
 
-- Ce schéma est conçu pour être **lisible par des humains et des agents IA**.
-- Il cherche un équilibre entre structure formelle et expressivité en langage naturel.
-- Il est explicitement conçu pour rester **évolutif** sans rupture trop douloureuse.
+- This schema is designed to be **readable by humans and AI agents**.
+- It seeks a balance between formal structure and natural-language expressiveness.
+- It is explicitly designed to remain **evolvable** without excessively disruptive changes.
 
-### Accélérer l’ingestion de nouveaux dépôts
+### Accelerating the Ingestion of New Repositories
 
-Pour aller plus vite quand on ramène un nouveau dépôt :
+To accelerate the onboarding of a new repository:
 
-- Commencer par identifier les fichiers structurels ([`index.md`](../research/index.md), [`concepts.md`](../research/concepts.md), [`corpus-status.md`](../research/corpus-status.md)) → leur appliquer un traitement léger et cohérent (souvent `creator` + champs de base + `working-paper`).
-- Ne pas chercher à tout normaliser sémantiquement dès le premier passage. Première passe = suppression legacy + préfixage `x-` des clusters expérimentaux qui reviennent.
-- Utiliser les patterns documentés dans [`frontmatter-synonym-mapping.md`](frontmatter-synonym-mapping.md) (section "Patterns observés lors de l’ingestion").
+- Begin by identifying structural files such as [`index.md`](../research/index.md), [`concepts.md`](../research/concepts.md), and [`corpus-status.md`](../research/corpus-status.md), then apply a light and consistent treatment—usually `creator`, the base fields, and `working-paper`.
+- Do not attempt complete semantic normalization during the first pass. The first pass should remove legacy fields and prefix recurring experimental clusters with `x-`.
+- Use the patterns documented in [`frontmatter-synonym-mapping.md`](frontmatter-synonym-mapping.md), particularly the “Patterns Observed During Ingestion” section.
 
-L’objectif est que chaque nouveau dépôt ingéré rende les suivants un peu plus mécaniques.
+The objective is for every newly ingested repository to make subsequent ingestions more mechanical.
 
 ---
 
-*Version : 0.1 — Brouillon de travail*
+*Version: 0.1 — Working draft*
 <!-- BEGIN_AUTO: backlinks -->
 ### Backlinks
 

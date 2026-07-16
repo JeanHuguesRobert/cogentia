@@ -1,6 +1,6 @@
 ---
 canonical_url: https://github.com/JeanHuguesRobert/cogentia/blob/main/AGENTS.md
-last_stamped_at: 2026-07-13
+last_stamped_at: 2026-07-15
 ---
 # AGENTS.md — Cogentia methodology shortcut
 
@@ -115,6 +115,42 @@ Agents must not commit, push, publish, send, sign, spend, or otherwise stabilize
 
 When authorization is ambiguous, prepare the batch and ask before acting.
 
+### Agentic commit transparency
+
+When an AI agent contributes to a commit, the commit or its attached trace must disclose that fact.
+
+The disclosure must not merely say that "AI was used". It must state:
+
+- which agent or tool acted;
+- who the human principal was;
+- what explicit mandate authorized the action;
+- what files or scope were affected;
+- what checks were run;
+- whether a human reviewed the result;
+- where the fuller trace can be inspected, when applicable.
+
+Minimal commit trailer:
+
+```text
+Agent-Assisted: yes
+Agent: <agent/tool name>
+Principal: Jean Hugues Robert
+Mandate: <short mandate or issue/continuation reference>
+Human-Reviewed: yes|no
+Trace: <issue|continuation|packet|file|hash|conversation checkpoint>
+```
+
+For larger, sensitive, multi-file, or multi-repository work, attach or reference a structured manifest using [`prompts/agentic-commit-manifest.template.yaml`](prompts/agentic-commit-manifest.template.yaml).
+
+A commit produced wholly or partly by an AI agent without such disclosure is incomplete as a corpus trace, even if the code, text, or data change is technically correct.
+
+Compact rule:
+
+```text
+No agentic commit without mandate trace.
+No mandate trace without principal, scope, review status, and recovery path.
+```
+
 ## Blocked-tool rule
 
 When an agent is blocked by a tool, connector, permission, policy check, API limit, repository access problem, or failed GitHub operation, it must not imply that the operation succeeded.
@@ -156,9 +192,10 @@ Use a branch, PR, staged patch, issue, checkpoint or human validation when the w
 - [`COGENTIA.md`](COGENTIA.md) — high-level framework in five distinctive moves.
 - [`research/agent_configuration_layer.md`](research/agent_configuration_layer.md) — AGENTS.md, `.agents/`, and governed operational projections of the corpus.
 - [`research/optimistic_mainline_governance.md`](research/optimistic_mainline_governance.md) — direct agent work on `main` under trace, reversibility and scoped authorization.
+- [`research/agentic_commit_transparency.md`](research/agentic_commit_transparency.md) — mandate, provenance, human review, and reversibility for AI-assisted corpus commits.
 
 ## Minimal prompt to use with an agent
 
 ```text
-Respect my Cogentia methodology: read the nearest repository-local AGENTS.md and the shared cogentia/AGENTS.md before acting; smallest sufficient container; checkpoint before stabilization; opening register for long conversations; distinction between exploration, issue, source document, derived product, and commit. Do not stabilize anything without explicit scoped authorization. When direct commit is authorized, work on the default branch with small reversible commits, readable diffs, validation when available, and a completion report. If a tool, connector, permission, policy check, API limit, repository access problem, or GitHub operation blocks the work, report the blockage honestly and ask whether manual intervention is desired when it could unblock the work. Do not create branches or PRs by default; use them only when risk, collaboration, repository rules or explicit instruction require isolation.
+Respect my Cogentia methodology: read the nearest repository-local AGENTS.md and the shared cogentia/AGENTS.md before acting; smallest sufficient container; checkpoint before stabilization; opening register for long conversations; distinction between exploration, issue, source document, derived product, and commit. Do not stabilize anything without explicit scoped authorization. When direct commit is authorized, work on the default branch with small reversible commits, readable diffs, validation when available, agentic commit transparency when an AI agent contributes, and a completion report. If a tool, connector, permission, policy check, API limit, repository access problem, or GitHub operation blocks the work, report the blockage honestly and ask whether manual intervention is desired when it could unblock the work. Do not create branches or PRs by default; use them only when risk, collaboration, repository rules or explicit instruction require isolation.
 ```
