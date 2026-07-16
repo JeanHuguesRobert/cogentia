@@ -18,11 +18,14 @@ classification_version: '1'
 classification_rule: research-index
 classification_confidence: strong
 author: unknown
+generated_by:
+  - "cogentia.js (research-index refresh)"
+update_policy: UP-GENERATED-REBUILD
 provenance:
-  origin_type: unknown
-  origin_repository: unknown
-  origin_ref: unknown
-  origin_date: unknown
+  origin_type: repository
+  origin_repository: JeanHuguesRobert/cogentia
+  origin_ref: d63a71d
+  origin_date: 2026-07-13
   derived_from: []
 review:
   status: unreviewed

@@ -19,11 +19,14 @@ classification_version: '1'
 classification_rule: concept-index
 classification_confidence: strong
 author: unknown
+generated_by:
+  - "cogentia.js (concept-index refresh)"
+update_policy: UP-GENERATED-REBUILD
 provenance:
-  origin_type: unknown
-  origin_repository: unknown
-  origin_ref: unknown
-  origin_date: unknown
+  origin_type: repository
+  origin_repository: JeanHuguesRobert/cogentia
+  origin_ref: 83b0204
+  origin_date: 2026-06-27
   derived_from: []
 review:
   status: unreviewed
