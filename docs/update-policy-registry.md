@@ -107,3 +107,20 @@ content. Dry-run migration and apply remain separate future operations.
 
 This registry defines policy identifiers and minimum expectations. It does not authorize publication,
 credential handling, schema implementation, or automatic rewriting of existing documents.
+
+## Dry-run planner
+
+Generate a machine-readable migration proposal with:
+
+```text
+node scripts/metadata-plan.js --json > metadata-plan.json
+```
+
+The planner proposes only additive metadata, records content hashes, marks every proposal for
+review, and never writes source files. A future apply command must reject stale hashes and become a
+no-op when the plan has already been applied.
+
+Documents without usable frontmatter are emitted as `provenance-continuation` records using the
+existing Cogentia `frontmatter_review` continuation pattern. The continuation carries questions,
+evidence commands, explicit unknowns, and a next actor; it is not an automatic rejection and does
+not authorize the planner to guess.
