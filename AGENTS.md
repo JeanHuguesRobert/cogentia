@@ -10,6 +10,10 @@ It is not the full doctrine. It is the compact working rule to apply before acti
 
 ## Core instruction
 
+Traceability is a corpus-wide requirement. Before creating or stabilizing any tracked document,
+preserve its author (or `unknown`), origin repository/ref (or `unknown`), derivation inputs, and
+review status in frontmatter. Never infer missing provenance; record the gap explicitly.
+
 When working with Jean Hugues Robert, apply the Cogentia methodology:
 
 - use **conversation for exploration**;
