@@ -24,6 +24,15 @@ let daemonLog = "";
 daemon.stdout.on("data", chunk => { daemonLog += chunk; });
 daemon.stderr.on("data", chunk => { daemonLog += chunk; });
 
+const expectedMcpTools = [
+  "cogentia_search",
+  "cogentia_context_pack",
+  "cogentia_context_pack_batch",
+  "cogentia_get_lines",
+  "cogentia_explain",
+  "cogentia_health",
+];
+
 try {
   await waitForHealth();
   const health = await getJson("/api/context/health");
@@ -85,14 +94,14 @@ try {
     { jsonrpc: "2.0", id: 3, method: "tools/call", params: { name: "cogentia_health", arguments: {} } },
   ]);
   assert.equal(mcp[0].result.serverInfo.name, "cogentia-mcp");
-  assert.equal(mcp[1].result.tools.length, 5);
+  assert.deepEqual(mcp[1].result.tools.map(tool => tool.name), expectedMcpTools);
   assert.equal(mcp[2].result.structuredContent.ok, true);
 
   const httpMcp = await runHttpMcp(base);
   assert.equal(httpMcp.initialize.result.serverInfo.name, "cogentia-mcp");
-  assert.equal(httpMcp.tools.result.tools.length, 5);
+  assert.deepEqual(httpMcp.tools.result.tools.map(tool => tool.name), expectedMcpTools);
   assert.equal(httpMcp.health.result.structuredContent.ok, true);
-  assert.equal(httpMcp.facadeTools.tools.length, 5);
+  assert.deepEqual(httpMcp.facadeTools.tools.map(tool => tool.name), expectedMcpTools);
   assert.equal(httpMcp.guideHealth.service, "fractavolta-guide");
   assert.equal(httpMcp.guideCors, "https://fractavolta.com");
   assert.equal(httpMcp.guideChat.ok, true);
@@ -103,7 +112,7 @@ try {
   for (let request = 0; request < 45; request++) rateStatuses.push(await responseStatus("/api/context/health"));
   assert.ok(rateStatuses.includes(429));
 
-  console.log(JSON.stringify({ ok: true, port, search_results: search.count, pack_hash: firstPack.pack_hash, mcp_tools: 5, http_mcp: "/mcp", guide_chat: httpMcp.guideChat.mode, rate_limit: 429 }, null, 2));
+  console.log(JSON.stringify({ ok: true, port, search_results: search.count, pack_hash: firstPack.pack_hash, mcp_tools: expectedMcpTools.length, http_mcp: "/mcp", guide_chat: httpMcp.guideChat.mode, rate_limit: 429 }, null, 2));
 } finally {
   daemon.kill();
 }
