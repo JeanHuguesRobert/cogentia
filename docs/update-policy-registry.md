@@ -120,6 +120,16 @@ The planner proposes only additive metadata, records content hashes, marks every
 review, and never writes source files. A future apply command must reject stale hashes and become a
 no-op when the plan has already been applied.
 
+The guarded apply command defaults to preview and requires an explicit `--apply` flag to write:
+
+```text
+node scripts/metadata-apply.js --plan metadata-plan.json --json
+node scripts/metadata-apply.js --plan metadata-plan.json --apply --json
+```
+
+It refuses stale hashes, skips continuation records, adds only fields still absent, and is
+idempotent after successful application.
+
 Documents without usable frontmatter are emitted as `provenance-continuation` records using the
 existing Cogentia `frontmatter_review` continuation pattern. The continuation carries questions,
 evidence commands, explicit unknowns, and a next actor; it is not an automatic rejection and does
