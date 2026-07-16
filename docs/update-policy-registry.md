@@ -85,6 +85,15 @@ discover drift -> plan update -> apply narrowly -> validate -> record trace -> r
 Staleness is a visible state, not a reason to invent facts. A maintainer may mark a document
 `under-review`, `deprecated`, or `superseded` while preserving its history.
 
+The current read-only machine report is generated per repository with:
+
+```text
+npm run metadata:audit > metadata-audit.json
+```
+
+The report declares schema `cogentia.metadata-audit.v1`, includes every tracked Markdown/YAML/JSON
+artifact in scope, and is safe to run repeatedly. It is an audit baseline, not an apply operation.
+
 ## Scope
 
 This registry defines policy identifiers and minimum expectations. It does not authorize publication,
