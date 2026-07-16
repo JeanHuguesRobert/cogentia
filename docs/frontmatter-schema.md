@@ -31,6 +31,7 @@ Ce document définit le schéma de métadonnées (frontmatter) utilisé dans le 
 ## Règles générales
 
 - Tous les documents de fond (research, specs, notes importantes) doivent avoir un frontmatter.
+- Every tracked corpus document must carry minimum traceability metadata, regardless of repository or directory. Missing information must be declared explicitly (`unknown`, `unreviewed`, or `[]`), never filled by assumption.
 - Les valeurs par défaut sont à privilégier pour alléger l’écriture.
 - Les synonymes sont tolérés **si et seulement si** une règle d’équivalence est documentée dans [`frontmatter-synonym-mapping.md`](frontmatter-synonym-mapping.md).
 - `privacy` est `public` par défaut. On ne le précise que si on sort de ce régime.
@@ -40,22 +41,22 @@ Ce document définit le schéma de métadonnées (frontmatter) utilisé dans le 
 
 ## Schéma des champs (v0.1)
 
-### 1. Core (recommandés / obligatoires sur les documents importants)
+### 1. Core (obligatoires sur tout document suivi)
 
 | Champ                | Type                  | Défaut                              | Obligatoire ? | Notes |
 |----------------------|-----------------------|-------------------------------------|---------------|-------|
 | `title`              | string                | —                                   | Oui           | — |
 | `subtitle`           | string                | —                                   | Non           | — |
 | `description`        | string                | —                                   | Recommandé    | Résumé court |
-| `author`             | string                | —                                        | Non      | À utiliser quand il y a un auteur humain (Droit d’Auteur) |
+| `author`             | string                | —                                        | Oui      | Auteur humain connu, sinon `unknown` |
 | `creator`            | string                | "Jean Hugues Noël Robert, baron Mariani" | Non      | À utiliser quand la production est majoritairement ou entièrement mécanique. Règle d’équivalence : `author` et `creator` ne sont pas automatiquement équivalents. |
 | `affiliation`        | string                | "Institut Mariani / C.O.R.S.I.C.A., 1 cours Paoli, F-20250 Corte, Corsica" | Oui | — |
-| `date`               | string (ISO 8601)     | —                                   | Recommandé    | Date sémantique principale du document |
+| `date`               | string (ISO 8601)     | —                                   | Oui           | Date sémantique principale, sinon `unknown` |
 | `last_modified_at`   | string (ISO 8601)     | —                                   | Non           | Date de dernière modification réelle |
 | `license`            | string                | "CC BY-SA 4.0"                      | Oui           | — |
 | `language`           | string                | "fr"                                | Oui           | — |
 
-### 2. Provenance & Traçabilité (fortement recommandés)
+### 2. Provenance & Traçabilité (obligatoires sur tout document suivi)
 
 | Champ                    | Type                    | Défaut | Notes |
 |--------------------------|-------------------------|--------|-------|
@@ -69,6 +70,26 @@ Ce document définit le schéma de métadonnées (frontmatter) utilisé dans le 
 | `reviewed_by`            | array                   | —      | — |
 | `human_arbitration_by`   | string                  | —      | Personne ayant fait l’arbitrage final |
 | `version_history`        | array                   | —      | — |
+
+### 2 bis. Minimum provenance (required)
+
+Each document must also declare a `provenance` block and a `review` block:
+
+```yaml
+provenance:
+  origin_type: "repository" # repository, external-repository, generated, conversation, unknown
+  origin_repository: "owner/repository" # or unknown
+  origin_ref: "<immutable commit, tag, or URL>" # or unknown
+  origin_date: "YYYY-MM-DD" # or unknown
+  derived_from: []
+review:
+  status: "unreviewed"
+  reviewed_by: []
+```
+
+`origin_ref` must be immutable or externally verifiable. A current branch name alone is not
+sufficient. For generated documents, also record `generated_by` and the input documents. For
+historical or unattributed material, use `unknown` explicitly and preserve the uncertainty.
 
 ### 3. Provenance documentaire
 
