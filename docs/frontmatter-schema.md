@@ -74,6 +74,7 @@ This document defines the metadata schema (frontmatter) used across the multi-re
 | `reviewed_by`            | array                   | —       | — |
 | `human_arbitration_by`   | string                  | —       | Person who made the final arbitration |
 | `version_history`        | array                   | —       | — |
+| `update_policy`          | string                  | `UP-DEFAULT-REVIEWED` | Identifier from the [update-policy registry](update-policy-registry.md) |
 
 ### 2 bis. Minimum Provenance (required)
 

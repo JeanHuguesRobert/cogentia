@@ -14,6 +14,13 @@ Traceability is a corpus-wide requirement. Before creating or stabilizing any tr
 preserve its author (or `unknown`), origin repository/ref (or `unknown`), derivation inputs, and
 review status in frontmatter. Never infer missing provenance; record the gap explicitly.
 
+Tracked documents should declare an `update_policy` from the [Corpus Update Policy Registry](docs/update-policy-registry.md).
+Updates must preserve provenance and leave an inspectable trace of what changed, why, and what was checked.
+
+For infrastructure claims, consult [Operium](https://github.com/JeanHuguesRobert/operium): Cogentia
+defines mandate and traceability invariants; Operium provides service-health, deployment, and
+recovery evidence. Never infer operational availability from hidden configuration or a valid mandate alone.
+
 When working with Jean Hugues Robert, apply the Cogentia methodology:
 
 - use **conversation for exploration**;
