@@ -1,3 +1,23 @@
+---
+title: Agent Gateway invocation runbook
+author: unknown
+date: '2026-07-13'
+document_role: source
+document_kind: documentation
+visibility: public
+lifecycle_state: working
+update_policy: UP-DEFAULT-REVIEWED
+provenance:
+  origin_type: repository
+  origin_repository: JeanHuguesRobert/cogentia
+  origin_ref: 132af2f
+  origin_date: '2026-07-13'
+  derived_from: []
+review:
+  status: unreviewed
+  reviewed_by: []
+---
+
 # Agent Gateway invocation runbook
 
 This document explains how a human operator or an agent can invoke the

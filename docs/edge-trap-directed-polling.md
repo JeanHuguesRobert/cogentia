@@ -1,3 +1,23 @@
+---
+title: Edge trap-directed polling (SNMP pattern)
+author: unknown
+date: '2026-07-12'
+document_role: source
+document_kind: documentation
+visibility: public
+lifecycle_state: working
+update_policy: UP-DEFAULT-REVIEWED
+provenance:
+  origin_type: repository
+  origin_repository: JeanHuguesRobert/cogentia
+  origin_ref: 540d4d0
+  origin_date: '2026-07-12'
+  derived_from: []
+review:
+  status: unreviewed
+  reviewed_by: []
+---
+
 # Edge trap-directed polling (SNMP pattern)
 
 FractaNet edge appliances (e.g. `rpi3-view`) use the same pattern SNMP managers and agents settled on decades ago:

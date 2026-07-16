@@ -1,3 +1,23 @@
+---
+title: TODO — cogentia
+author: unknown
+date: '2026-05-26'
+document_role: source
+document_kind: documentation
+visibility: public
+lifecycle_state: working
+update_policy: UP-DEFAULT-REVIEWED
+provenance:
+  origin_type: repository
+  origin_repository: JeanHuguesRobert/cogentia
+  origin_ref: 1b7603e
+  origin_date: '2026-05-26'
+  derived_from: []
+review:
+  status: unreviewed
+  reviewed_by: []
+---
+
 # TODO — cogentia
 
 Repo-local engineering follow-ups. Network-level / cross-repo work lives in `JeanHuguesRobert/TODO.md`.

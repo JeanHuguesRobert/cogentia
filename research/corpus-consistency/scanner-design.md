@@ -1,3 +1,23 @@
+---
+title: Corpus Consistency Scanner — SQLite-Based Convergent Algorithm (Historical Design)
+author: unknown
+date: '2026-07-12'
+document_role: source
+document_kind: documentation
+visibility: public
+lifecycle_state: working
+update_policy: UP-DEFAULT-REVIEWED
+provenance:
+  origin_type: repository
+  origin_repository: JeanHuguesRobert/cogentia
+  origin_ref: '18e7637'
+  origin_date: '2026-07-12'
+  derived_from: []
+review:
+  status: unreviewed
+  reviewed_by: []
+---
+
 # Corpus Consistency Scanner — SQLite-Based Convergent Algorithm (Historical Design)
 
 > **Status: superseded design exploration.** This proposal informed later consistency work but is

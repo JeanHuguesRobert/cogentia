@@ -17,6 +17,7 @@
     "metadata:maintain": "node scripts/metadata-maintain.js",
     "metadata:plan": "node scripts/metadata-plan.js",
     "metadata:apply": "node scripts/metadata-apply.js",
+    "metadata:resolve": "node scripts/metadata-resolve.js",
     "test:context": "node scripts/test-context-gateway.js",
     "test:guide": "node scripts/test-guide-http.js",
     "test:retrieval-inox": "node scripts/test-retrieval-inox-session.js",

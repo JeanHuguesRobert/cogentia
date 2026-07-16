@@ -1,3 +1,23 @@
+---
+title: Cogentia Trace
+author: unknown
+date: '2026-06-03'
+document_role: source
+document_kind: documentation
+visibility: public
+lifecycle_state: working
+update_policy: UP-DEFAULT-REVIEWED
+provenance:
+  origin_type: repository
+  origin_repository: JeanHuguesRobert/cogentia
+  origin_ref: bea299f
+  origin_date: '2026-06-03'
+  derived_from: []
+review:
+  status: unreviewed
+  reviewed_by: []
+---
+
 # Cogentia Trace
 
 **Cogentia Trace** is a local-first layer for transforming personal platform exports into normalized, classifiable and continuable traces.

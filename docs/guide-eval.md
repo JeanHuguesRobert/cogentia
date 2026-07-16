@@ -1,3 +1,23 @@
+---
+title: FractaVolta Guide Eval
+author: unknown
+date: '2026-07-02'
+document_role: source
+document_kind: documentation
+visibility: public
+lifecycle_state: working
+update_policy: UP-DEFAULT-REVIEWED
+provenance:
+  origin_type: repository
+  origin_repository: JeanHuguesRobert/cogentia
+  origin_ref: 44915c4
+  origin_date: '2026-07-02'
+  derived_from: []
+review:
+  status: unreviewed
+  reviewed_by: []
+---
+
 # FractaVolta Guide Eval
 
 `scripts/guide-eval.js` captures comparable Guide answers so model changes can

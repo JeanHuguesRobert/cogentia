@@ -1,3 +1,23 @@
+---
+title: Cogentia Context Gateway
+author: unknown
+date: '2026-07-01'
+document_role: source
+document_kind: documentation
+visibility: public
+lifecycle_state: working
+update_policy: UP-DEFAULT-REVIEWED
+provenance:
+  origin_type: repository
+  origin_repository: JeanHuguesRobert/cogentia
+  origin_ref: f71c895
+  origin_date: '2026-07-01'
+  derived_from: []
+review:
+  status: unreviewed
+  reviewed_by: []
+---
+
 # Cogentia Context Gateway
 
 Status: Phase 1, Markdown RAG public gateway.

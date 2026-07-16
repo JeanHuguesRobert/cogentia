@@ -1,3 +1,23 @@
+---
+title: Generic HTML Adapter
+author: unknown
+date: '2026-06-15'
+document_role: source
+document_kind: documentation
+visibility: public
+lifecycle_state: working
+update_policy: UP-DEFAULT-REVIEWED
+provenance:
+  origin_type: repository
+  origin_repository: JeanHuguesRobert/cogentia
+  origin_ref: 84a7abb
+  origin_date: '2026-06-15'
+  derived_from: []
+review:
+  status: unreviewed
+  reviewed_by: []
+---
+
 # Generic HTML Adapter
 
 ## Purpose

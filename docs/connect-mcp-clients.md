@@ -1,3 +1,23 @@
+---
+title: Connect MCP clients to Cogentia
+author: unknown
+date: '2026-06-30'
+document_role: source
+document_kind: documentation
+visibility: public
+lifecycle_state: working
+update_policy: UP-DEFAULT-REVIEWED
+provenance:
+  origin_type: repository
+  origin_repository: JeanHuguesRobert/cogentia
+  origin_ref: b7cdf97
+  origin_date: '2026-06-30'
+  derived_from: []
+review:
+  status: unreviewed
+  reviewed_by: []
+---
+
 # Connect MCP clients to Cogentia
 
 Cogentia exposes the corpus through a read-only MCP surface. The MCP surface is

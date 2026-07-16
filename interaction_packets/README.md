@@ -1,3 +1,23 @@
+---
+title: Interaction Packets
+author: unknown
+date: '2026-05-29'
+document_role: source
+document_kind: documentation
+visibility: public
+lifecycle_state: working
+update_policy: UP-DEFAULT-REVIEWED
+provenance:
+  origin_type: repository
+  origin_repository: JeanHuguesRobert/cogentia
+  origin_ref: 3d60637
+  origin_date: '2026-05-29'
+  derived_from: []
+review:
+  status: unreviewed
+  reviewed_by: []
+---
+
 # Interaction Packets
 
 Interaction Packets is a minimal Cogentia-compatible traceability pipeline for public, associative, institutional and personal interactions.

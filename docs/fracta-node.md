@@ -1,3 +1,23 @@
+---
+title: 'Cogentia/Fractanet node: fracta'
+author: unknown
+date: '2026-07-02'
+document_role: source
+document_kind: documentation
+visibility: public
+lifecycle_state: working
+update_policy: UP-DEFAULT-REVIEWED
+provenance:
+  origin_type: repository
+  origin_repository: JeanHuguesRobert/cogentia
+  origin_ref: 7d2b340
+  origin_date: '2026-07-02'
+  derived_from: []
+review:
+  status: unreviewed
+  reviewed_by: []
+---
+
 # Cogentia/Fractanet node: fracta
 
 This document is operational guidance for running a local Cogentia/Fractanet node on the Oracle VPS named `fracta`.
