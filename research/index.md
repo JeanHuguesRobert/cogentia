@@ -30,7 +30,6 @@ provenance:
 review:
   status: unreviewed
   reviewed_by: []
-update_policy: UP-DEFAULT-REVIEWED
 ---
 <!-- BEGIN_AUTO: trails -->
 
