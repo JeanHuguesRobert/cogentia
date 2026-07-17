@@ -45,19 +45,45 @@ const blackboard = createBlackboardStore();
 const port = boundedInteger(process.env.PORT || process.env.COGENTIA_MCP_PORT, 8791, 1, 65535);
 const host = process.env.COGENTIA_MCP_HOST || "0.0.0.0";
 const guideAgentGateway = process.env.COGENTIA_GUIDE_AGENT_GATEWAY === "1";
+let guideAgentSessionId = String(process.env.COGENTIA_GUIDE_AGENT_SESSION_ID || "").trim();
+let guideAgentSessionInit = null;
 
 async function guideSynthesisPost(payload) {
   if (!guideAgentGateway) return daemonPost("/v1/chat/completions", payload);
+  if (!guideAgentSessionId && guideAgentSessionInit) await guideAgentSessionInit;
   const client = createAgentGatewayClient({
     endpoint: process.env.COGENTIA_GUIDE_AGENT_GATEWAY_ENDPOINT || "http://127.0.0.1:8793",
     token: process.env.AGENT_GATEWAY_INVOKE_TOKEN || process.env.AGENT_GATEWAY_TOKEN || "",
     model: process.env.COGENTIA_GUIDE_AGENT_MODEL || "codex",
     timeoutMs: Number(process.env.COGENTIA_GUIDE_AGENT_TIMEOUT_MS || 120000),
   });
+  const request = async () => {
+    const metadata = {
+      ...(payload.metadata || {}),
+      adapter_mode: "repl",
+      session_id: guideAgentSessionId || undefined,
+      agent_session: "fractavolta-public-guide",
+    };
+    const result = await client.chatCompletion({
+      ...payload,
+      model: process.env.COGENTIA_GUIDE_AGENT_MODEL || "codex",
+      metadata,
+    });
+    const sessionId = String(result.body?.metadata?.session_id || "").trim();
+    if (sessionId) guideAgentSessionId = sessionId;
+    return result;
+  };
   try {
-    const result = await client.chatCompletion({ ...payload, model: process.env.COGENTIA_GUIDE_AGENT_MODEL || "codex" });
+    if (!guideAgentSessionId) {
+      guideAgentSessionInit = request();
+      const result = await guideAgentSessionInit;
+      guideAgentSessionInit = null;
+      return { ok: true, status: 200, body: result.body };
+    }
+    const result = await request();
     return { ok: true, status: 200, body: result.body };
   } catch (error) {
+    guideAgentSessionInit = null;
     return { ok: false, status: error.status || 502, error: error.code || "guide_agent_gateway_failed", body: error.body || null };
   }
 }
