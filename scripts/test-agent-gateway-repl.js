@@ -96,15 +96,16 @@ try {
     messages: [{ role: "user", content: "hold repl" }],
   });
   await new Promise(resolve => setTimeout(resolve, 200));
-  const busy = await postJson("/v1/chat/completions", {
+  const queued = postJson("/v1/chat/completions", {
     model: "grok-build",
     stream: false,
     metadata: { session_id: holdSessionId },
     messages: [{ role: "user", content: "blocked" }],
   });
   await slow;
-  assert.equal(busy.status, 409);
-  assert.equal(busy.body.error.code, "session_busy");
+  const queuedResult = await queued;
+  assert.equal(queuedResult.status, 200);
+  assert.match(queuedResult.body.choices?.[0]?.message?.content || "", /repl-mock/);
 
   const unknown = await postJson("/v1/chat/completions", {
     model: "grok-build",
@@ -122,7 +123,7 @@ try {
     implicit_session_reuse: true,
     timing_headers: true,
     stream_repl: streamText.slice(0, 32),
-    session_busy_409: true,
+    session_queue_fifo: true,
   }, null, 2));
 } finally {
   daemon.kill();

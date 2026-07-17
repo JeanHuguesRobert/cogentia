@@ -12,6 +12,7 @@ export class ReplSessionRegistry {
   constructor(options = {}) {
     this.ttlMs = options.ttlMs ?? DEFAULT_TTL_MS;
     this.maxSessions = options.maxSessions ?? 4;
+    this.maxPendingPerSession = options.maxPendingPerSession ?? 16;
     /** @type {Map<string, object>} */
     this.sessions = new Map();
   }
@@ -100,6 +101,7 @@ export class ReplSessionRegistry {
         needsBootstrap: true,
         buffer: "",
         pendingWaiters: [],
+        pendingQueue: [],
         dataDisposable: null,
       };
       session.handle = await spawn(session);
@@ -110,11 +112,24 @@ export class ReplSessionRegistry {
     }
 
     if (session.busy) {
-      throw {
-        code: "session_busy",
-        message: `REPL session busy: ${session.id}`,
-        status: 409,
-      };
+      if (!requestedId) {
+        throw {
+          code: "session_busy",
+          message: `REPL session busy: ${session.id}`,
+          status: 409,
+        };
+      }
+      if (session.pendingQueue.length >= this.maxPendingPerSession) {
+        throw {
+          code: "session_queue_full",
+          message: `REPL session queue full: ${session.id}`,
+          status: 429,
+        };
+      }
+      await new Promise((resolve, reject) => {
+        session.pendingQueue.push({ resolve, reject });
+      });
+      return this.acquireSession({ sessionId, adapter, model, turn, ctx, spawnRepl, spawnPty });
     }
 
     if (session.adapterId !== adapter.id) {
@@ -154,6 +169,8 @@ export class ReplSessionRegistry {
     if (!session) return;
     session.busy = false;
     session.lastActivity = Date.now();
+    const next = session.pendingQueue.shift();
+    if (next) next.resolve();
   }
 
   touch(sessionId) {
