@@ -1047,6 +1047,7 @@ function cmdConsolidate() {
   const auto_sections = verifyAutoSections(ctx);
   const trail_lint = lintTrails(ctx, inventory, PUBLIC_VIEW);
   const metadata_audit = runMetadataAudit();
+  const continuation_index = runContinuationIndex();
   const issues = [];
   const noiseSummary = countBy(worktree.repos.flatMap(r => r.entries), entry => entry.classification);
   const substantiveDirty = (noiseSummary.modified || 0)
@@ -1062,6 +1063,7 @@ function cmdConsolidate() {
   if (auto_sections.issues.length) issues.push(`${auto_sections.issues.length} auto-section safety issue(s)`);
   if (trail_lint.issues.length) issues.push(`${trail_lint.issues.length} trail lint issue(s)`);
   if (metadata_audit.invalid > 0) issues.push(`${metadata_audit.invalid} invalid metadata artifact(s)`);
+  if (continuation_index.blocked > 0) issues.push(`${continuation_index.blocked} continuation index repository(ies) blocked`);
   if (substantiveDirty) issues.push(`${substantiveDirty} substantive worktree change(s)`);
   if (noiseSummary.line_endings_only) issues.push(`${noiseSummary.line_endings_only} line-ending-only worktree change(s)`);
   for (const repo of git) {
@@ -1085,6 +1087,7 @@ function cmdConsolidate() {
     auto_sections,
     trail_lint,
     metadata_audit,
+    continuation_index,
     noise_summary: noiseSummary,
   };
   if (JSON_MODE) {
@@ -1104,6 +1107,17 @@ function runMetadataAudit() {
     return { schema: report.schema, read_only: true, scanned: report.totals?.scanned || 0, complete: report.totals?.complete || 0, needs_review: report.totals?.needs_review || 0, invalid };
   } catch (error) {
     return { schema: "cogentia.metadata-audit.v1", read_only: true, scanned: 0, complete: 0, needs_review: 0, invalid: 1, error: error.message };
+  }
+}
+
+function runContinuationIndex() {
+  try {
+    const repoRoot = process.cwd();
+    const raw = execFileSync(process.execPath, [path.join(repoRoot, "scripts", "corpus-continuation-index.js")], { cwd: repoRoot, encoding: "utf8" });
+    const report = JSON.parse(raw);
+    return { schema: report.schema, read_only: true, continuations: report.totals?.continuations || 0, entry_documents: report.totals?.entry_documents || 0, blocked: report.totals?.blocked || 0 };
+  } catch (error) {
+    return { schema: "cogentia.corpus-continuation-index.v1", read_only: true, continuations: 0, entry_documents: 0, blocked: 1, error: error.message };
   }
 }
 
@@ -9867,6 +9881,7 @@ function formatConsolidate(result) {
   lines.push(`Gaps: ${result.gaps.length}`);
   lines.push(`Privacy leaks: ${result.privacy.leaks.length}`);
   lines.push(`Active continuations: ${result.continuations.length}`);
+  lines.push(`Continuation index: ${result.continuation_index.continuations} pending; ${result.continuation_index.entry_documents} entry document(s)`);
   lines.push(`Auto-section issues: ${result.auto_sections.issues.length}`);
   lines.push(`Trail lint issues: ${result.trail_lint.issues.length}`);
   lines.push(`Metadata audit: ${result.metadata_audit.complete}/${result.metadata_audit.scanned} complete; ${result.metadata_audit.needs_review} need review`);
