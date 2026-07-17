@@ -11,6 +11,10 @@ const apply = args.has("--apply");
 const json = args.has("--json");
 const matchArg = process.argv.find((arg) => arg.startsWith("--match="));
 const match = matchArg ? matchArg.slice(8).toLowerCase() : null;
+const roleArg = process.argv.find((arg) => arg.startsWith("--role="));
+const role = roleArg ? roleArg.slice(7) : "source";
+const policyArg = process.argv.find((arg) => arg.startsWith("--policy="));
+const policy = policyArg ? policyArg.slice(9) : "UP-DEFAULT-REVIEWED";
 const sha = (value) => crypto.createHash("sha256").update(value).digest("hex");
 const files = execFileSync("git", ["ls-files"], { cwd: root, encoding: "utf8" })
   .split(/\r?\n/).filter((file) => /\.md(?:own)?$/i.test(file));
@@ -43,8 +47,8 @@ for (const file of files) {
   const o = origin(file);
   const data = {
     title: title(before, file), author: "unknown", date: o.date,
-    document_role: "source", document_kind: "documentation", visibility: "public",
-    lifecycle_state: "working", update_policy: "UP-DEFAULT-REVIEWED",
+    document_role: role, document_kind: "documentation", visibility: "public",
+    lifecycle_state: "working", update_policy: policy,
     provenance: { origin_type: "repository", origin_repository: repository, origin_ref: o.ref, origin_date: o.date, derived_from: [] },
     review: { status: "unreviewed", reviewed_by: [] },
   };
