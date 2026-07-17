@@ -21,6 +21,13 @@ function origin(file) {
     return { ref: ref || "unknown", date: date || "unknown" };
   } catch { return { ref: "unknown", date: "unknown" }; }
 }
+function repositoryIdentity() {
+  try {
+    const remote = execFileSync("git", ["config", "--get", "remote.origin.url"], { cwd: root, encoding: "utf8" }).trim();
+    return remote.replace(/^https?:\/\/github.com\//, "").replace(/^git@github.com:/, "").replace(/\.git$/, "");
+  } catch { return "unknown"; }
+}
+const repository = repositoryIdentity();
 
 function title(text, file) {
   const heading = text.match(/^#\s+(.+)$/m);
@@ -38,7 +45,7 @@ for (const file of files) {
     title: title(before, file), author: "unknown", date: o.date,
     document_role: "source", document_kind: "documentation", visibility: "public",
     lifecycle_state: "working", update_policy: "UP-DEFAULT-REVIEWED",
-    provenance: { origin_type: "repository", origin_repository: "JeanHuguesRobert/cogentia", origin_ref: o.ref, origin_date: o.date, derived_from: [] },
+    provenance: { origin_type: "repository", origin_repository: repository, origin_ref: o.ref, origin_date: o.date, derived_from: [] },
     review: { status: "unreviewed", reviewed_by: [] },
   };
   const after = `---\n${yaml.dump(data, { lineWidth: -1, noRefs: true })}---\n\n${before}`;
