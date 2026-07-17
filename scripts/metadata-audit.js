@@ -39,6 +39,11 @@ function audit(file) {
       result.metadata = "present";
       result.missing_fields = required.filter(key => parsed.data[key] === undefined);
       if (result.missing_fields.length) result.issues.push("missing-required-fields");
+      if (parsed.data.document_role === "adapted") {
+        const adaptationFields = ["derivation_mode", "adaptation_context", "derived_from"];
+        result.missing_adaptation_fields = adaptationFields.filter(key => parsed.data[key] === undefined);
+        if (result.missing_adaptation_fields.length) result.issues.push("missing-adaptation-trace");
+      }
       result.update_policy = parsed.data.update_policy || "UP-DEFAULT-REVIEWED";
     }
   } else {
