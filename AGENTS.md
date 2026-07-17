@@ -13,6 +13,7 @@ review:
   status: unreviewed
   reviewed_by: []
 update_policy: UP-DEFAULT-REVIEWED
+title: AGENTS.md — Cogentia methodology shortcut
 ---
 # AGENTS.md — Cogentia methodology shortcut
 

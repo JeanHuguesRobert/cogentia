@@ -34,6 +34,7 @@ review:
   status: unreviewed
   reviewed_by: []
 update_policy: UP-DEFAULT-REVIEWED
+title: Fictitious Data Export — Example Social — 2026-06-11
 ---
 
 # Fictitious Data Export — Example Social — 2026-06-11

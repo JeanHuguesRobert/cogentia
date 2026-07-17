@@ -44,6 +44,7 @@ review:
   status: unreviewed
   reviewed_by: []
 update_policy: UP-DEFAULT-REVIEWED
+title: Media Reference — Provider — YYYY-MM-DD — 000001
 ---
 
 # Media Reference — Provider — YYYY-MM-DD — 000001

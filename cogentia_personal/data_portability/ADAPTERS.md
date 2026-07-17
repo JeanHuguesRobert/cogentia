@@ -19,6 +19,7 @@ review:
   status: unreviewed
   reviewed_by: []
 update_policy: UP-DEFAULT-REVIEWED
+title: Cogentia Personal Data Portability — Provider Adapters
 ---
 
 # Cogentia Personal Data Portability — Provider Adapters

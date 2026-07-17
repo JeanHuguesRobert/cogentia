@@ -19,6 +19,7 @@ review:
   status: unreviewed
   reviewed_by: []
 update_policy: UP-DEFAULT-REVIEWED
+title: Intent Kernel Pattern
 ---
 
 # Intent Kernel Pattern

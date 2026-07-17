@@ -31,6 +31,8 @@ function plan(file) {
     next_actor: "human-or-authorized-agent"
   };
   const changes = {};
+  const heading = before.match(/^#\s+(.+)$/m);
+  if (parsed.data.title === undefined && heading) changes.title = heading[1].trim();
   if (parsed.data.author === undefined) changes.author = "unknown";
   if (parsed.data.date === undefined) changes.date = "unknown";
   if (parsed.data.provenance === undefined) changes.provenance = { origin_type: "unknown", origin_repository: "unknown", origin_ref: "unknown", origin_date: "unknown", derived_from: [] };
