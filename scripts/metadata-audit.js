@@ -44,6 +44,7 @@ function audit(file) {
         result.missing_adaptation_fields = adaptationFields.filter(key => parsed.data[key] === undefined);
         if (result.missing_adaptation_fields.length) result.issues.push("missing-adaptation-trace");
       }
+      if (parsed.data.adapted_products !== undefined && !Array.isArray(parsed.data.adapted_products)) result.issues.push("invalid-adapted-products");
       result.update_policy = parsed.data.update_policy || "UP-DEFAULT-REVIEWED";
     }
   } else {
