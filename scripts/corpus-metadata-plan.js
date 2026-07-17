@@ -8,6 +8,7 @@ import { execFileSync } from "node:child_process";
 const here = path.dirname(new URL(import.meta.url).pathname).replace(/^\/[A-Za-z]:/, (m) => m.slice(1));
 const planner = path.join(here, "metadata-plan.js");
 const arg = process.argv.find((value) => value.startsWith("--registry="));
+const entriesOnly = process.argv.includes("--entries");
 const registryPath = path.resolve(arg ? arg.slice(11) : (process.env.COGENTIA_REGISTRY || "../JeanHuguesRobert/.cogentia.json"));
 const registry = JSON.parse(fs.readFileSync(registryPath, "utf8"));
 const root = path.dirname(registryPath);
@@ -15,7 +16,8 @@ const repositories = (registry.repos || []).map((repo) => {
   const cwd = path.resolve(root, repo.path);
   try {
     const plan = JSON.parse(execFileSync(process.execPath, [planner, "--json"], { cwd, encoding: "utf8" }));
-    return { name: repo.name, path: repo.path, kind: repo.kind, state: "planned", totals: plan.totals, plans: plan.plans };
+    const plans = entriesOnly ? plan.plans.filter((item) => ["readme.md", "index.md", "concepts.md"].includes(path.basename(item.path).toLowerCase())) : plan.plans;
+    return { name: repo.name, path: repo.path, kind: repo.kind, state: "planned", totals: { plans: plans.length, safe_metadata_plans: plans.filter((item) => item.action === "add-safe-metadata").length, provenance_continuations: plans.filter((item) => item.action === "provenance-continuation").length }, plans };
   } catch (error) {
     return { name: repo.name, path: repo.path, kind: repo.kind, state: "blocked", error: error.message };
   }
