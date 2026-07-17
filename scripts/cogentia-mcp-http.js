@@ -26,6 +26,7 @@ import {
   parseActionRouteBody,
   routeActionThroughGateway,
 } from "./lib/agent-gateway-route.js";
+import { createAgentGatewayClient } from "./lib/agent-gateway-client.js";
 import { handleOpsNodeProxyRequest } from "./lib/ona-proxy.js";
 import { handleEdgeTrapPost, handleEdgeTrapsGet } from "./lib/edge-trap-ops.js";
 
@@ -43,6 +44,23 @@ const core = createMcpCore();
 const blackboard = createBlackboardStore();
 const port = boundedInteger(process.env.PORT || process.env.COGENTIA_MCP_PORT, 8791, 1, 65535);
 const host = process.env.COGENTIA_MCP_HOST || "0.0.0.0";
+const guideAgentGateway = process.env.COGENTIA_GUIDE_AGENT_GATEWAY === "1";
+
+async function guideSynthesisPost(payload) {
+  if (!guideAgentGateway) return daemonPost("/v1/chat/completions", payload);
+  const client = createAgentGatewayClient({
+    endpoint: process.env.COGENTIA_GUIDE_AGENT_GATEWAY_ENDPOINT || "http://127.0.0.1:8793",
+    token: process.env.AGENT_GATEWAY_INVOKE_TOKEN || process.env.AGENT_GATEWAY_TOKEN || "",
+    model: process.env.COGENTIA_GUIDE_AGENT_MODEL || "codex",
+    timeoutMs: Number(process.env.COGENTIA_GUIDE_AGENT_TIMEOUT_MS || 120000),
+  });
+  try {
+    const result = await client.chatCompletion({ ...payload, model: process.env.COGENTIA_GUIDE_AGENT_MODEL || "codex" });
+    return { ok: true, status: 200, body: result.body };
+  } catch (error) {
+    return { ok: false, status: error.status || 502, error: error.code || "guide_agent_gateway_failed", body: error.body || null };
+  }
+}
 const guideLimit = boundedInteger(process.env.COGENTIA_GUIDE_LIMIT, 8, 1, 12);
 const guideBudget = boundedInteger(process.env.COGENTIA_GUIDE_BUDGET, 14000, 256, 30000);
 const guideQueryLimit = boundedInteger(process.env.COGENTIA_GUIDE_QUERY_LIMIT, 6, 1, 10);
@@ -449,7 +467,7 @@ async function handleGuideChat(req, res) {
     },
   };
 
-  const routed = await daemonPost("/v1/chat/completions", chatPayload);
+  const routed = await guideSynthesisPost(chatPayload);
   if (routed.ok) {
     return sendJson(res, 200, guideChatResponse(question, activeLocale, routed.body, retrieval, web));
   }
@@ -527,7 +545,7 @@ async function handleGuideChatStream(res, question, locale, history = [], payloa
       },
     };
 
-    const routed = await daemonPost("/v1/chat/completions", chatPayload);
+    const routed = await guideSynthesisPost(chatPayload);
     if (routed.ok) {
       emit("guide_answer", guideChatResponse(question, locale, routed.body, retrieval, web));
     } else {
