@@ -7,10 +7,12 @@ generated_by: cogentia.js embeddings operium-sync
 health:
   score: 2
   status: fragile
-  reasons: - "Faible couverture: 26.7%"
-  - Backup local disponible en fallback
-  - Quota gratuit suffisant disponible
-  next_actions: - Prioriser l'indexation des chunks restants
+  reasons:
+    - "Faible couverture: 26.7%"
+    - "Backup local disponible en fallback"
+    - "Quota gratuit suffisant disponible"
+  next_actions:
+    - "Prioriser l'indexation des chunks restants"
 metrics:
   total_chunks: 3254
   indexed_chunks: 869
@@ -20,39 +22,36 @@ metrics:
   total_characters: 1234567
   total_tokens: 352734
   avg_tokens_per_chunk: 108
-  by_repo: -
-    repo: cogentia
-    total_chunks: 3254
-    indexed_chunks: 869
-    unindexed_chunks: 2385
-    coverage_percent: 26.7
-    total_characters: 1234567
-    total_tokens: 352734
+  by_repo:
+    - repo: cogentia
+      total_chunks: 3254
+      indexed_chunks: 869
+      unindexed_chunks: 2385
+      coverage_percent: 26.7
+      total_characters: 1234567
+      total_tokens: 352734
 active_model: none
 model_dimensions: 0
 reconstruction_cost:
   chunks_to_recreate: 3254
   estimated_tokens: 352734
-  by_model: -
-    model: text-embedding-3-large
-    dimensions: 3072
-    cost: 0.05
-    time_estimate: 55.0 heures
-  -
-    model: text-embedding-3-small
-    dimensions: 1536
-    cost: 0.01
-    time_estimate: 55.0 heures
-  -
-    model: nomic-embed-text-v1.5
-    dimensions: 768
-    cost: 0.00
-    time_estimate: 55.0 heures
-  -
-    model: mxbai-embed-large
-    dimensions: 1024
-    cost: 0.00
-    time_estimate: 55.0 heures
+  by_model:
+    - model: text-embedding-3-large
+      dimensions: 3072
+      cost: 0.05
+      time_estimate: "55.0 heures"
+    - model: text-embedding-3-small
+      dimensions: 1536
+      cost: 0.01
+      time_estimate: "55.0 heures"
+    - model: nomic-embed-text-v1.5
+      dimensions: 768
+      cost: 0.00
+      time_estimate: "55.0 heures"
+    - model: mxbai-embed-large
+      dimensions: 1024
+      cost: 0.00
+      time_estimate: "55.0 heures"
   current_cache_value: 0.01
 rate_limits: []
 predictions:
