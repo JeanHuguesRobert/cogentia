@@ -26,7 +26,23 @@ const results = repos.map((repo) => {
       stdio: ["ignore", "pipe", "pipe"],
     });
     const audit = JSON.parse(output);
-    return { name: repo.name, path: repo.path, kind: repo.kind, state: "audited", audit };
+    const needsReview = audit.artifacts.filter((artifact) => artifact.state === "needs-review");
+    const ranked = needsReview.map((artifact) => {
+      const basename = path.basename(artifact.path).toLowerCase();
+      const entry = ["readme.md", "index.md", "concepts.md"].includes(basename);
+      const structural = artifact.issues.includes("invalid-frontmatter") || artifact.issues.includes("invalid-structured-data");
+      const score = (repo.navigation?.read_priority || 99) * 100 + (entry ? 0 : 20) + (structural ? 0 : 10);
+      return { path: artifact.path, issues: artifact.issues, score };
+    }).sort((a, b) => a.score - b.score || a.path.localeCompare(b.path));
+    return {
+      name: repo.name,
+      path: repo.path,
+      kind: repo.kind,
+      read_priority: repo.navigation?.read_priority ?? null,
+      state: "audited",
+      audit,
+      priority: ranked,
+    };
   } catch (error) {
     return {
       name: repo.name,
@@ -49,11 +65,16 @@ const totals = results.reduce((acc, result) => {
   return acc;
 }, { repositories: 0, audited: 0, blocked: 0, scanned: 0, complete: 0, needs_review: 0 });
 
+const priority = results.flatMap((result) => result.state === "audited"
+  ? result.priority.map((item) => ({ repository: result.name, kind: result.kind, read_priority: result.read_priority, ...item }))
+  : []).sort((a, b) => a.score - b.score || a.repository.localeCompare(b.repository) || a.path.localeCompare(b.path));
+
 console.log(JSON.stringify({
   schema: "cogentia.corpus-metadata-audit.v1",
   generated_at: new Date().toISOString(),
   registry: registryPath.replaceAll("\\", "/"),
   read_only: true,
   totals,
+  priority,
   repositories: results,
 }, null, 2));
