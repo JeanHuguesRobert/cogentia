@@ -42,7 +42,7 @@ update_policy: "UP-DEFAULT-REVIEWED"
 | `UP-DEFAULT-REVIEWED` | General source and working documents | Update only from traceable evidence; preserve provenance; review on substantive change. |
 | `UP-GENERATED-REBUILD` | Generated indexes, status views, backlinks, and reports | Rebuild from declared inputs; record generator and date; never hand-edit generated blocks. |
 | `UP-DECISION-REVIEW` | ADRs, policies, mandates, and boundary decisions | Require human review before acceptance; record supersession rather than erasing history. |
-| `UP-DERIVED-SOURCE-LOCKED` | Derived products and publication packages | Keep source ref, derivation purpose, reviewer, and publication state; do not silently rewrite source claims. |
+| `UP-DERIVED-SOURCE-LOCKED` | Derived or intentionally adapted products and publication packages | Keep source ref, derivation/adaptation purpose, reviewer, and publication state; do not silently rewrite source claims. |
 | `UP-HISTORICAL-PRESERVE` | Archives and historical evidence | Preserve original wording and origin; append contextual notes instead of normalizing history. |
 | `UP-INFRASTRUCTURE-HEALTH` | Services, deployments, nodes, and operational infrastructure | Use Operium health and deployment evidence; do not infer availability from configuration or hidden access. |
 

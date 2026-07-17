@@ -130,7 +130,8 @@ Standard Jekyll fields such as `layout`, `permalink`, `nav_order`, `parent`, and
 | `tags`              | array  | — |
 | `related_documents` | array  | — |
 | `related_projects`  | array  | — |
-| `document_role`     | string | Examples: `source`, `symmetric-derived`, `synthesis`, `operational-note`, `translation` |
+| `document_role`     | string | Examples: `source`, `derived`, `adapted`, `symmetric-derived`, `synthesis`, `operational-note`, `translation` |
+| `derivation_mode`   | string | For products: `automatic` or `directed`; `directed` records an intentional contextual adaptation. |
 
 ---
 
@@ -186,6 +187,11 @@ Main equivalence rules—see the mapping file for the complete list:
 - `date` / `created` → equivalent;
 - `last_modified_at` / `updated` → equivalent;
 - `source_document` / `derived_from` → `source_document` preferred;
+
+`derived` is the umbrella English category for a product made from another artifact. Use
+`document_role: adapted` and `derivation_mode: directed` when the product intentionally
+adds a context, audience, or editorial direction (for example, a Corsican adaptation).
+Keep `derived_from` and state the added purpose in `purpose` or `adaptation_context`.
 - `tags` / `keywords` → `tags` preferred.
 
 ### Rule for Extensions
