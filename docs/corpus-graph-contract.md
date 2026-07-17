@@ -32,6 +32,7 @@ Nodes represent declared artifacts or work items:
 - `repository`: a registered Corpus repository;
 - `continuation`: an unresolved judgment or follow-up;
 - `publication`: a declared external target;
+- `issue`: a tracked GitHub/Git forge decision, continuation, or work item;
 - `snapshot`: an observed graph state.
 
 Edges are directed and may form cycles. Supported relations include:
@@ -43,6 +44,7 @@ Edges are directed and may form cycles. Supported relations include:
 - `blocks`;
 - `supersedes`;
 - `published_as`.
+- `tracks_issue` and `resolved_by_issue` connect artifacts and work branches to issues.
 
 An edge carries its declaration source, observed-at timestamp, repository commit,
 confidence, and unresolved status when applicable.
