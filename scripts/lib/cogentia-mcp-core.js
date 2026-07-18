@@ -65,6 +65,19 @@ export const TOOLS = [
     description: "Check whether the public Cogentia Context Gateway and its index are available.",
     inputSchema: { type: "object", properties: {}, additionalProperties: false },
   },
+  {
+    name: "cogentia_issue_graph",
+    description: "Build a read-only graph of issues and their target documents.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        repo: { type: "string" },
+        state: { type: "string", enum: ["open", "closed", "all"] },
+        limit: { type: "integer", minimum: 1, maximum: 100 },
+      },
+      additionalProperties: false,
+    },
+  },
 ];
 
 export function createMcpCore(env = process.env) {
@@ -151,6 +164,12 @@ export function createMcpCore(env = process.env) {
         return daemonGet("/api/context/explain", { result_id: args.result_id });
       case "cogentia_health":
         return daemonGet("/api/context/health", { quick: "1" });
+      case "cogentia_issue_graph":
+        return daemonGet("/api/issues/graph", {
+          repo: args.repo || "all",
+          state: enumOptional(args.state, ["open", "closed", "all"], "state") || "open",
+          limit: boundedOptional(args.limit, 1, 100) || 25,
+        });
       default:
         throw new Error(`Unknown tool: ${name}`);
     }

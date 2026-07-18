@@ -21,6 +21,7 @@ import { finished } from "node:stream/promises";
 import { pathToFileURL } from "node:url";
 import { createGunzip, createGzip } from "node:zlib";
 import { DAEMON_PLUGINS, DAEMON_PLUGIN_ROUTES, loadDaemonPlugins, dispatchPluginRoute } from "./daemon_plugins/registry.js";
+import { buildIssueGraph, renderIssueGraph } from "./lib/issue-graph.js";
 import { generateOperiumEmbeddingsReport } from "./lib/operium-embeddings.js";
 import { aiRouterHealth, createAiRouterClient } from "./lib/ai-router-client.js";
 
@@ -148,6 +149,7 @@ const PUBLIC_DAEMON_GET_ROUTES = new Set([
   "/api/context/search",
   "/api/context/pack",
   "/api/context/pack-batch",
+  "/api/issues/graph",
   "/api/context/doc",
   "/api/context/lines",
   "/api/context/explain",
@@ -325,6 +327,7 @@ Context Gateway:
                            Flags: --host <host> --port <port>
   GET /api/context/search  Short citable retrieval over the Markdown index.
   GET /api/context/pack    Deterministic, budgeted context for agents.
+  GET /api/issues/graph    Read-only issue graph over tracked GitHub work items.
   scripts/cogentia-mcp.js  MCP stdio adapter; calls the daemon and never SQLite directly.
   Docs: docs/cogentia-context-gateway.md and docs/cogentia-mcp.md
 
@@ -342,6 +345,10 @@ Issue commands:
                            Flags: --state open|closed|all --limit <n>
   issues packet <repo> <number>
                            Export one GitHub issue as a read-only continuation packet.
+  issues graph <repo|all>  Build a read-only graph of issues and their target docs.
+                           Flags: --state open|closed|all --limit <n>
+  issues sync <repo|all>   Materialize issue packets under .cogentia/issues.
+                           Flags: --state open|closed|all --limit <n>
 
 Git:
   git verify               Ahead/behind and dirty state for all repos.
@@ -1381,6 +1388,16 @@ async function handleDaemonRequest(req, res) {
     const result = await contextExplain(effectiveCtx, url.searchParams.get("result_id") || "", view);
     return daemonJson(res, result.ok ? 200 : contextErrorStatus(result), result);
   }
+  if (req.method === "GET" && url.pathname === "/api/issues/graph") {
+    const effectiveCtx = ctx || loadContext();
+    const result = issueGraphReport(effectiveCtx, {
+      repoArg: url.searchParams.get("repo") || "all",
+      state: url.searchParams.get("state") || "open",
+      limit: boundedInteger(url.searchParams.get("limit"), 25, 1, 100),
+      view,
+    });
+    return daemonJson(res, 200, result);
+  }
   if (req.method === "GET" && url.pathname === "/api/agent/health") {
     return daemonJson(res, 200, await cogentiaAgentHealth(view));
   }
@@ -2102,8 +2119,12 @@ function cmdIssues(sub) {
       return cmdIssuesList(ctx);
     case "packet":
       return cmdIssuesPacket(ctx);
+    case "graph":
+      return cmdIssuesGraph(ctx);
+    case "sync":
+      return cmdIssuesSync(ctx);
     default:
-      throw new Error(`Unknown issues subcommand "${sub}". Use list or packet.`);
+      throw new Error(`Unknown issues subcommand "${sub}". Use list, packet, graph, or sync.`);
   }
 }
 
@@ -2136,6 +2157,22 @@ function cmdIssuesPacket(ctx) {
   ]));
   const packet = buildIssuePacket(repo, issue);
   output(packet, renderIssuePacket(packet));
+}
+
+function cmdIssuesGraph(ctx) {
+  const repoArg = argv.shift() || "all";
+  const state = valueFlag("--state") || "open";
+  const limit = boundedInteger(valueFlag("--limit"), 25, 1, 100);
+  const result = issueGraphReport(ctx, { repoArg, state, limit, view: PUBLIC_VIEW });
+  output(result, renderIssueGraph(result));
+}
+
+function cmdIssuesSync(ctx) {
+  const repoArg = argv.shift() || "all";
+  const state = valueFlag("--state") || "all";
+  const limit = boundedInteger(valueFlag("--limit"), 100, 1, 100);
+  const result = syncIssuePackets(ctx, { repoArg, state, limit });
+  output(result, formatIssueSync(result));
 }
 
 function cmdContinuation(sub) {
@@ -3877,21 +3914,23 @@ function buildInventory(ctx) {
     repoMetas.set(repo.name, { ignore, indexSets });
     for (const file of listMarkdown(repo.path)) {
       const relPath = rel(repo.path, file);
-      const policyExcluded = repo.policy.default_scope === "research" && !relPath.startsWith("research/");
-      const ignored = matchesIgnore(relPath, ignore) || policyExcluded;
+      const issuePacket = relPath.replace(/\\/g, "/").startsWith(".cogentia/issues/");
+      const policyExcluded = repo.policy.default_scope === "research" && !relPath.startsWith("research/") && !issuePacket;
+      const ignored = issuePacket ? false : (matchesIgnore(relPath, ignore) || policyExcluded);
       const raw = fs.readFileSync(file, "utf8");
       const fm = parseFrontmatter(raw);
       const title = extractTitle(raw, file, fm.data);
       const dates = gitDates(gitIndex, relPath);
       const role = classifyRole(repo, relPath, file, fm.data, ignored, indexSets);
       const visibility = documentVisibility(repo, relPath, fm.data);
+      const github_url = fm.data.issue_url || fm.data.url || githubUrl(repo, relPath);
       documents.push({
         repo: repo.name,
         repo_path: repo.path,
         branch: repo.branch,
         full_path: file,
         rel: relPath,
-        github_url: githubUrl(repo, relPath),
+        github_url,
         title,
         role: role.role,
         role_source: role.source,
@@ -3945,7 +3984,12 @@ function classifyRole(repo, relPath, full, fm, ignored, indexSets) {
   const r = relPath.replace(/\\/g, "/");
   const explicit = String(fm.document_role || fm.corpus_role || fm.role || "").toLowerCase();
   const derivedFrom = fm.derived_from || fm.derived_by;
+  const sourceKind = String(fm.source_kind || "").toLowerCase();
+  const documentKind = String(fm.document_kind || "").toLowerCase();
   if (ignored) return { role: "archive", source: "ignore", confidence: "strong" };
+  if (sourceKind === "issue" || documentKind === "issue_packet") {
+    return { role: "source", source: "frontmatter:issue_packet", confidence: "strong" };
+  }
   if (/^research\/(index|concepts|corpus-status|documents)\.md$/i.test(r)) {
     return { role: "index", source: "path:research", confidence: "strong" };
   }
@@ -5923,6 +5967,10 @@ function walk(dir, out) {
   if (!fs.existsSync(dir)) return;
   const base = path.basename(dir);
   if (BUILTIN_SKIP_DIRS.has(base)) return;
+  if (base === ".cogentia") {
+    walk(path.join(dir, "issues"), out);
+    return;
+  }
   for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
     const full = path.join(dir, entry.name);
     if (entry.isDirectory()) walk(full, out);
@@ -6528,8 +6576,10 @@ function sanitizeDoc(d, inventory = null, view = PUBLIC_VIEW) {
 function resolveDocRef(inventory, ref) {
   const clean = ref.replace(/\\/g, "/");
   const repoPrefix = clean.match(/^([^/]+)\/(.+\.md)$/i);
-  if (repoPrefix) return inventory.documents.find(d => d.repo === repoPrefix[1] && d.rel === repoPrefix[2]);
-  return inventory.documents.find(d => d.rel === clean || d.full_path.replace(/\\/g, "/") === clean);
+  if (repoPrefix && inventory.documents.some(d => d.repo === repoPrefix[1])) {
+    return inventory.documents.find(d => d.repo === repoPrefix[1] && String(d.rel || "").replace(/\\/g, "/") === repoPrefix[2]);
+  }
+  return inventory.documents.find(d => String(d.rel || "").replace(/\\/g, "/") === clean || String(d.full_path || "").replace(/\\/g, "/") === clean);
 }
 
 function summarizeCoupling(edges) {
@@ -9973,7 +10023,24 @@ function continuationSchema() {
 }
 
 function resolveIssueRepo(ctx, repoArg) {
-  if (repoArg.includes("/")) return { name: repoArg.split("/").pop(), full_name: repoArg, path: "" };
+  if (repoArg.includes("/")) {
+    const full_name = normalizeGitHubFullName(repoArg);
+    const name = full_name ? full_name.split("/").pop() : repoArg.split("/").pop();
+    const registered = ctx.repos.find(repo => sameGitHubFullName(repo.github_full_name || "", full_name) || repo.name === name);
+    if (registered) return {
+      ...registered,
+      full_name: registered.full_name || registered.github_full_name || full_name || repoArg,
+      github_full_name: registered.github_full_name || full_name || repoArg,
+    };
+    return {
+      name,
+      full_name: full_name || repoArg,
+      path: "",
+      github_full_name: full_name || repoArg,
+      owner: full_name ? full_name.split("/")[0] : "",
+      policy: { default_scope: "all" },
+    };
+  }
   const repo = ctx.repos.find(r => r.name === repoArg);
   if (!repo) throw new Error(`Unknown registered repo: ${repoArg}`);
   const fullName = repo.github_full_name || repo.policy?.github || repo.policy?.github_repo || githubFullNameFromRemote(repo);
@@ -10012,13 +10079,24 @@ function sameGitHubFullName(a, b) {
 
 function ghJson(args) {
   try {
-    const raw = execFileSync("gh", args, { encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] });
+    const [command, ...commandArgs] = ghExecCommand();
+    const raw = execFileSync(command, [...commandArgs, ...args], { encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] });
     return parseJsonText(raw || "null", `gh ${args.join(" ")}`);
   } catch (e) {
     const stderr = e.stderr ? String(e.stderr).trim() : "";
     const detail = stderr || e.message || "unknown gh error";
     throw new Error(`gh failed: ${detail}`);
   }
+}
+
+function ghExecCommand() {
+  const override = String(process.env.COGENTIA_GH_EXEC || "").trim();
+  if (!override) return ["gh"];
+  try {
+    const parsed = JSON.parse(override);
+    if (Array.isArray(parsed) && parsed.length) return parsed.map(part => String(part));
+  } catch {}
+  return [override];
 }
 
 function normalizeGitHubIssue(issue) {
@@ -10041,6 +10119,20 @@ function normalizeGitHubIssue(issue) {
 
 function buildIssuePacket(repo, issue) {
   const body = issue.body || "";
+  const comments = Array.isArray(issue.comments) ? issue.comments : [];
+  const commentsText = comments
+    .map((comment, index) => {
+      const author = typeof comment.author === "string" ? comment.author : comment.author?.login || "";
+      const created = comment.createdAt || comment.created_at || "";
+      const updated = comment.updatedAt || comment.updated_at || "";
+      const header = [`Comment ${index + 1}`, author ? `@${author}` : "", created ? `created ${created}` : "", updated && updated !== created ? `updated ${updated}` : ""]
+        .filter(Boolean)
+        .join(" · ");
+      return [header, String(comment.body || "").trim()].filter(Boolean).join("\n");
+    })
+    .filter(Boolean)
+    .join("\n\n");
+  const issueBody = [body.trim(), commentsText ? `## Comments\n\n${commentsText}` : ""].filter(Boolean).join("\n\n").trim();
   const targetDocs = extractIssueTargetDocuments(body);
   const closure = extractIssueSection(body, [
     "Expected closure condition",
@@ -10068,10 +10160,11 @@ function buildIssuePacket(repo, issue) {
     updated_at: issue.updated_at,
     closed_at: issue.closed_at,
     target_documents: targetDocs,
+    comments,
     closure_condition: closure,
     risks,
     agent_task: nextStep || "Review the issue and decide whether it should be addressed, deferred, transformed, or closed as already handled.",
-    issue_body: body,
+    issue_body: issueBody,
   };
 }
 
@@ -10127,12 +10220,20 @@ function renderIssuePacket(packet) {
   const lines = [
     "---",
     `type: ${yamlScalar(packet.type)}`,
+    `document_kind: ${yamlScalar("issue_packet")}`,
+    `source_kind: ${yamlScalar("issue")}`,
     `repository: ${yamlScalar(packet.repository)}`,
     `issue: ${packet.issue}`,
     `title: ${yamlScalar(packet.title)}`,
     `status: ${yamlScalar(packet.status)}`,
     `state_reason: ${yamlScalar(packet.state_reason || "")}`,
     `url: ${yamlScalar(packet.url)}`,
+    `issue_number: ${packet.issue}`,
+    `issue_state: ${yamlScalar(packet.status)}`,
+    `issue_url: ${yamlScalar(packet.url)}`,
+    `issue_updated_at: ${yamlScalar(packet.updated_at || "")}`,
+    `issue_closed_at: ${yamlScalar(packet.closed_at || "")}`,
+    `content_hash: ${yamlScalar(packet.content_hash || "")}`,
     `updated_at: ${yamlScalar(packet.updated_at || "")}`,
     `closed_at: ${yamlScalar(packet.closed_at || "")}`,
     "labels:",
@@ -10164,6 +10265,158 @@ function renderIssuePacket(packet) {
     packet.issue_body || "-",
   ];
   return lines.join("\n");
+}
+
+function formatIssueSync(result) {
+  const lines = ["\nIssue sync\n"];
+  lines.push(`Repositories: ${result.repositories.length}`);
+  lines.push(`Issues written: ${result.written}`);
+  lines.push(`Issues unchanged: ${result.unchanged}`);
+  lines.push(`Issues removed: ${result.removed}`);
+  if (result.errors.length) {
+    lines.push("");
+    lines.push("Errors:");
+    for (const error of result.errors) {
+      lines.push(`- ${error.repository}: ${error.error}`);
+    }
+  }
+  return lines.join("\n");
+}
+
+function syncIssuePackets(ctx, options = {}) {
+  const repoArg = options.repoArg || "all";
+  const state = options.state || "all";
+  const limit = boundedInteger(options.limit, 100, 1, 100);
+  const repos = repoArg === "all"
+    ? ctx.repos
+    : [resolveIssueRepo(ctx, repoArg)];
+  const result = {
+    ok: true,
+    repo: repoArg,
+    state,
+    limit,
+    repositories: repos.map(repo => ({ name: repo.name, full_name: repo.full_name || repo.github_full_name || repo.name })),
+    written: 0,
+    unchanged: 0,
+    removed: 0,
+    errors: [],
+  };
+  for (const repo of repos) {
+    try {
+      const repoResult = syncIssuePacketsForRepo(repo, { state, limit });
+      result.written += repoResult.written;
+      result.unchanged += repoResult.unchanged;
+      result.removed += repoResult.removed;
+      if (repoResult.error) result.errors.push({ repository: repo.full_name || repo.name, error: repoResult.error });
+    } catch (error) {
+      result.errors.push({ repository: repo.full_name || repo.name, error: error.message });
+    }
+  }
+  result.ok = result.errors.length === 0;
+  return result;
+}
+
+function syncIssuePacketsForRepo(repo, { state = "all", limit = 100 } = {}) {
+  const repoFull = repo.full_name || repo.github_full_name || repo.name;
+  const cacheDir = path.join(repo.path, ".cogentia", "issues", slug(repoFull) || repo.name || "repo");
+  fs.mkdirSync(cacheDir, { recursive: true });
+  const issues = ghJson([
+    "issue", "list",
+    "--repo", repoFull,
+    "--state", state,
+    "--limit", String(limit),
+    "--json", "number,title,state,stateReason,updatedAt,closedAt,url,labels,author",
+  ]).map(normalizeGitHubIssue);
+  const seen = new Set();
+  let written = 0;
+  let unchanged = 0;
+  for (const issue of issues) {
+    const detail = normalizeGitHubIssue(ghJson([
+      "issue", "view", String(issue.number),
+      "--repo", repoFull,
+      "--json", "number,title,state,stateReason,updatedAt,closedAt,url,labels,author,body,comments",
+    ]));
+    const packet = buildIssuePacket(repo, detail);
+    packet.content_hash = sha(`${packet.repository}\n${packet.issue}\n${packet.updated_at}\n${packet.title}\n${packet.issue_body || ""}`);
+    const rendered = renderIssuePacket(packet);
+    const file = path.join(cacheDir, `issue-${String(packet.issue).padStart(5, "0")}.md`);
+    seen.add(path.resolve(file));
+    const before = fs.existsSync(file) ? fs.readFileSync(file, "utf8") : "";
+    if (before !== rendered) {
+      fs.writeFileSync(file, ensureFinalNewline(rendered), "utf8");
+      written++;
+    } else {
+      unchanged++;
+    }
+  }
+  let removed = 0;
+  for (const entry of fs.readdirSync(cacheDir)) {
+    const full = path.join(cacheDir, entry);
+    if (!entry.toLowerCase().endsWith(".md")) continue;
+    if (seen.has(path.resolve(full))) continue;
+    fs.rmSync(full, { force: true });
+    removed++;
+  }
+  return { written, unchanged, removed };
+}
+
+function issueGraphReport(ctx, { repoArg = "all", state = "open", limit = 25, view = PUBLIC_VIEW } = {}) {
+  const inventory = buildInventory(ctx);
+  const repos = repoArg === "all"
+    ? ctx.repos.filter(repo => canSeeRepo(repo, view))
+    : [resolveIssueRepo(ctx, repoArg)];
+  const packets = [];
+  const repoErrors = [];
+  for (const repo of repos) {
+    try {
+      const issues = ghJson([
+        "issue", "list",
+        "--repo", repo.full_name,
+        "--state", state,
+        "--limit", String(limit),
+        "--json", "number,title,state,stateReason,updatedAt,closedAt,url,labels,author,body",
+      ]);
+      for (const issue of issues.map(normalizeGitHubIssue)) {
+        packets.push(buildIssuePacket(repo, issue));
+      }
+    } catch (error) {
+      repoErrors.push({ repository: repo.full_name, error: error.message });
+    }
+  }
+  const report = buildIssueGraph(packets, {
+    generatedAt: new Date().toISOString(),
+    resolveTarget: (ref, packet) => resolveIssueGraphTarget(inventory, ref, packet),
+  });
+  report.request = { repo: repoArg, state, limit, view };
+  report.repository_errors = repoErrors;
+  report.repositories_requested = repos.map(repo => ({
+    name: repo.name,
+    full_name: repo.full_name,
+    visible: canSeeRepo(repo, view),
+  }));
+  report.ok = repoErrors.length === 0;
+  return report;
+}
+
+function resolveIssueGraphTarget(inventory, ref, packet) {
+  const doc = resolveDocRef(inventory, ref);
+  if (!doc) return { resolved: false };
+  const label = `${doc.repo || ""}/${doc.rel || ref}`.replace(/^\/+/, "");
+  const visibility = typeof doc.visibility === "string"
+    ? doc.visibility
+    : (doc.visibility?.level || "resolved");
+  return {
+    resolved: true,
+    node: {
+      id: `artifact_${slug(label)}`,
+      kind: "artifact",
+      label,
+      status: visibility,
+      repository: doc.repo || "",
+      path: doc.rel || ref,
+      url: doc.github_url || "",
+    },
+  };
 }
 
 function yamlScalar(value) {

@@ -24,6 +24,8 @@
     "test:blackboard": "node scripts/test-packet-attractor-blackboard.js",
     "test:guide-cli": "node scripts/test-guide-cli.js",
     "test:guide-eval": "node scripts/test-guide-eval.js",
+    "test:issue-graph": "node scripts/test-issue-graph.js",
+    "test:issue-graph-route": "node scripts/test-issue-graph-route.js",
     "test:ai-router": "node scripts/test-ai-router-client.js",
     "test:smart-embed": "node scripts/test-smart-embed-worker.js",
     "test:embedding-step": "node scripts/test-embedding-step.js",

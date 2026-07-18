@@ -71,6 +71,11 @@ continuations(filters?)
 snapshot(filters?)
 ```
 
+A first executable surface for issue-backed graph exploration is exposed by
+`cogentia issues graph` and the daemon route `GET /api/issues/graph`.
+Equivalent MCP or CLI facades may reuse the same read-only graph, but they must
+stay behind the daemon trust boundary.
+
 Cycles must be reported, not treated as fatal errors. Missing or invalid edges
 remain visible with an explicit status such as `unresolved` or `broken`.
 

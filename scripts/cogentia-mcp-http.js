@@ -940,6 +940,15 @@ function guideRetrievalQueries(question) {
       "FractaVolta deployment site territory"
     );
   }
+  if (/issue|issues|progress|recent|recently|update|status|blocker|open items|what changed|what's new/.test(lower)) {
+    queries.push(
+      "GitHub issues recent progress",
+      "GitHub issues recently updated",
+      "open issues blockers recent updates",
+      "repo issue progress",
+      "what changed in GitHub issues"
+    );
+  }
   if (/commune|pilot|pilote|municip|demarrer|d.marrer|verifiable|v.rifiable|sobre/.test(lower)) {
     queries.push(
       "FractaVolta commune pilote Corse",
