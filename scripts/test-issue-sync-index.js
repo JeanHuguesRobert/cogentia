@@ -47,33 +47,25 @@ const env = {
   COGENTIA_GH_EXEC: JSON.stringify(["C:\\Windows\\System32\\cmd.exe", "/d", "/s", "/c", ghScript]),
 };
 
-const sync = await run("scripts/cogentia.js", ["issues", "sync", "demo", "--state", "open", "--limit", "1", "--json"], env, root);
-assert.equal(sync.status, 0, JSON.stringify({
-  status: sync.status,
-  signal: sync.signal,
-  error: sync.error ? { message: sync.error.message, code: sync.error.code, errno: sync.error.errno, syscall: sync.error.syscall, path: sync.error.path } : null,
-  stdout: sync.stdout,
-  stderr: sync.stderr,
-}, null, 2));
-const syncJson = JSON.parse(sync.stdout);
-assert.equal(syncJson.ok, true, sync.stdout);
-
 const issuePacket = path.join(repoPath, ".cogentia", "issues", "JeanHuguesRobert-demo", "issue-00018.md");
+assert.ok(!fs.existsSync(issuePacket), issuePacket);
+
+const update = await run("scripts/cogentia.js", ["index", "update", "--json"], env, root);
+assert.equal(update.status, 0, JSON.stringify({
+  status: update.status,
+  signal: update.signal,
+  error: update.error ? { message: update.error.message, code: update.error.code, errno: update.error.errno, syscall: update.error.syscall, path: update.error.path } : null,
+  stdout: update.stdout,
+  stderr: update.stderr,
+}, null, 2));
+const updateJson = JSON.parse(update.stdout);
+assert.equal(updateJson.ok, true, update.stdout);
+assert.ok(updateJson.issue_packets?.written >= 1, update.stdout);
+
 assert.ok(fs.existsSync(issuePacket), issuePacket);
 const packetText = fs.readFileSync(issuePacket, "utf8");
 assert.match(packetText, /source_kind:\s+"issue"/);
 assert.match(packetText, /Recent progress: issue packets should be indexed as markdown/);
-
-const rebuild = await run("scripts/cogentia.js", ["index", "rebuild", "--json"], env, root);
-assert.equal(rebuild.status, 0, JSON.stringify({
-  status: rebuild.status,
-  signal: rebuild.signal,
-  error: rebuild.error ? { message: rebuild.error.message, code: rebuild.error.code, errno: rebuild.error.errno, syscall: rebuild.error.syscall, path: rebuild.error.path } : null,
-  stdout: rebuild.stdout,
-  stderr: rebuild.stderr,
-}, null, 2));
-const rebuildJson = JSON.parse(rebuild.stdout);
-assert.equal(rebuildJson.ok, true, rebuild.stdout);
 
 const search = await run("scripts/cogentia.js", ["index", "search", "recent progress on issue indexing", "--limit", "5", "--json"], env, root);
 assert.equal(search.status, 0, JSON.stringify({
@@ -89,8 +81,8 @@ assert.ok(searchJson.results.some(result => String(result.path || "").includes("
 
 console.log(JSON.stringify({
   ok: true,
-  sync_written: syncJson.written,
-  rebuild_documents: rebuildJson.documents,
+  update_issue_packets: updateJson.issue_packets?.written || 0,
+  update_documents: updateJson.documents,
   search_results: searchJson.count,
 }, null, 2));
 

@@ -3363,6 +3363,13 @@ async function indexRebuild(ctx, options = {}) {
   const startedAt = new Date().toISOString();
   try {
     initIndexSchema(db);
+    const issueRefresh = mode === "update"
+      ? syncIssuePackets(ctx, {
+        repoArg: "all",
+        state: "all",
+        limit: 100,
+      })
+      : null;
     const inventory = buildInventory(ctx);
     const boundaries = indexJudgmentBoundaries(ctx, inventory);
     const continuations = emitIndexContinuations(ctx, boundaries);
@@ -3468,6 +3475,14 @@ async function indexRebuild(ctx, options = {}) {
         continuations: String(continuations.length),
         partial: String(boundaries.some(b => b.blocks_index)),
       };
+      if (issueRefresh) {
+        const issueResult = issueRefresh;
+        indexState.issue_packets = String(issueResult.written || 0);
+        indexState.issue_packets_unchanged = String(issueResult.unchanged || 0);
+        indexState.issue_packets_removed = String(issueResult.removed || 0);
+        indexState.issue_packets_ok = String(issueResult.ok ? 1 : 0);
+        indexState.issue_packets_errors = String((issueResult.errors || []).length);
+      }
       writeIndexState(db, indexState);
       const vectorCache = inspectVectorCacheHealth(db, indexState);
       db.exec("COMMIT");
@@ -3486,6 +3501,13 @@ async function indexRebuild(ctx, options = {}) {
         continuations: continuations.map(c => stripContinuationBody(c.continuation)),
         boundary_count: boundaries.length,
         vector_cache: vectorCache,
+        issue_packets: issueRefresh ? {
+          ok: issueRefresh.ok,
+          written: issueRefresh.written,
+          unchanged: issueRefresh.unchanged,
+          removed: issueRefresh.removed,
+          errors: issueRefresh.errors,
+        } : undefined,
       };
     } catch (e) {
       db.exec("ROLLBACK");
