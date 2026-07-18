@@ -1249,6 +1249,7 @@ function guideShouldSearchWeb(question, payload = {}) {
   if (payload.web_search === false) return false;
   if (payload.web_search === true || payload.webSearch === true) return true;
   const text = String(question || "").toLowerCase();
+  if (/\bissue\s*#?\s*\d+\b/.test(text)) return false;
   return /\b(web|internet|online|search|latest|recent|current|today|news|price|tariff|law|regulation)\b/.test(text)
     || /\b(actualit|actuel|recen|aujourd|maintenant|cherche|recherche|prix|tarif|loi|reglement|règlement|web|internet)\b/.test(text);
 }
