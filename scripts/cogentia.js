@@ -2139,7 +2139,7 @@ function cmdIssuesList(ctx) {
     "--repo", repo.full_name,
     "--state", state,
     "--limit", limit,
-    "--json", "number,title,state,stateReason,updatedAt,closedAt,url,labels,author",
+    "--json", "number,title,state,updatedAt,closedAt,url,labels,author",
   ]);
   const normalized = issues.map(normalizeGitHubIssue);
   output({ ok: true, repo: repo.full_name, state, issues: normalized }, formatIssueList(repo.full_name, normalized, state));
@@ -2153,7 +2153,7 @@ function cmdIssuesPacket(ctx) {
   const issue = normalizeGitHubIssue(ghJson([
     "issue", "view", String(number),
     "--repo", repo.full_name,
-    "--json", "number,title,state,stateReason,updatedAt,closedAt,url,labels,author,body,comments",
+    "--json", "number,title,state,updatedAt,closedAt,url,labels,author,body,comments",
   ]));
   const packet = buildIssuePacket(repo, issue);
   output(packet, renderIssuePacket(packet));
@@ -10396,7 +10396,7 @@ function issueGraphReport(ctx, { repoArg = "all", state = "open", limit = 25, vi
         "--repo", repo.full_name,
         "--state", state,
         "--limit", String(limit),
-        "--json", "number,title,state,stateReason,updatedAt,closedAt,url,labels,author,body",
+        "--json", "number,title,state,updatedAt,closedAt,url,labels,author,body",
       ]);
       for (const issue of issues.map(normalizeGitHubIssue)) {
         packets.push(buildIssuePacket(repo, issue));
