@@ -940,7 +940,25 @@ function guideRetrievalQueries(question) {
       "FractaVolta deployment site territory"
     );
   }
-  if (/issue|issues|progress|recent|recently|update|status|blocker|open items|what changed|what's new/.test(lower)) {
+  const issueNumberMatch = lower.match(/\bissue\s*#?\s*(\d+)\b/);
+  if (issueNumberMatch) {
+    const issueNumber = issueNumberMatch[1];
+    const repoHint = /\binseme\b/.test(lower)
+      ? "inseme"
+      : /\bcogentia\b/.test(lower)
+        ? "cogentia"
+        : /\bfractavolta\b/.test(lower)
+          ? "fractavolta"
+          : "";
+    const exactIssueQueries = [
+      `${repoHint ? `${repoHint} ` : ""}issue ${issueNumber}`,
+      `${repoHint ? `${repoHint} ` : ""}issue #${issueNumber}`,
+      `${repoHint ? `${repoHint} ` : ""}issue ${issueNumber} recent progress`,
+      `${repoHint ? `${repoHint} ` : ""}issue ${issueNumber} status`,
+      `${repoHint ? `${repoHint} ` : ""}issue ${issueNumber} updates`,
+    ];
+    queries.push(...exactIssueQueries);
+  } else if (/issue|issues|progress|recent|recently|update|status|blocker|open items|what changed|what's new/.test(lower)) {
     queries.push(
       "GitHub issues recent progress",
       "GitHub issues recently updated",
