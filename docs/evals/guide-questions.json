@@ -55,6 +55,12 @@
     "expected": ["web", "public corpus", "current", "sources"]
   },
   {
+    "id": "en_inseme_issue_18",
+    "locale": "en",
+    "question": "What recent progress has been made on inseme issue 18 about COP reference runtime hardening ?",
+    "expected": ["inseme", "issue 18", "cop-kernel", "reference runtime profile", "restart safety"]
+  },
+  {
     "id": "fr_question_vague",
     "locale": "fr",
     "question": "Par ou commencer ?",
