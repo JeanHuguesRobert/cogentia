@@ -23,9 +23,16 @@ review:
 Status: Phase 1, Markdown RAG public gateway.
 
 The Context Gateway exposes a governed, read-only retrieval interface over the
-Cogentia corpus. Git and Markdown remain canonical. SQLite/FTS5 is a local,
-reconstructible cache: it can be deleted and rebuilt and must never be queried
-directly by agents.
+Cogentia corpus. Git and Markdown remain canonical. Retrieval uses a two-level
+cache:
+
+1. SQLite/FTS5 is the local, reconstructible index cache. It can be deleted and
+   rebuilt and must never be queried directly by agents.
+2. Supabase/Postgres is the serving cache for live semantic retrieval when the
+   live Guide is configured for regional lookup.
+
+The two levels serve different jobs: local cache for rebuildable corpus state,
+serving cache for faster query-time reuse.
 
 The governing distinction is:
 
@@ -41,6 +48,9 @@ SQLite / FTS5 (local reconstructible cache)
           |
           v
 cogentia.js daemon (visibility, limits, scoring, citations)
+          |
+          v
+Supabase / Postgres (regional serving cache, optional)
           |
           v
 HTTP clients and cogentia-mcp
@@ -203,8 +213,11 @@ node scripts/cogentia.js embeddings vec-status --json
 ```
 
 If `sqlite-vec` is missing or the cache is stale, semantic retrieval falls back
-to the existing JavaScript vector scan. It does not call the AI router or any
-external provider.
+to the existing JavaScript vector scan. If the live Guide is configured with
+`COGENTIA_RETRIEVAL_BACKEND=supabase`, the serving layer can then answer through
+the regional Supabase/Postgres cache instead of doing a slow local embedding
+scan. That does not change the canonical/local split: the SQLite index remains
+reconstructible, and the serving cache remains disposable.
 
 Use `embeddings benchmark --query <cached query>` to compare ranked-result
 cache, sqlite-vec, and exact JavaScript vector scan latency without creating a

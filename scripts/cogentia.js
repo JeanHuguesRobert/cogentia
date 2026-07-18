@@ -10347,7 +10347,7 @@ function syncIssuePacketsForRepo(repo, { state = "all", limit = 100 } = {}) {
     "--repo", repoFull,
     "--state", state,
     "--limit", String(limit),
-    "--json", "number,title,state,stateReason,updatedAt,closedAt,url,labels,author",
+    "--json", "number,title,state,updatedAt,closedAt,url,labels,author",
   ]).map(normalizeGitHubIssue);
   const seen = new Set();
   let written = 0;
@@ -10356,7 +10356,7 @@ function syncIssuePacketsForRepo(repo, { state = "all", limit = 100 } = {}) {
     const detail = normalizeGitHubIssue(ghJson([
       "issue", "view", String(issue.number),
       "--repo", repoFull,
-      "--json", "number,title,state,stateReason,updatedAt,closedAt,url,labels,author,body,comments",
+      "--json", "number,title,state,updatedAt,closedAt,url,labels,author,body,comments",
     ]));
     const packet = buildIssuePacket(repo, detail);
     packet.content_hash = sha(`${packet.repository}\n${packet.issue}\n${packet.updated_at}\n${packet.title}\n${packet.issue_body || ""}`);
