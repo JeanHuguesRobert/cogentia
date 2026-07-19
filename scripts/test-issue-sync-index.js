@@ -41,10 +41,23 @@ fs.writeFileSync(ghScript, [
   "echo []",
 ].join("\r\n"), "utf8");
 
+const portableGhScript = path.join(tempRoot, "gh.js");
+fs.writeFileSync(portableGhScript, `
+const args = process.argv.slice(2);
+const summary = { number: 18, title: "Recent progress on issue indexing", state: "OPEN", updatedAt: "2026-07-18T10:00:00Z", closedAt: null, url: "https://github.com/JeanHuguesRobert/demo/issues/18", labels: [{ name: "index" }], author: { login: "JeanHuguesRobert" } };
+if (args[0] === "issue" && args[1] === "list") {
+  process.stdout.write(JSON.stringify([summary]));
+} else if (args[0] === "issue" && args[1] === "view") {
+  process.stdout.write(JSON.stringify({ ...summary, body: "## Target documents\\n\\n- \`README.md\`\\n\\n## Agent-resumable next step\\n\\nCheck recent progress on issue indexing.", comments: [{ author: { login: "JeanHuguesRobert" }, createdAt: "2026-07-18T10:05:00Z", body: "Recent progress: issue packets should be indexed as markdown." }] }));
+} else {
+  process.stdout.write("[]");
+}
+`, "utf8");
+
 const env = {
   ...process.env,
   COGENTIA_REGISTRY: path.join(tempRoot, ".cogentia.json"),
-  COGENTIA_GH_EXEC: JSON.stringify(["C:\\Windows\\System32\\cmd.exe", "/d", "/s", "/c", ghScript]),
+  COGENTIA_GH_EXEC: JSON.stringify([process.execPath, portableGhScript]),
 };
 
 const issuePacket = path.join(repoPath, ".cogentia", "issues", "JeanHuguesRobert-demo", "issue-00018.md");
