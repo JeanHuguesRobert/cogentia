@@ -60,7 +60,7 @@ const env = {
   COGENTIA_GH_EXEC: JSON.stringify([process.execPath, portableGhScript]),
 };
 
-const issuePacket = path.join(repoPath, ".cogentia", "issues", "JeanHuguesRobert-demo", "issue-00018.md");
+const issuePacket = path.join(repoPath, ".cogentia", "issues", "jeanhuguesrobert-demo", "issue-00018.md");
 assert.ok(!fs.existsSync(issuePacket), issuePacket);
 
 const update = await run("scripts/cogentia.js", ["index", "update", "--json"], env, root);
