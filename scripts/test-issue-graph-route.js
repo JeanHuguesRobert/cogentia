@@ -2,13 +2,16 @@
 
 import assert from "node:assert/strict";
 import fs from "node:fs";
+import os from "node:os";
 import path from "node:path";
 import { spawn } from "node:child_process";
 import net from "node:net";
 import { fileURLToPath } from "node:url";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
-const temp = fs.mkdtempSync(path.join(process.env.TMP || process.env.TEMP || "C:\\tmp", "cogentia-gh-"));
+const temp = fs.mkdtempSync(path.join(os.tmpdir(), "cogentia-gh-"));
+const registry = process.env.COGENTIA_TEST_REGISTRY
+  || path.resolve(root, "..", "JeanHuguesRobert", ".cogentia.json");
 const ghJs = path.join(temp, "gh.js");
 const ghCmd = path.join(temp, "gh.cmd");
 const issueList = [
@@ -51,8 +54,8 @@ const daemon = spawn(process.execPath, ["scripts/cogentia.js", "daemon", "--host
   cwd: root,
   env: {
     ...process.env,
-    PATH: `${temp};${process.env.PATH}`,
-    COGENTIA_REGISTRY: "C:\\tweesic\\JeanHuguesRobert\\.cogentia.json",
+    PATH: `${temp}${path.delimiter}${process.env.PATH}`,
+    COGENTIA_REGISTRY: registry,
     COGENTIA_DAEMON_VIEW: "full",
     COGENTIA_ADMIN_TOKEN: "testtoken",
     COGENTIA_GH_EXEC: JSON.stringify(["node", ghJs]),
@@ -109,7 +112,7 @@ async function runMcp(messages) {
       cwd: root,
       env: {
         ...process.env,
-        PATH: `${temp};${process.env.PATH}`,
+        PATH: `${temp}${path.delimiter}${process.env.PATH}`,
         COGENTIA_DAEMON_URL: base,
         COGENTIA_MCP_VIEW: "public",
         COGENTIA_GH_EXEC: JSON.stringify(["node", ghJs]),
