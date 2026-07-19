@@ -22,6 +22,11 @@ review:
 
 Operational memory for the embedding **serving** layer (not index fabrication).
 
+The current live setup is intentionally two-level:
+
+- local SQLite stays the reconstructible corpus/index cache;
+- Supabase/Postgres acts as the faster serving cache for live Guide queries.
+
 ## Principle (locality)
 
 - **Heavy data stays put** (corpus vectors, chunks).
@@ -88,6 +93,14 @@ COGENTIA_REGISTRY=... COGENTIA_DATA_DIR=/var/lib/cogentia \
 - **Guide client (cogentia):** `COGENTIA_INOX_RETRIEVAL_URL` + optional `COGENTIA_INOX_SERVE_TOKEN` → `scripts/lib/retrieval-inox-session.js`
 - Next ops: point fracta `guide.env` at capable-host inox-serve; remove Supabase/OpenAI secrets from VPS when inline fulfill works remotely
 - Later: mandate packet `.nox` + COP stream instead of HTTP per turn
+
+## Cache split rule
+
+- Use SQLite/FTS5 for corpus inventory, indexing, and reconstructible local
+  state.
+- Use Supabase/Postgres only for serving-layer reuse and faster live retrieval.
+- Never treat either cache as canonical corpus truth; Git/Markdown remain the
+  source of record.
 
 ## Contracts (stable across phases)
 

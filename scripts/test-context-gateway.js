@@ -15,6 +15,7 @@ const daemon = spawn(process.execPath, ["scripts/cogentia.js", "daemon", "--host
     ...process.env,
     COGENTIA_DAEMON_VIEW: "public",
     COGENTIA_RATE_LIMIT_MAX: "40",
+    COGENTIA_RATE_LIMIT_WINDOW_MS: "300000",
     COGENTIA_AI_ROUTER_URL: "http://127.0.0.1:9",
     COGENTIA_AI_ROUTER_TIMEOUT_MS: "1000",
   },
@@ -85,14 +86,17 @@ try {
     { jsonrpc: "2.0", id: 3, method: "tools/call", params: { name: "cogentia_health", arguments: {} } },
   ]);
   assert.equal(mcp[0].result.serverInfo.name, "cogentia-mcp");
-  assert.equal(mcp[1].result.tools.length, 5);
+  assert.equal(mcp[1].result.tools.length, 6);
+  assert.ok(mcp[1].result.tools.some(tool => tool.name === "cogentia_issue_graph"));
   assert.equal(mcp[2].result.structuredContent.ok, true);
 
   const httpMcp = await runHttpMcp(base);
   assert.equal(httpMcp.initialize.result.serverInfo.name, "cogentia-mcp");
-  assert.equal(httpMcp.tools.result.tools.length, 5);
+  assert.equal(httpMcp.tools.result.tools.length, 6);
+  assert.ok(httpMcp.tools.result.tools.some(tool => tool.name === "cogentia_issue_graph"));
   assert.equal(httpMcp.health.result.structuredContent.ok, true);
-  assert.equal(httpMcp.facadeTools.tools.length, 5);
+  assert.equal(httpMcp.facadeTools.tools.length, 6);
+  assert.ok(httpMcp.facadeTools.tools.some(tool => tool.name === "cogentia_issue_graph"));
   assert.equal(httpMcp.guideHealth.service, "fractavolta-guide");
   assert.equal(httpMcp.guideCors, "https://fractavolta.com");
   assert.equal(httpMcp.guideChat.ok, true);
@@ -103,7 +107,7 @@ try {
   for (let request = 0; request < 45; request++) rateStatuses.push(await responseStatus("/api/context/health"));
   assert.ok(rateStatuses.includes(429));
 
-  console.log(JSON.stringify({ ok: true, port, search_results: search.count, pack_hash: firstPack.pack_hash, mcp_tools: 5, http_mcp: "/mcp", guide_chat: httpMcp.guideChat.mode, rate_limit: 429 }, null, 2));
+  console.log(JSON.stringify({ ok: true, port, search_results: search.count, pack_hash: firstPack.pack_hash, mcp_tools: 6, http_mcp: "/mcp", guide_chat: httpMcp.guideChat.mode, rate_limit: 429 }, null, 2));
 } finally {
   daemon.kill();
 }

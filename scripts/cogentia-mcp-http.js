@@ -940,6 +940,33 @@ function guideRetrievalQueries(question) {
       "FractaVolta deployment site territory"
     );
   }
+  const issueNumberMatch = lower.match(/\bissue\s*#?\s*(\d+)\b/);
+  if (issueNumberMatch) {
+    const issueNumber = issueNumberMatch[1];
+    const repoHint = /\binseme\b/.test(lower)
+      ? "inseme"
+      : /\bcogentia\b/.test(lower)
+        ? "cogentia"
+        : /\bfractavolta\b/.test(lower)
+          ? "fractavolta"
+          : "";
+    const exactIssueQueries = [
+      `${repoHint ? `${repoHint} ` : ""}issue ${issueNumber}`,
+      `${repoHint ? `${repoHint} ` : ""}issue #${issueNumber}`,
+      `${repoHint ? `${repoHint} ` : ""}issue ${issueNumber} recent progress`,
+      `${repoHint ? `${repoHint} ` : ""}issue ${issueNumber} status`,
+      `${repoHint ? `${repoHint} ` : ""}issue ${issueNumber} updates`,
+    ];
+    queries.push(...exactIssueQueries);
+  } else if (/issue|issues|progress|recent|recently|update|status|blocker|open items|what changed|what's new/.test(lower)) {
+    queries.push(
+      "GitHub issues recent progress",
+      "GitHub issues recently updated",
+      "open issues blockers recent updates",
+      "repo issue progress",
+      "what changed in GitHub issues"
+    );
+  }
   if (/commune|pilot|pilote|municip|demarrer|d.marrer|verifiable|v.rifiable|sobre/.test(lower)) {
     queries.push(
       "FractaVolta commune pilote Corse",
@@ -1222,6 +1249,7 @@ function guideShouldSearchWeb(question, payload = {}) {
   if (payload.web_search === false) return false;
   if (payload.web_search === true || payload.webSearch === true) return true;
   const text = String(question || "").toLowerCase();
+  if (/\bissue\s*#?\s*\d+\b/.test(text)) return false;
   return /\b(web|internet|online|search|latest|recent|current|today|news|price|tariff|law|regulation)\b/.test(text)
     || /\b(actualit|actuel|recen|aujourd|maintenant|cherche|recherche|prix|tarif|loi|reglement|règlement|web|internet)\b/.test(text);
 }
