@@ -193,6 +193,8 @@ async function main() {
       return cmdContinuation(argv.shift() || "list");
     case "issues":
       return cmdIssues(argv.shift() || "list");
+    case "publish":
+      return cmdPublish(argv.shift() || "list");
     case "git":
       return cmdGit(argv.shift() || "verify");
     case "repos":
@@ -349,6 +351,13 @@ Issue commands:
                            Flags: --state open|closed|all --limit <n>
   issues sync <repo|all>   Materialize issue packets under .cogentia/issues.
                            Flags: --state open|closed|all --limit <n>
+  issues export [repo|all] Export consolidated issues markdown.
+                           Flags: --state open|closed|all --body --comments --output <path>
+
+Publish commands:
+  publish list             List views available for publishing to Views Store.
+  publish push [view|all]  Publish generated views to Views Store (fracta VPS).
+                           Flags: --target <host> --dry-run
 
 Git:
   git verify               Ahead/behind and dirty state for all repos.
@@ -2123,8 +2132,10 @@ function cmdIssues(sub) {
       return cmdIssuesGraph(ctx);
     case "sync":
       return cmdIssuesSync(ctx);
+    case "export":
+      return cmdIssuesExport(ctx);
     default:
-      throw new Error(`Unknown issues subcommand "${sub}". Use list, packet, graph, or sync.`);
+      throw new Error(`Unknown issues subcommand "${sub}". Use list, packet, graph, sync, or export.`);
   }
 }
 
@@ -2173,6 +2184,22 @@ function cmdIssuesSync(ctx) {
   const limit = boundedInteger(valueFlag("--limit"), 100, 1, 100);
   const result = syncIssuePackets(ctx, { repoArg, state, limit });
   output(result, formatIssueSync(result));
+}
+
+function cmdIssuesExport(ctx) {
+  const repoArg = argv.shift() || "all";
+  const state = valueFlag("--state") || "open";
+  const includeBody = hasFlag("--body") || hasFlag("--include-body");
+  const includeComments = hasFlag("--comments") || hasFlag("--include-comments");
+  const outputPath = valueFlag("--output") || valueFlag("-o");
+  const result = exportIssues(ctx, {
+    repoArg,
+    state,
+    includeBody,
+    includeComments,
+    outputPath,
+  });
+  output(result, formatIssuesExport(result));
 }
 
 function cmdContinuation(sub) {
@@ -2228,6 +2255,31 @@ function cmdContinuationList(ctx) {
     .filter(c => !kind || c.kind === kind)
     .sort(compareContinuations);
   output({ ok: true, store: continuationsDir(ctx), status, kind: kind || "all", continuations: continuations.map(stripContinuationBody) }, formatContinuationList(continuations, status));
+}
+
+function cmdPublish(sub) {
+  const ctx = loadContext();
+  switch (sub) {
+    case "list":
+      return cmdPublishList(ctx);
+    case "push":
+      return cmdPublishPush(ctx);
+    default:
+      throw new Error(`Unknown publish subcommand "${sub}". Use list or push.`);
+  }
+}
+
+function cmdPublishList(ctx) {
+  const views = listPublishableViews(ctx);
+  output({ ok: true, views }, formatPublishList(views));
+}
+
+function cmdPublishPush(ctx) {
+  const viewId = argv.shift() || "all";
+  const target = valueFlag("--target") || valueFlag("-t") || "fracta";
+  const dryRun = hasFlag("--dry-run") || hasFlag("-n");
+  const result = publishViews(ctx, { viewId, target, dryRun });
+  output(result, formatPublishResult(result));
 }
 
 function cmdContinuationInspect(ctx, id) {
@@ -10013,6 +10065,109 @@ function formatContinuationSchema() {
   return `\n${CONTINUATION_PROTOCOL}\n\nRequired fields: id, status, kind, title, question, subject, context, expected_response.\nResolution is written by continuation resolve/cancel.\n`;
 }
 
+function listPublishableViews(ctx) {
+  const views = [];
+  const registryRepo = ctx.repos.find(r => r.role === "registry" || r.name === "JeanHuguesRobert");
+  if (!registryRepo) throw new Error("No registry repo found for views");
+
+  // Standard generated views
+  const standardViews = [
+    { id: "current-issues", name: "Current Issues", file: "current-issues.md", source: "issues export" },
+    { id: "documents", name: "Documents Index", file: "documents.md", source: "corpus generated" },
+    { id: "concepts", name: "Concepts Index", file: "concepts.md", source: "corpus generated" },
+  ];
+
+  for (const view of standardViews) {
+    const fullPath = path.join(registryRepo.path, view.file);
+    if (fs.existsSync(fullPath)) {
+      const stat = fs.statSync(fullPath);
+      views.push({
+        ...view,
+        exists: true,
+        size: stat.size,
+        modified: stat.mtime.toISOString(),
+      });
+    } else {
+      views.push({ ...view, exists: false, size: 0, modified: null });
+    }
+  }
+
+  return views;
+}
+
+function publishViews(ctx, options = {}) {
+  const viewId = options.viewId || "all";
+  const target = options.target || "fracta";
+  const dryRun = options.dryRun || false;
+
+  const views = listPublishableViews(ctx);
+  const toPublish = viewId === "all" ? views.filter(v => v.exists) : views.filter(v => v.id === viewId && v.exists);
+
+  if (!toPublish.length) {
+    return { ok: false, error: "No views to publish", viewId, available: views.length };
+  }
+
+  const registryRepo = ctx.repos.find(r => r.role === "registry" || r.name === "JeanHuguesRobert");
+  const results = [];
+
+  for (const view of toPublish) {
+    const sourcePath = path.join(registryRepo.path, view.file);
+    const targetPath = target === "fracta" ? `/srv/views/${view.file}` : `${target}/${view.file}`;
+
+    try {
+      if (!dryRun) {
+        const rsyncResult = execFileSync("rsync", [
+          "-avz",
+          "--progress",
+          sourcePath,
+          `${target}:${targetPath}`,
+        ], { encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] });
+        results.push({ view: view.id, success: true, target: targetPath, output: rsyncResult });
+      } else {
+        results.push({ view: view.id, success: true, target: targetPath, dry_run: true });
+      }
+    } catch (error) {
+      results.push({ view: view.id, success: false, target: targetPath, error: error.message || String(error) });
+    }
+  }
+
+  return {
+    ok: results.every(r => r.success),
+    target,
+    dry_run: dryRun,
+    published: results.filter(r => r.success).length,
+    failed: results.filter(r => !r.success).length,
+    results,
+  };
+}
+
+function formatPublishList(views) {
+  const lines = ["\nPublishable Views\n"];
+  lines.push(`${pad("ID", 16)} ${pad("Name", 24)} ${pad("Size", 8, true)} ${pad("Status", 8)}`);
+  lines.push("-".repeat(90));
+  for (const view of views) {
+    const size = view.exists ? `${Math.round(view.size / 1024)}KB` : "-";
+    const status = view.exists ? "ready" : "missing";
+    lines.push(`${pad(view.id, 16)} ${pad(view.name, 24)} ${pad(size, 8, true)} ${pad(status, 8)}`);
+  }
+  return lines.join("\n");
+}
+
+function formatPublishResult(result) {
+  const lines = ["\nPublish Results\n"];
+  lines.push(`Target: ${result.target}`);
+  lines.push(`Published: ${result.published}`);
+  lines.push(`Failed: ${result.failed}`);
+  if (result.dry_run) lines.push("(dry run, no actual transfer)");
+  lines.push("");
+  for (const r of result.results) {
+    const status = r.success ? "✓" : "✗";
+    lines.push(`${status} ${r.view} → ${r.target}`);
+    if (r.error) lines.push(`  Error: ${r.error}`);
+  }
+  return lines.join("\n");
+}
+
 function formatIssueList(repo, issues, state) {
   const lines = [`\nGitHub issues (${repo}, ${state})\n`];
   if (!issues.length) {
@@ -10418,6 +10573,166 @@ function issueGraphReport(ctx, { repoArg = "all", state = "open", limit = 25, vi
   }));
   report.ok = repoErrors.length === 0;
   return report;
+}
+
+function exportIssues(ctx, options = {}) {
+  const repoArg = options.repoArg || "all";
+  const state = options.state || "open";
+  const includeBody = options.includeBody || false;
+  const includeComments = options.includeComments || false;
+  const outputPath = options.outputPath || null;
+
+  // Default output: registry repo (JeanHuguesRobert) or .cogentia/
+  let targetRepo = ctx.repos.find(r => r.role === "registry" || r.name === "JeanHuguesRobert");
+  let targetPath;
+  if (outputPath) {
+    targetPath = outputPath;
+  } else if (targetRepo) {
+    targetPath = path.join(targetRepo.path, "current-issues.md");
+  } else {
+    targetPath = path.join(ctx.rootPath, ".cogentia", "current-issues.md");
+  }
+
+  const repos = repoArg === "all"
+    ? ctx.repos
+        .filter(repo => canSeeRepo(repo, PUBLIC_VIEW))
+        .filter(repo => repo.full_name || repo.github_full_name || repo.name)
+    : [resolveIssueRepo(ctx, repoArg)];
+
+  const issuesByRepo = new Map();
+  const repoErrors = [];
+  let totalIssues = 0;
+
+  for (const repo of repos) {
+    try {
+      // Construct GitHub full name if not present
+      const repoFull = repo.full_name || repo.github_full_name || `JeanHuguesRobert/${repo.name}`;
+      const issues = ghJson([
+        "issue", "list",
+        "--repo", repoFull,
+        "--state", state,
+        "--limit", "100",
+        "--json", "number,title,state,updatedAt,closedAt,url,labels,author,body,comments",
+      ]);
+      const normalized = issues.map(normalizeGitHubIssue);
+      if (normalized.length > 0) {
+        issuesByRepo.set(repo.name || repoFull, { repo, issues: normalized, repoFull });
+        totalIssues += normalized.length;
+      }
+    } catch (error) {
+      const repoFull = repo.full_name || repo.github_full_name || `JeanHuguesRobert/${repo.name}`;
+      repoErrors.push({ repository: repoFull, error: error.message });
+    }
+  }
+
+  // Generate markdown
+  const lines = [];
+  lines.push("---");
+  lines.push('title: "Current Issues - JeanHuguesRobert Organization"');
+  lines.push(`last_modified_at: ${today()}`);
+  lines.push("generated_by: cogentia.js");
+  lines.push(`generated_at: ${new Date().toISOString()}`);
+  lines.push(`total_issues: ${totalIssues}`);
+  lines.push("---");
+  lines.push("");
+  lines.push("# Current Issues - JeanHuguesRobert Organization");
+  lines.push("");
+  lines.push(`_${GENERATED_NOTE}_`);
+  lines.push("");
+  lines.push(`**Total: ${totalIssues} open issues**`);
+  lines.push("");
+
+  // Order repositories consistently
+  const repoOrder = ["FractaVolta", "cogentia", "inseme", "barons-Mariani", "operium", "registre-mariani", "ubikia", "Inox", "simpli", "marenostrum", "survey", "Rhuma", "pertitellu"];
+  const sortedRepos = Array.from(issuesByRepo.entries()).sort((a, b) => {
+    const aIdx = repoOrder.indexOf(a[0]);
+    const bIdx = repoOrder.indexOf(b[0]);
+    const aOrder = aIdx >= 0 ? aIdx : 999;
+    const bOrder = bIdx >= 0 ? bIdx : 999;
+    if (aOrder !== bOrder) return aOrder - bOrder;
+    return a[0].localeCompare(b[0]);
+  });
+
+  for (const [repoName, { repo, issues }] of sortedRepos) {
+    lines.push(`## ${repoName} (${issues.length} issue${issues.length > 1 ? "s" : ""})`);
+    lines.push("");
+
+    for (const issue of issues) {
+      const labels = Array.isArray(issue.labels) ? issue.labels.join(", ") : "";
+      const createdDate = issue.closed_at || issue.updated_at || "";
+      const updatedDate = issue.updated_at || "";
+
+      lines.push(`### [#${issue.number}] ${issue.title}`);
+      lines.push(`**URL:** ${issue.url} | **State:** ${issue.state}`);
+      if (updatedDate) lines.push(`**Updated:** ${updatedDate}`);
+      if (labels) lines.push(`**Labels:** ${labels}`);
+      lines.push("");
+
+      if (includeBody && issue.body) {
+        lines.push(issue.body);
+        lines.push("");
+      }
+
+      if (includeComments && Array.isArray(issue.comments) && issue.comments.length > 0) {
+        lines.push(`**Comments (${issue.comments.length}):**`);
+        for (const comment of issue.comments) {
+          const author = typeof comment === "string" ? comment : (comment.author?.login || "Unknown");
+          const body = typeof comment === "string" ? "" : (comment.body || "");
+          const created = typeof comment === "string" ? "" : (comment.createdAt || "");
+          if (body) {
+            const createdStr = created ? ` (${new Date(created).toLocaleDateString("fr-FR")})` : "";
+            lines.push(`- **${author}${createdStr}:** ${body.substring(0, 200)}${body.length > 200 ? "..." : ""}`);
+          }
+        }
+        lines.push("");
+      }
+
+      lines.push("---");
+      lines.push("");
+    }
+  }
+
+  // Write to file
+  const content = lines.join("\n");
+  ensureDir(path.dirname(targetPath));
+  fs.writeFileSync(targetPath, ensureFinalNewline(content), "utf8");
+
+  return {
+    ok: repoErrors.length === 0,
+    repoArg,
+    state,
+    includeBody,
+    includeComments,
+    output_path: targetPath,
+    total_issues: totalIssues,
+    repositories: sortedRepos.map(([name, { repo, issues, repoFull }]) => ({
+      name,
+      full_name: repoFull || repo.full_name || repo.github_full_name || name,
+      count: issues.length,
+    })),
+    repository_errors: repoErrors,
+    generated_at: new Date().toISOString(),
+  };
+}
+
+function formatIssuesExport(result) {
+  const lines = ["\nIssues export\n"];
+  lines.push(`Output: ${result.output_path}`);
+  lines.push(`Total issues: ${result.total_issues}`);
+  lines.push(`Repositories: ${result.repositories.length}`);
+  lines.push("");
+  lines.push("Repositories:");
+  for (const repo of result.repositories) {
+    lines.push(`- ${repo.name}: ${repo.count} issue${repo.count > 1 ? "s" : ""}`);
+  }
+  if (result.repository_errors.length > 0) {
+    lines.push("");
+    lines.push("Errors:");
+    for (const error of result.repository_errors) {
+      lines.push(`- ${error.repository}: ${error.error}`);
+    }
+  }
+  return lines.join("\n");
 }
 
 function resolveIssueGraphTarget(inventory, ref, packet) {
