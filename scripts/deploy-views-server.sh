@@ -13,7 +13,10 @@ FRACTA_USER="${VIEWS_USER:-root}"
 FRACTA_HOST="${VIEWS_HOST:-fracta}"
 VIEWS_DIR="/srv/views"
 SERVER_DIR="/srv/views-server"
-SCRIPT_NAME="views-server.mjs"
+SCRIPT_NAME="views-server.js"
+# Canonical sources live under deploy/views-server/ (ESM package, .js entry)
+SCRIPT_SRC="$(cd "$(dirname "$0")/.." && pwd)/deploy/views-server/${SCRIPT_NAME}"
+PKG_SRC="$(cd "$(dirname "$0")/.." && pwd)/deploy/views-server/package.json"
 
 echo "Deploying Views Store to ${FRACTA_HOST}..."
 
@@ -21,9 +24,9 @@ echo "Deploying Views Store to ${FRACTA_HOST}..."
 echo "Creating directories..."
 ${DRY_RUN} ssh ${FRACTA_USER}@${FRACTA_HOST} "mkdir -p ${VIEWS_DIR} ${SERVER_DIR}"
 
-# Copy server script
+# Copy server script (+ package.json for type:module / deps)
 echo "Copying server script..."
-${DRY_RUN} scp "$(dirname "$0")/${SCRIPT_NAME}" ${FRACTA_USER}@${FRACTA_HOST}:${SERVER_DIR}/
+${DRY_RUN} scp "${SCRIPT_SRC}" "${PKG_SRC}" ${FRACTA_USER}@${FRACTA_HOST}:${SERVER_DIR}/
 
 # Create systemd service
 echo "Creating systemd service..."

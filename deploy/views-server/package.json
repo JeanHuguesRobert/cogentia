@@ -1,0 +1,13 @@
+{
+  "name": "views-server",
+  "version": "1.1.0",
+  "type": "module",
+  "description": "Views Store — file-explorer UI over generated cogentia views",
+  "main": "views-server.js",
+  "scripts": {
+    "start": "node views-server.js"
+  },
+  "dependencies": {
+    "marked": "^18.0.7"
+  }
+}

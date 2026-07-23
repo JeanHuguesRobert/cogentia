@@ -1,9 +1,34 @@
 export const SERVER_NAME = "cogentia-mcp";
-export const SERVER_VERSION = "0.1.0";
+export const SERVER_VERSION = "0.2.0";
 export const PROTOCOL_VERSION = "2025-11-25";
 export const SUPPORTED_PROTOCOLS = new Set([PROTOCOL_VERSION, "2025-06-18", "2024-11-05"]);
 
 export const TOOLS = [
+  {
+    name: "cogentia_views_snapshot",
+    description:
+      "Session bootstrap / agent cockpit: compact situational picture (corpus health signals, alive continuations, open issues summary, key Views Store URLs). Prefer this first. Does not dump SQLite vectors or chunk bodies. Implementation lives in cogentia.js.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        limit: {
+          type: "integer",
+          minimum: 1,
+          maximum: 40,
+          description: "Max alive continuations to list (default 12).",
+        },
+        include_remote: {
+          type: "boolean",
+          description: "If true, probe Supabase inventory (slower; needs credentials on daemon host).",
+        },
+        no_store_probe: {
+          type: "boolean",
+          description: "If true, skip HTTP probe of the public Views Store API.",
+        },
+      },
+      additionalProperties: false,
+    },
+  },
   {
     name: "cogentia_search",
     description: "Explore the Cogentia corpus with short, citable search results.",
@@ -93,7 +118,11 @@ export function createMcpCore(env = process.env) {
       protocolVersion: SUPPORTED_PROTOCOLS.has(requested) ? requested : PROTOCOL_VERSION,
       capabilities: { tools: { listChanged: false } },
       serverInfo: { name: SERVER_NAME, version: SERVER_VERSION },
-      instructions: "Use context packs for broad questions, search for exploration, and get_lines for targeted verification. Cite source_id values.",
+      instructions:
+        "Start with cogentia_views_snapshot for situational awareness (load level/mode, alive work, corpus debt, view URLs). " +
+        "Read load.level and load.mode_recommendation before suggesting batch/sleep work. " +
+        "Use context packs for broad questions, search for exploration, and get_lines for targeted verification. Cite source_id values. " +
+        "MCP is a thin adapter; corpus truth lives in cogentia.js / the daemon.",
     };
   }
 
@@ -125,6 +154,12 @@ export function createMcpCore(env = process.env) {
 
   async function callTool(name, args = {}) {
     switch (name) {
+      case "cogentia_views_snapshot":
+        return daemonGet("/api/views/snapshot", {
+          limit: boundedOptional(args.limit, 1, 40),
+          include_remote: args.include_remote === true ? "1" : undefined,
+          no_store_probe: args.no_store_probe === true ? "1" : undefined,
+        });
       case "cogentia_search":
         requireString(args.query, "query");
         return daemonGet("/api/context/search", {

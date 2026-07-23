@@ -430,7 +430,7 @@ A mechanism for distilling the core actionable kernel from broader deliberations
 
 ---
 
-## KYS (Know Your System) / Psychocognitive Analysis
+## KYS (Know Your Self) / Psychocognitive Analysis
 
 **Type:** protocol
 **Scope:** project-specific

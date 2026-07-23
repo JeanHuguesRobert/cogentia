@@ -8,6 +8,141 @@ export function retrievalSupabaseConfigured(env = process.env) {
     && Boolean(env.SUPABASE_URL && env.SUPABASE_SERVICE_ROLE_KEY);
 }
 
+/**
+ * Lightweight remote inventory for Views Store / ops — counts & meta only.
+ * Never downloads embedding vectors or chunk text bodies.
+ */
+export async function retrievalSupabaseStatus(options = {}) {
+  const env = options.env || process.env;
+  const supabaseUrl = String(env.SUPABASE_URL || "").replace(/\/$/, "");
+  const serviceKey = String(env.SUPABASE_SERVICE_ROLE_KEY || env.SUPABASE_ANON_KEY || "");
+  const corpusKey = String(options.corpusKey || env.COGENTIA_RETRIEVAL_CORPUS_KEY || DEFAULT_CORPUS);
+  const backend = String(env.COGENTIA_RETRIEVAL_BACKEND || "").toLowerCase();
+
+  if (!supabaseUrl || !serviceKey) {
+    return {
+      ok: false,
+      configured: false,
+      backend: backend || null,
+      reason: "missing_SUPABASE_URL_or_key",
+      message: "Supabase not configured in this environment (no row fetch attempted).",
+    };
+  }
+
+  const headers = {
+    apikey: serviceKey,
+    Authorization: `Bearer ${serviceKey}`,
+    Prefer: "count=exact",
+  };
+
+  try {
+    // Total rows (metadata only via Content-Range)
+    const countRes = await fetch(
+      `${supabaseUrl}/rest/v1/retrieval_chunks?select=id&limit=1`,
+      { headers }
+    );
+    const contentRange = countRes.headers.get("content-range") || "";
+    const totalMatch = contentRange.match(/\/(\d+|\*)\s*$/);
+    const totalRows = totalMatch && totalMatch[1] !== "*" ? Number(totalMatch[1]) : null;
+
+    // Filtered count for corpus_key
+    const corpusRes = await fetch(
+      `${supabaseUrl}/rest/v1/retrieval_chunks?select=id&corpus_key=eq.${encodeURIComponent(corpusKey)}&limit=1`,
+      { headers }
+    );
+    const corpusRange = corpusRes.headers.get("content-range") || "";
+    const corpusMatch = corpusRange.match(/\/(\d+|\*)\s*$/);
+    const corpusRows = corpusMatch && corpusMatch[1] !== "*" ? Number(corpusMatch[1]) : null;
+
+    // Small metadata sample — no text, no embedding
+    const metaRes = await fetch(
+      `${supabaseUrl}/rest/v1/retrieval_chunks?select=corpus_key,index_hash,provider,model_name,dimensions,updated_at,repo&corpus_key=eq.${encodeURIComponent(corpusKey)}&order=updated_at.desc&limit=200`,
+      {
+        headers: {
+          apikey: serviceKey,
+          Authorization: `Bearer ${serviceKey}`,
+        },
+      }
+    );
+    const metaText = await metaRes.text();
+    let rows = [];
+    try {
+      rows = metaText ? JSON.parse(metaText) : [];
+    } catch {
+      rows = [];
+    }
+    if (!metaRes.ok) {
+      return {
+        ok: false,
+        configured: true,
+        backend: backend || "supabase",
+        supabase_url_host: safeUrlHost(supabaseUrl),
+        corpus_key: corpusKey,
+        error: "supabase_meta_query_failed",
+        message: typeof rows === "object" && rows?.message ? rows.message : metaText.slice(0, 200),
+        total_rows: totalRows,
+      };
+    }
+
+    const byProvider = new Map();
+    const byRepo = new Map();
+    const indexHashes = new Map();
+    let latestUpdated = null;
+    for (const row of rows) {
+      const pk = `${row.provider || "?"}::${row.model_name || "?"}::${row.dimensions || "?"}`;
+      byProvider.set(pk, (byProvider.get(pk) || 0) + 1);
+      if (row.repo) byRepo.set(row.repo, (byRepo.get(row.repo) || 0) + 1);
+      if (row.index_hash) indexHashes.set(row.index_hash, (indexHashes.get(row.index_hash) || 0) + 1);
+      if (row.updated_at && (!latestUpdated || row.updated_at > latestUpdated)) {
+        latestUpdated = row.updated_at;
+      }
+    }
+
+    return {
+      ok: true,
+      configured: true,
+      backend: backend || "supabase",
+      supabase_url_host: safeUrlHost(supabaseUrl),
+      corpus_key: corpusKey,
+      total_rows: totalRows,
+      corpus_rows: corpusRows,
+      sample_size: rows.length,
+      sample_note: "Provider/repo breakdown is from the latest 200 meta rows for this corpus_key (not a full scan).",
+      latest_updated_at: latestUpdated,
+      providers_sample: [...byProvider.entries()].map(([k, count]) => {
+        const [provider, model_name, dimensions] = k.split("::");
+        return { provider, model_name, dimensions: Number(dimensions) || dimensions, sample_count: count };
+      }),
+      repos_sample: [...byRepo.entries()]
+        .map(([repo, sample_count]) => ({ repo, sample_count }))
+        .sort((a, b) => b.sample_count - a.sample_count),
+      index_hashes_sample: [...indexHashes.entries()]
+        .map(([index_hash, sample_count]) => ({ index_hash, sample_count }))
+        .sort((a, b) => b.sample_count - a.sample_count),
+      vectors_included: false,
+      text_bodies_included: false,
+    };
+  } catch (error) {
+    return {
+      ok: false,
+      configured: true,
+      backend: backend || "supabase",
+      supabase_url_host: safeUrlHost(supabaseUrl),
+      corpus_key: corpusKey,
+      error: "supabase_status_failed",
+      message: error.message || String(error),
+    };
+  }
+}
+
+function safeUrlHost(url) {
+  try {
+    return new URL(url).host;
+  } catch {
+    return null;
+  }
+}
+
 export async function retrievalSupabasePackBatch(queries, options = {}) {
   const env = options.env || process.env;
   const supabaseUrl = String(env.SUPABASE_URL || "").replace(/\/$/, "");

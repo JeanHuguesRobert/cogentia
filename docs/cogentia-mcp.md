@@ -57,16 +57,17 @@ administrative configuration and remains subject to daemon authorization.
 
 ## Tools
 
+- `cogentia_views_snapshot`: **session bootstrap** — compact cockpit (corpus signals, alive continuations, open issues summary, key Views Store URLs). Prefer first. Implemented by `cogentia.js views snapshot` via daemon `GET /api/views/snapshot`.
 - `cogentia_search`: short exploratory search with citable results.
 - `cogentia_context_pack`: bounded context for a broad question.
 - `cogentia_get_lines`: focused verification of a cited line interval.
 - `cogentia_explain`: deterministic retrieval signals and current limits.
 - `cogentia_health`: daemon and index availability.
+- `cogentia_issue_graph`: read-only issue ↔ document graph (when available).
 
-Prefer `cogentia_context_pack` when answering a broad corpus question,
-`cogentia_search` while exploring, and `cogentia_get_lines` before asserting a
-specific passage. Responses preserve `source_id` citations produced by the
-gateway.
+Prefer `cogentia_views_snapshot` at session start, `cogentia_context_pack` for a broad corpus question, `cogentia_search` while exploring, and `cogentia_get_lines` before asserting a specific passage. Responses preserve `source_id` citations produced by the gateway.
+
+The adapter stays **thin**: no SQLite, no provider keys, no publish/rebuild. Logic lives in `cogentia.js` / the daemon.
 
 ## Protocol and errors
 

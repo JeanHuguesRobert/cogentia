@@ -43,16 +43,28 @@ filesystem operations, or cache rebuild actions.
 
 ## Tools exposed
 
-The MCP adapter exposes five tools:
+The MCP adapter is a **thin façade** over the daemon / `cogentia.js`. Tools:
 
-- `cogentia_search`: exploratory search with citable results.
-- `cogentia_context_pack`: bounded context pack for broad questions.
-- `cogentia_get_lines`: focused retrieval for a cited line interval.
-- `cogentia_explain`: retrieval signal explanation for a result.
-- `cogentia_health`: daemon and index health.
+| Tool | Role |
+|------|------|
+| `cogentia_views_snapshot` | **Start here** — cockpit: corpus health, alive continuations, issues, view URLs |
+| `cogentia_search` | Exploratory search with citable results |
+| `cogentia_context_pack` | Bounded context pack for broad questions |
+| `cogentia_get_lines` | Focused retrieval for a cited line interval |
+| `cogentia_explain` | Retrieval signal explanation for a result |
+| `cogentia_health` | Daemon and index health |
+| `cogentia_issue_graph` | Read-only issue graph |
 
-Use `cogentia_context_pack` for broad questions, `cogentia_search` while
-exploring, and `cogentia_get_lines` before asserting a specific passage.
+CLI equivalent of the snapshot (no MCP required):
+
+```bash
+COGENTIA_REGISTRY=/c/tweesic/JeanHuguesRobert \
+  node cogentia/scripts/cogentia.js --json views snapshot
+```
+
+Use `cogentia_views_snapshot` at session start, `cogentia_context_pack` for broad
+questions, `cogentia_search` while exploring, and `cogentia_get_lines` before
+asserting a specific passage.
 
 ## Local daemon
 
@@ -108,6 +120,100 @@ servers/tools. In Codex, `/mcp` should show `cogentia`.
 
 Keep `COGENTIA_MCP_VIEW = "public"` for model-facing use. `full` view requires
 `COGENTIA_ADMIN_TOKEN` and is for local or administrative use only.
+
+First useful prompt after connect:
+
+> Call `cogentia_views_snapshot`, read `load.level` and `load.mode_recommendation`,
+> then summarize where I am: total load (Σ load×weight), alive continuations, open
+> issues, and corpus warn signals. Only recommend sleep/consolidation batches if
+> mode is `sleep_ok` or `sleep_cautious`. Give 3 next actions.
+
+**Load** (`cogentia.load.v0`, English; French *charge*) is demand vs capacity:
+`demand = Σ (load_i × weight_i)`. Measure **before** dispatching off-peak sleep
+work. Sleep jobs are non-realtime and may later use preemptible capacity;
+crisis/wake_only defers them. Snapshot still mirrors the object as `charge` for
+one compatibility version — prefer `load`.
+
+## Claude Code / Claude Desktop
+
+**Claude Code** — project or user MCP config (JSON). Example
+`~/.claude.json` or project `.mcp.json` (paths vary by Claude Code version):
+
+```json
+{
+  "mcpServers": {
+    "cogentia": {
+      "command": "node",
+      "args": ["C:\\tweesic\\cogentia\\scripts\\cogentia-mcp.js"],
+      "env": {
+        "COGENTIA_DAEMON_URL": "http://127.0.0.1:8790",
+        "COGENTIA_MCP_VIEW": "public"
+      }
+    }
+  }
+}
+```
+
+**Claude Desktop** — same shape under Settings → Developer → MCP, or
+`claude_desktop_config.json`.
+
+Require the **local daemon** running first (see above). For remote-only use
+without a local daemon, prefer the Fracta HTTP endpoint if your client supports
+HTTP MCP:
+
+```text
+https://cogentia.fractavolta.com/mcp
+```
+
+## Cursor
+
+Cursor Settings → MCP → Add server (stdio):
+
+- Command: `node`
+- Args: `C:\tweesic\cogentia\scripts\cogentia-mcp.js`
+- Env: `COGENTIA_DAEMON_URL=http://127.0.0.1:8790`, `COGENTIA_MCP_VIEW=public`
+
+Or in `.cursor/mcp.json` / user MCP config (Cursor’s current file name may
+vary — check Cursor MCP docs if the UI moves):
+
+```json
+{
+  "mcpServers": {
+    "cogentia": {
+      "command": "node",
+      "args": ["C:\\tweesic\\cogentia\\scripts\\cogentia-mcp.js"],
+      "env": {
+        "COGENTIA_DAEMON_URL": "http://127.0.0.1:8790",
+        "COGENTIA_MCP_VIEW": "public"
+      }
+    }
+  }
+}
+```
+
+## Grok / Gemini / cmdc / other coding agents
+
+Many local agents (Grok Build, Gemini CLI wrappers, cmdc-launched tools) either:
+
+1. **Speak MCP stdio** — reuse the same `node …/cogentia-mcp.js` stanza as Codex/Claude, or  
+2. **Do not speak MCP** — call the CLI or HTTP directly:
+
+```powershell
+$env:COGENTIA_REGISTRY = 'C:\tweesic\JeanHuguesRobert'
+node C:\tweesic\cogentia\scripts\cogentia.js views snapshot --json
+# or against a running daemon:
+Invoke-RestMethod 'http://127.0.0.1:8790/api/views/snapshot'
+# public store (no daemon):
+Invoke-RestMethod 'https://cogentia.fractavolta.com/api/views?tag=kind:corpus-state'
+```
+
+Operium documents **workstation launchers and secrets** in
+[`operium/docs/coding-infrastructure.md`](../../operium/docs/coding-infrastructure.md)
+and semantic stack in
+[`operium/docs/cogentia-semantic-stack.md`](../../operium/docs/cogentia-semantic-stack.md).
+MCP connection recipes for Cogentia live primarily in **this file** and
+[`cogentia-mcp.md`](cogentia-mcp.md); Operium should **point** here rather than
+duplicate long-lived protocol detail.
 
 ## Fracta public checks
 
