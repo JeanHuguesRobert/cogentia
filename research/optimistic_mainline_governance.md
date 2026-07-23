@@ -119,6 +119,28 @@ This is not laxity. It is an action discipline adapted to a corpus that must lea
 
 ---
 
+## 3.1 Visibility domains and restricted supplements
+
+The same posture applies to information visibility.
+
+The normal mode is maximum lawful and responsible transparency: the public record is the living, inspectable corpus. A private register is not its concealed replacement; it is an exceptional supplement for material that cannot yet, or cannot safely, be public.
+
+Working rule:
+
+```text
+public record = normal, autonomous and inspectable line
+restricted supplement = explicit, bounded and dependent exception
+publication review = a traceable decision, not an automatic release
+```
+
+A restriction must be explicit, motivated, proportionate to the risk, limited in scope, and open to re-examination. Where doing so does not itself expose protected information, the public record may state that a restricted supplement exists and why it is withheld.
+
+This does not create a duty to disclose later. Re-examination tests whether the restriction remains justified, including for the privacy, safety or legitimate interests of third parties.
+
+A visibility conflict must not silently erase the public record or turn secrecy into the default. It is recorded as a bounded exception, with a correction or review path.
+
+---
+
 ## 4. Authorization is not a branch requirement
 
 Scoped authorization allows stabilization. It does not automatically require a branch or Pull Request.
