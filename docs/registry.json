@@ -1,0 +1,66 @@
+{
+  "repos": [
+    {
+      "name": "cogentia",
+      "path": "C:\\tweesic\\cogentia",
+      "branch": "main",
+      "added": "2026-05-09T19:42:58.050Z"
+    },
+    {
+      "name": "FractaVolta",
+      "path": "C:\\tweesic\\FractaVolta",
+      "branch": "main",
+      "added": "2026-05-09T19:42:58.330Z"
+    },
+    {
+      "name": "marenostrum",
+      "path": "C:\\tweesic\\marenostrum",
+      "branch": "main",
+      "added": "2026-05-09T19:42:58.633Z"
+    },
+    {
+      "name": "barons-Mariani",
+      "path": "C:\\tweesic\\barons-Mariani",
+      "branch": "main",
+      "added": "2026-05-09T19:42:58.961Z"
+    },
+    {
+      "name": "inseme",
+      "path": "C:\\tweesic\\inseme",
+      "branch": "main",
+      "added": "2026-05-13T04:54:19.207Z"
+    },
+    {
+      "name": "Inox",
+      "path": "C:\\tweesic\\Inox",
+      "branch": "master",
+      "added": "2026-05-21T16:49:46.207Z"
+    },
+    {
+      "name": "registre-mariani",
+      "path": "C:\\tweesic\\registre-mariani",
+      "branch": "main",
+      "added": "2026-06-13T21:00:00.000Z"
+    },
+    {
+      "name": "ubikia",
+      "path": "C:\\tweesic\\ubikia",
+      "branch": "main",
+      "added": "2026-06-13T21:00:00.000Z"
+    },
+    {
+      "name": "JeanHuguesRobert",
+      "path": "C:\\tweesic\\JeanHuguesRobert",
+      "branch": "main",
+      "added": "2026-05-28T05:41:14.424Z"
+    },
+    {
+      "name": "StructEnv",
+      "path": "C:\\tweesic\\StructEnv",
+      "branch": "main",
+      "added": "2026-07-23T16:49:09.042Z"
+    }
+  ],
+  "version": 1,
+  "updated": "2026-07-23T16:49:09.042Z"
+}

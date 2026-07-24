@@ -602,6 +602,35 @@ function normalizeDaemonClientUrl(value) {
   return url;
 }
 
+function cmdEmitStatic() {
+  const ctx = loadContext();
+  const inventory = buildInventory(ctx);
+  const result = emitStaticProjection(ctx, inventory);
+  output(result, `Static projection emitted: ${result.llms_path} (${result.repos_projected} repos projected)`);
+}
+
+function cmdPublishRegistry() {
+  const ctx = loadContext();
+  const result = publishRegistry(ctx);
+  output(result, `Authoritative registry published to: ${result.published.join(", ")}`);
+}
+
+function cmdNavBenchmark() {
+  const ctx = loadContext();
+  const inventory = buildInventory(ctx);
+  const result = runNavigationBenchmark(ctx, inventory);
+  output(result, `Navigation Benchmark: ${result.score} (${result.passed} passed, ${result.failed} failed)\n${JSON.stringify(result.results, null, 2)}`);
+}
+
+function cmdGuideResolve() {
+  const query = argv.join(" ").trim();
+  if (!query) throw new Error('Usage: node scripts/cogentia.js guide-resolve "<query>"');
+  const ctx = loadContext();
+  const inventory = buildInventory(ctx);
+  const result = guideResolve(query, inventory);
+  output(result, JSON.stringify(result, null, 2));
+}
+
 function cmdState() {
   const ctx = loadContext();
   const repos = ctx.repos.map(repo => ({
