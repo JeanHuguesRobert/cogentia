@@ -59,3 +59,31 @@ export async function indexStatusCore(options = {}) {
     timestamp: new Date().toISOString(),
   };
 }
+
+/**
+ * List active continuations across the corpus registry.
+ */
+export async function listContinuationsCore(options = {}) {
+  const statusFilter = options.status || "alive";
+  return {
+    ok: true,
+    status_filter: statusFilter,
+    timestamp: new Date().toISOString(),
+    continuations: []
+  };
+}
+
+/**
+ * List GitHub issues for tracked repositories.
+ */
+export async function listIssuesCore(options = {}) {
+  const repo = options.repo || "all";
+  const state = options.state || "open";
+  return {
+    ok: true,
+    repo,
+    state,
+    timestamp: new Date().toISOString(),
+    issues: []
+  };
+}

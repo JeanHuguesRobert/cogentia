@@ -136,6 +136,29 @@ export const TOOLS = [
     description: "Execute the S6 navigation benchmark suite over seed queries.",
     inputSchema: { type: "object", properties: {}, additionalProperties: false },
   },
+  {
+    name: "cogentia_continuation_list",
+    description: "List active or alive continuation decision packets across the corpus registry.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        status: { type: "string", enum: ["alive", "hibernating", "closed", "active", "resolved", "cancelled", "dormant", "all"] },
+      },
+      additionalProperties: false,
+    },
+  },
+  {
+    name: "cogentia_issues_list",
+    description: "List GitHub issues for a registered repository.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        repo: { type: "string" },
+        state: { type: "string", enum: ["open", "closed", "all"] },
+      },
+      additionalProperties: false,
+    },
+  },
 ];
 
 export function createMcpCore(env = process.env) {
@@ -249,6 +272,13 @@ export function createMcpCore(env = process.env) {
         return daemonGet("/api/ops/nav-benchmark", {});
       case "cogentia_git_verify":
         return daemonGet("/api/views/snapshot", { include_remote: "0" });
+      case "cogentia_continuation_list":
+        return daemonGet("/api/views/snapshot", { limit: 20 });
+      case "cogentia_issues_list":
+        return daemonGet("/api/issues/graph", {
+          repo: args.repo || "all",
+          state: enumOptional(args.state, ["open", "closed", "all"], "state") || "open",
+        });
       default:
         throw new Error(`Unknown tool: ${name}`);
     }

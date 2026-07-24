@@ -48,6 +48,13 @@ The MCP adapter is a **thin façade** over the daemon / `cogentia.js`. Tools:
 | Tool | Role |
 |------|------|
 | `cogentia_views_snapshot` | **Start here** — cockpit: corpus health, alive continuations, issues, view URLs |
+| `cogentia_guide_resolve` | **3-Layer S7 Navigation** — 1-hop canonical concept alias resolution |
+| `cogentia_git_verify` | Corpus git state (ahead/behind/dirty) across all 10 repositories |
+| `cogentia_emit_static` | Generate/verify S1 `llms.txt` static projection artifact |
+| `cogentia_publish_registry` | Generate/verify S2 `registry.json` authoritative artifact |
+| `cogentia_nav_benchmark` | Execute S6 1-hop navigation benchmark suite |
+| `cogentia_continuation_list` | List active or alive continuation decision packets |
+| `cogentia_issues_list` | List GitHub issues for tracked repositories |
 | `cogentia_search` | Exploratory search with citable results |
 | `cogentia_context_pack` | Bounded context pack for broad questions |
 | `cogentia_get_lines` | Focused retrieval for a cited line interval |
