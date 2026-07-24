@@ -116,6 +116,26 @@ export const TOOLS = [
       additionalProperties: false,
     },
   },
+  {
+    name: "cogentia_git_verify",
+    description: "Check ahead/behind and dirty state across all 10 monorepo repositories.",
+    inputSchema: { type: "object", properties: {}, additionalProperties: false },
+  },
+  {
+    name: "cogentia_emit_static",
+    description: "Generate or verify the llms.txt static projection artifact across all 10 repositories.",
+    inputSchema: { type: "object", properties: {}, additionalProperties: false },
+  },
+  {
+    name: "cogentia_publish_registry",
+    description: "Publish or verify the versioned registry.json authoritative artifact.",
+    inputSchema: { type: "object", properties: {}, additionalProperties: false },
+  },
+  {
+    name: "cogentia_nav_benchmark",
+    description: "Execute the S6 navigation benchmark suite over seed queries.",
+    inputSchema: { type: "object", properties: {}, additionalProperties: false },
+  },
 ];
 
 export function createMcpCore(env = process.env) {
@@ -221,6 +241,14 @@ export function createMcpCore(env = process.env) {
       case "cogentia_guide_resolve":
         requireString(args.query, "query");
         return daemonGet("/api/context/guide-resolve", { q: args.query });
+      case "cogentia_emit_static":
+        return daemonGet("/api/ops/emit-static", {});
+      case "cogentia_publish_registry":
+        return daemonGet("/api/ops/publish-registry", {});
+      case "cogentia_nav_benchmark":
+        return daemonGet("/api/ops/nav-benchmark", {});
+      case "cogentia_git_verify":
+        return daemonGet("/api/views/snapshot", { include_remote: "0" });
       default:
         throw new Error(`Unknown tool: ${name}`);
     }

@@ -1430,6 +1430,18 @@ async function handleDaemonRequest(req, res) {
     const result = guideResolve(q);
     return daemonJson(res, 200, { ok: true, query: q, resolution: result });
   }
+  if (req.method === "GET" && url.pathname === "/api/ops/emit-static") {
+    const proj = emitStaticProjection();
+    return daemonJson(res, 200, { ok: true, projection: proj });
+  }
+  if (req.method === "GET" && url.pathname === "/api/ops/publish-registry") {
+    const reg = publishRegistry();
+    return daemonJson(res, 200, { ok: true, registry: reg });
+  }
+  if (req.method === "GET" && url.pathname === "/api/ops/nav-benchmark") {
+    const bench = runNavigationBenchmark();
+    return daemonJson(res, 200, { ok: true, benchmark: bench });
+  }
   if (req.method === "GET" && url.pathname === "/api/context/search") {
     const effectiveCtx = ctx || loadContext();
     const result = await contextSearch(effectiveCtx, url.searchParams.get("q") || "", {
