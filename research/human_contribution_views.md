@@ -29,7 +29,7 @@ related_projects:
   - KYS
   - FractaVolta
   - Inseme
-  - Archiac
+  - Archia
 tags:
   - cogentia
   - derived-products
@@ -257,7 +257,7 @@ A Human Contribution View can reconstruct:
 - what human validation anchors were required;
 - what redress or appeal paths remain open.
 
-This connects the category to Archiac and to the doctrine of traceability of acts: a powerful organization should not dissolve responsibility into process, software, committees, subcontractors or AI systems.
+This connects the category to Archia and to the doctrine of traceability of acts: a powerful organization should not dissolve responsibility into process, software, committees, subcontractors or AI systems.
 
 Compact formula:
 
