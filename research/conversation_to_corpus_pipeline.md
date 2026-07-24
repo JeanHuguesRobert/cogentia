@@ -97,7 +97,7 @@ Les conversations deviennent ainsi une matière première durable plutôt qu’u
 
 ## Origine provisoire du concept
 
-Le concept est issu d’une comparaison entre Slack, Mattermost et Discord, puis d’un déplacement progressif vers les besoins propres d’Inseme, Cogentia, Kudocracy et Archiac.
+Le concept est issu d’une comparaison entre Slack, Mattermost et Discord, puis d’un déplacement progressif vers les besoins propres d’Inseme, Cogentia, Kudocracy et Archia.
 
 Les outils existants indiquent des surfaces utiles :
 
@@ -307,7 +307,7 @@ Cogentia
 Kudocracy
 → légitimation démocratique, vote, délégation, mandat
 
-Archiac
+Archia
 → actes, traces, imputabilité, audit
 ```
 
@@ -846,7 +846,7 @@ Ce pipeline s’intègre naturellement avec les autres documents du corpus :
 - il est directement applicable au processus de review et redaction ;
 - il renforce la méthode des terrains féconds en structurant les branches, objections et hypothèses ;
 - il s’aligne avec la traçabilité des actes ;
-- il fournit un cadre méthodologique pour les futures conversations sur l’Autonomie de Capacité, le Pacte anti-capture, FractaVolta, Inseme, Kudocracy et Archiac ;
+- il fournit un cadre méthodologique pour les futures conversations sur l’Autonomie de Capacité, le Pacte anti-capture, FractaVolta, Inseme, Kudocracy et Archia ;
 - il délègue explicitement la doctrine politique des mandats express au document souverain `barons-Mariani/research/democratie_crise_mandats_express.md`.
 
 Il peut être utilisé concrètement pour :
