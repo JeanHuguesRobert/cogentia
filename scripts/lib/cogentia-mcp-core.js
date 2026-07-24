@@ -103,6 +103,19 @@ export const TOOLS = [
       additionalProperties: false,
     },
   },
+  {
+    name: "cogentia_guide_resolve",
+    description:
+      "3-Layer S7 Navigation Engine: Resolves concept queries via 1-hop canonical alias lookup, hard admissibility pre-filter, and Attractor Card similarity. Guaranteed zero-drift 1-hop resolution.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        query: { type: "string", minLength: 1, description: "Concept query (e.g. 'Potentics', 'Channel Fragmentation', 'ERP')" },
+      },
+      required: ["query"],
+      additionalProperties: false,
+    },
+  },
 ];
 
 export function createMcpCore(env = process.env) {
@@ -205,6 +218,9 @@ export function createMcpCore(env = process.env) {
           state: enumOptional(args.state, ["open", "closed", "all"], "state") || "open",
           limit: boundedOptional(args.limit, 1, 100) || 25,
         });
+      case "cogentia_guide_resolve":
+        requireString(args.query, "query");
+        return daemonGet("/api/context/guide-resolve", { q: args.query });
       default:
         throw new Error(`Unknown tool: ${name}`);
     }

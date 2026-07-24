@@ -1425,6 +1425,11 @@ async function handleDaemonRequest(req, res) {
     const quick = parseBoolean(url.searchParams.get("quick"));
     return daemonJson(res, 200, await contextHealth(effectiveCtx, { quick }));
   }
+  if (req.method === "GET" && url.pathname === "/api/context/guide-resolve") {
+    const q = url.searchParams.get("q") || "";
+    const result = guideResolve(q);
+    return daemonJson(res, 200, { ok: true, query: q, resolution: result });
+  }
   if (req.method === "GET" && url.pathname === "/api/context/search") {
     const effectiveCtx = ctx || loadContext();
     const result = await contextSearch(effectiveCtx, url.searchParams.get("q") || "", {
