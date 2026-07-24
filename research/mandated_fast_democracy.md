@@ -29,7 +29,7 @@ related_projects:
   - Conversia
   - Cellula
   - Kudocracy
-  - Archiac
+  - Archia
   - Cogentia
   - Autonomie de Capacité
 document_role: source
