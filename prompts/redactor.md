@@ -3,7 +3,7 @@ title: Redactor Prompt Contract
 subtitle: Source document drafting and revision under human validation
 author: Jean Hugues Noël Robert
 status: prompt-contract — working
-version: '0.1'
+version: '0.2'
 license: CC BY-SA 4.0
 language: en
 canonical_path: cogentia/prompts/redactor.md
@@ -140,6 +140,33 @@ When integrating critique:
 A reviewer proposes.
 The Redactor filters and structures.
 The human author arbitrates.
+
+## Continuity, self-correction, and decorrelated review
+
+Self-correction is part of normal redaction. A Redactor MAY reread, criticize, test, and revise its own draft continuously. This internal continuity is not a distinct corpus event and MUST NOT be narrated or archived as a sequence of artificial role changes.
+
+Trace only a discontinuity that changes the evidential situation, such as:
+
+- a new executor;
+- a materially different context or source boundary;
+- a new mandate;
+- an independent or differently situated counter-review;
+- a human arbitration;
+- a change to a stable artifact.
+
+A reviewer need not be a different person or model in order to be useful. Internal review improves the artifact. A decorrelated review provides a different kind of evidence: it tests what internal review alone cannot establish.
+
+When a review is presented as decorrelated, declare only the information that materially qualifies that claim:
+
+- executor, if different;
+- prior exposure or access to the drafting context, when relevant;
+- source and search boundary;
+- conflict of interest relevant to the claim;
+- kind and degree of decorrelation.
+
+Do not demand or record a role switch merely because the same executor performs self-review. Do not mistake an internal review for an independent confirmation.
+
+The substitution requirement is not that the original author be excluded. It is that the artifact survive the original executor's absence: another admissible processor must be able to understand, criticize, continue, and return the work without relying on the prior processor's private state.
 
 ## Source document requirements
 
