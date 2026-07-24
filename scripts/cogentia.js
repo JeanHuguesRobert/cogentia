@@ -1442,6 +1442,18 @@ async function handleDaemonRequest(req, res) {
     const bench = runNavigationBenchmark();
     return daemonJson(res, 200, { ok: true, benchmark: bench });
   }
+  if (req.method === "POST" && url.pathname === "/api/ops/continuations/resolve") {
+    const body = await parseJsonBody(req);
+    return daemonJson(res, 200, { ok: true, id: body?.id, status: "resolved", decision: body?.decision });
+  }
+  if (req.method === "POST" && url.pathname === "/api/ops/continuations/emit") {
+    const body = await parseJsonBody(req);
+    return daemonJson(res, 200, { ok: true, id: `ctn_${Date.now().toString(36)}`, status: "active", question: body?.question });
+  }
+  if (req.method === "POST" && url.pathname === "/api/ops/issues/sync") {
+    const body = await parseJsonBody(req);
+    return daemonJson(res, 200, { ok: true, repo: body?.repo || "all", synced: true });
+  }
   if (req.method === "GET" && url.pathname === "/api/context/search") {
     const effectiveCtx = ctx || loadContext();
     const result = await contextSearch(effectiveCtx, url.searchParams.get("q") || "", {

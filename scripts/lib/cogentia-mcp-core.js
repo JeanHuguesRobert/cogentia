@@ -159,6 +159,59 @@ export const TOOLS = [
       additionalProperties: false,
     },
   },
+  {
+    name: "cogentia_continuation_inspect",
+    description: "Inspect full state, context, and question for a specific continuation ID.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        id: { type: "string", minLength: 1, description: "Continuation ID to inspect" },
+      },
+      required: ["id"],
+      additionalProperties: false,
+    },
+  },
+  {
+    name: "cogentia_continuation_resolve",
+    description:
+      "Resolve or resume an active continuation. Note: When a Cogentia tool emits a continuation, it is up to the tool user / client agent to decide and act upon that continuation.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        id: { type: "string", minLength: 1, description: "Continuation ID to resolve" },
+        decision: { type: "string", minLength: 1, description: "Decision text or JSON resolution payload" },
+        reason: { type: "string", description: "Rationale for the decision" },
+      },
+      required: ["id", "decision"],
+      additionalProperties: false,
+    },
+  },
+  {
+    name: "cogentia_continuation_emit",
+    description: "Emit a new external judgment request / continuation packet.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        question: { type: "string", minLength: 1, description: "Decision question or request text" },
+        subject: { type: "string", description: "Subject topic or component ID" },
+        kind: { type: "string", description: "Continuation kind (e.g. decision, approval, judgment)" },
+      },
+      required: ["question"],
+      additionalProperties: false,
+    },
+  },
+  {
+    name: "cogentia_issues_sync",
+    description: "Synchronize GitHub issue packets locally under .cogentia/issues.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        repo: { type: "string", description: "Target repository name or 'all'" },
+        state: { type: "string", enum: ["open", "closed", "all"] },
+      },
+      additionalProperties: false,
+    },
+  },
 ];
 
 export function createMcpCore(env = process.env) {
@@ -177,6 +230,7 @@ export function createMcpCore(env = process.env) {
       instructions:
         "Start with cogentia_views_snapshot for situational awareness (load level/mode, alive work, corpus debt, view URLs). " +
         "Read load.level and load.mode_recommendation before suggesting batch/sleep work. " +
+        "When a Cogentia tool emits a continuation, it is non-blocking; it is up to the tool user / client agent to inspect, decide, and act upon that continuation using cogentia_continuation_resolve or cogentia_continuation_emit. " +
         "Use context packs for broad questions, search for exploration, and get_lines for targeted verification. Cite source_id values. " +
         "MCP is a thin adapter; corpus truth lives in cogentia.js / the daemon.",
     };
@@ -276,6 +330,29 @@ export function createMcpCore(env = process.env) {
         return daemonGet("/api/views/snapshot", { limit: 20 });
       case "cogentia_issues_list":
         return daemonGet("/api/issues/graph", {
+          repo: args.repo || "all",
+          state: enumOptional(args.state, ["open", "closed", "all"], "state") || "open",
+        });
+      case "cogentia_continuation_inspect":
+        requireString(args.id, "id");
+        return daemonGet("/api/views/snapshot", { ctn_id: args.id });
+      case "cogentia_continuation_resolve":
+        requireString(args.id, "id");
+        requireString(args.decision, "decision");
+        return daemonPost("/api/ops/continuations/resolve", {
+          id: args.id,
+          decision: args.decision,
+          reason: args.reason || "",
+        });
+      case "cogentia_continuation_emit":
+        requireString(args.question, "question");
+        return daemonPost("/api/ops/continuations/emit", {
+          question: args.question,
+          subject: args.subject || "general",
+          kind: args.kind || "decision",
+        });
+      case "cogentia_issues_sync":
+        return daemonPost("/api/ops/issues/sync", {
           repo: args.repo || "all",
           state: enumOptional(args.state, ["open", "closed", "all"], "state") || "open",
         });

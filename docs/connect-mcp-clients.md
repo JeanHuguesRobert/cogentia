@@ -45,6 +45,8 @@ filesystem operations, or cache rebuild actions.
 
 The MCP adapter is a **thin façade** over the daemon / `cogentia.js`. Tools:
 
+> **Continuation Axiom**: When a Cogentia tool emits a continuation, it is non-blocking and asynchronous. It is up to the tool user / client agent to inspect, decide, and act upon that continuation using `cogentia_continuation_resolve` or `cogentia_continuation_emit`.
+
 | Tool | Role |
 |------|------|
 | `cogentia_views_snapshot` | **Start here** — cockpit: corpus health, alive continuations, issues, view URLs |
@@ -54,7 +56,11 @@ The MCP adapter is a **thin façade** over the daemon / `cogentia.js`. Tools:
 | `cogentia_publish_registry` | Generate/verify S2 `registry.json` authoritative artifact |
 | `cogentia_nav_benchmark` | Execute S6 1-hop navigation benchmark suite |
 | `cogentia_continuation_list` | List active or alive continuation decision packets |
+| `cogentia_continuation_inspect` | Inspect state and context for a specific continuation ID |
+| `cogentia_continuation_resolve` | **Mutation** — Resolve/resume an active continuation with decision & reason payload |
+| `cogentia_continuation_emit` | **Mutation** — Emit a new external judgment request / continuation packet |
 | `cogentia_issues_list` | List GitHub issues for tracked repositories |
+| `cogentia_issues_sync` | **Mutation** — Synchronize GitHub issue packets locally |
 | `cogentia_search` | Exploratory search with citable results |
 | `cogentia_context_pack` | Bounded context pack for broad questions |
 | `cogentia_get_lines` | Focused retrieval for a cited line interval |
