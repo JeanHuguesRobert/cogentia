@@ -199,6 +199,9 @@ const PUBLIC_DAEMON_GET_ROUTES = new Set([
 const PUBLIC_DAEMON_POST_ROUTES = new Set([
   "/v1/chat/completions",
   "/api/context/pack-batch",
+  "/api/ops/continuations/resolve",
+  "/api/ops/continuations/emit",
+  "/api/ops/issues/sync",
 ]);
 const daemonRateLimits = new Map();
 
@@ -1435,11 +1438,13 @@ async function handleDaemonRequest(req, res) {
     return daemonJson(res, 200, { ok: true, query: q, resolution: result });
   }
   if (req.method === "GET" && url.pathname === "/api/ops/emit-static") {
-    const proj = emitStaticProjection();
+    const effectiveCtx = ctx || loadContext();
+    const proj = emitStaticProjection(effectiveCtx);
     return daemonJson(res, 200, { ok: true, projection: proj });
   }
   if (req.method === "GET" && url.pathname === "/api/ops/publish-registry") {
-    const reg = publishRegistry();
+    const effectiveCtx = ctx || loadContext();
+    const reg = publishRegistry(effectiveCtx);
     return daemonJson(res, 200, { ok: true, registry: reg });
   }
   if (req.method === "GET" && url.pathname === "/api/ops/nav-benchmark") {
@@ -1905,6 +1910,21 @@ function daemonHeaders(res, extra = {}) {
   }
   return headers;
 }
+function parseJsonBody(req) {
+  return new Promise((resolve) => {
+    let body = "";
+    req.on("data", chunk => { body += chunk; });
+    req.on("end", () => {
+      try {
+        resolve(body ? JSON.parse(body) : {});
+      } catch {
+        resolve({});
+      }
+    });
+    req.on("error", () => resolve({}));
+  });
+}
+
 function daemonJson(res, status, body, extraHeaders = {}) {
   res.writeHead(status, daemonHeaders(res, extraHeaders));
   res.end(`${JSON.stringify(body, null, 2)}\n`);
