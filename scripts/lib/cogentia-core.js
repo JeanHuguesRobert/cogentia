@@ -16,7 +16,9 @@ import {
   aiRouterHealth
 } from "./ai-router-client.js";
 
-// Re-export Navigation Sub-System (S1–S7) and AI Router Boundary
+import { runWeeklyConsolidation } from "./consolidation.js";
+
+// Re-export Navigation Sub-System (S1–S7), AI Router Boundary, and Consolidation Runner
 export {
   emitStaticProjection,
   publishRegistry,
@@ -26,7 +28,8 @@ export {
   guideResolve,
   runNavigationBenchmark,
   createAiRouterClient,
-  aiRouterHealth
+  aiRouterHealth,
+  runWeeklyConsolidation
 };
 
 /**

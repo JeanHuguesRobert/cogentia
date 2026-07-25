@@ -26,6 +26,7 @@ import { generateOperiumEmbeddingsReport } from "./lib/operium-embeddings.js";
 import { aiRouterHealth, createAiRouterClient } from "./lib/ai-router-client.js";
 import { retrievalSupabaseConfigured, retrievalSupabaseStatus } from "./lib/retrieval-supabase.js";
 import { emitStaticProjection, publishRegistry, guideResolve, runNavigationBenchmark } from "./lib/navigation.js";
+import { runWeeklyConsolidation } from "./lib/consolidation.js";
 
 const COGENTIA_VERSION = "0.3.0";
 const VERSION = "2.4.0";
@@ -1155,7 +1156,11 @@ async function cmdAgentHealth() {
   output(result, formatAgentHealth(result));
 }
 
-function cmdConsolidate() {
+async function cmdConsolidate() {
+  if (hasFlag("--weekly")) {
+    const result = await runWeeklyConsolidation();
+    return output(result, `Sunday Consolidation Completed [${result.sprint_tag}]\nDigest: ${result.digest_path}`);
+  }
   const ctx = loadContext();
   const strict = hasFlag("--strict");
   const plan = buildPlan(ctx, { ...planOptions(), quiet: true });

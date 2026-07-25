@@ -212,6 +212,15 @@ export const TOOLS = [
       additionalProperties: false,
     },
   },
+  {
+    name: "cogentia_consolidate_weekly",
+    description: "Run Sunday Corpus Consolidation pipeline: audit index, triage continuations, emit llms.txt projections, and generate Weekly Sprint Digest.",
+    inputSchema: {
+      type: "object",
+      properties: {},
+      additionalProperties: false,
+    },
+  },
 ];
 
 export function createMcpCore(env = process.env) {
@@ -356,6 +365,8 @@ export function createMcpCore(env = process.env) {
           repo: args.repo || "all",
           state: enumOptional(args.state, ["open", "closed", "all"], "state") || "open",
         });
+      case "cogentia_consolidate_weekly":
+        return daemonGet("/api/ops/emit-static", {});
       default:
         throw new Error(`Unknown tool: ${name}`);
     }
