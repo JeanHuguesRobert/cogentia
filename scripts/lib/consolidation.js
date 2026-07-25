@@ -93,24 +93,49 @@ export async function runWeeklyConsolidation(options = {}) {
   console.log(`✓ Projected llms.txt & llms-full.txt across ${projectionResult.repos_projected} repositories.`);
   console.log(`✓ Registry published to ${registryResult.published.join(", ")}`);
 
-  // --- Phase 4: Weekly Digest Generation ---
-  console.log("\n[Phase 4] Auto-Generating Weekly Sprint Digest...");
+  // --- Phase 4: Dual Weekly Digest Generation (Public vs Full/Private) ---
+  console.log("\n[Phase 4] Auto-Generating Dual Weekly Sprint Digests (Public vs Full/Private)...");
+  
+  // 1. High-Signal Downloads Harvester
+  const downloadsPath = path.join(process.env.USERPROFILE || "C:\\Users\\admin", "Downloads");
+  const highSignalDownloads = harvestHighSignalDownloads(downloadsPath);
+
+  // 2. Public Digest (Excludes registre-mariani & private files)
   const sprintDir = path.join(root, "research", "sprints");
   if (!fs.existsSync(sprintDir)) fs.mkdirSync(sprintDir, { recursive: true });
-
-  const digestPath = path.join(sprintDir, `weekly_digest_${sprintTag}.md`);
-  const digestContent = generateWeeklyDigestMarkdown({
+  const publicDigestPath = path.join(sprintDir, `weekly_digest_${sprintTag}.md`);
+  const publicDigestContent = generateWeeklyDigestMarkdown({
     sprintTag,
     timestamp,
     gitStatus,
     indexStatus,
     traceSync,
     projectionResult,
-    gitLogs
+    gitLogs,
+    downloads: highSignalDownloads,
+    isFullView: false
   });
+  fs.writeFileSync(publicDigestPath, publicDigestContent, "utf8");
 
-  fs.writeFileSync(digestPath, digestContent, "utf8");
-  console.log(`✓ Weekly Digest written to: ${digestPath}`);
+  // 3. Full / Private Digest (Includes registre-mariani & private docs under .cogentia/)
+  const fullSprintDir = path.join(root, ".cogentia", "sprints");
+  if (!fs.existsSync(fullSprintDir)) fs.mkdirSync(fullSprintDir, { recursive: true });
+  const fullDigestPath = path.join(fullSprintDir, `weekly_digest_full_${sprintTag}.md`);
+  const fullDigestContent = generateWeeklyDigestMarkdown({
+    sprintTag,
+    timestamp,
+    gitStatus,
+    indexStatus,
+    traceSync,
+    projectionResult,
+    gitLogs,
+    downloads: highSignalDownloads,
+    isFullView: true
+  });
+  fs.writeFileSync(fullDigestPath, fullDigestContent, "utf8");
+
+  console.log(`✓ Public Weekly Digest written to: ${publicDigestPath}`);
+  console.log(`✓ Full/Private Digest written to: ${fullDigestPath}`);
 
   return {
     ok: true,
@@ -118,21 +143,77 @@ export async function runWeeklyConsolidation(options = {}) {
     timestamp,
     repos_projected: projectionResult.repos_projected,
     packets_scanned: traceSync.total_packets,
-    digest_path: digestPath,
+    digest_path: publicDigestPath,
+    full_digest_path: fullDigestPath,
   };
 }
 
-function generateWeeklyDigestMarkdown({ sprintTag, timestamp, gitStatus, indexStatus, traceSync, projectionResult, gitLogs = {} }) {
-  const repoCommitSections = Object.entries(gitLogs).map(([repoName, commits]) => {
+function harvestHighSignalDownloads(downloadsPath) {
+  if (!fs.existsSync(downloadsPath)) return [];
+  const sevenDaysAgo = Date.now() - 7 * 86400000;
+  const highSignalExts = new Set([".md", ".yaml", ".yml", ".txt"]);
+  const noisePatterns = [/Invoice-/i, /Receipt-/i, /\.zip$/i, /\.jpg$/i, /\.png$/i, /\.pdf$/i, /\.docx$/i];
+
+  const results = [];
+  try {
+    const entries = fs.readdirSync(downloadsPath, { withFileTypes: true });
+    for (const entry of entries) {
+      if (!entry.isFile()) continue;
+      const ext = path.extname(entry.name).toLowerCase();
+      if (!highSignalExts.has(ext)) continue;
+      
+      const isNoise = noisePatterns.some(pat => pat.test(entry.name));
+      if (isNoise) continue;
+
+      const fullPath = path.join(downloadsPath, entry.name);
+      const stat = fs.statSync(fullPath);
+      if (stat.mtimeMs >= sevenDaysAgo) {
+        results.push({
+          name: entry.name,
+          mtime: stat.mtime.toISOString(),
+          size: stat.size
+        });
+      }
+    }
+  } catch {}
+
+  return results.sort((a, b) => new Date(b.mtime) - new Date(a.mtime));
+}
+
+function generateWeeklyDigestMarkdown({
+  sprintTag,
+  timestamp,
+  gitStatus,
+  indexStatus,
+  traceSync,
+  projectionResult,
+  gitLogs = {},
+  downloads = [],
+  isFullView = false
+}) {
+  // Filter out registre-mariani in public view
+  const filteredLogs = Object.entries(gitLogs).filter(([repoName]) => {
+    if (!isFullView && repoName.toLowerCase() === "registre-mariani") return false;
+    return true;
+  });
+
+  const repoCommitSections = filteredLogs.map(([repoName, commits]) => {
     const listText = (commits || []).map(c => `- \`${c}\``).join("\n");
     return `### Repository: \`${repoName}\`\n${listText || "- *No recent commits*"}`;
   }).join("\n\n");
 
-  return `# Weekly Sprint Digest: ${sprintTag} 📜🧘‍♂️
+  const downloadsList = downloads.length
+    ? downloads.map(d => `- 📄 \`${d.name}\` (${(d.size / 1024).toFixed(1)} KB) — *${d.mtime.split("T")[0]}*`).join("\n")
+    : "- *No high-signal downloads detected this week.*";
+
+  const viewTitle = isFullView ? "Full / Private Workspace Digest" : "Public Corpus Digest";
+
+  return `# Weekly Sprint Digest: ${sprintTag} (${viewTitle}) 📜🧘‍♂️
 **Generated by Cogentia Sunday Consolidation Pipeline**
 - **Timestamp**: \`${timestamp}\`
 - **Corpus Index Version**: \`${indexStatus.index_version}\`
 - **Monorepo Repositories**: \`${projectionResult.repos_projected}\` tracked
+- **Privacy View Domain**: \`${isFullView ? "FULL (Private & Admin)" : "PUBLIC (Sanitized)"}\`
 
 ---
 
@@ -146,6 +227,12 @@ This week's sprint consolidated major milestones across the monorepo architectur
 4. **Continuation & Trace Sync (#68)**: Automated interaction packet scanning (\`${traceSync.total_packets}\` packets indexed).
 5. **Dual Static Projections (#66)**: Emitted \`llms.txt\` and \`llms-full.txt\` across all 10 repositories and live at \`https://cogentia.fractavolta.com/llms.txt\`.
 6. **COP Accounting Simulator**: Integrated quick event simulation buttons and live Kudos gravity ($\Gamma$) feedback in \`CopAccountingDashboard.jsx\`.
+
+---
+
+## 📥 High-Signal Downloads Ingest (Past 7 Days)
+
+${downloadsList}
 
 ---
 
