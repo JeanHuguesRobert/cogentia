@@ -48,9 +48,9 @@ export async function runDecorrelatedReview(options = {}) {
   const health = await aiClient.health();
 
   const reviewers = [
-    { name: "Grok", model: "grok-3", role: "Adversarial Risk & Symmetry Auditor" },
-    { name: "Claude", model: "claude-3-7-sonnet", role: "Structural Epistemic & Logic Auditor" },
-    { name: "ChatGPT", model: "gpt-4o", role: "Historical OSINT & Clarity Auditor" },
+    { name: "Grok", model: "grok-3", launcher: "C:\\tweesic\\grok.bat", role: "Adversarial Risk & Symmetry Auditor" },
+    { name: "Claude", model: "claude-3-7-sonnet", launcher: "C:\\tweesic\\claude-anthropic.bat", role: "Structural Epistemic & Logic Auditor" },
+    { name: "ChatGPT", model: "gpt-4o", launcher: "C:\\tweesic\\kimi.bat", role: "Historical OSINT & Clarity Auditor" },
   ];
 
   const generatedReviews = [];
@@ -59,6 +59,8 @@ export async function runDecorrelatedReview(options = {}) {
     console.log(`\n[Reviewer: ${r.name}] Generating decorrelated critique (${r.role})...`);
     
     let reviewBody = "";
+
+    // Tier 1: Magistral AI Router HTTP API
     if (health.ok) {
       const response = await aiClient.chatCompletions([
         { role: "system", content: REVIEW_PROMPT_TEMPLATE.replace("{TARGET_FILE}", targetFile).replace("{TARGET_VERSION}", "v1.0") },
@@ -70,6 +72,7 @@ export async function runDecorrelatedReview(options = {}) {
       }
     }
 
+    // Tier 2: Offline Standalone Decorrelated Reviewer Format
     if (!reviewBody) {
       reviewBody = generateStandaloneDecorrelatedReview(r.name, r.role, targetFile, paperContent);
     }
