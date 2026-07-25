@@ -1,0 +1,19 @@
+{
+  "id": "ctn_pouzin_datagram",
+  "kind": "cognitive_packet_journey",
+  "subject": "louis_pouzin_hommage_transmission",
+  "status": "alive",
+  "created_at": "2026-07-25T08:14:00Z",
+  "updated_at": "2026-07-25T08:40:00Z",
+  "origin_home": "https://jhn.baronsmariani.org/",
+  "destination": "Louis Pouzin & Chantal Lebrument (via sarah@adgency-experts.com)",
+  "target_documents": [
+    "barons-Mariani/research/louis_pouzin_datagram_pioneer.md",
+    "barons-Mariani/research/serendipity_as_epistemic_force.md",
+    "JeanHuguesRobert/interaction_packets/2026-07-25-hommage_louis_pouzin.yaml"
+  ],
+  "execution_steps_completed": 6,
+  "pending_step": "Human Authorization & Outbound Email Transmission by Jean-Hugues Robert",
+  "question": "Transmit official tribute letter and academic research paper to Louis Pouzin via AdGENCY Experts?",
+  "serendipity_ledger_count": 1
+}
