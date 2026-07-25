@@ -1243,6 +1243,7 @@ function runContinuationIndex() {
 async function cmdDaemon() {
   const host = valueFlag("--host") || "127.0.0.1";
   const port = Number(valueFlag("--port") || process.env.COGENTIA_PORT || 8787);
+  const withMcp = hasFlag("--with-mcp") || process.env.COGENTIA_EMBED_MCP === "1";
   if (!Number.isInteger(port) || port < 1 || port > 65535) {
     throw new Error(`Invalid daemon port: ${port}`);
   }
@@ -1266,6 +1267,12 @@ async function cmdDaemon() {
   });
   server.listen(port, host, () => {
     console.log(`Cogentia Local daemon listening on http://${host}:${port}`);
+    if (withMcp) {
+      const mcpPort = Number(valueFlag("--mcp-port") || process.env.COGENTIA_MCP_PORT || 8791);
+      console.log(`[Single-Process Mode] Starting embedded MCP server on port ${mcpPort}...`);
+      process.env.PORT = String(mcpPort);
+      import("./cogentia-mcp-http.js").catch(e => console.error("Failed to start embedded MCP:", e.message));
+    }
   });
 }
 async function handleDaemonRequest(req, res) {
