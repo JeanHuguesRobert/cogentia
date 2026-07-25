@@ -138,6 +138,10 @@ export async function runWeeklyConsolidation(options = {}) {
   console.log(`✓ Full/Private Digest written to: ${fullDigestPath}`);
 
   // 4. Register Consolidation Cognitive Packet Descriptor
+  const nextWeekNumber = weekNumber === 52 ? 1 : weekNumber + 1;
+  const nextYear = weekNumber === 52 ? year + 1 : year;
+  const nextSprintTag = `${nextYear}-W${String(nextWeekNumber).padStart(2, "0")}`;
+
   const ctnPath = path.join(root, ".cogentia", "continuations", "ctn_weekly_consolidation.json");
   const ctnDir = path.dirname(ctnPath);
   if (!fs.existsSync(ctnDir)) fs.mkdirSync(ctnDir, { recursive: true });
@@ -147,7 +151,7 @@ export async function runWeeklyConsolidation(options = {}) {
     packet_id: `CPKT-${sprintTag}-CONSOLIDATION`,
     kind: "cognitive_packet_journey",
     subject: "sunday_corpus_consolidation",
-    status: "alive",
+    status: "completed",
     created_at: timestamp,
     updated_at: timestamp,
     origin_home: "https://jhn.baronsmariani.org/",
@@ -162,20 +166,45 @@ export async function runWeeklyConsolidation(options = {}) {
       "docs/sunday-consolidation-master-plan.md"
     ],
     execution_steps_completed: 5,
-    serendipity_ledger_count: highSignalDownloads.length
+    serendipity_ledger_count: highSignalDownloads.length,
+    continuation_scheduled: `CPKT-${nextSprintTag}-CONSOLIDATION`
   };
   fs.writeFileSync(ctnPath, JSON.stringify(consolidationPacket, null, 2), "utf8");
-  console.log(`✓ Consolidation Cognitive Packet registered: ${ctnPath}`);
+
+  // 5. Auto-Schedule Next Week's Consolidation Mission Packet
+  const nextCtnPath = path.join(root, ".cogentia", "continuations", `ctn_weekly_consolidation_${nextSprintTag}.json`);
+  const scheduledNextPacket = {
+    id: `ctn_weekly_consolidation_${nextSprintTag}`,
+    packet_id: `CPKT-${nextSprintTag}-CONSOLIDATION`,
+    kind: "cognitive_packet_journey",
+    subject: "sunday_corpus_consolidation_scheduled",
+    status: "alive",
+    scheduled_for_sprint: nextSprintTag,
+    created_at: timestamp,
+    origin_home: "https://jhn.baronsmariani.org/",
+    destination: "https://cogentia.fractavolta.com/mcp",
+    mandate: {
+      mission: `Scheduled Sunday Corpus De-Entropy & Sprint Wrap-Up for ${nextSprintTag}`,
+      budget_units: 200,
+      continuation_parent: `CPKT-${sprintTag}-CONSOLIDATION`
+    }
+  };
+  fs.writeFileSync(nextCtnPath, JSON.stringify(scheduledNextPacket, null, 2), "utf8");
+
+  console.log(`✓ Current Consolidation Packet completed: ${ctnPath}`);
+  console.log(`✓ Next Sprint Consolidation Packet scheduled [${nextSprintTag}]: ${nextCtnPath}`);
 
   return {
     ok: true,
     sprint_tag: sprintTag,
+    next_sprint_tag: nextSprintTag,
     timestamp,
     repos_projected: projectionResult.repos_projected,
     packets_scanned: traceSync.total_packets,
     digest_path: publicDigestPath,
     full_digest_path: fullDigestPath,
     consolidation_packet: ctnPath,
+    scheduled_next_packet: nextCtnPath,
   };
 }
 
