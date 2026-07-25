@@ -218,6 +218,8 @@ async function main() {
     case "version":
     case "--version":
       return output({ cogentia_version: COGENTIA_VERSION, cli_version: VERSION, version: VERSION }, `Cogentia v${COGENTIA_VERSION} / cogentia.js v${VERSION}`);
+    case "guide-resolve":
+      return cmdGuideResolve();
     case "state":
       return cmdState();
     case "status":
