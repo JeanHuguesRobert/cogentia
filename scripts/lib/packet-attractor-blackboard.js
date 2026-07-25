@@ -446,3 +446,23 @@ function stripInternalFields(attractor = {}) {
   const { _stored_at, _advertised_by, ...rest } = attractor;
   return rest;
 }
+
+/**
+ * Append a Serendipitous Discovery to a Cognitive Packet payload.
+ * When a Cognitive Packet travels away from Home under a Mission Mandate,
+ * it records un-queried paths and attractors into its return payload.
+ */
+export function appendSerendipityTraceToPacket(packet = {}, serendipityEntry = {}) {
+  const serendipity_ledger = Array.isArray(packet.serendipity_ledger) ? [...packet.serendipity_ledger] : [];
+  serendipity_ledger.push({
+    timestamp: new Date().toISOString(),
+    unqueried_attractor: serendipityEntry.unqueried_attractor || "",
+    repository: serendipityEntry.repository || "",
+    reason: serendipityEntry.reason || "",
+    epistemic_value_score: Number(serendipityEntry.epistemic_value_score || 0.5),
+  });
+  return {
+    ...packet,
+    serendipity_ledger,
+  };
+}
