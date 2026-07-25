@@ -126,18 +126,27 @@ export function emitStaticProjection(ctx, inventory = []) {
   const fullContent = fullLines.join("\n") + "\n";
   fs.writeFileSync(llmsFullPath, fullContent, "utf8");
 
-  // Also publish to profile repo if present
-  const profileRepo = (ctx.repos || []).find(r => r.name === "JeanHuguesRobert");
-  if (profileRepo && fs.existsSync(profileRepo.path)) {
-    fs.writeFileSync(path.join(profileRepo.path, "llms.txt"), content, "utf8");
-    fs.writeFileSync(path.join(profileRepo.path, "llms-full.txt"), fullContent, "utf8");
+  // Publish llms.txt and llms-full.txt across ALL tracked repositories
+  const publishedRepos = [];
+  for (const repo of ctx.repos || []) {
+    const repoDir = path.resolve(rootDir, repo.path || ".");
+    if (fs.existsSync(repoDir) && fs.statSync(repoDir).isDirectory()) {
+      try {
+        fs.writeFileSync(path.join(repoDir, "llms.txt"), content, "utf8");
+        fs.writeFileSync(path.join(repoDir, "llms-full.txt"), fullContent, "utf8");
+        publishedRepos.push(repo.name || path.basename(repoDir));
+      } catch {
+        // Skip unwriteable directories
+      }
+    }
   }
 
   return {
     ok: true,
     llms_path: llmsPath,
     llms_full_path: llmsFullPath,
-    repos_projected: (ctx.repos || []).length
+    repos_projected: publishedRepos.length,
+    published_repos: publishedRepos
   };
 }
 
