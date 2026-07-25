@@ -72,7 +72,27 @@ export async function runDecorrelatedReview(options = {}) {
       }
     }
 
-    // Tier 2: Offline Standalone Decorrelated Reviewer Format
+    // Tier 2: Non-Interactive Local CLI Subprocess Execution (cmdc -p)
+    if (!reviewBody && options.useLocalLaunchers) {
+      try {
+        const cmdcPath = path.join(process.env.USERPROFILE || "C:\\Users\\admin", ".npm-global", "cmdc.cmd");
+        if (fs.existsSync(cmdcPath)) {
+          const prompt = `${REVIEW_PROMPT_TEMPLATE.replace("{TARGET_FILE}", targetFile).replace("{TARGET_VERSION}", "v1.0")}\n\nDocument :\n${paperContent}`;
+          const stdout = execFileSync(cmdcPath, ["-p", prompt, "-m", r.model, "--skip-onboarding"], {
+            encoding: "utf8",
+            timeout: 60000,
+            stdio: ["ignore", "pipe", "ignore"]
+          });
+          if (stdout && stdout.trim().length > 50) {
+            reviewBody = stdout.trim();
+          }
+        }
+      } catch (err) {
+        console.warn(`  ⚠️ Local CLI launcher ${r.name} skipped: ${err.message}`);
+      }
+    }
+
+    // Tier 3: Offline Standalone Decorrelated Reviewer Format
     if (!reviewBody) {
       reviewBody = generateStandaloneDecorrelatedReview(r.name, r.role, targetFile, paperContent);
     }
