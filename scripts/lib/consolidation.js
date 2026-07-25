@@ -137,6 +137,36 @@ export async function runWeeklyConsolidation(options = {}) {
   console.log(`✓ Public Weekly Digest written to: ${publicDigestPath}`);
   console.log(`✓ Full/Private Digest written to: ${fullDigestPath}`);
 
+  // 4. Register Consolidation Cognitive Packet Descriptor
+  const ctnPath = path.join(root, ".cogentia", "continuations", "ctn_weekly_consolidation.json");
+  const ctnDir = path.dirname(ctnPath);
+  if (!fs.existsSync(ctnDir)) fs.mkdirSync(ctnDir, { recursive: true });
+  
+  const consolidationPacket = {
+    id: `ctn_weekly_consolidation_${sprintTag}`,
+    packet_id: `CPKT-${sprintTag}-CONSOLIDATION`,
+    kind: "cognitive_packet_journey",
+    subject: "sunday_corpus_consolidation",
+    status: "alive",
+    created_at: timestamp,
+    updated_at: timestamp,
+    origin_home: "https://jhn.baronsmariani.org/",
+    destination: "https://cogentia.fractavolta.com/mcp",
+    mandate: {
+      mission: `Sunday Corpus De-Entropy & Sprint Wrap-Up for ${sprintTag}`,
+      budget_units: 200
+    },
+    target_documents: [
+      publicDigestPath,
+      fullDigestPath,
+      "docs/sunday-consolidation-master-plan.md"
+    ],
+    execution_steps_completed: 5,
+    serendipity_ledger_count: highSignalDownloads.length
+  };
+  fs.writeFileSync(ctnPath, JSON.stringify(consolidationPacket, null, 2), "utf8");
+  console.log(`✓ Consolidation Cognitive Packet registered: ${ctnPath}`);
+
   return {
     ok: true,
     sprint_tag: sprintTag,
@@ -145,6 +175,7 @@ export async function runWeeklyConsolidation(options = {}) {
     packets_scanned: traceSync.total_packets,
     digest_path: publicDigestPath,
     full_digest_path: fullDigestPath,
+    consolidation_packet: ctnPath,
   };
 }
 

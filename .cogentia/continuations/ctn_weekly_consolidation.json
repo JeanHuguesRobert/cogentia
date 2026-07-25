@@ -1,0 +1,22 @@
+{
+  "id": "ctn_weekly_consolidation_2026-W30",
+  "packet_id": "CPKT-2026-W30-CONSOLIDATION",
+  "kind": "cognitive_packet_journey",
+  "subject": "sunday_corpus_consolidation",
+  "status": "alive",
+  "created_at": "2026-07-25T06:41:59.586Z",
+  "updated_at": "2026-07-25T06:41:59.586Z",
+  "origin_home": "https://jhn.baronsmariani.org/",
+  "destination": "https://cogentia.fractavolta.com/mcp",
+  "mandate": {
+    "mission": "Sunday Corpus De-Entropy & Sprint Wrap-Up for 2026-W30",
+    "budget_units": 200
+  },
+  "target_documents": [
+    "C:\\tweesic\\cogentia\\research\\sprints\\weekly_digest_2026-W30.md",
+    "C:\\tweesic\\cogentia\\.cogentia\\sprints\\weekly_digest_full_2026-W30.md",
+    "docs/sunday-consolidation-master-plan.md"
+  ],
+  "execution_steps_completed": 5,
+  "serendipity_ledger_count": 13
+}
