@@ -12,7 +12,12 @@ import {
   runNavigationBenchmark
 } from "./navigation.js";
 
-// Re-export Navigation Sub-System (S1–S7)
+import {
+  createAiRouterClient,
+  aiRouterHealth
+} from "./ai-router-client.js";
+
+// Re-export Navigation Sub-System (S1–S7) and AI Router Boundary
 export {
   emitStaticProjection,
   publishRegistry,
@@ -20,7 +25,9 @@ export {
   buildAttractorCard,
   isStubDocument,
   guideResolve,
-  runNavigationBenchmark
+  runNavigationBenchmark,
+  createAiRouterClient,
+  aiRouterHealth
 };
 
 /**
