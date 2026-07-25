@@ -228,20 +228,27 @@ MCP connection recipes for Cogentia live primarily in **this file** and
 [`cogentia-mcp.md`](cogentia-mcp.md); Operium should **point** here rather than
 duplicate long-lived protocol detail.
 
-## Fracta public checks
+## Configurable Deployment Topologies
 
-The Fracta VPS currently runs:
+Cogentia supports two deployment topologies depending on hardware and RAM capabilities:
 
-- Cogentia daemon on loopback: `http://127.0.0.1:8790`
-- MCP HTTP adapter on loopback/public proxy: port `8791`
-- Caddy public routing for `cogentia.fractavolta.com`
-
-From a workstation:
+### Mode A: Single-Process Embedded Mode (Recommended for Constrained VPS like Fracta)
+Runs Daemon, MCP HTTP server, and Views Store under **1 single Node.js process** (~80 MB RAM total):
 
 ```bash
-curl https://cogentia.fractavolta.com/health
-curl https://cogentia.fractavolta.com/tools
+# Via CLI flag:
+node scripts/cogentia.js daemon --port 8790 --with-mcp --mcp-port 8791
+
+# Or via environment variable:
+COGENTIA_EMBED_MCP=1 node scripts/cogentia.js daemon --port 8790
 ```
+
+### Mode B: Decoupled Multi-Process Mode (Recommended for High-Capacity Cluster Nodes)
+Runs separate systemd units for maximum event loop isolation and independent hot-reloading (~160 MB RAM total):
+
+- `cogentia.service` — Daemon on `127.0.0.1:8790`
+- `mcp-cogentia.service` — MCP HTTP server on `127.0.0.1:8791`
+- `views-store.service` — Views Tag Browser on `127.0.0.1:3423`
 
 The canonical public MCP endpoint is:
 
