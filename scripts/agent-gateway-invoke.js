@@ -112,6 +112,7 @@ function buildClientOptions(args) {
   return {
     blackboardUrl: args.blackboardUrl || process.env.COGENTIA_BLACKBOARD_URL,
     token: args.token
+      || process.env.COGENTIA_API_KEY
       || process.env.AGENT_GATEWAY_INVOKE_TOKEN
       || process.env.AGENT_GATEWAY_ACCEPT_TOKEN
       || process.env.AGENT_GATEWAY_TOKEN,

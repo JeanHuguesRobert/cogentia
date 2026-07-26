@@ -21,7 +21,7 @@ export function resolveBindHost(input, env = process.env) {
 export function requireTokenForExposure(bind, token) {
   if (bind.mode === "loopback") return null;
   if (String(token || "").trim()) return null;
-  return "AGENT_GATEWAY_TOKEN is required when binding outside loopback";
+  return "COGENTIA_API_KEY is required when binding outside loopback (legacy alias: AGENT_GATEWAY_TOKEN)";
 }
 
 function readTailscaleIPv4(env) {

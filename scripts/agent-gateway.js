@@ -28,7 +28,8 @@ Environment:
   AGENT_GATEWAY_BIND              loopback | tailscale | all | <ip> (default loopback)
   AGENT_GATEWAY_HOST              Alias for bind host (legacy)
   AGENT_GATEWAY_PORT              Bind port (default 8793)
-  AGENT_GATEWAY_TOKEN             Optional bearer token
+  COGENTIA_API_KEY                Shared Cogentia bearer (preferred)
+  AGENT_GATEWAY_TOKEN             Legacy alias for COGENTIA_API_KEY
   AGENT_GATEWAY_MAX_CONCURRENT    Max parallel child processes (default 4)
   AGENT_GATEWAY_ALLOW_ANY_CWD=1   Skip repo-root cwd checks (dev only)
   AGENT_GATEWAY_TEST_MOCK=1       Use mock adapter instead of grok
@@ -54,7 +55,7 @@ Endpoints:
 const hostFlag = valueFlag("--host");
 const bind = resolveBindHost(hostFlag, process.env);
 const port = Number(valueFlag("--port") || process.env.AGENT_GATEWAY_PORT || 8793);
-const token = process.env.AGENT_GATEWAY_TOKEN || "";
+const token = process.env.COGENTIA_API_KEY || process.env.AGENT_GATEWAY_TOKEN || "";
 
 if (!Number.isInteger(port) || port < 1 || port > 65535) {
   console.error(`Invalid port: ${port}`);

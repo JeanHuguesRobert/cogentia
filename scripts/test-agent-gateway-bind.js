@@ -15,7 +15,7 @@ const tailscale = resolveBindHost("tailscale");
 assert.ok(["tailscale", "all"].includes(tailscale.mode));
 
 assert.equal(requireTokenForExposure(loopback, ""), null);
-assert.match(requireTokenForExposure(all, ""), /AGENT_GATEWAY_TOKEN/);
+assert.match(requireTokenForExposure(all, ""), /COGENTIA_API_KEY/);
 assert.equal(requireTokenForExposure(all, "secret"), null);
 
 console.log(JSON.stringify({

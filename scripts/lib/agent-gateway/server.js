@@ -52,7 +52,9 @@ export function createAgentGateway(options = {}) {
     ...loadHostContext(env),
     useMock: env.AGENT_GATEWAY_TEST_MOCK === "1",
   };
-  const token = env.AGENT_GATEWAY_TOKEN || "";
+  // Cogentia is the system name; COGENTIA_API_KEY is the shared bearer.
+  // Legacy AGENT_GATEWAY_TOKEN remains a migration alias.
+  const token = env.COGENTIA_API_KEY || env.AGENT_GATEWAY_TOKEN || "";
   const trustBoundary = buildTrustBoundary(ctx, token, options.bind);
   const gate = new ConcurrencyGate(ctx.maxConcurrent);
   const replRegistry = new ReplSessionRegistry({ maxSessions: ctx.maxConcurrent });

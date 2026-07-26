@@ -53,7 +53,11 @@ async function guideSynthesisPost(payload) {
   if (!guideAgentSessionId && guideAgentSessionInit) await guideAgentSessionInit;
   const client = createAgentGatewayClient({
     endpoint: process.env.COGENTIA_GUIDE_AGENT_GATEWAY_ENDPOINT || "http://127.0.0.1:8793",
-    token: process.env.AGENT_GATEWAY_INVOKE_TOKEN || process.env.AGENT_GATEWAY_TOKEN || "",
+    token:
+      process.env.COGENTIA_API_KEY
+      || process.env.AGENT_GATEWAY_INVOKE_TOKEN
+      || process.env.AGENT_GATEWAY_TOKEN
+      || "",
     model: process.env.COGENTIA_GUIDE_AGENT_MODEL || "codex",
     timeoutMs: Number(process.env.COGENTIA_GUIDE_AGENT_TIMEOUT_MS || 120000),
   });
@@ -194,7 +198,8 @@ async function guideHealth() {
         configured: Boolean(actionRouteToken()),
         gateway_token_configured: Boolean(
           String(
-            process.env.AGENT_GATEWAY_INVOKE_TOKEN
+            process.env.COGENTIA_API_KEY
+            || process.env.AGENT_GATEWAY_INVOKE_TOKEN
             || process.env.AGENT_GATEWAY_ACCEPT_TOKEN
             || process.env.AGENT_GATEWAY_TOKEN
             || "",
