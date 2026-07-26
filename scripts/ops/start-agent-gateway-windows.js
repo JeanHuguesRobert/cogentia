@@ -55,7 +55,7 @@ export async function runGatewayStart(options = {}) {
 
   await sleep(4000);
 
-  const token = String(runtimeEnv.AGENT_GATEWAY_TOKEN || "").trim();
+  const token = String(runtimeEnv.COGENTIA_API_KEY || runtimeEnv.AGENT_GATEWAY_TOKEN || "").trim();
   const healthHost = resolveHealthHost(runtimeEnv.AGENT_GATEWAY_BIND, paths.nodeSlug);
 
   try {
