@@ -1542,6 +1542,7 @@ async function guideFallback(question, locale, routed, retrieval = null, web = n
         answer: extractiveAnswer(locale, pack),
         sources: mergeGuideSources(pack.sources, web?.sources),
         context: summarizeGuideContext(pack, retrieval, web),
+        s7: retrieval?.s7 || null,
         warnings: [
           "guide_chat_backend_unavailable",
           ...(pack.warnings || []),
