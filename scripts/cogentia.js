@@ -1453,8 +1453,12 @@ async function handleDaemonRequest(req, res) {
   }
   if (req.method === "GET" && url.pathname === "/api/context/guide-resolve") {
     const q = url.searchParams.get("q") || "";
-    const result = guideResolve(q);
-    return daemonJson(res, 200, { ok: true, query: q, resolution: result });
+    const effectiveCtx = ctx || loadContext();
+    const inventory = buildInventory(effectiveCtx);
+    const view = normalizeView(url.searchParams.get("view") || PUBLIC_VIEW);
+    const docs = visibleDocs(inventory, view);
+    const result = guideResolve(q, docs);
+    return daemonJson(res, 200, { ok: true, query: q, view, resolution: result });
   }
   if (req.method === "GET" && url.pathname === "/api/ops/emit-static") {
     const effectiveCtx = ctx || loadContext();

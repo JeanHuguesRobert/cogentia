@@ -346,10 +346,18 @@ export function isStubDocument(doc) {
 
 /**
  * S7 — 3-Layer Guide Routing Engine
+ * @param {string} query
+ * @param {Array|object} inventory - document array, or inventory object with `.documents`
  */
 export function guideResolve(query, inventory = []) {
+  const docs = Array.isArray(inventory)
+    ? inventory
+    : Array.isArray(inventory?.documents)
+      ? inventory.documents
+      : [];
+
   // Layer 1: Deterministic resolution (No embeddings! Direct alias/canonical lookup)
-  const layer1 = resolveConceptAlias(query, inventory);
+  const layer1 = resolveConceptAlias(query, docs);
   if (layer1.hit) {
     return {
       ok: true,
@@ -357,15 +365,22 @@ export function guideResolve(query, inventory = []) {
       mode: "deterministic_alias",
       query,
       result: layer1,
+      canonical_repo: layer1.canonical_repo,
+      canonical_rel: layer1.canonical_rel,
       canonical_url: layer1.canonical_url,
     };
   }
 
   // Layer 2: Hard Admissibility Pre-Filter
-  const admissibleDocs = inventory.filter(doc => {
+  const admissibleDocs = docs.filter(doc => {
     if (isStubDocument(doc)) return false;
-    if (doc.document_role && doc.document_role !== "source" && doc.document_role !== "operational") return false;
+    const role = doc.document_role || doc.role;
+    if (role && role !== "source" && role !== "operational") return false;
     if (doc.is_generated || (doc.rel || "").includes("index.md") || (doc.rel || "").includes("concepts.md")) return false;
+    // Public Guide must never resolve into non-public docs
+    const level = doc.visibility?.level || "public";
+    if (level !== "public") return false;
+    if ((doc.visibility?.public_presence || "full") !== "full") return false;
     return true;
   });
 

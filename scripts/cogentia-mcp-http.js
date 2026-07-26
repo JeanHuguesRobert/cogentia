@@ -715,7 +715,16 @@ function extractJsonObject(content) {
 }
 
 async function guideRetrievalRun(question, plan = guideHeuristicPlan(question), options = {}) {
-  const queries = mergeQueries([...(plan.queries || []), ...guideRetrievalQueries(question)]).slice(0, guideQueryLimit);
+  // Latest MCP improvement: S7 guide_resolve (deterministic alias → admissibility → attractors)
+  // before hybrid pack retrieval, so commercial Guide answers anchor on canonical sources.
+  const s7 = await guideS7ResolveAnchor(question, plan);
+  const s7Queries = s7.ok ? s7.retrieval_queries : [];
+  const queries = mergeQueries([
+    ...s7Queries,
+    ...(plan.queries || []),
+    ...guideRetrievalQueries(question),
+  ]).slice(0, guideQueryLimit);
+
   const perQueryLimit = Math.max(1, Math.min(guideLimit, Math.ceil(guideLimit / 2)));
   const perQueryBudget = Math.max(512, Math.floor(guideBudget / Math.max(1, queries.length)));
   const packOptions = {
@@ -728,10 +737,20 @@ async function guideRetrievalRun(question, plan = guideHeuristicPlan(question), 
     stage: "retrieval_batch",
     backend: guideRetrievalBackend,
     query_count: queries.length,
+    s7: s7.ok
+      ? { layer: s7.layer, mode: s7.mode, canonical: s7.canonical_rel || null }
+      : { ok: false },
     message: guideProgress(options.locale, "retrieval_batch", { count: queries.length }).message,
   });
 
   const packs = await fetchGuideRetrievalPacks(queries, packOptions);
+
+  // If S7 resolved a canonical file, pull a bounded public excerpt via MCP get_lines.
+  let s7Anchor = null;
+  if (s7.ok && s7.ref) {
+    s7Anchor = await guideS7FetchAnchorExcerpt(s7);
+  }
+
   const result = mergeGuideRetrievalFromPacks({
     question,
     plan,
@@ -748,14 +767,158 @@ async function guideRetrievalRun(question, plan = guideHeuristicPlan(question), 
       summarizePackRetrieval,
       estimateGuideTokens,
       truncateGuideText,
-      rankGuideSources,
+      rankGuideSources: (q, qs, sources, context, sourceRanks) =>
+        rankGuideSources(q, qs, sources, context, sourceRanks, s7),
     },
   });
+
+  // Prepend S7 anchor so synthesis always sees the canonical public source first.
+  if (s7Anchor?.source && s7Anchor?.context) {
+    const already = result.sources.some(s => s.source_id === s7Anchor.source.source_id);
+    if (!already) {
+      result.sources = [s7Anchor.source, ...result.sources].slice(0, guideLimit);
+      result.context = [s7Anchor.context, ...result.context].slice(0, guideLimit);
+    } else {
+      // Move match to front
+      const idx = result.sources.findIndex(s => s.source_id === s7Anchor.source.source_id);
+      if (idx > 0) {
+        const [src] = result.sources.splice(idx, 1);
+        const ctxItem = result.context.find(c => c.source_id === src.source_id);
+        result.sources.unshift(src);
+        if (ctxItem) {
+          result.context = [ctxItem, ...result.context.filter(c => c.source_id !== src.source_id)];
+        }
+      }
+    }
+  }
+
   return {
     ...result,
     retrieval_backend: guideRetrievalBackend,
     batch: true,
+    s7: {
+      ok: Boolean(s7.ok),
+      layer: s7.layer || null,
+      mode: s7.mode || null,
+      canonical_repo: s7.canonical_repo || null,
+      canonical_rel: s7.canonical_rel || null,
+      canonical_url: s7.canonical_url || null,
+      source: "cogentia_guide_resolve",
+    },
   };
+}
+
+/**
+ * Call the latest MCP S7 tool (cogentia_guide_resolve) to anchor Guide retrieval.
+ * Public facade only — daemon/MCP default view is public.
+ */
+async function guideS7ResolveAnchor(question, plan = {}) {
+  const candidates = mergeQueries([
+    question,
+    ...(plan.queries || []).slice(0, 2),
+  ]).slice(0, 3);
+
+  for (const query of candidates) {
+    try {
+      const payload = await core.callTool("cogentia_guide_resolve", { query });
+      const resolution = payload?.resolution || payload;
+      if (!resolution?.ok) continue;
+
+      const result = resolution.result || {};
+      const canonical_repo =
+        resolution.canonical_repo ||
+        result.canonical_repo ||
+        (String(result.card_id || "").startsWith("card:")
+          ? String(result.card_id).split(":")[1]
+          : "");
+      const canonical_rel =
+        resolution.canonical_rel ||
+        result.canonical_rel ||
+        (String(result.card_id || "").startsWith("card:")
+          ? String(result.card_id).split(":").slice(2).join(":")
+          : "");
+      const canonical_url =
+        resolution.canonical_url ||
+        result.canonical_url ||
+        result.claims_manifest ||
+        "";
+
+      const retrieval_queries = [
+        result.name,
+        canonical_rel ? path.basename(canonical_rel, path.extname(canonical_rel)).replace(/[_-]/g, " ") : "",
+        canonical_repo && canonical_rel ? `${canonical_repo} ${canonical_rel}` : "",
+        query,
+      ].filter(Boolean);
+
+      return {
+        ok: true,
+        query,
+        layer: resolution.layer,
+        mode: resolution.mode,
+        canonical_repo,
+        canonical_rel,
+        canonical_url,
+        ref: canonical_repo && canonical_rel ? `${canonical_repo}:${canonical_rel.replace(/\\/g, "/")}` : "",
+        retrieval_queries,
+        raw: resolution,
+      };
+    } catch {
+      // Try next candidate query
+    }
+  }
+  return { ok: false };
+}
+
+async function guideS7FetchAnchorExcerpt(s7) {
+  if (!s7?.ref) return null;
+  try {
+    const lines = await core.callTool("cogentia_get_lines", {
+      ref: s7.ref,
+      start: 1,
+      end: 80,
+    });
+    const text = String(lines?.text || lines?.content || lines?.excerpt || "").trim();
+    // Some gateway shapes nest body differently
+    const bodyText =
+      text ||
+      String(lines?.lines?.map?.(l => l.text || l).join("\n") || "").trim() ||
+      String(lines?.body || "").trim();
+    if (!bodyText && !lines?.ok && !lines?.source_id) {
+      // Still publish a source card without excerpt so citations work
+    }
+    const source_id =
+      String(lines?.source_id || s7.ref.replace(/[\\/:]/g, "_")).slice(0, 120);
+    const source = {
+      source_id,
+      title: s7.canonical_rel ? path.basename(s7.canonical_rel) : s7.ref,
+      repo: s7.canonical_repo || "",
+      path: s7.canonical_rel || "",
+      url: s7.canonical_url || "",
+      description: `S7 ${s7.mode || "resolve"} (layer ${s7.layer || "?"})`,
+      start_line: 1,
+      end_line: 80,
+    };
+    const excerpt = truncateGuideText(bodyText || `(Canonical source: ${s7.ref})`, 4000);
+    return {
+      source,
+      context: { source_id, text: excerpt },
+    };
+  } catch {
+    return {
+      source: {
+        source_id: s7.ref.replace(/[\\/:]/g, "_"),
+        title: s7.canonical_rel ? path.basename(s7.canonical_rel) : s7.ref,
+        repo: s7.canonical_repo || "",
+        path: s7.canonical_rel || "",
+        url: s7.canonical_url || "",
+        description: `S7 ${s7.mode || "resolve"} (layer ${s7.layer || "?"})`,
+      },
+      context: {
+        source_id: s7.ref.replace(/[\\/:]/g, "_"),
+        text: `Canonical public source resolved by S7: ${s7.ref}${s7.canonical_url ? ` — ${s7.canonical_url}` : ""}`,
+      },
+    };
+  }
 }
 
 async function fetchGuideRetrievalPacks(queries, packOptions) {
@@ -820,7 +983,7 @@ async function fetchGuideRetrievalPacks(queries, packOptions) {
   return packs;
 }
 
-function rankGuideSources(question, queries, sources, context, sourceRanks) {
+function rankGuideSources(question, queries, sources, context, sourceRanks, s7 = null) {
   if (!sources.length) return { sources, context };
   const contextBySource = new Map(context.map(item => [item.source_id, item]));
   const rows = sources.map((source, index) => {
@@ -829,7 +992,7 @@ function rankGuideSources(question, queries, sources, context, sourceRanks) {
     return {
       source,
       context: item,
-      score: guideSourceScore(question, queries, source, item.text, rank),
+      score: guideSourceScore(question, queries, source, item.text, rank, s7),
       index,
     };
   });
@@ -840,7 +1003,7 @@ function rankGuideSources(question, queries, sources, context, sourceRanks) {
   };
 }
 
-function guideSourceScore(question, queries, source, text, rank) {
+function guideSourceScore(question, queries, source, text, rank, s7 = null) {
   const haystack = [
     source.source_id,
     source.repo,
@@ -857,6 +1020,18 @@ function guideSourceScore(question, queries, source, text, rank) {
   for (const token of queryTokens) if (haystack.includes(token)) score += 1;
   if (String(source.repo || "").toLowerCase() === "fractavolta") score += 24;
   if (/fractavolta/.test(haystack)) score += 10;
+  // Boost MCP S7 canonical anchors so commercial Guide cites doctrine files first.
+  if (s7?.ok) {
+    const rel = String(s7.canonical_rel || "").replace(/\\/g, "/").toLowerCase();
+    const repo = String(s7.canonical_repo || "").toLowerCase();
+    const spath = String(source.path || "").replace(/\\/g, "/").toLowerCase();
+    const srepo = String(source.repo || "").toLowerCase();
+    if (rel && (spath.endsWith(rel) || spath.includes(rel) || haystack.includes(path.basename(rel).toLowerCase()))) {
+      score += 80;
+    }
+    if (repo && srepo === repo) score += 12;
+    if (String(source.description || "").includes("S7")) score += 40;
+  }
 
   const intent = guideQuestionIntent(question);
   if (intent.prefer_fractavolta) {
@@ -1323,6 +1498,7 @@ function guideChatResponse(question, locale, completion, retrieval = null, web =
     answer: answer || guideFallbackText(locale),
     sources,
     context: summarizeGuideContext(context, retrieval, web),
+    s7: retrieval?.s7 || null,
     warnings: [...new Set([...(context.warnings || []), ...(retrieval?.warnings || []), ...(web?.warnings || [])])],
   };
 }
