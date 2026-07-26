@@ -308,7 +308,7 @@ Core commands:
                            Flags: --repo <name>, --view public|private,
                            --include-generated, --include-aliases,
                            --include-ambiguous, --fix-conflicts.
-  status                   Local health table used by the git hook.
+  status                   Local health table (docs, index gaps, dirty, drift).
   grep <text>              Full-text search over active markdown documents.
   ask <question>           Ask the Cogentia corpus agent through the daemon.
                            Flags: --daemon-url <url> --model <model>
