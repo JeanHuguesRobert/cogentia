@@ -20,7 +20,15 @@ review:
 
 # Fracta Guide stack supervision
 
-Operational scripts for the public Guide on the `fracta` node.
+**Operational ownership is Operium**, not this folder.
+
+- Fracta role, trust perimeter, health: `operium/docs/fracta-trust-perimeter.md`
+- Guide synthesis routing (Magistral → coding agents): `operium/docs/magistral-coding-agent-routing.md`
+- Observe live state: `operium up` / `operium node diagnose`
+- Invoke coding agents: `operium invoke tool …`
+
+This directory only ships **application** unit scripts and Caddy *fragments*
+used when an operator (or Operium-documented procedure) applies them on the node.
 
 ## Stack
 

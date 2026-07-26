@@ -1,10 +1,18 @@
-# cogentia.fractavolta.com — paste into /etc/caddy/Caddyfile on fracta.
-# Reload: sudo systemctl reload caddy
+# App-side Caddy fragment for Guide/MCP paths (mcp-cogentia :8791).
+# Operational ownership of live Caddy on fracta: Operium
+#   docs/magistral-coding-agent-routing.md
+#   decisions/views-store-caddy-service.md
+# Views Store remains on :3423; do not send all of cogentia.fractavolta.com here.
 
-cogentia.fractavolta.com {
-	@allowed_paths path /health /mcp /sse /tools /tools/* /guide/health /guide/chat /guide/* /ops/blackboard /ops/blackboard/* /ops/status /ops/dashboard
-	handle @allowed_paths {
-		reverse_proxy 127.0.0.1:8791
-	}
-	respond "Not found" 404
-}
+# Suggested split (merge into /etc/caddy/Caddyfile via Operium-governed change):
+#
+# cogentia.fractavolta.com {
+#   @mcp path /mcp /sse /tools /tools/* /guide /guide/* /ops/blackboard /ops/blackboard/* /ops/status /ops/dashboard /ops/route/* /ops/edge/* /ops/node/*
+#   handle @mcp {
+#     reverse_proxy 127.0.0.1:8791
+#   }
+#   handle {
+#     reverse_proxy localhost:3423
+#   }
+#   encode gzip
+# }

@@ -1,48 +1,5 @@
-[
-  {
-    "id": "coding-grok-fast",
-    "url": "http://100.122.121.68:8793/v1/chat/completions",
-    "model": "grok",
-    "tier": "fast",
-    "weight": 100,
-    "apiKeyEnv": "AGENT_GATEWAY_TOKEN",
-    "host": "i7-thinkpad-jhr",
-    "note": "ThinkPad Agent CLI Gateway → Grok Build (daily coding agent)"
-  },
-  {
-    "id": "coding-claude-fast",
-    "url": "http://100.122.121.68:8793/v1/chat/completions",
-    "model": "claude",
-    "tier": "fast",
-    "weight": 80,
-    "apiKeyEnv": "AGENT_GATEWAY_TOKEN",
-    "host": "i7-thinkpad-jhr",
-    "note": "ThinkPad Agent CLI Gateway → Claude Code"
-  },
-  {
-    "id": "coding-codex-strong",
-    "url": "http://100.122.121.68:8793/v1/chat/completions",
-    "model": "codex",
-    "tier": "strong",
-    "weight": 50,
-    "apiKeyEnv": "AGENT_GATEWAY_TOKEN",
-    "host": "i7-thinkpad-jhr",
-    "note": "ThinkPad Agent CLI Gateway → Codex (strong tier)"
-  },
-  {
-    "id": "openai-fast",
-    "url": "https://api.openai.com/v1/chat/completions",
-    "model": "gpt-4o-mini",
-    "tier": "fallback",
-    "weight": 10,
-    "note": "Cloud fallback only — currently 401 if OPENAI_API_KEY is bad; demoted from primary"
-  },
-  {
-    "id": "openai-strong",
-    "url": "https://api.openai.com/v1/chat/completions",
-    "model": "gpt-4.1-mini",
-    "tier": "fallback",
-    "weight": 5,
-    "note": "Cloud strong fallback — optional"
-  }
-]
+{
+  "moved_to": "operium/profiles/magistral-map.coding-agents.v1.json",
+  "reason": "Operational desired state is owned by Operium, not cogentia/deploy.",
+  "docs": "operium/docs/magistral-coding-agent-routing.md"
+}
