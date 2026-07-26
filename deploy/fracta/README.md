@@ -1,60 +1,25 @@
----
-title: Fracta Guide stack supervision
-author: unknown
-date: '2026-07-04'
-document_role: source
-document_kind: documentation
-visibility: public
-lifecycle_state: working
-update_policy: UP-DEFAULT-REVIEWED
-provenance:
-  origin_type: repository
-  origin_repository: JeanHuguesRobert/cogentia
-  origin_ref: fd4e4c4
-  origin_date: '2026-07-04'
-  derived_from: []
-review:
-  status: unreviewed
-  reviewed_by: []
----
+# Fracta — app fragments only
 
-# Fracta Guide stack supervision
+**Operational ownership is Operium**, not this directory.
 
-**Operational ownership is Operium**, not this folder.
+| Need | Where |
+|------|--------|
+| Health / deploy evidence | `operium` → `operium up` |
+| Fracta trust perimeter | `operium/docs/fracta-trust-perimeter.md` |
+| Guide synthesis routing (Magistral → coding agents) | `operium/docs/magistral-coding-agent-routing.md` |
+| Desired Magistral map | `operium/profiles/magistral-map.coding-agents.v1.json` |
 
-- Fracta role, trust perimeter, health: `operium/docs/fracta-trust-perimeter.md`
-- Guide synthesis routing (Magistral → coding agents): `operium/docs/magistral-coding-agent-routing.md`
-- Observe live state: `operium up` / `operium node diagnose`
-- Invoke coding agents: `operium invoke tool …`
+## What ships here
 
-This directory only ships **application** unit scripts and Caddy *fragments*
-used when an operator (or Operium-documented procedure) applies them on the node.
+| Path | Purpose |
+|------|---------|
+| `systemd/` | Guide stack healthcheck / restart **unit templates** |
+| `Caddyfile.snippet` | Suggested path list for MCP/Guide vs Views (merge under Operium change control) |
 
-## Stack
-
-```text
-cogentia.service (127.0.0.1:8790)
-  -> mcp-cogentia.service (8791)
-  -> https://cogentia.fractavolta.com/guide/chat
-  -> https://cogentia.fractavolta.com/ops/dashboard   (Fractanet ops UI)
-```
-
-### Fractanet ops dashboard
-
-Public operator UI (blackboard attractors, Guide/MCP health):
-
-- HTML: `https://cogentia.fractavolta.com/ops/dashboard`
-- JSON: `https://cogentia.fractavolta.com/ops/status`
-
-Caddy must allow `/ops/status` and `/ops/dashboard` — see `deploy/fracta/Caddyfile.snippet`.
-After `git pull`, restart MCP: `sudo scripts/ops/fracta-guide-stack.sh restart`.
-
-## Install on fracta
+Install units (operator, after Operium procedure says so):
 
 ```bash
 cd /srv/cogentia/repos/cogentia
-git pull
-chmod +x scripts/ops/fracta-guide-stack.sh
 sudo cp deploy/fracta/systemd/cogentia-guide-*.service /etc/systemd/system/
 sudo cp deploy/fracta/systemd/cogentia-guide-*.timer /etc/systemd/system/
 sudo systemctl daemon-reload
@@ -62,92 +27,4 @@ sudo systemctl enable --now cogentia-guide-healthcheck.timer
 sudo systemctl enable --now cogentia-guide-restart.timer
 ```
 
-## Manual commands
-
-```bash
-sudo scripts/ops/fracta-guide-stack.sh healthcheck
-sudo scripts/ops/fracta-guide-stack.sh restart
-sudo scripts/ops/fracta-guide-stack.sh ensure-healthy
-```
-
-## Behavior
-
-- `healthcheck`: verifies lightweight daemon and MCP liveness (`/api/status`, `/tools`).
-- `restart`: restarts `cogentia.service`, waits, restarts `mcp-cogentia.service`, verifies.
-- `ensure-healthy`: healthcheck; on failure, restart unless cooldown is active (default 30 min).
-
-Timers:
-
-- healthcheck every 15 minutes
-- proactive restart daily at 04:30 UTC
-
-Logs: `journalctl -u cogentia-guide-healthcheck.service` and `journalctl -u cogentia-guide-restart.service`
-
-## Fast Guide retrieval (batch + optional Supabase)
-
-Roadmap: `docs/retrieval-roadmap.md`.
-
-After `git pull`, restart the stack so MCP picks up batch retrieval:
-
-```bash
-sudo scripts/ops/fracta-guide-stack.sh restart
-```
-
-### Default: local batch (no Supabase)
-
-Guide issues one `POST /api/context/pack-batch` per visitor turn (one SQLite session, vectors loaded once). In `/srv/cogentia/secrets/guide.env`:
-
-```bash
-COGENTIA_GUIDE_BATCH=1
-```
-
-Unset or `0` falls back to sequential `GET /api/context/pack` (slower on a 1GB VPS).
-
-### Optional: regional Supabase backend
-
-1. Apply migration: `deploy/supabase/001_retrieval_chunks.sql`
-2. Sync public corpus after each index rebuild:
-
-```bash
-cd /srv/cogentia/repos/cogentia
-COGENTIA_REGISTRY=/srv/cogentia/registry COGENTIA_DATA_DIR=/var/lib/cogentia \
-  node scripts/sync-retrieval-supabase.js --corpus cogentia-public
-```
-
-3. Add to `/srv/cogentia/secrets/guide.env` (must be readable by `ubuntu`: `chown root:ubuntu`, `chmod 640`):
-
-```bash
-COGENTIA_RETRIEVAL_BACKEND=supabase
-SUPABASE_URL=https://xxx.supabase.co
-SUPABASE_SERVICE_ROLE_KEY=...
-COGENTIA_RETRIEVAL_CORPUS_KEY=cogentia-public
-OPENAI_API_KEY=...   # query embeddings for uncached queries
-```
-
-4. Sync corpus (uses `guide.env` via sudo):
-
-```bash
-sudo bash -c 'set -a; source /srv/cogentia/secrets/guide.env; set +a; \
-  export COGENTIA_REGISTRY=/srv/cogentia/repos/JeanHuguesRobert/.cogentia.json \
-         COGENTIA_DATA_DIR=/var/lib/cogentia; \
-  cd /srv/cogentia/repos/cogentia && node scripts/sync-retrieval-supabase.js --corpus cogentia-public'
-```
-
-5. Restart MCP: `sudo systemctl restart mcp-cogentia.service`
-
-Re-run sync after each `cogentia index update` on fracta.
-
-### Phase 4: Inox session retrieval (preferred on capable host)
-
-In `guide.env` on fracta (secrets **never** in git — see `operium/docs/fracta-trust-perimeter.md`):
-
-```bash
-COGENTIA_INOX_RETRIEVAL_URL=https://<capable-host>:8792
-COGENTIA_INOX_SERVE_TOKEN=...
-# Remove COGENTIA_RETRIEVAL_BACKEND, SUPABASE_*, OPENAI_API_KEY when inline fulfill runs on capable host
-```
-
-Guide uses `POST /session/turn` (`inox.session.v1`) via `scripts/lib/retrieval-inox-session.js`.
-Restart: `sudo systemctl restart mcp-cogentia.service`
-
-See `Inox/research/inox-session-packets.md`, `cogentia/docs/retrieval-roadmap.md`, issue #42.
+Stack scripts live in-repo: `scripts/ops/fracta-guide-stack.sh` (not ops doctrine).

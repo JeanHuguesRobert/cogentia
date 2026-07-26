@@ -60,12 +60,12 @@ This matches `UP-INFRASTRUCTURE-HEALTH` in [`docs/update-policy-registry.md`](..
 - `operium/profiles/magistral-map.coding-agents.v1.json`
 - `operium/docs/fracta-trust-perimeter.md`
 
-## Cogentia local redirects (already cleaned)
+## Cogentia local redirects (cleaned)
 
-- `deploy/fracta/README.md` — leads with Operium ownership
-- `deploy/fracta/magistral-coding-agents-runbook.md` — stub → Operium
-- `deploy/fracta/magistral-map.coding-agents.json` — redirect object
-- `deploy/fracta/Caddyfile.snippet` — app fragment + Operium change control
+- `deploy/fracta/README.md` — short pointer + unit install only
+- `deploy/fracta/systemd/` — unit templates
+- `deploy/fracta/Caddyfile.snippet` — path fragment only
+- (removed) stub runbook/map/full Caddyfile — lived in Operium instead
 
 ## Related agent feedback (workspace memory)
 

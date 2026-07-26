@@ -1,5 +1,0 @@
-{
-  "moved_to": "operium/profiles/magistral-map.coding-agents.v1.json",
-  "reason": "Operational desired state is owned by Operium, not cogentia/deploy.",
-  "docs": "operium/docs/magistral-coding-agent-routing.md"
-}
