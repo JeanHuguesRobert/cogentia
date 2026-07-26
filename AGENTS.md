@@ -34,6 +34,16 @@ For infrastructure claims, consult [Operium](https://github.com/JeanHuguesRobert
 defines mandate and traceability invariants; Operium provides service-health, deployment, and
 recovery evidence. Never infer operational availability from hidden configuration or a valid mandate alone.
 
+### Operium owns operational deploy (stigmergy — do not re-invent)
+
+**Error class (2026-07-26):** writing Fracta apply runbooks / Magistral maps only under
+`deploy/fracta/` and freestyle `ssh` as if that were the ops control plane.
+
+- **Do:** Operium docs/decisions/profiles + `operium up` / `operium invoke tool`.
+- **Do not:** parallel “how we run fracta” as sole SoT under this repo.
+- Trail mark: [`research/operium_owns_operational_deploy.md`](research/operium_owns_operational_deploy.md)
+- Live routing procedure: Operium `docs/magistral-coding-agent-routing.md`
+
 When working with Jean Hugues Robert, apply the Cogentia methodology:
 
 - use **conversation for exploration**;

@@ -45,6 +45,10 @@ This repository instantiates the **cognitive infrastructure layer** of the [DHIT
 *A map of what is, what is in progress, and what could be.*
 *See sibling indexes in [MareNostrum](https://github.com/JeanHuguesRobert/marenostrum/blob/main/research/index.md), [FractaVolta](https://github.com/JeanHuguesRobert/FractaVolta/blob/main/research/index.md), [barons-Mariani](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/index.md), [Inseme](https://github.com/JeanHuguesRobert/inseme/blob/main/research/index.md), [Inox](https://github.com/JeanHuguesRobert/Inox/blob/master/research/index.md).*
 
+### Agent stigmergy — operational deploy
+
+- [Operium owns operational deploy](operium_owns_operational_deploy.md) — **do not** invent a second Fracta ops control plane under `deploy/`; use Operium for health, routing, apply evidence.
+
 ---
 
 ## Published

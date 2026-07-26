@@ -85,6 +85,19 @@ COGENTIA_EMBEDDING_MODEL=text-embedding-3-small
 The default local URL is intentionally loopback. Public deployments should put a
 reverse proxy in front of Cogentia, not expose Magistral control endpoints.
 
+### Operational ownership (stigmergy)
+
+**Who runs Fracta / Magistral map / Guide stack in production** is an
+**Operium** concern, not a second doctrine inside this boundary note.
+
+- Desired Magistral → coding-agent routing: Operium
+  `docs/magistral-coding-agent-routing.md` and
+  `profiles/magistral-map.coding-agents.v1.json`
+- Agent anti-pattern note: [`research/operium_owns_operational_deploy.md`](../research/operium_owns_operational_deploy.md)
+
+Do not invent parallel “ssh fracta and edit map” runbooks only under
+`cogentia/deploy/`. App fragments may live there; **ops source of truth does not**.
+
 The public website Guide uses the same boundary. It is a public, low-maturity,
 read-only instance of the owner-rooted digital twin, not the private
 owner-facing core. Browser code calls the governed Cogentia HTTP facade, not
