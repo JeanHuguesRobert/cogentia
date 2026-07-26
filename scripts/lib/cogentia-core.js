@@ -3,6 +3,7 @@ import path from "node:path";
 
 import {
   emitStaticProjection,
+  emitDualStaticProjections,
   publishRegistry,
   resolveConceptAlias,
   buildAttractorCard,
@@ -17,10 +18,21 @@ import {
 } from "./ai-router-client.js";
 
 import { runWeeklyConsolidation } from "./consolidation.js";
+import { defaultMonorepoRepos } from "./privacy-views.js";
+
+export {
+  PUBLIC_VIEW,
+  PRIVATE_VIEW,
+  isPrivateRepo,
+  isPublicRepo,
+  filterReposForView,
+  defaultMonorepoRepos,
+} from "./privacy-views.js";
 
 // Re-export Navigation Sub-System (S1–S7), AI Router Boundary, and Consolidation Runner
 export {
   emitStaticProjection,
+  emitDualStaticProjections,
   publishRegistry,
   resolveConceptAlias,
   buildAttractorCard,
@@ -37,19 +49,13 @@ export {
  * Returns structured ahead/behind/dirty status for each repository.
  */
 export async function gitVerifyCore(options = {}) {
-  // Shared git status logic across all 10 repositories
-  const repos = [
-    { name: "cogentia", path: "." },
-    { name: "FractaVolta", path: "../FractaVolta" },
-    { name: "marenostrum", path: "../marenostrum" },
-    { name: "barons-Mariani", path: "../barons-Mariani" },
-    { name: "inseme", path: "../inseme" },
-    { name: "Inox", path: "../Inox" },
-    { name: "registre-mariani", path: "../registre-mariani" },
-    { name: "ubikia", path: "../ubikia" },
-    { name: "JeanHuguesRobert", path: "../JeanHuguesRobert" },
-    { name: "StructEnv", path: "../StructEnv" },
-  ];
+  // Shared git status logic across tracked monorepo repositories (with visibility)
+  const repos = defaultMonorepoRepos(options.root || process.cwd()).map((r) => ({
+    name: r.name,
+    path: r.path,
+    visibility: r.visibility || "public",
+    public_presence: r.public_presence,
+  }));
 
   return {
     ok: true,

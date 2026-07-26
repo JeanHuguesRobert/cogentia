@@ -121,6 +121,11 @@ const DEFAULT_REPO_POLICIES = {
     ignore_dirty: [".cogentia/**"],
     role: "registry",
   },
+  "registre-mariani": {
+    visibility: "private",
+    public_presence: "hidden",
+    note: "private civic/registry corpus — never fan-out into public digests or llms.txt",
+  },
 };
 const VISIBILITY_LEVELS = new Set(["public", "internal", "private", "confidential", "secret"]);
 const PUBLIC_PRESENCE = new Set(["full", "stub", "hidden"]);

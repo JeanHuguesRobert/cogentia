@@ -1,42 +1,47 @@
 [
   {
     "name": "cogentia",
-    "path": "."
+    "path": ".",
+    "visibility": "public"
   },
   {
     "name": "FractaVolta",
-    "path": "../FractaVolta"
+    "path": "../FractaVolta",
+    "visibility": "public"
   },
   {
     "name": "marenostrum",
-    "path": "../marenostrum"
+    "path": "../marenostrum",
+    "visibility": "public"
   },
   {
     "name": "barons-Mariani",
-    "path": "../barons-Mariani"
+    "path": "../barons-Mariani",
+    "visibility": "public"
   },
   {
     "name": "inseme",
-    "path": "../inseme"
+    "path": "../inseme",
+    "visibility": "public"
   },
   {
     "name": "Inox",
-    "path": "../Inox"
-  },
-  {
-    "name": "registre-mariani",
-    "path": "../registre-mariani"
+    "path": "../Inox",
+    "visibility": "public"
   },
   {
     "name": "ubikia",
-    "path": "../ubikia"
+    "path": "../ubikia",
+    "visibility": "public"
   },
   {
     "name": "JeanHuguesRobert",
-    "path": "../JeanHuguesRobert"
+    "path": "../JeanHuguesRobert",
+    "visibility": "public"
   },
   {
     "name": "StructEnv",
-    "path": "../StructEnv"
+    "path": "../StructEnv",
+    "visibility": "public"
   }
 ]

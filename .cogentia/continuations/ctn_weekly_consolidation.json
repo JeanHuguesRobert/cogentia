@@ -3,14 +3,53 @@
   "packet_id": "CPKT-2026-W30-CONSOLIDATION",
   "kind": "cognitive_packet_journey",
   "subject": "sunday_corpus_consolidation",
-  "status": "alive",
-  "created_at": "2026-07-25T06:41:59.586Z",
-  "updated_at": "2026-07-25T06:41:59.586Z",
+  "status": "completed",
+  "created_at": "2026-07-26T04:45:52.398Z",
+  "updated_at": "2026-07-26T04:45:52.398Z",
   "origin_home": "https://jhn.baronsmariani.org/",
   "destination": "https://cogentia.fractavolta.com/mcp",
   "mandate": {
     "mission": "Sunday Corpus De-Entropy & Sprint Wrap-Up for 2026-W30",
     "budget_units": 200
+  },
+  "privacy_domains": {
+    "public": {
+      "digest": "C:\\tweesic\\cogentia\\research\\sprints\\weekly_digest_2026-W30.md",
+      "llms": "C:\\tweesic\\cogentia\\llms.txt",
+      "llms_full": "C:\\tweesic\\cogentia\\llms-full.txt",
+      "repos": [
+        "cogentia",
+        "FractaVolta",
+        "marenostrum",
+        "barons-Mariani",
+        "inseme",
+        "Inox",
+        "ubikia",
+        "JeanHuguesRobert",
+        "StructEnv"
+      ]
+    },
+    "private": {
+      "digest": "C:\\tweesic\\cogentia\\.cogentia\\sprints\\weekly_digest_full_2026-W30.md",
+      "llms": "C:\\tweesic\\cogentia\\.cogentia\\projections\\llms.txt",
+      "llms_full": "C:\\tweesic\\cogentia\\.cogentia\\projections\\llms-full.txt",
+      "repos": [
+        "cogentia",
+        "FractaVolta",
+        "marenostrum",
+        "barons-Mariani",
+        "inseme",
+        "Inox",
+        "registre-mariani",
+        "ubikia",
+        "JeanHuguesRobert",
+        "StructEnv"
+      ],
+      "private_repos": [
+        "registre-mariani"
+      ],
+      "downloads_count": 11
+    }
   },
   "target_documents": [
     "C:\\tweesic\\cogentia\\research\\sprints\\weekly_digest_2026-W30.md",
@@ -18,5 +57,6 @@
     "docs/sunday-consolidation-master-plan.md"
   ],
   "execution_steps_completed": 5,
-  "serendipity_ledger_count": 13
+  "serendipity_ledger_count": 11,
+  "continuation_scheduled": "CPKT-2026-W31-CONSOLIDATION"
 }

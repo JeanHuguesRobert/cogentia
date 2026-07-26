@@ -1,7 +1,14 @@
 # Sunday Corpus Consolidation Master Plan 📜🧘‍♂️
 **Architectural Blueprint for Automated Weekly Corpus De-Entropy & Sprint Wrap-Up**
 
-> **Goal**: Automate the weekly Sunday Corpus Consolidation workflow via a single CLI command (`node scripts/cogentia.js consolidate --weekly`) and MCP tool (`cogentia_consolidate_weekly`). This pipeline scans all 10 monorepo repositories, audits index health, triages continuations and interaction traces, emits dual static projections (`llms.txt` and `llms-full.txt`), generates an executive Weekly Digest report (`research/sprints/weekly_digest_YYYY-WXX.md`), and synchronizes Fracta VPS public views.
+> **Goal**: Automate the weekly Sunday Corpus Consolidation workflow via a single CLI command (`node scripts/cogentia.js consolidate --weekly`) and MCP tool (`cogentia_consolidate_weekly`). This pipeline scans all 10 monorepo repositories, audits index health, triages continuations and interaction traces, and always emits **two privacy domains**:
+>
+> | Domain | Artifacts | Contents |
+> |--------|-----------|----------|
+> | **PUBLIC** (publishable) | `research/sprints/weekly_digest_YYYY-WXX.md`, root `llms.txt` / `llms-full.txt` (fan-out to public repos) | Public repos & commits only; no private repo names as inventory entries; no local Downloads |
+> | **PRIVATE** (workspace-only) | `.cogentia/sprints/weekly_digest_full_YYYY-WXX.md`, `.cogentia/projections/llms*.txt` | All repos including `registre-mariani`; high-signal Downloads; never fan-out to public roots |
+>
+> Private repos (`visibility: private`, e.g. `registre-mariani`) never leak into public digests or public `llms.txt`. Optional Phase 5 synchronizes Fracta VPS **public** views only.
 
 ---
 

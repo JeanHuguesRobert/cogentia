@@ -1,5 +1,6 @@
 // File: scripts/lib/consolidation.js
 // Description: Sunday Corpus Consolidation Runner (Issue #70).
+// Emits two privacy domains: public (publishable) and private (workspace-only).
 
 import fs from "node:fs";
 import path from "node:path";
@@ -11,9 +12,21 @@ import {
   emitStaticProjection,
   publishRegistry
 } from "./cogentia-core.js";
+import {
+  PUBLIC_VIEW,
+  PRIVATE_VIEW,
+  defaultMonorepoRepos,
+  filterReposForView,
+  filterGitLogsForView,
+  isPrivateRepo,
+  isPublicRepo,
+} from "./privacy-views.js";
 
 /**
  * Executes the 5-phase Sunday Corpus Consolidation Pipeline.
+ * Always produces dual results:
+ *   - PUBLIC  → research/sprints/weekly_digest_*.md + root llms.txt fan-out
+ *   - PRIVATE → .cogentia/sprints/weekly_digest_full_*.md + .cogentia/projections/
  */
 export async function runWeeklyConsolidation(options = {}) {
   const root = options.root || process.cwd();
@@ -26,30 +39,22 @@ export async function runWeeklyConsolidation(options = {}) {
   console.log(`          COGENTIA SUNDAY CORPUS CONSOLIDATION [${sprintTag}]            `);
   console.log(`==========================================================================`);
 
+  const monorepo = defaultMonorepoRepos(root);
+  const publicRepos = filterReposForView(monorepo, PUBLIC_VIEW);
+  const privateRepos = monorepo.filter((r) => isPrivateRepo(r));
+
   // --- Phase 1: Multi-Repo Audit ---
   console.log("\n[Phase 1] Auditing Monorepo Repositories & Index Status...");
   const gitStatus = await gitVerifyCore({ root });
   const indexStatus = await indexStatusCore({ root });
-  console.log(`✓ 10/10 Monorepo Repositories Checked.`);
+  console.log(`✓ ${monorepo.length}/${monorepo.length} Monorepo Repositories Checked.`);
+  console.log(`  · Public: ${publicRepos.length} · Private: ${privateRepos.length}`);
   console.log(`✓ Index Version: ${indexStatus.index_version}`);
 
-  // Fetch recent git commit history for cross-check across ALL 10 tracked repositories
+  // Fetch recent git commit history across ALL tracked repositories (filter later per view)
   const gitLogs = {};
-  const allRepos = [
-    { name: "cogentia", path: root },
-    { name: "barons-Mariani", path: path.join(root, "..", "barons-Mariani") },
-    { name: "inseme", path: path.join(root, "..", "inseme") },
-    { name: "Inox", path: path.join(root, "..", "Inox") },
-    { name: "FractaVolta", path: path.join(root, "..", "FractaVolta") },
-    { name: "marenostrum", path: path.join(root, "..", "marenostrum") },
-    { name: "registre-mariani", path: path.join(root, "..", "registre-mariani") },
-    { name: "ubikia", path: path.join(root, "..", "ubikia") },
-    { name: "JeanHuguesRobert", path: path.join(root, "..", "JeanHuguesRobert") },
-    { name: "StructEnv", path: path.join(root, "..", "StructEnv") },
-  ];
-
-  for (const repo of allRepos) {
-    const repoDir = path.resolve(root, repo.path);
+  for (const repo of monorepo) {
+    const repoDir = path.resolve(root, repo.path || ".");
     if (fs.existsSync(repoDir) && fs.statSync(repoDir).isDirectory()) {
       try {
         const logText = execFileSync("git", ["log", "--since=7 days ago", "--oneline", "-n", "15"], {
@@ -71,73 +76,88 @@ export async function runWeeklyConsolidation(options = {}) {
   const traceSync = await syncInteractionTracesCore({ root });
   console.log(`✓ Scanned ${traceSync.total_packets} interaction & continuation trace packets.`);
 
-  // --- Phase 3: Dual Static Projection Emission ---
-  console.log("\n[Phase 3] Emitting Dual Static Projections (llms.txt & llms-full.txt)...");
+  // --- Phase 3: Dual Static Projection Emission (public + private) ---
+  console.log("\n[Phase 3] Emitting Dual Static Projections (PUBLIC + PRIVATE)...");
+  const ctxRepos = monorepo.map((r) => ({
+    name: r.name,
+    path: r.path,
+    visibility: r.visibility,
+    public_presence: r.public_presence,
+    role: "primary",
+  }));
   const ctx = {
     registryRoot: root,
-    repos: gitStatus.repositories || [
-      { name: "cogentia", path: "." },
-      { name: "barons-Mariani", path: "../barons-Mariani" },
-      { name: "inseme", path: "../inseme" },
-      { name: "Inox", path: "../Inox" },
-      { name: "FractaVolta", path: "../FractaVolta" },
-      { name: "marenostrum", path: "../marenostrum" },
-      { name: "registre-mariani", path: "../registre-mariani" },
-      { name: "ubikia", path: "../ubikia" },
-      { name: "JeanHuguesRobert", path: "../JeanHuguesRobert" },
-      { name: "StructEnv", path: "../StructEnv" },
-    ]
+    repos: gitStatus.repositories
+      ? mergeRepoVisibility(gitStatus.repositories, monorepo)
+      : ctxRepos,
   };
-  const projectionResult = emitStaticProjection(ctx);
-  const registryResult = publishRegistry(ctx);
-  console.log(`✓ Projected llms.txt & llms-full.txt across ${projectionResult.repos_projected} repositories.`);
-  console.log(`✓ Registry published to ${registryResult.published.join(", ")}`);
 
-  // --- Phase 4: Dual Weekly Digest Generation (Public vs Full/Private) ---
-  console.log("\n[Phase 4] Auto-Generating Dual Weekly Sprint Digests (Public vs Full/Private)...");
-  
-  // 1. High-Signal Downloads Harvester
+  const publicProjection = emitStaticProjection(ctx, [], { view: PUBLIC_VIEW, fanOut: true });
+  const privateProjection = emitStaticProjection(ctx, [], { view: PRIVATE_VIEW, fanOut: false });
+  const registryResult = publishRegistry({
+    ...ctx,
+    repos: filterReposForView(ctx.repos, PUBLIC_VIEW),
+  });
+
+  console.log(
+    `✓ PUBLIC projection: ${publicProjection.llms_path} (${publicProjection.repos_listed} repos listed, fan-out ${publicProjection.repos_projected})`
+  );
+  if (publicProjection.private_repos_omitted?.length) {
+    console.log(`  · Omitted private repos: ${publicProjection.private_repos_omitted.join(", ")}`);
+  }
+  if (publicProjection.cleaned_private_repos?.length) {
+    console.log(`  · Cleaned leaked projections from: ${publicProjection.cleaned_private_repos.join(", ")}`);
+  }
+  console.log(
+    `✓ PRIVATE projection: ${privateProjection.llms_path} (${privateProjection.repos_listed} repos listed, workspace-only)`
+  );
+  console.log(`✓ Public registry published to ${registryResult.published.join(", ") || "(none)"}`);
+
+  // --- Phase 4: Dual Weekly Digest Generation ---
+  console.log("\n[Phase 4] Auto-Generating Dual Weekly Sprint Digests (PUBLIC + PRIVATE)...");
+
+  // High-signal downloads are local workstation signal → private digest only
   const downloadsPath = path.join(process.env.USERPROFILE || "C:\\Users\\admin", "Downloads");
   const highSignalDownloads = harvestHighSignalDownloads(downloadsPath);
 
-  // 2. Public Digest (Excludes registre-mariani & private files)
+  // 1. PUBLIC Digest (no private repos, no local downloads)
   const sprintDir = path.join(root, "research", "sprints");
   if (!fs.existsSync(sprintDir)) fs.mkdirSync(sprintDir, { recursive: true });
   const publicDigestPath = path.join(sprintDir, `weekly_digest_${sprintTag}.md`);
   const publicDigestContent = generateWeeklyDigestMarkdown({
     sprintTag,
     timestamp,
-    gitStatus,
     indexStatus,
     traceSync,
-    projectionResult,
+    projectionResult: publicProjection,
     gitLogs,
-    downloads: highSignalDownloads,
-    isFullView: false
+    downloads: [],
+    view: PUBLIC_VIEW,
+    monorepo,
   });
   fs.writeFileSync(publicDigestPath, publicDigestContent, "utf8");
 
-  // 3. Full / Private Digest (Includes registre-mariani & private docs under .cogentia/)
+  // 2. PRIVATE Digest (all repos + downloads) under .cogentia/
   const fullSprintDir = path.join(root, ".cogentia", "sprints");
   if (!fs.existsSync(fullSprintDir)) fs.mkdirSync(fullSprintDir, { recursive: true });
-  const fullDigestPath = path.join(fullSprintDir, `weekly_digest_full_${sprintTag}.md`);
-  const fullDigestContent = generateWeeklyDigestMarkdown({
+  const privateDigestPath = path.join(fullSprintDir, `weekly_digest_full_${sprintTag}.md`);
+  const privateDigestContent = generateWeeklyDigestMarkdown({
     sprintTag,
     timestamp,
-    gitStatus,
     indexStatus,
     traceSync,
-    projectionResult,
+    projectionResult: privateProjection,
     gitLogs,
     downloads: highSignalDownloads,
-    isFullView: true
+    view: PRIVATE_VIEW,
+    monorepo,
   });
-  fs.writeFileSync(fullDigestPath, fullDigestContent, "utf8");
+  fs.writeFileSync(privateDigestPath, privateDigestContent, "utf8");
 
-  console.log(`✓ Public Weekly Digest written to: ${publicDigestPath}`);
-  console.log(`✓ Full/Private Digest written to: ${fullDigestPath}`);
+  console.log(`✓ PUBLIC digest  → ${publicDigestPath}`);
+  console.log(`✓ PRIVATE digest → ${privateDigestPath}`);
 
-  // 4. Register Consolidation Cognitive Packet Descriptor
+  // 3. Register Consolidation Cognitive Packet Descriptor
   const nextWeekNumber = weekNumber === 52 ? 1 : weekNumber + 1;
   const nextYear = weekNumber === 52 ? year + 1 : year;
   const nextSprintTag = `${nextYear}-W${String(nextWeekNumber).padStart(2, "0")}`;
@@ -145,7 +165,7 @@ export async function runWeeklyConsolidation(options = {}) {
   const ctnPath = path.join(root, ".cogentia", "continuations", "ctn_weekly_consolidation.json");
   const ctnDir = path.dirname(ctnPath);
   if (!fs.existsSync(ctnDir)) fs.mkdirSync(ctnDir, { recursive: true });
-  
+
   const consolidationPacket = {
     id: `ctn_weekly_consolidation_${sprintTag}`,
     packet_id: `CPKT-${sprintTag}-CONSOLIDATION`,
@@ -160,18 +180,34 @@ export async function runWeeklyConsolidation(options = {}) {
       mission: `Sunday Corpus De-Entropy & Sprint Wrap-Up for ${sprintTag}`,
       budget_units: 200
     },
+    privacy_domains: {
+      public: {
+        digest: publicDigestPath,
+        llms: publicProjection.llms_path,
+        llms_full: publicProjection.llms_full_path,
+        repos: publicRepos.map((r) => r.name),
+      },
+      private: {
+        digest: privateDigestPath,
+        llms: privateProjection.llms_path,
+        llms_full: privateProjection.llms_full_path,
+        repos: monorepo.map((r) => r.name),
+        private_repos: privateRepos.map((r) => r.name),
+        downloads_count: highSignalDownloads.length,
+      },
+    },
     target_documents: [
       publicDigestPath,
-      fullDigestPath,
+      privateDigestPath,
       "docs/sunday-consolidation-master-plan.md"
     ],
     execution_steps_completed: 5,
     serendipity_ledger_count: highSignalDownloads.length,
     continuation_scheduled: `CPKT-${nextSprintTag}-CONSOLIDATION`
   };
-  fs.writeFileSync(ctnPath, JSON.stringify(consolidationPacket, null, 2), "utf8");
+  fs.writeFileSync(ctnPath, JSON.stringify(consolidationPacket, null, 2) + "\n", "utf8");
 
-  // 5. Auto-Schedule Next Week's Consolidation Mission Packet
+  // 4. Auto-Schedule Next Week's Consolidation Mission Packet
   const nextCtnPath = path.join(root, ".cogentia", "continuations", `ctn_weekly_consolidation_${nextSprintTag}.json`);
   const scheduledNextPacket = {
     id: `ctn_weekly_consolidation_${nextSprintTag}`,
@@ -189,23 +225,57 @@ export async function runWeeklyConsolidation(options = {}) {
       continuation_parent: `CPKT-${sprintTag}-CONSOLIDATION`
     }
   };
-  fs.writeFileSync(nextCtnPath, JSON.stringify(scheduledNextPacket, null, 2), "utf8");
+  fs.writeFileSync(nextCtnPath, JSON.stringify(scheduledNextPacket, null, 2) + "\n", "utf8");
 
   console.log(`✓ Current Consolidation Packet completed: ${ctnPath}`);
   console.log(`✓ Next Sprint Consolidation Packet scheduled [${nextSprintTag}]: ${nextCtnPath}`);
+  console.log(`\n--- Dual privacy results ---`);
+  console.log(`  PUBLIC : ${publicDigestPath}`);
+  console.log(`  PRIVATE: ${privateDigestPath}`);
 
   return {
     ok: true,
     sprint_tag: sprintTag,
     next_sprint_tag: nextSprintTag,
     timestamp,
-    repos_projected: projectionResult.repos_projected,
+    privacy: {
+      public: {
+        digest_path: publicDigestPath,
+        llms_path: publicProjection.llms_path,
+        llms_full_path: publicProjection.llms_full_path,
+        repos_listed: publicProjection.repos_listed,
+        repos_projected: publicProjection.repos_projected,
+        private_repos_omitted: publicProjection.private_repos_omitted || [],
+      },
+      private: {
+        digest_path: privateDigestPath,
+        llms_path: privateProjection.llms_path,
+        llms_full_path: privateProjection.llms_full_path,
+        repos_listed: privateProjection.repos_listed,
+        downloads_count: highSignalDownloads.length,
+      },
+    },
+    // Back-compat fields
+    repos_projected: publicProjection.repos_projected,
     packets_scanned: traceSync.total_packets,
     digest_path: publicDigestPath,
-    full_digest_path: fullDigestPath,
+    full_digest_path: privateDigestPath,
     consolidation_packet: ctnPath,
     scheduled_next_packet: nextCtnPath,
   };
+}
+
+function mergeRepoVisibility(gitRepos, monorepo) {
+  const byName = new Map(monorepo.map((r) => [r.name, r]));
+  return gitRepos.map((r) => {
+    const meta = byName.get(r.name) || {};
+    return {
+      ...r,
+      visibility: r.visibility || meta.visibility || (isPrivateRepo(r.name) ? "private" : "public"),
+      public_presence: r.public_presence || meta.public_presence,
+      path: r.path || meta.path || ".",
+    };
+  });
 }
 
 function harvestHighSignalDownloads(downloadsPath) {
@@ -221,7 +291,7 @@ function harvestHighSignalDownloads(downloadsPath) {
       if (!entry.isFile()) continue;
       const ext = path.extname(entry.name).toLowerCase();
       if (!highSignalExts.has(ext)) continue;
-      
+
       const isNoise = noisePatterns.some(pat => pat.test(entry.name));
       if (isNoise) continue;
 
@@ -243,37 +313,73 @@ function harvestHighSignalDownloads(downloadsPath) {
 function generateWeeklyDigestMarkdown({
   sprintTag,
   timestamp,
-  gitStatus,
   indexStatus,
   traceSync,
   projectionResult,
   gitLogs = {},
   downloads = [],
-  isFullView = false
+  view = PUBLIC_VIEW,
+  monorepo = [],
 }) {
-  // Filter out registre-mariani in public view
-  const filteredLogs = Object.entries(gitLogs).filter(([repoName]) => {
-    if (!isFullView && repoName.toLowerCase() === "registre-mariani") return false;
-    return true;
-  });
+  const isPrivate = view === PRIVATE_VIEW;
+  const filteredLogs = filterGitLogsForView(gitLogs, view);
 
   const repoCommitSections = filteredLogs.map(([repoName, commits]) => {
+    const privacyTag = isPrivateRepo(repoName) ? " 🔒" : "";
     const listText = (commits || []).map(c => `- \`${c}\``).join("\n");
-    return `### Repository: \`${repoName}\`\n${listText || "- *No recent commits*"}`;
+    return `### Repository: \`${repoName}\`${privacyTag}\n${listText || "- *No recent commits*"}`;
   }).join("\n\n");
 
-  const downloadsList = downloads.length
-    ? downloads.map(d => `- 📄 \`${d.name}\` (${(d.size / 1024).toFixed(1)} KB) — *${d.mtime.split("T")[0]}*`).join("\n")
-    : "- *No high-signal downloads detected this week.*";
+  const publicRepoCount = monorepo.filter((r) => isPublicRepo(r)).length;
+  const privateRepoCount = monorepo.filter((r) => isPrivateRepo(r)).length;
 
-  const viewTitle = isFullView ? "Full / Private Workspace Digest" : "Public Corpus Digest";
+  const viewTitle = isPrivate ? "Private Workspace Digest" : "Public Corpus Digest";
+  const domainLabel = isPrivate
+    ? "PRIVATE (workspace / admin — do not publish)"
+    : "PUBLIC (sanitized — safe to publish)";
+
+  // Downloads only in private view
+  let downloadsSection = "";
+  if (isPrivate) {
+    const downloadsList = downloads.length
+      ? downloads.map(d => `- 📄 \`${d.name}\` (${(d.size / 1024).toFixed(1)} KB) — *${d.mtime.split("T")[0]}*`).join("\n")
+      : "- *No high-signal downloads detected this week.*";
+    downloadsSection = `
+---
+
+## 📥 High-Signal Downloads Ingest (Past 7 Days — private workstation)
+
+${downloadsList}
+`;
+  } else {
+    downloadsSection = `
+---
+
+## 📥 Local Downloads
+
+- *Omitted from public digest* (workstation-local signal stays in the private digest under \`.cogentia/sprints/\`).
+`;
+  }
+
+  const projectionPaths = isPrivate
+    ? `- Private sitemap: [\`.cogentia/projections/llms.txt\`](../../.cogentia/projections/llms.txt)
+- Private full-text: [\`.cogentia/projections/llms-full.txt\`](../../.cogentia/projections/llms-full.txt)
+- Twin public digest: [\`research/sprints/weekly_digest_${sprintTag}.md\`](../../research/sprints/weekly_digest_${sprintTag}.md)`
+    : `- Public sitemap: [\`llms.txt\`](../../llms.txt)
+- Public full-text: [\`llms-full.txt\`](../../llms-full.txt)
+- Twin private digest: workspace-only under \`.cogentia/sprints/weekly_digest_full_${sprintTag}.md\``;
+
+  const privateRepoNote = isPrivate
+    ? `- **Private repos included**: ${privateRepoCount} (${monorepo.filter(isPrivateRepo).map((r) => r.name).join(", ") || "none"})`
+    : `- **Private repos omitted**: ${privateRepoCount} (${monorepo.filter(isPrivateRepo).map((r) => r.name).join(", ") || "none"})`;
 
   return `# Weekly Sprint Digest: ${sprintTag} (${viewTitle}) 📜🧘‍♂️
 **Generated by Cogentia Sunday Consolidation Pipeline**
 - **Timestamp**: \`${timestamp}\`
 - **Corpus Index Version**: \`${indexStatus.index_version}\`
-- **Monorepo Repositories**: \`${projectionResult.repos_projected}\` tracked
-- **Privacy View Domain**: \`${isFullView ? "FULL (Private & Admin)" : "PUBLIC (Sanitized)"}\`
+- **Privacy View Domain**: \`${domainLabel}\`
+- **Repositories in this view**: \`${projectionResult.repos_listed ?? filteredLogs.length}\` listed
+- **Public monorepo surface**: \`${publicRepoCount}\` · **Private monorepo surface**: \`${privateRepoCount}\`
 
 ---
 
@@ -285,37 +391,33 @@ This week's sprint consolidated major milestones across the monorepo architectur
 2. **Single-Process Embedded Mode**: Implemented \`--with-mcp\` flag reducing memory usage to **~80 MB RAM** on Fracta VPS.
 3. **Magistral AI Router Boundary (#67)**: Re-exported AI Router client contracts with zero secret leaks and graceful RAG fallback.
 4. **Continuation & Trace Sync (#68)**: Automated interaction packet scanning (\`${traceSync.total_packets}\` packets indexed).
-5. **Dual Static Projections (#66)**: Emitted \`llms.txt\` and \`llms-full.txt\` across all 10 repositories and live at \`https://cogentia.fractavolta.com/llms.txt\`.
-6. **COP Accounting Simulator**: Integrated quick event simulation buttons and live Kudos gravity ($\Gamma$) feedback in \`CopAccountingDashboard.jsx\`.
+5. **Dual Privacy Projections (#66 / #70)**: Emitted separate **public** and **private** \`llms.txt\` / digest surfaces (private repos never leak into public artifacts).
+6. **COP Accounting Simulator**: Integrated quick event simulation buttons and live Kudos gravity ($\\Gamma$) feedback in \`CopAccountingDashboard.jsx\`.
 
----
-
-## 📥 High-Signal Downloads Ingest (Past 7 Days)
-
-${downloadsList}
-
+${downloadsSection}
 ---
 
 ## 🔍 Git Commit Cross-Check (Past 7 Days - User: JeanHuguesRobert)
 
-${repoCommitSections || "*No recent activity detected across tracked repositories.*"}
+${repoCommitSections || "*No recent activity detected across tracked repositories in this privacy view.*"}
 
 ---
 
 ## 📊 Monorepo Inventory & Projections
 
-- **Total Repositories Projected**: \`${projectionResult.repos_projected}\`
+- **Privacy view**: \`${view}\`
+- **Repos listed in this view**: \`${projectionResult.repos_listed}\`
 - **Interaction & Continuation Packets**: \`${traceSync.total_packets}\`
-- **Canonical Projections**:
-  - Sitemap: [\`llms.txt\`](../../llms.txt)
-  - Full-Text RAG: [\`llms-full.txt\`](../../llms-full.txt)
+${privateRepoNote}
+- **Canonical projections for this view**:
+${projectionPaths}
 
 ---
 
 ## 🚀 Next Sprint Focus Areas
 
 - [ ] Complete derivative public publications for *When Cognition Became Traffic* (#69).
-- [ ] Maintain weekly Sunday Consolidation pipeline automation (#70).
+- [ ] Maintain weekly Sunday Consolidation dual privacy pipeline (#70).
 `;
 }
 
