@@ -37,6 +37,45 @@ Email provides a concrete asynchronous transport case. The first target demonstr
 governed round trip from an `email.received` artifact to a decision and then an `email.sent`
 artifact, without sending a real message during the initial phases.
 
+## FractaLog / OpenTelemetry convergence to explore
+
+The `2026-07-28` MCP revision standardizes W3C Trace Context propagation in request `_meta` through
+the `traceparent`, `tracestate` and `baggage` keys. It also deprecates MCP's protocol-level logging
+feature in favor of `stderr` for stdio diagnostics and OpenTelemetry for structured observability.
+
+This creates a potentially important convergence point with **FractaLog**, which currently remains
+mostly an idea. The sandbox should explore whether FractaLog can become the durable, cognitive and
+governance-aware projection of ordinary distributed traces, rather than inventing an unrelated
+observability transport.
+
+The architectural hypothesis to test is:
+
+```text
+OpenTelemetry trace/span
+  = operational causality and timing
+
+Cognitive Packet / COP Event / Artifact
+  = semantic identity, mandate, provenance and durable meaning
+
+FractaLog
+  = correlated projection joining both levels without collapsing them
+```
+
+This is deliberately exploratory. OpenTelemetry traces are not automatically durable cognitive
+artifacts, and Cognitive Packets must not be reduced to telemetry spans. The useful invariant may
+instead be a stable correlation: packet, tool call, email artifact and downstream operation share
+trace context while retaining distinct schemas, retention rules and authority.
+
+The initial sandbox should therefore:
+
+- accept and propagate valid `traceparent`, `tracestate` and `baggage` metadata;
+- attach the resulting trace/span correlation to Cognitive Packet lifecycle events;
+- preserve packet identity independently from trace and span identifiers;
+- show one causal tree across MCP client, Cogentia server, packet router and dry-run email handler;
+- redact secrets and personal data from telemetry;
+- record which evidence belongs in short-lived telemetry and which becomes a durable artifact;
+- avoid making an OpenTelemetry backend mandatory for the first in-memory tests.
+
 ## Precedent
 
 Follow the method established by
@@ -173,6 +212,8 @@ The sandbox is successful when:
 - legacy fallback works without ambiguity;
 - the same semantic tool can be called through both eras;
 - MCP requests and results have stable Cognitive Packet identities;
+- W3C trace context propagates across the MCP and Cognitive Packet boundary without becoming the
+  packet identity;
 - routing policy reads only the envelope;
 - payload interpretation happens only in the selected handler;
 - the email scenario produces correlated `email.received` and dry-run `email.sent` artifacts;
@@ -200,6 +241,8 @@ quota, external dependency, unresolved protocol ambiguity or human validation.
 
 - The final MCP specification may differ from the release candidate.
 - A client binary may contain `2026-07-28` code without enabling it in its normal MCP path.
+- FractaLog has no stabilized implementation or canonical storage model yet; the sandbox must
+  preserve the distinction between telemetry, audit trace and durable cognitive artifact.
 - Cross-repository imports can make the sandbox non-portable; prefer explicit adapters and document
   any workspace assumption.
 - Promoting adapter behavior into COP could affect protocol invariants and requires human
