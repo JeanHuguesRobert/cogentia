@@ -1,0 +1,41 @@
+{
+  "schema_version": "cogentia.mail-artifact.v1",
+  "occurrence_id": "urn:cogentia:mail-occurrence:sample-received-001",
+  "artifact_type": "email_received",
+  "artifact_id": "urn:cogentia:mail:sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "message_id": "<fictive-message@example.invalid>",
+  "observed_at": "2026-07-27T00:00:00Z",
+  "declared_date": "2026-07-27T00:00:00Z",
+  "mail_from": "sender@example.invalid",
+  "header_from": "sender@example.invalid",
+  "rcpt_to": ["twin@example.invalid"],
+  "direction": "inbound",
+  "agent_id": "agent-jhn-root",
+  "parent_agent_id": "jhn-human",
+  "mandate_id": "mandat-fictive",
+  "visibility": "raw_private",
+  "sensitivity": ["fictive"],
+  "integrity": {
+    "algorithm": "sha256",
+    "raw_message_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "raw_message_size": 123,
+    "raw_message_ref": "private-mail-store://sha256/aa/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.eml"
+  },
+  "authentication": {
+    "spf": "pass",
+    "dkim": "pass",
+    "dmarc": "pass",
+    "tls": true,
+    "tls_version": "TLSv1.3",
+    "peer": "example.invalid"
+  },
+  "transport": {
+    "stage": "mailbox_stored",
+    "status": "stored",
+    "smtp_reply": "250 2.0.0 fictive",
+    "queue_id": "fictive-queue-id"
+  },
+  "evidence_refs": ["private-log://stalwart/fictive-entry"],
+  "caused_by": [],
+  "notes": "Fictive example only; no real person, address or message."
+}

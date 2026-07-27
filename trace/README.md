@@ -24,6 +24,10 @@ review:
 
 It starts with a minimal scope: importing an official ChatGPT/OpenAI export locally, producing normalized events, preserving provenance, and suspending execution whenever a decision requires human judgment.
 
+The trace layer also defines a schema for durable private mail occurrences.
+This does not add Gmail import to the MVP: it standardizes `email_received` and
+`email_sent` evidence produced by a governed mail transport.
+
 ## Core principle
 
 Cogentia Trace is not a linear import pipeline.
@@ -85,14 +89,17 @@ trace/
     visibility_policy.md
     inversion_of_control.md
     continuations.md
+    mail-artifacts.md
     mvp_scope.md
   schemas/
     event.schema.json
+    mail-artifact.schema.json
     manifest.schema.json
     continuation.schema.json
     packet.schema.json
   examples/
     sample_event.jsonl
+    sample_mail_artifact.json
     sample_manifest.json
     sample_continuation.json
     sample_packet.yaml
