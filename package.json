@@ -24,6 +24,7 @@
     "test:blackboard": "node scripts/test-packet-attractor-blackboard.js",
     "test:guide-cli": "node scripts/test-guide-cli.js",
     "test:guide-eval": "node scripts/test-guide-eval.js",
+    "test:frontmatter-schema": "node scripts/test-frontmatter-schema-cli.js",
     "test:issue-graph": "node scripts/test-issue-graph.js",
     "test:issue-graph-route": "node scripts/test-issue-graph-route.js",
     "test:ai-router": "node scripts/test-ai-router-client.js",

@@ -1,0 +1,134 @@
+{
+  "schema": "cogentia.frontmatter-schema.v0.1",
+  "version": "0.1",
+  "maturity": "working-paper",
+  "source_document": "docs/frontmatter-schema.md",
+  "synonym_mapping": "docs/frontmatter-synonym-mapping.md",
+  "update_policy_registry": "docs/update-policy-registry.md",
+  "principles": {
+    "unknown_values": "Declare missing information explicitly as unknown, unreviewed, or an empty list; never infer it.",
+    "privacy": "Public by default; specify privacy only when the document is outside that regime.",
+    "extensions": "Unregistered extension fields must use the x- prefix.",
+    "synonyms": "Synonyms are accepted only when documented by the synonym mapping."
+  },
+  "field_groups": {
+    "core": {
+      "required": ["title", "author", "affiliation", "date", "license", "language"],
+      "recommended": ["description"],
+      "optional": ["subtitle", "creator", "last_modified_at"],
+      "defaults": {
+        "affiliation": "Institut Mariani / C.O.R.S.I.C.A., 1 cours Paoli, F-20250 Corte, Corsica",
+        "license": "CC BY-SA 4.0",
+        "language": "fr"
+      }
+    },
+    "traceability": {
+      "required": ["status", "update_policy", "provenance", "review"],
+      "conditionally_required": {
+        "canonical_url": "Required for substantive documents.",
+        "last_stamped_at": "Generated automatically; use unknown until a document has been stamped.",
+        "generated_by": "Required when production is entirely automated."
+      },
+      "optional": [
+        "version",
+        "methodology",
+        "generated_by",
+        "ai_assisted_by",
+        "reviewed_by",
+        "human_arbitration_by",
+        "version_history"
+      ],
+      "defaults": {
+        "update_policy": "UP-DEFAULT-REVIEWED"
+      }
+    },
+    "documentary_provenance": {
+      "optional": ["source_document", "additional_sources", "derived_from"],
+      "rules": {
+        "source_document": "Use only when a clear primary source document exists.",
+        "derived_from": "Tolerated synonym of source_document at the document level; distinct from provenance.derived_from."
+      }
+    },
+    "semantics": {
+      "optional": [
+        "webid",
+        "rights",
+        "tags",
+        "privacy",
+        "related_documents",
+        "related_projects",
+        "document_role",
+        "derivation_mode",
+        "adapted_products",
+        "purpose",
+        "adaptation_context"
+      ]
+    },
+    "publication": {
+      "optional": ["layout", "permalink", "nav_order", "parent", "has_children"]
+    }
+  },
+  "required_blocks": {
+    "provenance": {
+      "required": ["origin_type", "origin_repository", "origin_ref", "origin_date", "derived_from"],
+      "origin_type_vocabulary": [
+        "repository",
+        "external-repository",
+        "generated",
+        "conversation",
+        "unknown"
+      ],
+      "template": {
+        "origin_type": "unknown",
+        "origin_repository": "unknown",
+        "origin_ref": "unknown",
+        "origin_date": "unknown",
+        "derived_from": []
+      },
+      "rules": {
+        "origin_ref": "Must be immutable or externally verifiable; a current branch name alone is insufficient."
+      }
+    },
+    "review": {
+      "required": ["status", "reviewed_by"],
+      "template": {
+        "status": "unreviewed",
+        "reviewed_by": []
+      }
+    }
+  },
+  "status": {
+    "base_vocabulary": [
+      "draft",
+      "working-paper",
+      "stable",
+      "under-review",
+      "deprecated",
+      "superceded"
+    ],
+    "allows_multiple": true,
+    "allows_natural_language_qualifier": true
+  },
+  "generated_by": {
+    "type": "string-or-list",
+    "ordered": true,
+    "rule": "Order contributors by decreasing importance and make entirely automated production immediately visible."
+  },
+  "synonyms": {
+    "author_or_authors": "author or creator, subject to the human-authorship rule",
+    "created": "date",
+    "updated_or_last_updated": "last_modified_at",
+    "derived_from_or_predecessor": "source_document",
+    "keywords": "tags",
+    "licence_or_spdx-license-identifier": "license",
+    "lang": "language"
+  },
+  "deprecated_fields": [
+    "repository",
+    "path",
+    "intended_path",
+    "canonical_path",
+    "canonical_slug",
+    "repository_candidate"
+  ]
+}

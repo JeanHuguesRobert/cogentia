@@ -257,6 +257,8 @@ async function main() {
       return cmdConsolidate();
     case "classify":
       return cmdClassify(argv.shift() || "plan");
+    case "frontmatter":
+      return cmdFrontmatter(argv.shift() || "schema");
     case "index":
       return cmdIndex(argv.shift() || "status");
     case "embeddings":
@@ -278,6 +280,45 @@ async function main() {
     default:
       throw new Error(`Unknown command "${command}". Run: node scripts/cogentia.js help`);
   }
+}
+
+function cmdFrontmatter(subcommand) {
+  if (subcommand !== "schema") {
+    throw new Error(`Unknown frontmatter subcommand "${subcommand}". Use schema.`);
+  }
+
+  const schemaUrl = new URL("../docs/frontmatter-schema.v0.1.json", import.meta.url);
+  const schema = JSON.parse(fs.readFileSync(schemaUrl, "utf8"));
+  return output(schema, renderFrontmatterSchema(schema));
+}
+
+function renderFrontmatterSchema(schema) {
+  const lines = [
+    `Frontmatter schema ${schema.version} (${schema.maturity})`,
+    `Source: ${schema.source_document}`,
+    "",
+  ];
+
+  for (const [name, group] of Object.entries(schema.field_groups || {})) {
+    lines.push(`${name}:`);
+    if (group.required?.length) lines.push(`  required: ${group.required.join(", ")}`);
+    if (group.recommended?.length) lines.push(`  recommended: ${group.recommended.join(", ")}`);
+    if (group.optional?.length) lines.push(`  optional: ${group.optional.join(", ")}`);
+    for (const [field, rule] of Object.entries(group.conditionally_required || {})) {
+      lines.push(`  conditionally required: ${field} — ${rule}`);
+    }
+    lines.push("");
+  }
+
+  for (const [name, block] of Object.entries(schema.required_blocks || {})) {
+    lines.push(`required block ${name}: ${block.required.join(", ")}`);
+  }
+  lines.push("");
+  lines.push(`status vocabulary: ${(schema.status?.base_vocabulary || []).join(", ")}`);
+  lines.push(`deprecated fields: ${(schema.deprecated_fields || []).join(", ")}`);
+  lines.push("");
+  lines.push("Use --json for the complete schema, defaults, templates, rules, and synonyms.");
+  return lines.join("\n");
 }
 
 function cmdHelp() {
@@ -308,6 +349,8 @@ Core commands:
                            Flags: --repo <name>, --view public|private,
                            --include-generated, --include-aliases,
                            --include-ambiguous, --fix-conflicts.
+  frontmatter schema       Print the canonical frontmatter vocabulary from
+                           docs/frontmatter-schema.v0.1.json.
   status                   Local health table (docs, index gaps, dirty, drift).
   grep <text>              Full-text search over active markdown documents.
   ask <question>           Ask the Cogentia corpus agent through the daemon.

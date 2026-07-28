@@ -34,6 +34,11 @@ update_policy: UP-DEFAULT-REVIEWED
 
 This document defines the metadata schema (frontmatter) used across the multi-repository corpus.
 
+The machine-readable companion is
+[`frontmatter-schema.v0.1.json`](frontmatter-schema.v0.1.json). The current
+Cogentia CLI reads that file for `cogentia frontmatter schema`; changes to the
+field vocabulary must update both artifacts in the same change.
+
 ## Philosophy
 
 - **Flat fields** by default, for readability and simplicity.
