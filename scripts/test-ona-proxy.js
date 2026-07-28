@@ -24,6 +24,11 @@ assert.equal(parsed.ok, true);
 assert.equal(parsed.node_id, "resource://i7-thinkpad-jhr");
 assert.equal(parsed.ona_path, "/node/status");
 
+const somaParsed = parseOpsNodePath("/ops/node/resource%3A%2F%2Ffracta/soma/object");
+assert.equal(somaParsed.ok, true);
+assert.equal(somaParsed.node_id, "resource://fracta");
+assert.equal(somaParsed.ona_path, "/soma/object");
+
 assert.equal(parseOpsNodePath("/ops/node/bad/path").ok, false);
 
 const env = {
@@ -62,6 +67,19 @@ const onaServer = http.createServer((req, res) => {
       node_id: "resource://fracta",
       drift: [],
       next_actions: [],
+    }));
+    return;
+  }
+  if (req.method === "GET" && req.url === "/soma/object") {
+    res.writeHead(200, { "Content-Type": "application/json" });
+    res.end(JSON.stringify({
+      schema: "soma.object.v0",
+      id: "resource://fracta",
+      class: "operium.node",
+      attributes: {
+        "core.user-label": "fracta",
+      },
+      children: [],
     }));
     return;
   }
@@ -149,6 +167,18 @@ const okDrift = await handleOpsNodeProxyRequest(
 );
 assert.equal(okDrift.status, 200);
 assert.equal(okDrift.body.schema, "operium.node.drift.v1");
+
+const okSoma = await handleOpsNodeProxyRequest(
+  {
+    url: "/ops/node/resource%3A%2F%2Ffracta/soma/object",
+    headers: { authorization: "Bearer ops-read-token" },
+  },
+  store,
+  { env, timeoutMs: 5000 },
+);
+assert.equal(okSoma.status, 200);
+assert.equal(okSoma.body.schema, "soma.object.v0");
+assert.equal(okSoma.body.id, "resource://fracta");
 
 await new Promise((resolve) => onaServer.close(resolve));
 fs.rmSync(storeDir, { recursive: true, force: true });

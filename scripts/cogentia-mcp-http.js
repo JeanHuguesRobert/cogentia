@@ -218,7 +218,7 @@ server.listen(port, host, () => {
   console.error(`Daemon: ${core.daemonUrl.href}`);
   console.error("Endpoints: POST /mcp, GET /mcp, GET /health, GET /tools, POST /tools/{name}");
   console.error("Blackboard: GET /ops/blackboard, POST /ops/blackboard/upsert");
-  console.error("Ops: GET /ops/status, GET /ops/dashboard, POST /ops/route/action, GET /ops/node/:node_id/{status,drift}");
+  console.error("Ops: GET /ops/status, GET /ops/dashboard, POST /ops/route/action, GET /ops/node/:node_id/{status,drift,soma/object,soma/vocabulary}");
   console.error("Edge: POST /ops/edge/trap, GET /ops/edge/traps (trap-directed polling)");
 });
 

@@ -43,7 +43,9 @@ export function decodeNodeId(encoded) {
 }
 
 export function parseOpsNodePath(pathname = "") {
-  const match = String(pathname || "").match(/^\/ops\/node\/([^/]+)\/(status|drift)$/);
+  const match = String(pathname || "").match(
+    /^\/ops\/node\/([^/]+)\/(status|drift|soma\/object|soma\/vocabulary)$/,
+  );
   if (!match) {
     return { ok: false, error: "invalid_ops_node_path" };
   }
@@ -58,7 +60,12 @@ export function parseOpsNodePath(pathname = "") {
     encoded_node_id: match[1],
     node_id: nodeId,
     suffix: match[2],
-    ona_path: match[2] === "drift" ? "/node/drift" : "/node/status",
+    ona_path: {
+      status: "/node/status",
+      drift: "/node/drift",
+      "soma/object": "/soma/object",
+      "soma/vocabulary": "/soma/vocabulary",
+    }[match[2]],
   };
 }
 
