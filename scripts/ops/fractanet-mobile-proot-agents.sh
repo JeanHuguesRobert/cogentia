@@ -14,7 +14,7 @@ PROOT_NAME="${PROOT_NAME:-ubuntu}"
 WRAPPER_DIR="${HOME}/.local/bin"
 mkdir -p "${WRAPPER_DIR}"
 
-if ! proot-distro list 2>/dev/null | grep -qw "${PROOT_NAME}"; then
+if ! proot-distro login "${PROOT_NAME}" -- true >/dev/null 2>&1; then
   echo "[proot] installing ubuntu:24.04..."
   proot-distro install ubuntu:24.04
 fi
@@ -131,7 +131,8 @@ chmod +x "${WRAPPER_DIR}/agent-codex" "${WRAPPER_DIR}/agent-claude"
 ln -sf agent-codex "${WRAPPER_DIR}/codex"
 ln -sf agent-claude "${WRAPPER_DIR}/claude"
 
-install -m 600 /dev/null "${HOME}/.profile" 2>/dev/null || true
+touch "${HOME}/.profile"
+chmod 600 "${HOME}/.profile"
 grep -q 'source.*bashrc' "${HOME}/.profile" 2>/dev/null || cat > "${HOME}/.profile" <<'EOF'
 # Termux login shell — source interactive config
 if [ -f "$HOME/.bashrc" ]; then
