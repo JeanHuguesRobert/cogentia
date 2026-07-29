@@ -77,6 +77,7 @@ This repository instantiates the **cognitive infrastructure layer** of the [DHIT
 | [Digital Twin Ubiquity](digital_twin_ubiquity.md) *(source document v0.1 — instances, appearances, mandates, and COP coordination for an owner-rooted digital twin that can appear in multiple places at once)* | this repo | 2026-06-30 |
 | [Instance map — locked names (Inseme)](https://github.com/JeanHuguesRobert/inseme/blob/main/research/instance_map.md) *(external — Pertitellu first collective; JHN personal TwinRoot; Guide `fractavolta-public-guide` infant surface)* | inseme | 2026-07-29 |
 | [CPKT-2026-003 — Session handoff (Guide fail-fast · dual-era MCP · instance map)](CPKT-2026-003_session_handoff_guide_mcp_instances.md) *(cognitive packet — resume any agent/machine; do not redo A/B/C)* | this repo | 2026-07-29 |
+| [CPKT-2026-004 — SOMA actions and FractaNode health corrections](CPKT-2026-004_soma_actions_health_corrections_handoff.md) *(cognitive packet — postponed work; resume from published Operium commits and verified live state)* | this repo | 2026-07-29 |
 | [Cogentia and Cogentigram](Cogentia-and-Cogentigram.md) | this repo | 2026 |
 | [The Sovereign Digital Twin — Cogentia, Cogentigram, Cogentiscope](cogentia-digital-twin.md) | this repo | 2026-04 |
 | [Cogentia Personal Data Portability](cogentia_personal_data_portability.md) *(generic reusable layer for schemas, templates, normalizers and redacted/fictitious examples; explicitly separated from any private personal register)* | this repo | 2026-06-11 |
