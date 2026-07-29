@@ -9,7 +9,16 @@ import http from "node:http";
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { boundedInteger, createMcpCore, jsonRpcError, mcpToolResult, SERVER_NAME, SERVER_VERSION } from "./lib/cogentia-mcp-core.js";
+import {
+  boundedInteger,
+  createMcpCore,
+  jsonRpcError,
+  mcpToolResult,
+  SERVER_NAME,
+  SERVER_VERSION,
+  transportFromHttpRequest,
+} from "./lib/cogentia-mcp-core.js";
+import { aiRouterHealth } from "./lib/ai-router-client.js";
 import { mergeGuideRetrievalFromPacks } from "./lib/guide-retrieval-merge.js";
 import { retrievalInoxConfigured, retrievalInoxPackBatch, inoxRetrievalBaseUrl } from "./lib/retrieval-inox-session.js";
 import { retrievalSupabaseConfigured, retrievalSupabasePackBatch } from "./lib/retrieval-supabase.js";
@@ -47,6 +56,58 @@ const host = process.env.COGENTIA_MCP_HOST || "0.0.0.0";
 const guideAgentGateway = process.env.COGENTIA_GUIDE_AGENT_GATEWAY === "1";
 let guideAgentSessionId = String(process.env.COGENTIA_GUIDE_AGENT_SESSION_ID || "").trim();
 let guideAgentSessionInit = null;
+
+/** Cached AI-router chat probe so intent+planner+synthesis don't each pay a health RTT. */
+const GUIDE_CHAT_PROBE_TTL_MS = boundedInteger(process.env.COGENTIA_GUIDE_CHAT_PROBE_TTL_MS, 15000, 1000, 120000);
+let guideChatProbeCache = { at: 0, value: null };
+
+/**
+ * Fail-fast gate: when Magistral reports llm:false (or no chat capability),
+ * Guide must not chain three serial ~15s chat timeouts.
+ */
+async function guideChatCapability() {
+  const now = Date.now();
+  if (guideChatProbeCache.value && now - guideChatProbeCache.at < GUIDE_CHAT_PROBE_TTL_MS) {
+    return guideChatProbeCache.value;
+  }
+  if (guideAgentGateway) {
+    const value = { available: true, reason: "agent_gateway", probe_ms: 0 };
+    guideChatProbeCache = { at: now, value };
+    return value;
+  }
+  const started = Date.now();
+  try {
+    const health = await aiRouterHealth({
+      timeoutMs: boundedInteger(process.env.COGENTIA_GUIDE_CHAT_PROBE_TIMEOUT_MS, 2000, 500, 10000),
+    });
+    // Fail-fast only when router is reachable and explicitly reports no chat.
+    // Unreachable → optimistic (attempt synthesis; daemon/fallback still fail short).
+    let value;
+    if (!health.available) {
+      value = {
+        available: true,
+        reason: "router_unreachable_optimistic",
+        probe_ms: Date.now() - started,
+        error: health.error,
+      };
+    } else {
+      const chatAvailable = health.chat?.available !== false;
+      value = {
+        available: chatAvailable,
+        reason: health.chat?.reason || (chatAvailable ? "chat_ready" : "chat_unavailable"),
+        probe_ms: Date.now() - started,
+        llm: health.llm,
+        mode: health.mode,
+      };
+    }
+    guideChatProbeCache = { at: now, value };
+    return value;
+  } catch (error) {
+    const value = { available: true, reason: "probe_error", message: error.message, probe_ms: Date.now() - started };
+    guideChatProbeCache = { at: now, value };
+    return value;
+  }
+}
 
 async function guideSynthesisPost(payload) {
   if (!guideAgentGateway) return daemonPost("/v1/chat/completions", payload);
@@ -168,6 +229,7 @@ async function health() {
 
 async function guideHealth() {
   const daemon = await core.callTool("cogentia_health", {});
+  const chat = await guideChatCapability();
   return {
     ok: true,
     service: "fractavolta-guide",
@@ -188,6 +250,12 @@ async function guideHealth() {
       planner_enabled: guidePlannerEnabled,
       planner_query_limit: guidePlannerQueryLimit,
       history_limit: guideHistoryLimit,
+      chat: {
+        available: chat.available,
+        reason: chat.reason,
+        fail_fast: true,
+        probe_ms: chat.probe_ms,
+      },
       web_search: {
         enabled: guideWebSearchEnabled,
         configured: Boolean(guideWebSearchApiKey()),
@@ -334,13 +402,17 @@ async function handleMcpPost(req, res) {
   } catch {
     return sendJson(res, 400, jsonRpcError(null, -32700, "Parse error"));
   }
+  const transport = transportFromHttpRequest(req);
   if (Array.isArray(payload)) {
-    const responses = (await Promise.all(payload.map(message => core.handleJsonRpc(message)))).filter(Boolean);
+    const responses = (await Promise.all(payload.map(message => core.handleJsonRpc(message, transport)))).filter(Boolean);
     if (!responses.length) return sendNoContent(res, 202);
     return sendJson(res, 200, responses);
   }
-  const response = await core.handleJsonRpc(payload);
+  const response = await core.handleJsonRpc(payload, transport);
   if (!response) return sendNoContent(res, 202);
+  const version = response?.result?._meta?.["io.modelcontextprotocol/protocolVersion"]
+    || transport.protocolVersionHeader;
+  if (version) res.setHeader("MCP-Protocol-Version", version);
   return sendJson(res, 200, response);
 }
 
@@ -377,15 +449,42 @@ function checkSystemControlLocal(question, history) {
   return null;
 }
 
-async function parseUserIntent(question, history, defaultLocale = "en") {
+function heuristicUserIntent(question, history, defaultLocale = "en") {
   const localControl = checkSystemControlLocal(question, history);
   if (localControl) {
     return {
       intent: "control",
       resolved_search_query: localControl,
       visitor_name: null,
-      detected_language: defaultLocale
+      detected_language: defaultLocale,
+      source: "heuristic_control",
     };
+  }
+  const q = String(question || "").trim().toLowerCase();
+  if (/^(hi|hello|hey|bonjour|salut|coucou|good (morning|afternoon|evening))\b/.test(q)
+    || /^(my name is|je m'appelle|je suis)\b/.test(q)
+    || /^(what('s| is) my name|quel est mon nom)\b/.test(q)) {
+    return {
+      intent: "conversational",
+      resolved_search_query: null,
+      visitor_name: null,
+      detected_language: defaultLocale,
+      source: "heuristic_conversational",
+    };
+  }
+  return {
+    intent: "search",
+    resolved_search_query: question,
+    visitor_name: null,
+    detected_language: defaultLocale,
+    source: "heuristic_search",
+  };
+}
+
+async function parseUserIntent(question, history, defaultLocale = "en", options = {}) {
+  const local = heuristicUserIntent(question, history, defaultLocale);
+  if (local.intent === "control" || options.skipLlm) {
+    return local;
   }
 
   const messages = [
@@ -432,19 +531,15 @@ async function parseUserIntent(question, history, defaultLocale = "en") {
         intent: parsed.intent || "search",
         resolved_search_query: parsed.resolved_search_query || question,
         visitor_name: parsed.visitor_name || null,
-        detected_language: parsed.detected_language || defaultLocale
+        detected_language: parsed.detected_language || defaultLocale,
+        source: "llm",
       };
     }
   } catch (error) {
     // Silently fallback on failure
   }
 
-  return {
-    intent: "search",
-    resolved_search_query: question,
-    visitor_name: null,
-    detected_language: defaultLocale
-  };
+  return { ...local, source: local.source || "heuristic_search" };
 }
 
 async function handleGuideChat(req, res) {
@@ -463,12 +558,15 @@ async function handleGuideChat(req, res) {
 
   const defaultLocale = normalizeLocale(payload.locale);
   const history = normalizeGuideHistory(payload.history);
+  const chatCap = await guideChatCapability();
 
-  const intentResult = await parseUserIntent(question, history, defaultLocale);
+  const intentResult = await parseUserIntent(question, history, defaultLocale, { skipLlm: !chatCap.available });
   const activeLocale = intentResult.detected_language || defaultLocale;
   const resolvedQuestion = intentResult.resolved_search_query || question;
 
-  if (guideWantsStream(req, payload)) return handleGuideChatStream(res, question, activeLocale, history, payload, intentResult);
+  if (guideWantsStream(req, payload)) {
+    return handleGuideChatStream(res, question, activeLocale, history, payload, intentResult, chatCap);
+  }
 
   let plan, retrieval, web;
   if (intentResult.intent === "conversational") {
@@ -476,9 +574,32 @@ async function handleGuideChat(req, res) {
     retrieval = { sources: [], warnings: [] };
     web = { attempted: false, ok: false, sources: [] };
   } else {
-    plan = guidePlannerEnabled ? await guidePlanningRun(resolvedQuestion, activeLocale) : guideHeuristicPlan(resolvedQuestion, "planner_disabled");
+    const usePlanner = guidePlannerEnabled && chatCap.available;
+    plan = usePlanner
+      ? await guidePlanningRun(resolvedQuestion, activeLocale)
+      : guideHeuristicPlan(resolvedQuestion, chatCap.available ? "planner_disabled" : "chat_unavailable");
     retrieval = await guideRetrievalRun(resolvedQuestion, plan);
     web = await guideWebSearchRun(resolvedQuestion, activeLocale, payload);
+  }
+
+  if (!chatCap.available) {
+    const fallback = await guideFallback(
+      question,
+      activeLocale,
+      { ok: false, status: 503, error: "ai_router_chat_unavailable", body: { error: { type: "ai_router_chat_unavailable", message: chatCap.reason } } },
+      retrieval,
+      web,
+    );
+    if (fallback.body?.ok) {
+      fallback.body.warnings = [
+        "guide_chat_llm_unavailable",
+        "guide_chat_fail_fast",
+        chatCap.reason,
+        ...(fallback.body.warnings || []),
+      ].filter(Boolean);
+      fallback.body.chat = { available: false, reason: chatCap.reason };
+    }
+    return sendJson(res, fallback.status, fallback.body);
   }
 
   const chatPayload = {
@@ -507,9 +628,10 @@ async function handleGuideChat(req, res) {
   return sendJson(res, fallback.status, fallback.body);
 }
 
-async function handleGuideChatStream(res, question, locale, history = [], payload = {}, intentResult = null) {
+async function handleGuideChatStream(res, question, locale, history = [], payload = {}, intentResult = null, chatCap = null) {
+  if (!chatCap) chatCap = await guideChatCapability();
   if (!intentResult) {
-    intentResult = await parseUserIntent(question, history);
+    intentResult = await parseUserIntent(question, history, locale, { skipLlm: !chatCap.available });
   }
   const resolvedQuestion = intentResult.resolved_search_query || question;
 
@@ -523,6 +645,15 @@ async function handleGuideChatStream(res, question, locale, history = [], payloa
 
   try {
     emit("guide_status", guideProgress(locale, "received"));
+    if (!chatCap.available) {
+      emit("guide_status", {
+        stage: "chat_unavailable",
+        message: locale === "fr"
+          ? "Moteur conversationnel indisponible; reponse extractive."
+          : "Conversational backend unavailable; using extractive answer.",
+        reason: chatCap.reason,
+      });
+    }
 
     let plan, retrieval, web;
     if (intentResult.intent === "conversational") {
@@ -531,9 +662,10 @@ async function handleGuideChatStream(res, question, locale, history = [], payloa
       web = { attempted: false, ok: false, sources: [] };
     } else {
       emit("guide_status", guideProgress(locale, "planning"));
-      plan = guidePlannerEnabled
+      const usePlanner = guidePlannerEnabled && chatCap.available;
+      plan = usePlanner
         ? await guidePlanningRun(resolvedQuestion, locale)
-        : guideHeuristicPlan(resolvedQuestion, "planner_disabled");
+        : guideHeuristicPlan(resolvedQuestion, chatCap.available ? "planner_disabled" : "chat_unavailable");
       emit("guide_plan", {
         stage: "planned",
         source: plan.source,
@@ -556,6 +688,28 @@ async function handleGuideChatStream(res, question, locale, history = [], payloa
       });
 
       web = await guideWebSearchRun(resolvedQuestion, locale, payload, { progress: emit });
+    }
+
+    if (!chatCap.available) {
+      const fallback = await guideFallback(
+        question,
+        locale,
+        { ok: false, status: 503, error: "ai_router_chat_unavailable", body: { error: { type: "ai_router_chat_unavailable", message: chatCap.reason } } },
+        retrieval,
+        web,
+      );
+      if (fallback.body?.ok) {
+        fallback.body.warnings = [
+          "guide_chat_llm_unavailable",
+          "guide_chat_fail_fast",
+          chatCap.reason,
+          ...(fallback.body.warnings || []),
+        ].filter(Boolean);
+        fallback.body.chat = { available: false, reason: chatCap.reason };
+      }
+      emit(fallback.body?.ok === false ? "guide_error" : "guide_answer", fallback.body);
+      sendSse(res, "done", { ok: true, elapsed_ms: Date.now() - startedAt, chat_available: false });
+      return;
     }
 
     emit("guide_status", guideProgress(locale, "synthesis"));
@@ -1851,5 +2005,8 @@ function applyCors(req, res) {
   if (!allowed) return;
   res.setHeader("Access-Control-Allow-Origin", origin || "*");
   res.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
-  res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization, MCP-Protocol-Version, Mcp-Session-Id");
+  res.setHeader(
+    "Access-Control-Allow-Headers",
+    "Content-Type, Authorization, MCP-Protocol-Version, Mcp-Method, Mcp-Name, Mcp-Session-Id",
+  );
 }

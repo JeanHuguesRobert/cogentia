@@ -1623,8 +1623,23 @@ function sanitizeAiRouterHealth(health) {
     status: Number(health.status || 0),
     router: health.router ? { loopback: Boolean(health.router.loopback) } : undefined,
     capabilities: health.capabilities || {},
+    chat: health.chat
+      ? { available: Boolean(health.chat.available), reason: health.chat.reason || undefined }
+      : undefined,
+    embeddings: health.embeddings
+      ? { available: Boolean(health.embeddings.available), reason: health.embeddings.reason || undefined }
+      : undefined,
+    llm: health.llm,
+    mode: health.mode || undefined,
     error: health.error || undefined,
   };
+}
+
+function aiRouterChatReady(health) {
+  if (!health || !health.available) return false;
+  if (health.chat && Object.hasOwn(health.chat, "available")) return Boolean(health.chat.available);
+  if (health.capabilities && health.capabilities.chat_completions === false) return false;
+  return true;
 }
 
 async function daemonChatCompletions(req, res, ctx, view = PUBLIC_VIEW) {
@@ -1653,6 +1668,49 @@ async function daemonChatCompletions(req, res, ctx, view = PUBLIC_VIEW) {
   const cogentiaOptions = payload.cogentia && typeof payload.cogentia === "object" ? payload.cogentia : {};
   const metadata = payload.metadata && typeof payload.metadata === "object" ? payload.metadata : {};
   const contextEnabled = cogentiaOptions.context !== false && cogentiaOptions.context !== "none";
+
+  // Fail-fast when Magistral/router reports no chat LLM (llm:false, router_only, …).
+  const routerHealth = await aiRouterHealth().catch(error => ({
+    ok: false,
+    available: false,
+    error: "ai_router_config_error",
+    message: error.message,
+    chat: { available: false, reason: "ai_router_config_error" },
+  }));
+  if (!aiRouterChatReady(routerHealth)) {
+    const chatError = {
+      type: "ai_router_chat_unavailable",
+      message: routerHealth.chat?.reason || routerHealth.error || "AI router has no chat/LLM capability",
+    };
+    if (!contextEnabled) {
+      return daemonJson(res, 503, {
+        error: chatError,
+        cogentia_context: {
+          ok: true,
+          query,
+          strategy: "context-disabled",
+          retrieval_policy_version: "context-disabled",
+          source_ids: [],
+          sources: [],
+          warnings: ["ai_router_chat_unavailable"],
+        },
+      });
+    }
+    const pack = await contextPack(ctx, query, {
+      repo: String(cogentiaOptions.repo || metadata.repo || "all"),
+      budget: boundedInteger(cogentiaOptions.budget || metadata.budget, DEFAULT_CONTEXT_BUDGET, 256, MAX_CONTEXT_BUDGET),
+      limit: boundedInteger(cogentiaOptions.limit || metadata.limit, 8, 1, 20),
+      view,
+      mode: String(cogentiaOptions.mode || metadata.mode || "hybrid"),
+    });
+    return daemonJson(res, 503, {
+      error: chatError,
+      cogentia_context: pack?.ok
+        ? summarizePackForChat(pack)
+        : { ok: false, query, error: pack?.error || "context_error", warnings: ["ai_router_chat_unavailable"] },
+    });
+  }
+
   if (!contextEnabled) {
     if (!isContextDisabledChatAllowed(metadata)) {
       return daemonJson(res, 400, {

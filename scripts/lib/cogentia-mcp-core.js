@@ -1,7 +1,29 @@
 export const SERVER_NAME = "cogentia-mcp";
-export const SERVER_VERSION = "0.2.0";
+export const SERVER_VERSION = "0.3.0";
+
+/** Default negotiated version for legacy initialize when client omits one. */
 export const PROTOCOL_VERSION = "2025-11-25";
-export const SUPPORTED_PROTOCOLS = new Set([PROTOCOL_VERSION, "2025-06-18", "2024-11-05"]);
+/** Modern (stateless) era introduced by the 2026-07-28 MCP revision. */
+export const PROTOCOL_VERSION_MODERN = "2026-07-28";
+/** Dual-era: modern + legacy handshake revisions we still answer. */
+export const SUPPORTED_PROTOCOLS = new Set([
+  PROTOCOL_VERSION_MODERN,
+  PROTOCOL_VERSION,
+  "2025-06-18",
+  "2024-11-05",
+]);
+export const LEGACY_PROTOCOLS = new Set([PROTOCOL_VERSION, "2025-06-18", "2024-11-05"]);
+export const MODERN_PROTOCOLS = new Set([PROTOCOL_VERSION_MODERN]);
+
+export const MCP_META = {
+  protocolVersion: "io.modelcontextprotocol/protocolVersion",
+  clientInfo: "io.modelcontextprotocol/clientInfo",
+  clientCapabilities: "io.modelcontextprotocol/clientCapabilities",
+  serverInfo: "io.modelcontextprotocol/serverInfo",
+};
+
+/** JSON-RPC error code for UnsupportedProtocolVersionError (MCP 2026-07-28). */
+export const ERR_UNSUPPORTED_PROTOCOL_VERSION = -32022;
 
 export const TOOLS = [
   {
@@ -230,37 +252,164 @@ export function createMcpCore(env = process.env) {
   const adminToken = String(env.COGENTIA_ADMIN_TOKEN || "");
   const view = requestedView === "full" && adminToken ? "full" : "public";
 
+  const instructions =
+    "Start with cogentia_views_snapshot for situational awareness (load level/mode, alive work, corpus debt, view URLs). " +
+    "Read load.level and load.mode_recommendation before suggesting batch/sleep work. " +
+    "When a Cogentia tool emits a continuation, it is non-blocking; it is up to the tool user / client agent to inspect, decide, and act upon that continuation using cogentia_continuation_resolve or cogentia_continuation_emit. " +
+    "Use context packs for broad questions, search for exploration, and get_lines for targeted verification. Cite source_id values. " +
+    "MCP is a thin dual-era adapter (legacy initialize + modern server/discover); corpus truth lives in cogentia.js / the daemon.";
+
+  function serverInfo() {
+    return { name: SERVER_NAME, version: SERVER_VERSION };
+  }
+
+  function serverCapabilities() {
+    return { tools: { listChanged: false } };
+  }
+
+  /** Legacy handshake path (2025-11-25 and earlier). */
   function initialize(params = {}) {
     const requested = String(params.protocolVersion || "");
+    let negotiated = PROTOCOL_VERSION;
+    if (LEGACY_PROTOCOLS.has(requested)) negotiated = requested;
+    else if (MODERN_PROTOCOLS.has(requested)) negotiated = requested;
+    else if (SUPPORTED_PROTOCOLS.has(requested)) negotiated = requested;
     return {
-      protocolVersion: SUPPORTED_PROTOCOLS.has(requested) ? requested : PROTOCOL_VERSION,
-      capabilities: { tools: { listChanged: false } },
-      serverInfo: { name: SERVER_NAME, version: SERVER_VERSION },
-      instructions:
-        "Start with cogentia_views_snapshot for situational awareness (load level/mode, alive work, corpus debt, view URLs). " +
-        "Read load.level and load.mode_recommendation before suggesting batch/sleep work. " +
-        "When a Cogentia tool emits a continuation, it is non-blocking; it is up to the tool user / client agent to inspect, decide, and act upon that continuation using cogentia_continuation_resolve or cogentia_continuation_emit. " +
-        "Use context packs for broad questions, search for exploration, and get_lines for targeted verification. Cite source_id values. " +
-        "MCP is a thin adapter; corpus truth lives in cogentia.js / the daemon.",
+      protocolVersion: negotiated,
+      capabilities: serverCapabilities(),
+      serverInfo: serverInfo(),
+      instructions,
     };
   }
 
-  async function handleJsonRpc(message) {
+  /** Modern discovery (2026-07-28 server/discover). */
+  function discover() {
+    return {
+      resultType: "complete",
+      supportedVersions: [...SUPPORTED_PROTOCOLS],
+      capabilities: serverCapabilities(),
+      instructions,
+      ttlMs: 3_600_000,
+      cacheScope: "public",
+      _meta: {
+        [MCP_META.serverInfo]: serverInfo(),
+      },
+    };
+  }
+
+  function resolveRequestProtocol(message, transport = {}) {
+    const paramsMeta = message?.params && typeof message.params === "object" ? message.params._meta : null;
+    const topMeta = message && typeof message._meta === "object" ? message._meta : null;
+    const meta = (paramsMeta && typeof paramsMeta === "object" ? paramsMeta : null)
+      || (topMeta && typeof topMeta === "object" ? topMeta : null)
+      || {};
+    const fromMeta = String(meta[MCP_META.protocolVersion] || "").trim();
+    const fromHeader = String(transport.protocolVersionHeader || "").trim();
+    const method = String(message?.method || "");
+
+    if (method === "initialize") {
+      return {
+        era: "legacy",
+        protocolVersion: LEGACY_PROTOCOLS.has(String(message.params?.protocolVersion || ""))
+          ? String(message.params.protocolVersion)
+          : PROTOCOL_VERSION,
+        meta,
+      };
+    }
+
+    const requested = fromHeader || fromMeta;
+    if (requested) {
+      if (!SUPPORTED_PROTOCOLS.has(requested)) {
+        return { era: "error", protocolVersion: requested, meta, unsupported: true };
+      }
+      return {
+        era: MODERN_PROTOCOLS.has(requested) ? "modern" : "legacy",
+        protocolVersion: requested,
+        meta,
+      };
+    }
+
+    if (method === "server/discover") {
+      return { era: "modern", protocolVersion: PROTOCOL_VERSION_MODERN, meta };
+    }
+
+    return { era: "legacy", protocolVersion: PROTOCOL_VERSION, meta };
+  }
+
+  function attachModernMeta(result, protocolVersion) {
+    if (!result || typeof result !== "object" || Array.isArray(result)) return result;
+    const existing = result._meta && typeof result._meta === "object" ? result._meta : {};
+    return {
+      ...result,
+      _meta: {
+        ...existing,
+        [MCP_META.protocolVersion]: protocolVersion,
+        [MCP_META.serverInfo]: existing[MCP_META.serverInfo] || serverInfo(),
+      },
+    };
+  }
+
+  function toolsListResult(era) {
+    const base = { tools: TOOLS };
+    if (era === "modern") {
+      return { ...base, ttlMs: 3_600_000, cacheScope: "public" };
+    }
+    return base;
+  }
+
+  /**
+   * @param {object} message
+   * @param {{ protocolVersionHeader?: string, mcpMethod?: string, mcpName?: string }} [transport]
+   */
+  async function handleJsonRpc(message, transport = {}) {
     if (!message || message.jsonrpc !== "2.0" || typeof message.method !== "string") {
       return jsonRpcError(message?.id ?? null, -32600, "Invalid Request");
     }
     if (message.id === undefined) return null;
+
+    if (transport.mcpMethod) {
+      const headerMethod = String(transport.mcpMethod).trim();
+      if (headerMethod && headerMethod !== message.method) {
+        return jsonRpcError(message.id, -32600, `Mcp-Method header (${headerMethod}) does not match body method (${message.method})`);
+      }
+    }
+    if (transport.mcpName && message.method === "tools/call") {
+      const headerName = String(transport.mcpName).trim();
+      const bodyName = String(message.params?.name || "");
+      if (headerName && bodyName && headerName !== bodyName) {
+        return jsonRpcError(message.id, -32600, `Mcp-Name header (${headerName}) does not match tools/call name (${bodyName})`);
+      }
+    }
+
+    const resolved = resolveRequestProtocol(message, transport);
+    if (resolved.unsupported) {
+      return unsupportedProtocolVersionError(message.id, resolved.protocolVersion);
+    }
+
     try {
       if (message.method === "initialize") {
         return jsonRpcResult(message.id, initialize(message.params || {}));
       }
-      if (message.method === "ping") return jsonRpcResult(message.id, {});
-      if (message.method === "tools/list") return jsonRpcResult(message.id, { tools: TOOLS });
+      if (message.method === "server/discover") {
+        const result = attachModernMeta(discover(), resolved.protocolVersion || PROTOCOL_VERSION_MODERN);
+        return jsonRpcResult(message.id, result);
+      }
+      if (message.method === "ping") {
+        const result = resolved.era === "modern" ? attachModernMeta({}, resolved.protocolVersion) : {};
+        return jsonRpcResult(message.id, result);
+      }
+      if (message.method === "tools/list") {
+        let result = toolsListResult(resolved.era);
+        if (resolved.era === "modern") result = attachModernMeta(result, resolved.protocolVersion);
+        return jsonRpcResult(message.id, result);
+      }
       if (message.method === "tools/call") {
         const name = String(message.params?.name || "");
         const args = message.params?.arguments || {};
         const data = await callTool(name, args);
-        return jsonRpcResult(message.id, mcpToolResult(data));
+        let result = mcpToolResult(data);
+        if (resolved.era === "modern") result = attachModernMeta(result, resolved.protocolVersion);
+        return jsonRpcResult(message.id, result);
       }
       return jsonRpcError(message.id, -32601, "Method not found");
     } catch (error) {
@@ -437,6 +586,8 @@ export function createMcpCore(env = process.env) {
     view,
     tools: TOOLS,
     initialize,
+    discover,
+    resolveRequestProtocol,
     handleJsonRpc,
     callTool,
     callPackBatch(queries, options = {}) {
@@ -463,8 +614,31 @@ export function jsonRpcResult(id, result) {
   return { jsonrpc: "2.0", id, result };
 }
 
-export function jsonRpcError(id, code, message) {
-  return { jsonrpc: "2.0", id, error: { code, message } };
+export function jsonRpcError(id, code, message, data) {
+  const error = { code, message };
+  if (data !== undefined) error.data = data;
+  return { jsonrpc: "2.0", id, error };
+}
+
+export function unsupportedProtocolVersionError(id, requested) {
+  return jsonRpcError(id, ERR_UNSUPPORTED_PROTOCOL_VERSION, "Unsupported protocol version", {
+    supported: [...SUPPORTED_PROTOCOLS],
+    requested: String(requested || ""),
+  });
+}
+
+/** Build transport hints from Node HTTP request headers (Streamable HTTP). */
+export function transportFromHttpRequest(req) {
+  const headers = req?.headers || {};
+  const get = name => {
+    const value = headers[name] ?? headers[name.toLowerCase()];
+    return value == null ? "" : String(Array.isArray(value) ? value[0] : value).trim();
+  };
+  return {
+    protocolVersionHeader: get("mcp-protocol-version") || get("MCP-Protocol-Version"),
+    mcpMethod: get("mcp-method") || get("Mcp-Method"),
+    mcpName: get("mcp-name") || get("Mcp-Name"),
+  };
 }
 
 export function validateDaemonUrl(value) {

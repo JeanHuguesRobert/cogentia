@@ -71,6 +71,52 @@ export function createAiRouterClient(options = {}) {
   };
 }
 
+/**
+ * Interpret AI-router /health body for chat vs embeddings readiness.
+ * Explicit false wins (llm:false, capabilities.chat_completions:false).
+ * When fields are absent, assume chat is available if the router itself is up.
+ */
+export function interpretRouterCapabilities(body = {}) {
+  const caps = body && typeof body === "object" && body.capabilities && typeof body.capabilities === "object"
+    ? body.capabilities
+    : {};
+
+  let chatAvailable = true;
+  let chatReason = "assumed";
+
+  if (body && body.llm === false) {
+    chatAvailable = false;
+    chatReason = "llm_false";
+  } else if (caps.chat_completions === false || caps.chat === false) {
+    chatAvailable = false;
+    chatReason = "chat_capability_false";
+  } else if (body && body.llm === true) {
+    chatAvailable = true;
+    chatReason = "llm_true";
+  } else if (caps.chat_completions === true || caps.chat === true) {
+    chatAvailable = true;
+    chatReason = "chat_capability_true";
+  }
+
+  let embeddingsAvailable = true;
+  let embeddingsReason = "assumed";
+  if (caps.embeddings === false) {
+    embeddingsAvailable = false;
+    embeddingsReason = "embeddings_capability_false";
+  } else if (caps.embeddings === true) {
+    embeddingsAvailable = true;
+    embeddingsReason = "embeddings_capability_true";
+  }
+
+  return {
+    chat: { available: chatAvailable, reason: chatReason },
+    embeddings: { available: embeddingsAvailable, reason: embeddingsReason },
+    capabilities: caps,
+    llm: body && Object.hasOwn(body, "llm") ? Boolean(body.llm) : undefined,
+    mode: body && body.mode != null ? String(body.mode) : undefined,
+  };
+}
+
 export async function aiRouterHealth(options = {}) {
   const client = createAiRouterClient(options);
   const health = await client.health();
@@ -83,16 +129,27 @@ export async function aiRouterHealth(options = {}) {
       status: health.status,
       error: health.error,
       message: health.message,
+      chat: { available: false, reason: health.error || "ai_router_unavailable" },
+      embeddings: { available: false, reason: health.error || "ai_router_unavailable" },
     };
   }
   const body = health.body && typeof health.body === "object" ? health.body : {};
+  const interpreted = interpretRouterCapabilities(body);
   return {
     ok: true,
     available: true,
     service: body.service || "ai-router",
     router: health.router,
     status: health.status,
-    capabilities: body.capabilities || {},
+    capabilities: {
+      ...interpreted.capabilities,
+      chat_completions: interpreted.chat.available,
+      embeddings: interpreted.embeddings.available,
+    },
+    chat: interpreted.chat,
+    embeddings: interpreted.embeddings,
+    llm: interpreted.llm,
+    mode: interpreted.mode,
     health: sanitizeHealthBody(body),
   };
 }
