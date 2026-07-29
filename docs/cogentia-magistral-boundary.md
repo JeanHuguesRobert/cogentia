@@ -100,8 +100,10 @@ Do not invent parallel “ssh fracta and edit map” runbooks only under
 
 The public website Guide uses the same boundary. It is a public, low-maturity,
 read-only instance of the owner-rooted digital twin, not the private
-owner-facing core. Browser code calls the governed Cogentia HTTP facade, not
-Magistral and not a model provider:
+owner-facing core. Locked id: **`fractavolta-public-guide`** (see Inseme
+[instance map](https://github.com/JeanHuguesRobert/inseme/blob/main/research/instance_map.md)).
+Browser code calls the governed Cogentia HTTP facade, not Magistral and not a
+model provider:
 
 ```text
 POST /guide/chat
@@ -111,6 +113,14 @@ That facade forces the public Cogentia view, builds a public context pack, then
 asks the local AI router for grounded synthesis. If the AI router is not
 available, the route degrades to an extractive answer that lists public sources
 instead of inventing a conversational response.
+
+**Fail-fast when chat is down:** Guide and the daemon probe AI-router `/health`
+and treat explicit `llm: false` (or `capabilities.chat_completions: false`) as
+“no chat”. In that state Guide skips intent LLM, planner LLM, and synthesis
+(three serial ~15s timeouts) and goes straight to extractive fallback after
+retrieval. See `scripts/lib/ai-router-client.js` (`interpretRouterCapabilities`)
+and `guideChatCapability` in `scripts/cogentia-mcp-http.js`.
+Smoke: `node scripts/test-guide-fail-fast.js`.
 
 The Guide facade also accepts a bounded client-provided conversation `history`
 for continuity. That history is conversational context only, not evidence.

@@ -71,10 +71,23 @@ The adapter stays **thin**: no SQLite, no provider keys, no publish/rebuild. Log
 
 ## Protocol and errors
 
-The adapter implements MCP over newline-delimited JSON-RPC on stdin/stdout. It
-supports initialization, `ping`, `tools/list`, and `tools/call`. Standard output
-contains protocol messages only. Daemon connection failures, HTTP errors, and
-invalid tool arguments are returned as MCP tool errors without secrets.
+The adapter is **dual-era** (tools-only):
+
+| Era | Versions | Entry |
+|-----|----------|--------|
+| **Legacy** | `2025-11-25`, `2025-06-18`, `2024-11-05` | `initialize` handshake, then `tools/list` / `tools/call` |
+| **Modern** | `2026-07-28` | optional `server/discover`; per-request `_meta` / `MCP-Protocol-Version`; optional `Mcp-Method` / `Mcp-Name` headers on HTTP |
+
+Both eras share the same tool surface. Unsupported versions return JSON-RPC
+`-32022` (`UnsupportedProtocolVersionError`) with a `supported` list.
+MCP Apps, Tasks, and multi-round-trip elicitation are **not** implemented in
+this thin adapter (vertical Apps belong to Serra/Rhuma later).
+
+Stdio implements newline-delimited JSON-RPC. Standard output contains protocol
+messages only. Daemon connection failures, HTTP errors, and invalid tool
+arguments are returned as MCP tool errors without secrets.
+
+Smoke: `node scripts/test-mcp-dual-era.js`.
 
 Start it directly only when an MCP client will provide messages on stdin:
 
