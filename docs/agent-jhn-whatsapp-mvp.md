@@ -40,6 +40,8 @@ Baileys never sees corpus policy. Cognitive code never holds session secrets or 
 
 **Strategic placement (anti-capture):** message channels and free-tier hosts are *placements*, not prisons. Prefer cheap external capacity when reasonable, without locking the principal into a vendor; keep a sovereign path. See `research/digital_twin_trust_model.md` §9.1.
 
+**John (Inseme platform / JHN instance):** non-session WhatsApp config is stored in the personal instance vault (`public.instance_config` on the JHN Supabase project). Workstation SoT remains `inseme/.env` → `push-env-to-vault --apply`. Baileys session files stay under `STATE_DIR` on disk (not vault). See Inseme `apps/platform/docs/CONFIGURATION_VAULT.md` (Agent JHN WhatsApp section).
+
 ### Identity separation
 
 | Field | Role |
