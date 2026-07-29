@@ -55,7 +55,8 @@ $bbFile = Join-Path $secretsDir 'agent-gateway-blackboard.env'
 $gatewayEnv = Join-Path $secretsDir 'agent-gateway.env'
 . (Join-Path $ops 'Import-AgentGatewayEnv.ps1')
 Import-AgentGatewayEnv $gatewayEnv
-$token = $env:AGENT_GATEWAY_TOKEN
+$token = $env:COGENTIA_API_KEY
+if (-not $token) { $token = $env:AGENT_GATEWAY_TOKEN }
 
 $heartbeatUrl = "http://${Hostname}:$Port/health?quick=1"
 $tsBin = 'C:\Program Files\Tailscale\tailscale.exe'

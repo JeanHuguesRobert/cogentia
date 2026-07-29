@@ -44,14 +44,23 @@ export async function runGatewayStart(options = {}) {
   }
 
   const logFd = await openLogFile(logFile);
+  // Detached + breakaway: survive parent exit when Job allows it.
+  // Prefer logon task (run-agent-gateway-windows-foreground.ps1) for real durability.
   const child = spawnHeadless(process.execPath, [gatewayScript, "--port", String(port)], {
     cwd: paths.root,
     detached: true,
+    breakawayFromJob: true,
     stdio: ["ignore", logFd, logFd],
     env: runtimeEnv,
   });
   child.unref();
-  fs.closeSync(logFd);
+  // Do not close logFd immediately — keep a ref until after health so the child
+  // keeps a valid handle; Node will close on process GC of this starter.
+  try {
+    fs.closeSync(logFd);
+  } catch {
+    // best effort
+  }
 
   await sleep(4000);
 
@@ -59,7 +68,8 @@ export async function runGatewayStart(options = {}) {
   const healthHost = resolveHealthHost(runtimeEnv.AGENT_GATEWAY_BIND, paths.nodeSlug);
 
   try {
-    const health = await probeHealth(healthHost, port, token);
+    // Prefer quick health for install/start — full /health probes every adapter and is slow.
+    const health = await probeHealth(healthHost, port, token, 15_000, true);
     return {
       ok: true,
       pid: child.pid,
@@ -175,10 +185,11 @@ async function openLogFile(logFile, attempts = 8) {
   throw lastError;
 }
 
-async function probeHealth(host, port, token, timeoutMs = 45_000) {
+async function probeHealth(host, port, token, timeoutMs = 45_000, quick = false) {
   const headers = { Accept: "application/json" };
   if (token) headers.Authorization = `Bearer ${token}`;
-  const response = await fetch(`http://${host}:${port}/health`, {
+  const path = quick ? "/health?quick=1" : "/health";
+  const response = await fetch(`http://${host}:${port}${path}`, {
     headers,
     signal: AbortSignal.timeout(timeoutMs),
   });
