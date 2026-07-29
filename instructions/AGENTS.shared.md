@@ -1,7 +1,7 @@
 ---
 title: Cogentia Shared Agent Instructions
 status: active
-version: 2
+version: 3
 date: 2026-07-29
 document_role: operational
 document_kind: agent-instructions
@@ -25,6 +25,7 @@ This is the common operational layer for every agent working in the Cogentia cor
 
 - Use the smallest sufficient container: conversation for exploration; issue for memory in tension; source document for stabilized knowledge; commit for durable technical trace.
 - Do not commit, push, publish, send, sign, spend or otherwise stabilize an engaging act without explicit, scoped authorization.
+- A valid ongoing mandate is explicit, scoped authorization: it authorizes ordinary in-scope acts without per-act approval. Require contemporaneous evidence and human validation in proportion to the act's engagement and irreversibility, not by default for every routine action.
 - A blocked tool, access failure or missing evidence is a result to report, never a success to imply.
 - Before presenting work as ready, state scope, files affected, checks run, known risks, reversibility and required human validation.
 
