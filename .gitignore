@@ -34,6 +34,15 @@ package-lock.json
 
 # Local Cogentia runtime/scratch artefacts
 .cogentia/
+.local/
 scripts/*.bak
 scripts/plugin_api_test.js
 scripts/tmp_*.mjs
+
+# Agent JHN WhatsApp: session keys, raw private messages, outbox (never commit)
+**/agent-jhn-whatsapp/baileys-auth/
+**/agent-jhn-whatsapp/raw-private/
+**/agent-jhn-whatsapp/outbox/
+**/agent-jhn-whatsapp/traces/
+**/agent-jhn-whatsapp/sent-ledger.jsonl
+**/agent-jhn-whatsapp/env.local

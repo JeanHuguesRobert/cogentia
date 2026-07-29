@@ -459,6 +459,39 @@ The public relay should keep:
 No public request should silently gain full local authority just because an
 owner's machine is online.
 
+### 9.1 Anti-capture architecture (strategic invariant)
+
+Recorded from design conversation on message channels and multi-instance twins
+(2026-07-29): this project’s placement of infrastructure is **intentionally
+opposed** to the default of large platform vendors (e.g. OpenAI-class products).
+
+| Platform-default polarity | Twin / Cogentia polarity |
+|---------------------------|---------------------------|
+| The human is a **customer to retain** in a garden | The human (or legal person) is the **principal** |
+| **Capture** is often a business goal (sometimes soft / product-shaped) | **Anti-capture** is a **design constraint** |
+| Vertical integration: model + memory + UI + tools + billing | Separated roles; swappable placements; sovereign option |
+| Channel (mail, WhatsApp…) as another pipe into *their* agent | Channel under **mandate**; not the home of the twin |
+| Success = lock-in + usage | Success = portability + trust + capability without captivity |
+
+Working rules:
+
+```text
+Cheap / free external tiers are welcome when reasonable and reversible.
+They must not become the sole residence of mandate, memory, or identity.
+Each principal must keep a sovereign path (own machine, own VPS, own registry)
+when they want it — natural person or legal person.
+```
+
+Consequences already visible in the stack:
+
+- agent identity ≠ principal (disclosure self vs third party);
+- usage grants / account custodian (capacity, not transfer of the account);
+- private living traces in the owner’s registry (e.g. `registre-mariani`), not only in a vendor store;
+- instance placement: Netlify / Supabase / GitHub *per principal* **or** Fracta / self-host — same contracts, different hosts;
+- message adapters (mail, WhatsApp) stay **transport + policy**, not a monolythic “do everything” gateway that absorbs the owner.
+
+OpenClaw-class gateways are a different axis (local anti-walled-garden, high action surface). Vendor platforms are the **commercial capture** axis. This project optimizes against **capture of the principal**.
+
 ---
 
 ## 10. Preconditions before sharp actions

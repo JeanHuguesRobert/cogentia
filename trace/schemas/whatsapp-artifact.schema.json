@@ -1,0 +1,157 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/JeanHuguesRobert/cogentia/trace/schemas/whatsapp-artifact.schema.json",
+  "title": "Cogentia WhatsApp Artifact",
+  "description": "A private, durable observation that a WhatsApp message was received, queued, sent, or failed. Not an email; derived from mail-artifact invariants without conflating the channels.",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "occurrence_id",
+    "artifact_type",
+    "observed_at",
+    "direction",
+    "agent_id",
+    "mandate_id",
+    "visibility",
+    "integrity",
+    "transport"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "cogentia.whatsapp-artifact.v1"
+    },
+    "occurrence_id": {
+      "type": "string",
+      "pattern": "^urn:cogentia:whatsapp-occurrence:[A-Za-z0-9._:-]+$",
+      "description": "Durable identifier for this specific receive or send observation."
+    },
+    "artifact_type": {
+      "type": "string",
+      "enum": [
+        "whatsapp_received",
+        "whatsapp_send_requested",
+        "whatsapp_sent",
+        "whatsapp_delivery_failed"
+      ]
+    },
+    "platform_message_id": {
+      "type": ["string", "null"],
+      "description": "WhatsApp platform message id when available; never sole integrity id."
+    },
+    "observed_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "direction": {
+      "type": "string",
+      "enum": ["inbound", "outbound", "internal"]
+    },
+    "agent_id": {
+      "type": "string",
+      "description": "Logical agent identity (agent-jhn)."
+    },
+    "visible_agent_id": {
+      "type": "string",
+      "description": "Public-facing experimental agent label."
+    },
+    "mandate_id": {
+      "type": "string"
+    },
+    "action_request_id": {
+      "type": ["string", "null"]
+    },
+    "account_custodian_id": {
+      "type": "string",
+      "description": "Human account holder; not the artificial agent."
+    },
+    "beneficiary_instance_id": {
+      "type": "string",
+      "description": "Instance holding a usage grant for mediated capacity."
+    },
+    "principal_id": {
+      "type": "string"
+    },
+    "persona_id": {
+      "type": ["string", "null"],
+      "description": "Must be null for Agent JHN MVP."
+    },
+    "conversation_kind": {
+      "type": "string",
+      "enum": ["direct", "group"]
+    },
+    "conversation_id": {
+      "type": ["string", "null"]
+    },
+    "group_id": {
+      "type": ["string", "null"]
+    },
+    "group_member_id": {
+      "type": ["string", "null"]
+    },
+    "visibility": {
+      "type": "string",
+      "enum": ["raw_private", "private", "restricted", "do_not_publish"]
+    },
+    "integrity": {
+      "type": "object",
+      "required": ["algorithm", "raw_message_sha256", "raw_message_ref"],
+      "properties": {
+        "algorithm": { "const": "sha256" },
+        "raw_message_sha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "raw_message_size": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "raw_message_ref": {
+          "type": "string",
+          "description": "Private content-addressed storage reference; never a public URL."
+        }
+      },
+      "additionalProperties": false
+    },
+    "transport": {
+      "type": "object",
+      "required": ["stage", "status"],
+      "properties": {
+        "stage": {
+          "const": "whatsapp_web"
+        },
+        "status": {
+          "type": "string",
+          "enum": ["received", "queued", "sent", "delivered", "failed", "deferred"]
+        }
+      },
+      "additionalProperties": false
+    },
+    "policy": {
+      "type": "object",
+      "required": ["decision", "rule_id", "reason"],
+      "properties": {
+        "decision": {
+          "type": "string",
+          "enum": ["send", "draft_only", "hold_for_human", "reject"]
+        },
+        "rule_id": { "type": "string" },
+        "reason": { "type": "string" }
+      },
+      "additionalProperties": false
+    },
+    "usage_grant": {
+      "type": "object",
+      "properties": {
+        "grant_id": { "type": "string" },
+        "beneficiary_instance_id": { "type": "string" },
+        "conversation_scope": { "type": "string" },
+        "revoked": { "type": "boolean" }
+      },
+      "additionalProperties": false
+    },
+    "notes": {
+      "type": "string"
+    }
+  },
+  "additionalProperties": false
+}

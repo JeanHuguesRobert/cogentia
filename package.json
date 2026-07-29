@@ -46,12 +46,15 @@
     "embeddings:monitor": "node scripts/monitor-embeddings.js",
     "trace:import:chatgpt": "node trace/scripts/import_chatgpt_export.js",
     "guide:eval": "node scripts/guide-eval.js",
-    "guide": "node scripts/guide-cli.js"
+    "guide": "node scripts/guide-cli.js",
+    "test:agent-jhn-whatsapp": "node scripts/test-agent-jhn-whatsapp.js",
+    "agent-jhn-whatsapp": "node scripts/agent-jhn-whatsapp.js"
   },
   "devDependencies": {
     "turbo": "^2.0.0"
   },
   "dependencies": {
+    "@whiskeysockets/baileys": "7.0.0-rc13",
     "marked": "^18.0.7",
     "node-pty": "1.2.0-beta.14",
     "sqlite-vec": "^0.1.9"
