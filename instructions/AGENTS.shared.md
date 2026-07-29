@@ -1,8 +1,8 @@
 ---
 title: Cogentia Shared Agent Instructions
 status: active
-version: 1
-date: 2026-07-27
+version: 2
+date: 2026-07-29
 document_role: operational
 document_kind: agent-instructions
 visibility: public
@@ -34,8 +34,8 @@ This is the common operational layer for every agent working in the Cogentia cor
 - Default to direct, atomic commits on the current canonical branch.
 - Do not create branches, draft PRs, approval gates or review ceremonies merely to isolate ordinary, scoped and reversible work.
 - Before writing, fetch and inspect the current state. If a concurrent change appears, reconcile it directly while preserving both contributions.
-- Use a separate branch only when explicitly requested; when concurrent edits overlap materially; when the change is destructive or difficult to reverse; when external collaboration requires review; or when branch protection makes it technically necessary.
-- The default is measured progress, not precautionary bureaucracy.
+- Apply contextual judgment. A separate branch is appropriate when it materially improves safety, review or concurrent collaboration: for example when explicitly requested; when concurrent edits overlap materially; when the change is destructive or difficult to reverse; when external collaboration requires review; or when branch protection makes it technically necessary.
+- Branches are exceptions to justify by a concrete benefit, not prohibited mechanisms. The default is measured progress, not precautionary bureaucracy.
 
 ## Stigmergic correction
 
