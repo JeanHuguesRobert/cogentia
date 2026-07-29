@@ -28,6 +28,15 @@ This is the common operational layer for every agent working in the Cogentia cor
 - A blocked tool, access failure or missing evidence is a result to report, never a success to imply.
 - Before presenting work as ready, state scope, files affected, checks run, known risks, reversibility and required human validation.
 
+
+## Delivery policy — Optimistic Locking
+
+- Default to direct, atomic commits on the current canonical branch.
+- Do not create branches, draft PRs, approval gates or review ceremonies merely to isolate ordinary, scoped and reversible work.
+- Before writing, fetch and inspect the current state. If a concurrent change appears, reconcile it directly while preserving both contributions.
+- Use a separate branch only when explicitly requested; when concurrent edits overlap materially; when the change is destructive or difficult to reverse; when external collaboration requires review; or when branch protection makes it technically necessary.
+- The default is measured progress, not precautionary bureaucracy.
+
 ## Stigmergic correction
 
 An error detected in work must leave a reusable correction trace: erroneous form, canonical form, scope, reason, date and prevention rule. The trace changes the working terrain for later humans and agents.
