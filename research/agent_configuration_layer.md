@@ -286,6 +286,27 @@ Report blocked tools, preserve partial work, and ask for manual intervention whe
 
 These are not stylistic preferences. They are anti-capture rules.
 
+### 6.2 Language is a governed derivation constraint
+
+Language is not a corpus-wide default to apply mechanically. It is a property of the intended audience, document function, and target scene.
+
+The operating rule is:
+
+```text
+infrastructure / protocol / specification / schema / agent instruction / international research
+  -> English by default
+
+Corsican / territorial / political / electoral / local / family / audience-specific public product
+  -> French by default
+
+ambiguous classification
+  -> ask before drafting
+```
+
+The actual language of every consequential document must be declared in frontmatter. A derived product should also declare its `target_audience`, `target_scene`, and `document_function` when those fields make the derivation reconstructible.
+
+No agent may translate or draft unlike products as one homogeneous linguistic set merely because they originate from the same source. A technical specification and a brief for Corsican grand electors are separate derived products, with separate linguistic obligations.
+
 ### 6.1 Blocked-tool invariant
 
 A blocked tool, connector, permission denial, API limit, repository access problem, policy check, or failed GitHub operation is a first-class operational signal.
