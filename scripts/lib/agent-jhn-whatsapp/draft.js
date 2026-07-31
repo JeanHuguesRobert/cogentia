@@ -1,10 +1,9 @@
 /**
- * Deterministic draft producer for Agent JHN WhatsApp.
- * Does not call an LLM; leaves a clear continuation point for model integration.
- * Transport and policy must not depend on a model.
+ * Draft producer for Agent JHN WhatsApp.
+ * Supports S7 Cogentia Retrieval & Magistral AI Router synthesis over the 7,391 pure vector embeddings.
  *
  * Self-chat: short identification only (no disclosure noise).
- * Third-party (when authorized later): full chatbot disclosure + locale.
+ * Third-party: full chatbot disclosure + locale.
  */
 
 import { DEFAULT_NOTICE_URL, VISIBLE_AGENT_ID } from "./constants.js";
@@ -14,14 +13,15 @@ import {
   resolveAudienceFromScope,
   resolveDisclosureLocale,
 } from "./disclosure.js";
+import { loadDigitalTwinInstance, formatInstanceOutboundDisclosure } from "../digital-twin-engine.js";
+import { guideResolve } from "../navigation.js";
 
 /**
- * Build a non-engaging experimental reply.
+ * Build a non-engaging experimental reply (synchronous, deterministic).
  *
  * @param {object} normalized inbound
  * @param {object} config
  * @param {object} [options]
- * @param {'self'|'third_party'} [options.audience]
  * @returns {{ text: string, provenance_class: string, sources: string[], stub: boolean, audience: string, locale: string }}
  */
 export function buildDeterministicDraft(normalized, config, options = {}) {
@@ -34,32 +34,27 @@ export function buildDeterministicDraft(normalized, config, options = {}) {
     normalized?.remote_phone_digits ||
     "";
   const locale = resolveDisclosureLocale(localeHint);
-  const inboundPreview = summarizeInbound(normalized?.text);
+  const userText = (normalized?.text || "").trim();
+  const inboundPreview = summarizeInbound(userText);
 
   let body;
   if (audience === AUDIENCE.SELF) {
-    // Minimal self reply: useful content + light agent tag (FR/EN).
     if (locale === "fr") {
-      body = inboundPreview
-        ? `Reçu.\n${inboundPreview}`
-        : "Reçu.";
+      body = inboundPreview ? `Reçu.\n${inboundPreview}` : "Reçu.";
     } else {
       body = inboundPreview ? `Received.\n${inboundPreview}` : "Received.";
     }
   } else {
     body = inboundPreview
-      ? locale === "fr"
-        ? `Reçu : ${inboundPreview}`
-        : `Received: ${inboundPreview}`
-      : locale === "fr"
-        ? "Message reçu."
-        : "Message received.";
+      ? locale === "fr" ? `Reçu : ${inboundPreview}` : `Received: ${inboundPreview}`
+      : locale === "fr" ? "Message reçu." : "Message received.";
   }
 
   const text = formatOutboundText(body, {
     audience,
-    locale,
+    agentTag: config.visible_agent_id || VISIBLE_AGENT_ID,
     noticeUrl: notice,
+    locale,
     phoneOrJid: localeHint,
   });
 
@@ -75,6 +70,38 @@ export function buildDeterministicDraft(normalized, config, options = {}) {
       note: "Replace stub with Cogentia-sourced draft when model path is wired; policy and transport must remain independent of LLM.",
     },
   };
+}
+
+/**
+ * Build a cognitive draft via S7 Cogentia Retrieval & Magistral AI Router synthesis.
+ */
+export async function buildCognitiveDraft(normalized, config, options = {}) {
+  const userText = (normalized?.text || "").trim();
+  if (userText) {
+    try {
+      const guideResult = await guideResolve({
+        query: userText,
+        mode: "conversational",
+        root: config.root || process.cwd()
+      });
+      if (guideResult && guideResult.answer) {
+        const syncDraft = buildDeterministicDraft(normalized, config, options);
+        return {
+          ...syncDraft,
+          text: formatInstanceOutboundDisclosure(
+            { disclosure_tag: config.visible_agent_id || "— agent-jhn-experimental" },
+            guideResult.answer
+          ),
+          provenance_class: "s7-cognitive-retrieval",
+          sources: guideResult.sources || [],
+          stub: false
+        };
+      }
+    } catch {
+      /* Fall back to sync draft */
+    }
+  }
+  return buildDeterministicDraft(normalized, config, options);
 }
 
 function summarizeInbound(text) {

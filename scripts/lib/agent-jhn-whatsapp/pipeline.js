@@ -6,7 +6,7 @@
 import { createHash } from "node:crypto";
 import { normalizeInboundEvent } from "./inbound-normalizer.js";
 import { evaluatePolicy } from "./policy.js";
-import { buildDeterministicDraft } from "./draft.js";
+import { buildDeterministicDraft, buildCognitiveDraft } from "./draft.js";
 import {
   buildWhatsappArtifact,
   appendTrace,
@@ -52,7 +52,9 @@ export async function handleInbound(rawEvent, config, options = {}) {
   }
 
   const draft = normalized.ok
-    ? buildDeterministicDraft(normalized, config)
+    ? (options.enableCognitiveSynthesis
+        ? await buildCognitiveDraft(normalized, config, options)
+        : buildDeterministicDraft(normalized, config, options))
     : null;
 
   // Remember Message-yourself peer (@lid) for later proactive sends.
