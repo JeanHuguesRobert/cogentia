@@ -1,13 +1,13 @@
 ---
-title: "Conversations gouvernées et effets durables"
-subtitle: "Contrat de modélisation pour Cogentia, COP, Inseme et les agents mandatés"
+title: "Governed Conversations and Durable Effects"
+subtitle: "A modelling contract for Cogentia, COP, Inseme, and mandated agents"
 author: "Jean Hugues Noël Robert"
 date: "2026-07-31"
-version: "0.1-source"
+version: "0.2-source"
 status: "working-paper"
 document_role: "source"
 document_kind: "protocol-and-governance-model"
-language: "fr"
+language: "en"
 license: "CC BY-SA 4.0"
 visibility: "public"
 lifecycle_state: "working"
@@ -22,122 +22,108 @@ external_related_documents:
   - "barons-Mariani/research/test_critere_rossignol.md"
 ---
 
-# Conversations gouvernées et effets durables
+# Governed Conversations and Durable Effects
 
-## Objet
+## Status and authority
 
-Une conversation n'est pas seulement un flux de messages. C'est une suite située d'interactions entre des parties, des mandants, des mandataires, des agents et des référents du réel.
+This document is a source-level modelling contract. An implementation claiming compatibility with it **MUST** obey its normative requirements. A system **MUST NOT** silently downgrade a missing mandate, accountable party, validation, or correction path into a valid engaging act.
 
-Son intérêt de gouvernance apparaît lorsqu'elle permet de dégager une intention, de préparer une décision, de produire un engagement, de constater un résultat ou de créer une mémoire opposable dans le régime interne considéré.
+The words **MUST**, **MUST NOT**, **SHOULD**, and **MAY** are normative.
 
-Le modèle minimal distingue deux objets fondamentaux :
+## Scope
 
-1. **Conversation** — ensemble ordonné d'interactions et d'énoncés ;
-2. **Effet** — changement durable, ou prétendu durable, produit, préparé, reconnu ou contesté.
+A conversation is not merely a message stream. It is a situated sequence of interactions among principals, delegates, agents, institutions, and referents of reality.
 
-Les documents, mandats, décisions, publications, contrats, votes, déploiements et corrections sont des types d'effets. Ils ne doivent pas être confondus avec les énoncés qui les préparent ou les décrivent.
+Its governance value begins when it reveals an intention, prepares a decision, produces an engagement, records an outcome, or creates a durable trace in an applicable internal regime.
 
-## Invariants
+This model has two primary objects:
 
-- Un énoncé n'est pas un acte.
-- Une intention inférée n'est pas une autorisation.
-- Un agent peut assister, jamais acquérir par lui-même une voix souveraine.
-- Un effet engageant exige un répondant humain ou institutionnel identifiable.
-- Les seules voix politiques sont celles des êtres humains vivants.
-- Une trace doit être proportionnée : traces fortes pour les actes engageants ; pas de bureaucratie de chaque micro-événement.
-- Tout effet durable doit pouvoir être corrigé, contesté, révoqué ou déclaré remplacé selon son régime.
-- Le réel n'est pas une personne juridique : il est le référent extérieur qui résiste, mesure, contredit et fait apparaître les effets.
+1. **Conversation** — an ordered set of interactions and utterances;
+2. **Effect** — a durable, or purportedly durable, change that is produced, prepared, recognised, or contested.
 
-## 1. La conversation comme contexte de transformation
+Documents, mandates, decisions, publications, contracts, votes, deployments, and corrections are effect types. They **MUST NOT** be confused with the utterances that prepare or describe them.
 
-Une conversation peut contenir :
+## Non-negotiable invariants
 
-- des observations ;
-- des hypothèses ;
-- des demandes ;
-- des intentions ;
-- des objections ;
-- des propositions ;
-- des validations ;
-- des instructions ;
-- des engagements ;
-- des comptes rendus ;
-- des rectifications.
+- An utterance is not an act.
+- An inferred intention is not an authorisation.
+- An AI agent MAY assist; it **MUST NOT** acquire a sovereign vote.
+- An engaging effect **MUST** have an identifiable human or human institution accountable for it.
+- Political votes belong only to living human beings.
+- Traceability **MUST** be proportional: strong traces for engaging acts, not bureaucracy for every micro-event.
+- A durable effect **MUST** expose an applicable correction, challenge, revocation, or supersession path.
+- Reality is not a legal person: it is the external referent that resists, measures, contradicts, and reveals effects.
+- When mandatory provenance or accountability data is absent, the implementation **MUST** emit a validation failure; it **MUST NOT** present the result as authorised, verified, or binding.
 
-Elle est un contexte de production et d'interprétation. Elle ne confère pas, par elle-même, le droit de poser un acte au nom d'autrui.
+## 1. Conversation as a transformation context
 
-Une même conversation peut relever de plusieurs relations : personne et assistant ; mandant et mandataire ; donneur d'ordre et prestataire ; collectif et représentant ; agent principal et sous-agent ; jumeaux numériques personnels ou collectifs.
+A conversation can include observations, hypotheses, requests, intentions, objections, proposals, validations, instructions, commitments, reports, and corrections.
 
-## 2. L'effet durable
+It is a context for production and interpretation. It does not itself grant a right to act on behalf of another party.
 
-Un effet est une modification du monde social, documentaire, technique ou matériel. Il peut être :
+One conversation can involve several relationships: person and assistant; principal and delegate; ordering party and provider; collective and representative; main agent and sub-agent; personal or collective digital twins.
 
-- **revendiqué** : un acteur affirme qu'il a eu lieu ;
-- **reconnu** : le régime concerné l'admet ;
-- **contesté** : sa réalité, son sens ou sa validité est disputé ;
-- **révoqué** : son autorité ou son mandat est retiré ;
-- **remplacé** : une version ou décision ultérieure prévaut ;
-- **observé** : un retour du réel en atteste ou en contredit une conséquence ;
-- **vérifié** : une procédure ou une mesure suffisante le confirme.
+## 2. Durable effect
 
-Ces statuts doivent rester distincts de l'état épistémique d'une assertion :
+An effect is a change in the social, documentary, technical, or material world. Its lifecycle can be:
 
-- assertée ;
-- inférée ;
-- observée ;
-- vérifiée.
+- **claimed** — an actor says it occurred;
+- **recognised** — the relevant regime accepts it;
+- **contested** — its reality, meaning, or validity is disputed;
+- **revoked** — its authority or mandate is withdrawn;
+- **superseded** — a later version or decision prevails;
+- **observed** — reality attests to or contradicts a consequence;
+- **verified** — an adequate procedure or measurement confirms it.
 
-## 3. Acte engageant
+These lifecycle states **MUST** remain separate from the epistemic state of an assertion:
 
-Un acte engageant est un effet qui lie une responsabilité : politique, institutionnelle, juridique, technique, financière, morale ou documentaire.
+- asserted;
+- inferred;
+- observed;
+- verified.
 
-Il ne peut être stabilisé qu'avec :
+## 3. Engaging act
 
-- un auteur ou système opérant ;
-- un mandat ou une autre source d'autorité ;
-- un périmètre ;
-- une validation adaptée au risque ;
-- un répondant ;
-- une voie de recours, correction ou révocation ;
-- une trace des effets attendus et, quand c'est possible, observés.
+An engaging act is an effect that binds responsibility: political, institutional, legal, technical, financial, moral, or documentary.
 
-Cette qualification ne prétend pas remplacer les qualifications du droit. Elle définit un régime interne de gouvernance et de traçabilité.
+An implementation **MUST NOT** stabilise an engaging act without all of the following:
 
-## 4. Le réel : retour non négociable
+- an author or operating system;
+- a mandate or other source of authority;
+- an explicit scope;
+- validation proportionate to risk;
+- an accountable party;
+- a challenge, correction, or revocation path;
+- a trace of expected effects and, where available, observed effects.
 
-Le réel est une partie au sens méthodologique, mais non une partie contractante ou politique.
+This qualification does not replace legal qualification. It defines an internal governance and traceability regime.
 
-Il intervient par :
+## 4. Reality: non-negotiable feedback
 
-- une mesure ;
-- une contrainte physique ;
-- une ressource consommée ;
-- un vivant affecté ;
-- un résultat effectivement obtenu ;
-- un échec ;
-- une contradiction ;
-- une attestation extérieure.
+Reality is a party only in a methodological sense. It is neither a contractual party nor a political voter.
 
-Le **critère Rossignol** fournit le test pratique : un dispositif ou une chaîne procédurale doit pouvoir se fermer sur un point d'incarnation modeste, mesurable et vérifiable. Pour une infrastructure locale, cela peut être de l'eau réellement disponible dans une auge, de l'énergie effectivement produite et utilisée, ou un service effectivement rendu.
+It enters through measurement, physical constraint, consumed resource, affected living being, achieved result, failure, contradiction, or external attestation.
 
-Ce retour limite la dérive vers un système auto-référentiel où les simulations, récits et indicateurs seraient confondus avec les effets.
+The **Rossignol criterion** is the practical test: a device or procedural chain **SHOULD** be able to close on a modest, measurable, verifiable point of incarnation. For local infrastructure, this can be water actually available in a trough, energy actually produced and used, or a service actually delivered.
 
-## 5. Temps et causalité opérationnelle
+This feedback prevents an auto-referential system from mistaking simulations, narratives, or its own indicators for effects.
 
-Dans ce modèle, le temps est le processus par lequel des effets se propagent à une vitesse non infinie.
+## 5. Operational time and causality
 
-Un système doit pouvoir distinguer, lorsqu'ils diffèrent :
+In this model, time is the process by which effects propagate at a non-infinite speed.
 
-- le moment où l'acte est émis ;
-- le moment où il est reçu ;
-- le moment où il devient effectif ;
-- le moment où son effet est observé ;
-- le moment où il est enregistré ;
-- son échéance éventuelle.
+Where they differ, the system **SHOULD** distinguish:
 
-Cette distinction rend possibles l'imputabilité, la correction et la reprise sans prétendre épuiser une théorie physique du temps.
+- when an act was emitted;
+- when it was received;
+- when it became effective;
+- when its effect was observed;
+- when it was recorded;
+- when it expires.
 
-## 6. Schéma portable minimal
+This enables accountability, correction, and continuation without claiming to exhaust a physical theory of time.
+
+## 6. Portable minimum schema
 
 ```yaml
 governed_conversation:
@@ -159,7 +145,7 @@ governed_conversation:
   effects:
     - id: "effect-001"
       kind: "decision | publication | deployment | mandate | correction"
-      status: "claimed | recognized | contested | revoked | superseded"
+      status: "claimed | recognised | contested | revoked | superseded"
       authority: "mandate-or-rule-reference"
       accountable: "person-or-human-institution"
       expected_effects:
@@ -172,34 +158,35 @@ governed_conversation:
         revocation: "process-or-not-applicable"
 ```
 
-Le champ `real_referents` ne personnifie pas le réel et ne lui attribue aucun droit de vote. Il relie le registre symbolique à ce qui peut être constaté hors de lui.
+The `real_referents` field does not personify reality and gives it no vote. It connects the symbolic record with what can be externally observed.
 
-## 7. Conditions minimales d'implémentation
+## 7. Mandatory implementation requirements
 
-Une implémentation COP, Cogentia ou Inseme compatible devrait :
+A compatible COP, Cogentia, or Inseme implementation:
 
-1. séparer messages, inférences, validations et effets ;
-2. attacher les effets engageants à un mandat, un périmètre et un répondant ;
-3. conserver les versions, contestations, révocations et remplacements ;
-4. tracer la chaîne humain-agent-outil sans faire de l'agent un souverain ;
-5. exposer un statut de preuve pour les assertions et les résultats ;
-6. permettre l'export et la reprise dans des formats ouverts ;
-7. pouvoir lier certains effets à des observations ou mesures du réel ;
-8. appliquer une politique de rétention et de visibilité respectueuse des personnes concernées ;
-9. réserver les décisions politiques aux humains vivants.
+1. **MUST** separate messages, inferences, validations, and effects;
+2. **MUST** attach every engaging effect to authority, scope, and an accountable party;
+3. **MUST** preserve versions, contests, revocations, and supersessions;
+4. **MUST** trace the human-agent-tool chain without turning an agent into a sovereign;
+5. **MUST** expose a proof status for assertions and outcomes;
+6. **MUST** support export and continuation in open formats;
+7. **SHOULD** link relevant effects to observations or measurements of reality;
+8. **MUST** apply a visibility and retention policy that protects affected persons;
+9. **MUST** reserve political decisions to living human beings;
+10. **MUST NOT** convert an AI recommendation, inferred intent, or unvalidated draft into a binding act.
 
-## 8. Premiers cas de test
+## 8. Required test cases
 
-- Conversation Jean Hugues / Agent JHN : une demande devient-elle brouillon, décision validée ou publication ?
-- Conversation Agent JHN / sous-agent : le sous-agent reste-t-il dans son mandat et son budget ?
-- Conversation d'une commune avec son assistance : quelles propositions sont consultatives, quelles décisions sont imputables à l'élu ou à l'instance ?
-- Rossignol Node : la trace de la chaîne énergie-eau-action se ferme-t-elle sur une mesure réelle ?
-- Consultation publique : l'avis est-il distinct de la décision, et l'écart est-il motivé ?
+- Jean Hugues / Agent JHN: does a request become a draft, a validated decision, or a publication?
+- Agent JHN / sub-agent: does the sub-agent remain within mandate and budget?
+- A commune and its assistance: which outputs are consultative, and which decisions are accountable to the elected official or body?
+- Rossignol Node: does the energy-water-action trace close on a real measurement?
+- Public consultation: are contribution, synthesis, decision, and follow-up separated; is any deviation motivated?
 
 ## Continuation
 
-- dériver un schéma JSON ou YAML formel et ses identifiants stables ;
-- préciser les liens avec les événements COP et les Cognitive Packets ;
-- développer des tests de mandat, de révocation, de remplacement et de retour du réel ;
-- définir les politiques de confidentialité pour les conversations personnelles ;
-- produire des produits déclinés : note civique, guide d'implémentation et charte de pilote territorial.
+- derive a formal JSON or YAML schema and stable identifiers;
+- map the profile to COP events and Cognitive Packets;
+- add tests for mandate, revocation, supersession, and real-world feedback;
+- define privacy policies for personal conversations;
+- derive civic, implementation, and territorial-pilot products.
