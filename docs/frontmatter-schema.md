@@ -75,6 +75,24 @@ field vocabulary must update both artifacts in the same change.
 | `license`            | string                | "CC BY-SA 4.0"                       | Yes       | — |
 | `language`           | string                | "fr"                                 | Yes       | — |
 
+### 1 bis. Language, audience and derivation context
+
+\`language\` must describe the actual document content. It is required and has **no corpus-wide default**: an agent must select it from the document's audience, function, and target scene.
+
+| Field | Type | Required? | Notes |
+|---|---|---:|---|
+| \`target_audience\` | string or array | Recommended for derived products | Intended readers or users |
+| \`target_scene\` | string | Recommended for derived products | For example: technical, academic, political, electoral, local, public, internal |
+| \`document_function\` | string | Recommended for derived products | For example: specification, research, brief, speech, publication, implementation instruction |
+
+Selection rule:
+
+- technical infrastructure, protocols, specifications, schemas, agent instructions, and international research normally use English;
+- Corsican, territorial, political, electoral, local, family, and audience-specific public products normally use French, unless their audience requires another language;
+- if the classification is ambiguous, stop and request clarification before drafting.
+
+A technical source and a political/public product from the same work are distinct derived products and may legitimately have different languages.
+
 ### 2. Provenance & Traceability (required for every tracked document)
 
 | Field                    | Type                    | Default | Notes |
