@@ -108,6 +108,18 @@ The **Rossignol criterion** is the practical test: a device or procedural chain 
 
 This feedback prevents an auto-referential system from mistaking simulations, narratives, or its own indicators for effects.
 
+### 4.1 Living non-human beings and responsible representation
+
+A living non-human being can be an affected living being and an essential real-world referent. It is not a political voter and cannot be presumed to issue a mandate.
+
+A human carer, guardian, owner, officer, or institution may make the being's interests visible and answer for that human's own moral, practical, or legal obligations. The record **MUST NOT** describe this as a mandate from the non-human being.
+
+The model therefore distinguishes:
+
+- **political sovereignty** — living human beings only;
+- **affected interest** — human or non-human living being;
+- **responsible representation** — an explicitly identified human or institution, with a stated basis and scope, never a fictitious mandate.
+
 ## 5. Operational time and causality
 
 In this model, time is the process by which effects propagate at a non-infinite speed.
@@ -160,6 +172,14 @@ governed_conversation:
 
 The `real_referents` field does not personify reality and gives it no vote. It connects the symbolic record with what can be externally observed.
 
+### 6.1 vCon interoperability boundary
+
+[vCon](https://github.com/py-vcon/py-vcon) is relevant as an interoperability container for externally sourced communications: calls, messages, recordings, participants, and channel-level metadata.
+
+A compatible implementation **MAY** import from or export to vCon. It **MUST NOT** use vCon as the canonical internal governance model, because vCon alone does not express the required distinction between utterance, inferred intention, validated engaging act, mandate, accountable party, revocation, contestation, and real-world feedback.
+
+The canonical internal model remains `governed_conversation` plus `effect`; vCon is an adapter boundary, not the constitutional core of COP or Cogentia.
+
 ## 7. Mandatory implementation requirements
 
 A compatible COP, Cogentia, or Inseme implementation:
@@ -186,7 +206,7 @@ A compatible COP, Cogentia, or Inseme implementation:
 ## Continuation
 
 - derive a formal JSON or YAML schema and stable identifiers;
-- map the profile to COP events and Cognitive Packets;
+- map the profile to COP events and Cognitive Packets, with vCon as an import/export adapter only;
 - add tests for mandate, revocation, supersession, and real-world feedback;
-- define privacy policies for personal conversations;
+- define privacy policies for personal conversations and representation policies for affected non-human living beings;
 - derive civic, implementation, and territorial-pilot products.
