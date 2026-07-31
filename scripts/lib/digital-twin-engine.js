@@ -15,11 +15,11 @@ export const EXTERNAL_SURFACE_CONTRACT = {
   guarantees: false,
   legal_engagement: false,
   disclaimer: "Readonly, zero-guarantees, zero-engagement exploratory cognitive guide.",
-  contract_rule: "The external surface of any Digital Twin is a readonly guide over published views. It cannot commit the principal or bind the collective."
+  contract_rule: "The external surface of any Digital Twin is governed by an explicit versioned Mandate and Persona. Currently mostly readonly; capability expansion requires a formal mandate revision."
 };
 
 /**
- * Default Instance Manifest Templates
+ * Default Instance Manifest Templates with Mandate & Persona Governance
  */
 export const DEFAULT_INSTANCE_MANIFESTS = {
   "jhn-personal": {
@@ -34,6 +34,19 @@ export const DEFAULT_INSTANCE_MANIFESTS = {
     default_locale: "fr",
     policy_mode: "self_chat_only",
     external_surface_contract: EXTERNAL_SURFACE_CONTRACT,
+    active_mandate: {
+      mandate_id: "MND-JHN-GUIDE-v1",
+      mandate_kind: "read_only_corpus_exploration",
+      lifecycle_state: "active",
+      permitted_actions: ["corpus_search", "concept_resolve", "sprint_digest_read"],
+      evolution_policy: "Read-only by default. Future capability expansion (write/actions) requires an explicit signed Mandate update from principal."
+    },
+    persona: {
+      persona_id: "persona-agent-jhn",
+      persona_name: "Agent JHN",
+      role: "Personal Cognitive Twin & Corpus Guide",
+      voice_guidelines: "Concise, evidence-based, humble, epistemic, DHITL-aligned."
+    },
     corpus_scope: [
       "cogentia",
       "barons-Mariani",
@@ -57,6 +70,19 @@ export const DEFAULT_INSTANCE_MANIFESTS = {
     default_locale: "fr",
     policy_mode: "civic_public_chat",
     external_surface_contract: EXTERNAL_SURFACE_CONTRACT,
+    active_mandate: {
+      mandate_id: "MND-PERTITELLU-OPHELIA-v1",
+      mandate_kind: "civic_public_information_guide",
+      lifecycle_state: "active",
+      permitted_actions: ["municipal_program_search", "civic_proposal_browse", "local_issues_qna"],
+      evolution_policy: "Read-only civic guide by default. Future interactive/voting actions require democratic collective mandate approval."
+    },
+    persona: {
+      persona_id: "persona-ophelia",
+      persona_name: "Ophélia",
+      role: "Collective Civic Assistant (Pertitellu)",
+      voice_guidelines: "Welcoming, transparent, civic-focused, non-partisan, neutral."
+    },
     corpus_scope: [
       "pertitellu",
       "inseme",

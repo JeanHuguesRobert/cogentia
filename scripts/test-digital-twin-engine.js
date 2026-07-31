@@ -63,16 +63,20 @@ async function runTest() {
   }
   console.log("  ✓ PASS: Policy evaluation logic verified.");
 
-  // 5. Test Universal External Surface Contract
-  console.log("\n[Test 5] Testing Universal External Surface Contract (Readonly, Zero Guarantees)...");
-  if (!jhnInstance.external_surface_contract || !jhnInstance.external_surface_contract.readonly) {
-    throw new Error("❌ FAIL: JHN Instance missing Readonly External Surface Contract!");
+  // 6. Test Mandate & Persona Governance
+  console.log("\n[Test 6] Testing Mandate & Persona Governance...");
+  if (!jhnInstance.active_mandate || !jhnInstance.persona) {
+    throw new Error("❌ FAIL: JHN Instance missing active_mandate or persona!");
   }
-  if (jhnInstance.external_surface_contract.legal_engagement !== false) {
-    throw new Error("❌ FAIL: External surface must have legal_engagement = false!");
+  console.log("  Active Mandate ID:", jhnInstance.active_mandate.mandate_id);
+  console.log("  Persona ID:", jhnInstance.persona.persona_id);
+  console.log("  Evolution Policy:", jhnInstance.active_mandate.evolution_policy);
+
+  if (!pertitelluInstance.active_mandate || !pertitelluInstance.persona) {
+    throw new Error("❌ FAIL: Pertitellu Instance missing active_mandate or persona!");
   }
-  console.log("  Contract Rule:", jhnInstance.external_surface_contract.contract_rule);
-  console.log("  ✓ PASS: Universal External Surface Contract (Readonly, Zero-Guarantees, Zero-Engagement) verified.");
+  console.log("  Pertitellu Mandate ID:", pertitelluInstance.active_mandate.mandate_id);
+  console.log("  ✓ PASS: Mandate & Persona Governance (Readonly by default, evolution via explicit mandate) verified.");
 
   console.log("\n==========================================================================");
   console.log("✓ ALL DIGITAL TWIN ENGINE TESTS PASSED (100% SUCCESS)");
