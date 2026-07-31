@@ -63,6 +63,17 @@ async function runTest() {
   }
   console.log("  ✓ PASS: Policy evaluation logic verified.");
 
+  // 5. Test Universal External Surface Contract
+  console.log("\n[Test 5] Testing Universal External Surface Contract (Readonly, Zero Guarantees)...");
+  if (!jhnInstance.external_surface_contract || !jhnInstance.external_surface_contract.readonly) {
+    throw new Error("❌ FAIL: JHN Instance missing Readonly External Surface Contract!");
+  }
+  if (jhnInstance.external_surface_contract.legal_engagement !== false) {
+    throw new Error("❌ FAIL: External surface must have legal_engagement = false!");
+  }
+  console.log("  Contract Rule:", jhnInstance.external_surface_contract.contract_rule);
+  console.log("  ✓ PASS: Universal External Surface Contract (Readonly, Zero-Guarantees, Zero-Engagement) verified.");
+
   console.log("\n==========================================================================");
   console.log("✓ ALL DIGITAL TWIN ENGINE TESTS PASSED (100% SUCCESS)");
   console.log("==========================================================================");

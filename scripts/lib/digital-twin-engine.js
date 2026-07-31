@@ -6,6 +6,19 @@ import fs from "node:fs";
 import path from "node:path";
 
 /**
+ * Universal External Surface Contract for all Digital Twin Chatbots (The Guide).
+ * Ophélia (Pertitellu) is the legacy ancestor of "The Guide" in the Cogentia architecture.
+ */
+export const EXTERNAL_SURFACE_CONTRACT = {
+  mode: "readonly_exploratory_guide",
+  readonly: true,
+  guarantees: false,
+  legal_engagement: false,
+  disclaimer: "Readonly, zero-guarantees, zero-engagement exploratory cognitive guide.",
+  contract_rule: "The external surface of any Digital Twin is a readonly guide over published views. It cannot commit the principal or bind the collective."
+};
+
+/**
  * Default Instance Manifest Templates
  */
 export const DEFAULT_INSTANCE_MANIFESTS = {
@@ -13,12 +26,14 @@ export const DEFAULT_INSTANCE_MANIFESTS = {
     instance_id: "jhn-personal",
     class: "individual-sovereign",
     bot_name: "Agent JHN",
+    guide_name: "The Cogentia Guide (JHN)",
     principal_repo: "JeanHuguesRobert/JeanHuguesRobert",
     identity_kernel_path: "identity/INTENT_KERNEL.md",
     identity_kernel_url: "https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/identity/INTENT_KERNEL.md",
-    disclosure_tag: "— agent-jhn-experimental",
+    disclosure_tag: "— agent-jhn-experimental (readonly, zero guarantees)",
     default_locale: "fr",
     policy_mode: "self_chat_only",
+    external_surface_contract: EXTERNAL_SURFACE_CONTRACT,
     corpus_scope: [
       "cogentia",
       "barons-Mariani",
@@ -34,12 +49,14 @@ export const DEFAULT_INSTANCE_MANIFESTS = {
     instance_id: "pertitellu-corte",
     class: "collective-civic",
     bot_name: "Ophélia",
+    guide_name: "The Pertitellu Civic Guide (Ophélia)",
     principal_repo: "JeanHuguesRobert/pertitellu",
     identity_kernel_path: "apps/platform/docs/blueprint_ophelia.md",
     identity_kernel_url: "https://github.com/JeanHuguesRobert/pertitellu/blob/main/docs/blueprint_ophelia.md",
-    disclosure_tag: "— ophélia (assistant civique pertitellu)",
+    disclosure_tag: "— ophélia (assistant civique pertitellu — readonly, zéro engagement)",
     default_locale: "fr",
     policy_mode: "civic_public_chat",
+    external_surface_contract: EXTERNAL_SURFACE_CONTRACT,
     corpus_scope: [
       "pertitellu",
       "inseme",
