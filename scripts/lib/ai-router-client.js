@@ -84,18 +84,18 @@ export function interpretRouterCapabilities(body = {}) {
   let chatAvailable = true;
   let chatReason = "assumed";
 
-  if (body && body.llm === false) {
-    chatAvailable = false;
-    chatReason = "llm_false";
+  if (caps.chat_completions === true || caps.chat === true || caps.magistral_router === true) {
+    chatAvailable = true;
+    chatReason = "chat_capability_true";
   } else if (caps.chat_completions === false || caps.chat === false) {
     chatAvailable = false;
     chatReason = "chat_capability_false";
+  } else if (body && body.llm === false) {
+    chatAvailable = false;
+    chatReason = "llm_false";
   } else if (body && body.llm === true) {
     chatAvailable = true;
     chatReason = "llm_true";
-  } else if (caps.chat_completions === true || caps.chat === true) {
-    chatAvailable = true;
-    chatReason = "chat_capability_true";
   }
 
   let embeddingsAvailable = true;

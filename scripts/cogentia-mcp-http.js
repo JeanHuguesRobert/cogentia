@@ -41,6 +41,7 @@ import { handleEdgeTrapPost, handleEdgeTrapsGet } from "./lib/edge-trap-ops.js";
 
 const moduleDir = path.dirname(fileURLToPath(import.meta.url));
 const fractanetDashboardPath = path.join(moduleDir, "ops", "fractanet-dashboard.html");
+const guideDashboardPath = path.join(moduleDir, "ops", "guide-ui.html");
 
 loadOptionalEnvFiles([
   process.env.COGENTIA_MCP_ENV_FILE,
@@ -191,6 +192,7 @@ const server = http.createServer(async (req, res) => {
     if (req.method === "HEAD" && req.url === "/health") return sendNoContent(res, 200);
     if (req.method === "GET" && req.url === "/tools") return sendJson(res, 200, { tools: core.tools });
     if (req.method === "GET" && req.url === "/guide/health") return sendJson(res, 200, await guideHealth());
+    if (req.method === "GET" && (req.url === "/guide" || req.url === "/guide/" || req.url === "/guide/ui")) return handleGuideUi(req, res);
     if (req.method === "GET" && req.url?.startsWith("/ops/blackboard")) return handleBlackboardGet(req, res);
     if (req.method === "POST" && req.url === "/ops/blackboard/upsert") return handleBlackboardUpsert(req, res);
     if (req.method === "GET" && req.url === "/ops/status") return handleOpsStatus(req, res);
@@ -305,6 +307,15 @@ function handleOpsDashboard(_req, res) {
     return sendJson(res, 404, { ok: false, error: "dashboard_not_found" });
   }
   const html = fs.readFileSync(fractanetDashboardPath, "utf8");
+  res.writeHead(200, { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "no-store" });
+  res.end(html);
+}
+
+function handleGuideUi(_req, res) {
+  if (!fs.existsSync(guideDashboardPath)) {
+    return sendJson(res, 404, { ok: false, error: "guide_ui_not_found" });
+  }
+  const html = fs.readFileSync(guideDashboardPath, "utf8");
   res.writeHead(200, { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "no-store" });
   res.end(html);
 }

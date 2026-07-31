@@ -1,0 +1,677 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FractaVolta Public Guide — AI Knowledge Assistant</title>
+  <meta name="description" content="Interactive AI Guide for FractaVolta, Barons-Mariani research, and the Cogentia Knowledge Graph. Explore Potentics, possibilist models, and sovereign AI architectures.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-primary: #0a0d14;
+      --bg-secondary: #121722;
+      --bg-card: #1a2130;
+      --bg-hover: #222c40;
+      --border-color: rgba(255, 255, 255, 0.08);
+      --border-accent: rgba(99, 102, 241, 0.3);
+      --text-primary: #f3f4f6;
+      --text-secondary: #9ca3af;
+      --text-muted: #6b7280;
+      --accent-purple: #8b5cf6;
+      --accent-indigo: #6366f1;
+      --accent-cyan: #06b6d4;
+      --accent-emerald: #10b981;
+      --gradient-brand: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #06b6d4 100%);
+      --radius-sm: 8px;
+      --radius-md: 14px;
+      --radius-lg: 20px;
+      --shadow-glow: 0 0 25px rgba(99, 102, 241, 0.2);
+      --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background-color: var(--bg-primary);
+      color: var(--text-primary);
+      font-family: var(--font-sans);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      line-height: 1.6;
+      overflow-x: hidden;
+    }
+
+    /* Ambient Background Glow */
+    body::before {
+      content: '';
+      position: fixed;
+      top: -20%;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 800px;
+      height: 400px;
+      background: radial-gradient(ellipse at center, rgba(99, 102, 241, 0.15), rgba(139, 92, 246, 0.05), transparent 70%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    header {
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      background: rgba(10, 13, 20, 0.85);
+      backdrop-filter: blur(16px);
+      border-bottom: 1px solid var(--border-color);
+      padding: 16px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      text-decoration: none;
+    }
+
+    .brand-logo {
+      width: 36px;
+      height: 36px;
+      border-radius: 10px;
+      background: var(--gradient-brand);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-weight: 700;
+      font-size: 18px;
+      box-shadow: var(--shadow-glow);
+    }
+
+    .brand-title h1 {
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: var(--text-primary);
+      letter-spacing: -0.02em;
+    }
+
+    .brand-title span {
+      font-size: 0.75rem;
+      color: var(--accent-cyan);
+      font-family: var(--font-mono);
+      font-weight: 500;
+    }
+
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 10px;
+      border-radius: 20px;
+      background: rgba(16, 185, 129, 0.1);
+      border: 1px solid rgba(16, 185, 129, 0.3);
+      color: var(--accent-emerald);
+      font-size: 0.75rem;
+      font-family: var(--font-mono);
+    }
+
+    .status-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background-color: var(--accent-emerald);
+      box-shadow: 0 0 8px var(--accent-emerald);
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.5; transform: scale(0.85); }
+    }
+
+    .lang-selector {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      color: var(--text-primary);
+      padding: 6px 12px;
+      border-radius: var(--radius-sm);
+      font-size: 0.85rem;
+      cursor: pointer;
+      outline: none;
+      transition: all 0.2s ease;
+    }
+
+    .lang-selector:hover {
+      border-color: var(--accent-indigo);
+    }
+
+    main {
+      flex: 1;
+      max-width: 900px;
+      width: 100%;
+      margin: 0 auto;
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+      z-index: 1;
+    }
+
+    .hero-banner {
+      text-align: center;
+      margin: 20px 0 32px 0;
+    }
+
+    .hero-banner h2 {
+      font-size: 2rem;
+      font-weight: 700;
+      background: var(--gradient-brand);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 8px;
+    }
+
+    .hero-banner p {
+      color: var(--text-secondary);
+      font-size: 0.95rem;
+      max-width: 600px;
+      margin: 0 auto;
+    }
+
+    /* Starters Grid */
+    .starters-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 12px;
+      margin-bottom: 24px;
+    }
+
+    .starter-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      padding: 14px 16px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      text-align: left;
+      color: var(--text-primary);
+    }
+
+    .starter-card:hover {
+      border-color: var(--accent-indigo);
+      background: var(--bg-hover);
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    }
+
+    .starter-card .icon {
+      font-size: 1.2rem;
+      margin-bottom: 6px;
+    }
+
+    .starter-card .title {
+      font-size: 0.88rem;
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+
+    .starter-card .desc {
+      font-size: 0.78rem;
+      color: var(--text-muted);
+    }
+
+    /* Chat Messages Stream */
+    .chat-container {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+      margin-bottom: 24px;
+      min-height: 250px;
+    }
+
+    .message-row {
+      display: flex;
+      gap: 12px;
+      animation: fadeIn 0.3s ease;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .message-avatar {
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 600;
+      font-size: 0.85rem;
+      flex-shrink: 0;
+    }
+
+    .message-row.user .message-avatar {
+      background: rgba(255, 255, 255, 0.1);
+      color: var(--text-primary);
+    }
+
+    .message-row.assistant .message-avatar {
+      background: var(--gradient-brand);
+      color: white;
+      box-shadow: 0 0 12px rgba(99, 102, 241, 0.4);
+    }
+
+    .message-content {
+      flex: 1;
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      padding: 16px 20px;
+      font-size: 0.95rem;
+      color: var(--text-primary);
+    }
+
+    .message-row.user .message-content {
+      background: var(--bg-hover);
+      border-color: rgba(255, 255, 255, 0.12);
+    }
+
+    .message-content p {
+      margin-bottom: 12px;
+    }
+    .message-content p:last-child {
+      margin-bottom: 0;
+    }
+
+    /* Source Citation Cards */
+    .sources-container {
+      margin-top: 14px;
+      padding-top: 12px;
+      border-top: 1px solid var(--border-color);
+    }
+
+    .sources-title {
+      font-size: 0.75rem;
+      font-family: var(--font-mono);
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 8px;
+    }
+
+    .sources-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .source-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(99, 102, 241, 0.12);
+      border: 1px solid var(--border-accent);
+      border-radius: 6px;
+      padding: 4px 8px;
+      font-size: 0.78rem;
+      font-family: var(--font-mono);
+      color: var(--accent-cyan);
+      text-decoration: none;
+      transition: all 0.2s ease;
+    }
+
+    .source-badge:hover {
+      background: rgba(99, 102, 241, 0.25);
+      border-color: var(--accent-cyan);
+      transform: translateY(-1px);
+    }
+
+    /* Input Bar */
+    .input-container {
+      position: sticky;
+      bottom: 24px;
+      background: rgba(26, 33, 48, 0.9);
+      backdrop-filter: blur(16px);
+      border: 1px solid var(--border-accent);
+      border-radius: var(--radius-lg);
+      padding: 8px 8px 8px 18px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4), var(--shadow-glow);
+    }
+
+    .chat-input {
+      flex: 1;
+      background: transparent;
+      border: none;
+      outline: none;
+      color: var(--text-primary);
+      font-family: var(--font-sans);
+      font-size: 0.95rem;
+    }
+
+    .chat-input::placeholder {
+      color: var(--text-muted);
+    }
+
+    .send-btn {
+      width: 42px;
+      height: 42px;
+      border-radius: 12px;
+      background: var(--gradient-brand);
+      border: none;
+      color: white;
+      font-size: 1.1rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      flex-shrink: 0;
+    }
+
+    .send-btn:hover {
+      transform: scale(1.05);
+      box-shadow: 0 0 16px rgba(139, 92, 246, 0.5);
+    }
+
+    .send-btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    footer {
+      text-align: center;
+      padding: 16px;
+      font-size: 0.78rem;
+      color: var(--text-muted);
+      border-top: 1px solid var(--border-color);
+    }
+
+    footer a {
+      color: var(--accent-indigo);
+      text-decoration: none;
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <a href="#" class="brand">
+      <div class="brand-logo">F</div>
+      <div class="brand-title">
+        <h1>FractaVolta Guide</h1>
+        <span>mode=conversational · S7 Layered Retrieval</span>
+      </div>
+    </a>
+    <div class="header-actions">
+      <div class="status-badge">
+        <div class="status-dot"></div>
+        <span id="status-text">Sovereign 24/7</span>
+      </div>
+      <select id="lang-select" class="lang-selector" onchange="changeLanguage(this.value)">
+        <option value="en" selected>English 🇬🇧</option>
+        <option value="fr">Français 🇫🇷</option>
+      </select>
+    </div>
+  </header>
+
+  <main>
+    <div class="hero-banner" id="hero-banner">
+      <h2 id="hero-title">Explore the Possibilist Universe</h2>
+      <p id="hero-desc">Ask the FractaVolta Guide about Potentics, S7 Layered Retrieval, system architectures, or Barons-Mariani research papers.</p>
+    </div>
+
+    <!-- Quick Starters Grid -->
+    <div class="starters-grid" id="starters-grid">
+      <div class="starter-card" onclick="askQuestion('What is Potentics?')">
+        <div class="icon">🔮</div>
+        <div class="title" id="s1-title">What is Potentics?</div>
+        <div class="desc" id="s1-desc">Explore the science of the possible and scalar potentiality.</div>
+      </div>
+      <div class="starter-card" onclick="askQuestion('Qu\'est-ce que la Séquence Possibiliste ?')">
+        <div class="icon">📐</div>
+        <div class="title" id="s2-title">Possibilist Sequence</div>
+        <div class="desc" id="s2-desc">Understand propensities and actualization constraints.</div>
+      </div>
+      <div class="starter-card" onclick="askQuestion('How does S7 Layered Retrieval work?')">
+        <div class="icon">🌐</div>
+        <div class="title" id="s3-title">S7 Layered Retrieval</div>
+        <div class="desc" id="s3-desc">Alias resolution, frontmatter gating & vector attractor search.</div>
+      </div>
+    </div>
+
+    <!-- Chat Messages Container -->
+    <div class="chat-container" id="chat-container"></div>
+
+    <!-- Input Bar -->
+    <form class="input-container" id="chat-form" onsubmit="handleSend(event)">
+      <input type="text" id="user-input" class="chat-input" placeholder="Ask a question about the corpus..." autocomplete="off" required>
+      <button type="submit" id="send-btn" class="send-btn">➔</button>
+    </form>
+  </main>
+
+  <footer>
+    Powered by <a href="https://fractavolta.com" target="_blank">FractaVolta</a> · Cogentia S7 Engine · Inseme Magistral AI Gateway
+  </footer>
+
+  <script>
+    let currentLocale = 'en';
+
+    const translations = {
+      en: {
+        heroTitle: "Explore the Possibilist Universe",
+        heroDesc: "Ask the FractaVolta Guide about Potentics, S7 Layered Retrieval, system architectures, or Barons-Mariani research papers.",
+        placeholder: "Ask a question about the corpus...",
+        s1Title: "What is Potentics?",
+        s1Desc: "Explore the science of the possible and scalar potentiality.",
+        s2Title: "Possibilist Sequence",
+        s2Desc: "Understand propensities and actualization constraints.",
+        s3Title: "S7 Layered Retrieval",
+        s3Desc: "Alias resolution, frontmatter gating & vector search.",
+        sourcesTitle: "Corpus Sources (S7 Anchors):"
+      },
+      fr: {
+        heroTitle: "Explorez l'Univers Possibiliste",
+        heroDesc: "Interrogez le Guide FractaVolta sur les Potentiques, la recherche S7, l'architecture système ou les travaux du baron Mariani.",
+        placeholder: "Posez une question sur le corpus...",
+        s1Title: "Qu'est-ce que Potentics ?",
+        s1Desc: "Explorez la science du possible et les potentialités scalaires.",
+        s2Title: "Séquence Possibiliste",
+        s2Desc: "Comprendre les propensions et les contraintes d'actualisation.",
+        s3Title: "Recherche Stratifiée S7",
+        s3Desc: "Résolution d'alias, filtrage par en-tête et recherche vectorielle.",
+        sourcesTitle: "Sources du Corpus (Ancrages S7) :"
+      }
+    };
+
+    function changeLanguage(lang) {
+      currentLocale = lang;
+      const t = translations[lang];
+      document.getElementById('hero-title').innerText = t.heroTitle;
+      document.getElementById('hero-desc').innerText = t.heroDesc;
+      document.getElementById('user-input').placeholder = t.placeholder;
+      document.getElementById('s1-title').innerText = t.s1Title;
+      document.getElementById('s1-desc').innerText = t.s1Desc;
+      document.getElementById('s2-title').innerText = t.s2Title;
+      document.getElementById('s2-desc').innerText = t.s2Desc;
+      document.getElementById('s3-title').innerText = t.s3Title;
+      document.getElementById('s3-desc').innerText = t.s3Desc;
+    }
+
+    function askQuestion(q) {
+      document.getElementById('user-input').value = q;
+      handleSend(new Event('submit'));
+    }
+
+    async function handleSend(e) {
+      e.preventDefault();
+      const input = document.getElementById('user-input');
+      const question = input.value.trim();
+      if (!question) return;
+
+      input.value = '';
+      
+      // Hide starters once conversation begins
+      document.getElementById('starters-grid').style.display = 'none';
+      document.getElementById('hero-banner').style.display = 'none';
+
+      // Render User Message
+      appendMessage('user', question);
+
+      // Render Loading Assistant Message
+      const assistantMsgId = appendLoadingMessage();
+      document.getElementById('send-btn').disabled = true;
+
+      try {
+        const response = await fetch('/guide/chat', {
+          method: 'POST',
+          headers: { 
+            'Content-Type': 'application/json',
+            'Accept': 'text/event-stream'
+          },
+          body: JSON.stringify({ question, locale: currentLocale, stream: true })
+        });
+
+        if (!response.body) {
+          throw new Error("No response body");
+        }
+
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder();
+        let buffer = '';
+
+        while (true) {
+          const { value, done } = await reader.read();
+          if (done) break;
+          buffer += decoder.decode(value, { stream: true });
+
+          const chunks = buffer.split('\n\n');
+          buffer = chunks.pop(); // Keep incomplete chunk in buffer
+
+          for (const chunk of chunks) {
+            const eventMatch = chunk.match(/^event:\s*(.+)$/m);
+            const dataMatch = chunk.match(/^data:\s*(.+)$/m);
+
+            if (eventMatch && dataMatch) {
+              const eventType = eventMatch[1].trim();
+              try {
+                const eventData = JSON.parse(dataMatch[1].trim());
+                handleSseEvent(assistantMsgId, eventType, eventData);
+              } catch (parseErr) {}
+            }
+          }
+        }
+      } catch (err) {
+        updateAssistantMessage(assistantMsgId, "Network error: Unable to connect to FractaVolta Guide service.");
+      } finally {
+        document.getElementById('send-btn').disabled = false;
+      }
+    }
+
+    function handleSseEvent(id, eventType, data) {
+      const row = document.getElementById(id);
+      if (!row) return;
+
+      if (eventType === 'guide_status' && data.message) {
+        row.querySelector('.message-content').innerHTML = `<p><em>⚡ ${escapeHtml(data.message)}...</em></p>`;
+      } else if (eventType === 'guide_plan') {
+        row.querySelector('.message-content').innerHTML = `<p><em>🔍 Formulating retrieval plan for ${data.queries?.length || 0} topics...</em></p>`;
+      } else if (eventType === 'guide_retrieval') {
+        row.querySelector('.message-content').innerHTML = `<p><em>📚 Retrieved ${data.source_count || 0} corpus sources via S7...</em></p>`;
+      } else if (eventType === 'guide_answer') {
+        updateAssistantMessage(id, data.answer, data.sources);
+      } else if (eventType === 'guide_error') {
+        updateAssistantMessage(id, data.message || "An error occurred during guide synthesis.");
+      }
+      window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+    }
+
+    function appendMessage(role, text) {
+      const container = document.getElementById('chat-container');
+      const row = document.createElement('div');
+      row.className = `message-row ${role}`;
+      row.innerHTML = `
+        <div class="message-avatar">${role === 'user' ? 'U' : 'G'}</div>
+        <div class="message-content"><p>${escapeHtml(text)}</p></div>
+      `;
+      container.appendChild(row);
+      window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+    }
+
+    function appendLoadingMessage() {
+      const container = document.getElementById('chat-container');
+      const id = 'msg-' + Date.now();
+      const row = document.createElement('div');
+      row.className = 'message-row assistant';
+      row.id = id;
+      row.innerHTML = `
+        <div class="message-avatar">G</div>
+        <div class="message-content"><p><em>⚡ Initializing S7 Layered Retrieval...</em></p></div>
+      `;
+      container.appendChild(row);
+      window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+      return id;
+    }
+
+    function updateAssistantMessage(id, answerText, sources = []) {
+      const row = document.getElementById(id);
+      if (!row) return;
+
+      const formattedAnswer = formatProse(answerText);
+      let sourcesHtml = '';
+      if (sources && sources.length > 0) {
+        const t = translations[currentLocale];
+        const badges = sources.slice(0, 5).map(s => {
+          const title = s.title || s.source_id;
+          const url = s.url || '#';
+          return `<a href="${url}" target="_blank" class="source-badge" title="${s.source_id}">📄 ${escapeHtml(title)}</a>`;
+        }).join('');
+        sourcesHtml = `
+          <div class="sources-container">
+            <div class="sources-title">${t.sourcesTitle}</div>
+            <div class="sources-list">${badges}</div>
+          </div>
+        `;
+      }
+
+      row.querySelector('.message-content').innerHTML = `
+        <div>${formattedAnswer}</div>
+        ${sourcesHtml}
+      `;
+      window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+    }
+
+    function formatProse(text) {
+      if (!text) return '';
+      // Basic markdown formatting
+      let html = escapeHtml(text);
+      html = html.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+      html = html.replace(/\*(.*?)\*/g, '<em>$1</em>');
+      html = html.replace(/\n\n/g, '</p><p>');
+      html = html.replace(/\n/g, '<br>');
+      return `<p>${html}</p>`;
+    }
+
+    function escapeHtml(str) {
+      return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
+  </script>
+</body>
+</html>
