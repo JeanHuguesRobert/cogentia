@@ -34,10 +34,10 @@ async function runTest() {
   console.log("  Principal Repo (SoT):", pertitelluInstance.principal_repo);
   console.log("  Disclosure Tag:", pertitelluInstance.disclosure_tag);
 
-  if (pertitelluInstance.principal_repo !== "JeanHuguesRobert/inseme") {
-    throw new Error(`❌ FAIL: Pertitellu Collective Instance must point to 'JeanHuguesRobert/inseme', got '${pertitelluInstance.principal_repo}'`);
+  if (pertitelluInstance.principal_repo !== "JeanHuguesRobert/pertitellu") {
+    throw new Error(`❌ FAIL: Pertitellu Collective Instance must point to 'JeanHuguesRobert/pertitellu', got '${pertitelluInstance.principal_repo}'`);
   }
-  console.log("  ✓ PASS: Pertitellu Collective Instance bound to 'JeanHuguesRobert/inseme'");
+  console.log("  ✓ PASS: Pertitellu Collective Instance bound to 'JeanHuguesRobert/pertitellu'");
 
   // 3. Test Outbound Disclosure Formatting
   console.log("\n[Test 3] Testing Outbound Disclosure Formatting...");

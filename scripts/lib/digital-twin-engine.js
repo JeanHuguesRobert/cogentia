@@ -34,15 +34,15 @@ export const DEFAULT_INSTANCE_MANIFESTS = {
     instance_id: "pertitellu-corte",
     class: "collective-civic",
     bot_name: "Ophélia",
-    principal_repo: "JeanHuguesRobert/inseme",
+    principal_repo: "JeanHuguesRobert/pertitellu",
     identity_kernel_path: "apps/platform/docs/blueprint_ophelia.md",
-    identity_kernel_url: "https://github.com/JeanHuguesRobert/inseme/blob/main/apps/platform/docs/blueprint_ophelia.md",
+    identity_kernel_url: "https://github.com/JeanHuguesRobert/pertitellu/blob/main/docs/blueprint_ophelia.md",
     disclosure_tag: "— ophélia (assistant civique pertitellu)",
     default_locale: "fr",
     policy_mode: "civic_public_chat",
     corpus_scope: [
+      "pertitellu",
       "inseme",
-      "pertitellu-corte",
       "municipal-program",
       "civic-proposals"
     ],
