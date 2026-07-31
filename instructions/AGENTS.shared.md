@@ -21,6 +21,18 @@ This is the common operational layer for every agent working in the Cogentia cor
 - AI suggests and clarifies; a human principal retains mandate and responsibility for engaging acts.
 - Public by default does not cancel privacy: private material requires explicit authorization before public reuse.
 
+## Language and audience selection
+
+Language selection is mandatory. Before drafting, classify the intended audience, document function, and target scene.
+
+- Infrastructure, protocols, technical specifications, schemas, agent instructions, and international research **MUST normally be written in English**.
+- Corsican, territorial, political, electoral, local, family, and audience-specific public products **MUST normally be written in French**, unless their intended audience requires another language.
+- An agent **MUST NOT** apply a language preference mechanically across unlike document types.
+- Every consequential document **MUST** declare its actual `language`. Derived products **SHOULD** declare `target_audience`, `target_scene`, and `document_function`.
+- When classification is ambiguous, the agent **MUST** ask before drafting rather than silently choosing a language.
+
+A technical source and a public political product derived from the same work are distinct products and may therefore require different languages.
+
 ## Stabilisation
 
 - Use the smallest sufficient container: conversation for exploration; issue for memory in tension; source document for stabilized knowledge; commit for durable technical trace.
