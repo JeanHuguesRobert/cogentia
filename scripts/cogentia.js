@@ -8712,6 +8712,11 @@ async function indexEmbeddings(ctx, options = {}) {
       FROM chunks c
       WHERE c.text IS NOT NULL AND c.text != ''
         AND c.text != 'null'
+        AND length(c.text) >= 120
+        AND c.path NOT LIKE '%template%'
+        AND c.path NOT LIKE '%documents.md'
+        AND c.text NOT LIKE '%Backlinks *These documents link to this file:*%'
+        AND c.text NOT LIKE '%<!-- END_AUTO: backlinks -->%'
         ${publicClause}
         ${existingEmbeddingClause}
         ${roleClause}
@@ -8864,6 +8869,11 @@ async function exportEmbeddingCache(ctx, options = {}) {
     const clauses = [];
     const params = [];
     if (view !== FULL_VIEW) clauses.push("c.searchable_public = 1");
+    clauses.push("length(c.text) >= 120");
+    clauses.push("c.path NOT LIKE '%template%'");
+    clauses.push("c.path NOT LIKE '%documents.md'");
+    clauses.push("c.text NOT LIKE '%Backlinks *These documents link to this file:*%'");
+    clauses.push("c.text NOT LIKE '%<!-- END_AUTO: backlinks -->%'");
     if (repo !== "all") { clauses.push("c.repo = ?"); params.push(repo); }
     if (provider) { clauses.push("e.provider = ?"); params.push(provider); }
     if (model) { clauses.push("e.model_name = ?"); params.push(model); }
