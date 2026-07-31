@@ -9,21 +9,43 @@
     "unknown_values": "Declare missing information explicitly as unknown, unreviewed, or an empty list; never infer it.",
     "privacy": "Public by default; specify privacy only when the document is outside that regime.",
     "extensions": "Unregistered extension fields must use the x- prefix.",
-    "synonyms": "Synonyms are accepted only when documented by the synonym mapping."
+    "synonyms": "Synonyms are accepted only when documented by the synonym mapping.",
+    "language_selection": "Language is mandatory and audience/function/scene dependent: technical infrastructure, protocols, specifications, schemas, agent instructions, and international research normally use English; Corsican, territorial, political, electoral, local, family, and audience-specific public products normally use French unless their intended audience requires another language. Ask before drafting when classification is ambiguous."
   },
   "field_groups": {
     "core": {
-      "required": ["title", "author", "affiliation", "date", "license", "language"],
-      "recommended": ["description"],
-      "optional": ["subtitle", "creator", "last_modified_at"],
+      "required": [
+        "title",
+        "author",
+        "affiliation",
+        "date",
+        "license",
+        "language"
+      ],
+      "recommended": [
+        "description"
+      ],
+      "optional": [
+        "subtitle",
+        "creator",
+        "last_modified_at"
+      ],
       "defaults": {
         "affiliation": "Institut Mariani / C.O.R.S.I.C.A., 1 cours Paoli, F-20250 Corte, Corsica",
         "license": "CC BY-SA 4.0",
-        "language": "fr"
+        "language": null
+      },
+      "rules": {
+        "language": "Required. Describe the actual document language; select it from audience, function, and target scene. Do not apply a corpus-wide default mechanically."
       }
     },
     "traceability": {
-      "required": ["status", "update_policy", "provenance", "review"],
+      "required": [
+        "status",
+        "update_policy",
+        "provenance",
+        "review"
+      ],
       "conditionally_required": {
         "canonical_url": "Required for substantive documents.",
         "last_stamped_at": "Generated automatically; use unknown until a document has been stamped.",
@@ -43,7 +65,11 @@
       }
     },
     "documentary_provenance": {
-      "optional": ["source_document", "additional_sources", "derived_from"],
+      "optional": [
+        "source_document",
+        "additional_sources",
+        "derived_from"
+      ],
       "rules": {
         "source_document": "Use only when a clear primary source document exists.",
         "derived_from": "Tolerated synonym of source_document at the document level; distinct from provenance.derived_from."
@@ -61,16 +87,36 @@
         "derivation_mode",
         "adapted_products",
         "purpose",
-        "adaptation_context"
-      ]
+        "adaptation_context",
+        "target_audience",
+        "target_scene",
+        "document_function"
+      ],
+      "rules": {
+        "target_audience": "Recommended for derived products; intended readers or users.",
+        "target_scene": "Recommended for derived products; e.g. technical, academic, political, electoral, local, public, internal.",
+        "document_function": "Recommended for derived products; e.g. specification, research, brief, speech, publication, implementation-instruction."
+      }
     },
     "publication": {
-      "optional": ["layout", "permalink", "nav_order", "parent", "has_children"]
+      "optional": [
+        "layout",
+        "permalink",
+        "nav_order",
+        "parent",
+        "has_children"
+      ]
     }
   },
   "required_blocks": {
     "provenance": {
-      "required": ["origin_type", "origin_repository", "origin_ref", "origin_date", "derived_from"],
+      "required": [
+        "origin_type",
+        "origin_repository",
+        "origin_ref",
+        "origin_date",
+        "derived_from"
+      ],
       "origin_type_vocabulary": [
         "repository",
         "external-repository",
@@ -90,7 +136,10 @@
       }
     },
     "review": {
-      "required": ["status", "reviewed_by"],
+      "required": [
+        "status",
+        "reviewed_by"
+      ],
       "template": {
         "status": "unreviewed",
         "reviewed_by": []
