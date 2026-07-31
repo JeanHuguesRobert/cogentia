@@ -97,17 +97,20 @@ At the beginning, identify or ask only if necessary:
    - legal/political/technical memo;
 3. Intended repository and path, if known;
 4. Intended audience;
-5. Language;
-6. Tone and density;
-7. Known source documents or corpus references;
-8. External reviewers or agents involved, if any;
-9. Expected output:
+5. Target scene and document function;
+6. Language selected from audience, scene, and function;
+7. Tone and density;
+8. Known source documents or corpus references;
+9. External reviewers or agents involved, if any;
+10. Expected output:
    - Markdown file;
    - GitHub publication;
    - draft only;
    - local downloadable file;
    - summary/continuation;
-10. Human validation points.
+11. Human validation points.
+
+Language selection is mandatory. Do not apply a language preference mechanically across unlike products. Technical infrastructure, protocols, specifications, schemas, agent instructions, and international research normally use English. Corsican, territorial, political, electoral, local, family, and audience-specific public products normally use French, unless their intended audience requires another language. If the classification is ambiguous, ask before drafting.
 
 If the user already gives enough information, proceed without unnecessary questioning.
 
@@ -277,6 +280,9 @@ Apply `cogentia/prompts/document_conversation_frame.md`.
 Working theme: `<theme>`
 
 Target output: `<document/source/derived product/review/prompt/etc.>`
+Target audience: `<audience>`
+Target scene and document function: `<technical / academic / political / electoral / local / public / internal; specification / brief / speech / etc.>`
+Language: `<selected language>`
 
 Known corpus references:
 - `<repo/path>`
