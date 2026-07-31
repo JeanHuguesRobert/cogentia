@@ -49,6 +49,19 @@ Cogentia implements **Layer 4** of the DHITL architecture (cognitive infrastruct
 
 The architectural axiom lives in [`marenostrum/DHITL.md`](https://github.com/JeanHuguesRobert/marenostrum/blob/main/research/DHITL.md). The method by which the proposal develops lives in [`barons-Mariani/research/second_method.md`](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/second_method.md).
 
+
+
+## Public Guide Web Interface & S7 Layered Retrieval (v2.4)
+
+Cogentia exposes a public web interface and real-time streaming endpoint for corpus navigation and Q&A:
+- **Public Guide Web UI**: `https://cogentia.fractavolta.com/guide` (Dark mode glassmorphism interface, EN/FR toggles, interactive S7 source badges).
+- **Real-Time SSE Streaming**: Emits live progress events (`guide_status`, `guide_plan`, `guide_retrieval`, `guide_answer`, `done`) via `Accept: text/event-stream` over `POST /guide/chat`.
+- **S7 Layered Retrieval**:
+  - **Layer 1**: Deterministic S7 Alias Resolution (`barons-Mariani:research/potentics.md`).
+  - **Layer 2**: Frontmatter Metadata Filtering (`document_role`, `searchable_public`).
+  - **Layer 3**: `sqlite-vec` v0.1.9 1536-dimensional vector acceleration index (7,391 pure high-signal vector rows; 1,572 noise chunks pruned).
+- **Fine-Grained Embeddings Delta Sync**: `cogentia embeddings export-cache`, `sync-plan`, and `import-cache` commands for 100% hash parity sync across workstation and production VPS nodes.
+
 ## The Continuation protocol
 
 Cogentia's load-bearing technical contribution is `cogentia.continuation.v1` — a typed, validated, provider-neutral resumption point for CLI tools. The protocol is specified in [`research/agent_resumable_cli.md`](research/agent_resumable_cli.md). The earlier CLI implementation is preserved in [`scripts/cogentia.v1-history.js`](scripts/cogentia.v1-history.js); the current v2 system combines corpus governance with the indexed, daemon-mediated context layer agents use before issuing or resuming judgment-bearing work.
