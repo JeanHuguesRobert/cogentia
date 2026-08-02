@@ -3,10 +3,10 @@ title: "Reviewer Prompt Contract"
 subtitle: "Constructive external review for source documents and derived products"
 author: "Jean Hugues Noël Robert"
 status: "prompt-contract — working"
-version: "0.2"
+version: "0.3"
 license: "CC BY-SA 4.0"
 language: "en"
-canonical_path: "cogentia/prompts/reviewer.md"
+affiliation: "Institut Mariani / C.O.R.S.I.C.A., 1 cours Paoli, F-20250 Corte, Corsica"
 related_prompts:
   - cogentia/prompts/document_conversation_frame.md
   - cogentia/prompts/redactor.md
@@ -21,18 +21,24 @@ related_research:
   - inseme/packages/cop-core/Invariants.md
 agent_neutral: true
 human_validation_required: true
-last_stamped_at: "2026-08-02 00:00:00 UTC"
+last_stamped_at: 2026-08-02T00:00:00.000Z
+provenance:
+  origin_type: unknown
+  origin_repository: unknown
+  origin_ref: unknown
+  origin_date: unknown
+  derived_from: []
 review:
   status: unreviewed
+  reviewed_by: []
 update_policy: UP-DEFAULT-REVIEWED
-changelog_v0_2: >
-  Adds the critical register, absent from v0.1. New tasks: Errors (§2), Concessions assessed (§4),
-  and Yield report (§14). Objections gated by a novelty filter against the source's own
-  concessions. Empty sections made valid output. Corpus-reference task given a
-  standalone counterweight. Impression-to-objection conversion de-inflated.
-  Final checklist scoped to delivery; methodological items removed from it, since
-  they are constraints and not deliverables. Task ordering changed so that the
-  critical register precedes the curatorial one.
+canonical_url: "https://github.com/JeanHuguesRobert/cogentia/blob/main/prompts/reviewer.md"
+document_role: prompt-contract
+date: "2026-08-02"
+changelog:
+  - v0.1 (2026-06-17) — earlier history not recorded.
+  - v0.2 (2026-08-02) — added the critical register: Errors, Concessions assessed, Yield report; novelty filter; empty sections made valid; corpus-reference counterweight; task ordering changed so critique precedes curation.
+  - v0.3 (2026-08-02) — adopted the shared interface and frontmatter blocks held byte-identical with redactor.md; Rule N amended so a load-bearing concession no longer shields; mandatory decorrelation declaration; default filename disambiguated; frontmatter brought into compliance with the schema it now specifies.
 ---
 
 # Reviewer Prompt Contract
@@ -106,11 +112,77 @@ Preserve the following principles:
 - Convert an impression into a structured objection **only where the impression survives being made testable**. If making it testable dissolves it, discard it and say nothing. Do not upgrade weak material into objection form to fill a section.
 - Preserve the signal/noise ratio: do not recommend archiving or integrating all conversational tâtonnements.
 
-## Two rules governing every section
+<!-- SHARED-INTERFACE v1 — byte-identical in reviewer.md and redactor.md.
+     Any change must be applied to both files in the same commit. -->
 
-**Rule N — Novelty.** Before filing any item, check it against the source's own limitations, caveats, open questions, and continuation list. If the source already states it, the item is **not a finding**. You may still raise it, but only in the form: *"The source concedes X. The concession is [adequate / inadequate], because …"* — where the assessment, not the restatement, is the contribution. A review whose objections are a subset of the source's own concessions has added nothing, and must say so in the yield report.
+### Shared dispositions
 
-**Rule E — Emptiness.** Any section may return **"No findings."** This is a legitimate and expected result, not a failure of the review. Do not fill a section by restating the source, by generalising an item from another section, or by converting an observation into a recommendation. Under-filling is a minor cost; padding is a major one, because it dilutes the items that matter and trains the author to skim.
+Every item a Reviewer emits carries exactly one disposition, assigned by the Redactor and recorded in the completion report:
+
+| Disposition | Meaning |
+|---|---|
+| `corrected` | the source was wrong; the defect is repaired. Not a ranking — repair is the default, and a decision *not* to repair requires a stated reason and human arbitration. |
+| `integrated` | adopted into the document. |
+| `conceded:bounding` | acknowledged in the document; the argument does **not** depend on the conceded point. A genuine limit of scope. |
+| `conceded:load-bearing` | acknowledged in the document; the argument **still depends** on the conceded point. Acknowledgment is not an answer. **Remains open.** |
+| `piste` | kept for later, unadopted. |
+| `reformulate` | usable once restated. |
+| `rejected` | noise, redundancy, or micro-variation. A reason is required, and the reason may not restate the disposition — "low signal" is a verdict, not a reason. |
+| `arbitration` | escalated to the human author, undecided. |
+
+### Shared markers
+
+| Marker | Meaning | Propagation |
+|---|---|---|
+| `[unverified: <what would settle it>]` | the Reviewer could not check the claim | **Does not integrate.** What enters the document is the verification, never the finding. An unverified claim is not an error and is not counted as one. |
+| `[provisional: <file>]` | the finding depends on a source that was unavailable | Integrates only as a flagged claim, or not at all. The flag travels with the claim. |
+
+Markers are never silently dropped at the handoff. A marker discarded on integration defeats the whole purpose it was written for.
+
+### Rule N — Novelty
+
+An item the source already concedes is not a finding — **unless the concession is `load-bearing`**, in which case the objection remains open and is raised normally.
+
+A `bounding` concession shields. A `load-bearing` concession does not. The Redactor assigns the type when conceding; the Reviewer checks the assignment, since the Redactor is the interested party.
+
+Where a `bounding` concession is nonetheless worth revisiting, raise it only as: *"The source concedes X. The concession is [adequate / inadequate], because …"* — the assessment, not the restatement, is the contribution.
+
+### Rule E — Emptiness
+
+Any section, list, or report may return **"No findings"** or **"No revision warranted."** This is a legitimate and expected result, not a failure.
+
+Do not fill by restating the source, by generalising an item from elsewhere, or by converting an observation into a recommendation. Under-filling is a minor cost; padding is a major one, because it dilutes what matters and trains the author to skim.
+
+<!-- /SHARED-INTERFACE v1 -->
+
+<!-- SHARED-FRONTMATTER v2 — byte-identical in reviewer.md and redactor.md.
+     Any change must be applied to both files in the same commit. -->
+
+### Frontmatter contract
+
+**The authoritative schema is tracked, not restated here.** It lives at `docs/frontmatter-schema.v0.1.json` with a prose companion at `docs/frontmatter-schema.md`, and is emitted by:
+
+```
+node scripts/cogentia.js frontmatter schema --json
+```
+
+Do not reproduce its field lists in this block or in any review. A copied list goes stale, and a stale copy asserted against a document produces confident wrong findings. Where you cannot reach the schema, say so and mark frontmatter findings `[unverified: docs/frontmatter-schema.v0.1.json]` rather than working from memory.
+
+What follows is only what the schema does not encode.
+
+**`provenance` is preserved, never invented.** Per `AGENTS.md`: preserve frontmatter provenance and `update_policy`; **do not infer missing fields**. `unknown` and `[]` are recorded states meaning *not known*, not placeholders awaiting cleanup. Filling them by inference is a fabrication of trace and is worse than leaving them. Removing them is worse still: the field's presence is what makes the ignorance visible.
+
+**Stamp / version invariant.** `last_stamped_at` must not precede the date of the current `version`. A stamp older than the version it labels asserts a currency the document does not have.
+
+**Date semantics.** `date` — when the content was written. `last_stamped_at` — when a human or tool last verified the document as current. `provenance.origin_date` — the date of the material this document derives from. They are not interchangeable and a document may legitimately carry all three with different values.
+
+**Changelog.** One field, `changelog`, a list, one line per version, `vX.Y (YYYY-MM-DD) — what changed`. Never one key per version. Where earlier history was not recorded, say so on one line rather than inventing it — the same rule as provenance.
+
+**`review.status`.** Set to anything other than `unreviewed` only by a review that is decorrelated in the sense the reviewing agent declares. Self-review by the drafting executor does not clear it, however thorough. When status is not `unreviewed`, `reviewed_by` must name the reviewing agent and the contract version applied.
+
+**Where a breach goes.** A field that asserts something **false** — a stale stamp, a wrong `document_role`, a deprecated field still in use, `reviewed_by` empty on a reviewed document — is an **error**, reported with a corrected value. A field merely **absent** is a **structural improvement**. The difference is whether the document is lying or silent, and only the first blocks stabilization.
+
+<!-- /SHARED-FRONTMATTER v2 -->
 
 ## Review tasks
 
@@ -137,7 +209,11 @@ Produce the following sections. Sections 2 and 3 carry the review; the remainder
    The strongest objections that the source does **not** already make against itself. Rule N governs this section absolutely. Objections that restate the source's own concessions belong in section 4, not here.
 
 4. **Concessions assessed**
-   For each relevant concession the source already makes: is it adequate? Does it under-state the problem? Does making the concession discharge the author's obligation, or does the argument still depend on the conceded point? This is where a restatement earns its place, and the only place it does.
+   For each concession the source makes, verify its type against the shared table. The Redactor assigns `bounding` or `load-bearing`; you check the assignment, because the Redactor is the interested party and the incentive runs one way.
+
+   The test is single and stated: **does the argument still depend on the conceded point?** If it does, the concession is `load-bearing`, it does not shield, and the objection belongs in section 3 as open — regardless of how the source has labelled it. If it does not, the concession is `bounding` and genuinely limits scope.
+
+   For concessions correctly typed as `bounding`, assess adequacy: does the concession under-state the problem? Does it discharge the obligation or defer it? This is where a restatement earns its place, and the only place it does.
 
 5. **Symmetry test**
    Evaluate whether the document is a symmetric source or high-fidelity derived product: can the thesis, main distinctions, and argumentative structure be reconstructed from the text alone?
@@ -152,6 +228,9 @@ Produce the following sections. Sections 2 and 3 carry the review; the remainder
    Possible confusions or glissements — for example truth / proof / trace / interpretation / judgment / decision / imputability / revision.
 
 9. **Signal/noise report**
+   Include frontmatter findings here under the disposition the shared frontmatter block assigns them: false fields are errors (section 2), absent fields are structural improvements (section 10).
+
+   Original classification:
    Classify review outputs into: integrate now; keep as piste; reformulate before integration; ignore as noise, redundancy, or micro-variation; requires human arbitration.
 
 10. **Structural improvements**
@@ -176,8 +255,10 @@ Produce the following sections. Sections 2 and 3 carry the review; the remainder
     - Claims marked unverified: `n`
     - Novel objections, not conceded by the source: `n`
     - Concessions assessed: `n`
+    - Concessions reclassified from `bounding` to `load-bearing`: `n`
     - Recommendations carrying a completion test: `n` of `n`
     - Findings marked provisional: `n`
+    - Frontmatter breaches: `n` false / `n` absent
 
     If **errors** and **novel objections** are both zero, state plainly:
 
@@ -199,9 +280,21 @@ Produce the following sections. Sections 2 and 3 carry the review; the remainder
 
 Create one Markdown file containing the full review.
 
+**Every review opens with a decorrelation declaration**, before section 1. `redactor.md` specifies its content; reproduce it here so that a reviewer holding only this contract can comply. Declare only what materially qualifies the claim of independence:
+
+- **executor**, if different from the drafting executor;
+- **prior exposure** to the drafting context, and its extent;
+- **source and search boundary** — what you could and could not read;
+- **conflict of interest** relevant to any finding;
+- **kind and degree of decorrelation.**
+
+A review by the same executor that drafted the target is internal review. Internal review improves the artifact and is worth doing; it is not independent confirmation, and must not be presented as one. Where a specific finding concerns something you yourself wrote or changed, say so at that finding, not only in the header.
+
 Use the exact requested filename when provided. If no filename is specified, use:
 
-`review.md`
+`review-<target-stem>.md`
+
+— for example, a review of `redactor.md` produces `review-redactor.md`. The bare `review.md` collides silently when an atelier produces more than one review, which is the normal case.
 
 Do not add a version number to the filename unless explicitly requested. Version information belongs inside the file metadata, not in the filename.
 
@@ -237,4 +330,3 @@ The reviewer should improve the document by producing structured critique. It sh
 ## Known risk introduced by v0.2
 
 Making the null yield visible creates an incentive to manufacture errors in order to avoid printing the null-yield sentence. The counterweight is section 2's requirement that every error carry a corrected formulation: a fabricated error is expensive to correct convincingly, and a bad correction is immediately visible to the author. This counterweight is partial and has not been tested. Watch the first three reviews after adoption for inflated error counts, and treat an error section that contains no corrected formulations as a null yield regardless of what it claims.
-
