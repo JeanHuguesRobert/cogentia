@@ -177,6 +177,7 @@ try {
   assert.equal(health.mandate.corpus_view, "public");
   assert.equal(health.context.daemon.service, "mock-context-gateway");
   assert.equal(health.context.planner_enabled, true);
+  assert.equal(health.context.semantic_retrieval.state, "unknown");
 
   const chat = await postJson(`${mcpBase}/guide/chat`, {
     question: "What is the FractaVolta public Guide digital twin?",
@@ -206,6 +207,10 @@ try {
   assert.equal(chat.context.guide_retrieval.attempts[0].retrieval.sqlite_vec, true);
   assert.equal(chat.context.excerpts[0].source_id, "mock:README.md#L1-L4");
   assert.equal(chat.context.excerpts[0].text, "FractaVolta public context.");
+
+  const observedHealth = await (await fetch(`${mcpBase}/guide/health`)).json();
+  assert.equal(observedHealth.context.semantic_retrieval.state, "nominal");
+  assert.equal(observedHealth.context.semantic_retrieval.sqlite_vec, true);
 
   const webChat = await postJson(`${mcpBase}/guide/chat`, {
     question: "What is the latest current web note about FractaVolta?",

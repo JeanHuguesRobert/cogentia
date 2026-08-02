@@ -61,6 +61,9 @@ let guideAgentSessionInit = null;
 /** Cached AI-router chat probe so intent+planner+synthesis don't each pay a health RTT. */
 const GUIDE_CHAT_PROBE_TTL_MS = boundedInteger(process.env.COGENTIA_GUIDE_CHAT_PROBE_TTL_MS, 15000, 1000, 120000);
 let guideChatProbeCache = { at: 0, value: null };
+// Semantic retrieval is the nominal Guide regime. Keyword-only results are a
+// degraded fallback and must remain visible to the operational control plane.
+let guideSemanticRetrieval = { state: "unknown", observed_at: null, warnings: [] };
 
 /**
  * Fail-fast gate: when Magistral reports llm:false (or no chat capability),
@@ -263,6 +266,7 @@ async function guideHealth() {
         configured: Boolean(guideWebSearchApiKey()),
         limit: guideWebSearchLimit,
       },
+      semantic_retrieval: guideSemanticRetrieval,
       blackboard: summarizeBlackboardHealth(),
       action_route: {
         configured: Boolean(actionRouteToken()),
@@ -590,6 +594,7 @@ async function handleGuideChat(req, res) {
       ? await guidePlanningRun(resolvedQuestion, activeLocale)
       : guideHeuristicPlan(resolvedQuestion, chatCap.available ? "planner_disabled" : "chat_unavailable");
     retrieval = await guideRetrievalRun(resolvedQuestion, plan);
+    observeGuideSemanticRetrieval(retrieval);
     web = await guideWebSearchRun(resolvedQuestion, activeLocale, payload);
   }
 
@@ -689,6 +694,7 @@ async function handleGuideChatStream(res, question, locale, history = [], payloa
 
       emit("guide_status", guideProgress(locale, "retrieval"));
       retrieval = await guideRetrievalRun(resolvedQuestion, plan, { progress: emit, locale });
+      observeGuideSemanticRetrieval(retrieval);
       emit("guide_retrieval", {
         stage: "retrieved",
         query_count: retrieval.queries.length,
@@ -1441,6 +1447,25 @@ function guideRetrievalPrompt(locale, retrieval) {
   return lines.join("\n");
 }
 
+function observeGuideSemanticRetrieval(retrieval) {
+  const semantic = summarizeGuideSemanticRetrieval(retrieval?.attempts || []);
+  const warnings = Array.isArray(retrieval?.warnings) ? retrieval.warnings : [];
+  const degraded = semantic.attempted !== true
+    || semantic.keyword_fallback === true
+    || semantic.continuation_required === true;
+  guideSemanticRetrieval = {
+    state: degraded ? "degraded" : "nominal",
+    observed_at: new Date().toISOString(),
+    strategy: retrieval?.strategy || null,
+    semantic_attempted: semantic.attempted === true,
+    sqlite_vec: semantic.sqlite_vec === true,
+    query_embedding_cache: semantic.query_embedding_cache === true,
+    keyword_fallback: semantic.keyword_fallback === true,
+    continuation_required: semantic.continuation_required === true,
+    warnings: warnings.filter(warning => /semantic|sqlite-vec/i.test(String(warning))).slice(0, 4),
+  };
+}
+
 function buildGuideMessages(locale, retrieval, web, history, question, visitorName = null) {
   let systemPrompt = guideSystemPrompt(locale);
   if (visitorName) {
@@ -1755,7 +1780,10 @@ function guideSystemPrompt(locale) {
     "For durable project claims, prefer corpus sources. For current external facts, cite web sources.",
     "If context is insufficient, say what is missing and suggest a next public reading.",
     "Do not claim operational powers, private access, account access, or administrative authority.",
-    "Keep the answer concise and useful for a first-time visitor.",
+    "Start with a direct answer. Use 2 to 5 short paragraphs or bullets and no more than 5 actionable items.",
+    "Cite only the sources needed for the answer; do not enumerate the retrieval process.",
+    "Distinguish documented facts, clearly marked inferences, and unknowns when that distinction matters.",
+    "For a current-information question without web evidence, say that current web verification is unavailable rather than infer it from corpus material.",
   ].join("\n");
 }
 
