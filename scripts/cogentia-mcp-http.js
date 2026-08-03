@@ -1881,6 +1881,9 @@ function summarizeGuideContext(context = {}, retrieval = null, web = null) {
       : safeSources(context.sources).map(source => source.source_id),
     guide_retrieval: retrieval ? {
       strategy: retrieval.strategy,
+      retrieval_backend: retrieval.retrieval_backend,
+      timings_ms: retrieval.timings_ms,
+      s7: retrieval.s7,
       planner: retrieval.planner,
       query_limit: retrieval.query_limit,
       queries: retrieval.queries,
