@@ -336,6 +336,10 @@ Core commands:
   agent start              Read-only session start summary for human and AI agents.
   agent health             Check context index, embedding target and AI router.
                            Flags: --router-url <url> --check-query [--query <text>]
+  agent mandates plan      List repositories that need the minimal local mandate.
+  agent mandates apply     Create missing local mandates from the canonical template.
+  agent mandates verify    Verify that every configured repository declares the
+                           canonical shared mandate.
   corpus plan              Read-only plan of generated navigation changes.
   corpus apply             Apply generated navigation changes from a fresh plan.
   corpus verify            Verify generated views, gaps and git drift.
@@ -1102,9 +1106,116 @@ function cmdAgent(sub) {
     case "health":
     case "doctor":
       return cmdAgentHealth();
+    case "mandates":
+    case "instructions":
+      return cmdAgentMandates(argv.shift() || "plan");
     default:
-      throw new Error(`Unknown agent subcommand "${sub}". Use start or health.`);
+      throw new Error(`Unknown agent subcommand "${sub}". Use start, health, or mandates.`);
   }
+}
+
+const CANONICAL_SHARED_AGENT_INSTRUCTIONS = "https://github.com/JeanHuguesRobert/cogentia/blob/main/instructions/AGENTS.shared.md";
+
+function cmdAgentMandates(sub) {
+  if (!new Set(["plan", "apply", "verify"]).has(sub)) {
+    throw new Error(`Unknown agent mandates subcommand "${sub}". Use plan, apply, or verify.`);
+  }
+  const ctx = loadContext();
+  const sharedPath = path.join(ctx.repos.find(repo => repo.name === "cogentia")?.path || "", "instructions", "AGENTS.shared.md");
+  if (!fs.existsSync(sharedPath)) {
+    throw new Error(`Canonical shared mandate is unavailable: ${sharedPath}`);
+  }
+
+  const mandateState = ctx.repos.map(repo => {
+    const target = path.join(repo.path, "AGENTS.md");
+    const exists = fs.existsSync(target);
+    const text = exists ? fs.readFileSync(target, "utf8") : "";
+    return {
+      repo: repo.name,
+      path: target,
+      exists,
+      declares_shared: text.includes(`shared_instructions: ${CANONICAL_SHARED_AGENT_INSTRUCTIONS}`),
+    };
+  });
+  const missing = mandateState.filter(item => !item.exists);
+  const drift = mandateState.filter(item => item.exists && !item.declares_shared);
+
+  const preflight_failed = sub === "apply" ? preflightMandateWrites(missing) : [];
+  const failed = [];
+  const created = [];
+  if (sub === "apply" && preflight_failed.length === 0) {
+    for (const item of missing) {
+      try {
+        fs.writeFileSync(item.path, renderMinimalAgentMandate(item.repo), { encoding: "utf8", flag: "wx" });
+        created.push({ repo: item.repo, path: item.path });
+      } catch (error) {
+        failed.push({ repo: item.repo, path: item.path, error: error.code || error.message });
+      }
+    }
+  }
+
+  const result = {
+    ok: sub === "apply" ? drift.length === 0 && preflight_failed.length === 0 && failed.length === 0 : missing.length === 0 && drift.length === 0,
+    action: sub,
+    canonical_shared_instructions: CANONICAL_SHARED_AGENT_INSTRUCTIONS,
+    created,
+    preflight_failed,
+    failed,
+    missing: sub === "apply" ? [] : missing.map(item => ({ repo: item.repo, path: item.path })),
+    missing_shared_reference: drift.map(item => ({ repo: item.repo, path: item.path })),
+  };
+  return output(result, formatAgentMandates(result));
+}
+
+function preflightMandateWrites(items) {
+  const failures = [];
+  for (const item of items) {
+    const directory = path.dirname(item.path);
+    const probe = path.join(directory, `.cogentia-mandate-preflight-${process.pid}-${Date.now()}-${Math.random().toString(16).slice(2)}`);
+    try {
+      const fd = fs.openSync(probe, "wx");
+      fs.closeSync(fd);
+      fs.unlinkSync(probe);
+    } catch (error) {
+      try {
+        if (fs.existsSync(probe)) fs.unlinkSync(probe);
+      } catch {
+        // The original write failure is the actionable result.
+      }
+      failures.push({ repo: item.repo, path: item.path, error: error.code || error.message });
+    }
+  }
+  return failures;
+}
+
+function renderMinimalAgentMandate(repoName) {
+  return `---\nshared_instructions: ${CANONICAL_SHARED_AGENT_INSTRUCTIONS}\n---\n\n# ${repoName} agent mandate\n\nRead the shared Cogentia agent instructions referenced above before making changes. This local mandate activates the corpus-wide operational layer for this repository.\n`;
+}
+
+function formatAgentMandates(result) {
+  const lines = ["\nAgent mandates\n", `Action: ${result.action}`, `Canonical shared mandate: ${result.canonical_shared_instructions}`];
+  if (result.created.length) {
+    lines.push("", "Created:");
+    for (const item of result.created) lines.push(`- ${item.repo}: ${item.path}`);
+  }
+  if (result.missing.length) {
+    lines.push("", "Missing:");
+    for (const item of result.missing) lines.push(`- ${item.repo}: ${item.path}`);
+  }
+  if (result.missing_shared_reference.length) {
+    lines.push("", "Existing mandates without the canonical shared reference:");
+    for (const item of result.missing_shared_reference) lines.push(`- ${item.repo}: ${item.path}`);
+  }
+  if (result.preflight_failed.length) {
+    lines.push("", "Preflight failed; no mandates were created:");
+    for (const item of result.preflight_failed) lines.push(`- ${item.repo}: ${item.path} (${item.error})`);
+  }
+  if (result.failed.length) {
+    lines.push("", "Not created:");
+    for (const item of result.failed) lines.push(`- ${item.repo}: ${item.path} (${item.error})`);
+  }
+  if (result.ok) lines.push("", "OK.");
+  return lines.join("\n");
 }
 
 function cmdAgentStart() {

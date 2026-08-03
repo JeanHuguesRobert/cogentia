@@ -5,7 +5,7 @@ document_role: operational
 document_kind: agent-mandate
 visibility: public
 lifecycle_state: active
-shared_instructions: instructions/AGENTS.shared.md
+shared_instructions: https://github.com/JeanHuguesRobert/cogentia/blob/main/instructions/AGENTS.shared.md
 ---
 
 # Cogentia local specialization
@@ -23,6 +23,7 @@ Cogentia is the cognitive-infrastructure tooling of the multi-repository corpus:
 - Generated files are projections: change their generator or source, not their generated body by hand.
 - Treat `research/agent_configuration_layer.md` as the source doctrine for this instruction architecture.
 - Run `node scripts/agent-instructions-audit.js` to inventory instruction artefacts and detect drift between shared and local layers.
+- Use `node scripts/cogentia.js agent mandates plan|apply|verify` to create missing minimal mandates and verify their shared reference. `apply` preflights every target directory and does not attempt any creation if one is not writable.
 
 ## Operational routing
 

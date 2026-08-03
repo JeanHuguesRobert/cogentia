@@ -33,6 +33,20 @@ Language selection is mandatory. Before drafting, classify the intended audience
 
 A technical source and a public political product derived from the same work are distinct products and may therefore require different languages.
 
+### Conversation versus implementation language
+
+Conversation language does not determine artifact language.
+
+Unless Jean Hugues Robert explicitly requests otherwise, repository-facing
+implementation artifacts **MUST** be English: source code, identifiers,
+comments, tests, commit messages, issues, pull requests, technical
+documentation, CLI output, operational records, and user-facing technical UI
+copy.
+
+Agents may converse in French while applying this rule. They **MUST NOT**
+inject French into implementation artifacts merely because the conversation is
+French.
+
 ## Stabilisation
 
 - Use the smallest sufficient container: conversation for exploration; issue for memory in tension; source document for stabilized knowledge; commit for durable technical trace.

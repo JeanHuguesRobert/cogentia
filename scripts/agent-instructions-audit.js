@@ -8,6 +8,17 @@ const registryRoot = path.dirname(path.resolve(registryPath));
 const skip = new Set([".git", "node_modules", "dist", "build", ".cache", ".next", "coverage"]);
 const names = new Set(["agents.md", "claude.md", "instructions.md", ".ai-rules.md", ".rules.md", ".cursorrules", ".windsurfrules", ".clinerules", "copilot-instructions.md"]);
 const promptPath = /(^|[\\/])(prompts?|\.agents)([\\/]|$)|(?:^|[-_])prompt(?:[-_.]|$)/i;
+const canonicalSharedUrl = "https://github.com/JeanHuguesRobert/cogentia/blob/main/instructions/AGENTS.shared.md";
+
+function frontmatter(text) {
+  const match = String(text || "").match(/^---\s*\r?\n([\s\S]*?)\r?\n---\s*\r?\n/);
+  if (!match) return {};
+  return Object.fromEntries(match[1]
+    .split(/\r?\n/)
+    .map(line => line.match(/^([A-Za-z_][A-Za-z0-9_]*):\s*(.*?)\s*$/))
+    .filter(Boolean)
+    .map(([, key, value]) => [key, value.replace(/^['"]|['"]$/g, "")]));
+}
 
 function walk(root, current, found) {
   if (!fs.existsSync(current) || skip.has(path.basename(current))) return;
@@ -23,6 +34,13 @@ function walk(root, current, found) {
 
 const entries = [];
 const issues = [];
+const cogentiaRepo = (registry.repos || []).find(repo => repo.name === "cogentia");
+const cogentiaRoot = cogentiaRepo ? path.resolve(registryRoot, cogentiaRepo.path) : null;
+const shared = cogentiaRoot ? path.join(cogentiaRoot, "instructions", "AGENTS.shared.md") : null;
+if (!shared || !fs.existsSync(shared)) {
+  issues.push({ type: "missing_shared_source", repo: "cogentia", path: "instructions/AGENTS.shared.md" });
+}
+
 for (const repo of registry.repos || []) {
   const root = path.resolve(registryRoot, repo.path);
   if (!fs.existsSync(root)) {
@@ -36,18 +54,27 @@ for (const repo of registry.repos || []) {
   walk(root, root, found);
   for (const item of found) {
     const text = fs.readFileSync(item.full, "utf8");
+    const metadata = frontmatter(text);
     const kind = path.basename(item.full).toLowerCase() === "agents.md"
       ? "local_mandate" : promptPath.test(item.relative) ? "prompt_contract" : "tool_or_runtime_instruction";
-    const shared_reference = /AGENTS\.shared\.md|shared agent instructions|shared baseline/i.test(text);
-    entries.push({ repo: repo.name, path: item.relative, kind, shared_reference });
+    const declaredShared = metadata.shared_instructions || null;
+    const localShared = declaredShared && !/^https?:\/\//.test(declaredShared)
+      ? path.resolve(path.dirname(item.full), declaredShared)
+      : null;
+    const shared_reference = declaredShared === canonicalSharedUrl || localShared === shared;
+    entries.push({
+      repo: repo.name,
+      path: item.relative,
+      kind,
+      shared_reference,
+      shared_instructions: declaredShared,
+    });
     if (kind === "local_mandate" && repo.name !== "cogentia" && !shared_reference) {
-      issues.push({ type: "missing_shared_reference", repo: repo.name, path: item.relative });
+      issues.push({ type: "missing_explicit_shared_reference", repo: repo.name, path: item.relative });
     }
   }
 }
 
-const shared = path.resolve(registryRoot, "cogentia/instructions/AGENTS.shared.md");
-if (!fs.existsSync(shared)) issues.push({ type: "missing_shared_source", repo: "cogentia", path: "instructions/AGENTS.shared.md" });
 const by_kind = Object.fromEntries(["local_mandate", "prompt_contract", "tool_or_runtime_instruction"].map(kind => [kind, entries.filter(x => x.kind === kind).length]));
-console.log(JSON.stringify({ ok: issues.length === 0, shared_source: shared, summary: { total: entries.length, by_kind }, entries, issues }, null, 2));
+console.log(JSON.stringify({ ok: issues.length === 0, shared_source: { path: shared, canonical_url: canonicalSharedUrl }, summary: { total: entries.length, by_kind }, entries, issues }, null, 2));
 process.exitCode = issues.length ? 1 : 0;
