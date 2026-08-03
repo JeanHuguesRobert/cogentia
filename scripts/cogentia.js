@@ -10330,7 +10330,7 @@ async function contextSemanticSearch(ctx, q, options = {}) {
   const limit = boundedInteger(options.limit, 10, 1, 50);
   const mode = options.mode || "semantic";
   const bootstrap = await withIndexDatabaseLock(async () => {
-    const opened = await openIndexDatabase({ create: false, readOnly: true, loadVec: true });
+    const opened = await openIndexDatabase({ create: false, readOnly: true });
     if (!opened.ok) return { ok: false, error: opened.code, query: q, mode, code: opened.code };
     const { db } = opened;
     try {
@@ -10369,37 +10369,6 @@ async function contextSemanticSearch(ctx, q, options = {}) {
         ...(cachedSemanticResults.error ? [`Semantic ranked-result cache miss (${cachedSemanticResults.error}).`] : []),
         `Semantic retrieval used cached query embedding ${cachedQueryEmbedding.provider}/${cachedQueryEmbedding.model_name} (${cachedQueryEmbedding.dimensions}d).`,
         ...result.warnings,
-      ],
-    };
-  }
-  if (!directQueryEmbeddingsAllowed(options)) {
-    const continuation = options.emitContinuation
-      ? emitSemanticSearchContinuation(ctx, q, {
-        view,
-        repo,
-        limit,
-        mode: options.mode || "semantic",
-        target,
-      })
-      : null;
-    return {
-      ok: false,
-      error: "semantic_continuation_required",
-      query: q,
-      mode: options.mode || "semantic",
-      view,
-      continuation_required: true,
-      continuation_emitted: Boolean(continuation),
-      ...(continuation ? {
-        continuation: stripContinuationBody(continuation.continuation),
-        path: continuation.path,
-      } : {}),
-      message: continuation
-        ? "Semantic query embedding requires continuation fulfillment; continuation emitted."
-        : "Semantic query embedding requires continuation fulfillment. Use `embeddings search` or another explicit continuation command to emit the request.",
-      warnings: [
-        `Query embedding cache miss (${cachedQueryEmbedding.error || "cache_miss"}).`,
-        "Direct query embedding is disabled; an external continuation worker must provide the query embedding.",
       ],
     };
   }
@@ -10442,13 +10411,6 @@ async function contextSemanticSearch(ctx, q, options = {}) {
       ...result.warnings,
     ],
   };
-}
-
-function directQueryEmbeddingsAllowed(options = {}) {
-  return Boolean(
-    options.allowDirectQueryEmbedding
-    || parseBoolean(process.env.COGENTIA_ALLOW_DIRECT_QUERY_EMBEDDINGS)
-  );
 }
 
 function emitSemanticSearchContinuation(ctx, q, options = {}) {
@@ -10902,9 +10864,9 @@ async function contextHealth(ctx, options = {}) {
     index_available: Boolean(status.built && status.ok),
     modes: ["keyword", "hybrid", "semantic"],
     semantic_available: Boolean(semanticTarget.ok),
-    semantic_requires_ai_router_embeddings: directQueryEmbeddingsAllowed(),
-    semantic_requires_continuation: !directQueryEmbeddingsAllowed(),
-    direct_query_embeddings_enabled: directQueryEmbeddingsAllowed(),
+    semantic_requires_ai_router_embeddings: true,
+    semantic_requires_continuation: false,
+    direct_query_embeddings_enabled: true,
     embedding_target: semanticTarget.ok ? {
       provider: semanticTarget.provider,
       model_name: semanticTarget.model_name,

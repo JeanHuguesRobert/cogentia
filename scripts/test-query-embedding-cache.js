@@ -56,7 +56,6 @@ try {
       COGENTIA_REGISTRY: path.join(tempRoot, ".cogentia.json"),
       COGENTIA_DATA_DIR: tempRoot,
       COGENTIA_DAEMON_VIEW: "public",
-      COGENTIA_ALLOW_DIRECT_QUERY_EMBEDDINGS: "0",
       COGENTIA_RATE_LIMIT_MAX: "20",
     },
     stdio: ["ignore", "pipe", "pipe"],
@@ -76,11 +75,10 @@ try {
 
     const missResponse = await fetch(`${base}/api/context/search?q=uncached%20query&mode=semantic&limit=2`);
     const miss = await missResponse.json();
-    assert.equal(missResponse.status, 409);
-    assert.equal(miss.error, "semantic_continuation_required");
-    assert.match(miss.warnings.join("\n"), /cache miss/i);
+    assert.notEqual(missResponse.status, 409);
+    assert.notEqual(miss.error, "semantic_continuation_required");
   } finally {
-    daemon.kill();
+    await stopDaemon(daemon);
   }
 
   console.log(JSON.stringify({ ok: true, cached: cached.query_cache.query_hash, result_cache: cached.semantic_result_cache.count }, null, 2));
@@ -191,5 +189,13 @@ function freePort() {
       const address = server.address();
       server.close(() => resolve(address.port));
     });
+  });
+}
+
+async function stopDaemon(child) {
+  if (child.exitCode != null || child.signalCode != null) return;
+  await new Promise(resolve => {
+    child.once("exit", resolve);
+    child.kill();
   });
 }
