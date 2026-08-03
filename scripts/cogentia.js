@@ -781,6 +781,21 @@ function cmdCorpusApply() {
   const options = planOptions();
   const plan = buildPlan(ctx, options);
   const writes = mergePlanWrites(plan.changes);
+  const allowed = writes.filter(write => write.allowed);
+  const preflight_failed = preflightWritableTargets(allowed.map(write => ({
+    repo: write.repo,
+    path: write.path,
+    full_path: write.full_path,
+  })));
+  if (preflight_failed.length) {
+    return output({
+      ok: false,
+      applied: [],
+      skipped: writes.filter(change => !change.allowed).map(stripChangeBody),
+      preflight_failed,
+      summary: { ...plan.summary, write_files: allowed.length },
+    }, formatApply({ applied: [], skipped: writes.filter(change => !change.allowed).map(stripChangeBody), preflight_failed }));
+  }
   for (const write of writes) {
     if (!write.allowed) continue;
     ensureDir(path.dirname(write.full_path));
@@ -788,11 +803,11 @@ function cmdCorpusApply() {
   }
   const result = {
     ok: true,
-    applied: writes.filter(c => c.allowed).map(stripChangeBody),
+    applied: allowed.map(stripChangeBody),
     skipped: writes.filter(c => !c.allowed).map(stripChangeBody),
     summary: {
       ...plan.summary,
-      write_files: writes.filter(c => c.allowed).length,
+      write_files: allowed.length,
     },
   };
   output(result, formatApply(result));
@@ -981,14 +996,18 @@ function cmdClassifyPlan(inventory, options) {
   const blockingConflicts = plan.conflicts.length > 0 && !plan.options.fixConflicts;
   const blockingAmbiguous = plan.ambiguous.length > 0 && !plan.options.includeAmbiguous;
   const canApply = !blockingConflicts && !blockingAmbiguous;
-  if (options.apply && canApply) applyClassificationPlan(plan);
+  const preflight_failed = options.apply && canApply
+    ? preflightWritableTargets(plan.changes.map(change => ({ repo: change.repo, path: change.path, full_path: change.full_path })))
+    : [];
+  if (options.apply && canApply && !preflight_failed.length) applyClassificationPlan(plan);
   const result = {
     ok: options.verify
       ? plan.changes.length === 0 && plan.conflicts.length === 0 && plan.ambiguous.length === 0
-      : canApply,
+      : canApply && preflight_failed.length === 0,
     mode: options.apply ? "apply" : (options.verify ? "verify" : "plan"),
     ...stripClassificationPlan(plan),
-    applied: options.apply && canApply ? plan.changes.length : 0,
+    applied: options.apply && canApply && !preflight_failed.length ? plan.changes.length : 0,
+    preflight_failed,
   };
   output(result, formatClassificationPlan(result));
 }
@@ -1167,12 +1186,18 @@ function cmdAgentMandates(sub) {
   return output(result, formatAgentMandates(result));
 }
 
-function preflightMandateWrites(items) {
+function preflightWritableTargets(items) {
   const failures = [];
+  const checked = new Set();
   for (const item of items) {
-    const directory = path.dirname(item.path);
-    const probe = path.join(directory, `.cogentia-mandate-preflight-${process.pid}-${Date.now()}-${Math.random().toString(16).slice(2)}`);
+    const target = path.resolve(item.full_path || item.path);
+    if (checked.has(target)) continue;
+    checked.add(target);
+    let directory = path.dirname(target);
+    while (!fs.existsSync(directory) && path.dirname(directory) !== directory) directory = path.dirname(directory);
+    const probe = path.join(directory, `.cogentia-write-preflight-${process.pid}-${Date.now()}-${Math.random().toString(16).slice(2)}`);
     try {
+      if (fs.existsSync(target)) fs.accessSync(target, fs.constants.W_OK);
       const fd = fs.openSync(probe, "wx");
       fs.closeSync(fd);
       fs.unlinkSync(probe);
@@ -1186,6 +1211,10 @@ function preflightMandateWrites(items) {
     }
   }
   return failures;
+}
+
+function preflightMandateWrites(items) {
+  return preflightWritableTargets(items.map(item => ({ ...item, full_path: item.path })));
 }
 
 function renderMinimalAgentMandate(repoName) {
@@ -3703,6 +3732,13 @@ async function exportCorpusState(ctx, options = {}) {
   const jsonPath = mdPath.replace(/\.md$/i, ".json");
 
   const md = formatCorpusStateMarkdown(report);
+  const preflight_failed = preflightWritableTargets([
+    { repo: registryRepo?.name || "local", path: mdPath, full_path: mdPath },
+    { repo: registryRepo?.name || "local", path: jsonPath, full_path: jsonPath },
+  ]);
+  if (preflight_failed.length) {
+    return { ok: false, output_path: mdPath, json_path: jsonPath, preflight_failed, signals: report.signals, summary: {} };
+  }
   ensureDir(path.dirname(mdPath));
   fs.writeFileSync(mdPath, ensureFinalNewline(md), "utf8");
   // Public JSON: strip any residual absolute paths
@@ -3731,6 +3767,11 @@ async function exportCorpusState(ctx, options = {}) {
 
 function formatCorpusStateExport(result) {
   const lines = ["\nCorpus state export\n"];
+  if (result.preflight_failed?.length) {
+    lines.push("Preflight failed; no state files were written:");
+    for (const item of result.preflight_failed) lines.push(`- ${item.path} (${item.error})`);
+    return lines.join("\n");
+  }
   lines.push(`Markdown: ${result.output_path} (${Math.round((result.bytes_md || 0) / 1024)}KB)`);
   lines.push(`JSON: ${result.json_path} (${Math.round((result.bytes_json || 0) / 1024)}KB)`);
   if (result.summary) {
@@ -10984,6 +11025,10 @@ function formatApply(result) {
     lines.push(`Skipped: ${result.skipped.length}`);
     for (const c of result.skipped) lines.push(`- ${c.repo}: ${c.path} (${c.reason})`);
   }
+  if (result.preflight_failed?.length) {
+    lines.push("Preflight failed; no files were written:");
+    for (const item of result.preflight_failed) lines.push(`- ${item.repo || "local"}: ${item.path} (${item.error})`);
+  }
   return lines.join("\n");
 }
 
@@ -11003,6 +11048,10 @@ function formatClassificationPlan(result) {
     `Ambiguous: ${result.ambiguous.length}`,
   ];
   if (result.applied) lines.push(`Applied: ${result.applied}`);
+  if (result.preflight_failed?.length) {
+    lines.push("Preflight failed; no files were written:");
+    for (const item of result.preflight_failed) lines.push(`- ${item.repo || "local"}: ${item.path} (${item.error})`);
+  }
   if (result.changes.length) {
     lines.push("");
     lines.push("Planned changes:");
@@ -12444,6 +12493,10 @@ function formatIssueSync(result) {
   lines.push(`Issues written: ${result.written}`);
   lines.push(`Issues unchanged: ${result.unchanged}`);
   lines.push(`Issues removed: ${result.removed}`);
+  if (result.preflight_failed?.length) {
+    lines.push("", "Preflight failed; no issue packets were written:");
+    for (const item of result.preflight_failed) lines.push(`- ${item.repo}: ${item.path} (${item.error})`);
+  }
   if (result.errors.length) {
     lines.push("");
     lines.push("Errors:");
@@ -12472,6 +12525,15 @@ function syncIssuePackets(ctx, options = {}) {
     removed: 0,
     errors: [],
   };
+  result.preflight_failed = preflightWritableTargets(repos.map(repo => ({
+    repo: repo.name,
+    path: ".cogentia/issues",
+    full_path: path.join(repo.path, ".cogentia", "issues"),
+  })));
+  if (result.preflight_failed.length) {
+    result.ok = false;
+    return result;
+  }
   for (const repo of repos) {
     try {
       const repoResult = syncIssuePacketsForRepo(repo, { state, limit });

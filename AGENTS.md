@@ -24,6 +24,7 @@ Cogentia is the cognitive-infrastructure tooling of the multi-repository corpus:
 - Treat `research/agent_configuration_layer.md` as the source doctrine for this instruction architecture.
 - Run `node scripts/agent-instructions-audit.js` to inventory instruction artefacts and detect drift between shared and local layers.
 - Use `node scripts/cogentia.js agent mandates plan|apply|verify` to create missing minimal mandates and verify their shared reference. `apply` preflights every target directory and does not attempt any creation if one is not writable.
+- Multi-file local writes (`agent mandates apply`, `corpus apply`, `classify apply`, `corpus-state export`, and `issues sync`) must preflight every planned target and refuse the entire batch when one target is not writable.
 
 ## Operational routing
 
