@@ -891,9 +891,13 @@ function extractJsonObject(content) {
 }
 
 async function guideRetrievalRun(question, plan = guideHeuristicPlan(question), options = {}) {
+  const startedAt = performance.now();
+  const timings_ms = {};
   // Latest MCP improvement: S7 guide_resolve (deterministic alias → admissibility → attractors)
   // before hybrid pack retrieval, so commercial Guide answers anchor on canonical sources.
+  const s7StartedAt = performance.now();
   const s7 = await guideS7ResolveAnchor(question, plan);
+  timings_ms.s7_resolve = Math.round(performance.now() - s7StartedAt);
   const s7Queries = s7.ok ? s7.retrieval_queries : [];
   const queries = mergeQueries([
     ...s7Queries,
@@ -919,12 +923,16 @@ async function guideRetrievalRun(question, plan = guideHeuristicPlan(question), 
     message: guideProgress(options.locale, "retrieval_batch", { count: queries.length }).message,
   });
 
+  const batchStartedAt = performance.now();
   const packs = await fetchGuideRetrievalPacks(queries, packOptions);
+  timings_ms.retrieval_batch = Math.round(performance.now() - batchStartedAt);
 
   // If S7 resolved a canonical file, pull a bounded public excerpt via MCP get_lines.
   let s7Anchor = null;
   if (s7.ok && s7.ref) {
+    const anchorStartedAt = performance.now();
     s7Anchor = await guideS7FetchAnchorExcerpt(s7);
+    timings_ms.s7_anchor = Math.round(performance.now() - anchorStartedAt);
   }
 
   const result = mergeGuideRetrievalFromPacks({
@@ -970,6 +978,7 @@ async function guideRetrievalRun(question, plan = guideHeuristicPlan(question), 
 
   return {
     ...result,
+    timings_ms: { ...timings_ms, total: Math.round(performance.now() - startedAt) },
     retrieval_backend: guideRetrievalBackend,
     batch: true,
     s7: {
