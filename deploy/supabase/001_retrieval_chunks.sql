@@ -16,6 +16,9 @@ CREATE TABLE IF NOT EXISTS public.retrieval_chunks (
   heading_path text NOT NULL DEFAULT '',
   role text NOT NULL DEFAULT '',
   visibility text NOT NULL DEFAULT 'public',
+  admissible boolean NOT NULL DEFAULT false,
+  document_kind text NOT NULL DEFAULT '',
+  canonical_weight integer NOT NULL DEFAULT 0,
   github_url text NOT NULL DEFAULT '',
   text text NOT NULL,
   content_hash text NOT NULL,
@@ -30,6 +33,9 @@ CREATE TABLE IF NOT EXISTS public.retrieval_chunks (
 
 CREATE INDEX IF NOT EXISTS retrieval_chunks_corpus_idx
   ON public.retrieval_chunks (corpus_key, index_hash);
+
+CREATE INDEX IF NOT EXISTS retrieval_chunks_admissible_idx
+  ON public.retrieval_chunks (corpus_key, index_hash, admissible, canonical_weight DESC);
 
 CREATE INDEX IF NOT EXISTS retrieval_chunks_fts_idx
   ON public.retrieval_chunks USING gin (fts);
@@ -81,10 +87,11 @@ AS $$
   FROM public.retrieval_chunks c
   WHERE c.corpus_key = match_retrieval_chunks.corpus_key
     AND c.embedding IS NOT NULL
+    AND c.admissible = true
     AND c.provider = provider_filter
     AND c.model_name = model_filter
     AND (index_hash IS NULL OR index_hash = '' OR c.index_hash = index_hash)
-  ORDER BY c.embedding <=> query_embedding
+  ORDER BY c.canonical_weight DESC, c.embedding <=> query_embedding
   LIMIT GREATEST(1, LEAST(match_count, 50));
 $$;
 
@@ -128,8 +135,9 @@ AS $$
     ts_rank(c.fts, websearch_to_tsquery('simple', search_query)) AS rank
   FROM public.retrieval_chunks c
   WHERE c.corpus_key = search_retrieval_chunks_fts.corpus_key
+    AND c.admissible = true
     AND (index_hash IS NULL OR index_hash = '' OR c.index_hash = index_hash)
     AND c.fts @@ websearch_to_tsquery('simple', search_query)
-  ORDER BY rank DESC
+  ORDER BY c.canonical_weight DESC, rank DESC
   LIMIT GREATEST(1, LEAST(match_count, 50));
 $$;

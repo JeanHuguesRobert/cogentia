@@ -55,6 +55,10 @@ const blackboard = createBlackboardStore();
 const port = boundedInteger(process.env.PORT || process.env.COGENTIA_MCP_PORT, 8791, 1, 65535);
 const host = process.env.COGENTIA_MCP_HOST || "0.0.0.0";
 const guideAgentGateway = process.env.COGENTIA_GUIDE_AGENT_GATEWAY === "1";
+// S7 remains a navigation/audit tool. The public Guide relies on the
+// precomputed Supabase admissibility projection by default, so it must not
+// synchronously resolve and fetch an anchor for every question.
+const guideS7AnchorEnabled = process.env.COGENTIA_GUIDE_S7_ANCHOR === "1";
 let guideAgentSessionId = String(process.env.COGENTIA_GUIDE_AGENT_SESSION_ID || "").trim();
 let guideAgentSessionInit = null;
 
@@ -893,11 +897,12 @@ function extractJsonObject(content) {
 async function guideRetrievalRun(question, plan = guideHeuristicPlan(question), options = {}) {
   const startedAt = performance.now();
   const timings_ms = {};
-  // Latest MCP improvement: S7 guide_resolve (deterministic alias → admissibility → attractors)
-  // before hybrid pack retrieval, so commercial Guide answers anchor on canonical sources.
-  const s7StartedAt = performance.now();
-  const s7 = await guideS7ResolveAnchor(question, plan);
-  timings_ms.s7_resolve = Math.round(performance.now() - s7StartedAt);
+  let s7 = { ok: false, mode: "precomputed_index" };
+  if (guideS7AnchorEnabled) {
+    const s7StartedAt = performance.now();
+    s7 = await guideS7ResolveAnchor(question, plan);
+    timings_ms.s7_resolve = Math.round(performance.now() - s7StartedAt);
+  }
   const s7Queries = s7.ok ? s7.retrieval_queries : [];
   const queries = mergeQueries([
     ...s7Queries,

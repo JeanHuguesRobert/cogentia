@@ -10,6 +10,10 @@ async function main() {
   const args = process.argv.slice(2);
   const corpusKey = readFlag(args, "--corpus") || process.env.COGENTIA_RETRIEVAL_CORPUS_KEY || "cogentia-public";
   const dryRun = args.includes("--dry-run");
+  const startAt = Number.parseInt(readFlag(args, "--start-at") || "0", 10);
+  if (!Number.isInteger(startAt) || startAt < 0) {
+    throw new Error("--start-at must be a non-negative integer");
+  }
   const supabaseUrl = String(process.env.SUPABASE_URL || "").replace(/\/$/, "");
   const serviceKey = String(process.env.SUPABASE_SERVICE_ROLE_KEY || "");
   if (!supabaseUrl || !serviceKey) {
@@ -54,6 +58,9 @@ async function main() {
         title: row.title || "",
         heading_path: row.heading_path || "",
         role: row.role || "",
+        document_kind: row.role === "source" ? "source" : "",
+        admissible: row.role === "source" && !String(row.path || "").startsWith(".cogentia/") && !String(row.path || "").includes("/issues/"),
+        canonical_weight: 0,
         visibility: row.visibility || "public",
         github_url: row.github_url || "",
         text: row.text || "",
@@ -73,13 +80,17 @@ async function main() {
       index_hash: indexHash,
       db_path: dbPath,
       rows: records.length,
+      start_at: startAt,
     }, null, 2));
 
     if (dryRun) return;
+    if (startAt > records.length) {
+      throw new Error(`--start-at ${startAt} exceeds ${records.length} records`);
+    }
 
     const chunkSize = 100;
     let upserted = 0;
-    for (let i = 0; i < records.length; i += chunkSize) {
+    for (let i = startAt; i < records.length; i += chunkSize) {
       const batch = records.slice(i, i + chunkSize);
       const response = await fetch(`${supabaseUrl}/rest/v1/retrieval_chunks?on_conflict=corpus_key,source_id,provider,model_name,dimensions`, {
         method: "POST",
@@ -96,6 +107,7 @@ async function main() {
         throw new Error(`Supabase upsert failed (${response.status}): ${detail.slice(0, 500)}`);
       }
       upserted += batch.length;
+      console.log(JSON.stringify({ ok: true, batch_start: i, batch_size: batch.length, upserted }, null, 2));
     }
 
     if (indexHash) {
