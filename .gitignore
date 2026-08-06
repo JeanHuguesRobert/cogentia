@@ -35,6 +35,8 @@ package-lock.json
 # Local Cogentia runtime/scratch artefacts
 .cogentia/
 .local/
+cogentia-embeddings-*.jsonl.gz
+supabase/.temp/
 scripts/*.bak
 scripts/plugin_api_test.js
 scripts/tmp_*.mjs
