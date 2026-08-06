@@ -55,12 +55,12 @@ sync_checkout() {
 
   if [[ "$OFFLINE" -eq 0 ]]; then
     log "$name: fetching origin"
-    git -C "$root" fetch --prune origin
+    git -C "$root" fetch --prune origin >&2
     remote_head="$(git -C "$root" rev-parse origin/main)"
     local_head="$(git -C "$root" rev-parse HEAD)"
     if [[ "$local_head" != "$remote_head" ]]; then
       log "$name: fast-forwarding main"
-      git -C "$root" pull --ff-only origin main
+      git -C "$root" pull --ff-only origin main >&2
     fi
   else
     log "$name: offline; leaving checkout untouched"
