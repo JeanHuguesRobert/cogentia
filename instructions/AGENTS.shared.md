@@ -1,8 +1,8 @@
 ---
 title: Cogentia Shared Agent Instructions
 status: active
-version: 3
-date: 2026-07-29
+version: 4
+date: 2026-08-06
 document_role: operational
 document_kind: agent-instructions
 visibility: public
@@ -20,6 +20,27 @@ This is the common operational layer for every agent working in the Cogentia cor
 - Preserve provenance. Do not infer missing author, source, reference, review or visibility information.
 - AI suggests and clarifies; a human principal retains mandate and responsibility for engaging acts.
 - Public by default does not cancel privacy: private material requires explicit authorization before public reuse.
+
+## Monotonic mandate attenuation
+
+Layered instructions are cumulative restrictions, not override files.
+
+For any child configuration derived from a parent authority context:
+
+```text
+Authority(child) ⊆ Authority(parent)
+Obligations(child) ⊇ Obligations(parent)
+```
+
+A repository, directory, specialization, task or tool-specific instruction MAY narrow permissions, reduce scope or budget, shorten validity, add prohibitions, or strengthen validation, trace, privacy, confirmation and reporting duties. It MUST NOT create authority absent from its parent, cancel an inherited prohibition, enlarge a budget or risk ceiling, extend validity, increase delegation depth, weaken evidence requirements, or convert read access into disclosure authority.
+
+All ancestor constraints remain applicable. “Nearest” means more specific, not more powerful. Positive permission wording in an `AGENTS.md` is an upper bound within the actual mandate, never an independent grant of authority.
+
+When constraints are clearly compatible, compose them monotonically. When a child clearly attempts to widen authority, reject the widening and retain the parent restriction. When constraints are semantically incomparable or ambiguous for the affected act, fail closed rather than guessing.
+
+Independent mandates MUST NOT be silently unioned to synthesize a permission that no valid authority chain grants for the concrete act.
+
+The normative candidate and dimension-specific composition rules are defined in [`research/monotonic_mandate_attenuation.md`](../research/monotonic_mandate_attenuation.md).
 
 ## Language and audience selection
 
@@ -77,9 +98,12 @@ An error detected in work must leave a reusable correction trace: erroneous form
 
 1. Read this shared layer.
 2. Read the nearest repository-local `AGENTS.md` and any closer scoped instruction.
-3. Apply the stricter compatible constraint.
-4. Consult source documents when an operational rule cannot settle a semantic or institutional question.
+3. Compose all applicable constraints monotonically; a closer instruction may restrict but never widen inherited authority.
+4. Apply the strictest effective constraint on each governed dimension.
+5. Consult source documents when an operational rule cannot settle a semantic or institutional question.
 
 ## Local specialization contract
 
 A local mandate must declare the repository role, its local risks, its validation commands or evidence, and any stricter authorization gate. Prompts and runtime instructions must remain task-specific; they do not create a second corpus-wide policy.
+
+A local specialization MUST be monotone with respect to its parent configuration. If a local rule appears to require broader authority, that broader authority must come from an explicit valid authority source or mandate; it cannot be manufactured by the local file itself.
