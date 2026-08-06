@@ -22,6 +22,7 @@ Cogentia is the cognitive-infrastructure tooling of the multi-repository corpus:
 - Keep `scripts/cogentia.js` dependency-free unless the human principal explicitly authorizes a dependency change.
 - Generated files are projections: change their generator or source, not their generated body by hand.
 - Treat `research/agent_configuration_layer.md` as the source doctrine for this instruction architecture.
+- Treat `research/monotonic_mandate_attenuation.md` as the source rule for hierarchical specialization: child configuration may restrict authority and strengthen duties, never widen inherited authority.
 - Run `node scripts/agent-instructions-audit.js` to inventory instruction artefacts and detect drift between shared and local layers.
 - Use `node scripts/cogentia.js agent mandates plan|apply|verify` to create missing minimal mandates and verify their shared reference. `apply` preflights every target directory and does not attempt any creation if one is not writable.
 - Multi-file local writes (`agent mandates apply`, `corpus apply`, `classify apply`, `corpus-state export`, and `issues sync`) must preflight every planned target and refuse the entire batch when one target is not writable.
@@ -43,6 +44,7 @@ For new or changed operational documents, preserve frontmatter provenance and an
 ## Local references
 
 - [`research/agent_configuration_layer.md`](research/agent_configuration_layer.md)
+- [`research/monotonic_mandate_attenuation.md`](research/monotonic_mandate_attenuation.md)
 - [`research/agentic_commit_transparency.md`](research/agentic_commit_transparency.md)
 - [`research/optimistic_mainline_governance.md`](research/optimistic_mainline_governance.md)
 - [`docs/update-policy-registry.md`](docs/update-policy-registry.md)
