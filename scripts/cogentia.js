@@ -2727,13 +2727,18 @@ function daemonHttpContinuationResolve(ctx, body = {}) {
     payload,
   };
   continuation.history = Array.isArray(continuation.history) ? continuation.history : [];
-  continuation.history.push({ at: now, event: "resolved", decision, reason });
+  const historyEvent = { at: now, event: "resolved", decision, reason };
+  if (body.correlation && typeof body.correlation === "object") {
+    historyEvent.correlation = body.correlation;
+  }
+  continuation.history.push(historyEvent);
   saveContinuation(ctx, continuation);
   return [200, {
     ok: true,
     protocol: CONTINUATION_PROTOCOL,
     continuation: stripContinuationBody(continuation),
     skill_hint: "continuation-handling",
+    correlation: body.correlation && typeof body.correlation === "object" ? body.correlation : undefined,
   }];
 }
 
@@ -2745,6 +2750,10 @@ function daemonHttpContinuationEmit(ctx, body = {}) {
   const subject = typeof subjectRaw === "string"
     ? { topic: subjectRaw }
     : (subjectRaw && typeof subjectRaw === "object" ? subjectRaw : { topic: "general" });
+  const context = body.context && typeof body.context === "object" ? { ...body.context } : {};
+  if (body.correlation && typeof body.correlation === "object") {
+    context.correlation = body.correlation;
+  }
   const result = emitContinuation(ctx, {
     kind,
     title: body.title || kind,
@@ -2752,15 +2761,26 @@ function daemonHttpContinuationEmit(ctx, body = {}) {
     priority: Number(body.priority || 0) || 0,
     dedupe_key: body.dedupe_key || "",
     subject,
-    context: body.context && typeof body.context === "object" ? body.context : {},
+    context,
     expected_response: body.expected_response,
   });
+  if (result.created && result.continuation && body.correlation && typeof body.correlation === "object") {
+    result.continuation.history = Array.isArray(result.continuation.history)
+      ? result.continuation.history
+      : [];
+    const last = result.continuation.history[result.continuation.history.length - 1];
+    if (last && last.event === "emitted") {
+      last.correlation = body.correlation;
+      saveContinuation(ctx, result.continuation);
+    }
+  }
   return [result.ok === false ? 500 : 200, {
     ok: true,
     created: result.created,
     protocol: CONTINUATION_PROTOCOL,
     continuation: stripContinuationBody(result.continuation),
     skill_hint: "continuation-handling",
+    correlation: body.correlation && typeof body.correlation === "object" ? body.correlation : undefined,
   }];
 }
 

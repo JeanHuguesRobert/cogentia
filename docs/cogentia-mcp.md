@@ -91,6 +91,21 @@ Otherwise `tools/call` returns `tier_forbidden`. Public Fracta stays read-only.
 
 Prefer `cogentia_views_snapshot` at session start, `cogentia_context_pack` for a broad corpus question, `cogentia_search` while exploring, and `cogentia_get_lines` before asserting a specific passage. For suspended work use `continuation_list` → `continuation_inspect` and skill `continuation-handling`. Responses preserve `source_id` citations produced by the gateway.
 
+### Packet-shaped tool results (v0.5+ / Phase 3)
+
+Every `tools/call` success or tool-level error returns JSON with:
+
+```text
+ok, tool, protocol_era, view, data, citations[], continuation|null,
+skill_hint, mandate_hint, error_class|null, correlation{}, envelope.kind
+```
+
+- `envelope.kind` = `cogentia.mcp_tool_result/v1`
+- `citations` extracted from search/pack/lines hits (`source_id`, repo, path, lines)
+- `continuation` set when the payload is or points at suspended judgment
+- Pass `traceparent` (and optional `tracestate` / `baggage`) in request `params._meta` for cross-client correlation; echoed on the result and stored on emit/resolve history when mutate is enabled
+- No MCP session affinity required — resume from `continuation.id` + durable stores
+
 The adapter stays **thin**: no SQLite, no provider keys, no index rebuild. Logic lives in `cogentia.js` / the daemon.
 
 Path design: [cogentia-js-mcp-agent-path.md](cogentia-js-mcp-agent-path.md). Client evidence: [agent-skills-compatibility.md](agent-skills-compatibility.md).

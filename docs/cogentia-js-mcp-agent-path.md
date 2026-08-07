@@ -284,11 +284,27 @@ MCP must not become the only door; it is the **interop** door.
 
 ### Phase 3 — Packet envelope on results
 
-- [ ] Normalize tool responses with `citations` / `continuation` / `skill_hint` / `error_class`.
-- [ ] Propagate W3C `traceparent` from modern `_meta` into continuation history when present (sandbox plan correlation).
-- [ ] Document mapping to Cognitive Packet envelope fields.
+- [x] Normalize tool responses with `citations` / `continuation` / `skill_hint` / `error_class` (`cogentia.mcp_tool_result/v1`).
+- [x] Propagate W3C `traceparent` from request `_meta` into result `correlation` / modern result `_meta`; attach to continuation emit/resolve history when present.
+- [x] Document mapping to Cognitive Packet envelope fields (below + `scripts/lib/cogentia-mcp-envelope.js`).
+- [ ] Deploy Phase 3 to Fracta (mcp **0.5.0**).
 
 **Exit:** multi-hop handoff works across two different MCP clients without shared session.
+
+#### Packet mapping (MCP tool result → Cognitive Packet)
+
+| MCP envelope field | Packet role |
+|--------------------|-------------|
+| `tool` + `continuation.id` + `correlation.traceparent` | Identity / correlation |
+| `view`, `protocol_era`, `mandate_hint` | Routing / policy envelope |
+| `data` | Kind-specific payload |
+| `citations` | Traceable evidence refs (`source_id`) |
+| `continuation` | Suspended work pointer (resumable without MCP session) |
+| `skill_hint` | Method selection (not authority) |
+| `error_class` | First-class failure (not silent empty success) |
+| `envelope.kind` = `cogentia.mcp_tool_result/v1` | Self-describing result contract |
+
+Transmission is **by copy** in the JSON-RPC tool result. Clients must not require `Mcp-Session-Id` affinity.
 
 ### Phase 4 — CLI parity slices (demand-driven)
 

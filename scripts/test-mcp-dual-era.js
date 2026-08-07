@@ -10,7 +10,15 @@ import {
   MCP_META,
   MUTATE_TOOLS,
   transportFromHttpRequest,
+  ENVELOPE_KIND,
 } from "./lib/cogentia-mcp-core.js";
+import {
+  extractCitations,
+  extractContinuation,
+  wrapToolResult,
+  wrapToolError,
+  extractCorrelation,
+} from "./lib/cogentia-mcp-envelope.js";
 
 const publicCore = createMcpCore({
   COGENTIA_DAEMON_URL: "http://127.0.0.1:8790",
@@ -87,6 +95,46 @@ const skillMissing = await publicCore.handleJsonRpc({
   params: { name: "cogentia_skill_get", arguments: { id: "does-not-exist-skill" } },
 });
 assert.equal(skillMissing.result.isError, true);
+assert.equal(skillMissing.result.structuredContent?.error_class, "skill_not_found");
+assert.equal(skillMissing.result.structuredContent?.envelope?.kind, ENVELOPE_KIND);
+
+// Phase 3 envelope unit checks (no daemon)
+const sampleSearch = {
+  ok: true,
+  results: [
+    {
+      id: "cogentia:research/x.md#L1-L2",
+      repo: "cogentia",
+      path: "research/x.md",
+      start_line: 1,
+      end_line: 2,
+    },
+  ],
+};
+const cites = extractCitations(sampleSearch);
+assert.equal(cites.length, 1);
+assert.equal(cites[0].source_id, "cogentia:research/x.md#L1-L2");
+const cont = extractContinuation("cogentia_continuation_list", {
+  ok: true,
+  count: 1,
+  continuations: [{ id: "ctn_test", status: "active", question: "Q?", kind: "judgment" }],
+});
+assert.equal(cont.id, "ctn_test");
+const wrapped = wrapToolResult("cogentia_search", sampleSearch, {
+  protocolEra: "modern",
+  view: "public",
+  correlation: { traceparent: "00-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa-bbbbbbbbbbbbbbbb-01" },
+});
+assert.equal(wrapped.envelope.kind, ENVELOPE_KIND);
+assert.equal(wrapped.citations.length, 1);
+assert.equal(wrapped.skill_hint, "corpus-evidence-retrieval");
+assert.equal(wrapped.correlation.traceparent.startsWith("00-"), true);
+const errWrap = wrapToolError("cogentia_continuation_emit", new Error("tier_forbidden: no"), {
+  protocolEra: "legacy",
+  view: "public",
+});
+assert.equal(errWrap.error_class, "tier_forbidden");
+assert.equal(extractCorrelation({ traceparent: "00-aa-bb-01" }).traceparent, "00-aa-bb-01");
 
 const bad = await publicCore.handleJsonRpc({
   jsonrpc: "2.0",
@@ -118,6 +166,8 @@ const mutateDenied = await publicCore.handleJsonRpc({
 });
 assert.equal(mutateDenied.result.isError, true);
 assert.match(mutateDenied.result.content[0].text, /tier_forbidden/);
+assert.equal(mutateDenied.result.structuredContent?.error_class, "tier_forbidden");
+assert.equal(mutateDenied.result.structuredContent?.ok, false);
 
 const fullCore = createMcpCore({
   COGENTIA_DAEMON_URL: "http://127.0.0.1:8790",
@@ -138,7 +188,7 @@ for (const name of MUTATE_TOOLS) {
   assert.ok(fullNames.includes(name), `full+mutate tools/list must include ${name}`);
 }
 
-// Optional live daemon checks (P1 routes)
+// Optional live daemon checks (P1 routes) + Phase 3 envelope via tools/call
 let live = { daemon: false };
 try {
   const health = await publicCore.callTool("cogentia_health");
@@ -152,6 +202,42 @@ try {
   assert.equal(list.protocol, "cogentia.continuation.v2");
   live.continuation_list = true;
   live.continuation_count = list.count ?? list.continuations.length;
+
+  const enveloped = await publicCore.handleJsonRpc({
+    jsonrpc: "2.0",
+    id: 90,
+    method: "tools/call",
+    params: {
+      name: "cogentia_search",
+      arguments: { query: "continuation", limit: 2 },
+      _meta: {
+        [MCP_META.protocolVersion]: PROTOCOL_VERSION_MODERN,
+        traceparent: "00-11111111111111111111111111111111-2222222222222222-01",
+      },
+    },
+  }, { protocolVersionHeader: PROTOCOL_VERSION_MODERN });
+  const envBody = enveloped.result.structuredContent;
+  assert.equal(envBody.envelope.kind, ENVELOPE_KIND);
+  assert.equal(envBody.tool, "cogentia_search");
+  assert.equal(envBody.protocol_era, "modern");
+  assert.ok(Array.isArray(envBody.citations));
+  assert.equal(envBody.correlation.traceparent.includes("1111"), true);
+  assert.equal(enveloped.result._meta?.traceparent.includes("1111"), true);
+  live.envelope_search = true;
+
+  const listEnv = await publicCore.handleJsonRpc({
+    jsonrpc: "2.0",
+    id: 91,
+    method: "tools/call",
+    params: { name: "cogentia_continuation_list", arguments: { status: "alive" } },
+  });
+  const listBody = listEnv.result.structuredContent;
+  assert.equal(listBody.tool, "cogentia_continuation_list");
+  if (listBody.data?.count > 0) {
+    assert.ok(listBody.continuation?.id);
+    assert.equal(listBody.skill_hint, "continuation-handling");
+  }
+  live.envelope_continuation_list = true;
 
   try {
     const schema = await publicCore.callTool("cogentia_continuation_schema");

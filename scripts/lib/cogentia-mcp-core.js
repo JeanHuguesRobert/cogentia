@@ -1,7 +1,14 @@
 import { listAgentSkills, getAgentSkill, resolveRepoRoot } from "./cogentia-agent-skills.js";
+import {
+  extractCorrelation,
+  wrapToolResult,
+  wrapToolError,
+  ENVELOPE_KIND,
+} from "./cogentia-mcp-envelope.js";
 
 export const SERVER_NAME = "cogentia-mcp";
-export const SERVER_VERSION = "0.4.0";
+export const SERVER_VERSION = "0.5.0";
+export { ENVELOPE_KIND, wrapToolResult, wrapToolError, extractCorrelation };
 
 /** Default negotiated version for legacy initialize when client omits one. */
 export const PROTOCOL_VERSION = "2025-11-25";
@@ -336,6 +343,7 @@ export function createMcpCore(env = process.env) {
     "(4) cogentia_continuation_schema if preparing a step_result; list → inspect → prepare; resolve/emit only if mutate tools are listed and mandate allows. " +
     "Continuations are non-blocking judgment boundaries, not crashes. Skills recommend methods and never grant authority. " +
     "MCP is a thin dual-era adapter (legacy initialize + modern server/discover); corpus truth lives in cogentia.js / the daemon. " +
+    "Tool results are packet-shaped (cogentia.mcp_tool_result/v1): read citations, continuation, skill_hint, error_class, correlation — no MCP session affinity required. " +
     `Active view=${view}; mutate_tools=${allowMutate ? "enabled" : "disabled"}.`;
 
   function serverInfo() {
@@ -497,10 +505,40 @@ export function createMcpCore(env = process.env) {
       if (message.method === "tools/call") {
         const name = String(message.params?.name || "");
         const args = message.params?.arguments || {};
-        const data = await callTool(name, args);
-        let result = mcpToolResult(data);
-        if (resolved.era === "modern") result = attachModernMeta(result, resolved.protocolVersion);
-        return jsonRpcResult(message.id, result);
+        const correlation = extractCorrelation(resolved.meta || {});
+        const ctx = {
+          protocolEra: resolved.era === "modern" ? "modern" : "legacy",
+          view,
+          allowMutate,
+          correlation,
+        };
+        try {
+          const data = await callTool(name, args, { correlation });
+          const envelope = wrapToolResult(name, data, ctx);
+          let result = mcpToolResult(envelope);
+          if (resolved.era === "modern") {
+            result = attachModernMeta(result, resolved.protocolVersion);
+            if (correlation.traceparent) {
+              result._meta = {
+                ...result._meta,
+                traceparent: correlation.traceparent,
+                ...(correlation.tracestate ? { tracestate: correlation.tracestate } : {}),
+              };
+            }
+          }
+          return jsonRpcResult(message.id, result);
+        } catch (toolError) {
+          const envelope = wrapToolError(name, toolError, ctx);
+          let result = {
+            content: [{ type: "text", text: JSON.stringify(envelope, null, 2) }],
+            isError: true,
+            structuredContent: envelope,
+          };
+          if (resolved.era === "modern") {
+            result = attachModernMeta(result, resolved.protocolVersion);
+          }
+          return jsonRpcResult(message.id, result);
+        }
       }
       return jsonRpcError(message.id, -32601, "Method not found");
     } catch (error) {
@@ -511,7 +549,7 @@ export function createMcpCore(env = process.env) {
     }
   }
 
-  async function callTool(name, args = {}) {
+  async function callTool(name, args = {}, callOpts = {}) {
     if (MUTATE_TOOLS.has(name)) requireMutate(name);
     if (!tools.some((t) => t.name === name) && !MUTATE_TOOLS.has(name)) {
       throw new Error(`Unknown tool: ${name}`);
@@ -625,6 +663,7 @@ export function createMcpCore(env = process.env) {
           id: args.id,
           decision: args.decision,
           reason: args.reason || "",
+          correlation: callOpts.correlation || undefined,
         });
       case "cogentia_continuation_emit":
         requireString(args.question, "question");
@@ -632,6 +671,7 @@ export function createMcpCore(env = process.env) {
           question: args.question,
           subject: args.subject || "general",
           kind: args.kind || "decision",
+          correlation: callOpts.correlation || undefined,
         });
       case "cogentia_issues_sync":
         return daemonPost("/api/ops/issues/sync", {
@@ -735,6 +775,11 @@ export function mcpToolResult(data) {
     content: [{ type: "text", text }],
     ...(typeof data === "object" && data !== null ? { structuredContent: data } : {}),
   };
+}
+
+/** @deprecated Prefer wrapToolResult; kept for direct callTool consumers in tests. */
+export function mcpToolResultRaw(data) {
+  return mcpToolResult(data);
 }
 
 export function jsonRpcResult(id, result) {
