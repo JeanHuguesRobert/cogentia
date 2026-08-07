@@ -41,6 +41,16 @@ For changes to agent-instruction tooling, run the focused audit against a config
 
 For new or changed operational documents, preserve frontmatter provenance and an `update_policy`; do not infer missing fields.
 
+## Agent Skills (experimental)
+
+Repository-local method packages live under [`skills/`](skills/). Contract: [`docs/agent-skills-contract.md`](docs/agent-skills-contract.md). Inventory:
+
+```bash
+node scripts/validate-agent-skills.js
+```
+
+Skills recommend procedures and capabilities; they do not grant mandate, replace Cognitive Packets, or authorize external Acts. First package: [`skills/continuation-handling/`](skills/continuation-handling/) — inspect/prepare/resolve continuations and continuation-kind packet payloads under mandate.
+
 ## Local references
 
 - [`research/agent_configuration_layer.md`](research/agent_configuration_layer.md)
@@ -48,3 +58,5 @@ For new or changed operational documents, preserve frontmatter provenance and an
 - [`research/agentic_commit_transparency.md`](research/agentic_commit_transparency.md)
 - [`research/optimistic_mainline_governance.md`](research/optimistic_mainline_governance.md)
 - [`docs/update-policy-registry.md`](docs/update-policy-registry.md)
+- [`docs/agent-skills-contract.md`](docs/agent-skills-contract.md)
+- [`skills/continuation-handling/SKILL.md`](skills/continuation-handling/SKILL.md)

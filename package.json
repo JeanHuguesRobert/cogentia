@@ -49,7 +49,9 @@
     "guide:eval": "node scripts/guide-eval.js",
     "guide": "node scripts/guide-cli.js",
     "test:agent-jhn-whatsapp": "node scripts/test-agent-jhn-whatsapp.js",
-    "agent-jhn-whatsapp": "node scripts/agent-jhn-whatsapp.js"
+    "agent-jhn-whatsapp": "node scripts/agent-jhn-whatsapp.js",
+    "skills:validate": "node scripts/validate-agent-skills.js",
+    "test:agent-skills": "node scripts/validate-agent-skills.js"
   },
   "devDependencies": {
     "turbo": "^2.0.0"

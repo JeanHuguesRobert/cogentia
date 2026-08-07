@@ -1,0 +1,15 @@
+{
+  "type": "step_result",
+  "continuation_id": "c-example-001",
+  "status": "success",
+  "chosen_alternative": null,
+  "result": {
+    "decision": "accept_prepare_only",
+    "reason": "Judgment is to keep work as a prepared proposal; no external effect authorized."
+  },
+  "reason": "Applicable mandate permits prepare_only; resolve of an external Act would exceed scope.",
+  "confidence": 0.82,
+  "constraints_checked": true,
+  "skin_in_the_game_checked": true,
+  "mandate_basis": "repository AGENTS.md + issue comment authorization for preparation only"
+}

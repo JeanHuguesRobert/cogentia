@@ -1,0 +1,15 @@
+{
+  "object_kind": "cogentia.continuation.v2",
+  "continuation_id": "c-example-003",
+  "classification": "judgment_boundary",
+  "transmission_mode": "copy",
+  "packet_aspects_used": [
+    "envelope_identity",
+    "payload_question",
+    "resume_command",
+    "constraint_reconstruction"
+  ],
+  "allowed_action": "prepare_step_result",
+  "resolve_authorized": false,
+  "notes": "Fixture only — illustrates skill output shape before resolve."
+}

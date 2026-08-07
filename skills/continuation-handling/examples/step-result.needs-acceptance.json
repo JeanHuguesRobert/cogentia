@@ -1,0 +1,15 @@
+{
+  "type": "step_result",
+  "continuation_id": "c-example-002",
+  "status": "needs_acceptance",
+  "reason": "Irreversible or public effect requested without accountable party and explicit acceptance on the continuation object.",
+  "required_information": [
+    "accountable_party",
+    "cost_bearer",
+    "explicit_acceptance",
+    "mandate_ref"
+  ],
+  "constraints_checked": true,
+  "skin_in_the_game_checked": true,
+  "mandate_basis": "absent"
+}

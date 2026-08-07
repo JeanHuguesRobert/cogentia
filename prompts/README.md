@@ -30,6 +30,13 @@ This directory contains prompt contracts for the structured document-production 
 4. [Cognitive Packet](cognitive_packet.md) — preserve resumable continuation when needed.
 5. [Conversation Closure](conversation_closure.md) — close the atelier and prepare continuation.
 
+## Continuations (CLI + packets)
+
+- [Continuation User Prompt](continuation_user_prompt.md) — how to answer a continuation with a structured `step_result`.
+- [Continuation Designer Prompt](continuation_designer_prompt.md) — how to design resumable CLI continuation points.
+- Agent Skill (method package): [`../skills/continuation-handling/SKILL.md`](../skills/continuation-handling/SKILL.md) — inspect, classify judgment vs failure, prepare or resolve only under mandate; maps Cognitive Packet continuation payloads to `cogentia.continuation.v2`.
+- Contract: [`../docs/agent-skills-contract.md`](../docs/agent-skills-contract.md).
+
 ## Method rule
 
 The human author remains the final decision-maker. Agents assist, critique, structure, and package; they do not arbitrate doctrine.
