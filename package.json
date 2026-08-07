@@ -27,6 +27,7 @@
     "test:frontmatter-schema": "node scripts/test-frontmatter-schema-cli.js",
     "test:issue-graph": "node scripts/test-issue-graph.js",
     "test:issue-graph-route": "node scripts/test-issue-graph-route.js",
+    "test:issues-help": "node scripts/test-issues-help.js",
     "test:ai-router": "node scripts/test-ai-router-client.js",
     "test:smart-embed": "node scripts/test-smart-embed-worker.js",
     "test:embedding-step": "node scripts/test-embedding-step.js",

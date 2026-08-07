@@ -2558,6 +2558,9 @@ function daemonCliContinuationInspect(ctx, url) {
 }
 // plugin registry and dispatcher are implemented in scripts/daemon_plugins/registry.js
 function cmdIssues(sub) {
+  if (["help", "-h", "--help"].includes(sub) || hasFlag("-h") || hasFlag("--help")) {
+    return cmdHelp();
+  }
   const ctx = loadContext();
   switch (sub) {
     case "list":
