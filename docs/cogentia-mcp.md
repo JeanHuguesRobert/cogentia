@@ -64,6 +64,11 @@ Canonical list lives in `scripts/lib/cogentia-mcp-core.js` (`TOOLS`). Summary:
 | `cogentia_agent_start` | Cold-start agent session summary + playbook | P2 |
 | `cogentia_skill_list` / `cogentia_skill_get` | Portable Agent Skills inventory + SKILL body | P2 |
 | `cogentia_continuation_schema` | `cogentia.continuation.v2` field/command schema | P2 |
+| `cogentia_docs_inspect` | One document metadata by ref | P4 |
+| `cogentia_docs_gaps` | Navigation/index gaps | P4 |
+| `cogentia_corpus_privacy` | Public-view privacy leak report (paths/codes) | P4 |
+| `cogentia_consolidate` | Read-only publish-readiness (quick default) | P4 |
+| `cogentia_embeddings_status` | Embedding cache status (no index/store) | P4 |
 | `cogentia_views_snapshot` | Session cockpit (prefer first) | P0 |
 | `cogentia_health` | Daemon / index health | P0 |
 | `cogentia_search` | Citable corpus search | P0 |

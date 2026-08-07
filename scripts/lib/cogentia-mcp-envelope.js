@@ -196,9 +196,17 @@ function defaultSkillHint(toolName, continuation) {
     toolName === "cogentia_search" ||
     toolName === "cogentia_context_pack" ||
     toolName === "cogentia_context_pack_batch" ||
-    toolName === "cogentia_get_lines"
+    toolName === "cogentia_get_lines" ||
+    toolName === "cogentia_docs_inspect"
   ) {
     return "corpus-evidence-retrieval"; // declared future skill; hint only
+  }
+  if (
+    toolName === "cogentia_docs_gaps" ||
+    toolName === "cogentia_corpus_privacy" ||
+    toolName === "cogentia_consolidate"
+  ) {
+    return "agentic-change"; // declared future skill; hint only
   }
   return null;
 }

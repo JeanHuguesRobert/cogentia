@@ -210,6 +210,13 @@ const PUBLIC_DAEMON_GET_ROUTES = new Set([
   "/api/cli/git/verify",
   "/api/cli/skills",
   "/api/cli/skills/get",
+  // P4 read: navigation + publish readiness + embedding status (no mutate)
+  "/api/cli/docs/gaps",
+  "/api/cli/docs/inspect",
+  "/api/cli/docs/summary",
+  "/api/cli/corpus/privacy",
+  "/api/cli/corpus/consolidate",
+  "/api/cli/embeddings/status",
 ]);
 // Public POST stays read-oriented. Continuation mutate routes require full view (P3).
 const PUBLIC_DAEMON_POST_ROUTES = new Set([
@@ -217,6 +224,24 @@ const PUBLIC_DAEMON_POST_ROUTES = new Set([
   "/api/context/pack-batch",
 ]);
 const daemonRateLimits = new Map();
+/** Short TTL inventory cache for MCP/daemon CLI read paths (buildInventory is expensive). */
+const DAEMON_INVENTORY_TTL_MS = 60_000;
+let daemonInventoryCache = null;
+
+function getDaemonInventory(ctx) {
+  const now = Date.now();
+  const key = ctx?.configPath || "";
+  if (
+    daemonInventoryCache
+    && daemonInventoryCache.key === key
+    && now - daemonInventoryCache.at < DAEMON_INVENTORY_TTL_MS
+  ) {
+    return daemonInventoryCache.inventory;
+  }
+  const inventory = buildInventory(ctx);
+  daemonInventoryCache = { key, at: now, inventory };
+  return inventory;
+}
 
 const argv = process.argv.slice(2);
 const JSON_MODE = takeFlag("--json");
@@ -1391,25 +1416,48 @@ async function cmdAgentHealth() {
   output(result, formatAgentHealth(result));
 }
 
-async function cmdConsolidate() {
-  if (hasFlag("--weekly")) {
-    const result = await runWeeklyConsolidation();
-    return output(result, `Sunday Consolidation Completed [${result.sprint_tag}]\nDigest: ${result.digest_path}`);
-  }
-  const ctx = loadContext();
-  const strict = hasFlag("--strict");
-  const plan = buildPlan(ctx, { ...planOptions(), quiet: true });
-  const inventory = buildInventory(ctx);
-  const privacy = verifyPrivacy(ctx, inventory, PUBLIC_VIEW);
+/**
+ * Read-only publish-readiness report (CLI `consolidate` without --weekly).
+ * quick=true skips git/worktree/metadata audit for MCP cold paths.
+ */
+function buildConsolidateReport(ctx, options = {}) {
+  const quick = options.quick === true;
+  const inventory = options.inventory || getDaemonInventory(ctx);
+  const continuations = loadContinuations(ctx).filter(c => c.status === "active");
   const gaps = visibleDocs(inventory, PUBLIC_VIEW).filter(isIndexGap);
+  const privacy = verifyPrivacy(ctx, inventory, PUBLIC_VIEW);
+  const issues = [];
+
+  if (quick) {
+    if (gaps.length) issues.push(`${gaps.length} document gap(s)`);
+    if (privacy.leaks.length) issues.push(`${privacy.leaks.length} privacy leak(s)`);
+    if (continuations.length) issues.push(`${continuations.length} active continuation(s)`);
+    return {
+      ok: issues.length === 0,
+      protocol: "cogentia.consolidate.v1",
+      mode: "quick",
+      read_only: true,
+      issues,
+      gaps_count: gaps.length,
+      privacy_leaks_count: privacy.leaks.length,
+      active_continuations: continuations.length,
+      mcp_playbook: [
+        "cogentia_docs_gaps for gap details",
+        "cogentia_corpus_privacy for leak paths",
+        "cogentia_continuation_list for alive judgment",
+        "full consolidate via CLI: node scripts/cogentia.js consolidate",
+      ],
+      skill_hint: issues.length ? "agentic-change" : null,
+    };
+  }
+
+  const plan = buildPlan(ctx, { quiet: true, ...(options.planOptions || {}) });
   const git = verifyGit(ctx);
   const worktree = classifyGitWorktree(ctx, "all");
-  const continuations = loadContinuations(ctx).filter(c => c.status === "active");
   const auto_sections = verifyAutoSections(ctx);
   const trail_lint = lintTrails(ctx, inventory, PUBLIC_VIEW);
   const metadata_audit = runMetadataAudit();
   const continuation_index = runContinuationIndex();
-  const issues = [];
   const noiseSummary = countBy(worktree.repos.flatMap(r => r.entries), entry => entry.classification);
   const substantiveDirty = (noiseSummary.modified || 0)
     + (noiseSummary.untracked || 0)
@@ -1431,8 +1479,11 @@ async function cmdConsolidate() {
     if (repo.behind) issues.push(`${repo.repo} behind upstream`);
     if (repo.ahead) issues.push(`${repo.repo} ahead upstream`);
   }
-  const result = {
+  return {
     ok: issues.length === 0,
+    protocol: "cogentia.consolidate.v1",
+    mode: "full",
+    read_only: true,
     issues,
     generated: {
       changes: plan.summary.changes,
@@ -1450,13 +1501,24 @@ async function cmdConsolidate() {
     metadata_audit,
     continuation_index,
     noise_summary: noiseSummary,
+    skill_hint: issues.length ? "agentic-change" : null,
   };
+}
+
+async function cmdConsolidate() {
+  if (hasFlag("--weekly")) {
+    const result = await runWeeklyConsolidation();
+    return output(result, `Sunday Consolidation Completed [${result.sprint_tag}]\nDigest: ${result.digest_path}`);
+  }
+  const ctx = loadContext();
+  const strict = hasFlag("--strict");
+  const result = buildConsolidateReport(ctx, { planOptions: planOptions(), quick: false });
   if (JSON_MODE) {
     console.log(JSON.stringify(result, null, 2));
   } else {
     console.log(formatConsolidate(result));
   }
-  if (strict && issues.length) process.exit(2);
+  if (strict && result.issues?.length) process.exit(2);
 }
 
 function runMetadataAudit() {
@@ -1627,11 +1689,41 @@ async function handleDaemonRequest(req, res) {
   }
   if (req.method === "GET" && url.pathname === "/api/cli/docs/gaps") {
     const effectiveCtx = ctx || loadContext();
-    return daemonJson(res, 200, daemonCliDocsGaps(effectiveCtx));
+    return daemonJson(res, 200, daemonCliDocsGaps(effectiveCtx, url));
   }
   if (req.method === "GET" && url.pathname === "/api/cli/docs/inspect") {
     const effectiveCtx = ctx || loadContext();
-    return daemonJson(res, 200, daemonCliDocsInspect(effectiveCtx, url));
+    const result = daemonCliDocsInspect(effectiveCtx, url);
+    const status = result.ok === false
+      ? (result.error === "missing_ref" ? 400 : result.error === "forbidden_public_view" ? 403 : 404)
+      : 200;
+    return daemonJson(res, status, result);
+  }
+  if (req.method === "GET" && url.pathname === "/api/cli/corpus/privacy") {
+    const effectiveCtx = ctx || loadContext();
+    try {
+      return daemonJson(res, 200, daemonCliCorpusPrivacy(effectiveCtx));
+    } catch (error) {
+      return daemonJson(res, 500, { ok: false, error: "privacy_check_failed", message: error.message });
+    }
+  }
+  if (req.method === "GET" && url.pathname === "/api/cli/corpus/consolidate") {
+    const effectiveCtx = ctx || loadContext();
+    const full = parseBoolean(url.searchParams.get("full"));
+    try {
+      return daemonJson(res, 200, buildConsolidateReport(effectiveCtx, { quick: !full }));
+    } catch (error) {
+      return daemonJson(res, 500, { ok: false, error: "consolidate_failed", message: error.message });
+    }
+  }
+  if (req.method === "GET" && url.pathname === "/api/cli/embeddings/status") {
+    const effectiveCtx = ctx || loadContext();
+    try {
+      const result = await daemonCliEmbeddingsStatus(effectiveCtx, view);
+      return daemonJson(res, result.ok === false && !result.built ? 503 : 200, result);
+    } catch (error) {
+      return daemonJson(res, 500, { ok: false, error: "embeddings_status_failed", message: error.message });
+    }
   }
   if (req.method === "GET" && url.pathname === "/api/cli/docs/snippet") {
     const effectiveCtx = ctx || loadContext();
@@ -2565,19 +2657,96 @@ function daemonCliDocsSearchFromInventory(inventory, q, repo, limit, includeGene
   return { ok: true, query: q, repo, include_generated: includeGenerated, count: matches.length, matches };
 }
 
-function daemonCliDocsGaps(ctx) {
-  const inventory = buildInventory(ctx);
-  const docs = visibleDocs(inventory, PUBLIC_VIEW).filter(isIndexGap).sort(compareDocs('repo')).map(d => sanitizeDoc(d, inventory, PUBLIC_VIEW));
-  return { ok: true, view: PUBLIC_VIEW, count: docs.length, documents: docs };
+function daemonCliDocsGaps(ctx, url = new URL("http://local/")) {
+  const inventory = getDaemonInventory(ctx);
+  const repo = url.searchParams?.get?.("repo") || "all";
+  const limit = Math.min(Math.max(parseInt(url.searchParams?.get?.("limit"), 10) || 100, 1), 500);
+  let docs = visibleDocs(inventory, PUBLIC_VIEW)
+    .filter(isIndexGap)
+    .filter((d) => repo === "all" || d.repo === repo)
+    .sort(compareDocs("repo"))
+    .map((d) => sanitizeDoc(d, inventory, PUBLIC_VIEW));
+  const total = docs.length;
+  docs = docs.slice(0, limit);
+  return {
+    ok: true,
+    protocol: "cogentia.docs_gaps.v1",
+    view: PUBLIC_VIEW,
+    repo,
+    count: docs.length,
+    total,
+    truncated: total > docs.length,
+    documents: docs,
+    skill_hint: total ? "agentic-change" : null,
+  };
 }
 
 function daemonCliDocsInspect(ctx, url) {
-  const inventory = buildInventory(ctx);
-  const ref = url.searchParams.get('ref') || '';
-  if (!ref) return { ok: false, error: 'missing_ref' };
+  const inventory = getDaemonInventory(ctx);
+  const ref = url.searchParams.get("ref") || "";
+  if (!ref) return { ok: false, error: "missing_ref" };
   const doc = resolveDocRef(inventory, ref);
-  if (!doc) return { ok: false, error: 'document_not_found', ref };
-  return { ok: true, document: sanitizeDoc(doc, inventory, PUBLIC_VIEW) };
+  if (!doc) return { ok: false, error: "document_not_found", ref };
+  if (!canSeeDoc(doc, PUBLIC_VIEW)) {
+    return { ok: false, error: "forbidden_public_view", ref };
+  }
+  return {
+    ok: true,
+    protocol: "cogentia.docs_inspect.v1",
+    view: PUBLIC_VIEW,
+    document: sanitizeDoc(doc, inventory, PUBLIC_VIEW),
+    skill_hint: null,
+  };
+}
+
+function daemonCliCorpusPrivacy(ctx) {
+  const inventory = getDaemonInventory(ctx);
+  const privacy = verifyPrivacy(ctx, inventory, PUBLIC_VIEW);
+  // Do not expand leak bodies; paths/codes only for public MCP.
+  const leaks = (privacy.leaks || []).map((leak) => ({
+    repo: leak.repo || leak.document?.repo || null,
+    path: leak.path || leak.document?.rel || leak.rel || null,
+    code: leak.code || leak.rule || leak.kind || null,
+    message: leak.message || leak.reason || null,
+  }));
+  return {
+    ok: leaks.length === 0,
+    protocol: "cogentia.corpus_privacy.v1",
+    view: PUBLIC_VIEW,
+    read_only: true,
+    leak_count: leaks.length,
+    leaks: leaks.slice(0, 100),
+    truncated: leaks.length > 100,
+    skill_hint: leaks.length ? "agentic-change" : null,
+  };
+}
+
+function daemonCliEmbeddingsStatus(ctx, view = PUBLIC_VIEW) {
+  return embeddingsStatus(ctx).then((result) => {
+    if (view === FULL_VIEW) {
+      return { ok: result.ok !== false, protocol: "cogentia.embeddings_status.v1", ...result };
+    }
+    return {
+      ok: result.ok !== false && result.built !== false,
+      protocol: "cogentia.embeddings_status.v1",
+      built: Boolean(result.built),
+      count: result.count ?? 0,
+      model: result.model || null,
+      dimensions: result.dimensions || null,
+      created_at: result.created_at || null,
+      repos: Array.isArray(result.repos) ? result.repos : [],
+      providers: Array.isArray(result.providers)
+        ? result.providers.map((p) => ({
+            provider: p.provider,
+            model_name: p.model_name,
+            dimensions: p.dimensions,
+            count: p.count,
+          }))
+        : [],
+      message: result.message || result.error || null,
+      // omit local filesystem path on public view
+    };
+  });
 }
 
 function daemonCliDocsSnippet(ctx, url) {

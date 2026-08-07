@@ -73,6 +73,11 @@ assert.ok(publicNames.includes("cogentia_agent_start"));
 assert.ok(publicNames.includes("cogentia_skill_list"));
 assert.ok(publicNames.includes("cogentia_skill_get"));
 assert.ok(publicNames.includes("cogentia_continuation_schema"));
+assert.ok(publicNames.includes("cogentia_docs_inspect"));
+assert.ok(publicNames.includes("cogentia_docs_gaps"));
+assert.ok(publicNames.includes("cogentia_corpus_privacy"));
+assert.ok(publicNames.includes("cogentia_consolidate"));
+assert.ok(publicNames.includes("cogentia_embeddings_status"));
 assert.match(init.result.instructions, /cogentia_skill_get/);
 for (const name of MUTATE_TOOLS) {
   assert.ok(!publicNames.includes(name), `public tools/list must hide ${name}`);
@@ -238,6 +243,39 @@ try {
     assert.equal(listBody.skill_hint, "continuation-handling");
   }
   live.envelope_continuation_list = true;
+
+  try {
+    const gaps = await publicCore.callTool("cogentia_docs_gaps", { limit: 5 });
+    assert.equal(gaps.protocol, "cogentia.docs_gaps.v1");
+    assert.ok(typeof gaps.total === "number");
+    live.docs_gaps = true;
+  } catch (e) {
+    live.docs_gaps_error = e.message;
+  }
+  try {
+    const privacy = await publicCore.callTool("cogentia_corpus_privacy");
+    assert.equal(privacy.protocol, "cogentia.corpus_privacy.v1");
+    assert.ok(typeof privacy.leak_count === "number");
+    live.corpus_privacy = true;
+  } catch (e) {
+    live.corpus_privacy_error = e.message;
+  }
+  try {
+    const cons = await publicCore.callTool("cogentia_consolidate", {});
+    assert.equal(cons.protocol, "cogentia.consolidate.v1");
+    assert.equal(cons.read_only, true);
+    live.consolidate = true;
+  } catch (e) {
+    live.consolidate_error = e.message;
+  }
+  try {
+    const emb = await publicCore.callTool("cogentia_embeddings_status");
+    assert.equal(emb.protocol, "cogentia.embeddings_status.v1");
+    assert.ok(!("path" in emb) || emb.path == null);
+    live.embeddings_status = true;
+  } catch (e) {
+    live.embeddings_status_error = e.message;
+  }
 
   try {
     const schema = await publicCore.callTool("cogentia_continuation_schema");

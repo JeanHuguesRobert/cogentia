@@ -7,7 +7,7 @@ import {
 } from "./cogentia-mcp-envelope.js";
 
 export const SERVER_NAME = "cogentia-mcp";
-export const SERVER_VERSION = "0.5.0";
+export const SERVER_VERSION = "0.6.0";
 export { ENVELOPE_KIND, wrapToolResult, wrapToolError, extractCorrelation };
 
 /** Default negotiated version for legacy initialize when client omits one. */
@@ -79,6 +79,63 @@ export const TOOLS = [
     name: "cogentia_continuation_schema",
     description:
       "Return the cogentia.continuation.v2 operational schema (fields, liveness, CLI/MCP commands). Use before preparing a step_result.",
+    inputSchema: { type: "object", properties: {}, additionalProperties: false },
+  },
+  {
+    name: "cogentia_docs_inspect",
+    description:
+      "Inspect one corpus document by repo:path or repo/path.md (public metadata only). Use after search/pack to understand a document before citing or editing.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        ref: {
+          type: "string",
+          minLength: 1,
+          description: "Document reference, e.g. cogentia/research/cognitive_packets.md",
+        },
+      },
+      required: ["ref"],
+      additionalProperties: false,
+    },
+  },
+  {
+    name: "cogentia_docs_gaps",
+    description:
+      "List documents not referenced by their repo research/index.md (navigation gaps). Read-only publish-readiness signal.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        repo: { type: "string", description: "Repository name or 'all' (default all)" },
+        limit: { type: "integer", minimum: 1, maximum: 500, description: "Max gaps to return (default 100)" },
+      },
+      additionalProperties: false,
+    },
+  },
+  {
+    name: "cogentia_corpus_privacy",
+    description:
+      "Read-only privacy check: public views that may leak private/confidential material. Returns codes and paths, not secret bodies.",
+    inputSchema: { type: "object", properties: {}, additionalProperties: false },
+  },
+  {
+    name: "cogentia_consolidate",
+    description:
+      "Read-only publish-readiness consolidate report (gaps, privacy, active continuations). Default quick mode for MCP; not the weekly write pipeline.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        full: {
+          type: "boolean",
+          description: "If true, run full audit including git/worktree (slower). Default false (quick).",
+        },
+      },
+      additionalProperties: false,
+    },
+  },
+  {
+    name: "cogentia_embeddings_status",
+    description:
+      "Read-only embedding cache status (built, count, model, dimensions, providers). Does not index, store, or call providers.",
     inputSchema: { type: "object", properties: {}, additionalProperties: false },
   },
   {
@@ -329,7 +386,8 @@ function parseAllowMutate(env, view) {
 
 export function createMcpCore(env = process.env) {
   const daemonUrl = validateDaemonUrl(env.COGENTIA_DAEMON_URL || "http://127.0.0.1:8790");
-  const requestTimeoutMs = boundedInteger(env.COGENTIA_MCP_TIMEOUT_MS, 15000, 1000, 120000);
+  // Phase 4 inventory-backed tools need headroom; Fracta Guide already uses 90s.
+  const requestTimeoutMs = boundedInteger(env.COGENTIA_MCP_TIMEOUT_MS, 60000, 1000, 120000);
   const requestedView = String(env.COGENTIA_MCP_VIEW || "public").toLowerCase();
   const adminToken = String(env.COGENTIA_ADMIN_TOKEN || "");
   const view = requestedView === "full" && adminToken ? "full" : "public";
@@ -576,6 +634,22 @@ export function createMcpCore(env = process.env) {
       }
       case "cogentia_continuation_schema":
         return daemonGet("/api/cli/continuation/schema", {});
+      case "cogentia_docs_inspect":
+        requireString(args.ref, "ref");
+        return daemonGet("/api/cli/docs/inspect", { ref: args.ref });
+      case "cogentia_docs_gaps":
+        return daemonGet("/api/cli/docs/gaps", {
+          repo: typeof args.repo === "string" ? args.repo : "all",
+          limit: boundedOptional(args.limit, 1, 500) || 100,
+        });
+      case "cogentia_corpus_privacy":
+        return daemonGet("/api/cli/corpus/privacy", {});
+      case "cogentia_consolidate":
+        return daemonGet("/api/cli/corpus/consolidate", {
+          full: args.full === true ? "1" : undefined,
+        });
+      case "cogentia_embeddings_status":
+        return daemonGet("/api/cli/embeddings/status", {});
       case "cogentia_views_snapshot":
         return daemonGet("/api/views/snapshot", {
           limit: boundedOptional(args.limit, 1, 40),

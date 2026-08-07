@@ -310,9 +310,12 @@ Transmission is **by copy** in the JSON-RPC tool result. Clients must not requir
 
 Promote additional `cogentia.js` verbs only when an agent workflow fails without them:
 
-1. `docs inspect` / gaps (navigation).
-2. `corpus privacy` / `consolidate` (publish readiness, read-only).
-3. embeddings status (not full index mutate over public MCP).
+1. [x] `docs inspect` / gaps (navigation) — `cogentia_docs_inspect`, `cogentia_docs_gaps`
+2. [x] `corpus privacy` / `consolidate` (publish readiness, read-only) — `cogentia_corpus_privacy`, `cogentia_consolidate` (quick default)
+3. [x] embeddings status (not full index mutate over public MCP) — `cogentia_embeddings_status`
+
+- [x] Public daemon routes + MCP tools (mcp **0.6.0**, ~26 public tools)
+- [ ] Deploy Phase 4 to Fracta
 
 Avoid dumping the entire CLI into tools/list (context window poison). Prefer **few sharp tools** + skills.
 
