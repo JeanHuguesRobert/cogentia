@@ -2702,13 +2702,43 @@ function daemonCliDocsInspect(ctx, url) {
 function daemonCliCorpusPrivacy(ctx) {
   const inventory = getDaemonInventory(ctx);
   const privacy = verifyPrivacy(ctx, inventory, PUBLIC_VIEW);
-  // Do not expand leak bodies; paths/codes only for public MCP.
-  const leaks = (privacy.leaks || []).map((leak) => ({
-    repo: leak.repo || leak.document?.repo || null,
-    path: leak.path || leak.document?.rel || leak.rel || null,
-    code: leak.code || leak.rule || leak.kind || null,
-    message: leak.message || leak.reason || null,
-  }));
+  // Map verifyPrivacy shapes (public_to_private_link | generated_private_reference).
+  // Paths only — no private file bodies.
+  const leaks = (privacy.leaks || []).map((leak) => {
+    if (leak.type === "public_to_private_link") {
+      const from = String(leak.from || "");
+      return {
+        type: leak.type,
+        repo: from.split("/")[0] || null,
+        path: from || null,
+        target: leak.to || null,
+        code: leak.type,
+        message: `public link ${leak.from} -> ${leak.to}`,
+        url: leak.url || null,
+      };
+    }
+    if (leak.type === "generated_private_reference") {
+      const file = String(leak.file || "");
+      return {
+        type: leak.type,
+        repo: file.split("/")[0] || null,
+        path: file || null,
+        target: leak.target || null,
+        code: leak.type,
+        message: `generated ${leak.file} mentions ${leak.target}`,
+        url: null,
+      };
+    }
+    return {
+      type: leak.type || "unknown",
+      repo: leak.repo || null,
+      path: leak.path || leak.rel || null,
+      target: leak.to || leak.target || null,
+      code: leak.type || leak.code || null,
+      message: leak.message || JSON.stringify(leak).slice(0, 200),
+      url: leak.url || null,
+    };
+  });
   return {
     ok: leaks.length === 0,
     protocol: "cogentia.corpus_privacy.v1",
@@ -2717,6 +2747,7 @@ function daemonCliCorpusPrivacy(ctx) {
     leak_count: leaks.length,
     leaks: leaks.slice(0, 100),
     truncated: leaks.length > 100,
+    summary: privacy.summary || null,
     skill_hint: leaks.length ? "agentic-change" : null,
   };
 }
@@ -8240,6 +8271,10 @@ function filterDocuments(docs, filter, inventory = null) {
 }
 
 function isIndexGap(d) {
+  // Runtime / sync caches are not navigation gaps (agentic-change: reduce false debt).
+  const rel = String(d.rel || "").replace(/\\/g, "/");
+  if (rel.includes("/.cogentia/") || rel.startsWith(".cogentia/")) return false;
+  if (rel.includes("/node_modules/") || rel.startsWith("node_modules/")) return false;
   return !d.index.ignored
     && d.role !== "alias"
     && d.role !== "index"
