@@ -218,10 +218,17 @@ const PUBLIC_DAEMON_GET_ROUTES = new Set([
   "/api/cli/corpus/consolidate",
   "/api/cli/embeddings/status",
 ]);
-// Public POST stays read-oriented. Continuation mutate routes require full view (P3).
+// Public POST stays read-oriented. Continuation mutate routes require full view (P3)
+// or loopback from the co-located MCP adapter (JHN/admin gated in mcp-cogentia).
 const PUBLIC_DAEMON_POST_ROUTES = new Set([
   "/v1/chat/completions",
   "/api/context/pack-batch",
+]);
+/** Mutate ops: never public on the network; allowed from loopback only (MCP on :8791). */
+const DAEMON_LOOPBACK_POST_ROUTES = new Set([
+  "/api/ops/continuations/resolve",
+  "/api/ops/continuations/emit",
+  "/api/ops/issues/sync",
 ]);
 const daemonRateLimits = new Map();
 /** Short TTL inventory cache for MCP/daemon CLI read paths (buildInventory is expensive). */
@@ -2440,6 +2447,14 @@ function daemonPublicApiBlocked(req, url, view) {
   if (req.method === "OPTIONS") return false;
   if (!url.pathname.startsWith("/api/")) return false;
   if (req.method === "POST" && PUBLIC_DAEMON_POST_ROUTES.has(url.pathname)) return false;
+  // Co-located MCP (127.0.0.1) may hit mutate routes; MCP enforces JHN/admin attestation.
+  if (
+    req.method === "POST"
+    && daemonIsLoopback(req)
+    && DAEMON_LOOPBACK_POST_ROUTES.has(url.pathname)
+  ) {
+    return false;
+  }
   return req.method !== "GET" || !PUBLIC_DAEMON_GET_ROUTES.has(url.pathname);
 }
 
