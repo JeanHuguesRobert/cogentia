@@ -269,6 +269,7 @@ MCP must not become the only door; it is the **interop** door.
 - [x] Gate mutate tools by tier (`COGENTIA_MCP_ALLOW_MUTATE=1` + full view + admin token); remove fake public mutate stubs; real emit/resolve on full-view daemon POST.
 - [x] Align `docs/cogentia-mcp.md` tool table with `TOOLS[]`.
 - [x] Tests: extend `test-mcp-dual-era.js` with mutate gate + continuation list/inspect live optional.
+- [x] **Initial production deploy: Fracta VPS** (`git pull` → `5401f0e`, restart `cogentia.service` + `mcp-cogentia.service`). Public `https://cogentia.fractavolta.com/mcp` serves P0/P1 with mutate hidden (17 tools).
 
 **Exit:** `continuation-handling` skill can be executed **only via MCP tools** against a real continuation id (when daemon holds continuations).
 
@@ -317,6 +318,51 @@ Per #82: sandbox only (`sandbox/mcp-2026-cognitive-packet/`). No production clai
 
 ---
 
+## Deployment topology
+
+### Initial production: Fracta VPS (current)
+
+```text
+Internet
+  → Caddy cogentia.fractavolta.com
+  → mcp-cogentia.service  127.0.0.1:8791  (node scripts/cogentia-mcp-http.js)
+  → cogentia.service      127.0.0.1:8790  (node scripts/cogentia.js daemon)
+```
+
+- Working tree: `/srv/cogentia/repos/cogentia` (track `main`).
+- Public env: `COGENTIA_MCP_VIEW=public` (no `COGENTIA_MCP_ALLOW_MUTATE`).
+- Deploy procedure (operator):
+
+```bash
+ssh fracta
+cd /srv/cogentia/repos/cogentia
+git pull --ff-only origin main
+sudo systemctl restart cogentia.service mcp-cogentia.service
+curl -fsS http://127.0.0.1:8790/api/context/health?quick=1
+curl -fsS http://127.0.0.1:8791/health
+# External: tools/list should show 17 tools; mutate absent; emit → tier_forbidden
+```
+
+Operium owns ops doctrine (`operium/docs/fracta-trust-perimeter.md`); this path only names the app surface.
+
+### Later: Netlify Edge (Deno) — not yet
+
+A second public or edge projection of the **same** thin MCP contract may run as a **Netlify Edge Function** on the Deno runtime (precedent: Ophelia / legacy agent edge handlers under Inseme Netlify), for:
+
+- lower latency near clients;
+- burst scaling without VPS RAM pressure;
+- optional per-site front doors (e.g. JHN) that still call Fracta daemon or a hosted gateway.
+
+Constraints when that path is opened:
+
+1. Edge code remains an **adapter** — no SQLite, no provider keys, no corpus rewrite.
+2. Prefer **proxy** to Fracta `:8790`/trusted gateway or a minimal edge-safe tool subset (P0 only) if loopback daemon is unreachable from the edge.
+3. Reuse dual-era JSON-RPC handlers from `cogentia-mcp-core.js` via a Deno-compatible port or HTTP hop to the Node MCP service — do not fork semantics.
+4. Mutate tools stay **off** on any anonymous edge URL.
+5. Fracta VPS remains the **system of record** for daemon state and continuations until an explicit multi-region design says otherwise.
+
+Track as a follow-up issue when Ophelia-style Deno edge scaffolding is reused; do not block Fracta P1 on Edge.
+
 ## Non-goals
 
 - Replacing `cogentia.js` CLI with MCP-only workflows.
@@ -324,6 +370,7 @@ Per #82: sandbox only (`sandbox/mcp-2026-cognitive-packet/`). No production clai
 - Claiming universal Skills-over-MCP support.
 - Giving remote agents P3 mutate by default.
 - Collapsing COP Acts into MCP tool success codes.
+- Premature Netlify Edge rewrite of the Fracta daemon.
 
 ---
 

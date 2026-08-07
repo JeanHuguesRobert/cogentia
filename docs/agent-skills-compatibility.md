@@ -27,7 +27,8 @@ Claims about client support must cite a row below. Do not invent universal Skill
 | 2026-08-07 | dual-era + live daemon | same + `127.0.0.1:8790` | local daemon | legacy + modern | **verified** | health, continuation_list (count≥0), continuation_inspect on alive id; protocol `cogentia.continuation.v2` |
 | 2026-08-07 | MCP core smoke | health → snapshot → search → continuation_list | local daemon | — | **verified** | search hits=3 for `continuation`; skill_hint=`continuation-handling` |
 | 2026-08-07 | Public Fracta HTTP | production | `https://cogentia.fractavolta.com/mcp` | legacy initialize `2025-11-25` | **verified** | initialize + serverInfo `cogentia-mcp` 0.3.0 |
-| 2026-08-07 | Grok Build | session config | project + workspace `.grok/config.toml` | dual-era via stdio/HTTP | **partial** | config added (`cogentia` stdio, `cogentia_public` HTTP); tools appear after session reload / `grok mcp doctor` |
+| 2026-08-07 | Fracta VPS P1 deploy | `5401f0e` on `/srv/cogentia/repos/cogentia` | `https://cogentia.fractavolta.com/mcp` + loopback `:8790`/`:8791` | dual-era | **verified** | `tools/list` count=**17**; mutate tools hidden; emit → `tier_forbidden`; real `continuation_list` (alive count on host); services `cogentia`+`mcp-cogentia` restarted |
+| 2026-08-07 | Grok Build | session config | project + workspace `.grok/config.toml` | dual-era via stdio/HTTP | **partial** → prefer retest after Fracta deploy | local stdio + public HTTP; public now matches P1 tier |
 
 ## Local Agent Skills discovery
 
