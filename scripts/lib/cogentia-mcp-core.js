@@ -5,10 +5,12 @@ import {
   wrapToolError,
   ENVELOPE_KIND,
 } from "./cogentia-mcp-envelope.js";
+import { resolveCallerAuth } from "./cogentia-mcp-auth.js";
 
 export const SERVER_NAME = "cogentia-mcp";
-export const SERVER_VERSION = "0.6.0";
+export const SERVER_VERSION = "0.7.0";
 export { ENVELOPE_KIND, wrapToolResult, wrapToolError, extractCorrelation };
+export { resolveCallerAuth } from "./cogentia-mcp-auth.js";
 
 /** Default negotiated version for legacy initialize when client omits one. */
 export const PROTOCOL_VERSION = "2025-11-25";
@@ -391,8 +393,12 @@ export function createMcpCore(env = process.env) {
   const requestedView = String(env.COGENTIA_MCP_VIEW || "public").toLowerCase();
   const adminToken = String(env.COGENTIA_ADMIN_TOKEN || "");
   const view = requestedView === "full" && adminToken ? "full" : "public";
-  const allowMutate = parseAllowMutate(env, view);
-  const tools = TOOLS.filter((tool) => allowMutate || !MUTATE_TOOLS.has(tool.name));
+  const staticAllowMutate = parseAllowMutate(env, view);
+  const jhnMutateConfigured =
+    /^(1|true|yes)$/i.test(String(env.COGENTIA_MCP_JHN_MUTATE || "").trim()) &&
+    Boolean(String(env.COGENTIA_MCP_JHN_TOKEN || "").trim());
+  /** Default tool list (anonymous). Per-request list may include mutate for JHN. */
+  const tools = TOOLS.filter((tool) => staticAllowMutate || !MUTATE_TOOLS.has(tool.name));
 
   const instructions =
     "Playbook: (1) cogentia_agent_start and/or cogentia_views_snapshot — situation and load.mode_recommendation. " +
@@ -402,7 +408,9 @@ export function createMcpCore(env = process.env) {
     "Continuations are non-blocking judgment boundaries, not crashes. Skills recommend methods and never grant authority. " +
     "MCP is a thin dual-era adapter (legacy initialize + modern server/discover); corpus truth lives in cogentia.js / the daemon. " +
     "Tool results are packet-shaped (cogentia.mcp_tool_result/v1): read citations, continuation, skill_hint, error_class, correlation — no MCP session affinity required. " +
-    `Active view=${view}; mutate_tools=${allowMutate ? "enabled" : "disabled"}.`;
+    "Agent JHN (or agent:jhn.subagent:*) may use mutate tools when the server enables JHN attestation " +
+    "(Authorization Bearer + X-Cogentia-Actor / _meta cogentia.actor); anonymous public remains read-only. " +
+    `Active view=${view}; mutate_static=${staticAllowMutate ? "on" : "off"}; jhn_mutate_configured=${jhnMutateConfigured ? "yes" : "no"}.`;
 
   function serverInfo() {
     return { name: SERVER_NAME, version: SERVER_VERSION };
@@ -429,6 +437,22 @@ export function createMcpCore(env = process.env) {
 
   /** Modern discovery (2026-07-28 server/discover). */
   function discover() {
+    let experimental = {
+      skills_over_mcp: "experimental",
+      skills_delivery: "tools_first",
+      jhn_mutate: jhnMutateConfigured ? "token_attested" : "disabled",
+      note: "Not a claim of universal MCP Skills marketplace support (#82).",
+    };
+    try {
+      const inv = listAgentSkills({ env, repoRoot: resolveRepoRoot(env) });
+      experimental = {
+        ...experimental,
+        skills_count: inv.count,
+        skill_ids: (inv.skills || []).map((s) => s.id),
+      };
+    } catch {
+      experimental.skills_count = 0;
+    }
     return {
       resultType: "complete",
       supportedVersions: [...SUPPORTED_PROTOCOLS],
@@ -436,8 +460,10 @@ export function createMcpCore(env = process.env) {
       instructions,
       ttlMs: 3_600_000,
       cacheScope: "public",
+      experimental,
       _meta: {
         [MCP_META.serverInfo]: serverInfo(),
+        experimental,
       },
     };
   }
@@ -494,10 +520,24 @@ export function createMcpCore(env = process.env) {
     };
   }
 
-  function toolsListResult(era) {
+  function toolsForAuth(auth) {
+    const allow = auth?.allowMutate === true;
+    return TOOLS.filter((tool) => allow || !MUTATE_TOOLS.has(tool.name));
+  }
+
+  function toolsListResult(era, auth) {
+    const callerTools = toolsForAuth(auth);
     const base = {
-      tools,
-      _cogentia: { view, allowMutate, mutate_tools: [...MUTATE_TOOLS] },
+      tools: callerTools,
+      _cogentia: {
+        view,
+        allowMutate: auth?.allowMutate === true,
+        auth: auth?.auth || "none",
+        actor: auth?.actor || null,
+        mutate_tools: [...MUTATE_TOOLS],
+        jhn_mutate_configured: jhnMutateConfigured,
+        auth_reason: auth?.reason || null,
+      },
     };
     if (era === "modern") {
       return { ...base, ttlMs: 3_600_000, cacheScope: view === "public" ? "public" : "private" };
@@ -505,18 +545,34 @@ export function createMcpCore(env = process.env) {
     return base;
   }
 
-  function requireMutate(name) {
-    if (allowMutate) return;
+  function requireMutate(name, auth) {
+    if (auth?.allowMutate) return;
     const err = new Error(
-      `tier_forbidden: ${name} requires COGENTIA_MCP_VIEW=full, COGENTIA_ADMIN_TOKEN, and COGENTIA_MCP_ALLOW_MUTATE=1`
+      `tier_forbidden: ${name} requires either (full view + admin + COGENTIA_MCP_ALLOW_MUTATE=1) ` +
+        `or Agent JHN attestation (COGENTIA_MCP_JHN_MUTATE=1 + token + actor agent:jhn|agent:jhn.subagent:*). ` +
+        `reason=${auth?.reason || "none"}`
     );
     err.error_class = "tier_forbidden";
     throw err;
   }
 
+  function callerAuthFor(message, transport = {}) {
+    const paramsMeta = message?.params && typeof message.params === "object" ? message.params._meta : null;
+    const topMeta = message && typeof message._meta === "object" ? message._meta : null;
+    const meta = (paramsMeta && typeof paramsMeta === "object" ? paramsMeta : null)
+      || (topMeta && typeof topMeta === "object" ? topMeta : null)
+      || {};
+    return resolveCallerAuth(env, {
+      meta,
+      headers: transport.headers || {},
+      view,
+      staticAllowMutate,
+    });
+  }
+
   /**
    * @param {object} message
-   * @param {{ protocolVersionHeader?: string, mcpMethod?: string, mcpName?: string }} [transport]
+   * @param {{ protocolVersionHeader?: string, mcpMethod?: string, mcpName?: string, headers?: object }} [transport]
    */
   async function handleJsonRpc(message, transport = {}) {
     if (!message || message.jsonrpc !== "2.0" || typeof message.method !== "string") {
@@ -543,6 +599,8 @@ export function createMcpCore(env = process.env) {
       return unsupportedProtocolVersionError(message.id, resolved.protocolVersion);
     }
 
+    const auth = callerAuthFor(message, transport);
+
     try {
       if (message.method === "initialize") {
         return jsonRpcResult(message.id, initialize(message.params || {}));
@@ -556,7 +614,7 @@ export function createMcpCore(env = process.env) {
         return jsonRpcResult(message.id, result);
       }
       if (message.method === "tools/list") {
-        let result = toolsListResult(resolved.era);
+        let result = toolsListResult(resolved.era, auth);
         if (resolved.era === "modern") result = attachModernMeta(result, resolved.protocolVersion);
         return jsonRpcResult(message.id, result);
       }
@@ -567,12 +625,17 @@ export function createMcpCore(env = process.env) {
         const ctx = {
           protocolEra: resolved.era === "modern" ? "modern" : "legacy",
           view,
-          allowMutate,
+          allowMutate: auth.allowMutate,
           correlation,
         };
         try {
-          const data = await callTool(name, args, { correlation });
+          const data = await callTool(name, args, { correlation, auth });
           const envelope = wrapToolResult(name, data, ctx);
+          if (auth.auth === "jhn") {
+            envelope.actor = auth.actor;
+            envelope.mandate_hint = "resolve_under_mandate";
+            envelope.auth = "jhn";
+          }
           let result = mcpToolResult(envelope);
           if (resolved.era === "modern") {
             result = attachModernMeta(result, resolved.protocolVersion);
@@ -608,8 +671,13 @@ export function createMcpCore(env = process.env) {
   }
 
   async function callTool(name, args = {}, callOpts = {}) {
-    if (MUTATE_TOOLS.has(name)) requireMutate(name);
-    if (!tools.some((t) => t.name === name) && !MUTATE_TOOLS.has(name)) {
+    const auth = callOpts.auth || {
+      allowMutate: staticAllowMutate,
+      auth: staticAllowMutate ? "admin" : "none",
+      reason: staticAllowMutate ? "admin_full_view_mutate" : "none",
+    };
+    if (MUTATE_TOOLS.has(name)) requireMutate(name, auth);
+    if (!TOOLS.some((t) => t.name === name)) {
       throw new Error(`Unknown tool: ${name}`);
     }
     switch (name) {
@@ -738,6 +806,9 @@ export function createMcpCore(env = process.env) {
           decision: args.decision,
           reason: args.reason || "",
           correlation: callOpts.correlation || undefined,
+          actor: callOpts.auth?.actor || undefined,
+          mandate_ref: callOpts.auth?.mandate_ref || undefined,
+          auth: callOpts.auth?.auth || undefined,
         });
       case "cogentia_continuation_emit":
         requireString(args.question, "question");
@@ -746,11 +817,16 @@ export function createMcpCore(env = process.env) {
           subject: args.subject || "general",
           kind: args.kind || "decision",
           correlation: callOpts.correlation || undefined,
+          actor: callOpts.auth?.actor || undefined,
+          mandate_ref: callOpts.auth?.mandate_ref || undefined,
+          auth: callOpts.auth?.auth || undefined,
         });
       case "cogentia_issues_sync":
         return daemonPost("/api/ops/issues/sync", {
           repo: args.repo || "all",
           state: enumOptional(args.state, ["open", "closed", "all"], "state") || "open",
+          actor: callOpts.auth?.actor || undefined,
+          auth: callOpts.auth?.auth || undefined,
         });
       case "cogentia_consolidate_weekly":
         return daemonGet("/api/ops/emit-static", {});
@@ -822,7 +898,8 @@ export function createMcpCore(env = process.env) {
     daemonUrl,
     requestTimeoutMs,
     view,
-    allowMutate,
+    allowMutate: staticAllowMutate,
+    jhnMutateConfigured,
     tools,
     allTools: TOOLS,
     mutateTools: [...MUTATE_TOOLS],
@@ -884,6 +961,8 @@ export function transportFromHttpRequest(req) {
     protocolVersionHeader: get("mcp-protocol-version") || get("MCP-Protocol-Version"),
     mcpMethod: get("mcp-method") || get("Mcp-Method"),
     mcpName: get("mcp-name") || get("Mcp-Name"),
+    // Pass raw headers for JHN / admin attestation (Authorization, X-Cogentia-Actor, …).
+    headers,
   };
 }
 

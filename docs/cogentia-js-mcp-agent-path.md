@@ -319,9 +319,38 @@ Promote additional `cogentia.js` verbs only when an agent workflow fails without
 
 Avoid dumping the entire CLI into tools/list (context window poison). Prefer **few sharp tools** + skills.
 
-### Phase 5 — Experimental Skills-over-MCP
+### Phase 5 — Experimental Skills-over-MCP + JHN write path
 
-Per #82: sandbox only (`sandbox/mcp-2026-cognitive-packet/`). No production claim until client evidence matrix is filled. Local `SKILL.md` + `skill_get` remains the portable baseline.
+- [x] Sandbox harness `sandbox/mcp-2026-cognitive-packet/` (skills-discover, packet-envelope, jhn-mutate-attestation).
+- [x] `server/discover` exposes **experimental** skills inventory (tools-first; not a marketplace claim).
+- [x] **Agent JHN attested mutate**: when `COGENTIA_MCP_JHN_MUTATE=1` and `COGENTIA_MCP_JHN_TOKEN` match the request, and actor is `agent:jhn` or `agent:jhn.subagent:*` (header or `_meta`), mutate tools appear and may run. Anonymous public remains read-only.
+- [x] Skills still do not grant authority — only token + actor attestation does.
+- [ ] Operator: set Fracta `mcp-cogentia` drop-in with JHN token when ready (not in git).
+
+```bash
+# sandbox
+npm run test:mcp-sandbox
+# or
+node sandbox/mcp-2026-cognitive-packet/index.js run all
+```
+
+JHN client attestation (HTTP):
+
+```http
+Authorization: Bearer <COGENTIA_MCP_JHN_TOKEN>
+X-Cogentia-Actor: agent:jhn
+X-Cogentia-Mandate: mandate:jhn:…
+```
+
+Or JSON-RPC `_meta`:
+
+```json
+{
+  "cogentia.actor": "agent:jhn.subagent:elf-1",
+  "cogentia.jhn_token": "<token>",
+  "cogentia.mandate_ref": "mandate:jhn:…"
+}
+```
 
 ---
 

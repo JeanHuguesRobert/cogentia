@@ -84,15 +84,26 @@ Canonical list lives in `scripts/lib/cogentia-mcp-core.js` (`TOOLS`). Summary:
 | `cogentia_continuation_emit` / `_resolve` | Write continuations | **P3 mutate** |
 | `cogentia_issues_sync` | Sync GitHub issue packets | **P3 mutate** |
 
-**Mutate tools** appear in `tools/list` only when:
+**Mutate tools** appear in `tools/list` and may run when **either**:
 
 ```text
+# A) Admin full view
 COGENTIA_MCP_VIEW=full
 COGENTIA_ADMIN_TOKEN=<set>
 COGENTIA_MCP_ALLOW_MUTATE=1
 ```
 
-Otherwise `tools/call` returns `tier_forbidden`. Public Fracta stays read-only.
+```text
+# B) Agent JHN (or subagent) — Phase 5
+COGENTIA_MCP_JHN_MUTATE=1
+COGENTIA_MCP_JHN_TOKEN=<shared secret on server>
+# Request: Authorization: Bearer <token>
+#          X-Cogentia-Actor: agent:jhn | agent:jhn.subagent:<id>
+```
+
+Otherwise `tools/call` returns `tier_forbidden`. Anonymous public Fracta stays read-only until JHN (or admin) attests.
+
+Experimental Skills discovery: `server/discover` → `experimental.skill_ids` (tools-first; see sandbox).
 
 Prefer `cogentia_views_snapshot` at session start, `cogentia_context_pack` for a broad corpus question, `cogentia_search` while exploring, and `cogentia_get_lines` before asserting a specific passage. For suspended work use `continuation_list` → `continuation_inspect` and skill `continuation-handling`. Responses preserve `source_id` citations produced by the gateway.
 

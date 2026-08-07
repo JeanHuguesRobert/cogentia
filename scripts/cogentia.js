@@ -2923,6 +2923,9 @@ function daemonHttpContinuationEmit(ctx, body = {}) {
   if (body.correlation && typeof body.correlation === "object") {
     context.correlation = body.correlation;
   }
+  if (body.actor) context.actor = body.actor;
+  if (body.mandate_ref) context.mandate_ref = body.mandate_ref;
+  if (body.auth) context.auth = body.auth;
   const result = emitContinuation(ctx, {
     kind,
     title: body.title || kind,

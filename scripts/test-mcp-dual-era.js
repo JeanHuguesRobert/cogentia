@@ -37,7 +37,8 @@ const init = await publicCore.handleJsonRpc({
 });
 assert.equal(init.result.protocolVersion, PROTOCOL_VERSION);
 assert.equal(init.result.serverInfo.name, "cogentia-mcp");
-assert.match(init.result.instructions, /mutate_tools=disabled/);
+assert.match(init.result.instructions, /mutate_static=off/);
+assert.match(init.result.instructions, /jhn_mutate_configured=/);
 
 const discover = await publicCore.handleJsonRpc({
   jsonrpc: "2.0",
@@ -53,6 +54,8 @@ const discover = await publicCore.handleJsonRpc({
 assert.equal(discover.result.resultType, "complete");
 assert.ok(discover.result.supportedVersions.includes(PROTOCOL_VERSION_MODERN));
 assert.ok(discover.result.supportedVersions.includes(PROTOCOL_VERSION));
+assert.ok(discover.result.experimental?.skills_count >= 1);
+assert.equal(discover.result.experimental?.skills_delivery, "tools_first");
 
 const modernList = await publicCore.handleJsonRpc(
   {
@@ -173,6 +176,34 @@ assert.equal(mutateDenied.result.isError, true);
 assert.match(mutateDenied.result.content[0].text, /tier_forbidden/);
 assert.equal(mutateDenied.result.structuredContent?.error_class, "tier_forbidden");
 assert.equal(mutateDenied.result.structuredContent?.ok, false);
+
+// Phase 5: JHN attestation unlocks mutate tools without full admin view
+const jhnCore = createMcpCore({
+  COGENTIA_DAEMON_URL: "http://127.0.0.1:8790",
+  COGENTIA_MCP_VIEW: "public",
+  COGENTIA_MCP_JHN_MUTATE: "1",
+  COGENTIA_MCP_JHN_TOKEN: "test-jhn-token",
+});
+assert.equal(jhnCore.jhnMutateConfigured, true);
+const jhnList = await jhnCore.handleJsonRpc(
+  {
+    jsonrpc: "2.0",
+    id: 62,
+    method: "tools/list",
+    params: {
+      _meta: {
+        "cogentia.actor": "agent:jhn.subagent:elf-a",
+        "cogentia.jhn_token": "test-jhn-token",
+      },
+    },
+  },
+  { headers: { authorization: "Bearer test-jhn-token", "x-cogentia-actor": "agent:jhn.subagent:elf-a" } }
+);
+const jhnNames = jhnList.result.tools.map((t) => t.name);
+for (const name of MUTATE_TOOLS) {
+  assert.ok(jhnNames.includes(name), `JHN tools/list must include ${name}`);
+}
+assert.equal(jhnList.result._cogentia.auth, "jhn");
 
 const fullCore = createMcpCore({
   COGENTIA_DAEMON_URL: "http://127.0.0.1:8790",

@@ -48,3 +48,5 @@ scripts/tmp_*.mjs
 **/agent-jhn-whatsapp/traces/
 **/agent-jhn-whatsapp/sent-ledger.jsonl
 **/agent-jhn-whatsapp/env.local
+
+sandbox/mcp-2026-cognitive-packet/.traces/

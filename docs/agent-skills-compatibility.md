@@ -32,6 +32,8 @@ Claims about client support must cite a row below. Do not invent universal Skill
 | 2026-08-07 | Fracta VPS Phase 2 | `c3fd685` mcp 0.4.0 | `https://cogentia.fractavolta.com/mcp` | dual-era | **verified** | tools=21; skill_get meta; agent/start quick; instructions playbook |
 | 2026-08-07 | Phase 3 envelope | `test-mcp-dual-era.js` + local daemon | in-process / `:8790` | modern+legacy | **verified** | `cogentia.mcp_tool_result/v1`; citations; continuation pointer; traceparent correlation; tier_forbidden envelope |
 | 2026-08-07 | Phase 4 CLI parity | `66e1056` mcp 0.6.0 | local + Fracta | dual-era | **verified** | 26 tools; docs_gaps/privacy/consolidate/embeddings_status; inventory cache + 60s MCP timeout |
+| 2026-08-07 | Phase 5 sandbox | `npm run test:mcp-sandbox` | in-process | dual-era | **verified** | skills-discover; packet-envelope; jhn-mutate-attestation (anon deny + JHN/subagent allow) |
+| 2026-08-07 | Phase 5 unit | `test-mcp-dual-era.js` | in-process | dual-era | **verified** | discover.experimental skills; JHN tools/list unlock with token+actor |
 | 2026-08-07 | Grok Build | session config | project + workspace `.grok/config.toml` | dual-era via stdio/HTTP | **partial** → prefer retest after Fracta deploy | local stdio + public HTTP; public now matches P1 tier |
 
 ## Local Agent Skills discovery
