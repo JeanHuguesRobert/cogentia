@@ -57,17 +57,40 @@ administrative configuration and remains subject to daemon authorization.
 
 ## Tools
 
-- `cogentia_views_snapshot`: **session bootstrap** — compact cockpit (corpus signals, alive continuations, open issues summary, key Views Store URLs). Prefer first. Implemented by `cogentia.js views snapshot` via daemon `GET /api/views/snapshot`.
-- `cogentia_search`: short exploratory search with citable results.
-- `cogentia_context_pack`: bounded context for a broad question.
-- `cogentia_get_lines`: focused verification of a cited line interval.
-- `cogentia_explain`: deterministic retrieval signals and current limits.
-- `cogentia_health`: daemon and index availability.
-- `cogentia_issue_graph`: read-only issue ↔ document graph (when available).
+Canonical list lives in `scripts/lib/cogentia-mcp-core.js` (`TOOLS`). Summary:
 
-Prefer `cogentia_views_snapshot` at session start, `cogentia_context_pack` for a broad corpus question, `cogentia_search` while exploring, and `cogentia_get_lines` before asserting a specific passage. Responses preserve `source_id` citations produced by the gateway.
+| Tool | Role | Tier |
+|------|------|------|
+| `cogentia_views_snapshot` | Session cockpit (prefer first) | P0 |
+| `cogentia_health` | Daemon / index health | P0 |
+| `cogentia_search` | Citable corpus search | P0 |
+| `cogentia_context_pack` / `_batch` | Budgeted context packs | P0 |
+| `cogentia_get_lines` | Cite line intervals | P0 |
+| `cogentia_explain` | Retrieval signals | P0 |
+| `cogentia_guide_resolve` | Concept / Guide resolve | P0 |
+| `cogentia_issue_graph` / `cogentia_issues_list` | Issue graph (read) | P0/P1 |
+| `cogentia_continuation_list` | Real continuation queue (`GET /api/cli/continuation/list`) | P1 |
+| `cogentia_continuation_inspect` | Full/sanitized continuation object | P1 |
+| `cogentia_git_verify` | Repo git verify (`GET /api/cli/git/verify`) | P1 |
+| `cogentia_emit_static` / `publish_registry` / `nav_benchmark` | Ops projections | P2 |
+| `cogentia_continuation_emit` / `_resolve` | Write continuations | **P3 mutate** |
+| `cogentia_issues_sync` | Sync GitHub issue packets | **P3 mutate** |
 
-The adapter stays **thin**: no SQLite, no provider keys, no publish/rebuild. Logic lives in `cogentia.js` / the daemon.
+**Mutate tools** appear in `tools/list` only when:
+
+```text
+COGENTIA_MCP_VIEW=full
+COGENTIA_ADMIN_TOKEN=<set>
+COGENTIA_MCP_ALLOW_MUTATE=1
+```
+
+Otherwise `tools/call` returns `tier_forbidden`. Public Fracta stays read-only.
+
+Prefer `cogentia_views_snapshot` at session start, `cogentia_context_pack` for a broad corpus question, `cogentia_search` while exploring, and `cogentia_get_lines` before asserting a specific passage. For suspended work use `continuation_list` → `continuation_inspect` and skill `continuation-handling`. Responses preserve `source_id` citations produced by the gateway.
+
+The adapter stays **thin**: no SQLite, no provider keys, no index rebuild. Logic lives in `cogentia.js` / the daemon.
+
+Path design: [cogentia-js-mcp-agent-path.md](cogentia-js-mcp-agent-path.md). Client evidence: [agent-skills-compatibility.md](agent-skills-compatibility.md).
 
 ## Protocol and errors
 

@@ -201,13 +201,15 @@ const PUBLIC_DAEMON_GET_ROUTES = new Set([
   "/api/context/lines",
   "/api/context/explain",
   "/api/agent/health",
+  // P1 read: real continuation list/inspect + git verify (stripped for public view)
+  "/api/cli/continuation/list",
+  "/api/cli/continuation/inspect",
+  "/api/cli/git/verify",
 ]);
+// Public POST stays read-oriented. Continuation mutate routes require full view (P3).
 const PUBLIC_DAEMON_POST_ROUTES = new Set([
   "/v1/chat/completions",
   "/api/context/pack-batch",
-  "/api/ops/continuations/resolve",
-  "/api/ops/continuations/emit",
-  "/api/ops/issues/sync",
 ]);
 const daemonRateLimits = new Map();
 
@@ -1604,11 +1606,16 @@ async function handleDaemonRequest(req, res) {
   }
   if (req.method === "GET" && url.pathname === "/api/cli/continuation/list") {
     const effectiveCtx = ctx || loadContext();
-    return daemonJson(res, 200, daemonCliContinuationList(effectiveCtx, url));
+    const result = daemonCliContinuationList(effectiveCtx, url);
+    return daemonJson(res, result.ok === false ? 400 : 200, result);
   }
   if (req.method === "GET" && url.pathname === "/api/cli/continuation/inspect") {
     const effectiveCtx = ctx || loadContext();
-    return daemonJson(res, 200, daemonCliContinuationInspect(effectiveCtx, url));
+    const result = daemonCliContinuationInspect(effectiveCtx, url, view);
+    const status = result.ok === false
+      ? (result.error === "missing_id" ? 400 : 404)
+      : 200;
+    return daemonJson(res, status, result);
   }
   if (req.method === "GET" && url.pathname === "/api/index/status") {
     const effectiveCtx = ctx || loadContext();
@@ -1658,16 +1665,29 @@ async function handleDaemonRequest(req, res) {
     return daemonJson(res, 200, { ok: true, benchmark: bench });
   }
   if (req.method === "POST" && url.pathname === "/api/ops/continuations/resolve") {
+    // Full-view only (removed from PUBLIC_DAEMON_POST_ROUTES). Real CLI resolve path.
     const body = await parseJsonBody(req);
-    return daemonJson(res, 200, { ok: true, id: body?.id, status: "resolved", decision: body?.decision });
+    const effectiveCtx = ctx || loadContext();
+    return daemonJson(res, ...daemonHttpContinuationResolve(effectiveCtx, body));
   }
   if (req.method === "POST" && url.pathname === "/api/ops/continuations/emit") {
     const body = await parseJsonBody(req);
-    return daemonJson(res, 200, { ok: true, id: `ctn_${Date.now().toString(36)}`, status: "active", question: body?.question });
+    const effectiveCtx = ctx || loadContext();
+    return daemonJson(res, ...daemonHttpContinuationEmit(effectiveCtx, body));
   }
   if (req.method === "POST" && url.pathname === "/api/ops/issues/sync") {
     const body = await parseJsonBody(req);
-    return daemonJson(res, 200, { ok: true, repo: body?.repo || "all", synced: true });
+    const effectiveCtx = ctx || loadContext();
+    try {
+      const result = syncIssuePackets(effectiveCtx, {
+        repoArg: body?.repo || "all",
+        state: body?.state || "all",
+        limit: boundedInteger(body?.limit, 100, 1, 100),
+      });
+      return daemonJson(res, 200, { ok: true, ...result });
+    } catch (error) {
+      return daemonJson(res, 500, { ok: false, error: "issues_sync_failed", message: error.message });
+    }
   }
   if (req.method === "GET" && url.pathname === "/api/context/search") {
     const effectiveCtx = ctx || loadContext();
@@ -2539,22 +2559,138 @@ function daemonCliContinuationList(ctx, url) {
     .sort(compareContinuations);
   return {
     ok: true,
+    protocol: CONTINUATION_PROTOCOL,
     status: statusRaw,
     filter,
     kind: kind || 'all',
+    count: continuations.length,
     continuations: continuations.map(stripContinuationBody),
+    skill_hint: "continuation-handling",
   };
 }
 
-function daemonCliContinuationInspect(ctx, url) {
+function daemonCliContinuationInspect(ctx, url, view = PUBLIC_VIEW) {
   const id = url.searchParams.get('id') || '';
   if (!id) return { ok: false, error: 'missing_id' };
   try {
     const continuation = loadContinuation(ctx, id);
-    return { ok: true, continuation };
+    return {
+      ok: true,
+      protocol: CONTINUATION_PROTOCOL,
+      continuation: sanitizeContinuationForView(continuation, view),
+      skill_hint: "continuation-handling",
+      mandate_hint: continuation.status === "active" ? "resolve_under_mandate" : "read_public",
+    };
   } catch (e) {
     return { ok: false, error: 'continuation_not_found', message: e.message, id };
   }
+}
+
+/** Public inspect: enough for judgment prep; drop local paths / full requester env. */
+function sanitizeContinuationForView(continuation, view) {
+  if (view === FULL_VIEW) return continuation;
+  const base = stripContinuationBody(continuation);
+  const ctxIn = continuation.context && typeof continuation.context === "object"
+    ? continuation.context
+    : {};
+  const contextOut = {};
+  for (const [k, v] of Object.entries(ctxIn)) {
+    if (/cwd|token|secret|key|home|password|authorization/i.test(k)) continue;
+    if (typeof v === "string" || typeof v === "number" || typeof v === "boolean" || v == null) {
+      contextOut[k] = v;
+    }
+    if (Object.keys(contextOut).length >= 24) break;
+  }
+  return {
+    ...base,
+    protocol: continuation.protocol || CONTINUATION_PROTOCOL,
+    expected_response: continuation.expected_response || null,
+    context: contextOut,
+    history: Array.isArray(continuation.history)
+      ? continuation.history.map((h) => ({
+          at: h.at,
+          event: h.event,
+          decision: h.decision,
+          reason: h.reason,
+        }))
+      : [],
+    resolution: continuation.resolution
+      ? {
+          resolved_at: continuation.resolution.resolved_at,
+          cancelled_at: continuation.resolution.cancelled_at,
+          decision: continuation.resolution.decision,
+          reason: continuation.resolution.reason,
+        }
+      : null,
+  };
+}
+
+function daemonHttpContinuationResolve(ctx, body = {}) {
+  const id = String(body.id || body.continuation_id || "").trim();
+  if (!id) return [400, { ok: false, error: "missing_id" }];
+  let continuation;
+  try {
+    continuation = loadContinuation(ctx, id);
+  } catch (e) {
+    return [404, { ok: false, error: "continuation_not_found", message: e.message, id }];
+  }
+  if (continuation.status !== "active") {
+    return [409, {
+      ok: false,
+      error: "continuation_not_active",
+      id,
+      status: continuation.status,
+    }];
+  }
+  const payload = body.payload && typeof body.payload === "object" ? body.payload : {};
+  const decision = String(body.decision || payload.decision || payload.chosen_alternative || payload.status || "").trim();
+  const reason = String(body.reason || payload.reason || payload.summary || "").trim();
+  if (!decision) return [400, { ok: false, error: "missing_decision", id }];
+  const now = new Date().toISOString();
+  continuation.status = "resolved";
+  continuation.updated_at = now;
+  continuation.resolution = {
+    resolved_at: now,
+    decision,
+    reason,
+    payload,
+  };
+  continuation.history = Array.isArray(continuation.history) ? continuation.history : [];
+  continuation.history.push({ at: now, event: "resolved", decision, reason });
+  saveContinuation(ctx, continuation);
+  return [200, {
+    ok: true,
+    protocol: CONTINUATION_PROTOCOL,
+    continuation: stripContinuationBody(continuation),
+    skill_hint: "continuation-handling",
+  }];
+}
+
+function daemonHttpContinuationEmit(ctx, body = {}) {
+  const question = String(body.question || "").trim();
+  if (!question) return [400, { ok: false, error: "missing_question" }];
+  const kind = String(body.kind || "decision").trim() || "decision";
+  const subjectRaw = body.subject;
+  const subject = typeof subjectRaw === "string"
+    ? { topic: subjectRaw }
+    : (subjectRaw && typeof subjectRaw === "object" ? subjectRaw : { topic: "general" });
+  const result = emitContinuation(ctx, {
+    kind,
+    title: body.title || kind,
+    question,
+    priority: Number(body.priority || 0) || 0,
+    dedupe_key: body.dedupe_key || "",
+    subject,
+    context: body.context && typeof body.context === "object" ? body.context : {},
+    expected_response: body.expected_response,
+  });
+  return [result.ok === false ? 500 : 200, {
+    ok: true,
+    created: result.created,
+    protocol: CONTINUATION_PROTOCOL,
+    continuation: stripContinuationBody(result.continuation),
+    skill_hint: "continuation-handling",
+  }];
 }
 // plugin registry and dispatcher are implemented in scripts/daemon_plugins/registry.js
 function cmdIssues(sub) {

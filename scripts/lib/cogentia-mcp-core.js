@@ -25,6 +25,13 @@ export const MCP_META = {
 /** JSON-RPC error code for UnsupportedProtocolVersionError (MCP 2026-07-28). */
 export const ERR_UNSUPPORTED_PROTOCOL_VERSION = -32022;
 
+/** Tools that write continuations/issues — require full view + COGENTIA_MCP_ALLOW_MUTATE=1. */
+export const MUTATE_TOOLS = new Set([
+  "cogentia_continuation_resolve",
+  "cogentia_continuation_emit",
+  "cogentia_issues_sync",
+]);
+
 export const TOOLS = [
   {
     name: "cogentia_views_snapshot",
@@ -266,19 +273,30 @@ export const TOOLS = [
   },
 ];
 
+function parseAllowMutate(env, view) {
+  if (view !== "full") return false;
+  const raw = String(env.COGENTIA_MCP_ALLOW_MUTATE || "").trim().toLowerCase();
+  return raw === "1" || raw === "true" || raw === "yes";
+}
+
 export function createMcpCore(env = process.env) {
   const daemonUrl = validateDaemonUrl(env.COGENTIA_DAEMON_URL || "http://127.0.0.1:8790");
   const requestTimeoutMs = boundedInteger(env.COGENTIA_MCP_TIMEOUT_MS, 15000, 1000, 120000);
   const requestedView = String(env.COGENTIA_MCP_VIEW || "public").toLowerCase();
   const adminToken = String(env.COGENTIA_ADMIN_TOKEN || "");
   const view = requestedView === "full" && adminToken ? "full" : "public";
+  const allowMutate = parseAllowMutate(env, view);
+  const tools = TOOLS.filter((tool) => allowMutate || !MUTATE_TOOLS.has(tool.name));
 
   const instructions =
     "Start with cogentia_views_snapshot for situational awareness (load level/mode, alive work, corpus debt, view URLs). " +
     "Read load.level and load.mode_recommendation before suggesting batch/sleep work. " +
-    "When a Cogentia tool emits a continuation, it is non-blocking; it is up to the tool user / client agent to inspect, decide, and act upon that continuation using cogentia_continuation_resolve or cogentia_continuation_emit. " +
+    "When a Cogentia tool emits a continuation, it is non-blocking; inspect with cogentia_continuation_list / cogentia_continuation_inspect. " +
+    "Resolve or emit only when the server exposes mutate tools (full view + COGENTIA_MCP_ALLOW_MUTATE=1) and mandate allows. " +
+    "Method package: skills/continuation-handling (local SKILL.md). " +
     "Use context packs for broad questions, search for exploration, and get_lines for targeted verification. Cite source_id values. " +
-    "MCP is a thin dual-era adapter (legacy initialize + modern server/discover); corpus truth lives in cogentia.js / the daemon.";
+    "MCP is a thin dual-era adapter (legacy initialize + modern server/discover); corpus truth lives in cogentia.js / the daemon. " +
+    `Active view=${view}; mutate_tools=${allowMutate ? "enabled" : "disabled"}.`;
 
   function serverInfo() {
     return { name: SERVER_NAME, version: SERVER_VERSION };
@@ -371,11 +389,23 @@ export function createMcpCore(env = process.env) {
   }
 
   function toolsListResult(era) {
-    const base = { tools: TOOLS };
+    const base = {
+      tools,
+      _cogentia: { view, allowMutate, mutate_tools: [...MUTATE_TOOLS] },
+    };
     if (era === "modern") {
-      return { ...base, ttlMs: 3_600_000, cacheScope: "public" };
+      return { ...base, ttlMs: 3_600_000, cacheScope: view === "public" ? "public" : "private" };
     }
     return base;
+  }
+
+  function requireMutate(name) {
+    if (allowMutate) return;
+    const err = new Error(
+      `tier_forbidden: ${name} requires COGENTIA_MCP_VIEW=full, COGENTIA_ADMIN_TOKEN, and COGENTIA_MCP_ALLOW_MUTATE=1`
+    );
+    err.error_class = "tier_forbidden";
+    throw err;
   }
 
   /**
@@ -442,6 +472,10 @@ export function createMcpCore(env = process.env) {
   }
 
   async function callTool(name, args = {}) {
+    if (MUTATE_TOOLS.has(name)) requireMutate(name);
+    if (!tools.some((t) => t.name === name) && !MUTATE_TOOLS.has(name)) {
+      throw new Error(`Unknown tool: ${name}`);
+    }
     switch (name) {
       case "cogentia_views_snapshot":
         return daemonGet("/api/views/snapshot", {
@@ -504,9 +538,17 @@ export function createMcpCore(env = process.env) {
       case "cogentia_nav_benchmark":
         return daemonGet("/api/ops/nav-benchmark", {});
       case "cogentia_git_verify":
-        return daemonGet("/api/views/snapshot", { include_remote: "0" });
+        return daemonGet("/api/cli/git/verify", {});
       case "cogentia_continuation_list":
-        return daemonGet("/api/views/snapshot", { limit: 20 });
+        return daemonGet("/api/cli/continuation/list", {
+          status:
+            enumOptional(
+              args.status,
+              ["alive", "hibernating", "closed", "active", "resolved", "cancelled", "dormant", "all"],
+              "status"
+            ) || "alive",
+          kind: typeof args.kind === "string" ? args.kind : undefined,
+        });
       case "cogentia_issues_list":
         return daemonGet("/api/issues/graph", {
           repo: args.repo || "all",
@@ -514,7 +556,7 @@ export function createMcpCore(env = process.env) {
         });
       case "cogentia_continuation_inspect":
         requireString(args.id, "id");
-        return daemonGet("/api/views/snapshot", { ctn_id: args.id });
+        return daemonGet("/api/cli/continuation/inspect", { id: args.id });
       case "cogentia_continuation_resolve":
         requireString(args.id, "id");
         requireString(args.decision, "decision");
@@ -605,7 +647,10 @@ export function createMcpCore(env = process.env) {
     daemonUrl,
     requestTimeoutMs,
     view,
-    tools: TOOLS,
+    allowMutate,
+    tools,
+    allTools: TOOLS,
+    mutateTools: [...MUTATE_TOOLS],
     initialize,
     discover,
     resolveRequestProtocol,

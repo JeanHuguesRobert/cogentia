@@ -1,0 +1,23 @@
+# Project-scoped MCP: Cogentia (P0 public HTTP + P1 local stdio when daemon is up).
+# Docs: docs/cogentia-js-mcp-agent-path.md , docs/connect-mcp-clients.md
+#
+# Local P1 (preferred when daemon runs on :8790):
+#   cd cogentia
+#   node scripts/cogentia.js daemon --host 127.0.0.1 --port 8790
+#
+# Mutate tools (emit/resolve/sync) stay OFF here. Enable only in a private user
+# config with COGENTIA_MCP_VIEW=full, COGENTIA_ADMIN_TOKEN, COGENTIA_MCP_ALLOW_MUTATE=1.
+
+[mcp_servers.cogentia]
+command = "node"
+args = ["scripts/cogentia-mcp.js"]
+# Relative args resolve from this project root when Grok starts the server.
+env = { COGENTIA_DAEMON_URL = "http://127.0.0.1:8790", COGENTIA_MCP_VIEW = "public" }
+enabled = true
+startup_timeout_sec = 45
+tool_timeout_sec = 120
+
+# P0 read-only fallback — works without a local daemon.
+[mcp_servers.cogentia_public]
+url = "https://cogentia.fractavolta.com/mcp"
+enabled = true

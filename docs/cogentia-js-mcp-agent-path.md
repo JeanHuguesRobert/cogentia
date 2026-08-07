@@ -256,21 +256,21 @@ MCP must not become the only door; it is the **interop** door.
 
 ### Phase 0 — Connect & evidence (1 session)
 
-- [ ] Add Grok MCP config (user or `cogentia/.grok/config.toml`) for local stdio and/or public HTTP.
-- [ ] Start local daemon; `grok mcp doctor cogentia` (or equivalent) green.
-- [ ] Smoke from this agent: health → views_snapshot → search → get_lines.
-- [ ] Record evidence row in `docs/agent-skills-compatibility.md` (create if missing): client, version, era, pass/fail.
+- [x] Add Grok MCP config (`cogentia/.grok/config.toml` + workspace `.grok/config.toml`) for local stdio and public HTTP.
+- [ ] Start local daemon; `grok mcp doctor cogentia` green (operator / session reload).
+- [ ] Smoke from a Grok session with tools loaded: health → views_snapshot → search → get_lines.
+- [x] Record evidence rows in `docs/agent-skills-compatibility.md`.
 
-**Exit:** Grok (and one other client if available) can call Cogentia tools without shell hacks.
+**Exit:** Grok (and one other client if available) can call Cogentia tools without shell hacks. Config is in place; live tool injection needs session reload.
 
 ### Phase 1 — Honest tools (fix the façade)
 
-- [ ] Wire `continuation_list` / `inspect` to real daemon/CLI-backed routes (add routes if missing: e.g. `GET /api/ops/continuations`, `GET /api/ops/continuations/:id`).
-- [ ] Gate mutate tools by tier (`COGENTIA_MCP_ALLOW_MUTATE=1` + full view).
-- [ ] Align `docs/cogentia-mcp.md` tool table with `TOOLS[]`.
-- [ ] Tests: extend `test-mcp-dual-era.js` with continuation list/inspect fixtures.
+- [x] Wire `continuation_list` / `inspect` to real daemon routes (`GET /api/cli/continuation/list|inspect`); public-safe sanitization on inspect.
+- [x] Gate mutate tools by tier (`COGENTIA_MCP_ALLOW_MUTATE=1` + full view + admin token); remove fake public mutate stubs; real emit/resolve on full-view daemon POST.
+- [x] Align `docs/cogentia-mcp.md` tool table with `TOOLS[]`.
+- [x] Tests: extend `test-mcp-dual-era.js` with mutate gate + continuation list/inspect live optional.
 
-**Exit:** `continuation-handling` skill can be executed **only via MCP tools** against a real continuation id.
+**Exit:** `continuation-handling` skill can be executed **only via MCP tools** against a real continuation id (when daemon holds continuations).
 
 ### Phase 2 — Agent bootstrap completeness
 

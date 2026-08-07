@@ -109,6 +109,30 @@ back to keyword search. Replay fulfilled semantic continuations with
 `embeddings search-with <result.json> --cache-query` or
 `embeddings cache-query <result.json>`.
 
+## Grok Build configuration
+
+Project and workspace configs are checked in:
+
+- `cogentia/.grok/config.toml` — when the Grok cwd is the cogentia repo
+- workspace `C:\tweesic\.grok\config.toml` — absolute path to `cogentia-mcp.js`
+
+Both register:
+
+| Server | Transport | Role |
+|--------|-----------|------|
+| `cogentia` | stdio → local daemon `:8790` | P0/P1 when daemon is up |
+| `cogentia_public` | HTTP `https://cogentia.fractavolta.com/mcp` | P0 without local daemon |
+
+```powershell
+cd C:\tweesic\cogentia
+$env:COGENTIA_REGISTRY = 'C:\tweesic\JeanHuguesRobert\.cogentia.json'
+node scripts\cogentia.js daemon --host 127.0.0.1 --port 8790
+# other terminal:
+grok mcp doctor cogentia
+```
+
+Reload the Grok session (or restart) so tools appear. Mutate tools stay off unless you add a private user override with full view + admin token + `COGENTIA_MCP_ALLOW_MUTATE=1`.
+
 ## Local Codex configuration
 
 For Codex or another stdio MCP client, configure the MCP server as a local
