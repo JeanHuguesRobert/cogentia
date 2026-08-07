@@ -287,7 +287,7 @@ MCP must not become the only door; it is the **interop** door.
 - [x] Normalize tool responses with `citations` / `continuation` / `skill_hint` / `error_class` (`cogentia.mcp_tool_result/v1`).
 - [x] Propagate W3C `traceparent` from request `_meta` into result `correlation` / modern result `_meta`; attach to continuation emit/resolve history when present.
 - [x] Document mapping to Cognitive Packet envelope fields (below + `scripts/lib/cogentia-mcp-envelope.js`).
-- [ ] Deploy Phase 3 to Fracta (mcp **0.5.0**).
+- [x] Deploy Phase 3 to Fracta (mcp **0.5.0**).
 
 **Exit:** multi-hop handoff works across two different MCP clients without shared session.
 
