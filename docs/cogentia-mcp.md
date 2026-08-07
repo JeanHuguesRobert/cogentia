@@ -69,6 +69,7 @@ Canonical list lives in `scripts/lib/cogentia-mcp-core.js` (`TOOLS`). Summary:
 | `cogentia_corpus_privacy` | Public-view privacy leak report (paths/codes) | P4 |
 | `cogentia_consolidate` | Read-only publish-readiness (quick default) | P4 |
 | `cogentia_embeddings_status` | Embedding cache status (no index/store) | P4 |
+| `cogentia_mandate_attenuation_check` | Parent vs child mandate PASS/WARN/FAIL (#79) | P4/skill |
 | `cogentia_views_snapshot` | Session cockpit (prefer first) | P0 |
 | `cogentia_health` | Daemon / index health | P0 |
 | `cogentia_search` | Citable corpus search | P0 |

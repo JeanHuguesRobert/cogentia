@@ -1,0 +1,20 @@
+{
+  "parent": {
+    "effects": ["read", "prepare"],
+    "repos": ["inseme"],
+    "disclosure": ["public"],
+    "prohibitions": ["publish"],
+    "budget": { "tokens": 10000 },
+    "risk_ceiling": "low",
+    "may_disclose": false
+  },
+  "child": {
+    "effects": ["read", "prepare", "resolve", "publish"],
+    "repos": ["inseme", "operium"],
+    "disclosure": ["public", "private"],
+    "prohibitions": [],
+    "budget": { "tokens": 50000 },
+    "risk_ceiling": "high",
+    "may_disclose": true
+  }
+}

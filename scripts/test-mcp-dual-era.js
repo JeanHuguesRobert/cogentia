@@ -81,6 +81,7 @@ assert.ok(publicNames.includes("cogentia_docs_gaps"));
 assert.ok(publicNames.includes("cogentia_corpus_privacy"));
 assert.ok(publicNames.includes("cogentia_consolidate"));
 assert.ok(publicNames.includes("cogentia_embeddings_status"));
+assert.ok(publicNames.includes("cogentia_mandate_attenuation_check"));
 assert.match(init.result.instructions, /cogentia_skill_get/);
 for (const name of MUTATE_TOOLS) {
   assert.ok(!publicNames.includes(name), `public tools/list must hide ${name}`);

@@ -1,0 +1,32 @@
+{
+  "parent": {
+    "effects": ["read", "prepare", "resolve"],
+    "repos": ["inseme", "cogentia"],
+    "paths": ["apps/platform/**", "skills/**"],
+    "disclosure": ["public", "restricted"],
+    "prohibitions": ["publish", "send_email"],
+    "obligations": ["trace_material"],
+    "budget": { "tokens": 100000 },
+    "delegation_depth": 2,
+    "risk_ceiling": "medium",
+    "trace_minimum": "material",
+    "valid_until": "2026-12-31T00:00:00Z",
+    "may_disclose": false,
+    "may_resolve_without_mandate": false
+  },
+  "child": {
+    "effects": ["read", "prepare"],
+    "repos": ["inseme"],
+    "paths": ["apps/platform/mcp/**"],
+    "disclosure": ["public"],
+    "prohibitions": ["publish", "send_email", "force_push"],
+    "obligations": ["trace_material", "human_review"],
+    "budget": { "tokens": 20000 },
+    "delegation_depth": 1,
+    "risk_ceiling": "low",
+    "trace_minimum": "full",
+    "valid_until": "2026-09-01T00:00:00Z",
+    "may_disclose": false,
+    "may_resolve_without_mandate": false
+  }
+}

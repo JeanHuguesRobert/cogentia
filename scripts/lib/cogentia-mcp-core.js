@@ -6,9 +6,10 @@ import {
   ENVELOPE_KIND,
 } from "./cogentia-mcp-envelope.js";
 import { resolveCallerAuth } from "./cogentia-mcp-auth.js";
+import { compareMandateAttenuation } from "./mandate-attenuation.js";
 
 export const SERVER_NAME = "cogentia-mcp";
-export const SERVER_VERSION = "0.7.0";
+export const SERVER_VERSION = "0.8.0";
 export { ENVELOPE_KIND, wrapToolResult, wrapToolError, extractCorrelation };
 export { resolveCallerAuth } from "./cogentia-mcp-auth.js";
 
@@ -139,6 +140,28 @@ export const TOOLS = [
     description:
       "Read-only embedding cache status (built, count, model, dimensions, providers). Does not index, store, or call providers.",
     inputSchema: { type: "object", properties: {}, additionalProperties: false },
+  },
+  {
+    name: "cogentia_mandate_attenuation_check",
+    description:
+      "Compare parent vs child mandate/constraint envelopes for monotonic attenuation (#79). Returns PASS/WARN/FAIL per dimension. Read-only; does not grant authority. Use before subagent spawn or nested resolve.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        parent: {
+          type: "object",
+          description: "Parent constraint envelope (effects, repos, budget, …)",
+          additionalProperties: true,
+        },
+        child: {
+          type: "object",
+          description: "Child constraint envelope (must not widen parent)",
+          additionalProperties: true,
+        },
+      },
+      required: ["parent", "child"],
+      additionalProperties: false,
+    },
   },
   {
     name: "cogentia_views_snapshot",
@@ -718,6 +741,15 @@ export function createMcpCore(env = process.env) {
         });
       case "cogentia_embeddings_status":
         return daemonGet("/api/cli/embeddings/status", {});
+      case "cogentia_mandate_attenuation_check": {
+        if (!args.parent || typeof args.parent !== "object") {
+          throw new Error("parent must be an object");
+        }
+        if (!args.child || typeof args.child !== "object") {
+          throw new Error("child must be an object");
+        }
+        return compareMandateAttenuation(args.parent, args.child);
+      }
       case "cogentia_views_snapshot":
         return daemonGet("/api/views/snapshot", {
           limit: boundedOptional(args.limit, 1, 40),
