@@ -106,6 +106,8 @@ node scripts/cogentia.js corpus apply              # apply the fresh generated p
 node scripts/cogentia.js corpus verify --strict    # verify generated views, gaps and drift
 node scripts/cogentia.js git noise plan            # classify scratch/noise vs substantive edits
 node scripts/cogentia.js corpus commit-generated   # dry-run generated-only commit plan
+node scripts/cogentia.js issues export            # export consolidated GitHub issues markdown
+node scripts/generate-fix-bugs-first-dashboard.js # generate Fix Bugs First JSON & Markdown dashboard
 node scripts/cogentia.js index estimate            # estimate corpus size, policy, vectors and spend
 node scripts/cogentia.js index rebuild --json      # rebuild the local SQLite/FTS5 cache
 node scripts/cogentia.js daemon --port 8790        # start the local daemon
