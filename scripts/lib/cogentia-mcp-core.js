@@ -1,5 +1,7 @@
+import { listAgentSkills, getAgentSkill, resolveRepoRoot } from "./cogentia-agent-skills.js";
+
 export const SERVER_NAME = "cogentia-mcp";
-export const SERVER_VERSION = "0.3.0";
+export const SERVER_VERSION = "0.4.0";
 
 /** Default negotiated version for legacy initialize when client omits one. */
 export const PROTOCOL_VERSION = "2025-11-25";
@@ -33,6 +35,45 @@ export const MUTATE_TOOLS = new Set([
 ]);
 
 export const TOOLS = [
+  {
+    name: "cogentia_agent_start",
+    description:
+      "Cold-start bootstrap for agents: read-only session summary (repos, gaps, privacy signals, active continuations, recommended next actions, MCP playbook). Prefer with or just after views_snapshot. Does not write the corpus.",
+    inputSchema: { type: "object", properties: {}, additionalProperties: false },
+  },
+  {
+    name: "cogentia_skill_list",
+    description:
+      "List portable Agent Skills (method packages) available from this Cogentia deployment. Skills recommend procedures; they do not grant mandate. Use skill_get for full SKILL.md body.",
+    inputSchema: { type: "object", properties: {}, additionalProperties: false },
+  },
+  {
+    name: "cogentia_skill_get",
+    description:
+      "Fetch one Agent Skill by id or slug (e.g. continuation-handling or cogentia.continuation-handling). Returns metadata and markdown body so clients without a git checkout can learn the method.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        id: {
+          type: "string",
+          minLength: 1,
+          description: "Skill slug or cogentia.<slug> id",
+        },
+        meta_only: {
+          type: "boolean",
+          description: "If true, omit markdown body (metadata only).",
+        },
+      },
+      required: ["id"],
+      additionalProperties: false,
+    },
+  },
+  {
+    name: "cogentia_continuation_schema",
+    description:
+      "Return the cogentia.continuation.v2 operational schema (fields, liveness, CLI/MCP commands). Use before preparing a step_result.",
+    inputSchema: { type: "object", properties: {}, additionalProperties: false },
+  },
   {
     name: "cogentia_views_snapshot",
     description:
@@ -289,12 +330,11 @@ export function createMcpCore(env = process.env) {
   const tools = TOOLS.filter((tool) => allowMutate || !MUTATE_TOOLS.has(tool.name));
 
   const instructions =
-    "Start with cogentia_views_snapshot for situational awareness (load level/mode, alive work, corpus debt, view URLs). " +
-    "Read load.level and load.mode_recommendation before suggesting batch/sleep work. " +
-    "When a Cogentia tool emits a continuation, it is non-blocking; inspect with cogentia_continuation_list / cogentia_continuation_inspect. " +
-    "Resolve or emit only when the server exposes mutate tools (full view + COGENTIA_MCP_ALLOW_MUTATE=1) and mandate allows. " +
-    "Method package: skills/continuation-handling (local SKILL.md). " +
-    "Use context packs for broad questions, search for exploration, and get_lines for targeted verification. Cite source_id values. " +
+    "Playbook: (1) cogentia_agent_start and/or cogentia_views_snapshot — situation and load.mode_recommendation. " +
+    "(2) cogentia_skill_list then cogentia_skill_get id=continuation-handling when work may suspend or resume. " +
+    "(3) cogentia_context_pack or cogentia_search for evidence; cogentia_get_lines before asserting a passage; always cite source_id. " +
+    "(4) cogentia_continuation_schema if preparing a step_result; list → inspect → prepare; resolve/emit only if mutate tools are listed and mandate allows. " +
+    "Continuations are non-blocking judgment boundaries, not crashes. Skills recommend methods and never grant authority. " +
     "MCP is a thin dual-era adapter (legacy initialize + modern server/discover); corpus truth lives in cogentia.js / the daemon. " +
     `Active view=${view}; mutate_tools=${allowMutate ? "enabled" : "disabled"}.`;
 
@@ -477,6 +517,27 @@ export function createMcpCore(env = process.env) {
       throw new Error(`Unknown tool: ${name}`);
     }
     switch (name) {
+      case "cogentia_agent_start":
+        return daemonGet("/api/agent/start", {});
+      case "cogentia_skill_list":
+        // Package-local skills (COGENTIA_REPO_ROOT or repo containing this package).
+        return listAgentSkills({ env, repoRoot: resolveRepoRoot(env) });
+      case "cogentia_skill_get": {
+        requireString(args.id, "id");
+        const skill = getAgentSkill(args.id, {
+          env,
+          repoRoot: resolveRepoRoot(env),
+          includeBody: args.meta_only !== true,
+        });
+        if (!skill.ok) {
+          const err = new Error(skill.error || "skill_not_found");
+          err.error_class = skill.error || "skill_not_found";
+          throw err;
+        }
+        return skill;
+      }
+      case "cogentia_continuation_schema":
+        return daemonGet("/api/cli/continuation/schema", {});
       case "cogentia_views_snapshot":
         return daemonGet("/api/views/snapshot", {
           limit: boundedOptional(args.limit, 1, 40),

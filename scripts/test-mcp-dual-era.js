@@ -61,11 +61,32 @@ const publicNames = modernList.result.tools.map((t) => t.name);
 assert.ok(publicNames.includes("cogentia_continuation_list"));
 assert.ok(publicNames.includes("cogentia_continuation_inspect"));
 assert.ok(publicNames.includes("cogentia_health"));
+assert.ok(publicNames.includes("cogentia_agent_start"));
+assert.ok(publicNames.includes("cogentia_skill_list"));
+assert.ok(publicNames.includes("cogentia_skill_get"));
+assert.ok(publicNames.includes("cogentia_continuation_schema"));
+assert.match(init.result.instructions, /cogentia_skill_get/);
 for (const name of MUTATE_TOOLS) {
   assert.ok(!publicNames.includes(name), `public tools/list must hide ${name}`);
 }
 assert.equal(modernList.result._cogentia?.allowMutate, false);
 assert.equal(modernList.result._cogentia?.view, "public");
+
+// Phase 2 skills (no daemon required)
+const skillList = await publicCore.callTool("cogentia_skill_list");
+assert.equal(skillList.ok, true);
+assert.ok(skillList.count >= 1);
+assert.ok(skillList.skills.some((s) => s.slug === "continuation-handling"));
+const skillGet = await publicCore.callTool("cogentia_skill_get", { id: "continuation-handling" });
+assert.equal(skillGet.ok, true);
+assert.ok(String(skillGet.body_markdown || "").includes("continuation"));
+const skillMissing = await publicCore.handleJsonRpc({
+  jsonrpc: "2.0",
+  id: 61,
+  method: "tools/call",
+  params: { name: "cogentia_skill_get", arguments: { id: "does-not-exist-skill" } },
+});
+assert.equal(skillMissing.result.isError, true);
 
 const bad = await publicCore.handleJsonRpc({
   jsonrpc: "2.0",
@@ -131,6 +152,23 @@ try {
   assert.equal(list.protocol, "cogentia.continuation.v2");
   live.continuation_list = true;
   live.continuation_count = list.count ?? list.continuations.length;
+
+  try {
+    const schema = await publicCore.callTool("cogentia_continuation_schema");
+    assert.equal(schema.ok, true);
+    assert.equal(schema.protocol, "cogentia.continuation.v2");
+    live.continuation_schema = true;
+  } catch (e) {
+    live.continuation_schema_error = e.message;
+  }
+  try {
+    const agentStart = await publicCore.callTool("cogentia_agent_start");
+    assert.equal(agentStart.protocol, "cogentia.agent_start.v1");
+    assert.ok(Array.isArray(agentStart.mcp_playbook));
+    live.agent_start = true;
+  } catch (e) {
+    live.agent_start_error = e.message;
+  }
 
   if (list.continuations.length) {
     const id = list.continuations[0].id;

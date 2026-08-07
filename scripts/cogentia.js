@@ -27,6 +27,7 @@ import { aiRouterHealth, createAiRouterClient } from "./lib/ai-router-client.js"
 import { retrievalSupabaseConfigured, retrievalSupabaseStatus } from "./lib/retrieval-supabase.js";
 import { emitStaticProjection, publishRegistry, guideResolve, runNavigationBenchmark } from "./lib/navigation.js";
 import { runWeeklyConsolidation } from "./lib/consolidation.js";
+import { listAgentSkills, getAgentSkill } from "./lib/cogentia-agent-skills.js";
 
 const COGENTIA_VERSION = "0.3.0";
 const VERSION = "2.4.0";
@@ -201,10 +202,14 @@ const PUBLIC_DAEMON_GET_ROUTES = new Set([
   "/api/context/lines",
   "/api/context/explain",
   "/api/agent/health",
-  // P1 read: real continuation list/inspect + git verify (stripped for public view)
+  "/api/agent/start",
+  // P1/P2 read: continuation + git + skills bootstrap
   "/api/cli/continuation/list",
   "/api/cli/continuation/inspect",
+  "/api/cli/continuation/schema",
   "/api/cli/git/verify",
+  "/api/cli/skills",
+  "/api/cli/skills/get",
 ]);
 // Public POST stays read-oriented. Continuation mutate routes require full view (P3).
 const PUBLIC_DAEMON_POST_ROUTES = new Set([
@@ -1249,25 +1254,50 @@ function formatAgentMandates(result) {
   return lines.join("\n");
 }
 
-function cmdAgentStart() {
-  const ctx = loadContext();
+function buildAgentStartReport(ctx, options = {}) {
+  const quick = options.quick === true;
+  const continuations = loadContinuations(ctx).filter(c => c.status === "active");
+  const mcp_playbook = [
+    "cogentia_agent_start (this)",
+    "cogentia_views_snapshot for load/mode + alive continuations",
+    "cogentia_skill_get id=continuation-handling if judgment may suspend",
+    "cogentia_context_pack / cogentia_search — cite source_id",
+    "cogentia_continuation_list → inspect → prepare step_result",
+  ];
+  if (quick) {
+    return {
+      ok: true,
+      protocol: "cogentia.agent_start.v1",
+      mode: "quick",
+      registry: path.basename(ctx.configPath || "") || "registry",
+      repos: ctx.repos.map(repo => repo.name),
+      active_continuations: continuations.length,
+      recommended_next_actions: continuations.length
+        ? [{ type: "continuation", count: continuations.length, hint: "Inspect alive continuations before new work." }]
+        : [{ type: "ok", hint: "No active continuations; proceed with pack/search." }],
+      mcp_playbook,
+      skill_hint: continuations.length ? "continuation-handling" : null,
+      note: "quick mode for MCP cold-start. Full audit: CLI `agent start` or agent/start?full=1",
+    };
+  }
   const inventory = buildInventory(ctx);
-  const plan = buildPlan(ctx, { ...planOptions(), quiet: true });
+  const plan = buildPlan(ctx, { quiet: true, ...(options.planOptions || {}) });
   const git = verifyGit(ctx);
   const worktree = classifyGitWorktree(ctx, "all");
   const privacy = verifyPrivacy(ctx, inventory, PUBLIC_VIEW);
   const gaps = visibleDocs(inventory, PUBLIC_VIEW).filter(isIndexGap);
-  const continuations = loadContinuations(ctx).filter(c => c.status === "active");
   const trail_lint = lintTrails(ctx, inventory, PUBLIC_VIEW);
   const summary = docSummary(inventory, PUBLIC_VIEW);
-  const result = {
+  return {
     ok: !plan.changes.length
       && !gaps.length
       && !privacy.leaks.length
       && !continuations.length
       && !git.some(r => r.behind || r.ahead || r.dirty_count)
       && !trail_lint.issues.length,
-    registry: ctx.configPath,
+    protocol: "cogentia.agent_start.v1",
+    mode: "full",
+    registry: path.basename(ctx.configPath || "") || "registry",
     repos: ctx.repos.map(repo => repo.name),
     documents: summary.total,
     generated_pending: plan.changes.length,
@@ -1275,10 +1305,25 @@ function cmdAgentStart() {
     privacy_leaks: privacy.leaks.length,
     active_continuations: continuations.length,
     trail_issues: trail_lint.issues.length,
-    git,
+    git: Array.isArray(git)
+      ? git.map((r) => ({
+          name: r.name,
+          branch: r.branch,
+          ahead: r.ahead,
+          behind: r.behind,
+          dirty_count: r.dirty_count,
+        }))
+      : git,
     worktree_summary: worktree.summary,
     recommended_next_actions: agentStartRecommendations({ plan, gaps, privacy, continuations, git, trail_lint, worktree }),
+    mcp_playbook,
+    skill_hint: continuations.length ? "continuation-handling" : null,
   };
+}
+
+function cmdAgentStart() {
+  const ctx = loadContext();
+  const result = buildAgentStartReport(ctx, { planOptions: planOptions(), quick: false });
   output(result, formatAgentStart(result));
 }
 
@@ -1616,6 +1661,32 @@ async function handleDaemonRequest(req, res) {
       ? (result.error === "missing_id" ? 400 : 404)
       : 200;
     return daemonJson(res, status, result);
+  }
+  if (req.method === "GET" && url.pathname === "/api/cli/continuation/schema") {
+    return daemonJson(res, 200, {
+      ok: true,
+      ...continuationSchema(),
+      skill_hint: "continuation-handling",
+      step_result_shapes: ["success", "failed", "needs_acceptance"],
+    });
+  }
+  if (req.method === "GET" && url.pathname === "/api/agent/start") {
+    const effectiveCtx = ctx || loadContext();
+    const full = parseBoolean(url.searchParams.get("full"));
+    // Default quick for MCP cold-start (full git/privacy audit is CLI or ?full=1).
+    const quick = !full;
+    try {
+      return daemonJson(res, 200, buildAgentStartReport(effectiveCtx, { quick }));
+    } catch (error) {
+      return daemonJson(res, 500, { ok: false, error: "agent_start_failed", message: error.message });
+    }
+  }
+  if (req.method === "GET" && url.pathname === "/api/cli/skills") {
+    return daemonJson(res, 200, daemonCliSkillsList());
+  }
+  if (req.method === "GET" && url.pathname === "/api/cli/skills/get") {
+    const result = daemonCliSkillsGet(url);
+    return daemonJson(res, result.ok ? 200 : (result.error === "missing_id" ? 400 : 404), result);
   }
   if (req.method === "GET" && url.pathname === "/api/index/status") {
     const effectiveCtx = ctx || loadContext();
@@ -2691,6 +2762,24 @@ function daemonHttpContinuationEmit(ctx, body = {}) {
     continuation: stripContinuationBody(result.continuation),
     skill_hint: "continuation-handling",
   }];
+}
+
+function daemonCliSkillsList() {
+  try {
+    return listAgentSkills();
+  } catch (error) {
+    return { ok: false, error: "skills_list_failed", message: error.message };
+  }
+}
+
+function daemonCliSkillsGet(url) {
+  const id = url.searchParams.get("id") || url.searchParams.get("slug") || "";
+  const includeBody = !parseBoolean(url.searchParams.get("meta_only"));
+  try {
+    return getAgentSkill(id, { includeBody });
+  } catch (error) {
+    return { ok: false, error: "skills_get_failed", message: error.message };
+  }
 }
 // plugin registry and dispatcher are implemented in scripts/daemon_plugins/registry.js
 function cmdIssues(sub) {

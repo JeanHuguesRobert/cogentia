@@ -275,9 +275,10 @@ MCP must not become the only door; it is the **interop** door.
 
 ### Phase 2 — Agent bootstrap completeness
 
-- [ ] Add `cogentia_agent_start`, `cogentia_skill_list`, `cogentia_skill_get`, `cogentia_continuation_schema`.
-- [ ] Enrich server `instructions` string: ordered playbook (snapshot → skill_get continuation-handling → search/pack → cite → continuation loop).
-- [ ] Optional: resources for `skills/*/SKILL.md` if client supports MCP resources (tools-first remains mandatory).
+- [x] Add `cogentia_agent_start`, `cogentia_skill_list`, `cogentia_skill_get`, `cogentia_continuation_schema`.
+- [x] Enrich server `instructions` string: ordered playbook (agent_start/snapshot → skill_get continuation-handling → search/pack → cite → continuation loop).
+- [x] Tools-first skill delivery (`skill_get` body); MCP resources deferred.
+- [ ] Deploy Phase 2 to Fracta VPS (restart after pull).
 
 **Exit:** cold-start agent without repo checkout can still learn continuation method over MCP (public skill text).
 
