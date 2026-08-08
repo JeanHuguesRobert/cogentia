@@ -7,7 +7,9 @@
 # Suggested split (merge into /etc/caddy/Caddyfile via Operium-governed change):
 #
 # cogentia.fractavolta.com {
-#   @mcp path /mcp /sse /tools /tools/* /guide /guide/* /ops/blackboard /ops/blackboard/* /ops/status /ops/dashboard /ops/route/* /ops/edge/* /ops/node/*
+#   @mcp path /mcp /sse /tools /tools/* /guide /guide/* /twin /twin/* /ops/blackboard /ops/blackboard/* /ops/status /ops/dashboard /ops/route/* /ops/edge/* /ops/node/*
+#   Note: /guide/v1/* (Agent JHN OpenAI Chat Completions) is covered by /guide/*
+#   Optional /twin/jhn/v1/* alias requires /twin/* in the matcher (see docs/jhn-openai-surface.md)
 #   handle @mcp {
 #     reverse_proxy 127.0.0.1:8791
 #   }

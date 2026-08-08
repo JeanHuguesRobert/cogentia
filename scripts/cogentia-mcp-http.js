@@ -38,6 +38,7 @@ import {
 import { createAgentGatewayClient } from "./lib/agent-gateway-client.js";
 import { handleOpsNodeProxyRequest } from "./lib/ona-proxy.js";
 import { handleEdgeTrapPost, handleEdgeTrapsGet } from "./lib/edge-trap-ops.js";
+import { createJhnOpenAiSurface, isTwinOpenAiPath } from "./lib/jhn-openai-surface.js";
 
 const moduleDir = path.dirname(fileURLToPath(import.meta.url));
 const fractanetDashboardPath = path.join(moduleDir, "ops", "fractanet-dashboard.html");
@@ -191,6 +192,11 @@ const allowedOrigins = String(process.env.COGENTIA_CORS_ORIGIN || "http://localh
   .map(value => value.trim())
   .filter(Boolean);
 
+/** Agent JHN OpenAI-compat surface (public + owner key). Fracta host under /guide/v1/* . */
+const jhnOpenAi = createJhnOpenAiSurface({
+  produceAnswer: produceJhnPublicAnswer,
+});
+
 const server = http.createServer(async (req, res) => {
   try {
     applyCors(req, res);
@@ -209,6 +215,20 @@ const server = http.createServer(async (req, res) => {
     if (req.method === "POST" && req.url === "/ops/edge/trap") return handleEdgeTrap(req, res);
     if (req.method === "GET" && req.url?.startsWith("/ops/edge/traps")) return handleEdgeTrapsList(req, res);
     if (req.method === "POST" && req.url === "/guide/chat") return handleGuideChat(req, res);
+    // OpenAI Chat Completions surface for Agent JHN / UX tools (see lib/jhn-openai-surface.js)
+    {
+      const pathOnly = String(req.url || "").split("?")[0];
+      if (req.method === "GET" && isTwinOpenAiPath(pathOnly) && pathOnly.endsWith("/models")) {
+        return jhnOpenAi.handleModels(req, res, sendJson);
+      }
+      if (req.method === "POST" && isTwinOpenAiPath(pathOnly) && pathOnly.endsWith("/chat/completions")) {
+        return jhnOpenAi.handleChatCompletions(req, res, {
+          sendJson,
+          readBody,
+          sendOpenAiSse,
+        });
+      }
+    }
     if (req.method === "GET" && req.url === "/sse") return sendSseInfo(req, res);
     if (req.method === "GET" && req.url === "/mcp") return sendSseInfo(req, res);
     if (req.method === "POST" && req.url === "/mcp") return handleMcpPost(req, res);
@@ -226,6 +246,8 @@ server.listen(port, host, () => {
   console.error(`Cogentia MCP HTTP server listening on ${host}:${port}`);
   console.error(`Daemon: ${core.daemonUrl.href}`);
   console.error("Endpoints: POST /mcp, GET /mcp, GET /health, GET /tools, POST /tools/{name}");
+  console.error("Guide: POST /guide/chat, GET /guide/health");
+  console.error("JHN OpenAI: GET /guide/v1/models, POST /guide/v1/chat/completions (also /twin/jhn/v1/*)");
   console.error("Blackboard: GET /ops/blackboard, POST /ops/blackboard/upsert");
   console.error("Ops: GET /ops/status, GET /ops/dashboard, POST /ops/route/action, GET /ops/node/:node_id/{status,drift,soma/object,soma/vocabulary}");
   console.error("Edge: POST /ops/edge/trap, GET /ops/edge/traps (trap-directed polling)");
@@ -561,31 +583,24 @@ async function parseUserIntent(question, history, defaultLocale = "en", options 
   return { ...local, source: local.source || "heuristic_search" };
 }
 
-async function handleGuideChat(req, res) {
-  let payload;
-  try {
-    payload = JSON.parse(await readBody(req, 65536) || "{}");
-  } catch (error) {
-    return sendJson(res, error.message === "request_body_too_large" ? 413 : 400, {
-      ok: false,
-      error: error.message === "request_body_too_large" ? "request_body_too_large" : "invalid_json",
-    });
-  }
-  const question = String(payload.question || payload.q || "").trim();
-  if (!question) return sendJson(res, 400, { ok: false, error: "missing_question" });
-  if (question.length > 1200) return sendJson(res, 413, { ok: false, error: "question_too_large" });
-
-  const defaultLocale = normalizeLocale(payload.locale);
-  const history = normalizeGuideHistory(payload.history);
+/**
+ * Shared Guide/JHN public turn (readonly corpus). Used by POST /guide/chat and OpenAI surface.
+ * @returns {Promise<{ok:boolean,status:number,body:object}>}
+ */
+async function produceGuideTurn(question, history, payload = {}, options = {}) {
+  const defaultLocale = normalizeLocale(payload.locale || options.locale);
+  const cleanHistory = normalizeGuideHistory(history);
   const chatCap = await guideChatCapability();
-
-  const intentResult = await parseUserIntent(question, history, defaultLocale, { skipLlm: !chatCap.available });
+  const intentResult = await parseUserIntent(question, cleanHistory, defaultLocale, {
+    skipLlm: !chatCap.available,
+  });
   const activeLocale = intentResult.detected_language || defaultLocale;
   const resolvedQuestion = intentResult.resolved_search_query || question;
-
-  if (guideWantsStream(req, payload)) {
-    return handleGuideChatStream(res, question, activeLocale, history, payload, intentResult, chatCap);
-  }
+  const surface =
+    options.surface ||
+    (options.model === "jhn-public" || options.model === "jhn-owner"
+      ? "jhn-public-openai"
+      : "fractavolta-public-guide");
 
   let plan, retrieval, web;
   if (intentResult.intent === "conversational") {
@@ -606,7 +621,12 @@ async function handleGuideChat(req, res) {
     const fallback = await guideFallback(
       question,
       activeLocale,
-      { ok: false, status: 503, error: "ai_router_chat_unavailable", body: { error: { type: "ai_router_chat_unavailable", message: chatCap.reason } } },
+      {
+        ok: false,
+        status: 503,
+        error: "ai_router_chat_unavailable",
+        body: { error: { type: "ai_router_chat_unavailable", message: chatCap.reason } },
+      },
       retrieval,
       web,
     );
@@ -619,14 +639,37 @@ async function handleGuideChat(req, res) {
       ].filter(Boolean);
       fallback.body.chat = { available: false, reason: chatCap.reason };
     }
-    return sendJson(res, fallback.status, fallback.body);
+    return { ok: Boolean(fallback.body?.ok), status: fallback.status, body: fallback.body };
+  }
+
+  let messages = buildGuideMessages(
+    activeLocale,
+    retrieval,
+    web,
+    cleanHistory,
+    resolvedQuestion,
+    intentResult.visitor_name,
+  );
+  if (surface === "jhn-public-openai" || options.model === "jhn-owner") {
+    messages = [
+      {
+        role: "system",
+        content: [
+          "You are Agent John (JHN), the public conversational face of the Personal Digital Twin of Jean Hugues Noël Robert.",
+          "You answer from the public Cogentia corpus only (readonly). Cite source_ids when using corpus facts.",
+          "You are not the living person; you do not invent private facts or make commitments for the principal.",
+          "Knowledge scope is at least the FractaVolta public Guide, and ideally the full public corpus about the principal's work.",
+        ].join(" "),
+      },
+      ...messages,
+    ];
   }
 
   const chatPayload = {
     model: guideModel,
     temperature: 0.2,
     max_tokens: 1200,
-    messages: buildGuideMessages(activeLocale, retrieval, web, history, resolvedQuestion, intentResult.visitor_name),
+    messages,
     cogentia: {
       repo: "all",
       mode: "hybrid",
@@ -634,18 +677,85 @@ async function handleGuideChat(req, res) {
       budget: guideBudget,
     },
     metadata: {
-      surface: "fractavolta-public-guide",
+      surface,
       locale: activeLocale,
+      access_class: options.access_class || "public",
+      openai_model: options.model || null,
     },
   };
 
   const routed = await guideSynthesisPost(chatPayload);
   if (routed.ok) {
-    return sendJson(res, 200, guideChatResponse(question, activeLocale, routed.body, retrieval, web));
+    const body = guideChatResponse(question, activeLocale, routed.body, retrieval, web);
+    body.surface = surface;
+    return { ok: true, status: 200, body };
   }
 
   const fallback = await guideFallback(question, activeLocale, routed, retrieval, web);
-  return sendJson(res, fallback.status, fallback.body);
+  return { ok: Boolean(fallback.body?.ok), status: fallback.status, body: fallback.body };
+}
+
+/** Adapter for jhn-openai-surface produceAnswer. */
+async function produceJhnPublicAnswer({ question, locale, history, access, model }) {
+  const result = await produceGuideTurn(
+    question,
+    history,
+    { locale },
+    {
+      locale,
+      model,
+      access_class: access?.access_class || "public",
+      surface: model === "fractavolta-guide" ? "fractavolta-public-guide" : "jhn-public-openai",
+    },
+  );
+  if (!result.ok || !result.body) {
+    return {
+      ok: false,
+      status: result.status || 502,
+      error: result.body?.error || result.body?.message || "twin_turn_failed",
+    };
+  }
+  return {
+    ok: true,
+    answer: result.body.answer,
+    sources: result.body.sources || [],
+    warnings: result.body.warnings || [],
+    access_class: access?.access_class,
+  };
+}
+
+async function handleGuideChat(req, res) {
+  let payload;
+  try {
+    payload = JSON.parse(await readBody(req, 65536) || "{}");
+  } catch (error) {
+    return sendJson(res, error.message === "request_body_too_large" ? 413 : 400, {
+      ok: false,
+      error: error.message === "request_body_too_large" ? "request_body_too_large" : "invalid_json",
+    });
+  }
+  const question = String(payload.question || payload.q || "").trim();
+  if (!question) return sendJson(res, 400, { ok: false, error: "missing_question" });
+  if (question.length > 1200) return sendJson(res, 413, { ok: false, error: "question_too_large" });
+
+  const history = normalizeGuideHistory(payload.history);
+  const chatCap = await guideChatCapability();
+  const defaultLocale = normalizeLocale(payload.locale);
+  const intentResult = await parseUserIntent(question, history, defaultLocale, {
+    skipLlm: !chatCap.available,
+  });
+  const activeLocale = intentResult.detected_language || defaultLocale;
+
+  if (guideWantsStream(req, payload)) {
+    return handleGuideChatStream(res, question, activeLocale, history, payload, intentResult, chatCap);
+  }
+
+  const result = await produceGuideTurn(question, history, payload, {
+    locale: activeLocale,
+    surface: "fractavolta-public-guide",
+    model: guideModel,
+  });
+  return sendJson(res, result.status, result.body);
 }
 
 async function handleGuideChatStream(res, question, locale, history = [], payload = {}, intentResult = null, chatCap = null) {
@@ -2024,6 +2134,49 @@ function writeSseHeaders(res) {
 function sendSse(res, event, data) {
   res.write(`event: ${event}\n`);
   res.write(`data: ${JSON.stringify(data)}\n\n`);
+}
+
+/** OpenAI-compatible SSE for UX tools (Chat Completions stream). */
+function sendOpenAiSse(res, { id, created, model, content, access_class, warnings }) {
+  res.writeHead(200, {
+    "Content-Type": "text/event-stream; charset=utf-8",
+    "Cache-Control": "no-cache, no-transform",
+    Connection: "keep-alive",
+    "X-Accel-Buffering": "no",
+    "X-Twin-Access-Class": access_class || "public",
+  });
+  const base = {
+    id,
+    object: "chat.completion.chunk",
+    created: created || Math.floor(Date.now() / 1000),
+    model: model || "jhn-public",
+  };
+  res.write(
+    `data: ${JSON.stringify({
+      ...base,
+      choices: [{ index: 0, delta: { role: "assistant" }, finish_reason: null }],
+    })}\n\n`,
+  );
+  const text = String(content || "");
+  const pieceSize = 48;
+  for (let i = 0; i < text.length; i += pieceSize) {
+    const piece = text.slice(i, i + pieceSize);
+    res.write(
+      `data: ${JSON.stringify({
+        ...base,
+        choices: [{ index: 0, delta: { content: piece }, finish_reason: null }],
+      })}\n\n`,
+    );
+  }
+  res.write(
+    `data: ${JSON.stringify({
+      ...base,
+      choices: [{ index: 0, delta: {}, finish_reason: "stop" }],
+      twin: { access_class, warnings: warnings || [] },
+    })}\n\n`,
+  );
+  res.write("data: [DONE]\n\n");
+  res.end();
 }
 
 function readBody(req, maxBytes = 1024 * 1024) {
