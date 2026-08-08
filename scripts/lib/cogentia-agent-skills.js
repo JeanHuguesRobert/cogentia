@@ -272,3 +272,51 @@ export function getAgentSkill(idOrSlug, options = {}) {
 
   return result;
 }
+
+/**
+ * Export an Agent Skill as a self-contained portable Method Package JSON (issue #82).
+ *
+ * @param {string} idOrSlug
+ * @param {object} [options]
+ * @returns {object} Method package object or error report
+ */
+export function exportSkillAsMethodPackage(idOrSlug, options = {}) {
+  const full = getAgentSkill(idOrSlug, { ...options, includeBody: true });
+  if (!full.ok) return full;
+
+  const repoRoot = options.repoRoot || resolveRepoRoot(options.env || process.env);
+  const s = full.skill;
+
+  // Resolve source file availability
+  const resolvedSources = (s.sources || []).map((relPath) => {
+    const absPath = path.join(repoRoot, relPath);
+    const exists = fs.existsSync(absPath);
+    return {
+      path: relPath,
+      exists,
+      size: exists ? fs.statSync(absPath).size : 0,
+    };
+  });
+
+  return {
+    ok: true,
+    schema: "cogentia.skill_method_package/v1",
+    exported_at: new Date().toISOString(),
+    id: s.id,
+    slug: s.slug,
+    version: s.version,
+    status: s.status,
+    name: s.name,
+    description: s.description,
+    effects: s.effects,
+    triggers: s.triggers,
+    inputs: s.inputs,
+    outputs: s.outputs,
+    requires: s.requires || {},
+    governance: s.governance || {},
+    sources: resolvedSources,
+    instructions_markdown: full.body_markdown || "",
+    mandate_hint: "Skills recommend methods; they do not grant authority or authorize Acts.",
+  };
+}
+

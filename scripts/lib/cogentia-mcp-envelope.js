@@ -259,6 +259,9 @@ export function wrapToolResult(toolName, data, options = {}) {
   const mandate_hint = data?.mandate_hint || defaultMandateHint(toolName, allowMutate);
   const ok = data == null ? true : data.ok !== false;
 
+  const packet_id = options.packet_id || options.packet?.packet_id || data?.packet_id || null;
+  const provisional_cost = options.provisional_cost || data?.provisional_cost || null;
+
   return {
     ok,
     tool: toolName,
@@ -269,10 +272,14 @@ export function wrapToolResult(toolName, data, options = {}) {
     continuation,
     skill_hint,
     mandate_hint,
+    packet_id,
+    provisional_cost,
     error_class: ok ? null : (data?.error_class || data?.error || "tool_failed"),
     correlation: Object.keys(correlation).length ? correlation : {},
     envelope: {
       kind: ENVELOPE_KIND,
+      packet_id,
+      provisional_cost,
       packet_mapping: {
         note: "MCP tool result projects Cognitive Packet envelope fields without replacing packet schema",
         identity: "tool + optional continuation.id + correlation.traceparent",

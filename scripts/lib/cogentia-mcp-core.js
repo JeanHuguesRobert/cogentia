@@ -1,4 +1,4 @@
-import { listAgentSkills, getAgentSkill, resolveRepoRoot } from "./cogentia-agent-skills.js";
+import { listAgentSkills, getAgentSkill, exportSkillAsMethodPackage, resolveRepoRoot } from "./cogentia-agent-skills.js";
 import {
   extractCorrelation,
   wrapToolResult,
@@ -72,6 +72,23 @@ export const TOOLS = [
         meta_only: {
           type: "boolean",
           description: "If true, omit markdown body (metadata only).",
+        },
+      },
+      required: ["id"],
+      additionalProperties: false,
+    },
+  },
+  {
+    name: "cogentia_skill_export",
+    description:
+      "Export an Agent Skill as a self-contained portable Method Package JSON (issue #82). Includes metadata, required capabilities, source paths, and markdown body.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        id: {
+          type: "string",
+          minLength: 1,
+          description: "Skill slug or cogentia.<slug> id",
         },
       },
       required: ["id"],
@@ -722,6 +739,19 @@ export function createMcpCore(env = process.env) {
           throw err;
         }
         return skill;
+      }
+      case "cogentia_skill_export": {
+        requireString(args.id, "id");
+        const pkg = exportSkillAsMethodPackage(args.id, {
+          env,
+          repoRoot: resolveRepoRoot(env),
+        });
+        if (!pkg.ok) {
+          const err = new Error(pkg.error || "skill_not_found");
+          err.error_class = pkg.error || "skill_not_found";
+          throw err;
+        }
+        return pkg;
       }
       case "cogentia_continuation_schema":
         return daemonGet("/api/cli/continuation/schema", {});
