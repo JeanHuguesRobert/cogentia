@@ -1540,34 +1540,40 @@ function guideRetrievalPrompt(locale, retrieval) {
   const intro = locale === "fr"
     ? "Utilise cette recherche publique procedurale avant de repondre."
     : "Use this procedural public retrieval run before answering.";
+  const r = retrieval || {};
+  const attempts = Array.isArray(r.attempts) ? r.attempts : [];
+  const sources = Array.isArray(r.sources) ? r.sources : [];
+  const context = Array.isArray(r.context) ? r.context : [];
   const lines = [
     "# Public Guide retrieval run",
     "",
     intro,
     "Treat these passages as supplied public Cogentia context. Cite source_id values.",
     "Do not use numeric citations such as [1]; cite exact source_id values such as [repo:path#L1-L4].",
-    `Strategy: ${retrieval.strategy}`,
+    `Strategy: ${r.strategy || "none"}`,
     "",
     "## Query attempts",
     "",
-    ...retrieval.attempts.map((attempt, index) => {
-      const status = attempt.ok ? `${attempt.count || 0} sources` : `failed: ${attempt.error || "unknown"}`;
-      return `${index + 1}. ${attempt.query} (${status})`;
-    }),
+    ...(attempts.length
+      ? attempts.map((attempt, index) => {
+          const status = attempt.ok ? `${attempt.count || 0} sources` : `failed: ${attempt.error || "unknown"}`;
+          return `${index + 1}. ${attempt.query} (${status})`;
+        })
+      : ["(no retrieval attempts — conversational or skipped)"]),
     "",
     "## Sources",
     "",
   ];
 
-  retrieval.sources.forEach((source, index) => {
+  sources.forEach((source, index) => {
     lines.push(`[${index + 1}] ${source.source_id}`, `Title: ${source.title || source.path}`, `URL: ${source.url || "n/a"}`, "");
   });
 
   lines.push("## Context", "");
-  retrieval.context.forEach((item, index) => {
+  context.forEach((item, index) => {
     lines.push(`### [${index + 1}] ${item.source_id}`, "", item.text, "");
   });
-  if (!retrieval.context.length) lines.push("No public context was found by the Guide retrieval run.", "");
+  if (!context.length) lines.push("No public context was found by the Guide retrieval run.", "");
   return lines.join("\n");
 }
 
