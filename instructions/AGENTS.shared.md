@@ -16,6 +16,7 @@ This is the common operational layer for every agent working in the Cogentia cor
 ## Invariants
 
 - The corpus is the source of truth. Agent instructions are governed operational projections.
+- **Anti-Capture Doctrine**: Never propose, recommend, or implement hidden, machine-local, IDE-specific, or vendor-locked rule/state persistence (e.g., `/learn`, local `.agents/rules` overrides, or proprietary agent memory silos). All operational principles, agent skills, and states MUST be declared openly in Git commits on `main` or as versioned Cognitive Packet events (`cogentia.agent_skill/v1`, `cop.event/v1`).
 - Distinguish fact, hypothesis, interpretation, public formulation, source document, derived product and temporary trace.
 - Preserve provenance. Do not infer missing author, source, reference, review or visibility information.
 - AI suggests and clarifies; a human principal retains mandate and responsibility for engaging acts.
