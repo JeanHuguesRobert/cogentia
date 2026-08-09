@@ -54,8 +54,10 @@ export async function handleInbound(rawEvent, config, options = {}) {
     );
   }
 
+  const enableCognitive = options.enableCognitiveSynthesis !== false;
+
   let draft = normalized.ok
-    ? (options.enableCognitiveSynthesis
+    ? (enableCognitive
         ? await buildCognitiveDraft(normalized, config, options)
         : buildDeterministicDraft(normalized, config, options))
     : null;
