@@ -28,6 +28,7 @@ related_research:
   - barons-Mariani/research/traceabilite_des_actes.md
   - barons-Mariani/research/second_method.md
   - cogentia/research/blocked_tool_rule.md
+  - cogentia/research/agent_local_memory_anti_capture.md
 related_repositories:
   - cogentia
   - barons-Mariani

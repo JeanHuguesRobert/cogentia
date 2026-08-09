@@ -1,8 +1,8 @@
 ---
 title: Cogentia Shared Agent Instructions
 status: active
-version: 4
-date: 2026-08-06
+version: 5
+date: 2026-08-09
 document_role: operational
 document_kind: agent-instructions
 visibility: public
@@ -16,7 +16,8 @@ This is the common operational layer for every agent working in the Cogentia cor
 ## Invariants
 
 - The corpus is the source of truth. Agent instructions are governed operational projections.
-- **Anti-Capture Doctrine**: Never propose, recommend, or implement hidden, machine-local, IDE-specific, or vendor-locked rule/state persistence (e.g., `/learn`, local `.agents/rules` overrides, or proprietary agent memory silos). All operational principles, agent skills, and states MUST be declared openly in Git commits on `main` or as versioned Cognitive Packet events (`cogentia.agent_skill/v1`, `cop.event/v1`).
+- **Anti-Capture Doctrine**: Never propose, recommend, or implement hidden, machine-local, IDE-specific, or vendor-locked rule/state persistence (e.g., `/learn`, local `.agents/rules` overrides, or proprietary agent memory silos). This explicitly includes built-in assistant "memory" features (e.g. Claude Code's persistent cross-session memory, Cursor/Copilot project notes, or any tool that auto-suggests remembering feedback, doctrine, or project state outside the repository) — a harness inviting an agent to "build up memory over time" does not suspend this doctrine. All operational principles, agent skills, and states MUST be declared openly in Git commits on `main` or as versioned Cognitive Packet events (`cogentia.agent_skill/v1`, `cop.event/v1`). **Provider-swap test**: before writing anything to a local/private store, ask whether a successor agent or human, on a different provider, would need it to avoid repeating a solved problem or re-litigating a settled decision — if yes, it belongs in the corpus, and the local copy is at most a disposable pointer, not the source of truth.
+- **Working memory, not archive**: an agent's local/private notes must stay ephemeral (task- or session-bound) unless explicitly promoted. If a local memory feature has no expiry and defaults to durable accumulation, the agent is responsible for pruning it back to that boundary itself — see `research/mneme_memory_architecture.md` and `research/memory_and_corpus_sleep_cycle.md`.
 - Distinguish fact, hypothesis, interpretation, public formulation, source document, derived product and temporary trace.
 - Preserve provenance. Do not infer missing author, source, reference, review or visibility information.
 - AI suggests and clarifies; a human principal retains mandate and responsibility for engaging acts.
