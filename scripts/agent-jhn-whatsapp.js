@@ -115,6 +115,7 @@ function parseArgs(argv) {
     if (a === "--dry-run") args.dryRun = true;
     else if (a === "--i-am-present") args.iAmPresent = true;
     else if (a === "--pairing-code") args.pairingCode = true;
+    else if (a === "--qr") { args.pairingCode = false; args.qr = true; }
     else if (a === "--text") {
       args.text = rest[i + 1] || null;
       i += 1;
@@ -251,8 +252,21 @@ async function cmdPair(config, args) {
         }
         return;
       }
-      // Ephemeral display + optional clipboard + OPEN-ON-PHONE-ONLY.txt under STATE_DIR.
-      printPairMaterial(qr, { stateDir: config.state_dir, copy: true });
+      console.log("\n============================================================");
+      console.log("SCAN THIS QR CODE WITH WHATSAPP ON YOUR PHONE (Linked Devices):");
+      console.log("============================================================\n");
+      try {
+        const qrcodeTerminal = require("qrcode-terminal");
+        qrcodeTerminal.generate(qr, { small: true });
+      } catch {
+        try {
+          import("qrcode-terminal").then((m) => {
+            (m.default || m).generate(qr, { small: true });
+          });
+        } catch {
+          console.log(`[QR raw string]: ${qr}`);
+        }
+      }
     },
     onPairingCode: (code, phone) => {
       // Ultra-visible block (also written to STATE_DIR + Desktop for humans).
