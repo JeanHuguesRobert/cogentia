@@ -144,7 +144,7 @@ export function outboundDisclosureOk(text, config, options = {}) {
  * True if text looks like our own outbound (loop guard).
  */
 export function looksLikeAgentJhnOutbound(text) {
-  const s = String(text || "");
+  const s = String(text || "").trim();
   if (!s) return false;
   if (s.includes(VISIBLE_AGENT_ID)) return true;
   if (s.includes("agent-jhn-experimental-notice")) return true;
@@ -155,5 +155,9 @@ export function looksLikeAgentJhnOutbound(text) {
   if (/Message automatique d’un assistant expérimental/i.test(s)) return true;
   if (/Experimental disclosure:/i.test(s)) return true;
   if (/Divulgation\s*:/i.test(s) && /agent-jhn/i.test(s)) return true;
+  if (/^Reçu\b/i.test(s) || /^Received\b/i.test(s)) return true;
+  if (/^📱\s*\*Agent JHN/i.test(s) || /^📱\s*\*Active/i.test(s) || /^📇\s*\*Agent JHN/i.test(s)) return true;
+  if (/^✅ Saved contact/i.test(s) || /^✅ Continuation/i.test(s) || /^🚫 Continuation/i.test(s) || /^📁 Conversation/i.test(s)) return true;
+  if (/agent-jhn/i.test(s)) return true;
   return false;
 }
