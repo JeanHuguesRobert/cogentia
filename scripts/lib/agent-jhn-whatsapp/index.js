@@ -76,4 +76,9 @@ export {
   syncGoogleContactsMcpResult,
   TRUST_TIERS,
 } from "./contacts-manager.js";
+export {
+  checkRateLimit,
+  recordOutboundSendEvent,
+  resetRateLimiter,
+} from "./rate-limiter.js";
 

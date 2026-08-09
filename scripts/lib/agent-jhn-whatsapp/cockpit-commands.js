@@ -10,6 +10,8 @@ import { requestOutboundSend, buildActionRequestId } from "./outbound-gate.js";
 
 import { loadContactsStore, upsertContact, findContactByPhoneOrJid } from "./contacts-manager.js";
 
+import { resetRateLimiter } from "./rate-limiter.js";
+
 /**
  * Check if inbound text is a self-chat control command.
  */
@@ -22,6 +24,9 @@ export function isCockpitCommand(text) {
     t === "list chats" ||
     t === "contacts" ||
     t === "contact list" ||
+    t === "reset rate limit" ||
+    t === "reset limit" ||
+    t === "unblock" ||
     t.startsWith("contact ") ||
     t.startsWith("inspect ") ||
     t.startsWith("approve ") ||
@@ -51,8 +56,14 @@ export function processCockpitCommand(text, config) {
       "• `inspect <conv_id|ctn_id>` - Show recent turns or continuation details",
       "• `approve <ctn_id>` - Resolve continuation & send approved reply",
       "• `reject <ctn_id> [reason]` - Reject request & send polite refusal",
+      "• `reset rate limit` - Reset circuit breaker & unblock outbound sends",
       "• `close <conv_id>` - Conclude thread & archive to corpus",
     ].join("\n");
+  }
+
+  if (lower === "reset rate limit" || lower === "reset limit" || lower === "unblock") {
+    const res = resetRateLimiter(config);
+    return `⚡ *Circuit Breaker Reset:* ${res.message}`;
   }
 
   if (lower === "contacts" || lower === "contact list") {

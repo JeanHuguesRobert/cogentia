@@ -23,6 +23,7 @@ import { ARTIFACT_TYPES, DECISIONS } from "./constants.js";
 import { resolveSentLedgerPath } from "./config.js";
 import { resolveSelfSendJid } from "./self-peer.js";
 import { AUDIENCE, outboundDisclosureOk } from "./disclosure.js";
+import { recordOutboundSendEvent } from "./rate-limiter.js";
 
 const OUTBOX_KIND = "whatsapp.send";
 const OUTBOX_TARGET = "whatsapp.self_chat";
@@ -297,6 +298,7 @@ export async function drainWhatsappOutbox(config, options = {}) {
           usage_grant: config.usage_grant,
         });
         appendTrace(config, art);
+        recordOutboundSendEvent(config);
         results.push({ id: row.id, ok: true, sent: true, platform_send_id: sendResult.id });
       } else {
         const fail = markOutboxFailed(row, sendResult?.error || "send_failed");

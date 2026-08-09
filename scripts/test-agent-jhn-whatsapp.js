@@ -715,6 +715,33 @@ test("26_contact_manager_and_google_import", async () => {
   assert.equal(foundBob.name, "Bob Martin");
 });
 
+// --- 27. rate limiter & circuit breaker subsystem ---
+test("27_rate_limiter_circuit_breaker", async () => {
+  const dir = fs.mkdtempSync(path.join(tmpRoot, "t27-"));
+  const config = loadConfig(baseEnv({ AGENT_JHN_WHATSAPP_STATE_DIR: dir }));
+  ensureStateDirs(config);
+
+  const { checkRateLimit, recordOutboundSendEvent, resetRateLimiter } = await import("./lib/agent-jhn-whatsapp/rate-limiter.js");
+
+  const check1 = checkRateLimit(config, { maxSends: 3, windowMs: 60000 });
+  assert.equal(check1.allowed, true);
+
+  recordOutboundSendEvent(config);
+  recordOutboundSendEvent(config);
+  recordOutboundSendEvent(config);
+
+  const checkTripped = checkRateLimit(config, { maxSends: 3, windowMs: 60000 });
+  assert.equal(checkTripped.allowed, false);
+  assert.equal(checkTripped.tripped, true);
+  assert.equal(checkTripped.rule_id, "policy.rate_limit_exceeded_tripped");
+
+  const resetRes = resetRateLimiter(config);
+  assert.equal(resetRes.ok, true);
+
+  const checkPostReset = checkRateLimit(config, { maxSends: 3, windowMs: 60000 });
+  assert.equal(checkPostReset.allowed, true);
+});
+
 async function main() {
   const results = [];
   for (const t of tests) {

@@ -25,6 +25,7 @@ import {
   looksLikeAgentJhnOutbound,
   outboundDisclosureOk,
 } from "./disclosure.js";
+import { checkRateLimit } from "./rate-limiter.js";
 
 /**
  * Evaluate inbound (or intended outbound) against policy.
@@ -73,7 +74,7 @@ export function evaluatePolicy(normalized, config, context = {}) {
   }
 
   // 3b. pure protocol / empty sync noise — hold without media false-positive
-  if (normalized.is_protocol_only) {
+  if (normalized.is_protocol_noise) {
     return {
       decision: DECISIONS.HOLD_FOR_HUMAN,
       rule_id: "policy.protocol_noise",
@@ -81,6 +82,19 @@ export function evaluatePolicy(normalized, config, context = {}) {
       allow_send: false,
       group_policy_mode: null,
       details,
+    };
+  }
+
+  // 3c. Rate Limiter & Circuit Breaker Check (Loop & Runaway Send Protection)
+  const rateLimitCheck = checkRateLimit(config, { now: context.now });
+  if (!rateLimitCheck.allowed) {
+    return {
+      decision: DECISIONS.HOLD_FOR_HUMAN,
+      rule_id: rateLimitCheck.rule_id,
+      reason: rateLimitCheck.reason,
+      allow_send: false,
+      group_policy_mode: null,
+      details: { ...details, rate_limiter: rateLimitCheck },
     };
   }
 
