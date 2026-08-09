@@ -12,12 +12,15 @@ import {
   BENEFICIARY_PRINCIPAL_ID,
   DEFAULT_GRANT_ID,
   DEFAULT_NOTICE_URL,
+  DEFAULT_EMERGENCY_EMAIL,
+  DEFAULT_EMERGENCY_PHONE,
   GROUP_POLICY_MODES,
   MANDATE_ID,
   MODE_SELF_CHAT_ONLY,
   PRINCIPAL_ID,
   VISIBLE_AGENT_ID,
 } from "./constants.js";
+import { getEmergencyContacts } from "./emergency-notification.js";
 
 function envBool(value, defaultValue = false) {
   if (value === undefined || value === null || value === "") return defaultValue;
@@ -77,8 +80,8 @@ export function loadConfig(env = process.env, overrides = {}) {
     MODE_SELF_CHAT_ONLY,
   );
   const sendEnabled = envBool(
-    overrides.sendEnabled ?? env.AGENT_JHN_WHATSAPP_SEND_ENABLED,
-    false,
+    overrides.sendEnabled ?? env.AGENT_JHN_WHATSAPP_SEND_ENABLED ?? env.AGENT_JHN_WHATSAPP_SELF_READ_WRITE,
+    true,
   );
   const dryRun = envBool(overrides.dryRun ?? env.AGENT_JHN_WHATSAPP_DRY_RUN, false);
   const groupsExplicitlyEnabled = envBool(
@@ -151,6 +154,7 @@ export function loadConfig(env = process.env, overrides = {}) {
     mandate_id: MANDATE_ID,
     persona_id: personaId,
     usage_grant: grant,
+    emergency_contacts: getEmergencyContacts(env),
     auth_dir_name: "baileys-auth",
     traces_dir_name: "traces",
     sent_ledger_name: "sent-ledger.jsonl",

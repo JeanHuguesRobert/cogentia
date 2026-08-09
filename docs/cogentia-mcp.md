@@ -18,24 +18,45 @@ review:
   reviewed_by: []
 ---
 
-# Cogentia MCP adapter
+# Cogentia MCP Adapter & Architecture Specification
 
-`scripts/cogentia-mcp.js` is a small MCP stdio server for the Cogentia Context
-Gateway. `scripts/cogentia-mcp-http.js` exposes the same tools over HTTP at
-`/mcp`. Both adapters call the daemon over HTTP. They never open SQLite, read
-corpus files, rebuild the index, execute commands, or change the corpus.
+`scripts/cogentia-mcp.js` is a thin MCP (Model Context Protocol) stdio server for the Cogentia Context Gateway. `scripts/cogentia-mcp-http.js` exposes the same tools over HTTP at `/mcp`. 
 
-For client setup recipes, including local Codex and the Fracta public service,
-see [connect-mcp-clients.md](connect-mcp-clients.md).
+Both adapters act as thin facades: they delegate execution to the Cogentia daemon over HTTP (`/api/*`). They never open SQLite, read corpus files directly, rebuild the index, execute raw shell commands, or mutate the corpus without policy authorization.
 
-## Configuration
+For client setup recipes (Claude Code, Grok, Codex, Cursor, and Fracta public service), see [connect-mcp-clients.md](connect-mcp-clients.md).
+
+---
+
+## 1. Architectural Invariants & Trust Model
+
+The MCP layer is a **surface**, not a second product. All semantic identity, citations, and execution state remain grounded in **Cognitive Packets, Continuations, and Git Markdown files**.
+
+```text
+Tool availability is not authorization.
+Authorization is not execution.
+Caller mediation remains the execution boundary.
+```
+
+1. **Thin Adapter:** The MCP layer contains zero side logic or database connections. It maps MCP `tools/call` JSON-RPC messages directly to daemon HTTP routes.
+2. **Tiered Trust Boundaries:** Tools are grouped into strict Trust Tiers (P0 through P4). Public facades default to read-only (`P0`). Mutation tools (`P3`) require explicit administrative token attestation or agent mandate claims.
+3. **Stateless Resume & Continuations:** Tools return or point to durable **Continuation IDs** (`ctn_[hex]`). Clients do not rely on transient server session affinity.
+4. **Line-Level Citations:** All retrieval tools return `source_id` citations (`#L123-L145`). Agents must cite these references when claiming corpus content.
+
+---
+
+## 2. Configuration & Client Setup
+
+### Stdio Configuration (`mcpServers`)
+
+For local agents (Claude Code, Cursor, Codex, Grok CLI):
 
 ```json
 {
   "mcpServers": {
     "cogentia": {
       "command": "node",
-      "args": ["/srv/cogentia/repos/cogentia/scripts/cogentia-mcp.js"],
+      "args": ["C:/tweesic/cogentia/scripts/cogentia-mcp.js"],
       "env": {
         "COGENTIA_DAEMON_URL": "http://127.0.0.1:8790",
         "COGENTIA_MCP_VIEW": "public"
@@ -45,136 +66,143 @@ see [connect-mcp-clients.md](connect-mcp-clients.md).
 }
 ```
 
-Environment variables:
+### Environment Variables
 
-- `COGENTIA_DAEMON_URL` defaults to `http://127.0.0.1:8790`.
-- `COGENTIA_MCP_VIEW` defaults to `public`.
-- `COGENTIA_ADMIN_TOKEN` is required before the adapter will request `full`.
-- `COGENTIA_MCP_TIMEOUT_MS` defaults to 15000.
+| Variable | Default | Purpose |
+| :--- | :--- | :--- |
+| `COGENTIA_DAEMON_URL` | `http://127.0.0.1:8790` | Daemon HTTP endpoint address |
+| `COGENTIA_MCP_VIEW` | `public` | View visibility mode (`public` or `full`) |
+| `COGENTIA_ADMIN_TOKEN` | *none* | Admin token required before requesting `full` view |
+| `COGENTIA_MCP_ALLOW_MUTATE` | `0` | Set to `1` to enable write tools under `COGENTIA_ADMIN_TOKEN` |
+| `COGENTIA_MCP_JHN_MUTATE` | `0` | Set to `1` for Agent JHN / subagent mandate attestation |
+| `COGENTIA_MCP_JHN_TOKEN` | *none* | Agent JHN shared secret token for mutate attestation |
+| `COGENTIA_MCP_TIMEOUT_MS` | `15000` | Gateway request timeout in milliseconds |
 
-Use public view for model-facing deployments. Full view is an explicit local or
-administrative configuration and remains subject to daemon authorization.
+---
 
-## Tools
+## 3. Trust Tiers & Tool Reference
 
-Canonical list lives in `scripts/lib/cogentia-mcp-core.js` (`TOOLS`). Summary:
+Tools are registered in `scripts/lib/cogentia-mcp-core.js`. They are categorized into 5 Trust Tiers:
 
-| Tool | Role | Tier |
-|------|------|------|
-| `cogentia_agent_start` | Cold-start agent session summary + playbook | P2 |
-| `cogentia_skill_list` / `cogentia_skill_get` | Portable Agent Skills inventory + SKILL body | P2 |
-| `cogentia_continuation_schema` | `cogentia.continuation.v2` field/command schema | P2 |
-| `cogentia_docs_inspect` | One document metadata by ref | P4 |
-| `cogentia_docs_gaps` | Navigation/index gaps | P4 |
-| `cogentia_corpus_privacy` | Public-view privacy leak report (paths/codes) | P4 |
-| `cogentia_consolidate` | Read-only publish-readiness (quick default) | P4 |
-| `cogentia_embeddings_status` | Embedding cache status (no index/store) | P4 |
-| `cogentia_mandate_attenuation_check` | Parent vs child mandate PASS/WARN/FAIL (#79) | P4/skill |
-| `cogentia_views_snapshot` | Session cockpit (prefer first) | P0 |
-| `cogentia_health` | Daemon / index health | P0 |
-| `cogentia_search` | Citable corpus search | P0 |
-| `cogentia_context_pack` / `_batch` | Budgeted context packs | P0 |
-| `cogentia_get_lines` | Cite line intervals | P0 |
-| `cogentia_explain` | Retrieval signals | P0 |
-| `cogentia_guide_resolve` | Concept / Guide resolve | P0 |
-| `cogentia_issue_graph` / `cogentia_issues_list` | Issue graph (read) | P0/P1 |
-| `cogentia_continuation_list` | Real continuation queue (`GET /api/cli/continuation/list`) | P1 |
-| `cogentia_continuation_inspect` | Full/sanitized continuation object | P1 |
-| `cogentia_git_verify` | Repo git verify (`GET /api/cli/git/verify`) | P1 |
-| `cogentia_emit_static` / `publish_registry` / `nav_benchmark` | Ops projections | P2 |
-| `cogentia_continuation_emit` / `_resolve` | Write continuations | **P3 mutate** |
-| `cogentia_issues_sync` | Sync GitHub issue packets | **P3 mutate** |
+### Trust Tiers Summary
 
-**Mutate tools** appear in `tools/list` and may run when **either**:
+* **P0 Public:** Model-facing, read-only tools. Safe for all remote clients, public Fracta facades, and ChatGPT connectors.
+* **P1 Read Local:** Local-only read tools for inspecting active continuations, issue graphs, and Git status.
+* **P2 Session & Skills:** Session bootstrap, Agent Skills inventory (`skill_list`, `skill_get`, `skill_export`), and continuation schemas.
+* **P3 Mutate:** Write/mutation operations (`continuation_emit`, `continuation_resolve`, `issues_sync`). Strictly blocked unless explicit token attestation is provided.
+* **P4 Admin / Inspection:** Internal repository health, mandate attenuation checks, privacy leak reports, and ops projections.
 
-```text
-# A) Admin full view
-COGENTIA_MCP_VIEW=full
-COGENTIA_ADMIN_TOKEN=<set>
-COGENTIA_MCP_ALLOW_MUTATE=1
+---
+
+### Comprehensive Tool Table
+
+| Tool Name | Trust Tier | Role & Description |
+| :--- | :--- | :--- |
+| `cogentia_health` | **P0** | Returns daemon, corpus index, and vector cache health |
+| `cogentia_search` | **P0** | Citable Markdown corpus search (keyword, hybrid, semantic) |
+| `cogentia_context_pack` | **P0** | Budgeted, deterministic context pack for a given query |
+| `cogentia_context_pack_batch` | **P0** | Batch budgeted context packs for multi-query prompts |
+| `cogentia_get_lines` | **P0** | Read exact line-number intervals from a document with citations |
+| `cogentia_explain` | **P0** | Inspect retrieval signals, ranking scores, and term weights |
+| `cogentia_guide_resolve` | **P0** | Resolve concept or Guide topics against the corpus index |
+| `cogentia_views_snapshot` | **P0** | Redacted session cockpit snapshot (preferred at session start) |
+| `cogentia_issue_graph` | **P0** | Read-only issue graph mapping work items to target documents |
+| `cogentia_issues_list` | **P0** | List tracked GitHub issues for a registered repository |
+| `cogentia_continuation_list` | **P1** | List active continuation queue (`alive`, `hibernating`, `closed`) |
+| `cogentia_continuation_inspect` | **P1** | Inspect a specific continuation payload and execution status |
+| `cogentia_git_verify` | **P1** | Check git clean/dirty state and ahead/behind branch status |
+| `cogentia_agent_start` | **P2** | Cold-start agent session summary, repository map, and playbook |
+| `cogentia_skill_list` | **P2** | Inventory portable Agent Skills (method packages) |
+| `cogentia_skill_get` | **P2** | Fetch full `SKILL.md` body and metadata for a specific skill |
+| `cogentia_skill_export` | **P2** | Export an Agent Skill as a portable Method Package JSON |
+| `cogentia_continuation_schema` | **P2** | Field/command schema for `cogentia.continuation.v2` |
+| `cogentia_emit_static` | **P2** | Read-only static site / Markdown view export projections |
+| `cogentia_continuation_emit` | **P3 Mutate** | Create/emit a new continuation packet (`requires auth`) |
+| `cogentia_continuation_resolve` | **P3 Mutate** | Fulfill and resolve an active continuation (`requires auth`) |
+| `cogentia_issues_sync` | **P3 Mutate** | Materialize GitHub issue packets into `.cogentia/issues` (`requires auth`) |
+| `cogentia_docs_inspect` | **P4** | Inspect full document metadata by reference |
+| `cogentia_docs_gaps` | **P4** | Identify documentation index and navigation gaps |
+| `cogentia_corpus_privacy` | **P4** | Public-view privacy leak analysis (scans for raw paths/codes) |
+| `cogentia_consolidate` | **P4** | Read-only publish-readiness check for Views Store |
+| `cogentia_embeddings_status` | **P4** | Detailed embedding cache status and vector provider info |
+| `cogentia_mandate_attenuation_check`| **P4** | Verify parent vs. child mandate authority bounds (`PASS`/`WARN`/`FAIL`) |
+
+---
+
+## 4. Packet-Shaped Tool Result Envelopes (`cogentia.mcp_tool_result/v1`)
+
+Every successful or failed `tools/call` response is wrapped in a standardized, self-describing **Cognitive Packet Envelope**:
+
+```json
+{
+  "ok": true,
+  "tool": "cogentia_search",
+  "protocol_era": "2026-07-28",
+  "view": "public",
+  "data": {
+    "results": [ ... ]
+  },
+  "citations": [
+    {
+      "source_id": "doc:cogentia:docs/cogentia-mcp.md#L45-L60",
+      "repository": "cogentia",
+      "path": "docs/cogentia-mcp.md",
+      "lines": [45, 60]
+    }
+  ],
+  "continuation": null,
+  "skill_hint": "continuation-handling",
+  "mandate_hint": null,
+  "error_class": null,
+  "correlation": {
+    "traceparent": "00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01"
+  },
+  "envelope": {
+    "kind": "cogentia.mcp_tool_result/v1"
+  }
+}
 ```
 
-```text
-# B) Agent JHN (or subagent) — Phase 5
-COGENTIA_MCP_JHN_MUTATE=1
-COGENTIA_MCP_JHN_TOKEN=<shared secret on server>
-# Request: Authorization: Bearer <token>
-#          X-Cogentia-Actor: agent:jhn | agent:jhn.subagent:<id>
+* **`citations`**: Automatically extracted from retrieval hits so agents can cite exact line ranges.
+* **`continuation`**: Present when a tool result is or points to an asynchronous suspended judgment (`ctn_[hex]`).
+* **`correlation`**: Echoes `traceparent` (and `baggage`) from request `params._meta` for cross-system telemetry.
+
+---
+
+## 5. Dual-Era Protocol Architecture
+
+The adapter supports two protocol eras transparently:
+
+| Era | Protocol Versions | Handshake & Entry |
+| :--- | :--- | :--- |
+| **Legacy Era** | `2025-11-25`, `2025-06-18`, `2024-11-05` | Standard `initialize` handshake $\rightarrow$ `tools/list` $\rightarrow$ `tools/call` |
+| **Modern Era** | `2026-07-28` | Optional `server/discover`, stateless per-request `_meta`, `MCP-Protocol-Version` headers |
+
+Unsupported versions return JSON-RPC error code `-32022` (`UnsupportedProtocolVersionError`) listing supported versions.
+
+---
+
+## 6. Execution & Testing Commands
+
+### Smoke Tests
+
+```powershell
+# Dual-era protocol test
+node scripts/test-mcp-dual-era.js
+
+# Stdio server test
+node scripts/test-mcp-stdio-all.js
+
+# Live HTTP adapter test
+node scripts/test-mcp-live.js
 ```
 
-Otherwise `tools/call` returns `tier_forbidden`. Anonymous public Fracta stays read-only until JHN (or admin) attests.
+### Running Adapters
 
-Experimental Skills discovery: `server/discover` → `experimental.skill_ids` (tools-first; see sandbox).
-
-Prefer `cogentia_views_snapshot` at session start, `cogentia_context_pack` for a broad corpus question, `cogentia_search` while exploring, and `cogentia_get_lines` before asserting a specific passage. For suspended work use `continuation_list` → `continuation_inspect` and skill `continuation-handling`. Responses preserve `source_id` citations produced by the gateway.
-
-### Packet-shaped tool results (v0.5+ / Phase 3)
-
-Every `tools/call` success or tool-level error returns JSON with:
-
-```text
-ok, tool, protocol_era, view, data, citations[], continuation|null,
-skill_hint, mandate_hint, error_class|null, correlation{}, envelope.kind
-```
-
-- `envelope.kind` = `cogentia.mcp_tool_result/v1`
-- `citations` extracted from search/pack/lines hits (`source_id`, repo, path, lines)
-- `continuation` set when the payload is or points at suspended judgment
-- Pass `traceparent` (and optional `tracestate` / `baggage`) in request `params._meta` for cross-client correlation; echoed on the result and stored on emit/resolve history when mutate is enabled
-- No MCP session affinity required — resume from `continuation.id` + durable stores
-
-The adapter stays **thin**: no SQLite, no provider keys, no index rebuild. Logic lives in `cogentia.js` / the daemon.
-
-Path design: [cogentia-js-mcp-agent-path.md](cogentia-js-mcp-agent-path.md). Client evidence: [agent-skills-compatibility.md](agent-skills-compatibility.md).
-
-## Protocol and errors
-
-The adapter is **dual-era** (tools-only):
-
-| Era | Versions | Entry |
-|-----|----------|--------|
-| **Legacy** | `2025-11-25`, `2025-06-18`, `2024-11-05` | `initialize` handshake, then `tools/list` / `tools/call` |
-| **Modern** | `2026-07-28` | optional `server/discover`; per-request `_meta` / `MCP-Protocol-Version`; optional `Mcp-Method` / `Mcp-Name` headers on HTTP |
-
-Both eras share the same tool surface. Unsupported versions return JSON-RPC
-`-32022` (`UnsupportedProtocolVersionError`) with a `supported` list.
-MCP Apps, Tasks, and multi-round-trip elicitation are **not** implemented in
-this thin adapter (vertical Apps belong to Serra/Rhuma later).
-
-Stdio implements newline-delimited JSON-RPC. Standard output contains protocol
-messages only. Daemon connection failures, HTTP errors, and invalid tool
-arguments are returned as MCP tool errors without secrets.
-
-Smoke: `node scripts/test-mcp-dual-era.js`.
-
-Start it directly only when an MCP client will provide messages on stdin:
-
-```bash
+```powershell
+# Stdio Adapter (for local AI clients like Claude Code, Cursor, Grok)
 node scripts/cogentia-mcp.js
+
+# HTTP Adapter (for web connectors and remote endpoints)
+COGENTIA_DAEMON_URL=http://127.0.0.1:8790 COGENTIA_MCP_VIEW=public PORT=8791 node scripts/cogentia-mcp-http.js
 ```
-
-Run the HTTP adapter for clients that expect a URL endpoint:
-
-```bash
-COGENTIA_DAEMON_URL=http://127.0.0.1:8790 \
-COGENTIA_MCP_VIEW=public \
-PORT=8791 \
-node scripts/cogentia-mcp-http.js
-```
-
-The primary HTTP MCP route is:
-
-```text
-POST /mcp
-```
-
-The HTTP adapter also keeps compatibility routes for operational smoke tests:
-
-```text
-GET /health
-GET /tools
-POST /tools/{name}
-```
-
-SQLite remains a reconstructible cache behind the daemon and is not part of the
-MCP trust boundary.

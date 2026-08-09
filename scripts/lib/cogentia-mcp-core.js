@@ -462,6 +462,15 @@ export function createMcpCore(env = process.env) {
 
   /** Legacy handshake path (2025-11-25 and earlier). */
   function initialize(params = {}) {
+    const forced = String(env.COGENTIA_MCP_FORCE_PROTOCOL || "").trim();
+    if (forced && SUPPORTED_PROTOCOLS.has(forced)) {
+      return {
+        protocolVersion: forced,
+        capabilities: serverCapabilities(),
+        serverInfo: serverInfo(),
+        instructions,
+      };
+    }
     const requested = String(params.protocolVersion || "");
     let negotiated = PROTOCOL_VERSION;
     if (LEGACY_PROTOCOLS.has(requested)) negotiated = requested;

@@ -63,3 +63,17 @@ export {
   createTransport,
 } from "./baileys-transport.js";
 export { handleInbound } from "./pipeline.js";
+export {
+  getEmergencyContacts,
+  notifyHumanAttention,
+} from "./emergency-notification.js";
+export {
+  loadContactsStore,
+  saveContactsStore,
+  findContactByPhoneOrJid,
+  upsertContact,
+  importGoogleContactsJson,
+  syncGoogleContactsMcpResult,
+  TRUST_TIERS,
+} from "./contacts-manager.js";
+

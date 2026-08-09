@@ -651,6 +651,70 @@ test("23_media_forbidden", () => {
   assert.equal(p.rule_id, "policy.media_forbidden");
 });
 
+// --- 24. emergency contacts & notification handler ---
+test("24_emergency_contacts_instance_config", () => {
+  const config = loadConfig(baseEnv({
+    HUMAN_USER_PHONE: "+33753976287",
+    HUMAN_USER_EMAIL: "jeanhuguesrobert@gmail.com",
+  }));
+  assert.equal(config.emergency_contacts.phone, "+33753976287");
+  assert.equal(config.emergency_contacts.email, "jeanhuguesrobert@gmail.com");
+  assert.ok(config.emergency_contacts.whatsapp_jid.includes("33753976287"));
+});
+
+// --- 25. conversation thread store & cockpit commands ---
+test("25_conversation_store_and_cockpit_commands", async () => {
+  const dir = fs.mkdtempSync(path.join(tmpRoot, "t25-"));
+  const config = loadConfig(baseEnv({
+    AGENT_JHN_WHATSAPP_STATE_DIR: dir,
+    AGENT_JHN_WHATSAPP_SEND_ENABLED: "true",
+  }));
+  ensureStateDirs(config);
+
+  const { isCockpitCommand, processCockpitCommand } = await import("./lib/agent-jhn-whatsapp/cockpit-commands.js");
+  const { loadConversation } = await import("./lib/agent-jhn-whatsapp/conversation-store.js");
+
+  assert.equal(isCockpitCommand("list conversations"), true);
+  assert.equal(isCockpitCommand("help"), true);
+
+  const helpReply = processCockpitCommand("help", config);
+  assert.ok(helpReply.includes("Agent JHN Self-Chat Control Cockpit"));
+
+  // Inbound self-chat command via pipeline
+  const n = normalizeInboundEvent(selfMessage("list conversations", "msg-t25"));
+  const res = await handleInbound(selfMessage("list conversations", "msg-t25"), config, { includeDraftText: true });
+  assert.equal(res.ok, true);
+  assert.ok(res.draft_text_for_local.includes("Active Conversation Threads") || res.draft_text_for_local.includes("No active conversation threads"));
+
+  const conv = loadConversation(config, n.conversation_id);
+  assert.equal(conv.conversation_id, n.conversation_id);
+});
+
+// --- 26. sovereign contact manager & google import ---
+test("26_contact_manager_and_google_import", async () => {
+  const dir = fs.mkdtempSync(path.join(tmpRoot, "t26-"));
+  const config = loadConfig(baseEnv({ AGENT_JHN_WHATSAPP_STATE_DIR: dir }));
+  ensureStateDirs(config);
+
+  const { loadContactsStore, upsertContact, findContactByPhoneOrJid, importGoogleContactsJson } = await import("./lib/agent-jhn-whatsapp/contacts-manager.js");
+
+  const store = loadContactsStore(config);
+  assert.ok(store.contacts.length >= 1);
+  assert.equal(store.contacts[0].trust_tier, "principal");
+
+  upsertContact(config, { name: "Alice Dupont", phone: "+33612345678", trust_tier: "vip" });
+  const found = findContactByPhoneOrJid(config, "33612345678@s.whatsapp.net");
+  assert.equal(found.name, "Alice Dupont");
+  assert.equal(found.trust_tier, "vip");
+
+  const imp = importGoogleContactsJson(config, [
+    { name: "Bob Martin", phone: "+33698765432", trust_tier: "colleague" }
+  ]);
+  assert.equal(imp.imported, 1);
+  const foundBob = findContactByPhoneOrJid(config, "+33698765432");
+  assert.equal(foundBob.name, "Bob Martin");
+});
+
 async function main() {
   const results = [];
   for (const t of tests) {

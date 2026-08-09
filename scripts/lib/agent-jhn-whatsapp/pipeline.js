@@ -20,6 +20,9 @@ import {
 import { ARTIFACT_TYPES, DECISIONS } from "./constants.js";
 import { ensureStateDirs } from "./config.js";
 import { rememberSelfPeer } from "./self-peer.js";
+import { recordConversationTurn } from "./conversation-store.js";
+import { isCockpitCommand, processCockpitCommand } from "./cockpit-commands.js";
+import { formatOutboundText } from "./disclosure.js";
 
 /**
  * Process one inbound event (synthetic or Baileys).
@@ -51,11 +54,32 @@ export async function handleInbound(rawEvent, config, options = {}) {
     );
   }
 
-  const draft = normalized.ok
+  let draft = normalized.ok
     ? (options.enableCognitiveSynthesis
         ? await buildCognitiveDraft(normalized, config, options)
         : buildDeterministicDraft(normalized, config, options))
     : null;
+
+  // Process self-chat control cockpit commands (list, inspect, approve, reject, close)
+  if (normalized.ok && normalized.text && isCockpitCommand(normalized.text)) {
+    const cmdResult = processCockpitCommand(normalized.text, config);
+    if (draft) {
+      draft.text = formatOutboundText(cmdResult, { audience: "self" });
+    }
+  }
+
+  // Record turn into persistent conversation thread
+  if (normalized.ok && config.state_dir) {
+    try {
+      recordConversationTurn(config, normalized.conversation_id, {
+        role: normalized.from_me ? "user_self" : "third_party",
+        text: normalized.text,
+        platform_message_id: normalized.platform_message_id,
+      });
+    } catch {
+      /* non-fatal */
+    }
+  }
 
   // Remember Message-yourself peer (@lid) for later proactive sends.
   if (normalized.ok && config.state_dir) {
