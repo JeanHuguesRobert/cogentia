@@ -76,70 +76,84 @@ export function buildDeterministicDraft(normalized, config, options = {}) {
  */
 export async function buildCognitiveDraft(normalized, config, options = {}) {
   const userText = (normalized?.text || "").trim();
-  if (userText) {
-    try {
-      const directAnswer = await requestOpenAiDraft(userText, config, normalized, options);
-      if (directAnswer) {
-        const syncDraft = buildDeterministicDraft(normalized, config, options);
-        return {
-          ...syncDraft,
-          text: formatInstanceOutboundDisclosure(
-            { disclosure_tag: config.visible_agent_id || "— agent-jhn-experimental" },
-            directAnswer,
-          ),
-          provenance_class: "openai-direct",
-          sources: [],
-          stub: false,
-        };
-      }
-    } catch (error) {
-      if (!error?.cognitiveReported && typeof options.onCognitiveError === "function") {
-        options.onCognitiveError(error, safeCognitiveDiagnostics(error));
-      }
-    }
-    try {
-      const guideUrl = String(
-        options.guideUrl ||
-        process.env.AGENT_JHN_WHATSAPP_GUIDE_URL ||
-        "http://127.0.0.1:8791/guide/chat",
-      );
-      const response = await fetch(guideUrl, {
-        method: "POST",
-        headers: { Accept: "application/json", "Content-Type": "application/json" },
-        body: JSON.stringify({
-          question: userText,
-          locale: resolveDisclosureLocale(config.allowed_self_jid || normalized?.remote_jid || ""),
-          web_search: false,
-        }),
-        signal: AbortSignal.timeout(12000),
+  if (!userText) return buildDeterministicDraft(normalized, config, options);
+
+  let guideResult = null;
+  const guideUrl = String(
+    options.guideUrl ||
+    process.env.AGENT_JHN_WHATSAPP_GUIDE_URL ||
+    "http://127.0.0.1:8791/guide/chat",
+  );
+  const guideStartedAt = Date.now();
+  try {
+    const response = await fetch(guideUrl, {
+      method: "POST",
+      headers: { Accept: "application/json", "Content-Type": "application/json" },
+      body: JSON.stringify({
+        question: userText,
+        locale: resolveDisclosureLocale(config.allowed_self_jid || normalized?.remote_jid || ""),
+        web_search: false,
+      }),
+      signal: AbortSignal.timeout(8000),
+    });
+    if (response.ok) guideResult = await response.json();
+    else {
+      const error = new Error("Guide retrieval returned an error response");
+      emitCognitiveError(options, error, {
+        provider: "cogentia-guide", stage: "retrieval_response", endpoint_host: "127.0.0.1",
+        elapsed_ms: Date.now() - guideStartedAt, timeout_ms: 8000, http_status: response.status,
       });
-      const guideResult = await response.json();
-      if (guideResult && guideResult.answer) {
-        const syncDraft = buildDeterministicDraft(normalized, config, options);
-        return {
-          ...syncDraft,
-          text: formatInstanceOutboundDisclosure(
-            { disclosure_tag: config.visible_agent_id || "— agent-jhn-experimental" },
-            guideResult.answer
-          ),
-          provenance_class: "s7-cognitive-retrieval",
-          sources: guideResult.sources || [],
-          stub: false
-        };
-      }
-    } catch (error) {
-      if (typeof options.onCognitiveError === "function") options.onCognitiveError(error);
-      /* Fall back to sync draft */
     }
+  } catch (error) {
+    emitCognitiveError(options, error, {
+      provider: "cogentia-guide", stage: "retrieval_request", endpoint_host: "127.0.0.1",
+      elapsed_ms: Date.now() - guideStartedAt, timeout_ms: 8000, timed_out: isTimeoutError(error),
+    });
+  }
+
+  try {
+    const directAnswer = await requestOpenAiDraft(userText, config, normalized, options, guideResult);
+    if (directAnswer) {
+      const syncDraft = buildDeterministicDraft(normalized, config, options);
+      return {
+        ...syncDraft,
+        text: formatInstanceOutboundDisclosure(
+          { disclosure_tag: config.visible_agent_id || "— agent-jhn-experimental" },
+          directAnswer,
+        ),
+        provenance_class: guideResult ? "openai-corpus-grounded" : "openai-direct",
+        sources: guideResult?.sources || [],
+        stub: false,
+      };
+    }
+  } catch (error) {
+    if (!error?.cognitiveReported && typeof options.onCognitiveError === "function") {
+      options.onCognitiveError(error, safeCognitiveDiagnostics(error));
+    }
+  }
+
+  if (guideResult?.answer) {
+    const syncDraft = buildDeterministicDraft(normalized, config, options);
+    return {
+      ...syncDraft,
+      text: formatInstanceOutboundDisclosure(
+        { disclosure_tag: config.visible_agent_id || "— agent-jhn-experimental" },
+        guideResult.answer,
+      ),
+      provenance_class: "s7-cognitive-retrieval",
+      sources: guideResult.sources || [],
+      stub: false,
+    };
   }
   return buildDeterministicDraft(normalized, config, options);
 }
 
-async function requestOpenAiDraft(userText, config, normalized, options = {}) {
+async function requestOpenAiDraft(userText, config, normalized, options = {}, guideResult = null) {
   const apiKey = String(process.env.OPENAI_API_KEY || "").trim();
   if (!apiKey) return "";
   const locale = resolveDisclosureLocale(config.allowed_self_jid || normalized?.remote_jid || "");
-  const model = process.env.AGENT_JHN_WHATSAPP_OPENAI_MODEL || "gpt-5-mini";
+  const model = process.env.AGENT_JHN_WHATSAPP_OPENAI_MODEL || "gpt-4.1-mini";
+  const corpusContext = buildCorpusContext(guideResult);
   const timeoutMs = 15000;
   const startedAt = Date.now();
   let response;
@@ -159,9 +173,12 @@ async function requestOpenAiDraft(userText, config, normalized, options = {}) {
               "You are Agent John (JHN), the experimental personal digital twin assistant of Jean Hugues Noël Robert.",
               "You are not Jean Hugues and cannot make commitments for him.",
               "Answer the owner directly, helpfully, and concisely.",
+              "Use the supplied public corpus excerpts when relevant and cite their source_id in square brackets.",
+              "If the excerpts do not support a claim, say that the corpus does not establish it.",
               `Reply in ${locale === "fr" ? "French" : "English"}.`,
             ].join(" "),
           },
+          ...(corpusContext ? [{ role: "system", content: `Public corpus excerpts:\n${corpusContext}` }] : []),
           { role: "user", content: userText },
         ],
         max_completion_tokens: 800,
@@ -190,7 +207,32 @@ async function requestOpenAiDraft(userText, config, normalized, options = {}) {
     error.cognitiveReported = true;
     throw error;
   }
-  return String(body?.choices?.[0]?.message?.content || "").trim();
+  const content = String(body?.choices?.[0]?.message?.content || "").trim();
+  if (!content) {
+    const error = new Error("OpenAI synthesis returned no text");
+    emitCognitiveError(options, error, {
+      provider: "openai", stage: "empty_response", model, endpoint_host: "api.openai.com",
+      elapsed_ms: Date.now() - startedAt, timeout_ms: timeoutMs, timed_out: false,
+      http_status: response.status, request_id: response.headers.get("x-request-id"),
+      processing_ms: numberOrNull(response.headers.get("openai-processing-ms")),
+      finish_reason: body?.choices?.[0]?.finish_reason,
+      prompt_tokens: body?.usage?.prompt_tokens,
+      completion_tokens: body?.usage?.completion_tokens,
+      reasoning_tokens: body?.usage?.completion_tokens_details?.reasoning_tokens,
+    });
+    error.cognitiveReported = true;
+    throw error;
+  }
+  return content;
+}
+
+function buildCorpusContext(guideResult) {
+  const excerpts = Array.isArray(guideResult?.context?.excerpts) ? guideResult.context.excerpts : [];
+  return excerpts.slice(0, 6).map((item) => {
+    const sourceId = String(item?.source_id || "source").slice(0, 240);
+    const text = String(item?.text || "").replace(/\s+/g, " ").trim().slice(0, 1800);
+    return text ? `[${sourceId}]\n${text}` : "";
+  }).filter(Boolean).join("\n\n").slice(0, 10000);
 }
 
 function emitCognitiveError(options, error, details) {
@@ -212,6 +254,10 @@ export function safeCognitiveDiagnostics(error, details = {}) {
     provider_error_code: safeToken(details.provider_error_code),
     request_id: /^req_[A-Za-z0-9_-]{1,120}$/.test(String(details.request_id || "")) ? details.request_id : null,
     processing_ms: Number.isFinite(details.processing_ms) ? details.processing_ms : null,
+    finish_reason: safeToken(details.finish_reason),
+    prompt_tokens: numberOrNull(details.prompt_tokens),
+    completion_tokens: numberOrNull(details.completion_tokens),
+    reasoning_tokens: numberOrNull(details.reasoning_tokens),
     error_name: String(error?.name || "Error").slice(0, 80),
     error_code: safeToken(error?.code),
   };
