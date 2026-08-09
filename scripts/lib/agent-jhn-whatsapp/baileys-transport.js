@@ -324,6 +324,7 @@ export function createBaileysTransport(config, hooks = {}) {
         };
       }
       stopRequested = false;
+      reconnectEnabled = true;
       await openSocket();
       return { ok: true, mode: "connect" };
     },
