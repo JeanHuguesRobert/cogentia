@@ -1,7 +1,7 @@
 ---
 title: Cogentia Shared Agent Instructions
 status: active
-version: 5
+version: 6
 date: 2026-08-09
 document_role: operational
 document_kind: agent-instructions
@@ -84,7 +84,10 @@ French.
 - Default to direct, atomic commits on the current canonical branch.
 - Do not create branches, draft PRs, approval gates or review ceremonies merely to isolate ordinary, scoped and reversible work.
 - Before writing, fetch and inspect the current state. If a concurrent change appears, reconcile it directly while preserving both contributions.
+- Reconciling a concurrent change is not an occasion to multiply confirmation prompts. Resolve non-conflicting deltas without asking; reserve an actual question for genuine, consequential ambiguity. A human answering many low-stakes-looking prompts in a row, possibly tired, is a realistic operating condition, not an edge case to design around only in principle.
+- Never present a reconciliation choice that could discard content as a bare yes/no. State explicitly what would be lost if the answer goes one way, proportional to how hard it would be to recover — the person answering must be able to see the stakes without having to reconstruct them.
 - Apply contextual judgment. A separate branch is appropriate when it materially improves safety, review or concurrent collaboration: for example when explicitly requested; when concurrent edits overlap materially; when the change is destructive or difficult to reverse; when external collaboration requires review; or when branch protection makes it technically necessary.
+- A lightweight, disposable safety net (a stash or a throwaway tag on the losing side) before a reconciliation step that could discard content is proportionate, not systematic: reach for it when the reconciliation is destructive or hard to reverse per the branch-exception criteria above, skip it for routine, cheaply-recoverable merges. Proportion to irreversibility, never a blanket precaution — see "Branches are exceptions" below.
 - Branches are exceptions to justify by a concrete benefit, not prohibited mechanisms. The default is measured progress, not precautionary bureaucracy.
 
 ## Stigmergic correction
