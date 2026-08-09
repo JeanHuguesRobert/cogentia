@@ -114,14 +114,42 @@ function saveContinuation(continuation) {
 
 async function callRouterEmbeddings(texts, model, dimensions) {
   const baseUrl = process.env.COGENTIA_AI_ROUTER_URL || process.env.MAGISTRAL_URL || undefined;
-  const client = createAiRouterClient({ baseUrl });
-  const payload = { model, input: texts };
-  if (dimensions) payload.dimensions = dimensions;
-  const response = await client.embeddings(payload);
-  if (!response.ok) {
-    throw new Error(`${response.error || "ai_router_embeddings_failed"}: ${response.message || response.status}`);
+  try {
+    const client = createAiRouterClient({ baseUrl });
+    const payload = { model, input: texts };
+    if (dimensions) payload.dimensions = dimensions;
+    const response = await client.embeddings(payload);
+    if (response.ok) {
+      return response.body;
+    }
+  } catch {
+    /* Fallback to direct OpenAI API below */
   }
-  return response.body;
+
+  // Direct OpenAI API fallback
+  const openAiKey = (process.env.OPENAI_API_KEY || "").trim();
+  if (openAiKey) {
+    const payload = {
+      model: model || "text-embedding-3-small",
+      input: texts,
+    };
+    if (dimensions) payload.dimensions = dimensions;
+    const res = await fetch("https://api.openai.com/v1/embeddings", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${openAiKey}`,
+      },
+      body: JSON.stringify(payload),
+    });
+    if (res.ok) {
+      return await res.json();
+    }
+    const text = await res.text();
+    throw new Error(`OpenAI Direct API returned HTTP ${res.status}: ${text.slice(0, 200)}`);
+  }
+
+  throw new Error("ai_router_embeddings_failed and OPENAI_API_KEY missing");
 }
 
 function continuationProfile(continuation) {

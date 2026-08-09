@@ -6,11 +6,17 @@ import path from "node:path";
 import { execFileSync } from "node:child_process";
 
 const here = path.dirname(new URL(import.meta.url).pathname).replace(/^\/[A-Za-z]:/, (m) => m.slice(1));
-const planner = path.join(here, "metadata-plan.js");
 const registryArg = process.argv.find((arg) => arg.startsWith("--registry="));
-const registryPath = path.resolve(registryArg ? registryArg.slice(11) : (process.env.COGENTIA_REGISTRY || "../JeanHuguesRobert/.cogentia.json"));
+let registryPath = path.resolve(registryArg ? registryArg.slice(11) : (process.env.COGENTIA_REGISTRY || "../JeanHuguesRobert/.cogentia.json"));
+if (fs.existsSync(registryPath) && fs.statSync(registryPath).isDirectory()) {
+  const candidate = path.join(registryPath, "docs", "registry.json");
+  const candidate2 = path.join(path.dirname(registryPath), "docs", "registry.json");
+  if (fs.existsSync(candidate)) registryPath = candidate;
+  else if (fs.existsSync(candidate2)) registryPath = candidate2;
+  else registryPath = path.join(here, "..", "docs", "registry.json");
+}
 const registry = JSON.parse(fs.readFileSync(registryPath, "utf8"));
-const root = path.dirname(registryPath);
+const root = path.dirname(path.dirname(registryPath));
 const continuations = [];
 for (const repo of registry.repos || []) {
   const cwd = path.resolve(root, repo.path);
