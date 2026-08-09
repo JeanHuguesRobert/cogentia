@@ -397,7 +397,14 @@ async function cmdRun(config, args) {
     },
     onMessage: async (msg) => {
       if (stopping) return;
-      const result = await handleInbound(msg, config, { source: "baileys" });
+      const result = await handleInbound(msg, config, {
+        source: "baileys",
+        enableCognitiveSynthesis: true,
+        onCognitiveError: (_error, diagnostics = {}) => console.error(JSON.stringify({
+          event: "cognitive_error",
+          ...diagnostics,
+        })),
+      });
       // Safe diagnostics only (no message body, no secrets).
       console.log(JSON.stringify({
         event: "inbound_handled",
