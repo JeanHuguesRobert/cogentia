@@ -239,7 +239,7 @@ export function createBaileysTransport(config, hooks = {}) {
       stopRequested = false;
       reconnectEnabled = true;
       pairingCodeIssued = false;
-      const useCode = options.pairingCode === true || Boolean(options.phoneNumber);
+      const useCode = options.pairingCode === true;
 
       await openSocket({ suppressQr: useCode });
 
