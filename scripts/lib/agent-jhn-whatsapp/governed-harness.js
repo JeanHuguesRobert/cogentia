@@ -105,14 +105,14 @@ export function createGovernedHarness(options = {}) {
         try {
           const value = await capability.execute(step.input || {}, { turnInput: input, step, authorization });
           const observation = { type: "capability_result", capability: capability.name, ok: true, value };
-          appendStep(state, step, stepResult(step, "completed", { observation, elapsed_ms: clock() - callStartedAt }));
+          appendStep(state, step, stepResult(step, "completed", { observation: summarizeCapabilityObservation(observation), elapsed_ms: clock() - callStartedAt }));
           state.observations.push(observation);
         } catch (error) {
           const observation = {
             type: "capability_result", capability: capability.name, ok: false,
             error: { name: safeName(error?.name) || "Error", code: safeName(error?.code) },
           };
-          appendStep(state, step, stepResult(step, "failed", { observation, elapsed_ms: clock() - callStartedAt, error }));
+          appendStep(state, step, stepResult(step, "failed", { observation: summarizeCapabilityObservation(observation), elapsed_ms: clock() - callStartedAt, error }));
           state.observations.push(observation);
         }
       }
@@ -132,6 +132,7 @@ function normalizeCapability(definition = {}) {
   return Object.freeze({
     name, kind, risk, description: String(definition.description || "").slice(0, 500),
     inputSchema: definition.inputSchema && typeof definition.inputSchema === "object" ? definition.inputSchema : null,
+    resultVisibility: definition.resultVisibility === "reasoner" ? "reasoner" : "private",
     costUnits: boundedInteger(definition.costUnits, 1, 0, 100), execute: definition.execute,
   });
 }
@@ -169,7 +170,7 @@ function authorize(capability, requested, allowed, confirmed) {
 }
 function snapshot(state, registry, bounds) {
   return {
-    input: state.input, observations: state.observations.slice(), steps: state.steps.slice(),
+    input: state.input, observations: state.observations.map(item => observationForReasoner(item, registry)), steps: state.steps.slice(),
     nextSequence: state.sequence, capabilityCalls: state.capabilityCalls, costUnits: state.costUnits,
     capabilities: registry.list(), bounds,
   };
@@ -187,6 +188,25 @@ function normalizeNames(values) { return Array.isArray(values) ? values.map(safe
 function safeName(value) {
   const name = String(value || "").trim();
   return /^[A-Za-z0-9_.:-]{1,120}$/.test(name) ? name : null;
+}
+function observationForReasoner(observation, registry) {
+  if (observation?.type !== "capability_result" || !observation.ok) return observation;
+  const capability = registry.get(observation.capability);
+  if (capability?.resultVisibility === "reasoner") return observation;
+  return {
+    type: observation.type,
+    capability: observation.capability,
+    ok: true,
+    value: { redacted: true, reason: "capability_result_private" },
+  };
+}
+function summarizeCapabilityObservation(observation) {
+  return {
+    type: "capability_result",
+    capability: safeName(observation?.capability),
+    ok: Boolean(observation?.ok),
+    error: observation?.ok ? undefined : observation?.error,
+  };
 }
 function boundedInteger(value, fallback, minimum, maximum) {
   const number = Number(value);

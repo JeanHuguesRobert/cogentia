@@ -13,7 +13,7 @@ const reasoner = nextStep => ({ nextStep });
 
 function registry(overrides = {}) {
   return createCapabilityRegistry([
-    { name: "corpus.search", kind: "tool", risk: "read_only", costUnits: 1, execute: overrides.search || (async ({ query }) => ({ excerpts: [`evidence:${query}`] })) },
+    { name: "corpus.search", kind: "tool", risk: "read_only", resultVisibility: "reasoner", costUnits: 1, execute: overrides.search || (async ({ query }) => ({ excerpts: [`evidence:${query}`] })) },
     { name: "github.read", kind: "mcp", risk: "read_only", costUnits: 2, execute: async () => ({ issue: 18 }) },
     { name: "gmail.send", kind: "mcp", risk: "external_write", costUnits: 3, execute: overrides.send || (async () => ({ sent: true })) },
   ]);
@@ -33,6 +33,24 @@ test("a reasoner can mobilize an authorized capability then answer", async () =>
   assert.equal(result.steps[0].step.protocol, AGENT_STEP_PROTOCOL);
   assert.equal(result.steps[0].result.protocol, STEP_RESULT_PROTOCOL);
 });
+
+test("private capability results are redacted before the next reasoner step", async () => {
+  let observed;
+  const harness = createGovernedHarness({
+    registry: registry(),
+    reasoner: reasoner(async state => {
+      if (!state.observations.length) return { kind: "capability_call", capability: "github.read" };
+      observed = state.observations[0];
+      return { kind: "answer", answer: "done" };
+    }),
+  });
+  const result = await harness.run({}, { allowedCapabilities: ["github.read"] });
+  assert.equal(result.ok, true);
+  assert.deepEqual(observed.value, { redacted: true, reason: "capability_result_private" });
+  assert.deepEqual(result.observations[0].value, { issue: 18 });
+  assert.equal("value" in result.steps[0].result.observation, false);
+});
+
 
 test("registration does not grant authorization", async () => {
   const harness = createGovernedHarness({

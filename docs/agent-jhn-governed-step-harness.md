@@ -84,6 +84,35 @@ kernel and deterministic tests. It does not yet connect an LLM reasoner or MCP
 adapter to the WhatsApp runtime. That integration is a later adapter milestone,
 not part of the protocol itself.
 
+`scripts/lib/agent-jhn-whatsapp/openai-step-reasoner.js` is the first concrete
+reasoner adapter. It asks a model for exactly one JSON step and never executes
+that step itself. Capability results are private by default and become visible
+to an external reasoner only when the capability explicitly declares
+
+`scripts/lib/agent-jhn-whatsapp/guide-step-capability.js` is the first
+read-only capability adapter. It exposes normalized public Guide evidence as
+`corpus.search`. The complete isolated loop is now testable as reasoner step →
+Guide capability → reasoner-visible public observation → answer step, without
+changing the production WhatsApp path.
+
+## Open-Possible check
+
+Current frame: a reasoner mobilizes uniformly described capabilities while a
+deterministic kernel controls authority and bounds. The implementation kind is
+not an invariant: tools, skills, MCP connectors, models, and future executors
+can share the same step contract.
+
+Preserved residue: result visibility is currently whole-result and binary
+(`private` or `reasoner`). Field-level disclosure envelopes may later preserve
+more useful evidence without exposing an entire capability result. This is
+unsupported now, not impossible under the protocol.
+
+Small Booster / Reality test: the cached-public-Guide smoke loop verifies the
+full reasoner → capability → observation → answer transition without deploying
+or enabling a WhatsApp-side tool. Its successful trace justifies proceeding to
+runtime integration while keeping that integration independently reversible.
+`resultVisibility: reasoner`.
+
 ## Correction trace
 
 An earlier working draft named the cognitive dependency `planner`. That name
