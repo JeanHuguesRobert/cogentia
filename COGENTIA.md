@@ -181,7 +181,6 @@ The framework exists to be argued against, in the form it itself defined.
 - [Rendre capable — noyau doctrinal provisoire](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/noyau_doctrinal_rendre_capable.md)
 - [Test du critère Rossignol](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/test_critere_rossignol.md)
 - [Agent-Resumable CLI](research/agent_resumable_cli.md)
-- [AGENTS.md — Cogentia methodology shortcut](AGENTS.md)
 - [Cogentia](README.md)
 - [cogentia.js - Tutorial and Near-Specification](research/cogentia_js_tutorial.md)
 - [Cognitive Packet Switching](research/cognitive_packet_switching.md)

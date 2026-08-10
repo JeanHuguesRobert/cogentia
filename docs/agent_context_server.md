@@ -147,7 +147,6 @@ Mechanical generated views can be applied by the tool after review. Interpretive
 ### Backlinks
 
 *These documents link to this file:*
-- [AGENTS.md — Cogentia methodology shortcut](../AGENTS.md)
 - [Cogentia](../README.md)
 - [Research Index — Cogentia](../research/index.md)
 - [The Cogentia Commons Living Corpus](../research/cogentia_commons_living_corpus.md)

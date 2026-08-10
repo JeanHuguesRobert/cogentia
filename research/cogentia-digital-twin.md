@@ -195,4 +195,5 @@ This document is a position paper, not a product announcement. It is published i
 - [Trail: From Method to Machine](trails/from_method_to_machine.md)
 - [Operational Formulas — Representation Primitives](https://github.com/JeanHuguesRobert/JeanHuguesRobert/blob/main/research/operational_formulas.md)
 - [Project Context — Jean Hugues Noël Robert, baron Mariani](https://github.com/JeanHuguesRobert/JeanHuguesRobert/blob/main/CONTEXT.md)
+- [On n’est jamais si bien servi que par soi-même ; demain, cela fera beaucoup de monde](https://github.com/JeanHuguesRobert/ubikia/blob/main/artifacts/audible/on-nest-jamais-si-bien-servi/source.md)
 <!-- END_AUTO: backlinks -->

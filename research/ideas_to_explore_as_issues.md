@@ -466,7 +466,6 @@ Open continuations:
 ### Backlinks
 
 *These documents link to this file:*
-- [AGENTS.md — Cogentia methodology shortcut](../AGENTS.md)
 - [Research Index — Cogentia](index.md)
 - [Simplicité d'action](simplicite_action.md)
 - [The Cogentia Commons Living Corpus](cogentia_commons_living_corpus.md)

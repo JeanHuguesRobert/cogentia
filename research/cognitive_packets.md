@@ -1523,6 +1523,7 @@ The novelty of cognitive packets is therefore not the existence of the pattern, 
 - [Cogentigraphic Distillation](cogentigraphic_distillation.md)
 - [Cognitive Packet Switching](cognitive_packet_switching.md)
 - [Concept Index — cogentia](concepts.md)
+- [Informational Gravity — Contextual Attraction for Cognitive-Packet Routing](informational_gravity.md)
 - [Pipeline](pipeline.md)
 - [Research Index — Cogentia](index.md)
 - [The Cogentia Commons Living Corpus](cogentia_commons_living_corpus.md)
@@ -1533,10 +1534,13 @@ The novelty of cognitive packets is therefore not the existence of the pattern, 
 - [Le Réseau Inconscient](https://github.com/JeanHuguesRobert/FractaVolta/blob/main/research/LE_RESEAU_INCONSCIENT.md)
 - Methodology
 - [The Unconscious Grid](https://github.com/JeanHuguesRobert/FractaVolta/blob/main/research/UNCONSCIOUS_GRID.md)
+- [When Cognition Became Traffic](https://github.com/JeanHuguesRobert/FractaVolta/blob/main/research/when_cognition_became_traffic.md)
 - [Library packets — when the library is a specification, not code](https://github.com/JeanHuguesRobert/Inox/blob/master/research/library_packets.md)
 - [Reactive Sets in Inox — Native Implementation Path](https://github.com/JeanHuguesRobert/Inox/blob/master/research/reactive_sets_inox_cop_implementation.md)
 - [Research Index — Inox](https://github.com/JeanHuguesRobert/Inox/blob/master/research/index.md)
 - COP Reactive Cognitive Extension
+- [COP Zero Draft — Mission-Bearing Cognitive Packet Kernel](https://github.com/JeanHuguesRobert/inseme/blob/main/research/cop_zero_draft.md)
+- COP/Accounting — Resource, Budget, Mandate, and Ledger Semantics
 - [Packet Attractor — Fractanet Distributed Demand and Capability Routing](https://github.com/JeanHuguesRobert/inseme/blob/main/research/packet_attractor_fractanet.md)
 - [Reactive Cognitive COP Extension](https://github.com/JeanHuguesRobert/inseme/blob/main/research/reactive_cognitive_cop_extension.md)
 - [Research Index — Inseme](https://github.com/JeanHuguesRobert/inseme/blob/main/research/index.md)

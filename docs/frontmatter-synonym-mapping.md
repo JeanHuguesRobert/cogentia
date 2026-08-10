@@ -153,6 +153,7 @@ Objective: after two or three repositories have been processed this way, ingesti
 ### Backlinks
 
 *These documents link to this file:*
+- [Frontmatter Migration — v0.1](frontmatter-migration-v0.1.md)
 - [Frontmatter Schema — v0.1 (Corpus)](frontmatter-schema.md)
 - [Research Index — Cogentia](../research/index.md)
 <!-- END_AUTO: backlinks -->

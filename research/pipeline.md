@@ -1383,11 +1383,11 @@ A possible v0.5 of this paper would integrate these two sections into the main n
 - Barons Mariani
 - [Corsica2038 — De la prospective subie à l’autonomie de capacité](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/autonomia/corsica2038_contre_rapport_pruspettiva2050.md)
 - [Discours de la seconde méthode](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/second_method.md)
+- [Le Réel, le Virtuel et l’Actuel](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/le_reel_le_virtuel_et_l_actuel.md)
 - [Projet #1755](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/autonomia/projet_1755.md)
 - [Reality Safety](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/reality_safety_procedural_stabilizers.md)
 - [Rendre capable — noyau doctrinal provisoire](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/noyau_doctrinal_rendre_capable.md)
 - [Stigmergie sans limite haute](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/stigmergie_sans_limite_haute.md)
-- [AGENTS.md — Cogentia methodology shortcut](../AGENTS.md)
 - [Cogentia](../README.md)
 - [Cogentia Commons — Public by Default, Private by Exception](cogentia_commons_visibility_and_private_modes.md)
 - [cogentia.js - Tutorial and Near-Specification](cogentia_js_tutorial.md)

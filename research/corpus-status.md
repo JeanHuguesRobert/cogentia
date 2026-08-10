@@ -58,6 +58,7 @@ update_policy: UP-DEFAULT-REVIEWED
 | Kudos | yes | main | all | public | full |
 | .github | yes | main | all | public | full |
 | acorsica.org | yes | main | all | public | full |
+| StructEnv | no | main | all | public | full |
 <!-- END_AUTO: registered_repos -->
 ---
 
@@ -84,23 +85,26 @@ graph LR
   r_kudos["Kudos"]
   r_github[".github"]
   r_acorsica_org["acorsica.org"]
-  r_cogentia -->|97| r_barons_mariani
-  r_barons_mariani -->|67| r_cogentia
-  r_jeanhuguesrobert -->|66| r_barons_mariani
-  r_fractavolta -->|47| r_cogentia
+  r_structenv["StructEnv"]
+  r_cogentia -->|106| r_barons_mariani
+  r_barons_mariani -->|71| r_cogentia
+  r_jeanhuguesrobert -->|68| r_barons_mariani
+  r_fractavolta -->|48| r_cogentia
   r_fractavolta -->|37| r_marenostrum
-  r_jeanhuguesrobert -->|34| r_cogentia
-  r_inseme -->|23| r_cogentia
+  r_inseme -->|36| r_cogentia
+  r_jeanhuguesrobert -->|35| r_cogentia
+  r_cogentia -->|28| r_inseme
   r_barons_mariani -->|22| r_marenostrum
-  r_cogentia -->|22| r_inseme
   r_fractavolta -->|22| r_inseme
+  r_barons_mariani -->|19| r_fractavolta
   r_cogentia -->|19| r_marenostrum
-  r_fractavolta -->|18| r_barons_mariani
-  r_barons_mariani -->|17| r_fractavolta
-  r_barons_mariani -->|16| r_inseme
+  r_fractavolta -->|19| r_barons_mariani
+  r_inseme -->|19| r_barons_mariani
+  r_barons_mariani -->|18| r_inseme
   r_inox -->|16| r_cogentia
   r_jeanhuguesrobert -->|16| r_marenostrum
   r_marenostrum -->|16| r_cogentia
+  r_inseme -->|13| r_fractavolta
   r_inseme -->|12| r_inox
   r_marenostrum -->|12| r_fractavolta
   r_inox -->|11| r_barons_mariani
@@ -110,22 +114,24 @@ graph LR
   r_jeanhuguesrobert -->|9| r_fractavolta
   r_fractavolta -->|8| r_inox
   r_inox -->|8| r_marenostrum
-  r_inseme -->|8| r_fractavolta
-  r_jeanhuguesrobert -->|6| r_inseme
+  r_jeanhuguesrobert -->|7| r_inseme
+  r_inseme -->|6| r_kudos
   r_jeanhuguesrobert -->|6| r_inox
+  r_ubikia -->|6| r_cogentia
   r_barons_mariani -->|5| r_inox
   r_barons_mariani -->|5| r_jeanhuguesrobert
   r_cogentia -->|5| r_fractavolta
+  r_ubikia -->|5| r_barons_mariani
   r_barons_mariani -->|4| r_ubikia
   r_cogentia -->|4| r_jeanhuguesrobert
-  r_inseme -->|4| r_barons_mariani
   r_marianivillage -->|4| r_fractavolta
   r_operium -->|4| r_marenostrum
-  r_ubikia -->|4| r_cogentia
+  r_ubikia -->|4| r_jeanhuguesrobert
   r_github -->|3| r_gouvernance
   r_inseme -->|3| r_jeanhuguesrobert
   r_kudos -->|3| r_barons_mariani
   r_operium -->|3| r_cogentia
+  r_operium -->|3| r_barons_mariani
   r_operium -->|3| r_inseme
   r_cogentia -->|2| r_inox
   r_fractavolta -->|2| r_jeanhuguesrobert
@@ -139,9 +145,8 @@ graph LR
   r_marenostrum -->|2| r_jeanhuguesrobert
   r_marenostrum -->|2| r_inseme
   r_marenostrum -->|2| r_inox
-  r_operium -->|2| r_barons_mariani
-  r_privai -->|2| r_institut_mariani
   r_github -->|1| r_institut_mariani
+  r_cogentia -->|1| r_kudos
   r_gouvernance -->|1| r_jeanhuguesrobert
   r_gouvernance -->|1| r_cogentia
   r_gouvernance -->|1| r_inseme
@@ -160,6 +165,7 @@ graph LR
   r_jeanhuguesrobert -->|1| r_operium
   r_kudos -->|1| r_institut_mariani
   r_marianivillage -->|1| r_institut_mariani
+  r_privai -->|1| r_institut_mariani
 ```
 <!-- END_AUTO: graph -->
 ---
@@ -186,7 +192,7 @@ graph LR
 | [Sovereign Digital Twin](./concepts.md#sovereign-digital-twin) | Global | Defined | system model |
 | [Agent-Resumable CLI](./concepts.md#agent-resumable-cli) | Global | Operational | architecture |
 | [Kernel Extractor](./concepts.md#kernel-extractor) | repository-specific | Working | mechanism |
-| [KYS (Know Your System) / Psychocognitive Analysis](./concepts.md#kys-know-your-system-psychocognitive-analysis) | project-specific | Working | protocol |
+| [KYS (Know Your Self) / Psychocognitive Analysis](./concepts.md#kys-know-your-self-psychocognitive-analysis) | project-specific | Working | protocol |
 | [Cogentia Workflows](./concepts.md#cogentia-workflows) | repository-specific | Defined | system model |
 <!-- END_AUTO: concepts -->
 ## Concept Graph
@@ -211,7 +217,7 @@ graph LR
   c_sovereign_digital_twin["Sovereign Digital Twin"]
   c_agent_resumable_cli["Agent-Resumable CLI"]
   c_kernel_extractor["Kernel Extractor"]
-  c_kys_know_your_system_psychocognitive_analysis["KYS (Know Your System) / Psychocognitive Analysis"]
+  c_kys_know_your_self_psychocognitive_analysis["KYS (Know Your Self) / Psychocognitive Analysis"]
   c_cogentia_workflows["Cogentia Workflows"]
   c_cogentia["Cogentia"]
   c_cogentigram["Cogentigram"]
@@ -242,6 +248,11 @@ graph LR
   c_cogentia["Cogentia"]
   c_cogentigram["Cogentigram"]
   c_potentics["Potentics"]
+  c_presencology["Presencology"]
+  c_presence["Presence"]
+  c_presence_map["Presence Map"]
+  c_latent_functional_map["Latent Functional Map"]
+  c_projection_of_the_possible["Projection of The Possible"]
   c_cognitive_waves["Cognitive Waves"]
   c_mimetic_desynchronization["Mimetic Desynchronization"]
   c_invidia["Invidia"]
@@ -383,6 +394,20 @@ graph LR
   c_cogentigram -.-> c_map_vs_territory
   c_cogentigram -.-> c_operational_memory
   c_cogentigram -.-> c_traceable_agency
+  c_potentics -.-> c_presencology
+  c_potentics -.-> c_the_possible
+  c_potentics -.-> c_rational_odyssey
+  c_potentics -.-> c_rational_exploration_of_the_possible
+  c_potentics -.-> c_potentiality_map
+  c_presence_map -.-> c_potentiality_map
+  c_presence_map -.-> c_projection_of_the_possible
+  c_presence_map -.-> c_latent_functional_map
+  c_presence_map -.-> c_explicit_supermap
+  c_latent_functional_map -.-> c_presence_map
+  c_latent_functional_map -.-> c_rich_stigmergy
+  c_latent_functional_map -.-> c_flotilla_architecture
+  c_latent_functional_map -.-> c_cartographer
+  c_latent_functional_map -.-> c_explicit_supermap
   c_possibilism_academic_framework --> c_applied_possibilism
   c_cop_stigmergic_orchestration --> c_applied_possibilism
   c_dhitl_democratic_human_in_the_loop --> c_applied_possibilism
@@ -486,7 +511,7 @@ graph LR
   click c_sovereign_digital_twin "https://github.com/JeanHuguesRobert/cogentia/blob/main/research/concepts.md#sovereign-digital-twin" "Open Sovereign Digital Twin"
   click c_agent_resumable_cli "https://github.com/JeanHuguesRobert/cogentia/blob/main/research/concepts.md#agent-resumable-cli" "Open Agent-Resumable CLI"
   click c_kernel_extractor "https://github.com/JeanHuguesRobert/cogentia/blob/main/research/concepts.md#kernel-extractor" "Open Kernel Extractor"
-  click c_kys_know_your_system_psychocognitive_analysis "https://github.com/JeanHuguesRobert/cogentia/blob/main/research/concepts.md#kys-know-your-system-psychocognitive-analysis" "Open KYS (Know Your System) / Psychocognitive Analysis"
+  click c_kys_know_your_self_psychocognitive_analysis "https://github.com/JeanHuguesRobert/cogentia/blob/main/research/concepts.md#kys-know-your-self-psychocognitive-analysis" "Open KYS (Know Your Self) / Psychocognitive Analysis"
   click c_cogentia_workflows "https://github.com/JeanHuguesRobert/cogentia/blob/main/research/concepts.md#cogentia-workflows" "Open Cogentia Workflows"
   click c_cogentia "https://github.com/JeanHuguesRobert/FractaVolta/blob/main/research/concepts.md#cogentia" "Open Cogentia"
   click c_cogentigram "https://github.com/JeanHuguesRobert/FractaVolta/blob/main/research/concepts.md#cogentigram" "Open Cogentigram"
@@ -517,6 +542,11 @@ graph LR
   click c_cogentia "https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/concepts.md#cogentia" "Open Cogentia"
   click c_cogentigram "https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/concepts.md#cogentigram" "Open Cogentigram"
   click c_potentics "https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/concepts.md#potentics" "Open Potentics"
+  click c_presencology "https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/concepts.md#presencology" "Open Presencology"
+  click c_presence "https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/concepts.md#presence" "Open Presence"
+  click c_presence_map "https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/concepts.md#presence-map" "Open Presence Map"
+  click c_latent_functional_map "https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/concepts.md#latent-functional-map" "Open Latent Functional Map"
+  click c_projection_of_the_possible "https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/concepts.md#projection-of-the-possible" "Open Projection of The Possible"
   click c_cognitive_waves "https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/concepts.md#cognitive-waves" "Open Cognitive Waves"
   click c_mimetic_desynchronization "https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/concepts.md#mimetic-desynchronization" "Open Mimetic Desynchronization"
   click c_invidia "https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/concepts.md#invidia" "Open Invidia"
@@ -558,9 +588,9 @@ graph LR
   click c_cogentigram "https://github.com/JeanHuguesRobert/JeanHuguesRobert/blob/main/research/concepts.md#cogentigram" "Open Cogentigram"
 ```
 
-*Orphan concepts: `Civilizational Stakes` (cogentia), `Cogentia` (cogentia), `Cogentia Commons` (cogentia), `Sovereign Digital Twin` (cogentia), `Agent-Resumable CLI` (cogentia), `Kernel Extractor` (cogentia), `KYS (Know Your System) / Psychocognitive Analysis` (cogentia), `Cogentia Workflows` (cogentia), `IPN (Inference Packet Network)` (FractaVolta), `EPN (Energy Packet Network)` (FractaVolta), `PGN (Power Generation Node)` (FractaVolta), `Packet Attractors (Fractanet routing)` (FractaVolta), `Packet as evolutionary attractor` (FractaVolta), `The Unconscious Grid` (FractaVolta), `Mariani Village` (FractaVolta), `Value-Shaped Solar` (FractaVolta), `Containerized Compute (Tera)` (FractaVolta), `Traceable Governance` (FractaVolta), `DHITL (Democratic Human In The Loop)` (marenostrum), `CXU (Compute and Exergy Unit)` (marenostrum), `Safe Compute Exergy` (marenostrum), `Constellia` (marenostrum), `Corsica Forest Synergies` (marenostrum), `Sun to Sovereignty` (marenostrum), `Civilizational Stakes` (barons-Mariani), `Cogentia` (barons-Mariani), `Potentics` (barons-Mariani), `Cognitive Waves` (barons-Mariani), `Mimetic Desynchronization` (barons-Mariani), `Invidia` (barons-Mariani), `Transition Markets` (barons-Mariani), `The Uchronian Museum` (barons-Mariani), `Possibilism` (barons-Mariani), `Territoires Possibilistes` (barons-Mariani), `The Second Method` (barons-Mariani), `Discret Holography` (barons-Mariani), `COP (Continuous Operation Protocol)` (inseme), `Briques` (inseme), `Kudocracy` (inseme), `Agora` (inseme), `Ophélia` (inseme), `COP (Cognitive Orchestration Protocol)` (inseme), `Brique Spec / Multi-Instance` (inseme), `Modular System` (inseme), `Reactive sets` (Inox), `Actors` (Inox), `Dialects` (Inox).*
+*Orphan concepts: `Civilizational Stakes` (cogentia), `Cogentia` (cogentia), `Cogentia Commons` (cogentia), `Sovereign Digital Twin` (cogentia), `Agent-Resumable CLI` (cogentia), `Kernel Extractor` (cogentia), `KYS (Know Your Self) / Psychocognitive Analysis` (cogentia), `Cogentia Workflows` (cogentia), `IPN (Inference Packet Network)` (FractaVolta), `EPN (Energy Packet Network)` (FractaVolta), `PGN (Power Generation Node)` (FractaVolta), `Packet Attractors (Fractanet routing)` (FractaVolta), `Packet as evolutionary attractor` (FractaVolta), `The Unconscious Grid` (FractaVolta), `Mariani Village` (FractaVolta), `Value-Shaped Solar` (FractaVolta), `Containerized Compute (Tera)` (FractaVolta), `Traceable Governance` (FractaVolta), `DHITL (Democratic Human In The Loop)` (marenostrum), `CXU (Compute and Exergy Unit)` (marenostrum), `Safe Compute Exergy` (marenostrum), `Constellia` (marenostrum), `Corsica Forest Synergies` (marenostrum), `Sun to Sovereignty` (marenostrum), `Civilizational Stakes` (barons-Mariani), `Cogentia` (barons-Mariani), `Presencology` (barons-Mariani), `Presence` (barons-Mariani), `Projection of The Possible` (barons-Mariani), `Cognitive Waves` (barons-Mariani), `Mimetic Desynchronization` (barons-Mariani), `Invidia` (barons-Mariani), `Transition Markets` (barons-Mariani), `The Uchronian Museum` (barons-Mariani), `Possibilism` (barons-Mariani), `Territoires Possibilistes` (barons-Mariani), `The Second Method` (barons-Mariani), `Discret Holography` (barons-Mariani), `COP (Continuous Operation Protocol)` (inseme), `Briques` (inseme), `Kudocracy` (inseme), `Agora` (inseme), `Ophélia` (inseme), `COP (Cognitive Orchestration Protocol)` (inseme), `Brique Spec / Multi-Instance` (inseme), `Modular System` (inseme), `Reactive sets` (Inox), `Actors` (Inox), `Dialects` (Inox).*
 
-*Referenced but undefined: `Democratic AI Safety`, `Cogentia Commons (déclinaison manuelle)`, `Fractanet / COP (déclinaison automatisée)`, `Stabilisateurs (anti-Ubik)`, `DHITL (couches 4/5)`, `Effet Ubik (opposé)`, `Machine à explorer (opposé symétrique)`, `FM-11 (outer optimizer capture)`, `Concentration de compute (85% frontier)`, `Invidia (densité sociale destructrice)`, `DHITL (Compute Exergy comme unité traçable)`, `Map vs territory`, `Operational memory`, `Traceable agency`, `Non-deterministic Cognitive Step`, `Causal Trace Replay`, `COP/HITL Profile`, `Rule 0 (seconde méthode)`, `DHITL Layer 5`, `Envelope (kind-agnostic metadata layer)`, `Payload (kind-specific content layer)`, `Continuation payload`, `Objection payload`, `Hypothesis payload`, `Decision payload`, `Failure payload`, `Routing payload`, `Source Document`, `DHITL`, `Possibilism (academic framework)`, `COP (stigmergic orchestration)`, `DHITL (democratic human-in-the-loop)`, `Digital twins as cognitive liberation`, `Attractor-based exploration`, `Stateless agents for scalable exploration`, `Joy as method (against grim optimization)`, `Musée Mariani des Possibles (muséological application)`, `Applied Possibilism in agile style`, `Continuations as resumable exploration`, `Capabilities approach (Sen, Nussbaum)`, `Spécificité de phase`, `Flexibilité d'usage (redistributive vs. predatory)`, `Auto-institution démocratique (Castoriadis)`, `Communs (Ostrom)`, `Mauss — gift / counter-gift`, `Democratic AI Safety (thesis kernel)`, `DHITL — Democratic Humans in the Loop`, `Cogentia Commons (auditable knowledge)`, `Traçabilité civique anti-mafieuse`, `Muséologie capacitaire`, `Indice de friction administrative`, `Indice de capacité retrouvée`, `Grille de remise en service`, `Deterministic Replay (protocol layer only)`, `Energy Packet Network (FractaVolta)`, `Cognitive Packet envelope/payload (Cogentia)`, `Auxilia (Inseme brique — human-scale Fractanet exchange)`.*
+*Referenced but undefined: `Democratic AI Safety`, `Cogentia Commons (déclinaison manuelle)`, `Fractanet / COP (déclinaison automatisée)`, `Stabilisateurs (anti-Ubik)`, `DHITL (couches 4/5)`, `Effet Ubik (opposé)`, `Machine à explorer (opposé symétrique)`, `FM-11 (outer optimizer capture)`, `Concentration de compute (85% frontier)`, `Invidia (densité sociale destructrice)`, `DHITL (Compute Exergy comme unité traçable)`, `Map vs territory`, `Operational memory`, `Traceable agency`, `Non-deterministic Cognitive Step`, `Causal Trace Replay`, `COP/HITL Profile`, `Rule 0 (seconde méthode)`, `DHITL Layer 5`, `Envelope (kind-agnostic metadata layer)`, `Payload (kind-specific content layer)`, `Continuation payload`, `Objection payload`, `Hypothesis payload`, `Decision payload`, `Failure payload`, `Routing payload`, `Source Document`, `DHITL`, `The Possible`, `Rational Odyssey`, `Rational Exploration of The Possible`, `Potentiality Map`, `Explicit Supermap`, `Rich Stigmergy`, `Flotilla Architecture`, `Cartographer`, `Possibilism (academic framework)`, `COP (stigmergic orchestration)`, `DHITL (democratic human-in-the-loop)`, `Digital twins as cognitive liberation`, `Attractor-based exploration`, `Stateless agents for scalable exploration`, `Joy as method (against grim optimization)`, `Musée Mariani des Possibles (muséological application)`, `Applied Possibilism in agile style`, `Continuations as resumable exploration`, `Capabilities approach (Sen, Nussbaum)`, `Spécificité de phase`, `Flexibilité d'usage (redistributive vs. predatory)`, `Auto-institution démocratique (Castoriadis)`, `Communs (Ostrom)`, `Mauss — gift / counter-gift`, `Democratic AI Safety (thesis kernel)`, `DHITL — Democratic Humans in the Loop`, `Cogentia Commons (auditable knowledge)`, `Traçabilité civique anti-mafieuse`, `Muséologie capacitaire`, `Indice de friction administrative`, `Indice de capacité retrouvée`, `Grille de remise en service`, `Deterministic Replay (protocol layer only)`, `Energy Packet Network (FractaVolta)`, `Cognitive Packet envelope/payload (Cogentia)`, `Auxilia (Inseme brique — human-scale Fractanet exchange)`.*
 <!-- END_AUTO: concept_graph -->
 ---
 
@@ -573,6 +603,7 @@ graph LR
 | [Lien avec C.O.R.S.I.C.A., l’Institut Mariani et PrivAI](acorsica-institut-mariani.md) *(institutional boundary note — documentary links without institutional confusion)* | this repo | 2026-06-03 |
 | [Agent-Resumable CLI — Externalized Judgment, Continuations, and Provider-Neutral Resumption for AI-Compatible CLI Tools](agent_resumable_cli.md) *(defines the v1 continuation pattern; current `scripts/cogentia.js continuation` uses the v2 operational surface)* | this repo | 2026-05-14 |
 | [Cognitive Packets — An Envelope and Payload Format for Human–AI and Multi-Agent Cooperation](cognitive_packets.md) *(working paper v0.3 — envelope/payload split ; paired operational prompt in [`prompts/cognitive_packet.md`](../prompts/cognitive_packet.md))* | this repo | 2026-05-21 |
+| [Mailboxes at Two Scales — From Actor Messages to Governed Cognitive Packets](mailboxes_at_two_scales.md) *(working note — historical observation made when the Gmail ↔ Twin JHN channel became bidirectional)* | this repo | 2026-07-27 |
 | [Pipeline — From cognitive packets to source documents and derived products](pipeline.md) *(method note v0.4 — packet-switched, self-applicative; canonical operational method of the corpus)* | this repo | 2026-05-25 |
 | [Derived Products — Versioned Source Corpora, Situated Forms, and Publication Agents](derived_products.md) *(working paper v0.2 — source ↔ derived split; companion to [`pipeline.md`](pipeline.md))* | this repo | 2026-05-23 |
 | [cogentia.js - Tutorial and Near-Specification](cogentia_js_tutorial.md) *(generated automatically from the current v2 CLI and corpus docs; derived operational walkthrough, not a sovereign source document)* | this repo | 2026-06-16 |
@@ -587,6 +618,10 @@ graph LR
 | [Optimistic Mainline Governance](optimistic_mainline_governance.md) *(source document v0.1 — direct agent work on main under trace, reversibility and scoped authorization)* | this repo | 2026-06-26 |
 | [Digital Twin Trust Model](digital_twin_trust_model.md) *(source document v0.1 — maturity, capability, owner sovereignty, and progressive autonomy for a trustable digital twin of the owner)* | this repo | 2026-06-30 |
 | [Digital Twin Ubiquity](digital_twin_ubiquity.md) *(source document v0.1 — instances, appearances, mandates, and COP coordination for an owner-rooted digital twin that can appear in multiple places at once)* | this repo | 2026-06-30 |
+| [Instance map — locked names (Inseme)](https://github.com/JeanHuguesRobert/inseme/blob/main/research/instance_map.md) *(external — Pertitellu first collective; JHN personal TwinRoot; Guide `fractavolta-public-guide` infant surface)* | inseme | 2026-07-29 |
+| [CPKT-2026-003 — Session handoff (Guide fail-fast · dual-era MCP · instance map)](CPKT-2026-003_session_handoff_guide_mcp_instances.md) *(cognitive packet — resume any agent/machine; do not redo A/B/C)* | this repo | 2026-07-29 |
+| [CPKT-2026-004 — SOMA actions and FractaNode health corrections](CPKT-2026-004_soma_actions_health_corrections_handoff.md) *(cognitive packet — postponed work; resume from published Operium commits and verified live state)* | this repo | 2026-07-29 |
+| [CPKT-2026-006 — Fix Bugs First dashboard handoff](CPKT-2026-006_fix_bugs_first_dashboard_handoff.md) *(cognitive packet — resume the bounded read-oriented dashboard increment from a workstation or Termux; GitHub is the first adapter, not universal authority)* | this repo | 2026-08-06 |
 | [Cogentia and Cogentigram](Cogentia-and-Cogentigram.md) | this repo | 2026 |
 | [The Sovereign Digital Twin — Cogentia, Cogentigram, Cogentiscope](cogentia-digital-twin.md) | this repo | 2026-04 |
 | [Cogentia Personal Data Portability](cogentia_personal_data_portability.md) *(generic reusable layer for schemas, templates, normalizers and redacted/fictitious examples; explicitly separated from any private personal register)* | this repo | 2026-06-11 |
