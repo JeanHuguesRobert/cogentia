@@ -1,0 +1,9 @@
+{
+  "answer": "FractaVolta est une infrastructure énergétique et cognitive distribuée.",
+  "model": "gpt-5.6-terra",
+  "finish_reason": "stop",
+  "prompt_tokens": 320,
+  "completion_tokens": 42,
+  "reasoning_tokens": 0,
+  "request_id": "req_fixture_success"
+}

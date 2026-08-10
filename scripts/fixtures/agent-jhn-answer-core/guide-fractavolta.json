@@ -1,0 +1,21 @@
+{
+  "answer": "FractaVolta relie énergie distribuée, calcul et gouvernance locale.",
+  "sources": [
+    {
+      "source_id": "FractaVolta:research/fractavolta_paper.md#L450-L469",
+      "title": "FractaVolta"
+    },
+    {
+      "source_id": "FractaVolta:research/acorsica-institut-mariani.md#L40-L50",
+      "title": "Lien avec C.O.R.S.I.C.A. et l'Institut Mariani"
+    }
+  ],
+  "context": {
+    "excerpts": [
+      {
+        "source_id": "FractaVolta:research/fractavolta_paper.md#L450-L469",
+        "text": "FractaVolta organise une infrastructure énergétique distribuée et souveraine."
+      }
+    ]
+  }
+}

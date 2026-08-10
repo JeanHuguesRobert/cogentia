@@ -1,0 +1,9 @@
+{
+  "answer": "",
+  "model": "gpt-5.6-terra",
+  "finish_reason": "length",
+  "prompt_tokens": 320,
+  "completion_tokens": 800,
+  "reasoning_tokens": 800,
+  "request_id": "req_fixture_empty"
+}

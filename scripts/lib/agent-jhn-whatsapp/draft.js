@@ -14,6 +14,7 @@ import {
   resolveDisclosureLocale,
 } from "./disclosure.js";
 import { formatInstanceOutboundDisclosure } from "../digital-twin-engine.js";
+import { analyzeQuestion, createAnswerEngine } from "./answer-core.js";
 
 /**
  * Build a non-engaging experimental reply (synchronous, deterministic).
@@ -77,6 +78,11 @@ export function buildDeterministicDraft(normalized, config, options = {}) {
 export async function buildCognitiveDraft(normalized, config, options = {}) {
   const userText = (normalized?.text || "").trim();
   if (!userText) return buildDeterministicDraft(normalized, config, options);
+  const questionAnalysis = analyzeQuestion({
+    text: userText,
+    locale: resolveDisclosureLocale(config.allowed_self_jid || normalized?.remote_jid || ""),
+    channel: "whatsapp",
+  });
 
   let guideResult = null;
   const guideUrl = String(
@@ -91,8 +97,8 @@ export async function buildCognitiveDraft(normalized, config, options = {}) {
       headers: { Accept: "application/json", "Content-Type": "application/json" },
       body: JSON.stringify({
         question: userText,
-        locale: resolveDisclosureLocale(config.allowed_self_jid || normalized?.remote_jid || ""),
-        web_search: false,
+        locale: questionAnalysis.locale,
+        web_search: questionAnalysis.needsCurrentWeb,
       }),
       signal: AbortSignal.timeout(8000),
     });
@@ -111,54 +117,59 @@ export async function buildCognitiveDraft(normalized, config, options = {}) {
     });
   }
 
-  try {
-    const directAnswer = await requestOpenAiDraft(userText, config, normalized, options, guideResult);
-    if (directAnswer) {
-      const syncDraft = buildDeterministicDraft(normalized, config, options);
-      return {
-        ...syncDraft,
-        text: formatInstanceOutboundDisclosure(
-          { disclosure_tag: config.visible_agent_id || "— agent-jhn-experimental" },
-          directAnswer,
-        ),
-        provenance_class: guideResult ? "openai-corpus-grounded" : "openai-direct",
-        sources: guideResult?.sources || [],
-        stub: false,
-      };
-    }
-  } catch (error) {
-    if (!error?.cognitiveReported && typeof options.onCognitiveError === "function") {
-      options.onCognitiveError(error, safeCognitiveDiagnostics(error));
-    }
-  }
-
-  if (guideResult?.answer) {
+  const apiKey = String(process.env.OPENAI_API_KEY || "").trim();
+  const models = apiKey ? [
+    process.env.AGENT_JHN_WHATSAPP_OPENAI_MODEL || "gpt-5.6-terra",
+    process.env.AGENT_JHN_WHATSAPP_OPENAI_FALLBACK_MODEL || "gpt-4.1-mini",
+  ].filter((model, index, all) => model && all.indexOf(model) === index) : [];
+  const engine = createAnswerEngine({
+    retrieve: async () => guideResult,
+    synthesizers: models.map((model) => ({
+      provider: "openai",
+      model,
+      synthesize: async ({ retrieval, analysis, evidence }) => requestOpenAiModelDraft(
+        userText, retrieval, analysis, evidence, apiKey, model,
+      ),
+    })),
+    extractFallback: retrieval => retrieval?.answer || "",
+    onDiagnostic: diagnostics => {
+      if (typeof options.onCognitiveError === "function") {
+        options.onCognitiveError(new Error("answer core diagnostic"), diagnostics);
+      }
+    },
+  });
+  const answerResult = await engine.answer({
+    text: userText,
+    locale: questionAnalysis.locale,
+    channel: "whatsapp",
+    maxChars: 1200,
+    conversationId: normalized?.conversation_id || null,
+  });
+  if (answerResult.ok && answerResult.answer) {
     const syncDraft = buildDeterministicDraft(normalized, config, options);
     return {
       ...syncDraft,
       text: formatInstanceOutboundDisclosure(
         { disclosure_tag: config.visible_agent_id || "— agent-jhn-experimental" },
-        guideResult.answer,
+        answerResult.answer,
       ),
-      provenance_class: "s7-cognitive-retrieval",
-      sources: guideResult.sources || [],
+      provenance_class: answerResult.provider === "extractive-fallback"
+        ? "s7-cognitive-retrieval"
+        : guideResult ? "openai-corpus-grounded" : "openai-direct",
+      sources: answerResult.sources,
       stub: false,
     };
   }
   return buildDeterministicDraft(normalized, config, options);
 }
 
-async function requestOpenAiDraft(userText, config, normalized, options = {}, guideResult = null) {
-  const apiKey = String(process.env.OPENAI_API_KEY || "").trim();
-  if (!apiKey) return "";
-  const locale = resolveDisclosureLocale(config.allowed_self_jid || normalized?.remote_jid || "");
-  const model = process.env.AGENT_JHN_WHATSAPP_OPENAI_MODEL || "gpt-4.1-mini";
-  const corpusContext = buildCorpusContext(guideResult);
+async function requestOpenAiModelDraft(
+  userText, guideResult, analysis, evidence, apiKey, model,
+) {
+  const corpusContext = buildCorpusContext(evidence);
   const timeoutMs = 15000;
-  const startedAt = Date.now();
   let response;
-  try {
-    response = await fetch("https://api.openai.com/v1/chat/completions", {
+  response = await fetch("https://api.openai.com/v1/chat/completions", {
       method: "POST",
       headers: {
         Authorization: `Bearer ${apiKey}`,
@@ -172,63 +183,48 @@ async function requestOpenAiDraft(userText, config, normalized, options = {}, gu
             content: [
               "You are Agent John (JHN), the experimental personal digital twin assistant of Jean Hugues Noël Robert.",
               "You are not Jean Hugues and cannot make commitments for him.",
-              "Answer the owner directly, helpfully, and concisely.",
-              "Use the supplied public corpus excerpts when relevant and cite their source_id in square brackets.",
-              "If the excerpts do not support a claim, say that the corpus does not establish it.",
-              `Reply in ${locale === "fr" ? "French" : "English"}.`,
+              "Lead with the useful answer; do not merely summarize the excerpts.",
+              "Separate established facts from proposals, intentions, and unknowns.",
+              "Support each important corpus-grounded claim with its source_id in square brackets.",
+              "Never invent a source or claim that an announced project is already operational.",
+              "If evidence is insufficient, state the precise limit instead of filling the gap.",
+              analysis.needsCurrentWeb && !evidence.current_information_verified
+                ? "The supplied evidence is not verified as current; say so explicitly."
+                : "Use the supplied evidence according to its stated scope.",
+              `Intent: ${analysis.intent}. Preferred answer shape: ${analysis.answerShape}.`,
+              "This is WhatsApp: answer in at most 900 characters, with short paragraphs or compact steps.",
+              `Reply only in ${analysis.locale === "fr" ? "French" : "English"}.`,
             ].join(" "),
           },
           ...(corpusContext ? [{ role: "system", content: `Public corpus excerpts:\n${corpusContext}` }] : []),
           { role: "user", content: userText },
         ],
-        max_completion_tokens: 800,
+        max_completion_tokens: 700,
       }),
       signal: AbortSignal.timeout(timeoutMs),
     });
-  } catch (error) {
-    emitCognitiveError(options, error, {
-      provider: "openai", stage: "request", model, endpoint_host: "api.openai.com",
-      elapsed_ms: Date.now() - startedAt, timeout_ms: timeoutMs, timed_out: isTimeoutError(error),
-    });
-    error.cognitiveReported = true;
-    throw error;
-  }
   const body = await response.json();
   if (!response.ok) {
     const error = new Error("OpenAI synthesis returned an error response");
-    emitCognitiveError(options, error, {
-      provider: "openai", stage: "response", model, endpoint_host: "api.openai.com",
-      elapsed_ms: Date.now() - startedAt, timeout_ms: timeoutMs, timed_out: false,
-      http_status: response.status,
-      provider_error_code: body?.error?.code || body?.error?.type || null,
-      request_id: response.headers.get("x-request-id"),
-      processing_ms: numberOrNull(response.headers.get("openai-processing-ms")),
-    });
-    error.cognitiveReported = true;
+    error.code = safeToken(body?.error?.code || body?.error?.type) || "OPENAI_HTTP_ERROR";
+    error.http_status = response.status;
     throw error;
   }
   const content = String(body?.choices?.[0]?.message?.content || "").trim();
-  if (!content) {
-    const error = new Error("OpenAI synthesis returned no text");
-    emitCognitiveError(options, error, {
-      provider: "openai", stage: "empty_response", model, endpoint_host: "api.openai.com",
-      elapsed_ms: Date.now() - startedAt, timeout_ms: timeoutMs, timed_out: false,
-      http_status: response.status, request_id: response.headers.get("x-request-id"),
-      processing_ms: numberOrNull(response.headers.get("openai-processing-ms")),
-      finish_reason: body?.choices?.[0]?.finish_reason,
-      prompt_tokens: body?.usage?.prompt_tokens,
-      completion_tokens: body?.usage?.completion_tokens,
-      reasoning_tokens: body?.usage?.completion_tokens_details?.reasoning_tokens,
-    });
-    error.cognitiveReported = true;
-    throw error;
-  }
-  return content;
+  return {
+    answer: content,
+    model,
+    sources: guideResult?.sources || [],
+    finish_reason: body?.choices?.[0]?.finish_reason,
+    prompt_tokens: body?.usage?.prompt_tokens,
+    completion_tokens: body?.usage?.completion_tokens,
+    reasoning_tokens: body?.usage?.completion_tokens_details?.reasoning_tokens,
+    request_id: response.headers.get("x-request-id"),
+  };
 }
 
-function buildCorpusContext(guideResult) {
-  const excerpts = Array.isArray(guideResult?.context?.excerpts) ? guideResult.context.excerpts : [];
-  return excerpts.slice(0, 6).map((item) => {
+function buildCorpusContext(evidence) {
+  return (evidence?.claims || []).map((item) => {
     const sourceId = String(item?.source_id || "source").slice(0, 240);
     const text = String(item?.text || "").replace(/\s+/g, " ").trim().slice(0, 1800);
     return text ? `[${sourceId}]\n${text}` : "";
