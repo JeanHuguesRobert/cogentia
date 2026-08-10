@@ -3,7 +3,7 @@ title: "Reviewer Prompt Contract"
 subtitle: "Constructive external review for source documents and derived products"
 author: "Jean Hugues Noël Robert"
 status: "prompt-contract — working"
-version: "0.3"
+version: "0.4"
 license: "CC BY-SA 4.0"
 language: "en"
 affiliation: "Institut Mariani / C.O.R.S.I.C.A., 1 cours Paoli, F-20250 Corte, Corsica"
@@ -17,11 +17,12 @@ related_research:
   - cogentia/research/derived_products.md
   - cogentia/research/cognitive_packets.md
   - barons-Mariani/research/second_method.md
+  - barons-Mariani/research/booster_principle.md
   - inseme/AGENTS.md
   - inseme/packages/cop-core/Invariants.md
 agent_neutral: true
 human_validation_required: true
-last_stamped_at: 2026-08-02T00:00:00.000Z
+last_stamped_at: 2026-08-10T00:00:00.000Z
 provenance:
   origin_type: unknown
   origin_repository: unknown
@@ -34,11 +35,12 @@ review:
 update_policy: UP-DEFAULT-REVIEWED
 canonical_url: "https://github.com/JeanHuguesRobert/cogentia/blob/main/prompts/reviewer.md"
 document_role: prompt-contract
-date: "2026-08-02"
+date: "2026-08-10"
 changelog:
   - v0.1 (2026-06-17) — earlier history not recorded.
   - v0.2 (2026-08-02) — added the critical register: Errors, Concessions assessed, Yield report; novelty filter; empty sections made valid; corpus-reference counterweight; task ordering changed so critique precedes curation.
   - v0.3 (2026-08-02) — adopted the shared interface and frontmatter blocks held byte-identical with redactor.md; Rule N amended so a load-bearing concession no longer shields; mandatory decorrelation declaration; default filename disambiguated; frontmatter brought into compliance with the schema it now specifies.
+  - v0.4 (2026-08-10) — added a mechanical Open-Possible review pass: present-state invariants, impossibility-status discipline, unassimilated residues, Booster opportunities, and Reality-test prompts.
 ---
 
 # Reviewer Prompt Contract
@@ -227,6 +229,18 @@ Produce the following sections. Sections 2 and 3 carry the review; the remainder
 8. **Conceptual drift risks**
    Possible confusions or glissements — for example truth / proof / trace / interpretation / judgment / decision / imputability / revision.
 
+8A. **Possibility-space closure / Booster test**
+   Apply this pass when the source materially concerns exploration, futures, strategy, architecture, research, design, intervention, or claims about what can or cannot happen. Otherwise write `Not materially applicable` and do not manufacture findings.
+
+   Return `No findings` or identify one or more of the following:
+
+   - **Present-state invariant** — a current category, actor, institution, technology, constraint, interface, cost structure, or other feature is treated as invariant without sufficient justification, and that assumption materially excludes a relevant possibility. State the assumed invariant, where it appears, and what it excludes.
+   - **Impossibility-status error** — the source treats `unknown`, `unsupported`, `unrepresented`, `unfamiliar`, or `unavailable_now` as `impossible`, or uses an unqualified `impossible` where only a scoped form such as `impossible_under_current_regime` is supported. This is an inferential error when it changes the claim.
+   - **Unassimilated residue** — an observation or idea fits the source's current conceptual frame poorly and appears to have been normalized, renamed, dismissed, or forced into a familiar category. Preserve the mismatch as information; do not claim the residue is true merely because it resists classification.
+   - **Booster opportunity** — the source proposes substantial additional force, resources, rules, compute, organization, or complexity while overlooking a materially smaller reversible intervention that might unlock existing latent capacity. State the candidate and the smallest meaningful Reality test. `No Booster candidate identified` is valid.
+
+   Do not reward novelty for its own sake. Do not penalize a source for retaining a current constraint when the constraint is evidenced. The purpose is to prevent silent closure, not to force radical alternatives.
+
 9. **Signal/noise report**
    Include frontmatter findings here under the disposition the shared frontmatter block assigns them: false fields are errors (section 2), absent fields are structural improvements (section 10).
 
@@ -256,6 +270,10 @@ Produce the following sections. Sections 2 and 3 carry the review; the remainder
     - Novel objections, not conceded by the source: `n`
     - Concessions assessed: `n`
     - Concessions reclassified from `bounding` to `load-bearing`: `n`
+    - Possibility-space closure findings: `n`
+    - Impossibility-status errors: `n`
+    - Unassimilated residues worth preserving: `n`
+    - Booster opportunities: `n`
     - Recommendations carrying a completion test: `n` of `n`
     - Findings marked provisional: `n`
     - Frontmatter breaches: `n` false / `n` absent
