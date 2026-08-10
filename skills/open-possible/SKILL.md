@@ -26,7 +26,7 @@ outputs:
   - optional_impossibility_findings
   - optional_booster_candidates
   - reality_test
- effects: read_only
+effects: read_only
 requires:
   capabilities: []
 governance:
