@@ -27,8 +27,6 @@ outputs:
   - optional_booster_candidates
   - reality_test
 effects: read_only
-requires:
-  capabilities: []
 governance:
   minimum_mandate: read_public
   may_disclose: false
