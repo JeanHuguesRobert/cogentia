@@ -1,0 +1,21 @@
+{
+  "open_possible": {
+    "frame": "The service is assumed to require a central web application.",
+    "challenged_invariant": "Users must interact primarily through that application.",
+    "residue": "Existing agent-to-agent interactions do not fit the application-first frame well.",
+    "opened_possible": "Expose a small agent-facing protocol surface before redesigning the application.",
+    "booster": "Publish one bounded read-only agent endpoint as a reversible experiment.",
+    "reality_test": "Use the endpoint in three real tasks and compare completion quality and friction."
+  },
+  "claims": [
+    {
+      "status": "unknown",
+      "statement": "An agent-first surface will become the dominant interface."
+    },
+    {
+      "status": "impossible_under_current_regime",
+      "statement": "Anonymous write access cannot be enabled under the current mandate.",
+      "basis": "The current mandate authorizes read-only access."
+    }
+  ]
+}
