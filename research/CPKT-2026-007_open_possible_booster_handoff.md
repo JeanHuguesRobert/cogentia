@@ -34,6 +34,10 @@ related_documents:
   - "https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/booster_principle.md"
   - "https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/realite_operationnelle_et_reflexivite.md"
   - "https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/joie_jeu_capacite.md"
+classification_source: "cogentia.js"
+classification_version: "1"
+classification_rule: "explicit-metadata"
+classification_confidence: "medium"
 ---
 
 # CPKT-2026-007 — Open-Possible / Booster handoff

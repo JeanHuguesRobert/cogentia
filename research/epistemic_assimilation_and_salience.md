@@ -42,6 +42,10 @@ tags:
   - presentism
   - cognitive-agents
   - residue
+classification_source: "cogentia.js"
+classification_version: "1"
+classification_rule: "explicit-metadata"
+classification_confidence: "medium"
 ---
 
 # Epistemic Assimilation and Salience
