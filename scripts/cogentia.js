@@ -230,6 +230,14 @@ const DAEMON_LOOPBACK_POST_ROUTES = new Set([
   "/api/ops/continuations/emit",
   "/api/ops/issues/sync",
 ]);
+/**
+ * Host-local read endpoints whose metadata is not suitable for the public
+ * catalogue. MCP enforces administrator/JHN attestation before using them.
+ */
+const DAEMON_LOOPBACK_GET_ROUTES = new Set([
+  "/api/cli/config/hygiene-audit",
+]);
+const DAEMON_PRIVATE_READ_HEADER = "x-cogentia-private-read";
 const daemonRateLimits = new Map();
 /** Short TTL inventory cache for MCP/daemon CLI read paths (buildInventory is expensive). */
 const DAEMON_INVENTORY_TTL_MS = 60_000;
@@ -302,6 +310,8 @@ async function main() {
       return cmdIndex(argv.shift() || "status");
     case "embeddings":
       return cmdEmbeddings(argv.shift() || "status");
+    case "config":
+      return cmdConfig(argv.shift() || "hygiene-audit");
     case "corpus-state":
       return cmdCorpusState(argv.shift() || "export");
     case "views":
@@ -400,6 +410,8 @@ Core commands:
                            Flags: --daemon-url <url> --model <model>
                            --repo <name|all> --limit <n> --budget <n>
                            --mode keyword|hybrid|semantic --stream
+  config hygiene-audit     Read-only Vault/cache hygiene report for a configured
+                           Digital Twin. Returns no configuration values.
 
 Document commands:
   docs summary             Numeric corpus summaries.
@@ -1531,6 +1543,50 @@ async function cmdConsolidate() {
   if (strict && result.issues?.length) process.exit(2);
 }
 
+function configHygieneAudit(ctx, instance = "jhn") {
+  if (instance !== "jhn") {
+    return { ok: false, error: "unsupported_instance", instance };
+  }
+  const inseme = ctx.repos.find((repo) => repo.name === "inseme");
+  if (!inseme || !fs.existsSync(inseme.path)) {
+    return { ok: false, error: "config_audit_unavailable", reason: "inseme_repository_not_registered" };
+  }
+  const repoRoot = path.resolve(inseme.path);
+  const scriptPath = path.resolve(repoRoot, "apps", "platform", "scripts", "config-hygiene-audit.js");
+  if (!scriptPath.startsWith(`${repoRoot}${path.sep}`) || !fs.existsSync(scriptPath)) {
+    return { ok: false, error: "config_audit_unavailable", reason: "audit_script_not_available" };
+  }
+  try {
+    const raw = execFileSync(process.execPath, [scriptPath, "--instance", instance, "--json"], {
+      cwd: path.dirname(scriptPath),
+      encoding: "utf8",
+      stdio: ["ignore", "pipe", "ignore"],
+      timeout: 30_000,
+      maxBuffer: 1024 * 1024,
+    });
+    const report = JSON.parse(raw);
+    if (report?.schema !== "cogentia.config_hygiene_audit.v0" || report?.read_only !== true) {
+      return { ok: false, error: "config_audit_unavailable", reason: "invalid_audit_report" };
+    }
+    return report;
+  } catch {
+    // Child stderr is intentionally discarded: it may be provider-specific.
+    return { ok: false, error: "config_audit_unavailable", reason: "audit_execution_failed" };
+  }
+}
+
+function cmdConfig(subcommand) {
+  if (subcommand !== "hygiene-audit") {
+    throw new Error("Unknown config subcommand. Use hygiene-audit.");
+  }
+  const ctx = loadContext();
+  const instance = valueFlag("--instance") || "jhn";
+  const result = configHygieneAudit(ctx, instance);
+  return output(result, result.ok === false
+    ? `Configuration hygiene audit unavailable: ${result.reason || result.error}`
+    : `Configuration hygiene audit: ${result.instance} (${result.read_only ? "read-only" : "invalid"})`);
+}
+
 function runMetadataAudit() {
   try {
     const repoRoot = process.cwd();
@@ -1716,6 +1772,11 @@ async function handleDaemonRequest(req, res) {
     } catch (error) {
       return daemonJson(res, 500, { ok: false, error: "privacy_check_failed", message: error.message });
     }
+  }
+  if (req.method === "GET" && url.pathname === "/api/cli/config/hygiene-audit") {
+    const effectiveCtx = ctx || loadContext();
+    const result = configHygieneAudit(effectiveCtx, url.searchParams.get("instance") || "jhn");
+    return daemonJson(res, result.ok === false ? 503 : 200, result);
   }
   if (req.method === "GET" && url.pathname === "/api/cli/corpus/consolidate") {
     const effectiveCtx = ctx || loadContext();
@@ -2455,6 +2516,14 @@ function daemonPublicApiBlocked(req, url, view) {
     req.method === "POST"
     && daemonIsLoopback(req)
     && DAEMON_LOOPBACK_POST_ROUTES.has(url.pathname)
+  ) {
+    return false;
+  }
+  if (
+    req.method === "GET"
+    && daemonIsLoopback(req)
+    && DAEMON_LOOPBACK_GET_ROUTES.has(url.pathname)
+    && String(req.headers[DAEMON_PRIVATE_READ_HEADER] || "").trim() === "attested"
   ) {
     return false;
   }
@@ -8532,10 +8601,12 @@ function inferDocumentKind(doc) {
   if (r === "AGENTS.md" || r.endsWith("/AGENTS.md")) return kind("agent-mandate", "agent-mandate", "strong", "Agent mandate file.");
   if (rLower === "resume-session.md" || rLower.endsWith("/session_resume.md")) return kind("continuation-resume", "continuation-packet", "strong", "Explicit session-resume filename.", "operational");
   if (rLower.startsWith("scripts/ops/") && rLower.endsWith(".md")) return kind("ops-runbook", "runbook", "strong", "Operational script documentation path.", "operational");
+  if (rLower.startsWith("skills/") && rLower.endsWith("/skill.md")) return kind("skill-procedure", "documentation", "strong", "Skill procedure file.", "operational");
   if (rLower.startsWith("skills/") && rLower.includes("/references/")) return kind("skill-reference", "documentation", "strong", "Skill reference path.", "operational");
   if (doc.repo === "ubikia" && rLower.startsWith("artifacts/audible/") && rLower.endsWith("/adaptation-request.md")) return kind("audible-adaptation-request", "adaptation-request", "strong", "Audible adaptation request artifact.", "derived");
   if (doc.repo === "ubikia" && rLower.startsWith("artifacts/audible/") && /\/spoken(?:\.[^.]+)*\.md$/i.test(rLower)) return kind("audible-spoken-script", "spoken-script", "strong", "Audible spoken-script artifact.", "derived");
   if (doc.repo === "ubikia" && rLower.startsWith("artifacts/audible/") && rLower.endsWith("/youtube-description.md")) return kind("audible-publication-copy", "publication-copy", "strong", "Audible publication-copy artifact.", "derived");
+  if (doc.repo === "JeanHuguesRobert" && rLower.startsWith(".ubikia/products/") && /\/spoken(?:\.[^/]+)?(?:\/.*)?\.md$/i.test(rLower)) return kind("audible-spoken-script", "spoken-script", "strong", "Ubikia product spoken-script artifact.", "derived");
   if (doc.repo === "ubikia" && rLower.startsWith("publications/")) return kind("public-essay", "public-essay", "strong", "Ubikia publication path.", "source");
   if (doc.repo === "JeanHuguesRobert" && rLower === "twin/agent_john_learnings_fr.md") return kind("agent-john-doctrine", "doctrine-note", "strong", "Named Agent John learning doctrine.", "source");
   if (r.startsWith("research/trails/")) return kind("trail", "trail", "strong", "Curated trail path.");
@@ -8558,8 +8629,10 @@ function inferDocumentKind(doc) {
   if (/^context\.md$/i.test(r)) return kind("context-note", "context-note", "medium", "Root context document.");
   if (/^projects?\.md$/i.test(r)) return kind("project-map", "project-map", "medium", "Root project map.");
   if (/^timeline\.md$/i.test(r)) return kind("timeline", "timeline", "medium", "Root timeline document.");
+  if (String(fm.document_kind || "").toLowerCase() === "adr") return kind("adr", "adr", "strong", "Explicit ADR kind.", "source");
+  if (String(fm.document_kind || "").toLowerCase() === "media-subsystem-index") return kind("media-subsystem-index", "media-subsystem-index", "strong", "Explicit media subsystem index kind.", "index");
   if (/possibilism|concept/.test(text)) return kind("concept-note", "concept-note", "medium", "Concept keyword.");
-  if (/charte|charter/.test(text)) return kind("charter", "charter", "medium", "Charter keyword.");
+  if (/charte|charter/.test(text)) return kind("charter", "charter", "medium", "Charter keyword.", "source");
   if (/introduction/.test(text)) return kind("introduction", "introduction", "medium", "Introduction keyword.");
   if (/auteur|author|à propos/.test(text)) return kind("profile", "profile", "medium", "Author/profile keyword.");
   if (/extrait|excerpt/.test(text)) return kind("book-excerpt", "book-excerpt", "medium", "Excerpt keyword.");
@@ -8574,7 +8647,7 @@ function inferDocumentKind(doc) {
   if (/\bspec\b|specification/.test(text)) return kind("spec", "spec", "medium", "Specification keyword.");
   if (/protocol|protocole/.test(text)) return kind("protocol", "protocol", "medium", "Protocol keyword.");
   if (/architecture/.test(text)) return kind("architecture", "architecture", "medium", "Architecture keyword.");
-  if (/dashboard|tableau de bord/.test(text)) return kind("dashboard", "dashboard", "medium", "Dashboard keyword.");
+  if (/dashboard|tableau de bord/.test(text)) return kind("dashboard", "dashboard", "medium", "Dashboard keyword.", "operational");
   if (/journal/.test(text) || r.includes("/journal/")) return kind("journal", "journal", "medium", "Journal path or keyword.");
   if (doc.role === "operational") return kind("operational-note", "operational-note", "medium", "Operational role.");
   if (doc.role === "source" && r.startsWith("research/")) {
@@ -8608,8 +8681,8 @@ function inferLifecycleState(doc, kindInfo) {
   return { state: "active", rule: "default" };
 }
 
-function kind(rule, kindValue, confidence, reason) {
-  return { rule, kind: kindValue, confidence, reason };
+function kind(rule, kindValue, confidence, reason, role = "") {
+  return { rule, kind: kindValue, confidence, reason, role };
 }
 
 function weakestConfidence(values) {
@@ -12228,6 +12301,7 @@ function resolveRepoSiteUrl(repo) {
 
 function inferViewKind(view) {
   const id = view.id || "";
+  if (id.includes("fix-bugs-first")) return "work";
   if (id.includes("continuations")) return "continuations";
   if (id.includes("issues")) return "issues";
   if (id.includes("corpus-state")) return "corpus-state";
@@ -12241,6 +12315,7 @@ function inferViewKind(view) {
 
 function inferViewRelation(view) {
   const id = view.id || "";
+  if (id.includes("fix-bugs-first")) return "operational_export";
   if (id.includes("issues") || id.includes("continuations") || id.includes("corpus-state")) {
     return "operational_export";
   }
@@ -12299,7 +12374,7 @@ function buildViewCrossRefs(ctx, view) {
       github = {
         full_name: "JeanHuguesRobert",
         path: null,
-        url: "https://github.com/orgs/JeanHuguesRobert/repositories",
+        url: "https://github.com/JeanHuguesRobert?tab=repositories",
         note: "Open issues aggregated across tracked repositories",
       };
     } else if ((kind === "index" || kind === "concepts") && repoName) {
@@ -12401,6 +12476,8 @@ function listPublishableViews(ctx) {
 
   // Standard global views
   const standardViews = [
+    { id: "fix-bugs-first-dashboard", name: "Fix Bugs First Dashboard", file: "fix-bugs-first-dashboard.md", source: "Fix Bugs First generator", scope: "global", kind: "work", repo: "operium" },
+    { id: "fix-bugs-first-dashboard-json", name: "Fix Bugs First Dashboard (JSON)", file: "fix-bugs-first-dashboard.json", source: "Fix Bugs First generator", scope: "global", kind: "work", repo: "operium" },
     { id: "current-issues-list", name: "Current Issues List", file: "current-issues-list.md", source: "issues export (summary)", scope: "global", kind: "issues" },
     { id: "current-issues", name: "Current Issues (Full)", file: "current-issues.md", source: "issues export (--body --comments)", scope: "global", kind: "issues" },
     { id: "continuations-list", name: "Alive Continuations List", file: "continuations-list.md", source: "continuation export (alive summary)", scope: "global", kind: "continuations" },

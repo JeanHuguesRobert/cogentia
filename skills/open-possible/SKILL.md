@@ -38,6 +38,14 @@ sources:
   - instructions/AGENTS.shared.md
   - research/optimistic_mainline_governance.md
   - research/agent_configuration_layer.md
+document_role: "operational"
+document_kind: "documentation"
+visibility: "public"
+lifecycle_state: "active"
+classification_source: "cogentia.js"
+classification_version: "1"
+classification_rule: "skill-procedure"
+classification_confidence: "strong"
 ---
 
 # Skill: open-possible

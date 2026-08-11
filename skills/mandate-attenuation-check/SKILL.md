@@ -38,6 +38,14 @@ sources:
   - research/monotonic_mandate_attenuation.md
   - research/agent_configuration_layer.md
   - instructions/AGENTS.shared.md
+document_role: "operational"
+document_kind: "documentation"
+visibility: "public"
+lifecycle_state: "active"
+classification_source: "cogentia.js"
+classification_version: "1"
+classification_rule: "skill-procedure"
+classification_confidence: "strong"
 ---
 
 # Skill: mandate-attenuation-check
