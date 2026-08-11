@@ -742,6 +742,48 @@ test("27_rate_limiter_circuit_breaker", async () => {
   assert.equal(checkPostReset.allowed, true);
 });
 
+// --- 28. direct contact email & history-aware disclosure suppression ---
+test("28_contact_email_and_history_aware_disclosure", async () => {
+  const { DIRECT_CONTACT_EMAIL } = await import("./lib/agent-jhn-whatsapp/constants.js");
+  const { formatOutboundText, AUDIENCE } = await import("./lib/agent-jhn-whatsapp/disclosure.js");
+  const { hasRecentDisclosure, hasRecentEmailContact } = await import("./lib/agent-jhn-whatsapp/conversation-store.js");
+
+  assert.equal(DIRECT_CONTACT_EMAIL, "jeanhuguesrobert@gmail.com");
+
+  // 1. Initial third-party outbound: full disclaimer + direct email if requested
+  const t1 = formatOutboundText("Bonjour", {
+    audience: AUDIENCE.THIRD_PARTY,
+    locale: "fr",
+    includeEmailContact: true,
+    hasRecentDisclosure: false,
+    hasRecentEmailContact: false,
+  });
+  assert.ok(t1.includes("Message automatique d’un assistant expérimental"));
+  assert.ok(t1.includes("jeanhuguesrobert@gmail.com"));
+
+  // 2. History check helpers
+  const turnsWithDisclosure = [
+    { text: "Bonjour" },
+    { text: t1 },
+  ];
+  assert.equal(hasRecentDisclosure(turnsWithDisclosure), true);
+  assert.equal(hasRecentEmailContact(turnsWithDisclosure), true);
+
+  // 3. Subsequent outbound when disclosure and email are present in history:
+  // Full disclaimer and email are suppressed to avoid spamming
+  const t2 = formatOutboundText("Suivi de dossier", {
+    audience: AUDIENCE.THIRD_PARTY,
+    locale: "fr",
+    includeEmailContact: true,
+    hasRecentDisclosure: hasRecentDisclosure(turnsWithDisclosure),
+    hasRecentEmailContact: hasRecentEmailContact(turnsWithDisclosure),
+  });
+  assert.equal(t2.includes("Message automatique d’un assistant expérimental"), false);
+  assert.equal(t2.includes("jeanhuguesrobert@gmail.com"), false);
+  assert.ok(t2.includes("Suivi de dossier"));
+  assert.ok(t2.includes("— agent-jhn-experimental"));
+});
+
 async function main() {
   const results = [];
   for (const t of tests) {

@@ -20,7 +20,12 @@ import {
 import { ARTIFACT_TYPES, DECISIONS } from "./constants.js";
 import { ensureStateDirs } from "./config.js";
 import { rememberSelfPeer } from "./self-peer.js";
-import { recordConversationTurn } from "./conversation-store.js";
+import {
+  recordConversationTurn,
+  loadConversation,
+  hasRecentDisclosure,
+  hasRecentEmailContact,
+} from "./conversation-store.js";
 import { isCockpitCommand, processCockpitCommand } from "./cockpit-commands.js";
 import { formatOutboundText } from "./disclosure.js";
 
@@ -54,12 +59,28 @@ export async function handleInbound(rawEvent, config, options = {}) {
     );
   }
 
+  let conv = null;
+  let historyOptions = {};
+  if (normalized.ok && config.state_dir) {
+    try {
+      conv = loadConversation(config, normalized.conversation_id);
+      historyOptions = {
+        turns: conv?.turns || [],
+        hasRecentDisclosure: hasRecentDisclosure(conv?.turns),
+        hasRecentEmailContact: hasRecentEmailContact(conv?.turns),
+      };
+    } catch {
+      /* non-fatal */
+    }
+  }
+
+  const pipelineOptions = { ...options, ...historyOptions };
   const enableCognitive = options.enableCognitiveSynthesis !== false;
 
   let draft = normalized.ok
     ? (enableCognitive
-        ? await buildCognitiveDraft(normalized, config, options)
-        : buildDeterministicDraft(normalized, config, options))
+        ? await buildCognitiveDraft(normalized, config, pipelineOptions)
+        : buildDeterministicDraft(normalized, config, pipelineOptions))
     : null;
 
   // Process self-chat control cockpit commands (list, inspect, approve, reject, close)
@@ -95,6 +116,8 @@ export async function handleInbound(rawEvent, config, options = {}) {
   const policy = evaluatePolicy(normalized, config, {
     draftText: draft?.text,
     now: options.now,
+    hasRecentDisclosure: historyOptions.hasRecentDisclosure,
+    hasRecentEmailContact: historyOptions.hasRecentEmailContact,
   });
 
   let receiveArtifact = null;

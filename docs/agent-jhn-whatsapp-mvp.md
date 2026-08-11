@@ -6,6 +6,10 @@ lifecycle_state: active
 title: Agent JHN WhatsApp MVP (Baileys, self-chat only)
 related_issue: https://github.com/JeanHuguesRobert/cogentia/issues/75
 update_policy: UP-DEFAULT-REVIEWED
+classification_source: "cogentia.js"
+classification_version: "1"
+classification_rule: "explicit-metadata"
+classification_confidence: "medium"
 ---
 
 # Agent JHN WhatsApp MVP
@@ -239,3 +243,9 @@ Locale: **French** when the relevant number is country code **+33**; otherwise *
 Notice URL (third-party / docs):
 
 https://github.com/JeanHuguesRobert/JeanHuguesRobert/blob/main/research/agent-jhn-experimental-notice.md
+
+### Direct contact email & Thread History Awareness
+
+- **Reliable direct contact email**: `jeanhuguesrobert@gmail.com` is established as the official direct human contact method for Jean-Hugues Robert.
+- **Thread History-Aware Suppression**: To avoid annoying respondents with redundant notice headers or repeated email addresses, the pipeline inspects thread history (`conversations/<id>.json` sliding turn window). If full disclosure or direct contact email was sent recently in the active thread, the system suppresses repeating full disclosure disclaimers and uses light identification (`— agent-jhn-experimental`).
+

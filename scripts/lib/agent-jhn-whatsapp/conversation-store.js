@@ -108,3 +108,34 @@ export function listActiveConversations(config) {
     })
     .filter(Boolean);
 }
+
+/**
+ * Check if the recent turns in a conversation thread already contain an agent disclosure.
+ * Used to avoid spamming verbose disclaimers on every message.
+ */
+export function hasRecentDisclosure(turns = [], maxTurns = 5) {
+  if (!Array.isArray(turns) || turns.length === 0) return false;
+  const recent = turns.slice(-maxTurns);
+  return recent.some((t) => {
+    const text = String(t.text || "");
+    return (
+      text.includes("agent-jhn-experimental") ||
+      text.includes("agent-jhn-experimental-notice") ||
+      /message automatique|automated message|assistant expérimental|experimental assistant/i.test(text)
+    );
+  });
+}
+
+/**
+ * Check if the recent turns in a conversation thread already contain the direct email contact.
+ * Used to avoid repeating jeanhuguesrobert@gmail.com on every message.
+ */
+export function hasRecentEmailContact(turns = [], maxTurns = 10) {
+  if (!Array.isArray(turns) || turns.length === 0) return false;
+  const recent = turns.slice(-maxTurns);
+  return recent.some((t) => {
+    const text = String(t.text || "");
+    return text.includes("jeanhuguesrobert@gmail.com");
+  });
+}
+

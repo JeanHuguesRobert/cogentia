@@ -31,6 +31,7 @@ export const DEFAULT_INSTANCE_MANIFESTS = {
     identity_kernel_path: "identity/INTENT_KERNEL.md",
     identity_kernel_url: "https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/identity/INTENT_KERNEL.md",
     disclosure_tag: "— agent-jhn-experimental (readonly, zero guarantees)",
+    contact_email: "jeanhuguesrobert@gmail.com",
     default_locale: "fr",
     policy_mode: "self_chat_only",
     external_surface_contract: EXTERNAL_SURFACE_CONTRACT,
@@ -45,7 +46,8 @@ export const DEFAULT_INSTANCE_MANIFESTS = {
       persona_id: "persona-agent-jhn",
       persona_name: "Agent JHN",
       role: "Personal Cognitive Twin & Corpus Guide",
-      voice_guidelines: "Concise, evidence-based, humble, epistemic, DHITL-aligned."
+      contact_email: "jeanhuguesrobert@gmail.com",
+      voice_guidelines: "Concise, evidence-based, humble, epistemic, DHITL-aligned. Reliable direct contact for Jean-Hugues Robert is jeanhuguesrobert@gmail.com. Do not repeat disclosure disclaimers or contact email unnecessarily when already present in recent thread history."
     },
     corpus_scope: [
       "cogentia",

@@ -36,6 +36,8 @@ export function buildDeterministicDraft(normalized, config, options = {}) {
   const locale = resolveDisclosureLocale(localeHint);
   const userText = (normalized?.text || "").trim();
   const inboundPreview = summarizeInbound(userText);
+  const asksContact = /\b(joindre|contacter|email|courriel|contact|reach|mail)\b/i.test(userText);
+  const includeEmailContact = options.includeEmailContact || asksContact;
 
   let body;
   if (audience === AUDIENCE.SELF) {
@@ -56,6 +58,9 @@ export function buildDeterministicDraft(normalized, config, options = {}) {
     noticeUrl: notice,
     locale,
     phoneOrJid: localeHint,
+    hasRecentDisclosure: options.hasRecentDisclosure,
+    hasRecentEmailContact: options.hasRecentEmailContact,
+    includeEmailContact,
   });
 
   return {

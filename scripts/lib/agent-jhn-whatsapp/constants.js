@@ -16,6 +16,7 @@ export const DEFAULT_NOTICE_URL =
   "https://github.com/JeanHuguesRobert/JeanHuguesRobert/blob/main/research/agent-jhn-experimental-notice.md";
 
 export const DEFAULT_EMERGENCY_EMAIL = "jeanhuguesrobert@gmail.com";
+export const DIRECT_CONTACT_EMAIL = "jeanhuguesrobert@gmail.com";
 export const DEFAULT_EMERGENCY_PHONE = "+33753976287";
 
 export const SCHEMA_VERSION = "cogentia.whatsapp-artifact.v1";

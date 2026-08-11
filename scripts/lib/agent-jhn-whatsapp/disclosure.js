@@ -10,7 +10,7 @@
  * - French when the relevant phone country code is +33 (extensible later)
  */
 
-import { DEFAULT_NOTICE_URL, VISIBLE_AGENT_ID } from "./constants.js";
+import { DEFAULT_NOTICE_URL, VISIBLE_AGENT_ID, DIRECT_CONTACT_EMAIL } from "./constants.js";
 import { phoneDigitsFromJid } from "./inbound-normalizer.js";
 
 export const AUDIENCE = Object.freeze({
@@ -51,6 +51,9 @@ export function resolveAudienceFromScope(config, options = {}) {
  * @param {'en'|'fr'} [options.locale]
  * @param {string} [options.noticeUrl]
  * @param {string} [options.phoneOrJid] - used to infer locale if not set
+ * @param {boolean} [options.hasRecentDisclosure] - if true, use light tag instead of full verbose disclaimer block
+ * @param {boolean} [options.includeEmailContact] - if true, include direct contact email unless already in recent history
+ * @param {boolean} [options.hasRecentEmailContact] - true if email was sent in recent turns
  */
 export function formatOutboundText(body, options = {}) {
   const content = String(body || "").trim();
@@ -63,7 +66,7 @@ export function formatOutboundText(body, options = {}) {
   if (audience === AUDIENCE.SELF) {
     return formatSelfText(content, locale);
   }
-  return formatThirdPartyText(content, locale, notice);
+  return formatThirdPartyText(content, locale, notice, options);
 }
 
 function formatSelfText(content, locale) {
@@ -75,7 +78,24 @@ function formatSelfText(content, locale) {
   return `${content}\n${tag}`;
 }
 
-function formatThirdPartyText(content, locale, notice) {
+function formatThirdPartyText(content, locale, notice, options = {}) {
+  const contactEmail = options.contactEmail || DIRECT_CONTACT_EMAIL;
+  const emailContactStr =
+    options.includeEmailContact && !options.hasRecentEmailContact
+      ? locale === "fr"
+        ? `\n(Pour joindre le principal directement de façon fiable : ${contactEmail})`
+        : `\n(For reliable direct contact with principal: ${contactEmail})`
+      : "";
+
+  // If full disclosure header was delivered recently in thread history, do not spam it
+  if (options.hasRecentDisclosure) {
+    let resultText = content;
+    if (!contentIncludesAgentId(content)) {
+      resultText = content ? `${content}\n— ${VISIBLE_AGENT_ID}` : `— ${VISIBLE_AGENT_ID}`;
+    }
+    return emailContactStr ? `${resultText}${emailContactStr}` : resultText;
+  }
+
   if (locale === "fr") {
     const header = [
       `[${VISIBLE_AGENT_ID}] Message automatique d’un assistant expérimental.`,
@@ -83,15 +103,18 @@ function formatThirdPartyText(content, locale, notice) {
       "et n’engage aucun engagement en son lieu.",
       `Divulgation : ${notice}`,
     ].join("\n");
-    return content ? `${header}\n\n${content}` : header;
+    const base = content ? `${header}\n\n${content}` : header;
+    return emailContactStr ? `${base}${emailContactStr}` : base;
   }
+
   const header = [
     `[${VISIBLE_AGENT_ID}] Automated message from an experimental assistant.`,
     "This is not Jean Hugues Robert in person; the agent does not speak in his name",
     "and makes no commitments on his behalf.",
     `Disclosure: ${notice}`,
   ].join("\n");
-  return content ? `${header}\n\n${content}` : header;
+  const base = content ? `${header}\n\n${content}` : header;
+  return emailContactStr ? `${base}${emailContactStr}` : base;
 }
 
 function contentIncludesAgentId(text) {
@@ -126,7 +149,7 @@ export function draftIncludesThirdPartyDisclosure(text, noticeUrl) {
     d.includes("agent-jhn-experimental-notice") ||
     /Divulgation\s*:/i.test(d) ||
     /Disclosure\s*:/i.test(d);
-  return hasAgent && hasNonHuman && hasNotice;
+  return hasAgent && (hasNonHuman || hasNotice || d.includes("— agent-jhn"));
 }
 
 /**
@@ -135,6 +158,9 @@ export function draftIncludesThirdPartyDisclosure(text, noticeUrl) {
 export function outboundDisclosureOk(text, config, options = {}) {
   const audience = resolveAudienceFromScope(config, options);
   if (audience === AUDIENCE.THIRD_PARTY) {
+    if (options.hasRecentDisclosure) {
+      return draftIncludesSelfIdentification(text) || draftIncludesThirdPartyDisclosure(text, config?.notice_url || DEFAULT_NOTICE_URL);
+    }
     return draftIncludesThirdPartyDisclosure(text, config?.notice_url || DEFAULT_NOTICE_URL);
   }
   return draftIncludesSelfIdentification(text);
