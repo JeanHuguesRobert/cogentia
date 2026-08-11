@@ -8630,6 +8630,7 @@ function inferDocumentKind(doc) {
   if (/^projects?\.md$/i.test(r)) return kind("project-map", "project-map", "medium", "Root project map.");
   if (/^timeline\.md$/i.test(r)) return kind("timeline", "timeline", "medium", "Root timeline document.");
   if (String(fm.document_kind || "").toLowerCase() === "adr") return kind("adr", "adr", "strong", "Explicit ADR kind.", "source");
+  if (String(fm.document_kind || "").toLowerCase() === "methodological-bridge") return kind("methodological-bridge", "methodological-bridge", "strong", "Explicit methodological bridge kind.", "source");
   if (String(fm.document_kind || "").toLowerCase() === "media-subsystem-index") return kind("media-subsystem-index", "media-subsystem-index", "strong", "Explicit media subsystem index kind.", "index");
   if (/possibilism|concept/.test(text)) return kind("concept-note", "concept-note", "medium", "Concept keyword.");
   if (/charte|charter/.test(text)) return kind("charter", "charter", "medium", "Charter keyword.", "source");
