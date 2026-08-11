@@ -60,6 +60,7 @@ classification_source: "manual"
 classification_version: "1"
 classification_rule: "continuation"
 classification_confidence: "strong"
+legacy_document_role: "continuation"
 ---
 
 # Continuation — La Machine à corrompre

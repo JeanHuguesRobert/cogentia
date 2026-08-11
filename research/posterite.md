@@ -1,4 +1,8 @@
 ---
+classification_source: "cogentia.js"
+classification_version: "1"
+classification_rule: "concept-note"
+classification_confidence: "medium"
 title: "La postérité"
 subtitle: "Rendre le travail continuable, critiquable et transmissible"
 version: "0.1"

@@ -44,6 +44,10 @@ tags:
   - reputation
   - kudos
   - anti-capture
+classification_source: "cogentia.js"
+classification_version: "1"
+classification_rule: "explicit-metadata"
+classification_confidence: "medium"
 ---
 
 # Informational Gravity

@@ -22,6 +22,10 @@ related_documents:
   - "docs/cogentia-magistral-boundary.md"
   - "https://github.com/JeanHuguesRobert/inseme/blob/main/research/instance_map.md"
   - "https://github.com/JeanHuguesRobert/operium/blob/main/docs/magistral-coding-agent-routing.md"
+classification_source: "cogentia.js"
+classification_version: "1"
+classification_rule: "explicit-metadata"
+classification_confidence: "medium"
 ---
 
 # CPKT-2026-003 — Session handoff (Guide fail-fast · dual-era MCP · instance map)

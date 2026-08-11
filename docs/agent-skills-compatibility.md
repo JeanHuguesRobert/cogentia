@@ -13,6 +13,10 @@ provenance:
   derived_from:
     - docs/agent-skills-contract.md
     - docs/cogentia-js-mcp-agent-path.md
+classification_source: "cogentia.js"
+classification_version: "1"
+classification_rule: "explicit-metadata"
+classification_confidence: "medium"
 ---
 
 # Agent Skills / MCP compatibility evidence

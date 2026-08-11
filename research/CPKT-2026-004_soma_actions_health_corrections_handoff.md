@@ -22,6 +22,10 @@ related_documents:
   - "https://github.com/JeanHuguesRobert/operium/blob/agent/backup-2026-07-28/docs/operium-node-agent-install.md"
   - "https://github.com/JeanHuguesRobert/operium/issues/11"
   - "https://github.com/JeanHuguesRobert/operium/issues/12"
+classification_source: "cogentia.js"
+classification_version: "1"
+classification_rule: "explicit-metadata"
+classification_confidence: "medium"
 ---
 
 # CPKT-2026-004 — SOMA actions and FractaNode health corrections

@@ -1,4 +1,21 @@
 ---
+document_role: "operational"
+document_kind: "runbook"
+visibility: "public"
+lifecycle_state: "active"
+classification_source: "cogentia.js"
+classification_version: "1"
+classification_rule: "ops-runbook"
+classification_confidence: "strong"
+---
+
+document_kind: "operational-note"
+lifecycle_state: "working"
+classification_source: "cogentia.js"
+classification_version: "1"
+classification_rule: "operational-note"
+classification_confidence: "medium"
+---
 title: Deploy and verify POST /ops/route/action (Fracta action plane)
 document_role: operational
 status: working-paper

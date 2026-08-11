@@ -33,6 +33,10 @@ last_verified_at: "2026-07-16"
 generated_by:
   - "human-directed conversational drafting"
   - "Codex (structuring and frontmatter validation)"
+classification_source: "cogentia.js"
+classification_version: "1"
+classification_rule: "explicit-metadata"
+classification_confidence: "medium"
 ---
 
 # Self-Describing Declarative Corpus Artifacts

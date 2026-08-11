@@ -15,6 +15,10 @@ provenance:
     - research/agent_configuration_layer.md
     - research/monotonic_mandate_attenuation.md
     - research/mcp_2026_cognitive_packet_sandbox_plan.md
+classification_source: "cogentia.js"
+classification_version: "1"
+classification_rule: "explicit-metadata"
+classification_confidence: "medium"
 ---
 
 # Agent Skills contract

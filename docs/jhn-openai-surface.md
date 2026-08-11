@@ -1,4 +1,10 @@
 ---
+document_kind: "documentation"
+lifecycle_state: "active"
+classification_source: "cogentia.js"
+classification_version: "1"
+classification_rule: "documentation"
+classification_confidence: "medium"
 title: "Agent JHN OpenAI Chat Completions surface"
 date: "2026-08-08"
 document_role: operational

@@ -21,6 +21,10 @@ related_documents:
 external_related_documents:
   - "barons-Mariani/research/traceabilite_des_actes.md"
   - "barons-Mariani/research/test_critere_rossignol.md"
+classification_source: "cogentia.js"
+classification_version: "1"
+classification_rule: "explicit-metadata"
+classification_confidence: "medium"
 ---
 
 # Governed Conversations and Durable Effects

@@ -30,6 +30,10 @@ document_kind: specification
 visibility: public
 lifecycle_state: working
 update_policy: UP-DEFAULT-REVIEWED
+classification_source: "cogentia.js"
+classification_version: "1"
+classification_rule: "explicit-metadata"
+classification_confidence: "medium"
 ---
 
 # Monotonic Mandate Attenuation

@@ -16,6 +16,10 @@ provenance:
 review:
   status: unreviewed
   reviewed_by: []
+classification_source: "cogentia.js"
+classification_version: "1"
+classification_rule: "explicit-metadata"
+classification_confidence: "medium"
 ---
 
 # Alan v0.1 — Turing-complete direct-style MCP scripting language

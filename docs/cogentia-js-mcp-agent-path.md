@@ -22,6 +22,10 @@ related_issues:
   - 'https://github.com/JeanHuguesRobert/cogentia/issues/82'
   - 'https://github.com/JeanHuguesRobert/cogentia/issues/80'
   - 'https://github.com/JeanHuguesRobert/cogentia/issues/40'
+classification_source: "cogentia.js"
+classification_version: "1"
+classification_rule: "explicit-metadata"
+classification_confidence: "medium"
 ---
 
 # Path — cogentia.js useful through MCP (any compliant agent)

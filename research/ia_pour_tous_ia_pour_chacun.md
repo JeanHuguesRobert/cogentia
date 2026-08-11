@@ -21,6 +21,10 @@ related_documents:
   - "https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/pluralisation_cognitive_sous_mandat.md"
   - "https://github.com/JeanHuguesRobert/marenostrum/blob/main/research/DHITL.md"
   - "https://github.com/JeanHuguesRobert/inseme/blob/main/packages/cop-core/Architecture.md"
+classification_source: "cogentia.js"
+classification_version: "1"
+classification_rule: "explicit-metadata"
+classification_confidence: "medium"
 ---
 
 # IA pour tous, IA pour chacun

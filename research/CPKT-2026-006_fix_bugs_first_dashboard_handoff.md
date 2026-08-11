@@ -25,6 +25,10 @@ related_documents:
   - "https://github.com/JeanHuguesRobert/cogentia/blob/main/docs/views-store.md"
   - "https://github.com/JeanHuguesRobert/inseme/blob/main/packages/cop-core/COP_STORE_AND_PERSISTENCE.md"
   - "https://github.com/JeanHuguesRobert/inseme/blob/main/apps/platform/mcp/cop/AGENTS.md"
+classification_source: "cogentia.js"
+classification_version: "1"
+classification_rule: "explicit-metadata"
+classification_confidence: "medium"
 ---
 
 # CPKT-2026-006 — Fix Bugs First dashboard handoff

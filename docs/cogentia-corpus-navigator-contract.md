@@ -1,4 +1,11 @@
 ---
+document_role: "operational"
+document_kind: "documentation"
+lifecycle_state: "active"
+classification_source: "cogentia.js"
+classification_version: "1"
+classification_rule: "documentation"
+classification_confidence: "medium"
 title: "Cogentia Corpus Navigator Contract"
 created: 2026-07-07
 last_modified_at: 2026-07-07

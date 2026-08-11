@@ -22,6 +22,10 @@ related_documents:
   - "docs/agent-jhn-whatsapp-interaction-register.md"
   - "research/digital_twin_trust_model.md"
   - "https://github.com/JeanHuguesRobert/inseme/blob/main/apps/platform/docs/CONFIGURATION_VAULT.md"
+classification_source: "cogentia.js"
+classification_version: "1"
+classification_rule: "explicit-metadata"
+classification_confidence: "medium"
 ---
 
 # CPKT-2026-005 — Agent JHN WhatsApp channel handoff

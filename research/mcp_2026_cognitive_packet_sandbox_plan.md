@@ -12,6 +12,10 @@ provenance:
   derived_from:
     - research/cognitive_packet_switching.md
     - JeanHuguesRobert/inseme:sandbox/cop-continuation-bac-a-sable/README.md
+classification_source: "cogentia.js"
+classification_version: "1"
+classification_rule: "explicit-metadata"
+classification_confidence: "medium"
 ---
 
 # MCP 2026-07-28 / Cognitive Packet sandbox plan

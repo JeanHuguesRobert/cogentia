@@ -1,10 +1,18 @@
 ---
 title: "Collective memory for the public Guide"
 author: "Codex, following a Jean-Hugues Robert design discussion"
-document_role: research-note
+document_role: "source"
 source_kind: conversational-design
 update_policy: human-or-agent-review
 status: parked
+document_kind: "tutorial"
+visibility: "public"
+lifecycle_state: "active"
+classification_source: "cogentia.js"
+classification_version: "1"
+classification_rule: "tutorial"
+classification_confidence: "medium"
+legacy_document_role: "research-note"
 ---
 
 # Collective memory for the public Guide

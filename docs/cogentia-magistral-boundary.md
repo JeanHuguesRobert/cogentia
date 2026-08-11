@@ -1,4 +1,11 @@
 ---
+document_role: "operational"
+document_kind: "documentation"
+lifecycle_state: "active"
+classification_source: "cogentia.js"
+classification_version: "1"
+classification_rule: "documentation"
+classification_confidence: "medium"
 title: Cogentia and Magistral Boundary
 created: 2026-06-28T00:00:00.000Z
 last_modified_at: 2026-06-28T00:00:00.000Z

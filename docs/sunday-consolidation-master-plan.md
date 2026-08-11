@@ -1,3 +1,14 @@
+---
+document_role: "operational"
+document_kind: "documentation"
+visibility: "public"
+lifecycle_state: "active"
+classification_source: "cogentia.js"
+classification_version: "1"
+classification_rule: "documentation"
+classification_confidence: "medium"
+---
+
 # Sunday Corpus Consolidation Master Plan 📜🧘‍♂️
 **Architectural Blueprint for Automated Weekly Corpus De-Entropy & Sprint Wrap-Up**
 

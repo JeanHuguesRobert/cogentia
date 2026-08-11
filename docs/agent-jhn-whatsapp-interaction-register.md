@@ -6,6 +6,10 @@ lifecycle_state: active
 title: Agent JHN WhatsApp — registry placement (Occam)
 related_issue: https://github.com/JeanHuguesRobert/cogentia/issues/75
 update_policy: UP-DEFAULT-REVIEWED
+classification_source: "cogentia.js"
+classification_version: "1"
+classification_rule: "explicit-metadata"
+classification_confidence: "medium"
 ---
 
 # WhatsApp placement: use `registre-mariani`

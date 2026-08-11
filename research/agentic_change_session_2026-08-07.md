@@ -11,6 +11,10 @@ skills:
 related:
   - docs/agent-skills-contract.md
   - skills/agentic-change/SKILL.md
+classification_source: "cogentia.js"
+classification_version: "1"
+classification_rule: "explicit-metadata"
+classification_confidence: "medium"
 ---
 
 # Agentic-change session — live debt (step 3)

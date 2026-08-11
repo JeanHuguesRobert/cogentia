@@ -1,4 +1,8 @@
 ---
+classification_source: "cogentia.js"
+classification_version: "1"
+classification_rule: "working-note"
+classification_confidence: "medium"
 title: "Mailboxes at Two Scales — From Actor Messages to Governed Cognitive Packets"
 author: "Jean Hugues Noël Robert, baron Mariani"
 date: "2026-07-27"

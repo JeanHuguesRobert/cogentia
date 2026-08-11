@@ -1,4 +1,8 @@
 ---
+classification_source: "cogentia.js"
+classification_version: "1"
+classification_rule: "spec"
+classification_confidence: "medium"
 title: Agent CLI Gateway
 subtitle: OpenAI-compatible SSE gateway over coding-agent child processes
 author: Jean Hugues Noël Robert, baron Mariani

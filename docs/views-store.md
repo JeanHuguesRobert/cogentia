@@ -7,6 +7,10 @@ lifecycle_state: active
 update_policy: UP-DEFAULT-REVIEWED
 generated_by: human+agent
 last_modified_at: 2026-07-23
+classification_source: "cogentia.js"
+classification_version: "1"
+classification_rule: "explicit-metadata"
+classification_confidence: "medium"
 ---
 
 # Views Store

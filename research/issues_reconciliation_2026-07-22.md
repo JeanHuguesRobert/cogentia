@@ -1,3 +1,14 @@
+---
+document_role: "source"
+document_kind: "research-paper"
+visibility: "public"
+lifecycle_state: "active"
+classification_source: "cogentia.js"
+classification_version: "1"
+classification_rule: "research-paper"
+classification_confidence: "medium"
+---
+
 # Réconciliation issues — session 2026-07-20/22
 
 Inventaire : 115 issues ouvertes, 10 dépôts (export cogentia.js du 2026-07-22, fourni par le porteur — canal latéral déclaré). Confiance : titres vérifiés pour tout, corps vérifiés pour les recouvrements décisifs (#48 notamment) ; Hop 1 confirme avant toute fusion effective.

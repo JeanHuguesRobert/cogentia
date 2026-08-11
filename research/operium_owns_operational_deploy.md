@@ -12,6 +12,10 @@ related_documents:
   - "docs/cogentia-magistral-boundary.md"
   - "docs/update-policy-registry.md"
   - "deploy/fracta/README.md"
+classification_source: "cogentia.js"
+classification_version: "1"
+classification_rule: "explicit-metadata"
+classification_confidence: "medium"
 ---
 
 # Operium owns operational deploy — agent stigmergy note

@@ -1,4 +1,8 @@
 ---
+classification_source: "cogentia.js"
+classification_version: "1"
+classification_rule: "working-note"
+classification_confidence: "medium"
 title: Memory, Working Memory, and Corpus Sleep Cycle
 subtitle: Individual/collective memory, ephemeral working state, long-term consolidation and traceable forgetting
 author: Jean Hugues Noël Robert, baron Mariani

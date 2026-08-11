@@ -1,3 +1,14 @@
+---
+document_role: "operational"
+document_kind: "documentation"
+visibility: "public"
+lifecycle_state: "active"
+classification_source: "cogentia.js"
+classification_version: "1"
+classification_rule: "skill-reference"
+classification_confidence: "strong"
+---
+
 # Judgment boundary vs failure
 
 Used by skill `continuation-handling`.

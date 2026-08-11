@@ -23,6 +23,10 @@ provenance:
 review:
   status: "awaiting human arbitration"
   reviewed_by: []
+classification_source: "cogentia.js"
+classification_version: "1"
+classification_rule: "explicit-metadata"
+classification_confidence: "medium"
 ---
 
 # Corpus Navigation Audit — the Substitution Test Applied to Navigation

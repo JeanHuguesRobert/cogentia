@@ -1,3 +1,14 @@
+---
+document_role: "operational"
+document_kind: "continuation-packet"
+visibility: "public"
+lifecycle_state: "active"
+classification_source: "cogentia.js"
+classification_version: "1"
+classification_rule: "continuation-resume"
+classification_confidence: "strong"
+---
+
 # Session resume — MCP 2026 packet sandbox
 
 ## State

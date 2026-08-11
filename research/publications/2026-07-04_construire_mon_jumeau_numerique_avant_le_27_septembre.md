@@ -1,4 +1,12 @@
 ---
+document_role: "source"
+document_kind: "research-paper"
+visibility: "public"
+lifecycle_state: "working"
+classification_source: "cogentia.js"
+classification_version: "1"
+classification_rule: "research-paper"
+classification_confidence: "medium"
 title: Construire mon jumeau numérique avant le 27 septembre
 date: 2026-07-04T00:00:00.000Z
 status: draft-publication

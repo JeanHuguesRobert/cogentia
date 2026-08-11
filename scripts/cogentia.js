@@ -1033,7 +1033,10 @@ function cmdClassify(sub) {
 function cmdClassifyPlan(inventory, options) {
   const plan = classificationPlan(inventory, classificationOptions());
   const blockingConflicts = plan.conflicts.length > 0 && !plan.options.fixConflicts;
-  const blockingAmbiguous = plan.ambiguous.length > 0 && !plan.options.includeAmbiguous;
+  // The default plan already excludes weak/ambiguous changes. --apply-safe lets
+  // those deterministic changes land without treating unresolved judgments as
+  // permission to rewrite them.
+  const blockingAmbiguous = plan.ambiguous.length > 0 && !plan.options.includeAmbiguous && !plan.options.applySafe;
   const canApply = !blockingConflicts && !blockingAmbiguous;
   const preflight_failed = options.apply && canApply
     ? preflightWritableTargets(plan.changes.map(change => ({ repo: change.repo, path: change.path, full_path: change.full_path })))
@@ -8376,6 +8379,7 @@ function classificationOptions() {
     includeGenerated: hasFlag("--include-generated"),
     includeAliases: hasFlag("--include-aliases"),
     includeAmbiguous: hasFlag("--include-ambiguous"),
+    applySafe: hasFlag("--apply-safe"),
     fixConflicts: hasFlag("--fix-conflicts"),
     includeContent: hasFlag("--include-content"),
   };
@@ -8442,26 +8446,29 @@ function stripClassificationPlan(plan) {
 function classifyDocumentForFrontmatter(doc) {
   const fm = doc.frontmatter || {};
   const kind = inferDocumentKind(doc);
-  let inferredRole = kind.kind === "redirect-alias" ? "alias" : (doc.role === "archive" ? "operational" : doc.role);
-  let roleConfidence = doc.role_confidence || "medium";
+  let inferredRole = kind.role || (kind.kind === "redirect-alias" ? "alias" : (doc.role === "archive" ? "operational" : doc.role));
+  let roleConfidence = kind.role ? kind.confidence : (doc.role_confidence || "medium");
   if ((!inferredRole || inferredRole === "unknown") && kind.kind === "identity-document") {
     inferredRole = "operational";
     roleConfidence = kind.confidence;
   }
   const explicitRole = explicitDocumentRole(fm);
+  const explicitKind = String(fm.document_kind || "").trim();
+  const explicitLifecycle = String(fm.lifecycle_state || "").trim();
   const role = explicitRole || inferredRole;
   const lifecycle = inferLifecycleState(doc, kind);
   const visibility = doc.visibility?.level || "public";
-  const rule = kind.rule;
+  const usesExplicitMetadata = Boolean(explicitKind || explicitLifecycle);
+  const rule = usesExplicitMetadata ? "explicit-metadata" : kind.rule;
   const confidence = weakestConfidence([roleConfidence, kind.confidence]);
   const legacyDocumentRole = legacyFreeTextRole(fm.document_role);
   const legacyCorpusRole = legacyFreeTextRole(fm.corpus_role);
   const legacyRole = legacyFreeTextRole(fm.role);
   const desired = {
     document_role: role,
-    document_kind: kind.kind,
+    document_kind: explicitKind || kind.kind,
     visibility,
-    lifecycle_state: lifecycle.state,
+    lifecycle_state: explicitLifecycle || lifecycle.state,
     classification_source: "cogentia.js",
     classification_version: CLASSIFICATION_VERSION,
     classification_rule: rule,
@@ -8508,6 +8515,7 @@ function classifyDocumentForFrontmatter(doc) {
 
 function inferDocumentKind(doc) {
   const r = doc.rel.replace(/\\/g, "/");
+  const rLower = r.toLowerCase();
   const title = String(doc.title || "").toLowerCase();
   const fm = doc.frontmatter || {};
   const text = `${title} ${r.toLowerCase()} ${String(fm.type || "")} ${String(fm.status || "")} ${String(fm.document_role || "")} ${String(fm.corpus_role || "")}`;
@@ -8522,9 +8530,17 @@ function inferDocumentKind(doc) {
   if (/^research\/documents\.md$/i.test(r)) return kind("document-catalog", "document-catalog", "strong", "Consolidated document catalog.");
   if (r === "README.md") return kind("readme", "navigation", "strong", "Repository README.");
   if (r === "AGENTS.md" || r.endsWith("/AGENTS.md")) return kind("agent-mandate", "agent-mandate", "strong", "Agent mandate file.");
+  if (rLower === "resume-session.md" || rLower.endsWith("/session_resume.md")) return kind("continuation-resume", "continuation-packet", "strong", "Explicit session-resume filename.", "operational");
+  if (rLower.startsWith("scripts/ops/") && rLower.endsWith(".md")) return kind("ops-runbook", "runbook", "strong", "Operational script documentation path.", "operational");
+  if (rLower.startsWith("skills/") && rLower.includes("/references/")) return kind("skill-reference", "documentation", "strong", "Skill reference path.", "operational");
+  if (doc.repo === "ubikia" && rLower.startsWith("artifacts/audible/") && rLower.endsWith("/adaptation-request.md")) return kind("audible-adaptation-request", "adaptation-request", "strong", "Audible adaptation request artifact.", "derived");
+  if (doc.repo === "ubikia" && rLower.startsWith("artifacts/audible/") && /\/spoken(?:\.[^.]+)*\.md$/i.test(rLower)) return kind("audible-spoken-script", "spoken-script", "strong", "Audible spoken-script artifact.", "derived");
+  if (doc.repo === "ubikia" && rLower.startsWith("artifacts/audible/") && rLower.endsWith("/youtube-description.md")) return kind("audible-publication-copy", "publication-copy", "strong", "Audible publication-copy artifact.", "derived");
+  if (doc.repo === "ubikia" && rLower.startsWith("publications/")) return kind("public-essay", "public-essay", "strong", "Ubikia publication path.", "source");
+  if (doc.repo === "JeanHuguesRobert" && rLower === "twin/agent_john_learnings_fr.md") return kind("agent-john-doctrine", "doctrine-note", "strong", "Named Agent John learning doctrine.", "source");
   if (r.startsWith("research/trails/")) return kind("trail", "trail", "strong", "Curated trail path.");
   if (r.includes("/templates/")) return kind("template", "template", "strong", "Template path.");
-  if (r.includes("/examples/") || r.includes("/example_") || r.includes("fictitious_")) return kind("example", "example", "strong", "Example path or filename.");
+  if (rLower.startsWith("examples/") || rLower.includes("/examples/") || rLower.includes("/example_") || rLower.includes("fictitious_")) return kind("example", "example", "strong", "Example path or filename.", "example");
   if (r === "COGENTIA.md") return kind("identity-document", "identity-document", "strong", "Framework identity document.");
   if (/^identity\/intent_kernel\.md$/i.test(r)) return kind("intent-kernel", "identity-document", "strong", "Operational intent kernel path.");
   if (r.startsWith("cogentia_personal/data_portability/")) return inferDataPortabilityKind(doc, text);

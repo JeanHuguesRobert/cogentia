@@ -11,6 +11,10 @@ provenance:
   origin_type: repository
   origin_repository: JeanHuguesRobert/cogentia
   origin_ref: docs/agent-john-deployment-operium.md
+classification_source: "cogentia.js"
+classification_version: "1"
+classification_rule: "explicit-metadata"
+classification_confidence: "medium"
 ---
 
 # Operium Deployment Guide — Agent John (JHN)

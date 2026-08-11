@@ -1,4 +1,12 @@
 ---
+document_role: "source"
+document_kind: "research-paper"
+visibility: "public"
+lifecycle_state: "working"
+classification_source: "cogentia.js"
+classification_version: "1"
+classification_rule: "research-paper"
+classification_confidence: "medium"
 packet_id: CPKT-2026-002
 packet_kind: cognitive-packet/v0.1
 packet_version: 1

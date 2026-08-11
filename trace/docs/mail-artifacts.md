@@ -1,4 +1,8 @@
 ---
+classification_source: "cogentia.js"
+classification_version: "1"
+classification_rule: "operational-note"
+classification_confidence: "medium"
 title: "Cogentia Trace — Mail artifacts and private registry"
 author: "Jean Hugues Noël Robert, baron Mariani"
 date: "2026-07-27"

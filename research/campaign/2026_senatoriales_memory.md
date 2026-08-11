@@ -1,4 +1,11 @@
 ---
+document_role: "source"
+document_kind: "research-paper"
+lifecycle_state: "active"
+classification_source: "cogentia.js"
+classification_version: "1"
+classification_rule: "research-paper"
+classification_confidence: "medium"
 title: Mémoire de campagne — Sénatoriales 2026
 date_created: 2026-07-04T00:00:00.000Z
 status: living-memory
