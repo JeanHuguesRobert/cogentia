@@ -129,6 +129,8 @@ French.
 
 - Default to direct, atomic commits on the current canonical branch.
 - Do not create branches, draft PRs, approval gates or review ceremonies merely to isolate ordinary, scoped and reversible work.
+- An agent's habitual safety preference MUST NOT override this doctrine. A dirty worktree alone is not a reason to create a branch, a worktree or a review gate: first use a direct, visible reconciliation that preserves the work (for example `rebase --autostash` when applicable).
+- A temporary worktree, branch or comparable isolation mechanism requires a concrete, stated benefit beyond generic caution: material overlapping edits, destructive or hard-to-reverse reconciliation, a technical branch-protection requirement, or an explicit human request. State that benefit before proposing the exception.
 - Before writing, fetch and inspect the current state. If a concurrent change appears, reconcile it directly while preserving both contributions.
 - Reconciling a concurrent change is not an occasion to multiply confirmation prompts. Resolve non-conflicting deltas without asking; reserve an actual question for genuine, consequential ambiguity. A human answering many low-stakes-looking prompts in a row, possibly tired, is a realistic operating condition, not an edge case to design around only in principle.
 - Never present a reconciliation choice that could discard content as a bare yes/no. State explicitly what would be lost if the answer goes one way, proportional to how hard it would be to recover — the person answering must be able to see the stakes without having to reconstruct them.
