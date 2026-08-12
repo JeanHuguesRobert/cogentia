@@ -1,0 +1,137 @@
+schema_version: "0.1"
+kind: "cogentia_twin_capability_card"
+status: "provisional-dogfood"
+last_reviewed_at: "2026-08-12"
+
+invariant:
+  id: "DTI-01"
+  name: "Fidelity ≠ Trust ≠ Authority"
+  rule: "No value on one axis implies a value on another."
+  derived_rules:
+    - "Fidelity never implies authority."
+    - "Trust never creates authority."
+    - "Authority requires an explicit mandate or standing policy."
+
+principal:
+  id: "jhn"
+  name: "Jean Hugues Robert"
+  type: "natural_person"
+
+twin:
+  id: "jhn"
+  project: "Cogentia"
+  note: "Dogfood capability card. This file records claims and boundaries; it is not a certification of fidelity or trust."
+
+representation:
+  domains:
+    corpus_doctrine:
+      fidelity: "developing-high"
+      claim: "Can usually reconstruct and explain the principal's public corpus doctrine when grounded in current canonical sources."
+      evidence:
+        - "source-grounded GitHub retrieval and citation"
+        - "correction and propagation history in the corpus"
+      uncertainty: "Non-zero; sensitive to corpus freshness, retrieval coverage, and unresolved contradictions."
+      evaluated_at: "2026-08-12"
+    personal_history:
+      fidelity: "partial"
+      claim: "Can represent documented personal history only to the extent supported by governed corpus and authorized context."
+      evidence: []
+      uncertainty: "High outside explicitly sourced material."
+      evaluated_at: "2026-08-12"
+    legal_reasoning:
+      fidelity: "unvalidated"
+      claim: "May assist with research and structured reasoning but is not validated as a legal decision-maker."
+      evidence: []
+      uncertainty: "High; external legal verification may be required."
+      evaluated_at: "2026-08-12"
+    finance:
+      fidelity: "unvalidated"
+      claim: "No general fidelity claim for autonomous financial judgment."
+      evidence: []
+      uncertainty: "High."
+      evaluated_at: "2026-08-12"
+
+trust:
+  domains:
+    corpus_retrieval:
+      maturity_profile: "young-adult"
+      evidence:
+        - "repeated grounded retrieval over the public corpus"
+      known_failures: []
+    corpus_analysis:
+      maturity_profile: "young-adult"
+      evidence:
+        - "cross-document synthesis with explicit uncertainty and source attribution"
+      known_failures: []
+    corpus_mutation:
+      maturity_profile: "teenager"
+      evidence:
+        - "can prepare and perform scoped GitHub changes when the mutation path is explicit and reviewable"
+      known_failures: []
+    external_communication:
+      maturity_profile: "teenager"
+      evidence:
+        - "can draft and, under explicit mandate, assist with bounded communications"
+      known_failures: []
+    financial_action:
+      maturity_profile: "infant"
+      evidence: []
+      known_failures: []
+
+  note: "Maturity is domain-specific and records accumulated operational trust, not representational fidelity and not delegated power."
+
+authority:
+  default_policy: "deny unless explicitly allowed by mandate or standing policy"
+  standing_capabilities:
+    corpus_read:
+      allowed: true
+      mandate_basis: "owner request and public/trusted corpus access policy"
+    corpus_analysis:
+      allowed: true
+      mandate_basis: "owner request"
+    corpus_write:
+      allowed: "approval_or_explicit_execution_request_required"
+      mandate_basis: "scoped owner mandate"
+    github_issue_creation:
+      allowed: "bounded"
+      mandate_basis: "explicit owner request or standing corpus-maintenance workflow"
+    external_message_draft:
+      allowed: true
+      mandate_basis: "owner request"
+    external_message_send:
+      allowed: "explicit_mandate_required"
+      mandate_basis: null
+    financial_commitment:
+      allowed: false
+      mandate_basis: null
+    legal_commitment:
+      allowed: false
+      mandate_basis: null
+  revocable: true
+
+validation:
+  required_fields_for_future_fidelity_claims:
+    - "domain"
+    - "claim"
+    - "evidence"
+    - "uncertainty"
+    - "evaluated_at"
+  future_work:
+    - "calibration against observed outcomes"
+    - "drift measurement"
+    - "provider/model portability checks"
+    - "preservation of negative results as fidelity evidence"
+
+machine_rules:
+  - id: "DTI-01-A"
+    assertion: "authority_requires_mandate"
+    severity: "error"
+  - id: "DTI-01-B"
+    assertion: "fidelity_must_not_imply_authority"
+    severity: "error"
+  - id: "DTI-01-C"
+    assertion: "trust_must_not_imply_authority"
+    severity: "error"
+  - id: "DTI-01-D"
+    assertion: "fidelity_claim_requires_domain_and_evidence_metadata"
+    severity: "warning"
