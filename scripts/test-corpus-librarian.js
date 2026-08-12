@@ -1,0 +1,212 @@
+#!/usr/bin/env node
+
+import assert from "node:assert/strict";
+import {
+  assessPacketSufficiency,
+  buildEvidencePacket,
+  createCorpusLibrarianTools,
+  exploreCorpusDeterministic,
+  parseSourceId,
+} from "./lib/corpus-librarian/index.js";
+
+const tests = [];
+const test = (name, run) => tests.push({ name, run });
+
+function mockFetch(routes) {
+  return async (url) => {
+    const path = String(url).replace(/^https?:\/\/[^/]+/, "");
+    for (const route of routes) {
+      if (route.match(path)) {
+        const body = typeof route.body === "function" ? route.body(path) : route.body;
+        return new Response(JSON.stringify(body), {
+          status: route.status || 200,
+          headers: { "Content-Type": "application/json" },
+        });
+      }
+    }
+    return new Response(JSON.stringify({ ok: false, error: "not_found" }), { status: 404 });
+  };
+}
+
+test("parseSourceId reads stable gateway ids", () => {
+  assert.deepEqual(parseSourceId("cogentia:docs/x.md#L10-L20"), {
+    ref: "cogentia:docs/x.md",
+    start: 10,
+    end: 20,
+    source_id: "cogentia:docs/x.md#L10-L20",
+  });
+});
+
+test("buildEvidencePacket dedupes and sets coverage", () => {
+  const packet = buildEvidencePacket({
+    question: "What is Cogentia?",
+    excerpts: [
+      { source_id: "a#L1-L2", text: "Cogentia is a corpus." },
+      { source_id: "a#L1-L2", text: "duplicate" },
+      { source_id: "b#L1-L2", text: "Public retrieval gateway." },
+    ],
+  });
+  assert.equal(packet.excerpts.length, 2);
+  assert.equal(packet.coverage, "enough");
+  assert.equal(assessPacketSufficiency(packet).sufficient, true);
+});
+
+test("tools.search normalizes hits from context gateway", async () => {
+  const tools = createCorpusLibrarianTools({
+    baseUrl: "http://gateway.test",
+    fetch: mockFetch([{
+      match: (path) => path.startsWith("/api/context/search"),
+      body: {
+        ok: true,
+        mode: "keyword",
+        index_hash: "idx1",
+        results: [{
+          id: "cogentia:docs/cogentia-index-layer.md#L1-L12",
+          repo: "cogentia",
+          path: "docs/cogentia-index-layer.md",
+          start_line: 1,
+          end_line: 12,
+          title: "Index layer",
+          score: 0.9,
+          text: "short",
+        }],
+      },
+    }]),
+  });
+  const result = await tools.search({ query: "index", limit: 3, mode: "keyword" });
+  assert.equal(result.ok, true);
+  assert.equal(result.hits.length, 1);
+  assert.equal(result.hits[0].ref, "cogentia:docs/cogentia-index-layer.md");
+  assert.equal(result.hits[0].start_line, 1);
+});
+
+test("tools.open and expand call lines endpoint", async () => {
+  let opened = 0;
+  const tools = createCorpusLibrarianTools({
+    baseUrl: "http://gateway.test",
+    fetch: mockFetch([{
+      match: (path) => {
+        if (!path.startsWith("/api/context/lines")) return false;
+        opened += 1;
+        return true;
+      },
+      body: (path) => {
+        const url = new URL(path, "http://gateway.test");
+        return {
+          ok: true,
+          source_id: `cogentia:docs/x.md#L${url.searchParams.get("start")}-L${url.searchParams.get("end")}`,
+          text: "Indexed Markdown remains the canonical corpus source of truth for retrieval.",
+        };
+      },
+    }]),
+  });
+  const open = await tools.open({ ref: "cogentia:docs/x.md", start: 10, end: 12 });
+  assert.equal(open.ok, true);
+  assert.match(open.excerpt.text, /canonical corpus/);
+  const expanded = await tools.expand({
+    hit: { ref: "cogentia:docs/x.md", start_line: 10, end_line: 12, source_id: "cogentia:docs/x.md#L10-L12" },
+    radius: 5,
+  });
+  assert.equal(expanded.ok, true);
+  assert.equal(opened, 2);
+  assert.equal(expanded.excerpt.start_line, 5);
+});
+
+test("deterministic explore search→open builds a packet without LLM", async () => {
+  const tools = createCorpusLibrarianTools({
+    baseUrl: "http://gateway.test",
+    fetch: mockFetch([
+      {
+        match: (path) => path.startsWith("/api/context/search"),
+        body: {
+          ok: true,
+          mode: "hybrid",
+          index_hash: "idx2",
+          results: [
+            {
+              id: "cogentia:docs/a.md#L1-L3",
+              repo: "cogentia",
+              path: "docs/a.md",
+              start_line: 1,
+              end_line: 3,
+              text: "tiny",
+            },
+            {
+              id: "cogentia:docs/b.md#L4-L8",
+              repo: "cogentia",
+              path: "docs/b.md",
+              start_line: 4,
+              end_line: 8,
+              text: "also tiny",
+            },
+          ],
+        },
+      },
+      {
+        match: (path) => path.startsWith("/api/context/lines"),
+        body: (path) => {
+          const url = new URL(path, "http://gateway.test");
+          const ref = url.searchParams.get("ref");
+          return {
+            ok: true,
+            source_id: `${ref}#L${url.searchParams.get("start")}-L${url.searchParams.get("end")}`,
+            text: ref.includes("a.md")
+              ? "Cogentia indexes Markdown for public retrieval and citation."
+              : "The context gateway exposes search, pack, and line open over the index.",
+          };
+        },
+      },
+    ]),
+  });
+
+  const result = await exploreCorpusDeterministic(
+    { question: "How does Cogentia retrieve markdown?", locale: "en", intent: "explain" },
+    { tools, openTopK: 2, minOpenChars: 40, mode: "hybrid" },
+  );
+
+  assert.equal(result.ok, true);
+  assert.equal(result.stopReason, "packet_ready");
+  assert.equal(result.packet.protocol, "cogentia.evidence_packet/v1");
+  assert.ok(result.packet.excerpts.length >= 2);
+  assert.equal(result.packet.diagnostics.search_calls, 1);
+  assert.ok(result.packet.diagnostics.open_calls >= 1);
+  assert.equal(result.packet.diagnostics.tool_calls, result.trace.length);
+  assert.ok(result.trace.every(item => item.tool.startsWith("corpus.")));
+  // No synthesizer in this cycle: packet only.
+  assert.equal(result.answer, undefined);
+});
+
+test("empty search yields none coverage", async () => {
+  const tools = createCorpusLibrarianTools({
+    baseUrl: "http://gateway.test",
+    fetch: mockFetch([{
+      match: (path) => path.startsWith("/api/context/search"),
+      body: { ok: true, results: [] },
+    }]),
+  });
+  const result = await exploreCorpusDeterministic({ question: "zzzz-unknown" }, { tools });
+  assert.equal(result.ok, false);
+  assert.equal(result.packet.coverage, "none");
+  assert.ok(result.packet.gaps.includes("no_search_hits"));
+});
+
+let failed = 0;
+for (const item of tests) {
+  try {
+    await item.run();
+  } catch (error) {
+    failed += 1;
+    console.error(`FAIL ${item.name}: ${error.stack || error.message}`);
+  }
+}
+
+console.log(JSON.stringify({
+  ok: failed === 0,
+  passed: tests.length - failed,
+  failed,
+  total: tests.length,
+  cycle: "B",
+  network_calls: 0,
+  llm_calls: 0,
+}, null, 2));
+if (failed) process.exit(1);

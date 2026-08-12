@@ -19,6 +19,7 @@
     "metadata:apply": "node scripts/metadata-apply.js",
     "metadata:resolve": "node scripts/metadata-resolve.js",
     "test:context": "node scripts/test-context-gateway.js",
+    "test:corpus-librarian": "node scripts/test-corpus-librarian.js",
     "test:guide": "node scripts/test-guide-http.js",
     "test:retrieval-inox": "node scripts/test-retrieval-inox-session.js",
     "test:blackboard": "node scripts/test-packet-attractor-blackboard.js",
@@ -72,6 +73,7 @@
   },
   "dependencies": {
     "@whiskeysockets/baileys": "7.0.0-rc13",
+    "js-yaml": "^4.1.0",
     "marked": "^18.0.7",
     "node-pty": "1.2.0-beta.14",
     "sqlite-vec": "^0.1.9"
