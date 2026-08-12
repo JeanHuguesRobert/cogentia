@@ -46,17 +46,21 @@ Also in corpus (Promise / packet / join):
 
 ### Cascade rule (second-order endpoints) — explicit 2026-08-12
 
-The IoC rule **cascades**. If a surface *implements* an OpenAI-compatible endpoint (or any judgment service) by *needing* another OpenAI-compatible endpoint (embed, chat, rank, …), that **second-order** need must **not** be a direct provider call inside the first surface.
+The IoC rule **cascades**, but **“never call a provider” is too strong**.
+What is required is **honest control of judgment**, negotiated with the caller’s
+protocol literacy.
 
 ```text
 Caller A needs judgment
-  → emits continuation C1
+  → emits or accepts continuation C1  (if A understands continuations)
 Fulfiller / second-order surface B
-  (e.g. local "OpenAI-compatible" facade)
-  → must NOT silently call api.openai.com / nested router for its own judgment
-  → emits continuation C2 (or returns continuation_required upward)
-  → C1 stays suspended until C2 (or a batch of children) resolves
-  → A resumes with step_result
+  (e.g. local "OpenAI-compatible" facade, MCP tool, nested router)
+  → if B needs further judgment:
+       prefer emit C2 / continuation_required upward
+       only call a provider directly when the *negotiation* says the caller
+       cannot handle continuations and inline fulfillment is an explicit mode
+  → join children (batch) when several C2…Cn are needed
+  → resume parent with step_result (or OpenAI-shaped final answer)
 ```
 
 Join semantics (Promise-like, packet-native):
@@ -69,7 +73,69 @@ Join semantics (Promise-like, packet-native):
 
 **Continuations ≈ Promises/Futures that leave the process:** serialized, stored, routed, answered by another machine or human — like **packets** on a packet-switched network — not only in-memory `await`.
 
-**Corpus clarity:** Promise analogy + packet network + `split`/`merge` are **explicit**. The nested “OpenAI facade must not hide second-order provider calls” was **implied**; this section makes it **explicit**.
+### Capability negotiation (MCP vs OpenAI-compatible callers)
+
+Different surfaces have different ability to **explain and use** the
+continuation protocol. The cascade must depend on what was negotiated.
+
+| Caller class | Default assumption | Preferred when judgment is needed | Fallback if caller is continuation-blind |
+|--------------|-------------------|-------------------------------------|------------------------------------------|
+| **Cogentia CLI / internal daemon client** | Knows continuations | Emit / return structured continuation | N/A |
+| **MCP client** | Can learn tools + schemas | Prefer tools that return `continuation_required` + inspect/resolve tools; skills teach the loop | Document in tool description; optional “fulfill mode” only if declared |
+| **OpenAI-compatible agent** (generic Chat Completions client) | **Does not** know continuations | Prefer negotiated extension if present | Complete the OpenAI response shape; **may** inline fulfill *as the product*, or return a **teaching** payload inside the OpenAI envelope |
+
+#### Negotiation (not a single global “never”)
+
+```text
+1. Discover / declare protocol support
+   - MCP: tools/list + tool descriptions + optional skill (continuation-handling)
+   - OpenAI-compat: models list extras, response headers, or first-turn “capabilities”
+     (e.g. supports_continuations=true) if the client can send them
+
+2. Default when unknown (especially OpenAI-compat):
+   caller_is_continuation_blind = true
+
+3. If blind:
+   - Do not fail the whole world with a raw ctn_* JSON the client will ignore
+   - Either:
+     (a) fulfill nested judgment internally *as an explicit product mode*
+         (trace it: “fulfilled for blind caller”), or
+     (b) return an OpenAI-shaped message that *teaches* the protocol
+         (how to resume, where to POST step_result, link to docs)
+   - Prefer (b) when teaching is safe; (a) when the product must just answer
+     (Guide/WhatsApp-class experiences)
+
+4. If capable (MCP or negotiated):
+   - Emit continuation / continuation_required
+   - Never hide nested provider calls without trace
+```
+
+#### “Teaching” the caller
+
+An OpenAI-compatible response can carry a **protocol lesson** without breaking
+the envelope, for example:
+
+- assistant text that explains a suspended judgment and the resume steps;
+- structured `tool_calls` / function payloads if the client supports tools;
+- custom fields in `system_fingerprint` / provider-specific metadata only when
+  the client is known to strip unknowns safely.
+
+Teaching is **progressive disclosure**, not a guarantee the caller will learn.
+Default remains: **assume blind** unless capability was negotiated.
+
+#### MCP-specific note
+
+MCP is a good home for full IoC: the server can list tools such as
+`continuation_list` / `inspect` / `resolve` (mandate-gated) and a skill can
+explain the loop. There, **prefer pure continuation** when judgment is needed.
+Direct nested provider calls are the exception, and only as a declared
+“auto-fulfill” tool mode with audit trail—not silent embedding inside
+`cogentia_search`.
+
+**Corpus clarity:** Promise + packet + split/merge are **explicit**.
+Cascade was **implied**. **Caller negotiation / continuation-blind default /
+teaching via response** is a **2026-08-12 clarification** (this note); it was
+not previously stated as a compact table.
 
 ### Scope of the rule
 
