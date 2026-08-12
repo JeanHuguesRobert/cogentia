@@ -46,6 +46,9 @@ Fonction dans le corpus : expliquer ce qu'est Cogentia comme protocole, CLI, bri
 
 À lire avant toute action dans le dépôt : [`AGENTS.md`](AGENTS.md), projection opérationnelle courte de la méthode, puis le `AGENTS.md` local du dépôt effectivement modifié lorsque le travail traverse plusieurs dépôts.
 
+**Orientation rapide agents (continuations = paquets cognitifs + handlers) :**  
+[`docs/continuations_and_cognitive_packets_for_agents.md`](docs/continuations_and_cognitive_packets_for_agents.md) — à lire tôt ; la skill `continuation-handling` est le côté *handler*.
+
 À lire après : [The Cogentia Commons Living Corpus](research/cogentia_commons_living_corpus.md), [Agent-Resumable CLI](research/agent_resumable_cli.md), [Cognitive Packets](research/cognitive_packets.md).
 
 Dépend de : la seconde méthode, le principe que le corpus est sa propre preuve, et l'exigence de décisions humaines traçables.

@@ -12,9 +12,14 @@ shared_instructions: https://github.com/JeanHuguesRobert/cogentia/blob/main/inst
 
 Read [`instructions/AGENTS.shared.md`](instructions/AGENTS.shared.md) first. It is the corpus-wide operational layer. This file only adds rules specific to the `JeanHuguesRobert/cogentia` repository.
 
+**Before deep tooling work:** read
+[`docs/continuations_and_cognitive_packets_for_agents.md`](docs/continuations_and_cognitive_packets_for_agents.md).
+Continuations are Cognitive Packet payloads for suspended judgment; this repo
+implements their CLI, handlers, and gateways.
+
 ## Repository role
 
-Cogentia is the cognitive-infrastructure tooling of the multi-repository corpus: registry, navigation, continuations, context retrieval, governed prompts and agent-facing gateways. It implements Layer 4 of DHITL; it does not replace the human democratic layer.
+Cogentia is the cognitive-infrastructure tooling of the multi-repository corpus: registry, navigation, **continuations / Cognitive Packets**, context retrieval, governed prompts and agent-facing gateways. It implements Layer 4 of DHITL; it does not replace the human democratic layer.
 
 ## Local invariants
 
@@ -53,6 +58,9 @@ Skills recommend procedures and capabilities; they do not grant mandate, replace
 
 ## Local references
 
+- [`docs/continuations_and_cognitive_packets_for_agents.md`](docs/continuations_and_cognitive_packets_for_agents.md) — **early** packet/continuation/handler briefing
+- [`research/cognitive_packets.md`](research/cognitive_packets.md)
+- [`research/agent_resumable_cli.md`](research/agent_resumable_cli.md)
 - [`research/agent_configuration_layer.md`](research/agent_configuration_layer.md)
 - [`research/monotonic_mandate_attenuation.md`](research/monotonic_mandate_attenuation.md)
 - [`research/agentic_commit_transparency.md`](research/agentic_commit_transparency.md)

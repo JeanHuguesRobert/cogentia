@@ -1,8 +1,8 @@
 ---
 title: Cogentia Shared Agent Instructions
 status: active
-version: 7
-date: 2026-08-10
+version: 8
+date: 2026-08-12
 document_role: operational
 document_kind: agent-instructions
 visibility: public
@@ -17,6 +17,35 @@ classification_confidence: "medium"
 # Cogentia Shared Agent Instructions
 
 This is the common operational layer for every agent working in the Cogentia corpus. Repository-local `AGENTS.md` files may add constraints or become stricter; they must not silently weaken this layer.
+
+## Cognitive Packets, Continuations, and Handlers (read early)
+
+**Continuations are not optional trivia.** They are the operational form of
+**Cognitive Packets** when work is suspended for judgment. Agents are
+**handlers** of those packets (and of CLI continuation objects).
+
+```text
+Cognitive Packet = envelope + payload
+Continuation     = payload kind (or CLI twin) for suspended judgment
+Handler          = human / agent / twin / fulfiller that inspects, prepares, resolves
+```
+
+When a structural tool hits a judgment boundary, it emits a continuation
+instead of embedding a silent OpenAI-compatible call (inversion of control).
+A continuation is like a **cross-process Promise/Future** (no shared RAM),
+schema- and judgment-bearing, traveling **by copy** or **by reference**.
+
+**Early briefing (required orientation):**  
+[`docs/continuations_and_cognitive_packets_for_agents.md`](../docs/continuations_and_cognitive_packets_for_agents.md)
+
+**Handler procedure:**  
+[`skills/continuation-handling/SKILL.md`](../skills/continuation-handling/SKILL.md)
+
+**Sources:** [`research/cognitive_packets.md`](../research/cognitive_packets.md),
+[`research/agent_resumable_cli.md`](../research/agent_resumable_cli.md).
+
+Do not treat a continuation as a crash dump or as free-form chat. Do not
+resolve without mandate. Do not invent missing by-reference context.
 
 ## Invariants
 
@@ -149,11 +178,13 @@ An error detected in work must leave a reusable correction trace: erroneous form
 
 ## Read order
 
-1. Read this shared layer.
-2. Read the nearest repository-local `AGENTS.md` and any closer scoped instruction.
-3. Compose all applicable constraints monotonically; a closer instruction may restrict but never widen inherited authority.
-4. Apply the strictest effective constraint on each governed dimension.
-5. Consult source documents when an operational rule cannot settle a semantic or institutional question.
+1. Read this shared layer (including **Cognitive Packets, Continuations, and Handlers** above).
+2. Read the early briefing [`docs/continuations_and_cognitive_packets_for_agents.md`](../docs/continuations_and_cognitive_packets_for_agents.md) if not already known this session.
+3. Read the nearest repository-local `AGENTS.md` and any closer scoped instruction.
+4. Compose all applicable constraints monotonically; a closer instruction may restrict but never widen inherited authority.
+5. Apply the strictest effective constraint on each governed dimension.
+6. Consult source documents when an operational rule cannot settle a semantic or institutional question.
+7. On any continuation, packet handoff, or `continuation_required` result: load skill `continuation-handling` before inventing a procedure.
 
 ## Local specialization contract
 
