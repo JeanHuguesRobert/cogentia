@@ -381,7 +381,7 @@ function deriveCrossRefs(fileName, parsed) {
     github = {
       full_name: "JeanHuguesRobert",
       path: null,
-      url: "https://github.com/orgs/JeanHuguesRobert/repositories",
+      url: "https://github.com/JeanHuguesRobert?tab=repositories",
       note: "Open issues aggregated across tracked repositories",
     };
   } else if (kind === "continuations") {

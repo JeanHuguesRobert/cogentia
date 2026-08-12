@@ -10,7 +10,7 @@ version: "0.1-draft"
 license: "CC BY-SA 4.0"
 language: "fr"
 canonical_url: "unknown — publication GitHub non encore autorisée"
-document_role: "source-candidate"
+document_role: "source"
 document_kind: "research-paper"
 visibility: "local-draft"
 lifecycle_state: "proposed"
@@ -47,6 +47,7 @@ tags:
   - propriété privée
   - casa cumuna
   - Autonomie de Capacité
+legacy_document_role: "source-candidate"
 ---
 
 # La constitution minimale des communs

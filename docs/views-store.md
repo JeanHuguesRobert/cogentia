@@ -182,7 +182,7 @@ curl -sS 'https://cogentia.fractavolta.com/api/views?q=env'
 
 #### Kind tags (non-exhaustive)
 
-`issues` · `continuations` · `corpus-state` · `index` · `concepts` · `env` · `package` · `config` · `other`
+`issues` · `work` · `continuations` · `corpus-state` · `index` · `concepts` · `env` · `package` · `config` · `other`
 
 #### `corpus-state.json` (machine summary)
 
@@ -239,6 +239,7 @@ node cogentia/scripts/cogentia.js publish push all
 
 Related generators:
 
+- `generate-fix-bugs-first-dashboard.js` → `fix-bugs-first-dashboard.md` / `fix-bugs-first-dashboard.json` (read-only work projection; Operium backlog and native GitHub links remain authoritative)
 - `issues export` → `current-issues-list.md` / `current-issues.md` (open issues focus)
 - `continuation export` → `continuations-list.md` / `continuations.md` (**alive** focus by default)
 - `corpus-state export` → `corpus-state.md` / `corpus-state.json` (**metadata only**: local SQLite index + embeddings coverage + optional Supabase inventory — no vectors/bodies)
