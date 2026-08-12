@@ -44,6 +44,15 @@ export const MUTATE_TOOLS = new Set([
   "cogentia_issues_sync",
 ]);
 
+/**
+ * Read-only tools whose key names and metadata are still operationally
+ * sensitive. They are available to an administrator or to an attested JHN
+ * agent, never to the anonymous public catalogue.
+ */
+export const PRIVATE_READ_TOOLS = new Set([
+  "cogentia_config_hygiene_audit",
+]);
+
 export const TOOLS = [
   {
     name: "cogentia_agent_start",
@@ -136,6 +145,22 @@ export const TOOLS = [
     description:
       "Read-only privacy check: public views that may leak private/confidential material. Returns codes and paths, not secret bodies.",
     inputSchema: { type: "object", properties: {}, additionalProperties: false },
+  },
+  {
+    name: "cogentia_config_hygiene_audit",
+    description:
+      "Run the read-only configuration-cache hygiene audit for one configured Digital Twin instance. Returns statuses and Vault metadata only; never configuration values or secret-derived fingerprints. Requires full access or attested Agent JHN.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        instance: {
+          type: "string",
+          enum: ["jhn"],
+          description: "Configured Digital Twin instance id (currently jhn).",
+        },
+      },
+      additionalProperties: false,
+    },
   },
   {
     name: "cogentia_consolidate",
@@ -571,7 +596,11 @@ export function createMcpCore(env = process.env) {
 
   function toolsForAuth(auth) {
     const allow = auth?.allowMutate === true;
-    return TOOLS.filter((tool) => allow || !MUTATE_TOOLS.has(tool.name));
+    const allowPrivateRead = view === "full" || auth?.auth === "jhn";
+    return TOOLS.filter((tool) =>
+      (allow || !MUTATE_TOOLS.has(tool.name)) &&
+      (allowPrivateRead || !PRIVATE_READ_TOOLS.has(tool.name))
+    );
   }
 
   function toolsListResult(era, auth) {
@@ -584,6 +613,7 @@ export function createMcpCore(env = process.env) {
         auth: auth?.auth || "none",
         actor: auth?.actor || null,
         mutate_tools: [...MUTATE_TOOLS],
+        private_read_tools: [...PRIVATE_READ_TOOLS],
         jhn_mutate_configured: jhnMutateConfigured,
         auth_reason: auth?.reason || null,
       },
@@ -599,6 +629,16 @@ export function createMcpCore(env = process.env) {
     const err = new Error(
       `tier_forbidden: ${name} requires either (full view + admin + COGENTIA_MCP_ALLOW_MUTATE=1) ` +
         `or Agent JHN attestation (COGENTIA_MCP_JHN_MUTATE=1 + token + actor agent:jhn|agent:jhn.subagent:*). ` +
+        `reason=${auth?.reason || "none"}`
+    );
+    err.error_class = "tier_forbidden";
+    throw err;
+  }
+
+  function requirePrivateRead(name, auth) {
+    if (view === "full" || auth?.auth === "jhn") return;
+    const err = new Error(
+      `tier_forbidden: ${name} requires full access or an attested Agent JHN caller. ` +
         `reason=${auth?.reason || "none"}`
     );
     err.error_class = "tier_forbidden";
@@ -722,10 +762,11 @@ export function createMcpCore(env = process.env) {
   async function callTool(name, args = {}, callOpts = {}) {
     const auth = callOpts.auth || {
       allowMutate: staticAllowMutate,
-      auth: staticAllowMutate ? "admin" : "none",
-      reason: staticAllowMutate ? "admin_full_view_mutate" : "none",
+      auth: view === "full" ? "admin" : "none",
+      reason: view === "full" ? "admin_full_view" : "none",
     };
     if (MUTATE_TOOLS.has(name)) requireMutate(name, auth);
+    if (PRIVATE_READ_TOOLS.has(name)) requirePrivateRead(name, auth);
     if (!TOOLS.some((t) => t.name === name)) {
       throw new Error(`Unknown tool: ${name}`);
     }
@@ -774,6 +815,10 @@ export function createMcpCore(env = process.env) {
         });
       case "cogentia_corpus_privacy":
         return daemonGet("/api/cli/corpus/privacy", {});
+      case "cogentia_config_hygiene_audit":
+        return daemonGet("/api/cli/config/hygiene-audit", {
+          instance: enumOptional(args.instance, ["jhn"], "instance") || "jhn",
+        }, { privateRead: auth?.auth === "jhn" });
       case "cogentia_consolidate":
         return daemonGet("/api/cli/corpus/consolidate", {
           full: args.full === true ? "1" : undefined,
@@ -906,7 +951,7 @@ export function createMcpCore(env = process.env) {
     }
   }
 
-  async function daemonGet(route, params) {
+  async function daemonGet(route, params, options = {}) {
     const url = new URL(route, daemonUrl);
     url.searchParams.set("view", view);
     for (const [key, value] of Object.entries(params)) {
@@ -918,6 +963,7 @@ export function createMcpCore(env = process.env) {
     } else {
       headers["X-Cogentia-Entry"] = "public";
     }
+    if (options.privateRead === true) headers["X-Cogentia-Private-Read"] = "attested";
     let response;
     try {
       response = await fetch(url, { method: "GET", headers, redirect: "error", signal: AbortSignal.timeout(requestTimeoutMs) });
@@ -974,6 +1020,7 @@ export function createMcpCore(env = process.env) {
     tools,
     allTools: TOOLS,
     mutateTools: [...MUTATE_TOOLS],
+    privateReadTools: [...PRIVATE_READ_TOOLS],
     initialize,
     discover,
     resolveRequestProtocol,

@@ -9,6 +9,7 @@ import {
   ERR_UNSUPPORTED_PROTOCOL_VERSION,
   MCP_META,
   MUTATE_TOOLS,
+  PRIVATE_READ_TOOLS,
   transportFromHttpRequest,
   ENVELOPE_KIND,
 } from "./lib/cogentia-mcp-core.js";
@@ -82,8 +83,12 @@ assert.ok(publicNames.includes("cogentia_corpus_privacy"));
 assert.ok(publicNames.includes("cogentia_consolidate"));
 assert.ok(publicNames.includes("cogentia_embeddings_status"));
 assert.ok(publicNames.includes("cogentia_mandate_attenuation_check"));
+assert.ok(!publicNames.includes("cogentia_config_hygiene_audit"));
 assert.match(init.result.instructions, /cogentia_skill_get/);
 for (const name of MUTATE_TOOLS) {
+  assert.ok(!publicNames.includes(name), `public tools/list must hide ${name}`);
+}
+for (const name of PRIVATE_READ_TOOLS) {
   assert.ok(!publicNames.includes(name), `public tools/list must hide ${name}`);
 }
 assert.equal(modernList.result._cogentia?.allowMutate, false);
@@ -178,6 +183,15 @@ assert.match(mutateDenied.result.content[0].text, /tier_forbidden/);
 assert.equal(mutateDenied.result.structuredContent?.error_class, "tier_forbidden");
 assert.equal(mutateDenied.result.structuredContent?.ok, false);
 
+const privateReadDenied = await publicCore.handleJsonRpc({
+  jsonrpc: "2.0",
+  id: 63,
+  method: "tools/call",
+  params: { name: "cogentia_config_hygiene_audit", arguments: {} },
+});
+assert.equal(privateReadDenied.result.isError, true);
+assert.equal(privateReadDenied.result.structuredContent?.error_class, "tier_forbidden");
+
 // Phase 5: JHN attestation unlocks mutate tools without full admin view
 const jhnCore = createMcpCore({
   COGENTIA_DAEMON_URL: "http://127.0.0.1:8790",
@@ -204,6 +218,9 @@ const jhnNames = jhnList.result.tools.map((t) => t.name);
 for (const name of MUTATE_TOOLS) {
   assert.ok(jhnNames.includes(name), `JHN tools/list must include ${name}`);
 }
+for (const name of PRIVATE_READ_TOOLS) {
+  assert.ok(jhnNames.includes(name), `JHN tools/list must include ${name}`);
+}
 assert.equal(jhnList.result._cogentia.auth, "jhn");
 
 const fullCore = createMcpCore({
@@ -223,6 +240,9 @@ const fullList = await fullCore.handleJsonRpc({
 const fullNames = fullList.result.tools.map((t) => t.name);
 for (const name of MUTATE_TOOLS) {
   assert.ok(fullNames.includes(name), `full+mutate tools/list must include ${name}`);
+}
+for (const name of PRIVATE_READ_TOOLS) {
+  assert.ok(fullNames.includes(name), `full tools/list must include ${name}`);
 }
 
 // Optional live daemon checks (P1 routes) + Phase 3 envelope via tools/call
