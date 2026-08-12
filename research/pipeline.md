@@ -54,7 +54,7 @@ update_policy: UP-DEFAULT-REVIEWED
 # Pipeline
 <!-- BEGIN_AUTO: trails -->
 > 🧭 **Trail: From Method to Machine**
-> ⬅️ Previous: [Discours de la seconde méthode](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/second_method.md) | ➡️ Next: [Cogentia](../COGENTIA.md)
+> ➡️ Next: [Cogentia](../COGENTIA.md)
 <!-- END_AUTO: trails -->
 ## From cognitive packets to source documents and derived products
 
@@ -1380,14 +1380,6 @@ A possible v0.5 of this paper would integrate these two sections into the main n
 ### Backlinks
 
 *These documents link to this file:*
-- Barons Mariani
-- [Corsica2038 — De la prospective subie à l’autonomie de capacité](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/autonomia/corsica2038_contre_rapport_pruspettiva2050.md)
-- [Discours de la seconde méthode](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/second_method.md)
-- [Le Réel, le Virtuel et l’Actuel](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/le_reel_le_virtuel_et_l_actuel.md)
-- [Projet #1755](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/autonomia/projet_1755.md)
-- [Reality Safety](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/reality_safety_procedural_stabilizers.md)
-- [Rendre capable — noyau doctrinal provisoire](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/noyau_doctrinal_rendre_capable.md)
-- [Stigmergie sans limite haute](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/stigmergie_sans_limite_haute.md)
 - [Cogentia](../README.md)
 - [Cogentia Commons — Public by Default, Private by Exception](cogentia_commons_visibility_and_private_modes.md)
 - [cogentia.js - Tutorial and Near-Specification](cogentia_js_tutorial.md)
@@ -1399,16 +1391,4 @@ A possible v0.5 of this paper would integrate these two sections into the main n
 - [Self-Contained Documents in an Interconnected Corpus](self_contained_documents.md)
 - [The Cogentia Commons Living Corpus](cogentia_commons_living_corpus.md)
 - [Trail: From Method to Machine](trails/from_method_to_machine.md)
-- For researchers
-- [Fractanet — Generalized Control Planes for Heterogeneous Packet Networks](https://github.com/JeanHuguesRobert/FractaVolta/blob/main/research/fractanet.md)
-- FractaVolta
-- FractaVolta
-- Methodology
-- [Library packets — when the library is a specification, not code](https://github.com/JeanHuguesRobert/Inox/blob/master/research/library_packets.md)
-- [Reactive Sets in Inox — Native Implementation Path](https://github.com/JeanHuguesRobert/Inox/blob/master/research/reactive_sets_inox_cop_implementation.md)
-- [Research Index — Inox](https://github.com/JeanHuguesRobert/Inox/blob/master/research/index.md)
-- [COOP — Tutorial and Near-Specification](https://github.com/JeanHuguesRobert/inseme/blob/main/research/coop_tutorial.md)
-- [Reactive Cognitive COP Extension](https://github.com/JeanHuguesRobert/inseme/blob/main/research/reactive_cognitive_cop_extension.md)
-- [Research Index — Inseme](https://github.com/JeanHuguesRobert/inseme/blob/main/research/index.md)
-- Jean Hugues Noël Robert, baron Mariani
 <!-- END_AUTO: backlinks -->

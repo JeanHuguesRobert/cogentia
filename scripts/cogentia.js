@@ -867,8 +867,9 @@ function cmdCorpusApply() {
 function cmdCorpusVerify() {
   const ctx = loadContext();
   const strict = hasFlag("--strict");
-  const plan = buildPlan(ctx, { ...planOptions(), quiet: true });
-  const inventory = buildInventory(ctx);
+  const options = { ...planOptions(), quiet: true };
+  const plan = buildPlan(ctx, options);
+  const inventory = buildInventory(ctx, options);
   const git = verifyGit(ctx);
   const privacy = verifyPrivacy(ctx, inventory, PUBLIC_VIEW);
   const gaps = visibleDocs(inventory, PUBLIC_VIEW).filter(isIndexGap);
@@ -5886,7 +5887,7 @@ function ftsQueryFromText(text) {
 }
 
 function buildPlan(ctx, options) {
-  const inventory = buildInventory(ctx);
+  const inventory = buildInventory(ctx, options);
   const changes = [];
   if (options.corpusStatus) {
     for (const repo of ctx.repos) {
@@ -5968,10 +5969,11 @@ function planOptions() {
   };
 }
 
-function buildInventory(ctx) {
+function buildInventory(ctx, options = null) {
   const repoMetas = new Map();
   const documents = [];
   for (const repo of ctx.repos) {
+    if (options && !repoSelected(repo, options)) continue;
     const ignore = loadIgnore(repo.path);
     const indexSets = buildIndexSets(repo);
     const gitIndex = buildGitDateIndex(repo);

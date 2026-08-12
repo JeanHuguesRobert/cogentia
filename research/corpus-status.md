@@ -86,87 +86,9 @@ graph LR
   r_github[".github"]
   r_acorsica_org["acorsica.org"]
   r_structenv["StructEnv"]
-  r_cogentia -->|108| r_barons_mariani
-  r_barons_mariani -->|71| r_cogentia
-  r_jeanhuguesrobert -->|68| r_barons_mariani
-  r_fractavolta -->|48| r_cogentia
-  r_fractavolta -->|37| r_marenostrum
-  r_inseme -->|36| r_cogentia
-  r_jeanhuguesrobert -->|35| r_cogentia
-  r_cogentia -->|28| r_inseme
-  r_fractavolta -->|24| r_inseme
-  r_barons_mariani -->|22| r_marenostrum
-  r_barons_mariani -->|19| r_fractavolta
-  r_cogentia -->|19| r_marenostrum
-  r_fractavolta -->|19| r_barons_mariani
-  r_inseme -->|19| r_barons_mariani
-  r_barons_mariani -->|18| r_inseme
-  r_inox -->|16| r_cogentia
-  r_jeanhuguesrobert -->|16| r_marenostrum
-  r_marenostrum -->|16| r_cogentia
-  r_inseme -->|13| r_fractavolta
-  r_inseme -->|12| r_inox
-  r_marenostrum -->|12| r_fractavolta
-  r_inox -->|11| r_barons_mariani
-  r_marenostrum -->|11| r_barons_mariani
-  r_inox -->|10| r_fractavolta
-  r_inox -->|9| r_inseme
-  r_jeanhuguesrobert -->|9| r_fractavolta
-  r_fractavolta -->|8| r_inox
-  r_inox -->|8| r_marenostrum
-  r_jeanhuguesrobert -->|7| r_inseme
-  r_inseme -->|6| r_kudos
-  r_jeanhuguesrobert -->|6| r_inox
-  r_ubikia -->|6| r_cogentia
-  r_barons_mariani -->|5| r_inox
-  r_barons_mariani -->|5| r_jeanhuguesrobert
-  r_cogentia -->|5| r_fractavolta
-  r_ubikia -->|5| r_barons_mariani
-  r_barons_mariani -->|4| r_ubikia
-  r_cogentia -->|4| r_jeanhuguesrobert
-  r_marianivillage -->|4| r_fractavolta
-  r_operium -->|4| r_marenostrum
-  r_ubikia -->|4| r_jeanhuguesrobert
-  r_github -->|3| r_gouvernance
-  r_fractavolta -->|3| r_jeanhuguesrobert
-  r_inseme -->|3| r_jeanhuguesrobert
-  r_kudos -->|3| r_barons_mariani
-  r_operium -->|3| r_cogentia
-  r_operium -->|3| r_barons_mariani
-  r_operium -->|3| r_inseme
-  r_cogentia -->|2| r_inox
-  r_gouvernance -->|2| r_barons_mariani
-  r_gouvernance -->|2| r_fractavolta
-  r_inox -->|2| r_jeanhuguesrobert
-  r_inseme -->|2| r_marenostrum
-  r_institut_mariani -->|2| r_barons_mariani
-  r_institut_mariani -->|2| r_fractavolta
-  r_jeanhuguesrobert -->|2| r_ubikia
-  r_marenostrum -->|2| r_jeanhuguesrobert
-  r_marenostrum -->|2| r_inseme
-  r_marenostrum -->|2| r_inox
-  r_github -->|1| r_institut_mariani
-  r_cogentia -->|1| r_kudos
-  r_gouvernance -->|1| r_jeanhuguesrobert
-  r_gouvernance -->|1| r_cogentia
-  r_gouvernance -->|1| r_inseme
-  r_gouvernance -->|1| r_marenostrum
-  r_gouvernance -->|1| r_inox
-  r_gouvernance -->|1| r_kudos
-  r_gouvernance -->|1| r_marianivillage
-  r_inseme -->|1| r_ubikia
-  r_institut_mariani -->|1| r_privai
-  r_institut_mariani -->|1| r_kudos
-  r_institut_mariani -->|1| r_marianivillage
-  r_institut_mariani -->|1| r_inseme
-  r_institut_mariani -->|1| r_cogentia
-  r_institut_mariani -->|1| r_marenostrum
-  r_institut_mariani -->|1| r_inox
-  r_jeanhuguesrobert -->|1| r_operium
-  r_kudos -->|1| r_institut_mariani
-  r_marianivillage -->|1| r_institut_mariani
-  r_privai -->|1| r_institut_mariani
 ```
+
+*(No cross-repo links detected.)*
 <!-- END_AUTO: graph -->
 ---
 
@@ -698,8 +620,6 @@ graph LR
 - Cogentigram as visual language for knowledge graph navigation
 - PrivAI governance model — from non-profit to cooperative structure
 - Corpus Sleep Cycle command for periodic consolidation, cooling, obsolescence and memory-temperature review
-- [Rendre capable — noyau doctrinal provisoire](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/noyau_doctrinal_rendre_capable.md)
-- [Research Index — barons-Mariani](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/index.md)
 - [Agent-Resumable CLI](agent_resumable_cli.md)
 - [Cogentia](../README.md)
 - [Cogentia Commons — MVP Specification](cogentia_commons_mvp_spec.md)
@@ -710,11 +630,6 @@ graph LR
 - [From Biometrics and Psychometrics to Structural Signatures](structural_signatures.md)
 - [Frontmatter Schema — v0.1 (Corpus)](../docs/frontmatter-schema.md)
 - [Frontmatter Synonym Mapping — v0.1](../docs/frontmatter-synonym-mapping.md)
-- [Research Index — FractaVolta](https://github.com/JeanHuguesRobert/FractaVolta/blob/main/research/index.md)
-- [Research Index — Inox](https://github.com/JeanHuguesRobert/Inox/blob/master/research/index.md)
-- [Research Index — Inseme](https://github.com/JeanHuguesRobert/inseme/blob/main/research/index.md)
-- [Research Index — Jean Hugues Noël Robert (Profile / Entry Point)](https://github.com/JeanHuguesRobert/JeanHuguesRobert/blob/main/research/index.md)
-- [Research Index — MareNostrum](https://github.com/JeanHuguesRobert/marenostrum/blob/main/research/index.md)
 <!-- END_AUTO: possibilities -->
 ---
 

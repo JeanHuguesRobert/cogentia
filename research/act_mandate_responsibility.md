@@ -176,5 +176,4 @@ Open continuations:
 
 *These documents link to this file:*
 - [Research Index — Cogentia](index.md)
-- COP/Accounting — Resource, Budget, Mandate, and Ledger Semantics
 <!-- END_AUTO: backlinks -->

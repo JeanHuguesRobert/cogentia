@@ -1511,39 +1511,20 @@ The novelty of cognitive packets is therefore not the existence of the pattern, 
 ### Backlinks
 
 *These documents link to this file:*
-- [Alien, l’IA et les intelligences xénoformes](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/alien_blogpost.md)
-- [Incremental Transmissible Corpus Model](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/modele_corpus_transmissible_incremental.md)
-- [Mauvaise calibration métacognitive face aux intelligences xénoformes](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/alien_academic.md)
-- [Rendre capable — noyau doctrinal provisoire](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/noyau_doctrinal_rendre_capable.md)
 - [Act, mandate and responsibility](act_mandate_responsibility.md)
+- [AGENTS.md — Cogentia local specialization](../AGENTS.md)
 - [Cogentia](../COGENTIA.md)
 - [Cogentia](../README.md)
 - [Cogentia Commons](cogentia_commons_method_packets.md)
+- [Cogentia Shared Agent Instructions](../instructions/AGENTS.shared.md)
 - [cogentia.js - Tutorial and Near-Specification](cogentia_js_tutorial.md)
 - [Cogentigraphic Distillation](cogentigraphic_distillation.md)
 - [Cognitive Packet Switching](cognitive_packet_switching.md)
 - [Concept Index — cogentia](concepts.md)
+- [Continuations and Cognitive Packets — early agent briefing](../docs/continuations_and_cognitive_packets_for_agents.md)
 - [Informational Gravity — Contextual Attraction for Cognitive-Packet Routing](informational_gravity.md)
 - [Pipeline](pipeline.md)
 - [Research Index — Cogentia](index.md)
 - [The Cogentia Commons Living Corpus](cogentia_commons_living_corpus.md)
 - [Trail: From Method to Machine](trails/from_method_to_machine.md)
-- For researchers
-- [Fractanet — Generalized Control Planes for Heterogeneous Packet Networks](https://github.com/JeanHuguesRobert/FractaVolta/blob/main/research/fractanet.md)
-- FractaVolta
-- [Le Réseau Inconscient](https://github.com/JeanHuguesRobert/FractaVolta/blob/main/research/LE_RESEAU_INCONSCIENT.md)
-- Methodology
-- [The Unconscious Grid](https://github.com/JeanHuguesRobert/FractaVolta/blob/main/research/UNCONSCIOUS_GRID.md)
-- [When Cognition Became Traffic](https://github.com/JeanHuguesRobert/FractaVolta/blob/main/research/when_cognition_became_traffic.md)
-- [Library packets — when the library is a specification, not code](https://github.com/JeanHuguesRobert/Inox/blob/master/research/library_packets.md)
-- [Reactive Sets in Inox — Native Implementation Path](https://github.com/JeanHuguesRobert/Inox/blob/master/research/reactive_sets_inox_cop_implementation.md)
-- [Research Index — Inox](https://github.com/JeanHuguesRobert/Inox/blob/master/research/index.md)
-- COP Reactive Cognitive Extension
-- [COP Zero Draft — Mission-Bearing Cognitive Packet Kernel](https://github.com/JeanHuguesRobert/inseme/blob/main/research/cop_zero_draft.md)
-- COP/Accounting — Resource, Budget, Mandate, and Ledger Semantics
-- [Packet Attractor — Fractanet Distributed Demand and Capability Routing](https://github.com/JeanHuguesRobert/inseme/blob/main/research/packet_attractor_fractanet.md)
-- [Reactive Cognitive COP Extension](https://github.com/JeanHuguesRobert/inseme/blob/main/research/reactive_cognitive_cop_extension.md)
-- [Research Index — Inseme](https://github.com/JeanHuguesRobert/inseme/blob/main/research/index.md)
-- [Corpus Start Here — Carte globale du Corpus](https://github.com/JeanHuguesRobert/JeanHuguesRobert/blob/main/research/corpus-map.md)
-- Jean Hugues Noël Robert, baron Mariani
 <!-- END_AUTO: backlinks -->

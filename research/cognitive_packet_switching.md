@@ -998,16 +998,9 @@ The event substrate gives causality.
 ### Backlinks
 
 *These documents link to this file:*
-- [Rendre capable — noyau doctrinal provisoire](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/noyau_doctrinal_rendre_capable.md)
 - [Cogentia](../README.md)
+- [Continuations and Cognitive Packets — early agent briefing](../docs/continuations_and_cognitive_packets_for_agents.md)
 - [Informational Gravity — Contextual Attraction for Cognitive-Packet Routing](informational_gravity.md)
 - [Research Index — Cogentia](index.md)
 - [The Cogentia Commons Living Corpus](cogentia_commons_living_corpus.md)
-- For researchers
-- [Fractanet — Generalized Control Planes for Heterogeneous Packet Networks](https://github.com/JeanHuguesRobert/FractaVolta/blob/main/research/fractanet.md)
-- [COOP — Tutorial and Near-Specification](https://github.com/JeanHuguesRobert/inseme/blob/main/research/coop_tutorial.md)
-- [COP Zero Draft — Mission-Bearing Cognitive Packet Kernel](https://github.com/JeanHuguesRobert/inseme/blob/main/research/cop_zero_draft.md)
-- COP/Accounting — Resource, Budget, Mandate, and Ledger Semantics
-- [Corpus Start Here — Carte globale du Corpus](https://github.com/JeanHuguesRobert/JeanHuguesRobert/blob/main/research/corpus-map.md)
-- Jean Hugues Noël Robert, baron Mariani
 <!-- END_AUTO: backlinks -->

@@ -1129,22 +1129,19 @@ A compliant CLI does not hide judgment. It exposes judgment as a continuation, c
 ### Backlinks
 
 *These documents link to this file:*
-- [Test du critère Rossignol](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/test_critere_rossignol.md)
 - [Act, mandate and responsibility](act_mandate_responsibility.md)
 - [Agent CLI Gateway](agent_cli_gateway.md)
+- [AGENTS.md — Cogentia local specialization](../AGENTS.md)
 - [Cogentia](../COGENTIA.md)
 - [Cogentia](../README.md)
+- [Cogentia Shared Agent Instructions](../instructions/AGENTS.shared.md)
 - [cogentia.js - Tutorial and Near-Specification](cogentia_js_tutorial.md)
 - [Cognitive Packet Switching](cognitive_packet_switching.md)
 - [Cognitive Packets](cognitive_packets.md)
 - [Concept Index — cogentia](concepts.md)
+- [Continuations and Cognitive Packets — early agent briefing](../docs/continuations_and_cognitive_packets_for_agents.md)
 - [Pipeline](pipeline.md)
 - [Research Index — Cogentia](index.md)
 - [The Cogentia Commons Living Corpus](cogentia_commons_living_corpus.md)
 - [Trail: From Method to Machine](trails/from_method_to_machine.md)
-- For researchers
-- FractaVolta
-- Methodology
-- [Corpus Start Here — Carte globale du Corpus](https://github.com/JeanHuguesRobert/JeanHuguesRobert/blob/main/research/corpus-map.md)
-- [Public Corpus Navigation](https://github.com/JeanHuguesRobert/JeanHuguesRobert/blob/main/research/public-navigation.md)
 <!-- END_AUTO: backlinks -->

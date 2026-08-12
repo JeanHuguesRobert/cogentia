@@ -1274,5 +1274,4 @@ Together, they form an infrastructure for collective intelligence.
 *These documents link to this file:*
 - [Concept Index — cogentia](concepts.md)
 - [Research Index — Cogentia](index.md)
-- [Research Index — Inseme](https://github.com/JeanHuguesRobert/inseme/blob/main/research/index.md)
 <!-- END_AUTO: backlinks -->
