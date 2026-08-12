@@ -116,9 +116,10 @@ function normalizeHit(item = {}) {
     path: pathName || ref.split(":").slice(1).join(":") || "",
     start_line: start,
     end_line: Number.isInteger(end) ? end : start,
-    title: String(item.title || item.heading || "").slice(0, 300),
+    title: String(item.title || item.heading || item.heading_path || "").slice(0, 300),
     score: Number.isFinite(item.score) ? item.score : null,
-    text: item.text != null ? String(item.text).replace(/\s+/g, " ").trim().slice(0, 1800) : "",
+    // Gateway public search uses `snippet`; some modes may also return `text`.
+    text: String(item.text ?? item.snippet ?? "").replace(/\s+/g, " ").trim().slice(0, 1800),
   };
 }
 
@@ -146,16 +147,24 @@ function extractText(body = {}) {
 }
 
 async function gatewayGet(request, baseUrl, pathAndQuery, timeoutMs) {
-  const response = await request(`${baseUrl}${pathAndQuery}`, {
-    method: "GET",
-    headers: { Accept: "application/json", "X-Cogentia-Entry": "public" },
-    signal: AbortSignal.timeout(timeoutMs),
-  });
-  const body = await response.json().catch(() => null);
-  if (!response.ok) {
-    return { ok: false, http_status: response.status, error: body?.error || "http_error" };
+  try {
+    const response = await request(`${baseUrl}${pathAndQuery}`, {
+      method: "GET",
+      headers: { Accept: "application/json", "X-Cogentia-Entry": "public" },
+      signal: AbortSignal.timeout(timeoutMs),
+    });
+    const body = await response.json().catch(() => null);
+    if (!response.ok) {
+      return { ok: false, http_status: response.status, error: body?.error || "http_error" };
+    }
+    return body && typeof body === "object" ? body : { ok: false, error: "invalid_json" };
+  } catch (error) {
+    return {
+      ok: false,
+      error: error?.name === "TimeoutError" || error?.name === "AbortError" ? "timeout" : "network_error",
+      error_name: String(error?.name || "Error").slice(0, 80),
+    };
   }
-  return body;
 }
 
 function safeRaw(body) {

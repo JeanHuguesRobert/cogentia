@@ -7,6 +7,7 @@ import {
   createCorpusLibrarianTools,
   exploreCorpusDeterministic,
   parseSourceId,
+  searchQueryCandidates,
 } from "./lib/corpus-librarian/index.js";
 
 const tests = [];
@@ -112,7 +113,7 @@ test("tools.open and expand call lines endpoint", async () => {
   assert.equal(expanded.excerpt.start_line, 5);
 });
 
-test("deterministic explore search→open builds a packet without LLM", async () => {
+test("deterministic explore uses search include_text packet without LLM", async () => {
   const tools = createCorpusLibrarianTools({
     baseUrl: "http://gateway.test",
     fetch: mockFetch([
@@ -129,7 +130,7 @@ test("deterministic explore search→open builds a packet without LLM", async ()
               path: "docs/a.md",
               start_line: 1,
               end_line: 3,
-              text: "tiny",
+              text: "Cogentia indexes Markdown for public retrieval and citation.",
             },
             {
               id: "cogentia:docs/b.md#L4-L8",
@@ -137,23 +138,9 @@ test("deterministic explore search→open builds a packet without LLM", async ()
               path: "docs/b.md",
               start_line: 4,
               end_line: 8,
-              text: "also tiny",
+              text: "The context gateway exposes search, pack, and line open over the index.",
             },
           ],
-        },
-      },
-      {
-        match: (path) => path.startsWith("/api/context/lines"),
-        body: (path) => {
-          const url = new URL(path, "http://gateway.test");
-          const ref = url.searchParams.get("ref");
-          return {
-            ok: true,
-            source_id: `${ref}#L${url.searchParams.get("start")}-L${url.searchParams.get("end")}`,
-            text: ref.includes("a.md")
-              ? "Cogentia indexes Markdown for public retrieval and citation."
-              : "The context gateway exposes search, pack, and line open over the index.",
-          };
         },
       },
     ]),
@@ -169,11 +156,76 @@ test("deterministic explore search→open builds a packet without LLM", async ()
   assert.equal(result.packet.protocol, "cogentia.evidence_packet/v1");
   assert.ok(result.packet.excerpts.length >= 2);
   assert.equal(result.packet.diagnostics.search_calls, 1);
-  assert.ok(result.packet.diagnostics.open_calls >= 1);
+  assert.equal(result.packet.diagnostics.open_calls, 0);
+  assert.equal(result.packet.diagnostics.path, "search_text");
   assert.equal(result.packet.diagnostics.tool_calls, result.trace.length);
   assert.ok(result.trace.every(item => item.tool.startsWith("corpus.")));
-  // No synthesizer in this cycle: packet only.
   assert.equal(result.answer, undefined);
+});
+
+test("snippet field from gateway maps into hit text", async () => {
+  const tools = createCorpusLibrarianTools({
+    baseUrl: "http://gateway.test",
+    fetch: mockFetch([{
+      match: (path) => path.startsWith("/api/context/search"),
+      body: {
+        ok: true,
+        results: [{
+          id: "cogentia:docs/x.md#L1-L2",
+          repo: "cogentia",
+          path: "docs/x.md",
+          start_line: 1,
+          end_line: 2,
+          snippet: "Only snippet available without include_text.",
+        }],
+      },
+    }]),
+  });
+  const result = await tools.search({ query: "x" });
+  assert.equal(result.hits[0].text.includes("snippet"), true);
+});
+
+test("searchQueryCandidates reduces natural questions for keyword FTS", () => {
+  const candidates = searchQueryCandidates("Explain FractaVolta simply for a first-time visitor.");
+  assert.ok(candidates[0].includes("Explain FractaVolta"));
+  assert.ok(candidates.some(item => item === "FractaVolta" || item.includes("FractaVolta")));
+  assert.ok(candidates.length >= 2);
+});
+
+test("focused search retries when the full question has zero hits", async () => {
+  let calls = 0;
+  const tools = createCorpusLibrarianTools({
+    baseUrl: "http://gateway.test",
+    fetch: mockFetch([{
+      match: (path) => path.startsWith("/api/context/search"),
+      body: (path) => {
+        calls += 1;
+        const q = new URL(path, "http://gateway.test").searchParams.get("q") || "";
+        if (q.includes("Explain FractaVolta simply")) {
+          return { ok: true, results: [] };
+        }
+        return {
+          ok: true,
+          mode: "keyword",
+          results: [{
+            id: "FractaVolta:research/paper.md#L1-L8",
+            repo: "FractaVolta",
+            path: "research/paper.md",
+            start_line: 1,
+            end_line: 8,
+            text: "FractaVolta is a local capacity energy infrastructure proposal.",
+          }],
+        };
+      },
+    }]),
+  });
+  const result = await exploreCorpusDeterministic({
+    question: "Explain FractaVolta simply for a first-time visitor.",
+    locale: "en",
+  }, { tools, mode: "keyword", openTopK: 1, minOpenChars: 20 });
+  assert.equal(result.ok, true);
+  assert.ok(calls >= 2);
+  assert.ok(result.packet.excerpts[0].text.includes("FractaVolta"));
 });
 
 test("empty search yields none coverage", async () => {

@@ -39,20 +39,15 @@ export async function exploreCorpusDeterministic(input = {}, options = {}) {
     path: "search_open",
   };
 
-  const searchResult = await tools.search({
-    query: question,
+  // include_text=1 returns gateway `text` (chunk body). Prefer this path:
+  // live public /api/context/lines currently hangs on this workstation (rate later).
+  const preferOpen = options.preferOpen === true;
+  const searchResult = await searchUntilHits(tools, question, {
     limit: searchLimit,
     mode,
     repo: options.repo,
-    include_text: true,
-  });
-  diagnostics.tool_calls += 1;
-  diagnostics.search_calls += 1;
-  diagnostics.index_hash = searchResult.index_hash || null;
-  trace.push(step("corpus.search", searchResult.ok, {
-    hit_count: searchResult.hits?.length || 0,
-    mode: searchResult.mode,
-  }));
+    include_text: options.includeSearchText !== false,
+  }, { diagnostics, trace });
 
   if (!searchResult.ok || !searchResult.hits?.length) {
     return {
@@ -77,9 +72,9 @@ export async function exploreCorpusDeterministic(input = {}, options = {}) {
       excerpt = {
         source_id: hit.source_id,
         text: hit.text,
-        why_relevant: "search_snippet",
+        why_relevant: "search_include_text",
       };
-    } else {
+    } else if (preferOpen) {
       const opened = await tools.open({
         ref: hit.ref,
         start: hit.start_line,
@@ -87,6 +82,7 @@ export async function exploreCorpusDeterministic(input = {}, options = {}) {
       });
       diagnostics.tool_calls += 1;
       diagnostics.open_calls += 1;
+      diagnostics.path = "search_open";
       trace.push(step("corpus.open", opened.ok, { source_id: hit.source_id }));
       if (opened.ok && opened.excerpt?.text) {
         excerpt = {
@@ -95,9 +91,20 @@ export async function exploreCorpusDeterministic(input = {}, options = {}) {
           why_relevant: "opened_span",
         };
       }
+    } else if (hit.text) {
+      excerpt = {
+        source_id: hit.source_id,
+        text: hit.text,
+        why_relevant: "search_short_text",
+      };
     }
 
-    if (excerpt && excerpt.text.length < minOpenChars && typeof tools.expand === "function") {
+    if (
+      preferOpen
+      && excerpt
+      && excerpt.text.length < minOpenChars
+      && typeof tools.expand === "function"
+    ) {
       const expanded = await tools.expand({ hit, radius: options.expandRadius || 15 });
       diagnostics.tool_calls += 1;
       diagnostics.expand_calls += 1;
@@ -131,6 +138,75 @@ export async function exploreCorpusDeterministic(input = {}, options = {}) {
     trace,
     search: searchResult,
   };
+}
+
+/**
+ * Keyword FTS often ANDs tokens: full natural questions return 0 hits.
+ * Progressive queries: full → content words → top entity/token.
+ */
+async function searchUntilHits(tools, question, searchInput, { diagnostics, trace }) {
+  const candidates = searchQueryCandidates(question);
+  let last = { ok: false, hits: [], query: question };
+  for (const query of candidates) {
+    const result = await tools.search({ ...searchInput, query });
+    diagnostics.tool_calls += 1;
+    diagnostics.search_calls += 1;
+    if (result.index_hash) diagnostics.index_hash = result.index_hash;
+    diagnostics.path = diagnostics.search_calls === 1 ? "search_text" : "search_focused";
+    trace.push(step("corpus.search", result.ok, {
+      query,
+      hit_count: result.hits?.length || 0,
+      mode: result.mode,
+    }));
+    last = { ...result, query };
+    if (result.ok && result.hits?.length) return last;
+  }
+  return last;
+}
+
+export function searchQueryCandidates(question) {
+  const raw = String(question || "").trim();
+  if (!raw) return [];
+  const focused = focusSearchQuery(raw);
+  const tokens = tokenizeContent(raw);
+  const out = [];
+  const push = value => {
+    const q = String(value || "").trim();
+    if (q && !out.includes(q)) out.push(q);
+  };
+  push(raw);
+  push(focused);
+  // Prefer distinctive multi-word phrases before single tokens.
+  if (tokens.length >= 2) push(tokens.slice(0, 3).join(" "));
+  if (tokens.length >= 2) push(tokens.slice(0, 2).join(" "));
+  for (const token of tokens) push(token);
+  return out.slice(0, 6);
+}
+
+export function focusSearchQuery(question) {
+  return tokenizeContent(question).slice(0, 6).join(" ");
+}
+
+function tokenizeContent(question) {
+  const stop = new Set([
+    "a", "an", "the", "and", "or", "of", "to", "for", "in", "on", "at", "by", "with", "from", "as", "is", "are",
+    "was", "were", "be", "been", "what", "why", "how", "when", "where", "which", "who", "whom", "this", "that",
+    "these", "those", "it", "its", "do", "does", "did", "can", "could", "should", "would", "may", "might",
+    "about", "into", "over", "under", "only", "just", "than", "then", "also", "very", "more", "most",
+    "le", "la", "les", "un", "une", "des", "de", "du", "et", "ou", "au", "aux", "en", "dans", "sur", "par",
+    "pour", "avec", "sans", "est", "sont", "que", "qui", "quoi", "dont", "où", "ou", "comment", "pourquoi",
+    "quel", "quelle", "quels", "quelles", "ce", "cet", "cette", "ces", "il", "elle", "on", "nous", "vous",
+    "ils", "elles", "d", "l", "se", "sa", "son", "ses", "mon", "ton", "leur", "leurs", "ne", "pas", "plus",
+    "moins", "tres", "très", "peut", "peuvent", "doit", "doivent", "elle", "faire", "etre", "être",
+  ]);
+  return String(question || "")
+    .normalize("NFKC")
+    .replace(/[?!.,;:()[\]{}"“”«»]/g, " ")
+    .split(/\s+/)
+    .map(token => token.trim())
+    .filter(token => token.length >= 3)
+    .filter(token => !stop.has(token.toLowerCase()))
+    .filter(token => !/^\d+$/.test(token));
 }
 
 function step(tool, ok, detail = {}) {

@@ -92,8 +92,9 @@ No new index format. Rebuild remains `cogentia.js index rebuild`.
 | Cycle | Status | Change | Rate summary |
 |-------|--------|--------|--------------|
 | A | **done** | Freeze scorecard + L0 as champion reference | scorecard.jsonl |
-| B | **offline done** | Tool module + deterministic explore + unit tests | 6/6 offline pass; live vs L0 pending |
-| C+ | pending | Thin-hit second search / fail-closed escalate | — |
+| B | **rated live** | Tools + deterministic explore; progressive keyword focus | offline 9/9; live 11/11 packet ok, 0 none; mean 3.45 tools, 3605 ms |
+| C | next | Synthesizer on packet vs L0 prose (quality), and/or hybrid when embed router up | pending |
+| D+ | pending | Fail-closed escalate; open/lines when gateway fixed | — |
 
 ## Stop conditions
 

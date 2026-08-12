@@ -1,0 +1,23 @@
+{
+  "cycle": "B",
+  "at": "2026-08-12",
+  "status": "live_rate_ok",
+  "report": ".cogentia/evals/corpus-librarian/2026-08-12T15-08-05-332Z-cycle-b-live.json",
+  "mode": "keyword",
+  "cases": 11,
+  "ok": 11,
+  "coverage_enough": 8,
+  "coverage_partial": 3,
+  "coverage_none": 0,
+  "mean_latency_ms": 3605,
+  "mean_tool_calls": 3.45,
+  "mean_excerpt_count": 2.55,
+  "mean_expected_ratio_in_excerpts": 0.245,
+  "findings": [
+    "Full natural-language questions often return 0 keyword FTS hits (AND semantics).",
+    "Progressive searchQueryCandidates restores hits without an LLM controller.",
+    "context/lines hung on this host; Cycle B uses search include_text for packet body.",
+    "Semantic/hybrid need embed router; keyword-only path is the measured baseline."
+  ],
+  "next_cycle": "Wire packet→synthesizer and rate answer quality vs L0; optional hybrid when embeddings available."
+}
