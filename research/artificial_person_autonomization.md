@@ -240,6 +240,10 @@ instances, audited by logs, corrected by feedback, and revocable by authority.
 It is not a soul. It is not the living subject. It is not a metaphysical
 continuation of the person.
 
+Its continuity is also distinct from any particular execution shell. Models,
+providers, runtimes, channels, and hosting environments may be replaced without
+transferring sovereignty over the owner-rooted twin.
+
 ### 3.8 Clone
 
 A **clone** is a public metaphor. It captures the intuitive resemblance between a
@@ -885,16 +889,31 @@ models of the dead.
 Ownership is central because artificial persons become dangerous when their
 controlling relation is opaque.
 
+Recent legal scholarship gives this question a useful independent anchor.
+Jurcys et al., *Who owns my AI twin? Data ownership in a new world of simulated
+identities* (Computer Law & Security Review, 2026, DOI:
+`10.1016/j.clsr.2026.106347`), distinguish the identity-bearing **ghost** of an
+AI twin from its technical **shell** and argue for human-centred data dominion,
+privacy by default, and portability.
+
+Cogentia adopts the direction but treats legal ownership as only one layer of a
+stronger operational requirement. Personal-data rights, property rights,
+contractual rights, technical possession, and platform control may diverge. The
+relevant invariant is therefore **subject sovereignty over the continuity that
+makes the twin theirs**, independently of the current execution shell.
+
 For a sovereign twin:
 
 ```text
-subject owns twin root
+subject owns / governs twin root
 twin root may produce twin instances
 twin instances act only through mandates
 mandates grant capabilities
 capabilities emit COP packets
 COP packets produce fractal logs
 fractal logs preserve proof, accountability, and correction
+runtime shells remain replaceable
+portability prevents capture
 ```
 
 Ownership must apply at several levels:
@@ -914,7 +933,14 @@ keys
 runtime nodes
 ```
 
+But these levels need not share the same legal title. A subject may use a
+third-party model, provider, channel, or runtime while retaining sovereignty over
+the owner-rooted twin. The shell may belong to another party; the shell must not
+become the sole residence of identity, memory, mandate, or continuity.
+
 A twin without ownership becomes platform memory.
+
+A twin without portability becomes capturable.
 
 A twin without mandate becomes impersonation.
 
@@ -1020,7 +1046,21 @@ Mind uploading, posthumous avatars, griefbots, and digital ghosts expose the cop
 problem: resemblance, memory, or behavioral continuity do not automatically prove
 identity or metaphysical continuation.
 
-### 19.9 Recent public signals
+### 19.9 AI-twin ownership, data dominion, and portability
+
+Jurcys et al. (2026) provide a direct legal bridge to the Cogentia sovereignty
+problem. Their **ghost / shell** distinction supports separation between the
+identity-bearing twin continuity and replaceable infrastructure; their emphasis
+on data dominion, privacy by default, and portability provides an external legal
+anchor for Cogentia's anti-capture architecture.
+
+The convergence should not be overstated. Their argument advances a normative
+property-oriented account of personal data and AI twins; it should not be read as
+a simple statement that current positive law already treats all personal data as
+ordinary property. Cogentia therefore keeps **ownership**, **control**, and
+**sovereignty** conceptually distinct.
+
+### 19.10 Recent public signals
 
 Recent public discussion includes:
 
