@@ -36,6 +36,41 @@ Agent-Resumable tool (required):
   tool → continuation → external judgment (human/agent/worker) → step_result → resumes
 ```
 
+Also in corpus (Promise / packet / join):
+
+| Source | Contribution |
+|--------|----------------|
+| `research/agent_resumable_cli.md` §3.2 | Continuations **like Promises**, but cross-process, schema-bearing, judgment-bearing |
+| `research/cogentia_continuation_packet_routing.md` | Continuations as **packets**; routing `split` / `merge` of child packets; Fractanet packet-switch analogy |
+| `research/pipeline.md` | Method as packet-switched cognitive network |
+
+### Cascade rule (second-order endpoints) — explicit 2026-08-12
+
+The IoC rule **cascades**. If a surface *implements* an OpenAI-compatible endpoint (or any judgment service) by *needing* another OpenAI-compatible endpoint (embed, chat, rank, …), that **second-order** need must **not** be a direct provider call inside the first surface.
+
+```text
+Caller A needs judgment
+  → emits continuation C1
+Fulfiller / second-order surface B
+  (e.g. local "OpenAI-compatible" facade)
+  → must NOT silently call api.openai.com / nested router for its own judgment
+  → emits continuation C2 (or returns continuation_required upward)
+  → C1 stays suspended until C2 (or a batch of children) resolves
+  → A resumes with step_result
+```
+
+Join semantics (Promise-like, packet-native):
+
+| Join | Promise analogy | Routing vocabulary (corpus) |
+|------|-----------------|------------------------------|
+| Wait for all children | `Promise.all` | `split` then `merge` when all children complete |
+| Wait for first success | `Promise.race` / `any` | merge policy “first ok” (not fully standardized in CLI) |
+| All settled | `Promise.allSettled` | merge partials + failures into parent continuation |
+
+**Continuations ≈ Promises/Futures that leave the process:** serialized, stored, routed, answered by another machine or human — like **packets** on a packet-switched network — not only in-memory `await`.
+
+**Corpus clarity:** Promise analogy + packet network + `split`/`merge` are **explicit**. The nested “OpenAI facade must not hide second-order provider calls” was **implied**; this section makes it **explicit**.
+
 ### Scope of the rule
 
 Applies when a **structural tool** (CLI, daemon retrieval that needs model judgment, MCP mutate/prepare) hits a **judgment boundary**.
@@ -48,6 +83,7 @@ Does **not** mean “nothing in the monorepo may call OpenAI ever.” Distinct r
 | Continuation **fulfiller** (embed worker, human agent, step_result) | **Yes** — that *is* the external judge |
 | Product chat surface (Guide web, Agent Gateway, WhatsApp twin answering a user) | **Yes as the product** — the twin *is* the conversational agent, not a suspended CLI tool |
 | Offline **eval harness** (explicit score scripts) | Acceptable as lab tooling; must not be on the live tool path |
+| OpenAI-compatible **proxy** that still needs judgment | **No** direct second-order provider call — emit nested/batched continuations (cascade) |
 
 ---
 
