@@ -208,9 +208,16 @@ async function hybridSearchSupabase(supabaseUrl, serviceKey, query, options) {
 }
 
 async function semanticSearchSupabase(supabaseUrl, serviceKey, query, options) {
-  const embedding = await embedQuery(query, options);
+  const embedding = await resolveQueryEmbedding(query, options);
   if (!embedding.ok) {
-    return { ok: false, error: embedding.error, query, mode: "semantic", warnings: embedding.warnings || [] };
+    return {
+      ok: false,
+      error: embedding.error || "semantic_continuation_required",
+      query,
+      mode: "semantic",
+      warnings: embedding.warnings || [],
+      continuation_required: embedding.error === "semantic_continuation_required",
+    };
   }
   const rows = await supabaseRpc(supabaseUrl, serviceKey, "match_retrieval_chunks", {
     query_embedding: embedding.embedding,
@@ -291,10 +298,35 @@ function packFromRows(query, rows, options) {
   };
 }
 
-async function embedQuery(query, options) {
+/**
+ * Resolve a query embedding without hiding provider judgment in the tool path.
+ * Prefer options.queryEmbedding (from a fulfilled continuation / cache).
+ * Inline OpenAI call only when explicitly allowed (fulfiller mode).
+ */
+async function resolveQueryEmbedding(query, options = {}) {
+  if (Array.isArray(options.queryEmbedding) && options.queryEmbedding.length) {
+    return { ok: true, embedding: options.queryEmbedding, source: "provided" };
+  }
+  const env = options.env || process.env;
+  const allowInline = options.allowInlineEmbedFulfill === true
+    || String(env.COGENTIA_ALLOW_INLINE_EMBED_FULFILL || "").trim() === "1";
+  if (!allowInline) {
+    return {
+      ok: false,
+      error: "semantic_continuation_required",
+      warnings: [
+        "Supabase semantic search needs a query embedding from a fulfilled continuation (or options.queryEmbedding). Set COGENTIA_ALLOW_INLINE_EMBED_FULFILL=1 only for explicit fulfiller hosts.",
+      ],
+    };
+  }
+  return embedQueryAsFulfiller(query, options);
+}
+
+/** Explicit fulfiller: host opted into provider call to complete a continuation. */
+async function embedQueryAsFulfiller(query, options) {
   const apiKey = String(options.env?.OPENAI_API_KEY || options.env?.COGENTIA_OPENAI_API_KEY || "");
   if (!apiKey) {
-    return { ok: false, error: "missing_openai_api_key", warnings: ["Set OPENAI_API_KEY for Supabase semantic retrieval."] };
+    return { ok: false, error: "missing_openai_api_key", warnings: ["Set OPENAI_API_KEY for explicit embed fulfillment."] };
   }
   const response = await fetch("https://api.openai.com/v1/embeddings", {
     method: "POST",
@@ -314,7 +346,7 @@ async function embedQuery(query, options) {
   }
   const embedding = body?.data?.[0]?.embedding;
   if (!Array.isArray(embedding)) return { ok: false, error: "invalid_embedding_response" };
-  return { ok: true, embedding };
+  return { ok: true, embedding, source: "inline_fulfiller" };
 }
 
 async function supabaseRpc(supabaseUrl, serviceKey, fn, args) {

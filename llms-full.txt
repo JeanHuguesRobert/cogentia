@@ -2373,9 +2373,10 @@ Observed Fracta state on 2026-06-30:
 - Caddy serves `https://cogentia.fractavolta.com`.
 - Public `POST /mcp` returns the five Cogentia tools.
 - Public `tools/call` works for `cogentia_search`.
-- Public hybrid search uses the configured embedding provider on a query-cache
-  miss. It falls back to keyword only when semantic retrieval is genuinely
-  unavailable, such as a provider, credential, quota, or network failure.
+- Public hybrid/semantic search uses a **cached** query embedding when present.
+  On cache miss it emits a `semantic-search` continuation (IoC) rather than
+  calling a provider inline; hybrid falls back to keyword until the embed is
+  fulfilled (`embeddings search-with --cache-query` or a worker).
 
 The ChatGPT developer-mode connector flow is:
 

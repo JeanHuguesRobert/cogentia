@@ -463,7 +463,11 @@ export function createMcpCore(env = process.env) {
     /^(1|true|yes)$/i.test(String(env.COGENTIA_MCP_JHN_MUTATE || "").trim()) &&
     Boolean(String(env.COGENTIA_MCP_JHN_TOKEN || "").trim());
   /** Default tool list (anonymous). Per-request list may include mutate for JHN. */
-  const tools = TOOLS.filter((tool) => staticAllowMutate || !MUTATE_TOOLS.has(tool.name));
+  const allowPrivateReadStatic = view === "full";
+  const tools = TOOLS.filter((tool) =>
+    (staticAllowMutate || !MUTATE_TOOLS.has(tool.name)) &&
+    (allowPrivateReadStatic || !PRIVATE_READ_TOOLS.has(tool.name))
+  );
 
   const instructions =
     "Playbook: (1) cogentia_agent_start and/or cogentia_views_snapshot — situation and load.mode_recommendation. " +

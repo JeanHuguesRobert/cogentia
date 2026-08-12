@@ -73,10 +73,30 @@ try {
     assert.equal(semantic.results[0].path, "alpha.md");
     assert.match(semantic.warnings.join("\n"), /cached ranked results/);
 
+    // IoC: uncached semantic query must emit continuation (or 202), not call a provider inline.
     const missResponse = await fetch(`${base}/api/context/search?q=uncached%20query&mode=semantic&limit=2`);
     const miss = await missResponse.json();
-    assert.notEqual(missResponse.status, 409);
-    assert.notEqual(miss.error, "semantic_continuation_required");
+    assert.equal(miss.ok, false);
+    assert.equal(miss.error, "semantic_continuation_required");
+    assert.equal(miss.continuation_emitted, true);
+    assert.ok(miss.continuation_id || miss.continuation?.id);
+    assert.ok([202, 409].includes(missResponse.status), `expected 202/409, got ${missResponse.status}`);
+
+    // Hybrid must not call a provider inline; fixture has no FTS so keyword may fail,
+    // but the error must surface continuation/keyword path, not a live embed provider error.
+    const hybridResponse = await fetch(`${base}/api/context/search?q=uncached%20query&mode=hybrid&limit=2`);
+    const hybrid = await hybridResponse.json();
+    assert.notEqual(hybrid.error, "query_embedding_failed");
+    assert.notEqual(hybrid.error, "missing_openai_api_key");
+    if (hybrid.ok) {
+      assert.equal(hybrid.mode, "hybrid");
+      assert.match((hybrid.warnings || []).join("\n"), /keyword|continuation|Semantic/i);
+    } else {
+      assert.match(
+        String(hybrid.error || hybrid.warnings?.join(" ") || ""),
+        /continuation|keyword|fts|empty/i,
+      );
+    }
   } finally {
     await stopDaemon(daemon);
   }

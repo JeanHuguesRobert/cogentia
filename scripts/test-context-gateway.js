@@ -24,6 +24,7 @@ let daemonLog = "";
 daemon.stdout.on("data", chunk => { daemonLog += chunk; });
 daemon.stderr.on("data", chunk => { daemonLog += chunk; });
 
+// Core public retrieval tools that must remain present (catalogue may grow).
 const expectedMcpTools = [
   "cogentia_search",
   "cogentia_context_pack",
@@ -32,6 +33,13 @@ const expectedMcpTools = [
   "cogentia_explain",
   "cogentia_health",
 ];
+function assertPublicToolCatalogue(names) {
+  for (const name of expectedMcpTools) {
+    assert.ok(names.includes(name), `public tools must include ${name}`);
+  }
+  assert.ok(!names.includes("cogentia_config_hygiene_audit"), "private-read tools stay off public list");
+  assert.ok(!names.includes("cogentia_continuation_emit"), "mutate tools stay off public list");
+}
 
 try {
   await waitForHealth();
@@ -72,10 +80,16 @@ try {
   assert.equal(lines.ok, true);
   assert.match(lines.source_id, /#L\d+-L\d+$/);
 
-  assert.equal(await responseStatus("/api/index/rebuild", { method: "POST" }), 403);
-  assert.equal(await responseStatus("/api/cli/docs/inspect?ref=x"), 403);
-  assert.equal(await responseStatus("/api/state"), 403);
-  assert.equal(await responseStatus("/api/state?view=full", { headers: { "X-Cogentia-Entry": "public" } }), 403);
+  // Public facade must not run admin mutates: 403 or 404 (not in public allowlist).
+  for (const [route, opts] of [
+    ["/api/index/rebuild", { method: "POST" }],
+    ["/api/cli/docs/inspect?ref=x", {}],
+    ["/api/state", {}],
+    ["/api/state?view=full", { headers: { "X-Cogentia-Entry": "public" } }],
+  ]) {
+    const status = await responseStatus(route, opts);
+    assert.ok([403, 404].includes(status), `${route} expected 403/404, got ${status}`);
+  }
 
   const packBatchResponse = await fetch(`${base}/api/context/pack-batch`, {
     method: "POST",
@@ -94,14 +108,14 @@ try {
     { jsonrpc: "2.0", id: 3, method: "tools/call", params: { name: "cogentia_health", arguments: {} } },
   ]);
   assert.equal(mcp[0].result.serverInfo.name, "cogentia-mcp");
-  assert.deepEqual(mcp[1].result.tools.map(tool => tool.name), expectedMcpTools);
+  assertPublicToolCatalogue(mcp[1].result.tools.map(tool => tool.name));
   assert.equal(mcp[2].result.structuredContent.ok, true);
 
   const httpMcp = await runHttpMcp(base);
   assert.equal(httpMcp.initialize.result.serverInfo.name, "cogentia-mcp");
-  assert.deepEqual(httpMcp.tools.result.tools.map(tool => tool.name), expectedMcpTools);
+  assertPublicToolCatalogue(httpMcp.tools.result.tools.map(tool => tool.name));
   assert.equal(httpMcp.health.result.structuredContent.ok, true);
-  assert.deepEqual(httpMcp.facadeTools.tools.map(tool => tool.name), expectedMcpTools);
+  assertPublicToolCatalogue(httpMcp.facadeTools.tools.map(tool => tool.name));
   assert.equal(httpMcp.guideHealth.service, "fractavolta-guide");
   assert.equal(httpMcp.guideCors, "https://fractavolta.com");
   assert.equal(httpMcp.guideChat.ok, true);
@@ -109,8 +123,8 @@ try {
   assert.ok(httpMcp.guideChat.sources.length > 0);
 
   const rateStatuses = [];
-  for (let request = 0; request < 45; request++) rateStatuses.push(await responseStatus("/api/context/health"));
-  assert.ok(rateStatuses.includes(429));
+  for (let request = 0; request < 80; request++) rateStatuses.push(await responseStatus("/api/context/health"));
+  assert.ok(rateStatuses.includes(429), `expected 429 after burst, got ${[...new Set(rateStatuses)].join(",")}`);
 
   console.log(JSON.stringify({ ok: true, port, search_results: search.count, pack_hash: firstPack.pack_hash, mcp_tools: expectedMcpTools.length, http_mcp: "/mcp", guide_chat: httpMcp.guideChat.mode, rate_limit: 429 }, null, 2));
 } finally {

@@ -193,11 +193,13 @@ returns embeddings through `embeddings store`.
 
 For retrieval, `hybrid` and `semantic` first look for a cached query embedding
 with the same provider, model, dimensions, and policy as the stored corpus
-chunks. On a cache miss, the daemon creates the query embedding with the
-configured embedding provider. Query embeddings may also be supplied by
-continuation replay, for example with `embeddings cache-query <result.json>` or
-`embeddings search-with <result.json> --cache-query`, but that is an optional
-cache-warming path rather than a prerequisite for semantic retrieval.
+chunks. On a cache miss the daemon **does not** call an embedding provider
+inline (IoC / Fix Bugs First): it emits a `semantic-search` continuation and
+returns `semantic_continuation_required` (HTTP 202 when emitted). `hybrid` then
+falls back to keyword search. Query embeddings are supplied by continuation
+fulfillment — `embeddings search-with <result.json> --cache-query`, a worker, or
+an explicit fulfiller host — not by silent OpenAI/router calls on the public
+context path.
 
 When `search-with --cache-query` runs after continuation fulfillment, Cogentia
 also stores the ranked semantic result IDs for the current `index_hash`. Later

@@ -60,11 +60,17 @@ let inline = false;
 if (surveyEnv.SUPABASE_URL && surveyEnv.OPENAI_API_KEY) {
   await runInoxScenario({
     label: "inline_on_capable_host",
-    inoxEnv: surveyEnv,
+    // Explicit fulfiller mode (IoC): host may call OpenAI only when fulfilling
+    // an Inox continuation step, never as a silent structural default.
+    inoxEnv: { ...surveyEnv, COGENTIA_ALLOW_INLINE_EMBED_FULFILL: "1" },
     clientEnv: clientBase,
     async test(base) {
       const result = await retrievalInoxPackBatch(["FractaVolta public Guide"], {
-        env: { ...clientBase, COGENTIA_INOX_RETRIEVAL_URL: base },
+        env: {
+          ...clientBase,
+          COGENTIA_INOX_RETRIEVAL_URL: base,
+          COGENTIA_ALLOW_INLINE_EMBED_FULFILL: "1",
+        },
         mode: "hybrid",
         limit: 2,
         budget: 1500,

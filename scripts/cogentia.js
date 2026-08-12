@@ -1402,15 +1402,15 @@ async function cmdAgentHealth() {
         message: "No stored public corpus embedding target is available.",
       };
     } else {
-      const embedded = await createQueryEmbedding(query, target);
+      // IoC: health must not call AI-router embeddings. Smoke only reports cache readiness.
       query_embedding = {
         checked: true,
-        ok: Boolean(embedded.ok && embedded.embedding?.length === target.dimensions),
+        ok: false,
         query,
         expected_dimensions: target.dimensions,
-        actual_dimensions: Array.isArray(embedded.embedding) ? embedded.embedding.length : null,
-        error: embedded.ok ? null : embedded.error,
-        message: embedded.ok ? null : embedded.message,
+        actual_dimensions: null,
+        error: "ioc_no_inline_query_embed",
+        message: "Live query embedding is not performed by structural health (continuation/worker fulfills embeds). Pre-warm with embeddings search-with --cache-query.",
       };
     }
   }
@@ -10932,43 +10932,34 @@ async function contextSemanticSearch(ctx, q, options = {}) {
       ],
     };
   }
-  const queryEmbedding = await createQueryEmbedding(q, target);
-  if (!queryEmbedding.ok) {
-    return {
-      ok: false,
-      error: queryEmbedding.error || "query_embedding_failed",
-      message: queryEmbedding.message,
-      query: q,
-      mode: options.mode || "semantic",
-      warnings: [`Query embedding failed for ${target.provider}/${target.model_name}: ${queryEmbedding.message || queryEmbedding.error || "unknown error"}`],
-    };
-  }
-  if (queryEmbedding.embedding.length !== target.dimensions) {
-    return {
-      ok: false,
-      error: "query_embedding_dimension_mismatch",
-      query: q,
-      mode: options.mode || "semantic",
-      warnings: [`Query embedding dimensions ${queryEmbedding.embedding.length} do not match corpus dimensions ${target.dimensions}.`],
-    };
-  }
-  const result = await semanticSearchWithEmbedding(ctx, queryEmbedding.embedding, {
-    ...options,
-    query: q,
+  // IoC / Fix Bugs First: never call AI-router or OpenAI for query embed on the
+  // public context path. Emit a semantic-search continuation; hybrid falls back
+  // to keyword. Fulfill via embeddings search-with / worker, then retry.
+  const emitted = emitSemanticSearchContinuation(ctx, q, {
+    target,
     view,
     repo,
     limit,
-    provider: target.provider,
-    modelName: target.model_name,
-    dimensions: target.dimensions,
+    mode: options.mode || "semantic",
   });
-  if (!result.ok) return result;
+  const ctn = emitted?.continuation || null;
   return {
-    ...result,
+    ok: false,
+    error: "semantic_continuation_required",
+    continuation_emitted: Boolean(ctn?.id),
+    continuation_id: ctn?.id || null,
+    continuation: view === FULL_VIEW ? ctn : ctn ? {
+      id: ctn.id,
+      kind: ctn.kind,
+      title: ctn.title,
+      resume: ctn.resume,
+      expected_response: ctn.expected_response,
+    } : null,
+    query: q,
     mode: options.mode || "semantic",
     warnings: [
-      `Semantic retrieval used ${target.provider}/${target.model_name} (${target.dimensions}d).`,
-      ...result.warnings,
+      `Query embedding cache miss for ${target.provider}/${target.model_name} (${target.dimensions}d); emitted semantic-search continuation (IoC). Fulfill with embeddings search-with or a worker, then retry. Hybrid mode falls back to keyword.`,
+      ...(cachedSemanticResults.error ? [`Semantic ranked-result cache miss (${cachedSemanticResults.error}).`] : []),
     ],
   };
 }
@@ -11388,7 +11379,7 @@ async function contextExplain(ctx, resultId, view = PUBLIC_VIEW) {
       result_id: resultId,
       why,
       limits: [
-        "semantic mode requires a compatible AI-router /v1/embeddings endpoint",
+        "semantic mode needs a cached query embedding or a fulfilled semantic-search continuation (no inline provider on the public path)",
         "exact term contribution is not persisted between requests",
       ],
       retrieval_policy_version: CONTEXT_RETRIEVAL_POLICY_VERSION,
@@ -11424,9 +11415,10 @@ async function contextHealth(ctx, options = {}) {
     index_available: Boolean(status.built && status.ok),
     modes: ["keyword", "hybrid", "semantic"],
     semantic_available: Boolean(semanticTarget.ok),
-    semantic_requires_ai_router_embeddings: true,
-    semantic_requires_continuation: false,
-    direct_query_embeddings_enabled: true,
+    // IoC: live query embed is continuation/worker fulfilled, not inline AI-router.
+    semantic_requires_ai_router_embeddings: false,
+    semantic_requires_continuation: true,
+    direct_query_embeddings_enabled: false,
     embedding_target: semanticTarget.ok ? {
       provider: semanticTarget.provider,
       model_name: semanticTarget.model_name,

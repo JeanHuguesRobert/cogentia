@@ -200,20 +200,24 @@ Does **not** mean “nothing in the monorepo may call OpenAI ever.” Distinct r
 
 ---
 
-## Critical consistency gap
+## Critical consistency gap — **fixed 2026-08-12 (FBF)**
 
 ```text
 CLI path:
   embeddings search → emitContinuation(semantic-search)     ✅ IoC
 
-Gateway path:
+Gateway path (after fix):
   /api/context/search?mode=semantic|hybrid
     → contextSemanticSearch
-    → cache hit OK
-    → cache miss → createQueryEmbedding(ai-router) inline   ⚠️ not IoC
+    → cache hit OK                                          ✅
+    → cache miss → emitSemanticSearchContinuation
+                 → semantic_continuation_required (202/409) ✅ IoC
+    hybrid → keyword fallback on that miss                  ✅
 ```
 
-So IoC is **correctly implemented for CLI embedding index/search emit**, but **not uniformly** for live gateway semantic query embedding. Documented dual mode in `cogentia-context-gateway.md` (direct embed on miss + optional continuation warm path) is a **known fork**, not pure IoC.
+Supabase pack semantic path: no inline OpenAI unless
+`COGENTIA_ALLOW_INLINE_EMBED_FULFILL=1` (explicit fulfiller).
+Inox `openai.embeddings` step: same opt-in gate.
 
 ---
 

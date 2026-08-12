@@ -151,6 +151,16 @@ async function fulfillContinuationLocally(continuation, env) {
 async function fulfillCapabilityStep(step, env) {
   const capability = String(step.capability || "");
   if (capability === "openai.embeddings") {
+    // Explicit continuation fulfillment path for Inox session turns.
+    // Requires COGENTIA_ALLOW_INLINE_EMBED_FULFILL=1 so structural callers cannot
+    // silently treat this as a free OpenAI proxy (IoC / Fix Bugs First).
+    if (String(env.COGENTIA_ALLOW_INLINE_EMBED_FULFILL || "").trim() !== "1") {
+      return {
+        ok: false,
+        error: "inline_embed_fulfill_disabled",
+        message: "Inox openai.embeddings fulfillment requires COGENTIA_ALLOW_INLINE_EMBED_FULFILL=1 on the host fulfiller.",
+      };
+    }
     const request = step.request || {};
     const embedded = await embedQuery(String(request.input || ""), {
       env,
