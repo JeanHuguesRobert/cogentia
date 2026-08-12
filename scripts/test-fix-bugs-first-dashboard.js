@@ -68,10 +68,12 @@ assert.equal(gates.tooling.state, "OK");
 assert.equal(gates.tooling.blocking_bugs.length, 0);
 
 // 3. Test Full Dashboard Build & Markdown Rendering
-const dashboard = buildDashboardData([rawBug, items[1], items[2]], [], { test: true });
+const dashboard = buildDashboardData([rawBug, items[1], items[2]], [], { test: true, view_id: "fix-bugs-first-dashboard", visibility: "public" });
 assert.equal(dashboard.schema, "cogentia.fix-bugs-first-dashboard.v1");
 assert.equal(dashboard.metadata.open_bugs_count, 1);
 assert.equal(dashboard.metadata.open_features_count, 2);
+assert.equal(dashboard.metadata.view_id, "fix-bugs-first-dashboard");
+assert.equal(dashboard.metadata.visibility, "public");
 
 const markdown = renderDashboardMarkdown(dashboard);
 assert.match(markdown, /# 🛡️ Fix Bugs First Work Dashboard/);
