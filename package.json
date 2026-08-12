@@ -22,6 +22,8 @@
     "test:corpus-librarian": "node scripts/test-corpus-librarian.js",
     "eval:corpus-librarian-b": "node scripts/eval-corpus-librarian-cycle-b.js",
     "eval:corpus-librarian-c": "node scripts/eval-corpus-librarian-cycle-c.js",
+    "eval:corpus-librarian-semantic": "node scripts/eval-corpus-librarian-semantic.js",
+    "test:agent-jhn-semantic-judge": "node scripts/test-agent-jhn-semantic-judge.js",
     "test:guide": "node scripts/test-guide-http.js",
     "test:retrieval-inox": "node scripts/test-retrieval-inox-session.js",
     "test:blackboard": "node scripts/test-packet-attractor-blackboard.js",

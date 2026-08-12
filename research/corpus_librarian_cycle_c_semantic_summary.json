@@ -1,0 +1,27 @@
+{
+  "cycle": "C-semantic",
+  "at": "2026-08-12",
+  "status": "semantic_complete",
+  "source_run": ".cogentia/evals/corpus-librarian/2026-08-12T15-21-54-663Z-cycle-c-live.json",
+  "report": ".cogentia/evals/corpus-librarian/2026-08-12T15-21-54-663Z-cycle-c-live-librarian-semantic.json",
+  "judge_model": "gpt-5.6-sol",
+  "evidence": "Rebuilt live librarian packet + baseline hits for the judge (not source_id stubs)",
+  "cases": 11,
+  "wins": {
+    "librarian": 7,
+    "baseline": 4,
+    "tie": 0
+  },
+  "critical_regressions": {
+    "librarian": 0,
+    "baseline": 1
+  },
+  "activation_candidate": true,
+  "confound_first_run": {
+    "note": "First judge pass used source_id stubs only → false baseline 10–1 with 4 librarian criticals; discarded.",
+    "wins": { "librarian": 1, "baseline": 10, "tie": 0 },
+    "critical_librarian": 4
+  },
+  "verdict": "With real excerpts, progressive librarian wins 7/11 semantic pairwise vs single-focus baseline and has 0 critical regressions. Still not Guide L0; lexical+semantic both favor librarian over that baseline.",
+  "next": "Compare to Guide when available; optional hybrid; store packet excerpts in cycle-c JSON to avoid re-retrieve for judging."
+}

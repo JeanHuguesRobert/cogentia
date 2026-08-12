@@ -94,7 +94,8 @@ No new index format. Rebuild remains `cogentia.js index rebuild`.
 | A | **done** | Freeze scorecard + L0 as champion reference | scorecard.jsonl |
 | B | **rated live** | Tools + deterministic explore; progressive keyword focus | offline 9/9; live 11/11 packet ok, 0 none; mean 3.45 tools, 3605 ms |
 | C | **rated live** | Packet → OpenAI synthesizer vs single-focus baseline + same synth | lib pass 2>1; exp 0.318>0.259; cites 2.6>0.6; slower 7.1s vs 4.7s |
-| D | next | Optional semantic judge; hybrid when embed router; fail-closed vs Guide when available | pending |
+| C-sem | **rated** | Blind semantic A/B with rebuilt packet evidence | **lib 7 / base 4 / tie 0**; critical lib **0**; candidate yes (vs baseline only) |
+| D | next | Guide baseline when available; hybrid when embed router; store packet text in cycle-c JSON | pending |
 
 ## Stop conditions
 
