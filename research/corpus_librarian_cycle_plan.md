@@ -25,6 +25,10 @@ Not: free-form agent that authors the truth.
 Yes: **librarian** (tools + policy) builds an evidence packet; a **writer**
 answers only from that packet.
 
+**Channels:** Guide is primarily the **FractaVolta website** path. Reuse on
+WhatsApp was convenient, not definitional. The librarian is **channel-neutral**
+and may serve WhatsApp (or others) without waiting to “replace Guide.”
+
 ## Engineering meta-loop
 
 ```text
