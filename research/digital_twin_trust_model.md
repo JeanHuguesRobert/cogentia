@@ -234,6 +234,53 @@ The adult twin can:
 Adult status is not global. A twin may be adult for corpus retrieval and still a
 child for finance, legal commitments, publication, or private correspondence.
 
+### 4.1 Twinning depth is not authority
+
+Legal scholarship on AI twins usefully distinguishes degrees of representational
+proximity such as **imitation → simulation → emulation → replication**. Jurcys et
+al., *Who owns my AI twin? Data ownership in a new world of simulated identities*
+(Computer Law & Security Review, 2026, DOI: `10.1016/j.clsr.2026.106347`), use
+this progression to describe increasing depth of resemblance between an AI twin
+and its human subject.
+
+Cogentia treats this as an axis distinct from maturity and delegated authority.
+A system can resemble its owner very closely while having almost no authority;
+conversely, a relatively generic agent can receive a powerful operational
+mandate.
+
+Core rule:
+
+```text
+Fidelity is not authority.
+```
+
+The two dimensions must therefore remain orthogonal:
+
+| Representational depth | Low delegated authority | Higher delegated authority |
+|---|---|---|
+| **Imitation** | avatar, style proxy, public explainer | superficial representative with bounded acts |
+| **Simulation** | consultative adviser | agent reasoning in an owner-like manner under mandate |
+| **Emulation** | deep dry-run / decision rehearsal | delegated domain operator with trace |
+| **Replication** | high-fidelity consultative twin | maximum-risk zone: high resemblance + significant authority |
+
+This matrix is intentionally qualitative for now. It prevents a recurring
+category error: treating increased resemblance as if it automatically justified
+increased power.
+
+For every instance, Cogentia should eventually be able to report both axes:
+
+```yaml
+representation:
+  twinning_depth: "imitation | simulation | emulation | replication | unknown"
+authority:
+  maturity_profile: "infant | child | teenager | young-adult | adult-domain"
+  mandate_id: "..."
+  capability_profile: "..."
+```
+
+The dangerous quadrant is not replication by itself. It is **high
+representational fidelity combined with broad, weakly governed authority**.
+
 ---
 
 ## 5. Sharp tools
@@ -486,6 +533,11 @@ Each principal must keep a sovereign path (own machine, own VPS, own registry)
 when they want it — natural person or legal person.
 ```
 
+This is also the operational counterpart of the **ghost / shell** distinction
+used by Jurcys et al. The identity-bearing continuity of the twin must survive a
+change of shell. Portability is therefore not only interoperability; it is the
+practical test that a provider has not captured the principal's twin.
+
 Consequences already visible in the stack:
 
 - agent identity ≠ principal (disclosure self vs third party);
@@ -598,6 +650,9 @@ Trustable digital twins require progressive capability:
 not powerless assistants,
 not invisible powers,
 but growing agents under owner sovereignty.
+
+Fidelity is not authority.
+High resemblance never grants power by itself.
 ```
 
 The operational roadmap for applying this model lives in
