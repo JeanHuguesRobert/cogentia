@@ -1,6 +1,11 @@
 /**
  * Draft producer for Agent JHN WhatsApp.
- * Supports S7 Cogentia Retrieval & Magistral AI Router synthesis over the 7,391 pure vector embeddings.
+ * Supports Guide reuse and corpus-librarian retrieval (explore → packet → synth).
+ *
+ * Retrieval modes (AGENT_JHN_WHATSAPP_RETRIEVAL):
+ *   guide     — POST /guide/chat then OpenAI (default; website path reuse)
+ *   librarian — Context Gateway tools → evidence packet → synthesizer
+ *   shadow    — live answer stays guide; librarian runs for compare only
  *
  * Self-chat: short identification only (no disclosure noise).
  * Third-party: full chatbot disclosure + locale.
@@ -15,6 +20,27 @@ import {
 } from "./disclosure.js";
 import { formatInstanceOutboundDisclosure } from "../digital-twin-engine.js";
 import { analyzeQuestion, createAnswerEngine } from "./answer-core.js";
+import { answerWithLibrarian as defaultAnswerWithLibrarian } from "../corpus-librarian/pipeline.js";
+
+const RETRIEVAL_MODES = new Set(["guide", "librarian", "shadow"]);
+
+/**
+ * Resolve WhatsApp cognitive retrieval mode.
+ * Unknown values fall back to guide (safe default).
+ *
+ * @param {NodeJS.ProcessEnv | Record<string, string|undefined>} [env]
+ * @param {{ retrievalMode?: string }} [options]
+ * @returns {"guide"|"librarian"|"shadow"}
+ */
+export function resolveRetrievalMode(env = process.env, options = {}) {
+  const raw = String(
+    options.retrievalMode ??
+    env?.AGENT_JHN_WHATSAPP_RETRIEVAL ??
+    "guide",
+  ).trim().toLowerCase();
+  if (RETRIEVAL_MODES.has(raw)) return raw;
+  return "guide";
+}
 
 /**
  * Build a non-engaging experimental reply (synchronous, deterministic).
@@ -70,6 +96,7 @@ export function buildDeterministicDraft(normalized, config, options = {}) {
     stub: true,
     audience,
     locale,
+    retrieval_mode: resolveRetrievalMode(process.env, options),
     continuation: {
       kind: "model_draft_integration",
       note: "Replace stub with Cogentia-sourced draft when model path is wired; policy and transport must remain independent of LLM.",
@@ -78,17 +105,47 @@ export function buildDeterministicDraft(normalized, config, options = {}) {
 }
 
 /**
- * Build a cognitive draft via S7 Cogentia Retrieval & Magistral AI Router synthesis.
+ * Build a cognitive draft via Guide and/or corpus librarian retrieval.
  */
 export async function buildCognitiveDraft(normalized, config, options = {}) {
   const userText = (normalized?.text || "").trim();
   if (!userText) return buildDeterministicDraft(normalized, config, options);
+
   const questionAnalysis = analyzeQuestion({
     text: userText,
     locale: resolveDisclosureLocale(config.allowed_self_jid || normalized?.remote_jid || ""),
     channel: "whatsapp",
   });
+  const mode = resolveRetrievalMode(process.env, options);
 
+  if (mode === "librarian") {
+    return buildLibrarianDraft(normalized, config, options, questionAnalysis, userText);
+  }
+
+  if (mode === "shadow") {
+    const [guideDraft, shadow] = await Promise.all([
+      buildGuideDraft(normalized, config, options, questionAnalysis, userText),
+      runLibrarianShadow(userText, questionAnalysis, options),
+    ]);
+    if (typeof options.onShadowCompare === "function") {
+      try {
+        options.onShadowCompare(shadow);
+      } catch {
+        /* non-fatal observer */
+      }
+    }
+    return {
+      ...guideDraft,
+      retrieval_mode: "shadow",
+      shadow,
+    };
+  }
+
+  const guideDraft = await buildGuideDraft(normalized, config, options, questionAnalysis, userText);
+  return { ...guideDraft, retrieval_mode: "guide" };
+}
+
+async function buildGuideDraft(normalized, config, options, questionAnalysis, userText) {
   let guideResult = null;
   const guideUrl = String(
     options.guideUrl ||
@@ -111,13 +168,13 @@ export async function buildCognitiveDraft(normalized, config, options = {}) {
     else {
       const error = new Error("Guide retrieval returned an error response");
       emitCognitiveError(options, error, {
-        provider: "cogentia-guide", stage: "retrieval_response", endpoint_host: "127.0.0.1",
+        provider: "cogentia-guide", stage: "retrieval_response", endpoint_host: hostOf(guideUrl),
         elapsed_ms: Date.now() - guideStartedAt, timeout_ms: 8000, http_status: response.status,
       });
     }
   } catch (error) {
     emitCognitiveError(options, error, {
-      provider: "cogentia-guide", stage: "retrieval_request", endpoint_host: "127.0.0.1",
+      provider: "cogentia-guide", stage: "retrieval_request", endpoint_host: hostOf(guideUrl),
       elapsed_ms: Date.now() - guideStartedAt, timeout_ms: 8000, timed_out: isTimeoutError(error),
     });
   }
@@ -166,6 +223,159 @@ export async function buildCognitiveDraft(normalized, config, options = {}) {
     };
   }
   return buildDeterministicDraft(normalized, config, options);
+}
+
+async function buildLibrarianDraft(normalized, config, options, questionAnalysis, userText) {
+  const startedAt = Date.now();
+  let librarian;
+  try {
+    librarian = await invokeLibrarian(userText, questionAnalysis, options);
+  } catch (error) {
+    emitCognitiveError(options, error, {
+      provider: "corpus-librarian",
+      stage: "librarian_request",
+      endpoint_host: hostOf(gatewayBaseUrl(options)),
+      elapsed_ms: Date.now() - startedAt,
+      timed_out: isTimeoutError(error),
+    });
+    return {
+      ...buildDeterministicDraft(normalized, config, options),
+      retrieval_mode: "librarian",
+    };
+  }
+
+  if (librarian?.ok && librarian.answer) {
+    const syncDraft = buildDeterministicDraft(normalized, config, options);
+    return {
+      ...syncDraft,
+      text: formatInstanceOutboundDisclosure(
+        { disclosure_tag: config.visible_agent_id || "— agent-jhn-experimental" },
+        librarian.answer,
+      ),
+      provenance_class: librarian.provider === "extractive-fallback"
+        ? "librarian-extractive"
+        : "librarian-corpus-grounded",
+      sources: normalizeDraftSources(librarian.sources),
+      stub: false,
+      retrieval_mode: "librarian",
+      librarian: summarizeLibrarian(librarian),
+    };
+  }
+
+  emitCognitiveError(options, new Error("librarian produced no answer"), {
+    provider: "corpus-librarian",
+    stage: "librarian_empty",
+    endpoint_host: hostOf(gatewayBaseUrl(options)),
+    elapsed_ms: Date.now() - startedAt,
+  });
+  return {
+    ...buildDeterministicDraft(normalized, config, options),
+    retrieval_mode: "librarian",
+    librarian: librarian ? summarizeLibrarian(librarian) : { ok: false },
+  };
+}
+
+async function runLibrarianShadow(userText, questionAnalysis, options) {
+  const startedAt = Date.now();
+  try {
+    const librarian = await invokeLibrarian(userText, questionAnalysis, options);
+    return {
+      ...summarizeLibrarian(librarian),
+      elapsed_ms: Date.now() - startedAt,
+    };
+  } catch (error) {
+    emitCognitiveError(options, error, {
+      provider: "corpus-librarian",
+      stage: "shadow_librarian",
+      endpoint_host: hostOf(gatewayBaseUrl(options)),
+      elapsed_ms: Date.now() - startedAt,
+      timed_out: isTimeoutError(error),
+    });
+    return {
+      ok: false,
+      path: "librarian_c",
+      error_name: String(error?.name || "Error").slice(0, 80),
+      error_code: safeToken(error?.code),
+      elapsed_ms: Date.now() - startedAt,
+    };
+  }
+}
+
+async function invokeLibrarian(userText, questionAnalysis, options) {
+  const answerFn = typeof options.answerWithLibrarian === "function"
+    ? options.answerWithLibrarian
+    : defaultAnswerWithLibrarian;
+  const apiKey = String(options.apiKey ?? process.env.OPENAI_API_KEY ?? "").trim();
+  const model = String(
+    options.model ||
+    process.env.AGENT_JHN_WHATSAPP_OPENAI_MODEL ||
+    "gpt-5.6-terra",
+  );
+  return answerFn(
+    {
+      question: userText,
+      text: userText,
+      locale: questionAnalysis.locale,
+      channel: "whatsapp",
+    },
+    {
+      baseUrl: gatewayBaseUrl(options),
+      fetch: options.fetch,
+      tools: options.librarianTools,
+      apiKey,
+      model,
+      mode: options.librarianSearchMode || "keyword",
+      maxChars: options.maxChars || 1200,
+      channel: "whatsapp",
+      preferOpen: options.preferOpen === true,
+      openTopK: options.openTopK,
+      searchLimit: options.searchLimit,
+      minOpenChars: options.minOpenChars,
+      toolTimeoutMs: options.toolTimeoutMs,
+      synthTimeoutMs: options.synthTimeoutMs,
+      synthesizer: options.synthesizer,
+    },
+  );
+}
+
+function gatewayBaseUrl(options = {}) {
+  return String(
+    options.gatewayUrl ||
+    process.env.AGENT_JHN_WHATSAPP_GATEWAY_URL ||
+    process.env.COGENTIA_CONTEXT_GATEWAY_URL ||
+    "http://127.0.0.1:8790",
+  ).replace(/\/$/, "");
+}
+
+function summarizeLibrarian(librarian) {
+  if (!librarian || typeof librarian !== "object") {
+    return { ok: false, path: "librarian_c" };
+  }
+  const sourceIds = [];
+  for (const source of normalizeDraftSources(librarian.sources)) {
+    const id = typeof source === "string" ? source : source?.source_id;
+    if (id) sourceIds.push(String(id).slice(0, 240));
+  }
+  for (const id of librarian.packet?.source_ids || []) {
+    const value = String(id || "").slice(0, 240);
+    if (value && !sourceIds.includes(value)) sourceIds.push(value);
+  }
+  return {
+    ok: Boolean(librarian.ok && librarian.answer),
+    path: librarian.path || "librarian_c",
+    provider: librarian.provider || null,
+    model: librarian.model || null,
+    answer_length: String(librarian.answer || "").length,
+    source_ids: sourceIds.slice(0, 20),
+    explore: librarian.explore || null,
+    latency_ms: Number.isFinite(librarian.latencyMs) ? librarian.latencyMs : null,
+    coverage: librarian.packet?.coverage || null,
+  };
+}
+
+function normalizeDraftSources(sources) {
+  if (!Array.isArray(sources)) return [];
+  return sources.filter(Boolean).slice(0, 20);
 }
 
 async function requestOpenAiModelDraft(
@@ -276,6 +486,14 @@ function numberOrNull(value) {
 function safeToken(value) {
   const token = String(value || "").trim();
   return /^[A-Za-z0-9_.-]{1,80}$/.test(token) ? token : null;
+}
+
+function hostOf(url) {
+  try {
+    return new URL(String(url)).hostname || null;
+  } catch {
+    return null;
+  }
 }
 
 function summarizeInbound(text) {

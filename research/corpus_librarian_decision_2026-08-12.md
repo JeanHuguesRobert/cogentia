@@ -93,11 +93,24 @@ Further rate cycles against only a weak single-focus gateway baseline add little
 - Semantic reject retry loops  
 - Blind WhatsApp `active` without a deliberate product flip  
 
+## Product wire (2026-08-13)
+
+WhatsApp cognitive drafts accept a reversible env flip (default remains Guide):
+
+| `AGENT_JHN_WHATSAPP_RETRIEVAL` | Live outbound answer | Side path |
+|--------------------------------|----------------------|-----------|
+| `guide` (default) | Guide `/guide/chat` + OpenAI | — |
+| `librarian` | corpus librarian packet path | — |
+| `shadow` | Guide (unchanged) | librarian compare on draft.shadow |
+
+Code: `scripts/lib/agent-jhn-whatsapp/draft.js` (`resolveRetrievalMode`).  
+Do **not** set production WhatsApp to `librarian` until a deliberate live smoke; prefer `shadow` first.
+
 ## Resume condition
 
 Resume the **rate** loop when **at least one** holds:
 
-1. Product asks to **wire or shadow** librarian on WhatsApp (or another non-web channel), or  
+1. Live **shadow** or **librarian** WhatsApp smoke needs a new scorecard cut, or  
 2. Website/Guide team wants a **cross-check** against Guide `/guide/chat` when reachable, or  
 3. Index/`lines` changes force a tool re-rate (Cycle B-style).
 

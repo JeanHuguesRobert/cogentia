@@ -3,7 +3,10 @@ import assert from "node:assert/strict";
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { buildCognitiveDraft } from "./lib/agent-jhn-whatsapp/draft.js";
+import {
+  buildCognitiveDraft,
+  resolveRetrievalMode,
+} from "./lib/agent-jhn-whatsapp/draft.js";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const guide = JSON.parse(fs.readFileSync(path.join(here, "fixtures", "agent-jhn-answer-core", "guide-fractavolta.json"), "utf8"));
@@ -11,12 +14,14 @@ const originalFetch = globalThis.fetch;
 const originalKey = process.env.OPENAI_API_KEY;
 const originalPrimary = process.env.AGENT_JHN_WHATSAPP_OPENAI_MODEL;
 const originalFallback = process.env.AGENT_JHN_WHATSAPP_OPENAI_FALLBACK_MODEL;
+const originalRetrieval = process.env.AGENT_JHN_WHATSAPP_RETRIEVAL;
 const tests = [];
 const test = (name, run) => tests.push({ name, run });
 
 process.env.OPENAI_API_KEY = "test-key-never-sent";
 process.env.AGENT_JHN_WHATSAPP_OPENAI_MODEL = "gpt-5.6-terra";
 process.env.AGENT_JHN_WHATSAPP_OPENAI_FALLBACK_MODEL = "gpt-4.1-mini";
+delete process.env.AGENT_JHN_WHATSAPP_RETRIEVAL;
 
 const normalized = {
   text: "Qu'est-ce que FractaVolta ?",
@@ -48,6 +53,14 @@ function completion(model, content, finishReason = "stop") {
   };
 }
 
+test("resolveRetrievalMode defaults and sanitizes", () => {
+  assert.equal(resolveRetrievalMode({}), "guide");
+  assert.equal(resolveRetrievalMode({ AGENT_JHN_WHATSAPP_RETRIEVAL: "librarian" }), "librarian");
+  assert.equal(resolveRetrievalMode({ AGENT_JHN_WHATSAPP_RETRIEVAL: "SHADOW" }), "shadow");
+  assert.equal(resolveRetrievalMode({ AGENT_JHN_WHATSAPP_RETRIEVAL: "nope" }), "guide");
+  assert.equal(resolveRetrievalMode({ AGENT_JHN_WHATSAPP_RETRIEVAL: "guide" }, { retrievalMode: "librarian" }), "librarian");
+});
+
 test("Guide then GPT-5.6 produces a grounded answer", async () => {
   const calls = [];
   globalThis.fetch = async (url, options) => {
@@ -61,6 +74,7 @@ test("Guide then GPT-5.6 produces a grounded answer", async () => {
   assert.match(calls[1].body.messages[1].content, /Public corpus excerpts/);
   assert.match(result.text, /Réponse fondée sur le corpus/);
   assert.equal(result.provenance_class, "openai-corpus-grounded");
+  assert.equal(result.retrieval_mode, "guide");
 });
 
 test("empty GPT-5.6 response falls back to GPT-4.1", async () => {
@@ -109,6 +123,90 @@ test("Guide failure still allows a direct GPT-5.6 answer", async () => {
   assert.deepEqual(result.sources, []);
 });
 
+test("librarian mode uses packet path and never calls Guide", async () => {
+  let guideCalls = 0;
+  globalThis.fetch = async (url) => {
+    if (String(url).includes("/guide/chat")) {
+      guideCalls += 1;
+      return jsonResponse(guide);
+    }
+    throw new Error(`unexpected fetch ${url}`);
+  };
+  const result = await buildCognitiveDraft(normalized, config, {
+    retrievalMode: "librarian",
+    answerWithLibrarian: async () => ({
+      ok: true,
+      path: "librarian_c",
+      answer: "Réponse bibliothécaire grounded [cogentia:docs/x.md#L1-L2].",
+      provider: "openai",
+      model: "gpt-5.6-terra",
+      sources: [{ source_id: "cogentia:docs/x.md#L1-L2" }],
+      packet: { coverage: "enough", source_ids: ["cogentia:docs/x.md#L1-L2"] },
+      explore: { ok: true, toolCalls: 2, searchCalls: 1 },
+      latencyMs: 42,
+    }),
+  });
+  assert.equal(guideCalls, 0);
+  assert.equal(result.retrieval_mode, "librarian");
+  assert.equal(result.provenance_class, "librarian-corpus-grounded");
+  assert.match(result.text, /Réponse bibliothécaire grounded/);
+  assert.equal(result.librarian.ok, true);
+  assert.equal(result.librarian.path, "librarian_c");
+  assert.deepEqual(result.librarian.source_ids, ["cogentia:docs/x.md#L1-L2"]);
+});
+
+test("shadow mode keeps Guide live text and reports librarian compare", async () => {
+  const shadowReports = [];
+  globalThis.fetch = async (url) => {
+    if (String(url).includes("/guide/chat")) return jsonResponse(guide);
+    return jsonResponse(completion("gpt-5.6-terra", "Réponse Guide live."), 200, { "x-request-id": "req_shadow_guide" });
+  };
+  const result = await buildCognitiveDraft(normalized, config, {
+    retrievalMode: "shadow",
+    onShadowCompare: (summary) => shadowReports.push(summary),
+    answerWithLibrarian: async () => ({
+      ok: true,
+      path: "librarian_c",
+      answer: "Réponse librarian shadow-only (ne doit pas être envoyée).",
+      provider: "extractive-fallback",
+      sources: [{ source_id: "cogentia:docs/shadow.md#L1-L3" }],
+      packet: { coverage: "partial", source_ids: ["cogentia:docs/shadow.md#L1-L3"] },
+      explore: { ok: true, toolCalls: 1 },
+      latencyMs: 11,
+    }),
+  });
+  assert.equal(result.retrieval_mode, "shadow");
+  assert.match(result.text, /Réponse Guide live/);
+  assert.doesNotMatch(result.text, /shadow-only/);
+  assert.equal(result.provenance_class, "openai-corpus-grounded");
+  assert.equal(result.shadow.ok, true);
+  assert.equal(result.shadow.provider, "extractive-fallback");
+  assert.equal(shadowReports.length, 1);
+  assert.equal(shadowReports[0].answer_length > 0, true);
+});
+
+test("librarian empty answer falls back to deterministic stub", async () => {
+  globalThis.fetch = async () => {
+    throw new Error("fetch must not be used when librarian is injected empty");
+  };
+  const result = await buildCognitiveDraft(normalized, config, {
+    retrievalMode: "librarian",
+    answerWithLibrarian: async () => ({
+      ok: false,
+      path: "librarian_c",
+      answer: "",
+      provider: null,
+      sources: [],
+      packet: { coverage: "none", source_ids: [] },
+      explore: { ok: false, toolCalls: 1 },
+      latencyMs: 5,
+    }),
+  });
+  assert.equal(result.retrieval_mode, "librarian");
+  assert.equal(result.stub, true);
+  assert.equal(result.provenance_class, "deterministic_stub");
+});
+
 let passed = 0;
 const failures = [];
 try {
@@ -125,6 +223,7 @@ try {
   restoreEnv("OPENAI_API_KEY", originalKey);
   restoreEnv("AGENT_JHN_WHATSAPP_OPENAI_MODEL", originalPrimary);
   restoreEnv("AGENT_JHN_WHATSAPP_OPENAI_FALLBACK_MODEL", originalFallback);
+  restoreEnv("AGENT_JHN_WHATSAPP_RETRIEVAL", originalRetrieval);
 }
 
 console.log(JSON.stringify({

@@ -94,6 +94,9 @@ AGENT_JHN_WHATSAPP_ALLOWED_SELF_JID=336xxxxxxxx@s.whatsapp.net
 AGENT_JHN_WHATSAPP_NOTICE_URL=https://github.com/JeanHuguesRobert/JeanHuguesRobert/blob/main/research/agent-jhn-experimental-notice.md
 AGENT_JHN_WHATSAPP_MODE=self_chat_only
 AGENT_JHN_WHATSAPP_SEND_ENABLED=false
+# Retrieval for cognitive drafts (default guide). librarian = packet path; shadow = guide live + librarian compare.
+# AGENT_JHN_WHATSAPP_RETRIEVAL=guide
+# AGENT_JHN_WHATSAPP_GATEWAY_URL=http://127.0.0.1:8790
 ```
 
 ### What must not be committed vs what may be versioned

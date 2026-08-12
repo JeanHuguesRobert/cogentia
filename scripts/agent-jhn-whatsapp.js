@@ -88,6 +88,8 @@ Environment (see docs/agent-jhn-whatsapp-mvp.md):
   AGENT_JHN_WHATSAPP_MODE               must be self_chat_only
   AGENT_JHN_WHATSAPP_NOTICE_URL         experimental disclosure URL
   AGENT_JHN_WHATSAPP_GRANT_REVOKED      set true to revoke send capacity
+  AGENT_JHN_WHATSAPP_RETRIEVAL          guide|librarian|shadow (default guide)
+  AGENT_JHN_WHATSAPP_GATEWAY_URL        Context Gateway for librarian path
 
 Invariants:
   - No third-party send, no media, no public HTTP server
