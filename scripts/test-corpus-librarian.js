@@ -2,12 +2,15 @@
 
 import assert from "node:assert/strict";
 import {
+  answerWithLibrarian,
   assessPacketSufficiency,
   buildEvidencePacket,
   createCorpusLibrarianTools,
   exploreCorpusDeterministic,
+  packetToRetrieval,
   parseSourceId,
   searchQueryCandidates,
+  synthesizeFromPacket,
 } from "./lib/corpus-librarian/index.js";
 
 const tests = [];
@@ -242,6 +245,61 @@ test("empty search yields none coverage", async () => {
   assert.ok(result.packet.gaps.includes("no_search_hits"));
 });
 
+test("packetToRetrieval feeds answer-core claim shape", () => {
+  const retrieval = packetToRetrieval({
+    excerpts: [{ source_id: "a#L1-L2", text: "Claim text here." }],
+    source_ids: ["a#L1-L2"],
+    freshness: { required: false, verified: false },
+  });
+  assert.equal(retrieval.context.excerpts[0].source_id, "a#L1-L2");
+  assert.equal(retrieval.ok, true);
+});
+
+test("synthesizeFromPacket falls back extractively without API key", async () => {
+  const packet = buildEvidencePacket({
+    question: "What is Cogentia?",
+    locale: "en",
+    excerpts: [
+      { source_id: "cogentia:docs/x.md#L1-L4", text: "Cogentia is a public corpus and retrieval system." },
+      { source_id: "cogentia:docs/y.md#L2-L5", text: "It indexes Markdown for citation-grade answers." },
+    ],
+  });
+  const result = await synthesizeFromPacket(packet, { apiKey: "", channel: "api" });
+  assert.equal(result.ok, true);
+  assert.equal(result.provider, "extractive-fallback");
+  assert.match(result.answer, /Cogentia is a public corpus/);
+  assert.match(result.answer, /\[cogentia:docs\/x\.md#L1-L4\]/);
+});
+
+test("answerWithLibrarian explores then synthesizes without network LLM", async () => {
+  const tools = createCorpusLibrarianTools({
+    baseUrl: "http://gateway.test",
+    fetch: mockFetch([{
+      match: (path) => path.startsWith("/api/context/search"),
+      body: {
+        ok: true,
+        results: [{
+          id: "cogentia:docs/a.md#L1-L5",
+          repo: "cogentia",
+          path: "docs/a.md",
+          start_line: 1,
+          end_line: 5,
+          text: "Cogentia exposes a context gateway over indexed Markdown documents.",
+        }],
+      },
+    }]),
+  });
+  const result = await answerWithLibrarian(
+    { question: "What is the context gateway?", locale: "en" },
+    { tools, apiKey: "", mode: "keyword", openTopK: 1, minOpenChars: 20 },
+  );
+  assert.equal(result.ok, true);
+  assert.equal(result.path, "librarian_c");
+  assert.ok(result.explore.toolCalls >= 1);
+  assert.match(result.answer, /context gateway|Markdown/i);
+  assert.equal(result.provider, "extractive-fallback");
+});
+
 let failed = 0;
 for (const item of tests) {
   try {
@@ -257,7 +315,7 @@ console.log(JSON.stringify({
   passed: tests.length - failed,
   failed,
   total: tests.length,
-  cycle: "B",
+  cycle: "B+C",
   network_calls: 0,
   llm_calls: 0,
 }, null, 2));

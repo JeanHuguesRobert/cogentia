@@ -1,0 +1,40 @@
+{
+  "cycle": "C",
+  "at": "2026-08-12",
+  "status": "live_rate_complete",
+  "report": ".cogentia/evals/corpus-librarian/2026-08-12T15-21-54-663Z-cycle-c-live.json",
+  "mode": "keyword",
+  "model": "gpt-5.6-terra",
+  "cases": 11,
+  "baseline": {
+    "path": "single_focused_keyword_search_plus_synth",
+    "pass": 1,
+    "mean_expected_ratio": 0.259,
+    "mean_latency_ms": 4690,
+    "mean_tool_calls": 1,
+    "mean_citations": 0.636
+  },
+  "librarian": {
+    "path": "progressive_explore_packet_plus_synth",
+    "pass": 2,
+    "mean_expected_ratio": 0.318,
+    "mean_latency_ms": 7092,
+    "mean_tool_calls": 3.455,
+    "mean_citations": 2.636,
+    "empty_answers": 0,
+    "packet_none": 0
+  },
+  "gates": {
+    "librarian_pass_ge_baseline": true,
+    "librarian_mean_expected_ge_baseline": true,
+    "no_librarian_empty": true,
+    "activation_candidate_lexical": true
+  },
+  "caveats": [
+    "Guide chat not available on public gateway; baseline is not full production L0 Guide.",
+    "No blind semantic judge in this run (lexical expected-concept screen only).",
+    "Librarian is slower and uses more tool calls by design."
+  ],
+  "verdict": "Progressive librarian retrieval improves synthesis grounding/coverage vs single-focus baseline on this set. Not yet a Guide-replacement activation; next: semantic judge and/or Guide baseline when reachable.",
+  "next_cycle": "Optional blind semantic A/B; fix context/lines; hybrid when embed router available; compare to Guide when endpoint is local."
+}
