@@ -15,6 +15,8 @@ const moduleDir = path.dirname(fileURLToPath(import.meta.url));
 let cache = null;
 /** @type {{ path: string|null, mtimeMs: number, text: string } | null} */
 let publicAgentsCache = null;
+/** @type {{ path: string|null, mtimeMs: number, text: string } | null} */
+let cogentigramCapsuleCache = null;
 
 /**
  * Whether WhatsApp cognitive drafts should inject the agent brief.
@@ -241,8 +243,71 @@ export function buildAgentBriefSystemContent(briefText) {
 }
 
 /**
+ * Whether to inject Cogentigram thinking capsule (style of reasoning).
+ * Default true. AGENT_JHN_WHATSAPP_INJECT_COGENTIGRAM=0 disables.
+ */
+export function shouldInjectCogentigramCapsule(env = process.env, options = {}) {
+  if (options.injectCogentigramCapsule === false) return false;
+  if (options.injectCogentigramCapsule === true) return true;
+  if (options.cogentigramCapsuleText != null && String(options.cogentigramCapsuleText).trim()) {
+    return true;
+  }
+  const raw = String(env.AGENT_JHN_WHATSAPP_INJECT_COGENTIGRAM ?? "1").trim().toLowerCase();
+  return !(raw === "0" || raw === "false" || raw === "no" || raw === "off");
+}
+
+export function resolveCogentigramCapsulePath(env = process.env, options = {}) {
+  if (options.cogentigramCapsulePath) {
+    const p = path.resolve(String(options.cogentigramCapsulePath));
+    return fs.existsSync(p) ? p : null;
+  }
+  const fromEnv = String(env.AGENT_JHN_WHATSAPP_COGENTIGRAM_CAPSULE_PATH || env.COGENTIA_COGENTIGRAM_CAPSULE_PATH || "").trim();
+  if (fromEnv) {
+    const p = path.resolve(fromEnv);
+    if (fs.existsSync(p)) return p;
+  }
+  const candidates = [
+    path.resolve(process.cwd(), "research", "cogentigram_jhn_thinking_capsule.md"),
+    path.resolve(process.cwd(), "cogentia", "research", "cogentigram_jhn_thinking_capsule.md"),
+    "/srv/cogentia/repos/cogentia/research/cogentigram_jhn_thinking_capsule.md",
+    path.resolve(moduleDir, "..", "..", "..", "research", "cogentigram_jhn_thinking_capsule.md"),
+  ];
+  for (const candidate of candidates) {
+    if (fs.existsSync(candidate)) return candidate;
+  }
+  return null;
+}
+
+export function loadCogentigramCapsule(options = {}, env = process.env) {
+  if (options.cogentigramCapsuleText != null) {
+    const text = String(options.cogentigramCapsuleText);
+    return { ok: Boolean(text.trim()), text, path: null, source: "options" };
+  }
+  if (!shouldInjectCogentigramCapsule(env, options)) {
+    return { ok: false, text: "", path: null, source: "disabled" };
+  }
+  const filePath = resolveCogentigramCapsulePath(env, options);
+  if (!filePath) return { ok: false, text: "", path: null, source: "missing" };
+  try {
+    const stat = fs.statSync(filePath);
+    if (
+      cogentigramCapsuleCache
+      && cogentigramCapsuleCache.path === filePath
+      && cogentigramCapsuleCache.mtimeMs === stat.mtimeMs
+    ) {
+      return { ok: true, text: cogentigramCapsuleCache.text, path: filePath, source: "cache" };
+    }
+    const text = fs.readFileSync(filePath, "utf8");
+    cogentigramCapsuleCache = { path: filePath, mtimeMs: stat.mtimeMs, text };
+    return { ok: Boolean(text.trim()), text, path: filePath, source: "file" };
+  } catch {
+    return { ok: false, text: "", path: filePath, source: "error" };
+  }
+}
+
+/**
  * Ordered system messages for WhatsApp synthesis:
- * channel policy → public-readonly AGENTS → personal agent_brief.
+ * channel policy → public-readonly AGENTS → agent_brief → cogentigram capsule.
  *
  * @returns {Array<{ role: string, content: string }>}
  */
@@ -270,6 +335,22 @@ export function buildWhatsAppRepresentationMessages(analysis = {}, options = {},
       });
     }
   }
+
+  if (shouldInjectCogentigramCapsule(env, options)) {
+    const capsule = loadCogentigramCapsule(options, env);
+    if (capsule.ok && capsule.text.trim()) {
+      messages.push({
+        role: "system",
+        content: [
+          "Cogentigram thinking capsule — structural style of reasoning for fidelity (not identity).",
+          "Canonical: cogentia/research/cogentigram_jhn_thinking_capsule.md (+ 73-axis JSON profile).",
+          "Obey high axes (definitional rigor, systemising, process priority, density); do not fake affective warmth.",
+          "",
+          capsule.text,
+        ].join("\n"),
+      });
+    }
+  }
   return messages;
 }
 
@@ -277,4 +358,5 @@ export function buildWhatsAppRepresentationMessages(analysis = {}, options = {},
 export function clearAgentBriefCache() {
   cache = null;
   publicAgentsCache = null;
+  cogentigramCapsuleCache = null;
 }

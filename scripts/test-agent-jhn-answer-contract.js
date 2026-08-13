@@ -72,6 +72,7 @@ test("Guide then GPT-5.6 produces a grounded answer", async () => {
     // Keep this case focused on Guide+OpenAI wiring; brief/constitution covered below.
     injectAgentBrief: false,
     injectPublicReadonlyAgents: false,
+    injectCogentigramCapsule: false,
   });
   assert.equal(calls.length, 2);
   assert.equal(calls[1].body.model, "gpt-5.6-terra");
@@ -95,6 +96,8 @@ test("WhatsApp OpenAI prompt injects public-readonly AGENTS and agent brief", as
     agentBriefText: briefSnippet,
     injectPublicReadonlyAgents: true,
     publicReadonlyAgentsText: publicAgentsSnippet,
+    injectCogentigramCapsule: true,
+    cogentigramCapsuleText: "# Cogentigram thinking capsule\nDefinitional rigor; process priority.",
   });
   const openai = calls.find((c) => String(c.url).includes("api.openai.com"));
   assert.ok(openai);
@@ -103,6 +106,8 @@ test("WhatsApp OpenAI prompt injects public-readonly AGENTS and agent brief", as
   assert.match(joined, /strict subset/);
   assert.match(joined, /Agent Brief — Representing Jean Hugues Noël Robert/);
   assert.match(joined, /You draft; he decides/);
+  assert.match(joined, /Cogentigram thinking capsule/);
+  assert.match(joined, /Definitional rigor/);
   assert.match(joined, /Public corpus excerpts/);
   assert.match(joined, /Operating brief for representing/);
   assert.match(result.text, /sous mandat de représentation/);
@@ -124,6 +129,7 @@ test("empty GPT-5.6 response falls back to GPT-4.1", async () => {
   const result = await buildCognitiveDraft(normalized, config, {
     injectAgentBrief: false,
     injectPublicReadonlyAgents: false,
+    injectCogentigramCapsule: false,
     onCognitiveError: (_error, event) => diagnostics.push(event),
   });
   assert.deepEqual(models, ["gpt-5.6-terra", "gpt-4.1-mini"]);
@@ -141,6 +147,7 @@ test("two provider failures return the corpus fallback", async () => {
   const result = await buildCognitiveDraft(normalized, config, {
     injectAgentBrief: false,
     injectPublicReadonlyAgents: false,
+    injectCogentigramCapsule: false,
     onCognitiveError: (_error, event) => diagnostics.push(event),
   });
   assert.match(result.text, /énergie distribuée, calcul et gouvernance locale/);
@@ -156,6 +163,7 @@ test("Guide failure still allows a direct GPT-5.6 answer", async () => {
   const result = await buildCognitiveDraft(normalized, config, {
     injectAgentBrief: false,
     injectPublicReadonlyAgents: false,
+    injectCogentigramCapsule: false,
   });
   assert.match(result.text, /Réponse directe sans corpus/);
   assert.equal(result.provenance_class, "openai-direct");
