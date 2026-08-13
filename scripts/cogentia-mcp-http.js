@@ -40,6 +40,12 @@ import { handleOpsNodeProxyRequest } from "./lib/ona-proxy.js";
 import { handleEdgeTrapPost, handleEdgeTrapsGet } from "./lib/edge-trap-ops.js";
 import { createJhnOpenAiSurface, isTwinOpenAiPath } from "./lib/jhn-openai-surface.js";
 import { buildCrossSurfaceStyleBlock } from "./lib/agent-jhn-whatsapp/representation-brief.js";
+import {
+  openSurfaceTurnPacket,
+  spawnSurfaceDownstream,
+  recordPacketProviderSpend,
+  projectTurnAccounting,
+} from "./lib/cop-surface-accounting.js";
 
 const moduleDir = path.dirname(fileURLToPath(import.meta.url));
 const fractanetDashboardPath = path.join(moduleDir, "ops", "fractanet-dashboard.html");
@@ -598,17 +604,28 @@ async function parseUserIntent(question, history, defaultLocale = "en", options 
 async function produceGuideTurn(question, history, payload = {}, options = {}) {
   const defaultLocale = normalizeLocale(payload.locale || options.locale);
   const cleanHistory = normalizeGuideHistory(history);
+  const surface =
+    options.surface ||
+    (options.model === "jhn-public" || options.model === "jhn-owner"
+      ? "jhn-public-openai"
+      : "fractavolta-public-guide");
+
+  // COP treatment packet for this surface turn (mandate + optional budget reservation).
+  const turnAcct = await openSurfaceTurnPacket({
+    surface: surface.startsWith("jhn") ? "jhn-openai" : "guide",
+    question,
+    locale: defaultLocale,
+    instance_id: surface.startsWith("jhn") ? "agent:jhn:openai-surface" : "agent:jhn:guide",
+  });
+  const rootPacket = turnAcct.ok ? turnAcct.packet : null;
+  const cop = turnAcct.ok ? turnAcct.cop : null;
+
   const chatCap = await guideChatCapability();
   const intentResult = await parseUserIntent(question, cleanHistory, defaultLocale, {
     skipLlm: !chatCap.available,
   });
   const activeLocale = intentResult.detected_language || defaultLocale;
   const resolvedQuestion = intentResult.resolved_search_query || question;
-  const surface =
-    options.surface ||
-    (options.model === "jhn-public" || options.model === "jhn-owner"
-      ? "jhn-public-openai"
-      : "fractavolta-public-guide");
 
   let plan, retrieval, web;
   if (intentResult.intent === "conversational") {
@@ -646,6 +663,7 @@ async function produceGuideTurn(question, history, payload = {}, options = {}) {
         ...(fallback.body.warnings || []),
       ].filter(Boolean);
       fallback.body.chat = { available: false, reason: chatCap.reason };
+      attachCopAccountingToBody(fallback.body, rootPacket, cop);
     }
     return { ok: Boolean(fallback.body?.ok), status: fallback.status, body: fallback.body };
   }
@@ -690,22 +708,97 @@ async function produceGuideTurn(question, history, payload = {}, options = {}) {
       locale: activeLocale,
       access_class: options.access_class || "public",
       openai_model: options.model || null,
+      cop_packet_id: rootPacket?.packet_id || null,
     },
   };
 
   const routed = await guideSynthesisPost(chatPayload);
   if (routed.ok) {
+    await recordGuideSynthesisSpend({
+      rootPacket,
+      cop,
+      completion: routed.body,
+      surface,
+      step: "synthesis",
+    });
     const body = guideChatResponse(question, activeLocale, routed.body, retrieval, web);
     body.surface = surface;
     if (routed.body?._cogentia_guide_synthesis === "openai_direct_fallback") {
       body.mode = "openai_direct_fallback";
       body.warnings = [...new Set([...(body.warnings || []), "guide_synthesis_openai_fallback"])];
     }
+    attachCopAccountingToBody(body, rootPacket, cop);
     return { ok: true, status: 200, body };
   }
 
   const fallback = await guideFallback(question, activeLocale, routed, retrieval, web);
+  if (fallback.body) attachCopAccountingToBody(fallback.body, rootPacket, cop);
   return { ok: Boolean(fallback.body?.ok), status: fallback.status, body: fallback.body };
+}
+
+/**
+ * Record synthesis LLM spend as a COP downstream packet under the turn root.
+ */
+async function recordGuideSynthesisSpend({ rootPacket, cop, completion, surface, step }) {
+  if (!rootPacket || !cop) return;
+  const usage = completion?.usage && typeof completion.usage === "object" ? completion.usage : null;
+  const prompt_tokens = Number(usage?.prompt_tokens) || 0;
+  const completion_tokens = Number(usage?.completion_tokens) || 0;
+  if (!prompt_tokens && !completion_tokens) {
+    // Estimate from message content when provider omits usage
+    const content = String(completion?.choices?.[0]?.message?.content || "");
+    if (!content) return;
+  }
+  const model = String(
+    completion?.model
+    || process.env.COGENTIA_GUIDE_OPENAI_MODEL
+    || process.env.COGENTIA_GUIDE_MODEL
+    || "fractavolta-guide",
+  );
+  const provider = completion?._cogentia_guide_synthesis === "openai_direct_fallback"
+    ? "openai"
+    : (String(process.env.COGENTIA_GUIDE_PROVIDER || "openai"));
+
+  const spawned = await spawnSurfaceDownstream(rootPacket, cop, {
+    spawn_reason: step || "synthesis",
+    step: step || "synthesis",
+    instance_id: surface?.startsWith?.("jhn") ? "agent:jhn:openai-surface" : "agent:jhn:guide",
+  });
+  const spendPacket = spawned.ok && spawned.packet ? spawned.packet : rootPacket;
+  const estPrompt = prompt_tokens || estimateGuideTokens(JSON.stringify(completion?.choices || []).slice(0, 1));
+  const estCompletion = completion_tokens
+    || estimateGuideTokens(String(completion?.choices?.[0]?.message?.content || ""));
+
+  recordPacketProviderSpend(spendPacket, cop, {
+    provider,
+    model,
+    prompt_tokens: prompt_tokens || estPrompt,
+    completion_tokens: completion_tokens || estCompletion,
+    capability: "ai/chat-completion",
+    surface,
+    hop: { route_reason: step || "synthesis" },
+    allow_empty: true,
+    evidence_hash: completion?.id ? `completion:${completion.id}` : undefined,
+  });
+}
+
+function attachCopAccountingToBody(body, rootPacket, cop) {
+  if (!body || !rootPacket) return body;
+  const projection = projectTurnAccounting(rootPacket, cop);
+  if (projection) {
+    body.cognitive_packet = projection;
+    if (body.cost_estimate && typeof body.cost_estimate === "object") {
+      body.cost_estimate.cop = {
+        packet_id: projection.packet_id,
+        mandate_id: projection.mandate_id,
+        treatment_id: projection.treatment_id,
+        own_spend_usd: projection.own_spend,
+        consolidated_spend_usd: projection.consolidated_spend,
+        protocol: "cop-cognitive-packet",
+      };
+    }
+  }
+  return body;
 }
 
 /** Adapter for jhn-openai-surface produceAnswer. */

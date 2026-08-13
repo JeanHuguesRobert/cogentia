@@ -26,6 +26,12 @@ import {
   describeKysInjection,
   shouldInjectAgentBrief,
 } from "./representation-brief.js";
+import {
+  openSurfaceTurnPacket,
+  spawnSurfaceDownstream,
+  recordPacketProviderSpend,
+  projectTurnAccounting,
+} from "../cop-surface-accounting.js";
 
 const RETRIEVAL_MODES = new Set(["guide", "librarian", "shadow"]);
 
@@ -151,6 +157,18 @@ export async function buildCognitiveDraft(normalized, config, options = {}) {
 }
 
 async function buildGuideDraft(normalized, config, options, questionAnalysis, userText) {
+  // COP turn packet (WhatsApp treatment). Guide HTTP may open its own COP packet;
+  // we do not re-import Guide spend lines here (anti double-count).
+  const turnAcct = await openSurfaceTurnPacket({
+    surface: "whatsapp",
+    question: userText,
+    locale: questionAnalysis.locale,
+    instance_id: "agent:jhn:whatsapp",
+  });
+  const rootPacket = turnAcct.ok ? turnAcct.packet : null;
+  const cop = turnAcct.ok ? turnAcct.cop : null;
+  options = { ...options, cop_root_packet: rootPacket, cop };
+
   let guideResult = null;
   const guideUrl = String(
     options.guideUrl ||
@@ -173,8 +191,17 @@ async function buildGuideDraft(normalized, config, options, questionAnalysis, us
       }),
       signal: AbortSignal.timeout(guideTimeoutMs),
     });
-    if (response.ok) guideResult = await response.json();
-    else {
+    if (response.ok) {
+      guideResult = await response.json();
+      // Link to Guide's COP packet id if present (lineage reference only — no spend copy).
+      if (rootPacket && guideResult?.cognitive_packet?.packet_id) {
+        rootPacket.payload = {
+          ...(rootPacket.payload || {}),
+          guide_packet_id: guideResult.cognitive_packet.packet_id,
+          guide_consolidated_spend_usd: guideResult.cognitive_packet.consolidated_spend,
+        };
+      }
+    } else {
       const error = new Error("Guide retrieval returned an error response");
       emitCognitiveError(options, error, {
         provider: "cogentia-guide", stage: "retrieval_response", endpoint_host: hostOf(guideUrl),
@@ -219,6 +246,9 @@ async function buildGuideDraft(normalized, config, options, questionAnalysis, us
   if (answerResult.ok && answerResult.answer) {
     const syncDraft = buildDeterministicDraft(normalized, config, options);
     const kys = describeKysInjection(options, process.env);
+    const cognitive_packet = rootPacket && cop
+      ? projectTurnAccounting(rootPacket, cop)
+      : guideResult?.cognitive_packet || null;
     return {
       ...syncDraft,
       text: formatInstanceOutboundDisclosure(
@@ -232,9 +262,14 @@ async function buildGuideDraft(normalized, config, options, questionAnalysis, us
       stub: false,
       agent_brief_injected: shouldInjectAgentBrief(process.env, options),
       kys_grant: kys,
+      cognitive_packet,
+      prompt_tokens: answerResult.prompt_tokens,
+      completion_tokens: answerResult.completion_tokens,
     };
   }
-  return buildDeterministicDraft(normalized, config, options);
+  const empty = buildDeterministicDraft(normalized, config, options);
+  if (rootPacket && cop) empty.cognitive_packet = projectTurnAccounting(rootPacket, cop);
+  return empty;
 }
 
 async function buildLibrarianDraft(normalized, config, options, questionAnalysis, userText) {
@@ -433,15 +468,46 @@ async function requestOpenAiModelDraft(
     throw error;
   }
   const content = String(body?.choices?.[0]?.message?.content || "").trim();
+  const prompt_tokens = Number(body?.usage?.prompt_tokens) || 0;
+  const completion_tokens = Number(body?.usage?.completion_tokens) || 0;
+  const request_id = response.headers.get("x-request-id");
+
+  // COP: WhatsApp own synthesis spend on a downstream packet (not Guide's packet).
+  const rootPacket = draftOptions.cop_root_packet || null;
+  const cop = draftOptions.cop || null;
+  if (rootPacket && cop && (prompt_tokens || completion_tokens || content)) {
+    try {
+      const spawned = await spawnSurfaceDownstream(rootPacket, cop, {
+        spawn_reason: "whatsapp_synthesis",
+        step: "synthesis",
+        instance_id: "agent:jhn:whatsapp",
+      });
+      const spendPacket = spawned.ok && spawned.packet ? spawned.packet : rootPacket;
+      recordPacketProviderSpend(spendPacket, cop, {
+        provider: "openai",
+        model,
+        prompt_tokens: prompt_tokens || Math.ceil(JSON.stringify(messages).length / 4),
+        completion_tokens: completion_tokens || Math.ceil(content.length / 4),
+        request_id,
+        capability: "ai/chat-completion",
+        surface: "whatsapp",
+        hop: { route_reason: "whatsapp_synthesis" },
+        allow_empty: true,
+      });
+    } catch {
+      /* accounting must not break answers */
+    }
+  }
+
   return {
     answer: content,
     model,
     sources: guideResult?.sources || [],
     finish_reason: body?.choices?.[0]?.finish_reason,
-    prompt_tokens: body?.usage?.prompt_tokens,
-    completion_tokens: body?.usage?.completion_tokens,
+    prompt_tokens,
+    completion_tokens,
     reasoning_tokens: body?.usage?.completion_tokens_details?.reasoning_tokens,
-    request_id: response.headers.get("x-request-id"),
+    request_id,
   };
 }
 
