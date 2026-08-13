@@ -237,6 +237,8 @@ export function recordPacketProviderSpend(packet, cop, details = {}) {
 
     registerPacket(packet);
     maybeSpoolPacketEvent({ packet, spendingEntry, transactionEvent, surface: details.surface });
+    // Durable COP accounting store when configured (Supabase module accounting).
+    void maybePersistAccountingEvent(transactionEvent, packet);
 
     const summary = cop.summarizePacketSpending
       ? cop.summarizePacketSpending(packet, resolvePacketById)
@@ -250,6 +252,88 @@ export function recordPacketProviderSpend(packet, cop, details = {}) {
     };
   } catch (error) {
     return { ok: false, error: String(error?.message || error).slice(0, 240) };
+  }
+}
+
+/** @type {null | Promise<object|null>} */
+let accountingStorePromise = null;
+
+/**
+ * Lazy Supabase COP accounting store (inseme createSupabaseAccountingStore).
+ * Enabled when COGENTIA_COP_ACCOUNTING_PERSIST=1 and Supabase env present.
+ */
+async function getAccountingStore() {
+  if (accountingStorePromise) return accountingStorePromise;
+  accountingStorePromise = (async () => {
+    const raw = String(process.env.COGENTIA_COP_ACCOUNTING_PERSIST ?? "0").trim().toLowerCase();
+    if (raw === "0" || raw === "false" || raw === "no" || raw === "off") return null;
+    const url = String(process.env.SUPABASE_URL || process.env.COGENTIA_SUPABASE_URL || "").trim();
+    const key = String(
+      process.env.SUPABASE_SERVICE_ROLE_KEY
+      || process.env.COGENTIA_SUPABASE_SERVICE_ROLE_KEY
+      || process.env.SUPABASE_ANON_KEY
+      || "",
+    ).trim();
+    if (!url || !key) return null;
+    try {
+      const { createClient } = await import("@supabase/supabase-js");
+      const storeModCandidates = [
+        process.env.COGENTIA_COP_SUPABASE_STORE_PATH,
+        path.resolve(moduleDir, "..", "..", "..", "inseme", "packages", "cop-kernel", "src", "accounting", "supabaseAccountingStore.js"),
+        path.resolve(process.cwd(), "..", "inseme", "packages", "cop-kernel", "src", "accounting", "supabaseAccountingStore.js"),
+        "/srv/cogentia/repos/inseme/packages/cop-kernel/src/accounting/supabaseAccountingStore.js",
+      ].filter(Boolean);
+      let createSupabaseAccountingStore = null;
+      for (const c of storeModCandidates) {
+        try {
+          if (c.includes(":") && !/^[A-Za-z]:\\/.test(c) && !c.startsWith("/")) {
+            const m = await import(c);
+            createSupabaseAccountingStore = m.createSupabaseAccountingStore;
+            break;
+          }
+          const abs = path.resolve(c);
+          if (!fs.existsSync(abs)) continue;
+          const m = await import(pathToFileURL(abs).href);
+          createSupabaseAccountingStore = m.createSupabaseAccountingStore;
+          break;
+        } catch {
+          /* next */
+        }
+      }
+      if (!createSupabaseAccountingStore) return null;
+      const sb = createClient(url, key, { auth: { persistSession: false } });
+      return createSupabaseAccountingStore({ supabase: sb });
+    } catch {
+      return null;
+    }
+  })();
+  return accountingStorePromise;
+}
+
+async function maybePersistAccountingEvent(transactionEvent, packet) {
+  try {
+    const store = await getAccountingStore();
+    if (!store?.append) return;
+    // Enrich metadata for analytical dimensions + semantic account
+    const txn = {
+      ...transactionEvent,
+      metadata: {
+        ...(transactionEvent.metadata || {}),
+        packet_id: packet?.packet_id,
+        treatment_id: packet?.treatment_id,
+        mandate_id: packet?.mandate_id,
+        semantic_account_id: "COG:EXPENSE.AI.INFERENCE",
+        valuation_status: "provisional",
+      },
+    };
+    await store.append({
+      event_type: txn.eventType || "accounting/transaction",
+      idempotency_key: txn.idempotency_key,
+      payload: txn,
+      source: packet?.governance?.actor_subject_id || "agent:jhn",
+    });
+  } catch {
+    /* durable persist must not break answers */
   }
 }
 
