@@ -40,6 +40,33 @@ const shared = cogentiaRoot ? path.join(cogentiaRoot, "instructions", "AGENTS.sh
 if (!shared || !fs.existsSync(shared)) {
   issues.push({ type: "missing_shared_source", repo: "cogentia", path: "instructions/AGENTS.shared.md" });
 }
+const publicReadonly = cogentiaRoot
+  ? path.join(cogentiaRoot, "instructions", "AGENTS.public-readonly.md")
+  : null;
+if (!publicReadonly || !fs.existsSync(publicReadonly)) {
+  issues.push({
+    type: "missing_public_readonly_constitution",
+    repo: "cogentia",
+    path: "instructions/AGENTS.public-readonly.md",
+    note: "Answer surfaces (Guide/WhatsApp) inject this derived file; run: node scripts/cogentia.js agent public-readonly verify",
+  });
+} else {
+  const publicText = fs.readFileSync(publicReadonly, "utf8");
+  if (!/registre-mariani|secret/i.test(publicText)) {
+    issues.push({
+      type: "public_readonly_missing_privacy_boundary",
+      repo: "cogentia",
+      path: "instructions/AGENTS.public-readonly.md",
+    });
+  }
+  entries.push({
+    repo: "cogentia",
+    path: "instructions/AGENTS.public-readonly.md",
+    kind: "public_readonly_constitution",
+    shared_reference: true,
+    shared_instructions: canonicalSharedUrl,
+  });
+}
 
 for (const repo of registry.repos || []) {
   const root = path.resolve(registryRoot, repo.path);

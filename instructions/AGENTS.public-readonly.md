@@ -232,16 +232,23 @@ derived product** with optional tooling assist.
 
 ### Relation to `cogentia.js`
 
+```bash
+node scripts/cogentia.js agent public-readonly verify
+node scripts/cogentia.js agent public-readonly verify --json
+```
+
+Checks: file exists, `document_role: derived`, subset/privacy language, inject
+paths resolvable, and **warns** when `AGENTS.shared.md` is newer than this file.
+
+Also inventoried by `node scripts/agent-instructions-audit.js`.
+
 | Fit | Not a fit |
 |-----|-----------|
-| **`agent public-readonly verify`** (or extend `agent-instructions-audit.js`): file exists, frontmatter `derived_from`, version present, path known to injectors | Regenerating the full body on every CLI run without review |
-| **`plan` / drift report**: “shared AGENTS changed after public-readonly date” | Silent auto-`apply` that overwrites constitution on `index rebuild` |
-| Document the path as the **canonical injectable** for Guide / WhatsApp | Treating this as equal authority to full worker AGENTS |
+| **`agent public-readonly verify`** | Regenerating the full body on every CLI run without review |
+| Drift **warning** when shared is newer | Silent auto-`apply` that overwrites constitution on `index rebuild` |
+| Canonical injectable for Guide / WhatsApp | Equal authority to full worker AGENTS |
 
-So: **integrate as verify + inventory + docs in the agent-instructions tooling
-family**, same spirit as `agent mandates verify` — not as an always-on
-generator inside the hot retrieval path. Runtime continues to **load the committed
-Markdown file** (as today).
+Runtime continues to **load the committed Markdown file** (as today).
 
 Do not let chat prompts invent a parallel constitution outside this file.
 

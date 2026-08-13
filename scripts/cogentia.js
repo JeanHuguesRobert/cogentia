@@ -389,6 +389,10 @@ Core commands:
   agent mandates apply     Create missing local mandates from the canonical template.
   agent mandates verify    Verify that every configured repository declares the
                            canonical shared mandate.
+  agent public-readonly verify
+                           Verify the public answer-surface constitution
+                           (instructions/AGENTS.public-readonly.md): exists,
+                           derived frontmatter, inject paths, drift vs shared AGENTS.
   corpus plan              Read-only plan of generated navigation changes.
   corpus apply             Apply generated navigation changes from a fresh plan.
   corpus verify            Verify generated views, gaps and git drift.
@@ -1183,8 +1187,12 @@ function cmdAgent(sub) {
     case "mandates":
     case "instructions":
       return cmdAgentMandates(argv.shift() || "plan");
+    case "public-readonly":
+    case "public_readonly":
+    case "readonly-agents":
+      return cmdAgentPublicReadonly(argv.shift() || "verify");
     default:
-      throw new Error(`Unknown agent subcommand "${sub}". Use start, health, or mandates.`);
+      throw new Error(`Unknown agent subcommand "${sub}". Use start, health, mandates, or public-readonly.`);
   }
 }
 
@@ -1298,6 +1306,213 @@ function formatAgentMandates(result) {
     lines.push("", "Not created:");
     for (const item of result.failed) lines.push(`- ${item.repo}: ${item.path} (${item.error})`);
   }
+  if (result.ok) lines.push("", "OK.");
+  return lines.join("\n");
+}
+
+const PUBLIC_READONLY_AGENTS_REL = "instructions/AGENTS.public-readonly.md";
+const PUBLIC_READONLY_CANONICAL_URL =
+  "https://github.com/JeanHuguesRobert/cogentia/blob/main/instructions/AGENTS.public-readonly.md";
+
+/**
+ * Verify the public answer-surface constitution (read-only AGENTS projection).
+ * Does not auto-generate the body (judgment-bearing derived product).
+ */
+function cmdAgentPublicReadonly(sub) {
+  if (!new Set(["verify", "plan", "status"]).has(sub)) {
+    throw new Error(`Unknown agent public-readonly subcommand "${sub}". Use verify.`);
+  }
+  const ctx = loadContext();
+  const cogentiaRepo = ctx.repos.find(repo => repo.name === "cogentia");
+  const cogentiaRoot = cogentiaRepo?.path || "";
+  const publicPath = path.join(cogentiaRoot, PUBLIC_READONLY_AGENTS_REL);
+  const sharedPath = path.join(cogentiaRoot, "instructions", "AGENTS.shared.md");
+  const issues = [];
+  const warnings = [];
+
+  const publicExists = Boolean(cogentiaRoot && fs.existsSync(publicPath));
+  const sharedExists = Boolean(cogentiaRoot && fs.existsSync(sharedPath));
+  if (!cogentiaRoot) {
+    issues.push({ code: "cogentia_repo_missing", message: "Registry has no cogentia repository entry" });
+  }
+  if (!sharedExists) {
+    issues.push({
+      code: "shared_agents_missing",
+      message: `Worker shared AGENTS unavailable: ${sharedPath || "instructions/AGENTS.shared.md"}`,
+      path: sharedPath || null,
+    });
+  }
+  if (!publicExists) {
+    issues.push({
+      code: "public_readonly_missing",
+      message: `Public-readonly constitution missing: ${publicPath || PUBLIC_READONLY_AGENTS_REL}`,
+      path: publicPath || null,
+    });
+  }
+
+  let frontmatter = {};
+  let body = "";
+  let publicStat = null;
+  let sharedStat = null;
+  if (publicExists) {
+    body = fs.readFileSync(publicPath, "utf8");
+    publicStat = fs.statSync(publicPath);
+    frontmatter = parseSimpleFrontmatter(body);
+  }
+  if (sharedExists) sharedStat = fs.statSync(sharedPath);
+
+  if (publicExists) {
+    if (String(frontmatter.document_role || "").toLowerCase() !== "derived") {
+      issues.push({
+        code: "document_role_not_derived",
+        message: "frontmatter document_role should be derived",
+        path: publicPath,
+      });
+    }
+    const derivedFrom = frontmatter.derived_from || "";
+    const hasDerivedFrom =
+      (typeof derivedFrom === "string" && /AGENTS\.shared|ai_first_fidelity|agent_brief/i.test(derivedFrom))
+      || body.includes("AGENTS.shared.md");
+    if (!hasDerivedFrom) {
+      issues.push({
+        code: "derived_from_weak",
+        message: "expected derived_from / body to reference AGENTS.shared.md (or fidelity/agent_brief sources)",
+        path: publicPath,
+      });
+    }
+    if (!/read-?only|strict subset|public corpus/i.test(body)) {
+      issues.push({
+        code: "missing_readonly_subset_language",
+        message: "body should state read-only / subset mandate for answer surfaces",
+        path: publicPath,
+      });
+    }
+    if (!/secret|registre-mariani|private/i.test(body)) {
+      issues.push({
+        code: "missing_privacy_boundary",
+        message: "body should forbid secrets / private registre-mariani (or private corpus) on this surface",
+        path: publicPath,
+      });
+    }
+    if (body.length < 800) {
+      warnings.push({
+        code: "body_short",
+        message: `constitution body is only ${body.length} characters; check it was not truncated`,
+      });
+    }
+  }
+
+  if (publicExists && sharedExists && publicStat && sharedStat) {
+    if (sharedStat.mtimeMs > publicStat.mtimeMs + 1000) {
+      warnings.push({
+        code: "shared_newer_than_public_readonly",
+        message:
+          "AGENTS.shared.md is newer than AGENTS.public-readonly.md — review whether public answer constitution needs an update",
+        shared_mtime: sharedStat.mtime.toISOString(),
+        public_mtime: publicStat.mtime.toISOString(),
+      });
+    }
+  }
+
+  // Inject path discovery (same candidates as runtime loaders)
+  const injectCandidates = [
+    publicPath,
+    path.resolve(process.cwd(), PUBLIC_READONLY_AGENTS_REL),
+    "/srv/cogentia/repos/cogentia/instructions/AGENTS.public-readonly.md",
+  ].filter(Boolean);
+  const inject_resolvable = injectCandidates.some(p => fs.existsSync(p));
+  if (!inject_resolvable) {
+    issues.push({
+      code: "inject_path_unresolvable",
+      message: "no inject candidate path exists for Guide/WhatsApp loaders",
+      candidates: injectCandidates,
+    });
+  }
+
+  const result = {
+    ok: issues.length === 0,
+    action: sub === "plan" || sub === "status" ? "verify" : sub,
+    protocol: "cogentia.agent.public_readonly.verify.v1",
+    canonical_path: PUBLIC_READONLY_AGENTS_REL,
+    canonical_url: PUBLIC_READONLY_CANONICAL_URL,
+    paths: {
+      public_readonly: publicExists ? publicPath : null,
+      shared_agents: sharedExists ? sharedPath : null,
+    },
+    frontmatter: publicExists
+      ? {
+          document_role: frontmatter.document_role || null,
+          version: frontmatter.version || null,
+          date: frontmatter.date || null,
+          visibility: frontmatter.visibility || null,
+        }
+      : null,
+    sizes: publicExists ? { bytes: body.length, mtime: publicStat?.mtime?.toISOString?.() || null } : null,
+    inject: {
+      resolvable: inject_resolvable,
+      candidates: injectCandidates,
+      surfaces: ["guide_system_prompt", "whatsapp_representation_messages"],
+      env_disable: ["COGENTIA_GUIDE_INJECT_PUBLIC_AGENTS", "AGENT_JHN_WHATSAPP_INJECT_PUBLIC_AGENTS"],
+    },
+    issues,
+    warnings,
+    note:
+      "This command verifies presence and hygiene only. It does not auto-generate the constitution (judgment-bearing derived product).",
+  };
+
+  if (!result.ok) process.exitCode = 2;
+  return output(result, formatAgentPublicReadonly(result));
+}
+
+function parseSimpleFrontmatter(text) {
+  const match = String(text || "").match(/^---\s*\r?\n([\s\S]*?)\r?\n---\s*\r?\n/);
+  if (!match) return {};
+  const out = {};
+  for (const line of match[1].split(/\r?\n/)) {
+    const m = line.match(/^([A-Za-z_][A-Za-z0-9_]*):\s*(.*?)\s*$/);
+    if (!m) continue;
+    let value = m[2];
+    if (
+      (value.startsWith('"') && value.endsWith('"'))
+      || (value.startsWith("'") && value.endsWith("'"))
+    ) {
+      value = value.slice(1, -1);
+    }
+    out[m[1]] = value;
+  }
+  // multi-line derived_from list: keep raw block indicator if first line is empty
+  if (match[1].includes("derived_from:")) {
+    out.derived_from = match[1].includes("AGENTS.shared") || match[1].includes("ai_first")
+      ? match[1]
+      : (out.derived_from || match[1]);
+  }
+  return out;
+}
+
+function formatAgentPublicReadonly(result) {
+  const lines = [
+    "\nAgent public-readonly constitution\n",
+    `Canonical: ${result.canonical_path}`,
+    `URL: ${result.canonical_url}`,
+    `Status: ${result.ok ? "OK" : "FAILED"}`,
+  ];
+  if (result.paths?.public_readonly) lines.push(`Path: ${result.paths.public_readonly}`);
+  if (result.frontmatter) {
+    lines.push(
+      `Frontmatter: role=${result.frontmatter.document_role || "?"} version=${result.frontmatter.version || "?"} date=${result.frontmatter.date || "?"}`,
+    );
+  }
+  if (result.sizes) lines.push(`Size: ${result.sizes.bytes} bytes; mtime ${result.sizes.mtime || "?"}`);
+  lines.push(`Inject resolvable: ${result.inject?.resolvable ? "yes" : "no"} (Guide + WhatsApp)`);
+  if (result.issues?.length) {
+    lines.push("", "Issues:");
+    for (const issue of result.issues) lines.push(`- [${issue.code}] ${issue.message}`);
+  }
+  if (result.warnings?.length) {
+    lines.push("", "Warnings:");
+    for (const warning of result.warnings) lines.push(`- [${warning.code}] ${warning.message}`);
+  }
+  lines.push("", result.note);
   if (result.ok) lines.push("", "OK.");
   return lines.join("\n");
 }
