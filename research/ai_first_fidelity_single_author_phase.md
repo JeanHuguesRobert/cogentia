@@ -49,7 +49,9 @@ classification_confidence: "medium"
 > optimise for fidelity to how Jean Hugues Noël Robert would answer from the
 > documented corpus — not for a generic corporate chatbot voice.**  
 > **Those surfaces are mostly read-only: their capabilities and mandates are a
-> strict subset of the full twin/owner capability set, never a superset.**
+> strict subset of the full twin/owner capability set, never a superset.**  
+> **Read-only does not mean “may read secrets” or private registry material
+> (e.g. registre-mariani private traces): public corpus view only.**
 
 This is a **phase doctrine**, not a claim of legal identity or unlimited mandate.
 
@@ -176,7 +178,8 @@ Consequences:
 |-------|------|
 | **Whole public corpus** (minus pure clones where policy excludes them) | Material for fidelity: positions, projects, method, limits |
 | **Cogentia Registry “active” repos** | Priority, ops health, indexing weight, navigation |
-| **Private / confidential views** | Never mixed into public Guide without mandate |
+| **Private / confidential views** | **Not readable** on Guide/chat surfaces — not even under “read-only” |
+| **registre-mariani private / raw private / secrets** | **Out of scope** for public answer surfaces (transport custody and private memory stay private) |
 | **External cloned material** | Cite as external; do not treat as “what JHN would say” unless adopted |
 
 When retrieval budget is limited, **prefer active registry repos**, then expand
