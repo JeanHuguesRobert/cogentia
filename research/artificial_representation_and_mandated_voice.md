@@ -22,6 +22,7 @@ related_research:
   - cogentia/research/cogentia-digital-twin.md
   - cogentia/research/individual_and_collective_digital_twins.md
   - cogentia/research/digital_twin_trust_model.md
+  - cogentia/research/ai_first_fidelity_single_author_phase.md
 related_operations:
   - cogentia/docs/digital-twin-agile-roadmap.md
 document_role: source
