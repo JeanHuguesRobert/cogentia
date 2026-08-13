@@ -50,6 +50,9 @@ export async function answerWithLibrarian(input = {}, options = {}) {
     synthesizer: options.synthesizer,
     maxChars: options.maxChars,
     timeoutMs: options.synthTimeoutMs,
+    injectAgentBrief: options.injectAgentBrief,
+    agentBriefText: options.agentBriefText,
+    agentBriefPath: options.agentBriefPath,
   });
   const synthMs = Date.now() - synthStarted;
 

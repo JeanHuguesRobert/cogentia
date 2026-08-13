@@ -8,6 +8,7 @@ import {
   createAnswerEngine,
   renderAnswer,
 } from "../agent-jhn-whatsapp/answer-core.js";
+import { buildWhatsAppRepresentationMessages } from "../agent-jhn-whatsapp/representation-brief.js";
 
 /** Map librarian packet → answer-core retrieval shape. */
 export function packetToRetrieval(packet = {}) {
@@ -51,11 +52,43 @@ export function createOpenAiPacketSynthesizer(options = {}) {
   const timeoutMs = Number.isInteger(options.timeoutMs) ? options.timeoutMs : 20000;
   const maxChars = Number.isInteger(options.maxChars) ? options.maxChars : 1200;
 
+  const channel = String(options.channel || "api");
   return {
     provider: "openai",
     model,
     async synthesize({ text, analysis, evidence, retrieval }) {
       const corpusContext = buildCorpusContextFromEvidence(evidence);
+      const useRepresentation = channel === "whatsapp" || options.injectAgentBrief === true;
+      const systemMessages = useRepresentation
+        ? buildWhatsAppRepresentationMessages(analysis || {}, {
+            ...options,
+            maxChars,
+            currentInformationVerified: Boolean(evidence?.current_information_verified),
+          })
+        : [{
+            role: "system",
+            content: [
+              "You answer only from the supplied public corpus excerpts.",
+              "Lead with a useful answer; do not merely list sources.",
+              "Separate established facts from proposals and unknowns.",
+              "Support material corpus-grounded claims with exact source_id in square brackets.",
+              "Never invent a source_id or claim a project is operational unless an excerpt says so.",
+              "If evidence is insufficient, state the precise limit instead of filling the gap.",
+              analysis?.needsCurrentWeb && !evidence?.current_information_verified
+                ? "The supplied evidence is not verified as current; say so explicitly."
+                : "Use each excerpt only within its stated scope.",
+              `Intent: ${analysis?.intent || "explain"}. Preferred shape: ${analysis?.answerShape || "direct_answer"}.`,
+              `Stay within about ${maxChars} characters. Short paragraphs.`,
+              `Reply only in ${analysis?.locale === "fr" ? "French" : "English"}.`,
+            ].join(" "),
+          }];
+      if (useRepresentation) {
+        // Grounding still requires corpus excerpts; representation brief is mandate/voice.
+        systemMessages[0] = {
+          role: "system",
+          content: `${systemMessages[0].content} Prefer cited public corpus excerpts for project facts.`,
+        };
+      }
       const response = await request("https://api.openai.com/v1/chat/completions", {
         method: "POST",
         headers: {
@@ -65,23 +98,7 @@ export function createOpenAiPacketSynthesizer(options = {}) {
         body: JSON.stringify({
           model,
           messages: [
-            {
-              role: "system",
-              content: [
-                "You answer only from the supplied public corpus excerpts.",
-                "Lead with a useful answer; do not merely list sources.",
-                "Separate established facts from proposals and unknowns.",
-                "Support material corpus-grounded claims with exact source_id in square brackets.",
-                "Never invent a source_id or claim a project is operational unless an excerpt says so.",
-                "If evidence is insufficient, state the precise limit instead of filling the gap.",
-                analysis?.needsCurrentWeb && !evidence?.current_information_verified
-                  ? "The supplied evidence is not verified as current; say so explicitly."
-                  : "Use each excerpt only within its stated scope.",
-                `Intent: ${analysis?.intent || "explain"}. Preferred shape: ${analysis?.answerShape || "direct_answer"}.`,
-                `Stay within about ${maxChars} characters. Short paragraphs.`,
-                `Reply only in ${analysis?.locale === "fr" ? "French" : "English"}.`,
-              ].join(" "),
-            },
+            ...systemMessages,
             ...(corpusContext ? [{ role: "system", content: `Public corpus excerpts:\n${corpusContext}` }] : []),
             { role: "user", content: String(text || "") },
           ],
@@ -128,6 +145,10 @@ export async function synthesizeFromPacket(packet, options = {}) {
       fetch: options.fetch,
       timeoutMs: options.timeoutMs,
       maxChars: options.maxChars,
+      channel: options.channel,
+      injectAgentBrief: options.injectAgentBrief,
+      agentBriefText: options.agentBriefText,
+      agentBriefPath: options.agentBriefPath,
     }));
   }
 

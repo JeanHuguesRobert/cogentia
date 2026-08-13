@@ -97,6 +97,9 @@ AGENT_JHN_WHATSAPP_SEND_ENABLED=false
 # Retrieval for cognitive drafts (default guide). librarian = packet path; shadow = guide live + librarian compare.
 # AGENT_JHN_WHATSAPP_RETRIEVAL=guide
 # AGENT_JHN_WHATSAPP_GATEWAY_URL=http://127.0.0.1:8790
+# Quality-first: inject full JeanHuguesRobert/research/agent_brief.md into WhatsApp OpenAI system prompts (default on).
+# AGENT_JHN_WHATSAPP_INJECT_AGENT_BRIEF=1
+# AGENT_JHN_WHATSAPP_AGENT_BRIEF_PATH=/srv/cogentia/repos/JeanHuguesRobert/research/agent_brief.md
 ```
 
 Retrieval smoke (no WhatsApp send; writes under `.cogentia/evals/agent-jhn-retrieval/`):

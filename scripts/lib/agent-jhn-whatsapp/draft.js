@@ -21,6 +21,10 @@ import {
 import { formatInstanceOutboundDisclosure } from "../digital-twin-engine.js";
 import { analyzeQuestion, createAnswerEngine } from "./answer-core.js";
 import { answerWithLibrarian as defaultAnswerWithLibrarian } from "../corpus-librarian/pipeline.js";
+import {
+  buildWhatsAppRepresentationMessages,
+  shouldInjectAgentBrief,
+} from "./representation-brief.js";
 
 const RETRIEVAL_MODES = new Set(["guide", "librarian", "shadow"]);
 
@@ -194,7 +198,7 @@ async function buildGuideDraft(normalized, config, options, questionAnalysis, us
       provider: "openai",
       model,
       synthesize: async ({ retrieval, analysis, evidence }) => requestOpenAiModelDraft(
-        userText, retrieval, analysis, evidence, apiKey, model,
+        userText, retrieval, analysis, evidence, apiKey, model, options,
       ),
     })),
     extractFallback: retrieval => retrieval?.answer || "",
@@ -224,6 +228,7 @@ async function buildGuideDraft(normalized, config, options, questionAnalysis, us
         : guideResult ? "openai-corpus-grounded" : "openai-direct",
       sources: answerResult.sources,
       stub: false,
+      agent_brief_injected: shouldInjectAgentBrief(process.env, options),
     };
   }
   return buildDeterministicDraft(normalized, config, options);
@@ -338,6 +343,9 @@ async function invokeLibrarian(userText, questionAnalysis, options) {
       toolTimeoutMs: options.toolTimeoutMs,
       synthTimeoutMs: options.synthTimeoutMs,
       synthesizer: options.synthesizer,
+      injectAgentBrief: options.injectAgentBrief,
+      agentBriefText: options.agentBriefText,
+      agentBriefPath: options.agentBriefPath,
     },
   );
 }
@@ -383,10 +391,20 @@ function normalizeDraftSources(sources) {
 }
 
 async function requestOpenAiModelDraft(
-  userText, guideResult, analysis, evidence, apiKey, model,
+  userText, guideResult, analysis, evidence, apiKey, model, draftOptions = {},
 ) {
   const corpusContext = buildCorpusContext(evidence);
   const timeoutMs = 15000;
+  const systemMessages = buildWhatsAppRepresentationMessages(analysis, {
+    ...draftOptions,
+    maxChars: draftOptions.maxChars || 1200,
+    currentInformationVerified: Boolean(evidence?.current_information_verified),
+  });
+  const messages = [
+    ...systemMessages,
+    ...(corpusContext ? [{ role: "system", content: `Public corpus excerpts:\n${corpusContext}` }] : []),
+    { role: "user", content: userText },
+  ];
   let response;
   response = await fetch("https://api.openai.com/v1/chat/completions", {
       method: "POST",
@@ -396,28 +414,7 @@ async function requestOpenAiModelDraft(
       },
       body: JSON.stringify({
         model,
-        messages: [
-          {
-            role: "system",
-            content: [
-              "You are Agent John (JHN), the experimental personal digital twin assistant of Jean Hugues Noël Robert.",
-              "You are not Jean Hugues and cannot make commitments for him.",
-              "Lead with the useful answer; do not merely summarize the excerpts.",
-              "Separate established facts from proposals, intentions, and unknowns.",
-              "Support each important corpus-grounded claim with its source_id in square brackets.",
-              "Never invent a source or claim that an announced project is already operational.",
-              "If evidence is insufficient, state the precise limit instead of filling the gap.",
-              analysis.needsCurrentWeb && !evidence.current_information_verified
-                ? "The supplied evidence is not verified as current; say so explicitly."
-                : "Use the supplied evidence according to its stated scope.",
-              `Intent: ${analysis.intent}. Preferred answer shape: ${analysis.answerShape}.`,
-              "This is WhatsApp: answer in at most 900 characters, with short paragraphs or compact steps.",
-              `Reply only in ${analysis.locale === "fr" ? "French" : "English"}.`,
-            ].join(" "),
-          },
-          ...(corpusContext ? [{ role: "system", content: `Public corpus excerpts:\n${corpusContext}` }] : []),
-          { role: "user", content: userText },
-        ],
+        messages,
         max_completion_tokens: 700,
       }),
       signal: AbortSignal.timeout(timeoutMs),
