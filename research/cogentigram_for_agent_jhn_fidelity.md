@@ -14,6 +14,7 @@ related_research:
   - cogentia/research/kys_specialized_profiles_catalog.md
   - cogentia/research/cogentigram_jhn_thinking_capsule.md
   - cogentia/research/cogentigram_jhn_public_open.json
+  - cogentia/research/cogentigram_jhn_march_vs_open_2026-08.md
   - JeanHuguesRobert/research/agent_brief.md
 update_policy: UP-DEFAULT-REVIEWED
 classification_source: "cogentia.js"
@@ -44,7 +45,10 @@ This principal is deliberately **open** about structural self-model for research
 | Representation | `agent_brief` | What to say / red lines |
 | Specialized KYS | `kys.public_answer_style` → thinking capsule | How to write/reason |
 | Open structural radar | `cogentigram_jhn_public_open.json` | Full 73-axis **structural** profile, person-open |
+| March baseline | `apps/personal/samples/cogentigram_author.json` | 2026-03 ChatGPT sample (compare note below) |
 | Facts | Public corpus retrieval | Evidence |
+
+March vs August delta: [`cogentigram_jhn_march_vs_open_2026-08.md`](cogentigram_jhn_march_vs_open_2026-08.md) — **66/73** scores unchanged, **7** one-point bumps, **13** evidence rewrites; radar shape stable.
 
 Episodic private traces (raw WhatsApp, private registry dumps) stay **out**.
 
@@ -55,10 +59,12 @@ channel policy
   → AGENTS.public-readonly
   → agent_brief
   → kys.public_answer_style (capsule)
-  → optional: person-open structural Cogentigram JSON (dense)
+  → compressed top-N from person-open Cogentigram (default N=12)
   → public corpus excerpts
   → user question
 ```
+
+WhatsApp inject + grant diagnostics: `scripts/lib/agent-jhn-whatsapp/representation-brief.js` (`compressCogentigramTopN`, `describeKysInjection`).
 
 ## Specialized profiles around JHN (ideas in use)
 

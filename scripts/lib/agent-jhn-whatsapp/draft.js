@@ -23,6 +23,7 @@ import { analyzeQuestion, createAnswerEngine } from "./answer-core.js";
 import { answerWithLibrarian as defaultAnswerWithLibrarian } from "../corpus-librarian/pipeline.js";
 import {
   buildWhatsAppRepresentationMessages,
+  describeKysInjection,
   shouldInjectAgentBrief,
 } from "./representation-brief.js";
 
@@ -217,6 +218,7 @@ async function buildGuideDraft(normalized, config, options, questionAnalysis, us
   });
   if (answerResult.ok && answerResult.answer) {
     const syncDraft = buildDeterministicDraft(normalized, config, options);
+    const kys = describeKysInjection(options, process.env);
     return {
       ...syncDraft,
       text: formatInstanceOutboundDisclosure(
@@ -229,6 +231,7 @@ async function buildGuideDraft(normalized, config, options, questionAnalysis, us
       sources: answerResult.sources,
       stub: false,
       agent_brief_injected: shouldInjectAgentBrief(process.env, options),
+      kys_grant: kys,
     };
   }
   return buildDeterministicDraft(normalized, config, options);
@@ -255,6 +258,7 @@ async function buildLibrarianDraft(normalized, config, options, questionAnalysis
 
   if (librarian?.ok && librarian.answer) {
     const syncDraft = buildDeterministicDraft(normalized, config, options);
+    const kys = describeKysInjection(options, process.env);
     return {
       ...syncDraft,
       text: formatInstanceOutboundDisclosure(
@@ -268,6 +272,8 @@ async function buildLibrarianDraft(normalized, config, options, questionAnalysis
       stub: false,
       retrieval_mode: "librarian",
       librarian: summarizeLibrarian(librarian),
+      agent_brief_injected: shouldInjectAgentBrief(process.env, options),
+      kys_grant: kys,
     };
   }
 

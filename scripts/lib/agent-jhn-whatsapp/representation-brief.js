@@ -17,6 +17,20 @@ let cache = null;
 let publicAgentsCache = null;
 /** @type {{ path: string|null, mtimeMs: number, text: string } | null} */
 let cogentigramCapsuleCache = null;
+/** @type {{ path: string|null, mtimeMs: number, profile: object } | null} */
+let cogentigramOpenCache = null;
+
+/** Default specialized KYS grant for WhatsApp answer fidelity dogfood. */
+export const DEFAULT_KYS_PUBLIC_ANSWER_GRANT = {
+  kys_profile_id: "kys.public_answer_style",
+  purpose: "public_answer_fidelity",
+  controller: "person",
+  principal_ref: "JeanHuguesRobert",
+  privai_status: "experimental_uncertified_prototype",
+  non_episodic: true,
+  not_judicial_evidence: true,
+  structural_only: true,
+};
 
 /**
  * Whether WhatsApp cognitive drafts should inject the agent brief.
@@ -306,8 +320,137 @@ export function loadCogentigramCapsule(options = {}, env = process.env) {
 }
 
 /**
+ * Whether to inject compressed top-N axes from person-open structural Cogentigram.
+ * Default true. AGENT_JHN_WHATSAPP_INJECT_COGENTIGRAM_TOPN=0 disables.
+ */
+export function shouldInjectCogentigramTopN(env = process.env, options = {}) {
+  if (options.injectCogentigramTopN === false) return false;
+  if (options.injectCogentigramTopN === true) return true;
+  if (options.cogentigramTopNText != null && String(options.cogentigramTopNText).trim()) return true;
+  const raw = String(env.AGENT_JHN_WHATSAPP_INJECT_COGENTIGRAM_TOPN ?? "1").trim().toLowerCase();
+  return !(raw === "0" || raw === "false" || raw === "no" || raw === "off");
+}
+
+export function resolvePublicOpenCogentigramPath(env = process.env, options = {}) {
+  if (options.cogentigramOpenPath) {
+    const p = path.resolve(String(options.cogentigramOpenPath));
+    return fs.existsSync(p) ? p : null;
+  }
+  const fromEnv = String(
+    env.AGENT_JHN_WHATSAPP_COGENTIGRAM_OPEN_PATH || env.COGENTIA_COGENTIGRAM_OPEN_PATH || "",
+  ).trim();
+  if (fromEnv) {
+    const p = path.resolve(fromEnv);
+    if (fs.existsSync(p)) return p;
+  }
+  const candidates = [
+    path.resolve(process.cwd(), "research", "cogentigram_jhn_public_open.json"),
+    path.resolve(process.cwd(), "cogentia", "research", "cogentigram_jhn_public_open.json"),
+    "/srv/cogentia/repos/cogentia/research/cogentigram_jhn_public_open.json",
+    path.resolve(moduleDir, "..", "..", "..", "research", "cogentigram_jhn_public_open.json"),
+  ];
+  for (const candidate of candidates) {
+    if (fs.existsSync(candidate)) return candidate;
+  }
+  return null;
+}
+
+export function loadPublicOpenCogentigram(options = {}, env = process.env) {
+  if (options.cogentigramOpenProfile && typeof options.cogentigramOpenProfile === "object") {
+    return { ok: true, profile: options.cogentigramOpenProfile, path: null, source: "options" };
+  }
+  if (!shouldInjectCogentigramTopN(env, options) && !options.forceLoadOpenProfile) {
+    return { ok: false, profile: null, path: null, source: "disabled" };
+  }
+  const filePath = resolvePublicOpenCogentigramPath(env, options);
+  if (!filePath) return { ok: false, profile: null, path: null, source: "missing" };
+  try {
+    const stat = fs.statSync(filePath);
+    if (
+      cogentigramOpenCache
+      && cogentigramOpenCache.path === filePath
+      && cogentigramOpenCache.mtimeMs === stat.mtimeMs
+    ) {
+      return { ok: true, profile: cogentigramOpenCache.profile, path: filePath, source: "cache" };
+    }
+    const profile = JSON.parse(fs.readFileSync(filePath, "utf8"));
+    cogentigramOpenCache = { path: filePath, mtimeMs: stat.mtimeMs, profile };
+    return { ok: Boolean(profile?.indicators?.length), profile, path: filePath, source: "file" };
+  } catch {
+    return { ok: false, profile: null, path: filePath, source: "error" };
+  }
+}
+
+/**
+ * Compress person-open Cogentigram to top-N axes for prompt injection.
+ * @returns {{ text: string, top: object[], n: number, grant: object }}
+ */
+export function compressCogentigramTopN(profile, options = {}, env = process.env) {
+  const n = Math.max(3, Math.min(
+    Number(options.cogentigramTopN || env.AGENT_JHN_WHATSAPP_COGENTIGRAM_TOPN || 12),
+    30,
+  ));
+  const indicators = Array.isArray(profile?.indicators) ? profile.indicators.slice() : [];
+  indicators.sort((a, b) => Number(b.score || 0) - Number(a.score || 0));
+  const top = indicators.slice(0, n).map((item) => ({
+    rank: item.rank,
+    category: item.category,
+    name: item.name,
+    score: item.score,
+    confidence: item.confidence,
+    evidence: String(item.evidence || "").slice(0, 220),
+  }));
+  const low = indicators
+    .slice()
+    .sort((a, b) => Number(a.score || 0) - Number(b.score || 0))
+    .slice(0, 3)
+    .map((item) => ({ name: item.name, score: item.score, note: "do not fake this axis" }));
+
+  const grant = buildKysGrantMetadata(options, env);
+  const lines = [
+    `Compressed structural Cogentigram top-${top.length} (person-open dogfood).`,
+    `profile_id: ${profile?.profile_id || "unknown"}`,
+    `kys_profile_id: ${grant.kys_profile_id}`,
+    `purpose: ${grant.purpose}`,
+    "Structural only — not episodic; not court evidence; not clinical/HR truth.",
+    "",
+    "Top axes (prefer answers that exhibit these):",
+    ...top.map((item, i) =>
+      `${i + 1}. ${item.name} (${item.category}) score=${item.score} conf=${item.confidence} — ${item.evidence}`,
+    ),
+    "",
+    "Lower axes (do not simulate):",
+    ...low.map((item) => `- ${item.name} score=${item.score}`),
+  ];
+  return { text: lines.join("\n"), top, low, n: top.length, grant };
+}
+
+/**
+ * KYS grant metadata for draft diagnostics / traces.
+ */
+export function buildKysGrantMetadata(options = {}, env = process.env) {
+  const base = { ...DEFAULT_KYS_PUBLIC_ANSWER_GRANT };
+  if (options.kysGrant && typeof options.kysGrant === "object") {
+    Object.assign(base, options.kysGrant);
+  }
+  if (env.AGENT_JHN_WHATSAPP_KYS_PROFILE_ID) {
+    base.kys_profile_id = String(env.AGENT_JHN_WHATSAPP_KYS_PROFILE_ID).trim();
+  }
+  if (env.AGENT_JHN_WHATSAPP_KYS_PURPOSE) {
+    base.purpose = String(env.AGENT_JHN_WHATSAPP_KYS_PURPOSE).trim();
+  }
+  base.injected = {
+    public_readonly_agents: shouldInjectPublicReadonlyAgents(env, options),
+    agent_brief: shouldInjectAgentBrief(env, options),
+    answer_style_capsule: shouldInjectCogentigramCapsule(env, options),
+    structural_top_n: shouldInjectCogentigramTopN(env, options),
+  };
+  return base;
+}
+
+/**
  * Ordered system messages for WhatsApp synthesis:
- * channel policy → public-readonly AGENTS → agent_brief → cogentigram capsule.
+ * channel policy → public-readonly AGENTS → agent_brief → KYS capsule → top-N structural axes.
  *
  * @returns {Array<{ role: string, content: string }>}
  */
@@ -315,6 +458,7 @@ export function buildWhatsAppRepresentationMessages(analysis = {}, options = {},
   const messages = [
     { role: "system", content: buildWhatsAppChannelPolicy(analysis, options) },
   ];
+  const grant = buildKysGrantMetadata(options, env);
 
   if (shouldInjectPublicReadonlyAgents(env, options)) {
     const publicAgents = loadPublicReadonlyAgents(options, env);
@@ -342,9 +486,10 @@ export function buildWhatsAppRepresentationMessages(analysis = {}, options = {},
       messages.push({
         role: "system",
         content: [
-          "Specialized KYS profile kys.public_answer_style (prototype dogfood).",
-          "Person-controlled disclosure: use only for public answer fidelity. Structural style only — not episodic memory, not court evidence, not clinical/HR truth.",
-          "Canonical: cogentia/research/cogentigram_jhn_thinking_capsule.md. Optional denser open structural radar: cogentigram_jhn_public_open.json (still non-episodic/non-judicial).",
+          `Specialized KYS profile ${grant.kys_profile_id} (purpose: ${grant.purpose}).`,
+          "Person-controlled disclosure: public answer fidelity only.",
+          "Structural style only — not episodic memory, not court evidence, not clinical/HR truth.",
+          "Canonical: cogentia/research/cogentigram_jhn_thinking_capsule.md",
           "Obey style priorities (definitional rigor, systemising, process priority, density); do not fake affective warmth.",
           "",
           capsule.text,
@@ -352,7 +497,47 @@ export function buildWhatsAppRepresentationMessages(analysis = {}, options = {},
       });
     }
   }
+
+  if (shouldInjectCogentigramTopN(env, options)) {
+    if (options.cogentigramTopNText) {
+      messages.push({
+        role: "system",
+        content: String(options.cogentigramTopNText),
+      });
+    } else {
+      const loaded = loadPublicOpenCogentigram(options, env);
+      if (loaded.ok && loaded.profile) {
+        const compressed = compressCogentigramTopN(loaded.profile, options, env);
+        messages.push({
+          role: "system",
+          content: compressed.text,
+        });
+      }
+    }
+  }
+
   return messages;
+}
+
+/**
+ * Snapshot of KYS inject state for draft diagnostics.
+ */
+export function describeKysInjection(options = {}, env = process.env) {
+  const grant = buildKysGrantMetadata(options, env);
+  const open = shouldInjectCogentigramTopN(env, options)
+    ? loadPublicOpenCogentigram(options, env)
+    : { ok: false, source: "skipped" };
+  let topN = null;
+  if (open.ok && open.profile) {
+    const compressed = compressCogentigramTopN(open.profile, options, env);
+    topN = { n: compressed.n, top_names: compressed.top.map((item) => item.name) };
+  }
+  return {
+    ...grant,
+    open_profile_source: open.source || null,
+    open_profile_path: open.path || null,
+    structural_top_n: topN,
+  };
 }
 
 /** Test helper: clear file caches. */
@@ -360,4 +545,5 @@ export function clearAgentBriefCache() {
   cache = null;
   publicAgentsCache = null;
   cogentigramCapsuleCache = null;
+  cogentigramOpenCache = null;
 }
