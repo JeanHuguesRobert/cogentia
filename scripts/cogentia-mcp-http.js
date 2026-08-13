@@ -1902,6 +1902,7 @@ function guideChatResponse(question, locale, completion, retrieval = null, web =
     String(completion?.choices?.[0]?.message?.content || completion?.choices?.[0]?.text || "").trim(),
     sources
   );
+  const finalAnswer = answer || guideFallbackText(locale);
   return {
     ok: true,
     service: "fractavolta-guide",
@@ -1909,12 +1910,69 @@ function guideChatResponse(question, locale, completion, retrieval = null, web =
     mandate: guideMandate,
     question,
     locale,
-    answer: answer || guideFallbackText(locale),
+    answer: finalAnswer,
     sources,
     context: summarizeGuideContext(context, retrieval, web),
     s7: retrieval?.s7 || null,
     warnings: [...new Set([...(context.warnings || []), ...(retrieval?.warnings || []), ...(web?.warnings || [])])],
+    // Strict estimated spend accounting (quality-first: measure even when not optimizing).
+    cost_estimate: buildGuideCostEstimate({
+      question,
+      answer: finalAnswer,
+      completion,
+      retrieval,
+      web,
+    }),
   };
+}
+
+/**
+ * Estimated cost ledger for a Guide turn.
+ * Prefers provider usage when present; always records rough token estimates.
+ * Large spend is not legitimacy — this is accounting only.
+ */
+function buildGuideCostEstimate({ question, answer, completion, retrieval, web }) {
+  const usage = completion?.usage && typeof completion.usage === "object" ? completion.usage : null;
+  const promptTokens = numberOrNull(usage?.prompt_tokens);
+  const completionTokens = numberOrNull(usage?.completion_tokens);
+  const totalTokens = numberOrNull(usage?.total_tokens)
+    ?? ((promptTokens != null && completionTokens != null) ? promptTokens + completionTokens : null);
+  const estOut = estimateGuideTokens(answer);
+  const estIn = estimateGuideTokens(question)
+    + estimateGuideTokens(JSON.stringify(retrieval?.sources || []).slice(0, 4000))
+    + estimateGuideTokens(JSON.stringify(web?.sources || []).slice(0, 2000));
+  const pricePer1m = Number(process.env.COGENTIA_GUIDE_EST_USD_PER_1M_TOKENS || 0);
+  const tokensForMoney = totalTokens != null ? totalTokens : (estIn + estOut);
+  const estimatedUsd = pricePer1m > 0
+    ? Number(((tokensForMoney / 1_000_000) * pricePer1m).toFixed(6))
+    : null;
+  return {
+    kind: "guide_turn_cost_estimate/v1",
+    accounting_status: usage ? "provider_usage_partial" : "estimate_only",
+    note: "Strict estimated spend ledger. Prefer provider usage when available; char/4 estimates otherwise. Spend is not legitimacy.",
+    synthesis: completion?._cogentia_guide_synthesis || completion?.model || null,
+    model: completion?.model || null,
+    usage: usage
+      ? {
+          prompt_tokens: promptTokens,
+          completion_tokens: completionTokens,
+          total_tokens: totalTokens,
+          reasoning_tokens: numberOrNull(usage?.completion_tokens_details?.reasoning_tokens),
+        }
+      : null,
+    estimates: {
+      input_tokens_char4: estIn,
+      output_tokens_char4: estOut,
+      total_tokens_char4: estIn + estOut,
+    },
+    estimated_usd: estimatedUsd,
+    price_per_1m_tokens_usd: pricePer1m > 0 ? pricePer1m : null,
+  };
+}
+
+function numberOrNull(value) {
+  const n = Number(value);
+  return Number.isFinite(n) ? n : null;
 }
 
 function normalizeGuideCitations(answer, sources) {

@@ -21,6 +21,8 @@ let cogentigramCapsuleCache = null;
 let cogentigramOpenCache = null;
 /** @type {{ path: string|null, mtimeMs: number, text: string } | null} */
 let primaryStyleCache = null;
+/** @type {{ path: string|null, mtimeMs: number, text: string } | null} */
+let personStyleCache = null;
 
 /** Default specialized KYS grant for WhatsApp answer fidelity dogfood. */
 export const DEFAULT_KYS_PUBLIC_ANSWER_GRANT = {
@@ -561,6 +563,97 @@ export function buildPrimaryStyleSystemContent(text, options = {}, env = process
 }
 
 /**
+ * Whether to inject person-level STYLE.md (JeanHuguesRobert/STYLE.md).
+ * Default true (quality-first). AGENT_JHN_INJECT_PERSON_STYLE=0 disables.
+ */
+export function shouldInjectPersonStyle(env = process.env, options = {}) {
+  if (options.injectPersonStyle === false) return false;
+  if (options.injectPersonStyle === true) return true;
+  if (options.personStyleText != null && String(options.personStyleText).trim()) return true;
+  const personaId = resolvePersonaId(options, env);
+  if (personaId && personaId !== AGENT_JOHN_PRIMARY_PERSONA_ID) return false;
+  const raw = String(
+    env.AGENT_JHN_INJECT_PERSON_STYLE ?? env.AGENT_JHN_WHATSAPP_INJECT_PERSON_STYLE ?? "1",
+  ).trim().toLowerCase();
+  return !(raw === "0" || raw === "false" || raw === "no" || raw === "off");
+}
+
+export function resolvePersonStylePath(env = process.env, options = {}) {
+  if (options.personStylePath) {
+    const p = path.resolve(String(options.personStylePath));
+    return fs.existsSync(p) ? p : null;
+  }
+  const fromEnv = String(
+    env.AGENT_JHN_PERSON_STYLE_PATH || env.COGENTIA_PERSON_STYLE_PATH || "",
+  ).trim();
+  if (fromEnv) {
+    const p = path.resolve(fromEnv);
+    if (fs.existsSync(p)) return p;
+  }
+  const candidates = [
+    "/srv/cogentia/repos/JeanHuguesRobert/STYLE.md",
+    path.resolve(process.cwd(), "..", "JeanHuguesRobert", "STYLE.md"),
+    path.resolve(process.cwd(), "JeanHuguesRobert", "STYLE.md"),
+    path.resolve(process.cwd(), "STYLE.md"),
+    path.resolve(moduleDir, "..", "..", "..", "..", "JeanHuguesRobert", "STYLE.md"),
+    path.resolve(moduleDir, "..", "..", "..", "JeanHuguesRobert", "STYLE.md"),
+  ];
+  for (const candidate of candidates) {
+    if (fs.existsSync(candidate)) return candidate;
+  }
+  return null;
+}
+
+/**
+ * Load person-level STYLE.md if present.
+ * @returns {{ ok: boolean, text: string, path: string|null, source: string }}
+ */
+export function loadPersonStyle(options = {}, env = process.env) {
+  if (options.personStyleText != null) {
+    const text = String(options.personStyleText);
+    return {
+      ok: Boolean(text.trim()),
+      text,
+      path: options.personStylePath ? String(options.personStylePath) : null,
+      source: "options",
+    };
+  }
+  if (!shouldInjectPersonStyle(env, options)) {
+    return { ok: false, text: "", path: null, source: "disabled" };
+  }
+  const filePath = resolvePersonStylePath(env, options);
+  if (!filePath) return { ok: false, text: "", path: null, source: "missing" };
+  try {
+    const stat = fs.statSync(filePath);
+    if (
+      personStyleCache
+      && personStyleCache.path === filePath
+      && personStyleCache.mtimeMs === stat.mtimeMs
+    ) {
+      return { ok: true, text: personStyleCache.text, path: filePath, source: "cache" };
+    }
+    const text = fs.readFileSync(filePath, "utf8");
+    personStyleCache = { path: filePath, mtimeMs: stat.mtimeMs, text };
+    return { ok: Boolean(text.trim()), text, path: filePath, source: "file" };
+  } catch {
+    return { ok: false, text: "", path: filePath, source: "error" };
+  }
+}
+
+export function buildPersonStyleSystemContent(text) {
+  const body = String(text || "").trim();
+  if (!body) return "";
+  return [
+    "Person-level STYLE.md (principal-owned style mandate).",
+    "Canonical when present: <person-public-repo>/STYLE.md (e.g. JeanHuguesRobert/STYLE.md).",
+    "Governs how to sound and reason when representing this person — not identity, not clinical truth.",
+    "If STYLE.md conflicts with red-line mandates or cited corpus facts on project claims, prefer mandates/facts and name the tension.",
+    "",
+    body,
+  ].join("\n");
+}
+
+/**
  * Compact style block for Guide / OpenAI surfaces (token-aware first approximation).
  * Prefer full stack on WhatsApp; Guide gets kernel + short style priorities + optional top-N.
  *
@@ -577,13 +670,22 @@ export function buildCrossSurfaceStyleBlock(options = {}, env = process.env) {
     "Anti-patterns: generic chatbot voice, corporate brand persona, slogan caricature, first-person personhood, invented private episodes.",
   ];
 
+  if (shouldInjectPersonStyle(env, options)) {
+    const person = loadPersonStyle(options, env);
+    if (person.ok && person.text.trim()) {
+      const body = person.text.replace(/^---[\s\S]*?---\s*/m, "").trim();
+      const max = Number(options.personStyleMaxChars || env.AGENT_JHN_PERSON_STYLE_MAX_CHARS || 5000);
+      parts.push("", "--- PERSON STYLE.md ---", body.slice(0, Math.max(800, max)));
+    }
+  }
+
   if (shouldInjectPrimaryStyle(env, options)) {
     const kernel = loadPrimaryStyleKernel(options, env);
     if (kernel.ok && kernel.text.trim()) {
       // Strip YAML frontmatter for inject; keep body, cap length for Guide budgets.
       const body = kernel.text.replace(/^---[\s\S]*?---\s*/m, "").trim();
       const max = Number(options.primaryStyleMaxChars || env.AGENT_JHN_PRIMARY_STYLE_MAX_CHARS || 4500);
-      parts.push("", body.slice(0, Math.max(800, max)));
+      parts.push("", "--- PRIMARY STYLE KERNEL ---", body.slice(0, Math.max(800, max)));
     }
   }
 
@@ -628,6 +730,16 @@ export function buildWhatsAppRepresentationMessages(analysis = {}, options = {},
       messages.push({
         role: "system",
         content: buildAgentBriefSystemContent(loaded.text),
+      });
+    }
+  }
+
+  if (shouldInjectPersonStyle(env, options)) {
+    const person = loadPersonStyle(options, env);
+    if (person.ok && person.text.trim()) {
+      messages.push({
+        role: "system",
+        content: buildPersonStyleSystemContent(person.text),
       });
     }
   }
@@ -704,9 +816,15 @@ export function describeKysInjection(options = {}, env = process.env) {
     topN = { n: compressed.n, top_names: compressed.top.map((item) => item.name) };
   }
   const style = loadPrimaryStyleKernel(options, env);
+  const person = loadPersonStyle(options, env);
   return {
     ...grant,
     persona_id: resolvePersonaId(options, env),
+    person_style: {
+      injected: shouldInjectPersonStyle(env, options) && person.ok,
+      source: person.source,
+      path: person.path,
+    },
     primary_style: {
       injected: shouldInjectPrimaryStyle(env, options) && style.ok,
       source: style.source,
@@ -725,4 +843,5 @@ export function clearAgentBriefCache() {
   cogentigramCapsuleCache = null;
   cogentigramOpenCache = null;
   primaryStyleCache = null;
+  personStyleCache = null;
 }
