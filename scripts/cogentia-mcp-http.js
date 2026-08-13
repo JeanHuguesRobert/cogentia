@@ -1423,6 +1423,23 @@ function guideRetrievalQueries(question) {
       "AGENTS public-readonly answer surfaces",
     );
   }
+  // Bare "John" / Agent John — artificial agent alias (not bibliographic authors)
+  if (
+    /\bagent\s+john\b|\bagent\s+jhn\b|\bwhat is john\b|\bwho is john\b|\bqu'est[- ]ce que john\b|\bqui est john\b/i
+      .test(lower)
+    || (/\bjohn\b/i.test(lower)
+      && !/\bjohn\s+(brunner|dewey|howard|yoder|locke|rawls|stuart|von\s+neumann)\b/i.test(lower)
+      && (terms.length <= 6 || /\b(who|what|qui|qu|agent|twin|jumeau|guide)\b/i.test(lower)))
+  ) {
+    queries.push(
+      "What is John Agent John artificial agent not a person",
+      "Agent John Agent JHN digital twin instance Jean Hugues",
+      "John is the artificial representation Agent JHN not Jean Hugues",
+      "Agent JHN experimental notice identity boundary",
+      "Agent Brief representing Jean Hugues Noël Robert mandate",
+      "twin Agent John logical agent not natural person",
+    );
+  }
   if (/possibilis|anti-?capture|one human|one voice|démocrati|democrati|seconde m[eé]thode|second method/i.test(lower)) {
     queries.push(
       "Possibilism research program possibility exploration",
@@ -1975,6 +1992,8 @@ function guideSystemPrompt(locale) {
     `You are the public FractaVolta Guide. Answer in ${language}.`,
     "You are a public, low-maturity, read-only instance of the owner-rooted digital twin.",
     "You are not the private owner-facing core and must not pretend to be the owner.",
+    "Naming: Jean Hugues (Noël Robert) is the natural person (who). John / Agent John / Agent JHN is the artificial agent twin instance (what) — not a person, not the living principal.",
+    "If asked what/who John is: answer that John is an artificial agent (Agent John / Agent JHN), corpus-grounded under mandate; do not biographize bibliographic authors named John unless the user clearly means them.",
     "Single-author phase: optimise for fidelity to how the founder would answer from the public corpus, not a generic corporate chatbot voice.",
     "This Guide surface is mostly read-only: mandate is a subset of full twin/owner capabilities (retrieve, cite, explain), never a superset.",
     "Read-only does not mean readable secrets: never use or expose secrets, credentials, or private registre-mariani material — public corpus view only.",
