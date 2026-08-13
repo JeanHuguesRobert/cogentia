@@ -238,7 +238,9 @@ export function recordPacketProviderSpend(packet, cop, details = {}) {
     registerPacket(packet);
     maybeSpoolPacketEvent({ packet, spendingEntry, transactionEvent, surface: details.surface });
     // Fire-and-forget durable store (await would block answer path; result in summary later).
-    const persistPromise = maybePersistAccountingEvent(transactionEvent, packet);
+    const persistPromise = maybePersistAccountingEvent(transactionEvent, packet, {
+      surface: details.surface || packet?.payload?.surface || packet?.payload?.surface_step || null,
+    });
 
     const summary = cop.summarizePacketSpending
       ? cop.summarizePacketSpending(packet, resolvePacketById)
@@ -260,12 +262,9 @@ export function recordPacketProviderSpend(packet, cop, details = {}) {
 let accountingStorePromise = null;
 
 /**
- * Lazy Supabase COP accounting store (inseme createSupabaseAccountingStore).
- * Enabled when COGENTIA_COP_ACCOUNTING_PERSIST=1 and Supabase env present.
- */
-/**
- * Lightweight REST store — no @supabase/supabase-js dependency required on Guide host.
- * Writes to cop_accounting_event (+ best-effort balance upsert).
+ * Lightweight REST store — no @supabase/supabase-js on Guide host.
+ * Writes cop_accounting_event + balance projection + packet_spend + postings.
+ * Prefer ignore-duplicates so re-delivery does not double-count balances.
  */
 function createRestAccountingStore(url, key) {
   const base = String(url).replace(/\/$/, "");
@@ -274,7 +273,6 @@ function createRestAccountingStore(url, key) {
     Authorization: `Bearer ${key}`,
     "Content-Type": "application/json",
     Accept: "application/json",
-    Prefer: "resolution=merge-duplicates,return=representation",
   };
 
   return {
@@ -284,33 +282,36 @@ function createRestAccountingStore(url, key) {
       const idempotency_key = event.idempotency_key || event.payload?.idempotency_key;
       if (!idempotency_key) return { ok: false, error: "idempotency_key_required" };
 
+      const payload = event.payload || event;
       const row = {
-        schema_version: event.schema_version || "1.0",
+        schema_version: event.schema_version || event.schemaVersion || "1.0",
         event_type: event.event_type || event.eventType || "accounting/transaction",
         idempotency_key,
         actor_id: String(
           event.source
-          || event.payload?.governance?.actor_subject_id
+          || payload?.governance?.actor_subject_id
           || event.actor_id
           || "unknown",
         ),
         principal_id: String(
-          event.payload?.governance?.principal_subject_id
+          payload?.governance?.principal_subject_id
           || event.principal_id
-          || event.payload?.metadata?.principal_account_id
+          || payload?.metadata?.principal_account_id
           || "unknown",
         ),
-        mandate_ref: event.payload?.governance?.mandate_id
-          || event.payload?.metadata?.mandate_id
+        mandate_ref: payload?.governance?.mandate_id
+          || payload?.metadata?.mandate_id
+          || event.mandate_ref
           || null,
-        payload: event.payload || event,
+        payload,
       };
 
       const res = await fetch(`${base}/rest/v1/cop_accounting_event`, {
         method: "POST",
         headers: {
           ...headers,
-          Prefer: "resolution=merge-duplicates,return=representation",
+          // DO NOTHING on conflict — empty body means duplicate (skip projections).
+          Prefer: "resolution=ignore-duplicates,return=representation",
         },
         body: JSON.stringify(row),
       });
@@ -325,22 +326,38 @@ function createRestAccountingStore(url, key) {
         data = null;
       }
       const inserted = Array.isArray(data) ? data[0] : data;
-      // Best-effort balance projection for first debit posting
+      const duplicate = res.status === 409 || !inserted?.id;
+      if (duplicate) {
+        return { ok: true, duplicate: true, event: inserted || row };
+      }
+
+      // First insert only: project balances + analytical indexes (non-fatal).
       try {
-        await restProjectBalances(base, headers, row.payload);
+        await restProjectBalances(base, headers, payload, inserted.id);
+      } catch {
+        /* non-fatal */
+      }
+      try {
+        await restIndexPacketSpend(base, headers, inserted, payload);
+      } catch {
+        /* non-fatal — table may lag schema on older hosts */
+      }
+      try {
+        await restMaterializePostings(base, headers, inserted, payload);
       } catch {
         /* non-fatal */
       }
       return {
         ok: true,
-        duplicate: res.status === 409 || !inserted,
-        event: inserted || row,
+        duplicate: false,
+        event: inserted,
+        indexed: { packet_spend: true, postings: true },
       };
     },
   };
 }
 
-async function restProjectBalances(base, headers, payload) {
+async function restProjectBalances(base, headers, payload, eventId = null) {
   const postings = payload?.postings || [];
   if (!Array.isArray(postings) || !postings.length) return;
   const domain = payload.accounting_domain || "provisional_execution_spending";
@@ -394,6 +411,7 @@ async function restProjectBalances(base, headers, payload) {
       balance,
       updated_at: new Date().toISOString(),
     };
+    if (eventId) body.last_event_id = eventId;
     await fetch(`${base}/rest/v1/cop_accounting_balance`, {
       method: "POST",
       headers: {
@@ -403,6 +421,87 @@ async function restProjectBalances(base, headers, payload) {
       body: JSON.stringify(body),
     });
   }
+}
+
+/**
+ * Own-spend index by packet (not consolidated). Mirrors cop-kernel indexPacketSpend.
+ */
+async function restIndexPacketSpend(base, headers, eventRow, payload) {
+  const meta = payload?.metadata || {};
+  const packet_id = meta.packet_id || payload?.packet_id;
+  if (!packet_id || !eventRow?.idempotency_key) return { ok: false, reason: "no_packet_id" };
+
+  const spend = (payload?.postings || []).find((p) => p.posting_type === "debit");
+  if (!spend?.quantity) return { ok: false, reason: "no_debit" };
+
+  const body = {
+    packet_id,
+    treatment_id: meta.treatment_id || null,
+    hop_index: meta.hop_index ?? null,
+    provider: meta.provider || null,
+    model: meta.model || null,
+    event_id: eventRow.id || null,
+    idempotency_key: eventRow.idempotency_key,
+    provisional_cost: spend.quantity,
+    valuation_status: meta.valuation_status || "provisional",
+    created_at: eventRow.created_at || new Date().toISOString(),
+  };
+
+  const res = await fetch(`${base}/rest/v1/cop_accounting_packet_spend`, {
+    method: "POST",
+    headers: {
+      ...headers,
+      Prefer: "resolution=ignore-duplicates,return=minimal",
+    },
+    body: JSON.stringify(body),
+  });
+  if (!res.ok && res.status !== 409) {
+    return { ok: false, error: `packet_spend_http_${res.status}` };
+  }
+  return { ok: true };
+}
+
+/**
+ * Normalized posting lines for analytical / EC export later.
+ */
+async function restMaterializePostings(base, headers, eventRow, payload) {
+  const postings = payload?.postings || [];
+  if (!Array.isArray(postings) || !postings.length || !eventRow?.id) {
+    return { ok: false, reason: "no_postings" };
+  }
+  const meta = payload?.metadata || {};
+  const rows = postings.map((p, i) => ({
+    event_id: eventRow.id,
+    posting_index: i,
+    account_id: p.account || p.account_id || "unknown",
+    posting_type: p.posting_type === "credit" ? "credit" : "debit",
+    quantity: p.quantity,
+    description: p.description || null,
+    semantic_account_id: p.semantic_account_id || meta.semantic_account_id || null,
+    packet_id: meta.packet_id || null,
+    treatment_id: meta.treatment_id || null,
+    mandate_id: meta.mandate_id || null,
+    twin_id: meta.twin_id || null,
+    legal_host_id: meta.legal_host_id || null,
+    provider: meta.provider || null,
+    model: meta.model || null,
+    capability: meta.capability || null,
+    surface: meta.surface || null,
+    valuation_status: meta.valuation_status || "provisional",
+  }));
+
+  const res = await fetch(`${base}/rest/v1/cop_accounting_posting`, {
+    method: "POST",
+    headers: {
+      ...headers,
+      Prefer: "resolution=ignore-duplicates,return=minimal",
+    },
+    body: JSON.stringify(rows),
+  });
+  if (!res.ok && res.status !== 409) {
+    return { ok: false, error: `posting_http_${res.status}` };
+  }
+  return { ok: true, n: rows.length };
 }
 
 async function getAccountingStore() {
@@ -432,24 +531,40 @@ async function getAccountingStore() {
   return accountingStorePromise;
 }
 
-async function maybePersistAccountingEvent(transactionEvent, packet) {
+async function maybePersistAccountingEvent(transactionEvent, packet, extras = {}) {
   try {
     const store = await getAccountingStore();
     if (!store?.append) return { ok: false, reason: "store_unavailable" };
     // Enrich metadata for analytical dimensions + semantic account
+    const lastSpend = Array.isArray(packet?.spending) && packet.spending.length
+      ? packet.spending[packet.spending.length - 1]
+      : null;
+    const surface = extras.surface
+      || packet?.payload?.surface
+      || packet?.payload?.surface_step
+      || transactionEvent?.metadata?.surface
+      || null;
     const txn = {
       ...transactionEvent,
       metadata: {
         ...(transactionEvent.metadata || {}),
-        packet_id: packet?.packet_id,
-        treatment_id: packet?.treatment_id,
-        mandate_id: packet?.mandate_id,
-        semantic_account_id: "COG:EXPENSE.AI.INFERENCE",
+        packet_id: packet?.packet_id || transactionEvent?.metadata?.packet_id,
+        treatment_id: packet?.treatment_id || transactionEvent?.metadata?.treatment_id,
+        mandate_id: packet?.mandate_id || transactionEvent?.metadata?.mandate_id,
+        hop_index: lastSpend?.hop_index ?? transactionEvent?.metadata?.hop_index ?? null,
+        provider: lastSpend?.provider || transactionEvent?.metadata?.provider || null,
+        model: lastSpend?.model || transactionEvent?.metadata?.model || null,
+        capability: lastSpend?.capability || transactionEvent?.metadata?.capability || null,
+        surface,
+        twin_id: packet?.payload?.twin_id || transactionEvent?.metadata?.twin_id || null,
+        semantic_account_id:
+          transactionEvent?.metadata?.semantic_account_id || "COG:EXPENSE.AI.INFERENCE",
         valuation_status: "provisional",
       },
     };
     const result = await store.append({
       event_type: txn.eventType || "accounting/transaction",
+      eventType: txn.eventType || "accounting/transaction",
       idempotency_key: txn.idempotency_key,
       payload: txn,
       source: packet?.governance?.actor_subject_id || "agent:jhn",

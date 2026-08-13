@@ -94,7 +94,7 @@ function printSpool(spoolPath, limit) {
 }
 
 async function printEvents(env, limit) {
-  console.log("## Supabase cop_accounting_event (if configured)");
+  console.log("## Supabase durable tables (if configured)");
   const url = env.SUPABASE_URL || process.env.SUPABASE_URL;
   const key =
     env.SUPABASE_SERVICE_ROLE_KEY ||
@@ -105,31 +105,56 @@ async function printEvents(env, limit) {
     console.log("(Supabase not configured in env — spool-only mode)\n");
     return;
   }
+  const headers = {
+    apikey: key,
+    Authorization: `Bearer ${key}`,
+    Accept: "application/json",
+  };
   try {
     const r = await fetch(
       `${url}/rest/v1/cop_accounting_event?select=created_at,event_type,idempotency_key&order=created_at.desc&limit=${limit}`,
-      {
-        headers: {
-          apikey: key,
-          Authorization: `Bearer ${key}`,
-          Accept: "application/json",
-        },
-      },
+      { headers },
     );
     const rows = await r.json();
     if (!r.ok) {
-      console.log(`http=${r.status}`, typeof rows === "object" ? JSON.stringify(rows).slice(0, 120) : rows);
+      console.log(`event http=${r.status}`, typeof rows === "object" ? JSON.stringify(rows).slice(0, 120) : rows);
       console.log("");
       return;
     }
-    console.log(`http=${r.status}  n=${Array.isArray(rows) ? rows.length : 0}`);
+    console.log(`### cop_accounting_event  http=${r.status}  n=${Array.isArray(rows) ? rows.length : 0}`);
     if (Array.isArray(rows)) {
       for (const e of rows) {
         console.log(`- ${e.created_at}  ${e.event_type}  ${e.idempotency_key}`);
       }
     }
   } catch (e) {
-    console.log("error", String(e?.message || e).slice(0, 160));
+    console.log("event error", String(e?.message || e).slice(0, 160));
+  }
+  console.log("");
+
+  try {
+    const r = await fetch(
+      `${url}/rest/v1/cop_accounting_packet_spend?select=created_at,packet_id,provider,model,provisional_cost,valuation_status&order=created_at.desc&limit=${limit}`,
+      { headers },
+    );
+    const rows = await r.json();
+    if (!r.ok) {
+      console.log(`packet_spend http=${r.status}`, typeof rows === "object" ? JSON.stringify(rows).slice(0, 120) : rows);
+    } else {
+      console.log(`### cop_accounting_packet_spend  http=${r.status}  n=${Array.isArray(rows) ? rows.length : 0}`);
+      if (Array.isArray(rows)) {
+        for (const e of rows) {
+          const cost = e.provisional_cost
+            ? formatCost(e.provisional_cost)
+            : "n/a";
+          console.log(
+            `- ${e.created_at}  ${e.provider || "?"}/${e.model || "?"}  ${cost}  ${e.valuation_status || "?"}  ${e.packet_id || "?"}`,
+          );
+        }
+      }
+    }
+  } catch (e) {
+    console.log("packet_spend error", String(e?.message || e).slice(0, 160));
   }
   console.log("");
 }
