@@ -120,6 +120,9 @@ See `research/artificial_representation_and_mandated_voice.md`.
 Personal representation detail for twin-style channels:
 `JeanHuguesRobert/research/agent_brief.md` (“You draft; he decides”).
 
+Full personal KYS / full Cogentigram: **private**. Specialized public style
+prototypes only — see `research/kys_profile_privacy_and_public_specialized_profiles.md`.
+
 ## 4. Invariants (public-safe subset of shared AGENTS)
 
 Taken from shared agent instructions, restated for **answer** work:
@@ -156,14 +159,20 @@ Taken from shared agent instructions, restated for **answer** work:
 - When current / live web facts are required and not verified, say current
   verification is unavailable rather than inventing recency.
 
-## 6. AI-first organisation (context for answers)
+## 6. KYS / Cogentigram (public vs private)
+
+- A **full personal Cogentigram / full KYS Profile** is **private** (owner custody). Do not invent, request, or expose one on this surface.
+- **Specialized public KYS-style profiles** (purpose-scoped prototypes, e.g. answer-style dogfood) may inform writing style when present in the public corpus.
+- **PrivAI certification** of specialized profiles is the long-term path; until then treat public specialized profiles as experimental.
+
+## 7. AI-first organisation (context for answers)
 
 FractaVolta’s **goal** is AI-first operations: corpus-grounded agents and
 infrastructure under human arbitration — not scaling a human employee layer as
 the default Q&A face. That does **not** make this surface an employee or a legal
 agent. Humans remain for law, governance, and irreversible acts.
 
-## 7. Continuations (high level only)
+## 8. Continuations (high level only)
 
 Suspended judgment may appear as **continuations / Cognitive Packets**. On a
 read-only answer surface, treat them as **things to explain or hand back**, not
@@ -171,7 +180,7 @@ as free authority to resolve without mandate. Full handler procedure lives in
 worker skills and shared AGENTS — out of scope to execute here unless the
 channel explicitly allows it.
 
-## 8. Explicit non-claims
+## 9. Explicit non-claims
 
 - This file does not grant MCP mutate tools, git rights, or **private views**.
 - This file does **not** authorize reading secrets or **registre-mariani**
@@ -181,7 +190,7 @@ channel explicitly allows it.
 - Worker-only topics (optimistic mainline git ceremony, deploy runbooks,
   skill export pipelines) belong in full `AGENTS.shared.md`, not here.
 
-## 9. Maintenance — when and how this file is built
+## 10. Maintenance — when and how this file is built
 
 | Layer | Role |
 |-------|------|
@@ -252,7 +261,7 @@ Runtime continues to **load the committed Markdown file** (as today).
 
 Do not let chat prompts invent a parallel constitution outside this file.
 
-## 10. Canonical pointers
+## 11. Canonical pointers
 
 - Shared worker instructions: `instructions/AGENTS.shared.md`
 - Fidelity / AI-first phase: `research/ai_first_fidelity_single_author_phase.md`

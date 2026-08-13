@@ -1,21 +1,21 @@
 ---
-title: "Using a Cogentigram to improve Agent JHN fidelity"
-subtitle: "From 73-axis structural profile to answer-surface style and retrieval"
+title: "Using specialized KYS style profiles to improve Agent JHN fidelity"
+subtitle: "Full Cogentigram stays private; public dogfood uses specialized prototypes"
 author: "Jean Hugues Noël Robert, baron Mariani"
 date: "2026-08-13"
-version: "0.1"
+version: "0.2"
 document_role: source
 document_kind: research
 visibility: public
 lifecycle_state: working
 language: en
 related_research:
+  - cogentia/research/kys_profile_privacy_and_public_specialized_profiles.md
   - cogentia/research/Cogentia-and-Cogentigram.md
   - cogentia/research/cogentia-digital-twin.md
   - cogentia/research/structural_signatures.md
   - cogentia/research/ai_first_fidelity_single_author_phase.md
   - cogentia/research/artificial_representation_and_mandated_voice.md
-  - cogentia/research/cogentigram_jhn_v2026-08.json
   - cogentia/research/cogentigram_jhn_thinking_capsule.md
   - JeanHuguesRobert/research/agent_brief.md
 update_policy: UP-DEFAULT-REVIEWED
@@ -25,114 +25,94 @@ classification_rule: "explicit-metadata"
 classification_confidence: "medium"
 ---
 
-# Using a Cogentigram to improve Agent JHN fidelity
+# Using specialized KYS style profiles to improve Agent JHN fidelity
+
+## Privacy first
+
+| Object | Visibility |
+|--------|------------|
+| **Full Cogentigram / full KYS Profile** (73+ scored axes, deep evidence) | **Private** — owner custody; not public corpus research |
+| **Specialized KYS profiles** (purpose-scoped, e.g. public answer style) | **May be public** as **early prototypes**; future **PrivAI-certified** under KYS |
+| Method papers, licenses, cloaks | Public (design in the open) |
+
+See [`kys_profile_privacy_and_public_specialized_profiles.md`](kys_profile_privacy_and_public_specialized_profiles.md).
+
+**Design in the open · eat our own dog food** applies to specialized public prototypes and the framework — **not** to dumping the full private profile on GitHub.
 
 ## Problem
 
-Agent JHN and the FractaVolta Guide already use:
-
-- public corpus retrieval;
-- `agent_brief` (representation mandate and positions);
-- `AGENTS.public-readonly` (surface subset + privacy).
-
-They still under-use the **Cogentigram**: the measurable **way of thinking** (73 psychometric/behavioral axes), which is exactly the layer that distinguishes *sounding like a careful twin* from *sounding like a generic helpful bot with citations*.
+Agent JHN and the Guide use facts (retrieval), positions (`agent_brief`), and mandate (`AGENTS.public-readonly`). They still need a **public, scoped** layer for *way of thinking / writing* without exposing a full private KYS.
 
 ## Definitions (short)
 
 | Term | Role |
 |------|------|
-| **Cogentia** | Persistent structural signature of a person as inferred from interaction (not biography) |
-| **Cogentigram** | Structured measurement of that signature (axes, percentiles, confidence, evidence) |
-| **Cogentiscope** | Measurement process (historically: KYS prompt to the user’s own AI) |
+| **Full Cogentigram / full KYS** | Complete structural measurement — **private** |
+| **Specialized KYS profile** | Purpose-scoped slice (e.g. answer-style) — may be public prototype |
+| **PrivAI** | Intended governance for certification / graded disclosure (institution still forming) |
 | **agent_brief** | *What* to say / not do under mandate |
-| **Cogentigram capsule** | *How* to reason and write under that mandate |
+| **Answer-style specialized profile** | *How* to reason and write on public surfaces |
 
-See [Cogentia and Cogentigrams](Cogentia-and-Cogentigram.md), [digital twin](cogentia-digital-twin.md).
+## Dogfood artifacts (public)
 
-## What we have for JHN
-
-| Artifact | Status |
+| Artifact | Class |
 |----------|--------|
-| Sample 73-axis profile (2026-03, ChatGPT) | `apps/personal/samples/cogentigram_author.json` |
-| Updated profile (2026-08) | [`cogentigram_jhn_v2026-08.json`](cogentigram_jhn_v2026-08.json) |
-| Operational thinking capsule | [`cogentigram_jhn_thinking_capsule.md`](cogentigram_jhn_thinking_capsule.md) |
+| [`cogentigram_jhn_thinking_capsule.md`](cogentigram_jhn_thinking_capsule.md) | Specialized public answer-style KYS **prototype** |
+| `apps/personal/samples/cogentigram_author.json` | **Fixture / sample** for tooling — not a certified public full KYS of a living person for open disclosure |
+| Method: Cogentia-and-Cogentigram, kys-prompt | Public framework |
 
-The 2026-08 file **re-anchors** evidence to public corpus and twin/ops practice; scores are largely continuous with the March sample. It is **not** a clinical instrument and needs **human validation**.
+Full private profile: **not** in public `research/`; private custody only.
 
-## Why this improves fidelity
-
-Fidelity has at least four layers:
+## Why specialized public profiles help fidelity
 
 ```text
 1. Facts from public corpus          (retrieval + citations)
 2. Positions and red lines           (agent_brief)
 3. Surface mandate                   (AGENTS.public-readonly)
-4. Style of cognition / expression   (Cogentigram)   ← often missing
+4. Public answer style (specialized KYS prototype)
+5. Full private Cogentigram          (owner twin only — not Guide/chat)
 ```
 
-Without (4), answers can be *correct-ish and citable* but still *wrong-shaped*: too warm, too vague, too marketing, too little definitional rigor, too little process priority.
+Without (4), answers can be citable but wrong-shaped. Without keeping (5) private, we violate privacy and confuse dogfood with full disclosure.
 
-High axes for this profile (examples): **deductive logic, analytical precision, definitional rigor, systemising, epistemic/cognitive sovereignty, process priority, informational density**.  
-Lower / cautious: **affective empathy** — do not fake emotional performance.
+## Implementation path
 
-## How to use it (implementation path)
+### A. Inject specialized public profile (done / ongoing)
 
-### A. Inject a capsule (near-term, quality-first)
+- WhatsApp: inject answer-style capsule (default on).  
+- Guide: short subset optional.  
+- Never inject full private KYS scores.
 
-1. Load `cogentigram_jhn_thinking_capsule.md` into Agent JHN system messages  
-   (after public-readonly AGENTS, with or near `agent_brief`).  
-2. Optionally inject a **compressed top-12 axes** JSON into Guide (smaller budget).  
-3. Do **not** inject full 73-axis JSON every turn unless evaluating cost is fine.
+### B. Retrieval
 
-### B. Retrieval boosts (already started for doctrine/identity)
+Identity/method questions → agent_brief, twin papers, **specialized** style docs — not private profile files.
 
-When questions touch identity, method, values: prefer packs that include  
-agent_brief, possibilism, anti-capture, digital twin, **and** Cogentigram/Cogentia papers.
+### C. Eval
 
-### C. Eval / judge
+Judge style against specialized profile rules + corpus grounding + non-impersonation.
 
-Extend guide-fidelity and WhatsApp evals with rubric items:
+### D. PrivAI path (future)
 
-- definitional rigor present?
-- process/limits before hype?
-- density vs filler?
-- no false affective overclaim?
-- sovereignty of positions vs generic neutrality?
-
-### D. Longitudinal Cogentiscope
-
-Periodic re-score using `research/kys-prompt.md` / personal app against  
-current agent sessions **under human control**; version new dated JSON files.
+Specialized profiles gain **certification** and graded disclosure; full KYS remains under private license/custody.
 
 ### E. What not to do
 
-- Do not treat Cogentigram as **secret psychology** for public Guide.  
-- Do not use it to **impersonate** (“I feel…” as the person).  
-- Do not bypass privacy: profile is **style**, corpus is **facts**.  
-- Do not silently widen mandate because a score says “high autonomy.”
+- Publish full scored Cogentigram as `visibility: public` research  
+- Treat sample fixtures as certified production KYS  
+- Use private affective axes on public Guide  
+- Confuse “design in the open” with “disclose everything”
 
-## Recommended stack for Agent JHN prompts
+## Recommended public stack for Agent JHN
 
 ```text
-channel policy (WhatsApp / Guide)
-  → AGENTS.public-readonly (mandate subset + privacy)
-  → agent_brief (representation + positions)
-  → cogentigram thinking capsule (how to think/write)
-  → public corpus excerpts (evidence)
+channel policy
+  → AGENTS.public-readonly
+  → agent_brief
+  → specialized public answer-style KYS prototype (capsule)
+  → public corpus excerpts
   → user question
 ```
 
-## Success criteria
-
-| Signal | Target |
-|--------|--------|
-| Lexical fidelity suite (JHN questions) | Stay high after synthesis works |
-| Semantic fidelity (judge) | Higher “sounds like him” without impersonation |
-| Failure mode | Prefer explicit gap over warm generic fill |
-| Privacy | No private registry / secrets |
-
 ## Status
 
-- Profile updated and capsule written (2026-08-13).  
-- Injection into live Agent JHN/Guide prompts: **next implementation step** (see capsule § inject).  
-- Full automated Cogentiscope re-run: optional later with human validation.
+Privacy rule corrected 2026-08-13 after a mistaken public full-profile commit (withdrawn). Specialized prototype capsule remains for open dogfood.

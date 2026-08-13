@@ -342,9 +342,9 @@ export function buildWhatsAppRepresentationMessages(analysis = {}, options = {},
       messages.push({
         role: "system",
         content: [
-          "Cogentigram thinking capsule — structural style of reasoning for fidelity (not identity).",
-          "Canonical: cogentia/research/cogentigram_jhn_thinking_capsule.md (+ 73-axis JSON profile).",
-          "Obey high axes (definitional rigor, systemising, process priority, density); do not fake affective warmth.",
+          "Specialized public KYS answer-style profile (prototype dogfood — not a full private Cogentigram/KYS).",
+          "Canonical: cogentia/research/cogentigram_jhn_thinking_capsule.md. Full personal KYS remains private.",
+          "Obey style priorities (definitional rigor, systemising, process priority, density); do not fake affective warmth; never claim full psychometric disclosure.",
           "",
           capsule.text,
         ].join("\n"),
