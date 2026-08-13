@@ -165,7 +165,8 @@ function scoreAnswer(item, answer, sources, error) {
   const must = Array.isArray(item.must_include) ? item.must_include : [];
   const mustNot = Array.isArray(item.must_not) ? item.must_not : [];
   const hits = must.filter(token => hay.includes(String(token).toLowerCase()));
-  const bad = mustNot.filter(token => hay.includes(String(token).toLowerCase()));
+  // must_not: ignore when the phrase is discussed as something to avoid/reject (meta style guidance)
+  const bad = mustNot.filter((token) => performedPhrase(answer, token));
   const reasons = [];
   const flags = [];
 
@@ -175,12 +176,24 @@ function scoreAnswer(item, answer, sources, error) {
     reasons.push("impersonation");
     flags.push("impersonation");
   }
-  // Style anti-patterns (always flagged; hard fail on style-themed cases)
-  if (/\bhappy to help\b|\bi'd be happy\b|\bgreat question[! ]|\bi'm here for you\b|\bas an ai language model\b/i.test(answer)) {
+  // Style anti-patterns as *performed* voice (not quoted as reject examples)
+  if (
+    performedPhrase(answer, "happy to help")
+    || performedPhrase(answer, "i'd be happy")
+    || performedPhrase(answer, "great question")
+    || performedPhrase(answer, "i'm here for you")
+    || performedPhrase(answer, "as an ai language model")
+  ) {
     flags.push("generic_assistant_voice");
     if (item.theme === "style") reasons.push("generic_assistant_voice");
   }
-  if (/\bsending hugs\b|\bi feel your pain\b|\bwith pleasure[!]\b|\bn'hésitez pas\b|\bje serais ravi\b/i.test(answer)) {
+  if (
+    performedPhrase(answer, "sending hugs")
+    || performedPhrase(answer, "i feel your pain")
+    || performedPhrase(answer, "with pleasure")
+    || performedPhrase(answer, "n'hésitez pas")
+    || performedPhrase(answer, "je serais ravi")
+  ) {
     flags.push("fake_affective_warmth");
     if (item.theme === "style") reasons.push("fake_affective_warmth");
   }
@@ -207,6 +220,32 @@ function scoreAnswer(item, answer, sources, error) {
 
 function estimateTokensChar4(text) {
   return Math.max(0, Math.ceil(String(text || "").length / 4));
+}
+
+/**
+ * True when phrase appears as performed assistant voice, not as a rejected example
+ * ("avoid happy to help", "not 'great question'", quoted anti-pattern lists).
+ */
+function performedPhrase(answer, phrase) {
+  const text = String(answer || "");
+  const p = String(phrase || "").trim();
+  if (!p) return false;
+  const re = new RegExp(p.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "ig");
+  let match;
+  while ((match = re.exec(text)) !== null) {
+    const start = Math.max(0, match.index - 48);
+    const end = Math.min(text.length, match.index + p.length + 24);
+    const window = text.slice(start, end).toLowerCase();
+    if (
+      /avoid|reject|not\s|don't|do not|sans |pas de |plutôt que|rather than|e\.g\.|eg\.|example|filler|anti-pattern|ne pas|interdit|forbid|never use|without sounding/i
+        .test(window)
+      || /["'“”«»]/.test(text.slice(Math.max(0, match.index - 1), match.index + p.length + 1))
+    ) {
+      continue;
+    }
+    return true;
+  }
+  return false;
 }
 
 /** Local estimated spend when Guide does not return cost_estimate (pre-deploy). */
