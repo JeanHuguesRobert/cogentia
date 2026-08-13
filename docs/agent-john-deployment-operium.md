@@ -90,6 +90,34 @@ RestartSec=10
 WantedBy=multi-user.target
 ```
 
+### B2. Cognitive retrieval (Operium-owned desired state)
+
+Default retrieval is **`guide`** (website Guide reuse). For reversible librarian compare on WhatsApp **without** changing the live answer path, use **`shadow`**.
+
+**Do not invent a second ops runbook here.** Apply and verify from Operium:
+
+- [operium `docs/agent-john-whatsapp-retrieval.md`](https://github.com/JeanHuguesRobert/operium/blob/main/docs/agent-john-whatsapp-retrieval.md)
+- drop-in template: `operium/templates/agent-john/agent-john-whatsapp.service.d-retrieval.conf`
+
+Summary (Fracta pilot):
+
+```text
+AGENT_JHN_WHATSAPP_RETRIEVAL=shadow
+AGENT_JHN_WHATSAPP_GATEWAY_URL=http://127.0.0.1:8790
+AGENT_JHN_WHATSAPP_GUIDE_URL=http://127.0.0.1:8791/guide/chat
+AGENT_JHN_WHATSAPP_GUIDE_TIMEOUT_MS=45000
+```
+
+Smoke (no WhatsApp send), from cogentia checkout:
+
+```bash
+npm run test:agent-jhn-retrieval-smoke
+npm run smoke:agent-jhn-retrieval -- --mode shadow --limit 2
+```
+
+Rollback: set `AGENT_JHN_WHATSAPP_RETRIEVAL=guide` (or remove the drop-in), restart the unit.  
+Do **not** set production WhatsApp to `librarian` until a deliberate live review.
+
 Enable and start the service:
 ```bash
 sudo systemctl daemon-reload
