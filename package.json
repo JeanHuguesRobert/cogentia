@@ -62,6 +62,8 @@
     "test:agent-jhn-step-loop": "node scripts/test-agent-jhn-guide-step-loop.js",
     "test:cop-surface-accounting": "node scripts/test-cop-surface-accounting.js",
     "ops:last-cop-spends": "node scripts/ops/last-cop-spends.mjs",
+    "ops:verify-cop-accounting": "node scripts/ops/verify-cop-accounting-p0.mjs",
+    "ops:backfill-cop-indexes": "node scripts/ops/backfill-cop-accounting-indexes.mjs",
     "test:agent-jhn-retrieval-smoke": "node scripts/smoke-agent-jhn-whatsapp-retrieval.js --fixture --limit 2",
     "smoke:agent-jhn-retrieval": "node scripts/smoke-agent-jhn-whatsapp-retrieval.js",
     "agent-jhn-whatsapp": "node scripts/agent-jhn-whatsapp.js",

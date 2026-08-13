@@ -1,24 +1,34 @@
 #!/usr/bin/env bash
+# Fracta P0 accounting smoke: pull, restart Guide (needs sudo), one chat, verify chain.
+# Usage on fracta: bash scripts/ops/fracta-p0-smoke.sh
 set -euo pipefail
 cd /srv/cogentia/repos/cogentia
 git pull --ff-only origin main
-sudo systemctl restart mcp-cogentia
+
+# Restart requires root (passwordless sudo on fracta ops account).
+if sudo -n systemctl restart mcp-cogentia; then
+  echo "restarted mcp-cogentia"
+else
+  echo "WARN: sudo restart failed — process may still run old code" >&2
+  systemctl is-active mcp-cogentia || true
+fi
 sleep 3
 systemctl is-active mcp-cogentia
+echo "MainPID=$(systemctl show mcp-cogentia -p MainPID --value)"
+echo "ActiveEnter=$(systemctl show mcp-cogentia -p ActiveEnterTimestamp --value)"
 
-curl -sS -m 100 -X POST http://127.0.0.1:8791/guide/chat \
+curl -sS -m 120 -X POST http://127.0.0.1:8791/guide/chat \
   -H "Content-Type: application/json" \
   -d '{"question":"What is Possibilism briefly?","locale":"en"}' \
-  -o /tmp/guide-acct-smoke2.json \
-  -w "http=%{http_code}\n"
+  -o /tmp/guide-acct-smoke.json \
+  -w "guide_http=%{http_code}\n"
 
-node -e 'const d=require("/tmp/guide-acct-smoke2.json"); const cp=d.cognitive_packet||{}; console.log(JSON.stringify({ok:d.ok, error:d.error, mode:d.mode, packet:cp.packet_id, consol:cp.consolidated_spend}));'
+node -e 'const d=require("/tmp/guide-acct-smoke.json"); const cp=d.cognitive_packet||{}; console.log(JSON.stringify({ok:d.ok, error:d.error, mode:d.mode, packet:cp.packet_id, consol:cp.consolidated_spend, own:cp.own_spend}));'
 
 sleep 2
-node /tmp/verify-cop-accounting-p0.mjs /srv/cogentia/repos/inseme/.env
-
-PID=$(systemctl show mcp-cogentia -p MainPID --value || true)
-if [ -n "${PID:-}" ] && [ "$PID" != "0" ] && [ -r "/proc/$PID/environ" ]; then
-  echo "=== process env names ==="
-  tr '\0' '\n' < "/proc/$PID/environ" | grep -E '^(SUPABASE_URL|SUPABASE_SERVICE|COGENTIA_COP_)' | sed 's/=.*//' | sort -u
+ENV_FILE="${COGENTIA_ENV_FILE:-/srv/cogentia/repos/inseme/.env}"
+if [ ! -f "$ENV_FILE" ]; then
+  ENV_FILE="/srv/cogentia/repos/cogentia/.env"
 fi
+node scripts/ops/verify-cop-accounting-p0.mjs "$ENV_FILE"
+node scripts/ops/last-cop-spends.mjs --env "$ENV_FILE" --spool /var/lib/cogentia/accounting/spend.ndjson --limit 5

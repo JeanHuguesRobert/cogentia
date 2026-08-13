@@ -59,13 +59,15 @@ function resolveSpool(args, env) {
 function formatCost(pc) {
   if (!pc) return "n/a";
   if (typeof pc === "string") return pc;
-  const coef = String(pc.coefficient || "0");
+  let coef = String(pc.coefficient || "0");
+  const neg = coef.startsWith("-");
+  if (neg) coef = coef.slice(1);
   const scale = Number(pc.scale) || 8;
   const unit = pc.unit || "USD";
   const pad = coef.padStart(scale + 1, "0");
   const whole = pad.slice(0, -scale) || "0";
   const frac = pad.slice(-scale);
-  return `${whole}.${frac} ${unit}`;
+  return `${neg ? "-" : ""}${whole}.${frac} ${unit}`;
 }
 
 function printSpool(spoolPath, limit) {
