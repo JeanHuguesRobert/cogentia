@@ -263,6 +263,148 @@ let accountingStorePromise = null;
  * Lazy Supabase COP accounting store (inseme createSupabaseAccountingStore).
  * Enabled when COGENTIA_COP_ACCOUNTING_PERSIST=1 and Supabase env present.
  */
+/**
+ * Lightweight REST store — no @supabase/supabase-js dependency required on Guide host.
+ * Writes to cop_accounting_event (+ best-effort balance upsert).
+ */
+function createRestAccountingStore(url, key) {
+  const base = String(url).replace(/\/$/, "");
+  const headers = {
+    apikey: key,
+    Authorization: `Bearer ${key}`,
+    "Content-Type": "application/json",
+    Accept: "application/json",
+    Prefer: "resolution=merge-duplicates,return=representation",
+  };
+
+  return {
+    kind: "cop_rest_accounting_store/v1",
+    async append(envelope) {
+      const event = envelope?.event || envelope;
+      const idempotency_key = event.idempotency_key || event.payload?.idempotency_key;
+      if (!idempotency_key) return { ok: false, error: "idempotency_key_required" };
+
+      const row = {
+        schema_version: event.schema_version || "1.0",
+        event_type: event.event_type || event.eventType || "accounting/transaction",
+        idempotency_key,
+        actor_id: String(
+          event.source
+          || event.payload?.governance?.actor_subject_id
+          || event.actor_id
+          || "unknown",
+        ),
+        principal_id: String(
+          event.payload?.governance?.principal_subject_id
+          || event.principal_id
+          || event.payload?.metadata?.principal_account_id
+          || "unknown",
+        ),
+        mandate_ref: event.payload?.governance?.mandate_id
+          || event.payload?.metadata?.mandate_id
+          || null,
+        payload: event.payload || event,
+      };
+
+      const res = await fetch(`${base}/rest/v1/cop_accounting_event`, {
+        method: "POST",
+        headers: {
+          ...headers,
+          Prefer: "resolution=merge-duplicates,return=representation",
+        },
+        body: JSON.stringify(row),
+      });
+      const text = await res.text();
+      if (!res.ok && res.status !== 409) {
+        return { ok: false, error: `http_${res.status}`, body: text.slice(0, 200) };
+      }
+      let data = null;
+      try {
+        data = text ? JSON.parse(text) : null;
+      } catch {
+        data = null;
+      }
+      const inserted = Array.isArray(data) ? data[0] : data;
+      // Best-effort balance projection for first debit posting
+      try {
+        await restProjectBalances(base, headers, row.payload);
+      } catch {
+        /* non-fatal */
+      }
+      return {
+        ok: true,
+        duplicate: res.status === 409 || !inserted,
+        event: inserted || row,
+      };
+    },
+  };
+}
+
+async function restProjectBalances(base, headers, payload) {
+  const postings = payload?.postings || [];
+  if (!Array.isArray(postings) || !postings.length) return;
+  const domain = payload.accounting_domain || "provisional_execution_spending";
+  for (const posting of postings) {
+    const account_id = posting.account || posting.account_id;
+    const qty = posting.quantity;
+    if (!account_id || !qty) continue;
+    const unit = qty.unit || "USD";
+    const scale = Number(qty.scale) || 8;
+    const coef = String(qty.coefficient || "0");
+    // Read existing
+    const q = new URLSearchParams({
+      select: "*",
+      account_id: `eq.${account_id}`,
+      unit: `eq.${unit}`,
+      domain: `eq.${domain}`,
+      limit: "1",
+    });
+    const getRes = await fetch(`${base}/rest/v1/cop_accounting_balance?${q}`, {
+      headers: { ...headers, Prefer: "count=exact" },
+    });
+    const existingRows = getRes.ok ? await getRes.json().catch(() => []) : [];
+    const existing = Array.isArray(existingRows) ? existingRows[0] : null;
+    const zero = { coefficient: "0", scale, unit };
+    let debit = existing?.total_debit || zero;
+    let credit = existing?.total_credit || zero;
+    let balance = existing?.balance || zero;
+    const add = (a, b) => ({
+      coefficient: String(BigInt(a.coefficient || "0") + BigInt(b)),
+      scale,
+      unit,
+    });
+    const sub = (a, b) => ({
+      coefficient: String(BigInt(a.coefficient || "0") - BigInt(b)),
+      scale,
+      unit,
+    });
+    if (posting.posting_type === "debit") {
+      debit = add(debit, coef);
+      balance = add(balance, coef);
+    } else if (posting.posting_type === "credit") {
+      credit = add(credit, coef);
+      balance = sub(balance, coef);
+    }
+    const body = {
+      account_id,
+      unit,
+      domain,
+      total_debit: debit,
+      total_credit: credit,
+      balance,
+      updated_at: new Date().toISOString(),
+    };
+    await fetch(`${base}/rest/v1/cop_accounting_balance`, {
+      method: "POST",
+      headers: {
+        ...headers,
+        Prefer: "resolution=merge-duplicates,return=minimal",
+      },
+      body: JSON.stringify(body),
+    });
+  }
+}
+
 async function getAccountingStore() {
   if (accountingStorePromise) return accountingStorePromise;
   accountingStorePromise = (async () => {
@@ -280,34 +422,9 @@ async function getAccountingStore() {
     ).trim().toLowerCase();
     if (raw === "0" || raw === "false" || raw === "no" || raw === "off") return null;
     if (!url || !key) return null;
+    // Prefer REST (no heavy dependency on Guide host). Optional cop-kernel store if available.
     try {
-      const { createClient } = await import("@supabase/supabase-js");
-      const storeModCandidates = [
-        process.env.COGENTIA_COP_SUPABASE_STORE_PATH,
-        path.resolve(moduleDir, "..", "..", "..", "inseme", "packages", "cop-kernel", "src", "accounting", "supabaseAccountingStore.js"),
-        path.resolve(process.cwd(), "..", "inseme", "packages", "cop-kernel", "src", "accounting", "supabaseAccountingStore.js"),
-        "/srv/cogentia/repos/inseme/packages/cop-kernel/src/accounting/supabaseAccountingStore.js",
-      ].filter(Boolean);
-      let createSupabaseAccountingStore = null;
-      for (const c of storeModCandidates) {
-        try {
-          if (c.includes(":") && !/^[A-Za-z]:\\/.test(c) && !c.startsWith("/")) {
-            const m = await import(c);
-            createSupabaseAccountingStore = m.createSupabaseAccountingStore;
-            break;
-          }
-          const abs = path.resolve(c);
-          if (!fs.existsSync(abs)) continue;
-          const m = await import(pathToFileURL(abs).href);
-          createSupabaseAccountingStore = m.createSupabaseAccountingStore;
-          break;
-        } catch {
-          /* next */
-        }
-      }
-      if (!createSupabaseAccountingStore) return null;
-      const sb = createClient(url, key, { auth: { persistSession: false } });
-      return createSupabaseAccountingStore({ supabase: sb });
+      return createRestAccountingStore(url, key);
     } catch {
       return null;
     }
