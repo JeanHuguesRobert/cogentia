@@ -47,7 +47,13 @@ export function shouldInjectAgentBrief(env = process.env, options = {}) {
   if (options.injectAgentBrief === false) return false;
   if (options.injectAgentBrief === true) return true;
   if (options.agentBriefText != null && String(options.agentBriefText).trim()) return true;
-  const raw = String(env.AGENT_JHN_WHATSAPP_INJECT_AGENT_BRIEF ?? "1").trim().toLowerCase();
+  // Cross-surface: Guide + WhatsApp share quality-first agent_brief inject.
+  const raw = String(
+    env.AGENT_JHN_WHATSAPP_INJECT_AGENT_BRIEF
+      ?? env.COGENTIA_GUIDE_INJECT_AGENT_BRIEF
+      ?? env.COGENTIA_INJECT_AGENT_BRIEF
+      ?? "1",
+  ).trim().toLowerCase();
   return !(raw === "0" || raw === "false" || raw === "no" || raw === "off");
 }
 
@@ -655,12 +661,15 @@ export function buildPersonStyleSystemContent(text) {
 
 /**
  * Compact style block for Guide / OpenAI surfaces (token-aware first approximation).
- * Prefer full stack on WhatsApp; Guide gets kernel + short style priorities + optional top-N.
+ * Parity goal with WhatsApp representation stack: person STYLE + primary kernel +
+ * agent_brief (capped) + KYS grant + optional Cogentigram top-N.
+ * WhatsApp still gets multi-message full inject via buildWhatsAppRepresentationMessages.
  *
  * @returns {string}
  */
 export function buildCrossSurfaceStyleBlock(options = {}, env = process.env) {
   const persona_id = resolvePersonaId(options, env);
+  const grant = buildKysGrantMetadata(options, env);
   const parts = [
     "STYLE FIDELITY (Agent John primary approximation)",
     `persona_id: ${persona_id}`,
@@ -668,6 +677,12 @@ export function buildCrossSurfaceStyleBlock(options = {}, env = process.env) {
     "Optimise for fidelity to how the principal would answer from the public corpus (Buffon-style structural style), within this surface's read-only mandate.",
     "Priorities: definitional rigor; premises before flourish; systemising; density; literality; process priority; sober clarity (no fake warmth); second method (limits/objections); hand-back on irreversible acts.",
     "Anti-patterns: generic chatbot voice, corporate brand persona, slogan caricature, first-person personhood, invented private episodes.",
+    "",
+    "KYS grant (structural public-answer fidelity — not clinical/judicial truth):",
+    `kys_profile_id: ${grant.kys_profile_id}`,
+    `purpose: ${grant.purpose}`,
+    `privai_status: ${grant.privai_status}`,
+    "non_episodic: true; not_judicial_evidence: true; structural_only: true",
   ];
 
   if (shouldInjectPersonStyle(env, options)) {
@@ -686,6 +701,25 @@ export function buildCrossSurfaceStyleBlock(options = {}, env = process.env) {
       const body = kernel.text.replace(/^---[\s\S]*?---\s*/m, "").trim();
       const max = Number(options.primaryStyleMaxChars || env.AGENT_JHN_PRIMARY_STYLE_MAX_CHARS || 4500);
       parts.push("", "--- PRIMARY STYLE KERNEL ---", body.slice(0, Math.max(800, max)));
+    }
+  }
+
+  // agent_brief: same source as WhatsApp; capped for Guide context budget (quality-first).
+  if (shouldInjectAgentBrief(env, options) && options.includeAgentBrief !== false) {
+    const brief = loadAgentBrief(options, env);
+    if (brief.ok && brief.text.trim()) {
+      const body = brief.text.replace(/^---[\s\S]*?---\s*/m, "").trim();
+      const max = Number(
+        options.agentBriefMaxChars
+          || env.COGENTIA_GUIDE_AGENT_BRIEF_MAX_CHARS
+          || env.AGENT_JHN_AGENT_BRIEF_MAX_CHARS
+          || 6000,
+      );
+      parts.push(
+        "",
+        "--- AGENT BRIEF (principal-authored representation constraints) ---",
+        body.slice(0, Math.max(1200, max)),
+      );
     }
   }
 

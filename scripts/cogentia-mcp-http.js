@@ -2163,9 +2163,15 @@ function guideSystemPrompt(locale) {
   let styleBlock = "";
   try {
     if (!/^(0|false|no|off)$/i.test(String(process.env.COGENTIA_GUIDE_INJECT_PRIMARY_STYLE ?? "1").trim())) {
+      // Parity with WhatsApp representation stack (STYLE + brief + KYS + top-N), capped for Guide.
       styleBlock = buildCrossSurfaceStyleBlock({
         primaryStyleMaxChars: Number(process.env.COGENTIA_GUIDE_PRIMARY_STYLE_MAX_CHARS || 3500),
+        personStyleMaxChars: Number(process.env.COGENTIA_GUIDE_PERSON_STYLE_MAX_CHARS || 4000),
+        agentBriefMaxChars: Number(process.env.COGENTIA_GUIDE_AGENT_BRIEF_MAX_CHARS || 6000),
         cogentigramTopN: Number(process.env.AGENT_JHN_GUIDE_COGENTIGRAM_TOPN || 8),
+        includeAgentBrief: !/^(0|false|no|off)$/i.test(
+          String(process.env.COGENTIA_GUIDE_INJECT_AGENT_BRIEF ?? "1").trim(),
+        ),
       }, process.env);
     }
   } catch {
