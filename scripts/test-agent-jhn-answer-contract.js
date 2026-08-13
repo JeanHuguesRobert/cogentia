@@ -69,8 +69,9 @@ test("Guide then GPT-5.6 produces a grounded answer", async () => {
     return jsonResponse(completion("gpt-5.6-terra", "Réponse fondée sur le corpus."), 200, { "x-request-id": "req_contract_primary" });
   };
   const result = await buildCognitiveDraft(normalized, config, {
-    // Keep this case focused on Guide+OpenAI wiring; brief covered in dedicated test.
+    // Keep this case focused on Guide+OpenAI wiring; brief/constitution covered below.
     injectAgentBrief: false,
+    injectPublicReadonlyAgents: false,
   });
   assert.equal(calls.length, 2);
   assert.equal(calls[1].body.model, "gpt-5.6-terra");
@@ -80,7 +81,7 @@ test("Guide then GPT-5.6 produces a grounded answer", async () => {
   assert.equal(result.retrieval_mode, "guide");
 });
 
-test("WhatsApp OpenAI prompt injects the representation agent brief", async () => {
+test("WhatsApp OpenAI prompt injects public-readonly AGENTS and agent brief", async () => {
   const calls = [];
   globalThis.fetch = async (url, options) => {
     calls.push({ url: String(url), body: JSON.parse(options.body) });
@@ -88,13 +89,18 @@ test("WhatsApp OpenAI prompt injects the representation agent brief", async () =
     return jsonResponse(completion("gpt-5.6-terra", "Réponse sous mandat de représentation."));
   };
   const briefSnippet = "# Agent Brief — Representing Jean Hugues Noël Robert\nYou draft; he decides.";
+  const publicAgentsSnippet = "# Public read-only agent constitution\nSurface mandate is a strict subset.";
   const result = await buildCognitiveDraft(normalized, config, {
     injectAgentBrief: true,
     agentBriefText: briefSnippet,
+    injectPublicReadonlyAgents: true,
+    publicReadonlyAgentsText: publicAgentsSnippet,
   });
   const openai = calls.find((c) => String(c.url).includes("api.openai.com"));
   assert.ok(openai);
   const joined = openai.body.messages.map((m) => m.content).join("\n---\n");
+  assert.match(joined, /Public read-only agent constitution/);
+  assert.match(joined, /strict subset/);
   assert.match(joined, /Agent Brief — Representing Jean Hugues Noël Robert/);
   assert.match(joined, /You draft; he decides/);
   assert.match(joined, /Public corpus excerpts/);
@@ -117,6 +123,7 @@ test("empty GPT-5.6 response falls back to GPT-4.1", async () => {
   };
   const result = await buildCognitiveDraft(normalized, config, {
     injectAgentBrief: false,
+    injectPublicReadonlyAgents: false,
     onCognitiveError: (_error, event) => diagnostics.push(event),
   });
   assert.deepEqual(models, ["gpt-5.6-terra", "gpt-4.1-mini"]);
@@ -133,6 +140,7 @@ test("two provider failures return the corpus fallback", async () => {
   };
   const result = await buildCognitiveDraft(normalized, config, {
     injectAgentBrief: false,
+    injectPublicReadonlyAgents: false,
     onCognitiveError: (_error, event) => diagnostics.push(event),
   });
   assert.match(result.text, /énergie distribuée, calcul et gouvernance locale/);
@@ -145,7 +153,10 @@ test("Guide failure still allows a direct GPT-5.6 answer", async () => {
     if (String(url).includes("/guide/chat")) throw Object.assign(new Error("local guide unavailable"), { code: "ECONNREFUSED" });
     return jsonResponse(completion("gpt-5.6-terra", "Réponse directe sans corpus."));
   };
-  const result = await buildCognitiveDraft(normalized, config, { injectAgentBrief: false });
+  const result = await buildCognitiveDraft(normalized, config, {
+    injectAgentBrief: false,
+    injectPublicReadonlyAgents: false,
+  });
   assert.match(result.text, /Réponse directe sans corpus/);
   assert.equal(result.provenance_class, "openai-direct");
   assert.deepEqual(result.sources, []);

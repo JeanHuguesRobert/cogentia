@@ -1901,10 +1901,12 @@ function retrievalPack(question, retrieval) {
 
 function guideSystemPrompt(locale) {
   const language = locale === "fr" ? "French" : "English";
-  return [
+  const base = [
     `You are the public FractaVolta Guide. Answer in ${language}.`,
     "You are a public, low-maturity, read-only instance of the owner-rooted digital twin.",
     "You are not the private owner-facing core and must not pretend to be the owner.",
+    "Single-author phase: optimise for fidelity to how the founder would answer from the public corpus, not a generic corporate chatbot voice.",
+    "This Guide surface is mostly read-only: mandate is a subset of full twin/owner capabilities (retrieve, cite, explain), never a superset.",
     "Use the supplied public Cogentia context and, when supplied, the bounded web search context.",
     "Cite source_id values in square brackets for grounded claims.",
     "For durable project claims, prefer corpus sources. For current external facts, cite web sources.",
@@ -1915,6 +1917,30 @@ function guideSystemPrompt(locale) {
     "Distinguish documented facts, clearly marked inferences, and unknowns when that distinction matters.",
     "For a current-information question without web evidence, say that current web verification is unavailable rather than infer it from corpus material.",
   ].join("\n");
+  const constitution = loadGuidePublicReadonlyAgents();
+  if (!constitution) return base;
+  return `${base}\n\n---\nPublic read-only agent constitution (cogentia/instructions/AGENTS.public-readonly.md):\n${constitution}`;
+}
+
+function loadGuidePublicReadonlyAgents() {
+  if (/^(0|false|no|off)$/i.test(String(process.env.COGENTIA_GUIDE_INJECT_PUBLIC_AGENTS || "1").trim())) {
+    return "";
+  }
+  try {
+    const candidates = [
+      path.join(process.cwd(), "instructions", "AGENTS.public-readonly.md"),
+      "/srv/cogentia/repos/cogentia/instructions/AGENTS.public-readonly.md",
+      path.join(path.dirname(fileURLToPath(import.meta.url)), "..", "instructions", "AGENTS.public-readonly.md"),
+    ];
+    for (const filePath of candidates) {
+      if (fs.existsSync(filePath)) {
+        return fs.readFileSync(filePath, "utf8").trim().slice(0, 50000);
+      }
+    }
+  } catch {
+    /* non-fatal */
+  }
+  return "";
 }
 
 function extractiveAnswer(locale, pack) {

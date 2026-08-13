@@ -13,6 +13,8 @@ const moduleDir = path.dirname(fileURLToPath(import.meta.url));
 
 /** @type {{ path: string|null, mtimeMs: number, text: string } | null} */
 let cache = null;
+/** @type {{ path: string|null, mtimeMs: number, text: string } | null} */
+let publicAgentsCache = null;
 
 /**
  * Whether WhatsApp cognitive drafts should inject the agent brief.
@@ -100,6 +102,99 @@ export function loadAgentBrief(options = {}, env = process.env) {
 }
 
 /**
+ * Whether to inject the public read-only AGENTS constitution into answer surfaces.
+ * Default true. AGENT_JHN_WHATSAPP_INJECT_PUBLIC_AGENTS=0 disables for WhatsApp path.
+ */
+export function shouldInjectPublicReadonlyAgents(env = process.env, options = {}) {
+  if (options.injectPublicReadonlyAgents === false) return false;
+  if (options.injectPublicReadonlyAgents === true) return true;
+  if (options.publicReadonlyAgentsText != null && String(options.publicReadonlyAgentsText).trim()) {
+    return true;
+  }
+  const raw = String(env.AGENT_JHN_WHATSAPP_INJECT_PUBLIC_AGENTS ?? env.COGENTIA_INJECT_PUBLIC_AGENTS ?? "1")
+    .trim()
+    .toLowerCase();
+  return !(raw === "0" || raw === "false" || raw === "no" || raw === "off");
+}
+
+/**
+ * Resolve path to instructions/AGENTS.public-readonly.md
+ */
+export function resolvePublicReadonlyAgentsPath(env = process.env, options = {}) {
+  if (options.publicReadonlyAgentsPath) {
+    const p = path.resolve(String(options.publicReadonlyAgentsPath));
+    return fs.existsSync(p) ? p : null;
+  }
+  const fromEnv = String(
+    env.AGENT_JHN_WHATSAPP_PUBLIC_AGENTS_PATH ||
+    env.COGENTIA_PUBLIC_READONLY_AGENTS_PATH ||
+    "",
+  ).trim();
+  if (fromEnv) {
+    const p = path.resolve(fromEnv);
+    if (fs.existsSync(p)) return p;
+  }
+  const candidates = [
+    path.resolve(process.cwd(), "instructions", "AGENTS.public-readonly.md"),
+    path.resolve(process.cwd(), "cogentia", "instructions", "AGENTS.public-readonly.md"),
+    "/srv/cogentia/repos/cogentia/instructions/AGENTS.public-readonly.md",
+    path.resolve(moduleDir, "..", "..", "..", "instructions", "AGENTS.public-readonly.md"),
+  ];
+  for (const candidate of candidates) {
+    if (fs.existsSync(candidate)) return candidate;
+  }
+  return null;
+}
+
+/**
+ * Load public read-only AGENTS constitution (derived product for answer surfaces).
+ */
+export function loadPublicReadonlyAgents(options = {}, env = process.env) {
+  if (options.publicReadonlyAgentsText != null) {
+    const text = String(options.publicReadonlyAgentsText);
+    return {
+      ok: Boolean(text.trim()),
+      text,
+      path: options.publicReadonlyAgentsPath ? String(options.publicReadonlyAgentsPath) : null,
+      source: "options",
+    };
+  }
+  if (!shouldInjectPublicReadonlyAgents(env, options)) {
+    return { ok: false, text: "", path: null, source: "disabled" };
+  }
+  const filePath = resolvePublicReadonlyAgentsPath(env, options);
+  if (!filePath) return { ok: false, text: "", path: null, source: "missing" };
+  try {
+    const stat = fs.statSync(filePath);
+    if (
+      publicAgentsCache &&
+      publicAgentsCache.path === filePath &&
+      publicAgentsCache.mtimeMs === stat.mtimeMs
+    ) {
+      return { ok: true, text: publicAgentsCache.text, path: filePath, source: "cache" };
+    }
+    const text = fs.readFileSync(filePath, "utf8");
+    publicAgentsCache = { path: filePath, mtimeMs: stat.mtimeMs, text };
+    return { ok: Boolean(text.trim()), text, path: filePath, source: "file" };
+  } catch {
+    return { ok: false, text: "", path: filePath, source: "error" };
+  }
+}
+
+export function buildPublicReadonlyAgentsSystemContent(text) {
+  const body = String(text || "").trim();
+  if (!body) return "";
+  return [
+    "Public read-only agent constitution for this answer surface.",
+    "Canonical derived source: cogentia/instructions/AGENTS.public-readonly.md",
+    "Full worker AGENTS.md / AGENTS.shared.md may describe broader tools; this surface only has the subset described below.",
+    "Do not assume coding-agent or mutate powers from other instruction files.",
+    "",
+    body,
+  ].join("\n");
+}
+
+/**
  * Fixed channel + identity rules (always present).
  */
 export function buildWhatsAppChannelPolicy(analysis = {}, options = {}) {
@@ -145,7 +240,8 @@ export function buildAgentBriefSystemContent(briefText) {
 }
 
 /**
- * Ordered system messages for WhatsApp synthesis (policy → full brief → optional).
+ * Ordered system messages for WhatsApp synthesis:
+ * channel policy → public-readonly AGENTS → personal agent_brief.
  *
  * @returns {Array<{ role: string, content: string }>}
  */
@@ -153,19 +249,31 @@ export function buildWhatsAppRepresentationMessages(analysis = {}, options = {},
   const messages = [
     { role: "system", content: buildWhatsAppChannelPolicy(analysis, options) },
   ];
-  if (!shouldInjectAgentBrief(env, options)) return messages;
 
-  const loaded = loadAgentBrief(options, env);
-  if (loaded.ok && loaded.text.trim()) {
-    messages.push({
-      role: "system",
-      content: buildAgentBriefSystemContent(loaded.text),
-    });
+  if (shouldInjectPublicReadonlyAgents(env, options)) {
+    const publicAgents = loadPublicReadonlyAgents(options, env);
+    if (publicAgents.ok && publicAgents.text.trim()) {
+      messages.push({
+        role: "system",
+        content: buildPublicReadonlyAgentsSystemContent(publicAgents.text),
+      });
+    }
+  }
+
+  if (shouldInjectAgentBrief(env, options)) {
+    const loaded = loadAgentBrief(options, env);
+    if (loaded.ok && loaded.text.trim()) {
+      messages.push({
+        role: "system",
+        content: buildAgentBriefSystemContent(loaded.text),
+      });
+    }
   }
   return messages;
 }
 
-/** Test helper: clear file cache. */
+/** Test helper: clear file caches. */
 export function clearAgentBriefCache() {
   cache = null;
+  publicAgentsCache = null;
 }

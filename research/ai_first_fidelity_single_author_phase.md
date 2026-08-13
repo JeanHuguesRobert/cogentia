@@ -218,6 +218,10 @@ generic multi-tenant brand voice** that dilutes the single-author corpus.
 7. **Do not confuse surface parity with mandate parity.** Sharing retrieval
    indexes or answer contracts across Guide and WhatsApp is fine; copying
    **full** agent or ops capabilities into those surfaces is not.
+8. **Public answer constitution:** use the derived
+   `instructions/AGENTS.public-readonly.md` (not full worker `AGENTS.shared.md`)
+   as the injectable operational layer for Guide / chat. Keep full AGENTS files
+   for coding and mutate-capable agents.
 
 ## 8. Explicit non-claims
 

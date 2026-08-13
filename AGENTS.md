@@ -12,6 +12,10 @@ shared_instructions: https://github.com/JeanHuguesRobert/cogentia/blob/main/inst
 
 Read [`instructions/AGENTS.shared.md`](instructions/AGENTS.shared.md) first. It is the corpus-wide operational layer. This file only adds rules specific to the `JeanHuguesRobert/cogentia` repository.
 
+**Answer surfaces (Guide, WhatsApp, similar mostly read-only UIs)** use the derived
+[`instructions/AGENTS.public-readonly.md`](instructions/AGENTS.public-readonly.md) —
+a subset constitution for fidelity + public safety, not the full worker AGENTS.
+
 **Before deep tooling work:** read
 [`docs/continuations_and_cognitive_packets_for_agents.md`](docs/continuations_and_cognitive_packets_for_agents.md).
 Continuations are Cognitive Packet payloads for suspended judgment; this repo
