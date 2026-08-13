@@ -3,7 +3,7 @@ title: "AI-First Org and Fidelity Default — Single-Author Phase"
 subtitle: "FractaVolta / Cogentia / Agent JHN until multi-person personal instances"
 author: "Jean Hugues Noël Robert, baron Mariani"
 date: "2026-08-13"
-version: "0.1"
+version: "0.2"
 status: "source document — working doctrine"
 language: en
 repository: cogentia
@@ -20,8 +20,12 @@ tags:
   - ai-first
   - digital-twin
   - representation
+  - mandate
+  - read-only
 related_research:
   - cogentia/research/artificial_representation_and_mandated_voice.md
+  - cogentia/research/monotonic_mandate_attenuation.md
+  - cogentia/research/act_mandate_responsibility.md
   - cogentia/research/cogentia-digital-twin.md
   - JeanHuguesRobert/research/agent_brief.md
   - FractaVolta/research/accountable_digital_twin_commercial_thesis.md
@@ -43,7 +47,9 @@ classification_confidence: "medium"
 > **Until other people have their own personal twin instances, every public or
 > experimental answering path (Guide, Agent JHN, related chat schemes) should
 > optimise for fidelity to how Jean Hugues Noël Robert would answer from the
-> documented corpus — not for a generic corporate chatbot voice.**
+> documented corpus — not for a generic corporate chatbot voice.**  
+> **Those surfaces are mostly read-only: their capabilities and mandates are a
+> strict subset of the full twin/owner capability set, never a superset.**
 
 This is a **phase doctrine**, not a claim of legal identity or unlimited mandate.
 
@@ -123,7 +129,48 @@ Does **not** mean:
 See [Artificial Representation and Mandated Voice](artificial_representation_and_mandated_voice.md):
 *fidelity is not identity; representation is not impersonation*.
 
-## 4. Corpus scope
+## 4. Surfaces are attenuated mandates (mostly read-only)
+
+**Main structural difference** between answering surfaces and the full twin /
+owner-facing stack:
+
+```text
+full capability set (owner, private tools, mutate, ops, irreversible acts)
+  └── attenuated surface mandates (Guide, WhatsApp JHN, similar chat UIs)
+        └── mostly read-only: retrieve, cite, explain, draft under policy
+```
+
+| Surface | Typical mandate shape | Not in the surface mandate |
+|---------|----------------------|----------------------------|
+| **FractaVolta Guide** (web) | Public read-only corpus Q&A; orient; cite; explain public doctrine | Private vault, mutate, hire/spend, owner impersonation as legal agent |
+| **Agent JHN WhatsApp** | Experimental channel: draft/send under **narrow** policy + grant; disclosure; self-chat first | Full owner authority; group free-for-all; silent expand of powers |
+| **Other similar chat / FAQ surfaces** | Same class: **subset** of capabilities | Whole capability catalogue of Cogentia / Operium / private twin |
+
+Consequences:
+
+1. **Fidelity is about *how to answer*, not *what the surface may do*.**  
+   A read-only surface still aims for “what JHN would say from the corpus,”
+   but only **within** its allowed effects (usually: produce text and
+   citations, sometimes enqueue a constrained outbound message).
+
+2. **Subset, never superset.**  
+   Channel config, MCP public view, systemd env, and product policy may only
+   **narrow** authority relative to parent mandates
+   ([monotonic mandate attenuation](monotonic_mandate_attenuation.md)).  
+   “AI-first” does **not** mean every surface inherits every tool.
+
+3. **Guide vs WhatsApp differ by policy slice, not by fidelity goal.**  
+   Both are fidelity-seeking answer surfaces in the single-author phase.  
+   They differ in **disclosure, audience, send path, history, and grant** —
+   i.e. which *subset* of capabilities is enabled — not in whether answers
+   should invent a separate “employee brand voice.”
+
+4. **Mutate / ops / private-read stay on other planes.**  
+   Continuations, registry publish, Fracta ops, private config hygiene, etc.
+   live under **different** mandates and gateways. Chat surfaces must not
+   silently absorb them.
+
+## 5. Corpus scope
 
 | Layer | Role |
 |-------|------|
@@ -136,7 +183,7 @@ When retrieval budget is limited, **prefer active registry repos**, then expand
 rather than invent. When budget allows (quality-first phase), **prefer broader
 corpus coverage** over a thin FAQ slice.
 
-## 5. What changes when multi-person instances exist
+## 6. What changes when multi-person instances exist
 
 When other people have **personal twin instances**:
 
@@ -150,23 +197,29 @@ When other people have **personal twin instances**:
 Until that multi-instance regime is real in product, **do not optimise for a
 generic multi-tenant brand voice** that dilutes the single-author corpus.
 
-## 6. Implementation implications (normative for agents)
+## 7. Implementation implications (normative for agents)
 
 1. **Prompts** for Guide / JHN / twin draft paths should encode
    **fidelity-to-author-from-corpus**, not “helpful generic assistant.”
-2. **Retrieval** should prefer depth across the living corpus (registry-weighted)
+2. **Prompts and policy must also state the surface subset** (read-only /
+   public-only / no-mutate / send only under grant) so fidelity never
+   expands into unauthorised acts.
+3. **Retrieval** should prefer depth across the living corpus (registry-weighted)
    over isolated marketing pages.
-3. **Representation briefs** (`agent_brief.md`) and **doctrine** (this note,
+4. **Representation briefs** (`agent_brief.md`) and **doctrine** (this note,
    mandated voice) are first-class system inputs for quality, not optional
    footnotes.
-4. **Human employees as the answer layer** are out of the target architecture
+5. **Human employees as the answer layer** are out of the target architecture
    for FractaVolta’s AI-first goal; humans remain for **governance, law, and
    irreversible arbitration**.
-5. **Cost optimisation** (smaller prompts, thinner retrieval) is deferred until
+6. **Cost optimisation** (smaller prompts, thinner retrieval) is deferred until
    fidelity quality is measured as adequate — see Agent JHN quality-first
    choices (e.g. full `agent_brief` injection).
+7. **Do not confuse surface parity with mandate parity.** Sharing retrieval
+   indexes or answer contracts across Guide and WhatsApp is fine; copying
+   **full** agent or ops capabilities into those surfaces is not.
 
-## 7. Explicit non-claims
+## 8. Explicit non-claims
 
 - Not a labour-law statement about contractors or service providers.
 - Not a claim that AI systems are legal persons or employees.
@@ -174,9 +227,10 @@ generic multi-tenant brand voice** that dilutes the single-author corpus.
 - Not a requirement that every sentence sound like first-person diary voice;
   fidelity includes the second method: limits, objections, and sources.
 
-## 8. Status
+## 9. Status
 
 Stated here so the phase is **auditable**. Prior practice (Guide founder-rooted
-voice, Agent JHN brief, twin fidelity language) already leaned this way; this
-document makes the **AI-first org goal** and the **single-author fidelity
-default** explicit.
+voice, Agent JHN brief, twin fidelity language, public MCP read-only catalogue)
+already leaned this way; this document makes the **AI-first org goal**, the
+**single-author fidelity default**, and the **read-only surface = attenuated
+subset mandate** rule explicit.
