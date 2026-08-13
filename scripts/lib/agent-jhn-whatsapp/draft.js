@@ -473,6 +473,7 @@ async function requestOpenAiModelDraft(
   const request_id = response.headers.get("x-request-id");
 
   // COP: WhatsApp own synthesis spend on a downstream packet (not Guide's packet).
+  // Guide HTTP records its own spend in mcp-cogentia — do not copy those lines here.
   const rootPacket = draftOptions.cop_root_packet || null;
   const cop = draftOptions.cop || null;
   if (rootPacket && cop && (prompt_tokens || completion_tokens || content)) {
@@ -483,7 +484,7 @@ async function requestOpenAiModelDraft(
         instance_id: "agent:jhn:whatsapp",
       });
       const spendPacket = spawned.ok && spawned.packet ? spawned.packet : rootPacket;
-      recordPacketProviderSpend(spendPacket, cop, {
+      const recorded = recordPacketProviderSpend(spendPacket, cop, {
         provider: "openai",
         model,
         prompt_tokens: prompt_tokens || Math.ceil(JSON.stringify(messages).length / 4),
@@ -494,6 +495,10 @@ async function requestOpenAiModelDraft(
         hop: { route_reason: "whatsapp_synthesis" },
         allow_empty: true,
       });
+      // Await durable index (event + packet_spend + postings) so short smokes don't race.
+      if (recorded?.persistPromise) {
+        await recorded.persistPromise.catch(() => null);
+      }
     } catch {
       /* accounting must not break answers */
     }
