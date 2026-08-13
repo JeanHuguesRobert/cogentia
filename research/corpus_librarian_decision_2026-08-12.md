@@ -104,6 +104,8 @@ WhatsApp cognitive drafts accept a reversible env flip (default remains Guide):
 | `shadow` | Guide (unchanged) | librarian compare on draft.shadow |
 
 Code: `scripts/lib/agent-jhn-whatsapp/draft.js` (`resolveRetrievalMode`).  
+Smoke: `npm run test:agent-jhn-retrieval-smoke` (fixture) and  
+`npm run smoke:agent-jhn-retrieval -- --mode shadow|librarian` (live; no WhatsApp send).  
 Do **not** set production WhatsApp to `librarian` until a deliberate live smoke; prefer `shadow` first.
 
 ## Resume condition

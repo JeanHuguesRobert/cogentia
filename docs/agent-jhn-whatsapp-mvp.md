@@ -99,6 +99,14 @@ AGENT_JHN_WHATSAPP_SEND_ENABLED=false
 # AGENT_JHN_WHATSAPP_GATEWAY_URL=http://127.0.0.1:8790
 ```
 
+Retrieval smoke (no WhatsApp send; writes under `.cogentia/evals/agent-jhn-retrieval/`):
+
+```bash
+npm run test:agent-jhn-retrieval-smoke
+npm run smoke:agent-jhn-retrieval -- --mode shadow --limit 3
+npm run smoke:agent-jhn-retrieval -- --mode librarian --limit 5
+```
+
 ### What must not be committed vs what may be versioned
 
 Even inside the **private** `registre-mariani` repo, session keys and raw bodies stay gitignored (same rule as `secrets/`).

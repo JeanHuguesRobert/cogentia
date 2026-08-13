@@ -152,6 +152,10 @@ async function buildGuideDraft(normalized, config, options, questionAnalysis, us
     process.env.AGENT_JHN_WHATSAPP_GUIDE_URL ||
     "http://127.0.0.1:8791/guide/chat",
   );
+  const guideTimeoutMs = boundedTimeoutMs(
+    options.guideTimeoutMs ?? process.env.AGENT_JHN_WHATSAPP_GUIDE_TIMEOUT_MS,
+    8000,
+  );
   const guideStartedAt = Date.now();
   try {
     const response = await fetch(guideUrl, {
@@ -162,20 +166,20 @@ async function buildGuideDraft(normalized, config, options, questionAnalysis, us
         locale: questionAnalysis.locale,
         web_search: questionAnalysis.needsCurrentWeb,
       }),
-      signal: AbortSignal.timeout(8000),
+      signal: AbortSignal.timeout(guideTimeoutMs),
     });
     if (response.ok) guideResult = await response.json();
     else {
       const error = new Error("Guide retrieval returned an error response");
       emitCognitiveError(options, error, {
         provider: "cogentia-guide", stage: "retrieval_response", endpoint_host: hostOf(guideUrl),
-        elapsed_ms: Date.now() - guideStartedAt, timeout_ms: 8000, http_status: response.status,
+        elapsed_ms: Date.now() - guideStartedAt, timeout_ms: guideTimeoutMs, http_status: response.status,
       });
     }
   } catch (error) {
     emitCognitiveError(options, error, {
       provider: "cogentia-guide", stage: "retrieval_request", endpoint_host: hostOf(guideUrl),
-      elapsed_ms: Date.now() - guideStartedAt, timeout_ms: 8000, timed_out: isTimeoutError(error),
+      elapsed_ms: Date.now() - guideStartedAt, timeout_ms: guideTimeoutMs, timed_out: isTimeoutError(error),
     });
   }
 
@@ -494,6 +498,12 @@ function hostOf(url) {
   } catch {
     return null;
   }
+}
+
+function boundedTimeoutMs(value, fallback = 8000) {
+  const number = Number(value);
+  if (!Number.isFinite(number)) return fallback;
+  return Math.max(1000, Math.min(Math.trunc(number), 120000));
 }
 
 function summarizeInbound(text) {
