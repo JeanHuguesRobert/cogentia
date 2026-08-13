@@ -216,9 +216,10 @@ async function buildGuideDraft(normalized, config, options, questionAnalysis, us
   }
 
   const apiKey = String(process.env.OPENAI_API_KEY || "").trim();
+  // Prefer quality-first default (sol > terra > mini). Host drop-in may override.
   const models = apiKey ? [
-    process.env.AGENT_JHN_WHATSAPP_OPENAI_MODEL || "gpt-5.6-terra",
-    process.env.AGENT_JHN_WHATSAPP_OPENAI_FALLBACK_MODEL || "gpt-4.1-mini",
+    process.env.AGENT_JHN_WHATSAPP_OPENAI_MODEL || "gpt-5.6-sol",
+    process.env.AGENT_JHN_WHATSAPP_OPENAI_FALLBACK_MODEL || "gpt-5.6-terra",
   ].filter((model, index, all) => model && all.indexOf(model) === index) : [];
   const engine = createAnswerEngine({
     retrieve: async () => guideResult,
@@ -359,7 +360,7 @@ async function invokeLibrarian(userText, questionAnalysis, options) {
   const model = String(
     options.model ||
     process.env.AGENT_JHN_WHATSAPP_OPENAI_MODEL ||
-    "gpt-5.6-terra",
+    "gpt-5.6-sol",
   );
   return answerFn(
     {
