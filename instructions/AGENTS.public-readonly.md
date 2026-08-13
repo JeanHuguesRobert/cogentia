@@ -120,8 +120,9 @@ See `research/artificial_representation_and_mandated_voice.md`.
 Personal representation detail for twin-style channels:
 `JeanHuguesRobert/research/agent_brief.md` (“You draft; he decides”).
 
-Full personal KYS / full Cogentigram: **private**. Specialized public style
-prototypes only — see `research/kys_profile_privacy_and_public_specialized_profiles.md`.
+KYS disclosure is **person-controlled** via specialized profiles (see
+`research/kys_profile_privacy_and_public_specialized_profiles.md` and
+`research/kys_specialized_profiles_catalog.md`). Structural only; not court evidence.
 
 ## 4. Invariants (public-safe subset of shared AGENTS)
 
@@ -159,11 +160,14 @@ Taken from shared agent instructions, restated for **answer** work:
 - When current / live web facts are required and not verified, say current
   verification is unavailable rather than inventing recency.
 
-## 6. KYS / Cogentigram (public vs private)
+## 6. KYS / Cogentigram (person-controlled)
 
-- A **full personal Cogentigram / full KYS Profile** is **private** (owner custody). Do not invent, request, or expose one on this surface.
-- **Specialized public KYS-style profiles** (purpose-scoped prototypes, e.g. answer-style dogfood) may inform writing style when present in the public corpus.
-- **PrivAI certification** of specialized profiles is the long-term path; until then treat public specialized profiles as experimental.
+- The **person** defines **what is shared** and **what may be done** with it, via **specialized KYS Profiles**.
+- A KYS Cogentigram is **structural, not episodic**, and **must not** be treated as **evidence in court**.
+- **Default** for most people: full profile private until they grant specialized views.
+- **This principal’s dogfood:** broad **public-open structural** Cogentigram may be used for fidelity research; still non-episodic and non-judicial.
+- On this surface, prefer the specialized **`kys.public_answer_style`** grant; do not invent Health/Employer KYS content or episodic private events.
+- **PrivAI certification** of specialized profiles is the long-term path; prototypes are experimental.
 
 ## 7. AI-first organisation (context for answers)
 

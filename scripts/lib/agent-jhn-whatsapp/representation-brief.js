@@ -342,9 +342,10 @@ export function buildWhatsAppRepresentationMessages(analysis = {}, options = {},
       messages.push({
         role: "system",
         content: [
-          "Specialized public KYS answer-style profile (prototype dogfood — not a full private Cogentigram/KYS).",
-          "Canonical: cogentia/research/cogentigram_jhn_thinking_capsule.md. Full personal KYS remains private.",
-          "Obey style priorities (definitional rigor, systemising, process priority, density); do not fake affective warmth; never claim full psychometric disclosure.",
+          "Specialized KYS profile kys.public_answer_style (prototype dogfood).",
+          "Person-controlled disclosure: use only for public answer fidelity. Structural style only — not episodic memory, not court evidence, not clinical/HR truth.",
+          "Canonical: cogentia/research/cogentigram_jhn_thinking_capsule.md. Optional denser open structural radar: cogentigram_jhn_public_open.json (still non-episodic/non-judicial).",
+          "Obey style priorities (definitional rigor, systemising, process priority, density); do not fake affective warmth.",
           "",
           capsule.text,
         ].join("\n"),

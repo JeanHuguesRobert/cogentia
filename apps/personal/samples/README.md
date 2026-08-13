@@ -2,13 +2,17 @@
 
 ## `cogentigram_author.json`
 
-Early **fixture / sample** Cogentigram-shaped JSON (73 indicators) used for UI and pipeline dogfood.
+Historical **fixture** (2026-03) for UI/pipeline dogfood: 73-indicator Cogentigram-shaped JSON.
 
 | Is | Is not |
 |----|--------|
-| Tooling sample | Public certified full KYS of a living person |
-| Historical prototype (2026-03) | Authorization to publish full private profiles |
+| Tooling sample / early prototype | Final PrivAI-certified product |
+| Structural-style data shape | Episodic memory store |
+| Useful for schema dogfood | Judicial evidence or clinical certificate |
 
-**Privacy rule:** full personal Cogentigrams / full KYS Profiles remain **private**.  
-What may go public are **PrivAI-oriented specialized KYS profiles** (purpose-scoped prototypes).  
-See `research/kys_profile_privacy_and_public_specialized_profiles.md`.
+**Person-controlled KYS:** the person decides what is shared and under which **specialized KYS profile**.  
+See `research/kys_profile_privacy_and_public_specialized_profiles.md` and `research/kys_specialized_profiles_catalog.md`.
+
+For this principal’s **deliberately open** structural dogfood (Agent JHN), see  
+`research/cogentigram_jhn_public_open.json` and specialized  
+`research/cogentigram_jhn_thinking_capsule.md` (`kys.public_answer_style`).

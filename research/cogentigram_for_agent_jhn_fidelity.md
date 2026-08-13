@@ -1,9 +1,9 @@
 ---
-title: "Using specialized KYS style profiles to improve Agent JHN fidelity"
-subtitle: "Full Cogentigram stays private; public dogfood uses specialized prototypes"
+title: "Specialized KYS profiles and Agent JHN fidelity"
+subtitle: "Person-controlled disclosure; JHN open dogfood; non-episodic; non-judicial"
 author: "Jean Hugues Noël Robert, baron Mariani"
 date: "2026-08-13"
-version: "0.2"
+version: "0.3"
 document_role: source
 document_kind: research
 visibility: public
@@ -11,12 +11,9 @@ lifecycle_state: working
 language: en
 related_research:
   - cogentia/research/kys_profile_privacy_and_public_specialized_profiles.md
-  - cogentia/research/Cogentia-and-Cogentigram.md
-  - cogentia/research/cogentia-digital-twin.md
-  - cogentia/research/structural_signatures.md
-  - cogentia/research/ai_first_fidelity_single_author_phase.md
-  - cogentia/research/artificial_representation_and_mandated_voice.md
+  - cogentia/research/kys_specialized_profiles_catalog.md
   - cogentia/research/cogentigram_jhn_thinking_capsule.md
+  - cogentia/research/cogentigram_jhn_public_open.json
   - JeanHuguesRobert/research/agent_brief.md
 update_policy: UP-DEFAULT-REVIEWED
 classification_source: "cogentia.js"
@@ -25,94 +22,63 @@ classification_rule: "explicit-metadata"
 classification_confidence: "medium"
 ---
 
-# Using specialized KYS style profiles to improve Agent JHN fidelity
+# Specialized KYS profiles and Agent JHN fidelity
 
-## Privacy first
+## PrivAI thesis (applied)
 
-| Object | Visibility |
-|--------|------------|
-| **Full Cogentigram / full KYS Profile** (73+ scored axes, deep evidence) | **Private** — owner custody; not public corpus research |
-| **Specialized KYS profiles** (purpose-scoped, e.g. public answer style) | **May be public** as **early prototypes**; future **PrivAI-certified** under KYS |
-| Method papers, licenses, cloaks | Public (design in the open) |
+The **person** defines **what is shared** and **what may be done** with it.  
+That is implemented through **specialized KYS Profiles** (purpose-scoped grants), not platform capture of a life file.
 
-See [`kys_profile_privacy_and_public_specialized_profiles.md`](kys_profile_privacy_and_public_specialized_profiles.md).
+A KYS **Cogentigram** is **structural** (stable patterns). It:
 
-**Design in the open · eat our own dog food** applies to specialized public prototypes and the framework — **not** to dumping the full private profile on GitHub.
+- does **not** include **episodic** information (no event diary);
+- **must not** be treated as **evidence in court**.
 
-## Problem
+## Agent JHN (this principal)
 
-Agent JHN and the Guide use facts (retrieval), positions (`agent_brief`), and mandate (`AGENTS.public-readonly`). They still need a **public, scoped** layer for *way of thinking / writing* without exposing a full private KYS.
+This principal is deliberately **open** about structural self-model for research dogfood:
 
-## Definitions (short)
+| Layer | Artifact | Role |
+|-------|----------|------|
+| Mandate subset | `AGENTS.public-readonly` | What the surface may do |
+| Representation | `agent_brief` | What to say / red lines |
+| Specialized KYS | `kys.public_answer_style` → thinking capsule | How to write/reason |
+| Open structural radar | `cogentigram_jhn_public_open.json` | Full 73-axis **structural** profile, person-open |
+| Facts | Public corpus retrieval | Evidence |
 
-| Term | Role |
-|------|------|
-| **Full Cogentigram / full KYS** | Complete structural measurement — **private** |
-| **Specialized KYS profile** | Purpose-scoped slice (e.g. answer-style) — may be public prototype |
-| **PrivAI** | Intended governance for certification / graded disclosure (institution still forming) |
-| **agent_brief** | *What* to say / not do under mandate |
-| **Answer-style specialized profile** | *How* to reason and write on public surfaces |
+Episodic private traces (raw WhatsApp, private registry dumps) stay **out**.
 
-## Dogfood artifacts (public)
-
-| Artifact | Class |
-|----------|--------|
-| [`cogentigram_jhn_thinking_capsule.md`](cogentigram_jhn_thinking_capsule.md) | Specialized public answer-style KYS **prototype** |
-| `apps/personal/samples/cogentigram_author.json` | **Fixture / sample** for tooling — not a certified public full KYS of a living person for open disclosure |
-| Method: Cogentia-and-Cogentigram, kys-prompt | Public framework |
-
-Full private profile: **not** in public `research/`; private custody only.
-
-## Why specialized public profiles help fidelity
-
-```text
-1. Facts from public corpus          (retrieval + citations)
-2. Positions and red lines           (agent_brief)
-3. Surface mandate                   (AGENTS.public-readonly)
-4. Public answer style (specialized KYS prototype)
-5. Full private Cogentigram          (owner twin only — not Guide/chat)
-```
-
-Without (4), answers can be citable but wrong-shaped. Without keeping (5) private, we violate privacy and confuse dogfood with full disclosure.
-
-## Implementation path
-
-### A. Inject specialized public profile (done / ongoing)
-
-- WhatsApp: inject answer-style capsule (default on).  
-- Guide: short subset optional.  
-- Never inject full private KYS scores.
-
-### B. Retrieval
-
-Identity/method questions → agent_brief, twin papers, **specialized** style docs — not private profile files.
-
-### C. Eval
-
-Judge style against specialized profile rules + corpus grounding + non-impersonation.
-
-### D. PrivAI path (future)
-
-Specialized profiles gain **certification** and graded disclosure; full KYS remains under private license/custody.
-
-### E. What not to do
-
-- Publish full scored Cogentigram as `visibility: public` research  
-- Treat sample fixtures as certified production KYS  
-- Use private affective axes on public Guide  
-- Confuse “design in the open” with “disclose everything”
-
-## Recommended public stack for Agent JHN
+## Stack
 
 ```text
 channel policy
   → AGENTS.public-readonly
   → agent_brief
-  → specialized public answer-style KYS prototype (capsule)
+  → kys.public_answer_style (capsule)
+  → optional: person-open structural Cogentigram JSON (dense)
   → public corpus excerpts
   → user question
 ```
 
+## Specialized profiles around JHN (ideas in use)
+
+| Profile id | Status |
+|------------|--------|
+| `kys.public_answer_style` | Dogfood inject (capsule) |
+| `kys.research_partner` | Idea — denser method axes for co-writing |
+| `kys.coding_pair` | Idea — coding-agent style |
+| `kys.civic_communication` | Idea — public political drafting under human dispatch |
+| `kys.health` / `kys.employer` | Catalog only — **not** for public Guide |
+
+Catalog: [`kys_specialized_profiles_catalog.md`](kys_specialized_profiles_catalog.md).
+
+## Success criteria
+
+- Higher style fidelity without impersonation  
+- No episodic fabrication  
+- No “use this in court / HR” framing  
+- Person can re-scope specialized grants later under PrivAI  
+
 ## Status
 
-Privacy rule corrected 2026-08-13 after a mistaken public full-profile commit (withdrawn). Specialized prototype capsule remains for open dogfood.
+v0.3 — person-open full structural JSON restored as deliberate dogfood; specialized answer-style profile remains the primary inject; privacy doctrine person-controlled rather than “full always private for everyone.”

@@ -1,15 +1,16 @@
 ---
-title: "KYS / Cogentigram privacy — full profile private; specialized public prototypes"
-subtitle: "PrivAI-oriented disclosure rule for structural cognitive profiles"
+title: "KYS Profiles — person-controlled disclosure via specialized views"
+subtitle: "PrivAI: the person defines what is shared and what may be done with it"
 author: "Jean Hugues Noël Robert, baron Mariani"
 date: "2026-08-13"
-version: "0.1"
+version: "0.2"
 document_role: source
 document_kind: doctrine
 visibility: public
 lifecycle_state: working
 language: en
 related_research:
+  - cogentia/research/kys_specialized_profiles_catalog.md
   - cogentia/research/Cogentia-and-Cogentigram.md
   - cogentia/research/cogentia-digital-twin.md
   - cogentia/research/cogentigram_for_agent_jhn_fidelity.md
@@ -22,79 +23,91 @@ classification_rule: "explicit-metadata"
 classification_confidence: "medium"
 ---
 
-# KYS / Cogentigram privacy — full profile private; specialized public prototypes
+# KYS Profiles — person-controlled disclosure via specialized views
 
-## Compact rule
+## Compact rule (PrivAI direction)
 
 ```text
-Full Cogentigram / full KYS Profile  →  PRIVATE by default
-PrivAI-certified specialized KYS profiles → may be PUBLIC (prototypes, dogfood)
+The PERSON decides:
+  (1) what is shared
+  (2) what may be done with what is shared
+
+Mechanism: specialized KYS Profiles (purpose-scoped grants)
+Not: silent platform capture of a full life file
 ```
 
-**Design in the open** for the *framework*, *licenses*, *specialized public slices*, and *answer-surface style rules*.  
-**Do not** publish the **full** personal Cogentigram (all axes, percentiles, confidence, deep evidence) as public corpus material.
+**Default for most people:** full structural Cogentigram stays **private** until they grant specialized views.  
+**Exception by deliberate choice:** a person may publish a **broad or full structural** Cogentigram for open dogfood (e.g. Agent JHN principal) — still **non-episodic**, still **not court evidence**, still bound by **use profiles**.
 
-This aligns with: public-by-default does not cancel privacy; answer surfaces are public-read-only; registre-mariani / private custody hold private living data.
+**Design in the open · eat our own dog food.** Early specialized profiles and method docs are public prototypes, not the final PrivAI product.
 
-## What is a full KYS Profile / full Cogentigram
+## What a KYS Cogentigram is / is not
 
-A **full** profile is the complete structural measurement (classically **73+ indicators** with scores, confidence, relationship assessment, blind spots, etc.). It is intimate structural self-knowledge — closer to a **private KYS dossier** than to a public bio.
+| Is | Is not |
+|----|--------|
+| Structural signature (stable cognition, style, decision tendencies) | Episodic memory (events, chat logs, “what I did last week”) |
+| Self-knowledge / twin / mediation instrument under contract | **Evidence in court** (must not be treated as judicial proof of fact, intent, or guilt) |
+| Scorable axes with confidence and revision | Clinical diagnosis or medical certificate by default |
+| Controlled by the person via specialized profiles | Free-for-all public dump without purpose bounds |
 
-| Property | Full KYS / full Cogentigram |
-|----------|------------------------------|
-| Visibility | **private** (or confidential under mandate) |
-| Custody | Private vault / private registry / non-public path — **not** public GitHub research |
-| Use | Owner twin, certified processors, future PrivAI workflows under KYS license |
-| Not for | Public Guide dump, public research indexes, anonymous web scrapers |
+## Specialized KYS Profiles
 
-## What may go public
+Specialized profiles answer two questions for each grant:
 
-**PrivAI-oriented specialized KYS profiles** (early prototypes):
+1. **Share what?** (which axes / resolution / cloaks)  
+2. **Use for what?** (allowed purposes, forbidden secondary uses)
 
-- **Purpose-scoped** slices (e.g. “public answer style”, “coding-pair style”, “research-writing style”)
-- **Operational rules** for a surface (how to write/reason), not a full psychometric radar
-- **Framework and method** papers (Cogentia and Cogentigrams, KYS prompt contracts)
-- **Anonymized or synthetic samples** clearly labelled as samples / fixtures
-- Explicit **prototype** status: design in the open, dogfood on Agent JHN / Guide
+Examples (non-exhaustive; see [catalog](kys_specialized_profiles_catalog.md)):
 
-Example of a public specialized prototype for dogfood:
+| Specialized profile | Typical purpose | Not for |
+|---------------------|-----------------|---------|
+| **Public answer style** | Twin/Guide writing fidelity | Employer HR, court |
+| **Research partner** | Co-authorship method | Health marketing |
+| **Coding pair** | Agent coding style | Civic campaign medical claims |
+| **Health** | Care under health ethics/law | Employer screening |
+| **Employer** | Workplace only if person grants | Health detail, intimate axes |
 
-- [`cogentigram_jhn_thinking_capsule.md`](cogentigram_jhn_thinking_capsule.md) — **answer-style** rules for Agent JHN (not the full 73-axis score table)
+**Health vs employer** is the pedagogical pair: a doctor’s need is not an employer’s need; specialized profiles encode that separation.
 
-## PrivAI certification (direction)
+## PrivAI role
 
-Long-term, specialized public profiles should be:
+PrivAI is the intended governance home for:
 
-1. **Scoped** (purpose, surface, resolution);
-2. **Graded** under KYS license / cloaks where needed;
-3. **Certified** (or pre-certified as experimental) under **PrivAI** governance once the institution exists;
-4. **Revocable** and versioned.
+- KYS license / graded disclosure;
+- certification of specialized profiles (when mature);
+- dispute and fiduciary non-extractive rules.
 
-Until PrivAI is a formal institution, public specialized profiles remain **experimental dogfood** — honest about incompleteness, never marketed as “full certified KYS of a living person for sale.”
+Until PrivAI is formal, public specialized profiles and open structural dogfood remain **experimental**.
 
-## Dogfood stack (Agent JHN)
+## Agent JHN dogfood (this principal)
+
+This principal deliberately chooses **high openness** about structural self-model for twin research:
+
+| Artifact | Class | Public? |
+|----------|--------|---------|
+| Full structural Cogentigram (73 axes) | Person-open structural KYS dogfood | **Yes** (declared open; non-episodic; non-judicial) |
+| Answer-style specialized profile | `kys.public_answer_style` prototype | **Yes** — inject on Agent JHN |
+| Episodic private traces | Mail, WhatsApp raw, private registry | **No** |
+| Secrets / credentials | Ops | **No** |
+
+Use stack:
 
 ```text
-public specialized style profile (capsule)  →  OK to inject on public/experimental answer surfaces
-full private Cogentigram / KYS               →  NOT injected; NOT in public repo research/
-agent_brief + AGENTS.public-readonly         →  public operational layers (mandate + representation)
-public corpus facts                          →  retrieval
+AGENTS.public-readonly  (mandate subset)
+  + agent_brief           (representation / positions)
+  + kys.public_answer_style capsule
+  + person-open structural Cogentigram (optional denser context)
+  + public corpus facts
 ```
 
 ## Anti-patterns
 
-- Committing a full scored Cogentigram JSON under `visibility: public` “for convenience”
-- Confusing **style dogfood** with **full KYS disclosure**
-- Using private axes (affective intimacy, health, private life) on public Guide
-- Treating sample fixtures as certified production profiles
-
-## Correction note (2026-08-13)
-
-A full updated JHN Cogentigram JSON was briefly committed under public `research/`. That violates this rule. The full profile is **withdrawn from the public corpus**; specialized public capsule and method docs remain for open design and dogfood. Full profile custody is private (owner-side), not public research.
+- Platform publishes full KYS without person grant  
+- Specialized Health profile reused for Employer  
+- Treating Cogentigram scores as **court evidence** or clinical diagnosis  
+- Stuffing **episodic** logs into the Cogentigram object  
+- Confusing “design in the open” with “no privacy for others”
 
 ## Status
 
-Prototype doctrine. Implementation should keep:
-
-- public method + specialized dogfood profiles in public repos;
-- full KYS / full Cogentigram off public indexes and off public Git history going forward.
+v0.2 — person-control + specialized profiles + non-episodic/non-judicial clarified; JHN open structural dogfood allowed by deliberate choice. Catalog of profile kinds remains incomplete by design (ideas, not ISO).
