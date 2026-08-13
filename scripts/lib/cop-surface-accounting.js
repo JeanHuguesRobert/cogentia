@@ -237,8 +237,8 @@ export function recordPacketProviderSpend(packet, cop, details = {}) {
 
     registerPacket(packet);
     maybeSpoolPacketEvent({ packet, spendingEntry, transactionEvent, surface: details.surface });
-    // Durable COP accounting store when configured (Supabase module accounting).
-    void maybePersistAccountingEvent(transactionEvent, packet);
+    // Fire-and-forget durable store (await would block answer path; result in summary later).
+    const persistPromise = maybePersistAccountingEvent(transactionEvent, packet);
 
     const summary = cop.summarizePacketSpending
       ? cop.summarizePacketSpending(packet, resolvePacketById)
@@ -249,6 +249,7 @@ export function recordPacketProviderSpend(packet, cop, details = {}) {
       spendingEntry,
       transactionEvent,
       summary,
+      persistPromise,
     };
   } catch (error) {
     return { ok: false, error: String(error?.message || error).slice(0, 240) };
@@ -265,8 +266,8 @@ let accountingStorePromise = null;
 async function getAccountingStore() {
   if (accountingStorePromise) return accountingStorePromise;
   accountingStorePromise = (async () => {
-    const raw = String(process.env.COGENTIA_COP_ACCOUNTING_PERSIST ?? "0").trim().toLowerCase();
-    if (raw === "0" || raw === "false" || raw === "no" || raw === "off") return null;
+    // Default on when Supabase is configured (democratized durable spend accounting).
+    // Explicit COGENTIA_COP_ACCOUNTING_PERSIST=0 disables.
     const url = String(process.env.SUPABASE_URL || process.env.COGENTIA_SUPABASE_URL || "").trim();
     const key = String(
       process.env.SUPABASE_SERVICE_ROLE_KEY
@@ -274,6 +275,10 @@ async function getAccountingStore() {
       || process.env.SUPABASE_ANON_KEY
       || "",
     ).trim();
+    const raw = String(
+      process.env.COGENTIA_COP_ACCOUNTING_PERSIST ?? (url && key ? "1" : "0"),
+    ).trim().toLowerCase();
+    if (raw === "0" || raw === "false" || raw === "no" || raw === "off") return null;
     if (!url || !key) return null;
     try {
       const { createClient } = await import("@supabase/supabase-js");
@@ -313,7 +318,7 @@ async function getAccountingStore() {
 async function maybePersistAccountingEvent(transactionEvent, packet) {
   try {
     const store = await getAccountingStore();
-    if (!store?.append) return;
+    if (!store?.append) return { ok: false, reason: "store_unavailable" };
     // Enrich metadata for analytical dimensions + semantic account
     const txn = {
       ...transactionEvent,
@@ -326,15 +331,23 @@ async function maybePersistAccountingEvent(transactionEvent, packet) {
         valuation_status: "provisional",
       },
     };
-    await store.append({
+    const result = await store.append({
       event_type: txn.eventType || "accounting/transaction",
       idempotency_key: txn.idempotency_key,
       payload: txn,
       source: packet?.governance?.actor_subject_id || "agent:jhn",
     });
-  } catch {
-    /* durable persist must not break answers */
+    return result || { ok: true };
+  } catch (error) {
+    return { ok: false, error: String(error?.message || error).slice(0, 160) };
   }
+}
+
+/**
+ * Test helper: force clear store cache after env changes.
+ */
+export function resetAccountingStoreCacheForTests() {
+  accountingStorePromise = null;
 }
 
 /**
@@ -399,10 +412,23 @@ function formatQuantity(q) {
 }
 
 /**
- * Optional NDJSON spool for durable provisional traces (not a second ledger).
+ * NDJSON spool for durable provisional traces (local evidence; not a second ledger).
+ * Default path when unset: COGENTIA_OPS_STATE_DIR/accounting/spend.ndjson or .cogentia/...
  */
+function resolveSpendSpoolPath(env = process.env) {
+  const explicit = String(env.COGENTIA_COP_SPEND_SPOOL || "").trim();
+  if (explicit === "0" || explicit === "off" || explicit === "false") return null;
+  if (explicit) return explicit;
+  const base = String(
+    env.COGENTIA_OPS_STATE_DIR
+    || env.COGENTIA_STATE_DIR
+    || path.resolve(process.cwd(), ".cogentia"),
+  ).trim();
+  return path.join(base, "accounting", "spend.ndjson");
+}
+
 function maybeSpoolPacketEvent(event) {
-  const spoolPath = String(process.env.COGENTIA_COP_SPEND_SPOOL || "").trim();
+  const spoolPath = resolveSpendSpoolPath();
   if (!spoolPath) return;
   try {
     const dir = path.dirname(spoolPath);
@@ -421,6 +447,8 @@ function maybeSpoolPacketEvent(event) {
       provisional_cost: event.spendingEntry?.provisional_cost,
       transaction_id: event.transactionEvent?.transaction_id,
       surface: event.surface || null,
+      semantic_account_id: "COG:EXPENSE.AI.INFERENCE",
+      valuation_status: "provisional",
     });
     fs.appendFileSync(spoolPath, `${line}\n`, "utf8");
   } catch {
