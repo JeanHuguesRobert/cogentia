@@ -39,6 +39,7 @@ import { createAgentGatewayClient } from "./lib/agent-gateway-client.js";
 import { handleOpsNodeProxyRequest } from "./lib/ona-proxy.js";
 import { handleEdgeTrapPost, handleEdgeTrapsGet } from "./lib/edge-trap-ops.js";
 import { createJhnOpenAiSurface, isTwinOpenAiPath } from "./lib/jhn-openai-surface.js";
+import { buildCrossSurfaceStyleBlock } from "./lib/agent-jhn-whatsapp/representation-brief.js";
 
 const moduleDir = path.dirname(fileURLToPath(import.meta.url));
 const fractanetDashboardPath = path.join(moduleDir, "ops", "fractanet-dashboard.html");
@@ -665,6 +666,7 @@ async function produceGuideTurn(question, history, payload = {}, options = {}) {
           "You are Agent John (JHN), the public conversational face of the Personal Digital Twin of Jean Hugues Noël Robert.",
           "You answer from the public Cogentia corpus only (readonly). Cite source_ids when using corpus facts.",
           "You are not the living person; you do not invent private facts or make commitments for the principal.",
+          "Use the same primary style kernel as other Agent John surfaces (definitional rigor, density, sober clarity) unless an explicit non-primary persona is declared.",
           "Knowledge scope is at least the FractaVolta public Guide, and ideally the full public corpus about the principal's work.",
         ].join(" "),
       },
@@ -1990,11 +1992,11 @@ function guideSystemPrompt(locale) {
   const language = locale === "fr" ? "French" : "English";
   const base = [
     `You are the public FractaVolta Guide. Answer in ${language}.`,
-    "You are a public, low-maturity, read-only instance of the owner-rooted digital twin.",
+    "You are a public, low-maturity, read-only instance of the owner-rooted digital twin family (same primary style as Agent John / Agent JHN unless an explicit non-primary persona is set).",
     "You are not the private owner-facing core and must not pretend to be the owner.",
     "Naming: Jean Hugues (Noël Robert) is the natural person (who). John / Agent John / Agent JHN is the artificial agent twin instance (what) — not a person, not the living principal.",
     "If asked what/who John is: answer that John is an artificial agent (Agent John / Agent JHN), corpus-grounded under mandate; do not biographize bibliographic authors named John unless the user clearly means them.",
-    "Single-author phase: optimise for fidelity to how the founder would answer from the public corpus, not a generic corporate chatbot voice.",
+    "Single-author phase: optimise for fidelity to how the founder would answer from the public corpus — his cognitive/writing style (Buffon: style as structure), not a generic corporate chatbot voice.",
     "This Guide surface is mostly read-only: mandate is a subset of full twin/owner capabilities (retrieve, cite, explain), never a superset.",
     "Read-only does not mean readable secrets: never use or expose secrets, credentials, or private registre-mariani material — public corpus view only.",
     "Use the supplied public Cogentia context and, when supplied, the bounded web search context.",
@@ -2007,9 +2009,26 @@ function guideSystemPrompt(locale) {
     "Distinguish documented facts, clearly marked inferences, and unknowns when that distinction matters.",
     "For a current-information question without web evidence, say that current web verification is unavailable rather than infer it from corpus material.",
   ].join("\n");
+  let styleBlock = "";
+  try {
+    if (!/^(0|false|no|off)$/i.test(String(process.env.COGENTIA_GUIDE_INJECT_PRIMARY_STYLE ?? "1").trim())) {
+      styleBlock = buildCrossSurfaceStyleBlock({
+        primaryStyleMaxChars: Number(process.env.COGENTIA_GUIDE_PRIMARY_STYLE_MAX_CHARS || 3500),
+        cogentigramTopN: Number(process.env.AGENT_JHN_GUIDE_COGENTIGRAM_TOPN || 8),
+      }, process.env);
+    }
+  } catch {
+    styleBlock = "";
+  }
   const constitution = loadGuidePublicReadonlyAgents();
-  if (!constitution) return base;
-  return `${base}\n\n---\nPublic read-only agent constitution (cogentia/instructions/AGENTS.public-readonly.md):\n${constitution}`;
+  const parts = [base];
+  if (styleBlock.trim()) {
+    parts.push(`---\n${styleBlock.trim()}`);
+  }
+  if (constitution) {
+    parts.push(`---\nPublic read-only agent constitution (cogentia/instructions/AGENTS.public-readonly.md):\n${constitution}`);
+  }
+  return parts.join("\n\n");
 }
 
 function loadGuidePublicReadonlyAgents() {

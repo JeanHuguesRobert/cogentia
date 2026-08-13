@@ -19,6 +19,8 @@ let publicAgentsCache = null;
 let cogentigramCapsuleCache = null;
 /** @type {{ path: string|null, mtimeMs: number, profile: object } | null} */
 let cogentigramOpenCache = null;
+/** @type {{ path: string|null, mtimeMs: number, text: string } | null} */
+let primaryStyleCache = null;
 
 /** Default specialized KYS grant for WhatsApp answer fidelity dogfood. */
 export const DEFAULT_KYS_PUBLIC_ANSWER_GRANT = {
@@ -31,6 +33,9 @@ export const DEFAULT_KYS_PUBLIC_ANSWER_GRANT = {
   not_judicial_evidence: true,
   structural_only: true,
 };
+
+/** Primary (base) persona for Agent John — Ubikia alternate personas must opt in explicitly. */
+export const AGENT_JOHN_PRIMARY_PERSONA_ID = "agent_john_primary";
 
 /**
  * Whether WhatsApp cognitive drafts should inject the agent brief.
@@ -449,8 +454,154 @@ export function buildKysGrantMetadata(options = {}, env = process.env) {
 }
 
 /**
+ * Whether to inject the primary style kernel (cross-surface default).
+ * Default true. AGENT_JHN_INJECT_PRIMARY_STYLE=0 disables.
+ * Non-primary persona_id skips primary kernel (Ubikia alternate appearance).
+ */
+export function shouldInjectPrimaryStyle(env = process.env, options = {}) {
+  if (options.injectPrimaryStyle === false) return false;
+  if (options.injectPrimaryStyle === true) return true;
+  if (options.primaryStyleText != null && String(options.primaryStyleText).trim()) return true;
+  const personaId = resolvePersonaId(options, env);
+  if (personaId && personaId !== AGENT_JOHN_PRIMARY_PERSONA_ID) return false;
+  const raw = String(
+    env.AGENT_JHN_INJECT_PRIMARY_STYLE ?? env.AGENT_JHN_WHATSAPP_INJECT_PRIMARY_STYLE ?? "1",
+  ).trim().toLowerCase();
+  return !(raw === "0" || raw === "false" || raw === "no" || raw === "off");
+}
+
+/** @returns {string} */
+export function resolvePersonaId(options = {}, env = process.env) {
+  const fromOpt = options.personaId || options.persona_id;
+  if (fromOpt != null && String(fromOpt).trim()) return String(fromOpt).trim();
+  const fromEnv = String(env.AGENT_JHN_PERSONA_ID || env.AGENT_JHN_WHATSAPP_PERSONA_ID || "").trim();
+  return fromEnv || AGENT_JOHN_PRIMARY_PERSONA_ID;
+}
+
+export function resolvePrimaryStylePath(env = process.env, options = {}) {
+  if (options.primaryStylePath) {
+    const p = path.resolve(String(options.primaryStylePath));
+    return fs.existsSync(p) ? p : null;
+  }
+  const fromEnv = String(
+    env.AGENT_JHN_PRIMARY_STYLE_PATH || env.COGENTIA_PRIMARY_STYLE_PATH || "",
+  ).trim();
+  if (fromEnv) {
+    const p = path.resolve(fromEnv);
+    if (fs.existsSync(p)) return p;
+  }
+  const candidates = [
+    path.resolve(process.cwd(), "research", "agent_john_primary_style.md"),
+    path.resolve(process.cwd(), "cogentia", "research", "agent_john_primary_style.md"),
+    "/srv/cogentia/repos/cogentia/research/agent_john_primary_style.md",
+    path.resolve(moduleDir, "..", "..", "..", "research", "agent_john_primary_style.md"),
+  ];
+  for (const candidate of candidates) {
+    if (fs.existsSync(candidate)) return candidate;
+  }
+  return null;
+}
+
+/**
+ * Load primary style kernel text.
+ * @returns {{ ok: boolean, text: string, path: string|null, source: string, persona_id: string }}
+ */
+export function loadPrimaryStyleKernel(options = {}, env = process.env) {
+  const persona_id = resolvePersonaId(options, env);
+  if (options.primaryStyleText != null) {
+    const text = String(options.primaryStyleText);
+    return {
+      ok: Boolean(text.trim()),
+      text,
+      path: options.primaryStylePath ? String(options.primaryStylePath) : null,
+      source: "options",
+      persona_id,
+    };
+  }
+  if (!shouldInjectPrimaryStyle(env, options)) {
+    return { ok: false, text: "", path: null, source: "disabled", persona_id };
+  }
+  const filePath = resolvePrimaryStylePath(env, options);
+  if (!filePath) return { ok: false, text: "", path: null, source: "missing", persona_id };
+  try {
+    const stat = fs.statSync(filePath);
+    if (
+      primaryStyleCache
+      && primaryStyleCache.path === filePath
+      && primaryStyleCache.mtimeMs === stat.mtimeMs
+    ) {
+      return {
+        ok: true,
+        text: primaryStyleCache.text,
+        path: filePath,
+        source: "cache",
+        persona_id,
+      };
+    }
+    const text = fs.readFileSync(filePath, "utf8");
+    primaryStyleCache = { path: filePath, mtimeMs: stat.mtimeMs, text };
+    return { ok: Boolean(text.trim()), text, path: filePath, source: "file", persona_id };
+  } catch {
+    return { ok: false, text: "", path: filePath, source: "error", persona_id };
+  }
+}
+
+export function buildPrimaryStyleSystemContent(text, options = {}, env = process.env) {
+  const body = String(text || "").trim();
+  if (!body) return "";
+  const persona_id = resolvePersonaId(options, env);
+  return [
+    `Agent John primary style kernel (persona_id=${persona_id}).`,
+    "Cross-surface default: same style fidelity on Guide, WhatsApp, and jhn-public unless an explicit non-primary persona is set (Ubikia).",
+    "Critical fidelity — not slogan imitation, not impersonation, not clinical truth.",
+    "Canonical: cogentia/research/agent_john_primary_style.md",
+    "",
+    body,
+  ].join("\n");
+}
+
+/**
+ * Compact style block for Guide / OpenAI surfaces (token-aware first approximation).
+ * Prefer full stack on WhatsApp; Guide gets kernel + short style priorities + optional top-N.
+ *
+ * @returns {string}
+ */
+export function buildCrossSurfaceStyleBlock(options = {}, env = process.env) {
+  const persona_id = resolvePersonaId(options, env);
+  const parts = [
+    "STYLE FIDELITY (Agent John primary approximation)",
+    `persona_id: ${persona_id}`,
+    "You are Agent John / Agent JHN — artificial agent, not Jean Hugues Noël Robert.",
+    "Optimise for fidelity to how the principal would answer from the public corpus (Buffon-style structural style), within this surface's read-only mandate.",
+    "Priorities: definitional rigor; premises before flourish; systemising; density; literality; process priority; sober clarity (no fake warmth); second method (limits/objections); hand-back on irreversible acts.",
+    "Anti-patterns: generic chatbot voice, corporate brand persona, slogan caricature, first-person personhood, invented private episodes.",
+  ];
+
+  if (shouldInjectPrimaryStyle(env, options)) {
+    const kernel = loadPrimaryStyleKernel(options, env);
+    if (kernel.ok && kernel.text.trim()) {
+      // Strip YAML frontmatter for inject; keep body, cap length for Guide budgets.
+      const body = kernel.text.replace(/^---[\s\S]*?---\s*/m, "").trim();
+      const max = Number(options.primaryStyleMaxChars || env.AGENT_JHN_PRIMARY_STYLE_MAX_CHARS || 4500);
+      parts.push("", body.slice(0, Math.max(800, max)));
+    }
+  }
+
+  if (options.includeTopN !== false && shouldInjectCogentigramTopN(env, options)) {
+    const loaded = loadPublicOpenCogentigram({ ...options, forceLoadOpenProfile: true }, env);
+    if (loaded.ok && loaded.profile) {
+      const n = Number(options.cogentigramTopN || env.AGENT_JHN_GUIDE_COGENTIGRAM_TOPN || 8);
+      const compressed = compressCogentigramTopN(loaded.profile, { ...options, cogentigramTopN: n }, env);
+      parts.push("", compressed.text);
+    }
+  }
+
+  return parts.join("\n");
+}
+
+/**
  * Ordered system messages for WhatsApp synthesis:
- * channel policy → public-readonly AGENTS → agent_brief → KYS capsule → top-N structural axes.
+ * channel policy → public-readonly AGENTS → agent_brief → primary style → KYS capsule → top-N.
  *
  * @returns {Array<{ role: string, content: string }>}
  */
@@ -459,6 +610,7 @@ export function buildWhatsAppRepresentationMessages(analysis = {}, options = {},
     { role: "system", content: buildWhatsAppChannelPolicy(analysis, options) },
   ];
   const grant = buildKysGrantMetadata(options, env);
+  const persona_id = resolvePersonaId(options, env);
 
   if (shouldInjectPublicReadonlyAgents(env, options)) {
     const publicAgents = loadPublicReadonlyAgents(options, env);
@@ -478,6 +630,25 @@ export function buildWhatsAppRepresentationMessages(analysis = {}, options = {},
         content: buildAgentBriefSystemContent(loaded.text),
       });
     }
+  }
+
+  if (shouldInjectPrimaryStyle(env, options)) {
+    const kernel = loadPrimaryStyleKernel(options, env);
+    if (kernel.ok && kernel.text.trim()) {
+      messages.push({
+        role: "system",
+        content: buildPrimaryStyleSystemContent(kernel.text, options, env),
+      });
+    }
+  } else if (persona_id !== AGENT_JOHN_PRIMARY_PERSONA_ID) {
+    messages.push({
+      role: "system",
+      content: [
+        `Non-primary persona_id=${persona_id}: primary style kernel skipped.`,
+        "Still no impersonation of the natural person; still corpus-grounded; still mandate limits.",
+        "Persona may change register/form only — not invent positions or raise certainty (Ubikia).",
+      ].join(" "),
+    });
   }
 
   if (shouldInjectCogentigramCapsule(env, options)) {
@@ -532,8 +703,15 @@ export function describeKysInjection(options = {}, env = process.env) {
     const compressed = compressCogentigramTopN(open.profile, options, env);
     topN = { n: compressed.n, top_names: compressed.top.map((item) => item.name) };
   }
+  const style = loadPrimaryStyleKernel(options, env);
   return {
     ...grant,
+    persona_id: resolvePersonaId(options, env),
+    primary_style: {
+      injected: shouldInjectPrimaryStyle(env, options) && style.ok,
+      source: style.source,
+      path: style.path,
+    },
     open_profile_source: open.source || null,
     open_profile_path: open.path || null,
     structural_top_n: topN,
@@ -546,4 +724,5 @@ export function clearAgentBriefCache() {
   publicAgentsCache = null;
   cogentigramCapsuleCache = null;
   cogentigramOpenCache = null;
+  primaryStyleCache = null;
 }
