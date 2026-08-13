@@ -119,7 +119,14 @@ async function guideChatCapability() {
 }
 
 async function guideSynthesisPost(payload) {
-  if (!guideAgentGateway) return daemonPost("/v1/chat/completions", payload);
+  if (!guideAgentGateway) {
+    const routed = await daemonPost("/v1/chat/completions", payload);
+    if (routed.ok) return routed;
+    // Magistral/router often unavailable; use OpenAI when key is present (guide.env).
+    const direct = await guideOpenAiChatCompletions(payload);
+    if (direct.ok) return direct;
+    return routed;
+  }
   if (!guideAgentSessionId && guideAgentSessionInit) await guideAgentSessionInit;
   const client = createAgentGatewayClient({
     endpoint: process.env.COGENTIA_GUIDE_AGENT_GATEWAY_ENDPOINT || "http://127.0.0.1:8793",
@@ -688,6 +695,10 @@ async function produceGuideTurn(question, history, payload = {}, options = {}) {
   if (routed.ok) {
     const body = guideChatResponse(question, activeLocale, routed.body, retrieval, web);
     body.surface = surface;
+    if (routed.body?._cogentia_guide_synthesis === "openai_direct_fallback") {
+      body.mode = "openai_direct_fallback";
+      body.warnings = [...new Set([...(body.warnings || []), "guide_synthesis_openai_fallback"])];
+    }
     return { ok: true, status: 200, body };
   }
 
@@ -1398,6 +1409,65 @@ function guideRetrievalQueries(question) {
     .filter(term => term.length > 2 && !GUIDE_QUERY_STOPWORDS.has(term.toLowerCase()))
     .slice(0, 8);
 
+  // Identity / person / twin fidelity anchors
+  if (
+    /jean\s*hugues|no[eë]l\s*robert|baron\s*mariani|who is he|qui est|digital twin|jumeau|agent jhn|representing/i
+      .test(lower)
+  ) {
+    queries.push(
+      "Agent Brief Representing Jean Hugues Noël Robert",
+      "Jean Hugues Noël Robert baron Mariani",
+      "personal digital twin Guide public instance",
+      "artificial representation mandated voice fidelity",
+      "AI-First Org and Fidelity Default Single-Author Phase",
+      "AGENTS public-readonly answer surfaces",
+    );
+  }
+  if (/possibilis|anti-?capture|one human|one voice|démocrati|democrati|seconde m[eé]thode|second method/i.test(lower)) {
+    queries.push(
+      "Possibilism research program possibility exploration",
+      "anti-capture open source cognitive infrastructure",
+      "one human one voice democratic invariant AI",
+      "second method seconde methode think against oneself",
+      "Agent Brief value lattice possibilism anti-capture",
+    );
+  }
+  if (/mandat|draft.*behalf|commit|partnership|price|legal|sign/i.test(lower)) {
+    queries.push(
+      "You draft he decides agent mandate",
+      "public Guide cannot commit legal partnership",
+      "artificial representation not impersonation",
+      "read-only public corpus mandate subset",
+    );
+  }
+  if (/registre-mariani|secret|api key|private content|confidentiel/i.test(lower)) {
+    queries.push(
+      "public by default does not cancel privacy",
+      "public Guide corpus view only no private vault",
+      "AGENTS public-readonly secrets registre-mariani",
+    );
+  }
+  if (/c\.?o\.?r\.?s\.?i\.?c\.?a|institut mariani|corte|cors/i.test(lower)) {
+    queries.push(
+      "Institut Mariani definition role genealogie",
+      "C.O.R.S.I.C.A. association Corte",
+      "acorsica institut mariani corpus",
+    );
+  }
+  if (/inox/i.test(lower)) {
+    queries.push(
+      "Inox programming language specification concatenative",
+      "Inox VM stack postfix",
+    );
+  }
+  if (/employee|employ[eé]|AI-first|ai first|hiring|recrut/i.test(lower)) {
+    queries.push(
+      "AI-First Org and Fidelity Default Single-Author Phase",
+      "accountable digital twin not AI employees",
+      "FractaVolta AI-first operations",
+    );
+  }
+
   if (/first[- ]?time|visitor|visiteur|simple|simplement/.test(lower)) {
     queries.push(
       "FractaVolta first visitor",
@@ -1946,18 +2016,92 @@ function loadGuidePublicReadonlyAgents() {
 
 function extractiveAnswer(locale, pack) {
   const sources = safeSources(pack.sources).slice(0, 5);
-  if (locale === "fr") {
-    return [
-      "Je n'ai pas pu joindre le moteur conversationnel pour cette reponse.",
-      "Voici les meilleures sources publiques du corpus a consulter :",
-      ...sources.map((source, index) => `${index + 1}. ${source.title || source.path} [${source.source_id}]`),
-    ].join("\n");
+  const excerpts = Array.isArray(pack?.context?.excerpts)
+    ? pack.context.excerpts.filter(e => e?.text).slice(0, 3)
+    : [];
+  const fr = locale === "fr";
+  const fidelity = fr
+    ? [
+        "Rappel de surface (lecture seule publique) : je ne suis pas Jean Hugues Noël Robert ; je m'appuie sur le corpus public, sans secrets ni données privées (y compris registre-mariani privé) ; je ne prends pas d'engagements légaux ou commerciaux.",
+        "Le moteur conversationnel n'est pas joignable pour une synthèse complète. Voici un extrait public et des sources à lire :",
+      ]
+    : [
+        "Surface reminder (public read-only): I am not Jean Hugues Noël Robert; I use the public corpus only — no secrets or private data (including private registre-mariani); I cannot make legal or commercial commitments.",
+        "The conversational synthesizer is unavailable for a full answer. Public excerpts and sources to inspect:",
+      ];
+  const excerptLines = excerpts.map((item, index) => {
+    const id = String(item.source_id || "source").slice(0, 200);
+    const text = String(item.text || "").replace(/\s+/g, " ").trim().slice(0, 420);
+    return `${index + 1}. [${id}] ${text}`;
+  });
+  const sourceLines = sources.map((source, index) =>
+    `${excerpts.length + index + 1}. ${source.title || source.path || "source"} [${source.source_id}]`,
+  );
+  return [...fidelity, ...(excerptLines.length ? excerptLines : sourceLines)].join("\n");
+}
+
+/**
+ * Direct OpenAI chat when daemon→Magistral chat is down (quality-first Guide path).
+ */
+async function guideOpenAiChatCompletions(payload = {}) {
+  const apiKey = String(process.env.OPENAI_API_KEY || "").trim();
+  if (!apiKey) {
+    return { ok: false, error: "openai_key_missing", status: 0 };
   }
-  return [
-    "The conversational backend is not reachable for this answer.",
-    "These are the best public corpus sources to inspect:",
-    ...sources.map((source, index) => `${index + 1}. ${source.title || source.path} [${source.source_id}]`),
-  ].join("\n");
+  const model = String(
+    process.env.COGENTIA_GUIDE_OPENAI_MODEL
+    || process.env.AGENT_JHN_WHATSAPP_OPENAI_MODEL
+    || "gpt-4.1-mini",
+  );
+  const messages = Array.isArray(payload.messages) ? payload.messages : [];
+  if (!messages.length) return { ok: false, error: "empty_messages", status: 0 };
+  const timeoutMs = boundedInteger(process.env.COGENTIA_GUIDE_OPENAI_TIMEOUT_MS, 45000, 5000, 120000);
+  try {
+    const response = await fetch("https://api.openai.com/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        model,
+        messages: messages.map(message => ({
+          role: ["system", "user", "assistant"].includes(message?.role) ? message.role : "user",
+          content: typeof message?.content === "string"
+            ? message.content
+            : JSON.stringify(message?.content ?? ""),
+        })),
+        temperature: Number.isFinite(payload.temperature) ? payload.temperature : 0.2,
+        max_completion_tokens: boundedInteger(payload.max_tokens, 1200, 200, 4000),
+      }),
+      signal: AbortSignal.timeout(timeoutMs),
+    });
+    const body = await response.json().catch(() => null);
+    if (!response.ok) {
+      return {
+        ok: false,
+        status: response.status,
+        error: "openai_http_error",
+        body: { error: { type: body?.error?.type || "openai_http_error", message: body?.error?.message || response.statusText } },
+      };
+    }
+    return {
+      ok: true,
+      status: 200,
+      body: {
+        ...body,
+        model: body?.model || model,
+        _cogentia_guide_synthesis: "openai_direct_fallback",
+      },
+    };
+  } catch (error) {
+    return {
+      ok: false,
+      status: 0,
+      error: "openai_unavailable",
+      body: { error: { type: "openai_unavailable", message: String(error?.message || error).slice(0, 200) } },
+    };
+  }
 }
 
 function guideFallbackText(locale) {
