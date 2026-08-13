@@ -181,7 +181,7 @@ channel explicitly allows it.
 - Worker-only topics (optimistic mainline git ceremony, deploy runbooks,
   skill export pipelines) belong in full `AGENTS.shared.md`, not here.
 
-## 9. Maintenance
+## 9. Maintenance — when and how this file is built
 
 | Layer | Role |
 |-------|------|
@@ -189,9 +189,61 @@ channel explicitly allows it.
 | **This file** | Derived **public read-only constitution** for **answer surfaces** |
 | Repo `AGENTS.md` | Local worker specializations (not auto-merged into chat) |
 
-When shared invariants change in a way that affects public answers, update this
-derived product in the same change set or immediately after. Do not let chat
-prompts invent a parallel constitution.
+### When to rebuild or edit
+
+Rebuild or amend this file when **any** of the following is true:
+
+1. **Shared invariants that affect public answers change** in `AGENTS.shared.md`
+   (anti-capture, privacy, attenuation, human principal, epistemic hygiene,
+   Open-Possible framing that chat should still respect).
+2. **Surface mandate doctrine changes** (read-only subset, fidelity phase,
+   secrets / registre-mariani non-readability) in the fidelity or representation
+   research notes.
+3. **Answer-surface failure** shows a gap: Guide or WhatsApp invents powers,
+   leaks private framing, or ignores fidelity rules that belong here.
+4. **Periodic check** (e.g. with instruction audit / weekly consolidation):
+   verify the file still exists, is committed, and is still injected by runtime.
+
+Do **not** rebuild on every chat turn, every commit, or every `index update`.
+Injection at runtime reads the **committed** file; it does not re-distill shared
+AGENTS on the fly.
+
+### How to build (process)
+
+```text
+1. Diff AGENTS.shared.md (+ relevant doctrine) since last public-readonly edit
+2. Decide which deltas apply to answer surfaces (subset filter)
+3. Edit this derived product under human validation (or agent draft + human commit)
+4. Keep frontmatter derived_from / version / date honest
+5. Same change set or immediate follow-up: commit on main
+6. Deploy answer hosts (pull + restart Guide / Agent JHN) so injection reloads
+7. Optional: index update so search can discover the constitution as a doc
+```
+
+**Judgment filter (required):** drop worker-only material (git ceremony, mutate
+tools, deploy runbooks, skill export pipelines). **Never** promote private-read
+or secrets into this file. Prefer short, injectable constitution over a full
+shared mirror.
+
+**Not a mechanical whole-file transform.** Full auto-generation from
+`AGENTS.shared.md` would either (a) pull worker powers into chat prompts or
+(b) need a complex allowlist that still requires review. Prefer **human-governed
+derived product** with optional tooling assist.
+
+### Relation to `cogentia.js`
+
+| Fit | Not a fit |
+|-----|-----------|
+| **`agent public-readonly verify`** (or extend `agent-instructions-audit.js`): file exists, frontmatter `derived_from`, version present, path known to injectors | Regenerating the full body on every CLI run without review |
+| **`plan` / drift report**: “shared AGENTS changed after public-readonly date” | Silent auto-`apply` that overwrites constitution on `index rebuild` |
+| Document the path as the **canonical injectable** for Guide / WhatsApp | Treating this as equal authority to full worker AGENTS |
+
+So: **integrate as verify + inventory + docs in the agent-instructions tooling
+family**, same spirit as `agent mandates verify` — not as an always-on
+generator inside the hot retrieval path. Runtime continues to **load the committed
+Markdown file** (as today).
+
+Do not let chat prompts invent a parallel constitution outside this file.
 
 ## 10. Canonical pointers
 
