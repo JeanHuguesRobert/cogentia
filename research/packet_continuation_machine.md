@@ -1,0 +1,469 @@
+---
+title: "Packet/Continuation Machine — distributed branching computation model"
+author: "Jean Hugues Noël Robert, baron Mariani"
+date: "2026-08-14"
+status: "working-note"
+version: "0.1"
+license: "CC BY-SA 4.0"
+language: "en"
+repository: "JeanHuguesRobert/cogentia"
+canonical_path: "cogentia/research/packet_continuation_machine.md"
+document_role: "source"
+document_kind: "working-note"
+visibility: "public"
+lifecycle_state: "working"
+source_or_derived: "source-document"
+human_validation_required: true
+related_documents:
+  - "cogentia/research/alan_turing_mcp.md"
+  - "cogentia/research/cognitive_packets.md"
+  - "inseme/research/packet_attractor_fractanet.md"
+  - "Inox/research/fractanet_language_abstractions.md"
+tags:
+  - cogentia
+  - alan
+  - continuation
+  - cognitive-packet
+  - fractanet
+  - distributed-computing
+  - branching
+  - speculative-execution
+  - rational-exploration
+---
+
+# Packet/Continuation Machine
+
+## 0. Status
+
+This note records a candidate architecture and research hypothesis. It is not yet a claim of historical novelty. Individual ingredients have substantial prior art; the research question is whether their particular composition and governance form a useful and distinct computational architecture.
+
+## 1. Core proposition
+
+A suspended continuation is a **Packet**.
+
+```text
+Continuation ⊆ Packet
+```
+
+A computation therefore does not intrinsically belong to the machine currently executing it. Its future may be serialized, persisted, transported, attracted by a capability, resumed elsewhere, branched into competing or complementary continuations, and recombined.
+
+Canonical short forms:
+
+> **A Continuation is a Packet.**
+
+> **A computation does not belong to the machine currently executing it.**
+
+> **The Network is the Computer when continuations can travel, branch, compete and recombine.**
+
+The last sentence intentionally extends the historical Sun Microsystems slogan: the network becomes the execution substrate not merely when data or remote calls cross it, but when the future of a computation itself can move through it.
+
+## 2. Direct style is syntax, continuation is semantics
+
+Alan deliberately reconciles ordinary direct-style programming with distributed continuation semantics.
+
+Source may remain simple:
+
+```alan
+weather = mcp weather.forecast location="Corte"
+plan = call optimize weather=$weather
+approval = mcp human.approve proposal=$plan
+result = mcp energy.execute plan=$plan
+return result=$result
+```
+
+The apparent call/return syntax MUST NOT imply naïve RPC semantics. An effectful operation may instead mean:
+
+```text
+Need(capability, arguments)
++ Continuation(current computation)
++ Mandate
++ Policy
++ Budget
++ Trace
+       ↓
+Packet
+       ↓
+capability resolution / attraction / mediation
+       ↓
+zero, one or many executions
+       ↓
+Event(s) / Artifact(s) / Result(s)
+       ↓
+resume / branch / combine / terminate
+```
+
+Thus the problem with RPC is not necessarily its surface syntax. The problem is assigning synchronous local-call semantics to a distributed interaction. Alan may preserve the convenient syntax while giving it Packet/Continuation semantics.
+
+## 3. Abstract machine
+
+A minimal Packet/Continuation Machine (PCM) state can be described as:
+
+```text
+M = (P, K, C, S, E, B, G)
+```
+
+where:
+
+- `P` = active and suspended Packets;
+- `K` = available capabilities and capability attractors;
+- `C` = contexts and constraints;
+- `S` = durable and working state;
+- `E` = Events and Artifacts already produced;
+- `B` = budgets and resource envelopes;
+- `G` = governance: mandates, rights, policies, responsibility and trace requirements.
+
+A transition is not fundamentally an instruction-pointer increment. It is a transformation:
+
+```text
+(Packet, Capability, Context, State, Budget, Governance)
+    → {Packet'0 ... Packet'n} + Events + Artifacts + State'
+```
+
+`n` may be:
+
+- `0`: terminal, failed, refused or absorbed;
+- `1`: ordinary continuation;
+- `>1`: branching exploration, replication, quorum, alternative strategy or speculation.
+
+## 4. Branching as a first-class operation
+
+A continuation MAY be resolved by launching several branches:
+
+```text
+                    Continuation Packet C
+                           │
+                     branch policy
+             ┌─────────────┼─────────────┐
+             ↓             ↓             ↓
+            C1            C2            C3
+             ↓             ↓             ↓
+        local solver     LLM agent      human
+             ↓             ↓             ↓
+            R1            R2            R3
+             └─────────────┼─────────────┘
+                           ↓
+                 combine / choose / prune
+                           ↓
+                    Continuation C'
+```
+
+Branches MAY differ in:
+
+- algorithm;
+- language/runtime;
+- physical location;
+- provider;
+- model;
+- human or machine executor;
+- cost;
+- latency;
+- energy source;
+- trust level;
+- epistemic method.
+
+This makes the model more general than parallel execution of identical code paths.
+
+## 5. Resolution policy
+
+Branching is bounded rational exploration, not uncontrolled fan-out.
+
+A branch policy may consider:
+
+```text
+expected information gain
+expected utility
+latency
+compute cost
+energy/exergy cost
+confidence
+independence/diversity
+trust
+privacy
+jurisdiction
+mandate
+remaining budget
+deadline
+reversibility
+```
+
+Example:
+
+```text
+budget = 100
+
+branch:
+  local_heuristic      cost<=5
+  symbolic_solver      cost<=15
+  specialist_agent     cost<=20
+  high_quality_llm     cost<=40
+
+continue when:
+  confidence >= threshold
+  OR sufficient independent agreement
+  OR deadline reached
+  OR budget exhausted
+```
+
+This connects execution semantics to Cogentia's Rational Exploration of the Possible: execution itself may be a governed exploration of possible continuations.
+
+## 6. Recombination semantics
+
+Multiple branches do not imply that one winner must simply replace all others. Recombination policies include:
+
+```text
+first-valid
+best-score
+quorum
+majority
+weighted-confidence
+proof-check
+human-select
+merge-compatible
+retain-disagreement
+pareto-front
+all-results
+```
+
+The runtime SHOULD preserve disagreement when disagreement is itself informative.
+
+A recombination may produce:
+
+```text
+one continuation
+multiple surviving continuations
+an Event recording unresolved disagreement
+a request for new evidence
+a human decision point
+termination
+```
+
+## 7. Relationship to Prolog
+
+There is a useful analogy with Prolog search:
+
+```text
+choice point
+→ alternative branches
+→ exploration
+→ pruning/backtracking
+→ solution(s)
+```
+
+PCM generalizes the executor and branch type. A branch may be logical inference, SQL, numerical simulation, an LLM, a remote service, a sensor observation or a human decision. The search space is therefore not limited to a single logic-programming runtime.
+
+A rough comparison:
+
+```text
+Prolog                  Packet/Continuation Machine
+------                  ---------------------------
+goal                    continuation / intent
+clause                  capability / strategy
+choice point            branch policy
+proof branch            continuation packet
+backtracking            pruning / alternate continuation
+unification             result compatibility / binding
+solution                event/artifact/result + continuation
+single runtime model    heterogeneous capability network
+```
+
+## 8. Relationship to Von Neumann
+
+The comparison is architectural, not a claim of replacement.
+
+A simplified Von Neumann transition is:
+
+```text
+(memory, program_counter, instruction)
+    → (memory', program_counter')
+```
+
+A PCM transition is closer to:
+
+```text
+(packet, state, available_capabilities, context, governance)
+    → {packet'0 ... packet'n} + state' + events
+```
+
+Differences of emphasis:
+
+- no privileged single program counter;
+- location of execution is not intrinsic to the computation;
+- suspended future computation is serializable and addressable;
+- branching is first-class;
+- heterogeneous executors are normal;
+- governance, budget and trace are execution semantics, not external administration;
+- persistence permits computation to outlive a process, node, runtime or session.
+
+A conventional CPU remains a perfectly valid capability inside this architecture.
+
+## 9. Capability attraction instead of central scheduling
+
+PCM does not require a single omniscient scheduler.
+
+A Packet can advertise what it needs; capability nodes/Packet Attractors can advertise what they are able and authorized to resolve.
+
+```text
+Packet need
+    ↕
+capability matching / attraction
+    ↕
+mandate + policy + budget + locality
+    ↓
+execution site emerges
+```
+
+This supports a distributed ecology rather than a mandatory central orchestrator.
+
+## 10. Persistence and failure
+
+A Continuation Packet SHOULD be able to survive:
+
+- process termination;
+- runtime restart;
+- node failure;
+- migration;
+- long human delay;
+- temporary network partition.
+
+Therefore meaningful suspended state must be externalizable enough to be resumed without relying on a live stack frame in a particular process.
+
+The distinction is:
+
+```text
+process recovery ≠ computation recovery
+computation recovery = durable Packet + durable relevant state + trace
+```
+
+## 11. Governance is part of the machine
+
+A branch that is technically executable is not necessarily legitimate.
+
+For each continuation/effect, PCM must be able to preserve or resolve:
+
+```text
+mandate
+rights
+responsibility
+budget bearer
+policy
+privacy/data regime
+trace requirements
+human validation anchor
+expiry / TTL
+```
+
+This follows Alan's existing invariant:
+
+```text
+Tool availability is not authorization.
+Authorization is not execution.
+```
+
+Therefore governance metadata is not merely control-plane annotation; it constrains valid machine transitions.
+
+## 12. Initial prior-art map
+
+The architecture must be compared seriously with existing work before any novelty claim.
+
+Important neighbours include:
+
+- continuation-passing style and first-class continuations;
+- Actor Model / Erlang supervision;
+- dataflow machines;
+- Oz/Mozart distributed dataflow, futures, logic variables and programmable search;
+- distributed logic programming and parallel Prolog;
+- Linda/tuple spaces;
+- π-calculus and process calculi;
+- mobile code / mobile agents;
+- workflow and durable execution engines;
+- futures/promises and async/await;
+- speculative execution and branch-and-bound;
+- distributed task systems and serverless workflows.
+
+The closest historical neighbour found so far is arguably Oz/Mozart: it combines logic programming, constraint/search facilities, concurrent dataflow execution, capability-style security, and network-transparent distributed computation. That makes it a particularly important comparison target, not a reason to abandon PCM.
+
+The candidate distinctive composition to investigate is:
+
+```text
+Serializable Continuations as Packets
++ direct-style language surface
++ capability attraction
++ heterogeneous distributed branching
++ programmable recombination
++ mandate / responsibility / policy
++ explicit budget and cost bearer
++ durable trace and artifacts
++ Rational Exploration of the Possible
+```
+
+Novelty, if any, should be claimed only for a precisely specified composition after deeper literature and implementation review.
+
+## 13. Minimal executable experiment
+
+A useful proof-of-concept should avoid building a new distributed runtime first.
+
+Implement one Alan computation whose single apparent effect can resolve through several branches:
+
+```alan
+answer = explore weather.assess location="Corte"
+return answer=$answer
+```
+
+Possible branch executors:
+
+1. direct Open-Meteo/public API calculation;
+2. local historical/model calculation;
+3. LLM interpretation of available observations;
+4. optional human observation.
+
+The continuation is persisted as a Packet. Branches may execute on different available substrates. A recombination policy produces the result while preserving provenance and disagreement.
+
+Acceptance criteria:
+
+- source remains direct-style;
+- suspension produces a serializable Packet;
+- at least two branches can execute independently;
+- the initiating process can terminate before completion;
+- another runtime can resume/recombine;
+- each branch has explicit cost/budget/provenance;
+- disagreement is not silently erased;
+- the final result links to all supporting Events/Artifacts.
+
+## 14. Research questions
+
+1. What is the minimal serializable continuation representation required by Alan?
+2. Which state belongs in the Packet versus referenced durable Artifacts?
+3. How are continuation identity and idempotence defined?
+4. How should speculative side effects be prevented or compensated?
+5. Which branch policies can be decentralized safely?
+6. How should budgets be split, reclaimed and accounted across branches?
+7. What constitutes branch independence for epistemic confidence?
+8. How are human branches represented without pretending humans are deterministic functions?
+9. What are the minimal recombination primitives?
+10. Can the same semantics run from ESP32/Inox-micro through servers, LLMs and humans?
+11. Which properties are already present in Oz/Mozart, distributed Prolog, workflow engines or mobile-agent systems?
+12. Which remaining composition, if any, deserves a distinct architectural name?
+
+## 15. Working interpretation
+
+The proposed architecture shifts the fundamental abstraction from:
+
+```text
+instruction executed by processor
+```
+
+or:
+
+```text
+remote procedure executed by server
+```
+
+toward:
+
+```text
+Packet carrying a partially resolved computation
+→ attracted by legitimate capability
+→ transformed into Event/Artifact and possible Continuation Packets
+```
+
+The network is then not merely transport between computers. It participates in defining where and how computation continues.
