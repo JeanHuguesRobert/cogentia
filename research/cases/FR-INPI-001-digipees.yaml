@@ -1,0 +1,70 @@
+id: FR-INPI-001
+title: "Digipees — free trademark prior-art assistance as an Exemplar Test"
+jurisdiction: "France / European Union"
+institution: "INPI"
+status: collecting_facts
+
+facts:
+  declared_intent: []
+  legal_basis: []
+  observed_procedure: []
+  observed_costs: []
+  observed_effects: []
+  public_capabilities:
+    - description: "Public trademark data and API capabilities exist; exact scope and current terms must be recorded from authoritative sources during implementation."
+  sources: []
+
+interpretations:
+  hypotheses:
+    - statement: "A free first-line assistant can provide materially more useful prior-art screening than a basic identical search using public data and modest compute."
+      status: plausible
+      confidence: null
+      supported_by: []
+      contradicted_by: []
+    - statement: "Any observed gap between declared public-service goals and delivered capability constitutes an Intent–Reality Gap requiring explanation."
+      status: plausible
+      confidence: null
+      supported_by: []
+      contradicted_by: []
+    - statement: "The current arrangement creates or protects a commercial rent."
+      status: speculative
+      confidence: null
+      supported_by: []
+      contradicted_by: []
+
+burden:
+  learning: null
+  compliance: null
+  psychological: null
+  correction: null
+  opportunity: null
+  monetary: null
+  delay: null
+
+justification:
+  claimed: []
+  evidence: []
+  status: unknown
+
+exemplar:
+  alternative: "JHN Trademark Helper"
+  implementation: "Tracked by the Digipees Exemplar implementation issue."
+  status: specified
+  measured_cost: null
+  measured_results: []
+  residual_constraints:
+    - description: "The assistant must not claim that a sign is legally available or replace professional legal analysis."
+
+flows:
+  burden_bearer:
+    - "trademark applicant / user"
+  resource_provider:
+    - "public data infrastructure"
+    - "Agent JHN specialized service"
+    - "user-selected AI agent at judgment boundaries"
+  beneficiary: []
+
+provenance:
+  origin_type: conversation
+  origin_date: "2026-08-14"
+  note: "Facts intentionally left sparse until authoritative sources and measurements are attached. Interpretations are explicitly separated."
