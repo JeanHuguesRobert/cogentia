@@ -1,0 +1,127 @@
+$schema: "https://json-schema.org/draft/2020-12/schema"
+title: "Cogentia Institutional Friction Case"
+description: >-
+  Structured case format for documenting institutional friction while keeping
+  attributable facts distinct from interpretations and exemplar tests.
+type: object
+required:
+  - id
+  - title
+  - facts
+  - interpretations
+  - status
+properties:
+  id:
+    type: string
+  title:
+    type: string
+  jurisdiction:
+    type: [string, "null"]
+  institution:
+    type: [string, "null"]
+  facts:
+    type: object
+    required:
+      - declared_intent
+      - legal_basis
+      - observed_procedure
+      - observed_costs
+      - observed_effects
+    properties:
+      declared_intent:
+        type: array
+        items: {type: object}
+      legal_basis:
+        type: array
+        items: {type: object}
+      observed_procedure:
+        type: array
+        items: {type: object}
+      observed_costs:
+        type: array
+        items: {type: object}
+      observed_effects:
+        type: array
+        items: {type: object}
+      public_capabilities:
+        type: array
+        items: {type: object}
+      sources:
+        type: array
+        items: {type: object}
+  interpretations:
+    type: object
+    required:
+      - hypotheses
+    properties:
+      hypotheses:
+        type: array
+        items:
+          type: object
+          required: [statement, status]
+          properties:
+            statement: {type: string}
+            status:
+              enum: [supported, plausible, speculative, falsified, unknown]
+            confidence:
+              type: [number, "null"]
+              minimum: 0
+              maximum: 1
+            supported_by:
+              type: array
+              items: {type: string}
+            contradicted_by:
+              type: array
+              items: {type: string}
+  burden:
+    type: object
+    properties:
+      learning: {}
+      compliance: {}
+      psychological: {}
+      correction: {}
+      opportunity: {}
+      monetary: {}
+      delay: {}
+  justification:
+    type: object
+    properties:
+      claimed:
+        type: array
+        items: {type: object}
+      evidence:
+        type: array
+        items: {type: object}
+      status:
+        enum: [found, partial, none_found, unknown]
+  exemplar:
+    type: object
+    properties:
+      alternative: {type: [string, "null"]}
+      implementation: {type: [string, "null"]}
+      status:
+        enum: [idea, specified, prototype, running, measured, abandoned, null]
+      measured_cost: {}
+      measured_results:
+        type: array
+        items: {type: object}
+      residual_constraints:
+        type: array
+        items: {type: object}
+  flows:
+    type: object
+    properties:
+      burden_bearer:
+        type: array
+        items: {type: string}
+      resource_provider:
+        type: array
+        items: {type: string}
+      beneficiary:
+        type: array
+        items: {type: string}
+  status:
+    enum: [candidate, collecting_facts, tested, reviewed, closed]
+  provenance:
+    type: object
+additionalProperties: true
