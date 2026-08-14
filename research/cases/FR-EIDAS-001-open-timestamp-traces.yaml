@@ -1,0 +1,65 @@
+id: FR-EIDAS-001
+title: "Open high-quality timestamp traces versus qualified timestamp services"
+jurisdiction: "France / European Union"
+institution: "eIDAS trust-service ecosystem"
+status: candidate
+
+facts:
+  declared_intent: []
+  legal_basis: []
+  observed_procedure: []
+  observed_costs: []
+  observed_effects: []
+  public_capabilities: []
+  sources: []
+
+interpretations:
+  hypotheses:
+    - statement: "A large share of the technical value of reliable timestamping can be reproduced at very low marginal cost with open cryptographic techniques and public anchoring."
+      status: plausible
+      confidence: null
+      supported_by: []
+      contradicted_by: []
+    - statement: "The residual price of qualified timestamping may primarily reflect regulated trust, audit, liability, and qualification rather than cryptographic timestamp production itself."
+      status: plausible
+      confidence: null
+      supported_by: []
+      contradicted_by: []
+    - statement: "The qualification regime creates an unjustified regulatory rent."
+      status: speculative
+      confidence: null
+      supported_by: []
+      contradicted_by: []
+
+burden:
+  learning: null
+  compliance: null
+  psychological: null
+  correction: null
+  opportunity: null
+  monetary: null
+  delay: null
+
+justification:
+  claimed: []
+  evidence: []
+  status: unknown
+
+exemplar:
+  alternative: "Open Qualified-Like Trace"
+  implementation: "Canonical event + signature + hash + Merkle aggregation + independent public anchors + offline verifier; qualified timestamp optional for selected critical traces."
+  status: idea
+  measured_cost: null
+  measured_results: []
+  residual_constraints:
+    - description: "An open technical proof does not automatically receive the legal presumptions attached to a qualified eIDAS timestamp."
+
+flows:
+  burden_bearer: []
+  resource_provider: []
+  beneficiary: []
+
+provenance:
+  origin_type: conversation
+  origin_date: "2026-08-14"
+  note: "Candidate case. Authoritative legal and economic facts must be attached before drawing conclusions."
