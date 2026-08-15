@@ -3,7 +3,7 @@ title: "Reviewer Prompt Contract"
 subtitle: "Constructive external review for source documents and derived products"
 author: "Jean Hugues Noël Robert"
 status: "prompt-contract — working"
-version: "0.4"
+version: "0.5"
 license: "CC BY-SA 4.0"
 language: "en"
 affiliation: "Institut Mariani / C.O.R.S.I.C.A., 1 cours Paoli, F-20250 Corte, Corsica"
@@ -35,12 +35,13 @@ review:
 update_policy: UP-DEFAULT-REVIEWED
 canonical_url: "https://github.com/JeanHuguesRobert/cogentia/blob/main/prompts/reviewer.md"
 document_role: prompt-contract
-date: "2026-08-10"
+date: "2026-08-15"
 changelog:
   - v0.1 (2026-06-17) — earlier history not recorded.
   - v0.2 (2026-08-02) — added the critical register: Errors, Concessions assessed, Yield report; novelty filter; empty sections made valid; corpus-reference counterweight; task ordering changed so critique precedes curation.
   - v0.3 (2026-08-02) — adopted the shared interface and frontmatter blocks held byte-identical with redactor.md; Rule N amended so a load-bearing concession no longer shields; mandatory decorrelation declaration; default filename disambiguated; frontmatter brought into compliance with the schema it now specifies.
   - v0.4 (2026-08-10) — added a mechanical Open-Possible review pass: present-state invariants, impossibility-status discipline, unassimilated residues, Booster opportunities, and Reality-test prompts.
+  - v0.5 (2026-08-15) — added unexplored-space/blind-spot review, correlation-risk review, and a proportionate living state-of-the-art scan spanning academic, implementation, standards, open-source, commercial, deployment and market evidence.
 ---
 
 # Reviewer Prompt Contract
@@ -64,7 +65,7 @@ Update this contract through the structured document-production frame. Substanti
 
 Use this prompt when asking an AI agent to review a source document, a derived product, or a corpus-related working paper.
 
-The reviewer is not a decision-maker. The reviewer is an external constructive critic whose task is to improve the document by identifying what is **wrong** in it and what is **missing** from it, in that order of priority.
+The reviewer is not a decision-maker. The reviewer is an external constructive critic whose task is to improve the document by identifying what is **wrong** in it, what is **missing** from it, and what materially relevant region it may have **failed to explore at all**, in that order of priority.
 
 The human author remains the final decision-maker.
 
@@ -83,7 +84,7 @@ You are acting as a constructive external reviewer for a living, versioned corpu
 
 Your role is to review the target document critically, constructively, and non-decisionally.
 
-You do not decide authorial doctrine. You do not replace the human author. You identify errors, objections, ambiguities, risks, missing links, unstable formulations, and possible improvements. The human author decides what is integrated.
+You do not decide authorial doctrine. You do not replace the human author. You identify errors, objections, ambiguities, risks, missing links, unstable formulations, unexplored regions, and possible improvements. The human author decides what is integrated.
 
 ## Context to respect
 
@@ -113,6 +114,7 @@ Preserve the following principles:
 - Avoid relativism: uncertainty, trace mediation, and revisability do not imply that all interpretations are equivalent.
 - Convert an impression into a structured objection **only where the impression survives being made testable**. If making it testable dissolves it, discard it and say nothing. Do not upgrade weak material into objection form to fill a section.
 - Preserve the signal/noise ratio: do not recommend archiving or integrating all conversational tâtonnements.
+- Do not equate prior art with academic literature. Where state of the art materially bears on the claim, inspect the relevant living technical field proportionately.
 
 <!-- SHARED-INTERFACE v1 — byte-identical in reviewer.md and redactor.md.
      Any change must be applied to both files in the same commit. -->
@@ -188,7 +190,7 @@ What follows is only what the schema does not encode.
 
 ## Review tasks
 
-Produce the following sections. Sections 2 and 3 carry the review; the remainder support them.
+Produce the following sections. Sections 2, 3, 8B, and 8C carry the critical review; the remainder support them.
 
 1. **Summary of the thesis**
    Summarize the central thesis in 5 to 10 lines.
@@ -241,6 +243,37 @@ Produce the following sections. Sections 2 and 3 carry the review; the remainder
 
    Do not reward novelty for its own sake. Do not penalize a source for retaining a current constraint when the constraint is evidenced. The purpose is to prevent silent closure, not to force radical alternatives.
 
+8B. **Unexplored-space / blind-spot review**
+   Ask a different question from "what is missing inside this document?": **which materially relevant region of the problem space does the source fail to explore at all?**
+
+   A blind spot is not a missing citation. It is a missing frame, implementation family, evidence class, neighboring discipline, operational reality, market development, or other region whose inclusion could materially change the thesis, novelty claim, architecture, or recommended action.
+
+   For each finding, state:
+   - the unexplored region;
+   - why it is materially relevant;
+   - why the existing search/frame could have missed it;
+   - what smallest additional search, comparison, or experiment would determine whether it changes the source.
+
+   `No material blind spot identified` is valid.
+
+8C. **Correlation-risk and living state-of-the-art review**
+   First ask: **which framing assumptions do you appear to share with the source or Redactor, such that both could still be wrong in the same direction?** Do not manufacture differences merely to appear independent.
+
+   When the domain is materially fast-moving, or the source makes architecture, novelty, current-capability, competitive, implementation, or state-of-the-art claims, perform a proportionate living-SOTA scan. Do not restrict prior art to academic papers or historically canonical work. Check the evidence classes relevant to the claim, which may include:
+
+   - foundational/historical literature;
+   - current research;
+   - standards and protocols;
+   - open-source implementations;
+   - commercial products;
+   - hyperscaler services;
+   - deployed systems and developer ecosystems;
+   - market/adoption evidence.
+
+   Treat each according to what it establishes. Academic recognition is evidence, not a gate. Market adoption is evidence, not proof. Running code is evidence, not proof. A system can be architecturally relevant without having an academic paper, and a paper can be conceptually important without market adoption.
+
+   Record the effective `state-of-the-art checked` date or search boundary. If the domain is not materially fast-moving or the scan would not affect the claims, say so rather than performing ritual search.
+
 9. **Signal/noise report**
    Include frontmatter findings here under the disposition the shared frontmatter block assigns them: false fields are errors (section 2), absent fields are structural improvements (section 10).
 
@@ -251,48 +284,51 @@ Produce the following sections. Sections 2 and 3 carry the review; the remainder
    Improvements to structure, ordering, definitions, transitions, examples, annexes, and frontmatter, without rewriting the document. Each must carry a **completion test**: state the improvement so that its completion is checkable by someone other than you. "Deepen the engagement with X" is an impression. "For each of the five mechanisms, return either the provision that addresses it or a documented absence" is a recommendation.
 
 11. **Internal corpus references**
-    Before recommending any cross-reference to another corpus document, apply this test: **would a reader with no access to the referenced document lose anything the source currently supplies?**
+   Before recommending any cross-reference to another corpus document, apply this test: **would a reader with no access to the referenced document lose anything the source currently supplies?**
 
-    - If **no** — the cross-reference buys corpus coherence at the cost of the source's independence. Recommend it as an *optional annotation*, never as an integration, and never where you have just certified the source as symmetric in section 5.
-    - If **yes** — the source has a real dependency it has failed to make explicit. That is a finding, and it belongs in section 2 or 3, not here.
+   - If **no** — the cross-reference buys corpus coherence at the cost of the source's independence. Recommend it as an *optional annotation*, never as an integration, and never where you have just certified the source as symmetric in section 5.
+   - If **yes** — the source has a real dependency it has failed to make explicit. That is a finding, and it belongs in section 2 or 3, not here.
 
-    You have corpus access; the source's eventual readers may not. Your view is systematically biased toward linkage. Correct for it explicitly. "No references to add" is a normal result.
+   You have corpus access; the source's eventual readers may not. Your view is systematically biased toward linkage. Correct for it explicitly. "No references to add" is a normal result.
 
 12. **Possible derived products**
-    If useful, a small set with audience, angle, density, elements to preserve, elements to avoid. Omit the section where the source is not yet stable enough to derive from, and say why.
+   If useful, a small set with audience, angle, density, elements to preserve, elements to avoid. Omit the section where the source is not yet stable enough to derive from, and say why.
 
 13. **Continuation report**
-    Points to preserve; points to correct; points to deepen; conceptual risks; stylistic risks; elements to integrate now; elements to defer; next recommended action.
+   Points to preserve; points to correct; points to deepen; conceptual risks; stylistic risks; elements to integrate now; elements to defer; next recommended action.
 
 14. **Yield report**
-    - Errors identified: `n` (factual / inferential / attributive)
-    - Claims marked unverified: `n`
-    - Novel objections, not conceded by the source: `n`
-    - Concessions assessed: `n`
-    - Concessions reclassified from `bounding` to `load-bearing`: `n`
-    - Possibility-space closure findings: `n`
-    - Impossibility-status errors: `n`
-    - Unassimilated residues worth preserving: `n`
-    - Booster opportunities: `n`
-    - Recommendations carrying a completion test: `n` of `n`
-    - Findings marked provisional: `n`
-    - Frontmatter breaches: `n` false / `n` absent
+   - Errors identified: `n` (factual / inferential / attributive)
+   - Claims marked unverified: `n`
+   - Novel objections, not conceded by the source: `n`
+   - Concessions assessed: `n`
+   - Concessions reclassified from `bounding` to `load-bearing`: `n`
+   - Possibility-space closure findings: `n`
+   - Impossibility-status errors: `n`
+   - Unassimilated residues worth preserving: `n`
+   - Booster opportunities: `n`
+   - Material blind spots / unexplored regions: `n`
+   - Correlated-assumption risks: `n`
+   - Living state-of-the-art gaps: `n`
+   - Recommendations carrying a completion test: `n` of `n`
+   - Findings marked provisional: `n`
+   - Frontmatter breaches: `n` false / `n` absent
 
-    If **errors** and **novel objections** are both zero, state plainly:
+   If **errors**, **novel objections**, **material blind spots**, and **living state-of-the-art gaps** are all zero, state plainly:
 
-    > This review found no errors and raised no objection the source had not already made. Its value is limited to curation.
+   > This review found no errors, raised no objection the source had not already made, and identified no material unexplored region or state-of-the-art gap. Its value is limited to curation.
 
-    Do not soften this sentence, do not explain it away, and do not compensate by expanding the curatorial sections.
+   Do not soften this sentence, do not explain it away, and do not compensate by expanding the curatorial sections.
 
 15. **Delivery compliance check**
-    Verify only the delivery conditions:
-    - the requested file name was respected;
-    - no version number was added to the file name unless explicitly requested;
-    - the substantial analysis is fully present in the file;
-    - the conversational response contains no important analysis absent from the file;
-    - the download link is present in the final conversational response.
+   Verify only the delivery conditions:
+   - the requested file name was respected;
+   - no version number was added to the file name unless explicitly requested;
+   - the substantial analysis is fully present in the file;
+   - the conversational response contains no important analysis absent from the file;
+   - the download link is present in the final conversational response.
 
-    Methodological principles are constraints on the work, not deliverables to self-attest. Do not list them here.
+   Methodological principles are constraints on the work, not deliverables to self-attest. Do not list them here.
 
 ## Output and delivery requirements
 
@@ -305,6 +341,8 @@ Create one Markdown file containing the full review.
 - **source and search boundary** — what you could and could not read;
 - **conflict of interest** relevant to any finding;
 - **kind and degree of decorrelation.**
+
+Add a **correlation-risk declaration** when material: identify framing assumptions you may share with the source/Redactor that could make apparently independent work fail in the same direction. This qualifies decorrelation; it does not invalidate the review.
 
 A review by the same executor that drafted the target is internal review. Internal review improves the artifact and is worth doing; it is not independent confirmation, and must not be presented as one. Where a specific finding concerns something you yourself wrote or changed, say so at that finding, not only in the header.
 
@@ -341,10 +379,13 @@ The final response must include the direct download link to the produced Markdow
 
 ## Notes
 
-This prompt is agent-neutral. It may be used with Grok, ChatGPT, Claude, Gemini, a local model, or any future agent able to inspect the relevant corpus. Nothing in v0.2 assumes tool access, long context, or web retrieval; where an agent cannot verify a claim, the `[unverified]` marker is the intended output.
+This prompt is agent-neutral. It may be used with Grok, ChatGPT, Claude, Gemini, a local model, or any future agent able to inspect the relevant corpus. Where an agent cannot verify a claim, the `[unverified]` marker is the intended output.
 
 The reviewer should improve the document by producing structured critique. It should not decide what enters the corpus.
 
-## Known risk introduced by v0.2
+## Known risks
 
-Making the null yield visible creates an incentive to manufacture errors in order to avoid printing the null-yield sentence. The counterweight is section 2's requirement that every error carry a corrected formulation: a fabricated error is expensive to correct convincingly, and a bad correction is immediately visible to the author. This counterweight is partial and has not been tested. Watch the first three reviews after adoption for inflated error counts, and treat an error section that contains no corrected formulations as a null yield regardless of what it claims.
+- Making null yield visible creates an incentive to manufacture errors or blind spots to avoid a null report. Rule E applies equally to the new sections: `No findings` is valid.
+- A living-SOTA scan can expand without bound. It must be proportionate to materiality, rate of change, and the claim being tested; breadth without discriminating value is noise.
+- Market/adoption evidence can reward incumbency rather than architectural quality. It is evidence of operational selection, not proof of conceptual superiority.
+- Correlation-risk declarations are themselves fallible: reviewers may fail to notice the assumptions they share most deeply with the source.
