@@ -1,8 +1,8 @@
 ---
 title: Cogentia Shared Agent Instructions
 status: active
-version: 8
-date: 2026-08-12
+version: 9
+date: 2026-08-15
 document_role: operational
 document_kind: agent-instructions
 visibility: public
@@ -56,6 +56,16 @@ resolve without mandate. Do not invent missing by-reference context.
 - Preserve provenance. Do not infer missing author, source, reference, review or visibility information.
 - AI suggests and clarifies; a human principal retains mandate and responsibility for engaging acts.
 - Public by default does not cancel privacy: private material requires explicit authorization before public reuse.
+
+## Living evidence / state-of-the-art invariant
+
+For material research, architecture, novelty, or state-of-the-art claims, **search beyond the current frame**. Do not limit evidence to the source's existing references, to academic literature, or to historically canonical work when materially relevant contemporary evidence is available.
+
+Perform a proportionate check across the evidence classes that matter to the claim, which may include current research, standards and protocols, open-source implementations, commercial products, hyperscaler services, deployed systems, developer ecosystems, and market/adoption evidence.
+
+Treat each form of evidence according to what it establishes: academic recognition is evidence, not a gate; market adoption is evidence, not proof; running code is evidence, not proof. Distinguish absence of evidence from absence from the explored space.
+
+This is a search obligation, not a requirement to manufacture novelty or exhaustive surveys. Scale it to the materiality and rate of change of the domain.
 
 ## Open-Possible / Booster invariant
 
