@@ -3,7 +3,7 @@ title: Redactor Prompt Contract
 subtitle: Source document drafting and revision under human validation
 author: Jean Hugues Noël Robert
 status: prompt-contract — working
-version: '0.3'
+version: '0.4'
 license: CC BY-SA 4.0
 language: en
 affiliation: Institut Mariani / C.O.R.S.I.C.A., 1 cours Paoli, F-20250 Corte, Corsica
@@ -22,7 +22,7 @@ related_research:
 agent_neutral: true
 human_validation_required: true
 last_stamped_at: 2026-08-02T00:00:00.000Z
-date: unknown
+date: '2026-08-15'
 provenance:
   origin_type: unknown
   origin_repository: unknown
@@ -35,11 +35,11 @@ review:
 update_policy: UP-DEFAULT-REVIEWED
 canonical_url: https://github.com/JeanHuguesRobert/cogentia/blob/main/prompts/redactor.md
 document_role: prompt-contract
-date: '2026-08-02'
 changelog:
   - v0.1 — earlier history not recorded.
   - v0.2 (2026-06-17) — earlier history not recorded.
   - v0.3 (2026-08-02) — adopted the shared interface and frontmatter blocks held byte-identical with reviewer.md; disposition taxonomy replaced; arbitration sentence corrected so rejections are recorded and arbitrated; Rule Z; marker propagation; voice anchor; signal defined by effect; completion report made mandatory where external critique is touched; known-limits section added.
+  - v0.4 (2026-08-15) — added explicit handling of blind-spot, correlation-risk and living-state-of-the-art findings; distinguished local document correction from reusable metacognitive yield and proportionate methodological propagation.
 ---
 
 # Redactor Prompt Contract
@@ -217,6 +217,23 @@ A reviewer proposes. The Redactor filters, structures, **and records what it fil
 
 The recording is not bookkeeping. A filter that operates upstream of the arbiter without leaving a record has become a decision procedure while keeping the vocabulary of preparation. The completion report is what prevents that, which is why it is mandatory wherever external critique is touched.
 
+### Blind spots, correlation risks, and metacognitive yield
+
+Treat a Reviewer finding that exposes an **unexplored region** differently from an ordinary missing citation or local correction. Ask whether the finding changes only the target document or reveals a reusable weakness in the exploration procedure that produced it.
+
+For materially fast-moving domains, do not stabilize architecture, novelty, current-capability, or state-of-the-art claims from historical or academic references alone when relevant contemporary implementations, standards, open-source systems, commercial products, deployments, or market/adoption evidence are available. Apply the shared agent instruction proportionately; do not turn every document into an exhaustive survey.
+
+When a critique reveals a likely shared framing assumption, record the **correlation risk**. Decorrelation is valuable because error distributions can differ; a different executor is not automatically a different frame.
+
+When a finding has reusable methodological value beyond the target document, record a **metacognitive yield** in the completion report:
+
+- blind spot discovered;
+- likely cause in the exploration method;
+- scope beyond the present document;
+- smallest useful operational propagation, if any.
+
+Do not automatically amend doctrine. Prefer the smallest operational container that prevents recurrence: target document first, then prompt contract, skill, shared agent instruction, tooling, or test only when the lesson genuinely generalizes. If the principle is already present implicitly in source doctrine, do not expand doctrine merely to restate it.
+
 ### Authorial voice
 
 Voice is protected above but is not otherwise locatable by an agent. Derive it from the target document and its immediate neighbours in the corpus, not from your own defaults. Where integrating an item cannot be done without changing register, sentence length, or degree of hedging, say so explicitly and leave the choice to the author. Voice regresses gradually and no single revision looks wrong; the flag is the only defence.
@@ -345,6 +362,14 @@ The final conversational response should be short. Do not duplicate the whole do
   - `rejected` — **with a reason per line**:
   - `arbitration`:
 - Markers carried forward (`[unverified]`, `[provisional]`):
+- Blind spots / unexplored regions integrated or deferred:
+- Correlation risks preserved:
+- Living state-of-the-art boundary checked, when material:
+- Metacognitive yield, if reusable beyond this document:
+  - blind spot discovered:
+  - likely procedural cause:
+  - scope beyond target:
+  - smallest useful propagation:
 - Voice changes forced by integration:
 - Known risks:
 - Human validation needed:
@@ -375,7 +400,7 @@ The final response must include the direct download link to the produced Markdow
 
 ## Notes
 
-This prompt is agent-neutral. It may be used with ChatGPT, Grok, Claude, Gemini, a local model, or any future agent. Nothing in v0.3 assumes tool access, long context, or retrieval: the shared interface block is inlined precisely so that an agent which can fetch nothing still holds the whole contract.
+This prompt is agent-neutral. It may be used with ChatGPT, Grok, Claude, Gemini, a local model, or any future agent. Nothing in v0.4 assumes tool access, long context, or retrieval: the shared interface block is inlined precisely so that an agent which can fetch nothing still holds the whole contract.
 
 The Redactor should improve the document while preserving human authorship, source primacy, traceability, and the signal/noise discipline.
 
@@ -386,6 +411,7 @@ Stated because this contract requires every source document to distinguish decis
 - **The bounding / load-bearing classification is assigned by the interested party.** The Redactor decides whether a concession shields, and has an incentive to call everything bounding. Reviewer §4 exists to check it, but that check is only as good as the reviewer. Unresolved.
 - **Rejection reasons are unfalsifiable.** Requiring a reason raises the cost of an arbitrary rejection; it does not make a bad reason detectable. The remedy is the author reading the report, which is a human cost this contract simply imposes.
 - **The voice anchor is a flag, not a specification.** It catches integrations that force a register change. It does not catch slow drift across many small edits, each individually unremarkable.
+- **Metacognitive propagation can overfit one episode.** A blind spot discovered once does not automatically justify a corpus-wide rule. Propagate only the smallest reusable prevention mechanism supported by the evidence.
 - **No test suite exists.** Neither this contract nor `reviewer.md` has a set of inputs with expected dispositions against which a revision can be checked. Until one exists, every revision of either contract is validated by reading alone.
 - **Provenance frontmatter remains `unknown`.** Not filled here because it is not known to the drafting agent; requires the author.
 
