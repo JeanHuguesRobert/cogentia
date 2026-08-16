@@ -4,7 +4,7 @@ subtitle: "Provider-neutral backlog of pending corpus propagations"
 author: "Jean Hugues Noël Robert"
 repository: "cogentia"
 status: "working source — operational registry"
-version: "0.1"
+version: "0.2"
 date: "2026-08-16"
 last_modified_at: "2026-08-16"
 language: "en"
@@ -24,6 +24,7 @@ related_documents:
   - "research/cognitive_packets.md"
   - "research/memory_and_corpus_sleep_cycle.md"
   - "prompts/redactor.md"
+  - "https://github.com/JeanHuguesRobert/operium/blob/main/research/federated-capacity-registry.md"
 update_policy: "UP-DEFAULT-REVIEWED"
 ---
 
@@ -182,59 +183,68 @@ propagation:
     advanced farther than the current FractaLog source documents.
 ```
 
-### PR-2026-002 — Federated Capacity Registry and analytical resource accounting
+### PR-2026-002 — Operium Federated Capacity Registry and analytical resource accounting
 
 ```yaml
 propagation:
   id: PR-2026-002
-  status: propagation_needed
+  status: propagation_in_progress
   discovered_at: 2026-08-16
   source_refs:
+    - "operium/docs/operium-node-agent.md"
+    - "operium/research/federated-capacity-registry.md"
     - "inseme/research/cogentia_accounting_architecture.md"
-    - "inseme/packages/cop-kernel/src/capabilityRegistry.js"
     - "inseme/packages/cop-kernel/docs/packet-strict-accounting-cascade.md"
-    - "conversation checkpoint R55"
+    - "conversation checkpoints R55-R59"
   source_summary: >-
-    Compute and other capacities are heterogeneous, distributed and locally
-    authoritative. Cogentia analytical accounting already supports dimensions such
-    as provider, capability, model/resource, packet/treatment and beneficiary,
-    while COP already has a capability registry and packet-local resource
-    accounting. These should converge into a federated capacity registry rather
-    than a separate centralized inventory.
+    Operium already owns the natural operational layers for resource/capacity
+    inventory: a durable slow catalogue, fast volatile advertisements and
+    node-local operational projections. Cogentia/COP should express governed
+    capacity requirements, mandates, budgets and packet-local consumption facts,
+    while Operium federates what capacities are actually available. This avoids a
+    competing capacity authority inside Cogentia.
   observed_gap:
-    - "no canonical provider-neutral registry currently inventories heterogeneous compute/subscription/free-tier/local capacities"
-    - "capability discovery, resource availability and analytical cost/usage views are not yet explicitly unified"
-    - "personal lean-mode capacity such as subscriptions/free tiers is largely invisible to scheduling"
+    - "Operium catalogue and ONA advertisements do not yet expose a sufficiently generic qualified-capacity declaration for compute, inference, free-tier, subscription, quota and other heterogeneous resources"
+    - "Cogentia/COP capability matching and Operium operational capacity inventory are not yet connected by a clear requirements-to-candidates contract"
+    - "personal lean-mode capacity such as subscriptions, free tiers, local machines and VPS resources remains poorly visible to scheduling"
   targets:
-    - "JeanHuguesRobert/inseme:packages/cop-kernel/src/capabilityRegistry.js"
-    - "JeanHuguesRobert/inseme:research/cogentia_accounting_architecture.md"
-    - "JeanHuguesRobert/cogentia:research/memory_and_corpus_sleep_cycle.md"
-    - "relevant scheduler / packet-attractor documents after implementation evidence exists"
+    - "JeanHuguesRobert/operium:research/federated-capacity-registry.md"
+    - "JeanHuguesRobert/operium:catalogue / ONA capacity advertisements, after schema inventory"
+    - "JeanHuguesRobert/inseme:packet requirements / scheduler / Packet Attractor integration, after Operium declaration shape stabilizes"
+    - "JeanHuguesRobert/inseme:research/cogentia_accounting_architecture.md for analytical projection links only"
+    - "JeanHuguesRobert/cogentia:research/memory_and_corpus_sleep_cycle.md for residual-capacity consumption only"
   expected_effects:
-    - "each node/provider remains authoritative for its declared capacities"
-    - "global capacity views are federated projections with freshness, provenance, confidence and visibility"
-    - "capacity descriptions include access mode, quota, fixed/marginal cost, availability, automation, jurisdiction, privacy/security and preemptibility where material"
+    - "Operium is the operational authority/projection layer for available capacities; Cogentia does not create a competing central capacity registry"
+    - "each node/provider/source remains authoritative for the capacity facts it legitimately declares or measures"
+    - "global capacity views are federated projections with freshness, provenance, confidence/measurement status and visibility"
+    - "capacity descriptions may include access mode, quota, fixed/marginal cost, availability, automation, jurisdiction, privacy/security and preemptibility where material"
+    - "Cognitive Packets express requirements; Operium returns candidate capacities; capability does not imply authority"
     - "actual consumption remains packet-local and projects into analytical accounting"
-    - "schedulers prefer already-paid/free/idle admissible capacity before new purchase when total cost including human attention and risk justifies it"
-    - "Sleep/background work can consume qualified residual capacity only under explicit mandate and bounded budget"
+    - "lean-mode scheduling may prefer already-paid/free/prepaid admissible capacity before new purchase when total cost including attention and risk justifies it"
+    - "Sleep/background work may consume qualified residual capacity only under explicit mandate and bounded budget"
+    - "capacity-state changes may make previously blocked propagation/background packets admissible for reevaluation"
   priority: high
   confidence: high
-  propagation_level: 1
+  propagation_level: 2
   evidence_refs:
+    - "Operium ONA: slow catalogue, fast blackboard, node-local hot projections; Git registry remains durable truth"
     - "Cogentia Accounting Architecture: packet/treatment-level imputation and multidimensional analytical views"
-    - "COP capabilityRegistry implementation"
-    - "packet strict accounting own/consolidated projection semantics"
+    - "packet strict accounting: source spend facts remain packet-local; consolidated spend is a projection"
   blockers:
     - "actual quotas and subscription entitlements are provider-specific and may be difficult to measure automatically"
     - "subscription UI capacity must not be confused with API-automatable capacity"
-  next_action: "Inventory existing capability registry schema and scheduler consumers; propose the smallest compatible capacity-declaration extension before code changes."
+    - "the existing Operium catalogue/ONA capacity fields must be inventoried before freezing a new schema"
+  next_action: "Inventory existing Operium catalogue and ONA capacity fields; dogfood a read-only JHR capacity inventory; then define the smallest requirements-to-candidates bridge with COP."
   verification:
     status: planned
-    evidence_refs: []
+    evidence_refs:
+      - "operium/research/federated-capacity-registry.md created 2026-08-16"
   notes: >-
-    The first practical dogfood case is Jean Hugues Robert's own distributed
-    compute capacity in lean mode, but the schema must remain generic and
-    federation-ready.
+    Architectural correction after R58: the earlier candidate direction of
+    extending Cogentia capabilityRegistry as the federated capacity authority was
+    too centralizing and duplicated Operium's established role. capabilityRegistry
+    may remain a local/runtime matching primitive, but Operium owns the federated
+    operational view.
 ```
 
 ## Operational discipline
