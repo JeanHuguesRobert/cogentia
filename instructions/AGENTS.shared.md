@@ -1,8 +1,8 @@
 ---
 title: Cogentia Shared Agent Instructions
 status: active
-version: 9
-date: 2026-08-15
+version: 10
+date: 2026-08-16
 document_role: operational
 document_kind: agent-instructions
 visibility: public
@@ -161,8 +161,8 @@ French.
 - Do not commit, push, publish, send, sign, spend or otherwise stabilize an engaging act without explicit, scoped authorization.
 - A valid ongoing mandate is explicit, scoped authorization: it authorizes ordinary in-scope acts without per-act approval. Require contemporaneous evidence and human validation in proportion to the act's engagement and irreversibility, not by default for every routine action.
 - A blocked tool, access failure or missing evidence is a result to report, never a success to imply.
+- **Validate the delivered artifact, not only its pre-transformation source.** Whenever content passes through a renderer, converter, serializer, templating layer, code string, escaping layer, or other transformation before delivery, inspect or mechanically check the final bytes/artifact for semantic and syntactic corruption. A transformation step is part of the system under test, not a transparent pipe. For Markdown with TeX intended for GitHub, prefer `$...$` / `$$...$$`, preserve TeX backslashes through any interpreted string layer (raw strings or explicit escaping), and scan the final artifact for transformation signatures when material (for example dropped backslashes, `{=tex}`, broken math delimiters, or malformed commands).
 - Before presenting work as ready, state scope, files affected, checks run, known risks, reversibility and required human validation.
-
 
 ## Delivery policy — Optimistic Locking
 
