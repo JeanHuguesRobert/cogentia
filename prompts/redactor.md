@@ -3,7 +3,7 @@ title: Redactor Prompt Contract
 subtitle: Source document drafting and revision under human validation
 author: Jean Hugues Noël Robert
 status: prompt-contract — working
-version: '0.4'
+version: '0.5'
 license: CC BY-SA 4.0
 language: en
 affiliation: Institut Mariani / C.O.R.S.I.C.A., 1 cours Paoli, F-20250 Corte, Corsica
@@ -22,7 +22,7 @@ related_research:
 agent_neutral: true
 human_validation_required: true
 last_stamped_at: 2026-08-02T00:00:00.000Z
-date: '2026-08-15'
+date: '2026-08-16'
 provenance:
   origin_type: unknown
   origin_repository: unknown
@@ -40,6 +40,7 @@ changelog:
   - v0.2 (2026-06-17) — earlier history not recorded.
   - v0.3 (2026-08-02) — adopted the shared interface and frontmatter blocks held byte-identical with reviewer.md; disposition taxonomy replaced; arbitration sentence corrected so rejections are recorded and arbitrated; Rule Z; marker propagation; voice anchor; signal defined by effect; completion report made mandatory where external critique is touched; known-limits section added.
   - v0.4 (2026-08-15) — added explicit handling of blind-spot, correlation-risk and living-state-of-the-art findings; distinguished local document correction from reusable metacognitive yield and proportionate methodological propagation.
+  - v0.5 (2026-08-16) — added final-artifact validation after rendering/conversion/serialization; transformation layers are now part of the delivery test, with explicit protection for Markdown/TeX escaping and a completion-report check.
 ---
 
 # Redactor Prompt Contract
@@ -341,6 +342,20 @@ Version information belongs inside frontmatter or internal metadata.
 
 Do not create multiple intermediate files unless explicitly requested.
 
+### Final-artifact validation
+
+**Validate the artifact that will actually be delivered or stabilized, not only the source representation that existed before transformation.** If the document passes through a renderer, Markdown converter, serializer, templating system, code-generated string, escaping layer, or format conversion, that transformation is part of the production system and must be tested.
+
+For transformed text artifacts, perform a proportionate post-production check on the final bytes/content. At minimum, preserve syntax whose meaning depends on escaping and delimiters. For Markdown with TeX intended for GitHub:
+
+- prefer `$...$` and `$$...$$` as math delimiters;
+- when Markdown is constructed inside an interpreted language, preserve TeX backslashes with raw strings or explicit escaping;
+- do not assume conversion tools are transparent to TeX or Markdown syntax;
+- scan the final artifact for plausible corruption signatures when material, such as dropped backslashes (`ightarrow`, bare `eq` where `\neq` was intended), `{=tex}`, escaped math delimiters, or malformed commands;
+- when possible, verify the rendered or parsed form in the target environment, not merely the generator input.
+
+A source that was correct before transformation but corrupted in the delivered artifact is a failed delivery.
+
 The final conversational response must include a direct download link to the produced file. If the user has to ask again for the download link, your response is non-conformant.
 
 The final conversational response should be short. Do not duplicate the whole document in chat.
@@ -365,6 +380,7 @@ The final conversational response should be short. Do not duplicate the whole do
 - Blind spots / unexplored regions integrated or deferred:
 - Correlation risks preserved:
 - Living state-of-the-art boundary checked, when material:
+- Final-artifact validation performed after all transformations:
 - Metacognitive yield, if reusable beyond this document:
   - blind spot discovered:
   - likely procedural cause:
@@ -400,7 +416,7 @@ The final response must include the direct download link to the produced Markdow
 
 ## Notes
 
-This prompt is agent-neutral. It may be used with ChatGPT, Grok, Claude, Gemini, a local model, or any future agent. Nothing in v0.4 assumes tool access, long context, or retrieval: the shared interface block is inlined precisely so that an agent which can fetch nothing still holds the whole contract.
+This prompt is agent-neutral. It may be used with ChatGPT, Grok, Claude, Gemini, a local model, or any future agent. Nothing in v0.5 assumes tool access, long context, or retrieval: the shared interface block is inlined precisely so that an agent which can fetch nothing still holds the whole contract.
 
 The Redactor should improve the document while preserving human authorship, source primacy, traceability, and the signal/noise discipline.
 
