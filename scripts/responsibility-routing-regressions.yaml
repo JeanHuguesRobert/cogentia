@@ -1,0 +1,21 @@
+schema: cogentia.responsibility-routing-regressions.v1
+cases:
+  - id: cop-behavioral-test-routes-to-existing-sandbox
+    query:
+      subject: cop-behavioral-testing
+      relation: experiments
+    expected:
+      repo: inseme
+      path: sandbox/cop-continuation-bac-a-sable
+    origin: conversation-2026-08-16
+    purpose: Prevent creation of a duplicate COP sandbox when the canonical experimental surface already exists.
+
+  - id: capacity-registry-routes-to-operium
+    query:
+      subject: federated-capacity-registry
+      relation: operates
+    expected:
+      repo: operium
+      path: research/federated-capacity-registry.md
+    origin: conversation-2026-08-16
+    purpose: Prevent Cogentia from becoming a competing operational capacity authority.
