@@ -1,7 +1,7 @@
 ---
 name: explorer
 description: Expand the rationally interesting space of possibilities before convergence. Use for open-ended research, reframing, hypothesis generation, distant structural analogy, anomaly preservation, and discovery work where premature convergence is a risk.
-version: 0.1.4
+version: 0.1.5
 status: experimental
 ---
 
@@ -38,6 +38,7 @@ Exploration should be permissive. Belief should remain expensive.
 7. When exploration produces an insight that appears reusable, structurally important, or likely to be lost if it remains local, explicitly flag it as a **propagation candidate**. Flagging is not stabilization.
 8. Preserve an explicit return point for substantial excursions when the execution substrate supports suspension/resumption. Exploration may branch freely; losing the path back is not a virtue.
 9. A coherent hypothetical world is not thereby a fact about Reality. Thought experiments may generate knowledge candidates, predictions, discriminating observations, or better questions; they do not silently promote their premises to evidence.
+10. **Low evidence may forbid assertion without forbidding exploration. Fecundity may justify a temporary As-If exploration without justifying belief.**
 
 ## Workflow
 
@@ -97,6 +98,33 @@ Useful interventions include, without making them mandatory:
 - **Change level** — move the problem to another level of abstraction or system boundary;
 - **Change parameter** — vary a quantity or regime;
 - **Introduce/remove constraint** — test whether an apparent necessity belongs to Reality or only to the current framing.
+
+#### Possibilist As-If Exploration
+
+When a hypothesis is insufficiently established for belief but has enough intuition, mechanism, anomaly, or prospective fecundity to deserve exploration, **suspend judgement productively** and temporarily reason *as if* the hypothesis were true.
+
+The suspension is not indecision for its own sake and the As-If stance is not belief. Its purpose is to let the hypothesis produce descendants before the normal evidential threshold kills the branch.
+
+Use the sequence:
+
+```text
+Suspend judgement
+-> As If(H)
+-> propagate consequences
+-> derive differential predictions
+-> probe Reality
+-> revise the epistemic status of H
+```
+
+Prefer consequences that discriminate between competing hypotheses. Observing a consequence compatible with `H` does not prove `H`; ask whether that observation was materially more expected under `H` than under credible alternatives.
+
+This operation is compatible with abduction, hypothetico-deductive testing, Bayesian comparison, and thought experiments, but its Possibilist emphasis is on **productive exploration before commitment**: an hypothesis may deserve a small exploration budget because of prospective fecundity even before it is the best-supported explanation available.
+
+Two compact rules govern the operation:
+
+> **Low evidence may forbid assertion without forbidding exploration.**
+
+> **Fecundity authorizes As-If exploration, not belief.**
 
 #### Counterfactual Forking
 
@@ -196,7 +224,7 @@ The useful composition is therefore:
 
 ```text
 Explorer policy
--> branch / excursion / thought experiment
+-> branch / excursion / thought experiment / As-If exploration
 -> preserve continuation + provenance
 -> descendants / anomalies / candidate discoveries
 -> return or wake
@@ -216,7 +244,7 @@ For each surviving candidate provide, when applicable:
 - **Candidate** — concise proposition.
 - **Reframing** — what changed in the representation of the problem.
 - **Invisible assumption exposed** — any previously implicit constraint or premise made explicit.
-- **Thought experiment** — intervention, preserved constraints, observables, and comparison when used.
+- **Thought experiment / As-If exploration** — intervention, preserved constraints, predictions, observables, and comparison when used.
 - **Mechanism** — why it might work.
 - **Distance** — why it is not merely the obvious answer or nearest known concept.
 - **Descendants** — new questions, capabilities, experiments, or possibilities opened.
@@ -243,7 +271,9 @@ Avoid:
 - exploratory branches with no preserved lineage, return point, or explicit disposition when the substrate can provide one;
 - treating a coherent counterfactual world as evidence that it is actual;
 - generating counterfactual variants without specifying what changed and what remained constrained;
-- forcing incompatible branches to converge before they have produced discriminating descendants.
+- forcing incompatible branches to converge before they have produced discriminating descendants;
+- confusing temporary As-If adoption with belief;
+- treating confirmation of a predicted consequence as proof of the hypothesis without comparing alternatives.
 
 Unverified material is permitted only when clearly labelled and useful as exploratory material.
 
@@ -256,6 +286,7 @@ Explorer succeeds when it increases the quality of the option set available to s
 - structurally distant analogies;
 - promising anomalies preserved;
 - constrained thought experiments that expose consequences hidden by the reference framing;
+- As-If explorations that turn weak but fecund hypotheses into discriminating predictions without confusing exploration with belief;
 - competing worlds that produce discriminating observations or Reality tests rather than narrative variation alone;
 - high-value descendants;
 - cheap Reality tests;
@@ -267,4 +298,4 @@ It does not succeed merely by producing more text or more ideas.
 
 ## Experimental note
 
-This is v0.1.4. Treat the skill itself as a hypothesis. Compare work performed with and without it under comparable model, context, and compute budgets. Prefer blind downstream evaluation when practical.
+This is v0.1.5. Treat the skill itself as a hypothesis. Compare work performed with and without it under comparable model, context, and compute budgets. Prefer blind downstream evaluation when practical.
