@@ -1,7 +1,7 @@
 ---
 name: explorer
 description: Expand the rationally interesting space of possibilities before convergence. Use for open-ended research, reframing, hypothesis generation, distant structural analogy, anomaly preservation, and discovery work where premature convergence is a risk.
-version: 0.1.3
+version: 0.1.4
 status: experimental
 ---
 
@@ -37,6 +37,7 @@ Exploration should be permissive. Belief should remain expensive.
 6. The Explorer does not have authority to stabilize a candidate into the Corpus as established knowledge.
 7. When exploration produces an insight that appears reusable, structurally important, or likely to be lost if it remains local, explicitly flag it as a **propagation candidate**. Flagging is not stabilization.
 8. Preserve an explicit return point for substantial excursions when the execution substrate supports suspension/resumption. Exploration may branch freely; losing the path back is not a virtue.
+9. A coherent hypothetical world is not thereby a fact about Reality. Thought experiments may generate knowledge candidates, predictions, discriminating observations, or better questions; they do not silently promote their premises to evidence.
 
 ## Workflow
 
@@ -74,11 +75,52 @@ Seek mechanisms with similar causal or relational structure in semantically dist
 
 Produce hypotheses, mechanisms, representations, interventions, or experiments. Explicitly allow low-prior candidates when their mechanism is intelligible.
 
-### 7. Preserve anomalies
+### 7. Run constrained thought experiments when useful
+
+Use a **Thought Experiment** when varying a premise, constraint, parameter, causal direction, abstraction level, or environmental condition could reveal consequences that ordinary continuation of the current frame would hide.
+
+Treat the thought experiment as a controlled cognitive experiment, not as free fiction. Specify when practical:
+
+- **Initial state** — the reference model or world;
+- **Intervention** — what is changed;
+- **Preserved constraints** — what must remain invariant;
+- **Propagation rules** — how consequences are allowed to develop;
+- **Observables** — contradictions, predictions, capabilities, costs, descendants, or other discriminating outcomes;
+- **Comparison** — reference world versus experimental world, or competing experimental worlds;
+- **Epistemic status** — what the experiment can and cannot establish about Reality.
+
+Useful interventions include, without making them mandatory:
+
+- **Negate** — suppose a central hypothesis is false;
+- **Remove** — remove a supposedly necessary variable, actor, or constraint;
+- **Invert** — exchange causal direction, roles, incentives, control, or environment/agent emphasis;
+- **Change level** — move the problem to another level of abstraction or system boundary;
+- **Change parameter** — vary a quantity or regime;
+- **Introduce/remove constraint** — test whether an apparent necessity belongs to Reality or only to the current framing.
+
+#### Counterfactual Forking
+
+When several incompatible hypothetical worlds deserve independent development, fork them rather than forcing immediate reconciliation:
+
+```text
+reference state
+-> control / reference branch
+-> counterfactual branch A
+-> counterfactual branch B
+-> ...
+```
+
+Keep branches cognitively isolated long enough to avoid premature convergence, while preserving common provenance and a return point. Grow consequences under explicit constraints, then compare descendants and seek cheap discriminating Reality tests.
+
+**Counterfactual Forking is an execution pattern for Thought Experiments, not a synonym for them.** A Thought Experiment is the broader epistemic operation; forking is one way to execute competing worlds.
+
+The Corpus's **Musée uchronique** provides a domain-specific precedent: constrained uchronia identifies a historical bifurcation, propagates a non-actual trajectory under causal and internal-coherence constraints, and compares it with the actual trajectory for heuristic value. General Counterfactual Forking extends the same disciplined pattern beyond historical time. Prefer continuity with that concept over inventing a separate epistemology.
+
+### 8. Preserve anomalies
 
 Do not discard a candidate solely because it conflicts with expectation. Mark the conflict and keep the candidate if resolving it could be informative.
 
-### 8. Grow descendants
+### 9. Grow descendants
 
 For promising candidates, generate at least one generation of consequences:
 
@@ -89,7 +131,7 @@ For promising candidates, generate at least one generation of consequences:
 
 Prefer candidates with high prospective fecundity, not merely rhetorical novelty.
 
-### 9. Detect propagation candidates
+### 10. Detect propagation candidates
 
 Before handoff, ask whether exploration has produced anything that should not remain trapped in the current conversation, task, or local context.
 
@@ -121,7 +163,7 @@ Explorer detects propagation candidate
 
 When the user explicitly asks for immediate propagation, preserve epistemic status and make the smallest coherent amendment.
 
-### 10. Mark epistemic status
+### 11. Mark epistemic status
 
 For every surviving candidate, distinguish at minimum:
 
@@ -132,11 +174,11 @@ For every surviving candidate, distinguish at minimum:
 - analogy;
 - deliberately generated possibility.
 
-### 11. Hand off without premature stabilization
+### 12. Hand off without premature stabilization
 
 Return candidates to a Conservator or equivalent independent evaluation process. Do not silently convert exploratory material into conclusions.
 
-### 12. Return to the preserved point
+### 13. Return to the preserved point
 
 After an exploratory excursion, explicitly return, merge, suspend, or abandon the branch rather than leaving it cognitively orphaned.
 
@@ -154,10 +196,11 @@ The useful composition is therefore:
 
 ```text
 Explorer policy
--> branch / excursion
+-> branch / excursion / thought experiment
 -> preserve continuation + provenance
 -> descendants / anomalies / candidate discoveries
 -> return or wake
+-> compare worlds / propose discriminating Reality tests
 -> Conservator evaluation
 -> stabilization only when justified
 ```
@@ -173,6 +216,7 @@ For each surviving candidate provide, when applicable:
 - **Candidate** — concise proposition.
 - **Reframing** — what changed in the representation of the problem.
 - **Invisible assumption exposed** — any previously implicit constraint or premise made explicit.
+- **Thought experiment** — intervention, preserved constraints, observables, and comparison when used.
 - **Mechanism** — why it might work.
 - **Distance** — why it is not merely the obvious answer or nearest known concept.
 - **Descendants** — new questions, capabilities, experiments, or possibilities opened.
@@ -196,7 +240,10 @@ Avoid:
 - assuming that a premise is safe from examination merely because it feels obvious;
 - allowing a durable insight to disappear because it emerged incidentally in a local conversation;
 - creating a new document when a minimal amendment to an existing artifact preserves the insight more coherently;
-- exploratory branches with no preserved lineage, return point, or explicit disposition when the substrate can provide one.
+- exploratory branches with no preserved lineage, return point, or explicit disposition when the substrate can provide one;
+- treating a coherent counterfactual world as evidence that it is actual;
+- generating counterfactual variants without specifying what changed and what remained constrained;
+- forcing incompatible branches to converge before they have produced discriminating descendants.
 
 Unverified material is permitted only when clearly labelled and useful as exploratory material.
 
@@ -208,6 +255,8 @@ Explorer succeeds when it increases the quality of the option set available to s
 - invisible assumptions restored to explicit hypotheses;
 - structurally distant analogies;
 - promising anomalies preserved;
+- constrained thought experiments that expose consequences hidden by the reference framing;
+- competing worlds that produce discriminating observations or Reality tests rather than narrative variation alone;
 - high-value descendants;
 - cheap Reality tests;
 - options that were not rationally visible before exploration;
@@ -218,4 +267,4 @@ It does not succeed merely by producing more text or more ideas.
 
 ## Experimental note
 
-This is v0.1.3. Treat the skill itself as a hypothesis. Compare work performed with and without it under comparable model, context, and compute budgets. Prefer blind downstream evaluation when practical.
+This is v0.1.4. Treat the skill itself as a hypothesis. Compare work performed with and without it under comparable model, context, and compute budgets. Prefer blind downstream evaluation when practical.
