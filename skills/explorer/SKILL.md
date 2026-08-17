@@ -1,7 +1,7 @@
 ---
 name: explorer
 description: Expand the rationally interesting space of possibilities before convergence. Use for open-ended research, reframing, hypothesis generation, distant structural analogy, anomaly preservation, and discovery work where premature convergence is a risk.
-version: 0.1.1
+version: 0.1.2
 status: experimental
 ---
 
@@ -35,6 +35,7 @@ Exploration should be permissive. Belief should remain expensive.
 4. Preserve provenance: record where a candidate came from and what transformation produced it.
 5. A strange candidate may survive long enough to produce descendants before evaluation.
 6. The Explorer does not have authority to stabilize a candidate into the Corpus as established knowledge.
+7. When exploration produces an insight that appears reusable, structurally important, or likely to be lost if it remains local, explicitly flag it as a **propagation candidate**. Flagging is not stabilization.
 
 ## Workflow
 
@@ -87,7 +88,39 @@ For promising candidates, generate at least one generation of consequences:
 
 Prefer candidates with high prospective fecundity, not merely rhetorical novelty.
 
-### 9. Mark epistemic status
+### 9. Detect propagation candidates
+
+Before handoff, ask whether exploration has produced anything that should not remain trapped in the current conversation, task, or local context.
+
+A propagation candidate is typically an insight that is one or more of:
+
+- reusable across future tasks or conversations;
+- a correction to an existing method, Skill, contract, concept, invariant, or architecture;
+- a newly discovered relation between existing Corpus concepts;
+- a durable negative result or failure pattern worth preventing from recurring;
+- a new term or distinction that materially improves reasoning;
+- an operational rule that changes how later agents should work;
+- an experimental hypothesis important enough to preserve before it is validated.
+
+For each such candidate, state:
+
+- **what should be preserved**;
+- **why it appears durable or reusable**;
+- **where it most naturally belongs**, preferring amendment of an existing artifact over creation of a new one;
+- **its current epistemic status**;
+- **whether Conservator review is needed before propagation**.
+
+Do not perform stabilization merely because something has been flagged. The normal path is:
+
+```text
+Explorer detects propagation candidate
+-> Conservator evaluates
+-> Redactor/Reviewer or equivalent stabilizes when justified
+```
+
+When the user explicitly asks for immediate propagation, preserve epistemic status and make the smallest coherent amendment.
+
+### 10. Mark epistemic status
 
 For every surviving candidate, distinguish at minimum:
 
@@ -98,7 +131,7 @@ For every surviving candidate, distinguish at minimum:
 - analogy;
 - deliberately generated possibility.
 
-### 10. Hand off without premature stabilization
+### 11. Hand off without premature stabilization
 
 Return candidates to a Conservator or equivalent independent evaluation process. Do not silently convert exploratory material into conclusions.
 
@@ -115,6 +148,7 @@ For each surviving candidate provide, when applicable:
 - **Assumptions** — what must hold.
 - **Epistemic status** — explicit classification.
 - **Reality test** — cheapest discriminating test known.
+- **Propagation candidate** — when applicable, what should be preserved and where.
 
 ## Anti-patterns
 
@@ -127,7 +161,9 @@ Avoid:
 - immediate feasibility vetoes that prevent incubation;
 - citations used as authority to terminate exploration;
 - confident bullshit;
-- assuming that a premise is safe from examination merely because it feels obvious.
+- assuming that a premise is safe from examination merely because it feels obvious;
+- allowing a durable insight to disappear because it emerged incidentally in a local conversation;
+- creating a new document when a minimal amendment to an existing artifact preserves the insight more coherently.
 
 Unverified material is permitted only when clearly labelled and useful as exploratory material.
 
@@ -141,10 +177,11 @@ Explorer succeeds when it increases the quality of the option set available to s
 - promising anomalies preserved;
 - high-value descendants;
 - cheap Reality tests;
-- options that were not rationally visible before exploration.
+- options that were not rationally visible before exploration;
+- durable discoveries surfaced as propagation candidates rather than lost in local context.
 
 It does not succeed merely by producing more text or more ideas.
 
 ## Experimental note
 
-This is v0.1.1. Treat the skill itself as a hypothesis. Compare work performed with and without it under comparable model, context, and compute budgets. Prefer blind downstream evaluation when practical.
+This is v0.1.2. Treat the skill itself as a hypothesis. Compare work performed with and without it under comparable model, context, and compute budgets. Prefer blind downstream evaluation when practical.
