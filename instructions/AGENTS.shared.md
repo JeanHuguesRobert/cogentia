@@ -1,8 +1,8 @@
 ---
 title: Cogentia Shared Agent Instructions
 status: active
-version: 10
-date: 2026-08-16
+version: 11
+date: 2026-08-17
 document_role: operational
 document_kind: agent-instructions
 visibility: public
@@ -56,6 +56,32 @@ resolve without mandate. Do not invent missing by-reference context.
 - Preserve provenance. Do not infer missing author, source, reference, review or visibility information.
 - AI suggests and clarifies; a human principal retains mandate and responsibility for engaging acts.
 - Public by default does not cancel privacy: private material requires explicit authorization before public reuse.
+
+## Tools, Skills, Patterns, and Anti-patterns
+
+Treat the following as distinct first-class cognitive resources:
+
+- **Tool** — an invocable operation that can produce a result or effect.
+- **Skill** — a bounded operational method for performing work.
+- **Pattern** — in the Christopher Alexander / *A Pattern Language* sense: a reusable generative response to a recurring configuration of context, problem and forces. It guides contextual generation; it is not a fixed recipe and must not be confused with statistical pattern matching alone.
+- **Anti-pattern** — a recurring, apparently reasonable structure whose characteristic consequences are undesirable; it is a diagnostic warning, not an automatic veto.
+
+Do not reduce Patterns to Skills or Tools. For material work, proportionately discover and use relevant Tools, Skills, Patterns and Anti-patterns, loading only what is useful to the current context.
+
+```text
+problem
+→ discover relevant Tools / Skills / Patterns / Anti-patterns
+→ compose only what helps
+→ act only under applicable Mandate and inherited governance
+```
+
+Availability of a Tool, Skill, Pattern or Anti-pattern never creates authority. Capability availability, method availability, generative guidance and authority remain distinct.
+
+Human-facing and machine-facing interfaces SHOULD preserve semantic symmetry: the same underlying objects, identities, provenance, mandates, patterns, skills, tools, traces and responsibility boundaries should remain intelligible to both humans and machines. Projections may differ according to channel or participant capability, but Cogentia SHOULD NOT create separate semantic worlds for humans and machines where one shared model suffices.
+
+Pattern resources SHOULD therefore remain directly human-readable as well as machine-discoverable. Machine-readable metadata may support discovery and projection, but must not replace the inspectable canonical meaning.
+
+Initial experimental tracking: GitHub issue #110, `Cogentia Pattern Language — first-class Patterns/Anti-patterns alongside Tools and Skills`.
 
 ## Living evidence / state-of-the-art invariant
 
@@ -121,7 +147,7 @@ Obligations(child) ⊇ Obligations(parent)
 
 A repository, directory, specialization, task or tool-specific instruction MAY narrow permissions, reduce scope or budget, shorten validity, add prohibitions, or strengthen validation, trace, privacy, confirmation and reporting duties. It MUST NOT create authority absent from its parent, cancel an inherited prohibition, enlarge a budget or risk ceiling, extend validity, increase delegation depth, weaken evidence requirements, or convert read access into disclosure authority.
 
-All ancestor constraints remain applicable. “Nearest” means more specific, not more powerful. Positive permission wording in an `AGENTS.md` is an upper bound within the actual mandate, never an independent grant of authority.
+All ancestor constraints remain applicable. “Nearest” means more specific, not more powerful. Positive permission wording in `AGENTS.md` is an upper bound within the actual mandate, never an independent grant of authority.
 
 When constraints are clearly compatible, compose them monotonically. When a child clearly attempts to widen authority, reject the widening and retain the parent restriction. When constraints are semantically incomparable or ambiguous for the affected act, fail closed rather than guessing.
 
