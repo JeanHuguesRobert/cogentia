@@ -81,6 +81,37 @@ and because two entities that know one another well can communicate a large amou
 
 For a new interlocutor, the relation model may initially be ephemeral and sparse. For a recurring interlocutor, nothing in the concept requires starting from zero: persistent relational memory is precisely what ordinary human cognition already uses when it recognizes and adapts to known people. Persistence should nevertheless remain purpose-limited, governable, correctable, and proportionate.
 
+### 2.1 Repair history as privileged relational learning
+
+A communication failure can itself become useful data when the relation preserves how the failure was repaired:
+
+```text
+mismatch
+-> diagnosis
+-> reformulation or representation change
+-> restored understanding
+-> relation update
+```
+
+The Relatogram should therefore treat **successful repair history** as a privileged form of relational learning. A repeated misunderstanding is evidence that the interface model has not learned enough; a successful repair provides a reusable transformation for future interactions.
+
+Candidate repair records may preserve:
+
+- the representation that failed;
+- the likely source of impedance;
+- the repair attempted;
+- evidence that understanding improved;
+- the context in which the repair worked;
+- confidence that the repair is reusable.
+
+This creates a simple learning objective:
+
+```text
+Mismatch -> Repair -> Relational Learning
+```
+
+Over repeated interaction, effective impedance should normally decrease for recurring classes of misunderstanding. Failure to reduce repeated repair cost is itself a signal worth measuring.
+
 ## 3. Cognitive Interpreter — candidate cognitive prosthesis
 
 A **Cognitive Interpreter** is a cognitive prosthesis intended to reduce impedance between different Cogentias by adapting representations rather than merely translating words.
@@ -241,6 +272,7 @@ The concepts should remain experimental until they demonstrate utility. Low-cost
 6. Test whether assistance improves mutual understanding without reducing cognitive diversity or forcing convergence of opinions.
 7. For artificial agents, compare raw handoff against interpreter-mediated handoff while holding models, task, and compute budget comparable.
 8. Test whether adapting representation improves routing outcomes independently of choosing a different receiving agent.
+9. Test whether preserving successful repair histories reduces repeated misunderstanding and repair cost over time.
 
 ## 8. Governance constraints
 
@@ -262,7 +294,7 @@ The current claim is deliberately narrow:
 
 > Cognitive impedance is not only measurable; it may be partially *adaptable* through a cognitive prosthesis that preserves conceptual invariants while changing their representation for another cognitive architecture.
 
-The **Relatogram** is the candidate memory object for repeated relationships. The **Cognitive Interpreter** is the candidate active mechanism. Both are generalized to Cogentia-to-Cogentia interaction rather than restricted to human conversation. Their value should be established experimentally before either is promoted to a stable Cogentia primitive.
+The **Relatogram** is the candidate memory object for repeated relationships. Successful repair history is a privileged candidate source of relational learning. The **Cognitive Interpreter** is the candidate active mechanism. Both are generalized to Cogentia-to-Cogentia interaction rather than restricted to human conversation. Their value should be established experimentally before either is promoted to a stable Cogentia primitive.
 
 ## Related corpus
 
