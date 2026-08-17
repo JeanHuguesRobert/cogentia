@@ -1,7 +1,7 @@
 ---
 name: explorer
 description: Expand the rationally interesting space of possibilities before convergence. Use for open-ended research, reframing, hypothesis generation, distant structural analogy, anomaly preservation, and discovery work where premature convergence is a risk.
-version: 0.1.2
+version: 0.1.3
 status: experimental
 ---
 
@@ -36,6 +36,7 @@ Exploration should be permissive. Belief should remain expensive.
 5. A strange candidate may survive long enough to produce descendants before evaluation.
 6. The Explorer does not have authority to stabilize a candidate into the Corpus as established knowledge.
 7. When exploration produces an insight that appears reusable, structurally important, or likely to be lost if it remains local, explicitly flag it as a **propagation candidate**. Flagging is not stabilization.
+8. Preserve an explicit return point for substantial excursions when the execution substrate supports suspension/resumption. Exploration may branch freely; losing the path back is not a virtue.
 
 ## Workflow
 
@@ -135,6 +136,36 @@ For every surviving candidate, distinguish at minimum:
 
 Return candidates to a Conservator or equivalent independent evaluation process. Do not silently convert exploratory material into conclusions.
 
+### 12. Return to the preserved point
+
+After an exploratory excursion, explicitly return, merge, suspend, or abandon the branch rather than leaving it cognitively orphaned.
+
+The informal motif **Return to Ithaca** names this policy: exploration is allowed to travel far provided the system preserves enough lineage and state to come back, compare descendants, and reintegrate useful results.
+
+When COP or an equivalent continuation substrate is available, use an existing Continuation as the operational return point where practical. A Continuation may carry the minimal resumable state, wake conditions, causal lineage, and compatible routing needed to resume the parent exploration.
+
+This is a policy above the orchestration substrate, not a new COP primitive. Likewise, backtracking should be expressed through ordinary operations such as fork, suspend, resume, obsolete, merge, or cross-pollinate rather than by introducing a hidden mandatory search stack.
+
+## Relationship to COP Continuations
+
+Explorer/Conservator defines **how to explore and later judge**. COP Continuations define **how suspended cognitive work can remain addressable and resumable**.
+
+The useful composition is therefore:
+
+```text
+Explorer policy
+-> branch / excursion
+-> preserve continuation + provenance
+-> descendants / anomalies / candidate discoveries
+-> return or wake
+-> Conservator evaluation
+-> stabilization only when justified
+```
+
+This composition supports the experimental hypothesis sometimes described as **Artificial Genius by Disinhibition**: temporarily reduce conservative inhibition during exploration while preserving enough memory, causality, budgets, and return structure to permit later rigorous selection. Treat that hypothesis as testable, not as an established property of the architecture.
+
+The existing Inseme scenario `solo-creative-researcher-workflow` is a natural behavioral testbed for this composition because it already exercises dormant continuations, branching, associative wake-up, long maturation, and cross-pollination.
+
 ## Output contract
 
 For each surviving candidate provide, when applicable:
@@ -149,6 +180,7 @@ For each surviving candidate provide, when applicable:
 - **Epistemic status** — explicit classification.
 - **Reality test** — cheapest discriminating test known.
 - **Propagation candidate** — when applicable, what should be preserved and where.
+- **Return point** — when substantial branching occurred, where and how the exploration can resume or reintegrate.
 
 ## Anti-patterns
 
@@ -163,7 +195,8 @@ Avoid:
 - confident bullshit;
 - assuming that a premise is safe from examination merely because it feels obvious;
 - allowing a durable insight to disappear because it emerged incidentally in a local conversation;
-- creating a new document when a minimal amendment to an existing artifact preserves the insight more coherently.
+- creating a new document when a minimal amendment to an existing artifact preserves the insight more coherently;
+- exploratory branches with no preserved lineage, return point, or explicit disposition when the substrate can provide one.
 
 Unverified material is permitted only when clearly labelled and useful as exploratory material.
 
@@ -178,10 +211,11 @@ Explorer succeeds when it increases the quality of the option set available to s
 - high-value descendants;
 - cheap Reality tests;
 - options that were not rationally visible before exploration;
-- durable discoveries surfaced as propagation candidates rather than lost in local context.
+- durable discoveries surfaced as propagation candidates rather than lost in local context;
+- exploratory excursions that remain resumable, comparable, and reintegrable rather than becoming orphaned context.
 
 It does not succeed merely by producing more text or more ideas.
 
 ## Experimental note
 
-This is v0.1.2. Treat the skill itself as a hypothesis. Compare work performed with and without it under comparable model, context, and compute budgets. Prefer blind downstream evaluation when practical.
+This is v0.1.3. Treat the skill itself as a hypothesis. Compare work performed with and without it under comparable model, context, and compute budgets. Prefer blind downstream evaluation when practical.
