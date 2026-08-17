@@ -433,6 +433,27 @@ Document commands:
 Concept commands:
   concepts list [repo|all]
   concepts check [repo|all]
+  concepts graph [repo|all]  Mermaid concept graph for the given scope.
+  concepts status [repo|all] Per-concept status/warnings table.
+  concepts ref <name> [repo] Resolve a concept name to its canonical file.
+  concepts init <repo>       Bootstrap empty research/index.md and
+                             research/concepts.md skeletons if missing.
+                             Mechanical only -- no-op if the files already
+                             exist. Content is agent-drafted / human-accepted
+                             via continuation emit, never rewritten here.
+  concepts scan-issues <repo> [--state open|closed|all] [--label <l>] [--limit <n>] [--apply] [--yes]
+                             Dry-run by default (free preview: candidate
+                             count/titles, no gh issue view calls, no
+                             continuations). --apply fetches full issue+
+                             comments per candidate and emits one
+                             concept-from-issue judgment continuation each
+                             (never writes concepts.md directly). If --apply
+                             finds more than 15 candidates, defers to one
+                             confirmation continuation unless --yes is also
+                             given. Requires gh; on failure/timeout, defers
+                             to one capability-delegation continuation
+                             instead of erroring (see
+                             portable_continuations_and_judgment_boundaries.md).
 
 Corpus state (Views Store / ops — metadata only, no vector dumps):
   corpus-state export      Write corpus-state.md (+ .json) consolidating local
@@ -1081,6 +1102,54 @@ function cmdClassifyExplain(inventory, ref) {
 
 function cmdConcepts(sub) {
   const ctx = loadContext();
+
+  if (sub === "init") {
+    const repoArg = argv.shift() || "all";
+    if (repoArg === "all") throw new Error("Usage: concepts init <repo>");
+    const repo = ctx.repos.find(r => r.name === repoArg);
+    if (!repo) throw new Error(`Unknown repo: ${repoArg}`);
+    const result = initConceptsAndIndex(repo);
+    return output(result, formatConceptInit(result));
+  }
+
+  if (sub === "ref") {
+    const name = argv.shift();
+    if (!name) throw new Error("Usage: concepts ref <name> [repo]");
+    const repoScope = argv.shift() || "all";
+    const concepts = loadConcepts(ctx);
+    const scoped = repoScope === "all" ? concepts : concepts.filter(r => r.repo === repoScope);
+    const result = resolveConceptRef(name, scoped);
+    return output(result, formatConceptRef(result));
+  }
+
+  if (sub === "scan-issues") {
+    const repoArg = argv.shift();
+    if (!repoArg) throw new Error("Usage: concepts scan-issues <repo> [--state open|closed|all] [--label <label>] [--limit <n>]");
+    let repo;
+    try {
+      repo = resolveIssueRepo(ctx, repoArg);
+    } catch (e) {
+      const cont = emitClarificationContinuation(ctx, {
+        question: `What is the GitHub full name (owner/repo) for "${repoArg}"?`,
+        reason: e.message,
+        dedupeKey: `github-full-name:${repoArg}`,
+        subject: { repo: repoArg },
+        context: { attempted_command: "concepts scan-issues" },
+      });
+      return output(
+        { ok: false, deferred: true, repo: repoArg, reason: e.message, continuation: cont.continuation?.id || null },
+        `Cannot resolve GitHub identity for "${repoArg}": ${e.message}\nDeferred to continuation ${cont.continuation?.id || "(none)"}.`
+      );
+    }
+    const state = valueFlag("--state") || "open";
+    const label = valueFlag("--label") || "";
+    const limit = boundedInteger(valueFlag("--limit"), 30, 1, 100);
+    const apply = hasFlag("--apply");
+    const confirmed = hasFlag("--yes") || hasFlag("--confirm");
+    const result = scanIssuesForConcepts(ctx, repo, { state, label, limit, apply, confirmed });
+    return output(result, formatConceptScanIssues(result));
+  }
+
   const repoArg = argv.shift() || "all";
   const concepts = loadConcepts(ctx);
   const selected = repoArg === "all" ? concepts : concepts.filter(r => r.repo === repoArg);
@@ -1090,8 +1159,17 @@ function cmdConcepts(sub) {
       return output({ ok: true, repos: selected }, formatConceptList(selected));
     case "check":
       return output({ ok: true, results: checkConcepts(selected, concepts) }, formatConceptCheck(checkConcepts(selected, concepts)));
+    case "graph": {
+      const result = { ok: true, repo: repoArg, mermaid: renderConceptGraph(selected, ctx), concepts: selected.flatMap(r => r.concepts) };
+      return output(result, result.mermaid);
+    }
+    case "status": {
+      const merged = mergeConceptStatus(selected, checkConcepts(selected, concepts));
+      const result = { ok: true, repo: repoArg, concepts: merged };
+      return output(result, formatConceptStatus(result));
+    }
     default:
-      throw new Error(`Unknown concepts subcommand "${sub}". Use list or check.`);
+      throw new Error(`Unknown concepts subcommand "${sub}". Use list, check, graph, status, ref, init, or scan-issues.`);
   }
 }
 
@@ -6998,6 +7076,296 @@ function checkConcepts(selected, allLoaded) {
   });
 }
 
+function mergeConceptStatus(selected, checkResults) {
+  const warningsByKey = new Map();
+  for (const r of checkResults) {
+    for (const c of r.concepts) warningsByKey.set(`${r.repo}::${c.name}`, c.warnings);
+  }
+  const merged = [];
+  for (const r of selected) {
+    for (const c of r.concepts) {
+      merged.push({
+        repo: r.repo,
+        name: c.name,
+        slug: c.slug,
+        type: c.type || null,
+        scope: c.scope || null,
+        status: c.status || null,
+        warnings: warningsByKey.get(`${r.repo}::${c.name}`) || [],
+      });
+    }
+  }
+  return merged;
+}
+
+function resolveConceptRef(name, scoped) {
+  const key = String(name).toLowerCase();
+  const wantSlug = slug(name);
+  const matches = [];
+  for (const r of scoped) {
+    if (!r.ok) continue;
+    for (const c of r.concepts) {
+      if (c.name.toLowerCase() === key || c.slug === wantSlug) {
+        matches.push({ repo: r.repo, path: r.path, name: c.name, slug: c.slug });
+      }
+    }
+  }
+  if (!matches.length) return { ok: false, name, matches: [] };
+  const [first, ...rest] = matches;
+  return {
+    ok: true,
+    name: first.name,
+    repo: first.repo,
+    path: first.path,
+    slug: first.slug,
+    ambiguous: rest.length > 0,
+    matches,
+  };
+}
+
+/**
+ * Mechanical, judgment-free bootstrap: create research/index.md and
+ * research/concepts.md with an empty skeleton when a repo has neither file
+ * yet. No-op (idempotent) once the files exist -- their *content* is
+ * agent-drafted / human-accepted via `continuation emit`, never mechanically
+ * rewritten by this command. See issue #100.
+ */
+function initConceptsAndIndex(repo) {
+  const researchDir = path.join(repo.path, "research");
+  if (!fs.existsSync(researchDir)) fs.mkdirSync(researchDir, { recursive: true });
+
+  const now = new Date().toISOString();
+  const indexPath = path.join(researchDir, INDEX_FILE);
+  const conceptsPath = path.join(researchDir, CONCEPTS_FILE);
+
+  let indexCreated = false;
+  if (!fs.existsSync(indexPath)) {
+    fs.writeFileSync(indexPath, buildIndexFileSkeleton(repo.name, now), "utf8");
+    indexCreated = true;
+  }
+
+  let conceptsCreated = false;
+  if (!fs.existsSync(conceptsPath)) {
+    fs.writeFileSync(conceptsPath, buildConceptsFileSkeleton(repo.name, now), "utf8");
+    conceptsCreated = true;
+  }
+
+  return {
+    ok: true,
+    repo: repo.name,
+    index: { path: indexPath, created: indexCreated },
+    concepts: { path: conceptsPath, created: conceptsCreated },
+  };
+}
+
+/**
+ * Scan a repo's GitHub issues for concept candidates and emit a
+ * concept-from-issue judgment continuation per candidate -- never write to
+ * concepts.md directly. Issues whose title already matches an existing
+ * concept name are treated as already covered and skipped.
+ *
+ * Follows the capability-availability judgment boundary: the `gh issue
+ * list` call is attempted directly and bounded by a timeout; on failure,
+ * this defers to a single capability-delegation continuation instead of
+ * throwing. Per-issue detail fetches (title+comments) that fail are
+ * deferred individually without aborting the rest of the scan.
+ */
+const SCAN_ISSUES_CONFIRM_THRESHOLD = 15;
+
+function scanIssuesForConcepts(ctx, repo, { state = "open", label = "", limit = 30, apply = false, confirmed = false } = {}) {
+  const listArgs = [
+    "issue", "list",
+    "--repo", repo.full_name,
+    "--state", state,
+    "--limit", String(limit),
+    "--json", "number,title,state,updatedAt,url,labels,author,body",
+  ];
+  if (label) listArgs.push("--label", label);
+
+  const listCall = ghJsonOrDefer(listArgs);
+  if (!listCall.ok) {
+    const cont = emitCapabilityContinuation(ctx, {
+      capability: "gh",
+      command: listCall.command,
+      reason: listCall.error,
+      task: `List ${state} issues for ${repo.full_name}${label ? ` labeled "${label}"` : ""} and supply them as JSON (fields: number,title,state,updatedAt,url,labels,author,body).`,
+      subject: { repo: repo.name },
+      context: { repo: repo.full_name, state, label, limit },
+    });
+    return {
+      ok: false,
+      deferred: true,
+      repo: repo.name,
+      reason: listCall.error,
+      continuation: cont.continuation?.id || null,
+    };
+  }
+
+  const issues = listCall.result.map(normalizeGitHubIssue);
+  const existingForRepo = loadConcepts(ctx).find(r => r.repo === repo.name);
+  const existingNames = new Set((existingForRepo?.concepts || []).map(c => c.name.toLowerCase()));
+  const candidates = issues.filter(issue => !existingNames.has(String(issue.title).toLowerCase()));
+  const alreadyCovered = issues.length - candidates.length;
+
+  // First line of defense: the same dry-run/--apply convention used
+  // elsewhere in cogentia.js (repos fetch/push, publish views, ...).
+  // Free preview by default -- only the cheap `issue list` call above,
+  // no per-issue fetch, no continuations. --apply is required to do the
+  // real (costly) work.
+  if (!apply) {
+    return {
+      ok: true,
+      dry_run: true,
+      repo: repo.name,
+      state,
+      label: label || null,
+      scanned: issues.length,
+      already_covered: alreadyCovered,
+      would_propose: candidates.map(i => ({ issue: i.number, title: i.title })),
+    };
+  }
+
+  // Second line of defense: --apply is an explicit "go", but the actual
+  // scope is only known now (after the list call). Each candidate still
+  // costs one more `gh issue view` call (network) and one continuation
+  // (review-queue load) -- large scope discovered at apply-time gets a
+  // confirmation continuation instead of silently doing the work, since
+  // cancelling N continuations later is real cleanup cost.
+  if (candidates.length > SCAN_ISSUES_CONFIRM_THRESHOLD && !confirmed) {
+    const cont = emitContinuation(ctx, {
+      kind: "confirmation",
+      title: `Confirm large concepts scan-issues: ${candidates.length} candidates for ${repo.name}`,
+      question: `Scanning ${repo.full_name} (state=${state}${label ? `, label=${label}` : ""}) found ${candidates.length} concept candidates out of ${issues.length} issues scanned. Proceeding will make ${candidates.length} additional gh calls and create up to ${candidates.length} concept-from-issue continuations. Confirm to proceed at full scope, or resubmit with a smaller --limit / a --label filter to reduce it.`,
+      dedupe_key: `confirm-scan-issues:${repo.name}:${state}:${label}:${limit}`,
+      subject: { repo: repo.name },
+      context: {
+        candidate_count: candidates.length,
+        scanned: issues.length,
+        state, label, limit,
+        resume_with: `node scripts/cogentia.js concepts scan-issues ${repo.name} --state ${state}${label ? ` --label ${label}` : ""} --limit ${limit} --apply --yes`,
+      },
+      expected_response: {
+        format: "json",
+        required: ["decision"],
+      },
+    });
+    return {
+      ok: true,
+      needs_confirmation: true,
+      repo: repo.name,
+      candidate_count: candidates.length,
+      scanned: issues.length,
+      continuation: cont.continuation?.id || null,
+    };
+  }
+
+  const proposals = [];
+  const deferredFetch = [];
+  for (const issue of candidates) {
+    const packetCall = ghJsonOrDefer([
+      "issue", "view", String(issue.number),
+      "--repo", repo.full_name,
+      "--json", "number,title,state,updatedAt,closedAt,url,labels,author,body,comments",
+    ]);
+    if (!packetCall.ok) {
+      deferredFetch.push({ issue: issue.number, reason: packetCall.error });
+      continue;
+    }
+    const packet = buildIssuePacket(repo, normalizeGitHubIssue(packetCall.result));
+    const cont = emitContinuation(ctx, {
+      kind: "concept-from-issue",
+      title: `Concept candidate: #${issue.number} ${issue.title}`,
+      question: `Review issue #${issue.number} ("${issue.title}") and its comments. Propose a research/concepts.md entry for ${repo.name} (name, type, scope, status, short_definition, parents/children/related, reference_documents) or explicitly decline with a reason.`,
+      dedupe_key: `concept-from-issue:${repo.name}:${issue.number}`,
+      subject: { repo: repo.name, path: "research/concepts.md" },
+      context: {
+        issue: packet,
+        status_vocabulary: ["Seed", "Working", "Defined", "Operational", "Canonical"],
+        note: "Seed (\"intuition not yet stabilized\") is the default status for issue-sourced concepts unless the issue content clearly warrants more. Include this issue's URL in reference_documents for provenance, e.g. \"Source: issue #N\".",
+      },
+      expected_response: {
+        format: "json",
+        required: ["decision"],
+      },
+    });
+    proposals.push({
+      issue: issue.number,
+      title: issue.title,
+      continuation: cont.continuation?.id || null,
+      created: cont.created,
+    });
+  }
+
+  return {
+    ok: true,
+    repo: repo.name,
+    state,
+    label: label || null,
+    scanned: issues.length,
+    already_covered: alreadyCovered,
+    proposals,
+    deferred_fetch: deferredFetch,
+  };
+}
+
+function buildIndexFileSkeleton(repoName, now) {
+  return [
+    "---",
+    `title: "Research Index — ${repoName}"`,
+    'description: "A map of what is, what is in progress, and what could be."',
+    "layout: default",
+    "nav_order: 1",
+    `last_modified_at: ${now}`,
+    "document_role: index",
+    "document_kind: research-index",
+    "visibility: public",
+    "lifecycle_state: active",
+    "classification_source: cogentia.js",
+    "---",
+    "",
+    `# Research Index — ${repoName}`,
+    "",
+    "*A map of what is, what is in progress, and what could be.*",
+    "",
+    "## Published",
+    "",
+    "## In Progress",
+    "",
+  ].join("\n");
+}
+
+function buildConceptsFileSkeleton(repoName, now) {
+  return [
+    "---",
+    `title: "Concept Index — ${repoName}"`,
+    'description: "Typed concept registry for humans and AI agents; structure only, not semantic authority."',
+    "layout: default",
+    "nav_order: 3",
+    `last_modified_at: ${now}`,
+    "document_role: index",
+    "document_kind: concept-index",
+    "visibility: public",
+    "lifecycle_state: active",
+    "classification_source: cogentia.js",
+    "---",
+    "",
+    `# Concept Index — ${repoName}`,
+    "",
+    "This file maps concepts used across the corpus.",
+    "",
+    "`cogentia.js` maintains structure, links, scopes, status and graphs. It does not infer semantic truth.",
+    "",
+    "## Status scale",
+    "",
+    "- **Seed** — intuition not yet stabilized.",
+    "- **Working** — recurring and usable, but still evolving.",
+    "- **Defined** — explicit definition exists.",
+    "- **Operational** — connected to implementation, protocol, code, governance or legal use.",
+    "- **Canonical** — should be treated as a reference concept unless revised.",
+    "",
+  ].join("\n");
+}
+
 function buildIndexSets(repo) {
   const full = path.join(repo.path, "research", INDEX_FILE);
   const empty = { all: new Set(), published: new Set() };
@@ -12245,6 +12613,66 @@ function formatConceptCheck(results) {
   return lines.join("\n");
 }
 
+function formatConceptStatus(result) {
+  const lines = ["\nConcept status\n"];
+  for (const c of result.concepts) {
+    lines.push(`${pad(c.name, 28)} ${pad(c.repo, 16)} status=${c.status || "-"} warnings=${c.warnings.length}`);
+  }
+  if (!result.concepts.length) lines.push("(no concepts)");
+  return lines.join("\n");
+}
+
+function formatConceptRef(result) {
+  if (!result.ok) return `\nNo concept found for "${result.name}".`;
+  const lines = [`\n${result.name}`, `  repo: ${result.repo}`, `  path: ${result.path}#${result.slug}`];
+  if (result.ambiguous) {
+    lines.push(`  (ambiguous: also defined in ${result.matches.slice(1).map(m => m.repo).join(", ")})`);
+  }
+  return lines.join("\n");
+}
+
+function formatConceptInit(result) {
+  const lines = [`\nConcepts/index init — ${result.repo}\n`];
+  lines.push(`index.md:    ${result.index.created ? "created" : "already present (no-op)"} (${result.index.path})`);
+  lines.push(`concepts.md: ${result.concepts.created ? "created" : "already present (no-op)"} (${result.concepts.path})`);
+  return lines.join("\n");
+}
+
+function formatConceptScanIssues(result) {
+  if (result.deferred) {
+    return [
+      `\nConcepts scan-issues — ${result.repo}\n`,
+      `gh unavailable or too slow: ${result.reason}`,
+      `Deferred to continuation ${result.continuation || "(dedup: none created)"}.`,
+      `Run: node scripts/cogentia.js continuation inspect ${result.continuation || "<id>"}`,
+    ].join("\n");
+  }
+  if (result.needs_confirmation) {
+    return [
+      `\nConcepts scan-issues — ${result.repo}\n`,
+      `${result.candidate_count} candidates found out of ${result.scanned} issues scanned -- above the confirmation threshold.`,
+      `Deferred to confirmation continuation ${result.continuation || "(none)"}.`,
+      `Resolve it to proceed at full scope, or resubmit with --limit/--label to reduce it, or pass --yes to skip confirmation.`,
+    ].join("\n");
+  }
+  if (result.dry_run) {
+    const lines = [`\nConcepts scan-issues (dry run) — ${result.repo} (${result.state}${result.label ? `, label=${result.label}` : ""})\n`];
+    lines.push(`Scanned: ${result.scanned}   Already covered: ${result.already_covered}   Would propose: ${result.would_propose.length}`);
+    for (const c of result.would_propose) lines.push(`  #${c.issue} ${c.title}`);
+    lines.push(`\nPass --apply to actually fetch details and create continuations.`);
+    return lines.join("\n");
+  }
+  const lines = [`\nConcepts scan-issues — ${result.repo} (${result.state}${result.label ? `, label=${result.label}` : ""})\n`];
+  lines.push(`Scanned: ${result.scanned}   Already covered: ${result.already_covered}   Proposed: ${result.proposals.length}`);
+  if (result.deferred_fetch.length) {
+    lines.push(`Deferred (fetch failed): ${result.deferred_fetch.map(d => `#${d.issue}`).join(", ")}`);
+  }
+  for (const p of result.proposals) {
+    lines.push(`  #${p.issue} ${p.title} -> ${p.created ? "continuation created" : "continuation already active"} (${p.continuation})`);
+  }
+  return lines.join("\n");
+}
+
 function formatGit(results) {
   const lines = ["\nGit verify\n", `${pad("Repository", 18)} ${pad("Behind", 8, true)} ${pad("Ahead", 8, true)} ${pad("Dirty", 8, true)}`];
   lines.push("-".repeat(55));
@@ -13052,6 +13480,84 @@ function ghExecCommand() {
     if (Array.isArray(parsed) && parsed.length) return parsed.map(part => String(part));
   } catch {}
   return [override];
+}
+
+/**
+ * Direct-call-with-graceful-fallback for `gh`.
+ *
+ * Per the capability-availability judgment boundary (see
+ * research/portable_continuations_and_judgment_boundaries.md): attempt the
+ * direct subprocess call, bounded by a timeout so "quickly" is actually
+ * enforced, not assumed. On ANY failure -- not installed, unauthenticated,
+ * network error, or timeout -- defer rather than throw: return a failure
+ * descriptor the caller can turn into a capability-delegation continuation.
+ * Does not change ghJson()/issues * itself; this is additive.
+ */
+function ghJsonOrDefer(args, { timeoutMs = 6000 } = {}) {
+  try {
+    const [command, ...commandArgs] = ghExecCommand();
+    const raw = execFileSync(command, [...commandArgs, ...args], {
+      encoding: "utf8",
+      stdio: ["ignore", "pipe", "pipe"],
+      timeout: timeoutMs,
+    });
+    return { ok: true, result: parseJsonText(raw || "null", `gh ${args.join(" ")}`) };
+  } catch (e) {
+    const stderr = e.stderr ? String(e.stderr).trim() : "";
+    const timedOut = e.signal === "SIGTERM" || e.code === "ETIMEDOUT";
+    const detail = timedOut ? `timed out after ${timeoutMs}ms` : (stderr || e.message || "unknown gh error");
+    return { ok: false, error: detail, command: ["gh", ...args].join(" ") };
+  }
+}
+
+/**
+ * Emit a capability-delegation continuation: the direct call could not be
+ * made (see ghJsonOrDefer), so ask the caller to obtain the result by
+ * whatever means it judges best and supply it back. Distinct from a
+ * content-judgment continuation -- this one asks for *data*, not a
+ * decision; the caller's supplied result may still need a follow-up
+ * content-judgment continuation once available.
+ */
+function emitCapabilityContinuation(ctx, { capability, command, reason, task, subject = {}, context = {} }) {
+  return emitContinuation(ctx, {
+    kind: "capability-delegation",
+    title: `${capability} unavailable: ${task || "supply result directly"}`,
+    question: task || `Run ${command} yourself (or an equivalent) and supply the result.`,
+    dedupe_key: `capability:${capability}:${command}`,
+    subject,
+    context: {
+      capability,
+      command,
+      reason,
+      ...context,
+    },
+    expected_response: {
+      format: "json",
+      required: ["result"],
+    },
+  });
+}
+
+/**
+ * "I don't understand" rather than "it's impossible": when cogentia.js
+ * itself lacks information it needs to proceed -- not because an external
+ * tool is unreachable, but because the answer isn't derivable from what it
+ * already knows -- prefer emitting a continuation carrying the cause over
+ * throwing. A thrown error is a dead end; a continuation is resumable.
+ */
+function emitClarificationContinuation(ctx, { question, reason, dedupeKey, subject = {}, context = {} }) {
+  return emitContinuation(ctx, {
+    kind: "clarification",
+    title: question,
+    question,
+    dedupe_key: dedupeKey || "",
+    subject,
+    context: { reason, ...context },
+    expected_response: {
+      format: "json",
+      required: ["answer"],
+    },
+  });
 }
 
 function normalizeGitHubIssue(issue) {

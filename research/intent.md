@@ -4,8 +4,11 @@ subtitle: "Persistent, revisable commitments as the continuity layer between hum
 author: "Jean Hugues Noël Robert, baron Mariani"
 affiliation: "Institut Mariani / C.O.R.S.I.C.A. / Cogentia"
 date: "2026-08-14"
-version: "0.1"
+version: "0.2"
 status: "working-note — source doctrine"
+changelog:
+  - "v0.1 (2026-08-14) — initial doctrine, including the cogentia.js v1->v2 first concrete case (S13)."
+  - "v0.2 (2026-08-17) — add S13.1: resolution of the v1->v2 case (issue #100); narrows the diagnosis after reading actual v1 behavior -- index.md/concepts.md were never mechanically regenerated, even in v1; restores only the mechanical bootstrap/read surface, routes content proposals through the existing continuation emit/resolve path."
 language: "en"
 license: "CC BY-SA 4.0"
 document_role: "source"
@@ -525,6 +528,22 @@ The repair should consequently do two things:
 2. create assurance capable of detecting a future unexplained disappearance.
 
 The incident should become an **antibody**, not only a bug fix.
+
+### 13.1 Resolution, and a correction to the diagnosis
+
+Investigation before the fix (see [issue #100](https://github.com/JeanHuguesRobert/cogentia/issues/100)) narrowed the diagnosis above. Reading what the historical `ensureIndex` and `buildConceptsSkeleton` functions actually did — not just their names — showed they were one-time, judgment-free bootstrap scaffolds for a repo with neither file yet, never a mechanism that rewrote existing `index.md`/`concepts.md` content. Those files' actual authorship model, confirmed by the repository owner, is **agent drafts, human accepts** — never mechanically regenerated from a formula, and never hand-written either. This was already true in v1 and remains the desired model.
+
+So the stabilized intent above needs one correction: "maintainable and rebuildable by Cogentia tooling" applies to the **mechanical** surface only —
+
+- bootstrap: creating an empty skeleton when neither file exists yet;
+- read/report: `concepts list`, `concepts check`, `concepts graph`, `concepts status`, `concepts ref`;
+- structural sub-sections shared with other generated views (`<!-- BEGIN_AUTO: trails -->`, `backlinks`, and the `concepts`/`concept_graph` blocks already generated inside `corpus-status.md`).
+
+It explicitly does **not** mean mechanically rewriting `index.md`/`concepts.md` *content* (concept definitions, status, relationships, what's in progress). Building that would not have been a fix — it would have been a new regression against the agent-drafts/human-accepts model, just introduced going forward instead of by omission. Content proposals for these files go through the same generic path used for judgment-bearing changes elsewhere in v2: `continuation emit` (agent proposes, with rationale) → human review (`continuation list`/`inspect`) → `continuation resolve` (accept, reject, or request more context). This already existed and required no new mechanism.
+
+Restored in `cogentia.js` v2: `concepts init <repo>` (mechanical bootstrap, idempotent), `concepts graph`, `concepts status`, `concepts ref` (read/report, reusing already-working rendering logic that was previously only reachable through `corpus-status.md` generation). Regression fixture: `scripts/test-concepts-index-lifecycle.js`.
+
+This is itself an instance of the broader lesson in §10–§12: verifying an *intent* against the *actual* historical behavior, not against how that behavior is later described, can narrow — or redirect — the repair.
 
 ---
 

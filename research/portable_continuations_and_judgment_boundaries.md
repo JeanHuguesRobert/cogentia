@@ -3,7 +3,7 @@ title: "Portable Continuations and Judgment Boundaries"
 subtitle: "Provider-neutral cooperation from copy/paste to MCP and A2A"
 author: "Jean Hugues Noël Robert, baron Mariani"
 date: "2026-08-14"
-version: "0.1"
+version: "0.2"
 status: "working-note"
 language: "en"
 document_role: "source"
@@ -11,16 +11,21 @@ document_kind: "doctrinal-note"
 visibility: "public"
 lifecycle_state: "working"
 update_policy: "UP-DEFAULT-REVIEWED"
+changelog:
+  - "v0.1 (2026-08-14) — initial doctrine: determinism until judgment, continuation at the boundary, transport independence, JHN service pattern."
+  - "v0.2 (2026-08-17) — add capability availability as a second, orthogonal judgment-boundary trigger (uncertain reachability of an external tool, not content); first concrete case: gh in cogentia.js issues *."
 related_documents:
   - "research/agent_resumable_cli.md"
   - "research/cogentia_continuation_packet_routing.md"
   - "research/cognitive_packets.md"
   - "research/administrative_burden_and_exemplar_tests.md"
+  - "research/intent.md"
   - "https://github.com/JeanHuguesRobert/FractaVolta/blob/main/docs/website/guide-chatbot-agile-plan.md"
 tags:
   - continuation
   - inversion-of-control
   - judgment-boundary
+  - capability-availability
   - multi-agent
   - mcp
   - a2a
@@ -147,3 +152,37 @@ can continue deterministically?
 John provides the specialized capability; the user's environment provides replaceable judgment when needed.
 
 This is not merely outsourced compute. It is a generic cooperation protocol among heterogeneous agents and deterministic services.
+
+## Capability availability as a judgment boundary
+
+The core rule above frames the judgment boundary in terms of the *content* of the work: semantic, normative, contextual. There is a second, distinct trigger for the same boundary, orthogonal to content: uncertainty about whether an external capability is reachable at all, right now, from the process attempting the work.
+
+> **Direct invocation of an external capability (subprocess, API client, or any other synchronous mechanism) is rational only when both hold: the capability is actually present, and it can be expected to answer promptly. Otherwise — barring the ordinary accidents any direct call must already tolerate — the decision of how to obtain the result should be handed back to the caller, as a continuation.**
+
+This matters because deterministic capabilities are not only uncertain in what they should conclude; they are sometimes uncertain in whether they can even run. A subprocess tool may be absent, unauthenticated, network-isolated, or simply not installed in the environment a given invocation happens to execute in — independently of whether the eventual output would have required judgment at all.
+
+```text
+external capability needed (e.g. a CLI tool)
+    ↓
+available AND respond quickly, right now?
+  ├─ yes → direct call (subprocess / sync)
+  │         ↓
+  │      mechanical result
+  │         ↓
+  │      continue to the content judgment boundary, if any
+  └─ no / uncertain → emit Continuation
+              ↓
+          the caller decides how to satisfy it
+          (has the capability locally, has another path,
+           or declines)
+              ↓
+           StepResult
+              ↓
+          resume with the supplied result
+```
+
+This is a capability-delegation continuation, not a content-judgment continuation — the two can chain: a capability continuation may supply data that itself still needs a content-judgment continuation before it can be acted on. Neither should silently collapse into the other.
+
+### First concrete case: `gh` in `cogentia.js`
+
+`cogentia.js`'s `issues *` command family (`list`, `packet`, `graph`, `sync`, `export`) already shells out to the `gh` CLI directly (`ghJson()`), with no availability probe: a missing or unauthenticated `gh` simply throws. This is a pre-existing gap relative to the rule above, not a new one — worth noting rather than silently carrying forward as new capability-delegating commands are built on top of the same issue-fetching machinery (see `research/intent.md` §13.1 and issue #100 for the companion case this principle was articulated alongside).
