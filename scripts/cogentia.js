@@ -93,7 +93,10 @@ const DEFAULT_EMBEDDING_PROFILES = {
 };
 const MAINTENANCE_RE = /\b(refresh|generated|auto|backlinks?|trails?|readme|documents|corpus|navigation|frontmatter|stamp|bulk|maintenance)\b/i;
 const BUILTIN_IGNORED_BASENAMES = new Set([
-  "README.md",
+  // README.md deliberately NOT ignored (issue #107): it was routing to
+  // role="archive" -> searchable_public=0, zero chunks -- the single
+  // largest excluded category in the live index. LICENSE/CHANGELOG/etc.
+  // stay excluded as lower search value.
   "LICENSE",
   "LICENSE.md",
   "TODO.md",
@@ -473,8 +476,11 @@ Index commands:
                            --dimensions 512,1536 --model <embedding-model>
                            --price-per-1m <usd> --index-policy <path>
                            --include-archive --json
-  index rebuild            Rebuild the local SQLite/FTS5 index from Git + Markdown.
-  index update             Refresh the local index cache from canonical sources.
+  index rebuild            Rebuild the local SQLite/FTS5 index from Git +
+                           Markdown + synced GitHub Issues (.cogentia/issues/).
+                           gh unavailability defers to a capability-delegation
+                           continuation rather than failing the rebuild.
+  index update             Same coverage as rebuild, incremental.
   index search <query>     Search the local FTS5 index. Flags: --repo <name|all>
                            --limit <n>
 
@@ -5699,13 +5705,16 @@ async function indexRebuild(ctx, options = {}) {
   const startedAt = new Date().toISOString();
   try {
     initIndexSchema(db);
-    const issueRefresh = mode === "update"
-      ? syncIssuePackets(ctx, {
-        repoArg: "all",
-        state: "all",
-        limit: 100,
-      })
-      : null;
+    // Both rebuild and update sync issues first (mode=rebuild implies a
+    // complete fresh pass, so it should not be staler than update on this
+    // point) -- gh unavailability is handled gracefully inside
+    // syncIssuePacketsForRepo (capability-delegation continuation), it does
+    // not fail the rebuild.
+    const issueRefresh = syncIssuePackets(ctx, {
+      repoArg: "all",
+      state: "all",
+      limit: 100,
+    });
     const inventory = buildInventory(ctx);
     const boundaries = indexJudgmentBoundaries(ctx, inventory);
     const continuations = emitIndexContinuations(ctx, boundaries);
@@ -13777,7 +13786,7 @@ function syncIssuePackets(ctx, options = {}) {
   }
   for (const repo of repos) {
     try {
-      const repoResult = syncIssuePacketsForRepo(repo, { state, limit });
+      const repoResult = syncIssuePacketsForRepo(ctx, repo, { state, limit });
       result.written += repoResult.written;
       result.unchanged += repoResult.unchanged;
       result.removed += repoResult.removed;
@@ -13790,26 +13799,44 @@ function syncIssuePackets(ctx, options = {}) {
   return result;
 }
 
-function syncIssuePacketsForRepo(repo, { state = "all", limit = 100 } = {}) {
+function syncIssuePacketsForRepo(ctx, repo, { state = "all", limit = 100 } = {}) {
   const repoFull = repo.full_name || repo.github_full_name || repo.name;
   const cacheDir = path.join(repo.path, ".cogentia", "issues", slug(repoFull) || repo.name || "repo");
   fs.mkdirSync(cacheDir, { recursive: true });
-  const issues = ghJson([
+  const listCall = ghJsonOrDefer([
     "issue", "list",
     "--repo", repoFull,
     "--state", state,
     "--limit", String(limit),
     "--json", "number,title,state,updatedAt,closedAt,url,labels,author",
-  ]).map(normalizeGitHubIssue);
+  ]);
+  if (!listCall.ok) {
+    const cont = ctx ? emitCapabilityContinuation(ctx, {
+      capability: "gh",
+      command: listCall.command,
+      reason: listCall.error,
+      task: `List ${state} issues for ${repoFull} and supply them as JSON (fields: number,title,state,updatedAt,closedAt,url,labels,author) so they can be synced to .cogentia/issues/.`,
+      subject: { repo: repo.name },
+      context: { repo: repoFull, state, limit },
+    }) : null;
+    return { written: 0, unchanged: 0, removed: 0, error: listCall.error, deferred: true, continuation: cont?.continuation?.id || null };
+  }
+  const issues = listCall.result.map(normalizeGitHubIssue);
   const seen = new Set();
   let written = 0;
   let unchanged = 0;
+  const deferredIssues = [];
   for (const issue of issues) {
-    const detail = normalizeGitHubIssue(ghJson([
+    const viewCall = ghJsonOrDefer([
       "issue", "view", String(issue.number),
       "--repo", repoFull,
       "--json", "number,title,state,updatedAt,closedAt,url,labels,author,body,comments",
-    ]));
+    ]);
+    if (!viewCall.ok) {
+      deferredIssues.push({ issue: issue.number, reason: viewCall.error });
+      continue;
+    }
+    const detail = normalizeGitHubIssue(viewCall.result);
     const packet = buildIssuePacket(repo, detail);
     packet.content_hash = sha(`${packet.repository}\n${packet.issue}\n${packet.updated_at}\n${packet.title}\n${packet.issue_body || ""}`);
     const rendered = renderIssuePacket(packet);
@@ -13823,7 +13850,24 @@ function syncIssuePacketsForRepo(repo, { state = "all", limit = 100 } = {}) {
       unchanged++;
     }
   }
+  if (deferredIssues.length && ctx) {
+    emitCapabilityContinuation(ctx, {
+      capability: "gh",
+      command: `gh issue view --repo ${repoFull}`,
+      reason: deferredIssues.map(d => `#${d.issue}: ${d.reason}`).join("; "),
+      task: `Fetch full detail (title,body,comments) for issues ${deferredIssues.map(d => `#${d.issue}`).join(", ")} in ${repoFull} that failed during sync.`,
+      subject: { repo: repo.name },
+      context: { repo: repoFull, deferred_issues: deferredIssues },
+    });
+  }
   let removed = 0;
+  // seen stays empty for issues that failed their view call -- their existing
+  // cached file (if any) is intentionally left alone rather than removed,
+  // since we don't know if it's still current.
+  for (const issue of deferredIssues) {
+    const file = path.join(cacheDir, `issue-${String(issue.issue).padStart(5, "0")}.md`);
+    seen.add(path.resolve(file));
+  }
   for (const entry of fs.readdirSync(cacheDir)) {
     const full = path.join(cacheDir, entry);
     if (!entry.toLowerCase().endsWith(".md")) continue;
@@ -13831,7 +13875,7 @@ function syncIssuePacketsForRepo(repo, { state = "all", limit = 100 } = {}) {
     fs.rmSync(full, { force: true });
     removed++;
   }
-  return { written, unchanged, removed };
+  return { written, unchanged, removed, deferred_issues: deferredIssues };
 }
 
 function issueGraphReport(ctx, { repoArg = "all", state = "open", limit = 25, view = PUBLIC_VIEW } = {}) {
