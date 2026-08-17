@@ -77,13 +77,22 @@ Z(A,B) is relational
 Z(A -> B) may differ from Z(B -> A)
 ```
 
-and because two people who know one another well can communicate a large amount of reconstructed meaning with very little transmitted information due to accumulated shared context.
+and because two entities that know one another well can communicate a large amount of reconstructed meaning with very little transmitted information due to accumulated shared context.
 
 For a new interlocutor, the relation model may initially be ephemeral and sparse. For a recurring interlocutor, nothing in the concept requires starting from zero: persistent relational memory is precisely what ordinary human cognition already uses when it recognizes and adapts to known people. Persistence should nevertheless remain purpose-limited, governable, correctable, and proportionate.
 
 ## 3. Cognitive Interpreter — candidate cognitive prosthesis
 
 A **Cognitive Interpreter** is a cognitive prosthesis intended to reduce impedance between different Cogentias by adapting representations rather than merely translating words.
+
+The concept is deliberately entity-neutral. It applies to any pair of Cogentias:
+
+```text
+human <-> human
+human <-> artificial agent
+artificial agent <-> human
+artificial agent <-> artificial agent
+```
 
 Language translation approximates:
 
@@ -99,7 +108,7 @@ representation_A
   -> representation reconstructible by B
 ```
 
-It may therefore change vocabulary, ordering, granularity, examples, abstraction level, analogies, or the number of intermediate reasoning steps while attempting to preserve the idea being transmitted.
+It may therefore change vocabulary, ordering, granularity, examples, abstraction level, analogies, serialization, or the number of intermediate reasoning steps while attempting to preserve the idea being transmitted.
 
 A minimal architecture is:
 
@@ -107,13 +116,13 @@ A minimal architecture is:
 Cogentigram_A
 + Cogentigram_B (when legitimately available)
 + Relatogram_AB
-+ current conversation state
++ current interaction state
         |
         v
 estimated cognitive impedance
         |
         v
-small adaptation suggestion
+representation adaptation
         |
         v
 new observation and model update
@@ -121,9 +130,44 @@ new observation and model update
 
 The interpreter should preserve uncertainty. It should prefer statements such as "a possible misunderstanding is..." over unsupported claims such as "B thinks...". Its role is suggestion and illumination, not prescription.
 
+### 3.1 Artificial-to-artificial cognitive interpretation
+
+Two artificial agents can have substantial cognitive impedance even when they share the same natural language. Sources include different model families, contexts, tools, skills, ontologies, abstractions, epistemic policies, output contracts, and internal representations of what constitutes a useful continuation.
+
+A Cognitive Interpreter between artificial agents should therefore preserve more than prose. It may need to translate a cognitive work product into an interface object containing, for example:
+
+```text
+proposition
++ mechanism
++ provenance
++ descendants
++ assumptions
++ uncertainty
++ anomalies
++ requested next transformation
+```
+
+This overlaps naturally with **Cognitive Packets**: the packet carries not merely content but enough structured envelope information for another node to reconstruct what matters and continue the work.
+
+The Relatogram between artificial agents can accumulate successful interface transformations over repeated interactions. Rather than assuming that every agent must learn every other agent's preferred representation internally, the relationship layer can learn how to adapt between them.
+
+This is compatible with a broader architectural principle:
+
+> improve the environment and interfaces between heterogeneous agents before assuming that the agents themselves must be retrained or homogenized.
+
+### 3.2 Cognitive interpretation as routing support
+
+Routing and representation are coupled. Failure by an agent to develop an idea does not by itself establish that the idea is poor; it may indicate a poor match between:
+
+```text
+idea <-> representation <-> receiving capability
+```
+
+A Cognitive Interpreter may therefore complement Packet Attractors or other routing mechanisms by answering not only **where** to send a Cognitive Packet, but **under what representation** the next node is most likely to transform it usefully.
+
 ## 4. Real-time conversational prosthesis
 
-A practical product form is a phone plus earphones providing a low-bandwidth auxiliary channel during conversation. It need not regenerate the conversation. Short prompts may be sufficient:
+A practical human-facing product form is a phone plus earphones providing a low-bandwidth auxiliary channel during conversation. It need not regenerate the conversation. Short prompts may be sufficient:
 
 ```text
 Too abstract: give the concrete example first.
@@ -183,6 +227,8 @@ The Cognitive Interpreter could then serve as an **impedance adapter for concept
 
 This also protects evaluation of artificial systems: failure of humans to immediately understand an AI-generated reframing is not evidence that the reframing is valuable, but neither is it sufficient evidence that it is worthless. Generation and transmission should be evaluated separately and ultimately confronted with Reality.
 
+The same applies inside artificial cognitive networks: a potentially fertile representation may fail to propagate because it reaches the wrong capability or reaches the right capability under the wrong representation. Cognitive interpretation can therefore become part of the machinery by which distributed Artificial Genius, if it exists, becomes transmissible rather than trapped locally.
+
 ## 7. Testable hypotheses
 
 The concepts should remain experimental until they demonstrate utility. Low-cost tests include:
@@ -193,6 +239,8 @@ The concepts should remain experimental until they demonstrate utility. Low-cost
 4. Test directional impedance separately (`A -> B`, `B -> A`).
 5. Test whether the interpreter can detect skipped reasoning steps caused by asymmetric cognitive compression.
 6. Test whether assistance improves mutual understanding without reducing cognitive diversity or forcing convergence of opinions.
+7. For artificial agents, compare raw handoff against interpreter-mediated handoff while holding models, task, and compute budget comparable.
+8. Test whether adapting representation improves routing outcomes independently of choosing a different receiving agent.
 
 ## 8. Governance constraints
 
@@ -206,13 +254,15 @@ A useful relational model must not become an excuse for uncontrolled surveillanc
 - explicit separation between observation, inference, and established fact;
 - assistance remains suggestive rather than prescriptive.
 
+For artificial agents, equivalent governance concerns apply to mandates, provenance, authority boundaries, and the possibility that representation adaptation silently changes substantive meaning. The interpreter must preserve traceability of transformations.
+
 ## 9. Research position
 
 The current claim is deliberately narrow:
 
 > Cognitive impedance is not only measurable; it may be partially *adaptable* through a cognitive prosthesis that preserves conceptual invariants while changing their representation for another cognitive architecture.
 
-The **Relatogram** is the candidate memory object for repeated relationships. The **Cognitive Interpreter** is the candidate active mechanism. Their value should be established experimentally before either is promoted to a stable Cogentia primitive.
+The **Relatogram** is the candidate memory object for repeated relationships. The **Cognitive Interpreter** is the candidate active mechanism. Both are generalized to Cogentia-to-Cogentia interaction rather than restricted to human conversation. Their value should be established experimentally before either is promoted to a stable Cogentia primitive.
 
 ## Related corpus
 
