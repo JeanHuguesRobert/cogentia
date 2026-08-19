@@ -28,6 +28,7 @@ Cogentia is the cognitive-infrastructure tooling of the multi-repository corpus:
 ## Local invariants
 
 - Preserve the distinction between source corpus, generated navigation, caches, prompts and application runtime.
+- Apply the shared [`Open Commons Default`](instructions/OPEN_COMMONS.shared.md): do not silently introduce package privacy, restrictive licensing, closed publication defaults, or other capture mechanisms for software/data intended as public commons. Privacy and protected data remain separate constraints.
 - Keep `scripts/cogentia.js` dependency-free unless the human principal explicitly authorizes a dependency change.
 - Generated files are projections: change their generator or source, not their generated body by hand.
 - Treat `research/agent_configuration_layer.md` as the source doctrine for this instruction architecture.
