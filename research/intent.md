@@ -4,13 +4,14 @@ subtitle: "Persistent, revisable commitments as the continuity layer between hum
 author: "Jean Hugues Noël Robert, baron Mariani"
 affiliation: "Institut Mariani / C.O.R.S.I.C.A. / Cogentia"
 date: "2026-08-19"
-version: "0.4"
+version: "0.5"
 status: "working-note — source doctrine"
 changelog:
   - "v0.1 (2026-08-14) — initial doctrine, including the cogentia.js v1->v2 first concrete case (S13)."
   - "v0.2 (2026-08-17) — add S13.1: resolution of the v1->v2 case (issue #100); narrows the diagnosis after reading actual v1 behavior -- index.md/concepts.md were never mechanically regenerated, even in v1; restores only the mechanical bootstrap/read surface, routes content proposals through the existing continuation emit/resolve path."
   - "v0.3 (2026-08-18) — add S13.2: v1->v2->v3 progressive modularization (issue #80/#108) is additive-by-policy, extracts no existing v2 code; VERSION bumped to 3.0.0 in scripts/cogentia.js to mark the seam becoming real."
   - "v0.4 (2026-08-19) — add S13.3: the gatekeeper -- lockers (public/private x read/write) as two independent axes, not a ladder (\"one key, two lockers\"); documents two real privacy bugs found and fixed while extending write capabilities to authorized MCP callers; human-UX/agent-UX parity adopted as standing policy for new capabilities."
+  - "v0.5 (2026-08-19) — S13.3: cross-link to patterns/capability-symmetry/PATTERN.md (independently-arrived-at same doctrine) and to cogentia#111 (the guide-resolve fix was one instance checked, not a systematic audit)."
 language: "en"
 license: "CC BY-SA 4.0"
 document_role: "source"
@@ -568,6 +569,8 @@ A related nuance, also from the repository owner: a private *repository* is not 
 - `corpus.locate`'s `guide_resolve` and `concept_registry` branches applied no visibility filtering at all (its full-text-search branch was already safe, via the precomputed index column) — fixed by threading `view` through to `visibleDocs()` and a repo-filtered concept load.
 
 **Human-UX/agent-UX parity as policy, going forward:** a new read-only capability gets a daemon route (`PUBLIC_DAEMON_GET_ROUTES`) and an MCP tool alongside its CLI command as a matter of course (done for `corpus.locate` and the `concepts.*` family this pass) — not as a follow-up someone might get to. A new write capability additionally declares its `governance.requires` and is checked by the daemon itself via `invokeCapability` (not only by MCP's `MUTATE_TOOLS`) — `concepts.init` is the first, proving the pattern end-to-end (`scripts/test-concepts-init-write.js`) before any further write capability is added.
+
+This section and [`patterns/capability-symmetry/PATTERN.md`](../patterns/capability-symmetry/PATTERN.md) describe the same doctrine, arrived at independently two days apart (the pattern from Digipolis design exploration on 2026-08-17, this section from the corpus.locate/concepts.* work on 2026-08-19) before the connection was noticed. The pattern's H-test/M-test/Δ-test is the general form of the parity check applied here; this section is one concrete, code-grounded instance of it. The one-instance-checked, not-yet-systematic state of the guide-resolve fix is tracked in [cogentia#111](https://github.com/JeanHuguesRobert/cogentia/issues/111).
 
 ---
 

@@ -97,6 +97,10 @@ If an agent can invoke `corpus.status(subject)` through MCP, a human should be a
 
 **Accidental Agent Asymmetry** — one category of agent can mobilize a capability easily while another must use brittle workarounds, without an intrinsic reason for the difference.
 
+## Example — Corpus gatekeeper (independent convergence)
+
+`research/intent.md` S13.3 ("the gatekeeper: 'one key, two lockers'") describes extending `cogentia.js` write capabilities to authorized MCP callers with CLI/daemon/MCP parity, arrived at independently on 2026-08-19 — two days after this Pattern was written, without either side referencing the other until the connection was noticed afterward. That section is real design work applying the H/M/Δ-test in code: `corpus.locate` and the `concepts.*` family as capabilities with matching CLI, daemon route, and MCP tool projections; `concepts.init` as the first write capability checked by the same gate regardless of which surface invoked it. Independent convergence on the same shape is evidence for the Pattern, not proof — see Experimental status below.
+
 ## Experimental status
 
 This Pattern is dogfood for Cogentia Pattern Language. Its usefulness must be evaluated in real design work. Repetition or inclusion in agent instructions does not by itself establish it as a validated architectural principle.
