@@ -69,6 +69,28 @@ function headerGet(headers, name) {
 }
 
 /**
+ * Derive the "two lockers" grant (public/private x read/write) from an
+ * already-resolved {allowMutate, auth} pair. One credential (one key) is
+ * resolved once, by whichever path (admin token, JHN attestation, or a
+ * narrower future credential); this just projects that resolution onto the
+ * two independent access axes -- it does not add a second authentication
+ * mechanism. See research/intent.md S13.2 and the "one key, two lockers"
+ * design discussion.
+ *
+ * Deliberately reusable beyond MCP: the daemon (and, later, any other
+ * surface) can call this on its own resolved auth so read/write x
+ * public/private is checked the same way everywhere, not just here.
+ * @returns {{ public: {read:boolean, write:boolean}, private: {read:boolean, write:boolean} }}
+ */
+export function deriveLockers({ allowMutate = false, auth = "none" } = {}) {
+  const canReadPrivate = auth === "admin" || auth === "jhn";
+  return {
+    public: { read: true, write: Boolean(allowMutate) },
+    private: { read: canReadPrivate, write: Boolean(allowMutate) && canReadPrivate },
+  };
+}
+
+/**
  * Resolve caller mutate authorization for one JSON-RPC request.
  * @returns {{
  *   allowMutate: boolean,
@@ -77,10 +99,12 @@ function headerGet(headers, name) {
  *   mandate_ref: string|null,
  *   principal_ref: string|null,
  *   logical_agent_ref: string|null,
- *   reason: string
+ *   reason: string,
+ *   lockers: {public: {read:boolean,write:boolean}, private: {read:boolean,write:boolean}}
  * }}
  */
 export function resolveCallerAuth(env, { meta = {}, headers = {}, view = "public", staticAllowMutate = false } = {}) {
+  const finish = (result) => ({ ...result, lockers: deriveLockers(result) });
   const actor =
     String(meta[ACTOR_META_KEY] || meta.actor || "").trim() ||
     headerGet(headers, "x-cogentia-actor") ||
@@ -100,7 +124,7 @@ export function resolveCallerAuth(env, { meta = {}, headers = {}, view = "public
     null;
 
   if (staticAllowMutate && view === "full") {
-    return {
+    return finish({
       allowMutate: true,
       auth: "admin",
       actor: actor || "admin",
@@ -108,13 +132,13 @@ export function resolveCallerAuth(env, { meta = {}, headers = {}, view = "public
       principal_ref,
       logical_agent_ref,
       reason: "admin_full_view_mutate",
-    };
+    });
   }
 
   const jhnMutateOn = /^(1|true|yes)$/i.test(String(env.COGENTIA_MCP_JHN_MUTATE || "").trim());
   const expected = String(env.COGENTIA_MCP_JHN_TOKEN || "").trim();
   if (!jhnMutateOn || !expected) {
-    return {
+    return finish({
       allowMutate: false,
       auth: "none",
       actor,
@@ -122,7 +146,7 @@ export function resolveCallerAuth(env, { meta = {}, headers = {}, view = "public
       principal_ref,
       logical_agent_ref,
       reason: jhnMutateOn ? "jhn_token_not_configured" : "jhn_mutate_disabled",
-    };
+    });
   }
 
   const presented =
@@ -131,7 +155,7 @@ export function resolveCallerAuth(env, { meta = {}, headers = {}, view = "public
     String(meta[JHN_TOKEN_META_KEY] || "").trim();
 
   if (!presented || !safeEqualString(presented, expected)) {
-    return {
+    return finish({
       allowMutate: false,
       auth: "none",
       actor,
@@ -139,12 +163,12 @@ export function resolveCallerAuth(env, { meta = {}, headers = {}, view = "public
       principal_ref,
       logical_agent_ref,
       reason: presented ? "jhn_token_mismatch" : "jhn_token_missing",
-    };
+    });
   }
 
   const effectiveActor = actor || logical_agent_ref || "agent:jhn";
   if (!isJhnActorClaim(effectiveActor) && !isJhnActorClaim(logical_agent_ref)) {
-    return {
+    return finish({
       allowMutate: false,
       auth: "none",
       actor: effectiveActor,
@@ -152,10 +176,10 @@ export function resolveCallerAuth(env, { meta = {}, headers = {}, view = "public
       principal_ref,
       logical_agent_ref,
       reason: "actor_not_jhn",
-    };
+    });
   }
 
-  return {
+  return finish({
     allowMutate: true,
     auth: "jhn",
     actor: effectiveActor,
@@ -163,5 +187,5 @@ export function resolveCallerAuth(env, { meta = {}, headers = {}, view = "public
     principal_ref: principal_ref || "principal:jhn",
     logical_agent_ref: logical_agent_ref || "agent:jhn",
     reason: "jhn_attested",
-  };
+  });
 }

@@ -3,12 +3,14 @@ title: "Intent"
 subtitle: "Persistent, revisable commitments as the continuity layer between human purposes, mandates, actions, and effects"
 author: "Jean Hugues Noël Robert, baron Mariani"
 affiliation: "Institut Mariani / C.O.R.S.I.C.A. / Cogentia"
-date: "2026-08-14"
-version: "0.2"
+date: "2026-08-19"
+version: "0.4"
 status: "working-note — source doctrine"
 changelog:
   - "v0.1 (2026-08-14) — initial doctrine, including the cogentia.js v1->v2 first concrete case (S13)."
   - "v0.2 (2026-08-17) — add S13.1: resolution of the v1->v2 case (issue #100); narrows the diagnosis after reading actual v1 behavior -- index.md/concepts.md were never mechanically regenerated, even in v1; restores only the mechanical bootstrap/read surface, routes content proposals through the existing continuation emit/resolve path."
+  - "v0.3 (2026-08-18) — add S13.2: v1->v2->v3 progressive modularization (issue #80/#108) is additive-by-policy, extracts no existing v2 code; VERSION bumped to 3.0.0 in scripts/cogentia.js to mark the seam becoming real."
+  - "v0.4 (2026-08-19) — add S13.3: the gatekeeper -- lockers (public/private x read/write) as two independent axes, not a ladder (\"one key, two lockers\"); documents two real privacy bugs found and fixed while extending write capabilities to authorized MCP callers; human-UX/agent-UX parity adopted as standing policy for new capabilities."
 language: "en"
 license: "CC BY-SA 4.0"
 document_role: "source"
@@ -544,6 +546,28 @@ It explicitly does **not** mean mechanically rewriting `index.md`/`concepts.md` 
 Restored in `cogentia.js` v2: `concepts init <repo>` (mechanical bootstrap, idempotent), `concepts graph`, `concepts status`, `concepts ref` (read/report, reusing already-working rendering logic that was previously only reachable through `corpus-status.md` generation). Regression fixture: `scripts/test-concepts-index-lifecycle.js`.
 
 This is itself an instance of the broader lesson in §10–§12: verifying an *intent* against the *actual* historical behavior, not against how that behavior is later described, can narrow — or redirect — the repair.
+
+### 13.2 v1 → v2 → v3: additive modularization, not a rewrite
+
+[Issue #80](https://github.com/JeanHuguesRobert/cogentia/issues/80) proposes a module/capability seam so that new work stops accumulating as more `cmd*` functions in a single ~14,000-line file. The chosen strategy is **progressive modularization**: v3 opens a seam (`scripts/lib/v3-modules.js`: `ModuleDescriptor`, `registerModule`, `invokeCapability`) but extracts **zero** existing v2 code on day one. Every v2 command keeps running exactly as it is; only *new* capabilities register through the seam going forward. The first module, `corpus.locate` (from [issue #108](https://github.com/JeanHuguesRobert/cogentia/issues/108)), is deliberately a composition of three already-existing v2 capabilities (`guideResolve`, `resolveConceptRef`, `indexSearch`) rather than new logic — proving the seam works before anything is migrated through it.
+
+This is additive-by-policy in the same sense as §14 below: v2 stays the source of truth for existing behavior, and Intent Preservation Failure (§12) is the standing test any future v2→v3 migration of a specific command must pass, not an excuse to defer it indefinitely.
+
+`VERSION` (`scripts/cogentia.js`, the `cogentia.js` CLI's own version, distinct from `COGENTIA_VERSION`, the product/system version) moves to `3.0.0` to mark this seam becoming real, not because v2 behavior changed. This third major line follows directly on from Agent John's "birth" (2026-08-15, [`agent_john_identity.md`](agent_john_identity.md)); the repository owner has set 2026-12-25 as an informal target for the agent to reach some form of "adulthood" — not a versioned deliverable, but a horizon this modularization work is paced against.
+
+### 13.3 The gatekeeper: "one key, two lockers," and human-UX/agent-UX parity as policy
+
+Extending `cogentia.js`'s capabilities to authorized MCP callers (not just the CLI, not just an unauthenticated public daemon reader) surfaced a design question and, while investigating it, two real bugs.
+
+**Design question.** Access control has two independent axes, not one ladder: *which data* (public vs. private/internal/confidential — "secret" is a further, undiscussed tier) and *what action* (read vs. write). A capability can need `mutate` on public data only, `private_read` with no mutate, both, or neither — conflating them into a single tier (as the pre-existing admin/JHN model did: one `auth` value gating both) forecloses narrower future credentials for no reason. The resolution, in the repository owner's words: **"we do not need two keys, we need one key about two lockers."** One credential (admin token, JHN attestation, or a narrower credential later) is resolved once; it is then checked against a `lockers: {public: {read, write}, private: {read, write}}` grant (`deriveLockers`, `scripts/lib/cogentia-mcp-auth.js`). `ModuleDescriptor.governance.requires` (`scripts/lib/v3-modules.js`) declares what a capability needs — statically, or as a function of the call's own input when the target (e.g. a repo argument) determines the locker only at call time, not at registration time.
+
+A related nuance, also from the repository owner: a private *repository* is not a uniform locker — `documentVisibility()` already lets one document's own frontmatter override its repo's default visibility (a private repo can have a deliberately public document), and `index rebuild` already bakes per-document visibility into the FTS/embeddings index once, at build time (`canIndexDocForPublic`), rather than re-deriving it on every read. The gatekeeper has to respect both: check the actual target's resolved visibility, not just its container's; and recognize that some capabilities are "pre-gated" (a single boolean suffices at read time, because the real decision already happened at index-build time) while others are "live-gated" (must filter per-document, per call).
+
+**Two real bugs found while building this**, both fixed with regression fixtures (`scripts/test-privacy-gate.js`):
+- `/api/context/guide-resolve` computed its own content-visibility `view` straight from a client-supplied `?view=` query parameter, with no check against the daemon's own auth-resolved view at all — any caller could pass `?view=private` and see non-secret private/internal/confidential documents, unauthenticated. Fixed by `resolveEffectiveView(daemonView, requestedView)`: a route may let an *already-authorized* caller narrow their own view, never let any caller escalate past what the daemon itself resolved.
+- `corpus.locate`'s `guide_resolve` and `concept_registry` branches applied no visibility filtering at all (its full-text-search branch was already safe, via the precomputed index column) — fixed by threading `view` through to `visibleDocs()` and a repo-filtered concept load.
+
+**Human-UX/agent-UX parity as policy, going forward:** a new read-only capability gets a daemon route (`PUBLIC_DAEMON_GET_ROUTES`) and an MCP tool alongside its CLI command as a matter of course (done for `corpus.locate` and the `concepts.*` family this pass) — not as a follow-up someone might get to. A new write capability additionally declares its `governance.requires` and is checked by the daemon itself via `invokeCapability` (not only by MCP's `MUTATE_TOOLS`) — `concepts.init` is the first, proving the pattern end-to-end (`scripts/test-concepts-init-write.js`) before any further write capability is added.
 
 ---
 

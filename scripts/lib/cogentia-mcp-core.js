@@ -5,13 +5,13 @@ import {
   wrapToolError,
   ENVELOPE_KIND,
 } from "./cogentia-mcp-envelope.js";
-import { resolveCallerAuth } from "./cogentia-mcp-auth.js";
+import { resolveCallerAuth, deriveLockers } from "./cogentia-mcp-auth.js";
 import { compareMandateAttenuation } from "./mandate-attenuation.js";
 
 export const SERVER_NAME = "cogentia-mcp";
 export const SERVER_VERSION = "0.8.0";
 export { ENVELOPE_KIND, wrapToolResult, wrapToolError, extractCorrelation };
-export { resolveCallerAuth } from "./cogentia-mcp-auth.js";
+export { resolveCallerAuth, deriveLockers } from "./cogentia-mcp-auth.js";
 
 /** Default negotiated version for legacy initialize when client omits one. */
 export const PROTOCOL_VERSION = "2025-11-25";
@@ -42,6 +42,7 @@ export const MUTATE_TOOLS = new Set([
   "cogentia_continuation_resolve",
   "cogentia_continuation_emit",
   "cogentia_issues_sync",
+  "cogentia_concepts_init",
 ]);
 
 /**
@@ -335,6 +336,80 @@ export const TOOLS = [
         query: { type: "string", minLength: 1, description: "Concept query (e.g. 'Potentics', 'Channel Fragmentation', 'ERP')" },
       },
       required: ["query"],
+      additionalProperties: false,
+    },
+  },
+  {
+    name: "cogentia_locate",
+    description:
+      "Resolve a subject to concrete corpus locations by composing guide routing, the concept registry, and full-text search (v3 module corpus.locate, #80/#108). Returns candidate repo/path targets with the authority (canonical_candidate, concept_registry_definition, lexical_match, ...) and reasons behind each.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        subject: { type: "string", minLength: 1, description: "Subject to locate, e.g. a concept name or free-text topic" },
+        intent: { type: "string", description: "Optional caller intent label, echoed back in the result" },
+      },
+      required: ["subject"],
+      additionalProperties: false,
+    },
+  },
+  {
+    name: "cogentia_concepts_list",
+    description: "List the typed concept registry (research/concepts.md) for one repo or all repos. Read-only, view-filtered (v3 module concepts.list, #80/#108).",
+    inputSchema: {
+      type: "object",
+      properties: { repo: { type: "string", description: "Repository name, or 'all' (default)" } },
+      additionalProperties: false,
+    },
+  },
+  {
+    name: "cogentia_concepts_check",
+    description: "Check the concept registry for warnings (duplicate/ambiguous definitions, missing fields). Read-only, view-filtered (v3 module concepts.check).",
+    inputSchema: {
+      type: "object",
+      properties: { repo: { type: "string", description: "Repository name, or 'all' (default)" } },
+      additionalProperties: false,
+    },
+  },
+  {
+    name: "cogentia_concepts_graph",
+    description: "Mermaid concept graph for one repo or all repos. Read-only, view-filtered (v3 module concepts.graph).",
+    inputSchema: {
+      type: "object",
+      properties: { repo: { type: "string", description: "Repository name, or 'all' (default)" } },
+      additionalProperties: false,
+    },
+  },
+  {
+    name: "cogentia_concepts_status",
+    description: "Per-concept status/warnings table for one repo or all repos. Read-only, view-filtered (v3 module concepts.status).",
+    inputSchema: {
+      type: "object",
+      properties: { repo: { type: "string", description: "Repository name, or 'all' (default)" } },
+      additionalProperties: false,
+    },
+  },
+  {
+    name: "cogentia_concepts_init",
+    description:
+      "Bootstrap empty research/index.md and research/concepts.md skeletons for one repo, if missing (mechanical only -- no-op if the files already exist; never rewrites content). First write capability extended to authorized MCP callers (v3 module concepts.init, #80/#108). Requires mutate access.",
+    inputSchema: {
+      type: "object",
+      properties: { repo: { type: "string", minLength: 1, description: "Repository name to initialize" } },
+      required: ["repo"],
+      additionalProperties: false,
+    },
+  },
+  {
+    name: "cogentia_concepts_ref",
+    description: "Resolve a concept name to its canonical file (research/concepts.md of the defining repo). Read-only, view-filtered (v3 module concepts.ref).",
+    inputSchema: {
+      type: "object",
+      properties: {
+        name: { type: "string", minLength: 1, description: "Concept name to resolve" },
+        repo: { type: "string", description: "Optional repository scope (default all)" },
+      },
+      required: ["name"],
       additionalProperties: false,
     },
   },
@@ -764,11 +839,14 @@ export function createMcpCore(env = process.env) {
   }
 
   async function callTool(name, args = {}, callOpts = {}) {
-    const auth = callOpts.auth || {
-      allowMutate: staticAllowMutate,
-      auth: view === "full" ? "admin" : "none",
-      reason: view === "full" ? "admin_full_view" : "none",
-    };
+    const auth = callOpts.auth || (() => {
+      const base = {
+        allowMutate: staticAllowMutate,
+        auth: view === "full" ? "admin" : "none",
+        reason: view === "full" ? "admin_full_view" : "none",
+      };
+      return { ...base, lockers: deriveLockers(base) };
+    })();
     if (MUTATE_TOOLS.has(name)) requireMutate(name, auth);
     if (PRIVATE_READ_TOOLS.has(name)) requirePrivateRead(name, auth);
     if (!TOOLS.some((t) => t.name === name)) {
@@ -892,6 +970,23 @@ export function createMcpCore(env = process.env) {
       case "cogentia_guide_resolve":
         requireString(args.query, "query");
         return daemonGet("/api/context/guide-resolve", { q: args.query });
+      case "cogentia_locate":
+        requireString(args.subject, "subject");
+        return daemonGet("/api/context/locate", { subject: args.subject, intent: args.intent });
+      case "cogentia_concepts_list":
+        return daemonGet("/api/cli/concepts/list", { repo: args.repo || "all" });
+      case "cogentia_concepts_check":
+        return daemonGet("/api/cli/concepts/check", { repo: args.repo || "all" });
+      case "cogentia_concepts_graph":
+        return daemonGet("/api/cli/concepts/graph", { repo: args.repo || "all" });
+      case "cogentia_concepts_status":
+        return daemonGet("/api/cli/concepts/status", { repo: args.repo || "all" });
+      case "cogentia_concepts_ref":
+        requireString(args.name, "name");
+        return daemonGet("/api/cli/concepts/ref", { name: args.name, repo: args.repo || "all" });
+      case "cogentia_concepts_init":
+        requireString(args.repo, "repo");
+        return daemonPost("/api/ops/concepts/init", { repo: args.repo }, { auth: callOpts.auth });
       case "cogentia_emit_static":
         return daemonGet("/api/ops/emit-static", {});
       case "cogentia_publish_registry":
@@ -983,14 +1078,29 @@ export function createMcpCore(env = process.env) {
     return body;
   }
 
-  async function daemonPost(route, body) {
+  async function daemonPost(route, body, options = {}) {
     const url = new URL(route, daemonUrl);
+    // Mirror daemonGet: the daemon's own view resolution (daemonRequestView)
+    // reads ?view= from the URL, not just the Authorization header -- without
+    // this, an admin-authenticated POST would still resolve to public view
+    // at the daemon and fail any new invokeCapability governance check.
+    url.searchParams.set("view", view);
     const headers = {
       Accept: "application/json",
       "Content-Type": "application/json",
     };
     if (view === "full") {
       headers.Authorization = `Bearer ${adminToken}`;
+    } else if (options.auth?.auth === "jhn") {
+      // Forward the same JHN token this MCP process was itself configured
+      // with, so a daemon-side capability gate (invokeCapability + governance)
+      // can independently re-verify via resolveCallerAuth instead of trusting
+      // self-reported actor/auth fields in the body (the pre-existing pattern
+      // for the 3 legacy mutate tools, left as-is -- see MUTATE_TOOLS).
+      const jhnToken = String(env.COGENTIA_MCP_JHN_TOKEN || "");
+      if (jhnToken) headers.Authorization = `Bearer ${jhnToken}`;
+      if (options.auth.actor) headers["X-Cogentia-Actor"] = options.auth.actor;
+      headers["X-Cogentia-Entry"] = "public";
     } else {
       headers["X-Cogentia-Entry"] = "public";
     }

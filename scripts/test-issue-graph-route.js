@@ -86,9 +86,9 @@ try {
     { jsonrpc: "2.0", id: 2, method: "tools/call", params: { name: "cogentia_issue_graph", arguments: { repo: "JeanHuguesRobert/inseme", state: "open", limit: 5 } } },
   ]);
   assert.equal(mcp[0].result.serverInfo.name, "cogentia-mcp");
-  const issueGraphTool = mcp.find(message => message.result?.structuredContent?.schema === "cogentia.issue-graph.v1");
+  const issueGraphTool = mcp.find(message => message.result?.structuredContent?.data?.schema === "cogentia.issue-graph.v1");
   assert.ok(issueGraphTool, JSON.stringify(mcp, null, 2));
-  assert.equal(issueGraphTool.result.structuredContent.summary.issues, 1);
+  assert.equal(issueGraphTool.result.structuredContent.data.summary.issues, 1);
 
   console.log(JSON.stringify({ ok: true, graph_nodes: graph.nodes.length, graph_edges: graph.edges.length, mcp_tool: "cogentia_issue_graph" }, null, 2));
 } finally {

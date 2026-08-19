@@ -28,9 +28,11 @@ import { retrievalSupabaseConfigured, retrievalSupabaseStatus } from "./lib/retr
 import { emitStaticProjection, publishRegistry, guideResolve, runNavigationBenchmark } from "./lib/navigation.js";
 import { runWeeklyConsolidation } from "./lib/consolidation.js";
 import { listAgentSkills, getAgentSkill } from "./lib/cogentia-agent-skills.js";
+import { registerModule, invokeCapability } from "./lib/v3-modules.js";
+import { resolveCallerAuth, deriveLockers } from "./lib/cogentia-mcp-auth.js";
 
 const COGENTIA_VERSION = "0.3.0";
-const VERSION = "2.4.0";
+const VERSION = "3.0.0";
 const CONFIG_FILE = ".cogentia.json";
 const CLASSIFICATION_VERSION = "1";
 const DOCUMENTS_FILE = "documents.md";
@@ -193,6 +195,7 @@ const PUBLIC_DAEMON_GET_ROUTES = new Set([
   "/api/index/search",
   "/api/context/health",
   "/api/context/guide-resolve",
+  "/api/context/locate",
   "/api/ops/emit-static",
   "/api/ops/publish-registry",
   "/api/ops/nav-benchmark",
@@ -220,6 +223,13 @@ const PUBLIC_DAEMON_GET_ROUTES = new Set([
   "/api/cli/corpus/privacy",
   "/api/cli/corpus/consolidate",
   "/api/cli/embeddings/status",
+  // Concept registry reads (#80/#108 agent-UX parity) -- view-filtered
+  // v3 modules (concepts.list/check/graph/status/ref), not raw loadConcepts.
+  "/api/cli/concepts/list",
+  "/api/cli/concepts/check",
+  "/api/cli/concepts/graph",
+  "/api/cli/concepts/status",
+  "/api/cli/concepts/ref",
 ]);
 // Public POST stays read-oriented. Continuation mutate routes require full view (P3)
 // or loopback from the co-located MCP adapter (JHN/admin gated in mcp-cogentia).
@@ -232,6 +242,7 @@ const DAEMON_LOOPBACK_POST_ROUTES = new Set([
   "/api/ops/continuations/resolve",
   "/api/ops/continuations/emit",
   "/api/ops/issues/sync",
+  "/api/ops/concepts/init",
 ]);
 /**
  * Host-local read endpoints whose metadata is not suitable for the public
@@ -327,8 +338,8 @@ async function main() {
       return cmdPublishRegistry();
     case "nav-benchmark":
       return cmdNavBenchmark();
-    case "guide-resolve":
-      return cmdGuideResolve();
+    case "locate":
+      return cmdLocate();
     default:
       throw new Error(`Unknown command "${command}". Run: node scripts/cogentia.js help`);
   }
@@ -527,6 +538,17 @@ Semantic search (continuation-based):
                            Store a fulfilled semantic query embedding for later semantic search.
                            Flags: --query <text> --provider <name> --model <name>
                            --dimensions <n> --source <label>
+
+Navigation (v3 module seam, #80/#108):
+  locate <subject>          Resolve a subject to concrete corpus locations by
+                             composing guide routing, the concept registry and
+                             full-text search. Flags: --intent <label>
+                             --view public|private (default public, like
+                             docs gaps/corpus plan -- private repos/docs are
+                             excluded unless explicitly requested).
+                             First capability registered through the v3
+                             module/capability seam (scripts/lib/v3-modules.js);
+                             a thin v2 CLI wrapper around invokeCapability().
 
 Context Gateway:
   daemon                   Start the HTTP daemon. Defaults to 127.0.0.1 and public view.
@@ -774,6 +796,256 @@ function cmdGuideResolve() {
   const result = guideResolve(query, inventory);
   output(result, JSON.stringify(result, null, 2));
 }
+
+/**
+ * corpus.locate -- first v3 module (#80, #108).
+ *
+ * Composes three existing, independently-working evidence sources rather
+ * than reimplementing resolution:
+ *   - guideResolve (S7 deterministic alias/keyword resolution, navigation.js)
+ *   - the concept registry (resolveConceptRef, #100)
+ *   - full-text search (indexSearch, now covering README.md + GitHub
+ *     Issues since #107)
+ *
+ * Returns evidence and ambiguity, not hidden certainty, per #108's own
+ * stated contract for corpus.locate.
+ */
+async function runCorpusLocate(ctx, { subject, intent, view } = {}) {
+  const q = String(subject || "").trim();
+  if (!q) return { ok: false, error: "missing_subject" };
+  // Same default as every other content-view flag in this CLI (docs gaps,
+  // corpus plan, ...): public unless the caller explicitly asks for more.
+  // The daemon route passes its own auth-resolved view via
+  // resolveEffectiveView; this default only applies when no view is given.
+  const effectiveView = view || PUBLIC_VIEW;
+
+  const targets = [];
+  const byKey = new Map();
+  const addTarget = (repo, docPath, authority, reason) => {
+    if (!repo || !docPath) return;
+    const key = `${repo}::${docPath}`;
+    let t = byKey.get(key);
+    if (!t) {
+      t = { repo, path: docPath, authority, reasons: [] };
+      byKey.set(key, t);
+      targets.push(t);
+    }
+    t.reasons.push(reason);
+  };
+
+  const inventory = buildInventory(ctx);
+  const docs = visibleDocs(inventory, effectiveView);
+  const resolved = guideResolve(q, docs);
+  if (resolved.ok && resolved.canonical_repo && resolved.canonical_rel) {
+    addTarget(
+      resolved.canonical_repo,
+      resolved.canonical_rel,
+      resolved.layer === 1 ? "canonical_candidate" : "similarity_candidate",
+      `guide_resolve:layer${resolved.layer}:${resolved.mode}`
+    );
+  }
+  // Note: guideResolve's scored_matches (layer 3 runner-up matches) carry
+  // {title, url, score}, not {repo, path} directly -- not incorporated yet.
+  // The full-text search source below already covers similar ground with
+  // real repo/path fields; revisit only if that proves insufficient.
+
+  // loadConcepts reads research/concepts.md from every registered repo with
+  // no visibility filtering of its own (unlike guideResolve/indexSearch,
+  // which both take a view) -- so filter repos here before it ever touches
+  // disk, or a private repo's concept names/definitions would leak through.
+  const visibleRepos = ctx.repos.filter(repo => canSeeRepo(repo, effectiveView));
+  const concepts = loadConcepts({ ...ctx, repos: visibleRepos });
+  const conceptHit = resolveConceptRef(q, concepts);
+  if (conceptHit.ok) {
+    addTarget(conceptHit.repo, "research/concepts.md", "concept_registry_definition", `concept_registry:${conceptHit.slug}`);
+    if (conceptHit.ambiguous) {
+      for (const m of conceptHit.matches.slice(1)) {
+        addTarget(m.repo, "research/concepts.md", "concept_registry_alternative", `concept_registry:ambiguous:${m.slug}`);
+      }
+    }
+  }
+
+  const search = await indexSearch(ctx, q, { repo: "all", limit: 10, view: effectiveView });
+  if (search.ok) {
+    for (const r of search.results) {
+      addTarget(r.repo, r.path, "lexical_match", `full_text_search:score=${Number(r.score).toFixed(2)}`);
+    }
+  }
+
+  return {
+    ok: true,
+    subject: q,
+    intent: intent || null,
+    view: effectiveView,
+    targets,
+    ambiguities: targets.length > 1 ? targets.map(t => `${t.repo}/${t.path}`) : [],
+    sources: {
+      guide_resolve: resolved.ok === true,
+      concept_registry: conceptHit.ok === true,
+      full_text_search: search.ok === true,
+    },
+  };
+}
+
+function formatCorpusLocate(result) {
+  if (!result.ok) return `\ncorpus.locate failed: ${result.error}`;
+  const lines = [`\ncorpus.locate("${result.subject}")${result.intent ? ` intent=${result.intent}` : ""}\n`];
+  if (!result.targets.length) {
+    lines.push("No targets found.");
+  } else {
+    for (const t of result.targets) {
+      lines.push(`  ${t.repo}/${t.path}  [${t.authority}]`);
+      for (const r of t.reasons) lines.push(`    - ${r}`);
+    }
+  }
+  if (result.ambiguities.length > 1) lines.push(`\nAmbiguous: ${result.ambiguities.length} distinct candidate locations.`);
+  return lines.join("\n");
+}
+
+// v3 module registration (#80, #108). Additive only -- does not affect any
+// v2 command above. ctx is threaded through at call time, not captured here.
+registerModule({
+  id: "corpus.locate",
+  kind: "capability_provider",
+  provides: { capabilities: ["corpus.locate"] },
+  governance: { requires: [], trace_minimum: "none" },
+  run: ({ ctx, subject, intent, view }) => runCorpusLocate(ctx, { subject, intent, view }),
+});
+
+function cmdLocate() {
+  // Flags must be stripped before joining what remains into the subject --
+  // otherwise "locate foo --intent bar" would put "--intent bar" into the
+  // search text instead of treating it as a flag.
+  const intent = valueFlag("--intent") || null;
+  const view = valueFlag("--view") || null;
+  const subject = argv.join(" ").trim();
+  if (!subject) throw new Error('Usage: node scripts/cogentia.js locate "<subject>" [--intent <intent>] [--view public|private]');
+  const ctx = loadContext();
+  return invokeCapability(
+    "corpus.locate",
+    { ctx, subject, intent, view: view ? normalizeView(view) : null },
+    { auth: CLI_TRUSTED_AUTH }
+  ).then(result => output(result, formatCorpusLocate(result)));
+}
+
+/**
+ * Concept-registry reads (#80/#108 agent-UX parity follow-on) as v3
+ * modules -- reusing the exact rendering functions cmdConcepts already
+ * calls (checkConcepts, renderConceptGraph, mergeConceptStatus,
+ * resolveConceptRef), never reimplementing them. This is a NEW,
+ * daemon/MCP-facing surface: unlike cmdConcepts (CLI, always unfiltered --
+ * trusted-local, left untouched here), these filter repos by view first,
+ * because they are reachable by callers who are not necessarily trusted.
+ */
+function loadVisibleConcepts(ctx, view) {
+  const visibleRepos = ctx.repos.filter(repo => canSeeRepo(repo, view || PUBLIC_VIEW));
+  return loadConcepts({ ...ctx, repos: visibleRepos });
+}
+
+function selectConcepts(concepts, repoArg) {
+  const selected = repoArg && repoArg !== "all" ? concepts.filter(r => r.repo === repoArg) : concepts;
+  if (!selected.length && repoArg && repoArg !== "all") {
+    return { ok: false, error: "unknown_repo_or_no_concepts", repo: repoArg };
+  }
+  return { ok: true, selected };
+}
+
+registerModule({
+  id: "concepts.list",
+  kind: "capability_provider",
+  provides: { capabilities: ["concepts.list"] },
+  governance: { requires: [] },
+  run: ({ ctx, repo, view }) => {
+    const sel = selectConcepts(loadVisibleConcepts(ctx, view), repo);
+    if (!sel.ok) return sel;
+    return { ok: true, repo: repo || "all", view: view || PUBLIC_VIEW, repos: sel.selected };
+  },
+});
+
+registerModule({
+  id: "concepts.check",
+  kind: "capability_provider",
+  provides: { capabilities: ["concepts.check"] },
+  governance: { requires: [] },
+  run: ({ ctx, repo, view }) => {
+    const concepts = loadVisibleConcepts(ctx, view);
+    const sel = selectConcepts(concepts, repo);
+    if (!sel.ok) return sel;
+    return { ok: true, repo: repo || "all", view: view || PUBLIC_VIEW, results: checkConcepts(sel.selected, concepts) };
+  },
+});
+
+registerModule({
+  id: "concepts.graph",
+  kind: "capability_provider",
+  provides: { capabilities: ["concepts.graph"] },
+  governance: { requires: [] },
+  run: ({ ctx, repo, view }) => {
+    const sel = selectConcepts(loadVisibleConcepts(ctx, view), repo);
+    if (!sel.ok) return sel;
+    return {
+      ok: true,
+      repo: repo || "all",
+      view: view || PUBLIC_VIEW,
+      mermaid: renderConceptGraph(sel.selected, ctx),
+      concepts: sel.selected.flatMap(r => r.concepts),
+    };
+  },
+});
+
+registerModule({
+  id: "concepts.status",
+  kind: "capability_provider",
+  provides: { capabilities: ["concepts.status"] },
+  governance: { requires: [] },
+  run: ({ ctx, repo, view }) => {
+    const concepts = loadVisibleConcepts(ctx, view);
+    const sel = selectConcepts(concepts, repo);
+    if (!sel.ok) return sel;
+    const merged = mergeConceptStatus(sel.selected, checkConcepts(sel.selected, concepts));
+    return { ok: true, repo: repo || "all", view: view || PUBLIC_VIEW, concepts: merged };
+  },
+});
+
+registerModule({
+  id: "concepts.ref",
+  kind: "capability_provider",
+  provides: { capabilities: ["concepts.ref"] },
+  governance: { requires: [] },
+  run: ({ ctx, name, repo, view }) => {
+    if (!String(name || "").trim()) return { ok: false, error: "missing_name" };
+    const concepts = loadVisibleConcepts(ctx, view);
+    const scoped = repo && repo !== "all" ? concepts.filter(r => r.repo === repo) : concepts;
+    return resolveConceptRef(name, scoped);
+  },
+});
+
+/**
+ * First WRITE v3 module (#80/#108): mechanical bootstrap only, same
+ * behavior as the pre-existing `concepts init` CLI command (idempotent,
+ * never rewrites existing files -- see initConceptsAndIndex/S13.1 in
+ * research/intent.md). The locker requirement is dynamic: it depends on
+ * the target repo's own visibility, resolved at call time, not declared
+ * statically -- exactly the "one key, two lockers" case from the design
+ * discussion. Unknown repo defaults to the stricter "private" locker.
+ */
+registerModule({
+  id: "concepts.init",
+  kind: "capability_provider",
+  provides: { capabilities: ["concepts.init"] },
+  governance: {
+    requires: ({ ctx, repo }) => {
+      const repoObj = ctx?.repos?.find(r => r.name === repo);
+      const locker = repoObj && repoVisibility(repoObj) === "public" ? "public" : "private";
+      return [{ locker, mode: "write" }];
+    },
+  },
+  run: ({ ctx, repo }) => {
+    const repoObj = ctx.repos.find(r => r.name === repo);
+    if (!repoObj) return { ok: false, error: "unknown_repo", repo };
+    return initConceptsAndIndex(repoObj);
+  },
+});
 
 function cmdState() {
   const ctx = loadContext();
@@ -1112,10 +1384,9 @@ function cmdConcepts(sub) {
   if (sub === "init") {
     const repoArg = argv.shift() || "all";
     if (repoArg === "all") throw new Error("Usage: concepts init <repo>");
-    const repo = ctx.repos.find(r => r.name === repoArg);
-    if (!repo) throw new Error(`Unknown repo: ${repoArg}`);
-    const result = initConceptsAndIndex(repo);
-    return output(result, formatConceptInit(result));
+    if (!ctx.repos.find(r => r.name === repoArg)) throw new Error(`Unknown repo: ${repoArg}`);
+    return invokeCapability("concepts.init", { ctx, repo: repoArg }, { auth: CLI_TRUSTED_AUTH })
+      .then(result => output(result, formatConceptInit(result)));
   }
 
   if (sub === "ref") {
@@ -2102,11 +2373,58 @@ async function handleDaemonRequest(req, res) {
   }
   if (req.method === "GET" && url.pathname === "/api/cli/concepts/list") {
     const effectiveCtx = ctx || loadContext();
-    return daemonJson(res, 200, daemonCliConceptsList(effectiveCtx, url));
+    const effectiveView = resolveEffectiveView(view, url.searchParams.get("view"));
+    const auth = daemonResolveAuth(req, view);
+    const result = await invokeCapability(
+      "concepts.list",
+      { ctx: effectiveCtx, repo: url.searchParams.get("repo") || "all", view: effectiveView },
+      { auth }
+    );
+    return daemonJson(res, result.ok === false ? 404 : 200, result);
   }
   if (req.method === "GET" && url.pathname === "/api/cli/concepts/check") {
     const effectiveCtx = ctx || loadContext();
-    return daemonJson(res, 200, daemonCliConceptsCheck(effectiveCtx, url));
+    const effectiveView = resolveEffectiveView(view, url.searchParams.get("view"));
+    const auth = daemonResolveAuth(req, view);
+    const result = await invokeCapability(
+      "concepts.check",
+      { ctx: effectiveCtx, repo: url.searchParams.get("repo") || "all", view: effectiveView },
+      { auth }
+    );
+    return daemonJson(res, result.ok === false ? 404 : 200, result);
+  }
+  if (req.method === "GET" && url.pathname === "/api/cli/concepts/graph") {
+    const effectiveCtx = ctx || loadContext();
+    const effectiveView = resolveEffectiveView(view, url.searchParams.get("view"));
+    const auth = daemonResolveAuth(req, view);
+    const result = await invokeCapability(
+      "concepts.graph",
+      { ctx: effectiveCtx, repo: url.searchParams.get("repo") || "all", view: effectiveView },
+      { auth }
+    );
+    return daemonJson(res, result.ok === false ? 404 : 200, result);
+  }
+  if (req.method === "GET" && url.pathname === "/api/cli/concepts/status") {
+    const effectiveCtx = ctx || loadContext();
+    const effectiveView = resolveEffectiveView(view, url.searchParams.get("view"));
+    const auth = daemonResolveAuth(req, view);
+    const result = await invokeCapability(
+      "concepts.status",
+      { ctx: effectiveCtx, repo: url.searchParams.get("repo") || "all", view: effectiveView },
+      { auth }
+    );
+    return daemonJson(res, result.ok === false ? 404 : 200, result);
+  }
+  if (req.method === "GET" && url.pathname === "/api/cli/concepts/ref") {
+    const effectiveCtx = ctx || loadContext();
+    const effectiveView = resolveEffectiveView(view, url.searchParams.get("view"));
+    const auth = daemonResolveAuth(req, view);
+    const result = await invokeCapability(
+      "concepts.ref",
+      { ctx: effectiveCtx, name: url.searchParams.get("name") || "", repo: url.searchParams.get("repo") || "all", view: effectiveView },
+      { auth }
+    );
+    return daemonJson(res, result.ok === false ? 404 : 200, result);
   }
   if (req.method === "GET" && url.pathname === "/api/cli/git/verify") {
     const effectiveCtx = ctx || loadContext();
@@ -2179,10 +2497,19 @@ async function handleDaemonRequest(req, res) {
     const q = url.searchParams.get("q") || "";
     const effectiveCtx = ctx || loadContext();
     const inventory = buildInventory(effectiveCtx);
-    const view = normalizeView(url.searchParams.get("view") || PUBLIC_VIEW);
-    const docs = visibleDocs(inventory, view);
+    const effectiveView = resolveEffectiveView(view, url.searchParams.get("view"));
+    const docs = visibleDocs(inventory, effectiveView);
     const result = guideResolve(q, docs);
-    return daemonJson(res, 200, { ok: true, query: q, view, resolution: result });
+    return daemonJson(res, 200, { ok: true, query: q, view: effectiveView, resolution: result });
+  }
+  if (req.method === "GET" && url.pathname === "/api/context/locate") {
+    const subject = url.searchParams.get("subject") || "";
+    const intent = url.searchParams.get("intent") || null;
+    const effectiveCtx = ctx || loadContext();
+    const effectiveView = resolveEffectiveView(view, url.searchParams.get("view"));
+    const auth = daemonResolveAuth(req, view);
+    const result = await invokeCapability("corpus.locate", { ctx: effectiveCtx, subject, intent, view: effectiveView }, { auth });
+    return daemonJson(res, 200, result);
   }
   if (req.method === "GET" && url.pathname === "/api/ops/emit-static") {
     const effectiveCtx = ctx || loadContext();
@@ -2221,6 +2548,22 @@ async function handleDaemonRequest(req, res) {
       return daemonJson(res, 200, { ok: true, ...result });
     } catch (error) {
       return daemonJson(res, 500, { ok: false, error: "issues_sync_failed", message: error.message });
+    }
+  }
+  if (req.method === "POST" && url.pathname === "/api/ops/concepts/init") {
+    // First write route to enforce governance in the core (invokeCapability)
+    // rather than trusting loopback alone, per the "one key, two lockers"
+    // gatekeeper design -- unlike the three legacy mutate routes above,
+    // which predate this and are intentionally left as-is.
+    const body = await parseJsonBody(req);
+    const effectiveCtx = ctx || loadContext();
+    const auth = daemonResolveAuth(req, view);
+    try {
+      const result = await invokeCapability("concepts.init", { ctx: effectiveCtx, repo: body?.repo || "" }, { auth });
+      return daemonJson(res, result.ok === false ? 400 : 200, result);
+    } catch (error) {
+      const status = error.error_class === "tier_forbidden" ? 403 : 500;
+      return daemonJson(res, status, { ok: false, error: error.error_class || "concepts_init_failed", message: error.message });
     }
   }
   if (req.method === "GET" && url.pathname === "/api/context/search") {
@@ -2799,6 +3142,54 @@ function daemonRequestView(req, url) {
   return PUBLIC_VIEW;
 }
 
+/**
+ * Clamp a per-route content-visibility choice to what the daemon already
+ * authenticated for this request. `daemonView` (public|full) comes from
+ * daemonRequestView -- it is the only thing loopback/admin-token checks
+ * ever produce. A route may let an already-`full` caller narrow their own
+ * view (e.g. ?view=public for testing) or pick `private` (everything but
+ * secret); a `public` caller's requested view is always ignored, never
+ * escalated. Never resolve content visibility from req.url alone.
+ */
+function resolveEffectiveView(daemonView, requestedView) {
+  return daemonView === FULL_VIEW ? normalizeView(requestedView || PRIVATE_VIEW) : PUBLIC_VIEW;
+}
+
+/**
+ * Resolve the caller's lockers grant for one daemon request, so any
+ * capability-backed route (invokeCapability) can enforce governance in the
+ * core -- not only inside the separate MCP process. Reuses the same
+ * credentials (admin token via `daemonHasAdminToken`/`daemonView`, JHN
+ * attestation via COGENTIA_MCP_JHN_*) that already mean something to MCP;
+ * "one key" works the same way whether it arrives through MCP's headers or
+ * is presented straight to the daemon.
+ */
+function daemonResolveAuth(req, daemonView) {
+  const staticAllowMutate =
+    daemonView === FULL_VIEW &&
+    /^(1|true|yes)$/i.test(String(process.env.COGENTIA_MCP_ALLOW_MUTATE || "").trim());
+  return resolveCallerAuth(process.env, {
+    headers: req.headers,
+    view: daemonView,
+    staticAllowMutate,
+  });
+}
+
+/**
+ * The CLI's own auth context: a human (or a process the human already
+ * trusts, e.g. gh/git credentials on this machine) is the trust root here,
+ * same as every existing write command (corpus apply, classify apply, ...)
+ * which requires no token today. One fixed, fully-open grant -- no per-call
+ * resolution needed.
+ */
+const CLI_TRUSTED_AUTH = {
+  allowMutate: true,
+  auth: "admin",
+  actor: "cli:local",
+  reason: "cli_trusted_local",
+  lockers: { public: { read: true, write: true }, private: { read: true, write: true } },
+};
+
 function normalizeDaemonView(view) {
   const clean = String(view || "").trim().toLowerCase();
   if (clean === PUBLIC_VIEW) return PUBLIC_VIEW;
@@ -2995,7 +3386,7 @@ function daemonCliDocsQuery(ctx, url, daemonView = PUBLIC_VIEW) {
   const inventory = buildInventory(ctx);
   const filter = {
     repo: url.searchParams.get('repo') || 'all',
-    view: daemonView === FULL_VIEW ? normalizeView(url.searchParams.get('view') || PRIVATE_VIEW) : PUBLIC_VIEW,
+    view: resolveEffectiveView(daemonView, url.searchParams.get('view')),
     role: url.searchParams.get('role') || 'all',
     q: url.searchParams.get('q') || '',
     notIndexed: parseBoolean(url.searchParams.get('not-indexed')),
@@ -3184,22 +3575,6 @@ function daemonCliDocsSnippet(ctx, url) {
     if (matches.length >= 10) break;
   }
   return { ok: true, ref, q, count: matches.length, matches };
-}
-
-function daemonCliConceptsList(ctx, url) {
-  const repoArg = url.searchParams.get('repo') || 'all';
-  const concepts = loadConcepts(ctx);
-  const selected = repoArg === 'all' ? concepts : concepts.filter(r => r.repo === repoArg);
-  if (!selected.length && repoArg !== 'all') return { ok: false, error: 'unknown_repo_or_no_concepts', repo: repoArg };
-  return { ok: true, repos: selected };
-}
-
-function daemonCliConceptsCheck(ctx, url) {
-  const repoArg = url.searchParams.get('repo') || 'all';
-  const concepts = loadConcepts(ctx);
-  const selected = repoArg === 'all' ? concepts : concepts.filter(r => r.repo === repoArg);
-  if (!selected.length && repoArg !== 'all') return { ok: false, error: 'unknown_repo_or_no_concepts', repo: repoArg };
-  return { ok: true, results: checkConcepts(selected, concepts) };
 }
 
 function daemonCliContinuationList(ctx, url) {
@@ -7149,13 +7524,13 @@ function initConceptsAndIndex(repo) {
 
   let indexCreated = false;
   if (!fs.existsSync(indexPath)) {
-    fs.writeFileSync(indexPath, buildIndexFileSkeleton(repo.name, now), "utf8");
+    fs.writeFileSync(indexPath, buildIndexFileSkeleton(repo, now), "utf8");
     indexCreated = true;
   }
 
   let conceptsCreated = false;
   if (!fs.existsSync(conceptsPath)) {
-    fs.writeFileSync(conceptsPath, buildConceptsFileSkeleton(repo.name, now), "utf8");
+    fs.writeFileSync(conceptsPath, buildConceptsFileSkeleton(repo, now), "utf8");
     conceptsCreated = true;
   }
 
@@ -7317,7 +7692,8 @@ function scanIssuesForConcepts(ctx, repo, { state = "open", label = "", limit = 
   };
 }
 
-function buildIndexFileSkeleton(repoName, now) {
+function buildIndexFileSkeleton(repo, now) {
+  const repoName = repo.name;
   return [
     "---",
     `title: "Research Index — ${repoName}"`,
@@ -7327,7 +7703,11 @@ function buildIndexFileSkeleton(repoName, now) {
     `last_modified_at: ${now}`,
     "document_role: index",
     "document_kind: research-index",
-    "visibility: public",
+    // Inherit the repo's own visibility rather than hardcoding "public":
+    // an init'd index.md/concepts.md must not be the one document in a
+    // private repo that leaks past canSeeRepo (documentVisibility lets a
+    // document's own frontmatter override its repo's default).
+    `visibility: ${repoVisibility(repo)}`,
     "lifecycle_state: active",
     "classification_source: cogentia.js",
     "---",
@@ -7343,7 +7723,8 @@ function buildIndexFileSkeleton(repoName, now) {
   ].join("\n");
 }
 
-function buildConceptsFileSkeleton(repoName, now) {
+function buildConceptsFileSkeleton(repo, now) {
+  const repoName = repo.name;
   return [
     "---",
     `title: "Concept Index — ${repoName}"`,
@@ -7353,7 +7734,7 @@ function buildConceptsFileSkeleton(repoName, now) {
     `last_modified_at: ${now}`,
     "document_role: index",
     "document_kind: concept-index",
-    "visibility: public",
+    `visibility: ${repoVisibility(repo)}`,
     "lifecycle_state: active",
     "classification_source: cogentia.js",
     "---",
