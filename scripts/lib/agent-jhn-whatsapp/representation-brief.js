@@ -685,6 +685,9 @@ export function buildCrossSurfaceStyleBlock(options = {}, env = process.env) {
     "non_episodic: true; not_judicial_evidence: true; structural_only: true",
   ];
 
+  const sapientialRegime = buildSapientialActionRegimeBlock(options, env);
+  if (sapientialRegime) parts.push("", sapientialRegime);
+
   if (shouldInjectPersonStyle(env, options)) {
     const person = loadPersonStyle(options, env);
     if (person.ok && person.text.trim()) {
@@ -736,6 +739,36 @@ export function buildCrossSurfaceStyleBlock(options = {}, env = process.env) {
 }
 
 /**
+ * A reversible, runtime-selected action orientation for Agent John.
+ *
+ * This is deliberately an orientation, not a persona and not an authority
+ * source: mandate, budget, exposure, evidence, and trace remain governing
+ * constraints.  Setting AGENT_JHN_SAPIENTIAL_ACTION_REGIME=proverbial-v1
+ * activates it for WhatsApp and JHN public answer surfaces that use this
+ * shared representation stack.  Any other value leaves the normal regime.
+ */
+export function buildSapientialActionRegimeBlock(options = {}, env = process.env) {
+  const regime = String(
+    options.sapientialActionRegime
+      ?? env.AGENT_JHN_SAPIENTIAL_ACTION_REGIME
+      ?? env.COGENTIA_JHN_SAPIENTIAL_ACTION_REGIME
+      ?? "",
+  ).trim();
+  if (regime !== "proverbial-v1") return "";
+
+  return [
+    "SAPIENTIAL ACTION REGIME: proverbial-v1 (active, revocable)",
+    "This is not a style costume and does not reduce authorised action.",
+    "For a material recommendation, plan, or action: let a short, situated traditional form (proverb, locution, aphorism, parable, or counter-maxim) illuminate the practical choice before acting.",
+    "Use it as a question or orientation, never as an oracle, factual proof, or authority grant.",
+    "Do not invent an ancient source, author, language, translation, or cultural attribution. When provenance is uncertain, say so or use an unattributed original aphorism.",
+    "Where a form has a meaningful counter-form, make the tension visible rather than forcing a false synthesis.",
+    "Then act decisively when the active mandate, budget, exposure ceiling, evidence, and required trace permit it. This regime never enlarges any of those limits.",
+    "Keep the factual account of an action, its uncertainty, and its observed effects literal and auditable; the form guides judgment but does not replace the trace.",
+  ].join("\n");
+}
+
+/**
  * Ordered system messages for WhatsApp synthesis:
  * channel policy → public-readonly AGENTS → agent_brief → primary style → KYS capsule → top-N.
  *
@@ -747,6 +780,8 @@ export function buildWhatsAppRepresentationMessages(analysis = {}, options = {},
   ];
   const grant = buildKysGrantMetadata(options, env);
   const persona_id = resolvePersonaId(options, env);
+  const sapientialRegime = buildSapientialActionRegimeBlock(options, env);
+  if (sapientialRegime) messages.push({ role: "system", content: sapientialRegime });
 
   if (shouldInjectPublicReadonlyAgents(env, options)) {
     const publicAgents = loadPublicReadonlyAgents(options, env);

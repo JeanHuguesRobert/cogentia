@@ -100,6 +100,10 @@ AGENT_JHN_WHATSAPP_SEND_ENABLED=false
 # Quality-first: inject full JeanHuguesRobert/research/agent_brief.md into WhatsApp OpenAI system prompts (default on).
 # AGENT_JHN_WHATSAPP_INJECT_AGENT_BRIEF=1
 # AGENT_JHN_WHATSAPP_AGENT_BRIEF_PATH=/srv/cogentia/repos/JeanHuguesRobert/research/agent_brief.md
+# Optional, reversible action orientation. `proverbial-v1` asks John to use
+# situated traditional forms to guide judgment without changing any mandate,
+# budget, exposure, evidence, or trace boundary.
+# AGENT_JHN_SAPIENTIAL_ACTION_REGIME=proverbial-v1
 ```
 
 Retrieval smoke (no WhatsApp send; writes under `.cogentia/evals/agent-jhn-retrieval/`):
@@ -262,4 +266,3 @@ https://github.com/JeanHuguesRobert/JeanHuguesRobert/blob/main/research/agent-jh
 
 - **Reliable direct contact email**: `jeanhuguesrobert@gmail.com` is established as the official direct human contact method for Jean-Hugues Robert.
 - **Thread History-Aware Suppression**: To avoid annoying respondents with redundant notice headers or repeated email addresses, the pipeline inspects thread history (`conversations/<id>.json` sliding turn window). If full disclosure or direct contact email was sent recently in the active thread, the system suppresses repeating full disclosure disclaimers and uses light identification (`— agent-jhn-experimental`).
-

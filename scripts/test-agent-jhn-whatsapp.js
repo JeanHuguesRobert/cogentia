@@ -16,6 +16,7 @@ import {
   publicConfigSnapshot,
   ensureStateDirs,
 } from "./lib/agent-jhn-whatsapp/config.js";
+import { buildSapientialActionRegimeBlock } from "./lib/agent-jhn-whatsapp/representation-brief.js";
 import {
   normalizeInboundEvent,
   bareJid,
@@ -117,6 +118,17 @@ test("1_normalize_synthetic", () => {
   assert.equal(n.integrity.algorithm, "sha256");
   assert.match(n.integrity.raw_message_sha256, /^[a-f0-9]{64}$/);
   assert.equal(n.conversation_id, `whatsapp:${bareJid(SELF_JID)}`);
+});
+
+// --- 2. reject third party ---
+test("sapiential_action_regime_is_explicit_and_revocable", () => {
+  assert.equal(buildSapientialActionRegimeBlock({}, {}).trim(), "");
+  const active = buildSapientialActionRegimeBlock({}, {
+    AGENT_JHN_SAPIENTIAL_ACTION_REGIME: "proverbial-v1",
+  });
+  assert.match(active, /SAPIENTIAL ACTION REGIME: proverbial-v1/);
+  assert.match(active, /does not reduce authorised action/);
+  assert.match(active, /never enlarges/);
 });
 
 // --- 2. reject third party ---
