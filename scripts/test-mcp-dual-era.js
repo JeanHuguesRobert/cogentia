@@ -168,6 +168,29 @@ const transport = transportFromHttpRequest({
 assert.equal(transport.protocolVersionHeader, PROTOCOL_VERSION_MODERN);
 assert.ok(SUPPORTED_PROTOCOLS.has(PROTOCOL_VERSION_MODERN));
 
+// Test John CLI MCP projection (issue #112 / Option A)
+const johnCall = await publicCore.handleJsonRpc({
+  jsonrpc: "2.0",
+  id: 60,
+  method: "tools/call",
+  params: {
+    name: "cogentia_john_run",
+    arguments: {
+      prompt: "Hello from MCP test",
+      capability: "john.converse",
+      handler: { id: "mock.echo", kind: "mock" },
+    },
+  },
+});
+assert.equal(johnCall.result.isError, undefined);
+const johnData = johnCall.result.structuredContent.data;
+assert.equal(johnData.ok, true);
+assert.equal(johnData.status, "completed");
+assert.equal(johnData.text, "Mock handler received: Hello from MCP test");
+assert.ok(johnData.packet_id.startsWith("urn:cop:packet:john:"));
+assert.equal(johnData.accounting.observed_steps, 1);
+assert.equal(johnData.odyssey.lifecycle.isReturned, true);
+
 // Mutate gate without daemon round-trip
 const mutateDenied = await publicCore.handleJsonRpc({
   jsonrpc: "2.0",

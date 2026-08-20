@@ -56,10 +56,18 @@ NDJSON is canonical. Human rendering is a projection. Every run emits exactly
 one terminal event: `john.run.completed`, `john.run.failed`, or
 `john.run.cancelled`.
 
+## Symmetric MCP Projection (`cogentia_john_run`)
+
+Following the Capability Symmetry pattern (#110), `john` is projected into the Cogentia MCP server ([`scripts/cogentia-mcp.js`](../scripts/cogentia-mcp.js)):
+
+- **Tool Name**: `cogentia_john_run`
+- **Input Parameters**: `prompt`, `capability`, `principal_id`, `mandate_id`, `budget_id`, `exposure`, `max_steps`, `max_tool_calls`, `max_elapsed_ms`, `handler`, `ithaca`, or full `request` object.
+- **Output**: Structured MCP packet response containing `ok`, `packet_id`, `status`, `text`, `yield` (semantic + operational), `accounting`, and reconstructed `odyssey`.
+
+External assistants and clients (Claude Desktop, IDEs, peer agents) can invoke the exact same COP-governed execution without duplicating the loop.
+
 ## Next boundary
 
-Connect real handler adapters (Agent Gateway runtimes, OpenAI-compatible models,
-MCP connectors) behind the admitted invocation → receipt → settlement path.
-MCP, SSE, OpenAI-compatible and Inseme projections consume the same event
-objects rather than duplicate this loop.
+Implement multi-agent handoff (`john handoff`) across local agents and trusted Operium nodes, and connect interactive terminal modes.
+
 

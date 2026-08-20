@@ -7,6 +7,7 @@ import {
 } from "./cogentia-mcp-envelope.js";
 import { resolveCallerAuth, deriveLockers } from "./cogentia-mcp-auth.js";
 import { compareMandateAttenuation } from "./mandate-attenuation.js";
+import { runJohnRequest } from "./john-run.js";
 
 export const SERVER_NAME = "cogentia-mcp";
 export const SERVER_VERSION = "0.8.0";
@@ -515,6 +516,39 @@ export const TOOLS = [
     inputSchema: {
       type: "object",
       properties: {},
+      additionalProperties: false,
+    },
+  },
+  {
+    name: "cogentia_john_run",
+    description:
+      "Execute a portable COP-governed agent request via John (issue #112). Admits the request as an authoritative Cognitive Packet under mandate and execution budget boundaries, routes to the specified handler, and returns the canonical yield, accounting, and Odyssey trace.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        prompt: { type: "string", minLength: 1, description: "Input prompt or instruction." },
+        capability: { type: "string", description: "Target capability name (default: john.converse)." },
+        principal_id: { type: "string", description: "Principal identity id (e.g. principal:operator or jhn)." },
+        mandate_id: { type: "string", description: "Mandate authorizing execution." },
+        mandate_version: { type: "string", description: "Mandate version (default: 1)." },
+        budget_id: { type: "string", description: "Budget reservation id." },
+        exposure: { type: "string", enum: ["none", "read_only", "bounded", "consequential"], description: "Exposure level." },
+        max_steps: { type: "integer", minimum: 1, maximum: 1000, description: "Max reasoner steps." },
+        max_tool_calls: { type: "integer", minimum: 0, maximum: 100, description: "Max tool/capability calls." },
+        max_elapsed_ms: { type: "integer", minimum: 100, maximum: 60000, description: "Max elapsed time in ms." },
+        handler: {
+          type: "object",
+          description: "Handler specification (id, kind, options). Defaults to mock.echo if omitted.",
+        },
+        ithaca: {
+          type: "object",
+          description: "Optional custom Ithaca return target.",
+        },
+        request: {
+          type: "object",
+          description: "Complete raw john.request.v1 object (alternative to individual fields).",
+        },
+      },
       additionalProperties: false,
     },
   },
@@ -1045,6 +1079,55 @@ export function createMcpCore(env = process.env) {
         });
       case "cogentia_consolidate_weekly":
         return daemonGet("/api/ops/emit-static", {});
+      case "cogentia_john_run": {
+        let req = args.request;
+        if (!req || typeof req !== "object") {
+          const reqPrompt = String(args.prompt || args.input?.prompt || "").trim();
+          if (!reqPrompt) {
+            throw new Error("prompt is required for cogentia_john_run");
+          }
+          req = {
+            version: "john.request.v1",
+            request_id: args.request_id || `mcp-${Date.now()}-${Math.random().toString(16).slice(2, 8)}`,
+            principal: { id: args.principal_id || callOpts.auth?.actor || "principal:mcp-caller" },
+            mandate: {
+              id: args.mandate_id || (callOpts.auth?.mandate_ref || "mandate:mcp-caller"),
+              version: args.mandate_version || "1",
+            },
+            budget: { id: args.budget_id || "budget:mcp" },
+            execution_budget: {
+              max_steps: boundedOptional(args.max_steps, 1, 1000) || 4,
+              max_tool_calls: boundedOptional(args.max_tool_calls, 0, 100) || 2,
+              max_subagents: 0,
+              max_elapsed_ms: boundedOptional(args.max_elapsed_ms, 100, 60000) || 15000,
+              max_external_effects: 0,
+            },
+            exposure: args.exposure || (auth.allowMutate ? "bounded" : "read_only"),
+            capability: args.capability || "john.converse",
+            input: { prompt: reqPrompt },
+            handler: args.handler || { id: "mock.echo", kind: "mock" },
+            ithaca: args.ithaca || undefined,
+          };
+        }
+        const events = await runJohnRequest(req);
+        const completed = events.find((e) => e.type === "john.run.completed");
+        const failed = events.find((e) => e.type === "john.run.failed");
+        const settled = events.find((e) => e.type === "john.accounting.settled");
+        const admitted = events.find((e) => e.type === "john.packet.admitted");
+
+        return {
+          ok: Boolean(completed),
+          request_id: req.request_id,
+          packet_id: admitted?.data?.packet_id || null,
+          status: completed ? "completed" : "failed",
+          text: completed?.data?.result?.text || failed?.data?.text || "",
+          yield: completed?.data?.result?.yield || null,
+          accounting: settled?.data || null,
+          odyssey: completed?.data?.result?.odyssey || failed?.data?.odyssey || null,
+          events_count: events.length,
+          events,
+        };
+      }
       default:
         throw new Error(`Unknown tool: ${name}`);
     }
