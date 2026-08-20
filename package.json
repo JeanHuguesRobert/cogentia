@@ -13,6 +13,8 @@
     "commons:dev": "pnpm --filter @cogentia/commons run dev",
     "commons:build": "pnpm --filter @cogentia/commons run build",
     "cogentia": "node scripts/cogentia.js",
+    "john": "node scripts/john.js",
+    "test:john": "node scripts/test-john.js",
     "metadata:audit": "node scripts/metadata-audit.js",
     "metadata:maintain": "node scripts/metadata-maintain.js",
     "metadata:plan": "node scripts/metadata-plan.js",

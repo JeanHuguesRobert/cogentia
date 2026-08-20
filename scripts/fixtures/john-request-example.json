@@ -1,0 +1,30 @@
+{
+  "version": "john.request.v1",
+  "request_id": "john-example-001",
+  "principal": {
+    "id": "principal:example"
+  },
+  "mandate": {
+    "id": "mandate:example",
+    "version": "1"
+  },
+  "budget": {
+    "id": "budget:example"
+  },
+  "execution_budget": {
+    "max_steps": 1,
+    "max_tool_calls": 0,
+    "max_subagents": 0,
+    "max_elapsed_ms": 5000,
+    "max_external_effects": 0
+  },
+  "exposure": "none",
+  "capability": "john.converse",
+  "input": {
+    "prompt": "Demonstrate the safe John headless contract."
+  },
+  "handler": {
+    "id": "mock.echo",
+    "kind": "mock"
+  }
+}

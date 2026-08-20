@@ -1,0 +1,108 @@
+#!/usr/bin/env node
+
+import assert from "node:assert/strict";
+import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import os from "node:os";
+import path from "node:path";
+import { spawnSync } from "node:child_process";
+import {
+  buildCognitivePacketFromJohnRequest,
+  isTerminalEvent,
+  reconstructJohnOdyssey,
+  runJohnRequest,
+  validateJohnRequest,
+} from "./lib/john-run.js";
+
+const request = {
+  version: "john.request.v1",
+  request_id: "john-test-001",
+  principal: { id: "principal:test" },
+  mandate: { id: "mandate:test", version: "1" },
+  budget: { id: "budget:test" },
+  execution_budget: {
+    max_steps: 1,
+    max_tool_calls: 0,
+    max_subagents: 0,
+    max_elapsed_ms: 5000,
+    max_external_effects: 0,
+  },
+  exposure: "none",
+  capability: "john.converse",
+  input: { prompt: "hello" },
+  handler: { id: "mock.echo", kind: "mock" },
+};
+
+assert.deepEqual(validateJohnRequest(request), []);
+
+// Test Cognitive Packet builder
+const packet = buildCognitivePacketFromJohnRequest(request);
+assert.equal(packet.packetKind, "cognitive_packet");
+assert.equal(packet.envelope.protocol, "cognitive_packet.v0");
+assert.equal(packet.envelope.id, "urn:cop:packet:john:john-test-001");
+assert.equal(packet.envelope.status, "dispatched");
+assert.equal(packet.envelope.ithaca.return_target, "principal:test");
+assert.equal(packet.envelope.hops.length, 1);
+assert.equal(packet.envelope.hops[0].route_reason, "stimulus-admitted-to-cop");
+
+// Test execution events
+const events = runJohnRequest(request);
+assert.equal(events.length, 7);
+assert.equal(events[0].type, "john.run.started");
+assert.equal(events[0].data.ithaca.return_target, "principal:test");
+assert.equal(events[1].type, "john.packet.admitted");
+assert.equal(events[1].data.admission_mode, "cop_admitted");
+assert.equal(events.at(-1).type, "john.run.completed");
+assert.equal(events.filter(isTerminalEvent).length, 1);
+
+const settled = events.find(x => x.type === "john.accounting.settled");
+assert.equal(settled.data.provider_cost, 0);
+assert.equal(settled.data.observed_steps, 1);
+assert.equal(settled.data.hops_count, 3);
+assert.equal(settled.data.ithaca_returned, true);
+
+const completed = events.find(x => x.type === "john.run.completed");
+assert.equal(completed.data.result.status, "returned");
+assert.equal(completed.data.result.yield.semantic_yield, "Mock handler received: hello");
+assert.equal(completed.data.result.odyssey.lifecycle.isReturned, true);
+assert.equal(completed.data.result.odyssey.journey.hopsCount, 3);
+
+// Test custom Ithaca target
+const customIthacaRequest = {
+  ...request,
+  request_id: "john-test-custom-ithaca",
+  ithaca: {
+    description: "Custom Incident Room (Ithaca)",
+    return_target: "room:incident-42",
+    response_channel: "incident-bus",
+    return_conditions: ["run.completed"],
+  },
+};
+assert.deepEqual(validateJohnRequest(customIthacaRequest), []);
+const customEvents = runJohnRequest(customIthacaRequest);
+assert.equal(customEvents[0].data.ithaca.return_target, "room:incident-42");
+assert.equal(customEvents.at(-1).data.result.odyssey.ithaca.return_target, "room:incident-42");
+
+const invalid = runJohnRequest({ version: "wrong" });
+assert.equal(invalid.length, 1);
+assert.equal(invalid[0].type, "john.run.failed");
+assert.equal(isTerminalEvent(invalid[0]), true);
+
+const dir = mkdtempSync(path.join(os.tmpdir(), "john-test-"));
+try {
+  const file = path.join(dir, "request.json");
+  writeFileSync(file, JSON.stringify(customIthacaRequest), "utf8");
+  const run = spawnSync(process.execPath, ["scripts/john.js", "run", "--request", file, "--format", "ndjson"], {
+    cwd: path.resolve(import.meta.dirname, ".."),
+    encoding: "utf8",
+  });
+  assert.equal(run.status, 0, run.stderr);
+  const lines = run.stdout.trim().split("\n").map(JSON.parse);
+  assert.equal(lines.length, 7);
+  assert.equal(lines.at(-1).type, "john.run.completed");
+  assert.equal(lines.filter(isTerminalEvent).length, 1);
+} finally {
+  rmSync(dir, { recursive: true, force: true });
+}
+
+console.log(JSON.stringify({ ok: true, test: "john" }, null, 2));
+
