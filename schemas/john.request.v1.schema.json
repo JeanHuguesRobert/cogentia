@@ -45,7 +45,17 @@
       "required": ["id", "kind"],
       "properties": {
         "id": { "type": "string", "minLength": 1 },
-        "kind": { "type": "string", "enum": ["mock"] }
+        "kind": { "type": "string", "enum": ["mock", "governed_reasoner", "step_reasoner", "model"] },
+        "model": { "type": "string" },
+        "allowed_capabilities": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "confirmed_capabilities": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "options": { "type": "object" }
       }
     },
     "ithaca": {

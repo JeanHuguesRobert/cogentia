@@ -1,0 +1,38 @@
+{
+  "version": "john.request.v1",
+  "request_id": "john-governed-example-001",
+  "principal": {
+    "id": "principal:example"
+  },
+  "mandate": {
+    "id": "mandate:research",
+    "version": "1"
+  },
+  "budget": {
+    "id": "budget:example"
+  },
+  "execution_budget": {
+    "max_steps": 4,
+    "max_tool_calls": 2,
+    "max_subagents": 0,
+    "max_elapsed_ms": 10000,
+    "max_external_effects": 0
+  },
+  "exposure": "bounded",
+  "capability": "john.research",
+  "input": {
+    "prompt": "Synthesize key points of the FractaVolta architecture."
+  },
+  "handler": {
+    "id": "governed.step_reasoner",
+    "kind": "governed_reasoner",
+    "allowed_capabilities": [
+      "corpus.search"
+    ]
+  },
+  "ithaca": {
+    "description": "Operator research terminal",
+    "return_target": "principal:example",
+    "response_channel": "john-cli-stream"
+  }
+}

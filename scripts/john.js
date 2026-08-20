@@ -21,7 +21,7 @@ function valueFlag(argv, flag) {
   return value || null;
 }
 
-function main() {
+async function main() {
   const argv = process.argv.slice(2);
   const command = argv.shift();
   if (["help", "--help", "-h", undefined].includes(command)) {
@@ -41,15 +41,19 @@ function main() {
   } catch (error) {
     throw new Error(`Cannot read JSON request ${fullPath}: ${error.message}`);
   }
-  for (const item of runJohnRequest(request)) {
+  const events = await runJohnRequest(request);
+  for (const item of events) {
     process.stdout.write(format === "ndjson" ? `${JSON.stringify(item)}\n` : `${renderJohnEventHuman(item)}\n`);
   }
   return 0;
 }
 
-try {
-  process.exitCode = main();
-} catch (error) {
-  process.stderr.write(`john: ${error.message}\n`);
-  process.exitCode = 1;
-}
+main()
+  .then((code) => {
+    process.exitCode = code;
+  })
+  .catch((error) => {
+    process.stderr.write(`john: ${error.message}\n`);
+    process.exitCode = 1;
+  });
+
