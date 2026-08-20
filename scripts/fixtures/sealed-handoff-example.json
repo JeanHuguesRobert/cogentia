@@ -1,0 +1,95 @@
+{
+  "packetKind": "cognitive_packet",
+  "envelope": {
+    "protocol": "cognitive_packet.v0",
+    "id": "urn:cop:packet:john:john-governed-example-001",
+    "packet_id": "urn:cop:packet:john:john-governed-example-001",
+    "createdAt": "2026-08-20T21:49:27.584Z",
+    "status": "dispatched",
+    "principal_id": "principal:example",
+    "mandate_id": "mandate:research",
+    "budget_id": "budget:example",
+    "exposure": "bounded",
+    "capability": "john.research",
+    "requiredCapability": "john.research",
+    "intent": "Synthesize key points of the FractaVolta architecture.",
+    "ithaca": {
+      "description": "Operator research terminal",
+      "return_target": "principal:example",
+      "response_channel": "john-cli-stream",
+      "return_conditions": [
+        "run.completed"
+      ]
+    },
+    "hops": [
+      {
+        "hop_index": 0,
+        "node_id": "node:workstation:john-cli",
+        "instance_id": "john:logical-agent",
+        "interface": "cli",
+        "timestamp": "2026-08-20T21:49:27.584Z",
+        "route_reason": "stimulus-admitted-to-cop"
+      }
+    ],
+    "residue": [],
+    "kind": "john.request.handoff",
+    "lineage": {
+      "git_commit": "16dd2e8bfeefd4f5fc0251d5cb615057ed4bfde7",
+      "git_branch": "main",
+      "spawn_reason": "inter_machine_handoff",
+      "sealed_at": "2026-08-20T21:49:27.586Z"
+    }
+  },
+  "payload": {
+    "request_id": "john-governed-example-001",
+    "input": {
+      "prompt": "Synthesize key points of the FractaVolta architecture."
+    },
+    "capability": "john.research",
+    "handler": {
+      "id": "governed.step_reasoner",
+      "kind": "governed_reasoner",
+      "allowed_capabilities": [
+        "corpus.search"
+      ]
+    },
+    "request": {
+      "version": "john.request.v1",
+      "request_id": "john-governed-example-001",
+      "principal": {
+        "id": "principal:example"
+      },
+      "mandate": {
+        "id": "mandate:research",
+        "version": "1"
+      },
+      "budget": {
+        "id": "budget:example"
+      },
+      "execution_budget": {
+        "max_steps": 4,
+        "max_tool_calls": 2,
+        "max_subagents": 0,
+        "max_elapsed_ms": 10000,
+        "max_external_effects": 0
+      },
+      "exposure": "bounded",
+      "capability": "john.research",
+      "input": {
+        "prompt": "Synthesize key points of the FractaVolta architecture."
+      },
+      "handler": {
+        "id": "governed.step_reasoner",
+        "kind": "governed_reasoner",
+        "allowed_capabilities": [
+          "corpus.search"
+        ]
+      },
+      "ithaca": {
+        "description": "Operator research terminal",
+        "return_target": "principal:example",
+        "response_channel": "john-cli-stream"
+      }
+    }
+  }
+}

@@ -1,0 +1,301 @@
+{
+  "envelope": {
+    "id": "pkt-yield-urn:cop:packet:john:john-governed-example-001",
+    "packetKind": "john.yield.handoff",
+    "intent": "Yield for: Synthesize key points of the FractaVolta architecture.",
+    "status": "solved",
+    "routeTo": "principal:example",
+    "ithaca": {
+      "description": "Operator research terminal",
+      "return_target": "principal:example",
+      "response_channel": "john-cli-stream",
+      "return_conditions": [
+        "run.completed"
+      ]
+    },
+    "lineage": {
+      "upstream_packet_id": "urn:cop:packet:john:john-governed-example-001",
+      "solved_by_node": "local-node",
+      "solved_at": "2026-08-20T21:49:50.361Z"
+    },
+    "hops": [
+      {
+        "hop_index": 0,
+        "node_id": "node:workstation:john-cli",
+        "instance_id": "john:logical-agent",
+        "interface": "cli",
+        "timestamp": "2026-08-20T21:49:27.584Z",
+        "route_reason": "stimulus-admitted-to-cop"
+      },
+      {
+        "hop_index": 1,
+        "node_id": "local-node",
+        "instance_id": "john-handoff-executor",
+        "route_reason": "packet-solved",
+        "timestamp": "2026-08-20T21:49:50.361Z"
+      }
+    ],
+    "residue": []
+  },
+  "yield": {
+    "semantic_yield": "Governed step processed: Synthesize key points of the FractaVolta architecture.",
+    "operational_yield": {
+      "observed_steps": 1,
+      "capability_calls": 0,
+      "cost_units": 0,
+      "elapsed_ms": 1,
+      "handler_id": "governed.step_reasoner",
+      "stop_reason": "answer_accepted"
+    },
+    "produced_at": "2026-08-20T21:49:50.360Z",
+    "produced_by": "governed.step_reasoner"
+  },
+  "failure": null,
+  "events": [
+    {
+      "version": "john.event.v1",
+      "event_id": "john-governed-example-001:1",
+      "sequence": 1,
+      "run_id": "john-governed-example-001",
+      "type": "john.run.started",
+      "principal_id": "principal:example",
+      "mandate": {
+        "id": "mandate:research",
+        "version": "1"
+      },
+      "budget_id": "budget:example",
+      "exposure": "bounded",
+      "data": {
+        "mode": "headless",
+        "handler_mode": "governed_reasoner",
+        "execution_budget": {
+          "max_steps": 4,
+          "max_tool_calls": 2,
+          "max_subagents": 0,
+          "max_elapsed_ms": 10000,
+          "max_external_effects": 0
+        },
+        "ithaca": {
+          "description": "Operator research terminal",
+          "return_target": "principal:example",
+          "response_channel": "john-cli-stream",
+          "return_conditions": [
+            "run.completed"
+          ]
+        }
+      }
+    },
+    {
+      "version": "john.event.v1",
+      "event_id": "john-governed-example-001:2",
+      "sequence": 2,
+      "run_id": "john-governed-example-001",
+      "type": "john.packet.admitted",
+      "principal_id": "principal:example",
+      "mandate": {
+        "id": "mandate:research",
+        "version": "1"
+      },
+      "budget_id": "budget:example",
+      "exposure": "bounded",
+      "data": {
+        "admission_mode": "cop_admitted",
+        "packet_id": "urn:cop:packet:john:john-governed-example-001",
+        "consequential_effects": false,
+        "reserved_limits": {
+          "max_steps": 4,
+          "max_tool_calls": 2,
+          "max_subagents": 0,
+          "max_external_effects": 0
+        },
+        "ithaca": {
+          "description": "Operator research terminal",
+          "return_target": "principal:example",
+          "response_channel": "john-cli-stream",
+          "return_conditions": [
+            "run.completed"
+          ]
+        },
+        "note": "Admitted under COP boundary rules as an authoritative Cognitive Packet."
+      }
+    },
+    {
+      "version": "john.event.v1",
+      "event_id": "john-governed-example-001:3",
+      "sequence": 3,
+      "run_id": "john-governed-example-001",
+      "type": "john.capability.resolved",
+      "principal_id": "principal:example",
+      "mandate": {
+        "id": "mandate:research",
+        "version": "1"
+      },
+      "budget_id": "budget:example",
+      "exposure": "bounded",
+      "data": {
+        "capability": "john.research",
+        "provider": "governed.step_reasoner"
+      }
+    },
+    {
+      "version": "john.event.v1",
+      "event_id": "john-governed-example-001:4",
+      "sequence": 4,
+      "run_id": "john-governed-example-001",
+      "type": "john.handler.started",
+      "principal_id": "principal:example",
+      "mandate": {
+        "id": "mandate:research",
+        "version": "1"
+      },
+      "budget_id": "budget:example",
+      "exposure": "bounded",
+      "data": {
+        "handler": {
+          "id": "governed.step_reasoner",
+          "kind": "governed_reasoner",
+          "allowed_capabilities": [
+            "corpus.search"
+          ]
+        },
+        "hop_index": 1
+      }
+    },
+    {
+      "version": "john.event.v1",
+      "event_id": "john-governed-example-001:5",
+      "sequence": 5,
+      "run_id": "john-governed-example-001",
+      "type": "john.assistant.delta",
+      "principal_id": "principal:example",
+      "mandate": {
+        "id": "mandate:research",
+        "version": "1"
+      },
+      "budget_id": "budget:example",
+      "exposure": "bounded",
+      "data": {
+        "delta": "Governed step processed: Synthesize key points of the FractaVolta architecture."
+      }
+    },
+    {
+      "version": "john.event.v1",
+      "event_id": "john-governed-example-001:6",
+      "sequence": 6,
+      "run_id": "john-governed-example-001",
+      "type": "john.accounting.settled",
+      "principal_id": "principal:example",
+      "mandate": {
+        "id": "mandate:research",
+        "version": "1"
+      },
+      "budget_id": "budget:example",
+      "exposure": "bounded",
+      "data": {
+        "settlement_mode": "exact",
+        "provider_cost": 0,
+        "external_effects": 0,
+        "observed_steps": 1,
+        "tool_calls_count": 0,
+        "hops_count": 3,
+        "ithaca_returned": true
+      }
+    },
+    {
+      "version": "john.event.v1",
+      "event_id": "john-governed-example-001:7",
+      "sequence": 7,
+      "run_id": "john-governed-example-001",
+      "type": "john.run.completed",
+      "principal_id": "principal:example",
+      "mandate": {
+        "id": "mandate:research",
+        "version": "1"
+      },
+      "budget_id": "budget:example",
+      "exposure": "bounded",
+      "data": {
+        "terminal": true,
+        "result": {
+          "text": "Governed step processed: Synthesize key points of the FractaVolta architecture.",
+          "handler": "governed.step_reasoner",
+          "packet_id": "urn:cop:packet:john:john-governed-example-001",
+          "status": "returned",
+          "yield": {
+            "semantic_yield": "Governed step processed: Synthesize key points of the FractaVolta architecture.",
+            "operational_yield": {
+              "observed_steps": 1,
+              "capability_calls": 0,
+              "cost_units": 0,
+              "elapsed_ms": 1,
+              "handler_id": "governed.step_reasoner",
+              "stop_reason": "answer_accepted"
+            },
+            "produced_at": "2026-08-20T21:49:50.360Z",
+            "produced_by": "governed.step_reasoner"
+          },
+          "odyssey": {
+            "packetId": "urn:cop:packet:john:john-governed-example-001",
+            "intent": "Synthesize key points of the FractaVolta architecture.",
+            "ithaca": {
+              "description": "Operator research terminal",
+              "return_target": "principal:example",
+              "response_channel": "john-cli-stream",
+              "return_conditions": [
+                "run.completed"
+              ]
+            },
+            "lifecycle": {
+              "status": "returned",
+              "isSolved": true,
+              "isReturned": true,
+              "isAssimilated": false
+            },
+            "journey": {
+              "departureTimestamp": "2026-08-20T21:49:50.358Z",
+              "returnTimestamp": "2026-08-20T21:49:50.360Z",
+              "hopsCount": 3,
+              "hopsChain": [
+                {
+                  "hopIndex": 0,
+                  "node": "node:workstation:john-cli",
+                  "instance": "john:logical-agent",
+                  "reason": "stimulus-admitted-to-cop",
+                  "timestamp": "2026-08-20T21:49:50.358Z"
+                },
+                {
+                  "hopIndex": 1,
+                  "node": "node:handler:governed_reasoner",
+                  "instance": "governed.step_reasoner",
+                  "reason": "capability-execution",
+                  "timestamp": "2026-08-20T21:49:50.359Z"
+                },
+                {
+                  "hopIndex": 2,
+                  "node": "ithaca-node",
+                  "instance": "principal:example",
+                  "reason": "yield-returned-to-ithaca",
+                  "timestamp": "2026-08-20T21:49:50.360Z"
+                }
+              ]
+            },
+            "yield": {
+              "semantic_yield": "Governed step processed: Synthesize key points of the FractaVolta architecture.",
+              "operational_yield": {
+                "observed_steps": 1,
+                "capability_calls": 0,
+                "cost_units": 0,
+                "elapsed_ms": 1,
+                "handler_id": "governed.step_reasoner",
+                "stop_reason": "answer_accepted"
+              },
+              "produced_at": "2026-08-20T21:49:50.360Z",
+              "produced_by": "governed.step_reasoner"
+            },
+            "residue": []
+          }
+        }
+      }
+    }
+  ]
+}

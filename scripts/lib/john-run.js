@@ -128,6 +128,8 @@ export function buildCognitivePacketFromJohnRequest(request) {
       budget_id: request.budget.id,
       exposure: request.exposure,
       capability: request.capability,
+      requiredCapability: request.capability,
+      intent: request.input.prompt,
       ithaca,
       hops: [
         {
@@ -146,6 +148,7 @@ export function buildCognitivePacketFromJohnRequest(request) {
       input: request.input,
       capability: request.capability,
       handler: request.handler,
+      request,
     },
   };
 }

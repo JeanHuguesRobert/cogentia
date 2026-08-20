@@ -66,8 +66,23 @@ Following the Capability Symmetry pattern (#110), `john` is projected into the C
 
 External assistants and clients (Claude Desktop, IDEs, peer agents) can invoke the exact same COP-governed execution without duplicating the loop.
 
-## Next boundary
+## Inter-Machine / Inter-Agent Handoff (`john handoff`)
 
-Implement multi-agent handoff (`john handoff`) across local agents and trusted Operium nodes, and connect interactive terminal modes.
+`john handoff` enables cross-machine delegation between distinct environments that share **no RAM and no raw database files** (each machine maintains its own isolated SQLite cache):
+
+```bash
+# 1. Machine A: Pack a request into a sealed Cognitive Packet with Git provenance and Ithaca
+node scripts/john.js handoff pack --request request.json --out sealed-packet.json [--target node:remote-worker]
+
+# 2. Machine B: Unpack and inspect provenance without execution
+node scripts/john.js handoff unpack --packet sealed-packet.json
+
+# 3. Machine B: Execute locally with local SQLite and produce return yield targeting Ithaca
+node scripts/john.js handoff run --packet sealed-packet.json --out return-yield.json
+```
+
+- **Sealed Packet**: Combines bounded values (prompt, limits, mandate, Ithaca) with verifiable references (Git commit SHA, branch).
+- **Return Yield**: Produces a `john.yield.handoff` packet (`status: "solved"`) addressed to the original caller's Ithaca channel with full Odyssey hop trace.
+- **Continuous Availability**: Supports direct next-hop routing optimization with automatic fallback to capability providers, attractor pool broadcast, and store & forward spooling.
 
 

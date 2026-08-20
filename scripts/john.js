@@ -4,12 +4,21 @@ import fs from "node:fs";
 import path from "node:path";
 import process from "node:process";
 import { renderJohnEventHuman, runJohnRequest } from "./lib/john-run.js";
+import {
+  packHandoffPacket,
+  unpackHandoffPacket,
+  runHandoffPacket,
+} from "./lib/john-handoff.js";
 
 function usage() {
   return [
-    "Usage: node scripts/john.js run --request <request.json> [--format ndjson|human]",
+    "Usage:",
+    "  node scripts/john.js run --request <request.json> [--format ndjson|human]",
+    "  node scripts/john.js handoff pack --request <request.json> [--target <node>] [--out <packet.json>]",
+    "  node scripts/john.js handoff unpack --packet <packet.json>",
+    "  node scripts/john.js handoff run --packet <packet.json> [--format ndjson|human] [--out <yield.json>]",
     "",
-    "v0 accepts only the safe mock.echo handler. It creates no provider spend or external effect.",
+    "John CLI supports headless governed reasoners and cross-machine Cognitive Packet handoffs.",
   ].join("\n");
 }
 
@@ -21,6 +30,56 @@ function valueFlag(argv, flag) {
   return value || null;
 }
 
+async function handleHandoff(argv) {
+  const sub = argv.shift();
+  if (["pack", "export"].includes(sub)) {
+    const requestPath = valueFlag(argv, "--request");
+    const targetNode = valueFlag(argv, "--target");
+    const outPath = valueFlag(argv, "--out");
+    if (!requestPath) throw new Error("john handoff pack requires --request <request.json>");
+    const fullPath = path.resolve(process.cwd(), requestPath);
+    const request = JSON.parse(fs.readFileSync(fullPath, "utf8"));
+    const sealedPacket = packHandoffPacket(request, { targetNode });
+    const output = JSON.stringify(sealedPacket, null, 2);
+    if (outPath) {
+      fs.writeFileSync(path.resolve(process.cwd(), outPath), output, "utf8");
+      process.stdout.write(`Sealed Cognitive Packet written to ${outPath}\n`);
+    } else {
+      process.stdout.write(`${output}\n`);
+    }
+    return 0;
+  }
+
+  if (["unpack", "inspect"].includes(sub)) {
+    const packetPath = valueFlag(argv, "--packet");
+    if (!packetPath) throw new Error("john handoff unpack requires --packet <packet.json>");
+    const fullPath = path.resolve(process.cwd(), packetPath);
+    const packet = JSON.parse(fs.readFileSync(fullPath, "utf8"));
+    const inspection = unpackHandoffPacket(packet);
+    process.stdout.write(`${JSON.stringify(inspection, null, 2)}\n`);
+    return 0;
+  }
+
+  if (["run", "import", "exec"].includes(sub)) {
+    const packetPath = valueFlag(argv, "--packet");
+    const format = valueFlag(argv, "--format") || "human";
+    const outPath = valueFlag(argv, "--out");
+    if (!packetPath) throw new Error("john handoff run requires --packet <packet.json>");
+    const fullPath = path.resolve(process.cwd(), packetPath);
+    const packet = JSON.parse(fs.readFileSync(fullPath, "utf8"));
+    const result = await runHandoffPacket(packet);
+    for (const item of result.events) {
+      process.stdout.write(format === "ndjson" ? `${JSON.stringify(item)}\n` : `${renderJohnEventHuman(item)}\n`);
+    }
+    if (outPath) {
+      fs.writeFileSync(path.resolve(process.cwd(), outPath), JSON.stringify(result.returnPacket, null, 2), "utf8");
+    }
+    return result.success ? 0 : 1;
+  }
+
+  throw new Error(`Unknown handoff action ${JSON.stringify(sub)}.\n${usage()}`);
+}
+
 async function main() {
   const argv = process.argv.slice(2);
   const command = argv.shift();
@@ -28,6 +87,11 @@ async function main() {
     process.stdout.write(`${usage()}\n`);
     return 0;
   }
+
+  if (command === "handoff") {
+    return handleHandoff(argv);
+  }
+
   if (command !== "run") throw new Error(`Unknown command ${JSON.stringify(command)}.\n${usage()}`);
   const requestPath = valueFlag(argv, "--request");
   const format = valueFlag(argv, "--format") || "human";
