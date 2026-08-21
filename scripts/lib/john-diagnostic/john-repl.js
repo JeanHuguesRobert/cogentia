@@ -87,6 +87,15 @@ export class JohnRepl {
           return JSON.stringify(res, null, 2);
         }
 
+        case "symmetry":
+        case "sym": {
+          const symInsp = this.context.getInspector("symmetry");
+          if (arg && arg.includes("--json")) {
+            return JSON.stringify(symInsp.audit(), null, 2);
+          }
+          return symInsp.renderHuman();
+        }
+
         case "eval": {
           if (!arg) return "Usage: .eval <prompt>";
           return this.runStep(arg);

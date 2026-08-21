@@ -3,6 +3,7 @@ import { PacketOdysseyInspector } from "./inspectors/packet-odyssey-inspector.js
 import { ContinuationInspector } from "./inspectors/continuation-inspector.js";
 import { AccountingInspector } from "./inspectors/accounting-inspector.js";
 import { TopologyInspector } from "./inspectors/topology-inspector.js";
+import { SymmetryInspector } from "./inspectors/symmetry-inspector.js";
 
 /**
  * Diagnostic Context for John: Registers modular inspectors and maintains session diagnostics state.
@@ -19,6 +20,7 @@ export class DiagnosticContext {
     this.registerInspector(new ContinuationInspector(options));
     this.registerInspector(new AccountingInspector());
     this.registerInspector(new TopologyInspector(options));
+    this.registerInspector(new SymmetryInspector());
   }
 
   registerInspector(inspector) {

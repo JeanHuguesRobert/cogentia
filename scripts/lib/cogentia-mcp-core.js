@@ -8,6 +8,7 @@ import {
 import { resolveCallerAuth, deriveLockers } from "./cogentia-mcp-auth.js";
 import { compareMandateAttenuation } from "./mandate-attenuation.js";
 import { runJohnRequest } from "./john-run.js";
+import { auditCapabilitySymmetry } from "./symmetry-audit.js";
 
 export const SERVER_NAME = "cogentia-mcp";
 export const SERVER_VERSION = "0.8.0";
@@ -549,6 +550,16 @@ export const TOOLS = [
           description: "Complete raw john.request.v1 object (alternative to individual fields).",
         },
       },
+      additionalProperties: false,
+    },
+  },
+  {
+    name: "cogentia_symmetry_audit",
+    description:
+      "Audit Capability Symmetry across Human projections (CLI, Web UX) and Machine projections (MCP, API /v1, COP Cognitive Packet) per Issue #110 and Corpus Axioms.",
+    inputSchema: {
+      type: "object",
+      properties: {},
       additionalProperties: false,
     },
   },
@@ -1127,6 +1138,9 @@ export function createMcpCore(env = process.env) {
           events_count: events.length,
           events,
         };
+      }
+      case "cogentia_symmetry_audit": {
+        return auditCapabilitySymmetry();
       }
       default:
         throw new Error(`Unknown tool: ${name}`);

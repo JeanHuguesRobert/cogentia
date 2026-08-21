@@ -70,6 +70,16 @@ async function handleInspect(argv) {
       process.stdout.write(`${JSON.stringify(res, null, 2)}\n`);
       return 0;
     }
+    case "symmetry":
+    case "sym": {
+      const symInsp = ctx.getInspector("symmetry");
+      if (argv.includes("--json")) {
+        process.stdout.write(`${JSON.stringify(symInsp.audit(), null, 2)}\n`);
+      } else {
+        process.stdout.write(`${symInsp.renderHuman()}\n`);
+      }
+      return 0;
+    }
     case "packet": {
       const packetPath = valueFlag(argv, "--packet") || argv[0];
       if (!packetPath) throw new Error("john inspect packet requires --packet <packet.json>");
@@ -80,7 +90,7 @@ async function handleInspect(argv) {
       return 0;
     }
     default:
-      throw new Error(`Unknown inspection target '${target}'. Available: capabilities, topology, continuations, packet.\n${usage()}`);
+      throw new Error(`Unknown inspection target '${target}'. Available: capabilities, topology, continuations, symmetry, packet.\n${usage()}`);
   }
 }
 
@@ -165,6 +175,10 @@ async function main() {
 
   if (command === "inspect" || command === "diag" || command === "probe") {
     return handleInspect(argv);
+  }
+
+  if (command === "symmetry" || command === "scorecard") {
+    return handleInspect(["symmetry", ...argv]);
   }
 
   if (command === "repl" || command === "chat" || command === "console") {

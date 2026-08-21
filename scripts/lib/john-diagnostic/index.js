@@ -5,3 +5,4 @@ export { PacketOdysseyInspector } from "./inspectors/packet-odyssey-inspector.js
 export { ContinuationInspector } from "./inspectors/continuation-inspector.js";
 export { AccountingInspector } from "./inspectors/accounting-inspector.js";
 export { TopologyInspector } from "./inspectors/topology-inspector.js";
+export { SymmetryInspector } from "./inspectors/symmetry-inspector.js";
