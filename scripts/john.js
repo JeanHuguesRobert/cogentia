@@ -14,19 +14,22 @@ import {
   DiagnosticContext,
   JohnRepl,
 } from "./lib/john-diagnostic/index.js";
+import { JohnPacketListener } from "./lib/john-listener.js";
 
 function usage() {
   return [
     "Usage:",
     "  node scripts/john.js run --request <request.json> [--format ndjson|human]",
+    "  node scripts/john.js listen [--port 8790] [--host 0.0.0.0] [--node-id <id>]",
     "  node scripts/john.js repl [--mode diagnostic|conversational] [--format ndjson|human]",
-    "  node scripts/john.js inspect <capabilities|topology|continuations|packet> [options]",
+    "  node scripts/john.js inspect <capabilities|topology|continuations|symmetry|packet> [options]",
+    "  node scripts/john.js symmetry [--json]",
     "  node scripts/john.js handoff pack --request <request.json> [--target <node>] [--out <packet.json>]",
     "  node scripts/john.js handoff unpack --packet <packet.json>",
     "  node scripts/john.js handoff run --packet <packet.json> [--format ndjson|human] [--out <yield.json>]",
     "  node scripts/john.js handoff send --packet <packet.json> --target <url_or_proto> [--fallback <url>] [--out <yield.json>]",
     "",
-    "John CLI supports headless governed reasoners, interactive diagnostic REPLs, and cross-machine Cognitive Packet handoffs.",
+    "John CLI supports autonomous packet listeners, headless governed reasoners, interactive diagnostic REPLs, and cross-machine handoffs.",
   ].join("\n");
 }
 
@@ -179,6 +182,27 @@ async function main() {
 
   if (command === "symmetry" || command === "scorecard") {
     return handleInspect(["symmetry", ...argv]);
+  }
+
+  if (command === "listen" || command === "daemon" || command === "server") {
+    const port = Number(valueFlag(argv, "--port") || 8790);
+    const host = valueFlag(argv, "--host") || "0.0.0.0";
+    const nodeId = valueFlag(argv, "--node-id") || process.env.FRACTANET_NODE_ID || "node:workstation:john-daemon";
+    const listener = new JohnPacketListener({ port, host, nodeId });
+    const info = await listener.start();
+    process.stdout.write(`📡 John FractaNode Listener active at ${info.url} (NodeId: ${info.nodeId})\n`);
+    process.stdout.write(`   Endpoints: POST /cop/packet | GET /health | GET /cop/capabilities | /v1/chat/completions\n`);
+
+    // Keep process alive until SIGINT
+    return new Promise((resolve) => {
+      const shutdown = async () => {
+        process.stdout.write(`\nShutting down John listener...\n`);
+        await listener.stop();
+        resolve(0);
+      };
+      process.on("SIGINT", shutdown);
+      process.on("SIGTERM", shutdown);
+    });
   }
 
   if (command === "repl" || command === "chat" || command === "console") {

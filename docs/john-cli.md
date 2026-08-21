@@ -120,4 +120,19 @@ Inside the REPL, dot commands provide instantaneous diagnostic inspection:
 - `.eval <prompt>` — Execute a single governed step and display its granular event trace.
 - `.exit` / `.quit` — Terminate session.
 
+## Autonomous Packet Attractor & Listener (`john listen`)
+
+Transform any machine, container, or VPS into an autonomous FractaNode packet receiver:
+
+```bash
+# Start autonomous packet listener daemon
+node scripts/john.js listen [--port 8790] [--host 0.0.0.0] [--node-id <nodeId>]
+```
+
+### Endpoints
+- `POST /cop/packet` (or `/api/cop/packet`): Ingests sealed Cognitive Packets, appends arrival hop, executes locally under strict budget bounds, and auto-dispatches return yield to Ithaca.
+- `GET /health` (or `/cop/health`): Returns node health, uptime, processed packet metrics, and declared capabilities.
+- `GET /cop/capabilities`: Returns catalogue of mobilizable capabilities and rate cards.
+- `GET /guide/v1/models` & `POST /guide/v1/chat/completions`: Full OpenAI-compatible chat completions with SSE reasoning (`reasoning_content`) and tool calls for Web UIs (Open WebUI, LibreChat, Chatbox).
+
 

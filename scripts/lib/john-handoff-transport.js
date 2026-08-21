@@ -38,6 +38,8 @@ export async function sendHttpTransport(packet, targetUrl, options = {}) {
       transport: "http_direct",
       target: targetUrl,
       status: res.status === 200 ? "completed" : "accepted",
+      returnPacket: data.return_packet || data.returnPacket || null,
+      events: data.events || [],
       data,
     };
   } catch (err) {
