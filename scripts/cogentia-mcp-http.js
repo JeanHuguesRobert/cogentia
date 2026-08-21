@@ -657,7 +657,7 @@ async function parseUserIntent(question, history, defaultLocale = "en", options 
       temperature: 0,
       response_format: { type: "json_object" },
       messages
-    });
+    }, { timeoutMs: 2500 });
     if (res.ok && res.body && res.body.choices && res.body.choices[0]) {
       const content = res.body.choices[0].message.content.trim();
       const parsed = JSON.parse(content);
