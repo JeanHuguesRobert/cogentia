@@ -9,6 +9,7 @@ import {
   unpackHandoffPacket,
   runHandoffPacket,
 } from "./lib/john-handoff.js";
+import { sendHandoffPacket } from "./lib/john-handoff-transport.js";
 
 function usage() {
   return [
@@ -17,6 +18,7 @@ function usage() {
     "  node scripts/john.js handoff pack --request <request.json> [--target <node>] [--out <packet.json>]",
     "  node scripts/john.js handoff unpack --packet <packet.json>",
     "  node scripts/john.js handoff run --packet <packet.json> [--format ndjson|human] [--out <yield.json>]",
+    "  node scripts/john.js handoff send --packet <packet.json> --target <url_or_proto> [--fallback <url>] [--out <yield.json>]",
     "",
     "John CLI supports headless governed reasoners and cross-machine Cognitive Packet handoffs.",
   ].join("\n");
@@ -75,6 +77,23 @@ async function handleHandoff(argv) {
       fs.writeFileSync(path.resolve(process.cwd(), outPath), JSON.stringify(result.returnPacket, null, 2), "utf8");
     }
     return result.success ? 0 : 1;
+  }
+
+  if (["send", "dispatch"].includes(sub)) {
+    const packetPath = valueFlag(argv, "--packet");
+    const target = valueFlag(argv, "--target") || "mock://";
+    const fallback = valueFlag(argv, "--fallback");
+    const outPath = valueFlag(argv, "--out");
+    if (!packetPath) throw new Error("john handoff send requires --packet <packet.json>");
+    const fullPath = path.resolve(process.cwd(), packetPath);
+    const packet = JSON.parse(fs.readFileSync(fullPath, "utf8"));
+    const fallbacks = fallback ? [fallback] : [];
+    const result = await sendHandoffPacket(packet, { target, fallbacks });
+    process.stdout.write(`${JSON.stringify(result, null, 2)}\n`);
+    if (outPath && result.returnPacket) {
+      fs.writeFileSync(path.resolve(process.cwd(), outPath), JSON.stringify(result.returnPacket, null, 2), "utf8");
+    }
+    return result.ok ? 0 : 1;
   }
 
   throw new Error(`Unknown handoff action ${JSON.stringify(sub)}.\n${usage()}`);
