@@ -14,7 +14,7 @@ async function runDiagnosticAudit() {
   // 1. Test DiagnosticContext registration and mode toggles
   const ctx = new DiagnosticContext({ mode: "diagnostic" });
   assert.equal(ctx.mode, "diagnostic");
-  assert.equal(ctx.listInspectors().length, 5);
+  assert.equal(ctx.listInspectors().length, 6);
   assert.equal(ctx.setMode("conversational"), "conversational");
   assert.throws(() => ctx.setMode("invalid_mode"), /Invalid mode/);
 
@@ -112,9 +112,9 @@ async function runDiagnosticAudit() {
   assert.equal(repl.context.mode, "diagnostic");
   const diagEval = await repl.executeCommand(".eval Investigate system state");
   assert.ok(diagEval.includes("--- Diagnostic Event Trace"));
-  assert.ok(diagEval.includes("[john.run.started]"));
-  assert.ok(diagEval.includes("[john.packet.admitted]"));
-  assert.ok(diagEval.includes("[john.run.completed]"));
+  assert.ok(diagEval.includes("[Run Started]"));
+  assert.ok(diagEval.includes("[Packet Admitted]"));
+  assert.ok(diagEval.includes("[Run Completed]"));
   assert.ok(diagEval.includes("--- Accounting Settlement:"));
 
   // Test Capability introspection command

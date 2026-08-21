@@ -493,7 +493,35 @@ export function isTerminalEvent(item) {
 }
 
 export function renderJohnEventHuman(item) {
-  if (item.type === "john.assistant.delta") return item.data.delta;
+  if (item.type === "john.assistant.delta") return item.data?.delta || "";
+  if (item.type === "john.run.started") {
+    const budget = item.data?.execution_budget;
+    return `🚀 [Run Started]: req=${item.run_id} | budget=${budget?.max_steps || "?"} steps | exposure=${item.exposure} | ithaca=${item.data?.ithaca?.return_target || "caller"}`;
+  }
+  if (item.type === "john.packet.admitted") {
+    return `📦 [Packet Admitted]: id=${item.data?.packet_id} (COP authoritative)`;
+  }
+  if (item.type === "john.capability.resolved") {
+    return `🎯 [Capability Resolved]: ${item.data?.capability} -> provider=${item.data?.provider}`;
+  }
+  if (item.type === "john.handler.started") {
+    return `⚙️  [Handler Started]: ${item.data?.handler?.id} (hop #${item.data?.hop_index})`;
+  }
+  if (item.type === "john.tool.requested") {
+    return `🔧 [Tool Requested]: ${item.data?.capability} input=${JSON.stringify(item.data?.input)}`;
+  }
+  if (item.type === "john.tool.receipt") {
+    return `📥 [Tool Receipt]: ${item.data?.capability} status=${item.data?.status} cost=${item.data?.costUnits || 0} units`;
+  }
+  if (item.type === "john.accounting.settled") {
+    return `📊 [Accounting Settled]: ${item.data?.observed_steps} steps | ${item.data?.tool_calls_count || 0} tools | cost=${item.data?.provider_cost || 0} units | ithaca_returned=${item.data?.ithaca_returned}`;
+  }
+  if (item.type === "john.run.completed") {
+    return `✨ [Run Completed]: status=${item.data?.result?.status || "returned"}`;
+  }
+  if (item.type === "john.run.failed") {
+    return `❌ [Run Failed]: code=${item.data?.code}`;
+  }
   if (isTerminalEvent(item)) return `[${item.type}]`;
   return `[${item.type}] ${JSON.stringify(item.data)}`;
 }

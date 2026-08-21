@@ -2508,8 +2508,8 @@ function sendSse(res, event, data) {
   res.write(`data: ${JSON.stringify(data)}\n\n`);
 }
 
-/** OpenAI-compatible SSE for UX tools (Chat Completions stream). */
-function sendOpenAiSse(res, { id, created, model, content, access_class, warnings }) {
+/** OpenAI-compatible SSE for UX tools (Chat Completions stream with Reasoning & Tool Calling). */
+function sendOpenAiSse(res, { id, created, model, content, reasoning, tool_calls, access_class, warnings, citations }) {
   res.writeHead(200, {
     "Content-Type": "text/event-stream; charset=utf-8",
     "Cache-Control": "no-cache, no-transform",
@@ -2529,6 +2529,47 @@ function sendOpenAiSse(res, { id, created, model, content, access_class, warning
       choices: [{ index: 0, delta: { role: "assistant" }, finish_reason: null }],
     })}\n\n`,
   );
+
+  // 1. Stream reasoning_content (Thinking accordion for Open WebUI / LibreChat / Chatbox)
+  if (reasoning) {
+    const reasonText = String(reasoning || "");
+    const pieceSize = 48;
+    for (let i = 0; i < reasonText.length; i += pieceSize) {
+      const piece = reasonText.slice(i, i + pieceSize);
+      res.write(
+        `data: ${JSON.stringify({
+          ...base,
+          choices: [{ index: 0, delta: { reasoning_content: piece }, finish_reason: null }],
+        })}\n\n`,
+      );
+    }
+  }
+
+  // 2. Stream tool_calls if any were mobilized
+  if (Array.isArray(tool_calls) && tool_calls.length) {
+    for (let idx = 0; idx < tool_calls.length; idx++) {
+      const tc = tool_calls[idx];
+      res.write(
+        `data: ${JSON.stringify({
+          ...base,
+          choices: [{
+            index: 0,
+            delta: {
+              tool_calls: [{
+                index: idx,
+                id: tc.id || `call_${idx}`,
+                type: "function",
+                function: { name: tc.name || tc.capability, arguments: typeof tc.input === "string" ? tc.input : JSON.stringify(tc.input || {}) },
+              }],
+            },
+            finish_reason: null,
+          }],
+        })}\n\n`,
+      );
+    }
+  }
+
+  // 3. Stream final synthesis content
   const text = String(content || "");
   const pieceSize = 48;
   for (let i = 0; i < text.length; i += pieceSize) {
@@ -2540,11 +2581,13 @@ function sendOpenAiSse(res, { id, created, model, content, access_class, warning
       })}\n\n`,
     );
   }
+
+  // 4. Final finish chunk
   res.write(
     `data: ${JSON.stringify({
       ...base,
       choices: [{ index: 0, delta: {}, finish_reason: "stop" }],
-      twin: { access_class, warnings: warnings || [] },
+      twin: { access_class, warnings: warnings || [], citations: citations || [] },
     })}\n\n`,
   );
   res.write("data: [DONE]\n\n");
