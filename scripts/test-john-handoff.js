@@ -64,7 +64,35 @@ async function testHandoffRoundtrip() {
   assert.equal(returnPacket.envelope.lineage.solved_by_node, "node:remote-worker-b");
   assert.ok(returnPacket.yield.semantic_yield);
 
-  console.log(JSON.stringify({ ok: true, test: "john_handoff", completed: true }, null, 2));
+  // 4. Test Negative Path: Invalid request packing must throw
+  assert.throws(() => {
+    packHandoffPacket({ version: "john.request.v1" }); // missing required fields
+  }, /Invalid John request/);
+
+  // 5. Test Negative Path: Unpacking malformed packet must throw
+  assert.throws(() => {
+    unpackHandoffPacket({});
+  }, /Invalid Cognitive Packet/);
+
+  // 6. Test Failure Execution: Executing an invalid/failing request produces status 'failed' return packet
+  const failingRequest = {
+    ...sampleRequest,
+    request_id: "req-failing-test-002",
+    handler: { id: "unknown.handler", kind: "mock" },
+  };
+  const failingPacket = packHandoffPacket(failingRequest, {
+    targetNode: "node:worker-failing",
+  });
+  // Mutate payload to simulate invalid runtime state
+  failingPacket.payload.request.execution_budget.max_steps = -1;
+
+  const failingExec = await runHandoffPacket(failingPacket, { nodeId: "node:worker-failing" });
+  assert.equal(failingExec.success, false);
+  assert.equal(failingExec.returnPacket.envelope.status, "failed");
+  assert.equal(failingExec.returnPacket.envelope.routeTo, "node:developer-machine-a:session-789");
+  assert.ok(failingExec.returnPacket.failure);
+
+  console.log(JSON.stringify({ ok: true, test: "john_handoff", completed: true, boundary_tested: true }, null, 2));
 }
 
 testHandoffRoundtrip().catch((err) => {

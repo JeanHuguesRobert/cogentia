@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
-import { packHandoffPacket } from "./lib/john-handoff.js";
+import http from "node:http";
+import { packHandoffPacket, runHandoffPacket } from "./lib/john-handoff.js";
 import {
   sendMockTransport,
   sendHandoffPacket,
@@ -54,7 +55,50 @@ async function testTransports() {
   assert.equal(resilientResult.status, "completed");
   assert.equal(resilientResult.returnPacket.envelope.status, "solved");
 
-  // 3. Test Total Failure (All invalid targets fail gracefully)
+  // 3. Test REAL Over-The-Wire HTTP Socket Transport with ephemeral server
+  const server = http.createServer(async (req, res) => {
+    try {
+      assert.equal(req.method, "POST");
+      assert.equal(req.headers["authorization"], "Bearer test-auth-token-123");
+      let body = "";
+      req.on("data", (chunk) => { body += chunk; });
+      req.on("end", async () => {
+        try {
+          const receivedPacket = JSON.parse(body);
+          const execResult = await runHandoffPacket(receivedPacket, { nodeId: "node:http-daemon" });
+          res.writeHead(200, { "Content-Type": "application/json" });
+          res.end(JSON.stringify({ ok: true, returnPacket: execResult.returnPacket }));
+        } catch (err) {
+          res.writeHead(500, { "Content-Type": "application/json" });
+          res.end(JSON.stringify({ ok: false, error: err.message }));
+        }
+      });
+    } catch (err) {
+      res.writeHead(400, { "Content-Type": "application/json" });
+      res.end(JSON.stringify({ ok: false, error: err.message }));
+    }
+  });
+
+  await new Promise((resolve) => server.listen(0, "127.0.0.1", resolve));
+  const serverPort = server.address().port;
+  const serverUrl = `http://127.0.0.1:${serverPort}`;
+
+  try {
+    const httpResult = await sendHandoffPacket(packet, {
+      target: serverUrl,
+      options: { bearerToken: "test-auth-token-123", timeoutMs: 3000 },
+    });
+
+    assert.equal(httpResult.ok, true);
+    assert.equal(httpResult.transport, "http_direct");
+    assert.equal(httpResult.data.ok, true);
+    assert.equal(httpResult.data.returnPacket.envelope.status, "solved");
+    assert.equal(httpResult.data.returnPacket.envelope.lineage.solved_by_node, "node:http-daemon");
+  } finally {
+    server.close();
+  }
+
+  // 4. Test Total Failure (All invalid targets fail gracefully)
   const failedResult = await sendHandoffPacket(packet, {
     target: "http://127.0.0.1:9999/unreachable-1",
     fallbacks: ["http://127.0.0.1:9998/unreachable-2"],
@@ -65,7 +109,7 @@ async function testTransports() {
   assert.equal(failedResult.status, "delivery_failed");
   assert.equal(failedResult.errors.length, 2);
 
-  console.log(JSON.stringify({ ok: true, test: "john_handoff_transport", completed: true }, null, 2));
+  console.log(JSON.stringify({ ok: true, test: "john_handoff_transport", completed: true, real_http_socket_tested: true }, null, 2));
 }
 
 testTransports().catch((err) => {

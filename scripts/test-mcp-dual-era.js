@@ -268,6 +268,36 @@ for (const name of PRIVATE_READ_TOOLS) {
   assert.ok(fullNames.includes(name), `full tools/list must include ${name}`);
 }
 
+// Explicit test of cogentia_john_run via JSON-RPC tools/call
+const johnRpcResult = await publicCore.handleJsonRpc({
+  jsonrpc: "2.0",
+  id: 88,
+  method: "tools/call",
+  params: {
+    name: "cogentia_john_run",
+    arguments: {
+      prompt: "Synthesize anti-capture principles",
+      capability: "john.research",
+      principal_id: "user:auditor",
+      mandate_id: "mandate:audit",
+      budget_id: "budget:test",
+      exposure: "bounded",
+      max_steps: 2,
+    },
+  },
+});
+assert.equal(johnRpcResult.result.isError, undefined);
+const johnWrapped = JSON.parse(johnRpcResult.result.content[0].text);
+const johnPayload = johnWrapped.data;
+assert.equal(johnPayload.ok, true);
+assert.ok(johnPayload.packet_id.startsWith("urn:cop:packet:john:"));
+assert.equal(johnPayload.status, "completed");
+assert.equal(johnPayload.odyssey.lifecycle.status, "returned");
+assert.ok(johnPayload.yield.semantic_yield);
+assert.equal(johnPayload.odyssey.lifecycle.isReturned, true);
+assert.equal(johnPayload.odyssey.journey.hopsCount, 3);
+assert.equal(johnPayload.accounting.ithaca_returned, true);
+
 // Optional live daemon checks (P1 routes) + Phase 3 envelope via tools/call
 let live = { daemon: false };
 try {
