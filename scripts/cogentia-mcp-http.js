@@ -2338,7 +2338,7 @@ async function guideOpenAiChatCompletions(payload = {}) {
   const model = String(
     process.env.COGENTIA_GUIDE_OPENAI_MODEL
     || process.env.AGENT_JHN_WHATSAPP_OPENAI_MODEL
-    || "gpt-4.1-mini",
+    || "gpt-4o-mini",
   );
   const messages = Array.isArray(payload.messages) ? payload.messages : [];
   if (!messages.length) return { ok: false, error: "empty_messages", status: 0 };
