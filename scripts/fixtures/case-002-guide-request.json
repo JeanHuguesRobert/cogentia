@@ -1,0 +1,41 @@
+{
+  "version": "john.request.v1",
+  "request_id": "case-002-guide-inquiry",
+  "principal": {
+    "id": "visitor:fractavolta-web"
+  },
+  "mandate": {
+    "id": "mandate:guide:public-qa",
+    "version": "1.0.0"
+  },
+  "budget": {
+    "id": "budget:guide:session"
+  },
+  "execution_budget": {
+    "max_steps": 4,
+    "max_tool_calls": 2,
+    "max_subagents": 0,
+    "max_elapsed_ms": 10000,
+    "max_external_effects": 0
+  },
+  "exposure": "read_only",
+  "capability": "john.research",
+  "input": {
+    "prompt": "Explain how the Ithaca return target guarantees semantic convergence in Cognitive Packets."
+  },
+  "handler": {
+    "id": "governed.step_reasoner",
+    "kind": "governed_reasoner",
+    "allowed_capabilities": [
+      "corpus.search"
+    ]
+  },
+  "ithaca": {
+    "description": "Visitor Web Stream Session (Ithaca)",
+    "return_target": "visitor:session-891",
+    "response_channel": "guide-sse-stream",
+    "return_conditions": [
+      "answer-synthesized"
+    ]
+  }
+}
