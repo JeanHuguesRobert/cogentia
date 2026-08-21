@@ -323,8 +323,9 @@ async function resolveQueryEmbedding(query, options = {}) {
 }
 
 /** Explicit fulfiller: host opted into provider call to complete a continuation. */
-async function embedQueryAsFulfiller(query, options) {
-  const apiKey = String(options.env?.OPENAI_API_KEY || options.env?.COGENTIA_OPENAI_API_KEY || "");
+async function embedQueryAsFulfiller(query, options = {}) {
+  const env = options.env || process.env;
+  const apiKey = String(env.OPENAI_API_KEY || env.COGENTIA_OPENAI_API_KEY || "");
   if (!apiKey) {
     return { ok: false, error: "missing_openai_api_key", warnings: ["Set OPENAI_API_KEY for explicit embed fulfillment."] };
   }
