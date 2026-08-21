@@ -130,7 +130,7 @@ async function guideChatCapability() {
 
 async function guideSynthesisPost(payload) {
   if (!guideAgentGateway) {
-    const routed = await daemonPost("/v1/chat/completions", payload);
+    const routed = await daemonPost("/v1/chat/completions", payload, { timeoutMs: 5000 });
     if (routed.ok) return routed;
     // Magistral/router often unavailable; use OpenAI when key is present (guide.env).
     const direct = await guideOpenAiChatCompletions(payload);
@@ -1067,8 +1067,9 @@ async function handleGuideChatStream(res, question, locale, history = [], payloa
   }
 }
 
-async function daemonPost(route, body) {
+async function daemonPost(route, body, options = {}) {
   const url = new URL(route, core.daemonUrl);
+  const timeoutMs = options.timeoutMs || core.requestTimeoutMs;
   let response;
   try {
     response = await fetch(url, {
@@ -1080,7 +1081,7 @@ async function daemonPost(route, body) {
       },
       body: JSON.stringify(body),
       redirect: "error",
-      signal: AbortSignal.timeout(core.requestTimeoutMs),
+      signal: AbortSignal.timeout(timeoutMs),
     });
   } catch (error) {
     return { ok: false, status: 0, body: null, error: "cogentia_daemon_unavailable", message: error.message };
@@ -1110,7 +1111,7 @@ async function guidePlanningRun(question, locale) {
     },
   };
 
-  const routed = await daemonPost("/v1/chat/completions", payload);
+  const routed = await daemonPost("/v1/chat/completions", payload, { timeoutMs: 5000 });
   if (!routed.ok) {
     return { ...fallback, planner_error: routed.body?.error?.type || routed.error || "planner_failed" };
   }
