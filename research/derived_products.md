@@ -693,15 +693,33 @@ Can the intended audience understand it?
 
 Is authorship, review, or accountability clear enough for the stakes?
 
-### 13.6 Non-Capture
+### 13.6 Authenticity, Audience, and Contextual Transparency
+
+Does the product make a materially artificial origin, transformation, or
+appearance falsely seem human-originated, independently witnessed, authentic,
+or truthful to its reasonably foreseeable audience?
+
+Disclosure must be proportionate to the risk of misunderstanding. It must be
+clear, perceptible, and specific when the product's artificial generation or
+manipulation could mislead about its author, source, authenticity, or context.
+It must not become a ritual label when the artificial character is already
+evident to the intended audience or when the transformation is merely
+assistive and does not materially alter the source or its meaning.
+
+The provenance record must preserve the distinguishable roles of the
+principal, Twin or other agent, sources, substantive reviewers, and responsible
+publisher. A platform's category of account or technical authorization does
+not replace editorial responsibility.
+
+### 13.7 Non-Capture
 
 Does the product resist platform or persona incentives that would distort the source?
 
-### 13.7 Reusability
+### 13.8 Reusability
 
 Can the product be reused, forked, translated, summarized, or continued without losing the source relation?
 
-### 13.8 Return Value
+### 13.9 Return Value
 
 Does the publication generate feedback that can improve the corpus?
 
