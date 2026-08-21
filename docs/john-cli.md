@@ -85,4 +85,39 @@ node scripts/john.js handoff run --packet sealed-packet.json --out return-yield.
 - **Return Yield**: Produces a `john.yield.handoff` packet (`status: "solved"`) addressed to the original caller's Ithaca channel with full Odyssey hop trace.
 - **Continuous Availability**: Supports direct next-hop routing optimization with automatic fallback to capability providers, attractor pool broadcast, and store & forward spooling.
 
+## Interactive REPL & Modular Diagnostic Console (`john repl` / `john inspect`)
+
+John provides an interactive console distinguishing **Conversational Mode** (standard execution) from **Diagnostic & Investigation Mode** (deep system introspection):
+
+```bash
+# Start interactive REPL console
+node scripts/john.js repl [--mode diagnostic|conversational]
+
+# CLI direct inspection commands
+node scripts/john.js inspect capabilities [--filter <query>]
+node scripts/john.js inspect topology [--probe <nodeId>]
+node scripts/john.js inspect continuations [--status alive|all]
+node scripts/john.js inspect packet --packet <packet.json>
+```
+
+### Modular Inspectors (`scripts/lib/john-diagnostic/inspectors/`)
+
+The architecture decouples diagnostic capabilities into modular inspectors:
+- **`CapabilityInspector`**: Introspects the catalogue of mobilizable capabilities, providers, rate cards, and risk classes (`none`, `read_only`, `bounded`, `consequential`).
+- **`PacketOdysseyInspector`**: Reconstructs complete Odyssey journey traces, hop chains, residues, and Ithaca settlements.
+- **`ContinuationInspector`**: Inspects paused judgment boundaries, pending human review tickets, and arbitration tokens (#80).
+- **`AccountingInspector`**: Audits double-entry ledger postings, provisional token rates, and remaining budget headroom.
+- **`TopologyInspector`**: Probes Fractanet node reachability, network latency, attractor pools, and spool queues.
+
+### REPL In-Session Commands
+
+Inside the REPL, dot commands provide instantaneous diagnostic inspection:
+- `.mode [diagnostic|conversational]` — Toggle between full diagnostic event tracing and clean conversational output.
+- `.capabilities [filter]` — List and filter available capabilities.
+- `.cap <name>` — Inspect capability detail, audit limits, and rate card.
+- `.topology` / `.probe <nodeId>` — Probe network latency and node reachability.
+- `.continuations` — Inspect paused judgment boundaries.
+- `.eval <prompt>` — Execute a single governed step and display its granular event trace.
+- `.exit` / `.quit` — Terminate session.
+
 

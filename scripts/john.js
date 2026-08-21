@@ -10,17 +10,23 @@ import {
   runHandoffPacket,
 } from "./lib/john-handoff.js";
 import { sendHandoffPacket } from "./lib/john-handoff-transport.js";
+import {
+  DiagnosticContext,
+  JohnRepl,
+} from "./lib/john-diagnostic/index.js";
 
 function usage() {
   return [
     "Usage:",
     "  node scripts/john.js run --request <request.json> [--format ndjson|human]",
+    "  node scripts/john.js repl [--mode diagnostic|conversational] [--format ndjson|human]",
+    "  node scripts/john.js inspect <capabilities|topology|continuations|packet> [options]",
     "  node scripts/john.js handoff pack --request <request.json> [--target <node>] [--out <packet.json>]",
     "  node scripts/john.js handoff unpack --packet <packet.json>",
     "  node scripts/john.js handoff run --packet <packet.json> [--format ndjson|human] [--out <yield.json>]",
     "  node scripts/john.js handoff send --packet <packet.json> --target <url_or_proto> [--fallback <url>] [--out <yield.json>]",
     "",
-    "John CLI supports headless governed reasoners and cross-machine Cognitive Packet handoffs.",
+    "John CLI supports headless governed reasoners, interactive diagnostic REPLs, and cross-machine Cognitive Packet handoffs.",
   ].join("\n");
 }
 
@@ -30,6 +36,52 @@ function valueFlag(argv, flag) {
   const value = argv[index + 1];
   argv.splice(index, 2);
   return value || null;
+}
+
+async function handleInspect(argv) {
+  const target = argv.shift() || "capabilities";
+  const ctx = new DiagnosticContext();
+
+  switch (target) {
+    case "capabilities":
+    case "caps": {
+      const filter = valueFlag(argv, "--filter") || argv[0];
+      const capInsp = ctx.getInspector("capabilities");
+      const res = await capInsp.inspect(filter);
+      process.stdout.write(`${JSON.stringify(res, null, 2)}\n`);
+      return 0;
+    }
+    case "topology":
+    case "nodes": {
+      const probeNode = valueFlag(argv, "--probe");
+      const topInsp = ctx.getInspector("topology");
+      if (probeNode) {
+        const res = await topInsp.probeNode(probeNode);
+        process.stdout.write(`${JSON.stringify(res, null, 2)}\n`);
+      } else {
+        process.stdout.write(`${JSON.stringify(topInsp.listNodes(), null, 2)}\n`);
+      }
+      return 0;
+    }
+    case "continuations": {
+      const filter = valueFlag(argv, "--status") || "alive";
+      const contInsp = ctx.getInspector("continuations");
+      const res = await contInsp.list(filter);
+      process.stdout.write(`${JSON.stringify(res, null, 2)}\n`);
+      return 0;
+    }
+    case "packet": {
+      const packetPath = valueFlag(argv, "--packet") || argv[0];
+      if (!packetPath) throw new Error("john inspect packet requires --packet <packet.json>");
+      const packet = JSON.parse(fs.readFileSync(path.resolve(process.cwd(), packetPath), "utf8"));
+      const packetInsp = ctx.getInspector("packets");
+      const res = packetInsp.inspectPacket(packet);
+      process.stdout.write(`${JSON.stringify(res, null, 2)}\n`);
+      return 0;
+    }
+    default:
+      throw new Error(`Unknown inspection target '${target}'. Available: capabilities, topology, continuations, packet.\n${usage()}`);
+  }
 }
 
 async function handleHandoff(argv) {
@@ -109,6 +161,18 @@ async function main() {
 
   if (command === "handoff") {
     return handleHandoff(argv);
+  }
+
+  if (command === "inspect" || command === "diag" || command === "probe") {
+    return handleInspect(argv);
+  }
+
+  if (command === "repl" || command === "chat" || command === "console") {
+    const mode = valueFlag(argv, "--mode") || (command === "chat" ? "conversational" : "diagnostic");
+    const format = valueFlag(argv, "--format") || "human";
+    const repl = new JohnRepl({ mode, format });
+    await repl.startInteractive();
+    return 0;
   }
 
   if (command !== "run") throw new Error(`Unknown command ${JSON.stringify(command)}.\n${usage()}`);
