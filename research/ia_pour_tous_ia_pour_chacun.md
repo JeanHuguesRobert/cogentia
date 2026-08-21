@@ -226,6 +226,22 @@ Ce dividende relie l'IA pour chacun à l'IA pour tous. Une personne qui dispose 
 
 ---
 
+### 8.1. Présence publique, liberté d'expression et capacité de réunion
+
+L'augmentation de capacité ne vise pas à transformer une personne en marque, ni à normaliser ses opinions, ni à substituer un jugement automatisé à la liberté d'expression. Elle vise à rendre effectifs les moyens de contribuer à l'espace public : comprendre, formuler, sourcer, créer, publier, répondre, coopérer et être entendu selon ses propres finalités.
+
+Une présence publique démocratique permet à une personne de rendre son travail, ses positions, ses sources et sa responsabilité plus intelligibles, sans la réduire à une réputation globale, à une performance d'audience ou à une identité commercialisable. Les désaccords, les formes d'expression et les manières d'être présent dans l'espace public restent légitimement pluriels.
+
+L'IA peut diminuer les barrières de temps, de compétence technique, de langue et de disponibilité qui excluent nombre de personnes de cette présence. Elle peut préparer des publications, des formats accessibles, des traductions, des réponses documentées et des continuités éditoriales ; le principal conserve la définition de ses finalités et la responsabilité de ses actes engageants.
+
+La coopération recherchée n'est ni l'alignement des identités, ni la constitution de chapelles concurrentes. Elle est la capacité de voix autonomes à se rendre mutuellement accessibles, à se contredire loyalement, à produire des œuvres communes et à se réunir lorsque leurs intérêts ou leurs projets le justifient. L'outil ne doit donc pas imposer, à l'insu de son principal, l'optimisation de la dépendance, de l'antagonisme ou de l'attention compulsive.
+
+Formule :
+
+> **L'IA pour chacun rend la présence publique praticable ; l'IA pour tous rend la réunion des voix possible, sans les absorber ni les aligner.**
+
+---
+
 ## 9. Failure modes
 
 | Failure mode | Description | Stabilisation |
@@ -237,6 +253,9 @@ Ce dividende relie l'IA pour chacun à l'IA pour tous. Une personne qui dispose 
 | Multiplication politique | Une personne transforme ses agents ou organisations en voix supplémentaires | une personne vivante, une voix |
 | Capture de la saillance | Le système décide silencieusement ce qui mérite l'attention | critères publics, traces brutes, reclassement possible |
 | Solitude artificiellement entretenue | L'agent maximise l'engagement au détriment des relations humaines | objectif de capacité relationnelle, signaux de dépendance, sortie |
+| Marchandisation de la présence | Le système réduit une personne à une marque, une métrique d'audience ou une réputation globale | identité et mandats distincts, pluralité des modes de présence, droit au retrait et à la correction |
+| Polarisation imposée par l'outil | Le système optimise silencieusement l'antagonisme, l'indignation ou l'attention compulsive | finalités explicites du principal, absence d'optimisation autonome de l'engagement, contexte, sources et contradiction loyale |
+| Repli algorithmique | Les recommandations enferment durablement des personnes ou groupes dans des publics homogènes | découvrabilité pluraliste, ponts choisis entre communautés, synthèses alternatives et possibilité de sortie |
 | Mémoire sans recours | Une trace erronée persiste sans correction lisible | contre-événements, rectification, contestation |
 
 ---
@@ -255,6 +274,7 @@ Un système peut se dire compatible avec cette doctrine s'il respecte au minimum
 8. la distribution des capacités de compute est rendue visible ;
 9. l'augmentation de capacité est évaluée du point de vue de la personne et du public affecté ;
 10. aucune optimisation technique ne peut conférer un droit politique supplémentaire.
+11. les outils de présence publique respectent la liberté d'expression du principal : ils assistent ses finalités explicites sans normaliser ses opinions, fabriquer son soutien, ni optimiser à son insu dépendance, antagonisme ou attention compulsive.
 
 ---
 
@@ -280,4 +300,3 @@ Les prochaines continuations devraient :
 - mesurer la dépendance à un fournisseur ou à un modèle ;
 - relier cette doctrine aux premiers pilotes de Corte ;
 - produire des tests empêchant un agent ou une personne morale d'acquérir une voix souveraine.
-
