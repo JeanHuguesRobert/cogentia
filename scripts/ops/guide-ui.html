@@ -340,6 +340,88 @@
       transform: translateY(-1px);
     }
 
+    .inline-source-chip {
+      display: inline-block;
+      cursor: pointer;
+      background: rgba(6, 182, 212, 0.12);
+      color: var(--accent-cyan);
+      border: 1px solid rgba(6, 182, 212, 0.3);
+      border-radius: 4px;
+      padding: 1px 6px;
+      font-family: var(--font-mono);
+      font-size: 0.8rem;
+      font-weight: 500;
+      margin: 0 2px;
+      transition: all 0.15s ease;
+    }
+
+    .inline-source-chip:hover {
+      background: rgba(6, 182, 212, 0.25);
+      border-color: var(--accent-cyan);
+      transform: scale(1.03);
+    }
+
+    .action-toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 8px;
+      margin-top: 12px;
+      padding-top: 10px;
+      border-top: 1px dashed rgba(255, 255, 255, 0.08);
+    }
+
+    .action-btn {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--border-color);
+      color: var(--text-secondary);
+      border-radius: var(--radius-sm);
+      padding: 5px 10px;
+      font-size: 0.78rem;
+      font-family: var(--font-sans);
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.2s ease;
+    }
+
+    .action-btn:hover {
+      background: rgba(99, 102, 241, 0.15);
+      color: var(--text-primary);
+      border-color: var(--border-accent);
+    }
+
+    .action-btn.primary {
+      background: rgba(99, 102, 241, 0.2);
+      color: #c7d2fe;
+      border-color: rgba(99, 102, 241, 0.4);
+    }
+
+    .action-btn.primary:hover {
+      background: rgba(99, 102, 241, 0.35);
+      color: white;
+    }
+
+    /* Modal / Toast feedback */
+    .toast-msg {
+      position: fixed;
+      bottom: 90px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--bg-card);
+      border: 1px solid var(--accent-emerald);
+      color: #6ee7b7;
+      padding: 8px 16px;
+      border-radius: var(--radius-sm);
+      font-size: 0.85rem;
+      font-weight: 500;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+      z-index: 100;
+      display: none;
+      animation: fadeIn 0.2s ease;
+    }
+
     /* Input Bar */
     .input-container {
       position: sticky;
@@ -603,7 +685,10 @@
       window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
     }
 
+    let lastUserQuestion = '';
+
     function appendMessage(role, text) {
+      if (role === 'user') lastUserQuestion = text;
       const container = document.getElementById('chat-container');
       const row = document.createElement('div');
       row.className = `message-row ${role}`;
@@ -638,10 +723,10 @@
       let sourcesHtml = '';
       if (sources && sources.length > 0) {
         const t = translations[currentLocale];
-        const badges = sources.slice(0, 5).map(s => {
+        const badges = sources.slice(0, 6).map(s => {
           const title = s.title || s.source_id;
           const url = s.url || '#';
-          return `<a href="${url}" target="_blank" class="source-badge" title="${s.source_id}">📄 ${escapeHtml(title)}</a>`;
+          return `<a href="${url}" target="_blank" class="source-badge" id="badge-${escapeHtml(s.source_id)}" title="${escapeHtml(s.source_id)}">📄 ${escapeHtml(title)}</a>`;
         }).join('');
         sourcesHtml = `
           <div class="sources-container">
@@ -651,26 +736,128 @@
         `;
       }
 
+      const qJson = JSON.stringify(lastUserQuestion);
+      const aJson = JSON.stringify(answerText);
+      const sJson = JSON.stringify(sources);
+
+      const toolbarHtml = `
+        <div class="action-toolbar">
+          <button class="action-btn" onclick='copyAnswer(${aJson})'>
+            📋 ${currentLocale === 'fr' ? 'Copier' : 'Copy'}
+          </button>
+          <button class="action-btn primary" onclick='exportCognitivePacket(${qJson}, ${aJson}, ${sJson})'>
+            📦 ${currentLocale === 'fr' ? 'Exporter Paquet Cognitif (COP)' : 'Export Cognitive Packet (COP)'}
+          </button>
+          <span style="font-size:0.75rem; color:var(--text-muted); margin-left:auto; font-family:var(--font-mono)">
+            mandate: public-readonly
+          </span>
+        </div>
+      `;
+
       row.querySelector('.message-content').innerHTML = `
         <div>${formattedAnswer}</div>
         ${sourcesHtml}
+        ${toolbarHtml}
       `;
       window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
     }
 
     function formatProse(text) {
       if (!text) return '';
-      // Basic markdown formatting
       let html = escapeHtml(text);
       html = html.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
       html = html.replace(/\*(.*?)\*/g, '<em>$1</em>');
+      // Format citations [source_id] into interactive chips
+      html = html.replace(/\[([a-zA-Z0-9_\-\.\:\#]+)\]/g, (match, id) => {
+        return `<span class="inline-source-chip" title="Corpus Source: ${id}" onclick="highlightSource('${id}')">📄 ${id}</span>`;
+      });
       html = html.replace(/\n\n/g, '</p><p>');
       html = html.replace(/\n/g, '<br>');
       return `<p>${html}</p>`;
     }
 
+    function copyAnswer(text) {
+      navigator.clipboard.writeText(text).then(() => {
+        showToast(currentLocale === 'fr' ? 'Réponse copiée dans le presse-papier !' : 'Answer copied to clipboard!');
+      });
+    }
+
+    function exportCognitivePacket(question, answer, sources = []) {
+      const packet = {
+        version: "john.request.handoff.v1",
+        envelope: {
+          id: `urn:cop:packet:guide:${Date.now()}`,
+          intent: "guide_visitor_inquiry",
+          status: "solved",
+          riskLevel: "read_only",
+          ithaca: {
+            description: "FractaVolta Public Web Visitor (Ithaca)",
+            return_target: "web:client:browser",
+            response_channel: "guide-stream",
+          },
+          hops: [
+            {
+              hop_index: 0,
+              node_id: "node:fracta:main",
+              instance_id: "fractavolta-public-guide",
+              timestamp: new Date().toISOString(),
+              route_reason: "visitor-inquiry-answered",
+            }
+          ]
+        },
+        payload: {
+          question,
+          answer,
+          sources: sources.slice(0, 10),
+          exported_at: new Date().toISOString(),
+          license: "Apache-2.0 / Public Corpus",
+        },
+        yield: {
+          semantic_summary: answer.slice(0, 280),
+          source_count: sources.length,
+          completed: true,
+        }
+      };
+
+      const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(packet, null, 2));
+      const downloadAnchor = document.createElement('a');
+      downloadAnchor.setAttribute("href", dataStr);
+      downloadAnchor.setAttribute("download", `fractavolta-packet-${Date.now()}.json`);
+      document.body.appendChild(downloadAnchor);
+      downloadAnchor.click();
+      downloadAnchor.remove();
+
+      showToast(currentLocale === 'fr' ? '📦 Paquet Cognitif scellé téléchargé !' : '📦 Sealed Cognitive Packet downloaded!');
+    }
+
+    function highlightSource(sourceId) {
+      const badge = document.getElementById(`badge-${sourceId}`);
+      if (badge) {
+        badge.style.transform = 'scale(1.15)';
+        badge.style.boxShadow = '0 0 16px var(--accent-cyan)';
+        setTimeout(() => {
+          badge.style.transform = '';
+          badge.style.boxShadow = '';
+        }, 1200);
+      }
+      showToast(`Source : ${sourceId}`);
+    }
+
+    function showToast(msg) {
+      let toast = document.getElementById('toast');
+      if (!toast) {
+        toast = document.createElement('div');
+        toast.id = 'toast';
+        toast.className = 'toast-msg';
+        document.body.appendChild(toast);
+      }
+      toast.innerText = msg;
+      toast.style.display = 'block';
+      setTimeout(() => { toast.style.display = 'none'; }, 2400);
+    }
+
     function escapeHtml(str) {
-      return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+      return String(str || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
     }
   </script>
 </body>

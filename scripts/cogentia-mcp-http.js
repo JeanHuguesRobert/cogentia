@@ -1433,11 +1433,17 @@ async function fetchGuideRetrievalPacks(queries, packOptions) {
     }
   }
   if (guideRetrievalBackend === "supabase") {
-    const batch = await retrievalSupabasePackBatch(queries, packOptions);
-    for (const item of batch.packs || []) {
-      packs.set(item.query, item);
+    try {
+      const batch = await retrievalSupabasePackBatch(queries, packOptions);
+      if (batch?.ok && Array.isArray(batch.packs) && batch.packs.some(p => p.sources?.length > 0)) {
+        for (const item of batch.packs) {
+          packs.set(item.query, item);
+        }
+        return packs;
+      }
+    } catch {
+      // Fall through to local daemon SQLite batch
     }
-    return packs;
   }
 
   if (guideBatchEnabled) {
