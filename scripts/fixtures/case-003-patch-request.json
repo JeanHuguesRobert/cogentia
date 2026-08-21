@@ -1,0 +1,43 @@
+{
+  "version": "john.request.v1",
+  "request_id": "case-003-patch-socket-pool",
+  "principal": {
+    "id": "developer:lead-alice"
+  },
+  "mandate": {
+    "id": "mandate:contributor:code-patch",
+    "version": "1.0.0"
+  },
+  "budget": {
+    "id": "budget:developer:refactor"
+  },
+  "execution_budget": {
+    "max_steps": 5,
+    "max_tool_calls": 3,
+    "max_subagents": 0,
+    "max_elapsed_ms": 15000,
+    "max_external_effects": 1
+  },
+  "exposure": "bounded",
+  "capability": "john.research",
+  "input": {
+    "prompt": "Refactor socketPool.js to prevent concurrency race conditions and await human review before commit."
+  },
+  "handler": {
+    "id": "governed.step_reasoner",
+    "kind": "governed_reasoner",
+    "allowed_capabilities": [
+      "code-analysis",
+      "corpus.search"
+    ]
+  },
+  "ithaca": {
+    "description": "Git Main Repository Pull Request Queue (Ithaca)",
+    "return_target": "git:repo-main:pull-requests",
+    "response_channel": "github-pr-stream",
+    "return_conditions": [
+      "patch-validated-by-human",
+      "tests-passing"
+    ]
+  }
+}
