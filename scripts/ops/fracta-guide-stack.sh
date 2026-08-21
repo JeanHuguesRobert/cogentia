@@ -6,6 +6,7 @@ set -euo pipefail
 
 DAEMON_HEALTH_URL="${COGENTIA_DAEMON_HEALTH_URL:-http://127.0.0.1:8790/api/status}"
 MCP_HEALTH_URL="${COGENTIA_MCP_HEALTH_URL:-http://127.0.0.1:8791/tools}"
+COP_HEALTH_URL="${COGENTIA_COP_HEALTH_URL:-http://127.0.0.1:8791/cop/health}"
 DAEMON_UNIT="${COGENTIA_DAEMON_UNIT:-cogentia.service}"
 MCP_UNIT="${COGENTIA_MCP_UNIT:-mcp-cogentia.service}"
 PROBE_TIMEOUT_SEC="${COGENTIA_HEALTH_PROBE_TIMEOUT_SEC:-5}"
@@ -24,7 +25,7 @@ usage() {
 Usage: fracta-guide-stack.sh <command>
 
 Commands:
-  healthcheck   Exit 0 if daemon index and Guide MCP are healthy.
+  healthcheck   Exit 0 if daemon index, Guide MCP, and COP Attractor are healthy.
   restart       Restart cogentia then mcp-cogentia and wait for health.
   ensure-healthy
                 Run healthcheck; restart on failure (respects cooldown).
@@ -49,6 +50,12 @@ mcp_healthy() {
   echo "${body}" | jq -e '(.tools | type) == "array" and (.tools | length) > 0' >/dev/null
 }
 
+cop_healthy() {
+  local body
+  body="$(fetch_json "${COP_HEALTH_URL}")"
+  echo "${body}" | jq -e '.ok == true and .status == "online"' >/dev/null
+}
+
 healthcheck() {
   log "Checking daemon at ${DAEMON_HEALTH_URL}"
   daemon_healthy
@@ -56,6 +63,9 @@ healthcheck() {
   log "Checking MCP adapter at ${MCP_HEALTH_URL}"
   mcp_healthy
   log "MCP adapter healthy"
+  log "Checking COP Packet Attractor at ${COP_HEALTH_URL}"
+  cop_healthy
+  log "COP Packet Attractor healthy"
 }
 
 wait_for_daemon() {

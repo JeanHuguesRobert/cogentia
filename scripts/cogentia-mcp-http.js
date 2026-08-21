@@ -46,6 +46,9 @@ import {
   recordPacketProviderSpend,
   projectTurnAccounting,
 } from "./lib/cop-surface-accounting.js";
+import { runHandoffPacket } from "./lib/john-handoff.js";
+import { sendHandoffPacket } from "./lib/john-handoff-transport.js";
+import { CapabilityInspector } from "./lib/john-diagnostic/inspectors/capability-inspector.js";
 
 const moduleDir = path.dirname(fileURLToPath(import.meta.url));
 const fractanetDashboardPath = path.join(moduleDir, "ops", "fractanet-dashboard.html");
@@ -229,6 +232,16 @@ const server = http.createServer(async (req, res) => {
     if (req.method === "POST" && req.url === "/ops/edge/trap") return handleEdgeTrap(req, res);
     if (req.method === "GET" && req.url?.startsWith("/ops/edge/traps")) return handleEdgeTrapsList(req, res);
     if (req.method === "POST" && req.url === "/guide/chat") return handleGuideChat(req, res);
+    // Cognitive Packet Ingestion & Attraction (Autonomous FractaNode Hub)
+    if (req.method === "POST" && (req.url === "/cop/packet" || req.url === "/api/cop/packet" || req.url === "/packet")) {
+      return handleCopPacketPost(req, res);
+    }
+    if (req.method === "GET" && (req.url === "/cop/capabilities" || req.url === "/capabilities")) {
+      return handleCopCapabilitiesGet(req, res);
+    }
+    if (req.method === "GET" && (req.url === "/cop/health")) {
+      return handleCopHealthGet(req, res);
+    }
     // OpenAI Chat Completions surface for Agent JHN / UX tools (see lib/jhn-openai-surface.js)
     {
       const pathOnly = String(req.url || "").split("?")[0];
@@ -265,7 +278,73 @@ server.listen(port, host, () => {
   console.error("Blackboard: GET /ops/blackboard, POST /ops/blackboard/upsert");
   console.error("Ops: GET /ops/status, GET /ops/dashboard, POST /ops/route/action, GET /ops/node/:node_id/{status,drift,soma/object,soma/vocabulary}");
   console.error("Edge: POST /ops/edge/trap, GET /ops/edge/traps (trap-directed polling)");
+  console.error("COP Attractor: POST /cop/packet, GET /cop/health, GET /cop/capabilities (mutualized FractaNode hub)");
 });
+
+const fractaNodeId = process.env.FRACTANET_NODE_ID || "node:fracta:main";
+const sharedCapInspector = new CapabilityInspector();
+
+async function handleCopPacketPost(req, res) {
+  let body;
+  try {
+    body = JSON.parse(await readBody(req, 1024 * 1024));
+  } catch (err) {
+    return sendJson(res, 400, { ok: false, error: `Malformed JSON: ${err.message}` });
+  }
+
+  if (!body || !body.envelope) {
+    return sendJson(res, 400, { ok: false, error: "Invalid request: missing Cognitive Packet envelope" });
+  }
+
+  if (!Array.isArray(body.envelope.hops)) body.envelope.hops = [];
+  body.envelope.hops.push({
+    hop_index: body.envelope.hops.length,
+    node_id: fractaNodeId,
+    instance_id: "mcp-cogentia:hub",
+    route_reason: "packet-received-at-mutualized-hub",
+    timestamp: new Date().toISOString(),
+  });
+
+  const execution = await runHandoffPacket(body);
+
+  let dispatchResult = null;
+  const returnTarget = body.envelope.ithaca?.return_target;
+  if (returnTarget && (returnTarget.startsWith("http://") || returnTarget.startsWith("https://") || returnTarget.startsWith("supabase://"))) {
+    try {
+      dispatchResult = await sendHandoffPacket(execution.returnPacket, { target: returnTarget });
+    } catch (dispatchErr) {
+      dispatchResult = { ok: false, error: dispatchErr.message };
+    }
+  }
+
+  return sendJson(res, 200, {
+    ok: execution.success,
+    status: execution.returnPacket?.envelope?.status || "solved",
+    packet_id: body.envelope.id,
+    yield: execution.returnPacket?.yield || null,
+    dispatch: dispatchResult,
+    return_packet: execution.returnPacket,
+    events_count: execution.events.length,
+  });
+}
+
+async function handleCopCapabilitiesGet(_req, res) {
+  const caps = await sharedCapInspector.inspect();
+  return sendJson(res, 200, caps);
+}
+
+async function handleCopHealthGet(_req, res) {
+  const caps = await sharedCapInspector.inspect();
+  return sendJson(res, 200, {
+    ok: true,
+    node_id: fractaNodeId,
+    status: "online",
+    hub: "mutualized-mcp-cogentia",
+    uptime_seconds: Math.floor(process.uptime()),
+    capabilities: caps.map((c) => c.name),
+    protocol: "cognitive_packet.v0",
+  });
+}
 
 async function health() {
   const daemon = await core.callTool("cogentia_health", {});
