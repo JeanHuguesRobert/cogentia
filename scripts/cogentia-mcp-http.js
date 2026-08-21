@@ -94,6 +94,12 @@ async function guideChatCapability() {
     guideChatProbeCache = { at: now, value };
     return value;
   }
+  const hasDirectOpenAi = Boolean(String(process.env.OPENAI_API_KEY || process.env.COGENTIA_OPENAI_API_KEY || "").trim());
+  if (hasDirectOpenAi) {
+    const value = { available: true, reason: "openai_direct_configured", probe_ms: 0 };
+    guideChatProbeCache = { at: now, value };
+    return value;
+  }
   const started = Date.now();
   try {
     const health = await aiRouterHealth({
