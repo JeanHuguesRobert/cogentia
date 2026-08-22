@@ -1,0 +1,60 @@
+schema: cogentia.registry.v0.2
+registry:
+  id: registry:concepts:cogentia
+  name: Cogentia Concept Registry
+  registry_class: knowledge-navigation
+
+  records:
+    kinds:
+      - concept
+      - concept-relation
+      - concept-reference
+
+  facets:
+    function:
+      - catalogue
+      - discovery
+      - semantic-navigation
+      - projection
+    authority: structural-registry
+    topology: per-repository
+    temporality:
+      - slow-changing
+      - reconstructible
+    visibility: public
+    substrate:
+      - git-markdown
+    granularity:
+      - repository
+      - concept
+    mutation:
+      - automatically-generated
+      - human-reviewed-source-inputs
+
+  definition_source:
+    repo: JeanHuguesRobert/cogentia
+    path: docs/knowledge_mesh.md
+
+  record_authority:
+    mode: structural-only
+    description: The registry maintains structure, links, scopes, status and graph relations but does not infer or own semantic truth.
+
+  record_sources:
+    - repo: JeanHuguesRobert/cogentia
+      path: research/concepts.md
+      visibility: public
+
+  relations:
+    - predicate: indexes
+      object: corpus:concepts
+    - predicate: projects
+      object: graph:concept-relations
+    - predicate: references
+      object: corpus:documents
+
+  freshness:
+    mode: generated-view-relative-to-source
+    fields:
+      - generated_by
+      - provenance.origin_ref
+      - last_modified_at
