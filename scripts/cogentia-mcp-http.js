@@ -2359,12 +2359,13 @@ async function guideOpenAiChatCompletions(payload = {}) {
             : JSON.stringify(message?.content ?? ""),
         })),
         temperature: Number.isFinite(payload.temperature) ? payload.temperature : 0.2,
-        max_completion_tokens: boundedInteger(payload.max_tokens, 1200, 200, 4000),
+        max_tokens: boundedInteger(payload.max_tokens, 1200, 200, 4000),
       }),
       signal: AbortSignal.timeout(timeoutMs),
     });
     const body = await response.json().catch(() => null);
     if (!response.ok) {
+      console.error("[guide-openai] error:", response.status, body?.error?.message || response.statusText);
       return {
         ok: false,
         status: response.status,
