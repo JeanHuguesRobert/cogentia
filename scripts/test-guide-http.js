@@ -51,6 +51,40 @@ const daemon = http.createServer(async (req, res) => {
       },
     });
   }
+  if (req.method === "POST" && url.pathname === "/openrouter/chat/completions") {
+    const payload = JSON.parse(await readBody(req) || "{}");
+    if (!String(payload.model || "").endsWith(":free")) {
+      return sendJson(res, 402, {
+        error: { type: "insufficient_credits", message: "mock paid OpenRouter credit limit" },
+      });
+    }
+    const userMessage = String(payload.messages?.findLast?.(message => message.role === "user")?.content || "");
+    if (/incomplete/i.test(userMessage)) {
+      return sendJson(res, 200, {
+        id: "chatcmpl_mock_openrouter_free_incomplete",
+        object: "chat.completion",
+        model: payload.model,
+        choices: [{
+          index: 0,
+          message: { role: "assistant", content: "Partial" },
+          finish_reason: "length",
+        }],
+      });
+    }
+    return sendJson(res, 200, {
+      id: "chatcmpl_mock_openrouter_free",
+      object: "chat.completion",
+      model: payload.model,
+      choices: [{
+        index: 0,
+        message: {
+          role: "assistant",
+          content: "The public corpus explains FractaVolta through its cited sources [mock:README.md#L1-L4].",
+        },
+        finish_reason: "stop",
+      }],
+    });
+  }
   if (req.method === "POST" && url.pathname === "/v1/chat/completions") {
     const payload = JSON.parse(await readBody(req) || "{}");
     if (payload.metadata?.purpose === "guide_planner") {
@@ -156,6 +190,9 @@ const child = spawn(process.execPath, ["scripts/cogentia-mcp-http.js"], {
     COGENTIA_GUIDE_ENV_FILE: envFile,
     COGENTIA_GUIDE_WEB_SEARCH_URL: `${daemonBase}/brave`,
     COGENTIA_GUIDE_S7_ANCHOR: "0",
+    OPENROUTER_API_KEY: "test-openrouter-key",
+    COGENTIA_GUIDE_OPENROUTER_FREE_FALLBACK: "1",
+    COGENTIA_OPENROUTER_BASE_URL: `${daemonBase}/openrouter`,
     PORT: String(mcpPort),
   },
   stdio: ["ignore", "pipe", "pipe"],
@@ -280,10 +317,17 @@ try {
     locale: "en",
   });
   assert.equal(fallback.ok, true);
-  assert.equal(fallback.mode, "extractive_fallback");
+  assert.equal(fallback.mode, "openrouter_free_fallback");
   assert.equal(fallback.mandate.instance_id, "fractavolta-public-guide");
-  assert.ok(fallback.warnings.includes("guide_chat_backend_unavailable"));
+  assert.ok(fallback.warnings.includes("guide_synthesis_openrouter_free_fallback"));
   assert.equal(fallback.sources[0].source_id, "mock:README.md#L1-L4");
+  const incompleteFree = await postJson(`${mcpBase}/guide/chat`, {
+    question: "fallback incomplete please",
+    locale: "en",
+  });
+  assert.equal(incompleteFree.ok, true);
+  assert.equal(incompleteFree.mode, "extractive_fallback");
+  assert.ok(incompleteFree.warnings.includes("guide_chat_backend_unavailable"));
   assert.ok(seenEntries.filter(Boolean).every(entry => entry === "public"));
 
   console.log(JSON.stringify({
