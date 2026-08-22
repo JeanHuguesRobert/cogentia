@@ -18,6 +18,7 @@ const seenEntries = [];
 const seenPackQueries = [];
 const seenPackBatches = [];
 const seenChatPayloads = [];
+const seenOpenRouterPayloads = [];
 const seenPlannerPayloads = [];
 
 const daemon = http.createServer(async (req, res) => {
@@ -53,6 +54,7 @@ const daemon = http.createServer(async (req, res) => {
   }
   if (req.method === "POST" && url.pathname === "/openrouter/chat/completions") {
     const payload = JSON.parse(await readBody(req) || "{}");
+    seenOpenRouterPayloads.push(payload);
     if (!String(payload.model || "").endsWith(":free")) {
       return sendJson(res, 402, {
         error: { type: "insufficient_credits", message: "mock paid OpenRouter credit limit" },
@@ -336,6 +338,7 @@ try {
   assert.equal(fallback.mandate.instance_id, "fractavolta-public-guide");
   assert.ok(fallback.warnings.includes("guide_synthesis_openrouter_free_fallback"));
   assert.equal(fallback.sources[0].source_id, "mock:README.md#L1-L4");
+  assert.ok(seenOpenRouterPayloads.some(payload => String(payload.model).endsWith(":free")));
   const incompleteFree = await postJson(`${mcpBase}/guide/chat`, {
     question: "fallback incomplete please",
     locale: "en",

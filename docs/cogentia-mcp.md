@@ -227,3 +227,9 @@ Public read endpoints accept `HEAD` with the same status and relevant headers
 as `GET`, but no response body. SSE endpoints (`/sse`, `GET /mcp`) remain
 stream-only and return `405` to `HEAD`; mutation routes remain `POST` only.
 Use `GET /guide/health` when the diagnostic body is needed.
+
+For a bounded, no-paid-provider evaluation, set
+`COGENTIA_GUIDE_SYNTHESIS_PROVIDER=openrouter_free` together with
+`COGENTIA_GUIDE_OPENROUTER_FREE_FALLBACK=1` and an explicit
+`COGENTIA_GUIDE_OPENROUTER_FREE_MODEL`. This mode is opt-in; it bypasses the
+daemon, OpenAI, and paid OpenRouter candidates for synthesis.

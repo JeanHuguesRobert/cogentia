@@ -171,6 +171,11 @@ async function guideChatCapability() {
 
 async function guideSynthesisPost(payload) {
   if (!guideAgentGateway) {
+    // Explicit operational mode for bounded provider evaluation or continuity.
+    // It is opt-in and never selects a paid OpenRouter model.
+    if (guideSynthesisProvider() === "openrouter_free") {
+      return guideOpenRouterChatCompletions(payload, { freeOnly: true });
+    }
     // 1. Daemon / Magistral router (if circuit is not OPEN)
     if (providerCircuitBreaker.isAvailable("daemon")) {
       const routed = await daemonPost("/v1/chat/completions", payload, { timeoutMs: 5000 });
@@ -2553,7 +2558,7 @@ async function guideOpenAiChatCompletions(payload = {}) {
  * only after those candidates are unavailable, so a paid-credit outage can
  * still produce a bounded public answer.
  */
-async function guideOpenRouterChatCompletions(payload = {}) {
+async function guideOpenRouterChatCompletions(payload = {}, { freeOnly = false } = {}) {
   const apiKey = String(process.env.OPENROUTER_API_KEY || process.env.COGENTIA_OPENROUTER_API_KEY || "").trim();
   if (!apiKey) {
     return { ok: false, error: "openrouter_key_missing", status: 0 };
@@ -2561,6 +2566,9 @@ async function guideOpenRouterChatCompletions(payload = {}) {
   const freeFallbackEnabled = guideOpenRouterFreeEnabled();
   const paidAvailable = providerCircuitBreaker.isAvailable("openrouter");
   const freeAvailable = freeFallbackEnabled && providerCircuitBreaker.isAvailable("openrouter_free");
+  if (freeOnly && !freeAvailable) {
+    return { ok: false, error: "openrouter_free_unavailable", status: 0 };
+  }
   if (!paidAvailable && !freeAvailable) {
     return { ok: false, error: "openrouter_circuit_open", status: 0 };
   }
@@ -2571,7 +2579,7 @@ async function guideOpenRouterChatCompletions(payload = {}) {
     "meta-llama/llama-3.3-70b-instruct",
   ].filter(Boolean).filter((model, index, models) => models.indexOf(model) === index);
   const candidates = [
-    ...(paidAvailable ? paidModels.map(model => ({ model, circuit: "openrouter", free: false })) : []),
+    ...(!freeOnly && paidAvailable ? paidModels.map(model => ({ model, circuit: "openrouter", free: false })) : []),
     ...(freeAvailable ? [{
       model: String(process.env.COGENTIA_GUIDE_OPENROUTER_FREE_MODEL || "liquid/lfm-2.5-2.6b:free").trim(),
       circuit: "openrouter_free",
@@ -2666,6 +2674,10 @@ async function guideOpenRouterChatCompletions(payload = {}) {
 
 function guideOpenRouterFreeEnabled() {
   return parseBoolean(process.env.COGENTIA_GUIDE_OPENROUTER_FREE_FALLBACK, false);
+}
+
+function guideSynthesisProvider() {
+  return String(process.env.COGENTIA_GUIDE_SYNTHESIS_PROVIDER || "").trim().toLowerCase();
 }
 
 function openRouterChatCompletionsUrl() {
