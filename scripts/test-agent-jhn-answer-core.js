@@ -130,11 +130,11 @@ test("current-information intent records unverified freshness", async () => {
   assert.match(review.answer, /^Caution: this public information has not been verified as current\./);
 });
 
-test("WhatsApp rendering enforces a bounded answer", async () => {
-  const answer = Array.from({ length: 20 }, (_, index) => `Paragraph ${index}: ${"useful evidence ".repeat(12)}`).join("\n\n");
+test("short-message rendering does not clip a developed answer for style", async () => {
+  const answer = Array.from({ length: 8 }, (_, index) => `Paragraph ${index}: ${"useful evidence ".repeat(12).trim()}`).join("\n\n");
   const rendered = renderAnswer(answer, { channel: "whatsapp", maxChars: 900 });
-  assert.ok(rendered.length <= 900);
-  assert.match(rendered, /…$/);
+  assert.equal(rendered, answer);
+  assert.ok(!rendered.endsWith("…"));
 });
 
 test("engine exposes analysis, evidence, and critique", async () => {

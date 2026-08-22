@@ -281,38 +281,44 @@ const jhnOpenAi = createJhnOpenAiSurface({
 const server = http.createServer(async (req, res) => {
   try {
     applyCors(req, res);
-    if (req.method === "OPTIONS") return sendNoContent(res, 204);
-    if (req.method === "GET" && req.url === "/health") return sendJson(res, 200, await health());
-    if (req.method === "HEAD" && req.url === "/health") return sendNoContent(res, 200);
-    if (req.method === "GET" && req.url === "/tools") return sendJson(res, 200, { tools: core.tools });
-    if (req.method === "GET" && req.url === "/guide/health") return sendJson(res, 200, await guideHealth());
-    if (req.method === "GET" && (req.url === "/guide" || req.url === "/guide/" || req.url === "/guide/ui")) return handleGuideUi(req, res);
-    if (req.method === "GET" && req.url?.startsWith("/ops/blackboard")) return handleBlackboardGet(req, res);
-    if (req.method === "POST" && req.url === "/ops/blackboard/upsert") return handleBlackboardUpsert(req, res);
-    if (req.method === "GET" && req.url === "/ops/status") return handleOpsStatus(req, res);
-    if (req.method === "GET" && req.url === "/ops/dashboard") return handleOpsDashboard(req, res);
-    if (req.method === "POST" && req.url === "/ops/route/action") return handleOpsRouteAction(req, res);
-    if (req.method === "GET" && req.url?.startsWith("/ops/node/")) return handleOpsNodeProxy(req, res);
-    if (req.method === "POST" && req.url === "/ops/edge/trap") return handleEdgeTrap(req, res);
-    if (req.method === "GET" && req.url?.startsWith("/ops/edge/traps")) return handleEdgeTrapsList(req, res);
-    if (req.method === "POST" && req.url === "/guide/chat") return handleGuideChat(req, res);
+    const headRequest = req.method === "HEAD";
+    const pathOnly = String(req.url || "").split("?")[0];
+    if (headRequest) suppressResponseBody(res);
+    if (headRequest && (pathOnly === "/sse" || pathOnly === "/mcp")) {
+      res.setHeader("Allow", pathOnly === "/mcp" ? "GET, POST" : "GET");
+      return sendJson(res, 405, { error: "head_not_supported_for_stream" });
+    }
+    const method = headRequest ? "GET" : req.method;
+    if (method === "OPTIONS") return sendNoContent(res, 204);
+    if (method === "GET" && req.url === "/health") return sendJson(res, 200, await health());
+    if (method === "GET" && req.url === "/tools") return sendJson(res, 200, { tools: core.tools });
+    if (method === "GET" && req.url === "/guide/health") return sendJson(res, 200, await guideHealth());
+    if (method === "GET" && (req.url === "/guide" || req.url === "/guide/" || req.url === "/guide/ui")) return handleGuideUi(req, res);
+    if (method === "GET" && req.url?.startsWith("/ops/blackboard")) return handleBlackboardGet(req, res);
+    if (method === "POST" && req.url === "/ops/blackboard/upsert") return handleBlackboardUpsert(req, res);
+    if (method === "GET" && req.url === "/ops/status") return handleOpsStatus(req, res);
+    if (method === "GET" && req.url === "/ops/dashboard") return handleOpsDashboard(req, res);
+    if (method === "POST" && req.url === "/ops/route/action") return handleOpsRouteAction(req, res);
+    if (method === "GET" && req.url?.startsWith("/ops/node/")) return handleOpsNodeProxy(req, res);
+    if (method === "POST" && req.url === "/ops/edge/trap") return handleEdgeTrap(req, res);
+    if (method === "GET" && req.url?.startsWith("/ops/edge/traps")) return handleEdgeTrapsList(req, res);
+    if (method === "POST" && req.url === "/guide/chat") return handleGuideChat(req, res);
     // Cognitive Packet Ingestion & Attraction (Autonomous FractaNode Hub)
-    if (req.method === "POST" && (req.url === "/cop/packet" || req.url === "/api/cop/packet" || req.url === "/packet")) {
+    if (method === "POST" && (req.url === "/cop/packet" || req.url === "/api/cop/packet" || req.url === "/packet")) {
       return handleCopPacketPost(req, res);
     }
-    if (req.method === "GET" && (req.url === "/cop/capabilities" || req.url === "/capabilities")) {
+    if (method === "GET" && (req.url === "/cop/capabilities" || req.url === "/capabilities")) {
       return handleCopCapabilitiesGet(req, res);
     }
-    if (req.method === "GET" && (req.url === "/cop/health")) {
+    if (method === "GET" && (req.url === "/cop/health")) {
       return handleCopHealthGet(req, res);
     }
     // OpenAI Chat Completions surface for Agent JHN / UX tools (see lib/jhn-openai-surface.js)
     {
-      const pathOnly = String(req.url || "").split("?")[0];
-      if (req.method === "GET" && isTwinOpenAiPath(pathOnly) && pathOnly.endsWith("/models")) {
+      if (method === "GET" && isTwinOpenAiPath(pathOnly) && pathOnly.endsWith("/models")) {
         return jhnOpenAi.handleModels(req, res, sendJson);
       }
-      if (req.method === "POST" && isTwinOpenAiPath(pathOnly) && pathOnly.endsWith("/chat/completions")) {
+      if (method === "POST" && isTwinOpenAiPath(pathOnly) && pathOnly.endsWith("/chat/completions")) {
         return jhnOpenAi.handleChatCompletions(req, res, {
           sendJson,
           readBody,
@@ -320,10 +326,10 @@ const server = http.createServer(async (req, res) => {
         });
       }
     }
-    if (req.method === "GET" && req.url === "/sse") return sendSseInfo(req, res);
-    if (req.method === "GET" && req.url === "/mcp") return sendSseInfo(req, res);
-    if (req.method === "POST" && req.url === "/mcp") return handleMcpPost(req, res);
-    if (req.method === "POST" && req.url?.startsWith("/tools/")) return handleToolPost(req, res);
+    if (method === "GET" && pathOnly === "/sse") return sendSseInfo(req, res);
+    if (method === "GET" && pathOnly === "/mcp") return sendSseInfo(req, res);
+    if (method === "POST" && req.url === "/mcp") return handleMcpPost(req, res);
+    if (method === "POST" && req.url?.startsWith("/tools/")) return handleToolPost(req, res);
     return sendJson(res, 404, { error: "not_found" });
   } catch (error) {
     return sendJson(res, 500, {
@@ -1957,10 +1963,13 @@ function buildGuideMessages(locale, retrieval, web, history, question, visitorNa
   const messages = [];
   if (surface === "agent-john") {
     messages.push(...buildWhatsAppRepresentationMessages(
-      { locale, intent: "explain" },
       {
-        channel: "web",
-        maxChars: 8000,
+        locale,
+        intent: "explain",
+        attention: question.length < 24 ? "brief" : question.length > 280 ? "developed" : "compact",
+      },
+      {
+        channel: "web_conversation",
         currentInformationVerified: Boolean(web?.ok),
       },
     ));
@@ -2993,12 +3002,26 @@ function sendNoContent(res, status) {
   res.end();
 }
 
+/** Preserve HEAD semantics even when a shared GET handler calls res.end(body). */
+function suppressResponseBody(res) {
+  const end = res.end.bind(res);
+  res.write = (_chunk, encoding, callback) => {
+    const done = typeof encoding === "function" ? encoding : callback;
+    if (typeof done === "function") done();
+    return true;
+  };
+  res.end = (_chunk, encoding, callback) => {
+    const done = typeof encoding === "function" ? encoding : callback;
+    return typeof done === "function" ? end(done) : end();
+  };
+}
+
 function applyCors(req, res) {
   const origin = req.headers.origin || "";
   const allowed = allowedOrigins.some(value => value === "*" || (value.endsWith("*") ? origin.startsWith(value.slice(0, -1)) : origin === value));
   if (!allowed) return;
   res.setHeader("Access-Control-Allow-Origin", origin || "*");
-  res.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
+  res.setHeader("Access-Control-Allow-Methods", "GET, HEAD, POST, OPTIONS");
   res.setHeader(
     "Access-Control-Allow-Headers",
     "Content-Type, Authorization, MCP-Protocol-Version, Mcp-Method, Mcp-Name, Mcp-Session-Id",

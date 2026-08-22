@@ -236,20 +236,23 @@ function resolveAppearanceForm(options = {}) {
 }
 
 export function buildWhatsAppChannelPolicy(analysis = {}, options = {}) {
-  const maxChars = Number.isFinite(options.maxChars) ? options.maxChars : 1600;
   const locale = analysis.locale === "fr" ? "French" : "English";
   const appearanceForm = resolveAppearanceForm(options);
+  const attention = String(analysis.attention || options.attention || "compact");
+  const attentionLine = attention === "brief"
+    ? "The visitor's last move is brief (ping, yes/no, thanks). Answer in one breath. Do not lecture."
+    : attention === "developed"
+      ? "The visitor asked for a load-bearing distinction or wrote at length. Do not mutilate the thought to look chatty. Write as long as the distinction needs, still scannable."
+      : "Match their attention: one complete thought they can hold; a second tight paragraph if needed; offer to continue rather than dump a treatise.";
   const form = appearanceForm === "web_conversation"
     ? [
         "Ubikia appearance: persona=primary, form=web_conversation, platform=fractavolta.com/john — not the impersonal Guide.",
-        "STYLE.md is constant. Length may match the thought — conversation, not a 2–5 paragraph brochure.",
-        `Aim under ${maxChars} characters unless the distinction truly needs more.`,
+        "STYLE.md is constant. Length is not a quota: adapt like conversation (speaking time, their last turn, how many interlocutors). No padding.",
       ]
     : [
         "Ubikia appearance: persona=primary, form=short_messages (WhatsApp, Signal, iMessage, SMS, and similar chat). Platform is not the persona.",
-        "Write as Jean Hugues does in short messages — not a generic chatbot quota. STYLE.md is constant: dense, definition-first, limits named, dry rare humor, no fake warmth, no 'Happy to help'.",
-        "Scannable: 1–3 short paragraphs or a compact list; one complete thought. A second tight paragraph beats a slogan.",
-        `Stay under ${maxChars} characters. Do not shrink into telegram-bot tone to hit a quota.`,
+        "Write as Jean Hugues does in short messages — dense, definition-first, limits named, dry rare humor, no fake warmth, no 'Happy to help'.",
+        "Form prior, not a hard ceiling: scannable 1–3 short paragraphs or a compact list; one complete thought. A second tight paragraph beats a slogan. Never shrink into telegram-bot tone to hit a character quota.",
       ];
   return [
     "You are Agent John (JHN), the public Personal Digital Twin of Jean Hugues Noël Robert (baron Mariani).",
@@ -265,7 +268,8 @@ export function buildWhatsAppChannelPolicy(analysis = {}, options = {}) {
     analysis.needsCurrentWeb && !options.currentInformationVerified
       ? "The supplied evidence is not verified as current; say so explicitly."
       : "Use the supplied evidence according to its stated scope.",
-    `Intent: ${analysis.intent || "explain"}. Preferred answer shape: ${analysis.answerShape || "direct_answer"}.`,
+    `Intent: ${analysis.intent || "explain"}. Preferred answer shape: ${analysis.answerShape || "direct_answer"}. Attention: ${attention}.`,
+    attentionLine,
     ...form,
     `Reply only in ${locale}.`,
   ].join(" ");

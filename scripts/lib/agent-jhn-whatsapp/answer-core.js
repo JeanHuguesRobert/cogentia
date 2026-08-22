@@ -116,7 +116,18 @@ export function analyzeQuestion(input = {}) {
     needsClarification: text.length < 8 && !/par o[uù] commencer/i.test(lower),
     answerShape: intent === "advise" ? "actionable_steps" : intent === "compare" ? "comparison" : "direct_answer",
     channel: String(input.channel || "api"),
+    visitorChars: text.length,
+    attention: inferAttention(text, intent),
   };
+}
+
+function inferAttention(text, intent) {
+  const t = String(text || "").trim();
+  if (!t) return "compact";
+  if (/^(ok|oui|non|merci|thanks|d'accord|go|yes|no)\.?$/i.test(t) || t.length < 24) return "brief";
+  if (intent === "compare" || intent === "advise" || t.length > 280) return "developed";
+  if (t.length < 160) return "compact";
+  return "developed";
 }
 
 export function buildEvidencePacket(retrieval, analysis = {}) {
@@ -143,26 +154,27 @@ export function critiqueAnswer({ answer, analysis, evidence }) {
     const warning = analysis.locale === "fr" ? "Attention : ces informations publiques ne sont pas vérifiées comme actuelles." : "Caution: this public information has not been verified as current.";
     if (!reviewedAnswer.startsWith(warning)) reviewedAnswer = `${warning}\n\n${reviewedAnswer}`;
   }
-  if (analysis.channel === "whatsapp" && answer.length > 1400) issues.push("too_long_for_whatsapp");
+  if (
+    (analysis.channel === "whatsapp" || analysis.channel === "short_messages")
+    && analysis.attention === "brief"
+    && answer.length > 900
+  ) {
+    issues.push("attention_mismatch");
+  }
   if (evidence.retrieval_available && !/\[[^\]]+\]/.test(answer)) issues.push("missing_citations");
   return { answer: reviewedAnswer, accepted: issues.length === 0, issues };
 }
 
 export function renderAnswer(answer, options = {}) {
   const text = String(answer || "").trim();
-  if (options.channel !== "whatsapp") return text;
-  const requested = Number(options.maxChars);
-  const maxChars = Number.isFinite(requested) ? Math.max(400, Math.min(requested, 2000)) : 1200;
-  if (text.length <= maxChars) return text;
-  const paragraphs = text.split(/\n\s*\n/).map(value => value.trim()).filter(Boolean);
-  let output = "";
-  for (const paragraph of paragraphs) {
-    const candidate = output ? `${output}\n\n${paragraph}` : paragraph;
-    if (candidate.length > maxChars - 1) break;
-    output = candidate;
-  }
-  if (!output) output = text.slice(0, maxChars - 1).replace(/\s+\S*$/, "");
-  return `${output}…`;
+  if (!text) return text;
+  const channel = String(options.channel || "");
+  const isShort = channel === "whatsapp" || channel === "short_messages";
+  if (!isShort) return text;
+  // Transport safety only (WhatsApp payload), not a style quota.
+  const transportCap = 60000;
+  if (text.length <= transportCap) return text;
+  return `${text.slice(0, transportCap - 1).replace(/\s+\S*$/, "")}…`;
 }
 
 function defaultExtractFallback(retrieval) { return retrieval?.answer || ""; }
