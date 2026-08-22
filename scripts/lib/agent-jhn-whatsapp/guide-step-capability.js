@@ -29,7 +29,12 @@ export function createGuideCorpusCapability(options = {}) {
       const response = await request(url, {
         method: "POST",
         headers: { Accept: "application/json", "Content-Type": "application/json" },
-        body: JSON.stringify({ question, locale, web_search: Boolean(input.web_search) }),
+        body: JSON.stringify({
+          question,
+          locale,
+          web_search: Boolean(input.web_search),
+          surface: "agent-john",
+        }),
         signal: AbortSignal.timeout(timeoutMs),
       });
       const body = await response.json().catch(() => null);

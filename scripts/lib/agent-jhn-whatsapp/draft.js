@@ -3,7 +3,7 @@
  * Supports Guide reuse and corpus-librarian retrieval (explore → packet → synth).
  *
  * Retrieval modes (AGENT_JHN_WHATSAPP_RETRIEVAL):
- *   guide     — POST /guide/chat then OpenAI (default; website path reuse)
+ *   guide     — POST /guide/chat (surface=agent-john) then OpenAI rewrite (default)
  *   librarian — Context Gateway tools → evidence packet → synthesizer
  *   shadow    — live answer stays guide; librarian runs for compare only
  *
@@ -188,6 +188,7 @@ async function buildGuideDraft(normalized, config, options, questionAnalysis, us
         question: userText,
         locale: questionAnalysis.locale,
         web_search: questionAnalysis.needsCurrentWeb,
+        surface: "agent-john",
       }),
       signal: AbortSignal.timeout(guideTimeoutMs),
     });
