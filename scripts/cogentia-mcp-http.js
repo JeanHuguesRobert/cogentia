@@ -50,6 +50,9 @@ import { runHandoffPacket } from "./lib/john-handoff.js";
 import { sendHandoffPacket } from "./lib/john-handoff-transport.js";
 import { CapabilityInspector } from "./lib/john-diagnostic/inspectors/capability-inspector.js";
 import { createProviderCircuitBreaker } from "./lib/provider-circuit-breaker.js";
+import { resolveSourceUrl, formatSourceMarkdownLink } from "./lib/source-deep-links.js";
+import { synthesizeSmartExtractiveAnswer } from "./lib/smart-extractive-synthesizer.js";
+import { createSemanticAnswerCache } from "./lib/semantic-answer-cache.js";
 
 const moduleDir = path.dirname(fileURLToPath(import.meta.url));
 const fractanetDashboardPath = path.join(moduleDir, "ops", "fractanet-dashboard.html");
@@ -65,6 +68,7 @@ loadOptionalEnvFiles([
 const core = createMcpCore();
 const blackboard = createBlackboardStore();
 const providerCircuitBreaker = createProviderCircuitBreaker();
+const semanticAnswerCache = createSemanticAnswerCache();
 const port = boundedInteger(process.env.PORT || process.env.COGENTIA_MCP_PORT, 8791, 1, 65535);
 const host = process.env.COGENTIA_MCP_HOST || "0.0.0.0";
 const guideAgentGateway = process.env.COGENTIA_GUIDE_AGENT_GATEWAY === "1";
@@ -752,6 +756,33 @@ async function produceGuideTurn(question, history, payload = {}, options = {}) {
   });
   const rootPacket = turnAcct.ok ? turnAcct.packet : null;
   const cop = turnAcct.ok ? turnAcct.cop : null;
+
+  // Canonical zero-latency cache check (Pillar Q&A)
+  const canonical = semanticAnswerCache.matchCanonical(question);
+  if (canonical && !payload.force_refresh) {
+    const formattedSources = canonical.sources.map(s => ({
+      ...s,
+      github_url: resolveSourceUrl(s.source_id, s.github_url),
+      url: resolveSourceUrl(s.source_id, s.github_url),
+    }));
+    return {
+      ok: true,
+      status: 200,
+      body: {
+        ok: true,
+        service: "fractavolta-guide",
+        mode: "canonical_cache",
+        mandate: guideMandate,
+        question,
+        locale: defaultLocale,
+        answer: canonical.answer,
+        sources: formattedSources,
+        warnings: [],
+        canonical_cache: true,
+        elapsed_ms: 1,
+      },
+    };
+  }
 
   const chatCap = await guideChatCapability();
   const intentResult = await parseUserIntent(question, cleanHistory, defaultLocale, {
@@ -2244,7 +2275,7 @@ async function guideFallback(question, locale, routed, retrieval = null, web = n
         mandate: guideMandate,
         question,
         locale,
-        answer: extractiveAnswer(locale, pack),
+        answer: extractiveAnswer(locale, pack, question),
         sources: mergeGuideSources(pack.sources, web?.sources),
         context: summarizeGuideContext(pack, retrieval, web),
         s7: retrieval?.s7 || null,
@@ -2349,30 +2380,18 @@ function loadGuidePublicReadonlyAgents() {
   return "";
 }
 
-function extractiveAnswer(locale, pack) {
-  const sources = safeSources(pack.sources).slice(0, 5);
+function extractiveAnswer(locale, pack, question = "") {
+  const sources = safeSources(pack?.sources);
   const excerpts = Array.isArray(pack?.context?.excerpts)
-    ? pack.context.excerpts.filter(e => e?.text).slice(0, 3)
+    ? pack.context.excerpts.filter(e => e?.text)
     : [];
-  const fr = locale === "fr";
-  const fidelity = fr
-    ? [
-        "Rappel de surface (lecture seule publique) : je ne suis pas Jean Hugues Noël Robert ; je m'appuie sur le corpus public, sans secrets ni données privées (y compris registre-mariani privé) ; je ne prends pas d'engagements légaux ou commerciaux.",
-        "Le moteur conversationnel n'est pas joignable pour une synthèse complète. Voici un extrait public et des sources à lire :",
-      ]
-    : [
-        "Surface reminder (public read-only): I am not Jean Hugues Noël Robert; I use the public corpus only — no secrets or private data (including private registre-mariani); I cannot make legal or commercial commitments.",
-        "The conversational synthesizer is unavailable for a full answer. Public excerpts and sources to inspect:",
-      ];
-  const excerptLines = excerpts.map((item, index) => {
-    const id = String(item.source_id || "source").slice(0, 200);
-    const text = String(item.text || "").replace(/\s+/g, " ").trim().slice(0, 420);
-    return `${index + 1}. [${id}] ${text}`;
+
+  return synthesizeSmartExtractiveAnswer({
+    question,
+    excerpts,
+    sources,
+    locale,
   });
-  const sourceLines = sources.map((source, index) =>
-    `${excerpts.length + index + 1}. ${source.title || source.path || "source"} [${source.source_id}]`,
-  );
-  return [...fidelity, ...(excerptLines.length ? excerptLines : sourceLines)].join("\n");
 }
 
 /**
@@ -2699,16 +2718,22 @@ function mergeGuideSources(...sourceLists) {
 
 function safeSources(sources) {
   if (!Array.isArray(sources)) return [];
-  return sources.slice(0, 12).map(source => ({
-    source_id: String(source.source_id || ""),
-    title: String(source.title || ""),
-    repo: String(source.repo || ""),
-    path: String(source.path || ""),
-    start_line: source.start_line,
-    end_line: source.end_line,
-    url: String(source.github_url || source.url || ""),
-    description: String(source.description || ""),
-  }));
+  return sources.slice(0, 12).map(source => {
+    const source_id = String(source.source_id || "");
+    const explicitUrl = String(source.github_url || source.url || "");
+    const resolved = resolveSourceUrl(source_id, explicitUrl) || explicitUrl;
+    return {
+      source_id,
+      title: String(source.title || ""),
+      repo: String(source.repo || ""),
+      path: String(source.path || ""),
+      start_line: source.start_line,
+      end_line: source.end_line,
+      url: resolved,
+      github_url: resolved,
+      description: String(source.description || ""),
+    };
+  });
 }
 
 function estimateGuideTokens(text) {
