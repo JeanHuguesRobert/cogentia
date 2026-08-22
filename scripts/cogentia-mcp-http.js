@@ -251,7 +251,7 @@ function resolveGuideRetrievalBackend() {
 const guideRetrievalBackend = resolveGuideRetrievalBackend();
 const guidePlannerEnabled = parseBoolean(process.env.COGENTIA_GUIDE_PLANNER, true);
 const guidePlannerQueryLimit = boundedInteger(process.env.COGENTIA_GUIDE_PLANNER_QUERY_LIMIT, 5, 1, 8);
-const guideHistoryLimit = boundedInteger(process.env.COGENTIA_GUIDE_HISTORY_LIMIT, 8, 0, 20);
+const guideHistoryLimit = boundedInteger(process.env.COGENTIA_GUIDE_HISTORY_LIMIT, 16, 0, 24);
 const guideWebSearchEnabled = parseBoolean(process.env.COGENTIA_GUIDE_WEB_SEARCH, true);
 const guideWebSearchLimit = boundedInteger(process.env.COGENTIA_GUIDE_WEB_SEARCH_LIMIT, 5, 1, 10);
 const guideWebSearchUrl = process.env.COGENTIA_GUIDE_WEB_SEARCH_URL || "https://api.search.brave.com/res/v1/web/search";
@@ -2001,7 +2001,7 @@ function sanitizeGuideHistoryText(value) {
     .replace(/[\u0000-\u001f\u007f]/g, " ")
     .replace(/\s+/g, " ")
     .trim()
-    .slice(0, 1200);
+    .slice(0, 8000);
 }
 
 async function guideWebSearchRun(question, locale, payload = {}, options = {}) {
