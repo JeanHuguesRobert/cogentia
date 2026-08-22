@@ -73,6 +73,7 @@
     "skills:validate": "node scripts/validate-agent-skills.js",
     "test:agent-skills": "node scripts/validate-agent-skills.js",
     "test:mcp-dual-era": "node scripts/test-mcp-dual-era.js",
+    "test:capability-inventory": "node scripts/test-capability-inventory.js",
     "sandbox:mcp-packet": "node sandbox/mcp-2026-cognitive-packet/index.js run all",
     "test:mcp-sandbox": "node sandbox/mcp-2026-cognitive-packet/test/run-scenarios.js",
     "mandate:check": "node scripts/mandate-attenuation-check.js",

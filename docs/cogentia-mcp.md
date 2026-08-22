@@ -130,6 +130,16 @@ Tools are registered in `scripts/lib/cogentia-mcp-core.js`. They are categorized
 | `cogentia_consolidate` | **P4** | Read-only publish-readiness check for Views Store |
 | `cogentia_embeddings_status` | **P4** | Detailed embedding cache status and vector provider info |
 | `cogentia_mandate_attenuation_check`| **P4** | Verify parent vs. child mandate authority bounds (`PASS`/`WARN`/`FAIL`) |
+| `cogentia_status` / `state` / `repos` / `plugins` | **P0** | Daemon cockpit reads (`/api/status`, `/api/state`, `/api/repos`, `/api/plugins`) |
+| `cogentia_agent_health` | **P0** | AI router / agent gateway health |
+| `cogentia_grep` | **P0** | Corpus grep (`/api/cli/grep`) |
+| `cogentia_docs_summary` / `docs_query` / `docs_snippet` | **P0** | Documentation catalog reads |
+| `cogentia_get_doc` | **P0** | Document metadata by `repo:path` |
+| `cogentia_index_status` / `index_search` | **P0** | Local FTS index status and raw search |
+| `cogentia_pattern_list` / `pattern_get` | **P2** | Patterns / Anti-patterns (#110); not Skills, not authority |
+| `cogentia_cli_catalog` | **P0** | Live CLI/MCP/skill/pattern inventory (maximum visible set) |
+
+Anonymous `tools/list` still hides mutate tools. The **maximum set** is also advertised as MCP resources (`resources/list`, `skill://…`, `cogentia://pattern/…`, `cogentia://cli/catalog`) and experimental `skills/list` (SEP-2640). Use `cogentia_cli_catalog` or `resources/read` of `cogentia://capability/catalog` to see gated verbs even when they are omitted from the public tool list.
 
 ---
 
@@ -180,7 +190,7 @@ The adapter supports two protocol eras transparently:
 | Era | Protocol Versions | Handshake & Entry |
 | :--- | :--- | :--- |
 | **Legacy Era** | `2025-11-25`, `2025-06-18`, `2024-11-05` | Standard `initialize` handshake $\rightarrow$ `tools/list` $\rightarrow$ `tools/call` |
-| **Modern Era** | `2026-07-28` | Optional `server/discover`, stateless per-request `_meta`, `MCP-Protocol-Version` headers |
+| **Modern Era** | `2026-07-28` | Optional `server/discover`, stateless per-request `_meta`, `MCP-Protocol-Version` headers, `resources` / `prompts` / `completions`, experimental `io.modelcontextprotocol/skills` |
 
 Unsupported versions return JSON-RPC error code `-32022` (`UnsupportedProtocolVersionError`) listing supported versions.
 

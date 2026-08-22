@@ -9,9 +9,22 @@ import { resolveCallerAuth, deriveLockers } from "./cogentia-mcp-auth.js";
 import { compareMandateAttenuation } from "./mandate-attenuation.js";
 import { runJohnRequest } from "./john-run.js";
 import { auditCapabilitySymmetry } from "./symmetry-audit.js";
+import { listPatterns, getPattern } from "./cogentia-patterns.js";
+import {
+  serverCapabilityBlock,
+  LIST_TTL_MS,
+  listAllResources,
+  readMcpResource,
+  readDirectoryResource,
+  listMcpPrompts,
+  getMcpPrompt,
+  listSkillsSep2640,
+  getSkillSep2640,
+  completeMcp,
+} from "./cogentia-mcp-surface.js";
 
 export const SERVER_NAME = "cogentia-mcp";
-export const SERVER_VERSION = "0.8.0";
+export const SERVER_VERSION = "0.9.0";
 export { ENVELOPE_KIND, wrapToolResult, wrapToolError, extractCorrelation };
 export { resolveCallerAuth, deriveLockers } from "./cogentia-mcp-auth.js";
 
@@ -563,7 +576,162 @@ export const TOOLS = [
       additionalProperties: false,
     },
   },
+  {
+    name: "cogentia_status",
+    description: "Lightweight daemon status (/api/status).",
+    inputSchema: { type: "object", properties: {}, additionalProperties: false },
+  },
+  {
+    name: "cogentia_state",
+    description: "Corpus workspace state snapshot (/api/state).",
+    inputSchema: { type: "object", properties: {}, additionalProperties: false },
+  },
+  {
+    name: "cogentia_repos",
+    description: "List registered corpus repositories and their state (/api/repos).",
+    inputSchema: { type: "object", properties: {}, additionalProperties: false },
+  },
+  {
+    name: "cogentia_plugins",
+    description: "List daemon plugins and their HTTP routes (/api/plugins).",
+    inputSchema: { type: "object", properties: {}, additionalProperties: false },
+  },
+  {
+    name: "cogentia_agent_health",
+    description: "Agent gateway / AI router health (/api/agent/health).",
+    inputSchema: { type: "object", properties: {}, additionalProperties: false },
+  },
+  {
+    name: "cogentia_cli_status",
+    description: "Unified CLI status view (/api/cli/status).",
+    inputSchema: { type: "object", properties: {}, additionalProperties: false },
+  },
+  {
+    name: "cogentia_cli_state",
+    description: "Unified CLI state view (/api/cli/state).",
+    inputSchema: { type: "object", properties: {}, additionalProperties: false },
+  },
+  {
+    name: "cogentia_grep",
+    description: "Full-text grep over active corpus markdown (/api/cli/grep).",
+    inputSchema: {
+      type: "object",
+      properties: {
+        query: { type: "string", minLength: 1 },
+        repo: { type: "string" },
+        limit: { type: "integer", minimum: 1, maximum: 200 },
+      },
+      required: ["query"],
+      additionalProperties: false,
+    },
+  },
+  {
+    name: "cogentia_docs_summary",
+    description: "Numeric documentation inventory summary (/api/cli/docs/summary).",
+    inputSchema: { type: "object", properties: {}, additionalProperties: false },
+  },
+  {
+    name: "cogentia_docs_query",
+    description: "Query the documentation catalog (/api/cli/docs/query).",
+    inputSchema: {
+      type: "object",
+      properties: {
+        query: { type: "string" },
+        repo: { type: "string" },
+        limit: { type: "integer", minimum: 1, maximum: 200 },
+      },
+      additionalProperties: false,
+    },
+  },
+  {
+    name: "cogentia_docs_snippet",
+    description: "Fetch a documentation snippet by ref (/api/cli/docs/snippet).",
+    inputSchema: {
+      type: "object",
+      properties: {
+        ref: { type: "string", minLength: 1 },
+        start: { type: "integer", minimum: 1 },
+        end: { type: "integer", minimum: 1 },
+      },
+      required: ["ref"],
+      additionalProperties: false,
+    },
+  },
+  {
+    name: "cogentia_get_doc",
+    description: "Retrieve metadata / allowed view of a corpus document (/api/context/doc). ref form: repo:path.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        ref: { type: "string", minLength: 1, description: "Document reference repo:path" },
+      },
+      required: ["ref"],
+      additionalProperties: false,
+    },
+  },
+  {
+    name: "cogentia_index_status",
+    description: "Local SQLite/FTS index status (/api/index/status).",
+    inputSchema: { type: "object", properties: {}, additionalProperties: false },
+  },
+  {
+    name: "cogentia_index_search",
+    description: "Raw FTS index search (/api/index/search). Prefer cogentia_search for citable results.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        query: { type: "string", minLength: 1 },
+        repo: { type: "string" },
+        limit: { type: "integer", minimum: 1, maximum: 100 },
+      },
+      required: ["query"],
+      additionalProperties: false,
+    },
+  },
+  {
+    name: "cogentia_pattern_list",
+    description:
+      "List Cogentia Patterns and Anti-patterns (Christopher Alexander sense, issue #110). Patterns guide generation; they do not grant mandate.",
+    inputSchema: { type: "object", properties: {}, additionalProperties: false },
+  },
+  {
+    name: "cogentia_pattern_get",
+    description: "Fetch one Pattern or Anti-pattern by id/slug (PATTERN.md body + metadata).",
+    inputSchema: {
+      type: "object",
+      properties: {
+        id: { type: "string", minLength: 1, description: "Pattern slug or id" },
+        meta_only: { type: "boolean" },
+      },
+      required: ["id"],
+      additionalProperties: false,
+    },
+  },
+  {
+    name: "cogentia_cli_catalog",
+    description: "Return the live CLI/MCP/skill/pattern capability inventory (maximum visible set).",
+    inputSchema: { type: "object", properties: {}, additionalProperties: false },
+  },
 ];
+
+async function resolveResourceRead(uri, env) {
+  const read = readMcpResource(uri, { env });
+  if (!read.ok) return read;
+  if (read.deferred === "inventory") {
+    const { buildCapabilityInventory, CLI_COMMANDS } = await import("./capability-inventory.js");
+    const inventory = buildCapabilityInventory({ env });
+    const payload = read.uri === "cogentia://cli/catalog"
+      ? { ok: true, uri: read.uri, commands: CLI_COMMANDS }
+      : inventory;
+    return {
+      ok: true,
+      uri: read.uri,
+      mimeType: "application/json",
+      text: JSON.stringify(payload, null, 2),
+    };
+  }
+  return read;
+}
 
 function parseAllowMutate(env, view) {
   if (view !== "full") return false;
@@ -595,6 +763,7 @@ export function createMcpCore(env = process.env) {
     "(3) cogentia_context_pack or cogentia_search for evidence; cogentia_get_lines before asserting a passage; always cite source_id. " +
     "(4) cogentia_continuation_schema if preparing a step_result; list → inspect → prepare; resolve/emit only if mutate tools are listed and mandate allows. " +
     "Continuations are non-blocking judgment boundaries, not crashes. Skills recommend methods and never grant authority. " +
+    "Discover the maximum capability set via server/discover, resources/list, skills/list (SEP-2640 experimental), and cogentia_cli_catalog / cogentia_pattern_list — not tools/list alone. " +
     "MCP is a thin dual-era adapter (legacy initialize + modern server/discover); corpus truth lives in cogentia.js / the daemon. " +
     "Tool results are packet-shaped (cogentia.mcp_tool_result/v1): read citations, continuation, skill_hint, error_class, correlation — no MCP session affinity required. " +
     "Agent JHN (or agent:jhn.subagent:*) may use mutate tools when the server enables JHN attestation " +
@@ -606,7 +775,7 @@ export function createMcpCore(env = process.env) {
   }
 
   function serverCapabilities() {
-    return { tools: { listChanged: false } };
+    return serverCapabilityBlock();
   }
 
   /** Legacy handshake path (2025-11-25 and earlier). */
@@ -637,9 +806,10 @@ export function createMcpCore(env = process.env) {
   function discover() {
     let experimental = {
       skills_over_mcp: "experimental",
-      skills_delivery: "tools_first",
+      skills_delivery: "sep2640_and_tools_first",
+      skills_extension: "io.modelcontextprotocol/skills",
       jhn_mutate: jhnMutateConfigured ? "token_attested" : "disabled",
-      note: "Not a claim of universal MCP Skills marketplace support (#82).",
+      note: "SEP-2640 Skills Over MCP is experimental; tools-first skill_list/get remain for hosts without the extension (#82).",
     };
     try {
       const inv = listAgentSkills({ env, repoRoot: resolveRepoRoot(env) });
@@ -728,7 +898,14 @@ export function createMcpCore(env = process.env) {
   }
 
   function toolsListResult(era, auth) {
-    const callerTools = toolsForAuth(auth);
+    const callerTools = toolsForAuth(auth).map((tool) => ({
+      ...tool,
+      annotations: {
+        readOnlyHint: !MUTATE_TOOLS.has(tool.name),
+        destructiveHint: MUTATE_TOOLS.has(tool.name),
+        openWorldHint: false,
+      },
+    }));
     const base = {
       tools: callerTools,
       _cogentia: {
@@ -743,7 +920,7 @@ export function createMcpCore(env = process.env) {
       },
     };
     if (era === "modern") {
-      return { ...base, ttlMs: 3_600_000, cacheScope: view === "public" ? "public" : "private" };
+      return { ...base, ttlMs: LIST_TTL_MS, cacheScope: view === "public" ? "public" : "private" };
     }
     return base;
   }
@@ -828,6 +1005,89 @@ export function createMcpCore(env = process.env) {
       }
       if (message.method === "tools/list") {
         let result = toolsListResult(resolved.era, auth);
+        if (resolved.era === "modern") result = attachModernMeta(result, resolved.protocolVersion);
+        return jsonRpcResult(message.id, result);
+      }
+      if (message.method === "resources/list") {
+        let result = {
+          resources: listAllResources({ env }),
+        };
+        if (resolved.era === "modern") {
+          result = { ...result, ttlMs: LIST_TTL_MS, cacheScope: view === "public" ? "public" : "private" };
+          result = attachModernMeta(result, resolved.protocolVersion);
+        }
+        return jsonRpcResult(message.id, result);
+      }
+      if (message.method === "resources/read") {
+        const uri = String(message.params?.uri || "");
+        const read = await resolveResourceRead(uri, env);
+        if (!read.ok) {
+          return jsonRpcError(message.id, -32602, "Unknown resource", { uri, error: read.error });
+        }
+        let result = {
+          contents: [
+            {
+              uri: read.uri || uri,
+              mimeType: read.mimeType || "text/plain",
+              text: read.text,
+            },
+          ],
+        };
+        if (resolved.era === "modern") result = attachModernMeta(result, resolved.protocolVersion);
+        return jsonRpcResult(message.id, result);
+      }
+      if (message.method === "resources/directory/read") {
+        const uri = String(message.params?.uri || "");
+        const dir = readDirectoryResource(uri, { env });
+        if (!dir.ok) {
+          return jsonRpcError(message.id, -32602, "Unknown directory resource", { uri, error: dir.error });
+        }
+        let result = { resources: dir.resources };
+        if (resolved.era === "modern") {
+          result = { ...result, ttlMs: LIST_TTL_MS, cacheScope: view === "public" ? "public" : "private" };
+          result = attachModernMeta(result, resolved.protocolVersion);
+        }
+        return jsonRpcResult(message.id, result);
+      }
+      if (message.method === "prompts/list") {
+        let result = { prompts: listMcpPrompts({ env }) };
+        if (resolved.era === "modern") {
+          result = { ...result, ttlMs: LIST_TTL_MS, cacheScope: "public" };
+          result = attachModernMeta(result, resolved.protocolVersion);
+        }
+        return jsonRpcResult(message.id, result);
+      }
+      if (message.method === "prompts/get") {
+        const name = String(message.params?.name || "");
+        const prompt = getMcpPrompt(name, { env });
+        if (!prompt.ok) {
+          return jsonRpcError(message.id, -32602, "Unknown prompt", { name, error: prompt.error });
+        }
+        const { ok: _ok, ...body } = prompt;
+        let result = body;
+        if (resolved.era === "modern") result = attachModernMeta(result, resolved.protocolVersion);
+        return jsonRpcResult(message.id, result);
+      }
+      if (message.method === "completion/complete") {
+        let result = completeMcp(message.params || {}, { env });
+        if (resolved.era === "modern") result = attachModernMeta(result, resolved.protocolVersion);
+        return jsonRpcResult(message.id, result);
+      }
+      if (message.method === "skills/list") {
+        let result = listSkillsSep2640({ env });
+        if (resolved.era === "modern") {
+          result = { ...result, ttlMs: LIST_TTL_MS, cacheScope: "public" };
+          result = attachModernMeta(result, resolved.protocolVersion);
+        }
+        return jsonRpcResult(message.id, result);
+      }
+      if (message.method === "skills/get") {
+        const uri = String(message.params?.uri || "");
+        const got = getSkillSep2640(uri, { env });
+        if (!got.ok) {
+          return jsonRpcError(message.id, -32602, "Unknown skill", { uri, error: got.error });
+        }
+        let result = { skill: got.skill };
         if (resolved.era === "modern") result = attachModernMeta(result, resolved.protocolVersion);
         return jsonRpcResult(message.id, result);
       }
@@ -1140,7 +1400,79 @@ export function createMcpCore(env = process.env) {
         };
       }
       case "cogentia_symmetry_audit": {
-        return auditCapabilitySymmetry();
+        const { buildCapabilityInventory } = await import("./capability-inventory.js");
+        const live = buildCapabilityInventory({ env });
+        return auditCapabilitySymmetry({ inventory: live.capabilities });
+      }
+      case "cogentia_status":
+        return daemonGet("/api/status", {});
+      case "cogentia_state":
+        return daemonGet("/api/state", {});
+      case "cogentia_repos":
+        return daemonGet("/api/repos", {});
+      case "cogentia_plugins":
+        return daemonGet("/api/plugins", {});
+      case "cogentia_agent_health":
+        return daemonGet("/api/agent/health", {});
+      case "cogentia_cli_status":
+        return daemonGet("/api/cli/status", {});
+      case "cogentia_cli_state":
+        return daemonGet("/api/cli/state", {});
+      case "cogentia_grep":
+        requireString(args.query, "query");
+        return daemonGet("/api/cli/grep", {
+          q: args.query,
+          query: args.query,
+          repo: args.repo,
+          limit: boundedOptional(args.limit, 1, 200),
+        });
+      case "cogentia_docs_summary":
+        return daemonGet("/api/cli/docs/summary", {});
+      case "cogentia_docs_query":
+        return daemonGet("/api/cli/docs/query", {
+          q: args.query,
+          query: args.query,
+          repo: args.repo,
+          limit: boundedOptional(args.limit, 1, 200),
+        });
+      case "cogentia_docs_snippet":
+        requireString(args.ref, "ref");
+        return daemonGet("/api/cli/docs/snippet", {
+          ref: args.ref,
+          start: boundedOptional(args.start, 1, Number.MAX_SAFE_INTEGER),
+          end: boundedOptional(args.end, 1, Number.MAX_SAFE_INTEGER),
+        });
+      case "cogentia_get_doc":
+        requireString(args.ref, "ref");
+        return daemonGet("/api/context/doc", { ref: args.ref });
+      case "cogentia_index_status":
+        return daemonGet("/api/index/status", {});
+      case "cogentia_index_search":
+        requireString(args.query, "query");
+        return daemonGet("/api/index/search", {
+          q: args.query,
+          repo: args.repo,
+          limit: boundedOptional(args.limit, 1, 100),
+        });
+      case "cogentia_pattern_list":
+        return listPatterns({ env, repoRoot: resolveRepoRoot(env) });
+      case "cogentia_pattern_get": {
+        requireString(args.id, "id");
+        const pattern = getPattern(args.id, {
+          env,
+          repoRoot: resolveRepoRoot(env),
+          includeBody: args.meta_only !== true,
+        });
+        if (!pattern.ok) {
+          const err = new Error(pattern.error || "pattern_not_found");
+          err.error_class = pattern.error || "pattern_not_found";
+          throw err;
+        }
+        return pattern;
+      }
+      case "cogentia_cli_catalog": {
+        const { buildCapabilityInventory } = await import("./capability-inventory.js");
+        return buildCapabilityInventory({ env });
       }
       default:
         throw new Error(`Unknown tool: ${name}`);

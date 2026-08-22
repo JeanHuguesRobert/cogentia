@@ -47,7 +47,13 @@ filesystem operations, or cache rebuild actions.
 
 ## Tools exposed
 
-The MCP adapter is a **thin façade** over the daemon / `cogentia.js`. Tools:
+The MCP adapter is a **thin façade** over the daemon / `cogentia.js`. Anonymous
+`tools/list` is a **gated subset**. The maximum set is advertised through MCP
+2026-07-28 `server/discover`, `resources/list`, experimental `skills/list`
+(SEP-2640), `cogentia_pattern_list`, and `cogentia_cli_catalog`. Live inventory:
+`scripts/lib/capability-inventory.js`.
+
+Tools (non-exhaustive; prefer the catalog):
 
 > **Continuation Axiom**: When a Cogentia tool emits a continuation, it is non-blocking and asynchronous. It is up to the tool user / client agent to inspect, decide, and act upon that continuation using `cogentia_continuation_resolve` or `cogentia_continuation_emit`.
 

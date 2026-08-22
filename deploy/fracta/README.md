@@ -6,6 +6,7 @@
 |------|--------|
 | Health / deploy evidence | `operium` → `operium up` |
 | Fracta trust perimeter | `operium/docs/fracta-trust-perimeter.md` |
+| MCP catalog desired state | `operium/docs/mcp-capability-surface.md` |
 | Guide synthesis routing (Magistral → coding agents) | `operium/docs/magistral-coding-agent-routing.md` |
 | Desired Magistral map | `operium/profiles/magistral-map.coding-agents.v1.json` |
 

@@ -191,6 +191,18 @@ const ESTIMATE_SKIP_DIRS = new Set([
 ]);
 const PUBLIC_DAEMON_GET_ROUTES = new Set([
   "/api/status",
+  "/api/state",
+  "/api/repos",
+  "/api/plugins",
+  "/api/git/verify",
+  "/api/cli",
+  "/api/cli/state",
+  "/api/cli/status",
+  "/api/cli/grep",
+  "/api/cli/docs/query",
+  "/api/cli/docs/search",
+  "/api/cli/docs/snippet",
+  "/api/context/doc",
   "/api/index/status",
   "/api/index/search",
   "/api/context/health",

@@ -124,7 +124,17 @@ export function createRegistryAwareMcpCore(env = process.env) {
     async handleJsonRpc(message, transport = {}) {
       if (message?.method === "tools/list") {
         const response = await base.handleJsonRpc(message, transport);
-        if (response?.result?.tools) response.result.tools = [...response.result.tools, ...REGISTRY_TOOLS];
+        if (response?.result?.tools) {
+          const annotated = REGISTRY_TOOLS.map((tool) => ({
+            ...tool,
+            annotations: {
+              readOnlyHint: true,
+              destructiveHint: false,
+              openWorldHint: false,
+            },
+          }));
+          response.result.tools = [...response.result.tools, ...annotated];
+        }
         return response;
       }
       if (message?.method === "tools/call" && REGISTRY_TOOLS.some(tool => tool.name === message?.params?.name)) {

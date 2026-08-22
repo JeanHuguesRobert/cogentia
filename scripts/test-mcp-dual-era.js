@@ -56,7 +56,9 @@ assert.equal(discover.result.resultType, "complete");
 assert.ok(discover.result.supportedVersions.includes(PROTOCOL_VERSION_MODERN));
 assert.ok(discover.result.supportedVersions.includes(PROTOCOL_VERSION));
 assert.ok(discover.result.experimental?.skills_count >= 1);
-assert.equal(discover.result.experimental?.skills_delivery, "tools_first");
+assert.ok(["tools_first", "sep2640_and_tools_first"].includes(discover.result.experimental?.skills_delivery));
+assert.ok(discover.result.capabilities?.resources);
+assert.ok(discover.result.capabilities?.extensions?.["io.modelcontextprotocol/skills"]);
 
 const modernList = await publicCore.handleJsonRpc(
   {

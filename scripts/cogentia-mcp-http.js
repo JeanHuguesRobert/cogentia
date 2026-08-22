@@ -11,13 +11,13 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import {
   boundedInteger,
-  createMcpCore,
   jsonRpcError,
   mcpToolResult,
   SERVER_NAME,
   SERVER_VERSION,
   transportFromHttpRequest,
 } from "./lib/cogentia-mcp-core.js";
+import { createRegistryAwareMcpCore } from "./lib/cogentia-mcp-registries.js";
 import { aiRouterHealth } from "./lib/ai-router-client.js";
 import { mergeGuideRetrievalFromPacks } from "./lib/guide-retrieval-merge.js";
 import { retrievalInoxConfigured, retrievalInoxPackBatch, inoxRetrievalBaseUrl } from "./lib/retrieval-inox-session.js";
@@ -65,7 +65,7 @@ loadOptionalEnvFiles([
   process.env.COGENTIA_ENV_FILE,
 ]);
 
-const core = createMcpCore();
+const core = createRegistryAwareMcpCore();
 const blackboard = createBlackboardStore();
 const providerCircuitBreaker = createProviderCircuitBreaker();
 const semanticAnswerCache = createSemanticAnswerCache();

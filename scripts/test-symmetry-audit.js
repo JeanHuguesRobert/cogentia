@@ -35,6 +35,9 @@ async function testSymmetryAuditSuite() {
   assert.equal(mcpAudit.ok, true);
   assert.equal(mcpAudit.protocol, "cogentia.capability_symmetry.v1");
   assert.ok(mcpAudit.overallSymmetryScore >= 80);
+  assert.ok(mcpAudit.totalCapabilities >= 20, "live inventory should include CLI/skills/patterns, not only 6 canned rows");
+  assert.ok(mcpAudit.capabilities.some((c) => String(c.name).startsWith("skill.")));
+  assert.ok(mcpAudit.capabilities.some((c) => String(c.name).startsWith("pattern.")));
 
   console.log(JSON.stringify({
     ok: true,

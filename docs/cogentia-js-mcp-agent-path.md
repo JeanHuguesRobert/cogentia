@@ -327,6 +327,9 @@ Avoid dumping the entire CLI into tools/list (context window poison). Prefer **f
 
 - [x] Sandbox harness `sandbox/mcp-2026-cognitive-packet/` (skills-discover, packet-envelope, jhn-mutate-attestation).
 - [x] `server/discover` exposes **experimental** skills inventory (tools-first; not a marketplace claim).
+- [x] MCP 2026-07-28 `resources` / `prompts` / `completions` plus experimental `io.modelcontextprotocol/skills` (`skills/list`, `skills/get`, `skill://cogentia/…`).
+- [x] Patterns/Anti-patterns as tools + resources (`cogentia_pattern_list` / `pattern_get`).
+- [x] Live capability inventory (`cogentia_cli_catalog`, `cogentia://capability/catalog`) so gated verbs stay visible.
 - [x] **Agent JHN attested mutate**: when `COGENTIA_MCP_JHN_MUTATE=1` and `COGENTIA_MCP_JHN_TOKEN` match the request, and actor is `agent:jhn` or `agent:jhn.subagent:*` (header or `_meta`), mutate tools appear and may run. Anonymous public remains read-only.
 - [x] Skills still do not grant authority — only token + actor attestation does.
 - [ ] Operator: set Fracta `mcp-cogentia` drop-in with JHN token when ready (not in git).
@@ -393,7 +396,9 @@ git pull --ff-only origin main
 sudo systemctl restart cogentia.service mcp-cogentia.service
 curl -fsS http://127.0.0.1:8790/api/context/health?quick=1
 curl -fsS http://127.0.0.1:8791/health
-# External: tools/list should show 17 tools; mutate absent; emit → tier_forbidden
+# External: mutate tools absent from public tools/list;
+# server/discover advertises resources + io.modelcontextprotocol/skills;
+# skills/list and resources/list non-empty.
 ```
 
 Operium owns ops doctrine (`operium/docs/fracta-trust-perimeter.md`); this path only names the app surface.

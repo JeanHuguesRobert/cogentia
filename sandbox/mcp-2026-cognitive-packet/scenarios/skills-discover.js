@@ -42,17 +42,28 @@ export async function run() {
 
   const experimental = discover.result?.experimental || discover.result?._meta?.experimental;
 
+  const sepList = await core.handleJsonRpc({
+    jsonrpc: "2.0",
+    id: 3,
+    method: "skills/list",
+    params: { _meta: { [MCP_META.protocolVersion]: PROTOCOL_VERSION_MODERN } },
+  });
+
   return {
     ok:
       init.result?.serverInfo?.name === "cogentia-mcp" &&
       list.ok === true &&
       list.count >= 1 &&
       get.ok === true &&
-      get.skill?.slug === "continuation-handling",
+      get.skill?.slug === "continuation-handling" &&
+      Boolean(discover.result?.capabilities?.extensions?.["io.modelcontextprotocol/skills"]) &&
+      Array.isArray(sepList.result?.skills) &&
+      sepList.result.skills.length >= 1,
     initialize_version: init.result?.protocolVersion,
     discover_has_experimental_skills: Boolean(experimental?.skills || experimental?.skills_count),
+    sep2640_skill_count: sepList.result?.skills?.length || 0,
     skill_count: list.count,
     skill_ids: (list.skills || []).map((s) => s.id),
-    note: "Tools-first skill delivery; not a claim of MCP-distributed Skills marketplace support.",
+    note: "SEP-2640 skills/list plus tools-first skill_list/get; experimental, not a marketplace claim.",
   };
 }
