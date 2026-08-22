@@ -1,0 +1,51 @@
+schema: cogentia.registry.v0.2
+registry:
+  id: registry:propagation
+  name: Propagation Register
+  registry_class: domain-governance
+
+  records:
+    kinds:
+      - propagation-obligation
+
+  facets:
+    function:
+      - operational-state
+      - governance
+      - projection
+    authority: generated-projection
+    topology: distributed
+    temporality:
+      - stateful-evolving
+      - reconstructible
+    visibility: public
+    substrate:
+      - git-markdown
+      - embedded-yaml
+    granularity: corpus
+    mutation:
+      - human-reviewed
+      - agent-maintained-under-mandate
+
+  definition_source:
+    repo: JeanHuguesRobert/cogentia
+    path: research/propagation_register.md
+
+  record_authority:
+    mode: distributed-source-facts
+    description: Source facts remain in acts, packets, commits, reviews, issues, experiments or other evidence that created the propagation obligation.
+
+  relations:
+    - predicate: projects
+      object: corpus:propagation-obligations
+    - predicate: depends_on
+      object: corpus:source-evidence
+    - predicate: governed_by
+      object: policy:corpus-update
+
+  freshness:
+    mode: source-relative
+    fields:
+      - discovered_at
+      - status
+      - verification.status
