@@ -29,6 +29,14 @@ lifecycle_state: working
 4. **`get_lines` is independently slow** (40–63s, `inventory: none`). Separate from grep. Parallel `get_lines` + 60s MCP timeout ⇒ one call “unavailable”.
 5. **Process death after MCP grep was not reproduced** with HTTP-only greps. Treat MCP-era disappearances as: timeout + later restart/kill, until a JSONL `uncaughtException` or a Node report file appears.
 
+## Follow-up (same day): why `get_lines` was 40–113s
+
+`contextLines` called `buildInventory(ctx)` directly, **bypassing** `getDaemonInventory`. That is a full `git log -- *.md` over ~20 repos plus two reads of every markdown, to return 8 lines of one file. Probe: inventory **~110s** git dates; actual slice **7ms**.
+
+`loadContext()` also spawned `git remote get-url origin` for every registered repo **on every HTTP request** (including `health?quick=1`).
+
+Fix (in `cogentia.js`): `openContextDocument` resolves `repo:path` with `isInside` / visibility / ignore only; `loadContext` is mtime-cached and no longer calls git remotes in the per-request path.
+
 ## What we will not pretend
 
 Switching grep to FTS is a **performance** change, not an explanation of a crash we have not reproduced under isolation.

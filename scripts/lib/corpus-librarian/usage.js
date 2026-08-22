@@ -39,8 +39,8 @@ export async function exploreCorpusDeterministic(input = {}, options = {}) {
     path: "search_open",
   };
 
-  // include_text=1 returns gateway `text` (chunk body). Prefer this path:
-  // live public /api/context/lines currently hangs on this workstation (rate later).
+  // include_text=1 returns gateway `text` (chunk body). Prefer this path
+  // when the index already carries the span; /api/context/lines opens one file.
   const preferOpen = options.preferOpen === true;
   const searchResult = await searchUntilHits(tools, question, {
     limit: searchLimit,

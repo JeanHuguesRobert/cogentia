@@ -269,6 +269,10 @@ const daemonRateLimits = new Map();
 /** Short TTL inventory cache for MCP/daemon CLI read paths (buildInventory is expensive). */
 const DAEMON_INVENTORY_TTL_MS = 300_000;
 let daemonInventoryCache = null;
+/** Registry context: rebuilt when .cogentia.json mtime/size changes. */
+let loadedContextCache = null;
+/** git remote origin → owner/name, keyed by resolved repo path. */
+const gitRemoteFullNameCache = new Map();
 
 function getDaemonInventory(ctx) {
   const now = Date.now();
@@ -8866,6 +8870,21 @@ function loadContext() {
     ].join("\n");
     throw new Error(message);
   }
+  let stat;
+  try {
+    stat = fs.statSync(configPath);
+  } catch {
+    stat = null;
+  }
+  if (
+    loadedContextCache
+    && loadedContextCache.configPath === configPath
+    && stat
+    && loadedContextCache.mtimeMs === stat.mtimeMs
+    && loadedContextCache.size === stat.size
+  ) {
+    return loadedContextCache.ctx;
+  }
   const raw = JSON.parse(fs.readFileSync(configPath, "utf8"));
   const registryRoot = path.dirname(configPath);
   const repos = (raw.repos || []).map(r => {
@@ -8875,26 +8894,28 @@ function loadContext() {
       ...(raw.policies?.[r.name] || raw.repo_policies?.[r.name] || {}),
     };
     const repoPath = resolveRegistryPath(registryRoot, r.path || ".");
-    const githubFullName = normalizeGitHubFullName(
-      policy.github
-      || policy.github_repo
-      || githubFullNameFromRemote({ path: repoPath })
-      || `JeanHuguesRobert/${r.name}`
-    );
+    // Do not spawn `git remote` per repo on every request. Policy wins; else
+    // githubUrl / issue-sync resolve lazily via githubFullNameFromRemote cache.
+    const githubFullName = normalizeGitHubFullName(policy.github || policy.github_repo || "");
+    const fallbackName = githubFullName || `JeanHuguesRobert/${r.name}`;
     return {
       name: r.name,
       path: repoPath,
       branch: r.branch || "main",
       added: r.added,
       github_full_name: githubFullName,
-      owner: policy.owner || (githubFullName ? githubFullName.split("/")[0] : ""),
+      owner: policy.owner || fallbackName.split("/")[0],
       owner_kind: policy.owner_kind || "unknown",
       ownership: policy.ownership || policy.relation || "unknown",
       mandate: policy.mandate || "",
       policy: { default_scope: "all", ...policy },
     };
   });
-  return { configPath, registryRoot, config: raw, repos };
+  const ctx = { configPath, registryRoot, config: raw, repos };
+  if (stat) {
+    loadedContextCache = { configPath, mtimeMs: stat.mtimeMs, size: stat.size, ctx };
+  }
+  return ctx;
 }
 
 function resolveRegistryPath(registryRoot, targetPath) {
@@ -12370,16 +12391,116 @@ function contextPackMarkdown(pack) {
   return lines.join("\n");
 }
 
+function parseContextDocRef(ref) {
+  const clean = String(ref || "").replace(/\\/g, "/").replace(/#L\d+(?:-L\d+)?$/, "");
+  if (!clean || clean.includes("\0")) return null;
+  const colon = clean.indexOf(":");
+  if (colon > 0) {
+    const repo = clean.slice(0, colon);
+    const relPath = clean.slice(colon + 1);
+    if (!repo || !relPath) return null;
+    return { repo, rel: relPath };
+  }
+  const slash = clean.match(/^([^/]+)\/(.+\.md)$/i);
+  return slash ? { repo: slash[1], rel: slash[2] } : null;
+}
+
+function documentIgnoredForOpen(repo, relPath) {
+  const unix = String(relPath || "").replace(/\\/g, "/");
+  const issuePacket = unix.startsWith(".cogentia/issues/");
+  const policyExcluded = repo.policy?.default_scope === "research" && !unix.startsWith("research/") && !issuePacket;
+  const ignore = loadIgnore(repo.path);
+  const ignored = issuePacket ? false : (matchesIgnore(relPath, ignore) || policyExcluded);
+  return {
+    ignored,
+    ignored_reason: policyExcluded ? "policy:default_scope=research" : (matchesIgnore(relPath, ignore) ? "ignore" : ""),
+  };
+}
+
+/**
+ * Open one corpus markdown by repo:path without walking the registry.
+ * get_lines / doc used to call buildInventory (git log + double-read of every .md).
+ */
+function openContextDocument(ctx, ref) {
+  const t0 = Date.now();
+  const parsed = parseContextDocRef(ref);
+  if (!parsed || !/\.md$/i.test(parsed.rel)) {
+    lastInventoryAccess = { cache: "direct", ms: Date.now() - t0, docs: 0 };
+    return null;
+  }
+  const repo = ctx.repos.find(item => item.name === parsed.repo);
+  if (!repo) {
+    lastInventoryAccess = { cache: "direct", ms: Date.now() - t0, docs: 0 };
+    return null;
+  }
+  const full = path.resolve(repo.path, parsed.rel);
+  if (!isInside(repo.path, full) || !fs.existsSync(full) || !fs.statSync(full).isFile()) {
+    lastInventoryAccess = { cache: "direct", ms: Date.now() - t0, docs: 0 };
+    return null;
+  }
+  let realFile = full;
+  let realRoot = repo.path;
+  try {
+    realFile = fs.realpathSync(full);
+    realRoot = fs.realpathSync(repo.path);
+  } catch {
+    lastInventoryAccess = { cache: "direct", ms: Date.now() - t0, docs: 0 };
+    return null;
+  }
+  if (!isInside(realRoot, realFile)) {
+    lastInventoryAccess = { cache: "direct", ms: Date.now() - t0, docs: 0 };
+    return null;
+  }
+  const relPath = rel(repo.path, full);
+  const raw = readFileIfExists(full);
+  const fm = parseFrontmatter(raw);
+  const ignoreInfo = documentIgnoredForOpen(repo, relPath);
+  const visibility = documentVisibility(repo, relPath, fm.data);
+  const indexSets = buildIndexSets(repo);
+  const role = classifyRole(repo, relPath, full, fm.data, ignoreInfo.ignored, indexSets);
+  const doc = {
+    repo: repo.name,
+    repo_path: repo.path,
+    branch: repo.branch,
+    full_path: full,
+    rel: relPath,
+    github_url: fm.data.issue_url || fm.data.url || githubUrl(repo, relPath),
+    title: extractTitle(raw, full, fm.data),
+    role: role.role,
+    role_source: role.source,
+    role_confidence: role.confidence,
+    visibility,
+    frontmatter: fm.data,
+    size: {
+      bytes: Buffer.byteLength(raw),
+      body_bytes: Buffer.byteLength(fm.body),
+      words: wordCount(fm.body),
+      headings: countHeadings(fm.body),
+      reading_minutes: Math.max(1, Math.ceil(wordCount(fm.body) / 220)),
+    },
+    created: { date: "", source: "direct_open" },
+    updated: { date: "", source: "direct_open" },
+    links: { out_internal: 0, out_cross_repo: 0, in_internal: 0, in_cross_repo: 0 },
+    index: {
+      ignored: ignoreInfo.ignored,
+      ignored_reason: ignoreInfo.ignored_reason,
+      referenced: indexSets.all.has(path.resolve(full)) || relPath === "research/index.md",
+      published: indexSets.published.has(path.resolve(full)),
+    },
+  };
+  lastInventoryAccess = { cache: "direct", ms: Date.now() - t0, docs: 1 };
+  return { repo, doc };
+}
+
 function contextDocument(ctx, ref, view = PUBLIC_VIEW) {
   if (!ref) return { ok: false, error: "missing_ref" };
-  const inventory = buildInventory(ctx);
-  const doc = resolveContextDoc(inventory, ref);
-  if (!doc) return { ok: false, error: "document_not_found", ref };
-  const repo = ctx.repos.find(item => item.name === doc.repo);
+  const opened = openContextDocument(ctx, ref);
+  if (!opened) return { ok: false, error: "document_not_found", ref };
+  const { repo, doc } = opened;
   if (view !== FULL_VIEW && (!repo || !canIndexDocForPublic(repo, doc))) {
     return { ok: false, error: "document_not_found", ref };
   }
-  const document = sanitizeDoc(doc, inventory, view === FULL_VIEW ? PRIVATE_VIEW : PUBLIC_VIEW);
+  const document = sanitizeDoc(doc, null, view === FULL_VIEW ? PRIVATE_VIEW : PUBLIC_VIEW);
   if (view !== FULL_VIEW) delete document.full_path;
   return { ok: true, view, ref: `${doc.repo}:${doc.rel}`, document };
 }
@@ -12392,10 +12513,9 @@ function contextLines(ctx, ref, options = {}) {
     return { ok: false, error: "invalid_range", max_lines: MAX_CONTEXT_LINES };
   }
   const view = normalizeDaemonView(options.view) === FULL_VIEW ? FULL_VIEW : PUBLIC_VIEW;
-  const inventory = buildInventory(ctx);
-  const doc = resolveContextDoc(inventory, ref);
-  if (!doc) return { ok: false, error: "document_not_found", ref };
-  const repo = ctx.repos.find(item => item.name === doc.repo);
+  const opened = openContextDocument(ctx, ref);
+  if (!opened) return { ok: false, error: "document_not_found", ref };
+  const { repo, doc } = opened;
   if (view !== FULL_VIEW && (!repo || !canIndexDocForPublic(repo, doc))) {
     return { ok: false, error: "document_not_found", ref };
   }
@@ -13908,12 +14028,17 @@ function resolveIssueRepo(ctx, repoArg) {
 }
 
 function githubFullNameFromRemote(repo) {
+  const key = path.resolve(repo.path || "");
+  if (gitRemoteFullNameCache.has(key)) return gitRemoteFullNameCache.get(key);
+  let name = "";
   try {
     const remote = execFileSync("git", ["-C", repo.path, "remote", "get-url", "origin"], { encoding: "utf8" }).trim();
-    return parseGitHubFullName(remote);
+    name = parseGitHubFullName(remote);
   } catch {
-    return "";
+    name = "";
   }
+  gitRemoteFullNameCache.set(key, name);
+  return name;
 }
 
 function parseGitHubFullName(remote) {
