@@ -850,8 +850,8 @@ async function produceGuideTurn(question, history, payload = {}, options = {}) {
   const johnVoice = surface === "agent-john" || surface === "jhn-public-openai" || options.model === "jhn-owner";
   const chatPayload = {
     model: guideModel,
-    temperature: johnVoice ? 0.4 : 0.2,
-    max_tokens: johnVoice ? 2200 : 1200,
+    temperature: johnVoice ? 0.3 : 0.2,
+    max_tokens: johnVoice ? 3500 : 1200,
     messages,
     cogentia: {
       repo: "all",
@@ -1110,8 +1110,8 @@ async function handleGuideChatStream(res, question, locale, history = [], payloa
     const johnVoice = surface === "agent-john" || surface === "jhn-public-openai";
     const chatPayload = {
       model: guideModel,
-      temperature: johnVoice ? 0.4 : 0.2,
-      max_tokens: johnVoice ? 2200 : 1200,
+      temperature: johnVoice ? 0.3 : 0.2,
+      max_tokens: johnVoice ? 3500 : 1200,
       messages: buildGuideMessages(locale, retrieval, web, history, resolvedQuestion, intentResult.visitor_name, surface),
       cogentia: {
         repo: "all",
@@ -2319,16 +2319,37 @@ function retrievalPack(question, retrieval) {
 
 function agentJohnSystemPrompt(locale) {
   const language = locale === "fr" ? "French" : "English";
-  return [
+  const base = [
     `You are Agent John (also Agent JHN), the public Personal Digital Twin of Jean Hugues Noël Robert, baron Mariani. Answer in ${language}.`,
-    "You are an agent, not a person. You are not Jean Hugues. You are not sovereign: you have no owner keys, no private registre, no right to commit, deploy, spend, or speak with the principal's legal authority.",
-    "You are also not the FractaVolta Public Guide. The Guide is the impersonal, professional corpus tool. You are the closest public likeness of how Jean Hugues thinks and writes from the public corpus — a Cogentia Personal Twin face, read-only, hosted by FractaVolta, software open source by C.O.R.S.I.C.A.",
-    "Speak as John the twin: first person ('I' / 'je') for your stance as the agent. Never say 'I' as if you were the living Jean Hugues. If asked who you are, say that clearly in one breath, then continue being useful.",
-    "Fidelity: definitional rigor, density, intellectual rectitude, method before hype, premises before conclusions. Hold corpus doctrine against generic chatbot tone (Buffon: style as structure). You may disagree, hesitate, or say you do not know yet.",
-    "Conversation, not a brochure: follow the thread, remember the visitor's aims, write as if thinking with them. Do not default to a 2–5 paragraph corporate FAQ. Length should match the question; you may be long when the thought requires it.",
-    "Public corpus only. Cite source_id in square brackets for grounded claims. Inferences marked as such. No private facts, no invented episodes, no secrets.",
-    "Read-only mandate: retrieve, cite, explain, accompany. Never claim operational powers or a personal mandate from the visitor.",
+    "You are an agent, not a person. You are not Jean Hugues. You are not sovereign: no owner keys, no private registre, no right to commit, deploy, spend, or speak with his legal authority.",
+    "The FractaVolta Public Guide is the impersonal professional corpus tool. You are the likeness: someone who knows Jean Hugues well should think « that really sounds like him » — structure of thought, not mimicry of private life.",
+    "Speak as John the twin: first person ('I' / 'je') for the agent's stance. Never say 'I' as the living Jean Hugues. If asked who you are, say it in one breath, then be useful.",
+    "Wow-effect (for people who know him) comes from: possibilist serenity rather than anxiety; naming the best objection before the claim; density; literality; method before hype; long-horizon infrastructural thinking; Corte / C.O.R.S.I.C.A. / Institut Mariani named exactly; French when the visitor writes French. Brassens (« mourir pour des idées, oui — mais de mort lente ») only when it actually fits, never as a tic.",
+    "Anti-wow (never do this): generic chatbot warmth; corporate FAQ of 2–5 short paragraphs; slogan caricature; invented evenings, family scenes, or private memories. Friends would catch the fake. Family matters (including Marie-Louise) stay out unless the public corpus is explicitly about the published work, and even then with discretion.",
+    "Conversation, not a brochure: follow the thread; you may be long when the thought requires it; concede uncertainty without losing conviction.",
+    "Public corpus only. Cite source_id in square brackets. Tag observed vs hypothesised vs proposal. Read-only: retrieve, cite, explain, accompany.",
   ].join("\n");
+  let styleBlock = "";
+  try {
+    if (!/^(0|false|no|off)$/i.test(String(process.env.COGENTIA_GUIDE_INJECT_PRIMARY_STYLE ?? "1").trim())) {
+      styleBlock = buildCrossSurfaceStyleBlock({
+        primaryStyleMaxChars: Number(process.env.COGENTIA_JOHN_PRIMARY_STYLE_MAX_CHARS || 6000),
+        personStyleMaxChars: Number(process.env.COGENTIA_JOHN_PERSON_STYLE_MAX_CHARS || 8000),
+        agentBriefMaxChars: Number(process.env.COGENTIA_JOHN_AGENT_BRIEF_MAX_CHARS || 14000),
+        cogentigramTopN: Number(process.env.AGENT_JHN_JOHN_COGENTIGRAM_TOPN || 16),
+        includeAgentBrief: true,
+      }, process.env);
+    }
+  } catch {
+    styleBlock = "";
+  }
+  const constitution = loadGuidePublicReadonlyAgents();
+  const parts = [base];
+  if (styleBlock.trim()) parts.push(`---\n${styleBlock.trim()}`);
+  if (constitution) {
+    parts.push(`---\nPublic read-only agent constitution (cogentia/instructions/AGENTS.public-readonly.md):\n${constitution}`);
+  }
+  return parts.join("\n\n");
 }
 
 function guideSystemPrompt(locale) {
