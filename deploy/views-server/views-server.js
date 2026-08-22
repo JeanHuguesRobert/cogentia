@@ -1128,6 +1128,19 @@ function sendDownload(res, filePath) {
   res.end(fs.readFileSync(filePath));
 }
 
+function suppressResponseBody(res) {
+  const end = res.end.bind(res);
+  res.write = (_chunk, encoding, callback) => {
+    const done = typeof encoding === "function" ? encoding : callback;
+    if (typeof done === "function") done();
+    return true;
+  };
+  res.end = (_chunk, encoding, callback) => {
+    const done = typeof encoding === "function" ? encoding : callback;
+    return typeof done === "function" ? end(done) : end();
+  };
+}
+
 function escapeHtml(s) {
   return String(s)
     .replace(/&/g, "&amp;")
@@ -2346,6 +2359,11 @@ function serveViewByFileName(res, url, fileName) {
 
 const server = http.createServer((req, res) => {
   try {
+    if (req.method !== "GET" && req.method !== "HEAD") {
+      res.writeHead(405, { Allow: "GET, HEAD" });
+      return res.end();
+    }
+    if (req.method === "HEAD") suppressResponseBody(res);
     const url = new URL(req.url, `http://${req.headers.host || "localhost"}`);
 
     if (url.pathname === "/health" || url.pathname === "/api/health") {

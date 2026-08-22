@@ -220,3 +220,10 @@ node scripts/cogentia-mcp.js
 # HTTP Adapter (for web connectors and remote endpoints)
 COGENTIA_DAEMON_URL=http://127.0.0.1:8790 COGENTIA_MCP_VIEW=public PORT=8791 node scripts/cogentia-mcp-http.js
 ```
+
+## HTTP `HEAD` semantics
+
+Public read endpoints accept `HEAD` with the same status and relevant headers
+as `GET`, but no response body. SSE endpoints (`/sse`, `GET /mcp`) remain
+stream-only and return `405` to `HEAD`; mutation routes remain `POST` only.
+Use `GET /guide/health` when the diagnostic body is needed.

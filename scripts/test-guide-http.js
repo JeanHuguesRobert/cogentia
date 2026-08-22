@@ -217,6 +217,21 @@ try {
   assert.equal(health.context.planner_enabled, true);
   assert.equal(health.context.semantic_retrieval.state, "unknown");
 
+  const healthHead = await fetch(`${mcpBase}/guide/health`, { method: "HEAD" });
+  assert.equal(healthHead.status, healthResponse.status);
+  assert.equal(healthHead.headers.get("content-type"), healthResponse.headers.get("content-type"));
+  assert.equal(await healthHead.text(), "");
+
+  const toolsHead = await fetch(`${mcpBase}/tools`, { method: "HEAD" });
+  assert.equal(toolsHead.status, 200);
+  assert.equal(toolsHead.headers.get("content-type"), "application/json");
+  assert.equal(await toolsHead.text(), "");
+
+  const streamHead = await fetch(`${mcpBase}/sse`, { method: "HEAD" });
+  assert.equal(streamHead.status, 405);
+  assert.equal(streamHead.headers.get("allow"), "GET");
+  assert.equal(await streamHead.text(), "");
+
   const chat = await postJson(`${mcpBase}/guide/chat`, {
     question: "What is the FractaVolta public Guide digital twin?",
     locale: "en",

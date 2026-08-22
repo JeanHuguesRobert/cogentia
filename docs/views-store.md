@@ -75,6 +75,9 @@ Base URL (public): `https://cogentia.fractavolta.com`
 
 All JSON responses use `Content-Type: application/json; charset=utf-8` and `Cache-Control: no-store`.
 
+All public Views Store representations accept `HEAD` as the no-body equivalent
+of `GET`; other methods return `405 Method Not Allowed`.
+
 ### `GET /api/health`
 
 ```json
