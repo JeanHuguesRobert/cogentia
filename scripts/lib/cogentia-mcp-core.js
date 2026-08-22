@@ -1496,7 +1496,10 @@ export function createMcpCore(env = process.env) {
     try {
       response = await fetch(url, { method: "GET", headers, redirect: "error", signal: AbortSignal.timeout(requestTimeoutMs) });
     } catch (error) {
-      throw new Error(`Cogentia daemon unavailable at ${daemonUrl.origin}: ${error.message}`);
+      const err = new Error(`Cogentia daemon unavailable at ${daemonUrl.origin}: ${error.message}`);
+      err.cause = error;
+      err.name = error?.name || "Error";
+      throw err;
     }
     const contentType = response.headers.get("content-type") || "";
     const body = contentType.includes("application/json") ? await response.json() : await response.text();
@@ -1543,7 +1546,10 @@ export function createMcpCore(env = process.env) {
         signal: AbortSignal.timeout(requestTimeoutMs),
       });
     } catch (error) {
-      throw new Error(`Cogentia daemon unavailable at ${daemonUrl.origin}: ${error.message}`);
+      const err = new Error(`Cogentia daemon unavailable at ${daemonUrl.origin}: ${error.message}`);
+      err.cause = error;
+      err.name = error?.name || "Error";
+      throw err;
     }
     const contentType = response.headers.get("content-type") || "";
     const parsed = contentType.includes("application/json") ? await response.json() : await response.text();

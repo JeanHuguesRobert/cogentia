@@ -227,9 +227,19 @@ function defaultMandateHint(toolName, allowMutate) {
 
 export function classifyToolError(error, toolName = "") {
   const msg = String(error?.message || error || "");
+  const name = String(error?.name || "");
   if (error?.error_class) return String(error.error_class);
   if (/tier_forbidden/i.test(msg)) return "tier_forbidden";
-  if (/unavailable|ECONNREFUSED|fetch failed|aborted|timeout/i.test(msg)) return "daemon_unavailable";
+  // Timeouts mean the daemon (or event loop) did not answer in time — often
+  // a blocked inventory walk, not a dead process. Connection refused is down.
+  if (
+    name === "TimeoutError"
+    || /aborted due to timeout|TimeoutError/i.test(msg)
+  ) {
+    return "daemon_timeout";
+  }
+  if (/ECONNREFUSED|ECONNRESET|fetch failed|unavailable/i.test(msg)) return "daemon_unavailable";
+  if (/aborted|timeout/i.test(msg)) return "daemon_timeout";
   if (/HTTP 401|unauthorized|admin token/i.test(msg)) return "unauthorized";
   if (/HTTP 403|forbidden/i.test(msg)) return "forbidden";
   if (/HTTP 404|not_found|skill_not_found|continuation_not_found/i.test(msg)) return "not_found";

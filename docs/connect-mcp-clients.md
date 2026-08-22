@@ -93,6 +93,22 @@ asserting a specific passage.
 
 Start or verify the local daemon first:
 
+Preferred on Windows (pid file + logs, does not steal the Grok job):
+
+```powershell
+cd C:\tweesic\cogentia
+pwsh -File scripts\ops\start-cogentia-daemon-windows.ps1
+# optional supervisor:
+node scripts\ops\watch-cogentia-daemon-windows.js
+```
+
+Traces: `%USERPROFILE%\.cogentia\logs\cogentia-daemon.jsonl` (`event=http` with `inventory.cache` hit/miss and duration).  
+Watchdog log: `cogentia-daemon-watch.jsonl`.
+
+MCP distinguishes **`daemon_timeout`** (event loop stalled, often a markdown inventory rebuild) from **`daemon_unavailable`** (nothing listening). Grep/docs CLI routes now reuse a 60s inventory cache; the daemon warms that cache before `listen`.
+
+Bare start (still valid):
+
 ```powershell
 cd C:\tweesic\cogentia
 $env:COGENTIA_REGISTRY = 'C:\tweesic\JeanHuguesRobert\.cogentia.json'

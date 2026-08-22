@@ -12,6 +12,7 @@
 
 import fs from "node:fs";
 import http from "node:http";
+import os from "node:os";
 import path from "node:path";
 import readline from "node:readline";
 import { execFileSync } from "node:child_process";
@@ -277,11 +278,48 @@ function getDaemonInventory(ctx) {
     && daemonInventoryCache.key === key
     && now - daemonInventoryCache.at < DAEMON_INVENTORY_TTL_MS
   ) {
+    lastInventoryAccess = { cache: "hit", ms: 0, docs: daemonInventoryCache.inventory?.documents?.length || 0 };
     return daemonInventoryCache.inventory;
   }
+  const t0 = Date.now();
   const inventory = buildInventory(ctx);
+  const ms = Date.now() - t0;
+  lastInventoryAccess = { cache: "miss", ms, docs: inventory?.documents?.length || 0 };
   daemonInventoryCache = { key, at: now, inventory };
+  daemonTrace({
+    event: "inventory_build",
+    ms,
+    docs: lastInventoryAccess.docs,
+    cache: "miss",
+  });
   return inventory;
+}
+
+/** Last getDaemonInventory access in this request (request logger). */
+let lastInventoryAccess = { cache: "none", ms: 0, docs: 0 };
+
+function daemonLogPath() {
+  const fromEnv = String(process.env.COGENTIA_DAEMON_LOG || "").trim();
+  if (fromEnv) return fromEnv;
+  return path.join(os.homedir(), ".cogentia", "logs", "cogentia-daemon.jsonl");
+}
+
+function daemonTrace(record) {
+  const line = JSON.stringify({
+    ts: new Date().toISOString(),
+    pid: process.pid,
+    ...record,
+  });
+  try {
+    const logFile = daemonLogPath();
+    fs.mkdirSync(path.dirname(logFile), { recursive: true });
+    fs.appendFileSync(logFile, `${line}\n`);
+  } catch {
+    // Tracing must never take down the daemon.
+  }
+  if (process.env.COGENTIA_DAEMON_TRACE === "1") {
+    console.error(line);
+  }
 }
 
 const argv = process.argv.slice(2);
@@ -2201,6 +2239,16 @@ async function cmdDaemon() {
     throw new Error(`Invalid daemon port: ${port}`);
   }
   const ctx = loadContext();
+  process.on("uncaughtException", (err) => {
+    daemonTrace({ event: "uncaughtException", message: err?.message, stack: err?.stack });
+    console.error("uncaughtException", err);
+    process.exit(1);
+  });
+  process.on("unhandledRejection", (reason) => {
+    daemonTrace({ event: "unhandledRejection", message: String(reason?.message || reason) });
+    console.error("unhandledRejection", reason);
+    process.exit(1);
+  });
   // load plugins which may register additional HTTP routes
   try {
     await loadDaemonPlugins(ctx);
@@ -2208,9 +2256,15 @@ async function cmdDaemon() {
     console.error(`Failed to load daemon plugins: ${e.message}`);
   }
 
+  // Do not walk the full markdown inventory before listen: that blocks (and can
+  // OOM) the process so health checks never bind. Cache fills on first CLI-docs
+  // route; health?quick=1 stays inventory-free.
+  daemonTrace({ event: "listen", port, host });
+
   const server = http.createServer((req, res) => {
     res.cogentiaOrigin = daemonCorsOrigin(req);
     handleDaemonRequest(req, res).catch(err => {
+      daemonTrace({ event: "request_error", message: err?.message, stack: err?.stack });
       daemonJson(res, 500, {
         ok: false,
         error: "internal_error",
@@ -2220,6 +2274,7 @@ async function cmdDaemon() {
   });
   server.listen(port, host, () => {
     console.log(`Cogentia Local daemon listening on http://${host}:${port}`);
+    console.log(`Daemon traces: ${daemonLogPath()}`);
     if (withMcp) {
       const mcpPort = Number(valueFlag("--mcp-port") || process.env.COGENTIA_MCP_PORT || 8791);
       console.log(`[Single-Process Mode] Starting embedded MCP server on port ${mcpPort}...`);
@@ -2230,6 +2285,18 @@ async function cmdDaemon() {
 }
 async function handleDaemonRequest(req, res) {
   const url = new URL(req.url || "/", "http://127.0.0.1");
+  const t0 = Date.now();
+  lastInventoryAccess = { cache: "none", ms: 0, docs: 0 };
+  res.on("finish", () => {
+    daemonTrace({
+      event: "http",
+      method: req.method,
+      path: url.pathname,
+      status: res.statusCode,
+      ms: Date.now() - t0,
+      inventory: lastInventoryAccess,
+    });
+  });
   const view = daemonRequestView(req, url);
   res.cogentiaView = view;
   res.cogentiaPublicPostAllowed = PUBLIC_DAEMON_POST_ROUTES.has(url.pathname);
@@ -2508,7 +2575,7 @@ async function handleDaemonRequest(req, res) {
   if (req.method === "GET" && url.pathname === "/api/context/guide-resolve") {
     const q = url.searchParams.get("q") || "";
     const effectiveCtx = ctx || loadContext();
-    const inventory = buildInventory(effectiveCtx);
+    const inventory = getDaemonInventory(effectiveCtx);
     const effectiveView = resolveEffectiveView(view, url.searchParams.get("view"));
     const docs = visibleDocs(inventory, effectiveView);
     const result = guideResolve(q, docs);
@@ -3352,7 +3419,7 @@ function daemonCliState(ctx, view = PUBLIC_VIEW) {
 }
 
 function daemonCliStatus(ctx, view = PUBLIC_VIEW) {
-  const inventory = buildInventory(ctx);
+  const inventory = getDaemonInventory(ctx);
   const git = verifyGit(ctx);
   const rows = daemonReposForView(ctx, view).map(repo => {
     const docs = visibleDocs(inventory, PUBLIC_VIEW).filter(d => d.repo === repo.name);
@@ -3381,7 +3448,7 @@ function daemonCliStatus(ctx, view = PUBLIC_VIEW) {
 }
 
 function daemonCliGrep(ctx, url) {
-  const inventory = buildInventory(ctx);
+  const inventory = getDaemonInventory(ctx);
   const q = url.searchParams.get('q') || '';
   const repo = url.searchParams.get('repo') || 'all';
   const limit = parseInt(url.searchParams.get('limit'), 10) || 25;
@@ -3390,12 +3457,12 @@ function daemonCliGrep(ctx, url) {
 }
 
 function daemonCliDocsSummary(ctx) {
-  const inventory = buildInventory(ctx);
+  const inventory = getDaemonInventory(ctx);
   return docSummary(inventory, PUBLIC_VIEW);
 }
 
 function daemonCliDocsQuery(ctx, url, daemonView = PUBLIC_VIEW) {
-  const inventory = buildInventory(ctx);
+  const inventory = getDaemonInventory(ctx);
   const filter = {
     repo: url.searchParams.get('repo') || 'all',
     view: resolveEffectiveView(daemonView, url.searchParams.get('view')),
@@ -3411,7 +3478,7 @@ function daemonCliDocsQuery(ctx, url, daemonView = PUBLIC_VIEW) {
 }
 
 function daemonCliDocsSearch(ctx, url) {
-  const inventory = buildInventory(ctx);
+  const inventory = getDaemonInventory(ctx);
   const q = url.searchParams.get('q') || '';
   const repo = url.searchParams.get('repo') || 'all';
   const limit = parseInt(url.searchParams.get('limit'), 10) || 25;
@@ -3571,7 +3638,7 @@ function daemonCliEmbeddingsStatus(ctx, view = PUBLIC_VIEW) {
 }
 
 function daemonCliDocsSnippet(ctx, url) {
-  const inventory = buildInventory(ctx);
+  const inventory = getDaemonInventory(ctx);
   const ref = url.searchParams.get('ref') || '';
   const q = url.searchParams.get('q') || '';
   if (!ref) return { ok: false, error: 'missing_ref' };
