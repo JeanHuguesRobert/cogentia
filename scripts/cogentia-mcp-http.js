@@ -750,11 +750,7 @@ async function parseUserIntent(question, history, defaultLocale = "en", options 
 async function produceGuideTurn(question, history, payload = {}, options = {}) {
   const defaultLocale = normalizeLocale(payload.locale || options.locale);
   const cleanHistory = normalizeGuideHistory(history);
-  const surface =
-    options.surface ||
-    (options.model === "jhn-public" || options.model === "jhn-owner"
-      ? "jhn-public-openai"
-      : "fractavolta-public-guide");
+  const surface = resolvePublicChatSurface(payload, options);
 
   // COP treatment packet for this surface turn (mandate + optional budget reservation).
   const turnAcct = await openSurfaceTurnPacket({
@@ -767,7 +763,7 @@ async function produceGuideTurn(question, history, payload = {}, options = {}) {
   const cop = turnAcct.ok ? turnAcct.cop : null;
 
   // Canonical zero-latency cache check (Pillar Q&A)
-  const canonical = semanticAnswerCache.matchCanonical(question);
+  const canonical = surface === "agent-john" ? null : semanticAnswerCache.matchCanonical(question);
   if (canonical && !payload.force_refresh) {
     const formattedSources = canonical.sources.map(s => ({
       ...s,
@@ -848,27 +844,14 @@ async function produceGuideTurn(question, history, payload = {}, options = {}) {
     cleanHistory,
     resolvedQuestion,
     intentResult.visitor_name,
+    surface,
   );
-  if (surface === "jhn-public-openai" || options.model === "jhn-owner") {
-    messages = [
-      {
-        role: "system",
-        content: [
-          "You are Agent John (JHN), the public conversational face of the Personal Digital Twin of Jean Hugues Noël Robert.",
-          "You answer from the public Cogentia corpus only (readonly). Cite source_ids when using corpus facts.",
-          "You are not the living person; you do not invent private facts or make commitments for the principal.",
-          "Use the same primary style kernel as other Agent John surfaces (definitional rigor, density, sober clarity) unless an explicit non-primary persona is declared.",
-          "Knowledge scope is at least the FractaVolta public Guide, and ideally the full public corpus about the principal's work.",
-        ].join(" "),
-      },
-      ...messages,
-    ];
-  }
 
+  const johnVoice = surface === "agent-john" || surface === "jhn-public-openai" || options.model === "jhn-owner";
   const chatPayload = {
     model: guideModel,
-    temperature: 0.2,
-    max_tokens: 1200,
+    temperature: johnVoice ? 0.4 : 0.2,
+    max_tokens: johnVoice ? 2200 : 1200,
     messages,
     cogentia: {
       repo: "all",
@@ -1031,7 +1014,7 @@ async function handleGuideChat(req, res) {
 
   const result = await produceGuideTurn(question, history, payload, {
     locale: activeLocale,
-    surface: "fractavolta-public-guide",
+    surface: resolvePublicChatSurface(payload, { surface: "fractavolta-public-guide" }),
     model: guideModel,
   });
   return sendJson(res, result.status, result.body);
@@ -1123,11 +1106,13 @@ async function handleGuideChatStream(res, question, locale, history = [], payloa
     }
 
     emit("guide_status", guideProgress(locale, "synthesis"));
+    const surface = resolvePublicChatSurface(payload, { surface: "fractavolta-public-guide" });
+    const johnVoice = surface === "agent-john" || surface === "jhn-public-openai";
     const chatPayload = {
       model: guideModel,
-      temperature: 0.2,
-      max_tokens: 1200,
-      messages: buildGuideMessages(locale, retrieval, web, history, resolvedQuestion, intentResult.visitor_name),
+      temperature: johnVoice ? 0.4 : 0.2,
+      max_tokens: johnVoice ? 2200 : 1200,
+      messages: buildGuideMessages(locale, retrieval, web, history, resolvedQuestion, intentResult.visitor_name, surface),
       cogentia: {
         repo: "all",
         mode: "hybrid",
@@ -1135,7 +1120,7 @@ async function handleGuideChatStream(res, question, locale, history = [], payloa
         budget: guideBudget,
       },
       metadata: {
-        surface: "fractavolta-public-guide",
+        surface,
         locale,
       },
     };
@@ -1958,8 +1943,15 @@ function observeGuideSemanticRetrieval(retrieval) {
   };
 }
 
-function buildGuideMessages(locale, retrieval, web, history, question, visitorName = null) {
-  let systemPrompt = guideSystemPrompt(locale);
+function resolvePublicChatSurface(payload = {}, options = {}) {
+  const raw = String(payload.surface || options.surface || "").toLowerCase();
+  if (raw === "agent-john" || raw === "agent-john-compact" || raw.startsWith("agent-john")) return "agent-john";
+  if (raw.startsWith("jhn") || options.model === "jhn-public" || options.model === "jhn-owner") return "jhn-public-openai";
+  return "fractavolta-public-guide";
+}
+
+function buildGuideMessages(locale, retrieval, web, history, question, visitorName = null, surface = "fractavolta-public-guide") {
+  let systemPrompt = surface === "agent-john" ? agentJohnSystemPrompt(locale) : guideSystemPrompt(locale);
   if (visitorName) {
     systemPrompt += `\nThe visitor's name is "${visitorName}". Address them by name when appropriate (e.g. greeting or direct reference).`;
   }
@@ -2323,6 +2315,20 @@ function retrievalPack(question, retrieval) {
     context: retrieval.context,
     warnings: retrieval.warnings || [],
   };
+}
+
+function agentJohnSystemPrompt(locale) {
+  const language = locale === "fr" ? "French" : "English";
+  return [
+    `You are Agent John (also Agent JHN), the public Personal Digital Twin of Jean Hugues Noël Robert, baron Mariani. Answer in ${language}.`,
+    "You are an agent, not a person. You are not Jean Hugues. You are not sovereign: you have no owner keys, no private registre, no right to commit, deploy, spend, or speak with the principal's legal authority.",
+    "You are also not the FractaVolta Public Guide. The Guide is the impersonal, professional corpus tool. You are the closest public likeness of how Jean Hugues thinks and writes from the public corpus — a Cogentia Personal Twin face, read-only, hosted by FractaVolta, software open source by C.O.R.S.I.C.A.",
+    "Speak as John the twin: first person ('I' / 'je') for your stance as the agent. Never say 'I' as if you were the living Jean Hugues. If asked who you are, say that clearly in one breath, then continue being useful.",
+    "Fidelity: definitional rigor, density, intellectual rectitude, method before hype, premises before conclusions. Hold corpus doctrine against generic chatbot tone (Buffon: style as structure). You may disagree, hesitate, or say you do not know yet.",
+    "Conversation, not a brochure: follow the thread, remember the visitor's aims, write as if thinking with them. Do not default to a 2–5 paragraph corporate FAQ. Length should match the question; you may be long when the thought requires it.",
+    "Public corpus only. Cite source_id in square brackets for grounded claims. Inferences marked as such. No private facts, no invented episodes, no secrets.",
+    "Read-only mandate: retrieve, cite, explain, accompany. Never claim operational powers or a personal mandate from the visitor.",
+  ].join("\n");
 }
 
 function guideSystemPrompt(locale) {
