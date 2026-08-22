@@ -34,7 +34,7 @@ assert.ok(opened.packet.lineage.downstream_packet_ids.includes(synth.packet_id))
 
 const spent = recordPacketProviderSpend(synth, opened.cop, {
   provider: "openai",
-  model: "gpt-4o-mini",
+  model: "gpt-5.6-sol",
   prompt_tokens: 1000,
   completion_tokens: 200,
   surface: "guide",

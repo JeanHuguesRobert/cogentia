@@ -2335,61 +2335,70 @@ async function guideOpenAiChatCompletions(payload = {}) {
   if (!apiKey) {
     return { ok: false, error: "openai_key_missing", status: 0 };
   }
-  const model = String(
-    process.env.COGENTIA_GUIDE_OPENAI_MODEL
-    || process.env.AGENT_JHN_WHATSAPP_OPENAI_MODEL
-    || "gpt-4o-mini",
-  );
+  const candidateModels = [
+    process.env.COGENTIA_GUIDE_OPENAI_MODEL,
+    process.env.AGENT_JHN_WHATSAPP_OPENAI_MODEL,
+    "gpt-5.6-sol",
+    process.env.AGENT_JHN_WHATSAPP_OPENAI_FALLBACK_MODEL,
+    "gpt-5.6-terra",
+  ].filter(Boolean).filter((m, idx, arr) => arr.indexOf(m) === idx);
+
   const messages = Array.isArray(payload.messages) ? payload.messages : [];
   if (!messages.length) return { ok: false, error: "empty_messages", status: 0 };
   const timeoutMs = boundedInteger(process.env.COGENTIA_GUIDE_OPENAI_TIMEOUT_MS, 45000, 5000, 120000);
-  try {
-    const response = await fetch("https://api.openai.com/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${apiKey}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model,
-        messages: messages.map(message => ({
-          role: ["system", "user", "assistant"].includes(message?.role) ? message.role : "user",
-          content: typeof message?.content === "string"
-            ? message.content
-            : JSON.stringify(message?.content ?? ""),
-        })),
-        temperature: Number.isFinite(payload.temperature) ? payload.temperature : 0.2,
-        max_tokens: boundedInteger(payload.max_tokens, 1200, 200, 4000),
-      }),
-      signal: AbortSignal.timeout(timeoutMs),
-    });
-    const body = await response.json().catch(() => null);
-    if (!response.ok) {
-      console.error("[guide-openai] error:", response.status, body?.error?.message || response.statusText);
+
+  let lastError = null;
+  for (const model of candidateModels) {
+    try {
+      const response = await fetch("https://api.openai.com/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${apiKey}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          model,
+          messages: messages.map(message => ({
+            role: ["system", "user", "assistant"].includes(message?.role) ? message.role : "user",
+            content: typeof message?.content === "string"
+              ? message.content
+              : JSON.stringify(message?.content ?? ""),
+          })),
+          temperature: Number.isFinite(payload.temperature) ? payload.temperature : 0.2,
+          max_tokens: boundedInteger(payload.max_tokens, 1200, 200, 4000),
+        }),
+        signal: AbortSignal.timeout(timeoutMs),
+      });
+      const body = await response.json().catch(() => null);
+      if (!response.ok) {
+        lastError = {
+          ok: false,
+          status: response.status,
+          error: "openai_http_error",
+          body: { error: { type: body?.error?.type || "openai_http_error", message: body?.error?.message || response.statusText } },
+        };
+        console.error(`[guide-openai] error with model ${model}:`, response.status, body?.error?.message || response.statusText);
+        continue;
+      }
       return {
+        ok: true,
+        status: 200,
+        body: {
+          ...body,
+          model: body?.model || model,
+          _cogentia_guide_synthesis: "openai_direct_fallback",
+        },
+      };
+    } catch (error) {
+      lastError = {
         ok: false,
-        status: response.status,
-        error: "openai_http_error",
-        body: { error: { type: body?.error?.type || "openai_http_error", message: body?.error?.message || response.statusText } },
+        status: 0,
+        error: "openai_unavailable",
+        body: { error: { type: "openai_unavailable", message: String(error?.message || error).slice(0, 200) } },
       };
     }
-    return {
-      ok: true,
-      status: 200,
-      body: {
-        ...body,
-        model: body?.model || model,
-        _cogentia_guide_synthesis: "openai_direct_fallback",
-      },
-    };
-  } catch (error) {
-    return {
-      ok: false,
-      status: 0,
-      error: "openai_unavailable",
-      body: { error: { type: "openai_unavailable", message: String(error?.message || error).slice(0, 200) } },
-    };
   }
+  return lastError || { ok: false, error: "openai_all_candidates_failed", status: 0 };
 }
 
 function guideFallbackText(locale) {

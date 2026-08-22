@@ -28,7 +28,7 @@ const outDir = path.resolve(args.outDir || path.join(root, ".cogentia", "evals",
 const limit = args.limit ? Number(args.limit) : 0;
 const timeoutMs = Number(args.timeoutMs || process.env.GUIDE_EVAL_TIMEOUT_MS || 90000);
 const semantic = Boolean(args.semantic) || process.env.GUIDE_FIDELITY_SEMANTIC === "1";
-const judgeModel = args.judgeModel || process.env.GUIDE_FIDELITY_JUDGE_MODEL || "gpt-4o-mini";
+const judgeModel = args.judgeModel || process.env.GUIDE_FIDELITY_JUDGE_MODEL || "gpt-5.6-sol";
 const apiKey = String(process.env.OPENAI_API_KEY || "").trim();
 
 const all = JSON.parse(fs.readFileSync(questionsPath, "utf8"));

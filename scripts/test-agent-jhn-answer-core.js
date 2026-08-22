@@ -41,12 +41,12 @@ test("empty primary response uses secondary model", async () => {
     retrieve: async () => guide,
     onDiagnostic: event => events.push(event),
     synthesizers: [
-      { provider: "openai", model: "gpt-5.6-terra", synthesize: async () => empty },
-      { provider: "openai", model: "gpt-4.1-mini", synthesize: async () => ({ ...success, model: "gpt-4.1-mini" }) },
+      { provider: "openai", model: "gpt-5.6-sol", synthesize: async () => empty },
+      { provider: "openai", model: "gpt-5.6-terra", synthesize: async () => ({ ...success, model: "gpt-5.6-terra" }) },
     ],
   });
   const result = await engine.answer({ text: "question", locale: "fr" });
-  assert.equal(result.model, "gpt-4.1-mini");
+  assert.equal(result.model, "gpt-5.6-terra");
   assert.equal(result.fallbackLevel, 1);
   assert.equal(events[0].stage, "empty_response");
   assert.equal(events[0].finish_reason, "length");
@@ -57,12 +57,12 @@ test("timeout uses secondary model", async () => {
   const engine = createAnswerEngine({
     retrieve: async () => guide,
     synthesizers: [
-      { provider: "openai", model: "gpt-5.6-terra", synthesize: async () => { throw timeout; } },
-      { provider: "openai", model: "gpt-4.1-mini", synthesize: async () => ({ ...success, model: "gpt-4.1-mini" }) },
+      { provider: "openai", model: "gpt-5.6-sol", synthesize: async () => { throw timeout; } },
+      { provider: "openai", model: "gpt-5.6-terra", synthesize: async () => ({ ...success, model: "gpt-5.6-terra" }) },
     ],
   });
   const result = await engine.answer({ text: "question" });
-  assert.equal(result.model, "gpt-4.1-mini");
+  assert.equal(result.model, "gpt-5.6-terra");
   assert.equal(result.diagnostics[0].stage, "timeout");
   assert.equal(result.diagnostics[0].timed_out, true);
 });
@@ -74,8 +74,8 @@ test("two model failures use extractive corpus answer", async () => {
   const engine = createAnswerEngine({
     retrieve: async () => guide,
     synthesizers: [
+      { provider: "openai", model: "gpt-5.6-sol", synthesize: async () => { throw httpError; } },
       { provider: "openai", model: "gpt-5.6-terra", synthesize: async () => { throw httpError; } },
-      { provider: "openai", model: "gpt-4.1-mini", synthesize: async () => { throw httpError; } },
     ],
   });
   const result = await engine.answer({ text: "question" });

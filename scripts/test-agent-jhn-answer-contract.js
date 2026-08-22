@@ -19,8 +19,8 @@ const tests = [];
 const test = (name, run) => tests.push({ name, run });
 
 process.env.OPENAI_API_KEY = "test-key-never-sent";
-process.env.AGENT_JHN_WHATSAPP_OPENAI_MODEL = "gpt-5.6-terra";
-process.env.AGENT_JHN_WHATSAPP_OPENAI_FALLBACK_MODEL = "gpt-4.1-mini";
+process.env.AGENT_JHN_WHATSAPP_OPENAI_MODEL = "gpt-5.6-sol";
+process.env.AGENT_JHN_WHATSAPP_OPENAI_FALLBACK_MODEL = "gpt-5.6-terra";
 delete process.env.AGENT_JHN_WHATSAPP_RETRIEVAL;
 
 const normalized = {
@@ -66,7 +66,7 @@ test("Guide then GPT-5.6 produces a grounded answer", async () => {
   globalThis.fetch = async (url, options) => {
     calls.push({ url: String(url), body: JSON.parse(options.body) });
     if (String(url).includes("/guide/chat")) return jsonResponse(guide);
-    return jsonResponse(completion("gpt-5.6-terra", "Réponse fondée sur le corpus."), 200, { "x-request-id": "req_contract_primary" });
+    return jsonResponse(completion("gpt-5.6-sol", "Réponse fondée sur le corpus."), 200, { "x-request-id": "req_contract_primary" });
   };
   const result = await buildCognitiveDraft(normalized, config, {
     // Keep this case focused on Guide+OpenAI wiring; brief/constitution covered below.
@@ -75,7 +75,7 @@ test("Guide then GPT-5.6 produces a grounded answer", async () => {
     injectCogentigramCapsule: false,
   });
   assert.equal(calls.length, 2);
-  assert.equal(calls[1].body.model, "gpt-5.6-terra");
+  assert.equal(calls[1].body.model, "gpt-5.6-sol");
   assert.ok(calls[1].body.messages.some((m) => /Public corpus excerpts/.test(m.content)));
   assert.match(result.text, /Réponse fondée sur le corpus/);
   assert.equal(result.provenance_class, "openai-corpus-grounded");
@@ -87,7 +87,7 @@ test("WhatsApp OpenAI prompt injects public-readonly AGENTS and agent brief", as
   globalThis.fetch = async (url, options) => {
     calls.push({ url: String(url), body: JSON.parse(options.body) });
     if (String(url).includes("/guide/chat")) return jsonResponse(guide);
-    return jsonResponse(completion("gpt-5.6-terra", "Réponse sous mandat de représentation."));
+    return jsonResponse(completion("gpt-5.6-sol", "Réponse sous mandat de représentation."));
   };
   const briefSnippet = "# Agent Brief — Representing Jean Hugues Noël Robert\nYou draft; he decides.";
   const publicAgentsSnippet = "# Public read-only agent constitution\nSurface mandate is a strict subset.";
@@ -114,14 +114,14 @@ test("WhatsApp OpenAI prompt injects public-readonly AGENTS and agent brief", as
   assert.equal(result.agent_brief_injected, true);
 });
 
-test("empty GPT-5.6 response falls back to GPT-4.1", async () => {
+test("empty GPT-5.6-sol response falls back to GPT-5.6-terra", async () => {
   const models = [];
   const diagnostics = [];
   globalThis.fetch = async (url, options) => {
     if (String(url).includes("/guide/chat")) return jsonResponse(guide);
     const model = JSON.parse(options.body).model;
     models.push(model);
-    if (model === "gpt-5.6-terra") {
+    if (model === "gpt-5.6-sol") {
       return jsonResponse(completion(model, null, "length"), 200, { "x-request-id": "req_contract_empty" });
     }
     return jsonResponse(completion(model, "Réponse du modèle de secours."));
@@ -132,7 +132,7 @@ test("empty GPT-5.6 response falls back to GPT-4.1", async () => {
     injectCogentigramCapsule: false,
     onCognitiveError: (_error, event) => diagnostics.push(event),
   });
-  assert.deepEqual(models, ["gpt-5.6-terra", "gpt-4.1-mini"]);
+  assert.deepEqual(models, ["gpt-5.6-sol", "gpt-5.6-terra"]);
   assert.match(result.text, /modèle de secours/);
   assert.equal(diagnostics[0].stage, "empty_response");
   assert.equal(diagnostics[0].finish_reason, "length");
@@ -158,7 +158,7 @@ test("two provider failures return the corpus fallback", async () => {
 test("Guide failure still allows a direct GPT-5.6 answer", async () => {
   globalThis.fetch = async (url) => {
     if (String(url).includes("/guide/chat")) throw Object.assign(new Error("local guide unavailable"), { code: "ECONNREFUSED" });
-    return jsonResponse(completion("gpt-5.6-terra", "Réponse directe sans corpus."));
+    return jsonResponse(completion("gpt-5.6-sol", "Réponse directe sans corpus."));
   };
   const result = await buildCognitiveDraft(normalized, config, {
     injectAgentBrief: false,
@@ -206,7 +206,7 @@ test("shadow mode keeps Guide live text and reports librarian compare", async ()
   const shadowReports = [];
   globalThis.fetch = async (url) => {
     if (String(url).includes("/guide/chat")) return jsonResponse(guide);
-    return jsonResponse(completion("gpt-5.6-terra", "Réponse Guide live."), 200, { "x-request-id": "req_shadow_guide" });
+    return jsonResponse(completion("gpt-5.6-sol", "Réponse Guide live."), 200, { "x-request-id": "req_shadow_guide" });
   };
   const result = await buildCognitiveDraft(normalized, config, {
     retrievalMode: "shadow",
