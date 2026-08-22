@@ -1,0 +1,62 @@
+schema: cogentia.registry.v0.2
+registry:
+  id: registry:registries
+  name: Registry of Registries / Distributed Registry Graph
+  registry_class: meta-registry
+
+  records:
+    kinds:
+      - registry
+      - registry-relation
+      - registry-facet
+
+  facets:
+    function:
+      - catalogue
+      - discovery
+      - routing
+      - projection
+      - semantic-navigation
+    authority: generated-projection
+    topology: distributed
+    temporality:
+      - stateful-evolving
+      - reconstructible
+    visibility: public
+    substrate:
+      - git-yaml
+      - generated-view
+    granularity:
+      - corpus
+      - registry
+    mutation:
+      - source-declared
+      - automatically-generated
+
+  definition_source:
+    repo: JeanHuguesRobert/cogentia
+    path: research/registry_of_registries.md
+
+  record_authority:
+    mode: distributed-source-descriptors
+    description: Registry identity, authority, facets and relations are declared beside legitimate owning sources in *.registry.yaml files. Global graph and views are reconstructible projections.
+
+  record_sources:
+    - pattern: "**/*.registry.yaml"
+      authority: source-local-descriptor
+
+  relations:
+    - predicate: indexes
+      object: corpus:registries
+    - predicate: projects
+      object: graph:registries
+    - predicate: exposes_view
+      object: view:registries-all-tracked-repositories
+    - predicate: derived_from
+      object: graph:responsibilities
+
+  freshness:
+    mode: source-relative
+    fields:
+      - descriptor_file
+      - projection_generated_at
