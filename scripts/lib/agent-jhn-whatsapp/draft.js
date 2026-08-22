@@ -241,8 +241,8 @@ async function buildGuideDraft(normalized, config, options, questionAnalysis, us
   const answerResult = await engine.answer({
     text: userText,
     locale: questionAnalysis.locale,
-    channel: "whatsapp",
-    maxChars: 1200,
+    channel: "short_messages",
+    maxChars: 1600,
     conversationId: normalized?.conversation_id || null,
   });
   if (answerResult.ok && answerResult.answer) {

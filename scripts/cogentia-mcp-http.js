@@ -39,7 +39,10 @@ import { createAgentGatewayClient } from "./lib/agent-gateway-client.js";
 import { handleOpsNodeProxyRequest } from "./lib/ona-proxy.js";
 import { handleEdgeTrapPost, handleEdgeTrapsGet } from "./lib/edge-trap-ops.js";
 import { createJhnOpenAiSurface, isTwinOpenAiPath } from "./lib/jhn-openai-surface.js";
-import { buildCrossSurfaceStyleBlock } from "./lib/agent-jhn-whatsapp/representation-brief.js";
+import {
+  buildCrossSurfaceStyleBlock,
+  buildWhatsAppRepresentationMessages,
+} from "./lib/agent-jhn-whatsapp/representation-brief.js";
 import {
   openSurfaceTurnPacket,
   spawnSurfaceDownstream,
@@ -1951,14 +1954,30 @@ function resolvePublicChatSurface(payload = {}, options = {}) {
 }
 
 function buildGuideMessages(locale, retrieval, web, history, question, visitorName = null, surface = "fractavolta-public-guide") {
-  let systemPrompt = surface === "agent-john" ? agentJohnSystemPrompt(locale) : guideSystemPrompt(locale);
-  if (visitorName) {
-    systemPrompt += `\nThe visitor's name is "${visitorName}". Address them by name when appropriate (e.g. greeting or direct reference).`;
+  const messages = [];
+  if (surface === "agent-john") {
+    messages.push(...buildWhatsAppRepresentationMessages(
+      { locale, intent: "explain" },
+      {
+        channel: "web",
+        maxChars: 8000,
+        currentInformationVerified: Boolean(web?.ok),
+      },
+    ));
+    if (visitorName) {
+      messages.push({
+        role: "system",
+        content: `The visitor's name is "${visitorName}". Address them by name when appropriate.`,
+      });
+    }
+  } else {
+    let systemPrompt = guideSystemPrompt(locale);
+    if (visitorName) {
+      systemPrompt += `\nThe visitor's name is "${visitorName}". Address them by name when appropriate (e.g. greeting or direct reference).`;
+    }
+    messages.push({ role: "system", content: systemPrompt });
   }
-  const messages = [
-    { role: "system", content: systemPrompt },
-    { role: "system", content: guideRetrievalPrompt(locale, retrieval) },
-  ];
+  messages.push({ role: "system", content: guideRetrievalPrompt(locale, retrieval) });
   if (web?.attempted) messages.push({ role: "system", content: guideWebPrompt(locale, web) });
   const cleanHistory = normalizeGuideHistory(history);
   if (cleanHistory.length) {

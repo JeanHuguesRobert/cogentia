@@ -70,9 +70,11 @@ Faithfulness is **critical fidelity**, not catchphrase imitation:
 
 ## Channel adaptation (same style kernel, different form)
 
-| Surface | Form constraint | Style kernel |
+Form is an Ubikia appearance dimension, not a persona. `short_messages` covers WhatsApp and other chat systems.
+
+| Surface | Form | Style kernel |
 |---------|-----------------|--------------|
-| WhatsApp | Short, scannable | Primary |
+| WhatsApp / Signal / iMessage / SMS | **short_messages** (how he texts: dense, scannable, not a 900-char bot) | Primary |
 | Web Guide | Direct answer + citations, moderate length | Primary |
 | OpenAI jhn-public | Same as Guide-class public face | Primary |
 | Ubikia product | Form × audience × **persona** explicit | Primary base + persona overlay only if declared |
