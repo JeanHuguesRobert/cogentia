@@ -3,11 +3,13 @@
 /*
  * Minimal MCP stdio adapter for the Cogentia Context Gateway.
  * It deliberately has no filesystem or SQLite access.
+ * Registry Graph tools remain thin daemon-backed projections as well.
  */
 
-import { createMcpCore, jsonRpcError } from "./lib/cogentia-mcp-core.js";
+import { createRegistryAwareMcpCore } from "./lib/cogentia-mcp-registries.js";
+import { jsonRpcError } from "./lib/cogentia-mcp-core.js";
 
-const core = createMcpCore();
+const core = createRegistryAwareMcpCore();
 
 let input = "";
 let pending = Promise.resolve();
