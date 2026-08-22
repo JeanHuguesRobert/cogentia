@@ -105,7 +105,7 @@ node scripts\ops\watch-cogentia-daemon-windows.js
 Traces: `%USERPROFILE%\.cogentia\logs\cogentia-daemon.jsonl` (`event=http` with `inventory.cache` hit/miss and duration).  
 Watchdog log: `cogentia-daemon-watch.jsonl`.
 
-MCP distinguishes **`daemon_timeout`** (event loop stalled, often a markdown inventory rebuild) from **`daemon_unavailable`** (nothing listening). Grep/docs CLI routes now reuse a 60s inventory cache; the daemon warms that cache before `listen`.
+MCP distinguishes **`daemon_timeout`** (event loop stalled, often a markdown inventory rebuild) from **`daemon_unavailable`** (nothing listening). Grep/docs CLI routes reuse a 300s inventory cache **stamped when the walk finishes** (a 65s walk used to expire the 60s TTL before it was stored). Isolated HTTP greps do **not** kill the process (RSS ~280 MB). Investigation: `research/daemon_inventory_stall_2026-08-22.md`.
 
 Bare start (still valid):
 

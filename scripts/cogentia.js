@@ -267,7 +267,7 @@ const DAEMON_LOOPBACK_GET_ROUTES = new Set([
 const DAEMON_PRIVATE_READ_HEADER = "x-cogentia-private-read";
 const daemonRateLimits = new Map();
 /** Short TTL inventory cache for MCP/daemon CLI read paths (buildInventory is expensive). */
-const DAEMON_INVENTORY_TTL_MS = 60_000;
+const DAEMON_INVENTORY_TTL_MS = 300_000;
 let daemonInventoryCache = null;
 
 function getDaemonInventory(ctx) {
@@ -285,12 +285,19 @@ function getDaemonInventory(ctx) {
   const inventory = buildInventory(ctx);
   const ms = Date.now() - t0;
   lastInventoryAccess = { cache: "miss", ms, docs: inventory?.documents?.length || 0 };
-  daemonInventoryCache = { key, at: now, inventory };
+  // Stamp TTL from *end* of build. Stamping `now` (start) meant a 65s walk
+  // already exceeded DAEMON_INVENTORY_TTL_MS (60s) so the next grep rebuilt.
+  daemonInventoryCache = { key, at: Date.now(), inventory };
+  const mu = process.memoryUsage();
   daemonTrace({
     event: "inventory_build",
     ms,
     docs: lastInventoryAccess.docs,
     cache: "miss",
+    rss_mb: Math.round(mu.rss / 1048576),
+    heap_mb: Math.round(mu.heapUsed / 1048576),
+    heap_total_mb: Math.round(mu.heapTotal / 1048576),
+    external_mb: Math.round(mu.external / 1048576),
   });
   return inventory;
 }
