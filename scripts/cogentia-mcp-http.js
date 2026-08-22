@@ -49,6 +49,7 @@ import {
 import { runHandoffPacket } from "./lib/john-handoff.js";
 import { sendHandoffPacket } from "./lib/john-handoff-transport.js";
 import { CapabilityInspector } from "./lib/john-diagnostic/inspectors/capability-inspector.js";
+import { createProviderCircuitBreaker } from "./lib/provider-circuit-breaker.js";
 
 const moduleDir = path.dirname(fileURLToPath(import.meta.url));
 const fractanetDashboardPath = path.join(moduleDir, "ops", "fractanet-dashboard.html");
@@ -63,6 +64,7 @@ loadOptionalEnvFiles([
 
 const core = createMcpCore();
 const blackboard = createBlackboardStore();
+const providerCircuitBreaker = createProviderCircuitBreaker();
 const port = boundedInteger(process.env.PORT || process.env.COGENTIA_MCP_PORT, 8791, 1, 65535);
 const host = process.env.COGENTIA_MCP_HOST || "0.0.0.0";
 const guideAgentGateway = process.env.COGENTIA_GUIDE_AGENT_GATEWAY === "1";
@@ -95,11 +97,30 @@ async function guideChatCapability() {
     return value;
   }
   const hasDirectOpenAi = Boolean(String(process.env.OPENAI_API_KEY || process.env.COGENTIA_OPENAI_API_KEY || "").trim());
-  if (hasDirectOpenAi) {
-    const value = { available: true, reason: "openai_direct_configured", probe_ms: 0 };
+  const hasDirectOpenRouter = Boolean(String(process.env.OPENROUTER_API_KEY || process.env.COGENTIA_OPENROUTER_API_KEY || "").trim());
+
+  const openAiHealthy = hasDirectOpenAi && providerCircuitBreaker.isAvailable("openai");
+  const openRouterHealthy = hasDirectOpenRouter && providerCircuitBreaker.isAvailable("openrouter");
+
+  if (openAiHealthy || openRouterHealthy) {
+    const reason = openAiHealthy ? "openai_direct_configured" : "openrouter_direct_configured";
+    const value = { available: true, reason, probe_ms: 0 };
     guideChatProbeCache = { at: now, value };
     return value;
   }
+
+  // When all direct providers are configured but their circuit breakers are OPEN (e.g. 429 quota):
+  if ((hasDirectOpenAi || hasDirectOpenRouter) && !openAiHealthy && !openRouterHealthy) {
+    const value = {
+      available: false,
+      reason: "all_direct_providers_circuit_open",
+      probe_ms: 0,
+      circuits: providerCircuitBreaker.snapshot(),
+    };
+    guideChatProbeCache = { at: now, value };
+    return value;
+  }
+
   const started = Date.now();
   try {
     const health = await aiRouterHealth({
@@ -136,12 +157,34 @@ async function guideChatCapability() {
 
 async function guideSynthesisPost(payload) {
   if (!guideAgentGateway) {
-    const routed = await daemonPost("/v1/chat/completions", payload, { timeoutMs: 5000 });
-    if (routed.ok) return routed;
-    // Magistral/router often unavailable; use OpenAI when key is present (guide.env).
-    const direct = await guideOpenAiChatCompletions(payload);
-    if (direct.ok) return direct;
-    return routed;
+    // 1. Daemon / Magistral router (if circuit is not OPEN)
+    if (providerCircuitBreaker.isAvailable("daemon")) {
+      const routed = await daemonPost("/v1/chat/completions", payload, { timeoutMs: 5000 });
+      if (routed.ok) {
+        providerCircuitBreaker.recordSuccess("daemon");
+        return routed;
+      }
+      providerCircuitBreaker.recordFailure("daemon", routed.error || "daemon_failed", routed.status || 0);
+    }
+
+    // 2. Direct OpenAI (gpt-5.6-sol -> gpt-5.6-terra)
+    if (providerCircuitBreaker.isAvailable("openai")) {
+      const directOpenAi = await guideOpenAiChatCompletions(payload);
+      if (directOpenAi.ok) return directOpenAi;
+    }
+
+    // 3. Direct OpenRouter (Claude-5 / Llama / DeepSeek)
+    if (providerCircuitBreaker.isAvailable("openrouter")) {
+      const directOpenRouter = await guideOpenRouterChatCompletions(payload);
+      if (directOpenRouter.ok) return directOpenRouter;
+    }
+
+    return {
+      ok: false,
+      error: "all_synthesis_providers_unavailable",
+      status: 503,
+      circuits: providerCircuitBreaker.snapshot(),
+    };
   }
   if (!guideAgentSessionId && guideAgentSessionInit) await guideAgentSessionInit;
   const client = createAgentGatewayClient({
@@ -392,6 +435,11 @@ async function guideHealth() {
         limit: guideWebSearchLimit,
       },
       semantic_retrieval: guideSemanticRetrieval,
+      provider_circuits: providerCircuitBreaker.snapshot(),
+      provider_adapters: {
+        openai: Boolean(String(process.env.OPENAI_API_KEY || process.env.COGENTIA_OPENAI_API_KEY || "").trim()),
+        openrouter: Boolean(String(process.env.OPENROUTER_API_KEY || process.env.COGENTIA_OPENROUTER_API_KEY || "").trim()),
+      },
       blackboard: summarizeBlackboardHealth(),
       action_route: {
         configured: Boolean(actionRouteToken()),
@@ -2335,6 +2383,9 @@ async function guideOpenAiChatCompletions(payload = {}) {
   if (!apiKey) {
     return { ok: false, error: "openai_key_missing", status: 0 };
   }
+  if (providerCircuitBreaker.isOpen("openai")) {
+    return { ok: false, error: "openai_circuit_open", status: 0 };
+  }
   const candidateModels = [
     process.env.COGENTIA_GUIDE_OPENAI_MODEL,
     process.env.AGENT_JHN_WHATSAPP_OPENAI_MODEL,
@@ -2378,8 +2429,13 @@ async function guideOpenAiChatCompletions(payload = {}) {
           body: { error: { type: body?.error?.type || "openai_http_error", message: body?.error?.message || response.statusText } },
         };
         console.error(`[guide-openai] error with model ${model}:`, response.status, body?.error?.message || response.statusText);
+        if (response.status === 429 || response.status === 401 || response.status === 403) {
+          providerCircuitBreaker.recordFailure("openai", body?.error?.message || "quota_exceeded", response.status);
+          break;
+        }
         continue;
       }
+      providerCircuitBreaker.recordSuccess("openai");
       return {
         ok: true,
         status: 200,
@@ -2396,9 +2452,94 @@ async function guideOpenAiChatCompletions(payload = {}) {
         error: "openai_unavailable",
         body: { error: { type: "openai_unavailable", message: String(error?.message || error).slice(0, 200) } },
       };
+      providerCircuitBreaker.recordFailure("openai", error.message, 0);
     }
   }
   return lastError || { ok: false, error: "openai_all_candidates_failed", status: 0 };
+}
+
+/**
+ * Direct OpenRouter chat (multi-provider fallback: Claude, DeepSeek, Llama).
+ */
+async function guideOpenRouterChatCompletions(payload = {}) {
+  const apiKey = String(process.env.OPENROUTER_API_KEY || process.env.COGENTIA_OPENROUTER_API_KEY || "").trim();
+  if (!apiKey) {
+    return { ok: false, error: "openrouter_key_missing", status: 0 };
+  }
+  if (providerCircuitBreaker.isOpen("openrouter")) {
+    return { ok: false, error: "openrouter_circuit_open", status: 0 };
+  }
+  const candidateModels = [
+    process.env.COGENTIA_GUIDE_OPENROUTER_MODEL,
+    "anthropic/claude-sonnet-5",
+    "deepseek/deepseek-v4-flash",
+    "meta-llama/llama-3.3-70b-instruct",
+  ].filter(Boolean).filter((m, idx, arr) => arr.indexOf(m) === idx);
+
+  const messages = Array.isArray(payload.messages) ? payload.messages : [];
+  if (!messages.length) return { ok: false, error: "empty_messages", status: 0 };
+  const timeoutMs = boundedInteger(process.env.COGENTIA_GUIDE_OPENROUTER_TIMEOUT_MS, 45000, 5000, 120000);
+
+  let lastError = null;
+  for (const model of candidateModels) {
+    try {
+      const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${apiKey}`,
+          "Content-Type": "application/json",
+          "HTTP-Referer": "https://fractavolta.com",
+          "X-Title": "FractaVolta Guide",
+        },
+        body: JSON.stringify({
+          model,
+          messages: messages.map(message => ({
+            role: ["system", "user", "assistant"].includes(message?.role) ? message.role : "user",
+            content: typeof message?.content === "string"
+              ? message.content
+              : JSON.stringify(message?.content ?? ""),
+          })),
+          temperature: Number.isFinite(payload.temperature) ? payload.temperature : 0.2,
+          max_tokens: boundedInteger(payload.max_tokens, 1200, 200, 4000),
+        }),
+        signal: AbortSignal.timeout(timeoutMs),
+      });
+      const body = await response.json().catch(() => null);
+      if (!response.ok) {
+        lastError = {
+          ok: false,
+          status: response.status,
+          error: "openrouter_http_error",
+          body: { error: { type: body?.error?.type || "openrouter_http_error", message: body?.error?.message || response.statusText } },
+        };
+        console.error(`[guide-openrouter] error with model ${model}:`, response.status, body?.error?.message || response.statusText);
+        if (response.status === 429 || response.status === 402 || response.status === 401) {
+          providerCircuitBreaker.recordFailure("openrouter", body?.error?.message || "quota_exceeded", response.status);
+          break;
+        }
+        continue;
+      }
+      providerCircuitBreaker.recordSuccess("openrouter");
+      return {
+        ok: true,
+        status: 200,
+        body: {
+          ...body,
+          model: body?.model || model,
+          _cogentia_guide_synthesis: "openrouter_direct_fallback",
+        },
+      };
+    } catch (error) {
+      lastError = {
+        ok: false,
+        status: 0,
+        error: "openrouter_unavailable",
+        body: { error: { type: "openrouter_unavailable", message: String(error?.message || error).slice(0, 200) } },
+      };
+      providerCircuitBreaker.recordFailure("openrouter", error.message, 0);
+    }
+  }
+  return lastError || { ok: false, error: "openrouter_all_candidates_failed", status: 0 };
 }
 
 function guideFallbackText(locale) {
