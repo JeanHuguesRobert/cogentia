@@ -26,6 +26,9 @@ import {
   outboundDisclosureOk,
 } from "./disclosure.js";
 import { checkRateLimit } from "./rate-limiter.js";
+import { isExplicitlyAddressed } from "./mention-address.js";
+import { detectEmergency } from "./emergency-detect.js";
+import { PERM_SEND_GROUP_WHEN_POLICY_ALLOWS } from "./constants.js";
 
 /**
  * Evaluate inbound (or intended outbound) against policy.
@@ -116,71 +119,10 @@ export function evaluatePolicy(normalized, config, context = {}) {
     });
   }
 
-  // 6. groups: representable modes, effective reject for real groups in MVP
+  // 6. groups: stealth unless explicitly addressed as John/JHN; emergency override
   const groupPolicyMode = resolveGroupPolicyMode(normalized, config);
   if (normalized.conversation_kind === CONVERSATION_KINDS.GROUP) {
-    // Always reject material send/auto-reply for groups in this MVP lot.
-    // Modes may be represented for future activation tests.
-    if (!config.groups_explicitly_enabled) {
-      return reject(
-        "policy.group_disabled",
-        "group runtime disabled for first real test",
-        { ...details, group_policy_mode: GROUP_POLICY_MODES.DISABLED, group_id: normalized.group_id },
-      );
-    }
-    // Even with groups_explicitly_enabled, first lot does not auto-send in groups.
-    if (groupPolicyMode === GROUP_POLICY_MODES.DISABLED) {
-      return reject(
-        "policy.group_mode_disabled",
-        "group_policy_mode is disabled for this group",
-        { ...details, group_policy_mode: groupPolicyMode, group_id: normalized.group_id },
-      );
-    }
-    if (groupPolicyMode === GROUP_POLICY_MODES.OBSERVE) {
-      return {
-        decision: DECISIONS.HOLD_FOR_HUMAN,
-        rule_id: "policy.group_observe",
-        reason: "group observe mode: no auto reply",
-        allow_send: false,
-        group_policy_mode: groupPolicyMode,
-        details: { ...details, group_id: normalized.group_id },
-      };
-    }
-    if (groupPolicyMode === GROUP_POLICY_MODES.DRAFT_ON_MENTION) {
-      return {
-        decision: DECISIONS.DRAFT_ONLY,
-        rule_id: "policy.group_draft_on_mention",
-        reason: "group draft_on_mention: draft only, no send in MVP",
-        allow_send: false,
-        group_policy_mode: groupPolicyMode,
-        details: { ...details, group_id: normalized.group_id },
-      };
-    }
-    if (groupPolicyMode === GROUP_POLICY_MODES.APPROVAL_REQUIRED) {
-      return {
-        decision: DECISIONS.HOLD_FOR_HUMAN,
-        rule_id: "policy.group_approval_required",
-        reason: "group approval_required",
-        allow_send: false,
-        group_policy_mode: groupPolicyMode,
-        details: { ...details, group_id: normalized.group_id },
-      };
-    }
-    if (groupPolicyMode === GROUP_POLICY_MODES.MANDATED_AUTONOMY) {
-      return {
-        decision: DECISIONS.DRAFT_ONLY,
-        rule_id: "policy.group_mandated_autonomy_mvp_draft",
-        reason: "mandated_autonomy representable but not activated for send in this MVP",
-        allow_send: false,
-        group_policy_mode: groupPolicyMode,
-        details: { ...details, group_id: normalized.group_id },
-      };
-    }
-    return reject(
-      "policy.group_unknown_mode",
-      `unknown group policy mode ${groupPolicyMode}`,
-      { ...details, group_policy_mode: groupPolicyMode },
-    );
+    return evaluateGroupPolicy(normalized, config, context, details, groupPolicyMode);
   }
 
   // 7. self_only contact scope for direct chats
@@ -334,7 +276,7 @@ export function resolveGroupPolicyMode(normalized, config) {
   if (rawKey && config.group_policies && config.group_policies[rawKey]) {
     return config.group_policies[rawKey];
   }
-  return GROUP_POLICY_MODES.DISABLED;
+  return GROUP_POLICY_MODES.REPLY_ON_ADDRESS;
 }
 
 /**
@@ -405,6 +347,214 @@ export function isAllowedSelfPeer(normalized, config, selfJid, peer) {
   return {
     ok: false,
     reason: `contact ${maskJid(p)} is not the allowed self JID`,
+  };
+}
+
+function evaluateGroupPolicy(normalized, config, context, details, groupPolicyMode) {
+  const groupDetails = {
+    ...details,
+    group_policy_mode: groupPolicyMode,
+    group_id: normalized.group_id,
+  };
+
+  if (!config.groups_explicitly_enabled) {
+    return reject(
+      "policy.group_disabled",
+      "group runtime disabled; principal may still be alerted on emergency",
+      { ...groupDetails, group_policy_mode: GROUP_POLICY_MODES.DISABLED },
+    );
+  }
+
+  if (groupPolicyMode === GROUP_POLICY_MODES.DISABLED) {
+    return reject(
+      "policy.group_mode_disabled",
+      "group_policy_mode is disabled for this group",
+      groupDetails,
+    );
+  }
+
+  const addressed =
+    context.explicitlyAddressed === true ||
+    (context.explicitlyAddressed !== false && isExplicitlyAddressed(normalized.text));
+  const emergency =
+    context.emergency && typeof context.emergency === "object"
+      ? context.emergency
+      : detectEmergency(normalized.text);
+  const emergencyFollowUp = context.emergencyFollowUp === true;
+  const emergencyHit = Boolean(emergency?.hit) || emergencyFollowUp;
+  groupDetails.addressed = addressed;
+  groupDetails.emergency = Boolean(emergencyHit);
+  groupDetails.emergency_precision = emergency?.precision || (emergencyFollowUp ? "follow_up" : "none");
+
+  const canAutoSendOnAddress =
+    groupPolicyMode === GROUP_POLICY_MODES.REPLY_ON_ADDRESS ||
+    groupPolicyMode === GROUP_POLICY_MODES.MANDATED_AUTONOMY;
+
+  if (!addressed && !emergencyHit) {
+    return {
+      decision: DECISIONS.HOLD_FOR_HUMAN,
+      rule_id: "policy.group_stealth_silent",
+      reason: "not addressed as John/JHN; stay silent so unaware members do not see the agent",
+      allow_send: false,
+      group_policy_mode: groupPolicyMode,
+      details: groupDetails,
+    };
+  }
+
+  if (looksLikeAgentJhnOutbound(normalized.text)) {
+    return {
+      decision: DECISIONS.HOLD_FOR_HUMAN,
+      rule_id: "policy.ignore_own_agent_echo",
+      reason: "inbound looks like Agent JHN outbound; skip to avoid loops",
+      allow_send: false,
+      group_policy_mode: groupPolicyMode,
+      details: groupDetails,
+    };
+  }
+
+  if (normalized.from_me && !emergencyHit) {
+    return {
+      decision: DECISIONS.HOLD_FOR_HUMAN,
+      rule_id: "policy.group_own_message",
+      reason: "own group message; no auto reply unless emergency",
+      allow_send: false,
+      group_policy_mode: groupPolicyMode,
+      details: groupDetails,
+    };
+  }
+
+  // Emergency overrides observe / draft-only / approval — still not a 15/112 substitute.
+  if (emergencyHit) {
+    return finalizeGroupSend(normalized, config, context, groupDetails, {
+      rule_id: "policy.group_emergency_send",
+      reason:
+        "possible emergency: intervene, gather facts, alert principal, redirect to authorities",
+      group_policy_mode: groupPolicyMode,
+      skipEngaging: true,
+    });
+  }
+
+  if (groupPolicyMode === GROUP_POLICY_MODES.OBSERVE) {
+    return {
+      decision: DECISIONS.HOLD_FOR_HUMAN,
+      rule_id: "policy.group_observe",
+      reason: "group observe mode: no auto reply",
+      allow_send: false,
+      group_policy_mode: groupPolicyMode,
+      details: groupDetails,
+    };
+  }
+
+  if (groupPolicyMode === GROUP_POLICY_MODES.DRAFT_ON_MENTION) {
+    return {
+      decision: DECISIONS.DRAFT_ONLY,
+      rule_id: "policy.group_draft_on_mention",
+      reason: "group draft_on_mention: draft only, no send",
+      allow_send: false,
+      group_policy_mode: groupPolicyMode,
+      details: groupDetails,
+    };
+  }
+
+  if (groupPolicyMode === GROUP_POLICY_MODES.APPROVAL_REQUIRED) {
+    return {
+      decision: DECISIONS.HOLD_FOR_HUMAN,
+      rule_id: "policy.group_approval_required",
+      reason: "group approval_required",
+      allow_send: false,
+      group_policy_mode: groupPolicyMode,
+      details: groupDetails,
+    };
+  }
+
+  if (!canAutoSendOnAddress) {
+    return reject(
+      "policy.group_unknown_mode",
+      `unknown group policy mode ${groupPolicyMode}`,
+      groupDetails,
+    );
+  }
+
+  const draftText = context.draftText || "";
+  const engaging =
+    context.intentIsEngaging === true ||
+    isEngagingText(normalized.text) ||
+    isEngagingText(draftText);
+  if (engaging) {
+    return reject(
+      "policy.engaging_intent",
+      "engaging / committing intent cannot be auto-sent",
+      groupDetails,
+    );
+  }
+
+  return finalizeGroupSend(normalized, config, context, groupDetails, {
+    rule_id: "policy.group_address_send",
+    reason: "explicitly addressed as John/JHN in group",
+    group_policy_mode: groupPolicyMode,
+    skipEngaging: false,
+  });
+}
+
+function finalizeGroupSend(normalized, config, context, details, spec) {
+  if (!config.send_enabled) {
+    return {
+      decision: DECISIONS.DRAFT_ONLY,
+      rule_id: "policy.send_disabled",
+      reason: "SEND_ENABLED=false; draft only",
+      allow_send: false,
+      group_policy_mode: spec.group_policy_mode,
+      details,
+    };
+  }
+  if (config.dry_run) {
+    return {
+      decision: DECISIONS.DRAFT_ONLY,
+      rule_id: "policy.dry_run",
+      reason: "dry_run active; no material send",
+      allow_send: false,
+      group_policy_mode: spec.group_policy_mode,
+      details,
+    };
+  }
+
+  const grantSend = evaluateUsageGrant(config.usage_grant, {
+    now: context.now,
+    requestedInstanceId: config.agent_id || "agent-jhn",
+    requireSend: true,
+    requireGroupSend: true,
+  });
+  if (!grantSend.ok) {
+    return reject(grantSend.rule_id, grantSend.reason, {
+      ...details,
+      grant: grantSend,
+    });
+  }
+
+  const audience = AUDIENCE.THIRD_PARTY;
+  const draftText = context.draftText || "";
+  if (draftText && !outboundDisclosureOk(draftText, config, { audience })) {
+    return {
+      decision: DECISIONS.DRAFT_ONLY,
+      rule_id: "policy.missing_third_party_disclosure",
+      reason: "group draft must identify experimental chatbot + disclosure",
+      allow_send: false,
+      group_policy_mode: spec.group_policy_mode,
+      details: { ...details, audience },
+    };
+  }
+
+  return {
+    decision: DECISIONS.SEND,
+    rule_id: spec.rule_id,
+    reason: spec.reason,
+    allow_send: true,
+    group_policy_mode: spec.group_policy_mode,
+    details: {
+      ...details,
+      audience,
+      grant_permission: PERM_SEND_GROUP_WHEN_POLICY_ALLOWS,
+    },
   };
 }
 

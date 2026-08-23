@@ -75,7 +75,6 @@ Automation later, only after protocol stabilization.
 ## Documents
 
 *This list is maintained by `cogentia readme` (opt-in `readme_index` block).*
-
 <!-- BEGIN_AUTO: readme_index -->
 - [Extract Interaction Packet](prompts/extract_interaction_packet.md)
 - [Follow-up Generation](prompts/followup_generation.md)

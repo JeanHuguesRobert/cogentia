@@ -390,6 +390,7 @@ Robert, J. H. (2026c). *Infrastructure Is All You Need: Toward a structural theo
 ### Backlinks
 
 *These documents link to this file:*
+- [Research Index — barons-Mariani](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/index.md)
 - [Cogentia](../README.md)
 - [Cogentia Commons — `kernel_extractor` Plugin Sub-Specification](cogentia_commons_kernel_extractor.md)
 - [Cogentia Commons — MVP Specification](cogentia_commons_mvp_spec.md)
@@ -401,4 +402,12 @@ Robert, J. H. (2026c). *Infrastructure Is All You Need: Toward a structural theo
 - [Cogentia Workflows](cogentia_workflows.md)
 - [Concept Index — cogentia](concepts.md)
 - [Research Index — Cogentia](index.md)
+- For researchers
+- FractaVolta
+- Methodology
+- [Research Index — FractaVolta](https://github.com/JeanHuguesRobert/FractaVolta/blob/main/research/index.md)
+- [Research Index — barons-Mariani](https://github.com/JeanHuguesRobert/JeanHuguesRobert/blob/main/barons-Mariani-index.md)
+- [Research Index — FractaVolta](https://github.com/JeanHuguesRobert/JeanHuguesRobert/blob/main/FractaVolta-index.md)
+- [Research Index — MareNostrum](https://github.com/JeanHuguesRobert/JeanHuguesRobert/blob/main/marenostrum-index.md)
+- [Research Index — MareNostrum](https://github.com/JeanHuguesRobert/marenostrum/blob/main/research/index.md)
 <!-- END_AUTO: backlinks -->

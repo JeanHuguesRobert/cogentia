@@ -809,4 +809,5 @@ This draft should be continued in four directions:
 - [Cogentia](../README.md)
 - [Research Index — Cogentia](index.md)
 - [The Cogentia Commons Living Corpus](cogentia_commons_living_corpus.md)
+- [Library packets — when the library is a specification, not code](https://github.com/JeanHuguesRobert/Inox/blob/master/research/library_packets.md)
 <!-- END_AUTO: backlinks -->

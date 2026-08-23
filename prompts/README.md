@@ -42,3 +42,15 @@ This directory contains prompt contracts for the structured document-production 
 The human author remains the final decision-maker. Agents assist, critique, structure, and package; they do not arbitrate doctrine.
 
 The conversation is the atelier. The corpus receives stabilized material.
+
+## Prompt Documents
+<!-- BEGIN_AUTO: readme_index -->
+- [Cogentia Continuation Designer Prompt](continuation_designer_prompt.md)
+- [Cogentia Continuation User Prompt](continuation_user_prompt.md)
+- [Cognitive Packet Prompt Contract](cognitive_packet.md)
+- [Conversation Closure Prompt Contract](conversation_closure.md)
+- [Document Production Conversation Frame Prompt Contract](document_conversation_frame.md)
+- [Prompt — Agents JHN pour démocratisation démocratique des réseaux sociaux](agents_jhn_social_network_democracy.md)
+- [Redactor Prompt Contract](redactor.md)
+- [Reviewer Prompt Contract](reviewer.md)
+<!-- END_AUTO: readme_index -->

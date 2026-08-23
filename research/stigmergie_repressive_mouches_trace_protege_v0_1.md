@@ -317,5 +317,7 @@ continuation:
 ### Backlinks
 
 *These documents link to this file:*
+- [Sailing the Cognitive Waves](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/cognitive_waves.md)
+- [Stigmergie sans limite haute](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/stigmergie_sans_limite_haute.md)
 - [Research Index — Cogentia](index.md)
 <!-- END_AUTO: backlinks -->

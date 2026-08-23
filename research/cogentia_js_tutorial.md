@@ -614,7 +614,12 @@ That is the stable core.
 ### Backlinks
 
 *These documents link to this file:*
+- [Reality Safety](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/reality_safety_procedural_stabilizers.md)
 - [Cogentia](../README.md)
 - [Pipeline](pipeline.md)
 - [Research Index — Cogentia](index.md)
+- For researchers
+- [Reactive Cognitive COP Extension](https://github.com/JeanHuguesRobert/inseme/blob/main/research/reactive_cognitive_cop_extension.md)
+- [Corpus Start Here — Carte globale du Corpus](https://github.com/JeanHuguesRobert/JeanHuguesRobert/blob/main/research/corpus-map.md)
+- [Public Corpus Navigation](https://github.com/JeanHuguesRobert/JeanHuguesRobert/blob/main/research/public-navigation.md)
 <!-- END_AUTO: backlinks -->

@@ -156,4 +156,5 @@ Or, less catchy but more precise:
 *These documents link to this file:*
 - [Cogentia](../../README.md)
 - [Research Index — Cogentia](../index.md)
+- [Jean Hugues Noël Robert, baron Mariani](https://github.com/JeanHuguesRobert/JeanHuguesRobert/blob/main/README.md)
 <!-- END_AUTO: backlinks -->

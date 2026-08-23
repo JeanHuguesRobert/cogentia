@@ -6,6 +6,7 @@
 import {
   BENEFICIARY_INSTANCE_ID,
   DEFAULT_GRANT_ID,
+  PERM_SEND_GROUP_WHEN_POLICY_ALLOWS,
 } from "./constants.js";
 
 /**
@@ -72,16 +73,25 @@ export function evaluateUsageGrant(grant, options = {}) {
     };
   }
 
-  if (grant.conversation_scope !== "self_only") {
+  // self_only = no third-party DMs. self_and_groups = same, plus policy-gated groups.
+  const scope = grant.conversation_scope;
+  if (scope !== "self_only" && scope !== "self_and_groups") {
     return {
       ok: false,
       rule_id: "grant.scope",
-      reason: `conversation_scope ${grant.conversation_scope} out of MVP self_only`,
+      reason: `conversation_scope ${scope} out of MVP self_only / self_and_groups`,
     };
   }
 
   const requiredScope = options.requiredScope || "self_only";
-  if (grant.conversation_scope !== requiredScope) {
+  const scopeCovers =
+    grant.conversation_scope === requiredScope ||
+    (requiredScope === "self_only" &&
+      (grant.conversation_scope === "self_only" ||
+        grant.conversation_scope === "self_and_groups")) ||
+    (requiredScope === "self_and_groups" &&
+      grant.conversation_scope === "self_and_groups");
+  if (!scopeCovers) {
     return {
       ok: false,
       rule_id: "grant.scope_mismatch",
@@ -104,6 +114,19 @@ export function evaluateUsageGrant(grant, options = {}) {
       rule_id: "grant.no_send_permission",
       reason: "send_when_locally_enabled not in grant.permissions",
     };
+  }
+
+  if (options.requireGroupSend) {
+    const groupOk =
+      perms.includes(PERM_SEND_GROUP_WHEN_POLICY_ALLOWS) ||
+      grant.conversation_scope === "self_and_groups";
+    if (!groupOk) {
+      return {
+        ok: false,
+        rule_id: "grant.no_group_send_permission",
+        reason: `${PERM_SEND_GROUP_WHEN_POLICY_ALLOWS} not in grant.permissions`,
+      };
+    }
   }
 
   if (options.requireSend && grant.grant_id !== DEFAULT_GRANT_ID && options.strictDefaultGrant) {

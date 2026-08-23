@@ -6682,6 +6682,10 @@ function buildPlan(ctx, options) {
     const backlinkChanges = planBacklinks(ctx, inventory, options);
     for (const change of backlinkChanges) changes.push(change);
   }
+  if (options.readmes) {
+    const readmeChanges = planReadmeIndex(ctx, inventory, options);
+    for (const change of readmeChanges) changes.push(change);
+  }
   const clean = changes.filter(c => c.before !== c.after);
   return {
     ok: true,
@@ -6731,6 +6735,7 @@ function planOptions() {
     backlinks: !hasFlag("--no-backlinks"),
     corpusStatus: !hasFlag("--no-corpus-status"),
     documents: !hasFlag("--no-documents"),
+    readmes: !hasFlag("--no-readmes"),
     createBacklinks: hasFlag("--create-backlinks"),
     includeContent: hasFlag("--include-content"),
   };
@@ -7427,6 +7432,46 @@ function renderBacklinkBlock(repo, target, sourceDocs, view = PUBLIC_VIEW) {
     lines.push(href ? `- [${source.title}](${href})` : `- ${source.title}`);
   }
   return lines.join("\n");
+}
+
+function planReadmeIndex(ctx, inventory, options) {
+  const changes = [];
+  const readmes = inventory.documents.filter(d => path.basename(d.rel).toLowerCase() === "readme.md");
+
+  for (const readmeDoc of readmes) {
+    const repo = ctx.repos.find(r => r.name === readmeDoc.repo);
+    if (!repo || !repoSelected(repo, options)) continue;
+    if (!pathAllowedByScope(repo, readmeDoc.rel, options)) continue;
+    const view = viewForRepo(repo, options);
+    if (!canSeeDoc(readmeDoc, view, { includeIgnored: true })) continue;
+
+    const before = readFileIfExists(readmeDoc.full_path);
+    if (!before.includes("<!-- BEGIN_AUTO: readme_index -->")) continue;
+
+    const readmeDir = path.dirname(readmeDoc.full_path);
+    const subtreeDocs = inventory.documents
+      .filter(d => {
+        if (d.repo !== readmeDoc.repo) return false;
+        if (d.full_path === readmeDoc.full_path) return false;
+        if (path.basename(d.full_path).toLowerCase() === "readme.md") return false;
+        if (!canSeeDoc(d, view, { includeIgnored: true })) return false;
+        const relToDir = path.relative(readmeDir, d.full_path);
+        return relToDir && !relToDir.startsWith("..") && !path.isAbsolute(relToDir);
+      })
+      .map(d => ({
+        title: d.title || extractTitle(d.full_path),
+        rel: path.relative(readmeDir, d.full_path).replace(/\\/g, "/"),
+      }))
+      .sort((a, b) => a.title.localeCompare(b.title) || a.rel.localeCompare(b.rel));
+
+    const block = subtreeDocs.length
+      ? subtreeDocs.map(d => `- [${d.title}](${d.rel})`).join("\n")
+      : "*(no documents found in this subtree)*";
+
+    const after = replaceSection(before, "readme_index", block);
+    addChange(changes, repo, readmeDoc.full_path, "readme_index", before, after, true, "refresh opt-in subtree readme index");
+  }
+  return changes;
 }
 
 function loadConcepts(ctx) {
@@ -14392,7 +14437,7 @@ function syncIssuePackets(ctx, options = {}) {
 }
 
 function syncIssuePacketsForRepo(ctx, repo, { state = "all", limit = 100 } = {}) {
-  const repoFull = repo.full_name || repo.github_full_name || repo.name;
+  const repoFull = repo.full_name || repo.github_full_name || repo.policy?.github || repo.policy?.github_repo || githubFullNameFromRemote(repo) || repo.name;
   const cacheDir = path.join(repo.path, ".cogentia", "issues", slug(repoFull) || repo.name || "repo");
   fs.mkdirSync(cacheDir, { recursive: true });
   const listCall = ghJsonOrDefer([

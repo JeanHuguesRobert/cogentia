@@ -17,7 +17,7 @@ import {
 } from "../../ops/edge/lib/outbox.js";
 import { evaluatePolicy, draftIncludesNotice } from "./policy.js";
 import { evaluateUsageGrant } from "./usage-grant.js";
-import { bareJid } from "./inbound-normalizer.js";
+import { bareJid, isGroupJid } from "./inbound-normalizer.js";
 import { buildWhatsappArtifact, appendTrace, validateWhatsappArtifact } from "./trace.js";
 import { ARTIFACT_TYPES, DECISIONS } from "./constants.js";
 import { resolveSentLedgerPath } from "./config.js";
@@ -131,9 +131,15 @@ export function requestOutboundSend({
     };
   }
 
+  const isGroup = isGroupJid(normalized?.remote_jid || normalized?.remote_jid_bare);
+  const audience = isGroup ? AUDIENCE.THIRD_PARTY : AUDIENCE.SELF;
   const policy = evaluatePolicy(normalized, config, {
     draftText,
     now,
+    audience,
+    emergency: arguments[0]?.emergency,
+    emergencyFollowUp: arguments[0]?.emergencyFollowUp,
+    explicitlyAddressed: arguments[0]?.explicitlyAddressed,
   });
   if (!policy.allow_send || policy.decision !== DECISIONS.SEND) {
     return {
@@ -147,35 +153,45 @@ export function requestOutboundSend({
     };
   }
 
-  const audience = AUDIENCE.SELF; // MVP gate is self-chat only
   if (!outboundDisclosureOk(draftText, config, { audience })) {
     return {
       ok: false,
       enqueued: false,
-      reason: "draft missing Agent JHN self-identification",
-      rule_id: "gate.missing_self_identification",
+      reason:
+        audience === AUDIENCE.THIRD_PARTY
+          ? "draft missing third-party chatbot disclosure"
+          : "draft missing Agent JHN self-identification",
+      rule_id:
+        audience === AUDIENCE.THIRD_PARTY
+          ? "gate.missing_third_party_disclosure"
+          : "gate.missing_self_identification",
       action_request_id,
       blocked_before_outbox: true,
     };
   }
 
-  // Prefer Message-yourself @lid when remembered; else bare ALLOWED_SELF_JID.
-  const toJid = resolveSelfSendJid(config) || bareJid(config.allowed_self_jid);
+  // Groups: send to the group JID. Direct: Message-yourself @lid or ALLOWED_SELF_JID.
+  const toJid = isGroup
+    ? bareJid(normalized.remote_jid || normalized.remote_jid_bare)
+    : resolveSelfSendJid(config) || bareJid(config.allowed_self_jid);
   const record = enqueueOutbox(config.state_dir, {
     id: action_request_id,
     kind: OUTBOX_KIND,
-    target: OUTBOX_TARGET,
+    target: isGroup ? "whatsapp.group" : OUTBOX_TARGET,
     payload: {
       action_request_id,
       to_jid: toJid,
       text: draftText,
+      conversation_kind: isGroup ? "group" : "direct",
       conversation_id: normalized.conversation_id,
+      group_id: normalized.group_id || null,
       in_reply_to: normalized.platform_message_id,
       visible_agent_id: config.visible_agent_id,
       mandate_id: config.mandate_id,
       grant_id: config.usage_grant?.grant_id,
       account_custodian_id: config.account_custodian_id,
       beneficiary_instance_id: config.usage_grant?.beneficiary_instance_id,
+      audience,
       policy: {
         decision: policy.decision,
         rule_id: policy.rule_id,

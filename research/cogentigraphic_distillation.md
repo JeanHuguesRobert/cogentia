@@ -824,6 +824,7 @@ This v0.1 draft opens several continuations:
 ### Backlinks
 
 *These documents link to this file:*
+- [Cognitive Impedance, Relatogram, and Cognitive Interpreter](cognitive_impedance_relatogram_interpreter.md)
 - [Individual and Collective Digital Twins](individual_and_collective_digital_twins.md)
 - [Research Index — Cogentia](index.md)
 <!-- END_AUTO: backlinks -->

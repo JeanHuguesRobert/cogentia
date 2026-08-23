@@ -294,6 +294,8 @@ continuation:
 
 *These documents link to this file:*
 - [Cogentigraphic Distillation](cogentigraphic_distillation.md)
+- [Cognitive Impedance, Relatogram, and Cognitive Interpreter](cognitive_impedance_relatogram_interpreter.md)
 - [From Biometrics and Psychometrics to Structural Signatures](structural_signatures.md)
 - [Research Index — Cogentia](index.md)
+- [Operational Formulas — Representation Primitives](https://github.com/JeanHuguesRobert/JeanHuguesRobert/blob/main/research/operational_formulas.md)
 <!-- END_AUTO: backlinks -->

@@ -35,7 +35,12 @@ export const GROUP_POLICY_MODES = Object.freeze({
   DRAFT_ON_MENTION: "draft_on_mention",
   APPROVAL_REQUIRED: "approval_required",
   MANDATED_AUTONOMY: "mandated_autonomy",
+  /** Speak in group only if explicitly addressed as John/JHN, or emergency. */
+  REPLY_ON_ADDRESS: "reply_on_address",
 });
+
+/** Grant permission: group send when policy (address / emergency) allows. */
+export const PERM_SEND_GROUP_WHEN_POLICY_ALLOWS = "send_group_when_policy_allows";
 
 export const CONVERSATION_KINDS = Object.freeze({
   DIRECT: "direct",

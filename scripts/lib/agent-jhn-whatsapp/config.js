@@ -16,6 +16,7 @@ import {
   DEFAULT_EMERGENCY_PHONE,
   DIRECT_CONTACT_EMAIL,
   GROUP_POLICY_MODES,
+  PERM_SEND_GROUP_WHEN_POLICY_ALLOWS,
   MANDATE_ID,
   MODE_SELF_CHAT_ONLY,
   PRINCIPAL_ID,
@@ -119,7 +120,9 @@ export function loadConfig(env = process.env, overrides = {}) {
       overrides.grantScope ?? env.AGENT_JHN_WHATSAPP_GRANT_SCOPE,
       "self_only",
     ),
-    permissions: ["receive", "draft", "send_when_locally_enabled"],
+    permissions: groupsExplicitlyEnabled
+      ? ["receive", "draft", "send_when_locally_enabled", PERM_SEND_GROUP_WHEN_POLICY_ALLOWS]
+      : ["receive", "draft", "send_when_locally_enabled"],
     transferable: false,
     revocable: true,
     revocation_effect: "immediate_send_stop",
@@ -140,7 +143,12 @@ export function loadConfig(env = process.env, overrides = {}) {
     dry_run: dryRun,
     groups_explicitly_enabled: groupsExplicitlyEnabled,
     group_policies: groupPolicies,
-    group_runtime_mode: groupsExplicitlyEnabled ? "configured" : "disabled_for_first_real_test",
+    group_runtime_mode: groupsExplicitlyEnabled
+      ? "reply_on_address_or_emergency"
+      : "disabled_for_first_real_test",
+    default_group_policy_mode: groupsExplicitlyEnabled
+      ? GROUP_POLICY_MODES.REPLY_ON_ADDRESS
+      : GROUP_POLICY_MODES.DISABLED,
     media: "forbidden",
     links_and_attachments: "ignored_or_escalated",
     third_party_send: "forbidden",
@@ -203,8 +211,9 @@ export function validateConfig(config, options = {}) {
     errors.push("notice_url must be an https URL");
   }
 
-  if (config.usage_grant?.conversation_scope !== "self_only") {
-    errors.push("usage_grant.conversation_scope must be self_only for MVP");
+  const scope = config.usage_grant?.conversation_scope;
+  if (scope !== "self_only" && scope !== "self_and_groups") {
+    errors.push("usage_grant.conversation_scope must be self_only or self_and_groups");
   }
 
   if (config.usage_grant?.transferable === true) {
@@ -216,7 +225,9 @@ export function validateConfig(config, options = {}) {
   }
 
   if (config.groups_explicitly_enabled) {
-    warnings.push("GROUPS_ENABLED=true is outside first real-test scope; group send still blocked in MVP policy");
+    warnings.push(
+      "GROUPS_ENABLED=true: group send only when explicitly addressed as John/JHN, or on high-precision emergency (redirect to 15/17/18/112; not a substitute for authorities)",
+    );
   }
 
   return { ok: errors.length === 0, errors, warnings };

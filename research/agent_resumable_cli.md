@@ -1129,6 +1129,7 @@ A compliant CLI does not hide judgment. It exposes judgment as a continuation, c
 ### Backlinks
 
 *These documents link to this file:*
+- [Test du critère Rossignol](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/test_critere_rossignol.md)
 - [Act, mandate and responsibility](act_mandate_responsibility.md)
 - [Agent CLI Gateway](agent_cli_gateway.md)
 - [AGENTS.md — Cogentia local specialization](../AGENTS.md)
@@ -1144,4 +1145,9 @@ A compliant CLI does not hide judgment. It exposes judgment as a continuation, c
 - [Research Index — Cogentia](index.md)
 - [The Cogentia Commons Living Corpus](cogentia_commons_living_corpus.md)
 - [Trail: From Method to Machine](trails/from_method_to_machine.md)
+- For researchers
+- [FractaVolta](https://github.com/JeanHuguesRobert/FractaVolta/blob/main/README.md)
+- Methodology
+- [Corpus Start Here — Carte globale du Corpus](https://github.com/JeanHuguesRobert/JeanHuguesRobert/blob/main/research/corpus-map.md)
+- [Public Corpus Navigation](https://github.com/JeanHuguesRobert/JeanHuguesRobert/blob/main/research/public-navigation.md)
 <!-- END_AUTO: backlinks -->
