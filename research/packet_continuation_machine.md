@@ -1,9 +1,9 @@
 ---
 title: "Packet/Continuation Machine — distributed branching computation model"
 author: "Jean Hugues Noël Robert, baron Mariani"
-date: "2026-08-14"
+date: "2026-08-23"
 status: "working-note"
-version: "0.1"
+version: "0.2"
 license: "CC BY-SA 4.0"
 language: "en"
 repository: "JeanHuguesRobert/cogentia"
@@ -313,6 +313,60 @@ execution site emerges
 ```
 
 This supports a distributed ecology rather than a mandatory central orchestrator.
+
+### 9.1 Situated capability and productive interdependence
+
+A concrete offer is more than an abstract Blueprint. A coding agent installed
+on a particular machine and connected to a particular Principal account may
+have valuable repository access, operational context, accumulated interaction
+history, local tools, credentials, and situated competence. These properties
+are dependencies, but they are not automatically capture or defects.
+
+```text
+situated capability
+  = abstract capability
+  + installation and locality
+  + account-bound authority and context
+  + accessible history and tools
+  + declared dependencies and relations
+```
+
+The anti-capture objective is therefore not autarky or the refusal of every
+dependency. It is a Principal's ability to understand, govern, compensate,
+renegotiate, and, when necessary, reconfigure dependencies. A dependency is
+more capture-prone when it is opaque, unilateral, irreplaceable in practice,
+or makes the provider the sole residence of identity, mandate, or canonical
+work state. It can be productive when its value, scope, costs, alternatives,
+and recovery path remain visible and governable.
+
+Continuation portability consequently does not mean that every selected
+HandlerInstance is portable or that every situated advantage can be exported.
+It means that loss or replacement of a situated capability does not make the
+Task unintelligible: the durable Packet, authority, artifacts, and causal
+lineage remain reconstructible, while the lost advantage and recovery cost are
+declared.
+
+### 9.2 Attraction is a governed judgment, not only a static score
+
+The Pilot may filter deterministically on hard constraints, then rank or seek
+human/LLM judgment among admissible offers. Relevant attraction factors include
+the existing constraints plus:
+
+```text
+situated competence and relevant accessible context
+continuity of the Principal/capability relation
+dependency criticality and loss impact
+substitutability, recovery path, and recovery cost
+strength and location of backups or compensating capabilities
+exit, revocation, and renegotiation conditions
+```
+
+No universal scalar can settle every trade-off. A strong account-bound Codex
+installation may properly attract a coding Continuation because abandoning its
+situated context would cost more than the dependency risk at that moment. The
+selection rationale, declared dependency posture, and fallback or recovery
+plan should become traceable artifacts. Where these criteria are incomparable,
+selection is a judgment boundary, not hidden scheduler discretion.
 
 ## 10. Persistence and failure
 

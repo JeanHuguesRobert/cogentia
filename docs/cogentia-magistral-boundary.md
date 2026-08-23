@@ -8,7 +8,7 @@ classification_rule: "documentation"
 classification_confidence: "medium"
 title: Cogentia and Magistral Boundary
 created: 2026-06-28T00:00:00.000Z
-last_modified_at: 2026-06-28T00:00:00.000Z
+last_modified_at: 2026-08-23T00:00:00.000Z
 role: operational
 visibility: public
 public_presence: full
@@ -36,7 +36,7 @@ Short form:
 
 ```text
 Cogentia owns the corpus.
-Magistral owns model routing.
+Magistral owns capability routing, including model routing.
 The boundary is an AI Router API.
 ```
 
@@ -54,8 +54,10 @@ Cogentia is responsible for:
 Magistral is responsible for:
 
 - model/provider routing;
+- capability discovery, selection and invocation binding;
 - OpenAI-compatible chat completions;
 - OpenAI-compatible embeddings;
+- ACP client and provider surfaces for explicitly exposed rich-agent sessions;
 - provider failover, local fallback and degraded modes;
 - provider health, metrics and traffic logs;
 - optional local operational cache.
@@ -78,6 +80,12 @@ The contract is deliberately compatible with OpenAI-style providers. Magistral
 is the preferred local implementation because it can route to remote providers,
 Ollama, local llama-server and fallback models without Cogentia depending on a
 specific provider SDK.
+
+ACP is a separate, richer session surface. Magistral may use ACP as a client
+to mobilize a situated local agent such as Codex, and may itself act as an ACP
+provider to an external client. The OpenAI-compatible route remains a useful
+projection for model-like requests; it does not replace the canonical state or
+governance of an ACP coding-agent session.
 
 Cogentia configuration:
 
