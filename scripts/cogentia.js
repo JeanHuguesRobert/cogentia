@@ -1172,6 +1172,8 @@ function cmdCorpus(sub) {
       return cmdCorpusPlan();
     case "apply":
       return cmdCorpusApply();
+    case "converge":
+      return cmdCorpusConverge();
     case "verify":
       return cmdCorpusVerify();
     case "privacy":
@@ -1179,8 +1181,70 @@ function cmdCorpus(sub) {
     case "commit-generated":
       return cmdCorpusCommitGenerated();
     default:
-      throw new Error(`Unknown corpus subcommand "${sub}". Use plan, apply, verify, privacy, or commit-generated.`);
+      throw new Error(`Unknown corpus subcommand "${sub}". Use plan, apply, converge, verify, privacy, or commit-generated.`);
   }
+}
+
+async function cmdCorpusConverge(opts = {}) {
+  const ctx = loadContext();
+  const options = planOptions();
+  let iterations = 0;
+  const maxIterations = Number(valueFlag("--max-iterations") || 5) || 5;
+  const allApplied = [];
+  let reachedFixedPoint = false;
+
+  while (iterations < maxIterations) {
+    iterations++;
+    const plan = buildPlan(ctx, options);
+    const writes = mergePlanWrites(plan.changes);
+    const allowed = writes.filter(w => w.allowed);
+    if (allowed.length === 0) {
+      reachedFixedPoint = true;
+      break;
+    }
+    for (const write of allowed) {
+      ensureDir(path.dirname(write.full_path));
+      fs.writeFileSync(write.full_path, write.after, "utf8");
+      allApplied.push({
+        iteration: iterations,
+        repo: write.repo,
+        path: write.path,
+        type: write.type || "update",
+      });
+    }
+  }
+
+  // Update SQLite index in-process
+  const indexResult = await indexRebuild(ctx, { mode: "update" });
+
+  const summary = {
+    ok: true,
+    fixed_point_reached: reachedFixedPoint,
+    iterations,
+    total_files_applied: allApplied.length,
+    applied: allApplied,
+    index: {
+      documents: indexResult.documents,
+      chunks: indexResult.chunks,
+      edges: indexResult.edges,
+    },
+  };
+
+  const textOutput = [
+    `=== Corpus Convergence ===`,
+    `Fixed Point: ${reachedFixedPoint ? "✓ Reached" : "⚠ Max iterations reached"} (${iterations} iteration${iterations > 1 ? "s" : ""})`,
+    `Files updated: ${allApplied.length}`,
+    `Index: ${indexResult.documents} docs, ${indexResult.chunks} chunks, ${indexResult.edges} edges`,
+  ];
+  if (allApplied.length > 0) {
+    textOutput.push(`\nApplied changes:`);
+    for (const item of allApplied) {
+      textOutput.push(`  [Pass ${item.iteration}] ${item.repo}: ${item.path}`);
+    }
+  }
+
+  output(summary, textOutput.join("\n"));
+  return summary;
 }
 
 function cmdCorpusPlan() {
@@ -2160,9 +2224,17 @@ function buildConsolidateReport(ctx, options = {}) {
 }
 
 async function cmdConsolidate() {
-  if (hasFlag("--weekly")) {
+  if (hasFlag("--weekly") || hasFlag("-w")) {
     const result = await runWeeklyConsolidation();
+    if (hasFlag("--converge") || hasFlag("-c")) {
+      console.log(`\nSunday Consolidation Completed [${result.sprint_tag}]\nDigest: ${result.digest_path}\n`);
+      console.log(`[Phase 5] Auto-converging Corpus Navigation to Fixed Point...`);
+      return cmdCorpusConverge();
+    }
     return output(result, `Sunday Consolidation Completed [${result.sprint_tag}]\nDigest: ${result.digest_path}`);
+  }
+  if (hasFlag("--converge") || hasFlag("-c")) {
+    return cmdCorpusConverge();
   }
   const ctx = loadContext();
   const strict = hasFlag("--strict");
@@ -6169,17 +6241,14 @@ async function indexRebuild(ctx, options = {}) {
   const { db, path: dbPath } = opened;
   const startedAt = new Date().toISOString();
   try {
-    initIndexSchema(db);
-    // Both rebuild and update sync issues first (mode=rebuild implies a
-    // complete fresh pass, so it should not be staler than update on this
-    // point) -- gh unavailability is handled gracefully inside
-    // syncIssuePacketsForRepo (capability-delegation continuation), it does
-    // not fail the rebuild.
-    const issueRefresh = syncIssuePackets(ctx, {
+    // Sync issues only when explicitly requested (--sync-issues).
+    // Local index update and rebuild should remain fast (<2s) and offline-capable.
+    const shouldSyncIssues = Boolean(options.syncIssues || hasFlag("--sync-issues"));
+    const issueRefresh = shouldSyncIssues ? syncIssuePackets(ctx, {
       repoArg: "all",
       state: "all",
       limit: 100,
-    });
+    }) : null;
     const inventory = buildInventory(ctx);
     const boundaries = indexJudgmentBoundaries(ctx, inventory);
     const continuations = emitIndexContinuations(ctx, boundaries);
@@ -6265,9 +6334,10 @@ async function indexRebuild(ctx, options = {}) {
           indexedChunks++;
         }
       }
+      const docsByResolved = new Map(inventory.documents.map(d => [path.resolve(d.full_path), d]));
       for (const edge of inventory.edges) {
-        const from = inventory.documents.find(d => path.resolve(d.full_path) === path.resolve(edge.from));
-        const to = inventory.documents.find(d => path.resolve(d.full_path) === path.resolve(edge.to));
+        const from = docsByResolved.get(path.resolve(edge.from));
+        const to = docsByResolved.get(path.resolve(edge.to));
         if (!from || !to) continue;
         insertEdge.run(from.repo, from.rel, to.repo, to.rel, edge.url || "");
       }
@@ -9027,13 +9097,21 @@ function continuationId() {
   return `ctn_${randomBytes(4).toString("hex")}`;
 }
 
+let continuationCacheByDir = new Map();
+
+function invalidateContinuationsCache() {
+  continuationCacheByDir.clear();
+}
+
 function loadContinuations(ctx) {
   const dir = continuationsDir(ctx);
   if (!fs.existsSync(dir)) return [];
-  return fs.readdirSync(dir)
-    .filter(file => /^ctn_[a-f0-9]+\.json$/i.test(file))
-    .map(file => normalizeContinuation(readJson(path.join(dir, file))))
-    .filter(Boolean);
+  if (continuationCacheByDir.has(dir)) {
+    return continuationCacheByDir.get(dir);
+  }
+  const loaded = loadContinuationsForExport(ctx, { includeBodies: true });
+  continuationCacheByDir.set(dir, loaded);
+  return loaded;
 }
 
 /** Map a stored operational status to view-facing liveness. */
@@ -9245,6 +9323,7 @@ function loadContinuation(ctx, id) {
 function saveContinuation(ctx, continuation) {
   ensureDir(continuationsDir(ctx));
   fs.writeFileSync(continuationPath(ctx, continuation.id), `${JSON.stringify(continuation, null, 2)}\n`, "utf8");
+  invalidateContinuationsCache();
 }
 
 function emitContinuation(ctx, request) {
