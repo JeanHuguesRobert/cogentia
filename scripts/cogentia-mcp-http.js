@@ -2105,6 +2105,7 @@ function observeGuideSemanticRetrieval(retrieval) {
     query_embedding_cache: semantic.query_embedding_cache === true,
     keyword_fallback: semantic.keyword_fallback === true,
     continuation_required: semantic.continuation_required === true,
+    diagnostic: semantic.diagnostic,
     warnings: warnings.filter(warning => /semantic|sqlite-vec/i.test(String(warning))).slice(0, 4),
   };
 }
@@ -2965,11 +2966,28 @@ function summarizePackRetrieval(pack = {}) {
     sqlite_vec: Boolean(retrieval.sqlite_vec) || /sqlite-vec/i.test(joined),
     keyword_fallback: Boolean(retrieval.keyword_fallback) || /fell back to keyword/i.test(joined),
     continuation_required: Boolean(retrieval.continuation_required) || /continuation/i.test(joined),
+    diagnostic: safeRetrievalDiagnostic(pack.diagnostic || retrieval.diagnostic),
+  };
+}
+
+function safeRetrievalDiagnostic(diagnostic) {
+  if (!diagnostic || typeof diagnostic !== "object") return null;
+  return {
+    protocol: String(diagnostic.protocol || "cogentia.retrieval-diagnostic/v1"),
+    phase: String(diagnostic.phase || "unknown"),
+    code: String(diagnostic.code || "unknown"),
+    provider: diagnostic.provider ? String(diagnostic.provider) : null,
+    model: diagnostic.model ? String(diagnostic.model) : null,
+    dimensions: Number.isFinite(Number(diagnostic.dimensions)) ? Number(diagnostic.dimensions) : null,
+    upstream_status: Number.isFinite(Number(diagnostic.upstream_status)) ? Number(diagnostic.upstream_status) : null,
+    retryable: Boolean(diagnostic.retryable),
+    next_action: diagnostic.next_action ? String(diagnostic.next_action) : null,
   };
 }
 
 function summarizeGuideSemanticRetrieval(attempts = []) {
   const retrievals = attempts.map(attempt => attempt.retrieval || {}).filter(Boolean);
+  const diagnostics = retrievals.map(item => item.diagnostic).filter(Boolean);
   return {
     attempted: retrievals.some(item => ["semantic", "hybrid"].includes(String(item.requested_mode || item.mode || "").toLowerCase())),
     ranked_result_cache: retrievals.some(item => item.ranked_result_cache),
@@ -2977,6 +2995,7 @@ function summarizeGuideSemanticRetrieval(attempts = []) {
     sqlite_vec: retrievals.some(item => item.sqlite_vec),
     keyword_fallback: retrievals.some(item => item.keyword_fallback),
     continuation_required: retrievals.some(item => item.continuation_required),
+    diagnostic: diagnostics.at(-1) || null,
   };
 }
 

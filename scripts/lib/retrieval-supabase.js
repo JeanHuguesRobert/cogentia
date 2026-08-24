@@ -174,6 +174,8 @@ export async function retrievalSupabasePackBatch(queries, options = {}) {
     } else {
       pack = await hybridSearchSupabase(supabaseUrl, serviceKey, normalized, {
         corpusKey, indexHash, limit, budget, provider, modelName, dimensions, env,
+        allowInlineEmbedFulfill: options.allowInlineEmbedFulfill === true,
+        queryEmbedding: options.queryEmbedding,
       });
     }
     packs.push({ query: normalized, ...pack });
@@ -198,6 +200,7 @@ async function hybridSearchSupabase(supabaseUrl, serviceKey, query, options) {
     return {
       ...keyword,
       mode: "hybrid",
+      diagnostic: semantic.diagnostic || null,
       warnings: [
         `Semantic retrieval unavailable; fell back to keyword (${semantic.error || "no_semantic_results"}).`,
         ...(keyword.warnings || []),
@@ -216,6 +219,7 @@ async function semanticSearchSupabase(supabaseUrl, serviceKey, query, options) {
       query,
       mode: "semantic",
       warnings: embedding.warnings || [],
+      diagnostic: embedding.diagnostic || null,
       continuation_required: embedding.error === "semantic_continuation_required",
     };
   }
@@ -228,7 +232,7 @@ async function semanticSearchSupabase(supabaseUrl, serviceKey, query, options) {
     model_filter: options.modelName,
   });
   if (!rows.ok) {
-    return { ok: false, error: rows.error, query, mode: "semantic", warnings: [rows.message || rows.error] };
+    return { ok: false, error: rows.error, query, mode: "semantic", warnings: [rows.message || rows.error], diagnostic: rows.diagnostic || null };
   }
   return packFromRows(query, rows.data, {
     mode: "semantic",
@@ -246,7 +250,7 @@ async function keywordSearchSupabase(supabaseUrl, serviceKey, query, options) {
     match_count: options.limit,
   });
   if (!rows.ok) {
-    return { ok: false, error: rows.error, query, mode: "keyword", warnings: [rows.message || rows.error] };
+    return { ok: false, error: rows.error, query, mode: "keyword", warnings: [rows.message || rows.error], diagnostic: rows.diagnostic || null };
   }
   return packFromRows(query, rows.data, {
     mode: "keyword",
@@ -294,6 +298,7 @@ function packFromRows(query, rows, options) {
     context,
     pack_hash: `supabase-${options.mode}-${query.length}-${sources.length}`,
     warnings: options.warnings || [],
+    diagnostic: options.diagnostic || null,
     budget: { max_tokens: budget, used_tokens_estimate: used },
   };
 }
@@ -314,6 +319,7 @@ async function resolveQueryEmbedding(query, options = {}) {
     return {
       ok: false,
       error: "semantic_continuation_required",
+      diagnostic: embeddingDiagnostic("semantic_continuation_required", options, { retryable: false, next_action: "fulfill_query_embedding_continuation" }),
       warnings: [
         "Supabase semantic search needs a query embedding from a fulfilled continuation (or options.queryEmbedding). Set COGENTIA_ALLOW_INLINE_EMBED_FULFILL=1 only for explicit fulfiller hosts.",
       ],
@@ -327,27 +333,73 @@ async function embedQueryAsFulfiller(query, options = {}) {
   const env = options.env || process.env;
   const apiKey = String(env.OPENAI_API_KEY || env.COGENTIA_OPENAI_API_KEY || "");
   if (!apiKey) {
-    return { ok: false, error: "missing_openai_api_key", warnings: ["Set OPENAI_API_KEY for explicit embed fulfillment."] };
+    return {
+      ok: false,
+      error: "missing_openai_api_key",
+      diagnostic: embeddingDiagnostic("missing_openai_api_key", options, { retryable: false, next_action: "configure_embedding_fulfiller" }),
+      warnings: ["Set OPENAI_API_KEY for explicit embed fulfillment."],
+    };
   }
-  const response = await fetch("https://api.openai.com/v1/embeddings", {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${apiKey}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      model: options.modelName || DEFAULT_MODEL,
-      input: query,
-      dimensions: options.dimensions || DEFAULT_DIMENSIONS,
-    }),
-  });
+  let response;
+  try {
+    response = await fetch(resolveEmbeddingFulfillerUrl(env), {
+      method: "POST",
+      headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
+      body: JSON.stringify({ model: options.modelName || DEFAULT_MODEL, input: query, dimensions: options.dimensions || DEFAULT_DIMENSIONS }),
+    });
+  } catch {
+    return {
+      ok: false,
+      error: "embedding_provider_unreachable",
+      diagnostic: embeddingDiagnostic("embedding_provider_unreachable", options, { retryable: true, next_action: "retry_or_check_embedding_provider" }),
+      warnings: ["Query embedding provider could not be reached."],
+    };
+  }
   const body = await response.json().catch(() => ({}));
   if (!response.ok) {
-    return { ok: false, error: "query_embedding_failed", message: body?.error?.message || response.statusText };
+    const status = Number(response.status || 0);
+    const code = status === 401 || status === 403 ? "embedding_auth_failed" : status === 429 ? "embedding_rate_limited" : "embedding_provider_http_error";
+    return {
+      ok: false,
+      error: "query_embedding_failed",
+      diagnostic: embeddingDiagnostic(code, options, {
+        upstream_status: status || null,
+        retryable: status === 408 || status === 409 || status === 429 || status >= 500,
+        next_action: status === 401 || status === 403 ? "check_embedding_credentials" : "retry_or_check_embedding_provider",
+      }),
+      warnings: [`Query embedding provider returned HTTP ${status || "error"}.`],
+    };
   }
   const embedding = body?.data?.[0]?.embedding;
-  if (!Array.isArray(embedding)) return { ok: false, error: "invalid_embedding_response" };
+  if (!Array.isArray(embedding)) {
+    return {
+      ok: false,
+      error: "invalid_embedding_response",
+      diagnostic: embeddingDiagnostic("invalid_embedding_response", options, { retryable: false, next_action: "check_embedding_provider_contract" }),
+    };
+  }
   return { ok: true, embedding, source: "inline_fulfiller" };
+}
+
+function embeddingDiagnostic(code, options = {}, extra = {}) {
+  return {
+    protocol: "cogentia.retrieval-diagnostic/v1",
+    phase: "query_embedding",
+    code,
+    provider: String(options.provider || DEFAULT_PROVIDER),
+    model: String(options.modelName || DEFAULT_MODEL),
+    dimensions: Number(options.dimensions || DEFAULT_DIMENSIONS),
+    upstream_status: extra.upstream_status || null,
+    retryable: Boolean(extra.retryable),
+    next_action: extra.next_action || null,
+  };
+}
+
+function resolveEmbeddingFulfillerUrl(env = {}) {
+  const explicit = String(env.COGENTIA_EMBEDDING_FULFILLER_URL || env.MAGISTRAL_EMBEDDING_URL || "").trim();
+  if (explicit) return explicit;
+  const router = String(env.COGENTIA_AI_ROUTER_URL || "").replace(/\/$/, "");
+  return router ? `${router}/v1/embeddings` : "https://api.openai.com/v1/embeddings";
 }
 
 async function supabaseRpc(supabaseUrl, serviceKey, fn, args) {
@@ -369,8 +421,21 @@ async function supabaseRpc(supabaseUrl, serviceKey, fn, args) {
     data = null;
   }
   if (!response.ok) {
-    const message = typeof data === "object" ? (data.message || data.error || text) : text;
-    return { ok: false, error: "supabase_rpc_failed", message, fn };
+    const status = Number(response.status || 0);
+    return {
+      ok: false,
+      error: "supabase_rpc_failed",
+      message: `Supabase RPC ${fn} returned HTTP ${status || "error"}.`,
+      fn,
+      diagnostic: {
+        protocol: "cogentia.retrieval-diagnostic/v1",
+        phase: "vector_search",
+        code: "supabase_rpc_failed",
+        upstream_status: status || null,
+        retryable: status === 408 || status === 409 || status === 429 || status >= 500,
+        next_action: "check_supabase_retrieval_rpc",
+      },
+    };
   }
   return { ok: true, data };
 }
