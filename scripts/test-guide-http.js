@@ -215,7 +215,7 @@ const child = spawn(process.execPath, ["scripts/cogentia-mcp-http.js"], {
     ...process.env,
     COGENTIA_DAEMON_URL: daemonBase,
     COGENTIA_GUIDE_MAGISTRAL_URL: daemonBase,
-    COGENTIA_GUIDE_MAGISTRAL_API_KEY: "mock-magistral-key",
+    MAGISTRAL_API_KEY: "mock-magistral-key",
     COGENTIA_GUIDE_AGENT_GATEWAY: "0",
     COGENTIA_GUIDE_SYNTHESIS_PROVIDER: "",
     COGENTIA_MCP_VIEW: "public",

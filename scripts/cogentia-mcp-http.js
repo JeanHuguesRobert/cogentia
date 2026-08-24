@@ -79,7 +79,12 @@ const guideAgentGateway = process.env.COGENTIA_GUIDE_AGENT_GATEWAY === "1";
 // the public Guide's first LLM boundary and may itself route to a local ACP
 // provider; the Guide never starts a coding agent or an agent gateway.
 const guideMagistralUrl = String(process.env.COGENTIA_GUIDE_MAGISTRAL_URL || "").trim();
-const guideMagistralApiKey = String(process.env.COGENTIA_GUIDE_MAGISTRAL_API_KEY || "").trim();
+// On Fracta the existing runtime authority is MAGISTRAL_API_KEY.  Keep the
+// Guide-specific name as an override, but do not require a duplicate secret
+// copy merely to enable the internal loopback route.
+const guideMagistralApiKey = String(
+  process.env.COGENTIA_GUIDE_MAGISTRAL_API_KEY || process.env.MAGISTRAL_API_KEY || "",
+).trim();
 // S7 remains a navigation/audit tool. The public Guide relies on the
 // precomputed Supabase admissibility projection by default, so it must not
 // synchronously resolve and fetch an anchor for every question.
