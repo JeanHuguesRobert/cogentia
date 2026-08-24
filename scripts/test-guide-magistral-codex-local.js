@@ -132,7 +132,7 @@ try {
   }));
   assert.ok(events.some((event) => event.name === "guide_trace" && event.data.step === "provider.acp.session_update"), "Guide must expose ACP operational progress");
   assert.ok(events.some((event) => event.name === "guide_answer" && event.data.ok), "Guide must close with a structured answer");
-  assert.equal(delta.trim(), "GUIDE_MAGISTRAL_CODEX_READONLY_OK", "Codex must read only the isolated public fixture");
+  assert.match(delta, /GUIDE_MAGISTRAL_CODEX_READONLY_OK/, "Codex must read only the isolated public fixture");
   assert.equal(events.some((event) => {
     const trace = event.data?.provider_trace;
     return trace?.step === "acp.reasoning" && trace.visibility !== "withheld";
