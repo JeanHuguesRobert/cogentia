@@ -37,6 +37,11 @@ const magistralBase = `http://127.0.0.1:${magistralPort}`;
 const guideBase = `http://127.0.0.1:${guidePort}`;
 const token = "guide-local-thinkpad-acp-test";
 const publicCwd = fs.mkdtempSync(path.join(os.tmpdir(), "magistral-guide-public-"));
+fs.writeFileSync(
+  path.join(publicCwd, "PUBLIC_CONTEXT.md"),
+  "The public verification marker is GUIDE_MAGISTRAL_CODEX_READONLY_OK.\n",
+  "utf8",
+);
 
 const context = http.createServer(async (req, res) => {
   const url = new URL(req.url || "/", contextBase);
@@ -110,7 +115,7 @@ try {
     method: "POST",
     headers: { "Content-Type": "application/json", Accept: "text/event-stream" },
     body: JSON.stringify({
-      question: "Reply with exactly GUIDE_MAGISTRAL_CODEX_LOCAL_OK. Do not read files or use tools.",
+      question: "Read PUBLIC_CONTEXT.md using a read-only command, then reply with exactly its public verification marker. Do not make changes.",
       locale: "en",
       stream: true,
     }),
@@ -127,6 +132,7 @@ try {
   }));
   assert.ok(events.some((event) => event.name === "guide_trace" && event.data.step === "provider.acp.session_update"), "Guide must expose ACP operational progress");
   assert.ok(events.some((event) => event.name === "guide_answer" && event.data.ok), "Guide must close with a structured answer");
+  assert.equal(delta.trim(), "GUIDE_MAGISTRAL_CODEX_READONLY_OK", "Codex must read only the isolated public fixture");
   assert.equal(events.some((event) => {
     const trace = event.data?.provider_trace;
     return trace?.step === "acp.reasoning" && trace.visibility !== "withheld";
