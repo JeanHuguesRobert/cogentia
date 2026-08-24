@@ -20,6 +20,7 @@ const seenPackBatches = [];
 const seenChatPayloads = [];
 const seenOpenRouterPayloads = [];
 const seenPlannerPayloads = [];
+const seenMagistralPayloads = [];
 
 const daemon = http.createServer(async (req, res) => {
   const url = new URL(req.url || "/", daemonBase);
@@ -89,6 +90,10 @@ const daemon = http.createServer(async (req, res) => {
   }
   if (req.method === "POST" && url.pathname === "/v1/chat/completions") {
     const payload = JSON.parse(await readBody(req) || "{}");
+    if (req.headers["x-cogentia-provider"] === "magistral") {
+      seenMagistralPayloads.push(payload);
+      assert.equal(req.headers.authorization, "Bearer mock-magistral-key");
+    }
     if (payload.metadata?.purpose === "guide_planner") {
       seenPlannerPayloads.push(payload);
       return sendJson(res, 200, {
@@ -143,6 +148,28 @@ const daemon = http.createServer(async (req, res) => {
         }],
       });
     }
+    if (payload.stream) {
+      res.writeHead(200, { "Content-Type": "text/event-stream" });
+      res.write(`data: ${JSON.stringify({
+        id: "chatcmpl_mock_stream",
+        object: "chat.completion.chunk",
+        model: payload.model,
+        choices: [{ index: 0, delta: { content: "FractaVolta is explained " }, finish_reason: null }],
+      })}\n\n`);
+      res.write(`event: magistral_trace\ndata: ${JSON.stringify({
+        protocol: "magistral.public-trace/v1",
+        step: "acp.session_update",
+        kind: "tool_call_update",
+        status: "completed",
+      })}\n\n`);
+      res.write(`data: ${JSON.stringify({
+        id: "chatcmpl_mock_stream",
+        object: "chat.completion.chunk",
+        model: payload.model,
+        choices: [{ index: 0, delta: { content: "through the public corpus [1]." }, finish_reason: "stop" }],
+      })}\n\ndata: [DONE]\n\n`);
+      return res.end();
+    }
     seenChatPayloads.push(payload);
     const question = String(payload.messages?.findLast?.(message => message.role === "user")?.content || "");
     if (/fallback/i.test(question)) {
@@ -187,6 +214,10 @@ const child = spawn(process.execPath, ["scripts/cogentia-mcp-http.js"], {
   env: {
     ...process.env,
     COGENTIA_DAEMON_URL: daemonBase,
+    COGENTIA_GUIDE_MAGISTRAL_URL: daemonBase,
+    COGENTIA_GUIDE_MAGISTRAL_API_KEY: "mock-magistral-key",
+    COGENTIA_GUIDE_AGENT_GATEWAY: "0",
+    COGENTIA_GUIDE_SYNTHESIS_PROVIDER: "",
     COGENTIA_MCP_VIEW: "public",
     COGENTIA_CORS_ORIGIN: "https://fractavolta.com",
     COGENTIA_GUIDE_ENV_FILE: envFile,
@@ -206,6 +237,18 @@ child.stderr.on("data", chunk => { stderr += chunk; });
 try {
   await waitForMcp();
 
+  const serviceInfoResponse = await fetch(`${mcpBase}/service-info`);
+  assert.equal(serviceInfoResponse.status, 200);
+  assert.equal(serviceInfoResponse.headers.get("server"), "Cogentia-Guide");
+  assert.equal(serviceInfoResponse.headers.get("link"), '</service-info>; rel="describedby"; type="application/json"');
+  const serviceInfo = await serviceInfoResponse.json();
+  assert.equal(serviceInfo.protocol, "cogentia.service-identity/v1");
+  assert.equal(serviceInfo.service.id, "cogentia-guide");
+  const serviceInfoHead = await fetch(`${mcpBase}/service-info`, { method: "HEAD" });
+  assert.equal(serviceInfoHead.status, 200);
+  assert.equal(serviceInfoHead.headers.get("server"), "Cogentia-Guide");
+  assert.equal(await serviceInfoHead.text(), "");
+
   const healthResponse = await fetch(`${mcpBase}/guide/health`, {
     headers: { Origin: "https://fractavolta.com" },
   });
@@ -218,6 +261,7 @@ try {
   assert.equal(health.context.daemon.service, "mock-context-gateway");
   assert.equal(health.context.planner_enabled, true);
   assert.equal(health.context.semantic_retrieval.state, "unknown");
+  assert.equal(health.context.provider_adapters.magistral, true);
 
   const healthHead = await fetch(`${mcpBase}/guide/health`, { method: "HEAD" });
   assert.equal(healthHead.status, healthResponse.status);
@@ -253,6 +297,7 @@ try {
     batchQueryIncluded("Agent Brief Representing Jean Hugues Noël Robert")
   );
   assert.ok(seenChatPayloads[0].messages.some(message => /Public Guide retrieval run/.test(message.content)));
+  assert.ok(seenMagistralPayloads.length > 0, "Guide should route chat through configured Magistral");
   assert.ok(seenChatPayloads[0].messages.every(message => !/Previous visitor question/.test(message.content)));
   assert.equal(chat.context.guide_retrieval.strategy, "guide-retrieval-run-v1");
   assert.equal(chat.context.guide_retrieval.planner.source, "magistral");
@@ -323,6 +368,14 @@ try {
   });
   assert.ok(stream.some(event => event.name === "guide_status" && event.data.stage === "planning"));
   assert.ok(stream.some(event => event.name === "guide_retrieval_query"));
+  assert.ok(stream.some(event => event.name === "guide_trace" && event.data.step === "turn.admitted"));
+  assert.ok(stream.some(event => event.name === "guide_trace" && event.data.step === "synthesis.requested"));
+  assert.ok(stream.some(event => event.name === "guide_trace" && event.data.step === "synthesis.completed"));
+  assert.ok(
+    stream.some(event => event.name === "guide_delta" && /FractaVolta/.test(event.data.content)),
+    JSON.stringify({ stream, magistral: seenMagistralPayloads.map(payload => ({ stream: payload.stream, purpose: payload.metadata?.purpose })) }),
+  );
+  assert.ok(stream.some(event => event.name === "guide_trace" && event.data.step === "provider.acp.session_update"));
   assert.ok(stream.some(event => event.name === "guide_web_search"));
   const streamedAnswer = stream.find(event => event.name === "guide_answer")?.data;
   assert.equal(streamedAnswer.ok, true);

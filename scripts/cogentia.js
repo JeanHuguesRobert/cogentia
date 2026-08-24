@@ -2380,6 +2380,13 @@ async function handleDaemonRequest(req, res) {
       inventory: lastInventoryAccess,
     });
   });
+  if ((req.method === "GET" || req.method === "HEAD") && url.pathname === "/service-info") {
+    if (req.method === "HEAD") {
+      res.writeHead(200, daemonHeaders(res));
+      return res.end();
+    }
+    return daemonJson(res, 200, daemonServiceInfo());
+  }
   const view = daemonRequestView(req, url);
   res.cogentiaView = view;
   res.cogentiaPublicPostAllowed = PUBLIC_DAEMON_POST_ROUTES.has(url.pathname);
@@ -3220,6 +3227,8 @@ function daemonRepoState(repo, view = PUBLIC_VIEW) {
 }
 function daemonHeaders(res, extra = {}) {
   const headers = {
+    Server: "Cogentia-Context",
+    Link: '</service-info>; rel="describedby"; type="application/json"',
     "Content-Type": "application/json; charset=utf-8",
     "Access-Control-Allow-Methods": (res?.cogentiaView === FULL_VIEW || res?.cogentiaPublicPostAllowed) ? "GET, POST, OPTIONS" : "GET, OPTIONS",
     "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Cogentia-Entry, X-Cogentia-Admin-Token",
@@ -3232,6 +3241,21 @@ function daemonHeaders(res, extra = {}) {
     headers.Vary = "Origin";
   }
   return headers;
+}
+
+function daemonServiceInfo() {
+  return {
+    protocol: "cogentia.service-identity/v1",
+    service: { id: "cogentia-context", role: "corpus-context-retrieval" },
+    instance: {
+      id: process.env.COGENTIA_SERVICE_INSTANCE_ID || "local:cogentia-context",
+      environment: process.env.NODE_ENV || "development",
+    },
+    interfaces: [
+      { href: "/api/context/health", protocol: "cogentia-context/v1" },
+      { href: "/api/context/pack", protocol: "cogentia-context/v1" },
+    ],
+  };
 }
 function parseJsonBody(req) {
   return new Promise((resolve) => {

@@ -75,6 +75,11 @@ const semanticAnswerCache = createSemanticAnswerCache();
 const port = boundedInteger(process.env.PORT || process.env.COGENTIA_MCP_PORT, 8791, 1, 65535);
 const host = process.env.COGENTIA_MCP_HOST || "0.0.0.0";
 const guideAgentGateway = process.env.COGENTIA_GUIDE_AGENT_GATEWAY === "1";
+// An optional OpenAI-compatible Magistral endpoint.  When configured it is
+// the public Guide's first LLM boundary and may itself route to a local ACP
+// provider; the Guide never starts a coding agent or an agent gateway.
+const guideMagistralUrl = String(process.env.COGENTIA_GUIDE_MAGISTRAL_URL || "").trim();
+const guideMagistralApiKey = String(process.env.COGENTIA_GUIDE_MAGISTRAL_API_KEY || "").trim();
 // S7 remains a navigation/audit tool. The public Guide relies on the
 // precomputed Supabase admissibility projection by default, so it must not
 // synchronously resolve and fetch an anchor for every question.
@@ -100,6 +105,11 @@ async function guideChatCapability() {
   }
   if (guideAgentGateway) {
     const value = { available: true, reason: "agent_gateway", probe_ms: 0 };
+    guideChatProbeCache = { at: now, value };
+    return value;
+  }
+  if (guideMagistralUrl) {
+    const value = { available: true, reason: "magistral_configured", probe_ms: 0 };
     guideChatProbeCache = { at: now, value };
     return value;
   }
@@ -169,12 +179,21 @@ async function guideChatCapability() {
   }
 }
 
-async function guideSynthesisPost(payload) {
+async function guideSynthesisPost(payload, options = {}) {
   if (!guideAgentGateway) {
     // Explicit operational mode for bounded provider evaluation or continuity.
     // It is opt-in and never selects a paid OpenRouter model.
     if (guideSynthesisProvider() === "openrouter_free") {
       return guideOpenRouterChatCompletions(payload, { freeOnly: true });
+    }
+    if (guideMagistralUrl) {
+      const routed = await guideMagistralPost(payload, options);
+      if (routed.ok) {
+        if (routed.body && typeof routed.body === "object") {
+          routed.body._cogentia_guide_synthesis = "magistral_router";
+        }
+        return routed;
+      }
     }
     // 1. Daemon / Magistral router (if circuit is not OPEN)
     if (providerCircuitBreaker.isAvailable("daemon")) {
@@ -286,6 +305,8 @@ const jhnOpenAi = createJhnOpenAiSurface({
 const server = http.createServer(async (req, res) => {
   try {
     applyCors(req, res);
+    res.setHeader("Server", "Cogentia-Guide");
+    res.setHeader("Link", '</service-info>; rel="describedby"; type="application/json"');
     const headRequest = req.method === "HEAD";
     const pathOnly = String(req.url || "").split("?")[0];
     if (headRequest) suppressResponseBody(res);
@@ -295,6 +316,7 @@ const server = http.createServer(async (req, res) => {
     }
     const method = headRequest ? "GET" : req.method;
     if (method === "OPTIONS") return sendNoContent(res, 204);
+    if (method === "GET" && pathOnly === "/service-info") return sendJson(res, 200, guideServiceInfo());
     if (method === "GET" && req.url === "/health") return sendJson(res, 200, await health());
     if (method === "GET" && req.url === "/tools") return sendJson(res, 200, { tools: core.tools });
     if (method === "GET" && req.url === "/guide/health") return sendJson(res, 200, await guideHealth());
@@ -463,6 +485,7 @@ async function guideHealth() {
       semantic_retrieval: guideSemanticRetrieval,
       provider_circuits: providerCircuitBreaker.snapshot(),
       provider_adapters: {
+        magistral: Boolean(guideMagistralUrl),
         openai: Boolean(String(process.env.OPENAI_API_KEY || process.env.COGENTIA_OPENAI_API_KEY || "").trim()),
         openrouter: Boolean(String(process.env.OPENROUTER_API_KEY || process.env.COGENTIA_OPENROUTER_API_KEY || "").trim()),
         openrouter_free_fallback: guideOpenRouterFreeEnabled(),
@@ -733,7 +756,7 @@ async function parseUserIntent(question, history, defaultLocale = "en", options 
   messages.push({ role: "user", content: question });
 
   try {
-    const res = await daemonPost("/v1/chat/completions", {
+    const res = await guideChatPost({
       model: "magistral",
       temperature: 0,
       response_format: { type: "json_object" },
@@ -1048,9 +1071,16 @@ async function handleGuideChatStream(res, question, locale, history = [], payloa
     at: new Date().toISOString(),
     elapsed_ms: Date.now() - startedAt,
   });
+  const trace = (step, data = {}) => emit("guide_trace", {
+    protocol: "guide.public-trace/v1",
+    step,
+    visibility: "public",
+    ...data,
+  });
 
   try {
     emit("guide_status", guideProgress(locale, "received"));
+    trace("turn.admitted", { surface: resolvePublicChatSurface(payload, { surface: "fractavolta-public-guide" }), locale });
     if (!chatCap.available) {
       emit("guide_status", {
         stage: "chat_unavailable",
@@ -1081,6 +1111,7 @@ async function handleGuideChatStream(res, question, locale, history = [], payloa
         error: plan.planner_error || undefined,
         message: guideProgress(locale, "planned").message,
       });
+      trace("retrieval.planned", { planner: plan.source, queries: plan.queries || [] });
 
       emit("guide_status", guideProgress(locale, "retrieval"));
       retrieval = await guideRetrievalRun(resolvedQuestion, plan, { progress: emit, locale });
@@ -1092,6 +1123,10 @@ async function handleGuideChatStream(res, question, locale, history = [], payloa
         source_ids: retrieval.sources.map(source => source.source_id),
         warnings: retrieval.warnings,
         message: guideProgress(locale, "retrieved").message,
+      });
+      trace("retrieval.completed", {
+        source_ids: retrieval.sources.map(source => source.source_id),
+        warnings: retrieval.warnings,
       });
 
       web = await guideWebSearchRun(resolvedQuestion, locale, payload, { progress: emit });
@@ -1138,11 +1173,34 @@ async function handleGuideChatStream(res, question, locale, history = [], payloa
         locale,
       },
     };
+    trace("synthesis.requested", {
+      model: guideModel,
+      provider_boundary: "magistral",
+      source_count: retrieval.sources.length,
+      web_search_attempted: Boolean(web.attempted),
+    });
 
-    const routed = await guideSynthesisPost(chatPayload);
+    const routed = await guideSynthesisPost(
+      guideMagistralUrl ? { ...chatPayload, stream: true } : chatPayload,
+      {
+        onEvent: (event) => {
+          if (event.type === "content") {
+            emit("guide_delta", { content: event.content });
+          } else if (event.type === "trace") {
+            trace(`provider.${event.trace?.step || "update"}`, { provider_trace: event.trace });
+          }
+        },
+      },
+    );
     if (routed.ok) {
+      trace("synthesis.completed", {
+        model: routed.body?.model || guideModel,
+        provider: routed.body?._cogentia_guide_synthesis || "magistral",
+        usage: routed.body?.usage || null,
+      });
       emit("guide_answer", guideChatResponse(question, locale, routed.body, retrieval, web));
     } else {
+      trace("synthesis.failed", { error: routed.error || "routing_failed" });
       const fallback = await guideFallback(question, locale, routed, retrieval, web);
       emit(fallback.body?.ok === false ? "guide_error" : "guide_answer", fallback.body);
     }
@@ -1180,10 +1238,99 @@ async function daemonPost(route, body, options = {}) {
     return { ok: false, status: 0, body: null, error: "cogentia_daemon_unavailable", message: error.message };
   }
   const contentType = response.headers.get("content-type") || "";
+  if (contentType.includes("text/event-stream")) {
+    const body = await readMagistralSse(response, options.onEvent || (() => {}));
+    return { ok: response.ok, status: response.status, body, error: response.ok ? undefined : "magistral_http_error" };
+  }
   const parsed = contentType.includes("application/json")
     ? await response.json().catch(() => null)
     : await response.text().catch(() => "");
   return { ok: response.ok, status: response.status, body: parsed };
+}
+
+async function guideChatPost(body, options = {}) {
+  if (guideMagistralUrl) return guideMagistralPost(body, options);
+  return daemonPost("/v1/chat/completions", body, options);
+}
+
+async function guideMagistralPost(body, options = {}) {
+  let url;
+  try {
+    url = new URL("/v1/chat/completions", guideMagistralUrl);
+    if (!new Set(["http:", "https:"]).has(url.protocol) || url.username || url.password) {
+      throw new Error("invalid_magistral_url");
+    }
+  } catch (error) {
+    return { ok: false, status: 0, body: null, error: "magistral_url_invalid", message: error.message };
+  }
+  let response;
+  try {
+    response = await fetch(url, {
+      method: "POST",
+      headers: {
+        Accept: "application/json",
+        "Content-Type": "application/json",
+        "X-Cogentia-Entry": "public",
+        "X-Cogentia-Provider": "magistral",
+        ...(guideMagistralApiKey ? { Authorization: `Bearer ${guideMagistralApiKey}` } : {}),
+      },
+      body: JSON.stringify(body),
+      redirect: "error",
+      signal: AbortSignal.timeout(options.timeoutMs || boundedInteger(process.env.COGENTIA_GUIDE_MAGISTRAL_TIMEOUT_MS, 120000, 5000, 240000)),
+    });
+  } catch (error) {
+    return { ok: false, status: 0, body: null, error: "magistral_unavailable", message: error.message };
+  }
+  const contentType = response.headers.get("content-type") || "";
+  if (contentType.includes("text/event-stream")) {
+    const streamed = await readMagistralSse(response, options.onEvent || (() => {}));
+    return { ok: response.ok, status: response.status, body: streamed, error: response.ok ? undefined : "magistral_http_error" };
+  }
+  const parsed = contentType.includes("application/json")
+    ? await response.json().catch(() => null)
+    : await response.text().catch(() => "");
+  return { ok: response.ok, status: response.status, body: parsed, error: response.ok ? undefined : "magistral_http_error" };
+}
+
+async function readMagistralSse(response, onEvent) {
+  const decoder = new TextDecoder();
+  let buffer = "";
+  let content = "";
+  let id = null;
+  let model = null;
+  let finishReason = "stop";
+  for await (const chunk of response.body || []) {
+    buffer += decoder.decode(chunk, { stream: true });
+    let boundary;
+    while ((boundary = buffer.indexOf("\n\n")) !== -1) {
+      const block = buffer.slice(0, boundary);
+      buffer = buffer.slice(boundary + 2);
+      const event = block.match(/^event: (.+)$/m)?.[1] || "message";
+      const raw = block.match(/^data: (.+)$/m)?.[1] || "";
+      if (!raw || raw === "[DONE]") continue;
+      let data;
+      try { data = JSON.parse(raw); } catch { continue; }
+      if (event === "magistral_trace") {
+        onEvent({ type: "trace", trace: data });
+        continue;
+      }
+      const choice = data.choices?.[0] || {};
+      const fragment = String(choice.delta?.content || "");
+      if (fragment) {
+        content += fragment;
+        onEvent({ type: "content", content: fragment });
+      }
+      id ||= data.id || null;
+      model ||= data.model || null;
+      finishReason = choice.finish_reason || finishReason;
+    }
+  }
+  return {
+    id: id || `magistral-${Date.now().toString(36)}`,
+    object: "chat.completion",
+    model: model || guideModel,
+    choices: [{ index: 0, message: { role: "assistant", content }, finish_reason: finishReason }],
+  };
 }
 
 async function guidePlanningRun(question, locale) {
@@ -1204,7 +1351,7 @@ async function guidePlanningRun(question, locale) {
     },
   };
 
-  const routed = await daemonPost("/v1/chat/completions", payload, { timeoutMs: 5000 });
+  const routed = await guideChatPost(payload, { timeoutMs: 5000 });
   if (!routed.ok) {
     return { ...fallback, planner_error: routed.body?.error?.type || routed.error || "planner_failed" };
   }
@@ -3007,6 +3154,26 @@ function readBody(req, maxBytes = 1024 * 1024) {
 function sendJson(res, status, body) {
   res.writeHead(status, { "Content-Type": "application/json" });
   res.end(JSON.stringify(body));
+}
+
+function guideServiceInfo() {
+  return {
+    protocol: "cogentia.service-identity/v1",
+    service: { id: "cogentia-guide", role: "public-answer-surface" },
+    instance: {
+      id: process.env.COGENTIA_SERVICE_INSTANCE_ID || "local:cogentia-guide",
+      environment: process.env.NODE_ENV || "development",
+    },
+    interfaces: [
+      { href: "/guide/health", protocol: "guide-chat/v1" },
+      { href: "/guide/chat", protocol: "guide-chat/v1" },
+      { href: "/guide/v1/chat/completions", protocol: "openai-compatible" },
+    ],
+    dependencies: [
+      { id: "cogentia-context", role: "public-retrieval" },
+      ...(guideMagistralUrl ? [{ id: "magistral", role: "synthesis-router" }] : []),
+    ],
+  };
 }
 
 function sendNoContent(res, status) {

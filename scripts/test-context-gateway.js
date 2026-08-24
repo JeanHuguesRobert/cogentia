@@ -43,6 +43,17 @@ function assertPublicToolCatalogue(names) {
 
 try {
   await waitForHealth();
+  const serviceInfoResponse = await fetch(`${base}/service-info`);
+  assert.equal(serviceInfoResponse.status, 200);
+  assert.equal(serviceInfoResponse.headers.get("server"), "Cogentia-Context");
+  assert.equal(serviceInfoResponse.headers.get("link"), '</service-info>; rel="describedby"; type="application/json"');
+  const serviceInfo = await serviceInfoResponse.json();
+  assert.equal(serviceInfo.protocol, "cogentia.service-identity/v1");
+  assert.equal(serviceInfo.service.id, "cogentia-context");
+  const serviceInfoHead = await fetch(`${base}/service-info`, { method: "HEAD" });
+  assert.equal(serviceInfoHead.status, 200);
+  assert.equal(serviceInfoHead.headers.get("server"), "Cogentia-Context");
+  assert.equal(await serviceInfoHead.text(), "");
   const health = await getJson("/api/context/health");
   assert.equal(health.service, "cogentia-context-gateway");
   assert.equal(health.write_routes_public, false);
