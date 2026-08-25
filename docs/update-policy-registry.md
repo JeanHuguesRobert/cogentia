@@ -44,6 +44,9 @@ update_policy: "UP-DEFAULT-REVIEWED"
 | Identifier | Applies to | Minimum maintenance rule |
 |---|---|---|
 | `UP-DEFAULT-REVIEWED` | General source and working documents | Update only from traceable evidence; preserve provenance; review on substantive change. |
+| `UP-DESIRED-PRESENT` | Normative architecture specifications, core protocols, formal invariant definitions | Allow normative definitions, invariant refinement, conformance rules and compression; redirect rationale/prior art to Archaeology; semantic metadata changes (`document_kind`, `document_role`, `update_policy`) must be explicit and strongly reviewed, never incidental. |
+| `UP-ARCHAEOLOGY-LIVING` | Living conceptual syntheses, rationales, historical genealogies, SOTA comparisons | Allows accumulation of relevant rationale, ancestry, prior art and comparisons; must not silently redefine the normative architecture. |
+| `UP-REALITY-EVIDENCE` | Reality tests, experiment traces, test receipts, failure logs, residue reports | Preserves empirical observations, failures and residue; experimental history must not be rewritten after the fact merely to agree with current doctrine. |
 | `UP-GENERATED-REBUILD` | Generated indexes, status views, backlinks, and reports | Rebuild from declared inputs; record generator and date; never hand-edit generated blocks. |
 | `UP-DECISION-REVIEW` | ADRs, policies, mandates, and boundary decisions | Require human review before acceptance; record supersession rather than erasing history. |
 | `UP-DERIVED-SOURCE-LOCKED` | Derived or intentionally adapted products and publication packages | Keep source ref, derivation/adaptation purpose, reviewer, and publication state; do not silently rewrite source claims. |

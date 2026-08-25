@@ -31,6 +31,7 @@ import { runWeeklyConsolidation } from "./lib/consolidation.js";
 import { listAgentSkills, getAgentSkill } from "./lib/cogentia-agent-skills.js";
 import { registerModule, invokeCapability } from "./lib/v3-modules.js";
 import { resolveCallerAuth, deriveLockers } from "./lib/cogentia-mcp-auth.js";
+import { checkSemanticMutation, MUTATION_STATUS } from "./lib/semantic-mutation-checker.js";
 
 const COGENTIA_VERSION = "0.3.0";
 const VERSION = "3.0.0";
@@ -1368,9 +1369,77 @@ function cmdDocs(sub) {
       return cmdDocsTrails(ctx, inventory);
     case "judgments":
       return cmdDocsJudgments(ctx, inventory, optionalPositional("all"));
+    case "check-mutation":
+    case "mutation-check":
+      return cmdDocsCheckMutation(ctx, inventory, argv.shift());
     default:
-      throw new Error(`Unknown docs subcommand "${sub}". Use summary, query, search, gaps, inspect, trails, or judgments.`);
+      throw new Error(`Unknown docs subcommand "${sub}". Use summary, query, search, gaps, inspect, trails, judgments, or check-mutation.`);
   }
+}
+
+function cmdDocsCheckMutation(ctx, inventory, targetArg) {
+  const strict = hasFlag("--strict");
+  const override = hasFlag("--override");
+  let filePath = targetArg;
+  if (!filePath && argv.length > 0) filePath = argv.shift();
+  if (!filePath) {
+    throw new Error("Usage: node scripts/cogentia.js docs check-mutation <path/to/doc.md> [--strict] [--override] [--json]");
+  }
+
+  let absPath = path.isAbsolute(filePath) ? filePath : path.resolve(process.cwd(), filePath);
+  let doc = inventory.documents.find(d => d.full_path === absPath || d.rel === filePath || `${d.repo}/${d.rel}` === filePath);
+  if (doc) absPath = doc.full_path;
+
+  if (!fs.existsSync(absPath)) {
+    throw new Error(`File not found: ${filePath}`);
+  }
+
+  const afterContent = fs.readFileSync(absPath, "utf8");
+  let beforeContent = "";
+
+  try {
+    const repoDir = doc ? doc.repo_root : path.dirname(absPath);
+    const gitRel = path.relative(repoDir, absPath).replace(/\\/g, "/");
+    beforeContent = execFileSync("git", ["show", `HEAD:${gitRel}`], {
+      cwd: repoDir,
+      encoding: "utf8",
+      stdio: ["ignore", "pipe", "ignore"],
+    });
+  } catch {
+    beforeContent = "";
+  }
+
+  const result = checkSemanticMutation(beforeContent, afterContent, {
+    filePath: doc ? `${doc.repo}/${doc.rel}` : filePath,
+    explicitOverride: override,
+  });
+
+  if (JSON_MODE) {
+    console.log(JSON.stringify(result, null, 2));
+  } else {
+    console.log(`\nSemantic Mutation Check: ${result.file}\n`);
+    console.log(`Status: ${result.status} (policy: ${result.policy})`);
+    if (result.blocks.length > 0) {
+      console.log("\n[BLOCK] Violations:");
+      for (const b of result.blocks) {
+        console.log(`  - ${b.code}: ${b.message}`);
+      }
+    }
+    if (result.warnings.length > 0) {
+      console.log("\n[WARN] Warnings:");
+      for (const w of result.warnings) {
+        console.log(`  - ${w.code}: ${w.message}`);
+      }
+    }
+    if (result.status === MUTATION_STATUS.PASS) {
+      console.log("\nAll semantic mutation checks passed.");
+    }
+  }
+
+  if (strict && result.status === MUTATION_STATUS.BLOCK) {
+    process.exit(2);
+  }
+  return result;
 }
 
 function cmdDocsQuery(inventory, repoArg) {
