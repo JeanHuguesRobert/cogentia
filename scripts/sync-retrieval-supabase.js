@@ -63,7 +63,7 @@ async function main() {
       LIMIT ? OFFSET ?
     `);
 
-    const chunkSize = 100;
+    const chunkSize = 35;
     let upserted = 0;
     for (let offset = startAt; offset < totalRecords; offset += chunkSize) {
       const rows = batchStmt.all(chunkSize, offset);
@@ -104,23 +104,44 @@ async function main() {
       }).filter(record => Array.isArray(record.embedding) && record.embedding.length === 1536 && record.text);
 
       if (batch.length > 0) {
-        const response = await fetch(`${supabaseUrl}/rest/v1/retrieval_chunks?on_conflict=corpus_key,source_id,provider,model_name,dimensions`, {
-          method: "POST",
-          headers: {
-            apikey: serviceKey,
-            Authorization: `Bearer ${serviceKey}`,
-            "Content-Type": "application/json",
-            Prefer: "resolution=merge-duplicates,return=minimal",
-          },
-          body: JSON.stringify(batch),
-        });
-        if (!response.ok) {
-          const detail = await response.text();
-          throw new Error(`Supabase upsert failed (${response.status}): ${detail.slice(0, 500)}`);
+        let attempts = 0;
+        while (attempts < 4) {
+          attempts++;
+          try {
+            const response = await fetch(`${supabaseUrl}/rest/v1/retrieval_chunks?on_conflict=corpus_key,source_id,provider,model_name,dimensions`, {
+              method: "POST",
+              headers: {
+                apikey: serviceKey,
+                Authorization: `Bearer ${serviceKey}`,
+                "Content-Type": "application/json",
+                Prefer: "resolution=merge-duplicates,return=minimal",
+              },
+              body: JSON.stringify(batch),
+            });
+            if (!response.ok) {
+              const detail = await response.text();
+              if (attempts < 4 && (response.status === 500 || response.status === 504 || response.status === 429)) {
+                console.warn(`[Supabase retry ${attempts}/3] HTTP ${response.status}: ${detail.slice(0, 100)} — waiting 2s...`);
+                await new Promise(r => setTimeout(r, 2000 * attempts));
+                continue;
+              }
+              throw new Error(`Supabase upsert failed (${response.status}): ${detail.slice(0, 500)}`);
+            }
+            break;
+          } catch (err) {
+            if (attempts < 4) {
+              console.warn(`[Supabase retry ${attempts}/3] Network error: ${err.message} — waiting 2s...`);
+              await new Promise(r => setTimeout(r, 2000 * attempts));
+              continue;
+            }
+            throw err;
+          }
         }
       }
       upserted += rows.length;
-      console.log(JSON.stringify({ ok: true, batch_start: offset, batch_size: rows.length, upserted, total: totalRecords }, null, 2));
+      if ((offset % 350 === 0) || (offset + rows.length >= totalRecords)) {
+        console.log(JSON.stringify({ ok: true, batch_start: offset, batch_size: rows.length, upserted, total: totalRecords }, null, 2));
+      }
     }
 
     if (indexHash) {
