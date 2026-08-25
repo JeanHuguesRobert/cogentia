@@ -28,50 +28,13 @@ async function main() {
   const sqlite = await import("node:sqlite");
   const db = new sqlite.DatabaseSync(dbPath, { readOnly: true });
   try {
-    const indexHash = db.prepare("SELECT value FROM index_state WHERE key = 'index_hash'").get()?.value || "";
-    const rows = db.prepare(`
-      SELECT e.content_hash, e.provider, e.model_name, e.dimensions, e.embedding,
-             c.repo, c.path, c.start_line, c.end_line, c.title, c.heading_path, c.role,
-             c.visibility, c.github_url, c.text, c.searchable_public
+    const countRow = db.prepare(`
+      SELECT count(*) as total
       FROM embeddings e
       JOIN chunks c ON c.id = e.chunk_id
       WHERE c.searchable_public = 1
-      ORDER BY c.repo, c.path, c.start_line
-    `).all();
-
-    const records = rows.map(row => {
-      const sourceId = `${row.repo}:${row.path}#L${row.start_line}-L${row.end_line}`;
-      let embedding = row.embedding;
-      try {
-        embedding = typeof embedding === "string" ? JSON.parse(embedding) : embedding;
-      } catch {
-        embedding = null;
-      }
-      return {
-        corpus_key: corpusKey,
-        index_hash: indexHash,
-        source_id: sourceId,
-        repo: row.repo,
-        path: row.path,
-        start_line: row.start_line,
-        end_line: row.end_line,
-        title: row.title || "",
-        heading_path: row.heading_path || "",
-        role: row.role || "",
-        document_kind: row.role === "source" ? "source" : "",
-        admissible: row.role === "source" && !String(row.path || "").startsWith(".cogentia/") && !String(row.path || "").includes("/issues/"),
-        canonical_weight: 0,
-        visibility: row.visibility || "public",
-        github_url: row.github_url || "",
-        text: row.text || "",
-        content_hash: row.content_hash || "",
-        provider: row.provider || "openai",
-        model_name: row.model_name || "text-embedding-3-small",
-        dimensions: row.dimensions || 1536,
-        embedding,
-        updated_at: new Date().toISOString(),
-      };
-    }).filter(record => Array.isArray(record.embedding) && record.embedding.length === 1536 && record.text);
+    `).get();
+    const totalRecords = countRow?.total || 0;
 
     console.log(JSON.stringify({
       ok: true,
@@ -79,35 +42,84 @@ async function main() {
       corpus_key: corpusKey,
       index_hash: indexHash,
       db_path: dbPath,
-      rows: records.length,
+      rows: totalRecords,
       start_at: startAt,
     }, null, 2));
 
     if (dryRun) return;
-    if (startAt > records.length) {
-      throw new Error(`--start-at ${startAt} exceeds ${records.length} records`);
+    if (startAt > totalRecords) {
+      throw new Error(`--start-at ${startAt} exceeds ${totalRecords} records`);
     }
+
+    const batchStmt = db.prepare(`
+      SELECT e.content_hash, e.provider, e.model_name, e.dimensions, e.embedding,
+             c.repo, c.path, c.start_line, c.end_line, c.title, c.heading_path, c.role,
+             c.visibility, c.github_url, c.text, c.searchable_public
+      FROM embeddings e
+      JOIN chunks c ON c.id = e.chunk_id
+      WHERE c.searchable_public = 1
+      ORDER BY c.repo, c.path, c.start_line
+      LIMIT ? OFFSET ?
+    `);
 
     const chunkSize = 100;
     let upserted = 0;
-    for (let i = startAt; i < records.length; i += chunkSize) {
-      const batch = records.slice(i, i + chunkSize);
-      const response = await fetch(`${supabaseUrl}/rest/v1/retrieval_chunks?on_conflict=corpus_key,source_id,provider,model_name,dimensions`, {
-        method: "POST",
-        headers: {
-          apikey: serviceKey,
-          Authorization: `Bearer ${serviceKey}`,
-          "Content-Type": "application/json",
-          Prefer: "resolution=merge-duplicates,return=minimal",
-        },
-        body: JSON.stringify(batch),
-      });
-      if (!response.ok) {
-        const detail = await response.text();
-        throw new Error(`Supabase upsert failed (${response.status}): ${detail.slice(0, 500)}`);
+    for (let offset = startAt; offset < totalRecords; offset += chunkSize) {
+      const rows = batchStmt.all(chunkSize, offset);
+      if (!rows.length) break;
+
+      const batch = rows.map(row => {
+        const sourceId = `${row.repo}:${row.path}#L${row.start_line}-L${row.end_line}`;
+        let embedding = row.embedding;
+        try {
+          embedding = typeof embedding === "string" ? JSON.parse(embedding) : embedding;
+        } catch {
+          embedding = null;
+        }
+        return {
+          corpus_key: corpusKey,
+          index_hash: indexHash,
+          source_id: sourceId,
+          repo: row.repo,
+          path: row.path,
+          start_line: row.start_line,
+          end_line: row.end_line,
+          title: row.title || "",
+          heading_path: row.heading_path || "",
+          role: row.role || "",
+          document_kind: row.role === "source" ? "source" : "",
+          admissible: row.role === "source" && !String(row.path || "").startsWith(".cogentia/") && !String(row.path || "").includes("/issues/"),
+          canonical_weight: 0,
+          visibility: row.visibility || "public",
+          github_url: row.github_url || "",
+          text: row.text || "",
+          content_hash: row.content_hash || "",
+          provider: row.provider || "openai",
+          model_name: row.model_name || "text-embedding-3-small",
+          dimensions: row.dimensions || 1536,
+          embedding,
+          updated_at: new Date().toISOString(),
+        };
+      }).filter(record => Array.isArray(record.embedding) && record.embedding.length === 1536 && record.text);
+
+      if (batch.length > 0) {
+        const response = await fetch(`${supabaseUrl}/rest/v1/retrieval_chunks?on_conflict=corpus_key,source_id,provider,model_name,dimensions`, {
+          method: "POST",
+          headers: {
+            apikey: serviceKey,
+            Authorization: `Bearer ${serviceKey}`,
+            "Content-Type": "application/json",
+            Prefer: "resolution=merge-duplicates,return=minimal",
+          },
+          body: JSON.stringify(batch),
+        });
+        if (!response.ok) {
+          const detail = await response.text();
+          throw new Error(`Supabase upsert failed (${response.status}): ${detail.slice(0, 500)}`);
+        }
       }
-      upserted += batch.length;
-      console.log(JSON.stringify({ ok: true, batch_start: i, batch_size: batch.length, upserted }, null, 2));
+      upserted += rows.length;
+      console.log(JSON.stringify({ ok: true, batch_start: offset, batch_size: rows.length, upserted, total: totalRecords }, null, 2));
     }
 
     if (indexHash) {
