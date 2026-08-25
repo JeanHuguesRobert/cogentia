@@ -234,6 +234,7 @@ const PUBLIC_DAEMON_GET_ROUTES = new Set([
   "/api/cli/docs/gaps",
   "/api/cli/docs/inspect",
   "/api/cli/docs/summary",
+  "/api/cli/docs/check-mutation",
   "/api/cli/corpus/privacy",
   "/api/cli/corpus/consolidate",
   "/api/cli/embeddings/status",
@@ -505,6 +506,10 @@ Document commands:
   docs judgments [repo|all]
                            List document-role cases requiring external judgment.
                            Add --emit-continuations to create judgment requests.
+  docs check-mutation <file|repo|all>
+                           Deterministic semantic mutation checks against protected
+                           update policies (UP-DESIRED-PRESENT, UP-ARCHAEOLOGY-LIVING,
+                           UP-REALITY-EVIDENCE). Flags: --strict --override --json
 
 Concept commands:
   concepts list [repo|all]
@@ -1406,14 +1411,8 @@ function cmdDocs(sub) {
   }
 }
 
-function cmdDocsCheckMutation(ctx, inventory, targetArg) {
-  const strict = hasFlag("--strict");
-  const override = hasFlag("--override");
-  let scopeArg = targetArg;
-  if (!scopeArg && argv.length > 0 && !argv[0].startsWith("-")) scopeArg = argv.shift();
-  if (!scopeArg) scopeArg = "all";
-
-  // Check if target is a single specific file or a batch scope (all / repoName)
+function runDocsCheckMutation(ctx, inventory, { target, override, strict }) {
+  let scopeArg = target || "all";
   const isSpecificFile = scopeArg !== "all" && !ctx.repos.some(r => r.name === scopeArg) && (scopeArg.includes("/") || scopeArg.includes("\\") || scopeArg.endsWith(".md"));
 
   if (isSpecificFile) {
@@ -1422,7 +1421,7 @@ function cmdDocsCheckMutation(ctx, inventory, targetArg) {
     if (doc) absPath = doc.full_path;
 
     if (!fs.existsSync(absPath)) {
-      throw new Error(`File not found: ${scopeArg}`);
+      return { ok: false, error: `File not found: ${scopeArg}` };
     }
 
     const afterContent = fs.readFileSync(absPath, "utf8");
@@ -1444,32 +1443,6 @@ function cmdDocsCheckMutation(ctx, inventory, targetArg) {
       filePath: doc ? `${doc.repo}/${doc.rel}` : scopeArg,
       explicitOverride: override,
     });
-
-    if (JSON_MODE) {
-      console.log(JSON.stringify(result, null, 2));
-    } else {
-      console.log(`\nSemantic Mutation Check: ${result.file}\n`);
-      console.log(`Status: ${result.status} (policy: ${result.policy})`);
-      if (result.blocks.length > 0) {
-        console.log("\n[BLOCK] Violations:");
-        for (const b of result.blocks) {
-          console.log(`  - ${b.code}: ${b.message}`);
-        }
-      }
-      if (result.warnings.length > 0) {
-        console.log("\n[WARN] Warnings:");
-        for (const w of result.warnings) {
-          console.log(`  - ${w.code}: ${w.message}`);
-        }
-      }
-      if (result.status === MUTATION_STATUS.PASS) {
-        console.log("\nAll semantic mutation checks passed.");
-      }
-    }
-
-    if (strict && result.status === MUTATION_STATUS.BLOCK) {
-      process.exit(2);
-    }
     return result;
   }
 
@@ -1510,7 +1483,7 @@ function cmdDocsCheckMutation(ctx, inventory, targetArg) {
     }
   }
 
-  const summary = {
+  return {
     ok: blockCount === 0,
     scope: scopeArg,
     total_scanned: targetDocs.length,
@@ -1519,34 +1492,77 @@ function cmdDocsCheckMutation(ctx, inventory, targetArg) {
     blocked: blockCount,
     issues: results,
   };
+}
 
-  if (JSON_MODE) {
-    console.log(JSON.stringify(summary, null, 2));
-  } else {
-    console.log(`\nSemantic Mutation Audit [scope: ${scopeArg}]\n`);
-    console.log(`Scanned: ${targetDocs.length} documents across corpus`);
-    console.log(`- PASS: ${passCount}`);
-    console.log(`- WARN: ${warnCount}`);
-    console.log(`- BLOCK: ${blockCount}`);
-    if (results.length > 0) {
-      console.log("\nNoteworthy findings:");
-      for (const item of results.slice(0, 30)) {
-        console.log(`\n[${item.status}] ${item.file} (policy: ${item.policy}):`);
-        for (const b of item.blocks) console.log(`  - BLOCK: ${b.code} — ${b.message}`);
-        for (const w of item.warnings) console.log(`  - WARN: ${w.code} — ${w.message}`);
-      }
-      if (results.length > 30) {
-        console.log(`\n... and ${results.length - 30} more findings.`);
+registerModule({
+  id: "docs.check-mutation",
+  kind: "capability_provider",
+  provides: { capabilities: ["docs.check-mutation", "corpus.check-mutation"] },
+  governance: { requires: [], trace_minimum: "none" },
+  run: ({ ctx, inventory, target, override, strict }) => {
+    const inv = inventory || buildInventory(ctx);
+    return runDocsCheckMutation(ctx, inv, { target, override, strict });
+  },
+});
+
+function cmdDocsCheckMutation(ctx, inventory, targetArg) {
+  const strict = hasFlag("--strict");
+  const override = hasFlag("--override");
+  let scopeArg = targetArg;
+  if (!scopeArg && argv.length > 0 && !argv[0].startsWith("-")) scopeArg = argv.shift();
+  if (!scopeArg) scopeArg = "all";
+
+  return invokeCapability(
+    "docs.check-mutation",
+    { ctx, inventory, target: scopeArg, override, strict },
+    { auth: CLI_TRUSTED_AUTH }
+  ).then((result) => {
+    if (JSON_MODE) {
+      console.log(JSON.stringify(result, null, 2));
+    } else if (result.scope) {
+      console.log(`\nSemantic Mutation Audit [scope: ${result.scope}]\n`);
+      console.log(`Scanned: ${result.total_scanned} documents across corpus`);
+      console.log(`- PASS: ${result.passed}`);
+      console.log(`- WARN: ${result.warnings}`);
+      console.log(`- BLOCK: ${result.blocked}`);
+      if (result.issues?.length > 0) {
+        console.log("\nNoteworthy findings:");
+        for (const item of result.issues.slice(0, 30)) {
+          console.log(`\n[${item.status}] ${item.file} (policy: ${item.policy}):`);
+          for (const b of item.blocks || []) console.log(`  - BLOCK: ${b.code} — ${b.message}`);
+          for (const w of item.warnings || []) console.log(`  - WARN: ${w.code} — ${w.message}`);
+        }
+        if (result.issues.length > 30) {
+          console.log(`\n... and ${result.issues.length - 30} more findings.`);
+        }
+      } else {
+        console.log("\nAll documents across the tracked corpus passed semantic mutation checks.");
       }
     } else {
-      console.log("\nAll documents across the tracked corpus passed semantic mutation checks.");
+      console.log(`\nSemantic Mutation Check: ${result.file}\n`);
+      console.log(`Status: ${result.status} (policy: ${result.policy})`);
+      if (result.blocks?.length > 0) {
+        console.log("\n[BLOCK] Violations:");
+        for (const b of result.blocks) {
+          console.log(`  - ${b.code}: ${b.message}`);
+        }
+      }
+      if (result.warnings?.length > 0) {
+        console.log("\n[WARN] Warnings:");
+        for (const w of result.warnings) {
+          console.log(`  - ${w.code}: ${w.message}`);
+        }
+      }
+      if (result.status === MUTATION_STATUS.PASS) {
+        console.log("\nAll semantic mutation checks passed.");
+      }
     }
-  }
 
-  if (strict && blockCount > 0) {
-    process.exit(2);
-  }
-  return summary;
+    if (strict && (!result.ok || result.status === MUTATION_STATUS.BLOCK)) {
+      process.exit(2);
+    }
+    return result;
+  });
 }
 
 function cmdDocsQuery(inventory, repoArg) {
@@ -2680,6 +2696,25 @@ async function handleDaemonRequest(req, res) {
       ? (result.error === "missing_ref" ? 400 : result.error === "forbidden_public_view" ? 403 : 404)
       : 200;
     return daemonJson(res, status, result);
+  }
+  if (req.method === "GET" && url.pathname === "/api/cli/docs/check-mutation") {
+    const effectiveCtx = ctx || loadContext();
+    const effectiveView = resolveEffectiveView(view, url.searchParams.get("view"));
+    const inventory = getDaemonInventory(effectiveCtx);
+    const auth = daemonResolveAuth(req, view);
+    const target = url.searchParams.get("target") || url.searchParams.get("file") || "all";
+    const override = parseBoolean(url.searchParams.get("override"));
+    const strict = parseBoolean(url.searchParams.get("strict"));
+    try {
+      const result = await invokeCapability(
+        "docs.check-mutation",
+        { ctx: effectiveCtx, inventory, target, override, strict, view: effectiveView },
+        { auth }
+      );
+      return daemonJson(res, result.ok === false ? 422 : 200, result);
+    } catch (error) {
+      return daemonJson(res, 500, { ok: false, error: "check_mutation_failed", message: error.message });
+    }
   }
   if (req.method === "GET" && url.pathname === "/api/cli/corpus/privacy") {
     const effectiveCtx = ctx || loadContext();
@@ -6456,6 +6491,7 @@ async function indexRebuild(ctx, options = {}) {
     const repoByName = new Map(ctx.repos.map(repo => [repo.name, repo]));
     db.exec("BEGIN");
     try {
+      initIndexSchema(db);
       clearIndex(db);
       const insertDocument = db.prepare(`
         INSERT INTO documents (

@@ -157,6 +157,29 @@ export const TOOLS = [
     },
   },
   {
+    name: "cogentia_docs_check_mutation",
+    description:
+      "Run deterministic semantic mutation checks against corpus documents. Validates that document_kind, document_role, and update_policy (UP-DESIRED-PRESENT, UP-ARCHAEOLOGY-LIVING, UP-REALITY-EVIDENCE) are respected and prevents silent regressions.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        target: {
+          type: "string",
+          description: "Target file reference (e.g. 'barons-Mariani/research/jhn_architecture.md'), repo name, or 'all' (default 'all').",
+        },
+        override: {
+          type: "boolean",
+          description: "Allow explicit override of protected mutations with a warning instead of a blocking error.",
+        },
+        strict: {
+          type: "boolean",
+          description: "Fail with an error if any blocking violations are detected.",
+        },
+      },
+      additionalProperties: false,
+    },
+  },
+  {
     name: "cogentia_corpus_privacy",
     description:
       "Read-only privacy check: public views that may leak private/confidential material. Returns codes and paths, not secret bodies.",
@@ -1199,6 +1222,12 @@ export function createMcpCore(env = process.env) {
         return daemonGet("/api/cli/docs/gaps", {
           repo: typeof args.repo === "string" ? args.repo : "all",
           limit: boundedOptional(args.limit, 1, 500) || 100,
+        });
+      case "cogentia_docs_check_mutation":
+        return daemonGet("/api/cli/docs/check-mutation", {
+          target: typeof args.target === "string" ? args.target : "all",
+          override: args.override === true ? "1" : undefined,
+          strict: args.strict === true ? "1" : undefined,
         });
       case "cogentia_corpus_privacy":
         return daemonGet("/api/cli/corpus/privacy", {});

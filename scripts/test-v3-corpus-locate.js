@@ -233,6 +233,13 @@ function freshRegistry() {
       2
     )
   );
+  try {
+    spawnSync("git", ["init", "-b", "main"], { cwd: repoDir });
+    spawnSync("git", ["config", "user.name", "test"], { cwd: repoDir });
+    spawnSync("git", ["config", "user.email", "test@example.com"], { cwd: repoDir });
+    spawnSync("git", ["add", "."], { cwd: repoDir });
+    spawnSync("git", ["commit", "-m", "init"], { cwd: repoDir });
+  } catch {}
   return { scratchRoot, registryPath, env: { COGENTIA_REGISTRY: registryPath } };
 }
 
