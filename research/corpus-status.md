@@ -169,6 +169,7 @@ graph LR
   r_jeanhuguesrobert -->|1| r_operium
   r_kudos -->|1| r_institut_mariani
   r_marianivillage -->|1| r_institut_mariani
+  r_privai -->|1| r_barons_mariani
   r_privai -->|1| r_institut_mariani
 ```
 <!-- END_AUTO: graph -->
