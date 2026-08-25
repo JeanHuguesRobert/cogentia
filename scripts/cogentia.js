@@ -1409,66 +1409,144 @@ function cmdDocs(sub) {
 function cmdDocsCheckMutation(ctx, inventory, targetArg) {
   const strict = hasFlag("--strict");
   const override = hasFlag("--override");
-  let filePath = targetArg;
-  if (!filePath && argv.length > 0) filePath = argv.shift();
-  if (!filePath) {
-    throw new Error("Usage: node scripts/cogentia.js docs check-mutation <path/to/doc.md> [--strict] [--override] [--json]");
-  }
+  let scopeArg = targetArg;
+  if (!scopeArg && argv.length > 0 && !argv[0].startsWith("-")) scopeArg = argv.shift();
+  if (!scopeArg) scopeArg = "all";
 
-  let absPath = path.isAbsolute(filePath) ? filePath : path.resolve(process.cwd(), filePath);
-  let doc = inventory.documents.find(d => d.full_path === absPath || d.rel === filePath || `${d.repo}/${d.rel}` === filePath);
-  if (doc) absPath = doc.full_path;
+  // Check if target is a single specific file or a batch scope (all / repoName)
+  const isSpecificFile = scopeArg !== "all" && !ctx.repos.some(r => r.name === scopeArg) && (scopeArg.includes("/") || scopeArg.includes("\\") || scopeArg.endsWith(".md"));
 
-  if (!fs.existsSync(absPath)) {
-    throw new Error(`File not found: ${filePath}`);
-  }
+  if (isSpecificFile) {
+    let absPath = path.isAbsolute(scopeArg) ? scopeArg : path.resolve(process.cwd(), scopeArg);
+    let doc = inventory.documents.find(d => d.full_path === absPath || d.rel === scopeArg || `${d.repo}/${d.rel}` === scopeArg);
+    if (doc) absPath = doc.full_path;
 
-  const afterContent = fs.readFileSync(absPath, "utf8");
-  let beforeContent = "";
+    if (!fs.existsSync(absPath)) {
+      throw new Error(`File not found: ${scopeArg}`);
+    }
 
-  try {
-    const repoDir = doc ? doc.repo_root : path.dirname(absPath);
-    const gitRel = path.relative(repoDir, absPath).replace(/\\/g, "/");
-    beforeContent = execFileSync("git", ["show", `HEAD:${gitRel}`], {
-      cwd: repoDir,
-      encoding: "utf8",
-      stdio: ["ignore", "pipe", "ignore"],
+    const afterContent = fs.readFileSync(absPath, "utf8");
+    let beforeContent = "";
+
+    try {
+      const repoDir = doc ? doc.repo_root : path.dirname(absPath);
+      const gitRel = path.relative(repoDir, absPath).replace(/\\/g, "/");
+      beforeContent = execFileSync("git", ["show", `HEAD:${gitRel}`], {
+        cwd: repoDir,
+        encoding: "utf8",
+        stdio: ["ignore", "pipe", "ignore"],
+      });
+    } catch {
+      beforeContent = "";
+    }
+
+    const result = checkSemanticMutation(beforeContent, afterContent, {
+      filePath: doc ? `${doc.repo}/${doc.rel}` : scopeArg,
+      explicitOverride: override,
     });
-  } catch {
-    beforeContent = "";
+
+    if (JSON_MODE) {
+      console.log(JSON.stringify(result, null, 2));
+    } else {
+      console.log(`\nSemantic Mutation Check: ${result.file}\n`);
+      console.log(`Status: ${result.status} (policy: ${result.policy})`);
+      if (result.blocks.length > 0) {
+        console.log("\n[BLOCK] Violations:");
+        for (const b of result.blocks) {
+          console.log(`  - ${b.code}: ${b.message}`);
+        }
+      }
+      if (result.warnings.length > 0) {
+        console.log("\n[WARN] Warnings:");
+        for (const w of result.warnings) {
+          console.log(`  - ${w.code}: ${w.message}`);
+        }
+      }
+      if (result.status === MUTATION_STATUS.PASS) {
+        console.log("\nAll semantic mutation checks passed.");
+      }
+    }
+
+    if (strict && result.status === MUTATION_STATUS.BLOCK) {
+      process.exit(2);
+    }
+    return result;
   }
 
-  const result = checkSemanticMutation(beforeContent, afterContent, {
-    filePath: doc ? `${doc.repo}/${doc.rel}` : filePath,
-    explicitOverride: override,
-  });
+  // Scope: batch scan across repos or 'all'
+  const targetDocs = inventory.documents.filter(d => scopeArg === "all" || d.repo === scopeArg);
+  const results = [];
+  let blockCount = 0;
+  let warnCount = 0;
+  let passCount = 0;
+
+  for (const doc of targetDocs) {
+    if (!fs.existsSync(doc.full_path)) continue;
+    const afterContent = fs.readFileSync(doc.full_path, "utf8");
+    let beforeContent = "";
+    try {
+      const repoDir = doc.repo_root || path.dirname(doc.full_path);
+      const gitRel = path.relative(repoDir, doc.full_path).replace(/\\/g, "/");
+      beforeContent = execFileSync("git", ["show", `HEAD:${gitRel}`], {
+        cwd: repoDir,
+        encoding: "utf8",
+        stdio: ["ignore", "pipe", "ignore"],
+      });
+    } catch {
+      beforeContent = "";
+    }
+
+    const res = checkSemanticMutation(beforeContent, afterContent, {
+      filePath: `${doc.repo}/${doc.rel}`,
+      explicitOverride: override,
+    });
+
+    if (res.status === MUTATION_STATUS.BLOCK) blockCount++;
+    else if (res.status === MUTATION_STATUS.WARN) warnCount++;
+    else passCount++;
+
+    if (res.status !== MUTATION_STATUS.PASS) {
+      results.push(res);
+    }
+  }
+
+  const summary = {
+    ok: blockCount === 0,
+    scope: scopeArg,
+    total_scanned: targetDocs.length,
+    passed: passCount,
+    warnings: warnCount,
+    blocked: blockCount,
+    issues: results,
+  };
 
   if (JSON_MODE) {
-    console.log(JSON.stringify(result, null, 2));
+    console.log(JSON.stringify(summary, null, 2));
   } else {
-    console.log(`\nSemantic Mutation Check: ${result.file}\n`);
-    console.log(`Status: ${result.status} (policy: ${result.policy})`);
-    if (result.blocks.length > 0) {
-      console.log("\n[BLOCK] Violations:");
-      for (const b of result.blocks) {
-        console.log(`  - ${b.code}: ${b.message}`);
+    console.log(`\nSemantic Mutation Audit [scope: ${scopeArg}]\n`);
+    console.log(`Scanned: ${targetDocs.length} documents across corpus`);
+    console.log(`- PASS: ${passCount}`);
+    console.log(`- WARN: ${warnCount}`);
+    console.log(`- BLOCK: ${blockCount}`);
+    if (results.length > 0) {
+      console.log("\nNoteworthy findings:");
+      for (const item of results.slice(0, 30)) {
+        console.log(`\n[${item.status}] ${item.file} (policy: ${item.policy}):`);
+        for (const b of item.blocks) console.log(`  - BLOCK: ${b.code} — ${b.message}`);
+        for (const w of item.warnings) console.log(`  - WARN: ${w.code} — ${w.message}`);
       }
-    }
-    if (result.warnings.length > 0) {
-      console.log("\n[WARN] Warnings:");
-      for (const w of result.warnings) {
-        console.log(`  - ${w.code}: ${w.message}`);
+      if (results.length > 30) {
+        console.log(`\n... and ${results.length - 30} more findings.`);
       }
-    }
-    if (result.status === MUTATION_STATUS.PASS) {
-      console.log("\nAll semantic mutation checks passed.");
+    } else {
+      console.log("\nAll documents across the tracked corpus passed semantic mutation checks.");
     }
   }
 
-  if (strict && result.status === MUTATION_STATUS.BLOCK) {
+  if (strict && blockCount > 0) {
     process.exit(2);
   }
-  return result;
+  return summary;
 }
 
 function cmdDocsQuery(inventory, repoArg) {
