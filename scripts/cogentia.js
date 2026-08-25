@@ -1198,6 +1198,16 @@ async function cmdCorpusConverge(opts = {}) {
     iterations++;
     const plan = buildPlan(ctx, options);
     const writes = mergePlanWrites(plan.changes);
+    for (const write of writes) {
+      if (!write.allowed) continue;
+      const mutation = checkSemanticMutation(write.before || "", write.after || "", {
+        filePath: `${write.repo}/${write.path}`,
+      });
+      if (mutation.status === MUTATION_STATUS.BLOCK) {
+        write.allowed = false;
+        write.mutation_blocked = mutation.blocks;
+      }
+    }
     const allowed = writes.filter(w => w.allowed);
     if (allowed.length === 0) {
       reachedFixedPoint = true;
@@ -1261,6 +1271,16 @@ function cmdCorpusApply() {
   const options = planOptions();
   const plan = buildPlan(ctx, options);
   const writes = mergePlanWrites(plan.changes);
+  for (const write of writes) {
+    if (!write.allowed) continue;
+    const mutation = checkSemanticMutation(write.before || "", write.after || "", {
+      filePath: `${write.repo}/${write.path}`,
+    });
+    if (mutation.status === MUTATION_STATUS.BLOCK) {
+      write.allowed = false;
+      write.mutation_blocked = mutation.blocks;
+    }
+  }
   const allowed = writes.filter(write => write.allowed);
   const preflight_failed = preflightWritableTargets(allowed.map(write => ({
     repo: write.repo,
@@ -1309,6 +1329,15 @@ function cmdCorpusVerify() {
   for (const g of git) {
     if (g.behind) issues.push(`${g.repo} behind upstream`);
     if (g.ahead) issues.push(`${g.repo} ahead upstream`);
+  }
+  const writes = mergePlanWrites(plan.changes);
+  for (const write of writes) {
+    const mutation = checkSemanticMutation(write.before || "", write.after || "", {
+      filePath: `${write.repo}/${write.path}`,
+    });
+    if (mutation.status === MUTATION_STATUS.BLOCK) {
+      issues.push(`semantic mutation blocked: ${write.repo}/${write.path} (${mutation.blocks.map(b => b.code).join(", ")})`);
+    }
   }
   const result = {
     ok: issues.length === 0,
