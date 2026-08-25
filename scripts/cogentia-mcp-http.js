@@ -2622,10 +2622,12 @@ function extractiveAnswer(locale, pack, question = "") {
   });
 }
 
-/**
- * Direct OpenAI chat when daemon→Magistral chat is down (quality-first Guide path).
- */
 async function guideOpenAiChatCompletions(payload = {}) {
+  // Guard: OpenAI API credits must be preserved for lightweight embeddings only.
+  // Expensive chat/completions fallback to OpenAI is disabled by default.
+  if (!parseBoolean(process.env.COGENTIA_GUIDE_ALLOW_OPENAI_CHAT, false)) {
+    return { ok: false, error: "openai_chat_fallback_disabled", status: 0 };
+  }
   const apiKey = String(process.env.OPENAI_API_KEY || "").trim();
   if (!apiKey) {
     return { ok: false, error: "openai_key_missing", status: 0 };
