@@ -28,6 +28,7 @@ async function main() {
   const sqlite = await import("node:sqlite");
   const db = new sqlite.DatabaseSync(dbPath, { readOnly: true });
   try {
+    const indexHash = db.prepare("SELECT value FROM index_state WHERE key = 'index_hash'").get()?.value || "";
     const countRow = db.prepare(`
       SELECT count(*) as total
       FROM embeddings e
