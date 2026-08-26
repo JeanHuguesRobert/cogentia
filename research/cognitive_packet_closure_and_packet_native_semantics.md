@@ -4,8 +4,8 @@ subtitle: "Granularity, causal continuity, placement, effects, and the requireme
 author: "Jean Hugues Noël Robert, baron Mariani"
 affiliation: "Institut Mariani / C.O.R.S.I.C.A., 1 cours Paoli, F-20250 Corte, Corsica, France"
 date: "2026-08-25"
-last_modified_at: "2026-08-25"
-version: "0.1"
+last_modified_at: "2026-08-26"
+version: "0.2"
 status: "working source note"
 license: "CC BY-SA 4.0"
 language: "en"
@@ -20,6 +20,7 @@ methodology:
 related_documents:
   - "research/cognitive_packets.md"
   - "research/cognitive_packet_switching.md"
+  - "research/documents_as_cognitive_packets.md"
   - "research/semantic_propagation_rule.md"
   - "https://github.com/JeanHuguesRobert/inseme/blob/main/packages/cop-core/Architecture.md"
   - "https://github.com/JeanHuguesRobert/inseme/blob/main/packages/cop-core/src/packet.ts"
@@ -42,6 +43,9 @@ tags:
   - jhn-architecture
   - distributed-cognition
 update_policy: "UP-DEFAULT-REVIEWED"
+changelog:
+  - "v0.1 (2026-08-25) — initial formalization of Packet Closure and packet-native semantics."
+  - "v0.2 (2026-08-26) — clarified that Closure is relative to a declared admissible-handler environment; separated self-bootstrap from closure conformance; decomposed ambiguous lifecycle `forget`."
 ---
 
 # Cognitive Packet Closure and Packet-Native Semantics
@@ -86,7 +90,50 @@ The missing notion is **Packet Closure**.
 
 ### 2.1 Definition
 
-> **Packet Closure is the condition under which a Cognitive Packet carries, or can verifiably materialize, the complete set of information required for an admissible handler to continue the packet without reconstructing undocumented external context.**
+> **Packet Closure is the condition under which, relative to a declared admissible-handler class and shared execution environment, a Cognitive Packet carries or can verifiably materialize the complete set of information required for a handler to continue the packet without reconstructing undocumented private context.**
+
+Closure is therefore relational rather than absolute.
+
+A useful notation is:
+
+\[
+Closed(p,h,E)=true
+\]
+
+where:
+
+```text
+p = the Cognitive Packet / Capsule being resumed
+h = an admissible handler
+E = the declared shared execution environment
+```
+
+`E` may legitimately include documented and reachable conventions such as:
+
+```text
+protocol version
+schemas
+handler contract
+resolver rules
+shared Corpus
+public instructions
+installed declared Skills
+standard runtime / ABI conventions
+```
+
+Closure MUST NOT silently depend on:
+
+```text
+the previous handler's private session memory
+untracked local notes
+undocumented conversational context
+unstated author intention
+private conventions not declared by the packet or environment
+```
+
+This distinction matters because a zero-knowledge receiver is not automatically an admissible handler. Requiring every packet to teach an epistemically blank receiver the entire protocol, Corpus and surrounding civilization would make bounded closure impossible in practice.
+
+A separate **self-bootstrap** profile may deliberately test whether a packet can teach enough protocol to a previously foreign handler. That is an additional capability, not the default conformance meaning of Packet Closure.
 
 Closure does not mean that every byte of history is copied into every packet.
 
@@ -108,6 +155,8 @@ MATERIALIZABLE CLOSURE
 
 A practical packet may mix all three modes.
 
+The mode concerns **where required continuation state comes from**. It does not erase the admissible-handler contract. An INLINE packet may still assume a documented protocol or schema; a REFERENTIAL packet may be fully closed for a handler whose declared environment can resolve the references.
+
 ### 2.3 Closure versus self-description
 
 Self-description and closure are related but distinct.
@@ -117,12 +166,27 @@ self-description:
     how should this packet be interpreted?
 
 closure:
-    is everything required to continue it available or materializable?
+    can the declared handler/environment obtain everything required
+    to continue it without undocumented private context?
+
+self-bootstrap:
+    can a previously foreign receiver materialize enough protocol
+    to become an admissible handler?
 ```
 
 A packet may describe its schema perfectly while still containing a dangling reference. It is self-describing but not closed.
 
-Conversely, two tightly coupled systems may share enough conventions to make a packet operationally closed without embedding a human-readable protocol explanation.
+Conversely, two systems may share documented conventions that make a packet operationally closed without embedding a human-readable explanation of the entire protocol in every capsule.
+
+The boundary should be explicit. For example, an admissible Reviewer handler might be defined as one that:
+
+```text
+MUST understand or materialize the declared Reviewer contract
+MUST be able to resolve the declared Corpus references
+MUST preserve stated markers, constraints and return semantics
+NEED NOT know the originating conversation
+NEED NOT share the previous model's private state
+```
 
 ### 2.4 Closure and `call/cc`
 
@@ -136,12 +200,13 @@ call/cc
 → same runtime / address-space assumptions
 ```
 
-A Cognitive Packet continuation cannot rely on that hidden environment:
+A Cognitive Packet continuation cannot rely on that hidden process environment:
 
 ```text
 continuation
 → Packet Closure
 → explicit or materializable dependencies
+→ declared handler environment
 → transport
 → heterogeneous handler
 → resumption
@@ -381,7 +446,7 @@ hot volatile memory
 → offline / posterity preservation
 ```
 
-Movement between tiers is a lifecycle operation:
+Movement between tiers is a lifecycle operation, but lifecycle vocabulary must not collapse unlike retention semantics:
 
 ```text
 replicate
@@ -390,13 +455,33 @@ cool
 archive
 restore
 supersede
-forget
+discard
+erase
 collect
 ```
 
-The important point is that the packet can move without changing logical identity.
+In particular:
 
-Placement policy may consider:
+```text
+DISCARD
+    remove explicitly transient working state after its useful
+    obligations and material residue have been transferred
+
+COOL / ARCHIVE
+    reduce active cognitive availability while preserving history
+
+SUPERSEDE
+    replace the current reference state while preserving prior history
+
+ERASE
+    intentionally destroy durable historical content under distinct authority
+```
+
+`ERASE` must not be implemented as an ordinary synonym of `DISCARD` or generic garbage collection. The historical fact of an authorized erasure should normally remain as a proportionate non-reconstructive Event when law, policy and evidence permit.
+
+The important point is that the packet can move or change lifecycle placement without changing logical identity.
+
+Placement and retention policy may consider:
 
 ```text
 frequency of access
@@ -590,7 +675,7 @@ Once the packet is made primary, the following questions become unavoidable:
 | Question | Required concept |
 |---|---|
 | What is this work? | Packet Identity |
-| Can another handler continue it? | Packet Closure |
+| Can another declared admissible handler continue it? | Packet Closure + Handler Environment |
 | What exactly travels now? | Packet Capsule |
 | Which history does this state represent? | Causal Frontier |
 | Who authorized it? | Authority Lineage / Mandate |
@@ -664,6 +749,8 @@ A location-independent continuation requires that the state needed for resumptio
 - stably referenced;
 - or reconstructibly materialized.
 
+The admissible handler/runtime may still contribute documented protocol knowledge and declared capabilities. What must disappear is dependence on **the particular previous process's hidden state**, not every shared convention.
+
 Therefore a JHN machine cannot be defined only by active processors and local memory.
 
 Its state must include at least:
@@ -690,7 +777,7 @@ is replaced at the architectural level by something closer to:
 ```text
 packet set
 + materializable closure
-+ capability field
++ declared handler / capability environment
 + persistent memory field
 + governed effect boundary
 ```
@@ -719,11 +806,12 @@ Acceptance test: current COP tests pass unchanged plus schema round-trip tests.
 Goal: prove closure independently of distribution.
 
 - create a packet whose payload references local durable state;
+- declare the admissible handler/runtime assumptions;
 - materialize the state through a resolver;
 - destroy volatile handler state;
-- resume from packet + closure only.
+- resume from packet + closure + declared handler environment only.
 
-Acceptance test: successful resumption after process restart with no undocumented context.
+Acceptance test: successful resumption after process restart with no undocumented private context from the previous handler.
 
 ### Phase 2 — Store abstraction across SQLite and PostgreSQL
 
@@ -770,7 +858,7 @@ SQLite node A
 → assimilation
 ```
 
-Acceptance test: no hidden state on node A is needed to complete the Odyssey.
+Acceptance test: no hidden state on node A is needed to complete the Odyssey; all additional assumptions are part of the declared handler/environment contract.
 
 ### Phase 6 — Archive / Posterity
 
@@ -805,9 +893,10 @@ The implementation should therefore continuously ask:
 
 1. Does this concept become necessary because packets move independently?
 2. Can the requirement be represented with a smaller existing concept?
-3. Does the proposed representation survive handler, node and store replacement?
-4. Does it preserve responsibility and evidence across external effects?
-5. Does the implementation produce residue that falsifies or refines the model?
+3. Is the admissible-handler/environment contract explicit enough to make a closure claim falsifiable?
+4. Does the proposed representation survive handler, node and store replacement without relying on predecessor-private state?
+5. Does it preserve responsibility and evidence across external effects?
+6. Does the implementation produce residue that falsifies or refines the model?
 
 The intended loop is:
 
