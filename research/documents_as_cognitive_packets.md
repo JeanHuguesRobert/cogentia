@@ -5,7 +5,7 @@ author: "Jean Hugues Noël Robert, baron Mariani"
 affiliation: "Institut Mariani / C.O.R.S.I.C.A., 1 cours Paoli, F-20250 Corte, Corsica, France"
 date: "2026-08-25"
 last_modified_at: "2026-08-26"
-version: "0.2"
+version: "0.3"
 status: "working-paper"
 license: "CC BY-SA 4.0"
 language: "en"
@@ -65,9 +65,11 @@ review:
   status: "reviewed"
   reviewed_by:
     - "Grok (xAI), decorrelated Reviewer, reviewer contract v0.5, 2026-08-25"
+human_arbitration_by: "Jean Hugues Noël Robert"
 changelog:
   - "v0.1 (2026-08-25) — initial source note and recursive document-backed packet experiment."
   - "v0.2 (2026-08-26) — assimilated RT-001 decorrelated review; tightened Packet Capsule definition, lowered closure claim, added minimal capsule contract, lifecycle authority/evidence rules, first handoff measurements, and explicit review dispositions."
+  - "v0.3 (2026-08-26) — post-review arbitration clarified that Packet Closure is relative to a declared admissible-handler environment; reinterpreted RT-001 accordingly; split by-copy transport from foreign-handler self-bootstrap; propagated the clarification to the general Packet Closure note."
 x-cognitive-packet:
   candidate: true
   profile: "document-backed-capsule"
@@ -76,13 +78,15 @@ x-cognitive-packet:
     - "markdown-file"
     - "copy-paste"
   identity_claim: "provisional-no-storage-independent-packet-id-yet"
-  closure_claim: "referential-partial-materializable"
+  closure_claim: "relative-referential-materializable-for-declared-handler-class"
+  admissible_handler_class: "Corpus-aware handler able to materialize declared contracts and references"
   ithaca: "research/documents_as_cognitive_packets.md"
-  current_phase: "post-rt001-review-assimilation"
-  next_handler_capability: "foreign-handler-by-copy-test"
+  current_phase: "post-rt001-closure-scope-arbitration"
+  next_handler_capability: "corpus-aware-by-copy-review-test"
   retention_policy_for_review_artifacts: "transient-until-assimilated"
   rt001:
-    result: "partial"
+    reviewer_result: "partial"
+    post_arbitration_interpretation: "pass-for-declared-corpus-reviewer-handler-class"
     private_context_required: false
     material_findings: 9
     prior_art_risk: "medium"
@@ -124,26 +128,43 @@ this document v0.1
 → human routing
 → Redactor
 → this document v0.2
+→ human arbitration of the closure criterion
+→ this document v0.3
 ```
 
-### RT-001 result
+### RT-001 result and subsequent arbitration
 
 The Reviewer declared no access to the originating conversation or private drafting state. It reconstructed the thesis and performed a substantive review from the public Git reference and public Corpus references alone.
 
-The result was nevertheless **partial**, not full Packet Closure:
+The Reviewer returned:
 
 ```text
+closure_result: partial
 private conversational context required: no
 public reference materialization required: yes
 closure for contract-aware Corpus handler: good
 closure for completely foreign handler: incomplete
 ```
 
-The strongest empirical correction from RT-001 is therefore:
+The `partial` result is preserved as the historical Reviewer yield.
 
-> **This document currently demonstrates referential and partial materializable closure, not complete materializable closure for an arbitrary foreign admissible handler.**
+Subsequent human arbitration exposed that two experimental variables had been conflated:
 
-That downgrade is evidence from the experiment, not a failure of the hypothesis.
+```text
+transport / closure mode
+    Git reference vs copied material
+
+handler competence / environment
+    Corpus-aware admissible handler vs epistemically blank generic agent
+```
+
+A Cognitive Packet is not required by default to teach an arbitrary zero-knowledge receiver the whole protocol environment. Closure is relative to a declared admissible handler and shared environment.
+
+Therefore RT-001 is now interpreted more precisely as:
+
+> **RT-001 passes the important referential-closure test for the declared Corpus-aware Reviewer handler class: no predecessor-private conversational state was required. It does not establish, and was not required to establish, self-bootstrap closure for a completely foreign generic agent.**
+
+The generic-agent case remains interesting as a separate stress test.
 
 ---
 
@@ -247,11 +268,11 @@ The same Packet may have several simultaneous placements or several successive C
 
 ## 4. Minimal definition of a Packet Capsule
 
-RT-001 exposed an under-definition in v0.1. The following is the current working definition:
+RT-001 exposed an under-definition in v0.1. The current working definition is now aligned with the general Packet Closure note:
 
-> **A Packet Capsule is a bounded, transportable representation of an identified Cognitive Packet at a declared causal frontier, carrying or verifiably materializing enough state, constraints, continuation, routing, and return semantics for an admissible handler to resume the work without undocumented private context.**
+> **A Packet Capsule is a bounded, transportable representation of an identified Cognitive Packet at a declared causal frontier, carrying or verifiably materializing enough state, constraints, continuation, routing, and return semantics for an admissible handler, operating in a declared shared environment, to resume the work without undocumented private context.**
 
-The words **identified Packet** and **declared causal frontier** distinguish a Capsule from a merely well-written or self-contained Artifact.
+The words **identified Packet**, **declared causal frontier**, and **admissible handler environment** distinguish a Capsule from both a merely well-written Artifact and an impossible demand for context-free universal intelligibility.
 
 A document-backed Packet Capsule should make at least the following available or materializable:
 
@@ -265,6 +286,7 @@ Assumptions
 Constraints
 Relevant authority context when consequential
 Relevant references and closure mode
+Admissible handler / environment assumptions
 Open questions / unresolved residue
 Expected next action
 Admissible next-handler capability
@@ -280,10 +302,11 @@ A useful test is:
 
 1. **Identity** — does it represent identified continuing work rather than merely a file?
 2. **Frontier** — can a receiver tell which state/history frontier the representation claims to cover?
-3. **Closure** — can required context be obtained without undocumented private state?
-4. **Continuation** — is it clear what kind of handler can advance the work and what remains to do?
-5. **Return** — is it clear where the yield belongs?
-6. **Constraints** — are material authority, policy, budget, or resumption constraints preserved when relevant?
+3. **Handler contract** — is the admissible handler/environment sufficiently declared to make the closure claim falsifiable?
+4. **Closure** — can that handler/environment obtain required context without predecessor-private state?
+5. **Continuation** — is it clear what kind of handler can advance the work and what remains to do?
+6. **Return** — is it clear where the yield belongs?
+7. **Constraints** — are material authority, policy, budget, or resumption constraints preserved when relevant?
 
 A closed reference document that lacks continuation and return semantics may be an excellent **Artifact** without being a Packet Capsule.
 
@@ -298,6 +321,8 @@ x-cognitive-packet:
   causal_frontier: "event-or-snapshot-ref"
   closure:
     mode: materializable
+    admissible_handler: "corpus-reviewer/v0.5"
+    environment: "cogentia-public-corpus"
     refs:
       - "stable-ref"
   routing:
@@ -326,7 +351,7 @@ Markdown plus ordinary text transport degrades gracefully:
 rich native Packet
 → Markdown / YAML Capsule
 → Git / file / copy-paste / email / chat
-→ foreign handler
+→ replaceable admissible handler
 → materialization / continuation
 ```
 
@@ -359,21 +384,63 @@ This is a fallback and experimental baseline, not an argument against structured
 
 ---
 
-## 6. Packet Closure and the first measured handoff
+## 6. Packet Closure is relative to a declared handler environment
 
-Closure can be:
+The general Packet Closure note now makes the relation explicit:
+
+\[
+Closed(p,h,E)=true
+\]
+
+where:
+
+```text
+p = Packet / Capsule
+h = admissible handler
+E = declared shared execution environment
+```
+
+The environment may legitimately provide documented shared conventions:
+
+```text
+protocol version
+schemas
+Reviewer / Redactor contract
+resolver rules
+shared Corpus
+public instructions
+installed declared Skills
+standard runtime conventions
+```
+
+What Closure forbids is not all external knowledge. It forbids **undeclared dependence on predecessor-private state**:
+
+```text
+previous handler's private session memory
+untracked local notes
+hidden conversational context
+unstated author intentions
+undocumented private conventions
+```
+
+This prevents a pathological interpretation in which every Packet would have to embed its protocol, its Corpus, a dictionary, and recursively all prerequisites needed by an epistemically blank receiver.
+
+A zero-knowledge receiver can still be studied under a distinct **self-bootstrap** test: can the Capsule teach or materialize enough protocol for that receiver to become an admissible handler? This may be useful, but it is not the default closure criterion.
+
+Closure modes remain:
 
 ```text
 INLINE
-    required context embedded directly
+    required task state embedded directly
 
 REFERENTIAL
-    required context reachable through stable references
+    required task state reachable through stable references
 
 MATERIALIZABLE
-    the Capsule provides enough resolver information
-    to retrieve and verify required state
+    enough resolver information exists to retrieve and verify it
 ```
+
+The mode and the handler contract are orthogonal dimensions.
 
 A document that says:
 
@@ -383,15 +450,18 @@ use the second idea
 apply the same correction as before
 ```
 
-is not closed merely because it has metadata.
+is not closed merely because it has metadata: the hidden predecessor context is neither declared environment nor materializable state.
 
 ### RT-001 qualitative measurement
 
-The first handoff produced an initial measurement rather than only a metaphor:
+The first handoff produced an initial measurement:
 
 ```text
 transport to Reviewer:
     1 human routing action (Git reference + reviewer instruction)
+
+admissible handler class:
+    Corpus-aware Reviewer able to apply reviewer.md and resolve public refs
 
 private explanatory context supplied:
     0
@@ -408,13 +478,17 @@ returned artifact:
 material findings:
     9
 
-closure_result:
+historical Reviewer closure_result:
     partial
+
+post-arbitration closure interpretation:
+    pass for declared handler class;
+    foreign-handler self-bootstrap untested
 ```
 
-This is not yet a time-and-cost benchmark. It is enough to establish one useful fact:
+This is not yet a time-and-cost benchmark. It establishes a useful fact:
 
-> **The handoff did not require conversational context repair, but the foreign-handler contract remains under-specified at the Capsule level.**
+> **The handoff survived provider/process substitution without conversational context repair. The remaining question is how explicitly the admissible handler/environment contract should be represented.**
 
 ---
 
@@ -484,9 +558,9 @@ content existed
 
 Exceptional authority to erase even the erasure trace must be distinct, predefined, narrow, attributable, and non-self-extending.
 
-### Propagation residue
+### Propagation status
 
-`research/cognitive_packet_closure_and_packet_native_semantics.md` still lists `forget` among lifecycle operations. This remains a propagation item: the term should later be decomposed there rather than silently reinterpreted from this document.
+The earlier propagation residue is now resolved: `research/cognitive_packet_closure_and_packet_native_semantics.md` v0.2 decomposes the previous generic `forget` lifecycle term into distinct retention operations and explicitly separates `ERASE` from `DISCARD`.
 
 ---
 
@@ -1027,7 +1101,7 @@ Automation of transport and reconciliation does not make the machine sovereign o
 
 ## 19. Dogfooding protocol and current results
 
-### RT-001 — Git-by-reference continuation — **PARTIAL**
+### RT-001 — Git-by-reference continuation — **PASS FOR DECLARED HANDLER CLASS; REVIEWER YIELD PRESERVED AS PARTIAL**
 
 Input:
 
@@ -1037,6 +1111,15 @@ Git reference to this document
 instruction to apply the Corpus Reviewer contract
 ```
 
+Declared effective handler environment:
+
+```text
+replaceable Reviewer
+able to read/materialize reviewer.md
+able to resolve public Corpus references
+no access to predecessor-private conversation required
+```
+
 Observed:
 
 ```text
@@ -1044,38 +1127,72 @@ no private drafting context available to Reviewer
 no private context requested
 substantive review completed
 9 material findings returned
-closure judged partial
+Reviewer reported closure_result: partial
 ```
 
-Conclusion:
+Post-review arbitration:
 
-> Referential handoff works for a contract-aware Corpus handler, but a fully foreign handler still needs stronger Capsule scaffolding.
+> The `partial` report was based on an additional concern about a completely foreign handler. That concern is valid as a self-bootstrap question but is not a default Packet Closure requirement. For the declared Corpus-aware Reviewer class, the referential handoff succeeded.
 
-### RT-002 — Review Packet return and Redactor assimilation — **IN PROGRESS / v0.2 is the test output**
+### RT-002 — Review Packet return and Redactor assimilation — **PASS WITH OPEN RESIDUE**
 
 The Reviewer returned a complete Markdown review whose frontmatter declared itself transient, named its Ithaca, and requested a Redactor as next handler.
 
-This v0.2 revision tests whether the Redactor can classify the material findings, revise the source, and preserve unresolved residue without requiring the Reviewer to reconstruct hidden conversational context.
+The Redactor classified the material findings, revised the source, and preserved unresolved residue without requiring the Reviewer to reconstruct hidden conversational context.
 
-Because the Redactor is the original drafting executor, RT-002 tests **handoff completeness**, not decorrelation from the original authoring frame.
+Because the Redactor was the original drafting executor, RT-002 tested **handoff completeness**, not decorrelation from the original authoring frame.
 
-### RT-003 — Transient review retention — **NOT YET CLOSED**
+The subsequent human correction of the closure criterion was itself preserved as a new causal step rather than rewriting the Reviewer yield.
 
-The raw review has not been committed to the Corpus. This v0.2 preserves its material yield and review identity.
+### RT-003 — Transient review retention — **IN PROGRESS**
+
+The raw review has not been committed to the Corpus. v0.2/v0.3 preserve its material yield, review identity, dispositions, and subsequent arbitration.
 
 The stronger test remains whether the raw artifact can later disappear from active working storage without losing any material obligation or causal evidence.
 
-### RT-004 — Copy/paste fallback — **NEXT**
+### RT-004A — By-copy transport equivalence — **NEXT**
 
-Transport a bounded by-copy Packet Capsule to a handler with no Git access.
+Keep the handler class approximately constant while changing the transport/closure mode.
+
+Test setup:
+
+```text
+handler:
+    Corpus-aware Reviewer or equivalent admissible handler
+
+shared task competence:
+    unchanged
+
+Git access during test:
+    unavailable / not used
+
+transport:
+    copied Markdown Capsule
+    + copied minimum declared handler contract / dependencies
+
+originating conversation:
+    unavailable
+```
 
 Test:
 
-> Can the handler continue from the text alone, and what extra information must the human add?
+> Can the same class of admissible handler continue correctly by copy, and what additional material must be copied compared with RT-001 referential closure?
+
+This tests `REFERENTIAL → INLINE/by-copy` without simultaneously changing handler competence.
+
+### RT-004B — Foreign-handler self-bootstrap — **OPTIONAL STRESS TEST**
+
+Use a generic agent with no prior Corpus knowledge and ask the Capsule to materialize enough protocol for it to become a minimal admissible handler.
+
+This asks:
+
+> Can a previously foreign receiver bootstrap itself from the Capsule and declared protocol material?
+
+Failure here does **not** imply ordinary Packet Closure failure. It measures a stronger self-description / self-bootstrap property.
 
 ### RT-005 — Handler substitution — **PARTIALLY DEMONSTRATED**
 
-The Reviewer was a different provider with no shared conversational state. Further tests should vary handler capability and Corpus familiarity.
+The Reviewer was a different provider with no shared conversational state. Further tests should vary handler implementations while keeping the declared handler contract stable enough to isolate substitution effects.
 
 ### RT-006 — File identity test — **OPEN**
 
@@ -1092,17 +1209,20 @@ Introduce or detect a substantive error after stabilization and verify that corr
 ### Closure Cost
 
 ```text
-ClosureCost
+ClosureCost(p,h,E)
     = additional information required after handoff
-      before an admissible handler can continue correctly
+      before declared admissible handler h in environment E
+      can continue correctly
 ```
+
+This definition avoids charging the Packet for all knowledge that a legitimate execution environment is already declared to provide.
 
 For RT-001:
 
 ```text
 private conversational additions: 0
 public reference materialization: non-zero
-semantic underspecification discovered: Packet Capsule definition
+semantic underspecification discovered: Packet Capsule / handler-boundary definition
 result: low private-context cost, non-zero protocol/materialization cost
 ```
 
@@ -1121,7 +1241,7 @@ For the first loop, the observable routing operations were approximately:
 1. route Git reference + review instruction to Reviewer
 2. retrieve / upload returned review artifact to Redactor
 3. no explanatory context-repair message required
-4. human arbitration remains relevant for load-bearing open points
+4. one later human conceptual arbitration corrected the experiment definition
 ```
 
 This is a first instrumented instance, not a performance benchmark. Future cycles should record time, number of context-repair interventions, bytes/tokens transported, and number of human arbitration decisions.
@@ -1148,9 +1268,10 @@ exception handler
 
 The hypothesis is weakened if repeated tests show that:
 
-- independent handlers require substantial undocumented conversation context;
+- declared admissible handlers require substantial undocumented predecessor-private context;
+- the supposed handler/environment contract is so broad or vague that Closure becomes unfalsifiable;
 - Packet identity collapses into file identity or placement;
-- closure requires recursively embedding impractical history;
+- closure requires recursively embedding impractical history rather than relying on explicit shared environment and materializable references;
 - Packet Capsule adds vocabulary but no measurable continuation or routing benefit;
 - ordinary GitHub Issues, ADRs, tasks, or structured documents provide the same semantics with less machinery;
 - review handoffs repeatedly lose dispositions, constraints, authority, or return semantics;
@@ -1159,20 +1280,22 @@ The hypothesis is weakened if repeated tests show that:
 
 The possibility that a well-formed GitHub Issue or ADR already provides the simplest viable Capsule remains **load-bearing prior art / simplification residue**, not a dismissed objection.
 
+Failure of a zero-knowledge generic agent to bootstrap is **not**, by itself, a falsification of ordinary Closure unless such self-bootstrap was part of the declared handler profile.
+
 Failure is useful evidence, not a reason to redefine success.
 
 ---
 
-## 22. Assimilation of the first decorrelated review
+## 22. Assimilation of the first decorrelated review and post-review arbitration
 
 The RT-001 Reviewer reported 0 hard factual errors, 5 novel objections, 3 material blind spots, and 1 unassimilated residue, for 9 material findings total.
 
-The Redactor dispositions for those material findings are:
+The Redactor dispositions recorded in v0.2 were:
 
 | # | Reviewer finding | Disposition | v0.2 treatment |
 |---:|---|---|---|
 | 1 | Packet Capsule under-defined relative to base Packet ontology | `integrated` | Added a crisp working definition, qualification test, and minimal illustrative Capsule |
-| 2 | Recursive experiment only partially succeeds under strict foreign-handler substitution | `corrected` | Lowered frontmatter closure claim from `materializable` to `referential-partial-materializable`; recorded RT-001 result |
+| 2 | Recursive experiment only partially succeeds under strict foreign-handler substitution | `corrected` | Lowered frontmatter closure claim and recorded RT-001 result |
 | 3 | High-frequency Regime I→IV argument stronger than its evidence | `reformulate` | Recast as a research hypothesis; added explicit measurement requirement |
 | 4 | `forget` decomposition lacked authority/evidence semantics | `integrated` | Added lifecycle authority/evidence expectations for DISCARD, COOL/ARCHIVE, SUPERSEDE, ERASE |
 | 5 | Biological analogy can overreach accountability semantics | `integrated` | Marked biology as illustrative solution reservoir only, not authority/imputability analogy |
@@ -1183,13 +1306,38 @@ The Redactor dispositions for those material findings are:
 
 No Reviewer marker was dropped: the review contained no `[unverified]` or `[provisional]` findings.
 
+### Post-review human arbitration on finding 2
+
+The human Principal challenged the implicit experimental assumption that a target agent with no Git access should also be a generic agent with no Corpus knowledge.
+
+This objection is **integrated** and changes the interpretation, not the historical review:
+
+```text
+Reviewer finding:
+    foreign generic handler lacks enough scaffolding
+
+preserved truth:
+    yes — useful self-bootstrap observation
+
+rejected implication:
+    therefore ordinary Packet Closure is only partial
+
+replacement criterion:
+    Closure is evaluated relative to a declared admissible-handler
+    class and environment; generic self-bootstrap is a separate profile
+```
+
+This is a concrete example of a Reality Test correcting the **test definition itself**.
+
+The general semantic correction has been propagated to `research/cognitive_packet_closure_and_packet_native_semantics.md` v0.2.
+
 ### Correlation risk preserved
 
 The Reviewer noted that both Redactor and Reviewer share a preference for explicit packet-like resumability and may therefore under-weight simpler existing artifacts. This remains a live correlation risk and motivates the Issue/ADR simplification test.
 
 ### Review retention decision
 
-The raw review remains a **transient working artifact by standing policy** and is not copied into the Git Corpus. Its material yield is represented by the review frontmatter, this disposition table, RT-001 result, and remaining open items.
+The raw review remains a **transient working artifact by standing policy** and is not copied into the Git Corpus. Its material yield is represented by the review frontmatter, this disposition table, RT-001 result, subsequent human arbitration, and remaining open items.
 
 This does not erase the historical fact that a review occurred.
 
@@ -1202,8 +1350,10 @@ This does not erase the historical fact that a review occurred.
 - Some Corpus documents already move between replaceable Redactor and Reviewer handlers.
 - Markdown, Git references, files, and copy/paste are working transport channels.
 - Human routing currently supplies orchestration, arbitration, and retention decisions.
-- Packet Closure gives a falsifiable criterion for handoff quality.
-- RT-001 required no private conversational context, but exposed incomplete foreign-handler materialization.
+- Packet Closure is relational: `Closed(p,h,E)` is judged relative to a declared admissible handler and shared environment.
+- Closure forbids dependence on undocumented predecessor-private state; it does not require every Packet to embed every shared protocol convention.
+- RT-001 required no private conversational context and succeeded for the declared Corpus-aware Reviewer handler class.
+- A completely foreign generic agent tests self-bootstrap, not ordinary Closure, unless explicitly declared as the target handler profile.
 - A Packet Capsule must be distinguished from a merely closed Artifact by identified work/frontier plus continuation and return semantics.
 - Raw review artifacts may be transient; durable Corpus retention is a separate decision.
 - Recovery requires distinctions among rollback, compensation, rectification, restitution, repair, damage control, and residue.
@@ -1213,6 +1363,7 @@ This does not erase the historical fact that a review occurred.
 
 ### Open / load-bearing
 
+- How should a Packet declare the minimum admissible-handler/environment contract without reproducing large amounts of protocol metadata?
 - What is the canonical storage-independent identity mechanism for a document-backed Packet?
 - Is `Packet Capsule` genuinely useful beyond a disciplined Issue/ADR/document format?
 - Which metadata belongs in the document versus an external Packet store?
@@ -1226,9 +1377,9 @@ This does not erase the historical fact that a review occurred.
 
 ### Next action
 
-> **Run RT-004: create a bounded by-copy representation of this work using the minimal Capsule criteria, give it to a capable handler with no Git access and no prior Corpus context, and measure exactly what additional information, if any, the human must provide before correct continuation.**
+> **Run RT-004A as a controlled transport experiment: keep the admissible Reviewer capability approximately constant, remove Git as the runtime transport/materialization channel, provide the document-backed Capsule and minimum declared handler dependencies by copy, and measure the additional material and human context-repair required. Do not simultaneously replace the handler with a Corpus-naive generic agent.**
 
-This next action is intentionally executable from the document itself.
+The optional RT-004B self-bootstrap stress test can follow later if it remains useful.
 
 ---
 
@@ -1287,7 +1438,9 @@ The RT-001 Reviewer identified contemporary `Knowledge Capsule` and portable age
 
 ## 25. Working compression
 
-> **A document can be more than stored knowledge: when it represents identified continuing work at a causal frontier and carries enough closure, constraints, routing, continuation, and return semantics to survive handler substitution, it can function as a human-readable Cognitive Packet Capsule.**
+> **A document can be more than stored knowledge: when it represents identified continuing work at a causal frontier and carries enough closure, constraints, routing, continuation, and return semantics to survive substitution within a declared admissible-handler environment, it can function as a human-readable Cognitive Packet Capsule.**
+
+> **Packet Closure is relative to a declared handler/environment. It excludes hidden predecessor state; it does not require universal zero-knowledge intelligibility.**
 
 > **A well-closed Artifact is not automatically a Packet Capsule; continuation and return semantics matter.**
 
@@ -1299,4 +1452,4 @@ The RT-001 Reviewer identified contemporary `Knowledge Capsule` and portable age
 
 > **At scale, do not govern every event equally. Keep most micro-effects local and harmless, reconcile aggregates, and spend scarce coordination and human attention on Pivots, invariant violations, option loss, material consequences, and responsibility.**
 
-RT-001 did not prove the document-backed Packet hypothesis. It did something more useful: it showed that the handoff can work without private conversational state while exposing exactly where the current Capsule concept is still incomplete.
+RT-001 did not prove the document-backed Packet hypothesis. It demonstrated something more precise: a cross-provider handoff can succeed without predecessor-private conversational state when the handler contract and durable environment are declared, and a Reality Test can reveal that the test boundary itself needs correction.
