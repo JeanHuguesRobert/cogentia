@@ -319,19 +319,20 @@ preconditions.
 The distinction is:
 
 ```text
-optimistic = proceed when scope, mandate, trace, and reversibility are adequate
-blind = proceed because the model sounds confident
-paranoid = block because something could theoretically go wrong
+optimistic = proceed under Measured Risk (research/measured_risk.md) when Exposure is bounded and recovery paths (reversal, compensation, repair) are adequate
+blind = proceed because the model sounds confident without bounded Exposure
+paranoid = block reflexively because something could theoretically go wrong, burning human attention
 ```
 
-The desired posture is optimistic discipline:
+The desired posture is optimistic discipline under **Measured Risk**:
 
 ```text
 small action
 + explicit mandate
++ bounded Exposure
 + visible diff or result
-+ validation
-+ reversible correction path
++ validation via Reality Test
++ recovery path (reversal, compensation, repair, residue)
 + completion report
 ```
 

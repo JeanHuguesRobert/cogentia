@@ -40,18 +40,19 @@ their own twin from their own corpus, boundaries, feedback, and mandates.
 The twin should become progressively more capable as the owner's corpus becomes
 richer, better curated, better indexed, and better governed.
 
-This roadmap applies the second-method distinction:
+This roadmap applies the second-method distinction under **Measured Risk** (`research/measured_risk.md`):
 
 ```text
-When the error is irreversible, filter before action.
-When the trial is reversible, learn by traceable action.
+When exposure crosses hard boundaries or recovery is impossible, filter before action.
+When exposure is bounded and an envelope of recovery (reversal, compensation, repair) is guaranteed, learn by traceable action under Measured Risk.
 ```
 
-Therefore the plan advances by small reversible slices, acceptance checks,
-owner feedback, and correction. The roadmap itself is expected to change.
+Therefore the plan advances by small slices within a clear recovery envelope,
+acceptance checks, owner feedback, and correction. The roadmap itself is expected to change.
 
 ## Governing Documents
 
+- Measured Risk: `research/measured_risk.md`
 - Trust model: `research/digital_twin_trust_model.md`
 - Artificial representation and mandated voice: `research/artificial_representation_and_mandated_voice.md`
 - Individual and collective twins: `research/individual_and_collective_digital_twins.md`
