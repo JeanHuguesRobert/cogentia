@@ -1000,6 +1000,7 @@ The event substrate gives causality.
 *These documents link to this file:*
 - [Rendre capable — noyau doctrinal provisoire](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/noyau_doctrinal_rendre_capable.md)
 - [Cogentia](../README.md)
+- [Concept Index — cogentia](concepts.md)
 - [Continuations and Cognitive Packets — early agent briefing](../docs/continuations_and_cognitive_packets_for_agents.md)
 - [Informational Gravity — Contextual Attraction for Cognitive-Packet Routing](informational_gravity.md)
 - [Research Index — Cogentia](index.md)

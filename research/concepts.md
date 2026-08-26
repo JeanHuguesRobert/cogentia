@@ -456,6 +456,66 @@ Specific governance structures (private, group, public, federated) enabling syst
 
 **Reference documents:**
 - [`research/cogentia_workflows.md`](cogentia_workflows.md)
+
+---
+
+## Packet Capsule
+
+**Type:** data structure
+**Scope:** cross-corpus
+**Status:** Defined
+
+**Short definition:**
+A self-contained, serializable document structure packaging a cognitive payload, execution context, and closure requirements for reliable cross-agent transfer.
+
+**Reference documents:**
+- [`research/documents_as_cognitive_packets.md`](documents_as_cognitive_packets.md)
+- [`research/cognitive_packets.md`](cognitive_packets.md)
+
+---
+
+## Human-Routed Handoff
+
+**Type:** protocol
+**Scope:** cross-corpus
+**Status:** Defined
+
+**Short definition:**
+A Version-0 asynchronous coordination mechanism relying on human copy/paste as a universal transport before automating API pipelines.
+
+**Reference documents:**
+- [`research/documents_as_cognitive_packets.md`](documents_as_cognitive_packets.md)
+- [`patterns/human-copy-paste-transport/PATTERN.md`](../patterns/human-copy-paste-transport/PATTERN.md)
+
+---
+
+## Recursive Reality Test
+
+**Type:** methodology
+**Scope:** cross-corpus
+**Status:** Defined
+
+**Short definition:**
+The empirical verification of corpus health and executable artifacts by executing tests and simulations upon the corpus's own living state and tooling.
+
+**Reference documents:**
+- [`research/documents_as_cognitive_packets.md`](documents_as_cognitive_packets.md)
+- [`patterns/desired-present-archaeology-reality/PATTERN.md`](../patterns/desired-present-archaeology-reality/PATTERN.md)
+
+---
+
+## Eventual Reconciliation
+
+**Type:** mechanism
+**Scope:** cross-corpus
+**Status:** Defined
+
+**Short definition:**
+An asynchronous saga-based recovery and repair model ensuring that distributed cognitive packet mutations converge to consistency despite transient failures.
+
+**Reference documents:**
+- [`research/documents_as_cognitive_packets.md`](documents_as_cognitive_packets.md)
+- [`research/cognitive_packet_switching.md`](cognitive_packet_switching.md)
 <!-- BEGIN_AUTO: backlinks -->
 ### Backlinks
 

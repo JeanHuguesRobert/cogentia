@@ -7,8 +7,6 @@
  *   Desired Present states. Archaeology explains. Reality tests.
  */
 
-import yaml from "js-yaml";
-
 export const MUTATION_STATUS = Object.freeze({
   PASS: "PASS",
   WARN: "WARN",
@@ -34,13 +32,43 @@ export function parseFrontmatter(text) {
   if (typeof text !== "string") return { present: false, data: {}, body: "" };
   const match = text.match(/^---\r?\n([\s\S]*?)\r?\n---(?:\r?\n|$)/);
   if (!match) return { present: false, data: {}, body: text };
-  try {
-    const data = yaml.load(match[1]) || {};
-    const body = text.slice(match[0].length);
-    return { present: true, data, body, rawYaml: match[1] };
-  } catch (err) {
-    return { present: false, data: {}, body: text, error: err.message };
+  
+  const rawYaml = match[1];
+  const data = {};
+  const lines = rawYaml.split(/\r?\n/);
+  let currentKey = null;
+
+  for (const line of lines) {
+    const trimmed = line.trim();
+    if (!trimmed || trimmed.startsWith("#")) continue;
+
+    // Array item: - "v0.8 - ..."
+    const arrayMatch = line.match(/^(\s*)-\s+(.+)$/);
+    if (arrayMatch && currentKey) {
+      if (!Array.isArray(data[currentKey])) {
+        data[currentKey] = [];
+      }
+      let val = arrayMatch[2].trim().replace(/^["'](.*)["']$/, "$1");
+      data[currentKey].push(val);
+      continue;
+    }
+
+    // Key-value pair: key: "value"
+    const kvMatch = line.match(/^([a-zA-Z0-9_-]+):\s*(.*)$/);
+    if (kvMatch) {
+      currentKey = kvMatch[1];
+      let val = kvMatch[2].trim();
+      if (!val) {
+        data[currentKey] = [];
+      } else {
+        val = val.replace(/^["'](.*)["']$/, "$1");
+        data[currentKey] = val;
+      }
+    }
   }
+
+  const body = text.slice(match[0].length);
+  return { present: true, data, body, rawYaml };
 }
 
 export function extractVersionsFromChangelog(changelog) {

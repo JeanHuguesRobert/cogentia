@@ -14,6 +14,7 @@ document_kind: "research-note"
 document_function: "research"
 visibility: "public"
 lifecycle_state: "working"
+update_policy: "UP-ARCHAEOLOGY-LIVING"
 canonical_url: "https://github.com/JeanHuguesRobert/cogentia/blob/main/research/documents_as_cognitive_packets.md"
 methodology:
   - "Second Method"
