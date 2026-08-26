@@ -527,7 +527,6 @@ An asynchronous saga-based recovery and repair model ensuring that distributed c
 - [Trail: From Method to Machine](trails/from_method_to_machine.md)
 - [MareNostrum — Tableau de bord](https://github.com/JeanHuguesRobert/marenostrum/blob/main/research/dashboard.md)
 <!-- END_AUTO: backlinks -->
-
 ### FractaScheduler
 
 * **Canonical term:** FractaScheduler
