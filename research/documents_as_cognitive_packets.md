@@ -5,7 +5,7 @@ author: "Jean Hugues Noël Robert, baron Mariani"
 affiliation: "Institut Mariani / C.O.R.S.I.C.A., 1 cours Paoli, F-20250 Corte, Corsica, France"
 date: "2026-08-25"
 last_modified_at: "2026-08-26"
-version: "0.3"
+version: "0.4"
 status: "working-paper"
 license: "CC BY-SA 4.0"
 language: "en"
@@ -27,6 +27,8 @@ related_documents:
   - "research/cognitive_packets.md"
   - "research/cognitive_packet_switching.md"
   - "research/cognitive_packet_closure_and_packet_native_semantics.md"
+  - "research/ideas_to_explore_as_issues.md"
+  - "research/cogentia_commons_living_corpus.md"
   - "prompts/cognitive_packet.md"
   - "prompts/redactor.md"
   - "prompts/reviewer.md"
@@ -38,6 +40,8 @@ related_documents:
 tags:
   - cognitive-packets
   - documents
+  - github-issues
+  - substrate-study
   - packet-closure
   - packet-capsule
   - redactor
@@ -70,6 +74,7 @@ changelog:
   - "v0.1 (2026-08-25) — initial source note and recursive document-backed packet experiment."
   - "v0.2 (2026-08-26) — assimilated RT-001 decorrelated review; tightened Packet Capsule definition, lowered closure claim, added minimal capsule contract, lifecycle authority/evidence rules, first handoff measurements, and explicit review dispositions."
   - "v0.3 (2026-08-26) — post-review arbitration clarified that Packet Closure is relative to a declared admissible-handler environment; reinterpreted RT-001 accordingly; split by-copy transport from foreign-handler self-bootstrap; propagated the clarification to the general Packet Closure note."
+  - "v0.4 (2026-08-26) — applied Occam to keep GitHub Issues inside the same study; introduced comparative substrate Reality Tests, treated Issue roles contextually rather than ontologically, and used issue #120 as a live case for Packet identity, work loci, assimilation, and Reactive Corpus adaptation."
 x-cognitive-packet:
   candidate: true
   profile: "document-backed-capsule"
@@ -81,7 +86,7 @@ x-cognitive-packet:
   closure_claim: "relative-referential-materializable-for-declared-handler-class"
   admissible_handler_class: "Corpus-aware handler able to materialize declared contracts and references"
   ithaca: "research/documents_as_cognitive_packets.md"
-  current_phase: "post-rt001-closure-scope-arbitration"
+  current_phase: "comparative-substrate-refinement"
   next_handler_capability: "corpus-aware-by-copy-review-test"
   retention_policy_for_review_artifacts: "transient-until-assimilated"
   rt001:
@@ -130,6 +135,8 @@ this document v0.1
 → this document v0.2
 → human arbitration of the closure criterion
 → this document v0.3
+→ comparative substrate refinement
+→ this document v0.4
 ```
 
 ### RT-001 result and subsequent arbitration
@@ -1278,7 +1285,7 @@ The hypothesis is weakened if repeated tests show that:
 - transient retention destroys material residue needed for responsibility;
 - richer packet semantics increase HumanRoutingCost rather than reducing it.
 
-The possibility that a well-formed GitHub Issue or ADR already provides the simplest viable Capsule remains **load-bearing prior art / simplification residue**, not a dismissed objection.
+The possibility that a well-formed GitHub Issue or ADR already provides the simplest viable Capsule remains **load-bearing prior art / simplification residue**, not a dismissed objection. From v0.4 this is no longer only a future comparison: GitHub Issues are treated explicitly as a comparative substrate case inside this same document.
 
 Failure of a zero-knowledge generic agent to bootstrap is **not**, by itself, a falsification of ordinary Closure unless such self-bootstrap was part of the declared handler profile.
 
@@ -1343,6 +1350,206 @@ This does not erase the historical fact that a review occurred.
 
 ---
 
+## 22bis. Comparative substrate Reality Tests — GitHub Issues
+
+### Occam rule for this research
+
+The document-backed Packet hypothesis should not generate one new research document for every candidate substrate while those cases are still testing the same central question.
+
+Working rule:
+
+> **Do not create one research document per candidate substrate while the cases are still refining the same Cognitive Packet abstraction.**
+
+`Documents as Cognitive Packets` therefore treats GitHub Issues, and potentially later ADRs, Pull Requests, email threads, COP continuations, or other containers, as comparative cases inside one evolving study until a case becomes genuinely autonomous.
+
+The purpose is not to classify everything as a Cognitive Packet. It is to use concrete substrates as Reality Tests of the abstraction.
+
+> **“X as Cognitive Packets” is not primarily a classification exercise. It is a Reality Test: where the mapping works and where it breaks are both evidence about what a Cognitive Packet should mean.**
+
+A common comparison should ask at least:
+
+| Dimension | Question |
+|---|---|
+| Identity | Does the continuing work survive the concrete container? |
+| Closure | Can an admissible handler continue without predecessor-private context? |
+| Frontier | Is the represented causal/state frontier identifiable? |
+| Continuation | Is it clear what remains to do and what capability can advance it? |
+| Routing | Can work be directed without confusing routing metadata with authority? |
+| Authority | Under whose Mandate may consequential work proceed? |
+| Lineage | Can parent/child or causal descendants be reconstructed? |
+| Return | Where does the yield belong? |
+| Assimilation | What becomes durable Corpus memory? |
+| Retention | What may remain transient, cool, archive, supersede, or disappear? |
+| Quiescence | What does “finished” actually mean? |
+
+Possible results are deliberately non-binary. A substrate object may act as, or combine, a:
+
+```text
+Cognitive Packet
+Packet Capsule
+Artifact
+Placement
+Trace
+Projection
+Store
+Router surface
+persistent work locus
+or none of these
+```
+
+`persistent work locus` is descriptive vocabulary only at this stage, not a proposed new COP primitive.
+
+### GitHub Issues as a comparative case
+
+The Corpus already contained an earlier intuition. `research/ideas_to_explore_as_issues.md` describes an Issue as a **memory packet for continuation** and uses the compression:
+
+```text
+Issues capture motion.
+Checkpoints verify routing.
+Commits stabilize steps.
+```
+
+`research/cogentia_commons_living_corpus.md` likewise treats Issues as **memory in tension**: one way to materialize unfinished work outside private conversational state.
+
+The stronger Packet model developed since then now permits a more discriminating interpretation.
+
+A GitHub Issue can expose several Packet-related roles depending on use:
+
+| Issue element | Candidate Cognitive Packet reading |
+|---|---|
+| issue body | Packet Capsule or current work snapshot |
+| issue URL / number | durable address / placement reference, not necessarily logical Packet identity |
+| comments | continuations, observations, handler yields, sometimes event-like trace |
+| activity/history | partial causal trace |
+| assignees | routing hint or handler selection, **not Mandate** |
+| labels / fields | projections of envelope or routing metadata |
+| linked commits / PRs | Artifacts, yields, Effects, or evidence depending on context |
+| open state | active, waiting, or dormant work; not one unique lifecycle meaning |
+| close state | candidate quiescence or routing completion; not proof of assimilation |
+| reopen | reactivation of the work |
+
+This leads to a deliberately qualified statement:
+
+> **A GitHub Issue can function as a Packet Capsule, a placement, a trace-bearing work container, or a persistent locus of cognitive work. It is not intrinsically identical to a Cognitive Packet.**
+
+The mapping is contextual rather than one-to-one.
+
+### Issue #120 as a live case
+
+Cogentia issue #120, `Measured Risk doctrine — govern for bounded value creation, not risk minimization`, provides a useful live instance:
+
+```text
+logical work:
+    propagate Measured Risk through the Corpus
+
+represented / hosted by:
+    cogentia#120
+        objective
+        guardrails
+        propagation targets
+        closure condition
+        current residue
+
+current handler:
+    Codex
+
+expected yields:
+    commits / findings / tests
+
+return:
+    Issue state / comments + Corpus changes
+
+later:
+    verify propagation
+    assimilate remaining learning
+    close or preserve explicit residue
+```
+
+The important identity question is:
+
+> **If this work later leaves GitHub Issues and continues in COP/Postgres or another substrate, is it still the same continuing work?**
+
+The current working answer is **probably yes**, which strengthens the distinction:
+
+```text
+Packet identity
+≠ GitHub Issue identity
+```
+
+but this remains a hypothesis to test rather than a finished ontology.
+
+### Mobility and persistent loci
+
+The document case emphasized transportability. The Issue case exposes a complementary property: some cognitive structures are useful precisely because they remain addressable while work and handlers come to them.
+
+```text
+mobile Packet / Capsule
+        ↓
+persistent work locus
+        ↕
+handlers / comments / observations / children / artifacts
+        ↓
+new Packets / yields / assimilated state
+```
+
+This suggests that a distributed cognitive system may need both:
+
+```text
+things that move
++
+places where work persists
+```
+
+It would be premature to make `persistent work locus` a new first-class object. Existing notions such as Store, Placement, Topic, Task, Issue projection, or Packet host may already be sufficient. The comparative test should determine this rather than vocabulary proliferation.
+
+### Three provisional findings
+
+The Issue case strengthens three broader principles:
+
+> **1. A Cognitive Packet should not be identified a priori with its representation or hosting substrate.**
+
+> **2. A single substrate object may realize several Packet-related roles over its lifecycle; the mapping is contextual rather than one-to-one.**
+
+> **3. Comparative substrate cases are Reality Tests of the Cognitive Packet abstraction: mismatches are evidence for refining the abstraction, not failures to be normalized away.**
+
+A stronger candidate interpretation is emerging:
+
+> **The Cognitive Packet may be the logical continuing work, while envelope/payload objects, documents, Issues, COP records, database rows, and copied Capsules are representations, projections, placements, or loci through which that work becomes continuable.**
+
+The word **may** remains load-bearing. The study has not yet earned a final ontological definition.
+
+### Reactive / Living Corpus as observed adaptation
+
+This comparative method also makes the Living/Reactive Corpus itself observable as an evolving system rather than merely a document collection.
+
+The biological analogy must remain bounded: the Corpus is not claimed to be biologically alive. The existing `Living Corpus` and `Corpus Sleep Cycle` metaphors are useful because the system functionally exhibits processes such as working memory, consolidation, propagation, cooling, regression testing, and reactivation.
+
+The recent irreversibility → recovery → Measured Risk episode can be represented as:
+
+```text
+local observation:
+    irreversibility is not adequately Boolean
+
+→ exploration
+→ compensation / repair / residue distinctions
+→ second observation:
+    risk minimization is itself too restrictive
+→ candidate learning:
+    Measured Risk
+→ source assimilation
+→ propagation request: cogentia#120
+→ distributed handler work
+→ dependent Corpus changes
+→ verification / remaining residue
+→ altered future agent behaviour
+```
+
+This is usefully described as **adaptation of the Corpus's regulatory response** without treating the organism metaphor as proof.
+
+The important empirical question is whether the change survives handler substitution and changes future behaviour in the intended places. That connects this substrate study directly to the existing Corpus Sleep Cycle concepts of candidate learning, assimilation, regression, and cold-handler testing.
+
+---
+
 ## 23. Current continuation state
 
 ### Established
@@ -1360,6 +1567,9 @@ This does not erase the historical fact that a review occurred.
 - Reversibility is better modeled as a time- and consequence-dependent envelope than a Boolean.
 - Urgency, importance, option loss, and damage control are distinct governance dimensions.
 - High transaction-rate governance is a live scaling hypothesis requiring measurement rather than assertion.
+- Comparative substrate cases should test the Cognitive Packet abstraction rather than assume that each candidate object is a Packet.
+- A substrate object may realize several Packet-related roles contextually; representation/hosting identity should not be collapsed into logical Packet identity.
+- GitHub Issues are a particularly rich test because they combine durable addressability, mutable document state, routing hints, comments/history, and lifecycle while still plausibly remaining only a host/projection of the continuing work.
 
 ### Open / load-bearing
 
@@ -1374,10 +1584,16 @@ This does not erase the historical fact that a review occurred.
 - How should compensation, repair, accepted residue, and Damage Control interact with COP accounting and lifecycle?
 - Can document-backed Packets scale beyond human-routed workflows while remaining inspectable?
 - What do neighboring 2026 "Knowledge Capsule" / portable agent handoff artifacts already solve?
+- Does a `persistent work locus` name a genuinely missing abstraction, or are Store / Placement / Topic / Task / Issue projection already sufficient?
+- Can the work represented by issue #120 migrate to a different substrate while preserving a defensible logical identity and causal frontier?
+- Which other candidate substrates are worth comparing without violating Occam by proliferating research artifacts?
 
 ### Next action
 
-> **Run RT-004A as a controlled transport experiment: keep the admissible Reviewer capability approximately constant, remove Git as the runtime transport/materialization channel, provide the document-backed Capsule and minimum declared handler dependencies by copy, and measure the additional material and human context-repair required. Do not simultaneously replace the handler with a Corpus-naive generic agent.**
+Two observations can proceed without creating another research document:
+
+1. **Observe issue #120 after the current Codex hop**: determine whether the Issue and its materializable references were sufficient for continuation, what yields return to the Issue/Corpus, what remains outside it, and whether closing the Issue corresponds to actual assimilation/quiescence.
+2. **Run RT-004A when useful** as the controlled transport experiment: keep the admissible Reviewer capability approximately constant, remove Git as the runtime transport/materialization channel, provide the document-backed Capsule and minimum declared handler dependencies by copy, and measure the additional material and human context-repair required.
 
 The optional RT-004B self-bootstrap stress test can follow later if it remains useful.
 
@@ -1409,6 +1625,13 @@ This document does not claim novelty for the mechanisms below. They are part of 
 - Martin Fowler, **Reversal Adjustment**: https://martinfowler.com/eaaDev/ReversalAdjustment.html
 - NIST SP 800-61r2, **Computer Security Incident Handling Guide**: https://nvlpubs.nist.gov/nistpubs/SpecialPublications/NIST.SP.800-61r2.pdf
 - WHO, **Triage**: https://www.who.int/tools/triage
+
+### Corpus-native issue / continuation prior art
+
+- `research/ideas_to_explore_as_issues.md` — Issues as memory packets for continuation, with Occam and checkpoint discipline.
+- `research/cogentia_commons_living_corpus.md` — Issues as memory in tension inside a continuation-aware Living Corpus.
+
+These internal sources predate the v0.4 comparative substrate formulation and are part of its archaeology rather than retroactive evidence that the current Packet ontology was already complete.
 
 ### Legal and institutional analogies
 
@@ -1444,6 +1667,12 @@ The RT-001 Reviewer identified contemporary `Knowledge Capsule` and portable age
 
 > **A well-closed Artifact is not automatically a Packet Capsule; continuation and return semantics matter.**
 
+> **A Cognitive Packet should not be identified a priori with its representation or hosting substrate. One substrate object may realize several Packet-related roles, and the mapping may change over its lifecycle.**
+
+> **“X as Cognitive Packets” is a Reality Test of the abstraction, not a requirement to classify X as a Packet. Matches and mismatches are both evidence.**
+
+> **A GitHub Issue may host or project a Cognitive Packet as Capsule, placement, trace-bearing work container, or persistent work locus without being identical to the logical continuing work.**
+
 > **Packet durability is not Corpus retention. Persist work long enough to continue it; preserve knowledge when assimilation gives it durable value.**
 
 > **Before commitment, preserve options. After commitment, preserve causality. When reversal is incomplete, compensate. When consequences become damage, repair. When further repair is disproportionate, preserve and attribute accepted residue.**
@@ -1453,3 +1682,5 @@ The RT-001 Reviewer identified contemporary `Knowledge Capsule` and portable age
 > **At scale, do not govern every event equally. Keep most micro-effects local and harmless, reconcile aggregates, and spend scarce coordination and human attention on Pivots, invariant violations, option loss, material consequences, and responsibility.**
 
 RT-001 did not prove the document-backed Packet hypothesis. It demonstrated something more precise: a cross-provider handoff can succeed without predecessor-private conversational state when the handler contract and durable environment are declared, and a Reality Test can reveal that the test boundary itself needs correction.
+
+The GitHub Issue case adds a second lesson: **the Cognitive Packet abstraction should be allowed to become more precise when a useful substrate refuses a one-to-one mapping. The refusal is part of the result.**
