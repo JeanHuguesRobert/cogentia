@@ -1,15 +1,16 @@
 ---
 schema: cogentia.agent_skill/v1
 id: cogentia.open-possible
-version: 1
+version: 2
 status: experimental
 name: open-possible
 description: >
   Detect possibility-space closure and present-state assumptions, preserve
-  significant mismatches, search for small reversible Boosters, and propose
-  a minimal Reality test. Use for exploratory, prospective, strategic,
-  research, design, or architectural work, and when a conclusion risks
-  confusing unfamiliarity or absence from the current map with impossibility.
+  significant mismatches, search for small high-leverage Boosters, and propose
+  a bounded Measured-Risk Reality test with sufficient discriminating power.
+  Use for exploratory, prospective, strategic, research, design, or
+  architectural work, and when a conclusion risks confusing unfamiliarity or
+  absence from the current map with impossibility.
 triggers:
   - explore possible futures or alternatives
   - strategic or architectural design under uncertainty
@@ -36,6 +37,7 @@ governance:
 sources:
   - docs/agent-skills-contract.md
   - instructions/AGENTS.shared.md
+  - research/measured_risk.md
   - research/optimistic_mainline_governance.md
   - research/agent_configuration_layer.md
 document_role: "operational"
@@ -58,14 +60,14 @@ This skill does not require novelty and does not reward speculation. Its functio
 
 > **Do not let absence from the current map silently become impossibility.**
 
-The associated source doctrine is [The Booster Principle](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/booster_principle.md).
+The associated source doctrines are [The Booster Principle](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/booster_principle.md) and [`research/measured_risk.md`](../../research/measured_risk.md).
 
 Canonical compression:
 
 ```text
 Open.
-Try small.
-Let Reality answer.
+Try small enough to bound the downside,
+but large enough for Reality to answer.
 Keep the trace.
 Correct.
 ```
@@ -171,7 +173,7 @@ Return `none_identified` when no useful opening follows. Do not invent novelty t
 
 ### 5. BOOST
 
-Before recommending substantial additional force, search for a smaller reversible intervention that might unlock disproportionately large latent capacity.
+Before recommending substantial additional force, search for a smaller intervention that might unlock disproportionately large latent capacity.
 
 Question:
 
@@ -192,26 +194,43 @@ permission
 resource placement
 ```
 
-Prefer an experiment when the candidate Booster is cheap, bounded, and reversible.
+Do **not** choose a Booster merely because it minimizes risk. Prefer one whose **Measured Risk** is proportionate to the potential gain or learning:
+
+```text
+expected value / learning
++ bounded Exposure
++ inspectable uncertainty
++ adequate recovery path
++ clear responsibility boundary
++ explicit stop conditions where material
+```
+
+A less reversible Booster can be preferable to a more reversible one when its Exposure is much smaller, its information value is materially higher, and its remaining consequences are cheaply compensable or repairable.
 
 Return `none_identified` when appropriate.
 
 ### 6. TEST
 
-Propose the smallest meaningful action by which Reality can answer.
+Propose the smallest **sufficient** action by which Reality can answer.
 
-The test should, when possible, be:
+The target is not the smallest attainable risk regardless of usefulness. The test should, when possible, have:
 
 ```text
-small
-bounded
-observable
-traceable
-reversible or cheaply recoverable
-capable of discriminating between hypotheses
+sufficient discriminating power
+bounded Exposure
+observable outcome
+traceability
+known or explicit uncertainty
+reversal / compensation / repair path proportionate to consequences
+stop-loss or damage-control trigger when material
+respect for Mandate, rights and responsibility boundaries
 ```
 
-A Reality test is often the next small move, not a final validation ceremony.
+A useful test is therefore:
+
+> **safe enough to justify, risky enough to discriminate.**
+
+A Reality test is often the next measured move, not a final validation ceremony.
 
 ## Standard record
 
@@ -225,9 +244,16 @@ open_possible:
   opened_possible: "none_identified | ..."
   booster: "none_identified | ..."
   reality_test: "..."
+  measured_risk:
+    objective_or_learning: "..."
+    exposure: "none | bounded description"
+    recovery: "none-needed | reversal | compensation | repair | mixed | unknown"
+    stop_condition: "none-needed | ..."
 ```
 
 For machine validation, JSON with the same keys is preferred by the initial checker.
+
+The `measured_risk` block is operational guidance, not yet a frozen schema. Do not manufacture numerical precision when the evidence only supports qualitative bounds or explicit unknowns.
 
 Optional claim records may distinguish closure states:
 
@@ -263,24 +289,29 @@ impossible_under_current_regime
 
 may be accurate where an unqualified `impossible` is not.
 
-## Relationship to Boosters and Optimistic Locking
+## Relationship to Boosters, Measured Risk and Optimistic Locking
 
-The skill implements two compatible rules:
+The skill implements three compatible rules:
 
 > **Before adding force, look for a Booster.**
 
-and:
+> **Do not minimize risk as an objective in itself; measure it against what the experiment can teach or create.**
 
-> **When a candidate Booster is cheap, bounded, and reversible, prefer a traced experiment over prolonged speculation.**
+> **Prefer the smallest bounded Reality test with sufficient discriminating power and a proportionate recovery path.**
 
-This is the epistemic analogue of Optimistic Mainline Governance: do not attempt to prevent every possible mistake before action; make small actions visible, inspectable, and correctable.
+This is the epistemic analogue of Optimistic Mainline Governance: do not attempt to prevent every possible mistake before action; make measured actions visible, inspectable, attributable and correctable.
+
+`Reversible` remains a useful property, but it is not a binary gate. Apply the Reversibility Envelope from `research/measured_risk.md`: what can be restored, what can only be compensated or repaired, what has propagated, and what residue may remain.
 
 ## Stop conditions
 
 - No meaningful possibility-space question exists -> stop; do not manufacture one.
 - Required evidence is unavailable -> preserve the uncertainty; do not convert it to impossibility.
 - A proposed Reality test would require authority not present in the mandate -> prepare the test only; do not execute it.
-- A Booster candidate is high-risk, irreversible, private, destructive, or institutionally committing -> route through the applicable governance rather than treating small conceptual size as low operational risk.
+- Exposure cannot be bounded sufficiently for the current mandate -> reduce scope, prepare only, or escalate.
+- The recovery path is materially unknown and the possible consequence exceeds the accepted envelope -> do not execute until the uncertainty is reduced or explicitly arbitrated.
+- A test would externalize loss onto another Principal without authority -> do not infer permission from expected learning or value.
+- During a test, actual Exposure exceeds the declared envelope or a material third-party effect appears -> stop or enter the applicable damage-control regime.
 
 ## Non-goals
 
@@ -288,5 +319,6 @@ This is the epistemic analogue of Optimistic Mainline Governance: do not attempt
 - Not a requirement to produce a radical alternative.
 - Not a claim that every problem has a Booster.
 - Not a licence to ignore known constraints.
-- Not a substitute for evidence, domain expertise, mandate, or safety rules.
+- Not a licence to spend a risk/loss budget merely because it exists.
+- Not a substitute for evidence, domain expertise, mandate, rights, responsibility or safety rules.
 - Not a new orchestration runtime or Cognitive Packet type.
