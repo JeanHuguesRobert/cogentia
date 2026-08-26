@@ -157,6 +157,32 @@ export const TOOLS = [
     },
   },
   {
+    name: "cogentia_scheduler_status",
+    description: "Get FractaScheduler status, load recommendations, and active corpus signals.",
+    inputSchema: {
+      type: "object",
+      properties: {},
+    },
+  },
+  {
+    name: "cogentia_scheduler_run",
+    description: "Trigger an autonomous FractaScheduler cycle (Corpus Sleep Cycle, convergence, mutation audit, views sync).",
+    inputSchema: {
+      type: "object",
+      properties: {
+        mode: {
+          type: "string",
+          enum: ["quick", "sleep", "full"],
+          description: "Cycle mode: quick (convergence+export), sleep (standard nightly), full (deep audits)",
+        },
+        dryRun: {
+          type: "boolean",
+          description: "If true, compute actions without applying disk or git modifications",
+        },
+      },
+    },
+  },
+  {
     name: "cogentia_docs_check_mutation",
     description:
       "Run deterministic semantic mutation checks against corpus documents. Validates that document_kind, document_role, and update_policy (UP-DESIRED-PRESENT, UP-ARCHAEOLOGY-LIVING, UP-REALITY-EVIDENCE) are respected and prevents silent regressions.",
@@ -1222,6 +1248,14 @@ export function createMcpCore(env = process.env) {
         return daemonGet("/api/cli/docs/gaps", {
           repo: typeof args.repo === "string" ? args.repo : "all",
           limit: boundedOptional(args.limit, 1, 500) || 100,
+        });
+            case "cogentia_scheduler_status":
+        return daemonGet("/api/cli/scheduler/status", {});
+
+      case "cogentia_scheduler_run":
+        return daemonGet("/api/cli/scheduler/run", {
+          mode: args.mode || "sleep",
+          dryRun: args.dryRun ? "true" : "false",
         });
       case "cogentia_docs_check_mutation":
         return daemonGet("/api/cli/docs/check-mutation", {

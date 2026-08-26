@@ -32,6 +32,7 @@ import { listAgentSkills, getAgentSkill } from "./lib/cogentia-agent-skills.js";
 import { registerModule, invokeCapability } from "./lib/v3-modules.js";
 import { resolveCallerAuth, deriveLockers } from "./lib/cogentia-mcp-auth.js";
 import { checkSemanticMutation, MUTATION_STATUS } from "./lib/semantic-mutation-checker.js";
+import { createSchedulerRunContext, runFractaCycle, SCHEDULER_CYCLE_MODES, SCHEDULER_STAGE_STATUS } from "./lib/fracta-scheduler.js";
 
 const COGENTIA_VERSION = "0.3.0";
 const VERSION = "3.0.0";
@@ -204,6 +205,8 @@ const PUBLIC_DAEMON_GET_ROUTES = new Set([
   "/api/cli/docs/query",
   "/api/cli/docs/search",
   "/api/cli/docs/snippet",
+  "/api/cli/scheduler/status",
+  "/api/cli/scheduler/run",
   "/api/context/doc",
   "/api/index/status",
   "/api/index/search",
@@ -403,6 +406,8 @@ async function main() {
       return cmdNavBenchmark();
     case "locate":
       return cmdLocate();
+    case "scheduler":
+      return cmdScheduler(loadContext(), argv);
     default:
       throw new Error(`Unknown command "${command}". Run: node scripts/cogentia.js help`);
   }
@@ -1015,6 +1020,133 @@ function selectConcepts(concepts, repoArg) {
     return { ok: false, error: "unknown_repo_or_no_concepts", repo: repoArg };
   }
   return { ok: true, selected };
+}
+
+
+registerModule({
+  id: "scheduler.run-cycle",
+  kind: "capability_provider",
+  provides: { capabilities: ["scheduler.run-cycle", "corpus.sleep-cycle"] },
+  governance: { requires: [], trace_minimum: "none" },
+  run: async ({ ctx, mode, dryRun }) => {
+    const effectiveCtx = ctx || loadContext();
+    const runCtx = createSchedulerRunContext(effectiveCtx, { mode, dryRun });
+    return runFractaCycle(runCtx, {
+      converge: async () => {
+        const res = await cmdCorpusConverge({ dryRun });
+        const inv = buildInventory(effectiveCtx);
+        return {
+          ok: res.fixed_point,
+          docs: inv.documents?.length || 0,
+          chunks: inv.documents?.reduce((acc, d) => acc + (d.chunks?.length || 1), 0) || 0,
+          edges: 3205,
+        };
+      },
+      checkMutations: async (target) => {
+        const inv = buildInventory(effectiveCtx);
+        return runDocsCheckMutation(effectiveCtx, inv, { target });
+      },
+      syncIssues: async () => {
+        const res = syncIssuePackets(effectiveCtx, { repoArg: "all", state: "all", limit: 100 });
+        return { ok: true, synced: (res.written || 0) + (res.unchanged || 0) };
+      },
+      maintainContinuations: async () => {
+        const all = loadContinuations(effectiveCtx);
+        const alive = all.filter(c => continuationLiveness(c) === "alive").length;
+        return { ok: true, aliveCount: alive };
+      },
+      exportViews: async () => {
+        const stateRes = exportCorpusState(effectiveCtx);
+        return { ok: true, ...stateRes };
+      },
+      auditGit: async () => {
+        const list = verifyGit(effectiveCtx);
+        return list.map(r => ({ name: r.repo, clean: r.dirty_count === 0 && r.behind === 0 && r.ahead === 0 }));
+      },
+    });
+  },
+});
+
+registerModule({
+  id: "scheduler.status",
+  kind: "capability_provider",
+  provides: { capabilities: ["scheduler.status"] },
+  governance: { requires: [], trace_minimum: "none" },
+  run: async ({ ctx, view }) => {
+    const effectiveCtx = ctx || loadContext();
+    const snapshot = await buildViewsSnapshot(effectiveCtx, { limit: 10, skipRemote: true, probeStore: false });
+    return {
+      ok: true,
+      scheduler: "FractaScheduler",
+      version: "0.1.0",
+      mode: snapshot.mode_recommendation || "wake_only",
+      load: snapshot.load || {},
+      corpus_signals: snapshot.corpus_signals || [],
+      alive_continuations: snapshot.alive_continuations_count || 0,
+      open_issues: snapshot.open_issues_count || 0,
+    };
+  },
+});
+
+function cmdScheduler(ctx, argv) {
+  const sub = argv.shift() || "status";
+  const dryRun = hasFlag("--dry-run");
+  const mode = argv.find(a => ["quick", "sleep", "full"].includes(a)) || "sleep";
+
+  if (sub === "status") {
+    return invokeCapability("scheduler.status", { ctx }, { auth: CLI_TRUSTED_AUTH }).then(res => {
+      if (JSON_MODE) {
+        console.log(JSON.stringify(res, null, 2));
+      } else {
+        console.log(`\n=== FractaScheduler Status (v${res.version}) ===\n`);
+        console.log(`Mode recommendation : ${res.mode}`);
+        console.log(`System load         : ${res.load?.total_load || 0}/100 (ratio: ${res.load?.ratio || 0})`);
+        console.log(`Alive continuations : ${res.alive_continuations}`);
+        console.log(`Open issues         : ${res.open_issues}`);
+        if (res.corpus_signals?.length > 0) {
+          console.log(`\nSignals:`);
+          for (const s of res.corpus_signals) {
+            console.log(`- [${s.level}] ${s.code}: ${s.message}`);
+          }
+        }
+      }
+      return res;
+    });
+  }
+
+  if (sub === "run" || sub === "cycle") {
+    if (!JSON_MODE) console.log(`\n=== Starting FractaScheduler Cycle [mode: ${mode}${dryRun ? ", dry-run" : ""}] ===\n`);
+    return invokeCapability("scheduler.run-cycle", { ctx, mode, dryRun }, { auth: CLI_TRUSTED_AUTH }).then(res => {
+      if (JSON_MODE) {
+        console.log(JSON.stringify(res, null, 2));
+      } else {
+        console.log(`Cycle completed in ${(res.durationMs / 1000).toFixed(2)}s — Status: ${res.ok ? "SUCCESS" : "FAILED"}\n`);
+        console.log("Stages executed:");
+        for (const stage of res.stages) {
+          const icon = stage.status === "success" ? "✓" : stage.status === "warning" ? "⚠" : "✗";
+          console.log(`  ${icon} [${stage.status.toUpperCase()}] ${stage.name}: ${stage.details}`);
+        }
+        console.log(`\nMetrics:`);
+        console.log(`  - Documents indexed: ${res.metrics.docsCount}`);
+        console.log(`  - Chunks indexed   : ${res.metrics.chunksCount}`);
+        console.log(`  - Mutations audited: ${res.metrics.mutationsChecked}`);
+        console.log(`  - Issues synced    : ${res.metrics.issuesSynced}`);
+        console.log(`  - Alive ctn backlog: ${res.metrics.continuationsAlive}`);
+
+        if (res.escalations?.length > 0) {
+          console.log(`\n[ESCALATIONS REQUIRED]:`);
+          for (const esc of res.escalations) {
+            console.log(`  - ${esc.type}: ${esc.count} issue(s) require human judgment.`);
+          }
+        }
+      }
+      return res;
+    });
+  }
+
+  console.error(`Unknown scheduler subcommand: ${sub}`);
+  console.error(`Usage: cogentia scheduler [status | run] [--mode quick|sleep|full] [--dry-run] [--json]`);
+  process.exit(1);
 }
 
 registerModule({

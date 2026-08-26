@@ -1,0 +1,12 @@
+[Unit]
+Description=FractaScheduler Nightly Sleep Cycle
+After=network.target
+
+[Service]
+Type=oneshot
+User=root
+WorkingDirectory=/srv/cogentia/repos/cogentia
+Environment=COGENTIA_REGISTRY=/srv/cogentia/repos/JeanHuguesRobert/.cogentia.json
+ExecStart=/usr/bin/node /srv/cogentia/repos/cogentia/scripts/cogentia.js scheduler run --mode sleep
+StandardOutput=journal
+StandardError=journal
