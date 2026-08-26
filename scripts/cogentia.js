@@ -33,6 +33,7 @@ import { registerModule, invokeCapability } from "./lib/v3-modules.js";
 import { resolveCallerAuth, deriveLockers } from "./lib/cogentia-mcp-auth.js";
 import { checkSemanticMutation, MUTATION_STATUS } from "./lib/semantic-mutation-checker.js";
 import { createSchedulerRunContext, runFractaCycle, SCHEDULER_CYCLE_MODES, SCHEDULER_STAGE_STATUS } from "./lib/fracta-scheduler.js";
+import { packDocumentToCapsule, verifyCapsule, unpackCapsule } from "./lib/packet-capsule.js";
 
 const COGENTIA_VERSION = "0.3.0";
 const VERSION = "3.0.0";
@@ -1146,6 +1147,101 @@ function cmdScheduler(ctx, argv) {
 
   console.error(`Unknown scheduler subcommand: ${sub}`);
   console.error(`Usage: cogentia scheduler [status | run] [--mode quick|sleep|full] [--dry-run] [--json]`);
+  process.exit(1);
+}
+
+
+registerModule({
+  id: "packet.capsule.pack",
+  kind: "capability_provider",
+  provides: { capabilities: ["packet.capsule.pack"] },
+  governance: { requires: [], trace_minimum: "none" },
+  run: ({ docPath, relativePath, sourceRepo, packetId, closureState, admissibleEnvironment }) => {
+    return packDocumentToCapsule(docPath, { relativePath, sourceRepo, packetId, closureState, admissibleEnvironment });
+  },
+});
+
+registerModule({
+  id: "packet.capsule.verify",
+  kind: "capability_provider",
+  provides: { capabilities: ["packet.capsule.verify"] },
+  governance: { requires: [], trace_minimum: "none" },
+  run: ({ capsuleText }) => {
+    return verifyCapsule(capsuleText);
+  },
+});
+
+registerModule({
+  id: "packet.capsule.unpack",
+  kind: "capability_provider",
+  provides: { capabilities: ["packet.capsule.unpack"] },
+  governance: { requires: [], trace_minimum: "none" },
+  run: ({ capsuleText, targetDir, dryRun }) => {
+    return unpackCapsule(capsuleText, targetDir, { dryRun });
+  },
+});
+
+function cmdPacket(ctx, argv) {
+  const sub = argv.shift() || "help";
+  if (sub === "capsule") {
+    const action = argv.shift() || "help";
+    if (action === "pack") {
+      const fileArg = argv.shift();
+      if (!fileArg) throw new Error("Usage: cogentia packet capsule pack <file> [--output <path>] [--json]");
+      const docPath = path.resolve(fileArg);
+      const outputArg = valueFlag("--output");
+      const res = packDocumentToCapsule(docPath, { sourceRepo: "local", relativePath: path.basename(docPath) });
+      if (outputArg) {
+        fs.writeFileSync(path.resolve(outputArg), res.capsule_text, "utf8");
+        res.written_to = outputArg;
+      }
+      if (JSON_MODE) {
+        console.log(JSON.stringify(res, null, 2));
+      } else {
+        console.log(`\n=== Packet Capsule Packed ===\n`);
+        console.log(`Packet ID      : ${res.packet_id}`);
+        console.log(`Content SHA256 : ${res.content_sha256}`);
+        console.log(`Capsule SHA256 : ${res.capsule_sha256}`);
+        if (res.written_to) console.log(`Saved to       : ${res.written_to}`);
+      }
+      return res;
+    }
+    if (action === "verify") {
+      const fileArg = argv.shift();
+      if (!fileArg) throw new Error("Usage: cogentia packet capsule verify <capsule-file> [--json]");
+      const capsuleText = fs.readFileSync(path.resolve(fileArg), "utf8");
+      const res = verifyCapsule(capsuleText);
+      if (JSON_MODE) {
+        console.log(JSON.stringify(res, null, 2));
+      } else {
+        console.log(`\n=== Packet Capsule Verification ===\n`);
+        console.log(`Status         : ${res.ok ? "PASS" : "FAIL"}`);
+        console.log(`Packet ID      : ${res.packet_id || "N/A"}`);
+        console.log(`Checksum Valid : ${res.valid_checksum ? "YES" : "NO"}`);
+        if (res.error) console.log(`Error          : ${res.error}`);
+      }
+      return res;
+    }
+    if (action === "unpack") {
+      const fileArg = argv.shift();
+      if (!fileArg) throw new Error("Usage: cogentia packet capsule unpack <capsule-file> [--target-dir <path>] [--dry-run] [--json]");
+      const capsuleText = fs.readFileSync(path.resolve(fileArg), "utf8");
+      const targetDir = valueFlag("--target-dir") || process.cwd();
+      const dryRun = hasFlag("--dry-run");
+      const res = unpackCapsule(capsuleText, path.resolve(targetDir), { dryRun });
+      if (JSON_MODE) {
+        console.log(JSON.stringify(res, null, 2));
+      } else {
+        console.log(`\n=== Packet Capsule Unpacked ===\n`);
+        console.log(`Status         : ${res.ok ? "SUCCESS" : "FAILED"}`);
+        console.log(`Target Path    : ${res.target_path}`);
+        console.log(`Bytes Written  : ${res.bytes} bytes`);
+      }
+      return res;
+    }
+  }
+
+  console.error("Usage: cogentia packet capsule [pack | verify | unpack]");
   process.exit(1);
 }
 
