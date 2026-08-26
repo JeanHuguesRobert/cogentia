@@ -527,3 +527,12 @@ An asynchronous saga-based recovery and repair model ensuring that distributed c
 - [Trail: From Method to Machine](trails/from_method_to_machine.md)
 - [MareNostrum — Tableau de bord](https://github.com/JeanHuguesRobert/marenostrum/blob/main/research/dashboard.md)
 <!-- END_AUTO: backlinks -->
+
+### FractaScheduler
+
+* **Canonical term:** FractaScheduler
+* **Alternative labels:** Multi-Level Distributed Corpus Scheduler, Corpus Sleep Cycle Engine
+* **Short definition:** Le moteur d'ordonnancement multi-niveaux et distribué du Corpus Réactif (JHN Architecture), coordonnant le cycle de sommeil (*Corpus Sleep Cycle*), la convergence du point fixe, l'audit des mutations sémantiques et la publication du Views Store sous la doctrine du Risque Mesuré (*Measured Risk*).
+* **Primary authority:** `docs/fracta-scheduler.md`
+* **Related concepts:** [[Measured Risk]], [[Cognitive Packet]], [[Corpus Sleep Cycle]], [[Reality Test]]
+* **Status:** active
