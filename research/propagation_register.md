@@ -4,9 +4,9 @@ subtitle: "Provider-neutral backlog of pending corpus propagations"
 author: "Jean Hugues Noël Robert"
 repository: "cogentia"
 status: "working source — operational registry"
-version: "0.4"
+version: "0.5"
 date: "2026-08-16"
-last_modified_at: "2026-08-16"
+last_modified_at: "2026-08-27"
 language: "en"
 document_role: "source"
 document_kind: "operational-registry"
@@ -23,6 +23,8 @@ related_issues:
 related_documents:
   - "research/cognitive_packets.md"
   - "research/memory_and_corpus_sleep_cycle.md"
+  - "research/semantic_propagation_rule.md"
+  - "research/operational_stance.md"
   - "docs/corpus-responsibility-contract.md"
   - "prompts/redactor.md"
   - "https://github.com/JeanHuguesRobert/operium/blob/main/research/federated-capacity-registry.md"
@@ -210,6 +212,57 @@ propagation:
     evidence_refs:
       - "scripts/test-corpus-responsibilities.js"
       - "scripts/responsibility-routing-regressions.yaml"
+```
+
+### PR-2026-004 — Operational Stance semantic propagation
+
+```yaml
+propagation:
+  id: PR-2026-004
+  status: propagation_in_progress
+  discovered_at: 2026-08-27
+  source_refs:
+    - "research/operational_stance.md v0.5 — commit e341d75276e7b78be4677b749c2bcf3e140b29c7"
+    - "Grok decorrelated review of Operational Stance v0.2"
+    - "human arbitration 2026-08-27"
+  source_summary: >-
+    Operational Stance is retained as the conceptual name for temporary governed
+    situation-dependent control policy. Cogentigram remains the relatively persistent
+    structural representation; Measured Risk describes stakes/envelope; Skills are
+    reusable procedures; Persona/Style govern social and expressive presentation;
+    Mandate remains the authority boundary. mode_projection is experimental only and
+    stable packet/schema promotion is frozen until the Agent John A/B Reality Test.
+  completed_targets:
+    - "research/agent_john_cross_surface_style_fidelity.md v0.2 — commit f854382ea3c4f64c82236884d610e8b70d9a98cb"
+    - "skills/open-possible/SKILL.md v3 — commit dbbe5deb2ecd8e6ecbaf4b53782f9d78acf07cc1"
+    - "research/measured_risk.md v0.2 — commit 6d2b17f5bd666c0b91de5a92e3f807056895804c"
+    - "research/agent_configuration_layer.md v0.3 — commit 064583e277ac06e40c46d5c93f46dcdd01af656c"
+    - "research/Cogentia-and-Cogentigram.md — commit 5e34d0e507d3a71ebc7c78ccc1d4ef2cf1b5fd1c"
+  expected_effects:
+    - "Cogentigram is not used as storage for momentary Operational Stance"
+    - "Agent configuration can project situated policy without creating authority"
+    - "Measured Risk and Operational Stance remain distinct and recursively coupled"
+    - "Persona/Style changes remain separable from situated control-policy changes"
+    - "open-possible remains a Skill whose salience may increase under exploratory/opportunity-seeking Stance"
+    - "no stable mode_projection or stance packet/schema fields are introduced before Reality testing"
+  mechanical_targets:
+    - "regenerate research/index.md through its generator/build path so operational_stance.md becomes discoverable"
+    - "refresh generated concept/navigation projections only through cogentia.js or their declared generator/source path"
+  deliberately_not_propagated:
+    - "research/cognitive_packets.md schema fields — frozen until A/B"
+    - "runtime Stance Resolver or stable mode_projection schema — frozen until A/B"
+  priority: high
+  confidence: high
+  propagation_level: 2
+  blockers:
+    - "generated index/concept projections have not been rebuilt in this connector-only pass"
+    - "Agent John A/B Reality Test has not yet run"
+  next_action: "Run the declared generated-view refresh path, then execute the Agent John A/B Reality Test before any schema/runtime promotion."
+  verification:
+    status: partial
+    evidence_refs:
+      - "five semantic target commits listed above"
+      - "research/operational_stance.md §21 A/B Reality Test"
 ```
 
 ## Operational discipline
