@@ -4,8 +4,8 @@ subtitle: "Govern for bounded value creation, learning, and recovery rather than
 author: "Jean Hugues Noël Robert, baron Mariani"
 affiliation: "Institut Mariani / C.O.R.S.I.C.A., 1 cours Paoli, F-20250 Corte, Corsica, France"
 date: "2026-08-26"
-last_modified_at: "2026-08-26"
-version: "0.1"
+last_modified_at: "2026-08-27"
+version: "0.2"
 status: "working-paper"
 license: "CC BY-SA 4.0"
 language: "en"
@@ -40,6 +40,7 @@ tags:
   - mandate
   - human-attention
   - exploration
+  - operational-stance
 ---
 
 # Measured Risk
@@ -480,6 +481,49 @@ A less reversible experiment may sometimes be better when its Exposure is lower,
 
 A highly reversible experiment may still be poor when it exposes many people, creates misleading public signals, or consumes scarce attention without learning anything.
 
+### 12.1 Relationship to Operational Stance
+
+Measured Risk and [`Operational Stance`](operational_stance.md) answer different questions and must not be collapsed.
+
+```text
+Measured Risk
+  What value or learning is sought?
+  What uncertainty, Exposure, recovery structure, OptionLoss,
+  responsibility, Mandate and budgets govern the Act?
+
+Operational Stance
+  Given that situated envelope, how should the agent now
+  search, verify, deliberate, select procedures and commit?
+```
+
+Measured Risk is therefore an important **input** to situated mode resolution, not a Stance itself. A change in risk conditions may legitimately trigger a different Stance; conversely, Stance-driven search may reveal new evidence that changes the Measured Risk assessment.
+
+The relationship is recursive:
+
+```text
+Measured Risk / situation
+        ↓
+Operational Stance
+        ↓
+search / verify / deliberate / act
+        ↓
+Reality
+        ↓
+new evidence / Exposure / OptionLoss
+        ↓
+Measured Risk update
+        ↓
+possible Stance re-resolution
+```
+
+Two invariants follow:
+
+> **Operational Stance must not become a second risk model.**
+
+> **A more opportunity-seeking or decisive Stance never creates authority or enlarges the accepted risk envelope.**
+
+The experimental `mode_projection` representation is not yet a stable Measured Risk schema dependency; promotion remains frozen until the Agent John A/B Reality Test.
+
 ---
 
 ## 13. Relationship to Optimistic Mainline Governance
@@ -558,6 +602,7 @@ Damage Control
 Human Attention Budgets
 Reality Tests
 Reactive Corpus assimilation
+Operational Stance
 ```
 
 ---
@@ -578,6 +623,7 @@ recovery assumed without verification
 Damage Control used to perpetuate emergency authority
 unknown risk silently classified as low risk
 human attention treated as infinite
+Operational Stance used to rewrite risk estimates or widen an authorized envelope
 ```
 
 ---
@@ -607,3 +653,4 @@ Compact doctrine:
 - How should aggregate risk be reconciled when individually negligible micro-effects accumulate?
 - Can observed residue update future routing/risk appetite without allowing the system to silently rewrite the Principal's values?
 - How should risk models adapt under damage-control mode while ensuring exceptional authority expires?
+- Which Measured Risk changes should trigger Stance re-resolution, and which should remain below that threshold?
