@@ -101,6 +101,34 @@ A distributed training or scoring architecture in which raw behavioral data rema
 **Cogentia Commons**
 The collaborative extension of the individual Cogentia framework: a platform that organizes the collective reasoning trace of epistemic communities through Thesis Kernels, Cogentia Graphs, and multi-agent critique loops. See Robert (2026b).
 
+### 3.1 Boundary with Operational Stance
+
+A Cogentigram is deliberately **structural**, not a container for every momentary variation in behavior.
+
+[`Operational Stance`](operational_stance.md) names the complementary situated layer:
+
+```text
+Cogentigram
+  relatively persistent structural dispositions
+  measured across time
+
+Operational Stance
+  temporary governed policy for approaching a particular situation
+  resolved from context under Mandate, Budgets and Measured Risk
+```
+
+A persistent Cogentigram axis may influence which Stance is likely or appropriate, but the current Stance is **not itself a Cogentigram axis merely because it affects behavior**.
+
+For example, stable cognitive flexibility or risk tolerance may influence situated mode resolution without implying that the entity is always exploratory, cautious, skeptical, or decisive.
+
+Therefore:
+
+> **Disposition influences Stance; it is not Stance.**
+
+This boundary protects the Cogentigram against accidental conversion from a persistent structural map into episodic runtime state. Conversely, Operational Stance must not rewrite the Cogentigram merely to rationalize a temporary mode.
+
+The experimental machine-facing representation `mode_projection` remains outside the Cogentigram schema pending the Agent John A/B Reality Test.
+
 ---
 
 ## 4. Methodological Framework
@@ -197,6 +225,8 @@ Trend detection relies on:
 * Drift detection algorithms
 
 This allows monitoring of structural stability without presuming deterministic identity.
+
+`Dynamic` here means **revisable longitudinal structure**, not instantaneous runtime state. Repeated Operational Stances may eventually provide observations relevant to structural inference, but no individual Stance transition should be assimilated automatically into the Cogentigram.
 
 ---
 
@@ -304,6 +334,7 @@ Compliance must be jurisdiction-specific and continuously updated.
 * Model bias remains a structural risk.
 * Differential privacy introduces utility–privacy trade-offs.
 * Longitudinal inference risks reification of dynamic traits.
+* Episodic Operational Stance risks must not be reified as persistent Cogentigram structure without longitudinal evidence.
 * Institutional capture remains possible without robust governance safeguards.
 
 Cogentia is a modeling framework, not a metaphysical claim of identity essence.
@@ -317,6 +348,8 @@ AI systems already construct persistent structural representations of individual
 The choice is not whether modeling occurs. The choice is whether modeling remains opaque and extractive or becomes structured, measurable, privacy-preserving, and governable.
 
 Cogentia and Cogentigrams provide a formal vocabulary and methodological scaffold for the latter.
+
+Operational Stance complements this framework at a different timescale: the Cogentigram describes what relatively persists; Stance governs how a situation is approached now. Keeping those layers distinct allows adaptation without silently turning transient state into identity.
 
 At the collective level, Cogentia Commons (Robert, 2026b) extends this scaffold into collaborative epistemic settings — providing the cognitive infrastructure through which democratic communities can reason rigorously about the AI systems that are simultaneously modeling them. This is the core argument of the DHITL framework (Robert, 2026c): cognitive infrastructure is not ancillary to AI governance. It is the layer without which governance remains performative.
 
