@@ -1,7 +1,7 @@
 ---
 title: Agent Configuration Layer
 subtitle: From AGENTS.md to governed corpus projections
-version: '0.2'
+version: '0.3'
 status: working-paper — method note
 date: '2026-06-13'
 author: Jean Hugues Noël Robert
@@ -20,10 +20,12 @@ tags:
   - anti-capture
   - blocked-tools
   - tool-failure
+  - operational-stance
 related_research:
   - cogentia/AGENTS.md
   - cogentia/research/pipeline.md
   - cogentia/research/conversation_to_corpus_pipeline.md
+  - cogentia/research/operational_stance.md
   - cogentia/COGENTIA.md
   - barons-Mariani/research/traceabilite_des_actes.md
   - barons-Mariani/research/second_method.md
@@ -67,7 +69,7 @@ update_policy: UP-DEFAULT-REVIEWED
 
 ## From AGENTS.md to governed corpus projections
 
-**Version 0.2 — 2026-06-13**  
+**Version 0.3 — 2026-08-27**  
 **Repository:** `JeanHuguesRobert/cogentia`  
 **Path:** `research/agent_configuration_layer.md`
 
@@ -220,6 +222,48 @@ source corpus
 ```
 
 This matters because an agent does not act from the whole corpus directly. It acts from a **bounded operational projection** of the corpus.
+
+### 4.1 Operational Stance inside situated configuration
+
+[`Operational Stance`](operational_stance.md) makes one part of the situated projection explicit without turning it into new authority.
+
+The relevant layering is:
+
+```text
+Corpus / Values / Cogentigram
+        +
+Objective / Role / Situation
+        +
+Mandate / Budgets / Autonomy
+        +
+Measured Risk / Trust / Task phase
+        ↓
+Operational Stance
+        ↓
+situated agent configuration
+        ↓
+agent / action
+        ↓
+Reality / trace / possible re-resolution
+```
+
+The distinction is essential:
+
+```text
+Cogentigram
+  relatively persistent structural dispositions
+
+Operational Stance
+  temporary governed policy for approaching the current situation
+
+agent configuration
+  bounded operational projection carrying the instructions and constraints
+  actually needed by the agent in that context
+```
+
+Operational Stance may affect search allocation, verification intensity, deliberation, Skill salience, and commitment thresholds **inside** the applicable configuration. It cannot widen permissions, budgets, autonomy, rights, or Mandate.
+
+The experimental representation `mode_projection` is not yet a stable requirement of agent configuration files. The source doctrine freezes schema/runtime promotion until the Agent John A/B Reality Test. Until then, configurations may express the same situated policy directly without a canonical Stance field.
 
 The layer prevents two symmetrical failures:
 
@@ -525,6 +569,8 @@ agent third
 human mandate above stabilization
 trace after every meaningful action
 ```
+
+Operational Stance fits inside this order as a **situated policy projection**, never as a new source of authority.
 
 This is the practical rule:
 
