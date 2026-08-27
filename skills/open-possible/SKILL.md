@@ -1,7 +1,7 @@
 ---
 schema: cogentia.agent_skill/v1
 id: cogentia.open-possible
-version: 2
+version: 3
 status: experimental
 name: open-possible
 description: >
@@ -40,6 +40,7 @@ sources:
   - research/measured_risk.md
   - research/optimistic_mainline_governance.md
   - research/agent_configuration_layer.md
+  - research/operational_stance.md
 document_role: "operational"
 document_kind: "documentation"
 visibility: "public"
@@ -60,7 +61,7 @@ This skill does not require novelty and does not reward speculation. Its functio
 
 > **Do not let absence from the current map silently become impossibility.**
 
-The associated source doctrines are [The Booster Principle](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/booster_principle.md) and [`research/measured_risk.md`](../../research/measured_risk.md).
+The associated source doctrines are [The Booster Principle](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/booster_principle.md), [`research/measured_risk.md`](../../research/measured_risk.md), and [`research/operational_stance.md`](../../research/operational_stance.md).
 
 Canonical compression:
 
@@ -109,6 +110,24 @@ unrepresented       != impossible
 unfamiliar          != impossible
 unavailable_now     != impossible
 ```
+
+## Relationship to Operational Stance
+
+Operational Stance and this Skill are different objects:
+
+```text
+Operational Stance
+  temporary governed policy for approaching the current situation
+
+open-possible Skill
+  reusable procedure: FRAME → CHALLENGE → PRESERVE → OPEN → BOOST → TEST
+```
+
+An exploratory or opportunity-seeking Operational Stance may increase the **eligibility or salience** of `cogentia.open-possible`. That does not make the Stance a Skill, and it does not require the Skill to be invoked whenever an exploratory Stance is present.
+
+Conversely, invoking this Skill does not create or widen a Stance, Mandate, Budget, or authority. The procedure remains bounded by its declared governance and by Measured Risk.
+
+The current Operational Stance source deliberately freezes stable runtime/schema promotion until the Agent John A/B Reality Test. Accordingly, this Skill **does not consume or require `mode_projection` as a stable input**. A future experimental caller may use situated mode information as a routing hint, but the Skill remains independently invocable from its explicit triggers.
 
 ## Procedure
 
