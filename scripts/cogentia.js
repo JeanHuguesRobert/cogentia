@@ -27,6 +27,8 @@ import { generateOperiumEmbeddingsReport } from "./lib/operium-embeddings.js";
 import { aiRouterHealth, createAiRouterClient } from "./lib/ai-router-client.js";
 import { retrievalSupabaseConfigured, retrievalSupabaseStatus } from "./lib/retrieval-supabase.js";
 import { emitStaticProjection, publishRegistry, guideResolve, runNavigationBenchmark } from "./lib/navigation.js";
+import { orientCorpus, runOrientationBenchmark, DEFAULT_ORIENT_POLICY } from "./lib/corpus-orient.js";
+import { ORIENT_REALITY_FIXTURES } from "./lib/corpus-orient-fixtures.js";
 import { runWeeklyConsolidation } from "./lib/consolidation.js";
 import { listAgentSkills, getAgentSkill } from "./lib/cogentia-agent-skills.js";
 import { registerModule, invokeCapability } from "./lib/v3-modules.js";
@@ -214,9 +216,11 @@ const PUBLIC_DAEMON_GET_ROUTES = new Set([
   "/api/context/health",
   "/api/context/guide-resolve",
   "/api/context/locate",
+  "/api/context/orient",
   "/api/ops/emit-static",
   "/api/ops/publish-registry",
   "/api/ops/nav-benchmark",
+  "/api/ops/orient-benchmark",
   "/api/context/search",
   "/api/context/pack",
   "/api/context/pack-batch",
@@ -407,6 +411,10 @@ async function main() {
       return cmdNavBenchmark();
     case "locate":
       return cmdLocate();
+    case "orient":
+      return cmdOrient();
+    case "orient-benchmark":
+      return cmdOrientBenchmark();
     case "scheduler":
       return cmdScheduler(loadContext(), argv);
     default:
@@ -612,7 +620,7 @@ Semantic search (continuation-based):
                            Flags: --query <text> --provider <name> --model <name>
                            --dimensions <n> --source <label>
 
-Navigation (v3 module seam, #80/#108):
+Navigation (v3 module seam, #80/#108 / #122):
   locate <subject>          Resolve a subject to concrete corpus locations by
                              composing guide routing, the concept registry and
                              full-text search. Flags: --intent <label>
@@ -622,6 +630,14 @@ Navigation (v3 module seam, #80/#108):
                              First capability registered through the v3
                              module/capability seam (scripts/lib/v3-modules.js);
                              a thin v2 CLI wrapper around invokeCapability().
+  orient <query>            Conceptual orientation packet (corpus.orient, #122):
+                             seed concepts, explicit graph route, sources to
+                             read, implementation/checkpoint evidence, and an
+                             explicit terminal state. Not a document lookup.
+                             Flags: --view public|private
+                             --max-seeds <n> --max-hops <n> --max-nodes <n>
+  orient-benchmark          Virgin-agent Reality Tests for corpus.orient.
+                             JSON is always the useful output (--json).
 
 Context Gateway:
   daemon                   Start the HTTP daemon. Defaults to 127.0.0.1 and public view.
@@ -999,6 +1015,184 @@ function cmdLocate() {
     { ctx, subject, intent, view: view ? normalizeView(view) : null },
     { auth: CLI_TRUSTED_AUTH }
   ).then(result => output(result, formatCorpusLocate(result)));
+}
+
+function parseOrientBound(flag, fallback) {
+  const raw = valueFlag(flag);
+  if (raw == null || raw === "") return fallback;
+  const n = Number.parseInt(raw, 10);
+  return Number.isInteger(n) && n >= 0 ? n : fallback;
+}
+
+function flattenVisibleConcepts(ctx, view) {
+  return loadVisibleConcepts(ctx, view).flatMap((r) => (r.ok ? r.concepts : []));
+}
+
+function inventoryDocsForOrient(ctx, view) {
+  const inventory = buildInventory(ctx);
+  return visibleDocs(inventory, view).map((d) => ({
+    repo: d.repo,
+    rel: d.rel,
+    path: d.rel,
+    title: d.title,
+    description: d.description || "",
+    document_role: d.document_role || d.role,
+    github_url: d.github_url || d.url,
+    visibility: d.visibility,
+  }));
+}
+
+/**
+ * corpus.orient -- P0 conceptual orientation (#122).
+ *
+ * Reuses loadVisibleConcepts / visibleDocs / indexSearch / guideResolve
+ * (via orientCorpus) rather than a parallel navigation stack.
+ */
+async function runCorpusOrient(ctx, { query, view, max_seeds, max_hops, max_nodes } = {}) {
+  const q = String(query || "").trim();
+  if (!q) return { ok: false, error: "missing_query", schema: "cogentia.orientation.v1" };
+  const effectiveView = view || PUBLIC_VIEW;
+  const policy = {
+    ...DEFAULT_ORIENT_POLICY,
+    max_seeds: max_seeds ?? DEFAULT_ORIENT_POLICY.max_seeds,
+    max_hops: max_hops ?? DEFAULT_ORIENT_POLICY.max_hops,
+    max_nodes: max_nodes ?? DEFAULT_ORIENT_POLICY.max_nodes,
+  };
+  const concepts = flattenVisibleConcepts(ctx, effectiveView);
+  const documents = inventoryDocsForOrient(ctx, effectiveView);
+  let residualHits = [];
+  try {
+    const search = await indexSearch(ctx, q, { repo: "all", limit: policy.residual_limit, view: effectiveView });
+    if (search.ok) {
+      residualHits = (search.results || []).map((r) => ({
+        repo: r.repo,
+        rel: r.path,
+        title: r.path,
+        provenance: "semantic_candidate",
+      }));
+    }
+  } catch {
+    residualHits = [];
+  }
+  return orientCorpus({
+    query: q,
+    concepts,
+    documents,
+    residualHits,
+    policy,
+    view: effectiveView,
+  });
+}
+
+function formatCorpusOrient(result) {
+  if (!result.ok) return `\ncorpus.orient failed: ${result.error}`;
+  const lines = [
+    `\ncorpus.orient("${result.query}") view=${result.view} stop=${result.sufficiency?.status}`,
+    `  ${result.sufficiency?.reason || ""}`,
+    "",
+  ];
+  if (result.resolved_concepts?.length) {
+    lines.push("Resolved concepts:");
+    for (const c of result.resolved_concepts) {
+      lines.push(`  - ${c.name} (${c.repo}) [${c.provenance}]`);
+    }
+  }
+  if (result.conceptual_route?.length) {
+    lines.push("Conceptual route:");
+    for (const step of result.conceptual_route) {
+      const via = step.via ? ` ← ${step.via}` : "";
+      lines.push(`  hop ${step.hop}: ${step.concept}${via}`);
+    }
+  }
+  if (result.read_first?.length) {
+    lines.push("Read first:");
+    for (const d of result.read_first) lines.push(`  - ${d.repo}/${d.path}`);
+  }
+  if (result.then_read?.length) {
+    lines.push("Then read:");
+    for (const d of result.then_read) lines.push(`  - ${d.repo}/${d.path}`);
+  }
+  if (result.implementation_evidence?.length) {
+    lines.push("Implementation evidence:");
+    for (const d of result.implementation_evidence) lines.push(`  - ${d.repo}/${d.path}`);
+  }
+  if (result.open_questions?.length) {
+    lines.push("Open questions:");
+    for (const q of result.open_questions) lines.push(`  - ${q}`);
+  }
+  return lines.join("\n");
+}
+
+registerModule({
+  id: "corpus.orient",
+  kind: "capability_provider",
+  provides: { capabilities: ["corpus.orient"] },
+  governance: { requires: [], trace_minimum: "none" },
+  run: ({ ctx, query, view, max_seeds, max_hops, max_nodes }) =>
+    runCorpusOrient(ctx, { query, view, max_seeds, max_hops, max_nodes }),
+});
+
+function cmdOrient() {
+  const view = valueFlag("--view") || null;
+  const max_seeds = parseOrientBound("--max-seeds", null);
+  const max_hops = parseOrientBound("--max-hops", null);
+  const max_nodes = parseOrientBound("--max-nodes", null);
+  const query = argv.join(" ").trim();
+  if (!query) {
+    throw new Error(
+      'Usage: node scripts/cogentia.js orient "<query>" [--view public|private] [--max-seeds n] [--max-hops n] [--max-nodes n]'
+    );
+  }
+  const ctx = loadContext();
+  return invokeCapability(
+    "corpus.orient",
+    {
+      ctx,
+      query,
+      view: view ? normalizeView(view) : null,
+      max_seeds,
+      max_hops,
+      max_nodes,
+    },
+    { auth: CLI_TRUSTED_AUTH }
+  ).then((result) => output(result, formatCorpusOrient(result)));
+}
+
+function cmdOrientBenchmark() {
+  const view = valueFlag("--view") || PUBLIC_VIEW;
+  const ctx = loadContext();
+  return runOrientationBenchmark(
+    (question, policy) =>
+      invokeCapability(
+        "corpus.orient",
+        {
+          ctx,
+          query: question,
+          view: normalizeView(view),
+          max_seeds: policy.max_seeds,
+          max_hops: policy.max_hops,
+          max_nodes: policy.max_nodes,
+        },
+        { auth: CLI_TRUSTED_AUTH }
+      ),
+    ORIENT_REALITY_FIXTURES,
+    { includePackets: Boolean(JSON_MODE) }
+  ).then((result) => {
+    const lines = [
+      `\ncorpus.orient Reality Tests: ${result.total} questions, HumanBootstrapHints=${result.human_bootstrap_hints}`,
+      result.note,
+      "",
+    ];
+    for (const row of result.results) {
+      lines.push(
+        `${row.id}: stop=${row.stop_state} must=${row.must_reach_recovered} hints=${row.human_bootstrap_hints}`
+      );
+      for (const miss of row.missed_must || []) {
+        lines.push(`  missed must_reach ${miss.id} (${miss.expectation_basis?.type || "?"})`);
+      }
+    }
+    return output(result, lines.join("\n"));
+  });
 }
 
 /**
@@ -3119,6 +3313,28 @@ async function handleDaemonRequest(req, res) {
     const result = await invokeCapability("corpus.locate", { ctx: effectiveCtx, subject, intent, view: effectiveView }, { auth });
     return daemonJson(res, 200, result);
   }
+  if (req.method === "GET" && url.pathname === "/api/context/orient") {
+    const query = url.searchParams.get("q") || url.searchParams.get("query") || "";
+    const effectiveCtx = ctx || loadContext();
+    const effectiveView = resolveEffectiveView(view, url.searchParams.get("view"));
+    const auth = daemonResolveAuth(req, view);
+    const max_seeds = Number.parseInt(url.searchParams.get("max_seeds") || "", 10);
+    const max_hops = Number.parseInt(url.searchParams.get("max_hops") || "", 10);
+    const max_nodes = Number.parseInt(url.searchParams.get("max_nodes") || "", 10);
+    const result = await invokeCapability(
+      "corpus.orient",
+      {
+        ctx: effectiveCtx,
+        query,
+        view: effectiveView,
+        max_seeds: Number.isInteger(max_seeds) ? max_seeds : null,
+        max_hops: Number.isInteger(max_hops) ? max_hops : null,
+        max_nodes: Number.isInteger(max_nodes) ? max_nodes : null,
+      },
+      { auth }
+    );
+    return daemonJson(res, result.ok === false ? 400 : 200, result);
+  }
   if (req.method === "GET" && url.pathname === "/api/ops/emit-static") {
     const effectiveCtx = ctx || loadContext();
     const proj = emitStaticProjection(effectiveCtx);
@@ -3131,6 +3347,28 @@ async function handleDaemonRequest(req, res) {
   }
   if (req.method === "GET" && url.pathname === "/api/ops/nav-benchmark") {
     const bench = runNavigationBenchmark();
+    return daemonJson(res, 200, { ok: true, benchmark: bench });
+  }
+  if (req.method === "GET" && url.pathname === "/api/ops/orient-benchmark") {
+    const effectiveCtx = ctx || loadContext();
+    const effectiveView = resolveEffectiveView(view, url.searchParams.get("view"));
+    const auth = daemonResolveAuth(req, view);
+    const bench = await runOrientationBenchmark(
+      (question, policy) =>
+        invokeCapability(
+          "corpus.orient",
+          {
+            ctx: effectiveCtx,
+            query: question,
+            view: effectiveView,
+            max_seeds: policy.max_seeds,
+            max_hops: policy.max_hops,
+            max_nodes: policy.max_nodes,
+          },
+          { auth }
+        ),
+      ORIENT_REALITY_FIXTURES
+    );
     return daemonJson(res, 200, { ok: true, benchmark: bench });
   }
   if (req.method === "POST" && url.pathname === "/api/ops/continuations/resolve") {

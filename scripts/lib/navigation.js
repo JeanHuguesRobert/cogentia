@@ -47,6 +47,13 @@ export const SEED_CONCEPT_ALIASES = [
     canonical_repo: "cogentia",
     canonical_rel: "research/corpus_navigation_audit.md",
     canonical_url: "https://github.com/JeanHuguesRobert/cogentia/blob/main/research/corpus_navigation_audit.md"
+  },
+  {
+    name: "Conceptual Gravity",
+    aliases: ["conceptual gravity", "self-orienting corpus", "self-orienting reactive corpus", "corpus.orient"],
+    canonical_repo: "cogentia",
+    canonical_rel: "research/conceptual_gravity.md",
+    canonical_url: "https://github.com/JeanHuguesRobert/cogentia/blob/main/research/conceptual_gravity.md"
   }
 ];
 

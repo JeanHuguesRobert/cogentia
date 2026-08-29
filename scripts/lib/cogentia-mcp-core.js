@@ -418,6 +418,28 @@ export const TOOLS = [
     },
   },
   {
+    name: "cogentia_orient",
+    description:
+      "Given a cognitive need, return an explainable conceptual route and evidence plan from existing Corpus structure (v3 module corpus.orient, #122). Distinct from locate/search: concepts → relations → sources, with a deterministic terminal state. Public view never leaks private material.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        query: { type: "string", minLength: 1, description: "Cognitive need / question to orient" },
+        max_seeds: { type: "integer", minimum: 1, description: "Live traversal cap (experiment parameter)" },
+        max_hops: { type: "integer", minimum: 0, description: "Live traversal cap (experiment parameter)" },
+        max_nodes: { type: "integer", minimum: 1, description: "Live traversal cap (experiment parameter)" },
+      },
+      required: ["query"],
+      additionalProperties: false,
+    },
+  },
+  {
+    name: "cogentia_orient_benchmark",
+    description:
+      "Run the virgin-agent corpus.orient Reality Tests (#122). Returns inspectable navigation debt, not a single scalar score.",
+    inputSchema: { type: "object", properties: {}, additionalProperties: false },
+  },
+  {
     name: "cogentia_concepts_list",
     description: "List the typed concept registry (research/concepts.md) for one repo or all repos. Read-only, view-filtered (v3 module concepts.list, #80/#108).",
     inputSchema: {
@@ -1341,6 +1363,16 @@ export function createMcpCore(env = process.env) {
       case "cogentia_locate":
         requireString(args.subject, "subject");
         return daemonGet("/api/context/locate", { subject: args.subject, intent: args.intent });
+      case "cogentia_orient":
+        requireString(args.query, "query");
+        return daemonGet("/api/context/orient", {
+          q: args.query,
+          max_seeds: args.max_seeds,
+          max_hops: args.max_hops,
+          max_nodes: args.max_nodes,
+        });
+      case "cogentia_orient_benchmark":
+        return daemonGet("/api/ops/orient-benchmark", {});
       case "cogentia_concepts_list":
         return daemonGet("/api/cli/concepts/list", { repo: args.repo || "all" });
       case "cogentia_concepts_check":

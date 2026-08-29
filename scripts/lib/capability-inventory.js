@@ -60,6 +60,8 @@ export const CLI_COMMANDS = [
   { verb: "continuation emit", mcp_tool: "cogentia_continuation_emit", daemon: "/api/ops/continuations/emit", risk: "write" },
   { verb: "continuation resolve", mcp_tool: "cogentia_continuation_resolve", daemon: "/api/ops/continuations/resolve", risk: "write" },
   { verb: "john run", mcp_tool: "cogentia_john_run", risk: "read" },
+  { verb: "orient", mcp_tool: "cogentia_orient", daemon: "/api/context/orient", risk: "read" },
+  { verb: "orient-benchmark", mcp_tool: "cogentia_orient_benchmark", daemon: "/api/ops/orient-benchmark", risk: "read" },
 ];
 
 export const LEGACY_SYMMETRY_CAPABILITIES = [
