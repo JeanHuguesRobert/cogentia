@@ -256,6 +256,15 @@ The foundational system allowing AI agents to pause execution, seek human judgme
 
 **Short definition:** Explicit Artifact (especially in COP/HITL profile) representing a decision actively taken or validated by a living human. It functions as the structural anchor for imputability, skin in the game, and defense against harmful capture. Without it, log traceability survives but accountability dissolves.
 
+**Operational form — Engagement Gatekeeper:** The Gatekeeper is the boundary at
+which an agent proposal becomes an externally engaging Act only after an
+identified human has actively approved it. It preserves the request, proposed
+payload, mandate and evidence; records the human decision and its scope; then
+records the external receipt or failure. It does not replace human judgment or
+silently authorize an agent. For example, a private inter-agent mail request
+may become a Gmail draft, but public submission remains blocked until the
+Principal's explicit approval is recorded.
+
 **Parent concepts:**
 - Machine à explorer
 - COP/HITL Profile
@@ -264,9 +273,13 @@ The foundational system allowing AI agents to pause execution, seek human judgme
 - Non-deterministic Cognitive Step
 - Rule 0 (seconde méthode)
 - DHITL Layer 5
+- Engagement levels (E3/E4)
 
 **Reference documents:**
 - `inseme/packages/cop-core/Architecture.md` (COP/HITL profile, updated Phase 2)
+- `inseme/apps/platform/mcp/cop/AGENTS.md` (Act, receipt and imputability chain)
+- `operium/docs/fractanet-control-center.md` (engagement levels)
+- `trace/docs/mail-artifacts.md` (private mail request and receipt evidence)
 - `barons-Mariani/research/second_method.md`
 
 ---
