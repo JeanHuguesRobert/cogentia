@@ -265,6 +265,47 @@ propagation:
       - "research/operational_stance.md §21 A/B Reality Test"
 ```
 
+### PR-2026-005 — DNS provider portability into operational and NASA views
+
+```yaml
+propagation:
+  id: PR-2026-005
+  status: propagation_in_progress
+  discovered_at: 2026-08-29
+  source_refs:
+    - "operium/docs/dns-provider-portability.md"
+    - "operium/lib/node-agent/nasa-portal.js"
+    - "research/nasa_situated_views_and_interactive_surfaces.md"
+  source_summary: >-
+    DNS provider choice is a chosen, observable and reversible operational
+    dependency. Its public status belongs in an observer-relative NASA view
+    only as a dated, sanitized snapshot; provider credentials and record-write
+    authority remain outside the view.
+  completed_targets:
+    - "operium/docs/dns-provider-portability.md — public snapshot contract"
+    - "operium/lib/node-agent/nasa-portal.js — fleet and status projections"
+    - "operium/apps/edge-portal/index.html — human projection"
+    - "research/nasa_situated_views_and_interactive_surfaces.md — bounded DNS subject"
+  expected_effects:
+    - "La Nasa shows DNS migration awareness without becoming a DNS control plane"
+    - "unavailable or invalid evidence remains explicit rather than inferred"
+    - "human and API surfaces expose the same secret-free DNS object"
+    - "provider migration and return remain governed by Operium evidence"
+  deliberately_not_propagated:
+    - "Cloudflare or Gandi credentials, account identifiers and full zone records"
+    - "nameserver or record-write actions through La Nasa"
+  priority: high
+  confidence: high
+  propagation_level: 2
+  blockers:
+    - "A live operator-generated public DNS snapshot has not yet been installed on a NASA observer"
+  next_action: "Generate a sanitized snapshot from the read-only Gandi/Cloudflare export-diff evidence, deploy it to the selected observer, and perform a visual human check."
+  verification:
+    status: partial
+    evidence_refs:
+      - "operium/scripts/test-nasa-portal.js"
+```
+
 ## Operational discipline
 
 A propagation SHOULD close as `verified`, not merely `propagated`, when its expected effect is behaviorally material. Operational learning SHOULD carry an appropriate regression case; network-level learning SHOULD use cold-handler/substitution testing when feasible. A local gain that breaks a previously validated case creates new cognitive-regression debt.

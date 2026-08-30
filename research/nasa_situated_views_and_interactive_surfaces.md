@@ -48,6 +48,26 @@ HTML is one human-oriented NASA projection. The same underlying capability
 should remain available through ordinary machine-oriented surfaces, including
 API, CLI, MCP, and ACP, without creating a separate semantic world for agents.
 
+### 1.1 DNS configuration as a bounded awareness subject
+
+Authoritative DNS affects whether a remote service can be discovered, but a
+NASA view must not turn that relevance into a hidden provider control plane.
+A DNS subject in NASA is a dated, observer-local projection of an
+operator-prepared public snapshot. It identifies the domain, active and
+standby authoritative providers, migration state, edge mode, and DNSSEC state.
+
+The projection must distinguish `available`, `unavailable`, and `invalid`,
+carry `observed_at` and source reference, and leave a missing snapshot missing.
+It must not include credentials, provider account identifiers, full zone
+contents, origin addresses, browser profiles, or end-user identities. Its
+purpose is situational orientation: it supports a human or agent in deciding
+which evidence to inspect next; it does not authorize a nameserver or record
+change.
+
+This preserves the same observer-relative rule as the fleet: the view says
+what its observer has been given as public DNS evidence, not what the world
+must currently believe.
+
 ## 2. Remote Web Session
 
 **Remote Web Session** is the proposed name for the logical capability that
