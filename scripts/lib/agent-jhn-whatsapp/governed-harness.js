@@ -2,10 +2,19 @@
  * Provider-neutral governed step harness.
  * The reasoner freely proposes steps; this kernel only validates, authorizes,
  * executes, records, and enforces bounds.
+ *
+ * F1 (packet_required_events): kernel-discharges classified required events
+ * (orientation / living-evidence) before unrestricted nextStep. Not a COP
+ * Scheduler. Repeated identical capability+input → no_progress is a bounded
+ * test heuristic only (opt-in). Clarify yield is continuation-shaped and
+ * DOES NOT TEST CONTINUATION CLOSURE / Closed(p,h,E).
  */
+
+import { classifyNeed } from "../reasoning-loop.js";
 
 export const AGENT_STEP_PROTOCOL = "cogentia.agent_step/v1";
 export const STEP_RESULT_PROTOCOL = "cogentia.step_result/v1";
+export const REQUIRED_EVENT_POLICY = "packet_required_events";
 
 const RISKS = new Set(["read_only", "external_write"]);
 const KINDS = new Set(["tool", "skill", "mcp", "model"]);
@@ -24,6 +33,17 @@ export function createCapabilityRegistry(definitions = []) {
   });
 }
 
+export function requiredEventsForTurn(input = {}, options = {}) {
+  if (options.requiredEvents === false) return [];
+  if (Array.isArray(options.requiredEvents)) return [...options.requiredEvents];
+  const text = String(input.text || input.prompt || input.question || "");
+  const flags = classifyNeed(text);
+  const required = [];
+  if (flags.corpusLike) required.push("orientation.required");
+  if (flags.livingLike) required.push("living_evidence.required");
+  return required;
+}
+
 export function createGovernedHarness(options = {}) {
   if (!options.registry || typeof options.registry.get !== "function") throw new Error("A capability registry is required");
   if (!options.reasoner || typeof options.reasoner.nextStep !== "function") throw new Error("A reasoner with nextStep() is required");
@@ -32,6 +52,7 @@ export function createGovernedHarness(options = {}) {
   const reviewer = typeof options.reviewer === "function" ? options.reviewer : async ({ answer }) => ({ accepted: true, answer });
   const clock = typeof options.clock === "function" ? options.clock : Date.now;
   const idFactory = typeof options.idFactory === "function" ? options.idFactory : defaultIdFactory;
+  const noProgressHeuristic = options.noProgressHeuristic === true;
 
   return {
     async run(input = {}, authorization = {}, limits = {}) {
@@ -45,10 +66,27 @@ export function createGovernedHarness(options = {}) {
       const allowed = new Set(normalizeNames(authorization.allowedCapabilities));
       const confirmed = new Set(normalizeNames(authorization.confirmedCapabilities));
       const state = { input, observations: [], steps: [], sequence: 0, capabilityCalls: 0, costUnits: 0 };
+      const pendingRequired = requiredEventsForTurn(input, options);
+      const capabilityFingerprints = [];
 
       while (state.sequence < bounds.maxSteps) {
         if (clock() - startedAt >= bounds.maxElapsedMs) return stopped("time_budget", state, startedAt, clock);
         state.sequence += 1;
+
+        if (pendingRequired.length) {
+          const kind = pendingRequired.shift();
+          const step = systemStep(state.sequence, idFactory, "reason");
+          step.note = kind;
+          const observation = {
+            type: "required_event_discharged",
+            kind,
+            policy: REQUIRED_EVENT_POLICY,
+          };
+          appendStep(state, step, stepResult(step, "completed", { observation }));
+          state.observations.push(observation);
+          continue;
+        }
+
         let step;
         try {
           step = normalizeStep(await reasoner.nextStep(snapshot(state, registry, bounds)), state.sequence, idFactory);
@@ -80,7 +118,10 @@ export function createGovernedHarness(options = {}) {
 
         if (step.kind === "clarify") {
           appendStep(state, step, stepResult(step, "requires_input", { observation: { type: "clarification", question: step.question } }));
-          return terminal(false, "clarification_required", "", state, startedAt, clock, { question: step.question });
+          return terminal(false, "clarification_required", "", state, startedAt, clock, {
+            question: step.question,
+            continuation: f1ContinuationShape(step.question),
+          });
         }
 
         if (step.kind === "stop") {
@@ -102,6 +143,20 @@ export function createGovernedHarness(options = {}) {
         state.capabilityCalls += 1;
         state.costUnits += capability.costUnits;
         const callStartedAt = clock();
+        if (noProgressHeuristic) {
+          const fingerprint = `${capability.name}:${JSON.stringify(step.input || {})}`;
+          const repeats = capabilityFingerprints.filter((item) => item === fingerprint).length;
+          capabilityFingerprints.push(fingerprint);
+          if (repeats >= 1) {
+            const observation = {
+              type: "no_progress_heuristic",
+              capability: capability.name,
+              note: "F1 test heuristic only. Legitimate repetition may occur when Reality changed, freshness expired, evidence was incomplete, retry policy authorizes another attempt, or causal context materially changed.",
+            };
+            appendStep(state, step, stepResult(step, "failed", { observation }));
+            return stopped("no_progress", state, startedAt, clock);
+          }
+        }
         try {
           const value = await capability.execute(step.input || {}, { turnInput: input, step, authorization });
           const observation = { type: "capability_result", capability: capability.name, ok: true, value };
@@ -213,3 +268,19 @@ function boundedInteger(value, fallback, minimum, maximum) {
   return Number.isInteger(number) ? Math.max(minimum, Math.min(number, maximum)) : fallback;
 }
 function defaultIdFactory(sequence) { return `step-${sequence}`; }
+
+/**
+ * F1 DOES NOT TEST CONTINUATION CLOSURE.
+ * This object is a continuation-shaped yield, not Closed(p,h,E),
+ * not durable, not materializable across process death.
+ */
+function f1ContinuationShape(question) {
+  return {
+    protocol: "cogentia.continuation.v2",
+    status: "active",
+    kind: "clarification",
+    question: String(question || "").slice(0, 2000),
+    f1_does_not_test_continuation_closure: true,
+    closed: false,
+  };
+}

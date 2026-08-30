@@ -7,7 +7,7 @@ date: "2026-08-29"
 last_modified_at: "2026-08-30"
 license: "CC BY-SA 4.0"
 language: "en"
-version: "0.4"
+version: "0.5"
 status: "working-note"
 document_role: "source"
 document_kind: "architectural-report"
@@ -500,3 +500,28 @@ run → yield → capture explicit state → materialize Closed(p,h,E)
 ```
 
 Use `packet-capsule.js` + the closure note as the starting substrate; do not invent a parallel closure dialect.
+
+---
+
+## I. F1 Reality Test (2026-08-30, ChatGPT delta v4)
+
+**Boundary (implemented):** `createGovernedHarness` kernel-discharges `requiredEventsForTurn()` (`orientation.required` / `living_evidence.required` from `classifyNeed`) **before** unrestricted `reasoner.nextStep`. Policy name in observations: `packet_required_events` (not canonized as `packet_switch`). Bounds, authorize, execute, receipts unchanged. Production Guide/WhatsApp paths not modified.
+
+**No-progress:** opt-in `noProgressHeuristic: true`. Second identical capability+input → `stopReason=no_progress`. Documented as an F1 heuristic only; legitimate repetition when Reality changed, freshness expired, evidence incomplete, retry authorized, or causal context changed.
+
+**Clarify:** returns continuation-shaped yield with `f1_does_not_test_continuation_closure: true` and `closed: false`. Not durable, not `Closed(p,h,E)`.
+
+**Tests run:**
+
+| Suite | Result |
+|-------|--------|
+| `test-agent-jhn-f1-required-events.js` | 6/6 pass |
+| `test-agent-jhn-governed-harness.js` | 10/10 pass |
+| `test-agent-jhn-guide-step-loop.js` | 3/3 pass |
+| `test-john.js` | pass |
+| `test-reasoning-loop.js` | pass (defect wording updated) |
+| `test-reasoning-loop-variants.js` | pass; pipeline 2/8 and greedy 1/8 still fail as controls |
+
+**Contradiction found:** none architectural. The Guide-step-loop assertion omitted an already-sent `surface: "agent-john"` field; assertion aligned to current capability payload (not a Guide rewrite).
+
+**Not in F1:** Cognitive Scheduler, frontier, Choice Points, `Closed(p,h,E)`, COP/Core changes, WhatsApp/Guide production paths.

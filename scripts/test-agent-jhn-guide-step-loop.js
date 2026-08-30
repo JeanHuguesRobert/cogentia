@@ -45,7 +45,7 @@ test("reasoner -> Guide -> observation -> answer completes a bounded loop", asyn
   assert.equal(result.stepCount, 2);
   assert.equal(result.capabilityCalls, 1);
   assert.equal(calls.length, 3);
-  assert.deepEqual(calls[1].body, { question: "Explain FractaVolta simply.", locale: "en", web_search: false });
+  assert.deepEqual(calls[1].body, { question: "Explain FractaVolta simply.", locale: "en", web_search: false, surface: "agent-john" });
   assert.equal(result.steps[0].result.observation.value, undefined);
 });
 

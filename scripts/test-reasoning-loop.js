@@ -36,7 +36,7 @@ async function checkAsync(name, fn) {
 check("current Guide/JHN loops are catalogued as not this kernel", () => {
   assert.equal(CURRENT_LOOPS.guide_turn.shape, "pipeline");
   assert.equal(CURRENT_LOOPS.governed_harness.scheduler, "reasoner.nextStep(state)");
-  assert.match(CURRENT_LOOPS.governed_harness.defect, /model is the event loop/);
+  assert.match(CURRENT_LOOPS.governed_harness.defect, /model chooses the next step kind/);
 });
 
 check("every event kind has a known phase", () => {
