@@ -3,18 +3,22 @@
  * The reasoner freely proposes steps; this kernel only validates, authorizes,
  * executes, records, and enforces bounds.
  *
- * F1 (packet_required_events): kernel-discharges classified required events
- * (orientation / living-evidence) before unrestricted nextStep. Not a COP
- * Scheduler. Repeated identical capability+input → no_progress is a bounded
- * test heuristic only (opt-in). Clarify yield is continuation-shaped and
- * DOES NOT TEST CONTINUATION CLOSURE / Closed(p,h,E).
+ * F1.1 (packet_required_events): kernel runs an admissible required-event
+ * handler and records its receipt before unrestricted nextStep. Required
+ * work does not consume maxSteps (reasoning-step budget). Missing blocking
+ * handler is fail/escalate, never silent discharge. Clarify yield is
+ * continuation-shaped and DOES NOT TEST CONTINUATION CLOSURE / Closed(p,h,E).
  */
 
-import { classifyNeed } from "../reasoning-loop.js";
+import {
+  DEFAULT_REQUIRED_EVENT_CAPABILITIES,
+  REQUIRED_EVENT_POLICY,
+  requiredEventsForTurn,
+} from "../required-events.js";
 
 export const AGENT_STEP_PROTOCOL = "cogentia.agent_step/v1";
 export const STEP_RESULT_PROTOCOL = "cogentia.step_result/v1";
-export const REQUIRED_EVENT_POLICY = "packet_required_events";
+export { REQUIRED_EVENT_POLICY, requiredEventsForTurn } from "../required-events.js";
 
 const RISKS = new Set(["read_only", "external_write"]);
 const KINDS = new Set(["tool", "skill", "mcp", "model"]);
@@ -33,17 +37,6 @@ export function createCapabilityRegistry(definitions = []) {
   });
 }
 
-export function requiredEventsForTurn(input = {}, options = {}) {
-  if (options.requiredEvents === false) return [];
-  if (Array.isArray(options.requiredEvents)) return [...options.requiredEvents];
-  const text = String(input.text || input.prompt || input.question || "");
-  const flags = classifyNeed(text);
-  const required = [];
-  if (flags.corpusLike) required.push("orientation.required");
-  if (flags.livingLike) required.push("living_evidence.required");
-  return required;
-}
-
 export function createGovernedHarness(options = {}) {
   if (!options.registry || typeof options.registry.get !== "function") throw new Error("A capability registry is required");
   if (!options.reasoner || typeof options.reasoner.nextStep !== "function") throw new Error("A reasoner with nextStep() is required");
@@ -53,6 +46,7 @@ export function createGovernedHarness(options = {}) {
   const clock = typeof options.clock === "function" ? options.clock : Date.now;
   const idFactory = typeof options.idFactory === "function" ? options.idFactory : defaultIdFactory;
   const noProgressHeuristic = options.noProgressHeuristic === true;
+  const requiredEventHandlers = options.requiredEventHandlers || {};
 
   return {
     async run(input = {}, authorization = {}, limits = {}) {
@@ -65,27 +59,67 @@ export function createGovernedHarness(options = {}) {
       };
       const allowed = new Set(normalizeNames(authorization.allowedCapabilities));
       const confirmed = new Set(normalizeNames(authorization.confirmedCapabilities));
-      const state = { input, observations: [], steps: [], sequence: 0, capabilityCalls: 0, costUnits: 0 };
+      const state = {
+        input,
+        observations: [],
+        steps: [],
+        sequence: 0,
+        requiredEventCount: 0,
+        capabilityCalls: 0,
+        costUnits: 0,
+      };
       const pendingRequired = requiredEventsForTurn(input, options);
       const capabilityFingerprints = [];
 
-      while (state.sequence < bounds.maxSteps) {
+      while (true) {
         if (clock() - startedAt >= bounds.maxElapsedMs) return stopped("time_budget", state, startedAt, clock);
-        state.sequence += 1;
 
         if (pendingRequired.length) {
           const kind = pendingRequired.shift();
-          const step = systemStep(state.sequence, idFactory, "reason");
-          step.note = kind;
-          const observation = {
-            type: "required_event_discharged",
-            kind,
-            policy: REQUIRED_EVENT_POLICY,
-          };
-          appendStep(state, step, stepResult(step, "completed", { observation }));
-          state.observations.push(observation);
+          const handler = resolveRequiredEventHandler(kind, requiredEventHandlers, registry);
+          if (!handler) {
+            const observation = { type: "required_event_handler_missing", kind, policy: REQUIRED_EVENT_POLICY };
+            const missStep = systemStep(`req-${state.requiredEventCount + 1}`, idFactory, "stop");
+            missStep.note = kind;
+            appendStep(state, missStep, stepResult(missStep, "failed", { observation }));
+            return stopped("required_event_handler_missing", state, startedAt, clock);
+          }
+          try {
+            const observation = await handler({
+              kind,
+              input,
+              authorization,
+              registry,
+            });
+            if (!observation || observation.ok === false) {
+              return stopped("required_event_failed", state, startedAt, clock);
+            }
+            state.requiredEventCount += 1;
+            const reqStep = systemStep(`req-${state.requiredEventCount}`, idFactory, "reason");
+            reqStep.note = kind;
+            const receipt = {
+              ...observation,
+              kind,
+              policy: REQUIRED_EVENT_POLICY,
+              discharged: true,
+            };
+            appendStep(state, reqStep, stepResult(reqStep, "completed", { observation: summarizeRequiredObservation(receipt) }));
+            state.observations.push(receipt);
+          } catch (error) {
+            const observation = {
+              type: "required_event_failed",
+              kind,
+              error: { name: safeName(error?.name) || "Error", code: safeName(error?.code) },
+            };
+            const failStep = systemStep(`req-${state.requiredEventCount + 1}`, idFactory, "stop");
+            appendStep(state, failStep, stepResult(failStep, "failed", { observation, error }));
+            return stopped("required_event_failed", state, startedAt, clock);
+          }
           continue;
         }
+
+        if (state.sequence >= bounds.maxSteps) return stopped("step_budget", state, startedAt, clock);
+        state.sequence += 1;
 
         let step;
         try {
@@ -235,8 +269,43 @@ function stopped(reason, state, startedAt, clock) { return terminal(false, safeN
 function terminal(ok, stopReason, answer, state, startedAt, clock, extra = {}) {
   return {
     ok, answer, stopReason, observations: state.observations, steps: state.steps,
-    stepCount: state.sequence, capabilityCalls: state.capabilityCalls, costUnits: state.costUnits,
+    stepCount: state.sequence, requiredEventCount: state.requiredEventCount || 0,
+    capabilityCalls: state.capabilityCalls, costUnits: state.costUnits,
     latencyMs: clock() - startedAt, ...extra,
+  };
+}
+
+function resolveRequiredEventHandler(kind, handlers, registry) {
+  if (typeof handlers[kind] === "function") return handlers[kind];
+  const capName = DEFAULT_REQUIRED_EVENT_CAPABILITIES[kind];
+  const capability = capName ? registry.get(capName) : null;
+  if (!capability) return null;
+  return async (ctx) => {
+    const allowed = new Set(normalizeNames(ctx.authorization?.allowedCapabilities));
+    const confirmed = new Set(normalizeNames(ctx.authorization?.confirmedCapabilities));
+    const denial = authorize(capability, capName, allowed, confirmed);
+    if (denial) {
+      const error = new Error(denial);
+      error.code = denial;
+      throw error;
+    }
+    const query = String(ctx.input?.text || ctx.input?.prompt || "");
+    const value = await capability.execute({ query, subject: query }, { turnInput: ctx.input });
+    return {
+      type: kind === "orientation.required" ? "orientation_result" : "required_event_result",
+      ok: true,
+      value,
+    };
+  };
+}
+
+function summarizeRequiredObservation(observation) {
+  return {
+    type: observation.type,
+    kind: observation.kind,
+    policy: observation.policy,
+    discharged: true,
+    ok: observation.ok !== false,
   };
 }
 function normalizeNames(values) { return Array.isArray(values) ? values.map(safeName).filter(Boolean) : []; }

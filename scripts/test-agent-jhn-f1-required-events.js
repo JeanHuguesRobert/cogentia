@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
- * F1 Reality Test: packet_required_events on the existing governed harness.
- * F1 DOES NOT TEST CONTINUATION CLOSURE / Closed(p,h,E).
+ * F1.1 Reality Test: required events have real handlers and receipts.
+ * F1.1 DOES NOT TEST CONTINUATION CLOSURE / Closed(p,h,E).
  */
 import assert from "node:assert/strict";
 import {
@@ -15,7 +15,7 @@ const tests = [];
 const test = (name, run) => tests.push({ name, run });
 const reasoner = (nextStep) => ({ nextStep });
 
-function registry() {
+function registry(extra = []) {
   return createCapabilityRegistry([
     {
       name: "corpus.search",
@@ -25,7 +25,25 @@ function registry() {
       costUnits: 1,
       execute: async ({ query }) => ({ excerpts: [`evidence:${query}`] }),
     },
+    ...extra,
   ]);
+}
+
+function stubOrientation(calls) {
+  return {
+    "orientation.required": async ({ input }) => {
+      calls.orientation += 1;
+      return {
+        type: "orientation_result",
+        ok: true,
+        value: { query: input.text, conceptual_route: ["Kudos", "Cognitive Packet"] },
+      };
+    },
+    "living_evidence.required": async () => {
+      calls.living += 1;
+      return { type: "living_evidence_result", ok: true, value: { note: "seam only; no web search" } };
+    },
+  };
 }
 
 test("classifier requires orientation for a corpus question and not for phatic thanks", () => {
@@ -36,10 +54,12 @@ test("classifier requires orientation for a corpus question and not for phatic t
   assert.deepEqual(requiredEventsForTurn({ text: "ok thanks" }), []);
 });
 
-test("greedy reasoner cannot answer before orientation.required on a corpus question", async () => {
+test("greedy reasoner cannot answer before the orientation handler has run and produced a receipt", async () => {
+  const calls = { orientation: 0, living: 0 };
   let nextStepCalls = 0;
   const harness = createGovernedHarness({
     registry: registry(),
+    requiredEventHandlers: stubOrientation(calls),
     reasoner: reasoner(async () => {
       nextStepCalls += 1;
       return { kind: "answer", answer: "skipped orientation" };
@@ -48,38 +68,79 @@ test("greedy reasoner cannot answer before orientation.required on a corpus ques
   const result = await harness.run(
     { text: "How do Kudos affect Cognitive Packet routing?" },
     {},
-    { maxSteps: 4 }
+    { maxSteps: 1 }
   );
-  assert.equal(result.ok, true);
-  assert.equal(result.steps[0].result.observation.type, "required_event_discharged");
-  assert.equal(result.steps[0].result.observation.kind, "orientation.required");
-  assert.equal(result.steps[0].result.observation.policy, REQUIRED_EVENT_POLICY);
-  assert.equal(result.steps[1].step.kind, "answer");
+  assert.equal(calls.orientation, 1);
   assert.equal(nextStepCalls, 1);
-  assert.ok(nextStepCalls === 1, "nextStep must not run until orientation is kernel-discharged");
+  assert.equal(result.ok, true);
+  assert.equal(result.requiredEventCount, 1);
+  assert.equal(result.stepCount, 1);
+  assert.equal(result.steps[0].result.observation.type, "orientation_result");
+  assert.equal(result.steps[0].result.observation.discharged, true);
+  assert.equal(result.steps[0].result.observation.policy, REQUIRED_EVENT_POLICY);
+  assert.equal(result.observations[0].type, "orientation_result");
+  assert.deepEqual(result.observations[0].value.conceptual_route, ["Kudos", "Cognitive Packet"]);
+  assert.equal(result.steps[1].step.kind, "answer");
 });
 
-test("leave-the-corpus questions discharge living_evidence before unrestricted nextStep", async () => {
+test("required orientation without a handler is not marked discharged", async () => {
+  let nextStepCalls = 0;
   const harness = createGovernedHarness({
     registry: registry(),
+    reasoner: reasoner(async () => {
+      nextStepCalls += 1;
+      return { kind: "answer", answer: "should not run" };
+    }),
+  });
+  const result = await harness.run({ text: "How do Kudos affect Cognitive Packet routing?" });
+  assert.equal(result.stopReason, "required_event_handler_missing");
+  assert.equal(result.ok, false);
+  assert.equal(nextStepCalls, 0);
+  assert.equal(result.requiredEventCount, 0);
+  assert.equal(result.steps[0].result.observation.type, "required_event_handler_missing");
+  assert.equal(result.steps[0].result.observation.discharged, undefined);
+});
+
+test("maxSteps counts reasoning steps only; required orientation does not steal the budget", async () => {
+  const calls = { orientation: 0, living: 0 };
+  const harness = createGovernedHarness({
+    registry: registry(),
+    requiredEventHandlers: stubOrientation(calls),
+    reasoner: reasoner(async () => ({ kind: "answer", answer: "after orientation" })),
+  });
+  const result = await harness.run(
+    { text: "How do Kudos affect Cognitive Packet routing?" },
+    {},
+    { maxSteps: 1 }
+  );
+  assert.equal(calls.orientation, 1);
+  assert.equal(result.ok, true);
+  assert.equal(result.answer, "after orientation");
+  assert.equal(result.stepCount, 1);
+  assert.equal(result.requiredEventCount, 1);
+});
+
+test("leave-the-corpus questions run living_evidence handler before nextStep", async () => {
+  const calls = { orientation: 0, living: 0 };
+  const harness = createGovernedHarness({
+    registry: registry(),
+    requiredEventHandlers: stubOrientation(calls),
     reasoner: reasoner(async () => ({ kind: "answer", answer: "later" })),
   });
   const result = await harness.run(
     { text: "When should a Cogentia Agent leave the Corpus and perform external research?" },
     {},
-    { maxSteps: 6 }
+    { maxSteps: 1 }
   );
-  const discharged = result.steps
-    .filter((row) => row.result.observation?.type === "required_event_discharged")
-    .map((row) => row.result.observation.kind);
-  assert.ok(discharged.includes("orientation.required"));
-  assert.ok(discharged.includes("living_evidence.required"));
+  assert.equal(calls.orientation, 1);
+  assert.equal(calls.living, 1);
+  assert.equal(result.requiredEventCount, 2);
   const firstAnswer = result.steps.findIndex((row) => row.step.kind === "answer");
-  const lastRequired = result.steps.map((row, i) => (discharged.includes(row.result.observation?.kind) ? i : -1)).filter((i) => i >= 0).pop();
-  assert.ok(firstAnswer > lastRequired);
+  assert.ok(firstAnswer > 0);
+  assert.equal(result.steps[0].result.observation.type, "orientation_result");
 });
 
-test("phatic utterance does not inject orientation (existing Guide-loop behaviour)", async () => {
+test("phatic utterance does not inject orientation", async () => {
   let nextStepCalls = 0;
   const harness = createGovernedHarness({
     registry: registry(),
@@ -92,6 +153,7 @@ test("phatic utterance does not inject orientation (existing Guide-loop behaviou
   assert.equal(result.ok, true);
   assert.equal(nextStepCalls, 1);
   assert.equal(result.stepCount, 1);
+  assert.equal(result.requiredEventCount, 0);
   assert.equal(result.steps[0].step.kind, "answer");
 });
 
@@ -107,7 +169,39 @@ test("clarify yield is continuation-shaped and does not claim Closed(p,h,E)", as
   assert.equal(result.continuation.closed, false);
 });
 
-test("no_progress heuristic is opt-in and does not claim final liveness doctrine", async () => {
+test("registered corpus.orient may execute orientation when authorized; registration is not authority", async () => {
+  let orientCalls = 0;
+  const harness = createGovernedHarness({
+    registry: registry([
+      {
+        name: "corpus.orient",
+        kind: "tool",
+        risk: "read_only",
+        resultVisibility: "reasoner",
+        costUnits: 1,
+        execute: async ({ query }) => {
+          orientCalls += 1;
+          return { schema: "cogentia.orientation.v1", query, conceptual_route: ["Kudos"] };
+        },
+      },
+    ]),
+    reasoner: reasoner(async () => ({ kind: "answer", answer: "done" })),
+  });
+  const denied = await harness.run({ text: "How do Kudos affect Cognitive Packet routing?" }, { allowedCapabilities: [] });
+  assert.equal(denied.stopReason, "required_event_failed");
+  assert.equal(orientCalls, 0);
+
+  const allowed = await harness.run(
+    { text: "How do Kudos affect Cognitive Packet routing?" },
+    { allowedCapabilities: ["corpus.orient"] },
+    { maxSteps: 1 }
+  );
+  assert.equal(orientCalls, 1);
+  assert.equal(allowed.ok, true);
+  assert.equal(allowed.observations[0].type, "orientation_result");
+});
+
+test("no_progress heuristic remains opt-in and is not final liveness doctrine", async () => {
   const harness = createGovernedHarness({
     registry: registry(),
     noProgressHeuristic: true,

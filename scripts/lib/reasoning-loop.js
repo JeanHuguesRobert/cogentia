@@ -14,6 +14,10 @@
  * This module does not import WhatsApp, Guide, or OpenAI.
  */
 
+import { classifyNeed } from "./required-events.js";
+
+export { classifyNeed } from "./required-events.js";
+
 export const REASONING_EVENT_SCHEMA = "cogentia.reasoning_event/v1";
 export const REASONING_LOOP_SCHEMA = "cogentia.reasoning_loop/v1";
 
@@ -239,16 +243,6 @@ function pendingBlocking(queue, beforePhase) {
     const idx = PHASES.indexOf(event.phase);
     return idx >= 0 && idx < limit;
   });
-}
-
-export function classifyNeed(text) {
-  const raw = String(text || "");
-  return {
-    corpusLike: /corpus|concept|mandate|agent|packet|kudos|vote|orient|doctrine|cogentia/i.test(raw),
-    livingLike:
-      /state of the art|current law|current price|leave the corpus|external research|latest/i.test(raw),
-    exploratory: /possible|should we|architecture|design|strategy|could|what if/i.test(raw),
-  };
 }
 
 function defaultClassifyHandler() {

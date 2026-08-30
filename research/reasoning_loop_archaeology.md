@@ -7,7 +7,7 @@ date: "2026-08-29"
 last_modified_at: "2026-08-30"
 license: "CC BY-SA 4.0"
 language: "en"
-version: "0.5"
+version: "0.6"
 status: "working-note"
 document_role: "source"
 document_kind: "architectural-report"
@@ -525,3 +525,22 @@ Use `packet-capsule.js` + the closure note as the starting substrate; do not inv
 **Contradiction found:** none architectural. The Guide-step-loop assertion omitted an already-sent `surface: "agent-john"` field; assertion aligned to current capability payload (not a Guide rewrite).
 
 **Not in F1:** Cognitive Scheduler, frontier, Choice Points, `Closed(p,h,E)`, COP/Core changes, WhatsApp/Guide production paths.
+
+---
+
+## J. F1.1 (2026-08-30, ChatGPT delta v5)
+
+F1 proved **scheduler precedence** (a label before `nextStep`). It did **not** prove orientation happened.
+
+**F1.1 boundary:**
+
+- Required events are discharged only after an admissible handler runs and returns a receipt (`orientation_result` / `living_evidence_result`).
+- Missing blocking handler → `stopReason=required_event_handler_missing`; never silent discharge.
+- `maxSteps` counts **reasoning** steps only (`stepCount`). Kernel obligations use `requiredEventCount`. Time budget still covers both.
+- Classification/policy live in `scripts/lib/required-events.js`. Harness and tournament import that seam; harness no longer imports experimental `reasoning-loop.js`.
+- Handlers: `options.requiredEventHandlers[kind]` or registry capability `corpus.orient` (read-only; still gated by `allowedCapabilities`). Living-evidence is a seam; no web search wired.
+- F1.1 still **does not** test `Closed(p,h,E)`.
+
+**Tests:** F1 required-events 9/9; harness 10/10; guide-step-loop 3/3; john pass; reasoning-loop pass; tournament controls still fail.
+
+**Contradiction:** none. Remaining: default `classifyNeed` is still a regex; production Guide/WhatsApp unwired; living-evidence handler is a stub seam.

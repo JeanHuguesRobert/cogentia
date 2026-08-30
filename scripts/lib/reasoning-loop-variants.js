@@ -4,8 +4,8 @@
  * The independent variable is *who decides the next kind of work*.
  * Handlers, prompts, and retrieval quality are held constant or omitted.
  */
+import { classifyNeed } from "./required-events.js";
 import {
-  classifyNeed,
   createHandlerRegistry,
   createReasoningEvent,
   createReasoningLoop,
