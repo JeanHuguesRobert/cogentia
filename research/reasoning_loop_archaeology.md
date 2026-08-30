@@ -620,3 +620,24 @@ Frontier = **pure projection** of that list. Allocator = `allocateExplicit({ fun
 - F2 is not converged after this experiment.
 - Branches are possible / continuation-shaped, **not** portable, **not** `Closed(p,h,E)`.
 - Success of A obsoleting B without executing B is the composability proof, not a general exploration policy.
+
+### Empirical answers (after Reality Tests A–G)
+
+Implemented: `scripts/lib/continuation-frontier-f2a.js` + `scripts/test-continuation-frontier-f2a.js`. Inner executor: F1.2 `createGovernedHarness.run` as a callback. Tests A–G **7/7**; F1.2 required-events **11/11**; governed-harness **10/10**; guide-step-loop **3/3**.
+
+| # | Question | Result |
+|---|----------|--------|
+| 1 | Smallest real Choice Point? | One append-only fact `choice_point_opened` (`id`, `mode: OR`, `parentRef`, `branchRefs`). Not a COP type. Continuations are registered as separate facts. |
+| 2 | Several continuations without becoming a queue? | **Yes.** A and B coexist in the projection. Funding A does not dequeue B. |
+| 3 | Runnable separate from funded? | **Yes.** Both stay `runnable`+`live`. A=`funded`, B=`unfunded`. Execute on B is refused; B `executionCount` stays 0. |
+| 4 | Reality obsolete a branch without executing it? | **Yes.** A satisfies OR → B `viability=obsolete`, `executionCount=0`, object kept. |
+| 5 | Unfunded branch survive and later fund? | **Yes.** A fails → A `exhausted`, B stays `live` → fund B → B runs and can satisfy OR. |
+| 6 | Residue survive pruning? | **Yes.** Obsolete B remains in `continuations` and the projection. Exhausted A remains after B later wins (see surprise). |
+| 7 | Replay as projection? | **Yes.** `projectFrontier(facts)` is deterministic; replaying the same list (including via a new log seeded from facts) equals. |
+| 8 | F1 compose as one-continuation executor? | **Mostly yes.** Frontier funds; harness advances one continuation; Frontier updates from the receipt. No cop-kernel adapter was required because branches are **continuation-shaped v2 objects**, not COP Continuations. That is the honest boundary, not a hidden integration. |
+| 9 | Which F1 assumptions break under multi-branch? | Each F1 `run()` re-discharges required events (orientation runs again on B). There is no sibling-shared evidence. F1 still has no funding/viability concept — composition is external, which is correct. Yield/`clarify` remains RAM-local. |
+| 10 | Missing before a non-trivial Cognitive Scheduler? | Readiness beyond always-`runnable` (wait/wake); shared evidence with causality; Closure/materializability facet; durable (not RAM) facts; COP continuation identity vs Cogentia v2 shape; AND/join topology; multidimensional policy facts (cost-to-go, novelty, Measured Risk) **without** canonizing a scalar `priority_score`. |
+
+**Surprise:** a naïve OR rule “siblings of the winner become obsolete” would rewrite exhausted A as obsolete after B succeeds, erasing that A *did* run and fail. Projection now refuses to overwrite `exhausted` with `obsolete`. Residue kinds stay distinct.
+
+**F2a is provisionally coherent. F2 is not converged.**
