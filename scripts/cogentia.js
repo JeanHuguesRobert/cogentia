@@ -36,6 +36,7 @@ import { resolveCallerAuth, deriveLockers } from "./lib/cogentia-mcp-auth.js";
 import { checkSemanticMutation, MUTATION_STATUS } from "./lib/semantic-mutation-checker.js";
 import { createSchedulerRunContext, runFractaCycle, SCHEDULER_CYCLE_MODES, SCHEDULER_STAGE_STATUS } from "./lib/fracta-scheduler.js";
 import { packDocumentToCapsule, verifyCapsule, unpackCapsule } from "./lib/packet-capsule.js";
+import { runMonteCarloAudit } from "./lib/corpus-sleep-cycle/index.js";
 
 const COGENTIA_VERSION = "0.3.0";
 const VERSION = "3.0.0";
@@ -417,6 +418,8 @@ async function main() {
       return cmdOrientBenchmark();
     case "scheduler":
       return cmdScheduler(loadContext(), argv);
+    case "sleep-cycle":
+      return cmdSleepCycle();
     default:
       throw new Error(`Unknown command "${command}". Run: node scripts/cogentia.js help`);
   }
@@ -1985,6 +1988,54 @@ function cmdDocsCheckMutation(ctx, inventory, targetArg) {
     }
     return result;
   });
+}
+
+registerModule({
+  id: "corpus.sleep-cycle",
+  kind: "capability_provider",
+  provides: { capabilities: ["corpus.sleep-cycle", "corpus.audit-monte-carlo"] },
+  governance: { requires: [], trace_minimum: "none" },
+  run: ({ root, view, maxPairs, budgetMs, resume, seed, force }) => {
+    return runMonteCarloAudit({ root, view, maxPairs, budgetMs, resume, seed, force });
+  },
+});
+
+async function cmdSleepCycle() {
+  const force = takeFlag("--force");
+  const budgetMs = Number(valueFlag("--budget-ms") || valueFlag("--budget")) || 10000;
+  const maxPairs = Number(valueFlag("--max-pairs") || valueFlag("--pairs")) || 30;
+  const resume = valueFlag("--resume") || null;
+  const seed = valueFlag("--seed") ? (Number(valueFlag("--seed")) || valueFlag("--seed")) : 42;
+  const view = normalizeView(valueFlag("--view") || PUBLIC_VIEW);
+  const root = loadContext().rootPath;
+
+  const result = await invokeCapability(
+    "corpus.sleep-cycle",
+    { root, view, maxPairs, budgetMs, resume, seed, force },
+    { auth: CLI_TRUSTED_AUTH }
+  );
+
+  if (JSON_MODE) {
+    return output(result, JSON.stringify(result, null, 2));
+  }
+
+  const lines = ["\nCorpus Sleep Cycle — Monte Carlo Audit\n"];
+  lines.push(`Status: ${result.status} ${result.reason ? `(${result.reason})` : ""}`);
+  lines.push(`Evaluated pairs: ${result.evaluated_pairs_this_run || 0}`);
+  lines.push(`New candidate signals: ${result.new_signals_this_run || 0}`);
+  if (result.metrics) {
+    lines.push(`Coverage: ${(result.metrics.coverage.pair_coverage_ratio * 100).toFixed(1)}% (${result.metrics.coverage.unique_pairs_sampled} pairs, entropy: ${result.metrics.coverage.sampling_entropy})`);
+    lines.push(`Cognitive Gain Score: ${result.metrics.cognitive_yield.cognitive_gain_score}`);
+    lines.push(`Yield rate: ${(result.metrics.cognitive_yield.signal_yield_rate * 100).toFixed(1)}%`);
+  }
+  if (result.queue_stats) {
+    lines.push(`Review queue total: ${result.queue_stats.total_signals} (${result.queue_stats.by_status.pending_review} pending)`);
+  }
+  if (result.continuation) {
+    lines.push(`\nPreempted continuation: ${result.continuation.id}`);
+    lines.push(`Resume command: ${result.continuation.resume?.command}`);
+  }
+  return output(result, lines.join("\n"));
 }
 
 function cmdDocsQuery(inventory, repoArg) {

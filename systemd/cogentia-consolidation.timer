@@ -1,0 +1,10 @@
+[Unit]
+Description=Run Cogentia Weekly Sunday Consolidation on Sundays at 04:00 UTC
+Documentation=https://github.com/JeanHuguesRobert/cogentia/blob/main/docs/sunday-consolidation-master-plan.md
+
+[Timer]
+OnCalendar=Sun *-*-* 04:00:00 UTC
+Persistent=true
+
+[Install]
+WantedBy=timers.target

@@ -818,8 +818,7 @@ The first end-to-end Reality test should reuse a real historical incident. The M
 
 ## 19. Next artifacts
 
-Candidate continuations:
-
+- `cogentia/docs/corpus-sleep-cycle-monte-carlo.md` — preemptible Monte Carlo audit architecture on residual capacity (GitHub #124);
 - `cogentia/docs/corpus-sleep-cycle-mvp.md` — operational MVP and event flow;
 - `cogentia/docs/cognitive-regression-suite.md` — test-case schema, replay policy and scoring;
 - `cogentia/docs/memory-temperature-policy.md` — policy vocabulary;

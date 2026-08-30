@@ -23,6 +23,8 @@
     "test:context": "node scripts/test-context-gateway.js",
     "test:context-lines": "node scripts/test-context-lines-direct.js",
     "test:corpus-librarian": "node scripts/test-corpus-librarian.js",
+    "test:sleep-cycle": "node scripts/test-corpus-sleep-cycle.js",
+    "sleep-cycle": "node scripts/run-corpus-sleep-cycle.js",
     "eval:corpus-librarian-b": "node scripts/eval-corpus-librarian-cycle-b.js",
     "eval:corpus-librarian-c": "node scripts/eval-corpus-librarian-cycle-c.js",
     "eval:corpus-librarian-semantic": "node scripts/eval-corpus-librarian-semantic.js",

@@ -62,6 +62,7 @@ export const CLI_COMMANDS = [
   { verb: "john run", mcp_tool: "cogentia_john_run", risk: "read" },
   { verb: "orient", mcp_tool: "cogentia_orient", daemon: "/api/context/orient", risk: "read" },
   { verb: "orient-benchmark", mcp_tool: "cogentia_orient_benchmark", daemon: "/api/ops/orient-benchmark", risk: "read" },
+  { verb: "sleep-cycle", mcp_resource: "cogentia://cli/catalog", daemon: "/api/cli/sleep-cycle", risk: "read" },
 ];
 
 export const LEGACY_SYMMETRY_CAPABILITIES = [
