@@ -3,11 +3,11 @@
  * The reasoner freely proposes steps; this kernel only validates, authorizes,
  * executes, records, and enforces bounds.
  *
- * F1.1 (packet_required_events): kernel runs an admissible required-event
- * handler and records its receipt before unrestricted nextStep. Required
- * work does not consume maxSteps (reasoning-step budget). Missing blocking
- * handler is fail/escalate, never silent discharge. Clarify yield is
- * continuation-shaped and DOES NOT TEST CONTINUATION CLOSURE / Closed(p,h,E).
+ * F1.2: required events run before unrestricted nextStep via a real handler
+ * receipt. Capability-backed required events use the same governedInvokeCapability
+ * path as reasoner capability_call. Structural handlers are explicit and must
+ * not perform governed external effects. RequiredEvent receipts are not
+ * ReasoningSteps. F1.2 DOES NOT TEST Closed(p,h,E).
  */
 
 import {
@@ -63,6 +63,7 @@ export function createGovernedHarness(options = {}) {
         input,
         observations: [],
         steps: [],
+        requiredEventReceipts: [],
         sequence: 0,
         requiredEventCount: 0,
         capabilityCalls: 0,
@@ -70,51 +71,28 @@ export function createGovernedHarness(options = {}) {
       };
       const pendingRequired = requiredEventsForTurn(input, options);
       const capabilityFingerprints = [];
+      const invokeCtx = {
+        registry, bounds, allowed, confirmed, authorization, turnInput: input, clock, noProgressHeuristic, capabilityFingerprints,
+      };
 
       while (true) {
         if (clock() - startedAt >= bounds.maxElapsedMs) return stopped("time_budget", state, startedAt, clock);
 
         if (pendingRequired.length) {
           const kind = pendingRequired.shift();
-          const handler = resolveRequiredEventHandler(kind, requiredEventHandlers, registry);
-          if (!handler) {
-            const observation = { type: "required_event_handler_missing", kind, policy: REQUIRED_EVENT_POLICY };
-            const missStep = systemStep(`req-${state.requiredEventCount + 1}`, idFactory, "stop");
-            missStep.note = kind;
-            appendStep(state, missStep, stepResult(missStep, "failed", { observation }));
-            return stopped("required_event_handler_missing", state, startedAt, clock);
-          }
-          try {
-            const observation = await handler({
-              kind,
-              input,
-              authorization,
-              registry,
-            });
-            if (!observation || observation.ok === false) {
-              return stopped("required_event_failed", state, startedAt, clock);
-            }
-            state.requiredEventCount += 1;
-            const reqStep = systemStep(`req-${state.requiredEventCount}`, idFactory, "reason");
-            reqStep.note = kind;
-            const receipt = {
-              ...observation,
+          const descriptor = resolveRequiredEventDescriptor(kind, requiredEventHandlers, registry);
+          if (!descriptor) {
+            recordRequiredReceipt(state, {
               kind,
               policy: REQUIRED_EVENT_POLICY,
-              discharged: true,
-            };
-            appendStep(state, reqStep, stepResult(reqStep, "completed", { observation: summarizeRequiredObservation(receipt) }));
-            state.observations.push(receipt);
-          } catch (error) {
-            const observation = {
-              type: "required_event_failed",
-              kind,
-              error: { name: safeName(error?.name) || "Error", code: safeName(error?.code) },
-            };
-            const failStep = systemStep(`req-${state.requiredEventCount + 1}`, idFactory, "stop");
-            appendStep(state, failStep, stepResult(failStep, "failed", { observation, error }));
-            return stopped("required_event_failed", state, startedAt, clock);
+              handlerType: null,
+              status: "failed",
+              observation: { type: "required_event_handler_missing", kind, policy: REQUIRED_EVENT_POLICY },
+            });
+            return stopped("required_event_handler_missing", state, startedAt, clock);
           }
+          const outcome = await runRequiredEvent(kind, descriptor, state, invokeCtx);
+          if (outcome.stopReason) return stopped(outcome.stopReason, state, startedAt, clock);
           continue;
         }
 
@@ -163,47 +141,28 @@ export function createGovernedHarness(options = {}) {
           return stopped(step.reason || "reasoner_stop", state, startedAt, clock);
         }
 
-        const capability = registry.get(step.capability);
-        const denial = authorize(capability, step.capability, allowed, confirmed);
-        if (denial) {
-          const observation = { type: "capability_denied", capability: safeName(step.capability), reason: denial };
-          appendStep(state, step, stepResult(step, "denied", { observation }));
-          state.observations.push(observation);
+        const invoked = await governedInvokeCapability({
+          ...invokeCtx,
+          state,
+          requestedName: step.capability,
+          input: step.input || {},
+        });
+        if (invoked.status === "budget") return stopped(invoked.reason, state, startedAt, clock);
+        if (invoked.status === "no_progress") {
+          appendStep(state, step, stepResult(step, "failed", { observation: invoked.observation }));
+          return stopped("no_progress", state, startedAt, clock);
+        }
+        if (invoked.status === "denied") {
+          appendStep(state, step, stepResult(step, "denied", { observation: invoked.observation }));
+          state.observations.push(invoked.observation);
           continue;
         }
-        if (state.capabilityCalls >= bounds.maxCapabilityCalls) return stopped("capability_call_budget", state, startedAt, clock);
-        if (state.costUnits + capability.costUnits > bounds.maxCostUnits) return stopped("cost_budget", state, startedAt, clock);
-
-        state.capabilityCalls += 1;
-        state.costUnits += capability.costUnits;
-        const callStartedAt = clock();
-        if (noProgressHeuristic) {
-          const fingerprint = `${capability.name}:${JSON.stringify(step.input || {})}`;
-          const repeats = capabilityFingerprints.filter((item) => item === fingerprint).length;
-          capabilityFingerprints.push(fingerprint);
-          if (repeats >= 1) {
-            const observation = {
-              type: "no_progress_heuristic",
-              capability: capability.name,
-              note: "F1 test heuristic only. Legitimate repetition may occur when Reality changed, freshness expired, evidence was incomplete, retry policy authorizes another attempt, or causal context materially changed.",
-            };
-            appendStep(state, step, stepResult(step, "failed", { observation }));
-            return stopped("no_progress", state, startedAt, clock);
-          }
-        }
-        try {
-          const value = await capability.execute(step.input || {}, { turnInput: input, step, authorization });
-          const observation = { type: "capability_result", capability: capability.name, ok: true, value };
-          appendStep(state, step, stepResult(step, "completed", { observation: summarizeCapabilityObservation(observation), elapsed_ms: clock() - callStartedAt }));
-          state.observations.push(observation);
-        } catch (error) {
-          const observation = {
-            type: "capability_result", capability: capability.name, ok: false,
-            error: { name: safeName(error?.name) || "Error", code: safeName(error?.code) },
-          };
-          appendStep(state, step, stepResult(step, "failed", { observation: summarizeCapabilityObservation(observation), elapsed_ms: clock() - callStartedAt, error }));
-          state.observations.push(observation);
-        }
+        appendStep(state, step, stepResult(step, invoked.status === "completed" ? "completed" : "failed", {
+          observation: summarizeCapabilityObservation(invoked.observation),
+          elapsed_ms: invoked.elapsed_ms,
+          error: invoked.error,
+        }));
+        state.observations.push(invoked.observation);
       }
       return stopped("step_budget", state, startedAt, clock);
     },
@@ -259,9 +218,16 @@ function authorize(capability, requested, allowed, confirmed) {
 }
 function snapshot(state, registry, bounds) {
   return {
-    input: state.input, observations: state.observations.map(item => observationForReasoner(item, registry)), steps: state.steps.slice(),
-    nextSequence: state.sequence, capabilityCalls: state.capabilityCalls, costUnits: state.costUnits,
-    capabilities: registry.list(), bounds,
+    input: state.input,
+    observations: state.observations.map((item) => observationForReasoner(item, registry)),
+    steps: state.steps.slice(),
+    requiredEventReceipts: (state.requiredEventReceipts || []).slice(),
+    nextSequence: state.sequence,
+    capabilityCalls: state.capabilityCalls,
+    costUnits: state.costUnits,
+    requiredEventCount: state.requiredEventCount || 0,
+    capabilities: registry.list(),
+    bounds,
   };
 }
 function completed(answer, state, startedAt, clock) { return terminal(true, "answer_accepted", answer, state, startedAt, clock); }
@@ -270,43 +236,156 @@ function terminal(ok, stopReason, answer, state, startedAt, clock, extra = {}) {
   return {
     ok, answer, stopReason, observations: state.observations, steps: state.steps,
     stepCount: state.sequence, requiredEventCount: state.requiredEventCount || 0,
+    requiredEventReceipts: state.requiredEventReceipts || [],
     capabilityCalls: state.capabilityCalls, costUnits: state.costUnits,
     latencyMs: clock() - startedAt, ...extra,
   };
 }
 
-function resolveRequiredEventHandler(kind, handlers, registry) {
-  if (typeof handlers[kind] === "function") return handlers[kind];
-  const capName = DEFAULT_REQUIRED_EVENT_CAPABILITIES[kind];
-  const capability = capName ? registry.get(capName) : null;
-  if (!capability) return null;
-  return async (ctx) => {
-    const allowed = new Set(normalizeNames(ctx.authorization?.allowedCapabilities));
-    const confirmed = new Set(normalizeNames(ctx.authorization?.confirmedCapabilities));
-    const denial = authorize(capability, capName, allowed, confirmed);
-    if (denial) {
-      const error = new Error(denial);
-      error.code = denial;
-      throw error;
-    }
-    const query = String(ctx.input?.text || ctx.input?.prompt || "");
-    const value = await capability.execute({ query, subject: query }, { turnInput: ctx.input });
+async function governedInvokeCapability({
+  state, requestedName, input, turnInput, registry, bounds, allowed, confirmed, authorization, clock,
+  noProgressHeuristic, capabilityFingerprints,
+}) {
+  const capability = registry.get(requestedName);
+  const denial = authorize(capability, requestedName, allowed, confirmed);
+  if (denial) {
     return {
-      type: kind === "orientation.required" ? "orientation_result" : "required_event_result",
-      ok: true,
-      value,
+      status: "denied",
+      observation: { type: "capability_denied", capability: safeName(requestedName), reason: denial },
     };
-  };
+  }
+  if (state.capabilityCalls >= bounds.maxCapabilityCalls) {
+    return { status: "budget", reason: "capability_call_budget" };
+  }
+  if (state.costUnits + capability.costUnits > bounds.maxCostUnits) {
+    return { status: "budget", reason: "cost_budget" };
+  }
+  if (noProgressHeuristic) {
+    const fingerprint = `${capability.name}:${JSON.stringify(input || {})}`;
+    const repeats = capabilityFingerprints.filter((item) => item === fingerprint).length;
+    capabilityFingerprints.push(fingerprint);
+    if (repeats >= 1) {
+      return {
+        status: "no_progress",
+        observation: {
+          type: "no_progress_heuristic",
+          capability: capability.name,
+          note: "F1 test heuristic only. Legitimate repetition may occur when Reality changed, freshness expired, evidence was incomplete, retry policy authorizes another attempt, or causal context materially changed.",
+        },
+      };
+    }
+  }
+  state.capabilityCalls += 1;
+  state.costUnits += capability.costUnits;
+  const callStartedAt = clock();
+  try {
+    const value = await capability.execute(input || {}, { turnInput, authorization });
+    return {
+      status: "completed",
+      elapsed_ms: clock() - callStartedAt,
+      observation: { type: "capability_result", capability: capability.name, ok: true, value },
+    };
+  } catch (error) {
+    return {
+      status: "failed",
+      elapsed_ms: clock() - callStartedAt,
+      error,
+      observation: {
+        type: "capability_result",
+        capability: capability.name,
+        ok: false,
+        error: { name: safeName(error?.name) || "Error", code: safeName(error?.code) },
+      },
+    };
+  }
 }
 
-function summarizeRequiredObservation(observation) {
-  return {
-    type: observation.type,
-    kind: observation.kind,
-    policy: observation.policy,
-    discharged: true,
-    ok: observation.ok !== false,
-  };
+function resolveRequiredEventDescriptor(kind, handlers, registry) {
+  const raw = handlers[kind];
+  if (typeof raw === "function") return { type: "structural", run: raw };
+  if (raw && raw.type === "structural" && typeof raw.run === "function") return raw;
+  if (raw && (raw.type === "capability" || raw.capability)) {
+    return { type: "capability", capability: raw.capability, input: raw.input };
+  }
+  const capName = DEFAULT_REQUIRED_EVENT_CAPABILITIES[kind];
+  if (capName && registry.get(capName)) return { type: "capability", capability: capName };
+  return null;
+}
+
+async function runRequiredEvent(kind, descriptor, state, ctx) {
+  if (descriptor.type === "structural") {
+    try {
+      const observation = await descriptor.run({ kind, input: ctx.turnInput, authorization: ctx.authorization, registry: ctx.registry });
+      if (!observation || observation.ok === false) return { stopReason: "required_event_failed" };
+      recordRequiredReceipt(state, {
+        kind,
+        policy: REQUIRED_EVENT_POLICY,
+        handlerType: "structural",
+        status: "completed",
+        observation: { ...observation, kind, policy: REQUIRED_EVENT_POLICY, discharged: true },
+      });
+      return {};
+    } catch (error) {
+      recordRequiredReceipt(state, {
+        kind,
+        policy: REQUIRED_EVENT_POLICY,
+        handlerType: "structural",
+        status: "failed",
+        observation: {
+          type: "required_event_failed",
+          kind,
+          error: { name: safeName(error?.name) || "Error", code: safeName(error?.code) },
+        },
+      });
+      return { stopReason: "required_event_failed" };
+    }
+  }
+
+  const query = String(ctx.turnInput?.text || ctx.turnInput?.prompt || "");
+  const capInput = typeof descriptor.input === "function"
+    ? descriptor.input(ctx.turnInput)
+    : descriptor.input || { query, subject: query };
+  const invoked = await governedInvokeCapability({
+    ...ctx,
+    state,
+    requestedName: descriptor.capability,
+    input: capInput,
+  });
+  if (invoked.status === "budget") return { stopReason: invoked.reason };
+  if (invoked.status === "denied" || invoked.status === "failed" || invoked.status === "no_progress") {
+    recordRequiredReceipt(state, {
+      kind,
+      policy: REQUIRED_EVENT_POLICY,
+      handlerType: "capability",
+      capability: descriptor.capability,
+      status: "failed",
+      observation: invoked.observation,
+    });
+    return { stopReason: invoked.status === "denied" ? "required_event_failed" : invoked.status === "no_progress" ? "no_progress" : "required_event_failed" };
+  }
+  recordRequiredReceipt(state, {
+    kind,
+    policy: REQUIRED_EVENT_POLICY,
+    handlerType: "capability",
+    capability: descriptor.capability,
+    status: "completed",
+    observation: {
+      type: kind === "orientation.required" ? "orientation_result" : "required_event_result",
+      kind,
+      policy: REQUIRED_EVENT_POLICY,
+      discharged: true,
+      ok: true,
+      capability: descriptor.capability,
+      value: invoked.observation?.value,
+    },
+  });
+  return {};
+}
+
+function recordRequiredReceipt(state, receipt) {
+  state.requiredEventCount = (state.requiredEventCount || 0) + (receipt.status === "completed" ? 1 : 0);
+  state.requiredEventReceipts.push(receipt);
+  if (receipt.observation) state.observations.push(receipt.observation);
 }
 function normalizeNames(values) { return Array.isArray(values) ? values.map(safeName).filter(Boolean) : []; }
 function safeName(value) {

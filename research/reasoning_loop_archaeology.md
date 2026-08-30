@@ -7,7 +7,7 @@ date: "2026-08-29"
 last_modified_at: "2026-08-30"
 license: "CC BY-SA 4.0"
 language: "en"
-version: "0.6"
+version: "0.7"
 status: "working-note"
 document_role: "source"
 document_kind: "architectural-report"
@@ -544,3 +544,17 @@ F1 proved **scheduler precedence** (a label before `nextStep`). It did **not** p
 **Tests:** F1 required-events 9/9; harness 10/10; guide-step-loop 3/3; john pass; reasoning-loop pass; tournament controls still fail.
 
 **Contradiction:** none. Remaining: default `classifyNeed` is still a regex; production Guide/WhatsApp unwired; living-evidence handler is a stub seam.
+
+---
+
+## K. F1.2 (2026-08-30, ChatGPT delta v6) — F1 converged
+
+**Unified invocation:** internal `governedInvokeCapability(...)` used by reasoner `capability_call` and capability-backed required events (resolve, authorize, confirmation, call/cost budgets, accounting, execute, error/receipt).
+
+**Handlers:** `structural` (`run`) vs `capability` (`capability` name). Bare functions remain structural test stubs. Registration ≠ authority.
+
+**Trace:** `state.steps[]` = ReasoningSteps only. `state.requiredEventReceipts[]` = kernel obligations. `stepCount` vs `requiredEventCount`.
+
+**Eight F1 criteria:** all hold. F1 declared **converged**. Next work is F2 (separate), not more F1 polish unless Reality contradicts.
+
+**Tests:** F1 required-events 11/11; harness 10/10; guide-step 3/3; john pass; tournament controls still fail. F1.2 still does **not** test `Closed(p,h,E)`.

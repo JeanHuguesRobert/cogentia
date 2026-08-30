@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
- * F1.1 Reality Test: required events have real handlers and receipts.
- * F1.1 DOES NOT TEST CONTINUATION CLOSURE / Closed(p,h,E).
+ * F1.2 Reality Test: governed capability path + RequiredEvent != ReasoningStep.
+ * F1.2 DOES NOT TEST CONTINUATION CLOSURE / Closed(p,h,E).
  */
 import assert from "node:assert/strict";
 import {
@@ -75,12 +75,14 @@ test("greedy reasoner cannot answer before the orientation handler has run and p
   assert.equal(result.ok, true);
   assert.equal(result.requiredEventCount, 1);
   assert.equal(result.stepCount, 1);
-  assert.equal(result.steps[0].result.observation.type, "orientation_result");
-  assert.equal(result.steps[0].result.observation.discharged, true);
-  assert.equal(result.steps[0].result.observation.policy, REQUIRED_EVENT_POLICY);
+  assert.equal(result.requiredEventReceipts[0].observation.type, "orientation_result");
+  assert.equal(result.requiredEventReceipts[0].handlerType, "structural");
+  assert.equal(result.requiredEventReceipts[0].observation.discharged, true);
+  assert.equal(result.requiredEventReceipts[0].observation.policy, REQUIRED_EVENT_POLICY);
+  assert.equal(result.steps[0].step.kind, "answer");
+  assert.notEqual(result.steps[0].step.kind, "reason");
   assert.equal(result.observations[0].type, "orientation_result");
   assert.deepEqual(result.observations[0].value.conceptual_route, ["Kudos", "Cognitive Packet"]);
-  assert.equal(result.steps[1].step.kind, "answer");
 });
 
 test("required orientation without a handler is not marked discharged", async () => {
@@ -97,8 +99,9 @@ test("required orientation without a handler is not marked discharged", async ()
   assert.equal(result.ok, false);
   assert.equal(nextStepCalls, 0);
   assert.equal(result.requiredEventCount, 0);
-  assert.equal(result.steps[0].result.observation.type, "required_event_handler_missing");
-  assert.equal(result.steps[0].result.observation.discharged, undefined);
+  assert.equal(result.steps.length, 0);
+  assert.equal(result.requiredEventReceipts[0].observation.type, "required_event_handler_missing");
+  assert.equal(result.requiredEventReceipts[0].observation.discharged, undefined);
 });
 
 test("maxSteps counts reasoning steps only; required orientation does not steal the budget", async () => {
@@ -135,9 +138,9 @@ test("leave-the-corpus questions run living_evidence handler before nextStep", a
   assert.equal(calls.orientation, 1);
   assert.equal(calls.living, 1);
   assert.equal(result.requiredEventCount, 2);
-  const firstAnswer = result.steps.findIndex((row) => row.step.kind === "answer");
-  assert.ok(firstAnswer > 0);
-  assert.equal(result.steps[0].result.observation.type, "orientation_result");
+  assert.equal(result.steps[0].step.kind, "answer");
+  assert.equal(result.requiredEventReceipts[0].observation.type, "orientation_result");
+  assert.equal(result.requiredEventReceipts[1].observation.type, "living_evidence_result");
 });
 
 test("phatic utterance does not inject orientation", async () => {
@@ -198,7 +201,70 @@ test("registered corpus.orient may execute orientation when authorized; registra
   );
   assert.equal(orientCalls, 1);
   assert.equal(allowed.ok, true);
+  assert.equal(allowed.capabilityCalls, 1);
+  assert.equal(allowed.costUnits, 1);
   assert.equal(allowed.observations[0].type, "orientation_result");
+  assert.equal(allowed.requiredEventReceipts[0].handlerType, "capability");
+});
+
+test("kernel corpus.orient uses the same capability budgets as reasoner calls", async () => {
+  let orientCalls = 0;
+  const cap = {
+    name: "corpus.orient",
+    kind: "tool",
+    risk: "read_only",
+    resultVisibility: "reasoner",
+    costUnits: 1,
+    execute: async () => {
+      orientCalls += 1;
+      return { conceptual_route: ["Kudos"] };
+    },
+  };
+  const greedy = reasoner(async () => ({ kind: "answer", answer: "done" }));
+  const text = "How do Kudos affect Cognitive Packet routing?";
+
+  const noCalls = await createGovernedHarness({
+    registry: registry([cap]),
+    reasoner: greedy,
+  }).run({ text }, { allowedCapabilities: ["corpus.orient"] }, { maxSteps: 1, maxCapabilityCalls: 0 });
+  assert.equal(noCalls.stopReason, "capability_call_budget");
+  assert.equal(orientCalls, 0);
+
+  const noCost = await createGovernedHarness({
+    registry: registry([cap]),
+    reasoner: greedy,
+  }).run({ text }, { allowedCapabilities: ["corpus.orient"] }, { maxSteps: 1, maxCostUnits: 0 });
+  assert.equal(noCost.stopReason, "cost_budget");
+  assert.equal(orientCalls, 0);
+});
+
+test("capability-backed required-event descriptor still goes through governance", async () => {
+  let orientCalls = 0;
+  const harness = createGovernedHarness({
+    registry: registry([
+      {
+        name: "corpus.orient",
+        kind: "tool",
+        risk: "read_only",
+        resultVisibility: "reasoner",
+        costUnits: 1,
+        execute: async () => {
+          orientCalls += 1;
+          return { conceptual_route: ["Kudos"] };
+        },
+      },
+    ]),
+    requiredEventHandlers: {
+      "orientation.required": { type: "capability", capability: "corpus.orient" },
+    },
+    reasoner: reasoner(async () => ({ kind: "answer", answer: "done" })),
+  });
+  const denied = await harness.run(
+    { text: "How do Kudos affect Cognitive Packet routing?" },
+    { allowedCapabilities: [] }
+  );
+  assert.equal(denied.stopReason, "required_event_failed");
+  assert.equal(orientCalls, 0);
 });
 
 test("no_progress heuristic remains opt-in and is not final liveness doctrine", async () => {
