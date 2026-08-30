@@ -7,7 +7,7 @@ date: "2026-08-29"
 last_modified_at: "2026-08-30"
 license: "CC BY-SA 4.0"
 language: "en"
-version: "0.7"
+version: "0.8"
 status: "working-note"
 document_role: "source"
 document_kind: "architectural-report"
@@ -558,3 +558,65 @@ F1 proved **scheduler precedence** (a label before `nextStep`). It did **not** p
 **Eight F1 criteria:** all hold. F1 declared **converged**. Next work is F2 (separate), not more F1 polish unless Reality contradicts.
 
 **Tests:** F1 required-events 11/11; harness 10/10; guide-step 3/3; john pass; tournament controls still fail. F1.2 still does **not** test `Closed(p,h,E)`.
+
+F1 remains **provisionally converged**. F2 is allowed to contradict it. Do not describe F1 as proven.
+
+---
+
+## L. F2a — Choice Point + Continuation Frontier (ChatGPT v7)
+
+Source: `reasoning-loop-grok-build-v7-f2a.txt` (2026-08-30). Principal: Jean Hugues.
+
+**Goal:** test composability of two possible futures, not a general Cognitive Scheduler.
+
+**Not in F2a:** MCTS/UCT/bandits/VoC, AND/ANY/QUORUM/RACE/FALLBACK as ontology, copFork-as-Choice-Point, canonical Frontier store, viability on COP/Core, Reasoner-owned allocation, multi-branch Reasoning Loop, `Closed(p,h,E)`, Guide/WhatsApp production wiring.
+
+### Inspect answers (before coding)
+
+| Question | Against the code |
+|----------|------------------|
+| What concrete object can represent branches A and B today? | **Continuation-shaped Cogentia objects**, not COP instances. Closest: `cogentia.continuation.v2` (`id`, `status`, `kind`, `title`, `question`, `subject`, `context`, `expected_response`, `resume`) from the CLI store / F1 `clarify` yield. COP `cop/continuation` lives in inseme, not in this repo’s runtime. |
+| Can Cogentia tests instantiate actual COP Continuations without a new dependency? | **No.** `cogentia/package.json` has no `cop-kernel` / `cop-core` dependency. Importing inseme internals would hide the boundary the brief forbids papering over. |
+| Does `copFork` create alternative futures or only child work? | **Child work.** `inseme/packages/cop-kernel/src/copComposition.js` `copFork` spawns a `kind: "child-task"` packet with `lineage.upstream_packet_id` and Ithaca return. Promise-like combinators (`copAll` / `copRace` / `copSequence` / `copCascadeCancel`) join *packet yields*, not OR hypotheses. |
+| What existing lineage/event fields can represent parent → branches? | COP/packets: `upstream_packet_id` / `downstream_packet_ids`, `parentEventIds`. Cogentia v2 continuations: **no** parent→alternative graph (only `subject` / `context`). None of these is an OR Choice Point. |
+| Where should an experimental Choice Point relation live without changing COP/Core? | **Cogentia experiment:** append-only fact list + derived Frontier projection (`scripts/lib/continuation-frontier-f2a.js`). Not `CONTINUATION_LIVENESS` (`alive`/`hibernating`/`closed` in `scripts/cogentia.js`). Not `governed-harness.js`. Not cop-kernel combinators. |
+
+Working hypothesis **confirmed against code**:
+
+```text
+COP combinators     = composition algebra over packets (child work, join, race)
+Choice Point / F2a  = cognitive exploration semantics above that substrate
+```
+
+`copFork ≠` cognitive Choice Point. `copRace ≠` cognitive OR.
+
+### Dimensions (orthogonal; do not collapse)
+
+| Dimension | Owner | F2a values |
+|-----------|--------|------------|
+| Readiness | COP-shaped; experimental here | `runnable` (waiting unused in F2a) |
+| Allocation | Cognitive Scheduler (trivial explicit policy) | `funded` / `unfunded` |
+| Viability | Cogentia projection, **not** COP liveness | `live` / `obsolete` / `exhausted` |
+| Topology | Choice Point relation | `mode: OR`, parent, branch refs |
+| Closure | later Reality Test | `verified: false` on every branch |
+
+Do **not** encode “not selected” as `dormant` / `hibernating`. An unfunded branch may stay `runnable` + `live`.
+
+### Implementation map (smallest experiment)
+
+Canonical facts (append-only in RAM; replay = replay the list):
+
+1. `continuation_registered` — continuation-shaped A/B (`protocol: cogentia.continuation.v2`, Closure unverified)
+2. `choice_point_opened` — stable id, `mode: "OR"`, `parentRef`, `branchRefs`
+3. `allocation_decided` — explicit fund one id; siblings unfunded; **does not** change liveness/viability
+4. `branch_run` — F1.2 harness result + per-branch cost
+5. `or_objective_satisfied` — sibling viability → `obsolete` (residue kept)
+6. `branch_exhausted` — that branch viability → `exhausted`; siblings stay `live`
+
+Frontier = **pure projection** of that list. Allocator = `allocateExplicit({ fund })`. Inner executor = existing `createGovernedHarness.run` on **one** funded continuation. If the funded branch is not runnable+live, refuse; do not let F1 become a multi-branch scheduler.
+
+### What F2a will not claim
+
+- F2 is not converged after this experiment.
+- Branches are possible / continuation-shaped, **not** portable, **not** `Closed(p,h,E)`.
+- Success of A obsoleting B without executing B is the composability proof, not a general exploration policy.
