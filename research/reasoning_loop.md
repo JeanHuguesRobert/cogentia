@@ -4,10 +4,10 @@ description: "Study of why Guide and Agent JHN main loops are the wrong shape, a
 author: "Jean Hugues Noël Robert, baron Mariani"
 affiliation: "Institut Mariani / C.O.R.S.I.C.A."
 date: "2026-08-29"
-last_modified_at: "2026-08-29"
+last_modified_at: "2026-08-30"
 license: "CC BY-SA 4.0"
 language: "en"
-version: "0.1"
+version: "0.2"
 status: "working-note"
 document_role: "source"
 document_kind: "working-note"
@@ -26,20 +26,25 @@ related:
 
 # Reasoning Loop
 
-**Correction (2026-08-29):** a later archaeology pass
-([`reasoning_loop_archaeology.md`](reasoning_loop_archaeology.md)) shows that the
-JavaScript Event Loop analogue is the **outer** COP/Continuation/Scheduler, not
-this inner cycle. This file remains useful as the *required-event* tournament
-for the inner loop (orientation / prologue / living evidence). Do not treat
+**Correction (2026-08-30):** this experimental inner kernel borrows event-dispatch
+techniques from event-loop runtimes. It is **not** the architectural analogue of
+the JavaScript Event Loop. That role belongs to the outer COP completion/wake
+runtime (Level 1). This file is a *required-event policy* tournament inside the
+inner reasoning cycle (Level 3). See
+[`reasoning_loop_archaeology.md`](reasoning_loop_archaeology.md). Do not treat
 `scripts/lib/reasoning-loop.js` as a replacement for COP.
 
 ## Why this note exists
 
 Guide and Agent JHN do not fail primarily because a particular retriever is weak.
 
-They fail because the **main loop** is the wrong object.
+They fail because the **inner cycle** lets a pipeline or a model choose whether
+required cognition (orientation, living evidence, prologue) happens at all.
 
-JavaScript is not “a collection of good event handlers.” It is an **event loop** that dispatches **events** to **handlers**. Until that kernel exists, adding a better search, a better prompt, or a better `corpus.orient` call inside a retrieve-then-generate pipeline will not change the kind of reasoning the system can do.
+The outer COP runtime already schedules *runnable* work. Until required events
+are kernel-discharged *inside* a funded continuation, adding a better search or
+a better prompt inside retrieve-then-generate will not change the kind of
+reasoning the system can do.
 
 `instructions/AGENTS.shared.md` is already written as a **prologue** (read order, invariants, packets/handlers, living evidence, Open-Possible, Measured Risk, mandate attenuation). Today that prologue is at best injected into a prompt. It does not get to enqueue work.
 

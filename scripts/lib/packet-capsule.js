@@ -2,12 +2,18 @@
  * Packet Capsule Core Engine (cogentia / JHN Architecture).
  *
  * Implements self-contained, portable, content-addressed Cognitive Packet Capsules
- * per research/documents_as_cognitive_packets.md and research/the_network_is_the_learning_computer.md.
+ * per research/documents_as_cognitive_packets.md and
+ * research/cognitive_packet_closure_and_packet_native_semantics.md.
  *
- * Invariants:
- * - Deterministic serialization & hashing (sha256).
- * - Self-describing schema: cogentia.packet_capsule/v1.
- * - Admissible handler environment validation (Packet Closure).
+ * Present today:
+ * - Capsule schema / metadata (including declared closure: state + environment name)
+ * - Content-addressed hashing and checksum / payload integrity
+ * - pack / verify / unpack mechanics
+ *
+ * Not implemented: Closed(p,h,E) evaluation (dependency closure, HandlerProfile
+ * compatibility, environment satisfiability, materializability).
+ * Declared closure metadata != verified Packet Closure.
+ * Integrity != closure != handler admissibility != authorization != runnable-now.
  */
 
 import fs from "node:fs";

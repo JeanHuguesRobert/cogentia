@@ -4,10 +4,10 @@ description: "Architectural report answering the ChatGPT/Grok-Build brief: map e
 author: "Grok (xAI) — archaeology for Jean Hugues Noël Robert"
 affiliation: "Institut Mariani / C.O.R.S.I.C.A. / Cogentia"
 date: "2026-08-29"
-last_modified_at: "2026-08-29"
+last_modified_at: "2026-08-30"
 license: "CC BY-SA 4.0"
 language: "en"
-version: "0.3"
+version: "0.4"
 status: "working-note"
 document_role: "source"
 document_kind: "architectural-report"
@@ -476,7 +476,7 @@ Do **not** invent `Closed(p,h,E)`. It is already a working source:
 - `cogentia/research/documents_as_cognitive_packets.md` (RT-001 arbitration)
 - `barons-Mariani/research/jhn_architecture_packet_closure_addendum.md` (historical; integrated into JHN architecture v0.3)
 - inseme#58 COP Packet Closure
-- Runtime fragment: `scripts/lib/packet-capsule.js` (`closure:` in capsule header; admissible-handler environment validation)
+- Runtime fragment: `scripts/lib/packet-capsule.js` — **declared** `closure:` metadata plus checksum integrity. It does **not** evaluate `Closed(p,h,E)`, HandlerProfile compatibility, environment satisfiability, or materializability. Declared closure metadata ≠ verified Packet Closure.
 
 ChatGPT’s four-way split **matches** the closure paper’s table (§13):
 

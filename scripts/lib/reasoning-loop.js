@@ -1,18 +1,17 @@
 /**
- * Candidate core reasoning loop (not yet wired to Guide / Agent JHN).
+ * Experimental required-event policy for the inner reasoning cycle (Level 3).
  *
- * Analogy:
- *   JS event loop  →  this reasoning loop
- *   events         →  reasoning events
- *   event handlers →  reasoning handlers
+ * This kernel borrows event-dispatch techniques from event-loop runtimes.
+ * It is NOT the architectural analogue of the JavaScript Event Loop.
+ * That role belongs to the outer COP completion/wake runtime (Level 1).
  *
- * The kernel is the scheduler. A model is a handler for *judgment* events,
- * never the thing that chooses which event kind runs next.
+ * The kernel is the inner scheduler of required cognitive events.
+ * A model is a handler for judgment events, never the thing that chooses
+ * whether orientation / living-evidence / prologue may be skipped.
  *
  * Prologue: instructions/AGENTS.shared.md (read order + invariants).
  *
- * This module does not import WhatsApp, Guide, or OpenAI. Registering
- * those as handlers is a later adapter step.
+ * This module does not import WhatsApp, Guide, or OpenAI.
  */
 
 export const REASONING_EVENT_SCHEMA = "cogentia.reasoning_event/v1";
@@ -54,13 +53,14 @@ export const CURRENT_LOOPS = Object.freeze({
     scheduler: "reasoner.nextStep(state)",
     ticks: "while budget: model proposes step → kernel authorizes/executes → observation",
     defect:
-      "the model is the event loop. Bounds and authorization are real; which *kind* of reasoning happens next is not a runtime event, it is an LLM choice among reason|capability_call|answer|clarify|stop",
+      "the model chooses the next step kind. Bounds and authorization are real; required cognition (orientation, living evidence) is not kernel-discharged before unrestricted nextStep",
   }),
 });
 
 /**
- * Phases are the JS event-loop phases of this kernel.
+ * Dispatch phases for required inner-cycle events.
  * Lower index runs first. A blocking event in an earlier phase starves later ones.
+ * These are not COP Scheduler phases and not JS event-loop phases.
  */
 export const PHASES = Object.freeze([
   "prologue",
