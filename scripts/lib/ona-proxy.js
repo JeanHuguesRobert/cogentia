@@ -34,6 +34,52 @@ export function hasOpsReadAuth(req, env = process.env) {
   return left.length === right.length && left.length > 0 && timingSafeEqual(left, right);
 }
 
+export function socketRemoteIp(req) {
+  let ip = String(req.socket?.remoteAddress || req.connection?.remoteAddress || "").trim();
+  if (ip.startsWith("::ffff:")) ip = ip.slice(7);
+  return ip;
+}
+
+export function isTailscaleIp(ip) {
+  const value = String(ip || "").trim().toLowerCase();
+  if (!value) return false;
+  const v4 = value.startsWith("::ffff:") ? value.slice(7) : value;
+  const parts = v4.split(".");
+  if (parts.length === 4) {
+    const a = Number(parts[0]);
+    const b = Number(parts[1]);
+    return a === 100 && b >= 64 && b <= 127 && parts.every(p => /^\d+$/.test(p) && Number(p) <= 255);
+  }
+  const v6 = value.replace(/^\[|\]$/g, "");
+  return v6 === "::1" ? false : v6.startsWith("fd7a:115c:a1e0:");
+}
+
+export function isLoopbackIp(ip) {
+  const value = String(ip || "").trim().toLowerCase();
+  return value === "127.0.0.1" || value === "::1" || value === "localhost";
+}
+
+/**
+ * True when the TCP peer is on the Tailscale mesh (CGNAT 100.64/10 or
+ * Tailscale ULA). X-Forwarded-For is honoured only from loopback (Caddy on
+ * the same host). Public HTTPS visitors stay unauthenticated.
+ */
+export function isMeshReadClient(req) {
+  const sock = socketRemoteIp(req);
+  if (isTailscaleIp(sock)) return true;
+  if (!isLoopbackIp(sock)) return false;
+  const forwarded = String(req.headers?.["x-forwarded-for"] || "").split(",")[0].trim();
+  const fwd = forwarded.startsWith("::ffff:") ? forwarded.slice(7) : forwarded;
+  return isTailscaleIp(fwd);
+}
+
+export function hasOpsNodeReadAccess(req, env = process.env) {
+  if (hasOpsReadAuth(req, env)) return true;
+  const method = String(req.method || "GET").toUpperCase();
+  if (method !== "GET") return false;
+  return isMeshReadClient(req);
+}
+
 export function decodeNodeId(encoded) {
   try {
     return decodeURIComponent(String(encoded || "").trim());
@@ -157,7 +203,7 @@ export function resolveOnaAttractorForNode(blackboardStore, nodeId, options = {}
 
 export async function proxyOnaRequest(resolved, onaPath, options = {}) {
   const token = String(options.token || onaReadToken(options.env)).trim();
-  if (!token) {
+  if (!token && !options.allowUnauthedGet) {
     return { ok: false, error: "missing_ona_read_token" };
   }
 
@@ -175,7 +221,7 @@ export async function proxyOnaRequest(resolved, onaPath, options = {}) {
       method: "GET",
       headers: {
         Accept: "application/json",
-        Authorization: `Bearer ${token}`,
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
       },
       signal: AbortSignal.timeout(Number(options.timeoutMs || 10_000)),
     });
@@ -255,7 +301,7 @@ export async function handleOpsNodeProxyRequest(req, blackboardStore, options = 
     return { status: 404, body: { ok: false, error: parsed.error } };
   }
 
-  if (!hasOpsReadAuth(req, options.env)) {
+  if (!hasOpsNodeReadAccess(req, options.env)) {
     return { status: 401, body: { ok: false, error: "unauthorized_ops_read" } };
   }
 
@@ -264,7 +310,11 @@ export async function handleOpsNodeProxyRequest(req, blackboardStore, options = 
     return { status: 404, body: resolved };
   }
 
-  const proxied = await proxyOnaRequest(resolved, parsed.ona_path, options);
+  const meshGet = String(req.method || "GET").toUpperCase() === "GET" && isMeshReadClient(req);
+  const proxied = await proxyOnaRequest(resolved, parsed.ona_path, {
+    ...options,
+    allowUnauthedGet: meshGet,
+  });
   if (!proxied.ok) {
     const status = proxied.error === "missing_ona_read_token"
       ? 503
