@@ -10,6 +10,7 @@
 export const F2A_FACT_PROTOCOL = "cogentia.f2a_fact/v1";
 export const F2A_FRONTIER_PROTOCOL = "cogentia.continuation_frontier.f2a/v1";
 export const CHOICE_POINT_MODE_OR = "OR";
+export const CHOICE_POINT_MODE_AND = "AND";
 
 export function createFactLog(seed = []) {
   const facts = [];
@@ -17,6 +18,7 @@ export function createFactLog(seed = []) {
     append(type, payload = {}) {
       const fact = Object.freeze({
         protocol: F2A_FACT_PROTOCOL,
+        id: `evt-${facts.length + 1}`,
         seq: facts.length + 1,
         type: String(type),
         payload: Object.freeze({ ...payload }),
@@ -61,11 +63,22 @@ export function continuationShaped(fields = {}) {
 }
 
 export function openOrChoicePoint(log, { id, parentRef, branches } = {}) {
+  return openCompositeChoicePoint(log, { id, parentRef, branches, mode: CHOICE_POINT_MODE_OR });
+}
+
+export function openAndChoicePoint(log, { id, parentRef, branches, quorum = null } = {}) {
+  return openCompositeChoicePoint(log, { id, parentRef, branches, mode: CHOICE_POINT_MODE_AND, quorum });
+}
+
+export function openCompositeChoicePoint(log, { id, parentRef, branches, mode = CHOICE_POINT_MODE_OR, quorum = null } = {}) {
   const choicePointId = String(id || "").trim();
   if (!choicePointId) throw new Error("choice point id is required");
   if (!Array.isArray(branches) || branches.length < 2) {
-    throw new Error("OR choice point requires at least two branches");
+    throw new Error("choice point requires at least two branches");
   }
+  if (![CHOICE_POINT_MODE_OR, CHOICE_POINT_MODE_AND].includes(mode)) throw new Error(`unsupported choice point mode: ${mode}`);
+  const requiredBranches = quorum == null ? branches.length : Number(quorum);
+  if (!Number.isInteger(requiredBranches) || requiredBranches < 1 || requiredBranches > branches.length) throw new Error("quorum must be within branch count");
   const branchRefs = [];
   for (const branch of branches) {
     const continuation = continuationShaped({ ...branch, parentRef });
@@ -74,11 +87,46 @@ export function openOrChoicePoint(log, { id, parentRef, branches } = {}) {
   }
   log.append("choice_point_opened", {
     id: choicePointId,
-    mode: CHOICE_POINT_MODE_OR,
+    mode,
     parentRef: parentRef || null,
     branchRefs,
+    quorum: requiredBranches,
   });
   return projectFrontier(log.facts());
+}
+
+/** Publish a receipt once; it becomes immutable causal evidence, not copied branch state. */
+export function publishVerifiedEvidence(log, { id, producerRef = null, receipt } = {}) {
+  if (!receipt || typeof receipt !== "object") throw new Error("verified evidence receipt is required");
+  const evidenceId = String(id || "").trim() || `evidence-${log.facts().length + 1}`;
+  const fact = log.append("evidence_verified", { evidenceId, producerRef, receipt: Object.freeze({ ...receipt }) });
+  return { evidenceId, eventId: fact.id };
+}
+
+/** Share evidence by causal reference. Recipients never receive a copied receipt. */
+export function shareEvidence(log, { evidenceId, recipientRefs } = {}) {
+  const frontier = projectFrontier(log.facts());
+  const evidence = frontier.evidence[String(evidenceId || "")];
+  if (!evidence) throw new Error(`unknown evidence: ${evidenceId}`);
+  const recipients = Array.isArray(recipientRefs) ? recipientRefs.map(String) : [];
+  if (!recipients.length || recipients.some((ref) => !frontier.continuations[ref])) throw new Error("known evidence recipients are required");
+  return log.append("evidence_shared", { evidenceId: evidence.id, recipientRefs: recipients, parentEventIds: [evidence.eventId] });
+}
+
+/** Record a deterministic AND/quorum synthesis without erasing failed branch residue. */
+export function joinChoicePoint(log, { choicePointId, synthesis = null, includeResidueRefs = [] } = {}) {
+  const frontier = projectFrontier(log.facts());
+  const choicePoint = frontier.choicePoints.find((item) => item.id === choicePointId);
+  if (!choicePoint || choicePoint.mode !== CHOICE_POINT_MODE_AND) throw new Error("AND choice point is required");
+  const succeeded = choicePoint.branches.filter((branch) => branch.lastRunOk === true);
+  if (succeeded.length < choicePoint.quorum) throw new Error("AND/quorum convergence is not yet satisfied");
+  const residueRefs = [...new Set(includeResidueRefs.map(String))].filter((ref) => choicePoint.branches.some((branch) => branch.continuationRef === ref));
+  return log.append("join_completed", {
+    choicePointId,
+    succeededRefs: succeeded.map((branch) => branch.continuationRef),
+    residueRefs,
+    synthesis,
+  });
 }
 
 export function allocateExplicit(log, { choicePointId, fund } = {}) {
@@ -130,12 +178,13 @@ export async function executeFundedBranch(log, { continuationRef, execute } = {}
     capabilityCalls,
     stepCount,
   });
-  if (result?.ok) {
+  if (result?.ok && located.choicePoint.mode === CHOICE_POINT_MODE_OR) {
     log.append("or_objective_satisfied", {
       choicePointId: located.choicePoint.id,
       by: continuationRef,
     });
   } else {
+    if (result?.ok) return { result, frontier: projectFrontier(log.facts()) };
     log.append("branch_exhausted", {
       continuationRef,
       choicePointId: located.choicePoint.id,
@@ -152,6 +201,9 @@ export function projectFrontier(facts = []) {
   const execution = {};
   const viabilityOverride = {};
   const resolvedBy = {};
+  const evidence = {};
+  const sharedEvidenceByContinuation = {};
+  const joins = {};
 
   for (const fact of facts) {
     const payload = fact.payload || {};
@@ -171,6 +223,7 @@ export function projectFrontier(facts = []) {
           mode: payload.mode,
           parentRef: payload.parentRef,
           branchRefs: [...(payload.branchRefs || [])],
+          quorum: payload.quorum || (payload.branchRefs || []).length,
         });
         for (const ref of payload.branchRefs || []) {
           if (allocationByContinuation[ref] === undefined) allocationByContinuation[ref] = "unfunded";
@@ -188,8 +241,21 @@ export function projectFrontier(facts = []) {
         acc.costUnits += Number(payload.costUnits) || 0;
         acc.capabilityCalls += Number(payload.capabilityCalls) || 0;
         execution[payload.continuationRef] = acc;
+        acc.lastRunOk = payload.ok === true;
         break;
       }
+      case "evidence_verified":
+        evidence[payload.evidenceId] = { id: payload.evidenceId, eventId: fact.id, producerRef: payload.producerRef || null, receipt: payload.receipt };
+        break;
+      case "evidence_shared":
+        for (const ref of payload.recipientRefs || []) {
+          if (!sharedEvidenceByContinuation[ref]) sharedEvidenceByContinuation[ref] = [];
+          sharedEvidenceByContinuation[ref].push({ evidenceId: payload.evidenceId, parentEventIds: [...(payload.parentEventIds || [])] });
+        }
+        break;
+      case "join_completed":
+        joins[payload.choicePointId] = { succeededRefs: [...(payload.succeededRefs || [])], residueRefs: [...(payload.residueRefs || [])], synthesis: payload.synthesis || null };
+        break;
       case "or_objective_satisfied": {
         resolvedBy[payload.choicePointId] = payload.by;
         const choicePoint = choicePointsById.get(payload.choicePointId);
@@ -213,11 +279,14 @@ export function projectFrontier(facts = []) {
   return {
     protocol: F2A_FRONTIER_PROTOCOL,
     continuations,
+    evidence,
     choicePoints: [...choicePointsById.values()].map((choicePoint) => ({
       id: choicePoint.id,
       mode: choicePoint.mode,
       parentRef: choicePoint.parentRef,
+      quorum: choicePoint.quorum,
       resolvedBy: resolvedBy[choicePoint.id] || null,
+      convergence: joins[choicePoint.id] || null,
       branches: choicePoint.branchRefs.map((ref) => ({
         continuationRef: ref,
         readiness: "runnable",
@@ -226,6 +295,8 @@ export function projectFrontier(facts = []) {
         executionCount: execution[ref]?.count || 0,
         costUnits: execution[ref]?.costUnits || 0,
         capabilityCalls: execution[ref]?.capabilityCalls || 0,
+        lastRunOk: execution[ref]?.lastRunOk ?? null,
+        sharedEvidence: sharedEvidenceByContinuation[ref] || [],
       })),
     })),
   };
