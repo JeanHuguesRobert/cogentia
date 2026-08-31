@@ -378,7 +378,7 @@ server.listen(port, host, () => {
   console.error("Guide: POST /guide/chat, GET /guide/health");
   console.error("JHN OpenAI: GET /guide/v1/models, POST /guide/v1/chat/completions (also /twin/jhn/v1/*)");
   console.error("Blackboard: GET /ops/blackboard, POST /ops/blackboard/upsert");
-  console.error("Ops: GET /ops/status, GET /ops/dashboard, POST /ops/route/action, GET /ops/node/:node_id/{status,drift,soma/object,soma/vocabulary}");
+  console.error("Ops: GET /ops/status, GET /ops/dashboard, POST /ops/route/action, GET /ops/node/:node_id/{status,drift,calendar,soma/object,soma/vocabulary}");
   console.error("Edge: POST /ops/edge/trap, GET /ops/edge/traps (trap-directed polling)");
   console.error("COP Attractor: POST /cop/packet, GET /cop/health, GET /cop/capabilities (mutualized FractaNode hub)");
 });

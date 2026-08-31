@@ -42,9 +42,17 @@ export function decodeNodeId(encoded) {
   }
 }
 
+const OPS_NODE_READ_PATHS = {
+  status: "/node/status",
+  drift: "/node/drift",
+  calendar: "/node/calendar",
+  "soma/object": "/soma/object",
+  "soma/vocabulary": "/soma/vocabulary",
+};
+
 export function parseOpsNodePath(pathname = "") {
   const match = String(pathname || "").match(
-    /^\/ops\/node\/([^/]+)\/(status|drift|soma\/object|soma\/vocabulary)$/,
+    /^\/ops\/node\/([^/]+)\/(status|drift|calendar|soma\/object|soma\/vocabulary)$/,
   );
   if (!match) {
     return { ok: false, error: "invalid_ops_node_path" };
@@ -60,12 +68,7 @@ export function parseOpsNodePath(pathname = "") {
     encoded_node_id: match[1],
     node_id: nodeId,
     suffix: match[2],
-    ona_path: {
-      status: "/node/status",
-      drift: "/node/drift",
-      "soma/object": "/soma/object",
-      "soma/vocabulary": "/soma/vocabulary",
-    }[match[2]],
+    ona_path: OPS_NODE_READ_PATHS[match[2]],
   };
 }
 

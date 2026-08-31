@@ -29,7 +29,12 @@ assert.equal(somaParsed.ok, true);
 assert.equal(somaParsed.node_id, "resource://fracta");
 assert.equal(somaParsed.ona_path, "/soma/object");
 
+const calendarParsed = parseOpsNodePath("/ops/node/resource%3A%2F%2Ffracta/calendar");
+assert.equal(calendarParsed.ok, true);
+assert.equal(calendarParsed.ona_path, "/node/calendar");
+
 assert.equal(parseOpsNodePath("/ops/node/bad/path").ok, false);
+assert.equal(parseOpsNodePath("/ops/node/resource%3A%2F%2Ffracta/calendar/schedule").ok, false);
 
 const env = {
   COGENTIA_OPS_READ_TOKEN: "ops-read-token",
@@ -67,6 +72,16 @@ const onaServer = http.createServer((req, res) => {
       node_id: "resource://fracta",
       drift: [],
       next_actions: [],
+    }));
+    return;
+  }
+  if (req.method === "GET" && req.url === "/node/calendar") {
+    res.writeHead(200, { "Content-Type": "application/json" });
+    res.end(JSON.stringify({
+      schema: "operium.calendar.projection.v1",
+      not_an_executor: true,
+      items: [],
+      summary: { total: 0 },
     }));
     return;
   }
@@ -179,6 +194,19 @@ const okSoma = await handleOpsNodeProxyRequest(
 assert.equal(okSoma.status, 200);
 assert.equal(okSoma.body.schema, "soma.object.v0");
 assert.equal(okSoma.body.id, "resource://fracta");
+
+const okCalendar = await handleOpsNodeProxyRequest(
+  {
+    url: "/ops/node/resource%3A%2F%2Ffracta/calendar",
+    headers: { authorization: "Bearer ops-read-token" },
+  },
+  store,
+  { env, timeoutMs: 5000 },
+);
+assert.equal(okCalendar.status, 200);
+assert.equal(okCalendar.body.schema, "operium.calendar.projection.v1");
+assert.equal(okCalendar.body.not_an_executor, true);
+assert.equal(okCalendar.body.proxy.ona_path, "/node/calendar");
 
 await new Promise((resolve) => onaServer.close(resolve));
 fs.rmSync(storeDir, { recursive: true, force: true });
