@@ -59,17 +59,20 @@ export function createGovernedHarness(options = {}) {
       };
       const allowed = new Set(normalizeNames(authorization.allowedCapabilities));
       const confirmed = new Set(normalizeNames(authorization.confirmedCapabilities));
+      const init = options.initialState || authorization.initialState || {};
       const state = {
-        input,
-        observations: [],
-        steps: [],
-        requiredEventReceipts: [],
-        sequence: 0,
-        requiredEventCount: 0,
-        capabilityCalls: 0,
-        costUnits: 0,
+        input: init.input || input,
+        observations: Array.isArray(init.observations) ? [...init.observations] : [],
+        steps: Array.isArray(init.steps) ? [...init.steps] : [],
+        requiredEventReceipts: Array.isArray(init.requiredEventReceipts) ? [...init.requiredEventReceipts] : [],
+        sequence: typeof init.sequence === "number" ? init.sequence : 0,
+        requiredEventCount: typeof init.requiredEventCount === "number" ? init.requiredEventCount : (init.requiredEventReceipts ? init.requiredEventReceipts.length : 0),
+        capabilityCalls: typeof init.capabilityCalls === "number" ? init.capabilityCalls : 0,
+        costUnits: typeof init.costUnits === "number" ? init.costUnits : 0,
       };
-      const pendingRequired = requiredEventsForTurn(input, options);
+      const pendingRequired = (state.sequence > 0 || (state.requiredEventReceipts && state.requiredEventReceipts.length > 0))
+        ? []
+        : requiredEventsForTurn(input, options);
       const capabilityFingerprints = [];
       const invokeCtx = {
         registry, bounds, allowed, confirmed, authorization, turnInput: input, clock, noProgressHeuristic, capabilityFingerprints,
