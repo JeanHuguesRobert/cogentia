@@ -11,7 +11,10 @@ import {
 import {
   decodeNodeId,
   handleOpsNodeProxyRequest,
+  hasOpsNodeReadAccess,
   hasOpsReadAuth,
+  isMeshReadClient,
+  isTailscaleIp,
   parseOpsNodePath,
   proxyOnaRequest,
   resolveOnaAttractorForNode,
@@ -42,6 +45,30 @@ const env = {
 };
 assert.equal(hasOpsReadAuth({ headers: { authorization: "Bearer ops-read-token" } }, env), true);
 assert.equal(hasOpsReadAuth({ headers: { authorization: "Bearer wrong" } }, env), false);
+assert.equal(isTailscaleIp("100.91.12.74"), true);
+assert.equal(isTailscaleIp("100.63.255.255"), false);
+assert.equal(isTailscaleIp("8.8.8.8"), false);
+assert.equal(isTailscaleIp("fd7a:115c:a1e0:1::1"), true);
+assert.equal(isMeshReadClient({ socket: { remoteAddress: "100.91.12.74" }, headers: {} }), true);
+assert.equal(isMeshReadClient({ socket: { remoteAddress: "8.8.8.8" }, headers: {} }), false);
+assert.equal(isMeshReadClient({
+  socket: { remoteAddress: "127.0.0.1" },
+  headers: { "x-forwarded-for": "100.91.12.74" },
+}), true);
+assert.equal(isMeshReadClient({
+  socket: { remoteAddress: "8.8.8.8" },
+  headers: { "x-forwarded-for": "100.91.12.74" },
+}), false, "public clients cannot spoof Tailscale via X-Forwarded-For");
+assert.equal(hasOpsNodeReadAccess({
+  method: "GET",
+  socket: { remoteAddress: "100.91.12.74" },
+  headers: {},
+}, env), true);
+assert.equal(hasOpsNodeReadAccess({
+  method: "GET",
+  socket: { remoteAddress: "8.8.8.8" },
+  headers: {},
+}, env), false);
 
 const storeDir = fs.mkdtempSync(path.join(os.tmpdir(), "cogentia-ona-proxy-"));
 const store = createBlackboardStore({ storePath: path.join(storeDir, "blackboard.json") });
@@ -142,12 +169,25 @@ assert.equal(proxied.body.schema, "operium.node.status.v1");
 assert.equal(proxied.proxy.routed_via, "ona_proxy");
 
 const unauthorized = await handleOpsNodeProxyRequest(
-  { url: "/ops/node/resource%3A%2F%2Ffracta/status", headers: {} },
+  { url: "/ops/node/resource%3A%2F%2Ffracta/status", headers: {}, socket: { remoteAddress: "8.8.8.8" } },
   store,
   { env },
 );
 assert.equal(unauthorized.status, 401);
 assert.equal(unauthorized.body.error, "unauthorized_ops_read");
+
+const meshCalendar = await handleOpsNodeProxyRequest(
+  {
+    method: "GET",
+    url: "/ops/node/resource%3A%2F%2Ffracta/calendar",
+    headers: {},
+    socket: { remoteAddress: "100.91.12.74" },
+  },
+  store,
+  { env, timeoutMs: 5000 },
+);
+assert.equal(meshCalendar.status, 200);
+assert.equal(meshCalendar.body.schema, "operium.calendar.projection.v1");
 
 const missing = await handleOpsNodeProxyRequest(
   {
