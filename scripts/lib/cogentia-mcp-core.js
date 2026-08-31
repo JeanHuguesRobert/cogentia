@@ -67,6 +67,7 @@ export const MUTATE_TOOLS = new Set([
  */
 export const PRIVATE_READ_TOOLS = new Set([
   "cogentia_config_hygiene_audit",
+  "operium_calendar_list",
 ]);
 
 export const TOOLS = [
@@ -783,6 +784,23 @@ export const TOOLS = [
     description: "Return the live CLI/MCP/skill/pattern capability inventory (maximum visible set).",
     inputSchema: { type: "object", properties: {}, additionalProperties: false },
   },
+  {
+    name: "operium_calendar_list",
+    description:
+      "FractaCalendar projection for one Operium node (calendar.list). Same schema as GET /node/calendar. Private-read: not on the anonymous public catalogue. Does not schedule or tick. ACP is not a calendar transport.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        node_id: {
+          type: "string",
+          minLength: 1,
+          description: "Node resource id, e.g. resource://fracta",
+        },
+      },
+      required: ["node_id"],
+      additionalProperties: false,
+    },
+  },
 ];
 
 async function resolveResourceRead(uri, env) {
@@ -810,7 +828,27 @@ function parseAllowMutate(env, view) {
   return raw === "1" || raw === "true" || raw === "yes";
 }
 
-export function createMcpCore(env = process.env) {
+async function listOperiumCalendarViaOna(nodeId, env, timeoutMs) {
+  const base = String(env.ONA_URL || "http://127.0.0.1:8794").replace(/\/$/, "");
+  const token = String(env.ONA_READ_TOKEN || env.ONA_ADMIN_TOKEN || "").trim();
+  const headers = { Accept: "application/json" };
+  if (token) headers.Authorization = `Bearer ${token}`;
+  const url = `${base}/node/calendar`;
+  const response = await fetch(url, {
+    method: "GET",
+    headers,
+    signal: AbortSignal.timeout(timeoutMs),
+  });
+  const body = await response.json().catch(() => ({ ok: false, error: "invalid_json" }));
+  if (!response.ok) {
+    const err = new Error(body.error || `ona_calendar_http_${response.status}`);
+    err.error_class = body.error || "ona_calendar_failed";
+    throw err;
+  }
+  return { ...body, proxy: { node_id: nodeId, routed_via: "ona_direct" } };
+}
+
+export function createMcpCore(env = process.env, extras = {}) {
   const daemonUrl = validateDaemonUrl(env.COGENTIA_DAEMON_URL || "http://127.0.0.1:8790");
   // Phase 4 inventory-backed tools need headroom; Fracta Guide already uses 90s.
   const requestTimeoutMs = boundedInteger(env.COGENTIA_MCP_TIMEOUT_MS, 60000, 1000, 120000);
@@ -1568,6 +1606,13 @@ export function createMcpCore(env = process.env) {
       case "cogentia_cli_catalog": {
         const { buildCapabilityInventory } = await import("./capability-inventory.js");
         return buildCapabilityInventory({ env });
+      }
+      case "operium_calendar_list": {
+        requireString(args.node_id, "node_id");
+        if (typeof extras.listOperiumCalendar === "function") {
+          return extras.listOperiumCalendar(args);
+        }
+        return listOperiumCalendarViaOna(args.node_id, env, requestTimeoutMs);
       }
       default:
         throw new Error(`Unknown tool: ${name}`);

@@ -138,6 +138,18 @@ export const LEGACY_SYMMETRY_CAPABILITIES = [
       cop_packet: { available: true, target: "postings: debit/credit balanced" },
     },
   },
+  {
+    name: "operium.calendar.list",
+    category: "ops",
+    description: "FractaCalendar projection of temporal obligations (read-only; not an executor)",
+    projections: {
+      human_cli: { available: true, target: "operium calendar list / operium node calendar" },
+      human_web_ux: { available: true, target: "La Nasa node pack (mesh/auth); public /ops/console stays empty of node calendar" },
+      machine_mcp: { available: true, target: "operium_calendar_list (private-read / JHN)" },
+      machine_api_v1: { available: true, target: "GET /node/calendar and GET /ops/node/:id/calendar" },
+      cop_packet: { available: true, target: "cop/node.query.v1 query=calendar" },
+    },
+  },
 ];
 
 function mcpProjection(toolName, resourceUri) {

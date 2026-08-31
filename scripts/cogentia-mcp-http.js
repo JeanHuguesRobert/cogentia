@@ -36,7 +36,7 @@ import {
   routeActionThroughGateway,
 } from "./lib/agent-gateway-route.js";
 import { createAgentGatewayClient } from "./lib/agent-gateway-client.js";
-import { handleOpsNodeProxyRequest } from "./lib/ona-proxy.js";
+import { handleOpsNodeProxyRequest, opsReadToken } from "./lib/ona-proxy.js";
 import { handleEdgeTrapPost, handleEdgeTrapsGet } from "./lib/edge-trap-ops.js";
 import { createJhnOpenAiSurface, isTwinOpenAiPath } from "./lib/jhn-openai-surface.js";
 import {
@@ -68,8 +68,24 @@ loadOptionalEnvFiles([
   process.env.COGENTIA_ENV_FILE,
 ]);
 
-const core = createRegistryAwareMcpCore();
 const blackboard = createBlackboardStore();
+const core = createRegistryAwareMcpCore(process.env, {
+  listOperiumCalendar: async (args) => {
+    const encoded = encodeURIComponent(String(args.node_id || "").trim());
+    const result = await handleOpsNodeProxyRequest({
+      url: `/ops/node/${encoded}/calendar`,
+      headers: { authorization: `Bearer ${opsReadToken()}` },
+    }, blackboard, {
+      timeoutMs: boundedInteger(process.env.ONA_PROXY_TIMEOUT_MS, 10_000, 1000, 60_000),
+    });
+    if (result.status >= 400) {
+      const err = new Error(result.body?.error || "calendar_proxy_failed");
+      err.error_class = result.body?.error || "calendar_proxy_failed";
+      throw err;
+    }
+    return result.body;
+  },
+});
 const providerCircuitBreaker = createProviderCircuitBreaker();
 const semanticAnswerCache = createSemanticAnswerCache();
 const port = boundedInteger(process.env.PORT || process.env.COGENTIA_MCP_PORT, 8791, 1, 65535);

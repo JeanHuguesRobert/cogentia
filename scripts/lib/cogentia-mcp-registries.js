@@ -102,8 +102,8 @@ function mcpError(toolName, error, message, view) {
   };
 }
 
-export function createRegistryAwareMcpCore(env = process.env) {
-  const base = createMcpCore(env);
+export function createRegistryAwareMcpCore(env = process.env, extras = {}) {
+  const base = createMcpCore(env, extras);
   const daemonUrl = String(env.COGENTIA_DAEMON_URL || "http://127.0.0.1:8790");
   const timeoutMs = Math.max(1000, Math.min(120000, Number(env.COGENTIA_MCP_TIMEOUT_MS || 60000)));
 
