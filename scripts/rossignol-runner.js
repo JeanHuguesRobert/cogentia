@@ -25,6 +25,8 @@ import {
   createWorkloadMeasurementLog,
   project90DayEnvelopes
 } from "./lib/rossignol-watch.js";
+import { fetchAllLiveCorsicaFeeds } from "./lib/corsica-live-media-feed.js";
+import { recordArticlesToDocumentaryBase } from "./lib/campaign-documentary-base.js";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const outputDir = path.join(root, ".cogentia", "rossignol");
@@ -86,8 +88,45 @@ export async function runRossignolPipeline(options = {}) {
   const streamStats = {};
 
   for (const streamName of streamsToRun) {
-    const rawItems = DEFAULT_WATCH_FEEDS[streamName] || [];
-    console.log(`📡 [Flux : ${streamName.toUpperCase()}] Ingestion de ${rawItems.length} sources publiques primaires...`);
+    let rawItems = [...(DEFAULT_WATCH_FEEDS[streamName] || [])];
+
+    // Intégration des flux médias en direct pour la Corse (si hors smoke test)
+    if (streamName === "corsica" && !options.smoke) {
+      try {
+        console.log(`📡 [Flux : CORSICA] Interrogation en direct des médias insulaires (CNI, France 3, Alta Frequenza)...`);
+        const liveItems = await fetchAllLiveCorsicaFeeds(5000);
+        const relevantLive = liveItems.filter(i => i.is_senate_relevant);
+
+        // Enregistrement idempotent dans la base documentaire du Corpus
+        const docResult = recordArticlesToDocumentaryBase(relevantLive);
+        if (docResult.newly_added_count > 0) {
+          console.log(`   📝 [Base Documentaire Corpus] ${docResult.newly_added_count} nouvelles dépêches consignées dans : ${path.basename(docResult.daily_file)}`);
+        } else {
+          console.log(`   ✓ [Base Documentaire Corpus] 0 nouvelle dépêche (${docResult.skipped_count} déjà indexées — idempotence respectée).`);
+        }
+
+        // Conversion des dépêches en format de candidat Rossignol
+        for (const item of relevantLive.slice(0, 5)) {
+          rawItems.push({
+            id: `live-${Date.now()}-${item.matched_keywords?.[0] || "media"}`,
+            category: "media_live",
+            source_name: item.source_feed,
+            url: item.url,
+            title: item.title,
+            content: `${item.summary} (Mots-clés: ${(item.matched_keywords || []).join(", ")})`,
+            provenance: item.url,
+            date: item.published_at || new Date().toISOString(),
+            campaign_axis: "Actualité de campagne en direct",
+            target_electorate: "Grands électeurs & opinion insulaire",
+            key_actors: ["Médias régionaux", "Maires", "Candidats"]
+          });
+        }
+      } catch (err) {
+        console.warn(`   ⚠️ Erreur lors de l'ingestion des flux live : ${err.message}`);
+      }
+    } else {
+      console.log(`📡 [Flux : ${streamName.toUpperCase()}] Ingestion de ${rawItems.length} sources publiques primaires...`);
+    }
 
     // 1. Triage & Déduplication
     const { candidates, duplicatesCount } = triageAndDeduplicate(rawItems);
