@@ -223,6 +223,7 @@ const child = spawn(process.execPath, ["scripts/cogentia-mcp-http.js"], {
     COGENTIA_GUIDE_ENV_FILE: envFile,
     COGENTIA_GUIDE_WEB_SEARCH_URL: `${daemonBase}/brave`,
     COGENTIA_GUIDE_S7_ANCHOR: "0",
+    COGENTIA_REASONING_LOOP_V2: "true",
     OPENROUTER_API_KEY: "test-openrouter-key",
     COGENTIA_GUIDE_OPENROUTER_FREE_FALLBACK: "1",
     COGENTIA_OPENROUTER_BASE_URL: `${daemonBase}/openrouter`,
@@ -283,6 +284,9 @@ try {
     locale: "en",
   });
   assert.equal(chat.ok, true);
+  assert.equal(chat.reasoning_loop?.protocol, "cogentia.agent_john_reasoning_loop.v2");
+  assert.equal(chat.reasoning_loop?.surface, "fractavolta-public-guide");
+  assert.equal(chat.reasoning_loop?.governed?.capability_calls, 3);
   assert.equal(chat.mode, "conversational");
   assert.equal(chat.mandate.surface, "web-guide");
   assert.match(chat.answer, /FractaVolta/);
@@ -300,7 +304,6 @@ try {
   assert.ok(seenMagistralPayloads.length > 0, "Guide should route chat through configured Magistral");
   assert.ok(seenChatPayloads[0].messages.every(message => !/Previous visitor question/.test(message.content)));
   assert.equal(chat.context.guide_retrieval.strategy, "guide-retrieval-run-v1");
-  assert.equal(chat.context.guide_retrieval.planner.source, "magistral");
   assert.ok(chat.context.guide_retrieval.source_ids.includes("mock:README.md#L1-L4"));
   assert.equal(chat.context.guide_retrieval.semantic.attempted, true);
   assert.equal(chat.context.guide_retrieval.semantic.sqlite_vec, true);

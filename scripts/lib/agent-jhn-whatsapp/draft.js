@@ -32,6 +32,7 @@ import {
   recordPacketProviderSpend,
   projectTurnAccounting,
 } from "../cop-surface-accounting.js";
+import { runAgentJohnV2SurfaceTurn } from "../agent-jhn-reasoning-loop-v2.js";
 
 const RETRIEVAL_MODES = new Set(["guide", "librarian", "shadow"]);
 
@@ -119,6 +120,19 @@ export function buildDeterministicDraft(normalized, config, options = {}) {
  * Build a cognitive draft via Guide and/or corpus librarian retrieval.
  */
 export async function buildCognitiveDraft(normalized, config, options = {}) {
+  if (!options.reasoningLoopV2Internal) {
+    const v2 = await runAgentJohnV2SurfaceTurn({
+      text: normalized?.text || "",
+      surface: "agent-john-whatsapp",
+      legacyTurn: () => buildCognitiveDraft(normalized, config, { ...options, reasoningLoopV2Internal: true }),
+      mandate: { id: config.mandate_id || "inherited", mode: "read_public" },
+    });
+    if (v2.used) {
+      const draft = v2.result;
+      return { ...draft, reasoning_loop: v2.reasoning, reasoning_loop_fallback: v2.fallback || undefined };
+    }
+    return v2.result;
+  }
   const userText = (normalized?.text || "").trim();
   if (!userText) return buildDeterministicDraft(normalized, config, options);
 
