@@ -43,8 +43,8 @@ export async function sendCdpCommand(wsUrl, method, params = {}) {
 
     const timeout = setTimeout(() => {
       ws.close();
-      reject(new Error(`CDP command timed out after 6000ms: ${method}`));
-    }, 6000);
+      reject(new Error(`CDP command timed out after 30000ms: ${method}`));
+    }, 30000);
 
     ws.onopen = () => {
       ws.send(JSON.stringify({ id, method, params }));
