@@ -17,6 +17,22 @@ const secretsDir = path.join(root, ".cogentia", "secrets");
 
 export const DEFAULT_CDP_ENDPOINT = process.env.CDP_ENDPOINT || "http://127.0.0.1:9223";
 
+export const X_ACCOUNT_METADATA = {
+  suvranu: {
+    handle: "@suvranu",
+    email: "jean_hugues_robert@yahoo.com",
+    role: "popular_sovereignty_relay"
+  },
+  baronsmariani: {
+    handle: "@baronsmariani",
+    role: "official_statements"
+  },
+  jhr: {
+    handle: "@jhr",
+    role: "historical_authority"
+  }
+};
+
 /**
  * Sends a raw CDP JSON-RPC command over a WebSocket connection.
  */
@@ -106,8 +122,11 @@ export async function extractAndSaveXSession(accountKey = "baronsmariani", endpo
     };
   }
 
+  const meta = X_ACCOUNT_METADATA[accountKey] || {};
   const sessionPayload = {
     account: accountKey,
+    handle: meta.handle || `@${accountKey}`,
+    email: meta.email || null,
     extracted_at: new Date().toISOString(),
     auth_method: "cdp_hosted_browser",
     auth_token: authTokenCookie.value,

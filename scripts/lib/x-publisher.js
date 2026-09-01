@@ -29,6 +29,7 @@ export const X_ACCOUNTS = {
   },
   suvranu: {
     handle: "@suvranu",
+    email: "jean_hugues_robert@yahoo.com",
     role: "popular_sovereignty_relay",
     name: "Suvranu (Souveraineté Populaire)",
     description: "Relais territorial & compléments d'information pour 5000+ comptes corses"
