@@ -4,6 +4,7 @@ import path from "node:path";
 export const F2A_FACT_PROTOCOL = "cogentia.f2a_fact/v1";
 export const F2A_FRONTIER_PROTOCOL = "cogentia.continuation_frontier.f2a/v1";
 export const CHOICE_POINT_MODE_OR = "OR";
+export const CHOICE_POINT_MODE_AND = "AND";
 
 export function createFactLog(seed = []) {
   const facts = [];
@@ -143,6 +144,27 @@ export function openOrChoicePoint(log, { id, parentRef, branches } = {}) {
   return projectFrontier(log.facts());
 }
 
+export function openAndChoicePoint(log, { id, parentRef, branches } = {}) {
+  const choicePointId = String(id || "").trim();
+  if (!choicePointId) throw new Error("choice point id is required");
+  if (!Array.isArray(branches) || branches.length < 2) {
+    throw new Error("AND choice point requires at least two branches");
+  }
+  const branchRefs = [];
+  for (const branch of branches) {
+    const continuation = continuationShaped({ ...branch, parentRef });
+    log.append("continuation_registered", { continuation });
+    branchRefs.push(continuation.id);
+  }
+  log.append("choice_point_opened", {
+    id: choicePointId,
+    mode: CHOICE_POINT_MODE_AND,
+    parentRef: parentRef || null,
+    branchRefs,
+  });
+  return projectFrontier(log.facts());
+}
+
 export function allocateExplicit(log, { choicePointId, fund } = {}) {
   const frontier = projectFrontier(log.facts());
   const choicePoint = frontier.choicePoints.find((item) => item.id === choicePointId);
@@ -193,10 +215,27 @@ export async function executeFundedBranch(log, { continuationRef, execute } = {}
     stepCount,
   });
   if (result?.ok) {
-    log.append("or_objective_satisfied", {
-      choicePointId: located.choicePoint.id,
-      by: continuationRef,
-    });
+    if (located.choicePoint.mode === CHOICE_POINT_MODE_AND) {
+      log.append("and_branch_completed", {
+        continuationRef,
+        choicePointId: located.choicePoint.id,
+        answer: result?.answer,
+        value: result?.value,
+      });
+      const updatedFrontier = projectFrontier(log.facts());
+      const updatedCp = updatedFrontier.choicePoints.find((cp) => cp.id === located.choicePoint.id);
+      if (updatedCp && updatedCp.branches.every((b) => b.viability === "satisfied")) {
+        log.append("and_objective_converged", {
+          choicePointId: located.choicePoint.id,
+          completedBranches: updatedCp.branches.map((b) => b.continuationRef),
+        });
+      }
+    } else {
+      log.append("or_objective_satisfied", {
+        choicePointId: located.choicePoint.id,
+        by: continuationRef,
+      });
+    }
   } else {
     log.append("branch_exhausted", {
       continuationRef,
@@ -214,6 +253,8 @@ export function projectFrontier(facts = []) {
   const execution = {};
   const viabilityOverride = {};
   const resolvedBy = {};
+  const branchResults = {};
+  const convergedById = {};
 
   for (const fact of facts) {
     const payload = fact.payload || {};
@@ -281,6 +322,17 @@ export function projectFrontier(facts = []) {
         }
         break;
       }
+      case "and_branch_completed": {
+        viabilityOverride[payload.continuationRef] = "satisfied";
+        if (payload.answer !== undefined || payload.value !== undefined) {
+          branchResults[payload.continuationRef] = payload.answer ?? payload.value;
+        }
+        break;
+      }
+      case "and_objective_converged": {
+        convergedById[payload.choicePointId] = true;
+        break;
+      }
       case "branch_exhausted": {
         viabilityOverride[payload.continuationRef] = "exhausted";
         break;
@@ -293,12 +345,9 @@ export function projectFrontier(facts = []) {
   return {
     protocol: F2A_FRONTIER_PROTOCOL,
     continuations,
-    choicePoints: [...choicePointsById.values()].map((choicePoint) => ({
-      id: choicePoint.id,
-      mode: choicePoint.mode,
-      parentRef: choicePoint.parentRef,
-      resolvedBy: resolvedBy[choicePoint.id] || null,
-      branches: choicePoint.branchRefs.map((ref) => ({
+    choicePoints: [...choicePointsById.values()].map((choicePoint) => {
+      const isAnd = choicePoint.mode === CHOICE_POINT_MODE_AND;
+      const branches = choicePoint.branchRefs.map((ref) => ({
         continuationRef: ref,
         readiness: "runnable",
         viability: viabilityOverride[ref] || "live",
@@ -308,8 +357,35 @@ export function projectFrontier(facts = []) {
         capabilityCalls: execution[ref]?.capabilityCalls || 0,
         capsulePath: continuations[ref]?.capsulePath || null,
         capsuleSha256: continuations[ref]?.capsuleSha256 || null,
-      })),
-    })),
+        result: branchResults[ref] ?? null,
+      }));
+
+      const completedCount = branches.filter((b) => b.viability === "satisfied").length;
+      const exhaustedCount = branches.filter((b) => b.viability === "exhausted").length;
+      const allCompleted = branches.length > 0 && completedCount === branches.length;
+      const isBlocked = isAnd && exhaustedCount > 0;
+
+      let status = "open";
+      if (isAnd) {
+        if (convergedById[choicePoint.id] || allCompleted) status = "converged";
+        else if (isBlocked) status = "blocked";
+        else if (completedCount > 0) status = "in_progress";
+      } else {
+        if (resolvedBy[choicePoint.id]) status = "resolved";
+        else if (branches.every((b) => b.viability === "exhausted")) status = "exhausted";
+      }
+
+      return {
+        id: choicePoint.id,
+        mode: choicePoint.mode,
+        parentRef: choicePoint.parentRef,
+        status,
+        converged: isAnd ? Boolean(convergedById[choicePoint.id] || allCompleted) : false,
+        resolvedBy: isAnd ? (allCompleted ? choicePoint.branchRefs : null) : (resolvedBy[choicePoint.id] || null),
+        joinResults: isAnd ? branchResults : null,
+        branches,
+      };
+    }),
   };
 }
 
