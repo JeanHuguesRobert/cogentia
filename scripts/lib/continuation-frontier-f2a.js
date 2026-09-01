@@ -1,11 +1,5 @@
-/**
- * F2a: Choice Point + Continuation Frontier projection.
- *
- * Composability experiment only. Not a Cognitive Scheduler, not COP/Core,
- * not Closed(p,h,E). Frontier is a projection over an append-only fact list.
- * Allocation is explicit and separable. The inner executor is injected
- * (F1.2 governed harness in tests) and advances ONE funded continuation.
- */
+import fs from "node:fs";
+import path from "node:path";
 
 export const F2A_FACT_PROTOCOL = "cogentia.f2a_fact/v1";
 export const F2A_FRONTIER_PROTOCOL = "cogentia.continuation_frontier.f2a/v1";
@@ -34,6 +28,72 @@ export function createFactLog(seed = []) {
   return log;
 }
 
+export function createDurableFactLog(filePath, options = {}) {
+  if (!filePath || typeof filePath !== "string") {
+    throw new Error("filePath string is required for durable fact log");
+  }
+  const resolvedPath = path.resolve(filePath);
+  const parentDir = path.dirname(resolvedPath);
+  if (!fs.existsSync(parentDir)) {
+    fs.mkdirSync(parentDir, { recursive: true });
+  }
+
+  const facts = [];
+
+  // Replay existing facts if file exists on disk
+  if (fs.existsSync(resolvedPath)) {
+    const raw = fs.readFileSync(resolvedPath, "utf8");
+    const lines = raw.split(/\r?\n/).filter((line) => line.trim().length > 0);
+    for (const line of lines) {
+      try {
+        const parsed = JSON.parse(line);
+        if (parsed && parsed.protocol === F2A_FACT_PROTOCOL) {
+          facts.push(Object.freeze(parsed));
+        }
+      } catch (err) {
+        if (!options.ignoreCorruptLines) {
+          throw new Error(`Corrupted fact line in ${resolvedPath}: ${err.message}`);
+        }
+      }
+    }
+  }
+
+  const log = {
+    filePath: resolvedPath,
+    append(type, payload = {}) {
+      const fact = Object.freeze({
+        protocol: F2A_FACT_PROTOCOL,
+        seq: facts.length + 1,
+        type: String(type),
+        payload: Object.freeze({ ...payload }),
+      });
+      facts.push(fact);
+      const line = JSON.stringify(fact) + "\n";
+      fs.appendFileSync(resolvedPath, line, "utf8");
+      return fact;
+    },
+    facts() {
+      return facts.slice();
+    },
+    reload() {
+      facts.length = 0;
+      if (fs.existsSync(resolvedPath)) {
+        const raw = fs.readFileSync(resolvedPath, "utf8");
+        const lines = raw.split(/\r?\n/).filter((line) => line.trim().length > 0);
+        for (const line of lines) {
+          const parsed = JSON.parse(line);
+          if (parsed && parsed.protocol === F2A_FACT_PROTOCOL) {
+            facts.push(Object.freeze(parsed));
+          }
+        }
+      }
+      return facts.slice();
+    },
+  };
+
+  return log;
+}
+
 export function continuationShaped(fields = {}) {
   const id = String(fields.id || "").trim();
   if (!id) throw new Error("continuation id is required");
@@ -49,9 +109,11 @@ export function continuationShaped(fields = {}) {
     expected_response: null,
     resume: null,
     payload: fields.payload && typeof fields.payload === "object" ? Object.freeze({ ...fields.payload }) : Object.freeze({}),
-    closed: false,
-    f2a_does_not_test_continuation_closure: true,
-    closure: Object.freeze({
+    capsulePath: fields.capsulePath || null,
+    capsuleSha256: fields.capsuleSha256 || null,
+    closed: Boolean(fields.closed),
+    f2a_does_not_test_continuation_closure: fields.f2a_does_not_test_continuation_closure ?? true,
+    closure: fields.closure ? Object.freeze({ ...fields.closure }) : Object.freeze({
       verified: false,
       closed: false,
       f2a_does_not_test_closed: true,
@@ -182,12 +244,30 @@ export function projectFrontier(facts = []) {
         for (const ref of payload.unfunded || []) allocationByContinuation[ref] = "unfunded";
         break;
       }
+      case "continuation_capsule_stored": {
+        const ref = payload.continuationRef;
+        if (ref && continuations[ref]) {
+          continuations[ref] = {
+            ...continuations[ref],
+            capsulePath: payload.capsulePath || null,
+            capsuleSha256: payload.capsuleSha256 || null,
+          };
+        }
+        break;
+      }
       case "branch_run": {
         const acc = execution[payload.continuationRef] || { count: 0, costUnits: 0, capabilityCalls: 0 };
         acc.count += 1;
         acc.costUnits += Number(payload.costUnits) || 0;
         acc.capabilityCalls += Number(payload.capabilityCalls) || 0;
         execution[payload.continuationRef] = acc;
+        if (payload.capsulePath && continuations[payload.continuationRef]) {
+          continuations[payload.continuationRef] = {
+            ...continuations[payload.continuationRef],
+            capsulePath: payload.capsulePath,
+            capsuleSha256: payload.capsuleSha256 || null,
+          };
+        }
         break;
       }
       case "or_objective_satisfied": {
@@ -226,6 +306,8 @@ export function projectFrontier(facts = []) {
         executionCount: execution[ref]?.count || 0,
         costUnits: execution[ref]?.costUnits || 0,
         capabilityCalls: execution[ref]?.capabilityCalls || 0,
+        capsulePath: continuations[ref]?.capsulePath || null,
+        capsuleSha256: continuations[ref]?.capsuleSha256 || null,
       })),
     })),
   };
