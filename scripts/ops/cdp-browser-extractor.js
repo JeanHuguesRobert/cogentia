@@ -131,7 +131,7 @@ export async function extractAndSaveXSession(accountKey = "baronsmariani", endpo
     auth_method: "cdp_hosted_browser",
     auth_token: authTokenCookie.value,
     ct0: ct0Cookie.value,
-    all_x_cookies: cookies.map(c => ({ name: c.name, domain: c.domain, path: c.path, expires: c.expires }))
+    full_cookies: cookies.map(c => ({ name: c.name, value: c.value, domain: c.domain, path: c.path }))
   };
 
   if (!fs.existsSync(secretsDir)) fs.mkdirSync(secretsDir, { recursive: true });

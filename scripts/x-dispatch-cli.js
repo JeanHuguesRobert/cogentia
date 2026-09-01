@@ -61,11 +61,24 @@ async function main() {
   console.log(`🚀 Initialisation de l'instance Scraper (agent-twitter-client)...`);
   const scraper = new Scraper();
 
-  // Inject cookies (agent-twitter-client uses twitter.com requests under the hood)
-  await scraper.setCookies([
-    `auth_token=${creds.auth_token}; Domain=.twitter.com; Path=/; Secure; SameSite=None`,
-    `ct0=${creds.ct0}; Domain=.twitter.com; Path=/; Secure; SameSite=None`
-  ]);
+  // Inject all cookies if available, or fallback to auth_token/ct0
+  let cookieStrings = [];
+  if (creds.full_cookies && Array.isArray(creds.full_cookies)) {
+    cookieStrings = creds.full_cookies.flatMap(c => {
+      const dTwitter = c.domain.replace(/x\.com$/, "twitter.com");
+      return [
+        `${c.name}=${c.value}; Domain=${dTwitter}; Path=${c.path || '/'}; Secure; SameSite=None`,
+        `${c.name}=${c.value}; Domain=${c.domain}; Path=${c.path || '/'}; Secure; SameSite=None`
+      ];
+    });
+  } else {
+    cookieStrings = [
+      `auth_token=${creds.auth_token}; Domain=.twitter.com; Path=/; Secure; SameSite=None`,
+      `ct0=${creds.ct0}; Domain=.twitter.com; Path=/; Secure; SameSite=None`
+    ];
+  }
+
+  await scraper.setCookies(cookieStrings);
 
   console.log(`📡 Vérification de la session en ligne...`);
   const isLoggedIn = await scraper.isLoggedIn();
