@@ -299,3 +299,61 @@ export async function extractAllConnectedAccounts(endpoint = DEFAULT_CDP_ENDPOIN
 
   return extractedAccounts;
 }
+
+/**
+ * Programmatically switches the active account in the open X tab.
+ */
+export async function switchToAccountInTab(targetHandle, endpoint = DEFAULT_CDP_ENDPOINT) {
+  const cleanHandle = targetHandle.replace(/^@/, "").toLowerCase();
+  const tabs = await listActiveTabs(endpoint);
+  const xTab = tabs.find(t => t.url.includes("x.com") || t.url.includes("twitter.com"));
+  if (!xTab) throw new Error("Aucun onglet X ouvert trouvé.");
+
+  const wsUrl = xTab.webSocketDebuggerUrl;
+
+  const expr = `(async () => {
+    const btn = document.querySelector('[data-testid="SideNav_AccountSwitcher_Button"]');
+    if (!btn) return { success: false, error: "Bouton de sélection de compte introuvable." };
+
+    btn.click();
+    await new Promise(r => setTimeout(r, 700));
+
+    const menu = document.querySelector('[data-testid="AccountSwitcher_Menu"]') || 
+                 document.querySelector('[role="menu"]') ||
+                 document.querySelector('div[data-viewportview="true"]');
+    if (!menu) return { success: false, error: "Le menu de sélection de compte ne s'est pas ouvert." };
+
+    const clickableElements = Array.from(menu.querySelectorAll('a, button, [role="menuitem"], [data-testid*="AccountSwitcher_User"]'));
+    const targetEl = clickableElements.find(el => el.innerText.toLowerCase().includes("@" + ${JSON.stringify(cleanHandle)}));
+
+    if (!targetEl) {
+      const available = clickableElements.map(el => el.innerText).filter(t => t.includes("@"));
+      document.body.click();
+      return { 
+        success: false, 
+        error: "Compte non trouvé dans le sélecteur.",
+        target: "@" + ${JSON.stringify(cleanHandle)},
+        comptes_disponibles_dans_le_menu: available
+      };
+    }
+
+    targetEl.click();
+    await new Promise(r => setTimeout(r, 2500));
+
+    const newBtn = document.querySelector('[data-testid="SideNav_AccountSwitcher_Button"]');
+    return {
+      success: true,
+      switched_to: "@" + ${JSON.stringify(cleanHandle)},
+      nouveau_compte_actif: newBtn ? newBtn.innerText : "OK",
+      timestamp: new Date().toISOString()
+    };
+  })()`;
+
+  const evalRes = await sendCdpCommand(wsUrl, "Runtime.evaluate", {
+    expression: expr,
+    returnByValue: true,
+    awaitPromise: true
+  });
+
+  return evalRes.result?.value || evalRes.result;
+}

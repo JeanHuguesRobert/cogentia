@@ -8,11 +8,29 @@
  *   node scripts/ops/cdp-browser-cli.js --eval="document.title"
  */
 
-import { listActiveTabs, extractCookiesForUrls, extractAndSaveXSession, extractAllConnectedAccounts, evaluateJsInTab, detectActiveXAccount, DEFAULT_CDP_ENDPOINT } from "./cdp-browser-extractor.js";
+import { listActiveTabs, extractCookiesForUrls, extractAndSaveXSession, extractAllConnectedAccounts, switchToAccountInTab, evaluateJsInTab, detectActiveXAccount, DEFAULT_CDP_ENDPOINT } from "./cdp-browser-extractor.js";
 
 async function main() {
   const args = process.argv.slice(2);
   const endpoint = process.env.CDP_ENDPOINT || DEFAULT_CDP_ENDPOINT;
+
+  const switchArg = args.find(a => a.startsWith("--switch-to="));
+  if (switchArg) {
+    const targetHandle = switchArg.split("=")[1];
+    console.log(`🔄 Bascule programmatique du compte X vers : ${targetHandle}...`);
+    const res = await switchToAccountInTab(targetHandle, endpoint);
+    if (res.success) {
+      console.log(`✅ Bascule réussie !`);
+      console.log(`   • Nouveau compte actif : ${res.nouveau_compte_actif}`);
+      console.log(`   • Horodatage           : ${res.timestamp}\n`);
+    } else {
+      console.log(`⚠️ Échec de la bascule : ${res.error}`);
+      if (res.comptes_disponibles_dans_le_menu) {
+        console.log(`   Comptes trouvés dans le menu :`, res.comptes_disponibles_dans_le_menu);
+      }
+    }
+    return;
+  }
 
   if (args.includes("--inspect-sessions")) {
     console.log("🔍 Inspection détaillée des sessions et cookies dans chaque onglet...");
