@@ -1,0 +1,34 @@
+{
+  "id": "cop:wake:cogentia:consolidation",
+  "packet_type": "cop/node.wake.v1",
+  "artifact_type": "cop/cognitive-packet",
+  "payload": {
+    "schema": "cop/node.wake.v1",
+    "due_at": null,
+    "cadence": {
+      "kind": "interval",
+      "interval_ms": 604800000
+    },
+    "stop_condition": { "type": "none" },
+    "authorized": false,
+    "packet": {
+      "envelope": {
+        "packet_kind": "continuation",
+        "transmission_mode": "copy",
+        "status": "active"
+      },
+      "payload": {
+        "id": "cogentia:consolidation",
+        "kind": "corpus.consolidation",
+        "service": "cogentia",
+        "project": "cogentia",
+        "scope": "corpus",
+        "target_node": "resource://fracta2",
+        "owner_or_mandate": "corpus.consolidation",
+        "priority": "normal",
+        "interruptible": false,
+        "description": "Weekly Sunday sprint digest and corpus consolidation"
+      }
+    }
+  }
+}

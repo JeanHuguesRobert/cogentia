@@ -1,0 +1,38 @@
+{
+  "id": "cop:wake:cogentia:sleep-cycle",
+  "packet_type": "cop/node.wake.v1",
+  "artifact_type": "cop/cognitive-packet",
+  "payload": {
+    "schema": "cop/node.wake.v1",
+    "due_at": null,
+    "cadence": {
+      "kind": "interval",
+      "interval_ms": 7200000
+    },
+    "stop_condition": { "type": "none" },
+    "authorized": false,
+    "packet": {
+      "envelope": {
+        "packet_kind": "observation",
+        "transmission_mode": "copy",
+        "status": "active"
+      },
+      "payload": {
+        "id": "cogentia:sleep-cycle",
+        "kind": "corpus.sleep_cycle",
+        "service": "cogentia",
+        "project": "cogentia",
+        "scope": "corpus",
+        "target_node": "resource://fracta2",
+        "owner_or_mandate": "corpus.sleep-cycle",
+        "priority": "low",
+        "interruptible": true,
+        "budget": {
+          "max_wall_time_ms": 60000,
+          "max_pairs": 50
+        },
+        "description": "Preemptible Monte Carlo consistency audit on qualified residual capacity"
+      }
+    }
+  }
+}

@@ -1,0 +1,34 @@
+{
+  "id": "cop:wake:cogentia:fracta-scheduler",
+  "packet_type": "cop/node.wake.v1",
+  "artifact_type": "cop/cognitive-packet",
+  "payload": {
+    "schema": "cop/node.wake.v1",
+    "due_at": null,
+    "cadence": {
+      "kind": "interval",
+      "interval_ms": 86400000
+    },
+    "stop_condition": { "type": "none" },
+    "authorized": false,
+    "packet": {
+      "envelope": {
+        "packet_kind": "observation",
+        "transmission_mode": "copy",
+        "status": "active"
+      },
+      "payload": {
+        "id": "cogentia:fracta-scheduler",
+        "kind": "corpus.fracta_scheduler",
+        "service": "cogentia",
+        "project": "cogentia",
+        "scope": "corpus",
+        "target_node": "resource://fracta2",
+        "owner_or_mandate": "corpus.scheduler",
+        "priority": "normal",
+        "interruptible": false,
+        "description": "Nightly 6-stage deterministic corpus sleep cycle and views export"
+      }
+    }
+  }
+}
