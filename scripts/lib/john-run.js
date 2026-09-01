@@ -3,6 +3,7 @@ import {
   createGovernedHarness,
 } from "./agent-jhn-whatsapp/governed-harness.js";
 import { createOpenAiStepReasoner } from "./agent-jhn-whatsapp/openai-step-reasoner.js";
+import { runAgentJohnV2SurfaceTurn, reasoningLoopV2Enabled } from "./agent-jhn-reasoning-loop-v2.js";
 
 const REQUEST_VERSION = "john.request.v1";
 const TERMINAL_EVENTS = new Set([
@@ -225,6 +226,7 @@ export async function runJohnRequest(request, options = {}) {
   }
 
   const packet = buildCognitivePacketFromJohnRequest(request);
+  const reasoningLoopV2 = reasoningLoopV2Enabled(options.env || process.env, options);
   const ithaca = packet.envelope.ithaca;
   const startTime = Date.now();
   const events = [];
@@ -239,6 +241,23 @@ export async function runJohnRequest(request, options = {}) {
       ithaca,
     })
   );
+  if (reasoningLoopV2) {
+    const preflight = await runAgentJohnV2SurfaceTurn({
+      text: request.input.prompt,
+      surface: "agent-john",
+      enabled: true,
+      env: options.env || process.env,
+      mandate: request.mandate,
+      // John continues with its native governed harness below. This no-op
+      // legacy turn makes the shared required-event preflight observable here.
+      legacyTurn: async () => ({ ok: true }),
+    });
+    events.push(event(request, seq++, "john.reasoning_loop.preflight", {
+      protocol: preflight.reasoning?.protocol || null,
+      fallback: preflight.fallback,
+      dispatched: preflight.reasoning?.preflight?.dispatched || [],
+    }));
+  }
 
   // Event 2: packet admitted under COP rules
   events.push(
@@ -527,5 +546,4 @@ export function renderJohnEventHuman(item) {
 }
 
 export { REQUEST_VERSION, TERMINAL_EVENTS };
-
 
