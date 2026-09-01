@@ -8,7 +8,7 @@
  *   node scripts/ops/cdp-browser-cli.js --eval="document.title"
  */
 
-import { listActiveTabs, extractCookiesForUrls, extractAndSaveXSession, evaluateJsInTab, detectActiveXAccount, DEFAULT_CDP_ENDPOINT } from "./cdp-browser-extractor.js";
+import { listActiveTabs, extractCookiesForUrls, extractAndSaveXSession, extractAllConnectedAccounts, evaluateJsInTab, detectActiveXAccount, DEFAULT_CDP_ENDPOINT } from "./cdp-browser-extractor.js";
 
 async function main() {
   const args = process.argv.slice(2);
@@ -18,6 +18,18 @@ async function main() {
   console.log(" 🌐 CDP HOSTED BROWSER CONTROLLER & SESSION EXTRACTOR");
   console.log(`    Endpoint : ${endpoint}`);
   console.log("==========================================================================\n");
+
+  if (args.includes("--extract-all")) {
+    console.log("🚀 Extraction automatique en chaîne de TOUS les comptes X connectés...");
+    const results = await extractAllConnectedAccounts(endpoint);
+    console.log(`\n🎉 Bilan de l'extraction multi-comptes : ${results.length} compte(s) capturé(s) !`);
+    for (const r of results) {
+      console.log(`   • Compte : ${r.handle || r.account}`);
+      console.log(`     Token  : ${r.auth_token_preview}`);
+      console.log(`     Fichier: ${r.secret_file}\n`);
+    }
+    return;
+  }
 
   if (args.includes("--whoami")) {
     console.log("🕵️ Détection du compte X actuellement connecté via CDP...");

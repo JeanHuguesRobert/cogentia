@@ -203,3 +203,99 @@ export async function detectActiveXAccount(endpoint = DEFAULT_CDP_ENDPOINT) {
 
   return results.length === 1 ? results[0] : results;
 }
+
+/**
+ * Automates account switching via DOM to discover, switch to, and extract
+ * session cookies for ALL connected accounts in the X tab.
+ */
+export async function extractAllConnectedAccounts(endpoint = DEFAULT_CDP_ENDPOINT) {
+  const tabs = await listActiveTabs(endpoint);
+  const xTab = tabs.find(t => t.url.includes("x.com") || t.url.includes("twitter.com"));
+  if (!xTab) throw new Error("No open X/Twitter tab found.");
+
+  const wsUrl = xTab.webSocketDebuggerUrl;
+
+  // Step 1: Open account switcher menu and list all available accounts
+  const listAccountsExpr = `(async () => {
+    let btn = document.querySelector('[data-testid="SideNav_AccountSwitcher_Button"]');
+    if (!btn) return { error: "No account switcher button found." };
+    btn.click();
+    await new Promise(r => setTimeout(r, 600));
+
+    const menu = document.querySelector('[data-testid="AccountSwitcher_Menu"]') || document.querySelector('[role="menu"]');
+    if (!menu) return { error: "Account switcher menu did not open." };
+
+    const rows = Array.from(menu.querySelectorAll('[data-testid="AccountSwitcher_User_Row"], [role="menuitem"]'));
+    const accounts = rows.map((r, i) => {
+      const match = r.innerText.match(/@([a-zA-Z0-9_]+)/);
+      return {
+        index: i,
+        handle: match ? match[1] : null,
+        full_text: r.innerText
+      };
+    }).filter(a => a.handle);
+
+    // Close menu for now
+    document.body.click();
+    return { success: true, accounts };
+  })()`;
+
+  const listRes = await sendCdpCommand(wsUrl, "Runtime.evaluate", {
+    expression: listAccountsExpr,
+    returnByValue: true,
+    awaitPromise: true
+  });
+
+  const discovery = listRes.result?.value;
+  if (!discovery || !discovery.success || !discovery.accounts || discovery.accounts.length === 0) {
+    const single = await detectActiveXAccount(endpoint);
+    const singleObj = Array.isArray(single) ? single[0] : single;
+    const match = singleObj.raw_text?.match(/@([a-zA-Z0-9_]+)/);
+    const handle = match ? match[1] : "default";
+    const res = await extractAndSaveXSession(handle.toLowerCase(), endpoint);
+    return [res];
+  }
+
+  const extractedAccounts = [];
+
+  for (const acc of discovery.accounts) {
+    const handleKey = acc.handle.toLowerCase();
+
+    // Switch to account via DOM click
+    const switchExpr = `(async () => {
+      const btn = document.querySelector('[data-testid="SideNav_AccountSwitcher_Button"]');
+      if (btn) btn.click();
+      await new Promise(r => setTimeout(r, 600));
+
+      const menu = document.querySelector('[data-testid="AccountSwitcher_Menu"]') || document.querySelector('[role="menu"]');
+      if (!menu) return { error: "Menu not found" };
+
+      const rows = Array.from(menu.querySelectorAll('[data-testid="AccountSwitcher_User_Row"], [role="menuitem"]'));
+      const targetRow = rows.find(r => r.innerText.includes("@" + ${JSON.stringify(acc.handle)}));
+      if (targetRow) {
+        targetRow.click();
+        await new Promise(r => setTimeout(r, 1800));
+        return { switched: true, target: ${JSON.stringify(acc.handle)} };
+      }
+      return { switched: false };
+    })()`;
+
+    await sendCdpCommand(wsUrl, "Runtime.evaluate", {
+      expression: switchExpr,
+      returnByValue: true,
+      awaitPromise: true
+    });
+
+    // Wait for session cookie sync in Chrome
+    await new Promise(r => setTimeout(r, 1800));
+
+    // Extract cookies for this account
+    const saveRes = await extractAndSaveXSession(handleKey, endpoint);
+    extractedAccounts.push({
+      handle: `@${acc.handle}`,
+      ...saveRes
+    });
+  }
+
+  return extractedAccounts;
+}
