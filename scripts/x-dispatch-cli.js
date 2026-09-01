@@ -109,6 +109,25 @@ async function main() {
     const wsUrl = targetTab.webSocketDebuggerUrl;
 
     const domExpr = `(async () => {
+      // Step 1: Verify and switch to the target account if needed
+      const btn = document.querySelector('[data-testid="SideNav_AccountSwitcher_Button"]');
+      const targetHandle = ${JSON.stringify(accountConfig.handle)}; // e.g. "@jhr"
+      
+      if (btn && !btn.innerText.toLowerCase().includes(targetHandle.toLowerCase().replace('@', ''))) {
+        btn.click();
+        await new Promise(r => setTimeout(r, 800));
+        const menu = document.querySelector('[data-testid="AccountSwitcher_Menu"]') || document.querySelector('[role="menu"]');
+        if (menu) {
+          const rows = Array.from(menu.querySelectorAll('[data-testid="AccountSwitcher_User_Row"], [role="menuitem"]'));
+          const targetRow = rows.find(r => r.innerText.toLowerCase().includes(targetHandle.toLowerCase()));
+          if (targetRow) {
+            targetRow.click();
+            await new Promise(r => setTimeout(r, 2500));
+          }
+        }
+      }
+
+      // Step 2: Locate editor or open modal
       let editor = document.querySelector('[data-testid="tweetTextarea_0"]') || 
                    document.querySelector('div[role="textbox"][contenteditable="true"]');
 
@@ -116,7 +135,7 @@ async function main() {
         const composeBtn = document.querySelector('[data-testid="SideNav_NewTweet_Button"]');
         if (composeBtn) {
           composeBtn.click();
-          await new Promise(r => setTimeout(r, 800));
+          await new Promise(r => setTimeout(r, 1000));
           editor = document.querySelector('[data-testid="tweetTextarea_0"]') || 
                    document.querySelector('div[role="textbox"][contenteditable="true"]');
         }
@@ -128,7 +147,7 @@ async function main() {
       document.execCommand('selectAll', false, null);
       document.execCommand('insertText', false, ${JSON.stringify(tweetText)});
       
-      await new Promise(r => setTimeout(r, 600));
+      await new Promise(r => setTimeout(r, 800));
 
       const postBtn = document.querySelector('[data-testid="tweetButton"]') || 
                       document.querySelector('[data-testid="tweetButtonInline"]');
@@ -139,12 +158,12 @@ async function main() {
       }
 
       postBtn.click();
-      await new Promise(r => setTimeout(r, 1500));
+      await new Promise(r => setTimeout(r, 2000));
 
       return {
         success: true,
         method: "browser_session_direct",
-        account: ${JSON.stringify(accountConfig.handle)},
+        account: targetHandle,
         timestamp: new Date().toISOString()
       };
     })()`;
