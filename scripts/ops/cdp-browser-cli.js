@@ -8,7 +8,7 @@
  *   node scripts/ops/cdp-browser-cli.js --eval="document.title"
  */
 
-import { listActiveTabs, extractCookiesForUrls, extractAndSaveXSession, evaluateJsInTab, DEFAULT_CDP_ENDPOINT } from "./cdp-browser-extractor.js";
+import { listActiveTabs, extractCookiesForUrls, extractAndSaveXSession, evaluateJsInTab, detectActiveXAccount, DEFAULT_CDP_ENDPOINT } from "./cdp-browser-extractor.js";
 
 async function main() {
   const args = process.argv.slice(2);
@@ -18,6 +18,13 @@ async function main() {
   console.log(" 🌐 CDP HOSTED BROWSER CONTROLLER & SESSION EXTRACTOR");
   console.log(`    Endpoint : ${endpoint}`);
   console.log("==========================================================================\n");
+
+  if (args.includes("--whoami")) {
+    console.log("🕵️ Détection du compte X actuellement connecté via CDP...");
+    const accountInfo = await detectActiveXAccount(endpoint);
+    console.log("Résultat de l'analyse DOM :", JSON.stringify(accountInfo, null, 2));
+    return;
+  }
 
   if (args.includes("--tabs") || args.length === 0) {
     console.log("📑 Liste des onglets actifs dans Chromium :");

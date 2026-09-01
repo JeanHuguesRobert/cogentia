@@ -142,3 +142,33 @@ export async function evaluateJsInTab(tabId, expression, endpoint = DEFAULT_CDP_
     awaitPromise: true
   });
 }
+
+/**
+ * Detects the currently logged-in X/Twitter account name and handle from DOM.
+ */
+export async function detectActiveXAccount(endpoint = DEFAULT_CDP_ENDPOINT) {
+  const expr = `(() => {
+    const btn = document.querySelector('[data-testid="SideNav_AccountSwitcher_Button"]');
+    const profileLink = document.querySelector('[data-testid="AppTabBar_Profile_Link"]');
+    const userAvatar = document.querySelector('[data-testid="UserAvatar-Container-unknown"]');
+    const allLinks = Array.from(document.querySelectorAll('a[role="link"]')).map(a => a.href);
+    return {
+      raw_text: btn ? btn.innerText : null,
+      profile_href: profileLink ? profileLink.getAttribute('href') : null,
+      document_title: document.title,
+      url: window.location.href
+    };
+  })()`;
+
+  const tabs = await listActiveTabs(endpoint);
+  const xTab = tabs.find(t => t.url.includes("x.com") || t.url.includes("twitter.com")) || tabs[0];
+  if (!xTab) return { error: "No X tab found" };
+
+  const evalRes = await sendCdpCommand(xTab.webSocketDebuggerUrl, "Runtime.evaluate", {
+    expression: expr,
+    returnByValue: true,
+    awaitPromise: true
+  });
+
+  return evalRes.result?.value || evalRes.result;
+}
