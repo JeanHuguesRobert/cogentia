@@ -1,0 +1,18 @@
+[Unit]
+Description=Rossignol 24h Intelligence Watch Runner (Corsica Senate & AI Watch)
+Documentation=https://github.com/JeanHuguesRobert/cogentia/issues/141
+After=network.target
+
+[Service]
+Type=simple
+User=ubuntu
+WorkingDirectory=/srv/cogentia/repos/cogentia
+Environment=NODE_ENV=production
+ExecStart=/usr/bin/node /srv/cogentia/repos/cogentia/scripts/rossignol-runner.js --duration=24h --watch=all --model-class=medium
+Restart=on-failure
+RestartSec=30
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target
