@@ -61,15 +61,11 @@ async function main() {
   console.log(`🚀 Initialisation de l'instance Scraper (agent-twitter-client)...`);
   const scraper = new Scraper();
 
-  // Inject all cookies if available, or fallback to auth_token/ct0
+  // Inject all cookies (agent-twitter-client uses twitter.com requests under the hood)
   let cookieStrings = [];
   if (creds.full_cookies && Array.isArray(creds.full_cookies)) {
-    cookieStrings = creds.full_cookies.flatMap(c => {
-      const dTwitter = c.domain.replace(/x\.com$/, "twitter.com");
-      return [
-        `${c.name}=${c.value}; Domain=${dTwitter}; Path=${c.path || '/'}; Secure; SameSite=None`,
-        `${c.name}=${c.value}; Domain=${c.domain}; Path=${c.path || '/'}; Secure; SameSite=None`
-      ];
+    cookieStrings = creds.full_cookies.map(c => {
+      return `${c.name}=${c.value}; Domain=.twitter.com; Path=/; Secure; SameSite=None`;
     });
   } else {
     cookieStrings = [
