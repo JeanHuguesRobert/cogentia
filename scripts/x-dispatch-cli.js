@@ -83,14 +83,88 @@ async function main() {
   console.log(`📤 Envoi du Tweet en cours...`);
   try {
     const res = await scraper.sendTweet(tweetText);
-    console.log(`\n🎉 TWEET PUBLIÉ AVEC SUCCÈS !`);
+    console.log(`\n🎉 TWEET PUBLIÉ AVEC SUCCÈS (via agent-twitter-client) !`);
     console.log(`   • ID du Tweet :`, res ? (res.id || JSON.stringify(res)) : "OK");
     console.log(`   • Compte      : ${accountConfig.handle}`);
     console.log(`   • Horodatage  : ${new Date().toISOString()}\n`);
   } catch (err) {
-    console.error(`\n❌ Erreur lors de l'envoi du tweet via agent-twitter-client :`, err.message);
-    if (err.stack) console.error(err.stack);
-    process.exit(1);
+    console.warn(`⚠️ agent-twitter-client a échoué (${err.message}). Bascule sur l'émetteur direct de session du navigateur hébergé...`);
+    
+    // Fallback: Use direct tab DOM dispatch in the live Chrome session on fracta2
+    const { listActiveTabs, detectActiveXAccount, sendCdpCommand, DEFAULT_CDP_ENDPOINT } = await import("./ops/cdp-browser-extractor.js");
+    const tabs = await listActiveTabs(DEFAULT_CDP_ENDPOINT);
+    const detected = await detectActiveXAccount(DEFAULT_CDP_ENDPOINT);
+    const accountsList = Array.isArray(detected) ? detected : [detected];
+
+    const target = accountsList.find(a => 
+      a.raw_text?.toLowerCase().includes(accountKey.toLowerCase()) ||
+      a.profile_href?.toLowerCase().includes(accountKey.toLowerCase())
+    );
+
+    if (!target) {
+      throw new Error(`Aucun onglet actif trouvé pour le compte ${accountKey} dans le navigateur.`);
+    }
+
+    const targetTab = tabs.find(t => t.id === target.tab_id);
+    const wsUrl = targetTab.webSocketDebuggerUrl;
+
+    const domExpr = `(async () => {
+      let editor = document.querySelector('[data-testid="tweetTextarea_0"]') || 
+                   document.querySelector('div[role="textbox"][contenteditable="true"]');
+
+      if (!editor) {
+        const composeBtn = document.querySelector('[data-testid="SideNav_NewTweet_Button"]');
+        if (composeBtn) {
+          composeBtn.click();
+          await new Promise(r => setTimeout(r, 800));
+          editor = document.querySelector('[data-testid="tweetTextarea_0"]') || 
+                   document.querySelector('div[role="textbox"][contenteditable="true"]');
+        }
+      }
+
+      if (!editor) return { success: false, error: "Zone de saisie introuvable dans la page." };
+
+      editor.focus();
+      document.execCommand('selectAll', false, null);
+      document.execCommand('insertText', false, ${JSON.stringify(tweetText)});
+      
+      await new Promise(r => setTimeout(r, 600));
+
+      const postBtn = document.querySelector('[data-testid="tweetButton"]') || 
+                      document.querySelector('[data-testid="tweetButtonInline"]');
+
+      if (!postBtn) return { success: false, error: "Bouton de publication introuvable." };
+      if (postBtn.getAttribute('aria-disabled') === 'true') {
+        return { success: false, error: "Bouton désactivé." };
+      }
+
+      postBtn.click();
+      await new Promise(r => setTimeout(r, 1500));
+
+      return {
+        success: true,
+        method: "browser_session_direct",
+        account: ${JSON.stringify(accountConfig.handle)},
+        timestamp: new Date().toISOString()
+      };
+    })()`;
+
+    const domRes = await sendCdpCommand(wsUrl, "Runtime.evaluate", {
+      expression: domExpr,
+      returnByValue: true,
+      awaitPromise: true
+    });
+
+    const result = domRes.result?.value || domRes.result;
+    if (result && result.success) {
+      console.log(`\n🎉 TWEET PUBLIÉ AVEC SUCCÈS (via Session Directe du Navigateur) !`);
+      console.log(`   • Compte      : ${accountConfig.handle}`);
+      console.log(`   • Méthode     : ${result.method}`);
+      console.log(`   • Horodatage  : ${result.timestamp}\n`);
+    } else {
+      console.error(`\n❌ Échec de la publication :`, result?.error || result);
+      process.exit(1);
+    }
   }
 }
 
