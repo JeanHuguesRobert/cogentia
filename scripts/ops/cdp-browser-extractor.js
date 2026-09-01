@@ -312,18 +312,31 @@ export async function switchToAccountInTab(targetHandle, endpoint = DEFAULT_CDP_
   const wsUrl = xTab.webSocketDebuggerUrl;
 
   const expr = `(async () => {
-    const btn = document.querySelector('[data-testid="SideNav_AccountSwitcher_Button"]');
+    function triggerClick(el) {
+      el.focus();
+      el.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, cancelable: true, view: window }));
+      el.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, cancelable: true, view: window }));
+      el.dispatchEvent(new PointerEvent('pointerup', { bubbles: true, cancelable: true, view: window }));
+      el.dispatchEvent(new MouseEvent('mouseup', { bubbles: true, cancelable: true, view: window }));
+      el.click();
+    }
+
+    const btn = document.querySelector('[data-testid="SideNav_AccountSwitcher_Button"]') ||
+                document.querySelector('button[aria-label*="Compte"], div[aria-label*="Compte"]');
     if (!btn) return { success: false, error: "Bouton de sélection de compte introuvable." };
 
-    btn.click();
-    await new Promise(r => setTimeout(r, 700));
+    triggerClick(btn);
+    await new Promise(r => setTimeout(r, 1200));
 
+    // Chercher le menu dans l'ensemble du DOM (souvent monté en racine sous #layers)
     const menu = document.querySelector('[data-testid="AccountSwitcher_Menu"]') || 
+                 document.querySelector('[data-testid="Dropdown"]') ||
                  document.querySelector('[role="menu"]') ||
-                 document.querySelector('div[data-viewportview="true"]');
+                 document.querySelector('div[data-viewportview="true"]') ||
+                 document.querySelector('#layers div[role="group"]');
     if (!menu) return { success: false, error: "Le menu de sélection de compte ne s'est pas ouvert." };
 
-    const clickableElements = Array.from(menu.querySelectorAll('a, button, [role="menuitem"], [data-testid*="AccountSwitcher_User"]'));
+    const clickableElements = Array.from(menu.querySelectorAll('a, button, [role="menuitem"], [data-testid*="AccountSwitcher_User"], div[dir="ltr"]'));
     const targetEl = clickableElements.find(el => el.innerText.toLowerCase().includes("@" + ${JSON.stringify(cleanHandle)}));
 
     if (!targetEl) {
@@ -333,12 +346,12 @@ export async function switchToAccountInTab(targetHandle, endpoint = DEFAULT_CDP_
         success: false, 
         error: "Compte non trouvé dans le sélecteur.",
         target: "@" + ${JSON.stringify(cleanHandle)},
-        comptes_disponibles_dans_le_menu: available
+        comptes_disponibles_dans_le_menu: Array.from(new Set(available))
       };
     }
 
-    targetEl.click();
-    await new Promise(r => setTimeout(r, 2500));
+    triggerClick(targetEl);
+    await new Promise(r => setTimeout(r, 3000));
 
     const newBtn = document.querySelector('[data-testid="SideNav_AccountSwitcher_Button"]');
     return {
