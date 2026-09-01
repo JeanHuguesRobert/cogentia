@@ -61,10 +61,10 @@ async function main() {
   console.log(`🚀 Initialisation de l'instance Scraper (agent-twitter-client)...`);
   const scraper = new Scraper();
 
-  // Inject cookies
+  // Inject cookies (agent-twitter-client uses twitter.com requests under the hood)
   await scraper.setCookies([
-    `auth_token=${creds.auth_token}; Domain=.x.com; Path=/; Secure; SameSite=None`,
-    `ct0=${creds.ct0}; Domain=.x.com; Path=/; Secure; SameSite=None`
+    `auth_token=${creds.auth_token}; Domain=.twitter.com; Path=/; Secure; SameSite=None`,
+    `ct0=${creds.ct0}; Domain=.twitter.com; Path=/; Secure; SameSite=None`
   ]);
 
   console.log(`📡 Vérification de la session en ligne...`);
