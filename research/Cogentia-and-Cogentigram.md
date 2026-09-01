@@ -386,6 +386,7 @@ Robert, J. H. (2026c). *Democratic Humans in the Loop: Why Infrastructure Is All
 - [Cognitive Impedance, Relatogram, and Cognitive Interpreter](cognitive_impedance_relatogram_interpreter.md)
 - [From Biometrics and Psychometrics to Structural Signatures](structural_signatures.md)
 - [Individual and Collective Digital Twins](individual_and_collective_digital_twins.md)
+- [Operational Stance](operational_stance.md)
 - [Research Index — Cogentia](index.md)
 - [The Sovereign Digital Twin: Cogentia, Cogentigram, Cogentiscope](cogentia-digital-twin.md)
 - [DHITL, Democratic Humans In The Loop](https://github.com/JeanHuguesRobert/marenostrum/blob/main/research/DHITL.md)

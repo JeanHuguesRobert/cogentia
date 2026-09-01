@@ -157,5 +157,6 @@ continuation:
 ### Backlinks
 
 *These documents link to this file:*
+- [Conceptual Gravity — Governed Conceptual Routing for a Self-Orienting Reactive Corpus](conceptual_gravity.md)
 - [Research Index — Cogentia](index.md)
 <!-- END_AUTO: backlinks -->

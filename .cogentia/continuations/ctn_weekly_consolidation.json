@@ -1,20 +1,20 @@
 {
-  "id": "ctn_weekly_consolidation_2026-W35",
-  "packet_id": "CPKT-2026-W35-CONSOLIDATION",
+  "id": "ctn_weekly_consolidation_2026-W36",
+  "packet_id": "CPKT-2026-W36-CONSOLIDATION",
   "kind": "cognitive_packet_journey",
   "subject": "sunday_corpus_consolidation",
   "status": "completed",
-  "created_at": "2026-08-25T00:12:34.764Z",
-  "updated_at": "2026-08-25T00:12:34.764Z",
+  "created_at": "2026-08-30T22:45:14.348Z",
+  "updated_at": "2026-08-30T22:45:14.348Z",
   "origin_home": "https://jhn.baronsmariani.org/",
   "destination": "https://cogentia.fractavolta.com/mcp",
   "mandate": {
-    "mission": "Sunday Corpus De-Entropy & Sprint Wrap-Up for 2026-W35",
+    "mission": "Sunday Corpus De-Entropy & Sprint Wrap-Up for 2026-W36",
     "budget_units": 200
   },
   "privacy_domains": {
     "public": {
-      "digest": "C:\\tweesic\\cogentia\\research\\sprints\\weekly_digest_2026-W35.md",
+      "digest": "C:\\tweesic\\cogentia\\research\\sprints\\weekly_digest_2026-W36.md",
       "llms": "C:\\tweesic\\cogentia\\llms.txt",
       "llms_full": "C:\\tweesic\\cogentia\\llms-full.txt",
       "repos": [
@@ -30,7 +30,7 @@
       ]
     },
     "private": {
-      "digest": "C:\\tweesic\\cogentia\\.cogentia\\sprints\\weekly_digest_full_2026-W35.md",
+      "digest": "C:\\tweesic\\cogentia\\.cogentia\\sprints\\weekly_digest_full_2026-W36.md",
       "llms": "C:\\tweesic\\cogentia\\.cogentia\\projections\\llms.txt",
       "llms_full": "C:\\tweesic\\cogentia\\.cogentia\\projections\\llms-full.txt",
       "repos": [
@@ -48,15 +48,15 @@
       "private_repos": [
         "registre-mariani"
       ],
-      "downloads_count": 2
+      "downloads_count": 0
     }
   },
   "target_documents": [
-    "C:\\tweesic\\cogentia\\research\\sprints\\weekly_digest_2026-W35.md",
-    "C:\\tweesic\\cogentia\\.cogentia\\sprints\\weekly_digest_full_2026-W35.md",
+    "C:\\tweesic\\cogentia\\research\\sprints\\weekly_digest_2026-W36.md",
+    "C:\\tweesic\\cogentia\\.cogentia\\sprints\\weekly_digest_full_2026-W36.md",
     "docs/sunday-consolidation-master-plan.md"
   ],
   "execution_steps_completed": 5,
-  "serendipity_ledger_count": 2,
-  "continuation_scheduled": "CPKT-2026-W36-CONSOLIDATION"
+  "serendipity_ledger_count": 0,
+  "continuation_scheduled": "CPKT-2026-W37-CONSOLIDATION"
 }

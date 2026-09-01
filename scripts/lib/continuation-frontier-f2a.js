@@ -246,6 +246,20 @@ export async function executeFundedBranch(log, { continuationRef, execute } = {}
   return { result, frontier: projectFrontier(log.facts()) };
 }
 
+export function publishEvidence(log, { choicePointId, continuationRef, kind, key, value, receiptSha256 } = {}) {
+  const cpId = String(choicePointId || "").trim();
+  if (!cpId) throw new Error("choicePointId is required to publish evidence");
+  log.append("evidence_published", {
+    choicePointId: cpId,
+    continuationRef: continuationRef || null,
+    kind: String(kind || "fact"),
+    key: key || null,
+    value: value ?? null,
+    receiptSha256: receiptSha256 || null,
+  });
+  return projectFrontier(log.facts());
+}
+
 export function projectFrontier(facts = []) {
   const continuations = {};
   const choicePointsById = new Map();
@@ -255,6 +269,7 @@ export function projectFrontier(facts = []) {
   const resolvedBy = {};
   const branchResults = {};
   const convergedById = {};
+  const sharedEvidenceByChoicePoint = {};
 
   for (const fact of facts) {
     const payload = fact.payload || {};
@@ -283,6 +298,21 @@ export function projectFrontier(facts = []) {
       case "allocation_decided": {
         for (const ref of payload.funded || []) allocationByContinuation[ref] = "funded";
         for (const ref of payload.unfunded || []) allocationByContinuation[ref] = "unfunded";
+        break;
+      }
+      case "evidence_published": {
+        const cpId = payload.choicePointId;
+        if (!sharedEvidenceByChoicePoint[cpId]) sharedEvidenceByChoicePoint[cpId] = [];
+        sharedEvidenceByChoicePoint[cpId].push({
+          id: `evidence-${fact.seq}`,
+          seq: fact.seq,
+          choicePointId: cpId,
+          sourceContinuationRef: payload.continuationRef,
+          kind: payload.kind,
+          key: payload.key,
+          value: payload.value,
+          receiptSha256: payload.receiptSha256 || null,
+        });
         break;
       }
       case "continuation_capsule_stored": {
@@ -383,6 +413,7 @@ export function projectFrontier(facts = []) {
         converged: isAnd ? Boolean(convergedById[choicePoint.id] || allCompleted) : false,
         resolvedBy: isAnd ? (allCompleted ? choicePoint.branchRefs : null) : (resolvedBy[choicePoint.id] || null),
         joinResults: isAnd ? branchResults : null,
+        sharedEvidence: sharedEvidenceByChoicePoint[choicePoint.id] || [],
         branches,
       };
     }),
@@ -394,10 +425,14 @@ function locateBranch(frontier, continuationRef) {
   for (const choicePoint of frontier.choicePoints) {
     const branch = choicePoint.branches.find((item) => item.continuationRef === id);
     if (branch) {
+      const base = frontier.continuations[id] || null;
       return {
         choicePoint,
         branch,
-        continuation: frontier.continuations[id] || null,
+        continuation: base ? {
+          ...base,
+          sharedEvidence: choicePoint.sharedEvidence || [],
+        } : null,
       };
     }
   }

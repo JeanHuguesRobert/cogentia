@@ -1003,6 +1003,7 @@ The event substrate gives causality.
 - [Concept Index — cogentia](concepts.md)
 - [Continuations and Cognitive Packets — early agent briefing](../docs/continuations_and_cognitive_packets_for_agents.md)
 - [Informational Gravity — Contextual Attraction for Cognitive-Packet Routing](informational_gravity.md)
+- [Operational Stance](operational_stance.md)
 - [Research Index — Cogentia](index.md)
 - [The Cogentia Commons Living Corpus](cogentia_commons_living_corpus.md)
 - For researchers

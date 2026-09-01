@@ -36,14 +36,28 @@ function parseArgs() {
     watch: "all", // "corsica", "ai", "all"
     modelClass: "medium", // "small", "medium", "strong", "strongest_available"
     outputDir: outputDir,
+    cycles: 1,
+    intervalSec: 10,
+    continuous: false,
     json: false
   };
 
   for (const arg of args) {
     if (arg === "--smoke" || arg === "--mode=smoke") options.smoke = true;
+    else if (arg === "--continuous") options.continuous = true;
     else if (arg.startsWith("--watch=")) options.watch = arg.split("=")[1];
     else if (arg.startsWith("--model-class=")) options.modelClass = arg.split("=")[1];
     else if (arg.startsWith("--output-dir=")) options.outputDir = path.resolve(arg.split("=")[1]);
+    else if (arg.startsWith("--cycles=")) options.cycles = parseInt(arg.split("=")[1], 10) || 1;
+    else if (arg.startsWith("--interval-sec=")) options.intervalSec = parseInt(arg.split("=")[1], 10) || 10;
+    else if (arg.startsWith("--duration=")) {
+      const dur = arg.split("=")[1];
+      if (dur === "24h") {
+        options.cycles = 24; // 24 hourly cycles for a 24h run
+        options.intervalSec = 3600;
+        options.continuous = true;
+      }
+    }
     else if (arg === "--json") options.json = true;
   }
 
@@ -195,7 +209,29 @@ export async function runRossignolPipeline(options = {}) {
 // Execution if invoked directly from CLI
 if (process.argv[1] && fileURLToPath(import.meta.url) === path.resolve(process.argv[1])) {
   const options = parseArgs();
-  runRossignolPipeline(options).catch(err => {
+  
+  async function main() {
+    const totalCycles = options.cycles || 1;
+    console.log(`🚀 Démarrage du runner Rossignol (${totalCycles} cycle(s) prévu(s))...\n`);
+
+    for (let c = 1; c <= totalCycles; c++) {
+      if (totalCycles > 1) {
+        console.log(`\n==========================================================================`);
+        console.log(` ⏱️  CYCLE DE VEILLE ${c} / ${totalCycles} (${new Date().toLocaleTimeString()})`);
+        console.log(`==========================================================================`);
+      }
+
+      await runRossignolPipeline(options);
+
+      if (c < totalCycles) {
+        const waitMs = (options.intervalSec || 10) * 1000;
+        console.log(`⏳ Prochain cycle de veille dans ${options.intervalSec}s... (Appuyez sur Ctrl+C pour interrompre)`);
+        await new Promise(resolve => setTimeout(resolve, waitMs));
+      }
+    }
+  }
+
+  main().catch(err => {
     console.error("❌ Rossignol Runner failed:", err);
     process.exit(1);
   });

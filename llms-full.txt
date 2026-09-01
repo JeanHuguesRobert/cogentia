@@ -25,6 +25,7 @@ classification_rule: "research-paper"
 classification_confidence: "medium"
 changelog:
   - "2026-08-15 — integrated research/potentics_the_possible_addendum.md: The Possible vs possibilities (§1.1-1.3), the expanding Realized and Spirit of Synthesis (§3.4-3.5), Rational Exploration as deliberate acceleration (§4.4); addendum marked integrated."
+  - "2026-08-25 — integrated the stable core of research/potentics_exploration_ontology.md: Map/Territory distinction, represented candidates versus The Possible, Possibility Space as corrigible model, optional Fields/Landscapes, and the Map → Reality response → Map' exploration loop (§1.4)."
 ---
 # What is Potentics?
 
@@ -93,7 +94,7 @@ Possibilities are what a situation seems to offer.
 The Possible is what reality has not forbidden.
 ```
 
-The plural *possibilities* tends to refer to a local, visible, contingent set of options: what appears available to a person, institution, territory, market, scientific community, technical system, or historical moment. **The Possible** names the wider field of what reality permits, including what has not yet been seen, named, funded, institutionalized, socially accepted, technically assembled, or cognitively recognized.
+The plural *possibilities* tends to refer to a local, visible, contingent set of options: what appears available to a person, institution, territory, market, scientific community, technical system, or historical moment. **The Possible** names the wider domain of what reality permits, including what has not yet been seen, named, funded, institutionalized, socially accepted, technically assembled, or cognitively recognized.
 
 If Potentics were only the rational exploration of *possibilities*, it could be misread as a method for choosing among visible options. That is too small a claim. Potentics is concerned with a larger domain:
 
@@ -112,12 +113,12 @@ socially possible but cognitively unnamed states
 
 ### 1.2 Relation to potentiality
 
-The distinction between possibility and potentiality developed in §2 remains the operative one; **The Possible** sits a level above it, as the field within which possibilities and potentialities are situated:
+The distinction between possibility and potentiality developed in §2 remains the operative one; **The Possible** sits a level above it, as the domain within which possibilities and potentialities are situated:
 
 ```text
 possibilities = situated visible options
 the possible  = abstract domain of what can be
-The Possible  = doctrinal term for the full field of what reality permits
+The Possible  = doctrinal term for the full domain of what reality permits
 potentiality  = graded measure of a possible's propensity to actualize
 ```
 
@@ -150,6 +151,41 @@ reversibility
 ```
 
 A possible may be physically permitted but institutionally blocked. It may be technically feasible but socially invisible. It may be economically possible only after coordination failures are solved. Potentics studies these layers rather than collapsing them into a single yes/no judgment.
+
+### 1.4 Maps, Territory, and modeled possibility spaces
+
+Rational exploration requires representations, but Potentics MUST distinguish those representations from what they attempt to describe.
+
+**The Possible** is the wider Reality-constrained domain. Its complete boundary is not assumed to be known in advance.
+
+A **Map** is a corrigible representation used to orient exploration. A represented candidate is therefore **not thereby established as possible**: a Map may contain unsupported hypotheses, false routes, inconsistent states or candidates that later encounters with Reality exclude.
+
+A **Possibility Space** is an explicit model that gives coordinates, states, relations or dimensions to a family of represented candidate possibles. It is therefore a kind of Map, not The Possible itself, and may contain candidates that later prove impossible.
+
+**Territory** is the operational metaphor for the portion or aspect of the Real actually encountered by exploration and capable of resisting, enabling, surprising or redirecting the explorer. Territory need not be geographical; a technical, legal, institutional, biological, formal or social system may constitute the encountered Territory of an inquiry.
+
+The minimal epistemic loop is:
+
+```text
+Map_n
+→ candidate Path / hypothesis
+→ bounded act or observation
+→ Territory
+→ Reality response
+→ trace + residue
+→ correction
+→ Map_n+1
+```
+
+A **Path** is candidate or planned; a **Trajectory** is historical — what was actually attempted or traversed.
+
+Potentics may use **Fields** to assign structured quantities to explicitly declared domains, and **Landscapes** to project one or more such fields into navigable representations. These are modeling instruments, not claims that every Potentic quantity shares one mathematical space or that The Possible is itself a known field.
+
+The detailed exploration vocabulary, including distributed maps, Vehicles, Cognitive Packets, Attractors, Informational Gravity, Ithaca and Reactive Corpus projections, is maintained in [`research/potentics_exploration_ontology.md`](potentics_exploration_ontology.md). Those operational projections are deliberately kept outside the core definition so that Potentics does not depend on one computational architecture.
+
+> **The map guides exploration. The territory answers.**
+
+> **Do not mistake the current map for The Possible.**
 
 ---
 

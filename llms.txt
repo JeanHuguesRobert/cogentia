@@ -67,6 +67,8 @@
   - Aliases: exploration rationnelle du possible, erp, rational exploration of the possible
 - **Seconde Methode**: [research/corpus_navigation_audit.md](https://github.com/JeanHuguesRobert/cogentia/blob/main/research/corpus_navigation_audit.md)
   - Aliases: seconde methode, seconde méthode, second method, conserved negative returns
+- **Conceptual Gravity**: [research/conceptual_gravity.md](https://github.com/JeanHuguesRobert/cogentia/blob/main/research/conceptual_gravity.md)
+  - Aliases: conceptual gravity, self-orienting corpus, self-orienting reactive corpus, corpus.orient
 
 ## Navigation Contract Verbs (CPsN v0.1)
 - `resolve(name)`: Deterministic alias -> canonical file lookup

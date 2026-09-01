@@ -60,16 +60,51 @@ export function createGovernedHarness(options = {}) {
       const allowed = new Set(normalizeNames(authorization.allowedCapabilities));
       const confirmed = new Set(normalizeNames(authorization.confirmedCapabilities));
       const init = options.initialState || authorization.initialState || {};
+      const sharedEvidenceList = Array.isArray(options.sharedEvidence || authorization.sharedEvidence || init.sharedEvidence)
+        ? [...(options.sharedEvidence || authorization.sharedEvidence || init.sharedEvidence)]
+        : [];
       const state = {
         input: init.input || input,
         observations: Array.isArray(init.observations) ? [...init.observations] : [],
         steps: Array.isArray(init.steps) ? [...init.steps] : [],
         requiredEventReceipts: Array.isArray(init.requiredEventReceipts) ? [...init.requiredEventReceipts] : [],
+        sharedEvidence: sharedEvidenceList,
         sequence: typeof init.sequence === "number" ? init.sequence : 0,
         requiredEventCount: typeof init.requiredEventCount === "number" ? init.requiredEventCount : (init.requiredEventReceipts ? init.requiredEventReceipts.length : 0),
         capabilityCalls: typeof init.capabilityCalls === "number" ? init.capabilityCalls : 0,
         costUnits: typeof init.costUnits === "number" ? init.costUnits : 0,
       };
+
+      // If shared evidence contains verified required event receipts, import them
+      for (const item of state.sharedEvidence) {
+        if (item.kind === "orientation.required" || item.type === "required_event_receipt") {
+          const kind = item.kind || item.observation?.kind || "orientation.required";
+          if (!state.requiredEventReceipts.some((r) => r.kind === kind)) {
+            state.requiredEventReceipts.push({
+              kind,
+              policy: REQUIRED_EVENT_POLICY,
+              handlerType: "shared_evidence",
+              status: "completed",
+              producedBy: item.producedBy || item.sourceContinuationRef || "sibling_branch",
+              receiptSha256: item.receiptSha256 || null,
+              observation: {
+                ...(item.observation || item.value || {}),
+                type: item.observation?.type || "orientation_result",
+                kind,
+                source: "shared_sibling_evidence",
+                discharged: true,
+              },
+            });
+            state.observations.push({
+              ...(item.observation || item.value || {}),
+              type: item.observation?.type || "orientation_result",
+              kind,
+              source: "shared_sibling_evidence",
+            });
+          }
+        }
+      }
+
       const pendingRequired = (state.sequence > 0 || (state.requiredEventReceipts && state.requiredEventReceipts.length > 0))
         ? []
         : requiredEventsForTurn(input, options);
@@ -225,6 +260,7 @@ function snapshot(state, registry, bounds) {
     observations: state.observations.map((item) => observationForReasoner(item, registry)),
     steps: state.steps.slice(),
     requiredEventReceipts: (state.requiredEventReceipts || []).slice(),
+    sharedEvidence: (state.sharedEvidence || []).slice(),
     nextSequence: state.sequence,
     capabilityCalls: state.capabilityCalls,
     costUnits: state.costUnits,
