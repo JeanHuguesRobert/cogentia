@@ -16,6 +16,8 @@
     "rossignol": "node scripts/rossignol-runner.js",
     "rossignol:smoke": "node scripts/rossignol-runner.js --smoke",
     "test:rossignol": "node scripts/test-rossignol-runner.js",
+    "social:derive": "node scripts/social-derivation-cli.js",
+    "test:social": "node scripts/test-social-derivation.js",
     "john": "node scripts/john.js",
     "test:john": "node scripts/test-john.js",
     "metadata:audit": "node scripts/metadata-audit.js",
