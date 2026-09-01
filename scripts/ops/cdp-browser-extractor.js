@@ -370,3 +370,87 @@ export async function switchToAccountInTab(targetHandle, endpoint = DEFAULT_CDP_
 
   return evalRes.result?.value || evalRes.result;
 }
+
+/**
+ * Detects the currently logged-in Facebook account from DOM.
+ */
+export async function detectActiveFacebookAccount(endpoint = DEFAULT_CDP_ENDPOINT) {
+  const tabs = await listActiveTabs(endpoint);
+  const fbTab = tabs.find(t => t.url.includes("facebook.com"));
+  if (!fbTab) return { error: "Aucun onglet Facebook ouvert trouvé dans Chromium." };
+
+  const expr = `(() => {
+    const cUser = (document.cookie.match(/c_user=([^;]+)/) || [])[1];
+    const profileLink = document.querySelector('a[href*="/me"], a[href*="/profile.php"], a[aria-label*="profil" i], a[aria-label*="profile" i]');
+    
+    return {
+      tab_title: document.title,
+      url: window.location.href,
+      facebook_user_id: cUser || null,
+      profile_url: profileLink ? profileLink.href : null,
+      profile_name: profileLink ? profileLink.innerText.trim() : document.title.replace(/\\s*\\([0-9]+\\+\\)\\s*/, '').replace(/\\s*\\| Facebook$/, '')
+    };
+  })()`;
+
+  const evalRes = await sendCdpCommand(fbTab.webSocketDebuggerUrl, "Runtime.evaluate", {
+    expression: expr,
+    returnByValue: true,
+    awaitPromise: true
+  });
+
+  return {
+    tab_id: fbTab.id,
+    ...(evalRes.result?.value || evalRes.result)
+  };
+}
+
+/**
+ * Extracts and saves Facebook session tokens (c_user, xs, datr, fr) into .cogentia/secrets/fb_session_<alias>.json
+ */
+export async function extractAndSaveFacebookSession(alias = "default", endpoint = DEFAULT_CDP_ENDPOINT) {
+  const cookies = await extractCookiesForUrls(["https://facebook.com"], endpoint);
+  const cUser = cookies.find(c => c.name === "c_user");
+  const xs = cookies.find(c => c.name === "xs");
+
+  if (!cUser || !xs) {
+    return {
+      success: false,
+      error: "Cookies de session Facebook (c_user / xs) introuvables. Vérifiez que vous êtes connecté sur Facebook."
+    };
+  }
+
+  const secretsDir = path.resolve(process.cwd(), ".cogentia", "secrets");
+  if (!fs.existsSync(secretsDir)) {
+    fs.mkdirSync(secretsDir, { recursive: true });
+  }
+
+  const sessionPayload = {
+    platform: "facebook",
+    alias,
+    c_user: cUser.value,
+    xs: xs.value,
+    extracted_at: new Date().toISOString(),
+    auth_method: "cdp_hosted_browser",
+    full_cookies: cookies.map(c => ({
+      name: c.name,
+      value: c.value,
+      domain: c.domain,
+      path: c.path,
+      secure: c.secure,
+      httpOnly: c.httpOnly
+    }))
+  };
+
+  const secretPath = path.join(secretsDir, `fb_session_${alias}.json`);
+  fs.writeFileSync(secretPath, JSON.stringify(sessionPayload, null, 2), "utf8");
+
+  return {
+    success: true,
+    platform: "facebook",
+    alias,
+    c_user_preview: cUser.value,
+    xs_preview: xs.value.slice(0, 10) + "...",
+    secret_file: secretPath,
+    extracted_at: sessionPayload.extracted_at
+  };
+}

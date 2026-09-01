@@ -8,11 +8,45 @@
  *   node scripts/ops/cdp-browser-cli.js --eval="document.title"
  */
 
-import { listActiveTabs, extractCookiesForUrls, extractAndSaveXSession, extractAllConnectedAccounts, switchToAccountInTab, evaluateJsInTab, detectActiveXAccount, DEFAULT_CDP_ENDPOINT } from "./cdp-browser-extractor.js";
+import { 
+  listActiveTabs, 
+  extractCookiesForUrls, 
+  extractAndSaveXSession, 
+  extractAllConnectedAccounts, 
+  switchToAccountInTab, 
+  evaluateJsInTab, 
+  detectActiveXAccount,
+  detectActiveFacebookAccount,
+  extractAndSaveFacebookSession,
+  DEFAULT_CDP_ENDPOINT 
+} from "./cdp-browser-extractor.js";
 
 async function main() {
   const args = process.argv.slice(2);
   const endpoint = process.env.CDP_ENDPOINT || DEFAULT_CDP_ENDPOINT;
+
+  if (args.includes("--whoami-fb")) {
+    console.log("🕵️ Détection du compte Facebook actuellement connecté via CDP...");
+    const fbInfo = await detectActiveFacebookAccount(endpoint);
+    console.log("Résultat de l'analyse Facebook :", JSON.stringify(fbInfo, null, 2));
+    return;
+  }
+
+  const extractFbArg = args.find(a => a.startsWith("--extract-fb="));
+  if (extractFbArg) {
+    const alias = extractFbArg.split("=")[1];
+    console.log(`🔐 Extraction automatique de session Facebook sous l'alias : ${alias}...`);
+    const res = await extractAndSaveFacebookSession(alias, endpoint);
+    if (res.success) {
+      console.log(`✅ Session Facebook extraite avec succès !`);
+      console.log(`   • c_user   : ${res.c_user_preview}`);
+      console.log(`   • xs       : ${res.xs_preview}`);
+      console.log(`   • Fichier  : ${res.secret_file}\n`);
+    } else {
+      console.error(`❌ Échec de l'extraction Facebook : ${res.error}\n`);
+    }
+    return;
+  }
 
   const switchArg = args.find(a => a.startsWith("--switch-to="));
   if (switchArg) {
