@@ -180,14 +180,26 @@ export async function detectActiveXAccount(endpoint = DEFAULT_CDP_ENDPOINT) {
   })()`;
 
   const tabs = await listActiveTabs(endpoint);
-  const xTab = tabs.find(t => t.url.includes("x.com") || t.url.includes("twitter.com")) || tabs[0];
-  if (!xTab) return { error: "No X tab found" };
+  const xTabs = tabs.filter(t => t.url.includes("x.com") || t.url.includes("twitter.com"));
+  if (xTabs.length === 0) return { error: "No X tab found" };
 
-  const evalRes = await sendCdpCommand(xTab.webSocketDebuggerUrl, "Runtime.evaluate", {
-    expression: expr,
-    returnByValue: true,
-    awaitPromise: true
-  });
+  const results = [];
+  for (const xTab of xTabs) {
+    try {
+      const evalRes = await sendCdpCommand(xTab.webSocketDebuggerUrl, "Runtime.evaluate", {
+        expression: expr,
+        returnByValue: true,
+        awaitPromise: true
+      });
+      results.push({
+        tab_id: xTab.id,
+        tab_title: xTab.title,
+        ...(evalRes.result?.value || evalRes.result)
+      });
+    } catch (e) {
+      results.push({ tab_id: xTab.id, error: e.message });
+    }
+  }
 
-  return evalRes.result?.value || evalRes.result;
+  return results.length === 1 ? results[0] : results;
 }
