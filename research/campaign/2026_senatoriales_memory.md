@@ -401,16 +401,31 @@ Règles :
 - renvoyer les éléments sensibles vers un registre privé si nécessaire ;
 - ne pas publier de brouillons stratégiques sensibles sans validation humaine.
 
-## 11. Prochaines tâches
+## 11. Veille Territoriale & Intelligence de Campagne (Rossignol Issue #141)
 
+La veille continue est opérée par le runner minimal COP-native **Rossignol** (`scripts/rossignol-runner.js`), documenté dans :
+- [Manifeste de Veille Territoriale Corse — Campagne Sénatoriale 2026](corsica_senate_watch_manifest.md)
+- [Archéologie & Fondations Rossignol](../rossignol_runner_archaeology.md)
+
+Cinq dossiers territoriaux prioritaires alimentent quotidiennement la campagne :
+1. **Autonomie institutionnelle & Décentralisation communale** (Article 72-5, DGF, ingénierie rurale) ;
+2. **Énergie, Micro-Réseaux & FractaVolta** (ZNI, autoconsommation collective villageoise, batteries 2nde vie) ;
+3. **Foncier, Logement & Statut du Résident Rural** (Bail Réel Solidaire rural, SCIC, indivisions) ;
+4. **Eau, Déchets & Continuité des Services Publics** (Retenues collinaires OEHC, surcoût Syvadec) ;
+5. **Transparence anti-capture & Marchés publics** (Chambre Régionale des Comptes, dossier #1755).
+
+## 12. Prochaines tâches
+
+- [x] intégrer le runner de veille territoriale Rossignol (Issue #141) ;
+- [x] publier le manifeste des sources et données pour les grands électeurs ;
 - [ ] intégrer les publications déjà existantes ;
 - [ ] intégrer les interactions Facebook importantes ;
 - [ ] créer un packet template séparé si utile ;
-- [ ] créer le premier snapshot hebdomadaire ;
+- [ ] créer le snapshot hebdomadaire de septembre ;
 - [ ] relier ce document depuis l'issue #43 ;
 - [ ] définir un statut pour chaque position publique ;
 - [ ] créer une version courte de présentation de campagne.
 
-## 12. Formule de clôture
+## 13. Formule de clôture
 
 > Une campagne n'est pas seulement une suite de messages. C'est une épreuve de mémoire, de cohérence, de preuve et de capacité. Ce document sert à empêcher que le flux détruise la continuité.
