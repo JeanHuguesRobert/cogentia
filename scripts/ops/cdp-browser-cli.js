@@ -14,10 +14,31 @@ async function main() {
   const args = process.argv.slice(2);
   const endpoint = process.env.CDP_ENDPOINT || DEFAULT_CDP_ENDPOINT;
 
-  console.log("==========================================================================");
-  console.log(" 🌐 CDP HOSTED BROWSER CONTROLLER & SESSION EXTRACTOR");
-  console.log(`    Endpoint : ${endpoint}`);
-  console.log("==========================================================================\n");
+  if (args.includes("--inspect-sessions")) {
+    console.log("🔍 Inspection détaillée des sessions et cookies dans chaque onglet...");
+    const { sendCdpCommand } = await import("./cdp-browser-extractor.js");
+    const tabs = await listActiveTabs(endpoint);
+    for (const t of tabs) {
+      if (t.url.includes("x.com") || t.url.includes("twitter.com")) {
+        const expr = `(() => {
+          return {
+            tab_title: document.title,
+            url: window.location.href,
+            account_btn: document.querySelector('[data-testid="SideNav_AccountSwitcher_Button"]')?.innerText,
+            profile_link: document.querySelector('[data-testid="AppTabBar_Profile_Link"]')?.getAttribute('href'),
+            twid: decodeURIComponent((document.cookie.match(/twid=([^;]+)/) || [])[1] || '')
+          };
+        })()`;
+        const res = await sendCdpCommand(t.webSocketDebuggerUrl, "Runtime.evaluate", {
+          expression: expr,
+          returnByValue: true
+        });
+        console.log(`\n• Onglet [${t.id}] :`);
+        console.log(JSON.stringify(res.result?.value, null, 2));
+      }
+    }
+    return;
+  }
 
   if (args.includes("--extract-all")) {
     console.log("🚀 Extraction automatique en chaîne de TOUS les comptes X connectés...");
