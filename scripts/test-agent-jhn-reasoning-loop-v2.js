@@ -38,7 +38,9 @@ assert.equal(disabled.result.answer, "legacy");
 const recovered = await runAgentJohnV2SurfaceTurn({
   text: "x", enabled: true,
   legacyTurn: async () => ({ answer: "fallback" }),
-  limits: { maxElapsedMs: 1 },
+  forceFailure: true,
 });
 assert.equal(recovered.result.answer, "fallback");
+assert.equal(recovered.fallback, true);
+assert.equal(recovered.reasoning.error, "forced_v2_failure");
 console.log("ok - Agent John V2 is feature-gated, governed, and falls back to the legacy surface turn");

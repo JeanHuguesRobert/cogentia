@@ -19,6 +19,7 @@ export async function runAgentJohnV2SurfaceTurn({
   legacyTurn,
   stages = null,
   enabled,
+  forceFailure = false,
   env = process.env,
   mandate,
   view = "public",
@@ -31,6 +32,7 @@ export async function runAgentJohnV2SurfaceTurn({
 
   const startedAt = Date.now();
   try {
+    if (forceFailure) throw new Error("forced_v2_failure");
     // Level 1/2 preflight: required events are ordered before any unrestricted
     // turn capability. The current projector is deliberately side-effect free.
     const preflight = await createReasoningLoop().run(

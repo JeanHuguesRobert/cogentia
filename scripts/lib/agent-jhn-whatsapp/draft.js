@@ -124,6 +124,8 @@ export async function buildCognitiveDraft(normalized, config, options = {}) {
     const v2 = await runAgentJohnV2SurfaceTurn({
       text: normalized?.text || "",
       surface: "agent-john-whatsapp",
+      enabled: options.reasoningLoopV2Enabled,
+      forceFailure: options.reasoningLoopV2ForceFailure === true,
       legacyTurn: () => buildCognitiveDraft(normalized, config, { ...options, reasoningLoopV2Internal: true }),
       mandate: { id: config.mandate_id || "inherited", mode: "read_public" },
     });

@@ -86,6 +86,7 @@
     "test:continuation-convergence-f4": "node scripts/test-continuation-convergence-f4.js",
     "test:agent-jhn-reasoning-loop-v2": "node scripts/test-agent-jhn-reasoning-loop-v2.js",
     "test:guide-reasoning-loop": "node scripts/test-guide-reasoning-loop.js",
+    "test:whatsapp-reasoning-loop": "node scripts/test-whatsapp-reasoning-loop-v2.js",
     "test:agent-jhn-f1": "node scripts/test-agent-jhn-f1-required-events.js",
     "sandbox:mcp-packet": "node sandbox/mcp-2026-cognitive-packet/index.js run all",
     "test:mcp-sandbox": "node sandbox/mcp-2026-cognitive-packet/test/run-scenarios.js",
