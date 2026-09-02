@@ -92,6 +92,7 @@
     "test:mcp-sandbox": "node sandbox/mcp-2026-cognitive-packet/test/run-scenarios.js",
     "mandate:check": "node scripts/mandate-attenuation-check.js",
     "test:mandate-attenuation": "node scripts/test-mandate-attenuation.js",
+    "test:fbf-attention": "node scripts/test-fbf-attention-reminder.js",
     "mcp:inspect": "npx @modelcontextprotocol/inspector node scripts/cogentia-mcp.js",
     "mcp:inspect:2026": "node -e \"process.env.COGENTIA_MCP_FORCE_PROTOCOL='2026-07-28'; require('child_process').spawn('npx', ['@modelcontextprotocol/inspector', 'node', 'scripts/cogentia-mcp.js'], {stdio: 'inherit', shell: true})\""
   },

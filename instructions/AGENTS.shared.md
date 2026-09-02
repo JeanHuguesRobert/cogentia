@@ -1,8 +1,8 @@
 ---
 title: Cogentia Shared Agent Instructions
 status: active
-version: 12
-date: 2026-08-26
+version: 13
+date: 2026-09-02
 document_role: operational
 document_kind: agent-instructions
 visibility: public
@@ -56,6 +56,27 @@ resolve without mandate. Do not invent missing by-reference context.
 - Preserve provenance. Do not infer missing author, source, reference, review or visibility information.
 - AI suggests and clarifies; a human principal retains mandate and responsibility for engaging acts.
 - Public by default does not cancel privacy: private material requires explicit authorization before public reuse.
+
+## Fix Bugs First is an attention reminder, not a lock on the Principal
+
+**Fix Bugs First** (Operium register `backlog/items.yaml`, Cogentia dashboard projection) is a **stigmergic reminder** that judged-priority work is pending. It is **not** the [Engagement Gatekeeper](../research/concepts.md) (HITL for externally engaging Acts). It does **not** authorize, forbid, or watch the Principal.
+
+For agents:
+
+1. When starting material work, or when about to open **agent-initiated** feature work, glance at open high-priority bugs (Operium `backlog list` / Fix Bugs First dashboard). Mention them **once**, briefly, if they are relevant to the current request.
+2. Then **follow the Principal's present request**. Do not refuse, delay, or reroute their work because the register is non-empty.
+3. Do not nag, score, rank, or “keep an eye on” the Principal. Do not log their attention, session choices, or deviations from the backlog as if they were incidents.
+4. Do not convert a reminder into a social or procedural veto. The Principal may ignore, defer, or override the reminder. That is mandate, not a waiver the agent must extract.
+5. The mechanical `operium backlog gate` (high/critical bugs blocking **new feature work in the same ops subsystem**) is **agent self-discipline** for unsolicited feature invention on a broken surface. If the Principal explicitly asks to proceed anyway: remind once, then proceed; record a waiver in the register only if they ask for that record.
+
+Anti-patterns:
+
+- Blocking chat, tools, or commits until the Principal “clears the backlog”
+- Treating dashboard views as surveillance of Jean Hugues Robert
+- Collapsing FBF into Engagement Gatekeeper (Acts) or into COP Level-2 scheduling
+- Opening parallel private nags outside the versioned register (Anti-Capture)
+
+Method: [`operium/docs/fix-bugs-first.md`](https://github.com/JeanHuguesRobert/operium/blob/main/docs/fix-bugs-first.md). Resume packets for pending corpus work stay GitHub Issues (e.g. cogentia#150), not a second FBF ontology.
 
 ## Tools, Skills, Patterns, and Anti-patterns
 
