@@ -833,6 +833,7 @@ async function produceGuideTurn(question, history, payload = {}, options = {}) {
         },
       ],
       mandate: guideMandate,
+      limits: { maxElapsedMs: 120000 },
     });
     if (v2.used) {
       const result = v2.result;
