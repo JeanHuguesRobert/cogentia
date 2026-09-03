@@ -34,12 +34,21 @@ Work from this coding session is **not** in a vendor chat log. Resume from GitHu
 
 ## Resume handles
 
+Complete workspace (all repos, WIP vs `origin/main`, Inox/`simpli` vs `master`):
+
+```text
+resume operium/46
+resume GitHub Issue 46 of repository operium
+```
+
+This session only (Guide A/B, V2 hold, zg):
+
 ```text
 resume cogentia/156
 resume GitHub Issue 156 of repository cogentia
 ```
 
-[cogentia#156](https://github.com/JeanHuguesRobert/cogentia/issues/156) is the **session index** (map + discriminants + constraints). Execution happens on a **child**:
+[operium#46](https://github.com/JeanHuguesRobert/operium/issues/46) is the **fleet index**. [cogentia#156](https://github.com/JeanHuguesRobert/cogentia/issues/156) is the **session index**. Execution happens on a **child**:
 
 | Command | Authority |
 | --- | --- |
@@ -49,6 +58,10 @@ resume GitHub Issue 156 of repository cogentia
 | `resume cogentia/151` | FBF attention, not Principal lock — merge PR #151 |
 | `resume operium/44` | FBF backlog — merge Operium PR #44 |
 | `resume cogentia/141` | Rossignol — PR #144; separate tree |
+| `resume operium/46` | Fleet WIP vs main/master (Inox, Operium DNS/ONA/browser, inseme COP, ubikia, barons) |
+| `resume Inox/34` | Spec/runtime audit — uncommitted on `master` |
+| `resume operium/37` | DNS/mail branch `wip/mail-dns-cutover` (split before merge) |
+| `resume inseme/61` | COP Trace-Centric; `inseme` checkout is clean `main` |
 
 ## Facts a successor must not re-litigate
 
