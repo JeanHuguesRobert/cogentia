@@ -20,7 +20,7 @@ import {
 import { createRegistryAwareMcpCore } from "./lib/cogentia-mcp-registries.js";
 import { aiRouterHealth } from "./lib/ai-router-client.js";
 import { mergeGuideRetrievalFromPacks } from "./lib/guide-retrieval-merge.js";
-import { runAgentJohnV2SurfaceTurn } from "./lib/agent-jhn-reasoning-loop-v2.js";
+import { runAgentJohnV2SurfaceTurn, resolveGuideReasoningLoopV2 } from "./lib/agent-jhn-reasoning-loop-v2.js";
 import { retrievalInoxConfigured, retrievalInoxPackBatch, inoxRetrievalBaseUrl } from "./lib/retrieval-inox-session.js";
 import { retrievalSupabaseConfigured, retrievalSupabasePackBatch } from "./lib/retrieval-supabase.js";
 import {
@@ -813,6 +813,7 @@ async function produceGuideTurn(question, history, payload = {}, options = {}) {
     const v2 = await runAgentJohnV2SurfaceTurn({
       text: question,
       surface: resolvePublicChatSurface(payload, options),
+      enabled: resolveGuideReasoningLoopV2(payload, process.env),
       legacyTurn: () => produceGuideTurn(question, history, payload, { ...options, reasoningLoopV2Internal: true, v2Evidence: { plan: v2Plan, retrieval: v2Retrieval } }),
       stages: [
         {

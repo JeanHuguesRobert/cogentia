@@ -1,9 +1,14 @@
 #!/usr/bin/env node
 import assert from "node:assert/strict";
-import { runAgentJohnV2SurfaceTurn, reasoningLoopV2Enabled } from "./lib/agent-jhn-reasoning-loop-v2.js";
+import { runAgentJohnV2SurfaceTurn, reasoningLoopV2Enabled, resolveGuideReasoningLoopV2 } from "./lib/agent-jhn-reasoning-loop-v2.js";
 
 assert.equal(reasoningLoopV2Enabled({}), false);
 assert.equal(reasoningLoopV2Enabled({ COGENTIA_REASONING_LOOP_V2: "true" }), true);
+assert.equal(resolveGuideReasoningLoopV2({}, {}), false);
+assert.equal(resolveGuideReasoningLoopV2({ reasoning_loop_v2: true }, {}), false);
+assert.equal(resolveGuideReasoningLoopV2({ reasoning_loop_v2: true }, { COGENTIA_GUIDE_ALLOW_V2_PROBE: "true" }), true);
+assert.equal(resolveGuideReasoningLoopV2({ reasoning_loop_v2: false }, { COGENTIA_REASONING_LOOP_V2: "true" }), true);
+assert.equal(resolveGuideReasoningLoopV2({ reasoning_loop_v2: false }, { COGENTIA_REASONING_LOOP_V2: "true", COGENTIA_GUIDE_ALLOW_V2_PROBE: "true" }), false);
 
 let calls = 0;
 const enabled = await runAgentJohnV2SurfaceTurn({

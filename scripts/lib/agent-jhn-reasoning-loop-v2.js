@@ -13,6 +13,20 @@ export function reasoningLoopV2Enabled(env = process.env, options = {}) {
   return String(env?.COGENTIA_REASONING_LOOP_V2 || "").trim().toLowerCase() === "true";
 }
 
+/**
+ * Per-request V2 enablement for Guide eval A/B.
+ * A request may set reasoning_loop_v2 true/false only when
+ * COGENTIA_GUIDE_ALLOW_V2_PROBE=true (or the process already has V2 on).
+ * Probe-true + explicit false keeps a V2-default process comparable to legacy.
+ */
+export function resolveGuideReasoningLoopV2(payload = {}, env = process.env) {
+  const probe = String(env?.COGENTIA_GUIDE_ALLOW_V2_PROBE || "").trim().toLowerCase() === "true";
+  const globalOn = String(env?.COGENTIA_REASONING_LOOP_V2 || "").trim().toLowerCase() === "true";
+  if (payload.reasoning_loop_v2 === true) return probe || globalOn;
+  if (payload.reasoning_loop_v2 === false) return probe ? false : globalOn;
+  return globalOn;
+}
+
 export async function runAgentJohnV2SurfaceTurn({
   text,
   surface,
