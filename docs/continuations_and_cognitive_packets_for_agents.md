@@ -88,6 +88,75 @@ node scripts/cogentia.js continuation schema
 node scripts/cogentia.js continuation resolve <id> step_result.json
 ```
 
+## Handler initiative: continue when the next step is obvious
+
+A handler SHOULD NOT stop merely to ask whether it may perform a clearly implied
+**read-only, non-impacting** next step when that step is already within the
+inherited mandate, budget, disclosure rules and effect ceiling.
+
+Read-only is not a magic exemption. Retrieval can consume compute, API quota,
+attention, privacy budget, or other bounded resources, and some nominal reads
+can have hidden side effects. The handler therefore checks the whole operating
+envelope, not only the HTTP verb or tool label.
+
+```text
+if next_action_is_clear
+and within_mandate
+and within_budget
+and within_disclosure_and_effect_ceiling
+and read_only
+and no_material_hidden_side_effect:
+    execute the inspection / verification directly
+else:
+    surface the exact next action and the gate that prevents direct execution
+```
+
+Canonical compression:
+
+> **Do not stop at an obvious continuation. Surface it — or execute it directly
+> when it is read-only, non-impacting, and already inside mandate and budget.**
+
+## Verified handoffs
+
+A continuation is not ready to hand off merely because its instructions are
+correct. Its declared input must actually exist and be available to the next
+handler through the channel that handler can use.
+
+Before issuing a material handoff, verify proportionately:
+
+```text
+target exists
+∧ target is retrievable by the next handler
+∧ target content/version was checked
+∧ immutable identity is known when the review or replay requires immutability
+```
+
+For Git-backed artifacts, prefer the simplest native model:
+
+```text
+stable canonical path
+→ evolving content
+→ immutable commit checkpoints
+```
+
+Routine revisions do not require versioned filenames or branches. Use a branch
+only when there is a concrete need for genuinely parallel or incompatible work.
+For an external review handoff, the normal sequence is:
+
+```text
+edit canonical file
+→ required human arbitration
+→ commit
+→ fetch back from GitHub
+→ verify delivered content/version
+→ obtain immutable commit SHA
+→ issue reviewer handoff using that SHA
+```
+
+This is the **Verified Handoff Principle**: a handler must verify the next
+handler's actual input, not merely its own intention about what that input
+should be.
+
 ## Handlers, not session memory
 
 A packet/continuation must remain answerable by a **different** agent or human
