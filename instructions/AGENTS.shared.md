@@ -238,6 +238,27 @@ French.
 - A lightweight, disposable safety net (a stash or a throwaway tag on the losing side) before a reconciliation step that could discard content is proportionate, not systematic: reach for it when it materially improves recovery, skip it for routine cheaply-correctable merges. Measure the consequence profile; do not apply blanket precaution.
 - Branches are exceptions to justify by a concrete benefit, not prohibited mechanisms. The default is measured progress, not precautionary bureaucracy.
 
+## Operational agility, conflicts, and incidents
+
+Move through small, independently verifiable increments. Use the least
+ceremonial container that keeps the actual Exposure within mandate: a branch,
+review gate, or approval ritual is useful only when it materially improves the
+consequence or recovery profile.
+
+Before mutating live or concurrently edited state, re-read the relevant current
+state and, where the interface supports it, carry an expected revision or
+version. If that precondition no longer holds, do not overwrite blindly:
+re-read, reconcile or recalculate, then retry with the smallest sufficient
+scope. Report an unresolved conflict rather than manufacturing a false success.
+
+An observed bug or incident takes priority over a new evolution in the same
+subsystem. Repository-local instructions define any concrete register and
+mechanical gate. In an urgent incident, contain or stabilize first through the
+smallest authorized action with a credible recovery path; urgency never widens
+mandate, bypasses privacy or security boundaries, or excuses an unreported
+change. Preserve enough evidence to record the incident, action, result,
+residual risk, and next corrective step immediately afterwards.
+
 ## Stigmergic correction
 
 An error detected in work must leave a reusable correction trace: erroneous form, canonical form, scope, reason, date and prevention rule. The trace changes the working terrain for later humans and agents.
