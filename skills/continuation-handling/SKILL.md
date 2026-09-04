@@ -1,7 +1,7 @@
 ---
 schema: cogentia.agent_skill/v1
 id: cogentia.continuation-handling
-version: 1
+version: 2
 status: experimental
 name: continuation-handling
 description: >
@@ -41,6 +41,7 @@ governance:
   trace_minimum: material
 sources:
   - docs/agent-skills-contract.md
+  - docs/continuations_and_cognitive_packets_for_agents.md
   - prompts/continuation_user_prompt.md
   - prompts/continuation_designer_prompt.md
   - prompts/cognitive_packet.md
@@ -51,6 +52,7 @@ sources:
   - research/monotonic_mandate_attenuation.md
   - research/agent_configuration_layer.md
   - research/CPKT-2026-002_continuation_handoff.md
+  - research/packet_continuation_machine.md
   - trace/schemas/continuation.schema.json
 document_role: "operational"
 document_kind: "documentation"
@@ -187,6 +189,92 @@ If mandate is missing for resolve:
 - Return `status: needs_acceptance`, or
 - Emit a new continuation / packet hop describing the gate — **do not** call `continuation resolve` as success.
 
+### 4A. Continue obvious read-only work inside the envelope
+
+Do not create a judgment boundary merely because one procedural step ended.
+When the next useful action is highly predictable, first test whether it is
+already authorized and materially non-impacting.
+
+```text
+next_action_allowed :=
+    within_mandate
+    ∧ within_budget
+    ∧ within_disclosure_ceiling
+    ∧ within_effect_ceiling
+    ∧ no_material_hidden_side_effect
+
+if next_action_is_clear
+and next_action_allowed
+and action_is_read_only:
+    execute the inspection / retrieval / verification directly
+else:
+    surface the exact next action and the specific gate
+```
+
+This is the **Next Logical Action Principle**:
+
+> **When the next action is highly predictable, useful, and within mandate and
+> budget, execute it directly if it is read-only and non-impacting; otherwise
+> expose the action and request only the authorization actually required.**
+
+`read_only` does not mean `free`. Reads may consume compute, provider quota,
+human attention, privacy budget, or other bounded resources; some APIs also
+have observable or hidden side effects. The budget and effect envelope remain
+binding.
+
+This rule does not widen this skill's declared `prepare_only` effect. It removes
+unnecessary stops only for in-scope inspection, classification, retrieval and
+verification that were already permitted.
+
+### 4B. Verify a handoff before issuing it
+
+A handoff is not valid merely because the prompt, resume instruction, or target
+name is well formed. The declared input must exist in the state that the next
+handler will actually see.
+
+Before a material handoff, check proportionately:
+
+```text
+handoff_allowed :=
+    target_exists
+    ∧ target_retrievable_by_next_handler
+    ∧ target_content_or_version_verified
+    ∧ immutable_identity_known_when_required
+```
+
+If any term is false, do not issue the handoff as ready. Repair the packaging,
+publish/commit the intended input under the applicable mandate, switch to
+by-copy transmission, or report the precise blocker.
+
+For Git-backed document review, the preferred sequence is:
+
+```text
+edit canonical file
+→ required human arbitration
+→ commit
+→ fetch back from GitHub
+→ verify delivered content/version
+→ obtain immutable commit SHA
+→ hand off that SHA to the Reviewer
+```
+
+Use Git's native semantics instead of inventing routine document-version files:
+
+```text
+stable path
+→ evolving content
+→ immutable commit checkpoints
+```
+
+Versioned filenames or branches are justified only by a concrete need such as
+genuinely parallel or incompatible variants, not by ordinary sequential review.
+
+This is the **Verified Handoff Principle**:
+
+> **A continuation is not ready merely because its instructions are correct.
+> Its declared input must exist, be accessible through the next handler's
+> channel, and be independently retrievable before the handoff is issued.**
+
 ### 5. Produce output
 
 #### A. Valid `step_result` (generic default)
@@ -262,6 +350,7 @@ If handling a CPKT markdown/YAML handoff:
 2. Fill resumability report fields (R0–R5) when the packet defines them.
 3. Preserve absolute constraints (consent gates, GO-required workstreams).
 4. If by-reference context is unavailable → report packaging failure and request by-copy.
+5. Before declaring the hop ready, verify that every by-reference target required by the next handler is actually retrievable through that handler's available channel.
 
 ### 6. Stop conditions
 
@@ -272,6 +361,9 @@ Stop and hand control back when:
 - resolve would widen mandate, disclosure, or effect ceiling;
 - only external effect remains (send mail, merge without review, publish) — different skill/COP path;
 - packaging failure blocks safe resumption.
+
+Do **not** stop merely because the next logical step is an in-scope read-only
+inspection or verification already covered by mandate and budget.
 
 ## Provider neutrality
 
@@ -284,6 +376,8 @@ A continuation/packet must remain answerable by a human, another model, a script
 - Invent missing packet context (“lore reconstruction”).
 - Resolve without mandate while claiming success.
 - Silently exceed budget / disclosure constraints.
+- Ask for permission solely to perform an obvious, in-scope, non-impacting read that is already within mandate and budget.
+- Issue a handoff as ready without verifying that its declared target exists and is retrievable by the next handler.
 - Assume in-memory MCP session continuity across clients or restarts.
 - Collapse envelope routing into payload interpretation (or the reverse).
 - Turn this skill into an autonomous executor of arbitrary Acts.
@@ -299,6 +393,7 @@ action taken (inspect | prepare | resolve | refuse | hop)
 mandate_basis or refusal reason
 step_result status if any
 correlation ids if present (traceparent, issue URL, commit)
+handoff target + verification basis when a material handoff is emitted
 ```
 
 ## Quick map to Cognitive Packet Switching
@@ -309,8 +404,10 @@ This skill covers **handler-side continuation discipline**:
 receive packet/continuation
   → inspect envelope
   → interpret continuation payload
-  → check mandate / attenuation
+  → check mandate / attenuation / budget / effect envelope
+  → continue obvious read-only verification when already allowed
   → prepare or resolve judgment
+  → verify any next-handler target before handoff
   → emit result / refusal / next packet hop
   → leave trace
 ```

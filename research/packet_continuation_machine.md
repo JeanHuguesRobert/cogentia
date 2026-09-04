@@ -2,8 +2,9 @@
 title: "Packet/Continuation Machine — distributed branching computation model"
 author: "Jean Hugues Noël Robert, baron Mariani"
 date: "2026-08-23"
+last_modified_at: "2026-09-03"
 status: "working-note"
-version: "0.2"
+version: "0.3"
 license: "CC BY-SA 4.0"
 language: "en"
 repository: "JeanHuguesRobert/cogentia"
@@ -14,11 +15,13 @@ visibility: "public"
 lifecycle_state: "working"
 source_or_derived: "source-document"
 human_validation_required: true
+update_policy: "UP-DEFAULT-REVIEWED"
 related_documents:
   - "cogentia/research/alan_turing_mcp.md"
   - "cogentia/research/cognitive_packets.md"
   - "inseme/research/packet_attractor_fractanet.md"
   - "Inox/research/fractanet_language_abstractions.md"
+  - "https://github.com/JeanHuguesRobert/barons-Mariani/issues/54"
 tags:
   - cogentia
   - alan
@@ -414,6 +417,114 @@ Authorization is not execution.
 ```
 
 Therefore governance metadata is not merely control-plane annotation; it constrains valid machine transitions.
+
+### 11.1 Bounded handler initiative
+
+A continuation architecture can become needlessly bureaucratic if every
+predictable next step is converted into a fresh human judgment request. The
+opposite error is worse: treating prediction of the next step as authority to
+perform it.
+
+The useful boundary is the existing governance envelope.
+
+```text
+next_action_allowed :=
+    within_mandate
+    ∧ within_budget
+    ∧ within_rights_and_disclosure
+    ∧ within_effect_ceiling
+    ∧ no_material_hidden_side_effect
+
+if next_action_is_high_confidence
+and next_action_allowed
+and action_is_read_only:
+    execute directly
+else:
+    expose the exact continuation and its gate
+```
+
+This is the **Next Logical Action Principle**: when the next action is highly
+predictable and useful, the handler should not stop merely to describe it. It
+SHOULD execute an already-authorized, non-impacting read directly; where the
+step is effectful, costly beyond the envelope, disclosive, or otherwise gated,
+it SHOULD surface the exact action and request only the missing authority.
+
+`read_only` is not synonymous with `free` or `consequence-free`. Retrieval may
+consume compute, quota, privacy budget, scarce human attention, or cause
+provider-visible side effects. Autonomy can increase as consequence decreases,
+but it never bypasses mandate or budget.
+
+The architectural consequence is important: a Handler is responsible not only
+for resolving the current continuation, but also for recognizing when the next
+continuation is already determined enough to proceed inside the same envelope.
+Unnecessary stopping is therefore a handler defect just as unauthorized
+continuation is.
+
+### 11.2 Verified handoffs and native checkpointing
+
+A continuation hop is semantically invalid when the next handler cannot
+retrieve the input that the previous handler believes it has handed off.
+Correct instructions are not enough.
+
+```text
+handoff_valid :=
+    target_exists
+    ∧ target_retrievable_by_next_handler
+    ∧ target_content_or_version_verified
+    ∧ immutable_identity_known_when_required
+```
+
+The check is performed against the next handler's actual access path, not the
+sender's working memory. A local draft, an unpublished edit, or a mutable
+branch name cannot silently stand in for the immutable artifact named in a
+review or replay contract.
+
+For Git-backed Corpus work, the simplest native semantics are generally
+sufficient:
+
+```text
+stable path
+→ evolving content
+→ immutable commit checkpoints
+```
+
+Routine sequential revisions SHOULD keep one canonical path. The commit SHA is
+the immutable causal frontier. Versioned filenames and branches SHOULD be
+introduced only when they solve a concrete problem such as genuinely parallel
+or incompatible variants, not as a second versioning system layered over Git.
+
+A robust document-review handoff therefore follows:
+
+```text
+edit canonical file
+→ required human arbitration
+→ commit
+→ fetch back from the shared repository
+→ verify delivered content/version
+→ obtain immutable SHA
+→ hand off that SHA
+```
+
+This is the **Verified Handoff Principle**:
+
+> **A continuation is not valid merely because its instructions are correct.
+> Its declared input must exist, be accessible through the channel available to
+> the next handler, and be independently retrievable before the handoff is
+> issued.**
+
+The principle is a FractaCognitive yield from the document-production work
+tracked in `barons-Mariani#54`: a Reviewer handoff was prepared for a v0.4 that
+existed in the Redactor's local working state but had not yet been published to
+the GitHub path the Reviewer was told to inspect. The failure was not a lack of
+information about the workflow; it was a failure to let the shared artifact
+state answer before issuing the continuation. The correction therefore belongs
+in handler architecture, not merely in an instruction to “be more careful.”
+
+Together, bounded initiative and verified handoff give a useful rule:
+
+> **Continue without needless permission inside the authorized envelope; never
+> hand off an input you have not verified in the state the next handler will
+> actually receive.**
 
 ## 12. Initial prior-art map
 

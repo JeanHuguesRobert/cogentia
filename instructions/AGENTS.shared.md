@@ -1,8 +1,8 @@
 ---
 title: Cogentia Shared Agent Instructions
 status: active
-version: 12
-date: 2026-08-26
+version: 13
+date: 2026-09-04
 document_role: operational
 document_kind: agent-instructions
 visibility: public
@@ -56,6 +56,94 @@ resolve without mandate. Do not invent missing by-reference context.
 - Preserve provenance. Do not infer missing author, source, reference, review or visibility information.
 - AI suggests and clarifies; a human principal retains mandate and responsibility for engaging acts.
 - Public by default does not cancel privacy: private material requires explicit authorization before public reuse.
+
+## Bounded initiative and verified handoffs
+
+Agents SHOULD NOT create unnecessary judgment boundaries. When the next useful
+action is highly predictable, first test whether it is already inside the
+inherited operating envelope.
+
+```text
+next_action_allowed :=
+    within_mandate
+    ∧ within_budget
+    ∧ within_rights_privacy_and_disclosure
+    ∧ within_effect_and_risk_ceiling
+    ∧ no_material_hidden_side_effect
+
+if next_action_is_clear
+and next_action_allowed
+and action_is_read_only:
+    execute the inspection / retrieval / verification directly
+else:
+    surface the exact next action and the specific missing gate
+```
+
+This is the **Next Logical Action Principle**:
+
+> **When the next action is highly predictable, useful, and already within
+> mandate and budget, execute it directly if it is read-only and non-impacting;
+> otherwise expose the action and request only the authorization actually
+> required.**
+
+`read_only` is not synonymous with `free` or `consequence-free`. Retrieval may
+consume compute, provider quota, privacy budget, scarce human attention, or
+other bounded resources; some nominal reads may also create observable or
+hidden side effects. Read-only initiative therefore NEVER widens authority,
+budget, disclosure rights, effect ceiling, or risk envelope. Autonomy may
+increase as consequence decreases, but it never bypasses governance.
+
+A handoff has a complementary obligation. Correct instructions are insufficient
+when the next handler cannot retrieve the input the current handler believes it
+has handed off.
+
+Before issuing a material handoff, verify proportionately:
+
+```text
+handoff_valid :=
+    target_exists
+    ∧ target_retrievable_by_next_handler
+    ∧ target_content_or_version_verified
+    ∧ immutable_identity_known_when_required
+```
+
+This is the **Verified Handoff Principle**:
+
+> **A continuation or handoff is not valid merely because its instructions are
+> correct. Its declared input must exist, be accessible through the channel
+> available to the next handler, and be independently retrievable before the
+> handoff is issued.**
+
+Verification is against the next handler's actual access path, not the sender's
+working memory. A local draft, unpublished edit, inaccessible reference, stale
+cache, or merely intended future state MUST NOT silently stand in for the
+artifact named in a review, replay, or continuation contract.
+
+For Git-backed Corpus work, prefer the substrate's native semantics:
+
+```text
+stable canonical path
+→ evolving content
+→ immutable commit checkpoints
+```
+
+Routine sequential revisions SHOULD keep one canonical path. Versioned
+filenames and branches SHOULD be introduced only when they solve a concrete
+problem such as genuinely parallel or incompatible variants. For a review or
+other immutable handoff, the normal sequence is:
+
+```text
+edit canonical file
+→ required human arbitration
+→ commit
+→ fetch back from the shared repository
+→ verify delivered content/version
+→ obtain immutable commit SHA
+→ issue the handoff using that SHA
+```
+
+The fetch-back is part of delivery validation: do not assume that a successful
+write operation means the next handler will see the intended artifact.
 
 ## Tools, Skills, Patterns, and Anti-patterns
 
