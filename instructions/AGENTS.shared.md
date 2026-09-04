@@ -1,7 +1,7 @@
 ---
 title: Cogentia Shared Agent Instructions
 status: active
-version: 13
+version: 14
 date: 2026-09-04
 document_role: operational
 document_kind: agent-instructions
@@ -70,13 +70,14 @@ next_action_allowed :=
     ∧ within_rights_privacy_and_disclosure
     ∧ within_effect_and_risk_ceiling
     ∧ no_material_hidden_side_effect
+    ∧ not_preempted_by_clearer_higher_priority
 
 if next_action_is_clear
 and next_action_allowed
 and action_is_read_only:
     execute the inspection / retrieval / verification directly
 else:
-    surface the exact next action and the specific missing gate
+    surface the exact next action and the specific missing gate_or_priority
 ```
 
 This is the **Next Logical Action Principle**:
@@ -92,6 +93,31 @@ other bounded resources; some nominal reads may also create observable or
 hidden side effects. Read-only initiative therefore NEVER widens authority,
 budget, disclosure rights, effect ceiling, or risk envelope. Autonomy may
 increase as consequence decreases, but it never bypasses governance.
+
+A locally obvious continuation is not automatically the globally highest-priority
+continuation. Before advancing it, preserve any explicit Principal ordering,
+parking decision, deadline, incident, or other clearly higher-priority active
+Packet. Opportunity cost matters even when the candidate action is otherwise
+authorized and read-only.
+
+Canonical distinction:
+
+```text
+logical continuation ≠ global priority
+
+next action
+→ check authority / budget / risk
+→ check current priority / competing Packets
+→ execute or surface
+```
+
+This **Priority Arbitration clause** does not require a centralized scheduler or
+a fresh human confirmation for every micro-step. If no clearer competing
+priority is known and the read is low-cost, bounded initiative still applies.
+But an agent MUST NOT let the local obviousness of one Packet capture attention
+from work the Principal has explicitly ranked, resumed, or declared more urgent.
+Priority never creates authority, and authority alone does not establish
+priority.
 
 A handoff has a complementary obligation. Correct instructions are insufficient
 when the next handler cannot retrieve the input the current handler believes it
