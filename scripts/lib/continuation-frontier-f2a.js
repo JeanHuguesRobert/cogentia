@@ -1,5 +1,11 @@
-import fs from "node:fs";
-import path from "node:path";
+/**
+ * F2a: Choice Point + Continuation Frontier projection.
+ *
+ * Composability experiment only. Not a Cognitive Scheduler, not COP/Core,
+ * not Closed(p,h,E). Frontier is a projection over an append-only fact list.
+ * Allocation is explicit and separable. The inner executor is injected
+ * (F1.2 governed harness in tests) and advances ONE funded continuation.
+ */
 
 export const F2A_FACT_PROTOCOL = "cogentia.f2a_fact/v1";
 export const F2A_FRONTIER_PROTOCOL = "cogentia.continuation_frontier.f2a/v1";
@@ -12,6 +18,7 @@ export function createFactLog(seed = []) {
     append(type, payload = {}) {
       const fact = Object.freeze({
         protocol: F2A_FACT_PROTOCOL,
+        id: `evt-${facts.length + 1}`,
         seq: facts.length + 1,
         type: String(type),
         payload: Object.freeze({ ...payload }),
@@ -26,72 +33,6 @@ export function createFactLog(seed = []) {
   for (const fact of seed) {
     log.append(fact.type, fact.payload || {});
   }
-  return log;
-}
-
-export function createDurableFactLog(filePath, options = {}) {
-  if (!filePath || typeof filePath !== "string") {
-    throw new Error("filePath string is required for durable fact log");
-  }
-  const resolvedPath = path.resolve(filePath);
-  const parentDir = path.dirname(resolvedPath);
-  if (!fs.existsSync(parentDir)) {
-    fs.mkdirSync(parentDir, { recursive: true });
-  }
-
-  const facts = [];
-
-  // Replay existing facts if file exists on disk
-  if (fs.existsSync(resolvedPath)) {
-    const raw = fs.readFileSync(resolvedPath, "utf8");
-    const lines = raw.split(/\r?\n/).filter((line) => line.trim().length > 0);
-    for (const line of lines) {
-      try {
-        const parsed = JSON.parse(line);
-        if (parsed && parsed.protocol === F2A_FACT_PROTOCOL) {
-          facts.push(Object.freeze(parsed));
-        }
-      } catch (err) {
-        if (!options.ignoreCorruptLines) {
-          throw new Error(`Corrupted fact line in ${resolvedPath}: ${err.message}`);
-        }
-      }
-    }
-  }
-
-  const log = {
-    filePath: resolvedPath,
-    append(type, payload = {}) {
-      const fact = Object.freeze({
-        protocol: F2A_FACT_PROTOCOL,
-        seq: facts.length + 1,
-        type: String(type),
-        payload: Object.freeze({ ...payload }),
-      });
-      facts.push(fact);
-      const line = JSON.stringify(fact) + "\n";
-      fs.appendFileSync(resolvedPath, line, "utf8");
-      return fact;
-    },
-    facts() {
-      return facts.slice();
-    },
-    reload() {
-      facts.length = 0;
-      if (fs.existsSync(resolvedPath)) {
-        const raw = fs.readFileSync(resolvedPath, "utf8");
-        const lines = raw.split(/\r?\n/).filter((line) => line.trim().length > 0);
-        for (const line of lines) {
-          const parsed = JSON.parse(line);
-          if (parsed && parsed.protocol === F2A_FACT_PROTOCOL) {
-            facts.push(Object.freeze(parsed));
-          }
-        }
-      }
-      return facts.slice();
-    },
-  };
-
   return log;
 }
 
@@ -110,11 +51,9 @@ export function continuationShaped(fields = {}) {
     expected_response: null,
     resume: null,
     payload: fields.payload && typeof fields.payload === "object" ? Object.freeze({ ...fields.payload }) : Object.freeze({}),
-    capsulePath: fields.capsulePath || null,
-    capsuleSha256: fields.capsuleSha256 || null,
-    closed: Boolean(fields.closed),
-    f2a_does_not_test_continuation_closure: fields.f2a_does_not_test_continuation_closure ?? true,
-    closure: fields.closure ? Object.freeze({ ...fields.closure }) : Object.freeze({
+    closed: false,
+    f2a_does_not_test_continuation_closure: true,
+    closure: Object.freeze({
       verified: false,
       closed: false,
       f2a_does_not_test_closed: true,
@@ -124,11 +63,22 @@ export function continuationShaped(fields = {}) {
 }
 
 export function openOrChoicePoint(log, { id, parentRef, branches } = {}) {
+  return openCompositeChoicePoint(log, { id, parentRef, branches, mode: CHOICE_POINT_MODE_OR });
+}
+
+export function openAndChoicePoint(log, { id, parentRef, branches, quorum = null } = {}) {
+  return openCompositeChoicePoint(log, { id, parentRef, branches, mode: CHOICE_POINT_MODE_AND, quorum });
+}
+
+export function openCompositeChoicePoint(log, { id, parentRef, branches, mode = CHOICE_POINT_MODE_OR, quorum = null } = {}) {
   const choicePointId = String(id || "").trim();
   if (!choicePointId) throw new Error("choice point id is required");
   if (!Array.isArray(branches) || branches.length < 2) {
-    throw new Error("OR choice point requires at least two branches");
+    throw new Error("choice point requires at least two branches");
   }
+  if (![CHOICE_POINT_MODE_OR, CHOICE_POINT_MODE_AND].includes(mode)) throw new Error(`unsupported choice point mode: ${mode}`);
+  const requiredBranches = quorum == null ? branches.length : Number(quorum);
+  if (!Number.isInteger(requiredBranches) || requiredBranches < 1 || requiredBranches > branches.length) throw new Error("quorum must be within branch count");
   const branchRefs = [];
   for (const branch of branches) {
     const continuation = continuationShaped({ ...branch, parentRef });
@@ -137,32 +87,46 @@ export function openOrChoicePoint(log, { id, parentRef, branches } = {}) {
   }
   log.append("choice_point_opened", {
     id: choicePointId,
-    mode: CHOICE_POINT_MODE_OR,
+    mode,
     parentRef: parentRef || null,
     branchRefs,
+    quorum: requiredBranches,
   });
   return projectFrontier(log.facts());
 }
 
-export function openAndChoicePoint(log, { id, parentRef, branches } = {}) {
-  const choicePointId = String(id || "").trim();
-  if (!choicePointId) throw new Error("choice point id is required");
-  if (!Array.isArray(branches) || branches.length < 2) {
-    throw new Error("AND choice point requires at least two branches");
-  }
-  const branchRefs = [];
-  for (const branch of branches) {
-    const continuation = continuationShaped({ ...branch, parentRef });
-    log.append("continuation_registered", { continuation });
-    branchRefs.push(continuation.id);
-  }
-  log.append("choice_point_opened", {
-    id: choicePointId,
-    mode: CHOICE_POINT_MODE_AND,
-    parentRef: parentRef || null,
-    branchRefs,
+/** Publish a receipt once; it becomes immutable causal evidence, not copied branch state. */
+export function publishVerifiedEvidence(log, { id, producerRef = null, receipt } = {}) {
+  if (!receipt || typeof receipt !== "object") throw new Error("verified evidence receipt is required");
+  const evidenceId = String(id || "").trim() || `evidence-${log.facts().length + 1}`;
+  const fact = log.append("evidence_verified", { evidenceId, producerRef, receipt: Object.freeze({ ...receipt }) });
+  return { evidenceId, eventId: fact.id };
+}
+
+/** Share evidence by causal reference. Recipients never receive a copied receipt. */
+export function shareEvidence(log, { evidenceId, recipientRefs } = {}) {
+  const frontier = projectFrontier(log.facts());
+  const evidence = frontier.evidence[String(evidenceId || "")];
+  if (!evidence) throw new Error(`unknown evidence: ${evidenceId}`);
+  const recipients = Array.isArray(recipientRefs) ? recipientRefs.map(String) : [];
+  if (!recipients.length || recipients.some((ref) => !frontier.continuations[ref])) throw new Error("known evidence recipients are required");
+  return log.append("evidence_shared", { evidenceId: evidence.id, recipientRefs: recipients, parentEventIds: [evidence.eventId] });
+}
+
+/** Record a deterministic AND/quorum synthesis without erasing failed branch residue. */
+export function joinChoicePoint(log, { choicePointId, synthesis = null, includeResidueRefs = [] } = {}) {
+  const frontier = projectFrontier(log.facts());
+  const choicePoint = frontier.choicePoints.find((item) => item.id === choicePointId);
+  if (!choicePoint || choicePoint.mode !== CHOICE_POINT_MODE_AND) throw new Error("AND choice point is required");
+  const succeeded = choicePoint.branches.filter((branch) => branch.lastRunOk === true);
+  if (succeeded.length < choicePoint.quorum) throw new Error("AND/quorum convergence is not yet satisfied");
+  const residueRefs = [...new Set(includeResidueRefs.map(String))].filter((ref) => choicePoint.branches.some((branch) => branch.continuationRef === ref));
+  return log.append("join_completed", {
+    choicePointId,
+    succeededRefs: succeeded.map((branch) => branch.continuationRef),
+    residueRefs,
+    synthesis,
   });
-  return projectFrontier(log.facts());
 }
 
 export function allocateExplicit(log, { choicePointId, fund } = {}) {
@@ -214,29 +178,13 @@ export async function executeFundedBranch(log, { continuationRef, execute } = {}
     capabilityCalls,
     stepCount,
   });
-  if (result?.ok) {
-    if (located.choicePoint.mode === CHOICE_POINT_MODE_AND) {
-      log.append("and_branch_completed", {
-        continuationRef,
-        choicePointId: located.choicePoint.id,
-        answer: result?.answer,
-        value: result?.value,
-      });
-      const updatedFrontier = projectFrontier(log.facts());
-      const updatedCp = updatedFrontier.choicePoints.find((cp) => cp.id === located.choicePoint.id);
-      if (updatedCp && updatedCp.branches.every((b) => b.viability === "satisfied")) {
-        log.append("and_objective_converged", {
-          choicePointId: located.choicePoint.id,
-          completedBranches: updatedCp.branches.map((b) => b.continuationRef),
-        });
-      }
-    } else {
-      log.append("or_objective_satisfied", {
-        choicePointId: located.choicePoint.id,
-        by: continuationRef,
-      });
-    }
+  if (result?.ok && located.choicePoint.mode === CHOICE_POINT_MODE_OR) {
+    log.append("or_objective_satisfied", {
+      choicePointId: located.choicePoint.id,
+      by: continuationRef,
+    });
   } else {
+    if (result?.ok) return { result, frontier: projectFrontier(log.facts()) };
     log.append("branch_exhausted", {
       continuationRef,
       choicePointId: located.choicePoint.id,
@@ -246,20 +194,6 @@ export async function executeFundedBranch(log, { continuationRef, execute } = {}
   return { result, frontier: projectFrontier(log.facts()) };
 }
 
-export function publishEvidence(log, { choicePointId, continuationRef, kind, key, value, receiptSha256 } = {}) {
-  const cpId = String(choicePointId || "").trim();
-  if (!cpId) throw new Error("choicePointId is required to publish evidence");
-  log.append("evidence_published", {
-    choicePointId: cpId,
-    continuationRef: continuationRef || null,
-    kind: String(kind || "fact"),
-    key: key || null,
-    value: value ?? null,
-    receiptSha256: receiptSha256 || null,
-  });
-  return projectFrontier(log.facts());
-}
-
 export function projectFrontier(facts = []) {
   const continuations = {};
   const choicePointsById = new Map();
@@ -267,9 +201,9 @@ export function projectFrontier(facts = []) {
   const execution = {};
   const viabilityOverride = {};
   const resolvedBy = {};
-  const branchResults = {};
-  const convergedById = {};
-  const sharedEvidenceByChoicePoint = {};
+  const evidence = {};
+  const sharedEvidenceByContinuation = {};
+  const joins = {};
 
   for (const fact of facts) {
     const payload = fact.payload || {};
@@ -289,6 +223,7 @@ export function projectFrontier(facts = []) {
           mode: payload.mode,
           parentRef: payload.parentRef,
           branchRefs: [...(payload.branchRefs || [])],
+          quorum: payload.quorum || (payload.branchRefs || []).length,
         });
         for (const ref of payload.branchRefs || []) {
           if (allocationByContinuation[ref] === undefined) allocationByContinuation[ref] = "unfunded";
@@ -300,47 +235,27 @@ export function projectFrontier(facts = []) {
         for (const ref of payload.unfunded || []) allocationByContinuation[ref] = "unfunded";
         break;
       }
-      case "evidence_published": {
-        const cpId = payload.choicePointId;
-        if (!sharedEvidenceByChoicePoint[cpId]) sharedEvidenceByChoicePoint[cpId] = [];
-        sharedEvidenceByChoicePoint[cpId].push({
-          id: `evidence-${fact.seq}`,
-          seq: fact.seq,
-          choicePointId: cpId,
-          sourceContinuationRef: payload.continuationRef,
-          kind: payload.kind,
-          key: payload.key,
-          value: payload.value,
-          receiptSha256: payload.receiptSha256 || null,
-        });
-        break;
-      }
-      case "continuation_capsule_stored": {
-        const ref = payload.continuationRef;
-        if (ref && continuations[ref]) {
-          continuations[ref] = {
-            ...continuations[ref],
-            capsulePath: payload.capsulePath || null,
-            capsuleSha256: payload.capsuleSha256 || null,
-          };
-        }
-        break;
-      }
       case "branch_run": {
         const acc = execution[payload.continuationRef] || { count: 0, costUnits: 0, capabilityCalls: 0 };
         acc.count += 1;
         acc.costUnits += Number(payload.costUnits) || 0;
         acc.capabilityCalls += Number(payload.capabilityCalls) || 0;
         execution[payload.continuationRef] = acc;
-        if (payload.capsulePath && continuations[payload.continuationRef]) {
-          continuations[payload.continuationRef] = {
-            ...continuations[payload.continuationRef],
-            capsulePath: payload.capsulePath,
-            capsuleSha256: payload.capsuleSha256 || null,
-          };
-        }
+        acc.lastRunOk = payload.ok === true;
         break;
       }
+      case "evidence_verified":
+        evidence[payload.evidenceId] = { id: payload.evidenceId, eventId: fact.id, producerRef: payload.producerRef || null, receipt: payload.receipt };
+        break;
+      case "evidence_shared":
+        for (const ref of payload.recipientRefs || []) {
+          if (!sharedEvidenceByContinuation[ref]) sharedEvidenceByContinuation[ref] = [];
+          sharedEvidenceByContinuation[ref].push({ evidenceId: payload.evidenceId, parentEventIds: [...(payload.parentEventIds || [])] });
+        }
+        break;
+      case "join_completed":
+        joins[payload.choicePointId] = { succeededRefs: [...(payload.succeededRefs || [])], residueRefs: [...(payload.residueRefs || [])], synthesis: payload.synthesis || null };
+        break;
       case "or_objective_satisfied": {
         resolvedBy[payload.choicePointId] = payload.by;
         const choicePoint = choicePointsById.get(payload.choicePointId);
@@ -350,17 +265,6 @@ export function projectFrontier(facts = []) {
           // rewritten as obsolete (never needed). Both remain reconstructible.
           if (viabilityOverride[ref] !== "exhausted") viabilityOverride[ref] = "obsolete";
         }
-        break;
-      }
-      case "and_branch_completed": {
-        viabilityOverride[payload.continuationRef] = "satisfied";
-        if (payload.answer !== undefined || payload.value !== undefined) {
-          branchResults[payload.continuationRef] = payload.answer ?? payload.value;
-        }
-        break;
-      }
-      case "and_objective_converged": {
-        convergedById[payload.choicePointId] = true;
         break;
       }
       case "branch_exhausted": {
@@ -375,9 +279,15 @@ export function projectFrontier(facts = []) {
   return {
     protocol: F2A_FRONTIER_PROTOCOL,
     continuations,
-    choicePoints: [...choicePointsById.values()].map((choicePoint) => {
-      const isAnd = choicePoint.mode === CHOICE_POINT_MODE_AND;
-      const branches = choicePoint.branchRefs.map((ref) => ({
+    evidence,
+    choicePoints: [...choicePointsById.values()].map((choicePoint) => ({
+      id: choicePoint.id,
+      mode: choicePoint.mode,
+      parentRef: choicePoint.parentRef,
+      quorum: choicePoint.quorum,
+      resolvedBy: resolvedBy[choicePoint.id] || null,
+      convergence: joins[choicePoint.id] || null,
+      branches: choicePoint.branchRefs.map((ref) => ({
         continuationRef: ref,
         readiness: "runnable",
         viability: viabilityOverride[ref] || "live",
@@ -385,38 +295,10 @@ export function projectFrontier(facts = []) {
         executionCount: execution[ref]?.count || 0,
         costUnits: execution[ref]?.costUnits || 0,
         capabilityCalls: execution[ref]?.capabilityCalls || 0,
-        capsulePath: continuations[ref]?.capsulePath || null,
-        capsuleSha256: continuations[ref]?.capsuleSha256 || null,
-        result: branchResults[ref] ?? null,
-      }));
-
-      const completedCount = branches.filter((b) => b.viability === "satisfied").length;
-      const exhaustedCount = branches.filter((b) => b.viability === "exhausted").length;
-      const allCompleted = branches.length > 0 && completedCount === branches.length;
-      const isBlocked = isAnd && exhaustedCount > 0;
-
-      let status = "open";
-      if (isAnd) {
-        if (convergedById[choicePoint.id] || allCompleted) status = "converged";
-        else if (isBlocked) status = "blocked";
-        else if (completedCount > 0) status = "in_progress";
-      } else {
-        if (resolvedBy[choicePoint.id]) status = "resolved";
-        else if (branches.every((b) => b.viability === "exhausted")) status = "exhausted";
-      }
-
-      return {
-        id: choicePoint.id,
-        mode: choicePoint.mode,
-        parentRef: choicePoint.parentRef,
-        status,
-        converged: isAnd ? Boolean(convergedById[choicePoint.id] || allCompleted) : false,
-        resolvedBy: isAnd ? (allCompleted ? choicePoint.branchRefs : null) : (resolvedBy[choicePoint.id] || null),
-        joinResults: isAnd ? branchResults : null,
-        sharedEvidence: sharedEvidenceByChoicePoint[choicePoint.id] || [],
-        branches,
-      };
-    }),
+        lastRunOk: execution[ref]?.lastRunOk ?? null,
+        sharedEvidence: sharedEvidenceByContinuation[ref] || [],
+      })),
+    })),
   };
 }
 
@@ -425,14 +307,10 @@ function locateBranch(frontier, continuationRef) {
   for (const choicePoint of frontier.choicePoints) {
     const branch = choicePoint.branches.find((item) => item.continuationRef === id);
     if (branch) {
-      const base = frontier.continuations[id] || null;
       return {
         choicePoint,
         branch,
-        continuation: base ? {
-          ...base,
-          sharedEvidence: choicePoint.sharedEvidence || [],
-        } : null,
+        continuation: frontier.continuations[id] || null,
       };
     }
   }

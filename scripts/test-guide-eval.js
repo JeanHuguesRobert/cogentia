@@ -105,6 +105,8 @@ try {
   assert.match(report, /FractaVolta public orientation/);
   assert.match(report, /Codex Review/);
   assert.match(report, /Did model power help/);
+  assert.match(report, /Pairwise comparison/);
+  assert.match(report, /Answers equal/);
 
   console.log(JSON.stringify({ ok: true, guide_eval_run: true, guide_eval_report: true }, null, 2));
 } finally {

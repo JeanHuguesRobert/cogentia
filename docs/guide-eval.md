@@ -73,10 +73,28 @@ validated and resumed by Cogentia.
 
 The intended comparison has three lanes:
 
-1. `current`: the deployed Guide profile.
-2. `candidate`: the same Guide pipeline with a candidate Magistral/OpenAI
-   profile.
+1. `legacy` / `current`: the deployed Guide profile (V2 flag off).
+2. `v2` / `candidate`: the same questions through Agent John V2
+   (`reasoning_loop_v2: true` on the request, or a process with
+   `COGENTIA_REASONING_LOOP_V2=true`).
 3. `Codex Review`: a human/agent diagnosis over the two captured answers.
+
+Before flipping live V2, run **the same question file** against both lanes and
+read the pairwise table (answer equality, source overlap, latency, whether the
+V2 body is present). Equal answers with `V2 body = used` still count: they show
+the adapter is a silent bridge.
+
+Per-request A/B on one process requires `COGENTIA_GUIDE_ALLOW_V2_PROBE=true`
+(does **not** by itself enable V2 for ordinary visitors). Then:
+
+```bash
+node scripts/guide-eval.js run --label legacy --legacy --progress
+node scripts/guide-eval.js run --label v2 --v2 --progress
+node scripts/guide-eval.js report --runs <legacy.json>,<v2.json>
+```
+
+Do not set `COGENTIA_REASONING_LOOP_V2=true` on fracta until that report is
+reviewed. See Operium issue #45.
 
 The review should decide whether quality changed because of model power,
 retrieval, planner behavior, prompt shape, corpus coverage, language quality, or
@@ -87,6 +105,7 @@ visitor-facing expectations.
 ```bash
 node scripts/guide-eval.js run --label current --progress
 node scripts/guide-eval.js run --label candidate --url http://127.0.0.1:8791 --progress
+node scripts/guide-eval.js run --label v2 --v2 --progress
 ```
 
 The default question set is:

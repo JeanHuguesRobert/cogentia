@@ -29,12 +29,13 @@ function usage() {
   console.log(`Guide evaluation harness
 
 Usage:
-  node scripts/guide-eval.js run --label current [--url <guide-base>] [--questions <file>] [--out-dir <dir>] [--progress]
+  node scripts/guide-eval.js run --label current [--url <guide-base>] [--questions <file>] [--out-dir <dir>] [--progress] [--v2|--legacy]
   node scripts/guide-eval.js report --runs <run-a.json,run-b.json> [--output <file>]
 
 Run examples:
-  node scripts/guide-eval.js run --label current
-  node scripts/guide-eval.js run --label candidate --url http://127.0.0.1:8791
+  node scripts/guide-eval.js run --label legacy --progress
+  node scripts/guide-eval.js run --label v2 --v2 --progress
+  node scripts/guide-eval.js run --label candidate --url http://127.0.0.1:8791 --v2
 
 Report examples:
   node scripts/guide-eval.js report --runs .cogentia/evals/guide/2026-07-02-current.json,.cogentia/evals/guide/2026-07-02-candidate.json
@@ -62,6 +63,7 @@ async function runEval(options) {
     completed_at: null,
     guide_url: guideUrl.href,
     questions_file: relativePath(questionsPath),
+    reasoning_loop_v2_requested: options.v2 === true ? true : options.legacy === true ? false : null,
     count: questions.length,
     completed_count: 0,
     results,
@@ -79,6 +81,8 @@ async function runEval(options) {
     };
     if (item.web_search === false || options.webSearch === false) payload.web_search = false;
     if (item.web_search === true || options.webSearch === true) payload.web_search = true;
+    if (options.v2 === true) payload.reasoning_loop_v2 = true;
+    if (options.legacy === true) payload.reasoning_loop_v2 = false;
     try {
       const { response, body } = await fetchGuideJson(guideUrl, payload, timeoutMs);
       results.push(normalizeResult(item, response.status, Date.now() - started, body));
@@ -201,6 +205,13 @@ function normalizeResult(item, status, latencyMs, body) {
     sources: normalizeSources(body?.sources),
     excerpts: normalizeExcerpts(context.excerpts),
     warnings: Array.isArray(body?.warnings) ? body.warnings.map(String) : [],
+    reasoning_loop: body?.reasoning_loop && typeof body.reasoning_loop === "object" ? {
+      protocol: String(body.reasoning_loop.protocol || ""),
+      surface: String(body.reasoning_loop.surface || ""),
+      error: body.reasoning_loop.error ? String(body.reasoning_loop.error) : undefined,
+      elapsed_ms: Number.isFinite(body.reasoning_loop.elapsed_ms) ? body.reasoning_loop.elapsed_ms : undefined,
+      governed: body.reasoning_loop.governed || undefined,
+    } : undefined,
     context: {
       source_ids: Array.isArray(context.source_ids) ? context.source_ids.map(String) : [],
       retrieval_policy_version: context.retrieval_policy_version || "",
@@ -281,10 +292,11 @@ function renderReport(runs) {
     "",
     "## Runs",
     "",
-    "| Label | File | Guide URL | Questions | OK |",
-    "| --- | --- | --- | ---: | --- |",
-    ...runs.map(run => `| ${escapeMd(run.label)} | \`${escapeMd(run.file)}\` | ${escapeMd(run.guide_url || "")} | ${run.count || 0} | ${run.ok ? "yes" : "no"} |`),
+    "| Label | File | Guide URL | V2 requested | Questions | OK |",
+    "| --- | --- | --- | --- | ---: | --- |",
+    ...runs.map(run => `| ${escapeMd(run.label)} | \`${escapeMd(run.file)}\` | ${escapeMd(run.guide_url || "")} | ${run.reasoning_loop_v2_requested == null ? "default" : run.reasoning_loop_v2_requested} | ${run.count || 0} | ${run.ok ? "yes" : "no"} |`),
     "",
+    ...renderPairwiseComparison(runs),
     "## Questions",
     "",
   ];
@@ -304,6 +316,7 @@ function renderReport(runs) {
         `- Excerpts: ${(result.excerpts || []).length}`,
         `- Web search: ${renderWebSearch(result.context?.web_search)}`,
         `- Guide retrieval: ${renderGuideRetrieval(result.context?.guide_retrieval)}`,
+        `- Reasoning loop V2: ${renderReasoningLoop(result)}`,
         "",
         "**Answer:**",
         "",
@@ -346,6 +359,49 @@ function renderReport(runs) {
   }
 
   return `${lines.join("\n")}\n`;
+}
+
+function renderPairwiseComparison(runs) {
+  if (runs.length < 2) return [];
+  const [left, right] = runs;
+  const rightById = new Map((right.results || []).map((item) => [item.id, item]));
+  const lines = [
+    "## Pairwise comparison",
+    "",
+    `Left = \`${escapeMd(left.label)}\`. Right = \`${escapeMd(right.label)}\`.`,
+    "",
+    "| Id | Answers equal | Source overlap | Left ms | Right ms | V2 body |",
+    "| --- | --- | ---: | ---: | ---: | --- |",
+  ];
+  for (const a of left.results || []) {
+    const b = rightById.get(a.id);
+    if (!b) {
+      lines.push(`| ${escapeMd(a.id)} | missing-right | | ${a.latency_ms || 0} | | |`);
+      continue;
+    }
+    const sourcesA = new Set((a.sources || []).map((item) => item.source_id).filter(Boolean));
+    const sourcesB = new Set((b.sources || []).map((item) => item.source_id).filter(Boolean));
+    const union = new Set([...sourcesA, ...sourcesB]);
+    const inter = [...sourcesA].filter((id) => sourcesB.has(id)).length;
+    const overlap = union.size ? `${inter}/${union.size}` : "0/0";
+    const v2Label = (b.reasoning_loop || a.reasoning_loop)
+      ? ((b.warnings || a.warnings || []).includes("agent_john_reasoning_loop_v2_fallback") ? "fallback" : "used")
+      : "absent";
+    lines.push(`| ${escapeMd(a.id)} | ${String(a.answer || "") === String(b.answer || "") ? "yes" : "no"} | ${overlap} | ${a.latency_ms || 0} | ${b.latency_ms || 0} | ${v2Label} |`);
+  }
+  lines.push("", "Fill Codex Review below. Equal answers with V2 used still matter: they show the adapter is a silent bridge.", "");
+  return lines;
+}
+
+function renderReasoningLoop(result) {
+  const loop = result?.reasoning_loop;
+  if (!loop?.protocol) {
+    if ((result?.warnings || []).includes("agent_john_reasoning_loop_v2_fallback")) return "v2 fallback warning, no body";
+    return "not in body (legacy path)";
+  }
+  const parts = [loop.protocol, loop.error ? `error=${loop.error}` : "ok"];
+  if (loop.governed?.capabilities?.length) parts.push(loop.governed.capabilities.join("+"));
+  return parts.filter(Boolean).join(", ");
 }
 
 function renderWebSearch(web) {

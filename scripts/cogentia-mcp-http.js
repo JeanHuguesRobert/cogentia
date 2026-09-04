@@ -20,6 +20,7 @@ import {
 import { createRegistryAwareMcpCore } from "./lib/cogentia-mcp-registries.js";
 import { aiRouterHealth } from "./lib/ai-router-client.js";
 import { mergeGuideRetrievalFromPacks } from "./lib/guide-retrieval-merge.js";
+import { runAgentJohnV2SurfaceTurn, resolveGuideReasoningLoopV2 } from "./lib/agent-jhn-reasoning-loop-v2.js";
 import { retrievalInoxConfigured, retrievalInoxPackBatch, inoxRetrievalBaseUrl } from "./lib/retrieval-inox-session.js";
 import { retrievalSupabaseConfigured, retrievalSupabasePackBatch } from "./lib/retrieval-supabase.js";
 import {
@@ -806,6 +807,44 @@ async function parseUserIntent(question, history, defaultLocale = "en", options 
  * @returns {Promise<{ok:boolean,status:number,body:object}>}
  */
 async function produceGuideTurn(question, history, payload = {}, options = {}) {
+  if (!options.reasoningLoopV2Internal) {
+    let v2Plan = null;
+    let v2Retrieval = null;
+    const v2 = await runAgentJohnV2SurfaceTurn({
+      text: question,
+      surface: resolvePublicChatSurface(payload, options),
+      enabled: resolveGuideReasoningLoopV2(payload, process.env),
+      legacyTurn: () => produceGuideTurn(question, history, payload, { ...options, reasoningLoopV2Internal: true, v2Evidence: { plan: v2Plan, retrieval: v2Retrieval } }),
+      stages: [
+        {
+          capability: "corpus.orient",
+          description: "Construct a bounded public-corpus orientation plan for the Agent John projection.",
+          execute: async () => (v2Plan = guidePlanningRun(question, normalizeLocale(payload.locale || options.locale))),
+        },
+        {
+          capability: "corpus.search",
+          description: "Retrieve public corpus evidence through the Guide retrieval backend.",
+          execute: async () => (v2Retrieval = await guideRetrievalRun(question, v2Plan)),
+        },
+        {
+          capability: "agent_john.surface_synthesis",
+          description: "Render the constrained Guide surface from governed orientation and evidence.",
+          execute: async () => produceGuideTurn(question, history, payload, { ...options, reasoningLoopV2Internal: true, v2Evidence: { plan: v2Plan, retrieval: v2Retrieval } }),
+        },
+      ],
+      mandate: guideMandate,
+      limits: { maxElapsedMs: 120000 },
+    });
+    if (v2.used) {
+      const result = v2.result;
+      if (result?.body) {
+        result.body.reasoning_loop = v2.reasoning;
+        if (v2.fallback) result.body.warnings = [...new Set([...(result.body.warnings || []), "agent_john_reasoning_loop_v2_fallback"])];
+      }
+      return result;
+    }
+    return v2.result;
+  }
   const defaultLocale = normalizeLocale(payload.locale || options.locale);
   const cleanHistory = normalizeGuideHistory(history);
   const surface = resolvePublicChatSurface(payload, options);
@@ -860,11 +899,16 @@ async function produceGuideTurn(question, history, payload = {}, options = {}) {
     retrieval = { sources: [], warnings: [] };
     web = { attempted: false, ok: false, sources: [] };
   } else {
-    const usePlanner = guidePlannerEnabled && chatCap.available;
-    plan = usePlanner
-      ? await guidePlanningRun(resolvedQuestion, activeLocale)
-      : guideHeuristicPlan(resolvedQuestion, chatCap.available ? "planner_disabled" : "chat_unavailable");
-    retrieval = await guideRetrievalRun(resolvedQuestion, plan);
+    if (options.v2Evidence?.plan && options.v2Evidence?.retrieval) {
+      plan = options.v2Evidence.plan;
+      retrieval = options.v2Evidence.retrieval;
+    } else {
+      const usePlanner = guidePlannerEnabled && chatCap.available;
+      plan = usePlanner
+        ? await guidePlanningRun(resolvedQuestion, activeLocale)
+        : guideHeuristicPlan(resolvedQuestion, chatCap.available ? "planner_disabled" : "chat_unavailable");
+      retrieval = await guideRetrievalRun(resolvedQuestion, plan);
+    }
     observeGuideSemanticRetrieval(retrieval);
     web = await guideWebSearchRun(resolvedQuestion, activeLocale, payload);
   }
