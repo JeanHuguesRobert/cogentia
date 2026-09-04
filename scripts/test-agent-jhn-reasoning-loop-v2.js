@@ -32,6 +32,19 @@ assert.ok(!cleanedLive.includes("Je pars du corpus"));
 assert.ok(!cleanedLive.includes("Je vérifie"));
 assert.ok(cleanedLive.startsWith("Personne ne le garantit"));
 
+// Methodological preambles and bracketed citations
+const samplePreamble1 = "Je réponds à partir du corpus public FractaVolta, en séparant ce qui est documenté de ce qui relève d’une inférence opérationnelle. Je vais aller droit au levier immédiat: ce qui peut baisser la facture avant toute grande instruction réseau, puis ce qui reste à vérifier localement.La voie immédiate est de traiter la mairie";
+assert.equal(sanitizeSurfaceAnswer(samplePreamble1), "La voie immédiate est de traiter la mairie");
+
+const samplePreamble2 = "Je m’appuie sur le corpus public fourni pour rester au plus près du droit constant et éviter les faux remèdes. Je vais distinguer ce qui est documenté, ce qui relève d’une inférence prudente, et le point qui reste juridiquement à sécuriser.Oui: il faut sortir du faux débat";
+assert.equal(sanitizeSurfaceAnswer(samplePreamble2), "Oui: il faut sortir du faux débat");
+
+const samplePreamble3 = "Je pars du principe que vous cherchez un levier politique concret, pas une théorie générale: je vais répondre en termes d’outils sénatoriaux et de séquence d’action, en m’adossant au corpus public disponible sur l’autonomie territoriale [FractaVolta:research/fractavolta_paper.md#L38-L65].Oui, mais pas en “arrêtant”";
+assert.equal(sanitizeSurfaceAnswer(samplePreamble3), "Oui, mais pas en “arrêtant”");
+
+const samplePreamble4 = "Je m’appuie sur le brief public disponible pour formuler une réponse de méthode, pas une promesse d’appareil. Je vais rester sur le terrain des leviers réels d’un sénateur isolé et marquer clairement ce qui relève de l’inférence.Oui, s’il n’a pas un grand groupe";
+assert.equal(sanitizeSurfaceAnswer(samplePreamble4), "Oui, s’il n’a pas un grand groupe");
+
 let calls = 0;
 const enabled = await runAgentJohnV2SurfaceTurn({
   text: "What is a Cognitive Packet?",

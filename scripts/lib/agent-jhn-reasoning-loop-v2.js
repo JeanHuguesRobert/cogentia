@@ -146,20 +146,25 @@ export function sanitizeSurfaceAnswer(rawText) {
   if (!rawText || typeof rawText !== "string") return rawText;
   let text = rawText;
 
+  // Match sentences properly handling markdown brackets like [repo:file.md#L1]
+  const sentenceBody = "(?:(?:\\[[^\\]]+\\])|[^.!?\\n])+?";
+
   // 1. Remove meta-reasoning boilerplate sentences (English & French)
   const metaPrefixes = [
-    /^(?:I’m|I am|I'm)\s+checking\s+the\s+public\s+[^.!?\n]+?(?:so I can|to ground|before)[^.!?\n]*?[.!?]\s*/i,
-    /^(?:The\s+current\s+)?workspace\s+doesn’t\s+expose\s+[^.!?\n]+?(?:instead of guessing|at this path)[^.!?\n]*?[.!?]\s*/i,
-    /^(?:The\s+current\s+)?workspace\s+does\s+not\s+expose\s+[^.!?\n]+?[.!?]\s*/i,
-    /^(?:I’m|I am|I'm)\s+locating\s+the\s+public\s+corpus\s+file[^.!?\n]*?[.!?]\s*/i,
+    new RegExp(`^(?:I[’']m|I am)\\s+checking\\s+the\\s+public\\s+${sentenceBody}(?:so I can|to ground|before)[^.!?\\n]*?[.!?]\\s*`, "i"),
+    new RegExp(`^(?:The\\s+current\\s+)?workspace\\s+does(?:n[’']t|\\s+not)\\s+expose\\s+${sentenceBody}[.!?]\\s*`, "i"),
+    new RegExp(`^(?:I[’']m|I am)\\s+locating\\s+the\\s+public\\s+corpus\\s+file${sentenceBody}[.!?]\\s*`, "i"),
     /^(?:Looking\s+at|Based\s+on)\s+the\s+(?:supplied|provided)\s+(?:context|snippets|sources)\s*[,:]\s*/i,
-    /^(?:Je\s+pars\s+du|Je\s+consulte\s+(?:le\s+)?|Je\s+recherche\s+dans\s+(?:le\s+)?|Je\s+m'appuie\s+sur\s+(?:le\s+)?)\s*corpus\s+public[^.!?\n]*?[.!?]\s*/i,
-    /^(?:Je\s+vérifie|Je\s+regarde)\s+(?:d’abord|d'abord)[^.!?\n]*?[.!?]\s*/i,
-    /^(?:Le\s+workspace|L'espace\s+de\s+travail)\s+actuel\s+ne\s+contient\s+pas[^.!?\n]*?[.!?]\s*/i,
-    /^(?:D'après|Selon)\s+les\s+(?:extraits|sources|documents)\s+fourni(?:s|es)\s+dans\s+le\s+contexte\s*[,:]\s*/i,
+    new RegExp(`^(?:Je\\s+pars\\s+du|Je\\s+consulte\\s+(?:le\\s+)?|Je\\s+recherche\\s+dans\\s+(?:le\\s+)?|Je\\s+m[’']appuie\\s+sur\\s+(?:le\\s+|les\\s+)?)\\s*(?:corpus|br[ie]ef|principes?|sources?|fond|droit|cadre|texte|éléments?)${sentenceBody}[.!?]\\s*`, "i"),
+    new RegExp(`^(?:Je\\s+pars\\s+du\\s+principe\\s+que)${sentenceBody}[.!?]\\s*`, "i"),
+    new RegExp(`^(?:Je\\s+réponds\\s+(?:à\\s+partir|en\\s+mode|sur\\s+la\\s+base))${sentenceBody}[.!?]\\s*`, "i"),
+    new RegExp(`^(?:Je\\s+vais\\s+(?:répondre|distinguer|aller|convertir|rester|cadrer))${sentenceBody}[.!?]\\s*`, "i"),
+    new RegExp(`^(?:Je\\s+vérifie|Je\\s+regarde)\\s+(?:d[’']abord)${sentenceBody}[.!?]\\s*`, "i"),
+    new RegExp(`^(?:Le\\s+workspace|L[’']espace\\s+de\\s+travail)\\s+actuel\\s+ne\\s+contient\\s+pas${sentenceBody}[.!?]\\s*`, "i"),
+    /^(?:D[’']après|Selon)\s+les\s+(?:extraits|sources|documents)\s+fourni(?:s|es)\s+dans\s+le\s+contexte\s*[,:]\s*/i,
   ];
 
-  for (let i = 0; i < 3; i++) {
+  for (let i = 0; i < 5; i++) {
     for (const pat of metaPrefixes) {
       text = text.replace(pat, "");
     }
