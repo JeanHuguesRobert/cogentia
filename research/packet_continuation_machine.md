@@ -2,9 +2,9 @@
 title: "Packet/Continuation Machine — distributed branching computation model"
 author: "Jean Hugues Noël Robert, baron Mariani"
 date: "2026-08-23"
-last_modified_at: "2026-09-03"
+last_modified_at: "2026-09-04"
 status: "working-note"
-version: "0.3"
+version: "0.4"
 license: "CC BY-SA 4.0"
 language: "en"
 repository: "JeanHuguesRobert/cogentia"
@@ -434,13 +434,14 @@ next_action_allowed :=
     ∧ within_rights_and_disclosure
     ∧ within_effect_ceiling
     ∧ no_material_hidden_side_effect
+    ∧ not_preempted_by_clearer_higher_priority
 
 if next_action_is_high_confidence
 and next_action_allowed
 and action_is_read_only:
     execute directly
 else:
-    expose the exact continuation and its gate
+    expose the exact continuation and its gate_or_priority
 ```
 
 This is the **Next Logical Action Principle**: when the next action is highly
@@ -459,6 +460,35 @@ for resolving the current continuation, but also for recognizing when the next
 continuation is already determined enough to proceed inside the same envelope.
 Unnecessary stopping is therefore a handler defect just as unauthorized
 continuation is.
+
+#### Priority is orthogonal to local continuation logic
+
+Continuation semantics alone cannot determine global work order. A Packet may
+have an obvious successor while another active Packet has a stronger claim on
+the Principal's current attention, compute, deadline, or scarce execution
+capacity.
+
+```text
+local next continuation
+        ≠
+global next priority
+```
+
+Therefore a Handler or distributed attraction mechanism SHOULD preserve
+explicit priority signals and deliberate parking decisions before consuming
+material resources on an otherwise admissible successor. This is not a call for
+one omniscient scheduler: priority may remain distributed, stigmergic,
+Principal-declared, deadline-driven, or policy-derived. The minimum invariant is
+that local continuation certainty MUST NOT silently override a known stronger
+priority.
+
+Priority and authority remain orthogonal:
+
+```text
+authorized but lower-priority  → may remain parked
+high-priority but unauthorized → remains gated
+authorized + priority-fit      → eligible to proceed
+```
 
 ### 11.2 Verified handoffs and native checkpointing
 
