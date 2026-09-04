@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 import assert from "node:assert/strict";
-import { runAgentJohnV2SurfaceTurn, reasoningLoopV2Enabled, resolveGuideReasoningLoopV2 } from "./lib/agent-jhn-reasoning-loop-v2.js";
+import { runAgentJohnV2SurfaceTurn, reasoningLoopV2Enabled, resolveGuideReasoningLoopV2, sanitizeSurfaceAnswer } from "./lib/agent-jhn-reasoning-loop-v2.js";
 
 assert.equal(reasoningLoopV2Enabled({}), false);
 assert.equal(reasoningLoopV2Enabled({ COGENTIA_REASONING_LOOP_V2: "true" }), true);
@@ -9,6 +9,28 @@ assert.equal(resolveGuideReasoningLoopV2({ reasoning_loop_v2: true }, {}), false
 assert.equal(resolveGuideReasoningLoopV2({ reasoning_loop_v2: true }, { COGENTIA_GUIDE_ALLOW_V2_PROBE: "true" }), true);
 assert.equal(resolveGuideReasoningLoopV2({ reasoning_loop_v2: false }, { COGENTIA_REASONING_LOOP_V2: "true" }), true);
 assert.equal(resolveGuideReasoningLoopV2({ reasoning_loop_v2: false }, { COGENTIA_REASONING_LOOP_V2: "true", COGENTIA_GUIDE_ALLOW_V2_PROBE: "true" }), false);
+
+// Anti-leak sanitizer tests
+const leakedAnswer = "I’m checking the public FractaVolta corpus to ground the answer in its own partner framing, then I’ll give the shortest useful recommendation with limits. The current workspace doesn’t expose the FractaVolta repo at this path, so I’m locating the public corpus file that the supplied source_ids reference and using that instead of guessing. A first FractaVolta partner should be a territorial pilot sponsor: a public actor on C:\\tweesic\\cogentia\\scripts\\test.js [barons-Mariani:research/cas_edf.md#L240-L265].";
+const cleaned = sanitizeSurfaceAnswer(leakedAnswer);
+assert.ok(!cleaned.includes("checking the public"));
+assert.ok(!cleaned.includes("workspace doesn’t expose"));
+assert.ok(!cleaned.includes("C:\\tweesic"));
+assert.ok(cleaned.includes("A first FractaVolta partner should be a territorial pilot sponsor"));
+assert.ok(cleaned.includes("[barons-Mariani:research/cas_edf.md#L240-L265]"));
+
+const frenchLeak = "Je consulte le corpus public pour vérifier les informations. D'après les documents fournis dans le contexte, la DGF est sanctuarisée. Voir /srv/cogentia/repos/note.md.";
+const cleanedFr = sanitizeSurfaceAnswer(frenchLeak);
+assert.ok(!cleanedFr.includes("Je consulte"));
+assert.ok(!cleanedFr.includes("D'après les documents"));
+assert.ok(!cleanedFr.includes("/srv/cogentia"));
+assert.ok(cleanedFr.includes("la DGF est sanctuarisée"));
+
+const liveV2Leak = "Je pars du corpus public fourni et je vais répondre sur le point précis de garantie, pas sur une promesse politique générale. Je vérifie d’abord ce que le texte dit explicitement des garde-fous, puis j’indique ce qui reste non tranché.Personne ne le garantit automatiquement, à ce stade.";
+const cleanedLive = sanitizeSurfaceAnswer(liveV2Leak);
+assert.ok(!cleanedLive.includes("Je pars du corpus"));
+assert.ok(!cleanedLive.includes("Je vérifie"));
+assert.ok(cleanedLive.startsWith("Personne ne le garantit"));
 
 let calls = 0;
 const enabled = await runAgentJohnV2SurfaceTurn({
@@ -49,3 +71,4 @@ assert.equal(recovered.result.answer, "fallback");
 assert.equal(recovered.fallback, true);
 assert.equal(recovered.reasoning.error, "forced_v2_failure");
 console.log("ok - Agent John V2 is feature-gated, governed, and falls back to the legacy surface turn");
+console.log("ok - Agent John V2 output sanitizer strips workspace leaks and meta-commentary");

@@ -54,6 +54,55 @@ export const SEED_CONCEPT_ALIASES = [
     canonical_repo: "cogentia",
     canonical_rel: "research/conceptual_gravity.md",
     canonical_url: "https://github.com/JeanHuguesRobert/cogentia/blob/main/research/conceptual_gravity.md"
+  },
+  {
+    name: "Autonomie de Capacité",
+    aliases: ["autonomie de capacite", "autonomie de capacité", "finances communales", "dgf", "dotation globale de fonctionnement", "perequation", "péréquation", "communes rurales", "autonomie de papier", "sanctuarisation dgf"],
+    canonical_repo: "cogentia",
+    canonical_rel: "research/campaign/fiches_maires/fiche_01_autonomie_de_capacite_finances_communales.md",
+    canonical_url: "https://github.com/JeanHuguesRobert/cogentia/blob/main/research/campaign/fiches_maires/fiche_01_autonomie_de_capacite_finances_communales.md"
+  },
+  {
+    name: "FractaVolta Énergie Villageoise",
+    aliases: ["fractavolta", "energie villageoise", "énergie villageoise", "batteries seconde vie", "seconde vie", "autoconsommation collective", "boucle locale energie", "agrivoltaisme", "agrivoltaïsme", "vignes friches"],
+    canonical_repo: "cogentia",
+    canonical_rel: "research/campaign/fiches_maires/fiche_02_fractavolta_energie_villageoise.md",
+    canonical_url: "https://github.com/JeanHuguesRobert/cogentia/blob/main/research/campaign/fiches_maires/fiche_02_fractavolta_energie_villageoise.md"
+  },
+  {
+    name: "Statut Résident Rural et Foncier",
+    aliases: ["statut resident rural", "statut résident rural", "bail reel solidaire", "bail réel solidaire", "brs", "indivision fonciere", "indivision foncière", "girtec", "logement communal", "residence secondaire corse"],
+    canonical_repo: "cogentia",
+    canonical_rel: "research/campaign/fiches_maires/fiche_03_statut_resident_rural_logement_foncier.md",
+    canonical_url: "https://github.com/JeanHuguesRobert/cogentia/blob/main/research/campaign/fiches_maires/fiche_03_statut_resident_rural_logement_foncier.md"
+  },
+  {
+    name: "Eau Déchets et Services Publics",
+    aliases: ["eau et dechets", "eau et déchets", "teom", "taxe ordures menageres", "taxe ordures ménagères", "exportation dechets", "retenues collinaires", "oehc", "secheresse corse", "sécheresse corse", "gestion de l'eau"],
+    canonical_repo: "cogentia",
+    canonical_rel: "research/campaign/fiches_maires/fiche_04_eau_dechets_services_publics.md",
+    canonical_url: "https://github.com/JeanHuguesRobert/cogentia/blob/main/research/campaign/fiches_maires/fiche_04_eau_dechets_services_publics.md"
+  },
+  {
+    name: "Transparence Marchés Publics et Anti-Capture",
+    aliases: ["transparence marches publics", "transparence marchés publics", "dossier 1755", "anti capture", "chambre regionale des comptes", "chambre régionale des comptes", "subventions territoriales", "marches publics corse"],
+    canonical_repo: "cogentia",
+    canonical_rel: "research/campaign/fiches_maires/fiche_05_transparence_anti_capture_marches_publics.md",
+    canonical_url: "https://github.com/JeanHuguesRobert/cogentia/blob/main/research/campaign/fiches_maires/fiche_05_transparence_anti_capture_marches_publics.md"
+  },
+  {
+    name: "Agent John Compagnon Numérique",
+    aliases: ["agent john", "agent jhn", "assistant numerique", "assistant numérique", "dhitl", "you draft he decides", "demultiplication", "démultiplication", "compagnon numerique"],
+    canonical_repo: "cogentia",
+    canonical_rel: "research/reasoning_loop.md",
+    canonical_url: "https://github.com/JeanHuguesRobert/cogentia/blob/main/research/reasoning_loop.md"
+  },
+  {
+    name: "Kudocracy",
+    aliases: ["kudocracy", "kudocratie", "democratie directe", "démocratie directe", "democratie liquide", "démocratie liquide", "vote vivant", "grands electeurs vote", "john vote"],
+    canonical_repo: "survey",
+    canonical_rel: "README.md",
+    canonical_url: "https://github.com/JeanHuguesRobert/survey/blob/main/README.md"
   }
 ];
 
@@ -287,7 +336,7 @@ export function resolveConceptAlias(query, inventory = []) {
 
   // 1. Check seed aliases first (S3)
   for (const seed of SEED_CONCEPT_ALIASES) {
-    if (seed.name.toLowerCase() === normQuery || seed.aliases.some(a => normQuery.includes(a) || a.includes(normQuery))) {
+    if (seed.name.toLowerCase() === normQuery || seed.aliases.some(a => normQuery.includes(a) || (normQuery.length >= 5 && a.includes(normQuery)))) {
       return {
         hit: true,
         resolution_kind: "seed_alias",

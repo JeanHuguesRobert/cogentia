@@ -97,6 +97,7 @@ export async function runAgentJohnV2SurfaceTurn({
     );
     const surfaceResult = stageResults.at(-1);
     if (!governed.ok || surfaceResult === undefined) throw new Error(`governed_turn_${governed.stopReason || "failed"}`);
+    sanitizeResultAnswer(surfaceResult);
     return {
       used: true,
       fallback: false,
@@ -110,10 +111,12 @@ export async function runAgentJohnV2SurfaceTurn({
       },
     };
   } catch (error) {
+    const fallbackResult = await legacyTurn();
+    sanitizeResultAnswer(fallbackResult);
     return {
       used: true,
       fallback: true,
-      result: await legacyTurn(),
+      result: fallbackResult,
       reasoning: {
         protocol: "cogentia.agent_john_reasoning_loop.v2",
         surface: surface || "agent-john",
@@ -122,6 +125,60 @@ export async function runAgentJohnV2SurfaceTurn({
       },
     };
   }
+}
+
+function sanitizeResultAnswer(target) {
+  if (!target || typeof target !== "object") return;
+  if (target.body && typeof target.body.answer === "string") {
+    target.body.answer = sanitizeSurfaceAnswer(target.body.answer);
+  }
+  if (typeof target.answer === "string") {
+    target.answer = sanitizeSurfaceAnswer(target.answer);
+  }
+}
+
+/**
+ * Post-synthesis anti-leak sanitizer for Agent John and public Guide surfaces.
+ * Strips internal meta-commentary, local filesystem paths, and internal tooling paths
+ * while preserving standard markdown links and source citations [repo:path#L1-L2].
+ */
+export function sanitizeSurfaceAnswer(rawText) {
+  if (!rawText || typeof rawText !== "string") return rawText;
+  let text = rawText;
+
+  // 1. Remove meta-reasoning boilerplate sentences (English & French)
+  const metaPrefixes = [
+    /^(?:I’m|I am|I'm)\s+checking\s+the\s+public\s+[^.!?\n]+?(?:so I can|to ground|before)[^.!?\n]*?[.!?]\s*/i,
+    /^(?:The\s+current\s+)?workspace\s+doesn’t\s+expose\s+[^.!?\n]+?(?:instead of guessing|at this path)[^.!?\n]*?[.!?]\s*/i,
+    /^(?:The\s+current\s+)?workspace\s+does\s+not\s+expose\s+[^.!?\n]+?[.!?]\s*/i,
+    /^(?:I’m|I am|I'm)\s+locating\s+the\s+public\s+corpus\s+file[^.!?\n]*?[.!?]\s*/i,
+    /^(?:Looking\s+at|Based\s+on)\s+the\s+(?:supplied|provided)\s+(?:context|snippets|sources)\s*[,:]\s*/i,
+    /^(?:Je\s+pars\s+du|Je\s+consulte\s+(?:le\s+)?|Je\s+recherche\s+dans\s+(?:le\s+)?|Je\s+m'appuie\s+sur\s+(?:le\s+)?)\s*corpus\s+public[^.!?\n]*?[.!?]\s*/i,
+    /^(?:Je\s+vérifie|Je\s+regarde)\s+(?:d’abord|d'abord)[^.!?\n]*?[.!?]\s*/i,
+    /^(?:Le\s+workspace|L'espace\s+de\s+travail)\s+actuel\s+ne\s+contient\s+pas[^.!?\n]*?[.!?]\s*/i,
+    /^(?:D'après|Selon)\s+les\s+(?:extraits|sources|documents)\s+fourni(?:s|es)\s+dans\s+le\s+contexte\s*[,:]\s*/i,
+  ];
+
+  for (let i = 0; i < 3; i++) {
+    for (const pat of metaPrefixes) {
+      text = text.replace(pat, "");
+    }
+  }
+
+  // 2. Strip embedded meta-clauses
+  text = text.replace(/(?:The current workspace doesn’t expose [^,.;\n]+, so )/gi, "");
+  text = text.replace(/(?:The current workspace does not expose [^,.;\n]+, so )/gi, "");
+  text = text.replace(/\s*\([^\)]*workspace\s+doesn’t\s+expose[^\)]*\)/gi, "");
+  text = text.replace(/\s*\([^\)]*workspace\s+does\s+not\s+expose[^\)]*\)/gi, "");
+
+  // 3. Strip local filesystem paths (Windows drive and Unix absolute paths)
+  text = text.replace(/[A-Za-z]:\\[a-zA-Z0-9_\-\.\\]+/g, "[corpus]");
+  text = text.replace(/[A-Za-z]:\/[a-zA-Z0-9_\-\.\/]+/g, "[corpus]");
+  text = text.replace(/\/(?:srv|Users|home|root|var|etc|opt)\/[a-zA-Z0-9_\-\.\/]+/g, "[corpus]");
+  text = text.replace(/\.cogentia[/\\][a-zA-Z0-9_\-\.\/\\]+/g, "[system]");
+  text = text.replace(/scripts\/[a-zA-Z0-9_\-\.\/]+\.js/g, "[script]");
+
+  return text.trim();
 }
 
 function safeErrorCode(error) {

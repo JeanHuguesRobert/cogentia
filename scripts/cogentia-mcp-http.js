@@ -20,7 +20,7 @@ import {
 import { createRegistryAwareMcpCore } from "./lib/cogentia-mcp-registries.js";
 import { aiRouterHealth } from "./lib/ai-router-client.js";
 import { mergeGuideRetrievalFromPacks } from "./lib/guide-retrieval-merge.js";
-import { runAgentJohnV2SurfaceTurn, resolveGuideReasoningLoopV2 } from "./lib/agent-jhn-reasoning-loop-v2.js";
+import { runAgentJohnV2SurfaceTurn, resolveGuideReasoningLoopV2, sanitizeSurfaceAnswer } from "./lib/agent-jhn-reasoning-loop-v2.js";
 import { retrievalInoxConfigured, retrievalInoxPackBatch, inoxRetrievalBaseUrl } from "./lib/retrieval-inox-session.js";
 import { retrievalSupabaseConfigured, retrievalSupabasePackBatch } from "./lib/retrieval-supabase.js";
 import {
@@ -807,29 +807,94 @@ async function parseUserIntent(question, history, defaultLocale = "en", options 
  * @returns {Promise<{ok:boolean,status:number,body:object}>}
  */
 async function produceGuideTurn(question, history, payload = {}, options = {}) {
+  const defaultLocale = normalizeLocale(payload.locale || options.locale);
+  const cleanHistory = normalizeGuideHistory(history);
+  const surface = resolvePublicChatSurface(payload, options);
+
+  // Fast-path: Canonical zero-latency cache check (Pillar Q&A)
+  // Check BEFORE V2 multi-stage loop to avoid latency penalty on known cache hits!
+  const canonical = surface === "agent-john" ? null : semanticAnswerCache.matchCanonical(question);
+  if (canonical && !payload.force_refresh) {
+    const formattedSources = canonical.sources.map(s => ({
+      ...s,
+      github_url: resolveSourceUrl(s.source_id, s.github_url),
+      url: resolveSourceUrl(s.source_id, s.github_url),
+    }));
+    const v2Requested = resolveGuideReasoningLoopV2(payload, process.env);
+    const body = {
+      ok: true,
+      service: "fractavolta-guide",
+      mode: "canonical_cache",
+      mandate: guideMandate,
+      question,
+      locale: defaultLocale,
+      answer: sanitizeSurfaceAnswer(canonical.answer),
+      sources: formattedSources,
+      warnings: [],
+      canonical_cache: true,
+      elapsed_ms: 1,
+    };
+    if (v2Requested) {
+      body.reasoning_loop = {
+        protocol: "cogentia.agent_john_reasoning_loop.v2",
+        surface,
+        fast_path: "canonical_cache",
+        elapsed_ms: 1,
+      };
+    }
+    return { ok: true, status: 200, body };
+  }
+
   if (!options.reasoningLoopV2Internal) {
     let v2Plan = null;
     let v2Retrieval = null;
+    let v2Intent = null;
     const v2 = await runAgentJohnV2SurfaceTurn({
       text: question,
-      surface: resolvePublicChatSurface(payload, options),
+      surface,
       enabled: resolveGuideReasoningLoopV2(payload, process.env),
-      legacyTurn: () => produceGuideTurn(question, history, payload, { ...options, reasoningLoopV2Internal: true, v2Evidence: { plan: v2Plan, retrieval: v2Retrieval } }),
+      legacyTurn: () => produceGuideTurn(question, history, payload, {
+        ...options,
+        reasoningLoopV2Internal: true,
+        v2Evidence: { plan: v2Plan, retrieval: v2Retrieval, intent: v2Intent },
+      }),
       stages: [
         {
           capability: "corpus.orient",
           description: "Construct a bounded public-corpus orientation plan for the Agent John projection.",
-          execute: async () => (v2Plan = guidePlanningRun(question, normalizeLocale(payload.locale || options.locale))),
+          execute: async () => {
+            v2Intent = await parseUserIntent(question, cleanHistory, defaultLocale);
+            if (v2Intent.intent === "conversational") {
+              v2Plan = guideHeuristicPlan(question, "conversational_skip");
+            } else {
+              const activeLocale = v2Intent.detected_language || defaultLocale;
+              const resolvedQuestion = v2Intent.resolved_search_query || question;
+              v2Plan = await guidePlanningRun(resolvedQuestion, activeLocale);
+            }
+            return v2Plan;
+          },
         },
         {
           capability: "corpus.search",
           description: "Retrieve public corpus evidence through the Guide retrieval backend.",
-          execute: async () => (v2Retrieval = await guideRetrievalRun(question, v2Plan)),
+          execute: async () => {
+            if (v2Intent?.intent === "conversational") {
+              v2Retrieval = { sources: [], warnings: [] };
+            } else {
+              const resolvedQuestion = v2Intent?.resolved_search_query || question;
+              v2Retrieval = await guideRetrievalRun(resolvedQuestion, v2Plan);
+            }
+            return v2Retrieval;
+          },
         },
         {
           capability: "agent_john.surface_synthesis",
           description: "Render the constrained Guide surface from governed orientation and evidence.",
-          execute: async () => produceGuideTurn(question, history, payload, { ...options, reasoningLoopV2Internal: true, v2Evidence: { plan: v2Plan, retrieval: v2Retrieval } }),
+          execute: async () => produceGuideTurn(question, history, payload, {
+            ...options,
+            reasoningLoopV2Internal: true,
+            v2Evidence: { plan: v2Plan, retrieval: v2Retrieval, intent: v2Intent },
+          }),
         },
       ],
       mandate: guideMandate,
@@ -845,9 +910,6 @@ async function produceGuideTurn(question, history, payload = {}, options = {}) {
     }
     return v2.result;
   }
-  const defaultLocale = normalizeLocale(payload.locale || options.locale);
-  const cleanHistory = normalizeGuideHistory(history);
-  const surface = resolvePublicChatSurface(payload, options);
 
   // COP treatment packet for this surface turn (mandate + optional budget reservation).
   const turnAcct = await openSurfaceTurnPacket({
@@ -859,35 +921,8 @@ async function produceGuideTurn(question, history, payload = {}, options = {}) {
   const rootPacket = turnAcct.ok ? turnAcct.packet : null;
   const cop = turnAcct.ok ? turnAcct.cop : null;
 
-  // Canonical zero-latency cache check (Pillar Q&A)
-  const canonical = surface === "agent-john" ? null : semanticAnswerCache.matchCanonical(question);
-  if (canonical && !payload.force_refresh) {
-    const formattedSources = canonical.sources.map(s => ({
-      ...s,
-      github_url: resolveSourceUrl(s.source_id, s.github_url),
-      url: resolveSourceUrl(s.source_id, s.github_url),
-    }));
-    return {
-      ok: true,
-      status: 200,
-      body: {
-        ok: true,
-        service: "fractavolta-guide",
-        mode: "canonical_cache",
-        mandate: guideMandate,
-        question,
-        locale: defaultLocale,
-        answer: canonical.answer,
-        sources: formattedSources,
-        warnings: [],
-        canonical_cache: true,
-        elapsed_ms: 1,
-      },
-    };
-  }
-
   const chatCap = await guideChatCapability();
-  const intentResult = await parseUserIntent(question, cleanHistory, defaultLocale, {
+  const intentResult = options.v2Evidence?.intent || await parseUserIntent(question, cleanHistory, defaultLocale, {
     skipLlm: !chatCap.available,
   });
   const activeLocale = intentResult.detected_language || defaultLocale;
@@ -2413,7 +2448,7 @@ function guideChatResponse(question, locale, completion, retrieval = null, web =
     String(completion?.choices?.[0]?.message?.content || completion?.choices?.[0]?.text || "").trim(),
     sources
   );
-  const finalAnswer = answer || guideFallbackText(locale);
+  const finalAnswer = sanitizeSurfaceAnswer(answer || guideFallbackText(locale));
   const isOpenRouterFreeFallback = completion?._cogentia_guide_synthesis === "openrouter_free_fallback";
   return {
     ok: true,
@@ -2528,7 +2563,7 @@ async function guideFallback(question, locale, routed, retrieval = null, web = n
         mandate: guideMandate,
         question,
         locale,
-        answer: extractiveAnswer(locale, pack, question),
+        answer: sanitizeSurfaceAnswer(extractiveAnswer(locale, pack, question)),
         sources: mergeGuideSources(pack.sources, web?.sources),
         context: summarizeGuideContext(pack, retrieval, web),
         s7: retrieval?.s7 || null,
@@ -2616,6 +2651,7 @@ function guideSystemPrompt(locale) {
     "Do not claim operational powers, private access, account access, or administrative authority.",
     "Start with a direct answer. Use 2 to 5 short paragraphs or bullets and no more than 5 actionable items.",
     "Cite only the sources needed for the answer; do not enumerate the retrieval process.",
+    "DIGNITY & CONFIDENTIALITY: Never mention internal workspace mechanics, repositories, file paths, retrieval processes, or missing files. Never say 'I am checking the corpus', 'the workspace does not expose', or 'based on supplied snippets'. Answer with republican and senatorial gravitas directly addressing the substance of the question.",
     "Distinguish documented facts, clearly marked inferences, and unknowns when that distinction matters.",
     "For a current-information question without web evidence, say that current web verification is unavailable rather than infer it from corpus material.",
   ].join("\n");
