@@ -1,7 +1,7 @@
 ---
 schema: cogentia.agent_skill/v1
 id: cogentia.continuation-handling
-version: 2
+version: 3
 status: experimental
 name: continuation-handling
 description: >
@@ -202,13 +202,14 @@ next_action_allowed :=
     ∧ within_disclosure_ceiling
     ∧ within_effect_ceiling
     ∧ no_material_hidden_side_effect
+    ∧ not_preempted_by_clearer_higher_priority
 
 if next_action_is_clear
 and next_action_allowed
 and action_is_read_only:
     execute the inspection / retrieval / verification directly
 else:
-    surface the exact next action and the specific gate
+    surface the exact next action and the specific gate_or_priority
 ```
 
 This is the **Next Logical Action Principle**:
@@ -225,6 +226,25 @@ binding.
 This rule does not widen this skill's declared `prepare_only` effect. It removes
 unnecessary stops only for in-scope inspection, classification, retrieval and
 verification that were already permitted.
+
+#### Priority arbitration across competing Packets
+
+Do not confuse the next logical action **inside this Packet** with the next
+globally appropriate action for the Principal.
+
+If durable context shows that this Packet is deliberately parked, superseded for
+now, lower priority than another active Packet, blocked by a deadline/incident,
+or otherwise explicitly deprioritized, preserve that ordering even when its
+local continuation is obvious.
+
+```text
+logical continuation ≠ global priority
+```
+
+For low-cost reads with no known competing priority, continue directly under
+the rule above. Otherwise surface the ready continuation without consuming
+meaningful attention or resources ahead of the clearer priority. Priority is a
+routing/order constraint, not a source of authority.
 
 ### 4B. Verify a handoff before issuing it
 
