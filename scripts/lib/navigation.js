@@ -71,7 +71,7 @@ export const SEED_CONCEPT_ALIASES = [
   },
   {
     name: "Statut Résident Rural et Foncier",
-    aliases: ["statut resident rural", "statut résident rural", "bail reel solidaire", "bail réel solidaire", "brs", "indivision fonciere", "indivision foncière", "girtec", "logement communal", "residence secondaire corse"],
+    aliases: ["statut resident rural", "statut résident rural", "statut de resident", "statut de résident", "bail reel solidaire", "bail réel solidaire", "brs", "indivision fonciere", "indivision foncière", "indivision", "indivisions", "girtec", "logement communal", "residence secondaire corse"],
     canonical_repo: "cogentia",
     canonical_rel: "research/campaign/fiches_maires/fiche_03_statut_resident_rural_logement_foncier.md",
     canonical_url: "https://github.com/JeanHuguesRobert/cogentia/blob/main/research/campaign/fiches_maires/fiche_03_statut_resident_rural_logement_foncier.md"
@@ -103,6 +103,13 @@ export const SEED_CONCEPT_ALIASES = [
     canonical_repo: "survey",
     canonical_rel: "README.md",
     canonical_url: "https://github.com/JeanHuguesRobert/survey/blob/main/README.md"
+  },
+  {
+    name: "Non-alignement et Indépendance Parlementaire",
+    aliases: ["sans groupe parlementaire", "face aux appareils", "parti national", "majorite territoriale", "majorité territoriale", "isolement politique", "non-aligne", "non-aligné"],
+    canonical_repo: "barons-Mariani",
+    canonical_rel: "research/proposition_constitutionnelle_autonomie_capacite_corse.md",
+    canonical_url: "https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/proposition_constitutionnelle_autonomie_capacite_corse.md"
   }
 ];
 

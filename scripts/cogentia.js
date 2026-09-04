@@ -37,6 +37,15 @@ import { checkSemanticMutation, MUTATION_STATUS } from "./lib/semantic-mutation-
 import { createSchedulerRunContext, runFractaCycle, SCHEDULER_CYCLE_MODES, SCHEDULER_STAGE_STATUS } from "./lib/fracta-scheduler.js";
 import { packDocumentToCapsule, verifyCapsule, unpackCapsule } from "./lib/packet-capsule.js";
 import { runMonteCarloAudit, SleepCycleReviewQueue, REVIEW_DECISIONS } from "./lib/corpus-sleep-cycle/index.js";
+import {
+  runSenatorialesIocSuite,
+  orientQuestion,
+  evaluateAnswer,
+  emitQuestionContinuation,
+  generateSenatorialesReport,
+  loadAnswersFromSources,
+  registerSenatorialesModule,
+} from "./lib/senatoriales-ioc.js";
 
 const COGENTIA_VERSION = "0.3.0";
 const VERSION = "3.0.0";
@@ -420,6 +429,9 @@ async function main() {
       return cmdScheduler(loadContext(), argv);
     case "sleep-cycle":
       return cmdSleepCycle(argv.shift() || "run");
+    case "senat":
+    case "senatoriales":
+      return cmdSenatoriales(argv.shift() || "orient");
     default:
       throw new Error(`Unknown command "${command}". Run: node scripts/cogentia.js help`);
   }
@@ -706,6 +718,16 @@ Repository batch helpers:
 
 Agent/publish helpers:
   corpus commit-generated  Plan generated-only commits. Add --apply to stage and commit.
+
+Sénatoriales IoC evaluation commands:
+  senat orient             Deterministically orient questions to local corpus files.
+                           Flags: --limit <n> --questions <file>
+  senat emit               Emit typed continuation packets (cogentia.continuation.v2) for missing judgment.
+                           Flags: --limit <n> --out-dir <dir>
+  senat eval               Evaluate mayoral answers with IoC signal detection and anti-leak sanitization.
+                           Flags: --eval-run <file> --answers <file> --limit <n>
+  senat report             Generate consolidated markdown report from evaluated answers.
+                           Flags: --eval-run <file> --answers <file> --out <file>
 
 Plan/apply flags:
   --scope configured|all|research|repo:<name>
@@ -2101,6 +2123,122 @@ async function cmdSleepCycle(subcommand = "run") {
     lines.push(`Resume command: ${result.continuation.resume?.command}`);
   }
   return output(result, lines.join("\n"));
+}
+
+registerSenatorialesModule();
+
+async function cmdSenatoriales(subcommand = "orient") {
+  const limit = Number(valueFlag("--limit") || 0);
+  const questionsPath = valueFlag("--questions") || "docs/evals/senatoriales-questions.json";
+  const evalRun = valueFlag("--eval-run") || null;
+  const answers = valueFlag("--answers") || null;
+  const outPath = valueFlag("--out") || null;
+  const outDir = valueFlag("--out-dir") || ".cogentia/evals/senat-ioc";
+
+  if (subcommand === "orient") {
+    const qPath = path.resolve(questionsPath);
+    const rawQuestions = JSON.parse(fs.readFileSync(qPath, "utf8"));
+    const selected = (Array.isArray(rawQuestions) ? rawQuestions : []).slice(0, limit || undefined);
+
+    const results = [];
+    for (const q of selected) {
+      const oriented = orientQuestion(q);
+      results.push(oriented);
+    }
+
+    if (JSON_MODE) {
+      return output({ ok: true, count: results.length, questions: results }, JSON.stringify({ ok: true, questions: results }, null, 2));
+    }
+
+    const lines = [`\n=== Local Orientation for Sénatoriales Suite (${results.length} questions) ===\n`];
+    for (const [i, o] of results.entries()) {
+      lines.push(`[Q${i + 1}] ${o.id}`);
+      lines.push(`  Question: ${o.question}`);
+      lines.push(`  Expected signals: ${o.expected.join(", ")}`);
+      lines.push(`  Local target docs (${o.targets.length}):`);
+      for (const t of o.targets) {
+        const status = t.exists ? `OK (${t.line_count} lines)` : "MISSING";
+        lines.push(`    - [${status}] ${t.repo}:${t.path} (${t.title})`);
+      }
+      lines.push("");
+    }
+    return output({ ok: true, count: results.length, questions: results }, lines.join("\n"));
+  }
+
+  if (subcommand === "emit") {
+    const qPath = path.resolve(questionsPath);
+    const rawQuestions = JSON.parse(fs.readFileSync(qPath, "utf8"));
+    const selected = (Array.isArray(rawQuestions) ? rawQuestions : []).slice(0, limit || undefined);
+    const targetDir = path.resolve(outDir);
+    fs.mkdirSync(targetDir, { recursive: true });
+
+    const emitted = [];
+    for (const q of selected) {
+      const oriented = orientQuestion(q);
+      const ctn = emitQuestionContinuation(oriented);
+      const file = path.join(targetDir, `${ctn.continuation_id}.json`);
+      fs.writeFileSync(file, JSON.stringify(ctn, null, 2), "utf8");
+      emitted.push({ id: ctn.continuation_id, file });
+    }
+
+    if (JSON_MODE) {
+      return output({ ok: true, outDir: targetDir, emitted }, JSON.stringify({ ok: true, outDir: targetDir, emitted }, null, 2));
+    }
+    const lines = [`\nEmitted ${emitted.length} continuation packets to ${targetDir}:\n`];
+    for (const e of emitted) lines.push(`  - ${e.id} -> ${path.basename(e.file)}`);
+    lines.push("");
+    return output({ ok: true, outDir: targetDir, emitted }, lines.join("\n"));
+  }
+
+  if (subcommand === "eval") {
+    const suite = await invokeCapability(
+      "senatoriales.eval",
+      { questionsPath, limit, evalRun, answers, mode: "suite" },
+      { auth: CLI_TRUSTED_AUTH }
+    );
+
+    if (JSON_MODE) {
+      return output(suite, JSON.stringify(suite, null, 2));
+    }
+
+    const lines = [`\n=== Local IoC Evaluation Results (${suite.evaluated_count}/${suite.count} evaluated) ===\n`];
+    for (const item of suite.results) {
+      if (!item.evaluation) continue;
+      const ev = item.evaluation;
+      const status = ev.ok ? "PASS" : "FAIL";
+      lines.push(`[${status}] ${item.id} (Signal score: ${Math.round(ev.signal_score * 100)}%, Citations: ${ev.citations_count})`);
+      if (ev.missing_signals.length) {
+        lines.push(`       Missing signals: ${ev.missing_signals.join(", ")}`);
+      }
+      if (ev.leaks.meta_opening) lines.push(`       WARNING: Meta-opening detected`);
+      if (ev.leaks.windows_path || ev.leaks.unix_path) lines.push(`       WARNING: Filesystem path leak detected`);
+      if (ev.leaks.sanitizer_modified) lines.push(`       INFO: Sanitizer scrubbed boilerplate`);
+    }
+    lines.push(`\nOverall OK: ${suite.ok}\n`);
+    return output(suite, lines.join("\n"));
+  }
+
+  if (subcommand === "report") {
+    const suite = await invokeCapability(
+      "senatoriales.eval",
+      { questionsPath, limit, evalRun, answers, mode: "suite" },
+      { auth: CLI_TRUSTED_AUTH }
+    );
+    const targetOut = outPath
+      ? path.resolve(outPath)
+      : path.resolve(outDir, `${new Date().toISOString().slice(0, 10)}-senat-ioc-report.md`);
+
+    fs.mkdirSync(path.dirname(targetOut), { recursive: true });
+    const reportText = generateSenatorialesReport(suite);
+    fs.writeFileSync(targetOut, reportText, "utf8");
+
+    if (JSON_MODE) {
+      return output({ ok: true, file: targetOut, suite }, JSON.stringify({ ok: true, file: targetOut, suite }, null, 2));
+    }
+    return output({ ok: true, file: targetOut }, `\nWrote report to ${targetOut}\n`);
+  }
+
+  throw new Error(`Unknown senat subcommand "${subcommand}". Use orient|emit|eval|report.`);
 }
 
 function cmdDocsQuery(inventory, repoArg) {

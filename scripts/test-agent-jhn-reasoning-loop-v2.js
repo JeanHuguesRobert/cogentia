@@ -1,6 +1,15 @@
 #!/usr/bin/env node
 import assert from "node:assert/strict";
-import { runAgentJohnV2SurfaceTurn, reasoningLoopV2Enabled, resolveGuideReasoningLoopV2, sanitizeSurfaceAnswer } from "./lib/agent-jhn-reasoning-loop-v2.js";
+import {
+  runAgentJohnV2SurfaceTurn,
+  reasoningLoopV2Enabled,
+  resolveGuideReasoningLoopV2,
+  sanitizeSurfaceAnswer,
+  resolveHopStrategy,
+  computeHopStrategyOut,
+  BUILTIN_STRATEGIES,
+  STRATEGY_SCHEMA,
+} from "./lib/agent-jhn-reasoning-loop-v2.js";
 
 assert.equal(reasoningLoopV2Enabled({}), false);
 assert.equal(reasoningLoopV2Enabled({ COGENTIA_REASONING_LOOP_V2: "true" }), true);
@@ -45,6 +54,12 @@ assert.equal(sanitizeSurfaceAnswer(samplePreamble3), "Oui, mais pas en “arrêt
 const samplePreamble4 = "Je m’appuie sur le brief public disponible pour formuler une réponse de méthode, pas une promesse d’appareil. Je vais rester sur le terrain des leviers réels d’un sénateur isolé et marquer clairement ce qui relève de l’inférence.Oui, s’il n’a pas un grand groupe";
 assert.equal(sanitizeSurfaceAnswer(samplePreamble4), "Oui, s’il n’a pas un grand groupe");
 
+const samplePreamble5 = "Je formule une réponse opérationnelle en restant dans le corpus public FractaVolta, avec le point central suivant: agir d’abord derrière le compteur, pas via l’attente du raccordement.Par la voie courte, votre mairie doit d’abord réduire l’énergie achetée";
+assert.equal(sanitizeSurfaceAnswer(samplePreamble5), "Par la voie courte, votre mairie doit d’abord réduire l’énergie achetée");
+
+const samplePreamble6 = "Je vérifie le cadre juridique exact avant de proposer des leviers concrets à droit constant, puis je vous donne une architecture de solutions qui évite le faux pas du statut de résident.Si la voie du « statut de résident » est fermée, la solution sûre consiste à viser l’usage du sol";
+assert.equal(sanitizeSurfaceAnswer(samplePreamble6), "Si la voie du « statut de résident » est fermée, la solution sûre consiste à viser l’usage du sol");
+
 let calls = 0;
 const enabled = await runAgentJohnV2SurfaceTurn({
   text: "What is a Cognitive Packet?",
@@ -83,5 +98,50 @@ const recovered = await runAgentJohnV2SurfaceTurn({
 assert.equal(recovered.result.answer, "fallback");
 assert.equal(recovered.fallback, true);
 assert.equal(recovered.reasoning.error, "forced_v2_failure");
+assert.equal(recovered.reasoning.strategy_out.yield_classification, "failure_residue");
+
+// Dynamic Hop Strategy (sigma_in -> sigma_out) tests
+const mayoralStrat = resolveHopStrategy({ text: "Question du maire de Corte sur la DGF", surface: "senatoriales" });
+assert.equal(mayoralStrat.id, "mayoral_inquiry");
+assert.equal(mayoralStrat.posture, "political_representative");
+assert.equal(mayoralStrat.strict_anti_leak, true);
+
+const doctrinalStrat = resolveHopStrategy({ text: "Quel est le lien entre Potentics et le Learning Computer ?", surface: "agent-john" });
+assert.equal(doctrinalStrat.id, "doctrinal_synthesis");
+assert.equal(doctrinalStrat.posture, "academic_doctrinal");
+
+const adversarialStrat = resolveHopStrategy({ text: "Appliquons le critère Rossignol pour falsifier", surface: "agent-john" });
+assert.equal(adversarialStrat.id, "adversarial_verification");
+
+const ctnStrat = resolveHopStrategy({
+  packet: { continuation: { recommended_strategy: "fast_reactive_dispatch" } },
+});
+assert.equal(ctnStrat.id, "fast_reactive_dispatch");
+
+// Hop execution recording with Cognitive Packet envelope
+const testPacket = {
+  envelope: {
+    id: "pkt:test:001",
+    hops: [],
+  },
+};
+const hopTurn = await runAgentJohnV2SurfaceTurn({
+  text: "Question de la commune sur l'autonomie",
+  surface: "senat",
+  enabled: true,
+  packet: testPacket,
+  legacyTurn: async () => ({ answer: "L'autonomie de capacité protège les compétences communales." }),
+});
+assert.equal(hopTurn.used, true);
+assert.ok(hopTurn.reasoning.strategy_in);
+assert.equal(hopTurn.reasoning.strategy_in.id, "mayoral_inquiry");
+assert.ok(hopTurn.reasoning.strategy_out);
+assert.equal(hopTurn.reasoning.strategy_out.yield_classification, "nominal_yield");
+assert.equal(testPacket.envelope.hops.length, 1);
+assert.equal(testPacket.envelope.hops[0].strategy_in, "mayoral_inquiry");
+assert.equal(testPacket.envelope.hops[0].posture, "political_representative");
+
 console.log("ok - Agent John V2 is feature-gated, governed, and falls back to the legacy surface turn");
 console.log("ok - Agent John V2 output sanitizer strips workspace leaks and meta-commentary");
+console.log("ok - Agent John V2 agile hop strategy (sigma_in -> sigma_out) resolves and logs to packet hops");
+
