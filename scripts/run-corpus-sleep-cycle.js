@@ -10,6 +10,7 @@
 import { qualifySystemAvailability } from "./lib/idle-qualification.js";
 import { runWeeklyConsolidation } from "./lib/cogentia-core.js";
 import { runMonteCarloAudit } from "./lib/corpus-sleep-cycle/index.js";
+import { emitCopEvidence } from "./lib/cop-evidence-emitter.js";
 
 function nowMs() {
   return Date.now();
@@ -172,7 +173,7 @@ export async function runCorpusSleepCycle(options = {}) {
   }
 
   if (candidateLearning.status === "preempted") {
-    return {
+    const preemptedResult = {
       status: "preempted",
       reason: candidateLearning.evidence?.reason || "phase_preempted",
       availability,
@@ -180,6 +181,23 @@ export async function runCorpusSleepCycle(options = {}) {
       phases,
       continuation: candidateLearning.evidence?.continuation
     };
+
+    if (!options.noCopEvidence) {
+      await emitCopEvidence({
+        obligationId: "cogentia:sleep-cycle",
+        ok: true,
+        status: "active",
+        evidence: {
+          status: "preempted",
+          reason: preemptedResult.reason,
+          elapsed_ms: preemptedResult.budget?.elapsed_ms || 0,
+          preempted: true,
+          continuation: preemptedResult.continuation
+        }
+      }).catch(() => {});
+    }
+
+    return preemptedResult;
   }
 
   // Phase 3: Cognitive regression suite
@@ -283,6 +301,26 @@ export async function runCorpusSleepCycle(options = {}) {
     candidate_signals: candidateLearning.evidence?.metrics?.cognitive_yield?.total_signals || 0,
     metrics: candidateLearning.evidence?.metrics || null
   };
+
+  if (!options.noCopEvidence) {
+    try {
+      const copResult = await emitCopEvidence({
+        obligationId: "cogentia:sleep-cycle",
+        ok: result.status === "completed" || result.status === "completed_partial",
+        status: "active",
+        evidence: {
+          status: result.status,
+          candidate_signals: result.candidate_signals,
+          cognitive_gain_score: result.metrics?.cognitive_yield?.cognitive_gain_score || 0,
+          elapsed_ms: finalBudget.elapsedMs || 0,
+          preempted: false
+        }
+      });
+      result.cop_evidence = copResult;
+    } catch (e) {
+      result.cop_evidence = { ok: false, error: e.message };
+    }
+  }
 
   return result;
 }

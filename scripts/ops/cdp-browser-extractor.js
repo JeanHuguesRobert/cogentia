@@ -394,8 +394,7 @@ export async function detectActiveFacebookAccount(endpoint = DEFAULT_CDP_ENDPOIN
 
   const evalRes = await sendCdpCommand(fbTab.webSocketDebuggerUrl, "Runtime.evaluate", {
     expression: expr,
-    returnByValue: true,
-    awaitPromise: true
+    returnByValue: true
   });
 
   return {

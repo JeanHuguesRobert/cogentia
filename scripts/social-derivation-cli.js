@@ -21,7 +21,8 @@ async function runCli() {
   if (!fs.existsSync(outputDir)) fs.mkdirSync(outputDir, { recursive: true });
 
   console.log("==========================================================================");
-  console.log(" 📲 DÉMULTIPLICATION SOCIALE DHITL — SÉNATORIALES 2026 (Facebook & X)");
+  console.log(" 📲 DÉMULTIPLICATION DE CAMPAGNE DHITL — SÉNATORIALES 2026");
+  console.log("    Canaux : Facebook · X (Twitter) · Instagram · Réponse Grand Électeur");
   console.log("    Principe : « Agent John prépare et propose ; l'humain valide. »");
   console.log("==========================================================================\n");
 
@@ -55,16 +56,18 @@ async function runCli() {
     const packetFile = path.join(outputDir, `${derivation.continuation_id}.json`);
     fs.writeFileSync(packetFile, JSON.stringify(derivation.continuation_packet, null, 2), "utf8");
 
-    console.log(`   ✓ Paquet généré : ${derivation.continuation_id} -> ${packetFile}`);
-    console.log(`   ✓ Post Facebook : ${derivation.continuation_packet.facebook_payload.word_count} mots`);
-    console.log(`   ✓ Thread X      : ${derivation.x_thread.length} tweets (tous <= 280 car.)`);
+    console.log(`   ✓ Paquet généré    : ${derivation.continuation_id} -> ${packetFile}`);
+    console.log(`   ✓ Post Facebook    : ${derivation.continuation_packet.facebook_payload.word_count} mots`);
+    console.log(`   ✓ Thread X         : ${derivation.x_thread.length} tweets (tous <= 280 car.)`);
+    console.log(`   ✓ Instagram        : Carrousel (${derivation.continuation_packet.instagram_payload.carrousel_cards.length} cartes) + Script Reel (${derivation.continuation_packet.instagram_payload.reel_script.duration_sec}s)`);
+    console.log(`   ✓ Réponse Maire    : ${derivation.continuation_packet.reponse_maire_payload.word_count} mots personnalisés`);
     console.log(`\n📲 [Notification WhatsApp Mobile Cockpit] :`);
     console.log("--------------------------------------------------------------------------");
     console.log(derivation.whatsapp_notification);
     console.log("--------------------------------------------------------------------------\n");
   }
 
-  console.log(`✅ Tous les paquets de continuation sociale sont prêts dans : ${outputDir}\n`);
+  console.log(`✅ Tous les paquets de continuation de campagne sont prêts dans : ${outputDir}\n`);
 }
 
 runCli().catch(err => {

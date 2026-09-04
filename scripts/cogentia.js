@@ -36,7 +36,7 @@ import { resolveCallerAuth, deriveLockers } from "./lib/cogentia-mcp-auth.js";
 import { checkSemanticMutation, MUTATION_STATUS } from "./lib/semantic-mutation-checker.js";
 import { createSchedulerRunContext, runFractaCycle, SCHEDULER_CYCLE_MODES, SCHEDULER_STAGE_STATUS } from "./lib/fracta-scheduler.js";
 import { packDocumentToCapsule, verifyCapsule, unpackCapsule } from "./lib/packet-capsule.js";
-import { runMonteCarloAudit } from "./lib/corpus-sleep-cycle/index.js";
+import { runMonteCarloAudit, SleepCycleReviewQueue, REVIEW_DECISIONS } from "./lib/corpus-sleep-cycle/index.js";
 
 const COGENTIA_VERSION = "0.3.0";
 const VERSION = "3.0.0";
@@ -419,7 +419,7 @@ async function main() {
     case "scheduler":
       return cmdScheduler(loadContext(), argv);
     case "sleep-cycle":
-      return cmdSleepCycle();
+      return cmdSleepCycle(argv.shift() || "run");
     default:
       throw new Error(`Unknown command "${command}". Run: node scripts/cogentia.js help`);
   }
@@ -2000,14 +2000,79 @@ registerModule({
   },
 });
 
-async function cmdSleepCycle() {
+async function cmdSleepCycle(subcommand = "run") {
+  const root = loadContext().rootPath;
+  const queue = new SleepCycleReviewQueue({ root });
+
+  if (subcommand === "review" || subcommand === "list") {
+    const limit = Number(valueFlag("--limit") || 20);
+    const kind = valueFlag("--kind") || null;
+    const minConfidence = valueFlag("--min-confidence") ? Number(valueFlag("--min-confidence")) : null;
+    const pending = queue.listPending({ limit, kind, minConfidence });
+    const stats = queue.getQueueStats();
+
+    if (JSON_MODE) {
+      return output({ ok: true, stats, count: pending.length, items: pending }, JSON.stringify({ ok: true, stats, items: pending }, null, 2));
+    }
+
+    const lines = ["\nCorpus Sleep Cycle — Pending Review Queue\n"];
+    lines.push(`Total signals: ${stats.total_signals} | Pending: ${stats.by_status.pending_review} | Accepted: ${stats.by_status.accepted} | Rejected: ${stats.by_status.rejected}\n`);
+
+    if (pending.length === 0) {
+      lines.push("  No pending signals in review queue.");
+    } else {
+      for (const sig of pending) {
+        lines.push(`• [${sig.id}] Kind: ${sig.signal_kind} (Severity: ${sig.severity || "info"}, Confidence: ${sig.confidence})`);
+        lines.push(`  Doc A: ${sig.provenance?.doc_a}`);
+        lines.push(`  Doc B: ${sig.provenance?.doc_b}`);
+        if (sig.citations && sig.citations.length > 0) {
+          for (const cite of sig.citations) {
+            lines.push(`    - ${cite.file}: "${cite.claim}"`);
+          }
+        }
+        lines.push(`  Decision command: node scripts/cogentia.js sleep-cycle decide --id ${sig.id} --decision accepted|rejected|quarantined\n`);
+      }
+    }
+    return output({ ok: true, count: pending.length, items: pending }, lines.join("\n"));
+  }
+
+  if (subcommand === "decide") {
+    const signalId = valueFlag("--id") || valueFlag("--signal-id");
+    const decision = valueFlag("--decision") || valueFlag("--action");
+    const reviewer = valueFlag("--reviewer") || "operator";
+    const notes = valueFlag("--notes") || "";
+
+    if (!signalId || !decision) {
+      throw new Error("Usage: cogentia sleep-cycle decide --id <signalId> --decision <accepted|rejected|quarantined> [--notes <text>]");
+    }
+
+    const record = queue.recordReviewDecision(signalId, { decision, reviewer, notes });
+    if (JSON_MODE) {
+      return output({ ok: true, decision: record }, JSON.stringify({ ok: true, decision: record }, null, 2));
+    }
+    return output({ ok: true, decision: record }, `\nReview decision recorded for [${signalId}]: ${decision} by ${reviewer}\n`);
+  }
+
+  if (subcommand === "stats") {
+    const stats = queue.getQueueStats();
+    if (JSON_MODE) {
+      return output({ ok: true, stats }, JSON.stringify({ ok: true, stats }, null, 2));
+    }
+    const lines = ["\nCorpus Sleep Cycle — Review Queue Statistics\n"];
+    lines.push(`Total signals: ${stats.total_signals}`);
+    lines.push(`By status: pending=${stats.by_status.pending_review}, accepted=${stats.by_status.accepted}, rejected=${stats.by_status.rejected}, quarantined=${stats.by_status.quarantined}`);
+    lines.push(`By kind: ${JSON.stringify(stats.by_kind)}`);
+    lines.push(`Storage: ${stats.queue_file}`);
+    return output({ ok: true, stats }, lines.join("\n"));
+  }
+
+  // Default: run Monte Carlo audit
   const force = takeFlag("--force");
   const budgetMs = Number(valueFlag("--budget-ms") || valueFlag("--budget")) || 10000;
   const maxPairs = Number(valueFlag("--max-pairs") || valueFlag("--pairs")) || 30;
   const resume = valueFlag("--resume") || null;
   const seed = valueFlag("--seed") ? (Number(valueFlag("--seed")) || valueFlag("--seed")) : 42;
   const view = normalizeView(valueFlag("--view") || PUBLIC_VIEW);
-  const root = loadContext().rootPath;
 
   const result = await invokeCapability(
     "corpus.sleep-cycle",

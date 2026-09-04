@@ -62,6 +62,7 @@
     "embeddings:monitor": "node scripts/monitor-embeddings.js",
     "trace:import:chatgpt": "node trace/scripts/import_chatgpt_export.js",
     "guide:eval": "node scripts/guide-eval.js",
+    "guide:eval:senat": "node scripts/guide-eval.js run --label senat --questions docs/evals/senatoriales-questions.json --progress",
     "guide": "node scripts/guide-cli.js",
     "test:agent-jhn-whatsapp": "node scripts/test-agent-jhn-whatsapp.js",
     "test:agent-jhn-answer-core": "node scripts/test-agent-jhn-answer-core.js",

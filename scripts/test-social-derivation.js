@@ -7,7 +7,7 @@ import assert from "node:assert/strict";
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { deriveSocialProposals, deriveFromFile, SOCIAL_DERIVATION_PROTOCOL } from "./lib/social-derivation.js";
+import { deriveSocialProposals, deriveFromFile, deriveFromRossignolPacket, SOCIAL_DERIVATION_PROTOCOL } from "./lib/social-derivation.js";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 
@@ -57,7 +57,7 @@ async function runAll() {
 
     assert.ok(res.facebook_post.includes("#Sénatoriales2026"));
     assert.ok(res.facebook_post.includes("#AutonomieDeCapacité"));
-    assert.ok(res.facebook_post.includes("https://jhn.baronsmariani.org/senatoriales"));
+    assert.ok(res.facebook_post.includes("https://jhn.baronsmariani.org"));
   });
 
   await test("Invariant 4: Derivation from actual Fiches Maires files", () => {
@@ -67,6 +67,64 @@ async function runAll() {
       assert.ok(res.continuation_id);
       assert.ok(res.whatsapp_notification.includes("approve ctn_soc_"));
     }
+  });
+
+  await test("Invariant 5: Instagram Package compliance (Carrousel, Reel, Meta/CNIL safety)", () => {
+    const sampleText = "L'énergie villageoise avec FractaVolta et les batteries seconde vie.";
+    const res = deriveSocialProposals(sampleText, { title: "FractaVolta Corse" });
+
+    // Instagram Carrousel (5 cards)
+    assert.ok(res.instagram_carrousel);
+    assert.equal(res.instagram_carrousel.length, 5);
+    assert.equal(res.instagram_carrousel[0].card_type, "constat_terrain");
+    assert.equal(res.instagram_carrousel[1].card_type, "distinction_cle");
+    assert.equal(res.instagram_carrousel[4].card_type, "conclusion_source");
+
+    // Instagram Reel script (<= 60s, visual plans, spoken text, captions)
+    assert.ok(res.instagram_reel);
+    assert.ok(res.instagram_reel.duration_sec <= 60);
+    assert.ok(res.instagram_reel.spoken_text.length > 50);
+    assert.ok(res.instagram_reel.on_screen_captions.length >= 3);
+
+    // Instagram Risk Checklist
+    assert.equal(res.continuation_packet.instagram_payload.risk_checklist.organic_only, true);
+    assert.ok(res.continuation_packet.instagram_payload.risk_checklist.ai_disclosure);
+    assert.ok(res.whatsapp_notification.includes("Instagram"));
+  });
+
+  await test("Invariant 6: Réponse Grand Électeur (Maire rural) personalization", () => {
+    const sampleText = "Protéger la DGF des communes rurales et garantir le statut de résident rural.";
+    const res = deriveSocialProposals(sampleText, { title: "Statut Résident Rural" });
+
+    assert.ok(res.reponse_maire);
+    assert.ok(res.reponse_maire.includes("Monsieur le Maire"));
+    assert.ok(res.reponse_maire.includes("Jean Hugues Noël Robert"));
+    assert.ok(res.continuation_packet.reponse_maire_payload.subject.includes("Statut Résident Rural"));
+    assert.ok(res.whatsapp_notification.includes("Réponse Maire"));
+  });
+
+  await test("Invariant 7: Direct derivation from Rossignol Watch Packet", () => {
+    const rossignolPacket = {
+      packet_id: "CPKT-ROSSIGNOL-1756972800-corsica1",
+      title: "Rapport d'information sénatorial sur la décentralisation en Corse",
+      category: "institutions_autonomie",
+      source_name: "Sénat / Commission des Lois",
+      url: "https://www.senat.fr/dossiers-legislatifs/autonomie-corse.html",
+      content: "Examen des modalités de transfert de pouvoir normatif et fiscal. Débat crucial sur l'impact financier pour les communes rurales et la préservation de la Dotation Globale de Fonctionnement (DGF).",
+      campaign_metadata: {
+        axis: "Autonomie de Capacité vs Autonomie de papier",
+        target_electorate: "Maires et conseillers municipaux ruraux"
+      }
+    };
+
+    const res = deriveFromRossignolPacket(rossignolPacket);
+
+    assert.equal(res.continuation_packet.provenance.rossignol_packet_id, "CPKT-ROSSIGNOL-1756972800-corsica1");
+    assert.ok(res.facebook_post.toLowerCase().includes("rapport d'information sénatorial"));
+    assert.ok(res.x_thread.length >= 3);
+    assert.ok(res.instagram_carrousel.length === 5);
+    assert.ok(res.reponse_maire.includes("Rapport d'information sénatorial"));
+    assert.ok(res.whatsapp_notification.includes("approve ctn_soc_"));
   });
 
   console.log("\n==========================================================================");

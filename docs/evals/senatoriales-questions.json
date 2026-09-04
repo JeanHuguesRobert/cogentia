@@ -1,0 +1,74 @@
+[
+  {
+    "id": "senat_dgf_finances_rurales",
+    "locale": "fr",
+    "question": "Si l'autonomie institutionnelle transfère le pouvoir fiscal à la Collectivité de Corse, qui garantit que la DGF et les dotations d'équipement de mon village de 150 habitants ne seront pas rognées au profit des agglomérations d'Ajaccio et Bastia ?",
+    "expected": ["DGF", "communes rurales", "autonomie de capacité", "sanctuarisation", "péréquation"]
+  },
+  {
+    "id": "senat_fractavolta_autoconsommation",
+    "locale": "fr",
+    "question": "Comment notre mairie rurale peut-elle réduire immédiatement sa facture d'électricité avec FractaVolta et des batteries de seconde vie sans attendre 18 mois d'instruction et de raccordement par Enedis/EDF ?",
+    "expected": ["FractaVolta", "seconde vie", "autoconsommation collective directe", "dérogation", "bâtiments communaux"]
+  },
+  {
+    "id": "senat_statut_resident_rural_brs",
+    "locale": "fr",
+    "question": "Le Conseil constitutionnel a censuré la notion de statut de résident en Corse. Comment proposez-vous de loger les jeunes du village et de lutter contre la spéculation à droit constant sans risquer une nouvelle censure juridique ?",
+    "expected": ["statut du résident rural", "Bail Réel Solidaire", "BRS", "droit constant", "indivision", "SCIC"]
+  },
+  {
+    "id": "senat_dechets_eau_teom",
+    "locale": "fr",
+    "question": "La taxe d'enlèvement des ordures ménagères (TEOM) explose pour les contribuables de ma commune à cause du coût de l'exportation maritime des déchets. Que peut faire concrètement un sénateur pour stopper cette spirale ?",
+    "expected": ["déchets", "TEOM", "surcoût transport", "retenues collinaires", "continuité des services"]
+  },
+  {
+    "id": "senat_transparence_marches_publics",
+    "locale": "fr",
+    "question": "Que préconisez-vous pour mettre fin aux asymétries d'information et au manque de transparence dans l'attribution des subventions territoriales entre communes littorales et communes de montagne ?",
+    "expected": ["transparence", "pas de pouvoir sans contrôle", "Chambre Régionale des Comptes", "marchés publics", "dossier 1755"]
+  },
+  {
+    "id": "senat_autonomie_papier_vs_capacite",
+    "locale": "fr",
+    "question": "Quelle est la différence fondamentale entre l'autonomie institutionnelle discutée à Paris et ce que Jean-Hugues Robert appelle l'Autonomie de Capacité ?",
+    "expected": ["autonomie de papier", "autonomie de capacité", "moyens réels d'agir", "communes", "souveraineté pratique"]
+  },
+  {
+    "id": "senat_role_assistant_numerique_john",
+    "locale": "fr",
+    "question": "En tant que maire, pourquoi devrais-je dialoguer avec votre assistant numérique Agent John plutôt qu'avec vous directement par téléphone ?",
+    "expected": ["Agent John", "compagnon", "You draft, he decides", "DHITL", "démultiplication", "disponibilité", "dialogue direct"]
+  },
+  {
+    "id": "senat_vignes_friches_ia",
+    "locale": "fr",
+    "question": "Nos villages de l'intérieur perdent leurs habitants et les terres agricoles sont en friche. Comment l'agrivoltaïsme ou les projets d'énergie villageoise peuvent-ils générer de nouvelles recettes pour le budget municipal ?",
+    "expected": ["friches", "agrivoltaïsme", "recettes communales", "SCIC", "montagne"]
+  },
+  {
+    "id": "senat_indivision_fonciere_blocage",
+    "locale": "fr",
+    "question": "Dans ma commune, 40% des maisons anciennes sont verrouillées par des indivisions successorales centenaires. Quel levier législatif et pratique proposez-vous d'activer au Sénat ?",
+    "expected": ["indivision", "GIRTEC", "portage foncier", "réhabilitation", "résident rural"]
+  },
+  {
+    "id": "senat_secheresse_retenues_eau",
+    "locale": "fr",
+    "question": "Chaque été, les arrêtés de restriction d'eau frappent nos éleveurs et nos villages alors que les retenues littorales sont prioritaires. Comment rééquilibrer la gestion de l'eau en montagne ?",
+    "expected": ["eau", "retenues collinaires", "OEHC", "sécheresse", "équité territoriale"]
+  },
+  {
+    "id": "senat_kudocracy_democratie_liquide",
+    "locale": "fr",
+    "question": "Vous proposez des mécanismes de démocratie directe et de Kudocracy. Comment un sénateur peut-il concrètement associer les grands électeurs à ses votes au Palais du Luxembourg ?",
+    "expected": ["mandat", "contrôle", "transparence", "grands électeurs", "vote vivant"]
+  },
+  {
+    "id": "senat_isolement_politique_objection",
+    "locale": "fr",
+    "question": "Vous n'avez pas l'appui d'un grand parti national ou de la majorité territoriale à Ajaccio. Que pourra faire un sénateur sans groupe parlementaire puissant face aux appareils ?",
+    "expected": ["outillé", "amendements documentés", "transparence", "capacité", "non-aligné", "indépendance"]
+  }
+]
