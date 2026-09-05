@@ -1,7 +1,7 @@
 ---
 title: Cognitive Packet Switching
 subtitle: A Protocol Layer for Routable Ideas, Continuations, and Agent Orchestration
-version: '1.0'
+version: '1.1'
 status: published
 date: '2026-06-01'
 author: Jean Hugues Noël Robert, baron Mariani
@@ -24,6 +24,10 @@ tags:
   - cop
   - cognitive-orchestration-protocol
   - cogentia-commons
+  - raix
+  - capability-array
+  - learning-computer
+  - ithaca
 changelog_policy: omitted from published document; reconstruct from conversation or Git history if needed
 last_reviewed_by:
   - Grok — v0.1 critique
@@ -47,12 +51,15 @@ derived_from:
   - inseme/research/COP_STATE_OF_PLAY.md
   - inseme/packages/cop-core/README.md
   - inseme/packages/cop-core/REACTIVE_COGNITIVE_EXTENSION.md
+  - https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/the_network_is_the_learning_computer.md
+  - https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/the_network_is_the_learning_computer_raix_addendum.md
+  - https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/potentics_of_compute.md
 derived_products_planned:
   - TCP/IP for Ideas — Hacker News optimized post
   - TCP/IP des idées — French public note
   - Agent orchestration by cognitive packets — technical explainer
 canonical_url: https://github.com/JeanHuguesRobert/cogentia/blob/main/research/cognitive_packet_switching.md
-last_stamped_at: 2026-06-01T00:00:00.000Z
+last_stamped_at: 2026-09-05T00:00:00.000Z
 corpus_role: source
 document_role: source
 document_kind: research-paper
@@ -436,6 +443,30 @@ Tools can change.
 Repositories can move.  
 Runtimes can be replaced.  
 The packet remains the stable unit of work.
+
+### 8.1 The Hop redefined: from monolithic agent to dynamic capability array (RAIX)
+
+A classical or naive reading of packet switching might assume that each routing step ("hop") dispatches a packet to a single monolithic agent or fixed processor.
+
+As formalized in *The Network is the Learning Computer* ([`the_network_is_the_learning_computer.md`](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/the_network_is_the_learning_computer.md)) and its RAIX capability-array addendum:
+
+> **A hop is not necessarily a single processor; it can be a temporarily composed capability array.**
+
+Rather than routing to an isolated agent, the cognitive router can bind a temporary spatial or systolic cluster of complementary capabilities $C_1, \ldots, C_n$ (e.g., deterministic real-time MCU, neural NPU, edge SBC, frontier reasoning model) whose collective capacity is functional rather than scalar:
+
+$$
+C_{\text{collective}}(T) = F_T(C_1, \ldots, C_n)
+$$
+
+The target is super-additivity ($G_{\text{RAIX}}(T) > 1$), where the synthesized array achieves tasks that no individual processor nor simple parallel replication could accomplish.
+
+Crucially, the telemetry and trace residue generated as the packet traverses this temporary array return to the originating authority (Ithaca / Ithaque). Through continuous assimilation, the network learns and refines future composition and routing policies:
+
+$$
+\text{packets} \longrightarrow \text{telemetry} \longrightarrow \text{policy update (Ithaca)} \longrightarrow \text{improved future arrays}
+$$
+
+The network itself thus becomes an evolving Learning Computer, where hops are dynamically synthesized arrays rather than static destinations.
 
 ---
 

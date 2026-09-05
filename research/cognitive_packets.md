@@ -5,12 +5,12 @@ author: Jean Hugues Noël Robert, baron Mariani
 affiliation: Institut Mariani / C.O.R.S.I.C.A., 1 cours Paoli, F-20250 Corte, Corsica
 date: '2026-05-21'
 status: working-paper — Working paper
-version: '0.3'
+version: '0.4'
 license: CC BY-SA 4.0 for text; MIT for associated schemas or code
 spdx: CC-BY-SA-4.0
 operational_prompt: cogentia/prompts/cognitive_packet.md
 canonical_url: https://github.com/JeanHuguesRobert/cogentia/blob/main/research/cognitive_packets.md
-last_stamped_at: 2026-06-01T00:00:00.000Z
+last_stamped_at: 2026-09-05T00:00:00.000Z
 document_role: source
 document_kind: research-paper
 visibility: public
@@ -24,7 +24,9 @@ provenance:
   origin_repository: unknown
   origin_ref: unknown
   origin_date: unknown
-  derived_from: []
+  derived_from:
+    - "https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/logique_capacitaire_jhr_forth_linkos_fractanet.md"
+    - "research/cognitive_packet_closure_and_packet_native_semantics.md"
 review:
   status: unreviewed
   reviewed_by: []
@@ -42,11 +44,13 @@ update_policy: UP-DEFAULT-REVIEWED
 Institut Mariani / C.O.R.S.I.C.A.  
 1 cours Paoli, F-20250 Corte, Corsica
 
-*Working paper — May 2026 — v0.3*
+*Working paper — May 2026 (rev. Sep 2026) — v0.4*
 
 ---
 
 ## Version note
+
+**v0.4** incorporates the genealogical distinction between VM native closures and transportable serialized closures (prefigured in `l8`), and the substitution of serialized stack state by deterministic replay from inputs and causal traces (`side.js`).
 
 **v0.3** introduces the **envelope and payload** distinction. A cognitive packet now has two layers:
 
@@ -257,6 +261,23 @@ Runtime continuation:
 Cognitive packet:
   The next resumable state of cognitive work.
 ```
+
+### 4.6.1 VM native closures versus serialized closures (`l8`)
+
+In a classical execution runtime (such as Scheme, Forth, or Node.js), a continuation is a **native VM closure**. It relies on an implicit, uniform address-space memory heap and active stack frames. Such closures are intrinsically non-transportable: they cannot cross machine reboot, process restart, or heterogeneous multi-agent boundaries.
+
+For multi-agent and human-AI cooperation, a continuation must be transformed into a **serialized closure**: an explicit envelope and payload containing declared dependencies, validated inputs, and expected resumption schemas. This transition directly reflects the lineage of `l8` (2014), where monolithic execution threads were broken into discrete `Tasks` and `Steps`, turning continuations into first-class, externalized data objects capable of being paused, cancelled, and safely resumed across independent sessions.
+
+### 4.6.2 Deterministic replay as state substitution (`side.js`)
+
+Serializing complete in-memory mutable states across heterogeneous AI agents is often prohibitively heavy and brittle. An alternative operational pattern, formalized in `side.js` (2016), substitutes serialized state snapshots with **deterministic replay from the top**.
+
+Instead of serializing mutable internal state, the packet preserves:
+1. the initial immutable parameters,
+2. the causal trace of step inputs and outcomes ($\mathcal{J} = (P, H, S, T)$), and
+3. the causal frontier identifier.
+
+The receiving handler achieves Packet Closure by replaying the deterministic pipeline against fast in-memory caches, yielding byte-for-byte identical resumption state with microsecond latency without transporting bulky internal memory frames.
 
 ## 4.7 Self-description and bootstrapping
 

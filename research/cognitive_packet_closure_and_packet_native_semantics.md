@@ -4,8 +4,8 @@ subtitle: "Granularity, causal continuity, placement, effects, and the requireme
 author: "Jean Hugues Noël Robert, baron Mariani"
 affiliation: "Institut Mariani / C.O.R.S.I.C.A., 1 cours Paoli, F-20250 Corte, Corsica, France"
 date: "2026-08-25"
-last_modified_at: "2026-08-26"
-version: "0.2"
+last_modified_at: "2026-09-05"
+version: "0.3"
 status: "working source note"
 license: "CC BY-SA 4.0"
 language: "en"
@@ -27,6 +27,8 @@ related_documents:
   - "https://github.com/JeanHuguesRobert/inseme/blob/main/packages/cop-core/COP_MANDATED_AGENT_SECURITY.md"
   - "https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/the_network_is_the_learning_computer.md"
   - "https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/jhn_architecture.md"
+  - "https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/logique_capacitaire_jhr_forth_linkos_fractanet.md"
+  - "https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/potentics_of_compute.md"
 tags:
   - cognitive-packets
   - cognitive-packet-switching
@@ -42,10 +44,14 @@ tags:
   - reactive-corpus
   - jhn-architecture
   - distributed-cognition
+  - deterministic-replay
+  - side-js
+  - l8-tasks-steps
 update_policy: "UP-DEFAULT-REVIEWED"
 changelog:
   - "v0.1 (2026-08-25) — initial formalization of Packet Closure and packet-native semantics."
   - "v0.2 (2026-08-26) — clarified that Closure is relative to a declared admissible-handler environment; separated self-bootstrap from closure conformance; decomposed ambiguous lifecycle `forget`."
+  - "v0.3 (2026-09-05) — Integrates VM native closures vs serialized closures (l8) and deterministic replay substitution of serialized state (side.js), linked to master architectural sources (Issue #55)."
 ---
 
 # Cognitive Packet Closure and Packet-Native Semantics
@@ -215,6 +221,27 @@ continuation
 Packet Closure can therefore be understood as one of the costs of making continuations **location-independent and runtime-independent**.
 
 This does not imply that a Cognitive Packet serializes a native call stack. Closure may be reconstructed from code, inputs, memoized effects, Artifacts, Events, Corpus references, snapshots or other representations.
+
+### 2.5 Genealogy and Realization: VM Native Closures, Serialized Closures (`l8`), and Deterministic Replay (`side.js`)
+
+The distinction between an implicit runtime continuation and Packet Closure reflects a historical and architectural progression in the JHN lineage (see [`logique_capacitaire_jhr_forth_linkos_fractanet.md`](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/logique_capacitaire_jhr_forth_linkos_fractanet.md)):
+
+1. **VM Native Closures vs. Transportable Serialized Closures:**
+   In languages like Scheme (`call/cc`), Forth, or JavaScript, a closure captures pointers within a uniform address-space memory heap. The closure is fast and cheap, but strictly process-bound. Once computation is distributed across asynchronous agents, human-AI handoffs, and network boundaries, native VM closures cannot travel. They must become **serialized closures** — encapsulated packets containing explicit inputs, declared dependencies, and expected resumption schemas. This was directly prefigured by `l8` (2014), where monolithic execution was decomposed into discrete `Tasks` and `Steps`, and continuations were materialized as externalized objects supporting cancellation and resumption across sessions.
+
+2. **Substitution of Serialized State by Deterministic Replay (`side.js`):**
+   Full serialization of an evolving execution stack across heterogeneous machines is notoriously brittle, verbose, and schema-dependent. A powerful alternative pattern, formalized in `side.js` (2016), achieves Packet Closure without heavy state serialization: **deterministic replay from the top**.
+   
+   Instead of snapshotting every internal variable or heap reference, the packet records:
+   - the immutable initial parameters and prompt;
+   - the causal sequence of deterministic events, inputs, and step results ($\mathcal{J} = (P, H, S, T)$);
+   - a hash of the expected causal frontier.
+   
+   Resumption is performed by replaying the deterministic pipeline from the beginning against microsecond in-memory caches, writing out to disk or network only asynchronously when mutations settle. This ensures that:
+   $$
+   \text{Deterministic Replay}(P, H, S) \equiv \text{Materialized Stack State}
+   $$
+   thereby reducing packet payload size while guaranteeing byte-for-byte state equivalence across independent handlers.
 
 ---
 
