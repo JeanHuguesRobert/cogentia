@@ -359,6 +359,39 @@ This is the path toward **human political obsolescence**: humans formally retain
 rights, elections formally continue, institutions formally remain democratic, but
 real capacity shifts toward AI-augmented non-human entities.
 
+### 5.1 The counter-project: capacity augmentation for living persons
+
+The alternative is not a nostalgic refusal of assistance, nor a decorative
+"human in the loop" placed at the end of an opaque machine process. It is the
+deliberate augmentation of the **effective capacity of living persons**.
+
+```text
+AI-augmented artificial person
+  -> the organisation accumulates memory, speed, persuasion, execution,
+     and strategic continuity
+  -> individual humans become replaceable operators or targets
+
+sovereign personal augmentation
+  -> a living subject gains memory, orientation, research, comparison,
+     drafting and bounded execution capacities
+  -> the subject remains able to understand, redirect, contest, veto,
+     correct, export and revoke what acts in their name
+```
+
+The relevant political question is therefore not simply whether an AI system is
+"autonomous". It is **whose practical capacity increases, whose capacity is
+substituted, and who governs the continuity produced by that increase**.
+
+A personal digital twin can be a counter-infrastructure to concentration when
+it helps a person read a complex environment, retrieve their own Corpus, prepare
+an answer, verify a claim, navigate an interface, and bring useful observations
+back under the person's judgment. In this sense, computer assistance is not a
+less ambitious form of AI: it is a different allocation of agency.
+
+Its practical test is not whether the system can complete a task alone, but
+whether the principal leaves the interaction **more capable** of perceiving,
+understanding, deciding, expressing and acting than before.
+
 ---
 
 ## 6. Autonomization does not require consciousness
@@ -659,6 +692,30 @@ Formula:
 Autonomy, yes.
 Capture, no.
 ```
+
+### 13.1 The salience problem: assistance can orient before it acts
+
+An assistant need not publish, spend, or click in order to exercise power. It
+can shape a principal's practical horizon by selecting what appears relevant,
+urgent, normal, or possible. A proactive companion therefore requires a
+governance of **salience**, not only an action-permission model.
+
+For material suggestions, a sovereign twin should preserve enough trace for the
+principal to ask:
+
+```text
+Why was this suggested now?
+Which page, Corpus items, events, or explicit intention supported it?
+What alternatives were considered or withheld?
+What capability would the suggestion mobilize?
+What would happen if I accept, defer, reject, or disable it?
+```
+
+The principal must be able to tune or suspend proactivity, request a raw view
+or alternative ranking, and export the event sequence that led to a suggestion.
+This does not prohibit a useful companion from anticipating likely intentions.
+It prevents anticipation from becoming an unaccountable system of behavioural
+steering.
 
 ---
 
@@ -1169,6 +1226,8 @@ Short-term:
   `representation_boundary`;
 - connect ownership work to twin roots, instances, appearances, logs, and keys;
 - connect fractal logs to every mandate-bearing artificial entity.
+- define a traceable `suggestion` event shape: context, evidence, alternatives,
+  capability requested, principal outcome, and reason for salience.
 
 Medium-term:
 
