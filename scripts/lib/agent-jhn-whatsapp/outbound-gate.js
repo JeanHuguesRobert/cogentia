@@ -22,7 +22,8 @@ import { buildWhatsappArtifact, appendTrace, validateWhatsappArtifact } from "./
 import { ARTIFACT_TYPES, DECISIONS } from "./constants.js";
 import { resolveSentLedgerPath } from "./config.js";
 import { resolveSelfSendJid } from "./self-peer.js";
-import { AUDIENCE, outboundDisclosureOk } from "./disclosure.js";
+import { AUDIENCE, ensureOutboundDisclosure, outboundDisclosureOk } from "./disclosure.js";
+import { isAllowedSelfPeer } from "./self-peer.js";
 import { recordOutboundSendEvent } from "./rate-limiter.js";
 
 const OUTBOX_KIND = "whatsapp.send";
@@ -132,9 +133,14 @@ export function requestOutboundSend({
   }
 
   const isGroup = isGroupJid(normalized?.remote_jid || normalized?.remote_jid_bare);
-  const audience = isGroup ? AUDIENCE.THIRD_PARTY : AUDIENCE.SELF;
+  const selfPeer = isAllowedSelfPeer(normalized, config);
+  const audience = isGroup || !selfPeer.ok ? AUDIENCE.THIRD_PARTY : AUDIENCE.SELF;
+  const stamped = ensureOutboundDisclosure(draftText, config, {
+    audience,
+    phoneOrJid: config.allowed_self_jid || normalized?.remote_jid,
+  });
   const policy = evaluatePolicy(normalized, config, {
-    draftText,
+    draftText: stamped.text,
     now,
     audience,
     emergency: arguments[0]?.emergency,
@@ -153,7 +159,7 @@ export function requestOutboundSend({
     };
   }
 
-  if (!outboundDisclosureOk(draftText, config, { audience })) {
+  if (!outboundDisclosureOk(stamped.text, config, { audience })) {
     return {
       ok: false,
       enqueued: false,
@@ -181,7 +187,7 @@ export function requestOutboundSend({
     payload: {
       action_request_id,
       to_jid: toJid,
-      text: draftText,
+      text: stamped.text,
       conversation_kind: isGroup ? "group" : "direct",
       conversation_id: normalized.conversation_id,
       group_id: normalized.group_id || null,
@@ -285,7 +291,23 @@ export async function drainWhatsappOutbox(config, options = {}) {
     try {
       markOutboxInFlight(row);
       // Reload file path for subsequent marks — markOutboxInFlight mutates file but row still has _filePath
-      const sendResult = await transport.sendText(row.payload.to_jid, row.payload.text);
+      const stamped = ensureOutboundDisclosure(row.payload.text, config, {
+        audience: row.payload.audience || AUDIENCE.SELF,
+        phoneOrJid: config.allowed_self_jid,
+      });
+      if (!outboundDisclosureOk(stamped.text, config, { audience: stamped.audience })) {
+        const fail = markOutboxFailed(row, "missing agent disclosure at drain", { maxAttempts: 1 });
+        results.push({
+          id: row.id,
+          ok: false,
+          blocked: true,
+          reason: "missing agent disclosure at drain",
+          rule_id: "gate.missing_self_identification",
+          state: fail.state,
+        });
+        continue;
+      }
+      const sendResult = await transport.sendText(row.payload.to_jid, stamped.text);
       if (sendResult?.ok) {
         markOutboxDelivered(row);
         appendSentLedger(config, {
@@ -390,13 +412,13 @@ function recheckOutboundPreconditions(config, payload, now) {
   const toBare = bareJid(toJid);
   const okTarget =
     toBare === selfJid ||
-    toJid === preferred ||
-    toBare === bareJid(preferred) ||
-    (toJid.includes("@lid") && preferred && preferred.includes("@lid"));
+    (preferred && (toJid === preferred || toBare === bareJid(preferred)));
   if (!okTarget) {
     return { ok: false, rule_id: "gate.third_party", reason: "to_jid is not allowed self JID/peer" };
   }
-  if (!outboundDisclosureOk(payload.text, config, { audience: AUDIENCE.SELF })) {
+  const audience = payload.audience || AUDIENCE.SELF;
+  const stamped = ensureOutboundDisclosure(payload.text, config, { audience, phoneOrJid: selfJid });
+  if (!outboundDisclosureOk(stamped.text, config, { audience })) {
     return {
       ok: false,
       rule_id: "gate.missing_self_identification",

@@ -5,8 +5,13 @@
 
 import { createHash } from "node:crypto";
 import { normalizeInboundEvent } from "./inbound-normalizer.js";
-import { evaluatePolicy } from "./policy.js";
+import { evaluatePolicy, resolveChannelPolicy } from "./policy.js";
+import { isExplicitlyAddressed } from "./mention-address.js";
 import { buildDeterministicDraft, buildCognitiveDraft } from "./draft.js";
+import { admitTurn } from "./turn-admission.js";
+import { resolveTurnClock } from "./turn-clock.js";
+import { isAllowedSelfPeer, rememberSelfPeer } from "./self-peer.js";
+import { ensureOutboundDisclosure, formatOutboundText } from "./disclosure.js";
 import {
   buildWhatsappArtifact,
   appendTrace,
@@ -19,7 +24,6 @@ import {
 } from "./outbound-gate.js";
 import { ARTIFACT_TYPES, DECISIONS } from "./constants.js";
 import { ensureStateDirs } from "./config.js";
-import { rememberSelfPeer } from "./self-peer.js";
 import {
   recordConversationTurn,
   loadConversation,
@@ -27,7 +31,6 @@ import {
   hasRecentEmailContact,
 } from "./conversation-store.js";
 import { isCockpitCommand, processCockpitCommand } from "./cockpit-commands.js";
-import { formatOutboundText } from "./disclosure.js";
 
 /**
  * Process one inbound event (synthetic or Baileys).
@@ -74,20 +77,51 @@ export async function handleInbound(rawEvent, config, options = {}) {
     }
   }
 
-  const pipelineOptions = { ...options, ...historyOptions };
-  const enableCognitive = options.enableCognitiveSynthesis !== false;
+  const turnClock = resolveTurnClock({
+    now: options.now,
+    timezone: options.timezone || config.principal_timezone,
+  });
+  const pipelineOptions = { ...options, ...historyOptions, turnClock, now: turnClock.instant };
+  const addressed = normalized.ok ? isExplicitlyAddressed(normalized.text) : false;
+  const channelProfile = normalized.ok
+    ? resolveChannelPolicy(normalized, config, addressed)
+    : {};
+  if (channelProfile.persona_id && pipelineOptions.personaId == null) {
+    pipelineOptions.personaId = channelProfile.persona_id;
+  }
+  if (channelProfile.local_prompt && pipelineOptions.localPrompt == null) {
+    pipelineOptions.localPrompt = channelProfile.local_prompt;
+  }
+  const admission = normalized.ok
+    ? admitTurn(normalized, config, {
+        ...pipelineOptions,
+        explicitlyAddressed: addressed,
+        cockpitCommand: Boolean(normalized.text && isCockpitCommand(normalized.text)),
+      })
+    : { admitted: false, trigger: "none", rule_id: "admission.invalid", observed_author: "unknown" };
+  const enableCognitive = options.enableCognitiveSynthesis !== false && admission.admitted;
 
-  let draft = normalized.ok
-    ? (enableCognitive
+  let draft = null;
+  if (normalized.ok && admission.admitted) {
+    if (normalized.text && isCockpitCommand(normalized.text)) {
+      draft = {
+        ...buildDeterministicDraft(normalized, config, pipelineOptions),
+        text: formatOutboundText(processCockpitCommand(normalized.text, config), { audience: "self" }),
+        stub: true,
+      };
+    } else {
+      draft = enableCognitive
         ? await buildCognitiveDraft(normalized, config, pipelineOptions)
-        : buildDeterministicDraft(normalized, config, pipelineOptions))
-    : null;
-
-  // Process self-chat control cockpit commands (list, inspect, approve, reject, close)
-  if (normalized.ok && normalized.text && isCockpitCommand(normalized.text)) {
-    const cmdResult = processCockpitCommand(normalized.text, config);
-    if (draft) {
-      draft.text = formatOutboundText(cmdResult, { audience: "self" });
+        : buildDeterministicDraft(normalized, config, pipelineOptions);
+    }
+    if (draft?.text) {
+      const stamped = ensureOutboundDisclosure(draft.text, config, {
+        audience: draft.audience,
+        phoneOrJid: config.allowed_self_jid || normalized.remote_jid,
+        hasRecentDisclosure: historyOptions.hasRecentDisclosure,
+        hasRecentEmailContact: historyOptions.hasRecentEmailContact,
+      });
+      draft = { ...draft, text: stamped.text };
     }
   }
 
@@ -104,8 +138,8 @@ export async function handleInbound(rawEvent, config, options = {}) {
     }
   }
 
-  // Remember Message-yourself peer (@lid) for later proactive sends.
-  if (normalized.ok && config.state_dir) {
+  // Remember Message-yourself peer (@lid) only for confirmed self chats.
+  if (normalized.ok && config.state_dir && isAllowedSelfPeer(normalized, config).ok) {
     try {
       rememberSelfPeer(config, normalized);
     } catch {
@@ -115,7 +149,9 @@ export async function handleInbound(rawEvent, config, options = {}) {
 
   const policy = evaluatePolicy(normalized, config, {
     draftText: draft?.text,
-    now: options.now,
+    now: turnClock.instant,
+    admission,
+    explicitlyAddressed: addressed,
     hasRecentDisclosure: historyOptions.hasRecentDisclosure,
     hasRecentEmailContact: historyOptions.hasRecentEmailContact,
   });
@@ -145,6 +181,18 @@ export async function handleInbound(rawEvent, config, options = {}) {
       policy,
       usage_grant: config.usage_grant,
       observed_at: normalized.observed_at,
+      turn_admission: {
+        admitted: admission.admitted,
+        trigger: admission.trigger,
+        observed_author: admission.observed_author,
+        explicitly_addressed: admission.explicitly_addressed,
+      },
+      clock: {
+        timezone: turnClock.timezone,
+        instant: turnClock.instant,
+        civil_date: turnClock.civil_date,
+        source: turnClock.source,
+      },
     });
     const v = validateWhatsappArtifact(receiveArtifact);
     if (v.ok) appendTrace(config, receiveArtifact);
@@ -195,6 +243,18 @@ export async function handleInbound(rawEvent, config, options = {}) {
     draft_text_for_local: options.includeDraftText ? draft?.text : undefined,
     outbound,
     receive_occurrence_id: receiveArtifact?.occurrence_id || null,
+    turn_admission: {
+      admitted: admission.admitted,
+      trigger: admission.trigger,
+      observed_author: admission.observed_author,
+      rule_id: admission.rule_id,
+    },
+    clock: {
+      timezone: turnClock.timezone,
+      civil_date: turnClock.civil_date,
+      instant: turnClock.instant,
+      source: turnClock.source,
+    },
   };
 }
 

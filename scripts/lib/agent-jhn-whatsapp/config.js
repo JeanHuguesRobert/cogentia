@@ -59,6 +59,38 @@ function parseGroupPolicies(raw) {
   }
 }
 
+const DEFAULT_CHANNEL_POLICIES = Object.freeze({
+  self: { action: "reply" },
+  direct_addressed: { action: "reply_on_address" },
+  direct_unaddressed: { action: "silent" },
+  group_addressed: { action: "reply_on_address" },
+  group_unaddressed: { action: "silent" },
+});
+
+function parseChannelPolicies(raw) {
+  if (!raw) return { defaults: { ...DEFAULT_CHANNEL_POLICIES }, overrides: {} };
+  try {
+    const parsed = JSON.parse(raw);
+    const defaults = { ...DEFAULT_CHANNEL_POLICIES, ...(parsed?.defaults || {}) };
+    const overrides = parsed?.overrides && typeof parsed.overrides === "object" ? parsed.overrides : {};
+    return { defaults, overrides };
+  } catch {
+    return { defaults: { ...DEFAULT_CHANNEL_POLICIES }, overrides: {} };
+  }
+}
+
+function publicChannelPolicies(policies) {
+  const project = (value) => ({
+    action: value?.action || "silent",
+    persona_id: value?.persona_id || null,
+    local_prompt_configured: Boolean(value?.local_prompt),
+  });
+  return {
+    defaults: Object.fromEntries(Object.entries(policies?.defaults || {}).map(([k, v]) => [k, project(v)])),
+    override_count: Object.keys(policies?.overrides || {}).length,
+  };
+}
+
 /**
  * Load and validate configuration from env (and optional overrides).
  * @param {NodeJS.ProcessEnv|Record<string,string>} [env]
@@ -92,6 +124,9 @@ export function loadConfig(env = process.env, overrides = {}) {
   );
   const groupPolicies = parseGroupPolicies(
     overrides.groupPoliciesJson ?? env.AGENT_JHN_WHATSAPP_GROUP_POLICIES_JSON,
+  );
+  const channelPolicies = parseChannelPolicies(
+    overrides.channelPoliciesJson ?? env.AGENT_JHN_WHATSAPP_CHANNEL_POLICIES_JSON,
   );
   const personaIdRaw = envString(
     overrides.personaId ?? env.AGENT_JHN_WHATSAPP_PERSONA_ID,
@@ -143,6 +178,7 @@ export function loadConfig(env = process.env, overrides = {}) {
     dry_run: dryRun,
     groups_explicitly_enabled: groupsExplicitlyEnabled,
     group_policies: groupPolicies,
+    channel_policies: channelPolicies,
     group_runtime_mode: groupsExplicitlyEnabled
       ? "reply_on_address_or_emergency"
       : "disabled_for_first_real_test",
@@ -151,14 +187,22 @@ export function loadConfig(env = process.env, overrides = {}) {
       : GROUP_POLICY_MODES.DISABLED,
     media: "forbidden",
     links_and_attachments: "ignored_or_escalated",
-    third_party_send: "forbidden",
+    third_party_send: "channel_policy",
     external_side_effects: "forbidden",
-    allowed_contact_scope: "self_only",
+    allowed_contact_scope: grant.conversation_scope,
     principal_id: PRINCIPAL_ID,
     account_custodian_id: ACCOUNT_CUSTODIAN_ID,
     account_usage_mode: "non_exclusive",
     custodian_priority: "highest",
     credential_access: "mediated_only",
+    principal_timezone: envString(
+      overrides.principalTimezone ?? env.AGENT_JHN_WHATSAPP_TIMEZONE,
+      "Europe/Paris",
+    ) || "Europe/Paris",
+    proactive_opt_in: envBool(
+      overrides.proactiveOptIn ?? env.AGENT_JHN_WHATSAPP_PROACTIVE_OPT_IN,
+      false,
+    ),
     agent_id: AGENT_ID,
     visible_agent_id: VISIBLE_AGENT_ID,
     mandate_id: MANDATE_ID,
@@ -212,8 +256,8 @@ export function validateConfig(config, options = {}) {
   }
 
   const scope = config.usage_grant?.conversation_scope;
-  if (scope !== "self_only" && scope !== "self_and_groups") {
-    errors.push("usage_grant.conversation_scope must be self_only or self_and_groups");
+  if (!["self_only", "self_and_direct", "self_and_groups", "all"].includes(scope)) {
+    errors.push("usage_grant.conversation_scope must be self_only, self_and_direct, self_and_groups, or all");
   }
 
   if (config.usage_grant?.transferable === true) {
@@ -251,10 +295,14 @@ export function publicConfigSnapshot(config) {
     groups_explicitly_enabled: Boolean(config.groups_explicitly_enabled),
     group_runtime_mode: config.group_runtime_mode,
     group_policy_count: Object.keys(config.group_policies || {}).length,
+    channel_policies: publicChannelPolicies(config.channel_policies),
     media: config.media,
     principal_id: config.principal_id,
     account_custodian_id: config.account_custodian_id,
     account_usage_mode: config.account_usage_mode,
+    custodian_priority: config.custodian_priority,
+    principal_timezone: config.principal_timezone,
+    proactive_opt_in: Boolean(config.proactive_opt_in),
     agent_id: config.agent_id,
     visible_agent_id: config.visible_agent_id,
     mandate_id: config.mandate_id,

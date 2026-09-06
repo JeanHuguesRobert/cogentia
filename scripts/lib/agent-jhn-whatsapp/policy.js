@@ -12,10 +12,6 @@ import {
 } from "./constants.js";
 import {
   bareJid,
-  isGroupJid,
-  isLidJid,
-  phoneDigitsFromJid,
-  samePhoneAccount,
 } from "./inbound-normalizer.js";
 import { evaluateUsageGrant } from "./usage-grant.js";
 import {
@@ -29,6 +25,10 @@ import { checkRateLimit } from "./rate-limiter.js";
 import { isExplicitlyAddressed } from "./mention-address.js";
 import { detectEmergency } from "./emergency-detect.js";
 import { PERM_SEND_GROUP_WHEN_POLICY_ALLOWS } from "./constants.js";
+import { isAllowedSelfPeer } from "./self-peer.js";
+import { admitTurn } from "./turn-admission.js";
+
+export { isAllowedSelfPeer } from "./self-peer.js";
 
 /**
  * Evaluate inbound (or intended outbound) against policy.
@@ -119,10 +119,34 @@ export function evaluatePolicy(normalized, config, context = {}) {
     });
   }
 
+  const admission = context.admission && typeof context.admission === "object"
+    ? context.admission
+    : admitTurn(normalized, config, context);
+  details.turn_admission = {
+    admitted: admission.admitted,
+    trigger: admission.trigger,
+    observed_author: admission.observed_author,
+    explicitly_addressed: admission.explicitly_addressed,
+  };
+  if (!admission.admitted) {
+    return {
+      decision: DECISIONS.HOLD_FOR_HUMAN,
+      rule_id: admission.rule_id,
+      reason: admission.reason,
+      allow_send: false,
+      group_policy_mode: null,
+      details,
+    };
+  }
+
+  const addressed = context.explicitlyAddressed === true ||
+    (context.explicitlyAddressed !== false && isExplicitlyAddressed(normalized.text));
+  const channelPolicy = resolveChannelPolicy(normalized, config, addressed);
+
   // 6. groups: stealth unless explicitly addressed as John/JHN; emergency override
   const groupPolicyMode = resolveGroupPolicyMode(normalized, config);
   if (normalized.conversation_kind === CONVERSATION_KINDS.GROUP) {
-    return evaluateGroupPolicy(normalized, config, context, details, groupPolicyMode);
+    return evaluateGroupPolicy(normalized, config, { ...context, channelPolicy }, details, groupPolicyMode);
   }
 
   // 7. self_only contact scope for direct chats
@@ -138,6 +162,23 @@ export function evaluatePolicy(normalized, config, context = {}) {
   const peer = bareJid(normalized.remote_jid_bare || normalized.remote_jid);
   const selfOk = isAllowedSelfPeer(normalized, config, selfJid, peer);
   if (!selfOk.ok) {
+    if (channelPolicy.action === "silent" &&
+        ["self_and_direct", "all"].includes(config.usage_grant?.conversation_scope)) {
+      return hold("policy.direct_channel_silent", "direct third-party message was not explicitly addressed to John", channelPolicy);
+    }
+    if (channelPolicy.action !== "silent" &&
+        ["self_and_direct", "all"].includes(config.usage_grant?.conversation_scope)) {
+      if (channelPolicy.action === "draft") {
+        return hold("policy.direct_channel_draft", "direct channel policy requests a draft only", channelPolicy);
+      }
+      if (channelPolicy.action === "reply_on_address" && !addressed) {
+        return hold("policy.direct_unaddressed", "direct third-party message was not addressed to John", channelPolicy);
+      }
+      if (channelPolicy.action === "agent_decides" && context.agentDecision !== true) {
+        return hold("policy.direct_agent_decision_required", "direct third-party intervention requires an explicit suitability decision", channelPolicy);
+      }
+      return finalizeDirectThirdParty(normalized, config, context, details, channelPolicy);
+    }
     return reject(
       "policy.third_party_forbidden",
       selfOk.reason || `contact ${maskJid(peer)} is not the allowed self JID`,
@@ -257,6 +298,42 @@ export function evaluatePolicy(normalized, config, context = {}) {
   };
 }
 
+export function resolveChannelPolicy(normalized, config, addressed = false) {
+  const kind = normalized?.conversation_kind === CONVERSATION_KINDS.GROUP ? "group" : "direct";
+  const phase = addressed ? "addressed" : "unaddressed";
+  const defaults = config.channel_policies?.defaults || {};
+  const override = config.channel_policies?.overrides?.[normalized?.remote_jid] ||
+    config.channel_policies?.overrides?.[normalized?.conversation_id] || {};
+  return { ...(defaults[`${kind}_${phase}`] || defaults.self || { action: "silent" }), ...override,
+    channel_key: normalized?.conversation_id || normalized?.remote_jid || kind };
+}
+
+function hold(rule_id, reason, channelPolicy) {
+  return { decision: DECISIONS.HOLD_FOR_HUMAN, rule_id, reason, allow_send: false,
+    group_policy_mode: null, details: { channel_policy: channelPolicy } };
+}
+
+function finalizeDirectThirdParty(normalized, config, context, details, channelPolicy) {
+  const draftText = context.draftText || "";
+  if (context.intentIsEngaging === true || isEngagingText(normalized.text) || isEngagingText(draftText)) {
+    return reject("policy.engaging_intent", "engaging / committing intent cannot be auto-sent", {
+      ...details, channel_policy: channelPolicy, audience: AUDIENCE.THIRD_PARTY,
+    });
+  }
+  if (!config.send_enabled || config.dry_run) return {
+    decision: DECISIONS.DRAFT_ONLY, rule_id: "policy.direct_channel_draft", reason: "direct channel policy permits intervention; sending is disabled", allow_send: false,
+    group_policy_mode: null, details: { ...details, channel_policy: channelPolicy, audience: AUDIENCE.THIRD_PARTY },
+  };
+  const grant = evaluateUsageGrant(config.usage_grant, { now: context.now, requestedInstanceId: config.agent_id || "agent-jhn", requireSend: true, requiredScope: "self_and_direct" });
+  if (!grant.ok) return reject(grant.rule_id, grant.reason, { ...details, channel_policy: channelPolicy, grant });
+  if (draftText && !outboundDisclosureOk(draftText, config, { audience: AUDIENCE.THIRD_PARTY })) return {
+    decision: DECISIONS.DRAFT_ONLY, rule_id: "policy.missing_third_party_disclosure", reason: "direct third-party draft must identify experimental chatbot + disclosure", allow_send: false,
+    group_policy_mode: null, details: { ...details, channel_policy: channelPolicy, audience: AUDIENCE.THIRD_PARTY },
+  };
+  return { decision: DECISIONS.SEND, rule_id: "policy.direct_channel_send", reason: "direct channel policy permits this intervention", allow_send: true, group_policy_mode: null,
+    details: { ...details, channel_policy: channelPolicy, audience: AUDIENCE.THIRD_PARTY } };
+}
+
 /**
  * Resolve declared group policy mode (representable even when disabled globally).
  */
@@ -310,46 +387,6 @@ export function draftIncludesNotice(draftText, noticeUrl, options = {}) {
   return false;
 }
 
-/**
- * Self-chat acceptance for MVP:
- * - exact bare JID match
- * - same phone digits (device suffix / formatting)
- * - Message Yourself / notes: fromMe on direct non-group, including @lid peers
- */
-export function isAllowedSelfPeer(normalized, config, selfJid, peer) {
-  const self = selfJid || bareJid(config.allowed_self_jid || "");
-  const p = peer || bareJid(normalized?.remote_jid_bare || normalized?.remote_jid || "");
-  if (!self) return { ok: false, reason: "self jid unconfigured" };
-  if (isGroupJid(normalized?.remote_jid || p)) {
-    return { ok: false, reason: "group jid" };
-  }
-  if (p === self) return { ok: true, via: "exact_jid" };
-  if (samePhoneAccount(p, self)) return { ok: true, via: "phone_digits" };
-  // WhatsApp "Message yourself" often uses @lid or fromMe on own chat.
-  if (
-    normalized?.from_me &&
-    normalized?.conversation_kind === CONVERSATION_KINDS.DIRECT &&
-    !isGroupJid(normalized.remote_jid)
-  ) {
-    if (isLidJid(normalized.remote_jid) || isLidJid(p)) {
-      return { ok: true, via: "from_me_lid_self_chat" };
-    }
-    // fromMe direct to own PN (already covered) or status-like — only allow if digits match or empty peer domain is self
-    if (samePhoneAccount(p, self) || phoneDigitsFromJid(p) === phoneDigitsFromJid(self)) {
-      return { ok: true, via: "from_me_same_phone" };
-    }
-    // Last resort for self_chat_only: fromMe + direct + configured single self account
-    // (Message Yourself may not expose PN on the peer jid.)
-    if (config.mode === "self_chat_only" && config.allowed_self_jid) {
-      return { ok: true, via: "from_me_direct_self_chat_only" };
-    }
-  }
-  return {
-    ok: false,
-    reason: `contact ${maskJid(p)} is not the allowed self JID`,
-  };
-}
-
 function evaluateGroupPolicy(normalized, config, context, details, groupPolicyMode) {
   const groupDetails = {
     ...details,
@@ -382,6 +419,17 @@ function evaluateGroupPolicy(normalized, config, context, details, groupPolicyMo
       : detectEmergency(normalized.text);
   const emergencyFollowUp = context.emergencyFollowUp === true;
   const emergencyHit = Boolean(emergency?.hit) || emergencyFollowUp;
+  const channelAction = context.channelPolicy?.action;
+  if (channelAction === "silent") {
+    return reject("policy.channel_silent", "channel policy requests silence", { ...groupDetails, channel_policy: context.channelPolicy });
+  }
+  if (channelAction === "draft") {
+    return { decision: DECISIONS.DRAFT_ONLY, rule_id: "policy.channel_draft", reason: "channel policy requests a draft only", allow_send: false,
+      group_policy_mode: groupPolicyMode, details: { ...groupDetails, channel_policy: context.channelPolicy } };
+  }
+  if (channelAction === "agent_decides" && context.agentDecision !== true && !detectEmergency(normalized.text).hit) {
+    return hold("policy.group_agent_decision_required", "group intervention requires an explicit suitability decision", context.channelPolicy);
+  }
   groupDetails.addressed = addressed;
   groupDetails.emergency = Boolean(emergencyHit);
   groupDetails.emergency_precision = emergency?.precision || (emergencyFollowUp ? "follow_up" : "none");

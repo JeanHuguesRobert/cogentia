@@ -21,6 +21,7 @@ import {
   normalizeInboundEvent,
   bareJid,
 } from "./lib/agent-jhn-whatsapp/inbound-normalizer.js";
+import { isExplicitlyAddressed } from "./lib/agent-jhn-whatsapp/mention-address.js";
 import {
   evaluatePolicy,
   listRepresentableGroupPolicyModes,
@@ -141,6 +142,63 @@ test("2_reject_third_party", () => {
   assert.equal(p.decision, DECISIONS.REJECT);
   assert.equal(p.rule_id, "policy.third_party_forbidden");
   assert.equal(p.allow_send, false);
+});
+
+// An outgoing message to somebody else is not a Message Yourself note.
+test("2b_reject_outgoing_direct_message_to_third_party", () => {
+  const config = loadConfig(baseEnv({ AGENT_JHN_WHATSAPP_SEND_ENABLED: "true" }));
+  const raw = thirdMessage("message intended for the other person");
+  raw.key.fromMe = true;
+  const n = normalizeInboundEvent(raw);
+  const p = evaluatePolicy(n, config, {
+    draftText: buildDeterministicDraft(n, config).text,
+  });
+  assert.equal(n.from_me, true);
+  assert.equal(p.allow_send, false);
+  assert.equal(p.rule_id, "policy.custodian_outbound_silent");
+});
+
+test("2c_double_john_is_an_explicit_address", () => {
+  assert.equal(isExplicitlyAddressed("John John, are you there?"), true);
+  assert.equal(isExplicitlyAddressed("jj enquête"), true);
+  assert.equal(isExplicitlyAddressed("JJ, enquête"), true);
+  assert.equal(isExplicitlyAddressed("JJohnson enquête"), false);
+  assert.equal(isExplicitlyAddressed("We met Johnson yesterday."), false);
+});
+
+test("2c_default_direct_policy_is_silent_without_wake_word", () => {
+  const config = loadConfig(baseEnv({
+    AGENT_JHN_WHATSAPP_SEND_ENABLED: "true",
+    AGENT_JHN_WHATSAPP_GRANT_SCOPE: "self_and_direct",
+  }));
+  const n = normalizeInboundEvent(thirdMessage("ordinary conversation"));
+  const p = evaluatePolicy(n, config);
+  assert.equal(p.rule_id, "policy.direct_channel_silent");
+  assert.equal(p.allow_send, false);
+});
+
+test("2d_direct_channel_policy_matrix", () => {
+  const env = baseEnv({
+    AGENT_JHN_WHATSAPP_SEND_ENABLED: "true",
+    AGENT_JHN_WHATSAPP_GRANT_SCOPE: "self_and_direct",
+    AGENT_JHN_WHATSAPP_CHANNEL_POLICIES_JSON: JSON.stringify({
+      defaults: {
+        direct_addressed: { action: "reply_on_address" },
+        direct_unaddressed: { action: "agent_decides" },
+      },
+    }),
+  });
+  const config = loadConfig(env);
+  const addressed = normalizeInboundEvent(thirdMessage("John John, what do you think?"));
+  const draft = buildDeterministicDraft(addressed, config, { audience: "third_party" });
+  const allowed = evaluatePolicy(addressed, config, { draftText: draft.text });
+  assert.equal(allowed.rule_id, "policy.direct_channel_send");
+  assert.equal(allowed.allow_send, true);
+
+  const quiet = normalizeInboundEvent(thirdMessage("ordinary message"));
+  const held = evaluatePolicy(quiet, config, { draftText: draft.text });
+  assert.equal(held.rule_id, "policy.direct_agent_decision_required");
+  assert.equal(held.allow_send, false);
 });
 
 // --- 3. MVP reject real group ---
@@ -794,6 +852,154 @@ test("28_contact_email_and_history_aware_disclosure", async () => {
   assert.equal(t2.includes("jeanhuguesrobert@gmail.com"), false);
   assert.ok(t2.includes("Suivi de dossier"));
   assert.ok(t2.includes("— agent-jhn-experimental"));
+});
+
+// --- issue #75 incident 2026-09-07: turn admission, clock, mandatory disclosure ---
+test("75a_custodian_human_outbound_never_triggers_agent", async () => {
+  const dir = fs.mkdtempSync(path.join(tmpRoot, "t75a-"));
+  const config = loadConfig(baseEnv({
+    AGENT_JHN_WHATSAPP_STATE_DIR: dir,
+    AGENT_JHN_WHATSAPP_SEND_ENABLED: "true",
+    AGENT_JHN_WHATSAPP_GRANT_SCOPE: "self_and_direct",
+  }));
+  const raw = thirdMessage("Accord comme mandataire financier pour les sénatoriales du 27 septembre 2026.");
+  raw.key.fromMe = true;
+  let generated = false;
+  const res = await handleInbound(raw, config, {
+    enableCognitiveSynthesis: true,
+    includeDraftText: true,
+    answerWithLibrarian: async () => {
+      generated = true;
+      return { ok: true, answer: "should not run" };
+    },
+  });
+  assert.equal(res.normalized.from_me, true);
+  assert.equal(res.policy.allow_send, false);
+  assert.equal(res.policy.rule_id, "policy.custodian_outbound_silent");
+  assert.equal(res.outbound, null);
+  assert.equal(res.draft, null);
+  assert.equal(generated, false);
+  assert.equal(res.turn_admission.admitted, false);
+  assert.equal(res.turn_admission.observed_author, "custodian_human");
+});
+
+test("75b_self_echo_from_same_account_is_silent", async () => {
+  const dir = fs.mkdtempSync(path.join(tmpRoot, "t75b-"));
+  const config = loadConfig(baseEnv({
+    AGENT_JHN_WHATSAPP_STATE_DIR: dir,
+    AGENT_JHN_WHATSAPP_SEND_ENABLED: "true",
+  }));
+  const raw = selfMessage("note to self without invoking the agent", "msg-75b");
+  raw.key.fromMe = true;
+  const res = await handleInbound(raw, config, { includeDraftText: true });
+  assert.equal(res.policy.allow_send, false);
+  assert.equal(res.policy.rule_id, "policy.custodian_self_echo");
+  assert.equal(res.outbound, null);
+  assert.equal(res.draft, null);
+});
+
+test("75c_explicit_invocation_in_self_chat_is_identified", async () => {
+  const dir = fs.mkdtempSync(path.join(tmpRoot, "t75c-"));
+  const config = loadConfig(baseEnv({
+    AGENT_JHN_WHATSAPP_STATE_DIR: dir,
+    AGENT_JHN_WHATSAPP_SEND_ENABLED: "true",
+  }));
+  const raw = selfMessage("jj ping non engageant", "msg-75c");
+  raw.key.fromMe = true;
+  const res = await handleInbound(raw, config, {
+    enableCognitiveSynthesis: false,
+    includeDraftText: true,
+  });
+  assert.equal(res.turn_admission.admitted, true);
+  assert.equal(res.turn_admission.trigger, "explicit_invocation");
+  assert.equal(res.policy.decision, DECISIONS.SEND);
+  assert.equal(res.policy.allow_send, true);
+  assert.equal(res.outbound?.enqueued, true);
+  assert.ok(res.draft_text_for_local.includes("— agent-jhn-experimental"));
+});
+
+test("75d_midnight_crossing_uses_principal_timezone_clock", async () => {
+  const { resolveTurnClock } = await import("./lib/agent-jhn-whatsapp/turn-clock.js");
+  const { buildWhatsAppChannelPolicy } = await import("./lib/agent-jhn-whatsapp/representation-brief.js");
+  const before = resolveTurnClock({
+    now: "2026-09-06T21:59:00.000Z",
+    timezone: "Europe/Paris",
+  });
+  const after = resolveTurnClock({
+    now: "2026-09-06T22:01:00.000Z",
+    timezone: "Europe/Paris",
+  });
+  assert.equal(before.civil_date, "2026-09-06");
+  assert.equal(after.civil_date, "2026-09-07");
+  assert.equal(after.timezone, "Europe/Paris");
+  const policyText = buildWhatsAppChannelPolicy({}, { turnClock: after });
+  assert.match(policyText, /Authoritative civil date\/time for THIS turn[^.]+\b2026-09-07\b/);
+  assert.equal(after.instant.startsWith("2026-09-06T22:01"), true);
+  const dir = fs.mkdtempSync(path.join(tmpRoot, "t75d-"));
+  const config = loadConfig(baseEnv({
+    AGENT_JHN_WHATSAPP_STATE_DIR: dir,
+    AGENT_JHN_WHATSAPP_SEND_ENABLED: "false",
+  }));
+  const res = await handleInbound(selfMessage("hello twin", "msg-75d"), config, {
+    now: "2026-09-06T22:01:00.000Z",
+    enableCognitiveSynthesis: false,
+  });
+  assert.equal(res.clock.civil_date, "2026-09-07");
+  assert.equal(res.clock.timezone, "Europe/Paris");
+});
+
+test("75e_unmarked_draft_is_stamped_or_rejected_before_transport", async () => {
+  const { ensureOutboundDisclosure, hasVisibleAgentSignature } = await import("./lib/agent-jhn-whatsapp/disclosure.js");
+  const dir = fs.mkdtempSync(path.join(tmpRoot, "t75e-"));
+  const config = loadConfig(baseEnv({
+    AGENT_JHN_WHATSAPP_STATE_DIR: dir,
+    AGENT_JHN_WHATSAPP_SEND_ENABLED: "true",
+  }));
+  ensureStateDirs(config);
+  const unmarked = "Yes, the senate date is 27 September. Agent John can help later.";
+  assert.equal(hasVisibleAgentSignature(unmarked), false);
+  const stamped = ensureOutboundDisclosure(unmarked, config, { audience: "self" });
+  assert.equal(stamped.enriched, true);
+  assert.ok(hasVisibleAgentSignature(stamped.text));
+  assert.ok(stamped.text.includes("— agent-jhn-experimental"));
+
+  const n = normalizeInboundEvent(selfMessage("ping", "msg-75e"));
+  const req = requestOutboundSend({
+    config,
+    normalized: n,
+    draftText: unmarked,
+    actionRequestId: buildActionRequestId("msg-75e"),
+  });
+  assert.equal(req.enqueued, true);
+  const transport = createMockTransport({ connected: true });
+  const drained = await drainWhatsappOutbox(config, { transport, dryRun: false });
+  assert.equal(drained.sent, 1);
+  assert.ok(hasVisibleAgentSignature(transport.getSent()[0].text));
+});
+
+test("75f_poisoned_last_self_peer_is_not_a_send_target", async () => {
+  const dir = fs.mkdtempSync(path.join(tmpRoot, "t75f-"));
+  const config = loadConfig(baseEnv({
+    AGENT_JHN_WHATSAPP_STATE_DIR: dir,
+    AGENT_JHN_WHATSAPP_SEND_ENABLED: "true",
+  }));
+  ensureStateDirs(config);
+  const { rememberSelfPeer, resolveSelfSendJid, loadPreferredSelfPeer } = await import("./lib/agent-jhn-whatsapp/self-peer.js");
+  const third = normalizeInboundEvent((() => {
+    const raw = thirdMessage("hello from the principal");
+    raw.key.fromMe = true;
+    return raw;
+  })());
+  rememberSelfPeer(config, third);
+  assert.equal(loadPreferredSelfPeer(config), null);
+  assert.equal(resolveSelfSendJid(config), SELF_JID);
+
+  fs.writeFileSync(path.join(dir, "last-self-peer.json"), JSON.stringify({
+    remote_jid: THIRD_JID,
+    is_lid: false,
+    from_me: true,
+  }), "utf8");
+  assert.equal(resolveSelfSendJid(config), SELF_JID);
 });
 
 async function main() {

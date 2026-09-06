@@ -73,13 +73,13 @@ export function evaluateUsageGrant(grant, options = {}) {
     };
   }
 
-  // self_only = no third-party DMs. self_and_groups = same, plus policy-gated groups.
+  // Scopes are capability ceilings; channel policy still decides per message.
   const scope = grant.conversation_scope;
-  if (scope !== "self_only" && scope !== "self_and_groups") {
+  if (!["self_only", "self_and_direct", "self_and_groups", "all"].includes(scope)) {
     return {
       ok: false,
       rule_id: "grant.scope",
-      reason: `conversation_scope ${scope} out of MVP self_only / self_and_groups`,
+      reason: `conversation_scope ${scope} is unsupported`,
     };
   }
 
@@ -87,10 +87,11 @@ export function evaluateUsageGrant(grant, options = {}) {
   const scopeCovers =
     grant.conversation_scope === requiredScope ||
     (requiredScope === "self_only" &&
-      (grant.conversation_scope === "self_only" ||
-        grant.conversation_scope === "self_and_groups")) ||
+      grant.conversation_scope !== "" ) ||
+    (requiredScope === "self_and_direct" &&
+      ["self_and_direct", "all"].includes(grant.conversation_scope)) ||
     (requiredScope === "self_and_groups" &&
-      grant.conversation_scope === "self_and_groups");
+      ["self_and_groups", "all"].includes(grant.conversation_scope));
   if (!scopeCovers) {
     return {
       ok: false,

@@ -271,7 +271,16 @@ export function buildWhatsAppChannelPolicy(analysis = {}, options = {}) {
     `Intent: ${analysis.intent || "explain"}. Preferred answer shape: ${analysis.answerShape || "direct_answer"}. Attention: ${attention}.`,
     attentionLine,
     ...form,
+    formatTurnClockLine(options.turnClock),
     `Reply only in ${locale}.`,
+  ].filter(Boolean).join(" ");
+}
+
+function formatTurnClockLine(clock) {
+  if (!clock || !clock.civil_date) return "";
+  return [
+    `Authoritative civil date/time for THIS turn (do not inherit a previous day's date from conversation history, summaries, or cached context): ${clock.civil_date} ${clock.civil_time || ""} ${clock.timezone || ""}`.trim() + ".",
+    `Clock source: ${clock.source || "system_clock"}; instant: ${clock.instant || ""}.`,
   ].join(" ");
 }
 
@@ -802,6 +811,15 @@ export function buildWhatsAppRepresentationMessages(analysis = {}, options = {},
   const messages = [
     { role: "system", content: buildWhatsAppChannelPolicy(analysis, options) },
   ];
+  if (options.localPrompt && String(options.localPrompt).trim()) {
+    messages.push({
+      role: "system",
+      content: [
+        "Channel-local instruction (lower priority than the Agent John constitution, mandate, and public-corpus fidelity):",
+        String(options.localPrompt).trim().slice(0, 2000),
+      ].join("\n"),
+    });
+  }
   const grant = buildKysGrantMetadata(options, env);
   const persona_id = resolvePersonaId(options, env);
   const sapientialRegime = buildSapientialActionRegimeBlock(options, env);

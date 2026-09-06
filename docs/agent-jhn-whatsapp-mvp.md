@@ -58,6 +58,24 @@ Baileys never sees corpus policy. Cognitive code never holds session secrets or 
 
 Usage is a **mediated grant**, not transfer of the account or of secrets. See issue #75 amendment (commodat / non-exclusive capacity vocabulary is internal governance only).
 
+### Turn admission (shared account)
+
+`account_usage_mode: non_exclusive` plus `custodian_priority: highest` means **observing a message is not authorization to speak**.
+
+| Observed event | Agent JHN |
+|----------------|-----------|
+| Custodian sends to a third party (`fromMe`, other peer) | Silent. Never a send. No model generation. |
+| Custodian self-note without wake-word / cockpit command | Silent (self-echo). |
+| Explicit invocation (`jj`, `@john`, vocative John/JHN) | May draft/send under the rest of policy. |
+| Self-chat inbound that is not custodian-outbound | Existing self-chat path (still gated by send/grant/disclosure). |
+| Proactive intervention | Opt-in only (`AGENT_JHN_WHATSAPP_PROACTIVE_OPT_IN`); default off. |
+
+The outbound gate is the last transform: unmarked drafts are stamped with a visible `— agent-jhn-experimental` signature or rejected. A buried mention of “Agent John” is not a signature.
+
+Turn civil date/time comes from an explicit clock (`AGENT_JHN_WHATSAPP_TIMEZONE`, default `Europe/Paris`), never from yesterday’s cached prompt or thread summary.
+
+`last-self-peer.json` may only remember a **confirmed self** JID. An outgoing chat with someone else must not become the next send target.
+
 ## Commands
 
 ```bash
@@ -147,6 +165,24 @@ AGENT_JHN_WHATSAPP_GRANT_REVOKED=false
 AGENT_JHN_WHATSAPP_GRANT_EXPIRES_AT=
 AGENT_JHN_WHATSAPP_GROUPS_ENABLED=false
 AGENT_JHN_WHATSAPP_GROUP_POLICIES_JSON=
+
+### Channel behavior policy
+
+`AGENT_JHN_WHATSAPP_CHANNEL_POLICIES_JSON` declares the default behavior for
+`self`, `direct_addressed`, `direct_unaddressed`, `group_addressed`, and
+`group_unaddressed`, plus `overrides` keyed by the stable conversation id
+(`whatsapp:<jid>`). Supported actions are `reply`, `reply_on_address`,
+`agent_decides`, `draft`, and `silent`. An override may also carry a bounded
+`persona_id` and `local_prompt`; these are lower-priority style instructions and
+cannot widen the mandate, disclosure, or corpus access.
+
+Direct third-party sending additionally requires the usage grant scope
+`self_and_direct` (or `all`). The safe defaults are: reply in self-chat, reply
+when explicitly addressed in direct/group conversations, and remain silent in
+both unsolicited direct and group conversations. An installation may explicitly
+select `agent_decides` for unsolicited direct messages if it supplies a separate
+governed suitability decision. Custodian outbound (`fromMe`) still never
+triggers a reply by itself.
 ```
 
 - `self_chat_only` is mandatory.

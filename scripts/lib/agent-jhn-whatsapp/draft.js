@@ -18,7 +18,6 @@ import {
   resolveAudienceFromScope,
   resolveDisclosureLocale,
 } from "./disclosure.js";
-import { formatInstanceOutboundDisclosure } from "../digital-twin-engine.js";
 import { analyzeQuestion, createAnswerEngine } from "./answer-core.js";
 import { answerWithLibrarian as defaultAnswerWithLibrarian } from "../corpus-librarian/pipeline.js";
 import {
@@ -269,10 +268,14 @@ async function buildGuideDraft(normalized, config, options, questionAnalysis, us
       : guideResult?.cognitive_packet || null;
     return {
       ...syncDraft,
-      text: formatInstanceOutboundDisclosure(
-        { disclosure_tag: config.visible_agent_id || "— agent-jhn-experimental" },
-        answerResult.answer,
-      ),
+      text: formatOutboundText(answerResult.answer, {
+        audience: syncDraft.audience,
+        locale: syncDraft.locale,
+        noticeUrl: config.notice_url || DEFAULT_NOTICE_URL,
+        phoneOrJid: localeHintOf(normalized, config),
+        hasRecentDisclosure: options.hasRecentDisclosure,
+        hasRecentEmailContact: options.hasRecentEmailContact,
+      }),
       provenance_class: answerResult.provider === "extractive-fallback"
         ? "s7-cognitive-retrieval"
         : guideResult ? "openai-corpus-grounded" : "openai-direct",
@@ -314,10 +317,14 @@ async function buildLibrarianDraft(normalized, config, options, questionAnalysis
     const kys = describeKysInjection(options, process.env);
     return {
       ...syncDraft,
-      text: formatInstanceOutboundDisclosure(
-        { disclosure_tag: config.visible_agent_id || "— agent-jhn-experimental" },
-        librarian.answer,
-      ),
+      text: formatOutboundText(librarian.answer, {
+        audience: syncDraft.audience,
+        locale: syncDraft.locale,
+        noticeUrl: config.notice_url || DEFAULT_NOTICE_URL,
+        phoneOrJid: localeHintOf(normalized, config),
+        hasRecentDisclosure: options.hasRecentDisclosure,
+        hasRecentEmailContact: options.hasRecentEmailContact,
+      }),
       provenance_class: librarian.provider === "extractive-fallback"
         ? "librarian-extractive"
         : "librarian-corpus-grounded",
@@ -596,6 +603,15 @@ function boundedTimeoutMs(value, fallback = 8000) {
   const number = Number(value);
   if (!Number.isFinite(number)) return fallback;
   return Math.max(1000, Math.min(Math.trunc(number), 120000));
+}
+
+function localeHintOf(normalized, config) {
+  return (
+    config.allowed_self_jid ||
+    normalized?.remote_jid ||
+    normalized?.remote_phone_digits ||
+    ""
+  );
 }
 
 function summarizeInbound(text) {

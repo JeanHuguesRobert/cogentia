@@ -71,6 +71,8 @@ export function buildWhatsappArtifact(input = {}) {
         }
       : undefined,
     notes: input.notes || undefined,
+    turn_admission: input.turn_admission || undefined,
+    clock: input.clock || undefined,
   };
 
   // Drop undefined nested size
@@ -80,6 +82,8 @@ export function buildWhatsappArtifact(input = {}) {
   if (!artifact.policy) delete artifact.policy;
   if (!artifact.usage_grant) delete artifact.usage_grant;
   if (!artifact.notes) delete artifact.notes;
+  if (!artifact.turn_admission) delete artifact.turn_admission;
+  if (!artifact.clock) delete artifact.clock;
   if (!artifact.action_request_id) artifact.action_request_id = null;
   if (!artifact.platform_message_id) artifact.platform_message_id = null;
 

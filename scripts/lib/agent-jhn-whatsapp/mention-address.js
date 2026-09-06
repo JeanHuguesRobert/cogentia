@@ -10,6 +10,10 @@ const AGENT_NAME_FORMS = [
   /\bagent[\s-]?john\b/i,
   /\bagent[\s-]?jhn\b/i,
   /\bagent-jhn-experimental\b/i,
+  // Repeating the name is an unambiguous direct call, even without punctuation.
+  /\b(john|jhn)\s+\1\b/i,
+  // Compact wake word: "jj enquête" / "JJ, enquête".
+  /\bjj\b/i,
 ];
 
 /** @john / @jhn as a mention token, not the account @ of Jean Hugues. */

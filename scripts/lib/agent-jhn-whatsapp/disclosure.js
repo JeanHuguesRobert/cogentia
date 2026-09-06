@@ -73,8 +73,7 @@ function formatSelfText(content, locale) {
   // Minimal: identification only — user already knows the experimental context.
   const tag = locale === "fr" ? `— ${VISIBLE_AGENT_ID}` : `— ${VISIBLE_AGENT_ID}`;
   if (!content) return tag;
-  // Avoid double-tagging if body already identifies the agent.
-  if (contentIncludesAgentId(content)) return content;
+  if (hasVisibleAgentSignature(content)) return content;
   return `${content}\n${tag}`;
 }
 
@@ -90,7 +89,7 @@ function formatThirdPartyText(content, locale, notice, options = {}) {
   // If full disclosure header was delivered recently in thread history, do not spam it
   if (options.hasRecentDisclosure) {
     let resultText = content;
-    if (!contentIncludesAgentId(content)) {
+    if (!hasVisibleAgentSignature(content)) {
       resultText = content ? `${content}\n— ${VISIBLE_AGENT_ID}` : `— ${VISIBLE_AGENT_ID}`;
     }
     return emailContactStr ? `${resultText}${emailContactStr}` : resultText;
@@ -127,10 +126,41 @@ function contentIncludesAgentId(text) {
 }
 
 /**
- * Self path: agent identification is enough.
+ * Visible attribution mark required on every material send.
+ * Mentioning the agent in passing is not a signature.
+ */
+export function hasVisibleAgentSignature(text) {
+  const s = String(text || "");
+  if (!s.trim()) return false;
+  if (/(^|\n)—\s*agent-jhn/i.test(s)) return true;
+  if (/\[agent-jhn-experimental\]/i.test(s)) return true;
+  if (/Automated message from an experimental assistant/i.test(s)) return true;
+  if (/Message automatique d[’']un assistant expérimental/i.test(s)) return true;
+  if (/^📱\s*\*Agent JHN/m.test(s)) return true;
+  return false;
+}
+
+/**
+ * Self path: a visible agent signature is required, not a buried mention.
  */
 export function draftIncludesSelfIdentification(text) {
-  return contentIncludesAgentId(text);
+  return hasVisibleAgentSignature(text);
+}
+
+/**
+ * Last-mile transform: reject unmarked drafts or stamp a deterministic signature.
+ */
+export function ensureOutboundDisclosure(text, config, options = {}) {
+  const audience = resolveAudienceFromScope(config, options);
+  const merged = { ...options, audience, noticeUrl: options.noticeUrl || config?.notice_url };
+  if (outboundDisclosureOk(text, config, merged)) {
+    return { text: String(text || ""), enriched: false, audience };
+  }
+  const stamped = formatOutboundText(text, {
+    ...merged,
+    phoneOrJid: options.phoneOrJid || config?.allowed_self_jid,
+  });
+  return { text: stamped, enriched: true, audience };
 }
 
 /**

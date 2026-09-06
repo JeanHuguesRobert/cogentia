@@ -30,6 +30,7 @@ export { normalizeInboundEvent, bareJid, isGroupJid } from "./inbound-normalizer
 export {
   evaluatePolicy,
   resolveGroupPolicyMode,
+  resolveChannelPolicy,
   listRepresentableGroupPolicyModes,
   isEngagingText,
   draftIncludesNotice,
@@ -39,9 +40,14 @@ export {
   formatOutboundText,
   resolveDisclosureLocale,
   outboundDisclosureOk,
+  ensureOutboundDisclosure,
+  hasVisibleAgentSignature,
   draftIncludesSelfIdentification,
   draftIncludesThirdPartyDisclosure,
 } from "./disclosure.js";
+export { admitTurn } from "./turn-admission.js";
+export { resolveTurnClock, DEFAULT_PRINCIPAL_TIMEZONE } from "./turn-clock.js";
+export { isAllowedSelfPeer } from "./self-peer.js";
 export { evaluateUsageGrant, defaultUsageGrant } from "./usage-grant.js";
 export { buildDeterministicDraft } from "./draft.js";
 export {
@@ -81,4 +87,3 @@ export {
   recordOutboundSendEvent,
   resetRateLimiter,
 } from "./rate-limiter.js";
-
