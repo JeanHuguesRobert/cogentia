@@ -79,6 +79,12 @@
     "test:agent-jhn-retrieval-smoke": "node scripts/smoke-agent-jhn-whatsapp-retrieval.js --fixture --limit 2",
     "smoke:agent-jhn-retrieval": "node scripts/smoke-agent-jhn-whatsapp-retrieval.js",
     "agent-jhn-whatsapp": "node scripts/agent-jhn-whatsapp.js",
+    "navigation-assistant": "node scripts/ops/navigation-assistant-tui.js",
+    "navigation-assistant:supervisor": "node scripts/ops/navigation-assistant-supervisor.js",
+    "navigation-assistant:cli": "node scripts/ops/navigation-assistant.js",
+    "navigation-assistant:install": "node scripts/ops/navigation-assistant-install.js",
+    "test:navigation-assistant": "node scripts/test-navigation-assistant.js",
+    "test:navigation-rpc": "node scripts/test-navigation-rpc-transport.js",
     "skills:validate": "node scripts/validate-agent-skills.js",
     "test:agent-skills": "node scripts/validate-agent-skills.js",
     "test:mcp-dual-era": "node scripts/test-mcp-dual-era.js",
@@ -108,9 +114,12 @@
   "dependencies": {
     "@whiskeysockets/baileys": "7.0.0-rc13",
     "agent-twitter-client": "^0.0.18",
+    "blessed": "^0.1.81",
     "js-yaml": "^4.1.0",
+    "json-rpc-2.0": "^1.8.0",
     "marked": "^18.0.7",
     "node-pty": "1.2.0-beta.14",
-    "sqlite-vec": "^0.1.9"
+    "sqlite-vec": "^0.1.9",
+    "ws": "^8.21.3"
   }
 }
