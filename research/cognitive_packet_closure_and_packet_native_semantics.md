@@ -4,8 +4,8 @@ subtitle: "Granularity, causal continuity, placement, effects, and the requireme
 author: "Jean Hugues Noël Robert, baron Mariani"
 affiliation: "Institut Mariani / C.O.R.S.I.C.A., 1 cours Paoli, F-20250 Corte, Corsica, France"
 date: "2026-08-25"
-last_modified_at: "2026-09-05"
-version: "0.3"
+last_modified_at: "2026-09-08"
+version: "0.4"
 status: "working source note"
 license: "CC BY-SA 4.0"
 language: "en"
@@ -692,6 +692,84 @@ A useful closure condition is:
 > **A propagation becomes quiescent when every material descendant is assimilated, explicitly deferred, rejected, cancelled, superseded or budget-exhausted.**
 
 Quiescence is not eternal completion. A later Event may awaken a dormant continuation.
+
+### 12.1 Durable priority state
+
+Quiescence requires more than knowing what work exists. Successor handlers must
+also be able to reconstruct work that is **ready but deliberately not current**.
+
+A Packet that is parked for priority reasons SHOULD therefore carry enough
+durable shared state to distinguish it from both active execution and completed
+work:
+
+```yaml
+status: parked
+reason: ...
+resume_condition: ...
+priority_relation: ...
+```
+
+Canonical rule:
+
+> **A priority or parking decision that must constrain successor handlers must
+> be recorded in the Packet's durable shared state.**
+
+A priority decision that exists only in conversational working memory is not
+reliably governable across handler replacement. This is the priority analogue
+of a verified handoff: the successor can respect only the control state it can
+actually retrieve.
+
+```text
+logical continuation ≠ global priority
+
+ready + lower priority
+→ parked, not lost
+```
+
+### 12.2 Closure Contract Integrity
+
+Packet closure is itself a governed claim about state. A handler MUST NOT
+silently weaken the closure condition merely because a substantial intermediate
+phase succeeded.
+
+If the declared contract is conjunctive:
+
+```text
+closure := A ∧ B ∧ C
+```
+
+then:
+
+```text
+evidence(A ∧ B) ≠ evidence(COMPLETE)
+```
+
+An unmet material condition should instead produce one of the honest states
+already available to packet semantics:
+
+```text
+phase-complete
+parked / explicitly deferred
+blocked / awaiting mandate
+superseded
+cancelled
+budget-exhausted
+```
+
+The Packet may be marked complete only when the declared material closure
+conditions are evidenced, or when an authorized Human Principal / authority
+explicitly revises the closure contract and that arbitration is durably
+recorded.
+
+This distinction is especially important for Reality Tests: deterministic
+simulation, tests, or implementation evidence may establish a phase while a
+declared live-world observation remains outstanding. A successful laboratory
+phase must not silently redefine the live observation out of the contract.
+
+Observed provenance for this refinement: `JeanHuguesRobert/inseme#68`, where
+the deterministic R1–R6 implementation succeeded but the explicitly required
+live provider-attested step had not occurred. The correct state was therefore
+**parked awaiting explicit live mandate**, not completed.
 
 ---
 
