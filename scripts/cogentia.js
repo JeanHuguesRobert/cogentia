@@ -46,6 +46,11 @@ import {
   loadAnswersFromSources,
   registerSenatorialesModule,
 } from "./lib/senatoriales-ioc.js";
+import {
+  validateFrontmatterPaths,
+  validateFrontmatterText,
+  formatValidationReport,
+} from "./lib/frontmatter-validator.js";
 
 const COGENTIA_VERSION = "0.3.0";
 const VERSION = "3.0.0";
@@ -438,13 +443,40 @@ async function main() {
 }
 
 function cmdFrontmatter(subcommand) {
-  if (subcommand !== "schema") {
-    throw new Error(`Unknown frontmatter subcommand "${subcommand}". Use schema.`);
+  if (subcommand === "schema") {
+    const schemaUrl = new URL("../docs/frontmatter-schema.v0.1.json", import.meta.url);
+    const schema = JSON.parse(fs.readFileSync(schemaUrl, "utf8"));
+    return output(schema, renderFrontmatterSchema(schema));
   }
 
-  const schemaUrl = new URL("../docs/frontmatter-schema.v0.1.json", import.meta.url);
-  const schema = JSON.parse(fs.readFileSync(schemaUrl, "utf8"));
-  return output(schema, renderFrontmatterSchema(schema));
+  if (
+    subcommand === "verify" ||
+    subcommand === "check" ||
+    (typeof subcommand === "string" && (subcommand.endsWith(".md") || (fs.existsSync(subcommand) && fs.statSync(subcommand).isFile())))
+  ) {
+    const rawPaths = (subcommand === "verify" || subcommand === "check") ? argv : [subcommand, ...argv];
+    let targetPaths = rawPaths.filter(p => !p.startsWith("-"));
+    const strictRole = takeFlag("--strict-role");
+
+    if (targetPaths.length === 0) {
+      try {
+        targetPaths = execFileSync("git", ["ls-files", "*.md"], { encoding: "utf8" })
+          .split("\n")
+          .map(f => f.trim())
+          .filter(Boolean);
+      } catch {
+        targetPaths = ["docs", "research"].filter(d => fs.existsSync(d));
+      }
+    }
+
+    const report = validateFrontmatterPaths(targetPaths, { strictRole });
+    if (!report.ok) {
+      process.exitCode = 1;
+    }
+    return output(report, formatValidationReport(report));
+  }
+
+  throw new Error(`Unknown frontmatter subcommand "${subcommand}". Use schema, verify, or check.`);
 }
 
 function renderFrontmatterSchema(schema) {
@@ -514,6 +546,9 @@ Core commands:
                            --include-ambiguous, --fix-conflicts.
   frontmatter schema       Print the canonical frontmatter vocabulary from
                            docs/frontmatter-schema.v0.1.json.
+  frontmatter verify [paths]
+                           Validate markdown frontmatter against canonical schema.
+                           Alias: frontmatter check. Flags: [--strict-role] [--json]
   status                   Local health table (docs, index gaps, dirty, drift).
   grep <text>              Full-text search over active markdown documents.
   ask <question>           Ask the Cogentia corpus agent through the daemon.
@@ -1024,6 +1059,17 @@ registerModule({
   provides: { capabilities: ["corpus.locate"] },
   governance: { requires: [], trace_minimum: "none" },
   run: ({ ctx, subject, intent, view }) => runCorpusLocate(ctx, { subject, intent, view }),
+});
+
+registerModule({
+  id: "frontmatter.validator",
+  kind: "capability_provider",
+  provides: { capabilities: ["frontmatter.validate", "frontmatter.verify"] },
+  governance: { requires: [], trace_minimum: "none" },
+  run: ({ paths, text, options }) => {
+    if (text) return validateFrontmatterText(text, options);
+    return validateFrontmatterPaths(paths || [], options);
+  },
 });
 
 function cmdLocate() {
