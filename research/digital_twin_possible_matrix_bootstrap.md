@@ -73,6 +73,8 @@ This is complementary to, not a replacement for, other Twin bootstrap layers suc
 
 The matrix is therefore best understood as a **bootstrap view of lived capability and reachable possibility**, with the Marie-Louise corpus serving as the first longitudinal Reality Case.
 
+A validated change in mobilizable or composable capability can open, close, or transform practically reachable Possibles. This is a conceptual cross-link, not a lifecycle field: capability availability, validation, trust, authorization, and execution remain distinct, and the YAML projection is intentionally unchanged.
+
 ## Normalization
 
 The v0.1 prose sometimes mixes state and qualification:

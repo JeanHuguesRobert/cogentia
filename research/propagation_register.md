@@ -6,7 +6,7 @@ repository: "cogentia"
 status: "working source — operational registry"
 version: "0.5"
 date: "2026-08-16"
-last_modified_at: "2026-08-27"
+last_modified_at: "2026-09-09"
 language: "en"
 document_role: "source"
 document_kind: "operational-registry"
@@ -20,6 +20,7 @@ related_issues:
   - "cogentia#58"
   - "cogentia#91"
   - "cogentia#99"
+  - "cogentia#169"
 related_documents:
   - "research/cognitive_packets.md"
   - "research/memory_and_corpus_sleep_cycle.md"
@@ -304,6 +305,43 @@ propagation:
     status: partial
     evidence_refs:
       - "operium/scripts/test-nasa-portal.js"
+```
+
+### PR-2026-006 — FractaCognition, validated learning, capability change and reachable Possibles
+
+```yaml
+propagation:
+  id: PR-2026-006
+  status: propagated
+  discovered_at: 2026-09-09
+  source_refs:
+    - "cogentia#168 — Jekyll typed unknown-date Reality trace"
+    - "research/memory_and_corpus_sleep_cycle.md"
+    - "barons-Mariani/research/potentics_exploration_ontology.md §7.1 Vehicle"
+    - "research/digital_twin_possible_matrix_bootstrap.md"
+  source_summary: >-
+    This is a consolidation of already-distributed Corpus knowledge, not an
+    independent doctrine: Reality traces can yield validated learning; validated
+    learning can change mobilizable or composable capability; that change can
+    alter practically reachable Possibles. FractaCognition governs proportionate
+    vertical/generalizing and lateral/compositional propagation without automatic
+    propagation of trust, mandate, or authority.
+  completed_targets:
+    - "research/learning_computer_genese_et_architecture.md §VI.3"
+    - "research/digital_twin_possible_matrix_bootstrap.md — minimal conceptual cross-link"
+    - "research/propagation_register.md PR-2026-006"
+  expected_effects:
+    - "capability change may add, compose, adapt, restrict, deprecate, or retire capability"
+    - "capability availability, validation, trust, authorization, and execution remain distinct"
+    - "the Possible Matrix remains a projection; no capability-lifecycle schema is introduced"
+  priority: medium
+  confidence: high
+  propagation_level: 2
+  blockers: []
+  next_action: "Run documentary/frontmatter validation and seek decorrelated review before treating this conceptual propagation as verified."
+  verification:
+    status: planned
+    evidence_refs: []
 ```
 
 ## Operational discipline

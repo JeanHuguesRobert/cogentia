@@ -5,7 +5,7 @@ description: "Document source souverain établissant la genèse historique, l'an
 author: "Jean Hugues Noël Robert, baron Mariani"
 affiliation: "Institut Mariani / C.O.R.S.I.C.A., 1 cours Paoli, F-20250 Corte, Corsica"
 date: "2026-09-04"
-last_modified_at: "2026-09-04"
+last_modified_at: "2026-09-09"
 license: "CC BY-SA 4.0"
 language: "fr"
 version: "0.1"
@@ -75,6 +75,7 @@ review:
   reviewed_by: []
 changelog:
   - "v0.1 (2026-09-04) — premier jet complet préparé sous contrat Redactor v0.5 ; synthèse de la genèse empirique, du paradigme Trace-Centric, de l'isomorphisme CPS/call/cc et de la FractaCognition ; en attente de relecture externe décorrélée."
+  - "v0.1 (2026-09-09) — articulation minimale de la FractaCognition avec l'apprentissage validé, l'évolution des capacités et les Possibles atteignables ; statut de revue inchangé."
 x-cognitive-packet:
   profile: "document-production"
   work_locus: "https://github.com/JeanHuguesRobert/cogentia/issues/134"
@@ -406,7 +407,33 @@ Si Rossignol trouve l'abreuvoir vide, la réaction au Niveau 1 est de remplir l'
 
 La FractaCognition est le moteur qui permet à un incident matériel survenu sur une colline corse de modifier rigoureusement les spécifications formelles d'un protocole informatique distribué, sans jamais perdre la traçabilité de l'origine.
 
-### 3. La hiérarchie fractale des caches et la localité
+### 3. De la leçon validée aux capacités et aux Possibles atteignables
+
+Le [Corpus Sleep Cycle](memory_and_corpus_sleep_cycle.md) distingue une leçon candidate d'une assimilation validée par rejeu, régression cognitive et, lorsque cela importe, substitution de handler. Cette validation peut alors modifier durablement ce que le Learning Computer sait mobiliser : une capacité peut être ajoutée, composée, adaptée, restreinte, dépréciée ou retirée. Ce **delta de capacité** modifie en conséquence les Possibles pratiquement atteignables ; il ne présume ni croissance monotone du nombre de capacités ni amélioration sans preuve.
+
+La boucle compacte est donc :
+
+```text
+Réalité
+→ Trace
+→ Apprentissage validé
+→ Delta de capacité
+→ Delta de Possibles atteignables
+→ Exploration / Acte
+→ Réalité
+```
+
+La propagation fractacognitive n'est pas seulement ascendante ou généralisante. Une leçon validée, ou une capacité ainsi modifiée, peut aussi être réutilisée ou composée latéralement entre agents, Jumeaux, projets, dépôts ou nœuds Fractanet, sans pour autant devenir doctrine de niveau supérieur. Le cycle opérationnel du **Vehicle** de la [Potentics](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/potentics_exploration_ontology.md#71-explorer-and-vehicle) — capacité minimale utile, Reality Test, résidu, changement de capacité, nouveaux candidats atteignables — reste le vocabulaire source de cette articulation.
+
+```text
+capacité disponible ≠ capacité validée ≠ capacité de confiance ≠ capacité autorisée ≠ capacité exécutée
+delta de capacité ≠ delta d'autorité
+croissance des capacités ≠ apprentissage
+```
+
+La FractaCognition gouverne donc la transmissibilité proportionnée de l'apprentissage ; elle ne propage ni confiance, ni mandat, ni autorité automatiquement. La [Possible Matrix](digital_twin_possible_matrix_bootstrap.md) en donne une projection de bootstrap, sans transformer cette articulation en nouveau schéma.
+
+### 4. La hiérarchie fractale des caches et la localité
 
 Cette logique fractacognitive s'incarne directement dans la gestion de la mémoire et des caches du système, gouvernée par le principe de localité :
 
