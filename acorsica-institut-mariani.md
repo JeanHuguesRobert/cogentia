@@ -7,7 +7,7 @@ redirect_to: research/acorsica-institut-mariani.md
 redirected_at: '2026-06-07'
 redirect_reason: 'corpus consolidation: institutional boundary note belongs under research'
 author: unknown
-date: unknown
+date: null
 provenance:
   origin_type: unknown
   origin_repository: unknown
