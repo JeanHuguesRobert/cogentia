@@ -1,0 +1,418 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:cogentia:schema:possible-matrix:v0",
+  "title": "Cogentia Longitudinal Possible Matrix v0",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "kind",
+    "matrix_id",
+    "subject",
+    "source_projection",
+    "dynamic_vocabulary",
+    "possible_registry",
+    "events"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "cogentia.possible-matrix.v0"
+    },
+    "kind": {
+      "const": "longitudinal_possible_matrix"
+    },
+    "matrix_id": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._:-]+$"
+    },
+    "subject": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "label"
+      ],
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "label": {
+          "type": "string"
+        }
+      }
+    },
+    "source_projection": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "document",
+        "blob_sha",
+        "projection_status"
+      ],
+      "properties": {
+        "document": {
+          "type": "string"
+        },
+        "blob_sha": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{40}$"
+        },
+        "projection_status": {
+          "enum": [
+            "working_derived_projection",
+            "generated_projection",
+            "authoritative_data"
+          ]
+        },
+        "note": {
+          "type": "string"
+        }
+      }
+    },
+    "dynamic_vocabulary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "dynamics",
+        "scope_delta"
+      ],
+      "properties": {
+        "dynamics": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "enum": [
+              "capacity",
+              "open",
+              "maintain",
+              "friction",
+              "close",
+              "reopen",
+              "load",
+              "unknown"
+            ]
+          }
+        },
+        "scope_delta": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "enum": [
+              "narrow",
+              "same",
+              "expand",
+              "unknown"
+            ]
+          }
+        }
+      }
+    },
+    "possible_registry": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/possible_node"
+      }
+    },
+    "events": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/event"
+      }
+    }
+  },
+  "$defs": {
+    "possible_node": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "label"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^p:[a-z0-9._:-]+$"
+        },
+        "label": {
+          "type": "string"
+        },
+        "parent_ids": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "pattern": "^p:"
+          }
+        },
+        "notes": {
+          "type": "string"
+        }
+      }
+    },
+    "time": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "value",
+        "precision"
+      ],
+      "properties": {
+        "value": {
+          "type": "string"
+        },
+        "precision": {
+          "enum": [
+            "day",
+            "month",
+            "year",
+            "range",
+            "academic_year",
+            "unknown"
+          ]
+        }
+      }
+    },
+    "evidence_ref": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "ref",
+        "source_class",
+        "epistemic_status",
+        "supports"
+      ],
+      "properties": {
+        "ref": {
+          "type": "string"
+        },
+        "source_class": {
+          "enum": [
+            "primary_artifact",
+            "platform_trace",
+            "administrative_record",
+            "institutional_record",
+            "calendar_trace",
+            "public_source",
+            "contemporary_third_party",
+            "retrospective_third_party",
+            "corpus_derivation",
+            "unknown"
+          ]
+        },
+        "epistemic_status": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "enum": [
+              "voice",
+              "trace",
+              "third_party",
+              "fact",
+              "inference",
+              "unknown"
+            ]
+          }
+        },
+        "supports": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string"
+          }
+        },
+        "visibility": {
+          "enum": [
+            "public",
+            "public_reference_private_content",
+            "private",
+            "restricted",
+            "unknown"
+          ]
+        }
+      }
+    },
+    "causal_assessment": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status"
+      ],
+      "properties": {
+        "status": {
+          "enum": [
+            "direct",
+            "supported",
+            "inferred",
+            "unknown",
+            "not_claimed"
+          ]
+        },
+        "mechanism": {
+          "type": "string"
+        },
+        "counterevidence": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "alternative_explanations": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "prohibited_inference": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "probe": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "objective"
+      ],
+      "properties": {
+        "objective": {
+          "type": "string"
+        },
+        "target": {
+          "type": "string"
+        },
+        "expected_discriminant": {
+          "type": "string"
+        },
+        "priority": {
+          "enum": [
+            "p0",
+            "p1",
+            "p2",
+            "unspecified"
+          ]
+        }
+      }
+    },
+    "event": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "sequence",
+        "when",
+        "domain",
+        "observation",
+        "dynamics",
+        "possible_ids",
+        "observed_outcome",
+        "causal",
+        "evidence"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9._:-]+$"
+        },
+        "when": {
+          "$ref": "#/$defs/time"
+        },
+        "domain": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "type": "string"
+          }
+        },
+        "observation": {
+          "type": "string"
+        },
+        "dynamics": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "enum": [
+              "capacity",
+              "open",
+              "maintain",
+              "friction",
+              "close",
+              "reopen",
+              "load",
+              "unknown"
+            ]
+          }
+        },
+        "scope_delta": {
+          "enum": [
+            "narrow",
+            "same",
+            "expand",
+            "unknown"
+          ]
+        },
+        "qualifiers": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "string"
+          }
+        },
+        "possible_ids": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "pattern": "^p:"
+          }
+        },
+        "actors_or_mechanisms": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "observed_outcome": {
+          "type": "string"
+        },
+        "descendant_possible_ids": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "pattern": "^p:"
+          }
+        },
+        "causal": {
+          "$ref": "#/$defs/causal_assessment"
+        },
+        "evidence": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/evidence_ref"
+          }
+        },
+        "next_probes": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/probe"
+          }
+        },
+        "notes": {
+          "type": "string"
+        },
+        "sequence": {
+          "type": "integer",
+          "minimum": 1
+        }
+      }
+    }
+  }
+}
