@@ -5,6 +5,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { execFileSync } from "node:child_process";
 import yaml from "js-yaml";
+import { extractFrontmatter } from "./lib/frontmatter-validator.js";
 
 const root = process.cwd();
 const durable = /\.(md|markdown|ya?ml|json)$/i;
@@ -20,19 +21,12 @@ function trackedFiles() {
   }
 }
 
-function frontmatter(text) {
-  const match = text.match(/^---\r?\n([\s\S]*?)\r?\n---(?:\r?\n|$)/);
-  if (!match) return { present: false, data: null, error: null };
-  try { return { present: true, data: yaml.load(match[1]) || {}, error: null }; }
-  catch (error) { return { present: true, data: null, error: error.message }; }
-}
-
 function audit(file) {
   const absolute = path.join(root, file);
   const text = fs.readFileSync(absolute, "utf8");
   const result = { path: file.replaceAll("\\", "/"), artifact_kind: "durable-document", metadata: "missing", issues: [] };
   if (/\.md(?:own)?$/i.test(file)) {
-    const parsed = frontmatter(text);
+    const parsed = extractFrontmatter(text);
     if (!parsed.present) result.issues.push("missing-frontmatter");
     else if (parsed.error) { result.metadata = "invalid"; result.issues.push("invalid-frontmatter"); result.error = parsed.error; return result; }
     else {

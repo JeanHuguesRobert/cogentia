@@ -6,6 +6,7 @@ import path from "node:path";
 import crypto from "node:crypto";
 import { execFileSync } from "node:child_process";
 import yaml from "js-yaml";
+import { extractFrontmatter } from "./lib/frontmatter-validator.js";
 
 const root = process.cwd();
 const args = new Set(process.argv.slice(2));
@@ -14,7 +15,11 @@ const maxFiles = (() => { const i = process.argv.indexOf("--max-files"); return 
 const required = ["title", "author", "date", "provenance", "review"];
 const sha = value => crypto.createHash("sha256").update(value).digest("hex");
 const tracked = execFileSync("git", ["ls-files", "-z"], { cwd: root, encoding: "utf8" }).split("\0").filter(Boolean);
-function parse(text) { const m = text.match(/^---\r?\n([\s\S]*?)\r?\n---(?:\r?\n|$)/); if (!m) return { data: {}, valid: false }; try { return { data: yaml.load(m[1]) || {}, valid: true }; } catch (error) { return { data: {}, valid: false, error: error.message }; } }
+function parse(text) {
+  const res = extractFrontmatter(text);
+  if (!res.present || res.error || !res.data) return { data: {}, valid: false, error: res.error };
+  return { data: res.data, valid: true };
+}
 function plan(file) {
   const before = fs.readFileSync(path.join(root, file), "utf8"); const parsed = parse(before);
   if (!parsed.valid) return {

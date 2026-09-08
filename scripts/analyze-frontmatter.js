@@ -13,6 +13,7 @@
 
 import fs from "fs";
 import path from "path";
+import { extractFrontmatter } from "./lib/frontmatter-validator.js";
 
 const ROOT = process.cwd();
 
@@ -31,81 +32,9 @@ const IGNORE_DIRS = new Set([
   "node_modules", ".git", "dist", "build", "_site", ".jekyll-cache", "vendor",
 ]);
 
-// Amélioration simple du parseur de frontmatter (gère mieux les listes basiques)
 function parseFrontmatter(content) {
-  const match = content.match(/^---\r?\n([\s\S]*?)\r?\n---/);
-  if (!match) return null;
-
-  const yaml = match[1];
-  const result = {};
-  const lines = yaml.split(/\r?\n/);
-
-  let currentKey = null;
-  let currentList = null;
-
-  for (let rawLine of lines) {
-    const line = rawLine.trim();
-    if (!line || line.startsWith("#")) continue;
-
-    // Détection de clé simple : key: value
-    const keyMatch = line.match(/^([a-zA-Z0-9_-]+)\s*:\s*(.*)$/);
-    if (keyMatch) {
-      const key = keyMatch[1];
-      let value = keyMatch[2].trim();
-
-      // Fin de liste précédente
-      if (currentList && currentKey) {
-        result[currentKey] = currentList;
-        currentList = null;
-        currentKey = null;
-      }
-
-      if (value === "" || value === "[]") {
-        // Possible début de liste
-        currentKey = key;
-        currentList = [];
-      } else if (value.startsWith("[") && value.endsWith("]")) {
-        // Liste inline
-        try {
-          result[key] = JSON.parse(value);
-        } catch {
-          result[key] = value;
-        }
-      } else {
-        // Valeur simple
-        result[key] = cleanValue(value);
-      }
-      continue;
-    }
-
-    // Ligne de liste : - item
-    const listItemMatch = line.match(/^-\s*(.*)$/);
-    if (listItemMatch && currentKey) {
-      if (!currentList) currentList = [];
-      currentList.push(cleanValue(listItemMatch[1]));
-      continue;
-    }
-  }
-
-  // Fermeture éventuelle de la dernière liste
-  if (currentList && currentKey) {
-    result[currentKey] = currentList;
-  }
-
-  return result;
-}
-
-function cleanValue(val) {
-  if (!val) return "";
-  val = val.trim();
-  if ((val.startsWith('"') && val.endsWith('"')) || (val.startsWith("'") && val.endsWith("'"))) {
-    return val.slice(1, -1);
-  }
-  if (val === "true") return true;
-  if (val === "false") return false;
-  if (/^\d+$/.test(val)) return parseInt(val, 10);
-  if (/^\d{4}-\d{2}-\d{2}/.test(val)) return val; // date
-  return val;
+  const extracted = extractFrontmatter(content);
+  return extracted.present && !extracted.error ? extracted.data : null;
 }
 
 function isMarkdown(file) {

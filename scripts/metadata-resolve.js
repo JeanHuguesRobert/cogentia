@@ -4,6 +4,7 @@ import path from "node:path";
 import crypto from "node:crypto";
 import { execFileSync } from "node:child_process";
 import yaml from "js-yaml";
+import { extractFrontmatter } from "./lib/frontmatter-validator.js";
 
 const root = process.cwd();
 const args = new Set(process.argv.slice(2));
@@ -43,7 +44,7 @@ for (const file of files) {
   if (match && !file.toLowerCase().endsWith(match)) continue;
   const target = path.join(root, file);
   const before = fs.readFileSync(target, "utf8");
-  if (/^---\r?\n/.test(before)) continue;
+  if (extractFrontmatter(before).present) continue;
   const o = origin(file);
   const data = {
     title: title(before, file), author: "unknown", date: o.date,

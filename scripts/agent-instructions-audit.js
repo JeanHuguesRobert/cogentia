@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 import fs from "node:fs";
 import path from "node:path";
+import { extractFrontmatter } from "./lib/frontmatter-validator.js";
 
 const registryPath = process.env.COGENTIA_REGISTRY || process.argv[2] || ".cogentia.json";
 const registry = JSON.parse(fs.readFileSync(registryPath, "utf8"));
@@ -11,13 +12,8 @@ const promptPath = /(^|[\\/])(prompts?|\.agents)([\\/]|$)|(?:^|[-_])prompt(?:[-_
 const canonicalSharedUrl = "https://github.com/JeanHuguesRobert/cogentia/blob/main/instructions/AGENTS.shared.md";
 
 function frontmatter(text) {
-  const match = String(text || "").match(/^---\s*\r?\n([\s\S]*?)\r?\n---\s*\r?\n/);
-  if (!match) return {};
-  return Object.fromEntries(match[1]
-    .split(/\r?\n/)
-    .map(line => line.match(/^([A-Za-z_][A-Za-z0-9_]*):\s*(.*?)\s*$/))
-    .filter(Boolean)
-    .map(([, key, value]) => [key, value.replace(/^['"]|['"]$/g, "")]));
+  const extracted = extractFrontmatter(text);
+  return extracted.present && !extracted.error && extracted.data ? extracted.data : {};
 }
 
 function walk(root, current, found) {

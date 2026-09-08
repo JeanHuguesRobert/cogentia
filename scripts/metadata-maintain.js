@@ -5,6 +5,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { execFileSync } from "node:child_process";
 import yaml from "js-yaml";
+import { extractFrontmatter } from "./lib/frontmatter-validator.js";
 
 const root = process.cwd();
 const args = new Set(process.argv.slice(2));
@@ -25,14 +26,13 @@ function inspect(file) {
   const result = { path: file.replaceAll("\\", "/"), state: "complete", issues: [] };
   const text = fs.readFileSync(path.join(root, file), "utf8");
   if (!/\.md(?:own)?$/i.test(file)) { result.state = "skipped"; result.reason = "non-markdown"; return result; }
-  const match = text.match(/^---\r?\n([\s\S]*?)\r?\n---/);
-  if (!match) { result.state = "needs-review"; result.issues.push("missing-frontmatter"); return result; }
-  try {
-    const data = yaml.load(match[1]) || {};
-    result.missing_fields = required.filter(k => data[k] === undefined);
-    if (result.missing_fields.length) { result.state = "needs-review"; result.issues.push("missing-required-fields"); }
-    result.update_policy = data.update_policy || "UP-DEFAULT-REVIEWED";
-  } catch (error) { result.state = "needs-review"; result.issues.push("invalid-frontmatter"); result.error = error.message; }
+  const parsed = extractFrontmatter(text);
+  if (!parsed.present) { result.state = "needs-review"; result.issues.push("missing-frontmatter"); return result; }
+  if (parsed.error) { result.state = "needs-review"; result.issues.push("invalid-frontmatter"); result.error = parsed.error; return result; }
+  const data = parsed.data || {};
+  result.missing_fields = required.filter(k => data[k] === undefined);
+  if (result.missing_fields.length) { result.state = "needs-review"; result.issues.push("missing-required-fields"); }
+  result.update_policy = data.update_policy || "UP-DEFAULT-REVIEWED";
   return result;
 }
 

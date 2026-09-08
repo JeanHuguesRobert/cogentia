@@ -5,6 +5,7 @@ import fs from "node:fs";
 import path from "node:path";
 import crypto from "node:crypto";
 import yaml from "js-yaml";
+import { extractFrontmatter } from "./lib/frontmatter-validator.js";
 
 const root = process.cwd();
 const args = new Set(process.argv.slice(2));
@@ -20,9 +21,9 @@ for (const item of report.plans || []) {
   const target = path.join(root, item.path);
   const before = fs.readFileSync(target, "utf8");
   if (sha(before) !== item.before_hash) { results.push({ path: item.path, state: "stale", expected: item.before_hash, actual: sha(before) }); continue; }
-  const match = before.match(/^---\r?\n([\s\S]*?)\r?\n---(?:\r?\n|$)/);
-  if (!match) { results.push({ path: item.path, state: "manual-review", reason: "frontmatter-disappeared" }); continue; }
-  const data = yaml.load(match[1]) || {};
+  const parsed = extractFrontmatter(before);
+  if (!parsed.present || parsed.error) { results.push({ path: item.path, state: "manual-review", reason: "frontmatter-disappeared" }); continue; }
+  const data = parsed.data || {};
   const additions = Object.fromEntries(Object.entries(item.changes || {}).filter(([key]) => data[key] === undefined));
   if (!Object.keys(additions).length) { results.push({ path: item.path, state: "already-applied" }); continue; }
   const updated = { ...data, ...additions };
