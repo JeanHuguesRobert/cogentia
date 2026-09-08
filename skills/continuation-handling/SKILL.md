@@ -1,7 +1,7 @@
 ---
 schema: cogentia.agent_skill/v1
 id: cogentia.continuation-handling
-version: 3
+version: 4
 status: experimental
 name: continuation-handling
 description: >
@@ -245,6 +245,58 @@ For low-cost reads with no known competing priority, continue directly under
 the rule above. Otherwise surface the ready continuation without consuming
 meaningful attention or resources ahead of the clearer priority. Priority is a
 routing/order constraint, not a source of authority.
+
+#### Durable Priority State Principle
+
+A priority or parking decision that must constrain successor handlers MUST be
+recorded in durable shared Packet state. A decision that exists only in
+conversation, local working memory, or one handler's private context is not
+reliably governable after handoff or resume.
+
+Minimal durable parking state SHOULD make the successor able to reconstruct:
+
+```yaml
+status: parked
+reason: ...
+resume_condition: ...
+priority_relation: ...   # when useful
+```
+
+Canonical compression:
+
+```text
+parked :=
+    durable_status
+    + reason
+    + resume_condition
+```
+
+A handler cannot be expected to respect a priority signal it cannot retrieve.
+Conversely, once an explicit parking or priority signal is present in durable
+state, local obviousness of the next action does not authorize the handler to
+consume material attention or resources ahead of it.
+
+#### Closure Contract Integrity
+
+A handler MUST NOT silently weaken the Packet's declared closure contract.
+
+If completion is declared as a conjunction:
+
+```text
+DefinitionOfDone := A ∧ B ∧ C
+```
+
+then evidence for `A ∧ B` is not evidence for `COMPLETE`. The handler may record
+a phase checkpoint, park/defer the remaining condition, or surface a closure
+gate. It may close as complete only when:
+
+1. the declared material closure conditions are evidenced; or
+2. the Human Principal or other authorized authority explicitly revises the
+   closure contract and that arbitration is durably recorded.
+
+Do not silently reinterpret an unmet Reality Test, review, live validation,
+human gate, or other material condition as optional merely because an earlier
+implementation phase succeeded.
 
 ### 4B. Verify a handoff before issuing it
 
