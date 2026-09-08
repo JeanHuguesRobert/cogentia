@@ -348,10 +348,14 @@ propagation:
   confidence: high
   propagation_level: 2
   blockers: []
-  next_action: "Run documentary/frontmatter validation and seek decorrelated review before treating this conceptual propagation as verified."
+  next_action: "Seek decorrelated review; retain partial verification unless independent evidence establishes the propagation's expected effects."
   verification:
-    status: planned
-    evidence_refs: []
+    status: partial
+    evidence_refs:
+      - "cogentia commit 0561dcb948dd0231794fd0ee16fa82387149b069"
+      - "cogentia commit 002b28fab8bdc01650023429eeee934956bae9ea"
+      - "2026-09-09: cogentia frontmatter verify --strict-role — 3/3 valid, 0 errors, 0 warnings"
+      - "2026-09-09: pnpm test:frontmatter-validator — PASS"
 ```
 
 ## Operational discipline
