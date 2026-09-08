@@ -5,7 +5,7 @@ license: CC BY-SA 4.0
 language: en
 title: Frontmatter Schema — v0.1 (Corpus)
 date: '2026-05-27'
-last_modified_at: '2026-07-16'
+last_modified_at: '2026-09-08'
 status: working-paper — auto-filled (frontmatter cleanup)
 canonical_url: https://github.com/JeanHuguesRobert/cogentia/blob/main/docs/frontmatter-schema.md
 last_stamped_at: 2026-06-01T00:00:00.000Z
@@ -276,6 +276,16 @@ node scripts/cogentia.js frontmatter verify
 
 # Enforce strict document_role canonical validation
 node scripts/cogentia.js frontmatter verify path/to/document.md --strict-role
+
+# Scaffold a new compliant document skeleton (or prepend to bare markdown)
+node scripts/cogentia.js frontmatter scaffold path/to/new-doc.md --title "Title" --role operational --lang en
+
+# Inspect repairable metadata omissions and propose a dry-run plan
+node scripts/cogentia.js frontmatter plan --fix [paths...]
+node scripts/cogentia.js frontmatter plan --fix [paths...] --json
+
+# Safely apply mechanical repairs with preflight hash verification
+node scripts/cogentia.js frontmatter apply --fix [paths...]
 ```
 
 Underlying modular library: [`scripts/lib/frontmatter-validator.js`](../scripts/lib/frontmatter-validator.js).

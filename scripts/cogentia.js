@@ -50,6 +50,11 @@ import {
   validateFrontmatterPaths,
   validateFrontmatterText,
   formatValidationReport,
+  scaffoldFrontmatterFile,
+  planFrontmatterRepairs,
+  applyFrontmatterRepairs,
+  formatRepairsPlan,
+  formatRepairsApply,
 } from "./lib/frontmatter-validator.js";
 
 const COGENTIA_VERSION = "0.3.0";
@@ -449,6 +454,71 @@ function cmdFrontmatter(subcommand) {
     return output(schema, renderFrontmatterSchema(schema));
   }
 
+  if (subcommand === "scaffold") {
+    const title = valueFlag("--title");
+    const role = valueFlag("--role") || "operational";
+    const status = valueFlag("--status") || "working-paper";
+    const lang = valueFlag("--language") || valueFlag("--lang") || "en";
+    const author = valueFlag("--author") || "Jean Hugues Noël Robert, baron Mariani";
+    const affiliation = valueFlag("--affiliation");
+    const license = valueFlag("--license");
+    const force = takeFlag("--force");
+    const targetPath = argv.shift();
+
+    if (!targetPath) {
+      throw new Error("Usage: node scripts/cogentia.js frontmatter scaffold <path> [--title <title>] [--role <role>] [--status <status>] [--lang <lang>] [--author <author>] [--force]");
+    }
+
+    const result = scaffoldFrontmatterFile(targetPath, {
+      title,
+      role,
+      status,
+      lang,
+      author,
+      affiliation,
+      license,
+      force,
+    });
+
+    if (!result.ok) {
+      process.exitCode = 1;
+      return output(result, `✗ Scaffold failed: ${result.error} (${targetPath})`);
+    }
+
+    const modeText = result.mode === "created" ? "Created new file with frontmatter" : (result.mode === "replaced" ? "Replaced frontmatter in file" : "Prepended frontmatter to existing file");
+    return output(result, `✓ ${modeText}: ${targetPath}`);
+  }
+
+  if (subcommand === "plan" || subcommand === "apply" || subcommand === "fix" || subcommand === "repair") {
+    const fixFlag = takeFlag("--fix");
+    const applyFlag = subcommand === "apply" || takeFlag("--apply");
+    const strictRole = takeFlag("--strict-role");
+
+    let targetPaths = argv.filter(p => !p.startsWith("-"));
+    if (targetPaths.length === 0) {
+      try {
+        targetPaths = execFileSync("git", ["ls-files", "*.md"], { encoding: "utf8" })
+          .split("\n")
+          .map(f => f.trim())
+          .filter(Boolean);
+      } catch {
+        targetPaths = ["docs", "research"].filter(d => fs.existsSync(d));
+      }
+    }
+
+    const plan = planFrontmatterRepairs(targetPaths, { strictRole });
+
+    if (applyFlag) {
+      const applyResult = applyFrontmatterRepairs(plan);
+      if (!applyResult.ok) {
+        process.exitCode = 1;
+      }
+      return output(applyResult, formatRepairsApply(applyResult));
+    }
+
+    return output(plan, formatRepairsPlan(plan));
+  }
+
   if (
     subcommand === "verify" ||
     subcommand === "check" ||
@@ -476,7 +546,7 @@ function cmdFrontmatter(subcommand) {
     return output(report, formatValidationReport(report));
   }
 
-  throw new Error(`Unknown frontmatter subcommand "${subcommand}". Use schema, verify, or check.`);
+  throw new Error(`Unknown frontmatter subcommand "${subcommand}". Use schema, verify, check, scaffold, plan, or apply.`);
 }
 
 function renderFrontmatterSchema(schema) {
@@ -549,6 +619,14 @@ Core commands:
   frontmatter verify [paths]
                            Validate markdown frontmatter against canonical schema.
                            Alias: frontmatter check. Flags: [--strict-role] [--json]
+  frontmatter scaffold <path>
+                           Generate a valid, minimal compliant YAML frontmatter skeleton.
+                           Flags: [--title <title>] [--role <role>] [--status <status>]
+                                  [--lang <lang>] [--author <name>] [--force]
+  frontmatter plan --fix [paths]
+                           Plan mechanical frontmatter repairs (defaults, synonyms, blocks).
+  frontmatter apply --fix [paths]
+                           Apply planned mechanical frontmatter repairs safely.
   status                   Local health table (docs, index gaps, dirty, drift).
   grep <text>              Full-text search over active markdown documents.
   ask <question>           Ask the Cogentia corpus agent through the daemon.
@@ -1064,9 +1142,27 @@ registerModule({
 registerModule({
   id: "frontmatter.validator",
   kind: "capability_provider",
-  provides: { capabilities: ["frontmatter.validate", "frontmatter.verify"] },
+  provides: {
+    capabilities: [
+      "frontmatter.validate",
+      "frontmatter.verify",
+      "frontmatter.scaffold",
+      "frontmatter.plan",
+      "frontmatter.apply",
+    ],
+  },
   governance: { requires: [], trace_minimum: "none" },
-  run: ({ paths, text, options }) => {
+  run: ({ action, paths, text, targetPath, options = {} }) => {
+    if (action === "scaffold" || action === "frontmatter.scaffold") {
+      return scaffoldFrontmatterFile(targetPath, options);
+    }
+    if (action === "plan" || action === "frontmatter.plan") {
+      return planFrontmatterRepairs(paths || [], options);
+    }
+    if (action === "apply" || action === "frontmatter.apply") {
+      const plan = options.plan || planFrontmatterRepairs(paths || [], options);
+      return applyFrontmatterRepairs(plan);
+    }
     if (text) return validateFrontmatterText(text, options);
     return validateFrontmatterPaths(paths || [], options);
   },
