@@ -29,6 +29,7 @@ export const CLI_COMMANDS = [
   { verb: "classify verify", mcp_resource: "cogentia://cli/catalog", risk: "read" },
   { verb: "classify explain", mcp_resource: "cogentia://cli/catalog", risk: "read" },
   { verb: "frontmatter schema", mcp_resource: "cogentia://cli/catalog", risk: "read" },
+  { verb: "frontmatter verify", mcp_resource: "cogentia://cli/catalog", risk: "read" },
   { verb: "status", mcp_tool: "cogentia_status", daemon: "/api/status", risk: "read" },
   { verb: "grep", mcp_tool: "cogentia_grep", daemon: "/api/cli/grep", risk: "read" },
   { verb: "ask", mcp_tool: "cogentia_john_run", risk: "read" },

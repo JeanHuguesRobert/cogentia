@@ -170,6 +170,12 @@ Do not fill by restating the source, by generalising an item from elsewhere, or 
 node scripts/cogentia.js frontmatter schema --json
 ```
 
+Document frontmatter compliance is verified mechanically via:
+
+```
+node scripts/cogentia.js frontmatter verify <path> [--json]
+```
+
 Do not reproduce its field lists in this block or in any review. A copied list goes stale, and a stale copy asserted against a document produces confident wrong findings. Where you cannot reach the schema, say so and mark frontmatter findings `[unverified: docs/frontmatter-schema.v0.1.json]` rather than working from memory.
 
 What follows is only what the schema does not encode.

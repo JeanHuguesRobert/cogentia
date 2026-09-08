@@ -1,11 +1,36 @@
 ---
-canonical_url: https://github.com/JeanHuguesRobert/cogentia/blob/main/AGENTS.md
-title: AGENTS.md — Cogentia local specialization
-document_role: operational
-document_kind: agent-mandate
-visibility: public
-lifecycle_state: active
-shared_instructions: https://github.com/JeanHuguesRobert/cogentia/blob/main/instructions/AGENTS.shared.md
+title: "AGENTS.md — Cogentia local specialization"
+subtitle: "Operational guidance and local mandates for JeanHuguesRobert/cogentia"
+author: "Jean Hugues Noël Robert, baron Mariani"
+affiliation: "Institut Mariani / C.O.R.S.I.C.A., 1 cours Paoli, F-20250 Corte, Corsica"
+date: "2026-07-12"
+last_modified_at: "2026-09-08"
+version: "1.0"
+status: "stable — active"
+license: "CC BY-SA 4.0"
+language: "en"
+document_role: "operational"
+document_kind: "agent-mandate"
+visibility: "public"
+lifecycle_state: "active"
+update_policy: "UP-DEFAULT-REVIEWED"
+canonical_url: "https://github.com/JeanHuguesRobert/cogentia/blob/main/AGENTS.md"
+shared_instructions: "https://github.com/JeanHuguesRobert/cogentia/blob/main/instructions/AGENTS.shared.md"
+classification_source: "cogentia.js"
+classification_version: "1"
+classification_rule: "explicit-metadata"
+classification_confidence: "strong"
+provenance:
+  origin_type: "repository"
+  origin_repository: "JeanHuguesRobert/cogentia"
+  origin_ref: "cb5c9e3"
+  origin_date: "2026-07-12"
+  derived_from: []
+review:
+  status: "verified"
+  reviewed_by:
+    - "Jean Hugues Noël Robert"
+  reviewed_at: "2026-09-08"
 ---
 
 # Cogentia local specialization
@@ -49,7 +74,7 @@ Operium owns live operational deployment evidence and the service control plane.
 
 For changes to agent-instruction tooling, run the focused audit against a configured corpus and `git diff --check`. Report any broader suite not run.
 
-For new or changed operational documents, preserve frontmatter provenance and an `update_policy`; do not infer missing fields.
+For new or changed operational documents, preserve frontmatter provenance and an `update_policy`; do not infer missing fields. Verify compliance mechanically with `node scripts/cogentia.js frontmatter verify <path>`.
 
 ## Agent Skills (experimental)
 

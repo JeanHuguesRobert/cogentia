@@ -35,9 +35,10 @@ update_policy: UP-DEFAULT-REVIEWED
 This document defines the metadata schema (frontmatter) used across the multi-repository corpus.
 
 The machine-readable companion is
-[`frontmatter-schema.v0.1.json`](frontmatter-schema.v0.1.json). The current
-Cogentia CLI reads that file for `cogentia frontmatter schema`; changes to the
-field vocabulary must update both artifacts in the same change.
+[`frontmatter-schema.v0.1.json`](frontmatter-schema.v0.1.json). The
+Cogentia CLI reads that file for `cogentia frontmatter schema` and enforces it via
+`cogentia frontmatter verify` (or alias `check`); changes to the field vocabulary
+must update both artifacts in the same change.
 
 ## Philosophy
 
@@ -254,6 +255,30 @@ The following fields are considered legacy and must no longer be used in new doc
 - `canonical_path`
 - `canonical_slug`
 - `repository_candidate`
+
+---
+
+## Tooling and CLI Verification
+
+The schema and document frontmatters are inspected and verified using `cogentia.js`:
+
+```bash
+# Print canonical schema vocabulary and rules
+node scripts/cogentia.js frontmatter schema
+node scripts/cogentia.js frontmatter schema --json
+
+# Validate a specific document or multiple documents
+node scripts/cogentia.js frontmatter verify path/to/document.md
+node scripts/cogentia.js frontmatter check path/to/document.md --json
+
+# Validate all tracked markdown files in the repository
+node scripts/cogentia.js frontmatter verify
+
+# Enforce strict document_role canonical validation
+node scripts/cogentia.js frontmatter verify path/to/document.md --strict-role
+```
+
+Underlying modular library: [`scripts/lib/frontmatter-validator.js`](../scripts/lib/frontmatter-validator.js).
 
 ---
 

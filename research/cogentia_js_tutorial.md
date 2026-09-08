@@ -2,8 +2,9 @@
 title: cogentia.js - Tutorial and Near-Specification
 subtitle: Generated automatically from the current v2 CLI source and corpus doctrine
 version: 2.3.0
-status: generated automatically - current v2 tutorial
+status: "stable — generated automatically - current v2 tutorial"
 date: '2026-06-19'
+last_modified_at: '2026-09-08'
 author: Jean Hugues Noel Robert, baron Mariani
 affiliation: Institut Mariani / C.O.R.S.I.C.A., 1 cours Paoli, F-20250 Corte, Corsica
 license: CC BY-SA 4.0
@@ -248,6 +249,8 @@ classify plan
 classify apply
 classify verify
 classify explain <repo/path.md>
+frontmatter schema
+frontmatter verify [paths...]
 agent start
 consolidate
 status
@@ -255,6 +258,10 @@ grep <text>
 ```
 
 Use these when the goal is corpus orientation or mechanical refresh.
+
+`frontmatter` inspects and validates document metadata against the canonical schema ([`docs/frontmatter-schema.v0.1.json`](../docs/frontmatter-schema.v0.1.json)):
+- `frontmatter schema`: prints the canonical frontmatter vocabulary, required blocks, and rules.
+- `frontmatter verify [paths...]` (alias: `frontmatter check`): validates YAML frontmatter syntax, core required fields, traceability fields, provenance block, review block, status base vocabulary with natural language qualifiers, canonical document roles, and deprecated fields. If no paths are given, it verifies all tracked markdown files. Supports `--json` and `--strict-role`.
 
 `agent start` is the preferred first command for human and AI agents. It produces a read-only session summary: registry, repositories, document count, generated drift, gaps, privacy leaks, active continuations, trail issues, git drift, dirty worktree summary, and recommended next actions.
 
@@ -501,6 +508,17 @@ node scripts/cogentia.js classify verify --json
 ```
 
 Use this when the corpus has grown and navigation depends on consistent metadata. The classifier is deterministic and idempotent: after a clean apply, a fresh plan should report no changes, no conflicts, and no ambiguous cases.
+
+### 6.3.3 Inspect and verify frontmatter against canonical schema
+
+```bash
+node scripts/cogentia.js frontmatter schema --json
+node scripts/cogentia.js frontmatter verify docs/frontmatter-schema.md
+node scripts/cogentia.js frontmatter check path/to/document.md --json
+node scripts/cogentia.js frontmatter verify
+```
+
+Use `frontmatter verify` before committing substantive documents to guarantee strict adherence to [`docs/frontmatter-schema.v0.1.json`](../docs/frontmatter-schema.v0.1.json) without relying on ad-hoc scripts.
 
 ### 6.4 Build semantic embeddings by continuation
 
