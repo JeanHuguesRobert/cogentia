@@ -9,7 +9,7 @@ classification_version: '1'
 classification_rule: guide
 classification_confidence: strong
 author: unknown
-date: unknown
+date: null
 provenance:
   origin_type: unknown
   origin_repository: unknown
