@@ -8,7 +8,7 @@ classification_version: '1'
 classification_rule: operational-note
 classification_confidence: medium
 author: unknown
-date: unknown
+date: null
 provenance:
   origin_type: unknown
   origin_repository: unknown
