@@ -2,8 +2,9 @@
 title: "Propagation Register"
 subtitle: "Provider-neutral backlog of pending corpus propagations"
 author: "Jean Hugues Noël Robert"
-repository: "cogentia"
-status: "working source — operational registry"
+affiliation: "Institut Mariani / C.O.R.S.I.C.A., 1 cours Paoli, F-20250 Corte, Corsica"
+license: "MIT"
+status: "working-paper"
 version: "0.5"
 date: "2026-08-16"
 last_modified_at: "2026-09-09"
@@ -16,6 +17,15 @@ classification_source: "cogentia.js"
 classification_version: "1"
 classification_rule: "explicit-metadata"
 classification_confidence: "medium"
+provenance:
+  origin_type: "repository"
+  origin_repository: "JeanHuguesRobert/cogentia"
+  origin_ref: "69af5b4d0c5794e2a912c6e348a992d701e36ebc"
+  origin_date: "2026-08-16"
+  derived_from: []
+review:
+  status: "unreviewed"
+  reviewed_by: []
 related_issues:
   - "cogentia#58"
   - "cogentia#91"
