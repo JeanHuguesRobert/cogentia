@@ -41,6 +41,7 @@
     "test:guide-eval": "node scripts/test-guide-eval.js",
     "test:frontmatter-schema": "node scripts/test-frontmatter-schema-cli.js",
     "test:frontmatter-validator": "node scripts/test-frontmatter-validator.js",
+    "test:possible-matrix": "node scripts/test-possible-matrix-validator.js",
     "test:issue-graph": "node scripts/test-issue-graph.js",
     "test:issue-graph-route": "node scripts/test-issue-graph-route.js",
     "test:issues-help": "node scripts/test-issues-help.js",
