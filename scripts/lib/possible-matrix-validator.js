@@ -218,7 +218,7 @@ export function validatePossibleMatrixGraph(data) {
       possibles: possibles.length,
     },
     graph: {
-      ok: errors.filter((error) => /possible id|possible graph cycle|sequence|dynamic|scope_delta/.test(error)).length === 0,
+      ok: errors.length === 0,
       cycles,
     },
   };
