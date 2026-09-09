@@ -134,6 +134,25 @@ try {
   assert.equal(parsed.ok, true);
   assert.equal(parsed.counts.events, 2);
 
+  const siblingRealityCase = path.resolve(
+    root,
+    "..",
+    "barons-Mariani",
+    "memory",
+    "marie-louise",
+    "possible_matrix.yaml",
+  );
+  if (fs.existsSync(siblingRealityCase)) {
+    const realityReport = validatePossibleMatrixFile(siblingRealityCase);
+    assert.equal(
+      realityReport.ok,
+      true,
+      `Marie-Louise Reality Case must validate: ${realityReport.errors.join("; ")}`,
+    );
+    assert.equal(realityReport.counts.events, 26);
+    assert.equal(realityReport.projection.status, "verified");
+  }
+
   const invalidCli = structuredClone(valid);
   invalidCli.events[0].possible_ids = ["p:nope"];
   fs.writeFileSync(matrix, yaml.dump(invalidCli, { noRefs: true }), "utf8");
