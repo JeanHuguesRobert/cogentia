@@ -5,7 +5,7 @@ license: CC BY-SA 4.0
 language: en
 title: Frontmatter Synonym Mapping — v0.1
 date: '2026-05-27'
-last_modified_at: '2026-07-16'
+last_modified_at: '2026-09-09'
 status: working-paper — auto-filled (frontmatter cleanup)
 canonical_url: https://github.com/JeanHuguesRobert/cogentia/blob/main/docs/frontmatter-synonym-mapping.md
 last_stamped_at: 2026-06-01T00:00:00.000Z
@@ -39,6 +39,8 @@ This document lists synonyms observed across the corpus and their associated equ
 - Synonyms are **tolerated** when an equivalence rule is documented here.
 - There is **no deadline** for the use of legacy forms unless an explicit deprecation decision is made.
 - When a synonym is deprecated, it will be marked `deprecated` in this document.
+- A meaningful field does **not** become invalid merely because it is not yet registered in the shared schema. Local vocabulary is allowed to emerge before normalization.
+- The `x-` prefix is optional: use it when explicitly marking an extension boundary is useful, not as a mechanical quarantine for unfamiliar fields.
 
 ## Synonym Mapping
 
@@ -94,41 +96,43 @@ Examples:
 Many fields appear only once or twice, particularly in `barons-Mariani`. Examples include:
 - `merge_audit`, `decision_stack`, `vector_clock`, `claimed_ops`, `ghost_ops`, and others.
 
-**Rule:** These fields may remain for now. If their use expands, they will be reviewed to determine whether they should be normalized or converted into `x-` extensions.
+**Rule:** These fields may remain under their natural names while their semantics are local or evolving. Recurrence is evidence that a field may deserve documentation or promotion into shared vocabulary; it is **not** by itself a reason to rename it with `x-`. Existing `x-` fields may remain when the prefix conveys a useful extension boundary, but migration away from `x-` is allowed when a natural name is clearer.
 
-### 7. Patterns Observed During the Ingestion of New Repositories (2026-05)
+### 7. Patterns Observed During the Ingestion of New Repositories (2026-05, revised 2026-09)
 
-During broad migration passes across `barons-Mariani`, `cogentia`, `FractaVolta`, and other repositories, several clusters of experimental fields recurred. The following treatment was used to accelerate future ingestion.
+Earlier ingestion passes across `barons-Mariani`, `cogentia`, `FractaVolta`, and other repositories frequently prefixed unfamiliar fields with `x-`. That treatment is now considered **over-cautious** when applied mechanically: it can freeze provisional schema boundaries, obscure useful domain vocabulary, and turn discovery into normalization before semantics are understood.
 
 **a. “Packet” projects and network descriptions—FractaVolta style and some Cogentia documents**
 - Frequent fields: `address`, `email`, `website`, `keywords`.
-- Observed treatment: often converted to `x-address`, `x-email`, and similar fields, or grouped under `x-contact`.
-- Ingestion guidance: when several of these fields appear in project-description files, convert them to `x-` fields in one mechanical pass.
+- Historical treatment: often converted to `x-address`, `x-email`, and similar fields, or grouped under `x-contact`.
+- Current guidance: preserve meaningful natural names unless an explicit extension namespace is useful. Do not add `x-` merely because the shared schema does not yet know the field.
 
 **b. Political work and Autonomy of Capacity—`barons-Mariani` / `autonomia`**
 - Frequent fields: `type`, `branch`, `source_file`, `date_creation`, `date_derniere_entee`, `institutional_frame`, `public_dashboard`, and others.
 - These documents are often “source material,” “campaign rhetoric,” or “working stock.”
-- Observed treatment: many fields were prefixed with `x-`, especially `type`, `branch`, and `source_file`. Rich descriptive status values were legitimately retained.
-- Guidance: do not normalize everything too quickly. These repositories have their own style. Prefix recurring structural fields with `x-` and preserve rich statuses.
+- Historical treatment: many fields were prefixed with `x-`, especially `type`, `branch`, and `source_file`.
+- Current guidance: preserve the repository's meaningful vocabulary first. Normalize only when a stable equivalence or shared semantic need has emerged.
 
 **c. Structural corpus files—`index.md`, `concepts.md`, `corpus-status.md`**
 - These files occur in nearly every repository.
 - They are often maintained by tools, either generated or automatically updated.
-- Observed treatment: they generally receive `creator` rather than `author`, `status: working-paper`, the license and affiliation fields, while otherwise remaining relatively light.
+- They generally receive `creator` rather than `author`, `status: working-paper`, the license and affiliation fields, while otherwise remaining relatively light.
 - Ingestion guidance: identify these three file types early and apply the standardized “maintenance” treatment.
 
 **d. Practical rule for a new repository**
-1. Run `migrate-frontmatter.js --dry-run --broad`, or its equivalent, on `research/`.
-2. Group `unknown_non_x_field_*` entries by similarity.
-3. For clusters recurring across more than three or four files, propose a common `x-` prefix.
-4. Preserve highly descriptive status values unless they are genuinely inconsistent.
-5. Apply the “structural” treatment—`creator` plus the base fields—to `index.md`, `concepts.md`, and `corpus-status.md`.
+1. Run the migration/scanning tool in dry-run mode.
+2. Group unfamiliar fields by similarity without treating unfamiliarity as invalidity.
+3. Preserve local fields under natural names while their semantics are being learned.
+4. When recurrence reveals a stable cross-document concept, propose documentation, synonym mapping, or promotion to shared vocabulary.
+5. Use `x-` only when an explicit extension boundary adds information.
+6. Preserve highly descriptive status values unless they are genuinely inconsistent.
 
 ## General Equivalence Rules
 
 - Synonyms are accepted when an equivalence rule is documented here.
 - There is **no deadline** for using legacy forms unless an explicit deprecation decision is made and marked `deprecated` in this document.
 - Tolerance for different styles is intentional and reflects the personality of human authors and AI agents.
+- **Unregistered is not invalid.** Registration follows demonstrated semantic usefulness; it need not precede experimentation.
 
 ## Future Updates
 
@@ -140,15 +144,15 @@ This document will be extended after each migration pass or whenever significant
 
 When adding a repository to the corpus:
 
-1. Scan it using the broad mode, such as `--broad`, to identify `unknown_non_x_field_*` entries and problematic statuses.
+1. Scan it in broad/dry-run mode to identify unfamiliar fields and genuinely problematic statuses.
 2. Identify the three structural file types—[`index.md`](../research/index.md), [`concepts.md`](../research/concepts.md), and [`corpus-status.md`](../research/corpus-status.md)—and apply the standard “maintenance” treatment: `creator`, base fields, and `working-paper`.
-3. Group experimental fields that recur across several files:
-   - Packet or project descriptions → often use `x-` for `address`, `email`, `website`, and `keywords`.
-   - Political or autonomy-related work → often use `x-` for `type`, `branch`, and `source_file`, while tolerating highly descriptive statuses.
-4. Do not normalize everything in one pass. Priority should be given to removing genuinely legacy fields and prefixing recurrent experimental clusters.
-5. Record new observed patterns here for use in subsequent ingestion passes.
+3. Group experimental fields that recur across several files, but preserve their natural names during discovery unless there is a concrete ambiguity or collision.
+4. Promote or map a recurring field only when its semantics have become sufficiently stable to justify shared vocabulary.
+5. Use `x-` where an explicit extension namespace is useful; never as an automatic response to an unfamiliar key.
+6. Do not normalize everything in one pass. Priority belongs to factual correctness, traceability, and removal of genuinely deprecated fields.
+7. Record newly learned patterns here for subsequent ingestion passes.
 
-Objective: after two or three repositories have been processed this way, ingestion of a new repository should become increasingly mechanical for roughly 80% of cases.
+Objective: ingestion should become increasingly mechanical where semantics are stable, while remaining deliberately permissive where the Corpus is still learning its own vocabulary.
 <!-- BEGIN_AUTO: backlinks -->
 ### Backlinks
 
