@@ -1,7 +1,7 @@
 ---
 schema: cogentia.agent_skill/v1
 id: cogentia.continuation-handling
-version: 4
+version: 5
 status: experimental
 name: continuation-handling
 description: >
@@ -227,6 +227,39 @@ This rule does not widen this skill's declared `prepare_only` effect. It removes
 unnecessary stops only for in-scope inspection, classification, retrieval and
 verification that were already permitted.
 
+#### External Side-Effect Gate
+
+A predictable continuation does not create authority to execute an effectful
+continuation.
+
+```text
+clear next effect
+≠ authorization
+```
+
+For any send, publish, submit, commit, push, merge, remote-draft mutation,
+sharing, booking, spending, signing, deletion, deployment, or other external
+state change:
+
+```text
+prepare
+→ expose exact action + target + material payload
+→ obtain explicit execution directive
+→ execute once
+→ verify
+```
+
+Do not classify workflow narration, plan approval, draft approval, urgency,
+reversibility, prior similar permission, or the Next Logical Action Principle
+as execution authority.
+
+If authorization exists but the target or material payload changes, return to
+the gate. If authorization is absent, the continuation remains prepared/gated;
+do not resolve it as executed.
+
+This gate is stronger than local continuation obviousness and does not widen the
+skill's `prepare_only` effect.
+
 #### Priority arbitration across competing Packets
 
 Do not confuse the next logical action **inside this Packet** with the next
@@ -431,7 +464,7 @@ Stop and hand control back when:
 - classification is `mandate_gate` or `accountability_gap` and no principal is available;
 - `expected_response` cannot be satisfied without inventing facts;
 - resolve would widen mandate, disclosure, or effect ceiling;
-- only external effect remains (send mail, merge without review, publish) — different skill/COP path;
+- only external effect remains (send mail, merge, publish, submit, remote-draft mutation, etc.) and no explicit execution authorization is present — remain gated; a different skill/COP path still cannot infer authority;
 - packaging failure blocks safe resumption.
 
 Do **not** stop merely because the next logical step is an in-scope read-only
