@@ -3,7 +3,7 @@ title: Document Production Conversation Frame Prompt Contract
 subtitle: Framing a serious conversation intended to produce, revise, or stabilize a document
 author: Jean Hugues Noël Robert
 status: prompt-contract — revised
-version: '0.2'
+version: '0.3'
 license: CC BY-SA 4.0
 language: en
 canonical_path: cogentia/prompts/document_conversation_frame.md
@@ -23,7 +23,8 @@ last_stamped_at: 2026-06-06T00:00:00.000Z
 changelog:
   - v0.1 (2026-06-05) — seed contract for structured document-production conversations.
   - v0.2 (2026-06-06) — added standard document header requirements, clickable-reference rule outside frontmatter, and update-method link requirements.
-date: "2026-06-06"
+  - v0.3 (2026-09-09) — added mandatory two-phase External Side-Effect Gate and explicit separation of preparation from execution.
+date: "2026-09-09"
 provenance:
   origin_type: unknown
   origin_repository: unknown
@@ -152,6 +153,46 @@ For each significant step, preserve:
 - what was rejected or deferred;
 - what requires human validation.
 
+## 3.1. External Side-Effect Gate
+
+Treat preparation and execution as separate mandates.
+
+Any external side effect — including send, reply, forward, publish, post,
+submit, commit, push, merge, create/modify a remote draft, share, book,
+purchase, spend, delete, deploy, sign, accept, or mutate remote/account state —
+is forbidden by default until the human Principal explicitly authorizes that
+specific execution.
+
+Use:
+
+```text
+PREPARE → EXPOSE → AUTHORIZE → EXECUTE → VERIFY
+```
+
+Before requesting authorization, expose the exact action, exact target, and
+material payload. For a communication, show the actual outgoing message and
+material attachments. For a repository write, expose the repository, branch,
+files, operation and public/private consequence.
+
+Do not infer execution authorization from:
+- a description of what "we will" or "we are going to" do;
+- approval of the plan or draft;
+- authorization to prepare;
+- "this is the next logical action";
+- urgency, reversibility, or low apparent risk;
+- a previous similar authorization;
+- silence.
+
+A concise follow-up such as "send it" or "publish this" counts only when it
+unambiguously refers to one already-exposed action whose target and material
+payload have not changed.
+
+A material change after authorization invalidates the authorization. A
+one-action authorization is consumed after execution unless the Principal
+explicitly grants a bounded batch or recurring mandate.
+
+When in doubt: prepare, expose, and stop before execution.
+
 ## 4. Agent roles
 
 When useful, distinguish roles explicitly:
@@ -220,6 +261,8 @@ Before publishing or modifying repository files, identify:
 - source or derived product status;
 - whether this is creation or update;
 - whether human validation is needed before publication.
+
+Publication itself requires the External Side-Effect Gate even when the content is already approved.
 
 Do not silently publish:
 - legal claims;
