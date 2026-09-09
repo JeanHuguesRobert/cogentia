@@ -5,7 +5,7 @@ license: CC BY-SA 4.0
 language: en
 title: Frontmatter Schema — v0.1 (Corpus)
 date: '2026-05-27'
-last_modified_at: '2026-09-08'
+last_modified_at: '2026-09-09'
 status: working-paper — auto-filled (frontmatter cleanup)
 canonical_url: https://github.com/JeanHuguesRobert/cogentia/blob/main/docs/frontmatter-schema.md
 last_stamped_at: 2026-06-01T00:00:00.000Z
@@ -34,11 +34,7 @@ update_policy: UP-DEFAULT-REVIEWED
 
 This document defines the metadata schema (frontmatter) used across the multi-repository corpus.
 
-The machine-readable companion is
-[`frontmatter-schema.v0.1.json`](frontmatter-schema.v0.1.json). The
-Cogentia CLI reads that file for `cogentia frontmatter schema` and enforces it via
-`cogentia frontmatter verify` (or alias `check`); changes to the field vocabulary
-must update both artifacts in the same change.
+The machine-readable companion is [`frontmatter-schema.v0.1.json`](frontmatter-schema.v0.1.json). The Cogentia CLI reads that file for `cogentia frontmatter schema` and enforces it via `cogentia frontmatter verify` (or alias `check`); changes to the field vocabulary or its governing principles must keep both artifacts aligned.
 
 ## Philosophy
 
@@ -47,6 +43,7 @@ must update both artifacts in the same change.
 - **Equivalence rules** rather than a prohibition on synonyms, in the TIMTOWTDI spirit: “There Is More Than One Way.”
 - Priority is given to **traceability**, **portability**, and **privacy protection**.
 - The schema must remain **evolvable** and **pragmatic**. We avoid needless complexity: clear equivalence rules are preferred to excessive rigidity.
+- **Unregistered is not invalid.** A meaningful local field may emerge before the shared schema has learned its semantics.
 
 ## General Rules
 
@@ -56,6 +53,7 @@ must update both artifacts in the same change.
 - Synonyms are tolerated **if and only if** an equivalence rule is documented in [`frontmatter-synonym-mapping.md`](frontmatter-synonym-mapping.md).
 - `privacy` defaults to `public`. It only needs to be specified when the document falls outside that regime.
 - A document that is **entirely automated**, with no human contributor, must be readily identifiable through the `generated_by` field.
+- Unknown or repository-local fields are not automatically errors and must not be mechanically renamed merely because they are absent from the shared vocabulary.
 
 ---
 
@@ -63,56 +61,38 @@ must update both artifacts in the same change.
 
 ### 1. Core Fields (required for every tracked document)
 
-| Field                | Type                  | Default                              | Required? | Notes |
-|----------------------|-----------------------|--------------------------------------|-----------|-------|
-| `title`              | string                | —                                    | Yes       | — |
-| `subtitle`           | string                | —                                    | No        | — |
-| `description`        | string                | —                                    | Recommended | Short summary |
-| `author`             | string                | —                                    | Yes       | Known human author, otherwise `unknown` |
-| `creator`            | string                | "Jean Hugues Noël Robert, baron Mariani" | No | Use when production is predominantly or entirely mechanical. Equivalence rule: `author` and `creator` are not automatically equivalent. |
-| `affiliation`        | string                | "Institut Mariani / C.O.R.S.I.C.A., 1 cours Paoli, F-20250 Corte, Corsica" | Yes | — |
-| `date`               | ISO 8601 string or `null` | —                                 | Yes       | Primary semantic date; use `null` when unknown, never `unknown` |
-| `last_modified_at`   | string (ISO 8601)     | —                                    | No        | Date of the latest actual modification |
-| `license`            | string                | "CC BY-SA 4.0"                       | Yes       | — |
-| `language`           | string                | "fr"                                 | Yes       | — |
+| Field | Type | Default | Required? | Notes |
+|---|---|---|---:|---|
+| `title` | string | — | Yes | — |
+| `subtitle` | string | — | No | — |
+| `description` | string | — | Recommended | Short summary |
+| `author` | string | — | Yes | Known human author, otherwise `unknown` |
+| `creator` | string | — | No | Use when production is predominantly or entirely mechanical; not automatically equivalent to `author` |
+| `affiliation` | string | Institut Mariani / C.O.R.S.I.C.A., 1 cours Paoli, F-20250 Corte, Corsica | Yes | — |
+| `date` | ISO 8601 string or `null` | — | Yes | Primary semantic date; use `null` when unknown, never `unknown` |
+| `last_modified_at` | ISO 8601 string | — | No | Date of latest actual modification |
+| `license` | string | `CC BY-SA 4.0` | Yes | — |
+| `language` | string | — | Yes | Actual document language |
 
 ### 1 bis. Language, audience and derivation context
 
-\`language\` must describe the actual document content. It is required and has **no corpus-wide default**: an agent must select it from the document's audience, function, and target scene.
+`language` has **no corpus-wide default**. Select it from the document's audience, function, and target scene.
 
 | Field | Type | Required? | Notes |
 |---|---|---:|---|
-| \`target_audience\` | string or array | Recommended for derived products | Intended readers or users |
-| \`target_scene\` | string | Recommended for derived products | For example: technical, academic, political, electoral, local, public, internal |
-| \`document_function\` | string | Recommended for derived products | For example: specification, research, brief, speech, publication, implementation instruction |
+| `target_audience` | string or array | Recommended for derived products | Intended readers or users |
+| `target_scene` | string | Recommended for derived products | e.g. technical, academic, political, electoral, local, public, internal |
+| `document_function` | string | Recommended for derived products | e.g. specification, research, brief, speech, publication, implementation instruction |
 
-Selection rule:
+Technical infrastructure, protocols, specifications, schemas, agent instructions, and international research normally use English. Corsican, territorial, political, electoral, local, family, and audience-specific public products normally use French unless their intended audience requires another language. Ask before drafting when classification is genuinely ambiguous.
 
-- technical infrastructure, protocols, specifications, schemas, agent instructions, and international research normally use English;
-- Corsican, territorial, political, electoral, local, family, and audience-specific public products normally use French, unless their audience requires another language;
-- if the classification is ambiguous, stop and request clarification before drafting.
+### 2. Provenance & Traceability
 
-A technical source and a political/public product from the same work are distinct derived products and may legitimately have different languages.
+Common traceability fields include `canonical_url`, `last_stamped_at`, `version`, `status`, `methodology`, `generated_by`, `ai_assisted_by`, `reviewed_by`, `human_arbitration_by`, `version_history`, and `update_policy`.
 
-### 2. Provenance & Traceability (required for every tracked document)
+`update_policy` defaults to `UP-DEFAULT-REVIEWED`. `canonical_url` is required for substantive documents. `last_stamped_at` is generated automatically. `generated_by` is required when production is entirely automated.
 
-| Field                    | Type                    | Default | Notes |
-|--------------------------|-------------------------|---------|-------|
-| `canonical_url`          | string                  | —       | Required for substantive documents |
-| `last_stamped_at`        | string (ISO 8601)       | —       | Generated automatically |
-| `version`                | string                  | —       | — |
-| `status`                 | string or list          | —       | Controlled base list plus free-form qualifier. See the rules below. |
-| `methodology`            | string or array         | —       | Method implementation, for example “Cogentia Commons.” The Second Method is implicit. |
-| `generated_by`           | string or list          | —       | Ordered by decreasing importance. Use a single field. |
-| `ai_assisted_by`         | array                   | —       | List of participating AI systems |
-| `reviewed_by`            | array                   | —       | — |
-| `human_arbitration_by`   | string                  | —       | Person who made the final arbitration |
-| `version_history`        | array                   | —       | — |
-| `update_policy`          | string                  | `UP-DEFAULT-REVIEWED` | Identifier from the [update-policy registry](update-policy-registry.md) |
-
-### 2 bis. Minimum Provenance (required)
-
-Each document must also declare a `provenance` block and a `review` block:
+Every tracked document must also declare minimum `provenance` and `review` blocks:
 
 ```yaml
 provenance:
@@ -126,46 +106,25 @@ review:
   reviewed_by: []
 ```
 
-`origin_ref` must be immutable or externally verifiable. A current branch name alone is not sufficient. For generated documents, also record `generated_by` and the input documents. For historical or unattributed material, use `unknown` explicitly and preserve the uncertainty.
+`origin_ref` must be immutable or externally verifiable. A current branch name alone is insufficient. For generated documents, also record `generated_by` and the input documents. For historical or unattributed material, preserve uncertainty explicitly.
 
 ### 3. Documentary Provenance
 
-| Field                    | Type          | Default | Notes |
-|--------------------------|---------------|---------|-------|
-| `source_document`        | string        | —       | **Primary source document**, when one clearly exists |
-| `additional_sources`     | array         | —       | Complementary source documents, where relevant |
-| `derived_from`           | string        | —       | **Equivalence rule:** tolerated synonym of `source_document` |
+`source_document` identifies a clear primary source document when one exists. `additional_sources` may list complementary sources. `derived_from` is a tolerated document-level synonym of `source_document`, distinct from `provenance.derived_from`.
 
-**Important rule:**
-- Use `source_document` only when there is a **clear and identifiable** source document.
-- When no clear sovereign source document exists, as is often the case in transdisciplinary work, do not force this field. Put references in the document body instead.
-- Do not specify a source “type” such as sovereign or symmetric in frontmatter; doing so would be redundant and subjective.
+Do not force a source document when none is clearly sovereign. In transdisciplinary work, references in the document body may be more honest. Do not encode subjective source “types” such as sovereign or symmetric merely for classification.
 
 ### 4. Navigation & Publication (Jekyll)
 
 Standard Jekyll fields such as `layout`, `permalink`, `nav_order`, `parent`, and `has_children` remain permitted.
 
-`date` is also a Jekyll-reserved typed field. The #168 GitHub Pages Reality Test
-showed that `date: unknown` and `date: "unknown"` pass YAML parsing but fail
-Jekyll's date consumer. Preserve epistemic absence as `date: null` at the
-top level; the Corpus may continue to use `provenance.origin_date: unknown`,
-whose semantics are distinct and which Jekyll does not consume as a document
-date. `frontmatter verify/check` rejects a non-ISO, non-null top-level `date`,
-and `frontmatter plan/apply --fix` mechanically repairs only the `unknown`
-sentinel to `null` without inventing a date.
+`date` is a Jekyll-reserved typed field. The #168 GitHub Pages Reality Test showed that `date: unknown` and `date: "unknown"` pass YAML parsing but fail Jekyll's date consumer. Preserve epistemic absence as `date: null` at top level; `provenance.origin_date: unknown` remains valid because its semantics differ. `frontmatter verify/check` rejects a non-ISO, non-null top-level `date`, and `frontmatter plan/apply --fix` may mechanically repair only the `unknown` sentinel to `null` without inventing a date.
 
-### 5. Semantics & Future Traceability (preparation for Solid / Linked Data)
+### 5. Semantics & Future Traceability
 
-| Field               | Type   | Notes |
-|---------------------|--------|-------|
-| `webid`             | string | Planned for later; a GitHub pointer is currently acceptable |
-| `rights`            | string | More granular than `license`, when needed |
-| `tags`              | array  | — |
-| `related_documents` | array  | — |
-| `related_projects`  | array  | — |
-| `document_role`     | string | Examples: `source`, `derived`, `adapted`, `symmetric-derived`, `synthesis`, `operational-note`, `translation` |
-| `derivation_mode`   | string | For products: `automatic` or `directed`; `directed` records an intentional contextual adaptation. |
-| `adapted_products`  | list   | Reverse trace from a source/adapted document to declared products; each item names a repository, paths, and target. |
+Shared semantic fields currently include `webid`, `rights`, `tags`, `related_documents`, `related_projects`, `document_role`, `derivation_mode`, `adapted_products`, `purpose`, `adaptation_context`, `target_audience`, `target_scene`, and `document_function`.
+
+The shared list is deliberately incomplete: domain vocabulary may emerge locally before promotion to the shared schema.
 
 ---
 
@@ -173,149 +132,79 @@ sentinel to `null` without inventing a date.
 
 ### Rule for `status`
 
-- The `status` field is based on a **controlled list** of base values.
-- A document may have **multiple simultaneous statuses**.
-- A **natural-language qualifier** may be added after a dash or as a sentence.
-- Current official base values:
-  - `draft`
-  - `working-paper`
-  - `stable`
-  - `under-review`
-  - `deprecated`
-  - `superceded`
-
-Accepted examples:
-- `status: "working-paper"`
-- `status: "working-paper, superceded"`
-- `status: "working-paper — version revised after objections raised on 2026-05-27"`
-- `status: ["working-paper", "under-review"]`
+Official base values are `draft`, `working-paper`, `stable`, `under-review`, `deprecated`, and `superceded`. Multiple simultaneous statuses are allowed, and a natural-language qualifier may follow a base value.
 
 ### Rule for `generated_by`
 
-- `generated_by` is a **single list**, or a string when there is only one agent.
-- The list is **ordered by decreasing importance**: the most involved agent comes first and the least involved comes last.
-- Use the most precise description available, including the agent and its role where useful.
-- If the document is **entirely automated**, with no human agent, this must be immediately visible—for example by placing an AI agent first or stating the fact explicitly.
-
-Example:
-```yaml
-generated_by:
-  - "Jean Hugues Noël Robert"
-  - "Claude 4.3 (drafting + structuring)"
-  - "Grok 4.3 (critical review)"
-```
-
-Entirely automated example:
-```yaml
-generated_by: "Claude 4.3 (complete automated generation)"
-```
+`generated_by` is a string or a single ordered list, with contributors ordered by decreasing importance. Entirely automated production must be immediately visible.
 
 ### Rule for Synonyms and Stylistic Tolerance
 
-- Synonyms are **tolerated** when a clear equivalence rule is documented in [`frontmatter-synonym-mapping.md`](frontmatter-synonym-mapping.md).
-- There is **no deadline** for the use of alternative forms unless an explicit deprecation decision is made and marked `deprecated` in the mapping file.
-- “Style” is part of the personality of the author, whether human or agent. Excessive uniformity is not a goal.
+Synonyms are tolerated when a clear equivalence rule is documented in [`frontmatter-synonym-mapping.md`](frontmatter-synonym-mapping.md). There is no deadline for alternative forms unless an explicit deprecation decision is made. Excessive uniformity is not a goal.
 
-Main equivalence rules—see the mapping file for the complete list:
-- `author` / `authors` ↔ `creator`, subject to the copyright rule explained in the mapping;
-- `date` / `created` → equivalent;
-- `last_modified_at` / `updated` → equivalent;
-- `source_document` / `derived_from` → `source_document` preferred;
+`derived` is the umbrella English category for a product made from another artifact. Use `document_role: adapted` and `derivation_mode: directed` when a product intentionally adds context, audience, or editorial direction. `adapted_products` is a declaration, not proof of publication.
 
-`derived` is the umbrella English category for a product made from another artifact. Use
-`document_role: adapted` and `derivation_mode: directed` when the product intentionally
-adds a context, audience, or editorial direction (for example, a Corsican adaptation).
-Keep `derived_from` and state the added purpose in `purpose` or `adaptation_context`.
+### Rule for Extensions and Emerging Vocabulary
 
-`adapted_products` is a declaration, not proof of publication. The audit checks its
-shape and the referenced repository/path remains subject to external verification.
-- `tags` / `keywords` → `tags` preferred.
+- Unregistered fields may remain under their **natural, meaningful names** while their semantics are local or evolving.
+- The `x-` prefix is **optional**. Use it when explicitly marking an extension boundary adds information, for example to avoid a concrete collision or to identify a deliberately namespaced experiment.
+- Never add `x-` mechanically merely because a field is unfamiliar to the current shared schema or to a migration tool.
+- Recurrence is evidence that a local field may deserve documentation, synonym mapping, or promotion into shared vocabulary; recurrence is not itself a reason to rename it.
+- Existing `x-` fields may remain when the prefix is meaningful. Migration away from `x-` is allowed when the natural name is clearer and its semantics are understood.
+- Preserve semantic information first; normalize only after a stable equivalence or shared need has emerged.
 
-### Rule for Extensions
-
-- Extension fields must begin with the `x-` prefix, for example `x-my-experiment` or `x-internal-note`.
-- These fields are unrestricted.
-- Philosophy: **flexible at input, strict at output**, inspired by IETF principles.
-
-**Practical guidance from the 2026 ingestion passes:**
-- When the same experimental field appears in several files within one repository—for example `address`, `type`, `branch`, or `source_file`—move it quickly under an `x-` prefix to avoid polluting the primary schema.
-- Recurring observed clusters include:
-  - “Packet” projects and network descriptions: `address`, `email`, `website`, `keywords`;
-  - Political work and source material: `type`, `branch`, `source_file`, and specific creation dates.
-- Do not force immediate semantic normalization. Prefix first in order to preserve readability.
-
-Additional synonyms may be introduced provided that an equivalence rule is documented in this file.
+This is the frontmatter application of Optimistic Locking: permit small, visible, reversible semantic evolution rather than attempting to predict and freeze every future field in advance.
 
 ### Rule for Privacy
 
-- By default, every document is considered **public**.
-- It is not necessary to add `privacy: public`.
-- Other values will be introduced only when a concrete need arises.
+Every document is public by default; `privacy: public` need not be repeated. Other values should be introduced only when a concrete need arises.
 
 ---
 
 ## Fields to Remove During Migration
 
-The following fields are considered legacy and must no longer be used in new documents:
-
-- `repository`
-- `path`
-- `intended_path`
-- `canonical_path`
-- `canonical_slug`
-- `repository_candidate`
+The following fields are legacy and must no longer be used in new documents: `repository`, `path`, `intended_path`, `canonical_path`, `canonical_slug`, `repository_candidate`.
 
 ---
 
 ## Tooling and CLI Verification
 
-The schema and document frontmatters are inspected and verified using `cogentia.js`:
-
 ```bash
-# Print canonical schema vocabulary and rules
 node scripts/cogentia.js frontmatter schema
 node scripts/cogentia.js frontmatter schema --json
-
-# Validate a specific document or multiple documents
 node scripts/cogentia.js frontmatter verify path/to/document.md
 node scripts/cogentia.js frontmatter check path/to/document.md --json
-
-# Validate all tracked markdown files in the repository
 node scripts/cogentia.js frontmatter verify
-
-# Enforce strict document_role canonical validation
 node scripts/cogentia.js frontmatter verify path/to/document.md --strict-role
-
-# Scaffold a new compliant document skeleton (or prepend to bare markdown)
 node scripts/cogentia.js frontmatter scaffold path/to/new-doc.md --title "Title" --role operational --lang en
-
-# Inspect repairable metadata omissions and propose a dry-run plan
 node scripts/cogentia.js frontmatter plan --fix [paths...]
-node scripts/cogentia.js frontmatter plan --fix [paths...] --json
-
-# Safely apply mechanical repairs with preflight hash verification
 node scripts/cogentia.js frontmatter apply --fix [paths...]
 ```
 
 Underlying modular library: [`scripts/lib/frontmatter-validator.js`](../scripts/lib/frontmatter-validator.js).
 
+The validator enforces minimum shared invariants. It must not turn absence from the shared vocabulary into a blanket invalidation of meaningful local fields.
+
 ---
 
 ## Notes
 
-- This schema is designed to be **readable by humans and AI agents**.
-- It seeks a balance between formal structure and natural-language expressiveness.
-- It is explicitly designed to remain **evolvable** without excessively disruptive changes.
+- The schema is designed to be readable by humans and AI agents.
+- It balances formal structure with natural-language expressiveness.
+- It is explicitly evolvable without excessively disruptive changes.
 
 ### Accelerating the Ingestion of New Repositories
 
-To accelerate the onboarding of a new repository:
+1. Identify structural files such as `index.md`, `concepts.md`, and `corpus-status.md` and apply only the light maintenance treatment that is actually useful.
+2. Run migration/scanning in dry-run mode first.
+3. Remove genuinely deprecated fields mechanically where safe.
+4. Group unfamiliar fields by similarity **without treating unfamiliarity as invalidity**.
+5. Preserve meaningful local names while semantics are being learned.
+6. When recurrence reveals a stable cross-document concept, propose documentation, synonym mapping, or promotion to shared vocabulary.
+7. Use `x-` only where an explicit extension namespace adds information.
+8. Do not normalize everything in one pass. Traceability and factual correctness take priority over uniformity.
 
-- Begin by identifying structural files such as [`index.md`](../research/index.md), [`concepts.md`](../research/concepts.md), and [`corpus-status.md`](../research/corpus-status.md), then apply a light and consistent treatment—usually `creator`, the base fields, and `working-paper`.
-- Do not attempt complete semantic normalization during the first pass. The first pass should remove legacy fields and prefix recurring experimental clusters with `x-`.
-- Use the patterns documented in [`frontmatter-synonym-mapping.md`](frontmatter-synonym-mapping.md), particularly the “Patterns Observed During Ingestion” section.
-
-The objective is for every newly ingested repository to make subsequent ingestions more mechanical.
+The objective is for ingestion to become increasingly mechanical where semantics are stable while remaining deliberately permissive where the Corpus is still learning its own vocabulary.
 
 ---
 
