@@ -56,6 +56,10 @@ import {
   formatRepairsPlan,
   formatRepairsApply,
 } from "./lib/frontmatter-validator.js";
+import {
+  validatePossibleMatrixFile,
+  formatPossibleMatrixValidation,
+} from "./lib/possible-matrix-validator.js";
 
 const COGENTIA_VERSION = "0.3.0";
 const VERSION = "3.0.0";
@@ -411,6 +415,8 @@ async function main() {
       return cmdClassify(argv.shift() || "plan");
     case "frontmatter":
       return cmdFrontmatter(argv.shift() || "schema");
+    case "possible-matrix":
+      return cmdPossibleMatrix(argv.shift() || "validate");
     case "index":
       return cmdIndex(argv.shift() || "status");
     case "embeddings":
@@ -445,6 +451,28 @@ async function main() {
     default:
       throw new Error(`Unknown command "${command}". Run: node scripts/cogentia.js help`);
   }
+}
+
+function cmdPossibleMatrix(subcommand) {
+  if (subcommand !== "validate" && subcommand !== "check") {
+    throw new Error(`Unknown possible-matrix subcommand "${subcommand}". Use validate or check.`);
+  }
+
+  const schemaPath = valueFlag("--schema");
+  const checkSource = !takeFlag("--no-source-check");
+  const targetPath = argv.shift();
+
+  if (!targetPath) {
+    throw new Error("Usage: node scripts/cogentia.js possible-matrix validate <matrix.yaml> [--schema <path>] [--no-source-check] [--json]");
+  }
+
+  const report = validatePossibleMatrixFile(targetPath, {
+    schemaPath,
+    checkSource,
+  });
+
+  if (!report.ok) process.exitCode = 1;
+  return output(report, formatPossibleMatrixValidation(report));
 }
 
 function cmdFrontmatter(subcommand) {
@@ -614,6 +642,12 @@ Core commands:
                            Flags: --repo <name>, --view public|private,
                            --include-generated, --include-aliases,
                            --include-ambiguous, --fix-conflicts.
+  possible-matrix validate <path>
+                           Validate a machine-readable longitudinal Possible Matrix
+                           against schemas/possible-matrix.v0.schema.json, graph
+                           invariants, and its source-projection blob.
+                           Alias: possible-matrix check.
+                           Flags: --schema <path> --no-source-check --json
   frontmatter schema       Print the canonical frontmatter vocabulary from
                            docs/frontmatter-schema.v0.1.json.
   frontmatter verify [paths]
