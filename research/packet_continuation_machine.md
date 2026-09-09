@@ -450,6 +450,43 @@ SHOULD execute an already-authorized, non-impacting read directly; where the
 step is effectful, costly beyond the envelope, disclosive, or otherwise gated,
 it SHOULD surface the exact action and request only the missing authority.
 
+The principle has a hard boundary:
+
+> **Prediction is not permission. Preparation is not execution. No external
+> side effect is authorized merely because it is the obvious continuation.**
+
+For effectful transitions, the machine therefore requires a two-phase
+authorization boundary:
+
+```text
+prepare(effect, target, payload)
+→ expose(effect, target, material_payload)
+→ authorize(Principal, effect, target, payload_identity)
+→ execute
+→ verify
+```
+
+An authorization is scoped to the exposed effect and is invalidated by a
+material target or payload change. Unless a bounded batch mandate explicitly
+says otherwise, execution consumes the authorization.
+
+Narrative intent (`we will send`, `we are going to publish`), plan approval,
+draft approval, urgency, low apparent risk, reversibility, or prior similar
+authorization are machine-invalid substitutes for the execution gate.
+
+This yields an additional invariant:
+
+```text
+Tool availability
+≠ authorization
+Authorization
+≠ execution
+Predicted continuation
+≠ authorization
+Prepared payload
+≠ execution authorization
+```
+
 `read_only` is not synonymous with `free` or `consequence-free`. Retrieval may
 consume compute, quota, privacy budget, scarce human attention, or cause
 provider-visible side effects. Autonomy can increase as consequence decreases,
