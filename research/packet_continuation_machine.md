@@ -1,10 +1,10 @@
 ---
 title: "Packet/Continuation Machine — distributed branching computation model"
 author: "Jean Hugues Noël Robert, baron Mariani"
-date: "2026-08-23"
+date: "2026-09-09"
 last_modified_at: "2026-09-04"
 status: "working-note"
-version: "0.4"
+version: "0.5"
 license: "CC BY-SA 4.0"
 language: "en"
 repository: "JeanHuguesRobert/cogentia"
