@@ -51,7 +51,7 @@ must update both artifacts in the same change.
 ## General Rules
 
 - All substantive documents—research, specifications, and important notes—must carry frontmatter.
-- Every tracked corpus document must carry minimum traceability metadata, regardless of repository or directory. Missing information must be declared explicitly (`unknown`, `unreviewed`, or `[]`), never filled by assumption.
+- Every tracked corpus document must carry minimum traceability metadata, regardless of repository or directory. Missing information must be declared explicitly (`unknown`, `unreviewed`, `[]`, or a field-specific `null`), never filled by assumption.
 - Default values should be preferred to reduce writing overhead.
 - Synonyms are tolerated **if and only if** an equivalence rule is documented in [`frontmatter-synonym-mapping.md`](frontmatter-synonym-mapping.md).
 - `privacy` defaults to `public`. It only needs to be specified when the document falls outside that regime.
@@ -71,7 +71,7 @@ must update both artifacts in the same change.
 | `author`             | string                | —                                    | Yes       | Known human author, otherwise `unknown` |
 | `creator`            | string                | "Jean Hugues Noël Robert, baron Mariani" | No | Use when production is predominantly or entirely mechanical. Equivalence rule: `author` and `creator` are not automatically equivalent. |
 | `affiliation`        | string                | "Institut Mariani / C.O.R.S.I.C.A., 1 cours Paoli, F-20250 Corte, Corsica" | Yes | — |
-| `date`               | string (ISO 8601)     | —                                    | Yes       | Primary semantic date, otherwise `unknown` |
+| `date`               | ISO 8601 string or `null` | —                                 | Yes       | Primary semantic date; use `null` when unknown, never `unknown` |
 | `last_modified_at`   | string (ISO 8601)     | —                                    | No        | Date of the latest actual modification |
 | `license`            | string                | "CC BY-SA 4.0"                       | Yes       | — |
 | `language`           | string                | "fr"                                 | Yes       | — |
@@ -144,6 +144,15 @@ review:
 ### 4. Navigation & Publication (Jekyll)
 
 Standard Jekyll fields such as `layout`, `permalink`, `nav_order`, `parent`, and `has_children` remain permitted.
+
+`date` is also a Jekyll-reserved typed field. The #168 GitHub Pages Reality Test
+showed that `date: unknown` and `date: "unknown"` pass YAML parsing but fail
+Jekyll's date consumer. Preserve epistemic absence as `date: null` at the
+top level; the Corpus may continue to use `provenance.origin_date: unknown`,
+whose semantics are distinct and which Jekyll does not consume as a document
+date. `frontmatter verify/check` rejects a non-ISO, non-null top-level `date`,
+and `frontmatter plan/apply --fix` mechanically repairs only the `unknown`
+sentinel to `null` without inventing a date.
 
 ### 5. Semantics & Future Traceability (preparation for Solid / Linked Data)
 

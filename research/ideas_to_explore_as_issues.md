@@ -18,7 +18,7 @@ classification_source: cogentia.js
 classification_version: '1'
 classification_rule: working-note
 classification_confidence: medium
-date: unknown
+date: "2026-05-31"
 provenance:
   origin_type: unknown
   origin_repository: unknown

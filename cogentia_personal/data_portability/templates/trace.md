@@ -26,7 +26,7 @@ classification_version: '1'
 classification_rule: template
 classification_confidence: strong
 author: unknown
-date: unknown
+date: "2026-06-11"
 provenance:
   origin_type: unknown
   origin_repository: unknown

@@ -8,7 +8,7 @@ classification_version: '1'
 classification_rule: data-portability
 classification_confidence: medium
 author: unknown
-date: unknown
+date: "2026-06-12"
 provenance:
   origin_type: unknown
   origin_repository: unknown

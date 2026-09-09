@@ -18,7 +18,7 @@ related:
 checkpoint_policy: human-final-word
 visibility: public-source-unless-sensitive
 author: unknown
-date: unknown
+date: "2026-07-04"
 provenance:
   origin_type: unknown
   origin_repository: unknown

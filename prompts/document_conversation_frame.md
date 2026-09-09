@@ -23,7 +23,7 @@ last_stamped_at: 2026-06-06T00:00:00.000Z
 changelog:
   - v0.1 (2026-06-05) — seed contract for structured document-production conversations.
   - v0.2 (2026-06-06) — added standard document header requirements, clickable-reference rule outside frontmatter, and update-method link requirements.
-date: unknown
+date: "2026-06-06"
 provenance:
   origin_type: unknown
   origin_repository: unknown

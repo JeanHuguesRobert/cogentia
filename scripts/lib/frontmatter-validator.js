@@ -83,6 +83,13 @@ function isStatusTokenValid(token, baseVocabulary) {
   return baseVocabulary.some(b => basePart === b || basePart.startsWith(b));
 }
 
+function isJekyllSafeDate(value) {
+  if (value instanceof Date) return !Number.isNaN(value.getTime());
+  if (typeof value !== "string") return false;
+  const normalized = value.trim();
+  return /^\d{4}-\d{2}-\d{2}(?:T[^\s]+)?$/.test(normalized) && !Number.isNaN(Date.parse(normalized));
+}
+
 /**
  * Validate parsed frontmatter against the canonical Cogentia schema.
  * @param {object} data - Parsed YAML object
@@ -103,9 +110,15 @@ export function validateFrontmatter(data, schema = null, options = {}) {
   // 1. Core required fields
   const coreRequired = s.field_groups?.core?.required || [];
   for (const field of coreRequired) {
-    if (data[field] === undefined || data[field] === null || data[field] === "") {
+    if (data[field] === undefined || data[field] === "" || (data[field] === null && field !== "date")) {
       errors.push(`Missing core required field: '${field}'`);
     }
+  }
+
+  // Jekyll treats top-level `date` as a typed value. Null expresses an unknown
+  // document date without passing an invalid sentinel to that external consumer.
+  if (data.date !== undefined && data.date !== null && !isJekyllSafeDate(data.date)) {
+    errors.push("Field 'date' must be an ISO 8601 date/datetime or null; use null when the document date is unknown (Jekyll compatibility)");
   }
 
   // 2. Traceability required fields
@@ -591,9 +604,12 @@ export function planFrontmatterRepairs(paths, options = {}) {
       data.language = inferLanguage(content);
       repairs.push("add_default:language");
     }
-    if (data.date === undefined || data.date === null || data.date === "") {
+    if (data.date === undefined || data.date === "") {
       data.date = new Date().toISOString().slice(0, 10);
       repairs.push("add_default:date");
+    } else if (typeof data.date === "string" && data.date.trim().toLowerCase() === "unknown") {
+      data.date = null;
+      repairs.push("normalize_jekyll_date_unknown_to_null");
     }
 
     // Traceability defaults
@@ -789,4 +805,3 @@ export function formatRepairsApply(result) {
   }
   return lines.join("\n");
 }
-

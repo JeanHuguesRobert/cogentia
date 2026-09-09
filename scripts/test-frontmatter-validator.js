@@ -89,6 +89,25 @@ assert.ok(schema.status.base_vocabulary.includes("stable"));
   assert.equal(res.valid, true, `Expected valid, got errors: ${res.errors.join("; ")}`);
   assert.equal(res.errors.length, 0);
 
+  // Top-level dates must be safe for Jekyll, while provenance retains its own unknown semantics.
+  const unknownDate = validateFrontmatter({ ...validDoc, date: "unknown" }, schema);
+  assert.equal(unknownDate.valid, false);
+  assert.ok(unknownDate.errors.some(e => e.includes("Jekyll compatibility")));
+  const quotedUnknownValue = extractFrontmatter('---\ndate: "unknown"\n---').data.date;
+  const quotedUnknownDate = validateFrontmatter({ ...validDoc, date: quotedUnknownValue }, schema);
+  assert.equal(quotedUnknownDate.valid, false);
+  assert.ok(quotedUnknownDate.errors.some(e => e.includes("Jekyll compatibility")));
+  const nullDate = validateFrontmatter({ ...validDoc, date: null }, schema);
+  assert.equal(nullDate.valid, true, `Null date must be valid: ${nullDate.errors.join("; ")}`);
+  const isoDate = validateFrontmatter({ ...validDoc, date: "2026-09-09" }, schema);
+  assert.equal(isoDate.valid, true);
+  const unknownProvenanceDate = validateFrontmatter({
+    ...validDoc,
+    date: null,
+    provenance: { ...validDoc.provenance, origin_date: "unknown" },
+  }, schema);
+  assert.equal(unknownProvenanceDate.valid, true);
+
   // Missing core required fields
   const missingCore = validateFrontmatter({ ...validDoc, title: undefined, author: "" }, schema);
   assert.equal(missingCore.valid, false);
@@ -337,6 +356,38 @@ Body content here.
     assert.ok(change.repairs.some(r => r.includes("add_block:review")));
     assert.ok(change.repairs.some(r => r.includes("add_block:provenance")));
 
+    // The Pages failure form is mechanical: preserve unknown provenance but
+    // normalize only the top-level Jekyll date sentinel to null.
+    const jekyllDateDoc = path.join(tmpDir, "jekyll-date-unknown.md");
+    fs.writeFileSync(jekyllDateDoc, `---
+title: Jekyll date regression
+author: Jean Hugues Noël Robert
+affiliation: Institut Mariani
+date: "unknown"
+license: CC BY-SA 4.0
+language: en
+document_role: operational
+status: working-paper
+update_policy: UP-DEFAULT-REVIEWED
+provenance:
+  origin_type: unknown
+  origin_repository: unknown
+  origin_ref: unknown
+  origin_date: unknown
+  derived_from: []
+review:
+  status: unreviewed
+  reviewed_by: []
+---
+`, "utf8");
+    const jekyllPlan = planFrontmatterRepairs([jekyllDateDoc]);
+    assert.equal(jekyllPlan.changes_count, 1);
+    assert.ok(jekyllPlan.changes[0].repairs.includes("normalize_jekyll_date_unknown_to_null"));
+    assert.match(jekyllPlan.changes[0].new_content, /date: null/);
+    assert.match(jekyllPlan.changes[0].new_content, /origin_date: unknown/);
+    assert.equal(applyFrontmatterRepairs(jekyllPlan).ok, true);
+    assert.equal(validateFrontmatterPaths([jekyllDateDoc]).ok, true);
+
     // Content was not yet modified on disk during plan
     assert.equal(fs.readFileSync(defectiveDoc, "utf8"), defectiveContent);
 
@@ -436,4 +487,3 @@ status: working-paper
 }
 
 console.log("All frontmatter-validator tests passed successfully!");
-

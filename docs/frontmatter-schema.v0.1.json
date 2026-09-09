@@ -6,7 +6,7 @@
   "synonym_mapping": "docs/frontmatter-synonym-mapping.md",
   "update_policy_registry": "docs/update-policy-registry.md",
   "principles": {
-    "unknown_values": "Declare missing information explicitly as unknown, unreviewed, or an empty list; never infer it.",
+    "unknown_values": "Declare missing information explicitly as unknown, unreviewed, an empty list, or field-specific null; never infer it. A top-level document date unknown to the Corpus is represented as null because Jekyll consumes date as a typed field; provenance.origin_date may remain unknown.",
     "privacy": "Public by default; specify privacy only when the document is outside that regime.",
     "extensions": "Unregistered extension fields must use the x- prefix.",
     "synonyms": "Synonyms are accepted only when documented by the synonym mapping.",
@@ -36,7 +36,8 @@
         "language": null
       },
       "rules": {
-        "language": "Required. Describe the actual document language; select it from audience, function, and target scene. Do not apply a corpus-wide default mechanically."
+        "language": "Required. Describe the actual document language; select it from audience, function, and target scene. Do not apply a corpus-wide default mechanically.",
+        "date": "Required. Use an ISO 8601 date/datetime when known; use null when the top-level document date is unknown. Do not use unknown: Jekyll consumes this field as a typed date. This rule does not change provenance.origin_date."
       }
     },
     "traceability": {

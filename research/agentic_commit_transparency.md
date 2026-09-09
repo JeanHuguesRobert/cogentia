@@ -14,7 +14,7 @@ version: 0.1
 last_stamped_at: 2026-07-15T00:00:00.000Z
 canonical_url: https://github.com/JeanHuguesRobert/cogentia/blob/main/research/agentic_commit_transparency.md
 author: unknown
-date: unknown
+date: "2026-07-15"
 provenance:
   origin_type: unknown
   origin_repository: unknown

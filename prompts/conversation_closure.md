@@ -21,7 +21,7 @@ related_research:
 agent_neutral: true
 human_validation_required: true
 last_stamped_at: 2026-06-17T00:00:00.000Z
-date: unknown
+date: "2026-06-09"
 provenance:
   origin_type: unknown
   origin_repository: unknown

@@ -14,7 +14,7 @@ visibility: public
 public_presence: full
 trace_level: standard
 author: unknown
-date: unknown
+date: "2026-06-28"
 provenance:
   origin_type: unknown
   origin_repository: unknown
