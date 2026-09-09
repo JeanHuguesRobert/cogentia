@@ -8,28 +8,15 @@
   "principles": {
     "unknown_values": "Declare missing information explicitly as unknown, unreviewed, an empty list, or field-specific null; never infer it. A top-level document date unknown to the Corpus is represented as null because Jekyll consumes date as a typed field; provenance.origin_date may remain unknown.",
     "privacy": "Public by default; specify privacy only when the document is outside that regime.",
-    "extensions": "Unregistered extension fields must use the x- prefix.",
+    "extensions": "Unregistered fields may remain under their natural, meaningful names while their semantics are still local or evolving. The x- prefix is optional and reserved for cases where explicitly marking an extension boundary is useful; it must not be added mechanically merely because a field is not yet registered.",
     "synonyms": "Synonyms are accepted only when documented by the synonym mapping.",
     "language_selection": "Language is mandatory and audience/function/scene dependent: technical infrastructure, protocols, specifications, schemas, agent instructions, and international research normally use English; Corsican, territorial, political, electoral, local, family, and audience-specific public products normally use French unless their intended audience requires another language. Ask before drafting when classification is ambiguous."
   },
   "field_groups": {
     "core": {
-      "required": [
-        "title",
-        "author",
-        "affiliation",
-        "date",
-        "license",
-        "language"
-      ],
-      "recommended": [
-        "description"
-      ],
-      "optional": [
-        "subtitle",
-        "creator",
-        "last_modified_at"
-      ],
+      "required": ["title", "author", "affiliation", "date", "license", "language"],
+      "recommended": ["description"],
+      "optional": ["subtitle", "creator", "last_modified_at"],
       "defaults": {
         "affiliation": "Institut Mariani / C.O.R.S.I.C.A., 1 cours Paoli, F-20250 Corte, Corsica",
         "license": "CC BY-SA 4.0",
@@ -41,58 +28,24 @@
       }
     },
     "traceability": {
-      "required": [
-        "status",
-        "update_policy",
-        "provenance",
-        "review"
-      ],
+      "required": ["status", "update_policy", "provenance", "review"],
       "conditionally_required": {
         "canonical_url": "Required for substantive documents.",
         "last_stamped_at": "Generated automatically; use unknown until a document has been stamped.",
         "generated_by": "Required when production is entirely automated."
       },
-      "optional": [
-        "version",
-        "methodology",
-        "generated_by",
-        "ai_assisted_by",
-        "reviewed_by",
-        "human_arbitration_by",
-        "version_history"
-      ],
-      "defaults": {
-        "update_policy": "UP-DEFAULT-REVIEWED"
-      }
+      "optional": ["version", "methodology", "generated_by", "ai_assisted_by", "reviewed_by", "human_arbitration_by", "version_history"],
+      "defaults": {"update_policy": "UP-DEFAULT-REVIEWED"}
     },
     "documentary_provenance": {
-      "optional": [
-        "source_document",
-        "additional_sources",
-        "derived_from"
-      ],
+      "optional": ["source_document", "additional_sources", "derived_from"],
       "rules": {
         "source_document": "Use only when a clear primary source document exists.",
         "derived_from": "Tolerated synonym of source_document at the document level; distinct from provenance.derived_from."
       }
     },
     "semantics": {
-      "optional": [
-        "webid",
-        "rights",
-        "tags",
-        "privacy",
-        "related_documents",
-        "related_projects",
-        "document_role",
-        "derivation_mode",
-        "adapted_products",
-        "purpose",
-        "adaptation_context",
-        "target_audience",
-        "target_scene",
-        "document_function"
-      ],
+      "optional": ["webid", "rights", "tags", "privacy", "related_documents", "related_projects", "document_role", "derivation_mode", "adapted_products", "purpose", "adaptation_context", "target_audience", "target_scene", "document_function"],
       "rules": {
         "target_audience": "Recommended for derived products; intended readers or users.",
         "target_scene": "Recommended for derived products; e.g. technical, academic, political, electoral, local, public, internal.",
@@ -100,31 +53,13 @@
       }
     },
     "publication": {
-      "optional": [
-        "layout",
-        "permalink",
-        "nav_order",
-        "parent",
-        "has_children"
-      ]
+      "optional": ["layout", "permalink", "nav_order", "parent", "has_children"]
     }
   },
   "required_blocks": {
     "provenance": {
-      "required": [
-        "origin_type",
-        "origin_repository",
-        "origin_ref",
-        "origin_date",
-        "derived_from"
-      ],
-      "origin_type_vocabulary": [
-        "repository",
-        "external-repository",
-        "generated",
-        "conversation",
-        "unknown"
-      ],
+      "required": ["origin_type", "origin_repository", "origin_ref", "origin_date", "derived_from"],
+      "origin_type_vocabulary": ["repository", "external-repository", "generated", "conversation", "unknown"],
       "template": {
         "origin_type": "unknown",
         "origin_repository": "unknown",
@@ -132,30 +67,15 @@
         "origin_date": "unknown",
         "derived_from": []
       },
-      "rules": {
-        "origin_ref": "Must be immutable or externally verifiable; a current branch name alone is insufficient."
-      }
+      "rules": {"origin_ref": "Must be immutable or externally verifiable; a current branch name alone is insufficient."}
     },
     "review": {
-      "required": [
-        "status",
-        "reviewed_by"
-      ],
-      "template": {
-        "status": "unreviewed",
-        "reviewed_by": []
-      }
+      "required": ["status", "reviewed_by"],
+      "template": {"status": "unreviewed", "reviewed_by": []}
     }
   },
   "status": {
-    "base_vocabulary": [
-      "draft",
-      "working-paper",
-      "stable",
-      "under-review",
-      "deprecated",
-      "superceded"
-    ],
+    "base_vocabulary": ["draft", "working-paper", "stable", "under-review", "deprecated", "superceded"],
     "allows_multiple": true,
     "allows_natural_language_qualifier": true
   },
@@ -173,12 +93,5 @@
     "licence_or_spdx-license-identifier": "license",
     "lang": "language"
   },
-  "deprecated_fields": [
-    "repository",
-    "path",
-    "intended_path",
-    "canonical_path",
-    "canonical_slug",
-    "repository_candidate"
-  ]
+  "deprecated_fields": ["repository", "path", "intended_path", "canonical_path", "canonical_slug", "repository_candidate"]
 }
