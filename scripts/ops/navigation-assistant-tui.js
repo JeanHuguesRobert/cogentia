@@ -708,7 +708,7 @@ function render(state) {
   if (state.eventExport) lines.push(`Séquence : ${state.eventExport}`);
   const last = state.diagnostics.at(-1);
   if (last) lines.push(`Trace    : #${last.sequence} ${last.level}/${last.code} - ${last.message}`);
-  lines.push("", "Journal vivant : GET /diagnostics?limit=100  (circulaire, mémoire seule). Aucun envoi automatique. [r] redémarrer  [q] quitter.");
+  lines.push("", "Journal vivant : GET /diagnostics?limit=100  (circulaire, mémoire seule). Aucun envoi automatique.");
   state.panel.setContent(lines.join("\n"));
   state.screen.render();
 }
