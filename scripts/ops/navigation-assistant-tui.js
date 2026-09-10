@@ -700,7 +700,7 @@ function render(state) {
   }
   lines.push(`Onglet   : ${target?.title || "(aucun)"}`, `Lieu     : ${tabSiteLabel(target?.url)}`);
   const active = state.extensionContext?.activeField || page?.activeElement;
-  lines.push(`Champ    : ${active ? `${active.tag} ${active.role || ""} ${active.ariaLabel || ""}`.trim() : "(aucun)"}`, "-".repeat(62), "Actions : [h]/[l] cible  [[] début démo  []] fin démo  [c] contexte  [i] insérer  [p] presse-papiers → draft_out  [e] exporter  [q] redémarrer  [x] quitter");
+  lines.push(`Champ    : ${active ? `${active.tag} ${active.role || ""} ${active.ariaLabel || ""}`.trim() : "(aucun)"}`, "-".repeat(62), "Actions : [h]/[l] cible  [[] début démo  []] fin démo  [c] contexte  [i] insérer  [p] presse-papiers → draft_out  [e] exporter  [r] redémarrer  [q] quitter");
   if (state.error) lines.push(`Erreur   : ${state.error}`);
   if (state.clipboard) lines.push(`Presse-papiers : ${state.clipboard}`);
   if (state.recording) lines.push(`Démonstration : en cours depuis #${state.recording.startSequence}`);
@@ -708,7 +708,7 @@ function render(state) {
   if (state.eventExport) lines.push(`Séquence : ${state.eventExport}`);
   const last = state.diagnostics.at(-1);
   if (last) lines.push(`Trace    : #${last.sequence} ${last.level}/${last.code} - ${last.message}`);
-  lines.push("", "Journal vivant : GET /diagnostics?limit=100  (circulaire, mémoire seule). Aucun envoi automatique. [q] redémarrer  [x] quitter.");
+  lines.push("", "Journal vivant : GET /diagnostics?limit=100  (circulaire, mémoire seule). Aucun envoi automatique. [r] redémarrer  [q] quitter.");
   state.panel.setContent(lines.join("\n"));
   state.screen.render();
 }
@@ -889,9 +889,9 @@ export async function runTui() {
         resolve({ restartRequested: state.restartRequested });
     };
     state.shutdown = shutdown;
-    screen.key("q", () => requestAssistantRestart(state));
-    screen.key(["x", "C-c"], () => requestAssistantQuit(state));
-    screen.key(["c", "r"], async () => {
+    screen.key("r", () => requestAssistantRestart(state));
+    screen.key(["q", "C-c"], () => requestAssistantQuit(state));
+    screen.key("c", async () => {
       if (!state.closed) {
         requestContextRefresh(state);
       }

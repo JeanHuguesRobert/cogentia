@@ -28,14 +28,14 @@ pnpm navigation-assistant
 ```
 
 For a supervised development session, use `pnpm navigation-assistant:supervisor`.
-It restarts the TUI after a non-zero exit. In the TUI, `q` requests that
-restart; `x` or `Ctrl+C` stops the supervisor cleanly.
+It restarts the TUI after a non-zero exit. In the TUI, `r` requests that
+restart; `q` or `Ctrl+C` stops the supervisor cleanly.
 
 The resident TUI refreshes the selected tab, title, URL, and active field. Put
 the draft in `.\draft.txt`, focus the intended editable field, then press `i`
 to insert it. The TUI uses optimistic locking: if the page, field, or selection
 changed since the displayed context, insertion is refused. Press `c` or `r` to
-refresh, `t` to reset the selected tab, `q` to restart, and `x` to quit. The
+refresh, `t` to reset the selected tab, `r` to restart, and `q` to quit. The
 low-level one-shot CLI remains available for scripts and diagnostics:
 
 Prepare the local Brave extension with:
@@ -73,8 +73,8 @@ versions.
 `GET /diagnostics` returns the recent extension and bridge events.
 `POST /control/refresh` asks the extension to re-announce the active tab
 without restarting the resident process. `POST /stop` (aliases `POST /control/stop`, `POST /control/restart`)
-restarts the resident process, equivalent to `q`. `POST /quit` (alias
-`POST /control/quit`) stops it cleanly, equivalent to `x`.
+restarts the resident process, equivalent to `r`. `POST /quit` (alias
+`POST /control/quit`) stops it cleanly, equivalent to `q`.
 `POST /control/reload-extension` asks the unpacked extension to reload itself.
 `POST /control/evaluate` with `{"expression":"..."}` sends JavaScript to the
 minimal extension bridge for execution in the active page and exposes the
