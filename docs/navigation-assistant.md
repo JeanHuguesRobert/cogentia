@@ -34,7 +34,7 @@ restart; `q` or `Ctrl+C` stops the supervisor cleanly.
 The resident TUI refreshes the selected tab, title, URL, and active field. Put
 the draft in `.\draft.txt`, focus the intended editable field, then press `i`
 to insert it. The TUI uses optimistic locking: if the page, field, or selection
-changed since the displayed context, insertion is refused. Press `c` or `r` to
+changed since the displayed context, insertion is refused. Press `c` to
 refresh, `t` to reset the selected tab, `r` to restart, and `q` to quit. The
 low-level one-shot CLI remains available for scripts and diagnostics:
 
