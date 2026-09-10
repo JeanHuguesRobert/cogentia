@@ -131,6 +131,9 @@ exports precisely that marked interval (including its start/end markers) to
 sequence. Those brackets are scheduled to become **hints** for episode
 detection rather than the exclusive cut used to build macros — see
 [`research/navigation_assistant_episode_hints.md`](../research/navigation_assistant_episode_hints.md).
+Whether a slice is worth turning into a macro is a separate, operator-activated
+**judgment** (continuation, not a hidden model call in the TUI):
+[`research/navigation_assistant_macro_opportunity.md`](../research/navigation_assistant_macro_opportunity.md).
 All endpoints are loopback-only.
 
 ## Hosted Browser (same protocol, later extension)

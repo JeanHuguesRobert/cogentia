@@ -36,5 +36,10 @@ behavioural unit, not a keypress sandwich.
 Macro discovery continues to prefer accessibility signatures (role, name,
 ARIA, `data-testid`, native field metadata) over coordinates or volatile CSS.
 
+Segmenting episodes is not the same as deciding a **macro is worth
+proposing**. That second step is operator-activated **judgment** over the
+journal (typically an AI handler, with an explicit continuation contract):
+[`navigation_assistant_macro_opportunity.md`](navigation_assistant_macro_opportunity.md).
+
 This is not implemented yet. Until it is, `[` / `]` remain hard cuts in the
 TUI so current exports stay reproducible.
