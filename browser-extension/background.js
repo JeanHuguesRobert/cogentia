@@ -229,6 +229,13 @@ chrome.debugger.onDetach.addListener((source, reason) => {
 });
 chrome.debugger.onEvent.addListener((source, method, params) => {
   if (method !== "Runtime.bindingCalled" || params.name !== "CogentiaBridgeEvent") return;
-  try { notify("page.event", { tabId: source.tabId, event: JSON.parse(params.payload) }); }
-  catch { notify("page.event", { tabId: source.tabId, event: { type: "invalid", payload: params.payload } }); }
+  try { notify("page.event", { tabId: source.tabId, event: JSON.parse(params.payload), via: "debugger" }); }
+  catch { notify("page.event", { tabId: source.tabId, event: { type: "invalid", payload: params.payload }, via: "debugger" }); }
+});
+
+chrome.runtime.onMessage.addListener((message, sender) => {
+  if (message?.type !== "cogentia.page.event" || !message.event) return;
+  const tabId = sender.tab?.id;
+  if (!tabId) return;
+  notify("page.event", { tabId, event: message.event, via: "content-script" });
 });

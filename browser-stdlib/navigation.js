@@ -36,7 +36,7 @@
       testid: element.getAttribute("data-testid"),
       ariaLabel: element.getAttribute("aria-label"),
       aria,
-      accessibleName: aria["aria-label"] || textByIds(aria["aria-labelledby"]) || nativeLabel || element.getAttribute("alt") || element.getAttribute("title") || element.getAttribute("placeholder") || element.innerText?.trim().slice(0, 240) || "",
+      accessibleName: aria["aria-label"] || textByIds(aria["aria-labelledby"]) || nativeLabel || element.getAttribute("alt") || element.getAttribute("title") || element.getAttribute("placeholder") || "",
       placeholder: element.getAttribute("placeholder"),
       inputType: element.getAttribute("type"),
       contentEditable: Boolean(element.isContentEditable),
@@ -45,7 +45,7 @@
   }
 
   const api = {
-    version: "0.2.1",
+    version: "0.2.2",
     // Adapters are intentionally extensible while the generic API itself is
     // frozen. Site-specific code must not mutate generic capabilities.
     adapters: Object.create(null),
@@ -75,12 +75,36 @@
     visibleText(limit = 12000) { return (document.body?.innerText || "").slice(0, limit); },
     observe() {
       if (window.__cogentiaNavigationObserved) return;
+      if (document.documentElement?.getAttribute("data-cogentia-observed") === "content") {
+        window.__cogentiaNavigationObserved = true;
+        return;
+      }
       window.__cogentiaNavigationObserved = true;
-      const emit = (type, extra = {}) => window.CogentiaBridgeEvent?.(JSON.stringify({ type, context: api.context(), ...extra }));
-      document.addEventListener("focusin", (event) => emit("focusChanged", { relatedTarget: elementSignature(event.relatedTarget) }), true);
-      document.addEventListener("selectionchange", () => emit("selectionChanged"));
+      document.documentElement?.setAttribute("data-cogentia-observed", "stdlib");
+      const emit = (type, extra = {}) => window.CogentiaBridgeEvent?.(JSON.stringify({ type, context: { ...api.context(), selection: "" }, ...extra }));
+      document.addEventListener("focusin", (event) => emit("focusChanged", { relatedTarget: elementSignature(event.relatedTarget), target: elementSignature(event.target) }), true);
+      let selectionAt = 0;
+      document.addEventListener("selectionchange", () => {
+        const now = Date.now();
+        if (now - selectionAt < 400) return;
+        selectionAt = now;
+        emit("selectionChanged");
+      });
       window.addEventListener("pageshow", () => emit("pageShown"));
-      emit("observing");
+      document.addEventListener("click", (event) => {
+        if (typeof event.button === "number" && event.button !== 0) return;
+        emit("click", { target: elementSignature(event.target), modified: Boolean(event.metaKey || event.ctrlKey || event.altKey || event.shiftKey) });
+      }, true);
+      let inputTimer = 0;
+      document.addEventListener("input", (event) => {
+        const target = event.target;
+        if (!(target instanceof Element) || !api.isEditable(target)) return;
+        clearTimeout(inputTimer);
+        const signature = elementSignature(target);
+        const inputType = typeof event.inputType === "string" ? event.inputType : "input";
+        inputTimer = setTimeout(() => emit("fieldInput", { inputType, editable: true, target: signature }), 400);
+      }, true);
+      emit("observing", { via: "stdlib" });
     },
   };
   // Do not claim a generic page-global name: major sites are free to use it.

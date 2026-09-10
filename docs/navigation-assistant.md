@@ -123,7 +123,11 @@ exits and compacted to the last 50,000 events (`NAV_ASSIST_JOURNAL_PERSIST`).
 `GET /event-sequence` returns the ordered behavioural sequence; `e` writes
 the same local snapshot to `navigation-event-sequence.json` for macro analysis. Page-focus events include an accessibility signature:
 semantic role, accessible name, ARIA relationships and state, `data-testid`,
-native field metadata, and meaningful ancestor roles. Macro discovery should
+native field metadata, and meaningful ancestor roles. Unpacked extension
+`1.0.14+` also records `click` (target signature, no coordinates) and
+coalesced `fieldInput` (typing occurred, not the characters) from a content
+script, without waiting for a TUI context probe. Reload the unpacked
+extension after upgrading. Macro discovery should
 prefer these semantic anchors over screen coordinates or volatile CSS classes.
 In the TUI, `[` starts a manual demonstration and `]` ends it. Afterwards `e`
 exports precisely that marked interval (including its start/end markers) to

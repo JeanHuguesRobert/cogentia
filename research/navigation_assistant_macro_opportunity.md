@@ -115,19 +115,19 @@ Two streams are easy to confuse:
    *asked for*. They duplicate context, they are sparse (a probe when `[c]`,
    on connect, on `[i]`), and they do not reconstruct what the operator did
    between probes.
-2. **Passive page events**, only after a probe injected
-   `window.__cogentiaNavigationAssistant.observe()`:
-   `focusin` → `focusChanged`, `selectionchange`, `pageshow`, plus extension
-   tab events (`page.activeChanged`, `page.navigationStarted/Completed`,
-   window focus). That stream is the real behavioural meat — and it is still
-   a **focus/selection/navigation** log, not a click/key/input log.
+2. **Passive page events** from the unpacked content script
+   (`page-observe.js`, no debugger, no TUI probe required): `focusChanged`,
+   throttled `selectionChanged`, `pageShown`, `click` (target signature, no
+   coordinates), coalesced `fieldInput` (that typing happened, never the
+   text). Tab events remain (`page.activeChanged`,
+   `page.navigationStarted/Completed`, window focus). `accessibleName` does
+   not fall back to `innerText` (that would leak post bodies and drafts).
 
-`observe()` is a side-effect of the context probe, not a recorder that starts
-with the extension. A tab the TUI never probed may have **no** `page.event`
-at all. SPA route changes often skip `pageshow`. Clicks on buttons that do
-not keep focus leave **no** signature. User typing is invisible (no
-`input` / `beforeinput`); only Assistant `insertText` is logged. Scroll,
-hover, submit, file picker, drag, keyboard shortcuts: absent.
+`observe()` in the injected stdlib is a fallback when the content script is
+absent; it skips if `data-cogentia-observed=content` is already set. SPA
+route changes still often skip `pageshow` (tab URL updates still help).
+Scroll, hover, submit, file picker, drag, and keyboard shortcuts remain
+absent.
 
 So a handler can honestly say:
 
@@ -151,9 +151,10 @@ not an Act, still no Send):
 - keep SPA URL changes (`page.navigationCompleted` already helps when the
   tab URL updates).
 
-Until those exist, `[m]` should only claim macros of the **field-focus /
-tab / site** family. Anything else is packaging_failure: insufficient
-trace, not a cleverer model.
+With content-script `click` + `fieldInput`, judgment may also cite **button /
+control signatures** and **that a field was typed in**, still without
+reconstructing a CDP click script. `[m]` remains prepare_only. Scroll,
+hover, and shortcuts are still insufficient trace, not a cleverer model.
 
 ## Activation
 
