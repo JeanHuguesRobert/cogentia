@@ -378,7 +378,7 @@ projection. A skill still does not grant authority.
 4. Episode hints: brackets become priors into the default window.
 5. Only then: a macro *authoring* Act, attenuated under insertion rules.
 
-Until (2), `[` / `]` remain hard cuts for `e` export so current snapshots
+Until (2), `d` / `f` remain hard cuts for `e` export so current snapshots
 stay reproducible.
 
 ## Status

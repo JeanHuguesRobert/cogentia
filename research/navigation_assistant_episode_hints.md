@@ -42,5 +42,5 @@ proposing**. That second step is operator-activated **judgment** over the
 journal (typically an AI handler, with an explicit continuation contract):
 [`navigation_assistant_macro_opportunity.md`](navigation_assistant_macro_opportunity.md).
 
-This is not implemented yet. Until it is, `[` / `]` remain hard cuts in the
+This is not implemented yet. Until it is, `d` / `f` remain hard cuts in the
 TUI so current exports stay reproducible.
