@@ -1,0 +1,80 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/JeanHuguesRobert/cogentia/blob/main/schemas/navigation.macro-opportunity.v0.schema.json",
+  "title": "Navigation assistant macro-opportunity step_result",
+  "description": "Judgment output for cogentia.navigation.macro-opportunity/v0. prepare_only: propose, do not execute.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "type",
+    "continuation_id",
+    "status",
+    "result",
+    "reason",
+    "mandate_basis"
+  ],
+  "properties": {
+    "type": { "const": "step_result" },
+    "continuation_id": { "type": "string", "minLength": 1 },
+    "status": { "enum": ["success", "failed", "needs_acceptance"] },
+    "reason": { "type": "string" },
+    "confidence": { "type": "number", "minimum": 0, "maximum": 1 },
+    "constraints_checked": { "type": "boolean" },
+    "skin_in_the_game_checked": { "type": "boolean" },
+    "mandate_basis": { "const": "prepare_only" },
+    "result": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["opportunity", "episodes", "why"],
+      "properties": {
+        "opportunity": { "enum": ["none", "weak", "worth_proposing"] },
+        "episodes": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/episode" }
+        },
+        "why": { "type": "string" },
+        "caveats": { "type": "array", "items": { "type": "string" } },
+        "needs_tighter_window": { "type": "boolean" }
+      }
+    }
+  },
+  "$defs": {
+    "episode": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["from_sequence", "to_sequence", "summary", "anchors"],
+      "properties": {
+        "from_sequence": { "type": "integer", "minimum": 1 },
+        "to_sequence": { "type": "integer", "minimum": 1 },
+        "origin": { "enum": ["local", "hosted", "unknown"] },
+        "summary": { "type": "string" },
+        "anchors": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/anchor" }
+        },
+        "repetition_hint": { "type": "string" },
+        "caveats": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "anchor": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind"],
+      "properties": {
+        "kind": {
+          "enum": [
+            "role",
+            "accessible_name",
+            "testid",
+            "aria",
+            "native_field",
+            "site",
+            "hint"
+          ]
+        },
+        "value": { "type": "string" },
+        "stable": { "type": "boolean" }
+      }
+    }
+  }
+}
