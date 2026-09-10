@@ -125,7 +125,9 @@ prefer these semantic anchors over screen coordinates or volatile CSS classes.
 In the TUI, `[` starts a manual demonstration and `]` ends it. Afterwards `e`
 exports precisely that marked interval (including its start/end markers) to
 `navigation-event-sequence.json`; without markers, it exports the whole retained
-sequence.
+sequence. Those brackets are scheduled to become **hints** for episode
+detection rather than the exclusive cut used to build macros — see
+[`research/navigation_assistant_episode_hints.md`](../research/navigation_assistant_episode_hints.md).
 All endpoints are loopback-only.
 
 ## Hosted Browser (same protocol, later extension)
