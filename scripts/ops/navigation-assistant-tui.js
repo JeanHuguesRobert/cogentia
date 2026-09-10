@@ -11,6 +11,12 @@ import blessed from "blessed";
 import { WebSocketServer } from "ws";
 import packageJson from "../../package.json" with { type: "json" };
 import { listTabs, readPageContext, selectTab, insertTextInTab, DEFAULT_CDP_ENDPOINT } from "./navigation-assistant.js";
+import { tabSiteLabel, redactTab, showFullTabLocation } from "../lib/navigation-assistant/tab-location.js";
+import { fileURLToPath } from "node:url";
+
+const DRAFT_IN = "draft.txt";
+const DRAFT_OUT = "draft_out.txt";
+const EXTENSION_DIR = fileURLToPath(new URL("../../browser-extension", import.meta.url));
 
 const REFRESH_MS = 1500;
 const BRIDGE_PORT = Number(process.env.NAV_ASSIST_PORT || 8765);
@@ -178,7 +184,7 @@ function startAssistantScript(state, code) {
     }),
     text: Object.freeze({ normalize: normalizeAssistantText, facebookComment: formatFacebookComment }),
     clipboard: Object.freeze({ read: readTextFromClipboard, write: (text) => copyTextToClipboard(normalizeAssistantText(text)) }),
-    draft: Object.freeze({ read: () => fs.readFile(".\\draft.txt", "utf8") }),
+    draft: Object.freeze({ read: () => fs.readFile(DRAFT_IN, "utf8") }),
   });
   recordDiagnostic(state, "info", "assistant-script-started", "Assistant JavaScript task started.", { runId: id, code: codePreview(code) });
   const context = vm.createContext({ assistant, JSON, console: Object.freeze({ log: (...values) => emit("console", values) }) });
@@ -209,35 +215,46 @@ function contextProbeCode(source) {
   return `(() => { try { ${source}\nwindow.__cogentiaNavigationAssistant.observe(); return window.__cogentiaNavigationAssistant.context(); } catch (error) { return { __cogentiaProbeError: { name: error?.name, message: error?.message, stack: error?.stack } }; } })()`;
 }
 
-function copyTextToClipboard(text) {
-  // Keep the payload on stdin: no draft content is interpolated into a shell
-  // command. The assistant is a Windows-local tool, so Set-Clipboard is the
-  // native implementation here.
+function runClipboardCommand(command, args, { input = null } = {}) {
   return new Promise((resolve, reject) => {
-    const child = spawn("powershell.exe", [
-      "-NoProfile",
-      "-NonInteractive",
-      "-Command",
-      "[Console]::InputEncoding = [System.Text.Encoding]::UTF8; Set-Clipboard -Value ([Console]::In.ReadToEnd())",
-    ], { stdio: ["pipe", "ignore", "pipe"], windowsHide: true });
-    let stderr = "";
-    child.stderr.on("data", (chunk) => { stderr += chunk.toString(); });
-    child.on("error", reject);
-    child.on("close", (code) => code === 0 ? resolve() : reject(new Error(stderr.trim() || `Set-Clipboard exited with ${code}`)));
-    child.stdin.end(text, "utf8");
-  });
-}
-
-function readTextFromClipboard() {
-  return new Promise((resolve, reject) => {
-    const child = spawn("powershell.exe", ["-NoProfile", "-NonInteractive", "-Command", "Get-Clipboard -Raw"], { stdio: ["ignore", "pipe", "pipe"], windowsHide: true });
+    const child = spawn(command, args, {
+      stdio: [input === null ? "ignore" : "pipe", "pipe", "pipe"],
+      windowsHide: true,
+      env: process.env,
+    });
     let stdout = "";
     let stderr = "";
     child.stdout.on("data", (chunk) => { stdout += chunk.toString(); });
     child.stderr.on("data", (chunk) => { stderr += chunk.toString(); });
     child.on("error", reject);
-    child.on("close", (code) => code === 0 ? resolve(stdout) : reject(new Error(stderr.trim() || `Get-Clipboard exited with ${code}`)));
+    child.on("close", (code) => code === 0 ? resolve(stdout) : reject(new Error(stderr.trim() || `${command} exited with ${code}`)));
+    if (input !== null) child.stdin.end(input, "utf8");
   });
+}
+
+function copyTextToClipboard(text) {
+  // Keep the payload on stdin: no draft content is interpolated into a shell
+  // command.
+  if (process.platform === "win32") {
+    return runClipboardCommand("powershell.exe", [
+      "-NoProfile",
+      "-NonInteractive",
+      "-Command",
+      "[Console]::InputEncoding = [System.Text.Encoding]::UTF8; Set-Clipboard -Value ([Console]::In.ReadToEnd())",
+    ], { input: text }).then(() => undefined);
+  }
+  if (process.env.WAYLAND_DISPLAY) {
+    return runClipboardCommand("wl-copy", ["--foreground"], { input: text }).then(() => undefined);
+  }
+  return runClipboardCommand("xclip", ["-selection", "clipboard"], { input: text }).then(() => undefined);
+}
+
+function readTextFromClipboard() {
+  if (process.platform === "win32") {
+    return runClipboardCommand("powershell.exe", ["-NoProfile", "-NonInteractive", "-Command", "Get-Clipboard -Raw"]);
+  }
+  if (process.env.WAYLAND_DISPLAY) return runClipboardCommand("wl-paste", ["--no-newline"]);
+  return runClipboardCommand("xclip", ["-selection", "clipboard", "-o"]);
 }
 
 function sendWebSocketText(socket, value) {
@@ -269,7 +286,17 @@ function startBridge(state) {
     }
     if (request.method === "GET" && request.url === "/state") {
       response.writeHead(200, { "content-type": "application/json; charset=utf-8" });
-      response.end(JSON.stringify({ bridge: state.bridgeConnected, target: state.target, extensionContext: state.extensionContext, lastEvaluation: state.lastEvaluation || null, error: state.error }));
+      const extensionContext = state.extensionContext
+        ? { ...state.extensionContext, url: tabSiteLabel(state.extensionContext.url) }
+        : state.extensionContext;
+      response.end(JSON.stringify({
+        bridge: state.bridgeConnected,
+        target: redactTab(state.target),
+        extensionContext,
+        lastEvaluation: state.lastEvaluation || null,
+        error: state.error,
+        locationRedacted: !showFullTabLocation(),
+      }));
       return;
     }
     if (request.method === "GET" && request.url?.startsWith("/diagnostics")) {
@@ -388,7 +415,7 @@ function startBridge(state) {
     }
     if (request.method === "GET" && request.url === "/resource/draft.txt") {
       try {
-        const draft = await fs.readFile(".\\draft.txt", "utf8");
+        const draft = await fs.readFile(DRAFT_IN, "utf8");
         response.writeHead(200, { "content-type": "text/plain; charset=utf-8" });
         response.end(draft);
       } catch (error) {
@@ -399,7 +426,7 @@ function startBridge(state) {
     }
     if (request.method === "GET" && request.url === "/resource/draft_out.txt") {
       try {
-        const draft = await fs.readFile(".\\draft_out.txt", "utf8");
+        const draft = await fs.readFile(DRAFT_OUT, "utf8");
         response.writeHead(200, { "content-type": "text/plain; charset=utf-8" });
         response.end(draft);
       } catch (error) {
@@ -548,14 +575,16 @@ function render(state) {
   const lines = [
     "Cogentia Navigation Assistant (resident TUI)",
     "=".repeat(62),
-    `CDP      : ${DEFAULT_CDP_ENDPOINT} (${state.cdpAvailable ? "disponible" : "indisponible"})`,
-    `Extension: ${state.bridgeConnected ? "connectée" : "en attente"} (127.0.0.1:${BRIDGE_PORT})`,
+    `Pont     : ${state.bridgeConnected ? "extension (onglet courant)" : `en attente :${BRIDGE_PORT}`}`,
   ];
+  if (!state.bridgeConnected) {
+    lines.push(`CDP      : ${state.cdpAvailable ? "disponible" : "indisponible"}`);
+  }
   if (state.cdpUnavailable) lines.push("État     : CDP indisponible (mode extension requis)");
   if (!state.bridgeConnected) {
-    lines.push("", "Extension locale non connectée.", "Installation unique : chrome://extensions (or Brave menu → More tools → Extensions) → Mode développeur", "→ Charger l’extension non empaquetée → C:\\tweesic\\cogentia\\browser-extension");
+    lines.push("", "Extension non connectée.", "Brave : chrome://extensions → Mode développeur → Charger non empaquetée", `→ ${EXTENSION_DIR}`);
   }
-  lines.push(`Onglet   : ${target?.title || "(aucun)"}`, `URL      : ${target?.url || "(aucune)"}`);
+  lines.push(`Onglet   : ${target?.title || "(aucun)"}`, `Lieu     : ${tabSiteLabel(target?.url)}`);
   const active = state.extensionContext?.activeField || page?.activeElement;
   lines.push(`Champ    : ${active ? `${active.tag} ${active.role || ""} ${active.ariaLabel || ""}`.trim() : "(aucun)"}`, "-".repeat(62), "Actions : [[] début démo  []] fin démo  [c] contexte  [i] insérer  [p] presse-papiers → draft_out  [e] exporter  [q] quitter");
   if (state.error) lines.push(`Erreur   : ${state.error}`);
@@ -572,16 +601,16 @@ function render(state) {
 
 async function insertDraft(state) {
   if (state.bridgeSocket) {
-    const text = normalizeAssistantText(await fs.readFile(".\\draft.txt", "utf8"));
+    const text = normalizeAssistantText(await fs.readFile(DRAFT_IN, "utf8"));
     try {
       await copyTextToClipboard(text);
       state.clipboard = "mis à jour avec la dernière insertion";
-      recordDiagnostic(state, "info", "clipboard-updated", "Draft copied to the Windows clipboard.", { length: text.length });
+      recordDiagnostic(state, "info", "clipboard-updated", "Draft copied to the clipboard.", { length: text.length });
     } catch (error) {
       // Clipboard support is an extra convenience; a temporary Windows
       // clipboard failure must not prevent direct text insertion.
       state.clipboard = `indisponible (${error.message})`;
-      recordDiagnostic(state, "error", "clipboard-failed", "Could not update the Windows clipboard.", { error: error.message });
+      recordDiagnostic(state, "error", "clipboard-failed", "Could not update the clipboard.", { error: error.message });
     }
     const code = `window.__cogentiaNavigationAssistant?.insertText(${JSON.stringify(text)}) || ({ok:false,error:"stdlib unavailable"})`;
     queuePageEvaluation(state, code, "insert", "tui");
@@ -597,23 +626,22 @@ async function insertDraft(state) {
   const active = currentPage?.activeElement;
   const editable = active && (["INPUT", "TEXTAREA"].includes(active.tag) || active.isContentEditable || active.contentEditable === "true");
   if (!editable) throw new Error("Insertion refusée : le champ actif n’est pas éditable.");
-  const draftPath = ".\\draft.txt";
-  const text = normalizeAssistantText(await fs.readFile(draftPath, "utf8"));
+  const text = normalizeAssistantText(await fs.readFile(DRAFT_IN, "utf8"));
   await insertTextInTab(state.target, text);
   state.error = null;
 }
 
 async function saveClipboardToDraftOut(state) {
   const text = await readTextFromClipboard();
-  await fs.writeFile(".\\draft_out.txt", text, "utf8");
+  await fs.writeFile(DRAFT_OUT, text, "utf8");
   state.clipboard = `${text.length} caractères copiés dans draft_out.txt`;
   state.error = null;
-  recordDiagnostic(state, "info", "clipboard-saved", "Windows clipboard saved to draft_out.txt.", { length: text.length, path: "draft_out.txt" });
+  recordDiagnostic(state, "info", "clipboard-saved", "Clipboard saved to draft_out.txt.", { length: text.length, path: DRAFT_OUT });
   render(state);
 }
 
 async function exportEventSequence(state) {
-  const path = ".\\navigation-event-sequence.json";
+  const path = "navigation-event-sequence.json";
   const recording = state.recording || state.lastRecording || null;
   const payload = {
     schema: "cogentia.navigation.event-sequence/v1",
@@ -663,7 +691,14 @@ function stopRecording(state) {
 async function refresh(state) {
   // Once the extension is connected it owns active-tab tracking. Avoid a
   // needless CDP poll (and its confusing fetch error when Brave was not
-  // started with --remote-debugging-port).
+  // started with --remote-debugging-port). chrome.debugger and a CDP
+  // Runtime.evaluate on the same tab also collide.
+  if (process.env.NAV_ASSIST_SKIP_CDP === "1") {
+    state.cdpAvailable = false;
+    state.error = state.bridgeConnected ? null : state.error;
+    render(state);
+    return;
+  }
   if (state.bridgeConnected) {
     state.cdpUnavailable = false;
     state.error = null;
@@ -745,7 +780,7 @@ export async function runTui() {
           await saveClipboardToDraftOut(state);
         } catch (error) {
           state.error = `Presse-papiers : ${error.message}`;
-          recordDiagnostic(state, "error", "clipboard-read-failed", "Could not read the Windows clipboard.", { error: error.message });
+          recordDiagnostic(state, "error", "clipboard-read-failed", "Could not read the clipboard.", { error: error.message });
           render(state);
         }
       }
