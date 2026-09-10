@@ -103,6 +103,58 @@ Local + hosted share one journal (`origin` on some events only via the
 diagnostic `details`). Packaging must tag origin when known, and must not
 merge two browsers into one fake episode.
 
+## Is today’s log sufficient for a judgment to *identify* macros?
+
+**For the POC’s own job (focus an editable field, insert a draft): borderline,
+if `observe()` is actually running. For general UI macros: no.**
+
+Two streams are easy to confuse:
+
+1. **Answers to Assistant requests** (`rpc-request` / `rpc-result`,
+   `page.evaluate` probes, `page.insertText`). These are snapshots the TUI
+   *asked for*. They duplicate context, they are sparse (a probe when `[c]`,
+   on connect, on `[i]`), and they do not reconstruct what the operator did
+   between probes.
+2. **Passive page events**, only after a probe injected
+   `window.__cogentiaNavigationAssistant.observe()`:
+   `focusin` → `focusChanged`, `selectionchange`, `pageshow`, plus extension
+   tab events (`page.activeChanged`, `page.navigationStarted/Completed`,
+   window focus). That stream is the real behavioural meat — and it is still
+   a **focus/selection/navigation** log, not a click/key/input log.
+
+`observe()` is a side-effect of the context probe, not a recorder that starts
+with the extension. A tab the TUI never probed may have **no** `page.event`
+at all. SPA route changes often skip `pageshow`. Clicks on buttons that do
+not keep focus leave **no** signature. User typing is invisible (no
+`input` / `beforeinput`); only Assistant `insertText` is logged. Scroll,
+hover, submit, file picker, drag, keyboard shortcuts: absent.
+
+So a handler can honestly say:
+
+- “the operator repeatedly focused a `contentEditable` whose accessible name
+  looks like compose, on this site” → candidate for the **insert-draft**
+  family;
+- “there was a lot of selection churn on facebook.com” → not a macro, or
+  `weak`.
+
+It **cannot** honestly recover “click the overflow menu, then Privacy, then
+Save”. If we asked it to, it would **invent** a click path. That is why the
+contract forbids executable click scripts and x,y: the evidence is not in
+the log.
+
+Smallest observation upgrades *before* judgment gets more ambitious (still
+not an Act, still no Send):
+
+- install `observe()` on attach / navigation, without waiting for a TUI probe;
+- `click` (signature of the target, not coordinates);
+- `input`/`beforeinput` as *that typing happened*, not the keystrokes;
+- keep SPA URL changes (`page.navigationCompleted` already helps when the
+  tab URL updates).
+
+Until those exist, `[m]` should only claim macros of the **field-focus /
+tab / site** family. Anything else is packaging_failure: insufficient
+trace, not a cleverer model.
+
 ## Activation
 
 **Off unless the operator turns it on.** Suggested TUI surface: an explicit
