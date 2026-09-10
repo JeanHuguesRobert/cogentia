@@ -20,7 +20,9 @@ const EXTENSION_DIR = fileURLToPath(new URL("../../browser-extension", import.me
 
 const REFRESH_MS = 1500;
 const BRIDGE_PORT = Number(process.env.NAV_ASSIST_PORT || 8765);
-const GATEWAY_URL = String(process.env.NAV_ASSIST_GATEWAY || "").trim();
+const LOCAL_GATEWAY_URL = String(process.env.NAV_ASSIST_LOCAL_GATEWAY || `ws://127.0.0.1:${BRIDGE_PORT}/assistant`).trim();
+const HOSTED_GATEWAY_URL = String(process.env.NAV_ASSIST_GATEWAY || "ws://fracta2:8776/assistant").trim();
+const LOCAL_GATEWAY_WAIT_MS = Number(process.env.NAV_ASSIST_LOCAL_GATEWAY_WAIT_MS || 800);
 // Deliberately in-memory: this is a live troubleshooting trace, not a
 // persistence mechanism or a second source of truth.
 const MAX_DIAGNOSTICS = 5000;
@@ -60,14 +62,25 @@ function recordingSequence(state) {
 
 function activeSocket(state) {
   if (state.bridgeFocus === "hosted") return state.hostedSocket;
-  return state.bridgeSocket;
+  return state.localAssistantSocket || state.bridgeSocket;
+}
+
+function queueExtensionRpcOn(state, socket, method, params, kind, origin, id = crypto.randomUUID()) {
+  state.rpcKinds.set(id, { kind, origin, method, requestedAt: Date.now(), codePreview: method === "page.evaluate" ? codePreview(params.code) : null });
+  sendWebSocketText(socket, { jsonrpc: "2.0", id, method, params });
+  recordDiagnostic(state, "info", "rpc-request", `${method} queued (${kind}).`, { id, origin, method, params: method === "page.evaluate" ? { code: codePreview(params.code) } : params });
+  return id;
 }
 
 function queueExtensionRpc(state, method, params, kind, origin, id = crypto.randomUUID()) {
-  state.rpcKinds.set(id, { kind, origin, method, requestedAt: Date.now(), codePreview: method === "page.evaluate" ? codePreview(params.code) : null });
-  sendWebSocketText(activeSocket(state), { jsonrpc: "2.0", id, method, params });
-  recordDiagnostic(state, "info", "rpc-request", `${method} queued (${kind}).`, { id, origin, method, params: method === "page.evaluate" ? { code: codePreview(params.code) } : params });
-  return id;
+  return queueExtensionRpcOn(state, activeSocket(state), method, params, kind, origin, id);
+}
+
+function requestContextOn(state, socket, origin) {
+  if (!socket) return;
+  fs.readFile(new URL("../../browser-stdlib/navigation.js", import.meta.url), "utf8").then((source) => {
+    queueExtensionRpcOn(state, socket, "page.evaluate", { code: contextProbeCode(source) }, "context", origin);
+  }).catch((error) => recordDiagnostic(state, "error", "refresh-request", "Could not load browser stdlib.", { error: error.message, origin }));
 }
 
 function queuePageEvaluation(state, code, kind, origin, id = crypto.randomUUID()) {
@@ -269,22 +282,44 @@ function sendWebSocketText(socket, value) {
 
 function sendRpcRequest(state, method, params) {
   const id = crypto.randomUUID();
-  sendWebSocketText(state.bridgeSocket, { jsonrpc: "2.0", id, method, params });
+  sendWebSocketText(activeSocket(state), { jsonrpc: "2.0", id, method, params });
   return id;
 }
 
 function ingestBridgeMessage(state, message, origin = "local") {
   const hosted = origin === "hosted";
-  if (message.type === "gateway.hello" || message.type === "gateway.extensionConnected") {
-    state.hostedConnected = true;
-    recordDiagnostic(state, "info", message.type, "Hosted gateway update.", { instance: message.instance });
+  if (message.type === "gateway.hello") {
+    if (hosted) {
+      state.hostedGatewayUp = true;
+      state.hostedExtensionConnected = Boolean(message.extensionConnected);
+    } else {
+      state.localGatewayUp = true;
+      state.bridgeConnected = Boolean(message.extensionConnected);
+    }
+    recordDiagnostic(state, "info", message.type, "Gateway hello.", { origin, instance: message.instance, extensionConnected: message.extensionConnected });
+    if (message.extensionConnected) {
+      requestContextOn(state, hosted ? state.hostedSocket : state.localAssistantSocket, origin);
+    }
+    render(state);
+    return;
+  }
+  if (message.type === "gateway.extensionConnected") {
+    if (hosted) state.hostedExtensionConnected = true;
+    else state.bridgeConnected = true;
+    recordDiagnostic(state, "info", message.type, "Extension connected to gateway.", { origin, instance: message.instance });
+    requestContextOn(state, hosted ? state.hostedSocket : state.localAssistantSocket, origin);
     render(state);
     return;
   }
   if (message.type === "gateway.extensionDisconnected") {
-    state.hostedConnected = false;
-    state.hostedContext = null;
-    recordDiagnostic(state, "info", message.type, "Hosted extension disconnected.");
+    if (hosted) {
+      state.hostedExtensionConnected = false;
+      state.hostedContext = null;
+    } else {
+      state.bridgeConnected = false;
+      state.extensionContext = null;
+    }
+    recordDiagnostic(state, "info", message.type, "Extension disconnected from gateway.", { origin });
     render(state);
     return;
   }
@@ -371,28 +406,33 @@ function ingestBridgeMessage(state, message, origin = "local") {
   }
 }
 
-function startGatewayClient(state) {
-  if (!GATEWAY_URL) return null;
+function startGatewayClient(state, url, origin) {
+  if (!url || url === "off") return () => {};
+  const socketKey = origin === "hosted" ? "hostedSocket" : "localAssistantSocket";
   let retry = 0;
   let timer = null;
   const connect = () => {
     if (state.closed) return;
-    const socket = new WebSocket(GATEWAY_URL);
+    const socket = new WebSocket(url);
     socket.on("open", () => {
       retry = 0;
-      state.hostedSocket = socket;
-      state.hostedConnected = true;
-      recordDiagnostic(state, "info", "gateway-connected", `Assistant connected to ${GATEWAY_URL}`);
+      state[socketKey] = socket;
+      recordDiagnostic(state, "info", "gateway-connected", `Assistant connected to ${url}`, { origin });
       render(state);
     });
     socket.on("message", (data) => {
-      try { ingestBridgeMessage(state, JSON.parse(data.toString()), "hosted"); }
-      catch (error) { recordDiagnostic(state, "error", "gateway-message", "Malformed gateway JSON.", { error: error.message }); }
+      try { ingestBridgeMessage(state, JSON.parse(data.toString()), origin); }
+      catch (error) { recordDiagnostic(state, "error", "gateway-message", "Malformed gateway JSON.", { error: error.message, origin }); }
     });
     socket.on("close", () => {
-      if (state.hostedSocket === socket) {
-        state.hostedSocket = null;
-        state.hostedConnected = false;
+      if (state[socketKey] === socket) {
+        state[socketKey] = null;
+        if (origin === "hosted") {
+          state.hostedGatewayUp = false;
+          state.hostedExtensionConnected = false;
+        } else {
+          state.localGatewayUp = false;
+        }
         render(state);
       }
       if (state.closed) return;
@@ -402,7 +442,7 @@ function startGatewayClient(state) {
     socket.on("error", () => socket.close());
   };
   connect();
-  return () => { clearTimeout(timer); state.hostedSocket?.close(); };
+  return () => { clearTimeout(timer); state[socketKey]?.close(); };
 }
 
 function startBridge(state) {
@@ -642,15 +682,15 @@ function render(state) {
   const lines = [
     "Cogentia Navigation Assistant (resident TUI)",
     "=".repeat(62),
-    `Local    : ${state.bridgeConnected ? "extension" : `en attente :${BRIDGE_PORT}`}`,
-    `Hosted   : ${state.hostedConnected ? "gateway" : (GATEWAY_URL ? "en attente" : "off")}`,
+    `Local    : ${state.bridgeConnected ? "extension" : (state.localGatewayUp ? "gateway, pas d'extension" : `en attente :${BRIDGE_PORT}`)}`,
+    `Hosted   : ${state.hostedExtensionConnected ? "extension" : (state.hostedGatewayUp ? "gateway, pas d'extension" : "en attente")}`,
     `Cible    : ${focusedHosted ? "hosted" : "local"}  ([h] hosted  [l] local)`,
   ];
-  if (!state.bridgeConnected && !GATEWAY_URL) {
+  if (!state.bridgeConnected && !state.hostedGatewayUp) {
     lines.push(`CDP      : ${state.cdpAvailable ? "disponible" : "indisponible"}`);
   }
   if (state.cdpUnavailable) lines.push("État     : CDP indisponible (mode extension requis)");
-  if (!state.bridgeConnected && !state.hostedConnected) {
+  if (!state.bridgeConnected && !state.hostedExtensionConnected) {
     lines.push("", "Extension non connectée.", "Brave : chrome://extensions → Mode développeur → Charger non empaquetée", `→ ${EXTENSION_DIR}`);
   }
   lines.push(`Onglet   : ${target?.title || "(aucun)"}`, `Lieu     : ${tabSiteLabel(target?.url)}`);
@@ -798,23 +838,23 @@ async function refresh(state) {
 
 function requestContextRefresh(state) {
   if (activeSocket(state)) {
-    fs.readFile(new URL("../../browser-stdlib/navigation.js", import.meta.url), "utf8").then((source) => {
-      queuePageEvaluation(state, contextProbeCode(source), "context", "tui");
-    }).catch((error) => recordDiagnostic(state, "error", "refresh-request", "Could not load browser stdlib.", { error: error.message }));
+    requestContextOn(state, activeSocket(state), state.bridgeFocus === "hosted" ? "hosted" : "tui");
     return;
   }
   refresh(state);
 }
 
 export async function runTui() {
-  const state = { tabs: [], target: null, targetId: null, page: null, contextVersion: null, bridgeSocket: null, bridgeConnected: false, hostedSocket: null, hostedConnected: false, hostedContext: null, hostedExtensionVersion: null, bridgeFocus: "local", extensionVersion: null, cdpAvailable: false, cdpUnavailable: false, rpcKinds: new Map(), rpcWaiters: new Map(), scriptRuns: new Map(), error: null, clipboard: null, eventExport: null, recording: null, lastRecording: null, diagnostics: [], diagnosticSequence: 0, closed: false, shutdown: null, restartRequested: false };
+  const state = { tabs: [], target: null, targetId: null, page: null, contextVersion: null, bridgeSocket: null, bridgeConnected: false, localAssistantSocket: null, localGatewayUp: false, hostedSocket: null, hostedGatewayUp: false, hostedExtensionConnected: false, hostedContext: null, hostedExtensionVersion: null, bridgeFocus: "local", extensionVersion: null, cdpAvailable: false, cdpUnavailable: false, rpcKinds: new Map(), rpcWaiters: new Map(), scriptRuns: new Map(), error: null, clipboard: null, eventExport: null, recording: null, lastRecording: null, diagnostics: [], diagnosticSequence: 0, closed: false, shutdown: null, restartRequested: false };
   const screen = blessed.screen({ smartCSR: true, title: "Cogentia Navigation Assistant", fullUnicode: true, cursor: { artificial: false } });
   const panel = blessed.box({ top: 0, left: 0, width: "100%", height: "100%", tags: false, padding: { left: 1, right: 1 }, scrollable: false });
   screen.append(panel);
   state.screen = screen;
   state.panel = panel;
-  const bridge = startBridge(state);
-  const stopGateway = startGatewayClient(state);
+  const stopLocalGw = startGatewayClient(state, LOCAL_GATEWAY_URL, "local");
+  const stopHostedGw = startGatewayClient(state, HOSTED_GATEWAY_URL, "hosted");
+  await new Promise((resolve) => setTimeout(resolve, LOCAL_GATEWAY_WAIT_MS));
+  const bridge = state.localGatewayUp ? { close() {} } : startBridge(state);
   const interval = setInterval(() => { if (!state.closed) refresh(state); }, REFRESH_MS);
   await refresh(state);
   return new Promise((resolve) => {
@@ -823,7 +863,8 @@ export async function runTui() {
         state.closed = true;
         clearInterval(interval);
         state.bridgeSocket?.destroy();
-        stopGateway?.();
+        stopLocalGw?.();
+        stopHostedGw?.();
         bridge.close();
         screen.destroy();
         resolve({ restartRequested: state.restartRequested });

@@ -124,7 +124,10 @@ export function createNavigationGateway(options = {}) {
         const bound = http.createServer((req, res) => server.emit("request", req, res));
         bound.on("upgrade", (req, socket, head) => server.emit("upgrade", req, socket, head));
         await new Promise((resolve, reject) => {
-          bound.once("error", reject);
+          bound.once("error", (error) => {
+            bound.close();
+            reject(error);
+          });
           bound.listen(port, host, resolve);
         });
         this._bound.push(bound);

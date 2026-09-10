@@ -62,8 +62,11 @@ available. Without it, the first page target returned by CDP is used as a
 deliberate POC fallback. `CDP_ENDPOINT` may override the default
 `http://127.0.0.1:9222` endpoint.
 
-The resident process also exposes a minimal local HTTP surface on
-`http://127.0.0.1:8765`: `GET /health` reports bridge status, and
+The loopback WebSocket on `http://127.0.0.1:8765` is the **local hold**.
+When Operium Node Agent is running it imports this repo's gateway and
+listens there so the extension stays connected while the TUI is down.
+`GET /health` then reports `extensionConnected` / `assistants`. If that hold
+is not up, the TUI serves `:8765` itself (`GET /health` reports `bridge`).
 `GET /version` reports the assistant, bridge-protocol and connected-extension
 versions.
 `GET /state` exposes the current tab/context snapshot, while
@@ -126,7 +129,7 @@ All endpoints are loopback-only.
 
 ## Hosted Browser (same protocol, later extension)
 
-The assistant on the workstation talks to the **local** unpacked extension (`ws://127.0.0.1:8765`, the extension initiates). A small **gateway** on fracta2 (`navigation-assistant-gateway.js`, port 8776) sits on loopback plus the Tailscale address only. The hosted extension connects to `ws://127.0.0.1:8776/extension`; the TUI adds `NAV_ASSIST_GATEWAY=ws://<tailscale-fracta2>:8776/assistant`. Keys `[l]` / `[h]` choose local vs hosted. URLs stay redacted unless `NAV_ASSIST_SHOW_LOCATION=1`. Do not publish 8776 on the public Internet.
+The assistant on the workstation talks to the **local** unpacked extension (`ws://127.0.0.1:8765`, the extension initiates). A small **gateway** on fracta2 (`navigation-assistant-gateway.js`, port 8776) sits on loopback plus the Tailscale address only. The hosted extension connects to `ws://127.0.0.1:8776/extension` **before any assistant is present**; the TUI then joins `ws://fracta2:8776/assistant` (override with `NAV_ASSIST_GATEWAY`). Locally the same hold lives in Operium Node Agent on `:8765`; the TUI joins `ws://127.0.0.1:8765/assistant` when that process already owns the port. Keys `[l]` / `[h]` choose local vs hosted. URLs stay redacted unless `NAV_ASSIST_SHOW_LOCATION=1`. Do not publish 8776 on the public Internet.
 
 ## Safety boundary
 
