@@ -129,7 +129,7 @@ coalesced `fieldInput` (typing occurred, not the characters) from a content
 script, without waiting for a TUI context probe. Reload the unpacked
 extension after upgrading. Macro discovery should
 prefer these semantic anchors over screen coordinates or volatile CSS classes.
-In the TUI, `[` starts a manual demonstration and `]` ends it. Afterwards `e`
+In the TUI, `d` starts a manual demonstration and `f` ends it (`[` / `]` remain aliases; they are awkward on AZERTY). Afterwards `e`
 exports precisely that marked interval (including its start/end markers) to
 `navigation-event-sequence.json`; without markers, it exports the whole retained
 sequence. Those brackets are scheduled to become **hints** for episode

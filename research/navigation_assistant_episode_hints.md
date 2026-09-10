@@ -6,7 +6,8 @@ status: intended
 
 # Navigation assistant: brackets as episode hints
 
-Today `[` / `]` in the resident TUI are **hard cuts**. They start and stop a
+Today `d` / `f` in the resident TUI are **hard cuts** (`[` / `]` still work;
+they are painful on AZERTY). They start and stop a
 manual demonstration; `e` then exports exactly that sequence interval (or the
 whole journal if no interval exists). That is too brittle for macro
 construction: the operator is not a video editor, and a useful episode is a

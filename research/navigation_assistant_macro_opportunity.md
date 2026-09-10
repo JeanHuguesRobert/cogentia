@@ -15,7 +15,7 @@ related:
 
 # Evaluate the opportunity to create a macro
 
-Bracket hints (`[` / `]`) mark that something nearby *might* be an episode.
+Hint keys `d` / `f` (aliases `[` / `]`, poor on AZERTY) mark that something nearby *might* be an episode.
 They do not decide whether a **macro is worth proposing**. That second
 question is **judgment**, not a threshold on event counts.
 

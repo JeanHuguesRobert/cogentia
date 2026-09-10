@@ -707,7 +707,7 @@ function render(state) {
   }
   lines.push(`Onglet   : ${target?.title || "(aucun)"}`, `Lieu     : ${tabSiteLabel(target?.url)}`);
   const active = state.extensionContext?.activeField || page?.activeElement;
-  lines.push(`Champ    : ${active ? `${active.tag} ${active.role || ""} ${active.ariaLabel || ""}`.trim() : "(aucun)"}`, "-".repeat(62), "Actions : [h]/[l] cible  [[] début démo  []] fin démo  [c] contexte  [i] insérer  [p] presse-papiers → draft_out  [e] exporter  [r] redémarrer  [q] quitter");
+  lines.push(`Champ    : ${active ? `${active.tag} ${active.role || ""} ${active.ariaLabel || ""}`.trim() : "(aucun)"}`, "-".repeat(62), "Actions : [h]/[l] cible  [d] début démo  [f] fin démo  [c] contexte  [i] insérer  [p] presse-papiers → draft_out  [e] exporter  [r] redémarrer  [q] quitter");
   if (state.error) lines.push(`Erreur   : ${state.error}`);
   if (state.clipboard) lines.push(`Presse-papiers : ${state.clipboard}`);
   if (state.recording) lines.push(`Démonstration : en cours depuis #${state.recording.startSequence}`);
@@ -940,8 +940,8 @@ export async function runTui() {
         }
       }
     });
-    screen.key("[", () => { if (!state.closed) startRecording(state); });
-    screen.key("]", () => { if (!state.closed) stopRecording(state); });
+    screen.key(["d", "["], () => { if (!state.closed) startRecording(state); });
+    screen.key(["f", "]"], () => { if (!state.closed) stopRecording(state); });
     screen.key("t", async () => {
       if (!state.closed) {
         state.targetId = null;
