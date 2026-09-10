@@ -114,11 +114,14 @@ The resident TUI also provides `p`: it saves the current Windows clipboard in
 `draft_out.txt`. `draft.txt` remains the input draft for insertion, while
 `draft_out.txt` is an explicit capture of a pasted or copied result.
 
-The resident journal retains 5,000 structured in-memory events, including
-active-tab, window-focus, page-focus and selection transitions. `GET
-/event-sequence` returns the ordered behavioural sequence without heartbeat
-noise; `e` writes the same local snapshot to `navigation-event-sequence.json`
-for macro analysis. Page-focus events include an accessibility signature:
+The resident journal retains 5,000 structured in-memory events (heartbeats
+are not stored) and appends the same stream to
+`.local/navigation-assistant-journal.jsonl` (gitignored; override with
+`NAV_ASSIST_JOURNAL_PATH`, or `off` to disable). Sequence numbers continue
+across `[r]` restart and a graceful `[q]` quit; the file is fsync'd on those
+exits and compacted to the last 50,000 events (`NAV_ASSIST_JOURNAL_PERSIST`).
+`GET /event-sequence` returns the ordered behavioural sequence; `e` writes
+the same local snapshot to `navigation-event-sequence.json` for macro analysis. Page-focus events include an accessibility signature:
 semantic role, accessible name, ARIA relationships and state, `data-testid`,
 native field metadata, and meaningful ancestor roles. Macro discovery should
 prefer these semantic anchors over screen coordinates or volatile CSS classes.

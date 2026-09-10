@@ -17,7 +17,10 @@ behavioural unit, not a keypress sandwich.
 `[` and `]` become **hints**, not the episode.
 
 - The journal stays the source of truth (tab, window-focus, page-focus,
-  selection, field signatures — no heartbeats).
+  selection, field signatures — no heartbeats). It is a JSONL file on the
+  workstation (`.local/navigation-assistant-journal.jsonl`), appended as
+  events arrive and fsync'd on TUI restart or quit, so `[r]` no longer wipes
+  the matter used to detect episodes.
 - Episode detection reads that sequence and proposes one or more episodes
   (idle gaps, page/field transitions, semantic-anchor changes, burst vs
   pause).

@@ -12,6 +12,7 @@ import { WebSocket, WebSocketServer } from "ws";
 import packageJson from "../../package.json" with { type: "json" };
 import { listTabs, readPageContext, selectTab, insertTextInTab, DEFAULT_CDP_ENDPOINT } from "./navigation-assistant.js";
 import { tabSiteLabel, redactTab, showFullTabLocation } from "../lib/navigation-assistant/tab-location.js";
+import { createJournal, DEFAULT_MEMORY_CAP } from "../lib/navigation-assistant/journal.js";
 import { fileURLToPath } from "node:url";
 
 const DRAFT_IN = "draft.txt";
@@ -23,13 +24,18 @@ const BRIDGE_PORT = Number(process.env.NAV_ASSIST_PORT || 8765);
 const LOCAL_GATEWAY_URL = String(process.env.NAV_ASSIST_LOCAL_GATEWAY || `ws://127.0.0.1:${BRIDGE_PORT}/assistant`).trim();
 const HOSTED_GATEWAY_URL = String(process.env.NAV_ASSIST_GATEWAY || "ws://fracta2:8776/assistant").trim();
 const LOCAL_GATEWAY_WAIT_MS = Number(process.env.NAV_ASSIST_LOCAL_GATEWAY_WAIT_MS || 800);
-// Deliberately in-memory: this is a live troubleshooting trace, not a
-// persistence mechanism or a second source of truth.
-const MAX_DIAGNOSTICS = 5000;
+const MAX_DIAGNOSTICS = Number(process.env.NAV_ASSIST_JOURNAL_MEMORY || DEFAULT_MEMORY_CAP);
 const BRIDGE_PROTOCOL_VERSION = 2;
 const FACEBOOK_DEFAULT_SIGNATURE = "#suvranu";
 
 function recordDiagnostic(state, level, code, message, details = undefined) {
+  if (state.journal) {
+    const entry = state.journal.append(level, code, message, details);
+    if (!entry) return;
+    state.diagnosticSequence = state.journal.sequence;
+    return;
+  }
+  if (code === "bridge.ping") return;
   state.diagnosticSequence += 1;
   state.diagnostics.push({
     sequence: state.diagnosticSequence,
@@ -324,6 +330,7 @@ function ingestBridgeMessage(state, message, origin = "local") {
     return;
   }
   if (message.jsonrpc === "2.0" && message.method) {
+    if (message.method === "bridge.ping") return;
     recordDiagnostic(state, "info", message.method, hosted ? "Hosted extension event." : "Extension event received.", message.params || {});
     if (message.method === "page.activeChanged") {
       const ctx = {
@@ -864,7 +871,11 @@ function requestAssistantQuit(state) {
 }
 
 export async function runTui() {
-  const state = { tabs: [], target: null, targetId: null, page: null, contextVersion: null, bridgeSocket: null, bridgeConnected: false, localAssistantSocket: null, localGatewayUp: false, hostedSocket: null, hostedGatewayUp: false, hostedExtensionConnected: false, hostedContext: null, hostedExtensionVersion: null, bridgeFocus: "local", extensionVersion: null, cdpAvailable: false, cdpUnavailable: false, rpcKinds: new Map(), rpcWaiters: new Map(), scriptRuns: new Map(), error: null, clipboard: null, eventExport: null, recording: null, lastRecording: null, diagnostics: [], diagnosticSequence: 0, closed: false, shutdown: null, restartRequested: false };
+  const journal = createJournal({
+    memoryCap: MAX_DIAGNOSTICS,
+    persistCap: Number(process.env.NAV_ASSIST_JOURNAL_PERSIST || 50_000),
+  });
+  const state = { tabs: [], target: null, targetId: null, page: null, contextVersion: null, bridgeSocket: null, bridgeConnected: false, localAssistantSocket: null, localGatewayUp: false, hostedSocket: null, hostedGatewayUp: false, hostedExtensionConnected: false, hostedContext: null, hostedExtensionVersion: null, bridgeFocus: "local", extensionVersion: null, cdpAvailable: false, cdpUnavailable: false, rpcKinds: new Map(), rpcWaiters: new Map(), scriptRuns: new Map(), error: null, clipboard: null, eventExport: null, recording: null, lastRecording: null, journal, diagnostics: journal.events, diagnosticSequence: journal.sequence, closed: false, shutdown: null, restartRequested: false };
   const screen = blessed.screen({ smartCSR: true, title: "Cogentia Navigation Assistant", fullUnicode: true, cursor: { artificial: false } });
   const panel = blessed.box({ top: 0, left: 0, width: "100%", height: "100%", tags: false, padding: { left: 1, right: 1 }, scrollable: false });
   screen.append(panel);
@@ -881,6 +892,7 @@ export async function runTui() {
       if (state.closed) return;
         state.closed = true;
         clearInterval(interval);
+        try { state.journal?.flush(); state.journal?.close(); } catch { /* keep shutdown going */ }
         state.bridgeSocket?.destroy();
         stopLocalGw?.();
         stopHostedGw?.();
