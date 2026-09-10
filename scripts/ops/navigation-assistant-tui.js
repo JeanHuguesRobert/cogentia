@@ -525,9 +525,14 @@ function startBridge(state) {
       });
       return;
     }
-    if (request.method === "POST" && (request.url === "/stop" || request.url === "/control/stop")) {
-      state.restartRequested = true;
-      if (typeof state.shutdown === "function") state.shutdown();
+    if (request.method === "POST" && (request.url === "/stop" || request.url === "/control/stop" || request.url === "/control/restart")) {
+      requestAssistantRestart(state);
+      response.writeHead(202, { "content-type": "application/json; charset=utf-8" });
+      response.end(JSON.stringify({ ok: true, restarting: true, stopping: true }));
+      return;
+    }
+    if (request.method === "POST" && (request.url === "/quit" || request.url === "/control/quit")) {
+      requestAssistantQuit(state);
       response.writeHead(202, { "content-type": "application/json; charset=utf-8" });
       response.end(JSON.stringify({ ok: true, stopping: true }));
       return;
@@ -695,7 +700,7 @@ function render(state) {
   }
   lines.push(`Onglet   : ${target?.title || "(aucun)"}`, `Lieu     : ${tabSiteLabel(target?.url)}`);
   const active = state.extensionContext?.activeField || page?.activeElement;
-  lines.push(`Champ    : ${active ? `${active.tag} ${active.role || ""} ${active.ariaLabel || ""}`.trim() : "(aucun)"}`, "-".repeat(62), "Actions : [h]/[l] cible  [[] début démo  []] fin démo  [c] contexte  [i] insérer  [p] presse-papiers → draft_out  [e] exporter  [q] quitter");
+  lines.push(`Champ    : ${active ? `${active.tag} ${active.role || ""} ${active.ariaLabel || ""}`.trim() : "(aucun)"}`, "-".repeat(62), "Actions : [h]/[l] cible  [[] début démo  []] fin démo  [c] contexte  [i] insérer  [p] presse-papiers → draft_out  [e] exporter  [q] redémarrer  [x] quitter");
   if (state.error) lines.push(`Erreur   : ${state.error}`);
   if (state.clipboard) lines.push(`Presse-papiers : ${state.clipboard}`);
   if (state.recording) lines.push(`Démonstration : en cours depuis #${state.recording.startSequence}`);
@@ -703,7 +708,7 @@ function render(state) {
   if (state.eventExport) lines.push(`Séquence : ${state.eventExport}`);
   const last = state.diagnostics.at(-1);
   if (last) lines.push(`Trace    : #${last.sequence} ${last.level}/${last.code} - ${last.message}`);
-  lines.push("", "Journal vivant : GET /diagnostics?limit=100  (circulaire, mémoire seule). Aucun envoi automatique. [q] quitter.");
+  lines.push("", "Journal vivant : GET /diagnostics?limit=100  (circulaire, mémoire seule). Aucun envoi automatique. [q] redémarrer  [x] quitter.");
   state.panel.setContent(lines.join("\n"));
   state.screen.render();
 }
@@ -844,6 +849,20 @@ function requestContextRefresh(state) {
   refresh(state);
 }
 
+function requestAssistantRestart(state) {
+  if (state.closed) return;
+  state.restartRequested = true;
+  recordDiagnostic(state, "info", "assistant-restart", "Restart requested.");
+  state.shutdown?.();
+}
+
+function requestAssistantQuit(state) {
+  if (state.closed) return;
+  state.restartRequested = false;
+  recordDiagnostic(state, "info", "assistant-quit", "Quit requested.");
+  state.shutdown?.();
+}
+
 export async function runTui() {
   const state = { tabs: [], target: null, targetId: null, page: null, contextVersion: null, bridgeSocket: null, bridgeConnected: false, localAssistantSocket: null, localGatewayUp: false, hostedSocket: null, hostedGatewayUp: false, hostedExtensionConnected: false, hostedContext: null, hostedExtensionVersion: null, bridgeFocus: "local", extensionVersion: null, cdpAvailable: false, cdpUnavailable: false, rpcKinds: new Map(), rpcWaiters: new Map(), scriptRuns: new Map(), error: null, clipboard: null, eventExport: null, recording: null, lastRecording: null, diagnostics: [], diagnosticSequence: 0, closed: false, shutdown: null, restartRequested: false };
   const screen = blessed.screen({ smartCSR: true, title: "Cogentia Navigation Assistant", fullUnicode: true, cursor: { artificial: false } });
@@ -870,7 +889,8 @@ export async function runTui() {
         resolve({ restartRequested: state.restartRequested });
     };
     state.shutdown = shutdown;
-    screen.key(["q", "C-c"], shutdown);
+    screen.key("q", () => requestAssistantRestart(state));
+    screen.key(["x", "C-c"], () => requestAssistantQuit(state));
     screen.key(["c", "r"], async () => {
       if (!state.closed) {
         requestContextRefresh(state);
@@ -933,7 +953,14 @@ export async function runTui() {
 
 if (process.argv[1] && process.argv[1].endsWith("navigation-assistant-tui.js")) {
     runTui().then((result) => {
-      if (process.env.NAV_ASSIST_SUPERVISED === "1") process.exitCode = result?.restartRequested ? 75 : 0;
+      if (result?.restartRequested) {
+        process.exitCode = 75;
+        if (process.env.NAV_ASSIST_SUPERVISED !== "1") {
+          process.stderr.write("navigation-assistant-tui: restart requested; run pnpm navigation-assistant:supervisor to respawn\n");
+        }
+        return;
+      }
+      process.exitCode = 0;
     }).catch((error) => {
     console.error(`navigation-assistant-tui: ${error.message}`);
     process.exitCode = 1;
