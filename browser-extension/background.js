@@ -1,5 +1,6 @@
-// Minimal bridge: receive JavaScript, execute it in the active tab, return the result.
-const ENDPOINT = "ws://127.0.0.1:8765/ws";
+// Minimal bridge: the extension initiates the WebSocket (it cannot listen).
+const DEFAULT_ENDPOINT = "ws://127.0.0.1:8765/ws";
+let ENDPOINT = DEFAULT_ENDPOINT;
 let socket = null;
 let retry = 0;
 let retryTimer = null;
@@ -74,7 +75,6 @@ function connect() {
     clearInterval(heartbeatTimer);
     heartbeatTimer = null;
     socket = null;
-    if (retry >= 8) return;
     retry += 1;
     retryTimer = setTimeout(() => { retryTimer = null; connect(); }, Math.min(60000, 1000 * (2 ** retry)));
   };
@@ -198,7 +198,18 @@ async function handleCommand(message) {
   } finally { /* Keep the desired active tab attached for the next request. */ }
 }
 
-connect();
+async function loadEndpoint() {
+  try {
+    const data = await fetch(chrome.runtime.getURL("endpoint.json")).then((r) => r.json());
+    if (typeof data.endpoint === "string" && /^wss?:\/\//i.test(data.endpoint)) return data.endpoint;
+  } catch { /* packed default */ }
+  return DEFAULT_ENDPOINT;
+}
+
+loadEndpoint().then((endpoint) => {
+  ENDPOINT = endpoint;
+  connect();
+});
 chrome.tabs.onActivated.addListener(() => { announceActiveTab().catch((error) => emit({ type: "bridge.error", message: error.message })); });
 chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
   if (changeInfo.status) notify(`page.navigation${changeInfo.status === "loading" ? "Started" : "Completed"}`, { tab: { id: tabId, title: tab.title || "", url: tab.url || "" } });

@@ -8,7 +8,7 @@ import crypto from "node:crypto";
 import { spawn } from "node:child_process";
 import vm from "node:vm";
 import blessed from "blessed";
-import { WebSocketServer } from "ws";
+import { WebSocket, WebSocketServer } from "ws";
 import packageJson from "../../package.json" with { type: "json" };
 import { listTabs, readPageContext, selectTab, insertTextInTab, DEFAULT_CDP_ENDPOINT } from "./navigation-assistant.js";
 import { tabSiteLabel, redactTab, showFullTabLocation } from "../lib/navigation-assistant/tab-location.js";
@@ -20,6 +20,7 @@ const EXTENSION_DIR = fileURLToPath(new URL("../../browser-extension", import.me
 
 const REFRESH_MS = 1500;
 const BRIDGE_PORT = Number(process.env.NAV_ASSIST_PORT || 8765);
+const GATEWAY_URL = String(process.env.NAV_ASSIST_GATEWAY || "").trim();
 // Deliberately in-memory: this is a live troubleshooting trace, not a
 // persistence mechanism or a second source of truth.
 const MAX_DIAGNOSTICS = 5000;
@@ -57,9 +58,14 @@ function recordingSequence(state) {
   return eventSequence(state).filter((event) => event.sequence >= recording.startSequence && (!recording.endSequence || event.sequence <= recording.endSequence));
 }
 
+function activeSocket(state) {
+  if (state.bridgeFocus === "hosted") return state.hostedSocket;
+  return state.bridgeSocket;
+}
+
 function queueExtensionRpc(state, method, params, kind, origin, id = crypto.randomUUID()) {
   state.rpcKinds.set(id, { kind, origin, method, requestedAt: Date.now(), codePreview: method === "page.evaluate" ? codePreview(params.code) : null });
-  sendWebSocketText(state.bridgeSocket, { jsonrpc: "2.0", id, method, params });
+  sendWebSocketText(activeSocket(state), { jsonrpc: "2.0", id, method, params });
   recordDiagnostic(state, "info", "rpc-request", `${method} queued (${kind}).`, { id, origin, method, params: method === "page.evaluate" ? { code: codePreview(params.code) } : params });
   return id;
 }
@@ -69,7 +75,7 @@ function queuePageEvaluation(state, code, kind, origin, id = crypto.randomUUID()
 }
 
 function invokeExtensionRpc(state, method, params, kind, origin) {
-  if (!state.bridgeSocket) return Promise.reject(new Error("extension bridge is not connected"));
+  if (!activeSocket(state)) return Promise.reject(new Error("extension bridge is not connected"));
   const id = crypto.randomUUID();
   return new Promise((resolve, reject) => {
     const timeout = setTimeout(() => {
@@ -265,6 +271,138 @@ function sendRpcRequest(state, method, params) {
   const id = crypto.randomUUID();
   sendWebSocketText(state.bridgeSocket, { jsonrpc: "2.0", id, method, params });
   return id;
+}
+
+function ingestBridgeMessage(state, message, origin = "local") {
+  const hosted = origin === "hosted";
+  if (message.type === "gateway.hello" || message.type === "gateway.extensionConnected") {
+    state.hostedConnected = true;
+    recordDiagnostic(state, "info", message.type, "Hosted gateway update.", { instance: message.instance });
+    render(state);
+    return;
+  }
+  if (message.type === "gateway.extensionDisconnected") {
+    state.hostedConnected = false;
+    state.hostedContext = null;
+    recordDiagnostic(state, "info", message.type, "Hosted extension disconnected.");
+    render(state);
+    return;
+  }
+  if (message.jsonrpc === "2.0" && message.method) {
+    recordDiagnostic(state, "info", message.method, hosted ? "Hosted extension event." : "Extension event received.", message.params || {});
+    if (message.method === "page.activeChanged") {
+      const ctx = {
+        title: message.params?.tab?.title,
+        url: message.params?.tab?.url,
+        tabId: message.params?.tab?.id,
+        windowId: message.params?.tab?.windowId,
+        tabStatus: message.params?.tab?.status,
+        attached: message.params?.attached,
+        currentAttachedTabId: message.params?.currentAttachedTabId,
+        desiredTabId: message.params?.desiredTabId,
+        activeElement: null,
+      };
+      if (hosted) state.hostedContext = ctx;
+      else state.extensionContext = ctx;
+    }
+    if (message.method === "page.event" && message.params?.event?.context) {
+      if (hosted) state.hostedContext = { ...state.hostedContext, ...message.params.event.context, tabId: message.params.tabId || state.hostedContext?.tabId };
+      else state.extensionContext = { ...state.extensionContext, ...message.params.event.context, tabId: message.params.tabId || state.extensionContext?.tabId };
+    }
+    render(state);
+  }
+  if (message.jsonrpc === "2.0" && message.id !== undefined) {
+    const failed = Boolean(message.error);
+    const request = state.rpcKinds.get(message.id);
+    state.lastEvaluation = { requestId: message.id, kind: request?.kind || "unknown", ok: !failed, result: message.result?.value ?? null, error: message.error?.message || null };
+    if (request?.kind === "context" && !failed) {
+      const probeError = message.result?.value?.__cogentiaProbeError;
+      if (probeError) state.error = `Context probe failed: ${probeError.message || "unknown error"}`;
+      else if (hosted) state.hostedContext = message.result?.value || null;
+      else state.extensionContext = message.result?.value || null;
+    }
+    state.rpcKinds.delete(message.id);
+    const waiter = state.rpcWaiters.get(message.id);
+    if (waiter) {
+      state.rpcWaiters.delete(message.id);
+      clearTimeout(waiter.timeout);
+      if (failed) waiter.reject(new Error(message.error?.message || "page evaluation failed"));
+      else waiter.resolve(message.result);
+    }
+    if (state.error === "Insertion demandée…") state.error = failed ? `Insertion refusée : ${message.error.message}` : null;
+    recordDiagnostic(state, failed ? "error" : "info", "rpc-result", failed ? message.error.message : "JSON-RPC request completed.", {
+      id: message.id,
+      kind: request?.kind || "unknown",
+      origin: request?.origin || origin,
+      elapsedMs: request ? Date.now() - request.requestedAt : null,
+      request: request?.codePreview,
+      tab: message.result?.tab,
+      result: message.result?.value ?? null,
+      error: message.error || null,
+    });
+    render(state);
+  }
+  if (message.channel === "control" && message.type === "browser.context.changed") {
+    if (hosted) state.hostedContext = message;
+    else state.extensionContext = message;
+    render(state);
+  }
+  if (message.channel === "control" && message.type === "bridge.hello") {
+    if (hosted) state.hostedExtensionVersion = message.extensionVersion || null;
+    else state.extensionVersion = message.extensionVersion || null;
+    recordDiagnostic(state, "info", "bridge-hello", `Extension ${message.extensionVersion || "unknown"} connected (${origin}, protocol ${message.protocolVersion || "?"}).`);
+    render(state);
+  }
+  if (message.channel === "control" && message.type === "browser.diagnostic") {
+    recordDiagnostic(state, message.level || "error", message.code || "extension", message.message || "Unknown extension diagnostic.");
+    state.error = `${message.code}: ${message.message}`;
+    render(state);
+  }
+  if (message.channel === "control" && message.type === "execute.result") {
+    state.lastEvaluation = { requestId: message.requestId, ok: message.ok, result: message.value, error: message.error || null };
+    if (state.error === "Insertion demandée…") state.error = message.ok && message.value?.ok !== false ? null : `Insertion refusée : ${message.value?.error || message.error || "résultat inconnu"}`;
+    recordDiagnostic(state, "info", "evaluate-result", `Page evaluation completed (${message.requestId}).`);
+    render(state);
+  }
+  if (message.channel === "control" && message.type === "browser.insert.result") {
+    recordDiagnostic(state, message.ok ? "info" : "error", "insert-result", message.ok ? "Text inserted into the active field." : "Insertion failed.");
+    state.error = message.ok ? null : "Insertion failed.";
+    render(state);
+  }
+}
+
+function startGatewayClient(state) {
+  if (!GATEWAY_URL) return null;
+  let retry = 0;
+  let timer = null;
+  const connect = () => {
+    if (state.closed) return;
+    const socket = new WebSocket(GATEWAY_URL);
+    socket.on("open", () => {
+      retry = 0;
+      state.hostedSocket = socket;
+      state.hostedConnected = true;
+      recordDiagnostic(state, "info", "gateway-connected", `Assistant connected to ${GATEWAY_URL}`);
+      render(state);
+    });
+    socket.on("message", (data) => {
+      try { ingestBridgeMessage(state, JSON.parse(data.toString()), "hosted"); }
+      catch (error) { recordDiagnostic(state, "error", "gateway-message", "Malformed gateway JSON.", { error: error.message }); }
+    });
+    socket.on("close", () => {
+      if (state.hostedSocket === socket) {
+        state.hostedSocket = null;
+        state.hostedConnected = false;
+        render(state);
+      }
+      if (state.closed) return;
+      retry += 1;
+      timer = setTimeout(connect, Math.min(30000, 1000 * (2 ** Math.min(retry, 5))));
+    });
+    socket.on("error", () => socket.close());
+  };
+  connect();
+  return () => { clearTimeout(timer); state.hostedSocket?.close(); };
 }
 
 function startBridge(state) {
@@ -472,80 +610,8 @@ function startBridge(state) {
       if (state.bridgeSocket === socket) { state.bridgeSocket = null; state.bridgeConnected = false; render(state); }
     });
     socket.on("message", (data) => {
-        try {
-          const message = JSON.parse(data.toString());
-        if (message.jsonrpc === "2.0" && message.method) {
-          recordDiagnostic(state, "info", message.method, "Extension event received.", message.params || {});
-          if (message.method === "page.activeChanged") state.extensionContext = {
-            title: message.params?.tab?.title,
-            url: message.params?.tab?.url,
-            tabId: message.params?.tab?.id,
-            windowId: message.params?.tab?.windowId,
-            tabStatus: message.params?.tab?.status,
-            attached: message.params?.attached,
-            currentAttachedTabId: message.params?.currentAttachedTabId,
-            desiredTabId: message.params?.desiredTabId,
-            activeElement: null,
-          };
-          if (message.method === "page.event" && message.params?.event?.context) state.extensionContext = { ...state.extensionContext, ...message.params.event.context, tabId: message.params.tabId || state.extensionContext?.tabId };
-          render(state);
-        }
-        if (message.jsonrpc === "2.0" && message.id !== undefined) {
-          const failed = Boolean(message.error);
-          const request = state.rpcKinds.get(message.id);
-          state.lastEvaluation = { requestId: message.id, kind: request?.kind || "unknown", ok: !failed, result: message.result?.value ?? null, error: message.error?.message || null };
-          if (request?.kind === "context" && !failed) {
-            const probeError = message.result?.value?.__cogentiaProbeError;
-            if (probeError) state.error = `Context probe failed: ${probeError.message || "unknown error"}`;
-            else state.extensionContext = message.result?.value || null;
-          }
-          state.rpcKinds.delete(message.id);
-          const waiter = state.rpcWaiters.get(message.id);
-          if (waiter) {
-            state.rpcWaiters.delete(message.id);
-            clearTimeout(waiter.timeout);
-            if (failed) waiter.reject(new Error(message.error?.message || "page evaluation failed"));
-            else waiter.resolve(message.result);
-          }
-          if (state.error === "Insertion demandée…") state.error = failed ? `Insertion refusée : ${message.error.message}` : null;
-          recordDiagnostic(state, failed ? "error" : "info", "rpc-result", failed ? message.error.message : "JSON-RPC request completed.", {
-            id: message.id,
-            kind: request?.kind || "unknown",
-            origin: request?.origin || "unknown",
-            elapsedMs: request ? Date.now() - request.requestedAt : null,
-            request: request?.codePreview,
-            tab: message.result?.tab,
-            result: message.result?.value ?? null,
-            error: message.error || null,
-          });
-          render(state);
-        }
-        if (message.channel === "control" && message.type === "browser.context.changed") {
-          state.extensionContext = message;
-          render(state);
-        }
-        if (message.channel === "control" && message.type === "bridge.hello") {
-          state.extensionVersion = message.extensionVersion || null;
-          recordDiagnostic(state, "info", "bridge-hello", `Extension ${state.extensionVersion || "unknown"} connected (protocol ${message.protocolVersion || "?"}).`);
-          render(state);
-        }
-        if (message.channel === "control" && message.type === "browser.diagnostic") {
-          recordDiagnostic(state, message.level || "error", message.code || "extension", message.message || "Unknown extension diagnostic.");
-          state.error = `${message.code}: ${message.message}`;
-          render(state);
-        }
-        if (message.channel === "control" && message.type === "execute.result") {
-          state.lastEvaluation = { requestId: message.requestId, ok: message.ok, result: message.value, error: message.error || null };
-          if (state.error === "Insertion demandée…") state.error = message.ok && message.value?.ok !== false ? null : `Insertion refusée : ${message.value?.error || message.error || "résultat inconnu"}`;
-          recordDiagnostic(state, "info", "evaluate-result", `Page evaluation completed (${message.requestId}).`);
-          render(state);
-        }
-        if (message.channel === "control" && message.type === "browser.insert.result") {
-          recordDiagnostic(state, message.ok ? "info" : "error", "insert-result", message.ok ? "Text inserted into the active field." : "Insertion failed.");
-          state.error = message.ok ? null : "Insertion failed.";
-          render(state);
-        }
-        } catch (error) { recordDiagnostic(state, "error", "bridge-message", "Malformed bridge JSON.", { error: error.message, raw: data.toString().slice(0, 500) }); }
+      try { ingestBridgeMessage(state, JSON.parse(data.toString()), "local"); }
+      catch (error) { recordDiagnostic(state, "error", "bridge-message", "Malformed bridge JSON.", { error: error.message, raw: data.toString().slice(0, 500) }); }
     });
   });
   server.listen(BRIDGE_PORT, "127.0.0.1");
@@ -566,27 +632,30 @@ function render(state) {
   if (!state.panel) return;
   // The extension is authoritative for the focused tab when CDP is not
   // available (and also avoids depending on CDP's arbitrary target order).
-  const target = state.target || (state.extensionContext && {
-    id: state.extensionContext.tabId,
-    title: state.extensionContext.title,
-    url: state.extensionContext.url,
-  });
-  const page = state.page || state.extensionContext;
+  const localCtx = state.extensionContext;
+  const hostedCtx = state.hostedContext;
+  const focusedHosted = state.bridgeFocus === "hosted";
+  const target = focusedHosted
+    ? (hostedCtx && { id: hostedCtx.tabId, title: hostedCtx.title, url: hostedCtx.url })
+    : (state.target || (localCtx && { id: localCtx.tabId, title: localCtx.title, url: localCtx.url }));
+  const page = focusedHosted ? hostedCtx : (state.page || localCtx);
   const lines = [
     "Cogentia Navigation Assistant (resident TUI)",
     "=".repeat(62),
-    `Pont     : ${state.bridgeConnected ? "extension (onglet courant)" : `en attente :${BRIDGE_PORT}`}`,
+    `Local    : ${state.bridgeConnected ? "extension" : `en attente :${BRIDGE_PORT}`}`,
+    `Hosted   : ${state.hostedConnected ? "gateway" : (GATEWAY_URL ? "en attente" : "off")}`,
+    `Cible    : ${focusedHosted ? "hosted" : "local"}  ([h] hosted  [l] local)`,
   ];
-  if (!state.bridgeConnected) {
+  if (!state.bridgeConnected && !GATEWAY_URL) {
     lines.push(`CDP      : ${state.cdpAvailable ? "disponible" : "indisponible"}`);
   }
   if (state.cdpUnavailable) lines.push("État     : CDP indisponible (mode extension requis)");
-  if (!state.bridgeConnected) {
+  if (!state.bridgeConnected && !state.hostedConnected) {
     lines.push("", "Extension non connectée.", "Brave : chrome://extensions → Mode développeur → Charger non empaquetée", `→ ${EXTENSION_DIR}`);
   }
   lines.push(`Onglet   : ${target?.title || "(aucun)"}`, `Lieu     : ${tabSiteLabel(target?.url)}`);
   const active = state.extensionContext?.activeField || page?.activeElement;
-  lines.push(`Champ    : ${active ? `${active.tag} ${active.role || ""} ${active.ariaLabel || ""}`.trim() : "(aucun)"}`, "-".repeat(62), "Actions : [[] début démo  []] fin démo  [c] contexte  [i] insérer  [p] presse-papiers → draft_out  [e] exporter  [q] quitter");
+  lines.push(`Champ    : ${active ? `${active.tag} ${active.role || ""} ${active.ariaLabel || ""}`.trim() : "(aucun)"}`, "-".repeat(62), "Actions : [h]/[l] cible  [[] début démo  []] fin démo  [c] contexte  [i] insérer  [p] presse-papiers → draft_out  [e] exporter  [q] quitter");
   if (state.error) lines.push(`Erreur   : ${state.error}`);
   if (state.clipboard) lines.push(`Presse-papiers : ${state.clipboard}`);
   if (state.recording) lines.push(`Démonstration : en cours depuis #${state.recording.startSequence}`);
@@ -600,7 +669,7 @@ function render(state) {
 }
 
 async function insertDraft(state) {
-  if (state.bridgeSocket) {
+  if (activeSocket(state)) {
     const text = normalizeAssistantText(await fs.readFile(DRAFT_IN, "utf8"));
     try {
       await copyTextToClipboard(text);
@@ -728,7 +797,7 @@ async function refresh(state) {
 }
 
 function requestContextRefresh(state) {
-  if (state.bridgeSocket) {
+  if (activeSocket(state)) {
     fs.readFile(new URL("../../browser-stdlib/navigation.js", import.meta.url), "utf8").then((source) => {
       queuePageEvaluation(state, contextProbeCode(source), "context", "tui");
     }).catch((error) => recordDiagnostic(state, "error", "refresh-request", "Could not load browser stdlib.", { error: error.message }));
@@ -738,13 +807,14 @@ function requestContextRefresh(state) {
 }
 
 export async function runTui() {
-  const state = { tabs: [], target: null, targetId: null, page: null, contextVersion: null, bridgeSocket: null, bridgeConnected: false, extensionVersion: null, cdpAvailable: false, cdpUnavailable: false, rpcKinds: new Map(), rpcWaiters: new Map(), scriptRuns: new Map(), error: null, clipboard: null, eventExport: null, recording: null, lastRecording: null, diagnostics: [], diagnosticSequence: 0, closed: false, shutdown: null, restartRequested: false };
+  const state = { tabs: [], target: null, targetId: null, page: null, contextVersion: null, bridgeSocket: null, bridgeConnected: false, hostedSocket: null, hostedConnected: false, hostedContext: null, hostedExtensionVersion: null, bridgeFocus: "local", extensionVersion: null, cdpAvailable: false, cdpUnavailable: false, rpcKinds: new Map(), rpcWaiters: new Map(), scriptRuns: new Map(), error: null, clipboard: null, eventExport: null, recording: null, lastRecording: null, diagnostics: [], diagnosticSequence: 0, closed: false, shutdown: null, restartRequested: false };
   const screen = blessed.screen({ smartCSR: true, title: "Cogentia Navigation Assistant", fullUnicode: true, cursor: { artificial: false } });
   const panel = blessed.box({ top: 0, left: 0, width: "100%", height: "100%", tags: false, padding: { left: 1, right: 1 }, scrollable: false });
   screen.append(panel);
   state.screen = screen;
   state.panel = panel;
   const bridge = startBridge(state);
+  const stopGateway = startGatewayClient(state);
   const interval = setInterval(() => { if (!state.closed) refresh(state); }, REFRESH_MS);
   await refresh(state);
   return new Promise((resolve) => {
@@ -753,6 +823,7 @@ export async function runTui() {
         state.closed = true;
         clearInterval(interval);
         state.bridgeSocket?.destroy();
+        stopGateway?.();
         bridge.close();
         screen.destroy();
         resolve({ restartRequested: state.restartRequested });
@@ -802,6 +873,18 @@ export async function runTui() {
       if (!state.closed) {
         state.targetId = null;
         await refresh(state);
+      }
+    });
+    screen.key("l", () => {
+      if (!state.closed) {
+        state.bridgeFocus = "local";
+        render(state);
+      }
+    });
+    screen.key("h", () => {
+      if (!state.closed) {
+        state.bridgeFocus = "hosted";
+        render(state);
       }
     });
   });

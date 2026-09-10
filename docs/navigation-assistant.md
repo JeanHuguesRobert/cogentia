@@ -126,7 +126,7 @@ All endpoints are loopback-only.
 
 ## Hosted Browser (same protocol, later extension)
 
-The assistant is not tied to the Windows PC. On a Hosted Workspace the Unix user clones Cogentia under `~/src/cogentia` (Operium `bootstrap-hosted-dev-workspace.sh`). Hosted Brave loads `browser-extension` via `--load-extension`. The extension still connects to `ws://127.0.0.1:8765` on the **same** FractaNode. Set `NAV_ASSIST_SKIP_CDP=1` so the TUI does not CDP-attach while the extension debugger is on the tab. The TUI redacts the exact URL to a site label unless `NAV_ASSIST_SHOW_LOCATION=1`.
+The assistant on the workstation talks to the **local** unpacked extension (`ws://127.0.0.1:8765`, the extension initiates). A small **gateway** on fracta2 (`navigation-assistant-gateway.js`, port 8776) sits on loopback plus the Tailscale address only. The hosted extension connects to `ws://127.0.0.1:8776/extension`; the TUI adds `NAV_ASSIST_GATEWAY=ws://<tailscale-fracta2>:8776/assistant`. Keys `[l]` / `[h]` choose local vs hosted. URLs stay redacted unless `NAV_ASSIST_SHOW_LOCATION=1`. Do not publish 8776 on the public Internet.
 
 ## Safety boundary
 

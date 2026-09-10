@@ -4,8 +4,8 @@
   "version": "1.0.13",
   "description": "Local active-tab bridge for the Cogentia navigation assistant.",
   "permissions": ["debugger", "tabs", "windows"],
-  "host_permissions": ["http://127.0.0.1:8765/*"],
+  "host_permissions": ["http://127.0.0.1:8765/*", "http://127.0.0.1:8776/*", "ws://127.0.0.1:8765/*", "ws://127.0.0.1:8776/*"],
   "background": { "service_worker": "background.js", "type": "module" },
   "action": { "default_title": "Cogentia Navigation Assistant" },
-  "content_security_policy": { "extension_pages": "script-src 'self'; object-src 'self'; connect-src ws://127.0.0.1:8765" }
+  "content_security_policy": { "extension_pages": "script-src 'self'; object-src 'self'; connect-src ws://127.0.0.1:8765 ws://127.0.0.1:8776" }
 }
