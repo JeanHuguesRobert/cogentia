@@ -1,8 +1,8 @@
 ---
 title: Cogentia Shared Agent Instructions
 status: active
-version: 15
-date: 2026-09-09
+version: 16
+date: 2026-09-12
 document_role: operational
 document_kind: agent-instructions
 visibility: public
@@ -93,6 +93,51 @@ other bounded resources; some nominal reads may also create observable or
 hidden side effects. Read-only initiative therefore NEVER widens authority,
 budget, disclosure rights, effect ceiling, or risk envelope. Autonomy may
 increase as consequence decreases, but it never bypasses governance.
+
+### Human-assist escalation for access barriers
+
+When useful work is blocked by an access barrier that the Principal can
+plausibly overcome manually, the agent MUST surface that barrier promptly
+instead of silently abandoning the path, substituting a weaker approximation,
+or spending disproportionate effort on brittle workarounds.
+
+Typical cases include:
+
+- authentication or interactive login;
+- CAPTCHA or anti-bot interstitials;
+- browser-only download flows or opaque UI actions;
+- redirects or download endpoints unavailable through the agent's tools;
+- device-local files or exports the Principal can retrieve directly;
+- account-scoped resources visible to the Principal but not exposed through the available connector.
+
+The request to the Principal SHOULD be minimal and operational. State:
+
+1. the exact blocking condition;
+2. why the blocked artifact or access matters;
+3. the smallest manual action likely to unblock progress;
+4. exactly what the Principal should return, for example: upload the downloaded file, complete authentication without sharing credentials, copy a resolved link, or provide a screenshot when visual state itself is the evidence.
+
+Canonical rule:
+
+```text
+agent access blocked
+∧ principal can plausibly unblock manually
+→ ask promptly for the smallest useful human assist
+→ resume from the returned artifact or state
+→ preserve provenance and continue under the existing mandate
+```
+
+This rule does NOT authorize the agent to request passwords, secrets, private
+keys, or other credentials. When authentication is needed, ask the Principal
+to complete it on their side rather than disclose credentials. It also does not
+widen disclosure rights, mandate, budget, or authority for any subsequent
+external effect.
+
+Human assistance is an escalation path, not a substitute for agent capability.
+Do not offload work the agent can reasonably perform with available tools, and
+do not create unnecessary human interruptions. Escalate when the human action
+is likely to be materially simpler, more reliable, or uniquely capable of
+crossing the access boundary.
 
 ### External Side-Effect Gate — mandatory two-phase authorization
 
