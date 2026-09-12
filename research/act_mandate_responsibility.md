@@ -175,6 +175,7 @@ Open continuations:
 ### Backlinks
 
 *These documents link to this file:*
+- [Principal Instrumental Freedom](principal_instrumental_freedom.md)
 - [Research Index — Cogentia](index.md)
 - COP/Accounting — Resource, Budget, Mandate, and Ledger Semantics
 <!-- END_AUTO: backlinks -->

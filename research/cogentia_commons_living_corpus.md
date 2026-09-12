@@ -830,6 +830,7 @@ And the operational rule:
 ### Backlinks
 
 *These documents link to this file:*
+- [Quand le Réel répond](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/quand_le_reel_repond_pkd.md)
 - [Rendre capable — noyau doctrinal provisoire](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/noyau_doctrinal_rendre_capable.md)
 - [Cogentia](../COGENTIA.md)
 - [Cogentia Commons — Public by Default, Private by Exception](cogentia_commons_visibility_and_private_modes.md)

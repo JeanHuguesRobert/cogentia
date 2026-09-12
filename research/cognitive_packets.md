@@ -1535,6 +1535,7 @@ The novelty of cognitive packets is therefore not the existence of the pattern, 
 - [Alien, l’IA et les intelligences xénoformes](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/alien_blogpost.md)
 - [Incremental Transmissible Corpus Model](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/modele_corpus_transmissible_incremental.md)
 - [Mauvaise calibration métacognitive face aux intelligences xénoformes](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/alien_academic.md)
+- [Quand le Réel répond](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/quand_le_reel_repond_pkd.md)
 - [Rendre capable — noyau doctrinal provisoire](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/noyau_doctrinal_rendre_capable.md)
 - [Act, mandate and responsibility](act_mandate_responsibility.md)
 - [AGENTS.md — Cogentia local specialization](../AGENTS.md)

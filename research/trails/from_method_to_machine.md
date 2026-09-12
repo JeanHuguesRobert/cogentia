@@ -73,5 +73,6 @@ update_policy: UP-DEFAULT-REVIEWED
 ### Backlinks
 
 *These documents link to this file:*
+- [Quand le Réel répond](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/quand_le_reel_repond_pkd.md)
 - [Research Index — Cogentia](../index.md)
 <!-- END_AUTO: backlinks -->

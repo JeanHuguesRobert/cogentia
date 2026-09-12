@@ -1314,6 +1314,7 @@ It is to make a corpus appear without losing itself.
 - [Incremental Transmissible Corpus Model](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/modele_corpus_transmissible_incremental.md)
 - [Mauvaise calibration métacognitive face aux intelligences xénoformes](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/alien_academic.md)
 - [Projet #1755](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/autonomia/projet_1755.md)
+- [Quand le Réel répond](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/quand_le_reel_repond_pkd.md)
 - [Rendre capable — noyau doctrinal provisoire](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/noyau_doctrinal_rendre_capable.md)
 - [Cogentia](../README.md)
 - [cogentia.js - Tutorial and Near-Specification](cogentia_js_tutorial.md)

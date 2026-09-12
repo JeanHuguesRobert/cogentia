@@ -533,7 +533,7 @@ An asynchronous saga-based recovery and repair model ensuring that distributed c
 ### Backlinks
 
 *These documents link to this file:*
-- [Frontmatter Schema — v0.1 (Corpus)](../docs/frontmatter-schema.md)
+- [Quand le Réel répond](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/quand_le_reel_repond_pkd.md)
 - [Frontmatter Synonym Mapping — v0.1](../docs/frontmatter-synonym-mapping.md)
 - [Research Index — Cogentia](index.md)
 - [The Knowledge Mesh (Decentralized Wiki)](../docs/knowledge_mesh.md)

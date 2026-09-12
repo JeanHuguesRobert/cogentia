@@ -1385,6 +1385,7 @@ A possible v0.5 of this paper would integrate these two sections into the main n
 - [Discours de la seconde méthode](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/second_method.md)
 - [Le Réel, le Virtuel et l’Actuel](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/le_reel_le_virtuel_et_l_actuel.md)
 - [Projet #1755](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/autonomia/projet_1755.md)
+- [Quand le Réel répond](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/quand_le_reel_repond_pkd.md)
 - [Reality Safety](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/reality_safety_procedural_stabilizers.md)
 - [Rendre capable — noyau doctrinal provisoire](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/noyau_doctrinal_rendre_capable.md)
 - [Stigmergie sans limite haute](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/stigmergie_sans_limite_haute.md)

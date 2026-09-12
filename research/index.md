@@ -239,7 +239,6 @@ This repository instantiates the **cognitive infrastructure layer** of the [DHIT
 - [cogentia.js - Tutorial and Near-Specification](cogentia_js_tutorial.md)
 - [Cogentigraphic Distillation](cogentigraphic_distillation.md)
 - [From Biometrics and Psychometrics to Structural Signatures](structural_signatures.md)
-- [Frontmatter Schema — v0.1 (Corpus)](../docs/frontmatter-schema.md)
 - [Frontmatter Synonym Mapping — v0.1](../docs/frontmatter-synonym-mapping.md)
 - [Research Index — FractaVolta](https://github.com/JeanHuguesRobert/FractaVolta/blob/main/research/index.md)
 - [Research Index — Inox](https://github.com/JeanHuguesRobert/Inox/blob/master/research/index.md)
