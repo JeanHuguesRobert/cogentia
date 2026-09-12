@@ -58,8 +58,9 @@ Analogy: a **Promise/Future across process boundaries** (no shared RAM), with
 (by **copy** or by **reference**).
 
 Deep doctrine: [`research/agent_resumable_cli.md`](../research/agent_resumable_cli.md),
-[`research/cognitive_packets.md`](../research/cognitive_packets.md),
-[`research/ioc_continuation_openai_path_audit_2026-08-12.md`](../research/ioc_continuation_openai_path_audit_2026-08-12.md).
+[`research/cognitive_packets.md`](../research/cognitive_packets.md).
+A dated path audit of IoC vs embedded OpenAI-compatible calls exists as a
+**private** working note under `research/` and is not linked from public views.
 
 ## Transmission: by copy vs by reference
 
