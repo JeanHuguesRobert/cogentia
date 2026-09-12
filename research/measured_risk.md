@@ -4,8 +4,8 @@ subtitle: "Govern for bounded value creation, learning, and recovery rather than
 author: "Jean Hugues Noël Robert, baron Mariani"
 affiliation: "Institut Mariani / C.O.R.S.I.C.A., 1 cours Paoli, F-20250 Corte, Corsica, France"
 date: "2026-08-26"
-last_modified_at: "2026-08-27"
-version: "0.2"
+last_modified_at: "2026-09-12"
+version: "0.3"
 status: "working-paper"
 license: "CC BY-SA 4.0"
 language: "en"
@@ -41,6 +41,8 @@ tags:
   - human-attention
   - exploration
   - operational-stance
+  - antifragility
+  - bounded-antifragility
 ---
 
 # Measured Risk
@@ -524,6 +526,47 @@ Two invariants follow:
 
 The experimental `mode_projection` representation is not yet a stable Measured Risk schema dependency; promotion remains frozen until the Agent John A/B Reality Test.
 
+### 12.2 Relationship to bounded antifragility
+
+Antifragility, in Taleb's terminology, is not the same property as robustness or resilience. For use in this Corpus, the distinction should remain operational:
+
+```text
+FRAGILE
+    a relevant perturbation tends to reduce capability
+
+ROBUST / RESILIENT
+    a relevant perturbation is absorbed or recovered from
+    without a necessary net increase in capability
+
+ANTIFRAGILE
+    a defined class of perturbations can produce a net increase
+    in capability, optionality, knowledge, or correction capacity
+```
+
+The Corpus therefore uses the narrower expression **bounded antifragility**:
+
+> **Bounded antifragility is the property of a system that, for a defined class of perturbations and under Exposure limited by Measured Risk, tends to emerge with more capability, optionality, knowledge, or correction capacity than before, without widening the authorized risk envelope or exporting unaccepted loss to another Principal.**
+
+A generic mechanism is:
+
+```text
+bounded perturbation
+→ trace
+→ observation
+→ correction / adaptation
+→ reusable learning
+→ changed working terrain
+→ capability_after > capability_before
+```
+
+This property is always relative to a class of perturbations, a time horizon, an Exposure envelope, and identified affected Principals. A system may be antifragile to frequent small errors and catastrophically fragile to a rare large shock.
+
+Measured Risk supplies the boundary that a loose use of antifragility often lacks. The objective is **not** to seek damage, manufacture conflict, or maximize stress. Catastrophic, poorly bounded, rights-violating, or hard-to-repair shocks remain reasons for stronger prevention. Nor may a system count itself as antifragile merely because it learns while transferring the losses of experimentation to people who did not accept them.
+
+Several existing Corpus mechanisms already instantiate this pattern without requiring a separate governance layer: objections become first-class contributions; failed Reality Tests can produce reusable evidence; stigmergic correction leaves a prevention trace that changes the terrain for later humans and agents; version history preserves causality rather than pretending the error never happened.
+
+Bounded antifragility is therefore an **emergent performance property of a governed learning loop**, not an independent permission to take risk.
+
 ---
 
 ## 13. Relationship to Optimistic Mainline Governance
@@ -586,6 +629,12 @@ Safety engineering uses proportionality reasoning such as ALARP, under which ris
 
 - https://www.hse.gov.uk/managing/theory/alarpglance.htm
 
+### Antifragility
+
+Nassim Nicholas Taleb distinguishes antifragility from robustness: some systems can benefit from certain forms of disorder, volatility, error, or stress rather than merely withstand them. The present note adopts a deliberately narrower operational use: **bounded antifragility under Measured Risk**.
+
+- Taleb, Nassim Nicholas. *Antifragile: Things That Gain from Disorder*. Random House, 2012.
+
 These sources establish that **bounded and purposeful risk acceptance has substantial prior art**.
 
 The research question here is how to integrate that posture with:
@@ -603,6 +652,7 @@ Human Attention Budgets
 Reality Tests
 Reactive Corpus assimilation
 Operational Stance
+Bounded Antifragility
 ```
 
 ---
@@ -624,6 +674,7 @@ Damage Control used to perpetuate emergency authority
 unknown risk silently classified as low risk
 human attention treated as infinite
 Operational Stance used to rewrite risk estimates or widen an authorized envelope
+antifragility rhetoric used to seek harm, manufacture stress, or externalize losses
 ```
 
 ---
@@ -640,6 +691,8 @@ Compact doctrine:
 
 > **Risk may buy value and learning. Mandate decides what may be put at stake. Exposure bounds how much. Recovery determines what can be restored. Residue records what remains. Reality decides what actually happened.**
 
+> **Antifragility is legitimate only when the gain is produced inside the governed envelope rather than by exporting the downside.**
+
 ---
 
 ## 17. Open questions
@@ -654,3 +707,4 @@ Compact doctrine:
 - Can observed residue update future routing/risk appetite without allowing the system to silently rewrite the Principal's values?
 - How should risk models adapt under damage-control mode while ensuring exceptional authority expires?
 - Which Measured Risk changes should trigger Stance re-resolution, and which should remain below that threshold?
+- For which classes of perturbation can a claimed antifragility gain be measured without hiding displaced or delayed harm?
