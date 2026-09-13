@@ -9,6 +9,11 @@ aliases:
 document_role: operational
 visibility: public
 lifecycle_state: experimental
+document_kind: "experiment-log"
+classification_source: "cogentia.js"
+classification_version: "1"
+classification_rule: "explicit-metadata"
+classification_confidence: "medium"
 ---
 
 # Revealer / Stabilizer

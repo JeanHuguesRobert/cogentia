@@ -17,6 +17,11 @@ tags:
   - corpus-evolution
   - document-roles
   - semantic-typing
+document_kind: "experiment-log"
+classification_source: "cogentia.js"
+classification_version: "1"
+classification_rule: "explicit-metadata"
+classification_confidence: "medium"
 ---
 
 # Desired Present / Archaeology / Reality

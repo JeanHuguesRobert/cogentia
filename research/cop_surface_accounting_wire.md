@@ -2,6 +2,14 @@
 title: "COP surface accounting — Guide & Agent John"
 date: "2026-08-13"
 status: working
+document_role: "source"
+document_kind: "tutorial"
+visibility: "public"
+lifecycle_state: "working"
+classification_source: "cogentia.js"
+classification_version: "1"
+classification_rule: "tutorial"
+classification_confidence: "medium"
 ---
 
 # COP surface accounting — Guide & Agent John

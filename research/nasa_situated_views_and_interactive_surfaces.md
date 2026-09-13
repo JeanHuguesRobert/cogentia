@@ -1,6 +1,6 @@
 ---
 title: "NASA Situated Views and Interactive Surfaces"
-document_role: research
+document_role: "source"
 document_kind: architecture-proposal
 visibility: public
 lifecycle_state: working
@@ -13,6 +13,11 @@ provenance:
 review:
   status: under-review
   reviewed_by: []
+classification_source: "cogentia.js"
+classification_version: "1"
+classification_rule: "explicit-metadata"
+classification_confidence: "medium"
+legacy_document_role: "research"
 ---
 
 # NASA Situated Views and Interactive Surfaces

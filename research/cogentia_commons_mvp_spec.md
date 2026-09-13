@@ -1322,5 +1322,4 @@ Reference implementation contracts (schemas, plugin manifests, resolver code): *
 - [Cogentia Workflows](cogentia_workflows.md)
 - [Research Index — Cogentia](index.md)
 - [Research Index — Inseme](https://github.com/JeanHuguesRobert/inseme/blob/main/research/index.md)
-- [Research Index — Inseme](https://github.com/JeanHuguesRobert/JeanHuguesRobert/blob/main/inseme-index.md)
 <!-- END_AUTO: backlinks -->

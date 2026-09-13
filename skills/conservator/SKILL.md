@@ -3,6 +3,14 @@ name: conservator
 description: Evaluate exploratory candidates after incubation and determine what deserves to survive, be tested, or approach stabilization. Use for prior-art reconciliation, bullshit reduction, assumption checking, falsification, evidence ranking, and cheap Reality-test design without retrospectively suppressing exploration.
 version: 0.1.0
 status: experimental
+document_role: "operational"
+document_kind: "documentation"
+visibility: "public"
+lifecycle_state: "active"
+classification_source: "cogentia.js"
+classification_version: "1"
+classification_rule: "skill-procedure"
+classification_confidence: "strong"
 ---
 
 # Conservator

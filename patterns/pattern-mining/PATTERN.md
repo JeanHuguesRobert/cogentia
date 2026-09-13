@@ -9,6 +9,11 @@ visibility: public
 language: en
 origin: "Pattern Language dogfooding, 2026-08-17"
 related_issue: "JeanHuguesRobert/cogentia#110"
+lifecycle_state: "active"
+classification_source: "cogentia.js"
+classification_version: "1"
+classification_rule: "explicit-metadata"
+classification_confidence: "medium"
 ---
 
 # Pattern Mining

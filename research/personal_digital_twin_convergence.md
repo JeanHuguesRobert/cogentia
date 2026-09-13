@@ -29,6 +29,10 @@ review:
   status: "unreviewed"
   reviewed_by: []
 update_policy: "UP-DEFAULT-REVIEWED"
+classification_source: "cogentia.js"
+classification_version: "1"
+classification_rule: "explicit-metadata"
+classification_confidence: "medium"
 ---
 
 # Personal Digital Twin Convergence Note

@@ -11,6 +11,10 @@ update_policy: "UP-DEFAULT-REVIEWED"
 related:
   - "level2_continuation_scheduler_r1b.md"
   - "../scripts/test-continuation-convergence-f4.js"
+classification_source: "cogentia.js"
+classification_version: "1"
+classification_rule: "explicit-metadata"
+classification_confidence: "medium"
 ---
 
 # F4 Reality Test: Causal Evidence Sharing and Convergence

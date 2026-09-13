@@ -52,6 +52,10 @@ changelog:
   - "v0.1 (2026-08-25) — initial formalization of Packet Closure and packet-native semantics."
   - "v0.2 (2026-08-26) — clarified that Closure is relative to a declared admissible-handler environment; separated self-bootstrap from closure conformance; decomposed ambiguous lifecycle `forget`."
   - "v0.3 (2026-09-05) — Integrates VM native closures vs serialized closures (l8) and deterministic replay substitution of serialized state (side.js), linked to master architectural sources (Issue #55)."
+classification_source: "cogentia.js"
+classification_version: "1"
+classification_rule: "explicit-metadata"
+classification_confidence: "medium"
 ---
 
 # Cognitive Packet Closure and Packet-Native Semantics

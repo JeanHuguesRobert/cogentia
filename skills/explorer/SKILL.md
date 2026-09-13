@@ -3,6 +3,14 @@ name: explorer
 description: Expand the rationally interesting space of possibilities before convergence. Use for open-ended research, reframing, hypothesis generation, distant structural analogy, anomaly preservation, and discovery work where premature convergence is a risk.
 version: 0.1.5
 status: experimental
+document_role: "operational"
+document_kind: "documentation"
+visibility: "public"
+lifecycle_state: "active"
+classification_source: "cogentia.js"
+classification_version: "1"
+classification_rule: "skill-procedure"
+classification_confidence: "strong"
 ---
 
 # Explorer

@@ -13,6 +13,10 @@ related_issues:
   - cogentia#113
   - cogentia#80
   - cogentia#110
+classification_source: "cogentia.js"
+classification_version: "1"
+classification_rule: "explicit-metadata"
+classification_confidence: "medium"
 ---
 
 # John CLI — headless event contract

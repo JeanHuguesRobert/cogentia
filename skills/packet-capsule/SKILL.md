@@ -17,6 +17,14 @@ tools:
   - cogentia_packet_capsule_verify
 entrypoint:
   command: "node scripts/cogentia.js packet capsule pack"
+document_role: "operational"
+document_kind: "documentation"
+visibility: "public"
+lifecycle_state: "active"
+classification_source: "cogentia.js"
+classification_version: "1"
+classification_rule: "skill-procedure"
+classification_confidence: "strong"
 ---
 
 # Packet Capsule Skill

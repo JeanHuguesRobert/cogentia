@@ -12,6 +12,11 @@ origin: Digipolis design exploration, 2026-08-17
 related_issues:
   - cogentia#110
   - cogentia#108
+lifecycle_state: "active"
+classification_source: "cogentia.js"
+classification_version: "1"
+classification_rule: "explicit-metadata"
+classification_confidence: "medium"
 ---
 
 # Capability Symmetry

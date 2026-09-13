@@ -5,10 +5,17 @@ author: "Jean Hugues Noël Robert, baron Mariani — Candidat aux Sénatoriales 
 date: "2026-09-01"
 status: published
 corpus_role: source
-document_role: campaign-brief
+document_role: "source"
 document_kind: policy-memo
 target_audience: "Grands électeurs, maires ruraux, élus d'opposition, conseillers territoriaux"
 campaign_axis: "Transparence anti-capture & Contrôle"
+visibility: "public"
+lifecycle_state: "stable"
+classification_source: "cogentia.js"
+classification_version: "1"
+classification_rule: "explicit-metadata"
+classification_confidence: "medium"
+legacy_document_role: "campaign-brief"
 ---
 
 # Fiche 5 : Transparence Anti-Capture & Équité Territoriale — Pas de Pouvoir Sans Contrôle

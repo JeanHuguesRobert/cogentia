@@ -5,10 +5,17 @@ author: "Jean Hugues Noël Robert, baron Mariani — Candidat aux Sénatoriales 
 date: "2026-09-01"
 status: published
 corpus_role: source
-document_role: campaign-brief
+document_role: "source"
 document_kind: policy-memo
 target_audience: "Maires ruraux, élus du cadre de vie et de l'aménagement foncier"
 campaign_axis: "Foncier, Logement & Statut du Résident Rural"
+visibility: "public"
+lifecycle_state: "stable"
+classification_source: "cogentia.js"
+classification_version: "1"
+classification_rule: "explicit-metadata"
+classification_confidence: "medium"
+legacy_document_role: "campaign-brief"
 ---
 
 # Fiche 3 : Statut du Résident Rural — Loger les Jeunes et Débloquer les Villages à Droit Constant

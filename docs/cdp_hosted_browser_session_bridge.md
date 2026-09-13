@@ -5,7 +5,7 @@ author: "Jean Hugues Noël Robert, baron Mariani — Institut Mariani / Cogentia
 date: "2026-09-01"
 status: published
 corpus_role: source
-document_role: operational-guide
+document_role: "source"
 document_kind: architecture-note
 visibility: public
 language: fr
@@ -22,6 +22,12 @@ tags:
   - SOMA
   - DHITL
   - Fracta2
+lifecycle_state: "stable"
+classification_source: "cogentia.js"
+classification_version: "1"
+classification_rule: "explicit-metadata"
+classification_confidence: "medium"
+legacy_document_role: "operational-guide"
 ---
 
 # Hosted Browser CDP Session Bridge & Protocoles d'Accès Agents IA

@@ -34,6 +34,10 @@ tags:
   - provenance
   - source-derived
 update_policy: "UP-DEFAULT-REVIEWED"
+classification_source: "cogentia.js"
+classification_version: "1"
+classification_rule: "explicit-metadata"
+classification_confidence: "medium"
 ---
 
 # Semantic Propagation Rule for the Reactive Corpus

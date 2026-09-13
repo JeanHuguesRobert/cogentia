@@ -1,3 +1,14 @@
+---
+document_role: "source"
+document_kind: "research-paper"
+visibility: "public"
+lifecycle_state: "active"
+classification_source: "cogentia.js"
+classification_version: "1"
+classification_rule: "research-paper"
+classification_confidence: "medium"
+---
+
 # Research anchors — administrative burden and institutional friction
 
 This note records the main research traditions to be cited and deepened in later versions of `administrative_burden_and_exemplar_tests.md`.

@@ -2,6 +2,14 @@
 title: "Navigation assistant always-on hold"
 date: 2026-09-10
 status: active
+document_role: "source"
+document_kind: "research-paper"
+visibility: "public"
+lifecycle_state: "active"
+classification_source: "cogentia.js"
+classification_version: "1"
+classification_rule: "research-paper"
+classification_confidence: "medium"
 ---
 
 # Navigation assistant always-on hold

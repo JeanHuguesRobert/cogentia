@@ -4,6 +4,10 @@ document_role: operational
 document_kind: investigation
 visibility: public
 lifecycle_state: working
+classification_source: "cogentia.js"
+classification_version: "1"
+classification_rule: "explicit-metadata"
+classification_confidence: "medium"
 ---
 
 # Workstation daemon: stall vs crash

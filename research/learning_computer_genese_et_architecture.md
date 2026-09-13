@@ -85,6 +85,13 @@ x-cognitive-packet:
   closure_mode: "open-for-review"
   epistemic_closure: false
   next_handler_capability: "reviewer-v0.5"
+document_kind: "architecture"
+visibility: "public"
+lifecycle_state: "working"
+classification_source: "cogentia.js"
+classification_version: "1"
+classification_rule: "architecture"
+classification_confidence: "medium"
 ---
 
 # Genèse et architecture du Learning Computer

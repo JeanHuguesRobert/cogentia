@@ -32,6 +32,10 @@ review:
   reviewed_by: []
 ai_assisted_by:
   - "GPT-5.6 Sol"
+classification_source: "cogentia.js"
+classification_version: "1"
+classification_rule: "explicit-metadata"
+classification_confidence: "medium"
 ---
 
 # Possible Matrix v0.2 — design note

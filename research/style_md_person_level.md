@@ -4,7 +4,7 @@ subtitle: "Parallel to AGENTS.md: how representation agents should sound and rea
 author: "Jean Hugues Noël Robert, baron Mariani"
 date: "2026-08-13"
 version: "0.1"
-document_role: research
+document_role: "source"
 document_kind: convention
 visibility: public
 lifecycle_state: working
@@ -15,6 +15,11 @@ related_research:
   - cogentia/research/agent_john_cross_surface_style_fidelity.md
   - cogentia/research/cogentia-digital-twin.md
 update_policy: UP-DEFAULT-REVIEWED
+classification_source: "cogentia.js"
+classification_version: "1"
+classification_rule: "explicit-metadata"
+classification_confidence: "medium"
+legacy_document_role: "research"
 ---
 
 # STYLE.md — person-level style mandate (convention)

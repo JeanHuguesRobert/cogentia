@@ -21,6 +21,10 @@ related_documents:
   - "docs/connect-mcp-clients.md"
   - "docs/continuations_and_cognitive_packets_for_agents.md"
   - "https://github.com/JeanHuguesRobert/operium/blob/main/docs/mcp-capability-surface.md"
+classification_source: "cogentia.js"
+classification_version: "1"
+classification_rule: "explicit-metadata"
+classification_confidence: "medium"
 ---
 
 # CPKT-2026-008 — Restart to dogfood MCP 0.9.0

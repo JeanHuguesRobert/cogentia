@@ -77,6 +77,13 @@ changelog:
   - "v0.3 (2026-08-27) — assimilated decorrelated Grok review: governance envelope centered; evidence-diet invariant, control-mode prior art, switching constraints, dimensional falsification and A/B test added."
   - "v0.4 (2026-08-27) — applied Grok assimilation-check fixes: temporary field convention, stricter A/B Condition B, no cross-Principal inheritance or averaging."
   - "v0.5 (2026-08-27) — recorded human arbitration, consolidated transient review material, verified the cited 2025–2026 LLM references, and published the source working paper."
+document_kind: "experiment-log"
+visibility: "public"
+lifecycle_state: "working"
+classification_source: "cogentia.js"
+classification_version: "1"
+classification_rule: "experiment-log"
+classification_confidence: "medium"
 ---
 
 # Operational Stance

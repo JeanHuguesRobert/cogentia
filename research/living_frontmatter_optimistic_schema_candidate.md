@@ -10,7 +10,7 @@ status: "working-paper"
 canonical_url: "https://github.com/JeanHuguesRobert/cogentia/blob/main/research/living_frontmatter_optimistic_schema_candidate.md"
 last_stamped_at: "unknown"
 update_policy: "UP-DEFAULT-REVIEWED"
-document_role: "operational-note"
+document_role: "operational"
 document_kind: "schema-candidate"
 visibility: "public"
 lifecycle_state: "working"
@@ -34,6 +34,11 @@ related_documents:
   - "docs/frontmatter-migration-v0.1.md"
   - "research/memory_and_corpus_sleep_cycle.md"
   - "JeanHuguesRobert/cogentia#159"
+classification_source: "cogentia.js"
+classification_version: "1"
+classification_rule: "explicit-metadata"
+classification_confidence: "medium"
+legacy_document_role: "operational-note"
 ---
 
 # Living Frontmatter — Optimistic Schema Candidate from Reality

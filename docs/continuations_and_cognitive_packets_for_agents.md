@@ -12,6 +12,10 @@ related:
   - "../research/cognitive_packet_switching.md"
   - "../skills/continuation-handling/SKILL.md"
   - "../instructions/AGENTS.shared.md"
+classification_source: "cogentia.js"
+classification_version: "1"
+classification_rule: "explicit-metadata"
+classification_confidence: "medium"
 ---
 
 # Continuations and Cognitive Packets — early agent briefing

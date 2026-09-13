@@ -1573,6 +1573,4 @@ The novelty of cognitive packets is therefore not the existence of the pattern, 
 - [Research Index — Inseme](https://github.com/JeanHuguesRobert/inseme/blob/main/research/index.md)
 - [Corpus Start Here — Carte globale du Corpus](https://github.com/JeanHuguesRobert/JeanHuguesRobert/blob/main/research/corpus-map.md)
 - [Jean Hugues Noël Robert, baron Mariani](https://github.com/JeanHuguesRobert/JeanHuguesRobert/blob/main/README.md)
-- [Research Index — Inox](https://github.com/JeanHuguesRobert/JeanHuguesRobert/blob/main/Inox-index.md)
-- [Research Index — Inseme](https://github.com/JeanHuguesRobert/JeanHuguesRobert/blob/main/inseme-index.md)
 <!-- END_AUTO: backlinks -->

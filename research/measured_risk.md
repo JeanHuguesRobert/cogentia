@@ -43,6 +43,10 @@ tags:
   - operational-stance
   - antifragility
   - bounded-antifragility
+classification_source: "cogentia.js"
+classification_version: "1"
+classification_rule: "explicit-metadata"
+classification_confidence: "medium"
 ---
 
 # Measured Risk

@@ -22,6 +22,10 @@ related:
   - "reasoning_loop_archaeology.md"
   - "https://github.com/JeanHuguesRobert/cogentia/issues/123"
   - "https://github.com/JeanHuguesRobert/cogentia/pull/143"
+classification_source: "cogentia.js"
+classification_version: "1"
+classification_rule: "explicit-metadata"
+classification_confidence: "medium"
 ---
 
 # R1 Level-2 evidence residue

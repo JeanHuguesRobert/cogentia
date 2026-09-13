@@ -37,6 +37,10 @@ tags:
   - continuation
   - traceability
   - autonomy-of-capacity
+classification_source: "cogentia.js"
+classification_version: "1"
+classification_rule: "explicit-metadata"
+classification_confidence: "medium"
 ---
 
 # Administrative Burden, Institutional Friction, and Exemplar Tests

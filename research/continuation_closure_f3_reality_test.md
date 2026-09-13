@@ -9,7 +9,7 @@ license: "CC BY-SA 4.0"
 language: "en"
 version: "1.0"
 status: "conformed"
-document_role: "report"
+document_role: "source"
 document_kind: "architectural-report"
 visibility: "public"
 lifecycle_state: "active"
@@ -21,6 +21,11 @@ related:
   - "../docs/continuations_and_cognitive_packets_for_agents.md"
   - "../scripts/lib/packet-capsule.js"
   - "../scripts/test-continuation-closure-f3.js"
+classification_source: "cogentia.js"
+classification_version: "1"
+classification_rule: "explicit-metadata"
+classification_confidence: "medium"
+legacy_document_role: "report"
 ---
 
 # Packet Closure $\text{Closed}(p, h, E)$ & Durable Cross-Process Continuation Transport (F3 Reality Test)

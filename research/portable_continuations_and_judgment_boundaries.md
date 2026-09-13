@@ -31,6 +31,10 @@ tags:
   - a2a
   - clipboard
   - provider-neutral
+classification_source: "cogentia.js"
+classification_version: "1"
+classification_rule: "explicit-metadata"
+classification_confidence: "medium"
 ---
 
 # Portable Continuations and Judgment Boundaries

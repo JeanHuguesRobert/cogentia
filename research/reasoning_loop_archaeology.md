@@ -25,6 +25,10 @@ related:
   - "conceptual_gravity.md"
   - "https://github.com/JeanHuguesRobert/cogentia/issues/112"
   - "https://github.com/JeanHuguesRobert/inseme/blob/main/packages/cop-core/Architecture.md"
+classification_source: "cogentia.js"
+classification_version: "1"
+classification_rule: "explicit-metadata"
+classification_confidence: "medium"
 ---
 
 # Reasoning Loop archaeology

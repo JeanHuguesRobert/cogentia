@@ -7,6 +7,10 @@ document_role: operational
 document_kind: agent-instructions
 visibility: public
 lifecycle_state: active
+classification_source: "cogentia.js"
+classification_version: "1"
+classification_rule: "explicit-metadata"
+classification_confidence: "medium"
 ---
 
 # Open Commons Default

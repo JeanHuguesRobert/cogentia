@@ -67,6 +67,13 @@ changelog:
   - "v0.1 (2026-08-28) — initial Redactor working paper from the Conceptual Gravity exploration."
   - "v0.2 (2026-08-28) — assimilated decorrelated review, narrowed novelty claims relative to adaptive GraphRAG, introduced deterministic P0 sufficiency, disposable Concept Attractors, routing-trace corroboration, hostile-attraction handling, and benchmark-first implementation."
   - "v0.3 (2026-08-29) — corrected review metadata, added explicit benchmark expectation provenance, bounded live P0 traversal, typed routing-trace influence, and human validation of the working name and document for entry into the Corpus."
+document_kind: "concept-note"
+visibility: "public"
+lifecycle_state: "working"
+classification_source: "cogentia.js"
+classification_version: "1"
+classification_rule: "concept-note"
+classification_confidence: "medium"
 ---
 
 # Conceptual Gravity

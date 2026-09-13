@@ -11,6 +11,14 @@ related:
   - "ioc_continuation_openai_path_audit_2026-08-12.md"
   - "agent_resumable_cli.md"
   - "../schemas/navigation.macro-opportunity.v0.schema.json"
+document_role: "source"
+document_kind: "research-paper"
+visibility: "public"
+lifecycle_state: "active"
+classification_source: "cogentia.js"
+classification_version: "1"
+classification_rule: "research-paper"
+classification_confidence: "medium"
 ---
 
 # Evaluate the opportunity to create a macro

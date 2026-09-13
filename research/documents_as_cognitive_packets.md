@@ -95,6 +95,10 @@ x-cognitive-packet:
     private_context_required: false
     material_findings: 9
     prior_art_risk: "medium"
+classification_source: "cogentia.js"
+classification_version: "1"
+classification_rule: "explicit-metadata"
+classification_confidence: "medium"
 ---
 
 # Documents as Cognitive Packets

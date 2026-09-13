@@ -12,6 +12,10 @@ related:
   - "level2_continuation_scheduler_r1b.md"
   - "cognitive_packet_closure_and_packet_native_semantics.md"
   - "../scripts/test-continuation-closure-f3.js"
+classification_source: "cogentia.js"
+classification_version: "1"
+classification_rule: "explicit-metadata"
+classification_confidence: "medium"
 ---
 
 # F3 Reality Test: `Closed(p,h,E)`

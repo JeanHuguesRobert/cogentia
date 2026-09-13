@@ -5,7 +5,7 @@ author: "Jean Hugues Noël Robert, baron Mariani — Institut Mariani / Cogentia
 date: "2026-09-01"
 status: published
 corpus_role: source
-document_role: technical-strategy
+document_role: "source"
 document_kind: research-paper
 visibility: public
 language: fr
@@ -21,6 +21,12 @@ tags:
   - TikTok
   - DHITL
   - Sénatoriales 2026
+lifecycle_state: "stable"
+classification_source: "cogentia.js"
+classification_version: "1"
+classification_rule: "explicit-metadata"
+classification_confidence: "medium"
+legacy_document_role: "technical-strategy"
 ---
 
 # Plan Directeur & Architecture : Démultiplication & Automatisation Multi-Plateformes (X, Instagram, Facebook, Vidéos)

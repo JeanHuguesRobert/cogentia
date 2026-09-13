@@ -14,6 +14,10 @@ related:
   - "continuation_convergence_f4_reality_test.md"
   - "agent_john_reasoning_loop_v2_surface_integration.md"
   - "https://github.com/JeanHuguesRobert/inseme/blob/main/packages/cop-core/Architecture.md"
+classification_source: "cogentia.js"
+classification_version: "1"
+classification_rule: "explicit-metadata"
+classification_confidence: "medium"
 ---
 
 # R1 Closure: Level-2 Exploration Scheduler

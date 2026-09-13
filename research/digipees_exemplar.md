@@ -23,6 +23,10 @@ tags:
   - exemplar-test
   - continuation
   - multi-agent
+classification_source: "cogentia.js"
+classification_version: "1"
+classification_rule: "explicit-metadata"
+classification_confidence: "medium"
 ---
 
 # Digipees Exemplar

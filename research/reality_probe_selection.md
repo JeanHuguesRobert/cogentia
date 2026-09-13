@@ -25,6 +25,10 @@ tags:
   - information-value
   - reality-test
   - level-2
+classification_source: "cogentia.js"
+classification_version: "1"
+classification_rule: "explicit-metadata"
+classification_confidence: "medium"
 ---
 
 # Reality Probe Selection

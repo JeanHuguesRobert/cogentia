@@ -22,6 +22,10 @@ related:
   - "conceptual_gravity.md"
   - "operational_stance.md"
   - "../scripts/lib/reasoning-loop.js"
+classification_source: "cogentia.js"
+classification_version: "1"
+classification_rule: "explicit-metadata"
+classification_confidence: "medium"
 ---
 
 # Reasoning Loop

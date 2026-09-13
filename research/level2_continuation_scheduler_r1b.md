@@ -22,6 +22,10 @@ related:
   - "../docs/agent-jhn-governed-step-harness.md"
   - "../scripts/lib/continuation-frontier-f2a.js"
   - "../scripts/test-continuation-frontier-resumption.js"
+classification_source: "cogentia.js"
+classification_version: "1"
+classification_rule: "explicit-metadata"
+classification_confidence: "medium"
 ---
 
 # Level-2 Continuation / Exploration Scheduler (R1-B)

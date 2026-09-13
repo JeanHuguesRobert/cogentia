@@ -5,10 +5,17 @@ author: "Jean Hugues Noël Robert, baron Mariani — Candidat aux Sénatoriales 
 date: "2026-09-01"
 status: published
 corpus_role: source
-document_role: campaign-brief
+document_role: "source"
 document_kind: policy-memo
 target_audience: "Maires et délégués municipaux des 360 communes de Corse"
 campaign_axis: "Autonomie de Capacité vs Autonomie de papier"
+visibility: "public"
+lifecycle_state: "stable"
+classification_source: "cogentia.js"
+classification_version: "1"
+classification_rule: "explicit-metadata"
+classification_confidence: "medium"
+legacy_document_role: "campaign-brief"
 ---
 
 # Fiche 1 : Autonomie de Capacité & Garantie Financière des Communes Rurales

@@ -19,6 +19,10 @@ related:
   - "JeanHuguesRobert/cogentia/issues/84"
   - "JeanHuguesRobert/inseme/issues/36"
   - "JeanHuguesRobert/inseme/issues/66"
+classification_source: "cogentia.js"
+classification_version: "1"
+classification_rule: "explicit-metadata"
+classification_confidence: "medium"
 ---
 
 # BYOC — Bring Your Own Channel and External Interaction Edges

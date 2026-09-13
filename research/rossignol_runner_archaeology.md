@@ -2,7 +2,7 @@
 title: "Archéologie & Fondations — Runner Rossignol 24h & Veille Corse Sénatoriales 2026"
 status: published
 corpus_role: source
-document_role: research-paper
+document_role: "source"
 document_kind: technical-note
 lifecycle_state: active
 date: "2026-09-01"
@@ -22,6 +22,12 @@ summary: >
   Note d'archéologie technique et doctrinale pour l'implémentation de la veille Rossignol (Issue #141 / #140).
   Recensement exhaustif des briques existantes dans Cogentia et Inseme, alignement COP-native,
   et cadrage des flux d'intelligence territoriale corse indispensables pour la campagne sénatoriale du 27 septembre 2026.
+visibility: "public"
+classification_source: "cogentia.js"
+classification_version: "1"
+classification_rule: "explicit-metadata"
+classification_confidence: "medium"
+legacy_document_role: "research-paper"
 ---
 
 # Archéologie & Fondations — Runner Rossignol 24h & Veille Corse (Issue #141)

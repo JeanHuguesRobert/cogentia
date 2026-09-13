@@ -4,7 +4,7 @@ subtitle: "Primary style kernel on all answer surfaces; Ubikia personas as expli
 author: "Jean Hugues Noël Robert, baron Mariani"
 date: "2026-08-13"
 version: "0.2"
-document_role: research
+document_role: "source"
 document_kind: operational
 visibility: public
 lifecycle_state: working
@@ -16,6 +16,11 @@ related_research:
   - cogentia/research/cogentigram_for_agent_jhn_fidelity.md
   - cogentia/research/operational_stance.md
 update_policy: UP-DEFAULT-REVIEWED
+classification_source: "cogentia.js"
+classification_version: "1"
+classification_rule: "explicit-metadata"
+classification_confidence: "medium"
+legacy_document_role: "research"
 ---
 
 # Agent John — cross-surface style fidelity (first approximation)

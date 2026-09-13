@@ -1,3 +1,14 @@
+---
+document_role: "source"
+document_kind: "research-paper"
+visibility: "public"
+lifecycle_state: "active"
+classification_source: "cogentia.js"
+classification_version: "1"
+classification_rule: "research-paper"
+classification_confidence: "medium"
+---
+
 # Cogentigram comparison: March 2026 sample vs August person-open
 
 **Status:** living research note  

@@ -5,7 +5,7 @@ author: "Jean Hugues Noël Robert, baron Mariani — Candidat aux Sénatoriales 
 date: "2026-09-01"
 status: active
 corpus_role: strategy
-document_role: campaign-playbook
+document_role: "source"
 document_kind: strategy-note
 visibility: public
 language: fr
@@ -19,6 +19,13 @@ tags:
   - Maires Ruraux
   - Cogentia
   - Suvranu
+lifecycle_state: "active"
+classification_source: "cogentia.js"
+classification_version: "1"
+classification_rule: "explicit-metadata"
+classification_confidence: "medium"
+legacy_document_role: "campaign-playbook"
+legacy_corpus_role: "strategy"
 ---
 
 # 🦅 Catalogue Stratégique des Cas d'Usage X/Twitter — Sénatoriales 2026

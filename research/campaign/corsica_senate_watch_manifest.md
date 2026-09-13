@@ -2,7 +2,7 @@
 title: "Manifeste de Veille Territoriale Corse — Campagne Sénatoriale 2026"
 status: published
 corpus_role: source
-document_role: research-paper
+document_role: "source"
 document_kind: technical-note
 lifecycle_state: active
 date: "2026-09-01"
@@ -19,6 +19,12 @@ summary: >
   Catalogue structuré des sources de données publiques, flux institutionnels,
   indicateurs communaux et grilles de pertinence pour la veille territoriale Corse
   du runner Rossignol, orientée vers les besoins de la campagne sénatoriale du 27 septembre 2026.
+visibility: "public"
+classification_source: "cogentia.js"
+classification_version: "1"
+classification_rule: "explicit-metadata"
+classification_confidence: "medium"
+legacy_document_role: "research-paper"
 ---
 
 # Manifeste de Veille Territoriale Corse — Campagne Sénatoriale 2026

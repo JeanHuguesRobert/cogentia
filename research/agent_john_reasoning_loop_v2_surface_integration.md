@@ -12,6 +12,10 @@ related:
   - "../scripts/lib/agent-jhn-reasoning-loop-v2.js"
   - "../scripts/lib/john-run.js"
   - "../scripts/cogentia-mcp-http.js"
+classification_source: "cogentia.js"
+classification_version: "1"
+classification_rule: "explicit-metadata"
+classification_confidence: "medium"
 ---
 
 # Agent John V2 Reasoning Loop Surface Integration

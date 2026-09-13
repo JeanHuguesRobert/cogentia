@@ -17,6 +17,14 @@ tools:
   - cogentia_scheduler_run
 entrypoint:
   command: "node scripts/cogentia.js scheduler run --mode sleep"
+document_role: "operational"
+document_kind: "documentation"
+visibility: "public"
+lifecycle_state: "active"
+classification_source: "cogentia.js"
+classification_version: "1"
+classification_rule: "skill-procedure"
+classification_confidence: "strong"
 ---
 
 # FractaScheduler

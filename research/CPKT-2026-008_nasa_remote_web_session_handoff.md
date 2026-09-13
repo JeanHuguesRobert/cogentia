@@ -14,6 +14,10 @@ subscribing_homes:
   - "JeanHuguesRobert/cogentia"
   - "JeanHuguesRobert/operium"
 status: "in transit — awaiting a coding-capable handler"
+classification_source: "cogentia.js"
+classification_version: "1"
+classification_rule: "explicit-metadata"
+classification_confidence: "medium"
 ---
 
 # CPKT-2026-008 — NASA, Remote Web Session, Hosted Browser, and Pi Remote Access

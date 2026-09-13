@@ -5,9 +5,15 @@ author: "Jean Hugues Noël Robert, baron Mariani — Institut Mariani / Cogentia
 date: "2026-09-01"
 status: "active"
 corpus_role: "source"
-document_role: "campaign-chronicle"
+document_role: "source"
 document_kind: "registry-index"
 visibility: "public"
+lifecycle_state: "active"
+classification_source: "cogentia.js"
+classification_version: "1"
+classification_rule: "explicit-metadata"
+classification_confidence: "medium"
+legacy_document_role: "campaign-chronicle"
 ---
 
 # Chronique Vivante & Base Documentaire — Élections Sénatoriales Corse 2026

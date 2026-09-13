@@ -8,6 +8,10 @@ document_kind: propagation-note
 visibility: public
 lifecycle_state: active
 update_policy: UP-DEFAULT-REVIEWED
+classification_source: "cogentia.js"
+classification_version: "1"
+classification_rule: "explicit-metadata"
+classification_confidence: "medium"
 ---
 
 # Registry Graph Propagation

@@ -5,7 +5,7 @@ author: "Jean Hugues Noël Robert, baron Mariani — Institut Mariani / Cogentia
 date: "2026-09-01"
 status: published
 corpus_role: source
-document_role: strategic-analysis
+document_role: "source"
 document_kind: research-paper
 visibility: public
 language: fr
@@ -19,6 +19,12 @@ tags:
   - Core in Fronte
   - Palatinu
   - DHITL
+lifecycle_state: "stable"
+classification_source: "cogentia.js"
+classification_version: "1"
+classification_rule: "explicit-metadata"
+classification_confidence: "medium"
+legacy_document_role: "strategic-analysis"
 ---
 
 # Étude Stratégique : Présence sur les Réseaux Sociaux des Opposants et Forces Politiques Insulaires
