@@ -16,7 +16,8 @@ if (fs.existsSync(registryPath) && fs.statSync(registryPath).isDirectory()) {
   else registryPath = path.join(here, "..", "docs", "registry.json");
 }
 const registry = JSON.parse(fs.readFileSync(registryPath, "utf8"));
-const root = path.dirname(path.dirname(registryPath));
+const root = path.dirname(registryPath);
+const planner = path.join(here, "metadata-plan.js");
 const continuations = [];
 for (const repo of registry.repos || []) {
   const cwd = path.resolve(root, repo.path);
