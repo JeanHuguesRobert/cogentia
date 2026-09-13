@@ -10929,6 +10929,9 @@ function inferDocumentKind(doc) {
   if (doc.role === "alias" || fm.redirect_to || fm.canonical_document) {
     return kind("redirect-alias", "alias-redirect", "strong", "Alias or redirect metadata is present.");
   }
+  if (String(fm.document_kind || "").toLowerCase() === "issue_packet" || /(^|\/)\.cogentia\/issues\//i.test(r)) {
+    return kind("issue-packet", "issue_packet", "strong", "Issue packet path or explicit kind.", "source");
+  }
   if (isGeneratedNavigationDoc(doc)) {
     return kind("generated-view", "generated-navigation", "strong", "Generated corpus navigation path.");
   }
