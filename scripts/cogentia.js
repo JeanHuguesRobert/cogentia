@@ -21,6 +21,7 @@ import { once } from "node:events";
 import { finished } from "node:stream/promises";
 import { pathToFileURL } from "node:url";
 import { createGunzip, createGzip } from "node:zlib";
+import js_yaml from "js-yaml";
 import { DAEMON_PLUGINS, DAEMON_PLUGIN_ROUTES, loadDaemonPlugins, dispatchPluginRoute } from "./daemon_plugins/registry.js";
 import { buildIssueGraph, renderIssueGraph } from "./lib/issue-graph.js";
 import { generateOperiumEmbeddingsReport } from "./lib/operium-embeddings.js";
@@ -10625,16 +10626,41 @@ function globMatch(value, pattern) {
   return re.test(cleanValue);
 }
 
+function normalizeYamlValue(value) {
+  if (value instanceof Date) return value.toISOString().slice(0, 10);
+  if (Array.isArray(value)) return value.map(normalizeYamlValue);
+  if (value && typeof value === "object") {
+    const out = {};
+    for (const [k, v] of Object.entries(value)) out[k] = normalizeYamlValue(v);
+    return out;
+  }
+  return value;
+}
+
+function parseFrontmatterFlat(yamlText) {
+  const data = {};
+  for (const line of yamlText.split(/\r?\n/)) {
+    const m = line.match(/^([A-Za-z0-9_-]+):\s*(.*)$/);
+    if (!m) continue;
+    data[m[1]] = unquote(m[2].trim());
+  }
+  return data;
+}
+
 function parseFrontmatter(raw) {
   if (!raw.startsWith("---")) return { data: {}, body: raw };
   const end = raw.indexOf("\n---", 3);
   if (end < 0) return { data: {}, body: raw };
-  const yaml = raw.slice(3, end).trim();
-  const data = {};
-  for (const line of yaml.split(/\r?\n/)) {
-    const m = line.match(/^([A-Za-z0-9_-]+):\s*(.*)$/);
-    if (!m) continue;
-    data[m[1]] = unquote(m[2].trim());
+  const yamlText = raw.slice(3, end).trim();
+  let data;
+  try {
+    const parsed = js_yaml.load(yamlText);
+    data = (parsed && typeof parsed === "object" && !Array.isArray(parsed)) ? normalizeYamlValue(parsed) : {};
+  } catch {
+    // Hand-authored frontmatter occasionally breaks strict YAML (stray colons,
+    // tabs, etc.); fall back to the previous flat top-level-only parser rather
+    // than losing the document's classification entirely.
+    data = parseFrontmatterFlat(yamlText);
   }
   return { data, body: raw.slice(end + 4) };
 }
@@ -10772,8 +10798,20 @@ function derivedNeedsJudgment(doc) {
     fm.corpus_role,
     fm.role,
     fm.status,
+    fm.legacy_document_role,
   ].map(v => String(v || "").toLowerCase()).join(" ");
   if (explicit.includes("asym") || explicit.includes("asymétr")) return false;
+  if (explicit.includes("derived") || explicit.includes("adapted")) {
+    // A derived document that can name what it was derived from is asymmetric
+    // by definition: the "symmetric, temporarily counts as source" case is for
+    // derived documents that cannot point to their origin.
+    const hasNamedSource = Boolean(
+      fm.source_document || fm.source_documents ||
+      (Array.isArray(fm.derived_from) ? fm.derived_from.length : fm.derived_from) ||
+      (fm.provenance && (Array.isArray(fm.provenance.derived_from) ? fm.provenance.derived_from.length : fm.provenance.derived_from))
+    );
+    if (hasNamedSource) return false;
+  }
   if (fm.generated_automatically && fm.derived_from) return false;
   return true;
 }
