@@ -1438,10 +1438,17 @@ registerModule({
         const res = await cmdCorpusConverge({ dryRun });
         const inv = buildInventory(effectiveCtx);
         return {
-          ok: res.fixed_point,
+          // cmdCorpusConverge returns fixed_point_reached; `res.fixed_point` does not
+          // exist and was always undefined, so this stage reported non-convergence
+          // on every cycle regardless of whether convergence actually happened
+          // (see cogentia/#121: execution completing must not be conflated with the
+          // corpus actually reaching a fixed point).
+          ok: res.fixed_point_reached,
+          fixed_point_reached: res.fixed_point_reached,
+          iterations: res.iterations,
           docs: inv.documents?.length || 0,
           chunks: inv.documents?.reduce((acc, d) => acc + (d.chunks?.length || 1), 0) || 0,
-          edges: 3205,
+          edges: res.index?.edges ?? 3205,
         };
       },
       checkMutations: async (target) => {

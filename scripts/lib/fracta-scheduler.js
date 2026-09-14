@@ -45,6 +45,7 @@ export function createSchedulerRunContext(ctx, options = {}) {
       mutationsChecked: 0,
       issuesSynced: 0,
       continuationsAlive: 0,
+      fixedPointReached: false,
     },
     escalations: [],
     ok: true,
@@ -62,7 +63,20 @@ export async function runFractaCycle(runCtx, hooks = {}) {
       runCtx.metrics.docsCount = convRes.docs || 0;
       runCtx.metrics.chunksCount = convRes.chunks || 0;
       runCtx.metrics.edgesCount = convRes.edges || 0;
-      return { ok: true, details: `Converged to fixed point: ${convRes.docs} docs, ${convRes.chunks} chunks.` };
+      // "cycle/stage executed successfully" != "corpus actually converged to a
+      // fixed point" (cogentia/#121). Executing the converge hook without
+      // throwing is not the same claim as fixed_point_reached=true, so the two
+      // must stay distinguishable here rather than collapsing to a bare "ok".
+      const fixedPointReached = Boolean(convRes.fixed_point_reached ?? convRes.ok);
+      runCtx.metrics.fixedPointReached = fixedPointReached;
+      if (fixedPointReached) {
+        return { ok: true, details: `Converged to fixed point: ${convRes.docs} docs, ${convRes.chunks} chunks.` };
+      }
+      return {
+        ok: true,
+        warning: true,
+        details: `Convergence not established; iteration limit reached (${convRes.iterations ?? "?"} pass(es)): ${convRes.docs} docs, ${convRes.chunks} chunks.`,
+      };
     }
     return { ok: true, details: "No convergence hook provided (skipped)." };
   });
