@@ -104,6 +104,7 @@ export async function runFractaCycle(runCtx, hooks = {}) {
     if (hooks.syncIssues) {
       const issueRes = await hooks.syncIssues();
       runCtx.metrics.issuesSynced = issueRes.synced || 0;
+      if (issueRes.dry_run) return { ok: true, details: "Dry run: issue packet sync skipped (would overwrite local classification fields from the GitHub source)." };
       return { ok: true, details: "Synced issue packets across tracked repositories." };
     }
     return { ok: true, details: "Skipped issue sync." };
@@ -123,6 +124,7 @@ export async function runFractaCycle(runCtx, hooks = {}) {
   await recordStage(runCtx, "views_export", async () => {
     if (hooks.exportViews) {
       const viewRes = await hooks.exportViews();
+      if (viewRes.dry_run) return { ok: true, details: "Dry run: views export skipped." };
       return { ok: true, details: "Exported corpus-state and views snapshot." };
     }
     return { ok: true, details: "Skipped views export." };

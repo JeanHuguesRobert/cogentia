@@ -1456,6 +1456,12 @@ registerModule({
         return runDocsCheckMutation(effectiveCtx, inv, { target });
       },
       syncIssues: async () => {
+        // syncIssuePackets has no dry-run mode of its own and overwrites
+        // .cogentia/issues/*.md from the GitHub source of truth, which does
+        // not carry locally-added classification fields — a real --dry-run
+        // must not risk that write (see cogentia consolidate session,
+        // 2026-09-14: this silently reverted committed classification data).
+        if (dryRun) return { ok: true, synced: 0, dry_run: true };
         const res = syncIssuePackets(effectiveCtx, { repoArg: "all", state: "all", limit: 100 });
         return { ok: true, synced: (res.written || 0) + (res.unchanged || 0) };
       },
@@ -1465,6 +1471,7 @@ registerModule({
         return { ok: true, aliveCount: alive };
       },
       exportViews: async () => {
+        if (dryRun) return { ok: true, dry_run: true };
         const stateRes = exportCorpusState(effectiveCtx);
         return { ok: true, ...stateRes };
       },
@@ -2101,20 +2108,37 @@ function runDocsCheckMutation(ctx, inventory, { target, override, strict }) {
   let warnCount = 0;
   let passCount = 0;
 
+  // A file with no working-tree changes has before === after by definition,
+  // so it structurally cannot trip a mutation policy. Spawning `git show
+  // HEAD:<path>` per document (one subprocess each) to prove that for every
+  // unmodified document in the corpus is what made a full-corpus check take
+  // 20+ minutes: one `git status --porcelain` per repo (not per file) is
+  // enough to know which documents are even worth the expensive path.
+  const dirtyPathsByRepo = new Map();
+  const dirtyPathsForRepo = (repoDir) => {
+    if (!dirtyPathsByRepo.has(repoDir)) {
+      const status = git(repoDir, ["status", "--porcelain"], { ok: true }).split(/\r?\n/).filter(Boolean);
+      dirtyPathsByRepo.set(repoDir, new Set(status.map(line => gitStatusPath(line))));
+    }
+    return dirtyPathsByRepo.get(repoDir);
+  };
+
   for (const doc of targetDocs) {
     if (!fs.existsSync(doc.full_path)) continue;
     const afterContent = fs.readFileSync(doc.full_path, "utf8");
-    let beforeContent = "";
-    try {
-      const repoDir = doc.repo_root || path.dirname(doc.full_path);
-      const gitRel = path.relative(repoDir, doc.full_path).replace(/\\/g, "/");
-      beforeContent = execFileSync("git", ["show", `HEAD:${gitRel}`], {
-        cwd: repoDir,
-        encoding: "utf8",
-        stdio: ["ignore", "pipe", "ignore"],
-      });
-    } catch {
-      beforeContent = "";
+    const repoDir = doc.repo_root || path.dirname(doc.full_path);
+    const gitRel = path.relative(repoDir, doc.full_path).replace(/\\/g, "/");
+    let beforeContent = afterContent;
+    if (dirtyPathsForRepo(repoDir).has(gitRel)) {
+      try {
+        beforeContent = execFileSync("git", ["show", `HEAD:${gitRel}`], {
+          cwd: repoDir,
+          encoding: "utf8",
+          stdio: ["ignore", "pipe", "ignore"],
+        });
+      } catch {
+        beforeContent = "";
+      }
     }
 
     const res = checkSemanticMutation(beforeContent, afterContent, {
