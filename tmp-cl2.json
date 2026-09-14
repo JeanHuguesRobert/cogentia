@@ -1,0 +1,2926 @@
+{
+  "ok": true,
+  "store": "C:\\tweesic\\JeanHuguesRobert\\.cogentia\\continuations",
+  "status": "alive",
+  "filter": {
+    "mode": "liveness",
+    "value": "alive"
+  },
+  "kind": "all",
+  "continuations": [
+    {
+      "id": "ctn_576a090e",
+      "status": "active",
+      "kind": "index.document_role_judgment",
+      "title": "Personal app samples",
+      "question": "Cannot index deterministically with role=unknown confidence=weak.",
+      "priority": 2,
+      "dedupe_key": "index:index.document_role_judgment:cogentia:apps/personal/samples/README.md",
+      "subject": {
+        "repo": "cogentia",
+        "path": "apps/personal/samples/README.md"
+      },
+      "created_at": "2026-08-26T03:41:33.607Z",
+      "updated_at": "2026-08-26T03:41:33.607Z",
+      "resume": {
+        "command": "node scripts/cogentia.js continuation resolve ctn_576a090e <result.json>"
+      }
+    },
+    {
+      "id": "ctn_aada743b",
+      "status": "active",
+      "kind": "index.document_role_judgment",
+      "title": "Fracta — app fragments only",
+      "question": "Cannot index deterministically with role=unknown confidence=weak.",
+      "priority": 2,
+      "dedupe_key": "index:index.document_role_judgment:cogentia:deploy/fracta/README.md",
+      "subject": {
+        "repo": "cogentia",
+        "path": "deploy/fracta/README.md"
+      },
+      "created_at": "2026-08-26T03:41:33.862Z",
+      "updated_at": "2026-08-26T03:41:33.862Z",
+      "resume": {
+        "command": "node scripts/cogentia.js continuation resolve ctn_aada743b <result.json>"
+      }
+    },
+    {
+      "id": "ctn_65719f6a",
+      "status": "active",
+      "kind": "index.document_role_judgment",
+      "title": "Views Store server",
+      "question": "Cannot index deterministically with role=unknown confidence=weak.",
+      "priority": 2,
+      "dedupe_key": "index:index.document_role_judgment:cogentia:deploy/views-server/README.md",
+      "subject": {
+        "repo": "cogentia",
+        "path": "deploy/views-server/README.md"
+      },
+      "created_at": "2026-08-26T03:41:34.168Z",
+      "updated_at": "2026-08-26T03:41:34.168Z",
+      "resume": {
+        "command": "node scripts/cogentia.js continuation resolve ctn_65719f6a <result.json>"
+      }
+    },
+    {
+      "id": "ctn_0c61216b",
+      "status": "active",
+      "kind": "index.document_role_judgment",
+      "title": "Sandbox — MCP 2026 / Cognitive Packet / Skills / JHN mutate",
+      "question": "Cannot index deterministically with role=unknown confidence=weak.",
+      "priority": 2,
+      "dedupe_key": "index:index.document_role_judgment:cogentia:sandbox/mcp-2026-cognitive-packet/README.md",
+      "subject": {
+        "repo": "cogentia",
+        "path": "sandbox/mcp-2026-cognitive-packet/README.md"
+      },
+      "created_at": "2026-08-26T03:41:34.374Z",
+      "updated_at": "2026-08-26T03:41:34.374Z",
+      "resume": {
+        "command": "node scripts/cogentia.js continuation resolve ctn_0c61216b <result.json>"
+      }
+    },
+    {
+      "id": "ctn_a5335115",
+      "status": "active",
+      "kind": "index.document_role_judgment",
+      "title": "Conservator",
+      "question": "Cannot index deterministically with role=unknown confidence=weak.",
+      "priority": 2,
+      "dedupe_key": "index:index.document_role_judgment:cogentia:skills/conservator/SKILL.md",
+      "subject": {
+        "repo": "cogentia",
+        "path": "skills/conservator/SKILL.md"
+      },
+      "created_at": "2026-08-26T03:41:34.536Z",
+      "updated_at": "2026-08-26T03:41:34.536Z",
+      "resume": {
+        "command": "node scripts/cogentia.js continuation resolve ctn_a5335115 <result.json>"
+      }
+    },
+    {
+      "id": "ctn_009cb585",
+      "status": "active",
+      "kind": "index.document_role_judgment",
+      "title": "Explorer / Conservator — minimal experiment v0.1",
+      "question": "Cannot index deterministically with role=unknown confidence=weak.",
+      "priority": 2,
+      "dedupe_key": "index:index.document_role_judgment:cogentia:skills/EXPERIMENT.md",
+      "subject": {
+        "repo": "cogentia",
+        "path": "skills/EXPERIMENT.md"
+      },
+      "created_at": "2026-08-26T03:41:34.708Z",
+      "updated_at": "2026-08-26T03:41:34.708Z",
+      "resume": {
+        "command": "node scripts/cogentia.js continuation resolve ctn_009cb585 <result.json>"
+      }
+    },
+    {
+      "id": "ctn_d7f20b84",
+      "status": "active",
+      "kind": "index.document_role_judgment",
+      "title": "Explorer",
+      "question": "Cannot index deterministically with role=unknown confidence=weak.",
+      "priority": 2,
+      "dedupe_key": "index:index.document_role_judgment:cogentia:skills/explorer/SKILL.md",
+      "subject": {
+        "repo": "cogentia",
+        "path": "skills/explorer/SKILL.md"
+      },
+      "created_at": "2026-08-26T03:41:34.945Z",
+      "updated_at": "2026-08-26T03:41:34.945Z",
+      "resume": {
+        "command": "node scripts/cogentia.js continuation resolve ctn_d7f20b84 <result.json>"
+      }
+    },
+    {
+      "id": "ctn_52a9aa1a",
+      "status": "active",
+      "kind": "index.document_role_judgment",
+      "title": "Provenance — Jana logo generator",
+      "question": "Cannot index deterministically with role=unknown confidence=weak.",
+      "priority": 2,
+      "dedupe_key": "index:index.document_role_judgment:FractaVolta:tools/jana-logo-generator/PROVENANCE.md",
+      "subject": {
+        "repo": "FractaVolta",
+        "path": "tools/jana-logo-generator/PROVENANCE.md"
+      },
+      "created_at": "2026-08-26T03:41:35.297Z",
+      "updated_at": "2026-08-26T03:41:35.297Z",
+      "resume": {
+        "command": "node scripts/cogentia.js continuation resolve ctn_52a9aa1a <result.json>"
+      }
+    },
+    {
+      "id": "ctn_ef1b66a6",
+      "status": "active",
+      "kind": "index.document_role_judgment",
+      "title": "Jana logo generator",
+      "question": "Cannot index deterministically with role=unknown confidence=weak.",
+      "priority": 2,
+      "dedupe_key": "index:index.document_role_judgment:FractaVolta:tools/jana-logo-generator/README.md",
+      "subject": {
+        "repo": "FractaVolta",
+        "path": "tools/jana-logo-generator/README.md"
+      },
+      "created_at": "2026-08-26T03:41:35.666Z",
+      "updated_at": "2026-08-26T03:41:35.666Z",
+      "resume": {
+        "command": "node scripts/cogentia.js continuation resolve ctn_ef1b66a6 <result.json>"
+      }
+    },
+    {
+      "id": "ctn_ab8fd43b",
+      "status": "active",
+      "kind": "index.document_role_judgment",
+      "title": "Registre des instances — Agents JHN",
+      "question": "Cannot index deterministically with role=unknown confidence=weak.",
+      "priority": 2,
+      "dedupe_key": "index:index.document_role_judgment:barons-Mariani:agents-jhn/instances/README.md",
+      "subject": {
+        "repo": "barons-Mariani",
+        "path": "agents-jhn/instances/README.md"
+      },
+      "created_at": "2026-08-26T03:41:36.003Z",
+      "updated_at": "2026-08-26T03:41:36.003Z",
+      "resume": {
+        "command": "node scripts/cogentia.js continuation resolve ctn_ab8fd43b <result.json>"
+      }
+    },
+    {
+      "id": "ctn_e0f23727",
+      "status": "active",
+      "kind": "index.document_role_judgment",
+      "title": "Agents JHN",
+      "question": "Cannot index deterministically with role=unknown confidence=weak.",
+      "priority": 2,
+      "dedupe_key": "index:index.document_role_judgment:barons-Mariani:agents-jhn/README.md",
+      "subject": {
+        "repo": "barons-Mariani",
+        "path": "agents-jhn/README.md"
+      },
+      "created_at": "2026-08-26T03:41:36.362Z",
+      "updated_at": "2026-08-26T03:41:36.362Z",
+      "resume": {
+        "command": "node scripts/cogentia.js continuation resolve ctn_e0f23727 <result.json>"
+      }
+    },
+    {
+      "id": "ctn_dc35e280",
+      "status": "active",
+      "kind": "index.document_role_judgment",
+      "title": "Registre de révocation — Agents JHN",
+      "question": "Cannot index deterministically with role=unknown confidence=weak.",
+      "priority": 2,
+      "dedupe_key": "index:index.document_role_judgment:barons-Mariani:agents-jhn/revocations/README.md",
+      "subject": {
+        "repo": "barons-Mariani",
+        "path": "agents-jhn/revocations/README.md"
+      },
+      "created_at": "2026-08-26T03:41:36.697Z",
+      "updated_at": "2026-08-26T03:41:36.697Z",
+      "resume": {
+        "command": "node scripts/cogentia.js continuation resolve ctn_dc35e280 <result.json>"
+      }
+    },
+    {
+      "id": "ctn_f0d45ae6",
+      "status": "active",
+      "kind": "index.document_role_judgment",
+      "title": "Digipees — character set v1",
+      "question": "Cannot index deterministically with role=unknown confidence=weak.",
+      "priority": 2,
+      "dedupe_key": "index:index.document_role_judgment:barons-Mariani:hosted/digipees/docs/character-set.md",
+      "subject": {
+        "repo": "barons-Mariani",
+        "path": "hosted/digipees/docs/character-set.md"
+      },
+      "created_at": "2026-08-26T03:41:37.065Z",
+      "updated_at": "2026-08-26T03:41:37.065Z",
+      "resume": {
+        "command": "node scripts/cogentia.js continuation resolve ctn_f0d45ae6 <result.json>"
+      }
+    },
+    {
+      "id": "ctn_5916b55e",
+      "status": "active",
+      "kind": "index.document_role_judgment",
+      "title": "Digipees — asset and version inventory",
+      "question": "Cannot index deterministically with role=unknown confidence=weak.",
+      "priority": 2,
+      "dedupe_key": "index:index.document_role_judgment:barons-Mariani:hosted/digipees/docs/inventory.md",
+      "subject": {
+        "repo": "barons-Mariani",
+        "path": "hosted/digipees/docs/inventory.md"
+      },
+      "created_at": "2026-08-26T03:41:37.417Z",
+      "updated_at": "2026-08-26T03:41:37.417Z",
+      "resume": {
+        "command": "node scripts/cogentia.js continuation resolve ctn_5916b55e <result.json>"
+      }
+    },
+    {
+      "id": "ctn_90e7041e",
+      "status": "active",
+      "kind": "index.document_role_judgment",
+      "title": "Digipees — provenance and rights",
+      "question": "Cannot index deterministically with role=unknown confidence=weak.",
+      "priority": 2,
+      "dedupe_key": "index:index.document_role_judgment:barons-Mariani:hosted/digipees/docs/provenance-and-rights.md",
+      "subject": {
+        "repo": "barons-Mariani",
+        "path": "hosted/digipees/docs/provenance-and-rights.md"
+      },
+      "created_at": "2026-08-26T03:41:37.777Z",
+      "updated_at": "2026-08-26T03:41:37.777Z",
+      "resume": {
+        "command": "node scripts/cogentia.js continuation resolve ctn_90e7041e <result.json>"
+      }
+    },
+    {
+      "id": "ctn_df1065e1",
+      "status": "active",
+      "kind": "index.document_role_judgment",
+      "title": "Digipees — visual grammar",
+      "question": "Cannot index deterministically with role=unknown confidence=weak.",
+      "priority": 2,
+      "dedupe_key": "index:index.document_role_judgment:barons-Mariani:hosted/digipees/docs/visual-grammar.md",
+      "subject": {
+        "repo": "barons-Mariani",
+        "path": "hosted/digipees/docs/visual-grammar.md"
+      },
+      "created_at": "2026-08-26T03:41:38.146Z",
+      "updated_at": "2026-08-26T03:41:38.146Z",
+      "resume": {
+        "command": "node scripts/cogentia.js continuation resolve ctn_df1065e1 <result.json>"
+      }
+    },
+    {
+      "id": "ctn_8a6f3f51",
+      "status": "active",
+      "kind": "index.document_role_judgment",
+      "title": "Digipees — history and provenance",
+      "question": "Cannot index deterministically with role=unknown confidence=weak.",
+      "priority": 2,
+      "dedupe_key": "index:index.document_role_judgment:barons-Mariani:hosted/digipees/HISTORY.md",
+      "subject": {
+        "repo": "barons-Mariani",
+        "path": "hosted/digipees/HISTORY.md"
+      },
+      "created_at": "2026-08-26T03:41:38.495Z",
+      "updated_at": "2026-08-26T03:41:38.495Z",
+      "resume": {
+        "command": "node scripts/cogentia.js continuation resolve ctn_8a6f3f51 <result.json>"
+      }
+    },
+    {
+      "id": "ctn_b24ad1b6",
+      "status": "active",
+      "kind": "index.document_role_judgment",
+      "title": "Digipees — provenance des sources originales",
+      "question": "Cannot index deterministically with role=unknown confidence=weak.",
+      "priority": 2,
+      "dedupe_key": "index:index.document_role_judgment:barons-Mariani:hosted/digipees/originals/PROVENANCE.md",
+      "subject": {
+        "repo": "barons-Mariani",
+        "path": "hosted/digipees/originals/PROVENANCE.md"
+      },
+      "created_at": "2026-08-26T03:41:38.839Z",
+      "updated_at": "2026-08-26T03:41:38.839Z",
+      "resume": {
+        "command": "node scripts/cogentia.js continuation resolve ctn_b24ad1b6 <result.json>"
+      }
+    },
+    {
+      "id": "ctn_a3bf2be8",
+      "status": "active",
+      "kind": "index.document_role_judgment",
+      "title": "Digipees",
+      "question": "Cannot index deterministically with role=unknown confidence=weak.",
+      "priority": 2,
+      "dedupe_key": "index:index.document_role_judgment:barons-Mariani:hosted/digipees/README.md",
+      "subject": {
+        "repo": "barons-Mariani",
+        "path": "hosted/digipees/README.md"
+      },
+      "created_at": "2026-08-26T03:41:39.348Z",
+      "updated_at": "2026-08-26T03:41:39.348Z",
+      "resume": {
+        "command": "node scripts/cogentia.js continuation resolve ctn_a3bf2be8 <result.json>"
+      }
+    },
+    {
+      "id": "ctn_b508d409",
+      "status": "active",
+      "kind": "index.document_role_judgment",
+      "title": "Collections — Musée Mariani",
+      "question": "Cannot index deterministically with role=unknown confidence=weak.",
+      "priority": 2,
+      "dedupe_key": "index:index.document_role_judgment:barons-Mariani:musee-mariani/collections/README.md",
+      "subject": {
+        "repo": "barons-Mariani",
+        "path": "musee-mariani/collections/README.md"
+      },
+      "created_at": "2026-08-26T03:41:39.857Z",
+      "updated_at": "2026-08-26T03:41:39.857Z",
+      "resume": {
+        "command": "node scripts/cogentia.js continuation resolve ctn_b508d409 <result.json>"
+      }
+    },
+    {
+      "id": "ctn_e09a68c2",
+      "status": "active",
+      "kind": "index.document_role_judgment",
+      "title": "Musée Mariani — préfiguration",
+      "question": "Cannot index deterministically with role=unknown confidence=weak.",
+      "priority": 2,
+      "dedupe_key": "index:index.document_role_judgment:barons-Mariani:musee-mariani/README.md",
+      "subject": {
+        "repo": "barons-Mariani",
+        "path": "musee-mariani/README.md"
+      },
+      "created_at": "2026-08-26T03:41:40.873Z",
+      "updated_at": "2026-08-26T03:41:40.873Z",
+      "resume": {
+        "command": "node scripts/cogentia.js continuation resolve ctn_e09a68c2 <result.json>"
+      }
+    },
+    {
+      "id": "ctn_8bc2061e",
+      "status": "active",
+      "kind": "index.document_role_judgment",
+      "title": "The Iɴᴏx programming language",
+      "question": "Cannot index deterministically with role=unknown confidence=weak.",
+      "priority": 2,
+      "dedupe_key": "index:index.document_role_judgment:Inox:README.md",
+      "subject": {
+        "repo": "Inox",
+        "path": "README.md"
+      },
+      "created_at": "2026-08-26T03:41:41.610Z",
+      "updated_at": "2026-08-26T03:41:41.610Z",
+      "resume": {
+        "command": "node scripts/cogentia.js continuation resolve ctn_8bc2061e <result.json>"
+      }
+    },
+    {
+      "id": "ctn_3b4c01f9",
+      "status": "active",
+      "kind": "index.document_role_judgment",
+      "title": "Assets for the pluralisation cognitive media example",
+      "question": "Cannot index deterministically with role=unknown confidence=weak.",
+      "priority": 2,
+      "dedupe_key": "index:index.document_role_judgment:ubikia:examples/pluralisation_cognitive_media/assets/README.md",
+      "subject": {
+        "repo": "ubikia",
+        "path": "examples/pluralisation_cognitive_media/assets/README.md"
+      },
+      "created_at": "2026-08-26T03:41:44.687Z",
+      "updated_at": "2026-08-26T03:41:44.687Z",
+      "resume": {
+        "command": "node scripts/cogentia.js continuation resolve ctn_3b4c01f9 <result.json>"
+      }
+    },
+    {
+      "id": "ctn_43d9339f",
+      "status": "active",
+      "kind": "index.document_role_judgment",
+      "title": "Ubikia Media",
+      "question": "Cannot index deterministically with role=unknown confidence=weak.",
+      "priority": 2,
+      "dedupe_key": "index:index.document_role_judgment:ubikia:MEDIA.md",
+      "subject": {
+        "repo": "ubikia",
+        "path": "MEDIA.md"
+      },
+      "created_at": "2026-08-26T03:41:46.271Z",
+      "updated_at": "2026-08-26T03:41:46.271Z",
+      "resume": {
+        "command": "node scripts/cogentia.js continuation resolve ctn_43d9339f <result.json>"
+      }
+    },
+    {
+      "id": "ctn_17066eaf",
+      "status": "active",
+      "kind": "index.document_role_judgment",
+      "title": "Publication memory",
+      "question": "Cannot index deterministically with role=unknown confidence=weak.",
+      "priority": 2,
+      "dedupe_key": "index:index.document_role_judgment:ubikia:publications/README.md",
+      "subject": {
+        "repo": "ubikia",
+        "path": "publications/README.md"
+      },
+      "created_at": "2026-08-26T03:41:47.210Z",
+      "updated_at": "2026-08-26T03:41:47.210Z",
+      "resume": {
+        "command": "node scripts/cogentia.js continuation resolve ctn_17066eaf <result.json>"
+      }
+    },
+    {
+      "id": "ctn_b14dbff9",
+      "status": "active",
+      "kind": "index.document_role_judgment",
+      "title": "Agent John (WhatsApp) templates",
+      "question": "Cannot index deterministically with role=unknown confidence=weak.",
+      "priority": 2,
+      "dedupe_key": "index:index.document_role_judgment:operium:templates/agent-john/README.md",
+      "subject": {
+        "repo": "operium",
+        "path": "templates/agent-john/README.md"
+      },
+      "created_at": "2026-08-26T03:41:48.559Z",
+      "updated_at": "2026-08-26T03:41:48.559Z",
+      "resume": {
+        "command": "node scripts/cogentia.js continuation resolve ctn_b14dbff9 <result.json>"
+      }
+    },
+    {
+      "id": "ctn_ebccfa98",
+      "status": "active",
+      "kind": "index.document_role_judgment",
+      "title": "Olé Olé Fracta preview",
+      "question": "Cannot index deterministically with role=unknown confidence=weak.",
+      "priority": 2,
+      "dedupe_key": "index:index.document_role_judgment:operium:templates/oleole/README.md",
+      "subject": {
+        "repo": "operium",
+        "path": "templates/oleole/README.md"
+      },
+      "created_at": "2026-08-26T03:41:49.155Z",
+      "updated_at": "2026-08-26T03:41:49.155Z",
+      "resume": {
+        "command": "node scripts/cogentia.js continuation resolve ctn_ebccfa98 <result.json>"
+      }
+    },
+    {
+      "id": "ctn_f3d91c2c",
+      "status": "active",
+      "kind": "index.document_role_judgment",
+      "title": "Stalwart templates (secret-free)",
+      "question": "Cannot index deterministically with role=unknown confidence=weak.",
+      "priority": 2,
+      "dedupe_key": "index:index.document_role_judgment:operium:templates/stalwart/README.md",
+      "subject": {
+        "repo": "operium",
+        "path": "templates/stalwart/README.md"
+      },
+      "created_at": "2026-08-26T03:41:49.851Z",
+      "updated_at": "2026-08-26T03:41:49.851Z",
+      "resume": {
+        "command": "node scripts/cogentia.js continuation resolve ctn_f3d91c2c <result.json>"
+      }
+    },
+    {
+      "id": "ctn_4d4d39a0",
+      "status": "active",
+      "kind": "index.document_role_judgment",
+      "title": "Research Index - acorsica GitHub Profile",
+      "question": "Cannot index deterministically with role=unknown confidence=weak.",
+      "priority": 2,
+      "dedupe_key": "index:index.document_role_judgment:JeanHuguesRobert:.github-index.md",
+      "subject": {
+        "repo": "JeanHuguesRobert",
+        "path": ".github-index.md"
+      },
+      "created_at": "2026-08-26T03:41:50.448Z",
+      "updated_at": "2026-08-26T03:41:50.448Z",
+      "resume": {
+        "command": "node scripts/cogentia.js continuation resolve ctn_4d4d39a0 <result.json>"
+      }
+    },
+    {
+      "id": "ctn_872c66d6",
+      "status": "active",
+      "kind": "index.document_role_judgment",
+      "title": "Research Index - acorsica.org",
+      "question": "Cannot index deterministically with role=unknown confidence=weak.",
+      "priority": 2,
+      "dedupe_key": "index:index.document_role_judgment:JeanHuguesRobert:acorsica.org-index.md",
+      "subject": {
+        "repo": "JeanHuguesRobert",
+        "path": "acorsica.org-index.md"
+      },
+      "created_at": "2026-08-26T03:41:50.986Z",
+      "updated_at": "2026-08-26T03:41:50.986Z",
+      "resume": {
+        "command": "node scripts/cogentia.js continuation resolve ctn_872c66d6 <result.json>"
+      }
+    },
+    {
+      "id": "ctn_9c8afb5d",
+      "status": "active",
+      "kind": "index.document_role_judgment",
+      "title": "Concept Index — barons-Mariani",
+      "question": "Cannot index deterministically with role=unknown confidence=weak.",
+      "priority": 2,
+      "dedupe_key": "index:index.document_role_judgment:JeanHuguesRobert:barons-Mariani-concepts.md",
+      "subject": {
+        "repo": "JeanHuguesRobert",
+        "path": "barons-Mariani-concepts.md"
+      },
+      "created_at": "2026-08-26T03:41:52.242Z",
+      "updated_at": "2026-08-26T03:41:52.242Z",
+      "resume": {
+        "command": "node scripts/cogentia.js continuation resolve ctn_9c8afb5d <result.json>"
+      }
+    },
+    {
+      "id": "ctn_dbe86d87",
+      "status": "active",
+      "kind": "index.document_role_judgment",
+      "title": "Research Index — barons-Mariani",
+      "question": "Cannot index deterministically with role=unknown confidence=weak.",
+      "priority": 2,
+      "dedupe_key": "index:index.document_role_judgment:JeanHuguesRobert:barons-Mariani-index.md",
+      "subject": {
+        "repo": "JeanHuguesRobert",
+        "path": "barons-Mariani-index.md"
+      },
+      "created_at": "2026-08-26T03:41:53.024Z",
+      "updated_at": "2026-08-26T03:41:53.024Z",
+      "resume": {
+        "command": "node scripts/cogentia.js continuation resolve ctn_dbe86d87 <result.json>"
+      }
+    },
+    {
+      "id": "ctn_7d83f17f",
+      "status": "active",
+      "kind": "index.document_role_judgment",
+      "title": "Concept Index — cogentia",
+      "question": "Cannot index deterministically with role=unknown confidence=weak.",
+      "priority": 2,
+      "dedupe_key": "index:index.document_role_judgment:JeanHuguesRobert:cogentia-concepts.md",
+      "subject": {
+        "repo": "JeanHuguesRobert",
+        "path": "cogentia-concepts.md"
+      },
+      "created_at": "2026-08-26T03:41:54.285Z",
+      "updated_at": "2026-08-26T03:41:54.285Z",
+      "resume": {
+        "command": "node scripts/cogentia.js continuation resolve ctn_7d83f17f <result.json>"
+      }
+    },
+    {
+      "id": "ctn_6b96fa2f",
+      "status": "active",
+      "kind": "index.document_role_judgment",
+      "title": "Research Index — Cogentia",
+      "question": "Cannot index deterministically with role=unknown confidence=weak.",
+      "priority": 2,
+      "dedupe_key": "index:index.document_role_judgment:JeanHuguesRobert:cogentia-index.md",
+      "subject": {
+        "repo": "JeanHuguesRobert",
+        "path": "cogentia-index.md"
+      },
+      "created_at": "2026-08-26T03:41:55.889Z",
+      "updated_at": "2026-08-26T03:41:55.889Z",
+      "resume": {
+        "command": "node scripts/cogentia.js continuation resolve ctn_6b96fa2f <result.json>"
+      }
+    },
+    {
+      "id": "ctn_93a1bed6",
+      "status": "active",
+      "kind": "index.document_role_judgment",
+      "title": "Alive Continuations List",
+      "question": "Cannot index deterministically with role=unknown confidence=weak.",
+      "priority": 2,
+      "dedupe_key": "index:index.document_role_judgment:JeanHuguesRobert:continuations-list.md",
+      "subject": {
+        "repo": "JeanHuguesRobert",
+        "path": "continuations-list.md"
+      },
+      "created_at": "2026-08-26T03:41:56.889Z",
+      "updated_at": "2026-08-26T03:41:56.889Z",
+      "resume": {
+        "command": "node scripts/cogentia.js continuation resolve ctn_93a1bed6 <result.json>"
+      }
+    },
+    {
+      "id": "ctn_dfab1425",
+      "status": "active",
+      "kind": "index.document_role_judgment",
+      "title": "Alive Continuations - Full Details",
+      "question": "Cannot index deterministically with role=unknown confidence=weak.",
+      "priority": 2,
+      "dedupe_key": "index:index.document_role_judgment:JeanHuguesRobert:continuations.md",
+      "subject": {
+        "repo": "JeanHuguesRobert",
+        "path": "continuations.md"
+      },
+      "created_at": "2026-08-26T03:41:58.239Z",
+      "updated_at": "2026-08-26T03:41:58.239Z",
+      "resume": {
+        "command": "node scripts/cogentia.js continuation resolve ctn_dfab1425 <result.json>"
+      }
+    },
+    {
+      "id": "ctn_c14a275f",
+      "status": "active",
+      "kind": "index.document_role_judgment",
+      "title": "Current Issues List - JeanHuguesRobert Organization",
+      "question": "Cannot index deterministically with role=unknown confidence=weak.",
+      "priority": 2,
+      "dedupe_key": "index:index.document_role_judgment:JeanHuguesRobert:current-issues-list.md",
+      "subject": {
+        "repo": "JeanHuguesRobert",
+        "path": "current-issues-list.md"
+      },
+      "created_at": "2026-08-26T03:41:58.766Z",
+      "updated_at": "2026-08-26T03:41:58.766Z",
+      "resume": {
+        "command": "node scripts/cogentia.js continuation resolve ctn_c14a275f <result.json>"
+      }
+    },
+    {
+      "id": "ctn_d2c9ef2b",
+      "status": "active",
+      "kind": "index.document_role_judgment",
+      "title": "Fix Bugs First Work Dashboard",
+      "question": "Cannot index deterministically with role=unknown confidence=weak.",
+      "priority": 2,
+      "dedupe_key": "index:index.document_role_judgment:JeanHuguesRobert:fix-bugs-first-dashboard.md",
+      "subject": {
+        "repo": "JeanHuguesRobert",
+        "path": "fix-bugs-first-dashboard.md"
+      },
+      "created_at": "2026-08-26T03:41:59.621Z",
+      "updated_at": "2026-08-26T03:41:59.621Z",
+      "resume": {
+        "command": "node scripts/cogentia.js continuation resolve ctn_d2c9ef2b <result.json>"
+      }
+    },
+    {
+      "id": "ctn_e7c2ab8c",
+      "status": "active",
+      "kind": "index.document_role_judgment",
+      "title": "Concept Index — FractaVolta",
+      "question": "Cannot index deterministically with role=unknown confidence=weak.",
+      "priority": 2,
+      "dedupe_key": "index:index.document_role_judgment:JeanHuguesRobert:FractaVolta-concepts.md",
+      "subject": {
+        "repo": "JeanHuguesRobert",
+        "path": "FractaVolta-concepts.md"
+      },
+      "created_at": "2026-08-26T03:42:00.424Z",
+      "updated_at": "2026-08-26T03:42:00.424Z",
+      "resume": {
+        "command": "node scripts/cogentia.js continuation resolve ctn_e7c2ab8c <result.json>"
+      }
+    },
+    {
+      "id": "ctn_c8890a19",
+      "status": "active",
+      "kind": "index.document_role_judgment",
+      "title": "Research Index — FractaVolta",
+      "question": "Cannot index deterministically with role=unknown confidence=weak.",
+      "priority": 2,
+      "dedupe_key": "index:index.document_role_judgment:JeanHuguesRobert:FractaVolta-index.md",
+      "subject": {
+        "repo": "JeanHuguesRobert",
+        "path": "FractaVolta-index.md"
+      },
+      "created_at": "2026-08-26T03:42:00.799Z",
+      "updated_at": "2026-08-26T03:42:00.799Z",
+      "resume": {
+        "command": "node scripts/cogentia.js continuation resolve ctn_c8890a19 <result.json>"
+      }
+    },
+    {
+      "id": "ctn_74013830",
+      "status": "active",
+      "kind": "index.document_role_judgment",
+      "title": "Research Index - C.O.R.S.I.C.A. Gouvernance",
+      "question": "Cannot index deterministically with role=unknown confidence=weak.",
+      "priority": 2,
+      "dedupe_key": "index:index.document_role_judgment:JeanHuguesRobert:gouvernance-index.md",
+      "subject": {
+        "repo": "JeanHuguesRobert",
+        "path": "gouvernance-index.md"
+      },
+      "created_at": "2026-08-26T03:42:01.583Z",
+      "updated_at": "2026-08-26T03:42:01.583Z",
+      "resume": {
+        "command": "node scripts/cogentia.js continuation resolve ctn_74013830 <result.json>"
+      }
+    },
+    {
+      "id": "ctn_9b2b198d",
+      "status": "active",
+      "kind": "index.document_role_judgment",
+      "title": "Concept Index — Inox",
+      "question": "Cannot index deterministically with role=unknown confidence=weak.",
+      "priority": 2,
+      "dedupe_key": "index:index.document_role_judgment:JeanHuguesRobert:Inox-concepts.md",
+      "subject": {
+        "repo": "JeanHuguesRobert",
+        "path": "Inox-concepts.md"
+      },
+      "created_at": "2026-08-26T03:42:02.290Z",
+      "updated_at": "2026-08-26T03:42:02.290Z",
+      "resume": {
+        "command": "node scripts/cogentia.js continuation resolve ctn_9b2b198d <result.json>"
+      }
+    },
+    {
+      "id": "ctn_f2039c1d",
+      "status": "active",
+      "kind": "index.document_role_judgment",
+      "title": "Research Index — Inox",
+      "question": "Cannot index deterministically with role=unknown confidence=weak.",
+      "priority": 2,
+      "dedupe_key": "index:index.document_role_judgment:JeanHuguesRobert:Inox-index.md",
+      "subject": {
+        "repo": "JeanHuguesRobert",
+        "path": "Inox-index.md"
+      },
+      "created_at": "2026-08-26T03:42:03.433Z",
+      "updated_at": "2026-08-26T03:42:03.433Z",
+      "resume": {
+        "command": "node scripts/cogentia.js continuation resolve ctn_f2039c1d <result.json>"
+      }
+    },
+    {
+      "id": "ctn_72a6c701",
+      "status": "active",
+      "kind": "index.document_role_judgment",
+      "title": "Concept Index — inseme",
+      "question": "Cannot index deterministically with role=unknown confidence=weak.",
+      "priority": 2,
+      "dedupe_key": "index:index.document_role_judgment:JeanHuguesRobert:inseme-concepts.md",
+      "subject": {
+        "repo": "JeanHuguesRobert",
+        "path": "inseme-concepts.md"
+      },
+      "created_at": "2026-08-26T03:42:04.332Z",
+      "updated_at": "2026-08-26T03:42:04.332Z",
+      "resume": {
+        "command": "node scripts/cogentia.js continuation resolve ctn_72a6c701 <result.json>"
+      }
+    },
+    {
+      "id": "ctn_db425e03",
+      "status": "active",
+      "kind": "index.document_role_judgment",
+      "title": "Research Index — Inseme",
+      "question": "Cannot index deterministically with role=unknown confidence=weak.",
+      "priority": 2,
+      "dedupe_key": "index:index.document_role_judgment:JeanHuguesRobert:inseme-index.md",
+      "subject": {
+        "repo": "JeanHuguesRobert",
+        "path": "inseme-index.md"
+      },
+      "created_at": "2026-08-26T03:42:04.992Z",
+      "updated_at": "2026-08-26T03:42:04.992Z",
+      "resume": {
+        "command": "node scripts/cogentia.js continuation resolve ctn_db425e03 <result.json>"
+      }
+    },
+    {
+      "id": "ctn_cee2fd42",
+      "status": "active",
+      "kind": "index.document_role_judgment",
+      "title": "Research Index - Institut Mariani",
+      "question": "Cannot index deterministically with role=unknown confidence=weak.",
+      "priority": 2,
+      "dedupe_key": "index:index.document_role_judgment:JeanHuguesRobert:institut-mariani-index.md",
+      "subject": {
+        "repo": "JeanHuguesRobert",
+        "path": "institut-mariani-index.md"
+      },
+      "created_at": "2026-08-26T03:42:05.470Z",
+      "updated_at": "2026-08-26T03:42:05.470Z",
+      "resume": {
+        "command": "node scripts/cogentia.js continuation resolve ctn_cee2fd42 <result.json>"
+      }
+    },
+    {
+      "id": "ctn_ff30b1bf",
+      "status": "active",
+      "kind": "index.document_role_judgment",
+      "title": "Concept Index — JeanHuguesRobert",
+      "question": "Cannot index deterministically with role=unknown confidence=weak.",
+      "priority": 2,
+      "dedupe_key": "index:index.document_role_judgment:JeanHuguesRobert:JeanHuguesRobert-concepts.md",
+      "subject": {
+        "repo": "JeanHuguesRobert",
+        "path": "JeanHuguesRobert-concepts.md"
+      },
+      "created_at": "2026-08-26T03:42:06.001Z",
+      "updated_at": "2026-08-26T03:42:06.001Z",
+      "resume": {
+        "command": "node scripts/cogentia.js continuation resolve ctn_ff30b1bf <result.json>"
+      }
+    },
+    {
+      "id": "ctn_b6cda357",
+      "status": "active",
+      "kind": "index.document_role_judgment",
+      "title": "Research Index — Jean Hugues Noël Robert (Profile / Entry Point)",
+      "question": "Cannot index deterministically with role=unknown confidence=weak.",
+      "priority": 2,
+      "dedupe_key": "index:index.document_role_judgment:JeanHuguesRobert:JeanHuguesRobert-index.md",
+      "subject": {
+        "repo": "JeanHuguesRobert",
+        "path": "JeanHuguesRobert-index.md"
+      },
+      "created_at": "2026-08-26T03:42:06.950Z",
+      "updated_at": "2026-08-26T03:42:06.950Z",
+      "resume": {
+        "command": "node scripts/cogentia.js continuation resolve ctn_b6cda357 <result.json>"
+      }
+    },
+    {
+      "id": "ctn_90e24e96",
+      "status": "active",
+      "kind": "index.document_role_judgment",
+      "title": "Research Index - Kudos",
+      "question": "Cannot index deterministically with role=unknown confidence=weak.",
+      "priority": 2,
+      "dedupe_key": "index:index.document_role_judgment:JeanHuguesRobert:Kudos-index.md",
+      "subject": {
+        "repo": "JeanHuguesRobert",
+        "path": "Kudos-index.md"
+      },
+      "created_at": "2026-08-26T03:42:07.622Z",
+      "updated_at": "2026-08-26T03:42:07.622Z",
+      "resume": {
+        "command": "node scripts/cogentia.js continuation resolve ctn_90e24e96 <result.json>"
+      }
+    },
+    {
+      "id": "ctn_c104a9cc",
+      "status": "active",
+      "kind": "index.document_role_judgment",
+      "title": "Concept Index — marenostrum",
+      "question": "Cannot index deterministically with role=unknown confidence=weak.",
+      "priority": 2,
+      "dedupe_key": "index:index.document_role_judgment:JeanHuguesRobert:marenostrum-concepts.md",
+      "subject": {
+        "repo": "JeanHuguesRobert",
+        "path": "marenostrum-concepts.md"
+      },
+      "created_at": "2026-08-26T03:42:09.038Z",
+      "updated_at": "2026-08-26T03:42:09.038Z",
+      "resume": {
+        "command": "node scripts/cogentia.js continuation resolve ctn_c104a9cc <result.json>"
+      }
+    },
+    {
+      "id": "ctn_a148c37f",
+      "status": "active",
+      "kind": "index.document_role_judgment",
+      "title": "Research Index — MareNostrum",
+      "question": "Cannot index deterministically with role=unknown confidence=weak.",
+      "priority": 2,
+      "dedupe_key": "index:index.document_role_judgment:JeanHuguesRobert:marenostrum-index.md",
+      "subject": {
+        "repo": "JeanHuguesRobert",
+        "path": "marenostrum-index.md"
+      },
+      "created_at": "2026-08-26T03:42:09.837Z",
+      "updated_at": "2026-08-26T03:42:09.837Z",
+      "resume": {
+        "command": "node scripts/cogentia.js continuation resolve ctn_a148c37f <result.json>"
+      }
+    },
+    {
+      "id": "ctn_52c8d27d",
+      "status": "active",
+      "kind": "index.document_role_judgment",
+      "title": "Research Index - Mariani Village",
+      "question": "Cannot index deterministically with role=unknown confidence=weak.",
+      "priority": 2,
+      "dedupe_key": "index:index.document_role_judgment:JeanHuguesRobert:marianivillage-index.md",
+      "subject": {
+        "repo": "JeanHuguesRobert",
+        "path": "marianivillage-index.md"
+      },
+      "created_at": "2026-08-26T03:42:10.896Z",
+      "updated_at": "2026-08-26T03:42:10.896Z",
+      "resume": {
+        "command": "node scripts/cogentia.js continuation resolve ctn_52c8d27d <result.json>"
+      }
+    },
+    {
+      "id": "ctn_05107630",
+      "status": "active",
+      "kind": "index.document_role_judgment",
+      "title": "Research Index — Operium",
+      "question": "Cannot index deterministically with role=unknown confidence=weak.",
+      "priority": 2,
+      "dedupe_key": "index:index.document_role_judgment:JeanHuguesRobert:operium-index.md",
+      "subject": {
+        "repo": "JeanHuguesRobert",
+        "path": "operium-index.md"
+      },
+      "created_at": "2026-08-26T03:42:11.766Z",
+      "updated_at": "2026-08-26T03:42:11.766Z",
+      "resume": {
+        "command": "node scripts/cogentia.js continuation resolve ctn_05107630 <result.json>"
+      }
+    },
+    {
+      "id": "ctn_0667ea91",
+      "status": "active",
+      "kind": "index.document_role_judgment",
+      "title": "Research Index - PrivAI",
+      "question": "Cannot index deterministically with role=unknown confidence=weak.",
+      "priority": 2,
+      "dedupe_key": "index:index.document_role_judgment:JeanHuguesRobert:privai-index.md",
+      "subject": {
+        "repo": "JeanHuguesRobert",
+        "path": "privai-index.md"
+      },
+      "created_at": "2026-08-26T03:42:14.440Z",
+      "updated_at": "2026-08-26T03:42:14.440Z",
+      "resume": {
+        "command": "node scripts/cogentia.js continuation resolve ctn_0667ea91 <result.json>"
+      }
+    },
+    {
+      "id": "ctn_54f5cc74",
+      "status": "active",
+      "kind": "index.document_role_judgment",
+      "title": "Serra Research Index",
+      "question": "Cannot index deterministically with role=unknown confidence=weak.",
+      "priority": 2,
+      "dedupe_key": "index:index.document_role_judgment:JeanHuguesRobert:serra-index.md",
+      "subject": {
+        "repo": "JeanHuguesRobert",
+        "path": "serra-index.md"
+      },
+      "created_at": "2026-08-26T03:42:16.174Z",
+      "updated_at": "2026-08-26T03:42:16.174Z",
+      "resume": {
+        "command": "node scripts/cogentia.js continuation resolve ctn_54f5cc74 <result.json>"
+      }
+    },
+    {
+      "id": "ctn_53bbd389",
+      "status": "active",
+      "kind": "index.document_role_judgment",
+      "title": "Research Index - Survey / Ophelia",
+      "question": "Cannot index deterministically with role=unknown confidence=weak.",
+      "priority": 2,
+      "dedupe_key": "index:index.document_role_judgment:JeanHuguesRobert:survey-index.md",
+      "subject": {
+        "repo": "JeanHuguesRobert",
+        "path": "survey-index.md"
+      },
+      "created_at": "2026-08-26T03:42:16.890Z",
+      "updated_at": "2026-08-26T03:42:16.890Z",
+      "resume": {
+        "command": "node scripts/cogentia.js continuation resolve ctn_53bbd389 <result.json>"
+      }
+    },
+    {
+      "id": "ctn_19e3f4b8",
+      "status": "active",
+      "kind": "index.document_role_judgment",
+      "title": "Public Twin assets",
+      "question": "Cannot index deterministically with role=unknown confidence=weak.",
+      "priority": 2,
+      "dedupe_key": "index:index.document_role_judgment:JeanHuguesRobert:twin/assets/README.md",
+      "subject": {
+        "repo": "JeanHuguesRobert",
+        "path": "twin/assets/README.md"
+      },
+      "created_at": "2026-08-26T03:42:17.445Z",
+      "updated_at": "2026-08-26T03:42:17.445Z",
+      "resume": {
+        "command": "node scripts/cogentia.js continuation resolve ctn_19e3f4b8 <result.json>"
+      }
+    },
+    {
+      "id": "ctn_badc149f",
+      "status": "active",
+      "kind": "index.document_role_judgment",
+      "title": "Research Index - Ubikia",
+      "question": "Cannot index deterministically with role=unknown confidence=weak.",
+      "priority": 2,
+      "dedupe_key": "index:index.document_role_judgment:JeanHuguesRobert:ubikia-index.md",
+      "subject": {
+        "repo": "JeanHuguesRobert",
+        "path": "ubikia-index.md"
+      },
+      "created_at": "2026-08-26T03:42:18.060Z",
+      "updated_at": "2026-08-26T03:42:18.060Z",
+      "resume": {
+        "command": "node scripts/cogentia.js continuation resolve ctn_badc149f <result.json>"
+      }
+    },
+    {
+      "id": "ctn_057c5c29",
+      "status": "active",
+      "kind": "index.document_role_judgment",
+      "title": "FractaScheduler — Multi-level Distributed Corpus Sleep Cycle",
+      "question": "Cannot index deterministically with role=unknown confidence=weak.",
+      "priority": 2,
+      "dedupe_key": "index:index.document_role_judgment:cogentia:skills/fracta-scheduler/SKILL.md",
+      "subject": {
+        "repo": "cogentia",
+        "path": "skills/fracta-scheduler/SKILL.md"
+      },
+      "created_at": "2026-08-26T04:05:20.555Z",
+      "updated_at": "2026-08-26T04:05:20.555Z",
+      "resume": {
+        "command": "node scripts/cogentia.js continuation resolve ctn_057c5c29 <result.json>"
+      }
+    },
+    {
+      "id": "ctn_6da060f9",
+      "status": "active",
+      "kind": "index.document_role_judgment",
+      "title": "Packet Capsule — Cognitive Packet Packaging & Handoff",
+      "question": "Cannot index deterministically with role=unknown confidence=weak.",
+      "priority": 2,
+      "dedupe_key": "index:index.document_role_judgment:cogentia:skills/packet-capsule/SKILL.md",
+      "subject": {
+        "repo": "cogentia",
+        "path": "skills/packet-capsule/SKILL.md"
+      },
+      "created_at": "2026-08-26T06:58:56.155Z",
+      "updated_at": "2026-08-26T06:58:56.155Z",
+      "resume": {
+        "command": "node scripts/cogentia.js continuation resolve ctn_6da060f9 <result.json>"
+      }
+    },
+    {
+      "id": "ctn_8e398f3a",
+      "status": "active",
+      "kind": "document_role_review",
+      "title": "Classify barons-Mariani/agents-jhn/instances/README.md",
+      "question": "Decide the corpus role of barons-Mariani/agents-jhn/instances/README.md. In particular, say whether it is a sovereign source document, an asymmetric derived product, an alias/redirect, or a symmetric derived document that should temporarily count as sovereign source.",
+      "priority": 2,
+      "dedupe_key": "document_role_review:barons-Mariani/agents-jhn/instances/README.md",
+      "subject": {
+        "repo": "barons-Mariani",
+        "path": "agents-jhn/instances/README.md",
+        "title": "Registre des instances — Agents JHN",
+        "github_url": "https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/agents-jhn/instances/README.md"
+      },
+      "created_at": "2026-09-13T09:40:44.673Z",
+      "updated_at": "2026-09-13T09:40:44.673Z",
+      "resume": {
+        "command": "node scripts/cogentia.js continuation resolve ctn_8e398f3a <result.json>"
+      }
+    },
+    {
+      "id": "ctn_d9755b5f",
+      "status": "active",
+      "kind": "document_role_review",
+      "title": "Classify barons-Mariani/agents-jhn/README.md",
+      "question": "Decide the corpus role of barons-Mariani/agents-jhn/README.md. In particular, say whether it is a sovereign source document, an asymmetric derived product, an alias/redirect, or a symmetric derived document that should temporarily count as sovereign source.",
+      "priority": 2,
+      "dedupe_key": "document_role_review:barons-Mariani/agents-jhn/README.md",
+      "subject": {
+        "repo": "barons-Mariani",
+        "path": "agents-jhn/README.md",
+        "title": "Agents JHN",
+        "github_url": "https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/agents-jhn/README.md"
+      },
+      "created_at": "2026-09-13T09:40:44.862Z",
+      "updated_at": "2026-09-13T09:40:44.862Z",
+      "resume": {
+        "command": "node scripts/cogentia.js continuation resolve ctn_d9755b5f <result.json>"
+      }
+    },
+    {
+      "id": "ctn_a9a4e75f",
+      "status": "active",
+      "kind": "document_role_review",
+      "title": "Classify barons-Mariani/agents-jhn/revocations/README.md",
+      "question": "Decide the corpus role of barons-Mariani/agents-jhn/revocations/README.md. In particular, say whether it is a sovereign source document, an asymmetric derived product, an alias/redirect, or a symmetric derived document that should temporarily count as sovereign source.",
+      "priority": 2,
+      "dedupe_key": "document_role_review:barons-Mariani/agents-jhn/revocations/README.md",
+      "subject": {
+        "repo": "barons-Mariani",
+        "path": "agents-jhn/revocations/README.md",
+        "title": "Registre de révocation — Agents JHN",
+        "github_url": "https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/agents-jhn/revocations/README.md"
+      },
+      "created_at": "2026-09-13T09:40:45.035Z",
+      "updated_at": "2026-09-13T09:40:45.035Z",
+      "resume": {
+        "command": "node scripts/cogentia.js continuation resolve ctn_a9a4e75f <result.json>"
+      }
+    },
+    {
+      "id": "ctn_48afd712",
+      "status": "active",
+      "kind": "document_role_review",
+      "title": "Classify barons-Mariani/hosted/digipees/docs/character-set.md",
+      "question": "Decide the corpus role of barons-Mariani/hosted/digipees/docs/character-set.md. In particular, say whether it is a sovereign source document, an asymmetric derived product, an alias/redirect, or a symmetric derived document that should temporarily count as sovereign source.",
+      "priority": 2,
+      "dedupe_key": "document_role_review:barons-Mariani/hosted/digipees/docs/character-set.md",
+      "subject": {
+        "repo": "barons-Mariani",
+        "path": "hosted/digipees/docs/character-set.md",
+        "title": "Digipees — character set v1",
+        "github_url": "https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/hosted/digipees/docs/character-set.md"
+      },
+      "created_at": "2026-09-13T09:40:45.169Z",
+      "updated_at": "2026-09-13T09:40:45.169Z",
+      "resume": {
+        "command": "node scripts/cogentia.js continuation resolve ctn_48afd712 <result.json>"
+      }
+    },
+    {
+      "id": "ctn_8eefb33c",
+      "status": "active",
+      "kind": "document_role_review",
+      "title": "Classify barons-Mariani/hosted/digipees/docs/inventory.md",
+      "question": "Decide the corpus role of barons-Mariani/hosted/digipees/docs/inventory.md. In particular, say whether it is a sovereign source document, an asymmetric derived product, an alias/redirect, or a symmetric derived document that should temporarily count as sovereign source.",
+      "priority": 2,
+      "dedupe_key": "document_role_review:barons-Mariani/hosted/digipees/docs/inventory.md",
+      "subject": {
+        "repo": "barons-Mariani",
+        "path": "hosted/digipees/docs/inventory.md",
+        "title": "Digipees — asset and version inventory",
+        "github_url": "https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/hosted/digipees/docs/inventory.md"
+      },
+      "created_at": "2026-09-13T09:40:45.361Z",
+      "updated_at": "2026-09-13T09:40:45.361Z",
+      "resume": {
+        "command": "node scripts/cogentia.js continuation resolve ctn_8eefb33c <result.json>"
+      }
+    },
+    {
+      "id": "ctn_7182172e",
+      "status": "active",
+      "kind": "document_role_review",
+      "title": "Classify barons-Mariani/hosted/digipees/docs/provenance-and-rights.md",
+      "question": "Decide the corpus role of barons-Mariani/hosted/digipees/docs/provenance-and-rights.md. In particular, say whether it is a sovereign source document, an asymmetric derived product, an alias/redirect, or a symmetric derived document that should temporarily count as sovereign source.",
+      "priority": 2,
+      "dedupe_key": "document_role_review:barons-Mariani/hosted/digipees/docs/provenance-and-rights.md",
+      "subject": {
+        "repo": "barons-Mariani",
+        "path": "hosted/digipees/docs/provenance-and-rights.md",
+        "title": "Digipees — provenance and rights",
+        "github_url": "https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/hosted/digipees/docs/provenance-and-rights.md"
+      },
+      "created_at": "2026-09-13T09:40:45.504Z",
+      "updated_at": "2026-09-13T09:40:45.504Z",
+      "resume": {
+        "command": "node scripts/cogentia.js continuation resolve ctn_7182172e <result.json>"
+      }
+    },
+    {
+      "id": "ctn_6a667cca",
+      "status": "active",
+      "kind": "document_role_review",
+      "title": "Classify barons-Mariani/hosted/digipees/docs/visual-grammar.md",
+      "question": "Decide the corpus role of barons-Mariani/hosted/digipees/docs/visual-grammar.md. In particular, say whether it is a sovereign source document, an asymmetric derived product, an alias/redirect, or a symmetric derived document that should temporarily count as sovereign source.",
+      "priority": 2,
+      "dedupe_key": "document_role_review:barons-Mariani/hosted/digipees/docs/visual-grammar.md",
+      "subject": {
+        "repo": "barons-Mariani",
+        "path": "hosted/digipees/docs/visual-grammar.md",
+        "title": "Digipees — visual grammar",
+        "github_url": "https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/hosted/digipees/docs/visual-grammar.md"
+      },
+      "created_at": "2026-09-13T09:40:45.656Z",
+      "updated_at": "2026-09-13T09:40:45.656Z",
+      "resume": {
+        "command": "node scripts/cogentia.js continuation resolve ctn_6a667cca <result.json>"
+      }
+    },
+    {
+      "id": "ctn_dec02bbd",
+      "status": "active",
+      "kind": "document_role_review",
+      "title": "Classify barons-Mariani/hosted/digipees/HISTORY.md",
+      "question": "Decide the corpus role of barons-Mariani/hosted/digipees/HISTORY.md. In particular, say whether it is a sovereign source document, an asymmetric derived product, an alias/redirect, or a symmetric derived document that should temporarily count as sovereign source.",
+      "priority": 2,
+      "dedupe_key": "document_role_review:barons-Mariani/hosted/digipees/HISTORY.md",
+      "subject": {
+        "repo": "barons-Mariani",
+        "path": "hosted/digipees/HISTORY.md",
+        "title": "Digipees — history and provenance",
+        "github_url": "https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/hosted/digipees/HISTORY.md"
+      },
+      "created_at": "2026-09-13T09:40:45.808Z",
+      "updated_at": "2026-09-13T09:40:45.808Z",
+      "resume": {
+        "command": "node scripts/cogentia.js continuation resolve ctn_dec02bbd <result.json>"
+      }
+    },
+    {
+      "id": "ctn_bfc58047",
+      "status": "active",
+      "kind": "document_role_review",
+      "title": "Classify barons-Mariani/hosted/digipees/originals/PROVENANCE.md",
+      "question": "Decide the corpus role of barons-Mariani/hosted/digipees/originals/PROVENANCE.md. In particular, say whether it is a sovereign source document, an asymmetric derived product, an alias/redirect, or a symmetric derived document that should temporarily count as sovereign source.",
+      "priority": 2,
+      "dedupe_key": "document_role_review:barons-Mariani/hosted/digipees/originals/PROVENANCE.md",
+      "subject": {
+        "repo": "barons-Mariani",
+        "path": "hosted/digipees/originals/PROVENANCE.md",
+        "title": "Digipees — provenance des sources originales",
+        "github_url": "https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/hosted/digipees/originals/PROVENANCE.md"
+      },
+      "created_at": "2026-09-13T09:40:45.943Z",
+      "updated_at": "2026-09-13T09:40:45.943Z",
+      "resume": {
+        "command": "node scripts/cogentia.js continuation resolve ctn_bfc58047 <result.json>"
+      }
+    },
+    {
+      "id": "ctn_13a31894",
+      "status": "active",
+      "kind": "document_role_review",
+      "title": "Classify barons-Mariani/hosted/digipees/README.md",
+      "question": "Decide the corpus role of barons-Mariani/hosted/digipees/README.md. In particular, say whether it is a sovereign source document, an asymmetric derived product, an alias/redirect, or a symmetric derived document that should temporarily count as sovereign source.",
+      "priority": 2,
+      "dedupe_key": "document_role_review:barons-Mariani/hosted/digipees/README.md",
+      "subject": {
+        "repo": "barons-Mariani",
+        "path": "hosted/digipees/README.md",
+        "title": "Digipees",
+        "github_url": "https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/hosted/digipees/README.md"
+      },
+      "created_at": "2026-09-13T09:40:46.077Z",
+      "updated_at": "2026-09-13T09:40:46.077Z",
+      "resume": {
+        "command": "node scripts/cogentia.js continuation resolve ctn_13a31894 <result.json>"
+      }
+    },
+    {
+      "id": "ctn_04ddd867",
+      "status": "active",
+      "kind": "document_role_review",
+      "title": "Classify barons-Mariani/memory/marie-louise/carte.md",
+      "question": "Decide the corpus role of barons-Mariani/memory/marie-louise/carte.md. In particular, say whether it is a sovereign source document, an asymmetric derived product, an alias/redirect, or a symmetric derived document that should temporarily count as sovereign source.",
+      "priority": 2,
+      "dedupe_key": "document_role_review:barons-Mariani/memory/marie-louise/carte.md",
+      "subject": {
+        "repo": "barons-Mariani",
+        "path": "memory/marie-louise/carte.md",
+        "title": "Carte Marie-Louise",
+        "github_url": "https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/memory/marie-louise/carte.md"
+      },
+      "created_at": "2026-09-13T09:40:46.216Z",
+      "updated_at": "2026-09-13T09:40:46.216Z",
+      "resume": {
+        "command": "node scripts/cogentia.js continuation resolve ctn_04ddd867 <result.json>"
+      }
+    },
+    {
+      "id": "ctn_6393616d",
+      "status": "active",
+      "kind": "document_role_review",
+      "title": "Classify barons-Mariani/memory/marie-louise/sources/piste_photos_2016.md",
+      "question": "Decide the corpus role of barons-Mariani/memory/marie-louise/sources/piste_photos_2016.md. In particular, say whether it is a sovereign source document, an asymmetric derived product, an alias/redirect, or a symmetric derived document that should temporarily count as sovereign source.",
+      "priority": 2,
+      "dedupe_key": "document_role_review:barons-Mariani/memory/marie-louise/sources/piste_photos_2016.md",
+      "subject": {
+        "repo": "barons-Mariani",
+        "path": "memory/marie-louise/sources/piste_photos_2016.md",
+        "title": "Piste photographique — Marie-Louise, Corte, avril 2016",
+        "github_url": "https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/memory/marie-louise/sources/piste_photos_2016.md"
+      },
+      "created_at": "2026-09-13T09:40:46.647Z",
+      "updated_at": "2026-09-13T09:40:46.647Z",
+      "resume": {
+        "command": "node scripts/cogentia.js continuation resolve ctn_6393616d <result.json>"
+      }
+    },
+    {
+      "id": "ctn_5f2cf132",
+      "status": "active",
+      "kind": "document_role_review",
+      "title": "Classify barons-Mariani/musee-mariani/collections/README.md",
+      "question": "Decide the corpus role of barons-Mariani/musee-mariani/collections/README.md. In particular, say whether it is a sovereign source document, an asymmetric derived product, an alias/redirect, or a symmetric derived document that should temporarily count as sovereign source.",
+      "priority": 2,
+      "dedupe_key": "document_role_review:barons-Mariani/musee-mariani/collections/README.md",
+      "subject": {
+        "repo": "barons-Mariani",
+        "path": "musee-mariani/collections/README.md",
+        "title": "Collections — Musée Mariani",
+        "github_url": "https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/musee-mariani/collections/README.md"
+      },
+      "created_at": "2026-09-13T09:40:46.876Z",
+      "updated_at": "2026-09-13T09:40:46.876Z",
+      "resume": {
+        "command": "node scripts/cogentia.js continuation resolve ctn_5f2cf132 <result.json>"
+      }
+    },
+    {
+      "id": "ctn_f6a766d2",
+      "status": "active",
+      "kind": "document_role_review",
+      "title": "Classify barons-Mariani/musee-mariani/personnes/README.md",
+      "question": "Decide the corpus role of barons-Mariani/musee-mariani/personnes/README.md. In particular, say whether it is a sovereign source document, an asymmetric derived product, an alias/redirect, or a symmetric derived document that should temporarily count as sovereign source.",
+      "priority": 2,
+      "dedupe_key": "document_role_review:barons-Mariani/musee-mariani/personnes/README.md",
+      "subject": {
+        "repo": "barons-Mariani",
+        "path": "musee-mariani/personnes/README.md",
+        "title": "Personnes — index généalogique du Musée Mariani",
+        "github_url": "https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/musee-mariani/personnes/README.md"
+      },
+      "created_at": "2026-09-13T09:40:47.077Z",
+      "updated_at": "2026-09-13T09:40:47.077Z",
+      "resume": {
+        "command": "node scripts/cogentia.js continuation resolve ctn_f6a766d2 <result.json>"
+      }
+    },
+    {
+      "id": "ctn_b1667ec9",
+      "status": "active",
+      "kind": "document_role_review",
+      "title": "Classify barons-Mariani/musee-mariani/README.md",
+      "question": "Decide the corpus role of barons-Mariani/musee-mariani/README.md. In particular, say whether it is a sovereign source document, an asymmetric derived product, an alias/redirect, or a symmetric derived document that should temporarily count as sovereign source.",
+      "priority": 2,
+      "dedupe_key": "document_role_review:barons-Mariani/musee-mariani/README.md",
+      "subject": {
+        "repo": "barons-Mariani",
+        "path": "musee-mariani/README.md",
+        "title": "Musée Mariani — préfiguration",
+        "github_url": "https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/musee-mariani/README.md"
+      },
+      "created_at": "2026-09-13T09:40:47.281Z",
+      "updated_at": "2026-09-13T09:40:47.281Z",
+      "resume": {
+        "command": "node scripts/cogentia.js continuation resolve ctn_b1667ec9 <result.json>"
+      }
+    },
+    {
+      "id": "ctn_f3fbda9f",
+      "status": "active",
+      "kind": "document_role_review",
+      "title": "Classify barons-Mariani/projects/suicide-corse/architecture.md",
+      "question": "Decide the corpus role of barons-Mariani/projects/suicide-corse/architecture.md. In particular, say whether it is a sovereign source document, an asymmetric derived product, an alias/redirect, or a symmetric derived document that should temporarily count as sovereign source.",
+      "priority": 2,
+      "dedupe_key": "document_role_review:barons-Mariani/projects/suicide-corse/architecture.md",
+      "subject": {
+        "repo": "barons-Mariani",
+        "path": "projects/suicide-corse/architecture.md",
+        "title": "Suicide Corse — Architecture d'enquête v2",
+        "github_url": "https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/projects/suicide-corse/architecture.md"
+      },
+      "created_at": "2026-09-13T09:40:47.514Z",
+      "updated_at": "2026-09-13T09:40:47.514Z",
+      "resume": {
+        "command": "node scripts/cogentia.js continuation resolve ctn_f3fbda9f <result.json>"
+      }
+    },
+    {
+      "id": "ctn_2e556360",
+      "status": "active",
+      "kind": "document_role_review",
+      "title": "Classify cogentia/apps/personal/samples/README.md",
+      "question": "Decide the corpus role of cogentia/apps/personal/samples/README.md. In particular, say whether it is a sovereign source document, an asymmetric derived product, an alias/redirect, or a symmetric derived document that should temporarily count as sovereign source.",
+      "priority": 2,
+      "dedupe_key": "document_role_review:cogentia/apps/personal/samples/README.md",
+      "subject": {
+        "repo": "cogentia",
+        "path": "apps/personal/samples/README.md",
+        "title": "Personal app samples",
+        "github_url": "https://github.com/JeanHuguesRobert/cogentia/blob/main/apps/personal/samples/README.md"
+      },
+      "created_at": "2026-09-13T09:40:49.883Z",
+      "updated_at": "2026-09-13T09:40:49.883Z",
+      "resume": {
+        "command": "node scripts/cogentia.js continuation resolve ctn_2e556360 <result.json>"
+      }
+    },
+    {
+      "id": "ctn_e6157935",
+      "status": "active",
+      "kind": "document_role_review",
+      "title": "Classify cogentia/deploy/fracta/README.md",
+      "question": "Decide the corpus role of cogentia/deploy/fracta/README.md. In particular, say whether it is a sovereign source document, an asymmetric derived product, an alias/redirect, or a symmetric derived document that should temporarily count as sovereign source.",
+      "priority": 2,
+      "dedupe_key": "document_role_review:cogentia/deploy/fracta/README.md",
+      "subject": {
+        "repo": "cogentia",
+        "path": "deploy/fracta/README.md",
+        "title": "Fracta — app fragments only",
+        "github_url": "https://github.com/JeanHuguesRobert/cogentia/blob/main/deploy/fracta/README.md"
+      },
+      "created_at": "2026-09-13T09:40:50.042Z",
+      "updated_at": "2026-09-13T09:40:50.042Z",
+      "resume": {
+        "command": "node scripts/cogentia.js continuation resolve ctn_e6157935 <result.json>"
+      }
+    },
+    {
+      "id": "ctn_340abc3d",
+      "status": "active",
+      "kind": "document_role_review",
+      "title": "Classify cogentia/deploy/views-server/README.md",
+      "question": "Decide the corpus role of cogentia/deploy/views-server/README.md. In particular, say whether it is a sovereign source document, an asymmetric derived product, an alias/redirect, or a symmetric derived document that should temporarily count as sovereign source.",
+      "priority": 2,
+      "dedupe_key": "document_role_review:cogentia/deploy/views-server/README.md",
+      "subject": {
+        "repo": "cogentia",
+        "path": "deploy/views-server/README.md",
+        "title": "Views Store server",
+        "github_url": "https://github.com/JeanHuguesRobert/cogentia/blob/main/deploy/views-server/README.md"
+      },
+      "created_at": "2026-09-13T09:40:50.184Z",
+      "updated_at": "2026-09-13T09:40:50.184Z",
+      "resume": {
+        "command": "node scripts/cogentia.js continuation resolve ctn_340abc3d <result.json>"
+      }
+    },
+    {
+      "id": "ctn_f0f69677",
+      "status": "active",
+      "kind": "document_role_review",
+      "title": "Classify cogentia/sandbox/mcp-2026-cognitive-packet/README.md",
+      "question": "Decide the corpus role of cogentia/sandbox/mcp-2026-cognitive-packet/README.md. In particular, say whether it is a sovereign source document, an asymmetric derived product, an alias/redirect, or a symmetric derived document that should temporarily count as sovereign source.",
+      "priority": 2,
+      "dedupe_key": "document_role_review:cogentia/sandbox/mcp-2026-cognitive-packet/README.md",
+      "subject": {
+        "repo": "cogentia",
+        "path": "sandbox/mcp-2026-cognitive-packet/README.md",
+        "title": "Sandbox — MCP 2026 / Cognitive Packet / Skills / JHN mutate",
+        "github_url": "https://github.com/JeanHuguesRobert/cogentia/blob/main/sandbox/mcp-2026-cognitive-packet/README.md"
+      },
+      "created_at": "2026-09-13T09:40:51.274Z",
+      "updated_at": "2026-09-13T09:40:51.274Z",
+      "resume": {
+        "command": "node scripts/cogentia.js continuation resolve ctn_f0f69677 <result.json>"
+      }
+    },
+    {
+      "id": "ctn_fcc360a7",
+      "status": "active",
+      "kind": "document_role_review",
+      "title": "Classify cogentia/skills/EXPERIMENT.md",
+      "question": "Decide the corpus role of cogentia/skills/EXPERIMENT.md. In particular, say whether it is a sovereign source document, an asymmetric derived product, an alias/redirect, or a symmetric derived document that should temporarily count as sovereign source.",
+      "priority": 2,
+      "dedupe_key": "document_role_review:cogentia/skills/EXPERIMENT.md",
+      "subject": {
+        "repo": "cogentia",
+        "path": "skills/EXPERIMENT.md",
+        "title": "Explorer / Conservator — minimal experiment v0.1",
+        "github_url": "https://github.com/JeanHuguesRobert/cogentia/blob/main/skills/EXPERIMENT.md"
+      },
+      "created_at": "2026-09-13T09:40:51.434Z",
+      "updated_at": "2026-09-13T09:40:51.434Z",
+      "resume": {
+        "command": "node scripts/cogentia.js continuation resolve ctn_fcc360a7 <result.json>"
+      }
+    },
+    {
+      "id": "ctn_603b640d",
+      "status": "active",
+      "kind": "document_role_review",
+      "title": "Classify FractaVolta/tools/jana-logo-generator/PROVENANCE.md",
+      "question": "Decide the corpus role of FractaVolta/tools/jana-logo-generator/PROVENANCE.md. In particular, say whether it is a sovereign source document, an asymmetric derived product, an alias/redirect, or a symmetric derived document that should temporarily count as sovereign source.",
+      "priority": 2,
+      "dedupe_key": "document_role_review:FractaVolta/tools/jana-logo-generator/PROVENANCE.md",
+      "subject": {
+        "repo": "FractaVolta",
+        "path": "tools/jana-logo-generator/PROVENANCE.md",
+        "title": "Provenance — Jana logo generator",
+        "github_url": "https://github.com/JeanHuguesRobert/FractaVolta/blob/main/tools/jana-logo-generator/PROVENANCE.md"
+      },
+      "created_at": "2026-09-13T09:40:51.593Z",
+      "updated_at": "2026-09-13T09:40:51.593Z",
+      "resume": {
+        "command": "node scripts/cogentia.js continuation resolve ctn_603b640d <result.json>"
+      }
+    },
+    {
+      "id": "ctn_0cee7d59",
+      "status": "active",
+      "kind": "document_role_review",
+      "title": "Classify FractaVolta/tools/jana-logo-generator/README.md",
+      "question": "Decide the corpus role of FractaVolta/tools/jana-logo-generator/README.md. In particular, say whether it is a sovereign source document, an asymmetric derived product, an alias/redirect, or a symmetric derived document that should temporarily count as sovereign source.",
+      "priority": 2,
+      "dedupe_key": "document_role_review:FractaVolta/tools/jana-logo-generator/README.md",
+      "subject": {
+        "repo": "FractaVolta",
+        "path": "tools/jana-logo-generator/README.md",
+        "title": "Jana logo generator",
+        "github_url": "https://github.com/JeanHuguesRobert/FractaVolta/blob/main/tools/jana-logo-generator/README.md"
+      },
+      "created_at": "2026-09-13T09:40:51.734Z",
+      "updated_at": "2026-09-13T09:40:51.734Z",
+      "resume": {
+        "command": "node scripts/cogentia.js continuation resolve ctn_0cee7d59 <result.json>"
+      }
+    },
+    {
+      "id": "ctn_85dabfeb",
+      "status": "active",
+      "kind": "document_role_review",
+      "title": "Classify Inox/README.md",
+      "question": "Decide the corpus role of Inox/README.md. In particular, say whether it is a sovereign source document, an asymmetric derived product, an alias/redirect, or a symmetric derived document that should temporarily count as sovereign source.",
+      "priority": 2,
+      "dedupe_key": "document_role_review:Inox/README.md",
+      "subject": {
+        "repo": "Inox",
+        "path": "README.md",
+        "title": "The Iɴᴏx programming language",
+        "github_url": "https://github.com/JeanHuguesRobert/Inox/blob/master/README.md"
+      },
+      "created_at": "2026-09-13T09:40:52.019Z",
+      "updated_at": "2026-09-13T09:40:52.019Z",
+      "resume": {
+        "command": "node scripts/cogentia.js continuation resolve ctn_85dabfeb <result.json>"
+      }
+    },
+    {
+      "id": "ctn_558d59b5",
+      "status": "active",
+      "kind": "document_role_review",
+      "title": "Classify JeanHuguesRobert/appearance-log/README.md",
+      "question": "Decide the corpus role of JeanHuguesRobert/appearance-log/README.md. In particular, say whether it is a sovereign source document, an asymmetric derived product, an alias/redirect, or a symmetric derived document that should temporarily count as sovereign source.",
+      "priority": 2,
+      "dedupe_key": "document_role_review:JeanHuguesRobert/appearance-log/README.md",
+      "subject": {
+        "repo": "JeanHuguesRobert",
+        "path": "appearance-log/README.md",
+        "title": "Appearance log",
+        "github_url": "https://github.com/JeanHuguesRobert/JeanHuguesRobert/blob/main/appearance-log/README.md"
+      },
+      "created_at": "2026-09-13T09:40:53.028Z",
+      "updated_at": "2026-09-13T09:40:53.028Z",
+      "resume": {
+        "command": "node scripts/cogentia.js continuation resolve ctn_558d59b5 <result.json>"
+      }
+    },
+    {
+      "id": "ctn_8660628b",
+      "status": "active",
+      "kind": "document_role_review",
+      "title": "Classify JeanHuguesRobert/continuations-list.md",
+      "question": "Decide the corpus role of JeanHuguesRobert/continuations-list.md. In particular, say whether it is a sovereign source document, an asymmetric derived product, an alias/redirect, or a symmetric derived document that should temporarily count as sovereign source.",
+      "priority": 2,
+      "dedupe_key": "document_role_review:JeanHuguesRobert/continuations-list.md",
+      "subject": {
+        "repo": "JeanHuguesRobert",
+        "path": "continuations-list.md",
+        "title": "Alive Continuations List",
+        "github_url": "https://github.com/JeanHuguesRobert/JeanHuguesRobert/blob/main/continuations-list.md"
+      },
+      "created_at": "2026-09-13T09:40:53.161Z",
+      "updated_at": "2026-09-13T09:40:53.161Z",
+      "resume": {
+        "command": "node scripts/cogentia.js continuation resolve ctn_8660628b <result.json>"
+      }
+    },
+    {
+      "id": "ctn_cc400476",
+      "status": "active",
+      "kind": "document_role_review",
+      "title": "Classify JeanHuguesRobert/current-issues-list.md",
+      "question": "Decide the corpus role of JeanHuguesRobert/current-issues-list.md. In particular, say whether it is a sovereign source document, an asymmetric derived product, an alias/redirect, or a symmetric derived document that should temporarily count as sovereign source.",
+      "priority": 2,
+      "dedupe_key": "document_role_review:JeanHuguesRobert/current-issues-list.md",
+      "subject": {
+        "repo": "JeanHuguesRobert",
+        "path": "current-issues-list.md",
+        "title": "Current Issues List - JeanHuguesRobert Organization",
+        "github_url": "https://github.com/JeanHuguesRobert/JeanHuguesRobert/blob/main/current-issues-list.md"
+      },
+      "created_at": "2026-09-13T09:40:53.305Z",
+      "updated_at": "2026-09-13T09:40:53.305Z",
+      "resume": {
+        "command": "node scripts/cogentia.js continuation resolve ctn_cc400476 <result.json>"
+      }
+    },
+    {
+      "id": "ctn_29eea991",
+      "status": "active",
+      "kind": "document_role_review",
+      "title": "Classify JeanHuguesRobert/twin/assets/README.md",
+      "question": "Decide the corpus role of JeanHuguesRobert/twin/assets/README.md. In particular, say whether it is a sovereign source document, an asymmetric derived product, an alias/redirect, or a symmetric derived document that should temporarily count as sovereign source.",
+      "priority": 2,
+      "dedupe_key": "document_role_review:JeanHuguesRobert/twin/assets/README.md",
+      "subject": {
+        "repo": "JeanHuguesRobert",
+        "path": "twin/assets/README.md",
+        "title": "Public Twin assets",
+        "github_url": "https://github.com/JeanHuguesRobert/JeanHuguesRobert/blob/main/twin/assets/README.md"
+      },
+      "created_at": "2026-09-13T09:40:53.585Z",
+      "updated_at": "2026-09-13T09:40:53.585Z",
+      "resume": {
+        "command": "node scripts/cogentia.js continuation resolve ctn_29eea991 <result.json>"
+      }
+    },
+    {
+      "id": "ctn_c332dec2",
+      "status": "active",
+      "kind": "document_role_review",
+      "title": "Classify operium/templates/agent-john/README.md",
+      "question": "Decide the corpus role of operium/templates/agent-john/README.md. In particular, say whether it is a sovereign source document, an asymmetric derived product, an alias/redirect, or a symmetric derived document that should temporarily count as sovereign source.",
+      "priority": 2,
+      "dedupe_key": "document_role_review:operium/templates/agent-john/README.md",
+      "subject": {
+        "repo": "operium",
+        "path": "templates/agent-john/README.md",
+        "title": "Agent John (WhatsApp) templates",
+        "github_url": "https://github.com/JeanHuguesRobert/operium/blob/main/templates/agent-john/README.md"
+      },
+      "created_at": "2026-09-13T09:40:53.745Z",
+      "updated_at": "2026-09-13T09:40:53.745Z",
+      "resume": {
+        "command": "node scripts/cogentia.js continuation resolve ctn_c332dec2 <result.json>"
+      }
+    },
+    {
+      "id": "ctn_f5c95a0d",
+      "status": "active",
+      "kind": "document_role_review",
+      "title": "Classify operium/templates/oleole/README.md",
+      "question": "Decide the corpus role of operium/templates/oleole/README.md. In particular, say whether it is a sovereign source document, an asymmetric derived product, an alias/redirect, or a symmetric derived document that should temporarily count as sovereign source.",
+      "priority": 2,
+      "dedupe_key": "document_role_review:operium/templates/oleole/README.md",
+      "subject": {
+        "repo": "operium",
+        "path": "templates/oleole/README.md",
+        "title": "Olé Olé Fracta preview",
+        "github_url": "https://github.com/JeanHuguesRobert/operium/blob/main/templates/oleole/README.md"
+      },
+      "created_at": "2026-09-13T09:40:53.882Z",
+      "updated_at": "2026-09-13T09:40:53.882Z",
+      "resume": {
+        "command": "node scripts/cogentia.js continuation resolve ctn_f5c95a0d <result.json>"
+      }
+    },
+    {
+      "id": "ctn_8d8a9c6e",
+      "status": "active",
+      "kind": "document_role_review",
+      "title": "Classify operium/templates/pertitellu/README.md",
+      "question": "Decide the corpus role of operium/templates/pertitellu/README.md. In particular, say whether it is a sovereign source document, an asymmetric derived product, an alias/redirect, or a symmetric derived document that should temporarily count as sovereign source.",
+      "priority": 2,
+      "dedupe_key": "document_role_review:operium/templates/pertitellu/README.md",
+      "subject": {
+        "repo": "operium",
+        "path": "templates/pertitellu/README.md",
+        "title": "Pertitellu Corte / LePP Fracta Preview",
+        "github_url": "https://github.com/JeanHuguesRobert/operium/blob/main/templates/pertitellu/README.md"
+      },
+      "created_at": "2026-09-13T09:40:54.041Z",
+      "updated_at": "2026-09-13T09:40:54.041Z",
+      "resume": {
+        "command": "node scripts/cogentia.js continuation resolve ctn_8d8a9c6e <result.json>"
+      }
+    },
+    {
+      "id": "ctn_a790a754",
+      "status": "active",
+      "kind": "document_role_review",
+      "title": "Classify operium/templates/stalwart/README.md",
+      "question": "Decide the corpus role of operium/templates/stalwart/README.md. In particular, say whether it is a sovereign source document, an asymmetric derived product, an alias/redirect, or a symmetric derived document that should temporarily count as sovereign source.",
+      "priority": 2,
+      "dedupe_key": "document_role_review:operium/templates/stalwart/README.md",
+      "subject": {
+        "repo": "operium",
+        "path": "templates/stalwart/README.md",
+        "title": "Stalwart templates (secret-free)",
+        "github_url": "https://github.com/JeanHuguesRobert/operium/blob/main/templates/stalwart/README.md"
+      },
+      "created_at": "2026-09-13T09:40:54.170Z",
+      "updated_at": "2026-09-13T09:40:54.170Z",
+      "resume": {
+        "command": "node scripts/cogentia.js continuation resolve ctn_a790a754 <result.json>"
+      }
+    },
+    {
+      "id": "ctn_65688fa8",
+      "status": "active",
+      "kind": "document_role_review",
+      "title": "Classify registre-mariani/continuite/si-je-disparais.md",
+      "question": "Decide the corpus role of registre-mariani/continuite/si-je-disparais.md. In particular, say whether it is a sovereign source document, an asymmetric derived product, an alias/redirect, or a symmetric derived document that should temporarily count as sovereign source.",
+      "priority": 2,
+      "dedupe_key": "document_role_review:registre-mariani/continuite/si-je-disparais.md",
+      "subject": {
+        "repo": "registre-mariani",
+        "path": "continuite/si-je-disparais.md",
+        "title": "Si je disparais",
+        "github_url": "https://github.com/JeanHuguesRobert/registre-mariani/blob/main/continuite/si-je-disparais.md"
+      },
+      "created_at": "2026-09-13T09:40:54.302Z",
+      "updated_at": "2026-09-13T09:40:54.302Z",
+      "resume": {
+        "command": "node scripts/cogentia.js continuation resolve ctn_65688fa8 <result.json>"
+      }
+    },
+    {
+      "id": "ctn_bffdaae0",
+      "status": "active",
+      "kind": "document_role_review",
+      "title": "Classify registre-mariani/personal_data/MANIFEST.md",
+      "question": "Decide the corpus role of registre-mariani/personal_data/MANIFEST.md. In particular, say whether it is a sovereign source document, an asymmetric derived product, an alias/redirect, or a symmetric derived document that should temporarily count as sovereign source.",
+      "priority": 2,
+      "dedupe_key": "document_role_review:registre-mariani/personal_data/MANIFEST.md",
+      "subject": {
+        "repo": "registre-mariani",
+        "path": "personal_data/MANIFEST.md",
+        "title": "MANIFEST — Données personnelles portables",
+        "github_url": "https://github.com/JeanHuguesRobert/registre-mariani/blob/main/personal_data/MANIFEST.md"
+      },
+      "created_at": "2026-09-13T09:40:54.455Z",
+      "updated_at": "2026-09-13T09:40:54.455Z",
+      "resume": {
+        "command": "node scripts/cogentia.js continuation resolve ctn_bffdaae0 <result.json>"
+      }
+    },
+    {
+      "id": "ctn_deb72c7f",
+      "status": "active",
+      "kind": "document_role_review",
+      "title": "Classify registre-mariani/registre_mariani.md",
+      "question": "Decide the corpus role of registre-mariani/registre_mariani.md. In particular, say whether it is a sovereign source document, an asymmetric derived product, an alias/redirect, or a symmetric derived document that should temporarily count as sovereign source.",
+      "priority": 2,
+      "dedupe_key": "document_role_review:registre-mariani/registre_mariani.md",
+      "subject": {
+        "repo": "registre-mariani",
+        "path": "registre_mariani.md",
+        "title": "Registre Mariani",
+        "github_url": "https://github.com/JeanHuguesRobert/registre-mariani/blob/main/registre_mariani.md"
+      },
+      "created_at": "2026-09-13T09:40:54.661Z",
+      "updated_at": "2026-09-13T09:40:54.661Z",
+      "resume": {
+        "command": "node scripts/cogentia.js continuation resolve ctn_deb72c7f <result.json>"
+      }
+    },
+    {
+      "id": "ctn_d1ae8c90",
+      "status": "active",
+      "kind": "document_role_review",
+      "title": "Classify registre-mariani/runtime/README.md",
+      "question": "Decide the corpus role of registre-mariani/runtime/README.md. In particular, say whether it is a sovereign source document, an asymmetric derived product, an alias/redirect, or a symmetric derived document that should temporarily count as sovereign source.",
+      "priority": 2,
+      "dedupe_key": "document_role_review:registre-mariani/runtime/README.md",
+      "subject": {
+        "repo": "registre-mariani",
+        "path": "runtime/README.md",
+        "title": "Runtime local (hors Git pour les secrets)",
+        "github_url": "https://github.com/JeanHuguesRobert/registre-mariani/blob/main/runtime/README.md"
+      },
+      "created_at": "2026-09-13T09:40:54.886Z",
+      "updated_at": "2026-09-13T09:40:54.886Z",
+      "resume": {
+        "command": "node scripts/cogentia.js continuation resolve ctn_d1ae8c90 <result.json>"
+      }
+    },
+    {
+      "id": "ctn_7dbf4c63",
+      "status": "active",
+      "kind": "document_role_review",
+      "title": "Classify registre-mariani/twin/marie-louise-robert/civic-political-engagement.md",
+      "question": "Decide the corpus role of registre-mariani/twin/marie-louise-robert/civic-political-engagement.md. In particular, say whether it is a sovereign source document, an asymmetric derived product, an alias/redirect, or a symmetric derived document that should temporarily count as sovereign source.",
+      "priority": 2,
+      "dedupe_key": "document_role_review:registre-mariani/twin/marie-louise-robert/civic-political-engagement.md",
+      "subject": {
+        "repo": "registre-mariani",
+        "path": "twin/marie-louise-robert/civic-political-engagement.md",
+        "title": "Civic and political engagement — Marie-Louise Robert",
+        "github_url": "https://github.com/JeanHuguesRobert/registre-mariani/blob/main/twin/marie-louise-robert/civic-political-engagement.md"
+      },
+      "created_at": "2026-09-13T09:40:55.180Z",
+      "updated_at": "2026-09-13T09:40:55.180Z",
+      "resume": {
+        "command": "node scripts/cogentia.js continuation resolve ctn_7dbf4c63 <result.json>"
+      }
+    },
+    {
+      "id": "ctn_534aa35e",
+      "status": "active",
+      "kind": "document_role_review",
+      "title": "Classify registre-mariani/twin/marie-louise-robert/coverage-map.md",
+      "question": "Decide the corpus role of registre-mariani/twin/marie-louise-robert/coverage-map.md. In particular, say whether it is a sovereign source document, an asymmetric derived product, an alias/redirect, or a symmetric derived document that should temporarily count as sovereign source.",
+      "priority": 2,
+      "dedupe_key": "document_role_review:registre-mariani/twin/marie-louise-robert/coverage-map.md",
+      "subject": {
+        "repo": "registre-mariani",
+        "path": "twin/marie-louise-robert/coverage-map.md",
+        "title": "Coverage map — Marie-Louise Robert",
+        "github_url": "https://github.com/JeanHuguesRobert/registre-mariani/blob/main/twin/marie-louise-robert/coverage-map.md"
+      },
+      "created_at": "2026-09-13T09:40:55.311Z",
+      "updated_at": "2026-09-13T09:40:55.311Z",
+      "resume": {
+        "command": "node scripts/cogentia.js continuation resolve ctn_534aa35e <result.json>"
+      }
+    },
+    {
+      "id": "ctn_4f1458e1",
+      "status": "active",
+      "kind": "document_role_review",
+      "title": "Classify registre-mariani/twin/marie-louise-robert/institutions-encountered.md",
+      "question": "Decide the corpus role of registre-mariani/twin/marie-louise-robert/institutions-encountered.md. In particular, say whether it is a sovereign source document, an asymmetric derived product, an alias/redirect, or a symmetric derived document that should temporarily count as sovereign source.",
+      "priority": 2,
+      "dedupe_key": "document_role_review:registre-mariani/twin/marie-louise-robert/institutions-encountered.md",
+      "subject": {
+        "repo": "registre-mariani",
+        "path": "twin/marie-louise-robert/institutions-encountered.md",
+        "title": "Institutions encountered — Marie-Louise Robert",
+        "github_url": "https://github.com/JeanHuguesRobert/registre-mariani/blob/main/twin/marie-louise-robert/institutions-encountered.md"
+      },
+      "created_at": "2026-09-13T09:40:55.504Z",
+      "updated_at": "2026-09-13T09:40:55.504Z",
+      "resume": {
+        "command": "node scripts/cogentia.js continuation resolve ctn_4f1458e1 <result.json>"
+      }
+    },
+    {
+      "id": "ctn_b82cbdff",
+      "status": "active",
+      "kind": "document_role_review",
+      "title": "Classify registre-mariani/twin/marie-louise-robert/investigations/EXP-ML-2010-EXPERTISE.md",
+      "question": "Decide the corpus role of registre-mariani/twin/marie-louise-robert/investigations/EXP-ML-2010-EXPERTISE.md. In particular, say whether it is a sovereign source document, an asymmetric derived product, an alias/redirect, or a symmetric derived document that should temporarily count as sovereign source.",
+      "priority": 2,
+      "dedupe_key": "document_role_review:registre-mariani/twin/marie-louise-robert/investigations/EXP-ML-2010-EXPERTISE.md",
+      "subject": {
+        "repo": "registre-mariani",
+        "path": "twin/marie-louise-robert/investigations/EXP-ML-2010-EXPERTISE.md",
+        "title": "EXP-ML-2010-EXPERTISE",
+        "github_url": "https://github.com/JeanHuguesRobert/registre-mariani/blob/main/twin/marie-louise-robert/investigations/EXP-ML-2010-EXPERTISE.md"
+      },
+      "created_at": "2026-09-13T09:40:55.644Z",
+      "updated_at": "2026-09-13T09:40:55.644Z",
+      "resume": {
+        "command": "node scripts/cogentia.js continuation resolve ctn_b82cbdff <result.json>"
+      }
+    },
+    {
+      "id": "ctn_615ea191",
+      "status": "active",
+      "kind": "document_role_review",
+      "title": "Classify registre-mariani/twin/marie-louise-robert/investigations/EXP-ML-2024-PENAL.md",
+      "question": "Decide the corpus role of registre-mariani/twin/marie-louise-robert/investigations/EXP-ML-2024-PENAL.md. In particular, say whether it is a sovereign source document, an asymmetric derived product, an alias/redirect, or a symmetric derived document that should temporarily count as sovereign source.",
+      "priority": 2,
+      "dedupe_key": "document_role_review:registre-mariani/twin/marie-louise-robert/investigations/EXP-ML-2024-PENAL.md",
+      "subject": {
+        "repo": "registre-mariani",
+        "path": "twin/marie-louise-robert/investigations/EXP-ML-2024-PENAL.md",
+        "title": "EXP-ML-2024-PENAL",
+        "github_url": "https://github.com/JeanHuguesRobert/registre-mariani/blob/main/twin/marie-louise-robert/investigations/EXP-ML-2024-PENAL.md"
+      },
+      "created_at": "2026-09-13T09:40:55.817Z",
+      "updated_at": "2026-09-13T09:40:55.817Z",
+      "resume": {
+        "command": "node scripts/cogentia.js continuation resolve ctn_615ea191 <result.json>"
+      }
+    },
+    {
+      "id": "ctn_b8a24f96",
+      "status": "active",
+      "kind": "document_role_review",
+      "title": "Classify registre-mariani/twin/marie-louise-robert/investigations/EXP-ML-2024-SUBJECT-COMPLAINT.md",
+      "question": "Decide the corpus role of registre-mariani/twin/marie-louise-robert/investigations/EXP-ML-2024-SUBJECT-COMPLAINT.md. In particular, say whether it is a sovereign source document, an asymmetric derived product, an alias/redirect, or a symmetric derived document that should temporarily count as sovereign source.",
+      "priority": 2,
+      "dedupe_key": "document_role_review:registre-mariani/twin/marie-louise-robert/investigations/EXP-ML-2024-SUBJECT-COMPLAINT.md",
+      "subject": {
+        "repo": "registre-mariani",
+        "path": "twin/marie-louise-robert/investigations/EXP-ML-2024-SUBJECT-COMPLAINT.md",
+        "title": "EXP-ML-2024-SUBJECT-COMPLAINT",
+        "github_url": "https://github.com/JeanHuguesRobert/registre-mariani/blob/main/twin/marie-louise-robert/investigations/EXP-ML-2024-SUBJECT-COMPLAINT.md"
+      },
+      "created_at": "2026-09-13T09:40:55.957Z",
+      "updated_at": "2026-09-13T09:40:55.957Z",
+      "resume": {
+        "command": "node scripts/cogentia.js continuation resolve ctn_b8a24f96 <result.json>"
+      }
+    },
+    {
+      "id": "ctn_389a3b99",
+      "status": "active",
+      "kind": "document_role_review",
+      "title": "Classify registre-mariani/twin/marie-louise-robert/investigations/EXP-ML-OLETTA-MARTINE-BRILLAIS.md",
+      "question": "Decide the corpus role of registre-mariani/twin/marie-louise-robert/investigations/EXP-ML-OLETTA-MARTINE-BRILLAIS.md. In particular, say whether it is a sovereign source document, an asymmetric derived product, an alias/redirect, or a symmetric derived document that should temporarily count as sovereign source.",
+      "priority": 2,
+      "dedupe_key": "document_role_review:registre-mariani/twin/marie-louise-robert/investigations/EXP-ML-OLETTA-MARTINE-BRILLAIS.md",
+      "subject": {
+        "repo": "registre-mariani",
+        "path": "twin/marie-louise-robert/investigations/EXP-ML-OLETTA-MARTINE-BRILLAIS.md",
+        "title": "EXP-ML-OLETTA-MARTINE-BRILLAIS",
+        "github_url": "https://github.com/JeanHuguesRobert/registre-mariani/blob/main/twin/marie-louise-robert/investigations/EXP-ML-OLETTA-MARTINE-BRILLAIS.md"
+      },
+      "created_at": "2026-09-13T09:40:56.098Z",
+      "updated_at": "2026-09-13T09:40:56.098Z",
+      "resume": {
+        "command": "node scripts/cogentia.js continuation resolve ctn_389a3b99 <result.json>"
+      }
+    },
+    {
+      "id": "ctn_aa478664",
+      "status": "active",
+      "kind": "document_role_review",
+      "title": "Classify registre-mariani/twin/marie-louise-robert/legacy.md",
+      "question": "Decide the corpus role of registre-mariani/twin/marie-louise-robert/legacy.md. In particular, say whether it is a sovereign source document, an asymmetric derived product, an alias/redirect, or a symmetric derived document that should temporarily count as sovereign source.",
+      "priority": 2,
+      "dedupe_key": "document_role_review:registre-mariani/twin/marie-louise-robert/legacy.md",
+      "subject": {
+        "repo": "registre-mariani",
+        "path": "twin/marie-louise-robert/legacy.md",
+        "title": "Legacy — Marie-Louise Robert",
+        "github_url": "https://github.com/JeanHuguesRobert/registre-mariani/blob/main/twin/marie-louise-robert/legacy.md"
+      },
+      "created_at": "2026-09-13T09:40:56.230Z",
+      "updated_at": "2026-09-13T09:40:56.230Z",
+      "resume": {
+        "command": "node scripts/cogentia.js continuation resolve ctn_aa478664 <result.json>"
+      }
+    },
+    {
+      "id": "ctn_e9662f00",
+      "status": "active",
+      "kind": "document_role_review",
+      "title": "Classify registre-mariani/twin/marie-louise-robert/places-and-social-network.md",
+      "question": "Decide the corpus role of registre-mariani/twin/marie-louise-robert/places-and-social-network.md. In particular, say whether it is a sovereign source document, an asymmetric derived product, an alias/redirect, or a symmetric derived document that should temporarily count as sovereign source.",
+      "priority": 2,
+      "dedupe_key": "document_role_review:registre-mariani/twin/marie-louise-robert/places-and-social-network.md",
+      "subject": {
+        "repo": "registre-mariani",
+        "path": "twin/marie-louise-robert/places-and-social-network.md",
+        "title": "Places and social network — Marie-Louise Robert",
+        "github_url": "https://github.com/JeanHuguesRobert/registre-mariani/blob/main/twin/marie-louise-robert/places-and-social-network.md"
+      },
+      "created_at": "2026-09-13T09:40:56.370Z",
+      "updated_at": "2026-09-13T09:40:56.370Z",
+      "resume": {
+        "command": "node scripts/cogentia.js continuation resolve ctn_e9662f00 <result.json>"
+      }
+    },
+    {
+      "id": "ctn_91cd10b7",
+      "status": "active",
+      "kind": "document_role_review",
+      "title": "Classify registre-mariani/twin/marie-louise-robert/possessions-and-significant-objects.md",
+      "question": "Decide the corpus role of registre-mariani/twin/marie-louise-robert/possessions-and-significant-objects.md. In particular, say whether it is a sovereign source document, an asymmetric derived product, an alias/redirect, or a symmetric derived document that should temporarily count as sovereign source.",
+      "priority": 2,
+      "dedupe_key": "document_role_review:registre-mariani/twin/marie-louise-robert/possessions-and-significant-objects.md",
+      "subject": {
+        "repo": "registre-mariani",
+        "path": "twin/marie-louise-robert/possessions-and-significant-objects.md",
+        "title": "Possessions and significant objects — Marie-Louise Robert",
+        "github_url": "https://github.com/JeanHuguesRobert/registre-mariani/blob/main/twin/marie-louise-robert/possessions-and-significant-objects.md"
+      },
+      "created_at": "2026-09-13T09:40:56.537Z",
+      "updated_at": "2026-09-13T09:40:56.537Z",
+      "resume": {
+        "command": "node scripts/cogentia.js continuation resolve ctn_91cd10b7 <result.json>"
+      }
+    },
+    {
+      "id": "ctn_9a5ffca6",
+      "status": "active",
+      "kind": "document_role_review",
+      "title": "Classify registre-mariani/twin/marie-louise-robert/publication-policy.md",
+      "question": "Decide the corpus role of registre-mariani/twin/marie-louise-robert/publication-policy.md. In particular, say whether it is a sovereign source document, an asymmetric derived product, an alias/redirect, or a symmetric derived document that should temporarily count as sovereign source.",
+      "priority": 2,
+      "dedupe_key": "document_role_review:registre-mariani/twin/marie-louise-robert/publication-policy.md",
+      "subject": {
+        "repo": "registre-mariani",
+        "path": "twin/marie-louise-robert/publication-policy.md",
+        "title": "Publication Policy — Marie-Louise Robert Twin",
+        "github_url": "https://github.com/JeanHuguesRobert/registre-mariani/blob/main/twin/marie-louise-robert/publication-policy.md"
+      },
+      "created_at": "2026-09-13T09:40:56.717Z",
+      "updated_at": "2026-09-13T09:40:56.717Z",
+      "resume": {
+        "command": "node scripts/cogentia.js continuation resolve ctn_9a5ffca6 <result.json>"
+      }
+    },
+    {
+      "id": "ctn_6f917d37",
+      "status": "active",
+      "kind": "document_role_review",
+      "title": "Classify registre-mariani/twin/marie-louise-robert/relationships/artistic-relatogram.md",
+      "question": "Decide the corpus role of registre-mariani/twin/marie-louise-robert/relationships/artistic-relatogram.md. In particular, say whether it is a sovereign source document, an asymmetric derived product, an alias/redirect, or a symmetric derived document that should temporarily count as sovereign source.",
+      "priority": 2,
+      "dedupe_key": "document_role_review:registre-mariani/twin/marie-louise-robert/relationships/artistic-relatogram.md",
+      "subject": {
+        "repo": "registre-mariani",
+        "path": "twin/marie-louise-robert/relationships/artistic-relatogram.md",
+        "title": "Relatogram artistique — Marie-Louise Robert",
+        "github_url": "https://github.com/JeanHuguesRobert/registre-mariani/blob/main/twin/marie-louise-robert/relationships/artistic-relatogram.md"
+      },
+      "created_at": "2026-09-13T09:40:56.917Z",
+      "updated_at": "2026-09-13T09:40:56.917Z",
+      "resume": {
+        "command": "node scripts/cogentia.js continuation resolve ctn_6f917d37 <result.json>"
+      }
+    },
+    {
+      "id": "ctn_4315d3f1",
+      "status": "active",
+      "kind": "document_role_review",
+      "title": "Classify registre-mariani/twin/marie-louise-robert/relationships/cecile-dugue-public-neighborhood.md",
+      "question": "Decide the corpus role of registre-mariani/twin/marie-louise-robert/relationships/cecile-dugue-public-neighborhood.md. In particular, say whether it is a sovereign source document, an asymmetric derived product, an alias/redirect, or a symmetric derived document that should temporarily count as sovereign source.",
+      "priority": 2,
+      "dedupe_key": "document_role_review:registre-mariani/twin/marie-louise-robert/relationships/cecile-dugue-public-neighborhood.md",
+      "subject": {
+        "repo": "registre-mariani",
+        "path": "twin/marie-louise-robert/relationships/cecile-dugue-public-neighborhood.md",
+        "title": "Voisinage public — Cécile Dugué / Beaux-Arts Nantes",
+        "github_url": "https://github.com/JeanHuguesRobert/registre-mariani/blob/main/twin/marie-louise-robert/relationships/cecile-dugue-public-neighborhood.md"
+      },
+      "created_at": "2026-09-13T09:40:57.064Z",
+      "updated_at": "2026-09-13T09:40:57.064Z",
+      "resume": {
+        "command": "node scripts/cogentia.js continuation resolve ctn_4315d3f1 <result.json>"
+      }
+    },
+    {
+      "id": "ctn_14da1dd6",
+      "status": "active",
+      "kind": "document_role_review",
+      "title": "Classify registre-mariani/twin/marie-louise-robert/relationships/juliette-fetaz-valence-2019.md",
+      "question": "Decide the corpus role of registre-mariani/twin/marie-louise-robert/relationships/juliette-fetaz-valence-2019.md. In particular, say whether it is a sovereign source document, an asymmetric derived product, an alias/redirect, or a symmetric derived document that should temporarily count as sovereign source.",
+      "priority": 2,
+      "dedupe_key": "document_role_review:registre-mariani/twin/marie-louise-robert/relationships/juliette-fetaz-valence-2019.md",
+      "subject": {
+        "repo": "registre-mariani",
+        "path": "twin/marie-louise-robert/relationships/juliette-fetaz-valence-2019.md",
+        "title": "Juliette Fetaz — Valence, premier semestre 2019-2020",
+        "github_url": "https://github.com/JeanHuguesRobert/registre-mariani/blob/main/twin/marie-louise-robert/relationships/juliette-fetaz-valence-2019.md"
+      },
+      "created_at": "2026-09-13T09:40:57.195Z",
+      "updated_at": "2026-09-13T09:40:57.195Z",
+      "resume": {
+        "command": "node scripts/cogentia.js continuation resolve ctn_14da1dd6 <result.json>"
+      }
+    },
+    {
+      "id": "ctn_c85bbd25",
+      "status": "active",
+      "kind": "document_role_review",
+      "title": "Classify registre-mariani/twin/marie-louise-robert/rights-patrimony-legacy.md",
+      "question": "Decide the corpus role of registre-mariani/twin/marie-louise-robert/rights-patrimony-legacy.md. In particular, say whether it is a sovereign source document, an asymmetric derived product, an alias/redirect, or a symmetric derived document that should temporarily count as sovereign source.",
+      "priority": 2,
+      "dedupe_key": "document_role_review:registre-mariani/twin/marie-louise-robert/rights-patrimony-legacy.md",
+      "subject": {
+        "repo": "registre-mariani",
+        "path": "twin/marie-louise-robert/rights-patrimony-legacy.md",
+        "title": "Rights, patrimony and legacy — breadth-first map",
+        "github_url": "https://github.com/JeanHuguesRobert/registre-mariani/blob/main/twin/marie-louise-robert/rights-patrimony-legacy.md"
+      },
+      "created_at": "2026-09-13T09:40:57.347Z",
+      "updated_at": "2026-09-13T09:40:57.347Z",
+      "resume": {
+        "command": "node scripts/cogentia.js continuation resolve ctn_c85bbd25 <result.json>"
+      }
+    },
+    {
+      "id": "ctn_93d29a29",
+      "status": "active",
+      "kind": "document_role_review",
+      "title": "Classify registre-mariani/twin/marie-louise-robert/trajectory/animation-path-2016.md",
+      "question": "Decide the corpus role of registre-mariani/twin/marie-louise-robert/trajectory/animation-path-2016.md. In particular, say whether it is a sovereign source document, an asymmetric derived product, an alias/redirect, or a symmetric derived document that should temporarily count as sovereign source.",
+      "priority": 2,
+      "dedupe_key": "document_role_review:registre-mariani/twin/marie-louise-robert/trajectory/animation-path-2016.md",
+      "subject": {
+        "repo": "registre-mariani",
+        "path": "twin/marie-louise-robert/trajectory/animation-path-2016.md",
+        "title": "Piste animation — 2016",
+        "github_url": "https://github.com/JeanHuguesRobert/registre-mariani/blob/main/twin/marie-louise-robert/trajectory/animation-path-2016.md"
+      },
+      "created_at": "2026-09-13T09:40:57.554Z",
+      "updated_at": "2026-09-13T09:40:57.554Z",
+      "resume": {
+        "command": "node scripts/cogentia.js continuation resolve ctn_93d29a29 <result.json>"
+      }
+    },
+    {
+      "id": "ctn_00ca2e97",
+      "status": "active",
+      "kind": "document_role_review",
+      "title": "Classify registre-mariani/twin/marie-louise-robert/trajectory/art-school-admission-procedures-2017.md",
+      "question": "Decide the corpus role of registre-mariani/twin/marie-louise-robert/trajectory/art-school-admission-procedures-2017.md. In particular, say whether it is a sovereign source document, an asymmetric derived product, an alias/redirect, or a symmetric derived document that should temporarily count as sovereign source.",
+      "priority": 2,
+      "dedupe_key": "document_role_review:registre-mariani/twin/marie-louise-robert/trajectory/art-school-admission-procedures-2017.md",
+      "subject": {
+        "repo": "registre-mariani",
+        "path": "twin/marie-louise-robert/trajectory/art-school-admission-procedures-2017.md",
+        "title": "Art-school admission procedures — 2017 reconstruction",
+        "github_url": "https://github.com/JeanHuguesRobert/registre-mariani/blob/main/twin/marie-louise-robert/trajectory/art-school-admission-procedures-2017.md"
+      },
+      "created_at": "2026-09-13T09:40:57.723Z",
+      "updated_at": "2026-09-13T09:40:57.723Z",
+      "resume": {
+        "command": "node scripts/cogentia.js continuation resolve ctn_00ca2e97 <result.json>"
+      }
+    },
+    {
+      "id": "ctn_a3337a36",
+      "status": "active",
+      "kind": "document_role_review",
+      "title": "Classify registre-mariani/twin/marie-louise-robert/trajectory/artistic-network-2021.md",
+      "question": "Decide the corpus role of registre-mariani/twin/marie-louise-robert/trajectory/artistic-network-2021.md. In particular, say whether it is a sovereign source document, an asymmetric derived product, an alias/redirect, or a symmetric derived document that should temporarily count as sovereign source.",
+      "priority": 2,
+      "dedupe_key": "document_role_review:registre-mariani/twin/marie-louise-robert/trajectory/artistic-network-2021.md",
+      "subject": {
+        "repo": "registre-mariani",
+        "path": "twin/marie-louise-robert/trajectory/artistic-network-2021.md",
+        "title": "Réseau artistique et continuité étudiante — 2021",
+        "github_url": "https://github.com/JeanHuguesRobert/registre-mariani/blob/main/twin/marie-louise-robert/trajectory/artistic-network-2021.md"
+      },
+      "created_at": "2026-09-13T09:40:57.875Z",
+      "updated_at": "2026-09-13T09:40:57.875Z",
+      "resume": {
+        "command": "node scripts/cogentia.js continuation resolve ctn_a3337a36 <result.json>"
+      }
+    },
+    {
+      "id": "ctn_fdd6e579",
+      "status": "active",
+      "kind": "document_role_review",
+      "title": "Classify registre-mariani/twin/marie-louise-robert/trajectory/artistic-practice-2017-2021.md",
+      "question": "Decide the corpus role of registre-mariani/twin/marie-louise-robert/trajectory/artistic-practice-2017-2021.md. In particular, say whether it is a sovereign source document, an asymmetric derived product, an alias/redirect, or a symmetric derived document that should temporarily count as sovereign source.",
+      "priority": 2,
+      "dedupe_key": "document_role_review:registre-mariani/twin/marie-louise-robert/trajectory/artistic-practice-2017-2021.md",
+      "subject": {
+        "repo": "registre-mariani",
+        "path": "twin/marie-louise-robert/trajectory/artistic-practice-2017-2021.md",
+        "title": "Pratique artistique 2017–2021 — Marie-Louise Robert",
+        "github_url": "https://github.com/JeanHuguesRobert/registre-mariani/blob/main/twin/marie-louise-robert/trajectory/artistic-practice-2017-2021.md"
+      },
+      "created_at": "2026-09-13T09:40:58.008Z",
+      "updated_at": "2026-09-13T09:40:58.008Z",
+      "resume": {
+        "command": "node scripts/cogentia.js continuation resolve ctn_fdd6e579 <result.json>"
+      }
+    },
+    {
+      "id": "ctn_8220dd4b",
+      "status": "active",
+      "kind": "document_role_review",
+      "title": "Classify registre-mariani/twin/marie-louise-robert/trajectory/childhood-before-2007.md",
+      "question": "Decide the corpus role of registre-mariani/twin/marie-louise-robert/trajectory/childhood-before-2007.md. In particular, say whether it is a sovereign source document, an asymmetric derived product, an alias/redirect, or a symmetric derived document that should temporarily count as sovereign source.",
+      "priority": 2,
+      "dedupe_key": "document_role_review:registre-mariani/twin/marie-louise-robert/trajectory/childhood-before-2007.md",
+      "subject": {
+        "repo": "registre-mariani",
+        "path": "twin/marie-louise-robert/trajectory/childhood-before-2007.md",
+        "title": "Childhood before 2007 — provisional reconstruction",
+        "github_url": "https://github.com/JeanHuguesRobert/registre-mariani/blob/main/twin/marie-louise-robert/trajectory/childhood-before-2007.md"
+      },
+      "created_at": "2026-09-13T09:40:58.173Z",
+      "updated_at": "2026-09-13T09:40:58.173Z",
+      "resume": {
+        "command": "node scripts/cogentia.js continuation resolve ctn_8220dd4b <result.json>"
+      }
+    },
+    {
+      "id": "ctn_f7be1645",
+      "status": "active",
+      "kind": "document_role_review",
+      "title": "Classify registre-mariani/twin/marie-louise-robert/trajectory/early-life-2007-2014.md",
+      "question": "Decide the corpus role of registre-mariani/twin/marie-louise-robert/trajectory/early-life-2007-2014.md. In particular, say whether it is a sovereign source document, an asymmetric derived product, an alias/redirect, or a symmetric derived document that should temporarily count as sovereign source.",
+      "priority": 2,
+      "dedupe_key": "document_role_review:registre-mariani/twin/marie-louise-robert/trajectory/early-life-2007-2014.md",
+      "subject": {
+        "repo": "registre-mariani",
+        "path": "twin/marie-louise-robert/trajectory/early-life-2007-2014.md",
+        "title": "Early life and adolescence — 2007–2014",
+        "github_url": "https://github.com/JeanHuguesRobert/registre-mariani/blob/main/twin/marie-louise-robert/trajectory/early-life-2007-2014.md"
+      },
+      "created_at": "2026-09-13T09:40:58.319Z",
+      "updated_at": "2026-09-13T09:40:58.319Z",
+      "resume": {
+        "command": "node scripts/cogentia.js continuation resolve ctn_f7be1645 <result.json>"
+      }
+    },
+    {
+      "id": "ctn_b4f9e06b",
+      "status": "active",
+      "kind": "document_role_review",
+      "title": "Classify registre-mariani/twin/marie-louise-robert/trajectory/education-artistic.md",
+      "question": "Decide the corpus role of registre-mariani/twin/marie-louise-robert/trajectory/education-artistic.md. In particular, say whether it is a sovereign source document, an asymmetric derived product, an alias/redirect, or a symmetric derived document that should temporarily count as sovereign source.",
+      "priority": 2,
+      "dedupe_key": "document_role_review:registre-mariani/twin/marie-louise-robert/trajectory/education-artistic.md",
+      "subject": {
+        "repo": "registre-mariani",
+        "path": "twin/marie-louise-robert/trajectory/education-artistic.md",
+        "title": "Parcours artistique et étudiant — Marie-Louise Robert",
+        "github_url": "https://github.com/JeanHuguesRobert/registre-mariani/blob/main/twin/marie-louise-robert/trajectory/education-artistic.md"
+      },
+      "created_at": "2026-09-13T09:40:58.475Z",
+      "updated_at": "2026-09-13T09:40:58.475Z",
+      "resume": {
+        "command": "node scripts/cogentia.js continuation resolve ctn_b4f9e06b <result.json>"
+      }
+    },
+    {
+      "id": "ctn_45bd93a7",
+      "status": "active",
+      "kind": "document_role_review",
+      "title": "Classify registre-mariani/twin/marie-louise-robert/trajectory/nantes-to-nice.md",
+      "question": "Decide the corpus role of registre-mariani/twin/marie-louise-robert/trajectory/nantes-to-nice.md. In particular, say whether it is a sovereign source document, an asymmetric derived product, an alias/redirect, or a symmetric derived document that should temporarily count as sovereign source.",
+      "priority": 2,
+      "dedupe_key": "document_role_review:registre-mariani/twin/marie-louise-robert/trajectory/nantes-to-nice.md",
+      "subject": {
+        "repo": "registre-mariani",
+        "path": "twin/marie-louise-robert/trajectory/nantes-to-nice.md",
+        "title": "Transition Nantes → Nice — état des traces",
+        "github_url": "https://github.com/JeanHuguesRobert/registre-mariani/blob/main/twin/marie-louise-robert/trajectory/nantes-to-nice.md"
+      },
+      "created_at": "2026-09-13T09:40:58.611Z",
+      "updated_at": "2026-09-13T09:40:58.611Z",
+      "resume": {
+        "command": "node scripts/cogentia.js continuation resolve ctn_45bd93a7 <result.json>"
+      }
+    },
+    {
+      "id": "ctn_87432a77",
+      "status": "active",
+      "kind": "document_role_review",
+      "title": "Classify registre-mariani/twin/marie-louise-robert/voice/direct-voice-thematic-inventory.md",
+      "question": "Decide the corpus role of registre-mariani/twin/marie-louise-robert/voice/direct-voice-thematic-inventory.md. In particular, say whether it is a sovereign source document, an asymmetric derived product, an alias/redirect, or a symmetric derived document that should temporarily count as sovereign source.",
+      "priority": 2,
+      "dedupe_key": "document_role_review:registre-mariani/twin/marie-louise-robert/voice/direct-voice-thematic-inventory.md",
+      "subject": {
+        "repo": "registre-mariani",
+        "path": "twin/marie-louise-robert/voice/direct-voice-thematic-inventory.md",
+        "title": "Direct Voice thematic inventory — Marie-Louise Robert",
+        "github_url": "https://github.com/JeanHuguesRobert/registre-mariani/blob/main/twin/marie-louise-robert/voice/direct-voice-thematic-inventory.md"
+      },
+      "created_at": "2026-09-13T09:40:58.765Z",
+      "updated_at": "2026-09-13T09:40:58.765Z",
+      "resume": {
+        "command": "node scripts/cogentia.js continuation resolve ctn_87432a77 <result.json>"
+      }
+    },
+    {
+      "id": "ctn_d3e37b1e",
+      "status": "active",
+      "kind": "document_role_review",
+      "title": "Classify registre-mariani/twin/marie-louise-robert/voice/README.md",
+      "question": "Decide the corpus role of registre-mariani/twin/marie-louise-robert/voice/README.md. In particular, say whether it is a sovereign source document, an asymmetric derived product, an alias/redirect, or a symmetric derived document that should temporarily count as sovereign source.",
+      "priority": 2,
+      "dedupe_key": "document_role_review:registre-mariani/twin/marie-louise-robert/voice/README.md",
+      "subject": {
+        "repo": "registre-mariani",
+        "path": "twin/marie-louise-robert/voice/README.md",
+        "title": "Direct Voice Layer",
+        "github_url": "https://github.com/JeanHuguesRobert/registre-mariani/blob/main/twin/marie-louise-robert/voice/README.md"
+      },
+      "created_at": "2026-09-13T09:40:58.925Z",
+      "updated_at": "2026-09-13T09:40:58.925Z",
+      "resume": {
+        "command": "node scripts/cogentia.js continuation resolve ctn_d3e37b1e <result.json>"
+      }
+    },
+    {
+      "id": "ctn_c137a5bb",
+      "status": "active",
+      "kind": "document_role_review",
+      "title": "Classify registre-mariani/twin/marie-louise-robert/work-and-occupations.md",
+      "question": "Decide the corpus role of registre-mariani/twin/marie-louise-robert/work-and-occupations.md. In particular, say whether it is a sovereign source document, an asymmetric derived product, an alias/redirect, or a symmetric derived document that should temporarily count as sovereign source.",
+      "priority": 2,
+      "dedupe_key": "document_role_review:registre-mariani/twin/marie-louise-robert/work-and-occupations.md",
+      "subject": {
+        "repo": "registre-mariani",
+        "path": "twin/marie-louise-robert/work-and-occupations.md",
+        "title": "Work and occupations — Marie-Louise Robert",
+        "github_url": "https://github.com/JeanHuguesRobert/registre-mariani/blob/main/twin/marie-louise-robert/work-and-occupations.md"
+      },
+      "created_at": "2026-09-13T09:40:59.055Z",
+      "updated_at": "2026-09-13T09:40:59.055Z",
+      "resume": {
+        "command": "node scripts/cogentia.js continuation resolve ctn_c137a5bb <result.json>"
+      }
+    },
+    {
+      "id": "ctn_566ac613",
+      "status": "active",
+      "kind": "document_role_review",
+      "title": "Classify registre-mariani/twin/marie-louise-robert/works/2016-conceptual-cluster.md",
+      "question": "Decide the corpus role of registre-mariani/twin/marie-louise-robert/works/2016-conceptual-cluster.md. In particular, say whether it is a sovereign source document, an asymmetric derived product, an alias/redirect, or a symmetric derived document that should temporarily count as sovereign source.",
+      "priority": 2,
+      "dedupe_key": "document_role_review:registre-mariani/twin/marie-louise-robert/works/2016-conceptual-cluster.md",
+      "subject": {
+        "repo": "registre-mariani",
+        "path": "twin/marie-louise-robert/works/2016-conceptual-cluster.md",
+        "title": "2016 conceptual cluster — Marie-Louise Robert",
+        "github_url": "https://github.com/JeanHuguesRobert/registre-mariani/blob/main/twin/marie-louise-robert/works/2016-conceptual-cluster.md"
+      },
+      "created_at": "2026-09-13T09:40:59.211Z",
+      "updated_at": "2026-09-13T09:40:59.211Z",
+      "resume": {
+        "command": "node scripts/cogentia.js continuation resolve ctn_566ac613 <result.json>"
+      }
+    },
+    {
+      "id": "ctn_df3d77a8",
+      "status": "active",
+      "kind": "document_role_review",
+      "title": "Classify registre-mariani/twin/marie-louise-robert/works/2017-transition-photoroman-competitions.md",
+      "question": "Decide the corpus role of registre-mariani/twin/marie-louise-robert/works/2017-transition-photoroman-competitions.md. In particular, say whether it is a sovereign source document, an asymmetric derived product, an alias/redirect, or a symmetric derived document that should temporarily count as sovereign source.",
+      "priority": 2,
+      "dedupe_key": "document_role_review:registre-mariani/twin/marie-louise-robert/works/2017-transition-photoroman-competitions.md",
+      "subject": {
+        "repo": "registre-mariani",
+        "path": "twin/marie-louise-robert/works/2017-transition-photoroman-competitions.md",
+        "title": "2017 transition — `photoromanJulie` and art-school competitions",
+        "github_url": "https://github.com/JeanHuguesRobert/registre-mariani/blob/main/twin/marie-louise-robert/works/2017-transition-photoroman-competitions.md"
+      },
+      "created_at": "2026-09-13T09:40:59.362Z",
+      "updated_at": "2026-09-13T09:40:59.362Z",
+      "resume": {
+        "command": "node scripts/cogentia.js continuation resolve ctn_df3d77a8 <result.json>"
+      }
+    },
+    {
+      "id": "ctn_27cc9b5d",
+      "status": "active",
+      "kind": "document_role_review",
+      "title": "Classify registre-mariani/twin/marie-louise-robert/works/digital-platform-archaeology.md",
+      "question": "Decide the corpus role of registre-mariani/twin/marie-louise-robert/works/digital-platform-archaeology.md. In particular, say whether it is a sovereign source document, an asymmetric derived product, an alias/redirect, or a symmetric derived document that should temporarily count as sovereign source.",
+      "priority": 2,
+      "dedupe_key": "document_role_review:registre-mariani/twin/marie-louise-robert/works/digital-platform-archaeology.md",
+      "subject": {
+        "repo": "registre-mariani",
+        "path": "twin/marie-louise-robert/works/digital-platform-archaeology.md",
+        "title": "Digital platform archaeology — Marie-Louise Robert",
+        "github_url": "https://github.com/JeanHuguesRobert/registre-mariani/blob/main/twin/marie-louise-robert/works/digital-platform-archaeology.md"
+      },
+      "created_at": "2026-09-13T09:40:59.545Z",
+      "updated_at": "2026-09-13T09:40:59.545Z",
+      "resume": {
+        "command": "node scripts/cogentia.js continuation resolve ctn_27cc9b5d <result.json>"
+      }
+    },
+    {
+      "id": "ctn_576d346f",
+      "status": "active",
+      "kind": "document_role_review",
+      "title": "Classify registre-mariani/twin/marie-louise-robert/works/physical-artworks-custody.md",
+      "question": "Decide the corpus role of registre-mariani/twin/marie-louise-robert/works/physical-artworks-custody.md. In particular, say whether it is a sovereign source document, an asymmetric derived product, an alias/redirect, or a symmetric derived document that should temporarily count as sovereign source.",
+      "priority": 2,
+      "dedupe_key": "document_role_review:registre-mariani/twin/marie-louise-robert/works/physical-artworks-custody.md",
+      "subject": {
+        "repo": "registre-mariani",
+        "path": "twin/marie-louise-robert/works/physical-artworks-custody.md",
+        "title": "Physical artworks — custody and preservation map",
+        "github_url": "https://github.com/JeanHuguesRobert/registre-mariani/blob/main/twin/marie-louise-robert/works/physical-artworks-custody.md"
+      },
+      "created_at": "2026-09-13T09:40:59.679Z",
+      "updated_at": "2026-09-13T09:40:59.679Z",
+      "resume": {
+        "command": "node scripts/cogentia.js continuation resolve ctn_576d346f <result.json>"
+      }
+    },
+    {
+      "id": "ctn_788416ca",
+      "status": "active",
+      "kind": "document_role_review",
+      "title": "Classify registre-mariani/twin/marie-louise-robert/works/youtube-channel-reconstruction.md",
+      "question": "Decide the corpus role of registre-mariani/twin/marie-louise-robert/works/youtube-channel-reconstruction.md. In particular, say whether it is a sovereign source document, an asymmetric derived product, an alias/redirect, or a symmetric derived document that should temporarily count as sovereign source.",
+      "priority": 2,
+      "dedupe_key": "document_role_review:registre-mariani/twin/marie-louise-robert/works/youtube-channel-reconstruction.md",
+      "subject": {
+        "repo": "registre-mariani",
+        "path": "twin/marie-louise-robert/works/youtube-channel-reconstruction.md",
+        "title": "Reconstruction de la chaîne YouTube — Marie-Louise d'Angelis",
+        "github_url": "https://github.com/JeanHuguesRobert/registre-mariani/blob/main/twin/marie-louise-robert/works/youtube-channel-reconstruction.md"
+      },
+      "created_at": "2026-09-13T09:40:59.812Z",
+      "updated_at": "2026-09-13T09:40:59.812Z",
+      "resume": {
+        "command": "node scripts/cogentia.js continuation resolve ctn_788416ca <result.json>"
+      }
+    },
+    {
+      "id": "ctn_d874f06a",
+      "status": "active",
+      "kind": "document_role_review",
+      "title": "Classify ubikia/MEDIA.md",
+      "question": "Decide the corpus role of ubikia/MEDIA.md. In particular, say whether it is a sovereign source document, an asymmetric derived product, an alias/redirect, or a symmetric derived document that should temporarily count as sovereign source.",
+      "priority": 2,
+      "dedupe_key": "document_role_review:ubikia/MEDIA.md",
+      "subject": {
+        "repo": "ubikia",
+        "path": "MEDIA.md",
+        "title": "Ubikia Media",
+        "github_url": "https://github.com/JeanHuguesRobert/ubikia/blob/main/MEDIA.md"
+      },
+      "created_at": "2026-09-13T09:41:01.878Z",
+      "updated_at": "2026-09-13T09:41:01.878Z",
+      "resume": {
+        "command": "node scripts/cogentia.js continuation resolve ctn_d874f06a <result.json>"
+      }
+    },
+    {
+      "id": "ctn_d402b5b4",
+      "status": "active",
+      "kind": "document_role_review",
+      "title": "Classify barons-Mariani/research/backup_blogpost.md",
+      "question": "Decide the corpus role of barons-Mariani/research/backup_blogpost.md. In particular, say whether it is a sovereign source document, an asymmetric derived product, an alias/redirect, or a symmetric derived document that should temporarily count as sovereign source.",
+      "priority": 1,
+      "dedupe_key": "document_role_review:barons-Mariani/research/backup_blogpost.md",
+      "subject": {
+        "repo": "barons-Mariani",
+        "path": "research/backup_blogpost.md",
+        "title": "Backup",
+        "github_url": "https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/backup_blogpost.md"
+      },
+      "created_at": "2026-09-13T09:40:48.492Z",
+      "updated_at": "2026-09-13T09:40:48.492Z",
+      "resume": {
+        "command": "node scripts/cogentia.js continuation resolve ctn_d402b5b4 <result.json>"
+      }
+    },
+    {
+      "id": "ctn_d6741cdc",
+      "status": "active",
+      "kind": "document_role_review",
+      "title": "Classify barons-Mariani/research/jhn_architecture_packet_closure_addendum.md",
+      "question": "Decide the corpus role of barons-Mariani/research/jhn_architecture_packet_closure_addendum.md. In particular, say whether it is a sovereign source document, an asymmetric derived product, an alias/redirect, or a symmetric derived document that should temporarily count as sovereign source.",
+      "priority": 1,
+      "dedupe_key": "document_role_review:barons-Mariani/research/jhn_architecture_packet_closure_addendum.md",
+      "subject": {
+        "repo": "barons-Mariani",
+        "path": "research/jhn_architecture_packet_closure_addendum.md",
+        "title": "JHN Architecture — Packet Closure Addendum",
+        "github_url": "https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/jhn_architecture_packet_closure_addendum.md"
+      },
+      "created_at": "2026-09-13T09:40:48.630Z",
+      "updated_at": "2026-09-13T09:40:48.630Z",
+      "resume": {
+        "command": "node scripts/cogentia.js continuation resolve ctn_d6741cdc <result.json>"
+      }
+    },
+    {
+      "id": "ctn_658ce8b1",
+      "status": "active",
+      "kind": "document_role_review",
+      "title": "Classify barons-Mariani/research/the_network_is_the_learning_computer_v0.6_addendum.md",
+      "question": "Decide the corpus role of barons-Mariani/research/the_network_is_the_learning_computer_v0.6_addendum.md. In particular, say whether it is a sovereign source document, an asymmetric derived product, an alias/redirect, or a symmetric derived document that should temporarily count as sovereign source.",
+      "priority": 1,
+      "dedupe_key": "document_role_review:barons-Mariani/research/the_network_is_the_learning_computer_v0.6_addendum.md",
+      "subject": {
+        "repo": "barons-Mariani",
+        "path": "research/the_network_is_the_learning_computer_v0.6_addendum.md",
+        "title": "The Network is the Learning Computer — v0.6 Addendum",
+        "github_url": "https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/the_network_is_the_learning_computer_v0.6_addendum.md"
+      },
+      "created_at": "2026-09-13T09:40:49.474Z",
+      "updated_at": "2026-09-13T09:40:49.474Z",
+      "resume": {
+        "command": "node scripts/cogentia.js continuation resolve ctn_658ce8b1 <result.json>"
+      }
+    },
+    {
+      "id": "ctn_68a79bb8",
+      "status": "active",
+      "kind": "document_role_review",
+      "title": "Classify barons-Mariani/research/the_network_is_the_learning_computer_v0.7_packet_semantics_addendum.md",
+      "question": "Decide the corpus role of barons-Mariani/research/the_network_is_the_learning_computer_v0.7_packet_semantics_addendum.md. In particular, say whether it is a sovereign source document, an asymmetric derived product, an alias/redirect, or a symmetric derived document that should temporarily count as sovereign source.",
+      "priority": 1,
+      "dedupe_key": "document_role_review:barons-Mariani/research/the_network_is_the_learning_computer_v0.7_packet_semantics_addendum.md",
+      "subject": {
+        "repo": "barons-Mariani",
+        "path": "research/the_network_is_the_learning_computer_v0.7_packet_semantics_addendum.md",
+        "title": "The Network is the Learning Computer — v0.7 Packet Semantics Addendum",
+        "github_url": "https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/the_network_is_the_learning_computer_v0.7_packet_semantics_addendum.md"
+      },
+      "created_at": "2026-09-13T09:40:49.600Z",
+      "updated_at": "2026-09-13T09:40:49.600Z",
+      "resume": {
+        "command": "node scripts/cogentia.js continuation resolve ctn_68a79bb8 <result.json>"
+      }
+    },
+    {
+      "id": "ctn_8b1640cc",
+      "status": "active",
+      "kind": "document_role_review",
+      "title": "Classify barons-Mariani/research/the_network_is_the_learning_computer_v0.8_jhn_architecture_rationale_addendum.md",
+      "question": "Decide the corpus role of barons-Mariani/research/the_network_is_the_learning_computer_v0.8_jhn_architecture_rationale_addendum.md. In particular, say whether it is a sovereign source document, an asymmetric derived product, an alias/redirect, or a symmetric derived document that should temporarily count as sovereign source.",
+      "priority": 1,
+      "dedupe_key": "document_role_review:barons-Mariani/research/the_network_is_the_learning_computer_v0.8_jhn_architecture_rationale_addendum.md",
+      "subject": {
+        "repo": "barons-Mariani",
+        "path": "research/the_network_is_the_learning_computer_v0.8_jhn_architecture_rationale_addendum.md",
+        "title": "The Network is the Learning Computer — v0.8 JHN Architecture Rationale Addendum",
+        "github_url": "https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/the_network_is_the_learning_computer_v0.8_jhn_architecture_rationale_addendum.md"
+      },
+      "created_at": "2026-09-13T09:40:49.733Z",
+      "updated_at": "2026-09-13T09:40:49.733Z",
+      "resume": {
+        "command": "node scripts/cogentia.js continuation resolve ctn_8b1640cc <result.json>"
+      }
+    },
+    {
+      "id": "ctn_68700758",
+      "status": "active",
+      "kind": "document_role_review",
+      "title": "Classify cogentia/research/agent_john_identity.md",
+      "question": "Decide the corpus role of cogentia/research/agent_john_identity.md. In particular, say whether it is a sovereign source document, an asymmetric derived product, an alias/redirect, or a symmetric derived document that should temporarily count as sovereign source.",
+      "priority": 1,
+      "dedupe_key": "document_role_review:cogentia/research/agent_john_identity.md",
+      "subject": {
+        "repo": "cogentia",
+        "path": "research/agent_john_identity.md",
+        "title": "What is John — Agent John / Agent JHN identity card",
+        "github_url": "https://github.com/JeanHuguesRobert/cogentia/blob/main/research/agent_john_identity.md"
+      },
+      "created_at": "2026-09-13T09:40:50.484Z",
+      "updated_at": "2026-09-13T09:40:50.484Z",
+      "resume": {
+        "command": "node scripts/cogentia.js continuation resolve ctn_68700758 <result.json>"
+      }
+    },
+    {
+      "id": "ctn_e11f45a6",
+      "status": "active",
+      "kind": "document_role_review",
+      "title": "Classify cogentia/research/agent_john_primary_style.md",
+      "question": "Decide the corpus role of cogentia/research/agent_john_primary_style.md. In particular, say whether it is a sovereign source document, an asymmetric derived product, an alias/redirect, or a symmetric derived document that should temporarily count as sovereign source.",
+      "priority": 1,
+      "dedupe_key": "document_role_review:cogentia/research/agent_john_primary_style.md",
+      "subject": {
+        "repo": "cogentia",
+        "path": "research/agent_john_primary_style.md",
+        "title": "Agent John — primary style kernel (cross-surface)",
+        "github_url": "https://github.com/JeanHuguesRobert/cogentia/blob/main/research/agent_john_primary_style.md"
+      },
+      "created_at": "2026-09-13T09:40:50.657Z",
+      "updated_at": "2026-09-13T09:40:50.657Z",
+      "resume": {
+        "command": "node scripts/cogentia.js continuation resolve ctn_e11f45a6 <result.json>"
+      }
+    },
+    {
+      "id": "ctn_420e55b8",
+      "status": "active",
+      "kind": "document_role_review",
+      "title": "Classify Inox/research/inox-spec-runtime-audit.md",
+      "question": "Decide the corpus role of Inox/research/inox-spec-runtime-audit.md. In particular, say whether it is a sovereign source document, an asymmetric derived product, an alias/redirect, or a symmetric derived document that should temporarily count as sovereign source.",
+      "priority": 1,
+      "dedupe_key": "document_role_review:Inox/research/inox-spec-runtime-audit.md",
+      "subject": {
+        "repo": "Inox",
+        "path": "research/inox-spec-runtime-audit.md",
+        "title": "Inox specification/runtime semantic-drift audit",
+        "github_url": "https://github.com/JeanHuguesRobert/Inox/blob/master/research/inox-spec-runtime-audit.md"
+      },
+      "created_at": "2026-09-13T09:40:52.184Z",
+      "updated_at": "2026-09-13T09:40:52.184Z",
+      "resume": {
+        "command": "node scripts/cogentia.js continuation resolve ctn_420e55b8 <result.json>"
+      }
+    },
+    {
+      "id": "ctn_83e9f834",
+      "status": "active",
+      "kind": "document_role_review",
+      "title": "Classify JeanHuguesRobert/research/public-navigation.md",
+      "question": "Decide the corpus role of JeanHuguesRobert/research/public-navigation.md. In particular, say whether it is a sovereign source document, an asymmetric derived product, an alias/redirect, or a symmetric derived document that should temporarily count as sovereign source.",
+      "priority": 1,
+      "dedupe_key": "document_role_review:JeanHuguesRobert/research/public-navigation.md",
+      "subject": {
+        "repo": "JeanHuguesRobert",
+        "path": "research/public-navigation.md",
+        "title": "Public Corpus Navigation",
+        "github_url": "https://github.com/JeanHuguesRobert/JeanHuguesRobert/blob/main/research/public-navigation.md"
+      },
+      "created_at": "2026-09-13T09:40:53.450Z",
+      "updated_at": "2026-09-13T09:40:53.450Z",
+      "resume": {
+        "command": "node scripts/cogentia.js continuation resolve ctn_83e9f834 <result.json>"
+      }
+    },
+    {
+      "id": "ctn_66baf1f5",
+      "status": "active",
+      "kind": "document_role_review",
+      "title": "Classify registre-mariani/twin/marie-louise-robert/chronology.md",
+      "question": "Decide the corpus role of registre-mariani/twin/marie-louise-robert/chronology.md. In particular, say whether it is a sovereign source document, an asymmetric derived product, an alias/redirect, or a symmetric derived document that should temporarily count as sovereign source.",
+      "priority": 1,
+      "dedupe_key": "document_role_review:registre-mariani/twin/marie-louise-robert/chronology.md",
+      "subject": {
+        "repo": "registre-mariani",
+        "path": "twin/marie-louise-robert/chronology.md",
+        "title": "Chronologie initiale — Marie-Louise Robert",
+        "github_url": "https://github.com/JeanHuguesRobert/registre-mariani/blob/main/twin/marie-louise-robert/chronology.md"
+      },
+      "created_at": "2026-09-13T09:40:55.051Z",
+      "updated_at": "2026-09-13T09:40:55.051Z",
+      "resume": {
+        "command": "node scripts/cogentia.js continuation resolve ctn_66baf1f5 <result.json>"
+      }
+    },
+    {
+      "id": "ctn_54b02bcd",
+      "status": "active",
+      "kind": "document_role_review",
+      "title": "Classify ubikia/artifacts/audible/le-pere-noel-revient/adaptation-request.md",
+      "question": "Decide the corpus role of ubikia/artifacts/audible/le-pere-noel-revient/adaptation-request.md. In particular, say whether it is a sovereign source document, an asymmetric derived product, an alias/redirect, or a symmetric derived document that should temporarily count as sovereign source.",
+      "priority": 1,
+      "dedupe_key": "document_role_review:ubikia/artifacts/audible/le-pere-noel-revient/adaptation-request.md",
+      "subject": {
+        "repo": "ubikia",
+        "path": "artifacts/audible/le-pere-noel-revient/adaptation-request.md",
+        "title": "Spoken adaptation request",
+        "github_url": "https://github.com/JeanHuguesRobert/ubikia/blob/main/artifacts/audible/le-pere-noel-revient/adaptation-request.md"
+      },
+      "created_at": "2026-09-13T09:40:59.950Z",
+      "updated_at": "2026-09-13T09:40:59.950Z",
+      "resume": {
+        "command": "node scripts/cogentia.js continuation resolve ctn_54b02bcd <result.json>"
+      }
+    },
+    {
+      "id": "ctn_457d29b9",
+      "status": "active",
+      "kind": "document_role_review",
+      "title": "Classify ubikia/artifacts/audible/le-pere-noel-revient/spoken.draft.md",
+      "question": "Decide the corpus role of ubikia/artifacts/audible/le-pere-noel-revient/spoken.draft.md. In particular, say whether it is a sovereign source document, an asymmetric derived product, an alias/redirect, or a symmetric derived document that should temporarily count as sovereign source.",
+      "priority": 1,
+      "dedupe_key": "document_role_review:ubikia/artifacts/audible/le-pere-noel-revient/spoken.draft.md",
+      "subject": {
+        "repo": "ubikia",
+        "path": "artifacts/audible/le-pere-noel-revient/spoken.draft.md",
+        "title": "spoken.draft",
+        "github_url": "https://github.com/JeanHuguesRobert/ubikia/blob/main/artifacts/audible/le-pere-noel-revient/spoken.draft.md"
+      },
+      "created_at": "2026-09-13T09:41:00.165Z",
+      "updated_at": "2026-09-13T09:41:00.165Z",
+      "resume": {
+        "command": "node scripts/cogentia.js continuation resolve ctn_457d29b9 <result.json>"
+      }
+    },
+    {
+      "id": "ctn_fa40bc44",
+      "status": "active",
+      "kind": "document_role_review",
+      "title": "Classify ubikia/artifacts/audible/le-pere-noel-revient/spoken.reviewed.md",
+      "question": "Decide the corpus role of ubikia/artifacts/audible/le-pere-noel-revient/spoken.reviewed.md. In particular, say whether it is a sovereign source document, an asymmetric derived product, an alias/redirect, or a symmetric derived document that should temporarily count as sovereign source.",
+      "priority": 1,
+      "dedupe_key": "document_role_review:ubikia/artifacts/audible/le-pere-noel-revient/spoken.reviewed.md",
+      "subject": {
+        "repo": "ubikia",
+        "path": "artifacts/audible/le-pere-noel-revient/spoken.reviewed.md",
+        "title": "spoken.reviewed",
+        "github_url": "https://github.com/JeanHuguesRobert/ubikia/blob/main/artifacts/audible/le-pere-noel-revient/spoken.reviewed.md"
+      },
+      "created_at": "2026-09-13T09:41:00.328Z",
+      "updated_at": "2026-09-13T09:41:00.328Z",
+      "resume": {
+        "command": "node scripts/cogentia.js continuation resolve ctn_fa40bc44 <result.json>"
+      }
+    },
+    {
+      "id": "ctn_b82b59e6",
+      "status": "active",
+      "kind": "document_role_review",
+      "title": "Classify ubikia/artifacts/audible/le-pere-noel-revient/youtube-description.md",
+      "question": "Decide the corpus role of ubikia/artifacts/audible/le-pere-noel-revient/youtube-description.md. In particular, say whether it is a sovereign source document, an asymmetric derived product, an alias/redirect, or a symmetric derived document that should temporarily count as sovereign source.",
+      "priority": 1,
+      "dedupe_key": "document_role_review:ubikia/artifacts/audible/le-pere-noel-revient/youtube-description.md",
+      "subject": {
+        "repo": "ubikia",
+        "path": "artifacts/audible/le-pere-noel-revient/youtube-description.md",
+        "title": "youtube description",
+        "github_url": "https://github.com/JeanHuguesRobert/ubikia/blob/main/artifacts/audible/le-pere-noel-revient/youtube-description.md"
+      },
+      "created_at": "2026-09-13T09:41:00.483Z",
+      "updated_at": "2026-09-13T09:41:00.483Z",
+      "resume": {
+        "command": "node scripts/cogentia.js continuation resolve ctn_b82b59e6 <result.json>"
+      }
+    },
+    {
+      "id": "ctn_1c3a35db",
+      "status": "active",
+      "kind": "document_role_review",
+      "title": "Classify ubikia/artifacts/audible/on-nest-jamais-si-bien-servi/adaptation-request.md",
+      "question": "Decide the corpus role of ubikia/artifacts/audible/on-nest-jamais-si-bien-servi/adaptation-request.md. In particular, say whether it is a sovereign source document, an asymmetric derived product, an alias/redirect, or a symmetric derived document that should temporarily count as sovereign source.",
+      "priority": 1,
+      "dedupe_key": "document_role_review:ubikia/artifacts/audible/on-nest-jamais-si-bien-servi/adaptation-request.md",
+      "subject": {
+        "repo": "ubikia",
+        "path": "artifacts/audible/on-nest-jamais-si-bien-servi/adaptation-request.md",
+        "title": "Spoken adaptation request",
+        "github_url": "https://github.com/JeanHuguesRobert/ubikia/blob/main/artifacts/audible/on-nest-jamais-si-bien-servi/adaptation-request.md"
+      },
+      "created_at": "2026-09-13T09:41:00.625Z",
+      "updated_at": "2026-09-13T09:41:00.625Z",
+      "resume": {
+        "command": "node scripts/cogentia.js continuation resolve ctn_1c3a35db <result.json>"
+      }
+    },
+    {
+      "id": "ctn_3a3464b5",
+      "status": "active",
+      "kind": "document_role_review",
+      "title": "Classify ubikia/artifacts/audible/on-nest-jamais-si-bien-servi/spoken.draft.complete.md",
+      "question": "Decide the corpus role of ubikia/artifacts/audible/on-nest-jamais-si-bien-servi/spoken.draft.complete.md. In particular, say whether it is a sovereign source document, an asymmetric derived product, an alias/redirect, or a symmetric derived document that should temporarily count as sovereign source.",
+      "priority": 1,
+      "dedupe_key": "document_role_review:ubikia/artifacts/audible/on-nest-jamais-si-bien-servi/spoken.draft.complete.md",
+      "subject": {
+        "repo": "ubikia",
+        "path": "artifacts/audible/on-nest-jamais-si-bien-servi/spoken.draft.complete.md",
+        "title": "spoken.draft.complete",
+        "github_url": "https://github.com/JeanHuguesRobert/ubikia/blob/main/artifacts/audible/on-nest-jamais-si-bien-servi/spoken.draft.complete.md"
+      },
+      "created_at": "2026-09-13T09:41:00.921Z",
+      "updated_at": "2026-09-13T09:41:00.921Z",
+      "resume": {
+        "command": "node scripts/cogentia.js continuation resolve ctn_3a3464b5 <result.json>"
+      }
+    },
+    {
+      "id": "ctn_f74c48b6",
+      "status": "active",
+      "kind": "document_role_review",
+      "title": "Classify ubikia/artifacts/audible/on-nest-jamais-si-bien-servi/spoken.draft.md",
+      "question": "Decide the corpus role of ubikia/artifacts/audible/on-nest-jamais-si-bien-servi/spoken.draft.md. In particular, say whether it is a sovereign source document, an asymmetric derived product, an alias/redirect, or a symmetric derived document that should temporarily count as sovereign source.",
+      "priority": 1,
+      "dedupe_key": "document_role_review:ubikia/artifacts/audible/on-nest-jamais-si-bien-servi/spoken.draft.md",
+      "subject": {
+        "repo": "ubikia",
+        "path": "artifacts/audible/on-nest-jamais-si-bien-servi/spoken.draft.md",
+        "title": "spoken.draft",
+        "github_url": "https://github.com/JeanHuguesRobert/ubikia/blob/main/artifacts/audible/on-nest-jamais-si-bien-servi/spoken.draft.md"
+      },
+      "created_at": "2026-09-13T09:41:01.114Z",
+      "updated_at": "2026-09-13T09:41:01.114Z",
+      "resume": {
+        "command": "node scripts/cogentia.js continuation resolve ctn_f74c48b6 <result.json>"
+      }
+    },
+    {
+      "id": "ctn_e212d1ef",
+      "status": "active",
+      "kind": "document_role_review",
+      "title": "Classify ubikia/artifacts/audible/on-nest-jamais-si-bien-servi/spoken.reviewed.md",
+      "question": "Decide the corpus role of ubikia/artifacts/audible/on-nest-jamais-si-bien-servi/spoken.reviewed.md. In particular, say whether it is a sovereign source document, an asymmetric derived product, an alias/redirect, or a symmetric derived document that should temporarily count as sovereign source.",
+      "priority": 1,
+      "dedupe_key": "document_role_review:ubikia/artifacts/audible/on-nest-jamais-si-bien-servi/spoken.reviewed.md",
+      "subject": {
+        "repo": "ubikia",
+        "path": "artifacts/audible/on-nest-jamais-si-bien-servi/spoken.reviewed.md",
+        "title": "spoken.reviewed",
+        "github_url": "https://github.com/JeanHuguesRobert/ubikia/blob/main/artifacts/audible/on-nest-jamais-si-bien-servi/spoken.reviewed.md"
+      },
+      "created_at": "2026-09-13T09:41:01.264Z",
+      "updated_at": "2026-09-13T09:41:01.264Z",
+      "resume": {
+        "command": "node scripts/cogentia.js continuation resolve ctn_e212d1ef <result.json>"
+      }
+    },
+    {
+      "id": "ctn_90311a44",
+      "status": "active",
+      "kind": "document_role_review",
+      "title": "Classify ubikia/artifacts/audible/on-nest-jamais-si-bien-servi/youtube-description.md",
+      "question": "Decide the corpus role of ubikia/artifacts/audible/on-nest-jamais-si-bien-servi/youtube-description.md. In particular, say whether it is a sovereign source document, an asymmetric derived product, an alias/redirect, or a symmetric derived document that should temporarily count as sovereign source.",
+      "priority": 1,
+      "dedupe_key": "document_role_review:ubikia/artifacts/audible/on-nest-jamais-si-bien-servi/youtube-description.md",
+      "subject": {
+        "repo": "ubikia",
+        "path": "artifacts/audible/on-nest-jamais-si-bien-servi/youtube-description.md",
+        "title": "youtube description",
+        "github_url": "https://github.com/JeanHuguesRobert/ubikia/blob/main/artifacts/audible/on-nest-jamais-si-bien-servi/youtube-description.md"
+      },
+      "created_at": "2026-09-13T09:41:01.400Z",
+      "updated_at": "2026-09-13T09:41:01.400Z",
+      "resume": {
+        "command": "node scripts/cogentia.js continuation resolve ctn_90311a44 <result.json>"
+      }
+    },
+    {
+      "id": "ctn_71a13963",
+      "status": "active",
+      "kind": "document_role_review",
+      "title": "Classify ubikia/examples/reactive-products/manuscript/00-opening.md",
+      "question": "Decide the corpus role of ubikia/examples/reactive-products/manuscript/00-opening.md. In particular, say whether it is a sovereign source document, an asymmetric derived product, an alias/redirect, or a symmetric derived document that should temporarily count as sovereign source.",
+      "priority": 1,
+      "dedupe_key": "document_role_review:ubikia/examples/reactive-products/manuscript/00-opening.md",
+      "subject": {
+        "repo": "ubikia",
+        "path": "examples/reactive-products/manuscript/00-opening.md",
+        "title": "Opening",
+        "github_url": "https://github.com/JeanHuguesRobert/ubikia/blob/main/examples/reactive-products/manuscript/00-opening.md"
+      },
+      "created_at": "2026-09-13T09:41:01.674Z",
+      "updated_at": "2026-09-13T09:41:01.674Z",
+      "resume": {
+        "command": "node scripts/cogentia.js continuation resolve ctn_71a13963 <result.json>"
+      }
+    },
+    {
+      "id": "ctn_8f125e27",
+      "status": "active",
+      "kind": "document_role_review",
+      "title": "Classify ubikia/publications/2026-08-09-demultiplication-reseaux-sociaux-senatoriales.md",
+      "question": "Decide the corpus role of ubikia/publications/2026-08-09-demultiplication-reseaux-sociaux-senatoriales.md. In particular, say whether it is a sovereign source document, an asymmetric derived product, an alias/redirect, or a symmetric derived document that should temporarily count as sovereign source.",
+      "priority": 1,
+      "dedupe_key": "document_role_review:ubikia/publications/2026-08-09-demultiplication-reseaux-sociaux-senatoriales.md",
+      "subject": {
+        "repo": "ubikia",
+        "path": "publications/2026-08-09-demultiplication-reseaux-sociaux-senatoriales.md",
+        "title": "Étude & Stratégie d'Architecture : Démultiplication sur les Réseaux Sociaux (Facebook & X) par Agent John",
+        "github_url": "https://github.com/JeanHuguesRobert/ubikia/blob/main/publications/2026-08-09-demultiplication-reseaux-sociaux-senatoriales.md"
+      },
+      "created_at": "2026-09-13T09:41:02.128Z",
+      "updated_at": "2026-09-13T09:41:02.128Z",
+      "resume": {
+        "command": "node scripts/cogentia.js continuation resolve ctn_8f125e27 <result.json>"
+      }
+    },
+    {
+      "id": "ctn_a06bce0e",
+      "status": "active",
+      "kind": "document_role_review",
+      "title": "Classify ubikia/publications/2026-08-09-naissance-agent-john.md",
+      "question": "Decide the corpus role of ubikia/publications/2026-08-09-naissance-agent-john.md. In particular, say whether it is a sovereign source document, an asymmetric derived product, an alias/redirect, or a symmetric derived document that should temporarily count as sovereign source.",
+      "priority": 1,
+      "dedupe_key": "document_role_review:ubikia/publications/2026-08-09-naissance-agent-john.md",
+      "subject": {
+        "repo": "ubikia",
+        "path": "publications/2026-08-09-naissance-agent-john.md",
+        "title": "L'Éveil d'Agent John : Naissance d'une IA Souveraine au Cœur de la Corse",
+        "github_url": "https://github.com/JeanHuguesRobert/ubikia/blob/main/publications/2026-08-09-naissance-agent-john.md"
+      },
+      "created_at": "2026-09-13T09:41:02.360Z",
+      "updated_at": "2026-09-13T09:41:02.360Z",
+      "resume": {
+        "command": "node scripts/cogentia.js continuation resolve ctn_a06bce0e <result.json>"
+      }
+    },
+    {
+      "id": "ctn_9045d57c",
+      "status": "active",
+      "kind": "capability-delegation",
+      "title": "gh unavailable: Fetch full detail (title,body,comments) for issues #18 in JeanHuguesRobert/FractaVolta that failed during sync.",
+      "question": "Fetch full detail (title,body,comments) for issues #18 in JeanHuguesRobert/FractaVolta that failed during sync.",
+      "priority": 0,
+      "dedupe_key": "capability:gh:gh issue view --repo JeanHuguesRobert/FractaVolta",
+      "subject": {
+        "repo": "FractaVolta"
+      },
+      "created_at": "2026-08-26T04:18:18.707Z",
+      "updated_at": "2026-08-26T04:18:18.707Z",
+      "resume": {
+        "command": "node scripts/cogentia.js continuation resolve ctn_9045d57c <result.json>"
+      }
+    },
+    {
+      "id": "ctn_7c6d9146",
+      "status": "active",
+      "kind": "capability-delegation",
+      "title": "gh unavailable: Fetch full detail (title,body,comments) for issues #19 in JeanHuguesRobert/barons-Mariani that failed during sync.",
+      "question": "Fetch full detail (title,body,comments) for issues #19 in JeanHuguesRobert/barons-Mariani that failed during sync.",
+      "priority": 0,
+      "dedupe_key": "capability:gh:gh issue view --repo JeanHuguesRobert/barons-Mariani",
+      "subject": {
+        "repo": "barons-Mariani"
+      },
+      "created_at": "2026-08-26T04:19:56.328Z",
+      "updated_at": "2026-08-26T04:19:56.328Z",
+      "resume": {
+        "command": "node scripts/cogentia.js continuation resolve ctn_7c6d9146 <result.json>"
+      }
+    }
+  ]
+}

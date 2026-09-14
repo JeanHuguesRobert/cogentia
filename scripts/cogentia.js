@@ -8037,10 +8037,10 @@ function classifyRole(repo, relPath, full, fm, ignored, indexSets) {
   if (r === "AGENTS.md" || r.includes("/AGENTS.md")) {
     return { role: "operational", source: "path:AGENTS.md", confidence: "strong" };
   }
-  if (r.includes("/templates/")) {
+  if (r.startsWith("templates/") || r.includes("/templates/")) {
     return { role: "template", source: "path:templates", confidence: "strong" };
   }
-  if (r.includes("/examples/") || r.includes("/example_") || r.includes("fictitious_")) {
+  if (r.startsWith("examples/") || r.includes("/examples/") || r.includes("/example_") || r.includes("fictitious_")) {
     return { role: "example", source: "path:examples", confidence: "strong" };
   }
   if (/\balias\b/.test(explicit) || /\balias\b/i.test(String(fm.status || "")) || fm.redirect_to || fm.canonical_document || /^see\s+/i.test(readFileIfExists(full).trim())) {
