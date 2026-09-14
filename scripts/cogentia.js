@@ -632,6 +632,11 @@ Core commands:
                            derived frontmatter, inject paths, drift vs shared AGENTS.
   corpus plan              Read-only plan of generated navigation changes.
   corpus apply             Apply generated navigation changes from a fresh plan.
+  corpus converge          Repeatedly plan+apply until a fixed point (no more
+                           changes) or --max-iterations (default 5), then
+                           rebuild the SQLite index. Flags: --dry-run (report
+                           what pass 1 would apply, write nothing, skip the
+                           index rebuild) --max-iterations <n>.
   corpus verify            Verify generated views, gaps and git drift.
   corpus privacy           Check public views for private/confidential leaks.
   consolidate              Read-only publish-readiness check across corpus, privacy,
@@ -1818,12 +1823,15 @@ function cmdCorpus(sub) {
 async function cmdCorpusConverge(opts = {}) {
   const ctx = loadContext();
   const options = planOptions();
+  const dryRun = Boolean(opts.dryRun ?? hasFlag("--dry-run"));
   let iterations = 0;
   const maxIterations = Number(valueFlag("--max-iterations") || 5) || 5;
   const allApplied = [];
   let reachedFixedPoint = false;
 
-  while (iterations < maxIterations) {
+  // Dry run cannot iterate on its own writes (there are none), so it only
+  // ever evaluates a single pass: the plan cogentia.js would apply first.
+  while (iterations < (dryRun ? 1 : maxIterations)) {
     iterations++;
     const plan = buildPlan(ctx, options);
     const writes = mergePlanWrites(plan.changes);
@@ -1843,8 +1851,10 @@ async function cmdCorpusConverge(opts = {}) {
       break;
     }
     for (const write of allowed) {
-      ensureDir(path.dirname(write.full_path));
-      fs.writeFileSync(write.full_path, write.after, "utf8");
+      if (!dryRun) {
+        ensureDir(path.dirname(write.full_path));
+        fs.writeFileSync(write.full_path, write.after, "utf8");
+      }
       allApplied.push({
         iteration: iterations,
         repo: write.repo,
@@ -1854,15 +1864,20 @@ async function cmdCorpusConverge(opts = {}) {
     }
   }
 
-  // Update SQLite index in-process
-  const indexResult = await indexRebuild(ctx, { mode: "update" });
+  // Update SQLite index in-process (skipped on dry run: nothing was written).
+  const indexResult = dryRun
+    ? { documents: null, chunks: null, edges: null }
+    : await indexRebuild(ctx, { mode: "update" });
 
   const summary = {
     ok: true,
-    fixed_point_reached: reachedFixedPoint,
+    dry_run: dryRun,
+    fixed_point_reached: dryRun ? allApplied.length === 0 : reachedFixedPoint,
     iterations,
-    total_files_applied: allApplied.length,
-    applied: allApplied,
+    total_files_applied: dryRun ? 0 : allApplied.length,
+    total_files_would_apply: dryRun ? allApplied.length : undefined,
+    applied: dryRun ? [] : allApplied,
+    would_apply: dryRun ? allApplied : undefined,
     index: {
       documents: indexResult.documents,
       chunks: indexResult.chunks,
@@ -1871,13 +1886,15 @@ async function cmdCorpusConverge(opts = {}) {
   };
 
   const textOutput = [
-    `=== Corpus Convergence ===`,
-    `Fixed Point: ${reachedFixedPoint ? "✓ Reached" : "⚠ Max iterations reached"} (${iterations} iteration${iterations > 1 ? "s" : ""})`,
-    `Files updated: ${allApplied.length}`,
-    `Index: ${indexResult.documents} docs, ${indexResult.chunks} chunks, ${indexResult.edges} edges`,
-  ];
+    `=== Corpus Convergence${dryRun ? " (dry run)" : ""} ===`,
+    dryRun
+      ? `Would apply: ${allApplied.length} file(s) on pass 1${allApplied.length ? "; re-run without --dry-run and iterate to confirm the real fixed point" : " (fixed point on first pass)"}`
+      : `Fixed Point: ${reachedFixedPoint ? "✓ Reached" : "⚠ Max iterations reached"} (${iterations} iteration${iterations > 1 ? "s" : ""})`,
+    dryRun ? null : `Files updated: ${allApplied.length}`,
+    dryRun ? null : `Index: ${indexResult.documents} docs, ${indexResult.chunks} chunks, ${indexResult.edges} edges`,
+  ].filter(Boolean);
   if (allApplied.length > 0) {
-    textOutput.push(`\nApplied changes:`);
+    textOutput.push(`\n${dryRun ? "Would apply" : "Applied changes"}:`);
     for (const item of allApplied) {
       textOutput.push(`  [Pass ${item.iteration}] ${item.repo}: ${item.path}`);
     }
