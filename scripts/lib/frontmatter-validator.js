@@ -47,25 +47,32 @@ export function loadFrontmatterSchema(customPath = null) {
  * @returns {{ present: boolean, raw: string, data: object|null, error: string|null }}
  */
 export function extractFrontmatter(text) {
+  // `present` alone cannot distinguish "no frontmatter block was ever
+  // attempted" from "a `---` block was opened but is broken" — both return
+  // present: false, only the error text differs. `attempted` (true once text
+  // opens with `---`) is the field callers should branch on when they need
+  // that distinction (e.g. cogentia#181: auto-scaffolding missing
+  // frontmatter must not be confused with reporting a malformed block as
+  // unrepairable).
   if (typeof text !== "string") {
-    return { present: false, raw: "", data: null, error: "Input must be a string" };
+    return { present: false, attempted: false, raw: "", data: null, error: "Input must be a string" };
   }
   const trimmed = text.trimStart();
   if (!trimmed.startsWith("---")) {
-    return { present: false, raw: "", data: null, error: "Missing opening '---' delimiter" };
+    return { present: false, attempted: false, raw: "", data: null, error: "Missing opening '---' delimiter" };
   }
   const match = text.match(/^---\r?\n([\s\S]*?)\r?\n---(?:\r?\n|$)/);
   if (!match) {
-    return { present: false, raw: "", data: null, error: "Malformed frontmatter block: missing closing '---' delimiter" };
+    return { present: false, attempted: true, raw: "", data: null, error: "Malformed frontmatter block: missing closing '---' delimiter" };
   }
   try {
     const data = yaml.load(match[1]);
     if (!data || typeof data !== "object" || Array.isArray(data)) {
-      return { present: true, raw: match[1], data: null, error: "Frontmatter content must be a YAML object/mapping" };
+      return { present: true, attempted: true, raw: match[1], data: null, error: "Frontmatter content must be a YAML object/mapping" };
     }
-    return { present: true, raw: match[1], data, error: null };
+    return { present: true, attempted: true, raw: match[1], data, error: null };
   } catch (err) {
-    return { present: true, raw: match[1], data: null, error: `YAML parse error: ${err.message}` };
+    return { present: true, attempted: true, raw: match[1], data: null, error: `YAML parse error: ${err.message}` };
   }
 }
 
@@ -348,6 +355,42 @@ function extractTitleFromText(text) {
   return match ? match[1].trim() : null;
 }
 
+// cogentia#181: some corpus documents self-describe their own metadata in
+// plain prose near the top of the body instead of YAML frontmatter, e.g.:
+//   Status: working map
+//   Visibility: private
+//   Document role: derived temporal map
+// This is a recognized idiom in at least the registre-mariani twin dossier
+// (2026-09-14 migration), not a one-off typo, so it's worth recognizing
+// mechanically rather than discarding it in favor of generic scaffold
+// defaults. Conservative by design: only lines matching a known key name are
+// read, and only within the first LEGACY_PROSE_SCAN_LINES lines so an
+// unrelated "Status:" mention deep in a document's body isn't mistaken for
+// self-declared metadata.
+const LEGACY_PROSE_SCAN_LINES = 15;
+const LEGACY_PROSE_FIELD_MAP = Object.freeze({
+  status: "status",
+  visibility: "visibility",
+  "document role": "document_role",
+  "document kind": "document_kind",
+  role: "document_role",
+  kind: "document_kind",
+});
+
+export function extractLegacyProseMetadata(text) {
+  if (typeof text !== "string") return {};
+  const lines = text.split(/\r?\n/).slice(0, LEGACY_PROSE_SCAN_LINES);
+  const found = {};
+  for (const line of lines) {
+    const m = line.match(/^([A-Za-z][A-Za-z ]{1,20}):\s*(.+?)\s*$/);
+    if (!m) continue;
+    const key = LEGACY_PROSE_FIELD_MAP[m[1].trim().toLowerCase()];
+    if (!key || found[key]) continue; // first match wins if a field somehow repeats
+    found[key] = m[2].trim();
+  }
+  return found;
+}
+
 /**
  * Scaffold a minimal compliant frontmatter object.
  * @param {object} [options]
@@ -377,6 +420,15 @@ export function scaffoldFrontmatter(options = {}) {
   data.license = options.license || defaults.license || "CC BY-SA 4.0";
   data.language = options.language || options.lang || "en";
   data.document_role = options.document_role || options.role || "operational";
+  if (options.document_kind) {
+    data.document_kind = options.document_kind;
+  }
+  if (options.visibility) {
+    // Not part of the canonical schema's core defaults today, but used
+    // pervasively across the corpus; only set when the caller has actual
+    // evidence for it (never invent a value — see cogentia#181).
+    data.visibility = options.visibility;
+  }
   data.update_policy = options.update_policy || traceDefaults.update_policy || "UP-DEFAULT-REVIEWED";
 
   if (options.canonical_url) {
@@ -509,11 +561,17 @@ export function planFrontmatterRepairs(paths, options = {}) {
     const original_sha256 = createHash("sha256").update(content).digest("hex");
     const extracted = extractFrontmatter(content);
 
-    // Case 1: missing frontmatter
-    if (!extracted.present && !extracted.error) {
+    // Case 1: missing frontmatter (no "---" ever attempted). Previously
+    // checked `!extracted.present && !extracted.error`, but extractFrontmatter
+    // always sets an error message for the missing case too, so this branch
+    // was unreachable dead code — every file with no frontmatter fell through
+    // to Case 2 and was reported "unrepairable" instead of auto-scaffolded
+    // (cogentia#181).
+    if (!extracted.attempted) {
       const title = extractTitleFromText(content) || path.basename(filePath, path.extname(filePath));
       const lang = inferLanguage(content);
-      const scaffoldData = scaffoldFrontmatter({ ...options, title, language: lang });
+      const legacy = extractLegacyProseMetadata(content);
+      const scaffoldData = scaffoldFrontmatter({ ...options, ...legacy, title, language: lang });
       const newYaml = yaml.dump(scaffoldData, { lineWidth: -1, noRefs: true });
       const newContent = `---\n${newYaml}---\n\n${content}`;
       const new_sha256 = createHash("sha256").update(newContent).digest("hex");
@@ -523,7 +581,10 @@ export function planFrontmatterRepairs(paths, options = {}) {
         full_path: resolved,
         original_sha256,
         new_sha256,
-        repairs: ["insert_scaffold_frontmatter"],
+        repairs: Object.keys(legacy).length
+          ? ["insert_scaffold_frontmatter", "migrate_legacy_prose_metadata"]
+          : ["insert_scaffold_frontmatter"],
+        legacy_prose_metadata_found: legacy,
         before_yaml: "",
         after_yaml: newYaml,
         new_content: newContent,
