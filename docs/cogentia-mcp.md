@@ -81,6 +81,15 @@ For local agents (Claude Code, Cursor, Codex, Grok CLI):
 | `COGENTIA_MCP_JHN_MUTATE` | `0` | Set to `1` for Agent JHN / subagent mandate attestation |
 | `COGENTIA_MCP_JHN_TOKEN` | *none* | Agent JHN shared secret token for mutate attestation |
 | `COGENTIA_MCP_TIMEOUT_MS` | `15000` | Gateway request timeout in milliseconds |
+| `COGENTIA_HOST_FS_ROOT` | *none* | Required sandbox root for `host.fs.*`; no blanket filesystem export |
+| `COGENTIA_HOST_NODE_ID` | `node:local` | Target node id for host capability routing |
+| `COGENTIA_HOST_FS_PROVIDER` | `desktop-commander` | Provider id; not the public semantic name |
+| `COGENTIA_DC_MCP_INDEX` | auto | Explicit path to extracted Desktop Commander `dist/index.js` |
+| `COGENTIA_DC_MCP_COMMAND` / `COGENTIA_DC_MCP_ARGS` | extracted or `npx` | Override DC spawn; prefer extracted binary over `npx -y` |
+
+Host filesystem tools (`cogentia_host_fs_list` / `_read` / `_search` / `_write`) are **private-read or mutate**, never on the anonymous public catalogue. They are Cogentia semantic capabilities (`host.fs.*`). Desktop Commander is one local provider behind COP and #171, not a tool the client should name.
+
+Existing Cogentia surfaces (stdio MCP, HTTP `/mcp`, later `browser.fractavolta.com` / Agent John) consume those Cogentia tools. They must not open Desktop Commander, KasmVNC, or CDP as a substitute. Hosted-browser CDP remains a separate capability family (`docs/cdp_hosted_browser_session_bridge.md`). `fracta2` is not required for the local provider Reality Test.
 
 ---
 

@@ -9,8 +9,10 @@
  *   npm:     @wonderwhy-er/desktop-commander@0.2.50
  *   commit:  a781f5a4b8cfebac6638bc6fcbd38fca6326be53
  *   license: MIT
- *   transport: MCP stdio (Content-Length JSON-RPC)
+ *   transport: MCP stdio (JSON-line / NDJSON)
  */
+import fs from "node:fs";
+import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { McpStdioClient } from "./mcp-stdio-client.js";
@@ -21,7 +23,7 @@ export const DESKTOP_COMMANDER_UPSTREAM = {
   commit: "a781f5a4b8cfebac6638bc6fcbd38fca6326be53",
   license: "MIT",
   repository: "https://github.com/wonderwhy-er/DesktopCommanderMCP",
-  transport: "stdio",
+  transport: "stdio-ndjson",
   invocation: ["npx", "-y", "@wonderwhy-er/desktop-commander@0.2.50", "--no-onboarding"],
 };
 
@@ -68,6 +70,35 @@ export const HOST_CAPABILITY_MAP = {
   },
 };
 
+export function npmNpxCacheRoot(env = process.env) {
+  const cache = env.npm_config_cache
+    || (process.platform === "win32"
+      ? path.join(os.homedir(), "AppData", "Local", "npm-cache")
+      : path.join(os.homedir(), ".npm"));
+  return path.join(cache, "_npx");
+}
+
+/** Prefer an already-extracted DC dist/index.js over `npx -y` (slow/fragile on Windows). */
+export function discoverExtractedDesktopCommander(env = process.env) {
+  const explicit = String(env.COGENTIA_DC_MCP_INDEX || "").trim();
+  if (explicit) return fs.existsSync(explicit) ? path.resolve(explicit) : null;
+  const npxRoot = npmNpxCacheRoot(env);
+  if (!fs.existsSync(npxRoot)) return null;
+  for (const name of fs.readdirSync(npxRoot)) {
+    const candidate = path.join(
+      npxRoot,
+      name,
+      "node_modules",
+      "@wonderwhy-er",
+      "desktop-commander",
+      "dist",
+      "index.js"
+    );
+    if (fs.existsSync(candidate)) return candidate;
+  }
+  return null;
+}
+
 export function defaultDesktopCommanderSpawn(env = process.env) {
   const overrideCmd = String(env.COGENTIA_DC_MCP_COMMAND || "").trim();
   if (overrideCmd) {
@@ -76,6 +107,10 @@ export function defaultDesktopCommanderSpawn(env = process.env) {
       command: overrideCmd,
       args: extra ? extra.split(/\s+/) : [],
     };
+  }
+  const extracted = discoverExtractedDesktopCommander(env);
+  if (extracted) {
+    return { command: process.execPath, args: [extracted, "--no-onboarding"] };
   }
   const spec = ["npx", "-y", "@wonderwhy-er/desktop-commander@0.2.50", "--no-onboarding"];
   if (process.platform === "win32") {

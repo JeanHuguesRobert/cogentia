@@ -14,6 +14,8 @@ import {
   DesktopCommanderProvider,
   fakeDesktopCommanderSpawn,
   HOST_CAPABILITY_MAP,
+  discoverExtractedDesktopCommander,
+  defaultDesktopCommanderSpawn,
 } from "./lib/desktop-commander-provider.js";
 import { createHostCapabilityRouter, ensureHostCapabilityModules } from "./lib/host-capability-router.js";
 import {
@@ -95,6 +97,32 @@ async function withProvider(fn, extraEnv = {}) {
     rmFixture(dir);
   }
 }
+
+await check("extracted DC binary is preferred over npx", async () => {
+  const cache = fs.mkdtempSync(path.join(os.tmpdir(), "cogentia-npx-"));
+  const index = path.join(
+    cache,
+    "_npx",
+    "abc123",
+    "node_modules",
+    "@wonderwhy-er",
+    "desktop-commander",
+    "dist",
+    "index.js"
+  );
+  fs.mkdirSync(path.dirname(index), { recursive: true });
+  fs.writeFileSync(index, "export {}\n");
+  try {
+    const found = discoverExtractedDesktopCommander({ npm_config_cache: cache });
+    assert.equal(found, index);
+    const spawn = defaultDesktopCommanderSpawn({ npm_config_cache: cache });
+    assert.equal(spawn.command, process.execPath);
+    assert.equal(spawn.args[0], index);
+    assert.equal(spawn.args[1], "--no-onboarding");
+  } finally {
+    rmFixture(cache);
+  }
+});
 
 await check("provider lifecycle / clean shutdown", async () => {
   await withProvider(async (provider) => {

@@ -20,6 +20,7 @@ import {
   DesktopCommanderProvider,
   DESKTOP_COMMANDER_UPSTREAM,
   defaultDesktopCommanderSpawn,
+  discoverExtractedDesktopCommander,
 } from "../lib/desktop-commander-provider.js";
 import {
   grantSideEffectAuthorization,
@@ -29,34 +30,8 @@ import {
 const timeoutMs = Number(process.env.COGENTIA_DC_REALITY_TIMEOUT_MS || 60_000);
 const target = process.env.COGENTIA_HOST_NODE_ID || "node:local";
 
-function discoverExtractedIndex() {
-  const override = String(process.env.COGENTIA_DC_MCP_COMMAND || "").trim();
-  if (override && String(process.env.COGENTIA_DC_MCP_ARGS || "").includes("desktop-commander")) {
-    return null;
-  }
-  const cache = process.env.npm_config_cache || path.join(os.homedir(), "AppData", "Local", "npm-cache");
-  const npxRoot = path.join(cache, "_npx");
-  if (!fs.existsSync(npxRoot)) return null;
-  const names = fs.readdirSync(npxRoot);
-  for (const name of names) {
-    const candidate = path.join(
-      npxRoot,
-      name,
-      "node_modules",
-      "@wonderwhy-er",
-      "desktop-commander",
-      "dist",
-      "index.js"
-    );
-    if (fs.existsSync(candidate)) return candidate;
-  }
-  return null;
-}
-
-const extracted = discoverExtractedIndex();
-const spawn = extracted
-  ? { command: process.execPath, args: [extracted, "--no-onboarding"] }
-  : defaultDesktopCommanderSpawn(process.env);
+const extracted = discoverExtractedDesktopCommander(process.env);
+const spawn = defaultDesktopCommanderSpawn(process.env);
 
 const dir = fs.mkdtempSync(path.join(os.tmpdir(), "cogentia-dc-mcp-"));
 fs.writeFileSync(path.join(dir, "fixture.txt"), "reality-fixture-ok\n", "utf8");
@@ -75,6 +50,7 @@ const report = {
   cogentia_mcp_end_to_end: false,
   effectful_executed: false,
   unauthorized_write_blocked: false,
+  lifecycle_restart: false,
   raw_dc_tools_on_public_surface: null,
   extracted,
   spawn,
@@ -201,6 +177,18 @@ try {
     if (err.error_class !== "authorization_replay") throw err;
     report.authorization_replay_blocked = true;
   }
+
+  await provider.stop();
+  const reread = await core.callTool("cogentia_host_fs_read", {
+    path: path.join(dir, "fixture.txt"),
+    target,
+    provider: "desktop-commander",
+  });
+  if (!String(reread.result_text || "").includes("reality-fixture-ok")) {
+    throw new Error("post-restart Cogentia-MCP read did not return fixture content");
+  }
+  report.lifecycle_restart = true;
+  report.reread_upstream_tool = reread.upstream_tool;
 
   report.ok = true;
   await router.stop();
