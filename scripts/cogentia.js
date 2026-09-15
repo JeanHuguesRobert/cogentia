@@ -1435,7 +1435,7 @@ registerModule({
     const runCtx = createSchedulerRunContext(effectiveCtx, { mode, dryRun });
     return runFractaCycle(runCtx, {
       converge: async () => {
-        const res = await cmdCorpusConverge({ dryRun });
+        const res = await cmdCorpusConverge({ dryRun, silent: true });
         const inv = buildInventory(effectiveCtx);
         return {
           // cmdCorpusConverge returns fixed_point_reached; `res.fixed_point` does not
@@ -1914,7 +1914,10 @@ async function cmdCorpusConverge(opts = {}) {
     }
   }
 
-  output(summary, textOutput.join("\n"));
+  // Callers that reuse this as a subroutine (e.g. the scheduler's converge
+  // hook) already print their own consolidated result; printing here too
+  // interleaves two independent JSON objects into one stdout stream.
+  if (!opts.silent) output(summary, textOutput.join("\n"));
   return summary;
 }
 
