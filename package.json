@@ -96,6 +96,8 @@
     "test:agent-skills": "node scripts/validate-agent-skills.js",
     "test:mcp-dual-era": "node scripts/test-mcp-dual-era.js",
     "test:host-dc": "node scripts/test-side-effect-authorization.js && node scripts/test-host-desktop-commander-provider.js",
+    "test:communication-send": "node scripts/test-communication-send.js",
+    "reality:communication-send": "node scripts/ops/reality-test-communication-send.js",
     "reality:host-dc-mcp": "node scripts/ops/reality-test-desktop-commander-mcp.js",
     "test:capability-inventory": "node scripts/test-capability-inventory.js",
     "test:corpus-orient": "node scripts/test-corpus-orient.js",

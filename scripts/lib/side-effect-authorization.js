@@ -8,10 +8,14 @@
  * Tool availability is never treated as authority. Utterances never mint a grant.
  */
 import { createHash, randomUUID } from "node:crypto";
+import {
+  getAuthorizationStore,
+  setAuthorizationStore,
+  createMemoryStore,
+} from "./side-effect-store.js";
 
 export const AUTHORIZATION_KIND = "cogentia.side_effect_authorization/v1";
-
-const consumedIds = new Set();
+export { getAuthorizationStore, setAuthorizationStore, createMemoryStore };
 
 /** @typedef {"read_only"|"effectful"} ActionKind */
 
@@ -112,7 +116,7 @@ export function grantSideEffectAuthorization({
   material_parameters = {},
 } = {}) {
   const now = Date.now();
-  return {
+  const grant = {
     kind: AUTHORIZATION_KIND,
     authorization_id: `sea_${randomUUID()}`,
     principal: principal || null,
@@ -125,10 +129,12 @@ export function grantSideEffectAuthorization({
     expires_at: new Date(now + expires_in_ms).toISOString(),
     single_use,
   };
+  getAuthorizationStore().putGrant(grant);
+  return grant;
 }
 
 export function resetAuthorizationStore() {
-  consumedIds.clear();
+  setAuthorizationStore(createMemoryStore());
 }
 
 function fail(code, message) {
@@ -147,7 +153,7 @@ export function validateSideEffectAuthorization(authorization, expected = {}) {
   if (!authorization.authorization_id) {
     throw fail("authorization_invalid", "authorization_id required");
   }
-  if (authorization.single_use !== false && consumedIds.has(authorization.authorization_id)) {
+  if (authorization.single_use !== false && getAuthorizationStore().isConsumed(authorization.authorization_id)) {
     throw fail("authorization_replay", "single-use authorization already consumed");
   }
   if (authorization.expires_at && Date.parse(authorization.expires_at) < Date.now()) {
@@ -178,7 +184,7 @@ export function validateSideEffectAuthorization(authorization, expected = {}) {
 export function consumeSideEffectAuthorization(authorization) {
   if (!authorization?.authorization_id) return;
   if (authorization.single_use === false) return;
-  consumedIds.add(authorization.authorization_id);
+  getAuthorizationStore().markConsumed(authorization.authorization_id);
 }
 
 /**

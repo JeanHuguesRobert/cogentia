@@ -11,6 +11,7 @@ import { runJohnRequest } from "./john-run.js";
 import { auditCapabilitySymmetry } from "./symmetry-audit.js";
 import { listPatterns, getPattern } from "./cogentia-patterns.js";
 import { createHostCapabilityRouter } from "./host-capability-router.js";
+import { prepareCommunicationSend, executeCommunicationSend, createDryRunTransport } from "./communication-send.js";
 import {
   serverCapabilityBlock,
   LIST_TTL_MS,
@@ -60,6 +61,7 @@ export const MUTATE_TOOLS = new Set([
   "cogentia_issues_sync",
   "cogentia_concepts_init",
   "cogentia_host_fs_write",
+  "cogentia_communication_send",
 ]);
 
 /**
@@ -73,6 +75,7 @@ export const PRIVATE_READ_TOOLS = new Set([
   "cogentia_host_fs_list",
   "cogentia_host_fs_read",
   "cogentia_host_fs_search",
+  "cogentia_communication_prepare",
 ]);
 
 export const TOOLS = [
@@ -878,6 +881,37 @@ export const TOOLS = [
       additionalProperties: false,
     },
   },
+  {
+    name: "cogentia_communication_prepare",
+    description:
+      "PREPARE/EXPOSE a gmail.send payload. Does not send. Returns the exact message for human review and hashing. Private-read.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        to: { type: "array", items: { type: "string" }, minItems: 1 },
+        cc: { type: "array", items: { type: "string" } },
+        bcc: { type: "array", items: { type: "string" } },
+        subject: { type: "string", minLength: 1 },
+        body: { type: "string" },
+      },
+      required: ["to", "subject", "body"],
+      additionalProperties: false,
+    },
+  },
+  {
+    name: "cogentia_communication_send",
+    description:
+      "EXECUTE a prepared gmail.send. Requires #171 side_effect_authorization bound to the prepared payload. Default transport is dry-run (no Google). Mutate.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        prepared: { type: "object" },
+        side_effect_authorization: { type: "object" },
+      },
+      required: ["prepared", "side_effect_authorization"],
+      additionalProperties: false,
+    },
+  },
 ];
 
 async function resolveResourceRead(uri, env) {
@@ -949,6 +983,7 @@ export function createMcpCore(env = process.env, extras = {}) {
     hostRouter = createHostCapabilityRouter({ env });
     return hostRouter;
   }
+  const communicationTransport = extras.communicationTransport || createDryRunTransport();
 
   async function callHostCapability(capability, args, auth) {
     const router = getHostRouter();
@@ -1738,6 +1773,14 @@ export function createMcpCore(env = process.env, extras = {}) {
         requireString(args.path, "path");
         if (typeof args.content !== "string") throw new Error("content must be a string");
         return callHostCapability("host.fs.write", args, auth);
+      case "cogentia_communication_prepare":
+        return prepareCommunicationSend(args);
+      case "cogentia_communication_send":
+        return executeCommunicationSend({
+          prepared: args.prepared,
+          authorization: args.side_effect_authorization,
+          transport: communicationTransport,
+        });
       default:
         throw new Error(`Unknown tool: ${name}`);
     }
