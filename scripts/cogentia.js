@@ -861,7 +861,10 @@ Repository batch helpers:
                            fetched but never checked out or pulled. Flags: --dry-run
                            --include-private
   repos push [repo|all]    Run git push --dry-run by default; pass --apply to push.
-                           Dirty or behind repositories are skipped unless explicitly safe.
+                           Always fetches first. Dirty repos are skipped unless
+                           --allow-dirty. Behind repos are skipped unless --rebase,
+                           which rebases onto upstream first and refuses (aborting
+                           cleanly) on conflict or a dirty worktree.
   repos import-owner <github-owner>
                            Plan importing all visible repositories for a GitHub user or
                            organization. Flags: --apply --clone-missing --include-private
@@ -2725,7 +2728,7 @@ function cmdRepos(sub) {
     case "push":
       {
         const repoArg = valueFlag("--repo") || optionalPositional("all");
-        const result = batchRepoPush(ctx, repoArg, { apply: hasFlag("--apply"), allowDirty: hasFlag("--allow-dirty") });
+        const result = batchRepoPush(ctx, repoArg, { apply: hasFlag("--apply"), allowDirty: hasFlag("--allow-dirty"), autoRebase: hasFlag("--rebase") });
         return output(result, formatRepoBatch(result));
       }
     case "import-owner":
@@ -9508,8 +9511,14 @@ function repoRequiresPrivateOption(repo) {
 function batchRepoPush(ctx, repoArg = "all", options = {}) {
   const repos = selectRepos(ctx, repoArg);
   const dryRun = !options.apply;
+  const autoRebase = !!options.autoRebase;
   const results = repos.map(repo => {
-    const before = repoGitStatus(repo);
+    // Refresh remote-tracking refs first: behind/ahead must reflect the
+    // current remote, not whatever was cached at some earlier, unrelated
+    // fetch — a concurrent push from elsewhere between that fetch and now
+    // would otherwise go undetected until git itself rejects the push.
+    gitRun(repo.path, ["fetch"]);
+    let before = repoGitStatus(repo);
     const base = {
       ...before,
       before,
@@ -9522,10 +9531,28 @@ function batchRepoPush(ctx, repoArg = "all", options = {}) {
       return { ...base, action: "skip_dirty", skipped: true, ok: false, error: "dirty worktree; pass --allow-dirty to attempt push anyway" };
     }
     if (before.behind) {
-      return { ...base, action: "skip_behind", skipped: true, ok: false, error: "behind upstream; fetch/rebase before pushing" };
+      if (!autoRebase) {
+        return { ...base, action: "skip_behind", skipped: true, ok: false, error: "behind upstream; fetch/rebase before pushing, or pass --rebase" };
+      }
+      if (before.dirty_count) {
+        return { ...base, action: "skip_behind_dirty", skipped: true, ok: false, error: "behind upstream and worktree is dirty; --rebase refuses to rebase a dirty tree" };
+      }
+      if (dryRun) {
+        // Whether there'd be anything left to push is only knowable after the
+        // rebase actually happens (ahead could legitimately drop to 0 if the
+        // remote already has these commits under different hashes), so dry
+        // run reports the rebase step honestly rather than promising a push.
+        return { ...base, action: "would_rebase", skipped: false, ok: true, stdout: `would rebase onto upstream (${before.behind} commit(s) behind); whether a push follows depends on the rebase result` };
+      }
+      const rebase = gitRun(repo.path, ["rebase", "@{upstream}"]);
+      if (!rebase.ok) {
+        gitRun(repo.path, ["rebase", "--abort"]);
+        return { ...base, action: "skip_rebase_conflict", skipped: true, ok: false, error: `rebase failed, aborted cleanly: ${rebase.error}` };
+      }
+      before = repoGitStatus(repo);
     }
     if (!before.ahead) {
-      return { ...base, action: "skip_no_ahead", skipped: true };
+      return { ...base, before, action: "skip_no_ahead", skipped: true };
     }
     const args = dryRun ? ["push", "--dry-run"] : ["push"];
     const run = gitRun(repo.path, args);
@@ -9533,7 +9560,7 @@ function batchRepoPush(ctx, repoArg = "all", options = {}) {
     return {
       ...after,
       before,
-      action: dryRun ? "push_dry_run" : "push",
+      action: dryRun ? "push_dry_run" : (autoRebase ? "rebase_then_push" : "push"),
       skipped: false,
       ok: run.ok,
       stdout: run.stdout.trim(),
@@ -9546,6 +9573,7 @@ function batchRepoPush(ctx, repoArg = "all", options = {}) {
     command: "push",
     repo: repoArg,
     dry_run: dryRun,
+    auto_rebase: autoRebase,
     repos: results,
     summary: summarizeRepoBatch(results),
   };
