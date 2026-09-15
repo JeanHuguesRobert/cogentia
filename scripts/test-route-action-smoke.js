@@ -13,7 +13,10 @@ import {
   hasActionRouteAuth,
   parseActionRouteBody,
   routeActionThroughGateway,
+  gatewayActionPayload,
+  gatewayActionTarget,
 } from "./lib/agent-gateway-route.js";
+import { grantSideEffectAuthorization, resetAuthorizationStore } from "./lib/side-effect-authorization.js";
 
 const storeDir = fs.mkdtempSync(path.join(os.tmpdir(), "cogentia-route-smoke-"));
 const store = createBlackboardStore({ storePath: path.join(storeDir, "blackboard.json") });
@@ -86,7 +89,9 @@ const routeServer = http.createServer(async (req, res) => {
   });
 
   if (!result.ok) {
-    const status = result.error === "attractor_not_found" ? 404 : 502;
+    const status = result.error === "attractor_not_found" ? 404
+      : String(result.error || "").startsWith("authorization_") ? 403
+      : 502;
     res.writeHead(status, { "Content-Type": "application/json" });
     res.end(JSON.stringify(result));
     return;
@@ -98,16 +103,33 @@ const routeServer = http.createServer(async (req, res) => {
 
 const routePort = await listen(routeServer);
 
+resetAuthorizationStore();
 const unauthorized = await postJson(`http://127.0.0.1:${routePort}/ops/route/action`, {}, {});
 assert.equal(unauthorized.status, 401);
 assert.equal(unauthorized.body.error, "unauthorized_action_route");
 
-const ok = await postJson(`http://127.0.0.1:${routePort}/ops/route/action`, {
+const actionBody = {
   capability: "dev.tools.shell",
   model: "shell-repl",
   prompt: "echo ROUTED_OK",
   repl: true,
   expect: "ROUTED_OK",
+};
+const actionParsed = parseActionRouteBody(actionBody);
+const deniedEffect = await postJson(`http://127.0.0.1:${routePort}/ops/route/action`, actionBody, {
+  Authorization: "Bearer route-smoke-token",
+});
+assert.equal(deniedEffect.body.ok, false);
+assert.equal(deniedEffect.body.error, "authorization_missing");
+
+const ok = await postJson(`http://127.0.0.1:${routePort}/ops/route/action`, {
+  ...actionBody,
+  side_effect_authorization: grantSideEffectAuthorization({
+    principal: "principal:test",
+    action_class: "agent_gateway.invoke",
+    target: gatewayActionTarget(actionParsed),
+    payload: gatewayActionPayload(actionParsed),
+  }),
 }, {
   Authorization: "Bearer route-smoke-token",
 });

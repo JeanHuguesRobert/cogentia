@@ -600,10 +600,13 @@ async function handleOpsRouteAction(req, res) {
   if (!parsed.ok) {
     return sendJson(res, 400, { ok: false, error: parsed.error });
   }
-  const result = await routeActionThroughGateway(blackboard, parsed);
+  const result = await routeActionThroughGateway(blackboard, parsed, {
+    authorization: body.side_effect_authorization || body.authorization,
+  });
   if (!result.ok) {
     const status = result.error === "attractor_not_found" ? 404
       : result.error === "attractor_degraded" ? 503
+      : String(result.error || "").startsWith("authorization_") ? 403
       : 502;
     return sendJson(res, status, result);
   }

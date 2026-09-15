@@ -117,6 +117,8 @@ Environment for a Cogentia-MCP process that may invoke host tools:
 
 Writes also require a `side_effect_authorization` object (`cogentia.side_effect_authorization/v1`). Absence → `authorization_missing` before DC is called. Consumed tokens cannot be replayed.
 
+The same module (`scripts/lib/side-effect-authorization.js`) is the #171 choke point for Cogentia-controlled effectful routes. `POST /ops/route/action` (`agent_gateway.invoke`) now requires a matching grant; bearer route tokens are not enough. Direct Gmail/GitHub tools in a provider harness still bypass Cogentia until Phase C adapters wrap them.
+
 ## Upstream observed
 
 ```text

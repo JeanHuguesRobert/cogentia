@@ -2,6 +2,10 @@ import { timingSafeEqual } from "node:crypto";
 import { invokeThroughGateway } from "./agent-gateway-client.js";
 import { pickAgentGatewayAttractor } from "./agent-gateway-resolve.js";
 import { isAttractorFresh } from "./packet-attractor-blackboard.js";
+import {
+  validateSideEffectAuthorization,
+  consumeSideEffectAuthorization,
+} from "./side-effect-authorization.js";
 
 const GATEWAY_PROFILE = "agent-gateway.v1";
 
@@ -91,6 +95,7 @@ export function parseActionRouteBody(body = {}) {
     allowDegraded: body.allow_degraded === true || body.allowDegraded === true,
     fresh: body.fresh !== false,
     metadata: body.metadata && typeof body.metadata === "object" ? body.metadata : undefined,
+    side_effect_authorization: body.side_effect_authorization || body.authorization || undefined,
   };
 }
 
@@ -118,9 +123,40 @@ export function summarizeActionLayer(blackboardSummary = {}) {
   };
 }
 
+export function gatewayActionPayload(parsed = {}) {
+  return {
+    model: parsed.model,
+    prompt: parsed.prompt,
+    capability: parsed.capability || null,
+    repl: parsed.repl === true,
+  };
+}
+
+export function gatewayActionTarget(parsed = {}) {
+  return {
+    model: parsed.model || null,
+    capability: parsed.capability || null,
+    attractor_id: parsed.attractorId || null,
+  };
+}
+
 export async function routeActionThroughGateway(blackboardStore, body, options = {}) {
   const parsed = body?.ok === true && body.model ? body : parseActionRouteBody(body);
   if (!parsed.ok) return parsed;
+
+  const authorization = options.authorization || parsed.side_effect_authorization;
+  const actionClass = "agent_gateway.invoke";
+  const payload = gatewayActionPayload(parsed);
+  const target = gatewayActionTarget(parsed);
+  try {
+    validateSideEffectAuthorization(authorization, { action_class: actionClass, target, payload });
+  } catch (err) {
+    return {
+      ok: false,
+      error: err.error_class || "authorization_missing",
+      message: err.message,
+    };
+  }
 
   const resolved = resolveAgentGatewayFromSnapshot(blackboardStore, {
     capability: parsed.capability,
@@ -158,6 +194,7 @@ export async function routeActionThroughGateway(blackboardStore, body, options =
       timeoutMs: options.timeoutMs,
       allowDegraded: parsed.allowDegraded,
     });
+    consumeSideEffectAuthorization(authorization);
     return {
       ok: true,
       service: "cogentia-action-route",
@@ -165,6 +202,7 @@ export async function routeActionThroughGateway(blackboardStore, body, options =
       content: result.content,
       session_id: result.session_id,
       timing: result.timing,
+      authorization_id: authorization?.authorization_id || null,
       route: {
         ...result.route,
         snapshot_at: resolved.snapshot_at,

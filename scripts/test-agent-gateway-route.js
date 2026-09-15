@@ -16,7 +16,10 @@ import {
   resolveAgentGatewayFromSnapshot,
   routeActionThroughGateway,
   summarizeActionLayer,
+  gatewayActionPayload,
+  gatewayActionTarget,
 } from "./lib/agent-gateway-route.js";
+import { grantSideEffectAuthorization, resetAuthorizationStore } from "./lib/side-effect-authorization.js";
 
 assert.deepEqual(parseActionRouteBody({ model: "shell-repl" }), { ok: false, error: "missing_prompt" });
 assert.deepEqual(parseActionRouteBody({ prompt: "echo OK" }), { ok: false, error: "missing_model" });
@@ -70,10 +73,29 @@ assert.equal(hasActionRouteAuth({ headers: { authorization: "Bearer route-test-t
 assert.equal(hasActionRouteAuth({ headers: { authorization: "Bearer wrong" } }), false);
 process.env.COGENTIA_ACTION_ROUTE_TOKEN = prevRouteToken;
 
-const notFound = await routeActionThroughGateway(store, {
+resetAuthorizationStore();
+const missingAuth = await routeActionThroughGateway(store, {
   model: "shell-repl",
   prompt: "echo OK",
   capability: "dev.tools.python",
+});
+assert.equal(missingAuth.ok, false);
+assert.equal(missingAuth.error, "authorization_missing");
+
+const notFoundBody = {
+  model: "shell-repl",
+  prompt: "echo OK",
+  capability: "dev.tools.python",
+};
+const notFoundParsed = parseActionRouteBody(notFoundBody);
+const notFound = await routeActionThroughGateway(store, {
+  ...notFoundBody,
+  side_effect_authorization: grantSideEffectAuthorization({
+    principal: "principal:test",
+    action_class: "agent_gateway.invoke",
+    target: gatewayActionTarget(notFoundParsed),
+    payload: gatewayActionPayload(notFoundParsed),
+  }),
 });
 assert.equal(notFound.ok, false);
 assert.equal(notFound.error, "attractor_not_found");
