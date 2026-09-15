@@ -477,6 +477,38 @@ function cmdPossibleMatrix(subcommand) {
   return output(report, formatPossibleMatrixValidation(report));
 }
 
+// cogentia#183: scaffolding missing frontmatter with a bare generic default
+// (document_role: "operational") ignores the role/kind prediction
+// classifyRole()/inferDocumentKind() already compute for every document in
+// buildInventory, independent of whether frontmatter exists. Reusing that
+// signal here means confident predictions can be auto-applied, and anything
+// weak/unknown is left for the existing `docs judgments` continuation queue
+// instead of silently guessing wrong at corpus scale.
+function buildFrontmatterClassifier(ctx) {
+  const inventory = buildInventory(ctx);
+  const byFullPath = new Map();
+  for (const doc of inventory.documents) {
+    byFullPath.set(path.resolve(doc.full_path), doc);
+  }
+  return (absPath) => {
+    const doc = byFullPath.get(path.resolve(absPath));
+    if (!doc) return null;
+    const kindInfo = inferDocumentKind(doc);
+    const visibility = doc.visibility || {};
+    return {
+      repo: doc.repo,
+      role: doc.role,
+      role_confidence: doc.role_confidence,
+      document_kind: kindInfo.kind,
+      kind_confidence: kindInfo.confidence,
+      // Only trust visibility as a scaffold input when it traces to an
+      // actual repo policy (e.g. registre-mariani's private-registry
+      // default), never the generic public fallback with no real signal.
+      visibility: visibility.source === "repo_policy" ? visibility.level : null,
+    };
+  };
+}
+
 function cmdFrontmatter(subcommand) {
   if (subcommand === "schema") {
     const schemaUrl = new URL("../docs/frontmatter-schema.v0.1.json", import.meta.url);
@@ -536,7 +568,17 @@ function cmdFrontmatter(subcommand) {
       }
     }
 
-    const plan = planFrontmatterRepairs(targetPaths, { strictRole });
+    let classify = null;
+    try {
+      classify = buildFrontmatterClassifier(loadContext());
+    } catch {
+      // Not every invocation runs inside the registered corpus (e.g. a
+      // standalone file outside any configured repo); fall back to the
+      // pre-classifier generic scaffold rather than failing the command.
+      classify = null;
+    }
+
+    const plan = planFrontmatterRepairs(targetPaths, { strictRole, classify });
 
     if (applyFlag) {
       const applyResult = applyFrontmatterRepairs(plan);

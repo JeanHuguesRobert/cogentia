@@ -545,6 +545,7 @@ export function planFrontmatterRepairs(paths, options = {}) {
 
   const changes = [];
   const unrepairable = [];
+  const needsJudgment = [];
   let checkedCount = 0;
 
   for (const filePath of filesToAudit) {
@@ -568,23 +569,58 @@ export function planFrontmatterRepairs(paths, options = {}) {
     // to Case 2 and was reported "unrepairable" instead of auto-scaffolded
     // (cogentia#181).
     if (!extracted.attempted) {
+      const legacy = extractLegacyProseMetadata(content);
+      const prediction = options.classify ? options.classify(resolved) : null;
+      // cogentia#183: a document that self-declares its own role in prose
+      // (legacy) or that classifyRole/inferDocumentKind already predict with
+      // strong confidence is safe to auto-scaffold. Anything else is a real
+      // judgment call — guessing "operational" for every unclassified file
+      // at corpus scale would be worse than not scaffolding it at all, so
+      // it's routed to the existing docs-judgments continuation queue
+      // instead (same mechanism already used for document role review).
+      const hasConfidentRole = Boolean(legacy.document_role)
+        || Boolean(prediction && prediction.role && prediction.role !== "unknown" && prediction.role_confidence === "strong");
+
+      if (!hasConfidentRole) {
+        needsJudgment.push({
+          path: filePath,
+          full_path: resolved,
+          reason: prediction
+            ? `role prediction is ${prediction.role_confidence || "unavailable"} confidence (${prediction.role || "unknown"}); resolve via \`docs judgments <repo> --emit-continuations\` before scaffolding`
+            : "no classifier available (file is outside the registered corpus); provide explicit --role or scaffold manually",
+          predicted_role: prediction?.role || null,
+          predicted_role_confidence: prediction?.role_confidence || null,
+        });
+        continue;
+      }
+
       const title = extractTitleFromText(content) || path.basename(filePath, path.extname(filePath));
       const lang = inferLanguage(content);
-      const legacy = extractLegacyProseMetadata(content);
-      const scaffoldData = scaffoldFrontmatter({ ...options, ...legacy, title, language: lang });
+      const scaffoldOptions = { ...options, title, language: lang };
+      if (prediction) {
+        if (prediction.role && prediction.role !== "unknown") scaffoldOptions.role = prediction.role;
+        if (prediction.document_kind && prediction.kind_confidence !== "weak") scaffoldOptions.document_kind = prediction.document_kind;
+        if (prediction.visibility) scaffoldOptions.visibility = prediction.visibility;
+      }
+      Object.assign(scaffoldOptions, legacy); // explicit self-declared prose wins over a predicted guess
+      const scaffoldData = scaffoldFrontmatter(scaffoldOptions);
       const newYaml = yaml.dump(scaffoldData, { lineWidth: -1, noRefs: true });
       const newContent = `---\n${newYaml}---\n\n${content}`;
       const new_sha256 = createHash("sha256").update(newContent).digest("hex");
+
+      const repairs = ["insert_scaffold_frontmatter"];
+      if (Object.keys(legacy).length) repairs.push("migrate_legacy_prose_metadata");
+      if (prediction && !legacy.document_role && prediction.role && prediction.role !== "unknown") repairs.push("classified_role_from_inventory");
 
       changes.push({
         path: filePath,
         full_path: resolved,
         original_sha256,
         new_sha256,
-        repairs: Object.keys(legacy).length
-          ? ["insert_scaffold_frontmatter", "migrate_legacy_prose_metadata"]
-          : ["insert_scaffold_frontmatter"],
+        repairs,
         legacy_prose_metadata_found: legacy,
+        predicted_role: prediction?.role || null,
+        predicted_role_confidence: prediction?.role_confidence || null,
         before_yaml: "",
         after_yaml: newYaml,
         new_content: newContent,
@@ -759,8 +795,10 @@ export function planFrontmatterRepairs(paths, options = {}) {
     total_audited: checkedCount,
     changes_count: changes.length,
     unrepairable_count: unrepairable.length,
+    needs_judgment_count: needsJudgment.length,
     changes,
     unrepairable,
+    needs_judgment: needsJudgment,
   };
 }
 
@@ -819,7 +857,7 @@ export function formatRepairsPlan(plan) {
   lines.push(`Frontmatter repairs plan: ${plan.changes_count} file(s) to repair across ${plan.total_audited} audited.`);
   lines.push("");
 
-  if (plan.changes_count === 0) {
+  if (plan.changes_count === 0 && !plan.needs_judgment_count && !plan.unrepairable_count) {
     lines.push("✓ All audited documents are mechanically compliant. No repairs needed.");
     return lines.join("\n");
   }
@@ -839,9 +877,21 @@ export function formatRepairsPlan(plan) {
     }
   }
 
-  lines.push("");
-  lines.push("To apply these repairs safely, run:");
-  lines.push("  node scripts/cogentia.js frontmatter apply --fix");
+  if (plan.needs_judgment_count > 0) {
+    lines.push("");
+    lines.push(`? ${plan.needs_judgment_count} file(s) have no confident role prediction (cogentia#183 — not auto-scaffolded):`);
+    for (const j of plan.needs_judgment) {
+      lines.push(`    ? ${j.path}: ${j.reason}`);
+    }
+    lines.push("");
+    lines.push("  Resolve via: node scripts/cogentia.js docs judgments <repo> --emit-continuations");
+  }
+
+  if (plan.changes_count > 0) {
+    lines.push("");
+    lines.push("To apply these repairs safely, run:");
+    lines.push("  node scripts/cogentia.js frontmatter apply --fix");
+  }
 
   return lines.join("\n");
 }
