@@ -91,6 +91,8 @@ Host filesystem tools (`cogentia_host_fs_list` / `_read` / `_search` / `_write`)
 
 Existing Cogentia surfaces (stdio MCP, HTTP `/mcp`, later `browser.fractavolta.com` / Agent John) consume those Cogentia tools. They must not open Desktop Commander, KasmVNC, or CDP as a substitute. Hosted-browser CDP remains a separate capability family (`docs/cdp_hosted_browser_session_bridge.md`). `fracta2` is not required for the local provider Reality Test.
 
+Full Reality Test report, launcher notes, observed DC tool list, and evidence levels: [host_fs_desktop_commander.md](host_fs_desktop_commander.md).
+
 ---
 
 ## 3. Trust Tiers & Tool Reference
@@ -147,6 +149,10 @@ Tools are registered in `scripts/lib/cogentia-mcp-core.js`. They are categorized
 | `cogentia_index_status` / `index_search` | **P0** | Local FTS index status and raw search |
 | `cogentia_pattern_list` / `pattern_get` | **P2** | Patterns / Anti-patterns (#110); not Skills, not authority |
 | `cogentia_cli_catalog` | **P0** | Live CLI/MCP/skill/pattern inventory (maximum visible set) |
+| `cogentia_host_fs_list` | **P4** private-read | Bounded directory list on a selected host node (`host.fs.list`) |
+| `cogentia_host_fs_read` | **P4** private-read | Bounded file read (`host.fs.read`) |
+| `cogentia_host_fs_search` | **P4** private-read | Bounded host search (`host.fs.search`) |
+| `cogentia_host_fs_write` | **P3 Mutate** + #171 | Bounded file write; fails closed without `side_effect_authorization` |
 
 Anonymous `tools/list` still hides mutate tools. The **maximum set** is also advertised as MCP resources (`resources/list`, `skill://…`, `cogentia://pattern/…`, `cogentia://cli/catalog`) and experimental `skills/list` (SEP-2640). Use `cogentia_cli_catalog` or `resources/read` of `cogentia://capability/catalog` to see gated verbs even when they are omitted from the public tool list.
 

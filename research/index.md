@@ -171,6 +171,7 @@ This repository instantiates the **cognitive infrastructure layer** of the [DHIT
 | [Cogentia Index Layer v0.3](../docs/cogentia-index-layer.md) *(estimate-first retrieval index with policy files, stable/workspace channels, and local SQLite/FTS5 cache; Git and Markdown remain canonical)* | this repo | 2026-06-21 |
 | [Cogentia Context Gateway](../docs/cogentia-context-gateway.md) *(governed public Markdown RAG facade with deterministic context packs, citations and strict public/admin separation)* | this repo | 2026-06-23 |
 | [Cogentia MCP adapter](../docs/cogentia-mcp.md) *(stdio tools that retrieve through the daemon HTTP boundary and never access SQLite directly)* | this repo | 2026-06-23 |
+| [Host filesystem capabilities behind Cogentia-MCP](../docs/host_fs_desktop_commander.md) *(#184 Reality Test: Desktop Commander as a replaceable local provider of `host.fs.*`)* | this repo | 2026-09-15 |
 | [Connect MCP clients to Cogentia](../docs/connect-mcp-clients.md) *(client setup guide for local stdio, local HTTP, Fracta public MCP, and ChatGPT connector smoke tests)* | this repo | 2026-06-30 |
 | [Agent Gateway invocation runbook](../docs/agent-gateway-invocation.md) *(blackboard-routed invocation commands, Fractanet acceptance checks, and action-boundary usage rules for the Agent CLI Gateway)* | this repo | 2026-07-08 |
 | [Cogentia and Magistral Boundary](../docs/cogentia-magistral-boundary.md) *(service boundary for corpus authority, model routing, AI-router APIs, embedding policy and local/public deployments)* | this repo | 2026-06-28 |
