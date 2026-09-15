@@ -18,6 +18,7 @@ import {
   summarizeActionLayer,
   gatewayActionPayload,
   gatewayActionTarget,
+  isGatewayInvokeEffectful,
 } from "./lib/agent-gateway-route.js";
 import { grantSideEffectAuthorization, resetAuthorizationStore } from "./lib/side-effect-authorization.js";
 
@@ -74,10 +75,23 @@ assert.equal(hasActionRouteAuth({ headers: { authorization: "Bearer wrong" } }),
 process.env.COGENTIA_ACTION_ROUTE_TOKEN = prevRouteToken;
 
 resetAuthorizationStore();
-const missingAuth = await routeActionThroughGateway(store, {
+assert.equal(isGatewayInvokeEffectful({ prompt: "summarize this", model: "guide" }), false);
+assert.equal(isGatewayInvokeEffectful({ prompt: "echo OK", model: "shell-repl", repl: true }), true);
+assert.equal(isGatewayInvokeEffectful({ prompt: "x", model: "m", capability: "host.fs.write" }), true);
+
+const readAsk = await routeActionThroughGateway(store, {
   model: "shell-repl",
   prompt: "echo OK",
   capability: "dev.tools.python",
+});
+assert.equal(readAsk.ok, false);
+assert.equal(readAsk.error, "attractor_not_found");
+
+const missingAuth = await routeActionThroughGateway(store, {
+  model: "shell-repl",
+  prompt: "echo OK",
+  capability: "dev.tools.shell",
+  repl: true,
 });
 assert.equal(missingAuth.ok, false);
 assert.equal(missingAuth.error, "authorization_missing");

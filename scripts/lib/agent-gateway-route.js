@@ -5,6 +5,7 @@ import { isAttractorFresh } from "./packet-attractor-blackboard.js";
 import {
   validateSideEffectAuthorization,
   consumeSideEffectAuthorization,
+  classifyAction,
 } from "./side-effect-authorization.js";
 
 const GATEWAY_PROFILE = "agent-gateway.v1";
@@ -123,6 +124,13 @@ export function summarizeActionLayer(blackboardSummary = {}) {
   };
 }
 
+export function isGatewayInvokeEffectful(parsed = {}) {
+  if (parsed.repl === true) return true;
+  const cap = String(parsed.capability || "").trim();
+  if (cap && classifyAction(cap) === "effectful") return true;
+  return false;
+}
+
 export function gatewayActionPayload(parsed = {}) {
   return {
     model: parsed.model,
@@ -148,14 +156,17 @@ export async function routeActionThroughGateway(blackboardStore, body, options =
   const actionClass = "agent_gateway.invoke";
   const payload = gatewayActionPayload(parsed);
   const target = gatewayActionTarget(parsed);
-  try {
-    validateSideEffectAuthorization(authorization, { action_class: actionClass, target, payload });
-  } catch (err) {
-    return {
-      ok: false,
-      error: err.error_class || "authorization_missing",
-      message: err.message,
-    };
+  const effectful = isGatewayInvokeEffectful(parsed);
+  if (effectful) {
+    try {
+      validateSideEffectAuthorization(authorization, { action_class: actionClass, target, payload });
+    } catch (err) {
+      return {
+        ok: false,
+        error: err.error_class || "authorization_missing",
+        message: err.message,
+      };
+    }
   }
 
   const resolved = resolveAgentGatewayFromSnapshot(blackboardStore, {
@@ -194,7 +205,7 @@ export async function routeActionThroughGateway(blackboardStore, body, options =
       timeoutMs: options.timeoutMs,
       allowDegraded: parsed.allowDegraded,
     });
-    consumeSideEffectAuthorization(authorization);
+    if (effectful) consumeSideEffectAuthorization(authorization);
     return {
       ok: true,
       service: "cogentia-action-route",
@@ -202,7 +213,7 @@ export async function routeActionThroughGateway(blackboardStore, body, options =
       content: result.content,
       session_id: result.session_id,
       timing: result.timing,
-      authorization_id: authorization?.authorization_id || null,
+      authorization_id: effectful ? (authorization?.authorization_id || null) : null,
       route: {
         ...result.route,
         snapshot_at: resolved.snapshot_at,

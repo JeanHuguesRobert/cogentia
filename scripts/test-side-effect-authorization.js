@@ -18,7 +18,7 @@ assert.equal(isEffectfulCapability("host.fs.read"), false);
 assert.equal(isEffectfulCapability("host.fs.write"), true);
 assert.equal(isEffectfulCapability("host.process.run"), true);
 assert.equal(classifyAction("gmail.send"), "effectful");
-assert.equal(classifyAction("agent_gateway.invoke"), "effectful");
+assert.equal(classifyAction("agent_gateway.invoke"), "read_only");
 assert.equal(classifyAction("host.fs.read"), "read_only");
 assert.equal(classifyAction("calendar.publish"), "effectful");
 

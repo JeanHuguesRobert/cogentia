@@ -108,6 +108,17 @@ const unauthorized = await postJson(`http://127.0.0.1:${routePort}/ops/route/act
 assert.equal(unauthorized.status, 401);
 assert.equal(unauthorized.body.error, "unauthorized_action_route");
 
+const readOk = await postJson(`http://127.0.0.1:${routePort}/ops/route/action`, {
+  capability: "dev.tools.shell",
+  model: "shell-repl",
+  prompt: "echo ROUTED_OK",
+}, {
+  Authorization: "Bearer route-smoke-token",
+});
+assert.equal(readOk.status, 200);
+assert.equal(readOk.body.ok, true);
+assert.equal(readOk.body.authorization_id, null);
+
 const actionBody = {
   capability: "dev.tools.shell",
   model: "shell-repl",

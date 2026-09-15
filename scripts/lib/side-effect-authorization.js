@@ -25,7 +25,6 @@ export const ACTION_CLASSES = {
   "host.fs.search": { kind: "read_only" },
   "host.fs.write": { kind: "effectful" },
   "host.process.run": { kind: "effectful" },
-  "agent_gateway.invoke": { kind: "effectful" },
   "gmail.send": { kind: "effectful" },
   "communication.send": { kind: "effectful" },
   "github.commit": { kind: "effectful" },
