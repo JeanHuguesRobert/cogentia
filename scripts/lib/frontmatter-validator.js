@@ -571,6 +571,13 @@ export function planFrontmatterRepairs(paths, options = {}) {
     if (!extracted.attempted) {
       const legacy = extractLegacyProseMetadata(content);
       const prediction = options.classify ? options.classify(resolved) : null;
+      // cogentia#183 step 2: a repo whose policy-derived visibility is
+      // "private" (registre-mariani and any future private-registry repo)
+      // gets an extra gate — a strong classifier prediction alone is not
+      // enough to auto-scaffold third-party/sensitive content, even at
+      // strong confidence. Only an explicit self-declared prose role
+      // (a human already wrote it down) counts as confident there.
+      const isSensitiveRepo = Boolean(prediction && prediction.visibility === "private");
       // cogentia#183: a document that self-declares its own role in prose
       // (legacy) or that classifyRole/inferDocumentKind already predict with
       // strong confidence is safe to auto-scaffold. Anything else is a real
@@ -579,13 +586,15 @@ export function planFrontmatterRepairs(paths, options = {}) {
       // it's routed to the existing docs-judgments continuation queue
       // instead (same mechanism already used for document role review).
       const hasConfidentRole = Boolean(legacy.document_role)
-        || Boolean(prediction && prediction.role && prediction.role !== "unknown" && prediction.role_confidence === "strong");
+        || Boolean(!isSensitiveRepo && prediction && prediction.role && prediction.role !== "unknown" && prediction.role_confidence === "strong");
 
       if (!hasConfidentRole) {
         needsJudgment.push({
           path: filePath,
           full_path: resolved,
-          reason: prediction
+          reason: isSensitiveRepo && prediction && prediction.role_confidence === "strong"
+            ? `role prediction is strong confidence (${prediction.role}) but this is a private-registry repo — sensitive-content gate requires explicit human judgment regardless of prediction confidence (cogentia#183)`
+            : prediction
             ? `role prediction is ${prediction.role_confidence || "unavailable"} confidence (${prediction.role || "unknown"}); resolve via \`docs judgments <repo> --emit-continuations\` before scaffolding`
             : "no classifier available (file is outside the registered corpus); provide explicit --role or scaffold manually",
           predicted_role: prediction?.role || null,

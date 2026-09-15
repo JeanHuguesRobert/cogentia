@@ -95,6 +95,30 @@ test("planFrontmatterRepairs auto-scaffolds using a strong classifier prediction
   });
 });
 
+// cogentia#183 step 2: private-registry repos (registre-mariani and any
+// future one) get an extra gate — a strong prediction alone must not
+// auto-scaffold sensitive/third-party content.
+test("planFrontmatterRepairs gates a strong prediction in a private-registry repo (sensitive-repo gate)", () => {
+  const content = "# Title\n\nJust a document with no self-declared metadata.\n";
+  withTempFile(content, (file) => {
+    const classify = () => ({ role: "source", role_confidence: "strong", document_kind: "biographical-map", kind_confidence: "strong", visibility: "private" });
+    const plan = planFrontmatterRepairs([file], { classify });
+    assert.equal(plan.changes_count, 0, "strong confidence alone must not bypass the sensitive-repo gate");
+    assert.equal(plan.needs_judgment_count, 1);
+    assert.match(plan.needs_judgment[0].reason, /private-registry repo/);
+  });
+});
+
+test("planFrontmatterRepairs still auto-scaffolds a private-registry file with self-declared legacy role", () => {
+  const content = "# Title\n\nDocument role: derived\nVisibility: private\n\nbody\n";
+  withTempFile(content, (file) => {
+    const classify = () => ({ role: "unknown", role_confidence: "weak", document_kind: null, kind_confidence: "weak", visibility: "private" });
+    const plan = planFrontmatterRepairs([file], { classify });
+    assert.equal(plan.changes_count, 1, "explicit self-declared prose overrides the gate — a human already wrote it down");
+    assert.equal(plan.needs_judgment_count, 0);
+  });
+});
+
 test("planFrontmatterRepairs routes a weak/unknown prediction to needs_judgment, not a guess", () => {
   const content = "# Title\n\nJust a document with no self-declared metadata.\n";
   withTempFile(content, (file) => {
