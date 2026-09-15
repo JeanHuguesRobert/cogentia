@@ -35,6 +35,7 @@ import { listAgentSkills, getAgentSkill } from "./lib/cogentia-agent-skills.js";
 import { registerModule, invokeCapability } from "./lib/v3-modules.js";
 import { resolveCallerAuth, deriveLockers } from "./lib/cogentia-mcp-auth.js";
 import { checkSemanticMutation, MUTATION_STATUS } from "./lib/semantic-mutation-checker.js";
+import { runConvergenceLoop } from "./lib/convergence-loop.js";
 import { createSchedulerRunContext, runFractaCycle, SCHEDULER_CYCLE_MODES, SCHEDULER_STAGE_STATUS } from "./lib/fracta-scheduler.js";
 import { packDocumentToCapsule, verifyCapsule, unpackCapsule } from "./lib/packet-capsule.js";
 import { runMonteCarloAudit, SleepCycleReviewQueue, REVIEW_DECISIONS } from "./lib/corpus-sleep-cycle/index.js";
@@ -1841,45 +1842,17 @@ async function cmdCorpusConverge(opts = {}) {
   const ctx = loadContext();
   const options = planOptions();
   const dryRun = Boolean(opts.dryRun ?? hasFlag("--dry-run"));
-  let iterations = 0;
   const maxIterations = Number(valueFlag("--max-iterations") || 5) || 5;
-  const allApplied = [];
-  let reachedFixedPoint = false;
 
-  // Dry run cannot iterate on its own writes (there are none), so it only
-  // ever evaluates a single pass: the plan cogentia.js would apply first.
-  while (iterations < (dryRun ? 1 : maxIterations)) {
-    iterations++;
-    const plan = buildPlan(ctx, options);
-    const writes = mergePlanWrites(plan.changes);
-    for (const write of writes) {
-      if (!write.allowed) continue;
-      const mutation = checkSemanticMutation(write.before || "", write.after || "", {
-        filePath: `${write.repo}/${write.path}`,
-      });
-      if (mutation.status === MUTATION_STATUS.BLOCK) {
-        write.allowed = false;
-        write.mutation_blocked = mutation.blocks;
-      }
-    }
-    const allowed = writes.filter(w => w.allowed);
-    if (allowed.length === 0) {
-      reachedFixedPoint = true;
-      break;
-    }
-    for (const write of allowed) {
-      if (!dryRun) {
-        ensureDir(path.dirname(write.full_path));
-        fs.writeFileSync(write.full_path, write.after, "utf8");
-      }
-      allApplied.push({
-        iteration: iterations,
-        repo: write.repo,
-        path: write.path,
-        type: write.type || "update",
-      });
-    }
-  }
+  const { iterations, reachedFixedPoint, terminationReason, allApplied } = runConvergenceLoop({
+    maxIterations,
+    dryRun,
+    computePlan: () => mergePlanWrites(buildPlan(ctx, options).changes),
+    writeFile: (write) => {
+      ensureDir(path.dirname(write.full_path));
+      fs.writeFileSync(write.full_path, write.after, "utf8");
+    },
+  });
 
   // Update SQLite index in-process (skipped on dry run: nothing was written).
   const indexResult = dryRun
@@ -1890,6 +1863,7 @@ async function cmdCorpusConverge(opts = {}) {
     ok: true,
     dry_run: dryRun,
     fixed_point_reached: dryRun ? allApplied.length === 0 : reachedFixedPoint,
+    termination_reason: dryRun ? (allApplied.length === 0 ? "fixed_point" : "max_iterations") : terminationReason,
     iterations,
     total_files_applied: dryRun ? 0 : allApplied.length,
     total_files_would_apply: dryRun ? allApplied.length : undefined,
