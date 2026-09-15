@@ -579,9 +579,37 @@ function cmdFrontmatter(subcommand) {
     const fixFlag = takeFlag("--fix");
     const applyFlag = subcommand === "apply" || takeFlag("--apply");
     const strictRole = takeFlag("--strict-role");
+    const repoArg = valueFlag("--repo");
 
+    let ctx = null;
+    try {
+      ctx = loadContext();
+    } catch {
+      // Not every invocation runs inside the registered corpus (e.g. a
+      // standalone file outside any configured repo).
+      ctx = null;
+    }
+
+    // cogentia#186: --repo <name|all> resolves target paths from the
+    // registry across repos, same convention as corpus/classify/docs,
+    // instead of being stuck with whatever cwd + `git ls-files` sees.
     let targetPaths = argv.filter(p => !p.startsWith("-"));
-    if (targetPaths.length === 0) {
+    if (repoArg) {
+      if (!ctx) throw new Error("--repo requires a registered corpus context; run from inside a repo tracked by the registry.");
+      const repos = repoArg === "all" ? ctx.repos : ctx.repos.filter(r => r.name === repoArg);
+      if (!repos.length) throw new Error(`Unknown repo: ${repoArg}`);
+      targetPaths = [];
+      for (const repo of repos) {
+        try {
+          const files = execFileSync("git", ["ls-files", "*.md"], { cwd: repo.path, encoding: "utf8" })
+            .split("\n").map(f => f.trim()).filter(Boolean);
+          for (const f of files) targetPaths.push(path.join(repo.path, f));
+        } catch {
+          // Repo has no git history yet or ls-files failed; skip it rather
+          // than failing the whole multi-repo run.
+        }
+      }
+    } else if (targetPaths.length === 0) {
       try {
         targetPaths = execFileSync("git", ["ls-files", "*.md"], { encoding: "utf8" })
           .split("\n")
@@ -593,13 +621,12 @@ function cmdFrontmatter(subcommand) {
     }
 
     let classify = null;
-    try {
-      classify = buildFrontmatterClassifier(loadContext());
-    } catch {
-      // Not every invocation runs inside the registered corpus (e.g. a
-      // standalone file outside any configured repo); fall back to the
-      // pre-classifier generic scaffold rather than failing the command.
-      classify = null;
+    if (ctx) {
+      try {
+        classify = buildFrontmatterClassifier(ctx);
+      } catch {
+        classify = null;
+      }
     }
 
     const plan = planFrontmatterRepairs(targetPaths, { strictRole, classify });
@@ -736,8 +763,11 @@ Core commands:
                                   [--status <status>] [--lang <lang>] [--author <name>] [--force]
   frontmatter plan --fix [paths]
                            Plan mechanical frontmatter repairs (defaults, synonyms, blocks).
+                           Flags: [--repo <name|all>] scope across the registered corpus
+                                  instead of cwd's git ls-files (default when no [paths] given).
   frontmatter apply --fix [paths]
                            Apply planned mechanical frontmatter repairs safely.
+                           Flags: [--repo <name|all>] (same as plan)
   status                   Local health table (docs, index gaps, dirty, drift).
   grep <text>              Full-text search over active markdown documents.
   ask <question>           Ask the Cogentia corpus agent through the daemon.
@@ -2028,7 +2058,7 @@ function cmdCorpusVerify() {
   const strict = hasFlag("--strict");
   const options = { ...planOptions(), quiet: true };
   const plan = buildPlan(ctx, options);
-  const inventory = buildInventory(ctx, options);
+  const inventory = buildInventory(ctx);
   const git = verifyGit(ctx);
   const privacy = verifyPrivacy(ctx, inventory, PUBLIC_VIEW);
   const gaps = visibleDocs(inventory, PUBLIC_VIEW).filter(isIndexGap);
@@ -7955,7 +7985,7 @@ function ftsQueryFromText(text) {
 }
 
 function buildPlan(ctx, options) {
-  const inventory = buildInventory(ctx, options);
+  const inventory = buildInventory(ctx);
   const changes = [];
   if (options.corpusStatus) {
     for (const repo of ctx.repos) {
