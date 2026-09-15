@@ -19,6 +19,11 @@ export function encodeMcpFrame(message) {
   ]);
 }
 
+/** MCP SDK 1.x stdio (Desktop Commander 0.2.50) is JSON + newline, not LSP Content-Length. */
+export function encodeMcpNdjson(message) {
+  return Buffer.from(`${JSON.stringify(message)}\n`, "utf8");
+}
+
 export function createMcpFrameParser(onMessage) {
   let buffer = Buffer.alloc(0);
   return function push(chunk) {
@@ -26,11 +31,15 @@ export function createMcpFrameParser(onMessage) {
     while (buffer.length > 0) {
       const headerEnd = indexOfHeaderEnd(buffer);
       if (headerEnd < 0) {
+        const before = buffer.length;
+        let consumed = false;
         tryNdjson(buffer, (msg, rest) => {
           buffer = rest;
-          onMessage(msg);
+          consumed = true;
+          if (msg) onMessage(msg);
         });
-        return;
+        if (!consumed || buffer.length === before) return;
+        continue;
       }
       const header = buffer.subarray(0, headerEnd).toString("ascii");
       const match = header.match(/Content-Length:\s*(\d+)/i);
@@ -80,6 +89,7 @@ export class McpStdioClient {
     this.timeoutMs = options.timeoutMs || DEFAULT_TIMEOUT_MS;
     this.clientInfo = options.clientInfo || { name: "cogentia-mcp-stdio-client", version: "0.1.0" };
     this.protocolVersion = options.protocolVersion || "2024-11-05";
+    this.framing = options.framing === "content-length" ? "content-length" : "ndjson";
     this.shell = options.shell === true;
     this.child = null;
     this.nextId = 1;
@@ -149,9 +159,13 @@ export class McpStdioClient {
     }
   }
 
+  encode(message) {
+    return this.framing === "content-length" ? encodeMcpFrame(message) : encodeMcpNdjson(message);
+  }
+
   notify(method, params) {
     if (!this.child || this.closed) return;
-    this.child.stdin.write(encodeMcpFrame({ jsonrpc: "2.0", method, params }));
+    this.child.stdin.write(this.encode({ jsonrpc: "2.0", method, params }));
   }
 
   request(method, params = {}, timeoutMs = this.timeoutMs) {
@@ -168,7 +182,7 @@ export class McpStdioClient {
       }, timeoutMs);
       this.pending.set(id, { resolve, reject, timer });
       try {
-        this.child.stdin.write(encodeMcpFrame({ jsonrpc: "2.0", id, method, params }));
+        this.child.stdin.write(this.encode({ jsonrpc: "2.0", id, method, params }));
       } catch (err) {
         clearTimeout(timer);
         this.pending.delete(id);

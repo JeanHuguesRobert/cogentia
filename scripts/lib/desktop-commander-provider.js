@@ -117,9 +117,14 @@ export class DesktopCommanderProvider {
         command: spawnSpec.command,
         args: spawnSpec.args,
         cwd: this.options.cwd,
-        env: this.options.env,
+        env: {
+          ...process.env,
+          DESKTOP_COMMANDER_DISABLE_TELEMETRY: "1",
+          ...(this.options.env || {}),
+        },
         timeoutMs: this.options.timeoutMs || 20_000,
         clientInfo: { name: "cogentia-desktop-commander-provider", version: "0.1.0" },
+        framing: "ndjson",
       });
       this.ownsClient = true;
     }
