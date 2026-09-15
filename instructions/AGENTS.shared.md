@@ -1,8 +1,8 @@
 ---
 title: Cogentia Shared Agent Instructions
 status: active
-version: 16
-date: 2026-09-12
+version: 17
+date: 2026-09-15
 document_role: operational
 document_kind: agent-instructions
 visibility: public
@@ -50,6 +50,7 @@ resolve without mandate. Do not invent missing by-reference context.
 ## Invariants
 
 - The corpus is the source of truth. Agent instructions are governed operational projections.
+- **Corpus membership is broader than canonical source authority.** GitHub Issues and materially relevant Issue comments in Corpus repositories are integral parts of the Corpus when they carry work, objections, continuations, decisions, observations, provenance, or other cognitively relevant traces. They commonly function as **memory in tension**, trace-bearing work loci, Packet/Capsule projections, or routing surfaces. Their membership in the Corpus does **not** make them stabilized source doctrine, canonical truth, or equivalent in authority to reviewed source documents. Always distinguish **belongs to the Corpus** from **is a stabilized/canonical source**. Creating or updating such an Issue/comment changes the Corpus even when no Git-tracked source file changes.
 - **Anti-Capture Doctrine**: Never propose, recommend, or implement hidden, machine-local, IDE-specific, or vendor-locked rule/state persistence (e.g., `/learn`, local `.agents/rules` overrides, or proprietary agent memory silos). This explicitly includes built-in assistant "memory" features (e.g. Claude Code's persistent cross-session memory, Cursor/Copilot project notes, or any tool that auto-suggests remembering feedback, doctrine, or project state outside the repository) — a harness inviting an agent to "build up memory over time" does not suspend this doctrine. All operational principles, agent skills, and states MUST be declared openly in Git commits on `main` or as versioned Cognitive Packet events (`cogentia.agent_skill/v1`, `cop.event/v1`). **Provider-swap test**: before writing anything to a local/private store, ask whether a successor agent or human, on a different provider, would need it to avoid repeating a solved problem or re-litigating a settled decision — if yes, it belongs in the corpus, and the local copy is at most a disposable pointer, not the source of truth.
 - **Working memory, not archive**: an agent's local/private notes must stay ephemeral (task- or session-bound) unless explicitly promoted. If a local memory feature has no expiry and defaults to durable accumulation, the agent is responsible for pruning it back to that boundary itself — see `research/mneme_memory_architecture.md` and `research/memory_and_corpus_sleep_cycle.md`.
 - Distinguish fact, hypothesis, interpretation, public formulation, source document, derived product and temporary trace.
@@ -460,7 +461,7 @@ French.
 
 ## Stabilisation
 
-- Use the smallest sufficient container: conversation for exploration; issue for memory in tension; source document for stabilized knowledge; commit for durable technical trace.
+- Use the smallest sufficient container: conversation for exploration; issue for memory in tension; source document for stabilized knowledge; commit for durable technical trace. **This sequence describes stabilization level, not Corpus membership:** a materially relevant Issue or Issue comment in a Corpus repository is already Corpus material while still remaining non-canonical, provisional, or unresolved.
 - Do not commit, push, publish, send, sign, spend or otherwise stabilize an engaging act without explicit, scoped execution authorization under the External Side-Effect Gate. Preparation, planning, draft approval, urgency, reversibility, or logical obviousness never substitute for that gate.
 - A valid ongoing mandate is explicit, scoped authorization: it authorizes ordinary in-scope acts without per-act approval. Require contemporaneous evidence and human validation in proportion to the act's **Measured Risk**: Exposure, propagation, OptionLoss, recovery cost, possible residue, protected interests and uncertainty — not by default for every routine action.
 - A blocked tool, access failure or missing evidence is a result to report, never a success to imply.
