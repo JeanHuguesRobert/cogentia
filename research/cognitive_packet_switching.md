@@ -1029,6 +1029,7 @@ The event substrate gives causality.
 ### Backlinks
 
 *These documents link to this file:*
+- [Reactive Corpus semantic propagation: Learning Computer genesis, Trace primitive, and RAIX array cascades](https://github.com/JeanHuguesRobert/barons-Mariani/issues/55)
 - [Rendre capable — noyau doctrinal provisoire](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/noyau_doctrinal_rendre_capable.md)
 - [Cogentia](../README.md)
 - [Concept Index — cogentia](concepts.md)
