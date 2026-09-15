@@ -518,7 +518,8 @@ function cmdFrontmatter(subcommand) {
 
   if (subcommand === "scaffold") {
     const title = valueFlag("--title");
-    const role = valueFlag("--role") || "operational";
+    let role = valueFlag("--role");
+    let visibility = valueFlag("--visibility");
     const status = valueFlag("--status") || "working-paper";
     const lang = valueFlag("--language") || valueFlag("--lang") || "en";
     const author = valueFlag("--author") || "Jean Hugues Noël Robert, baron Mariani";
@@ -528,12 +529,35 @@ function cmdFrontmatter(subcommand) {
     const targetPath = argv.shift();
 
     if (!targetPath) {
-      throw new Error("Usage: node scripts/cogentia.js frontmatter scaffold <path> [--title <title>] [--role <role>] [--status <status>] [--lang <lang>] [--author <author>] [--force]");
+      throw new Error("Usage: node scripts/cogentia.js frontmatter scaffold <path> [--title <title>] [--role <role>] [--visibility <level>] [--status <status>] [--lang <lang>] [--author <author>] [--force]");
     }
+
+    // cogentia#189: consult the same classifier plan/apply already uses
+    // rather than silently defaulting role to "operational" and dropping
+    // visibility entirely — this is the single-file counterpart of
+    // buildFrontmatterClassifier's usage in the plan/apply branch below.
+    if (!role || !visibility) {
+      try {
+        const classify = buildFrontmatterClassifier(loadContext());
+        const prediction = classify(path.resolve(targetPath));
+        if (prediction) {
+          if (!role && prediction.role && prediction.role !== "unknown" && prediction.role_confidence === "strong") {
+            role = prediction.role;
+          }
+          if (!visibility && prediction.visibility) {
+            visibility = prediction.visibility;
+          }
+        }
+      } catch {
+        // Outside the registered corpus; fall through to the plain default.
+      }
+    }
+    role = role || "operational";
 
     const result = scaffoldFrontmatterFile(targetPath, {
       title,
       role,
+      visibility,
       status,
       lang,
       author,
@@ -704,8 +728,12 @@ Core commands:
                            Alias: frontmatter check. Flags: [--strict-role] [--json]
   frontmatter scaffold <path>
                            Generate a valid, minimal compliant YAML frontmatter skeleton.
-                           Flags: [--title <title>] [--role <role>] [--status <status>]
-                                  [--lang <lang>] [--author <name>] [--force]
+                           --role/--visibility default to the classifier's prediction
+                           (same signal used by plan/apply) when not given explicitly and
+                           confident; otherwise role falls back to "operational" and
+                           visibility is left unset.
+                           Flags: [--title <title>] [--role <role>] [--visibility <level>]
+                                  [--status <status>] [--lang <lang>] [--author <name>] [--force]
   frontmatter plan --fix [paths]
                            Plan mechanical frontmatter repairs (defaults, synonyms, blocks).
   frontmatter apply --fix [paths]
