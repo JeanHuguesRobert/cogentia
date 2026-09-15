@@ -10,6 +10,7 @@ import { compareMandateAttenuation } from "./mandate-attenuation.js";
 import { runJohnRequest } from "./john-run.js";
 import { auditCapabilitySymmetry } from "./symmetry-audit.js";
 import { listPatterns, getPattern } from "./cogentia-patterns.js";
+import { createHostCapabilityRouter } from "./host-capability-router.js";
 import {
   serverCapabilityBlock,
   LIST_TTL_MS,
@@ -58,6 +59,7 @@ export const MUTATE_TOOLS = new Set([
   "cogentia_continuation_emit",
   "cogentia_issues_sync",
   "cogentia_concepts_init",
+  "cogentia_host_fs_write",
 ]);
 
 /**
@@ -68,6 +70,9 @@ export const MUTATE_TOOLS = new Set([
 export const PRIVATE_READ_TOOLS = new Set([
   "cogentia_config_hygiene_audit",
   "operium_calendar_list",
+  "cogentia_host_fs_list",
+  "cogentia_host_fs_read",
+  "cogentia_host_fs_search",
 ]);
 
 export const TOOLS = [
@@ -801,6 +806,78 @@ export const TOOLS = [
       additionalProperties: false,
     },
   },
+  {
+    name: "cogentia_host_fs_list",
+    description:
+      "List a bounded directory on a selected host node (semantic capability host.fs.list). Private-read. Provider is selected by target; Desktop Commander is one implementation, not the public contract.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        path: { type: "string", minLength: 1 },
+        depth: { type: "integer", minimum: 1, maximum: 8 },
+        target: { type: "string", description: "Host node id, e.g. node:local" },
+        provider: { type: "string", description: "Optional provider id; default desktop-commander" },
+        mandate: { type: "string" },
+      },
+      required: ["path"],
+      additionalProperties: false,
+    },
+  },
+  {
+    name: "cogentia_host_fs_read",
+    description:
+      "Read a bounded file on a selected host node (semantic capability host.fs.read). Private-read. Does not expose raw Desktop Commander tools.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        path: { type: "string", minLength: 1 },
+        offset: { type: "integer" },
+        length: { type: "integer", minimum: 1 },
+        target: { type: "string" },
+        provider: { type: "string" },
+        mandate: { type: "string" },
+      },
+      required: ["path"],
+      additionalProperties: false,
+    },
+  },
+  {
+    name: "cogentia_host_fs_search",
+    description:
+      "Search a bounded host directory (semantic capability host.fs.search). Private-read.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        path: { type: "string", minLength: 1 },
+        pattern: { type: "string", minLength: 1 },
+        search_type: { type: "string" },
+        target: { type: "string" },
+        provider: { type: "string" },
+        mandate: { type: "string" },
+      },
+      required: ["path", "pattern"],
+      additionalProperties: false,
+    },
+  },
+  {
+    name: "cogentia_host_fs_write",
+    description:
+      "Write a bounded file on a selected host node (semantic capability host.fs.write). Mutate + #171 side_effect_authorization required. Fail-closed without authorization.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        path: { type: "string", minLength: 1 },
+        content: { type: "string" },
+        mode: { type: "string" },
+        target: { type: "string" },
+        provider: { type: "string" },
+        mandate: { type: "string" },
+        side_effect_authorization: { type: "object" },
+      },
+      required: ["path", "content"],
+      additionalProperties: false,
+    },
+  },
 ];
 
 async function resolveResourceRead(uri, env) {
@@ -865,6 +942,39 @@ export function createMcpCore(env = process.env, extras = {}) {
     (staticAllowMutate || !MUTATE_TOOLS.has(tool.name)) &&
     (allowPrivateReadStatic || !PRIVATE_READ_TOOLS.has(tool.name))
   );
+
+  let hostRouter = extras.hostRouter || null;
+  function getHostRouter() {
+    if (hostRouter) return hostRouter;
+    hostRouter = createHostCapabilityRouter({ env });
+    return hostRouter;
+  }
+
+  async function callHostCapability(capability, args, auth) {
+    const router = getHostRouter();
+    // MCP already enforced private-read / mutate. Project that onto the
+    // shared v3 lockers so host routing does not depend on JHN-mutate
+    // being the only path that sets auth="admin"|"jhn".
+    const hostAuth = {
+      ...(auth || {}),
+      lockers: {
+        public: { read: true, write: Boolean(auth?.allowMutate) },
+        private: {
+          read: true,
+          write: Boolean(auth?.allowMutate),
+        },
+      },
+    };
+    return router.invoke(capability, args, {
+      auth: hostAuth,
+      actor: auth?.actor,
+      principal: auth?.principal_ref,
+      mandate: args.mandate || auth?.mandate_ref,
+      target: args.target,
+      provider: args.provider,
+      authorization: args.side_effect_authorization || args.authorization,
+    });
+  }
 
   const instructions =
     "Playbook: (1) cogentia_agent_start and/or cogentia_views_snapshot — situation and load.mode_recommendation. " +
@@ -1614,6 +1724,20 @@ export function createMcpCore(env = process.env, extras = {}) {
         }
         return listOperiumCalendarViaOna(args.node_id, env, requestTimeoutMs);
       }
+      case "cogentia_host_fs_list":
+        requireString(args.path, "path");
+        return callHostCapability("host.fs.list", args, auth);
+      case "cogentia_host_fs_read":
+        requireString(args.path, "path");
+        return callHostCapability("host.fs.read", args, auth);
+      case "cogentia_host_fs_search":
+        requireString(args.path, "path");
+        requireString(args.pattern, "pattern");
+        return callHostCapability("host.fs.search", args, auth);
+      case "cogentia_host_fs_write":
+        requireString(args.path, "path");
+        if (typeof args.content !== "string") throw new Error("content must be a string");
+        return callHostCapability("host.fs.write", args, auth);
       default:
         throw new Error(`Unknown tool: ${name}`);
     }

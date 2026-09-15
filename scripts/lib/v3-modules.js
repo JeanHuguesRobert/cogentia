@@ -48,6 +48,7 @@ export function listModules() {
   return [...registry.values()].map(d => ({
     id: d.id,
     kind: d.kind || "capability_provider",
+    provider: d.provider || null,
     provides: d.provides,
     governance: d.governance || null,
   }));
@@ -96,21 +97,42 @@ function checkGovernance(module, input, auth) {
 }
 
 /**
- * Invoke the (first) module providing `capability`. Single-provider only
- * for now -- multi-provider routing/selection is out of scope until a
- * second module actually needs it (Occam rule, #108).
+ * Invoke a module providing `capability`.
+ *
+ * When only one module provides the capability, it is selected (the
+ * historical single-provider behaviour). When several providers exist,
+ * pass `provider` (descriptor.provider or descriptor.id) or `moduleId`.
+ * Missing explicit selection with multiple candidates uses the first
+ * registered module and is recorded as architectural residue (#184).
  *
  * `auth` (optional) is the caller's resolved lockers grant. Every surface
  * (CLI, daemon, MCP) is expected to resolve its own `auth` and pass it here
  * -- this is the one enforcement point all of them share, so none of them
  * has to re-derive permission logic on its own.
  */
-export async function invokeCapability(capability, input, { auth } = {}) {
+export async function invokeCapability(capability, input, { auth, provider, moduleId } = {}) {
   const candidates = findModulesByCapability(capability);
   if (!candidates.length) {
-    throw new Error(`No v3 module provides capability "${capability}"`);
+    const err = new Error(`No v3 module provides capability "${capability}"`);
+    err.error_class = "capability_not_found";
+    throw err;
   }
-  const module = candidates[0];
+  let module = candidates[0];
+  if (moduleId) {
+    module = candidates.find((c) => c.id === moduleId);
+    if (!module) {
+      const err = new Error(`No v3 module id "${moduleId}" provides capability "${capability}"`);
+      err.error_class = "provider_not_found";
+      throw err;
+    }
+  } else if (provider) {
+    module = candidates.find((c) => c.provider === provider || c.id === provider);
+    if (!module) {
+      const err = new Error(`No v3 module provider "${provider}" provides capability "${capability}"`);
+      err.error_class = "provider_not_found";
+      throw err;
+    }
+  }
   checkGovernance(module, input, auth);
   return module.run({ ...input, auth });
 }
