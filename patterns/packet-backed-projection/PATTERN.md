@@ -20,6 +20,7 @@ related_issues:
 related_documents:
   - research/living_frontmatter_optimistic_schema_candidate.md
   - interaction_packets/architecture.md
+  - patterns/packet-backed-projection/PRIOR_ART.md
 lifecycle_state: active
 classification_source: cogentia.js
 classification_version: '1'
@@ -73,6 +74,8 @@ A third failure is worse: a narrow SQL view is later treated as if it were the w
 - Large artifacts should be referenced rather than duplicated.
 - Historical state is valuable in some rows but not worth full event sourcing everywhere.
 - Schema evolution should be driven by observed use, not by speculative completeness.
+- A global change log can make the history of one row depend on unrelated activity elsewhere.
+- Some cross-row changes really do need a shared transaction / Act identity, so locality must not destroy correlation.
 
 ## Resolution
 
@@ -223,6 +226,73 @@ Prefer storing large artifacts once and referencing them many times.
 
 > **Store facts once, reference them many times; store changes, not copies.**
 
+## Row-Local History / Global Reference
+
+When a SQL row represents an independently intelligible entity, prefer making its historical chain independently intelligible too.
+
+Conceptually:
+
+```text
+row A current
+  ↓ history_head
+A17 → A16 → A15 → ...
+
+row B current
+  ↓ history_head
+B8 → B7 → ...
+```
+
+The history MAY be stored physically in one shared revision table; locality is primarily a semantic and addressing property:
+
+```sql
+entity_revisions (
+  entity_type,
+  entity_id,
+  revision,
+  previous_revision,
+  changed_at,
+  changed_by,
+  patch jsonb,
+  packet_ref,
+  source_ref,
+  act_ref
+)
+```
+
+The important property is that reconstructing or understanding row A does not require replaying unrelated changes to B, C, or the rest of the database.
+
+Compact principle:
+
+> **Keep history as local as the thing whose history it is; introduce global ordering or correlation only when a real cross-object invariant requires it.**
+
+Cross-row coherence is preserved by reference rather than by forcing every entity to depend on one global history stream:
+
+```text
+             act:xyz
+            /   |   \
+          A17  B42  C8
+```
+
+Thus a transaction, mandate, Act, import batch, interaction or other cross-object cause can be reconstructed without making global chronology the mandatory access path for each row's history.
+
+This is **local history / global reference**.
+
+### Why this is useful in SQL specifically
+
+SQL already gives a strongly circumscribed unit of current state: the row, composed of named columns. That makes the locality boundary unusually concrete:
+
+```text
+row
+├── current projected columns
+├── packet / packet_ref
+├── revision
+└── history_head / history_ref
+```
+
+The pattern therefore aligns current-state locality, rich-state locality and history locality around the same entity boundary.
+
+This does not claim that row-local version chains are novel database mechanisms. MVCC engines, temporal/versioned systems, document revision systems and per-aggregate event streams provide substantial prior art. The proposed contribution is the explicit composition of row-local history with Packet backing, lossless bidirectional reconciliation and usage-driven schema promotion. See `PRIOR_ART.md`.
+
 ## Optional row history
 
 A row MAY carry its own lightweight history when useful.
@@ -262,11 +332,11 @@ Thus one small mechanism can support traceability, conflict detection, reconcili
 When relevant, keep distinct:
 
 ```text
-occurred_at       = when the represented event happened
-as_of             = state-of-world horizon described by the Packet
-projected_at      = when this SQL projection was computed
+occurred_at        = when the represented event happened
+as_of              = state-of-world horizon described by the Packet
+projected_at       = when this SQL projection was computed
 projection_version = which projection logic produced it
-changed_at        = when the stored row/revision changed
+changed_at         = when the stored row/revision changed
 ```
 
 Do not invent all timestamps mechanically; preserve the distinctions when the domain needs them.
@@ -282,9 +352,12 @@ Is this row a projection of a richer information object?
 Could future fields exist before they deserve columns?
 Could a narrow write accidentally erase unknown information?
 Would provenance/revision/history materially improve traceability?
+Is the row an independently intelligible history locality boundary?
 ```
 
 If yes, the design SHOULD include Packet backing and non-destructive reconciliation from the start because the implementation cost is usually small compared with later recovery from information loss.
+
+Where historical traceability is useful, prefer row-local revision addressing and optional `act_ref` / `transaction_ref` correlation rather than a mandatory global log dependency.
 
 If the Pattern is deliberately not applied to a semantic/evolving table, record the reason rather than silently defaulting to a closed relational ontology.
 
@@ -304,6 +377,8 @@ and prove that Packet properties outside the projection survive the round trip.
 
 Test explicitly that `null`, absence and delete semantics do not cause unintended erasure.
 
+When row-local history is enabled, also test that one entity's history can be reconstructed without replaying unrelated entity revisions, while a shared `act_ref` can still correlate a genuinely cross-row change.
+
 ## Consequences
 
 Positive:
@@ -315,6 +390,8 @@ Positive:
 - transformations remain traceable;
 - historical reconstruction can be added proportionately;
 - Packet and SQL representations can evolve independently but remain reconcilable;
+- row-local histories improve computational and cognitive locality;
+- global correlations remain possible without imposing a global-log access path;
 - projection code is small enough to generate or standardize.
 
 Costs / risks:
@@ -323,7 +400,8 @@ Costs / risks:
 - two representations can drift if reconciliation is poorly implemented;
 - careless `jsonb` use can become schema avoidance rather than incremental design;
 - histories can grow without compaction or externalization;
-- provenance references must remain durable if values are not stored inline.
+- provenance references must remain durable if values are not stored inline;
+- purely local histories need explicit cross-object references when transaction-wide reconstruction matters.
 
 ## Non-goals
 
@@ -331,8 +409,35 @@ Costs / risks:
 - Do not replace relational modeling with JSON blobs.
 - Do not duplicate large source artifacts merely to make rows self-contained.
 - Do not require full event sourcing where lightweight revisions are sufficient.
+- Do not require physically separate history storage per row; logical locality is sufficient.
+- Do not deny global transaction/event order when the domain genuinely requires it.
 - Do not treat a Packet as canonical evidence when it is itself only a projection of an external source; preserve the evidence chain.
 - Do not promote a property into a column merely because it exists.
+
+## Defensive disclosure
+
+This Pattern is intentionally public and is not a claim of exclusive ownership over the individual mechanisms it composes.
+
+The disclosure is meant to make the combined technique inspectable, reusable and difficult to later mischaracterize as undisclosed prior work. The technical teaching disclosed here includes at least:
+
+```text
+SQL current-state columns as a situated projection
++ richer inline or referenced Packet state
++ bidirectional project/inflate/merge reconciliation
++ preservation of unknown/non-projected information
++ explicit NULL / absence / delete semantics
++ usage-driven Packet-field promotion into columns
++ optional row-local revision chains
++ deltas and referenced large artifacts
++ checkpoints when replay cost grows
++ optimistic concurrency by row revision
++ optional global Act/transaction correlation by reference
++ provenance from projection back to source evidence
+```
+
+The individual ingredients have prior art. The Pattern contribution is their explicit composition into an incremental, traceability-preserving SQL development method.
+
+The immutable Git commit containing each published revision is part of the disclosure record. External archival/DOI publication may later add independent timestamping and discoverability without changing the technical teaching disclosed here.
 
 ## Relationship to Pattern Mining
 
