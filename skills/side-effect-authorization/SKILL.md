@@ -59,3 +59,14 @@ Agent JHN never calls Baileys `sendMessage` directly. `requestOutboundSend` is t
 4. The inbound pipeline does **not** auto-enqueue. Missing grant → `authorization_missing` and a prepared envelope.
 
 Self-chat `SEND_ENABLED` is not a per-payload grant.
+
+## Git commit / push
+
+Do **not** run raw `git commit` or `git push` for corpus work. Those bypass `#171`.
+
+1. `cogentia_git_prepare` — EXPOSE operation, message, files, remote/branch.
+2. Mint `side_effect_authorization` bound to that payload.
+3. `cogentia_git_write` with the prepared envelope and the grant.
+4. Default MCP transport is dry-run. Local transport runs git only after the grant.
+
+`git status` / `git diff` / `git log` remain ungated reads.

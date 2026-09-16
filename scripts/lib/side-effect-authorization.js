@@ -30,6 +30,8 @@ export const ACTION_CLASSES = {
   "github.write": { kind: "effectful" },
   "github.commit": { kind: "effectful" },
   "github.push": { kind: "effectful" },
+  "git.commit": { kind: "effectful" },
+  "git.push": { kind: "effectful" },
   "whatsapp.send": { kind: "effectful" },
 };
 
