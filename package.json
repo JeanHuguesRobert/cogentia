@@ -98,6 +98,8 @@
     "test:host-dc": "node scripts/test-side-effect-authorization.js && node scripts/test-host-desktop-commander-provider.js",
     "test:communication-send": "node scripts/test-communication-send.js",
     "reality:communication-send": "node scripts/ops/reality-test-communication-send.js",
+    "test:github-write": "node scripts/test-github-write.js",
+    "reality:github-write": "node scripts/ops/reality-test-github-write.js",
     "reality:host-dc-mcp": "node scripts/ops/reality-test-desktop-commander-mcp.js",
     "test:capability-inventory": "node scripts/test-capability-inventory.js",
     "test:corpus-orient": "node scripts/test-corpus-orient.js",

@@ -12,6 +12,7 @@ import { auditCapabilitySymmetry } from "./symmetry-audit.js";
 import { listPatterns, getPattern } from "./cogentia-patterns.js";
 import { createHostCapabilityRouter } from "./host-capability-router.js";
 import { prepareCommunicationSend, executeCommunicationSend, createDryRunTransport } from "./communication-send.js";
+import { prepareGithubWrite, executeGithubWrite, createGithubDryRunTransport } from "./github-write.js";
 import {
   serverCapabilityBlock,
   LIST_TTL_MS,
@@ -62,6 +63,7 @@ export const MUTATE_TOOLS = new Set([
   "cogentia_concepts_init",
   "cogentia_host_fs_write",
   "cogentia_communication_send",
+  "cogentia_github_write",
 ]);
 
 /**
@@ -76,6 +78,7 @@ export const PRIVATE_READ_TOOLS = new Set([
   "cogentia_host_fs_read",
   "cogentia_host_fs_search",
   "cogentia_communication_prepare",
+  "cogentia_github_prepare",
 ]);
 
 export const TOOLS = [
@@ -912,6 +915,40 @@ export const TOOLS = [
       additionalProperties: false,
     },
   },
+  {
+    name: "cogentia_github_prepare",
+    description:
+      "PREPARE/EXPOSE a github.write mutation (add_issue_comment or issue_write). Does not write. Private-read.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        operation: { type: "string", enum: ["add_issue_comment", "issue_write"] },
+        owner: { type: "string", minLength: 1 },
+        repo: { type: "string", minLength: 1 },
+        issue_number: { type: "integer" },
+        method: { type: "string", enum: ["create", "update"] },
+        title: { type: "string" },
+        body: { type: "string" },
+        state: { type: "string", enum: ["open", "closed"] },
+      },
+      required: ["operation", "owner", "repo"],
+      additionalProperties: false,
+    },
+  },
+  {
+    name: "cogentia_github_write",
+    description:
+      "EXECUTE a prepared github.write. Requires #171 side_effect_authorization bound to the prepared payload. Default transport is dry-run (no GitHub API). Mutate.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        prepared: { type: "object" },
+        side_effect_authorization: { type: "object" },
+      },
+      required: ["prepared", "side_effect_authorization"],
+      additionalProperties: false,
+    },
+  },
 ];
 
 async function resolveResourceRead(uri, env) {
@@ -984,6 +1021,7 @@ export function createMcpCore(env = process.env, extras = {}) {
     return hostRouter;
   }
   const communicationTransport = extras.communicationTransport || createDryRunTransport();
+  const githubTransport = extras.githubTransport || createGithubDryRunTransport();
 
   async function callHostCapability(capability, args, auth) {
     const router = getHostRouter();
@@ -1780,6 +1818,14 @@ export function createMcpCore(env = process.env, extras = {}) {
           prepared: args.prepared,
           authorization: args.side_effect_authorization,
           transport: communicationTransport,
+        });
+      case "cogentia_github_prepare":
+        return prepareGithubWrite(args);
+      case "cogentia_github_write":
+        return executeGithubWrite({
+          prepared: args.prepared,
+          authorization: args.side_effect_authorization,
+          transport: githubTransport,
         });
       default:
         throw new Error(`Unknown tool: ${name}`);

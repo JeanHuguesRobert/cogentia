@@ -37,3 +37,14 @@ Do **not** call Grok MCP `gmail__send_message`, `gmail__send_draft`, `gmail__for
 4. Default transport is dry-run (no Google). Replay of the same grant must fail.
 
 Drafts (`gmail__create_draft`) are PREPARE, not EXECUTE.
+
+## GitHub writes
+
+Do **not** call Grok MCP `github__add_issue_comment`, `github__issue_write`, or other `*_write` GitHub tools. Those are denied in this workstation's Grok config. Reads (`github__issue_read`, `github__list_issues`, …) stay allowed.
+
+1. `cogentia_github_prepare` — show owner/repo/issue and the exact body or state change.
+2. After an explicit execute directive on **that** payload, mint `side_effect_authorization`.
+3. `cogentia_github_write` with the prepared envelope and the grant.
+4. Default transport is dry-run (no GitHub API). Replay must fail.
+
+`git commit` / `git push` are not covered yet.

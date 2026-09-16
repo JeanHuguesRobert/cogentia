@@ -27,6 +27,7 @@ export const ACTION_CLASSES = {
   "host.process.run": { kind: "effectful" },
   "gmail.send": { kind: "effectful" },
   "communication.send": { kind: "effectful" },
+  "github.write": { kind: "effectful" },
   "github.commit": { kind: "effectful" },
   "github.push": { kind: "effectful" },
   "whatsapp.send": { kind: "effectful" },
