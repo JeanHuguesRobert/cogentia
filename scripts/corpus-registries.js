@@ -11,6 +11,8 @@ export const SUPPORTED_REGISTRY_SCHEMAS = new Set([
 const SKIP_DIRS = new Set([
   ".git", "node_modules", "dist", "build", ".cache", ".next", "coverage",
   ".turbo", ".venv", "venv", ".cogentia",
+  // Ephemeral / parallel checkouts must not duplicate logical registry ids.
+  "handoffs", "worktrees", "inseme.worktrees",
 ]);
 
 const KNOWN_RELATIONS = new Set([

@@ -425,6 +425,8 @@ async function main() {
       return cmdEmbeddings(argv.shift() || "status");
     case "config":
       return cmdConfig(argv.shift() || "hygiene-audit");
+    case "interactions":
+      return cmdInteractions(argv.shift() || "list", argv);
     case "corpus-state":
       return cmdCorpusState(argv.shift() || "export");
     case "views":
@@ -776,6 +778,11 @@ Core commands:
                            --mode keyword|hybrid|semantic --stream
   config hygiene-audit     Read-only Vault/cache hygiene report for a configured
                            Digital Twin. Returns no configuration values.
+  interactions list        List Agent JHN Interaction Cases desk projection
+                           (Inseme #77). Flags: --open --limit <n> --json
+                           --instance jhn
+  interactions get <id>    Show one projected Interaction Case by packet_id.
+                           Flags: --json --instance jhn
 
 Document commands:
   docs summary             Numeric corpus summaries.
@@ -3462,6 +3469,96 @@ function cmdConfig(subcommand) {
   return output(result, result.ok === false
     ? `Configuration hygiene audit unavailable: ${result.reason || result.error}`
     : `Configuration hygiene audit: ${result.instance} (${result.read_only ? "read-only" : "invalid"})`);
+}
+
+/**
+ * Thin read-only bridge to the Agent JHN Interaction Cases SQL desk
+ * (Packet-Backed Projection, Inseme #77). Discovery lives in
+ * registry:interactions; this command queries the live projection.
+ */
+function queryJhnInteractions(ctx, { subcommand, packetId, openOnly, limit }) {
+  const instance = valueFlag("--instance") || "jhn";
+  if (instance !== "jhn") {
+    return { ok: false, error: "unsupported_instance", instance };
+  }
+  const inseme = ctx.repos.find((repo) => repo.name === "inseme");
+  if (!inseme || !fs.existsSync(inseme.path)) {
+    return { ok: false, error: "interactions_unavailable", reason: "inseme_repository_not_registered" };
+  }
+  const repoRoot = path.resolve(inseme.path);
+  const scriptPath = path.resolve(repoRoot, "scripts", "query-interaction-cases-jhn.js");
+  if (!scriptPath.startsWith(`${repoRoot}${path.sep}`) || !fs.existsSync(scriptPath)) {
+    return { ok: false, error: "interactions_unavailable", reason: "query_script_not_available" };
+  }
+  const args = [scriptPath, subcommand];
+  if (subcommand === "get") {
+    if (!packetId) return { ok: false, error: "missing_packet_id" };
+    args.push(packetId);
+  }
+  if (openOnly) args.push("--open");
+  if (limit != null) args.push("--limit", String(limit));
+  args.push("--json");
+  try {
+    const raw = execFileSync(process.execPath, args, {
+      cwd: repoRoot,
+      encoding: "utf8",
+      stdio: ["ignore", "pipe", "pipe"],
+      timeout: 60_000,
+      maxBuffer: 2 * 1024 * 1024,
+      env: { ...process.env, DOTENV_CONFIG_QUIET: "true" },
+    });
+    return JSON.parse(extractJsonPayload(raw));
+  } catch (error) {
+    let detail = error?.message || "query_execution_failed";
+    try {
+      const parsed = JSON.parse(extractJsonPayload(String(error?.stdout || "")));
+      if (parsed?.error) detail = parsed.error;
+    } catch {
+      /* keep detail */
+    }
+    return { ok: false, error: "interactions_unavailable", reason: detail };
+  }
+}
+
+function extractJsonPayload(raw) {
+  const text = String(raw || "").trim();
+  const start = text.indexOf("{");
+  if (start < 0) return text;
+  return text.slice(start);
+}
+
+function cmdInteractions(subcommand, restArgv = []) {
+  const known = new Set(["list", "get"]);
+  if (!known.has(subcommand)) {
+    throw new Error("Unknown interactions subcommand. Use list or get.");
+  }
+  const ctx = loadContext();
+  const packetId = subcommand === "get" ? (restArgv[0] || valueFlag("--id")) : null;
+  const openOnly = hasFlag("--open");
+  const limitRaw = valueFlag("--limit");
+  const limit = limitRaw != null ? Number(limitRaw) : 50;
+  const result = queryJhnInteractions(ctx, {
+    subcommand,
+    packetId,
+    openOnly,
+    limit: Number.isFinite(limit) ? limit : 50,
+  });
+  if (result?.ok === false && result.error && !result.schema) {
+    return output(result, `Interactions query unavailable: ${result.reason || result.error}`);
+  }
+  if (subcommand === "list") {
+    return output(
+      result,
+      `JHN interactions: ${result.count ?? 0} case(s)${result.open_only ? " (open)" : ""}`
+    );
+  }
+  if (result.ok === false && result.error === "not_found") {
+    return output(result, `Interaction case not found: ${result.packet_id}`);
+  }
+  return output(
+    result,
+    `Interaction case ${result.desk?.packet_id || packetId}: ${result.desk?.status_display || "-"}`
+  );
 }
 
 function runMetadataAudit() {
