@@ -28,7 +28,7 @@ import {
 import { handleInbound } from "./lib/agent-jhn-whatsapp/pipeline.js";
 import {
   drainWhatsappOutbox,
-  requestOutboundSend,
+  requestOutboundSendAuthorized,
   buildActionRequestId,
 } from "./lib/agent-jhn-whatsapp/outbound-gate.js";
 import {
@@ -600,7 +600,7 @@ async function cmdSend(config, args) {
   // Brief settle after open
   await new Promise((r) => setTimeout(r, 1500));
 
-  const req = requestOutboundSend({
+  const req = requestOutboundSendAuthorized({
     config,
     normalized,
     draftText: outboundText,

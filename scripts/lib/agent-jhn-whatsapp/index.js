@@ -59,6 +59,9 @@ export {
 } from "./trace.js";
 export {
   requestOutboundSend,
+  requestOutboundSendAuthorized,
+  prepareWhatsappSend,
+  mintWhatsappSendAuthorization,
   drainWhatsappOutbox,
   buildActionRequestId,
   isActionAlreadyHandled,

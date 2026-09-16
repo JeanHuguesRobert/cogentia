@@ -25,6 +25,11 @@ import { resolveSelfSendJid } from "./self-peer.js";
 import { AUDIENCE, ensureOutboundDisclosure, outboundDisclosureOk } from "./disclosure.js";
 import { isAllowedSelfPeer } from "./self-peer.js";
 import { recordOutboundSendEvent } from "./rate-limiter.js";
+import {
+  grantSideEffectAuthorization,
+  validateSideEffectAuthorization,
+  consumeSideEffectAuthorization,
+} from "../side-effect-authorization.js";
 
 const OUTBOX_KIND = "whatsapp.send";
 const OUTBOX_TARGET = "whatsapp.self_chat";
@@ -64,18 +69,18 @@ export function isActionAlreadyHandled(stateDir, actionRequestId, config) {
 }
 
 /**
- * Enqueue a send request after policy allows draft→send path.
- * Always re-evaluates policy. Never sends itself.
- *
- * @returns {{ ok: boolean, enqueued?: boolean, reason?: string, action_request_id?: string, record?: object }}
+ * EXPOSE a whatsapp.send intent. Does not enqueue.
  */
-export function requestOutboundSend({
+export function prepareWhatsappSend({
   config,
   normalized,
   draftText,
   actionRequestId,
   now,
-}) {
+  emergency,
+  emergencyFollowUp,
+  explicitlyAddressed,
+} = {}) {
   if (!config?.state_dir) {
     return { ok: false, enqueued: false, reason: "state_dir missing" };
   }
@@ -93,7 +98,6 @@ export function requestOutboundSend({
     };
   }
 
-  // Grant must be valid before outbox (amendment tests 16–18)
   const grant = evaluateUsageGrant(config.usage_grant, {
     now,
     requestedInstanceId: config.agent_id || "agent-jhn",
@@ -143,9 +147,9 @@ export function requestOutboundSend({
     draftText: stamped.text,
     now,
     audience,
-    emergency: arguments[0]?.emergency,
-    emergencyFollowUp: arguments[0]?.emergencyFollowUp,
-    explicitlyAddressed: arguments[0]?.explicitlyAddressed,
+    emergency,
+    emergencyFollowUp,
+    explicitlyAddressed,
   });
   if (!policy.allow_send || policy.decision !== DECISIONS.SEND) {
     return {
@@ -176,10 +180,89 @@ export function requestOutboundSend({
     };
   }
 
-  // Groups: send to the group JID. Direct: Message-yourself @lid or ALLOWED_SELF_JID.
   const toJid = isGroup
     ? bareJid(normalized.remote_jid || normalized.remote_jid_bare)
     : resolveSelfSendJid(config) || bareJid(config.allowed_self_jid);
+  const payload = {
+    to_jid: toJid,
+    text: stamped.text,
+    action_request_id,
+  };
+  return {
+    ok: true,
+    kind: "cogentia.whatsapp_prepare/v1",
+    action_class: "whatsapp.send",
+    phase: "EXPOSE",
+    action_request_id,
+    audience,
+    isGroup,
+    policy,
+    stamped,
+    target: { to_jid: toJid },
+    payload,
+    exposed_message: { to_jid: toJid, text: stamped.text },
+    note: "This is not a WhatsApp send. A side_effect_authorization bound to this payload is required to enqueue.",
+  };
+}
+
+export function mintWhatsappSendAuthorization(prepared, { principal } = {}) {
+  return grantSideEffectAuthorization({
+    principal: principal || "principal:whatsapp",
+    action_class: "whatsapp.send",
+    target: prepared.target,
+    payload: prepared.payload,
+  });
+}
+
+/**
+ * Enqueue a send request after policy allows draft→send path.
+ * Always re-evaluates policy. Never sends itself.
+ * Material enqueue requires a payload-bound #171 grant.
+ */
+export function requestOutboundSend({
+  config,
+  normalized,
+  draftText,
+  actionRequestId,
+  now,
+  side_effect_authorization,
+  emergency,
+  emergencyFollowUp,
+  explicitlyAddressed,
+} = {}) {
+  const prepared = prepareWhatsappSend({
+    config,
+    normalized,
+    draftText,
+    actionRequestId,
+    now,
+    emergency,
+    emergencyFollowUp,
+    explicitlyAddressed,
+  });
+  if (!prepared.ok || prepared.idempotent_skip) return prepared;
+
+  try {
+    validateSideEffectAuthorization(side_effect_authorization, {
+      action_class: "whatsapp.send",
+      target: prepared.target,
+      payload: prepared.payload,
+    });
+  } catch (err) {
+    return {
+      ok: false,
+      enqueued: false,
+      blocked_before_outbox: true,
+      error: err.error_class || "authorization_missing",
+      reason: err.message,
+      rule_id: "gate.side_effect_authorization",
+      action_request_id: prepared.action_request_id,
+      prepared,
+    };
+  }
+
+  const { action_request_id, isGroup, audience, policy, stamped } = prepared;
+  const toJid = prepared.payload.to_jid;
   const record = enqueueOutbox(config.state_dir, {
     id: action_request_id,
     kind: OUTBOX_KIND,
@@ -195,6 +278,7 @@ export function requestOutboundSend({
       visible_agent_id: config.visible_agent_id,
       mandate_id: config.mandate_id,
       grant_id: config.usage_grant?.grant_id,
+      side_effect_authorization_id: side_effect_authorization?.authorization_id || null,
       account_custodian_id: config.account_custodian_id,
       beneficiary_instance_id: config.usage_grant?.beneficiary_instance_id,
       audience,
@@ -230,6 +314,7 @@ export function requestOutboundSend({
   });
   validateWhatsappArtifact(art);
   appendTrace(config, art);
+  consumeSideEffectAuthorization(side_effect_authorization);
 
   return {
     ok: true,
@@ -237,7 +322,18 @@ export function requestOutboundSend({
     action_request_id,
     record,
     policy,
+    authorization_id: side_effect_authorization?.authorization_id || null,
   };
+}
+
+/** Test/CLI helper: EXPOSE + mint + enqueue. Not for the inbound pipeline. */
+export function requestOutboundSendAuthorized(args = {}) {
+  const prepared = prepareWhatsappSend(args);
+  if (!prepared.ok || prepared.idempotent_skip) return prepared;
+  const authorization = mintWhatsappSendAuthorization(prepared, {
+    principal: args.config?.principal_id || "principal:test",
+  });
+  return requestOutboundSend({ ...args, side_effect_authorization: authorization });
 }
 
 /**

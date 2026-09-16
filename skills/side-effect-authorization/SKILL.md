@@ -48,3 +48,14 @@ Do **not** call Grok MCP `github__add_issue_comment`, `github__issue_write`, or 
 4. Default transport is dry-run (no GitHub API). Replay must fail.
 
 `git commit` / `git push` are not covered yet.
+
+## WhatsApp
+
+Agent JHN never calls Baileys `sendMessage` directly. `requestOutboundSend` is the unique enqueue frontier.
+
+1. `prepareWhatsappSend` — EXPOSE `to_jid` and stamped text.
+2. Mint `side_effect_authorization` bound to that payload.
+3. `requestOutboundSend` with the grant. Usage-grant + SEND_ENABLED + policy still apply.
+4. The inbound pipeline does **not** auto-enqueue. Missing grant → `authorization_missing` and a prepared envelope.
+
+Self-chat `SEND_ENABLED` is not a per-payload grant.

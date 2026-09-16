@@ -20,6 +20,7 @@ import {
 } from "./trace.js";
 import {
   requestOutboundSend,
+  prepareWhatsappSend,
   buildActionRequestId,
 } from "./outbound-gate.js";
 import { ARTIFACT_TYPES, DECISIONS } from "./constants.js";
@@ -205,13 +206,37 @@ export async function handleInbound(rawEvent, config, options = {}) {
     draft &&
     config.state_dir
   ) {
-    outbound = requestOutboundSend({
-      config,
-      normalized,
-      draftText: draft.text,
-      actionRequestId: buildActionRequestId(normalized.platform_message_id),
-      now: options.now,
-    });
+    const actionRequestId = buildActionRequestId(normalized.platform_message_id);
+    if (options.side_effect_authorization) {
+      outbound = requestOutboundSend({
+        config,
+        normalized,
+        draftText: draft.text,
+        actionRequestId,
+        now: options.now,
+        side_effect_authorization: options.side_effect_authorization,
+      });
+    } else {
+      const prepared = prepareWhatsappSend({
+        config,
+        normalized,
+        draftText: draft.text,
+        actionRequestId,
+        now: options.now,
+      });
+      outbound = prepared.ok && !prepared.idempotent_skip
+        ? {
+            ok: false,
+            enqueued: false,
+            blocked_before_outbox: true,
+            error: "authorization_missing",
+            rule_id: "gate.side_effect_authorization",
+            reason: "whatsapp.send requires side_effect_authorization",
+            action_request_id: prepared.action_request_id,
+            prepared,
+          }
+        : prepared;
+    }
   }
 
   return {

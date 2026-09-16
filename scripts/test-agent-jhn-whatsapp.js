@@ -39,10 +39,12 @@ import {
 } from "./lib/agent-jhn-whatsapp/trace.js";
 import {
   requestOutboundSend,
+  requestOutboundSendAuthorized,
   drainWhatsappOutbox,
   buildActionRequestId,
   isActionAlreadyHandled,
 } from "./lib/agent-jhn-whatsapp/outbound-gate.js";
+import { resetAuthorizationStore } from "./lib/side-effect-authorization.js";
 import { createMockTransport } from "./lib/agent-jhn-whatsapp/baileys-transport.js";
 import { handleInbound } from "./lib/agent-jhn-whatsapp/pipeline.js";
 import {
@@ -60,6 +62,8 @@ import {
 const SELF_JID = "33612345678@s.whatsapp.net";
 const THIRD_JID = "33799999999@s.whatsapp.net";
 const GROUP_JID = "120363000000000000@g.us";
+
+resetAuthorizationStore();
 
 const tmpRoot = fs.mkdtempSync(path.join(os.tmpdir(), "agent-jhn-wa-"));
 const tests = [];
@@ -375,7 +379,7 @@ test("10_self_chat_send_when_ready", async () => {
   assert.equal(p.allow_send, true);
 
   const transport = createMockTransport({ connected: true });
-  const req = requestOutboundSend({
+  const req = requestOutboundSendAuthorized({
     config,
     normalized: n,
     draftText: draft.text,
@@ -399,7 +403,7 @@ test("11_idempotent_action_request", async () => {
   const n = normalizeInboundEvent(selfMessage("ping", "msg-t11"));
   const draft = buildDeterministicDraft(n, config);
   const actionId = buildActionRequestId("msg-t11");
-  const r1 = requestOutboundSend({ config, normalized: n, draftText: draft.text, actionRequestId: actionId });
+  const r1 = requestOutboundSendAuthorized({ config, normalized: n, draftText: draft.text, actionRequestId: actionId });
   assert.equal(r1.enqueued, true);
   const r2 = requestOutboundSend({ config, normalized: n, draftText: draft.text, actionRequestId: actionId });
   assert.equal(r2.idempotent_skip, true);
@@ -428,7 +432,7 @@ test("12_outbox_backoff", async () => {
   ensureStateDirs(config);
   const n = normalizeInboundEvent(selfMessage("ping", "msg-t12"));
   const draft = buildDeterministicDraft(n, config);
-  requestOutboundSend({
+  requestOutboundSendAuthorized({
     config,
     normalized: n,
     draftText: draft.text,
@@ -611,7 +615,7 @@ test("18_revoke_blocks_drain", async () => {
   ensureStateDirs(config);
   const n = normalizeInboundEvent(selfMessage("ping", "msg-t18"));
   const draft = buildDeterministicDraft(n, config);
-  const req = requestOutboundSend({
+  const req = requestOutboundSendAuthorized({
     config,
     normalized: n,
     draftText: draft.text,
@@ -694,7 +698,7 @@ test("22_dry_run_drain_no_material", async () => {
   ensureStateDirs(config);
   const n = normalizeInboundEvent(selfMessage("ping", "msg-t22"));
   const draft = buildDeterministicDraft(n, config);
-  requestOutboundSend({
+  requestOutboundSendAuthorized({
     config,
     normalized: n,
     draftText: draft.text,
@@ -914,7 +918,9 @@ test("75c_explicit_invocation_in_self_chat_is_identified", async () => {
   assert.equal(res.turn_admission.trigger, "explicit_invocation");
   assert.equal(res.policy.decision, DECISIONS.SEND);
   assert.equal(res.policy.allow_send, true);
-  assert.equal(res.outbound?.enqueued, true);
+  assert.equal(res.outbound?.enqueued, false);
+  assert.equal(res.outbound?.error, "authorization_missing");
+  assert.equal(res.outbound?.prepared?.action_class, "whatsapp.send");
   assert.ok(res.draft_text_for_local.includes("— agent-jhn-experimental"));
 });
 
@@ -964,7 +970,7 @@ test("75e_unmarked_draft_is_stamped_or_rejected_before_transport", async () => {
   assert.ok(stamped.text.includes("— agent-jhn-experimental"));
 
   const n = normalizeInboundEvent(selfMessage("ping", "msg-75e"));
-  const req = requestOutboundSend({
+  const req = requestOutboundSendAuthorized({
     config,
     normalized: n,
     draftText: unmarked,
@@ -975,6 +981,35 @@ test("75e_unmarked_draft_is_stamped_or_rejected_before_transport", async () => {
   const drained = await drainWhatsappOutbox(config, { transport, dryRun: false });
   assert.equal(drained.sent, 1);
   assert.ok(hasVisibleAgentSignature(transport.getSent()[0].text));
+});
+
+test("171_whatsapp_send_requires_payload_grant", () => {
+  resetAuthorizationStore();
+  const dir = fs.mkdtempSync(path.join(tmpRoot, "t171-"));
+  const config = loadConfig(baseEnv({
+    AGENT_JHN_WHATSAPP_STATE_DIR: dir,
+    AGENT_JHN_WHATSAPP_SEND_ENABLED: "true",
+  }));
+  ensureStateDirs(config);
+  const n = normalizeInboundEvent(selfMessage("ping", "msg-t171"));
+  const draft = buildDeterministicDraft(n, config);
+  const denied = requestOutboundSend({
+    config,
+    normalized: n,
+    draftText: draft.text,
+    actionRequestId: buildActionRequestId("msg-t171"),
+  });
+  assert.equal(denied.enqueued, false);
+  assert.equal(denied.error, "authorization_missing");
+  assert.equal(listPendingOutbox(dir).length, 0);
+  const allowed = requestOutboundSendAuthorized({
+    config,
+    normalized: n,
+    draftText: draft.text,
+    actionRequestId: buildActionRequestId("msg-t171"),
+  });
+  assert.equal(allowed.enqueued, true);
+  assert.equal(listPendingOutbox(dir).length, 1);
 });
 
 test("75f_poisoned_last_self_peer_is_not_a_send_target", async () => {
