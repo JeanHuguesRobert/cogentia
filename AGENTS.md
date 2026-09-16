@@ -4,8 +4,8 @@ subtitle: "Operational guidance and local mandates for JeanHuguesRobert/cogentia
 author: "Jean Hugues Noël Robert, baron Mariani"
 affiliation: "Institut Mariani / C.O.R.S.I.C.A., 1 cours Paoli, F-20250 Corte, Corsica"
 date: "2026-07-12"
-last_modified_at: "2026-09-08"
-version: "1.0"
+last_modified_at: "2026-09-16"
+version: "1.1"
 status: "stable — active"
 license: "CC BY-SA 4.0"
 language: "en"
@@ -30,7 +30,7 @@ review:
   status: "verified"
   reviewed_by:
     - "Jean Hugues Noël Robert"
-  reviewed_at: "2026-09-08"
+  reviewed_at: "2026-09-16"
 ---
 
 # Cogentia local specialization
@@ -56,6 +56,7 @@ Cogentia is the cognitive-infrastructure tooling of the multi-repository corpus:
 - Apply the shared [`Open Commons Default`](instructions/OPEN_COMMONS.shared.md): do not silently introduce package privacy, restrictive licensing, closed publication defaults, or other capture mechanisms for software/data intended as public commons. Privacy and protected data remain separate constraints.
 - Keep `scripts/cogentia.js` dependency-free unless the human principal explicitly authorizes a dependency change.
 - Generated files are projections: change their generator or source, not their generated body by hand.
+- **SQL schema evolution:** when creating or materially modifying a SQL schema that stores semantic or evolving domain state, load and apply [`patterns/packet-backed-projection/PATTERN.md`](patterns/packet-backed-projection/PATTERN.md). Treat columns as the current projection of potentially richer Packet state when applicable; preserve non-projected information on write-back; use row-local revision/history addressing when traceability is useful; correlate genuinely cross-row changes by reference. If the Pattern is deliberately not applicable, record the reason rather than silently assuming a closed relational ontology.
 - Treat `research/agent_configuration_layer.md` as the source doctrine for this instruction architecture.
 - Treat `research/monotonic_mandate_attenuation.md` as the source rule for hierarchical specialization: child configuration may restrict authority and strengthen duties, never widen inherited authority.
 - Run `node scripts/agent-instructions-audit.js` to inventory instruction artefacts and detect drift between shared and local layers.
@@ -95,6 +96,8 @@ Skills recommend procedures and capabilities; they do not grant mandate, replace
 - [`research/monotonic_mandate_attenuation.md`](research/monotonic_mandate_attenuation.md)
 - [`research/agentic_commit_transparency.md`](research/agentic_commit_transparency.md)
 - [`research/optimistic_mainline_governance.md`](research/optimistic_mainline_governance.md)
+- [`patterns/packet-backed-projection/PATTERN.md`](patterns/packet-backed-projection/PATTERN.md)
+- [`patterns/packet-backed-projection/PRIOR_ART.md`](patterns/packet-backed-projection/PRIOR_ART.md)
 - [`docs/update-policy-registry.md`](docs/update-policy-registry.md)
 - [`docs/agent-skills-contract.md`](docs/agent-skills-contract.md)
 - [`skills/continuation-handling/SKILL.md`](skills/continuation-handling/SKILL.md)
