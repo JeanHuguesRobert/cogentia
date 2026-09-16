@@ -1,7 +1,7 @@
 ---
 schema: cogentia.agent_skill/v1
 id: cogentia.side-effect-authorization
-version: 1
+version: 2
 status: experimental
 name: side-effect-authorization
 description: >
@@ -25,48 +25,38 @@ lifecycle_state: active
 PREPARE → EXPOSE → AUTHORIZE → EXECUTE → VERIFY
 ```
 
+The gate is **tracing, mandate, and budget** — not amputating tools.
+Tool availability is not authority. Native Gmail/GitHub/git capacities stay.
+
 Never mint a grant from chat. `authorizationFromUtterance` is always false.
+
+Before any write-class execute (send, comment, commit, push, WhatsApp enqueue):
+
+1. EXPOSE the exact payload (Cogentia `*_prepare` tools, or an equivalent preview).
+2. Mint `side_effect_authorization` bound to that payload (Principal / explicit execute on **that** payload).
+3. EXECUTE with the native tool **or** the Cogentia adapter.
+4. VERIFY: consume the grant, keep the trace (`cogentia.host_capability_trace` / send receipt / git sha).
+
+Reads stay ungated. Drafts are PREPARE, not EXECUTE.
 
 ## Gmail
 
-Do **not** call Grok MCP `gmail__send_message`, `gmail__send_draft`, `gmail__forward_message`, or `gmail__reply_all`. Those tools are denied in this workstation's Grok config.
-
-1. `cogentia_communication_prepare` — show the Principal the exact to/subject/body.
-2. After an explicit execute directive on **that** payload, mint `side_effect_authorization` via Cogentia (`grantSideEffectAuthorization` / CLI).
-3. `cogentia_communication_send` with the prepared envelope and the grant.
-4. Default transport is dry-run (no Google). Replay of the same grant must fail.
-
-Drafts (`gmail__create_draft`) are PREPARE, not EXECUTE.
+`gmail__create_draft` / `list_drafts` / `get_message` are fine without a grant.
+`gmail__send_message` / `send_draft` / `forward` / `reply_all` need a grant on the exact to/subject/body.
+Prefer `cogentia_communication_prepare` then execute (native send or `cogentia_communication_send`).
 
 ## GitHub writes
 
-Do **not** call Grok MCP `github__add_issue_comment`, `github__issue_write`, or other `*_write` GitHub tools. Those are denied in this workstation's Grok config. Reads (`github__issue_read`, `github__list_issues`, …) stay allowed.
-
-1. `cogentia_github_prepare` — show owner/repo/issue and the exact body or state change.
-2. After an explicit execute directive on **that** payload, mint `side_effect_authorization`.
-3. `cogentia_github_write` with the prepared envelope and the grant.
-4. Default transport is dry-run (no GitHub API). Replay must fail.
-
-`git commit` / `git push` are not covered yet.
+`github__issue_read` / `list_issues` are ungated.
+`github__add_issue_comment` / `issue_write` / other writes need a grant on the exact owner/repo/body.
+Prefer `cogentia_github_prepare` then execute.
 
 ## WhatsApp
 
-Agent JHN never calls Baileys `sendMessage` directly. `requestOutboundSend` is the unique enqueue frontier.
-
-1. `prepareWhatsappSend` — EXPOSE `to_jid` and stamped text.
-2. Mint `side_effect_authorization` bound to that payload.
-3. `requestOutboundSend` with the grant. Usage-grant + SEND_ENABLED + policy still apply.
-4. The inbound pipeline does **not** auto-enqueue. Missing grant → `authorization_missing` and a prepared envelope.
-
-Self-chat `SEND_ENABLED` is not a per-payload grant.
+Agent JHN still does not call Baileys `sendMessage` directly. `requestOutboundSend` is the enqueue frontier and requires the grant. Usage-grant + `SEND_ENABLED` + policy still apply. The inbound pipeline does not auto-enqueue.
 
 ## Git commit / push
 
-Do **not** run raw `git commit` or `git push` for corpus work. Those bypass `#171`.
-
-1. `cogentia_git_prepare` — EXPOSE operation, message, files, remote/branch.
-2. Mint `side_effect_authorization` bound to that payload.
-3. `cogentia_git_write` with the prepared envelope and the grant.
-4. Default MCP transport is dry-run. Local transport runs git only after the grant.
-
-`git status` / `git diff` / `git log` remain ungated reads.
+`git status` / `diff` / `log` are ungated.
+`git commit` / `git push` need a grant on the exact message/files/remote.
+Prefer `cogentia_git_prepare` then execute (native git or `cogentia_git_write`).
