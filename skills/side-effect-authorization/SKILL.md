@@ -13,6 +13,7 @@ sources:
   - docs/cogentia-mcp.md
   - instructions/AGENTS.shared.md
   - scripts/lib/side-effect-authorization.js
+  - research/cop_side_effect_packets.md
 document_role: operational
 document_kind: documentation
 visibility: public
@@ -35,7 +36,7 @@ Before any write-class execute (send, comment, commit, push, WhatsApp enqueue):
 1. EXPOSE the exact payload (Cogentia `*_prepare` tools, or an equivalent preview).
 2. Mint `side_effect_authorization` bound to that payload (Principal / explicit execute on **that** payload).
 3. EXECUTE with the native tool **or** the Cogentia adapter.
-4. VERIFY: consume the grant, keep the trace (`cogentia.host_capability_trace` / send receipt / git sha).
+4. VERIFY: consume the grant; the decision packet hops to `effect-verified` (`envelope.status: completed`). Do not invent a third trace protocol.
 
 Reads stay ungated. Drafts are PREPARE, not EXECUTE.
 

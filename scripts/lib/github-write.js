@@ -2,7 +2,7 @@
  * Cogentia-owned GitHub write adapter for #171 Phase C.
  * Default transport is dry-run and does not call GitHub.
  */
-import { executeAuthorizedEffect } from "./side-effect-authorization.js";
+import { executeAuthorizedEffect, attachExposePacket } from "./side-effect-authorization.js";
 
 export const GITHUB_PREPARE_KIND = "cogentia.github_prepare/v1";
 
@@ -77,7 +77,7 @@ export function prepareGithubWrite({
     body: body ?? null,
     state: state || null,
   };
-  return {
+  return attachExposePacket({
     kind: GITHUB_PREPARE_KIND,
     action_class: "github.write",
     target: {
@@ -89,7 +89,7 @@ export function prepareGithubWrite({
     exposed_mutation: { ...payload },
     phase: "EXPOSE",
     note: "This is not a GitHub write. A side_effect_authorization bound to this payload is required to execute.",
-  };
+  });
 }
 
 export async function executeGithubWrite({

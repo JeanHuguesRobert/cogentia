@@ -13,6 +13,7 @@ import {
   setAuthorizationStore,
   createMemoryStore,
 } from "./side-effect-store.js";
+import { asDecisionGrant, asExposeContinuation } from "./side-effect-packets.js";
 
 export const AUTHORIZATION_KIND = "cogentia.side_effect_authorization/v1";
 export { getAuthorizationStore, setAuthorizationStore, createMemoryStore };
@@ -118,18 +119,30 @@ export function grantSideEffectAuthorization({
   material_parameters = {},
 } = {}) {
   const now = Date.now();
+  const authorization_id = `sea_${randomUUID()}`;
+  const granted_at = new Date(now).toISOString();
+  const payload_hash = canonicalPayloadHash(payload);
   const grant = {
     kind: AUTHORIZATION_KIND,
-    authorization_id: `sea_${randomUUID()}`,
+    authorization_id,
     principal: principal || null,
     status: "granted",
     action_class,
     target: target || {},
-    payload_hash: canonicalPayloadHash(payload),
+    payload_hash,
     material_parameters,
-    granted_at: new Date(now).toISOString(),
+    granted_at,
     expires_at: new Date(now + expires_in_ms).toISOString(),
     single_use,
+    packet: asDecisionGrant({
+      authorization_id,
+      principal,
+      action_class,
+      target: target || {},
+      payload_hash,
+      single_use,
+      granted_at,
+    }),
   };
   getAuthorizationStore().putGrant(grant);
   return grant;
@@ -183,6 +196,14 @@ export function validateSideEffectAuthorization(authorization, expected = {}) {
   return { ok: true, authorization_id: authorization.authorization_id };
 }
 
+export function attachExposePacket(prepared, opts = {}) {
+  if (!prepared?.payload) return prepared;
+  return asExposeContinuation(
+    { ...prepared, payload_hash: prepared.payload_hash || canonicalPayloadHash(prepared.payload) },
+    opts
+  );
+}
+
 export function consumeSideEffectAuthorization(authorization) {
   if (!authorization?.authorization_id) return;
   if (authorization.single_use === false) return;
@@ -211,10 +232,15 @@ export async function executeAuthorizedEffect({
   validateSideEffectAuthorization(authorization, { action_class, target, payload });
   const result = await run();
   consumeSideEffectAuthorization(authorization);
+  const stored = getAuthorizationStore().getGrant(authorization.authorization_id);
   return {
     ok: true,
     authorization_id: authorization.authorization_id,
-    verification: { ok: true, executed_at: new Date().toISOString() },
+    verification: {
+      ok: true,
+      executed_at: new Date().toISOString(),
+      packet: stored?.packet || authorization.packet || null,
+    },
     result,
   };
 }

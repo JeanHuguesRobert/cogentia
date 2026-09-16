@@ -13,6 +13,7 @@ visibility: public
 lifecycle_state: active
 update_policy: UP-DEFAULT-REVIEWED
 related:
+  - "../research/cop_side_effect_packets.md"
   - "../docs/cogentia-mcp.md"
   - "../docs/cdp_hosted_browser_session_bridge.md"
   - "../docs/cogentia-magistral-boundary.md"
@@ -117,7 +118,7 @@ Environment for a Cogentia-MCP process that may invoke host tools:
 
 Writes also require a `side_effect_authorization` object (`cogentia.side_effect_authorization/v1`). Absence → `authorization_missing` before DC is called. Consumed tokens cannot be replayed.
 
-The same module (`scripts/lib/side-effect-authorization.js`) is the #171 choke point. Grants persist in `~/.cogentia/side-effect-authorization.json` (cross-process). The gate is tracing, mandate, and budget — not removing tools. `POST /ops/route/action` requires a matching grant only when the invoke is a mutation (`repl: true` or a write-class capability). Ordinary model asks are ungated. Cogentia `*_prepare` / execute adapters exist for Gmail, GitHub writes, git, and WhatsApp enqueue. Native provider tools remain available; they are not authority. WhatsApp `requestOutboundSend` still requires a payload-bound grant (unique send frontier, not a Grok deny list).
+The same module (`scripts/lib/side-effect-authorization.js`) is the #171 choke point. Grants persist as Cognitive Packets (decision + hops) in `~/.cogentia/side-effect-authorization.json` (cross-process). Mapping: [cop_side_effect_packets.md](../research/cop_side_effect_packets.md). The gate is tracing, mandate, and budget — not removing tools. `POST /ops/route/action` requires a matching grant only when the invoke is a mutation (`repl: true` or a write-class capability). Ordinary model asks are ungated. Cogentia `*_prepare` / execute adapters exist for Gmail, GitHub writes, git, and WhatsApp enqueue. Native provider tools remain available; they are not authority. WhatsApp `requestOutboundSend` still requires a payload-bound grant (unique send frontier, not a Grok deny list).
 
 ## Upstream observed
 

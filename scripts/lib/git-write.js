@@ -3,7 +3,7 @@
  * Default transport is dry-run. Local transport runs git in a given cwd.
  */
 import { execFileSync } from "node:child_process";
-import { executeAuthorizedEffect } from "./side-effect-authorization.js";
+import { executeAuthorizedEffect, attachExposePacket } from "./side-effect-authorization.js";
 
 export const GIT_PREPARE_KIND = "cogentia.git_prepare/v1";
 export const GIT_WRITE_OPERATIONS = new Set(["commit", "push"]);
@@ -86,7 +86,7 @@ export function prepareGitWrite({
     remote: op === "push" ? String(remote || "origin") : null,
     branch: op === "push" ? String(branch || "HEAD") : null,
   };
-  return {
+  return attachExposePacket({
     kind: GIT_PREPARE_KIND,
     action_class: op === "push" ? "git.push" : "git.commit",
     target: {
@@ -98,7 +98,7 @@ export function prepareGitWrite({
     exposed_mutation: { ...payload },
     phase: "EXPOSE",
     note: "This is not a git mutation. A side_effect_authorization bound to this payload is required to execute.",
-  };
+  });
 }
 
 export async function executeGitWrite({

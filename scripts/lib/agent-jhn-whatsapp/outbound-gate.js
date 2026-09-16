@@ -29,6 +29,7 @@ import {
   grantSideEffectAuthorization,
   validateSideEffectAuthorization,
   consumeSideEffectAuthorization,
+  attachExposePacket,
 } from "../side-effect-authorization.js";
 
 const OUTBOX_KIND = "whatsapp.send";
@@ -188,7 +189,7 @@ export function prepareWhatsappSend({
     text: stamped.text,
     action_request_id,
   };
-  return {
+  return attachExposePacket({
     ok: true,
     kind: "cogentia.whatsapp_prepare/v1",
     action_class: "whatsapp.send",
@@ -202,7 +203,7 @@ export function prepareWhatsappSend({
     payload,
     exposed_message: { to_jid: toJid, text: stamped.text },
     note: "This is not a WhatsApp send. A side_effect_authorization bound to this payload is required to enqueue.",
-  };
+  });
 }
 
 export function mintWhatsappSendAuthorization(prepared, { principal } = {}) {

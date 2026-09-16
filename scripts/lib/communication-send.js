@@ -2,7 +2,7 @@
  * Cogentia-owned communication.send (Gmail) adapter for #171 Phase C.
  * Default transport records a dry-run receipt and does not talk to Google.
  */
-import { executeAuthorizedEffect } from "./side-effect-authorization.js";
+import { executeAuthorizedEffect, attachExposePacket } from "./side-effect-authorization.js";
 
 export const COMMUNICATION_PREPARE_KIND = "cogentia.communication_prepare/v1";
 
@@ -55,7 +55,7 @@ export function prepareCommunicationSend({
     subject: String(subject),
     body,
   };
-  return {
+  return attachExposePacket({
     kind: COMMUNICATION_PREPARE_KIND,
     action_class: "gmail.send",
     target: { recipient: recipients.join(",") },
@@ -69,7 +69,7 @@ export function prepareCommunicationSend({
     },
     phase: "EXPOSE",
     note: "This is not a send. A side_effect_authorization bound to this payload is required to execute.",
-  };
+  });
 }
 
 export async function executeCommunicationSend({

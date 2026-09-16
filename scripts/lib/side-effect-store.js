@@ -6,6 +6,7 @@
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
+import { withVerifiedHop } from "./side-effect-packets.js";
 
 export function createMemoryStore() {
   const grants = new Map();
@@ -25,7 +26,7 @@ export function createMemoryStore() {
     markConsumed(id) {
       const row = grants.get(id) || { authorization_id: id };
       row.consumed_at = new Date().toISOString();
-      grants.set(id, row);
+      grants.set(id, withVerifiedHop(row, row.consumed_at));
     },
     reset() {
       grants.clear();
@@ -88,7 +89,7 @@ export function createFileStore(filePath) {
       data.grants = data.grants || {};
       const prev = data.grants[id] || { authorization_id: id };
       prev.consumed_at = new Date().toISOString();
-      data.grants[id] = prev;
+      data.grants[id] = withVerifiedHop(prev, prev.consumed_at);
       save(data);
     },
     reset() {
