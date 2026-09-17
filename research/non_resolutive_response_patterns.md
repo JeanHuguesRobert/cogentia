@@ -3,7 +3,7 @@ title: "Non-Resolutive Response Patterns"
 subtitle: "Detect when an answer moves attention without materially reducing the uncertainty that motivated the question"
 author: "Jean Hugues Noël Robert, baron Mariani"
 date: "2026-09-17"
-version: "0.2"
+version: "0.3"
 status: "working-paper"
 license: "CC BY-SA 4.0"
 language: "en"
@@ -28,6 +28,9 @@ tags:
   - occam
   - fragmentation
   - canonicalization
+  - question-preservation
+  - answer-drift
+  - frame-recovery
 related_documents:
   - "research/reality_probe_selection.md"
   - "research/epistemic_assimilation_and_salience.md"
@@ -464,3 +467,176 @@ This condition does not prove obstruction. It does justify a deliberate **canoni
 Compact formula:
 
 > **Track uncertainty, track fragmentation, and preserve one canonical object until Reality requires more.**
+
+---
+
+## 13. Question Preservation, Answer Drift and Frame Recovery
+
+A second family of non-resolution occurs when the response remains relevant to the broad context but answers a **different question** from the one that was asked.
+
+Canonical form:
+
+```text
+Question Q is asked
+    ↓
+Response R is relevant to the surrounding matter
+    ↓
+R actually answers Q'
+    ↓
+Q remains unresolved
+```
+
+Working terms:
+
+- **Question Substitution** — the original question is implicitly replaced by another one;
+- **Answer Drift** — the response drifts away from the requested decision-relevant atoms while remaining contextually plausible;
+- **Frame Recovery** — the reasoner deliberately restores the original question as the active frame.
+
+The key discipline is **Question Preservation**:
+
+> **A consequential question remains canonically active until it is answered, deliberately abandoned, or made irrelevant by new facts. A responder's reframing does not silently replace it.**
+
+### 13.1 Canonical question lock
+
+Before evaluating a consequential answer, freeze the target question in a compact canonical form, preferably atomized:
+
+```text
+Q1: ... ?
+Q2: ... ?
+Q3: ... ?
+```
+
+Then evaluate the response only against these atoms.
+
+Relevant information that does not answer them belongs in a separate bucket:
+
+```text
+useful_adjacent_information:
+- ...
+```
+
+Do not promote adjacent information into an answer merely because it is true, authoritative, lengthy or procedurally important.
+
+### 13.2 Detecting substitution
+
+A response should trigger a question-alignment check when:
+
+- it answers a neighboring legal, technical or procedural question;
+- it explains what another actor decided instead of what the queried actor did;
+- it restates background instead of supplying the requested fact;
+- it changes from factual verification to interpretation;
+- it changes from actor A's actions to actor B's decision;
+- it introduces a broader controversy while the requested atom remains unanswered.
+
+The test is simple:
+
+> **If R were perfectly true, would Q still remain unanswered?**
+
+If yes, the response may be useful but is not resolving Q.
+
+### 13.3 Frame Recovery
+
+When Question Substitution or Answer Drift is detected, do not get cognitively recruited into the substitute frame.
+
+Canonical instruction:
+
+> **Do not answer the answer. Restore the question.**
+
+French form:
+
+> **Ne pas répondre à la réponse à côté ; rétablir la question.**
+
+The recovery move should be smaller than the previous request, not larger:
+
+```text
+R answers Q'
+    ↓
+acknowledge useful Q' information if necessary
+    ↓
+state that Q concerns a different category
+    ↓
+restate only unresolved Q atoms
+    ↓
+constrain answer format when useful
+```
+
+For example:
+
+```text
+Q1 ? → yes / no / unavailable
+Q2 ? → yes / no / unavailable
+Q3 ? → yes / no / unavailable
+```
+
+This reduces the semantic surface available for another drift while preserving a courteous path to a direct answer.
+
+### 13.4 Do not enter an infinite recovery loop
+
+Question Preservation does not require endless repetition.
+
+Use a bounded escalation pattern:
+
+```text
+first drift
+→ precise reformulation
+
+second drift
+→ constrained answer format / explicit residue
+
+repeated drift
+→ stop conversational loop
+→ preserve unanswered atoms
+→ select a different Reality Probe
+```
+
+A different Reality Probe may be another source, document request, technical trace, hierarchical route, formal access mechanism, or independent evidence channel.
+
+Repeated non-alignment still does **not** prove intent. It changes the optimal probe, not the epistemic status of motive.
+
+### 13.5 FractaCognition risk: responder-frame capture
+
+The metacognitive danger is not merely receiving an irrelevant answer. It is allowing that answer to redefine the problem being reasoned about.
+
+Failure pattern:
+
+```text
+Q asked
+→ R answers Q'
+→ reasoner reacts to R
+→ discussion moves deeper into Q'
+→ Q disappears from working memory
+```
+
+This is **responder-frame capture**.
+
+Countermeasure:
+
+```text
+preserve Q
+→ classify R
+→ store adjacent information separately
+→ restore Q
+→ preserve residue
+```
+
+The reasoner should therefore track a fourth state in consequential exchanges:
+
+```text
+question frame
+    what exact uncertainty is currently entitled to closure?
+```
+
+### 13.6 Compact doctrine
+
+```text
+Preserve the question.
+Map the answer.
+Separate adjacent information.
+Restore the frame when it drifts.
+Do not debate the substitute question unless it independently matters.
+Stop repeating when a different Reality Probe has higher expected value.
+```
+
+Compact formula:
+
+> **Do not answer the answer. Restore the question, preserve the residue, then choose the next probe.**
