@@ -1,7 +1,7 @@
 ---
 name: response-resolution-check
-description: Detect whether a response actually resolves the question asked, preserve unresolved epistemic residue, distinguish effect from intent, and select the next Reality Probe when needed.
-version: 0.1.0
+description: Detect whether a response actually resolves the question asked, preserve unresolved epistemic residue, detect unexplained external fragmentation, distinguish effect from intent, and select the next Reality Probe when needed.
+version: 0.2.0
 status: experimental
 document_role: "operational"
 document_kind: "documentation"
@@ -17,13 +17,17 @@ classification_confidence: "strong"
 
 ## Purpose
 
-Prevent agents from confusing conversational movement with epistemic progress.
+Prevent agents from confusing conversational movement with epistemic progress, and prevent external fragmentation from silently fragmenting the internal cognitive model.
 
 Use this Skill when a response, document, portal, referral, institutional reply, support answer, expert answer, or agent output must be assessed against a prior question whose unresolved residue matters.
 
-Canonical question:
+Canonical questions:
 
 > **Did this response materially reduce the uncertainty attached to the question actually asked?**
+
+and, when the interaction creates additional dossiers, threads, identifiers, portals or procedural containers:
+
+> **What real distinction makes each additional entity necessary?**
 
 ## Invariants
 
@@ -33,10 +37,12 @@ Canonical question:
 4. A referral is not a resolution until the referred source has been checked.
 5. Preserve unresolved residue explicitly.
 6. Distinguish observable effect from hypothesized intent.
-7. Never infer evasion, obstruction, bad faith, delay strategy, or manipulation solely from non-resolution.
+7. Never infer evasion, obstruction, bad faith, delay strategy, manipulation or strategic fragmentation solely from non-resolution or multiplication of entities.
 8. Do not close a consequential question merely because a response was received.
 9. Prefer the next bounded Reality Probe that directly targets the residue.
 10. Stop probing when the residue is resolved, deliberately abandoned, or no longer decision-relevant.
+11. When external entities multiply, test whether the multiplication corresponds to a real substantive distinction.
+12. Do not import external fragmentation into the internal world model without first canonicalizing the underlying practical matter.
 
 ## Workflow
 
@@ -118,9 +124,68 @@ observed pattern: ...
 intent: unknown
 ```
 
-Only raise hypotheses such as accidental, procedural, defensive, dilatory, strategic or evasive when useful, and label them as hypotheses unless independently evidenced.
+Only raise hypotheses such as accidental, procedural, technical, defensive, dilatory, strategic or evasive when useful, and label them as hypotheses unless independently evidenced.
 
-### 8. Choose the next Reality Probe
+### 8. Run the External Occam Check when entities multiply
+
+Trigger this check when one practical matter appears as several:
+
+- case numbers;
+- email or messaging threads;
+- identifiers;
+- portals;
+- procedural containers;
+- duplicate-looking document sets;
+- intermediaries or routing stages.
+
+Do not treat plurality itself as an error. Apply four tests:
+
+```text
+necessity:
+  What real distinction requires the additional entity?
+
+continuity:
+  Which parties, recipients, documents, timestamps and references survived the split?
+
+recomposition:
+  Can the original practical matter be reconstructed unambiguously from the fragments?
+
+intent separation:
+  What is observed, and what remains only a hypothesis about cause?
+```
+
+Classify the fragmentation as:
+
+```text
+justified
+possibly justified / not yet explained
+unexplained entity proliferation
+```
+
+The last class means only that necessity has not yet been established.
+
+### 9. Canonicalize before reasoning further
+
+When external systems fragment one matter, represent one canonical internal object and attach external projections to it:
+
+```text
+canonical matter X
+├── projection A
+├── projection B
+├── thread C
+├── portal D
+└── document set E
+```
+
+Do not create separate internal matters merely because external systems use separate containers.
+
+Split the canonical object only when a substantive distinction is evidenced.
+
+Canonical instruction:
+
+> **Do not import external fragmentation into the cognitive model. Canonicalize first.**
+
+### 10. Choose the next Reality Probe
 
 Ask:
 
@@ -128,8 +193,9 @@ Ask:
 - What source is most likely to contain it?
 - What is the smallest precise request that would expose whether it exists?
 - Can the next request be phrased so that another displacement becomes visible rather than merely generating more text?
+- If entities have multiplied, what minimal question would establish whether their distinction is real and necessary?
 
-Prefer a probe that directly references the surviving residue.
+Prefer a probe that directly references the surviving residue and avoids creating unnecessary new containers.
 
 ## Output contract
 
@@ -153,17 +219,33 @@ response_resolution_check:
   residual_uncertainty:
     - ...
   classification: resolutive|partially_resolutive|non_resolutive|response_displacement
+  external_occam:
+    triggered: true|false
+    canonical_matter: ...
+    external_entities:
+      - ...
+    necessity_status: justified|possibly_justified|unexplained
+    continuity_losses:
+      - ...
+    recomposition_possible: true|false|unclear
   intent_status: unknown|independently_evidenced
   next_reality_probe: ...
 ```
 
 This schema is illustrative, not mandatory storage format.
 
-## Human mnemonic
+## Human mnemonics
 
 The informal French motif **« 1, 2, 3, Soleil ! »** may be used as a recognition aid for sequences where apparent progress repeatedly stops before the decisive information.
 
-Do not use the mnemonic as an accusation. The canonical analytical terms are **non-resolutive response** and **response displacement**.
+The informal analogy **« diviser pour régner »** may be used only as a warning about a possible *effect of fragmentation* on cognition: increased reconciliation cost, loss of context or diluted responsibility. It must not be used to attribute strategy or intent without independent evidence.
+
+Canonical analytical terms are:
+
+- **non-resolutive response**;
+- **response displacement**;
+- **unexplained entity proliferation**;
+- **canonicalization**.
 
 ## Anti-patterns
 
@@ -176,6 +258,8 @@ Avoid:
 - `residue amnesia`;
 - `intent inflation`;
 - `infinite referral loop`;
+- `fragmentation-import` — reproduce external dossier/thread proliferation inside the internal model without necessity;
+- `entity-count-as-evidence` — treat the number of external containers as proof of strategy;
 - asking a broader follow-up when a narrower residual atom can be requested directly.
 
 ## Relationship to Corpus doctrine
@@ -184,7 +268,9 @@ This Skill operationalizes:
 
 - `research/non_resolutive_response_patterns.md`;
 - `research/reality_probe_selection.md`;
-- `research/epistemic_assimilation_and_salience.md`.
+- `research/epistemic_assimilation_and_salience.md`;
+- `research/simplicite_action.md`;
+- `research/ideas_to_explore_as_issues.md`.
 
 The general loop is:
 
@@ -195,9 +281,19 @@ question
 → preserve residue
 → follow justified referral
 → measure actual uncertainty reduction
+→ detect external fragmentation
+→ canonicalize the practical matter
 → next Reality Probe
 ```
 
 ## Success criterion
 
-The Skill succeeds when a later agent can distinguish, without reconstructing the whole interaction, **what was asked, what was actually learned, what remains unknown, and why the next probe targets that residue**.
+The Skill succeeds when a later agent can distinguish, without reconstructing the whole interaction:
+
+- what was asked;
+- what was actually learned;
+- what remains unknown;
+- which external entities represent the same underlying practical matter;
+- whether their multiplication has an established necessity;
+- what context was lost across the splits;
+- and why the next probe targets the remaining residue without multiplying entities unnecessarily.
