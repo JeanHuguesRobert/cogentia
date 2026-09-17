@@ -19,6 +19,7 @@ related:
   - "../docs/cogentia-magistral-boundary.md"
   - "../patterns/capability-symmetry/PATTERN.md"
 related_issues:
+  - "https://github.com/JeanHuguesRobert/cogentia/issues/192"
   - "https://github.com/JeanHuguesRobert/cogentia/issues/184"
   - "https://github.com/JeanHuguesRobert/cogentia/issues/171"
   - "https://github.com/JeanHuguesRobert/cogentia/issues/170"
@@ -180,7 +181,7 @@ Commits on `main`: `a87116d`, `1c1fdd5`, `fdc9d1b`, `64b995e`, plus this documen
 |---|---|
 | `scripts/lib/mcp-stdio-client.js` | NDJSON (and Content-Length) MCP stdio client |
 | `scripts/lib/desktop-commander-provider.js` | Provider adapter + extracted-binary discovery |
-| `scripts/lib/host-capability-router.js` | Target/provider routing, sandbox, traces |
+| `scripts/lib/host-capability-router.js` | Target/provider routing, filesystem boundary, traces |
 | `scripts/lib/side-effect-authorization.js` | #171 prepare/expose/authorize/execute/verify |
 | `scripts/lib/v3-modules.js` | `provider` / `moduleId` selection |
 | `scripts/lib/cogentia-mcp-core.js` | `cogentia_host_fs_*` tools |
@@ -192,7 +193,7 @@ Traces use `cogentia.host_capability_trace/v1` (capability, target, provider, up
 ## Known limitations
 
 - Live `host.fs.search` was mapped and unit-tested against the fake server; the live harness did not exercise search.
-- MCP `callTool` traces often have null `actor` / `principal` / `mandate` unless the caller sets them.
+- While #184 traces permitted null `actor` / `principal` / `mandate`, #192 strictly requires authenticated identity and mandate context, failing closed with `identity_required` / `mandate_required` before reaching providers.
 - `host.process.run` is mapped and gated as effectful; it is not an MCP tool.
 - `npx -y` remains a poor Windows launcher (native deps, corrupt cache if interrupted).
 - v3 `invokeCapability` still first-matches when several modules provide a capability and no `provider` is passed.
