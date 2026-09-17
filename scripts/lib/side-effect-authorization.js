@@ -14,6 +14,7 @@ import {
   createMemoryStore,
 } from "./side-effect-store.js";
 import { asDecisionGrant, asExposeContinuation } from "./side-effect-packets.js";
+import { maybeRecordCopEffectSpend } from "./cop-surface-accounting.js";
 
 export const AUTHORIZATION_KIND = "cogentia.side_effect_authorization/v1";
 export { getAuthorizationStore, setAuthorizationStore, createMemoryStore };
@@ -256,7 +257,7 @@ export function consumeSideEffectAuthorization(authorization, extra = {}) {
  * VERIFY after a native execute. Capacities stay; this consumes the grant
  * and hops the decision packet. Does not call Gmail/GitHub/git.
  */
-export function recordSideEffectExecution({
+export async function recordSideEffectExecution({
   authorization,
   action_class,
   target,
@@ -266,6 +267,12 @@ export function recordSideEffectExecution({
   validateSideEffectAuthorization(authorization, { action_class, target, payload });
   consumeSideEffectAuthorization(authorization, { receipt });
   const stored = getAuthorizationStore().getGrant(authorization.authorization_id);
+  const cop_spend = await maybeRecordCopEffectSpend({
+    action_class,
+    authorization_id: authorization.authorization_id,
+    payload_hash: authorization.payload_hash || canonicalPayloadHash(payload),
+    surface: "effect",
+  });
   return {
     ok: true,
     authorization_id: authorization.authorization_id,
@@ -273,6 +280,7 @@ export function recordSideEffectExecution({
       ok: true,
       executed_at: stored?.consumed_at || new Date().toISOString(),
       packet: stored?.packet || null,
+      cop_spend,
     },
   };
 }
@@ -300,6 +308,12 @@ export async function executeAuthorizedEffect({
   const result = await run();
   consumeSideEffectAuthorization(authorization);
   const stored = getAuthorizationStore().getGrant(authorization.authorization_id);
+  const cop_spend = await maybeRecordCopEffectSpend({
+    action_class,
+    authorization_id: authorization.authorization_id,
+    payload_hash: authorization.payload_hash || canonicalPayloadHash(payload),
+    surface: "effect",
+  });
   return {
     ok: true,
     authorization_id: authorization.authorization_id,
@@ -307,6 +321,7 @@ export async function executeAuthorizedEffect({
       ok: true,
       executed_at: new Date().toISOString(),
       packet: stored?.packet || authorization.packet || null,
+      cop_spend,
     },
     result,
   };

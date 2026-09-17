@@ -43,6 +43,8 @@ const executed = await executeAuthorizedEffect({
   run: () => tx.send(prepared.payload),
 });
 assert.equal(executed.ok, true);
+assert.ok(executed.verification.cop_spend);
+assert.equal(executed.verification.cop_spend.ok, true);
 assert.equal(executed.verification.packet.envelope.status, "completed");
 assert.ok(executed.verification.packet.envelope.hops.some((h) => h.route_reason === "effect-verified"));
 const stored = getAuthorizationStore().getGrant(auth.authorization_id);
@@ -64,7 +66,7 @@ const nativeAuth = grantSideEffectAuthorization({
   target: nativePrep.target,
   payload: nativePrep.payload,
 });
-const recorded = recordSideEffectExecution({
+const recorded = await recordSideEffectExecution({
   authorization: nativeAuth,
   action_class: "gmail.send",
   target: nativePrep.target,
@@ -72,11 +74,13 @@ const recorded = recordSideEffectExecution({
   receipt: { transport: "gmail", message_id: "msg-1", body: "secret-body-must-not-trace" },
 });
 assert.equal(recorded.ok, true);
+assert.ok(recorded.verification.cop_spend);
+assert.equal(recorded.verification.cop_spend.ok, true);
 const hop = recorded.verification.packet.envelope.hops.find((h) => h.route_reason === "effect-verified");
 assert.equal(hop.receipt.message_id, "msg-1");
 assert.equal(hop.receipt.body, undefined);
 assert.equal(JSON.stringify(recorded.verification.packet).includes("secret-body-must-not-trace"), false);
-assert.throws(
+await assert.rejects(
   () => recordSideEffectExecution({
     authorization: nativeAuth,
     action_class: "gmail.send",
@@ -111,6 +115,8 @@ const via = await core.callTool("cogentia_side_effect_record", {
   receipt: { transport: "gmail", message_id: "m2" },
 });
 assert.equal(via.ok, true);
+assert.ok(via.verification.cop_spend);
+assert.equal(via.verification.cop_spend.ok, true);
 assert.equal(via.verification.packet.envelope.status, "completed");
 
 console.log(JSON.stringify({ ok: true, test: "side_effect_packets" }));

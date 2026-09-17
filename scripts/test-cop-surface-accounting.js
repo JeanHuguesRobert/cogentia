@@ -10,6 +10,7 @@ import {
   clearPacketStoreForTests,
   resolvePacketById,
   isCopAccountingEnabled,
+  maybeRecordCopEffectSpend,
 } from "./lib/cop-surface-accounting.js";
 
 clearPacketStoreForTests();
@@ -53,6 +54,18 @@ assert.equal(projection.own_spend, "0.00000000");
 assert.ok(Number(projection.consolidated_spend) > 0);
 assert.equal(projection.downstream.length, 1);
 assert.equal(resolvePacketById(synth.packet_id)?.packet_id, synth.packet_id);
+
+const effectSpend = await maybeRecordCopEffectSpend({
+  action_class: "gmail.send",
+  authorization_id: "auth-test-1",
+  payload_hash: "sha256:testpayload",
+  surface: "effect",
+});
+assert.equal(effectSpend.ok, true);
+assert.equal(effectSpend.reason, "recorded");
+assert.equal(effectSpend.spendingEntry.spend_id, "effect:auth-test-1");
+assert.equal(effectSpend.spendingEntry.capability, "effect/gmail.send");
+assert.equal(effectSpend.spendingEntry.evidence_hash, "sha256:testpayload");
 
 console.log("test-cop-surface-accounting: ok");
 console.log(JSON.stringify({

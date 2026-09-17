@@ -25,6 +25,8 @@ const DEFAULT_MANDATE_GUIDE = "mandate:fractavolta-public-guide:readonly";
 const DEFAULT_MANDATE_WHATSAPP = "mandate:agent-jhn-whatsapp:experimental";
 const DEFAULT_TREATMENT_GUIDE = "treatment:guide-chat-turn";
 const DEFAULT_TREATMENT_WHATSAPP = "treatment:agent-jhn-whatsapp-turn";
+const DEFAULT_MANDATE_EFFECT = "mandate:cogentia-external-effect:experimental";
+const DEFAULT_TREATMENT_EFFECT = "treatment:external-effect-verify";
 
 /**
  * Resolve and load COP packet accounting from the inseme monorepo (or override).
@@ -137,9 +139,13 @@ export async function openSurfaceTurnPacket(options = {}) {
 
   const surface = String(options.surface || "guide");
   const mandate_id = options.mandate_id
-    || (surface === "whatsapp" ? DEFAULT_MANDATE_WHATSAPP : DEFAULT_MANDATE_GUIDE);
+    || (surface === "whatsapp" ? DEFAULT_MANDATE_WHATSAPP
+      : surface === "effect" ? DEFAULT_MANDATE_EFFECT
+      : DEFAULT_MANDATE_GUIDE);
   const treatment_id = options.treatment_id
-    || (surface === "whatsapp" ? DEFAULT_TREATMENT_WHATSAPP : DEFAULT_TREATMENT_GUIDE);
+    || (surface === "whatsapp" ? DEFAULT_TREATMENT_WHATSAPP
+      : surface === "effect" ? DEFAULT_TREATMENT_EFFECT
+      : DEFAULT_TREATMENT_GUIDE);
 
   const packet = cop.createCognitivePacket({
     mandate_id,
@@ -150,7 +156,9 @@ export async function openSurfaceTurnPacket(options = {}) {
       || undefined,
     initial_node_id: options.node_id || process.env.COGENTIA_FRACTANET_NODE_ID || "node:fracta:main",
     initial_instance_id: options.instance_id
-      || (surface === "whatsapp" ? "agent:jhn:whatsapp" : "agent:jhn:guide"),
+      || (surface === "whatsapp" ? "agent:jhn:whatsapp"
+        : surface === "effect" ? "agent:effect"
+        : "agent:jhn:guide"),
     disclosure_class: options.disclosure_class || "public",
     payload: {
       surface,
@@ -572,6 +580,53 @@ async function maybePersistAccountingEvent(transactionEvent, packet, extras = {}
     return result || { ok: true };
   } catch (error) {
     return { ok: false, error: String(error?.message || error).slice(0, 160) };
+  }
+}
+
+/**
+ * VERIFY spend: one COP own-spend line for an external effect.
+ * Does not invent a parallel ledger. No-op if kernel disabled or missing.
+ * Zero token cost; the line is the effect count (evidence = payload hash).
+ */
+export async function maybeRecordCopEffectSpend(details = {}) {
+  if (!isCopAccountingEnabled()) {
+    return { ok: false, reason: "disabled" };
+  }
+  try {
+    const opened = await openSurfaceTurnPacket({
+      surface: details.surface || "effect",
+      mandate_id: details.mandate_id,
+      treatment_id: details.treatment_id,
+      question: details.action_class || "external-effect",
+      instance_id: details.instance_id || "agent:effect",
+    });
+    if (!opened.ok || !opened.packet || !opened.cop) {
+      return { ok: false, reason: opened.reason || "cop_unavailable", error: opened.error };
+    }
+    const spent = recordPacketProviderSpend(opened.packet, opened.cop, {
+      provider: "cogentia-effect",
+      model: String(details.action_class || "external-effect"),
+      capability: `effect/${details.action_class || "write"}`,
+      prompt_tokens: 0,
+      completion_tokens: 0,
+      allow_empty: true,
+      force_zero: true,
+      evidence_hash: details.payload_hash || details.authorization_id || undefined,
+      spend_id: details.authorization_id ? `effect:${details.authorization_id}` : undefined,
+      surface: details.surface || "effect",
+      hop: {
+        route_reason: "effect-verified",
+        instance_id: details.instance_id || "agent:effect",
+      },
+    });
+    return {
+      ok: spent.ok === true,
+      reason: spent.ok ? "recorded" : spent.error,
+      packet_id: opened.packet.packet_id,
+      spendingEntry: spent.spendingEntry || null,
+    };
+  } catch (error) {
+    return { ok: false, reason: String(error?.message || error).slice(0, 240) };
   }
 }
 
