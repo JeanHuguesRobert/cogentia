@@ -62,6 +62,11 @@ import {
   validatePossibleMatrixFile,
   formatPossibleMatrixValidation,
 } from "./lib/possible-matrix-validator.js";
+import {
+  groupCollection,
+  crossReferenceContinuations,
+  formatTriage,
+} from "./lib/triage.js";
 
 const COGENTIA_VERSION = "0.3.0";
 const VERSION = "3.0.0";
@@ -415,6 +420,8 @@ async function main() {
       return cmdAgent(argv.shift() || "start");
     case "consolidate":
       return cmdConsolidate();
+    case "triage":
+      return cmdTriage(optionalPositional("all"));
     case "classify":
       return cmdClassify(argv.shift() || "plan");
     case "frontmatter":
@@ -806,13 +813,18 @@ Core commands:
   corpus privacy           Check public views for private/confidential leaks.
   consolidate              Read-only publish-readiness check across corpus, privacy,
                            git drift, worktree noise, continuations, and auto-block safety.
+  triage [repo|all]        Correlated full diagnostic across consolidate, classify,
+                           docs judgments, and active continuations (cogentia#175).
+                           Flags stale continuations and untracked judgments.
+                           Flags: --cancel-stale, --emit-missing, --full,
+                           --group-by <field>, --strict, --json.
   classify plan            Plan idempotent frontmatter classification patches.
   classify apply           Apply missing classification fields from a fresh plan.
   classify verify          Verify classification is complete and conflict-free.
   classify explain <ref>   Explain deterministic classification for one document.
                            Flags: --repo <name>, --view public|private,
                            --include-generated, --include-aliases,
-                           --include-ambiguous, --fix-conflicts.
+                           --include-ambiguous, --fix-conflicts, --group-by <field>.
   possible-matrix validate <path>
                            Validate a machine-readable longitudinal Possible Matrix
                            against schemas/possible-matrix.v0.schema.json, graph
@@ -2693,6 +2705,7 @@ function cmdDocsTrails(ctx, inventory) {
 function cmdDocsJudgments(ctx, inventory, repoArg) {
   const emit = takeFlag("--emit-continuations");
   const includeInferredSource = takeFlag("--include-inferred-source");
+  const groupBy = valueFlag("--group-by");
   const requests = documentJudgmentRequests(inventory, repoArg, { includeInferredSource, ctx });
   const continuations = emit
     ? requests.map(req => emitContinuation(ctx, req))
@@ -2706,6 +2719,12 @@ function cmdDocsJudgments(ctx, inventory, repoArg) {
     needs_judgment: requests,
     continuations: continuations.map(x => stripContinuationBody(x.continuation)),
   };
+  if (groupBy) {
+    result.grouped = {
+      field: groupBy,
+      groups: groupCollection(requests, groupBy),
+    };
+  }
   output(result, formatJudgments(result));
 }
 
@@ -2727,6 +2746,7 @@ function cmdClassify(sub) {
 }
 
 function cmdClassifyPlan(inventory, options) {
+  const groupBy = valueFlag("--group-by");
   const plan = classificationPlan(inventory, classificationOptions());
   const blockingConflicts = plan.conflicts.length > 0 && !plan.options.fixConflicts;
   // The default plan already excludes weak/ambiguous changes. --apply-safe lets
@@ -2747,6 +2767,13 @@ function cmdClassifyPlan(inventory, options) {
     applied: options.apply && canApply && !preflight_failed.length ? plan.changes.length : 0,
     preflight_failed,
   };
+  if (groupBy) {
+    result.grouped = {
+      field: groupBy,
+      ambiguous: groupCollection(plan.ambiguous, groupBy),
+      changes: groupCollection(plan.changes, groupBy),
+    };
+  }
   output(result, formatClassificationPlan(result));
 }
 
@@ -3500,6 +3527,143 @@ async function cmdConsolidate() {
     console.log(formatConsolidate(result));
   }
   if (strict && result.issues?.length) process.exit(2);
+}
+
+function cmdTriage(repoArg = "all") {
+  if (repoArg === "help" || repoArg === "--help") {
+    console.log(`
+Usage:
+  node scripts/cogentia.js triage [repo|all] [flags]
+
+Correlated full diagnostic across consolidate, classify, docs judgments and continuations.
+Flags stale continuations (conditions resolved) and untracked judgments.
+
+Flags:
+  --full              Run full consolidate check instead of quick check
+  --cancel-stale      Auto-cancel stale active continuations whose conditions are resolved
+  --auto-cancel-stale Alias for --cancel-stale
+  --emit-missing      Emit continuation requests for untracked open judgments
+  --group-by <field>  Group output by field (repo, dir, reason, kind, rule, confidence)
+  --strict            Exit code 2 if any issues, stale continuations, or untracked judgments exist
+  --json              Output structured JSON
+`);
+    return;
+  }
+  const ctx = loadContext();
+  const inventory = buildInventory(ctx);
+  const full = takeFlag("--full");
+  const cancelStale = takeFlag("--cancel-stale") || takeFlag("--auto-cancel-stale");
+  const emitMissing = takeFlag("--emit-missing");
+  const groupBy = valueFlag("--group-by");
+  const strict = hasFlag("--strict");
+
+  const consolidate = buildConsolidateReport(ctx, {
+    inventory,
+    quick: !full,
+    planOptions: full ? planOptions() : undefined,
+  });
+
+  const classify = classificationPlan(inventory, {
+    repo: repoArg,
+    view: PUBLIC_VIEW,
+  });
+
+  const allJudgments = documentJudgmentRequests(inventory, repoArg, { ctx, includeInferredSource: false });
+  const judgmentsResolved = [];
+  const judgmentsUnresolved = [];
+  for (const j of allJudgments) {
+    if (j.context?.resolved_elsewhere) judgmentsResolved.push(j);
+    else judgmentsUnresolved.push(j);
+  }
+
+  const allContinuations = loadContinuations(ctx);
+  const activeContinuations = allContinuations
+    .filter(c => c.status === "active")
+    .filter(c => repoArg === "all" || !c.subject?.repo || c.subject.repo === repoArg);
+
+  const crossRef = crossReferenceContinuations(activeContinuations, allJudgments, inventory.documents, ctx.repos);
+
+  const cancelledStale = [];
+  if (cancelStale && crossRef.stale_continuations.length) {
+    for (const item of crossRef.stale_continuations) {
+      const fullContinuation = allContinuations.find(c => c.id === item.id);
+      if (fullContinuation && fullContinuation.status === "active") {
+        cancelContinuationRecord(ctx, fullContinuation, `Triage auto-cancel: ${item.reason}`);
+        cancelledStale.push(item.id);
+        item.cancelled = true;
+      }
+    }
+  }
+
+  const emittedMissing = [];
+  if (emitMissing && crossRef.untracked_judgments.length) {
+    for (const req of crossRef.untracked_judgments) {
+      const res = emitContinuation(ctx, req);
+      emittedMissing.push({
+        id: res.continuation.id,
+        dedupe_key: req.dedupe_key,
+        created: res.created,
+      });
+      req.emitted = true;
+    }
+  }
+
+  const activeByKind = countBy(activeContinuations, c => c.kind || "unknown");
+
+  const report = {
+    ok: consolidate.ok && classify.conflicts.length === 0 && crossRef.stale_continuations.length === 0 && crossRef.untracked_judgments.length === 0,
+    protocol: "cogentia.triage.v1",
+    timestamp: new Date().toISOString(),
+    repo: repoArg,
+    summary: {
+      consolidate_issues: consolidate.issues.length,
+      classification_changes: classify.changes.length,
+      classification_conflicts: classify.conflicts.length,
+      classification_ambiguous: classify.ambiguous.length,
+      judgments_total: allJudgments.length,
+      judgments_unresolved: judgmentsUnresolved.length,
+      judgments_already_resolved: judgmentsResolved.length,
+      active_continuations: activeContinuations.length,
+      stale_continuations: crossRef.stale_continuations.length,
+      untracked_judgments: crossRef.untracked_judgments.length,
+      tracked_judgments: crossRef.tracked_judgments.length,
+    },
+    consolidate_issues: consolidate.issues,
+    stale_continuations: crossRef.stale_continuations,
+    untracked_judgments: crossRef.untracked_judgments.map(j => ({
+      dedupe_key: j.dedupe_key,
+      repo: j.subject?.repo || "",
+      path: j.subject?.path || "",
+      title: j.title,
+      reasons: j.context?.reasons || [],
+      emitted: emittedMissing.some(e => e.dedupe_key === j.dedupe_key),
+    })),
+    classification: {
+      conflicts: classify.conflicts,
+      ambiguous: classify.ambiguous,
+      changes_count: classify.changes.length,
+    },
+    active_continuations_summary: activeByKind,
+    actions_taken: {
+      cancelled_stale_count: cancelledStale.length,
+      emitted_missing_count: emittedMissing.length,
+    },
+  };
+
+  if (groupBy) {
+    report.grouped = {
+      field: groupBy,
+      stale: groupCollection(crossRef.stale_continuations, groupBy),
+      untracked: groupCollection(crossRef.untracked_judgments, groupBy),
+      ambiguous: groupCollection(classify.ambiguous, groupBy),
+    };
+  }
+
+  if (strict && !report.ok) {
+    process.exitCode = 2;
+  }
+
+  output(report, formatTriage(report));
 }
 
 function configHygieneAudit(ctx, instance = "jhn") {
@@ -5571,12 +5735,7 @@ function cmdContinuationResolve(ctx, id) {
   output({ ok: true, continuation: stripContinuationBody(continuation) }, formatContinuationResolved(continuation));
 }
 
-function cmdContinuationCancel(ctx, id) {
-  if (!id) throw new Error("Usage: continuation cancel <id> --reason <text>");
-  const continuation = loadContinuation(ctx, id);
-  if (continuation.status !== "active") throw new Error(`Continuation ${id} is not active (status=${continuation.status}).`);
-  const reason = valueFlag("--reason") || argv.join(" ").trim();
-  if (!reason) throw new Error("Cancel requires --reason <text>.");
+function cancelContinuationRecord(ctx, continuation, reason) {
   const now = new Date().toISOString();
   continuation.status = "cancelled";
   continuation.updated_at = now;
@@ -5584,8 +5743,19 @@ function cmdContinuationCancel(ctx, id) {
     cancelled_at: now,
     reason,
   };
+  if (!Array.isArray(continuation.history)) continuation.history = [];
   continuation.history.push({ at: now, event: "cancelled", reason });
   saveContinuation(ctx, continuation);
+  return continuation;
+}
+
+function cmdContinuationCancel(ctx, id) {
+  if (!id) throw new Error("Usage: continuation cancel <id> --reason <text>");
+  const continuation = loadContinuation(ctx, id);
+  if (continuation.status !== "active") throw new Error(`Continuation ${id} is not active (status=${continuation.status}).`);
+  const reason = valueFlag("--reason") || argv.join(" ").trim();
+  if (!reason) throw new Error("Cancel requires --reason <text>.");
+  cancelContinuationRecord(ctx, continuation, reason);
   output({ ok: true, continuation: stripContinuationBody(continuation) }, formatContinuationResolved(continuation));
 }
 
@@ -14402,6 +14572,21 @@ function formatClassificationPlan(result) {
     }
     if (result.ambiguous.length > 30) lines.push(`- ... ${result.ambiguous.length - 30} more`);
   }
+  if (result.grouped) {
+    lines.push(`\nGrouped by ${result.grouped.field}:`);
+    if (result.ambiguous.length && result.grouped.ambiguous) {
+      lines.push(`  Ambiguous by ${result.grouped.field}:`);
+      for (const [k, v] of Object.entries(result.grouped.ambiguous)) {
+        lines.push(`    - ${k}: ${v.count}`);
+      }
+    }
+    if (result.changes.length && result.grouped.changes) {
+      lines.push(`  Changes by ${result.grouped.field}:`);
+      for (const [k, v] of Object.entries(result.grouped.changes)) {
+        lines.push(`    - ${k}: ${v.count}`);
+      }
+    }
+  }
   return lines.join("\n");
 }
 
@@ -14808,10 +14993,22 @@ function formatJudgments(result) {
     lines.push("No document-role judgment candidates.");
     return lines.join("\n");
   }
-  lines.push(`${pad("Repo", 18)} ${pad("Path", 46)} Reason`);
-  lines.push("-".repeat(95));
-  for (const req of result.needs_judgment) {
-    lines.push(`${pad(req.subject.repo, 18)} ${pad(req.subject.path, 46)} ${req.context.reasons.join("; ")}`);
+  if (result.grouped) {
+    lines.push(`Grouped by ${result.grouped.field}:\n`);
+    for (const [groupKey, groupData] of Object.entries(result.grouped.groups)) {
+      lines.push(`[${groupKey}] (${groupData.count})`);
+      for (const req of groupData.items.slice(0, 10)) {
+        lines.push(`  - ${req.subject.repo}/${req.subject.path}: ${req.context.reasons.join("; ")}`);
+      }
+      if (groupData.count > 10) lines.push(`  - ... ${groupData.count - 10} more`);
+      lines.push("");
+    }
+  } else {
+    lines.push(`${pad("Repo", 18)} ${pad("Path", 46)} Reason`);
+    lines.push("-".repeat(95));
+    for (const req of result.needs_judgment) {
+      lines.push(`${pad(req.subject.repo, 18)} ${pad(req.subject.path, 46)} ${req.context.reasons.join("; ")}`);
+    }
   }
   if (result.continuations.length) {
     lines.push("");
