@@ -64,6 +64,8 @@ import {
 } from "./lib/possible-matrix-validator.js";
 import {
   groupCollection,
+  categorizeAmbiguity,
+  topDirectoryClusters,
   crossReferenceContinuations,
   formatTriage,
 } from "./lib/triage.js";
@@ -2710,9 +2712,19 @@ function cmdDocsJudgments(ctx, inventory, repoArg) {
   const continuations = emit
     ? requests.map(req => emitContinuation(ctx, req))
     : [];
+  const categoryCounts = {
+    classifier_gap: requests.filter(r => r.judgment_category === "classifier_gap").length,
+    genuine_judgment: requests.filter(r => r.judgment_category === "genuine_judgment").length,
+  };
+  const gapClusters = topDirectoryClusters(
+    requests.filter(r => r.judgment_category === "classifier_gap"),
+    5
+  );
   const result = {
     ok: true,
     count: requests.length,
+    by_category: categoryCounts,
+    classifier_gap_clusters: gapClusters,
     emitted: continuations.filter(x => x.created).length,
     existing: continuations.filter(x => !x.created).length,
     include_inferred_source: includeInferredSource,
@@ -3620,6 +3632,14 @@ Flags:
       classification_changes: classify.changes.length,
       classification_conflicts: classify.conflicts.length,
       classification_ambiguous: classify.ambiguous.length,
+      classification_ambiguous_by_category: classify.summary?.ambiguous_by_category || {
+        classifier_gap: classify.ambiguous.filter(a => a.ambiguity_category === "classifier_gap").length,
+        genuine_judgment: classify.ambiguous.filter(a => a.ambiguity_category === "genuine_judgment").length,
+      },
+      classifier_gap_clusters: classify.summary?.classifier_gap_clusters || topDirectoryClusters(
+        classify.ambiguous.filter(a => a.ambiguity_category === "classifier_gap"),
+        5
+      ),
       judgments_total: allJudgments.length,
       judgments_unresolved: judgmentsUnresolved.length,
       judgments_already_resolved: judgmentsResolved.length,
@@ -11261,6 +11281,7 @@ function documentJudgmentRequests(inventory, repoArg, options = {}) {
     const ref = `${doc.repo}/${doc.rel}`;
     requests.push({
       kind: "document_role_review",
+      judgment_category: categorizeAmbiguity(reasons),
       title: `Classify ${ref}`,
       question: `Decide the corpus role of ${ref}. In particular, say whether it is a sovereign source document, an asymmetric derived product, an alias/redirect, or a symmetric derived document that should temporarily count as sovereign source.`,
       priority: doc.role === "unknown" ? 2 : 1,
@@ -11366,6 +11387,14 @@ function classificationPlan(inventory, options = {}) {
       changes: changes.length,
       conflicts: conflicts.length,
       ambiguous: ambiguous.length,
+      ambiguous_by_category: {
+        classifier_gap: ambiguous.filter(a => a.ambiguity_category === "classifier_gap").length,
+        genuine_judgment: ambiguous.filter(a => a.ambiguity_category === "genuine_judgment").length,
+      },
+      classifier_gap_clusters: topDirectoryClusters(
+        ambiguous.filter(a => a.ambiguity_category === "classifier_gap"),
+        5
+      ),
     },
   };
 }
@@ -11457,6 +11486,7 @@ function classifyDocumentForFrontmatter(doc) {
     explicit,
     conflicts,
     reason: kind.reason,
+    ambiguity_category: confidence === "weak" ? categorizeAmbiguity({ reason: kind.reason, rule, role: doc.role, confidence }) : null,
   };
 }
 
@@ -14534,12 +14564,16 @@ function formatDocs(docs) {
 }
 
 function formatClassificationPlan(result) {
+  const catSummary = result.summary?.ambiguous_by_category;
+  const ambigLine = catSummary && result.ambiguous.length > 0
+    ? `Ambiguous: ${result.ambiguous.length} (${catSummary.classifier_gap} classifier gap(s), ${catSummary.genuine_judgment} genuine judgment(s))`
+    : `Ambiguous: ${result.ambiguous.length}`;
   const lines = [
     `\nClassification ${result.mode}\n`,
     `Scanned: ${result.scanned}`,
     `Changes: ${result.changes.length}`,
     `Conflicts: ${result.conflicts.length}`,
-    `Ambiguous: ${result.ambiguous.length}`,
+    ambigLine,
   ];
   if (result.applied) lines.push(`Applied: ${result.applied}`);
   if (result.preflight_failed?.length) {
@@ -14568,9 +14602,18 @@ function formatClassificationPlan(result) {
     lines.push("");
     lines.push("Ambiguous:");
     for (const item of result.ambiguous.slice(0, 30)) {
-      lines.push(`- ${item.repo}/${item.path}: ${item.reason}`);
+      const catTag = item.ambiguity_category ? ` [${item.ambiguity_category}]` : "";
+      lines.push(`- ${item.repo}/${item.path}: ${item.reason}${catTag}`);
     }
     if (result.ambiguous.length > 30) lines.push(`- ... ${result.ambiguous.length - 30} more`);
+
+    if (result.summary?.classifier_gap_clusters?.length) {
+      lines.push("");
+      lines.push("Top classifier-gap directory clusters:");
+      for (const cluster of result.summary.classifier_gap_clusters) {
+        lines.push(`  - ${cluster.directory}: ${cluster.count} file(s) (${cluster.percentage}%)`);
+      }
+    }
   }
   if (result.grouped) {
     lines.push(`\nGrouped by ${result.grouped.field}:`);
@@ -14988,7 +15031,10 @@ function formatDocSummary(summary) {
 }
 
 function formatJudgments(result) {
-  const lines = ["\nDocument judgments\n"];
+  const catSummary = result.by_category
+    ? ` (${result.by_category.classifier_gap} classifier gap(s), ${result.by_category.genuine_judgment} genuine judgment(s))`
+    : "";
+  const lines = [`\nDocument judgments${catSummary}\n`];
   if (!result.needs_judgment.length) {
     lines.push("No document-role judgment candidates.");
     return lines.join("\n");
@@ -14998,16 +15044,24 @@ function formatJudgments(result) {
     for (const [groupKey, groupData] of Object.entries(result.grouped.groups)) {
       lines.push(`[${groupKey}] (${groupData.count})`);
       for (const req of groupData.items.slice(0, 10)) {
-        lines.push(`  - ${req.subject.repo}/${req.subject.path}: ${req.context.reasons.join("; ")}`);
+        const catTag = req.judgment_category ? ` [${req.judgment_category}]` : "";
+        lines.push(`  - ${req.subject.repo}/${req.subject.path}: ${req.context.reasons.join("; ")}${catTag}`);
       }
       if (groupData.count > 10) lines.push(`  - ... ${groupData.count - 10} more`);
       lines.push("");
     }
   } else {
-    lines.push(`${pad("Repo", 18)} ${pad("Path", 46)} Reason`);
+    lines.push(`${pad("Repo", 18)} ${pad("Category", 18)} ${pad("Path", 36)} Reason`);
     lines.push("-".repeat(95));
     for (const req of result.needs_judgment) {
-      lines.push(`${pad(req.subject.repo, 18)} ${pad(req.subject.path, 46)} ${req.context.reasons.join("; ")}`);
+      lines.push(`${pad(req.subject.repo, 18)} ${pad(req.judgment_category || "-", 18)} ${pad(req.subject.path, 36)} ${req.context.reasons.join("; ")}`);
+    }
+  }
+  if (result.classifier_gap_clusters?.length) {
+    lines.push("");
+    lines.push("Top classifier-gap directory clusters:");
+    for (const cluster of result.classifier_gap_clusters) {
+      lines.push(`  - ${cluster.directory}: ${cluster.count} file(s) (${cluster.percentage}%)`);
     }
   }
   if (result.continuations.length) {

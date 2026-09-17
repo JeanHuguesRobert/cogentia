@@ -5,6 +5,8 @@ import os from "node:os";
 import path from "node:path";
 import {
   groupCollection,
+  categorizeAmbiguity,
+  topDirectoryClusters,
   crossReferenceContinuations,
   formatTriage,
 } from "../scripts/lib/triage.js";
@@ -192,3 +194,138 @@ test("formatTriage renders report text with and without grouping", () => {
   assert.match(groupedText, /Stale Continuations by repo/);
   assert.match(groupedText, /repo-a: 1/);
 });
+
+test("categorizeAmbiguity distinguishes generic classifier gaps from genuine judgments", () => {
+  // Classifier gap strings
+  assert.equal(categorizeAmbiguity("No deterministic kind rule matched."), "classifier_gap");
+  assert.equal(categorizeAmbiguity("Source role without stronger kind signal."), "classifier_gap");
+  assert.equal(categorizeAmbiguity("document role is unknown or weakly inferred"), "classifier_gap");
+  assert.equal(categorizeAmbiguity("Cannot index deterministically with role=unknown"), "classifier_gap");
+  assert.equal(categorizeAmbiguity("Fallback heuristic used"), "classifier_gap");
+
+  // Genuine judgment strings
+  assert.equal(
+    categorizeAmbiguity("derived document may need judgment: asymmetric derived product or symmetric sovereign source"),
+    "genuine_judgment"
+  );
+  assert.equal(
+    categorizeAmbiguity("source role is inferred from research path, not explicit frontmatter"),
+    "genuine_judgment"
+  );
+  assert.equal(
+    categorizeAmbiguity("already resolved via continuation ctn_123 -> \"source\""),
+    "genuine_judgment"
+  );
+  assert.equal(categorizeAmbiguity("unknown provenance requiring human review"), "genuine_judgment");
+
+  // Arrays and Objects
+  assert.equal(
+    categorizeAmbiguity(["document role is unknown or weakly inferred", "derived document may need judgment: asymmetric derived product"]),
+    "genuine_judgment"
+  );
+  assert.equal(
+    categorizeAmbiguity({ context: { reasons: ["document role is unknown or weakly inferred"] } }),
+    "classifier_gap"
+  );
+  assert.equal(
+    categorizeAmbiguity({ rule: "unknown", confidence: "weak" }),
+    "classifier_gap"
+  );
+  assert.equal(
+    categorizeAmbiguity({ ambiguity_category: "genuine_judgment" }),
+    "genuine_judgment"
+  );
+});
+
+test("topDirectoryClusters groups directories and collapses multi-subdirectory trees", () => {
+  // Empty array
+  assert.deepEqual(topDirectoryClusters([]), []);
+
+  // Flat directory
+  const flatItems = [
+    { repo: "repo-a", path: "docs/readme.md" },
+    { repo: "repo-a", path: "docs/guide.md" },
+    { repo: "repo-a", path: "docs/tutorial.md" },
+  ];
+  const flatClusters = topDirectoryClusters(flatItems);
+  assert.equal(flatClusters.length, 1);
+  assert.equal(flatClusters[0].directory, "repo-a/docs");
+  assert.equal(flatClusters[0].count, 3);
+  assert.equal(flatClusters[0].percentage, 100);
+
+  // Multi-subdirectory tree under a shared 2-level prefix (e.g. issues)
+  const nestedItems = [
+    { repo: "cogentia", path: ".cogentia/issues/174/packet.md" },
+    { repo: "cogentia", path: ".cogentia/issues/175/packet.md" },
+    { repo: "cogentia", path: ".cogentia/issues/176/packet.md" },
+    { repo: "cogentia", path: "docs/readme.md" },
+  ];
+  const nestedClusters = topDirectoryClusters(nestedItems);
+  assert.equal(nestedClusters[0].directory, "cogentia/.cogentia/issues/**");
+  assert.equal(nestedClusters[0].count, 3);
+  assert.equal(nestedClusters[0].percentage, 75);
+  assert.equal(nestedClusters[1].directory, "cogentia/docs");
+  assert.equal(nestedClusters[1].count, 1);
+  assert.equal(nestedClusters[1].percentage, 25);
+});
+
+test("groupCollection groups by category", () => {
+  const items = [
+    { repo: "repo-a", path: "a.md", reason: "No deterministic kind rule matched." },
+    { repo: "repo-a", path: "b.md", reason: "Source role without stronger kind signal." },
+    { repo: "repo-a", path: "c.md", reason: "derived document may need judgment: asymmetric derived product" },
+  ];
+  const grouped = groupCollection(items, "category");
+  assert.equal(grouped["classifier_gap"].count, 2);
+  assert.equal(grouped["genuine_judgment"].count, 1);
+});
+
+test("formatTriage displays ambiguity category breakdown and classifier gap clusters", () => {
+  const report = {
+    ok: true,
+    protocol: "cogentia.triage.v1",
+    timestamp: "2026-09-17T12:00:00.000Z",
+    repo: "all",
+    summary: {
+      consolidate_issues: 0,
+      classification_changes: 0,
+      classification_conflicts: 0,
+      classification_ambiguous: 10,
+      classification_ambiguous_by_category: {
+        classifier_gap: 8,
+        genuine_judgment: 2,
+      },
+      classifier_gap_clusters: [
+        { directory: "barons-Mariani/agents-jhn/**", count: 8, percentage: 80 },
+      ],
+      judgments_total: 2,
+      judgments_unresolved: 2,
+      judgments_already_resolved: 0,
+      active_continuations: 0,
+      stale_continuations: 0,
+      untracked_judgments: 0,
+      tracked_judgments: 0,
+    },
+    consolidate_issues: [],
+    stale_continuations: [],
+    untracked_judgments: [],
+    classification: {
+      conflicts: [],
+      ambiguous: [
+        { repo: "barons-Mariani", path: "agents-jhn/mandat.md", reason: "No deterministic kind rule matched.", ambiguity_category: "classifier_gap" },
+      ],
+      changes_count: 0,
+    },
+    actions_taken: {
+      cancelled_stale_count: 0,
+      emitted_missing_count: 0,
+    },
+  };
+
+  const text = formatTriage(report);
+  assert.match(text, /10 ambiguous \(8 classifier gap\(s\), 2 genuine judgment\(s\)\)/);
+  assert.match(text, /Top classifier-gap directory clusters:/);
+  assert.match(text, /barons-Mariani\/agents-jhn\/\*\*: 8 file\(s\) \(80%\)/);
+  assert.match(text, /\[classifier_gap\]/);
+});
+

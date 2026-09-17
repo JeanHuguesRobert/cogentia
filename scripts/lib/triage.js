@@ -29,6 +29,8 @@ export function groupCollection(items, field) {
       const p = item.path || item.rel || item.subject?.path || "";
       key = p ? path.dirname(p).replace(/\\/g, "/") : ".";
       if (key === ".") key = "./";
+    } else if (safeField === "category" || safeField === "ambiguity_category" || safeField === "judgment_category") {
+      key = item.ambiguity_category || item.judgment_category || categorizeAmbiguity(item);
     } else if (safeField === "reason") {
       key = item.reason || (item.context?.reasons || []).join("; ") || (item.reasons || []).join("; ") || "unknown";
     } else if (safeField === "rule") {
@@ -54,6 +56,164 @@ export function groupCollection(items, field) {
     result[k] = { count: v.length, items: v };
   }
   return result;
+}
+
+/**
+ * Categorize ambiguity / judgment reasons into:
+ * - "classifier_gap": generic fallback, missing path rule, or unmapped pattern
+ * - "genuine_judgment": content, derivation symmetry, provenance, or human policy decision
+ *
+ * @param {string|Array<string>|object} input
+ * @returns {"classifier_gap" | "genuine_judgment"}
+ */
+export function categorizeAmbiguity(input) {
+  let reasons = [];
+  if (typeof input === "string") {
+    reasons = [input];
+  } else if (Array.isArray(input)) {
+    reasons = input;
+  } else if (input && typeof input === "object") {
+    if (input.ambiguity_category) return input.ambiguity_category;
+    if (input.judgment_category) return input.judgment_category;
+    if (Array.isArray(input.reasons)) {
+      reasons = input.reasons;
+    } else if (Array.isArray(input.context?.reasons)) {
+      reasons = input.context.reasons;
+    } else if (typeof input.reason === "string") {
+      reasons = [input.reason];
+    }
+  }
+
+  const text = reasons.join(" ").toLowerCase();
+
+  // Genuine judgment indicators:
+  // - derivation symmetry/asymmetry (asymmetric derived product vs symmetric sovereign source)
+  // - provenance questions
+  // - source role verification (e.g. inferred from research path)
+  // - existing resolved judgments
+  if (
+    /asymmetric|symmetric/i.test(text) ||
+    /derived document may need judgment/i.test(text) ||
+    /inferred from research path/i.test(text) ||
+    /provenance/i.test(text) ||
+    /already resolved/i.test(text) ||
+    /privacy|confidential/i.test(text)
+  ) {
+    return "genuine_judgment";
+  }
+
+  // Classifier gap fallback indicators:
+  // - "No deterministic kind rule matched."
+  // - "Source role without stronger kind signal."
+  // - "document role is unknown or weakly inferred"
+  // - "Cannot index deterministically with role=unknown"
+  // - fallback heuristics
+  if (
+    /no deterministic kind rule matched/i.test(text) ||
+    /without stronger kind signal/i.test(text) ||
+    /unknown or weakly inferred/i.test(text) ||
+    /cannot index deterministically/i.test(text) ||
+    /fallback/i.test(text) ||
+    /no rule matched/i.test(text)
+  ) {
+    return "classifier_gap";
+  }
+
+  // If item explicitly has rule "unknown" or "source-document" with weak confidence:
+  if (input && typeof input === "object") {
+    if (input.rule === "unknown" || input.rule === "source-document") {
+      return "classifier_gap";
+    }
+  }
+
+  // Default to classifier_gap for weak confidence items that have no specific human judgment prompt
+  return "classifier_gap";
+}
+
+/**
+ * Computes the top directory clusters for a collection of items (such as classifier gaps).
+ * Groups by normalized directory prefix, rolling up multi-file subdirectories where appropriate.
+ *
+ * @param {Array} items
+ * @param {number} [topN=5]
+ * @returns {Array<{ directory: string, count: number, percentage: number }>}
+ */
+export function topDirectoryClusters(items, topN = 5) {
+  if (!items || !items.length) return [];
+
+  // 1. Collect exact directories for all items
+  const exactCounts = new Map();
+  const itemEntries = [];
+
+  for (const item of items) {
+    const repo = item.repo || item.subject?.repo || "";
+    const p = (item.path || item.rel || item.subject?.path || "").replace(/\\/g, "/");
+    const dir = path.dirname(p).replace(/\\/g, "/");
+    const exactKey = repo ? (dir === "." ? repo : `${repo}/${dir}`) : (dir === "." ? "./" : dir);
+    exactCounts.set(exactKey, (exactCounts.get(exactKey) || 0) + 1);
+
+    const segments = p.split("/").filter(Boolean);
+    const dirSegments = segments.slice(0, -1);
+    itemEntries.push({ repo, path: p, exactKey, dirSegments });
+  }
+
+  // 2. Evaluate prefix candidates of depth 2, then depth 1
+  const prefixGroups = new Map();
+
+  for (const depth of [2, 1]) {
+    for (const entry of itemEntries) {
+      if (entry.dirSegments.length >= depth) {
+        const prefix = entry.dirSegments.slice(0, depth).join("/");
+        const key = entry.repo ? (prefix ? `${entry.repo}/${prefix}` : entry.repo) : (prefix || "./");
+        if (!prefixGroups.has(key)) prefixGroups.set(key, new Set());
+        prefixGroups.get(key).add(entry.exactKey);
+      }
+    }
+  }
+
+  // 3. Find clusters that span multiple distinct subdirectories (depth 2 preferred, then depth 1)
+  const clusters = new Map();
+  const sortedPrefixes = [...prefixGroups.entries()].sort((a, b) => {
+    const depthA = a[0].split("/").length;
+    const depthB = b[0].split("/").length;
+    return depthB - depthA;
+  });
+
+  const coveredExactKeys = new Set();
+
+  for (const [prefixKey, exactSet] of sortedPrefixes) {
+    const uncovered = [...exactSet].filter(k => !coveredExactKeys.has(k));
+    if (exactSet.size > 1 && uncovered.length > 1) {
+      let clusterCount = 0;
+      for (const k of exactSet) {
+        if (!coveredExactKeys.has(k)) {
+          clusterCount += exactCounts.get(k) || 0;
+          coveredExactKeys.add(k);
+        }
+      }
+      if (clusterCount > 0) {
+        clusters.set(`${prefixKey}/**`, clusterCount);
+      }
+    }
+  }
+
+  // 4. Any exact directories not covered by a multi-dir cluster remain as exact directories
+  for (const [exactKey, count] of exactCounts.entries()) {
+    if (!coveredExactKeys.has(exactKey)) {
+      clusters.set(exactKey, count);
+    }
+  }
+
+  // 5. Sort by count descending, then alphabetical
+  const sorted = [...clusters.entries()]
+    .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
+    .slice(0, topN);
+
+  return sorted.map(([directory, count]) => ({
+    directory,
+    count,
+    percentage: Math.round((count / items.length) * 100),
+  }));
 }
 
 /**
@@ -177,12 +337,17 @@ export function crossReferenceContinuations(activeContinuations, freshJudgments,
  * @returns {string}
  */
 export function formatTriage(report) {
+  const catSummary = report.summary.classification_ambiguous_by_category;
+  const ambigText = catSummary && report.summary.classification_ambiguous > 0
+    ? `${report.summary.classification_ambiguous} ambiguous (${catSummary.classifier_gap} classifier gap(s), ${catSummary.genuine_judgment} genuine judgment(s))`
+    : `${report.summary.classification_ambiguous} ambiguous`;
+
   const lines = [
     `\nCorpus Triage Report [${report.repo}] — ${report.timestamp.slice(0, 19).replace("T", " ")}\n`,
     `Status: ${report.ok ? "CLEAN" : "ATTENTION NEEDED"}`,
     `Active Continuations: ${report.summary.active_continuations} (stale: ${report.summary.stale_continuations})`,
     `Judgments: ${report.summary.judgments_total} total (${report.summary.judgments_already_resolved} resolved elsewhere, ${report.summary.judgments_unresolved} open, ${report.summary.untracked_judgments} untracked)`,
-    `Classification: ${report.summary.classification_changes} planned changes, ${report.summary.classification_conflicts} conflicts, ${report.summary.classification_ambiguous} ambiguous`,
+    `Classification: ${report.summary.classification_changes} planned changes, ${report.summary.classification_conflicts} conflicts, ${ambigText}`,
     `Consolidate Issues: ${report.summary.consolidate_issues}`,
   ];
 
@@ -191,6 +356,13 @@ export function formatTriage(report) {
   }
   if (report.actions_taken?.emitted_missing_count > 0) {
     lines.push(`\n[Action] Emitted ${report.actions_taken.emitted_missing_count} missing continuation(s).`);
+  }
+
+  if (report.summary.classifier_gap_clusters?.length) {
+    lines.push("\nTop classifier-gap directory clusters:");
+    for (const cluster of report.summary.classifier_gap_clusters) {
+      lines.push(`  - ${cluster.directory}: ${cluster.count} file(s) (${cluster.percentage}%)`);
+    }
   }
 
   if (report.grouped) {
@@ -233,6 +405,17 @@ export function formatTriage(report) {
       }
       if (report.untracked_judgments.length > 20) {
         lines.push(`  - ... ${report.untracked_judgments.length - 20} more (use --emit-missing to emit)`);
+      }
+    }
+
+    if (report.classification?.ambiguous?.length) {
+      lines.push(`\nAmbiguous Classifications (${report.classification.ambiguous.length}):`);
+      for (const item of report.classification.ambiguous.slice(0, 15)) {
+        const catTag = item.ambiguity_category ? ` [${item.ambiguity_category}]` : "";
+        lines.push(`  - ${item.repo}/${item.path}: ${item.reason}${catTag}`);
+      }
+      if (report.classification.ambiguous.length > 15) {
+        lines.push(`  - ... ${report.classification.ambiguous.length - 15} more`);
       }
     }
 
