@@ -592,6 +592,7 @@ export function planFrontmatterRepairs(paths, options = {}) {
         needsJudgment.push({
           path: filePath,
           full_path: resolved,
+          original_sha256,
           reason: isSensitiveRepo && prediction && prediction.role_confidence === "strong"
             ? `role prediction is strong confidence (${prediction.role}) but this is a private-registry repo — sensitive-content gate requires explicit human judgment regardless of prediction confidence (cogentia#183)`
             : prediction
@@ -799,12 +800,31 @@ export function planFrontmatterRepairs(paths, options = {}) {
     }
   }
 
+  // cogentia#187: annotate exact-content duplicates (real filesystem
+  // hardlinks, monorepo build-system copies, or plain duplicated files) so
+  // a judgment call or repair reads as a one-time decision applying to N
+  // paths, not N independent ones. Found the hard way in inseme (cogentia#183):
+  // 12 of 39 needs_judgment files were hardlinked copies across 4 apps,
+  // discovered only when scaffolding the second copy errored because the
+  // first had already (correctly) changed both.
+  const byHash = new Map();
+  for (const entry of [...changes, ...needsJudgment]) {
+    if (!entry.original_sha256) continue;
+    if (!byHash.has(entry.original_sha256)) byHash.set(entry.original_sha256, []);
+    byHash.get(entry.original_sha256).push(entry.path);
+  }
+  for (const entry of [...changes, ...needsJudgment]) {
+    const group = entry.original_sha256 ? byHash.get(entry.original_sha256) : null;
+    entry.shared_with = group && group.length > 1 ? group.filter(p => p !== entry.path) : [];
+  }
+
   return {
     ok: true,
     total_audited: checkedCount,
     changes_count: changes.length,
     unrepairable_count: unrepairable.length,
     needs_judgment_count: needsJudgment.length,
+    duplicate_groups_count: [...byHash.values()].filter(g => g.length > 1).length,
     changes,
     unrepairable,
     needs_judgment: needsJudgment,
@@ -872,7 +892,8 @@ export function formatRepairsPlan(plan) {
   }
 
   for (const change of plan.changes) {
-    lines.push(`⚡ ${change.path}`);
+    const sharedNote = change.shared_with?.length ? ` [shared content: ${change.shared_with.length} other path(s)]` : "";
+    lines.push(`⚡ ${change.path}${sharedNote}`);
     for (const r of change.repairs) {
       lines.push(`    + ${r}`);
     }
@@ -890,10 +911,16 @@ export function formatRepairsPlan(plan) {
     lines.push("");
     lines.push(`? ${plan.needs_judgment_count} file(s) have no confident role prediction (cogentia#183 — not auto-scaffolded):`);
     for (const j of plan.needs_judgment) {
-      lines.push(`    ? ${j.path}: ${j.reason}`);
+      const sharedNote = j.shared_with?.length ? ` [shared content: ${j.shared_with.length} other path(s) — one judgment applies to all]` : "";
+      lines.push(`    ? ${j.path}: ${j.reason}${sharedNote}`);
     }
     lines.push("");
     lines.push("  Resolve via: node scripts/cogentia.js docs judgments <repo> --emit-continuations");
+  }
+
+  if (plan.duplicate_groups_count > 0) {
+    lines.push("");
+    lines.push(`ℹ ${plan.duplicate_groups_count} group(s) of files share exact identical content (cogentia#187) — see "shared content" notes above and per-entry \`shared_with\` in --json.`);
   }
 
   if (plan.changes_count > 0) {

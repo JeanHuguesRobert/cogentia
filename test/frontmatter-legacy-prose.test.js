@@ -16,6 +16,22 @@ function withTempFile(content, fn) {
   }
 }
 
+// namesToContent: { "a/foo.md": "content", "b/foo.md": "content", ... }
+function withTempFiles(namesToContent, fn) {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "cogentia-fm-test-"));
+  const files = Object.entries(namesToContent).map(([name, content]) => {
+    const file = path.join(dir, name);
+    fs.mkdirSync(path.dirname(file), { recursive: true });
+    fs.writeFileSync(file, content, "utf8");
+    return file;
+  });
+  try {
+    return fn(files);
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+}
+
 // cogentia#181: documents that self-describe their own metadata in plain
 // prose instead of YAML frontmatter (a recognized idiom in at least the
 // registre-mariani twin dossier, migrated by hand 2026-09-14).
@@ -136,5 +152,35 @@ test("planFrontmatterRepairs routes to needs_judgment when no classifier is avai
     const plan = planFrontmatterRepairs([file], {});
     assert.equal(plan.changes_count, 0);
     assert.equal(plan.needs_judgment_count, 1);
+  });
+});
+
+// cogentia#187: identical content at different paths (hardlinks, monorepo
+// build-system copies, plain duplicates) should be flagged as one shared
+// decision, not N independent ones — found the hard way in inseme
+// (cogentia#183), where 12 of 39 needs_judgment files were hardlinked
+// copies across 4 apps.
+test("planFrontmatterRepairs flags needs_judgment duplicates via shared_with", () => {
+  const content = "# Shared Title\n\nIdentical content, no self-declared metadata.\n";
+  withTempFiles({ "a/doc.md": content, "b/doc.md": content, "c/other.md": "# Different\n\nUnrelated.\n" }, (files) => {
+    const plan = planFrontmatterRepairs(files, {});
+    assert.equal(plan.needs_judgment_count, 3);
+    assert.equal(plan.duplicate_groups_count, 1);
+    const a = plan.needs_judgment.find(x => x.path.endsWith("a/doc.md") || x.path.endsWith("a\\doc.md"));
+    const c = plan.needs_judgment.find(x => x.path.endsWith("c/other.md") || x.path.endsWith("c\\other.md"));
+    assert.equal(a.shared_with.length, 1, "the two identical files should reference each other");
+    assert.equal(c.shared_with.length, 0, "the unrelated file has no duplicates");
+  });
+});
+
+test("planFrontmatterRepairs flags scaffold duplicates via shared_with too, not just needs_judgment", () => {
+  const content = "# Shared Title\n\nIdentical content.\n";
+  withTempFiles({ "a/doc.md": content, "b/doc.md": content }, (files) => {
+    const classify = () => ({ role: "template", role_confidence: "strong", document_kind: "template", kind_confidence: "strong", visibility: null });
+    const plan = planFrontmatterRepairs(files, { classify });
+    assert.equal(plan.changes_count, 2);
+    assert.equal(plan.duplicate_groups_count, 1);
+    assert.equal(plan.changes[0].shared_with.length, 1);
+    assert.equal(plan.changes[1].shared_with.length, 1);
   });
 });
