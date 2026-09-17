@@ -401,6 +401,8 @@ async function main() {
       return cmdConcepts(argv.shift() || "check");
     case "continuation":
       return cmdContinuation(argv.shift() || "list");
+    case "effect":
+      return cmdEffect(argv);
     case "issues":
       return cmdIssues(argv.shift() || "list");
     case "publish":
@@ -454,6 +456,23 @@ async function main() {
       return cmdSenatoriales(argv.shift() || "orient");
     default:
       throw new Error(`Unknown command "${command}". Run: node scripts/cogentia.js help`);
+  }
+}
+
+async function cmdEffect(args) {
+  const sub = args.shift() || "help";
+  if (sub !== "grant") {
+    throw new Error("Usage: effect grant --from <expose.json> --confirm <payload_hash>");
+  }
+  const { cmdEffectGrant } = await import("./lib/cogentia-effect-cli.js");
+  const forwarded = JSON_MODE && !args.includes("--json") ? ["--json", ...args] : args;
+  try {
+    return await cmdEffectGrant(forwarded, process.env);
+  } catch (err) {
+    if (err.error_class === "confirm_required") {
+      process.exit(err.exit_code || 2);
+    }
+    throw err;
   }
 }
 
@@ -923,6 +942,12 @@ Context Gateway:
   GET /api/issues/graph    Read-only issue graph over tracked GitHub work items.
   scripts/cogentia-mcp.js  MCP stdio adapter; calls the daemon and never SQLite directly.
   Docs: docs/cogentia-context-gateway.md and docs/cogentia-mcp.md
+
+Effect commands (#171 mint UI):
+  effect grant --from <expose.json> --confirm <payload_hash>
+                           After EXPOSE, mint a payload-bound grant.
+                           Omit --confirm to print preview and hash (exit 2).
+                           Flags: --principal <id> --json --prepared-json <json>
 
 Continuation commands:
   continuation emit        Emit an external judgment request.

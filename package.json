@@ -102,6 +102,7 @@
     "reality:github-write": "node scripts/ops/reality-test-github-write.js",
     "reality:whatsapp-send": "node scripts/ops/reality-test-whatsapp-send.js",
     "test:git-write": "node scripts/test-git-write.js",
+    "test:effect-grant": "node scripts/test-effect-grant.js",
     "reality:git-write": "node scripts/ops/reality-test-git-write.js",
     "reality:host-dc-mcp": "node scripts/ops/reality-test-desktop-commander-mcp.js",
     "test:capability-inventory": "node scripts/test-capability-inventory.js",

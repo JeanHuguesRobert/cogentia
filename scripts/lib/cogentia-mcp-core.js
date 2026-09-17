@@ -11,7 +11,7 @@ import { runJohnRequest } from "./john-run.js";
 import { auditCapabilitySymmetry } from "./symmetry-audit.js";
 import { listPatterns, getPattern } from "./cogentia-patterns.js";
 import { createHostCapabilityRouter } from "./host-capability-router.js";
-import { recordSideEffectExecution } from "./side-effect-authorization.js";
+import { recordSideEffectExecution, mintSideEffectGrantFromPrepared } from "./side-effect-authorization.js";
 import { prepareCommunicationSend, executeCommunicationSend, createDryRunTransport } from "./communication-send.js";
 import { prepareGithubWrite, executeGithubWrite, createGithubDryRunTransport } from "./github-write.js";
 import { prepareGitWrite, executeGitWrite, createGitDryRunTransport } from "./git-write.js";
@@ -68,6 +68,7 @@ export const MUTATE_TOOLS = new Set([
   "cogentia_github_write",
   "cogentia_git_write",
   "cogentia_side_effect_record",
+  "cogentia_side_effect_grant",
 ]);
 
 /**
@@ -987,6 +988,21 @@ export const TOOLS = [
     },
   },
   {
+    name: "cogentia_side_effect_grant",
+    description:
+      "Mint a #171 side_effect_authorization after EXPOSE. Requires the prepared envelope and confirm=payload_hash (you must have seen the hash). Mutate. Utterances cannot mint.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        prepared: { type: "object", description: "EXPOSE envelope from *_prepare" },
+        confirm: { type: "string", description: "Must match payload_hash (sha256:…)" },
+        principal: { type: "string" },
+      },
+      required: ["prepared", "confirm"],
+      additionalProperties: false,
+    },
+  },
+  {
     name: "cogentia_side_effect_record",
     description:
       "VERIFY a native write-class execute: consume the #171 grant and hop the decision packet (effect-verified). Does not send mail, write GitHub, or run git. Mutate.",
@@ -1892,6 +1908,14 @@ export function createMcpCore(env = process.env, extras = {}) {
           prepared: args.prepared,
           authorization: args.side_effect_authorization,
           transport: gitTransport,
+        });
+      case "cogentia_side_effect_grant":
+        if (!args.prepared || typeof args.prepared !== "object") throw new Error("prepared is required");
+        requireString(args.confirm, "confirm");
+        return mintSideEffectGrantFromPrepared(args.prepared, {
+          principal: args.principal || auth?.principal_ref || auth?.actor || "principal:mcp",
+          confirm: args.confirm,
+          actor: auth?.actor,
         });
       case "cogentia_side_effect_record":
         requireString(args.action_class, "action_class");

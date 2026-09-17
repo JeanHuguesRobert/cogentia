@@ -93,3 +93,4 @@ A native `gmail__send_message` or `git commit` is still a capacity. Without VERI
 - `grantSideEffectAuthorization` — decision packet + flat grant
 - `*_prepare` — EXPOSE continuation on `packet`
 - `markConsumed` — `completed` + `effect-verified` hop
+- Mint UI: `node scripts/cogentia.js effect grant --from expose.json --confirm <payload_hash>` and MCP `cogentia_side_effect_grant`

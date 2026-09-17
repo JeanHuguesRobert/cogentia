@@ -109,6 +109,48 @@ export function canonicalPayloadHash(payload) {
   return `sha256:${createHash("sha256").update(stableSerialize(payload ?? {})).digest("hex")}`;
 }
 
+export function confirmMatchesPayloadHash(confirm, payload_hash) {
+  const want = String(payload_hash || "").trim();
+  const got = String(confirm || "").trim();
+  if (!want || !got) return false;
+  if (got === want) return true;
+  const wantHex = want.replace(/^sha256:/i, "");
+  const gotHex = got.replace(/^sha256:/i, "");
+  if (gotHex.length < 12) return false;
+  return wantHex === gotHex || wantHex.startsWith(gotHex);
+}
+
+/**
+ * Principal mint: EXPOSE envelope + confirm of payload_hash → decision grant.
+ * Utterances cannot mint. Confirm is the human/mandate "I saw this hash".
+ */
+export function mintSideEffectGrantFromPrepared(prepared, { principal, confirm, actor } = {}) {
+  if (!prepared || typeof prepared !== "object" || !prepared.payload || !prepared.action_class) {
+    throw fail("invalid_prepare", "prepared EXPOSE envelope with action_class and payload required");
+  }
+  if (classifyAction(prepared.action_class) !== "effectful") {
+    throw fail("not_effectful", `action_class ${prepared.action_class} is not write-class`);
+  }
+  const payload_hash = canonicalPayloadHash(prepared.payload);
+  if (!confirmMatchesPayloadHash(confirm, payload_hash)) {
+    const err = fail(
+      confirm ? "confirm_mismatch" : "confirm_required",
+      confirm
+        ? "confirm does not match payload_hash"
+        : `review EXPOSE then pass confirm=${payload_hash} to mint`
+    );
+    err.payload_hash = payload_hash;
+    err.exposed = prepared.exposed_message || prepared.exposed_mutation || prepared.target;
+    throw err;
+  }
+  return grantSideEffectAuthorization({
+    principal: principal || actor || null,
+    action_class: prepared.action_class,
+    target: prepared.target || {},
+    payload: prepared.payload,
+  });
+}
+
 export function grantSideEffectAuthorization({
   principal,
   action_class,

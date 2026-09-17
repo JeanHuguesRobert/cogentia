@@ -60,6 +60,7 @@ export const CLI_COMMANDS = [
   { verb: "continuation schema", mcp_tool: "cogentia_continuation_schema", daemon: "/api/cli/continuation/schema", risk: "read" },
   { verb: "continuation emit", mcp_tool: "cogentia_continuation_emit", daemon: "/api/ops/continuations/emit", risk: "write" },
   { verb: "continuation resolve", mcp_tool: "cogentia_continuation_resolve", daemon: "/api/ops/continuations/resolve", risk: "write" },
+  { verb: "effect grant", mcp_tool: "cogentia_side_effect_grant", risk: "write" },
   { verb: "john run", mcp_tool: "cogentia_john_run", risk: "read" },
   { verb: "orient", mcp_tool: "cogentia_orient", daemon: "/api/context/orient", risk: "read" },
   { verb: "orient-benchmark", mcp_tool: "cogentia_orient_benchmark", daemon: "/api/ops/orient-benchmark", risk: "read" },

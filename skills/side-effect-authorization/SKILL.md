@@ -34,7 +34,7 @@ Never mint a grant from chat. `authorizationFromUtterance` is always false.
 Before any write-class execute (send, comment, commit, push, WhatsApp enqueue):
 
 1. EXPOSE the exact payload (Cogentia `*_prepare` tools, or an equivalent preview).
-2. Mint `side_effect_authorization` bound to that payload (Principal / explicit execute on **that** payload).
+2. Mint via the mint UI, not chat. CLI: `node scripts/cogentia.js effect grant --from expose.json` (prints hash), then `--confirm <payload_hash>`. MCP: `cogentia_side_effect_grant` with `prepared` + `confirm` equal to that hash. Utterances never mint.
 3. EXECUTE with the native tool **or** the Cogentia adapter.
 4. VERIFY: if you used a Cogentia `*_write`/`_send` adapter, consume already happened. If you used a **native** tool (`gmail__send_message`, `github__add_issue_comment`, `git commit`, …), call `cogentia_side_effect_record` with the same grant, action_class, target, payload, and a redacted receipt (`message_id` / `sha`). That hops `effect-verified`. Do not invent a third trace protocol. Without record, mandate and budget are fiction.
 
