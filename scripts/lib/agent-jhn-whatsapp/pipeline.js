@@ -20,7 +20,7 @@ import {
 } from "./trace.js";
 import {
   requestOutboundSend,
-  prepareWhatsappSend,
+  requestOutboundSendAuthorized,
   buildActionRequestId,
 } from "./outbound-gate.js";
 import { ARTIFACT_TYPES, DECISIONS } from "./constants.js";
@@ -207,35 +207,22 @@ export async function handleInbound(rawEvent, config, options = {}) {
     config.state_dir
   ) {
     const actionRequestId = buildActionRequestId(normalized.platform_message_id);
+    const sendArgs = {
+      config,
+      normalized,
+      draftText: draft.text,
+      actionRequestId,
+      now: options.now,
+    };
     if (options.side_effect_authorization) {
       outbound = requestOutboundSend({
-        config,
-        normalized,
-        draftText: draft.text,
-        actionRequestId,
-        now: options.now,
+        ...sendArgs,
         side_effect_authorization: options.side_effect_authorization,
       });
     } else {
-      const prepared = prepareWhatsappSend({
-        config,
-        normalized,
-        draftText: draft.text,
-        actionRequestId,
-        now: options.now,
-      });
-      outbound = prepared.ok && !prepared.idempotent_skip
-        ? {
-            ok: false,
-            enqueued: false,
-            blocked_before_outbox: true,
-            error: "authorization_missing",
-            rule_id: "gate.side_effect_authorization",
-            reason: "whatsapp.send requires side_effect_authorization",
-            action_request_id: prepared.action_request_id,
-            prepared,
-          }
-        : prepared;
+      // In-mandate: JHN is the handler. Mint+consume the COP grant itself.
+      // Out-of-mandate never reaches here (policy / usage-grant / SEND_ENABLED).
+      outbound = requestOutboundSendAuthorized(sendArgs);
     }
   }
 

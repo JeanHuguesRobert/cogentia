@@ -918,9 +918,8 @@ test("75c_explicit_invocation_in_self_chat_is_identified", async () => {
   assert.equal(res.turn_admission.trigger, "explicit_invocation");
   assert.equal(res.policy.decision, DECISIONS.SEND);
   assert.equal(res.policy.allow_send, true);
-  assert.equal(res.outbound?.enqueued, false);
-  assert.equal(res.outbound?.error, "authorization_missing");
-  assert.equal(res.outbound?.prepared?.action_class, "whatsapp.send");
+  assert.equal(res.outbound?.enqueued, true);
+  assert.ok(res.outbound?.authorization_id);
   assert.ok(res.draft_text_for_local.includes("— agent-jhn-experimental"));
 });
 

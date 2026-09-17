@@ -327,12 +327,15 @@ export function requestOutboundSend({
   };
 }
 
-/** Test/CLI helper: EXPOSE + mint + enqueue. Not for the inbound pipeline. */
+/**
+ * In-mandate enqueue: JHN mints the COP decision packet as itself, then enqueues.
+ * No Principal judgment. Out-of-mandate traffic never gets allow_send.
+ */
 export function requestOutboundSendAuthorized(args = {}) {
   const prepared = prepareWhatsappSend(args);
   if (!prepared.ok || prepared.idempotent_skip) return prepared;
   const authorization = mintWhatsappSendAuthorization(prepared, {
-    principal: args.config?.principal_id || "principal:test",
+    principal: args.config?.agent_id || args.config?.mandate_id || "agent:jhn",
   });
   return requestOutboundSend({ ...args, side_effect_authorization: authorization });
 }

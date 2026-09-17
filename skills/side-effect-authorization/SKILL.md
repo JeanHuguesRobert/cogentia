@@ -54,7 +54,7 @@ Prefer `cogentia_github_prepare` then execute.
 
 ## WhatsApp
 
-Agent JHN still does not call Baileys `sendMessage` directly. `requestOutboundSend` is the enqueue frontier and requires the grant. Usage-grant + `SEND_ENABLED` + policy still apply. The inbound pipeline does not auto-enqueue.
+Agent JHN still does not call Baileys `sendMessage` directly. `requestOutboundSend` is the enqueue frontier. In-mandate self-chat replies: JHN mints and consumes the COP grant itself (no Principal judgment). Out-of-mandate never reaches send (policy / usage-grant / `SEND_ENABLED`). Principal mint is for effects outside that mandate (e.g. Grok + Gmail), not for every JHN ping.
 
 ## Git commit / push
 
