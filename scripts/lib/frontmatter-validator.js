@@ -585,7 +585,12 @@ export function planFrontmatterRepairs(paths, options = {}) {
       // at corpus scale would be worse than not scaffolding it at all, so
       // it's routed to the existing docs-judgments continuation queue
       // instead (same mechanism already used for document role review).
+      // A resolved continuation (cogentia#188) is an actual recorded human/
+      // agent judgment, not a heuristic guess — it bypasses the sensitive-
+      // repo gate the same way explicit self-declared prose does, since
+      // both represent a real decision rather than an inference.
       const hasConfidentRole = Boolean(legacy.document_role)
+        || Boolean(prediction?.resolved_via_continuation)
         || Boolean(!isSensitiveRepo && prediction && prediction.role && prediction.role !== "unknown" && prediction.role_confidence === "strong");
 
       if (!hasConfidentRole) {
@@ -620,7 +625,9 @@ export function planFrontmatterRepairs(paths, options = {}) {
 
       const repairs = ["insert_scaffold_frontmatter"];
       if (Object.keys(legacy).length) repairs.push("migrate_legacy_prose_metadata");
-      if (prediction && !legacy.document_role && prediction.role && prediction.role !== "unknown") repairs.push("classified_role_from_inventory");
+      if (prediction && !legacy.document_role && prediction.role && prediction.role !== "unknown") {
+        repairs.push(prediction.resolved_via_continuation ? "role_from_resolved_continuation" : "classified_role_from_inventory");
+      }
 
       changes.push({
         path: filePath,

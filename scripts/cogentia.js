@@ -505,8 +505,46 @@ function cmdPossibleMatrix(subcommand) {
 // signal here means confident predictions can be auto-applied, and anything
 // weak/unknown is left for the existing `docs judgments` continuation queue
 // instead of silently guessing wrong at corpus scale.
+// cogentia#188: a resolved continuation's decision (`continuation resolve
+// --decision "..."`) is currently only ever read back by a human scrolling
+// `continuation list`. classifyRole()/inferDocumentKind() recompute from
+// scratch every time and have no way to know a judgment call was already
+// made for this exact path — this session hit that gap twice, assuming a
+// resolution existed (or matched the wrong continuation kind) rather than
+// having the tool say so.
+const RESOLVED_ROLE_CONTINUATION_KINDS = Object.freeze(["document_role_review", "index.document_role_judgment"]);
+const KNOWN_DOCUMENT_ROLES_FOR_RESOLUTION = Object.freeze(["source", "derived", "operational", "template", "example", "alias", "archive", "index", "trail"]);
+
+function normalizeResolvedRoleDecision(decisionText) {
+  const text = String(decisionText || "").toLowerCase();
+  for (const role of KNOWN_DOCUMENT_ROLES_FOR_RESOLUTION) {
+    if (text.includes(role)) return role;
+  }
+  return null;
+}
+
+function buildResolvedRoleIndex(ctx) {
+  const index = new Map();
+  for (const c of loadContinuations(ctx)) {
+    if (c.status !== "resolved") continue;
+    if (!RESOLVED_ROLE_CONTINUATION_KINDS.includes(c.kind)) continue;
+    const repo = c.subject?.repo;
+    const relPath = c.subject?.path;
+    const role = normalizeResolvedRoleDecision(c.resolution?.decision);
+    if (!repo || !relPath || !role) continue;
+    const key = `${repo}::${relPath}`;
+    const resolvedAt = c.resolution?.resolved_at || "";
+    const existing = index.get(key);
+    if (!existing || resolvedAt > existing.resolved_at) {
+      index.set(key, { role, resolved_at: resolvedAt, continuation_id: c.id, decision: c.resolution.decision, reason: c.resolution?.reason || "" });
+    }
+  }
+  return index;
+}
+
 function buildFrontmatterClassifier(ctx) {
   const inventory = buildInventory(ctx);
+  const resolvedRoles = buildResolvedRoleIndex(ctx);
   const byFullPath = new Map();
   for (const doc of inventory.documents) {
     byFullPath.set(path.resolve(doc.full_path), doc);
@@ -516,10 +554,22 @@ function buildFrontmatterClassifier(ctx) {
     if (!doc) return null;
     const kindInfo = inferDocumentKind(doc);
     const visibility = doc.visibility || {};
+    let role = doc.role;
+    let role_confidence = doc.role_confidence;
+    let resolved_via_continuation = null;
+    if (!role || role === "unknown" || role_confidence !== "strong") {
+      const resolved = resolvedRoles.get(`${doc.repo}::${doc.rel}`);
+      if (resolved) {
+        role = resolved.role;
+        role_confidence = "strong";
+        resolved_via_continuation = resolved.continuation_id;
+      }
+    }
     return {
       repo: doc.repo,
-      role: doc.role,
-      role_confidence: doc.role_confidence,
+      role,
+      role_confidence,
+      resolved_via_continuation,
       document_kind: kindInfo.kind,
       kind_confidence: kindInfo.confidence,
       // Only trust visibility as a scaffold input when it traces to an
@@ -2643,7 +2693,7 @@ function cmdDocsTrails(ctx, inventory) {
 function cmdDocsJudgments(ctx, inventory, repoArg) {
   const emit = takeFlag("--emit-continuations");
   const includeInferredSource = takeFlag("--include-inferred-source");
-  const requests = documentJudgmentRequests(inventory, repoArg, { includeInferredSource });
+  const requests = documentJudgmentRequests(inventory, repoArg, { includeInferredSource, ctx });
   const continuations = emit
     ? requests.map(req => emitContinuation(ctx, req))
     : [];
@@ -11018,6 +11068,8 @@ function documentJudgmentRequests(inventory, repoArg, options = {}) {
     .filter(d => repoArg === "all" || d.repo === repoArg)
     .filter(d => !isGeneratedNavigationDoc(d))
     .sort(compareDocs("repo"));
+  // cogentia#188: don't re-ask for a judgment that's already been recorded.
+  const resolvedRoles = options.ctx ? buildResolvedRoleIndex(options.ctx) : new Map();
   const requests = [];
   for (const doc of docs) {
     const reasons = [];
@@ -11032,6 +11084,10 @@ function documentJudgmentRequests(inventory, repoArg, options = {}) {
       if (!explicit) reasons.push("source role is inferred from research path, not explicit frontmatter");
     }
     if (!reasons.length) continue;
+    const resolved = resolvedRoles.get(`${doc.repo}::${doc.rel}`);
+    if (resolved) {
+      reasons.push(`already resolved via continuation ${resolved.continuation_id} -> "${resolved.decision}" (${resolved.reason || "no reason recorded"}); apply directly rather than re-emitting a new judgment request`);
+    }
     const ref = `${doc.repo}/${doc.rel}`;
     requests.push({
       kind: "document_role_review",
@@ -11053,6 +11109,7 @@ function documentJudgmentRequests(inventory, repoArg, options = {}) {
         frontmatter: doc.frontmatter,
         size: doc.size,
         last_significant_update: doc.updated,
+        resolved_elsewhere: resolved ? { continuation_id: resolved.continuation_id, decision: resolved.decision, reason: resolved.reason, resolved_at: resolved.resolved_at } : null,
       },
       expected_response: {
         format: "json",
