@@ -26,7 +26,7 @@ update_policy: UP-DEFAULT-REVIEWED
 | 2026-03-27-001 | 2026-03-27 | FractaVolta / Constellia ICOME26 | HyFit; Corsica Sole | 0 | 78 | Sent — no response detected | D2 |
 | 2026-03-30-001 | 2026-03-30 | WIP Draft "Infractructure is all you need" | André Fazi | 0 | 75 | Sent — no response detected | D2 |
 | 2026-03-31-001 | 2026-03-31 | Proposition de session spéciale MareNostrum en lien avec ICOME’26 | Université de Corse; ICOME; Collectivité de Corse | 0 | 2 | Reply received; partial delivery failure observed | D2 |
-| 2026-04-11-001 | 2026-04-11 | Session spéciale MareNostrum — ICOME'26 | Jean-Louis Rossi | 1 | 23 | Followed up on 2026-05-04 | D2 |
+| 2026-04-11-001 | 2026-04-11 | Session MareNostrum | Jean-Louis Rossi | 1 | 23 | Followed up on 2026-05-04 | D2 |
 | 2026-04-11-002 | 2026-04-11 | Expression of interest — Mediterranean solar & compute sovereignty session, ICOME'26 Corte | PRIMA Secretariat | 0 | 0 | Delivery failed | D2 |
 | 2026-04-12-001 | 2026-04-12 | Projet MareNostrum — PRIMA France / ANR | PRIMA France / ANR | 0 | 62 | Sent — no response detected | D2 |
 | 2026-04-12-002 | 2026-04-12 | Contact François Casabianca — autonomie alimentaire | François Casabianca | 0 | 10 | Reply received; report sent | D2 |
@@ -35,6 +35,7 @@ update_policy: UP-DEFAULT-REVIEWED
 | 2026-06-12-001 | 2026-06-12 | Démocratie de capacité, publics capables et IA sous mandat | Hélène Landemore; Barbara Stiegler | 0 | 1 | Sent — awaiting reply | D2 |
 | 2026-06-13-001 | 2026-06-13 | Demande de cadrage territorial — Préfiguration d’un point d’autonomie numérique et administrative à Corte | Sous-préfecture de Corte; Mme Volpi; Institut Mariani | 0 | 0 | Sent — awaiting reply | D2 |
 | 2026-09-17-001 | 2026-09-17 | Re: Élections sénatoriales 2026 – vérification d’un point factuel relatif à la saisine du TA | Adrien Vidal / Préfecture de la Haute-Corse | 2 | 2 | Sent 10:06 CEST — Frame Recovery after non-resolutive reply; requests factual Q1/Q2/Q3 as yes/no/unavailable; awaiting reply | D2 |
+| 2026-09-17-002 | 2026-09-17 | Re: TR: élections sénatoriales TA Bastia – n° 2601714-1 et 2601715-1 – demande de communication et vérifications matérielles | Greffe TA Bastia | 1 | 1 | Sent 10:34 CEST in existing HCK thread, CC Laurence + Maguy — asks identification/time of 14 Sep “Réception d’une lettre”, time of note en délibéré, time judgment rendered/made available, initial-prefecture piece list, plus point 5: list of pieces possibly communicated later by prefecture; awaiting reply | D2 |
 <!-- BEGIN_AUTO: backlinks -->
 ### Backlinks
 
