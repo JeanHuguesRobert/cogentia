@@ -3,7 +3,7 @@ title: "Non-Resolutive Response Patterns"
 subtitle: "Detect when an answer moves attention without materially reducing the uncertainty that motivated the question"
 author: "Jean Hugues Noël Robert, baron Mariani"
 date: "2026-09-17"
-version: "0.1"
+version: "0.2"
 status: "working-paper"
 license: "CC BY-SA 4.0"
 language: "en"
@@ -25,9 +25,14 @@ tags:
   - information-value
   - institutional-interaction
   - traceability
+  - occam
+  - fragmentation
+  - canonicalization
 related_documents:
   - "research/reality_probe_selection.md"
   - "research/epistemic_assimilation_and_salience.md"
+  - "research/simplicite_action.md"
+  - "research/ideas_to_explore_as_issues.md"
   - "skills/response-resolution-check/SKILL.md"
 classification_source: "cogentia.js"
 classification_version: "1"
@@ -313,3 +318,149 @@ epistemic state
 ```
 
 Their divergence is itself a signal worth preserving.
+
+---
+
+## 11. External Occam Check — unexplained entity proliferation
+
+Cogentia already applies Occam internally: do not multiply concepts, documents, issues, containers or implementation layers beyond necessity. The same discipline must be applied to **external systems**.
+
+An interaction may represent one practical matter through several external entities:
+
+- several case numbers;
+- several conversation threads;
+- several identifiers;
+- several portals;
+- several procedural containers;
+- several intermediaries;
+- several apparently duplicate document sets.
+
+The signal is not plurality by itself. Plurality may be legally, technically or operationally necessary.
+
+The signal is:
+
+> **one practical object appears to be represented by several entities while the necessity of the multiplication remains unexplained.**
+
+Working term:
+
+> **Unexplained Entity Proliferation** — *prolifération non expliquée d'entités*.
+
+This is an **effect-level observation**, not an accusation.
+
+### 11.1 Four tests
+
+When external entities multiply, apply four checks:
+
+```text
+1. Necessity test
+   What real distinction requires the additional entity?
+
+2. Continuity test
+   Which facts, parties, recipients, documents, references and timestamps survived the split?
+
+3. Recomposition test
+   Can the original practical matter be reconstructed unambiguously from the fragments?
+
+4. Intent separation
+   Fragmentation effect is observable.
+   Cause remains to be established.
+```
+
+Possible causes include:
+
+- legal or procedural requirements;
+- database or software architecture;
+- organizational routing;
+- accidental duplication;
+- defensive workflow;
+- strategic fragmentation.
+
+Do not rank these causes without evidence.
+
+### 11.2 Fragmentation cost
+
+Even when benign, unnecessary or unexplained fragmentation can increase:
+
+```text
+number of entities
+    ↓
+reconciliation cost
+    ↓
+context-loss risk
+    ↓
+contradiction risk
+    ↓
+responsibility-dilution risk
+    ↓
+human and agent cognitive load
+```
+
+A fragmented system can therefore produce effects superficially resembling "divide and rule" without proving any intention to divide or confuse.
+
+The metacognitive task is to detect and neutralize the effect before speculating about motive.
+
+### 11.3 Canonicalization rule
+
+FractaCognition must not automatically import external fragmentation into its own world model.
+
+Canonical rule:
+
+> **Do not import external fragmentation into the cognitive model. Canonicalize first.**
+
+Represent the practical matter once, then map external projections onto it:
+
+```text
+canonical matter X
+├── external projection A
+├── external projection B
+├── conversation thread C
+├── portal record D
+└── document set E
+```
+
+External systems are free to multiply identifiers. The internal cognitive model should preserve a single canonical object unless a real substantive distinction is established.
+
+### 11.4 Occam symmetry
+
+Internal Occam:
+
+> Do not create a new entity if an existing entity is sufficient.
+
+External Occam check:
+
+> When another system creates an additional entity, ask what distinction makes it necessary before allowing that entity to split the internal model.
+
+This connects response-resolution analysis to `research/simplicite_action.md` and the "smallest sufficient container" rule in `research/ideas_to_explore_as_issues.md`.
+
+---
+
+## 12. FractaCognition invariant
+
+For consequential interactions, track three states separately:
+
+```text
+interaction state
+    what happened next?
+
+epistemic state
+    what uncertainty changed?
+
+entity topology
+    did the same matter become split across additional containers?
+```
+
+A useful warning condition is:
+
+```text
+interaction movement increases
+AND
+entity count increases
+AND
+residual uncertainty does not materially decrease
+```
+
+This condition does not prove obstruction. It does justify a deliberate **canonicalization and resolution check** before further action.
+
+Compact formula:
+
+> **Track uncertainty, track fragmentation, and preserve one canonical object until Reality requires more.**
