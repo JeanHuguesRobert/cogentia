@@ -204,10 +204,35 @@ export function attachExposePacket(prepared, opts = {}) {
   );
 }
 
-export function consumeSideEffectAuthorization(authorization) {
+export function consumeSideEffectAuthorization(authorization, extra = {}) {
   if (!authorization?.authorization_id) return;
   if (authorization.single_use === false) return;
-  getAuthorizationStore().markConsumed(authorization.authorization_id);
+  getAuthorizationStore().markConsumed(authorization.authorization_id, extra);
+}
+
+/**
+ * VERIFY after a native execute. Capacities stay; this consumes the grant
+ * and hops the decision packet. Does not call Gmail/GitHub/git.
+ */
+export function recordSideEffectExecution({
+  authorization,
+  action_class,
+  target,
+  payload,
+  receipt,
+} = {}) {
+  validateSideEffectAuthorization(authorization, { action_class, target, payload });
+  consumeSideEffectAuthorization(authorization, { receipt });
+  const stored = getAuthorizationStore().getGrant(authorization.authorization_id);
+  return {
+    ok: true,
+    authorization_id: authorization.authorization_id,
+    verification: {
+      ok: true,
+      executed_at: stored?.consumed_at || new Date().toISOString(),
+      packet: stored?.packet || null,
+    },
+  };
 }
 
 /**

@@ -83,7 +83,16 @@ export function asDecisionGrant({
   };
 }
 
-export function withVerifiedHop(row, at = nowIso()) {
+export function redactReceipt(receipt) {
+  if (!receipt || typeof receipt !== "object") return null;
+  const out = {};
+  for (const k of ["transport", "id", "message_id", "sha", "html_url", "operation", "ok"]) {
+    if (receipt[k] != null && receipt[k] !== "") out[k] = receipt[k];
+  }
+  return Object.keys(out).length ? out : { recorded: true };
+}
+
+export function withVerifiedHop(row, at = nowIso(), extra = {}) {
   if (!row || typeof row !== "object") return row;
   const packet = row.packet && typeof row.packet === "object"
     ? structuredClone(row.packet)
@@ -91,6 +100,9 @@ export function withVerifiedHop(row, at = nowIso()) {
   packet.envelope = packet.envelope || {};
   packet.envelope.status = "completed";
   packet.envelope.hops = Array.isArray(packet.envelope.hops) ? packet.envelope.hops : [];
-  packet.envelope.hops.push(copHop("effect-verified", { at }));
+  const hopExtra = { at };
+  const receipt = redactReceipt(extra.receipt);
+  if (receipt) hopExtra.receipt = receipt;
+  packet.envelope.hops.push(copHop("effect-verified", hopExtra));
   return { ...row, packet, consumed_at: row.consumed_at || at };
 }

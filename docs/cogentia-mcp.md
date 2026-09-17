@@ -159,6 +159,7 @@ Tools are registered in `scripts/lib/cogentia-mcp-core.js`. They are categorized
 | `cogentia_github_write` | **P3 Mutate** + #171 | EXECUTE prepared GitHub write; dry-run unless a transport is injected |
 | `cogentia_git_prepare` | **P4** private-read | EXPOSE a `git.commit` or `git.push`; does not mutate |
 | `cogentia_git_write` | **P3 Mutate** + #171 | EXECUTE prepared git mutation; dry-run unless a local transport is injected |
+| `cogentia_side_effect_record` | **P3 Mutate** + #171 | VERIFY after native execute: consume grant, hop `effect-verified`; does not send |
 
 Anonymous `tools/list` still hides mutate tools. The **maximum set** is also advertised as MCP resources (`resources/list`, `skill://…`, `cogentia://pattern/…`, `cogentia://cli/catalog`) and experimental `skills/list` (SEP-2640). Use `cogentia_cli_catalog` or `resources/read` of `cogentia://capability/catalog` to see gated verbs even when they are omitted from the public tool list.
 

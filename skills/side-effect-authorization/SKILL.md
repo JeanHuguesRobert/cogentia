@@ -36,7 +36,7 @@ Before any write-class execute (send, comment, commit, push, WhatsApp enqueue):
 1. EXPOSE the exact payload (Cogentia `*_prepare` tools, or an equivalent preview).
 2. Mint `side_effect_authorization` bound to that payload (Principal / explicit execute on **that** payload).
 3. EXECUTE with the native tool **or** the Cogentia adapter.
-4. VERIFY: consume the grant; the decision packet hops to `effect-verified` (`envelope.status: completed`). Do not invent a third trace protocol.
+4. VERIFY: if you used a Cogentia `*_write`/`_send` adapter, consume already happened. If you used a **native** tool (`gmail__send_message`, `github__add_issue_comment`, `git commit`, …), call `cogentia_side_effect_record` with the same grant, action_class, target, payload, and a redacted receipt (`message_id` / `sha`). That hops `effect-verified`. Do not invent a third trace protocol. Without record, mandate and budget are fiction.
 
 Reads stay ungated. Drafts are PREPARE, not EXECUTE.
 

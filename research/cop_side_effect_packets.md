@@ -85,7 +85,7 @@ COP-kernel accounting is **not** required for this slice. When it loads, record 
 
 ## Native execute
 
-A native `gmail__send_message` or `git commit` is still a capacity. Without VERIFY (consume + hop), mandate and budget are fiction. Slice C (`cogentia_side_effect_record`) attaches that hop after native execute. This note does not deny those tools.
+A native `gmail__send_message` or `git commit` is still a capacity. Without VERIFY (consume + hop), mandate and budget are fiction. `cogentia_side_effect_record` attaches that hop after native execute. This note does not deny those tools.
 
 ## Code
 

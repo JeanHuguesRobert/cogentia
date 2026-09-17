@@ -23,10 +23,10 @@ export function createMemoryStore() {
       const row = grants.get(id);
       return Boolean(row?.consumed_at);
     },
-    markConsumed(id) {
+    markConsumed(id, extra = {}) {
       const row = grants.get(id) || { authorization_id: id };
       row.consumed_at = new Date().toISOString();
-      grants.set(id, withVerifiedHop(row, row.consumed_at));
+      grants.set(id, withVerifiedHop(row, row.consumed_at, extra));
     },
     reset() {
       grants.clear();
@@ -84,12 +84,12 @@ export function createFileStore(filePath) {
     isConsumed(id) {
       return Boolean(load().grants?.[id]?.consumed_at);
     },
-    markConsumed(id) {
+    markConsumed(id, extra = {}) {
       const data = load();
       data.grants = data.grants || {};
       const prev = data.grants[id] || { authorization_id: id };
       prev.consumed_at = new Date().toISOString();
-      data.grants[id] = withVerifiedHop(prev, prev.consumed_at);
+      data.grants[id] = withVerifiedHop(prev, prev.consumed_at, extra);
       save(data);
     },
     reset() {

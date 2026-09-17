@@ -11,6 +11,7 @@ import { runJohnRequest } from "./john-run.js";
 import { auditCapabilitySymmetry } from "./symmetry-audit.js";
 import { listPatterns, getPattern } from "./cogentia-patterns.js";
 import { createHostCapabilityRouter } from "./host-capability-router.js";
+import { recordSideEffectExecution } from "./side-effect-authorization.js";
 import { prepareCommunicationSend, executeCommunicationSend, createDryRunTransport } from "./communication-send.js";
 import { prepareGithubWrite, executeGithubWrite, createGithubDryRunTransport } from "./github-write.js";
 import { prepareGitWrite, executeGitWrite, createGitDryRunTransport } from "./git-write.js";
@@ -66,6 +67,7 @@ export const MUTATE_TOOLS = new Set([
   "cogentia_communication_send",
   "cogentia_github_write",
   "cogentia_git_write",
+  "cogentia_side_effect_record",
 ]);
 
 /**
@@ -984,6 +986,26 @@ export const TOOLS = [
       additionalProperties: false,
     },
   },
+  {
+    name: "cogentia_side_effect_record",
+    description:
+      "VERIFY a native write-class execute: consume the #171 grant and hop the decision packet (effect-verified). Does not send mail, write GitHub, or run git. Mutate.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        action_class: { type: "string", minLength: 1 },
+        target: { type: "object" },
+        payload: { type: "object" },
+        side_effect_authorization: { type: "object" },
+        receipt: {
+          type: "object",
+          description: "Redacted receipt only (id, message_id, sha, transport, html_url). No mail bodies.",
+        },
+      },
+      required: ["action_class", "payload", "side_effect_authorization"],
+      additionalProperties: false,
+    },
+  },
 ];
 
 async function resolveResourceRead(uri, env) {
@@ -1870,6 +1892,16 @@ export function createMcpCore(env = process.env, extras = {}) {
           prepared: args.prepared,
           authorization: args.side_effect_authorization,
           transport: gitTransport,
+        });
+      case "cogentia_side_effect_record":
+        requireString(args.action_class, "action_class");
+        if (!args.payload || typeof args.payload !== "object") throw new Error("payload is required");
+        return recordSideEffectExecution({
+          authorization: args.side_effect_authorization,
+          action_class: args.action_class,
+          target: args.target,
+          payload: args.payload,
+          receipt: args.receipt,
         });
       default:
         throw new Error(`Unknown tool: ${name}`);
