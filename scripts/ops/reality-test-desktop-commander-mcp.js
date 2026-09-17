@@ -25,6 +25,7 @@ import {
 import {
   grantSideEffectAuthorization,
   resetAuthorizationStore,
+  buildHostFsWritePayload,
 } from "../lib/side-effect-authorization.js";
 
 const timeoutMs = Number(process.env.COGENTIA_DC_REALITY_TIMEOUT_MS || 60_000);
@@ -139,7 +140,11 @@ try {
   }
 
   const writePath = path.join(dir, "authorized.txt");
-  const payload = { capability: "host.fs.write", path: writePath, command: undefined };
+  const payload = buildHostFsWritePayload({
+    path: writePath,
+    content: "authorized-live-write",
+    target,
+  });
   const authorization = grantSideEffectAuthorization({
     principal: "principal:test",
     action_class: "host.fs.write",
@@ -167,7 +172,7 @@ try {
   try {
     await core.callTool("cogentia_host_fs_write", {
       path: writePath,
-      content: "replay",
+      content: "authorized-live-write",
       target,
       provider: "desktop-commander",
       side_effect_authorization: authorization,

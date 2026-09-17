@@ -8,6 +8,7 @@
  * Tool availability is never treated as authority. Utterances never mint a grant.
  */
 import { createHash, randomUUID } from "node:crypto";
+import path from "node:path";
 import {
   getAuthorizationStore,
   setAuthorizationStore,
@@ -18,6 +19,72 @@ import { maybeRecordCopEffectSpend } from "./cop-surface-accounting.js";
 
 export const AUTHORIZATION_KIND = "cogentia.side_effect_authorization/v1";
 export { getAuthorizationStore, setAuthorizationStore, createMemoryStore };
+
+/**
+ * Canonical payload builder for host.fs.write side effects (Cogentia #192 Finding A).
+ * Binds:
+ * - capability ("host.fs.write")
+ * - target node identifier
+ * - normalized canonical path
+ * - write mode (e.g. "write" / "append")
+ * - content_sha256 (cryptographic digest of file content)
+ * - content_bytes (exact byte count)
+ * - material write options
+ */
+export function buildHostFsWritePayload({
+  path: filePath,
+  content,
+  mode = "write",
+  target = "node:local",
+  options = {},
+} = {}) {
+  const contentStr = typeof content === "string" ? content : String(content ?? "");
+  const content_sha256 = `sha256:${createHash("sha256").update(contentStr).digest("hex")}`;
+  const content_bytes = Buffer.byteLength(contentStr, "utf8");
+  const normalizedPath = filePath ? path.resolve(filePath).replace(/\\/g, "/") : "";
+  const targetNode = typeof target === "string" ? target : target?.node || "node:local";
+  const payload = {
+    capability: "host.fs.write",
+    target: targetNode,
+    path: normalizedPath,
+    mode: mode || "write",
+    content_sha256,
+    content_bytes,
+  };
+  if (options && typeof options === "object" && Object.keys(options).length > 0) {
+    payload.options = options;
+  }
+  return payload;
+}
+
+/**
+ * Generic canonical effect payload builder.
+ */
+export function buildEffectPayload(capability, args = {}, { target = "node:local" } = {}) {
+  if (capability === "host.fs.write") {
+    return buildHostFsWritePayload({
+      path: args.path,
+      content: args.content,
+      mode: args.mode,
+      target,
+      options: args.options,
+    });
+  }
+  if (capability === "host.process.run") {
+    return {
+      capability: "host.process.run",
+      target: typeof target === "string" ? target : target?.node || "node:local",
+      command: args.command || "",
+      args: args.args || [],
+    };
+  }
+  return {
+    capability,
+    target: typeof target === "string" ? target : target?.node || "node:local",
+    path: args.path ? path.resolve(args.path).replace(/\\/g, "/") : undefined,
+    command: args.command || undefined,
+  };
+}
 
 /** @typedef {"read_only"|"effectful"} ActionKind */
 
@@ -224,8 +291,16 @@ export function validateSideEffectAuthorization(authorization, expected = {}) {
     );
   }
   if (expected.target) {
-    const got = JSON.stringify(authorization.target || {});
-    const want = JSON.stringify(expected.target);
+    const normTarget = (t) => {
+      if (!t || typeof t !== "object") return {};
+      const res = { ...t };
+      if (typeof res.path === "string") {
+        res.path = path.resolve(res.path).replace(/\\/g, "/");
+      }
+      return res;
+    };
+    const got = JSON.stringify(normTarget(authorization.target || {}));
+    const want = JSON.stringify(normTarget(expected.target));
     if (got !== want) {
       throw fail("authorization_target_mismatch", "authorization target does not match request");
     }

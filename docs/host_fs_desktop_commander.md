@@ -112,13 +112,33 @@ Environment for a Cogentia-MCP process that may invoke host tools:
 |---|---|
 | `COGENTIA_MCP_VIEW=full` (or JHN attestation) | private-read catalogue |
 | `COGENTIA_MCP_ALLOW_MUTATE=1` | required for `host.fs.write` |
-| `COGENTIA_HOST_FS_ROOT` | sandbox root |
+| `COGENTIA_HOST_FS_ROOT` | bounded root (canonical filesystem boundary) |
 | `COGENTIA_HOST_NODE_ID` | target, default `node:local` |
 | `DESKTOP_COMMANDER_DISABLE_TELEMETRY=1` | set by the provider by default |
 
 Writes also require a `side_effect_authorization` object (`cogentia.side_effect_authorization/v1`). Absence → `authorization_missing` before DC is called. Consumed tokens cannot be replayed.
 
 The same module (`scripts/lib/side-effect-authorization.js`) is the #171 choke point. Grants persist as Cognitive Packets (decision + hops) in `~/.cogentia/side-effect-authorization.json` (cross-process). Mapping: [cop_side_effect_packets.md](../research/cop_side_effect_packets.md). The gate is tracing, mandate, and budget — not removing tools. `POST /ops/route/action` requires a matching grant only when the invoke is a mutation (`repl: true` or a write-class capability). Ordinary model asks are ungated. Cogentia `*_prepare` / execute adapters exist for Gmail, GitHub writes, git, and WhatsApp enqueue. Native provider tools remain available; they are not authority. WhatsApp `requestOutboundSend` still requires a payload-bound grant (unique send frontier). In-mandate, Agent JHN mints that grant itself; Principal mint is not a second chatbot.
+
+## Hardening and governance (#192)
+
+Following [cogentia#192](https://github.com/JeanHuguesRobert/cogentia/issues/192), four core governance controls harden `host.fs.*` execution before reaching any provider:
+
+1. **Exact write payload binding (Finding A)**:
+   Write authorizations (`cogentia.side_effect_authorization/v1`) are cryptographically bound to the exact material write payload via `buildHostFsWritePayload`. The grant binds `capability: "host.fs.write"`, target node, normalized canonical path, write mode (`write` / `append`), `content_sha256`, `content_bytes`, and material options. Any substitution of file content, mode, or target fails closed with `authorization_payload_mismatch` before provider invocation.
+2. **Canonical filesystem containment (Finding B)**:
+   The security boundary is accurately described as a **bounded root / filesystem boundary** (not an operating-system-level sandbox). Lexical prefix checks are replaced with canonical filesystem resolution (`pathInsideRoot`):
+   - The root is canonicalized with `fs.realpathSync.native` / `fs.realpathSync`.
+   - Reads/existing files are resolved to their physical `realpath` and checked against the canonical root.
+   - Writes to non-existent paths resolve the nearest existing parent directory before appending child path segments.
+   - Symlink, NTFS junction, reparse-point, and `..` directory traversal escapes are rejected with `path_outside_root`.
+3. **Mandatory Principal / Actor and Mandate (Finding C)**:
+   Host capabilities fail closed if identity or mandate context is missing:
+   - An authenticated `principal` or authorized `actor` is required (rejection with `identity_required`).
+   - An explicit or inherited `mandate` is required (rejection with `mandate_required`).
+   - Enforcement occurs **prior** to provider resolution or execution.
+4. **COP Budget Seam (Finding D)**:
+   The router enforces bounded COP budget constraints (`ctx.budget` or router option `budget`), supporting operation quotas (`remaining`, `max_operations`) and programmable policy checks (`budget.check(...)`). Denials fail closed with `budget_exhausted` before provider invocation, and bounded budget outcomes are captured in execution traces (`cogentia.host_capability_trace/v1`).
 
 ## Upstream observed
 

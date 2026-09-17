@@ -1112,11 +1112,15 @@ export function createMcpCore(env = process.env, extras = {}) {
         },
       },
     };
+    const actor = auth?.actor || (auth?.auth === "admin" ? "actor:admin" : null);
+    const principal = auth?.principal_ref || (auth?.auth === "admin" ? "principal:admin" : null);
+    const mandate = args.mandate || auth?.mandate_ref || (auth?.auth === "admin" ? "mandate:admin-session" : null);
+
     return router.invoke(capability, args, {
       auth: hostAuth,
-      actor: auth?.actor,
-      principal: auth?.principal_ref,
-      mandate: args.mandate || auth?.mandate_ref,
+      actor,
+      principal,
+      mandate,
       target: args.target,
       provider: args.provider,
       authorization: args.side_effect_authorization || args.authorization,

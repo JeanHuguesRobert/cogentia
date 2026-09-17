@@ -21,6 +21,7 @@ import { createHostCapabilityRouter, ensureHostCapabilityModules } from "./lib/h
 import {
   grantSideEffectAuthorization,
   resetAuthorizationStore,
+  buildHostFsWritePayload,
 } from "./lib/side-effect-authorization.js";
 import { createMcpCore, PRIVATE_READ_TOOLS, MUTATE_TOOLS } from "./lib/cogentia-mcp-core.js";
 import { invokeCapability, registerModule } from "./lib/v3-modules.js";
@@ -382,25 +383,26 @@ await check("Cogentia-MCP surface does not expose raw DC tools", async () => {
   assert.equal(fs.existsSync(path.join(dir, "evil.txt")), false);
 
   resetAuthorizationStore();
-  const payload = {
-    capability: "host.fs.write",
-    path: path.join(dir, "ok.txt"),
-    command: undefined,
-  };
+  const okPath = path.join(dir, "ok.txt");
+  const payload = buildHostFsWritePayload({
+    path: okPath,
+    content: "authorized-write",
+    target: "node:test",
+  });
   const authorization = grantSideEffectAuthorization({
     principal: "principal:test",
     action_class: "host.fs.write",
-    target: { node: "node:test", path: payload.path },
+    target: { node: "node:test", path: okPath },
     payload,
   });
   const written = await privateCore.callTool("cogentia_host_fs_write", {
-    path: payload.path,
+    path: okPath,
     content: "authorized-write",
     target: "node:test",
     side_effect_authorization: authorization,
   });
   assert.equal(written.ok, true);
-  assert.equal(fs.readFileSync(payload.path, "utf8"), "authorized-write");
+  assert.equal(fs.readFileSync(okPath, "utf8"), "authorized-write");
 
   await router.stop();
   rmFixture(dir);
@@ -419,7 +421,11 @@ await check("authorized write then replay of the same authorization fails", asyn
     providerFactory: async () => provider,
   });
   const targetPath = path.join(dir, "once.txt");
-  const payload = { capability: "host.fs.write", path: targetPath, command: undefined };
+  const payload = buildHostFsWritePayload({
+    path: targetPath,
+    content: "once",
+    target: "node:test",
+  });
   const authorization = grantSideEffectAuthorization({
     principal: "principal:test",
     action_class: "host.fs.write",
@@ -434,13 +440,250 @@ await check("authorized write then replay of the same authorization fails", asyn
   await assert.rejects(
     () => router.invoke(
       "host.fs.write",
-      { path: targetPath, content: "twice" },
+      { path: targetPath, content: "once" },
       { auth: fullAuth(), target: "node:test", authorization }
     ),
     (e) => e.error_class === "authorization_replay"
   );
   await router.stop();
   rmFixture(dir);
+});
+
+await check("Finding A: write authorization binds exact content digest and rejects modified content", async () => {
+  resetAuthorizationStore();
+  const dir = fixtureDir();
+  const provider = new DesktopCommanderProvider({
+    spawn: fakeDesktopCommanderSpawn(),
+    timeoutMs: 8_000,
+  });
+  const router = createHostCapabilityRouter({
+    fsRoot: dir,
+    cacheKey: `payload-digest-${Date.now()}`,
+    providerFactory: async () => provider,
+  });
+  const targetPath = path.join(dir, "content-check.txt");
+  const payloadA = buildHostFsWritePayload({
+    path: targetPath,
+    content: "content A: original safe payload",
+    target: "node:test",
+  });
+  const authorization = grantSideEffectAuthorization({
+    principal: "principal:test",
+    action_class: "host.fs.write",
+    target: { node: "node:test", path: targetPath },
+    payload: payloadA,
+  });
+
+  // Calling with content B must be rejected before executing write
+  await assert.rejects(
+    () => router.invoke(
+      "host.fs.write",
+      { path: targetPath, content: "content B: malicious substitute" },
+      { auth: fullAuth(), target: "node:test", authorization }
+    ),
+    (e) => e.error_class === "authorization_payload_mismatch"
+  );
+  assert.equal(fs.existsSync(targetPath), false);
+
+  // Calling with target or mode mismatch must also be rejected
+  await assert.rejects(
+    () => router.invoke(
+      "host.fs.write",
+      { path: targetPath, content: "content A: original safe payload", mode: "append" },
+      { auth: fullAuth(), target: "node:test", authorization }
+    ),
+    (e) => e.error_class === "authorization_payload_mismatch"
+  );
+  assert.equal(fs.existsSync(targetPath), false);
+
+  await router.stop();
+  rmFixture(dir);
+});
+
+await check("Finding B: filesystem boundary rejects .. traversal and symlink escape", async () => {
+  const dir = fixtureDir();
+  const outsideDir = fixtureDir();
+  const secretFile = path.join(outsideDir, "secret.txt");
+  fs.writeFileSync(secretFile, "outside-secret\n");
+
+  const provider = new DesktopCommanderProvider({
+    spawn: fakeDesktopCommanderSpawn(),
+    timeoutMs: 8_000,
+  });
+  const router = createHostCapabilityRouter({
+    fsRoot: dir,
+    cacheKey: `fs-boundary-${Date.now()}`,
+    providerFactory: async () => provider,
+  });
+
+  try {
+    // 1. Ordinary .. traversal fails
+    const traversalPath = path.join(dir, "..", path.basename(outsideDir), "secret.txt");
+    await assert.rejects(
+      () => router.invoke(
+        "host.fs.read",
+        { path: traversalPath },
+        { auth: readAuth(), target: "node:test" }
+      ),
+      (e) => e.error_class === "path_outside_root"
+    );
+
+    // 2. Symlink/junction escape test (if platform allows symlink creation)
+    let symlinkCreated = false;
+    const linkPath = path.join(dir, "link-outside");
+    try {
+      fs.symlinkSync(outsideDir, linkPath, "junction");
+      symlinkCreated = true;
+    } catch {
+      // Non-privileged Windows environment may disallow symlink/junction creation
+    }
+
+    if (symlinkCreated) {
+      const escapedTarget = path.join(linkPath, "secret.txt");
+      await assert.rejects(
+        () => router.invoke(
+          "host.fs.read",
+          { path: escapedTarget },
+          { auth: readAuth(), target: "node:test" }
+        ),
+        (e) => e.error_class === "path_outside_root"
+      );
+
+      // Write to new child via escaping parent must also fail with path_outside_root (even if authorized)
+      const escapedNewChild = path.join(linkPath, "new-child.txt");
+      const authPayload = buildHostFsWritePayload({
+        path: escapedNewChild,
+        content: "escape-write",
+        target: "node:test",
+      });
+      const authGrant = grantSideEffectAuthorization({
+        principal: "principal:test",
+        action_class: "host.fs.write",
+        target: { node: "node:test", path: escapedNewChild },
+        payload: authPayload,
+      });
+      await assert.rejects(
+        () => router.invoke(
+          "host.fs.write",
+          { path: escapedNewChild, content: "escape-write" },
+          { auth: fullAuth(), target: "node:test", authorization: authGrant }
+        ),
+        (e) => e.error_class === "path_outside_root"
+      );
+    }
+  } finally {
+    await router.stop();
+    rmFixture(dir);
+    rmFixture(outsideDir);
+  }
+});
+
+await check("Finding C: host capabilities require authenticated Principal/actor and explicit mandate", async () => {
+  const dir = fixtureDir();
+  const provider = new DesktopCommanderProvider({
+    spawn: fakeDesktopCommanderSpawn(),
+    timeoutMs: 8_000,
+  });
+  const router = createHostCapabilityRouter({
+    fsRoot: dir,
+    cacheKey: `identity-mandate-${Date.now()}`,
+    providerFactory: async () => provider,
+  });
+
+  try {
+    const targetPath = path.join(dir, "hello.txt");
+
+    // Missing both actor and principal
+    await assert.rejects(
+      () => router.invoke(
+        "host.fs.read",
+        { path: targetPath },
+        { auth: { lockers: { private: { read: true } } }, mandate: "mandate:test", target: "node:test" }
+      ),
+      (e) => e.error_class === "identity_required"
+    );
+
+    // Missing mandate
+    await assert.rejects(
+      () => router.invoke(
+        "host.fs.read",
+        { path: targetPath },
+        { auth: { lockers: { private: { read: true } }, actor: "admin" }, target: "node:test" }
+      ),
+      (e) => e.error_class === "mandate_required"
+    );
+
+    // Valid identity and mandate succeeds
+    const res = await router.invoke(
+      "host.fs.read",
+      { path: targetPath },
+      { auth: readAuth(), target: "node:test" }
+    );
+    assert.match(res.result_text, /hello-from-fixture/);
+    assert.equal(res.trace.actor, "admin");
+    assert.equal(res.trace.principal, "principal:test");
+    assert.equal(res.trace.mandate, "mandate:cogentia#184");
+  } finally {
+    await router.stop();
+    rmFixture(dir);
+  }
+});
+
+await check("Finding D: bounded budget check can deterministically deny execution", async () => {
+  const dir = fixtureDir();
+  const provider = new DesktopCommanderProvider({
+    spawn: fakeDesktopCommanderSpawn(),
+    timeoutMs: 8_000,
+  });
+  const router = createHostCapabilityRouter({
+    fsRoot: dir,
+    cacheKey: `budget-${Date.now()}`,
+    providerFactory: async () => provider,
+  });
+
+  try {
+    const targetPath = path.join(dir, "hello.txt");
+
+    // Exhausted budget (remaining: 0) fails closed
+    const exhaustedBudget = {
+      budget_id: "budget:test-exhausted",
+      remaining: 0,
+    };
+    await assert.rejects(
+      () => router.invoke(
+        "host.fs.read",
+        { path: targetPath },
+        { auth: readAuth(), target: "node:test", budget: exhaustedBudget }
+      ),
+      (e) => e.error_class === "budget_exhausted"
+    );
+
+    // Bounded budget with remaining: 1 succeeds once, then exhausts
+    const singleBudget = {
+      budget_id: "budget:test-single",
+      remaining: 1,
+    };
+    const first = await router.invoke(
+      "host.fs.read",
+      { path: targetPath },
+      { auth: readAuth(), target: "node:test", budget: singleBudget }
+    );
+    assert.equal(first.trace.status, "ok");
+    assert.equal(singleBudget.remaining, 0);
+
+    // Second call is denied
+    await assert.rejects(
+      () => router.invoke(
+        "host.fs.read",
+        { path: targetPath },
+        { auth: readAuth(), target: "node:test", budget: singleBudget }
+      ),
+      (e) => e.error_class === "budget_exhausted"
+    );
+  } finally {
+    await router.stop();
+    rmFixture(dir);
+  }
 });
 
 if (failures) {
