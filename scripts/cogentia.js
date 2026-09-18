@@ -31,6 +31,7 @@ import { emitStaticProjection, publishRegistry, guideResolve, runNavigationBench
 import { orientCorpus, runOrientationBenchmark, DEFAULT_ORIENT_POLICY } from "./lib/corpus-orient.js";
 import { ORIENT_REALITY_FIXTURES } from "./lib/corpus-orient-fixtures.js";
 import { runWeeklyConsolidation } from "./lib/consolidation.js";
+import { buildConsolidateSession } from "./lib/consolidate-session.js";
 import { listAgentSkills, getAgentSkill } from "./lib/cogentia-agent-skills.js";
 import { registerModule, invokeCapability } from "./lib/v3-modules.js";
 import { resolveCallerAuth, deriveLockers } from "./lib/cogentia-mcp-auth.js";
@@ -827,8 +828,9 @@ Core commands:
                            index rebuild) --max-iterations <n>.
   corpus verify            Verify generated views, gaps and git drift.
   corpus privacy           Check public views for private/confidential leaks.
-  consolidate              Read-only publish-readiness check across corpus, privacy,
-                           git drift, worktree noise, continuations, and auto-block safety.
+  consolidate [--quick]    Read-only publish-readiness check. --quick is the
+                           bounded pre-flight: corpus/privacy/continuations only;
+                           omit it for git, worktree and generated-view audits.
   triage [repo|all]        Correlated full diagnostic across consolidate, classify,
                            docs judgments, and active continuations (cogentia#175).
                            Flags stale continuations and untracked judgments.
@@ -3458,7 +3460,7 @@ function buildConsolidateReport(ctx, options = {}) {
     if (gaps.length) issues.push(`${gaps.length} document gap(s)`);
     if (privacy.leaks.length) issues.push(`${privacy.leaks.length} privacy leak(s)`);
     if (continuations.length) issues.push(`${continuations.length} active continuation(s)`);
-    return {
+    const result = {
       ok: issues.length === 0,
       protocol: "cogentia.consolidate.v1",
       mode: "quick",
@@ -3475,15 +3477,25 @@ function buildConsolidateReport(ctx, options = {}) {
       ],
       skill_hint: issues.length ? "agentic-change" : null,
     };
+    return { ...result, session: buildConsolidateSession(ctx, result) };
   }
 
-  const plan = buildPlan(ctx, { quiet: true, ...(options.planOptions || {}) });
-  const git = verifyGit(ctx);
-  const worktree = classifyGitWorktree(ctx, "all");
-  const auto_sections = verifyAutoSections(ctx);
-  const trail_lint = lintTrails(ctx, inventory, PUBLIC_VIEW);
-  const metadata_audit = runMetadataAudit();
-  const continuation_index = runContinuationIndex();
+  const completed_sources = [];
+  const timed = (id, read) => {
+    const started = Date.now();
+    try {
+      return read();
+    } finally {
+      completed_sources.push({ id, duration_ms: Date.now() - started });
+    }
+  };
+  const plan = timed("corpus_plan", () => buildPlan(ctx, { quiet: true, ...(options.planOptions || {}) }));
+  const git = timed("git_verify", () => verifyGit(ctx));
+  const worktree = timed("worktree_classification", () => classifyGitWorktree(ctx, "all"));
+  const auto_sections = timed("auto_sections", () => verifyAutoSections(ctx));
+  const trail_lint = timed("trail_lint", () => lintTrails(ctx, inventory, PUBLIC_VIEW));
+  const metadata_audit = timed("metadata_audit", () => runMetadataAudit());
+  const continuation_index = timed("continuation_index", () => runContinuationIndex());
   const noiseSummary = countBy(worktree.repos.flatMap(r => r.entries), entry => entry.classification);
   const substantiveDirty = (noiseSummary.modified || 0)
     + (noiseSummary.untracked || 0)
@@ -3505,7 +3517,7 @@ function buildConsolidateReport(ctx, options = {}) {
     if (repo.behind) issues.push(`${repo.repo} behind upstream`);
     if (repo.ahead) issues.push(`${repo.repo} ahead upstream`);
   }
-  return {
+  const result = {
     ok: issues.length === 0,
     protocol: "cogentia.consolidate.v1",
     mode: "full",
@@ -3527,8 +3539,10 @@ function buildConsolidateReport(ctx, options = {}) {
     metadata_audit,
     continuation_index,
     noise_summary: noiseSummary,
+    diagnostics: { completed_sources },
     skill_hint: issues.length ? "agentic-change" : null,
   };
+  return { ...result, session: buildConsolidateSession(ctx, result) };
 }
 
 async function cmdConsolidate() {
@@ -3546,7 +3560,8 @@ async function cmdConsolidate() {
   }
   const ctx = loadContext();
   const strict = hasFlag("--strict");
-  const result = buildConsolidateReport(ctx, { planOptions: planOptions(), quick: false });
+  const quick = hasFlag("--quick");
+  const result = buildConsolidateReport(ctx, { planOptions: planOptions(), quick });
   if (JSON_MODE) {
     console.log(JSON.stringify(result, null, 2));
   } else {
@@ -15096,6 +15111,17 @@ function formatConsolidate(result) {
     for (const issue of result.issues) lines.push(`- ${issue}`);
   }
   lines.push("");
+  if (result.mode === "quick") {
+    lines.push("Mode: quick (no generated-view, Git, worktree, or metadata audit)");
+    lines.push(`Gaps: ${result.gaps_count}`);
+    lines.push(`Privacy leaks: ${result.privacy_leaks_count}`);
+    lines.push(`Active continuations: ${result.active_continuations}`);
+    if (result.session?.proposed_actions?.length) {
+      lines.push("Proposed actions (not run):");
+      for (const action of result.session.proposed_actions) lines.push(`- [${action.effect}] ${action.command}`);
+    }
+    return lines.join("\n");
+  }
   lines.push(`Generated: ${result.generated.changes} change(s) across ${result.generated.files} file(s)`);
   lines.push(`Gaps: ${result.gaps.length}`);
   lines.push(`Privacy leaks: ${result.privacy.leaks.length}`);
@@ -15109,6 +15135,10 @@ function formatConsolidate(result) {
     .filter(repo => repo.behind || repo.ahead || repo.dirty_count)
     .map(repo => `${repo.repo}=${repo.behind} behind/${repo.ahead} ahead/${repo.dirty_count} dirty`);
   lines.push(`Git drift: ${drift.length ? drift.join(", ") : "clean"}`);
+  if (result.session?.proposed_actions?.length) {
+    lines.push("Proposed actions (not run):");
+    for (const action of result.session.proposed_actions) lines.push(`- [${action.effect}] ${action.command}`);
+  }
   return lines.join("\n");
 }
 
