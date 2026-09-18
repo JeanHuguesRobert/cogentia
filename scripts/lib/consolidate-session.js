@@ -80,6 +80,9 @@ export function buildConsolidateSession(ctx, report, { now = new Date().toISOStr
     },
     diagnostics: {
       completed_sources: report.diagnostics?.completed_sources || [],
+      over_budget_sources: (report.diagnostics?.completed_sources || [])
+        .filter(source => source.status === "over_budget")
+        .map(source => source.id),
     },
     observations,
     proposed_actions: proposedActions,

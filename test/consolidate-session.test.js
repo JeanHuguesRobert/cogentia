@@ -19,12 +19,21 @@ test("consolidate session separates observations from unexecuted typed actions",
   assert.deepEqual(session.boundary.actions_executed, []);
   assert.deepEqual(session.boundary.external_effects, []);
   assert.deepEqual(session.diagnostics.completed_sources, [{ id: "corpus_plan", duration_ms: 123 }]);
+  assert.deepEqual(session.diagnostics.over_budget_sources, []);
   assert.equal(session.observations.find(item => item.id === "generated_navigation").status, "attention");
   const apply = session.proposed_actions.find(item => item.id === "apply_generated_navigation");
   assert.equal(apply.effect, "local_write_requires_authorization");
   assert.equal(apply.requires_authorization, true);
   assert.equal(apply.execution, "not_run");
   assert.equal(session.proposed_actions.find(item => item.id === "inspect_git_drift").effect, "read_only");
+});
+
+test("consolidate session surfaces sources that exceeded their declared budget", () => {
+  const session = buildConsolidateSession(ctx, {
+    diagnostics: { completed_sources: [{ id: "corpus_plan", duration_ms: 60_001, status: "over_budget", budget_ms: 60_000 }] },
+  }, { now: "2026-09-18T20:00:00.000Z" });
+
+  assert.deepEqual(session.diagnostics.over_budget_sources, ["corpus_plan"]);
 });
 
 test("consolidate session remains empty of actions when its inputs are clear", () => {

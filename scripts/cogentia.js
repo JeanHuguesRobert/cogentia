@@ -831,6 +831,7 @@ Core commands:
   consolidate [--quick]    Read-only publish-readiness check. --quick is the
                            bounded pre-flight: corpus/privacy/continuations only;
                            omit it for git, worktree and generated-view audits.
+                           Flags: --progress --stage-budget-ms <n>
   triage [repo|all]        Correlated full diagnostic across consolidate, classify,
                            docs judgments, and active continuations (cogentia#175).
                            Flags stale continuations and untracked judgments.
@@ -3481,12 +3482,18 @@ function buildConsolidateReport(ctx, options = {}) {
   }
 
   const completed_sources = [];
+  const stageBudgetMs = Number.isFinite(options.stageBudgetMs) ? options.stageBudgetMs : null;
+  const onStage = typeof options.onStage === "function" ? options.onStage : null;
   const timed = (id, read) => {
     const started = Date.now();
+    onStage?.({ event: "started", id });
     try {
       return read();
     } finally {
-      completed_sources.push({ id, duration_ms: Date.now() - started });
+      const duration_ms = Date.now() - started;
+      const status = stageBudgetMs != null && duration_ms > stageBudgetMs ? "over_budget" : "completed";
+      completed_sources.push({ id, duration_ms, status, budget_ms: stageBudgetMs });
+      onStage?.({ event: "completed", id, duration_ms, status, budget_ms: stageBudgetMs });
     }
   };
   const plan = timed("corpus_plan", () => buildPlan(ctx, { quiet: true, ...(options.planOptions || {}) }));
@@ -3561,7 +3568,19 @@ async function cmdConsolidate() {
   const ctx = loadContext();
   const strict = hasFlag("--strict");
   const quick = hasFlag("--quick");
-  const result = buildConsolidateReport(ctx, { planOptions: planOptions(), quick });
+  const progress = hasFlag("--progress");
+  const stageBudgetRaw = valueFlag("--stage-budget-ms");
+  const stageBudgetMs = stageBudgetRaw == null ? null : Number(stageBudgetRaw);
+  if (stageBudgetRaw != null && (!Number.isInteger(stageBudgetMs) || stageBudgetMs < 1)) {
+    throw new Error("--stage-budget-ms must be a positive integer");
+  }
+  const onStage = progress ? stage => {
+    const suffix = stage.event === "completed"
+      ? ` ${stage.duration_ms}ms (${stage.status})`
+      : "";
+    process.stderr.write(`[consolidate] ${stage.event} ${stage.id}${suffix}\n`);
+  } : null;
+  const result = buildConsolidateReport(ctx, { planOptions: planOptions(), quick, stageBudgetMs, onStage });
   if (JSON_MODE) {
     console.log(JSON.stringify(result, null, 2));
   } else {
@@ -15074,6 +15093,8 @@ function formatAgentStart(result) {
     .filter(repo => repo.behind || repo.ahead || repo.dirty_count)
     .map(repo => `${repo.repo}=${repo.behind} behind/${repo.ahead} ahead/${repo.dirty_count} dirty`);
   lines.push(`Git drift: ${drift.length ? drift.join(", ") : "clean"}`);
+  const overBudget = result.session?.diagnostics?.completed_sources?.filter(source => source.status === "over_budget") || [];
+  if (overBudget.length) lines.push(`Over budget: ${overBudget.map(source => `${source.id}=${source.duration_ms}ms`).join(", ")}`);
   lines.push("");
   lines.push("Recommended next actions:");
   for (const action of result.recommended_next_actions) lines.push(`- ${action}`);
