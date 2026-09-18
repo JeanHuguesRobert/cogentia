@@ -223,6 +223,8 @@ La formule **« Watch the Watchers — surveiller les surveillants, réguler les
 
 « Surveiller les surveillants » et « réguler les régulateurs » désignent ici deux faces du même problème récursif : tout pouvoir de surveillance, de contrôle ou de régulation doit lui-même être soumis à des mécanismes de contrôle. La réponse ne consiste pas à ajouter indéfiniment un surveillant au surveillant ou un régulateur au régulateur, mais à rendre l’exercice même du pouvoir observable, traçable, contestable et révocable.
 
+Dans un régime démocratique, cette récursion ne se termine donc pas par un régulateur suprême : elle reboucle vers les personnes dont procède le pouvoir. **Le peuple régule démocratiquement les régulateurs ; l'infrastructure DHITL rend cette boucle praticable, traçable et cognitivement soutenable sans se substituer au souverain.**
+
 Cette exigence ne justifie jamais, par symétrie, une atteinte disproportionnée à la vie privée des personnes surveillées. Le contrôle doit lui-même laisser une trace, être distribué, rotatif et contestable. Aucun gardien ne doit pouvoir transformer sa fonction en droit permanent sur le bien.
 
 L'observation n'implique toutefois pas sa divulgation complète. Rendre immédiatement visible au contrôleur tout ce que l'on sait de ses actes peut modifier son comportement et réduire la valeur de l'observation. La divulgation doit donc être proportionnée à son utilité corrective : **observer → conserver la trace → révéler minimalement → observer la réponse → accroître, si nécessaire, la visibilité de l'observation**. L'identification d'une personne, de sa fonction ou d'une trace précise ne doit être révélée que dans la mesure utile à l'imputabilité, à la correction ou au recours, jamais comme moyen d'intimidation.
