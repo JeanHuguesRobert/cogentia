@@ -221,7 +221,7 @@ test("F — accounting stays per-branch; existing is not a cost", async () => {
 });
 
 test("G — F1.2 required-event tests still pass", () => {
-  const script = path.join(here, "test-agent-jhn-f1-required-events.js");
+  const script = path.join(here, "check-agent-jhn-f1-required-events.js");
   const child = spawnSync(process.execPath, [script], { encoding: "utf8" });
   assert.equal(child.status, 0, child.stdout + child.stderr);
   assert.match(child.stdout, /"passed": 11/);

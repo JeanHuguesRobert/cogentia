@@ -95,8 +95,8 @@ Anonymous `tools/list` omits all of these. `COGENTIA_HOST_FS_ROOT` is required; 
 Deterministic (fake DC-MCP, no network):
 
 ```bash
-node scripts/test-side-effect-authorization.js
-node scripts/test-host-desktop-commander-provider.js
+node scripts/check-side-effect-authorization.js
+node scripts/check-host-desktop-commander-provider.js
 ```
 
 Live, this Windows workstation, extracted DC 0.2.50:
