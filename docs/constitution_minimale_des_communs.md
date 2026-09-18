@@ -219,7 +219,13 @@ La constitution minimale fournit trois tests simples :
 
 Une institution qui échoue durablement à ces trois tests conserve peut-être son titre public, mais perd une part de sa qualité de commun. Inversement, un bien privé peut acquérir une dimension commune lorsqu'il satisfait ces exigences dans un périmètre défini.
 
-La formule **« Watch the Watchers — surveiller les surveillants, réguler les régulateurs »** trouve ici son application : plus un acteur dispose d’un pouvoir de contrôle ou de surveillance sur autrui, plus l’exercice de ce pouvoir doit être observable, traçable et contestable. Cette exigence ne justifie jamais, par symétrie, une atteinte disproportionnée à la vie privée des personnes surveillées. Le contrôle doit lui-même laisser une trace, être distribué, rotatif et contestable. Aucun gardien ne doit pouvoir transformer sa fonction en droit permanent sur le bien.
+La formule **« Watch the Watchers — surveiller les surveillants, réguler les régulateurs »** trouve ici son application : plus un acteur dispose d’un pouvoir de contrôle ou de surveillance sur autrui, plus l’exercice de ce pouvoir doit être observable, traçable et contestable.
+
+« Surveiller les surveillants » et « réguler les régulateurs » désignent ici deux faces du même problème récursif : tout pouvoir de surveillance, de contrôle ou de régulation doit lui-même être soumis à des mécanismes de contrôle. La réponse ne consiste pas à ajouter indéfiniment un surveillant au surveillant ou un régulateur au régulateur, mais à rendre l’exercice même du pouvoir observable, traçable, contestable et révocable.
+
+Cette exigence ne justifie jamais, par symétrie, une atteinte disproportionnée à la vie privée des personnes surveillées. Le contrôle doit lui-même laisser une trace, être distribué, rotatif et contestable. Aucun gardien ne doit pouvoir transformer sa fonction en droit permanent sur le bien.
+
+L'observation n'implique toutefois pas sa divulgation complète. Rendre immédiatement visible au contrôleur tout ce que l'on sait de ses actes peut modifier son comportement et réduire la valeur de l'observation. La divulgation doit donc être proportionnée à son utilité corrective : **observer → conserver la trace → révéler minimalement → observer la réponse → accroître, si nécessaire, la visibilité de l'observation**. L'identification d'une personne, de sa fonction ou d'une trace précise ne doit être révélée que dans la mesure utile à l'imputabilité, à la correction ou au recours, jamais comme moyen d'intimidation.
 
 ---
 
