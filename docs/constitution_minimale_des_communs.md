@@ -219,7 +219,7 @@ La constitution minimale fournit trois tests simples :
 
 Une institution qui échoue durablement à ces trois tests conserve peut-être son titre public, mais perd une part de sa qualité de commun. Inversement, un bien privé peut acquérir une dimension commune lorsqu'il satisfait ces exigences dans un périmètre défini.
 
-La formule « surveiller les surveillants, réguler les régulateurs » trouve ici son application : le contrôle doit lui-même laisser une trace, être distribué, rotatif et contestable. Aucun gardien ne doit pouvoir transformer sa fonction en droit permanent sur le bien.
+La formule **« Watch the Watchers — surveiller les surveillants, réguler les régulateurs »** trouve ici son application : plus un acteur dispose d’un pouvoir de contrôle ou de surveillance sur autrui, plus l’exercice de ce pouvoir doit être observable, traçable et contestable. Cette exigence ne justifie jamais, par symétrie, une atteinte disproportionnée à la vie privée des personnes surveillées. Le contrôle doit lui-même laisser une trace, être distribué, rotatif et contestable. Aucun gardien ne doit pouvoir transformer sa fonction en droit permanent sur le bien.
 
 ---
 
