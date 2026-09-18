@@ -200,6 +200,20 @@ function startAssistantScript(state, code) {
         const outboundText = formatFacebookComment(text);
         return evaluatePage(state, `${navigationSource}\n${adapterSource}\nwindow.__cogentiaNavigationAssistant.adapters.facebook.replaceComment(${JSON.stringify(outboundText)}, ${JSON.stringify(expected)})`, "script-facebook-replace-comment", `assistant-script:${id}`);
       },
+      corseMatinArticle: async (options = {}) => {
+        const [navigationSource, adapterSource] = await Promise.all([
+          fs.readFile(new URL("../../browser-stdlib/navigation.js", import.meta.url), "utf8"),
+          fs.readFile(new URL("../../browser-stdlib/adapters/corsematin.js", import.meta.url), "utf8"),
+        ]);
+        return evaluatePage(state, `${navigationSource}\n${adapterSource}\nwindow.__cogentiaNavigationAssistant.adapters.corsematin.article(${JSON.stringify(options)})`, "script-corsematin-article", `assistant-script:${id}`);
+      },
+      corseMatinLinks: async (options = {}) => {
+        const [navigationSource, adapterSource] = await Promise.all([
+          fs.readFile(new URL("../../browser-stdlib/navigation.js", import.meta.url), "utf8"),
+          fs.readFile(new URL("../../browser-stdlib/adapters/corsematin.js", import.meta.url), "utf8"),
+        ]);
+        return evaluatePage(state, `${navigationSource}\n${adapterSource}\nwindow.__cogentiaNavigationAssistant.adapters.corsematin.links(${JSON.stringify(options)})`, "script-corsematin-links", `assistant-script:${id}`);
+      },
     }),
     tabs: Object.freeze({
       list: async () => invokeExtensionRpc(state, "tabs.list", {}, "script-tabs-list", `assistant-script:${id}`),
@@ -644,6 +658,17 @@ function startBridge(state) {
       } catch {
         response.writeHead(500, { "content-type": "text/plain; charset=utf-8" });
         response.end("Facebook adapter unavailable");
+      }
+      return;
+    }
+    if (request.method === "GET" && request.url === "/stdlib/adapters/corsematin.js") {
+      try {
+        const source = await fs.readFile(new URL("../../browser-stdlib/adapters/corsematin.js", import.meta.url), "utf8");
+        response.writeHead(200, { "content-type": "application/javascript; charset=utf-8", "cache-control": "no-cache" });
+        response.end(source);
+      } catch {
+        response.writeHead(500, { "content-type": "text/plain; charset=utf-8" });
+        response.end("Corse-Matin adapter unavailable");
       }
       return;
     }

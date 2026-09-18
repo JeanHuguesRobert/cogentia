@@ -108,6 +108,19 @@ it classifies visible `role=article` elements as `post`, `comment`, `reply`, or
 `page.facebookPost()` reads the post associated with a Facebook permalink;
 `page.facebookPost({ expand: true })` may explicitly activate its local
 "En voir plus" control before extraction. It never submits, reacts, or replies.
+
+The Corse-Matin adapter (`browser-stdlib/adapters/corsematin.js`) provides territorial
+media source extraction feeding the Corsica Cogentia Digital Twin (initially exposed
+via Agent JHN). `page.corseMatinArticle()` normalizes visible article semantics
+(precedence: JSON-LD `NewsArticle` > OpenGraph/meta > semantic DOM) into a canonical
+article record (`provider`, `kind`, `canonicalUrl`, `headline`, `description`, `author`,
+`publishedAt`, `modifiedAt`, `section`, `text`, `access`, `evidence`).
+`page.corseMatinLinks()` discovers candidate article links on section and index pages.
+The adapter follows a strict **no-bypass boundary**: it never circumvents paywalls,
+never solves CAPTCHAs, and extracts no cookies or session secrets. When a paywall
+or subscriber gate is active, it faithfully reports `access: "restricted"` with only
+the currently accessible excerpt text.
+
 `POST /control/connect` with `{"endpoint":"wss://host.example/ws"}` asks the
 extension to switch its outbound bridge endpoint; localhost remains the
 default. A hosted deployment must add authentication and instance binding
