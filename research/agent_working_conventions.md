@@ -91,6 +91,18 @@ Nothing here overrides `AGENTS.shared.md`; where the two disagree, the shared la
 - Multi-AI provenance is traced in frontmatter (`ai_assisted_by: [...]`) and in commit messages
   that name which agent contributed what (drafting, critique, synthesis) rather than flattening
   to a generic "AI-assisted" label.
+- **Uncoordinated concurrent agents on the same repo is an observed failure mode, not a
+  hypothetical one.** During the 2026-09-18 Suicide Corse anniversary edition work, two agent
+  sessions edited `barons-Mariani` in parallel without visibility into each other: both created
+  a "Chronologie" and "Annuaire" chapter around the same minute (one as filled content, one as an
+  editorial-contract skeleton under different filenames), and a "freeze-candidate receipt" was
+  produced and immediately went stale seconds later when the other session pushed unrelated
+  commits. Optimistic Locking (fetch → rebase → reconcile content → push) absorbed this without
+  losing work, but only because every session fetched before pushing and read the diff rather than
+  force-pushing. The lesson to carry forward: when a human dispatches parallel agent sessions
+  against the same repo, expect this pattern (duplicate skeletons, stale provenance receipts,
+  rebase-not-merge on every push) rather than treating a `fetch first` rejection as an anomaly to
+  work around quickly — reconcile content deliberately, don't just resolve the git conflict.
 
 ## Known cogentia.js mechanical limits
 
