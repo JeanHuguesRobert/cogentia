@@ -3,7 +3,7 @@ title: "Non-Resolutive Response Patterns"
 subtitle: "Detect when an answer moves attention without materially reducing the uncertainty that motivated the question"
 author: "Jean Hugues Noël Robert, baron Mariani"
 date: "2026-09-17"
-version: "0.3"
+version: "0.4"
 status: "working-paper"
 license: "CC BY-SA 4.0"
 language: "en"
@@ -157,6 +157,62 @@ The pattern is accidental, procedural, defensive, dilatory, strategic, evasive, 
 ```
 
 Intent requires independent evidence.
+
+### 4.1 Hanlon, SNAFU, and certainty closure
+
+When several causal explanations remain compatible with the observations,
+FractaCognition should test **ordinary failure** before imputing hostile intent.
+This is the Hanlon heuristic: error, haste, misunderstanding, overload,
+coordination failure, local incentives, or routine process effects are often
+sufficient explanations and are usually cheaper to test.
+
+Hanlon is a **search-order heuristic, not an innocence axiom**. Ordinary failure
+may itself be serious, repeated, or structural. This is where the American
+**SNAFU** intuition is useful: dysfunction can become the normal operating
+condition of a system without requiring a coordinated hostile design.
+
+The two checks are complementary:
+
+```text
+Hanlon check
+    could ordinary failure explain the observation?
+
+SNAFU check
+    could this ordinary failure be recurrent, structural, or normalized?
+```
+
+Neither check establishes motive. A systemic failure can emerge without hostile
+intent; conversely, conscious avoidance or hostile action remains a live
+hypothesis when independent evidence supports it.
+
+A third check concerns the reasoner's own cognition. A prior conclusion must
+not make later observations invisible merely because they appear unable to
+change an already-certain result. Feelings of certainty are observations about
+the reasoner, not substitutes for evidence.
+
+Canonical rule:
+
+> **Certainty must not close the evidence channel.**
+
+This yields a compact FractaCognition loop:
+
+```text
+observation
+→ separate fact / inference / hypotheses
+→ Hanlon: test ordinary failure first
+→ SNAFU: test whether ordinary failure is systemic
+→ certainty check: keep later evidence observable
+→ resolution check: measure residual uncertainty
+→ smallest discriminating Reality Probe
+→ preserve trace, residue, and surviving hypotheses
+→ propagate validated learning proportionately
+```
+
+Compact invariant:
+
+> **Assume neither malice nor accident. Test ordinary failure first; test
+> whether ordinary failure is systemic; never let certainty close the evidence
+> channel. Preserve competing hypotheses until Reality discriminates.**
 
 This prevents two symmetric errors:
 
