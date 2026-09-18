@@ -3,7 +3,7 @@ title: "Non-Resolutive Response Patterns"
 subtitle: "Detect when an answer moves attention without materially reducing the uncertainty that motivated the question"
 author: "Jean Hugues Noël Robert, baron Mariani"
 date: "2026-09-17"
-version: "0.4"
+version: "0.5"
 status: "working-paper"
 license: "CC BY-SA 4.0"
 language: "en"
@@ -193,6 +193,55 @@ the reasoner, not substitutes for evidence.
 Canonical rule:
 
 > **Certainty must not close the evidence channel.**
+
+### 4.2 Decision closure is not evidence closure
+
+Keep two different forms of closure separate:
+
+```text
+decision closure
+    an authorized process has reached a decision
+    at a given procedural or operational stage
+
+evidence closure
+    no further observation remains materially relevant
+    to understanding the decision, its inputs, its process,
+    or a still-live downstream consequence
+```
+
+Canonical invariant:
+
+> **Decision closure does not imply evidence closure.**
+
+A decision may close the question that an authorized decision-maker was required
+to decide without closing legitimate inquiry into what information was
+available, transmitted, recorded, considered, omitted, or discovered later. Do
+not infer from the existence or finality of a decision that its evidentiary
+history is complete or known.
+
+The converse discipline matters as well:
+
+> **Evidence inquiry is not decision relitigation.**
+
+Reconstructing the informational state that preceded a decision does not, by
+itself, assert that the decision was wrong or reopen the authority to decide it.
+
+Compact distinction:
+
+```text
+certainty closure     → danger inside the reasoner
+decision closure      → state of a decision process
+evidence closure      → state of what is known
+
+decision closed
+≠ evidence known
+≠ evidence exhausted
+≠ decision wrong
+```
+
+A useful Reality Probe is therefore:
+
+> **What was the observable information state at the moment of decision?**
 
 This yields a compact FractaCognition loop:
 
