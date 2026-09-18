@@ -1,0 +1,87 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/JeanHuguesRobert/cogentia/schemas/delta-disposition.v0.schema.json",
+  "title": "Cogentia Delta Disposition v0",
+  "type": "object",
+  "required": [
+    "schema",
+    "id",
+    "sources",
+    "summary",
+    "significance",
+    "disposition"
+  ],
+  "properties": {
+    "schema": {
+      "const": "cogentia.delta-disposition/v0"
+    },
+    "id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "sources": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "string"
+      }
+    },
+    "summary": {
+      "type": "string",
+      "minLength": 1
+    },
+    "significance": {
+      "enum": [
+        "low",
+        "medium",
+        "high",
+        "unknown"
+      ]
+    },
+    "disposition": {
+      "enum": [
+        "INTEGRATED",
+        "NO_IMPACT",
+        "REJECTED",
+        "DEFERRED",
+        "NEEDS_RESEARCH",
+        "NEEDS_DECISION",
+        "UNKNOWN",
+        "SUPERSEDED"
+      ]
+    },
+    "projection_refs": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "rationale": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "confidence": {
+      "enum": [
+        "low",
+        "medium",
+        "high",
+        "unknown"
+      ]
+    },
+    "follow_up": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "superseded_by": {
+      "type": [
+        "string",
+        "null"
+      ]
+    }
+  },
+  "additionalProperties": true
+}
