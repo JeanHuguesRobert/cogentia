@@ -43,10 +43,10 @@ export const SEED_CONCEPT_ALIASES = [
   },
   {
     name: "Seconde Methode",
-    aliases: ["seconde methode", "seconde méthode", "second method", "conserved negative returns"],
-    canonical_repo: "cogentia",
-    canonical_rel: "research/corpus_navigation_audit.md",
-    canonical_url: "https://github.com/JeanHuguesRobert/cogentia/blob/main/research/corpus_navigation_audit.md"
+    aliases: ["seconde methode", "seconde méthode", "discours de la seconde méthode", "discours de la seconde methode", "second method"],
+    canonical_repo: "barons-Mariani",
+    canonical_rel: "research/second_method.md",
+    canonical_url: "https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/second_method.md"
   },
   {
     name: "Conceptual Gravity",
@@ -203,6 +203,7 @@ export function emitStaticProjection(ctx, inventory = [], options = {}) {
     "research/vigilia.md",
     "research/informational_gravity.md",
     "research/corpus_navigation_audit.md",
+    "research/second_method.md",
     "docs/connect-mcp-clients.md",
     "docs/cogentia-magistral-boundary.md"
   ];
@@ -500,6 +501,16 @@ export function runNavigationBenchmark(ctx, inventory = []) {
       query: "Where is the interaction register?",
       expected_repo: "JeanHuguesRobert",
       expected_rel: "interaction_packets/mail_trace.md"
+    },
+    {
+      query: "Where is the Seconde Méthode?",
+      expected_repo: "barons-Mariani",
+      expected_rel: "research/second_method.md"
+    },
+    {
+      query: "Where is the Discours de la seconde méthode?",
+      expected_repo: "barons-Mariani",
+      expected_rel: "research/second_method.md"
     }
   ];
 
