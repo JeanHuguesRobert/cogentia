@@ -4,7 +4,8 @@ subtitle: "Méthode opérationnelle de sonde, trace, observation et correction"
 author: "Jean Hugues Noël Robert, baron Mariani"
 affiliation: "Institut Mariani / C.O.R.S.I.C.A., 1 cours Paoli, F-20250 Corte, Corsica"
 date: "2026-09-16"
-version: "0.1"
+last_modified_at: "2026-09-18"
+version: "0.2"
 status: "working-method"
 language: "fr"
 license: "CC BY-SA 4.0"
@@ -332,7 +333,55 @@ La divergence entre A et B n'est pas un échec : elle produit précisément une 
 
 > **La proportionnalité limite la nuisance, pas la connaissance.**
 
-## 15. Première campagne de dogfood
+## 15. Transformer sans rompre la chaîne de preuve
+
+La sonde n'est utile que si la connaissance produite reste reliée à ce qui l'a produite. La méthode adopte donc un invariant de **non-perte traçable** :
+
+> **Une transformation peut simplifier, projeter, agréger ou reformater l'information ; elle ne doit pas faire disparaître silencieusement ce qu'elle ne comprend pas.**
+
+```text
+Réel
+ ↓
+trace brute
+ ↓
+Packet
+ ↓
+projection
+ ↓
+analyse
+ ↓
+conclusion provisoire
+```
+
+Chaque étage doit permettre de revenir vers les traces qui ont produit l'étage suivant.
+
+Deux exigences sont distinctes :
+
+1. **non-perte sémantique** : l'information non projetée survit aux transformations et aux écritures sur une vue simplifiée ;
+2. **non-perte historique** : les états antérieurs pertinents restent adressables ou reconstructibles.
+
+Une transformation peut donc être localement destructive sans l'être globalement, si elle conserve une référence durable vers l'objet plus riche dont elle dérive.
+
+Cette règle rejoint le pattern [Packet-Backed Projection](../patterns/packet-backed-projection/PATTERN.md) : les colonnes SQL, résumés, vues publiques, Atlas ou états de Twin peuvent être des projections plus pauvres que leur source, sans que leur pauvreté devienne une destruction d'information.
+
+Pour une transformation importante, conserver lorsque pertinent :
+
+```text
+input_ref
+input_hash
+transformation
+transformation_version
+output_ref
+output_hash
+performed_at
+actor / agent
+```
+
+Formule opérationnelle pour les agents :
+
+> **Un agent peut produire une vue plus simple ; il ne doit jamais confondre simplification et effacement de la source.**
+
+## 16. Première campagne de dogfood
 
 Première application structurée : reconstitution du corpus préparatoire public/non publié relatif aux travaux parlementaires sur l'évolution institutionnelle de la Corse (2024-2026), en particulier les contributions écrites, questionnaires et documents de travail cités mais non intégralement publiés.
 
