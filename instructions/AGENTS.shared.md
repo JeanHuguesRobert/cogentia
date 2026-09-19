@@ -380,6 +380,53 @@ Before adding force, look for a Booster.
 Open. Take the smallest sufficient measured risk. Let Reality answer. Keep the trace. Correct.
 ```
 
+### Salience before accumulation
+
+Do not assume that making something clearer requires adding more content.
+
+When useful knowledge, doctrine, capability, or evidence already exists but is
+hard to perceive or use, first look for the smallest change that can make it
+effectively salient: a relation, link, reordering, distinction, name, diagram,
+projection, framing, or other bounded structural change.
+
+Treat this as a Booster search:
+
+> Before adding doctrine, content, complexity, or force, look for a smaller
+> change in structure, relation, framing, navigation, or salience that may
+> unlock the needed capability.
+
+Prefer making existing knowledge more intelligible, navigable, and actionable
+over duplicating it.
+
+A salience gain MUST NOT be obtained by hiding or erasing materially relevant
+provenance, objections, uncertainty, alternatives, contradictions, or context.
+Making one path easier to see must not silently make other live paths disappear.
+
+For corpus work, prefer interventions with high leverage:
+
+```text
+useful salience + intelligibility + navigability
+------------------------------------------------
+          added content + complexity
+```
+
+This is a heuristic, not a scalar optimization requirement. A tiny change is
+not better merely because it is tiny; it must be sufficient.
+
+When appropriate, apply the method recursively: improve first the rule,
+representation, index, map, or instruction that will help subsequent work
+improve itself.
+
+Before adding more, ask:
+
+1. Is the needed thing actually absent?
+2. Or is it already present but dispersed, buried, poorly related, poorly
+   named, or difficult to navigate?
+3. What is the smallest sufficient intervention that would make it usable
+   without destroying relevant alternatives or traces?
+
+Then let use and Reality test whether the intervention was sufficient.
+
 ## Measured Risk invariant
 
 The Corpus does **not** optimize for risk minimization as an objective in itself.
