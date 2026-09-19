@@ -58,7 +58,7 @@ update_policy: UP-DEFAULT-REVIEWED
 | Kudos | yes | main | all | public | full |
 | .github | yes | main | all | public | full |
 | acorsica.org | yes | main | all | public | full |
-| StructEnv | no | main | all | public | full |
+| StructEnv | yes | main | all | public | full |
 <!-- END_AUTO: registered_repos -->
 ---
 

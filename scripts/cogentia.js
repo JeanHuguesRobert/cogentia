@@ -32,6 +32,7 @@ import { orientCorpus, runOrientationBenchmark, DEFAULT_ORIENT_POLICY } from "./
 import { ORIENT_REALITY_FIXTURES } from "./lib/corpus-orient-fixtures.js";
 import { runWeeklyConsolidation } from "./lib/consolidation.js";
 import { buildConsolidateSession } from "./lib/consolidate-session.js";
+import { replaceIndexCatalog, stripIndexCatalog } from "./lib/research-index-navigation.js";
 import { listAgentSkills, getAgentSkill } from "./lib/cogentia-agent-skills.js";
 import { registerModule, invokeCapability } from "./lib/v3-modules.js";
 import { resolveCallerAuth, deriveLockers } from "./lib/cogentia-mcp-auth.js";
@@ -820,7 +821,9 @@ Core commands:
                            (instructions/AGENTS.public-readonly.md): exists,
                            derived frontmatter, inject paths, drift vs shared AGENTS.
   corpus plan              Read-only plan of generated navigation changes.
+                           Add --indexes to generate index catalog blocks.
   corpus apply             Apply generated navigation changes from a fresh plan.
+                           Add --indexes to apply generated index catalog blocks.
   corpus converge          Repeatedly plan+apply until a fixed point (no more
                            changes) or --max-iterations (default 5), then
                            rebuild the SQLite index. Flags: --dry-run (report
@@ -8440,6 +8443,9 @@ function buildPlan(ctx, options) {
       addChange(changes, registryRepo, full, "documents", before, after, true, "refresh consolidated document catalog");
     }
   }
+  if (options.indexes) {
+    for (const change of planResearchIndexCatalogs(ctx, inventory, options)) changes.push(change);
+  }
   if (options.trails) {
     const trailChanges = planTrails(ctx, inventory, options);
     for (const change of trailChanges) changes.push(change);
@@ -8461,6 +8467,24 @@ function buildPlan(ctx, options) {
     summary: summarizePlan(clean, inventory, outputView(options)),
     changes: clean,
   };
+}
+
+function planResearchIndexCatalogs(ctx, inventory, options) {
+  const changes = [];
+  for (const repo of ctx.repos) {
+    if (!repoSelected(repo, options)) continue;
+    const full = path.join(repo.path, "research", INDEX_FILE);
+    if (!fs.existsSync(full)) continue;
+    const before = readFileIfExists(full);
+    const manualRefs = resolveLinksInText(repo, full, stripIndexCatalog(before));
+    const documents = visibleDocs(inventory, viewForRepo(repo, options))
+      .filter(doc => doc.repo === repo.name)
+      .filter(doc => !doc.index.ignored && doc.role !== "alias" && doc.role !== "index")
+      .filter(doc => !manualRefs.has(path.resolve(doc.full_path)));
+    addChange(changes, repo, full, "research-index", before, replaceIndexCatalog(before, documents), true,
+      "add a generated catalog while preserving editorial index sections");
+  }
+  return changes;
 }
 
 function displayPlan(plan, options) {
@@ -8501,6 +8525,7 @@ function planOptions() {
     backlinks: !hasFlag("--no-backlinks"),
     corpusStatus: !hasFlag("--no-corpus-status"),
     documents: !hasFlag("--no-documents"),
+    indexes: hasFlag("--indexes"),
     readmes: !hasFlag("--no-readmes"),
     createBacklinks: hasFlag("--create-backlinks"),
     includeContent: hasFlag("--include-content"),
@@ -9662,22 +9687,22 @@ function buildIndexSets(repo) {
   const empty = { all: new Set(), published: new Set() };
   if (!fs.existsSync(full)) return empty;
   const raw = fs.readFileSync(full, "utf8");
-  const all = resolveLinksInText(repo, full, raw);
+  const all = resolveLinksInText(repo, full, raw, { includeAuto: true });
   const published = resolveLinksInText(repo, full, extractHeadingSection(raw, "Published"));
   return { all, published };
 }
 
-function resolveLinksInText(repo, fromFile, text) {
+function resolveLinksInText(repo, fromFile, text, { includeAuto = false } = {}) {
   const refs = new Set();
-  for (const link of extractMarkdownLinks(text)) {
+  for (const link of extractMarkdownLinks(text, { includeAuto })) {
     const target = resolveLocalLink(repo, fromFile, link.url);
     if (target) refs.add(path.resolve(target));
   }
   return refs;
 }
 
-function extractMarkdownLinks(raw) {
-  const text = stripFencedCode(stripAutoSections(raw));
+function extractMarkdownLinks(raw, { includeAuto = false } = {}) {
+  const text = stripFencedCode(includeAuto ? raw : stripAutoSections(raw));
   const links = [];
   const re = /\[[^\]]+\]\(([^)\s]+)(?:\s+"[^"]*")?\)/g;
   let m;
