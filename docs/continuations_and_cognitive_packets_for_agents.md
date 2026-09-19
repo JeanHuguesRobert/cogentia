@@ -93,6 +93,19 @@ node scripts/cogentia.js continuation schema
 node scripts/cogentia.js continuation resolve <id> step_result.json
 ```
 
+## Durable terminal trace
+
+Continuation records are runtime queue state and may be excluded from Git. A
+terminal decision must therefore also be recorded in the registry repository's
+tracked `.cogentia/audit.jsonl`.
+
+`continuation resolve` and `continuation cancel` append one typed
+`cogentia.continuation.audit.v1` event. The event records the continuation id,
+terminal status, subject, decision, reason, and terminal timestamp. For records
+resolved by an earlier CLI version, run the explicit, idempotent repair command:
+
+```bash
+
 ## Handler initiative: continue when the next step is obvious
 
 A handler SHOULD NOT stop merely to ask whether it may perform a clearly implied

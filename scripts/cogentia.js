@@ -1042,6 +1042,7 @@ Continuation commands:
   continuation resolve <id> [result.json] --decision <text> --reason <text>
   continuation resume <id> [result.json]   Alias for resolve.
   continuation cancel <id> --reason <text>
+  continuation audit-backfill [<id>|all]  Append missing durable audit events for resolved/cancelled records.
   continuation schema
 
 Issue commands:
@@ -5695,12 +5696,16 @@ function cmdContinuation(sub) {
     case "cancel":
     case "abort":
       return cmdContinuationCancel(ctx, argv.shift());
+    case "audit-backfill":
+      return cmdContinuationAuditBackfill(ctx, argv.shift() || "all");
+    case "audit-backfill":
+      return cmdContinuationAuditBackfill(ctx, argv.shift() || "all");
     case "export":
       return cmdContinuationsExport(ctx);
     case "schema":
       return output(continuationSchema(), formatContinuationSchema());
     default:
-      throw new Error(`Unknown continuation subcommand "${sub}". Use emit, list, export, inspect, resolve, cancel, or schema.`);
+      throw new Error(`Unknown continuation subcommand "${sub}". Use emit, list, export, inspect, resolve, cancel, audit-backfill, or schema.`);
   }
 }
 
@@ -5800,6 +5805,7 @@ function cmdContinuationResolve(ctx, id) {
   };
   continuation.history.push({ at: now, event: "resolved", decision, reason });
   saveContinuation(ctx, continuation);
+  appendContinuationAudit(ctx, continuation, "resolved");
   output({ ok: true, continuation: stripContinuationBody(continuation) }, formatContinuationResolved(continuation));
 }
 
@@ -5814,6 +5820,7 @@ function cancelContinuationRecord(ctx, continuation, reason) {
   if (!Array.isArray(continuation.history)) continuation.history = [];
   continuation.history.push({ at: now, event: "cancelled", reason });
   saveContinuation(ctx, continuation);
+  appendContinuationAudit(ctx, continuation, "cancelled");
   return continuation;
 }
 
@@ -5825,6 +5832,24 @@ function cmdContinuationCancel(ctx, id) {
   if (!reason) throw new Error("Cancel requires --reason <text>.");
   cancelContinuationRecord(ctx, continuation, reason);
   output({ ok: true, continuation: stripContinuationBody(continuation) }, formatContinuationResolved(continuation));
+}
+
+function cmdContinuationAuditBackfill(ctx, id) {
+  if (id !== "all" && !/^ctn_[a-f0-9]{8,}$/i.test(id)) {
+    throw new Error("Usage: continuation audit-backfill [<resolved-or-cancelled-id>|all]");
+  }
+  const candidates = loadContinuations(ctx).filter(continuation =>
+    (id === "all" || continuation.id === id)
+    && ["resolved", "cancelled"].includes(continuation.status)
+  );
+  if (id !== "all" && candidates.length === 0) {
+    throw new Error(`Continuation ${id} is not resolved or cancelled.`);
+  }
+  const written = candidates.filter(continuation => appendContinuationAudit(ctx, continuation, "backfilled"));
+  output(
+    { ok: true, protocol: "cogentia.continuation.audit.v1", requested: id, candidates: candidates.length, written: written.map(item => item.id) },
+    `Continuations audit backfill: ${written.length}/${candidates.length} event(s) written.`
+  );
 }
 
 function cmdContinuationsExport(ctx) {
@@ -11022,6 +11047,54 @@ function saveContinuation(ctx, continuation) {
   invalidateContinuationsCache();
 }
 
+function continuationAuditPath(ctx) {
+  return path.join(ctx.registryRoot || path.dirname(ctx.configPath), ".cogentia", "audit.jsonl");
+}
+
+function continuationAuditEvent(continuation, action) {
+  const resolution = continuation.resolution || {};
+  const terminalAt = resolution.resolved_at || resolution.cancelled_at || continuation.updated_at || "unknown";
+  return {
+    protocol: "cogentia.continuation.audit.v1",
+    event: `continuation.${continuation.status}`,
+    action,
+    continuation_id: continuation.id,
+    kind: continuation.kind || "unknown",
+    status: continuation.status,
+    subject: continuation.subject || {},
+    terminal_at: terminalAt,
+    decision: resolution.decision || "",
+    reason: resolution.reason || "",
+  };
+}
+
+function continuationAuditKeys(ctx) {
+  const auditPath = continuationAuditPath(ctx);
+  if (!fs.existsSync(auditPath)) return new Set();
+  const keys = new Set();
+  for (const line of fs.readFileSync(auditPath, "utf8").split(/\r?\n/)) {
+    if (!line.trim()) continue;
+    try {
+      const event = JSON.parse(line);
+      if (event.protocol !== "cogentia.continuation.audit.v1") continue;
+      keys.add(`${event.continuation_id}|${event.status}|${event.terminal_at}`);
+    } catch {
+      // A pre-existing malformed audit line must not erase valid prior events.
+    }
+  }
+  return keys;
+}
+
+function appendContinuationAudit(ctx, continuation, action) {
+  const event = continuationAuditEvent(continuation, action);
+  const key = `${event.continuation_id}|${event.status}|${event.terminal_at}`;
+  if (continuationAuditKeys(ctx).has(key)) return false;
+  const auditPath = continuationAuditPath(ctx);
+  ensureDir(path.dirname(auditPath));
+  fs.appendFileSync(auditPath, `${JSON.stringify({ at: new Date().toISOString(), ...event })}\n`, "utf8");
+  return true;
+}
+
 function emitContinuation(ctx, request) {
   const dedupeKey = request.dedupe_key || "";
   if (dedupeKey) {
@@ -15717,6 +15790,7 @@ function continuationSchema() {
       "continuation inspect <id>",
       "continuation resolve <id> <result.json>",
       "continuation resume <id> <result.json>",
+      "continuation audit-backfill [<id>|all]",
       "continuation cancel <id> --reason <text>",
     ],
   };
