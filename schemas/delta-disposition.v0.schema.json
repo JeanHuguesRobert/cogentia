@@ -2,6 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://github.com/JeanHuguesRobert/cogentia/schemas/delta-disposition.v0.schema.json",
   "title": "Cogentia Delta Disposition v0",
+  "description": "Experimental locality-aware semantic disposition of a Corpus delta relative to a target projection.",
   "type": "object",
   "required": [
     "schema",
@@ -9,6 +10,7 @@
     "sources",
     "summary",
     "significance",
+    "projection_relevance",
     "disposition"
   ],
   "properties": {
@@ -26,15 +28,68 @@
         "type": "string"
       }
     },
+    "semantic_home": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "description": "Canonical locality or semantic home of the underlying material when known."
+    },
+    "locality_refs": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
     "summary": {
       "type": "string",
       "minLength": 1
     },
     "significance": {
       "enum": [
+        "none",
         "low",
         "medium",
         "high",
+        "unknown"
+      ],
+      "description": "Intrinsic importance in the item's own locality."
+    },
+    "projection_relevance": {
+      "enum": [
+        "none",
+        "low",
+        "medium",
+        "high",
+        "unknown"
+      ],
+      "description": "Importance for the target projection, independently of intrinsic significance."
+    },
+    "impacts": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "enum": [
+          "content",
+          "epistemic",
+          "structural",
+          "other"
+        ]
+      }
+    },
+    "impact_notes": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "string"
+      }
+    },
+    "salience_status": {
+      "enum": [
+        "not_assessed",
+        "missing",
+        "present_and_salient",
+        "present_but_insufficiently_salient",
+        "not_applicable",
         "unknown"
       ]
     },
@@ -75,6 +130,13 @@
       "items": {
         "type": "string"
       }
+    },
+    "continuation_refs": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Localized Continuations or candidates for still-actionable work."
     },
     "superseded_by": {
       "type": [
