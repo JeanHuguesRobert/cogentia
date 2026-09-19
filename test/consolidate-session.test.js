@@ -56,6 +56,10 @@ test("consolidate session supports the bounded quick report shape", () => {
 
   assert.equal(session.observations.find(item => item.id === "document_gaps").count, 1);
   assert.equal(session.observations.find(item => item.id === "continuations").count, 2);
+  assert.deepEqual(session.observations.find(item => item.id === "generated_navigation"), {
+    id: "generated_navigation", source: "corpus plan", status: "not_observed", count: null,
+  });
+  assert.equal(session.proposed_actions.find(item => item.id === "apply_generated_navigation"), undefined);
   assert.equal(session.proposed_actions.find(item => item.id === "inspect_document_gaps").execution, "not_run");
   assert.equal(session.proposed_actions.find(item => item.id === "inspect_continuations").effect, "read_only");
 });

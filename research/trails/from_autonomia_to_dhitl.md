@@ -67,5 +67,6 @@ update_policy: UP-DEFAULT-REVIEWED
 ### Backlinks
 
 *These documents link to this file:*
+- [Trail — Une Corse capable](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/trails/une_corse_capable.md)
 - [Research Index — Cogentia](../index.md)
 <!-- END_AUTO: backlinks -->

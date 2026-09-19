@@ -1380,7 +1380,6 @@ A possible v0.5 of this paper would integrate these two sections into the main n
 ### Backlinks
 
 *These documents link to this file:*
-- [Barons Mariani](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/README.md)
 - [Corsica2038 — De la prospective subie à l’autonomie de capacité](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/autonomia/corsica2038_contre_rapport_pruspettiva2050.md)
 - [Discours de la seconde méthode](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/second_method.md)
 - [Le Réel, le Virtuel et l’Actuel](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/le_reel_le_virtuel_et_l_actuel.md)

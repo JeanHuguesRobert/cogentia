@@ -12,6 +12,7 @@ const READ_ONLY = "read_only";
 const LOCAL_WRITE = "local_write_requires_authorization";
 
 function observation(id, source, count) {
+  if (count === null) return { id, source, status: "not_observed", count };
   return { id, source, status: count > 0 ? "attention" : "clear", count };
 }
 
@@ -28,7 +29,7 @@ function action(id, command, effect, reason) {
 
 /** Return a deterministic-shape session envelope; `now` is injectable for tests. */
 export function buildConsolidateSession(ctx, report, { now = new Date().toISOString() } = {}) {
-  const generated = report.generated?.changes || 0;
+  const generated = typeof report.generated?.changes === "number" ? report.generated.changes : null;
   const gaps = Array.isArray(report.gaps) ? report.gaps.length : (report.gaps_count || 0);
   const privacyLeaks = Array.isArray(report.privacy?.leaks) ? report.privacy.leaks.length : (report.privacy_leaks_count || 0);
   const continuations = Array.isArray(report.continuations) ? report.continuations.length : (report.active_continuations || 0);
