@@ -4,8 +4,8 @@ subtitle: "Document-backed packet capsules, human-routed handoffs, lifecycle, re
 author: "Jean Hugues Noël Robert, baron Mariani"
 affiliation: "Institut Mariani / C.O.R.S.I.C.A., 1 cours Paoli, F-20250 Corte, Corsica, France"
 date: "2026-08-25"
-last_modified_at: "2026-08-26"
-version: "0.4"
+last_modified_at: "2026-09-19"
+version: "0.5"
 status: "working-paper"
 license: "CC BY-SA 4.0"
 language: "en"
@@ -75,6 +75,7 @@ changelog:
   - "v0.2 (2026-08-26) — assimilated RT-001 decorrelated review; tightened Packet Capsule definition, lowered closure claim, added minimal capsule contract, lifecycle authority/evidence rules, first handoff measurements, and explicit review dispositions."
   - "v0.3 (2026-08-26) — post-review arbitration clarified that Packet Closure is relative to a declared admissible-handler environment; reinterpreted RT-001 accordingly; split by-copy transport from foreign-handler self-bootstrap; propagated the clarification to the general Packet Closure note."
   - "v0.4 (2026-08-26) — applied Occam to keep GitHub Issues inside the same study; introduced comparative substrate Reality Tests, treated Issue roles contextually rather than ontologically, and used issue #120 as a live case for Packet identity, work loci, assimilation, and Reactive Corpus adaptation."
+  - "v0.5 (2026-09-19) — clarifies the temporal recovery ladder: reversal, compensation, containment, repair, restitution, accepted residue, cooling and learning; time changes urgency and reparability without rewriting historical truth."
 x-cognitive-packet:
   candidate: true
   profile: "document-backed-capsule"
@@ -713,6 +714,61 @@ Each step reduces some recovery options and may shift the problem from rollback 
 
 > **Reversibility is a time-dependent property of reachable consequences, not an intrinsic Boolean property of the originating command.**
 
+### 10.1 Temporal recovery ladder
+
+The same consequence may move through several recovery regimes as time passes and propagation occurs:
+
+~~~text
+AVOID
+  prevent commitment
+
+DEFER
+  preserve optionality
+
+REVERSE
+  restore controlled state while genuine reversal remains possible
+
+COMPENSATE
+  counteract an already committed effect
+
+CONTAIN
+  stop propagation and preserve remaining options
+
+REPAIR
+  restore harmed capabilities, interests or relationships where possible
+
+RESTITUTE / INDEMNIFY
+  provide an equivalent remedy when restoration is impossible
+
+ACCEPT RESIDUE
+  explicitly acknowledge what cannot reasonably be repaired
+
+COOL
+  lower operational priority when no further action is proportionate
+
+LEARN
+  assimilate the episode so future policy, routing or capability changes
+~~~
+
+This is not a mandatory linear workflow. It is a vocabulary for the changing recovery envelope.
+
+A central temporal invariant follows:
+
+> **Time does not rewrite history. It changes the value of options, urgency, reparability, proportionality and operational temperature.**
+
+Therefore:
+
+~~~text
+historical truth
+≠ current operational urgency
+≠ remaining repairability
+≠ memory temperature
+~~~
+
+An unresolved consequence may cease to justify active intervention without becoming causally resolved or historically erased.
+
+Cooling is therefore neither repair nor forgiveness nor deletion. It is a lifecycle decision about present action.
+
 ---
 
 ## 11. Pivot, option preservation, and dispositive Acts
@@ -879,6 +935,8 @@ stabilize
 ```
 
 Only after stabilization should the system normally return to assessment, repair, responsibility, residue, and learning.
+
+Damage control is especially time-sensitive because delay may destroy options faster than a complete diagnosis can be produced. Its optimization target may therefore shift from **restore the best final state** to **minimize irreversible future loss while preserving later judgment**.
 
 Because damage control creates exceptional authority, it should resemble an express mandate:
 
@@ -1679,7 +1737,9 @@ The RT-001 Reviewer identified contemporary `Knowledge Capsule` and portable age
 
 > **Packet durability is not Corpus retention. Persist work long enough to continue it; preserve knowledge when assimilation gives it durable value.**
 
-> **Before commitment, preserve options. After commitment, preserve causality. When reversal is incomplete, compensate. When consequences become damage, repair. When further repair is disproportionate, preserve and attribute accepted residue.**
+> **Before commitment, preserve options. After commitment, preserve causality. When reversal is incomplete, compensate. When consequences become damage, contain and repair. When restoration is impossible, restitute or indemnify where proportionate. When further repair is disproportionate, preserve and attribute accepted residue.**
+
+> **Time does not rewrite history; it transforms urgency, option value, reparability, proportionality and operational temperature. A consequence may cool without ever becoming “not happened”.**
 
 > **In an emergency, do not solve everything. Save what would otherwise become impossible.**
 
