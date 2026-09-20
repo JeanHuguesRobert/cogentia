@@ -3,9 +3,12 @@ canonical_url: https://github.com/JeanHuguesRobert/cogentia/blob/main/research/d
 author: Jean Hugues Noël Robert, baron Mariani
 affiliation: Institut Mariani / C.O.R.S.I.C.A., 1 cours Paoli, F-20250 Corte, Corsica
 license: CC BY-SA 4.0
+language: en
 last_stamped_at: 2026-06-01T00:00:00.000Z
 title: Derived Products
 date: '2026-05-24'
+last_modified_at: '2026-09-21'
+version: '0.3'
 status: working-paper — auto-filled (frontmatter cleanup)
 document_role: source
 document_kind: research-paper
@@ -29,7 +32,7 @@ update_policy: UP-DEFAULT-REVIEWED
 # Derived Products
 ## Versioned Source Corpora, Situated Forms, and Publication Agents
 
-**Status:** Working paper v0.2 draft — consolidated  
+**Status:** Working paper v0.3 draft — consolidated  
 **Repository target:** `cogentia/research/derived_products.md`  
 **Language:** English  
 **Authorial context:** Cogentia / Cogentia Commons / Ubikia / Jean Hugues Noël Robert  
@@ -213,6 +216,80 @@ products preserve the same degree of reconstructibility.
 Some derived products are close transpositions of a source. Others are
 performative condensations of a broader thesis. Both may be legitimate. They
 should not be confused.
+
+### 6.0 Co-Sovereign Language Peers Are Not Derived Products
+
+A special case must be separated from the derived-product model: two linguistic artifacts may carry the **same source authority**.
+
+A document can be historically produced by translating another document and nevertheless cease to be subordinate to it once the pair is explicitly maintained as two equal source artifacts.
+
+Call these **co-sovereign language peers**.
+
+Their relation is:
+
+~~~text
+                 shared doctrine
+                    /      \
+                   /        \
+          source peer A    source peer B
+             language X      language Y
+                   \        /
+                semantic lockstep
+~~~
+
+The defining properties are:
+
+- both artifacts carry `document_role: source`;
+- each has its own canonical address;
+- each can be cited directly as an authoritative source;
+- they identify one another through a reciprocal `language_peer` relation;
+- neither uses `source_document` or document-level `derived_from` to establish authority over the other;
+- substantive changes are expected to propagate across the pair;
+- material divergence is treated as **synchronization debt**, not as automatic precedence of one language;
+- historical translation direction belongs to provenance only.
+
+> **Translation history is provenance, not hierarchy.**
+
+Co-sovereignty does not require byte-level or sentence-level identity. Natural language may require local differences in syntax, terminology, examples, or idiom. The requirement is **semantic parity of the doctrine, distinctions, uncertainty, and normative force**.
+
+This differs from a symmetric derived product:
+
+| Relation | Authority | Direction | Maintenance |
+|---|---|---|---|
+| symmetric derived product | source remains sovereign | source → product | product follows source |
+| co-sovereign language peers | both are sovereign sources | no normative direction | both remain in semantic lockstep |
+
+### Why this is especially useful for AI agents
+
+A stable language peer can be particularly valuable when one language is operationally common across agents, prompts, tool documentation, specifications, or retrieval infrastructure.
+
+Without such a peer, each agent may silently perform its own translation at read time:
+
+~~~text
+source language
+→ implicit translation by agent A
+→ interpretation A
+
+source language
+→ implicit translation by agent B
+→ interpretation B
+~~~
+
+That hidden transformation can introduce:
+
+- terminology drift;
+- loss of distinctions;
+- inconsistent canonical phrases;
+- cross-agent citation mismatch;
+- retrieval asymmetry across languages;
+- repeated translation cost;
+- accidental preference for whichever language the model handles more fluently in the current context.
+
+A maintained co-sovereign peer externalizes that translation step into the Corpus, where it can be reviewed, versioned, cited, compared, and corrected.
+
+> **For AI-facing doctrine, a maintained language peer is not merely convenient translation; it is a reusable semantic stabilizer.**
+
+Its utility does not make the AI-facing language superior. The gain comes from making the transformation explicit and shared rather than hidden and repeatedly recomputed.
 
 ### 6.1 Symmetric Derived Products
 
