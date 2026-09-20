@@ -3,7 +3,8 @@ title: "Reality Probe Selection"
 subtitle: "Choose what is worth learning next"
 author: "Jean Hugues Noël Robert, baron Mariani"
 date: "2026-09-03"
-version: "0.2"
+last_modified_at: "2026-09-21"
+version: "0.3"
 status: "working-paper"
 license: "CC BY-SA 4.0"
 language: "en"
@@ -330,7 +331,91 @@ This is illustrative, not a stabilized schema.
 
 ---
 
-## 9. Anti-patterns
+
+## 9. Probe blinding, aperture and dual yield
+
+A high-value Reality Probe should not only discriminate among known Possibles. It should also avoid needlessly shaping the observation and, when appropriate, leave room for high-value unanticipated evidence.
+
+### 9.1 Probe blinding
+
+For human-source probes, the investigator may know more internally than should be exposed externally.
+
+Potential leakage includes:
+
+```text
+answer leakage
+event leakage
+category leakage
+causal leakage
+salience leakage
+```
+
+The governing rule is:
+
+> **Hide the discriminant when revealing it could alter the response; do not falsify Reality.**
+
+Useful techniques include free recall before targeted questioning, balanced truthful context, symmetric question framing and controlled question order. Fabricated facts or false memories are not admissible blinding devices.
+
+The purpose is epistemic independence, not persuasion.
+
+### 9.2 Serendipity aperture
+
+A probe can be too optimized.
+
+If every admissible answer is constrained to the investigator's current ontology, the probe may reduce uncertainty while still preventing discovery that the ontology itself is incomplete.
+
+Call **serendipity aperture** the degree of freedom left for Reality to return useful evidence that was neither explicitly queried nor anticipated.
+
+```text
+low aperture
+    closed yes/no verification
+
+medium aperture
+    bounded topic, open response
+
+high aperture
+    free recall / free description
+```
+
+No aperture level is universally best. Selection depends on decision value, cost, contamination risk, Human Attention, reliability and the value of possible unknown unknowns.
+
+### 9.3 Wide-to-narrow probing
+
+When source contamination matters, prefer a staged sequence when proportionate:
+
+```text
+P0 free recall
+→ P1 broad balanced themes
+→ P2 targeted discriminants
+→ P3 explicit recognition
+```
+
+Preserve elicitation provenance. A spontaneous P0 observation is not equivalent to a P3 recognition after suggestion.
+
+### 9.4 Dual yield
+
+A Reality Probe may produce two distinct epistemic outputs:
+
+```text
+targeted_yield
+    evidence bearing on the uncertainty that motivated the probe
+
+serendipity_yield
+    useful evidence that was not being sought
+```
+
+The second class should not be discarded as conversational noise. It may reveal a new discriminant, a new source, a wrong framing, a previously invisible branch or an entirely new Continuation.
+
+A serendipitous observation is still only an observation. It must be qualified before it changes canonical knowledge.
+
+Compact rule:
+
+> **Choose probes for discrimination, design them against epistemic leakage, and preserve enough aperture for Reality to surprise the model.**
+
+---
+
+## 10. Anti-patterns
+
 
 Avoid:
 
@@ -355,13 +440,19 @@ single-score illusion
 
 question tunnel vision
     assume every uncertainty should be resolved through dialogue rather than another Reality interaction
+
+probe overfitting
+    constrain the probe so tightly to the current ontology that unanticipated evidence cannot surface
+
+epistemic leakage
+    reveal internal events, categories, causal hypotheses or salience cues that can shape the source before observation
 ```
 
 ---
 
-## 10. Compact doctrine
+## 11. Compact doctrine
 
-> **Maintain the live Possible Space. Preserve the exploration Continuation. When further evidence is useful, choose a bounded Reality Probe whose expected decision-relevant discrimination justifies its costs, risk and attention demand. Let Reality answer, update the Possible Space, and continue or stop accordingly.**
+> **Maintain the live Possible Space. Preserve the exploration Continuation. When further evidence is useful, choose a bounded Reality Probe whose expected decision-relevant discrimination justifies its costs, risk and attention demand. Shield the probe from unnecessary epistemic leakage, preserve appropriate aperture for unanticipated evidence, let Reality answer, update the Possible Space, and continue or stop accordingly.**
 
 In its smallest form, this is binary search.
 
