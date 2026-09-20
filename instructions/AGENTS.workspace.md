@@ -63,7 +63,17 @@ When work hits a judgment boundary, Cogentia uses **continuations** (the operati
 - Default to direct, atomic commits on the current canonical branch (`main`).
 - Do not create branches, worktrees, or review gates for routine scoped work unless justified by high Exposure, concurrent conflicting edits, or an explicit human request.
 
-## 4. Sub-Project Discovery
+## 4. Routing / location questions — grep before answering
+
+If asked *where* something lives (a repo, a config, a private/public
+boundary, which sub-project owns a given concern), grep the relevant
+`AGENTS.md` files across the workspace **before** answering from memory or
+association. The sub-project discovery table below already answers most such
+questions directly (e.g. `registre-mariani` for private twin overlay
+material) — guessing from recalled names instead of reading it is not
+acceptable when the answer is documented and greppable in under a minute.
+
+## 5. Sub-Project Discovery
 
 | Repository / Project | Role & Toolchain | Local Mandate |
 |---|---|---|
