@@ -5,7 +5,7 @@ author: "Jean Hugues Noël Robert, baron Mariani"
 affiliation: "Institut Mariani / C.O.R.S.I.C.A., 1 cours Paoli, F-20250 Corte, Corsica"
 date: "2026-09-16"
 last_modified_at: "2026-09-21"
-version: "0.3"
+version: "0.4"
 status: "working-method"
 language: "fr"
 license: "CC BY-SA 4.0"
@@ -14,7 +14,10 @@ document_kind: "methodological-note"
 visibility: "public"
 lifecycle_state: "working"
 update_policy: "UP-DEFAULT-REVIEWED"
+canonical_url: "https://github.com/JeanHuguesRobert/cogentia/blob/main/research/interroger_le_reel.md"
+language_peer: "research/interrogating_reality.md"
 related_documents:
+  - "interrogating_reality.md"
   - "https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/principe_rossignol.md"
   - "https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/triangulation_du_reel.md"
   - "https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/traceabilite_des_actes.md"
@@ -392,171 +395,171 @@ Première application structurée : reconstitution du corpus préparatoire publi
 
 Le dossier de campagne vit avec son sujet territorial dans `barons-Mariani/research/autonomia/`, tandis que la méthode reste ici dans Cogentia.
 
-## 17. Epistemic shielding and serendipity aperture
+## 17. Blindage épistémique et ouverture à la sérendipité
 
-A probe can be grammatically neutral while still being cognitively suggestive.
+Une sonde peut être grammaticalement neutre tout en restant cognitivement suggestive.
 
-The risk is not limited to **answer suggestion**. An investigator may leak parts of the internal map into the probe itself and thereby shape the observation. Relevant forms include:
+Le risque ne se limite pas à la **suggestion de réponse**. Un enquêteur peut laisser fuir des éléments de sa carte interne dans la sonde elle-même et ainsi structurer l'observation obtenue. Les formes pertinentes comprennent :
 
-```text
-answer leakage
-    suggesting the expected answer
+~~~text
+fuite de réponse
+    suggérer la réponse attendue
 
-event leakage
-    suggesting that a particular event occurred
+fuite d'événement
+    suggérer qu'un événement déterminé a eu lieu
 
-category leakage
-    imposing the investigator's own categories
+fuite de catégorie
+    imposer les catégories propres de l'enquêteur
 
-causal leakage
-    introducing a hypothesized causal relation
+fuite causale
+    introduire une relation causale supposée
 
-salience leakage
-    revealing, through wording, order, contrast or repetition,
-    what the investigator considers important
-```
+fuite de saillance
+    révéler, par la formulation, l'ordre, le contraste ou la répétition,
+    ce que l'enquêteur considère comme important
+~~~
 
-Working term:
+Terme de travail :
 
-> **Epistemic leakage** is the projection into a Reality Probe of elements from the investigator's internal representation that may structure the response being observed.
+> **Fuite épistémique** : projection, dans une sonde adressée au Réel, d'éléments de la représentation interne de l'enquêteur susceptibles de structurer la réponse observée.
 
-This extends the earlier requirement that a good probe be non-suggestive. A probe may avoid an explicit leading question and still disclose the ontology, chronology, causal frame or discriminant that the investigator hopes to recover.
+Cela étend l'exigence précédente selon laquelle une bonne sonde doit être non suggestive. Une question peut éviter toute formulation explicitement orientée tout en révélant encore l'ontologie, la chronologie, le cadre causal ou le discriminant que l'enquêteur espère retrouver.
 
-### 17.1 Rich map, sparse probe
+### 17.1 Carte riche, sonde sobre
 
-The investigator may and often should maintain a rich private prior:
+L'enquêteur peut et doit souvent conserver un prior privé riche :
 
-```text
-known traces
-candidate chronologies
-competing hypotheses
-expected discriminants
-counter-hypotheses
-unknowns
-```
+~~~text
+traces connues
+chronologies candidates
+hypothèses concurrentes
+discriminants attendus
+contre-hypothèses
+inconnues
+~~~
 
-That richness need not be exported into the probe.
+Cette richesse n'a pas à être exportée dans la sonde.
 
-> **The map may be rich; the probe should remain sparse.**
+> **La Carte peut être riche ; la sonde doit rester sobre.**
 
-A compact form is:
+Formule compacte :
 
-> **Know richly. Ask sparsely. Compare afterwards.**
+> **Connaître richement. Interroger sobrement. Comparer après.**
 
-The prior is not discarded. It is frozen before the probe and used **after** the response to evaluate which elements appeared independently.
+Le prior n'est pas abandonné. Il est figé avant la sonde et utilisé **après** la réponse pour évaluer quels éléments sont apparus indépendamment.
 
-### 17.2 Hide the discriminant without falsifying Reality
+### 17.2 Masquer le discriminant sans falsifier le Réel
 
-When awareness of the investigator's intent could change the response, it can be useful to **mask the discriminant**.
+Lorsque la connaissance de l'intention de l'enquêteur peut modifier la réponse, il peut être utile de **masquer le discriminant**.
 
-Permissible techniques may include:
+Les techniques admissibles peuvent notamment comprendre :
 
-- free recall before targeted questioning;
-- several truthful and comparable contextual topics;
-- controlled variation in question order;
-- symmetric questions whose wording does not single out the target hypothesis;
-- low-cost positive or negative controls when they have genuine epistemic value.
+- le rappel libre avant toute question ciblée ;
+- plusieurs thèmes contextuels véridiques et comparables ;
+- une variation contrôlée de l'ordre des questions ;
+- des questions symétriques dont la formulation ne singularise pas l'hypothèse cible ;
+- des contrôles positifs ou négatifs peu coûteux lorsqu'ils ont une véritable valeur épistémique.
 
-This may be described as **probe blinding** or **controlled contextual noise**. It must not rely on fabricated facts, false memories or deceptive premises.
+On peut parler de **blindage de la sonde** ou de **bruit contextuel contrôlé**. Cela ne doit pas reposer sur des faits inventés, de faux souvenirs ou des prémisses trompeuses.
 
-> **Hide the discriminant; do not falsify Reality.**
+> **Masquer le discriminant ; ne pas falsifier le Réel.**
 
-A separate privacy doctrine may permit a private respondent, in bounded circumstances, to protect a legitimate private boundary through defensive opacity or even defensive deception. That does **not** authorize the investigator to seed false facts, fabricated memories or deceptive premises into a Reality Probe. These are different roles and duties:
+Une doctrine distincte de protection de la vie privée peut permettre à un répondant privé, dans des circonstances bornées, de protéger une frontière privée légitime par l'opacité défensive, voire par une tromperie défensive. Cela n'autorise **pas** l'enquêteur à injecter de faux faits, de faux souvenirs ou des prémisses trompeuses dans une sonde adressée au Réel. Les rôles et les devoirs sont différents :
 
-```text
-respondent protecting a legitimate private boundary
-    → privacy ethics
+~~~text
+répondant protégeant une frontière privée légitime
+    → éthique de la vie privée
 
-investigator trying to obtain evidence
-    → probe-integrity discipline
-```
+enquêteur cherchant à obtenir une preuve
+    → discipline d'intégrité de la sonde
+~~~
 
-The first concerns what a person may legitimately withhold or protect. The second concerns whether the observation has been contaminated by the investigator.
+Le premier point concerne ce qu'une personne peut légitimement retenir ou protéger. Le second concerne la contamination éventuelle de l'observation par l'enquêteur.
 
-The purpose is not to manipulate the respondent into a preferred answer. It is to reduce the amount of information the probe itself gives away about what the investigator is trying to observe.
+Le but n'est pas de manipuler le répondant vers une réponse préférée. Il est de réduire la quantité d'information que la sonde révèle elle-même sur ce que l'enquêteur cherche à observer.
 
-### 17.3 From open recall to explicit recognition
+### 17.3 Du rappel libre à la reconnaissance explicite
 
-For human-source probes, a useful progression is:
+Pour les sondes adressées à une source humaine, une progression utile est :
 
-```text
-P0 — free recall
-     minimal investigator framing
-     maximal opportunity for spontaneous recall
+~~~text
+P0 — rappel libre
+     cadrage minimal par l'enquêteur
+     possibilité maximale de rappel spontané
 
-P1 — broad, balanced themes
-     controlled contextual noise
+P1 — thèmes larges et équilibrés
+     bruit contextuel contrôlé
 
-P2 — targeted discriminating questions
-     narrower Possible Space
+P2 — questions discriminantes ciblées
+     espace des Possibles plus étroit
 
-P3 — explicit recognition
-     "Do you remember X?"
-     high targeted discrimination,
-     but known contamination
-```
+P3 — reconnaissance explicite
+     « Vous souvenez-vous de X ? »
+     forte discrimination ciblée,
+     mais contamination connue
+~~~
 
-Evidence obtained at these stages should retain its elicitation provenance.
+Les éléments obtenus à chaque étage doivent conserver la provenance de leur mode d'élucidation.
 
-A fact recalled spontaneously at P0 is not epistemically equivalent to a fact merely recognized after explicit suggestion at P3.
+Un fait rappelé spontanément à P0 n'est pas épistémiquement équivalent à un fait seulement reconnu après suggestion explicite à P3.
 
-### 17.4 Serendipity aperture
+### 17.4 Ouverture à la sérendipité
 
-A probe optimized too tightly for a known question can prevent discovery that the question itself was incomplete, misframed or aimed at the wrong object.
+Une sonde trop étroitement optimisée pour une question connue peut empêcher de découvrir que cette question était elle-même incomplète, mal cadrée ou dirigée vers le mauvais objet.
 
-A probe may therefore preserve a **serendipity aperture**: enough freedom for Reality to produce a high-value observation that was neither queried nor anticipated.
+Une sonde peut donc préserver une **ouverture à la sérendipité** : assez de liberté pour que le Réel produise une observation de grande valeur qui n'avait été ni demandée ni anticipée.
 
-```text
-low aperture
-    closed yes/no probe
-    strong targeted discrimination
-    little room for unknown unknowns
+~~~text
+ouverture faible
+    sonde fermée oui/non
+    forte discrimination ciblée
+    peu de place pour les inconnues inconnues
 
-medium aperture
-    bounded domain, open response
+ouverture moyenne
+    domaine borné, réponse ouverte
 
-high aperture
-    free description / free recall
-    weaker control, stronger opportunity for unanticipated attractors
-```
+ouverture forte
+    description libre / rappel libre
+    contrôle plus faible, plus forte possibilité d'attracteurs inattendus
+~~~
 
-The useful aperture depends on cost, risk, human attention, contamination risk and the expected value of unplanned discovery.
+L'ouverture utile dépend du coût, du risque, de l'attention humaine, du risque de contamination et de la valeur attendue d'une découverte non planifiée.
 
-Invariant:
+Invariant :
 
-> **Do not design a probe so narrowly that Reality can answer only the questions we already know how to ask.**
+> **Ne pas concevoir une sonde si étroitement que le Réel ne puisse répondre qu'aux questions que nous savons déjà poser.**
 
-### 17.5 Dual yield
+### 17.5 Double rendement
 
-After processing a probe, distinguish:
+Après traitement d'une sonde, distinguer :
 
-```text
-targeted_yield
-    what was learned about the uncertainty that motivated the probe
+~~~text
+rendement_ciblé
+    ce qui a été appris sur l'incertitude qui motivait la sonde
 
-serendipity_yield
-    what was learned that was not being sought
-```
+rendement_sérendipitaire
+    ce qui a été appris sans avoir été recherché
+~~~
 
-A serendipitous observation is not automatically important or true. It is an **unqueried attractor candidate** to be qualified, traced and, when valuable, tested by its own Reality Probe.
+Une observation sérendipitaire n'est pas automatiquement importante ni vraie. C'est un **candidat attracteur non interrogé** à qualifier, tracer et, lorsqu'il est utile, soumettre à sa propre sonde adressée au Réel.
 
-### 17.6 Epistemic leakage audit
+### 17.6 Audit de fuite épistémique
 
-Before emitting a consequential human-source probe, ask:
+Avant d'émettre une sonde conséquente vers une source humaine, demander :
 
-```text
-- Did I reveal the answer I hope to obtain?
-- Did I reveal an event whose existence I am trying to verify?
-- Did I impose my own analytical categories on the source?
-- Does wording, order or contrast reveal the true discriminant?
-- Can I remove information without making the request unintelligible?
-- Would free recall or a broader first probe produce a more independent observation?
-- Is there enough aperture for Reality to surface something I did not anticipate?
-```
+~~~text
+- Ai-je révélé la réponse que j'espère obtenir ?
+- Ai-je révélé un événement dont je cherche précisément à vérifier l'existence ?
+- Ai-je imposé mes propres catégories analytiques à la source ?
+- La formulation, l'ordre ou le contraste révèlent-ils le véritable discriminant ?
+- Puis-je retirer de l'information sans rendre la demande inintelligible ?
+- Un rappel libre ou une première sonde plus large produirait-il une observation plus indépendante ?
+- L'ouverture est-elle suffisante pour permettre au Réel de faire surgir quelque chose que je n'avais pas anticipé ?
+~~~
 
-Compact formula:
+Formule compacte :
 
-> **Know richly. Ask sparsely. Mask the discriminant when needed. Preserve an aperture for surprise. Compare afterwards.**
+> **Connaître richement. Interroger sobrement. Masquer le discriminant lorsque nécessaire. Préserver une ouverture à la surprise. Comparer après.**
 
-The response of Reality should be able not only to confirm or reject the current map, but also to expose what the map failed to contain.
+La réponse du Réel doit pouvoir non seulement confirmer ou rejeter la Carte actuelle, mais aussi révéler ce que cette Carte ne contenait pas.
 
