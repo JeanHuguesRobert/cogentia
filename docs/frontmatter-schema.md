@@ -5,7 +5,7 @@ license: CC BY-SA 4.0
 language: en
 title: Frontmatter Schema — v0.1 (Corpus)
 date: '2026-05-27'
-last_modified_at: '2026-09-09'
+last_modified_at: '2026-09-21'
 status: working-paper — auto-filled (frontmatter cleanup)
 canonical_url: https://github.com/JeanHuguesRobert/cogentia/blob/main/docs/frontmatter-schema.md
 last_stamped_at: 2026-06-01T00:00:00.000Z
@@ -83,6 +83,7 @@ The machine-readable companion is [`frontmatter-schema.v0.1.json`](frontmatter-s
 | `target_audience` | string or array | Recommended for derived products | Intended readers or users |
 | `target_scene` | string | Recommended for derived products | e.g. technical, academic, political, electoral, local, public, internal |
 | `document_function` | string | Recommended for derived products | e.g. specification, research, brief, speech, publication, implementation instruction |
+| `language_peer` | string or array | Optional | Reciprocal link to one or more co-sovereign source artifacts in another language; does not imply derivation or authority precedence. |
 
 Technical infrastructure, protocols, specifications, schemas, agent instructions, and international research normally use English. Corsican, territorial, political, electoral, local, family, and audience-specific public products normally use French unless their intended audience requires another language. Ask before drafting when classification is genuinely ambiguous.
 
@@ -143,6 +144,42 @@ Official base values are `draft`, `working-paper`, `stable`, `under-review`, `de
 Synonyms are tolerated when a clear equivalence rule is documented in [`frontmatter-synonym-mapping.md`](frontmatter-synonym-mapping.md). There is no deadline for alternative forms unless an explicit deprecation decision is made. Excessive uniformity is not a goal.
 
 `derived` is the umbrella English category for a product made from another artifact. Use `document_role: adapted` and `derivation_mode: directed` when a product intentionally adds context, audience, or editorial direction. `adapted_products` is a declaration, not proof of publication.
+
+
+### Rule for Co-Sovereign Language Peers
+
+Two artifacts in different languages MAY both be sovereign source documents when they carry the same doctrinal authority.
+
+Use this pattern only when the relation is intentionally symmetric:
+
+~~~yaml
+document_role: source
+language: fr
+language_peer: research/interrogating_reality.md
+~~~
+
+and reciprocally:
+
+~~~yaml
+document_role: source
+language: en
+language_peer: research/interroger_le_reel.md
+~~~
+
+The relation means:
+
+- each artifact has its own `canonical_url`;
+- either artifact may be cited as the authoritative source;
+- neither is classified as a derived product merely because one was historically translated from the other;
+- `source_document` and document-level `derived_from` SHOULD NOT be used to create a source-authority hierarchy between the peers;
+- substantive divergence is synchronization debt that requires explicit reconciliation;
+- historical translation direction MAY be preserved in provenance without creating normative precedence.
+
+> **Translation history is provenance, not hierarchy.**
+
+A co-sovereign language peer is especially useful when a stable rendering for AI agents removes repeated hidden translation from retrieval, prompting, tooling, and cross-agent reasoning. This is an operational benefit, not a claim that one language is semantically superior.
+
+Do not encode `sovereign` or `symmetric` as a new `document_role`. Sovereignty here is established by both artifacts already being `source` documents plus the reciprocal peer relation and the documented maintenance rule.
 
 ### Rule for Extensions and Emerging Vocabulary
 
