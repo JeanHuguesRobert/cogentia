@@ -1,7 +1,7 @@
 ---
 title: Cogentia Shared Agent Instructions
 status: active
-version: 21
+version: 22
 date: 2026-09-20
 document_role: operational
 document_kind: agent-instructions
@@ -438,6 +438,13 @@ existing rule that answers the actual problem:
   [Reality Probe Selection](../research/reality_probe_selection.md):
   stop collecting when additional evidence no longer has material
   decision-relevant value.
+- **Human-source probe before durable UNKNOWN** —
+  [Reality Probe Selection](../research/reality_probe_selection.md):
+  do not preserve a materially relevant `UNKNOWN` merely because the Corpus
+  is silent when an identifiable human is plausibly the direct, low-cost,
+  high-discrimination source. Ask the smallest sufficient question, then
+  preserve the answer with its actual epistemic status rather than promoting
+  it automatically to `FACT`.
 - **Metadata recursion boundary** —
   [COP Memory Metadata Recursion](https://github.com/JeanHuguesRobert/inseme/blob/main/research/cop_memory_metadata_recursion.md):
   recurse only when recursion changes trust, action, routing, preservation or
