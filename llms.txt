@@ -4,51 +4,101 @@
 
 ## Repositories & Canonical Entry Points
 
-- **[cogentia]**: .
+- **[cogentia]**: C:\tweesic\cogentia
   - Role: primary
   - Visibility: public
-  - Index: research\index.md
-  - Concepts: research\concepts.md
-- **[FractaVolta]**: ../FractaVolta
+  - Index: C:\tweesic\cogentia\research\index.md
+  - Concepts: C:\tweesic\cogentia\research\concepts.md
+- **[FractaVolta]**: C:\tweesic\FractaVolta
   - Role: primary
   - Visibility: public
-  - Index: ..\FractaVolta\research\index.md
-  - Concepts: ..\FractaVolta\research\concepts.md
-- **[marenostrum]**: ../marenostrum
+  - Index: C:\tweesic\FractaVolta\research\index.md
+  - Concepts: C:\tweesic\FractaVolta\research\concepts.md
+- **[marenostrum]**: C:\tweesic\marenostrum
   - Role: primary
   - Visibility: public
-  - Index: ..\marenostrum\research\index.md
-  - Concepts: ..\marenostrum\research\concepts.md
-- **[barons-Mariani]**: ../barons-Mariani
+  - Index: C:\tweesic\marenostrum\research\index.md
+  - Concepts: C:\tweesic\marenostrum\research\concepts.md
+- **[barons-Mariani]**: C:\tweesic\barons-Mariani
   - Role: primary
   - Visibility: public
-  - Index: ..\barons-Mariani\research\index.md
-  - Concepts: ..\barons-Mariani\research\concepts.md
-- **[inseme]**: ../inseme
+  - Index: C:\tweesic\barons-Mariani\research\index.md
+  - Concepts: C:\tweesic\barons-Mariani\research\concepts.md
+- **[inseme]**: C:\tweesic\inseme
   - Role: primary
   - Visibility: public
-  - Index: ..\inseme\research\index.md
-  - Concepts: ..\inseme\research\concepts.md
-- **[Inox]**: ../Inox
+  - Index: C:\tweesic\inseme\research\index.md
+  - Concepts: C:\tweesic\inseme\research\concepts.md
+- **[survey]**: C:\tweesic\survey
   - Role: primary
   - Visibility: public
-  - Index: ..\Inox\research\index.md
-  - Concepts: ..\Inox\research\concepts.md
-- **[ubikia]**: ../ubikia
+  - Index: C:\tweesic\survey\research\index.md
+  - Concepts: C:\tweesic\survey\research\concepts.md
+- **[Inox]**: C:\tweesic\Inox
   - Role: primary
   - Visibility: public
-  - Index: ..\ubikia\research\index.md
-  - Concepts: ..\ubikia\research\concepts.md
-- **[JeanHuguesRobert]**: ../JeanHuguesRobert
+  - Index: C:\tweesic\Inox\research\index.md
+  - Concepts: C:\tweesic\Inox\research\concepts.md
+- **[ubikia]**: C:\tweesic\ubikia
   - Role: primary
   - Visibility: public
-  - Index: ..\JeanHuguesRobert\research\index.md
-  - Concepts: ..\JeanHuguesRobert\research\concepts.md
-- **[StructEnv]**: ../StructEnv
+  - Index: C:\tweesic\ubikia\research\index.md
+  - Concepts: C:\tweesic\ubikia\research\concepts.md
+- **[operium]**: C:\tweesic\operium
   - Role: primary
   - Visibility: public
-  - Index: ..\StructEnv\research\index.md
-  - Concepts: ..\StructEnv\research\concepts.md
+  - Index: C:\tweesic\operium\research\index.md
+  - Concepts: C:\tweesic\operium\research\concepts.md
+- **[serra]**: C:\tweesic\serra
+  - Role: primary
+  - Visibility: public
+  - Index: C:\tweesic\serra\research\index.md
+  - Concepts: C:\tweesic\serra\research\concepts.md
+- **[JeanHuguesRobert]**: C:\tweesic\JeanHuguesRobert
+  - Role: primary
+  - Visibility: public
+  - Index: C:\tweesic\JeanHuguesRobert\research\index.md
+  - Concepts: C:\tweesic\JeanHuguesRobert\research\concepts.md
+- **[privai]**: C:\tweesic\privai
+  - Role: primary
+  - Visibility: public
+  - Index: C:\tweesic\privai\research\index.md
+  - Concepts: C:\tweesic\privai\research\concepts.md
+- **[gouvernance]**: C:\tweesic\gouvernance
+  - Role: primary
+  - Visibility: public
+  - Index: C:\tweesic\gouvernance\research\index.md
+  - Concepts: C:\tweesic\gouvernance\research\concepts.md
+- **[marianivillage]**: C:\tweesic\marianivillage
+  - Role: primary
+  - Visibility: public
+  - Index: C:\tweesic\marianivillage\research\index.md
+  - Concepts: C:\tweesic\marianivillage\research\concepts.md
+- **[institut-mariani]**: C:\tweesic\institut-mariani
+  - Role: primary
+  - Visibility: public
+  - Index: C:\tweesic\institut-mariani\research\index.md
+  - Concepts: C:\tweesic\institut-mariani\research\concepts.md
+- **[Kudos]**: C:\tweesic\Kudos
+  - Role: primary
+  - Visibility: public
+  - Index: C:\tweesic\Kudos\research\index.md
+  - Concepts: C:\tweesic\Kudos\research\concepts.md
+- **[.github]**: C:\tweesic\.github
+  - Role: primary
+  - Visibility: public
+  - Index: C:\tweesic\.github\research\index.md
+  - Concepts: C:\tweesic\.github\research\concepts.md
+- **[acorsica.org]**: C:\tweesic\acorsica.org
+  - Role: primary
+  - Visibility: public
+  - Index: C:\tweesic\acorsica.org\research\index.md
+  - Concepts: C:\tweesic\acorsica.org\research\concepts.md
+- **[StructEnv]**: C:\tweesic\StructEnv
+  - Role: primary
+  - Visibility: public
+  - Index: C:\tweesic\StructEnv\research\index.md
+  - Concepts: C:\tweesic\StructEnv\research\concepts.md
 
 ## Privacy Note
 
@@ -65,10 +115,32 @@
   - Aliases: interaction register, registre des interactions, mail_trace, mail trace, registre d'interaction
 - **Exploration Rationnelle du Possible**: [research/potentics.md](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/potentics.md)
   - Aliases: exploration rationnelle du possible, erp, rational exploration of the possible
-- **Seconde Methode**: [research/corpus_navigation_audit.md](https://github.com/JeanHuguesRobert/cogentia/blob/main/research/corpus_navigation_audit.md)
-  - Aliases: seconde methode, seconde méthode, second method, conserved negative returns
+- **Seconde Methode**: [research/second_method.md](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/second_method.md)
+  - Aliases: seconde methode, seconde méthode, discours de la seconde méthode, discours de la seconde methode, second method
 - **Conceptual Gravity**: [research/conceptual_gravity.md](https://github.com/JeanHuguesRobert/cogentia/blob/main/research/conceptual_gravity.md)
   - Aliases: conceptual gravity, self-orienting corpus, self-orienting reactive corpus, corpus.orient
+- **Autonomie de Capacité**: [research/campaign/fiches_maires/fiche_01_autonomie_de_capacite_finances_communales.md](https://github.com/JeanHuguesRobert/cogentia/blob/main/research/campaign/fiches_maires/fiche_01_autonomie_de_capacite_finances_communales.md)
+  - Aliases: autonomie de capacite, autonomie de capacité, finances communales, dgf, dotation globale de fonctionnement, perequation, péréquation, communes rurales, autonomie de papier, sanctuarisation dgf
+- **FractaVolta Énergie Villageoise**: [research/campaign/fiches_maires/fiche_02_fractavolta_energie_villageoise.md](https://github.com/JeanHuguesRobert/cogentia/blob/main/research/campaign/fiches_maires/fiche_02_fractavolta_energie_villageoise.md)
+  - Aliases: fractavolta, energie villageoise, énergie villageoise, batteries seconde vie, seconde vie, autoconsommation collective, boucle locale energie, agrivoltaisme, agrivoltaïsme, vignes friches
+- **Statut Résident Rural et Foncier**: [research/campaign/fiches_maires/fiche_03_statut_resident_rural_logement_foncier.md](https://github.com/JeanHuguesRobert/cogentia/blob/main/research/campaign/fiches_maires/fiche_03_statut_resident_rural_logement_foncier.md)
+  - Aliases: statut resident rural, statut résident rural, statut de resident, statut de résident, bail reel solidaire, bail réel solidaire, brs, indivision fonciere, indivision foncière, indivision, indivisions, girtec, logement communal, residence secondaire corse
+- **Eau Déchets et Services Publics**: [research/campaign/fiches_maires/fiche_04_eau_dechets_services_publics.md](https://github.com/JeanHuguesRobert/cogentia/blob/main/research/campaign/fiches_maires/fiche_04_eau_dechets_services_publics.md)
+  - Aliases: eau et dechets, eau et déchets, teom, taxe ordures menageres, taxe ordures ménagères, exportation dechets, retenues collinaires, oehc, secheresse corse, sécheresse corse, gestion de l'eau
+- **Transparence Marchés Publics et Anti-Capture**: [research/campaign/fiches_maires/fiche_05_transparence_anti_capture_marches_publics.md](https://github.com/JeanHuguesRobert/cogentia/blob/main/research/campaign/fiches_maires/fiche_05_transparence_anti_capture_marches_publics.md)
+  - Aliases: transparence marches publics, transparence marchés publics, dossier 1755, anti capture, chambre regionale des comptes, chambre régionale des comptes, subventions territoriales, marches publics corse
+- **Locality Principle**: [research/locality_principle.md](https://github.com/JeanHuguesRobert/cogentia/blob/main/research/locality_principle.md)
+  - Aliases: locality, locality principle, minimum sufficient locality, locality closure, local-first
+- **DHITL (Democratic Human In The Loop)**: [research/DHITL.md](https://github.com/JeanHuguesRobert/marenostrum/blob/main/research/DHITL.md)
+  - Aliases: dhitl, democratic human in the loop, democratic humans in the loop
+- **Control/data plane separation**: [research/concepts.md](https://github.com/JeanHuguesRobert/Inox/blob/master/research/concepts.md#control-data-plane-separation)
+  - Aliases: control/data plane separation, control data plane separation, control/data plane, data/control plane separation
+- **Agent John Compagnon Numérique**: [research/reasoning_loop.md](https://github.com/JeanHuguesRobert/cogentia/blob/main/research/reasoning_loop.md)
+  - Aliases: agent john, agent jhn, assistant numerique, assistant numérique, you draft he decides, demultiplication, démultiplication, compagnon numerique
+- **Kudocracy**: [README.md](https://github.com/JeanHuguesRobert/survey/blob/main/README.md)
+  - Aliases: kudocracy, kudocratie, democratie directe, démocratie directe, democratie liquide, démocratie liquide, vote vivant, grands electeurs vote, john vote
+- **Non-alignement et Indépendance Parlementaire**: [research/proposition_constitutionnelle_autonomie_capacite_corse.md](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/proposition_constitutionnelle_autonomie_capacite_corse.md)
+  - Aliases: sans groupe parlementaire, face aux appareils, parti national, majorite territoriale, majorité territoriale, isolement politique, non-aligne, non-aligné
 
 ## Navigation Contract Verbs (CPsN v0.1)
 - `resolve(name)`: Deterministic alias -> canonical file lookup

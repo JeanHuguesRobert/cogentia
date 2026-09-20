@@ -252,6 +252,7 @@ const child = spawn(process.execPath, ["scripts/cogentia-mcp-http.js"], {
     COGENTIA_GUIDE_WEB_SEARCH_URL: `${daemonBase}/brave`,
     COGENTIA_GUIDE_S7_ANCHOR: "0",
     COGENTIA_REASONING_LOOP_V2: "true",
+    COGENTIA_GUIDE_ALLOW_V2_PROBE: "true",
     OPENROUTER_API_KEY: "test-openrouter-key",
     COGENTIA_GUIDE_OPENROUTER_FREE_FALLBACK: "1",
     COGENTIA_OPENROUTER_BASE_URL: `${daemonBase}/openrouter`,
@@ -345,6 +346,15 @@ try {
     ["What is control/data plane separation?", "Inox", "research/concepts.md", /control plane/i],
   ]) {
     const [question, repo, sourcePath, excerpt] = expected;
+    if (question === "What is DHITL?") {
+      const legacy = await postJson(`${mcpBase}/guide/chat`, {
+        question,
+        locale: "en",
+        reasoning_loop_v2: false,
+      });
+      assert.equal(legacy.reasoning_loop, undefined);
+      assert.notEqual(legacy.sources[0]?.repo, "marenostrum");
+    }
     const anchored = await postJson(`${mcpBase}/guide/chat`, { question, locale: "en" });
     assert.ok(seenOrientationQueries.includes(question));
     assert.equal(anchored.context.guide_retrieval.orientation.ok, true);

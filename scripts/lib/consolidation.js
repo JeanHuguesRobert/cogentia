@@ -60,6 +60,7 @@ export async function runWeeklyConsolidation(options = {}) {
         const logText = execFileSync("git", ["log", "--since=7 days ago", "--oneline", "-n", "15"], {
           cwd: repoDir,
           encoding: "utf8",
+          stdio: ["ignore", "pipe", "ignore"],
         });
         const commits = logText.trim().split("\n").filter(Boolean);
         if (commits.length > 0) {
