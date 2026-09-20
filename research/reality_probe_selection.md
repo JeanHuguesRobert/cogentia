@@ -3,7 +3,7 @@ title: "Reality Probe Selection"
 subtitle: "Choose what is worth learning next"
 author: "Jean Hugues Noël Robert, baron Mariani"
 date: "2026-09-03"
-version: "0.1"
+version: "0.2"
 status: "working-paper"
 license: "CC BY-SA 4.0"
 language: "en"
@@ -149,6 +149,69 @@ Invariant:
 > **Do not spend Human Attention merely because the agent is uncertain; spend it when the expected decision-relevant value of the human probe justifies the interruption.**
 
 This makes Human Attention Budget part of epistemic scheduling, not merely interface design.
+
+### Human-source probe before durable UNKNOWN
+
+The anti-pattern `ask-human-first` does **not** mean `never ask the human`.
+
+Before stabilizing a materially relevant `UNKNOWN`, test whether an
+identifiable human is plausibly the direct, low-cost, high-discrimination
+source.
+
+Use this routing:
+
+```text
+material UNKNOWN
+    ↓
+already answered by admissible cheap evidence?
+    ├── yes → retrieve / inspect it
+    └── no
+         ↓
+identifiable human likely to be:
+actor / author / witness / decision-maker / trace custodian?
+    ├── no → choose another probe or preserve UNKNOWN
+    └── yes
+         ↓
+can one short question materially:
+resolve the UNKNOWN,
+narrow live possibles,
+reclassify epistemic status,
+point to a decisive trace,
+or change the next action?
+    ├── no → do not spend Human Attention
+    └── yes → ask the smallest sufficient question
+```
+
+A human answer must then be qualified rather than automatically promoted to
+`FACT`.
+
+Typical mappings:
+
+```text
+human editorial choice   → DECISION
+own intention / own act  → VOICE or ASSERTION
+direct recollection      → TESTIMONY
+pointer to a document    → retrieve and inspect TRACE
+indirect belief          → ASSERTION or INFERENCE
+another person's hidden inner state
+                         → UNKNOWN may remain
+```
+
+Invariant:
+
+> **Do not spend Human Attention merely because the agent is uncertain; but do
+> not stabilize a material UNKNOWN when an identifiable human is plausibly the
+> direct, low-cost, high-discrimination source. Ask the smallest sufficient
+> question, qualify the answer, then continue or stop.**
+
+This is especially important when the UNKNOWN concerns the available human's
+own act, decision, declared intention, direct observation, or custody of the
+relevant trace. In such cases, a short human probe should normally precede a
+materially more expensive documentary search.
+
+The rule does not authorize one person to supply another person's unobserved
+psychology or subjective meaning. A witness may provide their observation,
+memory, or report; epistemic status remains attached to that source.
 
 ---
 
