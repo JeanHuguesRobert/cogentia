@@ -461,6 +461,18 @@ This may be described as **probe blinding** or **controlled contextual noise**. 
 
 > **Hide the discriminant; do not falsify Reality.**
 
+A separate privacy doctrine may permit a private respondent, in bounded circumstances, to protect a legitimate private boundary through defensive opacity or even defensive deception. That does **not** authorize the investigator to seed false facts, fabricated memories or deceptive premises into a Reality Probe. These are different roles and duties:
+
+```text
+respondent protecting a legitimate private boundary
+    → privacy ethics
+
+investigator trying to obtain evidence
+    → probe-integrity discipline
+```
+
+The first concerns what a person may legitimately withhold or protect. The second concerns whether the observation has been contaminated by the investigator.
+
 The purpose is not to manipulate the respondent into a preferred answer. It is to reduce the amount of information the probe itself gives away about what the investigator is trying to observe.
 
 ### 17.3 From open recall to explicit recognition
