@@ -481,7 +481,7 @@ propagation:
     drift, retrieval asymmetry, citation mismatch, and hidden transformation cost.
   completed_targets:
     - "research/interrogating_reality.md v0.4 — commit fdd1e9dde4e6254f64cd93a5c1cc16b79bf31b64"
-    - "research/interroger_le_reel.md v0.4 — commit 8113673f8966eb014fb8ccc81518617e174c656e"
+    - "research/interroger_le_reel.md v0.4 — commit a398e4a3f229102073638b76a980fc4d3f84eb28"
     - "research/derived_products.md v0.3 — commit 3662ba2600a128d4088294e15a9fa9378c0d702e"
     - "docs/frontmatter-schema.md — commit b85848227d24dc14d32165ec3b54f40f2df57ed0"
     - "docs/frontmatter-schema.v0.1.json — commit e66bc5d14cdf634b46c63f07cb016409e2ec2d3d"
@@ -512,7 +512,7 @@ propagation:
     status: partial
     evidence_refs:
       - "cogentia commit fdd1e9dde4e6254f64cd93a5c1cc16b79bf31b64"
-      - "cogentia commit 8113673f8966eb014fb8ccc81518617e174c656e"
+      - "cogentia commit a398e4a3f229102073638b76a980fc4d3f84eb28"
       - "cogentia commit 3662ba2600a128d4088294e15a9fa9378c0d702e"
       - "cogentia commit b85848227d24dc14d32165ec3b54f40f2df57ed0"
       - "cogentia commit e66bc5d14cdf634b46c63f07cb016409e2ec2d3d"
