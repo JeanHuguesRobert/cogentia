@@ -5,7 +5,7 @@ author: "Jean Hugues Noël Robert"
 affiliation: "Institut Mariani / C.O.R.S.I.C.A., 1 cours Paoli, F-20250 Corte, Corsica"
 license: "MIT"
 status: "working-paper"
-version: "0.7"
+version: "0.8"
 date: "2026-08-16"
 last_modified_at: "2026-09-21"
 language: "en"
@@ -454,6 +454,68 @@ propagation:
     evidence_refs:
       - "cogentia commit 817bf1b85de5a1a342be465a207c13a8b4ee3854"
       - "cogentia commit b7dac4a6aaeea1016dc3d1bf33261715fde6f3a2"
+```
+
+
+### PR-2026-009 — Co-sovereign language peers for AI-facing doctrine
+
+```yaml
+propagation:
+  id: PR-2026-009
+  status: propagated
+  discovered_at: 2026-09-21
+  source_refs:
+    - "research/interroger_le_reel.md"
+    - "research/interrogating_reality.md"
+    - "research/derived_products.md"
+    - "docs/frontmatter-schema.md"
+    - "human doctrinal arbitration, 2026-09-21"
+  source_summary: >-
+    A language rendering specifically maintained for AI agents can be more than
+    a derived translation. When two linguistic artifacts intentionally carry the
+    same doctrinal authority, each is a sovereign source: the relation is symmetric,
+    each has its own canonical address, and neither language has automatic precedence.
+    Historical translation direction is provenance rather than hierarchy. A stable
+    AI-facing peer is useful because it externalizes and version-controls a translation
+    step that would otherwise be silently repeated by each agent, reducing terminology
+    drift, retrieval asymmetry, citation mismatch, and hidden transformation cost.
+  completed_targets:
+    - "research/interrogating_reality.md v0.4 — commit fdd1e9dde4e6254f64cd93a5c1cc16b79bf31b64"
+    - "research/interroger_le_reel.md v0.4 — commit 8113673f8966eb014fb8ccc81518617e174c656e"
+    - "research/derived_products.md v0.3 — commit 3662ba2600a128d4088294e15a9fa9378c0d702e"
+    - "docs/frontmatter-schema.md — commit b85848227d24dc14d32165ec3b54f40f2df57ed0"
+    - "docs/frontmatter-schema.v0.1.json — commit e66bc5d14cdf634b46c63f07cb016409e2ec2d3d"
+  expected_effects:
+    - "language peers may both be document_role source"
+    - "reciprocal language_peer links express semantic parity without a derivation hierarchy"
+    - "translation history is preserved as provenance but does not create authority precedence"
+    - "semantic lockstep is required while byte-level identity is not"
+    - "material divergence between peers is treated as synchronization debt"
+    - "AI agents can consume a stable English peer without silently retranslating the French source on every read"
+    - "English operational utility does not imply English semantic superiority"
+  deliberately_not_propagated:
+    - "no new document_role named sovereign or symmetric"
+    - "no claim that every translation becomes a sovereign source"
+    - "no claim that language peers must be literal sentence-by-sentence translations"
+    - "no automatic authority preference for the historically first artifact"
+  priority: high
+  confidence: high
+  propagation_level: 2
+  blockers:
+    - "generated research index/status views have not yet been refreshed"
+    - "no automated semantic-drift checker for language peers exists yet"
+  next_action: >-
+    Refresh generated corpus views through their declared generator path, then
+    dogfood a language-peer drift check on the French/English Interrogating Reality
+    pair before considering a reusable synchronization Skill.
+  verification:
+    status: partial
+    evidence_refs:
+      - "cogentia commit fdd1e9dde4e6254f64cd93a5c1cc16b79bf31b64"
+      - "cogentia commit 8113673f8966eb014fb8ccc81518617e174c656e"
+      - "cogentia commit 3662ba2600a128d4088294e15a9fa9378c0d702e"
+      - "cogentia commit b85848227d24dc14d32165ec3b54f40f2df57ed0"
+      - "cogentia commit e66bc5d14cdf634b46c63f07cb016409e2ec2d3d"
 ```
 
 ## Operational discipline
