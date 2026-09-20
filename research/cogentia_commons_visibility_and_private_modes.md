@@ -1,9 +1,10 @@
 ---
 title: Cogentia Commons — Public by Default, Private by Exception
 subtitle: Visibility modes, private communities, patent-oriented exploration, and commons financing
-version: '0.1'
+version: '0.2'
 status: working-paper — source document
 date: '2026-06-09'
+last_modified_at: '2026-09-21'
 author: Jean Hugues Noël Robert
 repository: JeanHuguesRobert/cogentia
 intended_path: research/cogentia_commons_visibility_and_private_modes.md
@@ -182,6 +183,42 @@ Private mode is therefore not an anti-commons stance. It is an access and timing
 > Private mode exists to protect exploration until the right publication, disclosure, filing, or abandonment decision can be made.
 
 ---
+
+
+### 3.1 Privacy, defensive opacity and public truthfulness
+
+Private life and public accountability do not carry the same disclosure duties.
+
+A private person has no general duty to make themselves transparent merely because another person asks a question. When a question is illegitimately intrusive, a person may protect a legitimate private boundary by refusing to answer, remaining silent, redirecting, or limiting disclosure.
+
+Within this working doctrine, **defensive deception may also be morally permissible in a private context when it is genuinely necessary to protect a legitimate private boundary**, especially when a refusal or silence would itself disclose the protected fact.
+
+This is not a blanket license to lie. It does not justify fraud, coercive deception, false accusation, abuse of an entrusted relationship, or avoidable harm to third parties. When refusal, silence or bounded disclosure is sufficient, the less deceptive protection is preferable.
+
+Public accountability creates a different regime. A person or institution acting under a public mandate may still have legitimate reasons for secrecy, redaction, confidentiality, defence, security or protection of third-party privacy. **Public accountability does not require total disclosure.** But lawful opacity is different from knowingly substituting a false representation for a fact that is materially part of the accountable public act.
+
+The asymmetry is therefore:
+
+```text
+private sphere
+    no general duty of self-disclosure
+    legitimate privacy may justify opacity
+    defensive deception may be morally permissible in bounded cases
+
+public mandate / accountable public act
+    protected secrecy may remain legitimate
+    but deliberate falsification of materially accountable facts
+    breaches the truthfulness required by public accountability
+```
+
+Canonical formulations:
+
+> **No general duty of transparency in private life; no general license to falsify accountable public facts.**
+
+> **Opacity may protect privacy. Falsification corrupts accountability.**
+
+This distinction concerns moral and governance doctrine. Particular legal duties, privileges, offences and disclosure obligations remain jurisdiction- and context-dependent.
+
 
 ## 4. The patents mode
 
