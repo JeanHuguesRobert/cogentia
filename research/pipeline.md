@@ -1395,6 +1395,7 @@ A possible v0.5 of this paper would integrate these two sections into the main n
 - [Cognitive Packet Switching](cognitive_packet_switching.md)
 - [Concept Index — cogentia](concepts.md)
 - [Derived Products](derived_products.md)
+- [README Topology and Maintenance](../docs/readme-topology.md)
 - [Research Index — Cogentia](index.md)
 - [Self-Contained Documents in an Interconnected Corpus](self_contained_documents.md)
 - [The Cogentia Commons Living Corpus](cogentia_commons_living_corpus.md)

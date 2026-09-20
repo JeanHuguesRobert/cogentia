@@ -125,6 +125,10 @@ node scripts/guide-eval.js run --label current     # capture Guide answers for m
 node scripts/guide-eval.js report --runs <a,b>     # compare Guide runs and prepare Codex review
 ```
 
+For repository and nested `README.md` entry points, see
+[README Topology and Maintenance](docs/readme-topology.md). It distinguishes
+curated README prose from opt-in generated local navigation.
+
 The CLI has zero npm dependencies. Node 20+ recommended. MIT-licensed.
 
 Note: `docs` and `documents` are equivalent top-level commands in this version of `cogentia.js`.

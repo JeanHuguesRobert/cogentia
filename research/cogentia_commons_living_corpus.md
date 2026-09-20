@@ -834,6 +834,7 @@ And the operational rule:
 - [Rendre capable — noyau doctrinal provisoire](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/noyau_doctrinal_rendre_capable.md)
 - [Cogentia](../COGENTIA.md)
 - [Cogentia Commons — Public by Default, Private by Exception](cogentia_commons_visibility_and_private_modes.md)
+- [README Topology and Maintenance](../docs/readme-topology.md)
 - [Research Index — Cogentia](index.md)
 - [Corpus Start Here — Carte globale du Corpus](https://github.com/JeanHuguesRobert/JeanHuguesRobert/blob/main/research/corpus-map.md)
 - [Public Corpus Navigation](https://github.com/JeanHuguesRobert/JeanHuguesRobert/blob/main/research/public-navigation.md)

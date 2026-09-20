@@ -338,7 +338,7 @@ This repository instantiates the **cognitive infrastructure layer** of the [DHIT
 | [CPKT-2026-008 — NASA, Remote Web Session, Hosted Browser, and Pi Remote Access](CPKT-2026-008_nasa_remote_web_session_handoff.md) | source | 2026-09-10 |
 | [CPKT-2026-009 — reprise après clôture technique : Interroger le Réel, projections et sondes autonomie](CPKT-2026-009_interroger_reel_projection_sondes_autonomie_handoff.md) | operational | 2026-09-18 |
 | [Daily brief to GitHub propagation protocol](../.cogentia/issues/jeanhuguesrobert-cogentia/issue-00091.md) | source | unknown |
-| [Delta Disposition](../patterns/delta-disposition/PATTERN.md) | operational | 2026-09-18 |
+| [Delta Disposition](../patterns/delta-disposition/PATTERN.md) | operational | 2026-09-19 |
 | [Desired Present / Archaeology / Reality](../patterns/desired-present-archaeology-reality/PATTERN.md) | operational | 2026-09-10 |
 | [Digipees Exemplar](digipees_exemplar.md) | source | 2026-09-10 |
 | [Digipees Exemplar — free trademark helper, institutional gap test, and portable continuations](../.cogentia/issues/jeanhuguesrobert-cogentia/issue-00101.md) | source | unknown |
@@ -416,6 +416,7 @@ This repository instantiates the **cognitive infrastructure layer** of the [DHIT
 | [Living Frontmatter — Optimistic Schema Candidate from Reality](living_frontmatter_optimistic_schema_candidate.md) | operational | 2026-09-10 |
 | [Living Frontmatter: make unknown dates consumer-safe and prevent Jekyll regressions](../.cogentia/issues/jeanhuguesrobert-cogentia/issue-00168.md) | source | unknown |
 | [Local Brave navigation assistant (CDP POC)](../docs/navigation-assistant.md) | operational | 2026-09-10 |
+| [Locality Principle](locality_principle.md) | source | 2026-09-19 |
 | [mailarch — Local IMAP Archive Explorer](../tools/mailarch/README.md) | source | 2026-09-10 |
 | [Manifeste de Veille Territoriale Corse — Campagne Sénatoriale 2026](campaign/corsica_senate_watch_manifest.md) | source | 2026-09-10 |
 | [MCP 2026-07-28 / Cognitive Packet sandbox plan](mcp_2026_cognitive_packet_sandbox_plan.md) | operational | 2026-09-10 |
@@ -458,7 +459,7 @@ This repository instantiates the **cognitive infrastructure layer** of the [DHIT
 | [Préserver les sources canoniques Markdown et formaliser les transitions de publication](../.cogentia/issues/jeanhuguesrobert-cogentia/issue-00083.md) | source | unknown |
 | [Principal Instrumental Freedom](principal_instrumental_freedom.md) | source | 2026-09-10 |
 | [Produits dérivés de « When Cognition Became Traffic »](../.cogentia/issues/jeanhuguesrobert-cogentia/issue-00069.md) | source | unknown |
-| [Projection Delta Review](../skills/projection-delta-review/SKILL.md) | unknown | 2026-09-18 |
+| [Projection Delta Review](../skills/projection-delta-review/SKILL.md) | unknown | 2026-09-19 |
 | [Propagate Personal Digital Twin convergence into canonical sources](../.cogentia/issues/jeanhuguesrobert-cogentia/issue-00097.md) | source | unknown |
 | [Propagation Register](propagation_register.md) | source | 2026-09-10 |
 | [Public intelligence core: factor Guide turn runner; John public as superset client](../.cogentia/issues/jeanhuguesrobert-cogentia/issue-00085.md) | source | unknown |
@@ -470,6 +471,7 @@ This repository instantiates the **cognitive infrastructure layer** of the [DHIT
 | [R1-B Branch B — Search / planning / frontier scheduling](../.cogentia/issues/jeanhuguesrobert-cogentia/issue-00135.md) | source | unknown |
 | [R1-B Branch C — Prolog / choice points / backtracking](../.cogentia/issues/jeanhuguesrobert-cogentia/issue-00136.md) | source | unknown |
 | [R1-B Branch D — Swarm / stigmergy / diversity / anti-Ant-Mill](../.cogentia/issues/jeanhuguesrobert-cogentia/issue-00137.md) | source | unknown |
+| [README Topology and Maintenance](../docs/readme-topology.md) | operational | unknown |
 | [Reality Probe Selection](reality_probe_selection.md) | source | 2026-09-10 |
 | [Reality Test: reuse Inseme dynamic artifact serving for a Cogentia WebPublicationProjection](../.cogentia/issues/jeanhuguesrobert-cogentia/issue-00170.md) | source | unknown |
 | [Reasoning Loop — events and handlers as the agent core](reasoning_loop.md) | source | 2026-09-10 |

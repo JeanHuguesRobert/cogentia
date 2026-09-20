@@ -1,8 +1,8 @@
 ---
 title: Cogentia Shared Agent Instructions
 status: active
-version: 19
-date: 2026-09-18
+version: 20
+date: 2026-09-20
 document_role: operational
 document_kind: agent-instructions
 visibility: public
@@ -508,6 +508,20 @@ copy.
 Agents may converse in French while applying this rule. They **MUST NOT**
 inject French into implementation artifacts merely because the conversation is
 French.
+
+## README topology and maintenance
+
+`README.md` files may exist at meaningful repository and subtree boundaries.
+A root README explains the repository as a whole; a nested README explains
+only its local scope, conventions, and entry points. Do not duplicate parent
+content. Link a nested README to its parent context when one exists, and keep
+generated local navigation only inside explicit managed sections.
+
+README prose that carries purpose, public commitments, commands, status, or
+other judgment is a maintained derived product: check it against its declared
+sources and the executable repository state rather than regenerating it by
+template. Mechanical navigation is opt-in and must not overwrite that prose.
+See [`docs/readme-topology.md`](../docs/readme-topology.md).
 
 ## Stabilisation
 
