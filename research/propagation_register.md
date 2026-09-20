@@ -5,7 +5,7 @@ author: "Jean Hugues Noël Robert"
 affiliation: "Institut Mariani / C.O.R.S.I.C.A., 1 cours Paoli, F-20250 Corte, Corsica"
 license: "MIT"
 status: "working-paper"
-version: "0.6"
+version: "0.7"
 date: "2026-08-16"
 last_modified_at: "2026-09-21"
 language: "en"
@@ -406,6 +406,54 @@ propagation:
     evidence_refs:
       - "cogentia commit 81b901a0afa62b9238610c2595dd92eb5a9558a4"
       - "cogentia commit 1f2182afde4b27f8a12b955d52a0cd24f97fa987"
+```
+
+
+### PR-2026-008 — Private defensive opacity vs public truthfulness
+
+```yaml
+propagation:
+  id: PR-2026-008
+  status: propagated
+  discovered_at: 2026-09-21
+  source_refs:
+    - "research/cogentia_commons_visibility_and_private_modes.md"
+    - "research/interroger_le_reel.md"
+    - "human doctrinal arbitration, 2026-09-21"
+  source_summary: >-
+    The Corpus now distinguishes legitimate protection of private life from the
+    stronger truthfulness duty attached to accountable public acts. A private
+    person has no general duty of self-disclosure and bounded defensive deception
+    may be morally permissible when needed to protect a legitimate private
+    boundary. Public accountability does not require total disclosure, but
+    deliberate falsification of materially accountable public facts is a breach
+    of that accountability. This privacy doctrine does not authorize investigators
+    to contaminate Reality Probes with fabricated facts or deceptive premises.
+  completed_targets:
+    - "research/cogentia_commons_visibility_and_private_modes.md v0.2 — commit 817bf1b85de5a1a342be465a207c13a8b4ee3854"
+    - "research/interroger_le_reel.md — commit b7dac4a6aaeea1016dc3d1bf33261715fde6f3a2"
+  expected_effects:
+    - "privacy is not silently equated with compulsory transparency"
+    - "lawful secrecy and redaction remain distinct from deliberate public falsification"
+    - "private defensive deception remains bounded rather than generalized"
+    - "probe blinding continues to prefer truthful contextual noise"
+    - "investigator probe integrity remains separate from respondent privacy defenses"
+  deliberately_not_propagated:
+    - "no universal legal rule about lying or disclosure"
+    - "no claim that public actors must disclose every protected or confidential fact"
+    - "no permission to use fabricated evidence in Reality Probes"
+  priority: medium
+  confidence: medium
+  propagation_level: 2
+  blockers: []
+  next_action: >-
+    Dogfood the distinction in privacy-sensitive and public-accountability cases;
+    seek decorrelated review before promoting it into a deeper constitutional invariant.
+  verification:
+    status: partial
+    evidence_refs:
+      - "cogentia commit 817bf1b85de5a1a342be465a207c13a8b4ee3854"
+      - "cogentia commit b7dac4a6aaeea1016dc3d1bf33261715fde6f3a2"
 ```
 
 ## Operational discipline
