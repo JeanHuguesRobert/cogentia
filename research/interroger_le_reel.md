@@ -43,6 +43,20 @@ review:
 
 # Interroger le Réel
 
+## Parité linguistique
+
+Ce document et [Interrogating Reality](interrogating_reality.md) sont des **pairs linguistiques co-souverains**.
+
+Aucun des deux n'est, au sens doctrinal, un produit dérivé de l'autre. Chacun porte `document_role: source`, possède sa propre adresse canonique et dispose de la même autorité pour la méthode. Ils ont vocation à rester en **verrouillage sémantique**.
+
+L'artefact anglais a été initialement produit à partir de l'artefact français déjà existant. Cette direction historique de production ne crée **aucune direction d'autorité**.
+
+> **L'histoire de la traduction relève de la provenance, pas de la hiérarchie.**
+
+Si les deux pairs linguistiques divergent substantiellement, cette divergence constitue une dette de synchronisation à résoudre explicitement. Un agent NE DOIT PAS privilégier silencieusement une langue parce qu'elle a été écrite la première, qu'elle est plus facile à retrouver ou qu'elle est plus proche de sa langue de travail par défaut.
+
+Le pair anglais est particulièrement utile aux agents IA parce qu'il supprime une étape implicite et répétée de traduction lors de la recherche et du raisonnement. Cela peut réduire la dérive terminologique, préserver un vocabulaire opérationnel stable entre prompts et outils, améliorer la recherche interlangue et rendre les citations reproductibles entre agents. Cette utilité opérationnelle ne rend pas l'anglais sémantiquement supérieur.
+
 ## Objet
 
 **Interroger le Réel** est une méthode de passage de l'incertitude à une observation traçable lorsqu'une information manquante peut raisonnablement être obtenue par une interaction avec le monde, un acteur, une institution ou un système.
