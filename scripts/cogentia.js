@@ -810,6 +810,7 @@ Tutorial:
 
 Core commands:
   agent start              Read-only session start summary for human and AI agents.
+                           Add --task <request> to attach a bounded corpus-orientation packet.
   agent health             Check context index, embedding target and AI router.
                            Flags: --router-url <url> --check-query [--query <text>]
   agent mandates plan      List repositories that need the minimal local mandate.
@@ -3312,8 +3313,9 @@ function formatAgentPublicReadonly(result) {
   return lines.join("\n");
 }
 
-function buildAgentStartReport(ctx, options = {}) {
+async function buildAgentStartReport(ctx, options = {}) {
   const quick = options.quick === true;
+  const task = String(options.task || "").trim();
   const continuations = loadContinuations(ctx).filter(c => c.status === "active");
   const mcp_playbook = [
     "cogentia_agent_start (this)",
@@ -3323,7 +3325,7 @@ function buildAgentStartReport(ctx, options = {}) {
     "cogentia_continuation_list → inspect → prepare step_result",
   ];
   if (quick) {
-    return {
+    const result = {
       ok: true,
       protocol: "cogentia.agent_start.v1",
       mode: "quick",
@@ -3337,6 +3339,15 @@ function buildAgentStartReport(ctx, options = {}) {
       skill_hint: continuations.length ? "continuation-handling" : null,
       note: "quick mode for MCP cold-start. Full audit: CLI `agent start` or agent/start?full=1",
     };
+    if (task) {
+      result.task = task;
+      result.orientation = await invokeCapability(
+        "corpus.orient",
+        { ctx, query: task, view: PUBLIC_VIEW },
+        { auth: CLI_TRUSTED_AUTH }
+      );
+    }
+    return result;
   }
   const inventory = buildInventory(ctx);
   const plan = buildPlan(ctx, { quiet: true, ...(options.planOptions || {}) });
@@ -3346,7 +3357,7 @@ function buildAgentStartReport(ctx, options = {}) {
   const gaps = visibleDocs(inventory, PUBLIC_VIEW).filter(isIndexGap);
   const trail_lint = lintTrails(ctx, inventory, PUBLIC_VIEW);
   const summary = docSummary(inventory, PUBLIC_VIEW);
-  return {
+  const result = {
     ok: !plan.changes.length
       && !gaps.length
       && !privacy.leaks.length
@@ -3377,11 +3388,21 @@ function buildAgentStartReport(ctx, options = {}) {
     mcp_playbook,
     skill_hint: continuations.length ? "continuation-handling" : null,
   };
+  if (task) {
+    result.task = task;
+    result.orientation = await invokeCapability(
+      "corpus.orient",
+      { ctx, query: task, view: PUBLIC_VIEW },
+      { auth: CLI_TRUSTED_AUTH }
+    );
+  }
+  return result;
 }
 
-function cmdAgentStart() {
+async function cmdAgentStart() {
+  const task = valueFlag("--task") || "";
   const ctx = loadContext();
-  const result = buildAgentStartReport(ctx, { planOptions: planOptions(), quick: false });
+  const result = await buildAgentStartReport(ctx, { planOptions: planOptions(), quick: false, task });
   output(result, formatAgentStart(result));
 }
 
@@ -4226,7 +4247,8 @@ async function handleDaemonRequest(req, res) {
     // Default quick for MCP cold-start (full git/privacy audit is CLI or ?full=1).
     const quick = !full;
     try {
-      return daemonJson(res, 200, buildAgentStartReport(effectiveCtx, { quick }));
+      const task = url.searchParams.get("task") || "";
+      return daemonJson(res, 200, await buildAgentStartReport(effectiveCtx, { quick, task }));
     } catch (error) {
       return daemonJson(res, 500, { ok: false, error: "agent_start_failed", message: error.message });
     }
@@ -15187,6 +15209,14 @@ function formatAgentStart(result) {
   lines.push(`Active continuations: ${result.active_continuations}`);
   lines.push(`Trail issues: ${result.trail_issues}`);
   lines.push(`Worktree: ${formatCounts(result.worktree_summary) || "clean"}`);
+  if (result.task) {
+    const orientation = result.orientation || {};
+    lines.push(`Task: ${result.task}`);
+    lines.push(`Orientation: ${orientation.sufficiency?.status || "unavailable"}`);
+    if (orientation.read_first?.length) {
+      lines.push(`Read first: ${orientation.read_first.map(item => `${item.repo}/${item.path}`).join(", ")}`);
+    }
+  }
   const drift = result.git
     .filter(repo => repo.behind || repo.ahead || repo.dirty_count)
     .map(repo => `${repo.repo}=${repo.behind} behind/${repo.ahead} ahead/${repo.dirty_count} dirty`);

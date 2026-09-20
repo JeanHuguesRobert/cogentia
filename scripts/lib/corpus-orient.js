@@ -93,6 +93,14 @@ function scoreHaystack(haystack, tokens) {
   return score;
 }
 
+function titleContainsTokens(title, tokens) {
+  const normalizedTitle = norm(title || "");
+  const titleTokens = tokenize(title || "");
+  return Boolean(
+    titleTokens.length && tokens.length && tokens.every((token) => titleTokens.includes(token) || normalizedTitle.includes(stem(token)))
+  );
+}
+
 function parseDocRef(raw, fallbackRepo) {
   const text = String(raw || "").trim();
   if (!text) return null;
@@ -137,6 +145,26 @@ export function selectSeedConcepts(query, concepts = [], documents = [], policy 
   const tokens = tokenize(q);
   const maxSeeds = Number(policy.max_seeds) > 0 ? Number(policy.max_seeds) : DEFAULT_ORIENT_POLICY.max_seeds;
   const scored = [];
+
+  // A source whose title directly answers the request is stronger structural
+  // evidence than an alias inferred from a secondary document basename.
+  for (const doc of documents) {
+    if ((doc.document_role !== "source" && doc.role !== "source") || !titleContainsTokens(doc.title, tokens)) continue;
+    scored.push({
+      concept: {
+        name: doc.title || doc.rel,
+        repo: doc.repo,
+        documents: [doc.rel],
+        parents: [],
+        children: [],
+        related: [],
+        short_definition: "",
+      },
+      score: 110,
+      provenance: EVIDENCE_CLASS.derived_structurally,
+      reason: "seed_source_title",
+    });
+  }
 
   const aliasHit = resolveConceptAlias(q, documents);
   if (aliasHit.hit) {
@@ -323,7 +351,7 @@ function collectEvidence(route, nodes, documents, residualHits, policy) {
   const implementation = [];
   const checkpoints = [];
   const seen = new Set();
-  const hopByKey = new Map(route.map((s) => [`${s.repo || ""}::${norm(s.concept)}`, s.hop]));
+  const routeByKey = new Map(route.map((s) => [`${s.repo || ""}::${norm(s.concept)}`, s]));
 
   const push = (bucket, entry) => {
     const id = docId(entry);
@@ -333,7 +361,8 @@ function collectEvidence(route, nodes, documents, residualHits, policy) {
   };
 
   for (const concept of nodes) {
-    const hop = hopByKey.get(conceptKey(concept));
+    const routeStep = routeByKey.get(conceptKey(concept));
+    const hop = routeStep?.hop;
     const refs = concept.documents || [];
     for (const raw of refs) {
       const parsed = parseDocRef(raw, concept.repo);
@@ -349,7 +378,9 @@ function collectEvidence(route, nodes, documents, residualHits, policy) {
         path: found.rel,
         title: found.title || found.rel,
         via_concept: concept.name,
-        provenance: concept.synthetic ? EVIDENCE_CLASS.semantic_candidate : EVIDENCE_CLASS.explicit,
+        provenance: concept.synthetic
+          ? EVIDENCE_CLASS.semantic_candidate
+          : routeStep?.provenance || EVIDENCE_CLASS.explicit,
       };
       if (kind === "implementation") push(implementation, entry);
       else if (kind === "checkpoint") push(checkpoints, entry);
@@ -396,13 +427,24 @@ function collectEvidence(route, nodes, documents, residualHits, policy) {
 function lexicalResidual(query, documents, already, limit) {
   const tokens = tokenize(query);
   if (!tokens.length) return [];
+  const normalizedQuery = norm(query);
   const hits = documents
     .map((doc) => {
       const hay = norm(`${doc.title || ""} ${doc.rel || ""} ${doc.description || ""}`);
-      return { doc, score: scoreHaystack(hay, tokens) };
+      const title = norm(doc.title || "");
+      const exactTitle = Boolean(title && title === normalizedQuery);
+      const titleContainsQuery = titleContainsTokens(doc.title, tokens);
+      const sourceTitleMatch = (doc.document_role === "source" || doc.role === "source") && titleContainsQuery;
+      const score = exactTitle ? 100 : sourceTitleMatch ? 60 : scoreHaystack(hay, tokens);
+      const provenance = exactTitle
+        ? EVIDENCE_CLASS.explicit
+        : sourceTitleMatch
+          ? EVIDENCE_CLASS.derived_structurally
+          : EVIDENCE_CLASS.semantic_candidate;
+      return { doc, score, provenance, direct_title_match: exactTitle || sourceTitleMatch };
     })
     .filter((row) => row.score >= 4)
-    .sort((a, b) => b.score - a.score)
+    .sort((a, b) => b.score - a.score || String(a.doc.title || "").localeCompare(String(b.doc.title || "")))
     .filter((row) => !already.has(docId({ repo: row.doc.repo, rel: row.doc.rel })))
     .slice(0, limit)
     .map((row) => ({
@@ -410,7 +452,8 @@ function lexicalResidual(query, documents, already, limit) {
       rel: row.doc.rel,
       title: row.doc.title || row.doc.rel,
       document_role: row.doc.document_role,
-      provenance: EVIDENCE_CLASS.semantic_candidate,
+      provenance: row.provenance,
+      direct_title_match: row.direct_title_match,
     }));
   return hits;
 }
@@ -528,6 +571,14 @@ export function orientCorpus({
       "residual_retrieval",
       extraResidual.slice(0, bounds.residual_limit).map((h) => `${h.repo}/${h.rel || h.path}`).join(", "),
       EVIDENCE_CLASS.semantic_candidate
+    );
+  }
+  const directTitleMatches = extraResidual.filter((hit) => hit.direct_title_match);
+  if (directTitleMatches.length) {
+    pushTrace(
+      "resolve_document_title",
+      directTitleMatches.map((hit) => `${hit.repo}/${hit.rel || hit.path}`).join(", "),
+      directTitleMatches[0].provenance || EVIDENCE_CLASS.derived_structurally
     );
   }
 

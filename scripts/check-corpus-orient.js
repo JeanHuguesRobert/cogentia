@@ -226,6 +226,20 @@ function sampleGraph() {
     assert.equal(packet.ok, false);
     assert.equal(packet.error, "missing_query");
   });
+
+  check("source document title matches outrank residual similarity", () => {
+    const packet = orientCorpus({
+      query: "locality",
+      concepts: [],
+      documents: [
+        { repo: "cogentia", rel: "research/locality_principle.md", title: "Locality Principle", document_role: "source" },
+        { repo: "other", rel: "notes/locality.md", title: "Locality notes", document_role: "other" },
+      ],
+    });
+    assert.equal(packet.read_first[0].path, "research/locality_principle.md");
+    assert.equal(packet.read_first[0].provenance, "derived_structurally");
+    assert.ok(packet.routing_trace.some((step) => step.step === "resolve_document_title"));
+  });
 }
 
 function run(args, { env: extraEnv = {} } = {}) {
@@ -328,6 +342,13 @@ function freshRegistry() {
     assert.ok(r.json.conceptual_route.some((s) => s.concept === "Widget Frobnicator"));
     assert.notEqual(r.json.sufficiency.status, "sufficient");
     assert.equal(r.json.view, "public");
+  });
+  check("CLI agent start --task carries the orientation packet", () => {
+    const r = run(["agent", "start", "--task", "Widget Frobnicator", "--json"], { env });
+    assert.equal(r.status, 0, r.stderr);
+    assert.equal(r.json.task, "Widget Frobnicator");
+    assert.equal(r.json.orientation?.schema, ORIENT_SCHEMA);
+    assert.ok(r.json.orientation?.conceptual_route?.length >= 1);
   });
   check("CLI orient default view does not mention Secret Widget", () => {
     const r = run(["orient", "Secret Widget", "--json"], { env });
@@ -452,6 +473,14 @@ async function runMcp(base, messages) {
       assert.equal(httpRes.ok, true, JSON.stringify(httpBody));
       assert.equal(httpBody.ok, true);
       assert.ok(httpBody.conceptual_route?.length >= 1);
+
+      const agentRes = await fetch(`${base}/api/agent/start?task=${encodeURIComponent("Widget Frobnicator")}`);
+      const agentBody = await agentRes.json();
+      assert.equal(agentRes.ok, true, JSON.stringify(agentBody));
+      assert.equal(agentBody.mode, "quick");
+      assert.equal(agentBody.task, "Widget Frobnicator");
+      assert.equal(agentBody.orientation?.schema, ORIENT_SCHEMA);
+      assert.ok(agentBody.orientation?.conceptual_route?.length >= 1);
 
       const mcp = await runMcp(base, [
         {

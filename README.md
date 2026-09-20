@@ -100,6 +100,8 @@ node scripts/cogentia.js help                      # show all commands
 node scripts/cogentia.js version                   # show the CLI version
 node scripts/cogentia.js state --json              # show registered repos and policies
 node scripts/cogentia.js agent start               # read-only start summary for humans/agents
+node scripts/cogentia.js agent start --task "locality" --json # summary plus bounded orientation packet
+node scripts/cogentia.js orient "locality" --json # focused corpus orientation packet
 node scripts/cogentia.js status                    # compact corpus health table
 node scripts/cogentia.js grep "exergy" --json     # full-text search over active markdown
 node scripts/cogentia.js docs summary --json       # numeric corpus summary
