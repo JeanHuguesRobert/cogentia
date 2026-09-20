@@ -20,6 +20,7 @@ import {
   ORIENT_SCHEMA,
 } from "./lib/corpus-orient.js";
 import { ORIENT_REALITY_FIXTURES } from "./lib/corpus-orient-fixtures.js";
+import { resolveConceptAlias } from "./lib/navigation.js";
 import { getModule } from "./lib/v3-modules.js";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
@@ -239,6 +240,20 @@ function sampleGraph() {
     assert.equal(packet.read_first[0].path, "research/locality_principle.md");
     assert.equal(packet.read_first[0].provenance, "derived_structurally");
     assert.ok(packet.routing_trace.some((step) => step.step === "resolve_document_title"));
+  });
+
+  check("load-bearing doctrine aliases resolve to their canonical source", () => {
+    const expected = [
+      ["locality", "cogentia", "research/locality_principle.md"],
+      ["DHITL", "marenostrum", "research/DHITL.md"],
+      ["control/data plane separation", "Inox", "research/concepts.md"],
+    ];
+    for (const [query, repo, rel] of expected) {
+      const resolved = resolveConceptAlias(query);
+      assert.equal(resolved.hit, true, query);
+      assert.equal(resolved.canonical_repo, repo, query);
+      assert.equal(resolved.canonical_rel, rel, query);
+    }
   });
 }
 

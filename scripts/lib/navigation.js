@@ -91,8 +91,29 @@ export const SEED_CONCEPT_ALIASES = [
     canonical_url: "https://github.com/JeanHuguesRobert/cogentia/blob/main/research/campaign/fiches_maires/fiche_05_transparence_anti_capture_marches_publics.md"
   },
   {
+    name: "Locality Principle",
+    aliases: ["locality", "locality principle", "minimum sufficient locality", "locality closure", "local-first"],
+    canonical_repo: "cogentia",
+    canonical_rel: "research/locality_principle.md",
+    canonical_url: "https://github.com/JeanHuguesRobert/cogentia/blob/main/research/locality_principle.md"
+  },
+  {
+    name: "DHITL (Democratic Human In The Loop)",
+    aliases: ["dhitl", "democratic human in the loop", "democratic humans in the loop"],
+    canonical_repo: "marenostrum",
+    canonical_rel: "research/DHITL.md",
+    canonical_url: "https://github.com/JeanHuguesRobert/marenostrum/blob/main/research/DHITL.md"
+  },
+  {
+    name: "Control/data plane separation",
+    aliases: ["control/data plane separation", "control data plane separation", "control/data plane", "data/control plane separation"],
+    canonical_repo: "Inox",
+    canonical_rel: "research/concepts.md",
+    canonical_url: "https://github.com/JeanHuguesRobert/Inox/blob/master/research/concepts.md#control-data-plane-separation"
+  },
+  {
     name: "Agent John Compagnon Numérique",
-    aliases: ["agent john", "agent jhn", "assistant numerique", "assistant numérique", "dhitl", "you draft he decides", "demultiplication", "démultiplication", "compagnon numerique"],
+    aliases: ["agent john", "agent jhn", "assistant numerique", "assistant numérique", "you draft he decides", "demultiplication", "démultiplication", "compagnon numerique"],
     canonical_repo: "cogentia",
     canonical_rel: "research/reasoning_loop.md",
     canonical_url: "https://github.com/JeanHuguesRobert/cogentia/blob/main/research/reasoning_loop.md"
