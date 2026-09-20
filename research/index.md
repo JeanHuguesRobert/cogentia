@@ -416,7 +416,7 @@ This repository instantiates the **cognitive infrastructure layer** of the [DHIT
 | [Living Frontmatter — Optimistic Schema Candidate from Reality](living_frontmatter_optimistic_schema_candidate.md) | operational | 2026-09-10 |
 | [Living Frontmatter: make unknown dates consumer-safe and prevent Jekyll regressions](../.cogentia/issues/jeanhuguesrobert-cogentia/issue-00168.md) | source | unknown |
 | [Local Brave navigation assistant (CDP POC)](../docs/navigation-assistant.md) | operational | 2026-09-10 |
-| [Locality Principle](locality_principle.md) | source | 2026-09-19 |
+| [Locality Principle](locality_principle.md) | source | 2026-09-20 |
 | [mailarch — Local IMAP Archive Explorer](../tools/mailarch/README.md) | source | 2026-09-10 |
 | [Manifeste de Veille Territoriale Corse — Campagne Sénatoriale 2026](campaign/corsica_senate_watch_manifest.md) | source | 2026-09-10 |
 | [MCP 2026-07-28 / Cognitive Packet sandbox plan](mcp_2026_cognitive_packet_sandbox_plan.md) | operational | 2026-09-10 |

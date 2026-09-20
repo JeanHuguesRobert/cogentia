@@ -5,7 +5,7 @@ author: "Jean Hugues Noël Robert, baron Mariani"
 affiliation: "Institut Mariani / C.O.R.S.I.C.A., 1 cours Paoli, F-20250 Corte, Corsica, France"
 date: "2026-09-19"
 last_modified_at: "2026-09-20"
-version: "0.2"
+version: "0.3"
 status: "working-paper — locality doctrine candidate"
 document_role: "source"
 document_kind: "architecture-principle"
@@ -59,6 +59,7 @@ classification_version: "1"
 classification_rule: "explicit-metadata"
 classification_confidence: "medium"
 changelog:
+  - "v0.3 (2026-09-20) — makes normative fractality and the meta-control-plane explicit: constitutional invariants, operating mechanisms, local rules, and situated acts preserve their authority boundary at every scale."
   - "v0.2 (2026-09-20) — relates Minimum Sufficient Locality to the control/data-plane distinction; records the authority boundary for Cogentia projections."
   - "v0.1 (2026-09-19) — first cross-Corpus formalization of locality, Minimum Sufficient Locality, locality closure, explicit crossing and global-reference-before-global-state."
 ---
@@ -602,6 +603,31 @@ The initial locality invariants are:
 10. **Global Maps may span local Territory.** Cartographic scope does not imply ownership or replication.
 11. **Expansion is explicit.** A bounded view SHOULD expose paths for deeper traversal instead of assuming exhaustive context.
 12. **Locality is fractal and situated.** The useful locality may change with the operation and scale.
+
+### Normative fractality and the meta-control plane
+
+The same structure recurs at each scale of governed action. This is analogous
+to, but does not substitute for, a legal architecture of constitutional norms,
+organic mechanisms, regulations, and situated acts:
+
+| Normative function | Corpus form | Boundary preserved at each scale |
+|---|---|---|
+| Constitutional invariant | Shared authority, privacy, provenance, and non-capture constraints | No local rule manufactures authority or cancels an inherited protection. |
+| Operating mechanism | Mandate schema, update policy, registry, continuation, plan/apply/verify and audit | The mechanism makes a rule inspectable and enforceable; it is not the source of semantic truth. |
+| Local rule | Repository, subsystem, or task mandate | It specializes and attenuates the inherited envelope for its own locality. |
+| Situated act | Edit, generation, commit, deployment, publication, or continuation resolution | It remains attributable, evidenced, and subject to the effective local mandate. |
+
+This recurrence is an **invariant of scale**, not a demand for identical files
+or bureaucracy at every level. Any locality that governs acts should make
+explicit: its source of authority, its scope and limits, its rule for change,
+and the references from which it derives. Smaller localities may express this
+more compactly; they may not make it disappear.
+
+The **meta-control plane** is therefore not a superior central controller. It
+is the recursively applicable arrangement that lets a control plane itself be
+located, versioned, criticized, audited, and changed without silently crossing
+its authority boundary. It protects the distinction between a rule that
+coordinates an act and the mandate that can authorize that act.
 
 ---
 
