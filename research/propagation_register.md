@@ -5,9 +5,9 @@ author: "Jean Hugues Noël Robert"
 affiliation: "Institut Mariani / C.O.R.S.I.C.A., 1 cours Paoli, F-20250 Corte, Corsica"
 license: "MIT"
 status: "working-paper"
-version: "0.5"
+version: "0.6"
 date: "2026-08-16"
-last_modified_at: "2026-09-09"
+last_modified_at: "2026-09-21"
 language: "en"
 document_role: "source"
 document_kind: "operational-registry"
@@ -356,6 +356,56 @@ propagation:
       - "cogentia commit 002b28fab8bdc01650023429eeee934956bae9ea"
       - "2026-09-09: cogentia frontmatter verify --strict-role — 3/3 valid, 0 errors, 0 warnings"
       - "2026-09-09: pnpm test:frontmatter-validator — PASS"
+```
+
+
+### PR-2026-007 — Epistemic shielding and serendipity aperture for Reality Probes
+
+```yaml
+propagation:
+  id: PR-2026-007
+  status: propagated
+  discovered_at: 2026-09-21
+  source_refs:
+    - "research/interroger_le_reel.md"
+    - "research/reality_probe_selection.md"
+    - "https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/serendipity_as_epistemic_force.md"
+    - "human-source probe design incident, 2026-09-21 — private case context intentionally omitted"
+  source_summary: >-
+    A local probe-design failure showed that a question may be grammatically
+    non-leading while still leaking the investigator's internal ontology,
+    hypothesized events, causal frame, salience structure or hidden discriminant.
+    The same incident also showed that over-optimized probes can suppress
+    serendipitous discovery by allowing Reality to answer only inside the
+    investigator's existing categories.
+  completed_targets:
+    - "research/interroger_le_reel.md v0.3 — commit 81b901a0afa62b9238610c2595dd92eb5a9558a4"
+    - "research/reality_probe_selection.md v0.3 — commit 1f2182afde4b27f8a12b955d52a0cd24f97fa987"
+  expected_effects:
+    - "human-source probes distinguish non-leading wording from deeper epistemic leakage"
+    - "investigators may keep rich private priors while emitting sparse probes"
+    - "discriminants may be masked with truthful contextual variation, never fabricated facts"
+    - "free recall can precede targeted recognition when contamination risk matters"
+    - "elicitation provenance is preserved across wide-to-narrow probing"
+    - "probe design considers serendipity aperture and unknown-unknown discovery"
+    - "targeted_yield and serendipity_yield remain distinct"
+  deliberately_not_propagated:
+    - "no universal numeric aperture score"
+    - "no automatic doctrine-level invariant beyond the two method documents"
+    - "no sensitive case facts from the incident that triggered the learning"
+  priority: medium
+  confidence: medium
+  propagation_level: 2
+  blockers: []
+  next_action: >-
+    Dogfood the method on several independent human-source probes and seek
+    decorrelated review before considering promotion to a deeper FractaCognition
+    invariant or reusable Skill.
+  verification:
+    status: partial
+    evidence_refs:
+      - "cogentia commit 81b901a0afa62b9238610c2595dd92eb5a9558a4"
+      - "cogentia commit 1f2182afde4b27f8a12b955d52a0cd24f97fa987"
 ```
 
 ## Operational discipline
