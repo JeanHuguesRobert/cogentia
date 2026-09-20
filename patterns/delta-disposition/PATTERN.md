@@ -8,8 +8,8 @@ document_kind: pattern
 visibility: public
 language: en
 date: '2026-09-18'
-last_modified_at: '2026-09-19'
-version: '0.2'
+last_modified_at: '2026-09-20'
+version: '0.3'
 update_policy: UP-DEFAULT-REVIEWED
 origin: "Suicide Corse campaign-journal and freeze/backlog exploration, 2026-09-18"
 lifecycle_state: active
@@ -51,6 +51,20 @@ Campaign Journal  localized Continuations
 A living Corpus evolves while projections are periodically rendered and frozen. A projection cannot and should not contain everything. The dangerous case is **silent loss**: material that deserved consideration has no traceable disposition relative to the projection.
 
 A second failure mode is **global capture**: a projection-specific review copies or takes ownership of source state that properly belongs to another locality.
+
+A third failure mode is **editorial capture by the previous projection**: treating Frozen Projection N as the mandatory structural template for N+1. This confuses historical immutability with future editorial constraint.
+
+Rule:
+
+> **Freeze the edition, never the next projection.**
+
+The next projection may reorder, rewrite, split, merge, omit or newly create editorial units. The previous projection contributes provenance, comparison context and coverage obligations—not a mandatory table of contents.
+
+```text
+frozen projection = immutable historical object
+future projection = free editorial composition
+delta review = attention / coverage constraint
+```
 
 Do not collapse intrinsic importance into projection relevance. A high-significance Corpus development may have no relevance to a particular projection; a modest local development may be highly relevant to one precise passage. Source-role, provenance or structural changes may affect interpretation without adding publishable content.
 
@@ -107,6 +121,8 @@ at-least-once consideration ≠ at-least-once publication
 ```
 
 The invariant is **disposition, not inclusion**.
+
+A disposition also does not imply structural inheritance. `INTEGRATED` means the target projection materially represents the item; it does not require reusing the previous location, chapter, ordering or wording.
 
 ## Salience before accumulation
 
@@ -182,7 +198,16 @@ The Map preserves source locality and provenance rather than owning mapped Terri
 
 ## Reality Case
 
-The first Reality Case is **Suicide Corse n°2** in `JeanHuguesRobert/barons-Mariani`: compare the frozen 17 September 2026 projection with current relevant Corpus localities and candidate n°2, then test whether the method detects projection-relevant developments lacking explicit treatment.
+The first Reality Case is **Suicide Corse n°2** in `JeanHuguesRobert/barons-Mariani`: compare the frozen 17 September 2026 projection with current relevant Corpus localities and a freely recomposed candidate n°2, then test whether the method detects projection-relevant developments lacking explicit treatment **without pulling the candidate back toward the previous table of contents**.
+
+This Reality Case adds a specific regression test:
+
+```text
+same Corpus delta
++ radically different editorial composition
+→ coverage should remain valid
+→ composition should remain free
+```
 
 ## Maturity path
 
