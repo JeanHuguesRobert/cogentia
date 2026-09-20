@@ -47,6 +47,27 @@ In short: **localize knowledge; distribute references**. A nested README is
 therefore not a smaller copy of its parent, but the smallest entry point that
 can make its own locality intelligible.
 
+## Why README topology is a locality pattern
+
+A root README cannot remain a useful entry point by carrying every command,
+decision, and operational detail of every subtree. That centralization makes
+the root difficult to maintain and obscures which facts actually govern a
+given component. Conversely, a subtree needs enough nearby context that a
+reader can understand, operate, or extend it without silently reconstructing
+the entire repository.
+
+A nested README establishes that smallest sufficient boundary. Its local
+explanation owns facts that change with the directory; its parent owns facts
+that govern the repository as a whole. Links make the crossing explicit: a
+reader can move upward for shared context or outward to a canonical source
+without duplicating either one.
+
+This is not a rule that every directory needs a README. Add one when the
+directory has a distinct responsibility, audience, interface, or maintenance
+cycle. The test is practical: can the local README make its scope intelligible
+with explicit references, while the root stays concise and does not become a
+central copy of all local knowledge?
+
 ## Scope by directory boundary
 
 | Location | The README explains |
