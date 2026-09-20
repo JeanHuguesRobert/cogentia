@@ -21,6 +21,7 @@ const seenChatPayloads = [];
 const seenOpenRouterPayloads = [];
 const seenPlannerPayloads = [];
 const seenMagistralPayloads = [];
+const seenOrientationQueries = [];
 
 const daemon = http.createServer(async (req, res) => {
   const url = new URL(req.url || "/", daemonBase);
@@ -41,6 +42,33 @@ const daemon = http.createServer(async (req, res) => {
       strategy: "context-pack-batch-v1",
       packs: queries.map(query => ({ query, ...mockPack(query) })),
     });
+  }
+  if (req.method === "GET" && url.pathname === "/api/context/orient") {
+    const query = url.searchParams.get("q") || "";
+    seenOrientationQueries.push(query);
+    const anchor = mockOrientationAnchor(query);
+    if (anchor) {
+      return sendJson(res, 200, {
+        ok: true,
+        schema: "cogentia.orientation.v1",
+        query,
+        sufficiency: { status: "structurally_exhausted" },
+        read_first: [anchor],
+      });
+    }
+    return sendJson(res, 200, { ok: false, error: "no_structural_route" });
+  }
+  if (req.method === "GET" && url.pathname === "/api/context/lines") {
+    const ref = url.searchParams.get("ref") || "";
+    const anchor = mockOrientationAnchorForRef(ref);
+    if (anchor) {
+      return sendJson(res, 200, {
+        ok: true,
+        source_id: `${anchor.repo}:${anchor.path}#L1-L8`,
+        text: anchor.text,
+      });
+    }
+    return sendJson(res, 404, { ok: false, error: "not_found" });
   }
   if (req.method === "GET" && url.pathname === "/brave") {
     return sendJson(res, 200, {
@@ -311,6 +339,21 @@ try {
   assert.equal(chat.context.excerpts[0].source_id, "mock:README.md#L1-L4");
   assert.equal(chat.context.excerpts[0].text, "FractaVolta public context.");
 
+  for (const expected of [
+    ["What is DHITL?", "marenostrum", "research/DHITL.md", /democratic authority/i],
+    ["What is the locality principle?", "cogentia", "research/locality_principle.md", /smallest sufficient locality/i],
+    ["What is control/data plane separation?", "Inox", "research/concepts.md", /control plane/i],
+  ]) {
+    const [question, repo, sourcePath, excerpt] = expected;
+    const anchored = await postJson(`${mcpBase}/guide/chat`, { question, locale: "en" });
+    assert.ok(seenOrientationQueries.includes(question));
+    assert.equal(anchored.context.guide_retrieval.orientation.ok, true);
+    assert.equal(anchored.context.guide_retrieval.s7.mode, "corpus_orient");
+    assert.equal(anchored.sources[0].repo, repo);
+    assert.equal(anchored.sources[0].path, sourcePath);
+    assert.match(anchored.context.excerpts[0].text, excerpt);
+  }
+
   const observedHealth = await (await fetch(`${mcpBase}/guide/health`)).json();
   assert.equal(observedHealth.context.semantic_retrieval.state, "nominal");
   assert.equal(observedHealth.context.semantic_retrieval.sqlite_vec, true);
@@ -491,6 +534,45 @@ function mockSourceForQuery(query) {
     github_url: "https://example.invalid/mock/README.md#L1-L4",
     text: "FractaVolta public context.",
   };
+}
+
+function mockOrientationAnchor(query) {
+  if (/\bDHITL\b/i.test(query)) {
+    return {
+      repo: "marenostrum",
+      path: "research/DHITL.md",
+      title: "DHITL — Democratic Humans in the Loop",
+      provenance: "explicit",
+      text: "DHITL keeps democratic authority with living human beings.",
+    };
+  }
+  if (/locality principle/i.test(query)) {
+    return {
+      repo: "cogentia",
+      path: "research/locality_principle.md",
+      title: "Locality Principle",
+      provenance: "derived_structurally",
+      text: "The locality principle seeks the smallest sufficient locality for an operation.",
+    };
+  }
+  if (/control\/data plane separation/i.test(query)) {
+    return {
+      repo: "Inox",
+      path: "research/concepts.md",
+      title: "Control/data plane separation",
+      provenance: "explicit",
+      text: "The control plane is distinct from the data plane it governs.",
+    };
+  }
+  return null;
+}
+
+function mockOrientationAnchorForRef(ref) {
+  return [
+    mockOrientationAnchor("DHITL"),
+    mockOrientationAnchor("locality principle"),
+    mockOrientationAnchor("control/data plane separation"),
+  ].find((anchor) => anchor && `${anchor.repo}:${anchor.path}` === ref) || null;
 }
 
 function sendJson(res, status, body) {

@@ -852,6 +852,7 @@ async function produceGuideTurn(question, history, payload = {}, options = {}) {
     let v2Plan = null;
     let v2Retrieval = null;
     let v2Intent = null;
+    let v2Orientation = null;
     const v2 = await runAgentJohnV2SurfaceTurn({
       text: question,
       surface,
@@ -859,7 +860,7 @@ async function produceGuideTurn(question, history, payload = {}, options = {}) {
       legacyTurn: () => produceGuideTurn(question, history, payload, {
         ...options,
         reasoningLoopV2Internal: true,
-        v2Evidence: { plan: v2Plan, retrieval: v2Retrieval, intent: v2Intent },
+        v2Evidence: { plan: v2Plan, retrieval: v2Retrieval, intent: v2Intent, orientation: v2Orientation },
       }),
       stages: [
         {
@@ -868,13 +869,15 @@ async function produceGuideTurn(question, history, payload = {}, options = {}) {
           execute: async () => {
             v2Intent = await parseUserIntent(question, cleanHistory, defaultLocale);
             if (v2Intent.intent === "conversational") {
+              v2Orientation = { ok: false, skipped: "conversational" };
               v2Plan = guideHeuristicPlan(question, "conversational_skip");
             } else {
               const activeLocale = v2Intent.detected_language || defaultLocale;
               const resolvedQuestion = v2Intent.resolved_search_query || question;
+              v2Orientation = await guideCorpusOrientation(resolvedQuestion);
               v2Plan = await guidePlanningRun(resolvedQuestion, activeLocale);
             }
-            return v2Plan;
+            return { orientation: v2Orientation, plan: v2Plan };
           },
         },
         {
@@ -885,7 +888,7 @@ async function produceGuideTurn(question, history, payload = {}, options = {}) {
               v2Retrieval = { sources: [], warnings: [] };
             } else {
               const resolvedQuestion = v2Intent?.resolved_search_query || question;
-              v2Retrieval = await guideRetrievalRun(resolvedQuestion, v2Plan);
+              v2Retrieval = await guideRetrievalRun(resolvedQuestion, v2Plan, { orientation: v2Orientation });
             }
             return v2Retrieval;
           },
@@ -896,7 +899,7 @@ async function produceGuideTurn(question, history, payload = {}, options = {}) {
           execute: async () => produceGuideTurn(question, history, payload, {
             ...options,
             reasoningLoopV2Internal: true,
-            v2Evidence: { plan: v2Plan, retrieval: v2Retrieval, intent: v2Intent },
+            v2Evidence: { plan: v2Plan, retrieval: v2Retrieval, intent: v2Intent, orientation: v2Orientation },
           }),
         },
       ],
@@ -1536,8 +1539,9 @@ function extractJsonObject(content) {
 async function guideRetrievalRun(question, plan = guideHeuristicPlan(question), options = {}) {
   const startedAt = performance.now();
   const timings_ms = {};
-  let s7 = { ok: false, mode: "precomputed_index" };
-  if (guideS7AnchorEnabled) {
+  const orientation = options.orientation || null;
+  let s7 = guideOrientationAnchor(orientation) || { ok: false, mode: "precomputed_index" };
+  if (!s7.ok && guideS7AnchorEnabled) {
     const s7StartedAt = performance.now();
     s7 = await guideS7ResolveAnchor(question, plan);
     timings_ms.s7_resolve = Math.round(performance.now() - s7StartedAt);
@@ -1634,7 +1638,68 @@ async function guideRetrievalRun(question, plan = guideHeuristicPlan(question), 
       canonical_url: s7.canonical_url || null,
       source: "cogentia_guide_resolve",
     },
+    orientation: summarizeGuideOrientation(orientation),
   };
+}
+
+/**
+ * The V2 orientation stage is allowed to anchor retrieval only on an explicit
+ * or structurally-derived source. Semantic candidates remain retrieval hints,
+ * not a claim that the question has one canonical answer.
+ */
+function guideOrientationAnchor(orientation) {
+  if (!orientation?.ok || !Array.isArray(orientation.read_first)) return null;
+  const source = orientation.read_first.find((entry) =>
+    entry?.repo
+    && entry?.path
+    && ["explicit", "derived_structurally"].includes(entry.provenance)
+  );
+  if (!source) return null;
+  const canonical_repo = String(source.repo);
+  const canonical_rel = String(source.path).replace(/\\/g, "/");
+  const canonical_url = source.url || resolveSourceUrl(`${canonical_repo}:${canonical_rel}`) || "";
+  const ref = `${canonical_repo}:${canonical_rel}`;
+  return {
+    ok: true,
+    query: orientation.query || "",
+    layer: "orientation",
+    mode: "corpus_orient",
+    canonical_repo,
+    canonical_rel,
+    canonical_url,
+    ref,
+    retrieval_queries: [
+      source.title,
+      path.basename(canonical_rel, path.extname(canonical_rel)).replace(/[_-]/g, " "),
+      `${canonical_repo} ${canonical_rel}`,
+    ].filter(Boolean),
+  };
+}
+
+function summarizeGuideOrientation(orientation) {
+  if (!orientation || typeof orientation !== "object") return null;
+  return {
+    ok: orientation.ok === true,
+    query: orientation.query || null,
+    sufficiency: orientation.sufficiency?.status || null,
+    read_first: Array.isArray(orientation.read_first)
+      ? orientation.read_first.slice(0, 3).map((entry) => ({
+        repo: entry.repo || null,
+        path: entry.path || null,
+        provenance: entry.provenance || null,
+      }))
+      : [],
+    skipped: orientation.skipped || null,
+  };
+}
+
+async function guideCorpusOrientation(question) {
+  try {
+    const orientation = await core.callTool("cogentia_orient", { query: question });
+    return orientation?.ok ? orientation : { ok: false, error: "orientation_unavailable" };
+  } catch {
+    return { ok: false, error: "orientation_unavailable" };
+  }
 }
 
 /**
@@ -3010,6 +3075,7 @@ function summarizeGuideContext(context = {}, retrieval = null, web = null) {
       retrieval_backend: retrieval.retrieval_backend,
       timings_ms: retrieval.timings_ms,
       s7: retrieval.s7,
+      orientation: retrieval.orientation || null,
       planner: retrieval.planner,
       query_limit: retrieval.query_limit,
       queries: retrieval.queries,

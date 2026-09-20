@@ -1,7 +1,11 @@
 ---
 title: FractaVolta Guide Eval
 author: unknown
+affiliation: Institut Mariani / C.O.R.S.I.C.A., Corte, Corsica, France
 date: '2026-07-02'
+status: working-paper
+license: CC BY-SA 4.0
+language: en
 document_role: source
 document_kind: documentation
 visibility: public
@@ -99,6 +103,26 @@ reviewed. See Operium issue #45.
 The review should decide whether quality changed because of model power,
 retrieval, planner behavior, prompt shape, corpus coverage, language quality, or
 visitor-facing expectations.
+
+### Candidate structural anchoring
+
+In the V2 candidate, the stage named `corpus.orient` calls the actual public
+`cogentia_orient` capability before retrieval. It may prepend one canonical
+excerpt only when `read_first` identifies an `explicit` or
+`derived_structurally` source. A semantic candidate is still a retrieval hint,
+not an assertion that the question has a canonical answer.
+
+The returned `context.guide_retrieval.orientation` receipt records the bounded
+orientation; `context.guide_retrieval.s7` records whether that receipt produced
+the source anchor. Review at least these deterministic cases alongside the
+ordinary question set:
+
+- `DHITL` → `marenostrum/research/DHITL.md`;
+- `locality principle` → `cogentia/research/locality_principle.md`;
+- `control/data plane separation` → `Inox/research/concepts.md`.
+
+Run `npm run test:guide` for the local end-to-end contract. The test verifies
+that each anchored source reaches synthesis before similarity-ranked material.
 
 ## Run
 
