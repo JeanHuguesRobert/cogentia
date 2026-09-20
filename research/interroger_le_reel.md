@@ -4,8 +4,8 @@ subtitle: "Méthode opérationnelle de sonde, trace, observation et correction"
 author: "Jean Hugues Noël Robert, baron Mariani"
 affiliation: "Institut Mariani / C.O.R.S.I.C.A., 1 cours Paoli, F-20250 Corte, Corsica"
 date: "2026-09-16"
-last_modified_at: "2026-09-18"
-version: "0.2"
+last_modified_at: "2026-09-21"
+version: "0.3"
 status: "working-method"
 language: "fr"
 license: "CC BY-SA 4.0"
@@ -21,6 +21,8 @@ related_documents:
   - "https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/fable_experimentale.md"
   - "https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/realite_operationnelle_et_reflexivite.md"
   - "../interaction_packets/architecture.md"
+  - "reality_probe_selection.md"
+  - "https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/serendipity_as_epistemic_force.md"
   - "https://github.com/JeanHuguesRobert/inseme/blob/main/research/interactions_registry_and_multichannel_messaging.md"
 provenance:
   origin_type: "method extraction from Corpus practice"
@@ -129,7 +131,7 @@ Une sonde est bonne lorsqu'elle est :
 - **ciblée** : elle pose une question identifiable ;
 - **informative** : plusieurs réponses possibles modifieraient réellement la carte ;
 - **proportionnée** : coût et nuisance faibles au regard de l'information recherchée ;
-- **non suggestive lorsque possible** : elle ne force pas la réponse attendue ;
+- **non suggestive lorsque possible** : elle ne force pas la réponse attendue et évite, lorsque cela importe, de révéler inutilement les catégories ou discriminants internes de l’enquête ;
 - **traçable** : cible, date, canal, contenu et réponse peuvent être retrouvés ;
 - **réversible / corrigible** : une erreur de formulation peut être rectifiée sans dommage disproportionné ;
 - **simple** : la sophistication de l'enquête ne doit pas contaminer la simplicité de l'expérience.
@@ -298,6 +300,9 @@ Avant une sonde externe, demander :
 5. Quelles réponses possibles changeront la carte ?
 6. Comment enregistrerai-je une réponse partielle, un refus ou un silence sans surinterpréter ?
 7. Une autre cible indépendante permet-elle une triangulation peu coûteuse ?
+8. La formulation révèle-t-elle la réponse, l’événement, la catégorie ou le discriminant que je cherche précisément à observer ?
+9. Puis-je retirer de l’information sans rendre la demande inintelligible ?
+10. Une première sonde plus ouverte préserverait-elle une réponse plus indépendante ou une découverte non anticipée ?
 ```
 
 ## 13. Exemple abstrait
@@ -386,3 +391,160 @@ Formule opérationnelle pour les agents :
 Première application structurée : reconstitution du corpus préparatoire public/non publié relatif aux travaux parlementaires sur l'évolution institutionnelle de la Corse (2024-2026), en particulier les contributions écrites, questionnaires et documents de travail cités mais non intégralement publiés.
 
 Le dossier de campagne vit avec son sujet territorial dans `barons-Mariani/research/autonomia/`, tandis que la méthode reste ici dans Cogentia.
+
+## 17. Epistemic shielding and serendipity aperture
+
+A probe can be grammatically neutral while still being cognitively suggestive.
+
+The risk is not limited to **answer suggestion**. An investigator may leak parts of the internal map into the probe itself and thereby shape the observation. Relevant forms include:
+
+```text
+answer leakage
+    suggesting the expected answer
+
+event leakage
+    suggesting that a particular event occurred
+
+category leakage
+    imposing the investigator's own categories
+
+causal leakage
+    introducing a hypothesized causal relation
+
+salience leakage
+    revealing, through wording, order, contrast or repetition,
+    what the investigator considers important
+```
+
+Working term:
+
+> **Epistemic leakage** is the projection into a Reality Probe of elements from the investigator's internal representation that may structure the response being observed.
+
+This extends the earlier requirement that a good probe be non-suggestive. A probe may avoid an explicit leading question and still disclose the ontology, chronology, causal frame or discriminant that the investigator hopes to recover.
+
+### 17.1 Rich map, sparse probe
+
+The investigator may and often should maintain a rich private prior:
+
+```text
+known traces
+candidate chronologies
+competing hypotheses
+expected discriminants
+counter-hypotheses
+unknowns
+```
+
+That richness need not be exported into the probe.
+
+> **The map may be rich; the probe should remain sparse.**
+
+A compact form is:
+
+> **Know richly. Ask sparsely. Compare afterwards.**
+
+The prior is not discarded. It is frozen before the probe and used **after** the response to evaluate which elements appeared independently.
+
+### 17.2 Hide the discriminant without falsifying Reality
+
+When awareness of the investigator's intent could change the response, it can be useful to **mask the discriminant**.
+
+Permissible techniques may include:
+
+- free recall before targeted questioning;
+- several truthful and comparable contextual topics;
+- controlled variation in question order;
+- symmetric questions whose wording does not single out the target hypothesis;
+- low-cost positive or negative controls when they have genuine epistemic value.
+
+This may be described as **probe blinding** or **controlled contextual noise**. It must not rely on fabricated facts, false memories or deceptive premises.
+
+> **Hide the discriminant; do not falsify Reality.**
+
+The purpose is not to manipulate the respondent into a preferred answer. It is to reduce the amount of information the probe itself gives away about what the investigator is trying to observe.
+
+### 17.3 From open recall to explicit recognition
+
+For human-source probes, a useful progression is:
+
+```text
+P0 — free recall
+     minimal investigator framing
+     maximal opportunity for spontaneous recall
+
+P1 — broad, balanced themes
+     controlled contextual noise
+
+P2 — targeted discriminating questions
+     narrower Possible Space
+
+P3 — explicit recognition
+     "Do you remember X?"
+     high targeted discrimination,
+     but known contamination
+```
+
+Evidence obtained at these stages should retain its elicitation provenance.
+
+A fact recalled spontaneously at P0 is not epistemically equivalent to a fact merely recognized after explicit suggestion at P3.
+
+### 17.4 Serendipity aperture
+
+A probe optimized too tightly for a known question can prevent discovery that the question itself was incomplete, misframed or aimed at the wrong object.
+
+A probe may therefore preserve a **serendipity aperture**: enough freedom for Reality to produce a high-value observation that was neither queried nor anticipated.
+
+```text
+low aperture
+    closed yes/no probe
+    strong targeted discrimination
+    little room for unknown unknowns
+
+medium aperture
+    bounded domain, open response
+
+high aperture
+    free description / free recall
+    weaker control, stronger opportunity for unanticipated attractors
+```
+
+The useful aperture depends on cost, risk, human attention, contamination risk and the expected value of unplanned discovery.
+
+Invariant:
+
+> **Do not design a probe so narrowly that Reality can answer only the questions we already know how to ask.**
+
+### 17.5 Dual yield
+
+After processing a probe, distinguish:
+
+```text
+targeted_yield
+    what was learned about the uncertainty that motivated the probe
+
+serendipity_yield
+    what was learned that was not being sought
+```
+
+A serendipitous observation is not automatically important or true. It is an **unqueried attractor candidate** to be qualified, traced and, when valuable, tested by its own Reality Probe.
+
+### 17.6 Epistemic leakage audit
+
+Before emitting a consequential human-source probe, ask:
+
+```text
+- Did I reveal the answer I hope to obtain?
+- Did I reveal an event whose existence I am trying to verify?
+- Did I impose my own analytical categories on the source?
+- Does wording, order or contrast reveal the true discriminant?
+- Can I remove information without making the request unintelligible?
+- Would free recall or a broader first probe produce a more independent observation?
+- Is there enough aperture for Reality to surface something I did not anticipate?
+```
+
+Compact formula:
+
+> **Know richly. Ask sparsely. Mask the discriminant when needed. Preserve an aperture for surprise. Compare afterwards.**
+
+The response of Reality should be able not only to confirm or reject the current map, but also to expose what the map failed to contain.
+
