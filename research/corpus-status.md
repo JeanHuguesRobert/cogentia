@@ -132,10 +132,10 @@ graph LR
   r_operium -->|4| r_marenostrum
   r_ubikia -->|4| r_jeanhuguesrobert
   r_github -->|3| r_gouvernance
+  r_cogentia -->|3| r_inox
   r_jeanhuguesrobert -->|3| r_ubikia
   r_kudos -->|3| r_barons_mariani
   r_operium -->|3| r_barons_mariani
-  r_cogentia -->|2| r_inox
   r_gouvernance -->|2| r_barons_mariani
   r_gouvernance -->|2| r_fractavolta
   r_inox -->|2| r_jeanhuguesrobert

@@ -471,7 +471,7 @@ This repository instantiates the **cognitive infrastructure layer** of the [DHIT
 | [R1-B Branch B — Search / planning / frontier scheduling](../.cogentia/issues/jeanhuguesrobert-cogentia/issue-00135.md) | source | unknown |
 | [R1-B Branch C — Prolog / choice points / backtracking](../.cogentia/issues/jeanhuguesrobert-cogentia/issue-00136.md) | source | unknown |
 | [R1-B Branch D — Swarm / stigmergy / diversity / anti-Ant-Mill](../.cogentia/issues/jeanhuguesrobert-cogentia/issue-00137.md) | source | unknown |
-| [README Topology and Maintenance](../docs/readme-topology.md) | operational | unknown |
+| [README Topology and Maintenance](../docs/readme-topology.md) | operational | 2026-09-20 |
 | [Reality Probe Selection](reality_probe_selection.md) | source | 2026-09-10 |
 | [Reality Test: reuse Inseme dynamic artifact serving for a Cogentia WebPublicationProjection](../.cogentia/issues/jeanhuguesrobert-cogentia/issue-00170.md) | source | unknown |
 | [Reasoning Loop — events and handlers as the agent core](reasoning_loop.md) | source | 2026-09-10 |

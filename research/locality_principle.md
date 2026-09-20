@@ -4,9 +4,9 @@ subtitle: "Smallest sufficient locality, explicit crossing, and global reference
 author: "Jean Hugues Noël Robert, baron Mariani"
 affiliation: "Institut Mariani / C.O.R.S.I.C.A., 1 cours Paoli, F-20250 Corte, Corsica, France"
 date: "2026-09-19"
-last_modified_at: "2026-09-19"
-version: "0.1"
-status: "working-source — locality doctrine candidate"
+last_modified_at: "2026-09-20"
+version: "0.2"
+status: "working-paper — locality doctrine candidate"
 document_role: "source"
 document_kind: "architecture-principle"
 visibility: "public"
@@ -24,13 +24,14 @@ related_documents:
   - "research/mneme_memory_architecture.md"
   - "research/memory_and_corpus_sleep_cycle.md"
   - "research/agent_working_conventions.md"
+  - "https://github.com/JeanHuguesRobert/Inox/blob/master/research/concepts.md#control-data-plane-separation"
   - "https://github.com/JeanHuguesRobert/inseme/blob/main/research/cop_memory_profile.md"
   - "https://github.com/JeanHuguesRobert/inseme/blob/main/packages/cop-core/COP_STORE_AND_PERSISTENCE.md"
   - "https://github.com/JeanHuguesRobert/inseme/blob/main/packages/cop-core/Invariants.md"
   - "https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/fractacarta.md"
   - "https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/the_network_is_the_learning_computer.md"
 provenance:
-  origin_type: "conversation-and-corpus-synthesis"
+  origin_type: "conversation"
   origin_repository: "JeanHuguesRobert/cogentia"
   origin_ref: "Locality / COP Memory / FractaCarta exploration — 2026-09-19"
   origin_date: "2026-09-19"
@@ -51,11 +52,14 @@ tags:
   - cop
   - minimum-sufficient-locality
   - federation
+  - control-plane
+  - data-plane
 classification_source: "cogentia.js"
 classification_version: "1"
 classification_rule: "explicit-metadata"
 classification_confidence: "medium"
 changelog:
+  - "v0.2 (2026-09-20) — relates Minimum Sufficient Locality to the control/data-plane distinction; records the authority boundary for Cogentia projections."
   - "v0.1 (2026-09-19) — first cross-Corpus formalization of locality, Minimum Sufficient Locality, locality closure, explicit crossing and global-reference-before-global-state."
 ---
 
@@ -279,6 +283,36 @@ reference
 → projection if needed
 → replication if justified
 ~~~
+
+### Control / data plane distinction
+
+The [control/data plane separation](https://github.com/JeanHuguesRobert/Inox/blob/master/research/concepts.md#control-data-plane-separation)
+is a complementary distinction. For any operation, the **control plane**
+declares or selects what is to be considered, where it belongs, which boundary
+applies, and which process may act. The **data plane** holds, transforms, or
+delivers the actual values, documents, code, packets, or service effects.
+
+The distinction is functional, not a claim that one repository or file belongs
+to only one plane. A README, for example, is a public derived product in the
+data plane; its opt-in navigation block is a control-plane projection. A
+registry can discover an authoritative source without owning its contents.
+
+For Cogentia, the boundary is practical:
+
+| Function | Plane | Authority boundary |
+|---|---|---|
+| Repository registry, source references, visibility declarations, and generated-navigation plans | Control | Describe and route; do not become the only source of truth. |
+| A `corpus apply` write to an explicit generated block | Data-plane effect under control | May refresh a deterministic projection only; it does not authorize a semantic rewrite. |
+| Curated README prose, source documents, code, packets, and live service behavior | Data | Remain governed by their local source, maintainer, and applicable execution mandate. |
+| Deployment routing, health, and apply evidence | Operational control | Operium owns this control plane; Cogentia must not create a competing one. |
+
+Thus a control-plane operation may prepare, select, or coordinate a data-plane
+effect without acquiring its semantic authority. A plan is not an execution
+mandate; a registry reference is not custody; a generated projection is not a
+replacement for the local source. When a judgment about meaning, public
+commitment, or irreversible effect remains open, the control plane must expose
+that boundary — for example through a continuation — rather than silently
+cross it.
 
 A global system should not copy a local source merely because it discovered it.
 
