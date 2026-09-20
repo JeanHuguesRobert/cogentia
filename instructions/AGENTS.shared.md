@@ -1,7 +1,7 @@
 ---
 title: Cogentia Shared Agent Instructions
 status: active
-version: 20
+version: 21
 date: 2026-09-20
 document_role: operational
 document_kind: agent-instructions
@@ -426,6 +426,31 @@ Before adding more, ask:
    without destroying relevant alternatives or traces?
 
 Then let use and Reality test whether the intervention was sufficient.
+
+### Related stop / anti-recursion rules
+
+Do not create a new doctrine merely to restate this one. Route to the smallest
+existing rule that answers the actual problem:
+
+- **Minimum Sufficient Locality** — [Locality Principle](../research/locality_principle.md):
+  expand context only as far as the current task actually requires.
+- **Probe inertia / information-for-information's-sake** —
+  [Reality Probe Selection](../research/reality_probe_selection.md):
+  stop collecting when additional evidence no longer has material
+  decision-relevant value.
+- **Metadata recursion boundary** —
+  [COP Memory Metadata Recursion](https://github.com/JeanHuguesRobert/inseme/blob/main/research/cop_memory_metadata_recursion.md):
+  recurse only when recursion changes trust, action, routing, preservation or
+  accountability; otherwise remain flat.
+- **Documentary Booster** —
+  [The Booster Principle](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/booster_principle.md):
+  accumulation can reduce effective accessibility; prefer a sufficient
+  structural or salience intervention over duplicated content.
+
+These are complementary views of the same operational discipline. Preserve the
+semantic result and the trace needed to trust, continue or correct it; do not
+promote every intermediate working state into durable Corpus material merely
+because it existed.
 
 ## Measured Risk invariant
 
