@@ -13,6 +13,7 @@
     "commons:dev": "pnpm --filter @cogentia/commons run dev",
     "commons:build": "pnpm --filter @cogentia/commons run build",
     "cogentia": "node scripts/cogentia.js",
+    "check:package-access": "node scripts/check-package-access.js",
     "test": "node --test test/*.test.js",
     "test:convergence-loop": "node --test test/convergence-loop.test.js",
     "rossignol": "node scripts/rossignol-runner.js",
