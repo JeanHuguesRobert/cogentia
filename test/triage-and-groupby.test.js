@@ -10,6 +10,24 @@ import {
   crossReferenceContinuations,
   formatTriage,
 } from "../scripts/lib/triage.js";
+import { groupReadmeReviewBoundaries } from "../scripts/lib/readme-audit.js";
+
+test("groupReadmeReviewBoundaries preserves nearest local README boundaries", () => {
+  const groups = groupReadmeReviewBoundaries([
+    { repo: "repo-a", path: "area/README.md", judgment_required: true },
+    { repo: "repo-a", path: "area/child/README.md", judgment_required: true },
+    { repo: "repo-a", path: "area/other/README.md", judgment_required: true },
+    { repo: "repo-a", path: "standalone/README.md", judgment_required: true },
+    { repo: "repo-b", path: "area/child/README.md", judgment_required: true },
+    { repo: "repo-a", path: "ignored/README.md", judgment_required: false },
+  ]);
+
+  assert.deepEqual(groups.map(({ repo, boundary, count, paths }) => ({ repo, boundary, count, paths })), [
+    { repo: "repo-a", boundary: "area", count: 3, paths: ["area/README.md", "area/child/README.md", "area/other/README.md"] },
+    { repo: "repo-a", boundary: "standalone", count: 1, paths: ["standalone/README.md"] },
+    { repo: "repo-b", boundary: "area/child", count: 1, paths: ["area/child/README.md"] },
+  ]);
+});
 
 test("groupCollection groups items by repo correctly", () => {
   const items = [
@@ -328,4 +346,3 @@ test("formatTriage displays ambiguity category breakdown and classifier gap clus
   assert.match(text, /barons-Mariani\/agents-jhn\/\*\*: 8 file\(s\) \(80%\)/);
   assert.match(text, /\[classifier_gap\]/);
 });
-

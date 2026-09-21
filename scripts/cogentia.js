@@ -71,6 +71,7 @@ import {
   crossReferenceContinuations,
   formatTriage,
 } from "./lib/triage.js";
+import { groupReadmeReviewBoundaries } from "./lib/readme-audit.js";
 import {
   CLASSIFICATION_VERSION,
   isGeneratedNavigationDoc,
@@ -2236,7 +2237,8 @@ function cmdCorpusCommitGenerated() {
 
 function cmdDocs(sub) {
   const ctx = loadContext();
-  const inventory = buildInventory(ctx);
+  const repo = valueFlag("--repo");
+  const inventory = buildInventory(ctx, repo ? { scope: `repo:${repo}` } : null);
   switch (sub) {
     case "summary":
       {
@@ -2250,6 +2252,8 @@ function cmdDocs(sub) {
       return cmdDocsSearch(inventory);
     case "gaps":
       return cmdDocsGaps(inventory);
+    case "readmes":
+      return cmdDocsReadmes(ctx, inventory, optionalPositional("inventory"));
     case "inspect":
       return cmdDocsInspect(inventory, argv.shift());
     case "trails":
@@ -2260,8 +2264,34 @@ function cmdDocs(sub) {
     case "mutation-check":
       return cmdDocsCheckMutation(ctx, inventory, argv.shift());
     default:
-      throw new Error(`Unknown docs subcommand "${sub}". Use summary, query, search, gaps, inspect, trails, judgments, or check-mutation.`);
+      throw new Error(`Unknown docs subcommand "${sub}". Use summary, query, search, gaps, readmes, inspect, trails, judgments, or check-mutation.`);
   }
+}
+
+function cmdDocsReadmes(ctx, inventory, mode) {
+  if (mode !== "inventory" && mode !== "audit") throw new Error("Usage: docs readmes inventory|audit [--emit-continuations]");
+  const readmes = inventory.documents.filter(doc => path.basename(doc.rel).toLowerCase() === "readme.md").map(doc => ({
+    repo: doc.repo, path: doc.rel, title: doc.title, role: doc.role,
+    visibility: doc.visibility?.level || "unknown", referenced: doc.index?.referenced === true,
+    judgment_required: doc.role === "unknown" || doc.role_confidence !== "strong",
+  }));
+  if (mode === "audit") {
+    const judgments = readmes.filter(readme => readme.judgment_required);
+    const groups = groupReadmeReviewBoundaries(readmes);
+    const emitted = hasFlag("--emit-continuations") ? groups.map(group => {
+      return emitContinuation(ctx, {
+      kind: "readme_review", priority: 2, dedupe_key: `readme_review:${group.repo}:${group.boundary}`,
+      title: `Review README boundary ${group.repo}/${group.boundary}`,
+      question: "Determine the README's proper role and whether its local prose remains accurate.",
+      subject: { repo: group.repo, path: group.boundary }, context: { readmes: group.readmes },
+      expected_response: { format: "json", required: ["decision", "reason"], allowed_decisions: ["keep", "update", "archive", "replace"] },
+    }); }) : [];
+    const result = { ok: true, protocol: "cogentia.readme_audit.v1", read_only: !hasFlag("--emit-continuations"), judgments, groups, emitted };
+    const printable = hasFlag("--summary") ? { ok: result.ok, groups: groups.map(({ repo, boundary, count, paths }) => ({ repo, boundary, count, paths })), total_judgments: judgments.length } : result;
+    return output(hasFlag("--summary") ? printable : result, JSON.stringify(printable, null, 2));
+  }
+  const result = { ok: true, protocol: "cogentia.readme_inventory.v1", read_only: true, total: readmes.length, readmes };
+  return output(result, JSON.stringify(result, null, 2));
 }
 
 function runDocsCheckMutation(ctx, inventory, { target, override, strict }) {

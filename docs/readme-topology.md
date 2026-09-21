@@ -138,6 +138,19 @@ where a README is publicly rendered.
 5. Review rendered links and run the repository's relevant validation before
    committing a coherent, small batch.
 
+Cogentia exposes the structural part of that sequence without pretending to
+judge curated prose:
+
+```powershell
+node scripts/cogentia.js docs readmes inventory --repo <repo> --json
+node scripts/cogentia.js docs readmes audit --repo <repo> --summary --json
+```
+
+`inventory` reports observable README metadata. `audit` groups candidates at
+their nearest local README boundary and remains read-only unless explicitly
+asked to materialize review continuations. A continuation is a request for
+judgment, not an automated editorial rewrite.
+
 The source doctrine is the [Locality Principle](../research/locality_principle.md).
 The source doctrine for the corpus's fractal structure is
 [`research/cogentia_commons_living_corpus.md`](../research/cogentia_commons_living_corpus.md).

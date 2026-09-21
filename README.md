@@ -106,6 +106,8 @@ node scripts/cogentia.js status                    # compact corpus health table
 node scripts/cogentia.js grep "exergy" --json     # full-text search over active markdown
 node scripts/cogentia.js docs summary --json       # numeric corpus summary
 node scripts/cogentia.js docs judgments --json     # list cases needing external judgment
+node scripts/cogentia.js docs readmes inventory --repo <repo> --json # README facts
+node scripts/cogentia.js docs readmes audit --repo <repo> --summary --json # local review boundaries
 node scripts/cogentia.js continuation list          # inspect active judgment requests
 node scripts/cogentia.js corpus plan --json        # inspect generated navigation changes
 node scripts/cogentia.js corpus apply              # apply the fresh generated plan
