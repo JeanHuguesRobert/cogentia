@@ -8449,7 +8449,7 @@ function ftsQueryFromText(text) {
 }
 
 function buildPlan(ctx, options) {
-  const inventory = buildInventory(ctx);
+  const inventory = buildInventory(ctx, options);
   const changes = [];
   if (options.corpusStatus) {
     for (const repo of ctx.repos) {

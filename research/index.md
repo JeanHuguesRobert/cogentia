@@ -297,7 +297,7 @@ This repository instantiates the **cognitive infrastructure layer** of the [DHIT
 | [Chronique des Sénatoriales 2026 — Dépêches et Faits du 2026-09-01](campaign/chronique_senatoriales_2026/2026-09-01.md) | source | 2026-09-10 |
 | [Chronique Vivante & Base Documentaire — Élections Sénatoriales Corse 2026](campaign/chronique_senatoriales_2026/index.md) | source | 2026-09-10 |
 | [Coding task — Code Navigator contract and first read-only index slice](../.cogentia/issues/jeanhuguesrobert-cogentia/issue-00057.md) | source | unknown |
-| [Cogentia](../README.md) | source | 2026-09-10 |
+| [Cogentia](../README.md) | source | 2026-09-20 |
 | [Cogentia Corpus Navigator Contract](../docs/cogentia-corpus-navigator-contract.md) | operational | 2026-09-10 |
 | [Cogentia invariant: outbound gates independent from cognitive agents](../.cogentia/issues/jeanhuguesrobert-cogentia/issue-00093.md) | source | unknown |
 | [Cogentia MCP — governed surgical corpus writes and provider-neutral work tracking](../.cogentia/issues/jeanhuguesrobert-cogentia/issue-00099.md) | source | unknown |
@@ -307,7 +307,7 @@ This repository instantiates the **cognitive infrastructure layer** of the [DHIT
 | [Cogentia Personal Data Portability — Adapters](../cogentia_personal/data_portability/adapters/README.md) | source | 2026-09-10 |
 | [Cogentia Personal Data Portability — Tools](../cogentia_personal/data_portability/tools/README.md) | source | 2026-09-10 |
 | [Cogentia Scripts & Verification Checks](../scripts/README.md) | unknown | 2026-09-18 |
-| [Cogentia Shared Agent Instructions](../instructions/AGENTS.shared.md) | operational | 2026-09-19 |
+| [Cogentia Shared Agent Instructions](../instructions/AGENTS.shared.md) | operational | 2026-09-20 |
 | [Cogentia Test Suite](../test/README.md) | unknown | 2026-09-18 |
 | [Cogentia Trace](../trace/README.md) | source | 2026-09-10 |
 | [Cogentia Trace — Mail artifacts and private registry](../trace/docs/mail-artifacts.md) | operational | 2026-09-10 |
@@ -338,7 +338,7 @@ This repository instantiates the **cognitive infrastructure layer** of the [DHIT
 | [CPKT-2026-008 — NASA, Remote Web Session, Hosted Browser, and Pi Remote Access](CPKT-2026-008_nasa_remote_web_session_handoff.md) | source | 2026-09-10 |
 | [CPKT-2026-009 — reprise après clôture technique : Interroger le Réel, projections et sondes autonomie](CPKT-2026-009_interroger_reel_projection_sondes_autonomie_handoff.md) | operational | 2026-09-18 |
 | [Daily brief to GitHub propagation protocol](../.cogentia/issues/jeanhuguesrobert-cogentia/issue-00091.md) | source | unknown |
-| [Delta Disposition](../patterns/delta-disposition/PATTERN.md) | operational | 2026-09-19 |
+| [Delta Disposition](../patterns/delta-disposition/PATTERN.md) | operational | 2026-09-20 |
 | [Desired Present / Archaeology / Reality](../patterns/desired-present-archaeology-reality/PATTERN.md) | operational | 2026-09-10 |
 | [Digipees Exemplar](digipees_exemplar.md) | source | 2026-09-10 |
 | [Digipees Exemplar — free trademark helper, institutional gap test, and portable continuations](../.cogentia/issues/jeanhuguesrobert-cogentia/issue-00101.md) | source | unknown |
@@ -402,7 +402,8 @@ This repository instantiates the **cognitive infrastructure layer** of the [DHIT
 | [Integration — Wire Level-2 Scheduler & Governed Reasoning Loop into Guide & WhatsApp turns](../.cogentia/issues/jeanhuguesrobert-cogentia/issue-00130.md) | source | unknown |
 | [Intent](intent.md) | source | 2026-09-10 |
 | [Interaction Packets: multichannel fields + adapter-ready method (email spine)](../.cogentia/issues/jeanhuguesrobert-cogentia/issue-00084.md) | source | unknown |
-| [Interroger le Réel](interroger_le_reel.md) | source | 2026-09-18 |
+| [Interrogating Reality](interrogating_reality.md) | source | 2026-09-21 |
+| [Interroger le Réel](interroger_le_reel.md) | source | 2026-09-21 |
 | [issue john](../.cogentia/issues/jeanhuguesrobert-cogentia/issue-00112.md) | source | unknown |
 | [John CLI — headless event contract](../docs/john-cli.md) | operational | 2026-09-10 |
 | [Judgment boundary vs failure](../skills/continuation-handling/references/judgment-boundary.md) | operational | 2026-09-10 |
@@ -440,6 +441,7 @@ This repository instantiates the **cognitive infrastructure layer** of the [DHIT
 | [Operational Stance](operational_stance.md) | source | 2026-09-10 |
 | [Operium Deployment Guide — Agent John on Fracta VPS & Mobile Phone](../docs/agent-john-deployment-operium.md) | source | 2026-09-10 |
 | [P0 — Self-orienting Corpus: add `corpus.orient` and virgin-agent Reality Tests](../.cogentia/issues/jeanhuguesrobert-cogentia/issue-00122.md) | source | unknown |
+| [Package Access Check](../docs/package-access-check.md) | operational | 2026-09-21 |
 | [Packet ↔ continuation field mapping](../skills/continuation-handling/references/packet-mapping.md) | operational | 2026-09-10 |
 | [Packet Capsule — Cognitive Packet Packaging & Handoff](../skills/packet-capsule/SKILL.md) | operational | 2026-09-10 |
 | [Packet Closure Closed(p,h,E) & Durable Cross-Process Continuation Transport — F3 Reality Test](continuation_closure_f3_reality_test.md) | source | 2026-09-10 |
@@ -459,9 +461,9 @@ This repository instantiates the **cognitive infrastructure layer** of the [DHIT
 | [Préserver les sources canoniques Markdown et formaliser les transitions de publication](../.cogentia/issues/jeanhuguesrobert-cogentia/issue-00083.md) | source | unknown |
 | [Principal Instrumental Freedom](principal_instrumental_freedom.md) | source | 2026-09-10 |
 | [Produits dérivés de « When Cognition Became Traffic »](../.cogentia/issues/jeanhuguesrobert-cogentia/issue-00069.md) | source | unknown |
-| [Projection Delta Review](../skills/projection-delta-review/SKILL.md) | unknown | 2026-09-19 |
+| [Projection Delta Review](../skills/projection-delta-review/SKILL.md) | unknown | 2026-09-20 |
 | [Propagate Personal Digital Twin convergence into canonical sources](../.cogentia/issues/jeanhuguesrobert-cogentia/issue-00097.md) | source | unknown |
-| [Propagation Register](propagation_register.md) | source | 2026-09-10 |
+| [Propagation Register](propagation_register.md) | source | 2026-09-20 |
 | [Public intelligence core: factor Guide turn runner; John public as superset client](../.cogentia/issues/jeanhuguesrobert-cogentia/issue-00085.md) | source | unknown |
 | [Public read-only agent constitution (answer surfaces)](../instructions/AGENTS.public-readonly.md) | derived | 2026-09-10 |
 | [R1 Closure: Level-2 Exploration Scheduler](r1_level2_scheduler_closure.md) | source | 2026-09-10 |
@@ -472,7 +474,7 @@ This repository instantiates the **cognitive infrastructure layer** of the [DHIT
 | [R1-B Branch C — Prolog / choice points / backtracking](../.cogentia/issues/jeanhuguesrobert-cogentia/issue-00136.md) | source | unknown |
 | [R1-B Branch D — Swarm / stigmergy / diversity / anti-Ant-Mill](../.cogentia/issues/jeanhuguesrobert-cogentia/issue-00137.md) | source | unknown |
 | [README Topology and Maintenance](../docs/readme-topology.md) | operational | 2026-09-20 |
-| [Reality Probe Selection](reality_probe_selection.md) | source | 2026-09-10 |
+| [Reality Probe Selection](reality_probe_selection.md) | source | 2026-09-20 |
 | [Reality Test: reuse Inseme dynamic artifact serving for a Cogentia WebPublicationProjection](../.cogentia/issues/jeanhuguesrobert-cogentia/issue-00170.md) | source | unknown |
 | [Reasoning Loop — events and handlers as the agent core](reasoning_loop.md) | source | 2026-09-10 |
 | [Reasoning Loop archaeology — nested loops, existing pieces, smallest contract](reasoning_loop_archaeology.md) | source | 2026-09-10 |
@@ -516,7 +518,7 @@ This repository instantiates the **cognitive infrastructure layer** of the [DHIT
 | [Source Code Navigator — distinct code index and complementary MCP for GitHub](../.cogentia/issues/jeanhuguesrobert-cogentia/issue-00056.md) | source | unknown |
 | [Study collective memory for the public Guide](../.cogentia/issues/jeanhuguesrobert-cogentia/issue-00059.md) | source | unknown |
 | [STYLE.md — person-level style mandate (convention)](style_md_person_level.md) | source | 2026-09-10 |
-| [Sunday Corpus Consolidation Master Plan 📜🧘‍♂️](../docs/sunday-consolidation-master-plan.md) | operational | 2026-09-10 |
+| [Sunday Corpus Consolidation Master Plan](../docs/sunday-consolidation-master-plan.md) | operational | 2026-09-21 |
 | [Sunday Corpus Consolidation Runner & Weekly Sprint Digest Automation](../.cogentia/issues/jeanhuguesrobert-cogentia/issue-00070.md) | source | unknown |
 | [Tester la frontière entre « IA pour chacun » et « IA pour tous »](../.cogentia/issues/jeanhuguesrobert-cogentia/issue-00065.md) | source | unknown |
 | [Twenty Questions — optimal discriminants, information gain and Human Attention Budget](../.cogentia/issues/jeanhuguesrobert-cogentia/issue-00153.md) | source | unknown |
@@ -531,8 +533,9 @@ This repository instantiates the **cognitive infrastructure layer** of the [DHIT
 | [Weekly Sprint Digest: 2026-W34 (Public Corpus Digest) 📜🧘‍♂️](sprints/weekly_digest_2026-W34.md) | source | 2026-09-10 |
 | [Weekly Sprint Digest: 2026-W35 (Public Corpus Digest) 📜🧘‍♂️](sprints/weekly_digest_2026-W35.md) | source | 2026-09-10 |
 | [Weekly Sprint Digest: 2026-W36 (Public Corpus Digest) 📜🧘‍♂️](sprints/weekly_digest_2026-W36.md) | source | 2026-09-10 |
+| [Weekly Sprint Digest: 2026-W38 (Public Corpus Digest)](sprints/weekly_digest_2026-W38.md) | source | 2026-09-21 |
 | [What is John — Agent John / Agent JHN identity card](agent_john_identity.md) | derived | 2026-09-10 |
-| [Workspace Root Guidance (C:/tweesic)](../instructions/AGENTS.workspace.md) | operational | 2026-09-10 |
+| [Workspace Root Guidance (C:/tweesic)](../instructions/AGENTS.workspace.md) | operational | 2026-09-21 |
 | [Workstation daemon stall vs crash (2026-08-22)](daemon_inventory_stall_2026-08-22.md) | operational | 2026-09-10 |
 
 <!-- END_AUTO: index_catalog -->
