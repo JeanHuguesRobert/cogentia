@@ -1,12 +1,29 @@
 ---
-document_role: "operational"
-document_kind: "documentation"
-visibility: "public"
-lifecycle_state: "active"
+title: "Sunday Corpus Consolidation Master Plan"
+author: "Jean Hugues Noel Robert, baron Mariani"
+affiliation: "Institut Mariani / C.O.R.S.I.C.A., 1 cours Paoli, F-20250 Corte, Corsica"
+license: "CC BY-SA 4.0"
+date: "2026-09-10"
+status: "stable — active"
+document_role: operational
+document_kind: documentation
+visibility: public
+lifecycle_state: active
+update_policy: UP-DEFAULT-REVIEWED
+language: en
 classification_source: "cogentia.js"
 classification_version: "1"
 classification_rule: "documentation"
 classification_confidence: "medium"
+provenance:
+  origin_type: repository
+  origin_repository: JeanHuguesRobert/cogentia
+  origin_ref: "6fd4b9a3def33621ee5f93069960e3f0499a4e2c"
+  origin_date: "2026-09-10"
+  derived_from: []
+review:
+  status: unreviewed
+  reviewed_by: []
 ---
 
 # Sunday Corpus Consolidation Master Plan 📜🧘‍♂️
@@ -17,9 +34,9 @@ classification_confidence: "medium"
 > | Domain | Artifacts | Contents |
 > |--------|-----------|----------|
 > | **PUBLIC** (publishable) | `research/sprints/weekly_digest_YYYY-WXX.md`, root `llms.txt` / `llms-full.txt` (fan-out to public repos) | Public repos & commits only; no private repo names as inventory entries; no local Downloads |
-> | **PRIVATE** (workspace-only) | `.cogentia/sprints/weekly_digest_full_YYYY-WXX.md`, `.cogentia/projections/llms*.txt` | All repos including `registre-mariani`; high-signal Downloads; never fan-out to public roots |
+> | **PRIVATE** (workspace-only) | `.cogentia/sprints/weekly_digest_full_YYYY-WXX.md`, `.cogentia/projections/llms*.txt` | All repositories, including private ones; high-signal Downloads; never fan-out to public roots |
 >
-> Private repos (`visibility: private`, e.g. `registre-mariani`) never leak into public digests or public `llms.txt`. Optional Phase 5 synchronizes Fracta VPS **public** views only.
+> Private repositories (`visibility: private`) never leak into public digests or public `llms.txt`. Optional Phase 5 synchronizes Fracta VPS **public** views only.
 
 ---
 
@@ -69,7 +86,7 @@ flowchart TD
 ## 📋 5-Phase Implementation Breakdown
 
 ### Phase 1: Multi-Repo Health & Link Audit
-- **Objective**: Ensure all 10 monorepo repositories (`cogentia`, `barons-Mariani`, `inseme`, `Inox`, `FractaVolta`, `marenostrum`, `registre-mariani`, `ubikia`, `JeanHuguesRobert`, `StructEnv`) are clean, indexed, and free of broken links or private data leaks.
+- **Objective**: Ensure every repository declared by the local monorepo inventory is clean, indexed, and free of broken links or private data leaks.
 - **Components**:
   - `gitVerifyCore()` status check.
   - Index status check (`indexStatusCore()`).
@@ -120,8 +137,12 @@ flowchart TD
 
 ### CLI Command
 ```bash
-node scripts/cogentia.js consolidate --weekly [--json] [--push-vps]
+node scripts/cogentia.js consolidate --weekly [--at ISO-8601] [--json] [--push-vps]
 ```
+
+`--at` replays the digest window ending at an explicit timestamp. It is used
+for a deterministic correction of a prior sprint: both the sprint tag and the
+seven-day Git history window derive from that timestamp.
 
 ### MCP Tool Definition (`cogentia_consolidate_weekly`)
 Exposes `cogentia_consolidate_weekly` tool in `scripts/lib/cogentia-mcp-core.js` so AI client agents (Antigravity, Cursor, Claude Desktop) can trigger Sunday Consolidation directly via MCP!

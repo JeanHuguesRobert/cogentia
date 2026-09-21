@@ -4,101 +4,51 @@
 
 ## Repositories & Canonical Entry Points
 
-- **[cogentia]**: C:\tweesic\cogentia
+- **[cogentia]**: .
   - Role: primary
   - Visibility: public
-  - Index: C:\tweesic\cogentia\research\index.md
-  - Concepts: C:\tweesic\cogentia\research\concepts.md
-- **[FractaVolta]**: C:\tweesic\FractaVolta
+  - Index: research\index.md
+  - Concepts: research\concepts.md
+- **[FractaVolta]**: ../FractaVolta
   - Role: primary
   - Visibility: public
-  - Index: C:\tweesic\FractaVolta\research\index.md
-  - Concepts: C:\tweesic\FractaVolta\research\concepts.md
-- **[marenostrum]**: C:\tweesic\marenostrum
+  - Index: ..\FractaVolta\research\index.md
+  - Concepts: ..\FractaVolta\research\concepts.md
+- **[marenostrum]**: ../marenostrum
   - Role: primary
   - Visibility: public
-  - Index: C:\tweesic\marenostrum\research\index.md
-  - Concepts: C:\tweesic\marenostrum\research\concepts.md
-- **[barons-Mariani]**: C:\tweesic\barons-Mariani
+  - Index: ..\marenostrum\research\index.md
+  - Concepts: ..\marenostrum\research\concepts.md
+- **[barons-Mariani]**: ../barons-Mariani
   - Role: primary
   - Visibility: public
-  - Index: C:\tweesic\barons-Mariani\research\index.md
-  - Concepts: C:\tweesic\barons-Mariani\research\concepts.md
-- **[inseme]**: C:\tweesic\inseme
+  - Index: ..\barons-Mariani\research\index.md
+  - Concepts: ..\barons-Mariani\research\concepts.md
+- **[inseme]**: ../inseme
   - Role: primary
   - Visibility: public
-  - Index: C:\tweesic\inseme\research\index.md
-  - Concepts: C:\tweesic\inseme\research\concepts.md
-- **[survey]**: C:\tweesic\survey
+  - Index: ..\inseme\research\index.md
+  - Concepts: ..\inseme\research\concepts.md
+- **[Inox]**: ../Inox
   - Role: primary
   - Visibility: public
-  - Index: C:\tweesic\survey\research\index.md
-  - Concepts: C:\tweesic\survey\research\concepts.md
-- **[Inox]**: C:\tweesic\Inox
+  - Index: ..\Inox\research\index.md
+  - Concepts: ..\Inox\research\concepts.md
+- **[ubikia]**: ../ubikia
   - Role: primary
   - Visibility: public
-  - Index: C:\tweesic\Inox\research\index.md
-  - Concepts: C:\tweesic\Inox\research\concepts.md
-- **[ubikia]**: C:\tweesic\ubikia
+  - Index: ..\ubikia\research\index.md
+  - Concepts: ..\ubikia\research\concepts.md
+- **[JeanHuguesRobert]**: ../JeanHuguesRobert
   - Role: primary
   - Visibility: public
-  - Index: C:\tweesic\ubikia\research\index.md
-  - Concepts: C:\tweesic\ubikia\research\concepts.md
-- **[operium]**: C:\tweesic\operium
+  - Index: ..\JeanHuguesRobert\research\index.md
+  - Concepts: ..\JeanHuguesRobert\research\concepts.md
+- **[StructEnv]**: ../StructEnv
   - Role: primary
   - Visibility: public
-  - Index: C:\tweesic\operium\research\index.md
-  - Concepts: C:\tweesic\operium\research\concepts.md
-- **[serra]**: C:\tweesic\serra
-  - Role: primary
-  - Visibility: public
-  - Index: C:\tweesic\serra\research\index.md
-  - Concepts: C:\tweesic\serra\research\concepts.md
-- **[JeanHuguesRobert]**: C:\tweesic\JeanHuguesRobert
-  - Role: primary
-  - Visibility: public
-  - Index: C:\tweesic\JeanHuguesRobert\research\index.md
-  - Concepts: C:\tweesic\JeanHuguesRobert\research\concepts.md
-- **[privai]**: C:\tweesic\privai
-  - Role: primary
-  - Visibility: public
-  - Index: C:\tweesic\privai\research\index.md
-  - Concepts: C:\tweesic\privai\research\concepts.md
-- **[gouvernance]**: C:\tweesic\gouvernance
-  - Role: primary
-  - Visibility: public
-  - Index: C:\tweesic\gouvernance\research\index.md
-  - Concepts: C:\tweesic\gouvernance\research\concepts.md
-- **[marianivillage]**: C:\tweesic\marianivillage
-  - Role: primary
-  - Visibility: public
-  - Index: C:\tweesic\marianivillage\research\index.md
-  - Concepts: C:\tweesic\marianivillage\research\concepts.md
-- **[institut-mariani]**: C:\tweesic\institut-mariani
-  - Role: primary
-  - Visibility: public
-  - Index: C:\tweesic\institut-mariani\research\index.md
-  - Concepts: C:\tweesic\institut-mariani\research\concepts.md
-- **[Kudos]**: C:\tweesic\Kudos
-  - Role: primary
-  - Visibility: public
-  - Index: C:\tweesic\Kudos\research\index.md
-  - Concepts: C:\tweesic\Kudos\research\concepts.md
-- **[.github]**: C:\tweesic\.github
-  - Role: primary
-  - Visibility: public
-  - Index: C:\tweesic\.github\research\index.md
-  - Concepts: C:\tweesic\.github\research\concepts.md
-- **[acorsica.org]**: C:\tweesic\acorsica.org
-  - Role: primary
-  - Visibility: public
-  - Index: C:\tweesic\acorsica.org\research\index.md
-  - Concepts: C:\tweesic\acorsica.org\research\concepts.md
-- **[StructEnv]**: C:\tweesic\StructEnv
-  - Role: primary
-  - Visibility: public
-  - Index: C:\tweesic\StructEnv\research\index.md
-  - Concepts: C:\tweesic\StructEnv\research\concepts.md
+  - Index: ..\StructEnv\research\index.md
+  - Concepts: ..\StructEnv\research\concepts.md
 
 ## Privacy Note
 

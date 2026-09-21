@@ -3579,7 +3579,11 @@ function buildConsolidateReport(ctx, options = {}) {
 
 async function cmdConsolidate() {
   if (hasFlag("--weekly") || hasFlag("-w")) {
-    const result = await runWeeklyConsolidation();
+    const at = valueFlag("--at");
+    if (at && Number.isNaN(new Date(at).getTime())) {
+      throw new Error("--at must be a valid ISO-8601 timestamp");
+    }
+    const result = await runWeeklyConsolidation({ now: at });
     if (hasFlag("--converge") || hasFlag("-c")) {
       console.log(`\nSunday Consolidation Completed [${result.sprint_tag}]\nDigest: ${result.digest_path}\n`);
       console.log(`[Phase 5] Auto-converging Corpus Navigation to Fixed Point...`);

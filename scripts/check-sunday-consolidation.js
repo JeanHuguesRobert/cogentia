@@ -22,7 +22,10 @@ async function runSundayConsolidationTest() {
 
   let result;
   try {
-    result = await runWeeklyConsolidation({ root: fixtureRoot });
+    result = await runWeeklyConsolidation({
+      root: fixtureRoot,
+      now: "2026-09-20T17:42:14.761Z",
+    });
   console.log("Consolidation Result Summary:", JSON.stringify({
     ok: result.ok,
     sprint_tag: result.sprint_tag,
@@ -33,6 +36,9 @@ async function runSundayConsolidationTest() {
 
   if (!result.ok) {
     throw new Error("❌ Sunday Consolidation failed!");
+  }
+  if (result.sprint_tag !== "2026-W38") {
+    throw new Error(`Expected deterministic W38 fixture, got ${result.sprint_tag}`);
   }
 
   const publicDigest = result.privacy?.public?.digest_path || result.digest_path;
@@ -62,13 +68,14 @@ async function runSundayConsolidationTest() {
   if (privateText.length < 500) {
     throw new Error("Expected private weekly digest size > 500 bytes");
   }
+  if (!publicText.startsWith("---\n") || !/\nvisibility: public\n/.test(publicText)) {
+    throw new Error("❌ Public digest must carry complete public frontmatter");
+  }
 
   // Privacy invariants
-  if (/registre-mariani/i.test(publicText) && /### Repository: `registre-mariani`/i.test(publicText)) {
-    throw new Error("❌ Public digest must not include registre-mariani commit section");
+  if (/registre-mariani/i.test(publicText)) {
+    throw new Error("❌ Public digest must not name registre-mariani");
   }
-  // Public may mention that private repos are omitted by name in inventory note — that's OK
-  // but must NOT list it under Repositories entry points in llms
   if (/-\s+\*\*\[registre-mariani\]\*\*/i.test(publicLlmsText)) {
     throw new Error("❌ Public llms.txt must not list registre-mariani as a repository entry");
   }
