@@ -125,16 +125,16 @@
     "mcp:inspect:2026": "node -e \"process.env.COGENTIA_MCP_FORCE_PROTOCOL='2026-07-28'; require('child_process').spawn('npx', ['@modelcontextprotocol/inspector', 'node', 'scripts/cogentia-mcp.js'], {stdio: 'inherit', shell: true})\""
   },
   "devDependencies": {
-    "@modelcontextprotocol/inspector": "^2.1.0",
-    "turbo": "^2.0.0"
+    "@modelcontextprotocol/inspector": "^2.7.0",
+    "turbo": "^2.11.2"
   },
   "dependencies": {
     "@whiskeysockets/baileys": "7.0.0-rc13",
     "agent-twitter-client": "^0.0.18",
     "blessed": "^0.1.81",
-    "js-yaml": "^4.1.0",
-    "json-rpc-2.0": "^1.8.0",
-    "marked": "^18.0.7",
+    "js-yaml": "^4.3.2",
+    "json-rpc-2.0": "^1.8.1",
+    "marked": "^18.0.13",
     "node-pty": "1.2.0-beta.14",
     "sqlite-vec": "^0.1.9",
     "ws": "^8.21.3"
