@@ -5,7 +5,7 @@ author: "Jean Hugues Noël Robert, baron Mariani"
 affiliation: "Institut Mariani / C.O.R.S.I.C.A., 1 cours Paoli, F-20250 Corte, Corsica"
 date: "2026-09-16"
 last_modified_at: "2026-09-21"
-version: "0.4"
+version: "0.5"
 status: "working-method"
 language: "en"
 license: "CC BY-SA 4.0"
@@ -242,6 +242,51 @@ noise / material error
 ~~~
 
 This is not a mandatory sequence: direct evidence may immediately establish a stronger level. Without such evidence, the next probe should seek to **reduce the explanation space**, not confirm the preferred hypothesis.
+
+## 8A. Graded counterfactual inference
+
+Interrogating Reality favors situations in which the world can actually produce a new trace. Some objects, however, are **counterfactual by nature**: the actual world cannot directly show what would have happened if a past bifurcation had gone differently.
+
+That observational limit does not justify automatic agnosticism.
+
+> **Unobservable ≠ unknowable.**
+
+> **Uncertain ≠ all hypotheses are equally plausible.**
+
+A counterfactual can be **strongly constrained** when several observable conditions converge:
+
+- the agent explicitly pursued the branch in question;
+- the agent had the practical capability to take it;
+- an identifiable, nearby bifurcation selects between branches;
+- prior behavior or commitments make continuation coherent;
+- competing alternatives are known or can be bounded.
+
+Confidence should decrease with causal distance:
+
+~~~text
+near bifurcation + converging traces
+→ strongly constrained counterfactual
+
+additional intermediate links
+→ increasing uncertainty
+
+long cascade of descendants
+→ weaker hypothesis, even when still informative
+~~~
+
+Reality can still be probed **around** the counterfactual: expressed intent, material capability, access conditions, the bifurcation decision, comparators, alternatives, and intermediate consequences. Such probes do not make the unrealized world observable; they narrow the space of scenarios compatible with the traces.
+
+The discipline therefore avoids two symmetric errors:
+
+~~~text
+free fiction
+≠
+constrained counterfactual inference
+≠
+defensive agnosticism
+~~~
+
+A rigorous method does not turn plausibility into certainty; neither does it erase a real difference in plausibility supported by evidence.
 
 ## 9. Parallelism and proportionality
 
