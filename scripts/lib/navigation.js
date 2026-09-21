@@ -236,7 +236,9 @@ export function emitStaticProjection(ctx, inventory = [], options = {}) {
     }
     if (fs.existsSync(fullFile)) {
       try {
-        const text = fs.readFileSync(fullFile, "utf8");
+        // llms-full is a plain-text projection, not a Markdown renderer: do
+        // not propagate source hard-break whitespace into generated artifacts.
+        const text = fs.readFileSync(fullFile, "utf8").replace(/[ \t]+$/gm, "");
         fullLines.push(`## Section: ${relPath}`);
         fullLines.push("");
         fullLines.push(text);

@@ -14,7 +14,7 @@ language: en
 provenance:
   origin_type: generated
   origin_repository: JeanHuguesRobert/cogentia
-  origin_ref: "d6846b509f554b4b771801f1ca8baad9562aa18b"
+  origin_ref: "3790585560881992d141c81ce4674f5357630f81"
   origin_date: "2026-09-20"
   derived_from:
     - "scripts/lib/consolidation.js"
