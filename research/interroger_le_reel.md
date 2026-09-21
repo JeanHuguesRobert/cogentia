@@ -5,7 +5,7 @@ author: "Jean Hugues Noël Robert, baron Mariani"
 affiliation: "Institut Mariani / C.O.R.S.I.C.A., 1 cours Paoli, F-20250 Corte, Corsica"
 date: "2026-09-16"
 last_modified_at: "2026-09-21"
-version: "0.4"
+version: "0.5"
 status: "working-method"
 language: "fr"
 license: "CC BY-SA 4.0"
@@ -245,6 +245,51 @@ bruit / erreur matérielle
 ```
 
 Ce n'est pas une séquence obligatoire : une preuve directe peut établir immédiatement un niveau fort. À défaut, la sonde suivante doit chercher à **réduire l'espace des explications**, non à confirmer l'hypothèse préférée.
+
+## 8A. Inférence contrefactuelle graduée
+
+Interroger le Réel privilégie les situations où le monde peut effectivement produire une nouvelle trace. Certains objets sont toutefois **contrefactuels par nature** : le monde actuel ne peut pas montrer directement ce qui se serait produit si une bifurcation passée avait été différente.
+
+Cette limite d'observation ne justifie pas un agnosticisme automatique.
+
+> **Non observable ≠ inconnaissable.**
+
+> **Incertain ≠ toutes les hypothèses se valent.**
+
+Un contrefactuel peut être **fortement contraint** lorsque plusieurs éléments observables convergent :
+
+- l'agent poursuivait explicitement la branche considérée ;
+- il disposait des capacités pratiques pour l'emprunter ;
+- une bifurcation identifiable et proche décide entre les branches ;
+- les comportements ou engagements antérieurs rendent la continuation cohérente ;
+- les alternatives concurrentes sont connues ou bornables.
+
+La confiance doit décroître avec la distance causale :
+
+```text
+bifurcation proche + traces convergentes
+→ contrefactuel fortement contraint
+
+maillons intermédiaires supplémentaires
+→ incertitude croissante
+
+longue cascade de descendants
+→ hypothèse plus faible, même si elle reste informative
+```
+
+Le Réel peut encore être interrogé **autour** du contrefactuel : intention exprimée, capacité matérielle, conditions d'accès, décision de bifurcation, comparateurs, alternatives et conséquences intermédiaires. Ces sondes ne rendent pas observable le monde non advenu ; elles resserrent l'espace des scénarios compatibles avec les traces.
+
+La discipline consiste donc à éviter deux erreurs symétriques :
+
+```text
+fiction libre
+≠
+inférence contrefactuelle contrainte
+≠
+agnosticisme défensif
+```
+
+Une méthode rigoureuse ne transforme pas une plausibilité en certitude ; elle ne détruit pas non plus une différence de plausibilité réellement portée par les faits.
 
 ## 9. Parallélisme et proportionnalité
 
