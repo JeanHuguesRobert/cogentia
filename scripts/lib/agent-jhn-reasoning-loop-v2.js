@@ -29,6 +29,14 @@ export function resolveGuideReasoningLoopV2(payload = {}, env = process.env) {
 
 export const STRATEGY_SCHEMA = "cogentia.hop_strategy/v1";
 
+// max_elapsed_ms on mayoral_inquiry, doctrinal_synthesis, and adversarial_verification
+// was raised 2026-09-21 (15000/25000/10000 -> 115000): the live Codex ACP synthesis hop
+// now takes ~60-90s, so the old per-strategy caps were tighter than the caller's own
+// limits.maxElapsedMs (120000, see cogentia-mcp-http.js), causing every non-cached
+// question to hit governed_turn_time_budget and silently fall back to legacy. See
+// operium#45 for the A/B evidence (10/11 V2 answers were fallback before this fix).
+// fast_reactive_dispatch is untouched: it is not reachable from ordinary Guide text
+// inference and is not evidenced to call the slow synthesis path.
 export const BUILTIN_STRATEGIES = Object.freeze({
   mayoral_inquiry: Object.freeze({
     id: "mayoral_inquiry",
@@ -37,7 +45,7 @@ export const BUILTIN_STRATEGIES = Object.freeze({
     posture: "political_representative",
     phases: ["prologue", "admit", "orient", "evidence", "governance", "judgment", "act", "sanitize", "terminal"],
     required_signals: ["local_sovereignty", "traceability", "reversibility"],
-    max_elapsed_ms: 15000,
+    max_elapsed_ms: 115000,
     max_steps: 6,
     max_events: 32,
     strict_anti_leak: true,
@@ -49,7 +57,7 @@ export const BUILTIN_STRATEGIES = Object.freeze({
     posture: "academic_doctrinal",
     phases: ["prologue", "admit", "classify", "orient", "evidence", "governance", "judgment", "act", "terminal"],
     required_signals: ["provenance", "non_claim_discipline", "corpus_consistency"],
-    max_elapsed_ms: 25000,
+    max_elapsed_ms: 115000,
     max_steps: 10,
     max_events: 48,
     strict_anti_leak: false,
@@ -61,7 +69,7 @@ export const BUILTIN_STRATEGIES = Object.freeze({
     posture: "adversarial_critic",
     phases: ["admit", "orient", "evidence", "governance", "judgment", "terminal"],
     required_signals: ["synthetic_skin_in_the_game", "reality_response"],
-    max_elapsed_ms: 10000,
+    max_elapsed_ms: 115000,
     max_steps: 5,
     max_events: 24,
     strict_anti_leak: true,
