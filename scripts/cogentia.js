@@ -8696,6 +8696,9 @@ function classifyRole(repo, relPath, full, fm, ignored, indexSets) {
   if (explicit.includes("source") || explicit.includes("sovereign") || explicit.includes("symmetric") || explicit.includes("souverain")) {
     return { role: "source", source: "frontmatter:document_role", confidence: "strong" };
   }
+  if (explicit.includes("index")) return { role: "index", source: "frontmatter:document_role", confidence: "strong" };
+  if (explicit.includes("trail")) return { role: "trail", source: "frontmatter:document_role", confidence: "strong" };
+  if (explicit.includes("archive")) return { role: "archive", source: "frontmatter:document_role", confidence: "strong" };
   if (derivedFrom || explicit.includes("derived") || r.includes("/derived_products/")) {
     return { role: "derived", source: "frontmatter/path:derived", confidence: "strong" };
   }
