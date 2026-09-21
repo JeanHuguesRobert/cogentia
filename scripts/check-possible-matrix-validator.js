@@ -6,7 +6,7 @@ import os from "node:os";
 import path from "node:path";
 import { execFileSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
-import yaml from "js-yaml";
+import * as yaml from "js-yaml";
 import {
   computeGitBlobSha,
   validatePossibleMatrixFile,

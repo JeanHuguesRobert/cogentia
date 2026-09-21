@@ -21,7 +21,7 @@ import { once } from "node:events";
 import { finished } from "node:stream/promises";
 import { pathToFileURL } from "node:url";
 import { createGunzip, createGzip } from "node:zlib";
-import js_yaml from "js-yaml";
+import * as js_yaml from "js-yaml";
 import { DAEMON_PLUGINS, DAEMON_PLUGIN_ROUTES, loadDaemonPlugins, dispatchPluginRoute } from "./daemon_plugins/registry.js";
 import { buildIssueGraph, renderIssueGraph } from "./lib/issue-graph.js";
 import { generateOperiumEmbeddingsReport } from "./lib/operium-embeddings.js";

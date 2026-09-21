@@ -2,7 +2,7 @@
 
 import fs from "node:fs";
 import path from "node:path";
-import yaml from "js-yaml";
+import * as yaml from "js-yaml";
 
 export const SUPPORTED_REGISTRY_SCHEMAS = new Set([
   "cogentia.registry.v0.2",

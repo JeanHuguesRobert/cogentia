@@ -4,7 +4,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import crypto from "node:crypto";
-import yaml from "js-yaml";
+import * as yaml from "js-yaml";
 import { extractFrontmatter } from "./lib/frontmatter-validator.js";
 
 const root = process.cwd();

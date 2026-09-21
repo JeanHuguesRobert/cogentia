@@ -132,7 +132,7 @@
     "@whiskeysockets/baileys": "7.0.0-rc14",
     "agent-twitter-client": "^0.0.18",
     "blessed": "^0.1.81",
-    "js-yaml": "^4.3.2",
+    "js-yaml": "^5.4.2",
     "json-rpc-2.0": "^1.8.1",
     "marked": "^18.0.13",
     "node-pty": "1.2.0-beta.14",

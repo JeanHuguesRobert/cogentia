@@ -3,7 +3,7 @@ import path from "node:path";
 import { execFileSync } from "node:child_process";
 import { createHash } from "node:crypto";
 import { fileURLToPath } from "node:url";
-import yaml from "js-yaml";
+import * as yaml from "js-yaml";
 
 const DEFAULT_SCHEMA_PATH = fileURLToPath(
   new URL("../../schemas/possible-matrix.v0.schema.json", import.meta.url),

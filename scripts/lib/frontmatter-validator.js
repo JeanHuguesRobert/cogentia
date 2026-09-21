@@ -9,7 +9,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { createHash } from "node:crypto";
-import yaml from "js-yaml";
+import * as yaml from "js-yaml";
 
 export const CANONICAL_DOCUMENT_ROLES = Object.freeze([
   "source",

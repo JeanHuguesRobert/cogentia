@@ -3,7 +3,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { execFileSync } from "node:child_process";
-import yaml from "js-yaml";
+import * as yaml from "js-yaml";
 
 export const RESPONSIBILITY_SCHEMA = "cogentia.responsibility-claims.v1";
 export const RELATIONS = new Set([
