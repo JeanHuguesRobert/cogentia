@@ -11,6 +11,7 @@ import { qualifySystemAvailability } from "./lib/idle-qualification.js";
 import { runWeeklyConsolidation } from "./lib/cogentia-core.js";
 import { runMonteCarloAudit } from "./lib/corpus-sleep-cycle/index.js";
 import { emitCopEvidence } from "./lib/cop-evidence-emitter.js";
+import { runRepoSyncPhase } from "./lib/repo-sync-phase.js";
 
 function nowMs() {
   return Date.now();
@@ -127,9 +128,44 @@ export async function runCorpusSleepCycle(options = {}) {
 
   const context = { root, options, availability, budget };
 
-  // Phase 2: Candidate learning & Monte Carlo Consistency Audit
+  // Phase 2: Repo sync — same command an operator would invoke on demand
+  // (`cogentia.js repos sync`), run first so later phases read fresh clones.
+  let repoSync = { name: "repo_sync", status: "skipped", evidence: null };
+  if (!options.skipRepoSync) {
+    if (!options.json) {
+      console.log("\n[Phase 2] Repo sync (cogentia.js repos sync)...");
+    }
+    let repoSyncGate = assertCanContinue({ availability, budget, options, phase: "repo_sync" });
+    if (!repoSyncGate.ok) {
+      return { status: "preempted", reason: repoSyncGate.reason, availability, budget: repoSyncGate.budget, phases };
+    }
+    const remainingBudgetMs = budget.maxWallTimeMs !== null
+      ? Math.max(5000, budget.maxWallTimeMs - budgetStatus(budget).elapsedMs)
+      : null;
+    const syncResult = await runRepoSyncPhase({
+      repo: options.repoSyncScope || "all",
+      includePrivate: !!options.repoSyncIncludePrivate,
+      // A full multi-repo network sync genuinely takes minutes, not seconds.
+      // Bound it by whatever wall-time budget remains for this cycle when one
+      // is set; otherwise fall back to a generous default (this phase is
+      // meant to run during idle/background time, not on a tight interactive
+      // budget).
+      timeoutMs: options.repoSyncTimeoutMs ?? remainingBudgetMs ?? 10 * 60 * 1000,
+    });
+    repoSync = { name: "repo_sync", status: syncResult.status, evidence: syncResult.evidence, error: syncResult.error };
+  }
+  phases.push(repoSync);
   if (!options.json) {
-    console.log("\n[Phase 2] Candidate learning & Monte Carlo consistency audit...");
+    console.log(`  Status: ${repoSync.status}${repoSync.error ? ` (${repoSync.error})` : ""}`);
+    if (repoSync.evidence?.summary) {
+      const s = repoSync.evidence.summary;
+      console.log(`  Repos: ${s.repos ?? "?"} total, ${s.ok ?? 0} ok, ${s.dirty ?? 0} dirty, ${s.skipped ?? 0} skipped, ${s.failed ?? 0} failed`);
+    }
+  }
+
+  // Phase 3: Candidate learning & Monte Carlo Consistency Audit
+  if (!options.json) {
+    console.log("\n[Phase 3] Candidate learning & Monte Carlo consistency audit...");
   }
   let gate = assertCanContinue({ availability, budget, options, phase: "candidate_learning" });
   if (!gate.ok) {
@@ -200,9 +236,9 @@ export async function runCorpusSleepCycle(options = {}) {
     return preemptedResult;
   }
 
-  // Phase 3: Cognitive regression suite
+  // Phase 4: Cognitive regression suite
   if (!options.json) {
-    console.log("\n[Phase 3] Cognitive regression suite...");
+    console.log("\n[Phase 4] Cognitive regression suite...");
   }
   gate = assertCanContinue({ availability, budget, options, phase: "cognitive_regression" });
   if (!gate.ok) {
@@ -216,9 +252,9 @@ export async function runCorpusSleepCycle(options = {}) {
   phases.push(regression);
   if (!options.json) console.log(`  ${regression.status}`);
 
-  // Phase 4: Cold-handler / substitution tests
+  // Phase 5: Cold-handler / substitution tests
   if (!options.json) {
-    console.log("\n[Phase 4] Cold-handler / substitution tests...");
+    console.log("\n[Phase 5] Cold-handler / substitution tests...");
   }
   gate = assertCanContinue({ availability, budget, options, phase: "handler_substitution" });
   if (!gate.ok) {
@@ -232,11 +268,11 @@ export async function runCorpusSleepCycle(options = {}) {
   phases.push(substitution);
   if (!options.json) console.log(`  ${substitution.status}`);
 
-  // Phase 5: Existing weekly consolidation
+  // Phase 6: Existing weekly consolidation
   let consolidation = null;
   if (!options.skipConsolidation) {
     if (!options.json) {
-      console.log("\n[Phase 5] Existing weekly consolidation...");
+      console.log("\n[Phase 6] Existing weekly consolidation...");
     }
     gate = assertCanContinue({ availability, budget, options, phase: "weekly_consolidation" });
     if (!gate.ok) {
@@ -257,9 +293,9 @@ export async function runCorpusSleepCycle(options = {}) {
     });
   }
 
-  // Phase 6: Candidate assimilation / Review Queue triage
+  // Phase 7: Candidate assimilation / Review Queue triage
   if (!options.json) {
-    console.log("\n[Phase 6] Candidate assimilation & review queue routing...");
+    console.log("\n[Phase 7] Candidate assimilation & review queue routing...");
   }
   gate = assertCanContinue({ availability, budget, options, phase: "assimilation" });
   if (!gate.ok) {
@@ -297,6 +333,7 @@ export async function runCorpusSleepCycle(options = {}) {
     availability,
     budget: finalBudget,
     phases,
+    repoSync,
     consolidation,
     candidate_signals: candidateLearning.evidence?.metrics?.cognitive_yield?.total_signals || 0,
     metrics: candidateLearning.evidence?.metrics || null
@@ -331,10 +368,15 @@ function parseCliArgs() {
     force: args.includes("--force"),
     json: args.includes("--json"),
     skipConsolidation: args.includes("--skip-consolidation"),
+    skipRepoSync: args.includes("--skip-repo-sync"),
+    repoSyncIncludePrivate: args.includes("--repo-sync-include-private"),
   };
 
   for (let i = 0; i < args.length; i++) {
-    if (args[i] === "--max-pairs" && args[i + 1]) {
+    if (args[i] === "--repo-sync-scope" && args[i + 1]) {
+      options.repoSyncScope = args[i + 1];
+      i++;
+    } else if (args[i] === "--max-pairs" && args[i + 1]) {
       options.maxPairs = parseInt(args[i + 1], 10);
       i++;
     } else if (args[i] === "--budget-ms" && args[i + 1]) {
