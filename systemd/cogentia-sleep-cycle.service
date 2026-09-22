@@ -5,7 +5,13 @@ After=network.target
 
 [Service]
 Type=oneshot
-User=root
+# Must match the UID that owns the registered repo checkouts under
+# /srv/cogentia/repos/ (and any symlinked paths outside it, e.g.
+# /home/ubuntu/*). The repo_sync phase runs plain `git fetch`/`pull` as
+# this user; running as root against non-root-owned checkouts trips
+# Git's "detected dubious ownership" guard, and root has no SSH identity
+# for private/SSH-remote repos unless separately provisioned.
+User=ubuntu
 WorkingDirectory=/srv/cogentia/repos/cogentia
 Environment=NODE_ENV=production
 Environment=COGENTIA_REGISTRY=/srv/cogentia/repos/JeanHuguesRobert/.cogentia.json
