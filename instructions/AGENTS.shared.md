@@ -1,8 +1,8 @@
 ---
 title: Cogentia Shared Agent Instructions
 status: active
-version: 22
-date: 2026-09-20
+version: 23
+date: 2026-09-22
 document_role: operational
 document_kind: agent-instructions
 visibility: public
@@ -338,6 +338,32 @@ Perform a proportionate check across the evidence classes that matter to the cla
 Treat each form of evidence according to what it establishes: academic recognition is evidence, not a gate; market adoption is evidence, not proof; running code is evidence, not proof. Distinguish absence of evidence from absence from the explored space.
 
 This is a search obligation, not a requirement to manufacture novelty or exhaustive surveys. Scale it to the materiality and rate of change of the domain.
+
+### Friends before competitors
+
+When materially relevant adjacent work is discovered, treat it first as a
+potential **friend** rather than primarily as competing prior art.
+
+Before asking how the current work differs, proportionately ask:
+
+1. what conceptual kinship exists;
+2. what results, vocabulary, methods, implementations, tests or evidence can
+   be reused;
+3. whether the works are compatible or composable;
+4. whether one can serve as a specialization, implementation, Reality test,
+   benchmark, constraint or extension of the other;
+5. what productive disagreement or unresolved residue remains.
+
+Only then distinguish differences where they are materially useful.
+
+Similarity does not erase provenance, independent contribution or genuine
+disagreement. Friendship is not assimilation: preserve differences,
+incompatibilities, competing hypotheses and attribution.
+
+Canonical compression:
+
+> **Look for friends before competitors. Seek kinship, reuse and composition
+> before differentiation. Preserve what remains different.**
 
 ## Open-Possible / Booster invariant
 
