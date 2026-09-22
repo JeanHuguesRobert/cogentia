@@ -107,8 +107,8 @@ export function checkDuplication(docA, docB, contentA, contentB) {
  */
 export function checkMissingLink(docA, docB) {
   const signals = [];
-  const relatedA = (docA.relatedDocs || []).map((r) => path.basename(r).toLowerCase());
-  const relatedB = (docB.relatedDocs || []).map((r) => path.basename(r).toLowerCase());
+  const relatedA = (docA.relatedDocs || []).map((r) => path.basename(String(r ?? "")).toLowerCase());
+  const relatedB = (docB.relatedDocs || []).map((r) => path.basename(String(r ?? "")).toLowerCase());
 
   const baseA = path.basename(docA.relPath).toLowerCase();
   const baseB = path.basename(docB.relPath).toLowerCase();
@@ -117,7 +117,7 @@ export function checkMissingLink(docA, docB) {
   const linksBtoA = relatedB.includes(baseA);
 
   const sharedTags = (docA.tags || []).filter((t) =>
-    (docB.tags || []).map((x) => x.toLowerCase()).includes(t.toLowerCase())
+    (docB.tags || []).map((x) => String(x ?? "").toLowerCase()).includes(String(t ?? "").toLowerCase())
   );
 
   // If they share 3+ specific tags or concepts but have no link in either direction
@@ -143,8 +143,11 @@ export function checkContradictions(docA, docB, contentA, contentB) {
   const signals = [];
 
   // Check 1: Lifecycle / Status claims inconsistency
-  const statusA = docA.status?.toLowerCase() || "";
-  const statusB = docB.status?.toLowerCase() || "";
+  // frontmatter `status` is usually a string, but malformed/atypical YAML
+  // can yield a non-string value (number, boolean, object); coerce first so
+  // a single anomalous document doesn't crash the whole audit.
+  const statusA = String(docA.status ?? "").toLowerCase();
+  const statusB = String(docB.status ?? "").toLowerCase();
 
   // Example: If Doc A claims Doc B is deprecated/superseded, but Doc B claims it is canonical/working
   const baseB = path.basename(docB.relPath).replace(/\.md$/, "");
@@ -218,8 +221,8 @@ export function checkContradictions(docA, docB, contentA, contentB) {
  */
 export function checkSemanticDrift(docA, docB, contentA, contentB) {
   const signals = [];
-  const tagsA = new Set((docA.tags || []).map((t) => t.toLowerCase()));
-  const tagsB = new Set((docB.tags || []).map((t) => t.toLowerCase()));
+  const tagsA = new Set((docA.tags || []).map((t) => String(t ?? "").toLowerCase()));
+  const tagsB = new Set((docB.tags || []).map((t) => String(t ?? "").toLowerCase()));
 
   for (const tag of tagsA) {
     if (!tagsB.has(tag)) continue;

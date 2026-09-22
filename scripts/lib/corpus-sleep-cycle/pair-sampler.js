@@ -142,16 +142,19 @@ export function discoverCorpusDocuments(options = {}) {
 export function calculateDocumentSimilarity(docA, docB) {
   if (docA.id === docB.id) return 1.0;
 
+  // Frontmatter fields (tags, relatedDocs, title) are usually well-typed, but
+  // atypical YAML can yield non-string entries; coerce defensively so one
+  // anomalous document doesn't crash the whole sampling pass.
   const setA = new Set([
-    ...docA.tags.map(t => t.toLowerCase()),
-    ...docA.relatedDocs.map(r => path.basename(r).toLowerCase()),
-    ...docA.title.toLowerCase().split(/\W+/).filter(w => w.length > 3)
+    ...(docA.tags || []).map(t => String(t ?? "").toLowerCase()),
+    ...(docA.relatedDocs || []).map(r => path.basename(String(r ?? "")).toLowerCase()),
+    ...String(docA.title ?? "").toLowerCase().split(/\W+/).filter(w => w.length > 3)
   ]);
 
   const setB = new Set([
-    ...docB.tags.map(t => t.toLowerCase()),
-    ...docB.relatedDocs.map(r => path.basename(r).toLowerCase()),
-    ...docB.title.toLowerCase().split(/\W+/).filter(w => w.length > 3)
+    ...(docB.tags || []).map(t => String(t ?? "").toLowerCase()),
+    ...(docB.relatedDocs || []).map(r => path.basename(String(r ?? "")).toLowerCase()),
+    ...String(docB.title ?? "").toLowerCase().split(/\W+/).filter(w => w.length > 3)
   ]);
 
   if (setA.size === 0 && setB.size === 0) return 0.1;
