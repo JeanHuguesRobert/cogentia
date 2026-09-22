@@ -9,10 +9,12 @@ User=root
 WorkingDirectory=/srv/cogentia/repos/cogentia
 Environment=NODE_ENV=production
 Environment=COGENTIA_REGISTRY=/srv/cogentia/repos/JeanHuguesRobert/.cogentia.json
-# Executes Monte Carlo pair audit on qualified residual capacity (max 50 pairs, 60s budget, low CPU priority)
+# Executes repo sync + Monte Carlo pair audit on qualified residual capacity
+# (max 50 pairs, 180s overall budget shared with the new repo_sync phase,
+# low CPU priority)
 Nice=19
 CPUSchedulingPolicy=idle
-ExecStart=/usr/bin/node /srv/cogentia/repos/cogentia/scripts/run-corpus-sleep-cycle.js --max-pairs 50 --budget-ms 60000 --json
+ExecStart=/usr/bin/node /srv/cogentia/repos/cogentia/scripts/run-corpus-sleep-cycle.js --max-pairs 50 --budget-ms 180000 --json
 StandardOutput=journal
 StandardError=journal
 
