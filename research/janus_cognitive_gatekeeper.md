@@ -1,14 +1,14 @@
 ---
-title: "Janus — Cognitive Transition Contract"
-subtitle: "A falsifiable interface hypothesis for qualified Cognitive Packet transitions and Future-to-Past settlement"
-description: "Working conceptual architecture for Janus as a candidate transition contract preserving qualification basis, unresolved residue, revision conditions, and settlement links around Cognitive Packets."
+title: "Janus — COP Resolution Pattern"
+subtitle: "A falsifiable composition pattern for making decisive prospective assertions answerable to later Reality"
+description: "Working conceptual architecture for Janus as a COP composition pattern reusing Assertions, EvidenceRelations, Continuations, temporal semantics, Mandates and Measured Risk; its candidate addition is an ex-ante ResolutionExpectation attached to decisive prospective assertions."
 author: "Jean Hugues Noël Robert, baron Mariani"
 affiliation: "Institut Mariani / C.O.R.S.I.C.A., 1 cours Paoli, F-20250 Corte, Corsica"
 date: "2026-09-22"
-last_modified_at: "2026-09-22"
+last_modified_at: "2026-09-23"
 last_stamped_at: "unknown"
-version: "0.3"
-status: "working-paper"
+version: "0.4"
+status: "working-paper — active experiment"
 license: "CC BY-SA 4.0"
 language: "en"
 document_role: "source"
@@ -20,6 +20,9 @@ update_policy: "UP-DEFAULT-REVIEWED"
 canonical_url: "https://github.com/JeanHuguesRobert/cogentia/blob/main/research/janus_cognitive_gatekeeper.md"
 ai_assisted_by:
   - "GPT-5.6 Sol"
+external_review:
+  - "Grok 4.6 (xAI) — external pass 1 on v0.2"
+  - "Claude — external pass 2 on v0.3"
 provenance:
   origin_type: "conversation"
   origin_repository: "unknown"
@@ -37,242 +40,669 @@ provenance:
     - "research/locality_principle.md"
     - "research/packet_continuation_machine.md"
     - "research/level2_continuation_scheduler_r1b.md"
+    - "https://github.com/JeanHuguesRobert/inseme/blob/main/research/cop_trace_model.md"
+    - "https://github.com/JeanHuguesRobert/inseme/blob/main/packages/cop-core/Invariants.md"
+    - "https://github.com/JeanHuguesRobert/inseme/blob/main/packages/cop-core/COP_MEASURED_RISK.md"
+    - "https://github.com/JeanHuguesRobert/inseme/blob/main/research/cop_janus_booster.md"
     - "https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/potentics.md"
     - "https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/principe_rossignol.md"
 review:
   status: "under-review"
   reviewed_by:
-    - "Grok 4.6 (xAI) — reviewer contract v0.5 — external pass 1, 2026-09-22"
+    - "Grok 4.6 (xAI) — external pass 1"
+    - "Claude — external pass 2"
 tags:
   - janus
+  - cop
   - cognitive-packets
-  - transition-contract
-  - provenance
-  - revision
-  - settlement
+  - assertions
+  - evidence-relations
+  - continuations
+  - resolution
   - foresight
   - reality
   - measured-risk
-  - synthetic-skin-in-the-game
-  - belief-revision
+  - provenance
   - non-monotonic
+  - synthetic-skin-in-the-game
 changelog:
   - "v0.1 (2026-09-22) — initial formulation of Janus as a bidirectional Cognitive Packet gatekeeper."
-  - "v0.2 (2026-09-22) — integrated three internal review passes and added embodiment, Synthetic Skin, philosophical ancestry, and external Reviewer contract."
-  - "v0.3 (2026-09-22) — response to Grok external review pass 1: narrowed Janus from governor/component to falsifiable transition-contract hypothesis; removed scalar embodiment, Black Packet, and Spirit of Synthesis from runtime architecture; added settlement semantics, deletion criterion, named friends, and Test J-Delta."
+  - "v0.2 (2026-09-22) — integrated internal reviews, embodiment, Synthetic Skin, philosophical ancestry and external Reviewer contract."
+  - "v0.3 (2026-09-22) — narrowed Janus from governor/component to falsifiable transition-contract hypothesis after Grok review."
+  - "v0.4 (2026-09-23) — crossed Janus with COP 2.x after Claude review; recast Janus as a COP composition pattern centered on ex-ante ResolutionExpectation, decisive Assertions, temporal integrity, Continuation-based follow-up and later EvidenceRelations."
 ---
 
-# Janus — Cognitive Transition Contract
+# Janus — COP Resolution Pattern
 
 ## Abstract
 
-**Janus** is a candidate interface contract for qualifying and recording transitions around Cognitive Packets.
+Janus is now best understood as a **COP composition pattern under test**, not as a new universal cognitive governor or dedicated runtime layer.
 
-It is deliberately smaller than the v0.2 proposal.
+Most of the machinery previously attributed to Janus already exists in COP 2.x:
 
-Janus does not define a new universal cognitive component. It does not perform belief revision, simulation, planning, risk estimation, authorization, synthesis, memory storage or execution.
+- Traces preserve evidential imprints without turning them into truth;
+- Assertions represent governed propositions with explicit epistemic status;
+- EvidenceRelations connect Traces to Assertions as supporting, contradicting or contextualizing evidence;
+- revision and contradiction are non-destructive;
+- temporal semantics distinguish Reality time, record creation and observation/ingestion;
+- Continuations preserve suspended work across time and handlers;
+- Mandates and policy govern authority;
+- COP/Measured Risk governs Exposure, reversibility, responsibility and recovery.
 
-Its candidate contribution is limited to preserving, across a transition:
+Janus therefore does not reimplement those mechanisms.
+
+Its remaining candidate contribution is narrower:
+
+> **A decisive prospective Assertion should be recorded ex ante with an explicit ResolutionExpectation, before the evidence that may resolve it exists or is observed, and should remain linked to a COP Continuation that later brings Reality traces back as EvidenceRelations to that same Assertion.**
+
+In short:
+
+> **Janus makes decision-relevant prospective assertions answerable to later Reality.**
+
+Whether this composition deserves a named COP profile, an enforced contract, or no distinct identity at all is now an empirical question.
+
+---
+
+# 1. From governor to composition pattern
+
+The research trajectory has deliberately reduced Janus:
 
 ```text
-what is being promoted
-why it is being promoted
-what remains unresolved
+v0.1  Cognitive gatekeeper
+
+v0.2  bidirectional governor around synthesis
+
+v0.3  falsifiable transition contract
+
+v0.4  COP composition pattern
+      +
+      ex-ante ResolutionExpectation
+      +
+      prospective → retrospective evidence loop
+```
+
+This reduction is intentional.
+
+The rule is:
+
+> **Reuse existing machinery before inventing a new layer.**
+
+A dedicated Janus service is not currently justified.
+
+---
+
+# 2. COP already owns most of Janus.Past
+
+The retrospective problem can be expressed directly in COP:
+
+```text
+Reality
+  ↓
+Trace
+  ↓
+Assertion
+  ↓
+EvidenceRelation
+  ↓
+revision / projection / continuation
+```
+
+For example, the statement:
+
+```text
+"Trace T concerns Cognitive Packet CP-42"
+```
+
+is itself an Assertion.
+
+Evidence may then:
+
+```text
+support
+contradict
+contextualize
+```
+
+that Assertion.
+
+Competing Packet-attribution hypotheses can coexist without historical deletion.
+
+Therefore the old Janus.Past gates:
+
+```text
+Identity Gate
+Relation Gate
+Canonicalization Gate
+```
+
+should no longer be treated as a new Janus mechanism.
+
+They are specializations of existing COP epistemic machinery.
+
+---
+
+# 3. Attribution is not truth
+
+The invariant survives intact:
+
+```text
+Trace attribution
+≠
+truth of Trace content
+```
+
+It may be well established that:
+
+```text
+Trace T belongs to CP-42
+```
+
+while the claim expressed inside T remains disputed.
+
+COP already protects this separation.
+
+Janus must not weaken it.
+
+---
+
+# 4. Unknown relation is not no relation
+
+The useful invariant remains:
+
+[
+UnknownRelation(T) \neq NoRelation(T)
+]
+
+No Black Cognitive Packet is required.
+
+Use ordinary Assertions, epistemic status, competing hypotheses and EvidenceRelations.
+
+Example:
+
+```text
+A1: T concerns CP-42
+    hypothesized
+
+A2: T concerns CP-57
+    hypothesized
+
+evidence exists for both
+
+→ relation remains unresolved
+```
+
+Ignorance is represented explicitly rather than hidden in a synthetic placeholder object.
+
+---
+
+# 5. The remaining Janus problem is prospective
+
+The first genuinely Janus-specific question now appears when a prospective claim contributes to a choice.
+
+Example:
+
+```text
+Current Packet P
+→ candidate continuation C
+
+Assertion A:
+"Choosing C should produce outcome X by horizon H."
+```
+
+A is already naturally a COP Assertion.
+
+Janus does not need another proposition type.
+
+What may be missing is an explicit ex-ante obligation to say:
+
+```text
+what would count as resolution
+when to look
 what could revise the decision
-and, for prospective transitions,
-which later Reality traces may settle it
+and how the later evidence will be connected back
 ```
 
-The central hypothesis is:
+That is the candidate Janus residue.
 
-> **A prospective cognitive commitment should remain linked to the later evidence that can confirm, revise or defeat it, while unresolved residue and revision conditions survive the transition.**
+---
 
-The corresponding retrospective discipline is:
+# 6. Decisive prospective Assertions
 
-> **A trace may be associated, retained and routed without being silently promoted into truth or canonical knowledge.**
+Not every forecast deserves Janus treatment.
 
-Janus is therefore first a **logical role and interface contract**.
+Otherwise the system invites trivial prediction farming and Goodhart-style gaming.
 
-Whether it deserves a dedicated runtime layer is explicitly left to Reality.
+Define:
 
-# 1. The claim under test
+> **A prospective Assertion is decisive for a transition when materially reversing that Assertion could have changed the qualification or selected continuation.**
 
-The v0.2 formulation treated Janus as a bidirectional governor.
+Conceptually:
 
-External review showed that most of the implied mechanisms already have mature or emerging implementations:
+[
+Decisive(A,T)
+]
+
+when:
+
+[
+Reverse(A) Rightarrow PossibleChange(T)
+]
+
+This need not be computed mechanically.
+
+A qualitative human- or handler-declared judgment is acceptable when the rationale is inspectable.
+
+The important distinction is:
 
 ```text
-truth maintenance
-belief revision
-provenance
-memory-update control
-world models
-predictive guards
-policy decision points
-execution tracing
-Measured Risk
+prediction exists
+≠
+prediction mattered to the decision
 ```
 
-Janus therefore has no right to exist merely because these mechanisms need coordination.
+Janus is interested primarily in the second case.
 
-The remaining candidate contribution is narrower:
+---
 
-```text
-qualified transition
-+
-unresolved residue
-+
-revision conditions
-+
-prospective settlement link
-```
+# 7. Minimal experimental profile
 
-The falsifiable question becomes:
+The current Booster uses existing COP metadata rather than a new core schema.
 
-> **Does making this contract explicit improve cognitive continuity, accountability or reconstruction compared with adding the same fields to existing Packet / continuation structures without a distinct Janus layer?**
-
-If not, Janus should be demoted to vocabulary or pattern.
-
-# 2. Janus is not a universal evaluator
-
-Janus may consume assessments produced elsewhere.
-
-It must not become their source.
-
-## Janus must not itself compute
-
-```text
-truth
-belief revision
-world-model prediction
-potentiality
-expected value
-risk
-authorization
-permission
-budget
-consent
-moral value
-memory retention policy
-synthesis
-execution
-```
-
-A possible flow is:
-
-```text
-belief-revision system ─┐
-world model ────────────┤
-risk model ─────────────┤
-capability model ───────┤
-policy context ─────────┤
-                        ▼
-                qualified transition record
-```
-
-Janus is therefore closer to a **governed semantic interface** than to a reasoning engine.
-
-# 3. One envelope, two procedures
-
-Past and Future share a useful record structure.
-
-They do **not** necessarily share an evaluation theory.
-
-## Janus.Past
-
-Retrospective procedure:
-
-```text
-trace
-→ attribution hypothesis
-→ relation qualification
-→ possible canonical promotion
-```
-
-Questions include:
-
-```text
-Does this trace concern Packet A?
-What relation does it support?
-How strong is the attribution?
-What remains unresolved?
-What could revise the attribution?
-```
-
-## Janus.Future
-
-Prospective procedure:
-
-```text
-current Packet
-→ candidate continuation
-→ qualification
-→ optional test / Act
-→ later Reality return
-```
-
-Questions include:
-
-```text
-What continuation is being promoted?
-On what basis?
-What uncertainty remains?
-What conditions would change the decision?
-What later observation can settle the prospective claim?
-```
-
-Thus:
-
-> **One transition envelope; two different qualification procedures.**
-
-# 4. Core transition record
-
-A minimal candidate representation is:
+Example:
 
 ```yaml
-qualified_transition:
-  direction: past | future
+meta:
+  janus:
+    decisive: true
+    recorded_at: "2026-09-23T10:00:00Z"
 
-  subject: <reference>
-  relation: <type>
-  status: <qualified-status>
+    revision_conditions:
+      - "A qualified later trace materially contradicts the expected outcome."
 
-  basis:
-    evidence: []
-    assessments: []
-    constraints: []
-
-  epistemic_status: <status>
-
-  unresolved:
-    - <open hypothesis or residue>
-
-  revision_conditions:
-    - <observation or condition that may change qualification>
-
-  settlement:
-    expected: <optional>
-    settled_by: <later trace reference or null>
+    resolution_expectation:
+      criterion: "Observable condition capable of supporting or contradicting the assertion."
+      horizon: "2026-10-01T12:00:00Z"
 ```
 
-The schema is intentionally implementation-neutral.
-
-A Cognitive Packet store, continuation runtime, memory layer, provenance graph or specialized controller may write the same logical structure.
-
-# 5. Qualification is not authorization
-
-A transition may be:
+The enclosing object remains a normal:
 
 ```text
-well supported
-promising
-low uncertainty
-technically feasible
+cop.assertion/v1
 ```
 
-without being authorized.
+No Janus-specific Assertion class is introduced.
 
-The existing Corpus distinction remains:
+---
+
+# 8. Resolution, not Settlement
+
+Earlier drafts used the word `settlement`.
+
+COP/Accounting already uses Settlement for resource/accounting semantics.
+
+To avoid collision, Janus now uses:
+
+```text
+ResolutionExpectation
+Resolution
+```
+
+A ResolutionExpectation says, ex ante:
+
+```text
+which assertion is under test
+what observation would bear on it
+when that observation should be reviewed
+what conditions could revise the prospective judgment
+```
+
+Resolution itself is not a naked verdict field.
+
+It is expressed through COP evidence machinery.
+
+---
+
+# 9. A Resolution is an EvidenceRelation
+
+This is a core v0.4 correction.
+
+Do not write:
+
+```yaml
+settled_by: trace:T
+result: contradicted
+```
+
+as if the meaning of a trace were self-evident.
+
+Instead:
+
+```text
+later Trace T
+      │
+      ▼
+retrospective qualification
+      │
+      ▼
+EvidenceRelation
+      │
+      ├── supports
+      ├── contradicts
+      └── contextualizes
+      │
+      ▼
+prospective Assertion A
+```
+
+The assertion remains the same object that influenced the earlier decision.
+
+That continuity is the strongest candidate Janus differentia.
+
+---
+
+# 10. Future-to-Past continuity
+
+The composition pattern is therefore:
+
+```text
+Prospective Assertion A
+        │
+        ├── decisive
+        ├── recorded_at
+        ├── revision_conditions
+        └── ResolutionExpectation
+                  │
+                  ▼
+             Continuation
+                  │
+                  ▼
+                Reality
+                  │
+                  ▼
+               Trace T
+                  │
+                  ▼
+         EvidenceRelation(T,A)
+                  │
+                  ▼
+         retrospective revision
+```
+
+The concise formulation becomes:
+
+> **Janus.Future records what must later answer. Janus.Past qualifies what Reality answered.**
+
+But Janus.Past is implemented with ordinary COP epistemic machinery.
+
+---
+
+# 11. One envelope, two different uncertainty regimes
+
+Past and Future remain asymmetric.
+
+The restored invariant is:
+
+[
+UnknownPast \neq UnactualizedFuture
+]
+
+Past uncertainty often means:
+
+```text
+the relevant event occurred
+but our evidence is incomplete
+```
+
+Future uncertainty includes:
+
+```text
+the relevant event does not yet exist
+and multiple branches remain genuinely open
+```
+
+Therefore Janus may share a structural envelope across Past and Future, but must not imply one common evaluation theory.
+
+Retrospective qualification is diagnostic and attributive.
+
+Prospective qualification is intervention-related and option-sensitive.
+
+---
+
+# 12. Temporal integrity is constitutive
+
+A prospective assertion must be identifiable as genuinely ex ante.
+
+COP already distinguishes multiple time coordinates, including Reality occurrence and observation/ingestion.
+
+Janus adds or profiles the assertion-side commitment time:
+
+```text
+recorded_at(A)
+```
+
+For ordinary prospective credit:
+
+[
+recorded_at(A) < observed_or_ingested_at(T)
+]
+
+for the traces used to resolve A.
+
+A stronger condition may hold for literal forecasting:
+
+[
+recorded_at(A) < occurred_at(T)
+]
+
+but these cases must remain distinguishable.
+
+Useful classes include:
+
+```text
+forecast
+  assertion recorded before Reality occurrence
+
+blind retrodiction
+  Reality occurrence already happened
+  but assertion recorded before observation
+
+postdiction
+  assertion recorded after observation
+```
+
+Postdiction must not receive prospective credit.
+
+---
+
+# 13. Resolution ownership through COP Continuations
+
+A ResolutionExpectation that wakes nobody is only a note.
+
+COP already provides the needed ownership mechanism:
+
+```text
+Continuation
+  resumeAfter
+  resumeBefore
+  waitForEvents
+  state
+  resumeTo
+```
+
+Therefore the candidate Janus pattern is:
+
+```text
+decisive Assertion
+→ ResolutionExpectation
+→ normal COP Continuation
+→ resume at horizon or relevant event
+→ inspect later traces
+→ create EvidenceRelation(s)
+```
+
+No Janus scheduler is needed.
+
+The existing COP Scheduler remains the execution mechanism.
+
+---
+
+# 14. Resolution may remain unresolved
+
+The system must not force a binary answer.
+
+At the declared horizon, possible states include:
+
+```text
+supported
+contradicted
+contextualized
+ambiguous
+unattributable
+not-yet-observable
+unresolved-at-horizon
+```
+
+The first three can be represented by EvidenceRelations.
+
+The latter states describe limits on present resolution.
+
+They are information, not failure to comply.
+
+---
+
+# 15. Prediction accuracy is not decision utility
+
+Janus should not evolve into a generic prediction leaderboard.
+
+Distinguish:
+
+```text
+prediction accuracy
+calibration
+decision utility
+information gain
+cost
+Exposure
+capability gain
+```
+
+A highly accurate but irrelevant claim may contribute little.
+
+A partially wrong forecast may still have improved a decision.
+
+Therefore the object of accountability is:
+
+> **the decision-relevant prospective Assertion and its actual role in the selected continuation.**
+
+---
+
+# 16. Synthetic Skin in the Game — operational interpretation
+
+The strongest current form of Synthetic Skin is not punishment.
+
+It is non-resettable answerability.
+
+The sequence is:
+
+```text
+you relied on Assertion A
+→ A is recorded
+→ its resolution criterion is recorded
+→ you cannot silently rewrite A after the outcome
+→ later Reality traces are linked back to A
+→ the relationship remains inspectable
+```
+
+This creates persistent cognitive consequence without pretending that an AI experiences biological skin, pain, shame or loss.
+
+The first Synthetic Skin mechanism is therefore:
+
+> **the impossibility of retroactively escaping what was prospectively advanced.**
+
+Only later, if justified, may resolved history influence:
+
+```text
+trust
+routing
+autonomy
+mandatory review
+budget
+model selection
+```
+
+Those consequences are separate design decisions.
+
+---
+
+# 17. Synthetic Skin remains empirical
+
+Persistent consequence can shape behavior.
+
+That does not prove it improves reasoning.
+
+The correct claim is:
+
+> **Synthetic Skin can make cognitive commitments persistent and opposable. Whether this improves calibration, learning, foresight or decision utility rather than merely proxy compliance is empirical.**
+
+Known gaming risks include:
+
+```text
+trivial prediction selection
+micro-prediction spam
+identity reset
+session reset
+proxy optimization
+trust-score gaming
+memory laundering
+reviewer imitation
+```
+
+The decisive-Assertion criterion is one defense, not a complete solution.
+
+---
+
+# 18. COP/Measured Risk owns Exposure
+
+Janus must not recreate a risk ontology.
+
+When a prospective continuation leads to a consequential Act, reference existing COP/Measured Risk machinery.
+
+That machinery already separates:
+
+```text
+Objective
+Budget
+Exposure
+Mandate
+Risk
+Reversibility
+Residue
+Responsibility
+```
+
+Therefore Janus may carry references such as:
+
+```yaml
+act_ref: ...
+measured_risk_ref: ...
+mandate_ref: ...
+```
+
+but does not compute or authorize them.
+
+The boundary remains:
+
+```text
+Janus-like epistemic record
+≠
+authorization
+```
+
+---
+
+# 19. Qualification is not authorization
+
+The Corpus invariant remains:
 
 ```text
 Intent
@@ -281,367 +711,291 @@ Intent
 ≠ Authorization
 ```
 
-Therefore:
+A prospective Assertion may be:
 
 ```text
-Janus-like qualification
-→ epistemic / operational record
-
-PDP / Mandate layer
-→ authorization decision
+well supported
+decision-relevant
+promising
 ```
 
-Existing policy systems such as Cedar- or OPA-like policy decision points are friends, not things Janus should replace.
+while the associated Act is still unauthorized.
 
-# 6. Attribution is not truth
+Janus must never become a policy decision point.
 
-The retrospective side must preserve:
+Existing Mandate and PDP mechanisms retain that role.
+
+---
+
+# 20. No dedicated Janus layer is currently justified
+
+The plausible maturity ladder is now:
 
 ```text
-Trace → Packet attribution
+0. Vocabulary
+   "Janus" names the idea.
+
+1. Pattern
+   Documentation:
+   prospective Assertion → Reality → EvidenceRelation.
+
+2. Profile
+   COP objects use a small janus metadata convention.
+
+3. Enforced Contract
+   decisive Assertions require ResolutionExpectation or explicit waiver.
+
+4. Active Protocol
+   follow-up Continuations are created automatically.
+
+5. Dedicated service/layer
+   currently unsupported by evidence.
 ```
 
-separately from:
+The project should advance only as far as Reality justifies.
+
+---
+
+# 21. Active Reality Test — COP/Janus Booster
+
+The first real experiment now lives in Inseme:
 
 ```text
-TraceContent → Claim truth status
+research/cop_janus_booster.md
 ```
+
+Tracking issue:
+
+```text
+JeanHuguesRobert/inseme#90
+Experiment — COP/Janus Booster: 10 prospective decisions
+```
+
+Executable scenario:
+
+```text
+sandbox/cop-continuation-bac-a-sable/scenarios/janus-resolution-booster.js
+```
+
+The sample is fixed at:
+
+> **the next 10 genuinely decision-bearing COP continuations**
+
+The experiment deliberately forbids a `cop-core` schema change.
+
+This makes the experiment a real test of whether existing primitives are already sufficient.
+
+---
+
+# 22. First coding validation
+
+A bounded coding-agent task is tracked separately from the field experiment.
+
+Its purpose is:
+
+```text
+run the scenario
+→ harden defects
+→ add the smallest useful regression test
+→ inspect the first real integration point
+```
+
+without introducing production Janus instrumentation.
+
+This separates:
+
+```text
+experiment register
+from
+implementation validation task
+```
+
+and keeps #90 clean as the field record.
+
+---
+
+# 23. First real integration candidate in Inseme
+
+Repository inspection identifies:
+
+```text
+apps/platform/mcp/cop/jhnDelegatingAgent.js
+```
+
+as the strongest first candidate.
+
+The relevant existing path is:
+
+```text
+user / Principal message
+→ shouldDelegate / wantsDelegate
+→ Mandate check
+→ budget check
+→ invokeGovernedCapability
+→ HandlerInstance
+→ CapabilityInvocation
+→ Act
+→ Trace
+→ Imputation
+```
+
+This is stronger than instrumenting `magistralCapabilityResolver.js`.
+
+Why:
+
+- the resolver knows how a capability is selected and executed;
+- it does not own the higher-level reason why delegation mattered;
+- `jhnDelegatingAgent.js` sits where a prospective judgment actually influences whether to delegate;
+- it already preserves Principal, Mandate, budget and governed-Act lineage.
+
+The candidate Janus Assertion would therefore concern the reason for delegation, not merely the fact that a provider was selected.
 
 Example:
 
 ```text
-"This letter belongs to CP-42"
+"Delegating this bounded coding task to capability C
+is expected to produce useful result X
+under current mandate and budget."
 ```
 
-may be strongly established while:
+Only if such a claim genuinely influences the decision should it be marked `decisive`.
+
+Production instrumentation is not yet authorized by this document.
+
+---
+
+# 24. Why Magistral remains a friend, not the Janus owner
+
+`magistralCapabilityResolver.js` is still relevant.
+
+It provides:
 
 ```text
-"The factual claim made in the letter is true"
+CapabilityRequirement
+→ CapabilityOffer
+→ HandlerInstance
+→ execution receipt
 ```
 
-remains contested.
+Those receipts may later become useful Reality traces.
 
-This distinction is invariant.
+But the resolver is intentionally lower-level and provider-neutral.
 
-> **Reliable provenance does not imply reliable content.**
-
-# 7. Unknown is not absent
-
-The architecture must preserve:
-
-\[
-UnknownRelation(T) \neq NoRelation(T)
-\]
-
-The v0.2 notion of a **Black Cognitive Packet** is withdrawn as a Packet-like object.
-
-Use explicit uncertainty instead:
-
-```yaml
-relation:
-  status: unresolved
-
-  hypotheses:
-    - packet: CP-A
-      basis: [...]
-    - packet: CP-B
-      basis: [...]
-
-  residue:
-    - "insufficient evidence to discriminate A from B"
-```
-
-This is compatible with open-world semantics and ATMS-style competing environments.
-
-No pseudo-Packet is required merely to own ignorance.
-
-# 8. Canonical remains revisable
-
-Canonicalization is operational.
-
-It does not mean eternal truth.
-
-A relation may evolve:
+Embedding Janus there would risk confusing:
 
 ```text
-candidate
-→ accepted
-→ challenged
-→ revised
-→ superseded
-```
-
-This non-monotonicity is primarily a property of the governed knowledge store.
-
-It is not claimed as Janus's unique invention.
-
-Janus merely requires that transition records do not erase the conditions under which later revision becomes legitimate.
-
-# 9. Dead-end is not impossible
-
-The distinction remains:
-
-\[
-DeadEnd(Map_t) \not\Rightarrow Impossible(Reality)
-\]
-
-Useful statuses include:
-
-```text
-open
-deferred
-dead-end-candidate
-blocked-under-current-regime
-closed-by-evidence
-```
-
-Every strong closure should preserve its scope.
-
-The rule remains:
-
-> **Gate promotion, not possibility.**
-
-# 10. Future commitments must become answerable
-
-The strongest surviving Janus hypothesis concerns **settlement**.
-
-A prospective claim should not disappear after it influences a continuation.
-
-Instead:
-
-```text
-prospective claim
-→ transition promoted
-→ action / probe / non-action
-→ Reality
-→ trace
-→ settlement
-→ retrospective revision
-```
-
-Example:
-
-```yaml
-qualified_transition:
-  direction: future
-  subject: CP-57
-  relation: continuation_of
-  status: probe-first
-
-  basis:
-    assessments:
-      - "branch A expected to outperform B"
-
-  revision_conditions:
-    - "observed result favors B"
-
-  settlement:
-    expected:
-      observation: "metric M after probe"
-      horizon: "after bounded execution"
-    settled_by: null
-```
-
-Later:
-
-```yaml
-settlement:
-  expected:
-    observation: "metric M after probe"
-  settled_by: trace:T-991
-  result: contradicted
-```
-
-This creates the coupling:
-
-> **Janus.Future makes a claim answerable; Janus.Past records how Reality answered.**
-
-# 11. Prediction accuracy is not decision utility
-
-A prediction can be:
-
-```text
-correct but useless
-wrong but decision-useful
-well calibrated but irrelevant
-informative but expensive
-```
-
-The architecture must therefore distinguish:
-
-```text
-accuracy
-calibration
-decision utility
-information gain
-resource cost
-Exposure
-capability gain
-```
-
-Settlement should attach to the **decision-relevant claim**, not to arbitrary easy-to-score predictions.
-
-# 12. Synthetic Skin in the Game — revised claim
-
-Synthetic Skin in the Game remains a useful research hypothesis.
-
-It must no longer be stated as automatically improving reasoning.
-
-Synthetic mechanisms may impose:
-
-```text
-finite resource consumption
-prediction settlement
-persistent causal trace
-authority constraints
-mandatory escalation
-non-resettable history
-```
-
-These mechanisms clearly shape behaviour.
-
-Whether they improve:
-
-```text
-calibration
-learning
-decision utility
-foresight
-```
-
-is empirical.
-
-Therefore:
-
-> **Synthetic Skin can make consequences persistent and opposable. Whether that persistence improves reasoning rather than merely proxy compliance must be tested.**
-
-This avoids confusing:
-
-```text
-behaviour shaping
+provider selection
 with
-cognitive improvement
+decision rationale
 ```
 
-# 13. Synthetic Skin failure modes
-
-A synthetic consequence system can be gamed.
-
-Examples include:
+Therefore the preferred first design is:
 
 ```text
-micro-prediction spam
-selection of only easy claims
-identity reset
-session reset
-proxy optimization
-trust-score gaming
-budget theatre
-agreement with reviewer models
-memory provenance laundering
+higher-level decision point
+records decisive Assertion
+
+Magistral/COP executes
+
+execution receipt / governed Trace
+returns as evidence
 ```
 
-Therefore the settlement target should be:
+---
+
+# 25. J-Δ′ — revised deletion test
+
+The previous J-Δ test compared unequal structures and could not cleanly distinguish a pattern from a dedicated layer.
+
+Use three stages instead.
+
+## A0 — existing COP only
 
 ```text
-decision-relevant claim
-→ actual consequence
-→ Reality return
+Assertion
+EvidenceRelation
+Packet / Continuation
+existing time semantics
 ```
 
-rather than:
+No Janus convention.
+
+## A1 — metadata composition pattern
+
+A0 plus:
 
 ```text
-generic agent score
+decisive
+revision_conditions
+ResolutionExpectation
+recorded_at
 ```
 
-# 14. From Embodiment Ladder to factored test regimes
+stored through existing extension points such as metadata.
 
-The v0.2 E0–E4 ladder mixed several orthogonal dimensions.
+No enforcement.
 
-The scalar ladder is withdrawn.
+## E — enforced contract
 
-A prospective test should instead be described across dimensions such as:
-
-```yaml
-test_regime:
-  representation_fidelity: low | medium | high
-  reality_coupling: none | sandbox | operational
-  stake_persistence: resettable | persistent
-  propagation: local | bounded | broad
-  affected_principals: []
-  moral_patienthood: none | human | animal | other
-  reversibility: <reference to Reversibility Envelope>
-  recovery_path: <reference>
-  mandate_basis: <reference>
-```
-
-Two tests may therefore invert on different axes.
-
-Example:
+A1 plus:
 
 ```text
-high-fidelity simulation involving public personal data
+write-time validation
+requirement or explicit waiver
+follow-up Continuation ownership
+horizon handling
+missing-resolution observability
 ```
 
-may create more real Exposure than:
+## Interpretation
 
 ```text
-private operational test on an isolated throwaway system
+A1 ≈ A0
+→ withdraw Janus as useful distinct pattern.
+
+A1 > A0
+and E ≈ A1
+→ Janus survives only as pattern/profile.
+
+E > A1 by a predeclared practically meaningful margin
+→ consider Janus as an enforced COP contract.
 ```
 
-No single “height” determines which is safer.
+A dedicated service is still not implied.
 
-# 15. Test selection and Measured Risk
+---
 
-The v0.2 expression:
+# 26. What to measure
 
-\[
-\min(Embodiment)
-\]
-
-is withdrawn.
-
-The correct principle is multi-dimensional:
-
-> **Choose a test regime whose discrimination, Exposure, affected Principals, reversibility, recovery structure and mandate are jointly acceptable.**
-
-A useful heuristic remains:
-
-> **Do not expose Reality more than necessary — but do not hide in simulation when only Reality can discriminate the question.**
-
-This is not a scalar optimization law.
-
-It is a Measured Risk discipline.
-
-# 16. Real stakes increase obligations
-
-When living or human Principals are exposed, the architecture must at least preserve or reference:
+The Booster should observe at least:
 
 ```text
-affected_principals
-loss_bearer
-mandate_basis
-consent where applicable
-Exposure envelope
-stop conditions
-recovery path
-compensation path where relevant
+presence of genuinely decisive Assertions
+ex-ante temporal integrity
+resolution follow-up rate
+resolution completeness
+preservation of ambiguity
+information otherwise lost
+review friction
+schema / metadata burden
+missed horizons
+false confidence
+usefulness to later human review
 ```
 
-Janus does not decide these matters.
+Before a formal J-Δ′ comparison, thresholds should be declared in advance.
 
-But a transition record should not discard them when they are material.
+Avoid pretending that N=10 provides statistical proof.
 
-The principle remains:
+The first ten cases are a field probe for structure, friction and failure modes.
 
-> **More real skin in the game creates stronger duties of care, not stronger permission to experiment.**
+---
 
-# 17. Closure for action vs epistemic revisability
+# 27. Closure for action vs epistemic revisability
 
-Non-monotonic knowledge must not imply endless operational reopening.
+Janus should preserve revision conditions without forcing endless reopening.
 
-Keep separate:
+Separate:
 
 ```text
 epistemically revisable
@@ -653,566 +1007,237 @@ from:
 operationally closed for present action
 ```
 
-A system may validly say:
+A decision may be closed under current deadline and Mandate while remaining open to later epistemic revision.
+
+This prevents non-monotonic reasoning from becoming paralysis.
+
+---
+
+# 28. Gate capture remains a failure mode
+
+Earlier Janus language emphasized gates.
+
+That creates a drift risk:
 
 ```text
-decision closed under current mandate and deadline
+qualification
+→ permission
+→ centralized veto
 ```
 
-while preserving:
+The v0.4 pattern avoids this by locating Janus inside ordinary COP objects.
+
+There need not be:
 
 ```text
-revision_condition = new evidence E
+Janus daemon
+Janus central authority
+Janus global registry
 ```
 
-This prevents revision machinery from becoming paralysis.
+The pattern can remain local to the history whose commitment it records.
 
-# 18. Friends before competitors
+This is compatible with the Locality Principle.
 
-Janus should reuse adjacent systems before defining new machinery.
+---
 
-## 18.1 ATMS / truth-maintenance systems
+# 29. Friends before competitors
 
-Strong friend for:
+The current closest friends are not competitors to displace.
 
-```text
-competing hypotheses
-justifications
-revision
-residue preservation
-```
+## COP Trace / Assertion / EvidenceRelation
 
-Potential reuse:
+Provides the retrospective epistemic substrate.
 
-```text
-Janus.Past competing Packet identities
-```
+## COP Continuations
 
-Janus should not reinvent ATMS environments.
+Provides resolution ownership across time.
 
-## 18.2 Memory-update controllers
+## COP temporal semantics
 
-Contemporary memory controllers — including systems using the name Janus — are close friends of retrospective promotion.
+Provides the distinction between event occurrence, creation and later observation.
 
-A useful specialization is:
+## COP/Measured Risk
 
-```text
-candidate memory update
-→ accept new state
-or
-→ retain previous state
-```
+Provides Exposure and recovery semantics for consequential acts.
 
-This resembles the Canonicalization Gate.
+## Mandate / PDP machinery
 
-The research question is what a Cognitive Packet transition contract adds beyond the memory controller itself.
+Provides authorization boundaries.
 
-## 18.3 Predictive guards and world models
+## Memory-update controllers / truth-maintenance systems
 
-Predictive guards can supply:
+Provide revision and competing-hypothesis machinery.
 
-```text
-expected consequences
-delayed-risk assessments
-counterfactual trajectories
-```
+## Predictive guards / execution-settled prediction systems
 
-to a Future qualification record.
+Provide adjacent mechanisms for linking forecasts to later execution outcomes.
 
-They are assessment providers, not Janus itself.
+Janus should compose these rather than reimplement them.
 
-## 18.4 Execution-settled prediction systems
+---
 
-Systems such as DreamLedger-like execution-settled prediction credit are especially close friends of the Future→Past settlement hypothesis.
+# 30. Pangloss Loop
 
-The relevant pattern is:
-
-```text
-claim
-→ execution
-→ observation
-→ settlement
-→ future weighting
-```
-
-Janus should reuse this idea rather than invent a generic prediction score.
-
-## 18.5 Policy decision points
-
-Cedar-, OPA- and similar policy systems are friends of:
-
-```text
-qualified
-→ authorized / forbidden
-```
-
-They occupy a boundary Janus must not absorb.
-
-## 18.6 Friends named Janus
-
-The name has several 2026 collisions.
-
-They should be separated into:
-
-### Architectural kinship
-
-```text
-memory update gating
-predictive safety gating
-permission gating
-restart-safe consistency checks
-```
-
-### Naming coincidence
-
-```text
-multimodal understanding/generation
-Jacobian-related methods
-unrelated serving or infrastructure systems
-```
-
-Repeated use of the name is not evidence that the Corpus architecture is necessary.
-
-It is only evidence worth investigating.
-
-# 19. Minimal Janus differentia
-
-After external review, the strongest possible differentia is no longer:
-
-```text
-two-faced governor
-```
-
-but:
-
-> **explicit settlement-bearing transition continuity across prospective and retrospective cognitive work.**
-
-In compact form:
-
-```text
-Future qualification
-   │
-   ├── basis
-   ├── unresolved residue
-   ├── revision conditions
-   └── settlement expectation
-              │
-              ▼
-            Reality
-              │
-              ▼
-Past qualification
-   └── settlement result
-```
-
-If existing Packet machinery already provides this cleanly, Janus may collapse into that machinery.
-
-# 20. Test J-Δ — deletion test
-
-Janus must be exposed to a direct falsifier.
-
-## 20.1 Corpus sample
-
-Select a bounded set of existing GitHub Issues / continuations containing sufficiently rich traces.
-
-Use the same evidence and same frozen handler/model for both conditions.
-
-## 20.2 Condition A — minimal fields
-
-Existing Packet / continuation representation plus only:
-
-```text
-epistemic_status
-unresolved[]
-revision_conditions[]
-settlement
-```
-
-No Janus vocabulary required.
-
-## 20.3 Condition B — Janus contract
-
-Use the explicit:
-
-```text
-qualified_transition
-direction: past | future
-basis
-epistemic_status
-unresolved[]
-revision_conditions[]
-settlement
-```
-
-## 20.4 Metrics
-
-Compare:
-
-```text
-false attribution
-residue preservation
-competing-hypothesis preservation
-settlement completeness
-reviewer agreement
-time-to-review
-schema burden
-implementation complexity
-```
-
-## 20.5 Pre-registered deletion criterion
-
-> **If Condition B does not materially improve residue preservation or settlement quality over Condition A while maintaining comparable attribution quality and acceptable complexity, Janus should not be promoted as a distinct architectural layer.**
-
-Possible outcomes:
-
-```text
-B clearly better
-→ retain Janus as interface contract
-
-A equivalent
-→ demote Janus to pattern / vocabulary
-
-A better
-→ withdraw distinct Janus architecture
-```
-
-This criterion is intentionally capable of killing the concept.
-
-# 21. Secondary Future test
-
-If Janus survives J-Δ, a later test should compare:
-
-```text
-execution-settled prediction credit only
-```
-
-against:
-
-```text
-execution-settled credit
-+
-explicit prospective Janus qualification
-```
-
-Endpoint:
-
-```text
-decision utility
-```
-
-not merely accuracy.
-
-# 22. Pangloss Loop
-
-Retain the operational anti-pattern:
+The anti-pattern remains useful:
 
 ```text
 Reality contradicts model
-→ contradiction rationalized
+→ contradiction rationalized away
 → model unchanged
 ```
 
-For Janus itself, the anti-Pangloss condition is Test J-Δ.
+Janus must itself remain subject to this test.
 
-If Janus fails its own deletion criterion and remains architecturally privileged anyway, the project has entered its own Pangloss Loop.
+If the Booster shows no useful gain and Janus survives only because the concept is elegant, the project has entered its own Pangloss Loop.
 
-# 23. Huxley Optimization
+---
 
-Retain only in bounded form:
+# 31. Hall of Mirrors
 
-```text
-reduce uncertainty / risk
-→ suppress useful exploration
-→ reduce effective option space
-→ call result safety
-```
-
-This anti-pattern must not be applied to legitimate rights-based refusal.
-
-Refusing an experiment because it violates rights or mandate is not “Huxley Optimization.”
-
-The anti-pattern concerns **unnecessary possibility closure**, not principled limits.
-
-# 24. Hall of Mirrors
-
-A particularly important failure mode remains:
+Another critical failure mode remains:
 
 ```text
 model
 → simulator
 → reviewer model
 → evaluator model
-→ consensus
+→ apparent consensus
 ```
 
-without an adequately independent Reality return.
+without a sufficiently independent Reality return.
 
-Multiple agents do not automatically provide independent evidence.
+Multiple models are not automatically independent evidence.
 
-This motivates settlement against external consequences where proportionate and lawful.
+The ResolutionExpectation exists precisely to keep a path open toward evidence outside the original reasoning loop when proportionate and lawful.
 
-# 25. Gate capture
+---
 
-Because Janus uses gate language, a persistent drift risk is:
+# 32. Current working definition
 
-```text
-qualification
-→ authority
-→ centralized veto
-```
-
-The safeguard remains:
-
-> **Janus records promotion status; it does not manufacture jurisdiction.**
-
-Distributed implementations are explicitly allowed.
-
-There need not be a central Janus service.
-
-# 26. Minimal implementation hypothesis
-
-The smallest implementation should not begin with:
-
-```text
-new daemon
-new CLI
-new database
-new orchestration service
-```
-
-Start with fields on existing structures.
-
-Candidate Booster:
-
-```yaml
-epistemic_status: candidate
-
-unresolved:
-  - "Packet identity ambiguous between CP-A and CP-B"
-
-revision_conditions:
-  - "new trace explicitly links issue to CP-A"
-
-settlement:
-  expected: null
-  settled_by: null
-```
-
-Only promote toward a dedicated Janus object if the Reality Test demonstrates value.
-
-# 27. Research questions
-
-1. Does Janus add anything beyond existing Packet/continuation fields?
-2. Does explicit Future→Past settlement improve decision utility?
-3. Which parts of Past qualification are already solved by ATMS or memory controllers?
-4. Which parts of Future qualification are already solved by predictive guards?
-5. Can one envelope serve both directions without encouraging one shared evaluation algorithm?
-6. What is the smallest settlement structure worth keeping?
-7. What counts as sufficient Reality independence from the model producing the prediction?
-8. How should identity-reset gaming be prevented without over-centralizing identity?
-9. When should an unresolved relation remain unresolved indefinitely?
-10. How should closure-for-action coexist with later epistemic reopening?
-11. Can OpenTelemetry or another existing trace model carry Janus records without a parallel standard?
-12. Does a named Janus interface improve human review time?
-13. Does it reduce false canonicalization?
-14. Does it improve preservation of competing hypotheses?
-15. Does it improve later settlement completeness?
-16. Does the concept survive Test J-Δ?
-
-# 28. Working definition
-
-> **Janus is a candidate interface contract for recording and qualifying transitions around Cognitive Packets. It preserves the basis, epistemic status, unresolved residue and revision conditions of a transition, and may link a prospective qualification to the later Reality traces that settle it. Janus does not itself perform belief revision, prediction, risk estimation, authorization, synthesis or execution. Whether Janus deserves a distinct architectural layer rather than remaining a shared transition record is an explicit empirical question.**
+> **Janus is a COP composition pattern that makes decision-relevant prospective Assertions answerable to later Reality. It reuses COP Assertions, EvidenceRelations, temporal semantics, Continuations, Mandates and Measured Risk. Its candidate addition is an ex-ante ResolutionExpectation attached to decisive prospective Assertions, recorded before the evidence that may resolve them is observed, and followed until later Traces can be qualified against those Assertions.**
 
 Short form:
 
-> **Janus records why a transition may be promoted, what remains unresolved, and what later evidence may revise it.**
+> **Janus makes decisive prospective assertions answerable to later Reality.**
 
-Prospective-retrospective compression:
+Operational compression:
 
-> **Future commitments become Past evidence.**
+> **Say before. Trace after. Answer for the link between the two.**
 
-# 29. Current status
+---
 
-Janus v0.3 is an **under-review interface hypothesis**.
+# 33. Current status
 
-It is not stabilized doctrine.
+Janus v0.4 is not stabilized doctrine.
 
-The next sequence is:
+It has moved from conceptual architecture toward an active Reality Test.
 
-```text
-v0.3
-→ commit
-→ verified immutable handoff
-→ Grok Reviewer pass 2
-→ Redactor response
-→ possible J-Δ implementation
-→ stabilization or demotion
-```
-
-The next Reviewer should receive:
+Current sequence:
 
 ```text
-v0.3 source
-+
-Grok pass 1
-+
-Redactor response to pass 1
+v0.4
+→ coding validation of Booster
+→ first real decision samples
+→ issue #90 accumulation
+→ inspect friction and failure modes
+→ define J-Δ′ thresholds if warranted
+→ pattern survives, strengthens, or disappears
 ```
 
-and must not restart from zero.
+The next useful work is primarily empirical.
 
-# Appendix A — Genealogy, not runtime architecture
+---
 
-This appendix records conceptual ancestry without making it part of the executable Janus architecture.
+# Appendix A — Conceptual genealogy, not runtime architecture
 
 ## A.1 Potentics
 
-Potentics distinguishes:
+Potentics distinguishes The Possible, The Realized, potentiality, actualization and capability.
 
-```text
-The Possible
-The Realized
-potentiality
-actualization
-capability
-```
-
-Janus may operate inside systems informed by those concepts.
-
-It does not depend on them for implementation.
+Janus can be interpreted within that conceptual landscape but does not require Potentics for implementation.
 
 ## A.2 Spirit of Synthesis
 
-An older Corpus formulation interprets the Christian Trinity structurally:
+The older Corpus mapping remains genealogically useful:
 
 ```text
-Father
-→ The Possible
-
-Son
-→ The Realized
-
-Holy Spirit
-→ Spirit of Synthesis
+Father → The Possible
+Son → The Realized
+Holy Spirit → Spirit of Synthesis
 ```
 
-where synthesis names the generative movement through which separate elements combine and new accessible possibilities may become actual.
+This is a personal structural interpretation, not presented as Christian dogma.
 
-This is a personal, structural interpretation.
+The Spirit of Synthesis is not a Janus runtime component.
 
-It is not presented as Christian doctrine.
+Janus no longer appears as a fourth theological element or as the executor of synthesis.
 
-The concept is deliberately **not represented as a Janus runtime component**.
+## A.3 Leibniz, Voltaire and Huxley
 
-Operational Janus does not invoke or require the Spirit of Synthesis.
+Leibniz remains conceptual genealogy for global optimization under local cost.
 
-## A.3 Leibniz
+Voltaire's Pangloss provides the operational anti-pattern of evidence-resistant rationalization.
 
-Leibniz's “best of all possible worlds” supplies historical ancestry for the problem that global value cannot be reduced mechanically to zero local cost.
+Huxley remains a bounded warning against unnecessarily eliminating possibility in the name of stability or safety.
 
-Measured Risk already handles the operational problem more directly.
+None of these are implementation dependencies.
 
-Leibniz is therefore genealogy, not an architectural dependency.
+---
 
-## A.4 Voltaire
+# Appendix B — Review-derived corrections incorporated in v0.4
 
-The useful operational extraction from *Candide* is the Pangloss Loop:
+The following corrections from the two external review passes are incorporated:
 
 ```text
-evidence contradicts theory
-→ theory explains away evidence
-→ theory survives unchanged
+Janus distinct-layer status remains falsifiable
+Synthetic Skin effect is empirical
+scalar Embodiment is removed
+Black Packet is removed
+Past/Future use one broad envelope but different procedures
+Spirit of Synthesis is removed from runtime architecture
+Janus.Past reuses COP Assertion/EvidenceRelation
+prospective resolution attaches to a decisive Assertion
+resolution requires ex-ante temporal integrity
+resolution returns through EvidenceRelation
+unknown Past differs from unactualized Future
+resolution ownership uses COP Continuations
+Measured Risk is referenced rather than copied
+J-Δ is replaced by A0/A1/E J-Δ′
 ```
 
-This remains directly relevant to Janus.
+The unresolved load-bearing question remains:
 
-## A.5 Huxley
+> **Does the Janus composition preserve useful information or accountability that ordinary COP usage would otherwise lose?**
 
-The useful extraction from *Brave New World* / *Le Meilleur des mondes* is a warning against eliminating uncertainty, divergence or suffering by unnecessarily eliminating freedom and possibility.
+---
 
-The reference is illustrative, not required for the technical contract.
+# Appendix C — Active implementation references
 
-# Appendix B — Review history
+Canonical Janus source:
 
-## Internal review
+`JeanHuguesRobert/cogentia/research/janus_cognitive_gatekeeper.md`
 
-Three internal passes preceded v0.2:
+COP/Janus Booster protocol:
 
-```text
-1. conceptual boundaries and prior art
-2. Friends before competitors
-3. Synthetic Skin / Measured Risk / philosophical ancestry
-```
+`JeanHuguesRobert/inseme/research/cop_janus_booster.md`
 
-These were internal reviews by the drafting environment and did not clear `review.status`.
+Executable Booster:
 
-## External review pass 1
+`JeanHuguesRobert/inseme/sandbox/cop-continuation-bac-a-sable/scenarios/janus-resolution-booster.js`
 
-Reviewer:
+Field experiment:
 
-```text
-Grok 4.6 (xAI)
-```
+`JeanHuguesRobert/inseme#90`
 
-Target:
+First bounded coding validation:
 
-```text
-v0.2
-commit e4449227bef1d061a9a5e902764044a3c891779f
-```
+`JeanHuguesRobert/inseme#91`
 
-Main accepted corrections:
+First candidate real integration point:
 
-```text
-Synthetic Skin effect becomes empirical hypothesis
-remove min(Embodiment)
-factor embodiment dimensions
-Black Packet withdrawn
-one envelope / two procedures
-Spirit of Synthesis removed from runtime diagrams
-Janus distinct-layer claim becomes load-bearing and falsifiable
-Test J-Delta adopted
-named friends required
-PDP / authorization boundary strengthened
-```
+`JeanHuguesRobert/inseme/apps/platform/mcp/cop/jhnDelegatingAgent.js`
 
-The review did not stabilize the source.
+Lower-level execution friend:
 
-It produced v0.3.
-
-# Appendix C — Pass 2 Reviewer brief
-
-Apply the current `cogentia/prompts/reviewer.md`.
-
-Do not restart from zero.
-
-Review:
-
-```text
-v0.3 source
-+
-Grok external review pass 1
-+
-Redactor response to pass 1
-```
-
-Priority questions:
-
-1. Did v0.3 genuinely answer the Delete-Janus objection, or merely rename Janus as an interface?
-2. Is the scalar Embodiment error fully removed?
-3. Are orthogonal test-regime dimensions now sufficiently separated?
-4. Is Past/Future symmetry limited to the shared envelope?
-5. Is Spirit of Synthesis fully absent from runtime architecture?
-6. Is Synthetic Skin explicitly empirical rather than asserted?
-7. Is settlement decision-relevant rather than proxy-relevant?
-8. Does Test J-Δ genuinely permit Janus to fail and disappear?
-9. Are external friends reused architecturally rather than cited ornamentally?
-10. Did the revision introduce any new super-component responsibility?
-
-The Reviewer may reopen any prior finding whose repair is incomplete.
-
-Plateau should not be declared merely because the document has become smaller.
-
-The governing question remains:
-
-> **What does Janus still add after everything reusable has been reused?**
+`JeanHuguesRobert/inseme/apps/platform/mcp/cop/magistralCapabilityResolver.js`
