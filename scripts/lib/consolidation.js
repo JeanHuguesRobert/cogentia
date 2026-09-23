@@ -39,6 +39,23 @@ export async function runWeeklyConsolidation(options = {}) {
   const weekStart = new Date(now.getTime() - 7 * 86400000).toISOString();
   const originRef = currentGitRef(root);
 
+  // This is a WEEKLY pipeline (rewrites the digest for the current ISO week
+  // and fans out llms.txt to every registered repo). A caller invoking it
+  // more often than weekly (e.g. a 2-hourly Sleep Cycle) must not repeat
+  // that side-effecting work every time — that produced constant, useless
+  // dirty-tree drift across the whole fleet. Skip if this week's public
+  // digest already exists, unless the caller explicitly forces a re-run.
+  const probeDigestPath = path.join(root, "research", "sprints", `weekly_digest_${sprintTag}.md`);
+  if (!options.force && fs.existsSync(probeDigestPath)) {
+    return {
+      ok: true,
+      skipped: true,
+      reason: "already_consolidated_this_week",
+      sprint_tag: sprintTag,
+      digest_path: probeDigestPath,
+    };
+  }
+
   console.log(`==========================================================================`);
   console.log(`          COGENTIA SUNDAY CORPUS CONSOLIDATION [${sprintTag}]            `);
   console.log(`==========================================================================`);
