@@ -518,6 +518,63 @@ propagation:
       - "cogentia commit e66bc5d14cdf634b46c63f07cb016409e2ec2d3d"
 ```
 
+### PR-2026-010 — Graded constrained counterfactuals and anti-defensive-agnosticism
+
+```yaml
+propagation:
+  id: PR-2026-010
+  status: propagated
+  discovered_at: 2026-09-21
+  source_refs:
+    - "JeanHuguesRobert/barons-Mariani: projects/suicide-corse/projections/book-2026-09-20-n2-editorial-decisions.md — D9"
+    - "JeanHuguesRobert/barons-Mariani: memory/marie-louise/2024_portes_et_controles_epistemiques.md"
+    - "JeanHuguesRobert/barons-Mariani: research/noyau_doctrinal_rendre_capable.md v0.5.3"
+    - "human doctrinal arbitration, 2026-09-21"
+  source_summary: >-
+    Scientific rigor must not collapse all unrealized futures into a uniform UNKNOWN.
+    When a branch was explicitly pursued, the agent had the practical capability to
+    take it, the bifurcation is identifiable and nearby, and observable traces constrain
+    the immediate continuation, a counterfactual may be strongly constrained. Confidence
+    should decay as additional causal links are added, but non-observable does not mean
+    unknowable and uncertainty does not mean all hypotheses are equally plausible.
+    The Marie-Louise / Villa Arson 2024 Reality Case exposed the symmetric failure modes:
+    free causal fiction on one side and defensive agnosticism that erases informative
+    plausibility differences on the other.
+  completed_targets:
+    - "research/interroger_le_reel.md v0.5 — commit bb3ebaee68c6"
+    - "research/interrogating_reality.md v0.5 — commit be8d6e80e9a4"
+    - "JeanHuguesRobert/barons-Mariani/research/noyau_doctrinal_rendre_capable.md v0.5.3"
+    - "JeanHuguesRobert/barons-Mariani/projects/suicide-corse/architecture.md"
+    - "JeanHuguesRobert/barons-Mariani/projects/suicide-corse/projections/book-2026-09-20-n2.yml — counterfactual_policy / D9"
+  expected_effects:
+    - "counterfactual claims are graded rather than flattened into UNKNOWN"
+    - "near, strongly constrained counterfactuals may carry high plausibility without being promoted to facts"
+    - "confidence decreases with causal distance and added intermediate mechanisms"
+    - "Reality Probes may investigate evidence around an unrealized branch even though the branch itself cannot be observed"
+    - "agents avoid both free fiction and defensive agnosticism"
+    - "material differences in plausibility remain visible and revisable"
+  deliberately_not_propagated:
+    - "no rule that counterfactuals are facts"
+    - "no automatic numeric probability requirement"
+    - "no claim that Villa Arson rejection is a demonstrated cause of Marie-Louise's suicide"
+    - "no transfer of individual psychology to territorial or collective systems"
+  priority: high
+  confidence: high
+  propagation_level: 2
+  blockers: []
+  next_action: >-
+    Dogfood the rule on additional bounded Reality Cases and watch for both failure
+    modes: overconfident causal storytelling and uniform UNKNOWN that destroys useful
+    plausibility ordering. Promote further only if repeated cross-domain use justifies
+    a dedicated reusable pattern or checker.
+  verification:
+    status: partial
+    evidence_refs:
+      - "cogentia commit bb3ebaee68c6"
+      - "cogentia commit be8d6e80e9a4"
+      - "barons-Mariani Suicide Corse n2 frozen snapshot f061abb2484dc5ee973d81865db5c9d3b5854d58"
+```
+
 ## Operational discipline
 
 A propagation SHOULD close as `verified`, not merely `propagated`, when its expected effect is behaviorally material. Operational learning SHOULD carry an appropriate regression case; network-level learning SHOULD use cold-handler/substitution testing when feasible. A local gain that breaks a previously validated case creates new cognitive-regression debt.
