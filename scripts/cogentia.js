@@ -73,6 +73,11 @@ import {
 } from "./lib/triage.js";
 import { groupReadmeReviewBoundaries } from "./lib/readme-audit.js";
 import {
+  auditReadmeSemanticEvidence,
+  readmeReviewState,
+  updateReadmeReviewMetadata,
+} from "./lib/readme-semantic-audit.js";
+import {
   CLASSIFICATION_VERSION,
   isGeneratedNavigationDoc,
   kind,
@@ -2238,6 +2243,9 @@ function cmdCorpusCommitGenerated() {
 function cmdDocs(sub) {
   const ctx = loadContext();
   const repo = valueFlag("--repo");
+  if (sub === "readmes") {
+    return cmdDocsReadmes(ctx, buildReadmeInventory(ctx, repo ? { scope: `repo:${repo}` } : null), optionalPositional("inventory"));
+  }
   const inventory = buildInventory(ctx, repo ? { scope: `repo:${repo}` } : null);
   switch (sub) {
     case "summary":
@@ -2252,8 +2260,6 @@ function cmdDocs(sub) {
       return cmdDocsSearch(inventory);
     case "gaps":
       return cmdDocsGaps(inventory);
-    case "readmes":
-      return cmdDocsReadmes(ctx, inventory, optionalPositional("inventory"));
     case "inspect":
       return cmdDocsInspect(inventory, argv.shift());
     case "trails":
@@ -2268,27 +2274,147 @@ function cmdDocs(sub) {
   }
 }
 
+// README review needs only README content and its local directory; building
+// every document edge in a large research repository is needless overhead.
+function buildReadmeInventory(ctx, options = null) {
+  const documents = [];
+  for (const repo of ctx.repos) {
+    if (options && !repoSelected(repo, options)) continue;
+    for (const file of listMarkdown(repo.path)) {
+      if (path.basename(file).toLowerCase() !== "readme.md") continue;
+      const raw = fs.readFileSync(file, "utf8");
+      const fm = parseFrontmatter(raw);
+      documents.push({
+        repo: repo.name,
+        full_path: file,
+        rel: rel(repo.path, file),
+        title: extractTitle(raw, file, fm.data),
+        role: fm.data.document_role || "unknown",
+        role_confidence: fm.data.document_role ? "strong" : "unknown",
+        visibility: { level: fm.data.visibility || "unknown" },
+        index: { referenced: false },
+      });
+    }
+  }
+  return { documents };
+}
+
 function cmdDocsReadmes(ctx, inventory, mode) {
-  if (mode !== "inventory" && mode !== "audit") throw new Error("Usage: docs readmes inventory|audit [--emit-continuations]");
+  if (mode === "audit" || mode === "semantic") mode = "review";
+  if (!["inventory", "review"].includes(mode)) throw new Error("Usage: docs readmes inventory|review [--emit-continuations] [--record-reviewed]");
+  const repoRoots = new Map(ctx.repos.map(repo => [repo.name, repo.path]));
   const readmes = inventory.documents.filter(doc => path.basename(doc.rel).toLowerCase() === "readme.md").map(doc => ({
     repo: doc.repo, path: doc.rel, title: doc.title, role: doc.role,
     visibility: doc.visibility?.level || "unknown", referenced: doc.index?.referenced === true,
     judgment_required: doc.role === "unknown" || doc.role_confidence !== "strong",
+    full_path: doc.full_path, repo_root: repoRoots.get(doc.repo),
   }));
-  if (mode === "audit") {
-    const judgments = readmes.filter(readme => readme.judgment_required);
-    const groups = groupReadmeReviewBoundaries(readmes);
-    const emitted = hasFlag("--emit-continuations") ? groups.map(group => {
-      return emitContinuation(ctx, {
-      kind: "readme_review", priority: 2, dedupe_key: `readme_review:${group.repo}:${group.boundary}`,
-      title: `Review README boundary ${group.repo}/${group.boundary}`,
-      question: "Determine the README's proper role and whether its local prose remains accurate.",
-      subject: { repo: group.repo, path: group.boundary }, context: { readmes: group.readmes },
-      expected_response: { format: "json", required: ["decision", "reason"], allowed_decisions: ["keep", "update", "archive", "replace"] },
-    }); }) : [];
-    const result = { ok: true, protocol: "cogentia.readme_audit.v1", read_only: !hasFlag("--emit-continuations"), judgments, groups, emitted };
-    const printable = hasFlag("--summary") ? { ok: result.ok, groups: groups.map(({ repo, boundary, count, paths }) => ({ repo, boundary, count, paths })), total_judgments: judgments.length } : result;
-    return output(hasFlag("--summary") ? printable : result, JSON.stringify(printable, null, 2));
+  if (mode === "review") {
+    const states = readmes.map(readme => ({ readme, ...readmeReviewState(readme) }));
+    const pending = states.filter(state => state.status === "review_required");
+    const requestedRecord = hasFlag("--record-reviewed");
+    if (requestedRecord && hasFlag("--emit-continuations")) {
+      throw new Error("--record-reviewed and --emit-continuations cannot be combined.");
+    }
+    const reports = pending.map(({ readme, snapshot }) => ({ ...auditReadmeSemanticEvidence(readme), input_fingerprint: snapshot.fingerprint }));
+    const reportsByPath = new Map(reports.map(report => [`${report.repo}:${report.path}`, report]));
+    const reviewCandidates = pending
+      .filter(({ readme }) => reportsByPath.get(`${readme.repo}:${readme.path}`).findings.requires_judgment)
+      .map(({ readme }) => readme)
+      .map(readme => ({ ...readme, judgment_required: true }));
+    const groups = groupReadmeReviewBoundaries(reviewCandidates);
+    const emitted = hasFlag("--emit-continuations") ? groups.map(group => emitContinuation(ctx, {
+      kind: "readme_semantic_review",
+      priority: 2,
+      dedupe_key: `readme_review:${group.repo}:${group.boundary}:${sha(JSON.stringify(group.paths.map(readmePath => reportsByPath.get(`${group.repo}:${readmePath}`)?.input_fingerprint || "changed")))}`,
+      title: `Verify README content at ${group.repo}/${group.boundary}`,
+      question: "Determine whether each README assertion remains current from the attached repository evidence. Treat README prose as derived documentation unless it explicitly declares itself a contract or specification.",
+      subject: { repo: group.repo, path: group.boundary },
+      context: {
+        readmes: group.readmes.map(({ repo, path, title }) => ({ repo, path, title })),
+        evidence: group.paths.map(readmePath => {
+          const report = reportsByPath.get(`${group.repo}:${readmePath}`);
+          const state = states.find(candidate => candidate.readme.repo === group.repo && candidate.readme.path === readmePath);
+          return { ...report, review_snapshot: state?.snapshot || null, previous_review: state?.metadata || null };
+        }),
+        work_order: {
+          objective: "Assess whether each material README assertion remains justified by the repository reality it describes.",
+          procedure: [
+            "Read the README in full and enumerate its material assertions: purpose, status, commands, architecture, links, current plans, and factual claims.",
+            "Inspect the locally named source files, package manifests, implementation entry points, tests, configuration, and relevant recent Git history.",
+            "When repository tests exist and are safe and relevant to a changed claim, execute them and record the working directory and observed result. A passing test is evidence of implemented behavior, not proof of every prose claim.",
+            "Classify every material assertion as supported, contradicted, stale, imprecise, or not_verifiable; preserve the evidence path and its limit.",
+            "Unless the README explicitly declares contractual authority, treat a low-ambiguity contradiction with implementation/configuration/tests as likely README drift. Propose the smallest source patch; do not apply it.",
+            "If the README explicitly declares itself a contract/specification, or the discrepancy is architectural, factual, or otherwise ambiguous, explain the conflict rather than choosing code or prose automatically.",
+          ],
+          exclusions: [
+            "Do not infer external, historical, legal, personal, operational, or live-service facts from repository silence.",
+            "Do not execute network, publication, deployment, contact, or other external effects.",
+            "Do not rewrite README prose as part of this review continuation.",
+          ],
+          definition_of_done: [
+            "Every material assertion has an evidence-backed classification or an explicit not_verifiable result.",
+            "Every executed command has a recorded working directory and result.",
+            "Every proposed correction is scoped to an exact file and claim.",
+          ],
+        },
+      },
+      expected_response: {
+        format: "json",
+        required: ["decision", "reason", "evidence_considered", "assertions", "proposed_corrections"],
+        allowed_decisions: ["verified_current", "update", "not_verifiable"],
+      },
+    })) : [];
+    if (requestedRecord) {
+      const targetPath = valueFlag("--path");
+      const decision = valueFlag("--decision");
+      if (!repo || !targetPath || decision !== "verified_current") {
+        throw new Error("Usage: docs readmes review --repo <repo> --path <README.md> --record-reviewed --decision verified_current");
+      }
+      const target = states.find(state => state.readme.repo === repo && state.readme.path.replace(/\\/g, "/") === targetPath.replace(/\\/g, "/"));
+      if (!target) throw new Error(`README not found in selected repository: ${targetPath}`);
+      if (target.status === "already_reviewed") throw new Error(`README review is already current: ${targetPath}`);
+      const reviewedCommit = execFileSync("git", ["-C", target.readme.repo_root, "rev-parse", "HEAD"], { encoding: "utf8" }).trim();
+      const original = fs.readFileSync(target.readme.full_path, "utf8");
+      const updated = updateReadmeReviewMetadata(original, {
+        version: 1,
+        authority: target.metadata?.authority || "derived",
+        reviewed_at: new Date().toISOString(),
+        reviewed_commit: reviewedCommit,
+        scope: target.snapshot.scope,
+        input_fingerprint: target.snapshot.fingerprint,
+      });
+      fs.writeFileSync(target.readme.full_path, updated, "utf8");
+      const result = {
+        ok: true,
+        protocol: "cogentia.readme_review.v1",
+        recorded: { repo, path: targetPath, decision, input_fingerprint: target.snapshot.fingerprint, reviewed_commit: reviewedCommit },
+      };
+      return output(result, JSON.stringify(result, null, 2));
+    }
+    const summary = states.map(({ readme, status, snapshot, metadata }) => ({
+      repo: readme.repo, path: readme.path,
+      status: status === "review_required" && !reportsByPath.get(`${readme.repo}:${readme.path}`).findings.requires_judgment
+        ? "change_observed_no_detected_drift"
+        : status,
+      scope: snapshot.scope,
+      input_fingerprint: snapshot.fingerprint, previous_review: metadata ? { reviewed_at: metadata.reviewed_at || null, reviewed_commit: metadata.reviewed_commit || null } : null,
+      ...(status === "review_required" ? (() => {
+        const report = reportsByPath.get(`${readme.repo}:${readme.path}`);
+        return {
+          broken_local_references: report.findings.broken_local_references.length,
+          missing_commands: report.findings.missing_commands.length,
+          temporal_cues: report.temporal_cues.length,
+        };
+      })() : {}),
+    }));
+    const result = { ok: true, protocol: "cogentia.readme_review.v1", read_only: !hasFlag("--emit-continuations"), states: summary, reports, groups, emitted };
+    const printable = hasFlag("--summary") ? { ok: true, states: summary, review_groups: groups.map(({ repo, boundary, count, paths }) => ({ repo, boundary, count, paths })) } : result;
+    return output(printable, JSON.stringify(printable, null, 2));
+  }
+  for (const readme of readmes) {
+    delete readme.full_path;
+    delete readme.repo_root;
   }
   const result = { ok: true, protocol: "cogentia.readme_inventory.v1", read_only: true, total: readmes.length, readmes };
   return output(result, JSON.stringify(result, null, 2));
@@ -11262,6 +11388,8 @@ function readContinuationContext() {
 }
 
 function readContinuationPayload() {
+  const payloadJson = valueFlag("--payload-json");
+  if (payloadJson) return parseJsonText(payloadJson, "--payload-json");
   const payloadFlag = valueFlag("--payload");
   const candidate = payloadFlag || (argv[0] && fs.existsSync(path.resolve(argv[0])) ? argv.shift() : "");
   if (!candidate) return {};

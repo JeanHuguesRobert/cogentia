@@ -143,13 +143,48 @@ judge curated prose:
 
 ```powershell
 node scripts/cogentia.js docs readmes inventory --repo <repo> --json
-node scripts/cogentia.js docs readmes audit --repo <repo> --summary --json
+node scripts/cogentia.js docs readmes review --repo <repo> --summary --json
 ```
 
-`inventory` reports observable README metadata. `audit` groups candidates at
-their nearest local README boundary and remains read-only unless explicitly
-asked to materialize review continuations. A continuation is a request for
-judgment, not an automated editorial rewrite.
+`inventory` reports observable README metadata. `review` is the single,
+locality-preserving review path. It fingerprints the README's directory tree,
+excluding only the README's own `readme_review` frontmatter block. When the
+fingerprint is unchanged from a previously recorded review, it returns
+`already_reviewed` without recollecting prose evidence or emitting a
+continuation. The first version is deliberately bytewise: cosmetic-change
+filtering is a future, separately versioned policy.
+
+When inputs changed, `review` collects reproducible evidence: local-reference
+existence, declared package scripts or Node entry points, and temporal cues.
+It reports a changed README with no detected contradiction as
+`change_observed_no_detected_drift`; this is a quiet signal, not an automatic
+judgment request. With `--emit-continuations`, it creates a review work order
+only for material mechanical contradictions. The handler treats README prose as
+derived documentation by default: a low-ambiguity conflict with implementation,
+configuration, or relevant passing tests is likely README drift. A README
+becomes a contract or specification only by explicit declaration; such a
+conflict remains a judgment boundary. A passing test is evidence of implemented
+behavior, never a universal proof of prose.
+
+After a real `verified_current` judgment, record its input snapshot explicitly
+and one README at a time:
+
+```powershell
+node scripts/cogentia.js docs readmes review --repo <repo> --path <README.md> --record-reviewed --decision verified_current
+```
+
+This writes only the following local frontmatter control block; its own change
+does not invalidate the recorded review:
+
+```yaml
+readme_review:
+  version: 1
+  authority: "derived"
+  reviewed_at: "..."
+  reviewed_commit: "..."
+  scope: "."
+  input_fingerprint: "sha256:..."
+```
 
 The source doctrine is the [Locality Principle](../research/locality_principle.md).
 The source doctrine for the corpus's fractal structure is
