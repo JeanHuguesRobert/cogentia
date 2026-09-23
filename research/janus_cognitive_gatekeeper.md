@@ -7,7 +7,7 @@ affiliation: "Institut Mariani / C.O.R.S.I.C.A., 1 cours Paoli, F-20250 Corte, C
 date: "2026-09-22"
 last_modified_at: "2026-09-23"
 last_stamped_at: "unknown"
-version: "0.4"
+version: "0.5"
 status: "working-paper — active experiment"
 license: "CC BY-SA 4.0"
 language: "en"
@@ -69,7 +69,7 @@ changelog:
   - "v0.1 (2026-09-22) — initial formulation of Janus as a bidirectional Cognitive Packet gatekeeper."
   - "v0.2 (2026-09-22) — integrated internal reviews, embodiment, Synthetic Skin, philosophical ancestry and external Reviewer contract."
   - "v0.3 (2026-09-22) — narrowed Janus from governor/component to falsifiable transition-contract hypothesis after Grok review."
-  - "v0.4 (2026-09-23) — crossed Janus with COP 2.x after Claude review; recast Janus as a COP composition pattern centered on ex-ante ResolutionExpectation, decisive Assertions, temporal integrity, Continuation-based follow-up and later EvidenceRelations."
+  - "v0.4 (2026-09-23) — crossed Janus with COP 2.x after Claude review; recast Janus as a COP composition pattern centered on ex-ante ResolutionExpectation, decisive Assertions, temporal integrity, Continuation-based follow-up and later EvidenceRelations."\n  - "v0.5 (2026-09-23) — assimilates successful Booster coding validation from inseme#91, activates the frozen N=10 field sample at 0/10 from commit c559d36, records the reason-bearing-delegation residue in jhnDelegatingAgent, and points measurement to the frozen Janus Case Record in Booster v0.2."
 ---
 
 # Janus — COP Resolution Pattern
@@ -758,7 +758,7 @@ The project should advance only as far as Reality justifies.
 
 # 21. Active Reality Test — COP/Janus Booster
 
-The first real experiment now lives in Inseme:
+The field experiment lives in Inseme:
 
 ```text
 research/cop_janus_booster.md
@@ -777,40 +777,61 @@ Executable scenario:
 sandbox/cop-continuation-bac-a-sable/scenarios/janus-resolution-booster.js
 ```
 
-The sample is fixed at:
+The sample remains fixed at:
 
-> **the next 10 genuinely decision-bearing COP continuations**
+> **the next 10 genuinely decision-bearing COP continuations encountered after activation.**
 
-The experiment deliberately forbids a `cop-core` schema change.
+Activation was recorded ex ante on 2026-09-23 after the bounded coding validation completed.
 
-This makes the experiment a real test of whether existing primitives are already sufficient.
+Frozen baseline:
+
+```text
+baseline = c559d36a0da5d463815d00e6c38dee0b81680895
+sample = 0 / 10
+status = active
+```
+
+Earlier decisions are not backfilled into the sample.
+
+The experiment still forbids a `cop-core` schema change. Booster v0.2 adds only a frozen observation record so that cases are measured consistently; it does not alter the inclusion rule, the decisive-Assertion criterion, or the allowed resolution states.
 
 ---
 
-# 22. First coding validation
+# 22. First coding validation — completed
 
-A bounded coding-agent task is tracked separately from the field experiment.
-
-Its purpose is:
+The bounded coding validation was executed under:
 
 ```text
-run the scenario
-→ harden defects
-→ add the smallest useful regression test
-→ inspect the first real integration point
+JeanHuguesRobert/inseme#91
+Continuation — Run and harden the COP/Janus Resolution Booster
 ```
 
-without introducing production Janus instrumentation.
-
-This separates:
+OpenAI Codex resumed the Issue from its durable Checkpoint 0, executed the prospective, supporting-resolution and contradicting-resolution modes, inspected the candidate integration point, and added:
 
 ```text
-experiment register
-from
-implementation validation task
+sandbox/cop-continuation-bac-a-sable/test/janus-resolution-booster.test.js
 ```
 
-and keeps #90 clean as the field record.
+Resulting commit:
+
+```text
+c559d36a0da5d463815d00e6c38dee0b81680895
+test: cover COP Janus resolution booster
+```
+
+Observed:
+
+- all three required runs succeeded;
+- the scenario preserved `cop.assertion/v1`, decisive Janus metadata, revision conditions and ResolutionExpectation;
+- the normal COP Continuation preserved `resumeAfter`;
+- later supporting and contradicting runs produced `cop.trace-ref/v1` and `cop.evidence-relation/v1` back to the original Assertion;
+- temporal ordering is regression-tested;
+- no bare Boolean resolution shortcut was introduced;
+- no runtime defect required changing the scenario;
+- no `cop-core` schema change was justified;
+- no production Janus instrumentation was introduced.
+
+This closes the implementation-validation task while leaving #90 as the active field experiment.
 
 ---
 
@@ -860,7 +881,19 @@ under current mandate and budget."
 
 Only if such a claim genuinely influences the decision should it be marked `decisive`.
 
-Production instrumentation is not yet authorized by this document.
+The #91 coding inspection sharpened the unresolved design point. The current optional contract is:
+
+```text
+shouldDelegate({ message, history }) → boolean
+```
+
+That is sufficient to control delegation, but it discards the reason that made the delegation choice warranted. Janus must not reconstruct or invent that reason retrospectively merely because delegation occurred.
+
+A future integration therefore needs a **reason-bearing decision boundary** before any production Janus instrumentation can be justified. Possible representations remain open: a richer delegation-decision object, an ordinary COP decision/assertion trace, or another existing object that preserves the decisive rationale without creating a new Janus ontology.
+
+The later governed execution Trace can resolve claims about execution and resource use. It does not, by itself, prove that the delegated assistance was materially useful; usefulness may require a later acceptance/use trace.
+
+Production instrumentation remains outside the present mandate.
 
 ---
 
@@ -982,6 +1015,27 @@ missed horizons
 false confidence
 usefulness to later human review
 ```
+
+To reduce case-to-case drift, Booster v0.2 freezes a minimal **Janus Case Record** before case 1/10. The record is measurement scaffolding only. It does not change what qualifies for the sample and must not pressure a handler to invent a decisive assertion.
+
+The record explicitly preserves:
+
+```text
+candidate decision
+alternatives considered
+eligibility / inclusion reason
+decisive assertion reference + why decisive
+recorded_at + revision conditions
+resolution criterion + horizon
+follow-up continuation
+later traces + EvidenceRelations
+resolution state
+information preserved
+review friction
+residue
+```
+
+A candidate with no genuinely decisive prospective Assertion should say so explicitly.
 
 Before a formal J-Δ′ comparison, thresholds should be declared in advance.
 
@@ -1129,23 +1183,31 @@ Operational compression:
 
 # 33. Current status
 
-Janus v0.4 is not stabilized doctrine.
+Janus v0.5 is not stabilized doctrine.
 
-It has moved from conceptual architecture toward an active Reality Test.
+The first implementation validation is complete and the N=10 Reality Test is active.
 
-Current sequence:
+Current state:
 
 ```text
-v0.4
-→ coding validation of Booster
-→ first real decision samples
-→ issue #90 accumulation
-→ inspect friction and failure modes
-→ define J-Δ′ thresholds if warranted
+conceptual reduction to COP composition pattern
+→ Booster coding validation PASSED (#91 / c559d36)
+→ observation format frozen before first field case
+→ #90 active at sample 0/10
+→ next genuine qualifying decision becomes case 1/10
+→ inspect friction, missed follow-up and information preserved
+→ define J-Δ′ thresholds only if field evidence warrants them
 → pattern survives, strengthens, or disappears
 ```
 
-The next useful work is primarily empirical.
+Two implementation residues are intentionally not solved yet:
+
+```text
+reason-bearing delegation decision
+usefulness evidence beyond successful handler execution
+```
+
+The next useful Janus work is primarily empirical. Do not manufacture case 1/10 merely to advance the counter.
 
 ---
 
