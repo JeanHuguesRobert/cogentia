@@ -4,8 +4,8 @@ subtitle: "Document-backed packet capsules, human-routed handoffs, lifecycle, re
 author: "Jean Hugues Noël Robert, baron Mariani"
 affiliation: "Institut Mariani / C.O.R.S.I.C.A., 1 cours Paoli, F-20250 Corte, Corsica, France"
 date: "2026-08-25"
-last_modified_at: "2026-09-19"
-version: "0.5"
+last_modified_at: "2026-09-23"
+version: "0.6"
 status: "working-paper"
 license: "CC BY-SA 4.0"
 language: "en"
@@ -75,7 +75,7 @@ changelog:
   - "v0.2 (2026-08-26) — assimilated RT-001 decorrelated review; tightened Packet Capsule definition, lowered closure claim, added minimal capsule contract, lifecycle authority/evidence rules, first handoff measurements, and explicit review dispositions."
   - "v0.3 (2026-08-26) — post-review arbitration clarified that Packet Closure is relative to a declared admissible-handler environment; reinterpreted RT-001 accordingly; split by-copy transport from foreign-handler self-bootstrap; propagated the clarification to the general Packet Closure note."
   - "v0.4 (2026-08-26) — applied Occam to keep GitHub Issues inside the same study; introduced comparative substrate Reality Tests, treated Issue roles contextually rather than ontologically, and used issue #120 as a live case for Packet identity, work loci, assimilation, and Reactive Corpus adaptation."
-  - "v0.5 (2026-09-19) — clarifies the temporal recovery ladder: reversal, compensation, containment, repair, restitution, accepted residue, cooling and learning; time changes urgency and reparability without rewriting historical truth."
+  - "v0.5 (2026-09-19) — clarifies the temporal recovery ladder: reversal, compensation, containment, repair, restitution, accepted residue, cooling and learning; time changes urgency and reparability without rewriting historical truth."\n  - "v0.6 (2026-09-23) — assimilates inseme#91 as a cross-provider Resumable Issue Reality Test: Codex resumed an active frontier and externalized a checkpoint; Grok later reconstructed the terminal frontier without replay, strengthening RT-005 handler substitution and referential Packet Closure evidence."
 x-cognitive-packet:
   candidate: true
   profile: "document-backed-capsule"
@@ -96,6 +96,16 @@ x-cognitive-packet:
     private_context_required: false
     material_findings: 9
     prior_art_risk: "medium"
+  rt005:
+    case: "JeanHuguesRobert/inseme#91"
+    result: "pass-for-declared-coding-handler-class"
+    providers_observed:
+      - "OpenAI Codex"
+      - "Grok (xAI)"
+    private_predecessor_state_required: false
+    active_frontier_resume_observed: true
+    terminal_frontier_detection_observed: true
+    unnecessary_replay_observed: false
 classification_source: "cogentia.js"
 classification_version: "1"
 classification_rule: "explicit-metadata"
@@ -1259,9 +1269,41 @@ This asks:
 
 Failure here does **not** imply ordinary Packet Closure failure. It measures a stronger self-description / self-bootstrap property.
 
-### RT-005 — Handler substitution — **PARTIALLY DEMONSTRATED**
+### RT-005 — Handler substitution — **PASS FOR DECLARED CODING-HANDLER CLASS; ACTIVE + TERMINAL FRONTIERS OBSERVED**
 
-The Reviewer was a different provider with no shared conversational state. Further tests should vary handler implementations while keeping the declared handler contract stable enough to isolate substitution effects.
+The earlier Reviewer experiment already showed provider substitution without shared conversational state, but it did not exercise the same durable work locus across successive active and terminal frontiers.
+
+On 2026-09-23, `JeanHuguesRobert/inseme#91` provided a stronger test.
+
+The human carrier gave OpenAI Codex only:
+
+```text
+Resume JeanHuguesRobert/inseme issue #91
+```
+
+Codex reconstructed the Issue's Checkpoint 0, read the repository instructions and durable references, executed the authorized Booster validation, added the regression test committed at `c559d36a0da5d463815d00e6c38dee0b81680895`, and left a material Continuation Checkpoint in the Issue. Its checkpoint explicitly reported that no load-bearing private predecessor context was missing.
+
+After the Issue was closed as completed, a second provider, Grok (xAI), received the same minimal resume locator. Grok reconstructed the later state, identified the Closure comment as the latest non-superseded record, verified the terminal commit/frontier, did not rerun the completed validation, made no tree change, and identified `inseme#90` as the successor locus for the still-active Janus field experiment.
+
+Observed path:
+
+```text
+Codex
+  Resume inseme#91
+  → active frontier reconstructed
+  → authorized work executed
+  → durable commit + Continuation Checkpoint
+
+Grok
+  Resume inseme#91
+  → terminal frontier reconstructed
+  → completed work not replayed
+  → successor continuation identified
+```
+
+For the declared handler class — a coding-capable agent with repository access, able to read the Issue, material comments, Git state and applicable `AGENTS.md` instructions — this is a positive cross-provider substitution result.
+
+It does **not** establish universal self-bootstrap closure, prove that a GitHub Issue is itself the logical Cognitive Packet, or prove that every coding agent will interpret `Resume owner/repo#N` correctly. It shows that the durable Issue/repository state was sufficient for two materially different handlers to reach the appropriate frontier without predecessor-private session state.
 
 ### RT-006 — File identity test — **OPEN**
 
@@ -1540,6 +1582,57 @@ Packet identity
 
 but this remains a hypothesis to test rather than a finished ontology.
 
+### Issue #91 as a cross-provider resumable case
+
+`JeanHuguesRobert/inseme#91`, `Continuation — Run and harden the COP/Janus Resolution Booster`, provides a more direct test of an Issue as a durable resumable work locus.
+
+The test deliberately minimized the carrier instruction:
+
+```text
+Resume JeanHuguesRobert/inseme issue #91
+```
+
+The command carries almost no task state by value. It acts as a **resume locator**: the handler must materialize the current state from the Issue, its material comments, the repository, applicable instructions, and durable references.
+
+The two observed hops differed because the frontier had changed:
+
+| Hop | Handler | Frontier found | Correct behavior observed |
+|---|---|---|---|
+| 1 | OpenAI Codex | active Checkpoint 0 | execute bounded validation, commit result, leave Continuation Checkpoint |
+| 2 | Grok (xAI) | terminal Closure | do not replay closed work; verify terminal state; identify successor #90 |
+
+This gives a useful operational distinction:
+
+```text
+Resume
+≠ execute the original Issue body again
+
+Resume
+= resolve locator
+  → reconstruct latest non-superseded state
+  → identify current frontier
+  → act only if that frontier is active
+```
+
+The observed minimal locator was:
+
+```text
+JeanHuguesRobert/inseme#91
+```
+
+with `Resume` providing the operation semantics.
+
+The Corpus already contained a nearby convention before this test: `cogentia#150` exposes a command of the form `resume GitHub Issue NNN of repository cogentia`. The #91 experiment therefore does not originate the intuition; it provides a cleaner cross-provider Reality Test of it.
+
+Provisional vocabulary, still descriptive rather than a new COP schema:
+
+- **Resume Locator** — stable reference used to materialize resumable work, here `owner/repo#N`.
+- **Resumable Issue** — an Issue whose durable state and references are sufficient for a declared admissible handler to reconstruct the work frontier without predecessor-private context.
+- **Continuation Checkpoint** — durable handler output that updates the reconstructible state of the work locus.
+- **Continuation Frontier** — the latest non-superseded boundary from which useful work may continue, including the possibility that the frontier is terminal.
+
+The test supports referential/materializable closure for the declared coding-handler environment. It does not collapse Issue identity into Packet identity: the Issue remains a placement/projection/work locus whose relationship to the logical continuing work is contextual.
+
 ### Mobility and persistent loci
 
 The document case emphasized transportability. The Issue case exposes a complementary property: some cognitive structures are useful precisely because they remain addressable while work and handlers come to them.
@@ -1632,6 +1725,8 @@ The important empirical question is whether the change survives handler substitu
 - Comparative substrate cases should test the Cognitive Packet abstraction rather than assume that each candidate object is a Packet.
 - A substrate object may realize several Packet-related roles contextually; representation/hosting identity should not be collapsed into logical Packet identity.
 - GitHub Issues are a particularly rich test because they combine durable addressability, mutable document state, routing hints, comments/history, and lifecycle while still plausibly remaining only a host/projection of the continuing work.
+- RT-005 now includes a cross-provider Resumable Issue test on `inseme#91`: Codex reconstructed and advanced an active frontier; Grok later reconstructed the terminal frontier from the same minimal resume locator and correctly avoided replay.
+- For the declared coding-handler class, #91 required no predecessor-private session state; the Issue/repository state and durable references were sufficient to materialize the current frontier.
 
 ### Open / load-bearing
 
@@ -1652,9 +1747,11 @@ The important empirical question is whether the change survives handler substitu
 
 ### Next action
 
-Two observations can proceed without creating another research document:
+RT-005 no longer needs an immediate manufactured repetition. Its next useful evidence should come from a **natural** resume in ordinary Corpus work, preferably with another Issue or substrate, so that the experiment does not optimize itself around #91.
 
-1. **Observe issue #120 after the current Codex hop**: determine whether the Issue and its materializable references were sufficient for continuation, what yields return to the Issue/Corpus, what remains outside it, and whether closing the Issue corresponds to actual assimilation/quiescence.
+Two other observations remain available when they become useful:
+
+1. **Observe issue #120 at its next material frontier**: determine whether its Issue and materializable references remain sufficient for continuation, what yields return to the Issue/Corpus, what remains outside it, and whether closing the Issue corresponds to actual assimilation/quiescence.
 2. **Run RT-004A when useful** as the controlled transport experiment: keep the admissible Reviewer capability approximately constant, remove Git as the runtime transport/materialization channel, provide the document-backed Capsule and minimum declared handler dependencies by copy, and measure the additional material and human context-repair required.
 
 The optional RT-004B self-bootstrap stress test can follow later if it remains useful.
