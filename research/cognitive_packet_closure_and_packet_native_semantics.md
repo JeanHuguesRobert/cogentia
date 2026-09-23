@@ -4,8 +4,8 @@ subtitle: "Granularity, causal continuity, placement, effects, and the requireme
 author: "Jean Hugues Noël Robert, baron Mariani"
 affiliation: "Institut Mariani / C.O.R.S.I.C.A., 1 cours Paoli, F-20250 Corte, Corsica, France"
 date: "2026-08-25"
-last_modified_at: "2026-09-08"
-version: "0.4"
+last_modified_at: "2026-09-23"
+version: "0.5"
 status: "working source note"
 license: "CC BY-SA 4.0"
 language: "en"
@@ -51,7 +51,7 @@ update_policy: "UP-DEFAULT-REVIEWED"
 changelog:
   - "v0.1 (2026-08-25) — initial formalization of Packet Closure and packet-native semantics."
   - "v0.2 (2026-08-26) — clarified that Closure is relative to a declared admissible-handler environment; separated self-bootstrap from closure conformance; decomposed ambiguous lifecycle `forget`."
-  - "v0.3 (2026-09-05) — Integrates VM native closures vs serialized closures (l8) and deterministic replay substitution of serialized state (side.js), linked to master architectural sources (Issue #55)."
+  - "v0.3 (2026-09-05) — Integrates VM native closures vs serialized closures (l8) and deterministic replay substitution of serialized state (side.js), linked to master architectural sources (Issue #55)."\n  - "v0.5 (2026-09-23) — records bounded cross-provider evidence from inseme#91: a GitHub Issue plus repository references materialized sufficient state for active Codex resume and later terminal Grok resume without predecessor-private session state; no new Packet primitive is inferred."
 classification_source: "cogentia.js"
 classification_version: "1"
 classification_rule: "explicit-metadata"
@@ -246,6 +246,53 @@ The distinction between an implicit runtime continuation and Packet Closure refl
    \text{Deterministic Replay}(P, H, S) \equiv \text{Materialized Stack State}
    $$
    thereby reducing packet payload size while guaranteeing byte-for-byte state equivalence across independent handlers.
+
+---
+
+### 2.6 Empirical cross-provider resume — `inseme#91`
+
+A 2026-09-23 Reality Test provides bounded evidence for referential/materializable closure across handler substitution.
+
+The work locus was `JeanHuguesRobert/inseme#91`. The carrier instruction to each coding handler was intentionally minimal:
+
+```text
+Resume JeanHuguesRobert/inseme issue #91
+```
+
+Observed sequence:
+
+1. **OpenAI Codex**, encountering an active Checkpoint 0, materialized the Issue/repository state, executed the bounded validation, committed the regression test at `c559d36a0da5d463815d00e6c38dee0b81680895`, and left a durable Continuation Checkpoint. Its report stated that no load-bearing predecessor-private context was missing.
+2. After the Issue was closed, **Grok (xAI)** materialized the same locus, found the later Closure as the latest non-superseded frontier, verified the terminal state, did not replay the completed validation, changed no files, and identified `inseme#90` as the successor active experiment.
+
+For a declared environment roughly characterized as:
+
+```text
+h = coding-capable Corpus-aware handler
+E = GitHub/repository access
+    + readable Issue/comments
+    + applicable AGENTS instructions
+    + durable Git references
+```
+
+the observations support:
+
+```text
+Closed(p, h, E) = true
+```
+
+for the **bounded continuation represented/materialized by this case**, insofar as both handlers reached the appropriate current frontier without predecessor-private session state.
+
+The evidence does **not** establish:
+
+- closure for arbitrary zero-knowledge handlers;
+- universal interpretation of the word `Resume`;
+- that GitHub Issue identity equals logical Packet identity;
+- that every statement carried by the Issue was independently true;
+- that all future frontiers can be reconstructed from the same substrate.
+
+The result is therefore evidence for the existing relational Closure model, not a reason to add a new core schema or ontology.
+
+The richer substrate analysis and RT-005 record live in `research/documents_as_cognitive_packets.md`.
 
 ---
 
