@@ -69,7 +69,8 @@ changelog:
   - "v0.1 (2026-09-22) — initial formulation of Janus as a bidirectional Cognitive Packet gatekeeper."
   - "v0.2 (2026-09-22) — integrated internal reviews, embodiment, Synthetic Skin, philosophical ancestry and external Reviewer contract."
   - "v0.3 (2026-09-22) — narrowed Janus from governor/component to falsifiable transition-contract hypothesis after Grok review."
-  - "v0.4 (2026-09-23) — crossed Janus with COP 2.x after Claude review; recast Janus as a COP composition pattern centered on ex-ante ResolutionExpectation, decisive Assertions, temporal integrity, Continuation-based follow-up and later EvidenceRelations."\n  - "v0.5 (2026-09-23) — assimilates successful Booster coding validation from inseme#91, activates the frozen N=10 field sample at 0/10 from commit c559d36, records the reason-bearing-delegation residue in jhnDelegatingAgent, and points measurement to the frozen Janus Case Record in Booster v0.2."
+  - "v0.4 (2026-09-23) — crossed Janus with COP 2.x after Claude review; recast Janus as a COP composition pattern centered on ex-ante ResolutionExpectation, decisive Assertions, temporal integrity, Continuation-based follow-up and later EvidenceRelations."
+  - "v0.5 (2026-09-23) — assimilates successful Booster coding validation from inseme#91, activates the frozen N=10 field sample at 0/10 from commit c559d36, records the reason-bearing-delegation residue in jhnDelegatingAgent, and points measurement to the frozen Janus Case Record in Booster v0.2."
 ---
 
 # Janus — COP Resolution Pattern
