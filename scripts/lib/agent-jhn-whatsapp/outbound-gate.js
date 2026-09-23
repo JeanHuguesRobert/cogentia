@@ -23,6 +23,7 @@ import { ARTIFACT_TYPES, DECISIONS } from "./constants.js";
 import { resolveSentLedgerPath } from "./config.js";
 import { resolveSelfSendJid } from "./self-peer.js";
 import { AUDIENCE, ensureOutboundDisclosure, outboundDisclosureOk } from "./disclosure.js";
+import { markdownLinksToWhatsAppText } from "./format-whatsapp.js";
 import { isAllowedSelfPeer } from "./self-peer.js";
 import { recordOutboundSendEvent } from "./rate-limiter.js";
 import {
@@ -407,7 +408,7 @@ export async function drainWhatsappOutbox(config, options = {}) {
         });
         continue;
       }
-      const sendResult = await transport.sendText(row.payload.to_jid, stamped.text);
+      const sendResult = await transport.sendText(row.payload.to_jid, markdownLinksToWhatsAppText(stamped.text));
       if (sendResult?.ok) {
         markOutboxDelivered(row);
         appendSentLedger(config, {

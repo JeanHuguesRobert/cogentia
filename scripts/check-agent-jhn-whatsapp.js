@@ -858,6 +858,44 @@ test("28_contact_email_and_history_aware_disclosure", async () => {
   assert.ok(t2.includes("— agent-jhn-experimental"));
 });
 
+// --- WhatsApp does not render Markdown [label](url); it auto-linkifies bare URLs ---
+test("29_markdown_links_converted_for_whatsapp", async () => {
+  const { markdownLinksToWhatsAppText } = await import("./lib/agent-jhn-whatsapp/format-whatsapp.js");
+
+  assert.equal(
+    markdownLinksToWhatsAppText("Voir [FractaVolta](https://fractavolta.com) pour plus."),
+    "Voir FractaVolta: https://fractavolta.com pour plus.",
+  );
+  // Bare URLs and non-link text are left untouched.
+  assert.equal(markdownLinksToWhatsAppText("https://fractavolta.com sans crochets"), "https://fractavolta.com sans crochets");
+  assert.equal(markdownLinksToWhatsAppText(""), "");
+
+  // End-to-end: the drain path (the only real sendText caller) must apply it.
+  const dir = fs.mkdtempSync(path.join(tmpRoot, "t29-"));
+  const config = loadConfig(baseEnv({
+    AGENT_JHN_WHATSAPP_STATE_DIR: dir,
+    AGENT_JHN_WHATSAPP_SEND_ENABLED: "true",
+  }));
+  ensureStateDirs(config);
+  const n = normalizeInboundEvent(selfMessage("ping non engageant", "msg-t29"));
+  const draft = buildDeterministicDraft(n, config);
+  const draftText = `${draft.text} Source: [FractaVolta](https://fractavolta.com)`;
+  evaluatePolicy(n, config, { draftText });
+
+  const transport = createMockTransport({ connected: true });
+  requestOutboundSendAuthorized({
+    config,
+    normalized: n,
+    draftText,
+    actionRequestId: buildActionRequestId("msg-t29"),
+  });
+  const drained = await drainWhatsappOutbox(config, { transport, dryRun: false });
+  assert.equal(drained.sent, 1);
+  const sentText = transport.getSent()[0].text;
+  assert.ok(!/\[.*\]\(https?:\/\//.test(sentText), "no Markdown link syntax should reach WhatsApp");
+  assert.ok(sentText.includes("FractaVolta: https://fractavolta.com"));
+});
+
 // --- issue #75 incident 2026-09-07: turn admission, clock, mandatory disclosure ---
 test("75a_custodian_human_outbound_never_triggers_agent", async () => {
   const dir = fs.mkdtempSync(path.join(tmpRoot, "t75a-"));
