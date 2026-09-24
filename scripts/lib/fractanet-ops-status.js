@@ -55,7 +55,11 @@ export async function buildFractanetOpsStatus(deps = {}) {
     role: "runtime-aggregator",
     layers: {
       services: {
-        fracta: {
+        // Labeled by function, not physical host: this node answers the
+        // fractavolta.com public Guide aggregator, regardless of which
+        // physical host it actually runs on (fracta2 since 2026-09-23,
+        // operium#55).
+        fractavolta_guide: {
           mcp: {
             ok: !guideError && daemonOk,
             error: guideError || (daemonOk ? null : daemon?.error || "daemon_unhealthy"),
