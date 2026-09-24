@@ -1028,6 +1028,19 @@ The structural-signature framework was developed primarily for the natural-perso
 [^cogentia-cogentigram]: Robert, J. H. N. *Cogentia and Cogentigrams: A Framework for Structured Representation of Persistent Cognitive Signatures in AI Systems*. Cogentia repository, 2026. https://github.com/JeanHuguesRobert/cogentia/blob/main/research/Cogentia-and-Cogentigram.md
 
 [^cognitive-packets]: Robert, J. H. N. *Cognitive Packets: An Envelope and Payload Format for Human–AI and Multi-Agent Cooperation*. Cogentia repository, 2026. https://github.com/JeanHuguesRobert/cogentia/blob/main/research/cognitive_packets.md
+
+## Research continuation — Latent coordinates and residual identity
+
+[Latent Human Space and the Cogentigraphic Booster](latent_human_space_and_cogentigraphic_booster.md) asks whether a structural signature can be represented economically as coordinates in a shared human latent space plus a person-specific residual.
+
+This strengthens, rather than weakens, the privacy claim of this paper. If compact coordinates preserve substantial predictive power across tasks, then a very small representation may remain highly identifying or inferentially sensitive.
+
+Therefore:
+
+> **Compression does not imply anonymity. A smaller structural signature may increase portability and efficiency while preserving — or concentrating — identifying power.**
+
+The empirical question is resolution-dependent: how much residual information is needed to preserve a declared fidelity level over a declared task family?
+
 <!-- BEGIN_AUTO: backlinks -->
 ### Backlinks
 
