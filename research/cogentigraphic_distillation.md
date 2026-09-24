@@ -809,6 +809,29 @@ Robert, J. H. (2026f). *Democratic Humans in the Loop*. MareNostrum Repository. 
 
 ---
 
+
+## Research continuation — Shared latent structure as a second compression
+
+The companion note [Latent Human Space and the Cogentigraphic Booster](latent_human_space_and_cogentigraphic_booster.md) proposes a second-order compression of the present architecture.
+
+This paper separates the **reader** from the **library**. The new hypothesis asks whether the reader itself can be factorised:
+
+```text
+Cogentigram_i
+~= shared human structural basis
++ person-specific coordinates
++ person-specific residual
+```
+
+If this holds at useful fidelity, cogentigraphic distillation need not relearn the whole cognitive operating layer independently for every person. Shared structure can be amortized across users while biography remains external and the personal residual remains governed by the subject.
+
+Compact continuation:
+
+> **Distill the reader, not the library; then avoid relearning what readers share.**
+
+This is a research hypothesis, not a claim that humans belong to fixed discrete types. Its validity depends on measured fidelity/cost curves, residual size, transfer across models, and privacy leakage.
+
+
 ## Continuation
 
 This v0.1 draft opens several continuations:
