@@ -583,6 +583,8 @@ Cogentigram
 
 ## Continuation
 
+Tracked experiment: [cogentia#199 — Experiment — Latent Human Space and Cogentigraphic Booster](https://github.com/JeanHuguesRobert/cogentia/issues/199).
+
 Highest-priority continuation:
 
 1. define a bounded benchmark and task family $T$;
