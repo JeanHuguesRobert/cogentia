@@ -129,6 +129,27 @@ twin_instance:
 The owner-rooted twin may have many instances, but each instance must declare
 what it is allowed to do.
 
+
+### 3.1 Structural identity is not runtime identity
+
+The companion hypothesis [Latent Human Space and the Cogentigraphic Booster](latent_human_space_and_cogentigraphic_booster.md) adds a deeper separation beneath the instance model.
+
+A twin instance is already distinct from the owner-rooted twin. The structural representation that conditions those instances may itself be portable:
+
+```text
+shared latent human basis
++ owner-specific coordinates / residual
++ governed owner corpus
+-> multiple runtime instances
+```
+
+This yields a useful architectural invariant:
+
+> **Identity is not runtime.**
+
+The same governed structural representation may condition different providers, local models, public surfaces, or future embodied runtimes without making any one runtime the identity itself. This remains an engineering identity model, not a metaphysical assertion of personal continuity.
+
+
 ## 4. Relation to Ubikia
 
 Ubikia's formula is:
