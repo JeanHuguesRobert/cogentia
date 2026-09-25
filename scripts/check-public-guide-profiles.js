@@ -32,6 +32,8 @@ assert.equal(fracta.profile.webSearch, "inherit");
 assert.equal(fracta.profile.bindsSurface, false);
 assert.equal(fracta.profile.mandate.instance_id, "fractavolta-public-guide");
 assert.equal(fracta.profile.sourceScope, null);
+assert.deepEqual(fracta.profile.act_templates.map(item => item.id), ["technical-report", "pilot-contact"]);
+assert.equal(fracta.profile.act_templates[0].to, "jhr@baronsmariani.org");
 assert.equal(resolveProfileWebSearch(fracta.profile, "What is the latest price?").mode, "inherit");
 
 const closed = resolvePublicGuideProfile("suicide-corse", {
@@ -41,6 +43,8 @@ assert.equal(closed.profile.sourceScopeSummary.mode, "fail_closed");
 assert.equal(closed.profile.mandate.instance_id, "suicide-corse-public-guide");
 assert.equal(closed.profile.bindsSurface, true);
 assert.equal(closed.profile.usesCanonicalCache, false);
+assert.deepEqual(closed.profile.act_templates.map(item => item.id), ["submit-testimony", "report-correction"]);
+assert.equal(closed.profile.act_templates[0].to, "institutmariani@gmail.com");
 assert.equal(sourceAllowedByProfile({
   repo: "barons-Mariani",
   path: "projects/suicide-corse/corpus.yml",
@@ -137,7 +141,7 @@ assert.equal(draft.body.prepared_act.draft, true);
 assert.equal(draft.body.prepared_act.to, "institutmariani@gmail.com");
 assert.equal(draft.body.prepared_act.notice, "Brouillon — non envoyé");
 assert.match(draft.body.prepared_act.body, /Je ne sais pas la date/);
-assert.match(draft.body.prepared_act.body, /Je ne connais pas le lieu/);
+assert.doesNotMatch(draft.body.prepared_act.body, /Je ne connais pas le lieu/);
 assert.match(draft.body.prepared_act.body, /n'est pas un témoignage/);
 assert.match(draft.body.prepared_act.body, /ne parle pas à la place de Marie-Louise/);
 assert.doesNotMatch(draft.body.prepared_act.body, /je voulais partir/);
@@ -169,6 +173,21 @@ assert.equal(preparePublicGuideAct({
   context: "   ",
 }).body.error, "missing_act_context");
 
+const latestTurn = preparePublicGuideAct({
+  profile: "suicide-corse",
+  act: "submit-testimony",
+  locale: "fr",
+  context: "   ",
+  history: [
+    { role: "user", content: "Un ancien message qui ne doit pas partir." },
+    { role: "assistant", content: "Réponse du Guide." },
+    { role: "user", content: "Seulement le dernier tour." },
+  ],
+});
+assert.match(latestTurn.body.prepared_act.body, /Seulement le dernier tour/);
+assert.doesNotMatch(latestTurn.body.prepared_act.body, /Un ancien message/);
+assert.equal(live.profile.act_templates.some(item => item.id === latestTurn.body.prepared_act.kind), true);
+
 const pilot = preparePublicGuideAct({
   profile: "fractavolta",
   act: "pilot-contact",
@@ -193,6 +212,9 @@ assert.ok(handlerStart > 0 && handlerEnd > handlerStart);
 const handler = httpSource.slice(handlerStart, handlerEnd);
 assert.match(handler, /preparePublicGuideAct/);
 assert.doesNotMatch(handler, /openSurfaceTurnPacket|guideWebSearchRun|guideRetrievalRun|createAgentGatewayClient|fetch\(/);
+assert.match(moduleSource, /act_templates/);
+assert.match(moduleSource, /resolvePublicGuideProfile/);
+assert.doesNotMatch(moduleSource, /ACTS\[/);
 
 const guideJs = fs.readFileSync(path.join(siteRoot, "assets", "guide.js"), "utf8");
 const guideHtml = fs.readFileSync(path.join(siteRoot, "guide.html"), "utf8");
@@ -200,8 +222,15 @@ assert.match(guideJs, /sessionStorage/);
 assert.doesNotMatch(guideJs, /localStorage/);
 assert.doesNotMatch(guideHtml, /localStorage/);
 assert.match(guideHtml, /Brouillon — non envoyé/);
-assert.match(guideJs, /institutmariani@gmail.com/);
-assert.match(guideJs, /jhr@baronsmariani.org/);
+assert.match(guideJs, /submit-testimony/);
+assert.match(guideJs, /report-correction/);
+assert.match(guideJs, /draft\.to/);
+assert.doesNotMatch(guideJs, /institutmariani@gmail\.com/);
+assert.doesNotMatch(guideJs, /jhr@baronsmariani\.org/);
+assert.doesNotMatch(guideJs, /technical-report|pilot-contact/);
+assert.doesNotMatch(guideHtml, /institutmariani@gmail\.com/);
+assert.doesNotMatch(guideHtml, /jhr@baronsmariani\.org/);
+assert.doesNotMatch(guideHtml, /technical-report|pilot-contact/);
 assert.doesNotMatch(guideJs, /mailto:/);
 assert.doesNotMatch(guideHtml, /mailto:/);
 assert.doesNotMatch(guideJs, /editions\//);

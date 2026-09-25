@@ -526,12 +526,16 @@ try {
     locale: "fr",
     context: "Je ne sais pas la date.",
     executed: true,
-    history: [{ role: "assistant", content: "Marie-Louise a dit « je voulais partir »." }],
+    history: [
+      { role: "user", content: "Un ancien message qui ne doit pas partir." },
+      { role: "assistant", content: "Marie-Louise a dit « je voulais partir »." },
+    ],
   });
   assert.equal(prepared.prepared_act.executed, false);
   assert.equal(prepared.prepared_act.to, "institutmariani@gmail.com");
   assert.equal(prepared.cognitive_packet, undefined);
   assert.match(prepared.prepared_act.body, /Je ne sais pas la date/);
+  assert.doesNotMatch(prepared.prepared_act.body, /Un ancien message/);
   assert.doesNotMatch(prepared.prepared_act.body, /je voulais partir/);
   assert.equal(seenChatPayloads.length, chatsBeforeAct);
   assert.equal(seenPackBatches.length, packsBeforeAct);

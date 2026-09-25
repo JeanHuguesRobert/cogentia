@@ -72,45 +72,50 @@ const SUICIDE_CORSE_MANDATE = Object.freeze({
   ]),
 });
 
-const ACTS = {
-  fractavolta: [
-    act("technical-report", "jhr@baronsmariani.org", {
-      fr: "FractaVolta — brouillon de signalement technique",
-      en: "FractaVolta — technical report draft",
-    }, {
-      fr: "Ce brouillon ne dépose pas un signalement et n'ouvre pas de chantier.",
-      en: "This draft does not file a report and does not open work.",
-    }),
-    act("pilot-contact", "jhr@baronsmariani.org", {
-      fr: "FractaVolta — brouillon de contact pilote",
-      en: "FractaVolta — pilot contact draft",
-    }, {
-      fr: "Ce brouillon ne démarre pas un pilote et n'envoie pas de message.",
-      en: "This draft does not start a pilot and does not send a message.",
-    }),
-  ],
-  "suicide-corse": [
-    act("submit-testimony", "institutmariani@gmail.com", {
-      fr: "Suicide Corse — brouillon de témoignage",
-      en: "Suicide Corse — testimony draft",
-    }, {
-      fr: "Ce brouillon ne parle pas à la place de Marie-Louise et n'ajoute aucun fait que le visiteur n'a pas écrit.",
-      en: "This draft does not speak as Marie-Louise and adds no fact the visitor did not write.",
-    }),
-    act("report-correction", "institutmariani@gmail.com", {
-      fr: "Suicide Corse — brouillon de correction",
-      en: "Suicide Corse — correction draft",
-    }, {
-      fr: "Ce brouillon ne parle pas à la place de Marie-Louise et ne transforme pas une correction en fait établi.",
-      en: "This draft does not speak as Marie-Louise and does not turn a correction into an established fact.",
-    }),
-  ],
-};
+const FRACTAVOLTA_ACT_TEMPLATES = Object.freeze([
+  act("technical-report", "jhr@baronsmariani.org", {
+    fr: "FractaVolta — brouillon de signalement technique",
+    en: "FractaVolta — technical report draft",
+  }, {
+    fr: "Ce brouillon ne dépose pas un signalement et n'ouvre pas de chantier.",
+    en: "This draft does not file a report and does not open work.",
+  }),
+  act("pilot-contact", "jhr@baronsmariani.org", {
+    fr: "FractaVolta — brouillon de contact pilote",
+    en: "FractaVolta — pilot contact draft",
+  }, {
+    fr: "Ce brouillon ne démarre pas un pilote et n'envoie pas de message.",
+    en: "This draft does not start a pilot and does not send a message.",
+  }),
+]);
+
+const SUICIDE_CORSE_ACT_TEMPLATES = Object.freeze([
+  act("submit-testimony", "institutmariani@gmail.com", {
+    fr: "Suicide Corse — brouillon de témoignage",
+    en: "Suicide Corse — testimony draft",
+  }, {
+    fr: "Ce brouillon ne parle pas à la place de Marie-Louise et n'ajoute aucun fait que le visiteur n'a pas écrit.",
+    en: "This draft does not speak as Marie-Louise and adds no fact the visitor did not write.",
+  }),
+  act("report-correction", "institutmariani@gmail.com", {
+    fr: "Suicide Corse — brouillon de correction",
+    en: "Suicide Corse — correction draft",
+  }, {
+    fr: "Ce brouillon ne parle pas à la place de Marie-Louise et ne transforme pas une correction en fait établi.",
+    en: "This draft does not speak as Marie-Louise and does not turn a correction into an established fact.",
+  }),
+]);
 
 const scopeCache = new Map();
 
 function act(id, to, subject, closing) {
-  return { id, transport: "email", to, subject, closing };
+  return Object.freeze({
+    id,
+    transport: "email",
+    to,
+    subject: Object.freeze(subject),
+    closing: Object.freeze(closing),
+  });
 }
 
 export function defaultSuicideCorseManifestPath() {
@@ -174,9 +179,9 @@ export function resolveProfileWebSearch(profile, question, payload = {}) {
 }
 
 export function preparePublicGuideAct(input = {}) {
-  const profileId = String(input.profile ?? "").trim().toLowerCase();
-  const templates = ACTS[profileId];
-  if (!templates) return actError(400, "unknown_profile");
+  const resolved = resolvePublicGuideProfile(input.profile);
+  const templates = resolved.profile?.act_templates;
+  if (!resolved.ok || !templates) return actError(400, resolved.error || "unknown_profile");
   const actId = String(input.act || input.template || input.act_id || "").trim();
   const template = templates.find(item => item.id === actId);
   if (!template) return actError(400, "unknown_act");
@@ -189,7 +194,7 @@ export function preparePublicGuideAct(input = {}) {
     status: 200,
     body: {
       ok: true,
-      profile: profileId,
+      profile: resolved.profile.id,
       prepared_act: {
         kind: template.id,
         transport: template.transport,
@@ -212,6 +217,7 @@ function fractavoltaProfile() {
     usesCanonicalCache: true,
     webSearch: "inherit",
     mandate: FRACTAVOLTA_MANDATE,
+    act_templates: FRACTAVOLTA_ACT_TEMPLATES,
     sourceScope: null,
     sourceScopeSummary: null,
     prompt: "",
@@ -227,6 +233,7 @@ function suicideCorseProfile(options) {
     usesCanonicalCache: false,
     webSearch: "explicit",
     mandate: SUICIDE_CORSE_MANDATE,
+    act_templates: SUICIDE_CORSE_ACT_TEMPLATES,
     sourceScope,
     sourceScopeSummary: {
       mode: sourceScope.mode,
@@ -344,21 +351,16 @@ function questionRequestsExternalVerification(question) {
 }
 
 function collectVisitorText(context, history) {
-  const chunks = [];
-  if (Array.isArray(history)) {
-    for (const item of history) {
-      if (String(item?.role || "user").toLowerCase() !== "user") continue;
-      const text = sanitizeActText(item?.content);
-      if (text) chunks.push(text);
-    }
-  }
   const supplied = sanitizeActText(context);
-  if (supplied) chunks.push(supplied);
-  const unique = [];
-  for (const chunk of chunks) {
-    if (unique.at(-1) !== chunk) unique.push(chunk);
+  if (supplied) return supplied;
+  if (!Array.isArray(history)) return "";
+  for (let index = history.length - 1; index >= 0; index -= 1) {
+    const item = history[index];
+    if (String(item?.role || "user").toLowerCase() !== "user") continue;
+    const text = sanitizeActText(item?.content);
+    if (text) return text;
   }
-  return unique.join("\n\n").slice(0, 12000);
+  return "";
 }
 
 function sanitizeActText(value) {
