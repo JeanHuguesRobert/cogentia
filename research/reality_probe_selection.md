@@ -3,8 +3,8 @@ title: "Reality Probe Selection"
 subtitle: "Choose what is worth learning next"
 author: "Jean Hugues Noël Robert, baron Mariani"
 date: "2026-09-03"
-last_modified_at: "2026-09-21"
-version: "0.3"
+last_modified_at: "2026-09-25"
+version: "0.4"
 status: "working-paper"
 license: "CC BY-SA 4.0"
 language: "en"
@@ -414,7 +414,46 @@ Compact rule:
 
 ---
 
-## 10. Anti-patterns
+## 10. Mapping before selection
+
+Selection presupposes a sufficiently complete frontier.
+
+When the inquiry does not yet know which sources, holders, systems, deadlines or empowered observers exist, first build or refresh a **Probe Map**.
+
+See [Cartographier les Reality Probes](reality_probe_mapping.md).
+
+The map adds several values that ordinary information-gain selection can miss:
+
+```text
+preservation value
+    prevent an learnable fact from expiring
+
+generative yield
+    reveal new sources, holders, systems or probes
+
+option value
+    preserve future epistemic actions
+
+phase-change value
+    recognize that an event or deadline creates a new observation surface
+```
+
+Compact routing:
+
+```text
+frontier well known
+→ select among probes
+
+frontier materially incomplete
+→ map probes / sources / outputs first
+→ then select
+```
+
+This is not an excuse for exhaustive planning. The Probe Map is itself incremental and should be revised after every material Reality response.
+
+---
+
+## 11. Anti-patterns
 
 
 Avoid:
@@ -450,7 +489,7 @@ epistemic leakage
 
 ---
 
-## 11. Compact doctrine
+## 12. Compact doctrine
 
 > **Maintain the live Possible Space. Preserve the exploration Continuation. When further evidence is useful, choose a bounded Reality Probe whose expected decision-relevant discrimination justifies its costs, risk and attention demand. Shield the probe from unnecessary epistemic leakage, preserve appropriate aperture for unanticipated evidence, let Reality answer, update the Possible Space, and continue or stop accordingly.**
 
