@@ -40,6 +40,7 @@ import { createAgentGatewayClient } from "./lib/agent-gateway-client.js";
 import { handleOpsNodeProxyRequest, opsReadToken } from "./lib/ona-proxy.js";
 import { handleEdgeTrapPost, handleEdgeTrapsGet } from "./lib/edge-trap-ops.js";
 import { createJhnOpenAiSurface, isTwinOpenAiPath } from "./lib/jhn-openai-surface.js";
+import { stripS7AnchorLabel } from "./lib/guide-s7-anchor.js";
 import {
   buildCrossSurfaceStyleBlock,
   buildWhatsAppRepresentationMessages,
@@ -1725,17 +1726,19 @@ async function guideS7ResolveAnchor(question, plan = {}) {
         (String(result.card_id || "").startsWith("card:")
           ? String(result.card_id).split(":")[1]
           : "");
-      const canonical_rel =
+      const canonical_rel = stripS7AnchorLabel(
         resolution.canonical_rel ||
         result.canonical_rel ||
         (String(result.card_id || "").startsWith("card:")
           ? String(result.card_id).split(":").slice(2).join(":")
-          : "");
-      const canonical_url =
+          : "")
+      );
+      const canonical_url = stripS7AnchorLabel(
         resolution.canonical_url ||
         result.canonical_url ||
         result.claims_manifest ||
-        "";
+        ""
+      );
 
       const retrieval_queries = [
         result.name,
