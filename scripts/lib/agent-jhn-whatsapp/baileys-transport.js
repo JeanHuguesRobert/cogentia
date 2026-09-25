@@ -16,6 +16,7 @@ import { resolveAuthDir } from "./config.js";
  */
 export function createMockTransport(options = {}) {
   const sent = [];
+  const typingEvents = [];
   let connected = Boolean(options.connected);
   return {
     kind: "mock",
@@ -39,8 +40,16 @@ export function createMockTransport(options = {}) {
       sent.push({ jid, text, id, at: new Date().toISOString() });
       return { ok: true, id };
     },
+    async sendTyping(jid) {
+      if (!connected) return { ok: false, error: "not_connected" };
+      typingEvents.push({ jid, at: new Date().toISOString() });
+      return { ok: true };
+    },
     getSent() {
       return [...sent];
+    },
+    getTypingEvents() {
+      return [...typingEvents];
     },
     clearSent() {
       sent.length = 0;
@@ -361,6 +370,24 @@ export function createBaileysTransport(config, hooks = {}) {
         return { ok: true, id };
       } catch (err) {
         return { ok: false, error: err.message || "sendMessage_failed" };
+      }
+    },
+
+    /**
+     * Ephemeral "composing…" presence signal — not a message, carries no
+     * text, no disclosure/policy gating needed (nothing is communicated
+     * beyond "still working"). WhatsApp auto-clears this after ~25s or on
+     * the next real message, so callers doing a long-running synthesis
+     * should refresh it periodically rather than sending it once.
+     */
+    async sendTyping(jid) {
+      if (!sock) return { ok: false, error: "socket_not_open" };
+      if (!connected) return { ok: false, error: "not_connected" };
+      try {
+        await sock.sendPresenceUpdate("composing", jid);
+        return { ok: true };
+      } catch (err) {
+        return { ok: false, error: err.message || "presence_update_failed" };
       }
     },
 

@@ -896,6 +896,48 @@ test("29_markdown_links_converted_for_whatsapp", async () => {
   assert.ok(sentText.includes("FractaVolta: https://fractavolta.com"));
 });
 
+// --- "composing…" presence signal while cognitive synthesis is in flight ---
+test("30_typing_indicator_during_cognitive_synthesis", async () => {
+  const dir = fs.mkdtempSync(path.join(tmpRoot, "t30-"));
+  const config = loadConfig(baseEnv({
+    AGENT_JHN_WHATSAPP_STATE_DIR: dir,
+    AGENT_JHN_WHATSAPP_SEND_ENABLED: "true",
+  }));
+  ensureStateDirs(config);
+  const transport = createMockTransport({ connected: true });
+
+  const res = await handleInbound(selfMessage("Explique FractaVolta simplement.", "msg-t30"), config, {
+    enableCognitiveSynthesis: true,
+    includeDraftText: true,
+    transport,
+    answerWithLibrarian: async () => ({ ok: true, answer: "Réponse de test." }),
+  });
+
+  assert.ok(res.draft, "a cognitive draft should have been produced");
+  assert.ok(
+    transport.getTypingEvents().length >= 1,
+    "sendTyping should be called at least once while synthesis runs",
+  );
+  assert.equal(transport.getTypingEvents()[0].jid, bareJid(SELF_JID));
+});
+
+test("30b_typing_indicator_is_best_effort_without_transport", async () => {
+  const dir = fs.mkdtempSync(path.join(tmpRoot, "t30b-"));
+  const config = loadConfig(baseEnv({
+    AGENT_JHN_WHATSAPP_STATE_DIR: dir,
+    AGENT_JHN_WHATSAPP_SEND_ENABLED: "true",
+  }));
+  ensureStateDirs(config);
+
+  // No `transport` option at all — must not throw or block the draft.
+  const res = await handleInbound(selfMessage("Explique FractaVolta simplement.", "msg-t30b"), config, {
+    enableCognitiveSynthesis: true,
+    includeDraftText: true,
+    answerWithLibrarian: async () => ({ ok: true, answer: "Réponse de test." }),
+  });
+  assert.ok(res.draft, "a cognitive draft should still be produced without a transport");
+});
+
 // --- issue #75 incident 2026-09-07: turn admission, clock, mandatory disclosure ---
 test("75a_custodian_human_outbound_never_triggers_agent", async () => {
   const dir = fs.mkdtempSync(path.join(tmpRoot, "t75a-"));

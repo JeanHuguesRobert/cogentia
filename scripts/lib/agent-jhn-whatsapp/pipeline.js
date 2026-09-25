@@ -41,6 +41,28 @@ import { isCockpitCommand, processCockpitCommand } from "./cockpit-commands.js";
  * @param {object} [options]
  * @returns {Promise<object>}
  */
+const TYPING_REFRESH_MS = 20_000; // WhatsApp auto-clears "composing" after ~25s.
+
+/**
+ * Keep a "composing…" presence signal alive for the duration of a
+ * potentially long-running async operation (cognitive synthesis can take
+ * anywhere from a few seconds to a couple of minutes). Best-effort: a
+ * missing transport, a mock without sendTyping, or a failed presence call
+ * must never block or fail the actual operation.
+ */
+async function withTypingIndicator(transport, jid, run) {
+  if (!jid || typeof transport?.sendTyping !== "function") return run();
+  transport.sendTyping(jid).catch(() => {});
+  const interval = setInterval(() => {
+    transport.sendTyping(jid).catch(() => {});
+  }, TYPING_REFRESH_MS);
+  try {
+    return await run();
+  } finally {
+    clearInterval(interval);
+  }
+}
+
 export async function handleInbound(rawEvent, config, options = {}) {
   if (config.state_dir) {
     ensureStateDirs(config);
@@ -110,10 +132,14 @@ export async function handleInbound(rawEvent, config, options = {}) {
         text: formatOutboundText(processCockpitCommand(normalized.text, config), { audience: "self" }),
         stub: true,
       };
+    } else if (enableCognitive) {
+      draft = await withTypingIndicator(
+        options.transport,
+        normalized.remote_jid,
+        () => buildCognitiveDraft(normalized, config, pipelineOptions),
+      );
     } else {
-      draft = enableCognitive
-        ? await buildCognitiveDraft(normalized, config, pipelineOptions)
-        : buildDeterministicDraft(normalized, config, pipelineOptions);
+      draft = buildDeterministicDraft(normalized, config, pipelineOptions);
     }
     if (draft?.text) {
       const stamped = ensureOutboundDisclosure(draft.text, config, {

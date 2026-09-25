@@ -402,6 +402,7 @@ async function cmdRun(config, args) {
       const result = await handleInbound(msg, config, {
         source: "baileys",
         enableCognitiveSynthesis: true,
+        transport,
         onCognitiveError: (_error, diagnostics = {}) => console.error(JSON.stringify({
           event: "cognitive_error",
           ...diagnostics,
