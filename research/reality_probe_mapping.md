@@ -3,7 +3,7 @@ title: "Cartographier les Reality Probes"
 subtitle: "Préserver, révéler, discriminer et étendre l'espace explorable"
 author: "Jean Hugues Noël Robert, baron Mariani"
 date: "2026-09-25"
-version: "0.1"
+version: "0.2"
 status: "working-method"
 language: "fr"
 license: "CC BY-SA 4.0"
@@ -393,7 +393,96 @@ mettre à jour la Probe Map
 continuer | changer d'observateur | attendre | arrêter
 ```
 
-## 13. Critère de réussite
+## 13. Batch mode — expansion puis réduction
+
+Lorsque la Probe Map contient plusieurs branches comparables, l'enquête peut être traitée en **batch mode** sans pour autant exécuter en bloc les Acts externes.
+
+Le batch porte sur le **raisonnement et la cartographie**, pas automatiquement sur les interactions avec le Réel.
+
+### PASS A — expansion
+
+Pour chaque probe candidat ou actif, produire le même paquet analytique :
+
+```yaml
+probe_batch_item:
+  probe_id: ...
+  unknowns: [...]
+  prior: ...
+  trigger_or_action: ...
+  outputs:
+    - label: ...
+      establishes: [...]
+      does_not_establish: [...]
+      closes: [...]
+      opens: [...]
+      reveals_sources: [...]
+      next_probes: [...]
+  expiry:
+    retention_risk: ...
+    legal_or_operational_deadline: ...
+  option_effect:
+    preserves: [...]
+    risks_closing: [...]
+  stop_condition: ...
+```
+
+L'expansion doit rester **sémantiquement bornée** : ne pas générer toutes les réponses logiquement imaginables, mais seulement les sorties qui changent réellement la carte, la topologie des sources, une deadline ou la continuation.
+
+### PASS B — réduction
+
+Après expansion de tous les probes :
+
+1. fusionner les sorties équivalentes ;
+2. détecter les probes strictement redondants ;
+3. distinguer les probes **actifs**, **prêts**, **conditionnels**, **déclenchés par événement** et **fermés** ;
+4. détecter les probes dominés par une source déjà disponible ;
+5. repérer les inconnues sans probe ;
+6. repérer les probes sans pouvoir discriminant ni rendement génératif suffisant ;
+7. isoler les éléments soumis à une échéance ou un risque de rétention ;
+8. préserver les branches non exécutées dans la carte plutôt que de les supprimer.
+
+### Dominance
+
+La dominance ne doit pas être réduite à un score universel.
+
+Un probe A peut être dit **strictement dominé** par B seulement lorsque, dans le contexte présent, B :
+
+- couvre les mêmes inconnues utiles ;
+- ne ferme pas davantage d'options ;
+- n'a pas un coût, un risque ou une latence supérieurs de manière pertinente ;
+- et fournit au moins autant de discrimination, de préservation ou de rendement génératif.
+
+En cas d'arbitrage entre dimensions hétérogènes, conserver les deux branches et laisser le choix à une décision humaine ou à un Mandate explicite.
+
+### Sorties du batch
+
+Un batch produit idéalement trois vues cohérentes :
+
+```text
+vue détaillée par probe
+        +
+matrice probe × sortie × next_probe
+        +
+vue réduite des états / triggers / gaps
+```
+
+Il doit également produire un **diff de carte** :
+
+```text
+nouveaux probes découverts
+probes rendus inutiles
+inconnues désormais sans probe
+deadlines nouvellement visibles
+sources de sources nouvellement révélées
+```
+
+Formule compacte :
+
+> **Expand first. Reduce second. Execute only after the map has been updated.**
+
+---
+
+## 14. Critère de réussite
 
 Une campagne de probes réussie n'est pas celle qui confirme l'hypothèse initiale.
 
