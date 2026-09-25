@@ -58,6 +58,12 @@ import { createProviderCircuitBreaker } from "./lib/provider-circuit-breaker.js"
 import { resolveSourceUrl, formatSourceMarkdownLink } from "./lib/source-deep-links.js";
 import { synthesizeSmartExtractiveAnswer } from "./lib/smart-extractive-synthesizer.js";
 import { createSemanticAnswerCache } from "./lib/semantic-answer-cache.js";
+import {
+  filterRetrievalForProfile,
+  preparePublicGuideAct,
+  resolveProfileWebSearch,
+  resolvePublicGuideProfile,
+} from "./lib/public-guide-profiles.js";
 
 const moduleDir = path.dirname(fileURLToPath(import.meta.url));
 const fractanetDashboardPath = path.join(moduleDir, "ops", "fractanet-dashboard.html");
@@ -353,6 +359,7 @@ const server = http.createServer(async (req, res) => {
     if (method === "POST" && req.url === "/ops/edge/trap") return handleEdgeTrap(req, res);
     if (method === "GET" && req.url?.startsWith("/ops/edge/traps")) return handleEdgeTrapsList(req, res);
     if (method === "POST" && req.url === "/guide/chat") return handleGuideChat(req, res);
+    if (method === "POST" && req.url === "/guide/prepare-act") return handleGuidePrepareAct(req, res);
     // Cognitive Packet Ingestion & Attraction (Autonomous FractaNode Hub)
     if (method === "POST" && (req.url === "/cop/packet" || req.url === "/api/cop/packet" || req.url === "/packet")) {
       return handleCopPacketPost(req, res);
@@ -393,7 +400,7 @@ server.listen(port, host, () => {
   console.error(`Cogentia MCP HTTP server listening on ${host}:${port}`);
   console.error(`Daemon: ${core.daemonUrl.href}`);
   console.error("Endpoints: POST /mcp, GET /mcp, GET /health, GET /tools, POST /tools/{name}");
-  console.error("Guide: POST /guide/chat, GET /guide/health");
+  console.error("Guide: POST /guide/chat, POST /guide/prepare-act, GET /guide/health");
   console.error("JHN OpenAI: GET /guide/v1/models, POST /guide/v1/chat/completions (also /twin/jhn/v1/*)");
   console.error("Blackboard: GET /ops/blackboard, POST /ops/blackboard/upsert");
   console.error("Ops: GET /ops/status, GET /ops/dashboard, POST /ops/route/action, GET /ops/node/:node_id/{status,drift,calendar,soma/object,soma/vocabulary}");
@@ -813,11 +820,23 @@ async function parseUserIntent(question, history, defaultLocale = "en", options 
 async function produceGuideTurn(question, history, payload = {}, options = {}) {
   const defaultLocale = normalizeLocale(payload.locale || options.locale);
   const cleanHistory = normalizeGuideHistory(history);
-  const surface = resolvePublicChatSurface(payload, options);
+  const profileResolution = resolvePublicGuideProfile(payload.profile, guideProfileOptions());
+  if (!profileResolution.ok) {
+    return {
+      ok: false,
+      status: 400,
+      body: { ok: false, service: "fractavolta-guide", error: profileResolution.error },
+    };
+  }
+  const profile = profileResolution.profile;
+  const requestedSurface = resolvePublicChatSurface(payload, options);
+  const surface = profile?.bindsSurface ? profile.surfaceId : requestedSurface;
 
   // Fast-path: Canonical zero-latency cache check (Pillar Q&A)
   // Check BEFORE V2 multi-stage loop to avoid latency penalty on known cache hits!
-  const canonical = surface === "agent-john" ? null : semanticAnswerCache.matchCanonical(question);
+  const canonical = surface === "agent-john" || (profile && profile.usesCanonicalCache === false)
+    ? null
+    : semanticAnswerCache.matchCanonical(question);
   if (canonical && !payload.force_refresh) {
     const formattedSources = canonical.sources.map(s => ({
       ...s,
@@ -846,6 +865,7 @@ async function produceGuideTurn(question, history, payload = {}, options = {}) {
         elapsed_ms: 1,
       };
     }
+    decorateGuideProfile(body, profile, requestedSurface);
     return { ok: true, status: 200, body };
   }
 
@@ -952,8 +972,9 @@ async function produceGuideTurn(question, history, payload = {}, options = {}) {
       retrieval = await guideRetrievalRun(resolvedQuestion, plan);
     }
     observeGuideSemanticRetrieval(retrieval);
-    web = await guideWebSearchRun(resolvedQuestion, activeLocale, payload);
+    web = await guideWebForTurn(profile, resolvedQuestion, activeLocale, payload);
   }
+  retrieval = filterRetrievalForProfile(retrieval, profile);
 
   if (!chatCap.available) {
     const fallback = await guideFallback(
@@ -978,6 +999,7 @@ async function produceGuideTurn(question, history, payload = {}, options = {}) {
       fallback.body.chat = { available: false, reason: chatCap.reason };
       attachCopAccountingToBody(fallback.body, rootPacket, cop);
     }
+    decorateGuideProfile(fallback.body, profile, requestedSurface);
     return { ok: Boolean(fallback.body?.ok), status: fallback.status, body: fallback.body };
   }
 
@@ -989,16 +1011,17 @@ async function produceGuideTurn(question, history, payload = {}, options = {}) {
     resolvedQuestion,
     intentResult.visitor_name,
     surface,
+    profile,
   );
 
-  const johnVoice = surface === "agent-john" || surface === "jhn-public-openai" || options.model === "jhn-owner";
+  const johnVoice = !profile?.bindsSurface && (surface === "agent-john" || surface === "jhn-public-openai" || options.model === "jhn-owner");
   const chatPayload = {
     model: guideModel,
     temperature: johnVoice ? 0.3 : 0.2,
     max_tokens: johnVoice ? 3500 : 1200,
     messages,
     cogentia: {
-      repo: "all",
+      repo: profile?.sourceScope ? "barons-Mariani" : "all",
       mode: "hybrid",
       limit: guideLimit,
       budget: guideBudget,
@@ -1021,18 +1044,20 @@ async function produceGuideTurn(question, history, payload = {}, options = {}) {
       surface,
       step: "synthesis",
     });
-    const body = guideChatResponse(question, activeLocale, routed.body, retrieval, web);
+    const body = guideChatResponse(question, activeLocale, routed.body, retrieval, web, profile);
     body.surface = surface;
     if (routed.body?._cogentia_guide_synthesis === "openai_direct_fallback") {
       body.mode = "openai_direct_fallback";
       body.warnings = [...new Set([...(body.warnings || []), "guide_synthesis_openai_fallback"])];
     }
     attachCopAccountingToBody(body, rootPacket, cop);
+    decorateGuideProfile(body, profile, requestedSurface);
     return { ok: true, status: 200, body };
   }
 
   const fallback = await guideFallback(question, activeLocale, routed, retrieval, web);
   if (fallback.body) attachCopAccountingToBody(fallback.body, rootPacket, cop);
+  decorateGuideProfile(fallback.body, profile, requestedSurface);
   return { ok: Boolean(fallback.body?.ok), status: fallback.status, body: fallback.body };
 }
 
@@ -1143,6 +1168,10 @@ async function handleGuideChat(req, res) {
   const question = String(payload.question || payload.q || "").trim();
   if (!question) return sendJson(res, 400, { ok: false, error: "missing_question" });
   if (question.length > 1200) return sendJson(res, 413, { ok: false, error: "question_too_large" });
+  const profileResolution = resolvePublicGuideProfile(payload.profile, guideProfileOptions());
+  if (!profileResolution.ok) {
+    return sendJson(res, 400, { ok: false, service: "fractavolta-guide", error: profileResolution.error });
+  }
 
   const history = normalizeGuideHistory(payload.history);
   const chatCap = await guideChatCapability();
@@ -1153,7 +1182,7 @@ async function handleGuideChat(req, res) {
   const activeLocale = intentResult.detected_language || defaultLocale;
 
   if (guideWantsStream(req, payload)) {
-    return handleGuideChatStream(res, question, activeLocale, history, payload, intentResult, chatCap);
+    return handleGuideChatStream(res, question, activeLocale, history, payload, intentResult, chatCap, profileResolution.profile);
   }
 
   const result = await produceGuideTurn(question, history, payload, {
@@ -1164,7 +1193,21 @@ async function handleGuideChat(req, res) {
   return sendJson(res, result.status, result.body);
 }
 
-async function handleGuideChatStream(res, question, locale, history = [], payload = {}, intentResult = null, chatCap = null) {
+async function handleGuidePrepareAct(req, res) {
+  let payload;
+  try {
+    payload = JSON.parse(await readBody(req, 65536) || "{}");
+  } catch (error) {
+    return sendJson(res, error.message === "request_body_too_large" ? 413 : 400, {
+      ok: false,
+      error: error.message === "request_body_too_large" ? "request_body_too_large" : "invalid_json",
+    });
+  }
+  const prepared = preparePublicGuideAct(payload);
+  return sendJson(res, prepared.status, prepared.body);
+}
+
+async function handleGuideChatStream(res, question, locale, history = [], payload = {}, intentResult = null, chatCap = null, profile = null) {
   if (!chatCap) chatCap = await guideChatCapability();
   if (!intentResult) {
     intentResult = await parseUserIntent(question, history, locale, { skipLlm: !chatCap.available });
@@ -1187,7 +1230,9 @@ async function handleGuideChatStream(res, question, locale, history = [], payloa
 
   try {
     emit("guide_status", guideProgress(locale, "received"));
-    trace("turn.admitted", { surface: resolvePublicChatSurface(payload, { surface: "fractavolta-public-guide" }), locale });
+    const requestedSurface = resolvePublicChatSurface(payload, { surface: "fractavolta-public-guide" });
+    const surface = profile?.bindsSurface ? profile.surfaceId : requestedSurface;
+    trace("turn.admitted", { surface, locale });
     if (!chatCap.available) {
       emit("guide_status", {
         stage: "chat_unavailable",
@@ -1223,6 +1268,7 @@ async function handleGuideChatStream(res, question, locale, history = [], payloa
       emit("guide_status", guideProgress(locale, "retrieval"));
       retrieval = await guideRetrievalRun(resolvedQuestion, plan, { progress: emit, locale });
       observeGuideSemanticRetrieval(retrieval);
+      retrieval = filterRetrievalForProfile(retrieval, profile);
       emit("guide_retrieval", {
         stage: "retrieved",
         query_count: retrieval.queries.length,
@@ -1236,7 +1282,7 @@ async function handleGuideChatStream(res, question, locale, history = [], payloa
         warnings: retrieval.warnings,
       });
 
-      web = await guideWebSearchRun(resolvedQuestion, locale, payload, { progress: emit });
+      web = await guideWebForTurn(profile, resolvedQuestion, locale, payload, { progress: emit });
     }
 
     if (!chatCap.available) {
@@ -1256,21 +1302,21 @@ async function handleGuideChatStream(res, question, locale, history = [], payloa
         ].filter(Boolean);
         fallback.body.chat = { available: false, reason: chatCap.reason };
       }
+      decorateGuideProfile(fallback.body, profile, requestedSurface);
       emit(fallback.body?.ok === false ? "guide_error" : "guide_answer", fallback.body);
       sendSse(res, "done", { ok: true, elapsed_ms: Date.now() - startedAt, chat_available: false });
       return;
     }
 
     emit("guide_status", guideProgress(locale, "synthesis"));
-    const surface = resolvePublicChatSurface(payload, { surface: "fractavolta-public-guide" });
-    const johnVoice = surface === "agent-john" || surface === "jhn-public-openai";
+    const johnVoice = !profile?.bindsSurface && (surface === "agent-john" || surface === "jhn-public-openai");
     const chatPayload = {
       model: guideModel,
       temperature: johnVoice ? 0.3 : 0.2,
       max_tokens: johnVoice ? 3500 : 1200,
-      messages: buildGuideMessages(locale, retrieval, web, history, resolvedQuestion, intentResult.visitor_name, surface),
+      messages: buildGuideMessages(locale, retrieval, web, history, resolvedQuestion, intentResult.visitor_name, surface, profile),
       cogentia: {
-        repo: "all",
+        repo: profile?.sourceScope ? "barons-Mariani" : "all",
         mode: "hybrid",
         limit: guideLimit,
         budget: guideBudget,
@@ -1305,10 +1351,13 @@ async function handleGuideChatStream(res, question, locale, history = [], payloa
         provider: routed.body?._cogentia_guide_synthesis || "magistral",
         usage: routed.body?.usage || null,
       });
-      emit("guide_answer", guideChatResponse(question, locale, routed.body, retrieval, web));
+      const answer = guideChatResponse(question, locale, routed.body, retrieval, web, profile);
+      decorateGuideProfile(answer, profile, requestedSurface);
+      emit("guide_answer", answer);
     } else {
       trace("synthesis.failed", { error: routed.error || "routing_failed" });
       const fallback = await guideFallback(question, locale, routed, retrieval, web);
+      decorateGuideProfile(fallback.body, profile, requestedSurface);
       emit(fallback.body?.ok === false ? "guide_error" : "guide_answer", fallback.body);
     }
     sendSse(res, "done", { ok: true, elapsed_ms: Date.now() - startedAt });
@@ -2276,6 +2325,43 @@ function observeGuideSemanticRetrieval(retrieval) {
   };
 }
 
+function guideProfileOptions() {
+  return {
+    manifestPath: process.env.COGENTIA_SUICIDE_CORSE_CORPUS || undefined,
+  };
+}
+
+function blockedProfileWeb(reason) {
+  return {
+    strategy: "profile-web-default-off",
+    attempted: false,
+    ok: false,
+    query: "",
+    sources: [],
+    context: [],
+    warnings: [reason],
+  };
+}
+
+async function guideWebForTurn(profile, question, locale, payload = {}, options = {}) {
+  const decision = resolveProfileWebSearch(profile, question, payload);
+  if (decision.mode === "off") return blockedProfileWeb(decision.reason);
+  const webPayload = decision.mode === "on" ? { ...payload, web_search: true } : payload;
+  return guideWebSearchRun(question, locale, webPayload, options);
+}
+
+function decorateGuideProfile(body, profile, requestedSurface) {
+  if (!body || !profile) return body;
+  body.profile = profile.id;
+  body.mandate = profile.mandate;
+  if (profile.sourceScopeSummary) body.source_scope = profile.sourceScopeSummary;
+  if (profile.bindsSurface) {
+    body.surface_requested = requestedSurface;
+    body.surface = profile.surfaceId;
+  }
+  return body;
+}
+
 function resolvePublicChatSurface(payload = {}, options = {}) {
   const raw = String(payload.surface || options.surface || "").toLowerCase();
   if (raw === "agent-john" || raw === "agent-john-compact" || raw.startsWith("agent-john")) return "agent-john";
@@ -2283,8 +2369,11 @@ function resolvePublicChatSurface(payload = {}, options = {}) {
   return "fractavolta-public-guide";
 }
 
-function buildGuideMessages(locale, retrieval, web, history, question, visitorName = null, surface = "fractavolta-public-guide") {
+function buildGuideMessages(locale, retrieval, web, history, question, visitorName = null, surface = "fractavolta-public-guide", profile = null) {
   const messages = [];
+  if (profile?.prompt) {
+    messages.push({ role: "system", content: profile.prompt });
+  }
   if (surface === "agent-john") {
     messages.push(...buildWhatsAppRepresentationMessages(
       {
@@ -2512,8 +2601,9 @@ function guideWebPrompt(locale, web) {
   return lines.join("\n");
 }
 
-function guideChatResponse(question, locale, completion, retrieval = null, web = null) {
-  const context = completion?.cogentia_context || {};
+function guideChatResponse(question, locale, completion, retrieval = null, web = null, profile = null) {
+  const rawContext = completion?.cogentia_context || {};
+  const context = profile?.sourceScope ? { ...rawContext, sources: [] } : rawContext;
   const sources = mergeGuideSources(retrieval?.sources, context.sources, web?.sources);
   const answer = normalizeGuideCitations(
     String(completion?.choices?.[0]?.message?.content || completion?.choices?.[0]?.text || "").trim(),
@@ -3361,6 +3451,7 @@ function guideServiceInfo() {
     interfaces: [
       { href: "/guide/health", protocol: "guide-chat/v1" },
       { href: "/guide/chat", protocol: "guide-chat/v1" },
+      { href: "/guide/prepare-act", protocol: "guide-prepare-act/v1" },
       { href: "/guide/v1/chat/completions", protocol: "openai-compatible" },
     ],
     dependencies: [

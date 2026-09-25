@@ -38,6 +38,7 @@
     "eval:corpus-librarian-semantic": "node scripts/eval-corpus-librarian-semantic.js",
     "test:agent-jhn-semantic-judge": "node scripts/check-agent-jhn-semantic-judge.js",
     "test:guide": "node scripts/check-guide-http.js",
+    "test:public-guide-profiles": "node scripts/check-public-guide-profiles.js",
     "test:guide-s7-anchor": "node scripts/check-guide-s7-anchor.js",
     "test:retrieval-inox": "node scripts/check-retrieval-inox-session.js",
     "test:blackboard": "node scripts/check-packet-attractor-blackboard.js",

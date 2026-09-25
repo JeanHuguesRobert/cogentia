@@ -22,6 +22,7 @@ const seenOpenRouterPayloads = [];
 const seenPlannerPayloads = [];
 const seenMagistralPayloads = [];
 const seenOrientationQueries = [];
+let seenBrave = 0;
 
 const daemon = http.createServer(async (req, res) => {
   const url = new URL(req.url || "/", daemonBase);
@@ -71,6 +72,7 @@ const daemon = http.createServer(async (req, res) => {
     return sendJson(res, 404, { ok: false, error: "not_found" });
   }
   if (req.method === "GET" && url.pathname === "/brave") {
+    seenBrave += 1;
     return sendJson(res, 200, {
       web: {
         results: [{
@@ -457,6 +459,98 @@ try {
   assert.ok(incompleteFree.warnings.includes("guide_chat_backend_unavailable"));
   assert.ok(seenEntries.filter(Boolean).every(entry => entry === "public"));
 
+  const braveBeforeProfile = seenBrave;
+  const scoped = await postJson(`${mcpBase}/guide/chat`, {
+    profile: "suicide-corse",
+    question: "SUICIDE_CORSE_SCOPE_PROBE",
+    locale: "fr",
+  });
+  assert.equal(seenBrave, braveBeforeProfile);
+  assert.equal(scoped.profile, "suicide-corse");
+  assert.equal(scoped.mandate.instance_id, "suicide-corse-public-guide");
+  assert.equal(scoped.surface, "suicide-corse-public-guide");
+  assert.equal(scoped.source_scope.mode === "manifest" || scoped.source_scope.mode === "fail_closed", true);
+  assert.ok(scoped.sources.some(source => source.source_id.startsWith("barons-Mariani:projects/suicide-corse/corpus.yml")));
+  assert.equal(scoped.sources.some(source => /FractaVolta:README|mock:README/.test(source.source_id)), false);
+  assert.equal(scoped.context.web_search, undefined);
+  assert.ok(scoped.warnings.some(warning => String(warning).startsWith("profile_source_filtered:")));
+  const scopedPrompt = [...seenChatPayloads].reverse().find(payload =>
+    payload.messages?.some(message => /Public Guide retrieval run/.test(message.content || ""))
+    && payload.messages?.some(message => /IN_SCOPE_SUICIDE_CORSE_MARKER/.test(message.content || ""))
+  );
+  assert.ok(scopedPrompt, "profile synthesis should see only the in-scope retrieval");
+  const scopedRetrieval = scopedPrompt.messages.find(message => /Public Guide retrieval run/.test(message.content || ""));
+  assert.match(scopedRetrieval.content, /IN_SCOPE_SUICIDE_CORSE_MARKER/);
+  assert.doesNotMatch(scopedRetrieval.content, /FOREIGN_PUBLIC_SOURCE_MARKER/);
+  assert.doesNotMatch(scopedRetrieval.content, /mock:README\.md/);
+
+  const bypass = await postJson(`${mcpBase}/guide/chat`, {
+    profile: "suicide-corse",
+    surface: "agent-john",
+    question: "SUICIDE_CORSE_SCOPE_PROBE",
+    locale: "fr",
+  });
+  assert.equal(bypass.surface, "suicide-corse-public-guide");
+  assert.equal(bypass.surface_requested, "agent-john");
+  assert.equal(bypass.sources.some(source => /FractaVolta:README|mock:README/.test(source.source_id)), false);
+  const bypassPrompt = [...seenChatPayloads].reverse().find(payload =>
+    payload.messages?.some(message => /Never write in her voice/.test(message.content || ""))
+  );
+  assert.ok(bypassPrompt);
+  assert.equal(bypassPrompt.messages.some(message => /You are Agent John \(also Agent JHN\)/.test(message.content || "")), false);
+
+  const explicitWeb = await postJson(`${mcpBase}/guide/chat`, {
+    profile: "suicide-corse",
+    question: "Verify on the web today SUICIDE_CORSE_SCOPE_PROBE",
+    locale: "en",
+  });
+  assert.ok(seenBrave > braveBeforeProfile);
+  assert.equal(explicitWeb.context.web_search.attempted, true);
+
+  const compatible = await postJson(`${mcpBase}/guide/chat`, {
+    profile: "fractavolta",
+    question: "fractavolta profile compatibility probe zebra",
+    locale: "en",
+  });
+  assert.equal(compatible.profile, "fractavolta");
+  assert.equal(compatible.mandate.instance_id, "fractavolta-public-guide");
+  assert.equal(compatible.sources[0].source_id, "mock:README.md#L1-L4");
+
+  const chatsBeforeAct = seenChatPayloads.length;
+  const packsBeforeAct = seenPackBatches.length;
+  const braveBeforeAct = seenBrave;
+  const entriesBeforeAct = seenEntries.length;
+  const prepared = await postJson(`${mcpBase}/guide/prepare-act`, {
+    profile: "suicide-corse",
+    act: "submit-testimony",
+    locale: "fr",
+    context: "Je ne sais pas la date.",
+    executed: true,
+    history: [{ role: "assistant", content: "Marie-Louise a dit « je voulais partir »." }],
+  });
+  assert.equal(prepared.prepared_act.executed, false);
+  assert.equal(prepared.prepared_act.to, "institutmariani@gmail.com");
+  assert.equal(prepared.cognitive_packet, undefined);
+  assert.match(prepared.prepared_act.body, /Je ne sais pas la date/);
+  assert.doesNotMatch(prepared.prepared_act.body, /je voulais partir/);
+  assert.equal(seenChatPayloads.length, chatsBeforeAct);
+  assert.equal(seenPackBatches.length, packsBeforeAct);
+  assert.equal(seenBrave, braveBeforeAct);
+  assert.equal(seenEntries.length, entriesBeforeAct);
+
+  const foreignAct = await fetch(`${mcpBase}/guide/prepare-act`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ profile: "suicide-corse", act: "pilot-contact", context: "no" }),
+  });
+  assert.equal(foreignAct.status, 400);
+  const unknownProfile = await fetch(`${mcpBase}/guide/chat`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ profile: "other-guide", question: "Hello" }),
+  });
+  assert.equal(unknownProfile.status, 400);
+
   console.log(JSON.stringify({
     ok: true,
     guide_chat: true,
@@ -480,7 +574,7 @@ function batchQueryIncluded(query) {
 }
 
 function mockPack(query) {
-  const source = mockSourceForQuery(query);
+  const sources = mockSourcesForQuery(query);
   return {
     ok: true,
     query,
@@ -491,7 +585,7 @@ function mockPack(query) {
     retrieval: {
       requested_mode: "hybrid",
       mode: "hybrid",
-      result_count: 1,
+      result_count: sources.length,
       ranked_result_cache: false,
       query_embedding_cache: true,
       sqlite_vec: true,
@@ -500,13 +594,41 @@ function mockPack(query) {
     },
     pack_hash: "pack_mock",
     index_hash: "index_mock",
-    sources: [source],
-    context: [{
+    sources,
+    context: sources.map(source => ({
       source_id: source.source_id,
       text: source.text,
-    }],
+    })),
     warnings: [],
   };
+}
+
+function mockSourcesForQuery(query) {
+  if (/SUICIDE_CORSE_SCOPE_PROBE/.test(query)) {
+    return [
+      {
+        source_id: "barons-Mariani:projects/suicide-corse/corpus.yml#L1-L4",
+        repo: "barons-Mariani",
+        path: "projects/suicide-corse/corpus.yml",
+        title: "Suicide Corse corpus",
+        start_line: 1,
+        end_line: 4,
+        github_url: "https://example.invalid/barons-Mariani/projects/suicide-corse/corpus.yml#L1-L4",
+        text: "IN_SCOPE_SUICIDE_CORSE_MARKER",
+      },
+      {
+        source_id: "FractaVolta:README.md#L9-L12",
+        repo: "FractaVolta",
+        path: "README.md",
+        title: "Foreign public source",
+        start_line: 9,
+        end_line: 12,
+        github_url: "https://example.invalid/FractaVolta/README.md#L9-L12",
+        text: "FOREIGN_PUBLIC_SOURCE_MARKER",
+      },
+    ];
+  }
+  return [mockSourceForQuery(query)];
 }
 
 function mockSourceForQuery(query) {
