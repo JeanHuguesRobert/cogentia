@@ -18,6 +18,7 @@ related_documents:
   - "patterns/packet-backed-projection/PATTERN.md"
   - "interaction_packets/architecture.md"
   - "https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/autonomia/campagne_sondes_corpus_preparatoire_2024_2026.md"
+  - "https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/autonomia/amendement_effectivite_article_72-5.md"
 ---
 
 # CPKT-2026-009 — reprise après clôture technique
@@ -144,6 +145,14 @@ drafted ≠ sent.
 - une réponse contradictoire est un résultat utile ;
 - aucune sophistication interne ne doit rendre la sonde externe inutilement complexe ;
 - aucun email de cette campagne ne doit être envoyé automatiquement.
+
+## Yield nouveau — 26 septembre 2026
+
+La campagne d’interrogation du Réel a désormais produit un objet légistique public distinct : l’[**Amendement d’effectivité — article 72-5**](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/autonomia/amendement_effectivite_article_72-5.md), version `0.4-rc4`, commit `2125fe9a7811ac2b2474682cf8cc1d314755fbec`.
+
+Le chemin est méthodologiquement pertinent pour ce Packet : contribution de société civile → confrontation au texte parlementaire → revues adverses externes → arbitrages humains → reformulation en delta parlementaire court → publication → propagation. L’objet publié reste lui-même une **sonde** : sa reprise, sa modification, son refus, son silence ou son usage futur sont des observations potentielles, à enregistrer sans les pré-interpréter.
+
+La possibilité laissée à d’autres acteurs de corriger ou de s’approprier la rédaction est volontaire. Elle doit être distinguée de la provenance, qui reste traçable par l’historique public.
 
 ## Prompt minimal de reprise
 
