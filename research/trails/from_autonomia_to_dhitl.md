@@ -37,6 +37,9 @@ update_policy: UP-DEFAULT-REVIEWED
 1. [Autonomia](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/autonomia.md)
    *The territorial doctrine. Autonomy of capacity, collective capabilities, phase specificity — what a territory becomes able to do, beyond formal sovereignty.*
 
+1 bis. [Amendement d’effectivité — article 72-5](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/autonomia/amendement_effectivite_article_72-5.md)
+   *First explicit legislative projection of Autonomie de Capacité. A public, versioned parliamentary-form candidate: effective implementation, periodic evaluation, and observable effects against Liberté–Égalité–Fraternité. Its deliberate incompleteness also tests an important capacity principle: a proposal can be made strong enough to travel without being closed so tightly that downstream legitimate actors cannot appropriate and rewrite it.*
+
 2. [The Generalized Tocqueville Law](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/tocqueville_law.md)
    *The diagnostic. Why status without capacity produces rising expectations and structural dissatisfaction.*
 
