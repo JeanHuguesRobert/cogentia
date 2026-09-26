@@ -1,8 +1,8 @@
 ---
 title: Cogentia Shared Agent Instructions
 status: active
-version: 23
-date: 2026-09-22
+version: 24
+date: 2026-09-26
 document_role: operational
 document_kind: agent-instructions
 visibility: public
@@ -52,6 +52,7 @@ resolve without mandate. Do not invent missing by-reference context.
 - The corpus is the source of truth. Agent instructions are governed operational projections.
 - **Corpus membership is broader than canonical source authority.** GitHub Issues and materially relevant Issue comments in Corpus repositories are integral parts of the Corpus when they carry work, objections, continuations, decisions, observations, provenance, or other cognitively relevant traces. They commonly function as **memory in tension**, trace-bearing work loci, Packet/Capsule projections, or routing surfaces. Their membership in the Corpus does **not** make them stabilized source doctrine, canonical truth, or equivalent in authority to reviewed source documents. Always distinguish **belongs to the Corpus** from **is a stabilized/canonical source**. Creating or updating such an Issue/comment changes the Corpus even when no Git-tracked source file changes.
 - **Anti-Capture Doctrine**: Never propose, recommend, or implement hidden, machine-local, IDE-specific, or vendor-locked rule/state persistence (e.g., `/learn`, local `.agents/rules` overrides, or proprietary agent memory silos). This explicitly includes built-in assistant "memory" features (e.g. Claude Code's persistent cross-session memory, Cursor/Copilot project notes, or any tool that auto-suggests remembering feedback, doctrine, or project state outside the repository) — a harness inviting an agent to "build up memory over time" does not suspend this doctrine. All operational principles, agent skills, and states MUST be declared openly in Git commits on `main` or as versioned Cognitive Packet events (`cogentia.agent_skill/v1`, `cop.event/v1`). **Provider-swap test**: before writing anything to a local/private store, ask whether a successor agent or human, on a different provider, would need it to avoid repeating a solved problem or re-litigating a settled decision — if yes, it belongs in the corpus, and the local copy is at most a disposable pointer, not the source of truth.
+- **Institutional / procedural anti-capture**: Anti-Capture applies to workflows and institutions as well as to tools and providers. In a material process, do not silently allow a channel, intermediary, transfer, mediation, reclassification, confidentiality regime, partial resolution, or closure to replace the Principal's original route or materially reduce parallel options. Preserve observability, recoverable independent traces, granular consent, independent deadlines, and reversibility where reasonably possible. When the capture mode cannot be predicted, preserve optionality rather than attempting to enumerate every possible failure. A protective or remedial mechanism must itself remain subject to Reality tests. See `research/institutional_procedural_anti_capture.md`.
 - **Working memory, not archive**: an agent's local/private notes must stay ephemeral (task- or session-bound) unless explicitly promoted. If a local memory feature has no expiry and defaults to durable accumulation, the agent is responsible for pruning it back to that boundary itself — see `research/mneme_memory_architecture.md` and `research/memory_and_corpus_sleep_cycle.md`.
 - Distinguish fact, hypothesis, interpretation, public formulation, source document, derived product and temporary trace.
 - **Public criticism**: In public output, frame negative judgments as `[act/fitness] vs [explicit standard]`, not `[person] is [pejorative]`; subjectivity markers do not neutralize invective.
