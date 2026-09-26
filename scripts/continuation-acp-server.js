@@ -39,6 +39,21 @@ const CONTINUATION_KIND = process.env.CONTINUATION_ACP_KIND || "guide_answer_jud
 const sessions = new Map(); // sessionId -> { cwd, streaming }
 const STREAM_DEFAULT = String(process.env.CONTINUATION_ACP_STREAM || "1") !== "0";
 
+// inseme#109: named, exhaustive failure modes for this node, each paired
+// with a human-readable template. Every thrown acpError() below uses one
+// of these -- never a bare "acp_request_failed"/"Internal error" with no
+// discriminant, which is exactly the failure mode that cost an entire
+// investigation session (operium#45) to decode by hand.
+export const CONTINUATION_ERROR_INFO = Object.freeze({
+  SUBSYSTEM_ERROR: "subsystem_error", // cogentia.js's own continuation store errored/returned nothing
+  CANCELLED: "cancelled", // a resolver explicitly cancelled the continuation
+  RESOLUTION_TIMEOUT: "resolution_timeout", // nobody resolved it within WAIT_TIMEOUT_MS
+  MALFORMED_RESOLUTION: "malformed_resolution", // resolved, but no usable answer/decision/reason
+  EMISSION_FAILED: "emission_failed", // cogentia continuation emit itself did not return an id
+  INVALID_SESSION: "invalid_session", // session/prompt referenced an unknown sessionId
+  EMPTY_PROMPT: "empty_prompt", // session/prompt carried no text content block
+});
+
 function runCogentia(args) {
   return new Promise((resolve, reject) => {
     const child = spawn(process.execPath, [cogentiaScript, ...args, "--json"], {
@@ -82,7 +97,7 @@ async function waitForResolution(sessionId, continuationId, streaming) {
     const continuation = inspected.continuation;
     if (!continuation) {
       throw acpError(-32603, "Internal error: continuation lookup failed", {
-        continuationErrorInfo: "subsystem_error",
+        continuationErrorInfo: CONTINUATION_ERROR_INFO.SUBSYSTEM_ERROR,
         continuationId,
       });
     }
@@ -93,7 +108,7 @@ async function waitForResolution(sessionId, continuationId, streaming) {
     if (continuation.status === "cancelled") {
       if (streaming) notifyMessage(sessionId, `Continuation ${continuationId} was cancelled.`);
       throw acpError(-32603, "Continuation was cancelled before resolution", {
-        continuationErrorInfo: "cancelled",
+        continuationErrorInfo: CONTINUATION_ERROR_INFO.CANCELLED,
         continuationId,
         reason: continuation.resolution?.reason || "(no reason given)",
       });
@@ -106,7 +121,7 @@ async function waitForResolution(sessionId, continuationId, streaming) {
   }
   if (streaming) notifyMessage(sessionId, `Continuation ${continuationId} timed out unresolved.`);
   throw acpError(-32603, "Timed out waiting for a resolver to answer the continuation", {
-    continuationErrorInfo: "resolution_timeout",
+    continuationErrorInfo: CONTINUATION_ERROR_INFO.RESOLUTION_TIMEOUT,
     continuationId,
     waitedMs: WAIT_TIMEOUT_MS,
   });
@@ -223,12 +238,12 @@ async function dispatch(method, params) {
       const { sessionId, prompt } = params || {};
       const session = sessions.get(sessionId);
       if (!session) {
-        throw acpError(-32602, "Unknown sessionId", { continuationErrorInfo: "invalid_session" });
+        throw acpError(-32602, "Unknown sessionId", { continuationErrorInfo: CONTINUATION_ERROR_INFO.INVALID_SESSION });
       }
       const question = extractPromptText(prompt);
       if (!question) {
         throw acpError(-32602, "session/prompt requires at least one text content block", {
-          continuationErrorInfo: "empty_prompt",
+          continuationErrorInfo: CONTINUATION_ERROR_INFO.EMPTY_PROMPT,
         });
       }
       const emitted = await runCogentia([
@@ -239,7 +254,7 @@ async function dispatch(method, params) {
       ]);
       const continuationId = emitted.continuation?.continuation_id;
       if (!continuationId) {
-        throw acpError(-32603, "Failed to emit continuation", { continuationErrorInfo: "emission_failed" });
+        throw acpError(-32603, "Failed to emit continuation", { continuationErrorInfo: CONTINUATION_ERROR_INFO.EMISSION_FAILED });
       }
       const resolved = await waitForResolution(sessionId, continuationId, session.streaming);
       const answer =
@@ -249,7 +264,7 @@ async function dispatch(method, params) {
         "";
       if (!answer) {
         throw acpError(-32603, "Continuation resolved without a usable answer", {
-          continuationErrorInfo: "malformed_resolution",
+          continuationErrorInfo: CONTINUATION_ERROR_INFO.MALFORMED_RESOLUTION,
           continuationId,
           resolution: resolved.resolution,
         });
