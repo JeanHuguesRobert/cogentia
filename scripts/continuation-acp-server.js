@@ -11,11 +11,17 @@
  * `cogentia continuation resolve`. Vendor-agnostic by construction: any
  * agent able to run that one CLI command can serve this node.
  *
- * Deliberately minimal: no session/update streaming (inseme#108), no
- * structured error taxonomy beyond a first pass (inseme#109), no
- * capability-surface breadth (inseme#110), no resolver capability
- * matching (inseme#111). Each of those is a separate, independently
- * resumable sub-issue.
+ * inseme#108: emits session/update progress notifications while waiting
+ * on a continuation, instead of a silent black box. Falls back to plain
+ * blocking behaviour (no notifications) when CONTINUATION_ACP_STREAM=0 or
+ * the client's initialize params explicitly say it won't consume them --
+ * "vraiment tres degrades" cases only, per jhrobert's framing, not the
+ * default.
+ *
+ * Still minimal on: structured error taxonomy beyond a first pass
+ * (inseme#109), capability-surface breadth (inseme#110), resolver
+ * capability matching (inseme#111). Each of those is a separate,
+ * independently resumable sub-issue.
  */
 
 import { spawn } from "node:child_process";
@@ -30,7 +36,8 @@ const POLL_INTERVAL_MS = boundedNumber(process.env.CONTINUATION_ACP_POLL_MS, 3_0
 const WAIT_TIMEOUT_MS = boundedNumber(process.env.CONTINUATION_ACP_TIMEOUT_MS, 15 * 60_000, 5_000, 24 * 60 * 60_000);
 const CONTINUATION_KIND = process.env.CONTINUATION_ACP_KIND || "guide_answer_judgment";
 
-const sessions = new Map(); // sessionId -> { cwd }
+const sessions = new Map(); // sessionId -> { cwd, streaming }
+const STREAM_DEFAULT = String(process.env.CONTINUATION_ACP_STREAM || "1") !== "0";
 
 function runCogentia(args) {
   return new Promise((resolve, reject) => {
@@ -63,8 +70,13 @@ function extractPromptText(prompt) {
     .trim();
 }
 
-async function waitForResolution(continuationId) {
-  const deadline = Date.now() + WAIT_TIMEOUT_MS;
+async function waitForResolution(sessionId, continuationId, streaming) {
+  const startedAt = Date.now();
+  const deadline = startedAt + WAIT_TIMEOUT_MS;
+  if (streaming) {
+    notifyMessage(sessionId, `Waiting on continuation ${continuationId} -- resolve it with:\n` +
+      `  cogentia continuation resolve ${continuationId} <result.json>`);
+  }
   while (Date.now() < deadline) {
     const inspected = await runCogentia(["continuation", "inspect", continuationId]);
     const continuation = inspected.continuation;
@@ -74,16 +86,25 @@ async function waitForResolution(continuationId) {
         continuationId,
       });
     }
-    if (continuation.status === "resolved") return continuation;
+    if (continuation.status === "resolved") {
+      if (streaming) notifyMessage(sessionId, `Continuation ${continuationId} resolved.`);
+      return continuation;
+    }
     if (continuation.status === "cancelled") {
+      if (streaming) notifyMessage(sessionId, `Continuation ${continuationId} was cancelled.`);
       throw acpError(-32603, "Continuation was cancelled before resolution", {
         continuationErrorInfo: "cancelled",
         continuationId,
         reason: continuation.resolution?.reason || "(no reason given)",
       });
     }
+    if (streaming) {
+      const elapsedS = Math.round((Date.now() - startedAt) / 1000);
+      notifyStatus(sessionId, { continuationId, elapsedS, status: "waiting" });
+    }
     await sleep(POLL_INTERVAL_MS);
   }
+  if (streaming) notifyMessage(sessionId, `Continuation ${continuationId} timed out unresolved.`);
   throw acpError(-32603, "Timed out waiting for a resolver to answer the continuation", {
     continuationErrorInfo: "resolution_timeout",
     continuationId,
@@ -124,6 +145,29 @@ process.stdin.on("data", (chunk) => {
 
 function send(message) {
   process.stdout.write(`${JSON.stringify(message)}\n`);
+}
+
+// Notifications carry no id, per JSON-RPC 2.0 -- a client that doesn't
+// consume session/update simply ignores lines it doesn't expect, so these
+// are safe to always send; the "basic Q&A fallback" is controlled by the
+// streaming flag itself (session-level, decided at session/new time), not
+// by clients silently dropping them.
+function notify(method, params) {
+  send({ jsonrpc: "2.0", method, params });
+}
+
+function notifyMessage(sessionId, text) {
+  notify("session/update", {
+    sessionId,
+    update: { sessionUpdate: "agent_message_chunk", content: { type: "text", text } },
+  });
+}
+
+function notifyStatus(sessionId, meta) {
+  notify("session/update", {
+    sessionId,
+    update: { sessionUpdate: "session_info_update", _meta: { continuation: meta } },
+  });
 }
 
 async function handleLine(line) {
@@ -167,12 +211,18 @@ async function dispatch(method, params) {
       };
     case "session/new": {
       const sessionId = `ctnacp_${randomUUID()}`;
-      sessions.set(sessionId, { cwd: params?.cwd || root });
+      // "vraiment tres degrades" opt-out: a client may declare it will not
+      // consume session/update at all via _meta.noStreaming; otherwise
+      // streaming defaults on (per-process default from
+      // CONTINUATION_ACP_STREAM, overridable per session).
+      const streaming = params?._meta?.noStreaming ? false : STREAM_DEFAULT;
+      sessions.set(sessionId, { cwd: params?.cwd || root, streaming });
       return { sessionId };
     }
     case "session/prompt": {
       const { sessionId, prompt } = params || {};
-      if (!sessions.has(sessionId)) {
+      const session = sessions.get(sessionId);
+      if (!session) {
         throw acpError(-32602, "Unknown sessionId", { continuationErrorInfo: "invalid_session" });
       }
       const question = extractPromptText(prompt);
@@ -191,7 +241,7 @@ async function dispatch(method, params) {
       if (!continuationId) {
         throw acpError(-32603, "Failed to emit continuation", { continuationErrorInfo: "emission_failed" });
       }
-      const resolved = await waitForResolution(continuationId);
+      const resolved = await waitForResolution(sessionId, continuationId, session.streaming);
       const answer =
         resolved.resolution?.payload?.answer ||
         resolved.resolution?.reason ||
