@@ -113,7 +113,7 @@ async function waitForResolution(sessionId, continuationId, streaming) {
   const startedAt = Date.now();
   const deadline = startedAt + WAIT_TIMEOUT_MS;
   if (streaming) {
-    notifyMessage(sessionId, `Waiting on continuation ${continuationId} -- resolve it with:\n` +
+    notifyProgress(sessionId, `Waiting on continuation ${continuationId} -- resolve it with:\n` +
       `  cogentia continuation resolve ${continuationId} <result.json>`);
   }
   while (Date.now() < deadline) {
@@ -126,11 +126,11 @@ async function waitForResolution(sessionId, continuationId, streaming) {
       });
     }
     if (continuation.status === "resolved") {
-      if (streaming) notifyMessage(sessionId, `Continuation ${continuationId} resolved.`);
+      if (streaming) notifyProgress(sessionId, `Continuation ${continuationId} resolved.`);
       return continuation;
     }
     if (continuation.status === "cancelled") {
-      if (streaming) notifyMessage(sessionId, `Continuation ${continuationId} was cancelled.`);
+      if (streaming) notifyProgress(sessionId, `Continuation ${continuationId} was cancelled.`);
       throw acpError(-32603, "Continuation was cancelled before resolution", {
         continuationErrorInfo: CONTINUATION_ERROR_INFO.CANCELLED,
         continuationId,
@@ -143,7 +143,7 @@ async function waitForResolution(sessionId, continuationId, streaming) {
     }
     await sleep(POLL_INTERVAL_MS);
   }
-  if (streaming) notifyMessage(sessionId, `Continuation ${continuationId} timed out unresolved.`);
+  if (streaming) notifyProgress(sessionId, `Continuation ${continuationId} timed out unresolved.`);
   throw acpError(-32603, "Timed out waiting for a resolver to answer the continuation", {
     continuationErrorInfo: CONTINUATION_ERROR_INFO.RESOLUTION_TIMEOUT,
     continuationId,
@@ -195,10 +195,28 @@ function notify(method, params) {
   send({ jsonrpc: "2.0", method, params });
 }
 
+// The actual answer -- accumulated verbatim by callers like
+// acp-executor.js (`text += extractText(update)` for every non-reasoning
+// agent_message_chunk). Use ONLY for the final resolved answer, never for
+// progress notes -- see notifyProgress for those.
 function notifyMessage(sessionId, text) {
   notify("session/update", {
     sessionId,
     update: { sessionUpdate: "agent_message_chunk", content: { type: "text", text } },
+  });
+}
+
+// Progress/status notes (inseme#108). Uses the "thought" sessionUpdate
+// kind specifically because acp-executor.js's isReasoningUpdate()
+// excludes anything matching /reasoning|thought/i from its accumulated
+// answer text -- found live on fracta2 after the first fix (progress
+// notes and the real answer were both landing in the same accumulated
+// buffer, corrupting it) -- so these must never share notifyMessage's
+// "agent_message_chunk" kind with the real answer.
+function notifyProgress(sessionId, text) {
+  notify("session/update", {
+    sessionId,
+    update: { sessionUpdate: "agent_thought_chunk", content: { type: "text", text } },
   });
 }
 
@@ -339,7 +357,19 @@ async function dispatch(method, params) {
           resolution: resolved.resolution,
         });
       }
-      return { stopReason: "end_turn", _meta: { continuationId }, result: answer };
+      // Critical, found live on fracta2: acp-executor.js does NOT read the
+      // final session/prompt response's own return value for the answer
+      // text -- it accumulates `text` exclusively from session/update
+      // agent_message_chunk notifications received during the call (see
+      // acp-executor.js: `text += extractText(update)`), matching how
+      // Codex/Claude/OpenCode actually stream their responses. A resolved
+      // continuation's answer MUST be delivered as a notification before
+      // returning, or the caller sees an empty completion regardless of
+      // what this RPC response itself contains. This is unconditional
+      // (unlike the optional progress heartbeats from inseme#108) --
+      // it's the actual payload, not a progress update.
+      notifyMessage(sessionId, answer);
+      return { stopReason: "end_turn", _meta: { continuationId } };
     }
     default:
       throw acpError(-32601, `Method not found: ${method}`);
