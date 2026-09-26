@@ -18,10 +18,20 @@
  * "vraiment tres degrades" cases only, per jhrobert's framing, not the
  * default.
  *
- * Still minimal on: structured error taxonomy beyond a first pass
- * (inseme#109), capability-surface breadth (inseme#110), resolver
- * capability matching (inseme#111). Each of those is a separate,
- * independently resumable sub-issue.
+ * inseme#109: structured, named error taxonomy (CONTINUATION_ERROR_INFO)
+ * instead of generic messages -- paired with router.js's classifyAcpError
+ * on the Magistral side (inseme#105).
+ *
+ * inseme#110: capability surface honestly declared as the union of what
+ * Codex/Claude/OpenCode's ACP surfaces were empirically observed to
+ * support, implementing session/load (resume-by-continuation-id),
+ * session/list, session/close, and embedded-context/image passthrough
+ * into the continuation. Declines (omits) capabilities it cannot honor
+ * (fork, delete, additionalDirectories, any MCP serving) rather than
+ * falsely advertising them.
+ *
+ * Still minimal on: resolver capability matching (inseme#111) --
+ * separate, independently resumable sub-issue.
  */
 
 import { spawn } from "node:child_process";
@@ -83,6 +93,20 @@ function extractPromptText(prompt) {
     .map((block) => block.text)
     .join("\n")
     .trim();
+}
+
+// inseme#110: honor promptCapabilities.embeddedContext/image by actually
+// carrying non-text blocks through to the continuation's context field,
+// rather than silently dropping them the way a capability that's
+// declared-but-unimplemented would. Whether the *resolver* can act on an
+// image is the resolver's own capability, not this node's -- see
+// inseme#111 for matching resolvers to what a continuation actually needs.
+function extractEmbeddedContext(prompt) {
+  if (!Array.isArray(prompt)) return null;
+  const resources = prompt.filter((block) => block?.type === "resource" || block?.type === "resource_link");
+  const images = prompt.filter((block) => block?.type === "image");
+  if (resources.length === 0 && images.length === 0) return null;
+  return { resources, images };
 }
 
 async function waitForResolution(sessionId, continuationId, streaming) {
@@ -214,14 +238,26 @@ async function handleLine(line) {
 async function dispatch(method, params) {
   switch (method) {
     case "initialize":
+      // inseme#110: capability union of Codex/Claude/OpenCode's observed
+      // ACP surfaces (see the issue's Traces for the raw probes), decided
+      // field by field for what this node can actually honor -- never
+      // claiming a capability it would then fail on. Declined fields
+      // (fork, delete, additionalDirectories, mcpCapabilities.*, auth)
+      // are omitted rather than falsely advertised; loadSession/resume,
+      // list, and close ARE implemented below via session/load,
+      // session/list, session/close.
       return {
         protocolVersion: 1,
         agentInfo: { name: "cogentia-continuation-acp", title: "Cogentia Continuation (Super ACP, minimal)", version: "0.1.0" },
         agentCapabilities: {
-          promptCapabilities: { embeddedContext: false, image: false },
-          sessionCapabilities: {},
+          loadSession: true,
+          promptCapabilities: { embeddedContext: true, image: true },
+          sessionCapabilities: { resume: {}, list: {}, close: {} },
           mcpCapabilities: { acp: false, http: false, sse: false },
         },
+        // No auth method: continuations are resolved under local
+        // filesystem trust (whoever can run `cogentia continuation
+        // resolve`), not a per-request credential this node manages.
         authMethods: [],
       };
     case "session/new": {
@@ -231,8 +267,36 @@ async function dispatch(method, params) {
       // streaming defaults on (per-process default from
       // CONTINUATION_ACP_STREAM, overridable per session).
       const streaming = params?._meta?.noStreaming ? false : STREAM_DEFAULT;
-      sessions.set(sessionId, { cwd: params?.cwd || root, streaming });
+      sessions.set(sessionId, { cwd: params?.cwd || root, streaming, resumeContinuationId: null });
       return { sessionId };
+    }
+    case "session/load": {
+      // inseme#110: sessionCapabilities.resume reinterpreted in
+      // continuation terms -- "resume" means "reattach to a still-active
+      // continuation by id" rather than replaying a vendor model's chat
+      // history (which doesn't exist here).
+      const { sessionId, continuationId } = params || {};
+      if (!continuationId) {
+        throw acpError(-32602, "session/load requires a continuationId", {
+          continuationErrorInfo: CONTINUATION_ERROR_INFO.INVALID_SESSION,
+        });
+      }
+      const newSessionId = sessionId || `ctnacp_${randomUUID()}`;
+      const streaming = params?._meta?.noStreaming ? false : STREAM_DEFAULT;
+      sessions.set(newSessionId, { cwd: params?.cwd || root, streaming, resumeContinuationId: continuationId });
+      return { sessionId: newSessionId };
+    }
+    case "session/list":
+      return {
+        sessions: Array.from(sessions.entries()).map(([sessionId, s]) => ({
+          sessionId,
+          resumeContinuationId: s.resumeContinuationId || null,
+        })),
+      };
+    case "session/close": {
+      const { sessionId } = params || {};
+      const existed = sessions.delete(sessionId);
+      return { sessionId, closed: existed };
     }
     case "session/prompt": {
       const { sessionId, prompt } = params || {};
@@ -241,20 +305,26 @@ async function dispatch(method, params) {
         throw acpError(-32602, "Unknown sessionId", { continuationErrorInfo: CONTINUATION_ERROR_INFO.INVALID_SESSION });
       }
       const question = extractPromptText(prompt);
-      if (!question) {
+      if (!question && !session.resumeContinuationId) {
         throw acpError(-32602, "session/prompt requires at least one text content block", {
           continuationErrorInfo: CONTINUATION_ERROR_INFO.EMPTY_PROMPT,
         });
       }
-      const emitted = await runCogentia([
-        "continuation", "emit",
-        "--kind", CONTINUATION_KIND,
-        "--title", `Super ACP: ${question.slice(0, 80)}`,
-        "--question", question,
-      ]);
-      const continuationId = emitted.continuation?.continuation_id;
+      let continuationId = session.resumeContinuationId;
       if (!continuationId) {
-        throw acpError(-32603, "Failed to emit continuation", { continuationErrorInfo: CONTINUATION_ERROR_INFO.EMISSION_FAILED });
+        const embedded = extractEmbeddedContext(prompt);
+        const emitArgs = [
+          "continuation", "emit",
+          "--kind", CONTINUATION_KIND,
+          "--title", `Super ACP: ${question.slice(0, 80)}`,
+          "--question", question,
+        ];
+        if (embedded) emitArgs.push("--context-json", JSON.stringify(embedded));
+        const emitted = await runCogentia(emitArgs);
+        continuationId = emitted.continuation?.continuation_id;
+        if (!continuationId) {
+          throw acpError(-32603, "Failed to emit continuation", { continuationErrorInfo: CONTINUATION_ERROR_INFO.EMISSION_FAILED });
+        }
       }
       const resolved = await waitForResolution(sessionId, continuationId, session.streaming);
       const answer =
