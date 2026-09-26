@@ -1382,6 +1382,29 @@ Publication agents manage distribution and traceability.
 The task is therefore not to multiply content.
 
 It is to make a corpus appear without losing itself.
+## Constitutional amendment as an appropriable derived product
+
+The publication on 26 September 2026 of the [**Article 72-5 effectiveness amendment**](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/autonomia/amendement_effectivite_article_72-5.md), version `0.4-rc4`, adds a useful boundary case to this framework.
+
+The source corpus carries the broader doctrine of **Autonomie de Capacité**. The amendment is not a compressed restatement of that doctrine. It is a situated political-legal form constrained by an existing constitutional text, parliamentary drafting conventions, and the need to remain adoptable by actors who were not the authors of the source corpus.
+
+This yields an additional design criterion for derived products:
+
+> **A derived product may be intentionally under-closed when successful transmission requires a legitimate downstream actor to appropriate, rewrite, sign or carry it.**
+
+The objective is therefore not always maximal textual optimization. It may instead be to minimize the **appropriation cost** while preserving enough precision, provenance and traceability for the object to remain auditable.
+
+```text
+source doctrine
+→ constrained situated form
+→ public versioned candidate
+→ downstream appropriation
+→ modification / carrying / rejection
+→ trace back into the corpus
+```
+
+This case should remain distinguished from authorship transfer: provenance is preserved even when political or institutional authorship of a later version moves to another actor.
+
 <!-- BEGIN_AUTO: backlinks -->
 ### Backlinks
 
