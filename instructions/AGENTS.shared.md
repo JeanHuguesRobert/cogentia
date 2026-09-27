@@ -1,7 +1,7 @@
 ---
 title: Cogentia Shared Agent Instructions
 status: active
-version: 27
+version: 28
 date: 2026-09-27
 document_role: operational
 document_kind: agent-instructions
@@ -133,6 +133,9 @@ Operational pattern:
 
 ## Invariants
 
+**FractaCognition principles:** [`research/fractacognition_principles.md`](../research/fractacognition_principles.md) consolidates, without centralizing, the shared metacognitive relationship among Occam, Hanlon, and Talleyrand. Operational rules below remain the authoritative local projections where they apply.
+
+
 - The corpus is the source of truth. Agent instructions are governed operational projections.
 - **Corpus membership is broader than canonical source authority.** GitHub Issues and materially relevant Issue comments in Corpus repositories are integral parts of the Corpus when they carry work, objections, continuations, decisions, observations, provenance, or other cognitively relevant traces. They commonly function as **memory in tension**, trace-bearing work loci, Packet/Capsule projections, or routing surfaces. Their membership in the Corpus does **not** make them stabilized source doctrine, canonical truth, or equivalent in authority to reviewed source documents. Always distinguish **belongs to the Corpus** from **is a stabilized/canonical source**. Creating or updating such an Issue/comment changes the Corpus even when no Git-tracked source file changes.
 - **Anti-Capture Doctrine**: Never propose, recommend, or implement hidden, machine-local, IDE-specific, or vendor-locked rule/state persistence (e.g., `/learn`, local `.agents/rules` overrides, or proprietary agent memory silos). This explicitly includes built-in assistant "memory" features (e.g. Claude Code's persistent cross-session memory, Cursor/Copilot project notes, or any tool that auto-suggests remembering feedback, doctrine, or project state outside the repository) — a harness inviting an agent to "build up memory over time" does not suspend this doctrine. All operational principles, agent skills, and states MUST be declared openly in Git commits on `main` or as versioned Cognitive Packet events (`cogentia.agent_skill/v1`, `cop.event/v1`). **Provider-swap test**: before writing anything to a local/private store, ask whether a successor agent or human, on a different provider, would need it to avoid repeating a solved problem or re-litigating a settled decision — if yes, it belongs in the corpus, and the local copy is at most a disposable pointer, not the source of truth.
@@ -254,9 +257,11 @@ freshness check
   from merely not-yet-fetched
 ```
 
-Talleyrand rule:
+Talleyrand Principle:
 
 > **Ce qui va sans dire va encore mieux en le disant.**
+
+Metacognitive source: [`research/fractacognition_principles.md`](../research/fractacognition_principles.md).
 
 ### Human-assist escalation for access barriers
 
