@@ -130,6 +130,29 @@ Target handler verifies retrieval.
 Result: executable handoff.
 ```
 
+#### ERP interpretation
+
+This gate is a narrow operational instance of **Exploration Rationnelle du
+Possible**.
+
+A resumable packet proposes a future branch of action. Before investing further
+reasoning in that branch, test the preconditions that can already decide whether
+the first step is feasible. Detecting a genuine impossibility early is positive
+epistemic yield: it contracts the modeled search space and redirects effort
+toward branches Reality has not ruled out.
+
+```text
+candidate continuation
+→ feasibility probe
+→ impossible dependency
+→ prune / repair / reroute
+→ preserve trace
+→ continue exploring remaining Possible
+```
+
+The gate must remain non-Panglossian in both directions: do not pretend an
+inaccessible dependency is available, but also do not promote temporary
+inaccessibility or uncertainty into metaphysical impossibility.
 ## 3. Relationship to other Issue types
 
 A Resumable Issue is not synonymous with every GitHub Issue.
