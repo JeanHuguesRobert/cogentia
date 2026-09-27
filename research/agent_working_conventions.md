@@ -66,6 +66,31 @@ Nothing here overrides `AGENTS.shared.md`; where the two disagree, the shared la
   table mapping each closure criterion from the spec to concrete evidence (file/line/function)
   and a ✅/❌, plus a one-sentence verdict. This is what makes fast, non-rubber-stamp human
   validation possible — the cross-referencing work is already done.
+- **Don't re-ask the same kind of confirmation mid-batch.** Once a human has approved the shape
+  of a multi-step or multi-question task (e.g. "run this comparison across all N questions",
+  "fix these fabrication-gap items one by one"), proceed through the mechanical repetitions
+  without a fresh confirmation prompt per item. Confirmed directly during the 2026-09-27
+  legacy-vs-V2 Guide comparison session: "and try to do a full batch without asking me the same
+  question again and again", then "and stop asking me so many questions". Reserve interactive
+  questions for genuinely new decisions (which track to pursue, how to resolve an unexpected
+  repo/branch state) — not for re-confirming a already-approved batch's next unit of work.
+
+## Git and branch hygiene
+
+- **A sub-project's working copy can be parked on an unrelated feature/WIP branch with its own
+  in-progress uncommitted changes.** Don't assume `main` is checked out just because a task is
+  documentation-only. Run `git branch --show-current` and `git status -sb` before editing or
+  committing. If unrelated modified files are already present, diff them before touching
+  anything — they may be genuine in-progress work (leave alone) or a harmless residue (e.g. a
+  file-mode-only diff, safe to discard).
+- **When you need `main` but the primary checkout is elsewhere, look for (or use) a worktree
+  already on `main`** rather than fighting the primary checkout's branch state. `git worktree
+  list` surfaces every checkout of a repo; several long-running repos in this corpus keep a
+  standing worktree per in-flight branch under `handoffs/worktrees/<repo>-<topic>` (see
+  `operium`, which as of 2026-09-27 has one at `handoffs/worktrees/operium-pause-fix` sitting on
+  `main`). Save the change as a patch (`git diff > /tmp/x.patch`), discard it from the
+  branch-mismatched checkout, `git apply` it in the `main` worktree, review the diff, then
+  commit and push there.
 
 ## Placement and locality
 
