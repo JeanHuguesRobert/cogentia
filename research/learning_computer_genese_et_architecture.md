@@ -34,6 +34,7 @@ related_documents:
   - "barons-Mariani/research/second_method.md"
   - "barons-Mariani/research/le_reel_le_virtuel_et_l_actuel.md"
   - "cogentia/research/cognitive_packet_switching.md"
+  - "cogentia/research/fractacognition_principles.md"
   - "cogentia/research/cognitive_packets.md"
   - "cogentia/research/documents_as_cognitive_packets.md"
   - "cogentia/research/cognitive_packet_closure_and_packet_native_semantics.md"
@@ -454,6 +455,10 @@ Cette logique fractacognitive s'incarne directement dans la gestion de la mémoi
 Chaque cache est une projection optimisée, subordonnée à la couche inférieure, et jetable sans perte d'information grâce à l'immuabilité des traces sous-jacentes. La continuité entre les *slots* de `side.js` (2016) et les continuations réifiées de COP (2026) illustre la longue maturation de cette invariance d'échelle.
 
 ---
+
+### Principes métacognitifs consolidés
+
+La FractaCognition dispose également d'une couche légère de **grands principes métacognitifs**, consolidatrice mais non centralisatrice. [`fractacognition_principles.md`](fractacognition_principles.md) relie notamment **Occam**, **Hanlon** et **Talleyrand** comme trois heuristiques complémentaires : ne pas ajouter de complexité inutile, ne pas ajouter d'intention hostile sans tester d'abord l'échec ordinaire, et ne pas omettre une hypothèse matérielle au seul motif qu'elle paraît évidente. Les développements spécialisés restent dans leurs documents locaux ; la consolidation porte sur leurs relations et leur découvrabilité, non sur une autorité centrale.
 
 ## VII. Conséquences normatives pour l'évolution de COP 2.x
 
