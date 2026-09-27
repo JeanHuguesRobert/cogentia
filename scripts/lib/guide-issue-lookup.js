@@ -100,6 +100,22 @@ function runGh(args, timeoutMs) {
     delete env.GH_TOKEN;
     delete env.GITHUB_ENTERPRISE_TOKEN;
     delete env.GH_ENTERPRISE_TOKEN;
+    // Second environment-pollution layer found live on fracta2, 2026-09-27,
+    // right after the token fix: the service's process also carries an
+    // HTTP_PROXY/HTTPS_PROXY pointing at a local proxy (127.0.0.1:8889, for
+    // some other feature) that isn't listening for this call, so gh's
+    // network request failed with "proxyconnect ... connection refused".
+    // Same defensive clearing already used by this workspace's other local
+    // subprocess integrations (see packages/magistral/registry/maps/
+    // local-*-acp.js's createAcpEnvironment) -- apply it here too.
+    env.HTTP_PROXY = "";
+    env.HTTPS_PROXY = "";
+    env.ALL_PROXY = "";
+    env.http_proxy = "";
+    env.https_proxy = "";
+    env.all_proxy = "";
+    env.NO_PROXY = "*";
+    env.no_proxy = "*";
     execFile(command, [...prefixArgs, ...args], { timeout: timeoutMs, maxBuffer: 2 * 1024 * 1024, env }, (error, stdout) => {
       if (error) return resolve({ ok: false, error: error.message });
       try {
