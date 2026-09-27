@@ -1,7 +1,7 @@
 ---
 title: Optimistic Mainline Governance
 subtitle: Direct agent work on main under trace, Measured Risk and scoped authorization
-version: '0.3'
+version: '0.4'
 status: source document — operational doctrine
 date: '2026-07-07'
 author: Jean Hugues Noël Robert, baron Mariani
@@ -154,6 +154,49 @@ Therefore:
 > **Prefer the smallest sufficient operational Exposure, not the smallest conceivable risk.**
 
 ---
+
+## 3.2 Concurrent work is not frozen work
+
+Optimistic locking applies to **ongoing cognitive work**, not only to file
+writes.
+
+Starting a coding agent or another handler does not create a private frozen
+branch of Reality. The shared Corpus may legitimately evolve while that handler
+works.
+
+```text
+handler baseline B0
+→ work begins
+→ Corpus evolves to B1
+→ material update appears
+→ handler refreshes
+→ compare B0 / local work / B1
+→ reconcile or expose conflict
+→ continue
+```
+
+The important distinction is:
+
+```text
+do not disturb blindly
+≠
+do not update at all
+```
+
+A small, relevant Corpus improvement should not be withheld merely because a
+task is already underway. Instead, propagate it with version awareness and
+conflict detection.
+
+When the active handler cannot be contacted directly through the shared
+substrate, the Principal may be used as a lightweight synchronization relay.
+This is legitimate use of human attention when the update is material enough
+to alter feasibility, constraints, risk, or the next action.
+
+> **Do not freeze the Corpus to protect work in progress; synchronize work in
+> progress with the living Corpus.**
+
+This remains bounded by Human Attention Budget: routine noise should not be
+forwarded manually.
 
 ## 3.1 Visibility domains and restricted supplements
 
