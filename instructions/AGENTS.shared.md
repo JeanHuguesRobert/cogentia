@@ -1,7 +1,7 @@
 ---
 title: Cogentia Shared Agent Instructions
 status: active
-version: 25
+version: 26
 date: 2026-09-27
 document_role: operational
 document_kind: agent-instructions
@@ -62,6 +62,48 @@ the Issue's durable references must be able to reconstruct the objective,
 current state, material constraints, applicable authority/effect ceiling,
 first actionable next step, and return/acceptance contract without vendor
 conversation history.
+
+#### Accessible Inputs Gate — *ad impossibilia nemo tenetur*
+
+Before declaring a GitHub Issue resumable, assigning work to another handler, or
+issuing any material continuation by reference, the producer MUST verify that
+every input required for the **first actionable step** actually exists and is
+retrievable through a channel available to the intended handler.
+
+```text
+resumable :=
+    objective_reconstructible
+    ∧ constraints_reconstructible
+    ∧ required_inputs_exist
+    ∧ required_inputs_retrievable_by_target_handler
+    ∧ first_action_feasible
+    ∧ return_contract_known
+```
+
+A file that exists only in the producer's chat attachment store, local working
+directory, private memory, inaccessible connector, unpublished draft, or other
+handler-invisible location does **not** satisfy a by-reference handoff merely
+because the producer can see it.
+
+If an essential input fails this gate, the producer MUST do one of the
+following before handoff:
+
+1. make the artifact durably accessible to the target handler;
+2. copy the smallest sufficient content into the packet;
+3. provide a verified alternative retrieval path; or
+4. mark the continuation **blocked** and name the exact missing dependency.
+
+Canonical rule:
+
+```text
+required input inaccessible to target handler
+→ handoff is not resumable
+→ repair | copy | verified alternate path | BLOCKED
+```
+
+**Ad impossibilia nemo tenetur**: no handler is accountable for completing an
+action whose required inputs were not made accessible to it. The burden is on
+the handoff producer to make the first actionable step actually possible.
 
 Do not duplicate retrievable repository context merely to make the Issue long.
 Carry decisions, constraints, uncertainty, routing, and next action; reference
