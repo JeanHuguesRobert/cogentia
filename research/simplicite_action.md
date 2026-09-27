@@ -43,6 +43,9 @@ Le corpus Cogentia est traversé par une exigence rarement énoncée mais consta
 
 ## 1. Quatre formules à garder en tête
 
+Cette note est la projection spécialisée du **principe d'Occam** dans l'éthique de l'action et du contenant. Son articulation métacognitive avec Hanlon et Talleyrand est consolidée, sans centraliser leurs domaines propres, dans [`fractacognition_principles.md`](fractacognition_principles.md).
+
+
 ### Le rasoir d'Occam — *entia non sunt multiplicanda praeter necessitatem*
 
 Guillaume d'Ockham, XIVᵉ siècle. *Les entités ne doivent pas être multipliées au-delà du nécessaire.* Principe explicatif d'abord (théories), méthodologique ensuite : entre deux artefacts de pouvoir explicatif équivalent, préférer le moins encombré. C'est l'ancêtre philosophique des trois formules suivantes — KISS, Small is beautiful, Worse is better en sont des reformulations situées (ingénierie, échelle, livraison).
