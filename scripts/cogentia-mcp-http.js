@@ -910,7 +910,7 @@ async function produceGuideTurn(question, history, payload = {}, options = {}) {
               v2Retrieval = { sources: [], warnings: [] };
             } else {
               const resolvedQuestion = v2Intent?.resolved_search_query || question;
-              v2Retrieval = await guideRetrievalRun(resolvedQuestion, v2Plan, { orientation: v2Orientation });
+              v2Retrieval = await guideRetrievalRun(resolvedQuestion, v2Plan, { orientation: v2Orientation, rawQuestion: question });
             }
             return v2Retrieval;
           },
@@ -970,7 +970,7 @@ async function produceGuideTurn(question, history, payload = {}, options = {}) {
       plan = usePlanner
         ? await guidePlanningRun(resolvedQuestion, activeLocale)
         : guideHeuristicPlan(resolvedQuestion, chatCap.available ? "planner_disabled" : "chat_unavailable");
-      retrieval = await guideRetrievalRun(resolvedQuestion, plan);
+      retrieval = await guideRetrievalRun(resolvedQuestion, plan, { rawQuestion: question });
     }
     observeGuideSemanticRetrieval(retrieval);
     web = await guideWebForTurn(profile, resolvedQuestion, activeLocale, payload);
@@ -1267,7 +1267,7 @@ async function handleGuideChatStream(res, question, locale, history = [], payloa
       trace("retrieval.planned", { planner: plan.source, queries: plan.queries || [] });
 
       emit("guide_status", guideProgress(locale, "retrieval"));
-      retrieval = await guideRetrievalRun(resolvedQuestion, plan, { progress: emit, locale });
+      retrieval = await guideRetrievalRun(resolvedQuestion, plan, { progress: emit, locale, rawQuestion: question });
       observeGuideSemanticRetrieval(retrieval);
       retrieval = filterRetrievalForProfile(retrieval, profile);
       emit("guide_retrieval", {
@@ -1756,7 +1756,14 @@ async function guideRetrievalRun(question, plan = guideHeuristicPlan(question), 
   // 2026-09-27 legacy-vs-V2 comparison, where no corpus query could ever
   // have found this -- the answer was never a document.
   if (guideIssueLookupEnabled()) {
-    const issueRef = detectIssueReference(question);
+    // Detect against the user's literal phrasing (options.rawQuestion),
+    // not `question` -- at every call site, `question` here is actually
+    // the *resolved/rewritten* search query (intentResult.resolved_search_query),
+    // which can legitimately drop words like "issue" or a repo name during
+    // rewriting. Found live on fracta2, 2026-09-27: the feature worked
+    // perfectly in isolation but never fired end-to-end for exactly this
+    // reason -- the rewritten query no longer matched the detector.
+    const issueRef = detectIssueReference(options.rawQuestion || question);
     if (issueRef) {
       const timeoutStartedAt = performance.now();
       const issueSource = await fetchIssueAsGuideSource(issueRef).catch(() => null);
