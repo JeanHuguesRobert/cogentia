@@ -379,6 +379,28 @@ read Issue
 An old commit SHA records provenance. It does not authorize resetting current
 work to that SHA.
 
+### 10.1 Live-update rule
+
+Resumption is not the only moment at which current state matters. A handler may
+already be working when the Corpus changes.
+
+If a new Corpus change is materially relevant to that active Issue, the work
+should be resynchronized rather than treated as untouchable:
+
+```text
+active handler
++ material shared-state update
+→ fetch / refresh current state
+→ compare against baseline and local changes
+→ reconcile under Optimistic Locking
+→ continue or expose conflict
+```
+
+Where direct handler notification is unavailable, request a minimal Principal
+relay. Human Attention should be spent only when the update can reasonably
+affect the goal, constraints, feasibility, risk envelope, next action, or
+acceptance criteria.
+
 ## 11. Next-action rule
 
 Good:
