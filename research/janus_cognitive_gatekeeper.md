@@ -5,9 +5,9 @@ description: "Working conceptual architecture for Janus as a COP composition pat
 author: "Jean Hugues Noël Robert, baron Mariani"
 affiliation: "Institut Mariani / C.O.R.S.I.C.A., 1 cours Paoli, F-20250 Corte, Corsica"
 date: "2026-09-22"
-last_modified_at: "2026-09-23"
+last_modified_at: "2026-09-27"
 last_stamped_at: "unknown"
-version: "0.5"
+version: "0.6"
 status: "working-paper — active experiment"
 license: "CC BY-SA 4.0"
 language: "en"
@@ -40,6 +40,7 @@ provenance:
     - "research/locality_principle.md"
     - "research/packet_continuation_machine.md"
     - "research/level2_continuation_scheduler_r1b.md"
+    - "../docs/resumable_github_issues.md"
     - "https://github.com/JeanHuguesRobert/inseme/blob/main/research/cop_trace_model.md"
     - "https://github.com/JeanHuguesRobert/inseme/blob/main/packages/cop-core/Invariants.md"
     - "https://github.com/JeanHuguesRobert/inseme/blob/main/packages/cop-core/COP_MEASURED_RISK.md"
@@ -66,6 +67,7 @@ tags:
   - non-monotonic
   - synthetic-skin-in-the-game
 changelog:
+  - "v0.6 (2026-09-27) — adds resumability refactoring as a concrete Janus.Past→Janus.Future application to historical Corpus Issues."
   - "v0.1 (2026-09-22) — initial formulation of Janus as a bidirectional Cognitive Packet gatekeeper."
   - "v0.2 (2026-09-22) — integrated internal reviews, embodiment, Synthetic Skin, philosophical ancestry and external Reviewer contract."
   - "v0.3 (2026-09-22) — narrowed Janus from governor/component to falsifiable transition-contract hypothesis after Grok review."
@@ -756,6 +758,63 @@ The plausible maturity ladder is now:
 The project should advance only as far as Reality justifies.
 
 ---
+
+# 20.1 Corpus application — resumability refactoring
+
+A concrete Past→Future application now exists in the Corpus:
+[`docs/resumable_github_issues.md`](../docs/resumable_github_issues.md).
+
+Refactoring an older GitHub Issue into a cold-handler-resumable Cognitive Packet
+uses the two Janus directions around a present-time hinge:
+
+```text
+historical Issue / comments / commits / files
+        │
+        ▼
+Janus.Past
+  reconstruct only what surviving traces justify
+  preserve unknown rationale as unknown
+        │
+        ▼
+──────── NOW ────────
+        │
+        ▼
+new attributable judgment where required
+        │
+        ▼
+Janus.Future
+  explicit objective / state / constraints
+  durable references
+  next action
+  acceptance / return contract
+        │
+        ▼
+future handler / Reality
+```
+
+The operation deliberately separates **historical reconstruction** from
+**present-day prospective construction**.
+
+Canonical invariant:
+
+> **Janus.Past reconstructs the justified state. Resumability refactoring turns
+> that qualified state into an explicit Janus.Future.**
+
+Therefore an observed historical action does not establish its original
+rationale, and a useful next action reconstructed today must not be backdated as
+the original author's intention.
+
+The prospective product should pass the simple cold-handler test:
+
+```text
+Resume issue N of repository R.
+```
+
+A future `cogentia.js issues` refactoring tool may mechanize this pattern as
+deterministic extraction and audit first, Continuation only at unresolved
+judgment boundaries, then explicit plan/apply/verify. This is an application of
+Janus and existing Continuation machinery, not evidence for a dedicated Janus
+service or a new COP ontology.
 
 # 21. Active Reality Test — COP/Janus Booster
 
