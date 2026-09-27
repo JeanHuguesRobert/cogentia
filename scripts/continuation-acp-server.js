@@ -318,6 +318,13 @@ async function dispatch(method, params) {
     }
     case "session/prompt": {
       const { sessionId, prompt } = params || {};
+      // inseme#111 (low-cost slice): let a client declare a need (e.g.
+      // "web_search") on the prompt itself; forwarded as a hint on the
+      // emitted continuation. No resolver registry/matching yet -- this
+      // only makes an implicit need explicit for whoever resolves it.
+      const requiredCapabilities = Array.isArray(params?._meta?.requiredCapabilities)
+        ? params._meta.requiredCapabilities.filter((c) => typeof c === "string" && c.trim()).map((c) => c.trim())
+        : [];
       const session = sessions.get(sessionId);
       if (!session) {
         throw acpError(-32602, "Unknown sessionId", { continuationErrorInfo: CONTINUATION_ERROR_INFO.INVALID_SESSION });
@@ -338,6 +345,7 @@ async function dispatch(method, params) {
           "--question", question,
         ];
         if (embedded) emitArgs.push("--context-json", JSON.stringify(embedded));
+        if (requiredCapabilities.length) emitArgs.push("--required-capabilities", requiredCapabilities.join(","));
         const emitted = await runCogentia(emitArgs);
         continuationId = emitted.continuation?.continuation_id;
         if (!continuationId) {

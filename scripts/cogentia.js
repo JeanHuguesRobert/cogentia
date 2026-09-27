@@ -5904,6 +5904,10 @@ function cmdContinuationEmit(ctx) {
   const context = readContinuationContext();
   const question = valueFlag("--question") || argv.join(" ").trim();
   if (!question) throw new Error("Usage: continuation emit --question <text> [--kind <kind>] [--title <title>]");
+  const requiredCapabilities = String(valueFlag("--required-capabilities") || "")
+    .split(",")
+    .map(s => s.trim())
+    .filter(Boolean);
   const result = emitContinuation(ctx, {
     kind,
     title: title || kind,
@@ -5912,6 +5916,7 @@ function cmdContinuationEmit(ctx) {
     dedupe_key: dedupeKey,
     subject: { repo: repo || "", path: docPath || "" },
     context,
+    required_capabilities: requiredCapabilities,
   });
   output(result, formatContinuationEmit(result));
 }
@@ -11326,6 +11331,11 @@ function emitContinuation(ctx, request) {
     dedupe_key: dedupeKey,
     subject: request.subject || {},
     context: request.context || {},
+    // inseme#111 (low-cost slice): a resolver-facing hint, not enforced
+    // matching -- no registry picks resolvers by this yet. Just makes an
+    // implicit need (e.g. "this needs live web search") explicit instead
+    // of relying on whoever picks up the continuation to guess.
+    required_capabilities: Array.isArray(request.required_capabilities) ? request.required_capabilities : [],
     expected_response: request.expected_response || {
       format: "json",
       required: ["decision", "reason"],
@@ -15474,7 +15484,10 @@ function formatPrivacy(result) {
 function formatContinuationEmit(result) {
   const c = result.continuation;
   const verb = result.created ? "Emitted" : "Already active";
-  return `\n${verb} continuation ${c.id}\nkind: ${c.kind}\ntitle: ${c.title}\nfile: ${result.path}\n`;
+  const caps = Array.isArray(c.required_capabilities) && c.required_capabilities.length
+    ? `\nrequired capabilities: ${c.required_capabilities.join(", ")}`
+    : "";
+  return `\n${verb} continuation ${c.id}\nkind: ${c.kind}\ntitle: ${c.title}\nfile: ${result.path}${caps}\n`;
 }
 
 function formatContinuationList(continuations, status) {
@@ -15493,7 +15506,10 @@ function formatContinuationList(continuations, status) {
 
 function formatContinuationInspect(c) {
   const subject = c.subject?.repo || c.subject?.path ? `${c.subject.repo || "-"} ${c.subject.path || ""}`.trim() : "-";
-  return `\n${c.id}\nstatus: ${c.status}\nkind: ${c.kind}\ntitle: ${c.title}\nsubject: ${subject}\nquestion: ${c.question}\ncreated: ${c.created_at}\nupdated: ${c.updated_at}\n`;
+  const caps = Array.isArray(c.required_capabilities) && c.required_capabilities.length
+    ? `\nrequired capabilities: ${c.required_capabilities.join(", ")} -- resolver should use these before answering (not enforced, no matching yet: inseme#111)`
+    : "";
+  return `\n${c.id}\nstatus: ${c.status}\nkind: ${c.kind}\ntitle: ${c.title}\nsubject: ${subject}\nquestion: ${c.question}${caps}\ncreated: ${c.created_at}\nupdated: ${c.updated_at}\n`;
 }
 
 function formatContinuationResolved(c) {
@@ -15506,6 +15522,8 @@ function formatContinuationSchema() {
     CONTINUATION_PROTOCOL,
     "",
     "Required fields: id, status, kind, title, question, subject, context, expected_response.",
+    "Optional: required_capabilities (string[]) -- resolver-facing hint, e.g. \"web_search\";",
+    "not matched/enforced by any registry yet (inseme#111 tracks that).",
     "Resolution is written by continuation resolve/cancel.",
     "",
     "Liveness (views/list default: alive ≈ open issues):",
