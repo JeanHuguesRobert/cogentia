@@ -104,6 +104,22 @@ required input inaccessible to target handler
 **Ad impossibilia nemo tenetur**: no handler is accountable for completing an
 action whose required inputs were not made accessible to it. The burden is on
 the handoff producer to make the first actionable step actually possible.
+**ERP relation: early impossibility detection.** The Accessible Inputs Gate is
+also a local application of the Corpus' **Exploration Rationnelle du Possible**:
+testing decisive feasibility conditions early reduces wasted exploration on a
+branch whose first step cannot exist in the target handler's actual world.
+
+```text
+explore possible
+→ test decisive preconditions early
+→ impossible here/now
+→ prune, repair, reroute, or mark BLOCKED
+→ preserve remaining Possible
+```
+
+Do not collapse `impossible` into `blocked`, `unknown`,
+`not-yet-accessible`, or `not-yet-invented`. Early pruning is rational only
+when the impossibility claim itself is justified.
 
 Do not duplicate retrievable repository context merely to make the Issue long.
 Carry decisions, constraints, uncertainty, routing, and next action; reference
