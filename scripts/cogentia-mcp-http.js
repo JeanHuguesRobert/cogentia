@@ -1633,7 +1633,7 @@ async function guideRetrievalRun(question, plan = guideHeuristicPlan(question), 
     timings_ms.s7_anchor = Math.round(performance.now() - anchorStartedAt);
   }
 
-  const result = mergeGuideRetrievalFromPacks({
+  let result = mergeGuideRetrievalFromPacks({
     question,
     plan,
     queries,
@@ -1653,6 +1653,56 @@ async function guideRetrievalRun(question, plan = guideHeuristicPlan(question), 
         rankGuideSources(q, qs, sources, context, sourceRanks, s7),
     },
   });
+
+  // If the planned queries returned nothing at all, retry once with the raw
+  // question alone in keyword mode -- a broader, less strict pass than the
+  // hybrid/semantic queries just attempted. This only helps when the
+  // original queries were poorly phrased or too narrow; it cannot find
+  // content that genuinely isn't in the corpus (e.g. a live GitHub issue --
+  // see cogentia's guide_confident_elaboration_beyond_source note and the
+  // legacy-vs-V2 comparison, 2026-09-27, where this exact gap was observed
+  // for en_inseme_issue_18: no corpus query, however phrased, would have
+  // found it, since the answer was never in the corpus at all).
+  if (result.sources.length === 0) {
+    const fallbackQuery = String(question || "").trim();
+    if (fallbackQuery) {
+      emitGuideProgress(options, "guide_status", {
+        stage: "retrieval_fallback",
+        message: guideProgress(options.locale, "retrieval_fallback", {}).message,
+      });
+      const fallbackPackOptions = { mode: "keyword", limit: guideLimit, budget: guideBudget };
+      const fallbackPacks = await fetchGuideRetrievalPacks([fallbackQuery], fallbackPackOptions);
+      const fallbackResult = mergeGuideRetrievalFromPacks({
+        question,
+        plan,
+        queries: [fallbackQuery],
+        packs: fallbackPacks,
+        guideLimit,
+        guideBudget,
+        guideQueryLimit,
+        options,
+        helpers: {
+          emitGuideProgress,
+          guideProgress,
+          safeSources,
+          summarizePackRetrieval,
+          estimateGuideTokens,
+          truncateGuideText,
+          rankGuideSources: (q, qs, sources, context, sourceRanks) =>
+            rankGuideSources(q, qs, sources, context, sourceRanks, s7),
+        },
+      });
+      if (fallbackResult.sources.length > 0) {
+        result = {
+          ...fallbackResult,
+          retrieval_fallback_attempted: true,
+          warnings: [...new Set([...(result.warnings || []), ...(fallbackResult.warnings || []), "retrieval_fallback_used"])],
+        };
+      } else {
+        result = { ...result, retrieval_fallback_attempted: true };
+      }
+    }
+  }
 
   // Prepend S7 anchor so synthesis always sees the canonical public source first.
   if (s7Anchor?.source && s7Anchor?.context) {
@@ -3133,6 +3183,9 @@ function guideProgress(locale, stage, data = {}) {
       ? `${data.count || 0} source(s) trouvee(s).`
       : `${data.count || 0} source(s) found.`,
     retrieved: fr ? "Sources publiques selectionnees." : "Public sources selected.",
+    retrieval_fallback: fr
+      ? "Aucune source trouvee, nouvelle recherche elargie..."
+      : "No sources found, retrying with a broader search...",
     web_search: fr ? `Recherche web: ${data.query || ""}` : `Web search: ${data.query || ""}`,
     web_search_done: fr
       ? `${data.count || 0} resultat(s) web trouve(s).`
