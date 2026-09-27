@@ -42,6 +42,7 @@ import { handleEdgeTrapPost, handleEdgeTrapsGet } from "./lib/edge-trap-ops.js";
 import { createJhnOpenAiSurface, isTwinOpenAiPath } from "./lib/jhn-openai-surface.js";
 import { stripS7AnchorLabel } from "./lib/guide-s7-anchor.js";
 import { guideIssueLookupEnabled, detectIssueReference, fetchIssueAsGuideSource } from "./lib/guide-issue-lookup.js";
+import { verifyOperationalClaims } from "./lib/guide-claim-verification.js";
 import {
   buildCrossSurfaceStyleBlock,
   buildWhatsAppRepresentationMessages,
@@ -2716,6 +2717,7 @@ function guideChatResponse(question, locale, completion, retrieval = null, web =
   );
   const finalAnswer = sanitizeSurfaceAnswer(answer || guideFallbackText(locale));
   const isOpenRouterFreeFallback = completion?._cogentia_guide_synthesis === "openrouter_free_fallback";
+  const claimCheck = verifyOperationalClaims(finalAnswer, retrieval?.context, web?.sources);
   return {
     ok: true,
     service: "fractavolta-guide",
@@ -2727,10 +2729,15 @@ function guideChatResponse(question, locale, completion, retrieval = null, web =
     sources,
     context: summarizeGuideContext(context, retrieval, web),
     s7: retrieval?.s7 || null,
+    // cogentia#209: heuristic-only, fail-soft flag for operational detail
+    // (durations, named artifacts, step numbering) not found anywhere in
+    // the cited source text -- see scripts/lib/guide-claim-verification.js.
+    unverified_claims: claimCheck.unsupported_claims,
     warnings: [...new Set([
       ...(context.warnings || []),
       ...(retrieval?.warnings || []),
       ...(web?.warnings || []),
+      ...claimCheck.warnings,
       ...(isOpenRouterFreeFallback ? ["guide_synthesis_openrouter_free_fallback"] : []),
     ])],
     // Strict estimated spend accounting (quality-first: measure even when not optimizing).

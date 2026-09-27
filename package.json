@@ -41,6 +41,7 @@
     "test:public-guide-profiles": "node scripts/check-public-guide-profiles.js",
     "test:guide-s7-anchor": "node scripts/check-guide-s7-anchor.js",
     "test:guide-issue-lookup": "node scripts/check-guide-issue-lookup.js",
+    "test:guide-claim-verification": "node scripts/check-guide-claim-verification.js",
     "test:retrieval-inox": "node scripts/check-retrieval-inox-session.js",
     "test:blackboard": "node scripts/check-packet-attractor-blackboard.js",
     "test:guide-cli": "node scripts/check-guide-cli.js",
