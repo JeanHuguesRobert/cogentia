@@ -176,6 +176,45 @@ This is the **Verified Handoff Principle**: a handler must verify the next
 handler's actual input, not merely its own intention about what that input
 should be.
 
+### Accessible Inputs Gate
+
+Verified handoff includes a harder feasibility condition: the next handler must
+be able to perform the first actionable step with the channels and artifacts it
+actually has.
+
+```text
+required_input_exists
+∧ exact_reference_known
+∧ target_handler_can_retrieve
+∧ retrieval_path_verified
+∧ first_step_feasible
+```
+
+If any essential term is false, the continuation is not ready. Repair the
+reference, copy the smallest sufficient context, expose a verified alternate
+retrieval path, or return **BLOCKED** with the missing dependency.
+
+A producer-side artifact is not a delivered artifact. In particular:
+
+```text
+visible in current chat
+≠ visible to coding agent
+
+present on local disk
+≠ present in repository
+
+mentioned in an Issue
+≠ retrievable by Issue handler
+```
+
+The maxim is operational rather than decorative:
+
+> **Ad impossibilia nemo tenetur** — do not attribute failure to a handler when
+> the handoff itself withheld an essential input.
+
+For GitHub-Issue continuations, see
+[`docs/resumable_github_issues.md`](resumable_github_issues.md).
+
 ## Handlers, not session memory
 
 A packet/continuation must remain answerable by a **different** agent or human
