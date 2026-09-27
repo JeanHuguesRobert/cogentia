@@ -843,6 +843,24 @@ producer says resumable
 
 This is a useful example of Janus.Future being answerable to Janus.Past without
 turning Janus into an authorization or workflow gate.
+### ERP connection: falsify impossible branches early
+
+The same case also links Janus to **Exploration Rationnelle du Possible**.
+A prospective continuation is itself a candidate path through The Possible.
+When a decisive precondition can already be tested, recording and testing it
+early prevents a merely imagined future from acquiring unjustified structure.
+
+```text
+possible future branch
+→ ex-ante feasibility claim
+→ Reality test
+→ impossible branch detected early
+→ update map before downstream work compounds
+```
+
+This does not redefine Janus as an impossibility detector. Janus contributes
+temporal accountability; ERP supplies the broader exploration logic. The
+Accessible Inputs Gate is simply a concrete place where the two meet.
 
 A future `cogentia.js issues` refactoring tool may mechanize this pattern as
 deterministic extraction and audit first, Continuation only at unresolved
