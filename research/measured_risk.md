@@ -4,8 +4,8 @@ subtitle: "Govern for bounded value creation, learning, and recovery rather than
 author: "Jean Hugues Noël Robert, baron Mariani"
 affiliation: "Institut Mariani / C.O.R.S.I.C.A., 1 cours Paoli, F-20250 Corte, Corsica, France"
 date: "2026-08-26"
-last_modified_at: "2026-09-12"
-version: "0.3"
+last_modified_at: "2026-09-27"
+version: "0.4"
 status: "working-paper"
 license: "CC BY-SA 4.0"
 language: "en"
@@ -196,6 +196,62 @@ with this Exposure,
 these recovery capacities,
 and these responsibility boundaries?
 ```
+### 4.1 Necessary Means Principle
+
+A reciprocal operational consequence follows from treating risk relative to an
+objective rather than as an evil to minimize.
+
+> **When a dependency is genuinely necessary to a valid and maintained
+> objective, its absence becomes a problem to solve. Seek an admissible way to
+> obtain, create, substitute, or route around that dependency under Measured
+> Risk.**
+
+Necessity does **not** create authority:
+
+```text
+necessary
+≠ authorized by necessity
+≠ any means permitted
+```
+
+Instead:
+
+```text
+objective O remains valid
+∧ dependency D is genuinely necessary
+∧ D is unavailable
+→ identify acquisition / creation / substitution paths
+→ assess Objective, Exposure, Recovery, Residue, Responsibility and Mandate
+→ prefer the smallest sufficient risk
+→ act when inside Mandate
+→ otherwise escalate for authority or human assistance
+→ if no admissible path exists, record BLOCKED or impossible_under_current_regime
+```
+
+The principle therefore rejects two symmetric failures:
+
+```text
+PASSIVE ABANDONMENT
+    a necessary means is missing
+    → silently abandon the objective
+
+NECESSITY OVERRIDE
+    a necessary means is missing
+    → treat necessity as permission to bypass rights, mandate or safety
+
+NECESSARY MEANS
+    keep the objective explicit
+    → search for lawful / authorized / proportionate means
+    → measure risk
+    → acquire or substitute when justified
+    → escalate or record the real blocking condition otherwise
+```
+
+This is the operational reciprocal of early impossibility detection in the
+Rational Exploration of The Possible. Detect impossible branches early; but
+when a branch matters and its obstacle is merely an absent means, deliberately
+increase its potentiality by acquiring the missing capability under a bounded
+risk envelope.
 
 ---
 
