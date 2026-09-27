@@ -78,6 +78,58 @@ cold handler
 
 Failure of an essential step means the packet is not sufficiently closed.
 
+### 2.1 Accessible Inputs / feasibility gate
+
+Logical completeness is not enough. Before a Resumable Issue is handed off, the
+producer MUST test the material feasibility of the first actionable step from
+the **target handler's** point of view.
+
+For every dependency required by that first step, ask:
+
+```text
+Does it exist?
+Is its exact location known?
+Can the intended handler retrieve it through an available channel?
+Has that retrieval path been verified?
+If mutable, is the required version identifiable?
+```
+
+Any **NO** on an essential dependency means:
+
+```text
+do not hand off as resumable
+→ repair accessibility
+   OR copy the minimum sufficient context
+   OR provide a verified alternate path
+   OR return BLOCKED with the exact dependency
+```
+
+This is the **Accessible Inputs Gate**.
+
+> **Ad impossibilia nemo tenetur** — no handler is accountable for work whose
+> required inputs were not made accessible to it. The producer of the handoff
+> owns the burden of making the first actionable step feasible.
+
+A by-reference Issue that points to an artifact visible only in a prior chat,
+local machine, private memory store, inaccessible connector, or unpublished
+working directory fails this gate even if the artifact genuinely exists.
+
+#### Canonical failure example
+
+```text
+BAD
+Issue: "Continue from the CSV already produced."
+Reality: CSV exists only in the producer's ChatGPT Library.
+Target: coding agent has repository access, not ChatGPT Library access.
+Result: false resumability.
+
+GOOD
+CSV committed at a stable repository path.
+Issue names that path and, when useful, an immutable commit checkpoint.
+Target handler verifies retrieval.
+Result: executable handoff.
+```
+
 ## 3. Relationship to other Issue types
 
 A Resumable Issue is not synonymous with every GitHub Issue.
