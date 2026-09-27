@@ -40,6 +40,13 @@ Nothing here overrides `AGENTS.shared.md`; where the two disagree, the shared la
 
 ## Documentation and stabilisation habits
 
+- **Refresh active work when the Corpus materially changes.** A running handler is not
+  entitled to treat its start-time snapshot as permanently authoritative. When a relevant doctrine,
+  artifact, constraint, or fix lands while work is in progress, use optimistic locking: fetch current
+  state, compare with the handler baseline and local work, reconcile non-conflicting changes, and
+  surface genuine conflicts. If the active handler will not see the update automatically, ask the
+  Principal for the smallest useful relay. Do not spend Human Attention on trivial churn.
+
 - **Pay-as-you-go verbosity.** Protocol and schema defaults should be minimal and ergonomic;
   full ceremonial forms (compliance metadata, full accountability structs, legal-archive audit
   trails) are opt-in and scale with actual stakes, gated behind explicit flags rather than on by
