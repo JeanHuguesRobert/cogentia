@@ -1671,27 +1671,40 @@ async function guideRetrievalRun(question, plan = guideHeuristicPlan(question), 
         message: guideProgress(options.locale, "retrieval_fallback", {}).message,
       });
       const fallbackPackOptions = { mode: "keyword", limit: guideLimit, budget: guideBudget };
-      const fallbackPacks = await fetchGuideRetrievalPacks([fallbackQuery], fallbackPackOptions);
-      const fallbackResult = mergeGuideRetrievalFromPacks({
-        question,
-        plan,
-        queries: [fallbackQuery],
-        packs: fallbackPacks,
-        guideLimit,
-        guideBudget,
-        guideQueryLimit,
-        options,
-        helpers: {
-          emitGuideProgress,
-          guideProgress,
-          safeSources,
-          summarizePackRetrieval,
-          estimateGuideTokens,
-          truncateGuideText,
-          rankGuideSources: (q, qs, sources, context, sourceRanks) =>
-            rankGuideSources(q, qs, sources, context, sourceRanks, s7),
-        },
-      });
+      // Bounded: the first batch already paid whatever cost the current
+      // retrieval backend has (observed live, 2026-09-27: OpenAI embedding
+      // 502s degrading semantic search to a slow keyword fallback already).
+      // An unbounded second attempt can compound that into a very long
+      // total wait for exactly the questions least likely to benefit
+      // (nothing found the first time). Give up on the fallback specifically
+      // -- not the whole request -- if it doesn't resolve quickly.
+      const FALLBACK_RETRIEVAL_TIMEOUT_MS = 15_000;
+      const fallbackResult = await Promise.race([
+        (async () => {
+          const fallbackPacks = await fetchGuideRetrievalPacks([fallbackQuery], fallbackPackOptions);
+          return mergeGuideRetrievalFromPacks({
+            question,
+            plan,
+            queries: [fallbackQuery],
+            packs: fallbackPacks,
+            guideLimit,
+            guideBudget,
+            guideQueryLimit,
+            options,
+            helpers: {
+              emitGuideProgress,
+              guideProgress,
+              safeSources,
+              summarizePackRetrieval,
+              estimateGuideTokens,
+              truncateGuideText,
+              rankGuideSources: (q, qs, sources, context, sourceRanks) =>
+                rankGuideSources(q, qs, sources, context, sourceRanks, s7),
+            },
+          });
+        })(),
+        new Promise((resolve) => setTimeout(() => resolve({ sources: [], context: [], warnings: ["retrieval_fallback_timed_out"], timed_out: true }), FALLBACK_RETRIEVAL_TIMEOUT_MS)),
+      ]).catch(() => ({ sources: [], context: [], warnings: ["retrieval_fallback_errored"] }));
       if (fallbackResult.sources.length > 0) {
         result = {
           ...fallbackResult,
@@ -1699,7 +1712,11 @@ async function guideRetrievalRun(question, plan = guideHeuristicPlan(question), 
           warnings: [...new Set([...(result.warnings || []), ...(fallbackResult.warnings || []), "retrieval_fallback_used"])],
         };
       } else {
-        result = { ...result, retrieval_fallback_attempted: true };
+        result = {
+          ...result,
+          retrieval_fallback_attempted: true,
+          warnings: [...new Set([...(result.warnings || []), ...(fallbackResult.warnings || [])])],
+        };
       }
     }
   }
