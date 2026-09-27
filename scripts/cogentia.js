@@ -24,6 +24,10 @@ import { createGunzip, createGzip } from "node:zlib";
 import * as js_yaml from "js-yaml";
 import { DAEMON_PLUGINS, DAEMON_PLUGIN_ROUTES, loadDaemonPlugins, dispatchPluginRoute } from "./daemon_plugins/registry.js";
 import { buildIssueGraph, renderIssueGraph } from "./lib/issue-graph.js";
+import {
+  auditResumableIssue,
+  renderResumableIssueAudit,
+} from "./lib/resumable-issue-audit.js";
 import { generateOperiumEmbeddingsReport } from "./lib/operium-embeddings.js";
 import { aiRouterHealth, createAiRouterClient } from "./lib/ai-router-client.js";
 import { retrievalSupabaseConfigured, retrievalSupabaseStatus } from "./lib/retrieval-supabase.js";
@@ -1068,6 +1072,12 @@ Issue commands:
                            Generates {repo}-current-issues-list.md (summary)
                            or {repo}-current-issues.md (with --body/--comments)
                            Flags: --state open|closed|all --body --comments --both --output <path>
+  issues resumable-audit <owner/repo#N | repo number>
+                           Read-only Phase-1 resumability audit. No Issue write.
+                           Flags: --body-file <path> --repository <owner/repo>
+                           --number <n> --root <dir> --emit-continuation
+                           Exit: PASS 0, PARTIAL 2, JUDGMENT_REQUIRED 3, FAIL 4.
+                           Operational errors exit 1. --json prints the audit.
 
 Publish commands:
   publish list             List views available for publishing to Views Store.
@@ -5783,6 +5793,7 @@ function cmdIssues(sub) {
   if (["help", "-h", "--help"].includes(sub) || hasFlag("-h") || hasFlag("--help")) {
     return cmdHelp();
   }
+  if (sub === "resumable-audit") return cmdIssuesResumableAudit();
   const ctx = loadContext();
   switch (sub) {
     case "list":
@@ -5796,8 +5807,133 @@ function cmdIssues(sub) {
     case "export":
       return cmdIssuesExport(ctx);
     default:
-      throw new Error(`Unknown issues subcommand "${sub}". Use list, packet, graph, sync, or export.`);
+      throw new Error(`Unknown issues subcommand "${sub}". Use list, packet, graph, sync, export, or resumable-audit.`);
   }
+}
+
+function cmdIssuesResumableAudit() {
+  const bodyFile = valueFlag("--body-file");
+  const repositoryFlag = valueFlag("--repository");
+  const numberFlag = valueFlag("--number");
+  const rootFlag = valueFlag("--root");
+  const emit = takeFlag("--emit-continuation");
+  const repoArg = argv.shift();
+  const numberArg = argv.shift();
+  const ref = parseResumableIssueRef(repoArg);
+  let repository = repositoryFlag || "";
+  let number = Number(numberFlag || 0);
+  let issue;
+  let repoPath = "";
+  let ctx = null;
+
+  if (bodyFile) {
+    const body = fs.readFileSync(path.resolve(bodyFile), "utf8");
+    const title = (body.match(/^#\s+(.+)$/m) || [])[1] || path.basename(bodyFile);
+    repository = repository || (ref ? ref.repository : "local/fixture");
+    number = number || (ref ? ref.number : 0);
+    issue = {
+      repository,
+      number,
+      title,
+      state: "",
+      url: "",
+      body,
+      comments: [],
+    };
+  } else {
+    if (ref?.repository?.includes("/")) {
+      repository = ref.repository;
+      number = ref.number;
+    } else if (ref) {
+      repository = ref.repository;
+      number = ref.number;
+    } else if (repoArg && numberArg) {
+      repository = repoArg;
+      number = Number(numberArg);
+    } else {
+      throw new Error("Usage: issues resumable-audit <owner/repo#N | repo number> [--body-file <path>] [--root <dir>]");
+    }
+    ctx = tryLoadContext();
+    const repo = resolveIssueRepo(ctx || { repos: [] }, repository);
+    repository = repo.full_name;
+    repoPath = repo.path || "";
+    const raw = ghJson([
+      "issue", "view", String(number),
+      "--repo", repository,
+      "--json", "number,title,state,updatedAt,closedAt,url,labels,author,body,comments",
+    ]);
+    const normalized = normalizeGitHubIssue(raw);
+    issue = {
+      repository,
+      number: normalized.number || number,
+      title: normalized.title,
+      state: normalized.state,
+      url: normalized.url,
+      labels: normalized.labels,
+      body: normalized.body,
+      comments: normalized.comments,
+    };
+  }
+
+  const root = rootFlag || repoPath;
+  const audit = auditResumableIssue(issue, {
+    fileExists: root ? resumableAuditFileExists(root) : null,
+  });
+  if (emit) {
+    if (!audit.continuations.length) {
+      audit.emit_continuation = { emitted: false, reason: "no_judgment_boundary" };
+    } else if (!ctx) {
+      ctx = tryLoadContext();
+    }
+    if (emit && audit.continuations.length) {
+      if (!ctx?.configPath) {
+        throw new Error("continuation emission needs a Cogentia registry. The GitHub Issue was not modified.");
+      }
+      for (const prepared of audit.continuations) {
+        const result = emitContinuation(ctx, {
+          kind: "judgment",
+          title: prepared.title,
+          question: prepared.question,
+          dedupe_key: `resumable-audit:${audit.issue.repository}#${audit.issue.number}:${prepared.reason}`,
+          subject: prepared.subject,
+          context: prepared.context,
+          expected_response: prepared.expected_response,
+        });
+        prepared.emitted = true;
+        prepared.continuation_id = result.continuation.id;
+      }
+      audit.effects.continuation_emitted = true;
+    }
+  }
+  output(audit, renderResumableIssueAudit(audit));
+  process.exit(audit.exit_code);
+}
+
+function parseResumableIssueRef(value) {
+  const text = String(value || "").trim();
+  const full = text.match(/^(?:https:\/\/github\.com\/)?([^/\s#]+)\/([^/\s#]+)\/(?:issues\/)?(\d+)$/i)
+    || text.match(/^(?:https:\/\/github\.com\/)?([^/\s#]+)\/([^/\s#]+)#(\d+)$/i);
+  if (full) return { repository: `${full[1]}/${full[2]}`, number: Number(full[3]) };
+  const short = text.match(/^([^/\s#]+)#(\d+)$/);
+  if (short) return { repository: short[1], number: Number(short[2]) };
+  return null;
+}
+
+function resumableAuditFileExists(root) {
+  const base = path.resolve(root);
+  return ref => {
+    const rel = String(ref || "").replace(/^\/+/, "").replace(/\\/g, "/");
+    if (!rel || rel.split("/").includes("..")) return false;
+    const full = path.resolve(base, rel);
+    if (full !== base && !full.startsWith(base + path.sep)) return false;
+    return fs.existsSync(full);
+  };
+}
+
+function tryLoadContext() {
+  const { configPath } = findConfig();
+  if (!configPath || !fs.existsSync(configPath)) return null;
+  return loadContext();
 }
 
 function cmdIssuesList(ctx) {
