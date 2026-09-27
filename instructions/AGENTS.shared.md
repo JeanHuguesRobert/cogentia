@@ -1,8 +1,8 @@
 ---
 title: Cogentia Shared Agent Instructions
 status: active
-version: 24
-date: 2026-09-26
+version: 25
+date: 2026-09-27
 document_role: operational
 document_kind: agent-instructions
 visibility: public
@@ -46,6 +46,32 @@ schema- and judgment-bearing, traveling **by copy** or **by reference**.
 
 Do not treat a continuation as a crash dump or as free-form chat. Do not
 resolve without mandate. Do not invent missing by-reference context.
+
+### Resumable GitHub Issues
+
+When asked to **packetize work as a resumable GitHub Issue**, create or prepare
+the smallest sufficient **by-reference Cognitive Packet** that passes the
+Resume-command sufficiency test:
+
+```text
+Resume issue N of repository R.
+```
+
+A compatible cold handler receiving that command, current repository state, and
+the Issue's durable references must be able to reconstruct the objective,
+current state, material constraints, applicable authority/effect ceiling,
+first actionable next step, and return/acceptance contract without vendor
+conversation history.
+
+Do not duplicate retrievable repository context merely to make the Issue long.
+Carry decisions, constraints, uncertainty, routing, and next action; reference
+stable bulk context. When refactoring an older Issue, preserve historical
+uncertainty: reconstruct only what surviving traces justify and treat any new
+judgment as present-day judgment, not retroactive fact.
+
+Operational pattern:
+[`docs/resumable_github_issues.md`](../docs/resumable_github_issues.md).
+
 
 ## Invariants
 
