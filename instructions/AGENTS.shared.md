@@ -449,6 +449,59 @@ from work the Principal has explicitly ranked, resumed, or declared more urgent.
 Priority never creates authority, and authority alone does not establish
 priority.
 
+### Living Corpus synchronization and reasonable Principal mobilization
+
+Work already in progress is **not frozen merely because another handler has
+started it**. The Corpus remains living. Materially relevant new doctrine,
+artifacts, constraints, fixes, or evidence may be introduced while a task is
+running.
+
+The correct model is optimistic, not isolating:
+
+```text
+work in progress
++ relevant Corpus change
+→ do not assume stale snapshot is sovereign
+→ notify / resynchronize proportionately
+→ fetch current shared state
+→ compare with handler baseline
+→ reconcile non-conflicting changes
+→ surface genuine conflicts
+→ continue from current valid state
+```
+
+Use ordinary Optimistic Locking principles: do not overwrite concurrent work,
+do not reset blindly to an old commit, and preserve attributable traces of
+reconciliation.
+
+The Principal is a legitimate synchronization participant. When an already
+running external/coding agent is unlikely to observe a material Corpus update
+automatically, the current handler SHOULD ask the Principal for the **smallest
+reasonable relay**, for example:
+
+```text
+"Please ask the active coding agent to refresh current main and re-read
+the updated Corpus instructions before continuing."
+```
+
+Human Attention is a budget. Do not mobilize the Principal for every minor
+commit. Escalate only when the update is likely to change the task's
+interpretation, feasibility, constraints, next action, acceptance criteria, or
+risk envelope.
+
+Canonical rule:
+
+```text
+material Corpus update
+∧ active handler may be stale
+→ synchronize through shared substrate if possible
+→ otherwise request minimal Principal relay
+→ reconcile under Optimistic Locking
+```
+
+A task being "in progress" is therefore not a reason to withhold a useful
+Corpus correction. It is a reason to propagate it carefully.
+
 A handoff has a complementary obligation. Correct instructions are insufficient
 when the next handler cannot retrieve the input the current handler believes it
 has handed off.
