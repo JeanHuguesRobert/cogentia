@@ -86,7 +86,21 @@ function ghExecCommand() {
 function runGh(args, timeoutMs) {
   return new Promise((resolve) => {
     const [command, ...prefixArgs] = ghExecCommand();
-    execFile(command, [...prefixArgs, ...args], { timeout: timeoutMs, maxBuffer: 2 * 1024 * 1024 }, (error, stdout) => {
+    // Found live on fracta2, 2026-09-27: mcp-cogentia.service's process
+    // environment carries a GITHUB_TOKEN set for an unrelated feature (some
+    // other drop-in config), which `gh` prioritizes over the working
+    // interactive `gh auth login` session -- causing a silent
+    // "HTTP 401: Bad credentials" that this function correctly reported as
+    // ok:false, but for a cause invisible without reading /proc/<pid>/environ
+    // directly. Clear the token env vars gh recognizes for *this* call only
+    // (not process.env itself, which the other feature still needs), so gh
+    // falls back to its own stored OAuth credentials.
+    const env = { ...process.env };
+    delete env.GITHUB_TOKEN;
+    delete env.GH_TOKEN;
+    delete env.GITHUB_ENTERPRISE_TOKEN;
+    delete env.GH_ENTERPRISE_TOKEN;
+    execFile(command, [...prefixArgs, ...args], { timeout: timeoutMs, maxBuffer: 2 * 1024 * 1024, env }, (error, stdout) => {
       if (error) return resolve({ ok: false, error: error.message });
       try {
         resolve({ ok: true, data: JSON.parse(stdout || "null") });
