@@ -32,6 +32,7 @@ tags:
   - answer-drift
   - frame-recovery
 related_documents:
+  - "research/fractacognition_principles.md"
   - "research/reality_probe_selection.md"
   - "research/epistemic_assimilation_and_salience.md"
   - "research/simplicite_action.md"
@@ -159,6 +160,9 @@ The pattern is accidental, procedural, defensive, dilatory, strategic, evasive, 
 Intent requires independent evidence.
 
 ### 4.1 Hanlon, SNAFU, and certainty closure
+
+This section is the specialized treatment of the **Hanlon Principle** for response interpretation. Its relation to Occam and Talleyrand is summarized in the consolidating FractaCognition note [`fractacognition_principles.md`](fractacognition_principles.md); the present document remains the richer local source for Hanlon in institutional and response-resolution analysis.
+
 
 When several causal explanations remain compatible with the observations,
 FractaCognition should test **ordinary failure** before imputing hostile intent.
