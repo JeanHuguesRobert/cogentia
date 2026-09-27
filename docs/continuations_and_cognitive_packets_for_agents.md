@@ -12,6 +12,7 @@ related:
   - "../research/cognitive_packet_switching.md"
   - "../skills/continuation-handling/SKILL.md"
   - "../instructions/AGENTS.shared.md"
+  - "resumable_github_issues.md"
 classification_source: "cogentia.js"
 classification_version: "1"
 classification_rule: "explicit-metadata"
@@ -190,3 +191,4 @@ after process restart. Prefer packet id / continuation id / hop log / files —
 | 3 | [`research/cognitive_packets.md`](../research/cognitive_packets.md) |
 | 4 | [`research/agent_resumable_cli.md`](../research/agent_resumable_cli.md) |
 | 5 | [`research/cognitive_packet_switching.md`](../research/cognitive_packet_switching.md) |
+| 6 | [`docs/resumable_github_issues.md`](resumable_github_issues.md) — GitHub Issues as cold-handler-resumable by-reference packets |
