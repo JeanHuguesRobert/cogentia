@@ -7,7 +7,7 @@ affiliation: "Institut Mariani / C.O.R.S.I.C.A., 1 cours Paoli, F-20250 Corte, C
 date: "2026-09-22"
 last_modified_at: "2026-09-27"
 last_stamped_at: "unknown"
-version: "0.6"
+version: "0.7"
 status: "working-paper — active experiment"
 license: "CC BY-SA 4.0"
 language: "en"
@@ -67,6 +67,7 @@ tags:
   - non-monotonic
   - synthetic-skin-in-the-game
 changelog:
+  - "v0.7 (2026-09-27) — records the Accessible Inputs Gate as a Janus.Future feasibility check for by-reference continuations; normative ownership remains in agent/resumability instructions."
   - "v0.6 (2026-09-27) — adds resumability refactoring as a concrete Janus.Past→Janus.Future application to historical Corpus Issues."
   - "v0.1 (2026-09-22) — initial formulation of Janus as a bidirectional Cognitive Packet gatekeeper."
   - "v0.2 (2026-09-22) — integrated internal reviews, embodiment, Synthetic Skin, philosophical ancestry and external Reviewer contract."
@@ -809,6 +810,39 @@ The prospective product should pass the simple cold-handler test:
 ```text
 Resume issue N of repository R.
 ```
+
+A further feasibility check applies before that prospective packet is released:
+
+```text
+declared next action
+→ required inputs
+→ inputs exist
+→ target handler can actually retrieve them
+→ first step is materially possible
+```
+
+This **Accessible Inputs Gate** is normative in
+[`instructions/AGENTS.shared.md`](../instructions/AGENTS.shared.md) and
+operationalized in
+[`docs/resumable_github_issues.md`](../docs/resumable_github_issues.md).
+Janus does not own or duplicate the rule.
+
+Its Janus relevance is narrower: a Future-facing continuation makes a
+prospective claim that another handler can continue the work. If an essential
+artifact exists only in the producer's inaccessible local/chat context, Reality
+can immediately falsify that claim. The correct transition is then not
+"handler failed" but "handoff was infeasible".
+
+```text
+producer says resumable
+→ future handler attempts retrieval
+→ artifact inaccessible
+→ Reality contradicts resumability claim
+→ repair handoff; do not blame handler
+```
+
+This is a useful example of Janus.Future being answerable to Janus.Past without
+turning Janus into an authorization or workflow gate.
 
 A future `cogentia.js issues` refactoring tool may mechanize this pattern as
 deterministic extraction and audit first, Continuation only at unresolved
