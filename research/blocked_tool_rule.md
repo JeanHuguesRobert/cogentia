@@ -1,7 +1,7 @@
 ---
 title: Blocked Tool Rule
 subtitle: How agents should report, degrade, and escalate failed tool operations
-version: '0.1'
+version: '0.2'
 status: source document — operational doctrine
 date: '2026-07-06'
 author: Jean Hugues Noël Robert
@@ -48,7 +48,7 @@ classification_confidence: "medium"
 
 ## How agents should report, degrade, and escalate failed tool operations
 
-**Version 0.1 — 2026-07-06**  
+**Version 0.2 — 2026-09-27**  
 **Repository:** `JeanHuguesRobert/cogentia`  
 **Path:** `research/blocked_tool_rule.md`
 
@@ -172,6 +172,37 @@ Cannot publish
 Cannot send email
   -> preserve draft and report that it was not sent.
 ```
+## 5.1 Necessary means escalation
+
+A blockage is not automatically a reason to abandon the objective.
+
+When the blocked capability or artifact is genuinely necessary and the
+objective remains valid, apply the **Necessary Means Principle**:
+
+```text
+blocked necessary means
+→ classify why it is blocked
+→ enumerate admissible acquisition / substitution / human-assist paths
+→ evaluate each path under Measured Risk
+→ use the smallest sufficient risk inside Mandate
+→ escalate if additional authority is required
+→ preserve BLOCKED only when no admissible path is presently available
+```
+
+This does not authorize bypass. In particular:
+
+```text
+necessity
+≠ permission to circumvent policy
+≠ permission to evade authentication or safety controls
+≠ permission to expose third-party data
+≠ permission to exceed Mandate
+```
+
+The purpose is to distinguish **blocked** from **abandoned** and **impossible**.
+A blocked route may justify searching for another instrument, obtaining a
+missing artifact, asking the Principal for a minimal assist, or creating a
+missing capability.
 
 ---
 
