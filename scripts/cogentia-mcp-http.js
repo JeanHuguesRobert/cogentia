@@ -1705,17 +1705,23 @@ async function guideRetrievalRun(question, plan = guideHeuristicPlan(question), 
         })(),
         new Promise((resolve) => setTimeout(() => resolve({ sources: [], context: [], warnings: ["retrieval_fallback_timed_out"], timed_out: true }), FALLBACK_RETRIEVAL_TIMEOUT_MS)),
       ]).catch(() => ({ sources: [], context: [], warnings: ["retrieval_fallback_errored"] }));
+      // Always tag that the fallback ran, regardless of outcome -- found
+      // live 2026-09-27: only the success and timeout/error branches were
+      // adding a distinct warnings marker, so the (most common) case where
+      // the fallback runs cleanly and still finds nothing left warnings
+      // empty, indistinguishable from "the fallback never fired at all".
+      const attemptedMarker = "retrieval_fallback_attempted";
       if (fallbackResult.sources.length > 0) {
         result = {
           ...fallbackResult,
           retrieval_fallback_attempted: true,
-          warnings: [...new Set([...(result.warnings || []), ...(fallbackResult.warnings || []), "retrieval_fallback_used"])],
+          warnings: [...new Set([...(result.warnings || []), ...(fallbackResult.warnings || []), attemptedMarker, "retrieval_fallback_used"])],
         };
       } else {
         result = {
           ...result,
           retrieval_fallback_attempted: true,
-          warnings: [...new Set([...(result.warnings || []), ...(fallbackResult.warnings || [])])],
+          warnings: [...new Set([...(result.warnings || []), ...(fallbackResult.warnings || []), attemptedMarker])],
         };
       }
     }
