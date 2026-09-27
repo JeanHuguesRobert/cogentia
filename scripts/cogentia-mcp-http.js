@@ -41,6 +41,7 @@ import { handleOpsNodeProxyRequest, opsReadToken } from "./lib/ona-proxy.js";
 import { handleEdgeTrapPost, handleEdgeTrapsGet } from "./lib/edge-trap-ops.js";
 import { createJhnOpenAiSurface, isTwinOpenAiPath } from "./lib/jhn-openai-surface.js";
 import { stripS7AnchorLabel } from "./lib/guide-s7-anchor.js";
+import { guideIssueLookupEnabled, detectIssueReference, fetchIssueAsGuideSource } from "./lib/guide-issue-lookup.js";
 import {
   buildCrossSurfaceStyleBlock,
   buildWhatsAppRepresentationMessages,
@@ -1742,6 +1743,30 @@ async function guideRetrievalRun(question, plan = guideHeuristicPlan(question), 
         result.sources.unshift(src);
         if (ctxItem) {
           result.context = [ctxItem, ...result.context.filter(c => c.source_id !== src.source_id)];
+        }
+      }
+    }
+  }
+
+  // Live GitHub issue lookup, added on top of corpus retrieval regardless
+  // of whether it already found something -- an issue reference is an
+  // authoritative signal the question needs live data, not a corpus fact.
+  // Scoped to an explicit repo allowlist, fails soft (see
+  // lib/guide-issue-lookup.js). Motivated by en_inseme_issue_18 from the
+  // 2026-09-27 legacy-vs-V2 comparison, where no corpus query could ever
+  // have found this -- the answer was never a document.
+  if (guideIssueLookupEnabled()) {
+    const issueRef = detectIssueReference(question);
+    if (issueRef) {
+      const timeoutStartedAt = performance.now();
+      const issueSource = await fetchIssueAsGuideSource(issueRef).catch(() => null);
+      timings_ms.issue_lookup = Math.round(performance.now() - timeoutStartedAt);
+      if (issueSource?.source && issueSource?.context) {
+        const already = result.sources.some(s => s.source_id === issueSource.source.source_id);
+        if (!already) {
+          result.sources = [issueSource.source, ...result.sources].slice(0, guideLimit + 1);
+          result.context = [issueSource.context, ...result.context].slice(0, guideLimit + 1);
+          result.warnings = [...new Set([...(result.warnings || []), "issue_lookup_used"])];
         }
       }
     }
