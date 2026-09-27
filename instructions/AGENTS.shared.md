@@ -1,7 +1,7 @@
 ---
 title: Cogentia Shared Agent Instructions
 status: active
-version: 26
+version: 27
 date: 2026-09-27
 document_role: operational
 document_kind: agent-instructions
@@ -182,6 +182,81 @@ other bounded resources; some nominal reads may also create observable or
 hidden side effects. Read-only initiative therefore NEVER widens authority,
 budget, disclosure rights, effect ceiling, or risk envelope. Autonomy may
 increase as consequence decreases, but it never bypasses governance.
+
+### Freshness Before Work Gate
+
+Before relying on repository state for substantive work, verify that the local
+checkout reflects the latest reachable shared state.
+
+For Git-backed repositories:
+
+1. inspect the current branch, HEAD, working-tree status, and configured remote;
+2. `git fetch` the relevant remote before concluding that a referenced file,
+   implementation, instruction, commit, or other repository object is absent;
+3. compare local HEAD with the relevant remote-tracking branch;
+4. distinguish explicitly among:
+   - absent on the remote;
+   - present on the remote but not locally;
+   - local checkout behind;
+   - local divergent work;
+   - inaccessible remote / fetch failure.
+
+A freshness check is observational. It does **not** authorize destructive or
+state-changing reconciliation.
+
+Do not silently `pull`, `reset`, `checkout`, `merge`, `rebase`, or
+overwrite local work merely to obtain freshness. Fetch first, compare, then
+reconcile only under the applicable mandate and with preservation of concurrent
+work.
+
+Canonical sequence:
+
+```text
+inspect local state
+→ fetch without mutating the working tree
+→ compare local vs shared state
+→ classify drift
+→ reconcile only if authorized and safe
+```
+
+A claim such as:
+
+```text
+"the document does not exist"
+"the implementation is missing"
+"the referenced commit is unavailable"
+```
+
+MUST NOT be made solely from a stale local checkout when the relevant remote can
+be checked.
+
+This gate applies especially to resumable Issues and cold-handler handoffs:
+
+```text
+Resume issue N
+→ read applicable instructions
+→ inspect local state
+→ fetch latest reachable shared state
+→ classify drift
+→ interpret the Issue against current Reality
+```
+
+The gate is also an ERP safeguard. A stale checkout can manufacture a false
+impossibility:
+
+```text
+stale state
+→ false absence
+→ false impossibility
+
+freshness check
+→ distinguish impossible
+  from merely not-yet-fetched
+```
+
+Talleyrand rule:
+
+> **Ce qui va sans dire va encore mieux en le disant.**
 
 ### Human-assist escalation for access barriers
 
