@@ -120,6 +120,39 @@ explore possible
 Do not collapse `impossible` into `blocked`, `unknown`,
 `not-yet-accessible`, or `not-yet-invented`. Early pruning is rational only
 when the impossibility claim itself is justified.
+#### Necessary Means Principle
+
+The reciprocal rule applies when the objective remains valid and the missing
+input or capability is genuinely necessary:
+
+> **Do not stop at “missing”. Seek an admissible way to obtain, create,
+> substitute, or route around the necessary means under Measured Risk.**
+
+```text
+needed_dependency_missing
+∧ objective_still_valid
+→ search admissible means
+→ evaluate Exposure / Recovery / Residue / Responsibility
+→ choose smallest sufficient risk
+→ execute only within Mandate
+→ otherwise escalate for authority or human assistance
+→ if no admissible path exists, mark BLOCKED or impossible_under_current_regime
+```
+
+Necessity NEVER widens Mandate, rights, disclosure authority, budgets, or
+safety ceilings. It creates a reason to search for a means, not permission to
+use any means.
+
+This principle complements the Accessible Inputs Gate:
+
+```text
+Accessible Inputs Gate:
+    do not hand off work whose indispensable inputs are inaccessible.
+
+Necessary Means Principle:
+    if the work genuinely matters, make those inputs accessible by an
+    admissible, proportionate path rather than silently abandoning the goal.
+```
 
 Do not duplicate retrievable repository context merely to make the Issue long.
 Carry decisions, constraints, uncertainty, routing, and next action; reference
