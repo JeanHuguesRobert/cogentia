@@ -51,7 +51,7 @@ classification_confidence: "medium"
 
 # Measured Risk
 
-> **Prudence is not risk minimization.** Prudence requires proportionality: do not let action outrun evidence, recovery capacity, Mandate, or system maturity. A zero-risk posture can itself destroy value or close the Possible. Under ERP, the target is the **smallest sufficient risk for a justified objective**, with uncertainty stated and recovery designed.
+> **Prudence is not inaction and not risk minimization.** Prudence is disciplined action under Reality: compare the risk of acting with the risk of not acting, then choose the proportionate path. A zero-risk posture can itself destroy value or close the Possible. When delay or abstention carries the greater exposure, prudence may require prompt or forceful action. Under ERP, the target is the **smallest sufficient risk for a justified objective**, with uncertainty stated, recovery designed, and the cost of inaction made visible.
 
 
 ## 1. Purpose
