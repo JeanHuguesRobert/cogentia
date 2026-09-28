@@ -28,6 +28,10 @@ import {
   auditResumableIssue,
   renderResumableIssueAudit,
 } from "./lib/resumable-issue-audit.js";
+import {
+  planResumableIssue,
+  renderResumableIssuePlan,
+} from "./lib/resumable-issue-plan.js";
 import { generateOperiumEmbeddingsReport } from "./lib/operium-embeddings.js";
 import { aiRouterHealth, createAiRouterClient } from "./lib/ai-router-client.js";
 import { retrievalSupabaseConfigured, retrievalSupabaseStatus } from "./lib/retrieval-supabase.js";
@@ -1078,6 +1082,12 @@ Issue commands:
                            --number <n> --root <dir> --emit-continuation
                            Exit: PASS 0, PARTIAL 2, JUDGMENT_REQUIRED 3, FAIL 4.
                            Operational errors exit 1. --json prints the audit.
+  issues resumable-plan <owner/repo#N | repo number>
+                           Read-only Phase-2 proposed Issue body. No Issue write.
+                           Flags: --body-file <path> --repository <owner/repo>
+                           --number <n> --root <dir> --step-result <file>
+                           Exit follows the predicted audit, or 3 when judgment
+                           is still required. --json prints the plan.
 
 Publish commands:
   publish list             List views available for publishing to Views Store.
@@ -5794,6 +5804,7 @@ function cmdIssues(sub) {
     return cmdHelp();
   }
   if (sub === "resumable-audit") return cmdIssuesResumableAudit();
+  if (sub === "resumable-plan") return cmdIssuesResumablePlan();
   const ctx = loadContext();
   switch (sub) {
     case "list":
@@ -5807,75 +5818,35 @@ function cmdIssues(sub) {
     case "export":
       return cmdIssuesExport(ctx);
     default:
-      throw new Error(`Unknown issues subcommand "${sub}". Use list, packet, graph, sync, export, or resumable-audit.`);
+      throw new Error(`Unknown issues subcommand "${sub}". Use list, packet, graph, sync, export, resumable-audit, or resumable-plan.`);
+  }
+}
+
+function cmdIssuesResumablePlan() {
+  const stepResults = takeResumableStepResults();
+  const target = readResumableIssueTarget("issues resumable-plan <owner/repo#N | repo number> [--body-file <path>] [--root <dir>] [--step-result <file>]");
+  const plan = planResumableIssue(target.issue, {
+    fileExists: target.root ? resumableAuditFileExists(target.root) : null,
+    stepResults,
+  });
+  output(plan, renderResumableIssuePlan(plan));
+  process.exit(plan.exit_code);
+}
+
+function takeResumableStepResults() {
+  const results = [];
+  for (;;) {
+    const file = valueFlag("--step-result");
+    if (!file) return results;
+    results.push(parseJsonText(fs.readFileSync(path.resolve(file), "utf8"), file));
   }
 }
 
 function cmdIssuesResumableAudit() {
-  const bodyFile = valueFlag("--body-file");
-  const repositoryFlag = valueFlag("--repository");
-  const numberFlag = valueFlag("--number");
-  const rootFlag = valueFlag("--root");
   const emit = takeFlag("--emit-continuation");
-  const repoArg = argv.shift();
-  const numberArg = argv.shift();
-  const ref = parseResumableIssueRef(repoArg);
-  let repository = repositoryFlag || "";
-  let number = Number(numberFlag || 0);
-  let issue;
-  let repoPath = "";
-  let ctx = null;
-
-  if (bodyFile) {
-    const body = fs.readFileSync(path.resolve(bodyFile), "utf8");
-    const title = (body.match(/^#\s+(.+)$/m) || [])[1] || path.basename(bodyFile);
-    repository = repository || (ref ? ref.repository : "local/fixture");
-    number = number || (ref ? ref.number : 0);
-    issue = {
-      repository,
-      number,
-      title,
-      state: "",
-      url: "",
-      body,
-      comments: [],
-    };
-  } else {
-    if (ref?.repository?.includes("/")) {
-      repository = ref.repository;
-      number = ref.number;
-    } else if (ref) {
-      repository = ref.repository;
-      number = ref.number;
-    } else if (repoArg && numberArg) {
-      repository = repoArg;
-      number = Number(numberArg);
-    } else {
-      throw new Error("Usage: issues resumable-audit <owner/repo#N | repo number> [--body-file <path>] [--root <dir>]");
-    }
-    ctx = tryLoadContext();
-    const repo = resolveIssueRepo(ctx || { repos: [] }, repository);
-    repository = repo.full_name;
-    repoPath = repo.path || "";
-    const raw = ghJson([
-      "issue", "view", String(number),
-      "--repo", repository,
-      "--json", "number,title,state,updatedAt,closedAt,url,labels,author,body,comments",
-    ]);
-    const normalized = normalizeGitHubIssue(raw);
-    issue = {
-      repository,
-      number: normalized.number || number,
-      title: normalized.title,
-      state: normalized.state,
-      url: normalized.url,
-      labels: normalized.labels,
-      body: normalized.body,
-      comments: normalized.comments,
-    };
-  }
-
-  const root = rootFlag || repoPath;
+  const target = readResumableIssueTarget("issues resumable-audit <owner/repo#N | repo number> [--body-file <path>] [--root <dir>]");
+  const { issue, root } = target;
+  let ctx = target.ctx;
   const audit = auditResumableIssue(issue, {
     fileExists: root ? resumableAuditFileExists(root) : null,
   });
@@ -5907,6 +5878,72 @@ function cmdIssuesResumableAudit() {
   }
   output(audit, renderResumableIssueAudit(audit));
   process.exit(audit.exit_code);
+}
+
+function readResumableIssueTarget(usage) {
+  const bodyFile = valueFlag("--body-file");
+  const repositoryFlag = valueFlag("--repository");
+  const numberFlag = valueFlag("--number");
+  const rootFlag = valueFlag("--root");
+  const repoArg = argv.shift();
+  const numberArg = argv.shift();
+  const ref = parseResumableIssueRef(repoArg);
+  let repository = repositoryFlag || "";
+  let number = Number(numberFlag || 0);
+
+  if (bodyFile) {
+    const body = fs.readFileSync(path.resolve(bodyFile), "utf8");
+    const title = (body.match(/^#\s+(.+)$/m) || [])[1] || path.basename(bodyFile);
+    repository = repository || (ref ? ref.repository : "local/fixture");
+    number = number || (ref ? ref.number : 0);
+    return {
+      ctx: null,
+      root: rootFlag || "",
+      issue: {
+        repository,
+        number,
+        title,
+        state: "",
+        url: "",
+        body,
+        comments: [],
+      },
+    };
+  }
+  if (ref?.repository?.includes("/")) {
+    repository = ref.repository;
+    number = ref.number;
+  } else if (ref) {
+    repository = ref.repository;
+    number = ref.number;
+  } else if (repoArg && numberArg) {
+    repository = repoArg;
+    number = Number(numberArg);
+  } else {
+    throw new Error(`Usage: ${usage}`);
+  }
+  const ctx = tryLoadContext();
+  const repo = resolveIssueRepo(ctx || { repos: [] }, repository);
+  const raw = ghJson([
+    "issue", "view", String(number),
+    "--repo", repo.full_name,
+    "--json", "number,title,state,updatedAt,closedAt,url,labels,author,body,comments",
+  ]);
+  const normalized = normalizeGitHubIssue(raw);
+  return {
+    ctx,
+    root: rootFlag || repo.path || "",
+    issue: {
+      repository: repo.full_name,
+      number: normalized.number || number,
+      title: normalized.title,
+      state: normalized.state,
+      url: normalized.url,
+      labels: normalized.labels,
+      body: normalized.body,
+      comments: normalized.comments,
+    },
+  };
 }
 
 function parseResumableIssueRef(value) {

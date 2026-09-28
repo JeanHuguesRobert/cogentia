@@ -655,6 +655,20 @@ function extractIssueRefs(text) {
   return out;
 }
 
+export function explicitIssueReferences(text) {
+  const excluded = CONTEXT_HEADINGS.map(normalizeHeading);
+  const found = [];
+  for (const section of parseSections(text)) {
+    const heading = section.heading || "(preamble)";
+    if (excluded.some(name => heading === name || heading.startsWith(`${name} `))) continue;
+    const body = section.lines.join("\n");
+    const paths = unique(extractRepoPaths(body));
+    const issues = unique(extractIssueRefs(body));
+    if (paths.length || issues.length) found.push({ heading, paths, issues });
+  }
+  return found;
+}
+
 function isRepoPath(value) {
   if (!value || value.includes("://") || value.includes("*") || value.includes("..")) return false;
   return /^(?:[\w.@+-]+\/)+[\w.@+-]+\.[A-Za-z0-9]+$/.test(value);
