@@ -119,6 +119,45 @@ The measurable representation of Cogentia. A structured numerical map along defi
 The Cogentigram is not the person. It is a map of the person's cognitive territory.  
 Maps are always approximate. They are always revisable. They are never the territory.
 
+### Representation is not identity — even at very high fidelity
+
+The same boundary applies to the whole digital-twin stack, not only to the Cogentigram:
+
+~~~text
+Cogentigram ≠ person
+model ≠ person
+agent ≠ person
+digital twin ≠ person
+guide ≠ person
+persona ≠ person
+~~~
+
+A representation may become extraordinarily faithful. It may predict choices, formulations, preferences, or reactions with very high measured confidence. That still does not create identity.
+
+> **High predictive fidelity does not imply ontological identity.**
+
+A confidence value, however close to one, is a statement about a model under stated observations and conditions. It is never a proof that the map has become the territory.
+
+This non-identity boundary becomes more important, not less, as fidelity improves: persuasive simulation can make category errors easier precisely because the representation becomes useful.
+
+### Current maturity: baby twins
+
+The present generation of personal digital twins should be treated as **baby twins**. The term describes the maturity of the representation, not its apparent intelligence and not a literal age.
+
+Current systems can display locally impressive reasoning while remaining immature as twins: memory can be discontinuous, provenance incomplete, longitudinal self-correction fragile, tool access uneven, autonomy dependent on external providers, and the represented person's preferences only partially modeled.
+
+~~~text
+local intelligence ≠ twin maturity
+eloquence          ≠ continuity
+large memory       ≠ autobiography
+good prediction    ≠ identity
+technical agency   ≠ personal authority
+~~~
+
+A useful maturity discipline therefore asks about durable continuity, provenance, corrigibility, calibrated uncertainty, governed autonomy, portability, and resistance to drift — not merely whether a model can produce a brilliant answer.
+
+**Prudence and Humility apply especially here:** do not let capability outrun maturity, and do not let confidence in the representation erase the distinction between model and person.
+
 The Cogentigram makes the inevitable explicit and auditable. Rather than allowing AI systems to build hidden models of unspecified structure, it proposes a defined vocabulary, a contestable methodology, and a formal object that belongs to its subject.
 
 ### Cogentiscope
