@@ -64,6 +64,33 @@ assert.ok(partial.unfilled_gaps.includes("next_action_missing"));
 assert.ok(partial.unfilled_gaps.includes("acceptance_missing"));
 assert.equal(partial.predicted_closure.status, "PARTIAL");
 
+const externalIssue = readFixture("external-paths.md");
+const externalPlan = planResumableIssue(externalIssue, { fileExists });
+assert.equal(externalPlan.status, "proposed");
+assert.equal(externalPlan.predicted_closure.status, "PASS", JSON.stringify(externalPlan.predicted_closure));
+assert.deepEqual(externalPlan.predicted_context.dangling, []);
+const contextAdded = externalPlan.proposed_body.split("## Context References")[1].split("## Cross-repository dependencies")[0];
+assert.match(contextAdded, /docs\/resumable_github_issues\.md/);
+assert.doesNotMatch(contextAdded, /projects\/suicide-corse\/corpus\.yml/);
+assert.doesNotMatch(contextAdded, /assets\/guide\.js/);
+const externalBody = externalPlan.proposed_body.split("## Cross-repository dependencies")[1];
+assert.match(externalBody, /projects\/suicide-corse\/corpus\.yml/);
+assert.match(externalBody, /projects\/suicide-corse\/projections\/conversational-agent\.yml/);
+assert.match(externalBody, /assets\/guide\.js/);
+assert.match(externalBody, /assets\/guide\.css/);
+assert.match(externalBody, /not required context/);
+assert.ok(externalPlan.sections.some(section => section.id === "external_references"));
+const strictDangle = auditResumableIssue({
+  ...externalIssue,
+  body: `${externalIssue.body}\n\n## Context References\n\n- \`projects/suicide-corse/corpus.yml\`\n`,
+}, { fileExists });
+assert.equal(strictDangle.cold_handler_closure.status, "FAIL");
+assert.ok(strictDangle.cold_handler_closure.reasons.includes("dangling_required_reference"));
+const unproved = planResumableIssue(externalIssue, {});
+assert.match(unproved.proposed_body, /## Context References/);
+assert.match(unproved.proposed_body, /projects\/suicide-corse\/corpus\.yml/);
+assert.doesNotMatch(unproved.proposed_body, /## Cross-repository dependencies/);
+
 const blocked = planResumableIssue(readFixture("judgment-goals.md"), { fileExists });
 assert.equal(blocked.status, "needs_judgment");
 assert.equal(blocked.proposed_body, null);

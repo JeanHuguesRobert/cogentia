@@ -4,7 +4,9 @@
  * Produces a proposed Issue body and a stable hash. It does not edit GitHub.
  * Strict audit headings stay strict. Explicit paths found under other headings
  * can be reorganized under "Context References" and are labeled as present-day
- * reorganization. Missing judgments are not invented.
+ * reorganization. A path proved absent from the audit root is not required
+ * context: it is recorded under "Cross-repository dependencies". Missing
+ * judgments are not invented.
  */
 import { createHash } from "node:crypto";
 import {
@@ -100,17 +102,26 @@ export function planResumableIssue(issue, options = {}) {
   }
 
   const contextMissing = audit.context_references?.status === "missing";
-  if (contextMissing) {
-    const harvested = harvestReferences(issue);
-    if (harvested.length) {
-      additions.push(contextSection(harvested));
-      sections.push({
-        id: "context_references",
-        origin: "reorganized_explicit",
-        headings: [...new Set(harvested.map(item => item.heading))],
-        refs: harvested.map(item => item.ref),
-      });
-    }
+  const harvested = harvestedContext(contextMissing, issue);
+  const partitioned = partitionHarvested(harvested, options.fileExists);
+  if (contextMissing && partitioned.required.length) {
+    additions.push(contextSection(partitioned.required));
+    sections.push({
+      id: "context_references",
+      origin: "reorganized_explicit",
+      headings: [...new Set(partitioned.required.map(item => item.heading))],
+      refs: partitioned.required.map(item => item.ref),
+    });
+  }
+  if (contextMissing && partitioned.external.length) {
+    additions.push(externalSection(partitioned.external));
+    sections.push({
+      id: "external_references",
+      origin: "reorganized_explicit",
+      headings: [...new Set(partitioned.external.map(item => item.heading))],
+      refs: partitioned.external.map(item => item.ref),
+      note: "Absent from the audit root. External references, not required context.",
+    });
   }
 
   if (additions.length) {
@@ -123,7 +134,7 @@ export function planResumableIssue(issue, options = {}) {
     });
   }
 
-  const unfilled = unfilledGaps(audit, sections, harvestedContext(contextMissing, issue));
+  const unfilled = unfilledGaps(audit, sections, partitioned.required);
   const predicted = auditResumableIssue({ ...issue, body: proposedBody }, options);
   const unchanged = proposedBody === String(issue?.body || "");
   let status = "proposed";
@@ -213,6 +224,20 @@ function harvestedContext(contextMissing, issue) {
   return contextMissing ? harvestReferences(issue) : [];
 }
 
+function partitionHarvested(harvested, fileExists) {
+  const required = [];
+  const external = [];
+  const canProveAbsence = typeof fileExists === "function";
+  for (const item of harvested) {
+    if (item.kind === "path" && canProveAbsence && fileExists(item.ref) === false) {
+      external.push(item);
+    } else {
+      required.push(item);
+    }
+  }
+  return { required, external };
+}
+
 function contextSection(harvested) {
   const lines = [
     "## Context References",
@@ -224,6 +249,20 @@ function contextSection(harvested) {
     const shown = item.kind === "path" ? `\`${item.ref}\`` : item.ref;
     const places = item.places.map(place => `${place.source} / ${place.heading}`).join("; ");
     lines.push(`- ${shown} (explicit in ${places})`);
+  }
+  return lines.join("\n");
+}
+
+function externalSection(harvested) {
+  const lines = [
+    "## Cross-repository dependencies",
+    "",
+    "Present-day reorganization. These paths were already explicit in this Issue, and they are absent from this repository. They stay external references. They are not required context for a handler rooted in this repository.",
+    "",
+  ];
+  for (const item of harvested) {
+    const places = item.places.map(place => `${place.source} / ${place.heading}`).join("; ");
+    lines.push(`- \`${item.ref}\` (explicit in ${places})`);
   }
   return lines.join("\n");
 }
