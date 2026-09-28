@@ -51,6 +51,9 @@ classification_confidence: "medium"
 
 # Measured Risk
 
+> **Prudence is not risk minimization.** Prudence requires proportionality: do not let action outrun evidence, recovery capacity, Mandate, or system maturity. A zero-risk posture can itself destroy value or close the Possible. Under ERP, the target is the **smallest sufficient risk for a justified objective**, with uncertainty stated and recovery designed.
+
+
 ## 1. Purpose
 
 This note records a correction to an increasingly visible failure mode in agent governance:
