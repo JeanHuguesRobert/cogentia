@@ -1,12 +1,12 @@
 ---
-title: "FractaCognition — Occam, Hanlon and Talleyrand"
-subtitle: "Three metacognitive heuristics for simplicity, attribution, and explicit assumptions"
-description: "Source note articulating the Occam, Hanlon, and Talleyrand principles as complementary FractaCognition heuristics."
+title: "FractaCognition — Prudence, Humility, Occam, Hanlon and Talleyrand"
+subtitle: "A cardinal discipline of prudence and humility, with heuristics for simplicity, attribution, and explicit assumptions"
+description: "Source note articulating Prudence and Humility as a cardinal FractaCognition discipline, with Occam, Hanlon, and Talleyrand as complementary heuristics."
 author: "Jean Hugues Noël Robert, baron Mariani"
 affiliation: "Institut Mariani / C.O.R.S.I.C.A., 1 cours Paoli, F-20250 Corte, Corsica"
 date: "2026-09-27"
-last_modified_at: "2026-09-27"
-version: "0.1"
+last_modified_at: "2026-09-28"
+version: "0.2"
 status: "working-paper"
 license: "CC BY-SA 4.0"
 language: "en"
@@ -20,6 +20,8 @@ canonical_url: "https://github.com/JeanHuguesRobert/cogentia/blob/main/research/
 tags:
   - fractacognition
   - metacognition
+  - prudence
+  - humility
   - occam
   - hanlon
   - talleyrand
@@ -42,7 +44,7 @@ review:
   reviewed_by: []
 ---
 
-# FractaCognition — Occam, Hanlon and Talleyrand
+# FractaCognition — Prudence, Humility, Occam, Hanlon and Talleyrand
 
 ## 1. Purpose
 
@@ -50,7 +52,42 @@ FractaCognition benefits from small metacognitive rules that improve how a reaso
 
 This note is a **consolidating but non-centralizing** layer. It does not replace the specialized source documents or operational projections where each principle is applied. It makes the principles jointly discoverable, clarifies their relationships, and points back to their local homes.
 
-Three complementary heuristics form a useful set:
+### Cardinal discipline — Prudence and Humility
+
+FractaCognition adopts **Prudence and Humility** as a cardinal discipline governing the use of every local heuristic, model, tool, and capability.
+
+> **Prudence:** do not let action outrun evidence, Mandate, reversibility, or the maturity of the representation and tools actually available.
+>
+> **Humility:** do not let confidence outrun what the evidence, model, provenance, and accessible Reality can actually support.
+
+Operationally:
+
+~~~text
+confidence > evidence
+→ lower the claim, expose uncertainty, or seek a Reality test
+
+capability > maturity
+→ do not infer readiness from impressive local performance
+
+model coherence
+→ does not imply truth
+
+predictive fidelity
+→ does not imply identity
+
+principal or agent overstates a conclusion
+→ challenge gently
+→ preserve the objection
+→ do not replace one unjustified certainty with another
+~~~
+
+This discipline applies to human principals, agents, twins, guides, and reviewers alike. An agent should not become deferential at the exact point where a material epistemic objection is needed: **challenge gently; hold firmly enough that the objection is not silently lost.**
+
+Prudence is not paralysis and Humility is not timidity. In ERP terms:
+
+> **Explore boldly; conclude cautiously.**
+
+Under that cardinal discipline, three complementary heuristics form a useful set:
 
 ~~~text
 Occam
@@ -375,6 +412,10 @@ The source principle should be stated once and projected where it changes behavi
 ## 10. Short operational card
 
 ~~~text
+PRUDENCE & HUMILITY
+Am I acting beyond evidence, mandate, reversibility, or maturity?
+Am I sounding more certain than the model can justify?
+
 OCCAM
 Am I adding something that is not necessary?
 
