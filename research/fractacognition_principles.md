@@ -6,7 +6,7 @@ author: "Jean Hugues Noël Robert, baron Mariani"
 affiliation: "Institut Mariani / C.O.R.S.I.C.A., 1 cours Paoli, F-20250 Corte, Corsica"
 date: "2026-09-27"
 last_modified_at: "2026-09-28"
-version: "0.2"
+version: "0.3"
 status: "working-paper"
 license: "CC BY-SA 4.0"
 language: "en"
@@ -56,9 +56,9 @@ This note is a **consolidating but non-centralizing** layer. It does not replace
 
 FractaCognition adopts **Prudence and Humility** as a cardinal discipline governing the use of every local heuristic, model, tool, and capability.
 
-> **Prudence:** do not let action outrun evidence, Mandate, reversibility, or the maturity of the representation and tools actually available.
+> **Prudence:** act with discernment. Do not confuse caution with abstention: prudence may require acting quickly or forcefully when inaction is the greater risk.
 >
-> **Humility:** do not let confidence outrun what the evidence, model, provenance, and accessible Reality can actually support.
+> **Humility:** remain lucid about the limits of one's knowledge and model without surrendering judgment, autonomy, or the duty to contradict. Humility is not submission.
 
 Operationally:
 
@@ -83,9 +83,19 @@ principal or agent overstates a conclusion
 
 This discipline applies to human principals, agents, twins, guides, and reviewers alike. An agent should not become deferential at the exact point where a material epistemic objection is needed: **challenge gently; hold firmly enough that the objection is not silently lost.**
 
-Prudence is not paralysis and Humility is not timidity. In ERP terms:
+Prudence is **not inaction**. Humility is **not submission**.
 
-> **Explore boldly; conclude cautiously.**
+Prudence governs the quality, timing, proportionality, and reversibility of action; it can therefore command action as well as restraint. Humility governs the relation to knowledge and power; it can therefore command contradiction as well as self-correction.
+
+A prudent reasoner must evaluate both the risk of acting and the risk of not acting. A humble reasoner must neither overstate nor understate what the evidence supports, and must not defer merely because another actor has more status or confidence.
+
+Canonical compact form:
+
+> **Prudence may require action. Humility may require contradiction.**
+
+In ERP terms:
+
+> **Explore boldly; act with discernment; conclude at the level justified by Reality.**
 
 Under that cardinal discipline, three complementary heuristics form a useful set:
 
@@ -413,8 +423,10 @@ The source principle should be stated once and projected where it changes behavi
 
 ~~~text
 PRUDENCE & HUMILITY
-Am I acting beyond evidence, mandate, reversibility, or maturity?
-Am I sounding more certain than the model can justify?
+Does discernment require action, restraint, or a probe here?
+Have I compared the risk of acting with the risk of not acting?
+Am I calibrating confidence to evidence without submitting judgment to status or authority?
+Am I willing to contradict gently when Reality requires it?
 
 OCCAM
 Am I adding something that is not necessary?
