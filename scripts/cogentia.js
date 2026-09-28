@@ -32,6 +32,12 @@ import {
   planResumableIssue,
   renderResumableIssuePlan,
 } from "./lib/resumable-issue-plan.js";
+import {
+  prepareResumableApply,
+  authorizeResumableApply,
+  verifyDeliveredBody,
+  renderResumableIssueApply,
+} from "./lib/resumable-issue-apply.js";
 import { generateOperiumEmbeddingsReport } from "./lib/operium-embeddings.js";
 import { aiRouterHealth, createAiRouterClient } from "./lib/ai-router-client.js";
 import { retrievalSupabaseConfigured, retrievalSupabaseStatus } from "./lib/retrieval-supabase.js";
@@ -1088,6 +1094,14 @@ Issue commands:
                            --number <n> --root <dir> --step-result <file>
                            Exit follows the predicted audit, or 3 when judgment
                            is still required. --json prints the plan.
+  issues resumable-apply <owner/repo#N> --from <plan.json>
+                           Phase-3 Issue body write. Expose first.
+                           Without --confirm, print the exact delivery body and
+                           its hash, then exit 2. No GitHub write.
+                           With --confirm <delivery_body_sha256>, write that body,
+                           fetch it back, and verify it.
+                           Refuses a stale plan when the current body hash differs.
+                           Flags: --from <plan.json> --confirm <sha256> --root <dir>
 
 Publish commands:
   publish list             List views available for publishing to Views Store.
@@ -5805,6 +5819,7 @@ function cmdIssues(sub) {
   }
   if (sub === "resumable-audit") return cmdIssuesResumableAudit();
   if (sub === "resumable-plan") return cmdIssuesResumablePlan();
+  if (sub === "resumable-apply") return cmdIssuesResumableApply();
   const ctx = loadContext();
   switch (sub) {
     case "list":
@@ -5818,7 +5833,61 @@ function cmdIssues(sub) {
     case "export":
       return cmdIssuesExport(ctx);
     default:
-      throw new Error(`Unknown issues subcommand "${sub}". Use list, packet, graph, sync, export, resumable-audit, or resumable-plan.`);
+      throw new Error(`Unknown issues subcommand "${sub}". Use list, packet, graph, sync, export, resumable-audit, resumable-plan, or resumable-apply.`);
+  }
+}
+
+function cmdIssuesResumableApply() {
+  const planFile = valueFlag("--from");
+  const confirm = valueFlag("--confirm");
+  if (!planFile) {
+    throw new Error("Usage: issues resumable-apply <owner/repo#N> --from <plan.json> [--confirm <delivery_body_sha256>]");
+  }
+  const plan = parseJsonText(fs.readFileSync(path.resolve(planFile), "utf8"), planFile);
+  const target = readResumableIssueTarget("issues resumable-apply <owner/repo#N> --from <plan.json> [--confirm <delivery_body_sha256>]");
+  const exposed = prepareResumableApply(target.issue, plan);
+  if (!confirm || exposed.status !== "exposed") {
+    output(exposed, renderResumableIssueApply(exposed));
+    process.exit(exposed.exit_code);
+  }
+  const authorized = authorizeResumableApply(exposed, confirm);
+  if (!authorized.authorized) {
+    output(authorized, renderResumableIssueApply(authorized));
+    process.exit(authorized.exit_code);
+  }
+  const bodyFile = path.join(os.tmpdir(), `cogentia-resumable-apply-${authorized.delivery_body_sha256}.md`);
+  fs.writeFileSync(bodyFile, authorized.delivery_body, "utf8");
+  try {
+    const [owner, repo] = String(authorized.issue.repository || "").split("/");
+    ghJson([
+      "issue", "edit", String(authorized.issue.number),
+      "--repo", `${owner}/${repo}`,
+      "--body-file", bodyFile,
+    ]);
+    const fetched = normalizeGitHubIssue(ghJson([
+      "issue", "view", String(authorized.issue.number),
+      "--repo", `${owner}/${repo}`,
+      "--json", "number,title,state,updatedAt,closedAt,url,labels,author,body,comments",
+    ]));
+    const verification = verifyDeliveredBody(authorized.delivery_body, fetched.body);
+    const result = {
+      ...authorized,
+      phase: "VERIFY",
+      status: verification.ok ? "applied" : "verify_failed",
+      verified: verification.ok,
+      verification,
+      fetched_body_sha256: verification.fetched_body_sha256,
+      effects: {
+        ...authorized.effects,
+        github_issue_mutation: true,
+        plan_applied: verification.ok,
+      },
+      exit_code: verification.ok ? 0 : 4,
+    };
+    output(result, renderResumableIssueApply(result));
+    process.exit(result.exit_code);
+  } finally {
+    fs.rmSync(bodyFile, { force: true });
   }
 }
 
