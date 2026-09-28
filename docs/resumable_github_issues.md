@@ -243,7 +243,9 @@ the next handler to repeat investigation whose result is already durable.
 ### Context References
 
 What must the handler read? Prefer stable paths, related Issues, Artifacts, and
-immutable commit references when exact historical content matters.
+immutable commit references when exact historical content matters. A path
+absent from the Issue's repository is a cross-repository dependency, not
+required context for a handler rooted in that repository.
 
 ### Constraints / Non-goals
 

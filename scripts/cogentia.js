@@ -24,6 +24,20 @@ import { createGunzip, createGzip } from "node:zlib";
 import * as js_yaml from "js-yaml";
 import { DAEMON_PLUGINS, DAEMON_PLUGIN_ROUTES, loadDaemonPlugins, dispatchPluginRoute } from "./daemon_plugins/registry.js";
 import { buildIssueGraph, renderIssueGraph } from "./lib/issue-graph.js";
+import {
+  auditResumableIssue,
+  renderResumableIssueAudit,
+} from "./lib/resumable-issue-audit.js";
+import {
+  planResumableIssue,
+  renderResumableIssuePlan,
+} from "./lib/resumable-issue-plan.js";
+import {
+  prepareResumableApply,
+  authorizeResumableApply,
+  verifyDeliveredBody,
+  renderResumableIssueApply,
+} from "./lib/resumable-issue-apply.js";
 import { generateOperiumEmbeddingsReport } from "./lib/operium-embeddings.js";
 import { aiRouterHealth, createAiRouterClient } from "./lib/ai-router-client.js";
 import { retrievalSupabaseConfigured, retrievalSupabaseStatus } from "./lib/retrieval-supabase.js";
@@ -1068,6 +1082,26 @@ Issue commands:
                            Generates {repo}-current-issues-list.md (summary)
                            or {repo}-current-issues.md (with --body/--comments)
                            Flags: --state open|closed|all --body --comments --both --output <path>
+  issues resumable-audit <owner/repo#N | repo number>
+                           Read-only Phase-1 resumability audit. No Issue write.
+                           Flags: --body-file <path> --repository <owner/repo>
+                           --number <n> --root <dir> --emit-continuation
+                           Exit: PASS 0, PARTIAL 2, JUDGMENT_REQUIRED 3, FAIL 4.
+                           Operational errors exit 1. --json prints the audit.
+  issues resumable-plan <owner/repo#N | repo number>
+                           Read-only Phase-2 proposed Issue body. No Issue write.
+                           Flags: --body-file <path> --repository <owner/repo>
+                           --number <n> --root <dir> --step-result <file>
+                           Exit follows the predicted audit, or 3 when judgment
+                           is still required. --json prints the plan.
+  issues resumable-apply <owner/repo#N> --from <plan.json>
+                           Phase-3 Issue body write. Expose first.
+                           Without --confirm, print the exact delivery body and
+                           its hash, then exit 2. No GitHub write.
+                           With --confirm <delivery_body_sha256>, write that body,
+                           fetch it back, and verify it.
+                           Refuses a stale plan when the current body hash differs.
+                           Flags: --from <plan.json> --confirm <sha256> --root <dir>
 
 Publish commands:
   publish list             List views available for publishing to Views Store.
@@ -5783,6 +5817,9 @@ function cmdIssues(sub) {
   if (["help", "-h", "--help"].includes(sub) || hasFlag("-h") || hasFlag("--help")) {
     return cmdHelp();
   }
+  if (sub === "resumable-audit") return cmdIssuesResumableAudit();
+  if (sub === "resumable-plan") return cmdIssuesResumablePlan();
+  if (sub === "resumable-apply") return cmdIssuesResumableApply();
   const ctx = loadContext();
   switch (sub) {
     case "list":
@@ -5796,8 +5833,213 @@ function cmdIssues(sub) {
     case "export":
       return cmdIssuesExport(ctx);
     default:
-      throw new Error(`Unknown issues subcommand "${sub}". Use list, packet, graph, sync, or export.`);
+      throw new Error(`Unknown issues subcommand "${sub}". Use list, packet, graph, sync, export, resumable-audit, resumable-plan, or resumable-apply.`);
   }
+}
+
+function cmdIssuesResumableApply() {
+  const planFile = valueFlag("--from");
+  const confirm = valueFlag("--confirm");
+  if (!planFile) {
+    throw new Error("Usage: issues resumable-apply <owner/repo#N> --from <plan.json> [--confirm <delivery_body_sha256>]");
+  }
+  const plan = parseJsonText(fs.readFileSync(path.resolve(planFile), "utf8"), planFile);
+  const target = readResumableIssueTarget("issues resumable-apply <owner/repo#N> --from <plan.json> [--confirm <delivery_body_sha256>]");
+  const exposed = prepareResumableApply(target.issue, plan);
+  if (!confirm || exposed.status !== "exposed") {
+    output(exposed, renderResumableIssueApply(exposed));
+    process.exit(exposed.exit_code);
+  }
+  const authorized = authorizeResumableApply(exposed, confirm);
+  if (!authorized.authorized) {
+    output(authorized, renderResumableIssueApply(authorized));
+    process.exit(authorized.exit_code);
+  }
+  const bodyFile = path.join(os.tmpdir(), `cogentia-resumable-apply-${authorized.delivery_body_sha256}.md`);
+  fs.writeFileSync(bodyFile, authorized.delivery_body, "utf8");
+  try {
+    const [owner, repo] = String(authorized.issue.repository || "").split("/");
+    ghJson([
+      "issue", "edit", String(authorized.issue.number),
+      "--repo", `${owner}/${repo}`,
+      "--body-file", bodyFile,
+    ]);
+    const fetched = normalizeGitHubIssue(ghJson([
+      "issue", "view", String(authorized.issue.number),
+      "--repo", `${owner}/${repo}`,
+      "--json", "number,title,state,updatedAt,closedAt,url,labels,author,body,comments",
+    ]));
+    const verification = verifyDeliveredBody(authorized.delivery_body, fetched.body);
+    const result = {
+      ...authorized,
+      phase: "VERIFY",
+      status: verification.ok ? "applied" : "verify_failed",
+      verified: verification.ok,
+      verification,
+      fetched_body_sha256: verification.fetched_body_sha256,
+      effects: {
+        ...authorized.effects,
+        github_issue_mutation: true,
+        plan_applied: verification.ok,
+      },
+      exit_code: verification.ok ? 0 : 4,
+    };
+    output(result, renderResumableIssueApply(result));
+    process.exit(result.exit_code);
+  } finally {
+    fs.rmSync(bodyFile, { force: true });
+  }
+}
+
+function cmdIssuesResumablePlan() {
+  const stepResults = takeResumableStepResults();
+  const target = readResumableIssueTarget("issues resumable-plan <owner/repo#N | repo number> [--body-file <path>] [--root <dir>] [--step-result <file>]");
+  const plan = planResumableIssue(target.issue, {
+    fileExists: target.root ? resumableAuditFileExists(target.root) : null,
+    stepResults,
+  });
+  output(plan, renderResumableIssuePlan(plan));
+  process.exit(plan.exit_code);
+}
+
+function takeResumableStepResults() {
+  const results = [];
+  for (;;) {
+    const file = valueFlag("--step-result");
+    if (!file) return results;
+    results.push(parseJsonText(fs.readFileSync(path.resolve(file), "utf8"), file));
+  }
+}
+
+function cmdIssuesResumableAudit() {
+  const emit = takeFlag("--emit-continuation");
+  const target = readResumableIssueTarget("issues resumable-audit <owner/repo#N | repo number> [--body-file <path>] [--root <dir>]");
+  const { issue, root } = target;
+  let ctx = target.ctx;
+  const audit = auditResumableIssue(issue, {
+    fileExists: root ? resumableAuditFileExists(root) : null,
+  });
+  if (emit) {
+    if (!audit.continuations.length) {
+      audit.emit_continuation = { emitted: false, reason: "no_judgment_boundary" };
+    } else if (!ctx) {
+      ctx = tryLoadContext();
+    }
+    if (emit && audit.continuations.length) {
+      if (!ctx?.configPath) {
+        throw new Error("continuation emission needs a Cogentia registry. The GitHub Issue was not modified.");
+      }
+      for (const prepared of audit.continuations) {
+        const result = emitContinuation(ctx, {
+          kind: "judgment",
+          title: prepared.title,
+          question: prepared.question,
+          dedupe_key: `resumable-audit:${audit.issue.repository}#${audit.issue.number}:${prepared.reason}`,
+          subject: prepared.subject,
+          context: prepared.context,
+          expected_response: prepared.expected_response,
+        });
+        prepared.emitted = true;
+        prepared.continuation_id = result.continuation.id;
+      }
+      audit.effects.continuation_emitted = true;
+    }
+  }
+  output(audit, renderResumableIssueAudit(audit));
+  process.exit(audit.exit_code);
+}
+
+function readResumableIssueTarget(usage) {
+  const bodyFile = valueFlag("--body-file");
+  const repositoryFlag = valueFlag("--repository");
+  const numberFlag = valueFlag("--number");
+  const rootFlag = valueFlag("--root");
+  const repoArg = argv.shift();
+  const numberArg = argv.shift();
+  const ref = parseResumableIssueRef(repoArg);
+  let repository = repositoryFlag || "";
+  let number = Number(numberFlag || 0);
+
+  if (bodyFile) {
+    const body = fs.readFileSync(path.resolve(bodyFile), "utf8");
+    const title = (body.match(/^#\s+(.+)$/m) || [])[1] || path.basename(bodyFile);
+    repository = repository || (ref ? ref.repository : "local/fixture");
+    number = number || (ref ? ref.number : 0);
+    return {
+      ctx: null,
+      root: rootFlag || "",
+      issue: {
+        repository,
+        number,
+        title,
+        state: "",
+        url: "",
+        body,
+        comments: [],
+      },
+    };
+  }
+  if (ref?.repository?.includes("/")) {
+    repository = ref.repository;
+    number = ref.number;
+  } else if (ref) {
+    repository = ref.repository;
+    number = ref.number;
+  } else if (repoArg && numberArg) {
+    repository = repoArg;
+    number = Number(numberArg);
+  } else {
+    throw new Error(`Usage: ${usage}`);
+  }
+  const ctx = tryLoadContext();
+  const repo = resolveIssueRepo(ctx || { repos: [] }, repository);
+  const raw = ghJson([
+    "issue", "view", String(number),
+    "--repo", repo.full_name,
+    "--json", "number,title,state,updatedAt,closedAt,url,labels,author,body,comments",
+  ]);
+  const normalized = normalizeGitHubIssue(raw);
+  return {
+    ctx,
+    root: rootFlag || repo.path || "",
+    issue: {
+      repository: repo.full_name,
+      number: normalized.number || number,
+      title: normalized.title,
+      state: normalized.state,
+      url: normalized.url,
+      labels: normalized.labels,
+      body: normalized.body,
+      comments: normalized.comments,
+    },
+  };
+}
+
+function parseResumableIssueRef(value) {
+  const text = String(value || "").trim();
+  const full = text.match(/^(?:https:\/\/github\.com\/)?([^/\s#]+)\/([^/\s#]+)\/(?:issues\/)?(\d+)$/i)
+    || text.match(/^(?:https:\/\/github\.com\/)?([^/\s#]+)\/([^/\s#]+)#(\d+)$/i);
+  if (full) return { repository: `${full[1]}/${full[2]}`, number: Number(full[3]) };
+  const short = text.match(/^([^/\s#]+)#(\d+)$/);
+  if (short) return { repository: short[1], number: Number(short[2]) };
+  return null;
+}
+
+function resumableAuditFileExists(root) {
+  const base = path.resolve(root);
+  return ref => {
+    const rel = String(ref || "").replace(/^\/+/, "").replace(/\\/g, "/");
+    if (!rel || rel.split("/").includes("..")) return false;
+    const full = path.resolve(base, rel);
+    if (full !== base && !full.startsWith(base + path.sep)) return false;
+    return fs.existsSync(full);
+  };
+}
+
+function tryLoadContext() {
+  const { configPath } = findConfig();
+  if (!configPath || !fs.existsSync(configPath)) return null;
+  return loadContext();
 }
 
 function cmdIssuesList(ctx) {
