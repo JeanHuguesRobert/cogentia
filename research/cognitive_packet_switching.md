@@ -468,6 +468,57 @@ $$
 
 The network itself thus becomes an evolving Learning Computer, where hops are dynamically synthesized arrays rather than static destinations.
 
+### 8.2 Incarnations, forks, and mission packets
+
+A Cognitive Packet should not be identified with one permanent material or digital carrier. The packet's stable continuity may survive changes of incarnation when identity, provenance, state and resumption references remain explicit.
+
+Candidate incarnations include:
+
+```text
+URL / durable reference
+digital artifact
+printed object
+QR- or NFC-addressable physical object
+other substrate-specific carrier
+```
+
+This introduces several distinct operations that MUST NOT be collapsed conceptually:
+
+```text
+MATERIALIZE       logical packet → physical incarnation
+DEMATERIALIZE     physical incarnation → durable digital/reference form
+CLONE / FORK      create a newly identified descendant
+ASSIGN            associate or reference a mission
+HANDOFF           change carrier or handler
+HANDLE            interpret and act on the payload
+```
+
+A fork of an incarnation does not imply a fork of content or mission. Conversely, a mission can be forked or shared without copying the same physical carrier.
+
+A mission can itself be represented as a Cognitive Packet:
+
+```text
+incarnation P381 ─┐
+incarnation P382 ─┼──→ mission packet M72
+incarnation P383 ─┘
+```
+
+This preserves the existing control/data-plane separation. Routing may inspect envelope-level identity, mission references, policy, capability requirements and admissible next hops; payload interpretation remains the responsibility of the selected handler.
+
+A human may therefore serve only as a transport or handoff capability without becoming the cognitive handler. An AI may handle a cognitive payload without moving any physical incarnation. An object may carry a stable packet reference without identifying its current holder.
+
+Candidate invariants:
+
+> **A support is not a packet.**
+
+> **A packet may change incarnation without losing its logical continuity.**
+
+> **A fork of incarnation does not imply a fork of content or mission.**
+
+> **Packet identity does not require holder identity.**
+
+These claims are intentionally weaker than a protocol specification and require further Reality Tests across materially different substrates.
+
 ---
 
 # 9. Packet-switched cognitive work
