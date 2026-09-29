@@ -38,6 +38,10 @@ import {
   verifyDeliveredBody,
   renderResumableIssueApply,
 } from "./lib/resumable-issue-apply.js";
+import {
+  preflightHandoff,
+  renderHandoffPreflight,
+} from "./lib/handoff-preflight.js";
 import { generateOperiumEmbeddingsReport } from "./lib/operium-embeddings.js";
 import { aiRouterHealth, createAiRouterClient } from "./lib/ai-router-client.js";
 import { retrievalSupabaseConfigured, retrievalSupabaseStatus } from "./lib/retrieval-supabase.js";
@@ -1082,6 +1086,13 @@ Issue commands:
                            Generates {repo}-current-issues-list.md (summary)
                            or {repo}-current-issues.md (with --body/--comments)
                            Flags: --state open|closed|all --body --comments --both --output <path>
+  issues handoff-preflight <owner/repo#N | repo number>
+                           Read-only check that the first step's required inputs
+                           are retrievable by the target handler. No Issue write.
+                           Flags: --body-file <path> --repository <owner/repo>
+                           --number <n> --root <dir> --current <sha>
+                           Exit: PASS 0, PARTIAL 2, JUDGMENT_REQUIRED 3, BLOCKED 4.
+                           Operational errors exit 1. --json prints the preflight.
   issues resumable-audit <owner/repo#N | repo number>
                            Read-only Phase-1 resumability audit. No Issue write.
                            Flags: --body-file <path> --repository <owner/repo>
@@ -5817,6 +5828,7 @@ function cmdIssues(sub) {
   if (["help", "-h", "--help"].includes(sub) || hasFlag("-h") || hasFlag("--help")) {
     return cmdHelp();
   }
+  if (sub === "handoff-preflight") return cmdIssuesHandoffPreflight();
   if (sub === "resumable-audit") return cmdIssuesResumableAudit();
   if (sub === "resumable-plan") return cmdIssuesResumablePlan();
   if (sub === "resumable-apply") return cmdIssuesResumableApply();
@@ -5833,8 +5845,19 @@ function cmdIssues(sub) {
     case "export":
       return cmdIssuesExport(ctx);
     default:
-      throw new Error(`Unknown issues subcommand "${sub}". Use list, packet, graph, sync, export, resumable-audit, resumable-plan, or resumable-apply.`);
+      throw new Error(`Unknown issues subcommand "${sub}". Use list, packet, graph, sync, export, handoff-preflight, resumable-audit, resumable-plan, or resumable-apply.`);
   }
+}
+
+function cmdIssuesHandoffPreflight() {
+  const current = valueFlag("--current");
+  const target = readResumableIssueTarget("issues handoff-preflight <owner/repo#N | repo number> [--body-file <path>] [--root <dir>] [--current <sha>]");
+  const result = preflightHandoff(target.issue, {
+    fileExists: target.root ? resumableAuditFileExists(target.root) : null,
+    baseline: current ? { current } : undefined,
+  });
+  output(result, renderHandoffPreflight(result));
+  process.exit(result.exit_code);
 }
 
 function cmdIssuesResumableApply() {
