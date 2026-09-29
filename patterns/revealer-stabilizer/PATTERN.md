@@ -59,6 +59,47 @@ The Stabilizer may be a procedure, protocol, automation, rule, incentive change,
 
 ## Effectivity bridge — checkpoint 2026-09-29
 
+### Relation to the three Machines
+
+This Pattern is **not** a fourth or fifth Machine at the same level as:
+
+- Machine à Empêcher;
+- Machine à Explorer;
+- Machine à Rendre Capable.
+
+The three Machines describe operational transformations of the space of accessible action:
+
+```text
+Machine à Empêcher
+→ contracts accessible possibilities
+
+Machine à Explorer
+→ discovers and tests possible branches
+
+Machine à Rendre Capable
+→ converts some possibilities into effective capacities
+```
+
+Revealer / Stabilizer is orthogonal to that triad. It is a **transversal metacognitive and robustness pair** that helps observe what the Machines actually do and preserve useful capacities without hiding their failures.
+
+Compactly:
+
+```text
+                META-LOOP
+          Revealer ↔ Stabilizer
+                 │
+                 ▼
+┌────────────────────────────────┐
+│ Machine à Empêcher             │
+│ Machine à Explorer             │
+│ Machine à Rendre Capable       │
+└────────────────────────────────┘
+```
+
+A Revealer can expose an impediment, an unexplored branch, or a missing conversion factor. A Stabilizer can make a newly acquired capacity reproducible, traceable and corrigible.
+
+This distinction prevents taxonomy drift: **Reveal** and **Stabilize** are functions that can operate across the three Machines, not new peer Machines.
+
 A cross-domain convergence suggests a sharper operational reading of the pair:
 
 > **Le révélateur rend visible un écart d’effectivité ; le stabilisateur réduit cet écart sans supprimer la capacité de le mesurer à nouveau.**
@@ -117,7 +158,9 @@ Reveal the effectivity gap
 → Stabilize again
 ```
 
-The pattern therefore gains a new review question:
+The pattern therefore gains two review questions:
+
+> **Which of the three Machines is currently operating or being transformed?**
 
 > **Does the proposed Stabilizer preserve a credible path by which its own ineffectivity can later be revealed?**
 
