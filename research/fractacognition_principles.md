@@ -5,8 +5,8 @@ description: "Source note articulating Prudence and Humility as a cardinal Fract
 author: "Jean Hugues Noël Robert, baron Mariani"
 affiliation: "Institut Mariani / C.O.R.S.I.C.A., 1 cours Paoli, F-20250 Corte, Corsica"
 date: "2026-09-27"
-last_modified_at: "2026-09-28"
-version: "0.3"
+last_modified_at: "2026-09-30"
+version: "0.4"
 status: "working-paper"
 license: "CC BY-SA 4.0"
 language: "en"
@@ -28,12 +28,15 @@ tags:
   - heuristics
 related_documents:
   - "research/learning_computer_genese_et_architecture.md"
+  - "research/indirection_as_metacognitive_heuristic.md"
   - "research/simplicite_action.md"
   - "research/non_resolutive_response_patterns.md"
   - "../instructions/AGENTS.shared.md"
   - "../docs/resumable_github_issues.md"
 provenance:
   origin_type: "conversation"
+  origin_repository: "JeanHuguesRobert/cogentia"
+  origin_ref: "unknown"
   origin_date: "2026-09-27"
   derived_from:
     - "research/simplicite_action.md"
@@ -145,6 +148,8 @@ existing mechanism sufficient
 Occam is not equivalent to "simpler is true". It is a complexity prior and design discipline. Reality may justify the more complex explanation or mechanism.
 
 Within the Corpus, its main specialized source remains [Simplicité d'action](simplicite_action.md).
+
+The complementary [indirection heuristic](indirection_as_metacognitive_heuristic.md) asks whether one explicit mediation removes a demonstrated coupling. Occam asks whether that added layer is truly necessary; the aphorism does not override this test.
 
 ## 3. The Hanlon Principle
 
