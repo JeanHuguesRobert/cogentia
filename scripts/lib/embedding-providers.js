@@ -181,7 +181,8 @@ function detectAvailableProviders() {
   const available = [];
 
   for (const [providerKey, provider] of Object.entries(PROVIDER_MODELS)) {
-    const apiKey = process.env[provider.apiKeyEnv] || envVars[provider.apiKeyEnv];
+    const apiKey = process.env[provider.apiKeyEnv] || envVars[provider.apiKeyEnv]
+      || (providerKey === "openai" ? (process.env.OPENROUTER_API_KEY || envVars.OPENROUTER_API_KEY) : null);
 
     // Check if provider is available
     // - No auth required (like local Magistral): always available

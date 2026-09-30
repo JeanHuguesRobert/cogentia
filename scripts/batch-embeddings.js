@@ -13,12 +13,13 @@ import { fileURLToPath } from "url";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const COGENTIA_DIR = path.resolve(__dirname, "..");
-const BATCH_SIZE = 100; // chunks per batch
-const MAX_TOTAL = 1000; // safety limit
+const BATCH_SIZE = Number(process.env.COGENTIA_EMBEDDINGS_BATCH_SIZE) || 100; // chunks per batch
+const MAX_TOTAL = Number(process.env.COGENTIA_EMBEDDINGS_MAX_TOTAL) || 1000; // safety limit
 const TARGET_REPO = process.env.COGENTIA_EMBEDDINGS_REPO || "all";
 
 function embeddingIndexArgs() {
   const args = ["scripts/cogentia.js", "embeddings", "index", "--repo", TARGET_REPO, "--limit", String(BATCH_SIZE)];
+  if (process.env.COGENTIA_REGISTRY) args.push("--registry", process.env.COGENTIA_REGISTRY);
   if (process.env.COGENTIA_EMBEDDINGS_PROFILE) args.push("--profile", process.env.COGENTIA_EMBEDDINGS_PROFILE);
   if (process.env.COGENTIA_EMBEDDINGS_PROVIDER) args.push("--provider", process.env.COGENTIA_EMBEDDINGS_PROVIDER);
   if (process.env.COGENTIA_EMBEDDINGS_ENV_FILE) args.push("--env-file", process.env.COGENTIA_EMBEDDINGS_ENV_FILE);
@@ -32,6 +33,7 @@ function execNode(args, options = {}) {
       cwd: COGENTIA_DIR,
       stdio: options.capture ? ["ignore", "pipe", "pipe"] : "inherit",
       encoding: options.capture ? "utf8" : undefined,
+      env: process.env,
       timeout: 180000 // 3 minutes
     });
   } catch (error) {
@@ -75,7 +77,7 @@ async function main() {
 
     // Process with worker
     console.log("\n2. Processing embeddings...");
-    const processOk = execNode(["scripts/smart-embed-worker.js"]);
+    const processOk = execNode(["scripts/smart-embed-worker.js", "run", "--id", continuationId]);
 
     if (!processOk) {
       console.log("   ⚠️  Worker failed, but continuing...");
@@ -93,6 +95,12 @@ async function main() {
       const count = data.embeddings?.length || 0;
       totalProcessed += count;
       console.log(`   ✅ Generated ${count} embeddings`);
+
+      // Store in SQLite
+      console.log("3. Storing embeddings in SQLite...");
+      const storeArgs = ["scripts/cogentia.js", "embeddings", "store", resultFile];
+      if (process.env.COGENTIA_REGISTRY) storeArgs.push("--registry", process.env.COGENTIA_REGISTRY);
+      execNode(storeArgs);
     } else {
       console.log("   ⚠️  No result file found");
     }

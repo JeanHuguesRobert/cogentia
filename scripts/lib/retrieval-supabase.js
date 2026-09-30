@@ -170,7 +170,7 @@ export async function retrievalSupabasePackBatch(queries, options = {}) {
     }
     let pack;
     if (mode === "keyword") {
-      pack = await keywordSearchSupabase(supabaseUrl, serviceKey, normalized, { corpusKey, indexHash, limit, budget });
+      pack = await keywordSearchSupabase(supabaseUrl, serviceKey, normalized, { corpusKey, indexHash, limit, budget, env });
     } else {
       pack = await hybridSearchSupabase(supabaseUrl, serviceKey, normalized, {
         corpusKey, indexHash, limit, budget, provider, modelName, dimensions, env,
@@ -223,40 +223,80 @@ async function semanticSearchSupabase(supabaseUrl, serviceKey, query, options) {
       continuation_required: embedding.error === "semantic_continuation_required",
     };
   }
-  const rows = await supabaseRpc(supabaseUrl, serviceKey, "match_retrieval_chunks", {
+  let indexHashUsed = options.indexHash || null;
+  let fallbackIndexHash = false;
+  let rows = await supabaseRpc(supabaseUrl, serviceKey, "match_retrieval_chunks", {
     query_embedding: embedding.embedding,
     corpus_key: options.corpusKey,
-    index_hash: options.indexHash || null,
+    index_hash: indexHashUsed,
     match_count: options.limit,
     provider_filter: options.provider,
     model_filter: options.modelName,
   });
+  if (indexHashUsed && (!rows.ok || (Array.isArray(rows.data) && rows.data.length === 0))) {
+    const fallbackRows = await supabaseRpc(supabaseUrl, serviceKey, "match_retrieval_chunks", {
+      query_embedding: embedding.embedding,
+      corpus_key: options.corpusKey,
+      index_hash: null,
+      match_count: options.limit,
+      provider_filter: options.provider,
+      model_filter: options.modelName,
+    });
+    if (fallbackRows.ok && Array.isArray(fallbackRows.data) && fallbackRows.data.length > 0) {
+      rows = fallbackRows;
+      fallbackIndexHash = true;
+      indexHashUsed = null;
+    }
+  }
   if (!rows.ok) {
     return { ok: false, error: rows.error, query, mode: "semantic", warnings: [rows.message || rows.error], diagnostic: rows.diagnostic || null };
+  }
+  const warnings = [`Semantic retrieval used Supabase pgvector (${options.modelName}, ${options.dimensions}d).`];
+  if (fallbackIndexHash) {
+    warnings.push("Retried vector search without index_hash filter due to index hash drift.");
   }
   return packFromRows(query, rows.data, {
     mode: "semantic",
     budget: options.budget,
-    indexHash: options.indexHash,
-    warnings: [`Semantic retrieval used Supabase pgvector (${options.modelName}, ${options.dimensions}d).`],
+    indexHash: indexHashUsed,
+    warnings,
   });
 }
 
 async function keywordSearchSupabase(supabaseUrl, serviceKey, query, options) {
-  const rows = await supabaseRpc(supabaseUrl, serviceKey, "search_retrieval_chunks_fts", {
+  let indexHashUsed = options.indexHash || null;
+  let fallbackIndexHash = false;
+  let rows = await supabaseRpc(supabaseUrl, serviceKey, "search_retrieval_chunks_fts", {
     search_query: query,
     corpus_key: options.corpusKey,
-    index_hash: options.indexHash || null,
+    index_hash: indexHashUsed,
     match_count: options.limit,
   });
+  if (indexHashUsed && (!rows.ok || (Array.isArray(rows.data) && rows.data.length === 0))) {
+    const fallbackRows = await supabaseRpc(supabaseUrl, serviceKey, "search_retrieval_chunks_fts", {
+      search_query: query,
+      corpus_key: options.corpusKey,
+      index_hash: null,
+      match_count: options.limit,
+    });
+    if (fallbackRows.ok && Array.isArray(fallbackRows.data) && fallbackRows.data.length > 0) {
+      rows = fallbackRows;
+      fallbackIndexHash = true;
+      indexHashUsed = null;
+    }
+  }
   if (!rows.ok) {
     return { ok: false, error: rows.error, query, mode: "keyword", warnings: [rows.message || rows.error], diagnostic: rows.diagnostic || null };
+  }
+  const warnings = ["Keyword retrieval used Supabase FTS."];
+  if (fallbackIndexHash) {
+    warnings.push("Retried keyword search without index_hash filter due to index hash drift.");
   }
   return packFromRows(query, rows.data, {
     mode: "keyword",
     budget: options.budget,
-    indexHash: options.indexHash,
-    warnings: ["Keyword retrieval used Supabase FTS."],
+    indexHash: indexHashUsed,
+    warnings,
   });
 }
 
@@ -332,20 +372,52 @@ async function resolveQueryEmbedding(query, options = {}) {
 async function embedQueryAsFulfiller(query, options = {}) {
   const env = options.env || process.env;
   const apiKey = String(env.OPENAI_API_KEY || env.COGENTIA_OPENAI_API_KEY || "");
-  if (!apiKey) {
+  const openRouterKey = String(env.OPENROUTER_API_KEY || env.COGENTIA_OPENROUTER_API_KEY || "");
+  if (!apiKey && !openRouterKey) {
     return {
       ok: false,
       error: "missing_openai_api_key",
       diagnostic: embeddingDiagnostic("missing_openai_api_key", options, { retryable: false, next_action: "configure_embedding_fulfiller" }),
-      warnings: ["Set OPENAI_API_KEY for explicit embed fulfillment."],
+      warnings: ["Set OPENAI_API_KEY or OPENROUTER_API_KEY for explicit embed fulfillment."],
     };
   }
+
+  if (apiKey) {
+    const directResult = await requestEmbeddingEndpoint(
+      resolveEmbeddingFulfillerUrl(env),
+      apiKey,
+      options.modelName || DEFAULT_MODEL,
+      options.dimensions || DEFAULT_DIMENSIONS,
+      query,
+      options
+    );
+    if (directResult.ok) return directResult;
+    if (!openRouterKey) {
+      return directResult;
+    }
+  }
+
+  if (openRouterKey) {
+    const rawModel = options.modelName || DEFAULT_MODEL;
+    const model = rawModel.includes("/") ? rawModel : `openai/${rawModel}`;
+    return requestEmbeddingEndpoint(
+      "https://openrouter.ai/api/v1/embeddings",
+      openRouterKey,
+      model,
+      options.dimensions || DEFAULT_DIMENSIONS,
+      query,
+      { ...options, provider: "openrouter" }
+    );
+  }
+}
+
+async function requestEmbeddingEndpoint(url, apiKey, model, dimensions, query, options = {}) {
   let response;
   try {
-    response = await fetch(resolveEmbeddingFulfillerUrl(env), {
+    response = await fetch(url, {
       method: "POST",
       headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
-      body: JSON.stringify({ model: options.modelName || DEFAULT_MODEL, input: query, dimensions: options.dimensions || DEFAULT_DIMENSIONS }),
+      body: JSON.stringify({ model, input: query, dimensions }),
     });
   } catch {
     return {
@@ -362,6 +434,7 @@ async function embedQueryAsFulfiller(query, options = {}) {
     return {
       ok: false,
       error: "query_embedding_failed",
+      upstream_status: status,
       diagnostic: embeddingDiagnostic(code, options, {
         upstream_status: status || null,
         retryable: status === 408 || status === 409 || status === 429 || status >= 500,

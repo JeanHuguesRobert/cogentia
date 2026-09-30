@@ -129,16 +129,43 @@ async function callRouterEmbeddings(texts, model, dimensions) {
   // Direct OpenAI API fallback
   const openAiKey = (process.env.OPENAI_API_KEY || "").trim();
   if (openAiKey) {
+    try {
+      const payload = {
+        model: model || "text-embedding-3-small",
+        input: texts,
+      };
+      if (dimensions) payload.dimensions = dimensions;
+      const res = await fetch("https://api.openai.com/v1/embeddings", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${openAiKey}`,
+        },
+        body: JSON.stringify(payload),
+      });
+      if (res.ok) {
+        return await res.json();
+      }
+    } catch {
+      /* Fallback to OpenRouter */
+    }
+  }
+
+  // OpenRouter proxy fallback
+  const openRouterKey = (process.env.OPENROUTER_API_KEY || "").trim();
+  if (openRouterKey) {
+    const rawModel = model || "text-embedding-3-small";
+    const openRouterModel = rawModel.includes("/") ? rawModel : `openai/${rawModel}`;
     const payload = {
-      model: model || "text-embedding-3-small",
+      model: openRouterModel,
       input: texts,
     };
     if (dimensions) payload.dimensions = dimensions;
-    const res = await fetch("https://api.openai.com/v1/embeddings", {
+    const res = await fetch("https://openrouter.ai/api/v1/embeddings", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${openAiKey}`,
+        Authorization: `Bearer ${openRouterKey}`,
       },
       body: JSON.stringify(payload),
     });
@@ -146,10 +173,10 @@ async function callRouterEmbeddings(texts, model, dimensions) {
       return await res.json();
     }
     const text = await res.text();
-    throw new Error(`OpenAI Direct API returned HTTP ${res.status}: ${text.slice(0, 200)}`);
+    throw new Error(`OpenRouter API returned HTTP ${res.status}: ${text.slice(0, 200)}`);
   }
 
-  throw new Error("ai_router_embeddings_failed and OPENAI_API_KEY missing");
+  throw new Error("Embeddings failed: neither valid OPENAI_API_KEY nor OPENROUTER_API_KEY available");
 }
 
 function continuationProfile(continuation) {

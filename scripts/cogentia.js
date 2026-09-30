@@ -7698,14 +7698,17 @@ function indexDbPath() {
   return path.join(cogentiaDataRoot(), ...INDEX_DB_REL);
 }
 
+let cachedExplicitRegistry = "";
+
 function cogentiaDataRoot() {
   const configured = peekValueFlag("--data-dir") || process.env.COGENTIA_DATA_DIR || "";
   if (configured) return path.resolve(configured);
+  if (loadedContextCache?.ctx?.registryRoot) return loadedContextCache.ctx.registryRoot;
   return registryRootFromOverride() || process.cwd();
 }
 
 function registryRootFromOverride() {
-  const explicit = peekValueFlag("--registry") || process.env.COGENTIA_REGISTRY || "";
+  const explicit = peekValueFlag("--registry") || cachedExplicitRegistry || process.env.COGENTIA_REGISTRY || "";
   if (!explicit) return "";
   const resolved = path.resolve(explicit);
   try {
@@ -11264,6 +11267,7 @@ function findConfig() {
   const trials = [];
   const explicit = valueFlag("--registry") || process.env.COGENTIA_REGISTRY;
   if (explicit) {
+    cachedExplicitRegistry = explicit;
     const p = path.resolve(explicit);
     if (fs.existsSync(p) && fs.statSync(p).isDirectory()) {
       const candidate = path.join(p, CONFIG_FILE);

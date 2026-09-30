@@ -8,6 +8,11 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { execFile } from "node:child_process";
+import {
+  createChildProcessEvent,
+  createDaemonIdentity,
+  readPackageVersion,
+} from "../lib/daemon-observability.js";
 
 // Parse CLI arguments for env files
 const args = process.argv.slice(2);
@@ -25,6 +30,7 @@ loadOptionalEnvFiles(envFiles);
 const BLACKBOARD_URL = String(process.env.COGENTIA_BLACKBOARD_URL || "https://cogentia.fractavolta.com").trim().replace(/\/$/, "");
 const INTERVAL_MS = Number(process.env.FRACTANET_WATCHDOG_INTERVAL_MS) || 60_000;
 const FAIL_THRESHOLD = Number(process.env.FRACTANET_WATCHDOG_FAIL_THRESHOLD) || 2;
+const SERVICE_VERSION = readPackageVersion(new URL("../../package.json", import.meta.url));
 
 const logPath = path.join(os.homedir(), ".cogentia-peer-watchdog.log");
 
@@ -56,11 +62,20 @@ function triggerAlert(message) {
   const platform = os.platform();
   if (platform === "win32") {
     const script = "Add-Type -AssemblyName System.Windows.Forms; [System.Windows.Forms.MessageBox]::Show($env:FRACTANET_ALERT_MESSAGE, 'Fractanet Peer Watchdog', 0, 48) | Out-Null";
-    execFile("powershell.exe", ["-NoProfile", "-NonInteractive", "-Command", script], {
+    const child = execFile("powershell.exe", ["-NoProfile", "-NonInteractive", "-Command", script], {
+      windowsHide: true,
       env: { ...process.env, FRACTANET_ALERT_MESSAGE: message },
     }, (err) => {
       if (err) logMessage(`Failed to display Windows alert: ${err.message}`);
     });
+    logMessage(JSON.stringify(createChildProcessEvent({
+      service: "fractanet-peer-watchdog",
+      version: SERVICE_VERSION,
+      command: "powershell.exe",
+      purpose: "desktop_alert",
+      childPid: child.pid,
+      windowsHide: true,
+    })));
   } else if (platform === "android" || fs.existsSync("/data/data/com.termux")) {
     execFile("termux-notification", ["--title", "Fractanet Alert", "--content", message, "--priority", "high"], (err) => {
       if (err) logMessage(`Failed to trigger Termux notification: ${err.message}`);
@@ -152,6 +167,14 @@ function unquoteEnvValue(value) {
 }
 
 // Run loop
+logMessage(JSON.stringify(createDaemonIdentity({
+  service: "fractanet-peer-watchdog",
+  version: SERVICE_VERSION,
+  target: BLACKBOARD_URL,
+  interval_ms: INTERVAL_MS,
+  fail_threshold: FAIL_THRESHOLD,
+  log_path: logPath,
+})));
 logMessage(`Peer Watchdog active. Target coordinator: ${BLACKBOARD_URL}`);
 logMessage(`Log path: ${logPath}`);
 

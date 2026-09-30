@@ -144,7 +144,8 @@ async function main() {
       }
     }
 
-    if (indexHash) {
+    const noPrune = args.includes("--no-prune");
+    if (indexHash && !noPrune) {
       await fetch(`${supabaseUrl}/rest/v1/retrieval_chunks?corpus_key=eq.${encodeURIComponent(corpusKey)}&index_hash=neq.${encodeURIComponent(indexHash)}`, {
         method: "DELETE",
         headers: {

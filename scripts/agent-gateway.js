@@ -2,6 +2,9 @@
 
 import { createAgentGateway } from "./lib/agent-gateway/server.js";
 import { resolveBindHost, requireTokenForExposure } from "./lib/agent-gateway/bind-host.js";
+import { createDaemonIdentity, readPackageVersion } from "./lib/daemon-observability.js";
+
+const SERVICE_VERSION = readPackageVersion(new URL("../package.json", import.meta.url));
 
 const argv = process.argv.slice(2);
 
@@ -76,5 +79,12 @@ const { server, ctx } = createAgentGateway({ bind });
 server.listen(port, bind.host, () => {
   const models = ctx.useMock ? "grok-build,claude-code,codex,antigravity,agy (mock)" : "grok-build,claude-code,codex,antigravity,agy";
   const tailscaleNote = bind.tailscale_ip ? `, tailscale=${bind.tailscale_ip}` : "";
+  console.error(JSON.stringify(createDaemonIdentity({
+    service: "agent-cli-gateway",
+    version: SERVICE_VERSION,
+    bind_mode: bind.mode,
+    listen_host: bind.host,
+    listen_port: port,
+  })));
   console.error(`Agent CLI Gateway listening on http://${bind.host}:${port} (${bind.mode}${tailscaleNote}, ${ctx.platform}, models: ${models})`);
 });

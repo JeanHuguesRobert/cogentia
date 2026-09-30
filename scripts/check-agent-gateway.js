@@ -43,6 +43,15 @@ daemon.stderr.on("data", chunk => { daemonLog += chunk; });
 try {
   await waitForHealth();
 
+  const identityLine = daemonLog.split(/\r?\n/).find(line => line.includes('"schema":"cogentia.daemon.identity.v1"'));
+  assert.ok(identityLine, `missing daemon identity in startup log: ${daemonLog}`);
+  const identity = JSON.parse(identityLine);
+  assert.equal(identity.service, "agent-cli-gateway");
+  assert.equal(identity.version, "0.3.0");
+  assert.equal(identity.pid, daemon.pid);
+  assert.equal(identity.parent_pid, process.pid);
+  assert.equal(identity.listen_port, port);
+
   const health = await getJson("/health");
   assert.equal(health.ok, true);
   assert.equal(health.service, "agent-cli-gateway");
