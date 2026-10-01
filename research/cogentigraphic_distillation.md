@@ -847,7 +847,9 @@ This v0.1 draft opens several continuations:
 ### Backlinks
 
 *These documents link to this file:*
+- [L’âme comme classe d’équivalence](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/ame_identite_latente_experience_de_pensee.md)
 - [Cognitive Impedance, Relatogram, and Cognitive Interpreter](cognitive_impedance_relatogram_interpreter.md)
 - [Individual and Collective Digital Twins](individual_and_collective_digital_twins.md)
+- [Latent Human Space and the Cogentigraphic Booster](latent_human_space_and_cogentigraphic_booster.md)
 - [Research Index — Cogentia](index.md)
 <!-- END_AUTO: backlinks -->

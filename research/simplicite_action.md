@@ -161,5 +161,6 @@ continuation:
 
 *These documents link to this file:*
 - [Conceptual Gravity — Governed Conceptual Routing for a Self-Orienting Reactive Corpus](conceptual_gravity.md)
+- [FractaCognition — Prudence, Humility, Occam, Hanlon and Talleyrand](fractacognition_principles.md)
 - [Research Index — Cogentia](index.md)
 <!-- END_AUTO: backlinks -->

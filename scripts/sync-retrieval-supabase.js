@@ -63,7 +63,7 @@ async function main() {
       LIMIT ? OFFSET ?
     `);
 
-    const chunkSize = 35;
+    const chunkSize = Math.max(1, Number.parseInt(readFlag(args, "--batch-size") || "20", 10));
     let upserted = 0;
     for (let offset = startAt; offset < totalRecords; offset += chunkSize) {
       const rows = batchStmt.all(chunkSize, offset);
@@ -117,6 +117,7 @@ async function main() {
                 Prefer: "resolution=merge-duplicates,return=minimal",
               },
               body: JSON.stringify(batch),
+              signal: AbortSignal.timeout(15000),
             });
             if (!response.ok) {
               const detail = await response.text();

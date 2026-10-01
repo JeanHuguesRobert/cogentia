@@ -1040,12 +1040,12 @@ Therefore:
 > **Compression does not imply anonymity. A smaller structural signature may increase portability and efficiency while preserving — or concentrating — identifying power.**
 
 The empirical question is resolution-dependent: how much residual information is needed to preserve a declared fidelity level over a declared task family?
-
 <!-- BEGIN_AUTO: backlinks -->
 ### Backlinks
 
 *These documents link to this file:*
 - [Cogentigraphic Distillation](cogentigraphic_distillation.md)
 - [Individual and Collective Digital Twins](individual_and_collective_digital_twins.md)
+- [Latent Human Space and the Cogentigraphic Booster](latent_human_space_and_cogentigraphic_booster.md)
 - [Research Index — Cogentia](index.md)
 <!-- END_AUTO: backlinks -->

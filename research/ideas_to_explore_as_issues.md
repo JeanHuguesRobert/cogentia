@@ -467,6 +467,7 @@ Open continuations:
 
 *These documents link to this file:*
 - [Research Index — Cogentia](index.md)
+- [Resumable GitHub Issues — Cognitive Packets by Reference](../docs/resumable_github_issues.md)
 - [Simplicité d'action](simplicite_action.md)
 - [The Cogentia Commons Living Corpus](cogentia_commons_living_corpus.md)
 <!-- END_AUTO: backlinks -->

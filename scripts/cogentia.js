@@ -3784,7 +3784,7 @@ async function cmdConsolidate() {
     if (at && Number.isNaN(new Date(at).getTime())) {
       throw new Error("--at must be a valid ISO-8601 timestamp");
     }
-    const result = await runWeeklyConsolidation({ now: at });
+    const result = await runWeeklyConsolidation({ now: at, force: hasFlag("--force") });
     if (hasFlag("--converge") || hasFlag("-c")) {
       console.log(`\nSunday Consolidation Completed [${result.sprint_tag}]\nDigest: ${result.digest_path}\n`);
       console.log(`[Phase 5] Auto-converging Corpus Navigation to Fixed Point...`);

@@ -1404,7 +1404,6 @@ source doctrine
 ```
 
 This case should remain distinguished from authorship transfer: provenance is preserved even when political or institutional authorship of a later version moves to another actor.
-
 <!-- BEGIN_AUTO: backlinks -->
 ### Backlinks
 
