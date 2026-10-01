@@ -19,6 +19,7 @@ provenance:
     - "scripts/smart-embed-worker.js"
     - "scripts/lib/embedding-providers.js"
     - "scripts/sync-retrieval-supabase.js"
+    - "scripts/ops/rebuild-corpus-embeddings.mjs"
     - "docs/retrieval-roadmap.md"
 review:
   status: unreviewed
@@ -38,7 +39,7 @@ During Sprint `2026-W40`, the Cogentia and FractaVolta retrieval substrate under
 1. **Production Cutover of Guide Reasoning Loop V2**: The Guide answering surface was permanently cut over to the V2 reasoning loop (`cogentia.agent_john_reasoning_loop.v2`) on `fracta2` (`100.84.109.87`), with A/B fallback preservation for legacy evaluation.
 2. **Provider-Agnostic Embedding Fallback**: Faced with exhausted direct OpenAI account credits, the embedding pipeline was enhanced with transparent OpenRouter fallback for `openai/text-embedding-3-small` (1536d).
 3. **Bit-to-Bit Vector Consistency**: Mathematical verification established an exact cosine similarity of $1.0000000$ between OpenAI-direct and OpenRouter-proxied vectors, ensuring seamless index interoperability without historical drift.
-4. **Full Corpus Vector Reconstitution**: 14,332 chunks across `FractaVolta`, `marenostrum`, `barons-Mariani`, and `cogentia` were embedded locally in `corpus.sqlite` and synchronized to Supabase pgvector (`retrieval_chunks`).
+4. **Full Corpus Vector Reconstitution**: 14,332 chunks across `FractaVolta`, `marenostrum`, `barons-Mariani`, and `cogentia` were embedded locally in `corpus.sqlite` and synchronized to Supabase pgvector (`retrieval_chunks`), bringing remote coverage to >23,000 vector records.
 5. **Sync Pipeline Hardening**: Implemented the `--no-prune` safety invariant and adaptive batch sizing with statement timeout protection against PostgREST/Postgres error `57014`.
 
 ---
@@ -58,6 +59,12 @@ Environment=COGENTIA_GUIDE_ALLOW_V2_PROBE=true
 
 - **Default Visitor Ingestion**: Regular public queries to `https://fractavolta.corsica/guide` automatically route through `cogentia.agent_john_reasoning_loop.v2`.
 - **A/B Probe Preservation**: Requests explicitly passing `{"reasoning_loop_v2": false}` in their JSON body remain capable of falling back to the legacy V1 loop for comparative eval.
+- **Service Verification**:
+  ```bash
+  sudo systemctl daemon-reload
+  sudo systemctl restart mcp-cogentia
+  journalctl -u mcp-cogentia -n 25 --no-pager
+  ```
 
 ---
 
@@ -110,9 +117,41 @@ The local SQLite index at `JeanHuguesRobert/.cogentia/index/corpus.sqlite` holds
 
 ---
 
-## 5. Epistemic Alignment & Anti-Capture
+## 5. Root Cause Analysis (Incident RCA)
+
+The investigation into the degradation of semantic retrieval on the Guide identified three compounding root causes:
+
+1. **Direct OpenAI Key Depletion (HTTP 401)**:
+   The key configured in `/srv/cogentia/secrets/guide.env` and local workspaces returned 401 Unauthorized due to depleted credits. Resolved by the OpenRouter fallback layer using `OPENROUTER_API_KEY`.
+2. **Magistral Fulfiller Endpoint Mismatch (HTTP 404)**:
+   A systemd drop-in (`/etc/systemd/system/mcp-cogentia.service.d/zzzz-magistral-acp.conf`) directed `COGENTIA_EMBEDDING_FULFILLER_URL` to `http://127.0.0.1:8880/v1/embeddings`. The Magistral local router only handles `/v1/chat/completions`, not embeddings, causing immediate 404 errors. Resolved by disabling the override and routing through the standard embedding client.
+3. **Index Hash Drift in Supabase `match_retrieval_chunks`**:
+   The RPC function strictly filtered by `c.index_hash = index_hash`. Whenever a local reindex occurred, the hash changed, rendering thousands of valid existing vectors invisible and causing 8s Postgres timeouts. Resolved in [`scripts/lib/retrieval-supabase.js`](file:///C:/tweesic/cogentia/scripts/lib/retrieval-supabase.js) via a two-tier lookup: strict hash first, with automatic fallback to `index_hash = null` if no matches are found.
+4. **CLI Registry Scope Bug in `scripts/cogentia.js`**:
+   `valueFlag("--registry")` consumed the argument from `argv`, causing downstream functions (`cogentiaDataRoot()`) to fallback to `process.cwd()`. Resolved by caching the explicit registry argument in `cachedExplicitRegistry`.
+
+---
+
+## 6. Operational Automation
+
+To ensure full reproducibility without manual step assembly, an operations script has been integrated into the repository:
+
+```bash
+# Rebuild all core embeddings and synchronize to Supabase
+node scripts/ops/rebuild-corpus-embeddings.mjs
+
+# Partial rebuild for specific repositories
+node scripts/ops/rebuild-corpus-embeddings.mjs --repos=FractaVolta,barons-Mariani
+
+# Embed only, skipping Supabase sync
+node scripts/ops/rebuild-corpus-embeddings.mjs --skip-sync
+```
+
+---
+
+## 7. Epistemic Alignment & Anti-Capture
 
 Per [`instructions/AGENTS.workspace.md`](file:///C:/tweesic/cogentia/instructions/AGENTS.workspace.md):
 > *"Working memory is ephemeral (task-bound); doctrine and project facts stay in the corpus."*
 
-This document serves as the permanent, Git-tracked record of the transition from single-provider fragility to multi-provider retrieval resilience. Future agents and human maintainers can inspect and operate this substrate without re-litigating design decisions.
+This document serves as the permanent, Git-tracked record of the transition from single-provider fragility to multi-provider retrieval resilience. Future agents and human maintainers can inspect, operate, and extend this substrate without relying on ephemeral conversational memory.
