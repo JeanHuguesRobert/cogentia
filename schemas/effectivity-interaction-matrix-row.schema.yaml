@@ -1,0 +1,102 @@
+$schema: "https://json-schema.org/draft/2020-12/schema"
+title: Effectivity Interaction Matrix Row
+type: object
+required:
+  - id
+  - subject_entity
+  - counterparty_entity
+  - request
+  - response_state
+  - evidence_status
+  - effect_on_capacity
+properties:
+  id: { type: string }
+  matrix_id: { type: [string, "null"] }
+  subject_entity: { type: string }
+  counterparty_entity: { type: string }
+  subactor: { type: [string, "null"] }
+  actor_role:
+    type: array
+    items: { type: string }
+
+  request: { type: string }
+  request_kind: { type: [string, "null"] }
+  requested_effect: { type: [string, "null"] }
+  request_scope: { type: [string, "null"] }
+  first_trace: { type: [string, "null"] }
+  last_followup: { type: [string, "null"] }
+
+  trigger: { type: [string, "null"] }
+  trigger_kind: { type: [string, "null"] }
+  trigger_date: { type: [string, "null"] }
+  why_relevant_now: { type: [string, "null"] }
+
+  age: { type: [number, integer, "null"] }
+  priority_mode:
+    type: string
+    enum: [none, procedural, operational, risk, information_gain, custom]
+  priority_rank: { type: [number, integer, "null"] }
+
+  information_holder: { type: [string, "null"] }
+  decision_authority: { type: [string, "null"] }
+  transmitter: { type: [string, "null"] }
+  controller_or_reviewer: { type: [string, "null"] }
+
+  routing_required: { type: [boolean, "null"] }
+  routing_target: { type: [string, "null"] }
+  routing_observed: { type: [boolean, "null"] }
+  routing_date: { type: [string, "null"] }
+  routing_trace: { type: [string, "null"] }
+
+  response_state:
+    type: string
+    enum: [YES, NO, PARTIAL, REFUSED, ROUTED, PENDING, SILENCE, NOT_FOUND, NOT_RECORDED, CHECKING, NON_COMMUNICABLE, UNKNOWN]
+  response_date: { type: [string, "null"] }
+  response_summary: { type: [string, "null"] }
+  partial_dimensions_closed:
+    type: array
+    items: { type: string }
+  open_dimensions:
+    type: array
+    items: { type: string }
+
+  evidence_status:
+    type: string
+    enum: [ESTABLISHED, CONTESTED, UNKNOWN, PENDING, NOT_TREATED, REFUTED, SUPERSEDED]
+  evidence_refs:
+    type: array
+    items: { type: string }
+  evidence_available_now: { type: [boolean, "null"] }
+  evidence_available_at_relevant_time: { type: [boolean, "null"] }
+  historical_availability_status: { type: [string, "null"] }
+
+  effect_on_capacity:
+    type: string
+    enum: [opens, improves, preserves, delays, reduces, blocks, unknown]
+  capacity_kind: { type: [string, "null"] }
+  capacity_delta: { type: [string, "null"] }
+  irreversibility: { type: [string, "null"] }
+  time_sensitivity: { type: [string, "null"] }
+
+  next_possible_actions:
+    type: array
+    items: { type: string }
+  next_actor: { type: [string, "null"] }
+  deadline: { type: [string, "null"] }
+
+  precedents:
+    type: array
+    items: { type: string }
+  comparison_scope: { type: [string, "null"] }
+  level_of_examination: { type: [string, "null"] }
+
+  epistemic_status: { type: [string, "null"] }
+  confidence:
+    anyOf:
+      - { type: number, minimum: 0, maximum: 1 }
+      - { type: "null" }
+  notes: { type: [string, "null"] }
+  sources:
+    type: array
+    items: { type: string }
+additionalProperties: true
