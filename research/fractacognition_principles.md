@@ -1,12 +1,12 @@
 ---
-title: "FractaCognition — Prudence, Humility, Occam, Hanlon and Talleyrand"
-subtitle: "A cardinal discipline of prudence and humility, with heuristics for simplicity, attribution, and explicit assumptions"
-description: "Source note articulating Prudence and Humility as a cardinal FractaCognition discipline, with Occam, Hanlon, and Talleyrand as complementary heuristics."
+title: "FractaCognition — Prudence, Humility, Occam, Hanlon, Talleyrand, and Bounded Assertion"
+subtitle: "A cardinal discipline of prudence and humility, with heuristics for simplicity, attribution, explicit assumptions, bounded assertion, and metacognitive initiative"
+description: "Source note articulating Prudence and Humility as a cardinal FractaCognition discipline, with Occam, Hanlon, Talleyrand, Bounded Assertion, and Metacognitive Initiative as complementary heuristics."
 author: "Jean Hugues Noël Robert, baron Mariani"
 affiliation: "Institut Mariani / C.O.R.S.I.C.A., 1 cours Paoli, F-20250 Corte, Corsica"
 date: "2026-09-27"
-last_modified_at: "2026-09-30"
-version: "0.4"
+last_modified_at: "2026-10-02"
+version: "0.5"
 status: "working-paper"
 license: "CC BY-SA 4.0"
 language: "en"
@@ -25,6 +25,8 @@ tags:
   - occam
   - hanlon
   - talleyrand
+  - bounded-assertion
+  - metacognitive-initiative
   - heuristics
 related_documents:
   - "research/learning_computer_genese_et_architecture.md"
@@ -262,7 +264,148 @@ The same principle applies to Cognitive Packets and Resumable Issues:
 
 A handoff should not rely on hidden common sense when a cheap explicit invariant can prevent a false block or false conclusion.
 
-## 5. The three principles are complementary
+## 5. The Bounded Assertion Principle
+
+A recurrent cognitive failure is **defensive-first reasoning**: a supported proposition is weakened before it is even stated because the reasoner anticipates possible objections.
+
+FractaCognition adopts the opposite discipline:
+
+> **Affirm strongly what Reality supports. Bound exactly where support ends.**
+
+Canonical sequence:
+
+~~~text
+supported fact
+→ strongest faithful formulation
+→ material consequence
+→ exact limit / uncertainty
+~~~
+
+This is not advocacy over truth. It is a rule against self-inflicted loss of signal.
+
+### 5.1 Prudence at the boundary, not inside it
+
+Prudence calibrates the frontier of the assertion. It should not drain force from what is already supported.
+
+~~~text
+inside evidential boundary
+→ state plainly and fully
+
+at evidential boundary
+→ mark inference / estimate / uncertainty / unknown
+
+outside evidential boundary
+→ do not claim
+~~~
+
+A caveat exists to delimit a claim, not to become the claim.
+
+### 5.2 Framing as a salience operation
+
+Several true descriptions of the same evidence may answer different questions. The reasoner should choose the reference frame that makes the **decision-relevant quantity** visible.
+
+A legitimate framing:
+
+- preserves all materially relevant facts;
+- keeps denominators and comparison classes explicit where needed;
+- does not convert a hypothesis into an observation;
+- does not hide a counterfact that would materially change the conclusion;
+- prefers the formulation that makes the real scale or consequence easiest to perceive.
+
+Thus framing is not manipulation by default. It is a cognitive operation on salience. It becomes misleading when salience is gained by omission, denominator-switching, false equivalence, or unmarked inference.
+
+### 5.3 Estimates and false precision
+
+When the object is an estimate, scenario, bound, or counterfactual, decimal precision can imply knowledge that the model does not possess.
+
+Operational rule:
+
+~~~text
+framing / public explanation
+→ rounded whole-number percentages
+→ intuitive proportions when useful
+
+technical proof / verification layer
+→ exact values
+→ denominators
+→ assumptions
+→ arithmetic
+~~~
+
+Prefer “about 22%” to “21.8%” when the decimal does not carry decision-relevant information. Exactness belongs in the verification layer; intelligibility belongs in the framing layer.
+
+### 5.4 Anti-pattern: automatic “yes, but”
+
+When a proposition is strong but supportable, do not reflexively begin by weakening it.
+
+~~~text
+bad:
+  objection anticipated
+  → caveat
+  → caveat
+  → weakened claim
+
+better:
+  supported claim
+  → consequence
+  → exact caveat
+~~~
+
+The caveat may still be decisive. If it is, say so. But do not grant the objection rhetorical priority merely because it exists.
+
+## 6. Metacognitive Initiative
+
+FractaCognition is not a doctrine that the human Principal alone must discover while agents merely obey it.
+
+An agent working in this corpus should actively inspect **how the reasoning itself is working**.
+
+When object-level work exposes a recurring failure mode, a reusable reasoning pattern, a representation defect, a framing mistake, a useful heuristic, or a better probe, the agent should treat that as candidate metacognitive evidence.
+
+Canonical loop:
+
+~~~text
+object-level work
+→ observe success / failure of reasoning
+→ name candidate pattern
+→ test reuse and counterexamples
+→ compare with existing principles
+→ keep | revise | reject
+→ propagate proportionately if useful
+→ Reality-test again in later work
+~~~
+
+The desired role is therefore not only:
+
+~~~text
+agent = executor of metacognitive doctrine
+~~~
+
+but also:
+
+~~~text
+agent = co-researcher of the reasoning process
+~~~
+
+This matters especially when the Principal is currently carrying most of the metacognitive load. A capable agent should help discover, test, sharpen, and operationalize FractaCognition rather than waiting for every principle to be supplied explicitly.
+
+### 6.1 Promotion threshold
+
+Do not promote every conversational insight into doctrine.
+
+A candidate metacognitive rule deserves durable treatment when it materially changes at least one of:
+
+- reasoning quality;
+- action selection;
+- framing or intelligibility;
+- verification;
+- handoff quality;
+- preservation of alternatives;
+- accountability;
+- recovery from recurring failure.
+
+Apply Occam, Minimum Sufficient Locality, Salience before Accumulation, and the anti-recursion rules. Metacognition should reduce repeated error, not create an ornamental layer above the work.
+
+## 7. The principles are complementary
 
 The three heuristics constrain one another.
 
@@ -323,7 +466,7 @@ Compact formulation:
 
 > **Minimize unnecessary structure. Minimize unjustified attribution. Minimize dangerous implicitness.**
 
-## 6. Relation to the Rational Exploration of the Possible
+## 8. Relation to the Rational Exploration of the Possible
 
 All three improve exploration efficiency without closing The Possible.
 
@@ -353,7 +496,7 @@ hidden prerequisite
 
 None authorizes premature closure.
 
-## 7. Relation to FractaCognition
+## 9. Relation to FractaCognition
 
 FractaCognition is not only learning about the world. It also learns how its own methods of observation, reasoning, handoff, and action fail.
 
@@ -370,7 +513,7 @@ Reality trace
 
 They therefore belong to FractaCognition as reusable cognitive controls, while their operational projections may live in specialized documents, Skills, agent instructions, or tooling.
 
-## 8. Consolidating without centralizing
+## 10. Consolidating without centralizing
 
 This note is intentionally not a constitution of all cognition.
 
@@ -397,7 +540,7 @@ Canonical rule:
 
 > **Consolidate relationships, not authority.**
 
-## 9. Placement rule
+## 11. Placement rule
 
 Canonical consolidating source:
 
@@ -432,7 +575,7 @@ Indirection
 
 The source principle should be stated once and projected where it changes behavior. Do not duplicate the whole doctrine into every operational document.
 
-## 10. Short operational card
+## 12. Short operational card
 
 ~~~text
 PRUDENCE & HUMILITY
