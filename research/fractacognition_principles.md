@@ -6,7 +6,7 @@ author: "Jean Hugues Noël Robert, baron Mariani"
 affiliation: "Institut Mariani / C.O.R.S.I.C.A., 1 cours Paoli, F-20250 Corte, Corsica"
 date: "2026-09-27"
 last_modified_at: "2026-10-02"
-version: "0.5"
+version: "0.6"
 status: "working-paper"
 license: "CC BY-SA 4.0"
 language: "en"
@@ -192,6 +192,26 @@ Canonical FractaCognition form:
 > **When an assumption, prerequisite, invariant, or expected action is material to successful continuation, make it explicit even when it appears obvious.**
 
 The point is not verbosity. It is to externalize assumptions whose omission can cause a capable handler to act on a different state of the world.
+
+But the principle is broader than handoff hygiene. In FractaCognition, **explicit formulation is itself a cognitive operation**. What remains merely implicit may guide one reasoner once; what is stated can be inspected, criticized, transmitted, compared, reused, operationalized, and tested by Reality.
+
+Canonical expansion:
+
+~~~text
+useful intuition
+→ say it explicitly
+→ make it inspectable
+→ test its scope and counterexamples
+→ if it survives, make it reusable
+→ let later Reality confirm, refine, or break it
+~~~
+
+This gives Talleyrand a double role:
+
+1. **operational explicitness** — state assumptions, prerequisites, invariants, and expected actions that materially affect continuation;
+2. **metacognitive explicitness** — when a useful way of reasoning is operating tacitly, formulate it so that it can become an object of reasoning itself.
+
+A principle that "goes without saying" may still be cognitively unavailable to another handler — or even to the same handler in another context. Saying it does not merely communicate it; it changes its status from tacit habit to inspectable cognitive object.
 
 Typical examples include:
 
