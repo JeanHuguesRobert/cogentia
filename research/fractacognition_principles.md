@@ -408,6 +408,10 @@ research/fractacognition_principles.md
 Specialized projections:
 
 ~~~text
+PRUDENCE & HUMILITY
+→ cardinal discipline across FractaCognition
+→ AGENTS.shared.md epistemic calibration / challenge / action-vs-inaction discipline
+
 Occam
 → research/simplicite_action.md
 → container / architecture / anti-bloat rules
@@ -420,6 +424,10 @@ Talleyrand
 → AGENTS.shared.md Freshness Before Work Gate
 → docs/resumable_github_issues.md
 → Verified Handoff / Accessible Inputs rules
+
+Indirection
+→ research/indirection_as_metacognitive_heuristic.md
+→ design boundaries / mappings / mediation where coupling is demonstrated
 ~~~
 
 The source principle should be stated once and projected where it changes behavior. Do not duplicate the whole doctrine into every operational document.
