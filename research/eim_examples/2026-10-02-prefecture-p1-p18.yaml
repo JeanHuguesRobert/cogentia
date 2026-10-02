@@ -1,0 +1,480 @@
+matrix_id: EIM-PREFECTURE-2026-10-02
+profile: EIM-PREFECTURE
+status: working
+observed_event:
+  sent_at: "2026-10-02T13:33:55+02:00"
+  gmail_message_id: "1a0fc64750fe95b6"
+  gmail_thread_id: "1a0e6e6f9908ab4e"
+epistemic_rules:
+  - "Sent request is ESTABLISHED."
+  - "Requested facts remain PENDING until answered or independently established."
+  - "Silence is not evidence of absence."
+  - "information_holder != decision_authority != transmitter != controller_or_reviewer"
+rows:
+  - id: PREF-2026-10-02-P1
+    subject_entity: Jean Hugues Noël Robert
+    counterparty_entity: Préfecture de la Haute-Corse
+    subactor: Bureau des élections / autorité compétente selon la demande
+    request: "Réception du courriel de 17:57:55"
+    request_kind: factual-traceability
+    first_trace: "2026-10-02T13:33:55+02:00"
+    last_followup: "2026-10-02T13:33:55+02:00"
+    trigger: "TA de Bastia invite à saisir le Conseil constitutionnel ; délai contentieux en cours"
+    trigger_date: "2026-10-01"
+    priority_mode: procedural
+    priority_rank: 2
+    information_holder: "Préfecture / Bureau des élections / systèmes concernés"
+    decision_authority: "variable selon la demande"
+    transmitter: "variable selon la demande"
+    controller_or_reviewer: "Conseil constitutionnel potentiel ; Défenseur des droits en continuité documentaire"
+    routing_required: true
+    routing_observed: false
+    response_state: PENDING
+    evidence_status: ESTABLISHED
+    effect_on_capacity: "Réduit l'incertitude factuelle et peut améliorer la capacité à documenter le recours."
+    next_actor: "Préfecture ou autorité routée ; Conseil constitutionnel si la question reste ouverte"
+    deadline: "2026-10-07T18:00:00+02:00"
+    sources:
+      - "https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/senatoriales-2026/investigation/sources/courriel-tracabilite-prefecture-2026-10-02.md"
+
+  - id: PREF-2026-10-02-P2
+    subject_entity: Jean Hugues Noël Robert
+    counterparty_entity: Préfecture de la Haute-Corse
+    subactor: Bureau des élections / autorité compétente selon la demande
+    request: "Traitement du courriel de 17:57:55"
+    request_kind: factual-traceability
+    first_trace: "2026-10-02T13:33:55+02:00"
+    last_followup: "2026-10-02T13:33:55+02:00"
+    trigger: "TA de Bastia invite à saisir le Conseil constitutionnel ; délai contentieux en cours"
+    trigger_date: "2026-10-01"
+    priority_mode: procedural
+    priority_rank: 2
+    information_holder: "Préfecture / Bureau des élections / systèmes concernés"
+    decision_authority: "variable selon la demande"
+    transmitter: "variable selon la demande"
+    controller_or_reviewer: "Conseil constitutionnel potentiel ; Défenseur des droits en continuité documentaire"
+    routing_required: true
+    routing_observed: false
+    response_state: PENDING
+    evidence_status: ESTABLISHED
+    effect_on_capacity: "Réduit l'incertitude factuelle et peut améliorer la capacité à documenter le recours."
+    next_actor: "Préfecture ou autorité routée ; Conseil constitutionnel si la question reste ouverte"
+    deadline: "2026-10-07T18:00:00+02:00"
+    sources:
+      - "https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/senatoriales-2026/investigation/sources/courriel-tracabilite-prefecture-2026-10-02.md"
+
+  - id: PREF-2026-10-02-P3
+    subject_entity: Jean Hugues Noël Robert
+    counterparty_entity: Préfecture de la Haute-Corse
+    subactor: Bureau des élections / autorité compétente selon la demande
+    request: "Transmission initiale au Tribunal administratif"
+    request_kind: factual-traceability
+    first_trace: "2026-10-02T13:33:55+02:00"
+    last_followup: "2026-10-02T13:33:55+02:00"
+    trigger: "TA de Bastia invite à saisir le Conseil constitutionnel ; délai contentieux en cours"
+    trigger_date: "2026-10-01"
+    priority_mode: procedural
+    priority_rank: 2
+    information_holder: "Préfecture / Bureau des élections / systèmes concernés"
+    decision_authority: "variable selon la demande"
+    transmitter: "variable selon la demande"
+    controller_or_reviewer: "Conseil constitutionnel potentiel ; Défenseur des droits en continuité documentaire"
+    routing_required: true
+    routing_observed: false
+    response_state: PENDING
+    evidence_status: ESTABLISHED
+    effect_on_capacity: "Réduit l'incertitude factuelle et peut améliorer la capacité à documenter le recours."
+    next_actor: "Préfecture ou autorité routée ; Conseil constitutionnel si la question reste ouverte"
+    deadline: "2026-10-07T18:00:00+02:00"
+    sources:
+      - "https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/senatoriales-2026/investigation/sources/courriel-tracabilite-prefecture-2026-10-02.md"
+
+  - id: PREF-2026-10-02-P4
+    subject_entity: Jean Hugues Noël Robert
+    counterparty_entity: Préfecture de la Haute-Corse
+    subactor: Bureau des élections / autorité compétente selon la demande
+    request: "Transmission complémentaire avant jugement"
+    request_kind: factual-traceability
+    first_trace: "2026-10-02T13:33:55+02:00"
+    last_followup: "2026-10-02T13:33:55+02:00"
+    trigger: "TA de Bastia invite à saisir le Conseil constitutionnel ; délai contentieux en cours"
+    trigger_date: "2026-10-01"
+    priority_mode: procedural
+    priority_rank: 2
+    information_holder: "Préfecture / Bureau des élections / systèmes concernés"
+    decision_authority: "variable selon la demande"
+    transmitter: "variable selon la demande"
+    controller_or_reviewer: "Conseil constitutionnel potentiel ; Défenseur des droits en continuité documentaire"
+    routing_required: true
+    routing_observed: false
+    response_state: PENDING
+    evidence_status: ESTABLISHED
+    effect_on_capacity: "Réduit l'incertitude factuelle et peut améliorer la capacité à documenter le recours."
+    next_actor: "Préfecture ou autorité routée ; Conseil constitutionnel si la question reste ouverte"
+    deadline: "2026-10-07T18:00:00+02:00"
+    sources:
+      - "https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/senatoriales-2026/investigation/sources/courriel-tracabilite-prefecture-2026-10-02.md"
+
+  - id: PREF-2026-10-02-P5
+    subject_entity: Jean Hugues Noël Robert
+    counterparty_entity: Préfecture de la Haute-Corse
+    subactor: Bureau des élections / autorité compétente selon la demande
+    request: "État exhaustif des transmissions Préfecture → TA"
+    request_kind: factual-traceability
+    first_trace: "2026-10-02T13:33:55+02:00"
+    last_followup: "2026-10-02T13:33:55+02:00"
+    trigger: "TA de Bastia invite à saisir le Conseil constitutionnel ; délai contentieux en cours"
+    trigger_date: "2026-10-01"
+    priority_mode: procedural
+    priority_rank: 2
+    information_holder: "Préfecture / Bureau des élections / systèmes concernés"
+    decision_authority: "variable selon la demande"
+    transmitter: "variable selon la demande"
+    controller_or_reviewer: "Conseil constitutionnel potentiel ; Défenseur des droits en continuité documentaire"
+    routing_required: true
+    routing_observed: false
+    response_state: PENDING
+    evidence_status: ESTABLISHED
+    effect_on_capacity: "Réduit l'incertitude factuelle et peut améliorer la capacité à documenter le recours."
+    next_actor: "Préfecture ou autorité routée ; Conseil constitutionnel si la question reste ouverte"
+    deadline: "2026-10-07T18:00:00+02:00"
+    sources:
+      - "https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/senatoriales-2026/investigation/sources/courriel-tracabilite-prefecture-2026-10-02.md"
+
+  - id: PREF-2026-10-02-P6
+    subject_entity: Jean Hugues Noël Robert
+    counterparty_entity: Préfecture de la Haute-Corse
+    subactor: Bureau des élections / autorité compétente selon la demande
+    request: "Demandes d'originaux ou de régularisation formulées avant 18:00"
+    request_kind: factual-traceability
+    first_trace: "2026-10-02T13:33:55+02:00"
+    last_followup: "2026-10-02T13:33:55+02:00"
+    trigger: "TA de Bastia invite à saisir le Conseil constitutionnel ; délai contentieux en cours"
+    trigger_date: "2026-10-01"
+    priority_mode: procedural
+    priority_rank: 3
+    information_holder: "Préfecture / Bureau des élections / systèmes concernés"
+    decision_authority: "variable selon la demande"
+    transmitter: "variable selon la demande"
+    controller_or_reviewer: "Conseil constitutionnel potentiel ; Défenseur des droits en continuité documentaire"
+    routing_required: true
+    routing_observed: false
+    response_state: PENDING
+    evidence_status: ESTABLISHED
+    effect_on_capacity: "Réduit l'incertitude factuelle et peut améliorer la capacité à documenter le recours."
+    next_actor: "Préfecture ou autorité routée ; Conseil constitutionnel si la question reste ouverte"
+    deadline: "2026-10-07T18:00:00+02:00"
+    sources:
+      - "https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/senatoriales-2026/investigation/sources/courriel-tracabilite-prefecture-2026-10-02.md"
+
+  - id: PREF-2026-10-02-P7
+    subject_entity: Jean Hugues Noël Robert
+    counterparty_entity: Préfecture de la Haute-Corse
+    subactor: Bureau des élections / autorité compétente selon la demande
+    request: "État du dossier après passage physique et courriel de 14:14"
+    request_kind: factual-traceability
+    first_trace: "2026-10-02T13:33:55+02:00"
+    last_followup: "2026-10-02T13:33:55+02:00"
+    trigger: "TA de Bastia invite à saisir le Conseil constitutionnel ; délai contentieux en cours"
+    trigger_date: "2026-10-01"
+    priority_mode: procedural
+    priority_rank: 3
+    information_holder: "Préfecture / Bureau des élections / systèmes concernés"
+    decision_authority: "variable selon la demande"
+    transmitter: "variable selon la demande"
+    controller_or_reviewer: "Conseil constitutionnel potentiel ; Défenseur des droits en continuité documentaire"
+    routing_required: true
+    routing_observed: false
+    response_state: PENDING
+    evidence_status: ESTABLISHED
+    effect_on_capacity: "Réduit l'incertitude factuelle et peut améliorer la capacité à documenter le recours."
+    next_actor: "Préfecture ou autorité routée ; Conseil constitutionnel si la question reste ouverte"
+    deadline: "2026-10-07T18:00:00+02:00"
+    sources:
+      - "https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/senatoriales-2026/investigation/sources/courriel-tracabilite-prefecture-2026-10-02.md"
+
+  - id: PREF-2026-10-02-P8
+    subject_entity: Jean Hugues Noël Robert
+    counterparty_entity: Préfecture de la Haute-Corse
+    subactor: Bureau des élections / autorité compétente selon la demande
+    request: "Préparation et finalisation de la saisine préfectorale"
+    request_kind: factual-traceability
+    first_trace: "2026-10-02T13:33:55+02:00"
+    last_followup: "2026-10-02T13:33:55+02:00"
+    trigger: "TA de Bastia invite à saisir le Conseil constitutionnel ; délai contentieux en cours"
+    trigger_date: "2026-10-01"
+    priority_mode: procedural
+    priority_rank: 3
+    information_holder: "Préfecture / Bureau des élections / systèmes concernés"
+    decision_authority: "variable selon la demande"
+    transmitter: "variable selon la demande"
+    controller_or_reviewer: "Conseil constitutionnel potentiel ; Défenseur des droits en continuité documentaire"
+    routing_required: true
+    routing_observed: false
+    response_state: PENDING
+    evidence_status: ESTABLISHED
+    effect_on_capacity: "Réduit l'incertitude factuelle et peut améliorer la capacité à documenter le recours."
+    next_actor: "Préfecture ou autorité routée ; Conseil constitutionnel si la question reste ouverte"
+    deadline: "2026-10-07T18:00:00+02:00"
+    sources:
+      - "https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/senatoriales-2026/investigation/sources/courriel-tracabilite-prefecture-2026-10-02.md"
+
+  - id: PREF-2026-10-02-P9
+    subject_entity: Jean Hugues Noël Robert
+    counterparty_entity: Préfecture de la Haute-Corse
+    subactor: Bureau des élections / autorité compétente selon la demande
+    request: "Vérification après réception d'éléments avant 18:00"
+    request_kind: factual-traceability
+    first_trace: "2026-10-02T13:33:55+02:00"
+    last_followup: "2026-10-02T13:33:55+02:00"
+    trigger: "TA de Bastia invite à saisir le Conseil constitutionnel ; délai contentieux en cours"
+    trigger_date: "2026-10-01"
+    priority_mode: procedural
+    priority_rank: 3
+    information_holder: "Préfecture / Bureau des élections / systèmes concernés"
+    decision_authority: "variable selon la demande"
+    transmitter: "variable selon la demande"
+    controller_or_reviewer: "Conseil constitutionnel potentiel ; Défenseur des droits en continuité documentaire"
+    routing_required: true
+    routing_observed: false
+    response_state: PENDING
+    evidence_status: ESTABLISHED
+    effect_on_capacity: "Réduit l'incertitude factuelle et peut améliorer la capacité à documenter le recours."
+    next_actor: "Préfecture ou autorité routée ; Conseil constitutionnel si la question reste ouverte"
+    deadline: "2026-10-07T18:00:00+02:00"
+    sources:
+      - "https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/senatoriales-2026/investigation/sources/courriel-tracabilite-prefecture-2026-10-02.md"
+
+  - id: PREF-2026-10-02-P10
+    subject_entity: Jean Hugues Noël Robert
+    counterparty_entity: Préfecture de la Haute-Corse
+    subactor: Bureau des élections / autorité compétente selon la demande
+    request: "Conservation des traces"
+    request_kind: factual-traceability
+    first_trace: "2026-10-02T13:33:55+02:00"
+    last_followup: "2026-10-02T13:33:55+02:00"
+    trigger: "TA de Bastia invite à saisir le Conseil constitutionnel ; délai contentieux en cours"
+    trigger_date: "2026-10-01"
+    priority_mode: procedural
+    priority_rank: 3
+    information_holder: "Préfecture / Bureau des élections / systèmes concernés"
+    decision_authority: "variable selon la demande"
+    transmitter: "variable selon la demande"
+    controller_or_reviewer: "Conseil constitutionnel potentiel ; Défenseur des droits en continuité documentaire"
+    routing_required: true
+    routing_observed: false
+    response_state: PENDING
+    evidence_status: ESTABLISHED
+    effect_on_capacity: "Réduit l'incertitude factuelle et peut améliorer la capacité à documenter le recours."
+    next_actor: "Préfecture ou autorité routée ; Conseil constitutionnel si la question reste ouverte"
+    deadline: "2026-10-07T18:00:00+02:00"
+    sources:
+      - "https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/senatoriales-2026/investigation/sources/courriel-tracabilite-prefecture-2026-10-02.md"
+
+  - id: PREF-2026-10-02-P11
+    subject_entity: Jean Hugues Noël Robert
+    counterparty_entity: Préfecture de la Haute-Corse
+    subactor: Bureau des élections / autorité compétente selon la demande
+    request: "Modalités et heure limite de remise de la requête au représentant de l'État"
+    request_kind: factual-traceability
+    first_trace: "2026-10-02T13:33:55+02:00"
+    last_followup: "2026-10-02T13:33:55+02:00"
+    trigger: "TA de Bastia invite à saisir le Conseil constitutionnel ; délai contentieux en cours"
+    trigger_date: "2026-10-01"
+    priority_mode: procedural
+    priority_rank: 1
+    information_holder: "Préfecture / Bureau des élections / systèmes concernés"
+    decision_authority: "variable selon la demande"
+    transmitter: "variable selon la demande"
+    controller_or_reviewer: "Conseil constitutionnel potentiel ; Défenseur des droits en continuité documentaire"
+    routing_required: true
+    routing_observed: false
+    response_state: PENDING
+    evidence_status: ESTABLISHED
+    effect_on_capacity: "Réduit l'incertitude factuelle et peut améliorer la capacité à documenter le recours."
+    next_actor: "Préfecture ou autorité routée ; Conseil constitutionnel si la question reste ouverte"
+    deadline: "2026-10-07T18:00:00+02:00"
+    sources:
+      - "https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/senatoriales-2026/investigation/sources/courriel-tracabilite-prefecture-2026-10-02.md"
+
+  - id: PREF-2026-10-02-P12
+    subject_entity: Jean Hugues Noël Robert
+    counterparty_entity: Préfecture de la Haute-Corse
+    subactor: Bureau des élections / autorité compétente selon la demande
+    request: "État des demandes pendantes et autorité compétente"
+    request_kind: factual-traceability
+    first_trace: "2026-10-02T13:33:55+02:00"
+    last_followup: "2026-10-02T13:33:55+02:00"
+    trigger: "TA de Bastia invite à saisir le Conseil constitutionnel ; délai contentieux en cours"
+    trigger_date: "2026-10-01"
+    priority_mode: procedural
+    priority_rank: 4
+    information_holder: "Préfecture / Bureau des élections / systèmes concernés"
+    decision_authority: "variable selon la demande"
+    transmitter: "variable selon la demande"
+    controller_or_reviewer: "Conseil constitutionnel potentiel ; Défenseur des droits en continuité documentaire"
+    routing_required: true
+    routing_observed: false
+    response_state: PENDING
+    evidence_status: ESTABLISHED
+    effect_on_capacity: "Réduit l'incertitude factuelle et peut améliorer la capacité à documenter le recours."
+    next_actor: "Préfecture ou autorité routée ; Conseil constitutionnel si la question reste ouverte"
+    deadline: "2026-10-07T18:00:00+02:00"
+    sources:
+      - "https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/senatoriales-2026/investigation/sources/courriel-tracabilite-prefecture-2026-10-02.md"
+
+  - id: PREF-2026-10-02-P13
+    subject_entity: Jean Hugues Noël Robert
+    counterparty_entity: Préfecture de la Haute-Corse
+    subactor: Bureau des élections / autorité compétente selon la demande
+    request: "Établissement et traçabilité des motifs de la saisine"
+    request_kind: factual-traceability
+    first_trace: "2026-10-02T13:33:55+02:00"
+    last_followup: "2026-10-02T13:33:55+02:00"
+    trigger: "TA de Bastia invite à saisir le Conseil constitutionnel ; délai contentieux en cours"
+    trigger_date: "2026-10-01"
+    priority_mode: procedural
+    priority_rank: 3
+    information_holder: "Préfecture / Bureau des élections / systèmes concernés"
+    decision_authority: "variable selon la demande"
+    transmitter: "variable selon la demande"
+    controller_or_reviewer: "Conseil constitutionnel potentiel ; Défenseur des droits en continuité documentaire"
+    routing_required: true
+    routing_observed: false
+    response_state: PENDING
+    evidence_status: ESTABLISHED
+    effect_on_capacity: "Réduit l'incertitude factuelle et peut améliorer la capacité à documenter le recours."
+    next_actor: "Préfecture ou autorité routée ; Conseil constitutionnel si la question reste ouverte"
+    deadline: "2026-10-07T18:00:00+02:00"
+    sources:
+      - "https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/senatoriales-2026/investigation/sources/courriel-tracabilite-prefecture-2026-10-02.md"
+
+  - id: PREF-2026-10-02-P14
+    subject_entity: Jean Hugues Noël Robert
+    counterparty_entity: Préfecture de la Haute-Corse
+    subactor: Bureau des élections / autorité compétente selon la demande
+    request: "Chaîne de décision, validation et délégation"
+    request_kind: factual-traceability
+    first_trace: "2026-10-02T13:33:55+02:00"
+    last_followup: "2026-10-02T13:33:55+02:00"
+    trigger: "TA de Bastia invite à saisir le Conseil constitutionnel ; délai contentieux en cours"
+    trigger_date: "2026-10-01"
+    priority_mode: procedural
+    priority_rank: 3
+    information_holder: "Préfecture / Bureau des élections / systèmes concernés"
+    decision_authority: "variable selon la demande"
+    transmitter: "variable selon la demande"
+    controller_or_reviewer: "Conseil constitutionnel potentiel ; Défenseur des droits en continuité documentaire"
+    routing_required: true
+    routing_observed: false
+    response_state: PENDING
+    evidence_status: ESTABLISHED
+    effect_on_capacity: "Réduit l'incertitude factuelle et peut améliorer la capacité à documenter le recours."
+    next_actor: "Préfecture ou autorité routée ; Conseil constitutionnel si la question reste ouverte"
+    deadline: "2026-10-07T18:00:00+02:00"
+    sources:
+      - "https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/senatoriales-2026/investigation/sources/courriel-tracabilite-prefecture-2026-10-02.md"
+
+  - id: PREF-2026-10-02-P15
+    subject_entity: Jean Hugues Noël Robert
+    counterparty_entity: Préfecture de la Haute-Corse
+    subactor: Bureau des élections / autorité compétente selon la demande
+    request: "Base informationnelle de la conclusion d'impossibilité de vérification"
+    request_kind: factual-traceability
+    first_trace: "2026-10-02T13:33:55+02:00"
+    last_followup: "2026-10-02T13:33:55+02:00"
+    trigger: "TA de Bastia invite à saisir le Conseil constitutionnel ; délai contentieux en cours"
+    trigger_date: "2026-10-01"
+    priority_mode: procedural
+    priority_rank: 3
+    information_holder: "Préfecture / Bureau des élections / systèmes concernés"
+    decision_authority: "variable selon la demande"
+    transmitter: "variable selon la demande"
+    controller_or_reviewer: "Conseil constitutionnel potentiel ; Défenseur des droits en continuité documentaire"
+    routing_required: true
+    routing_observed: false
+    response_state: PENDING
+    evidence_status: ESTABLISHED
+    effect_on_capacity: "Réduit l'incertitude factuelle et peut améliorer la capacité à documenter le recours."
+    next_actor: "Préfecture ou autorité routée ; Conseil constitutionnel si la question reste ouverte"
+    deadline: "2026-10-07T18:00:00+02:00"
+    sources:
+      - "https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/senatoriales-2026/investigation/sources/courriel-tracabilite-prefecture-2026-10-02.md"
+
+  - id: PREF-2026-10-02-P16
+    subject_entity: Jean Hugues Noël Robert
+    counterparty_entity: Préfecture de la Haute-Corse
+    subactor: Bureau des élections / autorité compétente selon la demande
+    request: "Sort du récépissé définitif"
+    request_kind: factual-traceability
+    first_trace: "2026-10-02T13:33:55+02:00"
+    last_followup: "2026-10-02T13:33:55+02:00"
+    trigger: "TA de Bastia invite à saisir le Conseil constitutionnel ; délai contentieux en cours"
+    trigger_date: "2026-10-01"
+    priority_mode: procedural
+    priority_rank: 3
+    information_holder: "Préfecture / Bureau des élections / systèmes concernés"
+    decision_authority: "variable selon la demande"
+    transmitter: "variable selon la demande"
+    controller_or_reviewer: "Conseil constitutionnel potentiel ; Défenseur des droits en continuité documentaire"
+    routing_required: true
+    routing_observed: false
+    response_state: PENDING
+    evidence_status: ESTABLISHED
+    effect_on_capacity: "Réduit l'incertitude factuelle et peut améliorer la capacité à documenter le recours."
+    next_actor: "Préfecture ou autorité routée ; Conseil constitutionnel si la question reste ouverte"
+    deadline: "2026-10-07T18:00:00+02:00"
+    sources:
+      - "https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/senatoriales-2026/investigation/sources/courriel-tracabilite-prefecture-2026-10-02.md"
+
+  - id: PREF-2026-10-02-P17
+    subject_entity: Jean Hugues Noël Robert
+    counterparty_entity: Préfecture de la Haute-Corse
+    subactor: Bureau des élections / autorité compétente selon la demande
+    request: "Qualification de la présentation physique du 11 septembre"
+    request_kind: factual-traceability
+    first_trace: "2026-10-02T13:33:55+02:00"
+    last_followup: "2026-10-02T13:33:55+02:00"
+    trigger: "TA de Bastia invite à saisir le Conseil constitutionnel ; délai contentieux en cours"
+    trigger_date: "2026-10-01"
+    priority_mode: procedural
+    priority_rank: 3
+    information_holder: "Préfecture / Bureau des élections / systèmes concernés"
+    decision_authority: "variable selon la demande"
+    transmitter: "variable selon la demande"
+    controller_or_reviewer: "Conseil constitutionnel potentiel ; Défenseur des droits en continuité documentaire"
+    routing_required: true
+    routing_observed: false
+    response_state: PENDING
+    evidence_status: ESTABLISHED
+    effect_on_capacity: "Réduit l'incertitude factuelle et peut améliorer la capacité à documenter le recours."
+    next_actor: "Préfecture ou autorité routée ; Conseil constitutionnel si la question reste ouverte"
+    deadline: "2026-10-07T18:00:00+02:00"
+    sources:
+      - "https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/senatoriales-2026/investigation/sources/courriel-tracabilite-prefecture-2026-10-02.md"
+
+  - id: PREF-2026-10-02-P18
+    subject_entity: Jean Hugues Noël Robert
+    counterparty_entity: Préfecture de la Haute-Corse
+    subactor: Bureau des élections / autorité compétente selon la demande
+    request: "Fichier source exact, provenance numérique et traces Télérecours"
+    request_kind: factual-traceability
+    first_trace: "2026-10-02T13:33:55+02:00"
+    last_followup: "2026-10-02T13:33:55+02:00"
+    trigger: "TA de Bastia invite à saisir le Conseil constitutionnel ; délai contentieux en cours"
+    trigger_date: "2026-10-01"
+    priority_mode: procedural
+    priority_rank: 3
+    information_holder: "Préfecture / Bureau des élections / systèmes concernés"
+    decision_authority: "variable selon la demande"
+    transmitter: "variable selon la demande"
+    controller_or_reviewer: "Conseil constitutionnel potentiel ; Défenseur des droits en continuité documentaire"
+    routing_required: true
+    routing_observed: false
+    response_state: PENDING
+    evidence_status: ESTABLISHED
+    effect_on_capacity: "Réduit l'incertitude factuelle et peut améliorer la capacité à documenter le recours."
+    next_actor: "Préfecture ou autorité routée ; Conseil constitutionnel si la question reste ouverte"
+    deadline: "2026-10-07T18:00:00+02:00"
+    sources:
+      - "https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/senatoriales-2026/investigation/sources/courriel-tracabilite-prefecture-2026-10-02.md"
