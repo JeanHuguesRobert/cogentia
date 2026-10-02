@@ -517,6 +517,31 @@ Canonical rule:
 > **Carry decisions, constraints, and routing; reference retrievable bulk
 > context.**
 
+### Talleyrand relation
+
+Resumability is also an operational projection of the
+[Talleyrand Principle](../research/fractacognition_principles.md):
+
+> **Ce qui va sans dire va encore mieux en le disant.**
+
+For a handoff, this means that a material prerequisite, freshness assumption,
+authority boundary, retrieval path, or return condition MUST NOT be left
+implicit merely because the originating handler considers it obvious.
+
+The counterweight is Occam: do not restate repository context that is already
+stable, visible, and cheaply retrievable. State what is necessary for shared
+closure; reference the rest.
+
+Canonical pair:
+
+```text
+Talleyrand
+→ make material hidden assumptions explicit
+
+Occam
+→ do not duplicate what is already sufficiently explicit and retrievable
+```
+
 ## 17. Creation heuristic
 
 Create a Resumable Issue when one or more apply:
