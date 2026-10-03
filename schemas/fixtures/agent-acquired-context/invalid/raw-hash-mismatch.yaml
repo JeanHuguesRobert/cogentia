@@ -1,0 +1,37 @@
+schema_version: cogentia.agent-acquired-context.v0
+kind: agent_acquired_context
+layer: normalized_snapshot
+capture_id: capture:example-bad-hash-001
+claim_status: agent_claim_not_fact
+source:
+  provider: example-agent
+  agent: Example Conversational Agent
+  model: null
+  platform: null
+  memory_scope: null
+captured_at:
+  status: known
+  value: "2026-10-03T09:00:00Z"
+protocol:
+  prompt_id: unknown
+  prompt_version: unknown
+  response_schema_version: cogentia.agent-acquired-context.v0
+raw_response:
+  role: immutable_raw_measurement
+  media_type: text/plain
+  body: "User said: I prefer morning meetings."
+  body_sha256: "sha256:0000000000000000000000000000000000000000000000000000000000000000"
+items:
+  - id: item:morning-meetings
+    content: "Person Example prefers morning meetings."
+    category: preferences
+    record_kind: preference
+    claimed_origin: explicit_user_statement
+    claimed_time:
+      status: known
+      value: "during the conversation"
+    uncertainty:
+      status: unknown
+      note: null
+    sensitivity: ordinary
+    contradicts: []

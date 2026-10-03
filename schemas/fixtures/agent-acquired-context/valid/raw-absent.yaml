@@ -1,0 +1,38 @@
+# The normalized item is present and the raw body is explicitly absent.
+schema_version: cogentia.agent-acquired-context.v0
+kind: agent_acquired_context
+layer: normalized_snapshot
+capture_id: capture:example-raw-absent-001
+claim_status: agent_claim_not_fact
+source:
+  provider: example-agent
+  agent: Example Conversational Agent
+  model: null
+  platform: null
+  memory_scope: null
+captured_at:
+  status: known
+  value: "2026-10-03T09:35:00Z"
+protocol:
+  prompt_id: unknown
+  prompt_version: unknown
+  response_schema_version: cogentia.agent-acquired-context.v0
+raw_response:
+  role: immutable_raw_measurement
+  media_type: unknown
+  body: null
+  body_sha256: unknown
+items:
+  - id: item:summary-only
+    content: "Person Example asked for a short weekly summary."
+    category: instructions
+    record_kind: instruction
+    claimed_origin: unknown
+    claimed_time:
+      status: unknown
+      value: null
+    uncertainty:
+      status: unknown
+      note: null
+    sensitivity: ordinary
+    contradicts: []

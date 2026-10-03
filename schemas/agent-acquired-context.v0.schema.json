@@ -1,0 +1,224 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:cogentia:schema:agent-acquired-context:v0",
+  "title": "Agent-acquired context v0",
+  "description": "Versioned boundary for a snapshot of what an external conversational agent claims to have learned, retained, or inferred about a person. A normalized snapshot is not the immutable raw response, not a later human annotation, not a mneme, and not a Cogentigram. Import does not make a claim true. Category strings are view labels, not a closed ontology. No field in this schema states a retention, consent, or lawful-basis policy.",
+  "oneOf": [
+    { "$ref": "#/$defs/snapshot" },
+    { "$ref": "#/$defs/annotation" }
+  ],
+  "$defs": {
+    "knownOrUnknown": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "value"],
+      "properties": {
+        "status": {
+          "enum": ["known", "unknown"]
+        },
+        "value": {
+          "type": ["string", "null"],
+          "minLength": 1,
+          "description": "Required non-empty string when status is known. Null when status is unknown. A null value is unknown; it must not be replaced with a guessed date or placeholder."
+        }
+      }
+    },
+    "uncertainty": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "note"],
+      "properties": {
+        "status": {
+          "enum": ["known", "unknown"],
+          "description": "Whether the agent stated an uncertainty. This is not a probability that the claim is true."
+        },
+        "note": {
+          "type": ["string", "null"],
+          "minLength": 1
+        }
+      }
+    },
+    "item": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "content",
+        "category",
+        "record_kind",
+        "claimed_origin",
+        "claimed_time",
+        "uncertainty",
+        "sensitivity",
+        "contradicts"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^item:[a-z0-9][a-z0-9._:-]*$"
+        },
+        "content": {
+          "type": "string",
+          "minLength": 1,
+          "description": "The claim text as imported. Not a fact, not a mneme, and not a Cogentigram axis."
+        },
+        "category": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Open view label. Identity, career, projects, preferences, and instructions are examples, not a required ontology."
+        },
+        "record_kind": {
+          "enum": ["claim", "preference", "instruction", "relationship", "other", "unknown"]
+        },
+        "claimed_origin": {
+          "enum": ["explicit_user_statement", "inference", "provider_memory", "unknown"],
+          "description": "Origin the agent claimed, or unknown. Unknown must stay unknown."
+        },
+        "claimed_time": { "$ref": "#/$defs/knownOrUnknown" },
+        "uncertainty": { "$ref": "#/$defs/uncertainty" },
+        "sensitivity": {
+          "enum": ["ordinary", "sensitive", "restricted", "unknown"],
+          "description": "Handling label carried with the claim. It does not define retention, consent, or disclosure."
+        },
+        "contradicts": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^item:[a-z0-9][a-z0-9._:-]*$"
+          },
+          "description": "Other item ids in this same snapshot that this claim conflicts with. Conflict is kept; it is not resolved into a truth."
+        }
+      }
+    },
+    "snapshot": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema_version",
+        "kind",
+        "layer",
+        "capture_id",
+        "claim_status",
+        "source",
+        "captured_at",
+        "protocol",
+        "raw_response",
+        "items"
+      ],
+      "properties": {
+        "schema_version": { "const": "cogentia.agent-acquired-context.v0" },
+        "kind": { "const": "agent_acquired_context" },
+        "layer": { "const": "normalized_snapshot" },
+        "capture_id": {
+          "type": "string",
+          "pattern": "^capture:[a-z0-9][a-z0-9._:-]*$"
+        },
+        "claim_status": {
+          "const": "agent_claim_not_fact",
+          "description": "Fixed marker. An imported agent claim is not evidence that the claim is true."
+        },
+        "source": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["provider", "agent", "model", "platform", "memory_scope"],
+          "properties": {
+            "provider": { "type": "string", "minLength": 1 },
+            "agent": { "type": "string", "minLength": 1 },
+            "model": { "type": ["string", "null"], "minLength": 1 },
+            "platform": { "type": ["string", "null"], "minLength": 1 },
+            "memory_scope": {
+              "type": ["string", "null"],
+              "minLength": 1,
+              "description": "Scope the agent declared, or null when the scope is unknown."
+            }
+          }
+        },
+        "captured_at": {
+          "$ref": "#/$defs/knownOrUnknown",
+          "description": "When this snapshot was captured. Independent of when the agent claims the underlying fact occurred."
+        },
+        "protocol": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["prompt_id", "prompt_version", "response_schema_version"],
+          "properties": {
+            "prompt_id": { "type": "string", "minLength": 1 },
+            "prompt_version": { "type": "string", "minLength": 1 },
+            "response_schema_version": { "const": "cogentia.agent-acquired-context.v0" }
+          }
+        },
+        "raw_response": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["role", "media_type", "body", "body_sha256"],
+          "properties": {
+            "role": { "const": "immutable_raw_measurement" },
+            "media_type": { "type": "string", "minLength": 1 },
+            "body": {
+              "type": ["string", "null"],
+              "description": "Exact response text when it is stored in this document. Null when the raw measurement lives elsewhere or was not retained. Null is not permission to reconstruct the response from items."
+            },
+            "body_sha256": {
+              "type": "string",
+              "pattern": "^(unknown|sha256:[a-f0-9]{64})$",
+              "description": "sha256: plus the hex digest of the UTF-8 body when body is present. unknown or an external sha256 reference when body is null."
+            }
+          }
+        },
+        "items": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/item" }
+        }
+      }
+    },
+    "annotation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema_version",
+        "kind",
+        "layer",
+        "annotation_id",
+        "claim_status",
+        "target",
+        "annotated_at",
+        "stance",
+        "note"
+      ],
+      "properties": {
+        "schema_version": { "const": "cogentia.agent-acquired-context.v0" },
+        "kind": { "const": "agent_acquired_context_annotation" },
+        "layer": { "const": "human_annotation" },
+        "annotation_id": {
+          "type": "string",
+          "pattern": "^annotation:[a-z0-9][a-z0-9._:-]*$"
+        },
+        "claim_status": {
+          "const": "human_annotation_not_a_rewrite",
+          "description": "A later human note points at a capture item. It does not replace the raw response or the normalized item."
+        },
+        "target": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["capture_id", "item_id"],
+          "properties": {
+            "capture_id": {
+              "type": "string",
+              "pattern": "^capture:[a-z0-9][a-z0-9._:-]*$"
+            },
+            "item_id": {
+              "type": "string",
+              "pattern": "^item:[a-z0-9][a-z0-9._:-]*$"
+            }
+          }
+        },
+        "annotated_at": { "$ref": "#/$defs/knownOrUnknown" },
+        "stance": {
+          "enum": ["confirm", "nuance", "contest", "contextualize", "restrict", "unknown"]
+        },
+        "note": { "type": "string", "minLength": 1 }
+      }
+    }
+  }
+}

@@ -1,0 +1,38 @@
+# Fictitious provider memory. Provider memory is still an agent claim.
+schema_version: cogentia.agent-acquired-context.v0
+kind: agent_acquired_context
+layer: normalized_snapshot
+capture_id: capture:example-provider-memory-001
+claim_status: agent_claim_not_fact
+source:
+  provider: example-agent
+  agent: Example Conversational Agent
+  model: example-model-1
+  platform: example-chat
+  memory_scope: "saved memories"
+captured_at:
+  status: known
+  value: "2026-10-03T09:10:00Z"
+protocol:
+  prompt_id: unknown
+  prompt_version: unknown
+  response_schema_version: cogentia.agent-acquired-context.v0
+raw_response:
+  role: immutable_raw_measurement
+  media_type: text/plain
+  body: "Saved memory: address Person Example as Captain Example."
+  body_sha256: "sha256:e84b1914aa5e4c7c7a0da39e6a419a1ee84cb966e39d4abd85b03b74f19952b1"
+items:
+  - id: item:captain-example
+    content: "Address Person Example as Captain Example."
+    category: instructions
+    record_kind: instruction
+    claimed_origin: provider_memory
+    claimed_time:
+      status: unknown
+      value: null
+    uncertainty:
+      status: known
+      note: "The agent presented this as saved memory, not as a new user statement."
+    sensitivity: ordinary
+    contradicts: []

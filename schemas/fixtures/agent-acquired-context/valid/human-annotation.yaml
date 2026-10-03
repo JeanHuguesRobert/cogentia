@@ -1,0 +1,14 @@
+# Later human annotation. It points at a snapshot item and does not replace it.
+schema_version: cogentia.agent-acquired-context.v0
+kind: agent_acquired_context_annotation
+layer: human_annotation
+annotation_id: annotation:example-contest-001
+claim_status: human_annotation_not_a_rewrite
+target:
+  capture_id: capture:example-contradictory-001
+  item_id: item:office
+annotated_at:
+  status: known
+  value: "2026-10-03T10:00:00Z"
+stance: contest
+note: "Person Example contests the office-work claim. This note does not replace the imported item or the raw response."

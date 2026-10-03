@@ -1,0 +1,14 @@
+schema_version: cogentia.agent-acquired-context.v0
+kind: agent_acquired_context_annotation
+layer: human_annotation
+annotation_id: annotation:example-rewrite-001
+claim_status: human_annotation_not_a_rewrite
+target:
+  capture_id: capture:example-contradictory-001
+  item_id: item:office
+annotated_at:
+  status: known
+  value: "2026-10-03T10:00:00Z"
+stance: contest
+note: "This annotation illegally tries to replace the item text."
+content: "Person Example prefers remote work only."

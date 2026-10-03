@@ -1,0 +1,38 @@
+# Category is an open view label. It does not have to be one of the example labels.
+schema_version: cogentia.agent-acquired-context.v0
+kind: agent_acquired_context
+layer: normalized_snapshot
+capture_id: capture:example-open-category-001
+claim_status: agent_claim_not_fact
+source:
+  provider: example-agent
+  agent: Example Conversational Agent
+  model: null
+  platform: example-chat
+  memory_scope: null
+captured_at:
+  status: known
+  value: "2026-10-03T09:30:00Z"
+protocol:
+  prompt_id: unknown
+  prompt_version: unknown
+  response_schema_version: cogentia.agent-acquired-context.v0
+raw_response:
+  role: immutable_raw_measurement
+  media_type: text/plain
+  body: "Person Example walks a fictional dog named Pixel on Sundays."
+  body_sha256: "sha256:fd9d60e0f58eb17b6ec4dce4c870705157eba9c22d5a7981fdd30df82a46911a"
+items:
+  - id: item:pixel
+    content: "Person Example walks a fictional dog named Pixel on Sundays."
+    category: neighbourhood-walks
+    record_kind: other
+    claimed_origin: explicit_user_statement
+    claimed_time:
+      status: known
+      value: Sundays
+    uncertainty:
+      status: unknown
+      note: null
+    sensitivity: ordinary
+    contradicts: []

@@ -49,6 +49,7 @@
     "test:frontmatter-schema": "node scripts/check-frontmatter-schema-cli.js",
     "test:frontmatter-validator": "node scripts/check-frontmatter-validator.js",
     "test:possible-matrix": "node scripts/check-possible-matrix-validator.js",
+    "test:agent-acquired-context": "node scripts/check-agent-acquired-context.js",
     "test:issue-graph": "node scripts/check-issue-graph.js",
     "test:issue-graph-route": "node scripts/check-issue-graph-route.js",
     "test:issues-help": "node scripts/check-issues-help.js",
