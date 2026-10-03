@@ -1,6 +1,7 @@
 import { Routes, Route, NavLink, Navigate } from 'react-router-dom'
 import Home from './pages/Home'
 import Snapshot from './pages/Snapshot'
+import LearnedContextMirror from './pages/LearnedContextMirror'
 import About from './pages/About'
 import Submit from './pages/Submit'
 import Results from './pages/Results'
@@ -12,6 +13,7 @@ function Layout({ children }) {
   const links = [
     { to: '/', label: 'Accueil' },
     { to: '/snapshot', label: 'Mon miroir' },
+    { to: '/mirror', label: 'Coller' },
     { to: '/about', label: 'Comprendre' },
   ]
 
@@ -43,6 +45,7 @@ export default function App() {
     <Routes>
       <Route path="/" element={<Layout><Home /></Layout>} />
       <Route path="/snapshot" element={<Layout><Snapshot /></Layout>} />
+      <Route path="/mirror" element={<Layout><LearnedContextMirror /></Layout>} />
       <Route path="/about" element={<Layout><About /></Layout>} />
 
       {/* Parcours avancé historique, conservé mais non exposé pendant la transition. */}

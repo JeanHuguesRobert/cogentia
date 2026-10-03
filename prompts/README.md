@@ -45,7 +45,7 @@ The conversation is the atelier. The corpus receives stabilized material.
 
 ## KYS learned-context capture
 
-- [Agent-acquired context prompt](agent-acquired-context.md) — one-shot paste prompt for what an agent claims to know, and the in-memory ingestion that keeps the raw paste separate from the normalized snapshot. Distinct from the 73-axis psychocognitive protocol.
+- [Agent-acquired context prompt](agent-acquired-context.md) — one-shot paste prompt for what an agent claims to know, the in-memory ingestion that keeps the raw paste separate from the normalized snapshot, and the immediate mirror shown before any account request. Distinct from the 73-axis psychocognitive protocol.
 
 ## Prompt Documents
 <!-- BEGIN_AUTO: readme_index -->

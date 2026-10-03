@@ -11,7 +11,12 @@ import { readAgentAcquiredContextReply } from "./lib/agent-acquired-context-prom
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const fixtureDir = path.join(root, "prompts", "fixtures", "agent-acquired-context");
 const ingestDir = path.join(fixtureDir, "ingestion");
-const ingestSource = fs.readFileSync(path.join(root, "scripts", "lib", "agent-acquired-context-ingest.js"), "utf8");
+const ingestSource = [
+  "scripts/lib/agent-acquired-context-ingest.js",
+  "scripts/lib/agent-acquired-context-ingest-pure.js",
+  "scripts/lib/agent-acquired-context-project.js",
+  "scripts/lib/agent-acquired-context-parse.js",
+].map((relative) => fs.readFileSync(path.join(root, relative), "utf8")).join("\n");
 
 function readExact(name) {
   return fs.readFileSync(path.join(ingestDir, name), "utf8");

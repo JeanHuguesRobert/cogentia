@@ -19,6 +19,7 @@ export default function Home() {
         </p>
         <div className="flex flex-col sm:flex-row gap-3 sm:items-center">
           <Link className="btn-primary justify-center" to="/snapshot">Interroger mon agent →</Link>
+          <Link className="btn-ghost justify-center" to="/mirror">Coller une réponse</Link>
           <span className="font-body text-xs text-muted">Sans compte · sans connexion à votre agent · sans conversation brute</span>
         </div>
       </section>

@@ -20,6 +20,7 @@ classification_confidence: medium
 canonical_url: https://github.com/JeanHuguesRobert/cogentia/blob/main/prompts/agent-acquired-context.md
 ai_assisted_by:
   - Grok 4.7 (xAI), under JeanHuguesRobert/cogentia#217
+  - Grok 4.7 (xAI), under JeanHuguesRobert/cogentia#219
 update_policy: UP-DEFAULT-REVIEWED
 provenance:
   origin_type: repository
@@ -170,4 +171,22 @@ Malformed JSON does not produce a snapshot. A missing required field does not pr
 
 ```bash
 node scripts/check-agent-acquired-context-ingest.js
+```
+
+## Immediate mirror
+
+After one ingestion, the personal app route `/mirror` shows that snapshot before any account request. `buildAgentAcquiredContextMirror` in [`scripts/lib/agent-acquired-context-mirror.js`](../scripts/lib/agent-acquired-context-mirror.js) is the view model. The page reuses the same projection and validator as ingestion. It does not write the paste to a database, file, or browser store.
+
+The view says the items are the agent's claims, not objective truth. Categories are the snapshot's own labels. Claimed origin and a stated uncertainty stay visible, and they are distinguishable when the snapshot says which is which. Counts for explicit statements, inferences, provider memory, unknown origin, stated uncertainty, and kept contradictions appear only when that count is greater than zero. The view does not invent a "new" count. A missing category is not shown as proof that the agent has no memory of that topic.
+
+The raw paste, its SHA-256, schema extensions, and per-item handling fields stay behind closed details.
+
+Authored UI fixtures, not captures from named providers:
+
+- [`rich-memory.yaml`](fixtures/agent-acquired-context/rich-memory.yaml) — a normal mix of origins.
+- [`no-persistent-memory.yaml`](fixtures/agent-acquired-context/no-persistent-memory.yaml) — a sparse capture-limit reply.
+- [`uncertainty-heavy.yaml`](fixtures/agent-acquired-context/uncertainty-heavy.yaml) — one explicit statement among several uncertain inferences and unknown origins.
+
+```bash
+node scripts/check-agent-acquired-context-mirror.js
 ```

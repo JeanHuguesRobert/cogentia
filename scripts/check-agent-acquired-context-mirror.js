@@ -1,0 +1,240 @@
+#!/usr/bin/env node
+
+import assert from "node:assert/strict";
+import fs from "node:fs";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+import React from "../apps/personal/node_modules/react/index.js";
+import { renderToStaticMarkup } from "../apps/personal/node_modules/react-dom/server.js";
+import * as yaml from "js-yaml";
+import { ingestAgentAcquiredContext } from "./lib/agent-acquired-context-ingest.js";
+import { sha256Prefixed } from "./lib/agent-acquired-context.js";
+import { buildAgentAcquiredContextMirror } from "./lib/agent-acquired-context-mirror.js";
+import { ingestLearnedContext } from "../apps/personal/src/lib/learned-context-ingest.js";
+import {
+  AgentClaimMirror,
+  LearnedContextPasteForm,
+  immediatePasteText,
+} from "../apps/personal/src/components/AgentClaimMirror.js";
+
+const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
+const fixtureDir = path.join(root, "prompts", "fixtures", "agent-acquired-context");
+
+function read(name) {
+  return fs.readFileSync(path.join(fixtureDir, name), "utf8");
+}
+
+function renderMirror(model) {
+  return renderToStaticMarkup(React.createElement(AgentClaimMirror, { model }));
+}
+
+function renderForm(mirror) {
+  return renderToStaticMarkup(React.createElement(LearnedContextPasteForm, {
+    text: "",
+    onText() {},
+    onReveal() {},
+    onPaste() {},
+    mirror,
+    pending: false,
+    failure: null,
+  }));
+}
+
+function assertNoAccountGate(html) {
+  assert.equal(html.includes("type=\"email\""), false);
+  assert.equal(html.includes("/auth"), false);
+  assert.equal(html.toLowerCase().includes("créer un compte"), false);
+  assert.equal(html.toLowerCase().includes("s'inscrire"), false);
+}
+
+function assertClaimBanner(html) {
+  assert.equal(html.includes("data-claim-banner=\"agent_claim_not_fact\""), true);
+  assert.equal(html.includes("pas une vérité objective"), true);
+  assertNoAccountGate(html);
+}
+
+function assertClosedDetails(html) {
+  assert.equal(html.includes("<details"), true);
+  assert.equal(html.includes("<details open"), false);
+}
+
+const browserFiles = [
+  "apps/personal/src/lib/learned-context-ingest.js",
+  "apps/personal/src/components/AgentClaimMirror.js",
+  "apps/personal/src/pages/LearnedContextMirror.jsx",
+  "scripts/lib/agent-acquired-context-mirror.js",
+];
+for (const relative of browserFiles) {
+  const source = fs.readFileSync(path.join(root, relative), "utf8");
+  for (const forbidden of ["supabase", "localStorage", "writeFile", "fetch(", "node:fs", "node:crypto"]) {
+    assert.equal(source.includes(forbidden), false, `${relative} mentions ${forbidden}`);
+  }
+}
+
+const browserIngest = fs.readFileSync(path.join(root, "apps/personal/src/lib/learned-context-ingest.js"), "utf8");
+assert.equal(browserIngest.includes("agent-acquired-context.js\""), false);
+assert.equal(browserIngest.includes("agent-acquired-context-ingest.js\""), false);
+
+const app = fs.readFileSync(path.join(root, "apps/personal/src/App.jsx"), "utf8");
+const links = app.slice(app.indexOf("const links"), app.indexOf("return"));
+assert.equal(links.includes("/mirror"), true);
+assert.equal(links.includes("/auth"), false);
+assert.equal(app.includes("path=\"/mirror\""), true);
+const home = fs.readFileSync(path.join(root, "apps/personal/src/pages/Home.jsx"), "utf8");
+assert.equal(home.includes("to=\"/mirror\""), true);
+assert.equal(home.includes("to=\"/snapshot\""), true);
+
+assert.equal(immediatePasteText("", "one reply"), "one reply");
+assert.equal(immediatePasteText("   ", "one reply"), "one reply");
+assert.equal(immediatePasteText("already there", "one reply"), null);
+assert.equal(immediatePasteText("", "   "), null);
+
+const emptyShell = renderForm(null);
+assert.equal(emptyShell.includes("Afficher le miroir"), true);
+assert.equal(emptyShell.includes("Sans compte"), true);
+assert.equal(emptyShell.includes("data-mirror="), false);
+assert.equal(emptyShell.includes("data-paste-form=\"learned-context\""), true);
+assertNoAccountGate(emptyShell);
+
+async function mirrorOf(name) {
+  const text = read(name);
+  const nodeResult = ingestAgentAcquiredContext(text);
+  const browserResult = await ingestLearnedContext(text);
+  assert.equal(browserResult.ok, nodeResult.ok, name);
+  assert.equal(browserResult.raw.sha256, nodeResult.raw.sha256, name);
+  assert.equal(browserResult.raw.text, text, name);
+  assert.deepEqual(browserResult.normalized, nodeResult.normalized, name);
+  assert.deepEqual(browserResult.extensions, nodeResult.extensions, name);
+  assert.deepEqual(browserResult.diagnostics, nodeResult.diagnostics, name);
+  const model = buildAgentAcquiredContextMirror(browserResult);
+  assert.equal(Object.hasOwn(model.counts, "new"), false, name);
+  return { text, model, html: renderMirror(model) };
+}
+
+const rich = await mirrorOf("rich-memory.yaml");
+assert.equal(rich.model.ok, true);
+assert.equal(rich.model.state, "claims");
+assert.equal(rich.model.claim_status, "agent_claim_not_fact");
+assert.deepEqual(rich.model.counts, {
+  explicit_user_statement: 3,
+  inference: 1,
+  provider_memory: 1,
+  unknown_origin: 1,
+  uncertainty_stated: 2,
+  contradictions: 2,
+});
+assert.deepEqual(rich.model.categories.map((category) => category.label), [
+  "preferences",
+  "career",
+  "instructions",
+  "identity",
+]);
+assertClaimBanner(rich.html);
+assertClosedDetails(rich.html);
+assert.equal(rich.html.includes("data-count=\"inference\""), true);
+assert.equal(rich.html.includes("data-count=\"new\""), false);
+assert.equal(rich.html.includes("data-origin=\"explicit_user_statement\""), true);
+assert.equal(rich.html.includes("data-origin=\"inference\""), true);
+assert.equal(rich.html.includes("data-origin=\"provider_memory\""), true);
+assert.equal(rich.html.includes("data-origin=\"unknown\""), true);
+assert.equal(rich.html.includes("data-absence-note=\"true\""), true);
+assert.equal(rich.html.includes("Modèle : example-model-1"), true);
+const workshop = rich.html.indexOf("data-item-id=\"item:workshop\"");
+const workshopDetails = rich.html.indexOf("data-item-details=\"item:workshop\"");
+const workshopNote = rich.html.indexOf("data-uncertainty-note=\"item:workshop\"");
+assert.ok(workshop < workshopNote && workshopNote < workshopDetails);
+assert.equal(rich.html.slice(workshop, workshopDetails).includes("Sensibilité"), false);
+assert.equal(rich.html.slice(workshopDetails, rich.html.indexOf("</details>", workshopDetails)).includes("Sensibilité"), true);
+const rawAt = rich.html.indexOf("data-raw-details=\"true\"");
+assert.ok(rich.html.indexOf("I prefer morning meetings") < rawAt);
+assert.ok(rich.html.slice(rawAt).includes(rich.model.raw.sha256));
+
+const sparse = await mirrorOf("no-persistent-memory.yaml");
+assert.equal(sparse.model.state, "claims");
+assert.deepEqual(sparse.model.counts, { unknown_origin: 1 });
+assert.deepEqual(sparse.model.categories.map((category) => category.label), ["capture-limit"]);
+assertClaimBanner(sparse.html);
+assert.equal(sparse.html.includes("data-count=\"inference\""), false);
+assert.equal(sparse.html.includes("data-count=\"uncertainty_stated\""), false);
+assert.equal(sparse.html.includes("data-count=\"explicit_user_statement\""), false);
+assert.equal(sparse.html.includes("data-count=\"unknown_origin\""), true);
+assert.equal(sparse.html.includes("data-category=\"capture-limit\""), true);
+assert.equal(sparse.html.includes("Limite de la capture"), true);
+assert.equal(sparse.html.includes("data-absence-note=\"true\""), true);
+assert.equal(sparse.html.includes("Modèle non indiqué"), true);
+
+const uncertain = await mirrorOf("uncertainty-heavy.yaml");
+assert.equal(uncertain.model.state, "claims");
+assert.deepEqual(uncertain.model.counts, {
+  explicit_user_statement: 1,
+  inference: 3,
+  provider_memory: 1,
+  unknown_origin: 2,
+  uncertainty_stated: 6,
+  contradictions: 2,
+});
+assertClaimBanner(uncertain.html);
+assertClosedDetails(uncertain.html);
+assert.equal(uncertain.html.includes("data-item-id=\"item:tea\""), true);
+assert.equal(uncertain.html.includes("data-origin=\"explicit_user_statement\""), true);
+assert.equal(uncertain.html.includes("data-uncertainty=\"unknown\""), true);
+assert.equal(uncertain.html.includes("data-item-id=\"item:harbour-town\""), true);
+assert.equal(uncertain.html.includes("data-origin=\"inference\""), true);
+assert.equal(uncertain.html.includes("data-uncertainty=\"known\""), true);
+assert.equal(uncertain.html.includes("data-count=\"uncertainty_stated\""), true);
+assert.equal(uncertain.html.includes("data-count=\"new\""), false);
+const tea = uncertain.html.indexOf("data-item-id=\"item:tea\"");
+const teaDetails = uncertain.html.indexOf("data-item-details=\"item:tea\"");
+assert.equal(uncertain.html.slice(tea, teaDetails).includes("data-uncertainty-note"), false);
+
+const shown = renderForm(sparse.model);
+assert.ok(shown.indexOf("data-paste-form=\"learned-context\"") < shown.indexOf("data-mirror=\"agent-claims\""));
+assert.equal(shown.includes("Afficher le miroir"), true);
+assertClaimBanner(shown);
+assert.equal(shown.includes("data-category=\"capture-limit\""), true);
+
+const prose = await ingestLearnedContext("This is a note from the agent, not one document.\n");
+const proseMirror = buildAgentAcquiredContextMirror(prose);
+assert.equal(proseMirror.state, "unreadable");
+assert.equal(proseMirror.categories.length, 0);
+const proseHtml = renderMirror(proseMirror);
+assertClaimBanner(proseHtml);
+assert.equal(proseHtml.includes("data-mirror-state=\"unreadable\""), true);
+assert.equal(proseHtml.includes("data-absence-note"), false);
+assert.equal(proseHtml.includes("data-diagnostics=\"true\""), true);
+assert.equal(proseHtml.includes("ne dit pas ce que"), true);
+
+const annotationText = fs.readFileSync(
+  path.join(root, "schemas", "fixtures", "agent-acquired-context", "valid", "human-annotation.yaml"),
+  "utf8",
+);
+const annotation = buildAgentAcquiredContextMirror(await ingestLearnedContext(annotationText));
+assert.equal(annotation.state, "annotation");
+assert.equal(annotation.categories.length, 0);
+const annotationHtml = renderMirror(annotation);
+assert.equal(annotationHtml.includes("data-mirror-state=\"annotation\""), true);
+assert.equal(annotationHtml.includes("data-category="), false);
+assert.equal(annotationHtml.includes("annotation humaine"), true);
+
+const withBody = yaml.load(read("no-persistent-memory.yaml"));
+withBody.raw_response.body = "exact body\n";
+withBody.raw_response.media_type = "text/plain";
+withBody.raw_response.body_sha256 = sha256Prefixed(withBody.raw_response.body);
+const withBodyText = yaml.dump(withBody);
+const withBodyNode = ingestAgentAcquiredContext(withBodyText);
+const withBodyBrowser = await ingestLearnedContext(withBodyText);
+assert.equal(withBodyNode.ok, true, withBodyNode.diagnostics.join("; "));
+assert.equal(withBodyBrowser.ok, true, withBodyBrowser.diagnostics.join("; "));
+assert.equal(withBodyBrowser.normalized.raw_response.body_sha256, withBodyNode.normalized.raw_response.body_sha256);
+assert.equal(withBodyBrowser.raw.sha256, withBodyNode.raw.sha256);
+
+const extended = buildAgentAcquiredContextMirror({
+  ...ingestAgentAcquiredContext(read("rich-memory.yaml")),
+  extensions: [{ path: "$.provider_note", value: "keep me" }],
+});
+const extendedHtml = renderMirror(extended);
+const extendedRaw = extendedHtml.indexOf("data-raw-details=\"true\"");
+assert.equal(extendedHtml.slice(0, extendedRaw).includes("$.provider_note"), false);
+assert.equal(extendedHtml.slice(extendedRaw).includes("$.provider_note"), true);
+
+console.log("agent-acquired-context mirror: ok");

@@ -1,0 +1,117 @@
+schema_version: cogentia.agent-acquired-context.v0
+kind: agent_acquired_context
+layer: normalized_snapshot
+capture_id: capture:uncertainty-heavy
+claim_status: agent_claim_not_fact
+source:
+  provider: example-agent
+  agent: Example Conversational Agent
+  model: null
+  platform: null
+  memory_scope: "mixed notes, mostly uncertain"
+captured_at:
+  status: unknown
+  value: null
+protocol:
+  prompt_id: kys-ami-02
+  prompt_version: v0
+  response_schema_version: cogentia.agent-acquired-context.v0
+raw_response:
+  role: immutable_raw_measurement
+  media_type: unknown
+  body: null
+  body_sha256: unknown
+items:
+  - id: item:tea
+    content: "Person Example said: \"I drink tea in the morning.\""
+    category: preferences
+    record_kind: preference
+    claimed_origin: explicit_user_statement
+    claimed_time:
+      status: unknown
+      value: null
+    uncertainty:
+      status: unknown
+      note: null
+    sensitivity: ordinary
+    contradicts: []
+  - id: item:harbour-town
+    content: "Summary, not a quotation: Person Example may live near a harbour."
+    category: identity
+    record_kind: claim
+    claimed_origin: inference
+    claimed_time:
+      status: unknown
+      value: null
+    uncertainty:
+      status: known
+      note: "Inferred from place names. The agent does not know whether this is current."
+    sensitivity: ordinary
+    contradicts: []
+  - id: item:sibling-workshop
+    content: "Summary, not a quotation: Person Example might share a fictional workshop with a sibling."
+    category: relationships
+    record_kind: relationship
+    claimed_origin: inference
+    claimed_time:
+      status: unknown
+      value: null
+    uncertainty:
+      status: known
+      note: "The agent inferred a sibling and marked the inference as uncertain."
+    sensitivity: ordinary
+    contradicts:
+      - item:solo-workshop
+  - id: item:solo-workshop
+    content: "Summary, not a quotation: Person Example might work alone."
+    category: relationships
+    record_kind: relationship
+    claimed_origin: inference
+    claimed_time:
+      status: unknown
+      value: null
+    uncertainty:
+      status: known
+      note: "This inference conflicts with the sibling note and is not resolved."
+    sensitivity: ordinary
+    contradicts:
+      - item:sibling-workshop
+  - id: item:nickname
+    content: "A stored note may say to use a short nickname, but the agent cannot date it."
+    category: instructions
+    record_kind: instruction
+    claimed_origin: provider_memory
+    claimed_time:
+      status: unknown
+      value: null
+    uncertainty:
+      status: known
+      note: "Stored personalization whose date and exact wording are unknown."
+    sensitivity: ordinary
+    contradicts: []
+  - id: item:unplaced-city
+    content: "The agent retains an undated city name and does not know who supplied it."
+    category: identity
+    record_kind: unknown
+    claimed_origin: unknown
+    claimed_time:
+      status: unknown
+      value: null
+    uncertainty:
+      status: known
+      note: "Origin unknown. The city name is not treated as a fact."
+    sensitivity: ordinary
+    contradicts: []
+  - id: item:unplaced-project
+    content: "The agent retains a fictional project title without an origin."
+    category: projects
+    record_kind: unknown
+    claimed_origin: unknown
+    claimed_time:
+      status: unknown
+      value: null
+    uncertainty:
+      status: known
+      note: "The title is retained without a claimed source."
+    sensitivity: ordinary
+    contradicts: []
