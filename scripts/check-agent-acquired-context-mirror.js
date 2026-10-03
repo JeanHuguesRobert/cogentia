@@ -83,6 +83,11 @@ assert.equal(app.includes("path=\"/mirror\""), true);
 const home = fs.readFileSync(path.join(root, "apps/personal/src/pages/Home.jsx"), "utf8");
 assert.equal(home.includes("to=\"/mirror\""), true);
 assert.equal(home.includes("to=\"/snapshot\""), true);
+const supabaseClient = fs.readFileSync(path.join(root, "apps/personal/src/supabaseClient.js"), "utf8");
+const authContext = fs.readFileSync(path.join(root, "apps/personal/src/context/AuthContext.jsx"), "utf8");
+assert.equal(supabaseClient.includes("throw new Error"), false);
+assert.equal(supabaseClient.includes("createClient(url, key) : null"), true);
+assert.equal(authContext.includes("if (!supabase) return undefined"), true);
 
 assert.equal(immediatePasteText("", "one reply"), "one reply");
 assert.equal(immediatePasteText("   ", "one reply"), "one reply");
