@@ -3,6 +3,10 @@ import { parseReplyDocument } from "../../../../scripts/lib/agent-acquired-conte
 import { ingestAgentAcquiredContextWith } from "../../../../scripts/lib/agent-acquired-context-ingest-pure.js";
 import { validateAgentAcquiredContextDocument } from "../../../../scripts/lib/agent-acquired-context-validate.js";
 import { buildAgentAcquiredContextMirror } from "../../../../scripts/lib/agent-acquired-context-mirror.js";
+import {
+  buildMirrorFromKysSnapshot,
+  looksLikeKysSnapshot,
+} from "../../../../scripts/lib/kys-snapshot-mirror.js";
 
 async function sha256Hex(text) {
   const bytes = new TextEncoder().encode(text);
@@ -37,5 +41,14 @@ export async function ingestLearnedContext(text) {
 }
 
 export async function mirrorLearnedContext(text) {
-  return buildAgentAcquiredContextMirror(await ingestLearnedContext(text));
+  const exact = String(text ?? "");
+  const parsed = parseReplyDocument(exact);
+  if (parsed.ok && looksLikeKysSnapshot(parsed.data)) {
+    return buildMirrorFromKysSnapshot(parsed.data, {
+      sha256: `sha256:${await sha256Hex(exact)}`,
+      media_type: "text/plain",
+      text: exact,
+    });
+  }
+  return buildAgentAcquiredContextMirror(await ingestLearnedContext(exact));
 }

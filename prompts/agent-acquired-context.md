@@ -181,11 +181,14 @@ The view says the items are the agent's claims, not objective truth. Categories 
 
 The raw paste, its SHA-256, schema extensions, and per-item handling fields stay behind closed details.
 
+A corrected portrait from the personal app uses the same page. `mirrorLearnedContext` recognizes a kys snapshot by `snapshot_version` or by the arrays `known`, `inferred`, `recurring_topics`, `working_style`, and `unknowns`. It shows those arrays as agent claims. Low or medium confidence is stated uncertainty. `context_limits` is shown whether it is one string or a list of strings. `human_review`, `status`, `not_a_diagnosis`, and `not_a_definition_of_person` stay in the closed details and are not added as claims. This portrait is not validated as `cogentia.agent-acquired-context.v0`, and the strict ingest path still rejects it. A missing array is not evidence that the agent lacks that knowledge.
+
 Authored UI fixtures, not captures from named providers:
 
 - [`rich-memory.yaml`](fixtures/agent-acquired-context/rich-memory.yaml) — a normal mix of origins.
 - [`no-persistent-memory.yaml`](fixtures/agent-acquired-context/no-persistent-memory.yaml) — a sparse capture-limit reply.
 - [`uncertainty-heavy.yaml`](fixtures/agent-acquired-context/uncertainty-heavy.yaml) — one explicit statement among several uncertain inferences and unknown origins.
+- [`kys-snapshot-portrait.json`](fixtures/agent-acquired-context/kys-snapshot-portrait.json) — an authored corrected portrait, including a list of context limits and a human review that must stay folded.
 
 ```bash
 node scripts/check-agent-acquired-context-mirror.js

@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import { Link } from 'react-router-dom'
 
 const PROVIDERS = ['ChatGPT', 'Claude', 'Gemini', 'Mistral', 'Grok', 'Autre agent']
 
@@ -177,6 +178,7 @@ export default function Snapshot() {
   const [reviews, setReviews] = useState({})
   const [error, setError] = useState('')
   const [copied, setCopied] = useState('')
+  const [correctionOffered, setCorrectionOffered] = useState(false)
 
   const prompt = useMemo(() => buildPrompt(provider), [provider])
 
@@ -230,9 +232,14 @@ Produisez maintenant une version corrigée en JSON valide.
   }, [items, reviews, snapshot])
 
   const handleCopy = async (text, label) => {
-    await copyText(text)
-    setCopied(label)
-    window.setTimeout(() => setCopied(''), 1600)
+    if (label === 'correction') setCorrectionOffered(true)
+    try {
+      await copyText(text)
+      setCopied(label)
+      window.setTimeout(() => setCopied(''), 1600)
+    } catch {
+      setCopied('')
+    }
   }
 
   const handleParse = () => {
@@ -430,14 +437,21 @@ Produisez maintenant une version corrigée en JSON valide.
               Cette seconde boucle transforme le portrait initial en représentation corrigée sous votre contrôle.
             </p>
             <textarea readOnly value={correctionPrompt} rows={16} className="input resize-y font-mono text-xs leading-relaxed" />
-            <button
-              type="button"
-              disabled={reviewedCount === 0}
-              className="btn-primary mt-4 disabled:opacity-40 disabled:cursor-not-allowed"
-              onClick={() => handleCopy(correctionPrompt, 'correction')}
-            >
-              {copied === 'correction' ? 'Prompt copié ✓' : 'Copier le prompt de correction'}
-            </button>
+            <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
+              <div>
+                {correctionOffered && (
+                  <Link to="/mirror" className="btn-primary">Coller la réponse</Link>
+                )}
+              </div>
+              <button
+                type="button"
+                disabled={reviewedCount === 0}
+                className="btn-primary disabled:opacity-40 disabled:cursor-not-allowed"
+                onClick={() => handleCopy(correctionPrompt, 'correction')}
+              >
+                {copied === 'correction' ? 'Prompt copié ✓' : 'Copier le prompt de correction'}
+              </button>
+            </div>
           </div>
 
           <div className="border-t border-border pt-6 text-xs text-muted leading-relaxed">

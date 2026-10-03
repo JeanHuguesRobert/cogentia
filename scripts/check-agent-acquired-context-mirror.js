@@ -10,7 +10,7 @@ import * as yaml from "js-yaml";
 import { ingestAgentAcquiredContext } from "./lib/agent-acquired-context-ingest.js";
 import { sha256Prefixed } from "./lib/agent-acquired-context.js";
 import { buildAgentAcquiredContextMirror } from "./lib/agent-acquired-context-mirror.js";
-import { ingestLearnedContext } from "../apps/personal/src/lib/learned-context-ingest.js";
+import { ingestLearnedContext, mirrorLearnedContext } from "../apps/personal/src/lib/learned-context-ingest.js";
 import {
   AgentClaimMirror,
   LearnedContextPasteForm,
@@ -63,6 +63,7 @@ const browserFiles = [
   "apps/personal/src/components/AgentClaimMirror.js",
   "apps/personal/src/pages/LearnedContextMirror.jsx",
   "scripts/lib/agent-acquired-context-mirror.js",
+  "scripts/lib/kys-snapshot-mirror.js",
 ];
 for (const relative of browserFiles) {
   const source = fs.readFileSync(path.join(root, relative), "utf8");
@@ -241,5 +242,102 @@ const extendedHtml = renderMirror(extended);
 const extendedRaw = extendedHtml.indexOf("data-raw-details=\"true\"");
 assert.equal(extendedHtml.slice(0, extendedRaw).includes("$.provider_note"), false);
 assert.equal(extendedHtml.slice(extendedRaw).includes("$.provider_note"), true);
+
+const portraitText = read("kys-snapshot-portrait.json");
+const portrait = await mirrorLearnedContext(portraitText);
+assert.equal(portrait.state, "claims");
+assert.equal(portrait.ok, true);
+assert.equal(portrait.claim_status, "agent_claim_not_fact");
+assert.deepEqual(portrait.diagnostics, []);
+assert.equal(portrait.diagnostics.some((line) => String(line).includes("missing required property")), false);
+assert.equal(Object.hasOwn(portrait.counts, "new"), false);
+assert.deepEqual(portrait.counts, {
+  inference: 2,
+  unknown_origin: 5,
+  uncertainty_stated: 2,
+});
+assert.deepEqual(portrait.categories.map((category) => category.label), [
+  "known",
+  "inferred",
+  "working_style",
+  "unknowns",
+  "context_limits",
+]);
+assert.equal(portrait.summary, "Earlier exchanges were about concrete artifacts.");
+assert.deepEqual(portrait.extensions.map((entry) => entry.path), [
+  "$.status",
+  "$.not_a_diagnosis",
+  "$.not_a_definition_of_person",
+  "$.human_review",
+]);
+assert.equal(JSON.stringify(portrait.categories).includes("Review note that must stay folded."), false);
+assert.equal(JSON.stringify(portrait.categories).includes("human_review"), false);
+const knownItems = portrait.categories[0].items;
+assert.equal(knownItems[0].claimed_origin, "unknown");
+assert.equal(knownItems[0].uncertainty_status, "unknown");
+assert.equal(knownItems[0].detail, "Declared basis: Recorded preference");
+assert.equal(knownItems[1].uncertainty_status, "known");
+assert.equal(knownItems[1].uncertainty_note, "Declared confidence: medium.");
+const inferredItem = portrait.categories[1].items[0];
+assert.equal(inferredItem.claimed_origin, "inference");
+assert.equal(inferredItem.uncertainty_status, "known");
+assert.equal(portrait.categories[2].items[0].uncertainty_status, "unknown");
+assert.equal(portrait.categories[4].items.map((item) => item.content).length, 2);
+const portraitHtml = renderMirror(portrait);
+assert.equal(portraitHtml.includes("missing required property"), false);
+assert.equal(portraitHtml.includes("unexpected property"), false);
+assert.equal(portraitHtml.includes("data-category=\"known\""), true);
+assert.equal(portraitHtml.includes("pense savoir"), true);
+assert.equal(portraitHtml.includes("data-origin=\"inference\""), true);
+assert.equal(portraitHtml.includes("data-uncertainty=\"known\""), true);
+assert.equal(portraitHtml.includes("data-basis=\"known-0\""), true);
+assert.equal(portraitHtml.includes("Base déclarée : Recorded preference"), true);
+assert.equal(portraitHtml.includes("Confiance déclarée : moyenne."), true);
+assert.equal(portraitHtml.includes("data-relationship-summary=\"true\""), true);
+assert.equal(portraitHtml.includes("Limites du contexte"), true);
+assert.equal(portraitHtml.includes("data-count=\"new\""), false);
+const portraitRaw = portraitHtml.indexOf("data-raw-details=\"true\"");
+assert.equal(portraitHtml.slice(0, portraitRaw).includes("$.human_review"), false);
+assert.equal(portraitHtml.slice(portraitRaw).includes("$.human_review"), true);
+assert.equal(portraitHtml.slice(0, portraitRaw).includes("Review note that must stay folded."), false);
+assert.equal(portraitHtml.slice(portraitRaw).includes("Review note that must stay folded."), true);
+assertClaimBanner(portraitHtml);
+assertClosedDetails(portraitHtml);
+
+const portraitIngest = await ingestLearnedContext(portraitText);
+assert.equal(portraitIngest.ok, false);
+assert.equal(portraitIngest.normalized, null);
+
+const fencedPortrait = `\`\`\`json\n${portraitText.trim()}\n\`\`\`\n`;
+const fencedPortraitMirror = await mirrorLearnedContext(fencedPortrait);
+assert.equal(fencedPortraitMirror.state, "claims");
+assert.equal(fencedPortraitMirror.raw.text, fencedPortrait);
+assert.equal(fencedPortraitMirror.categories[0].items[0].content, "French is the preferred language.");
+
+const stringLimits = JSON.parse(portraitText);
+stringLimits.context_limits = "Only this limit.";
+stringLimits.inferred = [];
+stringLimits.working_style = [];
+stringLimits.unknowns = [];
+stringLimits.known = [stringLimits.known[0]];
+const stringMirror = await mirrorLearnedContext(JSON.stringify(stringLimits));
+assert.deepEqual(stringMirror.categories.map((category) => category.label), ["known", "context_limits"]);
+assert.equal(stringMirror.categories[1].items[0].id, "context-limits-0");
+assert.equal(stringMirror.categories[1].items[0].content, "Only this limit.");
+
+const emptyPortrait = await mirrorLearnedContext('{"snapshot_version":"kys-snapshot-0.2","known":[]}\n');
+assert.equal(emptyPortrait.state, "unreadable");
+assert.equal(emptyPortrait.diagnostics.some((line) => String(line).includes("missing required property")), false);
+
+assert.deepEqual(await mirrorLearnedContext(rich.text), rich.model);
+const annotationViaPage = await mirrorLearnedContext(annotationText);
+assert.equal(annotationViaPage.state, "annotation");
+
+const snapshotSource = fs.readFileSync(path.join(root, "apps/personal/src/pages/Snapshot.jsx"), "utf8");
+const offerAt = snapshotSource.indexOf("correctionOffered &&");
+const mirrorLinkAt = snapshotSource.indexOf('to="/mirror"', offerAt);
+const pasteLabelAt = snapshotSource.indexOf("Coller la réponse", mirrorLinkAt);
+assert.ok(offerAt !== -1 && mirrorLinkAt > offerAt && pasteLabelAt > mirrorLinkAt);
+assert.equal(snapshotSource.includes("if (label === 'correction') setCorrectionOffered(true)"), true);
 
 console.log("agent-acquired-context mirror: ok");

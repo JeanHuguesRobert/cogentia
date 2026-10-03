@@ -1,0 +1,57 @@
+{
+  "snapshot_version": "kys-snapshot-0.2",
+  "status": "instantane_contestable",
+  "not_a_diagnosis": true,
+  "not_a_definition_of_person": true,
+  "agent": {
+    "provider": "Example",
+    "model": "example-1",
+    "context_scope": "Prior notes only."
+  },
+  "context_limits": [
+    "The role file was not reread.",
+    "This remains a contestable snapshot."
+  ],
+  "human_review": {
+    "confirmed": ["Review note that must stay folded."],
+    "nuanced": [],
+    "rejected": [],
+    "do_not_retain": []
+  },
+  "relationship_summary": "Earlier exchanges were about concrete artifacts.",
+  "known": [
+    {
+      "claim": "French is the preferred language.",
+      "basis": "Recorded preference",
+      "confidence": "high"
+    },
+    {
+      "claim": "A long practice is indicated.",
+      "basis": "Imported statement",
+      "confidence": "medium"
+    }
+  ],
+  "inferred": [
+    {
+      "claim": "Requests tend to connect an idea to a prototype.",
+      "basis": "Recurring operationalization",
+      "confidence": "low"
+    }
+  ],
+  "recurring_topics": [],
+  "working_style": [
+    {
+      "claim": "Deliverables are revised in local passes.",
+      "basis": "Recorded iterative preference",
+      "confidence": "high"
+    }
+  ],
+  "unknowns": [
+    {
+      "claim": "Current calendar constraints are not known.",
+      "basis": "Nothing in this turn establishes them",
+      "confidence": "high",
+      "human_review": "confirmed"
+    }
+  ]
+}

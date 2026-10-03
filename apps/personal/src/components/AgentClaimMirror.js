@@ -28,6 +28,12 @@ const COPY = {
     relationships: "Relations",
     projects: "Projets",
     "capture-limit": "Limite de la capture",
+    known: "Ce qu'il pense savoir",
+    inferred: "Ce qu'il suppose",
+    recurring_topics: "Sujets récurrents",
+    working_style: "Manière de travailler",
+    unknowns: "Limites reconnues",
+    context_limits: "Limites du contexte",
   },
   kinds: {
     claim: "affirmation",
@@ -56,6 +62,27 @@ function categoryLabel(label) {
   return COPY.categories[label] || label;
 }
 
+function visibleDetail(detail) {
+  const prefix = "Declared basis: ";
+  if (typeof detail === "string" && detail.startsWith(prefix)) {
+    return `Base déclarée : ${detail.slice(prefix.length)}`;
+  }
+  return detail;
+}
+
+function visibleUncertainty(note) {
+  if (note === "Declared confidence: low.") return "Confiance déclarée : faible.";
+  if (note === "Declared confidence: medium.") return "Confiance déclarée : moyenne.";
+  return note;
+}
+
+function visibleWarning(warning) {
+  if (typeof warning === "string" && warning.startsWith("This paste is a kys snapshot portrait.")) {
+    return "Cette réponse est un portrait d'instantané. Elle est montrée comme ce que l'agent affirme, et elle n'a pas été validée comme cogentia.agent-acquired-context.v0.";
+  }
+  return warning;
+}
+
 function sourceLines(source) {
   if (!source) return [];
   return [
@@ -75,9 +102,12 @@ function ItemView({ item }) {
     className: `pl-3 ${ORIGIN_CLASS[item.claimed_origin] || ORIGIN_CLASS.unknown}`,
   },
   h("p", { className: "font-body text-sm text-bright leading-relaxed" }, item.content),
+  item.detail
+    ? h("p", { className: "font-body text-xs text-dim mt-2", "data-basis": item.id }, visibleDetail(item.detail))
+    : null,
   h("p", { className: "tag mt-2" }, COPY.origins[item.claimed_origin] || COPY.origins.unknown),
   item.uncertainty_note
-    ? h("p", { className: "font-body text-xs text-dim mt-2", "data-uncertainty-note": item.id }, item.uncertainty_note)
+    ? h("p", { className: "font-body text-xs text-dim mt-2", "data-uncertainty-note": item.id }, visibleUncertainty(item.uncertainty_note))
     : null,
   item.contradicts.length
     ? h("p", { className: "font-body text-xs text-dim mt-2" }, COPY.tension)
@@ -114,6 +144,9 @@ export function AgentClaimMirror({ model }) {
   }, COPY.banner),
   model.state === "claims" ? h(React.Fragment, null,
     h("p", { className: "font-body text-sm text-dim", "data-source": "agent" }, sourceLines(model.source).join(" · ")),
+    model.summary
+      ? h("p", { className: "font-body text-sm text-bright leading-relaxed", "data-relationship-summary": "true" }, model.summary)
+      : null,
     counts.length
       ? h("ul", { className: "flex flex-wrap gap-2", "data-counts": "supported" }, counts.map((key) => (
         h("li", { key, className: "tag", "data-count": key }, `${model.counts[key]} ${COPY.counts[key]}`)
@@ -143,7 +176,7 @@ export function AgentClaimMirror({ model }) {
       : null,
     model.warnings?.length
       ? h("ul", { className: "mt-3 font-body text-xs text-dim space-y-1" },
-        model.warnings.map((warning) => h("li", { key: warning }, warning)))
+        model.warnings.map((warning) => h("li", { key: warning }, visibleWarning(warning))))
       : null,
     model.extensions?.length
       ? h("ul", { className: "mt-3 font-mono text-xs text-muted space-y-1", "data-extensions": "true" },
@@ -165,7 +198,7 @@ export function LearnedContextPasteForm({ text, onText, onReveal, onPaste, mirro
     h("p", { className: "font-mono text-signal text-xs tracking-widest uppercase" }, "Miroir immédiat"),
     h("h1", { className: "font-display text-3xl md:text-4xl font-bold text-bright" }, "Ce que cet agent affirme savoir"),
     h("p", { className: "font-body text-sm text-dim leading-relaxed" },
-      "Collez la réponse YAML de votre agent. Le miroir s'affiche sur cette page, avant toute demande de compte."),
+      "Collez la réponse de votre agent, en YAML ou en JSON. Le miroir s'affiche sur cette page, avant toute demande de compte."),
     h("form", {
       "data-paste-form": "learned-context",
       className: "space-y-3",
