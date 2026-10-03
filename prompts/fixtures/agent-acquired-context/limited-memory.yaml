@@ -1,0 +1,50 @@
+schema_version: cogentia.agent-acquired-context.v0
+kind: agent_acquired_context
+layer: normalized_snapshot
+capture_id: capture:limited-memory
+claim_status: agent_claim_not_fact
+source:
+  provider: example-agent
+  agent: Example Conversational Agent
+  model: null
+  platform: example-chat
+  memory_scope: "current conversation only; no saved-memory list is visible"
+captured_at:
+  status: unknown
+  value: null
+protocol:
+  prompt_id: kys-ami-02
+  prompt_version: v0
+  response_schema_version: cogentia.agent-acquired-context.v0
+raw_response:
+  role: immutable_raw_measurement
+  media_type: unknown
+  body: null
+  body_sha256: unknown
+items:
+  - id: item:short-answers
+    content: "Person Example said in this conversation: \"Please keep answers short.\""
+    category: instructions
+    record_kind: instruction
+    claimed_origin: explicit_user_statement
+    claimed_time:
+      status: known
+      value: "this conversation"
+    uncertainty:
+      status: unknown
+      note: null
+    sensitivity: ordinary
+    contradicts: []
+  - id: item:trip
+    content: "Summary, not a quotation: Person Example may be planning a fictional trip. The origin of this impression is unknown."
+    category: projects
+    record_kind: claim
+    claimed_origin: unknown
+    claimed_time:
+      status: unknown
+      value: null
+    uncertainty:
+      status: known
+      note: "The agent cannot tell whether this came from a statement, stored memory, or an inference."
+    sensitivity: ordinary
+    contradicts: []

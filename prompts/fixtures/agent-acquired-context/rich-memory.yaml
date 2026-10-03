@@ -1,0 +1,104 @@
+schema_version: cogentia.agent-acquired-context.v0
+kind: agent_acquired_context
+layer: normalized_snapshot
+capture_id: capture:rich-memory
+claim_status: agent_claim_not_fact
+source:
+  provider: example-agent
+  agent: Example Conversational Agent
+  model: example-model-1
+  platform: example-chat
+  memory_scope: "saved memories plus this conversation"
+captured_at:
+  status: unknown
+  value: null
+protocol:
+  prompt_id: kys-ami-02
+  prompt_version: v0
+  response_schema_version: cogentia.agent-acquired-context.v0
+raw_response:
+  role: immutable_raw_measurement
+  media_type: unknown
+  body: null
+  body_sha256: unknown
+items:
+  - id: item:morning-meetings
+    content: "Person Example said: \"I prefer morning meetings.\""
+    category: preferences
+    record_kind: preference
+    claimed_origin: explicit_user_statement
+    claimed_time:
+      status: unknown
+      value: null
+    uncertainty:
+      status: unknown
+      note: null
+    sensitivity: ordinary
+    contradicts: []
+  - id: item:workshop
+    content: "Summary, not a quotation: Person Example seems to lead a small fictional workshop."
+    category: career
+    record_kind: claim
+    claimed_origin: inference
+    claimed_time:
+      status: unknown
+      value: null
+    uncertainty:
+      status: known
+      note: "Inferred from fictional project names, not from a stored statement."
+    sensitivity: ordinary
+    contradicts: []
+  - id: item:captain
+    content: "Saved personalization says to address Person Example as Captain Example."
+    category: instructions
+    record_kind: instruction
+    claimed_origin: provider_memory
+    claimed_time:
+      status: unknown
+      value: null
+    uncertainty:
+      status: known
+      note: "This is stored personalization, not a transcript."
+    sensitivity: ordinary
+    contradicts: []
+  - id: item:remote
+    content: "Person Example said: \"I prefer remote work.\""
+    category: preferences
+    record_kind: preference
+    claimed_origin: explicit_user_statement
+    claimed_time:
+      status: unknown
+      value: null
+    uncertainty:
+      status: unknown
+      note: null
+    sensitivity: ordinary
+    contradicts:
+      - item:office
+  - id: item:office
+    content: "Person Example said: \"I prefer office work.\""
+    category: preferences
+    record_kind: preference
+    claimed_origin: explicit_user_statement
+    claimed_time:
+      status: unknown
+      value: null
+    uncertainty:
+      status: unknown
+      note: null
+    sensitivity: ordinary
+    contradicts:
+      - item:remote
+  - id: item:harbour
+    content: "Summary, not a quotation: Person Example once mentioned a harbour."
+    category: identity
+    record_kind: claim
+    claimed_origin: unknown
+    claimed_time:
+      status: unknown
+      value: null
+    uncertainty:
+      status: unknown
+      note: null
+    sensitivity: ordinary
+    contradicts: []

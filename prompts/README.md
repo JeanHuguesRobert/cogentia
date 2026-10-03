@@ -43,6 +43,10 @@ The human author remains the final decision-maker. Agents assist, critique, stru
 
 The conversation is the atelier. The corpus receives stabilized material.
 
+## KYS learned-context capture
+
+- [Agent-acquired context prompt](agent-acquired-context.md) — one-shot paste prompt for what an agent claims to know. Distinct from the 73-axis psychocognitive protocol.
+
 ## Prompt Documents
 <!-- BEGIN_AUTO: readme_index -->
 - [Cogentia Continuation Designer Prompt](continuation_designer_prompt.md)
