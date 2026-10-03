@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 
-const PROVIDERS = ['ChatGPT', 'Claude', 'Gemini', 'Mistral', 'Autre agent']
+const PROVIDERS = ['ChatGPT', 'Claude', 'Gemini', 'Mistral', 'Grok', 'Autre agent']
 
 const CATEGORIES = [
   { key: 'known', title: 'Ce que votre agent pense savoir', description: 'Éléments explicites ou très régulièrement confirmés.' },

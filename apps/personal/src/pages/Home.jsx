@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom'
 
 const STEPS = [
-  ['1', 'Interrogez votre agent', 'Copiez un prompt court dans ChatGPT, Claude, Gemini, Mistral ou un autre agent.'],
+  ['1', 'Interrogez votre agent', 'Copiez un prompt court dans ChatGPT, Claude, Gemini, Mistral, Grok ou un autre agent.'],
   ['2', 'Examinez son portrait', 'Distinguez ce qu’il pense savoir, ce qu’il suppose et ce qu’il reconnaît ignorer.'],
   ['3', 'Gardez le dernier mot', 'Confirmez, nuancez, rejetez ou marquez un élément comme ne devant pas être conservé.'],
 ]
