@@ -146,7 +146,7 @@ Three authored replies show capability profiles, not live provider captures:
 - [`limited-memory.yaml`](fixtures/agent-acquired-context/limited-memory.yaml) — current conversation only, plus one item of unknown origin.
 - [`no-persistent-memory.yaml`](fixtures/agent-acquired-context/no-persistent-memory.yaml) — one `capture-limit` item and no biography.
 
-They are not captures from named providers. A later paste-bridge packet (#218) stores the pasted bytes as the raw measurement. These examples leave `raw_response.body` null on purpose.
+They are not captures from named providers. These examples leave `raw_response.body` null on purpose. The paste itself is the measurement.
 
 Check:
 
@@ -155,3 +155,19 @@ node scripts/check-agent-acquired-context-prompt.js
 ```
 
 A reply is accepted when it is one YAML object that satisfies the v0 contract. Any other reply is rejected with the schema errors, or with a parse diagnostic that tells the sender to return one YAML document and nothing else.
+
+## Ingestion
+
+`ingestAgentAcquiredContext` in [`scripts/lib/agent-acquired-context-ingest.js`](../scripts/lib/agent-acquired-context-ingest.js) is the paste path for this protocol. It does not create an account and it does not write the paste to a database, file, or browser store.
+
+The result keeps three separate values:
+
+- `raw.text` is the pasted string, unchanged, with its SHA-256. It is never replaced by the normalized object.
+- `normalized` is a v0 snapshot or annotation, or `null` when the paste is malformed or does not meet the contract.
+- `extensions` lists parseable fields the v0 schema does not define. They stay as evidence beside the projection. A strict prompt check still rejects them. Ingestion does not drop them and does not copy them into `normalized`.
+
+Malformed JSON does not produce a snapshot. A missing required field does not produce a partial snapshot with guessed values. The historical 73-axis parser and the `kys-snapshot-0.1` page are different protocols and are not this route.
+
+```bash
+node scripts/check-agent-acquired-context-ingest.js
+```

@@ -39,35 +39,55 @@ function fail(errors) {
   };
 }
 
-export function readAgentAcquiredContextReply(text) {
+export function parseReplyDocument(text) {
   const trimmed = String(text ?? "").trim();
   if (!trimmed) {
-    return fail(["Reply is empty. Send one YAML document and nothing else."]);
+    return { ok: false, data: null, errors: ["Reply is empty. Send one YAML document and nothing else."] };
   }
 
   let body = trimmed;
-  const fenced = trimmed.match(/^```(?:yaml|yml)?[ \t]*\r?\n([\s\S]*?)\r?\n```$/);
+  const fenced = trimmed.match(/^```(?:yaml|yml|json)?[ \t]*\r?\n([\s\S]*?)\r?\n```$/);
   if (fenced) {
     body = fenced[1];
   } else if (trimmed.startsWith("```")) {
-    return fail(["Reply uses a code fence that is not a single YAML block. Send one YAML document and nothing else."]);
+    return {
+      ok: false,
+      data: null,
+      errors: ["Reply uses a code fence that is not a single YAML block. Send one YAML document and nothing else."],
+    };
   }
 
   let docs;
   try {
     docs = yaml.loadAll(body);
   } catch (error) {
-    return fail([`YAML parse error: ${error.message}. Send one YAML document and nothing else.`]);
+    const label = trimmed.startsWith("{") || trimmed.startsWith("[") ? "Malformed JSON" : "YAML parse error";
+    return {
+      ok: false,
+      data: null,
+      errors: [`${label}: ${error.message}. Send one YAML or JSON document and nothing else.`],
+    };
   }
 
   const meaningful = docs.filter((doc) => doc !== null && doc !== undefined);
   if (meaningful.length !== 1 || !isObject(meaningful[0])) {
-    return fail(["Reply must be one YAML object for cogentia.agent-acquired-context.v0, not prose, a list, or several documents."]);
+    return {
+      ok: false,
+      data: null,
+      errors: ["Reply must be one YAML object for cogentia.agent-acquired-context.v0, not prose, a list, or several documents."],
+    };
   }
 
-  const report = validateAgentAcquiredContext(meaningful[0]);
+  return { ok: true, data: meaningful[0], errors: [] };
+}
+
+export function readAgentAcquiredContextReply(text) {
+  const parsed = parseReplyDocument(text);
+  if (!parsed.ok) return fail(parsed.errors);
+
+  const report = validateAgentAcquiredContext(parsed.data);
   if (report.errors.some((error) => error.includes("unexpected property"))) {
     report.errors.push("Remove properties that are not in cogentia.agent-acquired-context.v0. Do not add completeness or truth flags.");
   }
-  return { ...report, data: meaningful[0] };
+  return { ...report, data: parsed.data };
 }

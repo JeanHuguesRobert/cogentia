@@ -1,0 +1,33 @@
+{
+  "schema_version": "cogentia.agent-acquired-context.v0",
+  "kind": "agent_acquired_context",
+  "layer": "normalized_snapshot",
+  "capture_id": "capture:missing-source",
+  "claim_status": "agent_claim_not_fact",
+  "vendor_extension": true,
+  "captured_at": { "status": "unknown", "value": null },
+  "protocol": {
+    "prompt_id": "kys-ami-02",
+    "prompt_version": "v0",
+    "response_schema_version": "cogentia.agent-acquired-context.v0"
+  },
+  "raw_response": {
+    "role": "immutable_raw_measurement",
+    "media_type": "unknown",
+    "body": null,
+    "body_sha256": "unknown"
+  },
+  "items": [
+    {
+      "id": "item:no-persistent-memory",
+      "content": "This agent has no distinguishable persistent memory about the person, and this conversation has not established any personalization.",
+      "category": "capture-limit",
+      "record_kind": "unknown",
+      "claimed_origin": "unknown",
+      "claimed_time": { "status": "unknown", "value": null },
+      "uncertainty": { "status": "unknown", "note": null },
+      "sensitivity": "unknown",
+      "contradicts": []
+    }
+  ]
+}
