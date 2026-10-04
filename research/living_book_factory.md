@@ -6,7 +6,7 @@ author: "Jean Hugues Noël Robert, baron Mariani"
 affiliation: "Institut Mariani / C.O.R.S.I.C.A., 1 cours Paoli, F-20250 Corte, Corsica"
 date: "2026-10-04"
 last_modified_at: "2026-10-04"
-version: "0.1"
+version: "0.2"
 status: "working-paper"
 license: "CC BY-SA 4.0"
 language: "en"
@@ -45,7 +45,7 @@ review:
 provenance:
   origin_type: "comparative-reality-case-audit"
   origin_repository: "JeanHuguesRobert/cogentia"
-  origin_ref: "conversation 2026-10-04"
+  origin_ref: "unknown"
   origin_date: "2026-10-04"
   derived_from:
     - "existing Living Book implementations in JeanHuguesRobert/barons-Mariani"
@@ -354,6 +354,144 @@ FUTURE
 > **Past reconstruction and future projection may coexist, but their proof regimes must never be silently merged.**
 
 institut.acorsica.org is the first intended Factory Reality Case using Janus as an explicit profile.
+
+
+## 8 bis. Three-axis state grammar: knowledge, institution, effect
+
+RT-LBF-001 exposes a recurring ambiguity that the Factory SHOULD make explicit when institutional or procedural objects are represented.
+
+A single field named \`status\` is often insufficient because three independent questions coexist:
+
+~~~text
+EPISTEMIC STATE
+What do we know about this object?
+
+INSTITUTIONAL STATE
+Where is this object in a human / organizational decision process?
+
+EFFECT STATE
+Is the object actually producing the effects attributed to it?
+~~~
+
+Canonical candidate invariant:
+
+> **Epistemic state ≠ institutional state ≠ effective state.**
+
+This is a cross-cutting grammar candidate, not yet a mandatory frontmatter vocabulary.
+
+### Epistemic state candidate values
+
+~~~text
+ESTABLISHED
+REPORTED
+RECONSTRUCTED
+INFERRED
+HYPOTHESIS
+SCENARIO
+UNKNOWN
+~~~
+
+The values describe support, not institutional authority.
+
+### Institutional state candidate values
+
+~~~text
+DRAFT
+PREPARATORY
+PROPOSED
+SUBMITTED
+ADOPTED
+REJECTED
+WITHDRAWN
+SUPERSEDED
+EXPIRED
+UNKNOWN
+N/A
+~~~
+
+The values describe a decision lifecycle. They do not prove legal effectiveness.
+
+### Effect state candidate values
+
+~~~text
+NOT_EFFECTIVE
+PARTIALLY_EFFECTIVE
+EFFECTIVE
+SUSPENDED
+CEASED
+UNKNOWN
+N/A
+~~~
+
+The values describe observed or legally/operationally established effect, not merely adoption.
+
+Example:
+
+~~~yaml
+object:
+  id: corsica-statutes-2026-draft
+  type: institutional-document
+
+epistemic_status:
+  value: ESTABLISHED
+  basis:
+    - document_exists
+
+institutional_status:
+  value: PREPARATORY
+  authority: C.O.R.S.I.C.A.
+
+effect_status:
+  value: NOT_EFFECTIVE
+~~~
+
+A draft can therefore be a perfectly established document while remaining institutionally preparatory and without present effect.
+
+### Event-sourced preference
+
+When state changes matter, handlers SHOULD preserve the transition as an event rather than silently overwrite history:
+
+~~~text
+PREPARATORY
+→ submission event
+→ SUBMITTED
+→ decision event
+→ ADOPTED
+→ effect / formalization event
+→ EFFECTIVE
+~~~
+
+The current status is then a projection of durable events.
+
+This aligns with Packet-Backed Projection and COP-style event accounting without requiring every Living Book to adopt a database or event runtime.
+
+### Minimum Sufficient Locality
+
+Not every object needs all three axes.
+
+~~~text
+historical photograph
+→ epistemic status useful
+→ institutional status N/A
+→ effect status N/A
+
+draft statutes
+→ all three axes useful
+
+future scenario
+→ epistemic SCENARIO
+→ institutional DRAFT or N/A
+→ effect NOT_EFFECTIVE
+~~~
+
+Do not add empty metadata merely for uniformity.
+
+### Frontmatter relation
+
+The canonical frontmatter schema remains authoritative for document metadata. These three axes are domain-state fields, not replacements for document-level \`status\`, \`review.status\`, or \`lifecycle_state\`.
+
+Under the Living Frontmatter optimistic rule, they MAY appear as local fields when materially useful, because their semantics are explicit, reversible and linked to this active Factory Reality Test. Promotion into shared frontmatter vocabulary requires further recurrence and review.
+
 
 ## 9. Magazine items as federatable objects
 
