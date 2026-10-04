@@ -5,18 +5,23 @@ import {
   immediatePasteText,
 } from '../components/AgentClaimMirror.js'
 import { AssistedContactCard } from '../components/AssistedContact.js'
+import { ContinuityPanel } from '../components/ContinuityPanel.js'
 import { StepNav, TurnBar, TurnClocks, forwardLabel, useNow } from '../components/TurnBar.jsx'
 import { mirrorLearnedContext } from '../lib/learned-context-ingest.js'
 import { extractJson, normalizeSnapshot } from '../lib/kys-snapshot.js'
 import {
   agentStampFromData,
   canGoBack,
+  emptyLog,
   forwardIntent,
   goForward,
   leaveMirror,
+  loadBrowserEnrolmentPreferences,
   loadBrowserTurnLog,
+  purgeBrowserContinuityData,
   recordParsedResponse,
   replyIsStale,
+  saveBrowserEnrolmentPreferences,
   saveBrowserTurnLog,
   updateResponseText,
   updateTurnReview,
@@ -47,6 +52,24 @@ export default function LearnedContextMirrorPage() {
     reviewedCount: Object.values(turn.reviews || {}).filter((r) => r?.verdict).length,
     hasAlignmentPrompt: Boolean(turn.reviews && Object.keys(turn.reviews).length > 0),
   }), [mirror, turn])
+
+  const [preferences, setPreferences] = useState(() => loadBrowserEnrolmentPreferences())
+
+  useEffect(() => {
+    saveBrowserEnrolmentPreferences(preferences)
+  }, [preferences])
+
+  function onUpdatePreferences(patch) {
+    setPreferences((current) => ({ ...current, ...patch }))
+  }
+
+  function onPurge() {
+    purgeBrowserContinuityData()
+    setLog(emptyLog(new Date().toISOString()))
+    setMirror(null)
+    setText('')
+    setPreferences({})
+  }
 
   useEffect(() => {
     saveBrowserTurnLog(log)
@@ -156,6 +179,14 @@ export default function LearnedContextMirrorPage() {
           <AssistedContactCard context={contactContext} />
         </div>
       )}
+      <div className="max-w-3xl mx-auto px-4 pb-6">
+        <ContinuityPanel
+          turnLog={log}
+          preferences={preferences}
+          onUpdatePreferences={onUpdatePreferences}
+          onPurge={onPurge}
+        />
+      </div>
       <div className="max-w-3xl mx-auto px-4 pb-10">
         <StepNav
           onBack={onBack}

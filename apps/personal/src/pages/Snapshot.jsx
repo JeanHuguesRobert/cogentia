@@ -4,16 +4,20 @@ import { extractJson, normalizeSnapshot } from '../lib/kys-snapshot.js'
 import {
   agentStampFromData,
   canGoBack,
+  emptyLog,
   ensureNextTurn,
   forwardIntent,
   goBack,
   goForward,
+  loadBrowserEnrolmentPreferences,
   loadBrowserTurnLog,
   markCorrectionOffered,
+  purgeBrowserContinuityData,
   recordParsedResponse,
   recordPromptCopy,
   replyIsStale,
   reviseNextPrompt,
+  saveBrowserEnrolmentPreferences,
   saveBrowserTurnLog,
   setTurnProvider,
   updatePromptText,
@@ -30,6 +34,7 @@ import {
 import { compareSnapshots } from '../../../../scripts/lib/agent-acquired-context-alignment.js'
 import { ReobservationComparisonCard } from '../components/AgentClaimMirror.js'
 import { AssistedContactCard } from '../components/AssistedContact.js'
+import { ContinuityPanel } from '../components/ContinuityPanel.js'
 
 const PROVIDERS = ['ChatGPT', 'Claude', 'Gemini', 'Mistral', 'Grok', 'Autre agent']
 
@@ -140,6 +145,22 @@ export default function Snapshot() {
     if (!snapshot || !previousTurn?.snapshot) return null
     return compareSnapshots(previousTurn.snapshot, snapshot, previousTurn.reviews || {})
   }, [snapshot, previousTurn])
+
+  const [preferences, setPreferences] = useState(() => loadBrowserEnrolmentPreferences())
+
+  useEffect(() => {
+    saveBrowserEnrolmentPreferences(preferences)
+  }, [preferences])
+
+  const onUpdatePreferences = (patch) => {
+    setPreferences((current) => ({ ...current, ...patch }))
+  }
+
+  const onPurge = () => {
+    purgeBrowserContinuityData()
+    setLog(emptyLog(new Date().toISOString()))
+    setPreferences({})
+  }
 
   useEffect(() => {
     saveBrowserTurnLog(log)
@@ -544,6 +565,14 @@ Produisez maintenant une version corrigée en JSON valide.
           />
 
           <AssistedContactCard context={contactContext} />
+
+          <ContinuityPanel
+            turnLog={log}
+            preferences={preferences}
+            onUpdatePreferences={onUpdatePreferences}
+            onPurge={onPurge}
+            onExport={exportSnapshot}
+          />
 
           <div className="border-t border-border pt-6 text-xs text-muted leading-relaxed">
             Ce résultat est un <strong className="text-dim">KYS Snapshot personnel</strong>, non un KYS Profile certifié. Les futurs KYS Profiles limités et finalisés relèveront du cadre fiduciaire non lucratif de PrivAI.

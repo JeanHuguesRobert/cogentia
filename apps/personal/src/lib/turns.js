@@ -1,4 +1,5 @@
 import { verdictToStance } from "../../../../scripts/lib/agent-acquired-context-review.js"
+import { clearContinuityStorage, ENROLMENT_PREFS_KEY } from "../../../../scripts/lib/progressive-enrolment.js"
 
 export const TURN_LOG_KEY = "kys_turn_log_v1"
 export const DRAFT_KEY = "kys_snapshot_draft_v1"
@@ -158,6 +159,24 @@ export function loadBrowserTurnLog() {
 
 export function saveBrowserTurnLog(log) {
   saveTurnLog(window.localStorage, log)
+}
+
+export function loadBrowserEnrolmentPreferences() {
+  try {
+    return JSON.parse(window.localStorage.getItem(ENROLMENT_PREFS_KEY) || "{}") || {}
+  } catch {
+    return {}
+  }
+}
+
+export function saveBrowserEnrolmentPreferences(prefs) {
+  try {
+    window.localStorage.setItem(ENROLMENT_PREFS_KEY, JSON.stringify(prefs || {}))
+  } catch {}
+}
+
+export function purgeBrowserContinuityData() {
+  clearContinuityStorage(window.localStorage)
 }
 
 export function agentStampFromData(data) {
