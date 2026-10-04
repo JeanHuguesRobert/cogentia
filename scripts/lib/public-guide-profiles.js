@@ -11,6 +11,7 @@ import { fileURLToPath } from "node:url";
 
 const moduleDir = path.dirname(fileURLToPath(import.meta.url));
 const PROJECT_PREFIX = "projects/suicide-corse/";
+const PRIVAI_PREFIX = "projects/privai/";
 const CORPUS_REPOS = new Set(["barons-mariani", "jeanhuguesrobert/barons-mariani"]);
 
 export const SUICIDE_CORSE_PROFILE_PROMPT = [
@@ -24,6 +25,22 @@ export const SUICIDE_CORSE_PROFILE_PROMPT = [
   "A conversation with this Guide is not testimony, not evidence, and not a submission.",
   "Political material stays descriptive or analytical. Do not endorse, rank, or predict.",
   "Private testimony and private registers are unreadable here. Do not imply access to them.",
+  "Do not say that this conversation has been sent, recorded, or accepted as a contribution.",
+].join("\n");
+
+export const PRIVAI_PROFILE_PROMPT = [
+  "Public Guide profile: privai.",
+  "This profile overrides the generic FractaVolta product identity for this turn.",
+  "You are the public PrivAI Guide for the working Living Book projection.",
+  "Answer in French unless the visitor writes in English.",
+  "Answer only from the supplied in-scope public excerpts. If they do not establish a fact, the fact stays unknown.",
+  "Keep four levels distinct: an AI dangerous in itself, a dangerous use of AI, institutional asymmetry amplified by AI, and loss of human sovereignty.",
+  "Do not give enforceable legal advice. Do not certify any system, model, or organization.",
+  "Do not say that a PrivAI Foundation already has legal personality or is legally carried by an association. Documentary links are not legal carriage.",
+  "Do not substitute for the visitor's judgment, mandate, or vote.",
+  "Do not invent Reality Cases, citations, dates, or sources.",
+  "Cogentia is a candidate implementation and does not self-certify.",
+  "A conversation with this Guide is not a submission, a record, or evidence.",
   "Do not say that this conversation has been sent, recorded, or accepted as a contribution.",
 ].join("\n");
 
@@ -72,6 +89,35 @@ const SUICIDE_CORSE_MANDATE = Object.freeze({
   ]),
 });
 
+const PRIVAI_MANDATE = Object.freeze({
+  instance_id: "privai-public-guide",
+  surface: "web-guide",
+  maturity: "infant",
+  corpus_view: "public",
+  profile: "privai",
+  allowed: Object.freeze([
+    "orient",
+    "retrieve-public-privai-corpus",
+    "cite",
+    "explain-public-corpus",
+    "prepare-act",
+  ]),
+  forbidden: Object.freeze([
+    "private-view",
+    "mutate",
+    "publish",
+    "send",
+    "intake",
+    "corpus-write",
+    "certification",
+    "legal-advice",
+    "mandate-substitution",
+    "unbounded-web",
+    "agent-john-bypass",
+    "owner-impersonation",
+  ]),
+});
+
 const FRACTAVOLTA_ACT_TEMPLATES = Object.freeze([
   act("technical-report", "jhr@baronsmariani.org", {
     fr: "FractaVolta — brouillon de signalement technique",
@@ -106,6 +152,23 @@ const SUICIDE_CORSE_ACT_TEMPLATES = Object.freeze([
   }),
 ]);
 
+const PRIVAI_ACT_TEMPLATES = Object.freeze([
+  act("submit-contribution", "jhr@baronsmariani.org", {
+    fr: "PrivAI — brouillon d'objection",
+    en: "PrivAI — objection draft",
+  }, {
+    fr: "Ce brouillon ne dépose pas l'objection et n'ajoute aucun fait que le visiteur n'a pas écrit.",
+    en: "This draft does not file the objection and adds no fact the visitor did not write.",
+  }),
+  act("report-correction", "jhr@baronsmariani.org", {
+    fr: "PrivAI — brouillon de correction",
+    en: "PrivAI — correction draft",
+  }, {
+    fr: "Ce brouillon ne transforme pas une correction en fait établi et n'envoie rien.",
+    en: "This draft does not turn a correction into an established fact and sends nothing.",
+  }),
+]);
+
 const scopeCache = new Map();
 
 function act(id, to, subject, closing) {
@@ -122,11 +185,16 @@ export function defaultSuicideCorseManifestPath() {
   return path.resolve(moduleDir, "../../../barons-Mariani/projects/suicide-corse/corpus.yml");
 }
 
+export function defaultPrivaiManifestPath() {
+  return path.resolve(moduleDir, "../../../barons-Mariani/projects/privai/corpus.yml");
+}
+
 export function resolvePublicGuideProfile(raw, options = {}) {
   const id = String(raw ?? "").trim().toLowerCase();
   if (!id) return { ok: true, profile: null };
   if (id === "fractavolta") return { ok: true, profile: fractavoltaProfile() };
   if (id === "suicide-corse") return { ok: true, profile: suicideCorseProfile(options) };
+  if (id === "privai") return { ok: true, profile: privaiProfile(options) };
   return { ok: false, error: "unknown_profile" };
 }
 
@@ -247,37 +315,80 @@ function suicideCorseProfile(options) {
   };
 }
 
+function privaiProfile(options) {
+  const sourceScope = loadPrivaiScope(options);
+  return {
+    id: "privai",
+    bindsSurface: true,
+    surfaceId: "privai-public-guide",
+    usesCanonicalCache: false,
+    webSearch: "explicit",
+    mandate: PRIVAI_MANDATE,
+    act_templates: PRIVAI_ACT_TEMPLATES,
+    sourceScope,
+    sourceScopeSummary: {
+      mode: sourceScope.mode,
+      repos: ["barons-Mariani"],
+      path_prefix: PRIVAI_PREFIX,
+      manifest_path: sourceScope.manifestPath,
+      manifest_path_count: sourceScope.exactPaths.size,
+      issue_numbers: [...sourceScope.issueNumbers],
+    },
+    prompt: PRIVAI_PROFILE_PROMPT,
+  };
+}
+
 function loadSuicideCorseScope(options = {}) {
   if (typeof options.manifestText === "string") {
-    return scopeFromManifest(options.manifestText, "manifest", options.manifestPath || null);
+    return scopeFromManifest(options.manifestText, "manifest", options.manifestPath || null, PROJECT_PREFIX);
   }
   const manifestPath = options.manifestPath || defaultSuicideCorseManifestPath();
-  if (scopeCache.has(manifestPath)) return scopeCache.get(manifestPath);
+  return loadScope(manifestPath, PROJECT_PREFIX);
+}
+
+function loadPrivaiScope(options = {}) {
+  if (typeof options.privaiManifestText === "string") {
+    return scopeFromManifest(
+      options.privaiManifestText,
+      "manifest",
+      options.privaiManifestPath || null,
+      PRIVAI_PREFIX,
+    );
+  }
+  const manifestPath = options.privaiManifestPath || defaultPrivaiManifestPath();
+  return loadScope(manifestPath, PRIVAI_PREFIX);
+}
+
+function loadScope(manifestPath, pathPrefix) {
+  const cacheKey = `${pathPrefix}\n${manifestPath}`;
+  if (scopeCache.has(cacheKey)) return scopeCache.get(cacheKey);
   let scope;
   try {
-    scope = scopeFromManifest(fs.readFileSync(manifestPath, "utf8"), "manifest", manifestPath);
+    scope = scopeFromManifest(fs.readFileSync(manifestPath, "utf8"), "manifest", manifestPath, pathPrefix);
   } catch {
-    scope = failClosedScope(manifestPath);
+    scope = failClosedScope(manifestPath, pathPrefix);
   }
-  scopeCache.set(manifestPath, scope);
+  scopeCache.set(cacheKey, scope);
   return scope;
 }
 
-function failClosedScope(manifestPath) {
+function failClosedScope(manifestPath, pathPrefix = PROJECT_PREFIX) {
   return {
     mode: "fail_closed",
     manifestPath: manifestPath || null,
+    pathPrefix,
     exactPaths: new Set(),
     issueNumbers: [],
   };
 }
 
-function scopeFromManifest(text, mode, manifestPath) {
+function scopeFromManifest(text, mode, manifestPath, pathPrefix = PROJECT_PREFIX) {
   const parsed = parseCorpusManifest(text);
-  if (!parsed.paths.length && !parsed.issueNumbers.length) return failClosedScope(manifestPath);
+  if (!parsed.paths.length && !parsed.issueNumbers.length) return failClosedScope(manifestPath, pathPrefix);
   return {
     mode,
     manifestPath: manifestPath || null,
+    pathPrefix,
     exactPaths: new Set(parsed.paths),
     issueNumbers: parsed.issueNumbers,
   };
@@ -312,7 +423,9 @@ function sourceAllowed(source, scope) {
   const located = locateSource(source);
   if (isIssueProjection(source, located, scope)) return true;
   if (!CORPUS_REPOS.has(located.repo)) return false;
-  if (located.filePath === PROJECT_PREFIX.slice(0, -1) || located.filePath.startsWith(PROJECT_PREFIX)) return true;
+  const prefix = scope.pathPrefix || PROJECT_PREFIX;
+  const prefixRoot = prefix.endsWith("/") ? prefix.slice(0, -1) : prefix;
+  if (located.filePath === prefixRoot || located.filePath.startsWith(prefix)) return true;
   return scope.exactPaths.has(located.filePath);
 }
 

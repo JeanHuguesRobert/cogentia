@@ -2434,6 +2434,7 @@ function observeGuideSemanticRetrieval(retrieval) {
 function guideProfileOptions() {
   return {
     manifestPath: process.env.COGENTIA_SUICIDE_CORSE_CORPUS || undefined,
+    privaiManifestPath: process.env.COGENTIA_PRIVAI_CORPUS || undefined,
   };
 }
 

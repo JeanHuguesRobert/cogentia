@@ -5,12 +5,14 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import {
+  defaultPrivaiManifestPath,
   defaultSuicideCorseManifestPath,
   filterRetrievalForProfile,
   preparePublicGuideAct,
   resolveProfileWebSearch,
   resolvePublicGuideProfile,
   sourceAllowedByProfile,
+  PRIVAI_PROFILE_PROMPT,
   SUICIDE_CORSE_PROFILE_PROMPT,
 } from "./lib/public-guide-profiles.js";
 
@@ -203,6 +205,86 @@ assert.equal(preparePublicGuideAct({
   context: "no",
 }).body.error, "unknown_act");
 
+const privaiClosed = resolvePublicGuideProfile("PrivAI", {
+  privaiManifestPath: path.join(root, "missing-privai-corpus.yml"),
+});
+assert.equal(privaiClosed.ok, true);
+assert.equal(privaiClosed.profile.id, "privai");
+assert.equal(privaiClosed.profile.sourceScopeSummary.mode, "fail_closed");
+assert.equal(privaiClosed.profile.usesCanonicalCache, false);
+assert.equal(privaiClosed.profile.bindsSurface, true);
+assert.equal(privaiClosed.profile.surfaceId, "privai-public-guide");
+assert.equal(privaiClosed.profile.webSearch, "explicit");
+assert.equal(resolveProfileWebSearch(privaiClosed.profile, "Qui restera souverain ?").mode, "off");
+assert.match(PRIVAI_PROFILE_PROMPT, /does not self-certify/);
+assert.equal(sourceAllowedByProfile({
+  repo: "barons-Mariani",
+  path: "projects/privai/manuscript/n1/00-qui-restera-souverain.md",
+}, privaiClosed.profile), true);
+assert.equal(sourceAllowedByProfile({
+  repo: "barons-Mariani",
+  path: "research/democratic_ai_safety.md",
+}, privaiClosed.profile), false);
+assert.equal(sourceAllowedByProfile({
+  repo: "barons-Mariani",
+  path: "projects/suicide-corse/architecture.md",
+}, privaiClosed.profile), false);
+assert.equal(sourceAllowedByProfile({
+  repo: "barons-Mariani",
+  path: "memory/marie-louise/carte.md",
+}, privaiClosed.profile), false);
+
+const privaiLiveManifest = defaultPrivaiManifestPath();
+const privaiLive = resolvePublicGuideProfile("privai");
+if (fs.existsSync(privaiLiveManifest)) {
+  assert.equal(privaiLive.profile.sourceScopeSummary.mode, "manifest");
+  assert.equal(sourceAllowedByProfile({
+    repo: "barons-Mariani",
+    path: "research/democratic_ai_safety.md",
+  }, privaiLive.profile), true);
+  assert.equal(sourceAllowedByProfile({
+    repo: "cogentia",
+    path: "research/kys_profile_privacy_and_public_specialized_profiles.md",
+  }, privaiLive.profile), false);
+} else {
+  assert.equal(privaiLive.profile.sourceScopeSummary.mode, "fail_closed");
+}
+const privaiFiltered = filterRetrievalForProfile({
+  sources: [
+    { source_id: "barons-Mariani:projects/privai/architecture.md#L1-L2", repo: "barons-Mariani", path: "projects/privai/architecture.md" },
+    { source_id: "barons-Mariani:projects/suicide-corse/architecture.md#L1-L2", repo: "barons-Mariani", path: "projects/suicide-corse/architecture.md" },
+    { source_id: "barons-Mariani:memory/marie-louise/carte.md#L1-L2", repo: "barons-Mariani", path: "memory/marie-louise/carte.md" },
+  ],
+  context: [
+    { source_id: "barons-Mariani:projects/privai/architecture.md#L1-L2", text: "in scope" },
+    { source_id: "barons-Mariani:memory/marie-louise/carte.md#L1-L2", text: "PRIVATE_MARKER" },
+  ],
+  s7: { ok: true, canonical_repo: "barons-Mariani", canonical_rel: "memory/marie-louise/carte.md", ref: "barons-Mariani:memory/marie-louise/carte.md" },
+  warnings: [],
+}, privaiClosed.profile);
+assert.deepEqual(privaiFiltered.sources.map(source => source.source_id), [
+  "barons-Mariani:projects/privai/architecture.md#L1-L2",
+]);
+assert.equal(privaiFiltered.context.length, 1);
+assert.equal(privaiFiltered.s7.ok, false);
+
+const privaiDraft = preparePublicGuideAct({
+  profile: "privai",
+  act: "submit-contribution",
+  locale: "fr",
+  context: "Le passage sur la fondation est trop fort.",
+});
+assert.equal(privaiDraft.ok, true);
+assert.equal(privaiDraft.body.prepared_act.executed, false);
+assert.equal(privaiDraft.body.prepared_act.draft, true);
+assert.equal(privaiDraft.body.prepared_act.to, "jhr@baronsmariani.org");
+assert.match(privaiDraft.body.prepared_act.body, /ne dépose pas l'objection/);
+assert.equal(preparePublicGuideAct({
+  profile: "privai",
+  act: "submit-testimony",
+  context: "no",
+}).body.error, "unknown_act");
+
 const moduleSource = fs.readFileSync(new URL("./lib/public-guide-profiles.js", import.meta.url), "utf8");
 assert.doesNotMatch(moduleSource, /child_process|nodemailer|octokit|writeFile|appendFile|fetch\(/);
 const httpSource = fs.readFileSync(path.join(root, "scripts", "cogentia-mcp-http.js"), "utf8");
@@ -238,7 +320,7 @@ assert.equal(fs.existsSync(path.join(siteRoot, "editions", "2026-09-17", "index.
 
 console.log(JSON.stringify({
   ok: true,
-  profiles: ["fractavolta", "suicide-corse"],
+  profiles: ["fractavolta", "suicide-corse", "privai"],
   prepare_act: true,
   suicide_corse_scope: live.profile.sourceScopeSummary.mode,
 }, null, 2));
