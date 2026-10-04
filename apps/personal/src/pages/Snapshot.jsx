@@ -1,5 +1,24 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
+import { extractJson, normalizeSnapshot } from '../lib/kys-snapshot.js'
+import {
+  agentStampFromData,
+  canGoBack,
+  ensureNextTurn,
+  forwardIntent,
+  goBack,
+  goForward,
+  loadBrowserTurnLog,
+  markCorrectionOffered,
+  recordParsedResponse,
+  recordPromptCopy,
+  saveBrowserTurnLog,
+  setTurnProvider,
+  updatePromptText,
+  updateResponseText,
+  updateTurnReview,
+} from '../lib/turns.js'
+import { StepNav, TurnBar, TurnClocks, forwardLabel, useNow } from '../components/TurnBar.jsx'
 
 const PROVIDERS = ['ChatGPT', 'Claude', 'Gemini', 'Mistral', 'Grok', 'Autre agent']
 
@@ -32,10 +51,12 @@ Règles :
 - N’infère aucun diagnostic, trouble, état de santé, orientation, religion, origine ou opinion politique.
 - Maximum 5 éléments par catégorie.
 - Écris en français clair, neutre et non clinique.
+- Indique answered_at : la date et l'heure de ta réponse, en ISO 8601 avec le décalage horaire numérique.
 
 Schéma attendu :
 {
   "snapshot_version": "kys-snapshot-0.1",
+  "answered_at": "2026-10-04T15:04:00+02:00",
   "agent": {
     "provider": "${provider}",
     "model": "",
@@ -58,86 +79,6 @@ Schéma attendu :
     { "claim": "", "basis": "Pourquoi cette information manque", "confidence": "high" }
   ]
 }`
-}
-
-function extractJson(text) {
-  const trimmed = text.trim()
-  if (!trimmed) throw new Error('Collez d’abord la réponse de votre agent.')
-
-  const withoutFence = trimmed
-    .replace(/^```(?:json)?\s*/i, '')
-    .replace(/\s*```$/, '')
-
-  try {
-    return JSON.parse(withoutFence)
-  } catch {
-    // Continue avec une extraction équilibrée du premier objet JSON.
-  }
-
-  const start = trimmed.indexOf('{')
-  if (start === -1) throw new Error('Aucun objet JSON détecté dans la réponse.')
-
-  let depth = 0
-  let inString = false
-  let escaped = false
-
-  for (let index = start; index < trimmed.length; index += 1) {
-    const char = trimmed[index]
-
-    if (inString) {
-      if (escaped) escaped = false
-      else if (char === '\\') escaped = true
-      else if (char === '"') inString = false
-      continue
-    }
-
-    if (char === '"') inString = true
-    else if (char === '{') depth += 1
-    else if (char === '}') {
-      depth -= 1
-      if (depth === 0) {
-        return JSON.parse(trimmed.slice(start, index + 1))
-      }
-    }
-  }
-
-  throw new Error('Le JSON semble incomplet. Vérifiez que la réponse a été copiée en entier.')
-}
-
-function normalizeClaim(item, index, category) {
-  if (typeof item === 'string') {
-    return { id: `${category}-${index}`, claim: item, basis: '', confidence: 'low' }
-  }
-
-  return {
-    id: item?.id || `${category}-${index}`,
-    claim: String(item?.claim || item?.text || '').trim(),
-    basis: String(item?.basis || item?.evidence || '').trim(),
-    confidence: ['high', 'medium', 'low'].includes(item?.confidence) ? item.confidence : 'low',
-  }
-}
-
-function normalizeSnapshot(data, provider) {
-  const normalized = {
-    snapshot_version: data?.snapshot_version || 'kys-snapshot-0.1',
-    agent: {
-      provider: data?.agent?.provider || provider,
-      model: data?.agent?.model || '',
-      context_scope: data?.agent?.context_scope || '',
-    },
-    relationship_summary: String(data?.relationship_summary || '').trim(),
-  }
-
-  CATEGORIES.forEach(({ key }) => {
-    normalized[key] = Array.isArray(data?.[key])
-      ? data[key].map((item, index) => normalizeClaim(item, index, key)).filter((item) => item.claim)
-      : []
-  })
-
-  const count = CATEGORIES.reduce((sum, { key }) => sum + normalized[key].length, 0)
-  if (count === 0) throw new Error('Le JSON ne contient aucune affirmation exploitable.')
-
-  return normalized
 }
 
 function copyText(text) {
@@ -171,14 +112,27 @@ function confidenceLabel(value) {
 }
 
 export default function Snapshot() {
-  const [provider, setProvider] = useState(PROVIDERS[0])
-  const [step, setStep] = useState(1)
-  const [pasted, setPasted] = useState('')
-  const [snapshot, setSnapshot] = useState(null)
-  const [reviews, setReviews] = useState({})
+  const now = useNow()
+  const [log, setLog] = useState(() => loadBrowserTurnLog())
   const [error, setError] = useState('')
   const [copied, setCopied] = useState('')
-  const [correctionOffered, setCorrectionOffered] = useState(false)
+  const turn = log.turns.find((item) => item.number === log.cursor.turn) || log.turns[0]
+  const step = log.cursor.step
+  const provider = turn.provider || PROVIDERS[0]
+  const snapshot = turn.snapshot
+  const reviews = turn.reviews || {}
+  const intent = forwardIntent(log)
+
+  useEffect(() => {
+    saveBrowserTurnLog(log)
+  }, [log])
+
+  useEffect(() => {
+    if (turn.prompt.role !== 'initial') return
+    const text = buildPrompt(turn.provider || PROVIDERS[0])
+    if (turn.prompt.text === text) return
+    setLog((current) => updatePromptText(current, turn.number, text, new Date().toISOString()))
+  }, [turn])
 
   const prompt = useMemo(() => buildPrompt(provider), [provider])
 
@@ -228,11 +182,29 @@ Produisez maintenant une version corrigée en JSON valide.
 - Ne conservez ni ne réutilisez les éléments signalés comme privés.
 - Intégrez mes nuances sans les transformer en conclusions plus générales.
 - Rappelez les limites du contexte auquel vous avez accès.
+- Indiquez answered_at, l'heure de votre réponse en ISO 8601 avec le décalage horaire, par exemple 2026-10-04T15:04:00+02:00.
 - Cette représentation reste un instantané contestable, non un diagnostic ni une définition de ma personne.`
   }, [items, reviews, snapshot])
 
+  const nextTurn = log.turns.find((item) => item.number === turn.number + 1)
+  const correctionOffered = Boolean(turn.correction_offered) && nextTurn?.prompt.copied_text === correctionPrompt
+
+  const setCorrectionOffered = (value) => {
+    if (value !== true) return
+    const at = new Date().toISOString()
+    setLog((current) => ensureNextTurn(markCorrectionOffered(current, turn.number), {
+      after: turn.number,
+      text: correctionPrompt,
+      producedAt: at,
+      copiedAt: at,
+    }))
+  }
+
   const handleCopy = async (text, label) => {
     if (label === 'correction') setCorrectionOffered(true)
+    if (label === 'prompt') {
+      setLog((current) => recordPromptCopy(current, turn.number, text, new Date().toISOString()))
+    }
     try {
       await copyText(text)
       setCopied(label)
@@ -244,23 +216,39 @@ Produisez maintenant une version corrigée en JSON valide.
 
   const handleParse = () => {
     try {
-      const parsed = normalizeSnapshot(extractJson(pasted), provider)
-      setSnapshot(parsed)
-      setReviews({})
+      const data = extractJson(turn.response.text)
+      const parsed = normalizeSnapshot(data, provider)
+      const keepReviews = Boolean(turn.snapshot) && turn.response.parsed_text === turn.response.text
       setError('')
-      setStep(3)
-      localStorage.setItem('kys_snapshot_draft_v1', JSON.stringify({ snapshot: parsed, reviews: {} }))
+      setLog((current) => recordParsedResponse(current, turn.number, {
+        text: turn.response.text,
+        pastedAt: new Date().toISOString(),
+        agentStamp: agentStampFromData(data),
+        snapshot: parsed,
+        keepReviews,
+        advance: true,
+      }))
     } catch (parseError) {
       setError(parseError.message || 'Réponse impossible à analyser.')
     }
   }
 
   const updateReview = (id, patch) => {
-    setReviews((current) => {
-      const next = { ...current, [id]: { ...current[id], ...patch } }
-      localStorage.setItem('kys_snapshot_draft_v1', JSON.stringify({ snapshot, reviews: next }))
-      return next
-    })
+    setLog((current) => updateTurnReview(current, turn.number, id, patch))
+  }
+
+  const onBack = () => setLog((current) => goBack(current))
+
+  const onForward = () => {
+    if (forwardIntent(log).kind === 'parse') {
+      handleParse()
+      return
+    }
+    setLog((current) => goForward(current))
+  }
+
+  const chooseProvider = (name) => {
+    setLog((current) => setTurnProvider(current, turn.number, name, buildPrompt(name), new Date().toISOString()))
   }
 
   const exportSnapshot = () => {
@@ -292,8 +280,21 @@ Produisez maintenant une version corrigée en JSON valide.
           Que croit savoir votre IA sur vous ?
         </h1>
         <p className="font-body text-dim max-w-2xl leading-relaxed">
-          Interrogez votre agent habituel, examinez chacune de ses affirmations, puis corrigez sa représentation. Rien n’est envoyé à Cogentia dans ce parcours.
+          Interrogez votre agent habituel, examinez chacune de ses affirmations, puis corrigez sa représentation. Rien n’est envoyé à Cogentia dans ce parcours. Les tours restent dans ce navigateur.
         </p>
+      </div>
+
+      <div className="mb-8" data-turn={turn.number} data-step={step}>
+        <TurnBar log={log} onJump={setLog} />
+        <p className="font-mono text-signal text-xs tracking-widest uppercase mb-3">Tour {turn.number} · étape {step}</p>
+        <TurnClocks turn={turn} now={now} />
+        <StepNav
+          onBack={onBack}
+          backDisabled={!canGoBack(log)}
+          onForward={onForward}
+          forwardDisabled={intent.kind === 'none'}
+          forwardLabel={forwardLabel(intent.kind, intent.target)}
+        />
       </div>
 
       <div className="flex gap-2 mb-10" aria-label="Progression">
@@ -304,37 +305,41 @@ Produisez maintenant une version corrigée en JSON valide.
 
       {step === 1 && (
         <section className="space-y-8">
-          <div>
-            <label className="label">Votre agent habituel</label>
-            <div className="flex flex-wrap gap-2">
-              {PROVIDERS.map((name) => (
-                <button
-                  key={name}
-                  type="button"
-                  onClick={() => setProvider(name)}
-                  className={`px-4 py-2 rounded-lg border text-sm transition-colors ${provider === name ? 'border-signal bg-signal/10 text-bright' : 'border-border text-dim hover:border-dim'}`}
-                >
-                  {name}
-                </button>
-              ))}
+          {turn.prompt.role === 'initial' && (
+            <div>
+              <label className="label">Votre agent habituel</label>
+              <div className="flex flex-wrap gap-2">
+                {PROVIDERS.map((name) => (
+                  <button
+                    key={name}
+                    type="button"
+                    onClick={() => chooseProvider(name)}
+                    className={`px-4 py-2 rounded-lg border text-sm transition-colors ${provider === name ? 'border-signal bg-signal/10 text-bright' : 'border-border text-dim hover:border-dim'}`}
+                  >
+                    {name}
+                  </button>
+                ))}
+              </div>
             </div>
-          </div>
+          )}
 
           <div className="card">
             <div className="flex items-start justify-between gap-4 mb-4">
               <div>
-                <h2 className="font-display text-xl font-semibold text-bright">1. Copiez ce prompt</h2>
-                <p className="font-body text-sm text-dim mt-1">Exécutez-le directement chez {provider}. Vous gardez la maîtrise de la conversation source.</p>
+                <h2 className="font-display text-xl font-semibold text-bright">
+                  {turn.prompt.role === 'correction' ? '1. Prompt de ce tour' : '1. Copiez ce prompt'}
+                </h2>
+                <p className="font-body text-sm text-dim mt-1">
+                  {turn.prompt.role === 'correction'
+                    ? 'Ce texte est celui qui a été envoyé à l’agent pour ce tour. Le recopier met à jour l’heure de copie.'
+                    : `Exécutez-le directement chez ${provider}. Vous gardez la maîtrise de la conversation source.`}
+                </p>
               </div>
-              <button type="button" className="btn-primary shrink-0" onClick={() => handleCopy(prompt, 'prompt')}>
+              <button type="button" className="btn-primary shrink-0" onClick={() => handleCopy(turn.prompt.text || prompt, 'prompt')}>
                 {copied === 'prompt' ? 'Copié ✓' : 'Copier'}
               </button>
             </div>
-            <textarea readOnly value={prompt} rows={14} className="input resize-y font-mono text-xs leading-relaxed" />
-          </div>
-
-          <div className="flex justify-end">
-            <button type="button" className="btn-primary" onClick={() => setStep(2)}>J’ai la réponse →</button>
+            <textarea readOnly value={turn.prompt.text || prompt} rows={14} className="input resize-y font-mono text-xs leading-relaxed" />
           </div>
         </section>
       )}
@@ -347,18 +352,13 @@ Produisez maintenant une version corrigée en JSON valide.
               N’ajoutez pas l’historique de conversation. Le JSON produit par votre agent suffit.
             </p>
             <textarea
-              value={pasted}
-              onChange={(event) => setPasted(event.target.value)}
+              value={turn.response.text}
+              onChange={(event) => setLog((current) => updateResponseText(current, turn.number, event.target.value))}
               rows={18}
               className="input resize-y font-mono text-xs leading-relaxed"
-              placeholder={'{\n  "snapshot_version": "kys-snapshot-0.1",\n  ...\n}'}
+              placeholder={'{\n  "snapshot_version": "kys-snapshot-0.1",\n  "answered_at": "2026-10-04T15:04:00+02:00"\n}'}
             />
             {error && <p className="font-mono text-red-400 text-xs mt-3">{error}</p>}
-          </div>
-
-          <div className="flex justify-between gap-3">
-            <button type="button" className="btn-ghost" onClick={() => setStep(1)}>← Revenir au prompt</button>
-            <button type="button" className="btn-primary" onClick={handleParse}>Afficher mon miroir →</button>
           </div>
         </section>
       )}
@@ -447,10 +447,24 @@ Produisez maintenant une version corrigée en JSON valide.
                 {copied === 'correction' ? 'Prompt copié ✓' : 'Copier le prompt de correction'}
               </button>
               {correctionOffered && (
-                <Link to="/mirror" className="btn-primary ml-auto">Coller la réponse</Link>
+                <Link
+                  to="/mirror"
+                  className="btn-primary ml-auto"
+                  onClick={() => saveBrowserTurnLog({ ...log, cursor: { turn: turn.number + 1, step: 2 } })}
+                >
+                  Coller la réponse
+                </Link>
               )}
             </div>
           </div>
+
+          <StepNav
+            onBack={onBack}
+            backDisabled={!canGoBack(log)}
+            onForward={onForward}
+            forwardDisabled={intent.kind === 'none'}
+            forwardLabel={forwardLabel(intent.kind, intent.target)}
+          />
 
           <div className="border-t border-border pt-6 text-xs text-muted leading-relaxed">
             Ce résultat est un <strong className="text-dim">KYS Snapshot personnel</strong>, non un KYS Profile certifié. Les futurs KYS Profiles limités et finalisés relèveront du cadre fiduciaire non lucratif de PrivAI.
