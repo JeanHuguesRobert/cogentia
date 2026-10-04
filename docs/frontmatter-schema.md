@@ -5,7 +5,7 @@ license: CC BY-SA 4.0
 language: en
 title: Frontmatter Schema — v0.1 (Corpus)
 date: '2026-05-27'
-last_modified_at: '2026-09-21'
+last_modified_at: '2026-10-04'
 status: working-paper — auto-filled (frontmatter cleanup)
 canonical_url: https://github.com/JeanHuguesRobert/cogentia/blob/main/docs/frontmatter-schema.md
 last_stamped_at: 2026-06-01T00:00:00.000Z
@@ -44,6 +44,7 @@ The machine-readable companion is [`frontmatter-schema.v0.1.json`](frontmatter-s
 - Priority is given to **traceability**, **portability**, and **privacy protection**.
 - The schema must remain **evolvable** and **pragmatic**. We avoid needless complexity: clear equivalence rules are preferred to excessive rigidity.
 - **Unregistered is not invalid.** A meaningful local field may emerge before the shared schema has learned its semantics.
+- **Frontmatter as metacognitive instrumentation, not cognition by fiat.** Frontmatter provides an explicit local substrate that lets a handler reason not only with a document's content, but about the conditions under which that content should be interpreted (provenance, role, currency, review status, authority). Richer metadata is not automatically better: Occam and Minimum Sufficient Locality apply to metadata as well, avoiding decorative or redundant fields without demonstrated cognitive purpose.
 
 ## General Rules
 

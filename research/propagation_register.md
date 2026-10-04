@@ -5,9 +5,9 @@ author: "Jean Hugues Noël Robert"
 affiliation: "Institut Mariani / C.O.R.S.I.C.A., 1 cours Paoli, F-20250 Corte, Corsica"
 license: "MIT"
 status: "working-paper"
-version: "0.8"
+version: "0.9"
 date: "2026-08-16"
-last_modified_at: "2026-09-21"
+last_modified_at: "2026-10-04"
 language: "en"
 document_role: "source"
 document_kind: "operational-registry"
@@ -31,11 +31,14 @@ related_issues:
   - "cogentia#91"
   - "cogentia#99"
   - "cogentia#169"
+  - "cogentia#226"
 related_documents:
   - "research/cognitive_packets.md"
   - "research/memory_and_corpus_sleep_cycle.md"
   - "research/semantic_propagation_rule.md"
   - "research/operational_stance.md"
+  - "research/fractacognition_principles.md"
+  - "research/locality_principle.md"
   - "docs/corpus-responsibility-contract.md"
   - "prompts/redactor.md"
   - "https://github.com/JeanHuguesRobert/operium/blob/main/research/federated-capacity-registry.md"
@@ -573,6 +576,56 @@ propagation:
       - "cogentia commit bb3ebaee68c6"
       - "cogentia commit be8d6e80e9a4"
       - "barons-Mariani Suicide Corse n2 frozen snapshot f061abb2484dc5ee973d81865db5c9d3b5854d58"
+```
+
+### PR-2026-011 — FractaCognition consolidation across Locality, frontmatter, and Friends before competitors
+
+```yaml
+propagation:
+  id: PR-2026-011
+  status: propagated
+  discovered_at: 2026-10-04
+  source_refs:
+    - "JeanHuguesRobert/cogentia#226"
+    - "JeanHuguesRobert/cogentia#226 comment IC_kwDORcFCM88AAAABZEH6TA"
+    - "research/telescript_as_a_friend.md"
+  source_summary: >-
+    Frontmatter review, Telescript analysis, and practical handler execution gaps
+    exposed an already-distributed relationship: FractaCognition is multiscale
+    metacognition operating within Minimum Sufficient Locality. Explicit metadata
+    (frontmatter) serves as local metacognitive instrumentation; Friends before
+    competitors provides an idea-level search heuristic symmetric to Hanlon;
+    and local handler incapacity does not imply network incapacity (routing work
+    via resumable continuations without authority widening).
+  completed_targets:
+    - "research/fractacognition_principles.md v0.7"
+    - "research/locality_principle.md v0.4"
+    - "docs/frontmatter-schema.md"
+  expected_effects:
+    - "FractaCognition has an explicit compact definition without mathematical overclaim"
+    - "FractaCognition and Minimum Sufficient Locality are reciprocally linked"
+    - "Frontmatter is recognized as metacognitive instrumentation under Occam and Locality"
+    - "Friends before competitors is articulated alongside Hanlon as a search-order heuristic"
+    - "Local handler incapacity is distinguished from system incapacity, enabling resumable continuation routing"
+    - "Validated learning stays local by default and propagates selectively without authority widening"
+  deliberately_not_propagated:
+    - "no new central meta-ontology or mandatory metadata fields"
+    - "no claim of strict mathematical fractality"
+    - "no dilution of local domain authority into a central cognitive constitution"
+    - "no uncritical assimilation of prior art or erasure of residual differences"
+    - "no automatic authority widening upon capability delegation"
+  priority: high
+  confidence: high
+  propagation_level: 2
+  blockers: []
+  next_action: >-
+    Dogfood the consolidated principles across multi-agent handoffs and resumable
+    issues; verify that cold handlers recognize local incapacity and emit resumable
+    continuations instead of blocking or assuming task impossibility.
+  verification:
+    status: partial
+    evidence_refs:
+      - "JeanHuguesRobert/cogentia#226"
 ```
 
 ## Operational discipline

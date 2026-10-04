@@ -4,8 +4,8 @@ subtitle: "Smallest sufficient locality, explicit crossing, and global reference
 author: "Jean Hugues Noël Robert, baron Mariani"
 affiliation: "Institut Mariani / C.O.R.S.I.C.A., 1 cours Paoli, F-20250 Corte, Corsica, France"
 date: "2026-09-19"
-last_modified_at: "2026-09-20"
-version: "0.3"
+last_modified_at: "2026-10-04"
+version: "0.4"
 status: "working-paper — locality doctrine candidate"
 document_role: "source"
 document_kind: "architecture-principle"
@@ -24,6 +24,9 @@ related_documents:
   - "research/mneme_memory_architecture.md"
   - "research/memory_and_corpus_sleep_cycle.md"
   - "research/agent_working_conventions.md"
+  - "research/fractacognition_principles.md"
+  - "research/propagation_register.md"
+  - "docs/frontmatter-schema.md"
   - "https://github.com/JeanHuguesRobert/Inox/blob/master/research/concepts.md#control-data-plane-separation"
   - "https://github.com/JeanHuguesRobert/inseme/blob/main/research/cop_memory_profile.md"
   - "https://github.com/JeanHuguesRobert/inseme/blob/main/packages/cop-core/COP_STORE_AND_PERSISTENCE.md"
@@ -54,11 +57,15 @@ tags:
   - federation
   - control-plane
   - data-plane
+  - metacognition
+  - fractacognition
+  - handler-capacity
 classification_source: "cogentia.js"
 classification_version: "1"
 classification_rule: "explicit-metadata"
 classification_confidence: "medium"
 changelog:
+  - "v0.4 (2026-10-04) — relates locality to FractaCognition: local metacognition, default local retention of validated learning, and distinction between local handler incapacity and network incapacity."
   - "v0.3 (2026-09-20) — makes normative fractality and the meta-control-plane explicit: constitutional invariants, operating mechanisms, local rules, and situated acts preserve their authority boundary at every scale."
   - "v0.2 (2026-09-20) — relates Minimum Sufficient Locality to the control/data-plane distinction; records the authority boundary for Cogentia projections."
   - "v0.1 (2026-09-19) — first cross-Corpus formalization of locality, Minimum Sufficient Locality, locality closure, explicit crossing and global-reference-before-global-state."
@@ -587,7 +594,73 @@ Do not globalize an object merely because a global system can see it.
 
 ---
 
-## 17. Design invariants
+## 17. Local metacognition and handler capacity
+
+Locality applies not only to data and domain state, but to the reflexive observation of reasoning itself.
+
+### 17.1 Local cognition includes local metacognition
+
+A locality does not merely execute tasks; it observes, represents, and evaluates how it performs them. [FractaCognition](fractacognition_principles.md) supplies this learning and self-correction dimension.
+
+However, metacognition must itself respect Minimum Sufficient Locality:
+
+> **Metacognition should remain within the Minimum Sufficient Locality until Reality justifies crossing that boundary.**
+
+Validated learning stays local by default. Do not broadcast or promote local operational insights into global rules or central registries without demonstrated recurrence and cross-locality need.
+
+Furthermore:
+
+~~~text
+global cognitive capability
+≠ global state
+≠ global memory
+≠ global context
+≠ global authority
+~~~
+
+A cognitive network achieves collective intelligence through sufficiently closed localities, stable references, bounded projections, routing, and selective propagation—never through totalized global capture.
+
+### 17.2 Local handler incapacity is not system incapacity
+
+A critical failure mode in distributed cognition is confusing the boundary of the current execution environment with the boundary of the system:
+
+> **Local handler incapacity does not imply system incapacity.**
+
+~~~text
+capability unavailable here
+≠ capability absent from the network
+~~~
+
+When an authorized handler encounters a capability barrier local to its environment (for example, inability to execute repository shell scripts, missing private connectors, or lack of interactive authentication), it MUST NOT collapse this into task impossibility.
+
+Under Minimum Sufficient Locality and FractaCognition:
+
+~~~text
+current handler cannot perform required act locally
+→ identify required semantic capability
+→ discover an admissible capable handler / provider / shell / principal
+→ package or reference sufficient continuation state
+→ delegate under unchanged mandate / authority bounds
+→ receive result / receipt
+→ verify
+→ assimilate useful yield
+~~~
+
+This maintains five cardinal invariants:
+
+~~~text
+local incapacity ≠ global incapacity
+capability discovery ≠ authorization
+delegation ≠ authority widening
+remote execution ≠ loss of provenance
+handler substitution ≠ packet identity change
+~~~
+
+A locality that cannot perform an act exports a resumable continuation (Cognitive Packet or resumable GitHub Issue) to an authorized peer; it does not surrender its mandate or assume the work is impossible.
+
+---
+
+## 18. Design invariants
 
 The initial locality invariants are:
 
@@ -603,6 +676,7 @@ The initial locality invariants are:
 10. **Global Maps may span local Territory.** Cartographic scope does not imply ownership or replication.
 11. **Expansion is explicit.** A bounded view SHOULD expose paths for deeper traversal instead of assuming exhaustive context.
 12. **Locality is fractal and situated.** The useful locality may change with the operation and scale.
+13. **Local incapacity is not network incapacity.** A capability absent in one locality may be routed through an explicit resumable continuation to an authorized locality without global state capture or authority widening.
 
 ### Normative fractality and the meta-control plane
 
@@ -631,7 +705,7 @@ coordinates an act and the mandate that can authorize that act.
 
 ---
 
-## 18. Non-goals and restraint
+## 19. Non-goals and restraint
 
 This note does **not** yet introduce:
 
@@ -650,7 +724,7 @@ The principle should first be tested through existing COP, Cogentia, FractaCarta
 
 ---
 
-## 19. Reality Test direction
+## 20. Reality Test direction
 
 A useful combined Reality Test should start with knowledge retained in Locality A and a cold handler operating from Locality B.
 
@@ -673,7 +747,7 @@ The test should record residue rather than forcing every observed need into the 
 
 ---
 
-## 20. Stable working formula
+## 21. Stable working formula
 
 ~~~text
 Keep what is locally intelligible local.

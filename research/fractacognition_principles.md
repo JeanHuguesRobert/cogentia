@@ -1,12 +1,12 @@
 ---
-title: "FractaCognition — Prudence, Humility, Occam, Hanlon, Talleyrand, and Bounded Assertion"
-subtitle: "A cardinal discipline of prudence and humility, with heuristics for simplicity, attribution, explicit assumptions, bounded assertion, and metacognitive initiative"
-description: "Source note articulating Prudence and Humility as a cardinal FractaCognition discipline, with Occam, Hanlon, Talleyrand, Bounded Assertion, and Metacognitive Initiative as complementary heuristics."
+title: "FractaCognition — Prudence, Humility, Occam, Hanlon, Talleyrand, Bounded Assertion, Friends Before Competitors, and Locality"
+subtitle: "A cardinal discipline of prudence and humility, with heuristics for simplicity, attribution, explicit assumptions, bounded assertion, adjacent kinship, and minimum sufficient locality"
+description: "Consolidating note articulating FractaCognition definition, multiscale reflexive grammar, Prudence and Humility as a cardinal discipline, and complementary heuristics including Occam, Hanlon, Talleyrand, Bounded Assertion, Friends Before Competitors, Minimum Sufficient Locality, and Metacognitive Initiative."
 author: "Jean Hugues Noël Robert, baron Mariani"
 affiliation: "Institut Mariani / C.O.R.S.I.C.A., 1 cours Paoli, F-20250 Corte, Corsica"
 date: "2026-09-27"
-last_modified_at: "2026-10-02"
-version: "0.6"
+last_modified_at: "2026-10-04"
+version: "0.7"
 status: "working-paper"
 license: "CC BY-SA 4.0"
 language: "en"
@@ -26,6 +26,9 @@ tags:
   - hanlon
   - talleyrand
   - bounded-assertion
+  - friends-before-competitors
+  - locality
+  - handler-capacity
   - metacognitive-initiative
   - heuristics
 related_documents:
@@ -33,6 +36,10 @@ related_documents:
   - "research/indirection_as_metacognitive_heuristic.md"
   - "research/simplicite_action.md"
   - "research/non_resolutive_response_patterns.md"
+  - "research/locality_principle.md"
+  - "research/telescript_as_a_friend.md"
+  - "research/propagation_register.md"
+  - "docs/frontmatter-schema.md"
   - "../instructions/AGENTS.shared.md"
   - "../docs/resumable_github_issues.md"
 provenance:
@@ -49,15 +56,49 @@ review:
   reviewed_by: []
 ---
 
-# FractaCognition — Prudence, Humility, Occam, Hanlon and Talleyrand
+# FractaCognition — Principles, Locality, and Complementary Heuristics
 
-## 1. Purpose
+## 1. Purpose and Scope
 
-FractaCognition benefits from small metacognitive rules that improve how a reasoner chooses representations, interprets causes, and prepares action.
+FractaCognition benefits from small metacognitive rules that improve how a reasoner chooses representations, interprets causes, explores adjacent work, and prepares action.
 
 This note is a **consolidating but non-centralizing** layer. It does not replace the specialized source documents or operational projections where each principle is applied. It makes the principles jointly discoverable, clarifies their relationships, and points back to their local homes.
 
-### Cardinal discipline — Prudence and Humility
+Canonical invariant:
+
+> **Consolidate relationships, not authority.**
+
+### 1.1 Compact definition
+
+> **FractaCognition is the capacity of a cognitive system to observe, represent, evaluate and modify how it knows, reasons, remembers, learns, acts and transmits, and to propagate validated learning proportionately across its connected scales and components.**
+
+FractaCognition is not merely learning about the external world; it is the reflexive discipline through which a cognitive architecture learns about its own habits of observation, representation, inference, coordination, handoff, and execution failure.
+
+### 1.2 Reflexive scale (not mathematical fractality)
+
+"Fracta" does **not** claim strict mathematical fractality (such as self-similarity at infinite depth or fractional dimension).
+
+Instead, it denotes a **recurring reflexive grammar across situated scales**:
+
+~~~text
+assertion
+→ document
+→ Cognitive Packet
+→ agent / handler
+→ Twin
+→ project
+→ community
+→ Corpus
+→ institution
+~~~
+
+At each scale:
+- the entity observes and represents its own boundaries, assumptions, and validity conditions;
+- it evaluates performance against Reality;
+- it adjusts conduct or schema under measured risk;
+- it attenuates authority monotonically: smaller localities specialize and restrict authority, never widen it.
+
+### 1.3 Cardinal discipline — Prudence and Humility
 
 FractaCognition adopts **Prudence and Humility** as a cardinal discipline governing the use of every local heuristic, model, tool, and capability.
 
@@ -102,7 +143,7 @@ In ERP terms:
 
 > **Explore boldly; act with discernment; conclude at the level justified by Reality.**
 
-Under that cardinal discipline, three complementary heuristics form a useful set:
+Under that cardinal discipline, complementary heuristics form a mutually constraining suite:
 
 ~~~text
 Occam
@@ -113,16 +154,32 @@ Hanlon
 
 Talleyrand
 → do not leave operationally material assumptions implicit merely because they appear obvious
+
+Bounded Assertion
+→ affirm strongly what Reality supports; bound exactly where support ends
+
+Friends before competitors
+→ seek kinship, reuse, and prepaid Reality before differentiation in ideas
+
+Minimum Sufficient Locality
+→ keep state and metacognition local until Reality justifies crossing; local incapacity ≠ network incapacity
+
+Metacognitive Initiative
+→ actively co-research, observe, and sharpen the reasoning process
 ~~~
 
 They are heuristics, not axioms. None substitutes for Reality, evidence, Mandate, or judgment.
 
-Together they reduce three recurrent cognitive failure modes:
+Together they reduce recurrent cognitive failure modes:
 
 ~~~text
 unnecessary complexity
 premature hostile attribution
 unstated assumptions
+defensive-first dilution of signal
+premature adversary framing in ideas
+spurious globalization of local state
+passive execution without metacognitive vigilance
 ~~~
 
 ## 2. The Occam Principle
@@ -284,6 +341,39 @@ The same principle applies to Cognitive Packets and Resumable Issues:
 
 A handoff should not rely on hidden common sense when a cheap explicit invariant can prevent a false block or false conclusion.
 
+### 4.3 Frontmatter as explicit metadata instrumentation
+
+Frontmatter is metadata, not cognition by fiat.
+
+It becomes metacognitive instrumentation when a reasoner uses it to reason not only with a document's content, but about the conditions under which that content should be interpreted:
+
+> **Frontmatter lets a document say enough about itself for another handler to reason not only with its content, but about the conditions under which that content should be interpreted.**
+
+Typical frontmatter declarations—provenance, authority role, review state, update policy, canonical URL, and language peers—externalize tacit assumptions that would otherwise be lost when an artifact crosses repository, handler, or temporal boundaries.
+
+Occam and Locality apply to frontmatter: richer metadata is not automatically better. Do not multiply frontmatter fields without demonstrated cognitive or operational purpose.
+
+Specialized sources: [Frontmatter Schema](../docs/frontmatter-schema.md), [Living Frontmatter Schema Candidate](living_frontmatter_optimistic_schema_candidate.md).
+
+### 4.4 Handler capacity as a Talleyrand case
+
+A frequent tacit assumption in agent execution is: "the current handler is the whole available computer."
+
+When a handler cannot execute a shell command, lacks a local compiler, or cannot cross an authentication boundary, an implicit mindset often concludes: "this cannot be done."
+
+Talleyrand makes the distinction explicit:
+
+~~~text
+tacit assumption:
+  current handler = entire system
+  → local failure = total impossibility
+
+Talleyrand correction:
+  "I cannot do this here" ≠ "this cannot be done"
+  → externalize limitation explicitly
+  → route resumable continuation to an authorized capable locality
+~~~
+
 ## 5. The Bounded Assertion Principle
 
 A recurrent cognitive failure is **defensive-first reasoning**: a supported proposition is weakened before it is even stated because the reasoner anticipates possible objections.
@@ -373,7 +463,119 @@ better:
 
 The caveat may still be decisive. If it is, say so. But do not grant the objection rhetorical priority merely because it exists.
 
-## 6. Metacognitive Initiative
+## 6. The Friends Before Competitors Principle
+
+When a reasoner explores a new problem or adjacent domain, a frequent cognitive failure mode is **premature adversarial framing**: treating adjacent systems, past protocols, or other thinkers primarily as competitors or novelty threats to be dismissed.
+
+FractaCognition adopts the opposite search-order heuristic:
+
+> **Look for friends before competitors. Seek kinship, reuse and composition before differentiation. Preserve what remains different.**
+
+### 6.1 The Hanlon / Friends symmetry
+
+This heuristic is the epistemic twin of the Hanlon Principle:
+
+~~~text
+Hanlon Principle
+→ in the realm of acts: avoid premature adversary attribution (test ordinary failure first)
+
+Friends before competitors
+→ in the realm of ideas: avoid premature adversary attribution (test kinship, reuse, and prior art first)
+~~~
+
+Before asking how a new design or doctrine differs from adjacent work, a reasoner should ask:
+
+1. What conceptual kinship exists?
+2. What vocabularies, tests, mechanisms, or implementations can be reused?
+3. Are the systems compatible or composable?
+4. Can one serve as a Reality test, specialization, or extension of the other?
+5. What productive disagreement or unresolved residue remains?
+
+Only after exhausting kinship should differentiation be emphasized.
+
+### 6.2 Prior art is prepaid Reality
+
+In a commons-oriented corpus, prior art is not an obstacle to patent claims; it is **prepaid Reality**:
+
+> **Prior art is prepaid Reality: earlier explorers have already absorbed the cost of testing edge cases, protocol invariants, failure modes, and ecosystem barriers.**
+
+However, like Hanlon, this is a search-order heuristic, not an uncritical endorsement:
+
+- prior work may be mistaken, obsolete, situated in a different regime, or unsuited to current invariants;
+- friendship is **not assimilation**: differences, incompatibilities, competing hypotheses, and proper attribution must be preserved;
+- kinship must not erase the unique residue or novel necessity that provoked the current effort.
+
+Specialized sources: [Telescript as a Friend](telescript_as_a_friend.md), [`AGENTS.shared.md`](../instructions/AGENTS.shared.md#friends-before-competitors).
+
+## 7. Metacognition and Minimum Sufficient Locality
+
+Metacognition does not require creating an omnipresent central monitor. Like all cognition in this architecture, it is subject to the [Locality Principle](locality_principle.md):
+
+> **Metacognition should remain within the Minimum Sufficient Locality until Reality justifies crossing that boundary.**
+
+Preserve the fundamental distinction:
+
+~~~text
+global cognitive capability
+≠ global state
+≠ global memory
+≠ global context
+≠ global authority
+~~~
+
+A system achieves high collective intelligence not by creating a single global context window, shared heap, or centralized supervisor, but through:
+
+~~~text
+sufficiently closed localities
++ stable references
++ bounded projections
++ routing
++ selective propagation
+~~~
+
+### 7.1 Local handler incapacity is not system incapacity
+
+A direct consequence of locality is that no single handler is identical to the entire cognitive network.
+
+When work halts because the current agent lacks a tool, execution shell, authorization, or private key, the system must not confuse local incapacity with system-wide impossibility:
+
+> **Local handler incapacity does not imply system incapacity.**
+
+~~~text
+capability unavailable here
+≠ capability absent from the network
+~~~
+
+Operational consequence:
+
+~~~text
+current handler cannot perform required act locally
+→ identify required semantic capability
+→ discover an admissible capable handler / provider / shell / principal
+→ package or reference sufficient continuation state
+→ delegate under unchanged mandate / authority bounds
+→ receive result / receipt
+→ verify
+→ assimilate useful yield
+~~~
+
+Five invariants govern this handoff:
+
+~~~text
+local incapacity ≠ global incapacity
+capability discovery ≠ authorization
+delegation ≠ authority widening
+remote execution ≠ loss of provenance
+handler substitution ≠ packet identity change
+~~~
+
+Compact formulation:
+
+> **A FractaCognitive system should distinguish "I cannot do this here" from "this cannot be done", and should externalize a resumable continuation whenever another authorized locality can supply the missing capability.**
+
+Specialized source: [Locality Principle](locality_principle.md).
+
+## 8. Metacognitive Initiative
 
 FractaCognition is not a doctrine that the human Principal alone must discover while agents merely obey it.
 
@@ -408,7 +610,7 @@ agent = co-researcher of the reasoning process
 
 This matters especially when the Principal is currently carrying most of the metacognitive load. A capable agent should help discover, test, sharpen, and operationalize FractaCognition rather than waiting for every principle to be supplied explicitly.
 
-### 6.1 Promotion threshold
+### 8.1 Promotion threshold
 
 Do not promote every conversational insight into doctrine.
 
@@ -425,115 +627,92 @@ A candidate metacognitive rule deserves durable treatment when it materially cha
 
 Apply Occam, Minimum Sufficient Locality, Salience before Accumulation, and the anti-recursion rules. Metacognition should reduce repeated error, not create an ornamental layer above the work.
 
-## 7. The principles are complementary
+## 9. Validated Learning and Selective Propagation
 
-The three heuristics constrain one another.
+When local metacognition succeeds in identifying a defect or a useful heuristic, how should that learning spread?
+
+Under Minimum Sufficient Locality:
+
+> **Validated learning stays local by default unless propagation across localities is justified by demonstrated recurrence, shared invariants, or coordinated action.**
+
+A local lesson should not instantly mutate global instructions or pollute unrelated repositories.
+
+Key propagation rules:
+
+~~~text
+propagated ≠ verified
+~~~
+
+1. **Verification before durable stabilization:** Behaviorally material changes require verification before being marked complete.
+2. **Non-propagation of authority:** Moving learning, data, or Cognitive Packets does **never** widen authority. Authority attenuates monotonically.
+3. **Projection before replication:** Propagate the minimal heuristic, invariant, or contract; leave the local working traces, scratchpads, and execution logs in their native locality.
+
+Specialized sources: [Propagation Register](propagation_register.md), [Memory and Corpus Sleep Cycle](memory_and_corpus_sleep_cycle.md).
+
+## 10. The principles are complementary
+
+The heuristics in this suite constrain and balance one another.
 
 ### Occam without Talleyrand
-
-Can become under-specification:
-
-~~~text
-"obvious details omitted"
-→ handler lacks a decisive prerequisite
-→ work fails
-~~~
+Can become under-specification: obvious details omitted, leaving the handler without a decisive prerequisite.
 
 ### Talleyrand without Occam
-
-Can become bureaucratic over-specification:
-
-~~~text
-everything stated
-→ signal buried in procedure
-→ cognitive load rises
-~~~
+Can become bureaucratic over-specification: everything stated, burying signal in procedural noise.
 
 ### Hanlon without Reality tests
+Can become naive exculpation: assuming "just an error" without probing for hostile or structural causes.
 
-Can become naive exculpation:
+### Hanlon + Friends before competitors
+Provides symmetric defense against premature adversary attribution: Hanlon in acts, Friends before competitors in ideas.
 
-~~~text
-"probably just an error"
-→ no discriminating probe
-→ hostile or structural explanation never tested
-~~~
+### Locality + Talleyrand
+Talleyrand makes handler and locality boundaries explicit, preventing an agent from confusing local limitations with total impossibility.
 
-### Talleyrand + Hanlon
-
-~~~text
-unexpected failure
-→ make hidden assumptions explicit
-→ test ordinary failure
-→ preserve competing explanations
-→ let Reality discriminate
-~~~
-
-### Occam + Hanlon + Talleyrand
-
-~~~text
-Occam:
-  do not add what is not needed.
-
-Hanlon:
-  do not add hostile intent before ordinary failure is tested.
-
-Talleyrand:
-  do not omit what must be shared for correct continuation.
-~~~
+### Prudence + Bounded Assertion
+Bounded Assertion affirms strongly what Reality supports; Prudence bounds the claim exactly where support ends, preventing defensive self-dilution.
 
 Compact formulation:
 
-> **Minimize unnecessary structure. Minimize unjustified attribution. Minimize dangerous implicitness.**
+> **Minimize unnecessary structure (Occam). Minimize unjustified attribution in acts (Hanlon) and ideas (Friends before competitors). Minimize dangerous implicitness (Talleyrand). Affirm supported reality firmly (Bounded Assertion). Keep cognition local until Reality requires crossing (Locality).**
 
-## 8. Relation to the Rational Exploration of the Possible
+## 11. Relation to the Rational Exploration of the Possible
 
-All three improve exploration efficiency without closing The Possible.
+All heuristics in this suite improve exploration efficiency without prematurely closing The Possible:
 
 ~~~text
 Occam
-→ reduces branches created by unnecessary concepts
+→ prunes branches created by unnecessary entities
 
 Hanlon
-→ orders causal hypotheses without deleting alternatives
+→ orders causal hypotheses without deleting alternative explanations
+
+Friends before competitors
+→ reuses prepaid Reality from prior art instead of re-exploring solved ground
 
 Talleyrand
-→ exposes hidden preconditions before they create false impossibility
+→ exposes hidden prerequisites and handler limits before they manufacture false impossibility
+
+Bounded Assertion
+→ preserves clear signal and visible decision boundaries
+
+Minimum Sufficient Locality
+→ tests feasibility against the handler's actual accessible world early
 ~~~
 
 In ERP terms:
 
 ~~~text
-unnecessary branch
-→ prune by Occam
-
-premature adversarial branch
-→ defer / test by Hanlon
-
-hidden prerequisite
-→ expose by Talleyrand
+unnecessary branch         → prune by Occam
+premature adversary branch → defer / test by Hanlon
+reinventing solved wheel   → avoid via Friends before competitors
+hidden prerequisite        → expose by Talleyrand
+defensive signal loss      → prevent via Bounded Assertion
+stale / inaccessible world → detect via Locality & Freshness Gate
 ~~~
 
 None authorizes premature closure.
 
-## 9. Relation to FractaCognition
-
-FractaCognition is not only learning about the world. It also learns how its own methods of observation, reasoning, handoff, and action fail.
-
-These principles operate at that metacognitive level:
-
-~~~text
-Reality trace
-→ detect cognitive failure mode
-→ formulate reusable heuristic
-→ propagate proportionately
-→ alter future reasoning / handoff behavior
-→ Reality test again
-~~~
-
-They therefore belong to FractaCognition as reusable cognitive controls, while their operational projections may live in specialized documents, Skills, agent instructions, or tooling.
-
-## 10. Consolidating without centralizing
+## 12. Consolidating without centralizing
 
 This note is intentionally not a constitution of all cognition.
 
@@ -560,7 +739,7 @@ Canonical rule:
 
 > **Consolidate relationships, not authority.**
 
-## 11. Placement rule
+## 13. Placement rule
 
 Canonical consolidating source:
 
@@ -568,34 +747,24 @@ Canonical consolidating source:
 research/fractacognition_principles.md
 ~~~
 
-Specialized projections:
+Specialized projections and source homes:
 
-~~~text
-PRUDENCE & HUMILITY
-→ cardinal discipline across FractaCognition
-→ AGENTS.shared.md epistemic calibration / challenge / action-vs-inaction discipline
-
-Occam
-→ research/simplicite_action.md
-→ container / architecture / anti-bloat rules
-
-Hanlon
-→ research/non_resolutive_response_patterns.md
-→ AGENTS.shared.md ordinary-failure prior
-
-Talleyrand
-→ AGENTS.shared.md Freshness Before Work Gate
-→ docs/resumable_github_issues.md
-→ Verified Handoff / Accessible Inputs rules
-
-Indirection
-→ research/indirection_as_metacognitive_heuristic.md
-→ design boundaries / mappings / mediation where coupling is demonstrated
-~~~
+| Principle / Heuristic | Source Home / Rich Semantics | Operational Projection |
+|---|---|---|
+| **Prudence & Humility** | `research/fractacognition_principles.md` | `instructions/AGENTS.shared.md` (epistemic calibration & challenge discipline) |
+| **Occam** | `research/simplicite_action.md` | Anti-bloat rules, packet minimalism, single-responsibility boundaries |
+| **Hanlon** | `research/non_resolutive_response_patterns.md` | `instructions/AGENTS.shared.md` (ordinary-failure search-order heuristic) |
+| **Talleyrand** | `research/fractacognition_principles.md` | `instructions/AGENTS.shared.md` (Freshness Before Work Gate, Verified Handoff) |
+| **Bounded Assertion** | `research/fractacognition_principles.md` | Claims drafting, public framing vs verification layer, anti-defensive reasoning |
+| **Friends before competitors** | `research/telescript_as_a_friend.md` | `instructions/AGENTS.shared.md` (commons research, prior art as prepaid Reality) |
+| **Minimum Sufficient Locality** | `research/locality_principle.md` | `instructions/AGENTS.shared.md` (Accessible Inputs Gate, handler capacity routing) |
+| **Frontmatter Instrumentation** | `docs/frontmatter-schema.md` | `scripts/cogentia.js frontmatter verify`, living metadata conventions |
+| **Selective Propagation** | `research/propagation_register.md` | `research/memory_and_corpus_sleep_cycle.md` (verified vs propagated) |
+| **Indirection** | `research/indirection_as_metacognitive_heuristic.md` | Mediations where coupling is demonstrated under Occam constraint |
 
 The source principle should be stated once and projected where it changes behavior. Do not duplicate the whole doctrine into every operational document.
 
-## 12. Short operational card
+## 14. Short operational card
 
 ~~~text
 PRUDENCE & HUMILITY
@@ -608,10 +777,23 @@ OCCAM
 Am I adding something that is not necessary?
 
 HANLON
-Am I adding hostile intent before testing ordinary failure?
+Am I attributing hostile intent before testing ordinary failure?
+
+FRIENDS BEFORE COMPETITORS
+Am I treating prior art as a competitor instead of looking for kinship and prepaid Reality?
+What can be reused or composed before differentiating?
 
 TALLEYRAND
 Am I omitting a material assumption because it feels obvious?
+Am I confusing "I cannot do this here" with "this cannot be done"?
+
+BOUNDED ASSERTION
+Am I reflexively weakening a supported claim before stating it?
+Is the caveat bounding the frontier or draining the core signal?
+
+LOCALITY & HANDLER CAPACITY
+Can this remain local?
+If I lack the capability locally, can I emit a resumable continuation to an authorized capable handler?
 ~~~
 
 Then:
