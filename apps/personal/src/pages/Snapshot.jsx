@@ -437,12 +437,7 @@ Produisez maintenant une version corrigée en JSON valide.
               Cette seconde boucle transforme le portrait initial en représentation corrigée sous votre contrôle.
             </p>
             <textarea readOnly value={correctionPrompt} rows={16} className="input resize-y font-mono text-xs leading-relaxed" />
-            <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
-              <div>
-                {correctionOffered && (
-                  <Link to="/mirror" className="btn-primary">Coller la réponse</Link>
-                )}
-              </div>
+            <div className="mt-4 flex flex-wrap items-center gap-3">
               <button
                 type="button"
                 disabled={reviewedCount === 0}
@@ -451,6 +446,9 @@ Produisez maintenant une version corrigée en JSON valide.
               >
                 {copied === 'correction' ? 'Prompt copié ✓' : 'Copier le prompt de correction'}
               </button>
+              {correctionOffered && (
+                <Link to="/mirror" className="btn-primary ml-auto">Coller la réponse</Link>
+              )}
             </div>
           </div>
 

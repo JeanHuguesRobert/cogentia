@@ -337,7 +337,10 @@ const snapshotSource = fs.readFileSync(path.join(root, "apps/personal/src/pages/
 const offerAt = snapshotSource.indexOf("correctionOffered &&");
 const mirrorLinkAt = snapshotSource.indexOf('to="/mirror"', offerAt);
 const pasteLabelAt = snapshotSource.indexOf("Coller la réponse", mirrorLinkAt);
+const copyAt = snapshotSource.indexOf("Copier le prompt de correction");
 assert.ok(offerAt !== -1 && mirrorLinkAt > offerAt && pasteLabelAt > mirrorLinkAt);
+assert.ok(copyAt !== -1 && copyAt < pasteLabelAt);
+assert.equal(snapshotSource.slice(mirrorLinkAt, pasteLabelAt).includes("ml-auto"), true);
 assert.equal(snapshotSource.includes("if (label === 'correction') setCorrectionOffered(true)"), true);
 
 console.log("agent-acquired-context mirror: ok");
