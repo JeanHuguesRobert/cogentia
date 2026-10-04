@@ -27,6 +27,8 @@ import {
   reviewToAnnotation,
   verdictToStance,
 } from '../../../../scripts/lib/agent-acquired-context-review.js'
+import { compareSnapshots } from '../../../../scripts/lib/agent-acquired-context-alignment.js'
+import { ReobservationComparisonCard } from '../components/AgentClaimMirror.js'
 
 const PROVIDERS = ['ChatGPT', 'Claude', 'Gemini', 'Mistral', 'Grok', 'Autre agent']
 
@@ -132,6 +134,11 @@ export default function Snapshot() {
   const snapshot = turn.snapshot
   const reviews = turn.reviews || {}
   const intent = forwardIntent(log)
+  const previousTurn = log.turns.find((item) => item.number === turn.number - 1)
+  const comparison = useMemo(() => {
+    if (!snapshot || !previousTurn?.snapshot) return null
+    return compareSnapshots(previousTurn.snapshot, snapshot, previousTurn.reviews || {})
+  }, [snapshot, previousTurn])
 
   useEffect(() => {
     saveBrowserTurnLog(log)
@@ -421,6 +428,7 @@ Produisez maintenant une version corrigée en JSON valide.
 
       {step === 3 && snapshot && (
         <section className="space-y-8">
+          {comparison && <ReobservationComparisonCard comparison={comparison} />}
           <div className="card border-signal/30">
             <p className="label">Résumé de la relation selon l’agent</p>
             <p className="font-body text-bright leading-relaxed">

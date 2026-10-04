@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
   LearnedContextPasteForm,
@@ -20,6 +20,7 @@ import {
   updateResponseText,
   updateTurnReview,
 } from '../lib/turns.js'
+import { compareSnapshots } from '../../../../scripts/lib/agent-acquired-context-alignment.js'
 
 export default function LearnedContextMirrorPage() {
   const navigate = useNavigate()
@@ -29,9 +30,15 @@ export default function LearnedContextMirrorPage() {
   const [failure, setFailure] = useState(null)
   const [mirror, setMirror] = useState(null)
   const turn = log.turns.find((item) => item.number === log.cursor.turn) || log.turns[0]
+  const previousTurn = log.turns.find((item) => item.number === turn.number - 1)
   const [text, setText] = useState(turn.response.text || '')
   const view = { ...log, cursor: { turn: turn.number, step: 2 } }
   const intent = forwardIntent(view)
+
+  const comparison = useMemo(() => {
+    if (!mirror || !previousTurn?.snapshot) return null
+    return compareSnapshots(previousTurn.snapshot, mirror, previousTurn.reviews || {})
+  }, [mirror, previousTurn])
 
   useEffect(() => {
     saveBrowserTurnLog(log)
@@ -134,6 +141,7 @@ export default function LearnedContextMirrorPage() {
         onReview={updateReview}
         pending={pending}
         failure={failure}
+        comparison={comparison}
       />
       <div className="max-w-3xl mx-auto px-4 pb-10">
         <StepNav

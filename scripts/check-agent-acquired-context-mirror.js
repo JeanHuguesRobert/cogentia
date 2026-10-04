@@ -64,6 +64,7 @@ const browserFiles = [
   "apps/personal/src/pages/LearnedContextMirror.jsx",
   "scripts/lib/agent-acquired-context-mirror.js",
   "scripts/lib/agent-acquired-context-review.js",
+  "scripts/lib/agent-acquired-context-alignment.js",
   "scripts/lib/kys-snapshot-mirror.js",
 ];
 for (const relative of browserFiles) {
@@ -355,5 +356,29 @@ assert.equal(mirrorWithReview.includes("data-human-review=\"item:workshop\""), t
 assert.equal(mirrorWithReview.includes("data-agent-assertion=\"item:workshop\""), true);
 assert.equal(mirrorWithReview.includes("data-verdict-button=\"obsolete\""), true);
 assert.equal(mirrorWithReview.includes("data-verdict-button=\"private\""), true);
+assert.equal(mirrorWithReview.includes("data-alignment-section=\"true\""), true);
+assert.equal(mirrorWithReview.includes("data-bounded-memory-notice=\"true\""), true);
+assert.equal(mirrorWithReview.includes("data-alignment-prompt-text=\"true\""), true);
+assert.equal(mirrorWithReview.includes("data-copy-alignment-prompt=\"true\""), true);
+
+const mirrorWithComparison = renderToStaticMarkup(React.createElement(AgentClaimMirror, {
+  model: rich.model,
+  comparison: {
+    remediedCount: 2,
+    conflictsCount: 1,
+    retainedCount: 3,
+    droppedCount: 2,
+    addedCount: 1,
+    epistemicDisclaimer: "Cette comparaison enregistre une différence de comportement observable.",
+    reviewAdherence: [
+      { claim: "Ancien atelier", outcome: "remedied", statusMessage: "Retiré avec succès" },
+      { claim: "Télétravail", outcome: "persisting_conflict", statusMessage: "Toujours affirmé" },
+    ],
+  },
+}));
+assert.equal(mirrorWithComparison.includes("data-reobservation-comparison=\"true\""), true);
+assert.equal(mirrorWithComparison.includes("data-epistemic-disclaimer=\"true\""), true);
+assert.equal(mirrorWithComparison.includes("data-metric=\"remedied\""), true);
+assert.equal(mirrorWithComparison.includes("data-metric=\"conflicts\""), true);
 
 console.log("agent-acquired-context mirror: ok");

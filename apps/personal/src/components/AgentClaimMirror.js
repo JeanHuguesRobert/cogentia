@@ -4,6 +4,10 @@ import {
   isSalientItem,
   verdictToStance,
 } from "../../../../scripts/lib/agent-acquired-context-review.js";
+import {
+  buildAlignmentPrompt,
+  compareSnapshots,
+} from "../../../../scripts/lib/agent-acquired-context-alignment.js";
 
 const COPY = {
   banner: "Ceci est ce que l'agent affirme. Ce n'est pas une vérité objective.",
@@ -196,7 +200,136 @@ function ItemView({ item, review = null, onReview = null }) {
   ));
 }
 
-export function AgentClaimMirror({ model, reviews = {}, onReview = null }) {
+export function AlignmentPromptSection({
+  reviews = {},
+  snapshot = null,
+  provider = "votre agent conversationnel",
+}) {
+  const [copied, setCopied] = React.useState(false);
+  const [customPrompt, setCustomPrompt] = React.useState(null);
+
+  const defaultPrompt = React.useMemo(() => {
+    return buildAlignmentPrompt({
+      reviews,
+      snapshot,
+      provider: typeof provider === "string" ? provider : (provider?.provider || "votre agent conversationnel"),
+      language: "fr",
+    });
+  }, [reviews, snapshot, provider]);
+
+  const promptValue = customPrompt !== null ? customPrompt : defaultPrompt;
+
+  const handleCopy = () => {
+    if (typeof navigator !== "undefined" && navigator?.clipboard?.writeText) {
+      navigator.clipboard.writeText(promptValue).catch(() => {});
+    }
+    setCopied(true);
+    if (typeof window !== "undefined" && window.setTimeout) {
+      window.setTimeout(() => setCopied(false), 2000);
+    }
+  };
+
+  return h("section", {
+    "data-alignment-section": "true",
+    className: "card border-signal/40 bg-panel/30 p-4 space-y-4",
+  },
+    h("div", { className: "flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2" },
+      h("div", null,
+        h("h3", { className: "font-display text-base font-semibold text-bright" }, "Consigne d'alignement pour l'agent"),
+        h("p", {
+          "data-bounded-memory-notice": "true",
+          className: "font-body text-xs text-dim mt-1",
+        }, "Cette consigne facultative transmet vos rectifications à l'agent sans supposer de mémoire persistante garantie. Vous pouvez la relire, l'ajuster ou la copier."),
+      ),
+      h("button", {
+        type: "button",
+        onClick: handleCopy,
+        "data-copy-alignment-prompt": "true",
+        className: "btn-primary text-xs shrink-0 self-start sm:self-center",
+      }, copied ? "Copié ✓" : "Copier la consigne"),
+    ),
+    h("textarea", {
+      "data-alignment-prompt-text": "true",
+      className: "input min-h-36 font-mono text-xs w-full leading-relaxed resize-y",
+      value: promptValue,
+      onChange: (event) => setCustomPrompt(event.target.value),
+      spellCheck: false,
+    }),
+  );
+}
+
+export function ReobservationComparisonCard({
+  comparison = null,
+  preSnapshot = null,
+  postSnapshot = null,
+  preReviews = {},
+}) {
+  const comp = comparison || (preSnapshot && postSnapshot ? compareSnapshots(preSnapshot, postSnapshot, preReviews) : null);
+  if (!comp) return null;
+
+  return h("section", {
+    "data-reobservation-comparison": "true",
+    className: "card border-signal/40 bg-panel/20 p-4 space-y-4",
+  },
+    h("div", { className: "space-y-1" },
+      h("h3", { className: "font-display text-base font-semibold text-bright" }, "Ré-observation : comparaison avec l'instantané précédent"),
+      h("p", {
+        "data-epistemic-disclaimer": "true",
+        role: "note",
+        className: "font-body text-xs text-dim border-l-2 border-signal/60 pl-3 py-1",
+      }, comp.epistemicDisclaimer),
+    ),
+    h("div", {
+      "data-comparison-metrics": "true",
+      className: "flex flex-wrap gap-2 text-xs font-mono",
+    },
+      h("span", {
+        "data-metric": "remedied",
+        className: "tag text-signal border-signal/30",
+      }, `${comp.remediedCount} rectifications prises en compte`),
+      comp.conflictsCount > 0 ? h("span", {
+        "data-metric": "conflicts",
+        className: "tag text-amber-400 border-amber-400/30",
+      }, `${comp.conflictsCount} tensions persistantes`) : null,
+      h("span", {
+        "data-metric": "retained",
+        className: "tag text-dim",
+      }, `${comp.retainedCount} affirmations conservées`),
+      h("span", {
+        "data-metric": "dropped",
+        className: "tag text-dim",
+      }, `${comp.droppedCount} affirmations disparues`),
+      comp.addedCount > 0 ? h("span", {
+        "data-metric": "added",
+        className: "tag text-dim",
+      }, `${comp.addedCount} nouvelles affirmations`) : null,
+    ),
+    comp.reviewAdherence && comp.reviewAdherence.length > 0 ? h("div", {
+      "data-adherence-list": "true",
+      className: "space-y-2 pt-2 border-t border-border/40",
+    },
+      h("h4", { className: "font-body text-xs font-semibold text-bright uppercase tracking-wider" }, "Suivi de vos rectifications"),
+      h("ul", { className: "space-y-2 text-xs font-body" },
+        comp.reviewAdherence.map((item, idx) => h("li", {
+          key: idx,
+          "data-adherence-item": item.claim,
+          "data-outcome": item.outcome,
+          className: `p-2 rounded border ${item.outcome === "persisting_conflict" ? "border-amber-400/40 bg-amber-950/20 text-bright" : "border-border/40 bg-panel/30 text-dim"}`,
+        },
+          h("div", { className: "flex flex-wrap items-center justify-between gap-1 mb-1 font-mono text-xs" },
+            h("span", { className: "font-medium text-bright" }, item.claim),
+            h("span", {
+              className: `tag text-[10px] ${item.outcome === "remedied" ? "text-signal border-signal/30" : item.outcome === "persisting_conflict" ? "text-amber-400 border-amber-400/30" : "text-dim"}`,
+            }, item.outcome),
+          ),
+          h("p", { className: "text-dim text-[11px]" }, item.statusMessage),
+        )),
+      ),
+    ) : null,
+  );
+}
+
+export function AgentClaimMirror({ model, reviews = {}, onReview = null, comparison = null }) {
   if (!model) return null;
   const [filter, setFilter] = React.useState("all");
   const counts = COUNT_ORDER.filter((key) => Object.hasOwn(model.counts || {}, key));
@@ -223,6 +356,7 @@ export function AgentClaimMirror({ model, reviews = {}, onReview = null }) {
     role: "note",
     className: "font-body text-sm text-bright border border-signal/30 bg-panel/40 rounded-lg px-4 py-3",
   }, COPY.banner),
+  comparison ? h(ReobservationComparisonCard, { comparison }) : null,
   model.state === "claims" ? h(React.Fragment, null,
     h("p", { className: "font-body text-sm text-dim", "data-source": "agent" }, sourceLines(model.source).join(" · ")),
     model.summary
@@ -280,6 +414,11 @@ export function AgentClaimMirror({ model, reviews = {}, onReview = null }) {
     h("h2", { className: "font-display text-lg font-semibold text-bright" }, categoryLabel(category.label)),
     category.items.map((item) => h(ItemView, { key: item.id, item, review: reviews?.[item.id] || null, onReview })),
     )),
+    reviewedCount > 0 ? h(AlignmentPromptSection, {
+      reviews,
+      snapshot: model,
+      provider: model.source?.provider || model.source?.agent,
+    }) : null,
     h("p", { className: "font-body text-xs text-muted", "data-absence-note": "true" }, COPY.absence),
   ) : h("p", { className: "font-body text-sm text-dim", role: "status" },
     model.state === "annotation" ? COPY.annotation : COPY.unreadable,
@@ -313,7 +452,7 @@ export function immediatePasteText(currentText, pastedText) {
   return null;
 }
 
-export function LearnedContextPasteForm({ text, onText, onReveal, onPaste, mirror, reviews = {}, onReview = null, pending, failure }) {
+export function LearnedContextPasteForm({ text, onText, onReveal, onPaste, mirror, reviews = {}, onReview = null, pending, failure, comparison = null }) {
   return h("div", { className: "max-w-3xl mx-auto px-4 py-10 space-y-6" },
     h("p", { className: "font-mono text-signal text-xs tracking-widest uppercase" }, "Miroir immédiat"),
     h("h1", { className: "font-display text-3xl md:text-4xl font-bold text-bright" }, "Ce que cet agent affirme savoir"),
@@ -341,7 +480,8 @@ export function LearnedContextPasteForm({ text, onText, onReveal, onPaste, mirro
     h("p", { className: "font-body text-xs text-muted" }, "Sans compte. La réponse reste dans cette page."),
     ),
     failure ? h("p", { role: "alert", className: "font-body text-sm text-dim" }, failure) : null,
-    mirror ? h(AgentClaimMirror, { model: mirror, reviews, onReview }) : null,
+    mirror ? h(AgentClaimMirror, { model: mirror, reviews, onReview, comparison }) : null,
   );
 }
+
 
