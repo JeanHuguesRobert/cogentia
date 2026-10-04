@@ -78,6 +78,7 @@ export function StepNav({ onBack, backDisabled, onForward, forwardDisabled, forw
 export function forwardLabel(kind, target) {
   if (kind === "parse") return "Afficher mon miroir →"
   if (kind === "skip") return "Suite · passer l’interrogation →"
+  if (kind === "pasted") return "Suite · réponse déjà collée →"
   if (kind === "stale") return "Suite · réponse du prompt précédent →"
   if (kind === "paste") return "J’ai la réponse →"
   if (kind === "review") return "Suite →"

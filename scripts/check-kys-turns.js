@@ -14,12 +14,14 @@ import {
   forwardIntent,
   goBack,
   goForward,
+  leaveMirror,
   loadTurnLog,
   markCorrectionOffered,
   offsetSentence,
   recordParsedResponse,
   recordPromptCopy,
   relateClocks,
+  reviseNextPrompt,
   saveTurnLog,
   setCursor,
   setTurnProvider,
@@ -61,8 +63,13 @@ const unmatched = relateClocks("2026-10-04T15:48:00", local.toISOString());
 assert.equal(unmatched.kind, "uncompared");
 assert.match(offsetSentence(unmatched), /celle écrite par l'agent/);
 
-const promptLine = describePrompt({ produced_at: fiveMinutesAgo, copied_at: fiveMinutesAgo }, now);
+const fiftyMinutes = relateClocks("2026-10-04T15:58:00", local.toISOString());
+assert.equal(fiftyMinutes.kind, "uncompared");
+
+const promptLine = describePrompt({ text: "prompt", produced_at: fiveMinutesAgo, copied_at: fiveMinutesAgo, copied_text: "prompt" }, now);
 assert.equal(promptLine.label, "Prompt copié");
+const revisedLine = describePrompt({ text: "prompt révisé", produced_at: fiveMinutesAgo, copied_at: fiveMinutesAgo, copied_text: "prompt" }, now);
+assert.equal(revisedLine.label, "Prompt produit");
 assert.match(promptLine.relative, /il y a/);
 
 const responseLines = describeResponse({
@@ -236,6 +243,11 @@ kept = recordParsedResponse(setCursor(kept, 2, 2), 2, {
 assert.equal(turnOf(kept, 2).response.for_prompt, "correction B");
 assert.equal(turnOf(kept, 2).reviews["known-0"].verdict, "accepted");
 assert.equal(forwardIntent(setCursor(kept, 1, 3)).kind, "skip");
+const drifted = reviseNextPrompt(kept, 1, "correction B révisée", "2026-10-04T12:11:00.000Z");
+assert.equal(turnOf(drifted, 2).prompt.copied_text, "correction B");
+assert.equal(turnOf(drifted, 2).response.text, "tour-2-c");
+assert.equal(forwardIntent(setCursor(drifted, 1, 3)).kind, "stale");
+assert.deepEqual(forwardIntent(setCursor(drifted, 1, 3)).target, { turn: 2, step: 2 });
 
 const legacyStorage = {
   items: new Map(),
@@ -259,12 +271,27 @@ const legacyLoaded = loadTurnLog(legacyStorage, "2026-10-04T13:00:00.000Z");
 assert.equal(forwardIntent(legacyLoaded).kind, "skip");
 assert.equal(turnOf(legacyLoaded).reviews["known-0"].verdict, "accepted");
 
+let unread = ensureNextTurn(markCorrectionOffered(emptyLog("2026-10-04T12:00:00.000Z"), 1), {
+  after: 1,
+  text: "correction",
+  producedAt: "2026-10-04T12:00:00.000Z",
+  copiedAt: "2026-10-04T12:00:00.000Z",
+});
+unread = updateResponseText(unread, 2, "réponse non lue");
+assert.equal(forwardIntent(setCursor(unread, 1, 3)).kind, "pasted");
+assert.deepEqual(forwardIntent(setCursor(unread, 1, 3)).target, { turn: 2, step: 2 });
+assert.deepEqual(leaveMirror(setCursor(unread, 1, 3)).cursor, { turn: 1, step: 3 });
+assert.deepEqual(leaveMirror(setCursor(unread, 1, 1)).cursor, { turn: 1, step: 1 });
+assert.deepEqual(leaveMirror(setCursor(unread, 2, 2)).cursor, { turn: 2, step: 1 });
+
 const snapshotSource = fs.readFileSync(path.join(root, "apps/personal/src/pages/Snapshot.jsx"), "utf8");
 const turnBarSource = fs.readFileSync(path.join(root, "apps/personal/src/components/TurnBar.jsx"), "utf8");
 const mirrorSource = fs.readFileSync(path.join(root, "apps/personal/src/pages/LearnedContextMirror.jsx"), "utf8");
 assert.equal(snapshotSource.includes("data-turn={turn.number}"), true);
 assert.equal(turnBarSource.includes("← Retour"), true);
 assert.equal(turnBarSource.includes("passer l’interrogation"), true);
+assert.equal(turnBarSource.includes("réponse déjà collée"), true);
+assert.equal(mirrorSource.includes("leaveMirror"), true);
 assert.equal(turnBarSource.includes("réponse du prompt précédent"), true);
 assert.equal(snapshotSource.includes("À REPRENDRE TELLES QUELLES"), true);
 assert.equal(snapshotSource.includes("review.verdict === 'nuanced'"), false);

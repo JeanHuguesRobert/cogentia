@@ -251,7 +251,7 @@ export function relateClocks(stamp, localIso, zoneOffsetMinutes = null) {
     const asLocal = new Date(parsed.y, parsed.mo - 1, parsed.d, parsed.h, parsed.mi, parsed.s)
     return { kind: "same-zone", shiftMinutes: 0, instant: asLocal.toISOString() }
   }
-  if (Math.abs(residual) <= 10) {
+  if (Math.abs(residual) < 10) {
     return {
       kind: "estimated",
       shiftMinutes: shiftHours * 60,
@@ -293,11 +293,12 @@ export function offsetSentence(relation) {
 
 export function describePrompt(prompt, now) {
   if (!prompt) return null
-  const at = prompt.copied_at || prompt.produced_at
+  const copied = Boolean(prompt.copied_at) && (prompt.copied_text || "") === (prompt.text || "")
+  const at = copied ? prompt.copied_at : prompt.produced_at
   if (!at) return null
   const dual = formatDual(at, now)
   if (!dual) return null
-  return { label: prompt.copied_at ? "Prompt copié" : "Prompt produit", ...dual }
+  return { label: copied ? "Prompt copié" : "Prompt produit", ...dual }
 }
 
 export function describeResponse(response, now, zoneOffsetMinutes = null) {
@@ -370,6 +371,24 @@ export function recordPromptCopy(log, number, text, at) {
 
 export function markCorrectionOffered(log, number) {
   return mapTurn(log, number, (turn) => ({ ...turn, correction_offered: true }))
+}
+
+export function reviseNextPrompt(log, after, text, at) {
+  const existing = turnOf(log, after + 1)
+  if (!existing || existing.prompt.text === text) return log
+  return mapTurn(log, after + 1, (turn) => ({
+    ...turn,
+    prompt: {
+      ...turn.prompt,
+      text,
+      produced_at: at,
+    },
+  }))
+}
+
+export function leaveMirror(log) {
+  if (log.cursor?.step === 2) return goBack(log)
+  return log
 }
 
 export function ensureNextTurn(log, { after, text, producedAt, copiedAt }) {
@@ -461,7 +480,7 @@ export function forwardIntent(log) {
   if (!next) return { kind: "none", target: null }
   if (replyIsStale(next)) return { kind: "stale", target: { turn: next.number, step: 2 } }
   if (replyIsCurrent(next)) return { kind: "skip", target: { turn: next.number, step: 3 } }
-  if (next.response.text.trim()) return { kind: "skip", target: { turn: next.number, step: 2 } }
+  if (next.response.text.trim()) return { kind: "pasted", target: { turn: next.number, step: 2 } }
   return { kind: "next-turn", target: { turn: next.number, step: 1 } }
 }
 

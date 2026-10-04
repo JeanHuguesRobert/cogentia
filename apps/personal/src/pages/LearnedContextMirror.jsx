@@ -11,8 +11,8 @@ import {
   agentStampFromData,
   canGoBack,
   forwardIntent,
-  goBack,
   goForward,
+  leaveMirror,
   loadBrowserTurnLog,
   recordParsedResponse,
   replyIsStale,
@@ -84,7 +84,7 @@ export default function LearnedContextMirrorPage() {
   }
 
   function onBack() {
-    saveBrowserTurnLog(goBack(view))
+    saveBrowserTurnLog(leaveMirror(log))
     navigate('/snapshot')
   }
 

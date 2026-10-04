@@ -13,6 +13,7 @@ import {
   recordParsedResponse,
   recordPromptCopy,
   replyIsStale,
+  reviseNextPrompt,
   saveBrowserTurnLog,
   setTurnProvider,
   updatePromptText,
@@ -197,6 +198,12 @@ Produisez maintenant une version corrigée en JSON valide.
 
   const nextTurn = log.turns.find((item) => item.number === turn.number + 1)
   const correctionOffered = Boolean(turn.correction_offered) && nextTurn?.prompt.copied_text === correctionPrompt
+
+  useEffect(() => {
+    if (!turn.correction_offered || !correctionPrompt) return
+    if (!nextTurn || nextTurn.prompt.text === correctionPrompt) return
+    setLog((current) => reviseNextPrompt(current, turn.number, correctionPrompt, new Date().toISOString()))
+  }, [correctionPrompt, nextTurn, turn])
 
   const setCorrectionOffered = (value) => {
     if (value !== true) return
