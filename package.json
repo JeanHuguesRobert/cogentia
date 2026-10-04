@@ -46,6 +46,7 @@
     "test:guide-claim-verification": "node scripts/check-guide-claim-verification.js",
     "test:retrieval-inox": "node scripts/check-retrieval-inox-session.js",
     "test:retrieval-admissibility": "node scripts/check-retrieval-admissibility.js",
+    "test:latent-sovereign": "node scripts/check-latent-sovereign.js",
     "test:blackboard": "node scripts/check-packet-attractor-blackboard.js",
     "test:guide-cli": "node scripts/check-guide-cli.js",
     "test:guide-eval": "node scripts/check-guide-eval.js",

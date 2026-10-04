@@ -25,6 +25,14 @@ import * as js_yaml from "js-yaml";
 import { DAEMON_PLUGINS, DAEMON_PLUGIN_ROUTES, loadDaemonPlugins, dispatchPluginRoute } from "./daemon_plugins/registry.js";
 import { buildIssueGraph, renderIssueGraph } from "./lib/issue-graph.js";
 import {
+  LATENT_SOVEREIGN_KIND,
+  explicitRoleIsSource,
+  isLatentSovereign,
+  materializeLatentSovereignMarkdown,
+  resolutionMaterializes,
+  applyResolvedCorpusRole,
+} from "./lib/latent-sovereign.js";
+import {
   auditResumableIssue,
   renderResumableIssueAudit,
 } from "./lib/resumable-issue-audit.js";
@@ -561,7 +569,7 @@ function cmdPossibleMatrix(subcommand) {
 // made for this exact path — this session hit that gap twice, assuming a
 // resolution existed (or matched the wrong continuation kind) rather than
 // having the tool say so.
-const RESOLVED_ROLE_CONTINUATION_KINDS = Object.freeze(["document_role_review", "index.document_role_judgment"]);
+const RESOLVED_ROLE_CONTINUATION_KINDS = Object.freeze(["document_role_review", "index.document_role_judgment", LATENT_SOVEREIGN_KIND]);
 const KNOWN_DOCUMENT_ROLES_FOR_RESOLUTION = Object.freeze(["source", "derived", "operational", "template", "example", "alias", "archive", "index", "trail"]);
 
 function normalizeResolvedRoleDecision(decisionText) {
@@ -579,13 +587,16 @@ function buildResolvedRoleIndex(ctx) {
     if (!RESOLVED_ROLE_CONTINUATION_KINDS.includes(c.kind)) continue;
     const repo = c.subject?.repo;
     const relPath = c.subject?.path;
-    const role = normalizeResolvedRoleDecision(c.resolution?.decision);
+    let role = normalizeResolvedRoleDecision(c.resolution?.decision);
+    if (c.kind === LATENT_SOVEREIGN_KIND && resolutionMaterializes(c.resolution?.decision, c.resolution?.payload)) {
+      role = "source";
+    }
     if (!repo || !relPath || !role) continue;
     const key = `${repo}::${relPath}`;
     const resolvedAt = c.resolution?.resolved_at || "";
     const existing = index.get(key);
     if (!existing || resolvedAt > existing.resolved_at) {
-      index.set(key, { role, resolved_at: resolvedAt, continuation_id: c.id, decision: c.resolution.decision, reason: c.resolution?.reason || "" });
+      index.set(key, { role, kind: c.kind, resolved_at: resolvedAt, continuation_id: c.id, decision: c.resolution.decision, reason: c.resolution?.reason || "" });
     }
   }
   return index;
@@ -603,22 +614,16 @@ function buildFrontmatterClassifier(ctx) {
     if (!doc) return null;
     const kindInfo = inferDocumentKind(doc);
     const visibility = doc.visibility || {};
-    let role = doc.role;
-    let role_confidence = doc.role_confidence;
-    let resolved_via_continuation = null;
-    if (!role || role === "unknown" || role_confidence !== "strong") {
-      const resolved = resolvedRoles.get(`${doc.repo}::${doc.rel}`);
-      if (resolved) {
-        role = resolved.role;
-        role_confidence = "strong";
-        resolved_via_continuation = resolved.continuation_id;
-      }
-    }
+    const resolved = resolvedRoles.get(`${doc.repo}::${doc.rel}`);
+    const applied = applyResolvedCorpusRole({
+      role: doc.role,
+      role_confidence: doc.role_confidence,
+    }, resolved);
     return {
       repo: doc.repo,
-      role,
-      role_confidence,
-      resolved_via_continuation,
+      role: applied.role,
+      role_confidence: applied.role_confidence,
+      resolved_via_continuation: applied.resolved_via_continuation,
       document_kind: kindInfo.kind,
       kind_confidence: kindInfo.confidence,
       // Only trust visibility as a scaffold input when it traces to an
@@ -6238,6 +6243,21 @@ function cmdContinuationInspect(ctx, id) {
   output({ ok: true, continuation }, formatContinuationInspect(continuation));
 }
 
+function writeLatentSovereignMaterialization(ctx, continuation) {
+  const repoName = continuation.subject?.repo;
+  const rel = String(continuation.subject?.path || "").replace(/\\/g, "/");
+  if (!repoName || !rel || rel.includes("..")) {
+    throw new Error("latent sovereign materialization needs subject.repo and a relative subject.path");
+  }
+  const repo = ctx.repos.find(item => item.name === repoName);
+  if (!repo) throw new Error(`Unknown repo: ${repoName}`);
+  const full = path.join(repo.path, rel);
+  const raw = fs.readFileSync(full, "utf8");
+  const after = materializeLatentSovereignMarkdown(raw);
+  fs.writeFileSync(full, after, "utf8");
+  return { repo: repoName, path: rel, wrote: ["sovereign_status", "document_role"], preserved: ["derived_from"] };
+}
+
 function cmdContinuationResolve(ctx, id) {
   if (!id) throw new Error("Usage: continuation resolve <id> [result.json] --decision <text> --reason <text>");
   const continuation = loadContinuation(ctx, id);
@@ -6249,6 +6269,10 @@ function cmdContinuationResolve(ctx, id) {
   const decision = valueFlag("--decision") || payload.decision || payload.chosen_alternative || payload.status || "";
   const reason = valueFlag("--reason") || payload.reason || payload.summary || "";
   if (!decision && !Object.keys(payload).length) throw new Error("Resolve requires --decision <text> or a result JSON file.");
+  let materialization = null;
+  if (continuation.kind === LATENT_SOVEREIGN_KIND && resolutionMaterializes(decision, payload)) {
+    materialization = writeLatentSovereignMaterialization(ctx, continuation);
+  }
   const now = new Date().toISOString();
   continuation.status = "resolved";
   continuation.updated_at = now;
@@ -6257,6 +6281,7 @@ function cmdContinuationResolve(ctx, id) {
     decision,
     reason,
     payload,
+    ...(materialization ? { materialization } : {}),
   };
   continuation.history.push({ at: now, event: "resolved", decision, reason });
   saveContinuation(ctx, continuation);
@@ -9092,7 +9117,10 @@ function classifyRole(repo, relPath, full, fm, ignored, indexSets) {
   if (explicit.includes("operational")) return { role: "operational", source: "frontmatter:document_role", confidence: "strong" };
   if (explicit.includes("template")) return { role: "template", source: "frontmatter:document_role", confidence: "strong" };
   if (explicit.includes("example")) return { role: "example", source: "frontmatter:document_role", confidence: "strong" };
-  if (explicit.includes("source") || explicit.includes("sovereign") || explicit.includes("symmetric") || explicit.includes("souverain")) {
+  if (isLatentSovereign(fm)) {
+    return { role: "derived", source: "frontmatter:sovereign_status_latent", confidence: "strong" };
+  }
+  if (explicitRoleIsSource(fm)) {
     return { role: "source", source: "frontmatter:document_role", confidence: "strong" };
   }
   if (explicit.includes("index")) return { role: "index", source: "frontmatter:document_role", confidence: "strong" };

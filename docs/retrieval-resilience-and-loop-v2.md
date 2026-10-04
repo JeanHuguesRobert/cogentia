@@ -114,6 +114,8 @@ The local SQLite index at `JeanHuguesRobert/.cogentia/index/corpus.sqlite` holds
    PostgREST statement timeouts (Postgres `57014`) trigger when upserting large batches (e.g. 35+ chunks) into an HNSW/IVFFlat indexed table exceeding 20,000 vector rows. Defaulting to 10-20 chunks guarantees execution well within server budget.
 3. **Socket Timeout (`AbortSignal.timeout(15000)`)**:
    Enforces a 15-second client timeout per batch to avoid unbounded hangs on dropped TCP connections.
+4. **Admissibility** (`scripts/lib/retrieval-admissibility.js`, classes in `scripts/lib/retrieval-admissibility-classes.yml`, method in `research/derived_products.md` §6.8):
+   Role, admissibility, and sovereignty are separate. A public chunk is served when `role` is `source`, or when `role` is `derived` and it matches a named class. The only class is `living-book-manuscript`: a public reading chapter whose path contains `/manuscript/`. Paths under `.cogentia/` or containing `/issues/` stay out. Press kits, forensic notes, candidature notices, blogposts, memory catalogues, trails, and operational notes stay out. `sovereign_status: latent` does not admit a chunk. Both retrieval RPCs still require `admissible = true`. The served manuscript rows match this class. A later sync must use this predicate and `--no-prune`. A source-only sync would hide them again. Editing the class file does not update the serving projection.
 
 ---
 
