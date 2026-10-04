@@ -48,11 +48,18 @@ const draftFeedback = buildContactEmailDraft({
 
 assert.equal(draftFeedback.noContact, false);
 assert.equal(draftFeedback.recipient, DEFAULT_CONTACT_RECIPIENT);
+assert.equal(DEFAULT_CONTACT_RECIPIENT, "jhr@baronsmariani.org");
+assert.ok(draftFeedback.subject.startsWith("[KYS][Cogentia][feedback]"));
 assert.ok(draftFeedback.subject.includes("Retour d'expérience"));
 assert.ok(draftFeedback.body.includes("Le miroir m'a surpris"));
+assert.ok(draftFeedback.body.includes("Origine : KYS — miroir agentique Cogentia"));
+assert.ok(draftFeedback.body.includes("Intention déclarée : Partager un retour d'expérience"));
+assert.ok(draftFeedback.body.includes("Code de routage : feedback"));
 assert.ok(draftFeedback.body.includes("Agent examiné : Claude"));
-assert.ok(draftFeedback.body.includes("Parcours en 2 tours"));
-assert.ok(draftFeedback.body.includes("Affirmations examinées par mes soins : 3"));
+assert.ok(draftFeedback.body.includes("Parcours : 2 tours"));
+assert.ok(draftFeedback.body.includes("Assertions examinées : 3"));
+assert.ok(draftFeedback.body.includes("Alignement effectué : oui"));
+assert.ok(draftFeedback.body.includes("Aucune donnée personnelle issue du miroir n’est jointe automatiquement."));
 assert.ok(draftFeedback.mailtoUrl.startsWith("mailto:"));
 assert.ok(draftFeedback.mailtoUrl.includes(encodeURIComponent(draftFeedback.subject)));
 
@@ -82,7 +89,8 @@ const draftOpen = buildContactEmailDraft({
   intentionId: "unsure_or_other",
   customNotes: "Remarque libre et spontanée.",
 });
-assert.ok(draftOpen.subject.includes("Message à propos de Cogentia"));
+assert.ok(draftOpen.subject.startsWith("[KYS][Cogentia][other]"));
+assert.ok(draftOpen.subject.includes("Message libre"));
 assert.ok(draftOpen.body.includes("Remarque libre et spontanée."));
 
 // 6. Browser purity check (no forbidden tokens)
