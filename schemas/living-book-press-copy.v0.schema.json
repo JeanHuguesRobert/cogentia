@@ -1,0 +1,99 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/JeanHuguesRobert/cogentia/blob/main/schemas/living-book-press-copy.v0.schema.json",
+  "title": "LivingBookPressCopyRecordV0",
+  "description": "Schema for a registered physical copy / incarnation in the Living Book Press.",
+  "type": "object",
+  "required": [
+    "copy_id",
+    "book_id",
+    "edition_id",
+    "singularization",
+    "material_profile",
+    "issued_at",
+    "status",
+    "verification_url"
+  ],
+  "properties": {
+    "copy_id": {
+      "type": "string",
+      "pattern": "^[A-Z0-9]+-[0-9]{8}-C[0-9]{4,}$",
+      "description": "Authoritatively allocated unique copy identifier (e.g. SC-20260917-C0001)."
+    },
+    "book_id": {
+      "type": "string",
+      "description": "Identifier of the Living Book (e.g. suicide-corse, capable, diaspora)."
+    },
+    "edition_id": {
+      "type": "string",
+      "description": "Identifier of the frozen edition (e.g. 2026-09-17-anniversaire, 2026-09-20-n2)."
+    },
+    "singularization": {
+      "type": "string",
+      "enum": ["singulier", "standard"],
+      "description": "Mode of singularization: singulier carries individual unique identity, standard is undifferentiated."
+    },
+    "material_profile": {
+      "type": "string",
+      "enum": ["accessible", "luxe", "custom"],
+      "description": "Physical material and print profile (accessible = lightweight / home, luxe = high finish)."
+    },
+    "issued_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO 8601 timestamp of allocation."
+    },
+    "edition_source": {
+      "type": "object",
+      "required": ["repository", "commit"],
+      "properties": {
+        "repository": { "type": "string" },
+        "commit": { "type": "string" },
+        "manifest_ref": { "type": "string" }
+      }
+    },
+    "render": {
+      "type": "object",
+      "required": ["format", "sha256", "generated_at"],
+      "properties": {
+        "format": { "type": "string", "enum": ["A4", "A5"] },
+        "print_profile": { "type": "string" },
+        "sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+        "byte_length": { "type": "integer", "minimum": 0 },
+        "generated_at": { "type": "string", "format": "date-time" }
+      }
+    },
+    "status": {
+      "type": "string",
+      "enum": ["RESERVED", "GENERATED", "MATERIALIZED", "VOID"],
+      "description": "Lifecycle state of the registered copy."
+    },
+    "verification_url": {
+      "type": "string",
+      "format": "uri",
+      "description": "Public URL where the copy and its provenance can be verified."
+    },
+    "biography": {
+      "type": "object",
+      "properties": {
+        "dedication": { "type": "string" },
+        "mission_ref": { "type": "string" },
+        "parent_copy_id": { "type": "string" },
+        "events": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["event_type", "timestamp"],
+            "properties": {
+              "event_type": { "type": "string" },
+              "timestamp": { "type": "string", "format": "date-time" },
+              "description": { "type": "string" },
+              "location": { "type": "string" }
+            }
+          }
+        }
+      }
+    }
+  },
+  "additionalProperties": false
+}
