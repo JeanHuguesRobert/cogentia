@@ -45,6 +45,7 @@
     "test:guide-issue-lookup": "node scripts/check-guide-issue-lookup.js",
     "test:guide-claim-verification": "node scripts/check-guide-claim-verification.js",
     "test:retrieval-inox": "node scripts/check-retrieval-inox-session.js",
+    "test:retrieval-admissibility": "node scripts/check-retrieval-admissibility.js",
     "test:blackboard": "node scripts/check-packet-attractor-blackboard.js",
     "test:guide-cli": "node scripts/check-guide-cli.js",
     "test:guide-eval": "node scripts/check-guide-eval.js",

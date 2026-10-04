@@ -3,6 +3,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { retrievalChunkAdmissible, retrievalDocumentKind } from "./lib/retrieval-admissibility.js";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 
@@ -88,8 +89,8 @@ async function main() {
           title: row.title || "",
           heading_path: row.heading_path || "",
           role: row.role || "",
-          document_kind: row.role === "source" ? "source" : "",
-          admissible: row.role === "source" && !String(row.path || "").startsWith(".cogentia/") && !String(row.path || "").includes("/issues/"),
+          document_kind: retrievalDocumentKind(row),
+          admissible: retrievalChunkAdmissible(row),
           canonical_weight: 0,
           visibility: row.visibility || "public",
           github_url: row.github_url || "",

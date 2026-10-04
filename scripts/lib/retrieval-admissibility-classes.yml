@@ -1,0 +1,17 @@
+# Public Guide admissibility classes for derived products.
+# Role, admissibility, and sovereignty are separate.
+# A latent sovereign document is not admissible merely because it is latent.
+# Method: research/derived_products.md section 6.8.
+
+excluded_path_prefixes:
+  - .cogentia/
+excluded_path_substrings:
+  - /issues/
+
+derived_classes:
+  - id: living-book-manuscript
+    role: derived
+    path_contains: /manuscript/
+    document_kind: derived
+    cites: public living-book reading chapters
+    does_not_grant: sovereign source status

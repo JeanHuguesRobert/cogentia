@@ -7,8 +7,8 @@ language: en
 last_stamped_at: 2026-06-01T00:00:00.000Z
 title: Derived Products
 date: '2026-05-24'
-last_modified_at: '2026-09-21'
-version: '0.3'
+last_modified_at: '2026-10-04'
+version: '0.4'
 status: working-paper — auto-filled (frontmatter cleanup)
 document_role: source
 document_kind: research-paper
@@ -471,6 +471,27 @@ The list is open. A new type joins it by declaring itself — a document with `d
 
 This open, self-declaring set of live artefacts is what turns a static collection of files into a **reactive corpus**: each derived product — Markdown document, README, trail, or website — is scheduled to re-react to its sources rather than drift away from them. Consolidation note, 2026-06-09: the principle is stable, but the current v2 CLI only exposes the generic continuation primitive and generated corpus views. The grouped derived-product refresh loop remains an open implementation target.
 
+### 6.8 Admissibility is not sovereignty
+
+Guide admissibility, corpus role, and sovereign authority are three decisions.
+
+| Question | What it decides | Where it lives |
+|---|---|---|
+| Corpus role | Whether the document is source, derived, operational, or another indexed role | `classifyRole` and frontmatter |
+| Admissibility | Whether a public chunk may be cited by the Guide | `scripts/lib/retrieval-admissibility-classes.yml` |
+| Sovereignty | Whether the document currently carries source authority | Not a role. Proposed mark: `sovereign_status` |
+
+A public chunk is admissible when its role is `source`, except under `.cogentia/` or a path containing `/issues/`. A derived chunk is admissible only when it matches a named class in that file. A class is not a one-off path regex added in code.
+
+The only class on 2026-10-04 is `living-book-manuscript`: role `derived`, path contains `/manuscript/`. It covers the public reading chapters of the living books. It ratifies the 360 serving rows already opened for Suicide Corse, Capable, PrivAI, and Rise & Fall. It does not make those chapters sovereign sources.
+
+These derived products have no class and stay out of Guide retrieval: blogposts, press kits, candidature notices, forensic notes, `memory/` catalogues, trails, and operational notes. `sovereign_status: latent` does not admit a chunk. A latent document is citable only when it also matches a named class.
+
+Profile filters still run after admissibility. `privai` and `suicide-corse` keep their own path prefixes. `fractavolta` has no path scope, so every admissible class is citable on that Guide.
+
+The word latent is the proposed distinction in [`barons-Mariani/research/le_reel_le_virtuel_et_l_actuel.md`](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/le_reel_le_virtuel_et_l_actuel.md): a power already structured and present, not yet exercised. A file can be actual as a text and latent as a sovereign authority. Materializing that authority is a later act. It writes `sovereign_status: actual` and `document_role: source`, and it keeps `derived_from`. That act is not implemented. Until it is, do not put `sovereign`, `souverain`, or `symmetric` in `document_role` to mean "latent": `classifyRole` still reads those substrings as role `source`.
+
+Changing this class file does not by itself change the serving projection. A later sync must use the same predicate and `--no-prune`. A sync that still admits only `source` would hide the manuscript rows again.
 
 ## 7. The Methodological Reversal
 

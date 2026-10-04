@@ -279,6 +279,8 @@ Operational rule:
 
 > A symmetric derived document may count as a provisional sovereign source, but this is a judgment, not a regex result.
 
+That judgment does not by itself change `document_role`, the indexed role, or Guide admissibility. Admissibility is the separate serving decision in [`derived_products.md`](derived_products.md) §6.8 and `scripts/lib/retrieval-admissibility-classes.yml`. A document that is latent as a sovereign authority, in the sense proposed in `barons-Mariani/research/le_reel_le_virtuel_et_l_actuel.md`, is not admissible merely for being latent. Materializing it is a later act: write `sovereign_status: actual` and `document_role: source`, and keep `derived_from`. The act is not implemented. `classifyRole` still treats `sovereign`, `souverain`, and `symmetric` inside `document_role` as role `source`, so those words must not be used there to record a latent state.
+
 Therefore `cogentia.js docs judgments` should surface such cases, and `docs judgments --emit-continuations` should ask the invoking agent or human to decide whether the document is:
 
 - a sovereign source;
