@@ -12,6 +12,7 @@ import {
   markCorrectionOffered,
   recordParsedResponse,
   recordPromptCopy,
+  replyIsStale,
   saveBrowserTurnLog,
   setTurnProvider,
   updatePromptText,
@@ -153,11 +154,15 @@ export default function Snapshot() {
       nuanced: [],
       rejected: [],
       private: [],
+      unchanged: [],
     }
 
     items.forEach((item) => {
       const review = reviews[item.id]
-      if (!review?.verdict) return
+      if (!review?.verdict) {
+        groups.unchanged.push(`- ${item.claim}`)
+        return
+      }
       const note = review.note?.trim() ? ` — précision : ${review.note.trim()}` : ''
       groups[review.verdict].push(`- ${item.claim}${note}`)
     })
@@ -176,8 +181,12 @@ ${groups.rejected.join('\n') || '- Aucun élément explicitement rejeté.'}
 À NE PAS CONSERVER NI RÉUTILISER
 ${groups.private.join('\n') || '- Aucun élément signalé.'}
 
+À REPRENDRE TELLES QUELLES
+${groups.unchanged.join('\n') || '- Aucune affirmation laissée sans examen.'}
+
 Produisez maintenant une version corrigée en JSON valide.
 - Distinguez explicitement ce que vous savez, ce que vous inférez et ce que vous ignorez.
+- Reprenez à l'identique les affirmations listées sous « À reprendre telles quelles ».
 - Ne réintroduisez pas les éléments rejetés.
 - Ne conservez ni ne réutilisez les éléments signalés comme privés.
 - Intégrez mes nuances sans les transformer en conclusions plus générales.
@@ -351,6 +360,11 @@ Produisez maintenant une version corrigée en JSON valide.
             <p className="font-body text-sm text-dim mb-5">
               N’ajoutez pas l’historique de conversation. Le JSON produit par votre agent suffit.
             </p>
+            {replyIsStale(turn) && (
+              <p className="font-body text-sm text-dim mb-5" data-stale-reply="true">
+                Cette réponse correspond au prompt précédent. Vous pouvez la modifier ou la remplacer.
+              </p>
+            )}
             <textarea
               value={turn.response.text}
               onChange={(event) => setLog((current) => updateResponseText(current, turn.number, event.target.value))}
@@ -407,12 +421,12 @@ Produisez maintenant une version corrigée en JSON valide.
                       ))}
                     </div>
 
-                    {review.verdict === 'nuanced' && (
+                    {review.verdict && (
                       <input
                         className="input"
                         value={review.note || ''}
                         onChange={(event) => updateReview(item.id, { note: event.target.value })}
-                        placeholder="Votre précision ou votre reformulation…"
+                        placeholder="Votre précision (facultative)…"
                       />
                     )}
                   </article>

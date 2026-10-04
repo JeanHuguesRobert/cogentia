@@ -22,8 +22,10 @@ import {
   relateClocks,
   saveTurnLog,
   setCursor,
+  setTurnProvider,
   turnOf,
   updateResponseText,
+  updateTurnReview,
 } from "../apps/personal/src/lib/turns.js";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
@@ -139,12 +141,134 @@ const normalized = normalizeSnapshot({
 }, "Example");
 assert.equal(normalized.answered_at, "2026-10-04T12:00:00+00:00");
 
+let kept = setTurnProvider(emptyLog("2026-10-04T12:00:00.000Z"), 1, "Grok", "prompt grok", "2026-10-04T12:00:00.000Z");
+const snap1 = normalizeSnapshot({
+  known: [
+    { claim: "Le français est préféré.", confidence: "high" },
+    { claim: "Ancienne formulation.", confidence: "low" },
+  ],
+  inferred: [{ claim: "Une supposition.", confidence: "medium" }],
+}, "Grok");
+kept = recordParsedResponse(updateResponseText(kept, 1, "tour-1"), 1, {
+  text: "tour-1",
+  pastedAt: "2026-10-04T12:05:00.000Z",
+  agentStamp: null,
+  snapshot: snap1,
+  keepReviews: false,
+  advance: true,
+});
+kept = updateTurnReview(kept, 1, "known-0", { verdict: "accepted" });
+kept = updateTurnReview(kept, 1, "known-1", { verdict: "rejected", note: "Ce n'est pas exact." });
+kept = updateTurnReview(kept, 1, "inferred-0", { verdict: "nuanced", note: "Seulement le matin." });
+const snap2 = normalizeSnapshot({
+  known: [
+    { claim: "Ancienne formulation.", confidence: "low" },
+    { claim: "Formulation nouvelle.", confidence: "low" },
+  ],
+  inferred: [{ claim: "  une supposition.  ", confidence: "medium" }],
+}, "Grok");
+kept = recordParsedResponse(setCursor(kept, 1, 2), 1, {
+  text: "tour-1-b",
+  pastedAt: "2026-10-04T12:06:00.000Z",
+  agentStamp: null,
+  snapshot: snap2,
+  keepReviews: false,
+  advance: true,
+});
+assert.deepEqual(turnOf(kept).reviews["known-0"], { verdict: "rejected", note: "Ce n'est pas exact." });
+assert.equal(turnOf(kept).reviews["known-1"], undefined);
+assert.deepEqual(turnOf(kept).reviews["inferred-0"], { verdict: "nuanced", note: "Seulement le matin." });
+
+kept = ensureNextTurn(kept, {
+  after: 1,
+  text: "correction A",
+  producedAt: "2026-10-04T12:07:00.000Z",
+  copiedAt: "2026-10-04T12:07:00.000Z",
+});
+assert.equal(turnOf(kept, 2).provider, "Grok");
+const snap3 = normalizeSnapshot({
+  known: [{ claim: "Ancienne formulation.", confidence: "low" }],
+  inferred: [{ claim: "Une supposition.", confidence: "medium" }],
+}, "Grok");
+kept = recordParsedResponse(updateResponseText(setCursor(kept, 2, 2), 2, "tour-2"), 2, {
+  text: "tour-2",
+  pastedAt: "2026-10-04T12:08:00.000Z",
+  agentStamp: null,
+  snapshot: snap3,
+  keepReviews: false,
+  advance: true,
+});
+assert.deepEqual(turnOf(kept, 2).reviews["known-0"], { verdict: "rejected", note: "Ce n'est pas exact." });
+assert.deepEqual(turnOf(kept, 2).reviews["inferred-0"], { verdict: "nuanced", note: "Seulement le matin." });
+assert.equal(turnOf(kept, 2).response.for_prompt, "correction A");
+assert.equal(forwardIntent(setCursor(kept, 1, 3)).kind, "skip");
+
+kept = updateTurnReview(kept, 2, "known-0", { verdict: "accepted", note: "Finalement oui." });
+kept = recordParsedResponse(setCursor(kept, 2, 2), 2, {
+  text: "tour-2-c",
+  pastedAt: "2026-10-04T12:08:30.000Z",
+  agentStamp: null,
+  snapshot: snap3,
+  keepReviews: false,
+  advance: false,
+});
+assert.equal(turnOf(kept, 2).reviews["known-0"].verdict, "accepted");
+assert.equal(turnOf(kept, 2).reviews["known-0"].note, "Finalement oui.");
+
+kept = ensureNextTurn(kept, {
+  after: 1,
+  text: "correction B",
+  producedAt: "2026-10-04T12:09:00.000Z",
+  copiedAt: "2026-10-04T12:09:00.000Z",
+});
+assert.equal(turnOf(kept, 2).response.text, "tour-2-c");
+assert.equal(forwardIntent(setCursor(kept, 1, 3)).kind, "stale");
+assert.deepEqual(forwardIntent(setCursor(kept, 1, 3)).target, { turn: 2, step: 2 });
+assert.equal(forwardIntent(setCursor(kept, 2, 2)).kind, "parse");
+kept = recordParsedResponse(setCursor(kept, 2, 2), 2, {
+  text: "tour-2-c",
+  pastedAt: "2026-10-04T12:10:00.000Z",
+  agentStamp: null,
+  snapshot: snap3,
+  keepReviews: true,
+  advance: true,
+});
+assert.equal(turnOf(kept, 2).response.for_prompt, "correction B");
+assert.equal(turnOf(kept, 2).reviews["known-0"].verdict, "accepted");
+assert.equal(forwardIntent(setCursor(kept, 1, 3)).kind, "skip");
+
+const legacyStorage = {
+  items: new Map(),
+  getItem(key) { return this.items.has(key) ? this.items.get(key) : null; },
+  setItem(key, value) { this.items.set(key, String(value)); },
+};
+legacyStorage.setItem("kys_turn_log_v1", JSON.stringify({
+  schema_version: "kys-turn-log.v0",
+  cursor: { turn: 1, step: 1 },
+  turns: [{
+    number: 1,
+    provider: "Grok",
+    prompt: { role: "initial", text: "ancien prompt", produced_at: "2026-10-04T12:00:00.000Z", copied_at: null, copied_text: "" },
+    response: { text: "meme", pasted_at: null, agent_stamped_at: null, parsed_text: "meme" },
+    snapshot: { known: [{ id: "known-0", claim: "Déjà lu." }] },
+    reviews: { "known-0": { verdict: "accepted" } },
+    correction_offered: false,
+  }],
+}));
+const legacyLoaded = loadTurnLog(legacyStorage, "2026-10-04T13:00:00.000Z");
+assert.equal(forwardIntent(legacyLoaded).kind, "skip");
+assert.equal(turnOf(legacyLoaded).reviews["known-0"].verdict, "accepted");
+
 const snapshotSource = fs.readFileSync(path.join(root, "apps/personal/src/pages/Snapshot.jsx"), "utf8");
 const turnBarSource = fs.readFileSync(path.join(root, "apps/personal/src/components/TurnBar.jsx"), "utf8");
 const mirrorSource = fs.readFileSync(path.join(root, "apps/personal/src/pages/LearnedContextMirror.jsx"), "utf8");
 assert.equal(snapshotSource.includes("data-turn={turn.number}"), true);
 assert.equal(turnBarSource.includes("← Retour"), true);
 assert.equal(turnBarSource.includes("passer l’interrogation"), true);
+assert.equal(turnBarSource.includes("réponse du prompt précédent"), true);
+assert.equal(snapshotSource.includes("À REPRENDRE TELLES QUELLES"), true);
+assert.equal(snapshotSource.includes("review.verdict === 'nuanced'"), false);
+assert.equal(snapshotSource.includes("Votre précision (facultative)"), true);
 assert.equal(snapshotSource.includes("if (label === 'correction') setCorrectionOffered(true)"), true);
 assert.equal(mirrorSource.includes("localStorage"), false);
 assert.equal(mirrorSource.includes("Tour {turn.number}"), true);

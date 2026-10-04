@@ -15,6 +15,7 @@ import {
   goForward,
   loadBrowserTurnLog,
   recordParsedResponse,
+  replyIsStale,
   saveBrowserTurnLog,
   updateResponseText,
 } from '../lib/turns.js'
@@ -70,8 +71,10 @@ export default function LearnedContextMirrorPage() {
   }
 
   useEffect(() => {
-    if (text.trim()) reveal(text)
+    if (!text.trim() || replyIsStale(turn)) return
+    reveal(text)
     // The stored reply is shown again when this page opens.
+    // A reply tied to an older prompt stays editable until the user asks to read it.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
@@ -103,6 +106,11 @@ export default function LearnedContextMirrorPage() {
         }} />
         <p className="font-mono text-signal text-xs tracking-widest uppercase mb-3">Tour {turn.number} · réponse</p>
         <TurnClocks turn={turn} now={now} />
+        {replyIsStale(turn) && (
+          <p className="font-body text-sm text-dim mb-4" data-stale-reply="true">
+            Cette réponse correspond au prompt précédent. Vous pouvez la modifier ou la remplacer.
+          </p>
+        )}
       </div>
       <LearnedContextPasteForm
         text={text}

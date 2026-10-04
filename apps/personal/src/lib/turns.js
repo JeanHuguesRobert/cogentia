@@ -4,6 +4,7 @@ export const DRAFT_KEY = "kys_snapshot_draft_v1"
 const STAMP_KEYS = ["answered_at", "stamped_at", "generated_at", "timestamp"]
 const STAMP_RE = /^(\d{4})-(\d{2})-(\d{2})[T ](\d{2}):(\d{2})(?::(\d{2}))?(?:\.\d+)?(Z|[+-]\d{2}:?\d{2})?$/
 const MONTHS = ["janv.", "févr.", "mars", "avr.", "mai", "juin", "juil.", "août", "sept.", "oct.", "nov.", "déc."]
+const CATEGORY_KEYS = ["known", "inferred", "recurring_topics", "working_style", "unknowns"]
 
 function emptyTurn(number, role, nowIso) {
   return {
@@ -21,6 +22,7 @@ function emptyTurn(number, role, nowIso) {
       pasted_at: null,
       agent_stamped_at: null,
       parsed_text: "",
+      for_prompt: null,
     },
     snapshot: null,
     reviews: {},
@@ -51,8 +53,58 @@ export function setCursor(log, turn, step) {
   return { ...log, cursor: { turn, step } }
 }
 
+function claimKey(category, claim) {
+  return `${category}\n${String(claim || "").trim().replace(/\s+/g, " ").toLocaleLowerCase("fr")}`
+}
+
+function reviewsByClaim(reviews, snapshot) {
+  const byKey = new Map()
+  if (!snapshot || !reviews) return byKey
+  for (const category of CATEGORY_KEYS) {
+    for (const item of snapshot[category] || []) {
+      if (!item?.id || !reviews[item.id] || byKey.has(claimKey(category, item.claim))) continue
+      byKey.set(claimKey(category, item.claim), reviews[item.id])
+    }
+  }
+  return byKey
+}
+
+function carryReviews(sources, nextSnapshot) {
+  const byKey = new Map()
+  for (const source of sources) {
+    if (!source) continue
+    for (const [key, review] of reviewsByClaim(source.reviews, source.snapshot)) {
+      if (!byKey.has(key)) byKey.set(key, review)
+    }
+  }
+  const next = {}
+  if (!nextSnapshot) return next
+  for (const category of CATEGORY_KEYS) {
+    for (const item of nextSnapshot[category] || []) {
+      if (!item?.id) continue
+      const review = byKey.get(claimKey(category, item.claim))
+      if (review) next[item.id] = { ...review }
+    }
+  }
+  return next
+}
+
+export function replyIsCurrent(turn) {
+  if (!turn?.snapshot || turn.response.text !== turn.response.parsed_text) return false
+  if (turn.response.for_prompt == null) return true
+  return turn.response.for_prompt === (turn.prompt?.text || "")
+}
+
+export function replyIsStale(turn) {
+  return Boolean(turn?.snapshot)
+    && turn.response.text === turn.response.parsed_text
+    && turn.response.text.trim() !== ""
+    && turn.response.for_prompt != null
+    && turn.response.for_prompt !== (turn.prompt?.text || "")
+}
+
 function furthestStep(turn) {
-  if (turn.snapshot && turn.response.text === turn.response.parsed_text) return 3
+  if (replyIsCurrent(turn)) return 3
   if (turn.response.text.trim()) return 2
   return 1
 }
@@ -322,9 +374,11 @@ export function markCorrectionOffered(log, number) {
 
 export function ensureNextTurn(log, { after, text, producedAt, copiedAt }) {
   const number = after + 1
+  const provider = turnOf(log, after)?.provider || "ChatGPT"
   const existing = turnOf(log, number)
   if (!existing) {
     const created = emptyTurn(number, "correction", producedAt)
+    created.provider = provider
     created.prompt = {
       role: "correction",
       text,
@@ -336,6 +390,7 @@ export function ensureNextTurn(log, { after, text, producedAt, copiedAt }) {
   }
   return mapTurn(log, number, (turn) => ({
     ...turn,
+    provider,
     prompt: {
       ...turn.prompt,
       role: "correction",
@@ -355,17 +410,27 @@ export function updateResponseText(log, number, text) {
 }
 
 export function recordParsedResponse(log, number, { text, pastedAt, agentStamp, snapshot, keepReviews, advance }) {
-  const next = mapTurn(log, number, (turn) => ({
-    ...turn,
-    response: {
-      text,
-      pasted_at: turn.response.text === text && turn.response.pasted_at ? turn.response.pasted_at : pastedAt,
-      agent_stamped_at: agentStamp || null,
-      parsed_text: snapshot ? text : turn.response.parsed_text,
-    },
-    snapshot: snapshot || turn.snapshot,
-    reviews: snapshot && !keepReviews ? {} : turn.reviews,
-  }))
+  const next = mapTurn(log, number, (turn) => {
+    const previous = turnOf(log, number - 1)
+    const reviews = snapshot && !keepReviews
+      ? carryReviews([
+        { reviews: turn.reviews, snapshot: turn.snapshot },
+        previous ? { reviews: previous.reviews, snapshot: previous.snapshot } : null,
+      ], snapshot)
+      : turn.reviews
+    return {
+      ...turn,
+      response: {
+        text,
+        pasted_at: turn.response.text === text && turn.response.pasted_at ? turn.response.pasted_at : pastedAt,
+        agent_stamped_at: agentStamp || null,
+        parsed_text: snapshot ? text : turn.response.parsed_text,
+        for_prompt: snapshot ? (turn.prompt.text || "") : turn.response.for_prompt,
+      },
+      snapshot: snapshot || turn.snapshot,
+      reviews,
+    }
+  })
   if (!advance || !snapshot) return next
   return setCursor(next, number, 3)
 }
@@ -381,13 +446,12 @@ export function forwardIntent(log) {
   const step = log.cursor.step
   const current = turnOf(log)
   if (!current) return { kind: "none", target: null }
-  if (step === 2 && (!current.snapshot || current.response.text !== current.response.parsed_text)) {
+  if (step === 2 && (replyIsStale(current) || !current.snapshot || current.response.text !== current.response.parsed_text)) {
     return { kind: "parse", target: null }
   }
   if (step === 1) {
-    if (current.snapshot && current.response.text === current.response.parsed_text) {
-      return { kind: "skip", target: { turn: current.number, step: 3 } }
-    }
+    if (replyIsCurrent(current)) return { kind: "skip", target: { turn: current.number, step: 3 } }
+    if (replyIsStale(current)) return { kind: "stale", target: { turn: current.number, step: 2 } }
     return { kind: "paste", target: { turn: current.number, step: 2 } }
   }
   if (step === 2 && current.snapshot) {
@@ -395,9 +459,8 @@ export function forwardIntent(log) {
   }
   const next = turnOf(log, current.number + 1)
   if (!next) return { kind: "none", target: null }
-  if (next.snapshot && next.response.text === next.response.parsed_text) {
-    return { kind: "skip", target: { turn: next.number, step: 3 } }
-  }
+  if (replyIsStale(next)) return { kind: "stale", target: { turn: next.number, step: 2 } }
+  if (replyIsCurrent(next)) return { kind: "skip", target: { turn: next.number, step: 3 } }
   if (next.response.text.trim()) return { kind: "skip", target: { turn: next.number, step: 2 } }
   return { kind: "next-turn", target: { turn: next.number, step: 1 } }
 }
