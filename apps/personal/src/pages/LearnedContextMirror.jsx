@@ -29,6 +29,18 @@ import {
 import { compareSnapshots } from '../../../../scripts/lib/agent-acquired-context-alignment.js'
 import { buildMultiAgentComparison } from '../../../../scripts/lib/agent-context-comparison.js'
 import { MultiAgentComparison } from '../components/MultiAgentComparison.js'
+import { inspectCogentiaSelfModel } from '../../../../scripts/lib/cogentia-introspection.js'
+import { CogentiaIntrospectionPanel } from '../components/CogentiaIntrospectionPanel.js'
+
+function downloadJson(filename, value) {
+  const blob = new Blob([JSON.stringify(value, null, 2)], { type: 'application/json;charset=utf-8' })
+  const url = URL.createObjectURL(blob)
+  const anchor = document.createElement('a')
+  anchor.href = url
+  anchor.download = filename
+  anchor.click()
+  URL.revokeObjectURL(url)
+}
 
 export default function LearnedContextMirrorPage() {
   const navigate = useNavigate()
@@ -62,14 +74,22 @@ export default function LearnedContextMirrorPage() {
     return null
   }, [log, mirror, turn])
 
+  const [preferences, setPreferences] = useState(() => loadBrowserEnrolmentPreferences())
+
+  const introspectionModel = useMemo(() => {
+    return inspectCogentiaSelfModel({ turnLog: log, preferences })
+  }, [log, preferences])
+
+  const exportIntrospection = () => {
+    downloadJson(`cogentia-self-introspection-${new Date().toISOString().slice(0, 10)}.json`, introspectionModel)
+  }
+
   const contactContext = useMemo(() => ({
     provider: mirror?.source?.provider || mirror?.source?.agent || turn.provider || 'Agent',
     turnNumber: turn.number,
     reviewedCount: Object.values(turn.reviews || {}).filter((r) => r?.verdict).length,
     hasAlignmentPrompt: Boolean(turn.reviews && Object.keys(turn.reviews).length > 0),
   }), [mirror, turn])
-
-  const [preferences, setPreferences] = useState(() => loadBrowserEnrolmentPreferences())
 
   useEffect(() => {
     saveBrowserEnrolmentPreferences(preferences)
@@ -205,6 +225,13 @@ export default function LearnedContextMirrorPage() {
           turnLog={log}
           preferences={preferences}
           onUpdatePreferences={onUpdatePreferences}
+          onPurge={onPurge}
+        />
+      </div>
+      <div className="max-w-3xl mx-auto px-4 pb-6">
+        <CogentiaIntrospectionPanel
+          model={introspectionModel}
+          onExport={exportIntrospection}
           onPurge={onPurge}
         />
       </div>

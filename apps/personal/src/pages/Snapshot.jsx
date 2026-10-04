@@ -37,6 +37,8 @@ import { ReobservationComparisonCard } from '../components/AgentClaimMirror.js'
 import { AssistedContactCard } from '../components/AssistedContact.js'
 import { ContinuityPanel } from '../components/ContinuityPanel.js'
 import { MultiAgentComparison } from '../components/MultiAgentComparison.js'
+import { inspectCogentiaSelfModel } from '../../../../scripts/lib/cogentia-introspection.js'
+import { CogentiaIntrospectionPanel } from '../components/CogentiaIntrospectionPanel.js'
 
 const PROVIDERS = ['ChatGPT', 'Claude', 'Gemini', 'Mistral', 'Grok', 'Autre agent']
 
@@ -155,6 +157,10 @@ export default function Snapshot() {
   }, [log])
 
   const [preferences, setPreferences] = useState(() => loadBrowserEnrolmentPreferences())
+
+  const introspectionModel = useMemo(() => {
+    return inspectCogentiaSelfModel({ turnLog: log, preferences })
+  }, [log, preferences])
 
   useEffect(() => {
     saveBrowserEnrolmentPreferences(preferences)
@@ -365,6 +371,10 @@ Produisez maintenant une version corrigée en JSON valide.
       }))
 
     downloadJson(`kys-annotations-${new Date().toISOString().slice(0, 10)}.json`, annotations)
+  }
+
+  const exportIntrospection = () => {
+    downloadJson(`cogentia-self-introspection-${new Date().toISOString().slice(0, 10)}.json`, introspectionModel)
   }
 
   return (
@@ -581,6 +591,12 @@ Produisez maintenant une version corrigée en JSON valide.
             onUpdatePreferences={onUpdatePreferences}
             onPurge={onPurge}
             onExport={exportSnapshot}
+          />
+
+          <CogentiaIntrospectionPanel
+            model={introspectionModel}
+            onExport={exportIntrospection}
+            onPurge={onPurge}
           />
 
           <div className="border-t border-border pt-6 text-xs text-muted leading-relaxed">
