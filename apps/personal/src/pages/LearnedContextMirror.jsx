@@ -27,6 +27,8 @@ import {
   updateTurnReview,
 } from '../lib/turns.js'
 import { compareSnapshots } from '../../../../scripts/lib/agent-acquired-context-alignment.js'
+import { buildMultiAgentComparison } from '../../../../scripts/lib/agent-context-comparison.js'
+import { MultiAgentComparison } from '../components/MultiAgentComparison.js'
 
 export default function LearnedContextMirrorPage() {
   const navigate = useNavigate()
@@ -45,6 +47,20 @@ export default function LearnedContextMirrorPage() {
     if (!mirror || !previousTurn?.snapshot) return null
     return compareSnapshots(previousTurn.snapshot, mirror, previousTurn.reviews || {})
   }, [mirror, previousTurn])
+
+  const multiComparison = useMemo(() => {
+    const list = []
+    for (const t of log.turns) {
+      if (t.snapshot) list.push(t)
+    }
+    if (mirror && !list.some((t) => t.number === turn.number)) {
+      list.push({ number: turn.number, provider: turn.provider, snapshot: mirror, reviews: turn.reviews || {} })
+    }
+    if (list.length >= 2) {
+      return buildMultiAgentComparison(list)
+    }
+    return null
+  }, [log, mirror, turn])
 
   const contactContext = useMemo(() => ({
     provider: mirror?.source?.provider || mirror?.source?.agent || turn.provider || 'Agent',
@@ -177,6 +193,11 @@ export default function LearnedContextMirrorPage() {
       {mirror && (
         <div className="max-w-3xl mx-auto px-4 pb-6">
           <AssistedContactCard context={contactContext} />
+        </div>
+      )}
+      {multiComparison && (
+        <div className="max-w-3xl mx-auto px-4 pb-6">
+          <MultiAgentComparison comparison={multiComparison} />
         </div>
       )}
       <div className="max-w-3xl mx-auto px-4 pb-6">

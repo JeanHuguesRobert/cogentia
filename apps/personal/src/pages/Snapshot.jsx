@@ -32,9 +32,11 @@ import {
   verdictToStance,
 } from '../../../../scripts/lib/agent-acquired-context-review.js'
 import { compareSnapshots } from '../../../../scripts/lib/agent-acquired-context-alignment.js'
+import { buildMultiAgentComparison } from '../../../../scripts/lib/agent-context-comparison.js'
 import { ReobservationComparisonCard } from '../components/AgentClaimMirror.js'
 import { AssistedContactCard } from '../components/AssistedContact.js'
 import { ContinuityPanel } from '../components/ContinuityPanel.js'
+import { MultiAgentComparison } from '../components/MultiAgentComparison.js'
 
 const PROVIDERS = ['ChatGPT', 'Claude', 'Gemini', 'Mistral', 'Grok', 'Autre agent']
 
@@ -145,6 +147,12 @@ export default function Snapshot() {
     if (!snapshot || !previousTurn?.snapshot) return null
     return compareSnapshots(previousTurn.snapshot, snapshot, previousTurn.reviews || {})
   }, [snapshot, previousTurn])
+
+  const multiComparison = useMemo(() => {
+    const list = log.turns.filter((t) => t.snapshot != null)
+    if (list.length < 2) return null
+    return buildMultiAgentComparison(list)
+  }, [log])
 
   const [preferences, setPreferences] = useState(() => loadBrowserEnrolmentPreferences())
 
@@ -458,6 +466,7 @@ Produisez maintenant une version corrigée en JSON valide.
       {step === 3 && snapshot && (
         <section className="space-y-8">
           {comparison && <ReobservationComparisonCard comparison={comparison} />}
+          {multiComparison && <MultiAgentComparison comparison={multiComparison} />}
           <div className="card border-signal/30">
             <p className="label">Résumé de la relation selon l’agent</p>
             <p className="font-body text-bright leading-relaxed">

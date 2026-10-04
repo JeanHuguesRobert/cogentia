@@ -61,6 +61,7 @@
     "test:agent-acquired-context-alignment": "node scripts/check-agent-acquired-context-alignment.js",
     "test:assisted-contact-intent": "node scripts/check-assisted-contact-intent.js",
     "test:progressive-enrolment": "node scripts/check-progressive-enrolment.js",
+    "test:agent-context-comparison": "node scripts/check-agent-context-comparison.js",
     "test:kys-turns": "node scripts/check-kys-turns.js",
     "test:issue-graph": "node scripts/check-issue-graph.js",
     "test:issue-graph-route": "node scripts/check-issue-graph-route.js",
