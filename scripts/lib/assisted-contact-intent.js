@@ -1,4 +1,4 @@
-export const DEFAULT_CONTACT_RECIPIENT = "contact@cogentia.io";
+export const DEFAULT_CONTACT_RECIPIENT = "jhr@baronsmariani.org";
 
 export const CONTACT_INTENTIONS = [
   {
@@ -6,7 +6,8 @@ export const CONTACT_INTENTIONS = [
     label: "Partager un retour d'expérience",
     summary: "Simple retour d'impression ou observation sur le miroir, sans suite attendue particulière.",
     category: "feedback",
-    subject: "Retour d'expérience sur le miroir KYS",
+    routeTag: "feedback",
+    subject: "Retour d'expérience sur le miroir agentique",
     intro: "Bonjour,\n\nJe viens de tester le miroir KYS et je souhaitais vous faire part de mes impressions :",
   },
   {
@@ -14,7 +15,8 @@ export const CONTACT_INTENTIONS = [
     label: "Poser une question",
     summary: "Comprendre la démarche, le fonctionnement du miroir ou le projet Cogentia.",
     category: "question",
-    subject: "Question à propos de Cogentia et du miroir KYS",
+    routeTag: "question",
+    subject: "Question sur le miroir agentique",
     intro: "Bonjour,\n\nAprès avoir exploré le miroir KYS, j'aurais une question à vous poser :",
   },
   {
@@ -22,7 +24,8 @@ export const CONTACT_INTENTIONS = [
     label: "Participer aux tests",
     summary: "Expérimenter le protocole sur d'autres agents ou contribuer aux jeux d'essais.",
     category: "contribute",
-    subject: "Proposition de participation aux tests KYS",
+    routeTag: "testing",
+    subject: "Participation aux tests",
     intro: "Bonjour,\n\nJe serais intéressé(e) pour tester le miroir KYS sur d'autres contextes ou agents conversationnels :",
   },
   {
@@ -30,7 +33,8 @@ export const CONTACT_INTENTIONS = [
     label: "Suivre le projet",
     summary: "Être tenu informé(e) des avancées sans engagement spécifique.",
     category: "follow",
-    subject: "Suivi des avancées du projet Cogentia",
+    routeTag: "follow",
+    subject: "Suivi du projet",
     intro: "Bonjour,\n\nJ'ai découvert le miroir KYS et j'aimerais suivre l'évolution de vos travaux :",
   },
   {
@@ -38,7 +42,8 @@ export const CONTACT_INTENTIONS = [
     label: "Explorer la perspective d'un Jumeau",
     summary: "Discuter d'un modèle personnel souverain et de l'architecture de Jumeau Numérique.",
     category: "explore",
-    subject: "Échange sur la perspective d'un Jumeau Numérique personnel",
+    routeTag: "twin",
+    subject: "Exploration d'un Jumeau Numérique",
     intro: "Bonjour,\n\nLa perspective d'un Jumeau Numérique personnel souverain m'intéresse particulièrement :",
   },
   {
@@ -46,7 +51,8 @@ export const CONTACT_INTENTIONS = [
     label: "Comprendre l'usage des données",
     summary: "Éclaircissements sur la souveraineté, la rétention locale et la confidentialité.",
     category: "governance",
-    subject: "Question sur la gouvernance des données et la confidentialité KYS",
+    routeTag: "data-governance",
+    subject: "Question sur l'usage des données",
     intro: "Bonjour,\n\nJe souhaiterais mieux comprendre le cadre de gouvernance et de confidentialité de votre protocole :",
   },
   {
@@ -54,7 +60,8 @@ export const CONTACT_INTENTIONS = [
     label: "Autre / Message libre",
     summary: "Rédiger un mot sans entrer dans une catégorie pré-définie.",
     category: "open",
-    subject: "Message à propos de Cogentia",
+    routeTag: "other",
+    subject: "Message libre",
     intro: "Bonjour,\n\nJe vous écris à propos du miroir KYS :",
   },
   {
@@ -62,6 +69,7 @@ export const CONTACT_INTENTIONS = [
     label: "Ne pas contacter pour le moment",
     summary: "Conserver ses observations pour soi sans établir de contact.",
     category: "none",
+    routeTag: "none",
     subject: "",
     intro: "",
   },
@@ -91,25 +99,36 @@ export function buildContactEmailDraft({
     };
   }
 
-  const subject = intention.subject || "Message à propos du miroir KYS";
+  const routeTag = intention.routeTag || intention.id || "other";
+  const subjectLabel = intention.subject || "Message libre";
+  const subject = `[KYS][Cogentia][${routeTag}] ${subjectLabel}`;
 
   // Build context details (strictly high-level operational metrics, NO raw private claims)
-  const metaLines = [];
+  const metaLines = [
+    "Origine : KYS — miroir agentique Cogentia",
+    `Intention déclarée : ${intention.label}`,
+    `Code de routage : ${routeTag}`,
+  ];
   if (context.provider) {
-    metaLines.push(`- Agent examiné : ${context.provider}`);
+    metaLines.push(`Agent examiné : ${context.provider}`);
   }
-  if (context.turnNumber && context.turnNumber > 1) {
-    metaLines.push(`- Parcours en ${context.turnNumber} tours`);
+  if (context.turnNumber) {
+    metaLines.push(`Parcours : ${context.turnNumber} tour${context.turnNumber > 1 ? "s" : ""}`);
   }
-  if (typeof context.reviewedCount === "number" && context.reviewedCount > 0) {
-    metaLines.push(`- Affirmations examinées par mes soins : ${context.reviewedCount}`);
+  if (typeof context.reviewedCount === "number") {
+    metaLines.push(`Assertions examinées : ${context.reviewedCount}`);
   }
-  if (context.hasAlignmentPrompt) {
-    metaLines.push("- Consigne d'alignement produite lors de l'échange");
-  }
+  metaLines.push(`Alignement effectué : ${context.hasAlignmentPrompt ? "oui" : "non"}`);
 
-  const sections = [];
-  sections.push(intention.intro);
+  const sections = [
+    "Contexte du message",
+    "-------------------",
+    metaLines.join("\n"),
+    "",
+    "Message",
+    "-------",
+    intention.intro,
+  ];
 
   if (customNotes && String(customNotes).trim()) {
     sections.push(String(customNotes).trim());
@@ -117,17 +136,11 @@ export function buildContactEmailDraft({
     sections.push("[Vos commentaires ou précisions ici...]");
   }
 
-  if (metaLines.length > 0) {
-    sections.push(
-      "---",
-      "Éléments de contexte (observables lors de ma session locale) :",
-      metaLines.join("\n"),
-    );
-  }
-
   sections.push(
     "",
-    "---\nMessage préparé volontairement depuis le navigateur via l'outil KYS.",
+    "---",
+    "Ce message a été préparé volontairement depuis KYS / Cogentia.",
+    "Aucune donnée personnelle issue du miroir n’est jointe automatiquement.",
   );
 
   const body = sections.join("\n\n");
