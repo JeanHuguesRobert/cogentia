@@ -59,6 +59,7 @@
     "test:agent-acquired-context-mirror": "node scripts/check-agent-acquired-context-mirror.js",
     "test:agent-acquired-context-review": "node scripts/check-agent-acquired-context-review.js",
     "test:agent-acquired-context-alignment": "node scripts/check-agent-acquired-context-alignment.js",
+    "test:assisted-contact-intent": "node scripts/check-assisted-contact-intent.js",
     "test:kys-turns": "node scripts/check-kys-turns.js",
     "test:issue-graph": "node scripts/check-issue-graph.js",
     "test:issue-graph-route": "node scripts/check-issue-graph-route.js",

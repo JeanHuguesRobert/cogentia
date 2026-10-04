@@ -29,6 +29,7 @@ import {
 } from '../../../../scripts/lib/agent-acquired-context-review.js'
 import { compareSnapshots } from '../../../../scripts/lib/agent-acquired-context-alignment.js'
 import { ReobservationComparisonCard } from '../components/AgentClaimMirror.js'
+import { AssistedContactCard } from '../components/AssistedContact.js'
 
 const PROVIDERS = ['ChatGPT', 'Claude', 'Gemini', 'Mistral', 'Grok', 'Autre agent']
 
@@ -161,6 +162,13 @@ export default function Snapshot() {
   }, [snapshot])
 
   const reviewedCount = items.filter((item) => reviews[item.id]?.verdict).length
+
+  const contactContext = useMemo(() => ({
+    provider,
+    turnNumber: turn.number,
+    reviewedCount,
+    hasAlignmentPrompt: Boolean(reviewedCount > 0),
+  }), [provider, turn.number, reviewedCount])
 
   const correctionPrompt = useMemo(() => {
     if (!snapshot) return ''
@@ -534,6 +542,8 @@ Produisez maintenant une version corrigée en JSON valide.
             forwardDisabled={intent.kind === 'none'}
             forwardLabel={forwardLabel(intent.kind, intent.target)}
           />
+
+          <AssistedContactCard context={contactContext} />
 
           <div className="border-t border-border pt-6 text-xs text-muted leading-relaxed">
             Ce résultat est un <strong className="text-dim">KYS Snapshot personnel</strong>, non un KYS Profile certifié. Les futurs KYS Profiles limités et finalisés relèveront du cadre fiduciaire non lucratif de PrivAI.

@@ -4,6 +4,7 @@ import {
   LearnedContextPasteForm,
   immediatePasteText,
 } from '../components/AgentClaimMirror.js'
+import { AssistedContactCard } from '../components/AssistedContact.js'
 import { StepNav, TurnBar, TurnClocks, forwardLabel, useNow } from '../components/TurnBar.jsx'
 import { mirrorLearnedContext } from '../lib/learned-context-ingest.js'
 import { extractJson, normalizeSnapshot } from '../lib/kys-snapshot.js'
@@ -39,6 +40,13 @@ export default function LearnedContextMirrorPage() {
     if (!mirror || !previousTurn?.snapshot) return null
     return compareSnapshots(previousTurn.snapshot, mirror, previousTurn.reviews || {})
   }, [mirror, previousTurn])
+
+  const contactContext = useMemo(() => ({
+    provider: mirror?.source?.provider || mirror?.source?.agent || turn.provider || 'Agent',
+    turnNumber: turn.number,
+    reviewedCount: Object.values(turn.reviews || {}).filter((r) => r?.verdict).length,
+    hasAlignmentPrompt: Boolean(turn.reviews && Object.keys(turn.reviews).length > 0),
+  }), [mirror, turn])
 
   useEffect(() => {
     saveBrowserTurnLog(log)
@@ -143,6 +151,11 @@ export default function LearnedContextMirrorPage() {
         failure={failure}
         comparison={comparison}
       />
+      {mirror && (
+        <div className="max-w-3xl mx-auto px-4 pb-6">
+          <AssistedContactCard context={contactContext} />
+        </div>
+      )}
       <div className="max-w-3xl mx-auto px-4 pb-10">
         <StepNav
           onBack={onBack}

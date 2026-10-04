@@ -61,10 +61,12 @@ function assertClosedDetails(html) {
 const browserFiles = [
   "apps/personal/src/lib/learned-context-ingest.js",
   "apps/personal/src/components/AgentClaimMirror.js",
+  "apps/personal/src/components/AssistedContact.js",
   "apps/personal/src/pages/LearnedContextMirror.jsx",
   "scripts/lib/agent-acquired-context-mirror.js",
   "scripts/lib/agent-acquired-context-review.js",
   "scripts/lib/agent-acquired-context-alignment.js",
+  "scripts/lib/assisted-contact-intent.js",
   "scripts/lib/kys-snapshot-mirror.js",
 ];
 for (const relative of browserFiles) {
