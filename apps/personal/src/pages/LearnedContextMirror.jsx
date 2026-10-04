@@ -18,6 +18,7 @@ import {
   replyIsStale,
   saveBrowserTurnLog,
   updateResponseText,
+  updateTurnReview,
 } from '../lib/turns.js'
 
 export default function LearnedContextMirrorPage() {
@@ -97,6 +98,11 @@ export default function LearnedContextMirrorPage() {
     navigate('/snapshot')
   }
 
+  function updateReview(id, patch) {
+    const captureId = mirror?.advanced?.capture_id || 'capture:kys-snapshot'
+    setLog((current) => updateTurnReview(current, turn.number, id, patch, captureId))
+  }
+
   return (
     <div data-turn={turn.number} data-step="2">
       <div className="max-w-3xl mx-auto px-4 pt-10">
@@ -124,6 +130,8 @@ export default function LearnedContextMirrorPage() {
           reveal(pasted)
         }}
         mirror={mirror}
+        reviews={turn.reviews || {}}
+        onReview={updateReview}
         pending={pending}
         failure={failure}
       />

@@ -1,0 +1,14 @@
+# Later human annotation marking a claim obsolete. It points at a snapshot item and does not replace it.
+schema_version: cogentia.agent-acquired-context.v0
+kind: agent_acquired_context_annotation
+layer: human_annotation
+annotation_id: annotation:example-obsolete-001
+claim_status: human_annotation_not_a_rewrite
+target:
+  capture_id: capture:example-rich-001
+  item_id: item:coffee-habit
+annotated_at:
+  status: known
+  value: "2026-10-04T12:00:00Z"
+stance: obsolete
+note: "Person Example stopped drinking coffee in 2025. This historical claim is now obsolete."

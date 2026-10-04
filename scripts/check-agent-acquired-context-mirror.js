@@ -63,6 +63,7 @@ const browserFiles = [
   "apps/personal/src/components/AgentClaimMirror.js",
   "apps/personal/src/pages/LearnedContextMirror.jsx",
   "scripts/lib/agent-acquired-context-mirror.js",
+  "scripts/lib/agent-acquired-context-review.js",
   "scripts/lib/kys-snapshot-mirror.js",
 ];
 for (const relative of browserFiles) {
@@ -342,5 +343,17 @@ assert.ok(offerAt !== -1 && mirrorLinkAt > offerAt && pasteLabelAt > mirrorLinkA
 assert.ok(copyAt !== -1 && copyAt < pasteLabelAt);
 assert.equal(snapshotSource.slice(mirrorLinkAt, pasteLabelAt).includes("ml-auto"), true);
 assert.equal(snapshotSource.includes("if (label === 'correction') setCorrectionOffered(true)"), true);
+
+const mirrorWithReview = renderToStaticMarkup(React.createElement(AgentClaimMirror, {
+  model: rich.model,
+  reviews: { "item:workshop": { verdict: "obsolete", stance: "obsolete", note: "Ancien atelier" } },
+  onReview() {},
+}));
+assert.equal(mirrorWithReview.includes("data-user-review=\"obsolete\""), true);
+assert.equal(mirrorWithReview.includes("data-review-stance=\"obsolete\""), true);
+assert.equal(mirrorWithReview.includes("data-human-review=\"item:workshop\""), true);
+assert.equal(mirrorWithReview.includes("data-agent-assertion=\"item:workshop\""), true);
+assert.equal(mirrorWithReview.includes("data-verdict-button=\"obsolete\""), true);
+assert.equal(mirrorWithReview.includes("data-verdict-button=\"private\""), true);
 
 console.log("agent-acquired-context mirror: ok");

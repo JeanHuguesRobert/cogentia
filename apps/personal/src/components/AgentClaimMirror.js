@@ -1,4 +1,9 @@
 import React from "react";
+import {
+  REVIEW_VERDICTS,
+  isSalientItem,
+  verdictToStance,
+} from "../../../../scripts/lib/agent-acquired-context-review.js";
 
 const COPY = {
   banner: "Ceci est ce que l'agent affirme. Ce n'est pas une vérité objective.",
@@ -43,6 +48,18 @@ const COPY = {
     other: "autre",
     unknown: "genre inconnu",
   },
+  verdicts: {
+    accepted: "Confirmé (Oui, c’est moi)",
+    nuanced: "À nuancer",
+    rejected: "Rejeté (Faux)",
+    obsolete: "Périmé / obsolète",
+    private: "Ne pas conserver (Restreint)",
+    unknown: "Inconnu (Non vérifiable)",
+  },
+  salienceHeader: "Points d'attention prioritaires",
+  salienceNotice: "Examen facultatif : vous pouvez cibler les affirmations en tension ou incertaines sans devoir tout valider.",
+  unreviewedBadge: "Non examiné (optionnel)",
+  userReviewHeading: "Votre examen",
 };
 
 const COUNT_ORDER = Object.keys(COPY.counts);
@@ -94,24 +111,30 @@ function sourceLines(source) {
   ];
 }
 
-function ItemView({ item }) {
+function ItemView({ item, review = null, onReview = null }) {
+  const salient = isSalientItem(item);
   return h("article", {
     "data-item-id": item.id,
     "data-origin": item.claimed_origin,
     "data-uncertainty": item.uncertainty_status,
-    className: `pl-3 ${ORIGIN_CLASS[item.claimed_origin] || ORIGIN_CLASS.unknown}`,
+    "data-user-review": review?.verdict || "unreviewed",
+    "data-review-stance": review?.stance || (review?.verdict ? verdictToStance(review.verdict) : "unreviewed"),
+    "data-salience": salient ? "priority" : "regular",
+    className: `pl-3 space-y-2 ${ORIGIN_CLASS[item.claimed_origin] || ORIGIN_CLASS.unknown}`,
   },
-  h("p", { className: "font-body text-sm text-bright leading-relaxed" }, item.content),
-  item.detail
-    ? h("p", { className: "font-body text-xs text-dim mt-2", "data-basis": item.id }, visibleDetail(item.detail))
-    : null,
-  h("p", { className: "tag mt-2" }, COPY.origins[item.claimed_origin] || COPY.origins.unknown),
-  item.uncertainty_note
-    ? h("p", { className: "font-body text-xs text-dim mt-2", "data-uncertainty-note": item.id }, visibleUncertainty(item.uncertainty_note))
-    : null,
-  item.contradicts.length
-    ? h("p", { className: "font-body text-xs text-dim mt-2" }, COPY.tension)
-    : null,
+  h("div", { "data-agent-assertion": item.id, className: "space-y-1" },
+    h("p", { className: "font-body text-sm text-bright leading-relaxed" }, item.content),
+    item.detail
+      ? h("p", { className: "font-body text-xs text-dim mt-2", "data-basis": item.id }, visibleDetail(item.detail))
+      : null,
+    h("p", { className: "tag mt-2" }, COPY.origins[item.claimed_origin] || COPY.origins.unknown),
+    item.uncertainty_note
+      ? h("p", { className: "font-body text-xs text-dim mt-2", "data-uncertainty-note": item.id }, visibleUncertainty(item.uncertainty_note))
+      : null,
+    item.contradicts.length
+      ? h("p", { className: "font-body text-xs text-dim mt-2" }, COPY.tension)
+      : null,
+  ),
   h("details", { "data-item-details": item.id, className: "mt-2" },
     h("summary", { className: "font-mono text-xs text-muted cursor-pointer" }, "Détail de l'élément"),
     h("dl", { className: "mt-2 space-y-1 font-mono text-xs text-muted" },
@@ -125,12 +148,70 @@ function ItemView({ item }) {
         ? h("div", null, `Contredit : ${item.contradicts.join(", ")}`)
         : null,
     ),
+  ),
+  h("div", {
+    "data-human-review": item.id,
+    className: "mt-3 pt-2 border-t border-border/40 space-y-2",
+  },
+    h("div", { className: "flex flex-wrap items-center justify-between gap-2" },
+      h("span", { className: "font-mono text-xs text-muted" }, COPY.userReviewHeading),
+      review?.verdict
+        ? h("span", {
+          className: "tag text-xs font-mono text-signal border-signal/40",
+          "data-review-badge": item.id,
+        }, `${COPY.verdicts[review.verdict] || review.verdict}${review.note ? " · avec précision" : ""}`)
+        : h("span", { className: "font-mono text-xs text-muted/60" }, COPY.unreviewedBadge),
+    ),
+    onReview ? h(React.Fragment, null,
+      h("div", { className: "flex flex-wrap gap-1.5", "data-review-controls": item.id },
+        REVIEW_VERDICTS.map((verdict) => {
+          const active = review?.verdict === verdict.id;
+          return h("button", {
+            key: verdict.id,
+            type: "button",
+            "data-verdict-button": verdict.id,
+            onClick: () => {
+              if (active) onReview(item.id, null);
+              else onReview(item.id, { verdict: verdict.id, stance: verdict.stance, note: review?.note || "" });
+            },
+            className: `px-2.5 py-1 rounded text-xs transition-colors border ${
+              active
+                ? "border-signal bg-signal/15 text-bright font-medium"
+                : "border-border text-dim hover:border-dim hover:text-bright"
+            }`,
+          }, verdict.label);
+        }),
+      ),
+      review?.verdict ? h("div", { className: "pt-1" },
+        h("input", {
+          type: "text",
+          className: "input text-xs w-full",
+          value: review.note || "",
+          placeholder: "Votre précision ou restriction d'usage (facultative)…",
+          "data-review-note-input": item.id,
+          onChange: (event) => onReview(item.id, { note: event.target.value }),
+        }),
+      ) : null,
+    ) : null,
   ));
 }
 
-export function AgentClaimMirror({ model }) {
+export function AgentClaimMirror({ model, reviews = {}, onReview = null }) {
   if (!model) return null;
+  const [filter, setFilter] = React.useState("all");
   const counts = COUNT_ORDER.filter((key) => Object.hasOwn(model.counts || {}, key));
+  const allItems = (model.categories || []).flatMap((cat) => cat.items || []);
+  const salientItems = allItems.filter(isSalientItem);
+  const reviewedCount = allItems.filter((item) => reviews && reviews[item.id]?.verdict).length;
+
+  const displayedCategories = (model.categories || []).map((category) => {
+    let items = category.items;
+    if (filter === "salient") items = items.filter(isSalientItem);
+    else if (filter === "reviewed") items = items.filter((it) => reviews && reviews[it.id]?.verdict);
+    else if (filter === "unreviewed") items = items.filter((it) => !reviews || !reviews[it.id]?.verdict);
+    return { ...category, items };
+  }).filter((category) => category.items.length > 0);
+
   return h("section", {
     "aria-label": "Miroir des affirmations de l'agent",
     "data-mirror": "agent-claims",
@@ -152,13 +233,52 @@ export function AgentClaimMirror({ model }) {
         h("li", { key, className: "tag", "data-count": key }, `${model.counts[key]} ${COPY.counts[key]}`)
       )))
       : null,
-    model.categories.map((category) => h("section", {
+    salientItems.length > 0 ? h("div", {
+      "data-salience-banner": "true",
+      className: "card bg-panel/30 border border-signal/30 p-4 space-y-3",
+    },
+      h("div", { className: "flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2" },
+        h("div", null,
+          h("p", { className: "font-display text-sm font-semibold text-bright" },
+            `${COPY.salienceHeader} (${salientItems.length})`),
+          h("p", { className: "font-body text-xs text-dim mt-0.5" },
+            COPY.salienceNotice),
+        ),
+        h("div", { className: "flex flex-wrap gap-1.5", "data-salience-filters": "true" },
+          h("button", {
+            type: "button",
+            onClick: () => setFilter("all"),
+            className: `px-2.5 py-1 rounded text-xs transition-colors ${filter === "all" ? "bg-signal text-night font-medium" : "bg-panel text-dim hover:text-bright"}`,
+            "data-filter": "all",
+          }, `Toutes (${allItems.length})`),
+          h("button", {
+            type: "button",
+            onClick: () => setFilter("salient"),
+            className: `px-2.5 py-1 rounded text-xs transition-colors ${filter === "salient" ? "bg-signal text-night font-medium" : "bg-panel text-dim hover:text-bright"}`,
+            "data-filter": "salient",
+          }, `Prioritaires (${salientItems.length})`),
+          reviewedCount > 0 ? h("button", {
+            type: "button",
+            onClick: () => setFilter("reviewed"),
+            className: `px-2.5 py-1 rounded text-xs transition-colors ${filter === "reviewed" ? "bg-signal text-night font-medium" : "bg-panel text-dim hover:text-bright"}`,
+            "data-filter": "reviewed",
+          }, `Examinées (${reviewedCount})`) : null,
+          h("button", {
+            type: "button",
+            onClick: () => setFilter("unreviewed"),
+            className: `px-2.5 py-1 rounded text-xs transition-colors ${filter === "unreviewed" ? "bg-signal text-night font-medium" : "bg-panel text-dim hover:text-bright"}`,
+            "data-filter": "unreviewed",
+          }, `Non examinées (${allItems.length - reviewedCount})`),
+        ),
+      ),
+    ) : null,
+    displayedCategories.map((category) => h("section", {
       key: category.label,
       className: "card space-y-4",
       "data-category": category.label,
     },
     h("h2", { className: "font-display text-lg font-semibold text-bright" }, categoryLabel(category.label)),
-    category.items.map((item) => h(ItemView, { key: item.id, item })),
+    category.items.map((item) => h(ItemView, { key: item.id, item, review: reviews?.[item.id] || null, onReview })),
     )),
     h("p", { className: "font-body text-xs text-muted", "data-absence-note": "true" }, COPY.absence),
   ) : h("p", { className: "font-body text-sm text-dim", role: "status" },
@@ -193,7 +313,7 @@ export function immediatePasteText(currentText, pastedText) {
   return null;
 }
 
-export function LearnedContextPasteForm({ text, onText, onReveal, onPaste, mirror, pending, failure }) {
+export function LearnedContextPasteForm({ text, onText, onReveal, onPaste, mirror, reviews = {}, onReview = null, pending, failure }) {
   return h("div", { className: "max-w-3xl mx-auto px-4 py-10 space-y-6" },
     h("p", { className: "font-mono text-signal text-xs tracking-widest uppercase" }, "Miroir immédiat"),
     h("h1", { className: "font-display text-3xl md:text-4xl font-bold text-bright" }, "Ce que cet agent affirme savoir"),
@@ -221,6 +341,7 @@ export function LearnedContextPasteForm({ text, onText, onReveal, onPaste, mirro
     h("p", { className: "font-body text-xs text-muted" }, "Sans compte. La réponse reste dans cette page."),
     ),
     failure ? h("p", { role: "alert", className: "font-body text-sm text-dim" }, failure) : null,
-    mirror ? h(AgentClaimMirror, { model: mirror }) : null,
+    mirror ? h(AgentClaimMirror, { model: mirror, reviews, onReview }) : null,
   );
 }
+

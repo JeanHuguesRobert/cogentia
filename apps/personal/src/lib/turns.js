@@ -1,3 +1,5 @@
+import { verdictToStance } from "../../../../scripts/lib/agent-acquired-context-review.js"
+
 export const TURN_LOG_KEY = "kys_turn_log_v1"
 export const DRAFT_KEY = "kys_snapshot_draft_v1"
 
@@ -454,11 +456,33 @@ export function recordParsedResponse(log, number, { text, pastedAt, agentStamp, 
   return setCursor(next, number, 3)
 }
 
-export function updateTurnReview(log, number, id, patch) {
-  return mapTurn(log, number, (turn) => ({
-    ...turn,
-    reviews: { ...turn.reviews, [id]: { ...turn.reviews[id], ...patch } },
-  }))
+export function updateTurnReview(log, number, id, patch, captureId = null) {
+  return mapTurn(log, number, (turn) => {
+    if (patch === null) {
+      const nextReviews = { ...turn.reviews }
+      delete nextReviews[id]
+      return { ...turn, reviews: nextReviews }
+    }
+    const current = turn.reviews?.[id] || {}
+    const updated = { ...current, ...patch }
+    if (captureId) {
+      updated.capture_id = captureId
+      updated.item_id = id
+      if (!updated.stance && updated.verdict) {
+        updated.stance = verdictToStance(updated.verdict)
+      }
+      if (!updated.annotated_at) {
+        updated.annotated_at = new Date().toISOString()
+      }
+    }
+    return {
+      ...turn,
+      reviews: {
+        ...turn.reviews,
+        [id]: updated,
+      },
+    }
+  })
 }
 
 export function forwardIntent(log) {

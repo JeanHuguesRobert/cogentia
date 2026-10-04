@@ -215,9 +215,9 @@
         },
         "annotated_at": { "$ref": "#/$defs/knownOrUnknown" },
         "stance": {
-          "enum": ["confirm", "nuance", "contest", "contextualize", "restrict", "unknown"]
+          "enum": ["confirm", "nuance", "contest", "contextualize", "restrict", "obsolete", "unknown"]
         },
-        "note": { "type": "string", "minLength": 1 }
+        "note": { "type": "string" }
       }
     }
   }

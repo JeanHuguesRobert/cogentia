@@ -22,6 +22,12 @@ import {
 } from '../lib/turns.js'
 import { StepNav, TurnBar, TurnClocks, forwardLabel, useNow } from '../components/TurnBar.jsx'
 
+import {
+  REVIEW_VERDICTS,
+  reviewToAnnotation,
+  verdictToStance,
+} from '../../../../scripts/lib/agent-acquired-context-review.js'
+
 const PROVIDERS = ['ChatGPT', 'Claude', 'Gemini', 'Mistral', 'Grok', 'Autre agent']
 
 const CATEGORIES = [
@@ -32,11 +38,13 @@ const CATEGORIES = [
   { key: 'unknowns', title: 'Ce qu’il ne sait pas', description: 'Limites reconnues, contexte absent ou informations inaccessibles.' },
 ]
 
-const VERDICTS = [
-  { id: 'accepted', label: 'Oui, c’est moi' },
-  { id: 'nuanced', label: 'À nuancer' },
-  { id: 'rejected', label: 'Non, pas du tout' },
-  { id: 'private', label: 'Ne pas conserver' },
+export const VERDICTS = [
+  { id: 'accepted', stance: 'confirm', label: 'Oui, c’est moi' },
+  { id: 'nuanced', stance: 'nuance', label: 'À nuancer' },
+  { id: 'rejected', stance: 'contest', label: 'Non, pas du tout' },
+  { id: 'obsolete', stance: 'obsolete', label: 'Périmé / obsolète' },
+  { id: 'private', stance: 'restrict', label: 'Ne pas conserver' },
+  { id: 'unknown', stance: 'unknown', label: 'Je ne sais pas' },
 ]
 
 function buildPrompt(provider) {
@@ -154,7 +162,9 @@ export default function Snapshot() {
       accepted: [],
       nuanced: [],
       rejected: [],
+      obsolete: [],
       private: [],
+      unknown: [],
       unchanged: [],
     }
 
@@ -165,7 +175,11 @@ export default function Snapshot() {
         return
       }
       const note = review.note?.trim() ? ` — précision : ${review.note.trim()}` : ''
-      groups[review.verdict].push(`- ${item.claim}${note}`)
+      if (groups[review.verdict]) {
+        groups[review.verdict].push(`- ${item.claim}${note}`)
+      } else {
+        groups.unchanged.push(`- ${item.claim}`)
+      }
     })
 
     return `Vous avez produit un instantané KYS de ce que vous croyiez savoir de moi. Voici mon examen humain de cette représentation.
@@ -179,8 +193,14 @@ ${groups.nuanced.join('\n') || '- Aucun élément à nuancer.'}
 REJETÉ
 ${groups.rejected.join('\n') || '- Aucun élément explicitement rejeté.'}
 
+PÉRIMÉ / OBSOLÈTE
+${groups.obsolete.join('\n') || '- Aucun élément signalé.'}
+
 À NE PAS CONSERVER NI RÉUTILISER
 ${groups.private.join('\n') || '- Aucun élément signalé.'}
+
+INCONNU / NON CONFIRMÉ
+${groups.unknown.join('\n') || '- Aucun élément signalé.'}
 
 À REPRENDRE TELLES QUELLES
 ${groups.unchanged.join('\n') || '- Aucune affirmation laissée sans examen.'}
@@ -188,8 +208,9 @@ ${groups.unchanged.join('\n') || '- Aucune affirmation laissée sans examen.'}
 Produisez maintenant une version corrigée en JSON valide.
 - Distinguez explicitement ce que vous savez, ce que vous inférez et ce que vous ignorez.
 - Reprenez à l'identique les affirmations listées sous « À reprendre telles quelles ».
-- Ne réintroduisez pas les éléments rejetés.
-- Ne conservez ni ne réutilisez les éléments signalés comme privés.
+- Ne réintroduisez pas les éléments rejetés ni les éléments périmés ou obsolètes.
+- Ne conservez ni ne réutilisez les éléments signalés comme privés ou à ne pas conserver.
+- Traitez les éléments signalés comme inconnus comme non confirmés par la personne.
 - Intégrez mes nuances sans les transformer en conclusions plus générales.
 - Rappelez les limites du contexte auquel vous avez accès.
 - Indiquez answered_at, l'heure de votre réponse en ISO 8601 avec le décalage horaire, par exemple 2026-10-04T15:04:00+02:00.
@@ -250,7 +271,8 @@ Produisez maintenant une version corrigée en JSON valide.
   }
 
   const updateReview = (id, patch) => {
-    setLog((current) => updateTurnReview(current, turn.number, id, patch))
+    const captureId = snapshot?.capture_id || 'capture:kys-snapshot'
+    setLog((current) => updateTurnReview(current, turn.number, id, patch, captureId))
   }
 
   const onBack = () => setLog((current) => goBack(current))
@@ -274,6 +296,7 @@ Produisez maintenant une version corrigée en JSON valide.
       basis: item.basis,
       confidence: item.confidence,
       user_verdict: reviews[item.id]?.verdict || 'unreviewed',
+      user_stance: reviews[item.id]?.stance || (reviews[item.id]?.verdict ? verdictToStance(reviews[item.id].verdict) : 'unreviewed'),
       user_note: reviews[item.id]?.note || '',
     }))
 
@@ -286,6 +309,18 @@ Produisez maintenant une version corrigée en JSON valide.
       relationship_summary: snapshot.relationship_summary,
       claims: reviewedClaims,
     })
+  }
+
+  const exportAnnotations = () => {
+    const annotations = Object.entries(reviews)
+      .filter(([_, rev]) => rev && rev.verdict)
+      .map(([id, rev]) => reviewToAnnotation({
+        ...rev,
+        item_id: rev.item_id || id,
+        capture_id: rev.capture_id || snapshot?.capture_id || 'capture:kys-snapshot',
+      }))
+
+    downloadJson(`kys-annotations-${new Date().toISOString().slice(0, 10)}.json`, annotations)
   }
 
   return (
@@ -420,7 +455,7 @@ Produisez maintenant une version corrigée en JSON valide.
                         <button
                           key={verdict.id}
                           type="button"
-                          onClick={() => updateReview(item.id, { verdict: verdict.id })}
+                          onClick={() => updateReview(item.id, review.verdict === verdict.id ? null : { verdict: verdict.id, stance: verdict.stance })}
                           className={`px-3 py-2 rounded-lg border text-xs transition-colors ${review.verdict === verdict.id ? 'border-signal bg-signal/10 text-bright' : 'border-border text-dim hover:border-dim'}`}
                         >
                           {verdict.label}
@@ -448,7 +483,12 @@ Produisez maintenant une version corrigée en JSON valide.
                 <p className="font-display text-xl font-semibold text-bright">Votre examen</p>
                 <p className="font-body text-sm text-dim mt-1">{reviewedCount} affirmation{reviewedCount > 1 ? 's' : ''} examinée{reviewedCount > 1 ? 's' : ''} sur {items.length}.</p>
               </div>
-              <button type="button" className="btn-ghost" onClick={exportSnapshot}>Exporter le brouillon JSON</button>
+              <div className="flex flex-wrap gap-2">
+                <button type="button" className="btn-ghost" onClick={exportSnapshot}>Exporter le brouillon JSON</button>
+                {reviewedCount > 0 && (
+                  <button type="button" className="btn-ghost" onClick={exportAnnotations}>Exporter les annotations (v0)</button>
+                )}
+              </div>
             </div>
           </div>
 
