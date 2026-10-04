@@ -499,6 +499,26 @@ try {
   assert.ok(bypassPrompt);
   assert.equal(bypassPrompt.messages.some(message => /You are Agent John \(also Agent JHN\)/.test(message.content || "")), false);
 
+  const privaiAnchor = await postJson(`${mcpBase}/guide/chat`, {
+    profile: "privai",
+    question: "PRIVAI_ANCHOR_PROBE",
+    locale: "fr",
+  });
+  assert.equal(privaiAnchor.profile, "privai");
+  assert.equal(privaiAnchor.context.guide_retrieval.orientation.read_first[0].path, "research/ubik_reality_dislocation.md");
+  assert.equal(privaiAnchor.context.guide_retrieval.orientation.read_first[0].provenance, "derived_structurally");
+  assert.equal(privaiAnchor.context.guide_retrieval.s7.ok, false);
+  assert.equal(privaiAnchor.context.guide_retrieval.s7.filtered_by_profile, true);
+  assert.equal(privaiAnchor.context.guide_retrieval.s7.canonical_rel, "research/ubik_reality_dislocation.md");
+  assert.equal(batchQueryIncluded("Ubik reality dislocation"), false);
+  assert.ok(privaiAnchor.sources.some(source => source.path === "projects/privai/manuscript/n1/00-qui-restera-souverain.md"));
+  assert.equal(privaiAnchor.sources.some(source => /ubik_reality_dislocation/.test(source.path || "")), false);
+  const privaiPrompt = [...seenChatPayloads].reverse().find(payload =>
+    payload.messages?.some(message => /IN_SCOPE_PRIVAI_SOVEREIGNTY_MARKER/.test(message.content || ""))
+  );
+  assert.ok(privaiPrompt, "profile synthesis should see the in-scope chapter");
+  assert.equal(privaiPrompt.messages.some(message => /OUT_OF_SCOPE_UBIK/.test(message.content || "")), false);
+
   const explicitWeb = await postJson(`${mcpBase}/guide/chat`, {
     profile: "suicide-corse",
     question: "Verify on the web today SUICIDE_CORSE_SCOPE_PROBE",
@@ -608,6 +628,30 @@ function mockPack(query) {
 }
 
 function mockSourcesForQuery(query) {
+  if (/PRIVAI_ANCHOR_PROBE/.test(query)) {
+    return [{
+      source_id: "barons-Mariani:projects/privai/manuscript/n1/00-qui-restera-souverain.md#L45-L56",
+      repo: "barons-Mariani",
+      path: "projects/privai/manuscript/n1/00-qui-restera-souverain.md",
+      title: "PrivAI n°1 — Qui restera souverain ?",
+      start_line: 45,
+      end_line: 56,
+      github_url: "https://example.invalid/privai-chapter",
+      text: "IN_SCOPE_PRIVAI_SOVEREIGNTY_MARKER",
+    }];
+  }
+  if (/Ubik reality dislocation|ubik reality dislocation|ubik_reality_dislocation/.test(query)) {
+    return Array.from({ length: 8 }, (_, index) => ({
+      source_id: `barons-Mariani:research/ubik_reality_dislocation.md#L${index + 1}-L${index + 2}`,
+      repo: "barons-Mariani",
+      path: "research/ubik_reality_dislocation.md",
+      title: "Ubik reality dislocation",
+      start_line: index + 1,
+      end_line: index + 2,
+      github_url: "https://example.invalid/ubik",
+      text: `OUT_OF_SCOPE_UBIK_FLOOD_${index}`,
+    }));
+  }
   if (/SUICIDE_CORSE_SCOPE_PROBE/.test(query)) {
     return [
       {
@@ -673,6 +717,15 @@ function mockSourceForQuery(query) {
 }
 
 function mockOrientationAnchor(query) {
+  if (/PRIVAI_ANCHOR_PROBE/.test(query)) {
+    return {
+      repo: "barons-Mariani",
+      path: "research/ubik_reality_dislocation.md",
+      title: "Ubik reality dislocation",
+      provenance: "derived_structurally",
+      text: "OUT_OF_SCOPE_UBIK_ANCHOR",
+    };
+  }
   if (/\bDHITL\b/i.test(query)) {
     return {
       repo: "marenostrum",

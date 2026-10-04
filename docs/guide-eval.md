@@ -110,7 +110,10 @@ In the V2 candidate, the stage named `corpus.orient` calls the actual public
 `cogentia_orient` capability before retrieval. It may prepend one canonical
 excerpt only when `read_first` identifies an `explicit` or
 `derived_structurally` source. A semantic candidate is still a retrieval hint,
-not an assertion that the question has a canonical answer.
+not an assertion that the question has a canonical answer. A bounded profile
+does not retrieve or prepend that excerpt when the path is outside its source
+scope. The orientation receipt still records `read_first`. The anchor's
+queries must not fill the retrieval window before the visitor's question.
 
 The returned `context.guide_retrieval.orientation` receipt records the bounded
 orientation; `context.guide_retrieval.s7` records whether that receipt produced

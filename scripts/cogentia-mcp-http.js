@@ -65,6 +65,7 @@ import {
   preparePublicGuideAct,
   resolveProfileWebSearch,
   resolvePublicGuideProfile,
+  sourceAllowedByProfile,
 } from "./lib/public-guide-profiles.js";
 
 const moduleDir = path.dirname(fileURLToPath(import.meta.url));
@@ -911,7 +912,7 @@ async function produceGuideTurn(question, history, payload = {}, options = {}) {
               v2Retrieval = { sources: [], warnings: [] };
             } else {
               const resolvedQuestion = v2Intent?.resolved_search_query || question;
-              v2Retrieval = await guideRetrievalRun(resolvedQuestion, v2Plan, { orientation: v2Orientation, rawQuestion: question });
+              v2Retrieval = await guideRetrievalRun(resolvedQuestion, v2Plan, { orientation: v2Orientation, rawQuestion: question, profile });
             }
             return v2Retrieval;
           },
@@ -971,7 +972,7 @@ async function produceGuideTurn(question, history, payload = {}, options = {}) {
       plan = usePlanner
         ? await guidePlanningRun(resolvedQuestion, activeLocale)
         : guideHeuristicPlan(resolvedQuestion, chatCap.available ? "planner_disabled" : "chat_unavailable");
-      retrieval = await guideRetrievalRun(resolvedQuestion, plan, { rawQuestion: question });
+      retrieval = await guideRetrievalRun(resolvedQuestion, plan, { rawQuestion: question, profile });
     }
     observeGuideSemanticRetrieval(retrieval);
     web = await guideWebForTurn(profile, resolvedQuestion, activeLocale, payload);
@@ -1268,7 +1269,7 @@ async function handleGuideChatStream(res, question, locale, history = [], payloa
       trace("retrieval.planned", { planner: plan.source, queries: plan.queries || [] });
 
       emit("guide_status", guideProgress(locale, "retrieval"));
-      retrieval = await guideRetrievalRun(resolvedQuestion, plan, { progress: emit, locale, rawQuestion: question });
+      retrieval = await guideRetrievalRun(resolvedQuestion, plan, { progress: emit, locale, rawQuestion: question, profile });
       observeGuideSemanticRetrieval(retrieval);
       retrieval = filterRetrievalForProfile(retrieval, profile);
       emit("guide_retrieval", {
@@ -1593,10 +1594,19 @@ async function guideRetrievalRun(question, plan = guideHeuristicPlan(question), 
   const timings_ms = {};
   const orientation = options.orientation || null;
   let s7 = guideOrientationAnchor(orientation) || { ok: false, mode: "precomputed_index" };
-  if (!s7.ok && guideS7AnchorEnabled) {
+  const declinedOrientation = declineAnchorOutsideProfile(s7, options.profile);
+  if (declinedOrientation) {
+    // The profile filter used to run after merge. An out-of-scope anchor
+    // filled guideLimit first, and the visitor's question never contributed
+    // a source the profile could keep. The orientation receipt still records
+    // read_first. Do not fall through to another anchor.
+    s7 = declinedOrientation;
+  } else if (!s7.ok && guideS7AnchorEnabled) {
     const s7StartedAt = performance.now();
     s7 = await guideS7ResolveAnchor(question, plan);
     timings_ms.s7_resolve = Math.round(performance.now() - s7StartedAt);
+    const declinedResolved = declineAnchorOutsideProfile(s7, options.profile);
+    if (declinedResolved) s7 = declinedResolved;
   }
   const s7Queries = s7.ok ? s7.retrieval_queries : [];
   const queries = mergeQueries([
@@ -1792,16 +1802,34 @@ async function guideRetrievalRun(question, plan = guideHeuristicPlan(question), 
       canonical_repo: s7.canonical_repo || null,
       canonical_rel: s7.canonical_rel || null,
       canonical_url: s7.canonical_url || null,
+      ...(s7.filtered_by_profile ? { filtered_by_profile: true } : {}),
       source: "cogentia_guide_resolve",
     },
     orientation: summarizeGuideOrientation(orientation),
   };
 }
 
+function declineAnchorOutsideProfile(s7, profile) {
+  if (!s7?.ok || !profile?.sourceScope) return null;
+  const allowed = sourceAllowedByProfile({
+    repo: s7.canonical_repo,
+    path: s7.canonical_rel,
+    source_id: s7.ref || "",
+  }, profile);
+  if (allowed) return null;
+  return {
+    ...s7,
+    ok: false,
+    filtered_by_profile: true,
+    retrieval_queries: [],
+  };
+}
+
 /**
  * The V2 orientation stage is allowed to anchor retrieval only on an explicit
  * or structurally-derived source. Semantic candidates remain retrieval hints,
- * not a claim that the question has one canonical answer.
+ * not a claim that the question has one canonical answer. A bounded profile
+ * declines the anchor before retrieval when the path is outside its scope.
  */
 function guideOrientationAnchor(orientation) {
   if (!orientation?.ok || !Array.isArray(orientation.read_first)) return null;
