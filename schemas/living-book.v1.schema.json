@@ -1,0 +1,145 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/JeanHuguesRobert/cogentia/blob/main/schemas/living-book.v1.schema.json",
+  "title": "LivingBookManifestV1",
+  "description": "Minimal declarative manifest for a Living Book instance under the Living Book Factory.",
+  "type": "object",
+  "required": [
+    "schema",
+    "book",
+    "institution",
+    "editorial"
+  ],
+  "properties": {
+    "schema": {
+      "type": "string",
+      "const": "living-book/v1"
+    },
+    "book": {
+      "type": "object",
+      "required": [
+        "id",
+        "title",
+        "canonical_host",
+        "language"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[a-z0-9-]+$",
+          "description": "Unique identifier slug for the Living Book."
+        },
+        "title": {
+          "type": "string",
+          "description": "Main title of the Living Book."
+        },
+        "subtitle": {
+          "type": "string",
+          "description": "Optional subtitle."
+        },
+        "canonical_host": {
+          "type": "string",
+          "description": "Target canonical public host / FQDN (e.g. institut.acorsica.org)."
+        },
+        "language": {
+          "type": "string",
+          "pattern": "^[a-z]{2}(-[A-Z]{2})?$",
+          "description": "Primary ISO language code (e.g. fr, en)."
+        },
+        "description": {
+          "type": "string",
+          "description": "Short summary or editorial scope."
+        }
+      }
+    },
+    "institution": {
+      "type": "object",
+      "required": [
+        "publisher"
+      ],
+      "properties": {
+        "publisher": {
+          "type": "string",
+          "description": "Legal or associative carrier / publisher (e.g. C.O.R.S.I.C.A.)."
+        },
+        "research_unit": {
+          "type": "string",
+          "description": "Affiliated research entity or laboratory (e.g. Institut Mariani)."
+        },
+        "editorial_director": {
+          "type": "string",
+          "description": "Named human editorial director."
+        },
+        "license": {
+          "type": "string",
+          "default": "CC BY-SA 4.0",
+          "description": "Open commons license."
+        }
+      }
+    },
+    "editorial": {
+      "type": "object",
+      "required": [
+        "book",
+        "magazine",
+        "site"
+      ],
+      "properties": {
+        "book": {
+          "type": "boolean",
+          "default": true,
+          "description": "Whether the durable long-arc synthesis (Book/Manuscript) is enabled."
+        },
+        "magazine": {
+          "type": "boolean",
+          "default": true,
+          "description": "Whether the continuous delta journal (Magazine) is enabled."
+        },
+        "site": {
+          "type": "boolean",
+          "default": true,
+          "description": "Whether the public reading projection (Site) is enabled."
+        },
+        "guide": {
+          "type": "boolean",
+          "default": true,
+          "description": "Whether the public Cogentia Guide profile is enabled."
+        },
+        "contributions": {
+          "type": "boolean",
+          "default": true,
+          "description": "Whether controlled contribution surfaces are enabled."
+        },
+        "janus": {
+          "type": "boolean",
+          "default": false,
+          "description": "Whether the Janus double temporality (reconstruction vs prospective) is enabled."
+        }
+      }
+    },
+    "magazine": {
+      "type": "object",
+      "properties": {
+        "mode": {
+          "type": "string",
+          "enum": ["local", "federated", "hybrid"],
+          "default": "local",
+          "description": "Magazine delta mode."
+        },
+        "sources": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Source Living Book IDs for federated syndication."
+        }
+      }
+    },
+    "extensions": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Declared optional extensions (e.g. chronology, people-registry, accounting, living-book-press, cases)."
+    }
+  },
+  "additionalProperties": true
+}

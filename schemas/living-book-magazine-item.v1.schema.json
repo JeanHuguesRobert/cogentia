@@ -1,0 +1,112 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/JeanHuguesRobert/cogentia/blob/main/schemas/living-book-magazine-item.v1.schema.json",
+  "title": "LivingBookMagazineItemV1",
+  "description": "Schema for an addressable, federatable Magazine delta item in a Living Book.",
+  "type": "object",
+  "required": [
+    "schema",
+    "id",
+    "source_book",
+    "published_at",
+    "title",
+    "summary",
+    "canonical_ref"
+  ],
+  "properties": {
+    "schema": {
+      "type": "string",
+      "const": "living-book.magazine-item/v1"
+    },
+    "id": {
+      "type": "string",
+      "description": "Unique addressable identifier for the magazine item."
+    },
+    "source_book": {
+      "type": "string",
+      "description": "Living Book ID where this item was originally published (canonical source)."
+    },
+    "published_at": {
+      "type": "string",
+      "format": "date",
+      "description": "Publication date in YYYY-MM-DD format."
+    },
+    "event_at": {
+      "type": "string",
+      "format": "date",
+      "description": "Optional date when the documented event or trace occurred."
+    },
+    "title": {
+      "type": "string",
+      "description": "Title of the chronicle or delta item."
+    },
+    "summary": {
+      "type": "object",
+      "required": ["short"],
+      "properties": {
+        "short": {
+          "type": "string",
+          "description": "Concise summary (1-2 sentences) suitable for feeds and syndication."
+        },
+        "medium": {
+          "type": "string",
+          "description": "Paragraph-length summary describing the findings and impact."
+        }
+      }
+    },
+    "topics": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Taxonomy or topic tags."
+    },
+    "epistemic_status": {
+      "type": "string",
+      "enum": ["established", "hypothesis", "controversy", "investigation", "reality-test", "correction"],
+      "default": "established",
+      "description": "Epistemic status of the statement or delta."
+    },
+    "canonical_ref": {
+      "type": "string",
+      "description": "URL or relative repo path to the canonical full-text article or trace."
+    },
+    "provenance": {
+      "type": "object",
+      "properties": {
+        "author": { "type": "string" },
+        "affiliation": { "type": "string" },
+        "derived_from": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      }
+    },
+    "syndication": {
+      "type": "object",
+      "description": "Present when this item is a contextual projection syndicated into another Living Book.",
+      "required": [
+        "syndicated_by",
+        "syndicated_at"
+      ],
+      "properties": {
+        "syndicated_by": {
+          "type": "string",
+          "description": "Book ID of the consuming Living Book that syndicated this item."
+        },
+        "syndicated_at": {
+          "type": "string",
+          "description": "Timestamp when this item was syndicated into the consuming book."
+        },
+        "contextual_note": {
+          "type": "string",
+          "description": "Editorial rationale explaining why this delta is projected into the consuming book."
+        },
+        "source_authority_preserved": {
+          "type": "boolean",
+          "const": true,
+          "description": "Explicit declaration that source authority is NOT cloned into the consuming book."
+        }
+      }
+    }
+  },
+  "additionalProperties": true
+}

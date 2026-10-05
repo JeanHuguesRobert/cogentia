@@ -43,7 +43,7 @@ review:
   status: "unreviewed"
   reviewed_by: []
 provenance:
-  origin_type: "comparative-reality-case-audit"
+  origin_type: "repository"
   origin_repository: "JeanHuguesRobert/cogentia"
   origin_ref: "unknown"
   origin_date: "2026-10-04"
@@ -650,6 +650,7 @@ The Factory MUST resist:
 7. Deployment conflation.
 8. Conversation-to-contribution collapse.
 9. Metacognitive recursion for its own sake.
+10. Concurrent projection duplication (independent handlers creating competing unlinked transcriptions or projections across `sources/` and `preparation/`; the hierarchy must remain PRIMARY TRACE → CANONICAL SOURCE TRANSCRIPTION → WORKING PROJECTIONS).
 
 ## 16. RT-LBF-001 — Institut Mariani
 
