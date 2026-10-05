@@ -67,7 +67,7 @@ export function normalizeItem(raw, sourceLabel = "operium-backlog") {
     : (isBug && BLOCKING_SEVERITIES.has(severity || ""));
 
   return {
-    id: String(raw.id || raw.node_id || `item_${Math.random().toString(36).substring(2, 9)}`),
+    id: String(raw.id || raw.node_id || (raw.repository && raw.number ? `${raw.repository}#${raw.number}` : `item_${Math.random().toString(36).substring(2, 9)}`)),
     kind: VALID_KINDS.includes(kind) ? kind : "task",
     work_type: VALID_WORK_TYPES.includes(workType) ? workType : "implementation",
     urgency: VALID_URGENCIES.includes(urgency) ? urgency : "planned",
@@ -163,13 +163,38 @@ export function buildDashboardData(backlogItems = [], githubIssues = [], metadat
 
 export function renderDashboardMarkdown(dashboardData) {
   const lines = [];
+  const generatedDate = dashboardData.generated_at.slice(0, 10);
   lines.push("---");
   lines.push(`title: "Fix Bugs First Work Dashboard"`);
+  lines.push("author: unknown");
+  lines.push("affiliation: Institut Mariani / C.O.R.S.I.C.A., 1 cours Paoli, F-20250 Corte, Corsica");
+  lines.push(`date: '${generatedDate}'`);
+  lines.push("license: CC BY-SA 4.0");
+  lines.push("language: en");
+  lines.push("document_role: operational");
+  lines.push("document_kind: dashboard");
+  lines.push("visibility: public");
+  lines.push("lifecycle_state: active");
+  lines.push("canonical_url: https://github.com/JeanHuguesRobert/JeanHuguesRobert/blob/main/fix-bugs-first-dashboard.md");
+  lines.push("status: working-paper");
+  lines.push("update_policy: UP-DEFAULT-REVIEWED");
+  lines.push("generated_by: scripts/generate-fix-bugs-first-dashboard.js");
   lines.push(`schema: "${dashboardData.schema}"`);
   lines.push(`generated_at: "${dashboardData.generated_at}"`);
   lines.push(`doctrine: "${dashboardData.doctrine}"`);
   lines.push(`total_items: ${dashboardData.metadata.total_items}`);
   lines.push(`open_bugs: ${dashboardData.metadata.open_bugs_count}`);
+  lines.push("provenance:");
+  lines.push("  origin_type: generated");
+  lines.push("  origin_repository: JeanHuguesRobert/cogentia");
+  lines.push("  origin_ref: unknown");
+  lines.push(`  origin_date: '${generatedDate}'`);
+  lines.push("  derived_from:");
+  lines.push(`    - ${dashboardData.metadata.source_links?.[0]?.url || "https://github.com/JeanHuguesRobert/operium/blob/main/backlog/items.yaml"}`);
+  lines.push("    - https://github.com/JeanHuguesRobert/JeanHuguesRobert/blob/main/current-issues-list.md");
+  lines.push("review:");
+  lines.push("  status: unreviewed");
+  lines.push("  reviewed_by: []");
   lines.push("---");
   lines.push("");
   lines.push("# 🛡️ Fix Bugs First Work Dashboard");

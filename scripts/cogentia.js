@@ -7391,6 +7391,7 @@ async function cmdEmbeddings(sub) {
     case "index": {
       const result = await indexEmbeddings(ctx, {
         repo: valueFlag("--repo") || "all",
+        path: valueFlag("--path") || null,
         limit: Number(valueFlag("--limit") || 1000) || 1000,
         force: takeFlag("--force"),
         view: valueFlag("--view") || "public",
@@ -12723,6 +12724,7 @@ async function indexEmbeddings(ctx, options = {}) {
 
     const view = normalizeDaemonView(options.view || "") === FULL_VIEW ? FULL_VIEW : PUBLIC_VIEW;
     const repoFilter = String(options.repo || "all");
+    const pathFilter = options.path ? String(options.path) : null;
     const limit = boundedInteger(options.limit, 1000, 1, 5000);
     const force = Boolean(options.force);
     const maxChars = boundedInteger(options.maxChars, 30000, 1000, 200000);
@@ -12733,6 +12735,7 @@ async function indexEmbeddings(ctx, options = {}) {
     const targetModel = embeddingProfile.model_name && embeddingProfile.model_name !== "unspecified" ? embeddingProfile.model_name : null;
 
     const repoClause = repoFilter === "all" ? "" : "AND c.repo = ?";
+    const pathClause = pathFilter ? (pathFilter.includes("%") ? "AND c.path LIKE ?" : "AND c.path = ?") : "";
     const publicClause = view === FULL_VIEW ? "" : "AND c.searchable_public = 1";
     const roleClause = excludedRoles.length ? `AND c.role NOT IN (${excludedRoles.map(() => "?").join(", ")})` : "";
     const existingEmbeddingClause = targetProvider && !force
@@ -12748,6 +12751,7 @@ async function indexEmbeddings(ctx, options = {}) {
       ...excludedRoles,
       maxChars,
       ...(repoFilter !== "all" ? [repoFilter] : []),
+      ...(pathFilter ? [pathFilter] : []),
       limit,
     ];
 
@@ -12766,6 +12770,7 @@ async function indexEmbeddings(ctx, options = {}) {
         ${roleClause}
         AND length(c.text) <= ?
         ${repoClause}
+        ${pathClause}
       ORDER BY c.repo, c.path, c.start_line
       LIMIT ?
     `).all(...queryParams);
@@ -16886,19 +16891,30 @@ function exportIssues(ctx, options = {}) {
 
   const issuesByRepo = new Map();
   const repoErrors = [];
+  const excludedPrivateRepositories = [];
   let totalIssues = 0;
+  const issueFields = includeBody || includeComments
+    ? "number,title,state,updatedAt,closedAt,url,labels,author,body,comments"
+    : "number,title,state,updatedAt,closedAt,url,labels";
 
   for (const repo of repos) {
     try {
       // Construct GitHub full name if not present
       const repoFull = repo.full_name || repo.github_full_name || `JeanHuguesRobert/${repo.name}`;
+      const visibility = ghJson(["repo", "view", repoFull, "--json", "isPrivate"]);
+      if (typeof visibility.isPrivate !== "boolean") throw new Error(`GitHub visibility unavailable for ${repoFull}`);
+      if (visibility.isPrivate) {
+        excludedPrivateRepositories.push(repoFull);
+        continue;
+      }
       const issues = ghJson([
         "issue", "list",
         "--repo", repoFull,
         "--state", state,
-        "--limit", "100",
-        "--json", "number,title,state,updatedAt,closedAt,url,labels,author,body,comments",
+        "--limit", "1000",
+        "--json", issueFields,
       ]);
+      if (issues.length >= 1000) throw new Error(`Issue list for ${repoFull} reached the export limit of 1000`);
       const normalized = issues.map(normalizeGitHubIssue);
       if (normalized.length > 0) {
         issuesByRepo.set(repo.name || repoFull, { repo, issues: normalized, repoFull });
@@ -16908,6 +16924,17 @@ function exportIssues(ctx, options = {}) {
       const repoFull = repo.full_name || repo.github_full_name || `JeanHuguesRobert/${repo.name}`;
       repoErrors.push({ repository: repoFull, error: error.message });
     }
+  }
+
+  if (repoErrors.length) {
+    return {
+      ok: false,
+      repoArg,
+      state,
+      output_path: null,
+      repository_errors: repoErrors,
+      excluded_private_repositories: excludedPrivateRepositories,
+    };
   }
 
   // Generate markdown
@@ -16920,11 +16947,33 @@ function exportIssues(ctx, options = {}) {
   const lines = [];
   lines.push("---");
   lines.push(`title: "${title}"`);
+  lines.push("author: unknown");
+  lines.push("affiliation: Institut Mariani / C.O.R.S.I.C.A., 1 cours Paoli, F-20250 Corte, Corsica");
+  lines.push(`date: '${today()}'`);
+  lines.push("license: CC BY-SA 4.0");
+  lines.push("language: en");
+  lines.push("document_role: operational");
+  lines.push("document_kind: issue-index");
+  lines.push("visibility: public");
+  lines.push("lifecycle_state: active");
+  lines.push(`canonical_url: https://github.com/JeanHuguesRobert/JeanHuguesRobert/blob/main/${baseName}${isFullContent ? "" : "-list"}.md`);
+  lines.push("status: working-paper");
+  lines.push("update_policy: UP-DEFAULT-REVIEWED");
   lines.push(`last_modified_at: ${today()}`);
   lines.push("generated_by: cogentia.js");
   lines.push(`generated_at: ${new Date().toISOString()}`);
   lines.push(`total_issues: ${totalIssues}`);
   lines.push(`content_type: ${isFullContent ? "full" : "list"}`);
+  lines.push("source_system: GitHub Issues API");
+  lines.push("provenance:");
+  lines.push("  origin_type: generated");
+  lines.push("  origin_repository: JeanHuguesRobert/cogentia");
+  lines.push("  origin_ref: unknown");
+  lines.push(`  origin_date: '${today()}'`);
+  lines.push("  derived_from: []");
+  lines.push("review:");
+  lines.push("  status: unreviewed");
+  lines.push("  reviewed_by: []");
   lines.push("---");
   lines.push("");
   lines.push(`# ${title}`);
@@ -17052,6 +17101,7 @@ function exportIssues(ctx, options = {}) {
       count: issues.length,
     })),
     repository_errors: repoErrors,
+    excluded_private_repositories: excludedPrivateRepositories,
     generated_at: new Date().toISOString(),
   };
 }

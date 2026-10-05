@@ -36,6 +36,7 @@ assert.equal(normalized.severity, "critical");
 assert.equal(normalized.urgency, "now"); // Inferred from critical severity
 assert.equal(normalized.blocks_features, true);
 assert.equal(normalized.url, "https://github.com/JeanHuguesRobert/operium/issues/99");
+assert.equal(normalizeItem({ repository: "cogentia", number: 78, title: "Issue" }, "github-issues").id, "cogentia#78");
 
 // 2. Test Subsystem Gates
 const items = [

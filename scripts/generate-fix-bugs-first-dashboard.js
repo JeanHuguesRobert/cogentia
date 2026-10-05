@@ -20,6 +20,8 @@ const operiumBacklogPath = process.env.OPERIUM_BACKLOG || path.join(operiumRoot,
 const outputDir = process.env.DASHBOARD_OUTPUT_DIR || path.join(rootPath, "JeanHuguesRobert");
 const viewsDir = process.env.DASHBOARD_VIEWS_DIR || path.join(rootPath, "cogentia", ".cogentia", "views");
 const issuesExportPath = process.env.COGENTIA_ISSUES_EXPORT || path.join(outputDir, "current-issues-list.md");
+const backlogRef = process.env.OPERIUM_BACKLOG_REF || "main";
+const backlogUrl = `https://github.com/JeanHuguesRobert/operium/blob/${backlogRef}/backlog/items.yaml`;
 
 // Load Operium Backlog
 let backlogItems = [];
@@ -66,18 +68,22 @@ function loadIssuesExport(filePath) {
 }
 
 const githubIssues = loadIssuesExport(issuesExportPath);
+const issuesExportText = fs.existsSync(issuesExportPath) ? fs.readFileSync(issuesExportPath, "utf8") : "";
+const issuesExportGeneratedAt = issuesExportText.match(/^generated_at:\s*["']?([^\n"']+)/m)?.[1]?.trim() || null;
 
 // Generate Dashboard Data
 const dashboardData = buildDashboardData(backlogItems, githubIssues, {
   view_id: "fix-bugs-first-dashboard",
   visibility: "public",
   generator: "scripts/generate-fix-bugs-first-dashboard.js",
-  source_backlog: operiumBacklogPath,
+  source_backlog: backlogUrl,
+  source_backlog_ref: backlogRef,
+  source_issues_generated_at: issuesExportGeneratedAt,
   source_links: [
     {
       authority: "operium-backlog",
       path: "backlog/items.yaml",
-      url: "https://github.com/JeanHuguesRobert/operium/blob/main/backlog/items.yaml",
+      url: backlogUrl,
     },
     {
       authority: "github-issues",
