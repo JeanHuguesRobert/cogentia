@@ -150,6 +150,11 @@ export function refreshDashboardArtifacts({
     { path: path.join(viewsDir, `${DASHBOARD_FILE}.md`), content: markdown },
     { path: path.join(viewsDir, `${DASHBOARD_FILE}.html`), content: html },
   ];
+  const artifactFingerprints = Object.fromEntries(candidates.slice(1, 4).map(file => [
+    path.basename(file.path),
+    createHash("sha256").update(file.content).digest("hex"),
+  ]));
+  const artifactFingerprint = createHash("sha256").update(JSON.stringify(artifactFingerprints)).digest("hex");
   const changes = candidates.filter(file => readText(file.path) !== file.content);
   if (!dryRun && changes.length) {
     preflightWrites(changes);
@@ -164,6 +169,8 @@ export function refreshDashboardArtifacts({
     changed: changes.length > 0,
     source_changed: sourceChanged,
     source_fingerprint: fingerprint,
+    artifact_fingerprint: artifactFingerprint,
+    artifact_fingerprints: artifactFingerprints,
     issue_count: issues.length,
     item_count: dashboard.metadata.total_items,
     open_bugs: dashboard.metadata.open_bugs_count,

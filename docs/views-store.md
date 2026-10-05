@@ -258,7 +258,7 @@ node cogentia/scripts/cogentia.js publish push all
 
 Related generators:
 
-- `dashboard refresh` → `fix-bugs-first-dashboard.html` (human view), `.md` and `.json` (read-only work projection; Operium backlog and native GitHub links remain authoritative). The command reads current public issues and Operium `main`, writes only changed files, and supports `--dry-run`.
+- `dashboard refresh` → `fix-bugs-first-dashboard.html` (human view), `.md` and `.json` (read-only work projection; Operium backlog and native GitHub links remain authoritative). By default, the command reads current public issues and Operium `main`, writes only changed files, and publishes changed views to Fracta. It records per-view artifact fingerprints in the ignored `.cogentia/cache/` directory of the registry checkout so an unchanged refresh skips transfers. Use `--dry-run` to preview files and publication, `--local-only` to regenerate without publishing, or `--force-publish` to republish all three artifacts.
 - `issues export` → `current-issues-list.md` / `current-issues.md` (open issues focus)
 - `continuation export` → `continuations-list.md` / `continuations.md` (**alive** focus by default)
 - `corpus-state export` → `corpus-state.md` / `corpus-state.json` (**metadata only**: local SQLite index + embeddings coverage + optional Supabase inventory — no vectors/bodies)

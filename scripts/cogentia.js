@@ -1128,10 +1128,12 @@ Continuation commands:
                            Flags: --from <plan.json> --confirm <sha256> --root <dir>
 
  Dashboard commands:
-  dashboard refresh        Refresh public Fix Bugs First Markdown, JSON and HTML.
+  dashboard refresh        Refresh and publish public Fix Bugs First views to Fracta.
                            Reads current GitHub issues and Operium main; writes
-                           only changed local outputs. Flags: --dry-run --json.
-                           Publishing GitHub commits or Views Store is separate.
+                           only changed local outputs and publishes the three
+                           Views Store artifacts by default. GitHub commits and
+                           pushes remain separate. Flags: --dry-run --local-only
+                           --force-publish --json.
 
 Publish commands:
   publish list             List views available for publishing to Views Store.
@@ -6151,10 +6153,16 @@ function cmdIssuesExport(ctx) {
 
 function cmdDashboard(sub) {
   if (["help", "-h", "--help"].includes(sub) || takeFlag("--help") || takeFlag("-h")) {
-    return output({ usage: "node scripts/cogentia.js dashboard refresh [--dry-run] [--json]" }, "Usage: node scripts/cogentia.js dashboard refresh [--dry-run] [--json]");
+    return output(
+      { usage: "node scripts/cogentia.js dashboard refresh [--dry-run] [--local-only] [--force-publish] [--json]" },
+      "Usage: node scripts/cogentia.js dashboard refresh [--dry-run] [--local-only] [--force-publish] [--json]\nBy default, refresh and publish the public Markdown, JSON and HTML views to Fracta."
+    );
   }
   if (sub !== "refresh") throw new Error(`Unknown dashboard subcommand "${sub}". Use dashboard refresh.`);
   const dryRun = takeFlag("--dry-run");
+  const localOnly = takeFlag("--local-only");
+  const forcePublish = takeFlag("--force-publish");
+  if (localOnly && forcePublish) throw new Error("--force-publish cannot be used with --local-only");
   if (argv.length) throw new Error(`Unexpected dashboard arguments: ${argv.join(" ")}`);
   const ctx = loadContext();
   const registryRepo = ctx.repos.find(repo => repo.role === "registry" || repo.name === "JeanHuguesRobert");
@@ -6189,7 +6197,83 @@ function cmdDashboard(sub) {
     viewsDir: path.join(cogentiaRepo.path, ".cogentia", "views"),
     dryRun,
   });
-  return output(result, `Dashboard refresh: ${result.changed ? `${result.files_to_update.length} files ${dryRun ? "would change" : "updated"}` : "already current"}\nIssues: ${result.issue_count} · items: ${result.item_count} · open bugs: ${result.open_bugs}\nGenerated: ${result.generated_at}`);
+
+  const publishStatePath = path.join(registryRepo.path, ".cogentia", "cache", "fix-bugs-first-dashboard-publish.json");
+  const viewFiles = [
+    ["fix-bugs-first-dashboard", "fix-bugs-first-dashboard.md"],
+    ["fix-bugs-first-dashboard-json", "fix-bugs-first-dashboard.json"],
+    ["fix-bugs-first-dashboard-html", "fix-bugs-first-dashboard.html"],
+  ];
+  const artifactFingerprint = result.artifact_fingerprint;
+  let previousPublish = null;
+  try {
+    previousPublish = JSON.parse(fs.readFileSync(publishStatePath, "utf8"));
+  } catch (error) {
+    if (error.code !== "ENOENT") previousPublish = null;
+  }
+  const previousArtifactFingerprints = previousPublish?.schema === "cogentia.fix-bugs-first-dashboard-publish.v1"
+    && previousPublish.target === "fracta"
+    ? previousPublish.artifact_fingerprints || {}
+    : {};
+  const viewsToPublish = forcePublish
+    ? viewFiles
+    : viewFiles.filter(([viewId, file]) => previousArtifactFingerprints[viewId] !== result.artifact_fingerprints[file]);
+  const shouldPublish = !localOnly && viewsToPublish.length > 0;
+  let publication = {
+    target: "fracta",
+    skipped: localOnly || viewsToPublish.length === 0,
+    reason: localOnly ? "local-only" : viewsToPublish.length === 0 ? "artifacts-already-published" : null,
+    dry_run: dryRun,
+    published: 0,
+    failed: 0,
+    views: [],
+  };
+  if (shouldPublish) {
+    if (dryRun) {
+      publication = {
+        target: "fracta",
+        skipped: false,
+        reason: null,
+        dry_run: true,
+        published: viewsToPublish.length,
+        failed: 0,
+        views: viewsToPublish.map(([viewId, file]) => ({ view: viewId, success: true, target: `/srv/views/${file}`, dry_run: true })),
+      };
+    } else {
+      const publishResults = viewsToPublish.map(([viewId]) => publishViews(ctx, { viewId, target: "fracta" }));
+      publication = {
+        target: "fracta",
+        skipped: false,
+        reason: null,
+        dry_run: false,
+        published: publishResults.reduce((sum, item) => sum + (item.published || 0), 0),
+        failed: publishResults.reduce((sum, item) => sum + (item.ok ? item.failed || 0 : Math.max(1, item.failed || 0)), 0),
+        views: publishResults.flatMap(item => item.results || []),
+      };
+    }
+    if (publication.failed > 0) process.exitCode = 1;
+  }
+  if (!dryRun && !localOnly && publication.failed === 0) {
+    fs.mkdirSync(path.dirname(publishStatePath), { recursive: true });
+    const tempStatePath = `${publishStatePath}.${process.pid}.tmp`;
+    fs.writeFileSync(tempStatePath, `${JSON.stringify({
+      schema: "cogentia.fix-bugs-first-dashboard-publish.v1",
+      target: "fracta",
+      source_fingerprint: result.source_fingerprint,
+      artifact_fingerprint: artifactFingerprint,
+      artifact_fingerprints: Object.fromEntries(viewFiles.map(([viewId, file]) => [viewId, result.artifact_fingerprints[file]])),
+      published_at: new Date().toISOString(),
+      views: viewFiles.map(([viewId]) => viewId),
+    }, null, 2)}\n`, "utf8");
+    fs.renameSync(tempStatePath, publishStatePath);
+  }
+  const finalResult = { ...result, ok: result.ok && publication.failed === 0, publication };
+  return output(finalResult, [
+    `Dashboard refresh: ${result.changed ? `${result.files_to_update.length} files ${dryRun ? "would change" : "updated"}` : "already current"}`,
+    `Issues: ${result.issue_count} · items: ${result.item_count} · open bugs: ${result.open_bugs}`,
+    `Generated: ${result.generated_at}`,
+    `Publication: ${publication.skipped ? `skipped (${publication.reason})` : `${dryRun ? "would publish" : "published"} ${publication.published} views to ${publication.target}${publication.failed ? `; ${publication.failed} failed` : ""}`}`,
+  ].join("\n"));
 }
 
 function cmdContinuation(sub) {
