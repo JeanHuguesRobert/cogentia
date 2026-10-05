@@ -5,8 +5,8 @@ description: "Operational specification derived from existing Living Book Realit
 author: "Jean Hugues Noël Robert, baron Mariani"
 affiliation: "Institut Mariani / C.O.R.S.I.C.A., 1 cours Paoli, F-20250 Corte, Corsica"
 date: "2026-10-04"
-last_modified_at: "2026-10-04"
-version: "0.2"
+last_modified_at: "2026-10-05"
+version: "0.3"
 status: "working-paper"
 license: "CC BY-SA 4.0"
 language: "en"
@@ -749,3 +749,30 @@ copy another project
 ~~~
 
 The Factory is therefore not only a publication tool. It is a reusable **capacity multiplier** whose own abstractions remain corrigible by the Living Books it helps create.
+
+
+## 20. Persistence boundaries and effect claims
+
+Factory operations may cross several distinct boundaries:
+
+~~~text
+computed / generated
+→ exists in a handler workspace
+
+persisted
+→ exists in the intended durable repository or registry
+
+published
+→ exposed through the intended public projection
+
+deployed
+→ active in the intended operational environment
+~~~
+
+These states MUST NOT be collapsed.
+
+A handler claiming an external effect SHOULD provide the durable evidence appropriate to that effect, typically a target repository commit, registry event, publication identifier or deployment observation.
+
+> **An internal success is not an external effect until it crosses and survives the relevant persistence boundary.**
+
+This extends the three-axis state grammar without requiring a fourth universal status axis: persistence is evidence used to determine `effect_status`.
