@@ -654,7 +654,7 @@ function cmdFrontmatter(subcommand) {
     const targetPath = argv.shift();
 
     if (!targetPath) {
-      throw new Error("Usage: node scripts/cogentia.js frontmatter scaffold <path> [--title <title>] [--role <role>] [--visibility <level>] [--status <status>] [--lang <lang>] [--author <author>] [--force]");
+      throw new Error("Usage: node scripts/cogentia.js frontmatter scaffold <path> [--title <title>] [--role <role>] [--visibility <level>] [--status <status>] [--lang <lang>] [--author <author>] [--affiliation <name>] [--license <license>] [--force]. Review generated metadata, then run frontmatter verify <path> --strict-role.");
     }
 
     // cogentia#189: consult the same classifier plan/apply already uses
@@ -697,7 +697,7 @@ function cmdFrontmatter(subcommand) {
     }
 
     const modeText = result.mode === "created" ? "Created new file with frontmatter" : (result.mode === "replaced" ? "Replaced frontmatter in file" : "Prepended frontmatter to existing file");
-    return output(result, `✓ ${modeText}: ${targetPath}`);
+    return output(result, `✓ ${modeText}: ${targetPath}\nReview author, language, affiliation, license, date, role, and provenance; then run frontmatter verify <path> --strict-role.`);
   }
 
   if (subcommand === "plan" || subcommand === "apply" || subcommand === "fix" || subcommand === "repair") {
@@ -889,13 +889,18 @@ Core commands:
                            Validate markdown frontmatter against canonical schema.
                            Alias: frontmatter check. Flags: [--strict-role] [--json]
   frontmatter scaffold <path>
-                           Generate a valid, minimal compliant YAML frontmatter skeleton.
-                           --role/--visibility default to the classifier's prediction
-                           (same signal used by plan/apply) when not given explicitly and
-                           confident; otherwise role falls back to "operational" and
-                           visibility is left unset.
+                           Create a Markdown file or prepend draft YAML frontmatter.
+                           --force replaces existing frontmatter. Review all values;
+                           then run frontmatter verify <path> --strict-role.
+                           Defaults: author "Jean Hugues Noël Robert, baron Mariani",
+                           language en, date today, status working-paper, schema
+                           affiliation/license, repository origin with unknown ref.
+                           Role uses a strong classifier prediction, else operational;
+                           visibility uses an explicit flag or repo policy, else omitted.
                            Flags: [--title <title>] [--role <role>] [--visibility <level>]
-                                  [--status <status>] [--lang <lang>] [--author <name>] [--force]
+                                  [--status <status>] [--lang|--language <lang>]
+                                  [--author <name>] [--affiliation <name>]
+                                  [--license <license>] [--force]
   frontmatter plan --fix [paths]
                            Plan mechanical frontmatter repairs (defaults, synonyms, blocks).
                            Flags: [--repo <name|all>] scope across the registered corpus
