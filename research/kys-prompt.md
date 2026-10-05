@@ -311,6 +311,7 @@ PRESENTATION INSTRUCTIONS (important for data collection):
 ### Backlinks
 
 *These documents link to this file:*
+- [Agent-acquired context prompt v0](../prompts/agent-acquired-context.md)
 - [Concept Index — cogentia](concepts.md)
 - [Research Index — Cogentia](index.md)
 <!-- END_AUTO: backlinks -->

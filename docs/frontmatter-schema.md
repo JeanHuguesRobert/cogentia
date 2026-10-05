@@ -251,6 +251,7 @@ The objective is for ingestion to become increasingly mechanical where semantics
 ### Backlinks
 
 *These documents link to this file:*
+- [FractaCognition — Prudence, Humility, Occam, Hanlon, Talleyrand, Bounded Assertion, Friends Before Competitors, and Locality](../research/fractacognition_principles.md)
 - [Frontmatter Migration — v0.1](frontmatter-migration-v0.1.md)
 - [Research Index — Cogentia](../research/index.md)
 <!-- END_AUTO: backlinks -->

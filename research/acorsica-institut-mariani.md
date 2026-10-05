@@ -84,6 +84,7 @@ Ils ne valent ni fusion institutionnelle, ni transfert de données, ni portage j
 ### Backlinks
 
 *These documents link to this file:*
+- [PrivAI — sources de la projection n°1](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/projects/privai/sources/README.md)
 - [Lien avec C.O.R.S.I.C.A., l’Institut Mariani et PrivAI](../acorsica-institut-mariani.md)
 - [Research Index — Cogentia](index.md)
 - [C.O.R.S.I.C.A., Institut Mariani et corpus personnel](https://github.com/JeanHuguesRobert/JeanHuguesRobert/blob/main/research/acorsica-et-corpus.md)

@@ -49,6 +49,7 @@ The conversation is the atelier. The corpus receives stabilized material.
 
 ## Prompt Documents
 <!-- BEGIN_AUTO: readme_index -->
+- [Agent-acquired context prompt v0](agent-acquired-context.md)
 - [Cogentia Continuation Designer Prompt](continuation_designer_prompt.md)
 - [Cogentia Continuation User Prompt](continuation_user_prompt.md)
 - [Cognitive Packet Prompt Contract](cognitive_packet.md)

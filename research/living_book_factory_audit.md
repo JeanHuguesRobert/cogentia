@@ -229,17 +229,19 @@ Every book received a canonical `manifest.yml` (`living-book/v1`), automated man
 | 5 | `privai` | `privai.acorsica.org` | 14 | 84.6 KB | 129.9 KB | 42.0 KB | working / preview |
 | 6 | `1755` | `1755.acorsica.org` | 6 | 35.6 KB | 54.1 KB | 19.6 KB | working / preview |
 | 7 | `rise-and-fall` | `riseandfall.baronsmariani.org` | 10 | 45.5 KB | 65.7 KB | 24.2 KB | working / preview |
-| 8 | `capable` | `capable.acorsica.org` | 11 | 25.8 KB | 39.5 KB | 15.7 KB | working / preview |
+| 8 | `capable` | `capable.lepp.fr` | 11 | 25.8 KB | 39.5 KB | 15.7 KB | working / preview |
 | 9 | `diaspora` | `diaspora.acorsica.org` | 2 | 13.9 KB | 20.8 KB | 8.4 KB | working / preview |
 | 10 | `suicide-corse` | `suicidecorse.baronsmariani.org` | 24 | 293.9 KB | 465.3 KB | 124.1 KB | working / preview (n°4) |
 | 11 | `napoleon` | `napoleon.acorsica.org` | 1 | 6.8 KB | 8.8 KB | 5.0 KB | working / preview |
 
 ### 4.5 Public Deployment and Live DNS Verification across the 11 Living Books
 
-Following projection generation, all 8 new Living Books were deployed to the origin server (`fracta2:/srv/www/<book>/current`), configured on the public edge gateway (`fracta`), and routed through authoritative Cloudflare DNS CNAME records on `acorsica.org` (DNS-only mode, pointing to `fracta.fractavolta.com`):
+Following projection generation, all 8 new Living Books were deployed to the origin server (`fracta2:/srv/www/<book>/current`), configured on the public edge gateway (`fracta`), and routed through authoritative Cloudflare DNS CNAME records across `acorsica.org` and `lepp.fr` (DNS-only mode, pointing to `fracta.fractavolta.com`):
 
 1. **Cloudflare Authoritative DNS Automation:**
-   - Eight CNAME records were programmatically created in zone `acorsica.org` (Zone ID `2cb790e3d677d40ac7130ac2af38a7f3`): `village`, `school`, `institut`, `commons`, `privai`, `1755`, `capable`, `napoleon`.
+   - Authoritative CNAME records were programmatically created:
+     - In zone `lepp.fr`: `capable` -> `fracta.fractavolta.com` (sovereign domain for Le Petit Parti).
+     - In zone `acorsica.org`: `village`, `school`, `institut`, `commons`, `privai`, `1755`, `capable` (301 redirect to `capable.lepp.fr`), and `napoleon`.
    - Proxy status set to `false` (DNS-only / grey cloud) to allow direct ACME challenge resolution by Caddy.
 2. **Edge & Origin Deployment:**
    - Origin (`fracta2`): Caddy virtual hosts in `/etc/caddy/Caddyfile.d/*.caddy` serving static release trees `/srv/www/<book>/current`.
