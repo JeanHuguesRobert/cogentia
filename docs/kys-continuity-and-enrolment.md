@@ -1,3 +1,29 @@
+---
+title: "KYS Continuity and Progressive Enrolment Architecture"
+author: unknown
+affiliation: "Institut Mariani / C.O.R.S.I.C.A., 1 cours Paoli, F-20250 Corte, Corsica"
+date: "2026-10-04"
+status: working-paper
+license: CC BY-SA 4.0
+language: en
+document_role: source
+document_kind: specification
+lifecycle_state: active
+update_policy: UP-DEFAULT-REVIEWED
+canonical_url: https://github.com/JeanHuguesRobert/cogentia/blob/main/docs/kys-continuity-and-enrolment.md
+ai_assisted_by:
+  - Antigravity
+provenance:
+  origin_type: repository
+  origin_repository: JeanHuguesRobert/cogentia
+  origin_ref: https://github.com/JeanHuguesRobert/cogentia/issues/223
+  origin_date: "2026-10-03"
+  derived_from: []
+review:
+  status: unreviewed
+  reviewed_by: []
+---
+
 # KYS Continuity and Progressive Enrolment Architecture
 
 This document specifies the privacy, legal, and architectural rules governing returning-user continuity and progressive relationship states within Cogentia Personal and the KYS (Know Your Self) protocol.

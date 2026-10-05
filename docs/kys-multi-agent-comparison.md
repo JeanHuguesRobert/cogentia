@@ -1,7 +1,27 @@
 ---
 title: "KYS — Multi-agent and Longitudinal Comparison"
-document_role: "architecture / doctrine / specifications"
+author: unknown
+affiliation: "Institut Mariani / C.O.R.S.I.C.A., 1 cours Paoli, F-20250 Corte, Corsica"
+date: "2026-10-04"
+status: working-paper
+license: CC BY-SA 4.0
+language: fr
+document_role: source
+document_kind: specification
 lifecycle_state: "active"
+update_policy: UP-DEFAULT-REVIEWED
+canonical_url: https://github.com/JeanHuguesRobert/cogentia/blob/main/docs/kys-multi-agent-comparison.md
+ai_assisted_by:
+  - Antigravity
+provenance:
+  origin_type: repository
+  origin_repository: JeanHuguesRobert/cogentia
+  origin_ref: https://github.com/JeanHuguesRobert/cogentia/issues/224
+  origin_date: "2026-10-03"
+  derived_from: []
+review:
+  status: unreviewed
+  reviewed_by: []
 tags:
   - kys
   - ami
