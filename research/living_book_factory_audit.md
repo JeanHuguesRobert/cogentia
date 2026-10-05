@@ -234,6 +234,23 @@ Every book received a canonical `manifest.yml` (`living-book/v1`), automated man
 | 10 | `suicide-corse` | `suicidecorse.baronsmariani.org` | 24 | 293.9 KB | 465.3 KB | 124.1 KB | working / preview (n°4) |
 | 11 | `napoleon` | `napoleon.acorsica.org` | 1 | 6.8 KB | 8.8 KB | 5.0 KB | working / preview |
 
+### 4.5 Public Deployment and Live DNS Verification across the 11 Living Books
+
+Following projection generation, all 8 new Living Books were deployed to the origin server (`fracta2:/srv/www/<book>/current`), configured on the public edge gateway (`fracta`), and routed through authoritative Cloudflare DNS CNAME records on `acorsica.org` (DNS-only mode, pointing to `fracta.fractavolta.com`):
+
+1. **Cloudflare Authoritative DNS Automation:**
+   - Eight CNAME records were programmatically created in zone `acorsica.org` (Zone ID `2cb790e3d677d40ac7130ac2af38a7f3`): `village`, `school`, `institut`, `commons`, `privai`, `1755`, `capable`, `napoleon`.
+   - Proxy status set to `false` (DNS-only / grey cloud) to allow direct ACME challenge resolution by Caddy.
+2. **Edge & Origin Deployment:**
+   - Origin (`fracta2`): Caddy virtual hosts in `/etc/caddy/Caddyfile.d/*.caddy` serving static release trees `/srv/www/<book>/current`.
+   - Edge (`fracta`): Public reverse-proxy termination forwarding over Tailscale mesh (`100.84.109.87:80`) with automatic ACME Let's Encrypt / ZeroSSL TLS certificates.
+3. **Live Multi-Endpoint Probe Results:**
+   - Automated HTTPS matrix probe confirmed 100% live availability (`HTTP 200 OK`) across all endpoints:
+     - Root portal (`https://<domain>/`)
+     - Complete web book reading projection (`/book.html` or `/web/index.html`)
+     - Downloadable vector PDF (`/book.pdf` or `/editions/...`)
+     - Downloadable mobile EPUB (`/book.epub` or `/editions/...`)
+
 ---
 
 ## 5. FractaCognitive Return and Pattern Mining
