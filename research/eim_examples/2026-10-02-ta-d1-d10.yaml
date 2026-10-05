@@ -1,0 +1,131 @@
+matrix_id: EIM-TA-2026-10-02
+profile: EIM-TA
+status: working
+canonical_source: "research/senatoriales-2026/matrice-reponses-ta-d1-d10-2026-10-02.md"
+epistemic_rules:
+  - "The procedural demand is ESTABLISHED."
+  - "The factual response of the court remains OPEN / PENDING until communication or deadline."
+  - "Absence of response or uncommunicated element does not prove factual absence at source."
+  - "Distinguish current presence in file from timely jurisdictional availability before decision."
+rows:
+  - id: TA-2026-10-02-D1
+    subject_entity: "Jean Hugues Noël Robert"
+    counterparty_entity: "Tribunal administratif de Bastia"
+    subactor: "Greffe du tribunal administratif"
+    request: "Nature et heure de l'entrée Sagace 'Réception d'une lettre' du 14/09"
+    request_kind: "judicial-record-traceability"
+    first_trace: "2026-10-02T10:40:46+02:00"
+    last_followup: "2026-10-02T10:40:46+02:00"
+    trigger: "Invitation par le TA à saisir le Conseil constitutionnel ; délai de recours en cours"
+    trigger_date: "2026-10-01"
+    priority_mode: procedural
+    priority_rank: 1
+    information_holder: "Greffe du TA / Journal applicatif Sagace"
+    decision_authority: "Président de la formation de jugement"
+    transmitter: "Greffier en chef / Greffe du TA"
+    controller_or_reviewer: "Conseil constitutionnel"
+    routing_required: false
+    routing_observed: true
+    response_state: OPEN
+    evidence_status: ESTABLISHED
+    evidence_available_now: true
+    evidence_available_at_relevant_time: false
+    historical_availability_status: "unknown_at_decision_time"
+    effect_on_capacity: "Ferme une inconnue chronologique essentielle pour le recours constitutionnel."
+    capacity_direction: improves
+    next_possible_actions:
+      - "Intégration du jalon dans le mémoire contentieux du Conseil constitutionnel"
+    next_actor: "Conseil constitutionnel"
+    deadline: "2026-10-07T18:00:00+02:00"
+    sources:
+      - "https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/senatoriales-2026/matrice-reponses-ta-d1-d10-2026-10-02.md"
+
+  - id: TA-2026-10-02-D2
+    subject_entity: "Jean Hugues Noël Robert"
+    counterparty_entity: "Tribunal administratif de Bastia"
+    subactor: "Greffe du tribunal administratif"
+    request: "Productions préfectorales enregistrées après les 16 pièces initiales et avant jugement"
+    request_kind: "dossier-completeness"
+    first_trace: "2026-10-02T10:40:46+02:00"
+    last_followup: "2026-10-02T10:40:46+02:00"
+    trigger: "Contrôle de la contradiction et de la complétude du dossier contentieux"
+    trigger_date: "2026-10-01"
+    priority_mode: procedural
+    priority_rank: 1
+    information_holder: "Dossier Télérecours / Registre du greffe"
+    decision_authority: "Formation de jugement"
+    transmitter: "Greffe du TA"
+    controller_or_reviewer: "Conseil constitutionnel"
+    routing_required: false
+    routing_observed: true
+    response_state: OPEN
+    evidence_status: ESTABLISHED
+    effect_on_capacity: "Établit le contenu documentaire effectivement mis à disposition de la formation."
+    capacity_direction: improves
+    next_possible_actions:
+      - "Demande de communication de pièce au titre de l'instruction constitutionnelle"
+    next_actor: "Conseil constitutionnel"
+    deadline: "2026-10-07T18:00:00+02:00"
+    sources:
+      - "https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/senatoriales-2026/matrice-reponses-ta-d1-d10-2026-10-02.md"
+
+  - id: TA-2026-10-02-D3
+    subject_entity: "Jean Hugues Noël Robert"
+    counterparty_entity: "Tribunal administratif de Bastia"
+    subactor: "Greffe du tribunal administratif"
+    request: "Présence matérielle et horodatée du courriel du 11/09 à 17:57:55 et de la vidéo de consentement"
+    request_kind: "evidence-transmission"
+    first_trace: "2026-10-02T10:40:46+02:00"
+    last_followup: "2026-10-02T10:40:46+02:00"
+    trigger: "Vérification de l'élément de preuve décisif de consentement"
+    trigger_date: "2026-10-01"
+    priority_mode: procedural
+    priority_rank: 1
+    information_holder: "Dossier d'instance / Serveurs de messagerie"
+    decision_authority: "Formation de jugement"
+    transmitter: "Greffe du TA"
+    controller_or_reviewer: "Conseil constitutionnel"
+    routing_required: true
+    routing_observed: false
+    response_state: OPEN
+    evidence_status: ESTABLISHED
+    effect_on_capacity: "Prouve la réalité du consentement transmis dans les délais utiles avant clôture."
+    capacity_direction: opens
+    next_possible_actions:
+      - "Production de la transcription certifiée et des métadonnées RFC 822 de l'émission"
+    next_actor: "Conseil constitutionnel"
+    deadline: "2026-10-07T18:00:00+02:00"
+    sources:
+      - "https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/senatoriales-2026/matrice-reponses-ta-d1-d10-2026-10-02.md"
+
+  - id: TA-2026-10-02-D10
+    subject_entity: "Jean Hugues Noël Robert"
+    counterparty_entity: "Tribunal administratif de Bastia"
+    subactor: "Formation de jugement"
+    request: "Disponibilité effective des pièces pour les magistrats avant qu'ils ne statuent"
+    request_kind: "jurisdictional-availability"
+    first_trace: "2026-10-02T10:40:46+02:00"
+    last_followup: "2026-10-02T10:40:46+02:00"
+    trigger: "Demande de clarification sur la distinction présence vs communicabilité effective"
+    trigger_date: "2026-10-01"
+    priority_mode: procedural
+    priority_rank: 1
+    information_holder: "Magistrats de la formation / Relevé d'instruction"
+    decision_authority: "Conseil constitutionnel (juge de l'élection)"
+    transmitter: "Greffe du TA"
+    controller_or_reviewer: "Conseil constitutionnel"
+    routing_required: false
+    routing_observed: true
+    response_state: OPEN
+    evidence_status: ESTABLISHED
+    evidence_available_now: true
+    evidence_available_at_relevant_time: false
+    historical_availability_status: "unverified_prior_to_hearing"
+    effect_on_capacity: "Distingue ce dont la formation pouvait effectivement prendre connaissance au temps utile."
+    capacity_direction: improves
+    next_possible_actions:
+      - "Soulèvement du moyen tiré du défaut d'examen des pièces décisives au dossier"
+    next_actor: "Conseil constitutionnel"
+    deadline: "2026-10-07T18:00:00+02:00"
+    sources:
+      - "https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/senatoriales-2026/matrice-reponses-ta-d1-d10-2026-10-02.md"

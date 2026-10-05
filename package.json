@@ -55,6 +55,7 @@
     "test:frontmatter-schema": "node scripts/check-frontmatter-schema-cli.js",
     "test:frontmatter-validator": "node scripts/check-frontmatter-validator.js",
     "test:possible-matrix": "node scripts/check-possible-matrix-validator.js",
+    "test:eim": "node scripts/check-eim.js",
     "test:agent-acquired-context": "node scripts/check-agent-acquired-context.js",
     "test:agent-acquired-context-prompt": "node scripts/check-agent-acquired-context-prompt.js",
     "test:agent-acquired-context-ingest": "node scripts/check-agent-acquired-context-ingest.js",

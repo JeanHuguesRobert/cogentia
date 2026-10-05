@@ -1,0 +1,110 @@
+matrix_id: EIM-CAPABLE-2026-10-02
+profile: EIM-CAPABLE
+status: working
+canonical_source: "projects/capable/campaign/matrix.md"
+epistemic_rules:
+  - "Campaign actions must be grounded in observable traces, not intentions."
+  - "Administrative silence remains an observable process event without imputed refusal."
+  - "information_holder != decision_authority != transmitter != controller_or_reviewer."
+rows:
+  - id: CAP-2026-10-02-C1
+    subject_entity: "Jean Hugues Noël Robert / Petit Parti / Capable"
+    counterparty_entity: "Préfecture de la Haute-Corse"
+    subactor: "Bureau des élections et de la réglementation"
+    request: "Enregistrement et récépissé définitif de la déclaration de candidature"
+    request_kind: "administrative-candidacy"
+    requested_effect: "Validation formelle de l'éligibilité et délivrance du récépissé"
+    first_trace: "2026-09-11T16:14:00+02:00"
+    last_followup: "2026-09-11T17:57:55+02:00"
+    trigger: "Clôture du dépôt des candidatures pour les élections sénatoriales"
+    trigger_date: "2026-09-11"
+    priority_mode: procedural
+    priority_rank: 1
+    information_holder: "Préfecture / Bureau des élections"
+    decision_authority: "Préfet de la Haute-Corse"
+    transmitter: "Secrétariat général / Greffe préfectoral"
+    controller_or_reviewer: "Tribunal administratif de Bastia / Conseil constitutionnel"
+    routing_required: false
+    routing_observed: true
+    response_state: REFUSED
+    response_date: "2026-09-11T19:00:00+02:00"
+    response_summary: "Refus d'enregistrement motivé par contestation formelle du consentement du suppléant"
+    evidence_status: ESTABLISHED
+    evidence_refs:
+      - "arrete-prefectoral-refus-enregistrement-2026-09-11.pdf"
+      - "recu-depot-16h14.pdf"
+    effect_on_capacity: "Empêche l'accès direct au scrutin sans recours juridictionnel d'urgence."
+    capacity_direction: blocks
+    next_possible_actions:
+      - "Saisine immédiate du Tribunal administratif de Bastia sous délai de 24h"
+      - "Documentation probatoire des échanges numériques antérieurs à 18h"
+    next_actor: "Tribunal administratif de Bastia"
+    deadline: "2026-09-12T19:00:00+02:00"
+    sources:
+      - "https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/projects/capable/campaign/matrix.md"
+
+  - id: CAP-2026-10-02-C2
+    subject_entity: "Jean Hugues Noël Robert / Petit Parti / Capable"
+    counterparty_entity: "Préfecture de la Haute-Corse"
+    subactor: "Service des élections"
+    request: "Communication de la liste intégrale des grands électeurs et adresses de notification"
+    request_kind: "electoral-college-transparency"
+    requested_effect: "Accès égalitaire aux coordonnées des délégués sénatoriaux pour diffusion de la propagande"
+    first_trace: "2026-09-08T10:00:00+02:00"
+    last_followup: "2026-09-15T11:30:00+02:00"
+    trigger: "Ouverture de la campagne officielle"
+    trigger_date: "2026-09-08"
+    priority_mode: operational
+    priority_rank: 2
+    information_holder: "Préfecture / Bureau des élections"
+    decision_authority: "Préfet de la Haute-Corse"
+    transmitter: "Service des élections"
+    controller_or_reviewer: "Commission de contrôle électoral / CNIL"
+    routing_required: false
+    routing_observed: true
+    response_state: YES
+    response_date: "2026-09-09T14:15:00+02:00"
+    response_summary: "Transmission du tableau des électeurs sénatoriaux de Haute-Corse"
+    evidence_status: ESTABLISHED
+    evidence_refs:
+      - "tableau-electeurs-senatoriaux-2026.csv"
+    effect_on_capacity: "Ouvre la capacité matérielle d'adresser les professions de foi aux maires et délégués."
+    capacity_direction: opens
+    next_possible_actions:
+      - "Routage postal et numérique de la circulaire de campagne"
+    next_actor: "Jean Hugues Noël Robert"
+    deadline: "2026-09-20T18:00:00+02:00"
+    sources:
+      - "https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/projects/capable/campaign/matrix.md"
+
+  - id: CAP-2026-10-02-C3
+    subject_entity: "Jean Hugues Noël Robert / Petit Parti / Capable"
+    counterparty_entity: "Commission de propagande électorale"
+    subactor: "Président de la commission"
+    request: "Homologation et mise sous pli des bulletins de vote et circulaires"
+    request_kind: "electoral-material-approval"
+    requested_effect: "Impression et distribution officielle de la propagande électorale"
+    first_trace: "2026-09-12T14:00:00+02:00"
+    last_followup: "2026-09-13T10:00:00+02:00"
+    trigger: "Dépôt des maquettes de bulletins et circulaires"
+    trigger_date: "2026-09-12"
+    priority_mode: procedural
+    priority_rank: 1
+    information_holder: "Commission de propagande"
+    decision_authority: "Commission de propagande"
+    transmitter: "Greffe du tribunal judiciaire de Bastia"
+    controller_or_reviewer: "Conseil constitutionnel"
+    routing_required: false
+    routing_observed: true
+    response_state: SUSPENDED
+    response_date: "2026-09-13T12:00:00+02:00"
+    response_summary: "Suspension conditionnée à l'issue du recours devant le tribunal administratif"
+    evidence_status: ESTABLISHED
+    effect_on_capacity: "Retarde la distribution des bulletins dans les bureaux de vote."
+    capacity_direction: delays
+    next_possible_actions:
+      - "Attente de la décision juridictionnelle du TA"
+    next_actor: "Tribunal administratif de Bastia"
+    deadline: "2026-09-14T12:00:00+02:00"
+    sources:
+      - "https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/projects/capable/campaign/matrix.md"

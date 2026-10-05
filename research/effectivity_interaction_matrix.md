@@ -4,8 +4,9 @@ subtitle: "Generic source-first model for actors, requests, triggers, routing, r
 author: "Jean Hugues Noël Robert, baron Mariani"
 affiliation: "Institut Mariani / C.O.R.S.I.C.A., 1 cours Paoli, F-20250 Corte, Corsica"
 date: '2026-10-02'
-version: '0.1'
-status: "working-paper — generic specification"
+version: '0.2'
+status: "working-paper — generic specification v0.2"
+last_modified_at: '2026-10-05'
 language: en
 license: CC BY-SA 4.0
 document_role: source
@@ -15,7 +16,7 @@ lifecycle_state: working
 update_policy: UP-DEFAULT-REVIEWED
 canonical_url: https://github.com/JeanHuguesRobert/cogentia/blob/main/research/effectivity_interaction_matrix.md
 provenance:
-  origin_type: corpus-generalization
+  origin_type: repository
   origin_repository: JeanHuguesRobert/cogentia
   origin_ref: "generalized from Capable / Campagne du Réel matrix, 2026-10-02"
   origin_date: '2026-10-02'
@@ -433,23 +434,48 @@ This supports:
 - historical reconstruction tests;
 - operational digital twins.
 
-## 16. Matrix instances
+## 16. Implementation Profiles and Concrete Incarnations
 
-The generic EIM is a specification.
+The generic EIM is an abstract specification. To be operational in specific environments without losing cross-domain comparability, the specification uses **Implementation Profiles**.
 
-Each project instance may add fields, views and constraints.
+A profile defines:
+- domain-specific vocabulary extensions;
+- required or prohibited subsets of fields;
+- domain-specific epistemic rules and invariants;
+- bindings to external source registers and tools.
 
-Examples:
+All profiles inherit from the canonical JSON Schema ([`schemas/effectivity-interaction-matrix-row.schema.yaml`](file:///C:/tweesic/cogentia/schemas/effectivity-interaction-matrix-row.schema.yaml)) and are verified by the automated validator ([`scripts/lib/eim-validator.js`](file:///C:/tweesic/cogentia/scripts/lib/eim-validator.js)) via `npm run test:eim`.
 
-- legal / administrative interaction matrix;
-- customer support matrix;
-- research contribution matrix;
-- historical command matrix;
-- institutional Twin observation matrix;
-- campaign execution matrix;
-- scientific replication matrix.
+### Concrete Profiles
 
-The generic specification MUST remain independent from any one use case.
+1. **`EIM-CAPABLE`** — Campaign Execution and Administrative Interaction
+   - File: [`research/eim_examples/2026-10-02-capable-campaign.yaml`](file:///C:/tweesic/cogentia/research/eim_examples/2026-10-02-capable-campaign.yaml)
+   - Scope: Electoral filings, candidacy registrations, grand elector rolls transparency, and ballot paper verifications under strict statutory deadlines.
+   - Key Invariant: Campaign actions are grounded in observable traces, not intentions; administrative silence remains an observable process event without imputed refusal.
+
+2. **`EIM-PREFECTURE`** — Administrative Query and Transparency Inquiries
+   - File: [`research/eim_examples/2026-10-02-prefecture-p1-p18.yaml`](file:///C:/tweesic/cogentia/research/eim_examples/2026-10-02-prefecture-p1-p18.yaml)
+   - Scope: 18 structured questions (P1–P18) testing prefectural response latency, transmission protocols, silence dynamics, and access to public documents.
+   - Key Invariant: Explicit quad-role separation between prefectural departments; silence is recorded as an empirical event without speculative attribution.
+
+3. **`EIM-TA`** — Judicial Review and Contentious Proceedings
+   - File: [`research/eim_examples/2026-10-02-ta-d1-d10.yaml`](file:///C:/tweesic/cogentia/research/eim_examples/2026-10-02-ta-d1-d10.yaml)
+   - Scope: Contentious proceedings before the Administrative Tribunal (emergency interim relief / référé, formal memorials, adversarial exchanges, judicial rulings).
+   - Key Invariant: Judicial decisions explicitly document procedural triggers, adversarial deadlines, and immediate capacity shifts (`blocks`, `opens`, `preserves`).
+
+4. **`EIM-TWIN-OBSERVATION`** — Longitudinal Observation Surface for Cogentia Twins / Reality Tests
+   - File: [`research/eim_examples/eim-twin-observation-example.yaml`](file:///C:/tweesic/cogentia/research/eim_examples/eim-twin-observation-example.yaml)
+   - Scope: Closed learning loop for digital twins and institutional Cogentigrams.
+   - Epistemic Cycle:
+     ```text
+     freeze_state → ex_ante_hypothesis → observed_event → ex_post_comparison → error_record → structural_update_candidate
+     ```
+   - Key Invariant: Predictions must be frozen and timestamped prior to observing outcomes; ex-post revisions never delete the prior prediction.
+
+5. **`EIM-NON-LEGAL-CONTRIBUTION`** — Participatory Editorial Boundary
+   - File: [`research/eim_examples/eim-non-legal-contribution.yaml`](file:///C:/tweesic/cogentia/research/eim_examples/eim-non-legal-contribution.yaml)
+   - Scope: Living Book contribution boundary (reader trace submissions, e.g. `#RT-LBF-001`, editorial deliberation, colophon attribution, delta magazine updates).
+   - Key Invariant: Non-coercive interactions; contributions are observable participatory acts, evaluated through editorial capacity deltas without legal or administrative enforcement.
 
 ## 17. Views
 
@@ -498,7 +524,40 @@ Possible edges:
 - `supersedes`
 - `tests`
 
-## 19. Non-goals
+## 19. Adversarial Review and Cognitive Failure Modes
+
+Applying interaction matrices to human, institutional, or cognitive systems carries specific epistemic risks. The EIM explicitly identifies five primary cognitive traps and embeds structural countermeasures:
+
+### Trap 1: Conflating Silence with Imputed Intent (Mind-Reading Trap)
+- **Risk**: An observer treats administrative, editorial, or personal silence as an implicit refusal, tacit consent, or deliberate evasion.
+- **Countermeasure**: In EIM, `SILENCE` is strictly an observable absence of communication within a given timeframe. It cannot be converted into `REFUSED` or `YES` unless an explicit statutory rule (such as formal silence-vaut-rejet or silence-vaut-accord) is documented as a distinct governing trace. The validator issues a semantic warning if `SILENCE` is paired with an inferred refusal in `response_summary`.
+
+### Trap 2: Collapsing Procedural Roles (Monolithic Actor Trap)
+- **Risk**: Treating an organization, institution, or collective body as a single monolithic mind, ignoring internal division of labor and friction.
+- **Countermeasure**: The EIM enforces four distinct procedural roles:
+  1. `information_holder`: who possesses the requested fact or document;
+  2. `decision_authority`: who holds formal jurisdiction or power to grant or deny;
+  3. `transmitter`: who channels the request or notification;
+  4. `controller_or_reviewer`: who audits or reviews the act.
+  The validator warns if all four roles are collapsed into an identical entity without explicit operational justification.
+
+### Trap 3: Hindsight Bias / Retro-projection (Anachronism Trap)
+- **Risk**: Judging an actor's past behavior based on evidence or documents that only became accessible later in the process.
+- **Countermeasure**: Dual temporal indexing:
+  - `evidence_available_now` (contemporary audit state);
+  - `evidence_available_at_relevant_time` (state at interaction trigger);
+  - `historical_availability_status` (explicit reason for disparity, e.g. `ongoing_silent_period`, `subsequent_disclosure`).
+  The validator warns if contemporary evidence is asserted without declaring historical availability status.
+
+### Trap 4: Conflating Procedural Routing with Substantive Disposition (Premature Closure Trap)
+- **Risk**: Marking a request as resolved or closed simply because an acknowledgment or routing notification was transmitted.
+- **Countermeasure**: Clear separation between `routing_observed` / `routing_target` and the terminal `response_state`. When a matter is routed, `response_state: ROUTED` preserves open tracking until the destination authority acts.
+
+### Trap 5: Conflating Interaction Logs with Normative Judgment (Moralizing Trap)
+- **Risk**: Using interaction matrices as a scoring tool for political praise or moral condemnation.
+- **Countermeasure**: The EIM strictly records **effectivity transitions** (what capabilities were opened, preserved, delayed, reduced, or blocked) supported by primary evidence references (`evidence_refs`). Capacity deltas describe reachable operational paths, not moral or ethical worth.
+
+## 20. Non-goals
 
 The EIM is not:
 
@@ -510,7 +569,7 @@ The EIM is not:
 - a claim that all silence is meaningful;
 - a scoring system for political actors.
 
-## 20. Relationship with Cogentia Twins
+## 21. Relationship with Cogentia Twins
 
 Repeated EIM observations may reveal persistent structural regularities.
 
@@ -528,7 +587,7 @@ EIM observations over time
 
 This creates a closed but falsifiable learning loop.
 
-## 21. Relationship with Living Books
+## 22. Relationship with Living Books
 
 A Living Book may:
 
@@ -548,7 +607,7 @@ Twin ≠ Cogentigram
 Cogentigram ≠ episodic corpus
 ```
 
-## 22. Canonical compact formula
+## 23. Canonical compact formula
 
 > **Observe interactions as effectivity transitions, not merely messages.**
 
@@ -560,14 +619,25 @@ what was observed, what evidence supports it,
 what capability changed, and what can happen next?
 ```
 
-## 23. Status
+## 24. Status and Promotion Decision
 
-v0.1 — first generic extraction from the Campagne du Réel implementation.
+### Promotion Decision: Promoted to Specification v0.2
 
-Next work:
+On **2026-10-05**, the generic Effectivity Interaction Matrix specification was formally evaluated and **promoted from v0.1 to v0.2**.
 
-- machine-readable schema;
-- adversarial review;
-- implementation profiles;
-- validation on non-legal domains;
-- integration with Twin / Living Book registry.
+### Promotion Checklist Completed:
+1. **Machine-readable Schema**: Formalized in [`schemas/effectivity-interaction-matrix-row.schema.yaml`](file:///C:/tweesic/cogentia/schemas/effectivity-interaction-matrix-row.schema.yaml).
+2. **Automated Verification**: Independent validator [`scripts/lib/eim-validator.js`](file:///C:/tweesic/cogentia/scripts/lib/eim-validator.js) and test runner [`scripts/check-eim.js`](file:///C:/tweesic/cogentia/scripts/check-eim.js) added to CI via `npm run test:eim`.
+3. **Multi-domain Profile Incarnations**:
+   - `EIM-CAPABLE` (political/campaign interactions, 3 rows);
+   - `EIM-PREFECTURE` (administrative queries, 18 rows);
+   - `EIM-TA` (administrative court proceedings, 4 rows);
+   - `EIM-TWIN-OBSERVATION` (Cogentia Twin reality test observation, 1 row);
+   - `EIM-NON-LEGAL-CONTRIBUTION` (Living Book participatory contribution boundary, 2 rows).
+4. **Adversarial Review Codified**: Detailed analysis of five cognitive traps (silence conflation, role collapse, hindsight bias, premature closure, moralizing) and structural schema guards.
+5. **Non-legal Domain Validation**: Validated on participatory Living Book editorial boundary.
+
+### Future Roadmap (v0.3 Candidate):
+- Integration with Cogentia Twin registry and automated drift detectors.
+- Automated Graph visualization export (Mermaid / DOT) from matrix YAML files.
+- Longitudinal cross-matrix correlation engine.

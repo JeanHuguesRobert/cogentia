@@ -1,0 +1,57 @@
+matrix_id: EIM-TWIN-OBS-2026-10-05
+profile: EIM-TWIN-OBSERVATION
+status: working
+description: "Longitudinal observation profile for Cogentigram / Twin Reality Tests"
+epistemic_cycle:
+  stages:
+    - "freeze_state"
+    - "ex_ante_hypothesis"
+    - "observed_event"
+    - "ex_post_comparison"
+    - "error_record"
+    - "structural_update_candidate"
+rows:
+  - id: TWIN-OBS-2026-10-05-01
+    subject_entity: "Provisional Cogentia Twin"
+    counterparty_entity: "Préfecture de la Haute-Corse"
+    subactor: "Bureau des élections"
+    request: "Délai moyen d'instruction et transmission de bordereau de recours"
+    request_kind: "administrative-latency-observation"
+    requested_effect: "Mesure de la fidélité du modèle prédictif temporel du Twin"
+    first_trace: "2026-10-02T13:33:55+02:00"
+    last_followup: "2026-10-05T08:00:00+02:00"
+    trigger: "Envoi des 18 questions P1-P18"
+    trigger_kind: "reality-test-probe"
+    trigger_date: "2026-10-02"
+    why_relevant_now: "Vérification du modèle comportemental avant expiration du délai constitutionnel"
+    priority_mode: information_gain
+    priority_rank: 1
+    information_holder: "Système d'information préfectoral"
+    decision_authority: "Secrétaire général de la préfecture"
+    transmitter: "Service courrier / messagerie"
+    controller_or_reviewer: "Cogentiscope / Superviseur Twin"
+    routing_required: true
+    routing_observed: false
+    response_state: SILENCE
+    evidence_status: ESTABLISHED
+    evidence_available_now: true
+    evidence_available_at_relevant_time: false
+    historical_availability_status: "ongoing_silent_period"
+    effect_on_capacity: "Permet de confronter l'hypothèse d'inertie institutionnelle aux observations factuelles."
+    capacity_direction: improves
+    next_possible_actions:
+      - "Constatation de silence persistant à T+5 jours"
+      - "Incrémentation du score d'erreur prédictif"
+    next_actor: "Provisional Cogentia Twin"
+    deadline: "2026-10-07T18:00:00+02:00"
+    epistemic_status: HYPOTHESIS
+    confidence: 0.85
+    twin_cycle:
+      freeze_state: "2026-10-02T14:00:00+02:00"
+      ex_ante_hypothesis: "Probabilité >80% de silence administratif complet sous 48h sans routage spontané"
+      observed_event: "Aucun accusé de réception ni transmission observé au 2026-10-05"
+      ex_post_comparison: "Hypothèse ex-ante vérifiée (0 réponse sur 18 questions)"
+      error_record: "Delta prédictif = 0.05 (biais conservateur validé)"
+      structural_update_candidate: "Consolider la règle de silence non-attributif dans le profil institutionnel"
+    sources:
+      - "research/eim_examples/2026-10-02-prefecture-p1-p18.yaml"

@@ -50,7 +50,7 @@ properties:
 
   response_state:
     type: string
-    enum: [YES, NO, PARTIAL, REFUSED, ROUTED, PENDING, SILENCE, NOT_FOUND, NOT_RECORDED, CHECKING, NON_COMMUNICABLE, UNKNOWN]
+    enum: [YES, NO, PARTIAL, REFUSED, ROUTED, PENDING, OPEN, SUSPENDED, SILENCE, NOT_FOUND, NOT_RECORDED, CHECKING, NON_COMMUNICABLE, UNKNOWN]
   response_date: { type: [string, "null"] }
   response_summary: { type: [string, "null"] }
   partial_dimensions_closed:
@@ -70,7 +70,8 @@ properties:
   evidence_available_at_relevant_time: { type: [boolean, "null"] }
   historical_availability_status: { type: [string, "null"] }
 
-  effect_on_capacity:
+  effect_on_capacity: { type: string }
+  capacity_direction:
     type: string
     enum: [opens, improves, preserves, delays, reduces, blocks, unknown]
   capacity_kind: { type: [string, "null"] }

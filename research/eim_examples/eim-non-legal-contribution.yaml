@@ -1,0 +1,89 @@
+matrix_id: EIM-CONTRIB-2026-10-05
+profile: EIM-NON-LEGAL-CONTRIBUTION
+status: working
+description: "Effectivity Interaction Matrix for Living Book Contribution Boundary (Editorial & Participatory)"
+epistemic_rules:
+  - "Contributions are observable participatory acts, not bilateral administrative commands."
+  - "Editorial silence remains an observable process event without imputed refusal."
+  - "information_holder != decision_authority != transmitter != controller_or_reviewer."
+rows:
+  - id: CONTRIB-2026-10-05-01
+    subject_entity: "Reader / Contributor (External Participant)"
+    counterparty_entity: "Living Book Editorial Desk / Custodian"
+    subactor: "Living Book Ingestion Pipeline"
+    request: "Ingestion and editorial review of reader trace #RT-LBF-001 regarding historical source transcription"
+    request_kind: "reader-trace-submission"
+    requested_effect: "Inclusion of reader trace in the delta magazine and public annotation layer"
+    request_scope: "sources/statuts-corsica-1995-transcription.md"
+    first_trace: "2026-10-04T16:00:00+02:00"
+    last_followup: "2026-10-05T10:00:00+02:00"
+    trigger: "Publication of RT-LBF-001 in barons-Mariani"
+    trigger_kind: "participatory-contribution"
+    trigger_date: "2026-10-04"
+    why_relevant_now: "Testing editorial boundary and contribution effectivity without administrative or judicial coercion"
+    priority_mode: procedural
+    priority_rank: 1
+    information_holder: "Public Ledger / Ingestion Queue"
+    decision_authority: "Living Book Editorial Committee / Sovereign Author"
+    transmitter: "Webhook / Pull Request Bot"
+    controller_or_reviewer: "Librarian / Schema Validator"
+    routing_required: true
+    routing_observed: true
+    routing_date: "2026-10-04T16:05:00+02:00"
+    routing_trace: "PR #142 in companion repo"
+    response_state: YES
+    response_date: "2026-10-05T09:30:00+02:00"
+    response_summary: "Trace accepted, validated against frontmatter schema, and incorporated into volume delta magazine"
+    evidence_status: ESTABLISHED
+    evidence_refs:
+      - "sources/statuts-corsica-1995-transcription.md"
+      - "projects/institut/preparation/sources.json"
+    evidence_available_now: true
+    evidence_available_at_relevant_time: true
+    historical_availability_status: "contemporary_valid_trace"
+    effect_on_capacity: "Augmente la richesse documentaire du Living Book et ouvre la possibilité d'un tirage imprimé révisé."
+    capacity_direction: improves
+    next_possible_actions:
+      - "Publication du delta magazine révisé"
+      - "Génération de l'édition augmentée"
+    next_actor: "Living Book Press Worker"
+    deadline: "2026-10-10T18:00:00+02:00"
+    epistemic_status: OBSERVATION
+    confidence: 1.0
+    sources:
+      - "https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/sources/statuts-corsica-1995-transcription.md"
+
+  - id: CONTRIB-2026-10-05-02
+    subject_entity: "Reader / Contributor (External Participant)"
+    counterparty_entity: "Living Book Editorial Desk / Custodian"
+    subactor: "Rights and Credits Manager"
+    request: "Attribution of contributor pseudonym in the colophon and metadata ledger"
+    request_kind: "attribution-request"
+    requested_effect: "Persistent acknowledgment in git history and colophon page"
+    first_trace: "2026-10-04T16:30:00+02:00"
+    last_followup: "2026-10-05T10:00:00+02:00"
+    trigger: "Accepted trace RT-LBF-001"
+    trigger_kind: "editorial-policy"
+    trigger_date: "2026-10-04"
+    why_relevant_now: "Fair contribution policy before press run"
+    priority_mode: operational
+    priority_rank: 2
+    information_holder: "Colophon Metadata Registry"
+    decision_authority: "Living Book Sovereign Author"
+    transmitter: "Editorial Bot"
+    controller_or_reviewer: "Commons Licensing Reviewer"
+    routing_required: false
+    routing_observed: false
+    response_state: PENDING
+    response_summary: "Awaiting final proof approval before sealing the edition colophon"
+    evidence_status: PENDING
+    effect_on_capacity: "Conditionne la finalisation de la page de crédits du volume sans bloquer la chaîne éditoriale."
+    capacity_direction: delays
+    next_possible_actions:
+      - "Validation des métadonnées de licence"
+    next_actor: "Living Book Sovereign Author"
+    deadline: "2026-10-08T12:00:00+02:00"
+    epistemic_status: HYPOTHESIS
+    confidence: 0.9
+    sources:
+      - "research/living_book_factory_audit.md"
