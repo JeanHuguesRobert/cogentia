@@ -98,6 +98,7 @@ import {
   formatTriage,
 } from "./lib/triage.js";
 import { groupReadmeReviewBoundaries } from "./lib/readme-audit.js";
+import { refreshDashboardArtifacts } from "./lib/fix-bugs-first-refresh.js";
 import {
   auditReadmeSemanticEvidence,
   readmeReviewState,
@@ -460,6 +461,8 @@ async function main() {
       return cmdEffect(argv);
     case "issues":
       return cmdIssues(argv.shift() || "list");
+    case "dashboard":
+      return cmdDashboard(argv.shift() || "refresh");
     case "publish":
       return cmdPublish(argv.shift() || "list");
     case "git":
@@ -1083,7 +1086,7 @@ Continuation commands:
   continuation audit-backfill [<id>|all]  Append missing durable audit events for resolved/cancelled records.
   continuation schema
 
-Issue commands:
+ Issue commands:
   issues list <repo>       List GitHub issues for a registered repo using gh.
                            Flags: --state open|closed|all --limit <n>
   issues packet <repo> <number>
@@ -1115,7 +1118,7 @@ Issue commands:
                            --number <n> --root <dir> --step-result <file>
                            Exit follows the predicted audit, or 3 when judgment
                            is still required. --json prints the plan.
-  issues resumable-apply <owner/repo#N> --from <plan.json>
+   issues resumable-apply <owner/repo#N> --from <plan.json>
                            Phase-3 Issue body write. Expose first.
                            Without --confirm, print the exact delivery body and
                            its hash, then exit 2. No GitHub write.
@@ -1123,6 +1126,12 @@ Issue commands:
                            fetch it back, and verify it.
                            Refuses a stale plan when the current body hash differs.
                            Flags: --from <plan.json> --confirm <sha256> --root <dir>
+
+ Dashboard commands:
+  dashboard refresh        Refresh public Fix Bugs First Markdown, JSON and HTML.
+                           Reads current GitHub issues and Operium main; writes
+                           only changed local outputs. Flags: --dry-run --json.
+                           Publishing GitHub commits or Views Store is separate.
 
 Publish commands:
   publish list             List views available for publishing to Views Store.
@@ -6138,6 +6147,49 @@ function cmdIssuesExport(ctx) {
     both,
   });
   output(result, formatIssuesExport(result));
+}
+
+function cmdDashboard(sub) {
+  if (["help", "-h", "--help"].includes(sub) || takeFlag("--help") || takeFlag("-h")) {
+    return output({ usage: "node scripts/cogentia.js dashboard refresh [--dry-run] [--json]" }, "Usage: node scripts/cogentia.js dashboard refresh [--dry-run] [--json]");
+  }
+  if (sub !== "refresh") throw new Error(`Unknown dashboard subcommand "${sub}". Use dashboard refresh.`);
+  const dryRun = takeFlag("--dry-run");
+  if (argv.length) throw new Error(`Unexpected dashboard arguments: ${argv.join(" ")}`);
+  const ctx = loadContext();
+  const registryRepo = ctx.repos.find(repo => repo.role === "registry" || repo.name === "JeanHuguesRobert");
+  const cogentiaRepo = ctx.repos.find(repo => repo.name === "cogentia");
+  const operiumRepo = ctx.repos.find(repo => repo.name === "operium");
+  if (!registryRepo || !cogentiaRepo || !operiumRepo) throw new Error("Dashboard refresh requires registered Cogentia, Operium and JeanHuguesRobert repositories");
+
+  const operiumFullName = operiumRepo.full_name || operiumRepo.github_full_name || "JeanHuguesRobert/operium";
+  const ref = ghJson(["api", `repos/${operiumFullName}/git/ref/heads/main`]);
+  const backlogRef = String(ref?.object?.sha || "");
+  if (!/^[a-f0-9]{40}$/.test(backlogRef)) throw new Error("Unable to verify Operium main commit");
+  const backlogFile = ghJson(["api", `repos/${operiumFullName}/contents/backlog/items.yaml?ref=${backlogRef}`]);
+  if (backlogFile?.encoding !== "base64" || !/^[a-f0-9]{40}$/.test(String(backlogFile?.sha || ""))) {
+    throw new Error("Unable to verify Operium backlog blob");
+  }
+  const backlogBytes = Buffer.from(backlogFile.content || "", "base64");
+  const blobHash = createHash("sha1").update(`blob ${backlogBytes.length}\0`).update(backlogBytes).digest("hex");
+  if (blobHash !== backlogFile.sha) throw new Error("Operium backlog content does not match its Git blob hash");
+  const backlogText = backlogBytes.toString("utf8");
+  const backlog = js_yaml.load(backlogText);
+  if (backlog?.schema !== "operium.backlog.v1" || !Array.isArray(backlog.items)) throw new Error("Operium backlog has an unexpected schema");
+
+  const issues = exportIssues(ctx, { repoArg: "all", state: "open", write: false, returnContent: true });
+  if (!issues.ok || !issues.content) throw new Error(`Public issue export failed: ${JSON.stringify(issues.repository_errors || [])}`);
+  const result = refreshDashboardArtifacts({
+    backlogItems: backlog.items,
+    backlogBlobSha: backlogFile.sha,
+    backlogRef,
+    backlogUrl: `https://github.com/${operiumFullName}/blob/${backlogRef}/backlog/items.yaml`,
+    issuesExportText: issues.content,
+    outputDir: registryRepo.path,
+    viewsDir: path.join(cogentiaRepo.path, ".cogentia", "views"),
+    dryRun,
+  });
+  return output(result, `Dashboard refresh: ${result.changed ? `${result.files_to_update.length} files ${dryRun ? "would change" : "updated"}` : "already current"}\nIssues: ${result.issue_count} · items: ${result.item_count} · open bugs: ${result.open_bugs}\nGenerated: ${result.generated_at}`);
 }
 
 function cmdContinuation(sub) {
@@ -15916,7 +15968,7 @@ function buildViewCrossRefs(ctx, view) {
   const file = view.file;
   const kind = view.kind || inferViewKind(view);
   const relation = inferViewRelation(view);
-  const viewUrl = `${VIEWS_STORE_PUBLIC_BASE}/views/${encodeURIComponent(file)}`;
+  const viewUrl = `${VIEWS_STORE_PUBLIC_BASE}/views/${encodeURIComponent(file)}${/\.html$/i.test(file) ? "?raw" : ""}`;
 
   let repoName = view.repo || null;
   let repo = repoName ? ctx.repos.find(r => r.name === repoName) : null;
@@ -16050,6 +16102,7 @@ function listPublishableViews(ctx) {
   // Standard global views
   const standardViews = [
     { id: "fix-bugs-first-dashboard", name: "Fix Bugs First Dashboard", file: "fix-bugs-first-dashboard.md", source: "Fix Bugs First generator", scope: "global", kind: "work", repo: "operium" },
+    { id: "fix-bugs-first-dashboard-html", name: "Fix Bugs First Dashboard (HTML)", file: "fix-bugs-first-dashboard.html", source: "Fix Bugs First generator", scope: "global", kind: "work", repo: "operium" },
     { id: "fix-bugs-first-dashboard-json", name: "Fix Bugs First Dashboard (JSON)", file: "fix-bugs-first-dashboard.json", source: "Fix Bugs First generator", scope: "global", kind: "work", repo: "operium" },
     { id: "current-issues-list", name: "Current Issues List", file: "current-issues-list.md", source: "issues export (summary)", scope: "global", kind: "issues" },
     { id: "current-issues", name: "Current Issues (Full)", file: "current-issues.md", source: "issues export (--body --comments)", scope: "global", kind: "issues" },
@@ -17070,9 +17123,11 @@ function exportIssues(ctx, options = {}) {
   }
 
   // Write to file(s)
-  const content = lines.join("\n");
-  ensureDir(path.dirname(targetPath));
-  fs.writeFileSync(targetPath, ensureFinalNewline(content), "utf8");
+  const content = ensureFinalNewline(lines.join("\n"));
+  if (options.write !== false) {
+    ensureDir(path.dirname(targetPath));
+    fs.writeFileSync(targetPath, content, "utf8");
+  }
 
   // Optionally generate both versions
   if (both && isFullContent) {
@@ -17102,6 +17157,7 @@ function exportIssues(ctx, options = {}) {
     })),
     repository_errors: repoErrors,
     excluded_private_repositories: excludedPrivateRepositories,
+    ...(options.returnContent ? { content } : {}),
     generated_at: new Date().toISOString(),
   };
 }

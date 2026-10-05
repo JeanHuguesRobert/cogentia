@@ -258,3 +258,78 @@ export function renderDashboardMarkdown(dashboardData) {
 
   return lines.join("\n");
 }
+
+function escapeHtml(value) {
+  return String(value ?? "").replace(/[&<>"']/g, character => ({
+    "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;",
+  })[character]);
+}
+
+function safeLink(value) {
+  try {
+    const url = new URL(String(value || ""));
+    return ["http:", "https:"].includes(url.protocol) ? url.href : null;
+  } catch {
+    return null;
+  }
+}
+
+function renderHtmlItems(items) {
+  if (!items.length) return '<p class="empty">No items in this section.</p>';
+  return `<ul class="work-list">${items.map(item => {
+    const href = safeLink(item.url);
+    const title = escapeHtml(item.title);
+    const heading = href
+      ? `<a href="${escapeHtml(href)}" rel="noopener noreferrer">${title}</a>`
+      : title;
+    const facts = [item.repository, item.subsystem, item.status, item.severity].filter(Boolean).map(escapeHtml).join(" · ");
+    return `<li><div class="work-heading"><span class="work-id">${escapeHtml(item.id)}</span><strong>${heading}</strong></div><p class="facts">${facts}</p>${item.next_action ? `<p class="next">Next: ${escapeHtml(item.next_action)}</p>` : ""}</li>`;
+  }).join("")}</ul>`;
+}
+
+export function renderDashboardHtml(dashboardData) {
+  const metadata = dashboardData.metadata || {};
+  const gates = Object.values(dashboardData.gates || {});
+  const otherOpen = (dashboardData.items || []).filter(item =>
+    ["open", "in_progress", "blocked"].includes(item.status) && !["bug", "feature"].includes(item.kind));
+  const byRepository = new Map();
+  for (const item of otherOpen) {
+    const name = item.repository || "unknown";
+    if (!byRepository.has(name)) byRepository.set(name, []);
+    byRepository.get(name).push(item);
+  }
+  const repositorySections = [...byRepository].sort(([a], [b]) => a.localeCompare(b))
+    .map(([name, items]) => `<details><summary>${escapeHtml(name)} <span class="count">${items.length}</span></summary>${renderHtmlItems(items)}</details>`).join("");
+  const gateRows = gates.map(gate => `<tr><th scope="row">${escapeHtml(gate.subsystem)}</th><td><span class="gate ${gate.state === "OK" ? "ok" : "blocked"}">${escapeHtml(gate.state)}</span></td><td>${Number(gate.open_bugs) || 0}</td><td>${escapeHtml((gate.blocking_bugs || []).join(", ") || "—")}</td></tr>`).join("");
+  const generated = escapeHtml(dashboardData.generated_at || "unknown");
+  const sourceIssues = escapeHtml(metadata.source_issues_generated_at || "unknown");
+  const sourceBacklog = safeLink(metadata.source_backlog);
+  return `<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Public, read-only Fix Bugs First work dashboard">
+  <title>Fix Bugs First · Operium</title>
+  <style>
+    :root{color-scheme:light;--ink:#152235;--muted:#53677d;--line:#d7e0e9;--paper:#f4f7fa;--card:#fff;--accent:#095a9d;--bad:#a62432;--ok:#216d45}
+    *{box-sizing:border-box}body{margin:0;background:var(--paper);color:var(--ink);font:16px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif}a{color:var(--accent)}a:hover{text-decoration-thickness:2px}a:focus-visible,summary:focus-visible{outline:3px solid var(--accent);outline-offset:3px}
+    .wrap{max-width:1100px;margin:auto;padding:1.5rem}header{background:#122b45;color:white;padding:2rem 0}header a{color:#c7e4ff}h1{margin:.2rem 0;font-size:clamp(1.8rem,4vw,2.8rem)}h2{font-size:1.35rem;margin:0 0 1rem}.lead{max-width:72ch;color:#d2e3f2}.eyebrow{letter-spacing:.11em;text-transform:uppercase;font-size:.75rem;font-weight:700;color:#a5d7ff}
+    .metrics{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:.8rem;margin:1.3rem 0}.metric,.panel{background:var(--card);border:1px solid var(--line);border-radius:.7rem;box-shadow:0 2px 12px #122b4508}.metric{padding:1rem}.metric strong{display:block;font-size:1.65rem}.metric span,.facts,.source,.empty{color:var(--muted)}.panel{padding:1.2rem;margin:1rem 0}.source{font-size:.88rem}.source p{margin:.35rem 0}
+    .scroll{overflow-x:auto}table{width:100%;border-collapse:collapse;text-align:left}th,td{padding:.6rem .7rem;border-bottom:1px solid var(--line)}thead th{font-size:.8rem;text-transform:uppercase;color:var(--muted)}.gate{font-weight:700}.gate.ok{color:var(--ok)}.gate.blocked{color:var(--bad)}
+    .work-list{list-style:none;margin:0;padding:0}.work-list li{padding:.85rem 0;border-top:1px solid var(--line)}.work-heading{display:flex;align-items:baseline;gap:.65rem;flex-wrap:wrap}.work-id{font:700 .78rem ui-monospace,monospace;color:var(--muted)}.facts,.next{margin:.25rem 0 0;font-size:.88rem}.next{color:var(--ink)}details{border-top:1px solid var(--line);padding:.6rem 0}summary{cursor:pointer;font-weight:600}.count{color:var(--muted);font-size:.85rem;margin-left:.3rem}footer{font-size:.85rem;color:var(--muted);padding:1rem 0 2rem}@media print{header{background:white;color:var(--ink)}header a{color:var(--accent)}.panel,.metric{box-shadow:none}details{break-inside:avoid}}
+  </style>
+</head>
+<body>
+<a class="skip" href="#main">Skip to dashboard</a>
+<header><div class="wrap"><div class="eyebrow">Operium · public work view</div><h1>Fix Bugs First</h1><p class="lead">A readable snapshot of open work. The Operium backlog and linked GitHub issues remain authoritative; this page cannot edit them.</p><a href="/ops/console/">Back to Operium Console</a></div></header>
+<main class="wrap" id="main">
+  <div class="metrics"><div class="metric"><strong>${Number(metadata.open_bugs_count) || 0}</strong><span>Open bugs</span></div><div class="metric"><strong>${Number(metadata.open_features_count) || 0}</strong><span>Open features</span></div><div class="metric"><strong>${Number(metadata.subsystems_count) || 0}</strong><span>Subsystems</span></div><div class="metric"><strong>${Number(metadata.total_items) || 0}</strong><span>Total items</span></div></div>
+  <section class="panel source" aria-label="Sources and freshness"><p><strong>Generated:</strong> <time datetime="${generated}">${generated}</time></p><p><strong>GitHub issues read:</strong> ${sourceIssues}</p><p><strong>Backlog:</strong> ${sourceBacklog ? `<a href="${escapeHtml(sourceBacklog)}">Operium source at GitHub</a>` : "unknown"}</p><p><strong>Scope:</strong> public repositories only; issue labels and Operium records determine the categories shown.</p></section>
+  <section class="panel" aria-labelledby="bugs"><h2 id="bugs">Open bugs · fix first</h2>${renderHtmlItems(dashboardData.open_bugs || [])}</section>
+  <section class="panel" aria-labelledby="gates"><h2 id="gates">Subsystem gates</h2><div class="scroll"><table><thead><tr><th scope="col">Subsystem</th><th scope="col">Gate</th><th scope="col">Open bugs</th><th scope="col">Blocking bugs</th></tr></thead><tbody>${gateRows}</tbody></table></div></section>
+  <section class="panel" aria-labelledby="features"><h2 id="features">Features and planned work</h2>${renderHtmlItems(dashboardData.open_features || [])}</section>
+  <section class="panel" aria-labelledby="other"><h2 id="other">Other open work <span class="count">${otherOpen.length}</span></h2><p class="source">Expand a repository to browse its open items.</p>${repositorySections || '<p class="empty">No other open work.</p>'}</section>
+</main><footer class="wrap">Read-only projection · ${escapeHtml(dashboardData.schema)}</footer>
+</body></html>\n`;
+}

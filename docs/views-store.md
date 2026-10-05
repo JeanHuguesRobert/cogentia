@@ -1,12 +1,28 @@
 ---
 title: "Views Store"
+author: unknown
+affiliation: Institut Mariani / C.O.R.S.I.C.A., 1 cours Paoli, F-20250 Corte, Corsica
+date: null
+license: CC BY-SA 4.0
+language: en
 document_role: source
 document_kind: reference
 visibility: public
 lifecycle_state: active
 update_policy: UP-DEFAULT-REVIEWED
+status: working-paper
+canonical_url: https://github.com/JeanHuguesRobert/cogentia/blob/main/docs/views-store.md
+provenance:
+  origin_type: repository
+  origin_repository: JeanHuguesRobert/cogentia
+  origin_ref: unknown
+  origin_date: unknown
+  derived_from: []
+review:
+  status: unreviewed
+  reviewed_by: []
 generated_by: human+agent
-last_modified_at: 2026-07-23
+last_modified_at: '2026-10-05'
 classification_source: "cogentia.js"
 classification_version: "1"
 classification_rule: "explicit-metadata"
@@ -242,7 +258,7 @@ node cogentia/scripts/cogentia.js publish push all
 
 Related generators:
 
-- `generate-fix-bugs-first-dashboard.js` → `fix-bugs-first-dashboard.md` / `fix-bugs-first-dashboard.json` (read-only work projection; Operium backlog and native GitHub links remain authoritative)
+- `dashboard refresh` → `fix-bugs-first-dashboard.html` (human view), `.md` and `.json` (read-only work projection; Operium backlog and native GitHub links remain authoritative). The command reads current public issues and Operium `main`, writes only changed files, and supports `--dry-run`.
 - `issues export` → `current-issues-list.md` / `current-issues.md` (open issues focus)
 - `continuation export` → `continuations-list.md` / `continuations.md` (**alive** focus by default)
 - `corpus-state export` → `corpus-state.md` / `corpus-state.json` (**metadata only**: local SQLite index + embeddings coverage + optional Supabase inventory — no vectors/bodies)
