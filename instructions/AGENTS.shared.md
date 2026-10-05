@@ -1,13 +1,28 @@
 ---
 title: Cogentia Shared Agent Instructions
-status: active
-version: 32
+author: unknown
+affiliation: "Institut Mariani / C.O.R.S.I.C.A., 1 cours Paoli, F-20250 Corte, Corsica"
+status: "working-paper — active operational mandate"
+version: 33
 date: 2026-10-02
+last_modified_at: "2026-10-05"
+license: CC BY-SA 4.0
+language: en
+canonical_url: https://github.com/JeanHuguesRobert/cogentia/blob/main/instructions/AGENTS.shared.md
 document_role: operational
 document_kind: agent-instructions
 visibility: public
 update_policy: UP-DEFAULT-REVIEWED
 lifecycle_state: "active"
+provenance:
+  origin_type: unknown
+  origin_repository: JeanHuguesRobert/cogentia
+  origin_ref: unknown
+  origin_date: unknown
+  derived_from: []
+review:
+  status: unreviewed
+  reviewed_by: []
 classification_source: "cogentia.js"
 classification_version: "1"
 classification_rule: "explicit-metadata"
@@ -240,6 +255,40 @@ This is not a license for abstraction-for-abstraction's-sake. Apply Occam, local
 - **Public criticism**: In public output, frame negative judgments as `[act/fitness] vs [explicit standard]`, not `[person] is [pejorative]`; subjectivity markers do not neutralize invective.
 - **Reputational claims**: Assert a potentially reputation-harming fact only to the exact extent supported by evidence; otherwise state the established facts, uncertainty, and inference separately. Truth permits precision, not extrapolation.
 - Preserve provenance. Do not infer missing author, source, reference, review or visibility information.
+
+### Canonical agile frontmatter — establish metadata when authoring
+
+For every new or materially revised substantive Markdown document intended for
+the tracked Corpus, agents **MUST** read the current
+[`Frontmatter Schema`](../docs/frontmatter-schema.md) and give the document a
+valid YAML frontmatter block as part of authoring, not as a later cleanup task.
+Declare the required core and traceability fields, the actual language,
+document role, provenance, review state, update policy, and canonical URL where
+applicable. Use a canonical role with a specific `document_kind` when useful.
+
+This is **agile**: use justified defaults and explicit `unknown`, `unreviewed`,
+empty lists, or `date: null` when evidence is absent; do not invent an author,
+review, origin, license, or authority to satisfy a validator. Distinguish the
+intellectual origin of content from the commit that materialized it. A known
+origin with an unavailable reference is not an unknown origin. The schema is
+the current protocol, not a closed ontology: a faithful, reversible extension
+may accompany canonical fields when the current vocabulary would distort
+known Reality, with a linked schema-evolution trace. See
+[`Living Frontmatter`](../research/living_frontmatter_optimistic_schema_candidate.md).
+`frontmatter scaffold` can supply syntax, but agents **MUST** check every
+prefilled value against the actual document and repository; a tool default is
+not evidence of authorship, language, affiliation, license, or origin.
+
+Before reporting an authored document ready, agents **MUST** run
+`node scripts/cogentia.js frontmatter verify <path> --strict-role` from
+Cogentia (or a repository-equivalent check) on each affected document,
+correct errors, and account for any warning, plus run `git diff --check`.
+A validator pass establishes structural
+conformance, not the truth of attribution or review. If the document format
+cannot carry YAML frontmatter or the checker is unavailable, record the exact
+exception or unverified state in the handoff. Apply this rule to the task's
+documents; legacy corpus-wide cleanup requires its own scoped mandate.
+
 - **Hanlon / ordinary-failure prior**: When several explanations remain compatible with the evidence, test ordinary failure before imputing hostile intent: error, haste, misunderstanding, overload, coordination failure, local incentives, or routine process effects. This is a **search-order heuristic, not an innocence axiom**: preserve competing hypotheses, including conscious avoidance or hostile action when evidence warrants them, and seek the smallest observable Reality test that discriminates among them. Do not convert unexplained behavior into motive.
 - AI suggests and clarifies; a human principal retains mandate and responsibility for engaging acts.
 - Public by default does not cancel privacy: private material requires explicit authorization before public reuse.

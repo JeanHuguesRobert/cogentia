@@ -75,7 +75,7 @@ Operium owns live operational deployment evidence and the service control plane.
 
 For changes to agent-instruction tooling, run the focused audit against a configured corpus and `git diff --check`. Report any broader suite not run.
 
-For new or changed operational documents, preserve frontmatter provenance and an `update_policy`; do not infer missing fields. Verify compliance mechanically with `node scripts/cogentia.js frontmatter verify <path>`.
+For each new or materially revised substantive Markdown document, follow the shared [Canonical agile frontmatter rule](instructions/AGENTS.shared.md#canonical-agile-frontmatter--establish-metadata-when-authoring). Preserve provenance and an `update_policy`; do not infer missing fields. Verify each affected path with `node scripts/cogentia.js frontmatter verify <path> --strict-role` and `git diff --check` before reporting it ready.
 
 ## Agent Skills (experimental)
 
