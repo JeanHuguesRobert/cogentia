@@ -502,11 +502,14 @@ function execCogentia(args) {
 }
 
 function activeEmbeddingContinuations(options = {}) {
+  if (options.id) {
+    const cont = readContinuation(options.id);
+    return cont && cont.status === "active" && cont.kind === "embeddings-index" ? [cont] : [];
+  }
   const files = fs.existsSync(CONTINUATIONS_DIR) ? fs.readdirSync(CONTINUATIONS_DIR).filter(f => f.endsWith(".json")) : [];
   return files
     .map(file => readContinuation(file.replace(".json", "")))
-    .filter(cont => cont && cont.status === "active" && cont.kind === "embeddings-index")
-    .filter(cont => !options.id || cont.id === options.id);
+    .filter(cont => cont && cont.status === "active" && cont.kind === "embeddings-index");
 }
 
 async function run(options = {}) {
@@ -541,7 +544,7 @@ async function run(options = {}) {
   if (magistralAvailable) {
     try {
       const magistralUrl = process.env.MAGISTRAL_URL || "http://127.0.0.1:8880";
-      const healthResponse = await fetch(`${magistralUrl}/health`);
+      const healthResponse = await fetch(`${magistralUrl}/health`, { signal: AbortSignal.timeout(1500) });
       if (!healthResponse.ok) throw new Error("Magistral health check failed");
       console.log(`   ✅ Magistral available at ${magistralUrl}`);
     } catch (error) {

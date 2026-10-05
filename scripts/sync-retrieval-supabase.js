@@ -15,6 +15,8 @@ async function main() {
   if (!Number.isInteger(startAt) || startAt < 0) {
     throw new Error("--start-at must be a non-negative integer");
   }
+  const targetRepo = readFlag(args, "--repo");
+  const targetPath = readFlag(args, "--path");
   const supabaseUrl = String(process.env.SUPABASE_URL || "").replace(/\/$/, "");
   const serviceKey = String(process.env.SUPABASE_SERVICE_ROLE_KEY || "");
   if (!supabaseUrl || !serviceKey) {
@@ -30,12 +32,24 @@ async function main() {
   const db = new sqlite.DatabaseSync(dbPath, { readOnly: true });
   try {
     const indexHash = db.prepare("SELECT value FROM index_state WHERE key = 'index_hash'").get()?.value || "";
+    const conditions = ["c.searchable_public = 1"];
+    const params = [];
+    if (targetRepo) {
+      conditions.push("c.repo = ?");
+      params.push(targetRepo);
+    }
+    if (targetPath) {
+      conditions.push("c.path LIKE ?");
+      params.push(targetPath);
+    }
+    const whereClause = conditions.join(" AND ");
+
     const countRow = db.prepare(`
       SELECT count(*) as total
       FROM embeddings e
       JOIN chunks c ON c.id = e.chunk_id
-      WHERE c.searchable_public = 1
-    `).get();
+      WHERE ${whereClause}
+    `).get(...params);
     const totalRecords = countRow?.total || 0;
 
     console.log(JSON.stringify({
@@ -43,6 +57,8 @@ async function main() {
       dry_run: dryRun,
       corpus_key: corpusKey,
       index_hash: indexHash,
+      repo: targetRepo || undefined,
+      path: targetPath || undefined,
       db_path: dbPath,
       rows: totalRecords,
       start_at: startAt,
@@ -59,7 +75,7 @@ async function main() {
              c.visibility, c.github_url, c.text, c.searchable_public
       FROM embeddings e
       JOIN chunks c ON c.id = e.chunk_id
-      WHERE c.searchable_public = 1
+      WHERE ${whereClause}
       ORDER BY c.repo, c.path, c.start_line
       LIMIT ? OFFSET ?
     `);
@@ -67,7 +83,7 @@ async function main() {
     const chunkSize = Math.max(1, Number.parseInt(readFlag(args, "--batch-size") || "20", 10));
     let upserted = 0;
     for (let offset = startAt; offset < totalRecords; offset += chunkSize) {
-      const rows = batchStmt.all(chunkSize, offset);
+      const rows = batchStmt.all(...params, chunkSize, offset);
       if (!rows.length) break;
 
       const batch = rows.map(row => {
@@ -118,7 +134,7 @@ async function main() {
                 Prefer: "resolution=merge-duplicates,return=minimal",
               },
               body: JSON.stringify(batch),
-              signal: AbortSignal.timeout(15000),
+              signal: AbortSignal.timeout(30000),
             });
             if (!response.ok) {
               const detail = await response.text();
