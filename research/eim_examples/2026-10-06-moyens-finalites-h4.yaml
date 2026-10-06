@@ -1,0 +1,87 @@
+matrix_id: EIM-MEF-H4-2026-10-06
+profile: EIM-TWIN-OBSERVATION
+status: frozen-baseline
+purpose: "Operationalize H4 of Moyens et finalités: heterogeneous alternative routes toward an identifiable parliamentary act."
+frozen_at: "2026-10-06"
+epistemic_rules:
+  - "Public availability of the amendment is not evidence that a specific amendment-right holder received or considered it."
+  - "Silence is not refusal unless an independent legal rule gives it that effect."
+  - "A later parliamentary act counts as evidence of an effective route only if the causal link to the transmission is independently traceable."
+  - "Plurality of routes is not treated as redundancy unless substitutability is established."
+sources:
+  - "https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/moyens_et_finalites.md"
+  - "https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/autonomia/amendement_effectivite_article_72-5.md"
+  - "https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/autonomia/note_continuite_parlementaire_autonomie_2026-09.md"
+  - "https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/courrier_public_six_parlementaires_corse.md"
+rows:
+  - id: MEF-H4-01
+    matrix_id: EIM-MEF-H4-2026-10-06
+    subject_entity: "Jean Hugues Noël Robert / C.O.R.S.I.C.A."
+    counterparty_entity: "Parliamentary actors holding or mediating amendment capacity on the Corsica constitutional bill"
+    actor_role:
+      - "potential amendment-right holder"
+      - "potential parliamentary intermediary"
+    request: "Transform, adopt, file, or substantially reformulate the published effectivity proposal into an identifiable parliamentary act."
+    request_kind: "parliamentary-contribution"
+    requested_effect: "An identifiable parliamentary act carrying all or part of the effectivity proposal before the useful Senate window closes."
+    request_scope: "H4 — heterogeneous alternative routes toward the amendment"
+    first_trace: "2026-09-26"
+    last_followup: null
+    trigger: "Publication of the candidate amendment and approaching Senate examination of constitutional bill no. 782."
+    trigger_kind: "publication-plus-procedural-window"
+    trigger_date: "2026-09-26"
+    why_relevant_now: "The personal senatorial route was lost; H4 asks whether other institutional routes remain effectively mobilizable."
+    priority_mode: procedural
+    priority_rank: 1
+    information_holder: "Jean Hugues Noël Robert / C.O.R.S.I.C.A.; public GitHub corpus"
+    decision_authority: "Each constitutionally competent amendment-right holder or competent parliamentary actor"
+    transmitter: null
+    controller_or_reviewer: "Public parliamentary record / later adversarial review"
+    routing_required: true
+    routing_target: "Specific competent parliamentary actors"
+    routing_observed: null
+    routing_date: null
+    routing_trace: null
+    response_state: UNKNOWN
+    response_date: null
+    response_summary: "The corpus establishes public availability and earlier parliamentary contribution channels, but does not yet establish receipt, routing, consideration, refusal, or filing by a specific amendment-right holder for this candidate amendment."
+    partial_dimensions_closed:
+      - "Candidate amendment exists publicly."
+      - "Earlier C.O.R.S.I.C.A. parliamentary contribution is documented."
+    open_dimensions:
+      - "Who received the candidate amendment directly?"
+      - "When was each transmission made?"
+      - "What was the useful filing deadline for each route?"
+      - "Was any parliamentary act causally linked to that transmission?"
+      - "Was any non-action caused by channel failure, substantive disagreement, timing, priority, or simple silence?"
+    evidence_status: PENDING
+    evidence_refs:
+      - "https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/autonomia/amendement_effectivite_article_72-5.md"
+      - "https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/autonomia/note_continuite_parlementaire_autonomie_2026-09.md"
+      - "https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/courrier_public_six_parlementaires_corse.md"
+    evidence_available_now: true
+    evidence_available_at_relevant_time: true
+    historical_availability_status: "Public candidate amendment available from 2026-09-26; direct transmission to specific actors remains unestablished in the examined corpus."
+    effect_on_capacity: "Tests whether a lost personal autonomous route is partly offset by practically mobilizable heterogeneous institutional routes."
+    capacity_direction: unknown
+    capacity_kind: "parliamentary initiative / amendment transmission"
+    capacity_delta: "unknown until a specific route is shown to have been reached and used, refused, or practically inaccessible"
+    irreversibility: "The useful parliamentary window is time-bounded; later adoption would not restore the same historical opportunity."
+    time_sensitivity: "High; exact amendment filing deadline must be established from an official Senate source before using non-action as evidence."
+    next_possible_actions:
+      - "Identify and freeze any direct transmission traces to specific actors."
+      - "Verify the official Senate amendment filing deadline."
+      - "Record replies, routing, explicit refusals, or silence without imputing motives."
+      - "If a parliamentary act appears, establish whether it was causally linked to the transmission before treating it as support for H4."
+    next_actor: "Corpus investigator / parliamentary source checker"
+    deadline: null
+    precedents:
+      - "2026-05-28 written contribution to the National Assembly Law Commission, later listed in report no. 2865"
+    comparison_scope: "personal autonomous route vs heterogeneous parliamentary routes"
+    level_of_examination: "prospective Reality Test baseline"
+    epistemic_status: "mixed: public amendment established; actor-specific routing and causal uptake unknown"
+    confidence: 0.88
+    notes: "This row deliberately refuses to encode the dates suggested in prior reviews until an official source verifies the relevant filing deadline."
+    sources:
+      - "https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/moyens_et_finalites.md"
+      - "https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/autonomia/amendement_effectivite_article_72-5.md"
