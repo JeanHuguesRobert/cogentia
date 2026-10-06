@@ -5,8 +5,8 @@ description: "Operational specification derived from existing Living Book Realit
 author: "Jean Hugues Noël Robert, baron Mariani"
 affiliation: "Institut Mariani / C.O.R.S.I.C.A., 1 cours Paoli, F-20250 Corte, Corsica"
 date: "2026-10-04"
-last_modified_at: "2026-10-05"
-version: "0.3"
+last_modified_at: "2026-10-06"
+version: "0.4"
 status: "working-paper"
 license: "CC BY-SA 4.0"
 language: "en"
@@ -37,6 +37,8 @@ related_documents:
   - "https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/projects/suicide-corse/editorial-architecture.md"
   - "https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/projects/rise-and-fall/editorial-architecture.md"
   - "https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/projects/diaspora/architecture.md"
+  - "https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/projects/diaspora/editorial-architecture.md"
+  - "https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/autonomia/osint_acteurs/index.md"
   - "https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/projects/privai/editorial-architecture.md"
   - "https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/projects/commons/editorial-architecture.md"
 review:
@@ -327,6 +329,45 @@ extension: living-book-press
 ~~~
 
 A profile MAY activate extensions, but activation MUST remain inspectable. An extension MUST NOT widen editorial or external-action authority.
+
+### 7.1 Local registry → directory projection
+
+Two independent Reality Cases now expose the same small pattern:
+
+- **DIASPORA** maintains local, sourced directory data and projects it as an annuaire, map, search and matching surface;
+- **Autonomia** maintains sourced OSINT actor records and a human-readable actor index.
+
+This is sufficient to generalize the relationship, not the local ontology.
+
+> **A registry SHOULD emerge locally when repeated entities require stable identity, provenance, temporal state or sourced relations. A directory, graph or map is a projection of that registry, not a new source of authority.**
+
+Minimum common shape:
+
+~~~text
+canonical local records
+→ stable local identity + provenance + temporal / verification state
+→ local registry when needed
+→ directory / graph / map / search projections
+~~~
+
+Apply **Occam** and **Minimum Sufficient Locality**:
+
+~~~text
+existing records + human index are sufficient
+→ keep them
+
+repeated friction appears
+  (duplication, generation, search, graphing, deduplication, federation)
+→ introduce the smallest structured local representation that removes it
+~~~
+
+The Factory MUST NOT require DIASPORA to refactor its working `seed.json`, nor require Autonomia to create a `registry.yml` or `registry.json` before demonstrated friction. Local implementations remain sovereign Reality Cases.
+
+Canonical governance consequence:
+
+> **Generalize the relation; do not centralize the records.**
+
+This is a direct application of Occam, Minimum Sufficient Locality, the two-Reality-Case heuristic, and **Consolidate relationships, not authority**.
 
 ## 8. The Janus profile
 
