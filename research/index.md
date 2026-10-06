@@ -55,6 +55,7 @@ This repository instantiates the **cognitive infrastructure layer** of the [DHIT
 
 | Title | Location | Date |
 |---|---|---|
+| [Effectivity Interaction Matrix](effectivity_interaction_matrix.md) *(working specification v0.2 — source-first interaction model with capability effects, routing, evidence states and Reality Test semantics; instrumented H4 and remedial-probe cases added 2026-10-06)* | this repo | 2026-10-02 → |
 | [**Cogentia — the framework, in five distinctive moves**](../COGENTIA.md) *(identity document; entry point)* | this repo | 2026-05-13 |
 | [Intent Kernel Pattern](../docs/intent-kernel-pattern.md) *(generic method v0.1 — short stable operational intention documents for humans and AI agents transforming a corpus without distorting its purpose)* | this repo | 2026-06-20 |
 | [Lien avec C.O.R.S.I.C.A., l’Institut Mariani et PrivAI](acorsica-institut-mariani.md) *(institutional boundary note — documentary links without institutional confusion)* | this repo | 2026-06-03 |
