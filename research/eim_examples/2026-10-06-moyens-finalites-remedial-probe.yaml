@@ -1,0 +1,203 @@
+matrix_id: EIM-MEF-REMEDY-2026-10-06
+profile: EIM-TWIN-OBSERVATION
+status: working-baseline
+purpose: "Operationalize the remedial-effectivity probe used by Moyens et finalités H5: existence, case availability, timeliness, and capacity restoration are distinct questions."
+frozen_at: "2026-10-06"
+epistemic_rules:
+  - "Abstract remedial power is not evidence that the remedy is legally available in this case."
+  - "Legal availability is not evidence that the remedy will arrive in useful time."
+  - "A later legal repair is not automatically historical restitution."
+  - "An exploratory infinitely subsidiary request is not a factual assertion that the applicant was regularly elected."
+sources:
+  - "https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/senatoriales-2026/investigation/annexe-strategie-recours-remedes-repetition-2026-10-06.md"
+  - "https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/senatoriales-2026/investigation/architecture-recours-cc-cedh-remedes-2026-10-05.md"
+  - "https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/moyens_et_finalites.md"
+rows:
+  - id: MEF-REM-01
+    matrix_id: EIM-MEF-REMEDY-2026-10-06
+    subject_entity: "Applicant in a parliamentary election dispute"
+    counterparty_entity: "Conseil constitutionnel"
+    actor_role:
+      - "election judge"
+    request: "Determine whether the legal order contains powers capable of correcting the result of a contested parliamentary election."
+    request_kind: "remedial-capacity-existence"
+    requested_effect: "Identify the abstract remedial powers available to the election judge."
+    request_scope: "Article 41 remedial probe"
+    first_trace: "2026-10-06"
+    last_followup: null
+    trigger: "Claim that temporal loss may become impossible to repair."
+    trigger_kind: "contentious-remedy-analysis"
+    trigger_date: "2026-10-06"
+    why_relevant_now: "H5 distinguishes the existence of a remedy from its effective capacity to restore a lost opportunity."
+    priority_mode: information_gain
+    priority_rank: 1
+    information_holder: "Legifrance / applicable organic ordinance"
+    decision_authority: "Conseil constitutionnel"
+    transmitter: null
+    controller_or_reviewer: "Legal adversarial review"
+    routing_required: false
+    routing_target: null
+    routing_observed: null
+    routing_date: null
+    routing_trace: null
+    response_state: YES
+    response_date: null
+    response_summary: "The corpus records that Article 41 provides abstract powers to annul the election, reform the proclamation, or proclaim the candidate who was regularly elected."
+    partial_dimensions_closed:
+      - "Existence of abstract corrective powers."
+    open_dimensions:
+      - "Conditions for direct proclamation in the present case."
+      - "Which remedy, if any, would be legally available on the established facts."
+    evidence_status: ESTABLISHED
+    evidence_refs:
+      - "https://www.legifrance.gouv.fr/loda/article_lc/LEGIARTI000006529999/"
+      - "https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/senatoriales-2026/investigation/annexe-strategie-recours-remedes-repetition-2026-10-06.md"
+    evidence_available_now: true
+    evidence_available_at_relevant_time: true
+    historical_availability_status: "Applicable legal source publicly available."
+    effect_on_capacity: "Opens the analytical possibility of a corrective remedy; does not establish case-specific entitlement."
+    capacity_direction: opens
+    capacity_kind: "legal remedial capacity"
+    capacity_delta: "abstract corrective capacity identified"
+    irreversibility: "None at the level of abstract legal power; historical opportunities may nevertheless expire."
+    time_sensitivity: "Medium for legal existence; high for practical restoration."
+    next_possible_actions:
+      - "Test case-specific conditions for each remedy."
+      - "Separate direct proclamation from annulment/new election."
+    next_actor: "Legal reviewer / Conseil constitutionnel"
+    deadline: null
+    precedents: []
+    comparison_scope: "abstract remedial power vs case-specific availability"
+    level_of_examination: "legal architecture"
+    epistemic_status: "established abstract power, bounded scope"
+    confidence: 0.96
+    notes: "The existence of Article 41 powers does not establish that direct proclamation is available where the excluded candidacy received no valid votes."
+    sources:
+      - "https://www.legifrance.gouv.fr/loda/article_lc/LEGIARTI000006529999/"
+
+  - id: MEF-REM-02
+    matrix_id: EIM-MEF-REMEDY-2026-10-06
+    subject_entity: "Jean Hugues Noël Robert"
+    counterparty_entity: "Conseil constitutionnel"
+    actor_role:
+      - "applicant"
+      - "election judge"
+    request: "At an infinitely subsidiary and exploratory level, test whether direct proclamation could be legally available despite exclusion before the vote."
+    request_kind: "case-specific-remedy-availability"
+    requested_effect: "Clarify whether the most radical corrective power can lawfully apply on these facts."
+    request_scope: "remedial probe, not primary requested relief"
+    first_trace: "2026-10-06"
+    last_followup: null
+    trigger: "Temporal harm alleged to be partly irreversible."
+    trigger_kind: "contentious-remedy-analysis"
+    trigger_date: "2026-10-06"
+    why_relevant_now: "The probe distinguishes 'no remedy exists' from 'this particular remedy is unavailable here'."
+    priority_mode: information_gain
+    priority_rank: 2
+    information_holder: "Conseil constitutionnel jurisprudence and case record"
+    decision_authority: "Conseil constitutionnel"
+    transmitter: "Applicant / filed submissions"
+    controller_or_reviewer: "Adversarial legal review"
+    routing_required: true
+    routing_target: "Conseil constitutionnel"
+    routing_observed: null
+    routing_date: null
+    routing_trace: null
+    response_state: OPEN
+    response_date: null
+    response_summary: "The corpus explicitly treats direct proclamation as legally difficult and exploratory because no valid votes could be cast for an unregistered candidacy."
+    partial_dimensions_closed:
+      - "The request is not presented as an assertion that the applicant was regularly elected."
+      - "Primary relief remains annulment and new electoral operations."
+    open_dimensions:
+      - "Whether Article 41 can support direct proclamation after upstream exclusion from the ballot."
+      - "Whether making the exploratory request weakens or clarifies the principal remedial argument."
+    evidence_status: CONTESTED
+    evidence_refs:
+      - "https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/senatoriales-2026/investigation/annexe-strategie-recours-remedes-repetition-2026-10-06.md"
+    evidence_available_now: true
+    evidence_available_at_relevant_time: true
+    historical_availability_status: "Current legal-strategy hypothesis; no adjudication on this case yet."
+    effect_on_capacity: "Tests the upper bound of case-specific remedial capacity without treating it as acquired."
+    capacity_direction: unknown
+    capacity_kind: "case-specific legal remedy"
+    capacity_delta: "unknown pending legal determination"
+    irreversibility: "If unavailable, the specific path closes; other corrective remedies may remain."
+    time_sensitivity: "High because parliamentary opportunities may pass before a final corrective outcome."
+    next_possible_actions:
+      - "Review Article 41 jurisprudence specifically for upstream candidacy exclusion."
+      - "Keep the request infinitely subsidiary unless stronger authority emerges."
+    next_actor: "Legal reviewer / Conseil constitutionnel"
+    deadline: null
+    precedents: []
+    comparison_scope: "direct proclamation vs annulment/new election"
+    level_of_examination: "exploratory case-specific remedy"
+    epistemic_status: "open legal hypothesis"
+    confidence: 0.78
+    notes: "This row is a probe of legal availability, not a claim of entitlement."
+    sources:
+      - "https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/senatoriales-2026/investigation/annexe-strategie-recours-remedes-repetition-2026-10-06.md"
+
+  - id: MEF-REM-03
+    matrix_id: EIM-MEF-REMEDY-2026-10-06
+    subject_entity: "Jean Hugues Noël Robert"
+    counterparty_entity: "Electoral and parliamentary timeline"
+    actor_role:
+      - "affected actor"
+    request: "Determine which practical capacities a later favorable remedy could still restore after the original election and parliamentary opportunities have passed."
+    request_kind: "remedy-effectivity"
+    requested_effect: "Distinguish legal repair, functional restoration, and historical restitution."
+    request_scope: "H5 temporal effectivity"
+    first_trace: "2026-10-06"
+    last_followup: null
+    trigger: "Potential mismatch between adjudication time and parliamentary opportunity."
+    trigger_kind: "time-sensitive-capability-loss"
+    trigger_date: "2026-10-06"
+    why_relevant_now: "A remedy may be legally meaningful while failing to recreate the same historical opportunity."
+    priority_mode: risk
+    priority_rank: 1
+    information_holder: "Election calendar, parliamentary calendar, future judgment"
+    decision_authority: "Multiple institutions depending on remedy"
+    transmitter: null
+    controller_or_reviewer: "Corpus / later adversarial review"
+    routing_required: false
+    routing_target: null
+    routing_observed: null
+    routing_date: null
+    routing_trace: null
+    response_state: OPEN
+    response_date: null
+    response_summary: "The distinction is analytically established; the actual capacities restored by any future remedy remain outcome-dependent."
+    partial_dimensions_closed:
+      - "Legal repair and historical restitution are not identical concepts."
+    open_dimensions:
+      - "Timing of the eventual decision."
+      - "Whether new electoral operations occur."
+      - "Which parliamentary opportunities remain open at that time."
+    evidence_status: PENDING
+    evidence_refs:
+      - "https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/senatoriales-2026/investigation/annexe-strategie-recours-remedes-repetition-2026-10-06.md"
+      - "https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/moyens_et_finalites.md"
+    evidence_available_now: true
+    evidence_available_at_relevant_time: true
+    historical_availability_status: "Current prospective analysis; future outcome not yet observable."
+    effect_on_capacity: "Separates restoration of legal standing from restoration of a time-bounded political opportunity."
+    capacity_direction: unknown
+    capacity_kind: "temporal remedial capacity"
+    capacity_delta: "future outcome dependent"
+    irreversibility: "Some historical opportunities may be irrecoverable even after legal repair."
+    time_sensitivity: "Very high."
+    next_possible_actions:
+      - "Freeze the parliamentary opportunities existing at each relevant date."
+      - "At judgment, compare restored capacities with the frozen baseline."
+      - "Do not treat non-restored historical opportunities as proof that the legal remedy was valueless."
+    next_actor: "Corpus investigator after judicial outcome"
+    deadline: null
+    precedents: []
+    comparison_scope: "legal repair vs functional restoration vs historical restitution"
+    level_of_examination: "prospective temporal Reality Test"
+    epistemic_status: "open prospective observation"
+    confidence: 0.9
+    notes: "This row operationalizes H5 without claiming novelty over established doctrines of effective remedy or path dependence."
+    sources:
+      - "https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/senatoriales-2026/investigation/annexe-strategie-recours-remedes-repetition-2026-10-06.md"
