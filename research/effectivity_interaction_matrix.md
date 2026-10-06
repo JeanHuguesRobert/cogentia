@@ -6,7 +6,7 @@ affiliation: "Institut Mariani / C.O.R.S.I.C.A., 1 cours Paoli, F-20250 Corte, C
 date: '2026-10-02'
 version: '0.2'
 status: "working-paper — generic specification v0.2"
-last_modified_at: '2026-10-05'
+last_modified_at: '2026-10-06'
 language: en
 license: CC BY-SA 4.0
 document_role: source
@@ -476,6 +476,22 @@ All profiles inherit from the canonical JSON Schema ([`schemas/effectivity-inter
    - File: [`research/eim_examples/eim-non-legal-contribution.yaml`](file:///C:/tweesic/cogentia/research/eim_examples/eim-non-legal-contribution.yaml)
    - Scope: Living Book contribution boundary (reader trace submissions, e.g. `#RT-LBF-001`, editorial deliberation, colophon attribution, delta magazine updates).
    - Key Invariant: Non-coercive interactions; contributions are observable participatory acts, evaluated through editorial capacity deltas without legal or administrative enforcement.
+
+### Instrumented Reality Cases derived from *Moyens et finalités*
+
+The following files are **applications of existing EIM semantics**, not new profiles:
+
+6. **H4 — Heterogeneous parliamentary routes toward an amendment**
+   - File: [`research/eim_examples/2026-10-06-moyens-finalites-h4.yaml`](eim_examples/2026-10-06-moyens-finalites-h4.yaml)
+   - Purpose: freeze a prospective baseline separating public availability, actor-specific receipt, routing, substantive response, and causally attributable parliamentary uptake.
+   - Key invariant: publication ≠ receipt ≠ routing ≠ consideration ≠ uptake.
+
+7. **Remedial effectivity probe**
+   - File: [`research/eim_examples/2026-10-06-moyens-finalites-remedial-probe.yaml`](eim_examples/2026-10-06-moyens-finalites-remedial-probe.yaml)
+   - Purpose: distinguish abstract remedial power, case-specific availability, useful timing, and the practical capacity actually restored.
+   - Key invariant: remedy exists ≠ remedy available in this case ≠ remedy timely ≠ historical capacity restored.
+
+These cases are deliberately kept as examples under `EIM-TWIN-OBSERVATION` until repeated use justifies a distinct implementation profile.
 
 ## 17. Views
 
