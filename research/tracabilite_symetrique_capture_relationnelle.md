@@ -269,6 +269,50 @@ Question :
 
 ---
 
+## 6.6 La sécurité comme clause de surplomb
+
+Les architectures captives sont fréquemment justifiées par des motifs de **sécurité** : filtrage anti-malware, blocage des liens externes, authentification renforcée, limitation des pièces jointes, cloisonnement des réseaux, prévention du phishing, protection contre l'exfiltration ou respect d'une politique interne.
+
+Ces objectifs peuvent être parfaitement légitimes. Le problème apparaît lorsque le mot **sécurité** devient une justification suffisamment générale pour neutraliser toute discussion sur :
+
+- la proportionnalité de la contrainte ;
+- l'existence d'une solution moins restrictive ;
+- la charge transférée vers l'usager ;
+- la qualité de la trace remise à l'usager ;
+- le risque nouveau créé par le canal sécurisé lui-même ;
+- la possibilité de vérifier empiriquement que la mesure améliore réellement la sécurité globale de l'interaction.
+
+La structure typique est alors :
+
+```text
+risque de sécurité invoqué
+→ canal ou restriction imposé
+→ complexité et dépendance supplémentaires
+→ perte de capacité ou de lisibilité pour l'usager
+→ faible contestabilité de la contrainte
+car « sécurité » fonctionne comme justification englobante
+```
+
+Cette note ne soutient pas qu'une justification de sécurité serait présumée abusive. Elle propose au contraire un **test de proportionnalité fonctionnelle** :
+
+1. **Nécessité** — quel risque concret la contrainte vise-t-elle ?
+2. **Adéquation** — la mesure traite-t-elle effectivement ce risque ?
+3. **Moindre restriction** — existait-il un moyen moins captif ou moins coûteux pour l'usager ?
+4. **Compensation** — le canal sécurisé restitue-t-il une trace au moins équivalente à celle qu'il remplace ?
+5. **Effet net** — la mesure ne crée-t-elle pas un risque procédural, probatoire ou cognitif supérieur au risque qu'elle prétend réduire ?
+
+Formule :
+
+> La sécurité ne devrait pas être un blanc-seing architectural.
+
+Ou, en termes plus opérationnels :
+
+> Plus une institution impose un canal au nom de la sécurité, plus elle devrait rendre explicites les étapes, les états, les preuves et les conditions d'achèvement de ce canal.
+
+Le cas Conseil constitutionnel / TransfertPro présenté plus loin illustre ce mécanisme : le greffe invoque explicitement le blocage des liens externes par le pare-feu conformément à sa politique de sécurité ; le canal sécurisé retenu introduit ensuite une étape de validation supplémentaire qui n'était pas clairement annoncée dans le parcours principal.
+
+---
+
 ## 7. Cadre juridique et normatif : une désynchronisation
 
 ### 7.1 Reconnaissance de la preuve électronique
