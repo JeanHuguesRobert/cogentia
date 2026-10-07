@@ -1,7 +1,7 @@
 ---
 schema: cogentia.agent_skill/v1
 id: cogentia.continuation-handling
-version: 5
+version: 6
 status: experimental
 name: continuation-handling
 description: >
@@ -20,6 +20,7 @@ triggers:
 inputs:
   - continuation_or_packet
   - applicable_mandate_or_constraints
+  - applicable_local_control_refs
   - optional_step_result_draft
 outputs:
   - classification
@@ -51,6 +52,8 @@ sources:
   - research/mcp_2026_cognitive_packet_sandbox_plan.md
   - research/monotonic_mandate_attenuation.md
   - research/agent_configuration_layer.md
+  - research/locality_principle.md
+  - docs/resumable_github_issues.md
   - research/CPKT-2026-002_continuation_handoff.md
   - research/packet_continuation_machine.md
   - trace/schemas/continuation.schema.json
@@ -100,7 +103,7 @@ Continuation payload / CLI object
 | **Payload (continuation)** | Inspect for judgment task, alternatives, constraints, expected result schema. |
 | **Transmission** | **By copy** embeds needed context; **by reference** requires shared stable context — if unreadable, demand/fallback to by-copy. |
 | **Resumption** | From durable objects (file, issue, CLI store, packet hop log) — **not** from an in-memory MCP `Mcp-Session-Id`. |
-| **HandlerInstance** | Replaceable. Same packet may resume under another agent/server if provenance reconstructs constraints. |
+| **HandlerInstance** | Replaceable. Same packet may resume under another agent/server only if provenance and durable references reconstruct both constraints **and the applicable local control plane**. |
 
 Operational CLI form (`node scripts/cogentia.js continuation …`) serializes **`cogentia.continuation.v2`**:
 
@@ -121,6 +124,44 @@ Activate when any of these appear:
 5. User asks to resume work from a packet, issue handoff, or previous session without transcript.
 
 ## Procedure
+
+### 0. Resolve and activate the applicable control plane
+
+Before interpreting or acting on the continuation payload, identify the
+locality of the next act and resolve the control plane that governs it.
+
+```text
+packet / continuation received
+→ identify next-act locality
+→ resolve applicable local control
+→ compose inherited constraints
+→ activate relevant rules
+→ only then inspect / handle payload
+```
+
+A capable handler with an unresolved control plane is not yet a valid resumption
+target. Do not treat "the rule exists somewhere in the corpus" as equivalent to
+"the rule is active here".
+
+If the control cannot be resolved:
+
+1. follow a stable durable reference if one is available;
+2. retrieve the minimum sufficient local control context;
+3. fall back to by-copy packaging when by-reference control is inaccessible;
+4. route to another admissible locality where the control is resolvable; or
+5. return a precise blocker.
+
+This step implements the FractaCognition coupling:
+
+```text
+data plane    ↔ cognition
+control plane ↔ metacognition
+```
+
+and the operational invariant:
+
+> **Every cognitive act on a packet must be guided by the relevant control
+> plane at the point of action.**
 
 ### 1. Inspect (do not treat as failure)
 
