@@ -1108,6 +1108,39 @@ Formule empirique issue de ce cas :
 
 Cette formulation ne suppose aucune intention de créer un piège. Elle décrit un **effet d'architecture** : le canal peut produire un piège procédural sans que celui-ci ait nécessairement été voulu par l'institution qui l'utilise.
 
+#### Historique promis, mais inaccessible dans le parcours réel
+
+Le courriel TransfertPro de **20 h 49 min 28 s** indique explicitement :
+
+> « Pour voir l'historique de vos envois, allez sur la page d'historique ».
+
+Dans le parcours réellement utilisé, ce lien conduit toutefois à une page d'authentification nécessitant un **compte TransfertPro**.
+
+Or aucun compte n'a été créé au cours de la procédure de dépôt, aucune création de compte n'a été proposée comme étape du parcours, et aucun identifiant permettant d'accéder à cet historique n'a été remis à l'expéditeur.
+
+Pour cet utilisateur et pour cette transaction, la fonctionnalité annoncée est donc **matériellement inaccessible** au moment où elle est proposée.
+
+Il convient de distinguer ici l'effet observable de l'intention :
+
+- il n'est pas nécessaire d'affirmer que le prestataire a voulu tromper l'utilisateur ;
+- en revanche, la phrase « voir l'historique de vos envois » décrit une possibilité que le parcours effectivement fourni ne permet pas d'exercer.
+
+On peut qualifier ce phénomène de **preuve captive derrière un accès non provisionné** :
+
+```text
+le système affirme qu'une trace existe
+→ il fournit un lien pour la consulter
+→ ce lien exige un compte
+→ aucun compte n'a été créé ou proposé
+→ la trace annoncée reste inaccessible à celui qui a pourtant effectué l'envoi
+```
+
+Ce point renforce une exigence normative simple :
+
+> Un canal imposé ne devrait pas renvoyer l'utilisateur vers un historique qu'il ne peut matériellement consulter. La preuve de la transaction devrait être remise directement sous une forme autonome, complète et exportable.
+
+Dans un contexte contentieux, la différence est importante : un historique consultable uniquement dans l'infrastructure du prestataire n'est pas équivalent à un reçu indépendant immédiatement conservable par la partie.
+
 #### Asymétrie de preuve
 
 Le cas montre également pourquoi une trace indépendante reste nécessaire.
