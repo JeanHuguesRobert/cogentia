@@ -3,9 +3,9 @@ title: Cogentia Shared Agent Instructions
 author: unknown
 affiliation: "Institut Mariani / C.O.R.S.I.C.A., 1 cours Paoli, F-20250 Corte, Corsica"
 status: "working-paper — active operational mandate"
-version: 33
+version: 34
 date: 2026-10-02
-last_modified_at: "2026-10-05"
+last_modified_at: "2026-10-07"
 license: CC BY-SA 4.0
 language: en
 canonical_url: https://github.com/JeanHuguesRobert/cogentia/blob/main/instructions/AGENTS.shared.md
@@ -75,8 +75,37 @@ Resume issue N of repository R.
 A compatible cold handler receiving that command, current repository state, and
 the Issue's durable references must be able to reconstruct the objective,
 current state, material constraints, applicable authority/effect ceiling,
-first actionable next step, and return/acceptance contract without vendor
+**resolve and activate the applicable local control plane**, identify the first
+actionable next step, and recover the return/acceptance contract without vendor
 conversation history.
+
+#### Applicable Control Gate — effective metacognitive coupling
+
+A packet is not safely resumable merely because its payload is reachable and a
+handler has the required capability. Before the first cognitive act, the target
+handler must be able to discover the local rules, mandate, method constraints,
+review gates, and other control that govern that act.
+
+Canonical rule:
+
+```text
+payload reachable
+∧ handler capable
+∧ applicable control resolvable
+∧ applicable control activated
+→ governed resumption
+```
+
+If the applicable control exists but cannot be resolved by the target handler,
+repair the handoff by adding a stable reference, copying the minimum sufficient
+control context, routing to a locality where the control is resolvable, or
+returning a precise blocker.
+
+This is an activation-order rule, not an authority-precedence rule. Local
+control specializes inherited constraints; it does not cancel them or widen
+mandate. Under Minimum Sufficient Locality, do not copy an entire control plane
+when a stable verified reference is sufficient.
+
 
 #### Accessible Inputs Gate — *ad impossibilia nemo tenetur*
 
@@ -89,6 +118,8 @@ retrievable through a channel available to the intended handler.
 resumable :=
     objective_reconstructible
     ∧ constraints_reconstructible
+    ∧ applicable_control_resolvable
+    ∧ applicable_control_activable
     ∧ required_inputs_exist
     ∧ required_inputs_retrievable_by_target_handler
     ∧ first_action_feasible
