@@ -1,14 +1,13 @@
 ---
 title: Cognitive Packet Switching
 subtitle: A Protocol Layer for Routable Ideas, Continuations, and Agent Orchestration
-version: '1.1'
+version: '1.2'
 status: published
 date: '2026-06-01'
 author: Jean Hugues Noël Robert, baron Mariani
 affiliation: Institut Mariani / C.O.R.S.I.C.A., 1 cours Paoli, F-20250 Corte, Corsica
 license: CC BY-SA 4.0
 language: en
-intended_path: research/cognitive_packet_switching.md
 tags:
   - cogentia
   - cognitive-packets
@@ -59,6 +58,7 @@ derived_products_planned:
   - TCP/IP des idées — French public note
   - Agent orchestration by cognitive packets — technical explainer
 canonical_url: https://github.com/JeanHuguesRobert/cogentia/blob/main/research/cognitive_packet_switching.md
+last_modified_at: '2026-10-07'
 last_stamped_at: 2026-09-05T00:00:00.000Z
 corpus_role: source
 document_role: source
@@ -219,6 +219,51 @@ packet → router → handler → packet
 In a pipeline, the path is primary.  
 In an agent graph, the agents are primary.  
 In a packet-switched cognitive system, the packet is primary.
+
+
+But a cognitively correct hop requires more than delivery to a capable handler.
+
+A routed packet carries work in the cognitive data plane. The receiving handler must also be able to resolve and activate the **relevant control plane**: the mandate, local rules, method constraints, provenance requirements, review thresholds, stop conditions, and other governance that must guide the next act.
+
+Thus:
+
+```text
+packet
+→ router
+→ handler with required capability
++ resolvable applicable control plane
+→ control activation
+→ governed handling
+→ packet / result
+```
+
+Compact invariant:
+
+> **A cognitive packet is not correctly routed merely because it reaches a capable handler. The hop is complete only when the applicable control plane can be resolved and activated for the next cognitive act.**
+
+This is the routing projection of the FractaCognition coupling:
+
+```text
+data plane    ↔ cognition
+control plane ↔ metacognition
+```
+
+The router need not copy every rule into every packet. Under Minimum Sufficient Locality, the envelope may instead carry stable references or enough locality information for the receiving handler to resolve the relevant control plane. By-copy transmission remains appropriate when those references would not be reliably dereferenceable.
+
+This yields a useful distinction:
+
+```text
+packet delivered
+≠ packet resumable
+≠ packet governed
+
+resumable governed hop
+= payload reachable
+  + capability available
+  + applicable control resolvable
+  + control activated
+  + return / continuation contract available
+```
 
 The packet carries enough structure to be routed, resumed, transformed, rejected, archived, criticized, or reintegrated into a corpus or event substrate.
 
