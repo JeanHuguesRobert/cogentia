@@ -4,8 +4,8 @@ subtitle: "Smallest sufficient locality, explicit crossing, and global reference
 author: "Jean Hugues Noël Robert, baron Mariani"
 affiliation: "Institut Mariani / C.O.R.S.I.C.A., 1 cours Paoli, F-20250 Corte, Corsica, France"
 date: "2026-09-19"
-last_modified_at: "2026-10-04"
-version: "0.4"
+last_modified_at: "2026-10-07"
+version: "0.5"
 status: "working-paper — locality doctrine candidate"
 document_role: "source"
 document_kind: "architecture-principle"
@@ -65,6 +65,7 @@ classification_version: "1"
 classification_rule: "explicit-metadata"
 classification_confidence: "medium"
 changelog:
+  - "v0.5 (2026-10-07) — formalizes effective coupling between data plane/cognition and control plane/metacognition; adds Applicable Local Control First and control-plane activation failure as a stigmergic correction."
   - "v0.4 (2026-10-04) — relates locality to FractaCognition: local metacognition, default local retention of validated learning, and distinction between local handler incapacity and network incapacity."
   - "v0.3 (2026-09-20) — makes normative fractality and the meta-control-plane explicit: constitutional invariants, operating mechanisms, local rules, and situated acts preserve their authority boundary at every scale."
   - "v0.2 (2026-09-20) — relates Minimum Sufficient Locality to the control/data-plane distinction; records the authority boundary for Cogentia projections."
@@ -620,7 +621,56 @@ global cognitive capability
 
 A cognitive network achieves collective intelligence through sufficiently closed localities, stable references, bounded projections, routing, and selective propagation—never through totalized global capture.
 
-### 17.2 Local handler incapacity is not system incapacity
+### 17.2 Effective control-plane coupling
+
+The control/data-plane distinction has a close functional analogue in cognition:
+
+~~~text
+data plane    ↔ cognition
+control plane ↔ metacognition
+~~~
+
+This is not an identity of substance. A checklist, confidence estimate, critique, or control decision may itself become data when another process inspects it. The correspondence concerns **function in the loop**: cognition/data-plane activity produces, transforms, carries, or decides; metacognition/control-plane activity selects, constrains, verifies, routes, and corrects that activity.
+
+The operational invariant is therefore:
+
+> **Every action in a data plane SHOULD be guided by the rules of the relevant control plane.**
+
+For governed cognitive work:
+
+~~~text
+situated cognitive act
+→ identify its locality
+→ load the applicable local control plane
+→ identify relevant constraints
+→ act
+→ verify the result against those constraints
+→ expand toward broader control only as needed
+~~~
+
+This is **Applicable Local Control First**. It is an activation-order rule, not an authority-precedence rule. Inherited constraints remain in force, and a local control plane cannot widen mandate or cancel a stronger parent constraint. The point is cognitive salience: the rules closest to the situated act must actually be active when that act occurs.
+
+A particularly important failure mode follows:
+
+> **A rule that exists but is not activated when it should govern an act is a control-plane activation failure.**
+
+If an error would have been prevented by an already-existing applicable local rule, the corrective action should not stop at repairing the data-plane artifact. Under stigmergic correction, the loop itself must be changed so that future handlers load and apply the relevant control plane at the point of action.
+
+This gives FractaCognition a concrete coupling requirement:
+
+~~~text
+metacognition exists
+≠ metacognition governs cognition
+
+effective metacognition
+= relevant control
+  + timely activation
+  + observable effect on the cognitive act
+~~~
+
+A control plane with no effective coupling to the data-plane actions it is meant to govern risks becoming documentary bureaucracy rather than operative metacognition.
+
+### 17.3 Local handler incapacity is not system incapacity
 
 A critical failure mode in distributed cognition is confusing the boundary of the current execution environment with the boundary of the system:
 
@@ -676,7 +726,9 @@ The initial locality invariants are:
 10. **Global Maps may span local Territory.** Cartographic scope does not imply ownership or replication.
 11. **Expansion is explicit.** A bounded view SHOULD expose paths for deeper traversal instead of assuming exhaustive context.
 12. **Locality is fractal and situated.** The useful locality may change with the operation and scale.
-13. **Local incapacity is not network incapacity.** A capability absent in one locality may be routed through an explicit resumable continuation to an authorized locality without global state capture or authority widening.
+13. **Applicable local control first.** Every situated data-plane/cognitive act SHOULD be guided by the rules of the relevant local control plane before broader control is consulted as needed; this ordering does not weaken inherited constraints.
+14. **Control must be effectively coupled.** A control rule that exists but is not activated at the act it governs has failed operationally; correct both the artifact and the activation loop.
+15. **Local incapacity is not network incapacity.** A capability absent in one locality may be routed through an explicit resumable continuation to an authorized locality without global state capture or authority widening.
 
 ### Normative fractality and the meta-control plane
 
