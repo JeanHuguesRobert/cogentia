@@ -4,8 +4,8 @@ subtitle: "Cold-handler resumability, Janus Past→Future refactoring, and minim
 author: "Jean Hugues Noël Robert, baron Mariani"
 affiliation: "Institut Mariani / C.O.R.S.I.C.A., 1 cours Paoli, F-20250 Corte, Corsica"
 date: "2026-09-27"
-last_modified_at: "2026-09-27"
-version: "0.1"
+last_modified_at: "2026-10-07"
+version: "0.2"
 status: "working-note — operational pattern"
 license: "CC BY-SA 4.0"
 language: "en"
@@ -24,6 +24,9 @@ provenance:
     - "continuations_and_cognitive_packets_for_agents.md"
     - "../research/ideas_to_explore_as_issues.md"
     - "../research/janus_cognitive_gatekeeper.md"
+review:
+  status: "unreviewed"
+  reviewed_by: []
 tags:
   - cognitive-packets
   - continuations
@@ -71,14 +74,52 @@ cold handler
 → understands the objective
 → knows the current state
 → retrieves required context
+→ resolves the applicable local control plane
 → knows constraints and authority
+→ activates the relevant control before acting
 → identifies the next useful action
 → can execute or correctly stop/escalate
 ```
 
 Failure of an essential step means the packet is not sufficiently closed.
 
-### 2.1 Accessible Inputs / feasibility gate
+### 2.1 Applicable Control / activation gate
+
+A cold handler must be able not only to retrieve the work, but also to discover the rules that govern its next act.
+
+For the first actionable step, ask:
+
+```text
+What is the relevant locality?
+Which local control plane applies?
+Can the target handler resolve it from durable references?
+Are inherited constraints still visible?
+Can the handler activate those rules before acting?
+```
+
+If an applicable control plane exists but the handoff gives the target handler no reliable way to discover or activate it, the Issue is **transportable but not safely resumable**.
+
+Canonical distinction:
+
+```text
+payload reachable
++ capability available
+- applicable control unresolved
+= false resumability
+```
+
+Repair by one of the following:
+
+```text
+add stable control-plane reference
+OR copy the minimum sufficient control context
+OR route to a locality where control is resolvable
+OR stop / escalate with the exact missing control dependency
+```
+
+This is an activation rule, not an authority override. Local control specializes inherited constraints; it does not cancel them or widen mandate.
+
+### 2.2 Accessible Inputs / feasibility gate
 
 Logical completeness is not enough. Before a Resumable Issue is handed off, the
 producer MUST test the material feasibility of the first actionable step from
@@ -243,7 +284,13 @@ the next handler to repeat investigation whose result is already durable.
 ### Context References
 
 What must the handler read? Prefer stable paths, related Issues, Artifacts, and
-immutable commit references when exact historical content matters. A path
+immutable commit references when exact historical content matters.
+
+Context references must include, when materially applicable, enough information
+to resolve the **local control plane** governing the next act: repository or
+task mandates, checklists, method rules, review gates, source-of-truth rules,
+or other local governance. Do not duplicate a large control plane by copy when
+a stable, verified reference is sufficient. A path
 absent from the Issue's repository is a cross-repository dependency, not
 required context for a handler rooted in that repository.
 
@@ -695,9 +742,10 @@ The prospective side constructs what a future cold handler needs:
 current objective
 current state
 durable references
+applicable control-plane references
 known constraints
 authority / effect ceiling
-open uncertainties
+unresolved uncertainties
 agent-resumable next action
 acceptance criteria
 return contract
@@ -867,17 +915,18 @@ as a request to:
 1. apply Cognitive Packet / Continuation doctrine;
 2. use by-reference transmission when repository context is stable;
 3. satisfy the Resume-command sufficiency test;
-4. preserve mandate and external-effect boundaries;
-5. verify referenced handoff material;
-6. provide an actionable next step and return contract;
-7. avoid unnecessary duplication and ontology.
+4. make the applicable local control plane resolvable to the cold handler;
+5. preserve mandate and external-effect boundaries;
+6. verify referenced handoff material and control references;
+7. provide an actionable next step and return contract;
+8. avoid unnecessary duplication and ontology.
 
 ## 20. Short operational definition
 
 > **A Resumable GitHub Issue is a Cognitive Packet by reference whose
-> identifier, repository state, and durable references are sufficient for a
-> compatible cold handler to continue the work without vendor conversation
-> history.**
+> identifier, repository state, durable references, and resolvable applicable
+> control are sufficient for a compatible cold handler to continue the work
+> without vendor conversation history.**
 
 Shortest Reality test:
 
