@@ -4,8 +4,8 @@ subtitle: Method-Governed Routing of Cognitive Packets in the Fractanet Architec
 author: Jean Hugues Noël Robert, baron Mariani
 affiliation: Institut Mariani / C.O.R.S.I.C.A., 1 cours Paoli, F-20250 Corte, Corsica
 date: '2026-06-01'
-status: working-paper — v0.3
-version: '0.3'
+status: working-paper — v0.4
+version: '0.4'
 document_role: source
 license: CC BY-SA 4.0 for text; MIT for associated schemas or code
 spdx: CC-BY-SA-4.0
@@ -44,6 +44,7 @@ tags:
 ai_assisted_by:
   - ChatGPT
   - Grok critique of v0.1 and v0.2
+last_modified_at: '2026-10-07'
 last_stamped_at: 2026-06-01T00:00:00.000Z
 corpus_role: source
 document_kind: research-paper
@@ -73,7 +74,7 @@ update_policy: UP-DEFAULT-REVIEWED
 Institut Mariani / C.O.R.S.I.C.A.  
 1 cours Paoli, F-20250 Corte, Corsica
 
-*Working paper v0.3 — 2026-06-01*  
+*Working paper v0.4 — 2026-10-07*  
 *License: CC BY-SA 4.0 for text; MIT for associated schemas or code*
 
 ---
@@ -932,10 +933,13 @@ Inox may eventually provide the runtime substrate for:
 ## 15. Research Questions
 
 1. **Routing correctness**  
-   How do we evaluate whether a cognitive packet was routed to the correct next capability?
+   How do we evaluate whether a cognitive packet was routed to the correct next capability **and to a locality where the applicable control plane can be resolved and activated**?
 
 2. **Method preservation**  
-   How do we verify that a router preserved method constraints across packet transitions?
+   How do we verify that a router preserved method constraints across packet transitions, rather than merely preserving their existence somewhere in the corpus?
+
+2A. **Control activation**  
+   What receipt or trace is sufficient to establish that the receiving handler actually loaded the relevant local control before acting on the payload?
 
 3. **Capability ontology**  
    What is the minimal useful set of cognitive capabilities?
@@ -988,6 +992,27 @@ Status: **design principle**.
 Routing decisions should preserve established methods plus Cogentia constraints: source discipline, proof levels, uncertainty, continuity, and human judgment.
 
 Status: **methodological rule**.
+
+
+### Claim 4A — Control-plane-resolving routing
+
+Routing must not stop at matching a packet to a handler capability. A valid next hop must also make the applicable control plane resolvable and activable by the receiving handler.
+
+```text
+route(packet)
+→ identify required capability
+→ identify relevant locality
+→ identify applicable control
+→ select admissible handler
+→ verify control resolvability
+→ deliver
+→ activate control
+→ handle payload
+```
+
+This does not require duplicating the full control plane inside the packet. Stable references, locality, and inherited configuration may be sufficient when the target handler can actually resolve them. If it cannot, the packet must carry the minimum sufficient control context by copy or the route must be rejected / repaired.
+
+Status: **methodological rule derived from effective control-plane coupling**.
 
 ### Claim 5 — Distillation target
 
@@ -1142,9 +1167,22 @@ Or, more analytically:
 
 > **Cogentia centralizes neither intelligence nor authority. It centralizes the conditions of cognitive continuity: method, provenance, proof, constraint, routing, suspension, and accountable resumption.**
 
+
+A further consequence is now explicit:
+
+> **Routing continuity includes control continuity.** Moving cognitive work without reconnecting it to the rules that govern its next act is transport, not reliable cognitive resumption.
+
 ---
 
 ## Changelog
+
+### v0.4 — 2026-10-07
+
+- Added control-plane-resolving routing: capability matching alone is insufficient.
+- Defined a routed hop as requiring applicable-control resolution and activation at the receiving locality.
+- Added control activation as a routing research question and linked routing continuity to control continuity.
+- Preserved Minimum Sufficient Locality: packets may carry stable control references instead of copying complete rule sets.
+
 
 ### v0.3 — 2026-06-01
 
