@@ -1,8 +1,8 @@
 ---
 title: Traçabilité symétrique et capture relationnelle
 subtitle: Email, portails propriétaires, preuve opposable et rééquilibrage du rapport de force entre individus et personnes morales
-version: '0.5'
-date: '2026-05-30'
+version: '0.6'
+date: '2026-10-07'
 status: working-paper — second-method consolidation
 author: Jean Hugues Noël Robert
 affiliation: Institut Mariani / C.O.R.S.I.C.A., 1 cours Paoli, F-20250 Corte, Corsica
@@ -43,7 +43,7 @@ update_policy: UP-DEFAULT-REVIEWED
 
 ## Email, portails propriétaires, preuve opposable et rééquilibrage du rapport de force entre individus et personnes morales
 
-**Version 0.5 — 2026-05-30**  
+**Version 0.6 — 2026-10-07**  
 **Repository:** `JeanHuguesRobert/cogentia`  
 **Canonical path:** `research/tracabilite_symetrique_capture_relationnelle.md`
 
@@ -968,39 +968,193 @@ Réponse : la documentation doit être proportionnée à l’enjeu. Pour une int
 
 ---
 
-## 23. Cas empiriques à documenter
+## 23. Cas empiriques — exemples vécus et cas à documenter
 
-Cette v0.5 ne prétend pas encore documenter empiriquement chaque cas. Elle établit une grille qui doit ensuite être testée.
+La généralisation proposée dans cette note doit être confrontée à des situations réelles et traçables. À partir de la v0.6, cette section distingue donc :
 
-Cas prioritaires :
+- des **cas vécus documentés**, pour lesquels existent des traces contemporaines vérifiables ;
+- des **cas à documenter**, qui restent des terrains d'étude prioritaires.
 
-1. **ANEF / titres de séjour** : forte dépendance au portail, enjeux vitaux, difficulté d’accès aux guichets, besoin de preuves de dépôt et de relance.
+L'objectif n'est pas de transformer une expérience individuelle en démonstration générale. Un cas vécu sert ici de **Reality Test** : il permet de vérifier si les concepts de traçabilité captive, mémoire opposable, friction de traçabilité et capture relationnelle décrivent effectivement un mécanisme observable.
+
+### 23.1 Cas vécu n° 1 — Conseil constitutionnel / TransfertPro, 7 octobre 2026
+
+#### Situation
+
+Le 7 octobre 2026, dans le cadre de la contestation de l'élection sénatoriale de Haute-Corse enregistrée sous le numéro **2026-6589 SEN**, le greffe du Conseil constitutionnel demande au requérant de transmettre sa requête et ses pièces par la boîte sécurisée **TransfertPro** qui lui a été communiquée.
+
+Le greffe explique que les liens externes précédemment transmis sont bloqués par le **pare-feu du Conseil constitutionnel conformément à sa politique de sécurité**.
+
+Le point important pour la présente note n'est pas de discuter ici la légitimité de cette politique de sécurité. Il est d'observer ce qui se produit lorsqu'une institution, pour des raisons qui peuvent être légitimes, substitue à un canal ouvert un canal qu'elle choisit et dont l'architecture n'est pas maîtrisée par l'expéditeur.
+
+Un contraste matériel mérite d'être relevé : le PDF principal concerné ne pèse que **200 935 octets**. La difficulté invoquée par le greffe ne portait donc pas sur une volumétrie exceptionnelle mais sur le blocage des liens externes. Rien, dans le message du greffe ici conservé, n'indique que la taille du fichier aurait empêché une pièce jointe ordinaire. Le choix du canal sécurisé a néanmoins introduit une chaîne d'actions sensiblement plus complexe qu'une simple transmission de fichier.
+
+#### Chronologie documentée
+
+- **19:52:06 CEST** : le greffe demande de communiquer « dans les plus brefs délais » la requête et les pièces via TransfertPro.
+- Le requérant utilise la boîte de dépôt indiquée et y place exactement deux PDF :
+  1. `requete-conseil-constitutionnel-haute-corse-2026.pdf` ;
+  2. `2026-6589-SEN_note-accompagnement_chaine-production_v6.pdf`.
+- L'interface de dépôt donne alors raisonnablement l'impression que l'opération a été accomplie.
+- **20:39:36 CEST** : un courriel séparé de TransfertPro, intitulé « Fichier(s) à valider », demande pourtant une **validation supplémentaire** de l'envoi. Le courriel porte le numéro de transaction **108954845843673847**.
+- Cette étape de validation n'avait pas été clairement annoncée comme condition restant à accomplir dans le parcours de dépôt.
+- Après consultation de sa messagerie, le requérant clique sur le lien de validation.
+- La page affichée confirme : **« Validation — L'envoi N°108954845843673847 est validé. »**
+- **20:49:28 CEST** : TransfertPro envoie enfin un second courriel indiquant que les deux fichiers sont **« disponibles en téléchargement pour greffe@conseil-constitutionnel.fr »**.
+
+#### Le faux achèvement
+
+Ce cas révèle une forme particulière de friction : le **faux achèvement**.
+
+L'utilisateur accomplit toutes les actions visibles dans l'interface principale et peut raisonnablement croire la transmission terminée. Pourtant, l'état réel du système reste incomplet tant qu'une action supplémentaire, déplacée vers un autre canal — ici le courriel — n'a pas été effectuée.
+
+La séquence est donc :
+
+```text
+canal imposé
+→ dépôt apparemment terminé
+→ condition supplémentaire non clairement annoncée
+→ notification dans un autre canal
+→ nécessité de surveiller ce second canal
+→ validation manuelle
+→ seulement ensuite mise à disposition effective
+```
+
+Le problème n'est pas seulement ergonomique. Dans un contexte contentieux ou soumis à délai, il crée un risque probatoire : une partie pourrait ultérieurement soutenir que les fichiers n'ont été effectivement transmis qu'au moment de la validation finale, alors même que l'expéditeur avait raisonnablement cru l'opération terminée après le dépôt initial.
+
+#### Complexité induite par le canal
+
+Le cas est d'autant plus instructif que l'objet transmis est techniquement modeste : un PDF d'environ 200 Ko.
+
+La chaîne effectivement imposée devient pourtant :
+
+```text
+courriel du greffe
+→ ouverture d'une boîte de dépôt tierce
+→ sélection et dépôt des fichiers
+→ attente d'un courriel séparé
+→ découverte d'une validation supplémentaire
+→ clic de validation
+→ page de confirmation
+→ nouveau courriel attestant la mise à disposition
+```
+
+Cette complexité n'est pas nécessairement injustifiée par principe : des politiques de sécurité peuvent conduire une institution à préférer un service spécialisé. Mais elle doit alors être **rendue explicite, complète et prévisible dès le début du parcours**.
+
+Sinon, une politique présentée comme sécurisante pour l'institution déplace vers l'usager un risque nouveau : celui de croire l'acte accompli alors qu'une étape silencieuse reste pendante.
+
+#### Capture relationnelle par architecture de canal
+
+Ce cas illustre directement la définition proposée plus haut.
+
+L'institution choisit le canal pour des raisons de sécurité. Ce choix transfère ensuite au dispositif imposé une partie du contrôle sur :
+
+- la définition de l'état « envoyé » ;
+- la distinction entre dépôt, validation et mise à disposition ;
+- les horodatages significatifs ;
+- la preuve disponible pour chaque étape ;
+- la notification d'une action encore requise ;
+- la possibilité pour l'expéditeur de savoir si son acte est réellement achevé.
+
+L'expéditeur supporte alors le coût cognitif et probatoire de découvrir les règles du canal qu'il n'a pas choisi.
+
+Formule empirique issue de ce cas :
+
+> Celui qui impose le canal ne devrait pas pouvoir faire peser sur l'autre partie le risque d'une étape cachée ou insuffisamment signalée, puis tirer avantage de cette opacité.
+
+Cette formulation ne suppose aucune intention de créer un piège. Elle décrit un **effet d'architecture** : le canal peut produire un piège procédural sans que celui-ci ait nécessairement été voulu par l'institution qui l'utilise.
+
+#### Asymétrie de preuve
+
+Le cas montre également pourquoi une trace indépendante reste nécessaire.
+
+Sans conservation externe :
+
+- l'expéditeur pourrait ne plus pouvoir établir l'heure du premier dépôt ;
+- il pourrait ignorer qu'une validation supplémentaire était requise ;
+- il pourrait ne conserver que la confirmation finale ;
+- il serait dépendant de l'historique interne de TransfertPro pour reconstituer l'enchaînement.
+
+Avec une mémoire indépendante, il devient possible de distinguer :
+
+1. la demande du greffe ;
+2. l'acte de dépôt ;
+3. la demande ultérieure de validation ;
+4. l'acte de validation ;
+5. la mise à disposition finale ;
+6. les deux fichiers concernés ;
+7. le numéro de transaction stable.
+
+C'est exactement la fonction de la **mémoire opposable** décrite dans cette note.
+
+#### Ce que ce cas ne démontre pas
+
+Ce cas ne démontre pas :
+
+- que le Conseil constitutionnel aurait voulu créer une difficulté ;
+- que TransfertPro serait juridiquement irrégulier ;
+- que tout canal sécurisé est captif ;
+- que l'étape de validation serait en elle-même illégitime ;
+- qu'une transmission par pièce jointe aurait nécessairement été acceptée par le système de messagerie du Conseil.
+
+Il établit en revanche un fait expérimental utile : **un canal imposé peut introduire une étape déterminante insuffisamment visible, déplacer le risque de surveillance vers l'usager et créer ensuite une ambiguïté sur le moment exact où la transmission devient effective.**
+
+#### Critères d'audit révélés par le cas
+
+À la grille générale de traçabilité, ce cas suggère d'ajouter explicitement quatre questions :
+
+1. **Achèvement explicite** — l'interface indique-t-elle sans ambiguïté que toutes les actions nécessaires sont terminées ?
+2. **Conditions résiduelles** — reste-t-il une validation, une authentification, un clic ou une action dans un autre canal ?
+3. **Moment d'effet** — le système distingue-t-il clairement dépôt, validation, réception et mise à disposition ?
+4. **Non-opposabilité de l'opacité** — l'organisme qui impose le canal s'interdit-il de tirer avantage d'une étape qu'il n'a pas clairement rendue visible ?
+
+### 23.2 Cas vécus suivants à documenter
+
+Le corpus contient déjà plusieurs interactions susceptibles d'être analysées avec la même grille, notamment :
+
+- téléservices administratifs et demandes de pièces ;
+- échanges électoraux avec exigence de formes matérielles ou originales ;
+- plateformes ou formulaires remplaçant un échange email directement archivable ;
+- systèmes de notification où le contenu utile n'apparaît qu'après authentification ;
+- interactions où l'organisme impose un canal mais ne fournit pas une copie complète et indépendante de la trace.
+
+Chaque futur cas devra distinguer strictement :
+
+```text
+fait observé
+→ effet pratique
+→ risque probatoire
+→ interprétation
+→ hypothèse systémique éventuelle
+```
+
+### 23.3 Cas externes prioritaires à documenter
+
+1. **ANEF / titres de séjour** : forte dépendance au portail, enjeux vitaux, difficulté d'accès aux guichets, besoin de preuves de dépôt et de relance.
 2. **CAF / MSA / CPAM** : prestations, pièces, délais, réclamations, décisions, indus, recours.
 3. **Services fiscaux** : messagerie sécurisée, pièces, délais de réponse, opposabilité.
 4. **Banques et assurances** : réclamations, sinistres, clôtures, justificatifs, médiation.
-5. **Opérateurs télécoms et fournisseurs d’énergie** : résiliation, facturation, incident, preuve de demande.
+5. **Opérateurs télécoms et fournisseurs d'énergie** : résiliation, facturation, incident, preuve de demande.
 6. **Universités et plateformes étudiantes** : inscriptions, bourses, recours, pièces.
 7. **Hôpitaux et plateformes de santé** : confidentialité forte, mais nécessité de trace transmissible.
 8. **Réseaux sociaux et plateformes de modération** : sanctions, suppressions, recours, décisions automatisées ou semi-automatisées.
 9. **Collectivités territoriales** : urbanisme, aides, demandes de documents, inscriptions.
 10. **Associations gestionnaires et prestataires délégataires** : cas hybrides entre service public, droit privé et dépendance pratique.
 
-Pour chaque cas, il faudra mesurer : score de traçabilité, existence d’un export, preuve de dépôt, preuve de réponse, historisation des statuts, voies de recours, canal de secours, possibilité d’assistance par un tiers.
-
----
+Pour chaque cas, il faudra mesurer : score de traçabilité, existence d'un export, preuve de dépôt, preuve de réponse, historisation des statuts, voies de recours, canal de secours, possibilité d'assistance par un tiers.
 
 ## 24. Self-evaluation selon la seconde méthode
 
-| Critère | Évaluation v0.5 | Commentaire |
+| Critère | Évaluation v0.6 | Commentaire |
 |---|---|---|
 | Clarté de l’hypothèse | Forte | La thèse est stable : la trace est condition de capacité. |
 | Contestabilité | Forte | Les objections principales sont explicites. |
-| Séparation des niveaux de preuve | Améliorée | La v0.5 distingue faits, interprétations, hypothèses et formules. |
+| Séparation des niveaux de preuve | Améliorée | La v0.6 distingue faits, interprétations, hypothèses et formules, et ajoute un premier Reality Test vécu. |
 | Autoportance | Forte | Le document peut être lu sans connaître tout le corpus. |
 | Intégration corpus | Forte | Liens explicites avec Autonomie de Capacité, Interaction Packets et Cogentia. |
 | Utilité pratique | Forte | Score, recommandations, modèle YAML, clause normative. |
 | Solidité juridique | Moyenne | Références présentes mais à consolider précisément. |
-| Empirie | Moyenne faible | Cas listés, mais pas encore documentés. |
+| Empirie | Moyenne faible | Premier cas vécu documenté ; généralisation empirique encore à construire. |
 | Risque rhétorique | Moyen | Certaines formules sont fortes ; elles sont désormais classées Level D. |
 | Produit décliné possible | Fort | Substack, Facebook, grille d’audit, note parlementaire. |
 
