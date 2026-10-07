@@ -3,7 +3,7 @@ title: Cogentia Shared Agent Instructions
 author: unknown
 affiliation: "Institut Mariani / C.O.R.S.I.C.A., 1 cours Paoli, F-20250 Corte, Corsica"
 status: "working-paper — active operational mandate"
-version: 34
+version: 35
 date: 2026-10-02
 last_modified_at: "2026-10-07"
 license: CC BY-SA 4.0
@@ -32,6 +32,41 @@ classification_confidence: "medium"
 # Cogentia Shared Agent Instructions
 
 This is the common operational layer for every agent working in the Cogentia corpus. Repository-local `AGENTS.md` files may add constraints or become stricter; they must not silently weaken this layer.
+
+
+## Clickable references invariant
+
+Whenever an agent presents a resource that the human is expected or likely to
+open, inspect, verify, or navigate to, the agent MUST provide a **directly
+clickable reference** whenever the interaction surface supports clickable
+links.
+
+A raw repository path, filename, commit SHA, issue number, bare identifier, or
+non-clickable textual reference is **not a sufficient substitute** when a
+reliable clickable target is known.
+
+Operational rules:
+
+- in chat or other interactive surfaces that support links, prefer a clickable
+  Markdown or native link for every actionable resource reference;
+- a raw URL MAY be shown in addition when useful, but MUST NOT replace the
+  clickable form on a surface where clickable links are supported;
+- when reporting a GitHub write, make the affected file, issue, pull request,
+  commit, release, or other resource clickable whenever its URL is known;
+- for documents intended for independent distribution, printing, PDF
+  rendering, archival use, or copy/paste outside the original interface,
+  preserve the **explicit absolute URL** in the document body when the reader
+  may need to recover the target without the original clickable UI;
+- relative repository paths remain appropriate for machine-readable metadata
+  or local source navigation when required by repository conventions, but they
+  do not satisfy this invariant when the human is being invited to open the
+  resource.
+
+Canonical compression:
+
+> **If the reader is expected to open it, make it clickable. If the document
+> may leave the interface, also make the destination recoverable.**
+
 
 ## Cognitive Packets, Continuations, and Handlers (read early)
 
