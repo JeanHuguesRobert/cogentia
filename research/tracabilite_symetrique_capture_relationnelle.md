@@ -1,7 +1,7 @@
 ---
 title: Traçabilité symétrique et capture relationnelle
 subtitle: Email, portails propriétaires, preuve opposable et rééquilibrage du rapport de force entre individus et personnes morales
-version: '0.6'
+version: '0.7'
 date: '2026-10-07'
 status: working-paper — second-method consolidation
 author: Jean Hugues Noël Robert
@@ -43,7 +43,7 @@ update_policy: UP-DEFAULT-REVIEWED
 
 ## Email, portails propriétaires, preuve opposable et rééquilibrage du rapport de force entre individus et personnes morales
 
-**Version 0.6 — 2026-10-07**  
+**Version 0.7 — 2026-10-07**  
 **Repository:** `JeanHuguesRobert/cogentia`  
 **Canonical path:** `research/tracabilite_symetrique_capture_relationnelle.md`
 
@@ -1152,7 +1152,265 @@ Il établit en revanche un fait expérimental utile : **un canal imposé peut in
 3. **Moment d'effet** — le système distingue-t-il clairement dépôt, validation, réception et mise à disposition ?
 4. **Non-opposabilité de l'opacité** — l'organisme qui impose le canal s'interdit-il de tirer avantage d'une étape qu'il n'a pas clairement rendue visible ?
 
-### 23.2 Cas vécus suivants à documenter
+### 23.2 Cas vécu n° 2 — Préfecture de Haute-Corse / Tribunal administratif de Bastia : orchestration et commutation des canaux
+
+Le second cas vécu est plus complexe que le précédent. Il ne repose pas sur un portail unique, mais sur une **succession de canaux différents au sein d'une même affaire**, chacun ouvrant certaines possibilités et en fermant d'autres.
+
+Le phénomène peut être nommé **capture par orchestration des canaux**.
+
+#### a) Le courriel accepté, puis limité matériellement
+
+Le 10 septembre 2026, un premier envoi électronique du dossier de candidature est rejeté par le serveur de messagerie préfectoral avec le message :
+
+`552 5.3.4 Message size exceeds fixed limit`
+
+Le même dossier doit alors être allégé : compression d'une pièce et remplacement d'un document documentaire par un lien.
+
+Un canal présenté comme disponible peut donc devenir matériellement inutilisable sans que cette limite soit connue à l'avance. La charge de réorganisation du dossier est supportée par l'expéditeur.
+
+#### b) Le courriel reconnu comme saisine, mais pas comme acte constitutif
+
+La préfecture accuse réception des échanges électroniques et les qualifie de saisines par voie électronique.
+
+Pour autant, elle indique que le CERFA de la remplaçante n'est pas recevable par voie dématérialisée et exige la remise d'un original manuscrit lors du dépôt physique.
+
+Le même canal produit donc deux statuts différents :
+
+```text
+courriel = trace reconnue de relation et de réception
+mais
+courriel ≠ canal suffisant pour produire l'effet juridique recherché
+```
+
+Ce découplage entre **réception** et **effet** constitue une source importante d'ambiguïté pour l'usager.
+
+#### c) Le passage physique comme canal d'effet
+
+Le 11 septembre, le candidat se déplace physiquement en préfecture et reçoit un récépissé provisoire.
+
+À partir de ce moment, la procédure combine au moins trois couches :
+
+- échanges électroniques préparatoires ;
+- dépôt physique ;
+- transmissions complémentaires électroniques ultérieures.
+
+L'état réel du dossier devient donc le résultat d'une agrégation multi-canal que l'usager ne maîtrise pas entièrement.
+
+#### d) Le routage interinstitutionnel Préfecture → Tribunal
+
+Après le dépôt, la préfecture saisit le Tribunal administratif.
+
+C'est ici qu'apparaît une autre forme de capture : l'usager connaît ce qu'il a transmis à la Préfecture, mais il ne dispose pas nécessairement d'une visibilité symétrique sur **ce que la Préfecture a elle-même transmis au Tribunal**.
+
+Cette difficulté apparaît notamment au sujet du courriel envoyé au Bureau des élections le 11 septembre à **17 h 57 min 55 s**, contenant un lien vers une déclaration vidéo.
+
+Le 15 septembre, le candidat demande de savoir :
+
+1. si ce courriel a été reçu avant 18 heures ;
+2. s'il figurait dans la saisine initiale du Tribunal ;
+3. s'il a éventuellement été transmis ensuite avant que le Tribunal statue.
+
+À ce jour, **le sort de cette vidéo reste inconnu**. Les traces disponibles n'établissent pas de manière certaine :
+
+- si le courriel de 17 h 57 min 55 s a été ouvert ;
+- si son lien a été consulté ;
+- si la vidéo a été visionnée ;
+- si elle a été enregistrée ou matérialisée dans un dossier préfectoral ;
+- si elle a été transmise au Tribunal dans la saisine initiale ;
+- si elle a fait l'objet d'une transmission complémentaire ;
+- si elle a été portée à la connaissance de la formation de jugement par un autre moyen ;
+- ou si elle est restée en dehors de la chaîne juridictionnelle.
+
+Cette inconnue ne doit pas être transformée artificiellement en certitude négative. **Absence de trace retrouvée ne vaut pas preuve de non-transmission.** Mais l'absence persistante de réponse sur ce point montre précisément la difficulté produite par le changement de canal et le routage interinstitutionnel.
+
+Le problème peut être formulé ainsi :
+
+```text
+l'usager sait ce qu'il a envoyé à A
+mais ne peut pas établir ce que A a transmis à B
+et ne sait pas si un élément déterminant a franchi la frontière entre les deux systèmes
+```
+
+La capture porte donc ici sur la **traçabilité du passage entre institutions**.
+
+#### e) L'email redevient pourtant opératoire devant le Tribunal
+
+Le 14 septembre, après l'audience, une note en délibéré est adressée par email au greffe du Tribunal administratif conformément à l'indication donnée sur place.
+
+Le greffe confirmera ensuite que la formation de jugement en a pris connaissance avant de statuer.
+
+Ce point est important : le courriel n'est pas intrinsèquement impropre. Sa valeur dépend du type d'acte, du moment et de la manière dont l'institution décide de l'intégrer à sa chaîne procédurale.
+
+#### f) Sagace : visibilité partielle sur une trace plus riche
+
+Après le jugement, le greffe renvoie vers Sagace.
+
+Sagace fait apparaître des entrées telles que :
+
+- « Requête nouvelle » ;
+- « Réception d'une lettre » ;
+- « Réception d'une note en délibéré ».
+
+Mais l'interface ne permet pas, du point de vue de l'usager, de connaître tous les détails recherchés : contenu précis des entrées, liste exhaustive des pièces, heures exactes, provenance de certaines transmissions.
+
+Il s'agit d'un exemple de **traçabilité captive partielle** : le système d'information contient ou peut contenir davantage d'information que ce qui est exposé à la partie.
+
+#### g) Télérecours Citoyens : davantage d'accès contre engagement de canal
+
+Lorsque Sagace ne suffit pas, le greffe invite le requérant à rattacher le dossier à Télérecours Citoyens.
+
+Le message précise qu'une fois ce rattachement effectué, l'intéressé **s'engage à utiliser ce téléservice dans ses échanges avec le tribunal jusqu'à la fin de l'instance**.
+
+Le mécanisme est remarquable :
+
+```text
+accès à davantage d'information
+→ acceptation du téléservice
+→ engagement de canal jusqu'à la fin de l'instance
+```
+
+L'accès à la trace devient donc lié à l'acceptation d'une architecture relationnelle spécifique.
+
+Le requérant refuse ce verrouillage et conserve l'email comme canal d'échange.
+
+#### h) Retour au papier pour la décision
+
+La décision du 14 septembre est notifiée par voie postale recommandée.
+
+Le 21 septembre, alors que les échanges électroniques avec le greffe se poursuivent, celui-ci invite le requérant à retirer le pli qui l'attend à La Poste depuis le 17 septembre.
+
+La décision elle-même est ainsi portée par un canal plus lent que le canal utilisé parallèlement pour discuter de son existence.
+
+Ce découplage crée une nouvelle asymétrie temporelle :
+
+```text
+information électronique rapide sur l'existence de la décision
+≠
+accès effectif au texte de la décision, dépendant du canal postal
+```
+
+#### i) Fermeture progressive du canal humain
+
+Après lecture du jugement, le requérant pose plusieurs questions factuelles sur la composition matérielle du dossier, les pièces transmises, la trace de l'audience, le greffier d'audience et la minute.
+
+Le 1er octobre, le greffe répond qu'il n'a pas vocation, après le prononcé d'une décision, à apporter des explications ou commentaires complémentaires et renvoie vers le Conseil constitutionnel.
+
+Le canal humain qui permettait auparavant certaines confirmations devient donc moins disponible précisément au moment où la reconstitution factuelle devient utile pour le recours.
+
+#### j) La Préfecture : du numérique demandé au présentiel imposé
+
+Après le scrutin du 27 septembre, le requérant demande une communication électronique du procès-verbal et de ses annexes, en exposant explicitement les avantages de la dématérialisation pour la conservation, l'indexation, l'analyse et la traçabilité.
+
+La préfecture répond que, compte tenu du nombre important de documents, la consultation se fera en présentiel.
+
+Le canal demandé :
+
+```text
+copiable
+→ indexable
+→ reproductible
+→ archivable
+```
+
+est remplacé par un canal :
+
+```text
+présentiel
+→ consultation locale
+→ reconstruction de la trace par l'usager lui-même
+```
+
+#### k) L'asymétrie de commutation
+
+Le cas met en évidence une propriété plus générale : **l'institution peut commuter entre ses canaux beaucoup plus facilement que l'usager**.
+
+L'affaire circule entre :
+
+- email ;
+- guichet physique ;
+- systèmes internes préfectoraux ;
+- Télérecours ;
+- Sagace ;
+- courrier recommandé ;
+- consultation physique ;
+- puis, finalement, Conseil constitutionnel et TransfertPro.
+
+Pour l'institution, ces systèmes appartiennent à une même chaîne fonctionnelle.
+
+Pour l'usager, ils constituent des espaces distincts dont il doit lui-même reconstruire la continuité.
+
+Formule :
+
+> Le coût de la continuité est externalisé vers l'usager.
+
+On peut appeler ce phénomène **asymétrie de commutation** : la partie institutionnelle peut déplacer l'interaction d'un canal à un autre tout en conservant sa continuité interne ; la partie extérieure doit, à chaque changement, retrouver ses repères, préserver les traces et établir les correspondances entre systèmes.
+
+#### l) Le silence dans le délai utile
+
+Cette architecture devient particulièrement problématique lorsque les réponses arrivent trop tard — ou n'arrivent pas — alors qu'un recours est soumis à un délai court.
+
+Le 2 octobre, plusieurs demandes détaillées et numérotées sont réitérées auprès de la Préfecture et du Tribunal administratif afin de stabiliser les faits avant l'échéance du **7 octobre 2026 à 18 heures**.
+
+Elles portent notamment sur :
+
+- le sort du courriel et de la vidéo de 17 h 57 min 55 s ;
+- la composition exacte des transmissions Préfecture → Tribunal ;
+- les éventuelles transmissions complémentaires ;
+- la chronologie de préparation et de dépôt de la saisine préfectorale ;
+- la trace matérielle de l'audience ;
+- l'inventaire et les horaires des pièces ;
+- les modalités pratiques de remise de la requête au représentant de l'État.
+
+À la date et à l'heure utiles pour le dépôt au Conseil constitutionnel, **aucune réponse substantielle complète à ces demandes n'avait été retrouvée**.
+
+Le 7 octobre, deux dernières demandes de vérification factuelle sont encore adressées séparément à la Préfecture et au Tribunal administratif avant gel de la requête. Elles n'ont pas reçu de réponse dans le temps restant avant l'échéance de 18 heures.
+
+Il faut là encore rester précis : ce silence ne démontre ni l'inexistence des documents demandés, ni une volonté de rétention, ni l'exactitude des hypothèses du requérant.
+
+Il établit en revanche un fait procédural important :
+
+> au moment où la partie devait exercer son recours, certaines informations factuelles qu'elle avait demandé à plusieurs reprises de stabiliser restaient inconnues.
+
+Le canal est alors en cause non seulement comme moyen de transmission, mais comme **architecture temporelle de capacité**.
+
+Une réponse reçue après l'expiration d'un délai peut avoir une valeur documentaire, mais elle ne restitue pas nécessairement la capacité d'utiliser cette information au moment où l'acte devait être accompli.
+
+#### m) Modèle général révélé par ce cas
+
+La séquence observée peut être résumée ainsi :
+
+```text
+email
+→ limite de taille
+→ dépôt physique
+→ transmissions électroniques complémentaires
+→ routage Préfecture → TA opaque pour l'usager
+→ Sagace partiel
+→ Télérecours plus riche mais engageant
+→ courrier postal pour la décision
+→ email pour demander les détails
+→ fermeture du canal humain
+→ consultation physique des pièces
+→ silence sur certaines demandes jusqu'à l'échéance utile
+```
+
+Le problème n'est donc pas seulement :
+
+> « l'institution impose son canal ».
+
+Il peut être plus précisément formulé ainsi :
+
+> L'institution contrôle la répartition des actes, des preuves et des états entre plusieurs canaux ; l'usager doit reconstruire lui-même la continuité de la relation et supporte le risque créé par chaque commutation.
+
+Ce cas enrichit donc la notion de **capture relationnelle par architecture de canal** par trois sous-concepts :
+
+1. **capture par orchestration des canaux** ;
+2. **asymétrie de commutation** ;
+3. **perte d'effectivité par délai de réponse**.
+
+---
+
+### 23.3 Cas vécus suivants à documenter
 
 Le corpus contient déjà plusieurs interactions susceptibles d'être analysées avec la même grille, notamment :
 
@@ -1172,7 +1430,7 @@ fait observé
 → hypothèse systémique éventuelle
 ```
 
-### 23.3 Cas externes prioritaires à documenter
+### 23.4 Cas externes prioritaires à documenter
 
 1. **ANEF / titres de séjour** : forte dépendance au portail, enjeux vitaux, difficulté d'accès aux guichets, besoin de preuves de dépôt et de relance.
 2. **CAF / MSA / CPAM** : prestations, pièces, délais, réclamations, décisions, indus, recours.
