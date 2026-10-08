@@ -2,7 +2,7 @@
 title: "FractaXXXX — A Generative Grammar of Possibilities"
 subtitle: "Principles, composition, emerging possibilities, friendly prior art, and Reality Tests"
 date: "2026-10-08"
-version: "0.3"
+version: "0.4"
 status: "working-paper — non-normative"
 language: "en"
 author: unknown
@@ -37,7 +37,7 @@ review:
 
 ## Generative thesis
 
-**FractaXXXX is an open variable, not a product family to complete.** Its purpose is to identify a minimal generative grammar whose combinations open possible capacities and relations, which can then be judged and tested. The list of names below is evidence and navigation, not the purpose of the document.
+**FractaXXXX is an open variable, not a product family to complete.** Its purpose is to identify a minimal generative grammar whose combinations open possible capacities and relations, which can then be judged and tested. The list of names below is evidence and navigation, not the purpose of the document. **Generative** means enabling exploration of candidates, not guaranteeing novelty, discovery or actualization.
 
 ```text
 Principles + capabilities + composition operators
@@ -48,9 +48,13 @@ Principles + capabilities + composition operators
   → an improved grammar and newly visible possibilities
 ```
 
-This is an exploratory orientation, not a proven algebra. Conceivable does not mean feasible; feasible does not mean authorized; authorized does not mean desirable. Nor is The Possible confined to the currently known map.
+This is an exploratory orientation, not a proven algebra. Conceivable does not mean feasible; feasible does not mean authorized; authorized does not mean desirable. Nor is The Possible confined to the currently known map. In Potentics, **The Possible** is not the same as a represented **possibility space**, which is a corrigible map. Candidate combinations can be conceivable yet impossible, misrepresented or inaccessible with current means; early impossibility evidence and exploration of necessary means both have their place.
 
 This note reuses, rather than renames or duplicates, [Potentics](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/potentics.md), [Potentics Exploration Ontology](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/potentics_exploration_ontology.md), [Rational Odysseys into The Possible](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/rational_odysseys_the_possible.md), and Cogentia's [open-possible discipline](../skills/open-possible/SKILL.md).
+
+**Fractal** here means a grammar that can recur across situated scales; it asserts neither strict mathematical self-similarity nor infinite recursion. Each concrete routing recursion requires finite budgets, termination and control boundaries, as framed by [FractaCognition](./fractacognition_principles.md).
+
+**Scope boundary:** Potentics studies The Possible and potentialities; FractaCognition supplies metacognitive exploration heuristics; COP expresses packet/mission/control semantics; FractaXXXX is a **generative crosswalk and research map** applying existing compositions. It creates none of those theories anew.
 
 ## Minimal generative moves
 
@@ -58,10 +62,10 @@ This note reuses, rather than renames or duplicates, [Potentics](https://github.
 - **Change scale**: a router may route toward another routing domain; nested envelopes expose only appropriately authorized projections.
 - **Change time**: store-and-forward permits asynchronous progress, but retention, custody, delivery and actual effects remain different contracts.
 - **Reconsider meaning**: ambiguity, supersession or intent drift may require FractaJudgement, which does not itself grant mandate.
-- **Explore**: do not confuse a local optimum or absence from the current map with global optimality or impossibility; allow bounded serendipity and unexpected observations.
+- **Explore**: do not confuse a local optimum or absence from the current map with global optimality or impossibility; allow situated peripheral attention, serendipity and unexpected observations without prescribing a fixed attention percentage.
 - **Learn**: capture a discriminating response from Reality and revise the map while retaining historical provenance.
 
-These are proposed **moves** for composition, not a new normative COP syntax. All are constrained by authority, disclosure, resources, causality, type compatibility, and effect-boundary controls.
+These are proposed **moves** for exploration and composition, not a new normative COP syntax, formal algebra, or an assertion that an operation is implemented. All are constrained by authority, disclosure, resources, causality, type compatibility, and effect-boundary controls.
 
 **Illustrative derivation:** FractaRouting + persistent store-and-forward + delayed-intent judgment + a scoped fork/join + privacy-preserving nested envelopes can form a new operational arrangement **without** inventing a new FractaX name. Compare it experimentally with a simpler COP-plus-standard-adapter arrangement before proposing additional infrastructure.
 
@@ -129,7 +133,7 @@ Not every item constitutes a direct predecessor of the same protocol. For each: 
 - [Telescript as a Friend](./telescript_as_a_friend.md).
 - [When Cognition Became Traffic](https://github.com/JeanHuguesRobert/FractaVolta/blob/main/research/when_cognition_became_traffic.md); see its deliberately *relative* CPN→CPS inversion and prior-art objections.
 
-## Review of assertions and epistemic status (v0.2)
+## Review of assertions and epistemic status
 
 | Assertion | Status | Evidence required for promotion |
 |---|---|---|
@@ -185,4 +189,4 @@ Before coining or promoting another `FractaXXXX`, ask:
 4. Can an existing document simply gain a link or a paragraph instead?
 5. What Reality Test could falsify the asserted distinction?
 
-**Status:** Living generative working note (v0.3); pending Principal review, frontmatter validation and Reality Tests; not a decision to rename COP, rewrite accepted source doctrine, or multiply projects.
+**Status:** Living generative working note (v0.4); pending Principal review, frontmatter validation and Reality Tests; not a decision to rename COP, rewrite accepted source doctrine, or multiply projects.
