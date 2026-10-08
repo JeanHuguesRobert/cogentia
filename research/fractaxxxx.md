@@ -42,13 +42,13 @@ review:
 |---|---|---|---|
 | Fractanet / FractaNet | The infrastructural instance of Generalized Packet Networks | documented | [Fractanet](https://github.com/JeanHuguesRobert/FractaVolta/blob/main/research/fractanet.md) |
 | FractaVolta | Energy-packet and mobile-buffer applications | established project | [FractaVolta](https://github.com/JeanHuguesRobert/FractaVolta) |
-| FractaCognition | Metacognitive discipline and composable heuristics | documented | [Principles](research/fractacognition_principles.md) |
+| FractaCognition | Metacognitive discipline and composable heuristics | documented | [Principles](./fractacognition_principles.md) |
 | FractaCarta | Fractal maps, local autonomy and exploration grammar | documented | [FractaCarta](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/fractacarta.md) |
 | FractaScheduler | Scheduling and progress of distributed cognitive work | implemented/documented profile | [Scheduler](../docs/fracta-scheduler.md) |
 | FractaCalendar | Federated temporal obligations | documented | [Calendar](https://github.com/JeanHuguesRobert/operium/blob/main/docs/fracta-calendar.md) |
 | FractaLog | Trace and act observability | documented | [Act catalog](https://github.com/JeanHuguesRobert/inseme/blob/main/docs/fractalog-act-catalog.md) |
 | **FractaRouting** | Recursive, capability-aware routing; optionally nested envelopes; routing itself can be packetized | **name adopted by Principal, 2026-10-08; normative specification pending** | [COP envelope](https://github.com/JeanHuguesRobert/inseme/blob/main/research/cop_zero_draft.md), [packet attractors](https://github.com/JeanHuguesRobert/inseme/blob/main/research/packet_attractor_fractanet.md) |
-| **FractaJudgement** | Composable, attributable human/AI judgement at semantic, normative and contextual boundaries | **candidate concept, not yet adopted as normative** | [Judgment boundaries](research/portable_continuations_and_judgment_boundaries.md), [Intent](research/intent.md) |
+| **FractaJudgement** | Composable, attributable human/AI judgement at semantic, normative and contextual boundaries | **candidate concept, not yet adopted as normative** | [Judgment boundaries](./portable_continuations_and_judgment_boundaries.md), [Intent](./intent.md) |
 
 ### Proposed names — not projects or established concepts
 
@@ -58,7 +58,7 @@ FractaCompute (compute-placement), FractaStore (durable storage), FractaTrust (t
 
 Documented operations include `route`, `fork`, `split`, `join`, `merge`, `transform`, `handoff`, `suspend`, `resume`, `return`, `revoke`, `retarget`, and `authorize-fork`. They belong to different semantic layers; **fork ≠ clone, join ≠ merge, judgment ≠ mandate, delivery ≠ execution**.
 
-Sources: [Generalized Packet Networks](https://github.com/JeanHuguesRobert/FractaVolta/blob/main/research/generalized_packet_networks.md); [Cognitive Packet Switching](research/cognitive_packet_switching.md); [COP Zero](https://github.com/JeanHuguesRobert/inseme/blob/main/research/cop_zero_draft.md).
+Sources: [Generalized Packet Networks](https://github.com/JeanHuguesRobert/FractaVolta/blob/main/research/generalized_packet_networks.md); [Cognitive Packet Switching](./cognitive_packet_switching.md); [COP Zero](https://github.com/JeanHuguesRobert/inseme/blob/main/research/cop_zero_draft.md).
 
 A router may choose a *domain that can route further*, not only a final handler. An envelope can contain or reference a more restricted envelope. Each hop sees the minimum required projection; the hidden payload and other envelope layers remain protected. This is an architectural candidate, not an existing interoperable wire standard.
 
@@ -70,7 +70,7 @@ Sources: [Deferred effects](https://github.com/JeanHuguesRobert/inseme/blob/main
 
 ## Judgment as a routable capability
 
-When a handler can no longer advance deterministically, it may emit a Continuation to a human, model, or qualified group, without inventing authority. A judgment may interpret an intent, assess evidence, generate objections, or propose whether an effect remains relevant. Its uncertainty and provenance survive; COP/Mandate determines whether an actual effect is authorized. FractaJudgement should build on, not replace, [Intent](research/intent.md) and [Judgment Boundaries](research/portable_continuations_and_judgment_boundaries.md).
+When a handler can no longer advance deterministically, it may emit a Continuation to a human, model, or qualified group, without inventing authority. A judgment may interpret an intent, assess evidence, generate objections, or propose whether an effect remains relevant. Its uncertainty and provenance survive; COP/Mandate determines whether an actual effect is authorized. FractaJudgement should build on, not replace, [Intent](./intent.md) and [Judgment Boundaries](./portable_continuations_and_judgment_boundaries.md).
 
 ## Living friends and state of the art
 
@@ -91,7 +91,7 @@ Not every item constitutes a direct predecessor of the same protocol. For each: 
 - E. Gelenbe, Z. Xu & E. Seref, *Cognitive Packet Networks*, ICTAI (1999).
 - E. Gelenbe, R. Lent & Z. Xu, *Design and Performance of Cognitive Packet Networks*, Performance Evaluation 46 (2001).
 - IETF [RFC 9171 — Bundle Protocol Version 7](https://www.rfc-editor.org/rfc/rfc9171.html).
-- [Telescript as a Friend](research/telescript_as_a_friend.md).
+- [Telescript as a Friend](./telescript_as_a_friend.md).
 - [When Cognition Became Traffic](https://github.com/JeanHuguesRobert/FractaVolta/blob/main/research/when_cognition_became_traffic.md); see its deliberately *relative* CPN→CPS inversion and prior-art objections.
 
 ## Minimum discriminating experiment
