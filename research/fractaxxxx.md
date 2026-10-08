@@ -3,8 +3,13 @@ title: "FractaXXXX — Family of Composable Fractal Capabilities"
 subtitle: "One navigation map for existing names, candidate names, interoperable friends and discriminating Reality Tests"
 date: "2026-10-08"
 version: "0.2"
-status: "working-note — non-normative"
+status: "working-paper — non-normative"
 language: "en"
+author: unknown
+affiliation: "Institut Mariani / C.O.R.S.I.C.A."
+ai_assisted_by:
+  - "ChatGPT GPT-6 (drafting and research synthesis)"
+last_modified_at: "2026-10-08"
 license: "CC BY-SA 4.0"
 document_role: source
 document_kind: "research-note"
@@ -15,12 +20,12 @@ update_policy: UP-DEFAULT-REVIEWED
 provenance:
   origin_type: "conversation"
   origin_repository: "JeanHuguesRobert/cogentia"
-  origin_ref: "conversation 2026-10-08, FractaRouting / FractaJudgement / Occam"
+  origin_ref: unknown # Known conversation 2026-10-08; no stable citable conversation URL available
   origin_date: "2026-10-08"
   derived_from:
-    - "research/fractacognition_principles.md"
-    - "research/intent.md"
-    - "research/cognitive_packet_switching.md"
+    - "https://github.com/JeanHuguesRobert/cogentia/blob/main/research/fractacognition_principles.md"
+    - "https://github.com/JeanHuguesRobert/cogentia/blob/main/research/intent.md"
+    - "https://github.com/JeanHuguesRobert/cogentia/blob/main/research/cognitive_packet_switching.md"
     - "https://github.com/JeanHuguesRobert/FractaVolta/blob/main/research/fractanet.md"
     - "https://github.com/JeanHuguesRobert/inseme/blob/main/research/cop_zero_draft.md"
 review:
