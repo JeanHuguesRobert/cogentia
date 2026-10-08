@@ -5,8 +5,8 @@ description: "Consolidating note articulating FractaCognition definition, multis
 author: "Jean Hugues Noël Robert, baron Mariani"
 affiliation: "Institut Mariani / C.O.R.S.I.C.A., 1 cours Paoli, F-20250 Corte, Corsica"
 date: "2026-09-27"
-last_modified_at: "2026-10-04"
-version: "0.7"
+last_modified_at: "2026-10-08"
+version: "0.8"
 status: "working-paper"
 license: "CC BY-SA 4.0"
 language: "en"
@@ -30,9 +30,13 @@ tags:
   - locality
   - handler-capacity
   - metacognitive-initiative
+  - serendipity
+  - peripheral-attention
   - heuristics
 related_documents:
   - "research/learning_computer_genese_et_architecture.md"
+  - "research/reality_probe_selection.md"
+  - "research/attention_peripherique_serendipite_crosswalk.md"
   - "research/indirection_as_metacognitive_heuristic.md"
   - "research/simplicite_action.md"
   - "research/non_resolutive_response_patterns.md"
@@ -627,6 +631,30 @@ A candidate metacognitive rule deserves durable treatment when it materially cha
 
 Apply Occam, Minimum Sufficient Locality, Salience before Accumulation, and the anti-recursion rules. Metacognition should reduce repeated error, not create an ornamental layer above the work.
 
+### 8.1 Peripheral Attention — serendipity while exploring (working metacognitive rule)
+
+> **While pursuing a primary objective, preserve proportionate attention for what is observable along the way, including what was not sought. Notice potentially meaningful surprises without turning every surprise into a new task.**
+
+This is **not** an explicit A/B testing obligation, a fixed percentage of time or tokens, or a new COP primitive. It is a situated metacognitive vigilance during ordinary Rational Exploration of the Possible. The relative attention budget may vary with urgency, risk, available resources and phase. Unknown attention cost must not be represented as zero.
+
+Operationally:
+
+~~~text
+pursue primary intention
+→ maintain proportionate peripheral awareness
+→ notice unsolicited observations without forcing them into the initial ontology
+→ distinguish observed fact / interpretation / hypothesis
+→ preserve a lightweight trace or continuation when warranted
+→ apply judgement, authority and budget before diverting effort
+→ return to the primary trajectory unless a justified pivot emerges
+~~~
+
+Do not optimize every passing observation into a planned probe; doing so would suppress the very openness this rule protects. Nor should an agent ignore genuine urgent signals merely because its reserved exploratory budget is exhausted.
+
+This rule extends—not replaces—the existing [Reality Probe Selection](reality_probe_selection.md) §9.2 **serendipity aperture** and §9.4 **dual yield**: aperture concerns what an individual Reality Probe permits to emerge; peripheral attention concerns what the reasoner is capable of noticing **between and around probes**. The [Human Attention Budget](reality_probe_selection.md) remains a scarce resource, and [Reasoning Loop Archaeology](reasoning_loop_archaeology.md) observes that its runtime integration is not yet implemented.
+
+The rule's effect will be observed **naturally** in subsequent explorations. Record convincing discoveries and counterexamples when they occur; do not create a dedicated A/B campaign merely to demonstrate the rule. Avoid confirmation bias in retrospective attribution.
+
 ## 9. Validated Learning and Selective Propagation
 
 When local metacognition succeeds in identifying a defect or a useful heuristic, how should that learning spread?
@@ -759,6 +787,7 @@ Specialized projections and source homes:
 | **Friends before competitors** | `research/telescript_as_a_friend.md` | `instructions/AGENTS.shared.md` (commons research, prior art as prepaid Reality) |
 | **Minimum Sufficient Locality** | `research/locality_principle.md` | `instructions/AGENTS.shared.md` (Accessible Inputs Gate, handler capacity routing) |
 | **Frontmatter Instrumentation** | `docs/frontmatter-schema.md` | `scripts/cogentia.js frontmatter verify`, living metadata conventions |
+| **Peripheral Attention / Serendipity** | `research/reality_probe_selection.md` §9.2/9.4 and §8.1 of this document | Situated vigilance during normal exploration; optional trace of unintended discoveries |
 | **Selective Propagation** | `research/propagation_register.md` | `research/memory_and_corpus_sleep_cycle.md` (verified vs propagated) |
 | **Indirection** | `research/indirection_as_metacognitive_heuristic.md` | Mediations where coupling is demonstrated under Occam constraint |
 
@@ -790,6 +819,10 @@ Am I confusing "I cannot do this here" with "this cannot be done"?
 BOUNDED ASSERTION
 Am I reflexively weakening a supported claim before stating it?
 Is the caveat bounding the frontier or draining the core signal?
+
+PERIPHERAL ATTENTION / SERENDIPITY
+What is observable around my primary objective that I did not seek?
+Am I leaving enough attention to notice it, without manufacturing busywork?
 
 LOCALITY & HANDLER CAPACITY
 Can this remain local?
