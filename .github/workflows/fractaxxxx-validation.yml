@@ -1,0 +1,28 @@
+name: FractaXXXX candidate validation
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'research/fractaxxxx.md'
+      - '.github/workflows/fractaxxxx-validation.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout full history for diff
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Canonical agile frontmatter validation
+        run: node scripts/cogentia.js frontmatter verify research/fractaxxxx.md --strict-role
+      - name: Diff whitespace and patch consistency
+        run: git diff --check origin/main...HEAD
