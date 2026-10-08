@@ -1,8 +1,8 @@
 ---
-title: "FractaXXXX — Family of Composable Fractal Capabilities"
-subtitle: "One navigation map for existing names, candidate names, interoperable friends and discriminating Reality Tests"
+title: "FractaXXXX — A Generative Grammar of Possibilities"
+subtitle: "Principles, composition, emerging possibilities, friendly prior art, and Reality Tests"
 date: "2026-10-08"
-version: "0.2"
+version: "0.3"
 status: "working-paper — non-normative"
 language: "en"
 author: unknown
@@ -34,6 +34,36 @@ review:
 ---
 
 # FractaXXXX
+
+## Generative thesis
+
+**FractaXXXX is an open variable, not a product family to complete.** Its purpose is to identify a minimal generative grammar whose combinations open possible capacities and relations, which can then be judged and tested. The list of names below is evidence and navigation, not the purpose of the document.
+
+```text
+Principles + capabilities + composition operators
+  → candidate possibilities
+  → judgment, constraints and admissibility
+  → bounded Reality Tests
+  → observations, objections and revisions
+  → an improved grammar and newly visible possibilities
+```
+
+This is an exploratory orientation, not a proven algebra. Conceivable does not mean feasible; feasible does not mean authorized; authorized does not mean desirable. Nor is The Possible confined to the currently known map.
+
+This note reuses, rather than renames or duplicates, [Potentics](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/potentics.md), [Potentics Exploration Ontology](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/potentics_exploration_ontology.md), [Rational Odysseys into The Possible](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/rational_odysseys_the_possible.md), and Cogentia's [open-possible discipline](../skills/open-possible/SKILL.md).
+
+## Minimal generative moves
+
+- **Compose** existing packet/capability operations: route, fork, join, merge, suspend, resume, and return, preserving their distinct semantics.
+- **Change scale**: a router may route toward another routing domain; nested envelopes expose only appropriately authorized projections.
+- **Change time**: store-and-forward permits asynchronous progress, but retention, custody, delivery and actual effects remain different contracts.
+- **Reconsider meaning**: ambiguity, supersession or intent drift may require FractaJudgement, which does not itself grant mandate.
+- **Explore**: do not confuse a local optimum or absence from the current map with global optimality or impossibility; allow bounded serendipity and unexpected observations.
+- **Learn**: capture a discriminating response from Reality and revise the map while retaining historical provenance.
+
+These are proposed **moves** for composition, not a new normative COP syntax. All are constrained by authority, disclosure, resources, causality, type compatibility, and effect-boundary controls.
+
+**Illustrative derivation:** FractaRouting + persistent store-and-forward + delayed-intent judgment + a scoped fork/join + privacy-preserving nested envelopes can form a new operational arrangement **without** inventing a new FractaX name. Compare it experimentally with a simpler COP-plus-standard-adapter arrangement before proposing additional infrastructure.
 
 ## Why one document
 
@@ -155,4 +185,4 @@ Before coining or promoting another `FractaXXXX`, ask:
 4. Can an existing document simply gain a link or a paragraph instead?
 5. What Reality Test could falsify the asserted distinction?
 
-**Status:** Living working View (v0.2); pending Principal review, frontmatter validation and Reality Tests; not a decision to rename COP, rewrite accepted source doctrine, or multiply projects.
+**Status:** Living generative working note (v0.3); pending Principal review, frontmatter validation and Reality Tests; not a decision to rename COP, rewrite accepted source doctrine, or multiply projects.
