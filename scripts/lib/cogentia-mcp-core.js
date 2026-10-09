@@ -89,6 +89,20 @@ export const PRIVATE_READ_TOOLS = new Set([
 
 export const TOOLS = [
   {
+    name: "cogentia_exploration_dependencies",
+    description: "Read-only public Cogentia registry dependency traversals: upstream, downstream, prospective impact.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        id: { type: "string" },
+        direction: { type: "string", enum: ["upstream", "downstream", "impact"] },
+        change: { type: "string" },
+        depth: { type: "integer", minimum: 0, maximum: 20 }
+      },
+      required: ["id", "direction"], additionalProperties: false
+    }
+  },
+  {
     name: "cogentia_agent_start",
     description:
       "Cold-start bootstrap for agents: read-only session summary (repos, gaps, privacy signals, active continuations, recommended next actions, MCP playbook). Prefer with or just after views_snapshot. Does not write the corpus.",
@@ -1528,6 +1542,12 @@ export function createMcpCore(env = process.env, extras = {}) {
       throw new Error(`Unknown tool: ${name}`);
     }
     switch (name) {
+      case "cogentia_exploration_dependencies": {
+        const { createDependencyExplorationCapability } = await import("./agent-jhn-whatsapp/dependency-step-capability.js");
+        const path = await import("node:path");
+        const root = path.resolve(String(env.COGENTIA_CORPUS_ROOT || path.join(process.cwd(), "..")));
+        return createDependencyExplorationCapability({ root }).execute(args);
+      }
       case "cogentia_agent_start":
         return daemonGet("/api/agent/start", {});
       case "cogentia_skill_list":
