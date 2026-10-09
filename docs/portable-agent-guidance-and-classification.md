@@ -58,6 +58,60 @@ Maintain statuses `verified`, `partial`, `unknown`, `incompatible` with dated re
 
 This list classifies integration surfaces, not model intelligence, safety rating or legal capacity.
 
+## Fractal specialization by composition (experimental)
+
+The generic contract above is the **base interface**, not a superclass from which model brands inherit authority. Reuse Cogentia's [Agent Configuration Layer](../research/agent_configuration_layer.md), [FractaCognition](../research/fractacognition_principles.md), and the non-normative [FractaXXXX](../research/fractaxxxx.md) grammar: the same observe–judge–adapt–act–trace discipline can recur at multiple situated scales without assuming mathematical fractality.
+
+Resolve an **effective handler profile** as a *governed composition*, not as a growing inheritance hierarchy:
+
+```text
+Corpus-wide invariants / authority ceiling
+  + capability-family traits (conversation, coding, job, service, human)
+  + provider/runtime adapters (ChatGPT, Codex, Claude, Grok, Actions, etc.)
+  + instance evidence (actual tools, scopes, state, receipts, version)
+  + repository / project / Packet / operation specialization
+  + situated risk, budget and Operational Stance
+    → bounded effective profile for this one invocation
+```
+
+The hierarchy here is **resolution scope**, not a license to override hard constraints. Across each nested context: capabilities must be *observed*, obligations may become stricter, and authority/budget/exposure may only be attenuated unless a separately valid higher authority explicitly changes the mandate. Conflicts are exposed, not resolved by silently choosing the most permissive configuration. Model identity alone is not a capability certificate.
+
+Prefer composable **interfaces/traits** over concrete inheritance:
+
+| Trait/interface | Optional implementation behavior | Non-claim |
+|---|---|---|
+| `CorpusReader` | fresh links, source retrieval, cited excerpts | local context does not establish full Corpus access |
+| `PacketObserver` | snapshots, generation, provenance | observation grants no mutation |
+| `VersionedWriter` | provider CAS, conflict receipt, reconcile | CAS is not mandate enforcement |
+| `ClaimHolder` | acquire/renew/release + fenced effect adapter | in-memory lease is not distributed enforcement |
+| `EvidenceReporter` | immutable/testable receipts, limits | self-report is not provider verification |
+| `ContinuationCarrier` | resumable handoff through durable reference | agent memory is not authoritative Store |
+| `EffectExecutor` | bounded provider effect under mandate | tool possession is not authorization |
+
+**Behavior can be specialized independently:** an agent can have `CorpusReader + EvidenceReporter` without `VersionedWriter`; a GitHub Actions runner can execute read-only typed Compute without permission to mutate. A particular ChatGPT conversation may have connected GitHub tools; another may not. The effective profile is per execution, not per brand.
+
+### Candidate minimal profile (illustration, not a new required schema)
+
+```yaml
+handler_family: conversational
+provider_adapter: chatgpt-with-github
+instance:
+  corpus_read: observed
+  versioned_write: observed
+  semantic_authority_fence: unsupported
+packet:
+  ref: https://github.com/JeanHuguesRobert/inseme/issues/121
+  mode: OBSERVE
+governance:
+  mandate: reference-required
+  exposure: bounded
+  uncertainty: explicitly-reported
+```
+
+**Resolution/optimistic-locking rule:** capture the initial evidence/version, do useful bounded work, refresh before a material write, reconcile deltas, and publish the actual receipt. If tools or policies differ from the profile, downgrade or reroute the operation; never imitate an unavailable capability. Specialization is recursive only while it adds discriminating value; cap traversal by time, attention, cost, and the smallest sufficient locality.
+
+**First adoption, no framework build:** use the existing [#121 portable resume](https://github.com/JeanHuguesRobert/inseme/blob/main/docs/issue121-portable-handler-resume.md) to compare two *actual* handler instances. Record which of the traits above are verified, partial, unsupported or unknown; apply one task-specific adjustment, then observe the outcome in ordinary work. Only formalize a shared machine-readable registry if repeated real divergence warrants it.
+
 ## Small agent-facing contract (portable by copy or link)
 
 1. **Freshness:** fetch current canonical state and relevant scoped instructions before acting; distinguish observations from cached assumptions.
