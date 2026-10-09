@@ -322,8 +322,12 @@ function main() {
     if (!id) throw new Error(`${command} requires <id> or --id <id>`);
     // Only registry-local descriptors are admitted by this surface. Private or
     // delegated repositories require an upstream access gate before ingestion.
+    const publicRegistry = id => {
+      const entries = graph.byId.get(id) || [];
+      return entries.length === 1 && entries[0].facets?.visibility === "public";
+    };
     const allowed = edge => edge.predicate === "depends_on" &&
-      graph.byId.has(edge.subject) && graph.byId.has(edge.object);
+      publicRegistry(edge.subject) && publicRegistry(edge.object);
     const options = { depth: values.depth === undefined ? 4 : Number(values.depth), allowed };
     const result = command === "upstream" ? upstream(graph.relations, id, options) :
       command === "downstream" ? downstream(graph.relations, id, options) :
