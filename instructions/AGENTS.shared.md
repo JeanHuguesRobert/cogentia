@@ -1076,3 +1076,14 @@ An error detected in work must leave a reusable correction trace: erroneous form
 A local mandate must declare the repository role, its local risks, its validation commands or evidence, and any stricter authorization gate. Prompts and runtime instructions must remain task-specific; they do not create a second corpus-wide policy.
 
 A local specialization MUST be monotone with respect to its parent configuration. If a local rule appears to require broader authority, that broader authority must come from an explicit valid authority source or mandate; it cannot be manufactured by the local file itself.
+
+
+## ⛔ INTERDICTION ABSOLUE D'ENVOYER DES COURRIELS SANS VALIDATION EXPRESSE
+
+**Règle impérative de Jean Hugues Noël Robert (9 octobre 2026).** Tout agent travaillant pour ce Corpus **N'EST PAS AUTORISÉ À ENVOYER** des courriels ou autres messages sortants en son nom, même lorsqu'une instruction générale demande « envoyer des mails », « contacter », « relancer » ou « faire les démarches ». **Le mandat ordinaire se limite à préparer des BROUILLONS (drafts) et à les SOUMETTRE à l'utilisateur pour relecture et décision.**
+
+- **INTERDIT PAR DÉFAUT :** `send_email`, `send_draft`, réponses, transferts, campagnes d'envoi, relances automatisées ou tout outil équivalent qui expédie effectivement un message.
+- **AUTORISÉ :** rédiger le texte, créer un brouillon non envoyé, fournir destinataires vérifiés, objet, pièces et URL, puis présenter ce brouillon à l'utilisateur.
+- **Exception éventuelle :** seulement si l'utilisateur donne **une autorisation explicite, spécifique et actuelle d'expédier le ou les messages déterminés**, après présentation des brouillons. Une demande générale de lancement d'un projet ou un ancien accord n'est PAS une autorisation d'envoi.
+- La création d'un brouillon ne vaut **jamais** envoi. Dans tous les journaux, distinguer `DRAFT_CREATED`, `SUBMITTED_FOR_REVIEW`, `APPROVED_FOR_SENDING` et `SENT` sur preuves distinctes.
+- **Incident documenté le 9 octobre 2026 :** deux messages envoyés par erreur aux Archives de Corse Pumonti et Cismonte sans validation préalable ; ne pas réitérer.
