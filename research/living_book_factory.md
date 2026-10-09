@@ -266,6 +266,16 @@ system describes itself
 
 > **Self-description is evidence about intended structure, not proof that the structure exists.**
 
+### Source Before Projection — generation gate
+
+Before substantively generating or revising a manuscript, magazine item, site narrative, Guide material or other derived surface, the Factory MUST establish source sufficiency. Each generated unit SHOULD retain inspectable source URI(s) with revision or documented state, its projection purpose/transformation, unresolved source gaps and the source-authority boundary. Claim qualification MUST distinguish direct source claims, editorial interpretation and new provisional proposals.
+
+A missing source MUST block any assertion that a new substantive claim is source-backed. A clearly flagged exploratory preview MAY proceed under its own mandate; it does not silently establish canonical doctrine. Source modification, derived generation, publication, freeze and deployment require distinct effect authorizations.
+
+Generated artifacts remain governed projections. Edit their authoritative source or generator rather than patching outputs directly, unless a surface is explicitly designated editable and its synchronization process is defined. Neither a release nor a frozen edition grants source authority.
+
+See [Derived Products](derived_products.md) and [shared agent gate](../instructions/AGENTS.shared.md).
+
 ## 6. Generic generation targets
 
 A minimal Factory SHOULD generate or validate the common shell without owning project-specific content.
