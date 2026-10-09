@@ -89,6 +89,11 @@ export const PRIVATE_READ_TOOLS = new Set([
 
 export const TOOLS = [
   {
+    name: "cogentia_calculette_bootstrap",
+    description: "Cold-start provider-neutral Calculette capability discovery and usage contract; no writes.",
+    inputSchema: { type: "object", properties: {}, additionalProperties: false },
+  },
+  {
     name: "cogentia_exploration_dependencies",
     description: "Read-only public Cogentia registry dependency traversals: upstream, downstream, prospective impact.",
     inputSchema: {
@@ -1542,6 +1547,10 @@ export function createMcpCore(env = process.env, extras = {}) {
       throw new Error(`Unknown tool: ${name}`);
     }
     switch (name) {
+      case "cogentia_calculette_bootstrap": {
+        const { createCalculetteBootstrap } = await import("./calculette-bootstrap.js");
+        return createCalculetteBootstrap({ advertisedTools: tools.map(item => item.name), surface: "mcp" });
+      }
       case "cogentia_exploration_dependencies": {
         const { createDependencyExplorationCapability } = await import("./agent-jhn-whatsapp/dependency-step-capability.js");
         const path = await import("node:path");
