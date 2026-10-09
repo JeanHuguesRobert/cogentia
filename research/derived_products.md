@@ -172,6 +172,16 @@ publication platform
 
 ---
 
+### Projection as a general concept — source authority and derivation gate
+
+A **projection** is a situated, corrigible representation of identified accessible source material or state, produced through declared transformations for a given question, use, audience, interface or scene. Projections may be static or dynamic: editorial products, maps, dashboards, SQL views, simulations and bounded agent answers are examples. Not every projection is a published editorial product.
+
+A projection MAY select, reorder, translate, illustrate, contextualize, calculate or operationalize source content. Such transformation does not grant source authority to novel substantive claims. Distinguish sourced content, interpretations and new candidate source material. Novelty MUST either return to an appropriate source-level locus for qualification or be visibly marked exploratory; a conversation or Issue may document its genesis without automatically stabilizing its doctrine.
+
+**Source Before Projection:** resolve sources and their versions/states → classify material claims → verify source sufficiency → fill a source gap or label experimental divergence → produce the projection → record provenance → route new observations and objections back to source intake. The required action and publication mandate remain separate at each boundary.
+
+Polish, publication, freezing and popularity cannot by themselves promote a derivative into a canonical doctrinal source. A frozen projection may become a primary historical trace of its own publication and observable effects. Explicitly maintained **co-sovereign language peers** (below) remain a distinct exception governed by their own reciprocal source-authority contract, not an automatic promotion path.
+
 ## 5. Definition of a Derived Product
 
 A derived product may be defined as follows:
