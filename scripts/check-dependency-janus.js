@@ -26,3 +26,51 @@ assert.deepEqual(downstream(edges, "X", { allowed }), down);
 assert.throws(() => downstream(edges, "X", { depth: -1 }), /depth/);
 assert.throws(() => impact(edges, "X", ""), /change/);
 console.log("ok - dependency Janus upstream/downstream/impact, redaction, cycles, bounds");
+
+import fs from "node:fs";
+import os from "node:os";
+import path from "node:path";
+import { spawnSync } from "node:child_process";
+import { fileURLToPath } from "node:url";
+const root = fs.mkdtempSync(path.join(os.tmpdir(), "janus-registry-cli-"));
+try {
+  const mk = (id, dependency, visibility = "public") => {
+    const file = path.join(root, "cogentia", id + ".registry.yaml");
+    fs.mkdirSync(path.dirname(file), { recursive: true });
+    fs.writeFileSync(file, `schema: cogentia.registry.v0.2
+registry:
+  id: registry:${id}
+  name: ${id}
+  records:
+    kinds: [test]
+  facets:
+    visibility: ${visibility}
+  definition_source:
+    repo: cogentia
+    path: ${id}.md
+  record_authority:
+    mode: source-local
+${dependency ? `  relations:
+    - predicate: depends_on
+      object: registry:${dependency}
+` : ""}`);
+  };
+  mk("x", null);
+  mk("a", "x");
+  mk("b", "a");
+  mk("secret", "x", "private");
+  const cli = (op, id, change) => {
+    const script = path.join(path.dirname(fileURLToPath(import.meta.url)), "corpus-registries.js");
+    const args = [script, op, id, "--root", root];
+    if (change) args.push("--change", change);
+    const out = spawnSync(process.execPath, args, { encoding: "utf8" });
+    assert.equal(out.status, 0, out.stderr || out.stdout);
+    return JSON.parse(out.stdout);
+  };
+  assert.deepEqual(cli("upstream", "registry:b").entries.map(e => e.id), ["registry:a", "registry:x"]);
+  assert.deepEqual(cli("downstream", "registry:x").entries.map(e => e.id), ["registry:a", "registry:b"]);
+  assert.ok(!JSON.stringify(cli("impact", "registry:x", "new evidence")).includes("registry:secret"));
+} finally {
+  fs.rmSync(root, { recursive: true, force: true });
+}
+console.log("ok - registry-backed CLI traversal and public visibility gate");
