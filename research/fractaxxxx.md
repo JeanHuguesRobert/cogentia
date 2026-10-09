@@ -176,6 +176,27 @@ Not every item constitutes a direct predecessor of the same protocol. For each: 
 
 **Falsifier:** if the same guarantees and outcomes are achievable more simply by COP plus a standard broker/DTN/A2A adapter, do not introduce an additional protocol layer.
 
+## Reality Test ledger — COP FractaRouting C1–C4 (2026-10-09)
+
+This ledger records **observed effects**, not a claim of autonomous or universally reliable routing. The implementation and evidence live in [inseme](https://github.com/JeanHuguesRobert/inseme); this research note records their relation to the generative grammar.
+
+| Step | What was tested | Evidence and scope |
+|---|---|---|
+| C1 | No admissible capability -> no arbitrary runtime invocation | [PR #123](https://github.com/JeanHuguesRobert/inseme/pull/123); targeted CI passed; local resolver/scheduler |
+| C2 | A no-route failure is recorded and cold-reconstructed from an explicit host-owned JSONL journal | [PR #125](https://github.com/JeanHuguesRobert/inseme/pull/125); local test; **not native COP durability** |
+| C3 | After capabilities change, a fresh scheduler retries the recovered Continuation and preserves its identity | [PR #126](https://github.com/JeanHuguesRobert/inseme/pull/126); simulated handler |
+| C4 | Two **separately dispatched GitHub Actions runs** exchange a durable artifact; the Consumer validates source provenance, downloads the Producer artifact, reconstructs the same Continuation and records a synthetic success receipt | [Producer #37902390558](https://github.com/JeanHuguesRobert/inseme/actions/runs/37902390558) -> [Consumer #37902633510](https://github.com/JeanHuguesRobert/inseme/actions/runs/37902633510); [Consumer evidence artifact](https://github.com/JeanHuguesRobert/inseme/actions/runs/37902633510/artifacts/11603235306) |
+
+**C4 concrete observation:** Producer published `cop-c4-handoff` (artifact ID `11602838894`). Consumer retrieved it with SHA-256 verification and published `cop-c4-consumer-evidence` (artifact ID `11603235306`). Both workflow runs completed successfully. The Consumer logs identify Continuation `62d718fa-3803-40f7-9010-f12f9f9d452a` and `cop.c4.outcome/v1` with `phase: consume`, `status: completed`, `errors: []`. Results are simulation-only, without a real provider side effect.
+
+**FBF / output-channel learning:** An earlier [Producer #37901244558](https://github.com/JeanHuguesRobert/inseme/actions/runs/37901244558) failed before business execution because a compiled COP Core dependency was missing. [PR #128](https://github.com/JeanHuguesRobert/inseme/pull/128) added a build step and a supervisor that emits structured `outcome.json` / `consumer-outcome.json` for ordinary execution errors; injected-exception, missing-input, rejected-provenance and normal-path tests passed. A GitHub-green workflow is **not** proof of business success: inspect `outcome.status` and `errors`. Runner failure, platform outage and artifact-publication failure cannot be guaranteed to use this channel.
+
+**What C4 does not prove:** automatic capability discovery or triggering; inter-node Fractanet interoperability; independent administrative domains; exactly-once provider effects; adversarial replay/duplicate safety; durable retention beyond artifact policy; atomic custody handover; universal resilience.
+
+**Next minimal discriminating Reality Test (C5, candidate only):** replay the same C4 input a second time under the same logical intention, and observe whether the downstream **effect** is deduplicated or fenced while both attempts leave separate, attributable receipts. Before implementing, inventory COP's existing claim, fencing and provider-side idempotency semantics and compare to simpler storage/adapter designs. Do not treat a GitHub Actions deduplication flag or a workflow-green status as proof of exactly-once effects. Keep the experiment synthetic, with no production effects. A negative result is useful evidence, not a reason to conceal failure.
+
+**Method:** FBF (Fix Bugs First); preserve evidence and uncertainty; increment minimally; prefer a real test to a theoretical new layer; avoid alert noise by reporting ordinary application errors as structured outcomes while retaining hard failure visibility when output publication itself is impossible.
+
 ## Minimum discriminating experiment
 
 One COP packet, two independently administered routing domains, nested envelopes with partial disclosure, durable store-and-forward, one human/AI judgment boundary, and a superseded deferred effect. Compare to a centralized route on correctness, leakage, latency, resources, and recovery. No production external effects in the first run. Prove the *actual* final effect boundary separately from preflight policy.
