@@ -68,6 +68,23 @@ Canonical compression:
 > may leave the interface, also make the destination recoverable.**
 
 
+## Source Before Projection — mandatory derivation gate
+
+Before creating or substantively modifying a derivative representation (Living Book, article, map, dashboard, SQL view, simulation, generated artifact, agent-facing answer or other projection), the handler MUST:
+
+1. Resolve the relevant Corpus sources, their accessible versions/states and applicable local authority. A conversation or Issue may be a valid trace of an idea without becoming its canonical doctrinal source.
+2. Qualify material claims as sourced content, observation/trace, hypothesis, interpretation, proposal, or novelty awaiting source integration.
+3. Test source sufficiency **before** authoring substantive derivative claims. If source material is missing, prepare or route a source-level draft/Continuation first; an expressly marked experimental projection may still explore unsourced candidates but MUST NOT portray them as stabilized doctrine.
+4. Preserve inspectable source references, relevant revisions, projection purpose and transformation, and unresolved gaps through existing provenance machinery. Prefer references over copied source material when accessible.
+5. Keep mandates separate: permission to analyze, change a source, produce a projection, publish it, or freeze it are distinct effects and do not authorize one another.
+6. Return observations, contradictions and substantive revisions revealed by projection use to a qualified trace/source intake; do not silently rewrite the source from a derivative.
+
+**Boundaries:** Corpus membership ≠ canonical source authority; publication/freeze ≠ source promotion; projection ≠ proof that projected claims are correct. A frozen publication may be a primary historical trace **of what was published**, without becoming canonical authority for its underlying doctrine. Co-sovereign language peers retain their separate explicit contract.
+
+If necessary source inputs are inaccessible, apply the Accessible Inputs Gate rather than inventing them. This rule does not ban exploration or editorial transformation; it forbids silent authority inversion.
+
+Reference: [Derived Products](../research/derived_products.md) and [Living Book Factory](../research/living_book_factory.md).
+
 ## Cognitive Packets, Continuations, and Handlers (read early)
 
 **Continuations are not optional trivia.** They are the operational form of
