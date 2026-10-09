@@ -56,6 +56,14 @@ This note reuses, rather than renames or duplicates, [Potentics](https://github.
 
 **Scope boundary:** Potentics studies The Possible and potentialities; FractaCognition supplies metacognitive exploration heuristics; COP expresses packet/mission/control semantics; FractaXXXX is a **generative crosswalk and research map** applying existing compositions. It creates none of those theories anew.
 
+### Reflexive capacity composition: method learning across scales
+
+Composition can improve not only an object-level capability but also the **method of composition**. A handler, packet, project, cooperative or territorial network may detect a recurring reasoning or coordination failure, prepare a bounded correction, test it and selectively propagate it to a wider locality. The reusable grammar recurs across scales without asserting identical causes or automatic authority.
+
+The 2026-10-09 *Source Before Projection* case is a concrete metacognitive example: proposed Living Book projection preceded qualified doctrinal source; the failure was diagnosed and four shared source-first documents were amended. The durable documentation change is verified, but independent behavioral improvement remains to be tested. See [FractaCognition — second-order learning](fractacognition_principles.md), [Derived Products](derived_products.md) and [Living Book Factory](living_book_factory.md).
+
+This is a **candidate composition of existing FractaCognition, provenance, mandate and projection mechanisms**—not a new FractaX product, not evidence that every layer should copy the same rule, and not permission to promote exploratory observations automatically. Test against a simple local correction first; use Minimum Sufficient Locality and FixBugsFirst before escalating.
+
 ## Minimal generative moves
 
 - **Compose** existing packet/capability operations: route, fork, join, merge, suspend, resume, and return, preserving their distinct semantics.
