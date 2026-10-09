@@ -35,4 +35,5 @@ jobs:
           node scripts/check-mcp-dependency-janus.js
           node scripts/check-calculette-bootstrap.js
           node scripts/check-calculette-janus-seed.js
+          node scripts/check-calculette-registry-prefill.js
           node scripts/calculette-janus-bootstrap.js --as-of 2026-10-09T23:00:00Z > /dev/null
