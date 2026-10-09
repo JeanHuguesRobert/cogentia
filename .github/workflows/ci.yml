@@ -32,3 +32,4 @@ jobs:
           pnpm test
           node scripts/check-dependency-janus.js
           node scripts/check-agent-jhn-dependency-step.js
+          node scripts/check-mcp-dependency-janus.js
