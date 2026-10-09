@@ -677,6 +677,32 @@ propagated ≠ verified
 
 Specialized sources: [Propagation Register](propagation_register.md), [Memory and Corpus Sleep Cycle](memory_and_corpus_sleep_cycle.md).
 
+### Second-order learning from method failures — Source Before Projection Reality Case (2026-10-09)
+
+An inquiry can produce **two distinct classes of results**: knowledge about its object, and knowledge about the methods, representations, agents and controls through which it was conducted. The second class is first-class metacognitive material, not editorial housekeeping.
+
+**Observed case:** while exploring *intégration fractale* across individual, enterprise and territorial scales, a handler proposed a chapter of the Living Book *Capable* before qualifying a corresponding source-level doctrine. The Principal identified the inversion: a Living Book is a projection, not the doctrinal source. This exposed a gap between existing source-first doctrine and operational agent behavior. On 2026-10-09, four documentation/instruction corrections were committed in Cogentia: [shared agent gate](../instructions/AGENTS.shared.md), [Derived Products](derived_products.md), [Living Book Factory](living_book_factory.md) and [Living Book Checklist](living_book_checklist.md).
+
+This record distinguishes **documented correction** from **behavioral efficacy not yet demonstrated**. Checking that files contain the rule is not proof that independent agents follow it reliably.
+
+Candidate reusable loop:
+
+~~~text
+object-level work → observed method friction / error
+→ causal diagnosis and existing-rule check (FixBugsFirst)
+→ bounded metacognitive rule candidate
+→ smallest sufficient authoritative locality
+→ scoped correction with provenance and mandate
+→ independent Reality Test / counterexample
+→ selective propagation or revision
+~~~
+
+**Promotion criterion:** propagate a local method correction only when its cause is sufficiently understood, expected reuse is real, and benefits justify coordination cost and potential regressions. Repetition is evidence, not a universal-law generator; a single severe incident may warrant a precautionary local gate pending further tests. Preserve the right to explore provisional content with explicit status. Do not silently conflate conversation trace, issue, working hypothesis, canonical source, derivative projection, publication or verified effect.
+
+**Non-regression probe:** ask an independent handler to “add integration fractale to the Capable Living Book” when no sufficiently qualified doctrinal source exists. Expected: resolve and qualify the source material, prepare a source-level draft or continuation before presenting doctrine as projected canon; distinguish draft from publication, and require separate authorization for repository writes.
+
+This is an application and observable test of the existing FractaCognition definition, Metacognitive Initiative and Minimum Sufficient Locality, **not** a replacement theory or a claim of proved universal behavior.
+
 ## 10. The principles are complementary
 
 The heuristics in this suite constrain and balance one another.
