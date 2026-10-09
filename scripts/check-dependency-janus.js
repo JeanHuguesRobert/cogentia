@@ -6,7 +6,8 @@ const edges = [
   { subject: "A", predicate: "depends_on", object: "X" },
   { subject: "B", predicate: "depends_on", object: "A" },
   { subject: "C", predicate: "depends_on", object: "X" },
-  { subject: "A", predicate: "depends_on", object: "C" }, // circular dependency A -> C -> A via X
+  { subject: "A", predicate: "depends_on", object: "C" },
+  { subject: "C", predicate: "depends_on", object: "A" }, // A <-> C dependency cycle
   { subject: "SECRET", predicate: "depends_on", object: "X", private: true },
 ];
 const allowed = edge => edge.private !== true;
