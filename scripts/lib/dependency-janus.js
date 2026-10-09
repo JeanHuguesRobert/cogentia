@@ -34,28 +34,32 @@ export function traverseDependencies(relations, id, {
   const start = String(id || "");
   if (!start) throw new Error("id is required");
   const results = [];
-  const visited = new Set([start]);
-  let frontier = [{ id: start, path: [start], via: [] }];
-  for (let d = 1; d <= limit && frontier.length; d++) {
-    const next = [];
-    for (const current of frontier) {
-      for (const edge of edges) {
-        const matches = direction === "upstream" ? edge.subject === current.id : edge.object === current.id;
-        if (!matches) continue;
-        const target = direction === "upstream" ? edge.object : edge.subject;
-        const cycle = current.path.includes(target);
-        if (cycle) {
-          results.push({ id: target, depth: d, cycle: true, path: [...current.path, target], via: [...current.via, edge] });
-        } else if (!visited.has(target)) {
-          visited.add(target);
-          const entry = { id: target, depth: d, cycle: false, path: [...current.path, target], via: [...current.via, edge] };
-          results.push(entry);
-          next.push(entry);
+  const discovered = new Set([start]);
+  let exploredPaths = 0;
+  const visit = (current, path, via) => {
+    if (path.length - 1 >= limit) return;
+    for (const edge of edges) {
+      const matches = direction === "upstream" ? edge.subject === current : edge.object === current;
+      if (!matches) continue;
+      if (++exploredPaths > 10000) throw new Error("dependency traversal budget exceeded");
+      const target = direction === "upstream" ? edge.object : edge.subject;
+      const cycle = path.includes(target);
+      const nextPath = [...path, target];
+      const nextVia = [...via, edge];
+      if (cycle) {
+        results.push({ id: target, depth: nextPath.length - 1, cycle: true, path: nextPath, via: nextVia });
+      } else {
+        if (!discovered.has(target)) {
+          discovered.add(target);
+          results.push({ id: target, depth: nextPath.length - 1, cycle: false, path: nextPath, via: nextVia });
         }
+        // Follow an alternate path even if target was discovered elsewhere:
+        // otherwise a cycle spanning two siblings could be silently missed.
+        visit(target, nextPath, nextVia);
       }
     }
-    frontier = next;
-  }
+  };
+  visit(start, [start], []);
   return { protocol: DEPENDENCY_VIEW_PROTOCOL, id: start, direction, depth: limit, entries: results };
 }
 export function upstream(relations, id, options = {}) {
