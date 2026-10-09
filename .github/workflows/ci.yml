@@ -31,3 +31,4 @@ jobs:
         run: |
           pnpm test
           node scripts/check-dependency-janus.js
+          node scripts/check-agent-jhn-dependency-step.js
