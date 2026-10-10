@@ -10,7 +10,9 @@ const args=process.argv.slice(2);
 const get=(flag,fallback)=>{const i=args.indexOf(flag);return i<0?fallback:args[i+1];};
 const file=path.resolve(get("--manifest",path.join(dir,"fixtures/calculette/corpus-repositories.json")));
 const config=JSON.parse(fs.readFileSync(file,"utf8"));
-const names=config.repositories.filter(r=>r.enabled&&r.visibility==="public_candidate").map(r=>r.full_name);
+const manifestNames=config.repositories.filter(r=>r.enabled&&r.visibility==="public_candidate").map(r=>r.full_name);
+const extra=get("--add-repositories","").split(",").map(x=>x.trim()).filter(Boolean);
+const names=[...new Set([...manifestNames,...extra])];
 const result=await bootstrapCorpusOpenIssues(names,{
   observedAt:get("--as-of",new Date().toISOString()),
   load:name=>fetchOpenIssues(name,{maxPages:Number(get("--max-pages","10"))})
