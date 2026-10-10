@@ -39,4 +39,5 @@ jobs:
           node scripts/check-calculette-continuation-import.js
           node scripts/check-calculette-github-issues-import.js
           node scripts/check-calculette-open-issues-bootstrap.js
+          node scripts/check-calculette-corpus-bootstrap.js
           node scripts/calculette-janus-bootstrap.js --as-of 2026-10-09T23:00:00Z > /dev/null
