@@ -11,6 +11,7 @@ export class LivingBookRegistry {
     this.storageDir = options.storageDir || null;
     this.records = new Map(); // copy_id -> record
     this.counters = new Map(); // book_id:edition_id -> number
+    this._lockHeld = false;
     this._load();
   }
 
@@ -71,11 +72,13 @@ export class LivingBookRegistry {
     // Fail closed on contention: callers may retry, never allocate speculatively.
     fs.mkdirSync(lock);
     try {
+      this._lockHeld = true;
       this.records.clear();
       this.counters.clear();
       this._load();
       return action();
     } finally {
+      this._lockHeld = false;
       fs.rmdirSync(lock);
     }
   }
@@ -114,7 +117,7 @@ export class LivingBookRegistry {
     if (!record || !record.copy_id) {
       throw new Error('Invalid record: missing copy_id');
     }
-    if (this.storageDir && !fs.existsSync(path.join(this.storageDir, '.living-book-registry.lock'))) {
+    if (this.storageDir && !this._lockHeld) {
       return this._withLock(() => this.saveRecord(record));
     }
     this.records.set(record.copy_id, { ...record });
