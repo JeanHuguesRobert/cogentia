@@ -28,4 +28,16 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Run tests
-        run: pnpm test
+        run: |
+          pnpm test
+          node scripts/check-dependency-janus.js
+          node scripts/check-agent-jhn-dependency-step.js
+          node scripts/check-mcp-dependency-janus.js
+          node scripts/check-calculette-bootstrap.js
+          node scripts/check-calculette-janus-seed.js
+          node scripts/check-calculette-registry-prefill.js
+          node scripts/check-calculette-continuation-import.js
+          node scripts/check-calculette-github-issues-import.js
+          node scripts/check-calculette-open-issues-bootstrap.js
+          node scripts/check-calculette-corpus-bootstrap.js
+          node scripts/calculette-janus-bootstrap.js --as-of 2026-10-09T23:00:00Z > /dev/null

@@ -1,0 +1,21 @@
+#!/usr/bin/env node
+import assert from "node:assert/strict";
+import fs from "node:fs";
+import { fileURLToPath } from "node:url";
+import path from "node:path";
+import { buildJanusSeed, compareJanusSeeds } from "./lib/calculette-janus-seed.js";
+const here = path.dirname(fileURLToPath(import.meta.url));
+const fixture = JSON.parse(fs.readFileSync(path.join(here,"fixtures/calculette/janus-github-2026-10-09.json"),"utf8"));
+const prior = buildJanusSeed({ ...fixture, asOf: "2026-10-09T21:00:00Z" });
+assert.equal(prior.facts.length,0);
+const now = buildJanusSeed({ ...fixture, asOf: "2026-10-09T23:00:00Z" });
+assert.equal(now.facts.length,3);
+assert.equal(now.relations.length,2);
+assert.equal(now.facts.find(f=>f.id.includes("233")).occurred_at,"2026-10-09T19:25:46Z");
+assert.deepEqual(now,buildJanusSeed({ ...fixture, observations: [...fixture.observations].reverse(), edges: [...fixture.edges].reverse(), asOf: "2026-10-09T23:00:00Z" }));
+const delta = compareJanusSeeds(prior,now);
+assert.equal(delta.newly_observed_facts.length,3);
+assert.equal(delta.newly_observed_relations.length,2);
+assert.match(delta.interpretation,/not necessarily newly occurred/);
+assert.throws(()=>buildJanusSeed({ observations:[{id:"bad"}],asOf:"2026-10-09T23:00:00Z"}),/source/);
+console.log("ok - replayable provenance-bound Janus bootstrap seed and chronological delta");

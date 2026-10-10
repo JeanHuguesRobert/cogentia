@@ -3,6 +3,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import * as yaml from "js-yaml";
+import { upstream, downstream, impact } from "./lib/dependency-janus.js";
 
 export const SUPPORTED_REGISTRY_SCHEMAS = new Set([
   "cogentia.registry.v0.2",
@@ -316,7 +317,28 @@ function main() {
     return;
   }
 
-  throw new Error(`Unknown command: ${command}. Use list, check, show, related.`);
+  if (["upstream", "downstream", "impact"].includes(command)) {
+    const id = String(values.id || positional[0] || "");
+    if (!id) throw new Error(`${command} requires <id> or --id <id>`);
+    // Only registry-local descriptors are admitted by this surface. Private or
+    // delegated repositories require an upstream access gate before ingestion.
+    const publicRegistry = id => {
+      const entries = graph.byId.get(id) || [];
+      return entries.length === 1 && entries[0].facets?.visibility === "public";
+    };
+    const allowed = edge => edge.predicate === "depends_on" &&
+      publicRegistry(edge.subject) && publicRegistry(edge.object);
+    const options = { depth: values.depth === undefined ? 4 : Number(values.depth), allowed };
+    const result = command === "upstream" ? upstream(graph.relations, id, options) :
+      command === "downstream" ? downstream(graph.relations, id, options) :
+      impact(graph.relations, id, String(values.change || ""), options);
+    console.log(JSON.stringify({ ...result, data_scope: "locally-discovered-registries",
+      completeness: "known-local-edges-only", errors: graph.errors }, null, 2));
+    if (graph.errors.length) process.exitCode = 2;
+    return;
+  }
+
+  throw new Error(`Unknown command: ${command}. Use list, check, show, related, upstream, downstream, impact.`);
 }
 
 const invoked = process.argv[1] && path.resolve(process.argv[1]) === path.resolve(new URL(import.meta.url).pathname.replace(/^\/(?:[A-Za-z]:)/, match => match.slice(1)));

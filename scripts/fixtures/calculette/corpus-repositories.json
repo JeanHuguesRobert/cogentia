@@ -1,0 +1,107 @@
+{
+  "schema": "cogentia.calculette_corpus_sources/v1",
+  "owner": "JeanHuguesRobert",
+  "source": "https://github.com/JeanHuguesRobert/JeanHuguesRobert/blob/main/research/documents.md",
+  "source_date": "2026-09-19",
+  "coverage": "initial public inventory; re-discovery required",
+  "repositories": [
+    {
+      "full_name": "JeanHuguesRobert/cogentia",
+      "visibility": "public_candidate",
+      "enabled": true
+    },
+    {
+      "full_name": "JeanHuguesRobert/FractaVolta",
+      "visibility": "public_candidate",
+      "enabled": true
+    },
+    {
+      "full_name": "JeanHuguesRobert/marenostrum",
+      "visibility": "public_candidate",
+      "enabled": true
+    },
+    {
+      "full_name": "JeanHuguesRobert/barons-Mariani",
+      "visibility": "public_candidate",
+      "enabled": true
+    },
+    {
+      "full_name": "JeanHuguesRobert/inseme",
+      "visibility": "public_candidate",
+      "enabled": true
+    },
+    {
+      "full_name": "JeanHuguesRobert/survey",
+      "visibility": "public_candidate",
+      "enabled": true
+    },
+    {
+      "full_name": "JeanHuguesRobert/Inox",
+      "visibility": "public_candidate",
+      "enabled": true
+    },
+    {
+      "full_name": "JeanHuguesRobert/ubikia",
+      "visibility": "public_candidate",
+      "enabled": true
+    },
+    {
+      "full_name": "JeanHuguesRobert/operium",
+      "visibility": "public_candidate",
+      "enabled": true
+    },
+    {
+      "full_name": "JeanHuguesRobert/serra",
+      "visibility": "public_candidate",
+      "enabled": true
+    },
+    {
+      "full_name": "JeanHuguesRobert/JeanHuguesRobert",
+      "visibility": "public_candidate",
+      "enabled": true
+    },
+    {
+      "full_name": "JeanHuguesRobert/privai",
+      "visibility": "public_candidate",
+      "enabled": true
+    },
+    {
+      "full_name": "JeanHuguesRobert/gouvernance",
+      "visibility": "public_candidate",
+      "enabled": true
+    },
+    {
+      "full_name": "JeanHuguesRobert/marianivillage",
+      "visibility": "public_candidate",
+      "enabled": true
+    },
+    {
+      "full_name": "JeanHuguesRobert/institut-mariani",
+      "visibility": "public_candidate",
+      "enabled": true
+    },
+    {
+      "full_name": "JeanHuguesRobert/Kudos",
+      "visibility": "public_candidate",
+      "enabled": true
+    },
+    {
+      "full_name": "JeanHuguesRobert/.github",
+      "visibility": "public_candidate",
+      "enabled": true
+    },
+    {
+      "full_name": "JeanHuguesRobert/acorsica.org",
+      "visibility": "public_candidate",
+      "enabled": true
+    },
+    {
+      "full_name": "JeanHuguesRobert/StructEnv",
+      "visibility": "public_candidate",
+      "enabled": true
+    }
+  ],
+  "excluded_private": [
+    "JeanHuguesRobert/registre-mariani"
+  ]
+}
