@@ -16,5 +16,5 @@ const partial=await bootstrapCorpusOpenIssues(names,{load:async name=>name.endsW
 assert.equal(partial.complete,false);
 assert.equal(partial.failures.length,1);
 assert.equal(partial.work_queue.length,2);
-assert.throws(()=>bootstrapCorpusOpenIssues(names,{load,observedAt:at,maxRepositories:2}),/budget/);
+await assert.rejects(bootstrapCorpusOpenIssues(names,{load,observedAt:at,maxRepositories:2}),/budget/);
 console.log("ok - federated multi-repository bootstrap, stable qualified IDs and partial coverage");
