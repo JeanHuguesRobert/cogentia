@@ -70,7 +70,16 @@ export class LivingBookRegistry {
     fs.mkdirSync(this.storageDir, { recursive: true });
     const lock = path.join(this.storageDir, '.living-book-registry.lock');
     // Fail closed on contention: callers may retry, never allocate speculatively.
-    fs.mkdirSync(lock);
+    let acquired = false;
+    for (let attempt = 0; attempt < 40; attempt++) {
+      try { fs.mkdirSync(lock); acquired = true; break; }
+      catch (e) {
+        if (e.code !== 'EEXIST') throw e;
+        // Contentious worker must never issue a speculative ID.
+        Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 25);
+      }
+    }
+    if (!acquired) throw new Error('Living Book registry lock busy: reservation not issued');
     try {
       this._lockHeld = true;
       this.records.clear();
