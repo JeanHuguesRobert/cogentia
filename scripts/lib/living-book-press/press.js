@@ -54,13 +54,12 @@ export class LivingBookPress {
       throw new Error(`Unrecognized edition ${editionId} for book ${bookId}`);
     }
 
-    // Step 1: Allocate authoritative unique copy_id
-    const copyId = this.registry.allocateCopyId(bookId, edition.id, profile.prefix);
-    const issuedAt = new Date().toISOString();
-    const verificationUrl = `${profile.verificationBaseUrl}/${copyId}`;
-
-    // Step 2: Persist provisional RESERVED record in registry before render
-    const initialRecord = {
+    // Allocate + persist under the registry's exclusive reservation lock.
+    const initialRecord = this.registry.reserveCopy(allocate => {
+      const copyId = allocate(bookId, edition.id, profile.prefix);
+      const issuedAt = new Date().toISOString();
+      const verificationUrl = `${profile.verificationBaseUrl}/${copyId}`;
+      return {
       copy_id: copyId,
       book_id: bookId,
       edition_id: edition.id,
@@ -86,8 +85,9 @@ export class LivingBookPress {
           }
         ]
       }
-    };
-    this.registry.saveRecord(initialRecord);
+      };
+    });
+    const copyId = initialRecord.copy_id;
 
     // Step 3: Render copy-specific PDF artifact
     const renderResult = renderUniqueCopyPdf(initialRecord, {
