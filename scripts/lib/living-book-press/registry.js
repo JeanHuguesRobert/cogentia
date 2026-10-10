@@ -40,22 +40,55 @@ export class LivingBookRegistry {
         }
       }
     } catch (e) {
-      // Ignore load error in fallback
+      throw new Error(`Living Book registry load failed: ${e.message}`, { cause: e });
     }
   }
 
   _persist(bookId) {
     if (!this.storageDir) return;
+    fs.mkdirSync(this.storageDir, { recursive: true });
+    const outPath = this._getStoragePath(bookId);
+    const bookRecords = Array.from(this.records.values()).filter(r => r.book_id === bookId);
+    const temp = outPath + '.' + process.pid + '.' + Date.now() + '.tmp';
     try {
-      if (!fs.existsSync(this.storageDir)) {
-        fs.mkdirSync(this.storageDir, { recursive: true });
-      }
-      const outPath = this._getStoragePath(bookId);
-      const bookRecords = Array.from(this.records.values()).filter(r => r.book_id === bookId);
-      fs.writeFileSync(outPath, JSON.stringify({ book_id: bookId, updated_at: new Date().toISOString(), records: bookRecords }, null, 2), 'utf8');
-    } catch (e) {
-      // Fallback
+      const fd = fs.openSync(temp, 'wx', 0o600);
+      try {
+        fs.writeFileSync(fd, JSON.stringify({ book_id: bookId, updated_at: new Date().toISOString(), records: bookRecords }, null, 2));
+        fs.fsyncSync(fd);
+      } finally { fs.closeSync(fd); }
+      fs.renameSync(temp, outPath);
+      const dir = fs.openSync(this.storageDir, 'r');
+      try { fs.fsyncSync(dir); } finally { fs.closeSync(dir); }
+    } finally {
+      try { fs.unlinkSync(temp); } catch (e) { if (e.code !== 'ENOENT') throw e; }
     }
+  }
+
+  _withLock(action) {
+    if (!this.storageDir) return action();
+    fs.mkdirSync(this.storageDir, { recursive: true });
+    const lock = path.join(this.storageDir, '.living-book-registry.lock');
+    // Fail closed on contention: callers may retry, never allocate speculatively.
+    fs.mkdirSync(lock);
+    try {
+      this.records.clear();
+      this.counters.clear();
+      this._load();
+      return action();
+    } finally {
+      fs.rmdirSync(lock);
+    }
+  }
+
+  reserveCopy(buildRecord) {
+    return this._withLock(() => {
+      // Reserve identity and persist the RESERVED record within one exclusive section.
+      const metadata = buildRecord((bookId, editionId, prefix) => this.allocateCopyId(bookId, editionId, prefix));
+      if (!metadata || !metadata.copy_id) throw new Error('Invalid reservation');
+      if (this.records.has(metadata.copy_id)) throw new Error('Duplicate copy_id');
+      this.saveRecord(metadata);
+      return metadata;
+    });
   }
 
   /**
@@ -80,6 +113,9 @@ export class LivingBookRegistry {
   saveRecord(record) {
     if (!record || !record.copy_id) {
       throw new Error('Invalid record: missing copy_id');
+    }
+    if (this.storageDir && !fs.existsSync(path.join(this.storageDir, '.living-book-registry.lock'))) {
+      return this._withLock(() => this.saveRecord(record));
     }
     this.records.set(record.copy_id, { ...record });
     this._persist(record.book_id);
