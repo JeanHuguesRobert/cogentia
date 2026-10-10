@@ -7,17 +7,18 @@ import { bootstrapOpenIssues } from "./lib/calculette-open-issues-bootstrap.js";
 export async function fetchOpenIssues(repository,{fetchImpl=fetch,maxPages=10,perPage=100}={}) {
   if(!/^[\w.-]+\/[\w.-]+$/.test(repository)) throw new Error("owner/repo required");
   if(!Number.isInteger(maxPages)||maxPages<1||maxPages>30) throw new Error("maxPages 1..30");
-  const issues=[]; let complete=false;
+  const issues=[]; let complete=false; let pagesChecked=0;
   for(let page=1;page<=maxPages;page++) {
     const url=`https://api.github.com/repos/${repository}/issues?state=open&per_page=${perPage}&page=${page}`;
     const response=await fetchImpl(url,{headers:{Accept:"application/vnd.github+json","User-Agent":"Cogentia-Calculette-Janus-Bootstrap"}});
     if(!response.ok) throw new Error(`GitHub HTTP ${response.status} at page ${page}`);
     const items=await response.json();
+    pagesChecked=page;
     if(!Array.isArray(items)) throw new Error("GitHub expected issue array");
     issues.push(...items.filter(item=>!item.pull_request));
     if(items.length<perPage){complete=true;break;}
   }
-  return {issues,complete,pages_checked:complete?Math.ceil((issues.length+1)/perPage):maxPages};
+  return {issues,complete,pages_checked:pagesChecked};
 }
 const invoked=process.argv[1]?.endsWith("calculette-open-issues-prefill.js");
 if(invoked){
