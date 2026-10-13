@@ -85,6 +85,21 @@ If necessary source inputs are inaccessible, apply the Accessible Inputs Gate ra
 
 Reference: [Derived Products](../research/derived_products.md) and [Living Book Factory](../research/living_book_factory.md).
 
+## Capability autodiscovery — recall before declaring inability
+
+When an essential capability seems missing, **first discover a feasible path**, not merely a named tool: orient to the task and its authoritative Packet; recall relevant accessible traces, tested capability compositions and known failures; inspect the **currently callable** tools, providers and adapters; then test the smallest authorized route when useful. A local/tool failure does not prove a Fractanet-wide inability.
+
+Keep these distinctions explicit:
+
+```text
+remembered ≠ currently accessible ≠ authorized ≠ executed ≠ outcome achieved
+salience ≠ truth / authority
+```
+
+Use existing [Mneme memory architecture](../research/mneme_memory_architecture.md) for governed durable memory, [Corpus Sleep Cycle](../research/memory_and_corpus_sleep_cycle.md) for validated assimilation, and [Calculette / Cogentia #233](https://github.com/JeanHuguesRobert/cogentia/issues/233) for situated `orient / recall / inspect` *candidate* operations. **Do not presume those operations are deployed**, create a parallel memory store, or treat ephemeral recall, historical traces or old execution receipts as current access grants. Stigmergic salience/evaporation affects attention projections, never historical Act records. Recheck current mandate, input reachability, scope, time and available resources before executing; preserve bounded evidence for successful and failed tests. Propagate portable lessons by reference under Minimum Sufficient Locality, not global runtime state.
+
+Reality example: [Inseme #120, remote compute](https://github.com/JeanHuguesRobert/inseme/issues/120#issuecomment-6153032377) proved GitHub → typed compute → durable receipt, while the target Gallica pages remained inaccessible (HTTP 403). **Execution success is not task success.** See [FractaCognition principles](../research/fractacognition_principles.md).
+
 ## Cognitive Packets, Continuations, and Handlers (read early)
 
 **Continuations are not optional trivia.** They are the operational form of
