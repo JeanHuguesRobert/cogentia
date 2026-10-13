@@ -863,3 +863,67 @@ Reality
 → preserve trace
 → propagate validated learning
 ~~~
+
+
+## Operational case — dynamic self-discovery of agent capabilities (13 October 2026)
+
+**Source of this case:** [Inseme #120](https://github.com/JeanHuguesRobert/inseme/issues/120), [first Gallica compute receipt](https://github.com/JeanHuguesRobert/inseme/issues/120#issuecomment-6153032377), [alternate-source compute receipt](https://github.com/JeanHuguesRobert/inseme/issues/120#issuecomment-6153111914). This is a situated *Reality Test* of the present ChatGPT handler, not a claim that every instance or later conversation inherits these exact capabilities.
+
+### The discovered failure mode
+
+The handler initially had GitHub connector operations but failed to resolve the referenced #120 in `barons-Mariani`, because the Packet's home was actually `inseme`. It first tried local code/web access and found no reliable Gallica page retrieval. After inspecting the actual Issue and adapter sources it discovered a **composed capability**:
+
+```text
+GitHub read/write
+→ inspect typed compute contract and program source
+→ commit bounded network retrieval probe
+→ publish typed Issue comment
+→ GitHub Actions with permitted network
+→ durable execution receipt and run artifact
+→ retrieve and interpret artifact
+```
+
+The first execution succeeded **as compute** but Gallica responded HTTP 403 (Cloudflare); the BnF catalogue responded HTTP 200. A second script had a JavaScript syntax bug; its failed receipt led to a corrected, newly identified retry. Later alternate-source lookup exposed an Internet Archive reproduction of Fontana (1907), independently examined for relevant pages. Thus:
+
+```text
+Tool exposed ≠ semantic capability assembled
+Compute completed ≠ requested evidence acquired
+Network reachable ≠ target source accessible
+Previous failure ≠ universal inability
+New result ≠ permanent entitlement
+```
+
+### Minimum self-discovery protocol, v0.1
+
+Given an **outcome** rather than a named tool:
+
+1. **LOCATE** the authoritative Packet/repository/scope (verify home; a 404 may be wrong locator, not absent capability).
+2. **ENUMERATE** callable tools, connectors, actions and providers **in this session**, including *deferred or indirect* capability descriptions. Discovery metadata is not a guarantee of execution.
+3. **COMPOSE** candidate paths from small semantic steps (e.g. source read, remote compute, result return), using the existing Magistral/COP contracts instead of inventing a new executor.
+4. **ADMIT** only paths consistent with current mandate, provider permissions, quotas, confidentiality, target terms, network/write restrictions and effect ceiling. Availability and authorization are distinct.
+5. **PROBE** the cheapest discriminating end-to-end Reality Test and preserve its source commit, computation ID, provider run, receipt and artifact. Detect the difference between a transport/compute success and the user's achieved outcome.
+6. **REVISE** the discovered capability state based on evidence: `observed_success`, `observed_failure`, `blocked`, `not_tested`, `expired_or_stale`, with a precise scope/time/reason. Do not infer all providers or hosts from one probe.
+7. **PUBLISH LOCALLY** a *pointer* to the stable execution evidence and tested composition, not a global entitlement or redundant static inventory. Propagate reusable learning only after validation (including alternative handler when appropriate).
+
+Minimal observational record (example, not a new canonical ontology):
+
+```yaml
+intent: acquire-public-historical-edition
+path: github-issue -> typed-compute -> github-actions -> artifact
+observed_at: 2026-10-13
+scope: github-actions-runner; public-bnf/gallica-hosts
+evidence: https://github.com/JeanHuguesRobert/inseme/issues/120#issuecomment-6153032377
+compute: observed_success
+gallica_http: observed_failure_403
+bnf_catalogue_http: observed_success_200
+historical-pages-acquired: false
+authority_inherited: false
+```
+
+### FractaCognition interpretation
+
+The metacognitive improvement is not to claim more tools, but to learn to **search for a realizable capability path**, test it, update the local model of what is possible, and selectively transmit the verified composition across future handlers/Packets. This instantiates `Reality → Trace → Learning → Capability Δ → Possible Δ → Reality` as already discussed in [Cogentia #169](https://github.com/JeanHuguesRobert/cogentia/issues/169). Apply Minimum Sufficient Locality: runtime observations are local and dated; portable contracts and evidence pointers may propagate. **Capability Δ ≠ Authority Δ**, and the right conclusion from a 403 is not to bypass an access control.
+
+### Next falsifiable test
+
+A fresh conversation should be able to discover `inseme #120`, inspect the actual typed-compute adapter, recover a completed receipt and its artifact, then predict in advance which source-access steps are unproven. Measure time-to-discovery, wrong-repository attempts, number of unjustified ability claims, and whether it distinguishes `completed` from `artifact contains requested evidence`. A second independent handler should reproduce the procedure without inherited private context. If it fails, update the protocol and do not mark the method validated.
