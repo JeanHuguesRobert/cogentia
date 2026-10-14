@@ -36,6 +36,7 @@ update_policy: UP-DEFAULT-REVIEWED
 | 2026-06-13-001 | 2026-06-13 | Demande de cadrage territorial — Préfiguration d’un point d’autonomie numérique et administrative à Corte | Sous-préfecture de Corte; Mme Volpi; Institut Mariani | 0 | 0 | Sent — awaiting reply | D2 |
 | 2026-09-17-001 | 2026-09-17 | Re: Élections sénatoriales 2026 – vérification d’un point factuel relatif à la saisine du TA | Adrien Vidal / Préfecture de la Haute-Corse | 4 | 8 | Continued through 25 Sep — factual questions remained unresolved; a formal access and trace-preservation request was sent to the prefecture on 25 Sep at 16:59 CEST; awaiting substantive reply | D2 |
 | 2026-09-17-002 | 2026-09-17 | Re: TR: élections sénatoriales TA Bastia – n° 2601714-1 et 2601715-1 – demande de communication et vérifications matérielles | Greffe TA Bastia | 3 | 8 | Continued through 25 Sep — judgment received and read; note-en-délibéré registration time resolved as 15:49, while six material questions remain. Follow-up sent 25 Sep at 16:50 CEST in the existing thread, CC Laurence + Maguy; awaiting reply | D2 |
+| 2026-10-14-001 | 2026-10-14 | Autonomie de la Corse — contribution C.O.R.S.I.C.A. au projet constitutionnel n° 782, article 72-5 | Commission des lois du Sénat; Mme Muriel Jourda; copie Institut Mariani | 0 | 0 | Sent 08:10 CEST — receipt and response not yet confirmed; Gmail message 1a13908dec2526dc | D2 |
 <!-- BEGIN_AUTO: backlinks -->
 ### Backlinks
 
