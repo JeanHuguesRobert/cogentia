@@ -5927,7 +5927,12 @@ async function cmdResumeExternalIssue() {
     const plan = magistral
       ? { ...await discoverMagistralResume(), schema: "cogentia.external-resume-prepare/v1", phase: "PREPARE", issue: { repository: issue.repository, number: issue.number, url: issue.url }, required_capabilities: requiredCapabilities, execution_receipt: null, effects: { handler_spawned: false, command_executed: false, git_commit: false, github_mutation: false } }
       : prepareExternalResume({ issue, handlersFile });
-    output({ ...result, phase: "PREPARE", preparation: plan, status: plan.status },
+    const preparedRouting = {
+      capability_discovery: magistral ? plan.reachability : (handlersFile ? "manifest_declaration" : "not_connected"),
+      selected_handler: plan.selected_handler || null,
+      required_next: plan.blockers?.join(", ") || "Further verification required",
+    };
+    output({ ...result, phase: "PREPARE", preparation: plan, routing: preparedRouting, status: plan.status },
       `Cogentia resume PREPARE  ${issueRef}\nstate: ${plan.status}\nhandler: ${plan.selected_handler?.id || "none"}\nExecution: none — no mandate or dispatch\nContinuation: ${continuation.id || "portable only"}`);
     process.exitCode = 3;
     return;
