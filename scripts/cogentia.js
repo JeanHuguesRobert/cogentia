@@ -5864,6 +5864,35 @@ function cmdResumeExternalIssue() {
   const preflight = preflightHandoff(issue, {
     fileExists: root ? resumableAuditFileExists(root) : null,
   });
+  // A missing handler capability is a continuation boundary, not an error
+  // and never evidence that the requested operation has run.
+  const requiredCapabilities = ["agent.handler", "cop.capability-discovery"];
+  const issueRef = `${issue.repository}#${issue.number}`;
+  const continuationRequest = {
+    kind: "routing",
+    title: `Resume Cognitive Packet ${issueRef}`,
+    question: `Locate an authorized handler capable of resuming ${issueRef}; verify its required capabilities and inherited mandate, then return a traceable result or an explicit blocker. Do not presume execution.`,
+    dedupe_key: `external-resume:handler:${issueRef}`,
+    subject: { repo: issue.repository, issue: issue.number, url: issue.url || `https://github.com/${issue.repository}/issues/${issue.number}` },
+    context: {
+      packet_url: issue.url || `https://github.com/${issue.repository}/issues/${issue.number}`,
+      audit_status: audit.cold_handler_closure?.status || "unknown",
+      boundary: "missing_local_handler_capability",
+      constraints: "No commit, publication, deployment or delegated external effect without authorization",
+    },
+    required_capabilities: requiredCapabilities,
+    expected_response: { format: "json", required: ["handler", "capability_truth", "mandate_basis", "execution_receipt_or_blocker"] },
+  };
+  const registry = tryLoadContext();
+  const emitted = registry?.configPath
+    ? emitContinuation(registry, continuationRequest)
+    : null;
+  const continuation = emitted
+    ? { emitted: true, persisted: true, created: emitted.created, id: emitted.continuation.id, path: emitted.path, required_capabilities: requiredCapabilities }
+    : { emitted: true, persisted: false, status: "PORTABLE_ONLY", reason: "registry_unavailable", packet: {
+        type: "continuation", protocol: CONTINUATION_PROTOCOL, status: "active",
+        ...continuationRequest,
+      } };
   const result = {
     schema: "cogentia.external-resume/v1",
     phase: "INSPECT",
@@ -5879,6 +5908,7 @@ function cmdResumeExternalIssue() {
     },
     cold_handler_closure: audit.cold_handler_closure,
     handoff: preflight,
+    continuation,
     effects: {
       github_issue_mutation: false, git_commit: false,
       git_push: false, deployment: false, external_communication: false,
@@ -5889,6 +5919,7 @@ function cmdResumeExternalIssue() {
     `Cogentia resume  ${issue.repository}#${issue.number}`,
     `state: ${result.status}`,
     `audit: ${audit.cold_handler_closure?.status || "unknown"}`,
+    emitted ? `Continuation emitted: ${emitted.continuation.id}` : "Continuation emitted as portable packet (no local registry)",
     "Execution: none — COP handler not connected",
     "No source, Issue or publication mutated",
   ].join("\n"));
