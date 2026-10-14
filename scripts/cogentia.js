@@ -455,6 +455,8 @@ async function main() {
       return cmdDocs(argv.shift() || "summary");
     case "concepts":
       return cmdConcepts(argv.shift() || "check");
+    case "resume":
+      return cmdResumeExternalIssue();
     case "continuation":
       return cmdContinuation(argv.shift() || "list");
     case "effect":
@@ -1089,7 +1091,7 @@ Continuation commands:
  Issue commands:
   issues list <repo>       List GitHub issues for a registered repo using gh.
                            Flags: --state open|closed|all --limit <n>
-  issues packet <repo> <number>
+  resume <GitHub Issue URL>  Inspect external Cognitive Packet and report handler routing boundary (no effects).\n  issues packet <repo> <number>
                            Export one GitHub issue as a read-only continuation packet.
   issues graph <repo|all>  Build a read-only graph of issues and their target docs.
                            Flags: --state open|closed|all --limit <n>
@@ -5845,6 +5847,54 @@ function daemonCliSkillsGet(url) {
   }
 }
 // plugin registry and dispatcher are implemented in scripts/daemon_plugins/registry.js
+/**
+ * URL-first Cognitive Packet entrypoint. Deliberately read-only.
+ * Execution belongs to a capability-specific COP handler after authorization;
+ * GitHub Issue comments and a successful audit are not execution receipts.
+ */
+function cmdResumeExternalIssue() {
+  if (hasFlag("--execute") || hasFlag("--apply") || hasFlag("--dispatch")) {
+    throw new Error("cogentia resume: no authorized execution adapter is wired; refusing effectful dispatch");
+  }
+  const target = readResumableIssueTarget("resume <https://github.com/owner/repo/issues/N> [--json] [--root <dir>]");
+  const { issue, root } = target;
+  const audit = auditResumableIssue(issue, {
+    fileExists: root ? resumableAuditFileExists(root) : null,
+  });
+  const preflight = preflightHandoff(issue, {
+    fileExists: root ? resumableAuditFileExists(root) : null,
+  });
+  const result = {
+    schema: "cogentia.external-resume/v1",
+    phase: "INSPECT",
+    issue: {
+      repository: issue.repository, number: issue.number, title: issue.title,
+      url: issue.url, state: issue.state,
+    },
+    status: "WAITING_HANDLER",
+    routing: {
+      capability_discovery: "not_connected",
+      selected_handler: null,
+      required_next: "Select an authorized COP handler on the current host; execute bounded work; attach a separate ExecutionReceipt",
+    },
+    cold_handler_closure: audit.cold_handler_closure,
+    handoff: preflight,
+    effects: {
+      github_issue_mutation: false, git_commit: false,
+      git_push: false, deployment: false, external_communication: false,
+    },
+    execution_receipt: null,
+  };
+  output(result, [
+    `Cogentia resume  ${issue.repository}#${issue.number}`,
+    `state: ${result.status}`,
+    `audit: ${audit.cold_handler_closure?.status || "unknown"}`,
+    "Execution: none — COP handler not connected",
+    "No source, Issue or publication mutated",
+  ].join("\n"));
+  process.exitCode = 3;
+}
+
 function cmdIssues(sub) {
   if (["help", "-h", "--help"].includes(sub) || hasFlag("-h") || hasFlag("--help")) {
     return cmdHelp();
