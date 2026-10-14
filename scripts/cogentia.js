@@ -5888,10 +5888,12 @@ function cmdResumeExternalIssue() {
     expected_response: { format: "json", required: ["handler", "capability_truth", "mandate_basis", "execution_receipt_or_blocker"] },
   };
   const registry = tryLoadContext();
-  const emitted = registry?.configPath
+  const emitted = !prepare && registry?.configPath
     ? emitContinuation(registry, continuationRequest)
     : null;
-  const continuation = emitted
+  const continuation = prepare
+    ? { emitted: false, persisted: false, status: "PREPARE_ONLY", required_capabilities: requiredCapabilities }
+    : emitted
     ? { emitted: true, persisted: true, created: emitted.created, id: emitted.continuation.id, path: emitted.path, required_capabilities: requiredCapabilities }
     : { emitted: true, persisted: false, status: "PORTABLE_ONLY", reason: "registry_unavailable", packet: {
         type: "continuation", protocol: CONTINUATION_PROTOCOL, status: "active",
