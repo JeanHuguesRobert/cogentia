@@ -47,3 +47,35 @@ export function prepareExternalResume({ issue, handlersFile, requiredCapabilitie
     next_action: "Resolve mandate and claim/fencing through an authorized COP adapter before any execution",
   };
 }
+
+/**
+ * Read-only Magistral service identity discovery. Only loopback HTTP is accepted:
+ * neither a GitHub Issue nor a resolver manifest may direct this probe to an
+ * arbitrary network destination. The returned map is an offer, not a mandate.
+ */
+export async function discoverMagistralResume({ endpoint = "http://127.0.0.1:8880/service-info", fetchImpl = fetch } = {}) {
+  const base = { source: "magistral.service-info", endpoint, reachability: "unverified", readiness: "not_probed", execution_authorized: false };
+  let url;
+  try { url = new URL(endpoint); } catch { return { ...base, status: "BLOCKED", blockers: ["invalid_discovery_endpoint"] }; }
+  if (url.protocol !== "http:" || url.hostname !== "127.0.0.1" || url.pathname !== "/service-info" || url.username || url.password || url.search || url.hash) {
+    return { ...base, status: "BLOCKED", blockers: ["discovery_endpoint_must_be_loopback_service_info"] };
+  }
+  let response, body;
+  try {
+    response = await fetchImpl(url, { method: "GET", redirect: "error", signal: AbortSignal.timeout(3000) });
+    if (!response.ok) throw new Error("http_" + response.status);
+    body = await response.json();
+  } catch {
+    return { ...base, status: "WAITING_CAPABILITY_DISCOVERY", blockers: ["magistral_service_unreachable_or_invalid"] };
+  }
+  if (body?.protocol !== "cogentia.service-identity/v1" || body?.service?.id !== "magistral" || !Array.isArray(body.capabilities)) {
+    return { ...base, status: "BLOCKED", blockers: ["unexpected_magistral_identity_schema"] };
+  }
+  const offers = body.capabilities.filter(x => x?.id === "local-codex-acp" && x.adapter === "acp_stdio");
+  if (offers.length !== 1) return { ...base, reachability: "http_verified", status: "WAITING_HANDLER", blockers: ["local_codex_acp_offer_missing_or_ambiguous"] };
+  return {
+    ...base, status: "WAITING_HANDLER_PROBE", reachability: "http_verified",
+    selected_handler: { id: "local-codex-acp", adapter: "acp_stdio", tier: offers[0].tier, evidence: "magistral_live_declaration" },
+    blockers: ["acp_invocation_not_probed", "mandate_not_verified", "execution_adapter_not_connected", "provider_effect_fence_not_verified"],
+  };
+}
