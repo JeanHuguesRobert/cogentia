@@ -33,13 +33,17 @@ export function prepareExternalResume({ issue, handlersFile, requiredCapabilitie
   if (!eligible.length) return { ...base, status: "WAITING_HANDLER", blockers: ["no_available_capability_match"] };
   if (eligible.length !== 1) return { ...base, status: "WAITING_HANDLER_SELECTION", blockers: ["ambiguous_matching_handlers"], candidate_ids: eligible.map(h => h.id) };
   const handler = eligible[0];
+  // A local manifest is only a declaration. No endpoint probe has happened.
+  const evidenceLevel = handler.evidence?.level === "configured" ? "configured" : "declared";
   // Manifest declarations cannot mint a mandate. Authority must be checked
   // independently at the eventual provider/adapter effect boundary.
   return {
     ...base,
     status: "WAITING_MANDATE_VERIFICATION",
-    selected_handler: { id: handler.id, capabilities: requiredCapabilities, evidence: "manifest_declaration_only" },
-    blockers: ["mandate_not_verified", "execution_adapter_not_connected", "provider_effect_fence_not_verified"],
+    selected_handler: { id: handler.id, capabilities: requiredCapabilities, evidence: evidenceLevel },
+    reachability: "not_probed",
+    readiness: "not_probed",
+    blockers: ["handler_reachability_not_verified", "mandate_not_verified", "execution_adapter_not_connected", "provider_effect_fence_not_verified"],
     next_action: "Resolve mandate and claim/fencing through an authorized COP adapter before any execution",
   };
 }
