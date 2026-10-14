@@ -10,6 +10,15 @@ const edges = [
   { subject: "C", predicate: "depends_on", object: "A" }, // A <-> C dependency cycle
   { subject: "SECRET", predicate: "depends_on", object: "X", private: true },
 ];
+// ERP: a discovered bibliographic candidate or an untyped relation is not a proven prerequisite.
+const ambiguous = [
+  { subject: "Rossi-edition", object: "Gallica-candidate", source: "catalogue" },
+  { subject: "Rossi-edition", predicate: "candidate_unverified", object: "Gallica-candidate" },
+  { subject: "Rossi-edition", predicate: "depends_on", object: "verified-scan", source: "attested" },
+];
+assert.deepEqual(upstream(ambiguous, "Rossi-edition").entries.map(e => e.id), ["verified-scan"]);
+assert.deepEqual(downstream(ambiguous, "Gallica-candidate").entries, []);
+
 const allowed = edge => edge.private !== true;
 const up = upstream(edges, "B", { allowed });
 assert.deepEqual(new Set(up.entries.filter(e => !e.cycle).map(e => e.id)), new Set(["A","X","C"]));
