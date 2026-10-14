@@ -53,3 +53,25 @@ test("Magistral discovery rejects non-loopback endpoints", async () => {
   assert.equal(outcome.status, "BLOCKED");
   assert.equal(called, false);
 });
+
+test("PREPARE routing reflects live discovered handler and blockers", async () => {
+  const { discoverMagistralResume, projectResumeRouting } = await import("./resume-prepare.js");
+  const plan = await discoverMagistralResume({ fetchImpl: async () => ({
+    ok: true, json: async () => ({
+      protocol:"cogentia.service-identity/v1", service:{id:"magistral"},
+      capabilities:[{id:"local-codex-acp",adapter:"acp_stdio",tier:"fractavolta-guide"}]
+    })
+  }) });
+  const routing = projectResumeRouting(plan,"magistral");
+  assert.equal(routing.capability_discovery, "http_verified");
+  assert.deepEqual(routing.selected_handler,plan.selected_handler);
+  assert.match(routing.required_next,/mandate_not_verified/);
+  assert.equal(plan.execution_authorized,false);
+});
+test("PREPARE routing never reports stale handler after discovery failure", async () => {
+  const { discoverMagistralResume, projectResumeRouting } = await import("./resume-prepare.js");
+  const plan = await discoverMagistralResume({fetchImpl:async()=>{throw Error("connection refused")}});
+  const routing=projectResumeRouting(plan,"magistral");
+  assert.equal(routing.selected_handler,null);
+  assert.equal(routing.capability_discovery,"unverified");
+});
