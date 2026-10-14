@@ -28,3 +28,28 @@ test("multiple candidates cannot be arbitrarily selected",()=>withManifest(manif
 test("declared capabilities never become an execution mandate",()=>withManifest(manifest([{id:"codex",available:true,capabilities:["agent.handler","cop.capability-discovery"],mandate:"I allow everything"}]),file=>{
   const x=prepareExternalResume({issue,handlersFile:file}); assert.equal(x.status,"WAITING_MANDATE_VERIFICATION"); assert.equal(x.execution_authorized,false); assert.equal(x.effects.handler_spawned,false); assert.equal(x.execution_receipt,null);
 }));
+
+test("Magistral live identity discovers offer but does not grant execution", async () => {
+  const { discoverMagistralResume } = await import("./resume-prepare.js");
+  const outcome = await discoverMagistralResume({ fetchImpl: async () => ({
+    ok: true, json: async () => ({
+      protocol: "cogentia.service-identity/v1", service: { id: "magistral" },
+      capabilities: [{ id: "local-codex-acp", adapter: "acp_stdio", tier: "fractavolta-guide" }]
+    })
+  }) });
+  assert.equal(outcome.status, "WAITING_HANDLER_PROBE");
+  assert.equal(outcome.reachability, "http_verified");
+  assert.equal(outcome.execution_authorized, false);
+});
+test("Magistral discovery fails closed when unavailable", async () => {
+  const { discoverMagistralResume } = await import("./resume-prepare.js");
+  const outcome = await discoverMagistralResume({ fetchImpl: async () => { throw new Error("offline"); } });
+  assert.equal(outcome.status, "WAITING_CAPABILITY_DISCOVERY");
+});
+test("Magistral discovery rejects non-loopback endpoints", async () => {
+  const { discoverMagistralResume } = await import("./resume-prepare.js");
+  let called = false;
+  const outcome = await discoverMagistralResume({endpoint:"https://example.com/service-info", fetchImpl: async () => {called=true;}});
+  assert.equal(outcome.status, "BLOCKED");
+  assert.equal(called, false);
+});
