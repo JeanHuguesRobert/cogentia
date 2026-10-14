@@ -90,3 +90,25 @@ export function projectResumeRouting(plan, source = "magistral") {
     required_next: plan.blockers?.join(", ") || "Further verification required",
   };
 }
+
+/**
+ * A capability probe receipt is never an execution receipt or mandate.
+ * A successful HTTP response alone is insufficient: content must match.
+ */
+export function createCapabilityProbeReceipt({ handlerId, model, httpStatus, responseText, observedAt, evidenceSource = "operator_observation" }) {
+  if (typeof handlerId !== "string" || !handlerId.trim() || typeof model !== "string" || !model.trim()) throw new TypeError("handlerId and model are required");
+  if (!observedAt || !Number.isFinite(Date.parse(observedAt))) throw new TypeError("observedAt must be an ISO timestamp");
+  if (!["operator_observation", "local_http_probe"].includes(evidenceSource)) throw new TypeError("invalid evidenceSource");
+  const passed = httpStatus === 200 && responseText === "ACP_PROBE_OK";
+  return Object.freeze({
+    schema: "cogentia.capability-probe-receipt/v1",
+    handler_id: handlerId, model, observed_at: observedAt,
+    evidence_source: evidenceSource,
+    http_status: httpStatus,
+    result: passed ? "PASS" : "FAIL",
+    response_matched: responseText === "ACP_PROBE_OK",
+    proves: passed ? ["magistral_route_invocation", "acp_text_response"] : [],
+    does_not_prove: ["packet_mandate", "cop_claim", "provider_effect_fencing", "packet_execution"],
+    execution_authorized: false, execution_receipt: null,
+  });
+}
