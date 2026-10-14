@@ -79,3 +79,14 @@ export async function discoverMagistralResume({ endpoint = "http://127.0.0.1:888
     blockers: ["acp_invocation_not_probed", "mandate_not_verified", "execution_adapter_not_connected", "provider_effect_fence_not_verified"],
   };
 }
+
+/** Consistent top-level projection for all PREPARE adapters. */
+export function projectResumeRouting(plan, source = "magistral") {
+  return {
+    capability_discovery: source === "magistral"
+      ? plan.reachability
+      : (source === "manifest" ? "manifest_declaration" : "not_connected"),
+    selected_handler: plan.selected_handler || null,
+    required_next: plan.blockers?.join(", ") || "Further verification required",
+  };
+}
