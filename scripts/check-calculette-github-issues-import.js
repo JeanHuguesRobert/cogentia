@@ -1,0 +1,20 @@
+#!/usr/bin/env node
+import assert from "node:assert/strict";
+import { importGithubIssues } from "./lib/calculette-github-issues-import.js";
+import { buildJanusSeed } from "./lib/calculette-janus-seed.js";
+const observedAt="2026-10-10T00:00:00Z";
+const issue={number:233,html_url:"https://github.com/JeanHuguesRobert/cogentia/issues/233",created_at:"2026-10-09T19:25:46Z",updated_at:"2026-10-09T22:59:00Z",closed_at:null,state:"open",title:"Calculette",body:"See #234, #235. Maybe blocked by #120."};
+const batch=importGithubIssues([issue],{observedAt,repository:"JeanHuguesRobert/cogentia"});
+assert.equal(batch.observations.length,2);
+assert.equal(batch.edges.length,0);
+assert.equal(batch.candidates.length,3);
+assert.ok(batch.candidates.every(e=>e.epistemic_status==="candidate_unverified"));
+assert.equal(batch.observations.find(x=>x.kind==="github_issue_snapshot").occurred_at,null);
+const before=buildJanusSeed({...batch,asOf:"2026-10-09T19:30:00Z"});
+assert.equal(before.facts.length,0);
+const after=buildJanusSeed({...batch,asOf:observedAt});
+assert.equal(after.facts.length,2);
+assert.ok(after.facts.some(e=>e.kind==="github_issue_created"&&e.occurred_at==="2026-10-09T19:25:46Z"));
+assert.equal(importGithubIssues([{...issue,pull_request:{url:"private"}}],{observedAt}).observations.length,0);
+assert.equal(importGithubIssues([{...issue,html_url:"https://evil.example/issues/233"}],{observedAt}).observations.length,0);
+console.log("ok - GitHub issues: observed snapshot not backdated, refs candidates only, canonical gating");

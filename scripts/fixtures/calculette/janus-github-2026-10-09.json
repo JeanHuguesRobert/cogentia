@@ -1,0 +1,49 @@
+{
+  "protocol": "cogentia.calculette_janus_source_fixture/v1",
+  "purpose": "Minimal attested history of issue #233 and corrective/implementation PRs. Partial, not corpus-complete.",
+  "observations": [
+    {
+      "id": "github:cogentia:issue:233:opened",
+      "kind": "issue_opened",
+      "subject": "github:cogentia:issue:233",
+      "occurred_at": "2026-10-09T19:25:46Z",
+      "observed_at": "2026-10-09T21:23:13Z",
+      "source": "https://github.com/JeanHuguesRobert/cogentia/issues/233",
+      "epistemic_status": "source_attested"
+    },
+    {
+      "id": "github:cogentia:pr:234:opened",
+      "kind": "pull_request_opened",
+      "subject": "github:cogentia:pr:234",
+      "occurred_at": "2026-10-09T19:38:31Z",
+      "observed_at": "2026-10-09T21:23:13Z",
+      "source": "https://github.com/JeanHuguesRobert/cogentia/pull/234",
+      "epistemic_status": "source_attested"
+    },
+    {
+      "id": "github:cogentia:pr:235:opened",
+      "kind": "pull_request_opened",
+      "subject": "github:cogentia:pr:235",
+      "occurred_at": "2026-10-09T19:46:38Z",
+      "observed_at": "2026-10-09T21:23:13Z",
+      "source": "https://github.com/JeanHuguesRobert/cogentia/pull/235",
+      "epistemic_status": "source_attested"
+    }
+  ],
+  "edges": [
+    {
+      "subject": "github:cogentia:pr:234",
+      "predicate": "references",
+      "object": "github:cogentia:issue:233",
+      "source": "https://github.com/JeanHuguesRobert/cogentia/pull/234",
+      "observed_at": "2026-10-09T21:23:13Z"
+    },
+    {
+      "subject": "github:cogentia:pr:235",
+      "predicate": "references",
+      "object": "github:cogentia:issue:233",
+      "source": "https://github.com/JeanHuguesRobert/cogentia/pull/235",
+      "observed_at": "2026-10-09T21:23:13Z"
+    }
+  ]
+}
