@@ -75,3 +75,27 @@ test("PREPARE routing never reports stale handler after discovery failure", asyn
   assert.equal(routing.selected_handler,null);
   assert.equal(routing.capability_discovery,"unverified");
 });
+
+test("successful ACP capability receipt never becomes packet execution authority", async () => {
+  const { createCapabilityProbeReceipt } = await import("./resume-prepare.js");
+  const receipt = createCapabilityProbeReceipt({
+    handlerId: "local-codex-acp", model: "fractavolta-guide",
+    httpStatus: 200, responseText: "ACP_PROBE_OK",
+    observedAt: "2026-10-14T20:00:00Z",
+  });
+  assert.equal(receipt.result, "PASS");
+  assert.equal(receipt.schema, "cogentia.capability-probe-receipt/v1");
+  assert.equal(receipt.execution_authorized, false);
+  assert.equal(receipt.execution_receipt, null);
+  assert.ok(receipt.does_not_prove.includes("cop_claim"));
+});
+test("HTTP 200 with unexpected ACP reply cannot pass probe", async () => {
+  const { createCapabilityProbeReceipt } = await import("./resume-prepare.js");
+  const receipt = createCapabilityProbeReceipt({
+    handlerId: "local-codex-acp", model: "fractavolta-guide",
+    httpStatus: 200, responseText: "unexpected",
+    observedAt: "2026-10-14T20:00:00Z",
+  });
+  assert.equal(receipt.result, "FAIL");
+  assert.deepEqual(receipt.proves, []);
+});
