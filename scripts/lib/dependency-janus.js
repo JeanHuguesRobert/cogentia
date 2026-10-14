@@ -16,7 +16,7 @@ function visibleRelations(relations, allowed) {
   if (typeof allowed !== "function") throw new TypeError("allowed must be a visibility predicate");
   return relations.filter(edge => edge && typeof edge.subject === "string" &&
     typeof edge.object === "string" && allowed(edge)).map(edge => ({
-      subject: edge.subject, object: edge.object, predicate: String(edge.predicate || "depends_on"),
+      subject: edge.subject, object: edge.object, predicate: String(edge.predicate ?? ""),
       source: edge._source_file || edge.source || null,
   }));
 }
