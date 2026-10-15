@@ -36,6 +36,20 @@ export async function executeTrustedAnalysis({issue, prompt, endpoint="http://12
   fs.writeFileSync(filename,JSON.stringify(receipt,null,2)+"\n",{flag:"wx",mode:0o600});
   return {receipt_path:filename,receipt:{...receipt,answer:answer.slice(0,3000)}};
 }
+// Refresh the actual public Packet; never silently replace missing evidence with a
+// synthetic issue summary. The allowlist is intentionally narrow for this pilot.
+export async function fetchPilotPacket({fetchImpl=fetch}={}) {
+  const url="https://api.github.com/repos/JeanHuguesRobert/inseme/issues/120";
+  const response=await fetchImpl(url,{redirect:"error",signal:AbortSignal.timeout(10000),
+    headers:{"Accept":"application/vnd.github+json","User-Agent":"cogentia-resume-pilot"}});
+  if(!response.ok)throw Error("packet_fetch_http_"+response.status);
+  const doc=await response.json();
+  if(doc.number!==120||typeof doc.body!=="string"||!doc.body.trim())
+    throw Error("packet_content_unverified");
+  if(doc.body.length>100000)throw Error("packet_body_exceeds_limit");
+  return {url:doc.html_url,title:doc.title,body:doc.body,updated_at:doc.updated_at};
+}
+
 export function magistralTokenFromService() {
   // Local user must have permission to read the service environment.
   const pid=execFileSync("systemctl",["show","magistral","-p","MainPID","--value"],{encoding:"utf8",timeout:5000}).trim();
