@@ -11,7 +11,7 @@
  */
 
 import fs from "node:fs";
-import { prepareExternalResume, discoverMagistralResume, projectResumeRouting } from "./lib/resume-prepare.js";
+import { prepareExternalResume, discoverMagistralResume, projectResumeRouting, planGovernedResume } from "./lib/resume-prepare.js";
 import http from "node:http";
 import os from "node:os";
 import path from "node:path";
@@ -5928,7 +5928,8 @@ async function cmdResumeExternalIssue() {
       ? { ...await discoverMagistralResume(), schema: "cogentia.external-resume-prepare/v1", phase: "PREPARE", issue: { repository: issue.repository, number: issue.number, url: issue.url }, required_capabilities: requiredCapabilities, execution_receipt: null, effects: { handler_spawned: false, command_executed: false, git_commit: false, github_mutation: false } }
       : prepareExternalResume({ issue, handlersFile });
     const preparedRouting = projectResumeRouting(plan, magistral ? "magistral" : handlersFile ? "manifest" : "none");
-    output({ ...result, phase: "PREPARE", preparation: plan, routing: preparedRouting, status: plan.status },
+    const governedPlan = planGovernedResume({ issue, discovery: plan });
+    output({ ...result, phase: "PREPARE", preparation: plan, routing: preparedRouting, governed_plan: governedPlan, status: plan.status },
       `Cogentia resume PREPARE  ${issueRef}\nstate: ${plan.status}\nhandler: ${plan.selected_handler?.id || "none"}\nExecution: none — no mandate or dispatch\nContinuation: ${continuation.id || "portable only"}`);
     process.exitCode = 3;
     return;
