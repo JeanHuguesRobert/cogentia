@@ -168,3 +168,20 @@ test("read-only request without handler remains blocked", async () => {
   assert.equal(x.handler_id,null);
   assert.equal(x.execution_receipt,null);
 });
+
+test("trusted Codex does not universally require Bubblewrap", async () => {
+  const {planTrustedHandlerResume}=await import("./resume-prepare.js");
+  const p=planTrustedHandlerResume({issue,discovery:{reachability:"http_verified",selected_handler:{id:"local-codex-acp"}},trust:"trusted_local_handler"});
+  assert.equal(p.isolation,"risk_based");
+  assert.equal(p.optimistic_locking.conflict,"stop_refresh_reconcile");
+  assert.equal(p.execution_authorized,false);
+  assert.ok(!p.blockers.includes("os_filesystem_isolation_not_verified"));
+});
+test("trusted status never mints mandate for GitHub or publishing", async () => {
+  const {planTrustedHandlerResume}=await import("./resume-prepare.js");
+  for(const effect of ["github_update","publish"]) {
+    const p=planTrustedHandlerResume({issue,discovery:{reachability:"http_verified",selected_handler:{id:"local-codex-acp"}},trust:"trusted_local_handler",effect});
+    assert.ok(p.blockers.includes("bounded_mandate_not_verified"));
+    assert.equal(p.execution_authorized,false);
+  }
+});
