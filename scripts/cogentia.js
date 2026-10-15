@@ -11,7 +11,7 @@
  */
 
 import fs from "node:fs";
-import { prepareExternalResume, discoverMagistralResume, projectResumeRouting, planGovernedResume, assessReadOnlyDelegation } from "./lib/resume-prepare.js";
+import { prepareExternalResume, discoverMagistralResume, projectResumeRouting, planGovernedResume, assessReadOnlyDelegation, planTrustedHandlerResume } from "./lib/resume-prepare.js";
 import http from "node:http";
 import os from "node:os";
 import path from "node:path";
@@ -5931,8 +5931,9 @@ async function cmdResumeExternalIssue() {
       : prepareExternalResume({ issue, handlersFile });
     const preparedRouting = projectResumeRouting(plan, magistral ? "magistral" : handlersFile ? "manifest" : "none");
     const governedPlan = planGovernedResume({ issue, discovery: plan });
+    const trustedPlan = magistral ? planTrustedHandlerResume({ issue, discovery: plan, trust: "trusted_local_handler", effect: "worktree_edit" }) : null;
     const delegation = readOnly ? assessReadOnlyDelegation({ issue, discovery: plan, requested: true }) : null;
-    output({ ...result, phase: "PREPARE", preparation: plan, routing: preparedRouting, governed_plan: governedPlan, ...(readOnly ? { read_only_delegation: delegation } : {}), status: readOnly ? delegation.status : plan.status },
+    output({ ...result, phase: "PREPARE", preparation: plan, routing: preparedRouting, governed_plan: governedPlan, ...(trustedPlan ? {trusted_handler_plan: trustedPlan} : {}), ...(readOnly ? { read_only_delegation: delegation } : {}), status: readOnly ? delegation.status : plan.status },
       `Cogentia resume PREPARE  ${issueRef}\nstate: ${plan.status}\nhandler: ${plan.selected_handler?.id || "none"}\nExecution: none — no mandate or dispatch\nContinuation: ${continuation.id || "portable only"}`);
     process.exitCode = 3;
     return;
