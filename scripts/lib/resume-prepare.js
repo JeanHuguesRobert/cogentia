@@ -188,3 +188,43 @@ export function planGovernedResume({ issue, discovery, proposedEffects = [] }) {
     execution_receipt: null,
   };
 }
+
+/**
+ * Read-only delegation security contract. A prompt or ACP permission callback
+ * is not an OS sandbox. No execution path can be unlocked by self-asserted
+ * JSON evidence; require a future independently verified isolation adapter.
+ */
+export function assessReadOnlyDelegation({ issue, discovery, requested = false } = {}) {
+  const discovered = discovery?.selected_handler?.id === "local-codex-acp" &&
+    discovery?.reachability === "http_verified";
+  return Object.freeze({
+    schema: "cogentia.read-only-delegation/v1",
+    packet_ref: issue?.url || null,
+    requested,
+    handler_id: discovered ? "local-codex-acp" : null,
+    scope: { repositories: ["JeanHuguesRobert/inseme", "JeanHuguesRobert/cogentia"],
+      effects: [], network: "disabled_except_necessary_provider_auth",
+      source_access: "read_only", output: "durable_local_receipt" },
+    controls: {
+      mandate: "not_verified",
+      os_filesystem_isolation: "not_verified",
+      agent_tool_restriction: "advisory_only",
+      credential_separation: "not_verified",
+      provider_network_isolation: "not_verified",
+      bounded_execution: "not_connected",
+      durable_result: "not_connected",
+    },
+    status: discovered ? "WAITING_ISOLATED_READ_ONLY_ADAPTER" : "WAITING_HANDLER",
+    blockers: [
+      ...(!discovered ? ["handler_not_discovered"] : []),
+      "read_only_mandate_not_verified",
+      "os_filesystem_isolation_not_verified",
+      "credential_separation_not_verified",
+      "bounded_execution_not_connected",
+      "durable_receipt_not_connected",
+    ],
+    execution_authorized: false,
+    execution_receipt: null,
+    effects: { handler_spawned: false, command_executed: false, git_commit: false, github_mutation: false },
+  });
+}
