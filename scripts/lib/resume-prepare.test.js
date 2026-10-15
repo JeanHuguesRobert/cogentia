@@ -125,3 +125,27 @@ test("expired claim is rejected independently of effect fence", async () => {
     claim:{schema:"cop.packet-claim/v1",packet_ref:issue.url,handler_ref:"local-codex-acp",claim_id:"stale",epoch:1,mode:"MUTATE",scope:"packet",expires_at:"2026-10-15T02:00:00Z"}});
   assert.ok(result.blockers.includes("current_claim_not_verified"));
 });
+
+test("governed plan does not mistake discovered handler for read-only mandate", async () => {
+  const { planGovernedResume } = await import("./resume-prepare.js");
+  const plan = planGovernedResume({issue,discovery:{status:"WAITING_HANDLER_PROBE",reachability:"http_verified",selected_handler:{id:"local-codex-acp"}}});
+  assert.equal(plan.analysis.status,"WAITING_READ_ONLY_MANDATE");
+  assert.equal(plan.execution_authorized,false);
+  assert.equal(plan.execution_receipt,null);
+});
+test("governed plan refuses external GitHub writes and unverified fencing", async () => {
+  const { planGovernedResume } = await import("./resume-prepare.js");
+  const plan=planGovernedResume({issue,discovery:{status:"WAITING_HANDLER_PROBE",reachability:"http_verified",selected_handler:{id:"local-codex-acp"}},proposedEffects:[
+    {kind:"update_file",provider:"github",boundary:"external_provider_fenced"},
+    {kind:"publish",provider:"github",boundary:"external_unfenced"},
+  ]});
+  assert.equal(plan.effects.length,2);
+  assert.ok(plan.effects.every(x=>x.status==="BLOCKED"&&!x.execution_authorized));
+  assert.ok(plan.blockers.includes("effects_not_authorized"));
+});
+test("governed plan with no discovered handler remains blocked", async () => {
+  const { planGovernedResume } = await import("./resume-prepare.js");
+  const plan=planGovernedResume({issue,discovery:{status:"WAITING_CAPABILITY_DISCOVERY",reachability:"unverified"}});
+  assert.equal(plan.status,"WAITING_HANDLER");
+  assert.equal(plan.handler,null);
+});
