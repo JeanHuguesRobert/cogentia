@@ -228,3 +228,32 @@ export function assessReadOnlyDelegation({ issue, discovery, requested = false }
     effects: { handler_spawned: false, command_executed: false, git_commit: false, github_mutation: false },
   });
 }
+
+/** Trusted handler policy: isolation is risk-based, not a universal prerequisite.
+ * This is a planning decision, never an authority token or executor.
+ */
+export function planTrustedHandlerResume({ issue, discovery, trust = "unknown", effect = "worktree_edit", mandate = null } = {}) {
+  const handler = discovery?.selected_handler?.id === "local-codex-acp" ? discovery.selected_handler : null;
+  const recognized = handler && discovery?.reachability === "http_verified" && trust === "trusted_local_handler";
+  const permittedTypes = ["analysis", "worktree_edit", "git_commit", "github_update", "publish", "external_communication"];
+  const sensitive = ["publish", "external_communication"].includes(effect);
+  const blockers = [];
+  if (!recognized) blockers.push("trusted_handler_not_verified");
+  if (!permittedTypes.includes(effect)) blockers.push("unknown_effect");
+  if (mandate?.packet_ref !== issue?.url || mandate?.handler_id !== handler?.id ||
+      !Array.isArray(mandate?.allowed_effects) || !mandate.allowed_effects.includes(effect) ||
+      mandate?.explicit_authority !== true) blockers.push("bounded_mandate_not_verified");
+  if (sensitive) blockers.push("sensitive_effect_requires_specific_review");
+  if (effect === "github_update") blockers.push("provider_optimistic_write_adapter_not_connected");
+  // Local working changes are recoverable but must stay in an isolated worktree.
+  // A user-supplied JSON mandate cannot independently prove authorization.
+  return {
+    schema: "cogentia.trusted-handler-resume-plan/v1", packet_ref: issue?.url || null,
+    handler_id: handler?.id || null, trust_policy: "trusted_handler_optimistic_effects",
+    isolation: "risk_based", worktree: "required_for_mutations",
+    optimistic_locking: { baseline_sha: "required", conflict: "stop_refresh_reconcile", force_push: "forbidden" },
+    effect, blockers: [...blockers,"trusted_mandate_adapter_not_connected","execution_adapter_not_connected"],
+    status: "WAITING_TRUSTED_MANDATE_ADAPTER", execution_authorized: false,
+    execution_receipt: null,
+  };
+}
