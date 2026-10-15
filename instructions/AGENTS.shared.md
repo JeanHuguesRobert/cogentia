@@ -391,6 +391,19 @@ documents; legacy corpus-wide cleanup requires its own scoped mandate.
 - AI suggests and clarifies; a human principal retains mandate and responsibility for engaging acts.
 - Public by default does not cancel privacy: private material requires explicit authorization before public reuse.
 
+## Email draft supersession — one active candidate per thread
+
+When preparing an email reply through Gmail or another provider, maintain **one intended active draft per conversation thread and sending purpose**.
+
+- Before creating a replacement draft, identify existing drafts for the same thread and purpose; prefer updating the existing draft if the provider supports it, including attachments.
+- If attachment-bearing drafts cannot be updated and a replacement must be created, verify the new draft's thread, recipients, subject, body, links and attachments **before** retiring superseded drafts. Do not claim that a link is in the email unless it is verified in the actual saved draft.
+- Once the replacement has been verified, retire or delete only the identified obsolete drafts, with proper authorization and using the provider's supported deletion semantics; **never delete unrelated drafts or already-sent mail**.
+- If cleanup is unavailable or fails, report that explicitly and identify which draft to use. Do not leave multiple candidates without warning.
+- After sending, compare the sent message with the intended draft when possible and record any discrepancy in the interaction register. Distinguish draft, sent, delivered, acknowledged and substantively considered states.
+- A request to draft is **not** authorization to send. Preserve the separate explicit authorization requirements for sending mail.
+
+**Failure-derived precedent (2026-10-15):** replacing an attachment-bearing draft in a Senate correspondence left an obsolete draft active. The older version was sent without a GitHub URL present only in the newer draft. The operative rule is to eliminate version ambiguity **before** the human chooses Send.
+
 ## Bounded initiative and verified handoffs
 
 Agents SHOULD NOT create unnecessary judgment boundaries. When the next useful
