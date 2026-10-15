@@ -11,6 +11,7 @@
  */
 
 import fs from "node:fs";
+import { executeTrustedAnalysis, magistralTokenFromService } from "./lib/trusted-handler-analysis.js";
 import { prepareExternalResume, discoverMagistralResume, projectResumeRouting, planGovernedResume, assessReadOnlyDelegation, planTrustedHandlerResume } from "./lib/resume-prepare.js";
 import http from "node:http";
 import os from "node:os";
@@ -5858,6 +5859,8 @@ async function cmdResumeExternalIssue() {
   const handlersFile = valueFlag("--handlers-file");
   const magistral = takeFlag("--magistral");
   const readOnly = takeFlag("--read-only");
+  const runAnalysis = takeFlag("--run-analysis");
+  if(runAnalysis && (prepare || readOnly || handlersFile)) throw new Error("--run-analysis excludes prepare, read-only and handlers-file");
   if (readOnly && !magistral) throw new Error("--read-only requires --magistral");
   if (magistral && (!prepare && !readOnly || handlersFile)) throw new Error("--magistral requires --prepare and excludes --handlers-file");
   if (handlersFile && !prepare) throw new Error("--handlers-file requires --prepare");
@@ -5866,6 +5869,26 @@ async function cmdResumeExternalIssue() {
   }
   const target = readResumableIssueTarget("resume <https://github.com/owner/repo/issues/N> [--json] [--root <dir>]");
   const { issue, root } = target;
+  if(runAnalysis) {
+    if(issue.url !== "https://github.com/JeanHuguesRobert/inseme/issues/120") throw new Error("pilot is limited to Inseme #120");
+    const discovered=await discoverMagistralResume();
+    if(discovered.status!=="WAITING_HANDLER_PROBE") throw new Error("Magistral handler not discovered");
+    const token=magistralTokenFromService();
+    const prompt="Analyze Cognitive Packet "+issue.url+" as a trusted local advisor. "+
+      "Provide a concise status, the evidence you can actually verify, the next smallest implementation step and unresolved blockers. "+
+      "Do not execute tools, mutate files, publish, or claim to have read issue content not supplied. "+
+      "This is an advisory first run, not an authorized mutation mandate. "+
+      "Known context: Cogentia #240 discovers Magistral Codex ACP and plans governed resume; "+
+      "Inseme #143 tests local SQLite epoch fencing; GitHub provider effects remain unfenced.";
+    const receipt=await executeTrustedAnalysis({issue,prompt,token});
+    output({schema:"cogentia.external-resume/v1",phase:"ANALYSIS",status:receipt.receipt.status,
+      receipt_path:receipt.receipt_path,receipt:receipt.receipt},
+      "Handler analysis: "+receipt.receipt.status+"\\nReceipt: "+receipt.receipt_path+"\\n"+
+      (receipt.receipt.answer||receipt.receipt.error||""));
+    if(receipt.receipt.status!=="PASS")process.exitCode=3;
+    return;
+  }
+
   const audit = auditResumableIssue(issue, {
     fileExists: root ? resumableAuditFileExists(root) : null,
   });
