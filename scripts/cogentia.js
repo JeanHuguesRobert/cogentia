@@ -11,7 +11,7 @@
  */
 
 import fs from "node:fs";
-import { executeTrustedAnalysis, magistralTokenFromService } from "./lib/trusted-handler-analysis.js";
+import { executeTrustedAnalysis, magistralTokenFromService, fetchPilotPacket } from "./lib/trusted-handler-analysis.js";
 import { prepareExternalResume, discoverMagistralResume, projectResumeRouting, planGovernedResume, assessReadOnlyDelegation, planTrustedHandlerResume } from "./lib/resume-prepare.js";
 import http from "node:http";
 import os from "node:os";
@@ -5874,12 +5874,14 @@ async function cmdResumeExternalIssue() {
     const discovered=await discoverMagistralResume();
     if(discovered.status!=="WAITING_HANDLER_PROBE") throw new Error("Magistral handler not discovered");
     const token=magistralTokenFromService();
-    const prompt="Analyze Cognitive Packet "+issue.url+" as a trusted local advisor. "+
-      "Provide a concise status, the evidence you can actually verify, the next smallest implementation step and unresolved blockers. "+
-      "Do not execute tools, mutate files, publish, or claim to have read issue content not supplied. "+
-      "This is an advisory first run, not an authorized mutation mandate. "+
-      "Known context: Cogentia #240 discovers Magistral Codex ACP and plans governed resume; "+
-      "Inseme #143 tests local SQLite epoch fencing; GitHub provider effects remain unfenced.";
+    const packet=await fetchPilotPacket();
+    const prompt="Analyze the following actual Cognitive Packet as a trusted local advisor. "+
+      "Identify its real goal and acceptance criteria, distinguish evidence from assumptions, "+
+      "and recommend the smallest executable next step. "+
+      "No external mutations are authorized by this pilot. "+
+      "Do not claim repository files or comments were read unless actually supplied.\\n"+
+      "PACKET URL: "+issue.url+"\\nUPDATED: "+packet.updated_at+
+      "\\nTITLE: "+packet.title+"\\nISSUE BODY:\\n"+packet.body;
     const receipt=await executeTrustedAnalysis({issue,prompt,token});
     output({schema:"cogentia.external-resume/v1",phase:"ANALYSIS",status:receipt.receipt.status,
       receipt_path:receipt.receipt_path,receipt:receipt.receipt},
