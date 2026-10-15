@@ -99,3 +99,29 @@ test("HTTP 200 with unexpected ACP reply cannot pass probe", async () => {
   assert.equal(receipt.result, "FAIL");
   assert.deepEqual(receipt.proves, []);
 });
+
+test("governed-effect preflight fails closed without mandate or claim", async () => {
+  const { assessResumeEffectBoundary } = await import("./resume-prepare.js");
+  const result=assessResumeEffectBoundary({packetRef:issue.url,handlerRef:"local-codex-acp",observedAt:"2026-10-15T03:00:00Z"});
+  assert.equal(result.status,"BLOCKED");
+  assert.equal(result.execution_authorized,false);
+  assert.ok(result.blockers.includes("mandate_not_verified"));
+  assert.ok(result.blockers.includes("current_claim_not_verified"));
+});
+test("forged mandate and valid-looking claim never authorize effects", async () => {
+  const { assessResumeEffectBoundary } = await import("./resume-prepare.js");
+  const result=assessResumeEffectBoundary({
+    packetRef:issue.url,handlerRef:"local-codex-acp",observedAt:"2026-10-15T03:00:00Z",
+    mandate:{packet_ref:issue.url,handler_ref:"local-codex-acp",explicit_authority:true,allowed_effects:["git_commit"]},
+    claim:{schema:"cop.packet-claim/v1",packet_ref:issue.url,handler_ref:"local-codex-acp",claim_id:"fake",epoch:1,mode:"MUTATE",scope:"packet",expires_at:"2026-10-15T04:00:00Z"},
+  });
+  assert.equal(result.execution_authorized,false);
+  assert.ok(result.blockers.includes("provider_effect_fence_not_verified"));
+  assert.ok(result.blockers.includes("authoritative_claim_validation_not_connected"));
+});
+test("expired claim is rejected independently of effect fence", async () => {
+  const { assessResumeEffectBoundary } = await import("./resume-prepare.js");
+  const result=assessResumeEffectBoundary({packetRef:issue.url,handlerRef:"local-codex-acp",observedAt:"2026-10-15T03:00:00Z",
+    claim:{schema:"cop.packet-claim/v1",packet_ref:issue.url,handler_ref:"local-codex-acp",claim_id:"stale",epoch:1,mode:"MUTATE",scope:"packet",expires_at:"2026-10-15T02:00:00Z"}});
+  assert.ok(result.blockers.includes("current_claim_not_verified"));
+});
