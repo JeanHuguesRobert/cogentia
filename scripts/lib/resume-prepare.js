@@ -112,3 +112,37 @@ export function createCapabilityProbeReceipt({ handlerId, model, httpStatus, res
     execution_authorized: false, execution_receipt: null,
   });
 }
+
+/**
+ * Advisory-only governed-effect preflight. Inputs are untrusted snapshots,
+ * including claims: no local JSON object can establish provider-side fencing.
+ * No true execution_authorized result is representable here.
+ */
+export function assessResumeEffectBoundary({ packetRef, handlerRef, mandate, claim, observedAt } = {}) {
+  const blockers = [];
+  if (typeof packetRef !== "string" || !/^https:\/\/github\.com\/[^/]+\/[^/]+\/issues\/[1-9][0-9]*$/.test(packetRef)) blockers.push("invalid_packet_reference");
+  if (typeof handlerRef !== "string" || !handlerRef.trim()) blockers.push("handler_not_identified");
+  if (mandate?.packet_ref !== packetRef || mandate?.handler_ref !== handlerRef ||
+      mandate?.explicit_authority !== true || !Array.isArray(mandate?.allowed_effects)) blockers.push("mandate_not_verified");
+  const now = Date.parse(observedAt);
+  if (!Number.isFinite(now)) blockers.push("observation_time_not_verified");
+  const claimShape = claim?.schema === "cop.packet-claim/v1" &&
+    claim.packet_ref === packetRef && claim.handler_ref === handlerRef &&
+    typeof claim.claim_id === "string" && claim.claim_id.length > 0 &&
+    Number.isInteger(claim.epoch) && claim.epoch >= 1 &&
+    claim.mode === "MUTATE" && claim.scope === "packet" &&
+    Number.isFinite(Date.parse(claim.expires_at)) && Date.parse(claim.expires_at) > now;
+  if (!claimShape) blockers.push("current_claim_not_verified");
+  // Even a well-formed mandate/claim JSON can be forged or stale:
+  // authoritative provider verification and an effect fence are indispensable.
+  blockers.push("provider_effect_fence_not_verified");
+  blockers.push("authoritative_claim_validation_not_connected");
+  return Object.freeze({
+    schema: "cogentia.resume-effect-boundary/v1",
+    packet_ref: packetRef || null, handler_ref: handlerRef || null,
+    phase: "PREFLIGHT", status: "BLOCKED",
+    evidence: "untrusted_snapshot_advisory_only",
+    blockers, execution_authorized: false, execution_receipt: null,
+    effects: { handler_spawned: false, command_executed: false, git_commit: false, github_mutation: false },
+  });
+}
