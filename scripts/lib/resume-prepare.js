@@ -146,3 +146,45 @@ export function assessResumeEffectBoundary({ packetRef, handlerRef, mandate, cla
     effects: { handler_spawned: false, command_executed: false, git_commit: false, github_mutation: false },
   });
 }
+
+/**
+ * Portable, advisory execution plan. It never runs a handler, claims a Packet,
+ * or confers authority from a GitHub Issue's text.
+ */
+export function planGovernedResume({ issue, discovery, proposedEffects = [] }) {
+  const handler = discovery?.selected_handler || null;
+  const candidateReady = discovery?.status === "WAITING_HANDLER_PROBE" && discovery?.reachability === "http_verified";
+  const effects = proposedEffects.map((e, index) => {
+    const boundary = e?.boundary || "unknown";
+    const local = boundary === "local_transactional" && e?.provider === "sqlite-governed-effect-gateway" && e?.kind === "synthetic_state_update";
+    return {
+      index, kind: typeof e?.kind === "string" ? e.kind : "unknown",
+      provider: typeof e?.provider === "string" ? e.provider : "unknown",
+      boundary,
+      status: local ? "ADVISORY_ONLY" : "BLOCKED",
+      reason: local ? "local_commit_requires_authoritative_claim" : "provider_effect_fence_not_verified",
+      execution_authorized: false,
+    };
+  });
+  return {
+    schema: "cogentia.governed-resume-plan/v1",
+    packet_ref: issue?.url || null,
+    handler,
+    handler_evidence: candidateReady ? "live_declared; acp_probe_receipt_not_attached" : "unverified",
+    analysis: {
+      status: candidateReady ? "WAITING_READ_ONLY_MANDATE" : "WAITING_HANDLER",
+      allowed_without_mandate: false,
+      required: ["explicit_read_only_scope", "workspace_boundary", "budget_and_timeout", "durable_result_channel"],
+    },
+    effects,
+    status: candidateReady ? "WAITING_READ_ONLY_MANDATE" : "WAITING_HANDLER",
+    blockers: [
+      ...(candidateReady ? [] : ["handler_not_ready"]),
+      "read_only_mandate_not_verified",
+      "execution_adapter_not_connected",
+      ...(effects.length ? ["effects_not_authorized"] : []),
+    ],
+    execution_authorized: false,
+    execution_receipt: null,
+  };
+}
