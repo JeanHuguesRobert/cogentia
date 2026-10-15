@@ -27,3 +27,12 @@ test("failed handler response is durably recorded as failure",async()=>{
  assert.equal(JSON.parse(fs.readFileSync(x.receipt_path,"utf8")).status,"FAILED");
  }finally{fs.rmSync(dir,{recursive:true,force:true});}
 });
+
+test("pilot fetch injects actual verified issue body and fails closed",async()=>{
+ const {fetchPilotPacket}=await import("./trusted-handler-analysis.js");
+ const packet=await fetchPilotPacket({fetchImpl:async(url)=>({
+   ok:true,json:async()=>({number:120,body:"# Goal\\nRun bounded compute",title:"Packet",html_url:"https://github.com/JeanHuguesRobert/inseme/issues/120",updated_at:"2026-10-15T00:00:00Z"})
+ })});
+ assert.match(packet.body,/Run bounded compute/);
+ await assert.rejects(fetchPilotPacket({fetchImpl:async()=>({ok:true,json:async()=>({number:121,body:"wrong"})})}),/packet_content_unverified/);
+});
