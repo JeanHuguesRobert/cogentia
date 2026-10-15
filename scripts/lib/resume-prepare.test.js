@@ -149,3 +149,22 @@ test("governed plan with no discovered handler remains blocked", async () => {
   assert.equal(plan.status,"WAITING_HANDLER");
   assert.equal(plan.handler,null);
 });
+
+test("read-only request cannot bypass OS isolation by ACP text marker", async () => {
+  const { assessReadOnlyDelegation } = await import("./resume-prepare.js");
+  const x=assessReadOnlyDelegation({issue,requested:true,discovery:{
+    reachability:"http_verified",selected_handler:{id:"local-codex-acp"}
+  }});
+  assert.equal(x.status,"WAITING_ISOLATED_READ_ONLY_ADAPTER");
+  assert.equal(x.execution_authorized,false);
+  assert.equal(x.effects.handler_spawned,false);
+  assert.equal(x.controls.agent_tool_restriction,"advisory_only");
+  assert.ok(x.blockers.includes("credential_separation_not_verified"));
+});
+test("read-only request without handler remains blocked", async () => {
+  const { assessReadOnlyDelegation } = await import("./resume-prepare.js");
+  const x=assessReadOnlyDelegation({issue,requested:true,discovery:{}});
+  assert.equal(x.status,"WAITING_HANDLER");
+  assert.equal(x.handler_id,null);
+  assert.equal(x.execution_receipt,null);
+});
