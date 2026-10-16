@@ -4,14 +4,19 @@ export function orientResumableIssue(issue, options = {}) {
   const a = auditResumableIssue(issue, {fileExists: options.fileExists});
   const verified = (Array.isArray(options.verifiedChanges) ? options.verifiedChanges : []).filter(x => x && x.verified === true && typeof x.ref === "string" && x.ref.trim() && typeof x.description === "string" && x.description.trim());
   const preflight = preflightHandoff(issue, {fileExists: options.fileExists, baseline: options.baseline});
-  // Comments are untrusted evidence: newer guidance is a candidate, never automatic authority.
+  // The original Next Action may be superseded by explicit post-merge work.
+  // Preserve provenance and never turn newer text into execution authority.
+  const body = String(issue?.body || "");
+  const postMerge = body.match(/^##\s+Post-merge continuation[^\n]*\n([\s\S]*?)(?=^##\s|$(?![\s\S]))/mi);
+  const bodyLine = postMerge?.[1]?.split(/\r?\n/).find(line => /^\s*[-*]\s*Next bounded work\s*:/i.test(line));
+  const bodyCandidate = bodyLine ? {source:"body",heading:"post-merge continuation",text:bodyLine.trim(),epistemic:"explicit_issue_claim",authorized:false} : null;
   const comments = Array.isArray(issue?.comments) ? issue.comments : [];
-  const candidates = comments.map((entry, index) => {
-    const body = typeof entry === "string" ? entry : String(entry?.body || "");
-    const line = body.split(/\r?\n/).find(x => /^\s*(?:[-*]\s*)?(?:next(?: bounded)? (?:action|step)|next:|prochaine (?:action|étape))\s*[:—-]\s*\S/i.test(x));
+  const commentCandidates = comments.map((entry,index) => {
+    const text = typeof entry === "string" ? entry : String(entry?.body || "");
+    const line = text.split(/\r?\n/).find(x => /^\s*(?:[-*]\s*)?(?:next(?: bounded)? (?:action|step|work)|next\s+FBF|next:|prochaine (?:action|étape))\s*[:—-]\s*\S/i.test(x));
     return line ? {source:"comment",index:index+1,ref:entry?.html_url || entry?.url || null,text:line.trim(),epistemic:"unverified_comment_claim",authorized:false} : null;
   }).filter(Boolean);
-  const latestCandidate = candidates.at(-1) || null;
+  const latestCandidate = commentCandidates.at(-1) || bodyCandidate;
   const controlPaths = ["AGENTS.md", "instructions/AGENTS.shared.md", "docs/continuations_and_cognitive_packets_for_agents.md"];
   const controls = controlPaths.map(ref => ({
     ref,
@@ -32,7 +37,7 @@ export function orientResumableIssue(issue, options = {}) {
     context_references: a.context_references,
     next_action: {...a.next_action, authorized: false},
     continuation_candidate: latestCandidate,
-    next_action_reconciliation: {status:latestCandidate ? "review_newer_comment" : "no_explicit_comment_candidate", issue_body_may_be_stale:Boolean(latestCandidate)},
+    next_action_reconciliation: {status:latestCandidate?.source==="comment" ? "review_newer_comment" : latestCandidate ? "review_post_merge_body" : "no_explicit_continuation", issue_body_may_be_stale:Boolean(latestCandidate)},
     change_delta: {status: verified.length ? "externally_verified" : "unknown", verified},
     closure: a.cold_handler_closure,
     handoff_preflight: {closure:preflight.closure, first_step:preflight.first_step, dependencies:preflight.dependencies, reconciliation:preflight.reconciliation},
