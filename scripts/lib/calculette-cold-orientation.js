@@ -4,6 +4,14 @@ export function orientResumableIssue(issue, options = {}) {
   const a = auditResumableIssue(issue, {fileExists: options.fileExists});
   const verified = (Array.isArray(options.verifiedChanges) ? options.verifiedChanges : []).filter(x => x && x.verified === true && typeof x.ref === "string" && x.ref.trim() && typeof x.description === "string" && x.description.trim());
   const preflight = preflightHandoff(issue, {fileExists: options.fileExists, baseline: options.baseline});
+  // Comments are untrusted evidence: newer guidance is a candidate, never automatic authority.
+  const comments = Array.isArray(issue?.comments) ? issue.comments : [];
+  const candidates = comments.map((entry, index) => {
+    const body = typeof entry === "string" ? entry : String(entry?.body || "");
+    const line = body.split(/\r?\n/).find(x => /^\s*(?:[-*]\s*)?(?:next(?: bounded)? (?:action|step)|next:|prochaine (?:action|étape))\s*[:—-]\s*\S/i.test(x));
+    return line ? {source:"comment",index:index+1,ref:entry?.html_url || entry?.url || null,text:line.trim(),epistemic:"unverified_comment_claim",authorized:false} : null;
+  }).filter(Boolean);
+  const latestCandidate = candidates.at(-1) || null;
   const controlPaths = ["AGENTS.md", "instructions/AGENTS.shared.md", "docs/continuations_and_cognitive_packets_for_agents.md"];
   const controls = controlPaths.map(ref => ({
     ref,
@@ -23,6 +31,8 @@ export function orientResumableIssue(issue, options = {}) {
     stop_conditions: a.stop_conditions,
     context_references: a.context_references,
     next_action: {...a.next_action, authorized: false},
+    continuation_candidate: latestCandidate,
+    next_action_reconciliation: {status:latestCandidate ? "review_newer_comment" : "no_explicit_comment_candidate", issue_body_may_be_stale:Boolean(latestCandidate)},
     change_delta: {status: verified.length ? "externally_verified" : "unknown", verified},
     closure: a.cold_handler_closure,
     handoff_preflight: {closure:preflight.closure, first_step:preflight.first_step, dependencies:preflight.dependencies, reconciliation:preflight.reconciliation},
