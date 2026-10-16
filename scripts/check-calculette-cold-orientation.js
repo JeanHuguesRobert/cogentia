@@ -5,7 +5,7 @@ import { fileURLToPath } from "node:url";
 import { orientResumableIssue } from "./lib/calculette-cold-orientation.js";
 const issue={repository:"JeanHuguesRobert/cogentia",number:241,state:"open",body:[
 "## Goal","Resume work.","## Current state","Patch claimed merged.",
-"## Agent-resumable Next Action","Inspect sources.",
+"## Agent-resumable Next Action","1. Inspect sources.",
 "## Acceptance","Return evidence."
 ].join("\n\n")};
 const a=orientResumableIssue(issue);
@@ -13,7 +13,10 @@ assert.equal(a.change_delta.status,"unknown");
 assert.equal(a.next_action.authorized,false);
 assert.equal(a.applicable_control.verified,false);
 assert.ok(a.handoff_preflight.closure.status);
-assert.equal(a.handoff_preflight.first_step.text.includes("Inspect"),true);
+assert.equal(a.handoff_preflight.first_step.text,"Inspect sources.");
+const unnumbered=orientResumableIssue({...issue,body:issue.body.replace("1. Inspect sources.","Inspect sources.")});
+assert.equal(unnumbered.handoff_preflight.first_step.missing,true);
+assert.ok(unnumbered.blockers.includes("handoff: first_step_missing"));
 const b=orientResumableIssue(issue,{verifiedChanges:[{verified:true,ref:"commit:a60b267",description:"Merged fix"},{verified:false,ref:"false",description:"Claim"}]});
 assert.equal(b.change_delta.verified.length,1);
 const absent=orientResumableIssue({...issue,body:issue.body+"\n\n## Context References\n\n- `docs/absent-cold-orientation.md`"},{fileExists:()=>false});
