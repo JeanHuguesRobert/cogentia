@@ -31,3 +31,5 @@ jobs:
         run: |
           pnpm test
           node scripts/check-continuation-frontier-f2a.js
+          node scripts/check-calculette-cold-orientation.js
+          node scripts/check-calculette-git-delta.js
