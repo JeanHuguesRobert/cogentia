@@ -33,3 +33,4 @@ jobs:
           node scripts/check-continuation-frontier-f2a.js
           node scripts/check-calculette-cold-orientation.js
           node scripts/check-calculette-git-delta.js
+          python3 scripts/check-calculette-janus-receipts.py
