@@ -46,3 +46,11 @@ assert.ok(Array.isArray(parsed.handoff_preflight.dependencies));
 assert.equal(parsed.applicable_control.status,"accessible_not_activated");
 assert.equal(parsed.authorization.status,"not_granted");
 console.log("cold orientation CLI: passed");
+
+const withDelta=spawnSync(process.execPath,["scripts/cogentia.js","calculette","orient","--body-file",fixture,"--root",root,"--delta-base","deliberately-invalid-base","--json"],{cwd:root,encoding:"utf8"});
+assert.equal(withDelta.status,0,withDelta.stderr||withDelta.stdout);
+const deltaResult=JSON.parse(withDelta.stdout);
+assert.equal(deltaResult.git_delta.status,"unknown");
+assert.equal(deltaResult.git_delta.reason,"git_verification_failed");
+assert.notEqual(deltaResult.git_delta.reason,"root_and_base_required");
+console.log("calculette CLI delta flag: passed");
