@@ -35,3 +35,4 @@ jobs:
           node scripts/check-calculette-git-delta.js
           python3 scripts/check-calculette-janus-receipts.py
           python3 scripts/check-calculette-decision-quality.py
+          python3 scripts/check-calculette-orientation-cost.py
