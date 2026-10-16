@@ -1,5 +1,7 @@
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
+import { mkdtempSync, writeFileSync, rmSync } from "node:fs";
+import { tmpdir } from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { orientResumableIssue } from "./lib/calculette-cold-orientation.js";
@@ -55,3 +57,36 @@ assert.equal(deltaResult.git_delta.status,"unknown");
 assert.equal(deltaResult.git_delta.reason,"git_verification_failed");
 assert.notEqual(deltaResult.git_delta.reason,"root_and_base_required");
 console.log("calculette CLI delta flag: passed");
+
+const commented=orientResumableIssue({...issue,comments:[
+  {body:"Next action: inspect old implementation",url:"https://example.invalid/old"},
+  {body:"Next bounded action: compare latest benchmark",url:"https://example.invalid/new"},
+]});
+assert.equal(commented.continuation_candidate.index,2);
+assert.match(commented.continuation_candidate.text,/compare latest benchmark/);
+assert.equal(commented.continuation_candidate.authorized,false);
+assert.equal(commented.next_action.authorized,false);
+console.log("cold orientation comment candidate: passed");
+
+const temp=mkdtempSync(path.join(tmpdir(),"calculette-snapshot-"));
+try {
+  const snapshot=path.join(temp,"issue.json");
+  writeFileSync(snapshot,JSON.stringify({number:241,title:"cold fixture",body:issue.body,comments:[{body:"Next action: verify latest continuation"}]}));
+  const p=spawnSync(process.execPath,["scripts/cogentia.js","calculette","orient","JeanHuguesRobert/cogentia#241","--issue-snapshot",snapshot,"--root",root,"--json"],{cwd:root,encoding:"utf8"});
+  assert.equal(p.status,2,p.stderr||p.stdout); // intentionally PARTIAL fixture
+  const output=JSON.parse(p.stdout);
+  assert.equal(output.closure.status,"PARTIAL");
+  assert.equal(output.continuation_candidate.index,1);
+  assert.equal(output.continuation_candidate.authorized,false);
+  assert.equal(output.next_action_reconciliation.status,"review_newer_comment");
+  console.log("cold orientation Issue snapshot CLI: passed");
+} finally {rmSync(temp,{recursive:true,force:true});}
+
+const postMergeCase=orientResumableIssue({...issue,body:issue.body+
+  "\n## Post-merge continuation (2026-10-16)\n- Next bounded work: compare matched trials without repeating merged FBF.\n",
+  comments:[]});
+assert.equal(postMergeCase.continuation_candidate.source,"body");
+assert.match(postMergeCase.continuation_candidate.text,/compare matched trials/);
+assert.equal(postMergeCase.next_action_reconciliation.status,"review_post_merge_body");
+assert.equal(postMergeCase.continuation_candidate.authorized,false);
+console.log("cold orientation post-merge continuation: passed");

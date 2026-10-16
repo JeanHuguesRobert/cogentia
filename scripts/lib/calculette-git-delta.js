@@ -18,5 +18,8 @@ export function inspectGitDelta({root, base, head="HEAD", maxCommits=30}={}) {
     let remote=null;
     try { remote=git("remote","get-url","origin"); } catch { /* isolated local fixtures need no remote */ }
     return {status:"verified_local_git",base_sha:baseline,head_sha:current,commit_count:count,commits,remote,verified:commits.map(c=>({verified:true,ref:c.sha,description:c.subject})),truncated:count>commits.length};
-  }catch(e){return {status:"unknown",verified:[],reason:"git_verification_failed",detail:String(e.message||e).slice(0,180)};}
+  }catch(e){
+    const blocked = e?.code === "EPERM" || e?.code === "EACCES" || e?.code === "EROFS";
+    return {status:"unknown",verified:[],reason:blocked ? "git_execution_blocked" : "git_verification_failed",code:e?.code || null,detail:String(e.message||e).slice(0,180),alternate_evidence:"requires separately validated provenance; do not mark supplied claims verified"};
+  }
 }
