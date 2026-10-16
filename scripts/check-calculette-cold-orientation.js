@@ -10,6 +10,7 @@ const issue={repository:"JeanHuguesRobert/cogentia",number:241,state:"open",body
 ].join("\n\n")};
 const a=orientResumableIssue(issue);
 assert.equal(a.change_delta.status,"unknown");
+for (const dimension of ["constraints","authority","acceptance","stop_conditions","context_references"]) assert.ok(Object.hasOwn(a,dimension),dimension+" missing");
 assert.equal(a.next_action.authorized,false);
 assert.equal(a.applicable_control.verified,false);
 assert.equal(a.applicable_control.status,"access_unverified");
