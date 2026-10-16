@@ -15,7 +15,8 @@ export function inspectGitDelta({root, base, head="HEAD", maxCommits=30}={}) {
     const count=Number(git("rev-list","--count",baseline+".."+current));
     const log=git("log","--format=%H%x09%s","--max-count="+Math.max(1,Math.min(100,maxCommits)),baseline+".."+current);
     const commits=log?log.split("\n").map(line=>{const pos=line.indexOf("\t");return {sha:line.slice(0,pos),subject:line.slice(pos+1)}}):[];
-    const remote=git("remote","get-url","origin");
+    let remote=null;
+    try { remote=git("remote","get-url","origin"); } catch { /* isolated local fixtures need no remote */ }
     return {status:"verified_local_git",base_sha:baseline,head_sha:current,commit_count:count,commits,remote,verified:commits.map(c=>({verified:true,ref:c.sha,description:c.subject})),truncated:count>commits.length};
   }catch(e){return {status:"unknown",verified:[],reason:"git_verification_failed",detail:String(e.message||e).slice(0,180)};}
 }
