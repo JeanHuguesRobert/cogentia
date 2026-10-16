@@ -17,6 +17,31 @@ export function orientResumableIssue(issue, options = {}) {
     return line ? {source:"comment",index:index+1,ref:entry?.html_url || entry?.url || null,text:line.trim(),epistemic:"unverified_comment_claim",authorized:false} : null;
   }).filter(Boolean);
   const latestCandidate = commentCandidates.at(-1) || bodyCandidate;
+  // Janus: keep intent, execution receipts and achieved outcome separate.
+  // Comments are claims until independently verified; no keyword can grant completion.
+  const janusEvidence = comments.flatMap((entry,index) => {
+    const text = typeof entry === "string" ? entry : String(entry?.body || "");
+    const ref = entry?.html_url || entry?.url || null;
+    const matched = /(?:matched benchmark batch|benchmark batch[12]|batch[12].*complete|control:.*assisted:)/i.test(text);
+    if (!matched) return [];
+    const control = /control[:\s].*?(?:[0-9]+(?:\.[0-9]+)?\s*s|completed)/i.test(text);
+    const assisted = /assisted[:\s].*?(?:[0-9]+(?:\.[0-9]+)?\s*s|completed)/i.test(text);
+    return [{source:"comment",index:index+1,ref,kind:"trial_execution_claim",
+      control_claimed:control,assisted_claimed:assisted,
+      epistemic:"reported_not_independently_verified"}];
+  });
+  const pairedClaims = janusEvidence.filter(e => e.control_claimed && e.assisted_claimed);
+  const candidateIsBenchmark = Boolean(latestCandidate && /matched|benchmark|trial/i.test(latestCandidate.text));
+  const janus = {
+    schema:"cogentia.calculette.janus-reconciliation/v1",
+    planned: Boolean(latestCandidate),
+    execution: pairedClaims.length ? "reported_both_arms" : "not_established",
+    result: pairedClaims.length ? "comparison_reported_quality_unverified" : "not_established",
+    evidence:janusEvidence,
+    independently_verified:false,
+    requires_review:pairedClaims.length > 0,
+    caution: "A completion report is not independent proof of validity, effectiveness or authorization."
+  };
   const controlPaths = ["AGENTS.md", "instructions/AGENTS.shared.md", "docs/continuations_and_cognitive_packets_for_agents.md"];
   const controls = controlPaths.map(ref => ({
     ref,
@@ -37,7 +62,8 @@ export function orientResumableIssue(issue, options = {}) {
     context_references: a.context_references,
     next_action: {...a.next_action, authorized: false},
     continuation_candidate: latestCandidate,
-    next_action_reconciliation: {status:latestCandidate?.source==="comment" ? "review_newer_comment" : latestCandidate ? "review_post_merge_body" : "no_explicit_continuation", issue_body_may_be_stale:Boolean(latestCandidate)},
+    janus_reconciliation: janus,
+    next_action_reconciliation: {status:candidateIsBenchmark && pairedClaims.length ? "review_execution_receipts_before_repeat" : latestCandidate?.source==="comment" ? "review_newer_comment" : latestCandidate ? "review_post_merge_body" : "no_explicit_continuation", issue_body_may_be_stale:Boolean(latestCandidate)},
     change_delta: {status: verified.length ? "externally_verified" : "unknown", verified},
     closure: a.cold_handler_closure,
     handoff_preflight: {closure:preflight.closure, first_step:preflight.first_step, dependencies:preflight.dependencies, reconciliation:preflight.reconciliation},
