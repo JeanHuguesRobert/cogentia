@@ -81,3 +81,12 @@ try {
   assert.equal(output.next_action_reconciliation.status,"review_newer_comment");
   console.log("cold orientation Issue snapshot CLI: passed");
 } finally {rmSync(temp,{recursive:true,force:true});}
+
+const postMergeCase=orientResumableIssue({...issue,body:issue.body+
+  "\n## Post-merge continuation (2026-10-16)\n- Next bounded work: compare matched trials without repeating merged FBF.\n",
+  comments:[]});
+assert.equal(postMergeCase.continuation_candidate.source,"body");
+assert.match(postMergeCase.continuation_candidate.text,/compare matched trials/);
+assert.equal(postMergeCase.next_action_reconciliation.status,"review_post_merge_body");
+assert.equal(postMergeCase.continuation_candidate.authorized,false);
+console.log("cold orientation post-merge continuation: passed");
