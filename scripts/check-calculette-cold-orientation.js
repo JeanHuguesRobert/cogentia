@@ -90,3 +90,15 @@ assert.match(postMergeCase.continuation_candidate.text,/compare matched trials/)
 assert.equal(postMergeCase.next_action_reconciliation.status,"review_post_merge_body");
 assert.equal(postMergeCase.continuation_candidate.authorized,false);
 console.log("cold orientation post-merge continuation: passed");
+
+const janusIssue={...issue,body:issue.body+"\n## Post-merge continuation (2026-10-16)\n- Next bounded work: compare matched benchmark arms.\n",comments:[
+ {body:"Matched benchmark batch2 complete. Control: 84.78 s, 6 commands. Assisted: 160.82 s, 13 commands.",url:"https://example.invalid/receipt"}
+]};
+const janusView=orientResumableIssue(janusIssue);
+assert.equal(janusView.janus_reconciliation.execution,"reported_both_arms");
+assert.equal(janusView.janus_reconciliation.independently_verified,false);
+assert.equal(janusView.next_action_reconciliation.status,"review_execution_receipts_before_repeat");
+assert.equal(janusView.authorization.status,"not_granted");
+const missingReceipt=orientResumableIssue({...janusIssue,comments:[]});
+assert.equal(missingReceipt.janus_reconciliation.execution,"not_established");
+console.log("cold orientation Janus claims vs results: passed");
