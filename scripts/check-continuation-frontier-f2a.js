@@ -195,6 +195,39 @@ test("D — failure preserves fallback; B can later be funded and run", async ()
   assert.equal(branch(afterB.frontier, A).viability, "exhausted");
 });
 
+test("D2 — budget yield preserves branch viability and permits later execution", async () => {
+  const log = openWorld();
+  allocateExplicit(log, { choicePointId: CP, fund: A });
+  const first = await executeFundedBranch(log, {
+    continuationRef: A,
+    execute: async () => ({ ok: false, stopReason: "step_budget", stepCount: 1, costUnits: 1 }),
+  });
+  assert.equal(branch(first.frontier, A).viability, "live");
+  assert.equal(branch(first.frontier, A).executionCount, 1);
+  assert.equal(branch(first.frontier, B).viability, "live");
+  assert.equal(log.facts().filter((fact) => fact.type === "branch_exhausted").length, 0);
+  const second = await executeFundedBranch(log, {
+    continuationRef: A,
+    execute: async () => ({ ok: true, stepCount: 1, costUnits: 1 }),
+  });
+  assert.equal(second.frontier.choicePoints[0].resolvedBy, A);
+  assert.equal(branch(second.frontier, A).executionCount, 2);
+  assert.equal(branch(second.frontier, A).costUnits, 2);
+  assert.equal(branch(second.frontier, B).viability, "obsolete");
+});
+
+test("D3 — nonterminal technical stops do not fabricate exhaustion", async () => {
+  const log = openWorld();
+  allocateExplicit(log, { choicePointId: CP, fund: A });
+  const outcome = await executeFundedBranch(log, {
+    continuationRef: A,
+    execute: async () => ({ ok: false, stopReason: "required_event_failed", stepCount: 0 }),
+  });
+  assert.equal(branch(outcome.frontier, A).viability, "live");
+  assert.equal(outcome.frontier.choicePoints[0].resolvedBy, null);
+  assert.equal(log.facts().filter((fact) => fact.type === "branch_exhausted").length, 0);
+});
+
 test("E — replay rebuilds the same Frontier projection", async () => {
   const log = openWorld();
   allocateExplicit(log, { choicePointId: CP, fund: A });

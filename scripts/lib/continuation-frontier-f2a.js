@@ -185,11 +185,17 @@ export async function executeFundedBranch(log, { continuationRef, execute } = {}
     });
   } else {
     if (result?.ok) return { result, frontier: projectFrontier(log.facts()) };
-    log.append("branch_exhausted", {
-      continuationRef,
-      choicePointId: located.choicePoint.id,
-      stopReason: result?.stopReason || "exhausted",
-    });
+    // A bounded/yielding execution is not evidence that its hypothesis failed.
+    // Exhaust a branch only when the executor explicitly reports a terminal
+    // hypothesis outcome. Unknown/technical stop reasons remain recoverable.
+    const terminalReasons = new Set(["hypothesis_exhausted", "exhausted", "hypothesis_refuted", "refuted"]);
+    if (terminalReasons.has(result?.stopReason)) {
+      log.append("branch_exhausted", {
+        continuationRef,
+        choicePointId: located.choicePoint.id,
+        stopReason: result.stopReason,
+      });
+    }
   }
   return { result, frontier: projectFrontier(log.facts()) };
 }
