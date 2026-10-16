@@ -5937,7 +5937,14 @@ function cmdCalculette(sub) {
     return;
   }
   const deltaBase = valueFlag("--delta-base");
-  const target = readResumableIssueTarget("calculette orient <owner/repo#N> [--body-file <path>] [--root <dir>] [--delta-base <commit>]");
+  const snapshotFile = valueFlag("--issue-snapshot");
+  const target = snapshotFile ? (() => {
+    const raw = parseJsonText(fs.readFileSync(path.resolve(snapshotFile), "utf8"), snapshotFile);
+    if (Number(raw.number) <= 0 || typeof raw.body !== "string") throw new Error("Invalid Issue snapshot");
+    const ref = parseResumableIssueRef(argv.shift());
+    if (!ref?.repository?.includes("/") || ref.number !== Number(raw.number)) throw new Error("Issue snapshot target mismatch");
+    return {root:valueFlag("--root") || "",issue:{...raw,repository:ref.repository,comments:raw.comments || []}};
+  })() : readResumableIssueTarget("calculette orient <owner/repo#N> [--body-file <path>] [--root <dir>] [--delta-base <commit>]");
   const delta = inspectGitDelta({root:target.root,base:deltaBase});
   const result = orientResumableIssue(target.issue, {
     fileExists: target.root ? resumableAuditFileExists(target.root) : null,
@@ -5953,6 +5960,7 @@ function cmdCalculette(sub) {
     "handoff: " + result.handoff_preflight.closure.status,
     ...result.handoff_preflight.closure.reasons.map(item => "handoff gap: " + item),
     "next: " + (result.next_action.evidence?.at(-1)?.excerpt || "unknown"),
+    "newer continuation: " + (result.continuation_candidate?.text || "none"),
     "authority: NOT GRANTED; activate control and validate inputs before execution",
     ...result.blockers.map(item => "blocker: " + item),
   ];
