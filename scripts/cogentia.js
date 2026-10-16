@@ -5936,8 +5936,8 @@ function cmdCalculette(sub) {
     console.log("Usage: calculette orient <owner/repo#N> [--body-file <path>] [--root <dir>] [--json]");
     return;
   }
-  const target = readResumableIssueTarget("calculette orient <owner/repo#N> [--body-file <path>] [--root <dir>]");
   const deltaBase = valueFlag("--delta-base");
+  const target = readResumableIssueTarget("calculette orient <owner/repo#N> [--body-file <path>] [--root <dir>] [--delta-base <commit>]");
   const delta = inspectGitDelta({root:target.root,base:deltaBase});
   const result = orientResumableIssue(target.issue, {
     fileExists: target.root ? resumableAuditFileExists(target.root) : null,
