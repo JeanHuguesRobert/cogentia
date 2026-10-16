@@ -24,8 +24,8 @@ export function orientResumableIssue(issue, options = {}) {
     const ref = entry?.html_url || entry?.url || null;
     const matched = /(?:matched benchmark batch|benchmark batch[12]|batch[12].*complete|control:.*assisted:)/i.test(text);
     if (!matched) return [];
-    const control = /control[:\\s].*?(?:[0-9]+(?:\\.[0-9]+)?\\s*s|completed)/i.test(text);
-    const assisted = /assisted[:\\s].*?(?:[0-9]+(?:\\.[0-9]+)?\\s*s|completed)/i.test(text);
+    const control = /control[:\s].*?(?:[0-9]+(?:\.[0-9]+)?\s*s|completed)/i.test(text);
+    const assisted = /assisted[:\s].*?(?:[0-9]+(?:\.[0-9]+)?\s*s|completed)/i.test(text);
     return [{source:"comment",index:index+1,ref,kind:"trial_execution_claim",
       control_claimed:control,assisted_claimed:assisted,
       epistemic:"reported_not_independently_verified"}];
