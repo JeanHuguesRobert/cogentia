@@ -36,6 +36,7 @@ import {
   auditResumableIssue,
   renderResumableIssueAudit,
 } from "./lib/resumable-issue-audit.js";
+import { orientResumableIssue } from "./lib/calculette-cold-orientation.js";
 import {
   planResumableIssue,
   renderResumableIssuePlan,
@@ -463,6 +464,8 @@ async function main() {
       return cmdEffect(argv);
     case "issues":
       return cmdIssues(argv.shift() || "list");
+    case "calculette":
+      return cmdCalculette(argv.shift() || "help");
     case "dashboard":
       return cmdDashboard(argv.shift() || "refresh");
     case "publish":
@@ -1088,7 +1091,8 @@ Continuation commands:
   continuation audit-backfill [<id>|all]  Append missing durable audit events for resolved/cancelled records.
   continuation schema
 
- Issue commands:
+ Calculette commands:
+  calculette orient <owner/repo#N>   Read-only orientation over Issue audit.\n                           Flags: --body-file <path> --root <dir> --json.\n\n Issue commands:
   issues list <repo>       List GitHub issues for a registered repo using gh.
                            Flags: --state open|closed|all --limit <n>
   resume <GitHub Issue URL>  Inspect external Cognitive Packet and report handler routing boundary (no effects).\n  issues packet <repo> <number>
@@ -5924,6 +5928,29 @@ function cmdResumeExternalIssue() {
     "No source, Issue or publication mutated",
   ].join("\n"));
   process.exitCode = 3;
+}
+
+function cmdCalculette(sub) {
+  if (sub !== "orient") {
+    console.log("Usage: calculette orient <owner/repo#N> [--body-file <path>] [--root <dir>] [--json]");
+    return;
+  }
+  const target = readResumableIssueTarget("calculette orient <owner/repo#N> [--body-file <path>] [--root <dir>]");
+  const result = orientResumableIssue(target.issue, {
+    fileExists: target.root ? resumableAuditFileExists(target.root) : null,
+  });
+  const lines = [
+    "Calculette cold orientation — " + result.issue.repository + "#" + result.issue.number,
+    "closure: " + result.closure.status,
+    "goal: " + (result.goal.evidence?.at(-1)?.excerpt || "unknown"),
+    "current: " + (result.current_state.evidence?.at(-1)?.excerpt || "unknown"),
+    "delta: " + result.change_delta.status + " (no independent verification supplied)",
+    "next: " + (result.next_action.evidence?.at(-1)?.excerpt || "unknown"),
+    "authority: NOT GRANTED; activate control and validate inputs before execution",
+    ...result.blockers.map(item => "blocker: " + item),
+  ];
+  output(result, lines.join("\n"));
+  process.exitCode = result.closure.status === "PASS" ? 0 : 2;
 }
 
 function cmdIssues(sub) {
