@@ -37,6 +37,7 @@ import {
   renderResumableIssueAudit,
 } from "./lib/resumable-issue-audit.js";
 import { orientResumableIssue } from "./lib/calculette-cold-orientation.js";
+import { inspectGitDelta } from "./lib/calculette-git-delta.js";
 import {
   planResumableIssue,
   renderResumableIssuePlan,
@@ -5936,15 +5937,19 @@ function cmdCalculette(sub) {
     return;
   }
   const target = readResumableIssueTarget("calculette orient <owner/repo#N> [--body-file <path>] [--root <dir>]");
+  const deltaBase = valueFlag("--delta-base");
+  const delta = inspectGitDelta({root:target.root,base:deltaBase});
   const result = orientResumableIssue(target.issue, {
     fileExists: target.root ? resumableAuditFileExists(target.root) : null,
+    verifiedChanges: delta.verified,
   });
+  result.git_delta = delta;
   const lines = [
     "Calculette cold orientation — " + result.issue.repository + "#" + result.issue.number,
     "closure: " + result.closure.status,
     "goal: " + (result.goal.evidence?.at(-1)?.excerpt || "unknown"),
     "current: " + (result.current_state.evidence?.at(-1)?.excerpt || "unknown"),
-    "delta: " + result.change_delta.status + " (no independent verification supplied)",
+    "delta: " + result.change_delta.status + " (Git status: " + delta.status + ")",
     "handoff: " + result.handoff_preflight.closure.status,
     ...result.handoff_preflight.closure.reasons.map(item => "handoff gap: " + item),
     "next: " + (result.next_action.evidence?.at(-1)?.excerpt || "unknown"),
