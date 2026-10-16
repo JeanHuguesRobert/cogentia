@@ -73,7 +73,20 @@ def main():
     stderr = out / (args.arm + ".stderr")
     if any(p.exists() for p in (results, trace, stderr)):
         raise SystemExit("Trial artifacts already exist; choose a new output directory.")
-    prompt = ISSUE + "\n\n" + BASE + "\n" + ARMS[args.arm]
+    snapshot = out / "issue-241.snapshot.json"
+    if not snapshot.exists():
+        raw = subprocess.check_output(["gh", "issue", "view", "241", "--repo",
+                                       "JeanHuguesRobert/cogentia", "--json",
+                                       "number,title,state,body,comments"], text=True, timeout=30)
+        parsed = json.loads(raw)
+        if parsed.get("number") != 241 or not parsed.get("body"):
+            raise SystemExit("Issue snapshot is incomplete; trial not started.")
+        with snapshot.open("x", encoding="utf-8") as fh:
+            fh.write(json.dumps(parsed, ensure_ascii=False, indent=2))
+        snapshot.chmod(0o600)
+    issue_sha = hashlib.sha256(snapshot.read_bytes()).hexdigest()
+    prompt = (ISSUE + "\nRead the authoritative issue body and comments from local snapshot: "
+              + str(snapshot) + "\n\n" + BASE + "\n" + ARMS[args.arm])
     start = dt.datetime.now(dt.timezone.utc).isoformat()
     began = time.monotonic()
     status = None
@@ -93,7 +106,7 @@ def main():
     final = evidence.pop("final_answer")
     result = {"schema":"cogentia.calculette.matched-cold-trial/v1",
               "arm":args.arm, "issue":ISSUE, "head":head,
-              "prompt_sha256":sha(prompt), "started_utc":start,
+              "prompt_sha256":sha(prompt), "issue_snapshot_sha256":issue_sha, "started_utc":start,
               "elapsed_seconds":round(time.monotonic()-began, 2),
               "codex_exit_code":status, "failure":failure, **evidence,
               "trace":str(trace), "stderr":str(stderr),
