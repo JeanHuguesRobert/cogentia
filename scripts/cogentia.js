@@ -5945,6 +5945,8 @@ function cmdCalculette(sub) {
     "goal: " + (result.goal.evidence?.at(-1)?.excerpt || "unknown"),
     "current: " + (result.current_state.evidence?.at(-1)?.excerpt || "unknown"),
     "delta: " + result.change_delta.status + " (no independent verification supplied)",
+    "handoff: " + result.handoff_preflight.closure.status,
+    ...result.handoff_preflight.closure.reasons.map(item => "handoff gap: " + item),
     "next: " + (result.next_action.evidence?.at(-1)?.excerpt || "unknown"),
     "authority: NOT GRANTED; activate control and validate inputs before execution",
     ...result.blockers.map(item => "blocker: " + item),
