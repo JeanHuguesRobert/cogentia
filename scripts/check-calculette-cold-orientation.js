@@ -55,3 +55,13 @@ assert.equal(deltaResult.git_delta.status,"unknown");
 assert.equal(deltaResult.git_delta.reason,"git_verification_failed");
 assert.notEqual(deltaResult.git_delta.reason,"root_and_base_required");
 console.log("calculette CLI delta flag: passed");
+
+const commented=orientResumableIssue({...issue,comments:[
+  {body:"Next action: inspect old implementation",url:"https://example.invalid/old"},
+  {body:"Next bounded action: compare latest benchmark",url:"https://example.invalid/new"},
+]});
+assert.equal(commented.continuation_candidate.index,2);
+assert.match(commented.continuation_candidate.text,/compare latest benchmark/);
+assert.equal(commented.continuation_candidate.authorized,false);
+assert.equal(commented.next_action.authorized,false);
+console.log("cold orientation comment candidate: passed");
