@@ -73,8 +73,9 @@ try {
   const snapshot=path.join(temp,"issue.json");
   writeFileSync(snapshot,JSON.stringify({number:241,title:"cold fixture",body:issue.body,comments:[{body:"Next action: verify latest continuation"}]}));
   const p=spawnSync(process.execPath,["scripts/cogentia.js","calculette","orient","JeanHuguesRobert/cogentia#241","--issue-snapshot",snapshot,"--root",root,"--json"],{cwd:root,encoding:"utf8"});
-  assert.equal(p.status,0,p.stderr||p.stdout);
+  assert.equal(p.status,2,p.stderr||p.stdout); // intentionally PARTIAL fixture
   const output=JSON.parse(p.stdout);
+  assert.equal(output.closure.status,"PARTIAL");
   assert.equal(output.continuation_candidate.index,1);
   assert.equal(output.continuation_candidate.authorized,false);
   assert.equal(output.next_action_reconciliation.status,"review_newer_comment");
