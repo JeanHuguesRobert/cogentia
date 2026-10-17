@@ -5,9 +5,9 @@ author: "Jean Hugues Noël Robert"
 affiliation: "Institut Mariani / C.O.R.S.I.C.A., 1 cours Paoli, F-20250 Corte, Corsica"
 license: "MIT"
 status: "working-paper"
-version: "0.9"
+version: "0.10"
 date: "2026-08-16"
-last_modified_at: "2026-10-04"
+last_modified_at: "2026-10-17"
 language: "en"
 document_role: "source"
 document_kind: "operational-registry"
@@ -83,6 +83,63 @@ The Corpus Sleep Cycle SHOULD inspect this register and related source traces to
 This is the provider-neutral substrate anticipated by `cogentia#58`; GitHub Issues/Kanban remain projections, not canonical state.
 
 ## Entries
+
+### PR-2026-012 — Private source identity / public reference separation
+
+```yaml
+propagation:
+  id: PR-2026-012
+  status: propagation_in_progress
+  discovered_at: 2026-10-17
+  source_refs:
+    - "docs/plural-source-provenance-contract.md"
+    - "barons-Mariani/projects/suicide-corse/architecture.md v0.4"
+    - "registre-mariani/twin/marie-louise-robert/sources/registry.yml"
+    - "barons-Mariani/memory/marie-louise/sources/public.yml"
+  source_summary: >-
+    The Suicide Corse / Marie-Louise Reality Case exposed a recurring privacy
+    and provenance failure mode: public derived documents retained provider
+    locators (notably message/thread identifiers) even after the corresponding
+    evidence had been stabilized in a private canonical registry. Source
+    identity, provider locator, public reference and public claim must remain
+    separate. Public projections should render an authorized opaque alias or
+    redacted view while private resolution stays inside the owning trust domain.
+  completed_targets:
+    - "barons-Mariani: Suicide Corse architecture now declares the private-source/public-alias boundary"
+    - "barons-Mariani: pilot public source registry memory/marie-louise/sources/public.yml"
+    - "barons-Mariani: carte, possible_matrix, chronology README, 2024 doors note and manuscript chapter 15 migrated from private Gmail locators to opaque ML-PUB aliases"
+    - "registre-mariani: canonical Marie-Louise registry carries public_alias mappings for pilot sources"
+    - "cogentia: shared Source Before Projection gate extended with public disclosure resolution"
+    - "cogentia: Living Book Factory extended with provider-neutral public source-reference rendering gate"
+  targets:
+    - "remaining barons-Mariani memory/marie-louise source-bearing files"
+    - "remaining Suicide Corse source-bearing canonical documents"
+    - "Living Book inspect/validate implementation"
+    - "generic source-descriptor/disclosure-view adapters where Reality justifies them"
+  expected_effects:
+    - "no protected provider locator is required in a public projection"
+    - "public references remain stable when providers or private storage locations change"
+    - "private source authority remains resolvable inside its trust domain"
+    - "frozen historical editions remain historical traces and are not silently rewritten"
+    - "absence of public source disclosure is not misrepresented as absence of evidence"
+  priority: high
+  confidence: high
+  propagation_level: 2
+  blockers:
+    - "historical public Corpus still contains many provider locators outside the migrated pilot surfaces"
+    - "provider-neutral validation is specified but not yet implemented in Living Book tooling"
+  next_action: >-
+    Continue migration by authority/exposure: Marie-Louise works, formation,
+    elections and witnesses; then implement a provider-neutral Living Book
+    validation that detects private locator leakage without assuming Gmail.
+  verification:
+    status: partial
+    evidence_refs:
+      - "barons-Mariani/memory/marie-louise/sources/public.yml"
+      - "barons-Mariani/projects/suicide-corse/architecture.md"
+      - "cogentia/instructions/AGENTS.shared.md"
+      - "cogentia/research/living_book_factory.md"
+```
 
 ### PR-2026-001 — FractaLog source facts should become packet-local
 
