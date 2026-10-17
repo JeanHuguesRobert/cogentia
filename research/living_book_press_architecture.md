@@ -243,3 +243,12 @@ The registry records issuance of the digital artifact; the physical holder remai
 - **RC3 — Concurrent Issuance:** Near-simultaneous issuance requests for the same edition receive strictly sequential, collision-free identifiers.
 - **RC4 — Duplicate Print:** Explicit distinction between rematerialization and incarnation fork.
 - **RC5 — Biographical Event:** Attaching an optional mission to an existing copy without mutating the edition.
+
+
+---
+
+## 8. Doctrine cross-reference — effective continuity (working proposal, 2026-10-17)
+
+The general candidate principle of **attestable effective continuity of incarnations** is documented in [Cognitive Packet Incarnations and Missions](cognitive_packet_incarnations_and_missions.md#10-principe-candidat--continuité-effective-attestable-des-incarnations-17-octobre-2026). This Press architecture remains an *application*, not the source of that doctrine. Its SQLite transaction, copy-id authority and recovery tests are provisional implementation choices whose scope is a qualified local filesystem (see [FBF #238](https://github.com/JeanHuguesRobert/cogentia/issues/238) and [PR #239](https://github.com/JeanHuguesRobert/cogentia/pull/239)).
+
+Distinguish durable reservation from generated PDF, printed incarnation, observed handoff and mission effect. No inferential shortcut between those stages, and no silent migration of existing issuance authorities.
