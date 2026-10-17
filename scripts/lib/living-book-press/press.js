@@ -97,8 +97,8 @@ export class LivingBookPress {
     });
 
     // Step 4: Record render evidence and promote to GENERATED
-    const generatedRecord = {
-      ...initialRecord,
+    const generatedRecord = this.registry.updateRecord(copyId, current => ({
+      ...current,
       render: {
         format,
         print_profile: materialProfile,
@@ -106,16 +106,19 @@ export class LivingBookPress {
         byte_length: renderResult.byteLength,
         generated_at: new Date().toISOString()
       },
-      status: 'GENERATED'
-    };
-
-    generatedRecord.biography.events.push({
-      event_type: 'RENDERED',
-      timestamp: generatedRecord.render.generated_at,
-      description: `Rendered copy-specific PDF (${renderResult.byteLength} bytes, SHA-256: ${renderResult.sha256})`
-    });
-
-    this.registry.saveRecord(generatedRecord);
+      status: 'GENERATED',
+      biography: {
+        ...current.biography,
+        events: [
+          ...(current.biography?.events || []),
+          {
+            event_type: 'RENDERED',
+            timestamp: new Date().toISOString(),
+            description: `Rendered copy-specific PDF (${renderResult.byteLength} bytes, SHA-256: ${renderResult.sha256})`
+          }
+        ]
+      }
+    }));
 
     return {
       record: generatedRecord,
