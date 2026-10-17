@@ -3,9 +3,9 @@ title: Cogentia Shared Agent Instructions
 author: unknown
 affiliation: "Institut Mariani / C.O.R.S.I.C.A., 1 cours Paoli, F-20250 Corte, Corsica"
 status: "working-paper — active operational mandate"
-version: 35
+version: 36
 date: 2026-10-02
-last_modified_at: "2026-10-07"
+last_modified_at: "2026-10-17"
 license: CC BY-SA 4.0
 language: en
 canonical_url: https://github.com/JeanHuguesRobert/cogentia/blob/main/instructions/AGENTS.shared.md
@@ -80,6 +80,33 @@ Before creating or substantively modifying a derivative representation (Living B
 6. Return observations, contradictions and substantive revisions revealed by projection use to a qualified trace/source intake; do not silently rewrite the source from a derivative.
 
 **Boundaries:** Corpus membership ≠ canonical source authority; publication/freeze ≠ source promotion; projection ≠ proof that projected claims are correct. A frozen publication may be a primary historical trace **of what was published**, without becoming canonical authority for its underlying doctrine. Co-sovereign language peers retain their separate explicit contract.
+
+### Public projection disclosure gate
+
+Before emitting source references into a public or less-trusted projection, the handler MUST resolve the source visibility/disclosure boundary, not merely source sufficiency.
+
+```text
+canonical/private source
+→ resolve disclosure policy
+→ choose authorized disclosure view
+→ public opaque alias / redacted view / publishable source
+→ projection
+```
+
+A provider locator, private repository path, private semantic source identifier, account identifier, message/thread identifier, or other protected retrieval handle MUST NOT be copied into a public projection merely because the handler can access it. Where public traceability is needed but source identity is protected, use a separately authorized opaque public reference whose private resolution remains inside the owning trust domain.
+
+Canonical distinctions:
+
+```text
+source identity ≠ physical/provider locator ≠ public reference ≠ public claim
+retrievable ≠ disclosable
+public alias ≠ authorization to reveal source content
+absence of disclosed alias ≠ absence of evidence
+```
+
+If no authorized public view exists, prepare one in the source-owning domain, redact under policy, or keep the claim unsupported/publicly opaque rather than leaking the locator.
+
+Reference: [Plural-Source Provenance Contract](../docs/plural-source-provenance-contract.md).
 
 If necessary source inputs are inaccessible, apply the Accessible Inputs Gate rather than inventing them. This rule does not ban exploration or editorial transformation; it forbids silent authority inversion.
 
