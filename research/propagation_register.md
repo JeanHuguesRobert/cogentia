@@ -5,7 +5,7 @@ author: "Jean Hugues Noël Robert"
 affiliation: "Institut Mariani / C.O.R.S.I.C.A., 1 cours Paoli, F-20250 Corte, Corsica"
 license: "MIT"
 status: "working-paper"
-version: "0.10"
+version: "0.11"
 date: "2026-08-16"
 last_modified_at: "2026-10-17"
 language: "en"
@@ -32,6 +32,8 @@ related_issues:
   - "cogentia#99"
   - "cogentia#169"
   - "cogentia#226"
+  - "cogentia#254"
+  - "cogentia#255"
 related_documents:
   - "research/cognitive_packets.md"
   - "research/memory_and_corpus_sleep_cycle.md"
@@ -83,6 +85,65 @@ The Corpus Sleep Cycle SHOULD inspect this register and related source traces to
 This is the provider-neutral substrate anticipated by `cogentia#58`; GitHub Issues/Kanban remain projections, not canonical state.
 
 ## Entries
+
+### PR-2026-013 — Local continuity under coordinator loss
+
+~~~yaml
+propagation:
+  id: PR-2026-013
+  status: propagation_in_progress
+  discovered_at: 2026-10-17
+  source_refs:
+    - "cogentia#255 — RT-1 hub-loss continuation"
+    - "cogentia commit a5a823e9760210a586f9f2c6ea9bf8e125cf8917"
+    - "operium commit 64413269cc87a31a949b39851b569e62ee22cb91"
+    - "inseme#120 result cogentia-255-offline-cache-20261017-b"
+    - "inseme#120 result cogentia-255-operium-failure-recovery-20261017-b"
+  source_summary: >-
+    FractaX RT-1 moved Minimum Sufficient Locality from a purely architectural
+    anti-capture rule toward an observed continuity mechanism. Deterministic
+    executions show that loss of a central blackboard can degrade discovery
+    without erasing previously validated local routing knowledge, learned peer
+    state, pending COP work, or envelope identity. Durable retry and receiver-side
+    deduplication permit convergence after transport recovery. This evidence does
+    not confer offline authority: cached reachability, peer state or capability
+    observations remain distinct from mandate, authorization and current control.
+  completed_targets:
+    - "cogentia/research/locality_principle.md v0.6 — operational continuity under coordinator loss"
+    - "cogentia/research/fractality-locality-centralization-audit-2026-10.md — RT-1 changed from unproved to PARTIAL with evidence boundary"
+    - "cogentia/research/propagation_register.md — this propagation record"
+  targets:
+    - "inseme/research/packet_attractor_fractanet.md — bind 'no single board' to observed degraded-continuity behavior without treating cached attractors as authority"
+    - "live bounded FractaNode RT-1: process-local blackboard loss, then route evidence and optional harmless COP retry"
+    - "inspect inseme/packages/cop-core/COP_STORE_AND_PERSISTENCE.md after live RT-1; propagate only if the live evidence adds a durable Store invariant"
+  expected_effects:
+    - "global coordination loss degrades discovery/freshness before destroying bounded local continuity"
+    - "local pending work and packet identity survive bounded transport failure where explicitly materialized"
+    - "retry/reconciliation remains explicit and idempotent"
+    - "cached route or capability evidence is never promoted into mandate or authorization"
+    - "claims of Fractanet decentralization remain bounded by observed evidence"
+  deliberately_not_propagated:
+    - "no claim that every FractaNode is autonomously sufficient offline"
+    - "no claim that stale attractors remain valid indefinitely"
+    - "no claim that cached reachability creates or extends authority"
+    - "no claim that live hub-loss continuity is already proven"
+  priority: high
+  confidence: high
+  propagation_level: 2
+  blockers:
+    - "live process-local blackboard-loss Reality Test has not yet run on an authorized FractaNode"
+    - "offline continuity of applicable mandate/control has not yet been demonstrated for an arbitrary governed Cognitive Packet"
+  next_action: >-
+    Complete the Packet Attractor semantic propagation, then run the bounded
+    process-local blackboard-loss test described in cogentia#255 without stopping
+    or firewalling fracta. Promote verification only from observed live evidence.
+  verification:
+    status: partial
+    evidence_refs:
+      - "https://github.com/JeanHuguesRobert/cogentia/issues/255#issuecomment-6240914591"
+      - "https://github.com/JeanHuguesRobert/inseme/issues/120#issuecomment-6240899139"
+      - "https://github.com/JeanHuguesRobert/inseme/issues/120#issuecomment-6240898038"
+~~~
 
 ### PR-2026-012 — Private source identity / public reference separation
 

@@ -4,8 +4,8 @@ subtitle: "Smallest sufficient locality, explicit crossing, and global reference
 author: "Jean Hugues Noël Robert, baron Mariani"
 affiliation: "Institut Mariani / C.O.R.S.I.C.A., 1 cours Paoli, F-20250 Corte, Corsica, France"
 date: "2026-09-19"
-last_modified_at: "2026-10-07"
-version: "0.5"
+last_modified_at: "2026-10-17"
+version: "0.6"
 status: "working-paper — locality doctrine candidate"
 document_role: "source"
 document_kind: "architecture-principle"
@@ -65,6 +65,7 @@ classification_version: "1"
 classification_rule: "explicit-metadata"
 classification_confidence: "medium"
 changelog:
+  - "v0.6 (2026-10-17) — adds bounded operational continuity under coordinator loss, grounded in FractaX RT-1 deterministic evidence; separates cached reachability from authority and records retry/reconciliation as a Locality Closure consequence."
   - "v0.5 (2026-10-07) — formalizes effective coupling between data plane/cognition and control plane/metacognition; adds Applicable Local Control First and control-plane activation failure as a stigmergic correction."
   - "v0.4 (2026-10-04) — relates locality to FractaCognition: local metacognition, default local retention of validated learning, and distinction between local handler incapacity and network incapacity."
   - "v0.3 (2026-09-20) — makes normative fractality and the meta-control-plane explicit: constitutional invariants, operating mechanisms, local rules, and situated acts preserve their authority boundary at every scale."
@@ -412,6 +413,64 @@ Any dependency discovered by that test SHOULD either become local or become an e
 
 This connects Locality Closure to Packet Closure without asserting that the two are identical.
 
+### 10.1 Operational continuity under coordinator loss
+
+Minimum Sufficient Locality has an operational consequence: a locality SHOULD retain enough
+validated local state to preserve a **bounded continuation** when a global coordination surface
+becomes unavailable.
+
+For a bounded operation, loss of a blackboard, registry view, global index, or routing coordinator
+should preferentially cause:
+
+~~~text
+loss of global coordination
+→ degraded discovery / freshness
+→ use admissible locally retained knowledge where still valid
+→ local execution when sufficient
+   or durable local postponement when not
+→ explicit retry / reconciliation
+→ idempotent convergence
+~~~
+
+rather than:
+
+~~~text
+loss of global coordination
+→ loss of packet identity
+→ loss of pending work
+→ loss of local source knowledge
+→ implicit loss or widening of authority
+~~~
+
+This strengthens **Locality Closure** without asserting autonomous sufficiency for every operation.
+A sufficiently closed locality need not be able to finish every task offline; it should know what it
+can still do, what it must retain, and which explicit missing dependency prevents further progress.
+
+The authority boundary remains strict:
+
+~~~text
+cached route / peer / capability observation
+= evidence of reachability or prior availability
+≠ mandate
+≠ current authorization
+≠ current control validity
+~~~
+
+Loss of connectivity does not create a mandate, extend an expired authorization, or make stale
+control valid. Continuity of execution therefore requires continuity of applicable control as well
+as continuity of data and routing state.
+
+The 2026-10-17 FractaX RT-1 deterministic experiments provide initial evidence for this corollary:
+Cogentia retained and health-checked cached routing knowledge after blackboard loss; Operium
+preserved previously learned peer state after failed blackboard synchronization; COP outbox work
+survived failed delivery and was retried after recovery; and receiver-side envelope identity
+prevented duplicate application. See
+[Cogentia #255](https://github.com/JeanHuguesRobert/cogentia/issues/255) and its
+[recorded evidence](https://github.com/JeanHuguesRobert/cogentia/issues/255#issuecomment-6240914591).
+
+This evidence is **partial**: it establishes the mechanism deterministically, not yet the continuity
+of a governed Cognitive Packet on a real FractaNode during actual hub loss.
+
 ---
 
 ## 11. FractaCarta relation
@@ -729,6 +788,7 @@ The initial locality invariants are:
 13. **Applicable local control first.** Every situated data-plane/cognitive act SHOULD be guided by the rules of the relevant local control plane before broader control is consulted as needed; this ordering does not weaken inherited constraints.
 14. **Control must be effectively coupled.** A control rule that exists but is not activated at the act it governs has failed operationally; correct both the artifact and the activation loop.
 15. **Local incapacity is not network incapacity.** A capability absent in one locality may be routed through an explicit resumable continuation to an authorized locality without global state capture or authority widening.
+16. **Coordinator loss should degrade coordination before continuity.** Where Reality has justified local retention, loss of a global discovery or routing surface SHOULD preserve bounded local knowledge, pending work, packet identity and explicit retry state without widening authority.
 
 ### Normative fractality and the meta-control plane
 

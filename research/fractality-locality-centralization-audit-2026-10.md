@@ -1,7 +1,7 @@
 ---
 title: "Audit transversal — Fractalité, centralisation et granularité de la localité"
 date: 2026-10-16
-status: "working audit — documentary evidence; operational tests pending"
+status: "working audit — documentary + deterministic operational evidence; live node tests pending"
 document_role: source
 document_kind: architecture-audit
 visibility: public
@@ -22,7 +22,7 @@ related_documents:
 
 ## Portée et méthode
 
-Audit documentaire transversal, et non preuve du comportement de tous les services déployés. Sources inspectées : Cogentia (Locality Principle v0.5, Registry of Registries, FractaXXXX), Inseme (Packet Attractor Fractanet), Operium (ONA, Federated Capacity Registry, Trust Perimeter). Étendre ensuite aux branches du corpus (FractaVolta, Inox, barons-Mariani, registres privés accessibles dans le périmètre) et aux tests sur FractaNodes. Séparer systématiquement doctrine, code, déploiement et test.
+Audit documentaire transversal, et non preuve du comportement de tous les services déployés. Sources inspectées : Cogentia (Locality Principle v0.6, Registry of Registries, FractaXXXX), Inseme (Packet Attractor Fractanet), Operium (ONA, Federated Capacity Registry, Trust Perimeter). Étendre ensuite aux branches du corpus (FractaVolta, Inox, barons-Mariani, registres privés accessibles dans le périmètre) et aux tests sur FractaNodes. Séparer systématiquement doctrine, code, déploiement et test.
 
 **Test de centralisation cachée :** une composante globalisée devient un centre d'autorité lorsque sa disparition empêche de *comprendre*, *autoriser*, *continuer* ou *reconstruire* une opération locale pourtant indépendante. Un hub opérationnel peut être acceptable si les sources restent locales et si la dégradation est bornée et explicite.
 
@@ -30,7 +30,52 @@ Audit documentaire transversal, et non preuve du comportement de tous les servic
 
 Le Locality Principle stipule **Minimum Sufficient Locality (MSL)**, localité ≠ placement, « localize knowledge; distribute references », franchissement explicite de frontières et reconstruction des vues globales. Le Registry of Registries exige que les faits et prétentions d'autorité restent auprès de leurs sources. Le FractaXXXX est une *vue générative*, pas un super-protocole. Le Federated Capacity Registry prévoit une autorité locale par source et des projections fédérées. Le Packet Attractor prévoit « no single board » comme direction.
 
-**Écart principal** : ces règles normatives ne prouvent pas que les chemins d'exécution et de reprise sont déjà décentralisés.
+**Écart principal — état initial (2026-10-16)** : ces règles normatives ne prouvaient pas encore que les chemins d'exécution et de reprise étaient décentralisés.
+
+### Mise à jour RT-1 — 17 octobre 2026
+
+Cet écart est désormais **partiellement réduit, mais non fermé**.
+
+Les premiers Reality Tests déterministes montrent que la perte du blackboard central n'efface pas
+nécessairement la capacité locale de continuer ou de différer proprement un travail déjà
+suffisamment matérialisé :
+
+~~~text
+blackboard disponible
+→ connaissance locale acquise
+→ blackboard indisponible
+→ route/cache local encore exploitable sous vérification
+→ exécution locale possible ou mise en attente durable
+→ retry après retour du transport
+→ déduplication par identité d'enveloppe
+~~~
+
+Preuves observées et exécutées indépendamment via le compute GitHub borné d'Inseme :
+
+- Cogentia : snapshot du blackboard mis en cache, blackboard rendu inaccessible, puis résolution via
+  `offline_cache_fallback` après vérification de santé de l'endpoint ;
+- Operium : conservation de la dernière projection locale des pairs après échec de synchronisation ;
+- COP/ONA : conservation d'une enveloppe en outbox après échec de transport, puis retry et livraison
+  après retour du transport ;
+- réception : replay du même identifiant d'enveloppe reconnu comme doublon sans réappliquer l'événement.
+
+Références : [RT-1 / Cogentia #255](https://github.com/JeanHuguesRobert/cogentia/issues/255),
+[preuve Cogentia](https://github.com/JeanHuguesRobert/inseme/issues/120#issuecomment-6240899139) et
+[preuve Operium](https://github.com/JeanHuguesRobert/inseme/issues/120#issuecomment-6240898038).
+
+Ces résultats réfutent déjà l'hypothèse forte selon laquelle le blackboard `fracta` serait
+nécessairement le détenteur unique de la continuité opérationnelle. Ils ne démontrent pas encore
+qu'un FractaNode réel peut continuer un Cognitive Packet gouverné pendant une indisponibilité
+effective de `fracta`, ni que le contrôle applicable et le mandat restent localement résolubles.
+
+La conclusion intermédiaire est donc :
+
+~~~text
+continuité locale partiellement prouvée
+≠ autonomie absolue
+≠ autorité hors ligne automatique
+≠ disparition du besoin de coordination globale
+~~~text
 
 ## Matrice initiale des risques
 
@@ -81,7 +126,7 @@ Ne pas faire de la fractalité une obligation de partition infinie; accepter la 
 
 ## Reality Tests recommandés (ordre FBF)
 
-- **RT-1 (P0) Décapitation du hub :** couper l'accès au blackboard fracta pour un Packet local non financier; vérifier traitement, trace et store-and-forward puis replay sans doublon.
+- **RT-1 (P0) Décapitation du hub — PARTIAL 2026-10-17 :** mécanismes déterministes PASS (cache de route, projection locale des pairs, outbox/retry, déduplication). Prochaine preuve discriminante : sur un FractaNode autorisé, rendre le blackboard inaccessible **pour un seul processus client**, sans arrêter ni firewaller `fracta`, puis exiger `routed_via: offline_cache_fallback` avant un éventuel test COP live borné.
 - **RT-2 (P0) Autorité sans connectivité :** accès SSH/Tailscale et possession de secrets ne doivent pas suffire à autoriser un acte gouverné sans mandat actif.
 - **RT-3 (P0) Comptabilité :** budget commun demande sérialisation; un sous-budget explicitement délégué pourrait permettre des actes hors-ligne dans une limite bornée, sans double dépense; hypothèse à prouver.
 - **RT-4 (P1) Répertoire :** supprimer le cache global de capacités et vérifier la reconstruction locale/fédérée.
@@ -91,4 +136,4 @@ Ne pas faire de la fractalité une obligation de partition infinie; accepter la 
 
 **Ne pas « décentraliser » par principe tous les composants.** Séparer *autorité logique*, *coordination*, *placement*, *projection* et *exécution*; identifier et tester les dépendances obligatoires. FractaX fournit une grammaire de composition, le principe de localité une règle de placement de responsabilité, COP la gouvernance de l'acte, et Operium les ressources et réalités opérationnelles.
 
-Cet audit n'est pas encore un relevé exhaustif des plus de vingt dépôts du corpus ni un test d'indisponibilité réel. Il est une base sourcée pour une campagne d'audit progressive.
+Cet audit n'est pas encore un relevé exhaustif des plus de vingt dépôts du corpus. Il contient désormais une première preuve opérationnelle déterministe de continuité sous perte de coordination, mais pas encore un test live d'indisponibilité de `fracta`. Il reste une base sourcée pour une campagne d'audit progressive.
