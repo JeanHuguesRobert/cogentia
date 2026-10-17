@@ -157,30 +157,33 @@ export class LivingBookRegistry {
    * Updates status of an existing copy record.
    */
   updateStatus(copyId, newStatus, extra = {}) {
-    const rec = this.getRecord(copyId);
-    if (!rec) throw new Error(`Copy not found: ${copyId}`);
-    rec.status = newStatus;
-    Object.assign(rec, extra);
-    this.records.set(copyId, rec);
-    this._persist(rec.book_id);
-    return rec;
+    return this._withLock(() => {
+      const rec = this.getRecord(copyId);
+      if (!rec) throw new Error(`Copy not found: ${copyId}`);
+      const next = { ...rec, ...extra, status: newStatus };
+      return this.saveRecord(next);
+    });
   }
 
   /**
-   * Appends an event to the biography of a copy.
+   * Append against the latest durable record, not a stale in-memory snapshot.
    */
   addBiographyEvent(copyId, event) {
-    const rec = this.getRecord(copyId);
-    if (!rec) throw new Error(`Copy not found: ${copyId}`);
-    if (!rec.biography) rec.biography = {};
-    if (!Array.isArray(rec.biography.events)) rec.biography.events = [];
-    rec.biography.events.push({
-      ...event,
-      timestamp: event.timestamp || new Date().toISOString()
+    return this._withLock(() => {
+      const rec = this.getRecord(copyId);
+      if (!rec) throw new Error(`Copy not found: ${copyId}`);
+      const next = {
+        ...rec,
+        biography: {
+          ...(rec.biography || {}),
+          events: [
+            ...(rec.biography?.events || []),
+            { ...event, timestamp: event.timestamp || new Date().toISOString() }
+          ]
+        }
+      };
+      return this.saveRecord(next);
     });
-    this.records.set(copyId, rec);
-    this._persist(rec.book_id);
-    return rec;
   }
 
   /**
