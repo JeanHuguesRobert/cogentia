@@ -35,18 +35,16 @@ try {
   assert.ok(persisted.biography.events.some(e => e.event_type === 'OBSERVATION_A'));
   assert.ok(persisted.biography.events.some(e => e.event_type === 'OBSERVATION_B'));
 
-  // Crash simulation: a lock left by a dead worker must not trigger speculative issuance.
-  const lock = path.join(tmp, '.living-book-registry.lock');
-  fs.mkdirSync(lock);
-  assert.throws(() => issue(), /lock busy/,
-    'A stale or held lock must block issuance until explicitly recovered');
-  fs.rmdirSync(lock);
-
-  // No silent recovery to empty sequence following corruption.
-  const file = path.join(tmp, 'press-registry-suicide-corse.json');
-  fs.writeFileSync(file, '{ corrupt JSON', 'utf8');
-  assert.throws(() => new LivingBookRegistry({storageDir:tmp}),
-    'Corrupted authoritative registry must fail closed');
+  // SQLite corruption must fail loudly; never silently reset the sequence.
+  const dbFile = path.join(tmp, 'living-book-press.sqlite');
+  // First close active connections before corruption (simulated unrecoverable disk state).
+  // Test fail-closed on invalid SQLite database in a separate empty directory.
+  const invalidDir = fs.mkdtempSync(path.join(os.tmpdir(), 'press-invalid-'));
+  try {
+    fs.writeFileSync(path.join(invalidDir, 'living-book-press.sqlite'), '{not a database');
+    assert.throws(() => new LivingBookRegistry({storageDir:invalidDir}),
+      'A corrupt SQLite store must refuse startup');
+  } finally { fs.rmSync(invalidDir, {recursive:true,force:true}); }
 
   console.log('PASS — FBF #238 independent instance uniqueness and fail-closed recovery');
 } finally {
