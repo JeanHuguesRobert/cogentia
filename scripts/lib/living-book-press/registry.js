@@ -134,6 +134,18 @@ export class LivingBookRegistry {
     return this.records.get(record.copy_id);
   }
 
+  updateRecord(copyId, updater) {
+    return this._withLock(() => {
+      const current = this.getRecord(copyId);
+      if (!current) throw new Error(`Copy not found: ${copyId}`);
+      const next = updater(structuredClone(current));
+      if (!next || next.copy_id !== copyId || next.book_id !== current.book_id) {
+        throw new Error('Invalid registry update: identity cannot change');
+      }
+      return this.saveRecord(next);
+    });
+  }
+
   /**
    * Retrieves a copy record by copy_id.
    */
