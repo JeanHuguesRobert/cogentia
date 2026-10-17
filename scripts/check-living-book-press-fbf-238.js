@@ -35,6 +35,25 @@ try {
   assert.ok(persisted.biography.events.some(e => e.event_type === 'OBSERVATION_A'));
   assert.ok(persisted.biography.events.some(e => e.event_type === 'OBSERVATION_B'));
 
+  // A failed reservation must roll back both serial allocation and copy record.
+  const before = new LivingBookRegistry({storageDir:tmp}).listRecords().length;
+  const faulty = new LivingBookRegistry({storageDir:tmp});
+  assert.throws(() => faulty.reserveCopy(next => {
+    next('suicide-corse', '2026-09-20-n2', 'SC');
+    throw new Error('simulated failure after serial allocation');
+  }), /simulated failure/);
+  assert.equal(new LivingBookRegistry({storageDir:tmp}).listRecords().length, before);
+  const afterFailure = issue();
+  assert.notEqual(afterFailure.record.copy_id, first.record.copy_id);
+  assert.notEqual(afterFailure.record.copy_id, second.record.copy_id);
+
+  // Migration barrier: old JSON must not be silently ignored.
+  const legacyDir = fs.mkdtempSync(path.join(os.tmpdir(), 'press-legacy-'));
+  try {
+    fs.writeFileSync(path.join(legacyDir, 'press-registry-old.json'), '{}');
+    assert.throws(() => new LivingBookRegistry({storageDir:legacyDir}), /migration required/);
+  } finally { fs.rmSync(legacyDir, {recursive:true,force:true}); }
+
   // SQLite corruption must fail loudly; never silently reset the sequence.
   const dbFile = path.join(tmp, 'living-book-press.sqlite');
   // First close active connections before corruption (simulated unrecoverable disk state).
