@@ -5,8 +5,8 @@ description: "Operational specification derived from existing Living Book Realit
 author: "Jean Hugues Noël Robert, baron Mariani"
 affiliation: "Institut Mariani / C.O.R.S.I.C.A., 1 cours Paoli, F-20250 Corte, Corsica"
 date: "2026-10-04"
-last_modified_at: "2026-10-06"
-version: "0.4"
+last_modified_at: "2026-10-17"
+version: "0.5"
 status: "working-paper"
 license: "CC BY-SA 4.0"
 language: "en"
@@ -34,6 +34,7 @@ related_documents:
   - "patterns/pattern-mining/PATTERN.md"
   - "patterns/packet-backed-projection/PATTERN.md"
   - "research/locality_principle.md"
+  - "docs/plural-source-provenance-contract.md"
   - "https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/projects/suicide-corse/editorial-architecture.md"
   - "https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/projects/rise-and-fall/editorial-architecture.md"
   - "https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/projects/diaspora/architecture.md"
@@ -275,6 +276,32 @@ A missing source MUST block any assertion that a new substantive claim is source
 Generated artifacts remain governed projections. Edit their authoritative source or generator rather than patching outputs directly, unless a surface is explicitly designated editable and its synchronization process is defined. Neither a release nor a frozen edition grants source authority.
 
 See [Derived Products](derived_products.md) and [shared agent gate](../instructions/AGENTS.shared.md).
+
+#### Public source-reference rendering gate
+
+A Living Book may derive from private or mixed-trust-domain sources. The Factory MUST therefore treat source **resolution** and source **rendering** as separate operations.
+
+```text
+resolve canonical source
+→ inspect trust domain + disclosure policy
+→ render only authorized public view
+```
+
+For a public projection, a private provider locator (mail/message id, private path, cloud object id, vault key, private semantic identifier, etc.) MUST NOT be emitted directly. If provenance must remain visible, the source-owning domain SHOULD expose an opaque public alias or redacted disclosure view.
+
+A minimal validation SHOULD be able to report:
+
+```text
+public source refs
+→ authorized opaque/publishable views: PASS
+→ private locators leaked: FAIL
+→ unresolved disclosure: BLOCK / Continuation
+```
+
+This validation is provider-neutral: it checks disclosure class and rendering policy rather than banning one provider-specific prefix.
+
+The first Reality Case is *Suicide Corse*, where private Marie-Louise source identities remain in `registre-Mariani` while public projections use opaque `ML-PUB-*` references.
+
 
 ## 6. Generic generation targets
 
