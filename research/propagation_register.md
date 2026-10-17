@@ -105,15 +105,20 @@ propagation:
     separate. Public projections should render an authorized opaque alias or
     redacted view while private resolution stays inside the owning trust domain.
   completed_targets:
-    - "barons-Mariani: Suicide Corse architecture now declares the private-source/public-alias boundary"
-    - "barons-Mariani: pilot public source registry memory/marie-louise/sources/public.yml"
-    - "barons-Mariani: carte, possible_matrix, chronology README, 2024 doors note and manuscript chapter 15 migrated from private Gmail locators to opaque ML-PUB aliases"
-    - "registre-mariani: canonical Marie-Louise registry carries public_alias mappings for pilot sources"
+    - "barons-Mariani: Suicide Corse architecture declares the private-source/public-alias boundary"
+    - "barons-Mariani: public opaque registry memory/marie-louise/sources/public.yml"
+    - "barons-Mariani: core Marie-Louise carte, possible matrices, chronology, 2024 doors note and manuscript chapters 15-16 migrated from private locators to ML-PUB aliases"
+    - "barons-Mariani: Marie-Louise works and work catalogue migrated to opaque aliases"
+    - "barons-Mariani: Marie-Louise formation and 2017/2020/2022/2024 election source files migrated to opaque aliases"
+    - "barons-Mariani: Marie-Louise witness/campaign source files migrated to opaque aliases"
+    - "barons-Mariani: identity source file migrated to opaque aliases"
+    - "registre-mariani: canonical Marie-Louise registry carries public_alias mappings for migrated public sources"
+    - "registre-mariani: previously orphaned witness, election and historical locators were first canonicalized before alias projection"
     - "cogentia: shared Source Before Projection gate extended with public disclosure resolution"
     - "cogentia: Living Book Factory extended with provider-neutral public source-reference rendering gate"
   targets:
-    - "remaining barons-Mariani memory/marie-louise source-bearing files"
-    - "remaining Suicide Corse source-bearing canonical documents"
+    - "regenerate Suicide Corse HTML/site/projection outputs from migrated canonical sources"
+    - "scan remaining Marie-Louise public source files outside the migrated authoritative set"
     - "Living Book inspect/validate implementation"
     - "generic source-descriptor/disclosure-view adapters where Reality justifies them"
   expected_effects:
@@ -129,9 +134,9 @@ propagation:
     - "historical public Corpus still contains many provider locators outside the migrated pilot surfaces"
     - "provider-neutral validation is specified but not yet implemented in Living Book tooling"
   next_action: >-
-    Continue migration by authority/exposure: Marie-Louise works, formation,
-    elections and witnesses; then implement a provider-neutral Living Book
-    validation that detects private locator leakage without assuming Gmail.
+    Regenerate derived Suicide Corse projections from the migrated canonical
+    sources, then implement a provider-neutral Living Book validation that
+    detects private locator leakage without assuming Gmail.
   verification:
     status: partial
     evidence_refs:
