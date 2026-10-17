@@ -9169,7 +9169,10 @@ function ftsQueryFromText(text) {
 }
 
 function buildPlan(ctx, options) {
-  const inventory = buildInventory(ctx, options);
+  // Plan scope constrains mutation targets, not the evidence used to render
+  // cross-repository projections. A repo-scoped refresh of corpus-status,
+  // backlinks, or trails still needs the full configured corpus inventory.
+  const inventory = buildInventory(ctx);
   const changes = [];
   if (options.corpusStatus) {
     for (const repo of ctx.repos) {
