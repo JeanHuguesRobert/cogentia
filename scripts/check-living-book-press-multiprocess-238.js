@@ -41,9 +41,11 @@ try {
   assert.equal(new LivingBookRegistry({storageDir:root}).listRecords().length,ids.length);
   const crashed=spawnSync(process.execPath,[worker,root,'crash'],{encoding:'utf8'});
   assert.ok(crashed.signal==='SIGKILL' || crashed.status!==0,'worker was interrupted');
-  assert.ok(fs.existsSync(path.join(root,'.living-book-registry.lock')),'orphaned lock remains');
-  const blocked=spawnSync(process.execPath,[worker,root,'issue'],{encoding:'utf8'});
-  assert.notEqual(blocked.status,0,'orphan lock must fail closed, not issue ID');
-  assert.equal(new LivingBookRegistry({storageDir:root}).listRecords().length,ids.length);
-  console.log('PASS: eight independent processes, SIGKILL fail-closed, no lost issued records');
+  // SQLite releases an interrupted process's transaction automatically.
+  assert.equal(fs.existsSync(path.join(root,'.living-book-registry.lock')), false);
+  const recovered=spawnSync(process.execPath,[worker,root,'issue'],{encoding:'utf8'});
+  assert.equal(recovered.status,0, 'issuer must recover automatically after SIGKILL: '+recovered.stderr);
+  assert.ok(!ids.includes(recovered.stdout.trim()), 'post-crash ID must be unique');
+  assert.equal(new LivingBookRegistry({storageDir:root}).listRecords().length,ids.length+1);
+  console.log('PASS: eight independent processes, SIGKILL automatic recovery, no lost issued records');
 } finally {fs.rmSync(root,{recursive:true,force:true});}
