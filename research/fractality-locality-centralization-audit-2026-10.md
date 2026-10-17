@@ -75,7 +75,7 @@ continuité locale partiellement prouvée
 ≠ autonomie absolue
 ≠ autorité hors ligne automatique
 ≠ disparition du besoin de coordination globale
-~~~text
+~~~
 
 ## Matrice initiale des risques
 
