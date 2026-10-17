@@ -101,6 +101,7 @@ import {
 } from "./lib/triage.js";
 import { groupReadmeReviewBoundaries } from "./lib/readme-audit.js";
 import { refreshDashboardArtifacts } from "./lib/fix-bugs-first-refresh.js";
+import { stampGeneratedProjectionChange } from "./lib/generated-projection-frontmatter.js";
 import {
   auditReadmeSemanticEvidence,
   readmeReviewState,
@@ -9617,7 +9618,8 @@ function renderCorpusStatus(repo, ctx, inventory, before, view = PUBLIC_VIEW) {
   content = replaceSection(content, "concept_graph", renderConceptGraph(loadConcepts(ctx), ctx));
   content = replaceSection(content, "published", renderPublishedBlock(repo, ctx, inventory, view));
   content = replaceSection(content, "possibilities", renderPossibilitiesBlock(repo));
-  return ensureFinalNewline(content);
+  const rendered = ensureFinalNewline(content);
+  return stampGeneratedProjectionChange(original, rendered, today());
 }
 
 function bootstrapCorpusStatus(repo) {
