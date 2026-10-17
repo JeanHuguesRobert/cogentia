@@ -8,7 +8,14 @@ import {
 
 const GATEWAY_PROFILE = "agent-gateway.v1";
 
-function getLocalCachePath() {
+function getLocalCachePath(options = {}) {
+  const configured = String(
+    options.cachePath
+    || options.env?.COGENTIA_BLACKBOARD_CACHE
+    || process.env.COGENTIA_BLACKBOARD_CACHE
+    || "",
+  ).trim();
+  if (configured) return path.resolve(configured);
   return path.join(os.homedir(), ".cogentia-blackboard-cache.json");
 }
 
@@ -33,7 +40,7 @@ export async function fetchBlackboardSnapshot(blackboardUrl, options = {}) {
 
     // Cache the snapshot locally
     try {
-      const cachePath = getLocalCachePath();
+      const cachePath = getLocalCachePath(options);
       fs.mkdirSync(path.dirname(cachePath), { recursive: true });
       fs.writeFileSync(cachePath, JSON.stringify(body, null, 2), "utf8");
     } catch (_) {}
@@ -42,7 +49,7 @@ export async function fetchBlackboardSnapshot(blackboardUrl, options = {}) {
   } catch (error) {
     // Attempt local cache fallback
     try {
-      const cachePath = getLocalCachePath();
+      const cachePath = getLocalCachePath(options);
       if (fs.existsSync(cachePath)) {
         const cached = JSON.parse(fs.readFileSync(cachePath, "utf8"));
         cached._routed_via = "offline_cache_fallback";
@@ -98,6 +105,8 @@ export async function resolveAgentGatewayAttractor(options = {}) {
     capability: options.capability,
     fresh: options.fresh,
     timeoutMs: options.timeoutMs,
+    cachePath: options.cachePath,
+    env: options.env,
   });
 
   const isOffline = snapshot._routed_via === "offline_cache_fallback";

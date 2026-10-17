@@ -75,7 +75,7 @@
     "test:embedding-step": "node scripts/check-embedding-step.js",
     "test:semantic-worker": "node scripts/check-semantic-search-worker.js",
     "test:query-cache": "node scripts/check-query-embedding-cache.js",
-    "test:agent-gateway": "node scripts/check-agent-gateway-bind.js && node scripts/check-agent-gateway-attractor.js && node scripts/check-agent-gateway.js && node scripts/check-agent-gateway-repl.js && node scripts/check-agent-gateway-session-entities.js && node scripts/check-agent-gateway-resolve.js && node scripts/check-agent-gateway-watchdog.js && node scripts/check-agent-gateway-client.js && node scripts/check-agent-gateway-route.js",
+    "test:agent-gateway": "node scripts/check-agent-gateway-bind.js && node scripts/check-agent-gateway-attractor.js && node scripts/check-agent-gateway.js && node scripts/check-agent-gateway-repl.js && node scripts/check-agent-gateway-session-entities.js && node scripts/check-agent-gateway-resolve.js && node scripts/check-agent-gateway-offline-cache.js && node scripts/check-agent-gateway-watchdog.js && node scripts/check-agent-gateway-client.js && node scripts/check-agent-gateway-route.js",
     "test:route-action": "node scripts/check-route-action-smoke.js",
     "test:ona-proxy": "node scripts/check-ona-proxy.js",
     "bench:repl-reuse": "node scripts/bench-agent-gateway-repl-reuse.js",
