@@ -5,7 +5,7 @@ author: "Jean Hugues Noël Robert"
 affiliation: "Institut Mariani / C.O.R.S.I.C.A., 1 cours Paoli, F-20250 Corte, Corsica"
 license: "MIT"
 status: "working-paper"
-version: "0.11"
+version: "0.12"
 date: "2026-08-16"
 last_modified_at: "2026-10-17"
 language: "en"
@@ -91,7 +91,7 @@ This is the provider-neutral substrate anticipated by `cogentia#58`; GitHub Issu
 ~~~yaml
 propagation:
   id: PR-2026-013
-  status: propagation_in_progress
+  status: propagated
   discovered_at: 2026-10-17
   source_refs:
     - "cogentia#255 — RT-1 hub-loss continuation"
@@ -112,8 +112,8 @@ propagation:
     - "cogentia/research/locality_principle.md v0.6 — operational continuity under coordinator loss"
     - "cogentia/research/fractality-locality-centralization-audit-2026-10.md — RT-1 changed from unproved to PARTIAL with evidence boundary"
     - "cogentia/research/propagation_register.md — this propagation record"
+    - "inseme/research/packet_attractor_fractanet.md v0.2 — commit 71b9e7e6b5c8c9cbf0cd03973a77c346e85d65f6; no-single-board grounded in bounded degraded-continuity evidence"
   targets:
-    - "inseme/research/packet_attractor_fractanet.md — bind 'no single board' to observed degraded-continuity behavior without treating cached attractors as authority"
     - "live bounded FractaNode RT-1: process-local blackboard loss, then route evidence and optional harmless COP retry"
     - "inspect inseme/packages/cop-core/COP_STORE_AND_PERSISTENCE.md after live RT-1; propagate only if the live evidence adds a durable Store invariant"
   expected_effects:
@@ -134,15 +134,18 @@ propagation:
     - "live process-local blackboard-loss Reality Test has not yet run on an authorized FractaNode"
     - "offline continuity of applicable mandate/control has not yet been demonstrated for an arbitrary governed Cognitive Packet"
   next_action: >-
-    Complete the Packet Attractor semantic propagation, then run the bounded
-    process-local blackboard-loss test described in cogentia#255 without stopping
-    or firewalling fracta. Promote verification only from observed live evidence.
+    Run the bounded process-local blackboard-loss test described in cogentia#255
+    without stopping or firewalling fracta. Then inspect COP Store persistence
+    doctrine only if the live evidence adds a durable invariant. Promote
+    verification only from observed live evidence.
   verification:
     status: partial
     evidence_refs:
       - "https://github.com/JeanHuguesRobert/cogentia/issues/255#issuecomment-6240914591"
       - "https://github.com/JeanHuguesRobert/inseme/issues/120#issuecomment-6240899139"
       - "https://github.com/JeanHuguesRobert/inseme/issues/120#issuecomment-6240898038"
+      - "inseme commit 71b9e7e6b5c8c9cbf0cd03973a77c346e85d65f6 — Packet Attractor v0.2 semantic propagation"
+      - "https://github.com/JeanHuguesRobert/inseme/issues/120#issuecomment-6241145035 — Inseme document verification PASS"
 ~~~
 
 ### PR-2026-012 — Private source identity / public reference separation

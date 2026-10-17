@@ -1,7 +1,21 @@
 ---
 title: "Audit transversal — Fractalité, centralisation et granularité de la localité"
+author: "Jean Hugues Noël Robert, baron Mariani"
+affiliation: "Institut Mariani / C.O.R.S.I.C.A., 1 cours Paoli, F-20250 Corte, Corsica, France"
 date: 2026-10-16
-status: "working audit — documentary + deterministic operational evidence; live node tests pending"
+update_policy: UP-DEFAULT-REVIEWED
+provenance:
+  origin_type: repository
+  origin_repository: "JeanHuguesRobert/cogentia"
+  origin_ref: "cogentia#254"
+  origin_date: "2026-10-16"
+  derived_from:
+    - "research/locality_principle.md"
+    - "https://github.com/JeanHuguesRobert/inseme/blob/main/research/packet_attractor_fractanet.md"
+review:
+  status: unreviewed
+  reviewed_by: []
+status: "working-paper — architecture audit with documentary + deterministic operational evidence; live node tests pending"
 document_role: source
 document_kind: architecture-audit
 visibility: public
