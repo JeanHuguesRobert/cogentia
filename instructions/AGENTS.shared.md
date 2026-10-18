@@ -182,6 +182,16 @@ current state, material constraints, applicable authority/effect ceiling,
 actionable next step, and recover the return/acceptance contract without vendor
 conversation history.
 
+**Self-contained Resumability Invariant (normative):** Every resumable Cognitive
+Packet MUST convey **by value and/or by verified accessible reference** all
+information reasonably required by its declared admissible handler, including
+mandate, state, constraints, control, next action and acceptance. A cold handler
+must need no undocumented predecessor-private conversation context. When an
+ordinary resume instruction requires an explanatory prompt, fix the **packet**
+rather than routinely lengthening the prompt. Preserve Minimum Sufficient
+Locality: do not copy retrievable source material just to make an Issue longer.
+See [the canonical formulation](../docs/resumable_github_issues.md#self-contained-resumability-invariant-normative).
+
 #### Applicable Control Gate — effective metacognitive coupling
 
 A packet is not safely resumable merely because its payload is reachable and a
