@@ -91,6 +91,27 @@ Toutes les preuves ci-dessus proviennent de courriels contemporains consultés d
 3. Établir la chaîne des droits et la matérialisation de la proposition MPL 1.1 du 7 octobre 2007.
 4. Distinguer état déployé, prototype, maquette, intention et filiation rétrospective.
 
+## Sources primaires supplémentaires retrouvées le 18 octobre 2026
+
+### Executive Summary 2007 — document commercial contemporain
+
+[Executive Summary 2007 (Google Drive)](https://docs.google.com/document/d/10nLK3Ibtw85JhPBpESD-hJaoosQQ1pUJUktnqsQ7vLc/edit) : document ancien dont les métadonnées indiquent une dernière modification en avril 2007 (la date d'import Google Drive est plus récente). Il décrit explicitement Circle2 comme un service personnel de partage et d'archivage de photos, vidéos et documents entre proches **de confiance**, reposant sur une architecture **F2F (Friend-to-Friend)**. Le stockage est mutualisé sur les équipements possédés par les participants ; un abonnement de l'ordre de 5 USD/mois est envisagé. Le texte parle d'un mini-datacenter chez chaque utilisateur et envisage ordinateurs, téléphones et équipements multimédias comme participants possibles. L'enjeu principal y est la sauvegarde des mémoires familiales, la confidentialité et la réduction de la dépendance aux datacenters commerciaux.
+
+Le document décrit le premier produit comme une sorte de **« Skype/Wiki » pour les contenus privés**. Cela établit un lien bien plus fort entre le moteur Wiki, le partage social Circle2 et la couche de stockage que ne le permettaient les seules correspondances. **Prudence :** il s'agit d'un argumentaire et d'une architecture projetée, non d'un audit d'implémentation ni d'une preuve que des terminaux hétérogènes ont participé au réseau.
+
+Il ne faut pas reprendre les comparatifs de prix de 2007 comme s'ils étaient valables en 2026 ; ils sont utiles pour comprendre le modèle économique historique.
+
+### Deux pièces jointes retrouvées, extraction encore impossible
+
+- **14 novembre 2006 :** `d2lab-demo.zip` (916 781 octets), pièce jointe du message « demo d2lab ». Le connecteur Gmail confirme la pièce et sa taille mais déclare son type ZIP non téléchargeable par cet accès. **Contenu non inspecté** ; il peut s'agir d'une démonstration et non du code de production.
+- **19 décembre 2006 :** `BP.doc`, pièce jointe « BP. ». Document potentiellement essentiel pour préciser la chronologie, le financement et la segmentation des offres. **Contenu non inspecté**, format non pris en charge par la voie Gmail disponible.
+
+Leur copie peut être récupérée manuellement à partir de l'interface Gmail par une personne autorisée, puis examinée et inventoriée avec empreinte cryptographique ; éviter toute publication automatique de secrets ou données personnelles éventuellement inclus.
+
+### Registre commercial externe
+
+Le Mémorial luxembourgeois conserve les [statuts constitutifs de d2lab S.A. (2 juin 2006)](https://memorialc.public.lu/memorial/2006/C/Pdf/c1696129.pdf) et une [publication relative à une assemblée du 20 octobre 2009](https://memorialc.public.lu/memorial/2010/C/Pdf/c0048081.pdf). Ces documents doivent être lus intégralement avant de tirer des conclusions sur la liquidation : les changements de mandataires publiés en 2009 rendent insuffisante la seule formule « dissolution imminente en 2007 ».
+
 ## Lacunes et actions d'archéologie
 
 1. Retrouver présentations, captures du site et offres D2Lab (env. 2005–2008), afin de corroborer le slogan et l'articulation commerciale.
