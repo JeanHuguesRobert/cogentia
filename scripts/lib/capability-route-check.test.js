@@ -65,3 +65,26 @@ test("failed provider execution must not be described operational",()=>{
  const r=evaluateCapabilityRoutes({...access,evidence:[failed],verifyReceipt:()=>true});
  assert.equal(r.status,"probe_required");
 });
+
+test("trusted receipt source integrates without caller-supplied verification", async()=>{
+ const {assessCapabilityFromReceiptSource} = await import("./capability-route-check.js");
+ const seen=[];
+ const resolved=await assessCapabilityFromReceiptSource({
+   ...access, receiptSource:{fetchVerified:async query=>{
+     seen.push(query); return {verified:true,receipt};
+   }}
+ });
+ assert.equal(resolved.status,"operational");
+ assert.deepEqual(seen,[{requirement_ref:route.requirement_ref,offer_id:route.offer_id}]);
+});
+test("untrusted source result remains untested",async()=>{
+ const {assessCapabilityFromReceiptSource} = await import("./capability-route-check.js");
+ const resolved=await assessCapabilityFromReceiptSource({
+   ...access, receiptSource:{fetchVerified:async()=>({verified:false,receipt})}
+ });
+ assert.equal(resolved.status,"probe_required");
+});
+test("without receipt source no execution claim",async()=>{
+ const {assessCapabilityFromReceiptSource} = await import("./capability-route-check.js");
+ await assert.rejects(()=>assessCapabilityFromReceiptSource({...access}),/trusted receipt source/);
+});
