@@ -5,7 +5,7 @@ author: Jean Hugues Noël Robert, baron Mariani
 affiliation: Institut Mariani / C.O.R.S.I.C.A., 1 cours Paoli, F-20250 Corte, Corsica
 date: '2026-05-21'
 status: working-paper — Working paper
-version: '0.4'
+version: '0.5'
 license: CC BY-SA 4.0 for text; MIT for associated schemas or code
 spdx: CC-BY-SA-4.0
 operational_prompt: cogentia/prompts/cognitive_packet.md
@@ -44,11 +44,13 @@ update_policy: UP-DEFAULT-REVIEWED
 Institut Mariani / C.O.R.S.I.C.A.  
 1 cours Paoli, F-20250 Corte, Corsica
 
-*Working paper — May 2026 (rev. Sep 2026) — v0.4*
+*Working paper — May 2026 (rev. Oct 2026) — v0.5*
 
 ---
 
 ## Version note
+
+**v0.5** adds multi-handler coordination: scoped claims, optional leases, baseline revisions, optimistic reconciliation, explicit forks, and late-result handling, while distinguishing the already-tested atomic continuation claim prototype from still-candidate distributed enforcement mechanisms.
 
 **v0.4** incorporates the genealogical distinction between VM native closures and transportable serialized closures (prefigured in `l8`), and the substitution of serialized stack state by deterministic replay from inputs and causal traces (`side.js`).
 
@@ -733,6 +735,195 @@ Required payload emphasis:
 - required capability;
 - context;
 - expected output schema.
+
+
+## 10.7 Concurrent handlers, scoped claims, and reconciliation
+
+Cognitive Packets are designed for multi-agent and human–AI cooperation. Once several compatible handlers can discover and resume the same work, routing alone is insufficient: the system also needs a way to avoid duplicate incompatible work and stale effects without suppressing useful parallelism.
+
+The core problem is not merely concurrent file editing. Three different collisions must remain distinguishable:
+
+```text
+work collision
+  = two handlers unknowingly perform the same incompatible unit of work
+
+write collision
+  = two handlers attempt incompatible effects on the same mutable resource
+
+semantic collision
+  = two technically non-conflicting changes embody incompatible decisions
+```
+
+Git and compare-and-swap mechanisms help with write collisions. They do not by themselves prevent duplicated work or semantic divergence.
+
+### Handler identity is not logical-agent identity
+
+A replaceable handler instance must not be confused with the durable logical agent or Principal whose mandate it serves.
+
+```text
+HandlerInstance ≠ LogicalAgent
+```
+
+Two ChatGPT conversations, two coding-agent sessions, a GitHub Actions job and a human may all act as different handler instances for one logical agent. Coordination therefore belongs in durable shared state rather than in private session memory.
+
+### Claim as coordination, not authority
+
+A handler may acquire a claim over a bounded work scope before performing incompatible work.
+
+```text
+claim
+  = coordination fact about who is currently working on what
+
+claim ≠ mandate
+claim ≠ authority
+claim ≠ truth
+claim ≠ permanent ownership
+```
+
+A claim never widens the handler's authority. It only reduces accidental duplication and provides a visible coordination point.
+
+The current Cogentia prototype already proves the smallest useful form: `scripts/lib/resolver-registry.js` uses the filesystem's atomic create-if-absent semantics to ensure that two resolvers racing to claim the same continuation cannot both win. `scripts/check-resolver-registry.js` verifies this optimistic-locking race.
+
+That prototype is intentionally narrower than the general model. It currently proves:
+
+```text
+same continuation
++ two concurrent claim attempts
+→ exactly one successful claim
+→ losing resolver can identify the current holder
+```
+
+It does **not** yet prove distributed leases, scoped subclaims, provider-enforced fencing, or late-result reconciliation.
+
+### Scoped claims
+
+The useful unit is not necessarily an entire Packet. Parallel work SHOULD remain possible when scopes are compatible.
+
+Conceptually:
+
+```yaml
+claim:
+  packet_ref: <packet>
+  handler_instance_ref: <handler>
+  scope:
+    kind: semantic | files | capability | subtask
+    refs: [...]
+  baseline_revision: <observed revision>
+  claimed_at: <timestamp>
+  lease_until: <optional timestamp>
+```
+
+Examples:
+
+```text
+Packet P
+ ├─ legal-review       → Handler A
+ ├─ implementation     → Handler B
+ └─ prior-art search   → Handler C
+```
+
+These claims are compatible if their effect surfaces do not conflict. A broad exclusive claim should therefore be a last resort, not the default.
+
+Canonical invariant:
+
+> **One incompatible unit of work should have at most one active writer unless an explicit fork is declared.**
+
+### Lease and expiry
+
+A long-lived distributed system needs claims that can recover from abandoned handlers. A lease is the candidate mechanism:
+
+```text
+claim
+→ optional lease
+→ renew while actively working
+→ release on completion
+→ expiry permits reassignment
+```
+
+But:
+
+```text
+lease expiry ≠ cancellation of prior work
+```
+
+A slow handler may return after its lease has expired. Its result is then a **late result** and must be evaluated against current state. It must not silently overwrite newer work merely because it began earlier.
+
+### Baseline revision and optimistic reconciliation
+
+Claims coordinate work, but mutable Corpus state may legitimately evolve while a handler is working. Each material handler should therefore retain the baseline it observed.
+
+```text
+Packet / source @ B0
+→ claim(scope, B0)
+→ handler works
+→ shared state evolves to B1
+→ handler prepares Result(B0)
+→ refresh current state
+→ compare B0 / local result / B1
+→ integrate | reconcile | explicit fork | reject stale effect
+```
+
+An `expected_revision`, commit SHA, row revision, packet epoch, or equivalent provider token can serve as the concrete optimistic-concurrency witness.
+
+This yields a stronger rule than ordinary "fetch latest":
+
+> **Refresh before a material effect, then reconcile against the baseline that justified the work.**
+
+A clean textual merge is not sufficient evidence of semantic compatibility.
+
+```text
+Git conflict-free ≠ semantic compatibility
+```
+
+### Explicit fork
+
+Parallel incompatible exploration can be useful. It should be represented deliberately rather than emerging accidentally from two handlers believing they are authoritative over the same line of work.
+
+```text
+same baseline
+→ explicit fork A
+→ explicit fork B
+→ later comparison / selection / synthesis
+```
+
+The fork must preserve provenance, baseline, mandate and expected return contract so that later reconciliation remains possible.
+
+### Reality Test — stale reasoning avoided by refresh
+
+A concrete October 2026 Reality Test occurred during work on `JeanHuguesRobert/inseme` Issue #120. One handler diagnosed and prepared a correction to `.github/workflows/compute-batch-reality-test.yml`. Before applying its change, it refreshed `main` and discovered that another handler had already corrected that workflow.
+
+No Git conflict was required to reveal the race. The stale effect was avoided because the second handler re-read the live baseline immediately before writing.
+
+```text
+read B0
+→ reason / prepare
+→ another handler writes B1
+→ refresh before effect
+→ detect B0 ≠ B1
+→ avoid duplicate or stale write
+```
+
+This is the minimum useful form of optimistic multi-handler coordination and should be preserved even where stronger claims or leases are unavailable.
+
+### Operational synthesis
+
+The preferred distributed work cycle is:
+
+```text
+discover
+→ inspect current claims and baseline
+→ acquire scoped claim when incompatible work requires one
+→ work
+→ checkpoint
+→ refresh live state
+→ compare baseline / local work / current state
+→ integrate | reconcile | explicit fork
+→ publish durable result
+→ release claim
+```
+
+When no enforceable shared claim mechanism exists, handlers MUST still perform the refresh/reconcile steps before material effects and SHOULD expose overlapping work rather than silently racing.
+
 
 ---
 
