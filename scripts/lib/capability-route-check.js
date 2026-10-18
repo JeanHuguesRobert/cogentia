@@ -17,15 +17,15 @@ export function evaluateCapabilityRoutes({required, routes = [], callable = [], 
     const callableNow = valid && missing.length === 0;
     const authorized = Boolean(r.mandate && grants.has(r.mandate));
     const probe = witnessed.get(r.id);
-    const tested = probe?.ok === true && probe?.reachable === true;
-    const reachable = callableNow && tested;
+    const tested = probe?.ok === true && probe?.reachable === true && probe?.verified === true && probe?.capability === required && probe?.route_id === r.id;
+    const reachable = callableNow && authorized && tested;
     const status = !valid ? "invalid"
       : !authorized ? "unauthorized"
       : !callableNow ? "unavailable"
       : !tested ? "untested" : "operational";
     return {
       id: r.id, remembered: true, callable: callableNow, missing, authorized,
-      reachable, tested, outcome: probe?.outcome || "not_tested", status
+      reachable, tested, outcome: tested ? (probe.outcome || "unknown") : "not_verified", status
     };
   });
   const status = candidates.some(r => r.status === "operational") ? "operational"
