@@ -215,6 +215,58 @@ The maxim is operational rather than decorative:
 For GitHub-Issue continuations, see
 [`docs/resumable_github_issues.md`](resumable_github_issues.md).
 
+
+## Concurrent handlers: claim, refresh, reconcile
+
+When more than one handler can resume the same Packet or continuation, private session memory is not enough coordination.
+
+The minimum operational sequence is:
+
+```text
+observe current claim / baseline
+→ acquire a scoped claim when incompatible work requires one
+→ work
+→ refresh current state before a material effect
+→ compare baseline / local work / current state
+→ integrate | reconcile | explicit fork
+→ publish durable result
+→ release claim
+```
+
+A claim coordinates work. It never creates mandate or semantic authority.
+
+```text
+HandlerInstance ≠ LogicalAgent
+claim ≠ authority
+Git conflict-free ≠ semantic compatibility
+```
+
+Cogentia already contains a tested prototype in
+[`scripts/lib/resolver-registry.js`](../scripts/lib/resolver-registry.js):
+two resolvers racing to claim the same continuation use atomic create-if-absent,
+so exactly one wins. The isolated check is
+[`scripts/check-resolver-registry.js`](../scripts/check-resolver-registry.js).
+
+That prototype is only the first enforcement layer. It does not yet provide
+distributed lease renewal, sub-packet scopes, provider-side fencing, or automatic
+late-result reconciliation. Until those exist, every material effect still
+requires a live refresh and reconciliation against the baseline used to begin work.
+
+If an overlapping active claim is observed, do not duplicate blindly. Choose the
+smallest appropriate response:
+
+```text
+different compatible scope
+| cooperate with current holder
+| explicit fork
+| wait / return
+| challenge only a stale or expired claim under the applicable rules
+```
+
+Deep doctrine:
+[`research/cognitive_packets.md#107-concurrent-handlers-scoped-claims-and-reconciliation`](../research/cognitive_packets.md#107-concurrent-handlers-scoped-claims-and-reconciliation).
+
+
 ## Handlers, not session memory
 
 A packet/continuation must remain answerable by a **different** agent or human
