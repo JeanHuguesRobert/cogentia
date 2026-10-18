@@ -2,13 +2,13 @@
 title: Optimistic Mainline Governance
 subtitle: Direct agent work on main under trace, Measured Risk and scoped authorization
 version: '0.4'
-status: source document — operational doctrine
+status: working-paper — source document — operational doctrine
 date: '2026-07-07'
 author: Jean Hugues Noël Robert, baron Mariani
+affiliation: "Institut Mariani / C.O.R.S.I.C.A., 1 cours Paoli, F-20250 Corte, Corsica"
 license: CC BY-SA 4.0
 language: en
-repository: cogentia
-canonical_path: cogentia/research/optimistic_mainline_governance.md
+canonical_url: https://github.com/JeanHuguesRobert/cogentia/blob/main/research/optimistic_mainline_governance.md
 tags:
   - cogentia
   - agents
