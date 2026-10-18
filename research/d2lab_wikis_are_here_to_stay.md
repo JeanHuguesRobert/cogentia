@@ -64,6 +64,33 @@ D2Lab ambitionnait d'abord la pérennité des wikis. Il ne serait pas justifié 
 
 Tahoe-LAFS (chiffrement et redondance sous logiciels libres), Garage/Deuxfleurs (stockage objet distribué auto-hébergeable), Ceph, SeaweedFS et IPFS offrent des points de comparaison. Les solutions industrielles comme Hivenet peuvent être distribuées **sans** que tout leur contrôle logiciel soit libre ni qu'un tiers puisse reconstruire un réseau indépendant. La question centrale n'est donc pas seulement « est-ce distribué ? », mais **« qui peut continuer à lire, réparer et exploiter les contenus après la disparition d'un opérateur ? »**. Aucun lien historique direct D2Lab ↔ Hivenet/Inria n'est établi.
 
+## Complément probatoire — correspondances retrouvées (2006–2008, vérifiées le 18 octobre 2026)
+
+**Pièce majeure, 7 octobre 2007 — intention de libération sous MPL 1.1.** Jean Hugues Robert adresse à Rodolphe Briet, Thierry Parmentelat, Jean-François Catz et Yvan Balsamo une proposition visant à rendre réutilisables les créations immatérielles D2Lab (graphismes, code du site et idées), selon les termes de la **Mozilla Public License 1.1**. Jean-François Catz, Yvan Balsamo et Rodolphe Briet approuvent explicitement par réponse le même jour ; un message de Thierry Parmentelat soutient l'idée et sollicite l'approbation d'Yvan. **Portée :** preuve directe d'une volonté collective de libération, et de plusieurs consentements explicites. **Limite juridique :** la formule « domaine public selon MPL 1.1 » est imprécise (MPL ≠ domaine public) ; ces courriels ne suffisent pas à établir une cession valide de l'ensemble des droits, l'autorité de chaque signataire, la chaîne des droits ou la publication effective de chaque composant sous MPL 1.1. Il faut retrouver les fichiers de licence, statuts/actes et archives de code avant de présenter les actifs comme définitivement libres.
+
+**15 octobre 2006 — maturité technique et commerciale (témoignage contemporain du fondateur).** Dans un échange interne, JHR décrit une équipe ne disposant encore d'aucun prototype achevé, mais de maquettes, d'une vision technique et d'un business plan encore à consolider. Cela empêche d'attribuer sans réserve à D2Lab un moteur de stockage pleinement opérationnel à cette date.
+
+**13 décembre 2006 – janvier 2007 — service Circle2 exploité.** Des échanges signalent `circle2.d2lab.com` accessible puis indisponible à la suite d'erreurs Rails, avec interventions et vérifications d'espace disque. Il existait donc une application web déployée, mais cela ne prouve pas l'exécution du stockage P2P projeté.
+
+**13 février 2007 — réunion stratégique.** Des minutes internes distinguent Circle2 comme projet structurant et de possibles « petits produits » capables de produire du revenu à court terme. Les scénarios financiers évoqués restent conditionnels et ne prouvent pas une levée de fonds réalisée.
+
+**29 mars 2007 — description fonctionnelle de Circle2.** JHR décrit explicitement une demande pour l'« échange de données multimédia entre proches en P2P » et indique que le plan Circle2 pourrait être exécuté si le financement était trouvé. **Correction historique :** Circle2 doit être qualifié d'application de partage multimédia social P2P, et non identifié automatiquement au Wiki Engine ; les rapports exacts entre Circle2, le Wiki D2Lab et Simpli restent à établir.
+
+**23 juillet 2007 — inventaire précis d'une sauvegarde.** Thierry Parmentelat déclare avoir sauvegardé la base Subversion, un snapshot des sites Rails `d2lab` et `circle2` (hors vidéos), quatre bases de données (production/test), les journaux, la configuration Apache et les listes de paquets `dpkg` et `gem`. Cette trace est antérieure à celle de février 2008 et précise le périmètre des archives à rechercher.
+
+**2007–2008 — fermeture progressive.** La dissolution est annoncée comme imminente en octobre 2007 ; l'hébergement semble avoir cessé en 2008. Il faut conserver la distinction entre intention de dissolution, actes juridiques définitifs et arrêt technique.
+
+### Sources et divulgation
+
+Toutes les preuves ci-dessus proviennent de courriels contemporains consultés dans l'archive personnelle du fondateur. Le présent document publie une **synthèse factuelle D2**, sans identifiant fournisseur, identifiant de fil, données bancaires, numéros de téléphone, ni reproduction intégrale des échanges. La publication des messages complets, notamment ceux de collaborateurs, exigerait un examen distinct de proportionnalité et des droits des tiers. Les messages de 2007 doivent être conservés comme pièces privées vérifiables.
+
+### Priorité d'archéologie révisée
+
+1. Rechercher **en priorité** les archives Subversion et snapshots documentés en juillet 2007 et février 2008.
+2. Retrouver le business plan, les maquettes, les spécifications du Wiki, de Circle2 et de la couche de stockage ; ne pas confondre ces trois objets.
+3. Établir la chaîne des droits et la matérialisation de la proposition MPL 1.1 du 7 octobre 2007.
+4. Distinguer état déployé, prototype, maquette, intention et filiation rétrospective.
+
 ## Lacunes et actions d'archéologie
 
 1. Retrouver présentations, captures du site et offres D2Lab (env. 2005–2008), afin de corroborer le slogan et l'articulation commerciale.
