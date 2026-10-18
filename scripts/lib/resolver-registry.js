@@ -93,6 +93,25 @@ export function findCapableResolvers(cogentiaRoot, requiredCapability) {
 }
 
 /**
+ * Find resolvers that declare ALL requested capabilities (AND semantics).
+ *
+ * This is eligibility by declaration only, not authorization or liveness.
+ * Fail closed on malformed requirements; callers must separately verify
+ * freshness, mandate and the scope of every consequential effect.
+ */
+export function findCapableResolversForAll(cogentiaRoot, requiredCapabilities) {
+  if (!Array.isArray(requiredCapabilities) ||
+      requiredCapabilities.some((c) => typeof c !== "string" || !c.trim())) {
+    throw new TypeError("requiredCapabilities must be an array of nonempty strings");
+  }
+  const required = [...new Set(requiredCapabilities.map((c) => c.trim()))];
+  return listResolvers(cogentiaRoot).filter((resolver) =>
+    Array.isArray(resolver.capabilities) &&
+    required.every((capability) => resolver.capabilities.includes(capability))
+  );
+}
+
+/**
  * Attempt to claim a continuation for a given resolver. Returns
  * { claimed: true, claim } on success, { claimed: false, existingClaim }
  * if someone else already claimed it first -- the optimistic-locking
