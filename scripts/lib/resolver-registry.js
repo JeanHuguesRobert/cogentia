@@ -1,6 +1,13 @@
 /**
- * Resolver capability registry + optimistic-locking claim protocol
+ * Resolver capability registry + local optimistic WorkClaim adapter
  * (inseme#111, part of the "Super ACP" umbrella, inseme#112).
+ *
+ * Architectural status (2026-10-18): this file is NOT a separate coordination
+ * layer. It is a small filesystem enforcement adapter for the canonical COP
+ * WorkClaim semantics documented in inseme/packages/cop-core/Terminology.md.
+ * COP owns logical work identity, claim/lease/fencing semantics and
+ * reconciliation; this module only supplies atomic local create-if-absent
+ * behavior for a continuation claim.
  *
  * Design note (kept here rather than a separate doc, per the issue's own
  * preference for a short note over a research paper):
@@ -16,7 +23,8 @@
  *   Per the issue's own stated assumption, the realistic resolver pool
  *   is small (jhrobert + one or two coding-agent sessions), so a
  *   manually-maintained registry is acceptable for v1.
- * - Claiming uses the filesystem's own atomic "create if not exists"
+ * - Claiming realizes one local COP WorkClaim enforcement strategy using the
+ *   filesystem's own atomic "create if not exists"
  *   semantics (`fs.writeFileSync(path, data, { flag: "wx" })`) as the
  *   optimistic-locking primitive: two resolvers racing to claim the same
  *   continuation will have exactly one writeFileSync succeed and one
