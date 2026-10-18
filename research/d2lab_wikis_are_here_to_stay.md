@@ -127,3 +127,13 @@ Le Mémorial luxembourgeois conserve les [statuts constitutifs de d2lab S.A. (2 
 - [When Cognition Became Traffic — FractaVolta](https://github.com/JeanHuguesRobert/FractaVolta/blob/main/research/when_cognition_became_traffic.md)
 
 *Note de divulgation : les correspondances historiques privées sont décrites seulement par leur date, objet et portée probatoire ; leurs identifiants, adresses et corps ne sont pas reproduits dans cette source publique.*
+
+## Complements probatoires (courriels de septembre a novembre 2006)
+
+- **8 septembre 2006** : Thierry Parmentelat annonce Circle2 v0.0.1 en production, avec inscription et fonctions Wiki elementaires disponibles mais fragiles. Il vise notamment la reprise des donnees de l'ancien Wiki D2Lab et d'Updatelog. Cela prouve un Wiki deploye, non une implementation operationnelle de toute l'architecture de stockage mutualise.
+- **8 septembre 2006** : une micro-specification de l'interface Wiki decrit albums photo, post-it, pages, recherche, historique, administration et export ; elle mentionne explicitement Instiki. Certaines fonctions restent a developper ou reparer.
+- **13 septembre 2006** : une annonce de deploiement documente les tags `share-page` et `share-wiki`, etablissant une gestion de partage au niveau des pages et wikis.
+- **15 octobre 2006** : Jean-Francois Catz evoque F2F, chiffrement, metadonnees, archivage, rendu et decoupage de fichiers en fragments comme elements de la vision technique. Leur fonctionnement effectif n'est pas etabli par ce message.
+- **10 novembre 2007** : Jean Hugues Robert envisage de relancer un Wiki cote client avec OpenSocial et du stockage fourni par Google, sans serveur applicatif tiers : hypothese architecturale, pas preuve d'une implementation.
+
+**Sources :** correspondances privees contemporaines consultees dans la boite du fondateur. Seuls les faits minimaux utiles sont publics ; les messages, adresses et identifiants de recuperation ne sont pas republies. **Correction de lecture :** la mention en octobre 2006 de maquettes et d'absence de prototype acheve doit etre comprise au niveau du produit global, non comme une negation du Wiki deja deploye.
