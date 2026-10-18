@@ -3,9 +3,9 @@ title: Cogentia Shared Agent Instructions
 author: unknown
 affiliation: "Institut Mariani / C.O.R.S.I.C.A., 1 cours Paoli, F-20250 Corte, Corsica"
 status: "working-paper — active operational mandate"
-version: 36
+version: 37
 date: 2026-10-02
-last_modified_at: "2026-10-17"
+last_modified_at: "2026-10-18"
 license: CC BY-SA 4.0
 language: en
 canonical_url: https://github.com/JeanHuguesRobert/cogentia/blob/main/instructions/AGENTS.shared.md
@@ -30,6 +30,15 @@ classification_confidence: "medium"
 ---
 
 # Cogentia Shared Agent Instructions
+
+## Mandatory two-channel GitHub Actions discipline (FBF)
+
+**Before creating or changing ANY workflow, recall and enforce this invariant.** GitHub Actions status is the transport/infrastructure channel, not the task result. Expected work failures (test, build, validation, missing dependency/input, timeout, and handled exceptions) MUST be converted to typed durable results while the GitHub job/check remains green. Preserve the original phase, error code, cause, logs, and outcome in a separate COP receipt/Issue callback and/or artifact. Never hide the cause to make the check green.
+
+**Pre-write gate:** audit every potentially failing step INCLUDING setup and dependency installation; put expected failures under a non-failing supervisor and ensure finalization of the result; reuse existing Inseme generic patterns rather than raw failing shell steps; test both successful and deliberately failing tasks; do not infer task success from a green workflow. Platform/runner failures can still be outside our control: do not falsely promise absolute prevention of every red status.
+
+**Why this is a hard invariant:** recurring unwanted GitHub failure notifications reported by the principal. Reproduction 2026-10-18: Inseme `.github/workflows/fbf-magistral-receipts.yml` had non-failing test handling but an unprotected `npm ci` step; corrected under FBF. See Inseme #120, #121 and generic compute finalizer. This must be recalled before each GitHub Actions change, not only after a failure.
+
 
 This is the common operational layer for every agent working in the Cogentia corpus. Repository-local `AGENTS.md` files may add constraints or become stricter; they must not silently weaken this layer.
 
