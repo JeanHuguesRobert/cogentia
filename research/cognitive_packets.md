@@ -5,7 +5,7 @@ author: Jean Hugues Noël Robert, baron Mariani
 affiliation: Institut Mariani / C.O.R.S.I.C.A., 1 cours Paoli, F-20250 Corte, Corsica
 date: '2026-05-21'
 status: working-paper — Working paper
-version: '0.6'
+version: '0.7'
 license: CC BY-SA 4.0 for text; MIT for associated schemas or code
 spdx: CC-BY-SA-4.0
 operational_prompt: cogentia/prompts/cognitive_packet.md
@@ -44,13 +44,15 @@ update_policy: UP-DEFAULT-REVIEWED
 Institut Mariani / C.O.R.S.I.C.A.  
 1 cours Paoli, F-20250 Corte, Corsica
 
-*Working paper — May 2026 (rev. Oct 2026) — v0.6*
+*Working paper — May 2026 (rev. Oct 2026) — v0.7*
 
 ---
 
 ## Version note
 
-**v0.6** consolidates multi-handler coordination under COP: Cognitive Packets describe resumable work, while COP owns the logical WorkClaim/lease/fencing semantics. Local filesystem, SQL and GitHub mechanisms are adapters or enforcement strategies, not additional coordination layers.
+**v0.7** removes the temporary `PacketClaim` duplicate and converges multi-handler coordination on the already implemented COP `PacketClaim` (`cop.packet-claim/v1`) model. Cognitive Packets describe resumable work; COP Packet coordination owns claims, lease epochs, stale-holder fencing and generation-aware mutation semantics; local filesystem, SQL and GitHub mechanisms remain adapters or enforcement strategies.
+
+**v0.6** temporarily named the same logical coordination role `PacketClaim`; that name is superseded by `PacketClaim` to avoid a duplicate architectural primitive.
 
 **v0.5** adds multi-handler coordination: scoped claims, optional leases, baseline revisions, optimistic reconciliation, explicit forks, and late-result handling, while distinguishing the already-tested atomic continuation claim prototype from still-candidate distributed enforcement mechanisms.
 
@@ -790,16 +792,16 @@ Canonical ownership is deliberately singular:
 Cognitive Packet / Continuation
   describes resumable work
 
-COP WorkClaim
+COP PacketClaim
   owns logical coordination, lease/generation and stale-holder semantics
 
 Magistral ExecutionBinding
   binds the coordinated work to a concrete capability/runtime
 ```
 
-Filesystem claims, SQL leases, GitHub reservations and provider-native compare-and-swap are implementation strategies for the COP WorkClaim where appropriate. They are not independent architectural layers.
+Filesystem claims, SQL leases, GitHub reservations and provider-native compare-and-swap are implementation strategies for COP PacketClaim semantics where appropriate. They are not independent architectural layers.
 
-The current Cogentia prototype already proves the smallest useful local enforcement form: `scripts/lib/resolver-registry.js` uses the filesystem's atomic create-if-absent semantics to ensure that two resolvers racing to claim the same continuation cannot both win. `scripts/check-resolver-registry.js` verifies this optimistic-locking race. This prototype is an experimental local **adapter of the COP WorkClaim semantic**, not a separate coordination layer.
+The current Cogentia prototype already proves the smallest useful local enforcement form: `scripts/lib/resolver-registry.js` uses the filesystem's atomic create-if-absent semantics to ensure that two resolvers racing to claim the same continuation cannot both win. `scripts/check-resolver-registry.js` verifies this optimistic-locking race. This prototype is an experimental local **adapter of the COP PacketClaim semantic**, not a separate coordination layer.
 
 That prototype is intentionally narrower than the general model. It currently proves:
 
