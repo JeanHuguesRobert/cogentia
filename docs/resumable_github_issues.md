@@ -4,7 +4,7 @@ subtitle: "Cold-handler resumability, Janus Past→Future refactoring, and minim
 author: "Jean Hugues Noël Robert, baron Mariani"
 affiliation: "Institut Mariani / C.O.R.S.I.C.A., 1 cours Paoli, F-20250 Corte, Corsica"
 date: "2026-09-27"
-last_modified_at: "2026-10-07"
+last_modified_at: "2026-10-18"
 version: "0.2"
 status: "working-note — operational pattern"
 license: "CC BY-SA 4.0"
@@ -220,6 +220,41 @@ This complements
 [`research/ideas_to_explore_as_issues.md`](../research/ideas_to_explore_as_issues.md):
 that pattern asks whether an opening deserves durable memory; this pattern asks
 whether another handler can actually continue the work.
+
+## Canonical hop journal — Issue first
+
+For work executed as a Resumable GitHub Issue (a Cognitive Packet by reference),
+**the Issue thread is the canonical human- and agent-readable hop journal**.
+Each hop SHOULD append one idempotently identifiable Issue comment containing:
+
+- stable packet / hop / computation identifiers and parent-hop correlation;
+- action or capability invoked, with relevant mandate and bounded scope;
+- status of the *work* (completed, failed, refused, pending), separate from workflow transport status;
+- original error/exception phase and cause when applicable, plus references to detailed logs;
+- immutable source/run/commit evidence and returned outputs or their content-addressed references;
+- next feasible continuation or precisely stated blocker.
+
+The Issue body retains purpose, controls, and a compact current-state checkpoint;
+its comments retain the chronological history. **Do not create a file per hop or
+duplicate the hop journal in an independent ad-hoc result store.** Source code,
+tests and reusable doctrine still belong in versioned files when genuinely needed.
+
+If the Issue callback is unavailable, existing COP compute Store & Forward may
+temporarily spool the hop as a GitHub Actions artifact / outbox, then reconcile
+idempotently into the same Issue. This temporary recovery mechanism is not a
+second canonical hop log. Large/binary outputs may remain in artifacts or other
+durable stores, but the Issue comment must carry their exact references, hashes
+where warranted, and retrieval constraints/expiry. Do not misrepresent ephemeral
+artifacts as durable evidence.
+
+**Two channels:** a handled work failure belongs in the hop result, not in a
+red GitHub Actions check. Preserve the cause; avoid duplicate callbacks or
+unnecessary failure notifications. GitHub platform failures themselves cannot
+always be made green. Do not confuse an Issue's narrative completeness with
+authorization, reachability or an independently verified effect.
+
+This is a locality rule: **packet hops live with their packet**; reusable
+mechanisms live in their owning source repository.
 
 ## 4. Corpus status
 
