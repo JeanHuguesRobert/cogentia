@@ -1,0 +1,35 @@
+name: FBF capability route tests
+on:
+  push:
+    paths:
+      - 'scripts/lib/capability-route-check*.js'
+      - 'scripts/lib/github-actions-receipt-source*.js'
+      - '.github/workflows/fbf-capability-routes.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Run focused tests and preserve result separately from workflow success
+        shell: bash
+        run: |
+          set +e
+          node --test scripts/lib/capability-route-check.test.js scripts/lib/github-actions-receipt-source.test.js > /tmp/fbf-test.log 2>&1
+          rc=$?
+          cat /tmp/fbf-test.log
+          mkdir -p fbf-evidence
+          cp /tmp/fbf-test.log fbf-evidence/test.log
+          printf '{"schema":"fbf.test-result/v1","exit_code":%s,"passed":%s}\n' "$rc" "$([ "$rc" -eq 0 ] && echo true || echo false)" > fbf-evidence/result.json
+          exit 0
+      - name: Upload durable diagnostic artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: fbf-capability-route-results
+          path: fbf-evidence/
+          retention-days: 14
