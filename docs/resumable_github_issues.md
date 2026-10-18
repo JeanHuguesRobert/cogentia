@@ -5,7 +5,7 @@ author: "Jean Hugues Noël Robert, baron Mariani"
 affiliation: "Institut Mariani / C.O.R.S.I.C.A., 1 cours Paoli, F-20250 Corte, Corsica"
 date: "2026-09-27"
 last_modified_at: "2026-10-18"
-version: "0.2"
+version: "0.3"
 status: "working-note — operational pattern"
 license: "CC BY-SA 4.0"
 language: "en"
@@ -55,6 +55,41 @@ Resume issue <N> of repository <OWNER/REPOSITORY>.
 
 The Issue identifier locates the packet. The repository and durable references
 carried by the Issue provide the context needed to resume it.
+
+### Self-contained Resumability Invariant (normative)
+
+> A resumable Cognitive Packet MUST carry, **by value and/or by reference**,
+> all information reasonably necessary for an admissible handler to reconstruct
+> its mandate, current state, applicable control, next action, and completion
+> criteria **without predecessor-private conversation context**.
+
+This is a **relative, testable closure** claim, not a demand to copy all knowledge.
+The packet identifies its admissible handler/environment and makes each
+load-bearing dependency reachable there. Stable references are preferred over
+duplicate payloads under Minimum Sufficient Locality. A reference is sufficient
+only if its location, version where material, access path and applicable
+authority can be resolved by that handler.
+
+**Producer obligation:** Before handing off, perform the cold-resume test using
+only the proposed one-line invocation. If the handler needs an explanatory
+paragraph from the predecessor, repair the **packet** (or its stable references),
+not the invocation. Record any unavoidable external dependency or authority
+boundary as a precise blocker, with a runnable next step. Do not silently
+substitute implicit chat memory.
+
+**Handler obligation:** Refresh mutable references with optimistic locking,
+recover the declared control plane, act within the inherited mandate, and emit
+a durable outcome or typed continuation. Never claim completion solely because
+the handoff was readable or the process ran.
+
+The operational target is therefore:
+
+```text
+Resume issue <N> of repository <OWNER/REPOSITORY>.
+```
+
+Anything beyond that line is a **packet packaging defect to correct whenever
+reasonably possible**, not a routine burden on the Principal.
 
 ## 2. Resume-command sufficiency test
 
