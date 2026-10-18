@@ -14,6 +14,7 @@ import {
   listResolvers,
   findCapableResolvers,
   findCapableResolversForAll,
+  claimAdmissibleResolver,
   claimContinuation,
   getClaim,
   releaseClaim,
@@ -53,6 +54,39 @@ try {
 
   const nobodyCapable = findCapableResolvers(root, "quantum_computing");
   assert.equal(nobodyCapable.length, 0);
+
+  // No implicit admission: registered capability does not imply authority.
+  assert.equal(
+    claimAdmissibleResolver(root, "ctn_no_gates", ["corpus_research"]).reason,
+    "missing_admission_checks"
+  );
+  assert.equal(getClaim(root, "ctn_no_gates"), null);
+  const unavailable = claimAdmissibleResolver(root, "ctn_unavailable", ["corpus_research"], {
+    isAvailable: () => false,
+    isAuthorized: () => true,
+  });
+  assert.equal(unavailable.reason, "no_admissible_resolver");
+  assert.equal(getClaim(root, "ctn_unavailable"), null);
+  const unauthorized = claimAdmissibleResolver(root, "ctn_unauthorized", ["corpus_research"], {
+    isAvailable: () => true,
+    isAuthorized: () => false,
+  });
+  assert.equal(unauthorized.reason, "no_admissible_resolver");
+  assert.equal(getClaim(root, "ctn_unauthorized"), null);
+  const admitted = claimAdmissibleResolver(root, "ctn_admitted", ["corpus_research", "image_view"], {
+    isAvailable: () => true,
+    isAuthorized: () => true,
+  });
+  assert.equal(admitted.claimed, true);
+  assert.equal(admitted.claim.resolver_id, "human-jhrobert");
+  assert.equal(claimAdmissibleResolver(root, "ctn_admitted", ["corpus_research", "image_view"], {
+    isAvailable: () => true,
+    isAuthorized: () => true,
+  }).reason, "already_claimed");
+  assert.equal(claimAdmissibleResolver(root, "ctn_unknown", ["not-a-capability"], {
+    isAvailable: () => true,
+    isAuthorized: () => true,
+  }).reason, "no_capable_resolver_available");
 
   // The actual point of this issue: optimistic-locking claim race.
   const continuationId = "ctn_test_race";
