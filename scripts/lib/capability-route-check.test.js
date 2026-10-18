@@ -1,42 +1,67 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { evaluateCapabilityRoutes } from "./capability-route-check.js";
-const routes=[{id:"github-cop-fracta2",capability:"public-document-fetch",steps:["github.issue.write","cop.typed.compute"],mandate:"public-read"}];
-test("indirect path without SSH is discoverable but not assumed operational",()=>{
- const r=evaluateCapabilityRoutes({required:"public-document-fetch",routes,callable:["github.issue.write","cop.typed.compute"],mandates:["public-read"]});
- assert.equal(r.candidates[0].status,"untested"); assert.equal(r.candidates[0].callable,true);
+
+const route = {
+  id:"github-cop-fracta2", capability:"public-document-fetch",
+  requirement_ref:"requirement:corte:092", offer_id:"offer:fracta2",
+  steps:["github.issue.write","cop.typed.compute"], mandate:"public-read"
+};
+const access = {required:route.capability,routes:[route],
+  callable:["github.issue.write","cop.typed.compute"],mandates:["public-read"]};
+const receipt = {
+  schema:"magistral.execution-receipt/v1",status:"completed",terminal:true,
+  binding:{schema:"magistral.execution-binding/v1",
+    requirement_ref:route.requirement_ref,offer_id:route.offer_id,
+    provider_execution_id:"run-123",provider_ref:"fracta2"}
+};
+
+test("composed route discoverable without direct SSH, but requires receipt",()=>{
+ const r=evaluateCapabilityRoutes(access);
+ assert.equal(r.status,"probe_required");
+ assert.equal(r.candidates[0].callable,true);
 });
-test("documented but unavailable is never operational",()=>{
- const r=evaluateCapabilityRoutes({required:"public-document-fetch",routes,callable:["github.issue.write"],mandates:["public-read"],evidence:[{route_id:"github-cop-fracta2",ok:true,reachable:true}]});
- assert.equal(r.candidates[0].status,"unavailable");
+test("schema-valid receipt without trusted verifier remains untested",()=>{
+ const r=evaluateCapabilityRoutes({...access,evidence:[receipt]});
+ assert.equal(r.status,"probe_required");
 });
-test("reachable does not grant authority",()=>{
- const r=evaluateCapabilityRoutes({required:"public-document-fetch",routes,callable:["github.issue.write","cop.typed.compute"],evidence:[{route_id:"github-cop-fracta2",ok:true,reachable:true}]});
+test("trusted verifier and correlated completed receipt confirm execution only",()=>{
+ const r=evaluateCapabilityRoutes({...access,evidence:[receipt],
+   verifyReceipt:(r,route)=>r.binding.offer_id===route.offer_id});
+ assert.equal(r.status,"operational");
+ assert.equal(r.candidates[0].outcome,"execution_confirmed");
+});
+test("cross-route receipt is rejected even if verifier would accept it",()=>{
+ const forged={...receipt,binding:{...receipt.binding,offer_id:"offer:other"}};
+ const r=evaluateCapabilityRoutes({...access,evidence:[forged],verifyReceipt:()=>true});
+ assert.equal(r.status,"probe_required");
+});
+test("nonterminal receipt is not execution completion",()=>{
+ const running={...receipt,status:"running",terminal:false};
+ const r=evaluateCapabilityRoutes({...access,evidence:[running],verifyReceipt:()=>true});
+ assert.equal(r.status,"probe_required");
+});
+test("unbound receipt is not accepted",()=>{
+ const pending={...receipt,binding:{...receipt.binding,provider_execution_id:null}};
+ const r=evaluateCapabilityRoutes({...access,evidence:[pending],verifyReceipt:()=>true});
+ assert.equal(r.status,"probe_required");
+});
+test("authorization cannot be supplied by a receipt",()=>{
+ const r=evaluateCapabilityRoutes({...access,mandates:[],evidence:[receipt],verifyReceipt:()=>true});
+ assert.equal(r.status,"blocked");
  assert.equal(r.candidates[0].status,"unauthorized");
 });
-test("transport success distinct from target document retrieval",()=>{
- const r=evaluateCapabilityRoutes({required:"public-document-fetch",routes,callable:["github.issue.write","cop.typed.compute"],mandates:["public-read"],evidence:[{route_id:"github-cop-fracta2",ok:true,reachable:true,verified:true,capability:"public-document-fetch",outcome:"pdf_not_found"}]});
- assert.equal(r.candidates[0].status,"operational"); assert.equal(r.candidates[0].outcome,"pdf_not_found");
+test("unreachable route cannot be rescued by a receipt",()=>{
+ const r=evaluateCapabilityRoutes({...access,callable:["github.issue.write"],evidence:[receipt],verifyReceipt:()=>true});
+ assert.equal(r.candidates[0].status,"unavailable");
 });
-
-test("empty route must not masquerade as callable or operational",()=>{
- const r=evaluateCapabilityRoutes({required:"public-document-fetch",routes:[{id:"empty",capability:"public-document-fetch",steps:[],mandate:"public-read"}],mandates:["public-read"],evidence:[{route_id:"empty",ok:true,reachable:true}]});
- assert.equal(r.candidates[0].status,"invalid");
- assert.equal(r.candidates[0].callable,false);
- assert.equal(r.status,"blocked");
+test("empty or missing route is invalid or undiscovered",()=>{
+ const bad={...route,steps:[]};
+ assert.equal(evaluateCapabilityRoutes({...access,routes:[bad]}).candidates[0].status,"invalid");
+ assert.equal(evaluateCapabilityRoutes({...access,routes:[]}).status,"not_discovered");
 });
-test("missing path is not discovered and admitted untested path requires probing",()=>{
- const a=evaluateCapabilityRoutes({required:"public-document-fetch",routes:[]});
- assert.equal(a.status,"not_discovered");
- const b=evaluateCapabilityRoutes({required:"public-document-fetch",routes,callable:["github.issue.write","cop.typed.compute"],mandates:["public-read"]});
- assert.equal(b.status,"probe_required");
-});
-
-test("unverified receipt cannot declare a route operational",()=>{
- const r=evaluateCapabilityRoutes({required:"public-document-fetch",routes,callable:["github.issue.write","cop.typed.compute"],mandates:["public-read"],evidence:[{route_id:"github-cop-fracta2",ok:true,reachable:true,outcome:"success"}]});
- assert.equal(r.status,"probe_required"); assert.equal(r.candidates[0].outcome,"not_verified");
-});
-test("verified receipt for another capability is not reusable",()=>{
- const r=evaluateCapabilityRoutes({required:"public-document-fetch",routes,callable:["github.issue.write","cop.typed.compute"],mandates:["public-read"],evidence:[{route_id:"github-cop-fracta2",ok:true,reachable:true,verified:true,capability:"unrelated"}]});
+test("failed provider execution must not be described operational",()=>{
+ const failed={...receipt,status:"failed",terminal:true};
+ const r=evaluateCapabilityRoutes({...access,evidence:[failed],verifyReceipt:()=>true});
  assert.equal(r.status,"probe_required");
 });
