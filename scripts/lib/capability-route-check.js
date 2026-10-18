@@ -1,22 +1,35 @@
-/** A bounded read-only assessment; catalog claims do not confer runtime authority. */
+/**
+ * Evidence-gated route assessment. A catalog is a map, not a live capability
+ * or an authorization grant. This function performs no side effects.
+ */
 export function evaluateCapabilityRoutes({required, routes = [], callable = [], mandates = [], evidence = []}) {
-  if (!required || typeof required !== "string") throw new TypeError("required capability must be named");
+  if (typeof required !== "string" || !required.trim()) {
+    throw new TypeError("required capability must be named");
+  }
   const live = new Set(callable);
   const grants = new Set(mandates);
-  const witnessed = new Map(evidence.map(x => [x.route_id, x]));
-  return {
-    required,
-    status: "unresolved",
-    candidates: routes.filter(r => r.capability === required).map(r => {
-      const steps = r.steps || [];
-      const missing = steps.filter(s => !live.has(s));
-      const authorized = grants.has(r.mandate);
-      const probe = witnessed.get(r.id);
-      const tested = probe?.ok === true && probe?.reachable === true;
-      const reachable = missing.length === 0 && tested;
-      return {id:r.id, remembered:true, callable:missing.length===0, missing, authorized,
-        reachable, tested, outcome:probe?.outcome || "not_tested",
-        status: !authorized ? "unauthorized" : missing.length ? "unavailable" : !tested ? "untested" : "operational"};
-    })
-  };
+  const witnessed = new Map(evidence.filter(x => x?.route_id).map(x => [x.route_id, x]));
+  const candidates = routes.filter(r => r.capability === required).map(r => {
+    // An unconfigured route must never be treated as callable.
+    const steps = Array.isArray(r.steps) ? r.steps : [];
+    const valid = Boolean(r.id && steps.length && steps.every(s => typeof s === "string" && s.length));
+    const missing = steps.filter(s => !live.has(s));
+    const callableNow = valid && missing.length === 0;
+    const authorized = Boolean(r.mandate && grants.has(r.mandate));
+    const probe = witnessed.get(r.id);
+    const tested = probe?.ok === true && probe?.reachable === true;
+    const reachable = callableNow && tested;
+    const status = !valid ? "invalid"
+      : !authorized ? "unauthorized"
+      : !callableNow ? "unavailable"
+      : !tested ? "untested" : "operational";
+    return {
+      id: r.id, remembered: true, callable: callableNow, missing, authorized,
+      reachable, tested, outcome: probe?.outcome || "not_tested", status
+    };
+  });
+  const status = candidates.some(r => r.status === "operational") ? "operational"
+    : candidates.some(r => r.status === "untested") ? "probe_required"
+    : candidates.length ? "blocked" : "not_discovered";
+  return {required, status, candidates};
 }
