@@ -53,3 +53,52 @@ export function evaluateCapabilityRoutes({
     : candidates.length ? "blocked" : "not_discovered";
   return {required, status, candidates};
 }
+
+
+/**
+ * Resolve evidence through an adapter owned by the execution trust domain.
+ * The caller supplies requirements/routes and the admitted adapter reference;
+ * it cannot supply an evidence array or a verifier callback here.
+ *
+ * This is an integration seam, NOT a built-in verification of GitHub or COP.
+ * A real adapter must fetch receipts from authoritative run/trace storage,
+ * validate their correlation and integrity, and enforce its trust boundary.
+ */
+export async function assessCapabilityFromReceiptSource({
+  required, routes, callable, mandates, receiptSource
+}) {
+  if (!receiptSource || typeof receiptSource.fetchVerified !== "function") {
+    throw new TypeError("trusted receipt source with fetchVerified() required");
+  }
+  const admissible = (routes || []).filter(r =>
+    r.capability === required &&
+    r.mandate && (mandates || []).includes(r.mandate) &&
+    Array.isArray(r.steps) && r.steps.length > 0 &&
+    r.steps.every(s => (callable || []).includes(s))
+  );
+  const evidence = [];
+  const verifiedKeys = new Set();
+  for (const route of admissible) {
+    const record = await receiptSource.fetchVerified({
+      requirement_ref: route.requirement_ref,
+      offer_id: route.offer_id
+    });
+    // The source must return both its own verification decision and the
+    // correlated receipt. Never trust a boolean embedded in the receipt.
+    if (!record || record.verified !== true || !record.receipt) continue;
+    const receipt = record.receipt;
+    const key = JSON.stringify([
+      receipt.binding?.requirement_ref, receipt.binding?.offer_id,
+      receipt.binding?.provider_execution_id
+    ]);
+    evidence.push(receipt);
+    verifiedKeys.add(key);
+  }
+  return evaluateCapabilityRoutes({
+    required, routes, callable, mandates, evidence,
+    verifyReceipt: receipt => verifiedKeys.has(JSON.stringify([
+      receipt.binding?.requirement_ref, receipt.binding?.offer_id,
+      receipt.binding?.provider_execution_id
+    ]))
+  });
+}
