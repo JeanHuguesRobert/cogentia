@@ -155,6 +155,24 @@ Therefore:
 
 ---
 
+### 3.3 Optimistic execution by contract (Meyer)
+
+Optimistic Mainline Governance governs initiative and concurrency; **Design by Contract** governs local correctness. Both apply beyond Git commits, including diagnosis, delegated operations, and operational recovery.
+
+Within an explicit mandate and measured Exposure, a handler SHOULD perform the smallest sufficient action rather than repeatedly delegating mechanical commands or requesting equivalent micro-approvals from the Principal. Specify proportionately:
+
+- **Preconditions:** authoritative current state, reachable required inputs, applicable authority and impact budget.
+- **Action:** smallest scoped step, including expected version/baseline and who executes it.
+- **Postconditions:** observable service or artifact effect, not merely process liveness or a zero exit code.
+- **Invariants:** capabilities, live sessions, protected information and other properties that must be preserved.
+- **Failure and recovery:** bounded evidence, reconciliation, compensating action or escalation if postconditions fail.
+
+Refresh the live baseline before a material act; compare against the handler's prior baseline and reconcile concurrent changes. Successful authorization for diagnosis does not automatically authorize production restarts, publication, or other effects. If the required mandate, invariant or recovery path fails, lower Exposure, return a precise Continuation, or stop at the authority boundary. Do not manufacture a success receipt when the functional postcondition is unverified.
+
+The operative principle is **do useful work under a verifiable contract; spend Human Attention only at genuine judgment or authority boundaries.** Contract formality is pay-as-you-go and proportional to consequences, never an excuse for indefinite preflight ceremony.
+
+Reference: [Agent Working Conventions](agent_working_conventions.md); [Shared Instructions](../instructions/AGENTS.shared.md).
+
 ## 3.2 Concurrent work is not frozen work
 
 Optimistic locking applies to **ongoing cognitive work**, not only to file
