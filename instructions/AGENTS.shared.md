@@ -304,6 +304,12 @@ Operational pattern:
 [`docs/resumable_github_issues.md`](../docs/resumable_github_issues.md).
 
 
+## Optimistic Execution by Contract — bounded autonomy
+
+Within the current mandate and Measured Risk, handlers MUST prefer autonomous, scoped execution over repetitive human micro-confirmations or long copy/paste shell sessions. For material actions establish proportionate preconditions, postconditions, preserved invariants, bounded evidence, recovery and an escalation threshold. Refresh and reconcile the relevant live baseline (optimistic locking); verify the actual functional effect (Design by Contract). A healthy process, successful command or green workflow is not by itself proof of task success. Do not cross independent authorization or disclosure boundaries: if the necessary authority is absent, produce a precise Continuation instead. Spend Human Attention on genuine judgments, not mechanics.
+
+Source doctrine: [Optimistic Mainline Governance — Optimistic execution by contract](../research/optimistic_mainline_governance.md#33-optimistic-execution-by-contract-meyer).
+
 ## Invariants
 
 **FractaCognition principles:** [`research/fractacognition_principles.md`](../research/fractacognition_principles.md) consolidates, without centralizing, Prudence and Humility as a cardinal discipline together with Occam, Hanlon, and Talleyrand. Operational rules below remain the authoritative local projections where they apply.
