@@ -13,6 +13,7 @@ import {
   deregisterResolver,
   listResolvers,
   findCapableResolvers,
+  findCapableResolversForAll,
   claimContinuation,
   getClaim,
   releaseClaim,
@@ -31,6 +32,21 @@ try {
   const capable = findCapableResolvers(root, "image_view");
   assert.equal(capable.length, 1);
   assert.equal(capable[0].resolver_id, "human-jhrobert");
+
+  // AND semantics: both requirements must be held by the same resolver.
+  assert.deepEqual(
+    findCapableResolversForAll(root, ["corpus_research", "image_view"]).map((r) => r.resolver_id),
+    ["human-jhrobert"]
+  );
+  assert.deepEqual(
+    findCapableResolversForAll(root, ["corpus_research", "quantum_computing"]),
+    [],
+    "unknown requirements must fail closed"
+  );
+  assert.equal(findCapableResolversForAll(root, []).length, 2);
+  assert.equal(findCapableResolversForAll(root, ["image_view", "image_view"]).length, 1);
+  assert.throws(() => findCapableResolversForAll(root, "image_view"), TypeError);
+  assert.throws(() => findCapableResolversForAll(root, ["image_view", ""]), TypeError);
 
   const noRequirement = findCapableResolvers(root, "");
   assert.equal(noRequirement.length, 2, "an empty requirement should match every resolver");
