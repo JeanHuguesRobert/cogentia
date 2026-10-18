@@ -146,3 +146,26 @@ export function releaseClaim(cogentiaRoot, continuationId) {
   const claimFile = path.join(claimsDir(cogentiaRoot), `${continuationId}.json`);
   if (fs.existsSync(claimFile)) fs.unlinkSync(claimFile);
 }
+
+/**
+ * Explicitly admitted resolver claim. No execution or continuation resolution.
+ * Caller-supplied gates must establish fresh availability and inherited mandate;
+ * a registry entry by itself is never authority. A stale claim is not stolen.
+ */
+export function claimAdmissibleResolver(cogentiaRoot, continuationId, requiredCapabilities, {
+  isAvailable,
+  isAuthorized,
+} = {}) {
+  if (typeof isAvailable !== "function" || typeof isAuthorized !== "function") {
+    return { claimed: false, reason: "missing_admission_checks" };
+  }
+  const candidates = findCapableResolversForAll(cogentiaRoot, requiredCapabilities);
+  if (!candidates.length) return { claimed: false, reason: "no_capable_resolver_available" };
+  for (const candidate of candidates) {
+    if (isAvailable(candidate) !== true || isAuthorized(candidate, continuationId) !== true) continue;
+    const result = claimContinuation(cogentiaRoot, continuationId, candidate.resolver_id);
+    if (result.claimed) return { ...result, resolver: candidate };
+    return { claimed: false, reason: "already_claimed", existingClaim: result.existingClaim };
+  }
+  return { claimed: false, reason: "no_admissible_resolver" };
+}
