@@ -64,6 +64,26 @@ Canonical short forms:
 
 The last sentence intentionally extends the historical Sun Microsystems slogan: the network becomes the execution substrate not merely when data or remote calls cross it, but when the future of a computation itself can move through it.
 
+### Rational Exploration of the Possible: operational interpretation
+
+The **Rational Exploration of the Possible (ERP)** is not merely a description of a method for thinking. When embodied in the Packet/Continuation Machine, it becomes **governed Compute**: work that can be carried out, suspended, persisted, transported, resumed, branched and recombined, while preserving its mandate, relevant context, provenance, uncertainty and judgment boundaries.
+
+A continuation is not a new kind of truth, nor does successful execution imply a correct conclusion. Distinguish strictly:
+
+1. **Execution result** — the operation ran and produced a typed outcome (including failure or impossibility).
+2. **Epistemic result** — an assertion is supported, contradicted or remains uncertain in light of inspectable evidence.
+3. **Effective result** — a proposed capability or intervention produces observable effects in the Real.
+
+These levels may lead to further continuations. Their distinction must survive handoff between handlers. **A green execution is not a proven proposition; a proven proposition is not yet an effective capability.**
+
+Occam and Talleyrand jointly govern serialization and documentation: make explicit what a future handler needs to continue and judge the work, but do not multiply packets, abstractions, documents or metadata beyond demonstrable need. Reuse the existing Cognitive Packet envelope, continuation payload, receipts and provenance mechanisms; do not introduce a new protocol primitive for ERP.
+
+The success criterion is not the number of operations or continuations issued, but the verified increase in understanding, actionable capacity or the elimination of impossible branches, relative to the costs and risks incurred.
+
+See [FractaCognition principles](fractacognition_principles.md), [Simplicité d'action](simplicite_action.md) and [Continuations and Cognitive Packets](../docs/continuations_and_cognitive_packets_for_agents.md).
+
+---
+
 ## 2. Direct style is syntax, continuation is semantics
 
 Alan deliberately reconciles ordinary direct-style programming with distributed continuation semantics.
