@@ -3,6 +3,11 @@
 import importlib.util
 import pathlib
 import unittest
+import json
+import sys
+import tempfile
+from contextlib import redirect_stdout
+from io import StringIO
 from unittest.mock import patch
 
 MODULE = pathlib.Path(__file__).with_name("corpus_velocity.py")
@@ -40,6 +45,46 @@ class TreeMetricsTests(unittest.TestCase):
         self.assertEqual(metrics["code_bytes"], 123)
         self.assertEqual(metrics["markdown_files"], 1)
         self.assertEqual(metrics["by_language"]["Python"]["bytes"], 123)
+
+
+
+class CoverageTests(unittest.TestCase):
+    def test_missing_and_excluded_have_one_row_per_month(self):
+        with tempfile.TemporaryDirectory() as root:
+            registry = pathlib.Path(root) / "registry.json"
+            registry.write_text(json.dumps({"repositories": [
+                {"name": "example/missing", "local_path": str(pathlib.Path(root) / "absent"), "visibility": "public"},
+                {"name": "example/excluded", "local_path": str(pathlib.Path(root) / "private"), "visibility": "private"},
+            ]}))
+            out = pathlib.Path(root) / "result"
+            args = ["corpus_velocity.py", "--registry", str(registry),
+                    "--out", str(out), "--start", "2025-10", "--end", "2025-11"]
+            with patch.object(sys, "argv", args), redirect_stdout(StringIO()):
+                module.main()
+            rows = json.loads((out / "corpus-velocity.json").read_text())["metrics"]
+            self.assertEqual(len(rows), 4)
+            self.assertEqual({r["period"] for r in rows}, {"2025-10", "2025-11"})
+            self.assertEqual(sorted(r["status"] for r in rows),
+                             ["excluded", "excluded", "missing", "missing"])
+
+    def test_future_month_is_flagged_partial(self):
+        with tempfile.TemporaryDirectory() as root:
+            checkout = pathlib.Path(root) / "checkout"
+            (checkout / ".git").mkdir(parents=True)
+            registry = pathlib.Path(root) / "registry.json"
+            registry.write_text(json.dumps({"repositories": [
+                {"name": "example/public", "local_path": str(checkout), "visibility": "public"}
+            ]}))
+            out = pathlib.Path(root) / "result"
+            args = ["corpus_velocity.py", "--registry", str(registry),
+                    "--out", str(out), "--start", "2099-01", "--end", "2099-01"]
+            with patch.object(sys, "argv", args), patch.object(
+                    module, "git", side_effect=[b"deadbeef\\n", b""]), redirect_stdout(StringIO()):
+                module.main()
+            rows = json.loads((out / "corpus-velocity.json").read_text())["metrics"]
+            self.assertEqual(len(rows), 1)
+            self.assertTrue(rows[0]["partial"])
+            self.assertEqual(rows[0]["period"], "2099-01")
 
 if __name__ == "__main__":
     unittest.main()
