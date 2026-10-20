@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "scope": "public starter subset only; extend from canonical corpus registry before claiming completeness",
+  "scope": "expanded verified-public subset only; not exhaustive; absent local clones recorded monthly as missing",
   "repositories": [
     {
       "name": "JeanHuguesRobert/inseme",
@@ -46,6 +46,54 @@
       "name": "acorsica/gouvernance",
       "local_path": "/srv/cogentia/repos/gouvernance",
       "visibility": "public"
+    },
+    {
+      "name": "JeanHuguesRobert/JeanHuguesRobert",
+      "local_path": "/srv/cogentia/repos/JeanHuguesRobert",
+      "visibility": "public",
+      "category": "corpus"
+    },
+    {
+      "name": "JeanHuguesRobert/marenostrum",
+      "local_path": "/srv/cogentia/repos/marenostrum",
+      "visibility": "public",
+      "category": "corpus"
+    },
+    {
+      "name": "JeanHuguesRobert/StructEnv",
+      "local_path": "/srv/cogentia/repos/StructEnv",
+      "visibility": "public",
+      "category": "corpus"
+    },
+    {
+      "name": "JeanHuguesRobert/serra",
+      "local_path": "/srv/cogentia/repos/serra",
+      "visibility": "public",
+      "category": "corpus"
+    },
+    {
+      "name": "acorsica/institut-mariani",
+      "local_path": "/srv/cogentia/repos/institut-mariani",
+      "visibility": "public",
+      "category": "association"
+    },
+    {
+      "name": "acorsica/acorsica.org",
+      "local_path": "/srv/cogentia/repos/acorsica.org",
+      "visibility": "public",
+      "category": "association"
+    },
+    {
+      "name": "acorsica/privai",
+      "local_path": "/srv/cogentia/repos/privai",
+      "visibility": "public",
+      "category": "association"
+    },
+    {
+      "name": "acorsica/Kudos",
+      "local_path": "/srv/cogentia/repos/Kudos",
+      "visibility": "public",
+      "category": "association"
     }
   ]
 }
