@@ -50,7 +50,7 @@ def tree_metrics(repo, commit):
         if not entry:
             continue
         meta, path_bytes = entry.split(b"\t", 1)
-        bits = meta.split(b" ")
+        bits = meta.split()  # split arbitrary whitespace; git ls-tree -l pads size field
         if bits[1] != b"blob":
             continue
         path = path_bytes.decode("utf-8", "surrogateescape")
