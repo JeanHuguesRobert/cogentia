@@ -31,13 +31,14 @@ def month_ends(start, end):
     y, m = map(int, start.split("-"))
     ey, em = map(int, end.split("-"))
     while (y, m) <= (ey, em):
+        period = f"{y:04d}-{m:02d}"
         if m == 12:
             limit = dt.datetime(y + 1, 1, 1, tzinfo=dt.timezone.utc)
             y, m = y + 1, 1
         else:
             limit = dt.datetime(y, m + 1, 1, tzinfo=dt.timezone.utc)
             m += 1
-        yield (limit - dt.timedelta(seconds=1)).strftime("%Y-%m-%dT%H:%M:%SZ"), limit.strftime("%Y-%m")
+        yield (limit - dt.timedelta(seconds=1)).strftime("%Y-%m-%dT%H:%M:%SZ"), period
 
 
 def tree_metrics(repo, commit):
