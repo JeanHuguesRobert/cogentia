@@ -62,6 +62,7 @@ def tree_metrics(repo, commit):
             result["markdown_files"] += 1
         if suffix in CODE and not IGNORE.search(path):
             result["code_files"] += 1
+            result["source_files"] += 1
             result["code_bytes"] += size
             lang = LANG.get(suffix, suffix)
             entry = result["by_language"].setdefault(lang, {"files": 0, "bytes": 0})
