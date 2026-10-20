@@ -77,27 +77,33 @@ def main():
     ap.add_argument("--start", default="2025-10")
     ap.add_argument("--end", default="2026-10")
     args = ap.parse_args()
+    periods = list(month_ends(args.start, args.end))
+    now = dt.datetime.now(dt.timezone.utc)
     registry = json.loads(pathlib.Path(args.registry).read_text())
     rows = []
     for item in registry["repositories"]:
         name = item["name"]
         if item.get("visibility") != "public" or not item.get("included", True):
-            rows.append({"repo": name, "status": "excluded", "reason": "privacy_or_scope"})
+            for _, period in periods:
+                rows.append({"repo": name, "period": period, "status": "excluded", "reason": "privacy_or_scope"})
             continue
         repo = pathlib.Path(item["local_path"]).expanduser()
         if not (repo / ".git").exists():
-            rows.append({"repo": name, "status": "missing", "reason": "local_checkout_absent"})
+            for _, period in periods:
+                rows.append({"repo": name, "period": period, "status": "missing", "reason": "local_checkout_absent"})
             continue
-        for until, period in month_ends(args.start, args.end):
+        for until, period in periods:
+            cutoff = min(dt.datetime.strptime(until, "%Y-%m-%dT%H:%M:%SZ").replace(tzinfo=dt.timezone.utc), now)
+            partial = cutoff < dt.datetime.strptime(until, "%Y-%m-%dT%H:%M:%SZ").replace(tzinfo=dt.timezone.utc)
             try:
-                head = git(repo, "rev-list", "-1", "--before=" + until, item.get("ref", "HEAD")).decode().strip()
+                head = git(repo, "rev-list", "-1", "--before=" + cutoff.strftime("%Y-%m-%dT%H:%M:%SZ"), item.get("ref", "HEAD")).decode().strip()
                 if not head:
-                    rows.append({"repo": name, "period": period, "status": "not_created"})
+                    rows.append({"repo": name, "period": period, "status": "not_created", "partial": partial})
                     continue
                 metrics = tree_metrics(repo, head)
-                rows.append({"repo": name, "period": period, "status": "ok", "commit": head, **metrics})
+                rows.append({"repo": name, "period": period, "status": "ok", "partial": partial, "commit": head, **metrics})
             except subprocess.CalledProcessError as e:
-                rows.append({"repo": name, "period": period, "status": "error", "reason": e.stderr.decode(errors="replace")[:200]})
+                rows.append({"repo": name, "period": period, "status": "error", "partial": partial, "reason": e.stderr.decode(errors="replace")[:200]})
     out = pathlib.Path(args.out)
     out.mkdir(parents=True, exist_ok=True)
     (out / "corpus-velocity.json").write_text(json.dumps({
@@ -107,7 +113,7 @@ def main():
                         "generated/path exclusions heuristic", "no LOC/SLOC yet",
                         "no private-repository metrics exported"]}, indent=2) + "\n")
     fields = ["repo", "period", "status", "commit", "blobs", "bytes", "code_files",
-              "code_bytes", "markdown_files", "reason"]
+              "code_bytes", "markdown_files", "partial", "reason"]
     with (out / "corpus-velocity.csv").open("w", newline="") as f:
         writer = csv.DictWriter(f, fieldnames=fields, extrasaction="ignore")
         writer.writeheader()
