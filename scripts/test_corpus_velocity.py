@@ -48,6 +48,13 @@ class TreeMetricsTests(unittest.TestCase):
         self.assertEqual(metrics["by_language"]["Python"]["bytes"], 123)
 
 
+    def test_unavailable_blob_size_must_not_be_reported_as_zero(self):
+        listing = (b"100644 blob aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa     -\\tapp/main.py\\0")
+        with patch.object(module, "git", return_value=listing):
+            with self.assertRaisesRegex(ValueError, "blob size unavailable"):
+                module.tree_metrics("/fake", "deadbeef")
+
+
 
 class CoverageTests(unittest.TestCase):
     def test_missing_and_excluded_have_one_row_per_month(self):
