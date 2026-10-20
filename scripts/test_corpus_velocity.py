@@ -42,6 +42,7 @@ class TreeMetricsTests(unittest.TestCase):
         self.assertEqual(metrics["blobs"], 3)
         self.assertEqual(metrics["bytes"], 176)
         self.assertEqual(metrics["code_files"], 1)
+        self.assertEqual(metrics["source_files"], 1)
         self.assertEqual(metrics["code_bytes"], 123)
         self.assertEqual(metrics["markdown_files"], 1)
         self.assertEqual(metrics["by_language"]["Python"]["bytes"], 123)
