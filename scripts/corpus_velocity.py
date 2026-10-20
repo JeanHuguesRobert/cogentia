@@ -54,7 +54,10 @@ def tree_metrics(repo, commit):
         if bits[1] != b"blob":
             continue
         path = path_bytes.decode("utf-8", "surrogateescape")
-        size = int(bits[3]) if bits[3].isdigit() else 0
+        # Missing blob size (e.g. partial clone) must never be represented as zero.
+        if len(bits) < 4 or not bits[3].isdigit():
+            raise ValueError(f"blob size unavailable for {path!r}; fetch blob objects")
+        size = int(bits[3])
         result["blobs"] += 1
         result["bytes"] += size
         suffix = pathlib.PurePosixPath(path).suffix.lower()
@@ -103,8 +106,11 @@ def main():
                     continue
                 metrics = tree_metrics(repo, head)
                 rows.append({"repo": name, "period": period, "status": "ok", "partial": partial, "commit": head, **metrics})
-            except subprocess.CalledProcessError as e:
-                rows.append({"repo": name, "period": period, "status": "error", "partial": partial, "reason": e.stderr.decode(errors="replace")[:200]})
+            except (subprocess.CalledProcessError, ValueError) as e:
+                reason = (e.stderr.decode(errors="replace") if isinstance(e, subprocess.CalledProcessError)
+                          else str(e))
+                rows.append({"repo": name, "period": period, "status": "error",
+                             "partial": partial, "reason": reason[:200]})
     out = pathlib.Path(args.out)
     out.mkdir(parents=True, exist_ok=True)
     (out / "corpus-velocity.json").write_text(json.dumps({
