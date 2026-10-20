@@ -1,0 +1,51 @@
+{
+  "schema_version": 1,
+  "scope": "public starter subset only; extend from canonical corpus registry before claiming completeness",
+  "repositories": [
+    {
+      "name": "JeanHuguesRobert/inseme",
+      "local_path": "/srv/cogentia/repos/inseme",
+      "visibility": "public"
+    },
+    {
+      "name": "JeanHuguesRobert/cogentia",
+      "local_path": "/srv/cogentia/repos/cogentia",
+      "visibility": "public"
+    },
+    {
+      "name": "JeanHuguesRobert/FractaVolta",
+      "local_path": "/srv/cogentia/repos/FractaVolta",
+      "visibility": "public"
+    },
+    {
+      "name": "JeanHuguesRobert/operium",
+      "local_path": "/srv/cogentia/repos/operium",
+      "visibility": "public"
+    },
+    {
+      "name": "JeanHuguesRobert/barons-Mariani",
+      "local_path": "/srv/cogentia/repos/barons-Mariani",
+      "visibility": "public"
+    },
+    {
+      "name": "JeanHuguesRobert/Inox",
+      "local_path": "/srv/cogentia/repos/Inox",
+      "visibility": "public"
+    },
+    {
+      "name": "JeanHuguesRobert/survey",
+      "local_path": "/srv/cogentia/repos/survey",
+      "visibility": "public"
+    },
+    {
+      "name": "JeanHuguesRobert/ubikia",
+      "local_path": "/srv/cogentia/repos/ubikia",
+      "visibility": "public"
+    },
+    {
+      "name": "acorsica/gouvernance",
+      "local_path": "/srv/cogentia/repos/gouvernance",
+      "visibility": "public"
+    }
+  ]
+}
