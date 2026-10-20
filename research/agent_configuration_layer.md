@@ -517,6 +517,17 @@ Counter-rule:
 
 ---
 
+### Placement of useful findings — source locality before accumulation
+
+When an exploration yields a reusable finding, **record it where its authority and future use belong**, not automatically in the document that happened to host the exploration.
+
+- Cross-agent configuration invariants belong in this Agent Configuration Layer or the shared instructions when genuinely binding.
+- Handler capability classifications and adapter-specific delivery guidance belong in the existing specialized [Portable Agent Guidance](../docs/portable-agent-guidance-and-classification.md), with measured instance evidence rather than model-brand assumptions.
+- A particular Cognitive Packet's status, evidence, remaining work and resume instructions belong in the **Packet itself** (or in a narrowly scoped, executable projection explicitly consumed by its handlers).
+- Provider effects belong in test artifacts, logs and durable receipts; avoid copying an entire execution history into doctrine.
+
+After placing the useful parts, check backlinks and actual consumers of the intermediate note. **Delete a redundant document only when it no longer carries unique meaning or a live execution contract**; otherwise keep it small and link to its true sources. This is a locality and anti-paralysis rule, not an excuse for another full documentation campaign.
+
 ## 12. Review checklist for future agents
 
 Before acting in any structural repository, an agent should answer:
