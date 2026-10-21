@@ -1322,6 +1322,41 @@ information électronique rapide sur l'existence de la décision
 accès effectif au texte de la décision, dépendant du canal postal
 ```
 
+#### h bis) Le coût probatoire de la notification postale : reconstituer un numérique déjà produit par l'institution
+
+Une nouvelle observation matérielle du **21 octobre 2026**, issue du travail de provenance du dossier électoral [2026-6589 SEN, Cognitive Packet #131](https://github.com/JeanHuguesRobert/barons-Mariani/issues/131), permet de préciser le coût de cette commutation. Il ne s'agit pas seulement d'attendre le facteur : la partie destinataire doit **reconstituer un objet documentaire exploitable** pour l'indexation, la recherche, la citation, l'archivage et la préparation d'un recours.
+
+Le document de contrôle [P-20](https://github.com/JeanHuguesRobert/barons-Mariani/issues/131#issuecomment-6317662872) a été retrouvé dans la bibliothèque privée du requérant : **un PDF composite de 11 pages**, constitué à partir de photographies, contenant l'avis de passage, les traces de la circulation postale, la notification et **trois pages photographiées du jugement du TA de Bastia du 14 septembre 2026** (affaires n° 2601714 et 2601715). Les trois pages de décision ont été inspectées visuellement. Ce PDF est une **reconstitution réalisée du côté destinataire** : il ne doit pas être qualifié de PDF natif produit par le greffe. Les photographies et le composite permettent de contrôler le contenu visible mais ne prouvent pas, à eux seuls, toutes les dates de présentation ou les opérations internes de la juridiction.
+
+La chaîne de travail observée peut être schématisée ainsi :
+
+```text
+jugement rendu / conservé par la juridiction
+  → notification par lettre recommandée
+  → acheminement, présentation, retrait du pli
+  → photographies des pages papier
+  → assemblage d'un PDF de contrôle
+  → transcription / indexation / comparaison au texte de travail
+  → constitution d'une pièce vérifiable pour le recours
+```
+
+La **question contrefactuelle** est celle du coût évitable : lorsque l'institution dispose d'un document électronique exploitable, pourquoi l'usager doit-il refaire à partir du papier la numérisation, la pagination, la transcription et les contrôles de fidélité ? Il convient toutefois de **vérifier l'existence, le format et la communicabilité de l'exemplaire électronique** conservé par le greffe : l'usage institutionnel d'un système numérique rend cette hypothèse plausible, sans démontrer automatiquement la disponibilité d'un PDF transmissible, l'obligation légale de l'envoyer par email, ni l'illégalité du recommandé.
+
+Le mécanisme pertinent est celui de la **charge de reconstruction documentaire externalisée** :
+
+- **coût temporel** : le texte utilisable arrive après les délais d'acheminement et les opérations de récupération et de saisie ;
+- **coût technique** : photographier, redresser, réunir, transcrire et rendre interrogeable un document dont le destinataire ne possède pas le fichier source ;
+- **coût probatoire** : préserver la distinction entre jugement authentique, photo, montage documentaire, transcription et version de travail ; contrôler les éventuelles erreurs de lecture ;
+- **coût capacitaire** : mobiliser temps, équipement, accès postal et compétences dans un contexte où la fenêtre d'action peut être courte.
+
+En termes de modèle, si le canal retenu transfère vers le destinataire une charge `C_reconstruction` sans améliorer proportionnellement la sécurité ou l'effectivité de la notification, le **coût total de l'acte** augmente pour la partie la moins équipée. Ce n'est pas une mesure chiffrée réalisée dans le dossier, mais une **hypothèse falsifiable** : relever temps passé, opérations nécessaires, erreurs de transcription et disponibilité réelle d'un canal alternatif. La comparaison correcte n'est pas « courrier postal mauvais, email bon » : le recommandé peut apporter des garanties de date, d'identification et de notification dont le courriel ordinaire ne dispose pas. La question est plutôt de savoir si l'on pouvait **conserver les garanties du recommandé tout en fournissant une copie électronique fidèle, portable et vérifiable**.
+
+**Meilleure objection juridique et institutionnelle :** les règles de notification d'un jugement ne sont pas interchangeables avec celles d'une correspondance informelle ; sécurité, certitude des délais, secret de l'instance, identification des destinataires et régime des téléservices peuvent justifier une voie formalisée. Il ne résulte pas de cette seule affaire qu'un courriel était dû, qu'une demande déterminée de PDF a été formellement refusée ou que le greffe a voulu accroître la charge du requérant. L'intention des agents et la conformité juridique doivent être **établies séparément** de l'effet pratique mesurable.
+
+**Hypothèse académique à tester :** l'*asymétrie de commutation* s'accompagne ici d'une *asymétrie de reproductibilité*. L'institution conserve une continuité de dossier tandis que la partie extérieure doit reconstruire son propre exemplaire exploitable. Le test empirique pertinent porte sur la capacité de chaque partie à obtenir **le même texte, dans un format utilisable, avec une provenance et un état de notification traçables**, dans le délai utile. C'est un cas d'application de la **Traçabilité des actes comme stabilisateur procédural** : conserver séparément l'acte, ses copies, son canal, ses dates et ses effets pour rendre la continuité vérifiable.
+
+**Périmètre de preuve et réutilisation :** les photographies et la chaîne postale sont des **sources du cas** ; le présent article constitue une **interprétation doctrinale**. Aucun grief contentieux nouveau ne découle automatiquement du modèle. Le suivi de P-20, de son PDF composite et des éventuelles photographies natives relève du [paquet de provenance #131](https://github.com/JeanHuguesRobert/barons-Mariani/issues/131) ; il faut maintenir distincts `document_localisé`, `octets_vérifiés`, `notifié`, `effectivement_lu` et `juridiquement_pertinent`.
+
 #### i) Fermeture progressive du canal humain
 
 Après lecture du jugement, le requérant pose plusieurs questions factuelles sur la composition matérielle du dossier, les pièces transmises, la trace de l'audience, le greffier d'audience et la minute.
