@@ -655,6 +655,27 @@ This rule extends—not replaces—the existing [Reality Probe Selection](realit
 
 The rule's effect will be observed **naturally** in subsequent explorations. Record convincing discoveries and counterexamples when they occur; do not create a dedicated A/B campaign merely to demonstrate the rule. Avoid confirmation bias in retrospective attribution.
 
+### 8.2 Anti-presentism and the third woodcutter — invest in changing the means
+
+**Canonical maxim:** *Free the future from capture by the past.* A plan, decomposition, backlog, or chosen tool is a dated hypothesis about how to act, not a permanent claim of authority over possibilities discovered later.
+
+**The three woodcutters (heuristic).** Faced with many trees: (1) the first begins immediately with an axe; (2) the second spends time sharpening it; (3) the third assesses the scale and designs or acquires a chainsaw. The third does not merely optimize an existing process: they change the available **capability** and thereby the space of attainable actions. This is not a rule that building a chainsaw always wins: for one tree, a sharp axe may be better; tool construction consumes time and resources, can fail, and demands maintenance, training, permission and safety. The relevant decision is **when to execute, improve an existing method, reuse/compose an existing capability, or invest in a new capability**.
+
+Before committing to a long repetitive plan, evaluate, with bounded effort:
+
+1. **Reality of the workload:** expected number and diversity of instances; magnitude, recurrence, deadlines and reversibility.
+2. **Available means:** immediate execution, sharpening, reusable existing tools, composition/delegation, or construction of a new tool. Apply *Friends Before Competitors* and *prior art is prepaid Reality* before inventing.
+3. **Payback and optionality:** expected total cost of each route, including discovery, construction, verification, maintenance, errors and handoffs; whether the capability can help other mandates.
+4. **Early Reality test:** validate the smallest useful slice of the proposed capability before investing further; let measured results challenge the plan.
+5. **Revision gate:** if new evidence changes scale, feasible capabilities, risk or payback, **revise the plan and its Cognitive Packet topology**, preserving the provenance of the former decision. Do not let sunk costs or a frozen table of contents veto the new possible.
+6. **Mandate boundary:** replan freely within authorization; spending, disclosure, deployment, judicial filing and other effects still require their own authorization. Anti-presentism is not license to erase history, evade procedure, or retroactively rewrite an issued act.
+
+This is a form of *second-order agility*: not merely replanning which tree to cut next, but reconsidering the means of cutting at all. FBF and non-regression remain constraints on the **change**, not reasons to preserve an inferior method indefinitely.
+
+**Minimal decision test:** “Are we executing with an axe, sharpening the axe, reusing an existing chainsaw, or justified in building one — and what observation would make us change course?”
+
+**Reality Case:** [barons-Mariani #127](https://github.com/JeanHuguesRobert/barons-Mariani/issues/127) — an umbrella packet for an extensive judicial supplemental message. Its outline and children are revised on discovery, subject to a non-regression checklist, while the already filed petition remains historically immutable. The proposed reuse of this method is general; legal admissibility of any late material is a separate question.
+
 ## 9. Validated Learning and Selective Propagation
 
 When local metacognition succeeds in identifying a defect or a useful heuristic, how should that learning spread?
