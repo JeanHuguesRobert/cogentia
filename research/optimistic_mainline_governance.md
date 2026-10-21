@@ -155,6 +155,22 @@ Therefore:
 
 ---
 
+### 3.2 Ordinary authorized writes and real failure classes
+
+Do not preemptively withhold a routine, explicitly mandated, bounded write merely because a previous tool call failed. Apply the normal optimistic path: fetch current content and its blob SHA; prepare the smallest inspectable change; submit the write against that exact SHA; read back and verify the intended effect. A successful call without postcondition verification is not sufficient evidence.
+
+Classify actual failures by their observable mechanism:
+
+- **Version conflict**: refresh the baseline, reconcile concurrent changes and retry only the reconciled patch; never silently overwrite.
+- **Permission or security refusal**: preserve the exact error and pending work as a resumable receipt; do not disguise the refusal as a version conflict, bypass a control, or assume the principal lacks GitHub ownership.
+- **Transport/connector failure**: preserve uncertainty about whether the write took effect; read back before repeating to avoid duplicate actions.
+
+The presence of independent platform safeguards does not negate an otherwise valid mandate, nor does an explicit mandate disable those safeguards. Distinguish *anticipated risk* from *observed refusal*. This is a practical optimistic-locking rule, not a blanket permission to retry forbidden actions.
+
+Evidence example: [interaction audit handoff](https://github.com/JeanHuguesRobert/JeanHuguesRobert/blob/main/interaction_packets/reconciliations/2026-10-21-conversation-handoff.md) — ordinary SHA-guarded GitHub publication succeeded after a prior different write was rejected by a platform security check; the particular rejection cause remains unknown.
+
+---
+
 ### 3.3 Optimistic execution by contract (Meyer)
 
 Optimistic Mainline Governance governs initiative and concurrency; **Design by Contract** governs local correctness. Both apply beyond Git commits, including diagnosis, delegated operations, and operational recovery.
