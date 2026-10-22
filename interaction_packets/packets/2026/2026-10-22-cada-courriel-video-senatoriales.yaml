@@ -1,0 +1,61 @@
+id: "2026-10-22-001"
+type: "interaction_packet"
+date: "2026-10-22"
+channel: "email"
+sent_time: "09:48:17+02:00"
+subject: "Saisine de la CADA pour avis — courriel et vidéo du 11 septembre 2026"
+from: "Jean Hugues Noël Robert"
+to:
+  - "Secrétariat général de la Commission d'accès aux documents administratifs (CADA)"
+status: "reply_received"
+disclosure: "D3"
+source_disclosure: "D1 — messages originaux et 14 fichiers joints conservés dans Gmail, non publiés"
+public_summary: >-
+  Saisine de la CADA pour avis sur la communicabilité des documents détenus
+  par la préfecture de la Haute-Corse relatifs à la réception, à la circulation,
+  au traitement et à l'éventuelle transmission au tribunal administratif
+  du courriel du 11 septembre 2026 à 17:57:55 et de son lien vers une
+  déclaration vidéo. Accusé de réception du secrétariat général reçu le même
+  jour. Un destinataire secondaire en copie était invalide ; ce défaut
+  de distribution n'invalide pas la réception par l'adresse principale.
+main_request:
+  - "Traces de réception et de traitement du courriel par la messagerie préfectorale."
+  - "Échanges et enregistrements internes relatifs à sa circulation entre services."
+  - "Documents établissant si et quand le courriel ou la vidéo ont été transmis ou signalés au tribunal administratif."
+source_messages:
+  sent_gmail_id: "1a162950fcb19b4a"
+  acknowledgment_gmail_id: "1a16295a2cf631e3"
+  partial_failure_gmail_id: "1a1629542d086e2a"
+  source_of_truth: "Gmail natif — consultation du 22 octobre 2026"
+attachments_declared:
+  count: 14
+  format: "message/rfc822 (.eml)"
+  scope: "Correspondance entre le 11 septembre et le 7 octobre 2026, incluant le courriel vidéo, demandes et relances à la préfecture, réponses et accusés automatiques."
+  published: false
+follow_up:
+  - date: "2026-10-22"
+    time: "09:48:31+02:00"
+    direction: "inbound"
+    event: "Échec de distribution à une adresse secondaire en copie"
+    status: "partial_delivery_failure"
+    summary: "Notification de non-distribution concernant cada@mail.cada.fr ; l'adresse principale cada@cada.fr reste distincte."
+  - date: "2026-10-22"
+    time: "09:48:55+02:00"
+    direction: "inbound"
+    event: "Accusé de réception du secrétariat général de la CADA"
+    status: "reply_received"
+    summary: "Le secrétariat général confirme la bonne réception du courrier électronique et indique qu'un doublon postal n'est pas utile."
+observed_continuation: >-
+  Réception du courriel confirmée par le secrétariat général.
+  Aucun avis de la Commission n'a été observé au moment de cette vérification.
+expected_continuation: >-
+  Attribution et instruction du dossier, éventuelle demande de complément,
+  puis avis sur la communicabilité des documents administratifs demandés.
+epistemic_limits:
+  - "Accusé de réception du courriel ne signifie pas enregistrement d'un avis rendu."
+  - "Aucun numéro de dossier CADA constaté dans les trois messages consultés."
+  - "L'échec d'une adresse en copie n'est pas un échec de distribution générale."
+links:
+  related_corpus: "https://github.com/JeanHuguesRobert/barons-Mariani/issues/131"
+  underlying_case: "Conseil constitutionnel, 2026-6589 SEN"
+last_verified: "2026-10-22"
