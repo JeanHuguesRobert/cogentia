@@ -186,6 +186,7 @@ Les interprétations ensuite.
 Les corrections doivent rester visibles lorsqu’elles sont importantes.
 
 
+| 2026-10-22-001 | 2026-10-22 | CADA — communicabilité des traces de réception et de transmission du courriel vidéo | CADA | Saisine reçue ; accusé 09:48:55 CEST ; avis non reçu | D3 | [YAML](./packets/2026/2026-10-22-cada-courriel-video-senatoriales.yaml) |
 <!-- BEGIN_AUTO: backlinks -->
 ### Backlinks
 
