@@ -4,6 +4,7 @@ import os from "node:os";
 import path from "node:path";
 import {
   grantSideEffectAuthorization,
+  canonicalPayloadHash,
   resetAuthorizationStore,
   authorizationFromUtterance,
   setAuthorizationStore,
@@ -40,6 +41,7 @@ const auth = grantSideEffectAuthorization({
   action_class: "gmail.send",
   target: prepared.target,
   payload: prepared.payload,
+  direct_send_exception: { approved_by_principal: true, payload_hash: canonicalPayloadHash(prepared.payload), justification: "synthetic test-only direct-send exception", approval_reference: "test-fixture:explicit-approval" },
 });
 const sent = await executeCommunicationSend({ prepared, authorization: auth, transport });
 assert.equal(sent.ok, true);
@@ -66,6 +68,7 @@ try {
     action_class: "gmail.send",
     target: prepared2.target,
     payload: prepared2.payload,
+  direct_send_exception: { approved_by_principal: true, payload_hash: canonicalPayloadHash(prepared2.payload), justification: "synthetic test-only direct-send exception", approval_reference: "test-fixture:explicit-approval" },
   });
   const b = createFileStore(storePath);
   setAuthorizationStore(b);
@@ -110,6 +113,7 @@ const token = grantSideEffectAuthorization({
   action_class: "gmail.send",
   target: exposed.target,
   payload: exposed.payload,
+  direct_send_exception: { approved_by_principal: true, payload_hash: canonicalPayloadHash(exposed.payload), justification: "synthetic test-only direct-send exception", approval_reference: "test-fixture:explicit-approval" },
 });
 const viaMcp = await core.callTool("cogentia_communication_send", {
   prepared: exposed,
