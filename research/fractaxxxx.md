@@ -2,14 +2,14 @@
 title: "FractaXXXX — A Generative Grammar of Possibilities"
 subtitle: "Principles, composition, emerging possibilities, friendly prior art, and Reality Tests"
 date: "2026-10-08"
-version: "0.4"
+version: "0.5"
 status: "working-paper — non-normative"
 language: "en"
 author: unknown
 affiliation: "Institut Mariani / C.O.R.S.I.C.A."
 ai_assisted_by:
   - "ChatGPT GPT-6 (drafting and research synthesis)"
-last_modified_at: "2026-10-08"
+last_modified_at: "2026-10-23"
 license: "CC BY-SA 4.0"
 document_role: source
 document_kind: "research-note"
@@ -219,3 +219,74 @@ Before coining or promoting another `FractaXXXX`, ask:
 5. What Reality Test could falsify the asserted distinction?
 
 **Status:** Living generative working note (v0.4); pending Principal review, frontmatter validation and Reality Tests; not a decision to rename COP, rewrite accepted source doctrine, or multiply projects.
+
+## Reflexive planes, latent capacity and Booster hypotheses (2026-10-23)
+
+This section is a **comparative research extension**, not a FractaPlane protocol, a new FractaX product, or evidence that an unobserved capability exists. It reuses the canonical [control/data plane separation](https://github.com/JeanHuguesRobert/Inox/blob/master/research/concepts.md#control-data-plane-separation), Cogentia's [Locality Principle](locality_principle.md), [FractaCognition](fractacognition_principles.md), the [Second Method](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/second_method.md), [Potentics](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/potentics.md), and the [Booster Principle](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/booster_principle.md).
+
+### Functional planes, not ontological compartments
+
+- **Data plane:** situated production, transformation, transport or use of representations, documents and effects.
+- **Control plane:** selection, constraints, monitoring, routing, verification and correction under an applicable mandate.
+- **Meta-control:** bounded criticism and revision of control procedures and their authority; no infinitely stacked controllers and no global sovereign controller by default.
+- Plane membership is **relative to an operation**. A policy document controls one edit but becomes data in a separately authorized policy review. Control information is not intrinsically more truthful than object-level information.
+- Cognition ↔ data plane and metacognition ↔ control plane are *analogies of function*, not exact mappings of neural anatomy or claims of conscious introspection. Normative criticism may question both planes.
+
+Relevant predecessors include Nelson and Narens's object/meta-level monitoring and control model; cybernetic feedback; reflective systems and metaobject protocols; autonomic MAPE-K; Kubernetes reconciliation; and GitOps. None establishes a universal two-plane ontology. A control loop must not be mistaken for authority to change its own rules.
+
+### Critique, exploration and synthesis are complementary
+
+The **Second Method** requires the process, objections and corrections to remain inspectable; it does not make an agent's epistemic contribution a political mandate. **Rational Exploration of The Possible** broadens candidate spaces beyond currently visible alternatives, while refusing to equate conceivable with possible or possible with authorized. **Spirit of Synthesis**, as defined in Potentics §3.5, concerns *generative composition* of previously separated elements or capabilities that may enlarge the accessible Possible; it is not merely summarization and is not a third hierarchical plane. **Reality Tests** discriminate fruitful novelty from plausible prose.
+
+A possible operating loop, not a mandatory universal sequence:
+
+```text
+explore candidates ↔ synthesize combinations
+       ↓                    ↑
+objections / critical examination / admissibility
+       ↓
+bounded encounter with Reality
+       ↓
+verified effect, useful failure, retained provenance
+       ↺ selective revision of both map and method
+```
+
+A strong intellect can excel within an established problem space while exceptional creativity can *sometimes* alter the problem representation or create new combinations. Kant's restricted aesthetic meaning of genius, Schopenhauer's relative emancipation of intellect from habitual interests, creativity research on latent inhibition, executive/default-network cooperation, and systemic models of creativity are **comparators**, not proofs that genius is a universally inhibited capacity. Historical recognition of 'genius' is not an adequate experimental measurement; use novelty, objective validity, transfer and consequential new reachable tasks.
+
+### Booster: three explanations must not be collapsed
+
+A disproportionate performance gain after a small intervention can mean:
+
+1. **Latent capability elicited:** existing resources were insufficiently activated or excessively filtered.
+2. **Access/coordination improvement:** retrieval, framing, salience, tool access or cooperation changed what the system could use.
+3. **Added capability or changed task:** the intervention supplied missing information, computation, training or a simpler task, so no 'inhibition' was shown.
+
+The [Booster Principle](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/booster_principle.md) is *functional*, not a claim that inhibition is always the mechanism. Human paradoxical functional facilitation is documented for bounded functions but does not establish a large universal reserve of dormant intelligence. Research on LLM latent capability elicitation and model introspection provides task-specific evidence, not evidence of generalized self-awareness or reliably self-correcting reasoning.
+
+**Candidate hypotheses (not validated claims):**
+- H1: Existing cognitive resources can be under-elicited by ordinary conditions.
+- H2: A small local change in a control policy or interface can improve performance without proportionate change in the underlying substrate.
+- H3: Composition can enable qualitatively new tasks beyond additive throughput gains.
+- H4: Some LLMs have limited, context-dependent internal monitoring signals; whether a Booster can make them reliably useful across tasks is open.
+
+### Discriminating Reality Test: no hidden genius by assertion
+
+For pre-registered tasks with objective scoring, compare randomized and repeated conditions: (A) ordinary baseline, (B) explicit reflection, (C) narrowly specified reversible Booster, (D) trustworthy external feedback or verifier, (E) compute/token-matched placebo intervention. Hold model weights fixed when testing inference-only elicitation; distinguish that experiment from fine-tuning. Reserve unseen held-out tasks and report correctness, calibration, genuinely new solved task classes, cost, failures, regressions, transfer and reproducibility. Do not choose the winning prompt on the test set.
+
+**Interpretation gate:** performance gain establishes conditional improvement, **not** inhibition; evidence for inhibition requires a further causal intervention isolating the blocking mechanism. An apparent gain due to longer computation, added facts or evaluator leakage is not evidence for H2. Failing to outperform the matched baseline is a valid negative result. A novel combination is not necessarily useful or permitted.
+
+### Minimal Markdown lifecycle case
+
+For a living Markdown document, distinguish content and generated projections (data-plane effects) from locally applicable metadata, mandate, review, publication rules and checks (control-plane functions). The frontmatter is a local interface to governance, **not** itself a source of authority. Test separately: bounded authorized correction; publication of an explicitly provisional living version; and integrity of an immutable historical edition with bidirectional links to the living source. A policy amendment is itself an operation requiring an applicable policy-review mandate. Never infer semantic validation from successful CI, or actual public reachability from a `visibility: public` field.
+
+**Occam and locality gate:** reuse present schemas, packets, traces, document tooling and Reality Tests. No new registry, mandatory `plane_id`, generic orchestrator, or parallel control authority unless a failed discriminating experiment proves a missing capability. First apply FixBugsFirst to observed violations.
+
+**Research pointers (evidence must be checked per task):**
+- Nelson & Narens, *Metamemory: A Theoretical Framework and New Findings* (1990), object/meta monitoring and control.
+- Kant, *Critique of Judgment*, §§46–50; Schopenhauer, *The World as Will and Representation* (philosophical comparisons).
+- Carson, Peterson & Higgins (2003), decreased latent inhibition and creative achievement (association; not causal proof).
+- Donoway et al., *Quantifying Elicitation of Latent Capabilities in Language Models* (NeurIPS 2025), parameter-efficient elicitation, **not** prompt-only elicitation.
+- Binder et al., *Looking Inward: Language Models Can Learn About Themselves by Introspection* (ICLR 2025), bounded self-prediction results.
+- Anthropic, *Emergent Introspective Awareness in Large Language Models* (2025), intervention-dependent, limited introspective behavior.
+- [Documents as Cognitive Packets](documents_as_cognitive_packets.md), [Frontmatter Schema](../docs/frontmatter-schema.md), [Corpus Navigation Audit](corpus_navigation_audit.md).
+
