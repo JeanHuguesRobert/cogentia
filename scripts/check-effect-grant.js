@@ -10,16 +10,19 @@ import {
   canonicalPayloadHash,
 } from "./lib/side-effect-authorization.js";
 import { prepareCommunicationSend } from "./lib/communication-send.js";
+import { prepareGitWrite } from "./lib/git-write.js";
 import { createMcpCore } from "./lib/cogentia-mcp-core.js";
 import { cmdEffectGrant } from "./lib/cogentia-effect-cli.js";
 
 resetAuthorizationStore();
-const prepared = prepareCommunicationSend({
+const mailPrepared = prepareCommunicationSend({
   to: ["ext@example.com"],
   subject: "Mint UI",
   body: "exact body",
 });
+const prepared = prepareGitWrite({ operation: "commit", cwd: "/tmp/cogentia-285", message: "test" });
 const hash = canonicalPayloadHash(prepared.payload);
+assert.throws(() => mintSideEffectGrantFromPrepared(mailPrepared, { principal: "principal:test", confirm: canonicalPayloadHash(mailPrepared.payload) }), (e) => e.error_class === "explicit_send_exception_required");
 
 assert.throws(
   () => mintSideEffectGrantFromPrepared(prepared, { principal: "principal:test" }),
