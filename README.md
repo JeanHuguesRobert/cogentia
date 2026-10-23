@@ -3,6 +3,7 @@ title: Cogentia
 author: unknown
 affiliation: Institut Mariani / C.O.R.S.I.C.A., 1 cours Paoli, F-20250 Corte, Corsica
 date: '2026-07-15'
+last_modified_at: '2026-10-24'
 license: CC BY-SA 4.0
 language: en
 document_role: source
@@ -97,6 +98,11 @@ apps/
 ```
 
 ## Quickstart with cogentia.js
+
+For private KYS/AMI replies, use `node scripts/cogentia.js memory capture --stdin --json`.
+See [governed memory capture](docs/memory-capture.md#cli-and-mcp-surfaces-282)
+for stdin examples, MCP authorization, output privacy, size limits and exit codes.
+Run `node scripts/cogentia.js memory capture --help` for the command's own help.
 
 ```bash
 # From any of your registered repositories

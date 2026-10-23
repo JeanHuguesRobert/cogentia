@@ -1052,6 +1052,7 @@ Navigation (v3 module seam, #80/#108 / #122):
   memory capture --stdin   Normalize a private KYS/AMI reply from stdin only.
                              JSON output; max 262144 UTF-8 bytes. Local,
                              in-memory operation, without daemon or storage.
+                             Details: memory capture --help; docs/memory-capture.md
   locate <subject>          Resolve a subject to concrete corpus locations by
                              composing guide routing, the concept registry and
                              full-text search. Flags: --intent <label>
@@ -1076,7 +1077,8 @@ Context Gateway:
   GET /api/context/search  Short citable retrieval over the Markdown index.
   GET /api/context/pack    Deterministic, budgeted context for agents.
   GET /api/issues/graph    Read-only issue graph over tracked GitHub work items.
-  scripts/cogentia-mcp.js  MCP stdio adapter; calls the daemon and never SQLite directly.
+  scripts/cogentia-mcp.js  MCP stdio adapter; corpus retrieval uses the daemon.
+                           Private memory capture runs locally; no direct SQLite access.
   Docs: docs/cogentia-context-gateway.md and docs/cogentia-mcp.md
 
 Effect commands (#171 mint UI):
@@ -1518,6 +1520,19 @@ registerModule({
 });
 
 async function cmdMemoryCapture() {
+  if ((argv.length === 1 && ["--help", "-h"].includes(argv[0])) ||
+      (argv.length === 2 && argv[0] === "capture" && ["--help", "-h"].includes(argv[1]))) {
+    console.log(`Usage: node scripts/cogentia.js memory capture --stdin [--json]
+
+Normalize a supplied KYS/AMI reply through the governed memory.capture capability.
+Input: UTF-8 text on stdin only, at most 262144 bytes. No text or file arguments.
+Output: ingestion JSON on stdout, including unchanged raw text and SHA-256.
+Keep stdout private. No daemon, provider call, storage write or Corpus promotion.
+Exit codes: 0 accepted; 2 rejected capture; 1 surface/input failure.
+MCP equivalent: cogentia_memory_capture({ text }), requiring private-read access.
+Docs: docs/memory-capture.md`);
+    return;
+  }
   if (argv.length !== 2 || argv[0] !== "capture" || argv[1] !== "--stdin") {
     throw Object.assign(new Error("Usage: cogentia memory capture --stdin [--json]"), { error_class: "invalid_input" });
   }

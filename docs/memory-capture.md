@@ -129,6 +129,27 @@ CLI invocation:
 node scripts/cogentia.js memory capture --stdin --json
 ```
 
+Command help is available without reading stdin:
+
+```text
+node scripts/cogentia.js memory capture --help
+node scripts/cogentia.js memory --help
+```
+
+From PowerShell at the Cogentia repository root, this example uses an authored
+synthetic fixture and native input redirection to preserve its exact bytes:
+
+```powershell
+cmd /c "node scripts\cogentia.js memory capture --stdin --json < prompts\fixtures\agent-acquired-context\rich-memory.yaml"
+```
+
+The fixture is synthetic; its successful ingestion is not a live provider-memory
+extraction. On shells supporting native stdin redirection, the equivalent is:
+
+```sh
+node scripts/cogentia.js memory capture --stdin --json < prompts/fixtures/agent-acquired-context/rich-memory.yaml
+```
+
 Supply UTF-8 text through stdin, using a pipe or the caller's stdin API.
 Capture text and file paths are not accepted as command arguments. The local
 CLI uses the existing trusted-local grant. It emits only the ingestion JSON to
