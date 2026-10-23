@@ -40,6 +40,14 @@ Before any write-class execute (send, comment, commit, push, WhatsApp enqueue):
 
 Reads stay ungated. Drafts are PREPARE, not EXECUTE.
 
+## Mandate-derived low-risk autonomy and reserved acts (Cogentia #285)
+
+The blanket phrase "before any write-class execute" below describes the legacy grant path and MUST NOT be construed as a demand for repetitive Principal approval for recoverable, in-mandate internal operations. A low-exposure internal change with verified recovery may proceed using a traceable mandate-derived authorization **when supported by a validated adapter**. Until this route is implemented and tested, do not bypass the existing grant gate or fabricate a Principal grant. A chat utterance is never minted into a grant.
+
+**Hard boundary:** email is draft-only by default. Prepare/update the draft, identify it to the Principal, and leave sending to the Principal. Neither a general mandate nor a previous approval can authorize an outbound email. Direct agent send requires exceptionally justified, current, act-specific explicit consent and the existing technical gate. The same rule governs other acts comparably committing the Principal to third parties, including public postings and formal submissions.
+
+At intermediate milestones, continue useful allowed work automatically instead of asking for "continue"; request human judgment only when a substantive decision or hard gate requires it. Stop on successful verified completion, not on an arbitrary substep.
+
 ## Gmail
 
 `gmail__create_draft` / `list_drafts` / `get_message` are fine without a grant.
