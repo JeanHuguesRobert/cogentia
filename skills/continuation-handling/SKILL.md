@@ -1,8 +1,26 @@
 ---
 schema: cogentia.agent_skill/v1
 id: cogentia.continuation-handling
-version: 6
-status: experimental
+version: 7
+status: "working-paper — experimental"
+title: "Continuation handling"
+author: unknown
+affiliation: unknown
+date: null
+last_modified_at: "2026-10-23"
+license: CC BY-SA 4.0
+language: en
+update_policy: UP-DEFAULT-REVIEWED
+canonical_url: https://github.com/JeanHuguesRobert/cogentia/blob/main/skills/continuation-handling/SKILL.md
+provenance:
+  origin_type: unknown
+  origin_repository: JeanHuguesRobert/cogentia
+  origin_ref: unknown
+  origin_date: unknown
+  derived_from: []
+review:
+  status: unreviewed
+  reviewed_by: []
 name: continuation-handling
 description: >
   Inspect and handle Cogentia continuations and Cognitive Packet continuation
@@ -374,6 +392,15 @@ implementation phase succeeded.
 
 ### 4B. Verify a handoff before issuing it
 
+First choose the smallest sufficient home for the result. When an existing
+Issue/Packet owns the work, prepare its checkpoint as an Issue comment; do not
+create a separate handoff file for progress, test results, blockers or next
+steps. A file requires an independently useful purpose beyond recording this
+hop. Distinguish a reusable technical contract from the task's current state,
+and leave the latter in the Issue. This choice precedes the Git-backed document
+review procedure below; that procedure does not require creating a document.
+Apply [Canonical hop journal — Issue first](../../docs/resumable_github_issues.md#canonical-hop-journal--issue-first).
+
 A handoff is not valid merely because the prompt, resume instruction, or target
 name is well formed. The declared input must exist in the state that the next
 handler will actually see.
@@ -386,6 +413,7 @@ handoff_allowed :=
     ∧ target_retrievable_by_next_handler
     ∧ target_content_or_version_verified
     ∧ immutable_identity_known_when_required
+    ∧ owning_packet_links_to_delivered_evidence
 ```
 
 If any term is false, do not issue the handoff as ready. Repair the packaging,

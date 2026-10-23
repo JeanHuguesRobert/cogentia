@@ -4,9 +4,9 @@ subtitle: "Cold-handler resumability, Janus Past→Future refactoring, and minim
 author: "Jean Hugues Noël Robert, baron Mariani"
 affiliation: "Institut Mariani / C.O.R.S.I.C.A., 1 cours Paoli, F-20250 Corte, Corsica"
 date: "2026-09-27"
-last_modified_at: "2026-10-18"
-version: "0.3"
-status: "working-note — operational pattern"
+last_modified_at: "2026-10-23"
+version: "0.4"
+status: "working-paper — operational pattern"
 license: "CC BY-SA 4.0"
 language: "en"
 document_role: "operational"
@@ -18,6 +18,8 @@ update_policy: "UP-DEFAULT-REVIEWED"
 canonical_url: "https://github.com/JeanHuguesRobert/cogentia/blob/main/docs/resumable_github_issues.md"
 provenance:
   origin_type: "conversation"
+  origin_repository: "JeanHuguesRobert/cogentia"
+  origin_ref: unknown
   origin_date: "2026-09-27"
   derived_from:
     - "../research/cognitive_packets.md"
@@ -290,6 +292,42 @@ authorization, reachability or an independently verified effect.
 
 This is a locality rule: **packet hops live with their packet**; reusable
 mechanisms live in their owning source repository.
+
+### Artifact placement before handoff verification
+
+Before writing a new handoff/checkpoint file, identify the work's owning
+Issue/Packet and ask whether the proposed content is its current state or an
+independently useful artifact. Progress, decisions, validation receipts,
+blockers and next actions belong in an Issue comment. A reusable contract,
+maintained operational guide, source code, tests or substantive source document
+may need a versioned file; record its delivered reference in the owning Issue.
+Do not use text length, convenience, agent replacement or a desire for a commit
+as sufficient justification for a separate task-history file.
+
+Verification follows placement. The Git-backed artifact verification procedure
+does not imply that every continuation needs a Git-backed document. Check the
+return path from the owning Packet to the evidence, not only a document's link
+back to the Packet. When a comment is not yet authorized, prepare its exact
+payload and expose the publication gate; do not create another permanent
+handoff file as a workaround. Existing Store & Forward remains the bounded
+fallback for an unavailable callback, not a competing canonical journal.
+
+Regression cases for a cold handler:
+
+| Situation | Expected placement and verification |
+| --- | --- |
+| Resume #271 after a synthetic prototype: commit, tests, missing adapters, next step | One checkpoint comment in #271 with verified evidence links; no new handoff file |
+| Define a source-neutral adapter contract useful independently of this hop | Versioned implementation documentation may be justified; #271 still owns progress and next steps |
+| Handoff document links to #271, but #271 has no link to the delivered evidence | Incomplete return path; prepare the missing Issue checkpoint |
+| Issue comment publication needs separate authorization | Prepare and expose that comment; do not relocate the journal to bypass the gate |
+
+Stigmergic correction, 2026-10-23: #271 used a separate handoff Markdown file
+before its Issue checkpoint was published. The incorrect choice detached task
+state from its owning Packet. The canonical choice is Issue-first hop history;
+any independently useful technical documentation remains separately justified.
+The later [checkpoint](https://github.com/JeanHuguesRobert/cogentia/issues/271#issuecomment-6375213810)
+repairs discoverability. Preserve existing published evidence rather than
+deleting or relocating it without checking references and authority.
 
 ## 4. Corpus status
 
