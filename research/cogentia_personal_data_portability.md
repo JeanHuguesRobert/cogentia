@@ -147,3 +147,18 @@ Never claim a tombstone proves global destruction of Git objects, remote clones 
 Operational implementation belongs to [MEMSYNC umbrella #278](https://github.com/JeanHuguesRobert/cogentia/issues/278), referencing the prior completed [KYS/AMI #215](https://github.com/JeanHuguesRobert/cogentia/issues/215) without reopening its mandate. Compare against the established Anti-Capture rule and existing corpus-navigation/provider-swap tests before adding abstractions. Use synthetic fixtures; no personal data in public test artifacts. Stop and close bounded work when exit tests pass, leaving recurring future drift to the governed Sleep Cycle.
 
 **Research questions:** Do users place value on verifiable exit? Does a visible export-and-resume demonstration measurably improve adoption? What exit assurances are economically sustainable and independently auditable? Compare before/after controlled pilots, avoiding claims of causality without evidence.
+
+
+## PrivAI governance and conformance linkage (2026-10-23)
+
+**Canonical spelling: PrivAI**, not “PrivaAI”. Its governance and public conformance home is [acorsica/privai](https://github.com/acorsica/privai), which explicitly treats Cogentia as a prospective open implementation rather than a self-certifying standard. Maintain the separation between **PrivAI (normative guarantees, KYS profiles/contracts, assurance, independent tests)** and **Cogentia (implementation, corpus, memories, adapters and evidence)**.
+
+- [PrivAI charter](https://github.com/acorsica/privai/blob/main/charte.md): foundational protection of personal traces and representations.
+- [KYS profiles](https://github.com/acorsica/privai/tree/main/profiles) and [contracts](https://github.com/acorsica/privai/tree/main/contracts): consented purpose-bounded disclosures, not unconditional transfer of agent-held data.
+- [Data Pact Assurance](https://github.com/acorsica/privai/blob/main/conformance/data_pact_assurance.md): evidence of data provenance, computing and applicable authority.
+- [Migration-Tested v0.1](https://github.com/acorsica/privai/blob/main/conformance/migration_tested_v0.1.md): existing independent test framing for migration with Principal identity, mandates, source memory, traceability and resumption intact. **Reuse this test instead of minting a competing Cogentia portability certification.**
+- [STAKE / GAGE](https://github.com/acorsica/privai/blob/main/assurance/stake_gage.md): evidence of actually exercised capacity, distinct from merely declared interoperability.
+
+Concrete mapping: MEMSYNC capture/import/export supplies consented evidence; the Cogentia cold provider-swap/round-trip fixtures implement the technical exercise; PrivAI declares and judges externally testable conformance. Absence of capture applies to use, delegation and agency, not only bits at rest. An export that loses restrictions on who may act, revocation, purpose, or responsibility is **not** sufficient continuity.
+
+No automatic private-data transfer into public PrivAI tests. Use synthetic examples and independently verifiable receipts; disclose only authorized projections. Institutional hosting/portage is separate from these technical and doctrinal links and must not be inferred.
