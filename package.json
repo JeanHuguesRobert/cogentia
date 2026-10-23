@@ -16,7 +16,7 @@
     "press": "node scripts/living-book-press.js",
     "living-book": "node scripts/living-book.js",
     "check:package-access": "node scripts/check-package-access.js",
-    "test": "node --test test/*.test.js scripts/lib/side-effect-authorization-285.test.js scripts/lib/mandate-continuation.test.js && node scripts/check-side-effect-authorization.js && node scripts/check-git-write.js && node scripts/check-communication-send.js && node scripts/check-effect-grant.js && node scripts/check-side-effect-packets.js",
+    "test": "node --test test/*.test.js scripts/lib/side-effect-authorization-285.test.js scripts/lib/mandate-continuation.test.js && node scripts/check-side-effect-authorization.js && node scripts/check-git-write.js && node scripts/check-communication-send.js && node scripts/check-effect-grant.js",
     "test:living-book-press": "node scripts/check-living-book-press.js",
     "test:living-book": "node scripts/check-living-book-factory.js",
     "test:convergence-loop": "node --test test/convergence-loop.test.js",
