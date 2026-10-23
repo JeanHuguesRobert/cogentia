@@ -90,8 +90,7 @@ await assert.rejects(
   () => executeAuthorizedEffect({
     action_class: "gmail.send",
     target: { recipient: "ext@example.com" },
-    payload: { subject: "Hello",
-  direct_send_exception: { approved_by_principal: true, payload_hash: canonicalPayloadHash({ subject: "Hello"), justification: "synthetic test-only direct-send exception", approval_reference: "test-fixture:explicit-approval" }, body: "exact body" },
+    payload: { subject: "Hello", body: "exact body" },
     authorization: null,
     run: () => fakeSend({ to: "ext@example.com" }),
   }),
@@ -105,13 +104,12 @@ const mailAuth = grantSideEffectAuthorization({
   action_class: "gmail.send",
   target: { recipient: "ext@example.com" },
   payload: mailPayload,
-  direct_send_exception: { approved_by_principal: true, payload_hash: canonicalPayloadHash(mailPayload), justification: "synthetic test-only direct-send exception", approval_reference: "test-fixture:explicit-approval" },
+  direct_send_exception: { approved_by_principal: true, payload_hash: canonicalPayloadHash(mailPayload), justification: "synthetic explicit test grant", approval_reference: "test:explicit" },
 });
 const executed = await executeAuthorizedEffect({
   action_class: "gmail.send",
   target: { recipient: "ext@example.com" },
   payload: mailPayload,
-  direct_send_exception: { approved_by_principal: true, payload_hash: canonicalPayloadHash(mailPayload), justification: "synthetic test-only direct-send exception", approval_reference: "test-fixture:explicit-approval" },
   authorization: mailAuth,
   run: () => fakeSend({ to: "ext@example.com", ...mailPayload }),
 });
@@ -122,7 +120,6 @@ await assert.rejects(
     action_class: "gmail.send",
     target: { recipient: "ext@example.com" },
     payload: mailPayload,
-  direct_send_exception: { approved_by_principal: true, payload_hash: canonicalPayloadHash(mailPayload), justification: "synthetic test-only direct-send exception", approval_reference: "test-fixture:explicit-approval" },
     authorization: mailAuth,
     run: () => fakeSend({ to: "ext@example.com" }),
   }),
