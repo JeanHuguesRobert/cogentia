@@ -5,12 +5,13 @@ After=network.target
 
 [Service]
 Type=oneshot
-User=root
+User=ubuntu
 WorkingDirectory=/srv/cogentia/repos/cogentia
 Environment=NODE_ENV=production
 Environment=COGENTIA_REGISTRY=/srv/cogentia/repos/JeanHuguesRobert/.cogentia.json
 Nice=10
-ExecStart=/usr/bin/node /srv/cogentia/repos/cogentia/scripts/cogentia.js corpus consolidate
+TimeoutStartSec=15min
+ExecStart=/usr/bin/node /srv/cogentia/repos/cogentia/scripts/cogentia.js consolidate --weekly --no-fan-out
 StandardOutput=journal
 StandardError=journal
 

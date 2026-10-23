@@ -202,6 +202,13 @@ const BUILTIN_IGNORED_BASENAMES = new Set([
 ]);
 const BUILTIN_SKIP_DIRS = new Set([
   ".git",
+  ".tmp",
+  ".local",
+  "_tmp",
+  "_temp",
+  "_scratch",
+  "tmp",
+  "temp",
   "node_modules",
   ".turbo",
   "dist",
@@ -879,6 +886,8 @@ Core commands:
                            bounded pre-flight: corpus/privacy/continuations only;
                            omit it for git, worktree and generated-view audits.
                            Flags: --progress --stage-budget-ms <n>
+  consolidate --weekly    Generate this week's public/private local digests.
+                           Flags: --at <ISO-8601> --force --no-fan-out
   triage [repo|all]        Correlated full diagnostic across consolidate, classify,
                            docs judgments, and active continuations (cogentia#175).
                            Flags stale continuations and untracked judgments.
@@ -3845,7 +3854,7 @@ async function cmdConsolidate() {
     if (at && Number.isNaN(new Date(at).getTime())) {
       throw new Error("--at must be a valid ISO-8601 timestamp");
     }
-    const result = await runWeeklyConsolidation({ now: at, force: hasFlag("--force") });
+    const result = await runWeeklyConsolidation({ now: at, force: hasFlag("--force"), fanOut: !hasFlag("--no-fan-out") });
     if (hasFlag("--converge") || hasFlag("-c")) {
       console.log(`\nSunday Consolidation Completed [${result.sprint_tag}]\nDigest: ${result.digest_path}\n`);
       console.log(`[Phase 5] Auto-converging Corpus Navigation to Fixed Point...`);

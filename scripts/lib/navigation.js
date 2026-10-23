@@ -347,9 +347,11 @@ export function emitDualStaticProjections(ctx, inventory = []) {
 export function publishRegistry(ctx) {
   const cogentiaRepo = (ctx.repos || []).find(r => r.name === "cogentia");
   const published = [];
+  const rootDir = ctx.registryRoot || ctx.rootPath || process.cwd();
+  const repoDir = cogentiaRepo ? path.resolve(rootDir, cogentiaRepo.path || ".") : null;
 
-  if (cogentiaRepo && fs.existsSync(cogentiaRepo.path)) {
-    const target = path.join(cogentiaRepo.path, "docs", "registry.json");
+  if (repoDir && fs.existsSync(repoDir)) {
+    const target = path.join(repoDir, "docs", "registry.json");
     if (!fs.existsSync(path.dirname(target))) fs.mkdirSync(path.dirname(target), { recursive: true });
     fs.writeFileSync(target, JSON.stringify(ctx.config || ctx.repos, null, 2) + "\n", "utf8");
     published.push(target);

@@ -38,15 +38,44 @@ export async function runWeeklyConsolidation(options = {}) {
   const sprintTag = `${year}-W${String(weekNumber).padStart(2, "0")}`;
   const weekStart = new Date(now.getTime() - 7 * 86400000).toISOString();
   const originRef = currentGitRef(root);
+  const nextWeekNumber = weekNumber === 52 ? 1 : weekNumber + 1;
+  const nextYear = weekNumber === 52 ? year + 1 : year;
+  const nextSprintTag = `${nextYear}-W${String(nextWeekNumber).padStart(2, "0")}`;
+  const monorepo = defaultMonorepoRepos(root);
 
   // This is a WEEKLY pipeline (rewrites the digest for the current ISO week
   // and fans out llms.txt to every registered repo). A caller invoking it
   // more often than weekly (e.g. a 2-hourly Sleep Cycle) must not repeat
   // that side-effecting work every time — that produced constant, useless
-  // dirty-tree drift across the whole fleet. Skip if this week's public
-  // digest already exists, unless the caller explicitly forces a re-run.
+  // dirty-tree drift across the whole fleet. A public digest alone is not
+  // proof that the private outputs and completion packet were finalized.
   const probeDigestPath = path.join(root, "research", "sprints", `weekly_digest_${sprintTag}.md`);
-  if (!options.force && fs.existsSync(probeDigestPath)) {
+  const requiredOutputs = [
+    probeDigestPath,
+    path.join(root, ".cogentia", "sprints", `weekly_digest_full_${sprintTag}.md`),
+    path.join(root, "llms.txt"),
+    path.join(root, "llms-full.txt"),
+    path.join(root, ".cogentia", "projections", "llms.txt"),
+    path.join(root, ".cogentia", "projections", "llms-full.txt"),
+    path.join(root, "docs", "registry.json"),
+    path.join(root, ".cogentia", "continuations", `ctn_weekly_consolidation_${nextSprintTag}.json`),
+  ];
+  if (options.fanOut !== false) {
+    for (const repo of filterReposForView(monorepo, PUBLIC_VIEW)) {
+      const repoDir = path.resolve(root, repo.path || ".");
+      if (!fs.existsSync(repoDir)) continue;
+      requiredOutputs.push(path.join(repoDir, "llms.txt"), path.join(repoDir, "llms-full.txt"));
+    }
+  }
+  let completedPacket = null;
+  try {
+    completedPacket = JSON.parse(fs.readFileSync(path.join(root, ".cogentia", "continuations", "ctn_weekly_consolidation.json"), "utf8"));
+  } catch { /* A missing or malformed completion packet requires recovery. */ }
+  const complete = completedPacket?.id === `ctn_weekly_consolidation_${sprintTag}`
+    && completedPacket.status === "completed"
+    && completedPacket.execution_steps_completed === 5
+    && requiredOutputs.every(file => fs.existsSync(file) && fs.statSync(file).isFile() && fs.statSync(file).size > 0);
+  if (!options.force && complete) {
     return {
       ok: true,
       skipped: true,
@@ -60,7 +89,6 @@ export async function runWeeklyConsolidation(options = {}) {
   console.log(`          COGENTIA SUNDAY CORPUS CONSOLIDATION [${sprintTag}]            `);
   console.log(`==========================================================================`);
 
-  const monorepo = defaultMonorepoRepos(root);
   const publicRepos = filterReposForView(monorepo, PUBLIC_VIEW);
   const privateRepos = monorepo.filter((r) => isPrivateRepo(r));
 
@@ -68,9 +96,9 @@ export async function runWeeklyConsolidation(options = {}) {
   console.log("\n[Phase 1] Auditing Monorepo Repositories & Index Status...");
   const gitStatus = await gitVerifyCore({ root });
   const indexStatus = await indexStatusCore({ root });
-  console.log(`✓ ${monorepo.length}/${monorepo.length} Monorepo Repositories Checked.`);
+  console.log(`✓ ${monorepo.length} repository definitions loaded (working-tree and remote health not verified).`);
   console.log(`  · Public: ${publicRepos.length} · Private: ${privateRepos.length}`);
-  console.log(`✓ Index Version: ${indexStatus.index_version}`);
+  console.log(`  Index adapter version: ${indexStatus.index_version} (live index health not verified).`);
 
   // Fetch recent git commit history across ALL tracked repositories (filter later per view)
   const gitLogs = {};
@@ -114,7 +142,7 @@ export async function runWeeklyConsolidation(options = {}) {
       : ctxRepos,
   };
 
-  const publicProjection = emitStaticProjection(ctx, [], { view: PUBLIC_VIEW, fanOut: true });
+  const publicProjection = emitStaticProjection(ctx, [], { view: PUBLIC_VIEW, fanOut: options.fanOut !== false });
   const privateProjection = emitStaticProjection(ctx, [], { view: PRIVATE_VIEW, fanOut: false });
   const registryResult = publishRegistry({
     ...ctx,
@@ -182,10 +210,6 @@ export async function runWeeklyConsolidation(options = {}) {
   console.log(`✓ PRIVATE digest → ${privateDigestPath}`);
 
   // 3. Register Consolidation Cognitive Packet Descriptor
-  const nextWeekNumber = weekNumber === 52 ? 1 : weekNumber + 1;
-  const nextYear = weekNumber === 52 ? year + 1 : year;
-  const nextSprintTag = `${nextYear}-W${String(nextWeekNumber).padStart(2, "0")}`;
-
   const ctnPath = path.join(root, ".cogentia", "continuations", "ctn_weekly_consolidation.json");
   const ctnDir = path.dirname(ctnPath);
   if (!fs.existsSync(ctnDir)) fs.mkdirSync(ctnDir, { recursive: true });
@@ -367,6 +391,7 @@ function generateWeeklyDigestMarkdown({
     return `### Repository: \`${repoName}\`${privacyTag}\n${listText || "- *No recent commits*"}`;
   }).join("\n\n");
 
+  const observedCommitCount = filteredLogs.reduce((total, [, commits]) => total + commits.length, 0);
   const publicRepoCount = monorepo.filter((r) => isPublicRepo(r)).length;
   const privateRepoCount = monorepo.filter((r) => isPrivateRepo(r)).length;
 
@@ -413,13 +438,15 @@ ${downloadsList}
   const digestDate = timestamp.slice(0, 10);
   const digestFrontmatter = `---
 title: "Weekly Sprint Digest: ${sprintTag} (${viewTitle})"
-author: "Jean Hugues Noel Robert, baron Mariani"
+author: unknown
+generated_by: scripts/lib/consolidation.js
 affiliation: "Institut Mariani / C.O.R.S.I.C.A., 1 cours Paoli, F-20250 Corte, Corsica"
 license: "CC BY-SA 4.0"
 date: "${digestDate}"
-status: "stable — active"
-document_role: source
-document_kind: research-paper
+status: "working-paper — generated and unreviewed"
+document_role: operational
+document_kind: weekly-consolidation-report
+canonical_url: ${isPrivate ? "unknown" : `https://github.com/JeanHuguesRobert/cogentia/blob/main/research/sprints/weekly_digest_${sprintTag}.md`}
 visibility: ${isPrivate ? "private" : "public"}
 lifecycle_state: active
 update_policy: UP-DEFAULT-REVIEWED
@@ -441,7 +468,7 @@ review:
   return `${digestFrontmatter}# Weekly Sprint Digest: ${sprintTag} (${viewTitle}) 📜🧘‍♂️
 **Generated by Cogentia Sunday Consolidation Pipeline**
 - **Timestamp**: \`${timestamp}\`
-- **Corpus Index Version**: \`${indexStatus.index_version}\`
+- **Index adapter version**: \`${indexStatus.index_version}\` (declared by the adapter; live index health not verified)
 - **Privacy View Domain**: \`${domainLabel}\`
 - **Repositories in this view**: \`${projectionResult.repos_listed ?? filteredLogs.length}\` listed
 - **Public monorepo surface**: \`${publicRepoCount}\` · **Private monorepo surface**: \`${privateRepoCount}\`
@@ -450,21 +477,19 @@ review:
 
 ## 🎯 Executive Sprint Summary
 
-This week's sprint consolidated major milestones across the monorepo architecture:
+This report records the local consolidation run, without inferring delivery milestones from commit subjects.
 
-1. **Decoupled Cogentia Core Engine**: Extracted \`scripts/lib/cogentia-core.js\` and expanded the MCP facade to **18 tools** (100% PASS rate).
-2. **Single-Process Embedded Mode**: Implemented \`--with-mcp\` flag reducing memory usage to **~80 MB RAM** on Fracta VPS.
-3. **Magistral AI Router Boundary (#67)**: Re-exported AI Router client contracts with zero secret leaks and graceful RAG fallback.
-4. **Continuation & Trace Sync (#68)**: Automated interaction packet scanning (\`${traceSync.total_packets}\` packets indexed).
-5. **Dual Privacy Projections (#66 / #70)**: Emitted separate **public** and **private** \`llms.txt\` / digest surfaces (private repos never leak into public artifacts).
-6. **COP Accounting Simulator**: Integrated quick event simulation buttons and live Kudos gravity ($\\Gamma$) feedback in \`CopAccountingDashboard.jsx\`.
+- Observed **${observedCommitCount} recent commit entries** across **${filteredLogs.length} ${filteredLogs.length === 1 ? "repository" : "repositories"}** in this privacy view (at most 15 entries per repository).
+- Emitted this view's static navigation and full-text projections locally.
+- Scanned **${traceSync.total_packets} local interaction and continuation records**; scanning does not resolve or index their judgments.
+- Working-tree cleanliness, remote synchronization, live index health, deployment and functional test results are **not verified by this pipeline**.
 
 ${downloadsSection}
 ---
 
-## 🔍 Git Commit Cross-Check (Past 7 Days - User: JeanHuguesRobert)
+## 🔍 Local Git Commit Observations (Past 7 Days, All Authors)
 
-${repoCommitSections || "*No recent activity detected across tracked repositories in this privacy view.*"}
+${repoCommitSections || "*No recent commit entries observed in this privacy view; missing or unreadable repositories may have been skipped.*"}
 
 ---
 
@@ -481,8 +506,9 @@ ${projectionPaths}
 
 ## 🚀 Next Sprint Focus Areas
 
-- [ ] Complete derivative public publications for *When Cognition Became Traffic* (#69).
-- [ ] Maintain weekly Sunday Consolidation dual privacy pipeline (#70).
+- [ ] Review the observed commits and unresolved continuation records before choosing priorities.
+- [ ] Verify live index health and remote synchronization separately.
+- [ ] Review generated artifacts before any commit, push or publication.
 `;
 }
 

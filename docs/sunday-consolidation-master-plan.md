@@ -4,6 +4,8 @@ author: "Jean Hugues Noel Robert, baron Mariani"
 affiliation: "Institut Mariani / C.O.R.S.I.C.A., 1 cours Paoli, F-20250 Corte, Corsica"
 license: "CC BY-SA 4.0"
 date: "2026-09-10"
+last_modified_at: "2026-10-24"
+canonical_url: https://github.com/JeanHuguesRobert/cogentia/blob/main/docs/sunday-consolidation-master-plan.md
 status: "stable — active"
 document_role: operational
 document_kind: documentation
@@ -28,6 +30,46 @@ review:
 
 # Sunday Corpus Consolidation Master Plan 📜🧘‍♂️
 **Architectural Blueprint for Automated Weekly Corpus De-Entropy & Sprint Wrap-Up**
+
+## Verified implementation boundary (2026-10-24)
+
+The sections below describe the target architecture. They are not evidence
+that every phase is implemented, deployed, authorized or currently healthy.
+The present weekly runner:
+
+- observes up to 15 local Git commit entries per configured default repository
+  over seven days, across all authors; missing/unreadable repositories may be
+  skipped;
+- scans interaction and continuation records without resolving their judgments;
+- emits separate public/private digests, static projections, a local registry,
+  a completion packet and the next weekly packet;
+- labels the adapter's fixed index version as a declaration, not a live index
+  health check, and does not certify worktree cleanliness or remote freshness;
+- skips a repeated week only when both privacy domains, registry, required
+  projections and next packet exist and the current completion packet is valid;
+  `--force` explicitly regenerates a complete week;
+- supports `--no-fan-out` to preserve sibling repositories' projections;
+- never commits, pushes, deploys or synchronizes a remote service itself.
+
+Use `node scripts/cogentia.js consolidate --weekly --no-fan-out` for the
+bounded local run. Run `corpus converge` separately when navigation and the
+local SQLite index must be regenerated. Temporary folders (`.tmp`, `.local`,
+`_tmp`, `_temp`, `_scratch`, `tmp`, `temp`) are excluded from corpus traversal;
+copies stored there are recovery material, not source documents.
+
+The versioned systemd fragment now invokes that weekly command, rather than
+the nonexistent `corpus consolidate` subcommand. Editing the fragment does not
+install or activate a timer. The COP wake descriptor remains `authorized: false`.
+Live scheduling evidence, activation, ownership and rollback belong to
+[Operium](https://github.com/JeanHuguesRobert/operium), under a separately
+reviewed execution mandate.
+
+Verification: `node scripts/check-sunday-consolidation.js` covers first run,
+complete repeat without writes, missing private outputs/next packet,
+malformed completion packet, forced run, fan-out and public/private separation.
+`node scripts/check-corpus-plan-scope.js` verifies that temporary copies do not
+become cross-repository navigation evidence. These checks do not establish
+live scheduler availability.
 
 > **Goal**: Automate the weekly Sunday Corpus Consolidation workflow via a single CLI command (`node scripts/cogentia.js consolidate --weekly`) and MCP tool (`cogentia_consolidate_weekly`). This pipeline scans all 10 monorepo repositories, audits index health, triages continuations and interaction traces, and always emits **two privacy domains**:
 >
