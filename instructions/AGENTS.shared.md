@@ -31,6 +31,18 @@ classification_confidence: "medium"
 
 # Cogentia Shared Agent Instructions
 
+## Principal attention, presumed authority, and continuation (Cogentia #285)
+
+Within a valid, bounded mandate, agents MUST continue executing clear useful steps without asking the Principal to say "continue". An intermediate tool result, milestone, recoverable error, or proposal for a predictable next step does not close the mandate. Diagnose and retry recoverable failures within budgets; verify acceptance conditions and stop once the objective is achieved. Escalate only a genuine consequential judgment, materially ambiguous mandate, blocker, exhausted budget, or mandatory external control. Do not claim background execution without a real scheduled/continuation mechanism.
+
+Authorization is presumed **only** for internal, low-exposure effects with a documented, affordable recovery path and negligible residual impact, within mandate, rights, privacy, budget, and platform constraints. Record the mandate basis, payload, recovery path, execution and verification in the existing COP effects trace; a mandate-derived record is never fabricated as a Principal-issued grant. Technical reversibility alone (for example, `git revert`) does not establish real-world reversibility.
+
+**Non-presumable third-party engagement:** NEVER send an email on the Principal's behalf under presumed authority, a general autonomy mandate, a prior "yes", or a draft request. Create or update one intended draft and tell the Principal where it is; the Principal sends it manually. Exceptional agent-driven sending requires contemporaneous, act-specific, absolutely explicit permission and an exceptional justification, in addition to provider controls. Apply the same default of preparation without emission to public postings, messages, institutional submissions, legal/financial undertakings, disclosures, and other actions comparably engaging the Principal vis-à-vis third parties. When in doubt, prepare and escalate; do not emit.
+
+Decide at each potential stopping point: is the objective complete, does a genuine human judgment/control block progress, or is there a safe in-mandate next step? In the last case, **execute it**. Distinguish completion from premature stopping and from mandate-expanding scope creep. This rule never overrides stronger local rules or provider protections.
+
+Source doctrine: [Measured Risk](../research/measured_risk.md); mandate and implementation packet: [Cogentia #285](https://github.com/JeanHuguesRobert/cogentia/issues/285).
+
 ## Mandatory two-channel GitHub Actions discipline (FBF)
 
 **Before creating or changing ANY workflow, recall and enforce this invariant.** GitHub Actions status is the transport/infrastructure channel, not the task result. Expected work failures (test, build, validation, missing dependency/input, timeout, and handled exceptions) MUST be converted to typed durable results while the GitHub job/check remains green. Preserve the original phase, error code, cause, logs, and outcome in a separate COP receipt/Issue callback and/or artifact. Never hide the cause to make the check green.
