@@ -17,6 +17,39 @@ import {
 import { asDecisionGrant, asExposeContinuation } from "./side-effect-packets.js";
 import { maybeRecordCopEffectSpend } from "./cop-surface-accounting.js";
 
+/**
+ * #285: Conservative effect-boundary classification. This is advisory only:
+ * it never mints a Principal grant and never bypasses existing effect gates.
+ * Recoverability must be proven by the caller rather than inferred from git.
+ */
+export function assessPresumedEffect({
+  action_class,
+  within_mandate = false,
+  within_budget = false,
+  recovery_verified = false,
+  negligible_residue = false,
+  low_exposure = false,
+  privacy_cleared = false,
+  externally_engaging = false,
+  mandatory_confirmation = false,
+} = {}) {
+  const action = String(action_class || "").toLowerCase();
+  const reserved = externally_engaging
+    || /(^|\.)(send|publish|post|forward|reply|submit|disclose|contract|payment|transfer)(\.|$)/.test(action)
+    || action.startsWith("gmail.")
+    || action.startsWith("whatsapp.")
+    || action.startsWith("communication.");
+  if (reserved) return { decision: "explicit_principal_authorization", reason: "third_party_commitment" };
+  if (mandatory_confirmation) return { decision: "platform_confirmation", reason: "mandatory_external_control" };
+  if (!within_mandate) return { decision: "escalate", reason: "outside_mandate" };
+  if (!within_budget) return { decision: "escalate", reason: "budget" };
+  if (!privacy_cleared) return { decision: "escalate", reason: "privacy" };
+  if (!(recovery_verified && negligible_residue && low_exposure)) {
+    return { decision: "escalate", reason: "recovery_or_exposure_unproven" };
+  }
+  return { decision: "mandate_derived_candidate", reason: "bounded_recoverable_internal_effect" };
+}
+
 export const AUTHORIZATION_KIND = "cogentia.side_effect_authorization/v1";
 export { getAuthorizationStore, setAuthorizationStore, createMemoryStore };
 
