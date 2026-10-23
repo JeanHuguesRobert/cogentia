@@ -307,7 +307,7 @@ export function mintMandateDerivedGrant({
   if (!mandate_ref || !recovery_ref || !target || !payload || typeof payload !== "object") {
     throw fail("mandate_evidence_missing", "mandate, recovery, target, and bound payload are required");
   }
-  const decision = assessPresumedEffect({ action_class, ...policy_evidence });
+  const decision = assessPresumedEffect({ ...policy_evidence, action_class });
   if (decision.decision !== "mandate_derived_candidate") {
     throw fail("mandate_derived_forbidden", decision.reason);
   }
@@ -369,8 +369,8 @@ export function validateSideEffectAuthorization(authorization, expected = {}) {
     if (!new Set(["git.commit", "host.fs.write"]).has(authorization.action_class)
       || !authorization.mandate_ref || !authorization.recovery_ref
       || assessPresumedEffect({
-        action_class: authorization.action_class,
         ...(authorization.material_parameters?.policy_evidence || {}),
+        action_class: authorization.action_class,
       }).decision !== "mandate_derived_candidate") {
       throw fail("mandate_derived_forbidden", "invalid mandate-derived authority");
     }
