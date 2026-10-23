@@ -27,3 +27,9 @@ test("missing mandate, budget, privacy, recovery and platform gates fail closed"
   }
   assert.equal(assessPresumedEffect({ ...safe, mandatory_confirmation: true }).decision, "platform_confirmation");
 });
+
+test("a generic assent or continuation never authorizes an external send", () => {
+  for (const utterance of ["continuons", "oui j'autorise", "continue", "faisons cela"]) {
+    assert.equal(assessPresumedEffect({ ...safe, action_class: "gmail.send" }).decision, "explicit_principal_authorization", utterance);
+  }
+});
