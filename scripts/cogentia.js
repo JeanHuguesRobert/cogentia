@@ -63,6 +63,7 @@ import { buildConsolidateSession } from "./lib/consolidate-session.js";
 import { replaceIndexCatalog, stripIndexCatalog } from "./lib/research-index-navigation.js";
 import { listAgentSkills, getAgentSkill } from "./lib/cogentia-agent-skills.js";
 import { registerModule, invokeCapability } from "./lib/v3-modules.js";
+import "./lib/memory-capture.js";
 import { resolveCallerAuth, deriveLockers } from "./lib/cogentia-mcp-auth.js";
 import { checkSemanticMutation, MUTATION_STATUS } from "./lib/semantic-mutation-checker.js";
 import { runConvergenceLoop } from "./lib/convergence-loop.js";

@@ -102,8 +102,8 @@ function checkGovernance(module, input, auth) {
  * When only one module provides the capability, it is selected (the
  * historical single-provider behaviour). When several providers exist,
  * pass `provider` (descriptor.provider or descriptor.id) or `moduleId`.
- * Missing explicit selection with multiple candidates uses the first
- * registered module and is recorded as architectural residue (#184).
+ * Ambiguous selection is rejected, including when a provider label matches
+ * several modules. Registration order never establishes provider identity.
  *
  * `auth` (optional) is the caller's resolved lockers grant. Every surface
  * (CLI, daemon, MCP) is expected to resolve its own `auth` and pass it here
@@ -117,22 +117,21 @@ export async function invokeCapability(capability, input, { auth, provider, modu
     err.error_class = "capability_not_found";
     throw err;
   }
-  let module = candidates[0];
-  if (moduleId) {
-    module = candidates.find((c) => c.id === moduleId);
-    if (!module) {
-      const err = new Error(`No v3 module id "${moduleId}" provides capability "${capability}"`);
-      err.error_class = "provider_not_found";
-      throw err;
-    }
-  } else if (provider) {
-    module = candidates.find((c) => c.provider === provider || c.id === provider);
-    if (!module) {
-      const err = new Error(`No v3 module provider "${provider}" provides capability "${capability}"`);
-      err.error_class = "provider_not_found";
-      throw err;
-    }
+  const selected = candidates.filter((candidate) =>
+    (!moduleId || candidate.id === moduleId) &&
+    (!provider || candidate.provider === provider || candidate.id === provider)
+  );
+  if (!selected.length) {
+    const err = new Error(`No v3 module matches the requested provider/module for capability "${capability}"`);
+    err.error_class = "provider_not_found";
+    throw err;
   }
+  if (selected.length > 1) {
+    const err = new Error(`Ambiguous v3 capability "${capability}"; select a unique provider or moduleId`);
+    err.error_class = "provider_ambiguous";
+    throw err;
+  }
+  const [module] = selected;
   checkGovernance(module, input, auth);
   return module.run({ ...input, auth });
 }
