@@ -2,7 +2,7 @@
 title: "FractaXXXX — A Generative Grammar of Possibilities"
 subtitle: "Principles, composition, emerging possibilities, friendly prior art, and Reality Tests"
 date: "2026-10-08"
-version: "0.5"
+version: "0.6"
 status: "working-paper — non-normative"
 language: "en"
 author: unknown
@@ -218,7 +218,7 @@ Before coining or promoting another `FractaXXXX`, ask:
 4. Can an existing document simply gain a link or a paragraph instead?
 5. What Reality Test could falsify the asserted distinction?
 
-**Status:** Living generative working note (v0.4); pending Principal review, frontmatter validation and Reality Tests; not a decision to rename COP, rewrite accepted source doctrine, or multiply projects.
+**Status:** Living generative working note (v0.6); pending Principal review, frontmatter validation and Reality Tests; not a decision to rename COP, rewrite accepted source doctrine, or multiply projects.
 
 ## Reflexive planes, latent capacity and Booster hypotheses (2026-10-23)
 
@@ -284,9 +284,26 @@ For a living Markdown document, distinguish content and generated projections (d
 **Research pointers (evidence must be checked per task):**
 - Nelson & Narens, *Metamemory: A Theoretical Framework and New Findings* (1990), object/meta monitoring and control.
 - Kant, *Critique of Judgment*, §§46–50; Schopenhauer, *The World as Will and Representation* (philosophical comparisons).
-- Carson, Peterson & Higgins (2003), decreased latent inhibition and creative achievement (association; not causal proof).
-- Donoway et al., *Quantifying Elicitation of Latent Capabilities in Language Models* (NeurIPS 2025), parameter-efficient elicitation, **not** prompt-only elicitation.
-- Binder et al., *Looking Inward: Language Models Can Learn About Themselves by Introspection* (ICLR 2025), bounded self-prediction results.
-- Anthropic, *Emergent Introspective Awareness in Large Language Models* (2025), intervention-dependent, limited introspective behavior.
+- [Carson, Peterson & Higgins (2003)](https://pubmed.ncbi.nlm.nih.gov/14498785/), decreased latent inhibition and creative achievement (association; not causal proof).
+- [Donoway et al., *Quantifying Elicitation of Latent Capabilities in Language Models* (NeurIPS 2025)](https://proceedings.nips.cc/paper_files/paper/2025/hash/dd16e008534dc52fab72fdedad069d5c-Abstract-Conference.html), parameter-efficient elicitation, **not** prompt-only elicitation.
+- [Binder et al., *Looking Inward* (ICLR 2025)](https://proceedings.iclr.cc/paper_files/paper/2025/hash/0a6059857ae5c82ea9726ee9282a7145-Abstract-Conference.html), bounded self-prediction results.
+- [Anthropic, *Emergent Introspective Awareness in Large Language Models* (2025)](https://www.anthropic.com/research/introspection), intervention-dependent, limited introspective behavior.
 - [Documents as Cognitive Packets](documents_as_cognitive_packets.md), [Frontmatter Schema](../docs/frontmatter-schema.md), [Corpus Navigation Audit](corpus_navigation_audit.md).
 
+
+## FractaPlane / Booster: evidence gate and minimum Reality Test (2026-10-23)
+
+This is a research plan, **not** a claim that a test has run or that latent general intelligence was proven. Respect Source Before Projection, FixBugsFirst, Minimum Sufficient Locality and distinct mandates for edit, publication and freeze.
+
+| Candidate claim | Minimum distinguishing evidence | Insufficient evidence |
+| --- | --- | --- |
+| A control/data distinction is useful for Markdown | An identified edit and a separately mandated policy change with different permissible operations | Assuming frontmatter is the authority |
+| A Booster improves performance | Randomized repeated gains on unseen objectively scored tasks over matched token/compute and information controls | A persuasive single demonstration |
+| Inhibition explains the improvement | Targeted reversible causal intervention identifying an inhibiting mechanism | Gain attributed to a better prompt alone |
+| Synthesis expands accessible possibilities | A demonstrably new task class solved by a combination, not by matched isolated components | Attractive new wording |
+| Metacognitive feedback improves accuracy | Correctness and calibration improvements with recorded failures and regressions | More elaborate self-criticism |
+| A document is public and correctly published | Source revision, generated artifact and independently retrieved public output correspond | A green workflow or visibility metadata |
+
+**Smallest discriminating trial.** First take a single public Markdown source already linked to a Living Book. Capture its immutable commit SHA, applicable local update policy, revision/review state, expected public URL and the observed public output. Report separately whether (a) generation matches source and (b) the public address really serves that generation; mark unobserved evidence UNKNOWN. Then compare A ordinary prompting, B explicit reflection, C one prespecified reversible Booster, D reliable external verifier, and E token/compute-matched neutral intervention on unseen tasks. Keep model weights constant for inference-only claims, randomize order, retain negative outcomes, and never tune on the held-out evaluation set. No new workflow or schema is required for the first trial.
+
+**Outcome record:** task and source SHA, conditions, budget, verifier, observed score, uncertainty calibration, public reachability evidence or explicit unknown, regressions, and whether a failure concerned execution or desired outcome. Store under an existing Packet/Issue or evidence ledger. A positive result establishes conditional improvement, not automatically hidden capability or inhibition. No doctrine is promoted automatically.
