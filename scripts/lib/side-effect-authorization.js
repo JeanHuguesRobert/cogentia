@@ -359,6 +359,16 @@ export function validateSideEffectAuthorization(authorization, expected = {}) {
   if (!authorization.authorization_id) {
     throw fail("authorization_invalid", "authorization_id required");
   }
+  // A caller-supplied envelope is not authority. Look up the minted grant.
+  const storedGrant = getAuthorizationStore().getGrant(authorization.authorization_id);
+  if (!storedGrant || storedGrant.payload_hash !== authorization.payload_hash
+      || storedGrant.action_class !== authorization.action_class
+      || stableSerialize(storedGrant.target || {}) !== stableSerialize(authorization.target || {})
+      || storedGrant.authority_origin !== authorization.authority_origin
+      || storedGrant.mandate_ref !== authorization.mandate_ref
+      || storedGrant.recovery_ref !== authorization.recovery_ref) {
+    throw fail("authorization_untrusted", "authorization must match its stored minted record");
+  }
   if (authorization.single_use !== false && getAuthorizationStore().isConsumed(authorization.authorization_id)) {
     throw fail("authorization_replay", "single-use authorization already consumed");
   }
