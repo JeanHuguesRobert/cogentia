@@ -20,6 +20,7 @@ import {
 import { evaluateDocumentPair } from "./audit-evaluator.js";
 import { SleepCycleReviewQueue } from "./review-queue.js";
 import { evaluateAuditMetrics } from "./metrics.js";
+import { runInteractionEvidenceMission } from "./interaction-evidence.js";
 
 function nowMs() {
   return Date.now();
@@ -55,6 +56,29 @@ export async function runMonteCarloAudit(options = {}) {
       signals: [],
       queue_stats: reviewQueue.getQueueStats()
     };
+  }
+
+  // Opt-in mission; the timer, pair sampler and default behavior stay unchanged.
+  // A live adapter must be reattached by an authorized handler on each resume.
+  if (options.mission === "interaction_evidence") {
+    const resumed = typeof options.resume === "string"
+      ? loadContinuationFile(root, options.resume) : options.resume;
+    const checkpoint = resumed?.state?.checkpoint || options.checkpoint;
+    const receipt = await runInteractionEvidenceMission({
+      ...options, root, checkpoint,
+      resumeUnavailable: Boolean(options.resume && !resumed?.state?.checkpoint),
+      now: checkpoint?.through || options.now,
+      from: checkpoint?.from || options.from,
+      maxWallTimeMs,
+      shouldPreempt: () => options.shouldPreempt?.() || (!options.force && !qualifySystemAvailability(options).is_idle)
+    });
+    const continuation = receipt.status === "PREEMPTED"
+      ? emitSleepCycleContinuation(root, {
+        runId, reason: receipt.code, checkpoint: receipt.checkpoint,
+        accumulatedSignals: [], metrics: null,
+        options: { mission: "interaction_evidence", from: receipt.checkpoint.from, now: receipt.checkpoint.through, maxCases: options.maxCases, minePatterns: options.minePatterns }
+      }) : null;
+    return { ...receipt, runId, continuation, queue_stats: reviewQueue.getQueueStats() };
   }
 
   // 2. Discover Documents (respecting privacy view)
@@ -242,8 +266,9 @@ function emitSleepCycleContinuation(root, { runId, reason, checkpoint, accumulat
       metrics_summary: metrics?.coverage
     },
     resume: {
-      command: `node scripts/run-corpus-sleep-cycle.js --resume ${continuationId}`,
+      command: options.mission === "interaction_evidence" ? null : `node scripts/run-corpus-sleep-cycle.js --resume ${continuationId}`,
       method: "runMonteCarloAudit",
+      ...(options.mission === "interaction_evidence" ? { requires: "Reattach the authorized read-only adapter and mission=interaction_evidence; CLI adapter routing is not implemented." } : {}),
       options: {
         ...options,
         resume: continuationId

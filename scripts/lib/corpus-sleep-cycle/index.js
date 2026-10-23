@@ -34,3 +34,5 @@ export {
 export {
   runMonteCarloAudit
 } from "./sleep-cycle-engine.js";
+
+export { runInteractionEvidenceMission, reconcileInteraction } from "./interaction-evidence.js";

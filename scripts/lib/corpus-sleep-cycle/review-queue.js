@@ -95,6 +95,16 @@ export class SleepCycleReviewQueue {
       }
     }
 
+    // #271: supersession is a derived view; immutable findings and human
+    // decisions remain intact. Only same-interaction predecessors may be hidden.
+    for (const sig of map.values()) {
+      if (sig.signal_kind !== "interaction_evidence") continue;
+      for (const priorId of sig.supersedes || []) {
+        const prior = map.get(priorId);
+        if (prior && prior.id !== sig.id && prior.signal_kind === sig.signal_kind && prior.interaction_ref === sig.interaction_ref) prior.superseded_by = sig.id;
+      }
+    }
+
     return map;
   }
 
@@ -121,7 +131,7 @@ export class SleepCycleReviewQueue {
    */
   listPending(options = {}) {
     const all = Array.from(this.loadAllSignalsMap().values());
-    let pending = all.filter((s) => s.review_status === REVIEW_DECISIONS.PENDING || !s.review_status);
+    let pending = all.filter((s) => !s.superseded_by && (s.review_status === REVIEW_DECISIONS.PENDING || !s.review_status));
 
     if (options.kind) {
       pending = pending.filter((s) => s.signal_kind === options.kind);
