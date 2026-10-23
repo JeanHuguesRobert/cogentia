@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import {
   grantSideEffectAuthorization,
+  canonicalPayloadHash,
   resetAuthorizationStore,
   executeAuthorizedEffect,
   recordSideEffectExecution,
@@ -27,6 +28,7 @@ const auth = grantSideEffectAuthorization({
   action_class: "gmail.send",
   target: prepared.target,
   payload: prepared.payload,
+  direct_send_exception: { approved_by_principal: true, payload_hash: canonicalPayloadHash(prepared.payload), justification: "synthetic test-only direct-send exception", approval_reference: "test-fixture:explicit-approval" },
 });
 assert.equal(auth.status, "granted");
 assert.equal(auth.packet.envelope.packet_kind, "decision");
@@ -39,6 +41,7 @@ const executed = await executeAuthorizedEffect({
   action_class: "gmail.send",
   target: prepared.target,
   payload: prepared.payload,
+  direct_send_exception: { approved_by_principal: true, payload_hash: canonicalPayloadHash(prepared.payload), justification: "synthetic test-only direct-send exception", approval_reference: "test-fixture:explicit-approval" },
   authorization: auth,
   run: () => tx.send(prepared.payload),
 });
@@ -65,12 +68,14 @@ const nativeAuth = grantSideEffectAuthorization({
   action_class: "gmail.send",
   target: nativePrep.target,
   payload: nativePrep.payload,
+  direct_send_exception: { approved_by_principal: true, payload_hash: canonicalPayloadHash(nativePrep.payload), justification: "synthetic test-only direct-send exception", approval_reference: "test-fixture:explicit-approval" },
 });
 const recorded = await recordSideEffectExecution({
   authorization: nativeAuth,
   action_class: "gmail.send",
   target: nativePrep.target,
   payload: nativePrep.payload,
+  direct_send_exception: { approved_by_principal: true, payload_hash: canonicalPayloadHash(nativePrep.payload), justification: "synthetic test-only direct-send exception", approval_reference: "test-fixture:explicit-approval" },
   receipt: { transport: "gmail", message_id: "msg-1", body: "secret-body-must-not-trace" },
 });
 assert.equal(recorded.ok, true);
@@ -86,6 +91,7 @@ await assert.rejects(
     action_class: "gmail.send",
     target: nativePrep.target,
     payload: nativePrep.payload,
+  direct_send_exception: { approved_by_principal: true, payload_hash: canonicalPayloadHash(nativePrep.payload), justification: "synthetic test-only direct-send exception", approval_reference: "test-fixture:explicit-approval" },
   }),
   (e) => e.error_class === "authorization_replay"
 );
@@ -106,11 +112,13 @@ const a2 = grantSideEffectAuthorization({
   action_class: "gmail.send",
   target: p2.target,
   payload: p2.payload,
+  direct_send_exception: { approved_by_principal: true, payload_hash: canonicalPayloadHash(p2.payload), justification: "synthetic test-only direct-send exception", approval_reference: "test-fixture:explicit-approval" },
 });
 const via = await core.callTool("cogentia_side_effect_record", {
   action_class: "gmail.send",
   target: p2.target,
   payload: p2.payload,
+  direct_send_exception: { approved_by_principal: true, payload_hash: canonicalPayloadHash(p2.payload), justification: "synthetic test-only direct-send exception", approval_reference: "test-fixture:explicit-approval" },
   side_effect_authorization: a2,
   receipt: { transport: "gmail", message_id: "m2" },
 });
