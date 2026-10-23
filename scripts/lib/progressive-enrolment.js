@@ -58,7 +58,7 @@ export const RETENTION_PURPOSES = {
 export function inspectContinuityState(turnLog = null, preferences = {}) {
   const turns = Array.isArray(turnLog?.turns) ? turnLog.turns : [];
   const validTurns = turns.filter((t) => t && typeof t === "object");
-  const snapshots = validTurns.filter((t) => Boolean(t.snapshot));
+  const snapshots = validTurns.filter((t) => Boolean(t.snapshot || t.mirror));
   const latestTurn = validTurns[validTurns.length - 1] || null;
 
   let reviewedClaimsCount = 0;
@@ -68,7 +68,7 @@ export function inspectContinuityState(turnLog = null, preferences = {}) {
     }
   }
 
-  const hasRetainedData = validTurns.length > 0 && (snapshots.length > 0 || reviewedClaimsCount > 0);
+  const hasRetainedData = validTurns.some((t) => Boolean(t.response?.text || t.prompt?.copied_at)) || snapshots.length > 0 || reviewedClaimsCount > 0;
   const provider = latestTurn?.provider || null;
 
   // Stated intentions (must be explicit, NEVER inferred)

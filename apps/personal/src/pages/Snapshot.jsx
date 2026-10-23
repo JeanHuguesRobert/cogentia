@@ -5,6 +5,7 @@ import {
   agentStampFromData,
   canGoBack,
   emptyLog,
+  exportPersonalData,
   ensureNextTurn,
   forwardIntent,
   goBack,
@@ -151,7 +152,7 @@ export default function Snapshot() {
   }, [snapshot, previousTurn])
 
   const multiComparison = useMemo(() => {
-    const list = log.turns.filter((t) => t.snapshot != null)
+    const list = log.turns.filter((t) => t.mirror || t.snapshot).map((t) => ({ ...t, snapshot: t.mirror || t.snapshot }))
     if (list.length < 2) return null
     return buildMultiAgentComparison(list)
   }, [log])
@@ -178,7 +179,7 @@ export default function Snapshot() {
 
   useEffect(() => {
     saveBrowserTurnLog(log)
-  }, [log])
+  }, [log, preferences])
 
   useEffect(() => {
     if (turn.prompt.role !== 'initial') return
@@ -444,7 +445,7 @@ Produisez maintenant une version corrigée en JSON valide.
                 {copied === 'prompt' ? 'Copié ✓' : 'Copier'}
               </button>
             </div>
-            <textarea readOnly value={turn.prompt.text || prompt} rows={14} className="input resize-y font-mono text-xs leading-relaxed" />
+            <textarea aria-label="Prompt à copier" readOnly value={turn.prompt.text || prompt} rows={14} className="input resize-y font-mono text-xs leading-relaxed" />
           </div>
         </section>
       )}
@@ -456,12 +457,14 @@ Produisez maintenant une version corrigée en JSON valide.
             <p className="font-body text-sm text-dim mb-5">
               N’ajoutez pas l’historique de conversation. Le JSON produit par votre agent suffit.
             </p>
+            <p className="text-sm text-dim mb-4">Votre réponse est conservée dans ce navigateur jusqu’à effacement, sans envoi automatique. <Link className="underline" to="/mirror">Réponse YAML, export complet ou effacement →</Link></p>
             {replyIsStale(turn) && (
               <p className="font-body text-sm text-dim mb-5" data-stale-reply="true">
                 Cette réponse correspond au prompt précédent. Vous pouvez la modifier ou la remplacer.
               </p>
             )}
             <textarea
+              aria-label="Réponse JSON de votre agent"
               value={turn.response.text}
               onChange={(event) => setLog((current) => updateResponseText(current, turn.number, event.target.value))}
               rows={18}
@@ -553,7 +556,7 @@ Produisez maintenant une version corrigée en JSON valide.
             <p className="font-body text-sm text-dim mb-5">
               Cette seconde boucle transforme le portrait initial en représentation corrigée sous votre contrôle.
             </p>
-            <textarea readOnly value={correctionPrompt} rows={16} className="input resize-y font-mono text-xs leading-relaxed" />
+            <textarea aria-label="Prompt de correction" readOnly value={correctionPrompt} rows={16} className="input resize-y font-mono text-xs leading-relaxed" />
             <div className="mt-4 flex flex-wrap items-center gap-3">
               <button
                 type="button"
@@ -590,7 +593,7 @@ Produisez maintenant une version corrigée en JSON valide.
             preferences={preferences}
             onUpdatePreferences={onUpdatePreferences}
             onPurge={onPurge}
-            onExport={exportSnapshot}
+            onExport={() => downloadJson('cogentia-personal-local.json', exportPersonalData(log, preferences))}
           />
 
           <CogentiaIntrospectionPanel

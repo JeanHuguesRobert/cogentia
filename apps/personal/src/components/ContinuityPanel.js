@@ -107,6 +107,8 @@ export function ContinuityPanel({
       "data-doctrine-note": "true",
       className: "font-body text-xs text-dim border-l-2 border-signal/50 pl-3 py-1 bg-surface/20",
     }, state.doctrineNote),
+    onExport ? h("p", { className: "text-xs text-dim" },
+      "L’export complet contient les prompts, réponses originales, annotations et préférences locales. Il est téléchargé sur votre appareil ; choisissez vous-même avec qui le partager.") : null,
 
     h("div", {
       "data-continuity-controls": "true",
@@ -131,7 +133,7 @@ export function ContinuityPanel({
       onPurge ? h("div", { className: "flex items-center gap-2" },
         confirmPurge
           ? h(React.Fragment, null,
-            h("span", { className: "text-xs text-amber-400 font-body" }, "Confirmer l'effacement complet ?"),
+            h("span", { className: "text-xs text-amber-400 font-body" }, "Effacer les réponses et préférences de ce navigateur ? Vos exports et votre fournisseur restent inchangés."),
             h("button", {
               type: "button",
               onClick: () => {

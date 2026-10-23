@@ -12,6 +12,11 @@
     @apply antialiased;
   }
 
+  :is(a, button, summary):focus-visible {
+    outline: 2px solid #4f7cff;
+    outline-offset: 4px;
+  }
+
   ::selection {
     background-color: #4f7cff33;
     color: #e8ecf5;

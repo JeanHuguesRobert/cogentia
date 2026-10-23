@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom'
+import BlindSpotCard from '../components/BlindSpotCard'
 
 const STEPS = [
   ['1', 'Interrogez votre agent', 'Copiez un prompt court dans ChatGPT, Claude, Gemini, Mistral, Grok ou un autre agent.'],
@@ -12,7 +13,7 @@ export default function Home() {
       <section className="max-w-3xl">
         <p className="font-mono text-signal text-xs tracking-widest uppercase mb-5">KYS Snapshot · Know Your Self</p>
         <h1 className="font-display text-4xl md:text-6xl font-bold text-bright leading-tight mb-6">
-          Voyez ce que votre IA croit savoir de vous.
+          Que savent mes IA de moi ?
         </h1>
         <p className="font-body text-lg text-dim leading-relaxed mb-8">
           Votre agent s’est déjà construit une représentation de vos préférences, de vos sujets et de votre manière de travailler. KYS la rend visible, contestable et portable.
@@ -23,6 +24,8 @@ export default function Home() {
           <span className="font-body text-xs text-muted">Sans compte · sans connexion à votre agent · sans conversation brute</span>
         </div>
       </section>
+
+      <BlindSpotCard />
 
       <section className="grid md:grid-cols-3 gap-4 mt-20">
         {STEPS.map(([number, title, description]) => (

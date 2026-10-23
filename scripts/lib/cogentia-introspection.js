@@ -152,8 +152,9 @@ export function inspectCogentiaSelfModel({
   // 3. External Agent Assertion Layer
   const externalAgentItems = [];
   turns.forEach((turn) => {
-    if (!turn.snapshot) return;
-    const claims = extractSnapshotClaims(turn.snapshot);
+    const snapshot = turn.mirror || turn.snapshot;
+    if (!snapshot) return;
+    const claims = extractSnapshotClaims(snapshot);
     claims.forEach((claim) => {
       const review = turn.reviews?.[claim.id] || null;
       const stance = review ? (review.stance || verdictToStance(review.verdict)) : null;
@@ -163,7 +164,7 @@ export function inspectCogentiaSelfModel({
         layer: "external_agent_assertion",
         id: `agent:turn-${turn.number}:${claim.id}`,
         turn: turn.number,
-        provider: turn.provider || turn.snapshot?.agent?.provider || "Agent",
+        provider: snapshot.source?.provider || snapshot.agent?.provider || turn.provider || "Agent",
         content: claim.content,
         category: claim.category,
         basis: claim.basis,
@@ -202,8 +203,9 @@ export function inspectCogentiaSelfModel({
   // Inference B: Salience of items
   let salientCount = 0;
   turns.forEach((turn) => {
-    if (!turn.snapshot) return;
-    const claims = extractSnapshotClaims(turn.snapshot);
+    const snapshot = turn.mirror || turn.snapshot;
+    if (!snapshot) return;
+    const claims = extractSnapshotClaims(snapshot);
     claims.forEach((c) => {
       if (isSalientItem(c)) {
         salientCount += 1;
@@ -239,7 +241,7 @@ export function inspectCogentiaSelfModel({
     active_turn: cursor.turn,
     active_step: cursor.step,
     active_provider: currentTurn?.provider || "ChatGPT",
-    has_active_snapshot: Boolean(currentTurn?.snapshot),
+    has_active_snapshot: Boolean(currentTurn?.mirror || currentTurn?.snapshot),
     has_active_reviews: Boolean(currentTurn?.reviews && Object.keys(currentTurn.reviews).length > 0),
     draft_present: Boolean(draft),
     local_persistence_disabled: Boolean(preferences.disableLocalPersistence),

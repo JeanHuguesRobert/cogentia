@@ -175,14 +175,15 @@ export function parseSnapshotInput(input, index = 0) {
   // If it's a turn object from turnLog
   if (input.number != null && input.snapshot != null) {
     const rawClaims = extractSnapshotClaims(input.snapshot);
-    const provider = input.provider || input.snapshot?.agent?.provider || "Agent";
-    const agent = input.snapshot?.agent?.model || provider;
-    const capturedAt = input.snapshot?.answered_at || input.snapshot?.stamped_at || input.response?.pasted_at || input.response?.agent_stamped_at || null;
+    const provider = input.snapshot?.source?.provider || input.snapshot?.agent?.provider || input.provider || "Agent";
+    const agent = input.snapshot?.source?.agent || input.snapshot?.agent?.model || provider;
+    const model = input.snapshot?.source?.model || input.snapshot?.agent?.model || null;
+    const capturedAt = input.snapshot?.advanced?.captured_at?.value || input.snapshot?.answered_at || input.snapshot?.stamped_at || input.response?.pasted_at || input.response?.agent_stamped_at || null;
     return {
       snapshot_id: `turn-${input.number}`,
       provider,
       agent,
-      model: input.snapshot?.agent?.model || null,
+      model,
       captured_at: capturedAt,
       turn_number: input.number,
       claims: rawClaims.map((c) => ({

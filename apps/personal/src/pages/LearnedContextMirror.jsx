@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useEffect, useMemo, useRef, useState } from 'react'
+import { Link, useNavigate } from 'react-router-dom'
 import {
   LearnedContextPasteForm,
   immediatePasteText,
@@ -13,6 +13,7 @@ import {
   agentStampFromData,
   canGoBack,
   emptyLog,
+  exportPersonalData,
   forwardIntent,
   goForward,
   leaveMirror,
@@ -23,6 +24,7 @@ import {
   replyIsStale,
   saveBrowserEnrolmentPreferences,
   saveBrowserTurnLog,
+  startNextObservation,
   updateResponseText,
   updateTurnReview,
 } from '../lib/turns.js'
@@ -49,6 +51,7 @@ export default function LearnedContextMirrorPage() {
   const [pending, setPending] = useState(false)
   const [failure, setFailure] = useState(null)
   const [mirror, setMirror] = useState(null)
+  const requestId = useRef(0)
   const turn = log.turns.find((item) => item.number === log.cursor.turn) || log.turns[0]
   const previousTurn = log.turns.find((item) => item.number === turn.number - 1)
   const [text, setText] = useState(turn.response.text || '')
@@ -56,14 +59,14 @@ export default function LearnedContextMirrorPage() {
   const intent = forwardIntent(view)
 
   const comparison = useMemo(() => {
-    if (!mirror || !previousTurn?.snapshot) return null
-    return compareSnapshots(previousTurn.snapshot, mirror, previousTurn.reviews || {})
+    if (!mirror || !(previousTurn?.mirror || previousTurn?.snapshot)) return null
+    return compareSnapshots(previousTurn.mirror || previousTurn.snapshot, mirror, previousTurn.reviews || {})
   }, [mirror, previousTurn])
 
   const multiComparison = useMemo(() => {
     const list = []
     for (const t of log.turns) {
-      if (t.snapshot) list.push(t)
+      if (t.mirror || t.snapshot) list.push({ ...t, snapshot: t.mirror || t.snapshot })
     }
     if (mirror && !list.some((t) => t.number === turn.number)) {
       list.push({ number: turn.number, provider: turn.provider, snapshot: mirror, reviews: turn.reviews || {} })
@@ -100,22 +103,26 @@ export default function LearnedContextMirrorPage() {
   }
 
   function onPurge() {
+    requestId.current += 1
     purgeBrowserContinuityData()
     setLog(emptyLog(new Date().toISOString()))
     setMirror(null)
     setText('')
     setPreferences({})
+    setPending(false)
   }
 
   useEffect(() => {
     saveBrowserTurnLog(log)
-  }, [log])
+  }, [log, preferences])
 
   async function reveal(next = text) {
+    const activeRequest = ++requestId.current
     setPending(true)
     setFailure(null)
     try {
       const model = await mirrorLearnedContext(next)
+      if (activeRequest !== requestId.current) return
       setMirror(model)
       let snapshot = null
       let agentStamp = null
@@ -133,15 +140,17 @@ export default function LearnedContextMirrorPage() {
           pastedAt: new Date().toISOString(),
           agentStamp,
           snapshot,
-          keepReviews: Boolean(active.snapshot) && active.response.parsed_text === next,
+          mirror: model.state === 'claims' ? model : null,
+          keepReviews: active.response.parsed_text === next,
           advance: false,
         })
       })
     } catch (error) {
+      if (activeRequest !== requestId.current) return
       setMirror(null)
       setFailure(error instanceof Error ? error.message : 'Lecture impossible')
     } finally {
-      setPending(false)
+      if (activeRequest === requestId.current) setPending(false)
     }
   }
 
@@ -154,6 +163,9 @@ export default function LearnedContextMirrorPage() {
   }, [])
 
   function onText(value) {
+    requestId.current += 1
+    setPending(false)
+    setMirror(null)
     setText(value)
     setLog((current) => updateResponseText(current, turn.number, value))
   }
@@ -180,6 +192,8 @@ export default function LearnedContextMirrorPage() {
   return (
     <div data-turn={turn.number} data-step="2">
       <div className="max-w-3xl mx-auto px-4 pt-10">
+        <p className="text-sm text-dim mb-4">Cette réponse et vos annotations sont conservées dans ce navigateur jusqu’à effacement. Aucun envoi automatique. Export et effacement sont disponibles ci-dessous. L’effacement ne touche ni votre fournisseur d’IA, ni vos fichiers téléchargés.</p>
+        <Link to="/snapshot" className="btn-ghost mb-4">Choisir un agent et copier le prompt</Link>
         <TurnBar log={log} onJump={(next) => {
           saveBrowserTurnLog(next)
           navigate('/snapshot')
@@ -212,6 +226,13 @@ export default function LearnedContextMirrorPage() {
       />
       {mirror && (
         <div className="max-w-3xl mx-auto px-4 pb-6">
+          <button type="button" className="btn-ghost mb-4" onClick={() => {
+            requestId.current += 1
+            setLog((current) => startNextObservation(current, new Date().toISOString()))
+            setMirror(null)
+            setText('')
+            setFailure(null)
+          }}>Comparer avec une autre réponse</button>
           <AssistedContactCard context={contactContext} />
         </div>
       )}
@@ -226,6 +247,7 @@ export default function LearnedContextMirrorPage() {
           preferences={preferences}
           onUpdatePreferences={onUpdatePreferences}
           onPurge={onPurge}
+          onExport={() => downloadJson('cogentia-personal-local.json', exportPersonalData(log, preferences))}
         />
       </div>
       <div className="max-w-3xl mx-auto px-4 pb-6">

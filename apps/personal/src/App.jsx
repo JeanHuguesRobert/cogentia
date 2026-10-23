@@ -12,7 +12,7 @@ import Auth from './pages/Auth'
 function Layout({ children }) {
   const links = [
     { to: '/', label: 'Accueil' },
-    { to: '/snapshot', label: 'Mon miroir' },
+    { to: '/snapshot', label: 'Que savent mes IA de moi ?' },
     { to: '/mirror', label: 'Coller' },
     { to: '/about', label: 'Comprendre' },
   ]
@@ -22,7 +22,7 @@ function Layout({ children }) {
       <header className="border-b border-slate-800 bg-slate-900/90">
         <div className="max-w-6xl mx-auto px-4 py-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <NavLink to="/" className="font-display font-semibold text-bright">KYS — miroir agentique</NavLink>
-          <nav className="flex gap-4 text-sm overflow-x-auto">
+          <nav aria-label="Navigation principale" className="flex flex-wrap gap-4 text-sm">
             {links.map((link) => (
               <NavLink
                 key={link.to}

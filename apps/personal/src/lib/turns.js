@@ -3,6 +3,7 @@ import { clearContinuityStorage, ENROLMENT_PREFS_KEY } from "../../../../scripts
 
 export const TURN_LOG_KEY = "kys_turn_log_v1"
 export const DRAFT_KEY = "kys_snapshot_draft_v1"
+let ephemeralLog = null
 
 const STAMP_KEYS = ["answered_at", "stamped_at", "generated_at", "timestamp"]
 const STAMP_RE = /^(\d{4})-(\d{2})-(\d{2})[T ](\d{2}):(\d{2})(?::(\d{2}))?(?:\.\d+)?(Z|[+-]\d{2}:?\d{2})?$/
@@ -146,6 +147,18 @@ export function loadTurnLog(storage, nowIso) {
 }
 
 export function saveTurnLog(storage, log) {
+  let preferences = {}
+  try { preferences = JSON.parse(storage.getItem(ENROLMENT_PREFS_KEY) || '{}') || {} } catch {}
+  if (preferences.disableLocalPersistence) {
+    storage.removeItem(TURN_LOG_KEY)
+    storage.removeItem(DRAFT_KEY)
+    return
+  }
+  if (!log.turns.some((turn) => turn.response.text || turn.snapshot || turn.mirror || turn.prompt.copied_at || Object.keys(turn.reviews || {}).length)) {
+    storage.removeItem(TURN_LOG_KEY)
+    storage.removeItem(DRAFT_KEY)
+    return
+  }
   storage.setItem(TURN_LOG_KEY, JSON.stringify(log))
   const latest = [...log.turns].reverse().find((turn) => turn.snapshot)
   if (latest) {
@@ -154,10 +167,12 @@ export function saveTurnLog(storage, log) {
 }
 
 export function loadBrowserTurnLog() {
+  if (loadBrowserEnrolmentPreferences().disableLocalPersistence && ephemeralLog) return ephemeralLog
   return loadTurnLog(window.localStorage, new Date().toISOString())
 }
 
 export function saveBrowserTurnLog(log) {
+  ephemeralLog = log
   saveTurnLog(window.localStorage, log)
 }
 
@@ -171,12 +186,33 @@ export function loadBrowserEnrolmentPreferences() {
 
 export function saveBrowserEnrolmentPreferences(prefs) {
   try {
+    if (!Object.keys(prefs || {}).length) {
+      window.localStorage.removeItem(ENROLMENT_PREFS_KEY)
+      return
+    }
+    if (prefs?.disableLocalPersistence) {
+      window.localStorage.removeItem(TURN_LOG_KEY)
+      window.localStorage.removeItem(DRAFT_KEY)
+      // Retain only the opt-out; no personal intentions survive it.
+      window.localStorage.setItem(ENROLMENT_PREFS_KEY, JSON.stringify({ disableLocalPersistence: true }))
+      return
+    }
     window.localStorage.setItem(ENROLMENT_PREFS_KEY, JSON.stringify(prefs || {}))
   } catch {}
 }
 
 export function purgeBrowserContinuityData() {
+  ephemeralLog = null
   clearContinuityStorage(window.localStorage)
+}
+
+export function exportPersonalData(log, preferences) {
+  return { kind: 'cogentia-personal-local-export', version: 1, turnLog: log, preferences }
+}
+
+export function startNextObservation(log, nowIso) {
+  const number = Math.max(...log.turns.map((turn) => turn.number)) + 1
+  return { ...log, cursor: { turn: number, step: 2 }, turns: [...log.turns, emptyTurn(number, 'initial', nowIso)] }
 }
 
 export function agentStampFromData(data) {
@@ -449,7 +485,7 @@ export function updateResponseText(log, number, text) {
   }))
 }
 
-export function recordParsedResponse(log, number, { text, pastedAt, agentStamp, snapshot, keepReviews, advance }) {
+export function recordParsedResponse(log, number, { text, pastedAt, agentStamp, snapshot, mirror = undefined, keepReviews, advance }) {
   const next = mapTurn(log, number, (turn) => {
     const previous = turnOf(log, number - 1)
     const reviews = snapshot && !keepReviews
@@ -464,11 +500,12 @@ export function recordParsedResponse(log, number, { text, pastedAt, agentStamp, 
         text,
         pasted_at: turn.response.text === text && turn.response.pasted_at ? turn.response.pasted_at : pastedAt,
         agent_stamped_at: agentStamp || null,
-        parsed_text: snapshot ? text : turn.response.parsed_text,
-        for_prompt: snapshot ? (turn.prompt.text || "") : turn.response.for_prompt,
+        parsed_text: snapshot || mirror ? text : turn.response.parsed_text,
+        for_prompt: snapshot || mirror ? (turn.prompt.text || "") : turn.response.for_prompt,
       },
-      snapshot: snapshot || turn.snapshot,
-      reviews,
+      snapshot: mirror !== undefined ? snapshot : (snapshot || turn.snapshot),
+      mirror: mirror || null,
+      reviews: mirror !== undefined && !keepReviews ? {} : reviews,
     }
   })
   if (!advance || !snapshot) return next

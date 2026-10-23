@@ -26,6 +26,7 @@ export function extractSnapshotClaims(snapshot) {
       confidence: item.uncertainty_note || item.confidence || "",
       record_kind: item.record_kind || "claim",
       claimed_origin: item.claimed_origin || "unknown",
+      contradicts: item.contradicts || [],
       key: claimKey(item.category, item.content),
     }));
   }
@@ -40,6 +41,7 @@ export function extractSnapshotClaims(snapshot) {
       confidence: item.uncertainty_note || item.confidence || "",
       record_kind: item.record_kind || "claim",
       claimed_origin: item.claimed_origin || "unknown",
+      contradicts: item.contradicts || [],
       key: claimKey(cat.label || item.category, item.content || item.claim),
     })));
   }

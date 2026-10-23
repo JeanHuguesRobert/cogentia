@@ -356,6 +356,10 @@ export function AgentClaimMirror({ model, reviews = {}, onReview = null, compari
     role: "note",
     className: "font-body text-sm text-bright border border-signal/30 bg-panel/40 rounded-lg px-4 py-3",
   }, COPY.banner),
+  model.state === "claims" ? h("p", { className: "font-body text-xs text-dim", "data-input-type": model.advanced?.layer || "unrecognized" },
+    model.advanced?.layer === "kys_snapshot_portrait"
+      ? "Portrait KYS : résumé déclaré par l’agent, sans conversion en relevé de mémoire AMI."
+      : "Relevé AMI : origines et incertitudes déclarées par l’agent, sans garantie d’exhaustivité.") : null,
   comparison ? h(ReobservationComparisonCard, { comparison }) : null,
   model.state === "claims" ? h(React.Fragment, null,
     h("p", { className: "font-body text-sm text-dim", "data-source": "agent" }, sourceLines(model.source).join(" · ")),
@@ -477,7 +481,7 @@ export function LearnedContextPasteForm({ text, onText, onReveal, onPaste, mirro
     }),
     h("button", { className: "btn-primary w-full sm:w-auto", type: "submit" },
       pending ? "Lecture de la réponse…" : "Afficher le miroir"),
-    h("p", { className: "font-body text-xs text-muted" }, "Sans compte. La réponse reste dans cette page."),
+    h("p", { className: "font-body text-xs text-muted" }, "Sans compte. Conservation dans ce navigateur jusqu’à effacement ; aucun envoi automatique."),
     ),
     failure ? h("p", { role: "alert", className: "font-body text-sm text-dim" }, failure) : null,
     mirror ? h(AgentClaimMirror, { model: mirror, reviews, onReview, comparison }) : null,
