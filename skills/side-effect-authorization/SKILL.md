@@ -51,7 +51,7 @@ At intermediate milestones, continue useful allowed work automatically instead o
 ## Gmail
 
 `gmail__create_draft` / `list_drafts` / `get_message` are fine without a grant.
-`gmail__send_message` / `send_draft` / `forward` / `reply_all` need a grant on the exact to/subject/body.
+`gmail__send_message` / `send_draft` / `forward` / `reply_all` must be refused by default; prepare a draft and notify the Principal. The #285 grant code now also requires a recorded, act-specific `direct_send_exception` (approval reference, exact payload hash and exceptional justification) for an email grant. A caller-supplied approval claim is not itself proof of the Principal's decision; the trusted interface must verify provenance. Without such verification, do not send.
 Prefer `cogentia_communication_prepare` then execute (native send or `cogentia_communication_send`).
 
 ## GitHub writes
