@@ -68,3 +68,26 @@ test("mandate-derived grants refuse outbound effects and absent recovery", () =>
     mandate_ref: "issue:285", policy_evidence: safe,
   }), /recovery/);
 });
+
+test("caller-manufactured or tampered authorization is rejected before executing", async () => {
+  resetAuthorizationStore();
+  const target = { path: "/tmp/packet-285" };
+  const payload = { content: "test" };
+  const valid = mintMandateDerivedGrant({
+    action_class: "host.fs.write", target, payload,
+    mandate_ref: "issue:285", recovery_ref: "snapshot:test",
+    policy_evidence: { ...safe },
+  });
+  let calls = 0;
+  for (const forged of [
+    { ...valid, authorization_id: "sea_forged" },
+    { ...valid, mandate_ref: "issue:other" },
+    { ...valid, authority_origin: undefined },
+  ]) {
+    await assert.rejects(() => executeAuthorizedEffect({
+      action_class: "host.fs.write", target, payload,
+      authorization: forged, run: async () => ++calls,
+    }), /must match its stored minted record/);
+  }
+  assert.equal(calls, 0);
+});
