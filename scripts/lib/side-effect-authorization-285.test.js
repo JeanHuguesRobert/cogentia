@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { assessPresumedEffect } from "./side-effect-authorization.js";
+import { assessPresumedEffect, mintMandateDerivedGrant, validateSideEffectAuthorization, resetAuthorizationStore, executeAuthorizedEffect } from "./side-effect-authorization.js";
 
 const safe = {
   action_class: "git.commit",
@@ -32,4 +32,39 @@ test("a generic assent or continuation never authorizes an external send", () =>
   for (const utterance of ["continuons", "oui j'autorise", "continue", "faisons cela"]) {
     assert.equal(assessPresumedEffect({ ...safe, action_class: "gmail.send" }).decision, "explicit_principal_authorization", utterance);
   }
+});
+
+test("mandate derived grant is traceable and executes a bound internal effect once", async () => {
+  resetAuthorizationStore();
+  const target = { path: "/tmp/packet-285-test" };
+  const payload = { content_sha256: "sha256:demo", path: target.path };
+  const authorization = mintMandateDerivedGrant({
+    action_class: "host.fs.write", target, payload,
+    mandate_ref: "https://github.com/JeanHuguesRobert/cogentia/issues/285",
+    recovery_ref: "snapshot:isolated-test",
+    policy_evidence: { ...safe },
+  });
+  assert.equal(authorization.authority_origin, "mandate_derived");
+  assert.equal(authorization.principal, null);
+  assert.equal(validateSideEffectAuthorization(authorization, { action_class: "host.fs.write", target, payload }).ok, true);
+  let runs = 0;
+  await executeAuthorizedEffect({ action_class: "host.fs.write", target, payload, authorization, run: async () => ++runs });
+  assert.equal(runs, 1);
+  await assert.rejects(() => executeAuthorizedEffect({
+    action_class: "host.fs.write", target, payload, authorization, run: async () => ++runs
+  }), /already consumed/);
+  assert.equal(runs, 1);
+});
+test("mandate-derived grants refuse outbound effects and absent recovery", () => {
+  resetAuthorizationStore();
+  for (const action_class of ["gmail.send", "communication.send", "github.write", "git.push", "whatsapp.send"]) {
+    assert.throws(() => mintMandateDerivedGrant({
+      action_class, target: { id: "test" }, payload: { value: "test" },
+      mandate_ref: "issue:285", recovery_ref: "snapshot:test", policy_evidence: safe,
+    }), /only audited internal/);
+  }
+  assert.throws(() => mintMandateDerivedGrant({
+    action_class: "git.commit", target: { branch: "test" }, payload: { hash: "a" },
+    mandate_ref: "issue:285", policy_evidence: safe,
+  }), /recovery/);
 });
