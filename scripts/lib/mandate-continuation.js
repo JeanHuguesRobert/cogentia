@@ -16,3 +16,36 @@ export function decideMandateContinuation({
   if (next_step_clear && next_step_allowed) return { action: "continue", reason: "in_mandate_next_step" };
   return { action: "escalate", reason: "mandate_or_next_step_unclear" };
 }
+
+/**
+ * Run authorized steps until a real boundary instead of stopping after every
+ * intermediate result. The caller owns state inspection and effects.
+ * No background execution is implied.
+ */
+export async function runMandateToBoundary({
+  inspect,
+  execute,
+  max_steps = 16,
+  on_step = null,
+} = {}) {
+  if (typeof inspect !== "function" || typeof execute !== "function") {
+    throw new TypeError("inspect and execute callbacks are required");
+  }
+  const limit = Number.isSafeInteger(max_steps) ? Math.max(1, Math.min(max_steps, 256)) : 16;
+  const events = [];
+  for (let i = 0; i < limit; i += 1) {
+    const state = await inspect({ step: i, events: events.slice() });
+    const boundary = decideMandateContinuation(state);
+    if (boundary.action !== "continue") {
+      return { ...boundary, steps_completed: i, events };
+    }
+    const result = await execute({ step: i, state });
+    const outcome = { step: i, ok: result?.ok !== false, code: result?.code || null };
+    events.push(outcome);
+    if (typeof on_step === "function") await on_step(outcome);
+    if (!outcome.ok) {
+      return { action: "handoff", reason: "step_failed", steps_completed: i, events };
+    }
+  }
+  return { action: "handoff", reason: "step_limit", steps_completed: limit, events };
+}
