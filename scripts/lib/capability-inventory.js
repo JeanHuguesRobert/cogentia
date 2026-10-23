@@ -13,6 +13,7 @@ import { listMcpPrompts, listAllResources } from "./cogentia-mcp-surface.js";
  * Write verbs may be catalog-only on the anonymous surface.
  */
 export const CLI_COMMANDS = [
+  { verb: "memory capture", mcp_tool: "cogentia_memory_capture", risk: "private_read" },
   { verb: "agent start", mcp_tool: "cogentia_agent_start", daemon: "/api/agent/start", risk: "read" },
   { verb: "agent health", mcp_tool: "cogentia_agent_health", daemon: "/api/agent/health", risk: "read" },
   { verb: "agent mandates plan", mcp_resource: "cogentia://cli/catalog", risk: "read" },

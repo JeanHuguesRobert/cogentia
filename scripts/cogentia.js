@@ -64,6 +64,7 @@ import { replaceIndexCatalog, stripIndexCatalog } from "./lib/research-index-nav
 import { listAgentSkills, getAgentSkill } from "./lib/cogentia-agent-skills.js";
 import { registerModule, invokeCapability } from "./lib/v3-modules.js";
 import "./lib/memory-capture.js";
+import { captureMemoryForSurface, readMemoryCaptureStdin } from "./lib/memory-capture-surface.js";
 import { resolveCallerAuth, deriveLockers } from "./lib/cogentia-mcp-auth.js";
 import { checkSemanticMutation, MUTATION_STATUS } from "./lib/semantic-mutation-checker.js";
 import { runConvergenceLoop } from "./lib/convergence-loop.js";
@@ -511,6 +512,8 @@ async function main() {
       return cmdNavBenchmark();
     case "locate":
       return cmdLocate();
+    case "memory":
+      return cmdMemoryCapture();
     case "orient":
       return cmdOrient();
     case "orient-benchmark":
@@ -1046,6 +1049,9 @@ Semantic search (continuation-based):
                            --dimensions <n> --source <label>
 
 Navigation (v3 module seam, #80/#108 / #122):
+  memory capture --stdin   Normalize a private KYS/AMI reply from stdin only.
+                             JSON output; max 262144 UTF-8 bytes. Local,
+                             in-memory operation, without daemon or storage.
   locate <subject>          Resolve a subject to concrete corpus locations by
                              composing guide routing, the concept registry and
                              full-text search. Flags: --intent <label>
@@ -1510,6 +1516,16 @@ registerModule({
     return validateFrontmatterPaths(paths || [], options);
   },
 });
+
+async function cmdMemoryCapture() {
+  if (argv.length !== 2 || argv[0] !== "capture" || argv[1] !== "--stdin") {
+    throw Object.assign(new Error("Usage: cogentia memory capture --stdin [--json]"), { error_class: "invalid_input" });
+  }
+  const text = await readMemoryCaptureStdin(process.stdin);
+  const result = await captureMemoryForSurface({ text }, CLI_TRUSTED_AUTH);
+  console.log(JSON.stringify(result, null, 2));
+  if (!result.ok) process.exitCode = 2;
+}
 
 function cmdLocate() {
   // Flags must be stripped before joining what remains into the subject --
@@ -17978,6 +17994,14 @@ function escapeRegExp(s) {
 }
 
 main().catch(err => {
+  if (command === "memory") {
+    const error_class = err.error_class || "memory_capture_failed";
+    // Never echo stdin, argument values, a stack or local paths on this surface.
+    const message = err.error_class ? err.message : "memory.capture failed";
+    console.log(JSON.stringify({ ok: false, error_class, error: { message, class: error_class } }));
+    process.exitCode = 1;
+    return;
+  }
   if (JSON_MODE) {
     console.error(JSON.stringify({ ok: false, error: err.message, stack: err.stack }, null, 2));
   } else {

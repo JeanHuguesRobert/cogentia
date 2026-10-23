@@ -5,7 +5,8 @@ import {
   wrapToolError,
   ENVELOPE_KIND,
 } from "./cogentia-mcp-envelope.js";
-import { resolveCallerAuth, deriveLockers } from "./cogentia-mcp-auth.js";
+import { resolveCallerAuth, deriveLockers, parseBearer, safeEqualString } from "./cogentia-mcp-auth.js";
+import { captureMemoryForSurface, MEMORY_CAPTURE_MAX_BYTES } from "./memory-capture-surface.js";
 import { compareMandateAttenuation } from "./mandate-attenuation.js";
 import { runJohnRequest } from "./john-run.js";
 import { auditCapabilitySymmetry } from "./symmetry-audit.js";
@@ -77,6 +78,7 @@ export const MUTATE_TOOLS = new Set([
  * agent, never to the anonymous public catalogue.
  */
 export const PRIVATE_READ_TOOLS = new Set([
+  "cogentia_memory_capture",
   "cogentia_config_hygiene_audit",
   "operium_calendar_list",
   "cogentia_host_fs_list",
@@ -88,6 +90,16 @@ export const PRIVATE_READ_TOOLS = new Set([
 ]);
 
 export const TOOLS = [
+  {
+    name: "cogentia_memory_capture",
+    description: "Normalize a supplied private KYS/AMI reply in memory via memory.capture. No storage or provider calls. Requires private read authorization; the whole result is private.",
+    inputSchema: {
+      type: "object",
+      properties: { text: { type: "string", maxLength: MEMORY_CAPTURE_MAX_BYTES } },
+      required: ["text"],
+      additionalProperties: false,
+    },
+  },
   {
     name: "cogentia_agent_start",
     description:
@@ -1262,6 +1274,7 @@ export function createMcpCore(env = process.env, extras = {}) {
     const allow = auth?.allowMutate === true;
     const allowPrivateRead = view === "full" || auth?.auth === "jhn";
     return TOOLS.filter((tool) =>
+      (tool.name !== "cogentia_memory_capture" || (auth?.memoryCaptureRead ?? auth?.lockers?.private?.read) === true) &&
       (allow || !MUTATE_TOOLS.has(tool.name)) &&
       (allowPrivateRead || !PRIVATE_READ_TOOLS.has(tool.name))
     );
@@ -1290,7 +1303,8 @@ export function createMcpCore(env = process.env, extras = {}) {
       },
     };
     if (era === "modern") {
-      return { ...base, ttlMs: LIST_TTL_MS, cacheScope: view === "public" ? "public" : "private" };
+      return { ...base, ttlMs: LIST_TTL_MS, cacheScope: view === "public" &&
+        !callerTools.some((tool) => tool.name === "cogentia_memory_capture") ? "public" : "private" };
     }
     return base;
   }
@@ -1322,6 +1336,28 @@ export function createMcpCore(env = process.env, extras = {}) {
     const meta = (paramsMeta && typeof paramsMeta === "object" ? paramsMeta : null)
       || (topMeta && typeof topMeta === "object" ? topMeta : null)
       || {};
+    if (message?.params?.name === "cogentia_memory_capture" || message?.method === "tools/list") {
+      // This private capture must not inherit an HTTP server's static admin
+      // grant. HTTP needs a verified per-request credential; stdio is local.
+      let captureAuth;
+      if (transport.headers) {
+        const presented = parseBearer(transport.headers.authorization || transport.headers.Authorization);
+        if (view === "full" && safeEqualString(presented, adminToken)) {
+          captureAuth = { auth: "admin", allowMutate: false, lockers: deriveLockers({ auth: "admin" }) };
+        } else {
+          captureAuth = resolveCallerAuth(env, { meta, headers: transport.headers, view: "public", staticAllowMutate: false });
+        }
+      } else if (view === "full") {
+        captureAuth = { auth: "admin", allowMutate: staticAllowMutate,
+          lockers: deriveLockers({ auth: "admin", allowMutate: staticAllowMutate }) };
+      } else {
+        captureAuth = resolveCallerAuth(env, { meta, headers: {}, view, staticAllowMutate });
+      }
+      if (message?.params?.name === "cogentia_memory_capture") return captureAuth;
+      // Keep legacy catalogue authorization intact; only filter capture.
+      const legacy = resolveCallerAuth(env, { meta, headers: transport.headers || {}, view, staticAllowMutate });
+      return { ...legacy, memoryCaptureRead: captureAuth.lockers.private.read };
+    }
     return resolveCallerAuth(env, {
       meta,
       headers: transport.headers || {},
@@ -1467,7 +1503,7 @@ export function createMcpCore(env = process.env, extras = {}) {
         const correlation = extractCorrelation(resolved.meta || {});
         const ctx = {
           protocolEra: resolved.era === "modern" ? "modern" : "legacy",
-          view,
+          view: name === "cogentia_memory_capture" && auth?.lockers?.private?.read ? "full" : view,
           allowMutate: auth.allowMutate,
           correlation,
         };
@@ -1522,12 +1558,19 @@ export function createMcpCore(env = process.env, extras = {}) {
       };
       return { ...base, lockers: deriveLockers(base) };
     })();
+    if (name === "cogentia_memory_capture" && auth?.lockers?.private?.read !== true) {
+      // Reject before inspecting text or validating arguments, even on a
+      // full-view HTTP server whose legacy private-read gate is static.
+      throw Object.assign(new Error("tier_forbidden: memory.capture requires private.read"), { error_class: "tier_forbidden" });
+    }
     if (MUTATE_TOOLS.has(name)) requireMutate(name, auth);
     if (PRIVATE_READ_TOOLS.has(name)) requirePrivateRead(name, auth);
     if (!TOOLS.some((t) => t.name === name)) {
       throw new Error(`Unknown tool: ${name}`);
     }
     switch (name) {
+      case "cogentia_memory_capture":
+        return captureMemoryForSurface(args, auth);
       case "cogentia_agent_start":
         return daemonGet("/api/agent/start", {});
       case "cogentia_skill_list":

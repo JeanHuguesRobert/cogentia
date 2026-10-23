@@ -677,6 +677,10 @@ async function handleMcpPost(req, res) {
     return sendJson(res, 400, jsonRpcError(null, -32700, "Parse error"));
   }
   const transport = transportFromHttpRequest(req);
+  const requests = Array.isArray(payload) ? payload : [payload];
+  if (requests.some((message) => message?.method === "tools/call" && message?.params?.name === "cogentia_memory_capture")) {
+    res.setHeader("Cache-Control", "no-store");
+  }
   if (Array.isArray(payload)) {
     const responses = (await Promise.all(payload.map(message => core.handleJsonRpc(message, transport)))).filter(Boolean);
     if (!responses.length) return sendNoContent(res, 202);
@@ -692,6 +696,11 @@ async function handleMcpPost(req, res) {
 
 async function handleToolPost(req, res) {
   const name = decodeURIComponent(String(req.url || "").slice("/tools/".length));
+  if (name === "cogentia_memory_capture") {
+    // The legacy shortcut does not resolve caller authorization. Private
+    // captures must use /mcp, whose request credentials are verified.
+    return sendJson(res, 403, { ok: false, error_class: "tier_forbidden", error: "Use authenticated POST /mcp" });
+  }
   let args;
   try {
     args = JSON.parse(await readBody(req) || "{}");
