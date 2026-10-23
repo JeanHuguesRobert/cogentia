@@ -260,7 +260,19 @@ export function grantSideEffectAuthorization({
   expires_in_ms = 10 * 60 * 1000,
   single_use = true,
   material_parameters = {},
+  direct_send_exception = null,
 } = {}) {
+  if (new Set(["gmail.send", "communication.send"]).has(action_class)) {
+    const payload_hash = canonicalPayloadHash(payload);
+    if (!direct_send_exception
+      || direct_send_exception.approved_by_principal !== true
+      || direct_send_exception.payload_hash !== payload_hash
+      || !String(direct_send_exception.justification || "").trim()
+      || !String(direct_send_exception.approval_reference || "").trim()) {
+      throw fail("explicit_send_exception_required",
+        "external email send requires an exceptionally justified, act-specific Principal approval; draft by default");
+    }
+  }
   const now = Date.now();
   const authorization_id = `sea_${randomUUID()}`;
   const granted_at = new Date(now).toISOString();
@@ -273,7 +285,10 @@ export function grantSideEffectAuthorization({
     action_class,
     target: target || {},
     payload_hash,
-    material_parameters,
+    material_parameters: {
+      ...material_parameters,
+      ...(direct_send_exception ? { direct_send_exception } : {}),
+    },
     granted_at,
     expires_at: new Date(now + expires_in_ms).toISOString(),
     single_use,
@@ -374,6 +389,16 @@ export function validateSideEffectAuthorization(authorization, expected = {}) {
   }
   if (authorization.expires_at && Date.parse(authorization.expires_at) < Date.now()) {
     throw fail("authorization_expired", "authorization expired");
+  }
+  if (new Set(["gmail.send", "communication.send"]).has(authorization.action_class)) {
+    const approval = storedGrant.material_parameters?.direct_send_exception;
+    if (!approval || approval.approved_by_principal !== true
+      || approval.payload_hash !== storedGrant.payload_hash
+      || !String(approval.justification || "").trim()
+      || !String(approval.approval_reference || "").trim()) {
+      throw fail("explicit_send_exception_required",
+        "draft only: externally engaging email has no recorded specific Principal approval");
+    }
   }
   if (authorization.authority_origin === "mandate_derived") {
     if (!new Set(["git.commit", "host.fs.write"]).has(authorization.action_class)
