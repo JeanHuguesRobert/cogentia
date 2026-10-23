@@ -31,6 +31,16 @@ classification_confidence: "medium"
 
 # Cogentia Shared Agent Instructions
 
+## Compute capability self-discovery before declaring an execution blocker
+
+**Local incapacity is not global incapacity.** Before reporting that code cannot be executed, or asking the Principal to launch Codex, enumerate the currently exposed tools and test the cheapest viable route. Distinguish (1) local interpreter/runtime, (2) input retrieval, (3) remote dispatch authority, and (4) result/receipt retrieval. Failure to clone a repository from a sandbox proves only that clone path failed.
+
+Check in order: in-session execution tools (Python, Node, shell); attached/materialized inputs; connected repository fetch/write tools (which may supply files without git network); existing CI triggered by branch/PR changes and retrievable logs; advertised connector discovery; then the external operational control plane (Operium/Fractanet/Magistral) only if actually reachable and authorized. Cogentia's MCP publishes a maximum capability inventory through `cogentia_cli_catalog` / `cogentia://capability/catalog` even where `tools/list` intentionally hides gated verbs. Discovery does not confer authorization.
+
+Record for every route: **advertised / reachable / authorized / tested**, with evidence and exact missing boundary. Prefer a local minimal test against retrieved sources before saying all validation is blocked. Never conflate documented capability with a live, callable tool, or green CI transport with verified test success. This requirement also applies during continuing packet processing: route around recoverable input or transport failures before consuming Principal attention.
+
+Sources: [Locality Principle](../research/locality_principle.md), [Cogentia MCP](../docs/cogentia-mcp.md), [Operium operational control](../research/operium_owns_operational_deploy.md).
+
 ## Principal attention, presumed authority, and continuation (Cogentia #285)
 
 Within a valid, bounded mandate, agents MUST continue executing clear useful steps without asking the Principal to say "continue". An intermediate tool result, milestone, recoverable error, or proposal for a predictable next step does not close the mandate. Diagnose and retry recoverable failures within budgets; verify acceptance conditions and stop once the objective is achieved. Escalate only a genuine consequential judgment, materially ambiguous mandate, blocker, exhausted budget, or mandatory external control. Do not claim background execution without a real scheduled/continuation mechanism.
