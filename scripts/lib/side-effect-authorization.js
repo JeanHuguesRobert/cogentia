@@ -291,6 +291,54 @@ export function grantSideEffectAuthorization({
   return grant;
 }
 
+/**
+ * Restricted COP mandate-derived grant. Never claims Principal approval.
+ * This authorizes only already attested internal local effects and is stored
+ * in the same #171 grant store as human-issued grants.
+ */
+export function mintMandateDerivedGrant({
+  action_class, target, payload, mandate_ref, recovery_ref,
+  policy_evidence = {}, expires_in_ms = 10 * 60 * 1000,
+} = {}) {
+  const allowedInternal = new Set(["git.commit", "host.fs.write"]);
+  if (!allowedInternal.has(action_class)) {
+    throw fail("mandate_derived_forbidden", "only audited internal action classes support mandate-derived grants");
+  }
+  if (!mandate_ref || !recovery_ref || !target || !payload || typeof payload !== "object") {
+    throw fail("mandate_evidence_missing", "mandate, recovery, target, and bound payload are required");
+  }
+  const decision = assessPresumedEffect({ action_class, ...policy_evidence });
+  if (decision.decision !== "mandate_derived_candidate") {
+    throw fail("mandate_derived_forbidden", decision.reason);
+  }
+  const now = Date.now();
+  const authorization_id = `sea_${randomUUID()}`;
+  const granted_at = new Date(now).toISOString();
+  const payload_hash = canonicalPayloadHash(payload);
+  const grant = {
+    kind: AUTHORIZATION_KIND,
+    authorization_id,
+    principal: null,
+    authority_origin: "mandate_derived",
+    mandate_ref,
+    recovery_ref,
+    status: "granted",
+    action_class, target, payload_hash,
+    material_parameters: { policy_evidence },
+    granted_at,
+    expires_at: new Date(now + Math.min(Math.max(expires_in_ms, 1), 10 * 60 * 1000)).toISOString(),
+    single_use: true,
+    packet: asDecisionGrant({
+      authorization_id, principal: null, action_class, target, payload_hash,
+      single_use: true, granted_at,
+    }),
+  };
+  grant.packet.payload.authority = { kind: "mandate_derived", mandate_ref, recovery_ref };
+  grant.packet.payload.rationale = "bounded internal effect, explicitly attested recovery";
+  getAuthorizationStore().putGrant(grant);
+  return grant;
+}
+
 export function resetAuthorizationStore() {
   setAuthorizationStore(createMemoryStore());
 }
@@ -316,6 +364,16 @@ export function validateSideEffectAuthorization(authorization, expected = {}) {
   }
   if (authorization.expires_at && Date.parse(authorization.expires_at) < Date.now()) {
     throw fail("authorization_expired", "authorization expired");
+  }
+  if (authorization.authority_origin === "mandate_derived") {
+    if (!new Set(["git.commit", "host.fs.write"]).has(authorization.action_class)
+      || !authorization.mandate_ref || !authorization.recovery_ref
+      || assessPresumedEffect({
+        action_class: authorization.action_class,
+        ...(authorization.material_parameters?.policy_evidence || {}),
+      }).decision !== "mandate_derived_candidate") {
+      throw fail("mandate_derived_forbidden", "invalid mandate-derived authority");
+    }
   }
   if (expected.action_class && authorization.action_class !== expected.action_class) {
     throw fail(
