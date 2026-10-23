@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { assessPresumedEffect, mintMandateDerivedGrant, validateSideEffectAuthorization, resetAuthorizationStore, executeAuthorizedEffect } from "./side-effect-authorization.js";
+import { assessPresumedEffect, mintMandateDerivedGrant, grantSideEffectAuthorization, canonicalPayloadHash, validateSideEffectAuthorization, resetAuthorizationStore, executeAuthorizedEffect } from "./side-effect-authorization.js";
 
 const safe = {
   action_class: "git.commit",
@@ -90,4 +90,28 @@ test("caller-manufactured or tampered authorization is rejected before executing
     }), /must match its stored minted record/);
   }
   assert.equal(calls, 0);
+});
+
+test("email cannot mint an ordinary generic grant and exceptional consent binds exact content", () => {
+  resetAuthorizationStore();
+  const payload = { to: ["ext@example.invalid"], subject: "Test", body: "draft only" };
+  const target = { recipient: "ext@example.invalid" };
+  const request = { principal: "principal:test", action_class: "gmail.send", target, payload };
+  assert.throws(() => grantSideEffectAuthorization(request),
+    (e) => e.error_class === "explicit_send_exception_required");
+  assert.throws(() => grantSideEffectAuthorization({
+    ...request,
+    direct_send_exception: {
+      approved_by_principal: true, payload_hash: canonicalPayloadHash({ ...payload, body: "changed" }),
+      justification: "synthetic specific exception", approval_reference: "test:explicit",
+    },
+  }), (e) => e.error_class === "explicit_send_exception_required");
+  const grant = grantSideEffectAuthorization({
+    ...request,
+    direct_send_exception: {
+      approved_by_principal: true, payload_hash: canonicalPayloadHash(payload),
+      justification: "synthetic explicit exception only", approval_reference: "test:explicit",
+    },
+  });
+  assert.equal(validateSideEffectAuthorization(grant, { action_class: "gmail.send", target, payload }).ok, true);
 });
