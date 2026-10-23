@@ -110,7 +110,7 @@ resolved by an earlier CLI version, run the explicit, idempotent repair command:
 ## Handler initiative: continue when the next step is obvious
 
 A handler SHOULD NOT stop merely to ask whether it may perform a clearly implied
-**read-only, non-impacting** next step when that step is already within the
+non-impacting or independently authorized, narrowly recoverable **internal** next step when that step is already within the
 inherited mandate, budget, disclosure rules and effect ceiling.
 
 Read-only is not a magic exemption. Retrieval can consume compute, API quota,
@@ -123,17 +123,17 @@ if next_action_is_clear
 and within_mandate
 and within_budget
 and within_disclosure_and_effect_ceiling
-and read_only
+and (read_only or trusted_mandate_derived_internal_effect)
 and no_material_hidden_side_effect:
     execute the inspection / verification directly
 else:
-    surface the exact next action and the gate that prevents direct execution
+    prepare safely, test the missing gate, and escalate only a material judgment
 ```
 
 Canonical compression:
 
 > **Do not stop at an obvious continuation. Surface it — or execute it directly
-> when it is read-only, non-impacting, and already inside mandate and budget.**
+> when it is non-impacting or a strictly controlled, verified recoverable internal effect inside mandate and budget.**
 
 ## Verified handoffs
 
