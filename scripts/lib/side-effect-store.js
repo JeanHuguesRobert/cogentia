@@ -13,11 +13,11 @@ export function createMemoryStore() {
   return {
     kind: "memory",
     putGrant(grant) {
-      grants.set(grant.authorization_id, { ...grant, consumed_at: grant.consumed_at || null });
+      grants.set(grant.authorization_id, structuredClone({ ...grant, consumed_at: grant.consumed_at || null }));
     },
     getGrant(id) {
       const row = grants.get(id);
-      return row ? { ...row } : null;
+      return row ? structuredClone(row) : null;
     },
     isConsumed(id) {
       const row = grants.get(id);

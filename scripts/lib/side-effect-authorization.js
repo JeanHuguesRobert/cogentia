@@ -14,7 +14,7 @@ import {
   setAuthorizationStore,
   createMemoryStore,
 } from "./side-effect-store.js";
-import { asDecisionGrant, asExposeContinuation } from "./side-effect-packets.js";
+import { asDecisionGrant, asExposeContinuation, isSuccessfulEffectReceipt } from "./side-effect-packets.js";
 import { maybeRecordCopEffectSpend } from "./cop-surface-accounting.js";
 
 /**
@@ -225,7 +225,17 @@ export function confirmMatchesPayloadHash(confirm, payload_hash) {
  * Principal mint: EXPOSE envelope + confirm of payload_hash → decision grant.
  * Utterances cannot mint. Confirm is the human/mandate "I saw this hash".
  */
-export function mintSideEffectGrantFromPrepared(prepared, { principal, confirm, actor } = {}) {
+export function mintSideEffectGrantFromPrepared(prepared, {
+  principal,
+  confirm,
+  actor,
+  authority_origin = "principal",
+  mandate_ref = null,
+  budget_reservation_id = null,
+  account_id = null,
+  treatment_id = null,
+  recovery_ref = null,
+} = {}) {
   if (!prepared || typeof prepared !== "object" || !prepared.payload || !prepared.action_class) {
     throw fail("invalid_prepare", "prepared EXPOSE envelope with action_class and payload required");
   }
@@ -249,6 +259,14 @@ export function mintSideEffectGrantFromPrepared(prepared, { principal, confirm, 
     action_class: prepared.action_class,
     target: prepared.target || {},
     payload: prepared.payload,
+    authority_origin,
+    actor: actor || null,
+    mandate_ref,
+    budget_reservation_id,
+    account_id,
+    treatment_id,
+    recovery_ref,
+    expose_packet_id: prepared.packet?.packet_id || prepared.packet?.envelope?.packet_id || null,
   });
 }
 
@@ -261,6 +279,14 @@ export function grantSideEffectAuthorization({
   single_use = true,
   material_parameters = {},
   direct_send_exception = null,
+  authority_origin = "principal",
+  actor = null,
+  mandate_ref = null,
+  budget_reservation_id = null,
+  account_id = null,
+  treatment_id = null,
+  recovery_ref = null,
+  expose_packet_id = null,
 } = {}) {
   if (new Set(["gmail.send", "communication.send"]).has(action_class)) {
     throw fail("explicit_send_exception_required",
@@ -274,6 +300,14 @@ export function grantSideEffectAuthorization({
     kind: AUTHORIZATION_KIND,
     authorization_id,
     principal: principal || null,
+    authority_origin,
+    actor: actor || null,
+    mandate_ref: mandate_ref || null,
+    budget_reservation_id: budget_reservation_id || null,
+    account_id: account_id || null,
+    treatment_id: treatment_id || null,
+    recovery_ref: recovery_ref || null,
+    expose_packet_id: expose_packet_id || null,
     status: "granted",
     action_class,
     target: target || {},
@@ -293,6 +327,14 @@ export function grantSideEffectAuthorization({
       payload_hash,
       single_use,
       granted_at,
+      authority_origin,
+      actor,
+      mandate_ref,
+      budget_reservation_id,
+      account_id,
+      treatment_id,
+      recovery_ref,
+      expose_packet_id,
     }),
   };
   getAuthorizationStore().putGrant(grant);
@@ -339,12 +381,29 @@ export function validateSideEffectAuthorization(authorization, expected = {}) {
   }
   // A caller-supplied envelope is not authority. Look up the minted grant.
   const storedGrant = getAuthorizationStore().getGrant(authorization.authorization_id);
-  if (!storedGrant || storedGrant.payload_hash !== authorization.payload_hash
+  if (!storedGrant) {
+    throw fail("authorization_untrusted", "authorization must match its stored minted record");
+  }
+  if (storedGrant.single_use !== false && getAuthorizationStore().isConsumed(authorization.authorization_id)) {
+    throw fail("authorization_replay", "single-use authorization already consumed");
+  }
+  if (storedGrant.status !== authorization.status
+      || storedGrant.principal !== authorization.principal
+      || storedGrant.expires_at !== authorization.expires_at
+      || storedGrant.single_use !== authorization.single_use
+      || stableSerialize(storedGrant.material_parameters || {}) !== stableSerialize(authorization.material_parameters || {})
+      || stableSerialize(storedGrant.packet || {}) !== stableSerialize(authorization.packet || {})
+      || storedGrant.payload_hash !== authorization.payload_hash
       || storedGrant.action_class !== authorization.action_class
       || stableSerialize(storedGrant.target || {}) !== stableSerialize(authorization.target || {})
       || storedGrant.authority_origin !== authorization.authority_origin
+      || storedGrant.actor !== authorization.actor
       || storedGrant.mandate_ref !== authorization.mandate_ref
-      || storedGrant.recovery_ref !== authorization.recovery_ref) {
+      || storedGrant.budget_reservation_id !== authorization.budget_reservation_id
+      || storedGrant.account_id !== authorization.account_id
+      || storedGrant.treatment_id !== authorization.treatment_id
+      || storedGrant.recovery_ref !== authorization.recovery_ref
+      || storedGrant.expose_packet_id !== authorization.expose_packet_id) {
     throw fail("authorization_untrusted", "authorization must match its stored minted record");
   }
   if (authorization.single_use !== false && getAuthorizationStore().isConsumed(authorization.authorization_id)) {
@@ -406,7 +465,7 @@ export function consumeSideEffectAuthorization(authorization, extra = {}) {
 }
 
 /**
- * VERIFY after a native execute. Capacities stay; this consumes the grant
+ * Record a native execute outcome. Capacities stay; this consumes the grant
  * and hops the decision packet. Does not call Gmail/GitHub/git.
  */
 export async function recordSideEffectExecution({
@@ -417,28 +476,47 @@ export async function recordSideEffectExecution({
   receipt,
 } = {}) {
   validateSideEffectAuthorization(authorization, { action_class, target, payload });
-  consumeSideEffectAuthorization(authorization, { receipt });
-  const stored = getAuthorizationStore().getGrant(authorization.authorization_id);
+  const executedAt = new Date().toISOString();
+  const safeReceipt = redactEffectReceipt(receipt);
+  const effectVerified = isSuccessfulEffectReceipt(safeReceipt);
   const cop_spend = await maybeRecordCopEffectSpend({
     action_class,
     authorization_id: authorization.authorization_id,
+    authority_origin: authorization.authority_origin,
+    principal: authorization.principal,
+    recovery_ref: authorization.recovery_ref,
     payload_hash: authorization.payload_hash || canonicalPayloadHash(payload),
+    mandate_id: authorization.mandate_ref,
+    budget_reservation_id: authorization.budget_reservation_id,
+    account_id: authorization.account_id,
+    treatment_id: authorization.treatment_id,
+    instance_id: authorization.actor,
+    grant_packet_id: authorization.packet?.envelope?.id || null,
+    expose_packet_id: authorization.expose_packet_id || authorization.packet?.payload?.expose_packet_id || null,
+    receipt: safeReceipt,
     surface: "effect",
   });
+  consumeSideEffectAuthorization(authorization, {
+    receipt: safeReceipt,
+    executed_at: executedAt,
+    accounting: { ...cop_spend, durable: cop_spend.ok === true },
+  });
+  const stored = getAuthorizationStore().getGrant(authorization.authorization_id);
   return {
-    ok: true,
+    ok: effectVerified,
     authorization_id: authorization.authorization_id,
     verification: {
-      ok: true,
+      ok: effectVerified,
       executed_at: stored?.consumed_at || new Date().toISOString(),
       packet: stored?.packet || null,
       cop_spend,
+      accounting_complete: cop_spend.ok === true,
     },
   };
 }
 
 /**
- * Choke point: validate, run, consume only on success, return verification.
+ * Choke point: validate, run once, consume the grant, and return verification.
  * Fail closed before `run` when authorization is missing or mismatched.
  */
 export async function executeAuthorizedEffect({
@@ -457,24 +535,68 @@ export async function executeAuthorizedEffect({
     return { ok: true, authorization_id: null, skipped: "not_effectful", result: await run() };
   }
   validateSideEffectAuthorization(authorization, { action_class, target, payload });
-  const result = await run();
-  consumeSideEffectAuthorization(authorization);
-  const stored = getAuthorizationStore().getGrant(authorization.authorization_id);
+  let result;
+  try {
+    result = await run();
+  } catch (error) {
+    consumeSideEffectAuthorization(authorization, {
+      receipt: { status: "unknown" },
+      executed_at: new Date().toISOString(),
+      accounting: { ok: false, reason: "effect_outcome_unknown", durable: false },
+    });
+    throw error;
+  }
+  const executedAt = new Date().toISOString();
+  const safeReceipt = redactEffectReceipt(result);
+  const effectVerified = isSuccessfulEffectReceipt(safeReceipt);
   const cop_spend = await maybeRecordCopEffectSpend({
     action_class,
     authorization_id: authorization.authorization_id,
+    authority_origin: authorization.authority_origin,
+    principal: authorization.principal,
+    recovery_ref: authorization.recovery_ref,
     payload_hash: authorization.payload_hash || canonicalPayloadHash(payload),
+    mandate_id: authorization.mandate_ref,
+    budget_reservation_id: authorization.budget_reservation_id,
+    account_id: authorization.account_id,
+    treatment_id: authorization.treatment_id,
+    instance_id: authorization.actor,
+    grant_packet_id: authorization.packet?.envelope?.id || null,
+    expose_packet_id: authorization.expose_packet_id || authorization.packet?.payload?.expose_packet_id || null,
+    receipt: safeReceipt,
     surface: "effect",
   });
+  consumeSideEffectAuthorization(authorization, {
+    receipt: safeReceipt,
+    executed_at: executedAt,
+    accounting: { ...cop_spend, durable: cop_spend.ok === true },
+  });
+  const stored = getAuthorizationStore().getGrant(authorization.authorization_id);
   return {
-    ok: true,
+    ok: effectVerified,
     authorization_id: authorization.authorization_id,
+    effect_executed: true,
+    effect_verified: effectVerified,
+    accounting_complete: cop_spend.ok === true,
     verification: {
-      ok: true,
+      ok: effectVerified,
       executed_at: new Date().toISOString(),
       packet: stored?.packet || authorization.packet || null,
       cop_spend,
     },
     result,
   };
+}
+
+function redactEffectReceipt(receipt) {
+  if (!receipt || typeof receipt !== "object") return null;
+  const allowed = ["transport", "id", "message_id", "sha", "commit_sha", "html_url", "operation", "ok", "status"];
+  const safe = {};
+  for (const key of allowed) {
+    const value = receipt[key];
+    if (value != null && value !== "" && ["string", "number", "boolean"].includes(typeof value)) {
+      safe[key] = value;
+    }
+  }
+  return Object.keys(safe).length ? safe : null;
 }

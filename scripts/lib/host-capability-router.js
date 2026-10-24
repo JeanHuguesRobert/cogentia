@@ -19,7 +19,7 @@ import {
 import {
   isEffectfulCapability,
   validateSideEffectAuthorization,
-  consumeSideEffectAuthorization,
+  recordSideEffectExecution,
   canonicalPayloadHash,
   buildEffectPayload,
   buildHostFsWritePayload,
@@ -196,6 +196,8 @@ export function createHostCapabilityRouter(options = {}) {
     const principal = ctx.principal || ctx.auth?.principal_ref || null;
     const mandate = ctx.mandate || ctx.auth?.mandate_ref || rawArgs.mandate || null;
     const budget = ctx.budget || options.budget || null;
+    let effectTarget = null;
+    let effectPayload = null;
 
     const traceBase = {
       protocol: "cogentia.host_capability_trace/v1",
@@ -275,9 +277,11 @@ export function createHostCapabilityRouter(options = {}) {
       if (effectful) {
         // Cogentia #192 Finding A: Exact payload binding including content digest, mode, and target
         const payload = buildEffectPayload(capability, argsIn, { target });
+        effectPayload = payload;
+        effectTarget = { node: target, path: payload.path || null };
         validateSideEffectAuthorization(ctx.authorization, {
           action_class: capability,
-          target: { node: target, path: payload.path || null },
+          target: effectTarget,
           payload,
         });
       }
@@ -304,13 +308,32 @@ export function createHostCapabilityRouter(options = {}) {
         { auth: ctx.auth, provider: providerName }
       );
 
-      if (effectful) consumeSideEffectAuthorization(ctx.authorization);
+      const effectVerification = effectful
+        ? await recordSideEffectExecution({
+          authorization: ctx.authorization,
+          action_class: capability,
+          target: effectTarget,
+          payload: effectPayload,
+          receipt: {
+            transport: providerName,
+            operation: capability,
+            ok: result?.ok === true,
+            status: result?.ok === true ? "success" : "failed",
+          },
+        })
+        : null;
 
       const trace = finish({
-        status: "ok",
+        status: result?.ok === false ? "error" : "ok",
         upstream_tool: result.upstream_tool,
         authorization_id: ctx.authorization?.authorization_id || null,
-        verification: { ok: true },
+        verification: effectVerification
+          ? {
+            ok: effectVerification.ok === true,
+            accounting_complete: effectVerification.verification?.accounting_complete === true,
+            cop_spend: effectVerification.verification?.cop_spend || null,
+          }
+          : { ok: true },
       });
       return { ...result, trace };
     } catch (err) {

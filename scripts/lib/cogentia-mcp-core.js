@@ -996,7 +996,10 @@ export const TOOLS = [
       properties: {
         prepared: { type: "object", description: "EXPOSE envelope from *_prepare" },
         confirm: { type: "string", description: "Must match payload_hash (sha256:…)" },
-        principal: { type: "string" },
+        budget_reservation_id: { type: "string" },
+        account_id: { type: "string" },
+        treatment_id: { type: "string" },
+        recovery_ref: { type: "string" },
       },
       required: ["prepared", "confirm"],
       additionalProperties: false,
@@ -1917,9 +1920,19 @@ export function createMcpCore(env = process.env, extras = {}) {
         if (!args.prepared || typeof args.prepared !== "object") throw new Error("prepared is required");
         requireString(args.confirm, "confirm");
         return mintSideEffectGrantFromPrepared(args.prepared, {
-          principal: args.principal || auth?.principal_ref || auth?.actor || "principal:mcp",
+          principal: auth?.principal_ref || (auth?.auth === "admin" ? "principal:admin" : null),
           confirm: args.confirm,
           actor: auth?.actor,
+          authority_origin: auth?.auth === "jhn"
+            ? "mcp_jhn_attested_mutate"
+            : auth?.auth === "admin"
+              ? "mcp_admin_mutate"
+              : "in_process_effect_grant",
+          mandate_ref: auth?.mandate_ref || null,
+          budget_reservation_id: args.budget_reservation_id || null,
+          account_id: args.account_id || null,
+          treatment_id: args.treatment_id || null,
+          recovery_ref: args.recovery_ref || null,
         });
       case "cogentia_side_effect_record":
         requireString(args.action_class, "action_class");

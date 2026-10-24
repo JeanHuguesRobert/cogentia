@@ -11,6 +11,7 @@
 
 import fs from "node:fs";
 import path from "node:path";
+import { isSuccessfulEffectReceipt } from "./side-effect-packets.js";
 import { fileURLToPath, pathToFileURL } from "node:url";
 
 const moduleDir = path.dirname(fileURLToPath(import.meta.url));
@@ -151,9 +152,9 @@ export async function openSurfaceTurnPacket(options = {}) {
     mandate_id,
     treatment_id,
     account_id: options.account_id || process.env.COGENTIA_COP_ACCOUNT_ID || DEFAULT_ACCOUNT,
-    budget_reservation_id: options.budget_reservation_id
-      || process.env.COGENTIA_COP_BUDGET_RESERVATION_ID
-      || undefined,
+    budget_reservation_id: Object.prototype.hasOwnProperty.call(options, "budget_reservation_id")
+      ? options.budget_reservation_id
+      : process.env.COGENTIA_COP_BUDGET_RESERVATION_ID || undefined,
     initial_node_id: options.node_id || process.env.COGENTIA_FRACTANET_NODE_ID || "node:fracta:main",
     initial_instance_id: options.instance_id
       || (surface === "whatsapp" ? "agent:jhn:whatsapp"
@@ -166,6 +167,7 @@ export async function openSurfaceTurnPacket(options = {}) {
       locale: options.locale || null,
       opened_at: new Date().toISOString(),
       kind: "surface_turn",
+      ...(options.payload && typeof options.payload === "object" ? options.payload : {}),
     },
   });
 
@@ -244,7 +246,7 @@ export function recordPacketProviderSpend(packet, cop, details = {}) {
     });
 
     registerPacket(packet);
-    maybeSpoolPacketEvent({ packet, spendingEntry, transactionEvent, surface: details.surface });
+    const spoolReceipt = maybeSpoolPacketEvent({ packet, spendingEntry, transactionEvent, surface: details.surface });
     // Fire-and-forget durable store (await would block answer path; result in summary later).
     const persistPromise = maybePersistAccountingEvent(transactionEvent, packet, {
       surface: details.surface || packet?.payload?.surface || packet?.payload?.surface_step || null,
@@ -259,6 +261,7 @@ export function recordPacketProviderSpend(packet, cop, details = {}) {
       spendingEntry,
       transactionEvent,
       summary,
+      spoolReceipt,
       persistPromise,
     };
   } catch (error) {
@@ -592,13 +595,37 @@ export async function maybeRecordCopEffectSpend(details = {}) {
   if (!isCopAccountingEnabled()) {
     return { ok: false, reason: "disabled" };
   }
+  if (!String(details.mandate_id || "").trim()) {
+    return { ok: false, reason: "mandate_id_required" };
+  }
+  const receipt = details.receipt && typeof details.receipt === "object" ? details.receipt : null;
+  if (!receipt) {
+    return { ok: false, reason: "effect_receipt_required" };
+  }
+  if (!isSuccessfulEffectReceipt(receipt)) {
+    return { ok: false, reason: "effect_not_verified" };
+  }
   try {
     const opened = await openSurfaceTurnPacket({
       surface: details.surface || "effect",
       mandate_id: details.mandate_id,
       treatment_id: details.treatment_id,
+      account_id: details.account_id,
+      budget_reservation_id: details.budget_reservation_id ?? null,
       question: details.action_class || "external-effect",
-      instance_id: details.instance_id || "agent:effect",
+      instance_id: details.instance_id || details.actor || "agent:effect",
+      payload: {
+        kind: "side_effect_accounting",
+        authorization_id: details.authorization_id || null,
+        authority_origin: details.authority_origin || null,
+        principal_ref: details.principal || null,
+        recovery_ref: details.recovery_ref || null,
+        grant_packet_id: details.grant_packet_id || null,
+        expose_packet_id: details.expose_packet_id || null,
+        action_class: details.action_class || null,
+        payload_hash: details.payload_hash || null,
+        receipt: details.receipt || null,
+      },
     });
     if (!opened.ok || !opened.packet || !opened.cop) {
       return { ok: false, reason: opened.reason || "cop_unavailable", error: opened.error };
@@ -616,13 +643,19 @@ export async function maybeRecordCopEffectSpend(details = {}) {
       surface: details.surface || "effect",
       hop: {
         route_reason: "effect-verified",
-        instance_id: details.instance_id || "agent:effect",
+        instance_id: details.instance_id || details.actor || "agent:effect",
       },
     });
+    const persistence = await spent.persistPromise;
+    const spool = spent.spoolReceipt || { ok: false, reason: "spool_receipt_missing" };
+    const durable = spool.ok === true || persistence?.ok === true;
     return {
-      ok: spent.ok === true,
-      reason: spent.ok ? "recorded" : spent.error,
+      ok: spent.ok === true && durable,
+      reason: !spent.ok ? spent.error : durable ? "recorded" : "durable_accounting_unavailable",
       packet_id: opened.packet.packet_id,
+      spend_id: spent.spendingEntry?.spend_id || null,
+      persistence: persistence || { ok: false, reason: "store_unavailable" },
+      spool,
       spendingEntry: spent.spendingEntry || null,
     };
   } catch (error) {
@@ -716,7 +749,7 @@ function resolveSpendSpoolPath(env = process.env) {
 
 function maybeSpoolPacketEvent(event) {
   const spoolPath = resolveSpendSpoolPath();
-  if (!spoolPath) return;
+  if (!spoolPath) return { ok: false, reason: "spool_disabled" };
   try {
     const dir = path.dirname(spoolPath);
     fs.mkdirSync(dir, { recursive: true });
@@ -725,6 +758,16 @@ function maybeSpoolPacketEvent(event) {
       packet_id: event.packet?.packet_id,
       mandate_id: event.packet?.mandate_id,
       treatment_id: event.packet?.treatment_id,
+      budget_reservation_id: event.packet?.budget_reservation_id || null,
+      authorization_id: event.packet?.payload?.authorization_id || null,
+      authority_origin: event.packet?.payload?.authority_origin || null,
+      principal_ref: event.packet?.payload?.principal_ref || null,
+      recovery_ref: event.packet?.payload?.recovery_ref || null,
+      grant_packet_id: event.packet?.payload?.grant_packet_id || null,
+      expose_packet_id: event.packet?.payload?.expose_packet_id || null,
+      effect_action_class: event.packet?.payload?.action_class || null,
+      payload_hash: event.packet?.payload?.payload_hash || null,
+      receipt: event.packet?.payload?.receipt || null,
       spend_id: event.spendingEntry?.spend_id,
       hop_index: event.spendingEntry?.hop_index,
       provider: event.spendingEntry?.provider,
@@ -738,8 +781,9 @@ function maybeSpoolPacketEvent(event) {
       valuation_status: "provisional",
     });
     fs.appendFileSync(spoolPath, `${line}\n`, "utf8");
+    return { ok: true, path: spoolPath };
   } catch {
-    /* non-fatal */
+    return { ok: false, reason: "spool_write_failed" };
   }
 }
 
