@@ -263,15 +263,8 @@ export function grantSideEffectAuthorization({
   direct_send_exception = null,
 } = {}) {
   if (new Set(["gmail.send", "communication.send"]).has(action_class)) {
-    const payload_hash = canonicalPayloadHash(payload);
-    if (!direct_send_exception
-      || direct_send_exception.approved_by_principal !== true
-      || direct_send_exception.payload_hash !== payload_hash
-      || !String(direct_send_exception.justification || "").trim()
-      || !String(direct_send_exception.approval_reference || "").trim()) {
-      throw fail("explicit_send_exception_required",
-        "external email send requires an exceptionally justified, act-specific Principal approval; draft by default");
-    }
+    throw fail("explicit_send_exception_required",
+      "email sending is disabled until an independently verified, act-specific Principal approval path exists; create a draft for manual sending");
   }
   const now = Date.now();
   const authorization_id = `sea_${randomUUID()}`;
@@ -315,43 +308,13 @@ export function mintMandateDerivedGrant({
   action_class, target, payload, mandate_ref, recovery_ref,
   policy_evidence = {}, expires_in_ms = 10 * 60 * 1000,
 } = {}) {
-  const allowedInternal = new Set(["git.commit", "host.fs.write"]);
-  if (!allowedInternal.has(action_class)) {
-    throw fail("mandate_derived_forbidden", "only audited internal action classes support mandate-derived grants");
-  }
-  if (!mandate_ref || !recovery_ref || !target || !payload || typeof payload !== "object") {
-    throw fail("mandate_evidence_missing", "mandate, recovery, target, and bound payload are required");
-  }
-  const decision = assessPresumedEffect({ ...policy_evidence, action_class });
-  if (decision.decision !== "mandate_derived_candidate") {
-    throw fail("mandate_derived_forbidden", decision.reason);
-  }
-  const now = Date.now();
-  const authorization_id = `sea_${randomUUID()}`;
-  const granted_at = new Date(now).toISOString();
-  const payload_hash = canonicalPayloadHash(payload);
-  const grant = {
-    kind: AUTHORIZATION_KIND,
-    authorization_id,
-    principal: null,
-    authority_origin: "mandate_derived",
-    mandate_ref,
-    recovery_ref,
-    status: "granted",
-    action_class, target, payload_hash,
-    material_parameters: { policy_evidence },
-    granted_at,
-    expires_at: new Date(now + Math.min(Math.max(expires_in_ms, 1), 10 * 60 * 1000)).toISOString(),
-    single_use: true,
-    packet: asDecisionGrant({
-      authorization_id, principal: null, action_class, target, payload_hash,
-      single_use: true, granted_at,
-    }),
-  };
-  grant.packet.payload.authority = { kind: "mandate_derived", mandate_ref, recovery_ref };
-  grant.packet.payload.rationale = "bounded internal effect, explicitly attested recovery";
-  getAuthorizationStore().putGrant(grant);
-  return grant;
+  // Fail closed until a trusted runtime verifier can attest the mandate,
+  // recovery path, budget and privacy boundary independently of this caller.
+  // Caller-provided references and policy_evidence are descriptive data only.
+  void action_class; void target; void payload; void mandate_ref; void recovery_ref;
+  void policy_evidence; void expires_in_ms;
+  throw fail("mandate_derived_verifier_unavailable",
+    "mandate-derived grants are disabled until trusted adapter-side evidence verification is wired");
 }
 
 export function resetAuthorizationStore() {
@@ -391,24 +354,12 @@ export function validateSideEffectAuthorization(authorization, expected = {}) {
     throw fail("authorization_expired", "authorization expired");
   }
   if (new Set(["gmail.send", "communication.send"]).has(authorization.action_class)) {
-    const approval = storedGrant.material_parameters?.direct_send_exception;
-    if (!approval || approval.approved_by_principal !== true
-      || approval.payload_hash !== storedGrant.payload_hash
-      || !String(approval.justification || "").trim()
-      || !String(approval.approval_reference || "").trim()) {
-      throw fail("explicit_send_exception_required",
-        "draft only: externally engaging email has no recorded specific Principal approval");
-    }
+    throw fail("explicit_send_exception_required",
+      "draft only: no independently verified, act-specific Principal approval path is available");
   }
   if (authorization.authority_origin === "mandate_derived") {
-    if (!new Set(["git.commit", "host.fs.write"]).has(authorization.action_class)
-      || !authorization.mandate_ref || !authorization.recovery_ref
-      || assessPresumedEffect({
-        ...(authorization.material_parameters?.policy_evidence || {}),
-        action_class: authorization.action_class,
-      }).decision !== "mandate_derived_candidate") {
-      throw fail("mandate_derived_forbidden", "invalid mandate-derived authority");
-    }
+    throw fail("mandate_derived_verifier_unavailable",
+      "mandate-derived grants cannot be validated without trusted adapter-side evidence");
   }
   if (expected.action_class && authorization.action_class !== expected.action_class) {
     throw fail(

@@ -42,16 +42,16 @@ Reads stay ungated. Drafts are PREPARE, not EXECUTE.
 
 ## Mandate-derived low-risk autonomy and reserved acts (Cogentia #285)
 
-The blanket phrase "before any write-class execute" below describes the legacy grant path and MUST NOT be construed as a demand for repetitive Principal approval for recoverable, in-mandate internal operations. A low-exposure internal change with verified recovery may proceed using a traceable mandate-derived authorization **when supported by a validated adapter**. The core now provides `mintMandateDerivedGrant` for narrowly classified `git.commit` and `host.fs.write`, but its evidence is currently caller supplied: **do not enable this as an autonomous production bypass** until a trusted adapter independently verifies mandate provenance, exposure, and recovery. Never fabricate a Principal grant. A chat utterance is never minted into a grant.
+The blanket phrase "before any write-class execute" below describes the legacy grant path and MUST NOT be construed as a demand for repetitive Principal approval for recoverable, in-mandate internal operations. The intended rule permits a traceable mandate-derived authorization for low-exposure internal changes with verified recovery. **The implementation is currently fail-closed:** `mintMandateDerivedGrant` rejects all requests because the repository has no trusted adapter verifier for mandate provenance, budget, privacy, exposure, and recovery. Caller-supplied references and policy fields are descriptive data, not evidence. Keep the legacy authorization gate until such a verifier is wired and tested end to end; never fabricate a Principal grant.
 
-**Hard boundary:** email is draft-only by default. Prepare/update the draft, identify it to the Principal, and leave sending to the Principal. Neither a general mandate nor a previous approval can authorize an outbound email. Direct agent send requires exceptionally justified, current, act-specific explicit consent and the existing technical gate. The same rule governs other acts comparably committing the Principal to third parties, including public postings and formal submissions.
+**Hard boundary:** email is draft-only. Prepare/update the draft, identify it to the Principal, and leave sending to the Principal. Neither a general mandate nor a previous approval can authorize an outbound email. The implementation rejects every agent send grant, including caller-supplied claims of explicit consent, until a trusted interface can verify an exceptionally justified, current, act-specific approval. The same preparation-without-emission rule governs other acts comparably committing the Principal to third parties, including public postings and formal submissions.
 
 At intermediate milestones, continue useful allowed work automatically instead of asking for "continue"; request human judgment only when a substantive decision or hard gate requires it. Stop on successful verified completion, not on an arbitrary substep.
 
 ## Gmail
 
 `gmail__create_draft` / `list_drafts` / `get_message` are fine without a grant.
-`gmail__send_message` / `send_draft` / `forward` / `reply_all` must be refused by default; prepare a draft and notify the Principal. The #285 grant code now also requires a recorded, act-specific `direct_send_exception` (approval reference, exact payload hash and exceptional justification) for an email grant. A caller-supplied approval claim is not itself proof of the Principal's decision; the trusted interface must verify provenance. Without such verification, do not send.
+`gmail__send_message` / `send_draft` / `forward` / `reply_all` are disabled in the current implementation; prepare a draft and notify the Principal. `direct_send_exception` fields supplied by a caller are not accepted as proof of approval.
 Prefer `cogentia_communication_prepare` then execute (native send or `cogentia_communication_send`).
 
 ## GitHub writes

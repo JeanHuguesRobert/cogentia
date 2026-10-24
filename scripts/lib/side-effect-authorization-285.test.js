@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { assessPresumedEffect, mintMandateDerivedGrant, grantSideEffectAuthorization, canonicalPayloadHash, validateSideEffectAuthorization, resetAuthorizationStore, executeAuthorizedEffect } from "./side-effect-authorization.js";
+import { assessPresumedEffect, mintMandateDerivedGrant, grantSideEffectAuthorization, canonicalPayloadHash, resetAuthorizationStore, executeAuthorizedEffect } from "./side-effect-authorization.js";
 
 const safe = {
   action_class: "git.commit",
@@ -34,65 +34,50 @@ test("a generic assent or continuation never authorizes an external send", () =>
   }
 });
 
-test("mandate derived grant is traceable and executes a bound internal effect once", async () => {
+test("caller-supplied mandate and recovery evidence cannot mint a grant", () => {
   resetAuthorizationStore();
-  const target = { path: "/tmp/packet-285-test" };
-  const payload = { content_sha256: "sha256:demo", path: target.path };
-  const authorization = mintMandateDerivedGrant({
-    action_class: "host.fs.write", target, payload,
-    mandate_ref: "https://github.com/JeanHuguesRobert/cogentia/issues/285",
-    recovery_ref: "snapshot:isolated-test",
-    policy_evidence: { ...safe },
-  });
-  assert.equal(authorization.authority_origin, "mandate_derived");
-  assert.equal(authorization.principal, null);
-  assert.equal(validateSideEffectAuthorization(authorization, { action_class: "host.fs.write", target, payload }).ok, true);
-  let runs = 0;
-  await executeAuthorizedEffect({ action_class: "host.fs.write", target, payload, authorization, run: async () => ++runs });
-  assert.equal(runs, 1);
-  await assert.rejects(() => executeAuthorizedEffect({
-    action_class: "host.fs.write", target, payload, authorization, run: async () => ++runs
-  }), /already consumed/);
-  assert.equal(runs, 1);
+  for (const action_class of ["git.commit", "host.fs.write"]) {
+    assert.throws(() => mintMandateDerivedGrant({
+      action_class, target: { path: "/tmp/packet-285-test" }, payload: { value: "test" },
+      mandate_ref: "https://github.com/JeanHuguesRobert/cogentia/issues/285",
+      recovery_ref: "snapshot:isolated-test", policy_evidence: { ...safe },
+    }), (e) => e.error_class === "mandate_derived_verifier_unavailable");
+  }
 });
-test("mandate-derived grants refuse outbound effects and absent recovery", () => {
+test("mandate-derived grant minting fails closed for every action until trusted verification exists", () => {
   resetAuthorizationStore();
   for (const action_class of ["gmail.send", "communication.send", "github.write", "git.push", "whatsapp.send"]) {
     assert.throws(() => mintMandateDerivedGrant({
       action_class, target: { id: "test" }, payload: { value: "test" },
       mandate_ref: "issue:285", recovery_ref: "snapshot:test", policy_evidence: safe,
-    }), /only audited internal/);
+    }), (e) => e.error_class === "mandate_derived_verifier_unavailable");
   }
   assert.throws(() => mintMandateDerivedGrant({
     action_class: "git.commit", target: { branch: "test" }, payload: { hash: "a" },
     mandate_ref: "issue:285", policy_evidence: safe,
-  }), /recovery/);
+  }), (e) => e.error_class === "mandate_derived_verifier_unavailable");
 });
 
-test("caller-manufactured or tampered authorization is rejected before executing", async () => {
+test("caller-manufactured mandate grant is rejected before executing", async () => {
   resetAuthorizationStore();
   const target = { path: "/tmp/packet-285" };
   const payload = { content: "test" };
-  const valid = mintMandateDerivedGrant({
-    action_class: "host.fs.write", target, payload,
-    mandate_ref: "issue:285", recovery_ref: "snapshot:test",
-    policy_evidence: { ...safe },
-  });
   let calls = 0;
-  for (const forged of [
-    { ...valid, authorization_id: "sea_forged" },
-    { ...valid, mandate_ref: "issue:other" },
-    { ...valid, authority_origin: undefined },
-  ]) {
-    await assert.rejects(() => executeAuthorizedEffect({
+  const forged = {
+    kind: "cogentia.side_effect_authorization/v1", authorization_id: "sea_forged",
+    principal: null, authority_origin: "mandate_derived", status: "granted",
+    action_class: "host.fs.write", target, payload_hash: canonicalPayloadHash(payload),
+    mandate_ref: "issue:285", recovery_ref: "snapshot:test",
+    material_parameters: { policy_evidence: safe }, single_use: true,
+  };
+  await assert.rejects(() => executeAuthorizedEffect({
       action_class: "host.fs.write", target, payload,
       authorization: forged, run: async () => ++calls,
-    }), /must match its stored minted record/);
-  }
+  }), /must match its stored minted record/);
   assert.equal(calls, 0);
 });
 
-test("email cannot mint an ordinary generic grant and exceptional consent binds exact content", () => {
+test("email cannot mint a grant from caller-authored approval claims", () => {
   resetAuthorizationStore();
   const payload = { to: ["ext@example.invalid"], subject: "Test", body: "draft only" };
   const target = { recipient: "ext@example.invalid" };
@@ -106,12 +91,11 @@ test("email cannot mint an ordinary generic grant and exceptional consent binds 
       justification: "synthetic specific exception", approval_reference: "test:explicit",
     },
   }), (e) => e.error_class === "explicit_send_exception_required");
-  const grant = grantSideEffectAuthorization({
+  assert.throws(() => grantSideEffectAuthorization({
     ...request,
     direct_send_exception: {
       approved_by_principal: true, payload_hash: canonicalPayloadHash(payload),
       justification: "synthetic explicit exception only", approval_reference: "test:explicit",
     },
-  });
-  assert.equal(validateSideEffectAuthorization(grant, { action_class: "gmail.send", target, payload }).ok, true);
+  }), (e) => e.error_class === "explicit_send_exception_required");
 });

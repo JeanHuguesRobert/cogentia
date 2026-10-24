@@ -99,32 +99,20 @@ await assert.rejects(
 assert.equal(sent.length, 0);
 
 const mailPayload = { subject: "Hello", body: "exact body" };
-const mailAuth = grantSideEffectAuthorization({
+assert.throws(() => grantSideEffectAuthorization({
   principal: "principal:jhn",
   action_class: "gmail.send",
   target: { recipient: "ext@example.com" },
   payload: mailPayload,
-  direct_send_exception: { approved_by_principal: true, payload_hash: canonicalPayloadHash(mailPayload), justification: "synthetic explicit test grant", approval_reference: "test:explicit" },
-});
-const executed = await executeAuthorizedEffect({
+  direct_send_exception: { approved_by_principal: true, payload_hash: canonicalPayloadHash(mailPayload), justification: "caller-authored test claim", approval_reference: "test:explicit" },
+}), (e) => e.error_class === "explicit_send_exception_required");
+await assert.rejects(() => executeAuthorizedEffect({
   action_class: "gmail.send",
   target: { recipient: "ext@example.com" },
   payload: mailPayload,
-  authorization: mailAuth,
+  authorization: null,
   run: () => fakeSend({ to: "ext@example.com", ...mailPayload }),
-});
-assert.equal(executed.ok, true);
-assert.equal(sent.length, 1);
-await assert.rejects(
-  () => executeAuthorizedEffect({
-    action_class: "gmail.send",
-    target: { recipient: "ext@example.com" },
-    payload: mailPayload,
-    authorization: mailAuth,
-    run: () => fakeSend({ to: "ext@example.com" }),
-  }),
-  (e) => e.error_class === "authorization_replay"
-);
-assert.equal(sent.length, 1);
+}), (e) => e.error_class === "authorization_missing");
+assert.equal(sent.length, 0);
 
 console.log(JSON.stringify({ ok: true, test: "side_effect_authorization" }));
