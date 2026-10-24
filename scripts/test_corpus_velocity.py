@@ -39,11 +39,17 @@ class TreeMetricsTests(unittest.TestCase):
                    b"100644 blob eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee    10\tgenerated/index.md\0"
                    b"100644 blob ffffffffffffffffffffffffffffffffffffffff     6\tdocs/index.md\0")
         py_sha = b"a" * 40
+        readme_sha = b"b" * 40
         js_sha = b"d" * 40
+        docs_sha = b"f" * 40
         py_blob = b"print(1)\n# comment\n\n"
+        readme_blob = b"# Docs\n\n"
         js_blob = b"test();\n"
+        docs_blob = b"doc\n"
         cat_file = (py_sha + b" blob " + str(len(py_blob)).encode() + b"\n" + py_blob + b"\n" +
+                    readme_sha + b" blob " + str(len(readme_blob)).encode() + b"\n" + readme_blob + b"\n" +
                     js_sha + b" blob " + str(len(js_blob)).encode() + b"\n" + js_blob + b"\n")
+        cat_file += (docs_sha + b" blob " + str(len(docs_blob)).encode() + b"\n" + docs_blob + b"\n")
         with patch.object(module, "git", side_effect=[listing, cat_file]):
             metrics = module.tree_metrics("/fake", "deadbeef")
         self.assertEqual(metrics["blobs"], 6)
@@ -56,6 +62,11 @@ class TreeMetricsTests(unittest.TestCase):
         self.assertEqual(metrics["markdown_bytes"], 51)
         self.assertEqual(metrics["document_files"], 2)
         self.assertEqual(metrics["document_bytes"], 51)
+        self.assertEqual(metrics["text_document_files"], 2)
+        self.assertEqual(metrics["text_document_physical_lines"], 3)
+        self.assertEqual(metrics["text_document_nonblank_lines"], 2)
+        self.assertEqual(metrics["markdown_physical_lines"], 3)
+        self.assertEqual(metrics["markdown_nonblank_lines"], 2)
         self.assertEqual(metrics["excluded_files"], 2)
         self.assertEqual(metrics["by_language"]["Python"]["bytes"], 123)
         self.assertEqual(metrics["by_language"]["Python"]["physical_lines"], 3)

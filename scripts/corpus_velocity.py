@@ -19,6 +19,8 @@ CODE = {".js", ".jsx", ".mjs", ".cjs", ".ts", ".tsx", ".py", ".go", ".rs", ".c",
         ".h", ".cpp", ".hpp", ".java", ".sh", ".rb", ".php", ".sql", ".swift", ".kt"}
 DOCUMENTS = {".md", ".markdown", ".mdx", ".txt", ".rst", ".adoc",
              ".asciidoc", ".org", ".tex", ".pdf", ".doc", ".docx", ".odt"}
+MARKDOWN = {".md", ".markdown", ".mdx"}
+TEXT_DOCUMENTS = DOCUMENTS - {".pdf", ".doc", ".docx", ".odt"}
 IGNORE = re.compile(r"(^|/)(node_modules|vendor|dist|build|coverage|generated|__generated__|snapshots?|fixtures|target|\.next)(/|$)")
 LANG = {".js": "JavaScript", ".jsx": "JavaScript", ".mjs": "JavaScript",
         ".cjs": "JavaScript", ".ts": "TypeScript", ".tsx": "TypeScript",
@@ -72,9 +74,13 @@ def tree_metrics(repo, commit):
     result = {"blobs": 0, "bytes": 0, "code_files": 0, "code_bytes": 0,
               "code_physical_lines": 0, "code_nonblank_lines": 0,
               "document_files": 0, "document_bytes": 0,
-              "markdown_files": 0, "markdown_bytes": 0, "excluded_files": 0,
+              "text_document_files": 0, "text_document_physical_lines": 0,
+              "text_document_nonblank_lines": 0,
+              "markdown_files": 0, "markdown_bytes": 0,
+              "markdown_physical_lines": 0, "markdown_nonblank_lines": 0,
+              "excluded_files": 0,
               "by_language": {}}
-    code_blobs = []
+    line_blobs = []
     # NUL-delimited Git tree output safely handles spaces and Unicode paths.
     entries = git(repo, "ls-tree", "-rz", "-l", commit).split(b"\0")
     for entry in entries:
@@ -98,9 +104,13 @@ def tree_metrics(repo, commit):
         if suffix in DOCUMENTS:
             result["document_files"] += 1
             result["document_bytes"] += size
-        if suffix == ".md":
+        if suffix in MARKDOWN:
             result["markdown_files"] += 1
             result["markdown_bytes"] += size
+        if suffix in TEXT_DOCUMENTS:
+            result["text_document_files"] += 1
+            kind = "markdown" if suffix in MARKDOWN else "document"
+            line_blobs.append((bits[2], kind, None))
         if suffix in CODE:
             result["code_files"] += 1
             result["code_bytes"] += size
@@ -109,12 +119,12 @@ def tree_metrics(repo, commit):
                 lang, {"files": 0, "bytes": 0, "physical_lines": 0, "nonblank_lines": 0})
             language["files"] += 1
             language["bytes"] += size
-            code_blobs.append((bits[2], lang))
-    if code_blobs:
-        request = b"".join(sha + b"\n" for sha, _ in code_blobs)
+            line_blobs.append((bits[2], "code", lang))
+    if line_blobs:
+        request = b"".join(sha + b"\n" for sha, _, _ in line_blobs)
         contents = git(repo, "cat-file", "--batch", input=request)
         cursor = 0
-        for expected_sha, lang in code_blobs:
+        for expected_sha, kind, lang in line_blobs:
             header_end = contents.find(b"\n", cursor)
             if header_end < 0:
                 raise ValueError("incomplete cat-file batch header")
@@ -129,11 +139,18 @@ def tree_metrics(repo, commit):
             cursor = start + size + 1
             physical_lines = blob.count(b"\n") + int(bool(blob) and not blob.endswith(b"\n"))
             nonblank_lines = sum(bool(line.strip()) for line in blob.splitlines())
-            result["code_physical_lines"] += physical_lines
-            result["code_nonblank_lines"] += nonblank_lines
-            language = result["by_language"][lang]
-            language["physical_lines"] += physical_lines
-            language["nonblank_lines"] += nonblank_lines
+            if kind == "code":
+                result["code_physical_lines"] += physical_lines
+                result["code_nonblank_lines"] += nonblank_lines
+                language = result["by_language"][lang]
+                language["physical_lines"] += physical_lines
+                language["nonblank_lines"] += nonblank_lines
+            else:
+                result["text_document_physical_lines"] += physical_lines
+                result["text_document_nonblank_lines"] += nonblank_lines
+                if kind == "markdown":
+                    result["markdown_physical_lines"] += physical_lines
+                    result["markdown_nonblank_lines"] += nonblank_lines
     return result
 
 
@@ -207,6 +224,8 @@ def main():
         "filters": {
             "code_extensions": sorted(CODE),
             "document_extensions": sorted(DOCUMENTS),
+            "text_document_extensions": sorted(TEXT_DOCUMENTS),
+            "markdown_extensions": sorted(MARKDOWN),
             "excluded_path_regex": IGNORE.pattern,
         },
         "limitations": ["Git tree snapshot, not churn", "code extension filter",
@@ -215,7 +234,10 @@ def main():
                         "no private-repository metrics exported"]}, indent=2) + "\n")
     fields = ["repo", "period", "status", "branch", "ref", "commit", "blobs", "bytes",
               "code_files", "code_bytes", "code_physical_lines", "code_nonblank_lines",
-              "document_files", "document_bytes", "markdown_files", "markdown_bytes",
+              "document_files", "document_bytes", "text_document_files",
+              "text_document_physical_lines", "text_document_nonblank_lines",
+              "markdown_files", "markdown_bytes", "markdown_physical_lines",
+              "markdown_nonblank_lines",
               "excluded_files", "partial", "reason"]
     with (out / "corpus-velocity.csv").open("w", newline="") as f:
         writer = csv.DictWriter(f, fieldnames=fields, extrasaction="ignore", lineterminator="\n")

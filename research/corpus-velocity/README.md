@@ -30,8 +30,9 @@ its end. The script reads existing local clones and does not fetch them.
 The manifest publishes the exact code/document extension sets and excluded
 path expression. It reports total Git tree blobs and bytes, plus code and
 document file counts and bytes. Markdown counts are a subset of document counts.
-Physical and nonblank code lines are included as literal line counts, not
-language-aware SLOC. Generated/vendor/test-fixture exclusions are path
+Physical and nonblank code and text-document lines are literal line counts;
+binary documents are counted by files and bytes only. These line counts are
+not language-aware SLOC. Generated/vendor/test-fixture exclusions are path
 heuristics. Total tree size includes every blob; code and document counts apply
 the published path and extension filters. Aggregates sum each repository tree;
 the same copied file in two repositories is counted twice, so these figures
