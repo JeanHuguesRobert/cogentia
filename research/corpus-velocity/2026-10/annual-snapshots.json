@@ -1,0 +1,1981 @@
+{
+  "generated_at": "2026-10-24T17:40:12+00:00",
+  "snapshots": [
+    "2022-10-24T17:40:04+00:00",
+    "2023-10-24T17:40:04+00:00",
+    "2024-10-24T17:40:04+00:00",
+    "2025-10-24T17:40:04+00:00",
+    "2026-10-24T17:40:04+00:00"
+  ],
+  "registry_sha256": "ceeabdc4e99ea62d311ddf470bbdc395c2f684a4abb17ea5341e12b59a48360d",
+  "branch_policy": "main/master only; origin/HEAD when it resolves to main/master, otherwise origin/main, origin/master, local main, local master; first-parent snapshots; never use HEAD or side branches",
+  "source": "existing local Git clones; no fetch performed",
+  "repository_count": 17,
+  "row_status_counts": {
+    "ok": 17
+  },
+  "snapshot_repository_counts": {
+    "2022-10-24T17:40:04+00:00": 2,
+    "2023-10-24T17:40:04+00:00": 3,
+    "2024-10-24T17:40:04+00:00": 3,
+    "2025-10-24T17:40:04+00:00": 7,
+    "2026-10-24T17:40:04+00:00": 17
+  },
+  "portfolio_snapshots": [
+    {
+      "as_of": "2022-10-24T17:40:04+00:00",
+      "repository_count": 2,
+      "totals": {
+        "blobs": 46,
+        "bytes": 1913566,
+        "code_files": 4,
+        "code_bytes": 197534,
+        "code_physical_lines": 7121,
+        "code_nonblank_lines": 5635,
+        "document_files": 11,
+        "document_bytes": 14770,
+        "text_document_files": 11,
+        "text_document_physical_lines": 332,
+        "text_document_nonblank_lines": 191,
+        "markdown_files": 11,
+        "markdown_bytes": 14770,
+        "markdown_physical_lines": 332,
+        "markdown_nonblank_lines": 191
+      }
+    },
+    {
+      "as_of": "2023-10-24T17:40:04+00:00",
+      "repository_count": 3,
+      "totals": {
+        "blobs": 98,
+        "bytes": 4515516,
+        "code_files": 14,
+        "code_bytes": 940021,
+        "code_physical_lines": 28136,
+        "code_nonblank_lines": 22870,
+        "document_files": 5,
+        "document_bytes": 126253,
+        "text_document_files": 5,
+        "text_document_physical_lines": 2309,
+        "text_document_nonblank_lines": 1720,
+        "markdown_files": 5,
+        "markdown_bytes": 126253,
+        "markdown_physical_lines": 2309,
+        "markdown_nonblank_lines": 1720
+      }
+    },
+    {
+      "as_of": "2024-10-24T17:40:04+00:00",
+      "repository_count": 3,
+      "totals": {
+        "blobs": 98,
+        "bytes": 4515516,
+        "code_files": 14,
+        "code_bytes": 940021,
+        "code_physical_lines": 28136,
+        "code_nonblank_lines": 22870,
+        "document_files": 5,
+        "document_bytes": 126253,
+        "text_document_files": 5,
+        "text_document_physical_lines": 2309,
+        "text_document_nonblank_lines": 1720,
+        "markdown_files": 5,
+        "markdown_bytes": 126253,
+        "markdown_physical_lines": 2309,
+        "markdown_nonblank_lines": 1720
+      }
+    },
+    {
+      "as_of": "2025-10-24T17:40:04+00:00",
+      "repository_count": 7,
+      "totals": {
+        "blobs": 324,
+        "bytes": 6427321,
+        "code_files": 169,
+        "code_bytes": 1345639,
+        "code_physical_lines": 41625,
+        "code_nonblank_lines": 34673,
+        "document_files": 38,
+        "document_bytes": 331142,
+        "text_document_files": 38,
+        "text_document_physical_lines": 7357,
+        "text_document_nonblank_lines": 5433,
+        "markdown_files": 38,
+        "markdown_bytes": 331142,
+        "markdown_physical_lines": 7357,
+        "markdown_nonblank_lines": 5433
+      }
+    },
+    {
+      "as_of": "2026-10-24T17:40:04+00:00",
+      "repository_count": 17,
+      "totals": {
+        "blobs": 7105,
+        "bytes": 390373445,
+        "code_files": 3158,
+        "code_bytes": 21924085,
+        "code_physical_lines": 616690,
+        "code_nonblank_lines": 556112,
+        "document_files": 2691,
+        "document_bytes": 301312750,
+        "text_document_files": 2579,
+        "text_document_physical_lines": 801742,
+        "text_document_nonblank_lines": 558967,
+        "markdown_files": 2497,
+        "markdown_bytes": 36227600,
+        "markdown_physical_lines": 745417,
+        "markdown_nonblank_lines": 517583
+      }
+    }
+  ],
+  "year_over_year_portfolio_comparisons": [
+    {
+      "baseline_at": "2022-10-24T17:40:04+00:00",
+      "as_of": "2023-10-24T17:40:04+00:00",
+      "comparable_repository_count": 2,
+      "comparable_repositories": [
+        "JeanHuguesRobert/inseme",
+        "JeanHuguesRobert/Inox"
+      ],
+      "comparable_cohort_totals": {
+        "blobs": {
+          "baseline": 46,
+          "current": 97,
+          "change": 51,
+          "growth_percent": 110.9
+        },
+        "bytes": {
+          "baseline": 1913566,
+          "current": 4508790,
+          "change": 2595224,
+          "growth_percent": 135.6
+        },
+        "code_files": {
+          "baseline": 4,
+          "current": 14,
+          "change": 10,
+          "growth_percent": 250.0
+        },
+        "code_bytes": {
+          "baseline": 197534,
+          "current": 940021,
+          "change": 742487,
+          "growth_percent": 375.9
+        },
+        "code_physical_lines": {
+          "baseline": 7121,
+          "current": 28136,
+          "change": 21015,
+          "growth_percent": 295.1
+        },
+        "code_nonblank_lines": {
+          "baseline": 5635,
+          "current": 22870,
+          "change": 17235,
+          "growth_percent": 305.9
+        },
+        "document_files": {
+          "baseline": 11,
+          "current": 4,
+          "change": -7,
+          "growth_percent": -63.6
+        },
+        "document_bytes": {
+          "baseline": 14770,
+          "current": 119527,
+          "change": 104757,
+          "growth_percent": 709.3
+        },
+        "text_document_files": {
+          "baseline": 11,
+          "current": 4,
+          "change": -7,
+          "growth_percent": -63.6
+        },
+        "text_document_physical_lines": {
+          "baseline": 332,
+          "current": 2215,
+          "change": 1883,
+          "growth_percent": 567.2
+        },
+        "text_document_nonblank_lines": {
+          "baseline": 191,
+          "current": 1646,
+          "change": 1455,
+          "growth_percent": 761.8
+        },
+        "markdown_files": {
+          "baseline": 11,
+          "current": 4,
+          "change": -7,
+          "growth_percent": -63.6
+        },
+        "markdown_bytes": {
+          "baseline": 14770,
+          "current": 119527,
+          "change": 104757,
+          "growth_percent": 709.3
+        },
+        "markdown_physical_lines": {
+          "baseline": 332,
+          "current": 2215,
+          "change": 1883,
+          "growth_percent": 567.2
+        },
+        "markdown_nonblank_lines": {
+          "baseline": 191,
+          "current": 1646,
+          "change": 1455,
+          "growth_percent": 761.8
+        }
+      },
+      "portfolio_repository_counts": {
+        "baseline": 2,
+        "current": 3
+      },
+      "portfolio_totals": {
+        "blobs": {
+          "baseline": 46,
+          "current": 98,
+          "change": 52,
+          "growth_percent": 113.0
+        },
+        "bytes": {
+          "baseline": 1913566,
+          "current": 4515516,
+          "change": 2601950,
+          "growth_percent": 136.0
+        },
+        "code_files": {
+          "baseline": 4,
+          "current": 14,
+          "change": 10,
+          "growth_percent": 250.0
+        },
+        "code_bytes": {
+          "baseline": 197534,
+          "current": 940021,
+          "change": 742487,
+          "growth_percent": 375.9
+        },
+        "code_physical_lines": {
+          "baseline": 7121,
+          "current": 28136,
+          "change": 21015,
+          "growth_percent": 295.1
+        },
+        "code_nonblank_lines": {
+          "baseline": 5635,
+          "current": 22870,
+          "change": 17235,
+          "growth_percent": 305.9
+        },
+        "document_files": {
+          "baseline": 11,
+          "current": 5,
+          "change": -6,
+          "growth_percent": -54.5
+        },
+        "document_bytes": {
+          "baseline": 14770,
+          "current": 126253,
+          "change": 111483,
+          "growth_percent": 754.8
+        },
+        "text_document_files": {
+          "baseline": 11,
+          "current": 5,
+          "change": -6,
+          "growth_percent": -54.5
+        },
+        "text_document_physical_lines": {
+          "baseline": 332,
+          "current": 2309,
+          "change": 1977,
+          "growth_percent": 595.5
+        },
+        "text_document_nonblank_lines": {
+          "baseline": 191,
+          "current": 1720,
+          "change": 1529,
+          "growth_percent": 800.5
+        },
+        "markdown_files": {
+          "baseline": 11,
+          "current": 5,
+          "change": -6,
+          "growth_percent": -54.5
+        },
+        "markdown_bytes": {
+          "baseline": 14770,
+          "current": 126253,
+          "change": 111483,
+          "growth_percent": 754.8
+        },
+        "markdown_physical_lines": {
+          "baseline": 332,
+          "current": 2309,
+          "change": 1977,
+          "growth_percent": 595.5
+        },
+        "markdown_nonblank_lines": {
+          "baseline": 191,
+          "current": 1720,
+          "change": 1529,
+          "growth_percent": 800.5
+        }
+      },
+      "newly_measurable_repositories": [
+        "JeanHuguesRobert/barons-Mariani"
+      ],
+      "no_longer_measurable_repositories": []
+    },
+    {
+      "baseline_at": "2023-10-24T17:40:04+00:00",
+      "as_of": "2024-10-24T17:40:04+00:00",
+      "comparable_repository_count": 3,
+      "comparable_repositories": [
+        "JeanHuguesRobert/inseme",
+        "JeanHuguesRobert/barons-Mariani",
+        "JeanHuguesRobert/Inox"
+      ],
+      "comparable_cohort_totals": {
+        "blobs": {
+          "baseline": 98,
+          "current": 98,
+          "change": 0,
+          "growth_percent": 0.0
+        },
+        "bytes": {
+          "baseline": 4515516,
+          "current": 4515516,
+          "change": 0,
+          "growth_percent": 0.0
+        },
+        "code_files": {
+          "baseline": 14,
+          "current": 14,
+          "change": 0,
+          "growth_percent": 0.0
+        },
+        "code_bytes": {
+          "baseline": 940021,
+          "current": 940021,
+          "change": 0,
+          "growth_percent": 0.0
+        },
+        "code_physical_lines": {
+          "baseline": 28136,
+          "current": 28136,
+          "change": 0,
+          "growth_percent": 0.0
+        },
+        "code_nonblank_lines": {
+          "baseline": 22870,
+          "current": 22870,
+          "change": 0,
+          "growth_percent": 0.0
+        },
+        "document_files": {
+          "baseline": 5,
+          "current": 5,
+          "change": 0,
+          "growth_percent": 0.0
+        },
+        "document_bytes": {
+          "baseline": 126253,
+          "current": 126253,
+          "change": 0,
+          "growth_percent": 0.0
+        },
+        "text_document_files": {
+          "baseline": 5,
+          "current": 5,
+          "change": 0,
+          "growth_percent": 0.0
+        },
+        "text_document_physical_lines": {
+          "baseline": 2309,
+          "current": 2309,
+          "change": 0,
+          "growth_percent": 0.0
+        },
+        "text_document_nonblank_lines": {
+          "baseline": 1720,
+          "current": 1720,
+          "change": 0,
+          "growth_percent": 0.0
+        },
+        "markdown_files": {
+          "baseline": 5,
+          "current": 5,
+          "change": 0,
+          "growth_percent": 0.0
+        },
+        "markdown_bytes": {
+          "baseline": 126253,
+          "current": 126253,
+          "change": 0,
+          "growth_percent": 0.0
+        },
+        "markdown_physical_lines": {
+          "baseline": 2309,
+          "current": 2309,
+          "change": 0,
+          "growth_percent": 0.0
+        },
+        "markdown_nonblank_lines": {
+          "baseline": 1720,
+          "current": 1720,
+          "change": 0,
+          "growth_percent": 0.0
+        }
+      },
+      "portfolio_repository_counts": {
+        "baseline": 3,
+        "current": 3
+      },
+      "portfolio_totals": {
+        "blobs": {
+          "baseline": 98,
+          "current": 98,
+          "change": 0,
+          "growth_percent": 0.0
+        },
+        "bytes": {
+          "baseline": 4515516,
+          "current": 4515516,
+          "change": 0,
+          "growth_percent": 0.0
+        },
+        "code_files": {
+          "baseline": 14,
+          "current": 14,
+          "change": 0,
+          "growth_percent": 0.0
+        },
+        "code_bytes": {
+          "baseline": 940021,
+          "current": 940021,
+          "change": 0,
+          "growth_percent": 0.0
+        },
+        "code_physical_lines": {
+          "baseline": 28136,
+          "current": 28136,
+          "change": 0,
+          "growth_percent": 0.0
+        },
+        "code_nonblank_lines": {
+          "baseline": 22870,
+          "current": 22870,
+          "change": 0,
+          "growth_percent": 0.0
+        },
+        "document_files": {
+          "baseline": 5,
+          "current": 5,
+          "change": 0,
+          "growth_percent": 0.0
+        },
+        "document_bytes": {
+          "baseline": 126253,
+          "current": 126253,
+          "change": 0,
+          "growth_percent": 0.0
+        },
+        "text_document_files": {
+          "baseline": 5,
+          "current": 5,
+          "change": 0,
+          "growth_percent": 0.0
+        },
+        "text_document_physical_lines": {
+          "baseline": 2309,
+          "current": 2309,
+          "change": 0,
+          "growth_percent": 0.0
+        },
+        "text_document_nonblank_lines": {
+          "baseline": 1720,
+          "current": 1720,
+          "change": 0,
+          "growth_percent": 0.0
+        },
+        "markdown_files": {
+          "baseline": 5,
+          "current": 5,
+          "change": 0,
+          "growth_percent": 0.0
+        },
+        "markdown_bytes": {
+          "baseline": 126253,
+          "current": 126253,
+          "change": 0,
+          "growth_percent": 0.0
+        },
+        "markdown_physical_lines": {
+          "baseline": 2309,
+          "current": 2309,
+          "change": 0,
+          "growth_percent": 0.0
+        },
+        "markdown_nonblank_lines": {
+          "baseline": 1720,
+          "current": 1720,
+          "change": 0,
+          "growth_percent": 0.0
+        }
+      },
+      "newly_measurable_repositories": [],
+      "no_longer_measurable_repositories": []
+    },
+    {
+      "baseline_at": "2024-10-24T17:40:04+00:00",
+      "as_of": "2025-10-24T17:40:04+00:00",
+      "comparable_repository_count": 3,
+      "comparable_repositories": [
+        "JeanHuguesRobert/inseme",
+        "JeanHuguesRobert/barons-Mariani",
+        "JeanHuguesRobert/Inox"
+      ],
+      "comparable_cohort_totals": {
+        "blobs": {
+          "baseline": 98,
+          "current": 102,
+          "change": 4,
+          "growth_percent": 4.1
+        },
+        "bytes": {
+          "baseline": 4515516,
+          "current": 4532450,
+          "change": 16934,
+          "growth_percent": 0.4
+        },
+        "code_files": {
+          "baseline": 14,
+          "current": 17,
+          "change": 3,
+          "growth_percent": 21.4
+        },
+        "code_bytes": {
+          "baseline": 940021,
+          "current": 955585,
+          "change": 15564,
+          "growth_percent": 1.7
+        },
+        "code_physical_lines": {
+          "baseline": 28136,
+          "current": 28799,
+          "change": 663,
+          "growth_percent": 2.4
+        },
+        "code_nonblank_lines": {
+          "baseline": 22870,
+          "current": 23424,
+          "change": 554,
+          "growth_percent": 2.4
+        },
+        "document_files": {
+          "baseline": 5,
+          "current": 5,
+          "change": 0,
+          "growth_percent": 0.0
+        },
+        "document_bytes": {
+          "baseline": 126253,
+          "current": 126256,
+          "change": 3,
+          "growth_percent": 0.0
+        },
+        "text_document_files": {
+          "baseline": 5,
+          "current": 5,
+          "change": 0,
+          "growth_percent": 0.0
+        },
+        "text_document_physical_lines": {
+          "baseline": 2309,
+          "current": 2309,
+          "change": 0,
+          "growth_percent": 0.0
+        },
+        "text_document_nonblank_lines": {
+          "baseline": 1720,
+          "current": 1720,
+          "change": 0,
+          "growth_percent": 0.0
+        },
+        "markdown_files": {
+          "baseline": 5,
+          "current": 5,
+          "change": 0,
+          "growth_percent": 0.0
+        },
+        "markdown_bytes": {
+          "baseline": 126253,
+          "current": 126256,
+          "change": 3,
+          "growth_percent": 0.0
+        },
+        "markdown_physical_lines": {
+          "baseline": 2309,
+          "current": 2309,
+          "change": 0,
+          "growth_percent": 0.0
+        },
+        "markdown_nonblank_lines": {
+          "baseline": 1720,
+          "current": 1720,
+          "change": 0,
+          "growth_percent": 0.0
+        }
+      },
+      "portfolio_repository_counts": {
+        "baseline": 3,
+        "current": 7
+      },
+      "portfolio_totals": {
+        "blobs": {
+          "baseline": 98,
+          "current": 324,
+          "change": 226,
+          "growth_percent": 230.6
+        },
+        "bytes": {
+          "baseline": 4515516,
+          "current": 6427321,
+          "change": 1911805,
+          "growth_percent": 42.3
+        },
+        "code_files": {
+          "baseline": 14,
+          "current": 169,
+          "change": 155,
+          "growth_percent": 1107.1
+        },
+        "code_bytes": {
+          "baseline": 940021,
+          "current": 1345639,
+          "change": 405618,
+          "growth_percent": 43.1
+        },
+        "code_physical_lines": {
+          "baseline": 28136,
+          "current": 41625,
+          "change": 13489,
+          "growth_percent": 47.9
+        },
+        "code_nonblank_lines": {
+          "baseline": 22870,
+          "current": 34673,
+          "change": 11803,
+          "growth_percent": 51.6
+        },
+        "document_files": {
+          "baseline": 5,
+          "current": 38,
+          "change": 33,
+          "growth_percent": 660.0
+        },
+        "document_bytes": {
+          "baseline": 126253,
+          "current": 331142,
+          "change": 204889,
+          "growth_percent": 162.3
+        },
+        "text_document_files": {
+          "baseline": 5,
+          "current": 38,
+          "change": 33,
+          "growth_percent": 660.0
+        },
+        "text_document_physical_lines": {
+          "baseline": 2309,
+          "current": 7357,
+          "change": 5048,
+          "growth_percent": 218.6
+        },
+        "text_document_nonblank_lines": {
+          "baseline": 1720,
+          "current": 5433,
+          "change": 3713,
+          "growth_percent": 215.9
+        },
+        "markdown_files": {
+          "baseline": 5,
+          "current": 38,
+          "change": 33,
+          "growth_percent": 660.0
+        },
+        "markdown_bytes": {
+          "baseline": 126253,
+          "current": 331142,
+          "change": 204889,
+          "growth_percent": 162.3
+        },
+        "markdown_physical_lines": {
+          "baseline": 2309,
+          "current": 7357,
+          "change": 5048,
+          "growth_percent": 218.6
+        },
+        "markdown_nonblank_lines": {
+          "baseline": 1720,
+          "current": 5433,
+          "change": 3713,
+          "growth_percent": 215.9
+        }
+      },
+      "newly_measurable_repositories": [
+        "JeanHuguesRobert/survey",
+        "JeanHuguesRobert/StructEnv",
+        "JeanHuguesRobert/serra",
+        "acorsica/Kudos"
+      ],
+      "no_longer_measurable_repositories": []
+    },
+    {
+      "baseline_at": "2025-10-24T17:40:04+00:00",
+      "as_of": "2026-10-24T17:40:04+00:00",
+      "comparable_repository_count": 7,
+      "comparable_repositories": [
+        "JeanHuguesRobert/inseme",
+        "JeanHuguesRobert/barons-Mariani",
+        "JeanHuguesRobert/Inox",
+        "JeanHuguesRobert/survey",
+        "JeanHuguesRobert/StructEnv",
+        "JeanHuguesRobert/serra",
+        "acorsica/Kudos"
+      ],
+      "comparable_cohort_totals": {
+        "blobs": {
+          "baseline": 324,
+          "current": 4885,
+          "change": 4561,
+          "growth_percent": 1407.7
+        },
+        "bytes": {
+          "baseline": 6427321,
+          "current": 368521721,
+          "change": 362094400,
+          "growth_percent": 5633.7
+        },
+        "code_files": {
+          "baseline": 169,
+          "current": 2206,
+          "change": 2037,
+          "growth_percent": 1205.3
+        },
+        "code_bytes": {
+          "baseline": 1345639,
+          "current": 14793048,
+          "change": 13447409,
+          "growth_percent": 999.3
+        },
+        "code_physical_lines": {
+          "baseline": 41625,
+          "current": 430502,
+          "change": 388877,
+          "growth_percent": 934.2
+        },
+        "code_nonblank_lines": {
+          "baseline": 34673,
+          "current": 385896,
+          "change": 351223,
+          "growth_percent": 1013.0
+        },
+        "document_files": {
+          "baseline": 38,
+          "current": 1902,
+          "change": 1864,
+          "growth_percent": 4905.3
+        },
+        "document_bytes": {
+          "baseline": 331142,
+          "current": 289798321,
+          "change": 289467179,
+          "growth_percent": 87414.8
+        },
+        "text_document_files": {
+          "baseline": 38,
+          "current": 1790,
+          "change": 1752,
+          "growth_percent": 4610.5
+        },
+        "text_document_physical_lines": {
+          "baseline": 7357,
+          "current": 559634,
+          "change": 552277,
+          "growth_percent": 7506.8
+        },
+        "text_document_nonblank_lines": {
+          "baseline": 5433,
+          "current": 379345,
+          "change": 373912,
+          "growth_percent": 6882.2
+        },
+        "markdown_files": {
+          "baseline": 38,
+          "current": 1731,
+          "change": 1693,
+          "growth_percent": 4455.3
+        },
+        "markdown_bytes": {
+          "baseline": 331142,
+          "current": 26299808,
+          "change": 25968666,
+          "growth_percent": 7842.2
+        },
+        "markdown_physical_lines": {
+          "baseline": 7357,
+          "current": 534370,
+          "change": 527013,
+          "growth_percent": 7163.4
+        },
+        "markdown_nonblank_lines": {
+          "baseline": 5433,
+          "current": 360336,
+          "change": 354903,
+          "growth_percent": 6532.4
+        }
+      },
+      "portfolio_repository_counts": {
+        "baseline": 7,
+        "current": 17
+      },
+      "portfolio_totals": {
+        "blobs": {
+          "baseline": 324,
+          "current": 7105,
+          "change": 6781,
+          "growth_percent": 2092.9
+        },
+        "bytes": {
+          "baseline": 6427321,
+          "current": 390373445,
+          "change": 383946124,
+          "growth_percent": 5973.7
+        },
+        "code_files": {
+          "baseline": 169,
+          "current": 3158,
+          "change": 2989,
+          "growth_percent": 1768.6
+        },
+        "code_bytes": {
+          "baseline": 1345639,
+          "current": 21924085,
+          "change": 20578446,
+          "growth_percent": 1529.3
+        },
+        "code_physical_lines": {
+          "baseline": 41625,
+          "current": 616690,
+          "change": 575065,
+          "growth_percent": 1381.5
+        },
+        "code_nonblank_lines": {
+          "baseline": 34673,
+          "current": 556112,
+          "change": 521439,
+          "growth_percent": 1503.9
+        },
+        "document_files": {
+          "baseline": 38,
+          "current": 2691,
+          "change": 2653,
+          "growth_percent": 6981.6
+        },
+        "document_bytes": {
+          "baseline": 331142,
+          "current": 301312750,
+          "change": 300981608,
+          "growth_percent": 90892.0
+        },
+        "text_document_files": {
+          "baseline": 38,
+          "current": 2579,
+          "change": 2541,
+          "growth_percent": 6686.8
+        },
+        "text_document_physical_lines": {
+          "baseline": 7357,
+          "current": 801742,
+          "change": 794385,
+          "growth_percent": 10797.7
+        },
+        "text_document_nonblank_lines": {
+          "baseline": 5433,
+          "current": 558967,
+          "change": 553534,
+          "growth_percent": 10188.4
+        },
+        "markdown_files": {
+          "baseline": 38,
+          "current": 2497,
+          "change": 2459,
+          "growth_percent": 6471.1
+        },
+        "markdown_bytes": {
+          "baseline": 331142,
+          "current": 36227600,
+          "change": 35896458,
+          "growth_percent": 10840.2
+        },
+        "markdown_physical_lines": {
+          "baseline": 7357,
+          "current": 745417,
+          "change": 738060,
+          "growth_percent": 10032.1
+        },
+        "markdown_nonblank_lines": {
+          "baseline": 5433,
+          "current": 517583,
+          "change": 512150,
+          "growth_percent": 9426.7
+        }
+      },
+      "newly_measurable_repositories": [
+        "JeanHuguesRobert/cogentia",
+        "JeanHuguesRobert/FractaVolta",
+        "JeanHuguesRobert/operium",
+        "JeanHuguesRobert/ubikia",
+        "acorsica/gouvernance",
+        "JeanHuguesRobert/JeanHuguesRobert",
+        "JeanHuguesRobert/marenostrum",
+        "acorsica/institut-mariani",
+        "acorsica/acorsica.org",
+        "acorsica/privai"
+      ],
+      "no_longer_measurable_repositories": []
+    }
+  ],
+  "fixed_cohort_repository_count": 2,
+  "fixed_cohort_repositories": [
+    "JeanHuguesRobert/inseme",
+    "JeanHuguesRobert/Inox"
+  ],
+  "fixed_cohort_snapshots": [
+    {
+      "as_of": "2022-10-24T17:40:04+00:00",
+      "repository_count": 2,
+      "totals": {
+        "blobs": 46,
+        "bytes": 1913566,
+        "code_files": 4,
+        "code_bytes": 197534,
+        "code_physical_lines": 7121,
+        "code_nonblank_lines": 5635,
+        "document_files": 11,
+        "document_bytes": 14770,
+        "text_document_files": 11,
+        "text_document_physical_lines": 332,
+        "text_document_nonblank_lines": 191,
+        "markdown_files": 11,
+        "markdown_bytes": 14770,
+        "markdown_physical_lines": 332,
+        "markdown_nonblank_lines": 191
+      },
+      "growth_from_first_percent": {
+        "blobs": 0.0,
+        "bytes": 0.0,
+        "code_files": 0.0,
+        "code_bytes": 0.0,
+        "code_physical_lines": 0.0,
+        "code_nonblank_lines": 0.0,
+        "document_files": 0.0,
+        "document_bytes": 0.0,
+        "text_document_files": 0.0,
+        "text_document_physical_lines": 0.0,
+        "text_document_nonblank_lines": 0.0,
+        "markdown_files": 0.0,
+        "markdown_bytes": 0.0,
+        "markdown_physical_lines": 0.0,
+        "markdown_nonblank_lines": 0.0
+      }
+    },
+    {
+      "as_of": "2023-10-24T17:40:04+00:00",
+      "repository_count": 2,
+      "totals": {
+        "blobs": 97,
+        "bytes": 4508790,
+        "code_files": 14,
+        "code_bytes": 940021,
+        "code_physical_lines": 28136,
+        "code_nonblank_lines": 22870,
+        "document_files": 4,
+        "document_bytes": 119527,
+        "text_document_files": 4,
+        "text_document_physical_lines": 2215,
+        "text_document_nonblank_lines": 1646,
+        "markdown_files": 4,
+        "markdown_bytes": 119527,
+        "markdown_physical_lines": 2215,
+        "markdown_nonblank_lines": 1646
+      },
+      "growth_from_first_percent": {
+        "blobs": 110.9,
+        "bytes": 135.6,
+        "code_files": 250.0,
+        "code_bytes": 375.9,
+        "code_physical_lines": 295.1,
+        "code_nonblank_lines": 305.9,
+        "document_files": -63.6,
+        "document_bytes": 709.3,
+        "text_document_files": -63.6,
+        "text_document_physical_lines": 567.2,
+        "text_document_nonblank_lines": 761.8,
+        "markdown_files": -63.6,
+        "markdown_bytes": 709.3,
+        "markdown_physical_lines": 567.2,
+        "markdown_nonblank_lines": 761.8
+      }
+    },
+    {
+      "as_of": "2024-10-24T17:40:04+00:00",
+      "repository_count": 2,
+      "totals": {
+        "blobs": 97,
+        "bytes": 4508790,
+        "code_files": 14,
+        "code_bytes": 940021,
+        "code_physical_lines": 28136,
+        "code_nonblank_lines": 22870,
+        "document_files": 4,
+        "document_bytes": 119527,
+        "text_document_files": 4,
+        "text_document_physical_lines": 2215,
+        "text_document_nonblank_lines": 1646,
+        "markdown_files": 4,
+        "markdown_bytes": 119527,
+        "markdown_physical_lines": 2215,
+        "markdown_nonblank_lines": 1646
+      },
+      "growth_from_first_percent": {
+        "blobs": 110.9,
+        "bytes": 135.6,
+        "code_files": 250.0,
+        "code_bytes": 375.9,
+        "code_physical_lines": 295.1,
+        "code_nonblank_lines": 305.9,
+        "document_files": -63.6,
+        "document_bytes": 709.3,
+        "text_document_files": -63.6,
+        "text_document_physical_lines": 567.2,
+        "text_document_nonblank_lines": 761.8,
+        "markdown_files": -63.6,
+        "markdown_bytes": 709.3,
+        "markdown_physical_lines": 567.2,
+        "markdown_nonblank_lines": 761.8
+      }
+    },
+    {
+      "as_of": "2025-10-24T17:40:04+00:00",
+      "repository_count": 2,
+      "totals": {
+        "blobs": 101,
+        "bytes": 4525724,
+        "code_files": 17,
+        "code_bytes": 955585,
+        "code_physical_lines": 28799,
+        "code_nonblank_lines": 23424,
+        "document_files": 4,
+        "document_bytes": 119530,
+        "text_document_files": 4,
+        "text_document_physical_lines": 2215,
+        "text_document_nonblank_lines": 1646,
+        "markdown_files": 4,
+        "markdown_bytes": 119530,
+        "markdown_physical_lines": 2215,
+        "markdown_nonblank_lines": 1646
+      },
+      "growth_from_first_percent": {
+        "blobs": 119.6,
+        "bytes": 136.5,
+        "code_files": 325.0,
+        "code_bytes": 383.8,
+        "code_physical_lines": 304.4,
+        "code_nonblank_lines": 315.7,
+        "document_files": -63.6,
+        "document_bytes": 709.3,
+        "text_document_files": -63.6,
+        "text_document_physical_lines": 567.2,
+        "text_document_nonblank_lines": 761.8,
+        "markdown_files": -63.6,
+        "markdown_bytes": 709.3,
+        "markdown_physical_lines": 567.2,
+        "markdown_nonblank_lines": 761.8
+      }
+    },
+    {
+      "as_of": "2026-10-24T17:40:04+00:00",
+      "repository_count": 2,
+      "totals": {
+        "blobs": 2406,
+        "bytes": 159733638,
+        "code_files": 1499,
+        "code_bytes": 10113615,
+        "code_physical_lines": 291992,
+        "code_nonblank_lines": 261780,
+        "document_files": 574,
+        "document_bytes": 134883186,
+        "text_document_files": 533,
+        "text_document_physical_lines": 156309,
+        "text_document_nonblank_lines": 107064,
+        "markdown_files": 523,
+        "markdown_bytes": 5334057,
+        "markdown_physical_lines": 152309,
+        "markdown_nonblank_lines": 104134
+      },
+      "growth_from_first_percent": {
+        "blobs": 5130.4,
+        "bytes": 8247.4,
+        "code_files": 37375.0,
+        "code_bytes": 5019.9,
+        "code_physical_lines": 4000.4,
+        "code_nonblank_lines": 4545.6,
+        "document_files": 5118.2,
+        "document_bytes": 913124.0,
+        "text_document_files": 4745.5,
+        "text_document_physical_lines": 46981.0,
+        "text_document_nonblank_lines": 55954.5,
+        "markdown_files": 4654.5,
+        "markdown_bytes": 36014.1,
+        "markdown_physical_lines": 45776.2,
+        "markdown_nonblank_lines": 54420.4
+      }
+    }
+  ],
+  "filters": {
+    "code_extensions": [
+      ".c",
+      ".cjs",
+      ".cpp",
+      ".go",
+      ".h",
+      ".hpp",
+      ".java",
+      ".js",
+      ".jsx",
+      ".kt",
+      ".mjs",
+      ".php",
+      ".py",
+      ".rb",
+      ".rs",
+      ".sh",
+      ".sql",
+      ".swift",
+      ".ts",
+      ".tsx"
+    ],
+    "document_extensions": [
+      ".adoc",
+      ".asciidoc",
+      ".doc",
+      ".docx",
+      ".markdown",
+      ".md",
+      ".mdx",
+      ".odt",
+      ".org",
+      ".pdf",
+      ".rst",
+      ".tex",
+      ".txt"
+    ],
+    "text_document_extensions": [
+      ".adoc",
+      ".asciidoc",
+      ".markdown",
+      ".md",
+      ".mdx",
+      ".org",
+      ".rst",
+      ".tex",
+      ".txt"
+    ],
+    "markdown_extensions": [
+      ".markdown",
+      ".md",
+      ".mdx"
+    ],
+    "excluded_path_regex": "(^|/)(node_modules|vendor|dist|build|coverage|generated|__generated__|snapshots?|fixtures|target|\\.next)(/|$)"
+  },
+  "limitations": [
+    "portfolio growth percentages include repositories first measurable since the previous snapshot",
+    "comparable-cohort percentages use only repositories with snapshots at both dates",
+    "repositories with no snapshot are not assigned a fabricated zero per-repository percentage",
+    "line counts are physical/nonblank lines, not language-aware SLOC",
+    "Git tree sizes count each repository copy separately"
+  ],
+  "repositories": [
+    {
+      "repo": "JeanHuguesRobert/inseme",
+      "status": "ok",
+      "branch": "main",
+      "ref": "refs/remotes/origin/main",
+      "snapshots": {
+        "2022-10-24T17:40:04+00:00": {
+          "commit": "f6c45385bd2c3f827bd466ce71024b0bbbe2c6ec",
+          "blobs": 9,
+          "bytes": 128595,
+          "code_files": 1,
+          "code_bytes": 63259,
+          "code_physical_lines": 2377,
+          "code_nonblank_lines": 1925,
+          "document_files": 1,
+          "document_bytes": 10850,
+          "text_document_files": 1,
+          "text_document_physical_lines": 227,
+          "text_document_nonblank_lines": 128,
+          "markdown_files": 1,
+          "markdown_bytes": 10850,
+          "markdown_physical_lines": 227,
+          "markdown_nonblank_lines": 128
+        },
+        "2023-10-24T17:40:04+00:00": {
+          "commit": "f6c45385bd2c3f827bd466ce71024b0bbbe2c6ec",
+          "blobs": 9,
+          "bytes": 128595,
+          "code_files": 1,
+          "code_bytes": 63259,
+          "code_physical_lines": 2377,
+          "code_nonblank_lines": 1925,
+          "document_files": 1,
+          "document_bytes": 10850,
+          "text_document_files": 1,
+          "text_document_physical_lines": 227,
+          "text_document_nonblank_lines": 128,
+          "markdown_files": 1,
+          "markdown_bytes": 10850,
+          "markdown_physical_lines": 227,
+          "markdown_nonblank_lines": 128
+        },
+        "2024-10-24T17:40:04+00:00": {
+          "commit": "f6c45385bd2c3f827bd466ce71024b0bbbe2c6ec",
+          "blobs": 9,
+          "bytes": 128595,
+          "code_files": 1,
+          "code_bytes": 63259,
+          "code_physical_lines": 2377,
+          "code_nonblank_lines": 1925,
+          "document_files": 1,
+          "document_bytes": 10850,
+          "text_document_files": 1,
+          "text_document_physical_lines": 227,
+          "text_document_nonblank_lines": 128,
+          "markdown_files": 1,
+          "markdown_bytes": 10850,
+          "markdown_physical_lines": 227,
+          "markdown_nonblank_lines": 128
+        },
+        "2025-10-24T17:40:04+00:00": {
+          "commit": "f6c45385bd2c3f827bd466ce71024b0bbbe2c6ec",
+          "blobs": 9,
+          "bytes": 128595,
+          "code_files": 1,
+          "code_bytes": 63259,
+          "code_physical_lines": 2377,
+          "code_nonblank_lines": 1925,
+          "document_files": 1,
+          "document_bytes": 10850,
+          "text_document_files": 1,
+          "text_document_physical_lines": 227,
+          "text_document_nonblank_lines": 128,
+          "markdown_files": 1,
+          "markdown_bytes": 10850,
+          "markdown_physical_lines": 227,
+          "markdown_nonblank_lines": 128
+        },
+        "2026-10-24T17:40:04+00:00": {
+          "commit": "3322150b952b11f8664cf8190c9152d126925ceb",
+          "blobs": 2243,
+          "bytes": 154583123,
+          "code_files": 1462,
+          "code_bytes": 9059349,
+          "code_physical_lines": 260802,
+          "code_nonblank_lines": 235907,
+          "document_files": 539,
+          "document_bytes": 134222957,
+          "text_document_files": 498,
+          "text_document_physical_lines": 141167,
+          "text_document_nonblank_lines": 95645,
+          "markdown_files": 490,
+          "markdown_bytes": 4869441,
+          "markdown_physical_lines": 141021,
+          "markdown_nonblank_lines": 95511
+        }
+      }
+    },
+    {
+      "repo": "JeanHuguesRobert/cogentia",
+      "status": "ok",
+      "branch": "main",
+      "ref": "refs/remotes/origin/main",
+      "snapshots": {
+        "2022-10-24T17:40:04+00:00": null,
+        "2023-10-24T17:40:04+00:00": null,
+        "2024-10-24T17:40:04+00:00": null,
+        "2025-10-24T17:40:04+00:00": null,
+        "2026-10-24T17:40:04+00:00": {
+          "commit": "161b043d9f0a2f6a161d80ce106dcc14ac340033",
+          "blobs": 1228,
+          "bytes": 11558483,
+          "code_files": 623,
+          "code_bytes": 5598031,
+          "code_physical_lines": 143839,
+          "code_nonblank_lines": 131730,
+          "document_files": 373,
+          "document_bytes": 5136280,
+          "text_document_files": 373,
+          "text_document_physical_lines": 119102,
+          "text_document_nonblank_lines": 88561,
+          "markdown_files": 370,
+          "markdown_bytes": 4935563,
+          "markdown_physical_lines": 115165,
+          "markdown_nonblank_lines": 85701
+        }
+      }
+    },
+    {
+      "repo": "JeanHuguesRobert/FractaVolta",
+      "status": "ok",
+      "branch": "main",
+      "ref": "refs/remotes/origin/main",
+      "snapshots": {
+        "2022-10-24T17:40:04+00:00": null,
+        "2023-10-24T17:40:04+00:00": null,
+        "2024-10-24T17:40:04+00:00": null,
+        "2025-10-24T17:40:04+00:00": null,
+        "2026-10-24T17:40:04+00:00": {
+          "commit": "4a8d1b8b32578350baf3779913032748656472bd",
+          "blobs": 138,
+          "bytes": 2232889,
+          "code_files": 10,
+          "code_bytes": 136187,
+          "code_physical_lines": 3080,
+          "code_nonblank_lines": 2806,
+          "document_files": 96,
+          "document_bytes": 1522368,
+          "text_document_files": 96,
+          "text_document_physical_lines": 28488,
+          "text_document_nonblank_lines": 20028,
+          "markdown_files": 93,
+          "markdown_bytes": 1323575,
+          "markdown_physical_lines": 24557,
+          "markdown_nonblank_lines": 17170
+        }
+      }
+    },
+    {
+      "repo": "JeanHuguesRobert/operium",
+      "status": "ok",
+      "branch": "main",
+      "ref": "refs/remotes/origin/main",
+      "snapshots": {
+        "2022-10-24T17:40:04+00:00": null,
+        "2023-10-24T17:40:04+00:00": null,
+        "2024-10-24T17:40:04+00:00": null,
+        "2025-10-24T17:40:04+00:00": null,
+        "2026-10-24T17:40:04+00:00": {
+          "commit": "474f50ee26f15b9c20c6be6ef1b57a811c94dc06",
+          "blobs": 431,
+          "bytes": 2426080,
+          "code_files": 229,
+          "code_bytes": 1064147,
+          "code_physical_lines": 29901,
+          "code_nonblank_lines": 27236,
+          "document_files": 98,
+          "document_bytes": 1025109,
+          "text_document_files": 98,
+          "text_document_physical_lines": 25229,
+          "text_document_nonblank_lines": 19730,
+          "markdown_files": 96,
+          "markdown_bytes": 893057,
+          "markdown_physical_lines": 22663,
+          "markdown_nonblank_lines": 17897
+        }
+      }
+    },
+    {
+      "repo": "JeanHuguesRobert/barons-Mariani",
+      "status": "ok",
+      "branch": "main",
+      "ref": "refs/remotes/origin/main",
+      "snapshots": {
+        "2022-10-24T17:40:04+00:00": null,
+        "2023-10-24T17:40:04+00:00": {
+          "commit": "514ed3e38025db406b0ba8c17890531ddb057e03",
+          "blobs": 1,
+          "bytes": 6726,
+          "code_files": 0,
+          "code_bytes": 0,
+          "code_physical_lines": 0,
+          "code_nonblank_lines": 0,
+          "document_files": 1,
+          "document_bytes": 6726,
+          "text_document_files": 1,
+          "text_document_physical_lines": 94,
+          "text_document_nonblank_lines": 74,
+          "markdown_files": 1,
+          "markdown_bytes": 6726,
+          "markdown_physical_lines": 94,
+          "markdown_nonblank_lines": 74
+        },
+        "2024-10-24T17:40:04+00:00": {
+          "commit": "514ed3e38025db406b0ba8c17890531ddb057e03",
+          "blobs": 1,
+          "bytes": 6726,
+          "code_files": 0,
+          "code_bytes": 0,
+          "code_physical_lines": 0,
+          "code_nonblank_lines": 0,
+          "document_files": 1,
+          "document_bytes": 6726,
+          "text_document_files": 1,
+          "text_document_physical_lines": 94,
+          "text_document_nonblank_lines": 74,
+          "markdown_files": 1,
+          "markdown_bytes": 6726,
+          "markdown_physical_lines": 94,
+          "markdown_nonblank_lines": 74
+        },
+        "2025-10-24T17:40:04+00:00": {
+          "commit": "514ed3e38025db406b0ba8c17890531ddb057e03",
+          "blobs": 1,
+          "bytes": 6726,
+          "code_files": 0,
+          "code_bytes": 0,
+          "code_physical_lines": 0,
+          "code_nonblank_lines": 0,
+          "document_files": 1,
+          "document_bytes": 6726,
+          "text_document_files": 1,
+          "text_document_physical_lines": 94,
+          "text_document_nonblank_lines": 74,
+          "markdown_files": 1,
+          "markdown_bytes": 6726,
+          "markdown_physical_lines": 94,
+          "markdown_nonblank_lines": 74
+        },
+        "2026-10-24T17:40:04+00:00": {
+          "commit": "58226aecf6143d5c576e7dc3bd711aa72955e60d",
+          "blobs": 1467,
+          "bytes": 67453107,
+          "code_files": 26,
+          "code_bytes": 172889,
+          "code_physical_lines": 3971,
+          "code_nonblank_lines": 3635,
+          "document_files": 1110,
+          "document_bytes": 21529833,
+          "text_document_files": 1080,
+          "text_document_physical_lines": 285978,
+          "text_document_nonblank_lines": 195206,
+          "markdown_files": 1047,
+          "markdown_bytes": 17770968,
+          "markdown_physical_lines": 281719,
+          "markdown_nonblank_lines": 192092
+        }
+      }
+    },
+    {
+      "repo": "JeanHuguesRobert/Inox",
+      "status": "ok",
+      "branch": "master",
+      "ref": "refs/remotes/origin/master",
+      "snapshots": {
+        "2022-10-24T17:40:04+00:00": {
+          "commit": "602d94f0279a26a3b43a5dcdd8d2b982e0fda26f",
+          "blobs": 37,
+          "bytes": 1784971,
+          "code_files": 3,
+          "code_bytes": 134275,
+          "code_physical_lines": 4744,
+          "code_nonblank_lines": 3710,
+          "document_files": 10,
+          "document_bytes": 3920,
+          "text_document_files": 10,
+          "text_document_physical_lines": 105,
+          "text_document_nonblank_lines": 63,
+          "markdown_files": 10,
+          "markdown_bytes": 3920,
+          "markdown_physical_lines": 105,
+          "markdown_nonblank_lines": 63
+        },
+        "2023-10-24T17:40:04+00:00": {
+          "commit": "6c881628af365e4fc52537b03215c02b3bbe8ff3",
+          "blobs": 88,
+          "bytes": 4380195,
+          "code_files": 13,
+          "code_bytes": 876762,
+          "code_physical_lines": 25759,
+          "code_nonblank_lines": 20945,
+          "document_files": 3,
+          "document_bytes": 108677,
+          "text_document_files": 3,
+          "text_document_physical_lines": 1988,
+          "text_document_nonblank_lines": 1518,
+          "markdown_files": 3,
+          "markdown_bytes": 108677,
+          "markdown_physical_lines": 1988,
+          "markdown_nonblank_lines": 1518
+        },
+        "2024-10-24T17:40:04+00:00": {
+          "commit": "6c881628af365e4fc52537b03215c02b3bbe8ff3",
+          "blobs": 88,
+          "bytes": 4380195,
+          "code_files": 13,
+          "code_bytes": 876762,
+          "code_physical_lines": 25759,
+          "code_nonblank_lines": 20945,
+          "document_files": 3,
+          "document_bytes": 108677,
+          "text_document_files": 3,
+          "text_document_physical_lines": 1988,
+          "text_document_nonblank_lines": 1518,
+          "markdown_files": 3,
+          "markdown_bytes": 108677,
+          "markdown_physical_lines": 1988,
+          "markdown_nonblank_lines": 1518
+        },
+        "2025-10-24T17:40:04+00:00": {
+          "commit": "6b3b1d108f189de4b5517294f6f8728143933fb4",
+          "blobs": 92,
+          "bytes": 4397129,
+          "code_files": 16,
+          "code_bytes": 892326,
+          "code_physical_lines": 26422,
+          "code_nonblank_lines": 21499,
+          "document_files": 3,
+          "document_bytes": 108680,
+          "text_document_files": 3,
+          "text_document_physical_lines": 1988,
+          "text_document_nonblank_lines": 1518,
+          "markdown_files": 3,
+          "markdown_bytes": 108680,
+          "markdown_physical_lines": 1988,
+          "markdown_nonblank_lines": 1518
+        },
+        "2026-10-24T17:40:04+00:00": {
+          "commit": "483ccf66041adcac9a7a263a1b8923b793740645",
+          "blobs": 163,
+          "bytes": 5150515,
+          "code_files": 37,
+          "code_bytes": 1054266,
+          "code_physical_lines": 31190,
+          "code_nonblank_lines": 25873,
+          "document_files": 35,
+          "document_bytes": 660229,
+          "text_document_files": 35,
+          "text_document_physical_lines": 15142,
+          "text_document_nonblank_lines": 11419,
+          "markdown_files": 33,
+          "markdown_bytes": 464616,
+          "markdown_physical_lines": 11288,
+          "markdown_nonblank_lines": 8623
+        }
+      }
+    },
+    {
+      "repo": "JeanHuguesRobert/survey",
+      "status": "ok",
+      "branch": "main",
+      "ref": "refs/remotes/origin/main",
+      "snapshots": {
+        "2022-10-24T17:40:04+00:00": null,
+        "2023-10-24T17:40:04+00:00": null,
+        "2024-10-24T17:40:04+00:00": null,
+        "2025-10-24T17:40:04+00:00": {
+          "commit": "9cdf11a039d6c347a54445cdb9d7d6e9bd7bcf49",
+          "blobs": 36,
+          "bytes": 282943,
+          "code_files": 23,
+          "code_bytes": 118179,
+          "code_physical_lines": 3266,
+          "code_nonblank_lines": 2932,
+          "document_files": 4,
+          "document_bytes": 12441,
+          "text_document_files": 4,
+          "text_document_physical_lines": 369,
+          "text_document_nonblank_lines": 277,
+          "markdown_files": 4,
+          "markdown_bytes": 12441,
+          "markdown_physical_lines": 369,
+          "markdown_nonblank_lines": 277
+        },
+        "2026-10-24T17:40:04+00:00": {
+          "commit": "89d4b38f118074dbdf22e73a6292f10726f2ea07",
+          "blobs": 759,
+          "bytes": 139182081,
+          "code_files": 519,
+          "code_bytes": 4045491,
+          "code_physical_lines": 118911,
+          "code_nonblank_lines": 106848,
+          "document_files": 162,
+          "document_bytes": 132523070,
+          "text_document_files": 121,
+          "text_document_physical_lines": 99461,
+          "text_document_nonblank_lines": 63344,
+          "markdown_files": 111,
+          "markdown_bytes": 2792268,
+          "markdown_physical_lines": 91442,
+          "markdown_nonblank_lines": 56841
+        }
+      }
+    },
+    {
+      "repo": "JeanHuguesRobert/ubikia",
+      "status": "ok",
+      "branch": "main",
+      "ref": "refs/remotes/origin/main",
+      "snapshots": {
+        "2022-10-24T17:40:04+00:00": null,
+        "2023-10-24T17:40:04+00:00": null,
+        "2024-10-24T17:40:04+00:00": null,
+        "2025-10-24T17:40:04+00:00": null,
+        "2026-10-24T17:40:04+00:00": {
+          "commit": "35e6927f88d647424e01ac224cec77b0cf6ade3e",
+          "blobs": 167,
+          "bytes": 1029649,
+          "code_files": 90,
+          "code_bytes": 332672,
+          "code_physical_lines": 9368,
+          "code_nonblank_lines": 8444,
+          "document_files": 46,
+          "document_bytes": 632046,
+          "text_document_files": 46,
+          "text_document_physical_lines": 17083,
+          "text_document_nonblank_lines": 12721,
+          "markdown_files": 43,
+          "markdown_bytes": 435983,
+          "markdown_physical_lines": 13214,
+          "markdown_nonblank_lines": 9917
+        }
+      }
+    },
+    {
+      "repo": "acorsica/gouvernance",
+      "status": "ok",
+      "branch": "main",
+      "ref": "refs/remotes/origin/main",
+      "snapshots": {
+        "2022-10-24T17:40:04+00:00": null,
+        "2023-10-24T17:40:04+00:00": null,
+        "2024-10-24T17:40:04+00:00": null,
+        "2025-10-24T17:40:04+00:00": null,
+        "2026-10-24T17:40:04+00:00": {
+          "commit": "95dbc11b0ea01482f74864dbf479dcf06d1ba2ea",
+          "blobs": 19,
+          "bytes": 232397,
+          "code_files": 0,
+          "code_bytes": 0,
+          "code_physical_lines": 0,
+          "code_nonblank_lines": 0,
+          "document_files": 15,
+          "document_bytes": 230194,
+          "text_document_files": 15,
+          "text_document_physical_lines": 4457,
+          "text_document_nonblank_lines": 3388,
+          "markdown_files": 13,
+          "markdown_bytes": 98142,
+          "markdown_physical_lines": 1891,
+          "markdown_nonblank_lines": 1555
+        }
+      }
+    },
+    {
+      "repo": "JeanHuguesRobert/JeanHuguesRobert",
+      "status": "ok",
+      "branch": "main",
+      "ref": "refs/remotes/origin/main",
+      "snapshots": {
+        "2022-10-24T17:40:04+00:00": null,
+        "2023-10-24T17:40:04+00:00": null,
+        "2024-10-24T17:40:04+00:00": null,
+        "2025-10-24T17:40:04+00:00": null,
+        "2026-10-24T17:40:04+00:00": {
+          "commit": "55e04fa084f58277cab871a5faf4e09384d891a2",
+          "blobs": 133,
+          "bytes": 2664045,
+          "code_files": 0,
+          "code_bytes": 0,
+          "code_physical_lines": 0,
+          "code_nonblank_lines": 0,
+          "document_files": 76,
+          "document_bytes": 1285651,
+          "text_document_files": 76,
+          "text_document_physical_lines": 17217,
+          "text_document_nonblank_lines": 12886,
+          "markdown_files": 74,
+          "markdown_bytes": 1153599,
+          "markdown_physical_lines": 14651,
+          "markdown_nonblank_lines": 11053
+        }
+      }
+    },
+    {
+      "repo": "JeanHuguesRobert/marenostrum",
+      "status": "ok",
+      "branch": "main",
+      "ref": "refs/remotes/origin/main",
+      "snapshots": {
+        "2022-10-24T17:40:04+00:00": null,
+        "2023-10-24T17:40:04+00:00": null,
+        "2024-10-24T17:40:04+00:00": null,
+        "2025-10-24T17:40:04+00:00": null,
+        "2026-10-24T17:40:04+00:00": {
+          "commit": "9462181cba23b07d2423ab7b1d15444874644dca",
+          "blobs": 60,
+          "bytes": 1054556,
+          "code_files": 0,
+          "code_bytes": 0,
+          "code_physical_lines": 0,
+          "code_nonblank_lines": 0,
+          "document_files": 54,
+          "document_bytes": 1045185,
+          "text_document_files": 54,
+          "text_document_physical_lines": 17900,
+          "text_document_nonblank_lines": 12533,
+          "markdown_files": 52,
+          "markdown_bytes": 846433,
+          "markdown_physical_lines": 13972,
+          "markdown_nonblank_lines": 9678
+        }
+      }
+    },
+    {
+      "repo": "JeanHuguesRobert/StructEnv",
+      "status": "ok",
+      "branch": "main",
+      "ref": "refs/remotes/origin/main",
+      "snapshots": {
+        "2022-10-24T17:40:04+00:00": null,
+        "2023-10-24T17:40:04+00:00": null,
+        "2024-10-24T17:40:04+00:00": null,
+        "2025-10-24T17:40:04+00:00": {
+          "commit": "ffb4fc8940854e224647226912575398d7d076d9",
+          "blobs": 10,
+          "bytes": 152691,
+          "code_files": 4,
+          "code_bytes": 28485,
+          "code_physical_lines": 1030,
+          "code_nonblank_lines": 905,
+          "document_files": 1,
+          "document_bytes": 62017,
+          "text_document_files": 1,
+          "text_document_physical_lines": 2256,
+          "text_document_nonblank_lines": 1711,
+          "markdown_files": 1,
+          "markdown_bytes": 62017,
+          "markdown_physical_lines": 2256,
+          "markdown_nonblank_lines": 1711
+        },
+        "2026-10-24T17:40:04+00:00": {
+          "commit": "17504731f73aca677fa802449c1477d32a48e25c",
+          "blobs": 18,
+          "bytes": 410035,
+          "code_files": 4,
+          "code_bytes": 32273,
+          "code_physical_lines": 1151,
+          "code_nonblank_lines": 1009,
+          "document_files": 8,
+          "document_bytes": 314878,
+          "text_document_files": 8,
+          "text_document_physical_lines": 7054,
+          "text_document_nonblank_lines": 5389,
+          "markdown_files": 6,
+          "markdown_bytes": 119265,
+          "markdown_physical_lines": 3200,
+          "markdown_nonblank_lines": 2593
+        }
+      }
+    },
+    {
+      "repo": "JeanHuguesRobert/serra",
+      "status": "ok",
+      "branch": "main",
+      "ref": "refs/remotes/origin/main",
+      "snapshots": {
+        "2022-10-24T17:40:04+00:00": null,
+        "2023-10-24T17:40:04+00:00": null,
+        "2024-10-24T17:40:04+00:00": null,
+        "2025-10-24T17:40:04+00:00": {
+          "commit": "2f66f5198aafd9e5927eeca7db8959036a004e25",
+          "blobs": 155,
+          "bytes": 1361331,
+          "code_files": 125,
+          "code_bytes": 243390,
+          "code_physical_lines": 8530,
+          "code_nonblank_lines": 7412,
+          "document_files": 9,
+          "document_bytes": 35047,
+          "text_document_files": 9,
+          "text_document_physical_lines": 1203,
+          "text_document_nonblank_lines": 951,
+          "markdown_files": 9,
+          "markdown_bytes": 35047,
+          "markdown_physical_lines": 1203,
+          "markdown_nonblank_lines": 951
+        },
+        "2026-10-24T17:40:04+00:00": {
+          "commit": "b757ffcbb27df2f7a19519b5f3eada6689e0c1c6",
+          "blobs": 206,
+          "bytes": 1443062,
+          "code_files": 158,
+          "code_bytes": 428780,
+          "code_physical_lines": 14477,
+          "code_nonblank_lines": 12624,
+          "document_files": 23,
+          "document_bytes": 250660,
+          "text_document_files": 23,
+          "text_document_physical_lines": 5629,
+          "text_document_nonblank_lines": 4411,
+          "markdown_files": 21,
+          "markdown_bytes": 118608,
+          "markdown_physical_lines": 3063,
+          "markdown_nonblank_lines": 2578
+        }
+      }
+    },
+    {
+      "repo": "acorsica/institut-mariani",
+      "status": "ok",
+      "branch": "main",
+      "ref": "refs/remotes/origin/main",
+      "snapshots": {
+        "2022-10-24T17:40:04+00:00": null,
+        "2023-10-24T17:40:04+00:00": null,
+        "2024-10-24T17:40:04+00:00": null,
+        "2025-10-24T17:40:04+00:00": null,
+        "2026-10-24T17:40:04+00:00": {
+          "commit": "5272c1e2b3ae490ee97357f1702000e109d1caf7",
+          "blobs": 11,
+          "bytes": 200528,
+          "code_files": 0,
+          "code_bytes": 0,
+          "code_physical_lines": 0,
+          "code_nonblank_lines": 0,
+          "document_files": 8,
+          "document_bytes": 198914,
+          "text_document_files": 8,
+          "text_document_physical_lines": 3712,
+          "text_document_nonblank_lines": 2831,
+          "markdown_files": 6,
+          "markdown_bytes": 66862,
+          "markdown_physical_lines": 1146,
+          "markdown_nonblank_lines": 998
+        }
+      }
+    },
+    {
+      "repo": "acorsica/acorsica.org",
+      "status": "ok",
+      "branch": "main",
+      "ref": "refs/remotes/origin/main",
+      "snapshots": {
+        "2022-10-24T17:40:04+00:00": null,
+        "2023-10-24T17:40:04+00:00": null,
+        "2024-10-24T17:40:04+00:00": null,
+        "2025-10-24T17:40:04+00:00": null,
+        "2026-10-24T17:40:04+00:00": {
+          "commit": "2cb061aa56a6a5e021bd63b36d2ac90103d1cd65",
+          "blobs": 12,
+          "bytes": 192103,
+          "code_files": 0,
+          "code_bytes": 0,
+          "code_physical_lines": 0,
+          "code_nonblank_lines": 0,
+          "document_files": 6,
+          "document_bytes": 184542,
+          "text_document_files": 6,
+          "text_document_physical_lines": 3407,
+          "text_document_nonblank_lines": 2638,
+          "markdown_files": 4,
+          "markdown_bytes": 52490,
+          "markdown_physical_lines": 841,
+          "markdown_nonblank_lines": 805
+        }
+      }
+    },
+    {
+      "repo": "acorsica/privai",
+      "status": "ok",
+      "branch": "main",
+      "ref": "refs/remotes/origin/main",
+      "snapshots": {
+        "2022-10-24T17:40:04+00:00": null,
+        "2023-10-24T17:40:04+00:00": null,
+        "2024-10-24T17:40:04+00:00": null,
+        "2025-10-24T17:40:04+00:00": null,
+        "2026-10-24T17:40:04+00:00": {
+          "commit": "9edac8428e701fa0c75dde4e34b0e9fc15826a27",
+          "blobs": 21,
+          "bytes": 260994,
+          "code_files": 0,
+          "code_bytes": 0,
+          "code_physical_lines": 0,
+          "code_nonblank_lines": 0,
+          "document_files": 17,
+          "document_bytes": 254140,
+          "text_document_files": 17,
+          "text_document_physical_lines": 5513,
+          "text_document_nonblank_lines": 4306,
+          "markdown_files": 15,
+          "markdown_bytes": 122088,
+          "markdown_physical_lines": 2947,
+          "markdown_nonblank_lines": 2473
+        }
+      }
+    },
+    {
+      "repo": "acorsica/Kudos",
+      "status": "ok",
+      "branch": "main",
+      "ref": "refs/remotes/origin/main",
+      "snapshots": {
+        "2022-10-24T17:40:04+00:00": null,
+        "2023-10-24T17:40:04+00:00": null,
+        "2024-10-24T17:40:04+00:00": null,
+        "2025-10-24T17:40:04+00:00": {
+          "commit": "3f70590326b9802a7311642713064c8db39ad032",
+          "blobs": 21,
+          "bytes": 97906,
+          "code_files": 0,
+          "code_bytes": 0,
+          "code_physical_lines": 0,
+          "code_nonblank_lines": 0,
+          "document_files": 19,
+          "document_bytes": 95381,
+          "text_document_files": 19,
+          "text_document_physical_lines": 1220,
+          "text_document_nonblank_lines": 774,
+          "markdown_files": 19,
+          "markdown_bytes": 95381,
+          "markdown_physical_lines": 1220,
+          "markdown_nonblank_lines": 774
+        },
+        "2026-10-24T17:40:04+00:00": {
+          "commit": "91860eb35035cf182a2b188f53624a8ec77cec22",
+          "blobs": 29,
+          "bytes": 299798,
+          "code_files": 0,
+          "code_bytes": 0,
+          "code_physical_lines": 0,
+          "code_nonblank_lines": 0,
+          "document_files": 25,
+          "document_bytes": 296694,
+          "text_document_files": 25,
+          "text_document_physical_lines": 5203,
+          "text_document_nonblank_lines": 3931,
+          "markdown_files": 23,
+          "markdown_bytes": 164642,
+          "markdown_physical_lines": 2637,
+          "markdown_nonblank_lines": 2098
+        }
+      }
+    }
+  ]
+}

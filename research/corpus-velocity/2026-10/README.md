@@ -8,10 +8,10 @@ est encore en cours.
 
 | Mesure | Fichiers | Taille | Lignes physiques | Lignes non vides |
 | --- | ---: | ---: | ---: | ---: |
-| Arbres Git complets | 7 108 | 390,39 MB | — | — |
-| Code, selon les extensions retenues | 3 160 | 21,93 MB | 616 834 | 556 234 |
-| Documents, selon les extensions retenues | 2 690 | 301,31 MB | — | — |
-| dont Markdown (`.md`, `.markdown`, `.mdx`) | 2 496 | 36,22 MB | 745 340 | 517 516 |
+| Arbres Git complets | 7 105 | 390,37 MB | — | — |
+| Code, selon les extensions retenues | 3 158 | 21,92 MB | 616 690 | 556 112 |
+| Documents, selon les extensions retenues | 2 691 | 301,31 MB | — | — |
+| dont Markdown (`.md`, `.markdown`, `.mdx`) | 2 497 | 36,23 MB | 745 417 | 517 583 |
 
 Les MB sont décimaux : 1 MB = 1 000 000 octets. Markdown est compris dans le
 total des documents. Le total des arbres Git comprend tous les types de
@@ -25,7 +25,7 @@ octets seulement.
 | Dépôt | Branche | Code : fichiers | Code : MB | Code : lignes phys./non vides | Docs : fichiers | Docs : MB | Markdown : lignes phys./non vides |
 | --- | :---: | ---: | ---: | ---: | ---: | ---: | ---: |
 | [inseme](https://github.com/JeanHuguesRobert/inseme) | `main` | 1 462 | 9,06 | 260 802 / 235 907 | 539 | 134,22 | 141 021 / 95 511 |
-| [cogentia](https://github.com/JeanHuguesRobert/cogentia) | `main` | 625 | 5,60 | 143 983 / 131 852 | 372 | 5,13 | 115 088 / 85 634 |
+| [cogentia](https://github.com/JeanHuguesRobert/cogentia) | `main` | 623 | 5,60 | 143 839 / 131 730 | 373 | 5,14 | 115 165 / 85 701 |
 | [FractaVolta](https://github.com/JeanHuguesRobert/FractaVolta) | `main` | 10 | 0,14 | 3 080 / 2 806 | 96 | 1,52 | 24 557 / 17 170 |
 | [operium](https://github.com/JeanHuguesRobert/operium) | `main` | 229 | 1,06 | 29 901 / 27 236 | 98 | 1,03 | 22 663 / 17 897 |
 | [barons-Mariani](https://github.com/JeanHuguesRobert/barons-Mariani) | `main` | 26 | 0,17 | 3 971 / 3 635 | 1 110 | 21,53 | 281 719 / 192 092 |
@@ -59,7 +59,42 @@ vides ; les lignes non vides excluent les lignes composées uniquement
 d’espaces. Ce sont des comptes bruts, pas des SLOC ni une mesure de logique
 exécutable.
 
-## Évolution à périmètre constant
+## Points annuels et variation d’une année à l’autre
+
+Les snapshots sont pris chaque **24 octobre à 17:40 UTC**, de 2022 à 2026.
+Celui de 2022 précède le lancement public de ChatGPT, le **30 novembre 2022**
+([annonce OpenAI](https://openai.com/index/chatgpt/)). Il sert de point de
+référence pré-lancement ; octobre 2023 est le premier point annuel après ce
+lancement.
+
+| Date | Dépôts mesurables | Code (MB, variation annuelle) | Lignes physiques de code (variation) | Documents (MB, variation annuelle) | Lignes physiques Markdown (variation) |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| 2022-10-24 | 2 | 0,20 — base | 7 121 — base | 0,01 — base | 332 — base |
+| 2023-10-24 | 3 | 0,94 (+375,9 %) | 28 136 (+295,1 %) | 0,13 (+754,8 %) | 2 309 (+595,5 %) |
+| 2024-10-24 | 3 | 0,94 (0,0 %) | 28 136 (0,0 %) | 0,13 (0,0 %) | 2 309 (0,0 %) |
+| 2025-10-24 | 7 | 1,35 (+43,1 %) | 41 625 (+47,9 %) | 0,33 (+162,3 %) | 7 357 (+218,6 %) |
+| 2026-10-24 | 17 | 21,92 (+1 529,3 %) | 616 690 (+1 381,5 %) | 301,31 (+90 892,0 %) | 745 417 (+10 032,1 %) |
+
+Ces variations portent sur le **portefeuille mesurable à chaque date** ; elles
+incluent donc les dépôts qui n’avaient pas encore de snapshot l’année
+précédente. Sur les deux dépôts mesurables à tous les points (`inseme` et
+`Inox`), la comparaison d’octobre 2022 à octobre 2026 donne **+5 019,9 %** de
+code en octets, **+4 000,4 %** en lignes physiques de code, **+913 124,0 %**
+de documents en octets et **+45 776,2 %** en lignes physiques Markdown. Les
+baselines étaient très petites ; les tailles absolues sont dans le rapport
+détaillé.
+
+Les dépôts sans snapshot au premier point ne reçoivent pas de taux individuel
+calculé à partir de zéro ; leur apparition est comprise dans la variation du
+portefeuille. Ces mesures suivent la taille du code et des documents ; à elles
+seules, elles n’attribuent pas cette croissance à l’IA ni ne mesurent la
+productivité personnelle.
+
+Les cinq points et les SHA des branches principales sont dans le
+[rapport annuel JSON](./annual-snapshots.json) et son
+[CSV](./annual-snapshots.csv).
+
+## Évolution mensuelle à périmètre constant
 
 Le nombre de dépôts ayant un snapshot mesurable passe de **7 en octobre 2025 à
 17 en octobre 2026**. Pour isoler l’évolution à périmètre constant, le tableau

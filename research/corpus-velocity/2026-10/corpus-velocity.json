@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-10-24T17:29:13+00:00",
+  "generated_at": "2026-10-24T17:37:23+00:00",
   "registry_sha256": "ceeabdc4e99ea62d311ddf470bbdc395c2f684a4abb17ea5341e12b59a48360d",
   "record_count": 221,
   "status_counts": {
@@ -1012,22 +1012,22 @@
       "partial": true,
       "branch": "main",
       "ref": "refs/remotes/origin/main",
-      "commit": "da8674d1d1950ae2f676b4ebe33ed282ebbd6666",
-      "blobs": 1231,
-      "bytes": 11570818,
-      "code_files": 625,
-      "code_bytes": 5604443,
-      "code_physical_lines": 143983,
-      "code_nonblank_lines": 131852,
-      "document_files": 372,
-      "document_bytes": 5130674,
-      "text_document_files": 372,
-      "text_document_physical_lines": 119025,
-      "text_document_nonblank_lines": 88494,
-      "markdown_files": 369,
-      "markdown_bytes": 4929957,
-      "markdown_physical_lines": 115088,
-      "markdown_nonblank_lines": 85634,
+      "commit": "161b043d9f0a2f6a161d80ce106dcc14ac340033",
+      "blobs": 1228,
+      "bytes": 11558483,
+      "code_files": 623,
+      "code_bytes": 5598031,
+      "code_physical_lines": 143839,
+      "code_nonblank_lines": 131730,
+      "document_files": 373,
+      "document_bytes": 5136280,
+      "text_document_files": 373,
+      "text_document_physical_lines": 119102,
+      "text_document_nonblank_lines": 88561,
+      "markdown_files": 370,
+      "markdown_bytes": 4935563,
+      "markdown_physical_lines": 115165,
+      "markdown_nonblank_lines": 85701,
       "excluded_files": 72,
       "by_language": {
         "JavaScript": {
@@ -1043,10 +1043,10 @@
           "nonblank_lines": 941
         },
         "Python": {
-          "files": 16,
-          "bytes": 61675,
-          "physical_lines": 1216,
-          "nonblank_lines": 1123
+          "files": 14,
+          "bytes": 55263,
+          "physical_lines": 1072,
+          "nonblank_lines": 1001
         },
         ".sh": {
           "files": 23,
