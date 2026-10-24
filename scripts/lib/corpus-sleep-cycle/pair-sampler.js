@@ -73,8 +73,13 @@ export function discoverCorpusDocuments(options = {}) {
   const view = options.view || PUBLIC_VIEW;
   const repos = filterReposForView(defaultMonorepoRepos(root), view);
   const docs = [];
+  const outOfBudget = () => {
+    if (options.deadlineMs !== undefined && Date.now() >= options.deadlineMs) { options.onPreempt?.(); return true; }
+    return false;
+  };
 
   for (const repo of repos) {
+    if (outOfBudget()) break;
     const repoDir = repo.absPath || path.resolve(root, repo.path || ".");
     if (!fs.existsSync(repoDir) || !fs.statSync(repoDir).isDirectory()) continue;
 
@@ -84,6 +89,7 @@ export function discoverCorpusDocuments(options = {}) {
       catch { return; }
 
       for (const entry of entries) {
+        if (outOfBudget()) break;
         if (entry.name.startsWith(".") && entry.name !== ".well-known") continue;
         if (entry.isDirectory()) {
           if (!SKIP_DIRS.has(entry.name)) {

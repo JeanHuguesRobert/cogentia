@@ -132,7 +132,10 @@ export function createInteractionSourceAdapter(config, { stateRoot, gmailReader 
               fs.writeFileSync(path.join(root, ".snapshot-ready"), revision, { mode: 0o600 });
             }
           } else revision = execFileSync("git", ["rev-parse", "HEAD"], gitOptions).trim();
-        } catch { unavailable = true; }
+        } catch (error) {
+          unavailable = true;
+          (aliases.__failures ||= []).push({ repository_ref: reference(`repository:${repository.name}`), phase: "repository_refresh", code: ["ENOENT", "EACCES", "EPERM", "ETIMEDOUT"].includes(error.code) ? error.code : "GIT_COMMAND_FAILED", exit_status: Number.isInteger(error.status) ? error.status : null });
+        }
         const tree = path.join(root, "interaction_packets");
         if (!fs.existsSync(tree)) { unavailable = true; continue; }
         const inspect = (file) => {
@@ -181,7 +184,8 @@ export function createInteractionSourceAdapter(config, { stateRoot, gmailReader 
           for (const row of rows) if (idPattern.test(keyOf(row.id))) group(keyOf(row.id)).rows.push({ date: dateOf(row.date), raw_status: row.status, ref, linked: true });
         } catch { unavailable = true; }
       }
-      const sorted = [...groups.values()].sort((a, b) => Number(idPattern.test(b.key)) - Number(idPattern.test(a.key)) || b.key.localeCompare(a.key));
+      const anchored = (c) => c.packets.some((p) => /^[a-f\d]{8,16}$/i.test(String(p.packet.source_messages?.sent_gmail_id || "")));
+      const sorted = [...groups.values()].sort((a, b) => Number(anchored(b)) - Number(anchored(a)) || Number(idPattern.test(b.key)) - Number(idPattern.test(a.key)) || b.key.localeCompare(a.key));
       const progress = readJson(progressFile, { after: "" });
       const pending = sorted.slice(sorted.findIndex((c) => c.key === progress.after) + 1);
       const chosen = (pending.length ? pending : sorted).slice(0, Math.min(config.maxCases || 10, 50));
@@ -201,7 +205,8 @@ export function createInteractionSourceAdapter(config, { stateRoot, gmailReader 
         const since = previous?.checked_at ? new Date(Math.max(Date.parse(from), Date.parse(previous.checked_at) - 3 * 86400000)).toISOString() : from;
         return { key: item.key, sent_id: new Set(locators).size === 1 ? locators[0] : "", known_kinds: known, since };
       });
-      const observed = await gmailReader({ cases: requests, from, through }, { env, signal, timeoutMs: config.readTimeoutMs || 45000 });
+      privateWrite(aliasesFile, aliases);
+      const observed = await gmailReader({ cases: requests, from, through, max_messages: Math.min(config.maxMessages || 20, 80) }, { env, signal, timeoutMs: config.readTimeoutMs || 45000 });
       const byKey = new Map(observed.map((c) => [c.key, c]));
       const cases = chosen.map((item) => {
         const observation = byKey.get(item.key);

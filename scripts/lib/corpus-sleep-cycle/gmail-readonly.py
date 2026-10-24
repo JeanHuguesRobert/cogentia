@@ -99,7 +99,7 @@ def main():
         client.login(user, password)
         password = None
         phase = "metadata"
-        result = read_cases(client, cases, request["through"])
+        result = read_cases(client, cases, request["through"], max_messages=max(1, min(int(request.get("max_messages", 20)), 80)))
         print(json.dumps({"status": "COMPLETED", "cases": result}))
     except (KeyError, FileNotFoundError, PermissionError):
         print(json.dumps({"status": "BLOCKED_SECURITY", "code": "GMAIL_CREDENTIALS_UNAVAILABLE", "phase": phase}))

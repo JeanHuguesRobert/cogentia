@@ -83,7 +83,12 @@ export async function runMonteCarloAudit(options = {}) {
   }
 
   // 2. Discover Documents (respecting privacy view)
-  const documents = discoverCorpusDocuments({ root, view });
+  let discoveryPreempted = false;
+  const documents = discoverCorpusDocuments({ root, view, deadlineMs: startedAt + maxWallTimeMs, onPreempt: () => { discoveryPreempted = true; } });
+  if (discoveryPreempted) {
+    const continuation = emitSleepCycleContinuation(queueRoot, { runId, reason: "wall_time_budget_exhausted", checkpoint: { discovery_pending: true }, accumulatedSignals: [], metrics: null, options: { seed: options.seed, view } });
+    return { status: "preempted", reason: "wall_time_budget_exhausted", phase: "document_discovery", continuation, metrics: null, queue_stats: reviewQueue.getQueueStats() };
+  }
   if (documents.length < 2) {
     return {
       status: "completed_empty",

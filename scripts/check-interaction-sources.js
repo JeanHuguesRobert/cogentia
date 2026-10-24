@@ -7,7 +7,7 @@ import { execFileSync } from "node:child_process";
 import { createInteractionSourceAdapter, parseInteractionRows, statusView } from "./lib/corpus-sleep-cycle/interaction-source-adapter.js";
 import { runConfiguredInteractions } from "./lib/corpus-sleep-cycle/configured-interactions.js";
 import { runCorpusSleepCycle } from "./run-corpus-sleep-cycle.js";
-import { runMonteCarloAudit, SleepCycleReviewQueue } from "./lib/corpus-sleep-cycle/index.js";
+import { runMonteCarloAudit, SleepCycleReviewQueue, discoverCorpusDocuments } from "./lib/corpus-sleep-cycle/index.js";
 
 const from = "2026-10-01T00:00:00Z", through = "2026-10-24T00:00:00Z";
 function fixture(t) {
@@ -140,4 +140,19 @@ test("acknowledgment does not contradict an explicitly substantive awaiting clai
   const finding = new SleepCycleReviewQueue({ root: f.stateRoot }).listPending({ kind: "interaction_evidence" })[0];
   // Only generic YAML "awaiting" may be contradicted; substantive register is preserved.
   assert.equal(finding.corrections.filter((c) => c.reason === "awaiting_despite_observed_inbound").length, 1);
+});
+
+test("document discovery honors an exhausted wall budget before scanning", (t) => {
+  const f = fixture(t);
+  let preempted = false;
+  const documents = discoverCorpusDocuments({ root: f.repo, deadlineMs: 0, onPreempt: () => { preempted = true; } });
+  assert.deepEqual(documents, []); assert.equal(preempted, true);
+});
+
+test("initial interaction-only probe cannot launch the unrelated audit or consolidation", async (t) => {
+  const f = fixture(t);
+  const result = await runCorpusSleepCycle({ root: f.repo, force: true, json: true, noCopEvidence: true,
+    interactionsOnly: true, interactionConfig: f.configFile, interactionGmailReader: f.gmailReader,
+    candidateLearningHook: () => { throw new Error("audit must not run in a source probe"); } });
+  assert.deepEqual(result.phases.map((p) => p.name), ["resource_qualification", "interaction_evidence"]);
 });
