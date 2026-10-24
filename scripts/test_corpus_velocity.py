@@ -40,18 +40,29 @@ class TreeMetricsTests(unittest.TestCase):
                    b"100644 blob dddddddddddddddddddddddddddddddddddddddd     9\ttests/check.test.js\0"
                    b"100644 blob eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee    10\tgenerated/index.md\0"
                    b"100644 blob ffffffffffffffffffffffffffffffffffffffff     6\tdocs/index.md\0")
-        with patch.object(module, "git", return_value=listing):
+        py_sha = b"a" * 40
+        js_sha = b"d" * 40
+        py_blob = b"print(1)\n# comment\n\n"
+        js_blob = b"test();\n"
+        cat_file = (py_sha + b" blob " + str(len(py_blob)).encode() + b"\n" + py_blob + b"\n" +
+                    js_sha + b" blob " + str(len(js_blob)).encode() + b"\n" + js_blob + b"\n")
+        with patch.object(module, "git", side_effect=[listing, cat_file]):
             metrics = module.tree_metrics("/fake", "deadbeef")
         self.assertEqual(metrics["blobs"], 6)
         self.assertEqual(metrics["bytes"], 201)
         self.assertEqual(metrics["code_files"], 2)
         self.assertEqual(metrics["source_files"], 2)
         self.assertEqual(metrics["code_bytes"], 132)
+        self.assertEqual(metrics["code_physical_lines"], 4)
+        self.assertEqual(metrics["code_nonblank_lines"], 3)
         self.assertEqual(metrics["markdown_files"], 2)
         self.assertEqual(metrics["derived_markdown_files"], 1)
         self.assertEqual(metrics["test_files"], 1)
         self.assertEqual(metrics["excluded_files"], 2)
         self.assertEqual(metrics["by_language"]["Python"]["bytes"], 123)
+        self.assertEqual(metrics["by_language"]["Python"]["physical_lines"], 3)
+        self.assertEqual(metrics["by_language"]["Python"]["nonblank_lines"], 2)
+        self.assertEqual(metrics["by_language"]["JavaScript"]["physical_lines"], 1)
 
 
     def test_unavailable_blob_size_must_not_be_reported_as_zero(self):

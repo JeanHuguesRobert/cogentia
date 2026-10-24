@@ -25,9 +25,9 @@ LANG = {".js": "JavaScript", ".jsx": "JavaScript", ".mjs": "JavaScript",
         ".py": "Python", ".rs": "Rust", ".go": "Go"}
 
 
-def git(repo, *args):
-    return subprocess.run(["git", "-C", str(repo), *args], stdout=subprocess.PIPE,
-                          stderr=subprocess.PIPE, check=True).stdout
+def git(repo, *args, input=None):
+    return subprocess.run(["git", "-C", str(repo), *args], input=input,
+                          stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=True).stdout
 
 
 def month_ends(start, end):
@@ -46,9 +46,11 @@ def month_ends(start, end):
 
 def tree_metrics(repo, commit):
     result = {"blobs": 0, "bytes": 0, "code_files": 0, "code_bytes": 0,
+              "code_physical_lines": 0, "code_nonblank_lines": 0,
               "markdown_files": 0, "derived_markdown_files": 0,
               "source_files": 0, "test_files": 0, "excluded_files": 0,
               "by_language": {}}
+    code_blobs = []
     # NUL-delimited Git tree output safely handles spaces and Unicode paths.
     entries = git(repo, "ls-tree", "-rz", "-l", commit).split(b"\0")
     for entry in entries:
@@ -80,9 +82,35 @@ def tree_metrics(repo, commit):
             result["source_files"] += 1
             result["code_bytes"] += size
             lang = LANG.get(suffix, suffix)
-            entry = result["by_language"].setdefault(lang, {"files": 0, "bytes": 0})
-            entry["files"] += 1
-            entry["bytes"] += size
+            language = result["by_language"].setdefault(
+                lang, {"files": 0, "bytes": 0, "physical_lines": 0, "nonblank_lines": 0})
+            language["files"] += 1
+            language["bytes"] += size
+            code_blobs.append((bits[2], lang))
+    if code_blobs:
+        request = b"".join(sha + b"\n" for sha, _ in code_blobs)
+        contents = git(repo, "cat-file", "--batch", input=request)
+        cursor = 0
+        for expected_sha, lang in code_blobs:
+            header_end = contents.find(b"\n", cursor)
+            if header_end < 0:
+                raise ValueError("incomplete cat-file batch header")
+            header = contents[cursor:header_end].split()
+            if len(header) != 3 or header[0] != expected_sha or header[1] != b"blob":
+                raise ValueError("unexpected cat-file batch response")
+            size = int(header[2])
+            start = header_end + 1
+            blob = contents[start:start + size]
+            if len(blob) != size or contents[start + size:start + size + 1] != b"\n":
+                raise ValueError("incomplete cat-file batch object")
+            cursor = start + size + 1
+            physical_lines = blob.count(b"\n") + int(bool(blob) and not blob.endswith(b"\n"))
+            nonblank_lines = sum(bool(line.strip()) for line in blob.splitlines())
+            result["code_physical_lines"] += physical_lines
+            result["code_nonblank_lines"] += nonblank_lines
+            language = result["by_language"][lang]
+            language["physical_lines"] += physical_lines
+            language["nonblank_lines"] += nonblank_lines
     return result
 
 
@@ -139,11 +167,12 @@ def main():
         "schema_version": 1, "period_start": args.start, "period_end": args.end,
         "coverage": "partial_unless_registry_exhaustive", "metrics": rows,
         "limitations": ["Git tree snapshot, not churn", "code extension filter",
-                        "generated/path exclusions heuristic", "no LOC/SLOC yet",
+                        "generated/path exclusions heuristic",
+                        "physical and nonblank line counts include comments and are not language-aware SLOC",
                         "no private-repository metrics exported"]}, indent=2) + "\n")
     fields = ["repo", "period", "status", "commit", "blobs", "bytes", "code_files",
-              "code_bytes", "markdown_files", "derived_markdown_files", "test_files",
-              "excluded_files", "partial", "reason"]
+              "code_bytes", "code_physical_lines", "code_nonblank_lines", "markdown_files",
+              "derived_markdown_files", "test_files", "excluded_files", "partial", "reason"]
     with (out / "corpus-velocity.csv").open("w", newline="") as f:
         writer = csv.DictWriter(f, fieldnames=fields, extrasaction="ignore", lineterminator="\n")
         writer.writeheader()

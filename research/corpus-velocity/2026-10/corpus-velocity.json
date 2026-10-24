@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-10-24T16:29:57+00:00",
+  "generated_at": "2026-10-24T16:31:17+00:00",
   "registry_sha256": "ceeabdc4e99ea62d311ddf470bbdc395c2f684a4abb17ea5341e12b59a48360d",
   "record_count": 221,
   "status_counts": {
@@ -21,6 +21,8 @@
       "bytes": 128595,
       "code_files": 1,
       "code_bytes": 63259,
+      "code_physical_lines": 2377,
+      "code_nonblank_lines": 1925,
       "markdown_files": 1,
       "derived_markdown_files": 0,
       "source_files": 1,
@@ -29,7 +31,9 @@
       "by_language": {
         "JavaScript": {
           "files": 1,
-          "bytes": 63259
+          "bytes": 63259,
+          "physical_lines": 2377,
+          "nonblank_lines": 1925
         }
       }
     },
@@ -43,6 +47,8 @@
       "bytes": 128595,
       "code_files": 1,
       "code_bytes": 63259,
+      "code_physical_lines": 2377,
+      "code_nonblank_lines": 1925,
       "markdown_files": 1,
       "derived_markdown_files": 0,
       "source_files": 1,
@@ -51,7 +57,9 @@
       "by_language": {
         "JavaScript": {
           "files": 1,
-          "bytes": 63259
+          "bytes": 63259,
+          "physical_lines": 2377,
+          "nonblank_lines": 1925
         }
       }
     },
@@ -65,6 +73,8 @@
       "bytes": 138684632,
       "code_files": 572,
       "code_bytes": 3856219,
+      "code_physical_lines": 111841,
+      "code_nonblank_lines": 100713,
       "markdown_files": 116,
       "derived_markdown_files": 0,
       "source_files": 572,
@@ -73,23 +83,33 @@
       "by_language": {
         "JavaScript": {
           "files": 511,
-          "bytes": 3480802
+          "bytes": 3480802,
+          "physical_lines": 101606,
+          "nonblank_lines": 91881
         },
         ".sh": {
           "files": 2,
-          "bytes": 1224
+          "bytes": 1224,
+          "physical_lines": 42,
+          "nonblank_lines": 33
         },
         ".sql": {
           "files": 55,
-          "bytes": 362455
+          "bytes": 362455,
+          "physical_lines": 9696,
+          "nonblank_lines": 8395
         },
         "Python": {
           "files": 1,
-          "bytes": 1085
+          "bytes": 1085,
+          "physical_lines": 38,
+          "nonblank_lines": 31
         },
         "TypeScript": {
           "files": 3,
-          "bytes": 10653
+          "bytes": 10653,
+          "physical_lines": 459,
+          "nonblank_lines": 373
         }
       }
     },
@@ -103,6 +123,8 @@
       "bytes": 148004891,
       "code_files": 808,
       "code_bytes": 5096763,
+      "code_physical_lines": 149824,
+      "code_nonblank_lines": 135159,
       "markdown_files": 312,
       "derived_markdown_files": 3,
       "source_files": 808,
@@ -111,23 +133,33 @@
       "by_language": {
         "JavaScript": {
           "files": 735,
-          "bytes": 4686502
+          "bytes": 4686502,
+          "physical_lines": 138581,
+          "nonblank_lines": 125469
         },
         ".sh": {
           "files": 2,
-          "bytes": 1224
+          "bytes": 1224,
+          "physical_lines": 42,
+          "nonblank_lines": 33
         },
         ".sql": {
           "files": 59,
-          "bytes": 369356
+          "bytes": 369356,
+          "physical_lines": 9861,
+          "nonblank_lines": 8542
         },
         "Python": {
           "files": 4,
-          "bytes": 19562
+          "bytes": 19562,
+          "physical_lines": 571,
+          "nonblank_lines": 477
         },
         "TypeScript": {
           "files": 8,
-          "bytes": 20119
+          "bytes": 20119,
+          "physical_lines": 769,
+          "nonblank_lines": 638
         }
       }
     },
@@ -141,6 +173,8 @@
       "bytes": 148667690,
       "code_files": 896,
       "code_bytes": 5483096,
+      "code_physical_lines": 162157,
+      "code_nonblank_lines": 146016,
       "markdown_files": 313,
       "derived_markdown_files": 3,
       "source_files": 896,
@@ -149,23 +183,33 @@
       "by_language": {
         "JavaScript": {
           "files": 825,
-          "bytes": 5079514
+          "bytes": 5079514,
+          "physical_lines": 151142,
+          "nonblank_lines": 136522
         },
         ".sh": {
           "files": 2,
-          "bytes": 1224
+          "bytes": 1224,
+          "physical_lines": 42,
+          "nonblank_lines": 33
         },
         ".sql": {
           "files": 59,
-          "bytes": 369305
+          "bytes": 369305,
+          "physical_lines": 9860,
+          "nonblank_lines": 8541
         },
         "Python": {
           "files": 4,
-          "bytes": 19562
+          "bytes": 19562,
+          "physical_lines": 571,
+          "nonblank_lines": 477
         },
         "TypeScript": {
           "files": 6,
-          "bytes": 13491
+          "bytes": 13491,
+          "physical_lines": 542,
+          "nonblank_lines": 443
         }
       }
     },
@@ -179,6 +223,8 @@
       "bytes": 148667690,
       "code_files": 896,
       "code_bytes": 5483096,
+      "code_physical_lines": 162157,
+      "code_nonblank_lines": 146016,
       "markdown_files": 313,
       "derived_markdown_files": 3,
       "source_files": 896,
@@ -187,23 +233,33 @@
       "by_language": {
         "JavaScript": {
           "files": 825,
-          "bytes": 5079514
+          "bytes": 5079514,
+          "physical_lines": 151142,
+          "nonblank_lines": 136522
         },
         ".sh": {
           "files": 2,
-          "bytes": 1224
+          "bytes": 1224,
+          "physical_lines": 42,
+          "nonblank_lines": 33
         },
         ".sql": {
           "files": 59,
-          "bytes": 369305
+          "bytes": 369305,
+          "physical_lines": 9860,
+          "nonblank_lines": 8541
         },
         "Python": {
           "files": 4,
-          "bytes": 19562
+          "bytes": 19562,
+          "physical_lines": 571,
+          "nonblank_lines": 477
         },
         "TypeScript": {
           "files": 6,
-          "bytes": 13491
+          "bytes": 13491,
+          "physical_lines": 542,
+          "nonblank_lines": 443
         }
       }
     },
@@ -217,6 +273,8 @@
       "bytes": 148883057,
       "code_files": 913,
       "code_bytes": 5585097,
+      "code_physical_lines": 165338,
+      "code_nonblank_lines": 148812,
       "markdown_files": 316,
       "derived_markdown_files": 3,
       "source_files": 913,
@@ -225,23 +283,33 @@
       "by_language": {
         "JavaScript": {
           "files": 842,
-          "bytes": 5181515
+          "bytes": 5181515,
+          "physical_lines": 154323,
+          "nonblank_lines": 139318
         },
         ".sh": {
           "files": 2,
-          "bytes": 1224
+          "bytes": 1224,
+          "physical_lines": 42,
+          "nonblank_lines": 33
         },
         ".sql": {
           "files": 59,
-          "bytes": 369305
+          "bytes": 369305,
+          "physical_lines": 9860,
+          "nonblank_lines": 8541
         },
         "Python": {
           "files": 4,
-          "bytes": 19562
+          "bytes": 19562,
+          "physical_lines": 571,
+          "nonblank_lines": 477
         },
         "TypeScript": {
           "files": 6,
-          "bytes": 13491
+          "bytes": 13491,
+          "physical_lines": 542,
+          "nonblank_lines": 443
         }
       }
     },
@@ -255,6 +323,8 @@
       "bytes": 149237708,
       "code_files": 925,
       "code_bytes": 5682925,
+      "code_physical_lines": 168593,
+      "code_nonblank_lines": 151583,
       "markdown_files": 334,
       "derived_markdown_files": 5,
       "source_files": 925,
@@ -263,23 +333,33 @@
       "by_language": {
         "JavaScript": {
           "files": 853,
-          "bytes": 5271499
+          "bytes": 5271499,
+          "physical_lines": 157335,
+          "nonblank_lines": 141910
         },
         ".sh": {
           "files": 2,
-          "bytes": 1224
+          "bytes": 1224,
+          "physical_lines": 42,
+          "nonblank_lines": 33
         },
         ".sql": {
           "files": 60,
-          "bytes": 376284
+          "bytes": 376284,
+          "physical_lines": 10092,
+          "nonblank_lines": 8710
         },
         "Python": {
           "files": 4,
-          "bytes": 19562
+          "bytes": 19562,
+          "physical_lines": 571,
+          "nonblank_lines": 477
         },
         "TypeScript": {
           "files": 6,
-          "bytes": 14356
+          "bytes": 14356,
+          "physical_lines": 553,
+          "nonblank_lines": 453
         }
       }
     },
@@ -293,6 +373,8 @@
       "bytes": 149975428,
       "code_files": 961,
       "code_bytes": 6094592,
+      "code_physical_lines": 178714,
+      "code_nonblank_lines": 160805,
       "markdown_files": 358,
       "derived_markdown_files": 5,
       "source_files": 961,
@@ -301,19 +383,27 @@
       "by_language": {
         "JavaScript": {
           "files": 891,
-          "bytes": 5684390
+          "bytes": 5684390,
+          "physical_lines": 167498,
+          "nonblank_lines": 151165
         },
         ".sql": {
           "files": 60,
-          "bytes": 376284
+          "bytes": 376284,
+          "physical_lines": 10092,
+          "nonblank_lines": 8710
         },
         "Python": {
           "files": 4,
-          "bytes": 19562
+          "bytes": 19562,
+          "physical_lines": 571,
+          "nonblank_lines": 477
         },
         "TypeScript": {
           "files": 6,
-          "bytes": 14356
+          "bytes": 14356,
+          "physical_lines": 553,
+          "nonblank_lines": 453
         }
       }
     },
@@ -327,6 +417,8 @@
       "bytes": 150955484,
       "code_files": 1032,
       "code_bytes": 6613395,
+      "code_physical_lines": 193663,
+      "code_nonblank_lines": 174395,
       "markdown_files": 381,
       "derived_markdown_files": 5,
       "source_files": 1032,
@@ -335,19 +427,27 @@
       "by_language": {
         "JavaScript": {
           "files": 950,
-          "bytes": 6115253
+          "bytes": 6115253,
+          "physical_lines": 180345,
+          "nonblank_lines": 162879
         },
         ".sql": {
           "files": 71,
-          "bytes": 446838
+          "bytes": 446838,
+          "physical_lines": 11577,
+          "nonblank_lines": 10012
         },
         "Python": {
           "files": 4,
-          "bytes": 19562
+          "bytes": 19562,
+          "physical_lines": 571,
+          "nonblank_lines": 477
         },
         "TypeScript": {
           "files": 7,
-          "bytes": 31742
+          "bytes": 31742,
+          "physical_lines": 1170,
+          "nonblank_lines": 1027
         }
       }
     },
@@ -361,6 +461,8 @@
       "bytes": 152478152,
       "code_files": 1224,
       "code_bytes": 7599987,
+      "code_physical_lines": 221973,
+      "code_nonblank_lines": 200323,
       "markdown_files": 447,
       "derived_markdown_files": 5,
       "source_files": 1224,
@@ -369,19 +471,27 @@
       "by_language": {
         "JavaScript": {
           "files": 1126,
-          "bytes": 6999170
+          "bytes": 6999170,
+          "physical_lines": 206024,
+          "nonblank_lines": 186433
         },
         ".sql": {
           "files": 80,
-          "bytes": 509222
+          "bytes": 509222,
+          "physical_lines": 12982,
+          "nonblank_lines": 11267
         },
         "TypeScript": {
           "files": 14,
-          "bytes": 72033
+          "bytes": 72033,
+          "physical_lines": 2396,
+          "nonblank_lines": 2146
         },
         "Python": {
           "files": 4,
-          "bytes": 19562
+          "bytes": 19562,
+          "physical_lines": 571,
+          "nonblank_lines": 477
         }
       }
     },
@@ -395,6 +505,8 @@
       "bytes": 153914050,
       "code_files": 1315,
       "code_bytes": 8580663,
+      "code_physical_lines": 249792,
+      "code_nonblank_lines": 225787,
       "markdown_files": 461,
       "derived_markdown_files": 5,
       "source_files": 1315,
@@ -403,19 +515,27 @@
       "by_language": {
         "JavaScript": {
           "files": 1213,
-          "bytes": 7915549
+          "bytes": 7915549,
+          "physical_lines": 231941,
+          "nonblank_lines": 210180
         },
         ".sql": {
           "files": 84,
-          "bytes": 534998
+          "bytes": 534998,
+          "physical_lines": 13619,
+          "nonblank_lines": 11841
         },
         "TypeScript": {
           "files": 14,
-          "bytes": 110554
+          "bytes": 110554,
+          "physical_lines": 3661,
+          "nonblank_lines": 3289
         },
         "Python": {
           "files": 4,
-          "bytes": 19562
+          "bytes": 19562,
+          "physical_lines": 571,
+          "nonblank_lines": 477
         }
       }
     },
@@ -429,6 +549,8 @@
       "bytes": 154343638,
       "code_files": 1409,
       "code_bytes": 8870952,
+      "code_physical_lines": 256511,
+      "code_nonblank_lines": 231906,
       "markdown_files": 482,
       "derived_markdown_files": 5,
       "source_files": 1409,
@@ -437,19 +559,27 @@
       "by_language": {
         "JavaScript": {
           "files": 1306,
-          "bytes": 8197454
+          "bytes": 8197454,
+          "physical_lines": 238357,
+          "nonblank_lines": 216041
         },
         ".sql": {
           "files": 85,
-          "bytes": 543257
+          "bytes": 543257,
+          "physical_lines": 13918,
+          "nonblank_lines": 12096
         },
         "TypeScript": {
           "files": 14,
-          "bytes": 110679
+          "bytes": 110679,
+          "physical_lines": 3665,
+          "nonblank_lines": 3292
         },
         "Python": {
           "files": 4,
-          "bytes": 19562
+          "bytes": 19562,
+          "physical_lines": 571,
+          "nonblank_lines": 477
         }
       }
     },
@@ -493,6 +623,8 @@
       "bytes": 408454,
       "code_files": 25,
       "code_bytes": 215628,
+      "code_physical_lines": 4871,
+      "code_nonblank_lines": 4302,
       "markdown_files": 5,
       "derived_markdown_files": 0,
       "source_files": 25,
@@ -501,11 +633,15 @@
       "by_language": {
         "JavaScript": {
           "files": 23,
-          "bytes": 177864
+          "bytes": 177864,
+          "physical_lines": 4127,
+          "nonblank_lines": 3684
         },
         ".sql": {
           "files": 2,
-          "bytes": 37764
+          "bytes": 37764,
+          "physical_lines": 744,
+          "nonblank_lines": 618
         }
       }
     },
@@ -519,6 +655,8 @@
       "bytes": 451315,
       "code_files": 38,
       "code_bytes": 225633,
+      "code_physical_lines": 4958,
+      "code_nonblank_lines": 4394,
       "markdown_files": 8,
       "derived_markdown_files": 0,
       "source_files": 38,
@@ -527,11 +665,15 @@
       "by_language": {
         "JavaScript": {
           "files": 32,
-          "bytes": 180671
+          "bytes": 180671,
+          "physical_lines": 4092,
+          "nonblank_lines": 3662
         },
         ".sql": {
           "files": 6,
-          "bytes": 44962
+          "bytes": 44962,
+          "physical_lines": 866,
+          "nonblank_lines": 732
         }
       }
     },
@@ -545,6 +687,8 @@
       "bytes": 1894401,
       "code_files": 43,
       "code_bytes": 606454,
+      "code_physical_lines": 13941,
+      "code_nonblank_lines": 12487,
       "markdown_files": 60,
       "derived_markdown_files": 2,
       "source_files": 43,
@@ -553,11 +697,15 @@
       "by_language": {
         "JavaScript": {
           "files": 39,
-          "bytes": 565091
+          "bytes": 565091,
+          "physical_lines": 13136,
+          "nonblank_lines": 11812
         },
         ".sql": {
           "files": 4,
-          "bytes": 41363
+          "bytes": 41363,
+          "physical_lines": 805,
+          "nonblank_lines": 675
         }
       }
     },
@@ -571,6 +719,8 @@
       "bytes": 3268471,
       "code_files": 74,
       "code_bytes": 1322491,
+      "code_physical_lines": 32719,
+      "code_nonblank_lines": 29812,
       "markdown_files": 123,
       "derived_markdown_files": 2,
       "source_files": 74,
@@ -579,11 +729,15 @@
       "by_language": {
         "JavaScript": {
           "files": 70,
-          "bytes": 1281128
+          "bytes": 1281128,
+          "physical_lines": 31914,
+          "nonblank_lines": 29137
         },
         ".sql": {
           "files": 4,
-          "bytes": 41363
+          "bytes": 41363,
+          "physical_lines": 805,
+          "nonblank_lines": 675
         }
       }
     },
@@ -597,6 +751,8 @@
       "bytes": 5328868,
       "code_files": 234,
       "code_bytes": 2404284,
+      "code_physical_lines": 63495,
+      "code_nonblank_lines": 57876,
       "markdown_files": 183,
       "derived_markdown_files": 2,
       "source_files": 234,
@@ -605,15 +761,21 @@
       "by_language": {
         "JavaScript": {
           "files": 210,
-          "bytes": 2304396
+          "bytes": 2304396,
+          "physical_lines": 60867,
+          "nonblank_lines": 55629
         },
         ".sql": {
           "files": 5,
-          "bytes": 44967
+          "bytes": 44967,
+          "physical_lines": 940,
+          "nonblank_lines": 803
         },
         ".sh": {
           "files": 19,
-          "bytes": 54921
+          "bytes": 54921,
+          "physical_lines": 1688,
+          "nonblank_lines": 1444
         }
       }
     },
@@ -627,6 +789,8 @@
       "bytes": 7757125,
       "code_files": 392,
       "code_bytes": 3699390,
+      "code_physical_lines": 98073,
+      "code_nonblank_lines": 89790,
       "markdown_files": 274,
       "derived_markdown_files": 2,
       "source_files": 392,
@@ -635,15 +799,21 @@
       "by_language": {
         "JavaScript": {
           "files": 363,
-          "bytes": 3587512
+          "bytes": 3587512,
+          "physical_lines": 95167,
+          "nonblank_lines": 87302
         },
         ".sql": {
           "files": 6,
-          "bytes": 48889
+          "bytes": 48889,
+          "physical_lines": 997,
+          "nonblank_lines": 853
         },
         ".sh": {
           "files": 23,
-          "bytes": 62989
+          "bytes": 62989,
+          "physical_lines": 1909,
+          "nonblank_lines": 1635
         }
       }
     },
@@ -657,6 +827,8 @@
       "bytes": 9843951,
       "code_files": 515,
       "code_bytes": 4787461,
+      "code_physical_lines": 125541,
+      "code_nonblank_lines": 114942,
       "markdown_files": 341,
       "derived_markdown_files": 3,
       "source_files": 515,
@@ -665,15 +837,21 @@
       "by_language": {
         "JavaScript": {
           "files": 486,
-          "bytes": 4675583
+          "bytes": 4675583,
+          "physical_lines": 122635,
+          "nonblank_lines": 112454
         },
         ".sql": {
           "files": 6,
-          "bytes": 48889
+          "bytes": 48889,
+          "physical_lines": 997,
+          "nonblank_lines": 853
         },
         ".sh": {
           "files": 23,
-          "bytes": 62989
+          "bytes": 62989,
+          "physical_lines": 1909,
+          "nonblank_lines": 1635
         }
       }
     },
@@ -687,6 +865,8 @@
       "bytes": 10816112,
       "code_files": 577,
       "code_bytes": 5304878,
+      "code_physical_lines": 138396,
+      "code_nonblank_lines": 126562,
       "markdown_files": 358,
       "derived_markdown_files": 3,
       "source_files": 577,
@@ -695,15 +875,21 @@
       "by_language": {
         "JavaScript": {
           "files": 547,
-          "bytes": 5190115
+          "bytes": 5190115,
+          "physical_lines": 135400,
+          "nonblank_lines": 123986
         },
         ".sql": {
           "files": 7,
-          "bytes": 51774
+          "bytes": 51774,
+          "physical_lines": 1087,
+          "nonblank_lines": 941
         },
         ".sh": {
           "files": 23,
-          "bytes": 62989
+          "bytes": 62989,
+          "physical_lines": 1909,
+          "nonblank_lines": 1635
         }
       }
     },
@@ -753,6 +939,8 @@
       "bytes": 110704,
       "code_files": 0,
       "code_bytes": 0,
+      "code_physical_lines": 0,
+      "code_nonblank_lines": 0,
       "markdown_files": 6,
       "derived_markdown_files": 0,
       "source_files": 0,
@@ -770,6 +958,8 @@
       "bytes": 856420,
       "code_files": 0,
       "code_bytes": 0,
+      "code_physical_lines": 0,
+      "code_nonblank_lines": 0,
       "markdown_files": 42,
       "derived_markdown_files": 4,
       "source_files": 0,
@@ -787,6 +977,8 @@
       "bytes": 1091736,
       "code_files": 1,
       "code_bytes": 10050,
+      "code_physical_lines": 264,
+      "code_nonblank_lines": 238,
       "markdown_files": 72,
       "derived_markdown_files": 5,
       "source_files": 1,
@@ -795,7 +987,9 @@
       "by_language": {
         "JavaScript": {
           "files": 1,
-          "bytes": 10050
+          "bytes": 10050,
+          "physical_lines": 264,
+          "nonblank_lines": 238
         }
       }
     },
@@ -809,6 +1003,8 @@
       "bytes": 1355742,
       "code_files": 1,
       "code_bytes": 34837,
+      "code_physical_lines": 858,
+      "code_nonblank_lines": 791,
       "markdown_files": 80,
       "derived_markdown_files": 5,
       "source_files": 1,
@@ -817,7 +1013,9 @@
       "by_language": {
         "JavaScript": {
           "files": 1,
-          "bytes": 34837
+          "bytes": 34837,
+          "physical_lines": 858,
+          "nonblank_lines": 791
         }
       }
     },
@@ -831,6 +1029,8 @@
       "bytes": 1601668,
       "code_files": 4,
       "code_bytes": 70522,
+      "code_physical_lines": 1750,
+      "code_nonblank_lines": 1623,
       "markdown_files": 90,
       "derived_markdown_files": 5,
       "source_files": 4,
@@ -839,7 +1039,9 @@
       "by_language": {
         "JavaScript": {
           "files": 4,
-          "bytes": 70522
+          "bytes": 70522,
+          "physical_lines": 1750,
+          "nonblank_lines": 1623
         }
       }
     },
@@ -853,6 +1055,8 @@
       "bytes": 2222575,
       "code_files": 10,
       "code_bytes": 136187,
+      "code_physical_lines": 3080,
+      "code_nonblank_lines": 2806,
       "markdown_files": 93,
       "derived_markdown_files": 5,
       "source_files": 10,
@@ -861,11 +1065,15 @@
       "by_language": {
         "JavaScript": {
           "files": 4,
-          "bytes": 70522
+          "bytes": 70522,
+          "physical_lines": 1750,
+          "nonblank_lines": 1623
         },
         "Python": {
           "files": 6,
-          "bytes": 65665
+          "bytes": 65665,
+          "physical_lines": 1330,
+          "nonblank_lines": 1183
         }
       }
     },
@@ -879,6 +1087,8 @@
       "bytes": 2222575,
       "code_files": 10,
       "code_bytes": 136187,
+      "code_physical_lines": 3080,
+      "code_nonblank_lines": 2806,
       "markdown_files": 93,
       "derived_markdown_files": 5,
       "source_files": 10,
@@ -887,11 +1097,15 @@
       "by_language": {
         "JavaScript": {
           "files": 4,
-          "bytes": 70522
+          "bytes": 70522,
+          "physical_lines": 1750,
+          "nonblank_lines": 1623
         },
         "Python": {
           "files": 6,
-          "bytes": 65665
+          "bytes": 65665,
+          "physical_lines": 1330,
+          "nonblank_lines": 1183
         }
       }
     },
@@ -953,6 +1167,8 @@
       "bytes": 71598,
       "code_files": 0,
       "code_bytes": 0,
+      "code_physical_lines": 0,
+      "code_nonblank_lines": 0,
       "markdown_files": 15,
       "derived_markdown_files": 2,
       "source_files": 0,
@@ -970,6 +1186,8 @@
       "bytes": 1342183,
       "code_files": 133,
       "code_bytes": 552076,
+      "code_physical_lines": 16610,
+      "code_nonblank_lines": 14973,
       "markdown_files": 60,
       "derived_markdown_files": 2,
       "source_files": 133,
@@ -978,19 +1196,27 @@
       "by_language": {
         "JavaScript": {
           "files": 99,
-          "bytes": 433209
+          "bytes": 433209,
+          "physical_lines": 13259,
+          "nonblank_lines": 11996
         },
         ".sql": {
           "files": 4,
-          "bytes": 6772
+          "bytes": 6772,
+          "physical_lines": 211,
+          "nonblank_lines": 185
         },
         ".sh": {
           "files": 29,
-          "bytes": 100173
+          "bytes": 100173,
+          "physical_lines": 2843,
+          "nonblank_lines": 2536
         },
         "Python": {
           "files": 1,
-          "bytes": 11922
+          "bytes": 11922,
+          "physical_lines": 297,
+          "nonblank_lines": 256
         }
       }
     },
@@ -1004,6 +1230,8 @@
       "bytes": 1839688,
       "code_files": 174,
       "code_bytes": 783905,
+      "code_physical_lines": 23635,
+      "code_nonblank_lines": 21440,
       "markdown_files": 77,
       "derived_markdown_files": 2,
       "source_files": 174,
@@ -1012,19 +1240,27 @@
       "by_language": {
         "JavaScript": {
           "files": 133,
-          "bytes": 645374
+          "bytes": 645374,
+          "physical_lines": 19688,
+          "nonblank_lines": 17928
         },
         ".sql": {
           "files": 6,
-          "bytes": 8696
+          "bytes": 8696,
+          "physical_lines": 269,
+          "nonblank_lines": 239
         },
         ".sh": {
           "files": 34,
-          "bytes": 117913
+          "bytes": 117913,
+          "physical_lines": 3381,
+          "nonblank_lines": 3017
         },
         "Python": {
           "files": 1,
-          "bytes": 11922
+          "bytes": 11922,
+          "physical_lines": 297,
+          "nonblank_lines": 256
         }
       }
     },
@@ -1038,6 +1274,8 @@
       "bytes": 1983429,
       "code_files": 182,
       "code_bytes": 817470,
+      "code_physical_lines": 24420,
+      "code_nonblank_lines": 22166,
       "markdown_files": 84,
       "derived_markdown_files": 2,
       "source_files": 182,
@@ -1046,19 +1284,27 @@
       "by_language": {
         "JavaScript": {
           "files": 140,
-          "bytes": 677196
+          "bytes": 677196,
+          "physical_lines": 20437,
+          "nonblank_lines": 18618
         },
         ".sql": {
           "files": 6,
-          "bytes": 8696
+          "bytes": 8696,
+          "physical_lines": 269,
+          "nonblank_lines": 239
         },
         ".sh": {
           "files": 35,
-          "bytes": 119656
+          "bytes": 119656,
+          "physical_lines": 3417,
+          "nonblank_lines": 3053
         },
         "Python": {
           "files": 1,
-          "bytes": 11922
+          "bytes": 11922,
+          "physical_lines": 297,
+          "nonblank_lines": 256
         }
       }
     },
@@ -1072,6 +1318,8 @@
       "bytes": 2207263,
       "code_files": 199,
       "code_bytes": 927717,
+      "code_physical_lines": 26253,
+      "code_nonblank_lines": 23914,
       "markdown_files": 91,
       "derived_markdown_files": 2,
       "source_files": 199,
@@ -1080,19 +1328,27 @@
       "by_language": {
         "JavaScript": {
           "files": 157,
-          "bytes": 787443
+          "bytes": 787443,
+          "physical_lines": 22270,
+          "nonblank_lines": 20366
         },
         ".sql": {
           "files": 6,
-          "bytes": 8696
+          "bytes": 8696,
+          "physical_lines": 269,
+          "nonblank_lines": 239
         },
         ".sh": {
           "files": 35,
-          "bytes": 119656
+          "bytes": 119656,
+          "physical_lines": 3417,
+          "nonblank_lines": 3053
         },
         "Python": {
           "files": 1,
-          "bytes": 11922
+          "bytes": 11922,
+          "physical_lines": 297,
+          "nonblank_lines": 256
         }
       }
     },
@@ -1106,6 +1362,8 @@
       "bytes": 6726,
       "code_files": 0,
       "code_bytes": 0,
+      "code_physical_lines": 0,
+      "code_nonblank_lines": 0,
       "markdown_files": 1,
       "derived_markdown_files": 0,
       "source_files": 0,
@@ -1123,6 +1381,8 @@
       "bytes": 6726,
       "code_files": 0,
       "code_bytes": 0,
+      "code_physical_lines": 0,
+      "code_nonblank_lines": 0,
       "markdown_files": 1,
       "derived_markdown_files": 0,
       "source_files": 0,
@@ -1140,6 +1400,8 @@
       "bytes": 6726,
       "code_files": 0,
       "code_bytes": 0,
+      "code_physical_lines": 0,
+      "code_nonblank_lines": 0,
       "markdown_files": 1,
       "derived_markdown_files": 0,
       "source_files": 0,
@@ -1157,6 +1419,8 @@
       "bytes": 6726,
       "code_files": 0,
       "code_bytes": 0,
+      "code_physical_lines": 0,
+      "code_nonblank_lines": 0,
       "markdown_files": 1,
       "derived_markdown_files": 0,
       "source_files": 0,
@@ -1174,6 +1438,8 @@
       "bytes": 9558,
       "code_files": 0,
       "code_bytes": 0,
+      "code_physical_lines": 0,
+      "code_nonblank_lines": 0,
       "markdown_files": 2,
       "derived_markdown_files": 0,
       "source_files": 0,
@@ -1191,6 +1457,8 @@
       "bytes": 9558,
       "code_files": 0,
       "code_bytes": 0,
+      "code_physical_lines": 0,
+      "code_nonblank_lines": 0,
       "markdown_files": 2,
       "derived_markdown_files": 0,
       "source_files": 0,
@@ -1208,6 +1476,8 @@
       "bytes": 263961,
       "code_files": 0,
       "code_bytes": 0,
+      "code_physical_lines": 0,
+      "code_nonblank_lines": 0,
       "markdown_files": 15,
       "derived_markdown_files": 0,
       "source_files": 0,
@@ -1225,6 +1495,8 @@
       "bytes": 3030260,
       "code_files": 0,
       "code_bytes": 0,
+      "code_physical_lines": 0,
+      "code_nonblank_lines": 0,
       "markdown_files": 68,
       "derived_markdown_files": 2,
       "source_files": 0,
@@ -1242,6 +1514,8 @@
       "bytes": 4449006,
       "code_files": 0,
       "code_bytes": 0,
+      "code_physical_lines": 0,
+      "code_nonblank_lines": 0,
       "markdown_files": 140,
       "derived_markdown_files": 2,
       "source_files": 0,
@@ -1259,6 +1533,8 @@
       "bytes": 5232790,
       "code_files": 0,
       "code_bytes": 0,
+      "code_physical_lines": 0,
+      "code_nonblank_lines": 0,
       "markdown_files": 193,
       "derived_markdown_files": 2,
       "source_files": 0,
@@ -1276,6 +1552,8 @@
       "bytes": 9093457,
       "code_files": 0,
       "code_bytes": 0,
+      "code_physical_lines": 0,
+      "code_nonblank_lines": 0,
       "markdown_files": 250,
       "derived_markdown_files": 2,
       "source_files": 0,
@@ -1293,6 +1571,8 @@
       "bytes": 17363373,
       "code_files": 5,
       "code_bytes": 48770,
+      "code_physical_lines": 1253,
+      "code_nonblank_lines": 1157,
       "markdown_files": 496,
       "derived_markdown_files": 5,
       "source_files": 5,
@@ -1301,7 +1581,9 @@
       "by_language": {
         "JavaScript": {
           "files": 5,
-          "bytes": 48770
+          "bytes": 48770,
+          "physical_lines": 1253,
+          "nonblank_lines": 1157
         }
       }
     },
@@ -1315,6 +1597,8 @@
       "bytes": 67453107,
       "code_files": 26,
       "code_bytes": 172889,
+      "code_physical_lines": 3971,
+      "code_nonblank_lines": 3635,
       "markdown_files": 1047,
       "derived_markdown_files": 12,
       "source_files": 26,
@@ -1323,15 +1607,21 @@
       "by_language": {
         "JavaScript": {
           "files": 11,
-          "bytes": 94836
+          "bytes": 94836,
+          "physical_lines": 2318,
+          "nonblank_lines": 2125
         },
         "Python": {
           "files": 14,
-          "bytes": 72241
+          "bytes": 72241,
+          "physical_lines": 1537,
+          "nonblank_lines": 1395
         },
         ".sh": {
           "files": 1,
-          "bytes": 5812
+          "bytes": 5812,
+          "physical_lines": 116,
+          "nonblank_lines": 115
         }
       }
     },
@@ -1345,6 +1635,8 @@
       "bytes": 4397129,
       "code_files": 16,
       "code_bytes": 892326,
+      "code_physical_lines": 26422,
+      "code_nonblank_lines": 21499,
       "markdown_files": 3,
       "derived_markdown_files": 0,
       "source_files": 16,
@@ -1353,11 +1645,15 @@
       "by_language": {
         "JavaScript": {
           "files": 12,
-          "bytes": 219502
+          "bytes": 219502,
+          "physical_lines": 1314,
+          "nonblank_lines": 1192
         },
         "TypeScript": {
           "files": 4,
-          "bytes": 672824
+          "bytes": 672824,
+          "physical_lines": 25108,
+          "nonblank_lines": 20307
         }
       }
     },
@@ -1371,6 +1667,8 @@
       "bytes": 4397129,
       "code_files": 16,
       "code_bytes": 892326,
+      "code_physical_lines": 26422,
+      "code_nonblank_lines": 21499,
       "markdown_files": 3,
       "derived_markdown_files": 0,
       "source_files": 16,
@@ -1379,11 +1677,15 @@
       "by_language": {
         "JavaScript": {
           "files": 12,
-          "bytes": 219502
+          "bytes": 219502,
+          "physical_lines": 1314,
+          "nonblank_lines": 1192
         },
         "TypeScript": {
           "files": 4,
-          "bytes": 672824
+          "bytes": 672824,
+          "physical_lines": 25108,
+          "nonblank_lines": 20307
         }
       }
     },
@@ -1397,6 +1699,8 @@
       "bytes": 4397129,
       "code_files": 16,
       "code_bytes": 892326,
+      "code_physical_lines": 26422,
+      "code_nonblank_lines": 21499,
       "markdown_files": 3,
       "derived_markdown_files": 0,
       "source_files": 16,
@@ -1405,11 +1709,15 @@
       "by_language": {
         "JavaScript": {
           "files": 12,
-          "bytes": 219502
+          "bytes": 219502,
+          "physical_lines": 1314,
+          "nonblank_lines": 1192
         },
         "TypeScript": {
           "files": 4,
-          "bytes": 672824
+          "bytes": 672824,
+          "physical_lines": 25108,
+          "nonblank_lines": 20307
         }
       }
     },
@@ -1423,6 +1731,8 @@
       "bytes": 4397129,
       "code_files": 16,
       "code_bytes": 892326,
+      "code_physical_lines": 26422,
+      "code_nonblank_lines": 21499,
       "markdown_files": 3,
       "derived_markdown_files": 0,
       "source_files": 16,
@@ -1431,11 +1741,15 @@
       "by_language": {
         "JavaScript": {
           "files": 12,
-          "bytes": 219502
+          "bytes": 219502,
+          "physical_lines": 1314,
+          "nonblank_lines": 1192
         },
         "TypeScript": {
           "files": 4,
-          "bytes": 672824
+          "bytes": 672824,
+          "physical_lines": 25108,
+          "nonblank_lines": 20307
         }
       }
     },
@@ -1449,6 +1763,8 @@
       "bytes": 4397129,
       "code_files": 16,
       "code_bytes": 892326,
+      "code_physical_lines": 26422,
+      "code_nonblank_lines": 21499,
       "markdown_files": 3,
       "derived_markdown_files": 0,
       "source_files": 16,
@@ -1457,11 +1773,15 @@
       "by_language": {
         "JavaScript": {
           "files": 12,
-          "bytes": 219502
+          "bytes": 219502,
+          "physical_lines": 1314,
+          "nonblank_lines": 1192
         },
         "TypeScript": {
           "files": 4,
-          "bytes": 672824
+          "bytes": 672824,
+          "physical_lines": 25108,
+          "nonblank_lines": 20307
         }
       }
     },
@@ -1475,6 +1795,8 @@
       "bytes": 4397129,
       "code_files": 16,
       "code_bytes": 892326,
+      "code_physical_lines": 26422,
+      "code_nonblank_lines": 21499,
       "markdown_files": 3,
       "derived_markdown_files": 0,
       "source_files": 16,
@@ -1483,11 +1805,15 @@
       "by_language": {
         "JavaScript": {
           "files": 12,
-          "bytes": 219502
+          "bytes": 219502,
+          "physical_lines": 1314,
+          "nonblank_lines": 1192
         },
         "TypeScript": {
           "files": 4,
-          "bytes": 672824
+          "bytes": 672824,
+          "physical_lines": 25108,
+          "nonblank_lines": 20307
         }
       }
     },
@@ -1501,6 +1827,8 @@
       "bytes": 4398390,
       "code_files": 16,
       "code_bytes": 892326,
+      "code_physical_lines": 26422,
+      "code_nonblank_lines": 21499,
       "markdown_files": 3,
       "derived_markdown_files": 0,
       "source_files": 16,
@@ -1509,11 +1837,15 @@
       "by_language": {
         "JavaScript": {
           "files": 12,
-          "bytes": 219502
+          "bytes": 219502,
+          "physical_lines": 1314,
+          "nonblank_lines": 1192
         },
         "TypeScript": {
           "files": 4,
-          "bytes": 672824
+          "bytes": 672824,
+          "physical_lines": 25108,
+          "nonblank_lines": 20307
         }
       }
     },
@@ -1527,6 +1859,8 @@
       "bytes": 4515204,
       "code_files": 17,
       "code_bytes": 901811,
+      "code_physical_lines": 26634,
+      "code_nonblank_lines": 21688,
       "markdown_files": 13,
       "derived_markdown_files": 2,
       "source_files": 17,
@@ -1535,11 +1869,15 @@
       "by_language": {
         "JavaScript": {
           "files": 13,
-          "bytes": 222221
+          "bytes": 222221,
+          "physical_lines": 1408,
+          "nonblank_lines": 1268
         },
         "TypeScript": {
           "files": 4,
-          "bytes": 679590
+          "bytes": 679590,
+          "physical_lines": 25226,
+          "nonblank_lines": 20420
         }
       }
     },
@@ -1553,6 +1891,8 @@
       "bytes": 4676236,
       "code_files": 17,
       "code_bytes": 961945,
+      "code_physical_lines": 28084,
+      "code_nonblank_lines": 23058,
       "markdown_files": 24,
       "derived_markdown_files": 2,
       "source_files": 17,
@@ -1561,11 +1901,15 @@
       "by_language": {
         "JavaScript": {
           "files": 13,
-          "bytes": 223146
+          "bytes": 223146,
+          "physical_lines": 1418,
+          "nonblank_lines": 1281
         },
         "TypeScript": {
           "files": 4,
-          "bytes": 738799
+          "bytes": 738799,
+          "physical_lines": 26666,
+          "nonblank_lines": 21777
         }
       }
     },
@@ -1579,6 +1923,8 @@
       "bytes": 4944569,
       "code_files": 36,
       "code_bytes": 1051107,
+      "code_physical_lines": 31127,
+      "code_nonblank_lines": 25811,
       "markdown_files": 33,
       "derived_markdown_files": 2,
       "source_files": 36,
@@ -1587,11 +1933,15 @@
       "by_language": {
         "JavaScript": {
           "files": 32,
-          "bytes": 312308
+          "bytes": 312308,
+          "physical_lines": 4461,
+          "nonblank_lines": 4034
         },
         "TypeScript": {
           "files": 4,
-          "bytes": 738799
+          "bytes": 738799,
+          "physical_lines": 26666,
+          "nonblank_lines": 21777
         }
       }
     },
@@ -1605,6 +1955,8 @@
       "bytes": 5104779,
       "code_files": 36,
       "code_bytes": 1051107,
+      "code_physical_lines": 31127,
+      "code_nonblank_lines": 25811,
       "markdown_files": 33,
       "derived_markdown_files": 2,
       "source_files": 36,
@@ -1613,11 +1965,15 @@
       "by_language": {
         "JavaScript": {
           "files": 32,
-          "bytes": 312308
+          "bytes": 312308,
+          "physical_lines": 4461,
+          "nonblank_lines": 4034
         },
         "TypeScript": {
           "files": 4,
-          "bytes": 738799
+          "bytes": 738799,
+          "physical_lines": 26666,
+          "nonblank_lines": 21777
         }
       }
     },
@@ -1631,6 +1987,8 @@
       "bytes": 5145010,
       "code_files": 37,
       "code_bytes": 1053966,
+      "code_physical_lines": 31186,
+      "code_nonblank_lines": 25869,
       "markdown_files": 33,
       "derived_markdown_files": 2,
       "source_files": 37,
@@ -1639,11 +1997,15 @@
       "by_language": {
         "JavaScript": {
           "files": 33,
-          "bytes": 315167
+          "bytes": 315167,
+          "physical_lines": 4520,
+          "nonblank_lines": 4092
         },
         "TypeScript": {
           "files": 4,
-          "bytes": 738799
+          "bytes": 738799,
+          "physical_lines": 26666,
+          "nonblank_lines": 21777
         }
       }
     },
@@ -1657,6 +2019,8 @@
       "bytes": 5145010,
       "code_files": 37,
       "code_bytes": 1053966,
+      "code_physical_lines": 31186,
+      "code_nonblank_lines": 25869,
       "markdown_files": 33,
       "derived_markdown_files": 2,
       "source_files": 37,
@@ -1665,11 +2029,15 @@
       "by_language": {
         "JavaScript": {
           "files": 33,
-          "bytes": 315167
+          "bytes": 315167,
+          "physical_lines": 4520,
+          "nonblank_lines": 4092
         },
         "TypeScript": {
           "files": 4,
-          "bytes": 738799
+          "bytes": 738799,
+          "physical_lines": 26666,
+          "nonblank_lines": 21777
         }
       }
     },
@@ -1683,6 +2051,8 @@
       "bytes": 357847,
       "code_files": 30,
       "code_bytes": 185655,
+      "code_physical_lines": 5052,
+      "code_nonblank_lines": 4561,
       "markdown_files": 4,
       "derived_markdown_files": 0,
       "source_files": 30,
@@ -1691,11 +2061,15 @@
       "by_language": {
         "JavaScript": {
           "files": 27,
-          "bytes": 169009
+          "bytes": 169009,
+          "physical_lines": 4599,
+          "nonblank_lines": 4168
         },
         ".sql": {
           "files": 3,
-          "bytes": 16646
+          "bytes": 16646,
+          "physical_lines": 453,
+          "nonblank_lines": 393
         }
       }
     },
@@ -1709,6 +2083,8 @@
       "bytes": 135132852,
       "code_files": 212,
       "code_bytes": 1468083,
+      "code_physical_lines": 42802,
+      "code_nonblank_lines": 38637,
       "markdown_files": 69,
       "derived_markdown_files": 0,
       "source_files": 212,
@@ -1717,15 +2093,21 @@
       "by_language": {
         "JavaScript": {
           "files": 194,
-          "bytes": 1402837
+          "bytes": 1402837,
+          "physical_lines": 41048,
+          "nonblank_lines": 37117
         },
         "Python": {
           "files": 1,
-          "bytes": 1085
+          "bytes": 1085,
+          "physical_lines": 38,
+          "nonblank_lines": 31
         },
         ".sql": {
           "files": 17,
-          "bytes": 64161
+          "bytes": 64161,
+          "physical_lines": 1716,
+          "nonblank_lines": 1489
         }
       }
     },
@@ -1739,6 +2121,8 @@
       "bytes": 138597052,
       "code_files": 514,
       "code_bytes": 3963953,
+      "code_physical_lines": 116820,
+      "code_nonblank_lines": 104919,
       "markdown_files": 107,
       "derived_markdown_files": 0,
       "source_files": 514,
@@ -1747,19 +2131,27 @@
       "by_language": {
         "JavaScript": {
           "files": 462,
-          "bytes": 3600263
+          "bytes": 3600263,
+          "physical_lines": 106947,
+          "nonblank_lines": 96405
         },
         "Python": {
           "files": 1,
-          "bytes": 1085
+          "bytes": 1085,
+          "physical_lines": 38,
+          "nonblank_lines": 31
         },
         "TypeScript": {
           "files": 3,
-          "bytes": 10653
+          "bytes": 10653,
+          "physical_lines": 459,
+          "nonblank_lines": 373
         },
         ".sql": {
           "files": 48,
-          "bytes": 351952
+          "bytes": 351952,
+          "physical_lines": 9376,
+          "nonblank_lines": 8110
         }
       }
     },
@@ -1773,6 +2165,8 @@
       "bytes": 138597052,
       "code_files": 514,
       "code_bytes": 3963953,
+      "code_physical_lines": 116820,
+      "code_nonblank_lines": 104919,
       "markdown_files": 107,
       "derived_markdown_files": 0,
       "source_files": 514,
@@ -1781,19 +2175,27 @@
       "by_language": {
         "JavaScript": {
           "files": 462,
-          "bytes": 3600263
+          "bytes": 3600263,
+          "physical_lines": 106947,
+          "nonblank_lines": 96405
         },
         "Python": {
           "files": 1,
-          "bytes": 1085
+          "bytes": 1085,
+          "physical_lines": 38,
+          "nonblank_lines": 31
         },
         "TypeScript": {
           "files": 3,
-          "bytes": 10653
+          "bytes": 10653,
+          "physical_lines": 459,
+          "nonblank_lines": 373
         },
         ".sql": {
           "files": 48,
-          "bytes": 351952
+          "bytes": 351952,
+          "physical_lines": 9376,
+          "nonblank_lines": 8110
         }
       }
     },
@@ -1807,6 +2209,8 @@
       "bytes": 138597052,
       "code_files": 514,
       "code_bytes": 3963953,
+      "code_physical_lines": 116820,
+      "code_nonblank_lines": 104919,
       "markdown_files": 107,
       "derived_markdown_files": 0,
       "source_files": 514,
@@ -1815,19 +2219,27 @@
       "by_language": {
         "JavaScript": {
           "files": 462,
-          "bytes": 3600263
+          "bytes": 3600263,
+          "physical_lines": 106947,
+          "nonblank_lines": 96405
         },
         "Python": {
           "files": 1,
-          "bytes": 1085
+          "bytes": 1085,
+          "physical_lines": 38,
+          "nonblank_lines": 31
         },
         "TypeScript": {
           "files": 3,
-          "bytes": 10653
+          "bytes": 10653,
+          "physical_lines": 459,
+          "nonblank_lines": 373
         },
         ".sql": {
           "files": 48,
-          "bytes": 351952
+          "bytes": 351952,
+          "physical_lines": 9376,
+          "nonblank_lines": 8110
         }
       }
     },
@@ -1841,6 +2253,8 @@
       "bytes": 138597052,
       "code_files": 514,
       "code_bytes": 3963953,
+      "code_physical_lines": 116820,
+      "code_nonblank_lines": 104919,
       "markdown_files": 107,
       "derived_markdown_files": 0,
       "source_files": 514,
@@ -1849,19 +2263,27 @@
       "by_language": {
         "JavaScript": {
           "files": 462,
-          "bytes": 3600263
+          "bytes": 3600263,
+          "physical_lines": 106947,
+          "nonblank_lines": 96405
         },
         "Python": {
           "files": 1,
-          "bytes": 1085
+          "bytes": 1085,
+          "physical_lines": 38,
+          "nonblank_lines": 31
         },
         "TypeScript": {
           "files": 3,
-          "bytes": 10653
+          "bytes": 10653,
+          "physical_lines": 459,
+          "nonblank_lines": 373
         },
         ".sql": {
           "files": 48,
-          "bytes": 351952
+          "bytes": 351952,
+          "physical_lines": 9376,
+          "nonblank_lines": 8110
         }
       }
     },
@@ -1875,6 +2297,8 @@
       "bytes": 138597052,
       "code_files": 514,
       "code_bytes": 3963953,
+      "code_physical_lines": 116820,
+      "code_nonblank_lines": 104919,
       "markdown_files": 107,
       "derived_markdown_files": 0,
       "source_files": 514,
@@ -1883,19 +2307,27 @@
       "by_language": {
         "JavaScript": {
           "files": 462,
-          "bytes": 3600263
+          "bytes": 3600263,
+          "physical_lines": 106947,
+          "nonblank_lines": 96405
         },
         "Python": {
           "files": 1,
-          "bytes": 1085
+          "bytes": 1085,
+          "physical_lines": 38,
+          "nonblank_lines": 31
         },
         "TypeScript": {
           "files": 3,
-          "bytes": 10653
+          "bytes": 10653,
+          "physical_lines": 459,
+          "nonblank_lines": 373
         },
         ".sql": {
           "files": 48,
-          "bytes": 351952
+          "bytes": 351952,
+          "physical_lines": 9376,
+          "nonblank_lines": 8110
         }
       }
     },
@@ -1909,6 +2341,8 @@
       "bytes": 138863283,
       "code_files": 516,
       "code_bytes": 3980889,
+      "code_physical_lines": 117261,
+      "code_nonblank_lines": 105299,
       "markdown_files": 108,
       "derived_markdown_files": 0,
       "source_files": 516,
@@ -1917,19 +2351,27 @@
       "by_language": {
         "JavaScript": {
           "files": 464,
-          "bytes": 3617187
+          "bytes": 3617187,
+          "physical_lines": 107388,
+          "nonblank_lines": 96785
         },
         "Python": {
           "files": 1,
-          "bytes": 1085
+          "bytes": 1085,
+          "physical_lines": 38,
+          "nonblank_lines": 31
         },
         "TypeScript": {
           "files": 3,
-          "bytes": 10653
+          "bytes": 10653,
+          "physical_lines": 459,
+          "nonblank_lines": 373
         },
         ".sql": {
           "files": 48,
-          "bytes": 351964
+          "bytes": 351964,
+          "physical_lines": 9376,
+          "nonblank_lines": 8110
         }
       }
     },
@@ -1943,6 +2385,8 @@
       "bytes": 138863283,
       "code_files": 516,
       "code_bytes": 3980889,
+      "code_physical_lines": 117261,
+      "code_nonblank_lines": 105299,
       "markdown_files": 108,
       "derived_markdown_files": 0,
       "source_files": 516,
@@ -1951,19 +2395,27 @@
       "by_language": {
         "JavaScript": {
           "files": 464,
-          "bytes": 3617187
+          "bytes": 3617187,
+          "physical_lines": 107388,
+          "nonblank_lines": 96785
         },
         "Python": {
           "files": 1,
-          "bytes": 1085
+          "bytes": 1085,
+          "physical_lines": 38,
+          "nonblank_lines": 31
         },
         "TypeScript": {
           "files": 3,
-          "bytes": 10653
+          "bytes": 10653,
+          "physical_lines": 459,
+          "nonblank_lines": 373
         },
         ".sql": {
           "files": 48,
-          "bytes": 351964
+          "bytes": 351964,
+          "physical_lines": 9376,
+          "nonblank_lines": 8110
         }
       }
     },
@@ -1977,6 +2429,8 @@
       "bytes": 138978553,
       "code_files": 519,
       "code_bytes": 4045491,
+      "code_physical_lines": 118911,
+      "code_nonblank_lines": 106848,
       "markdown_files": 110,
       "derived_markdown_files": 2,
       "source_files": 519,
@@ -1985,19 +2439,27 @@
       "by_language": {
         "JavaScript": {
           "files": 467,
-          "bytes": 3681789
+          "bytes": 3681789,
+          "physical_lines": 109038,
+          "nonblank_lines": 98334
         },
         "Python": {
           "files": 1,
-          "bytes": 1085
+          "bytes": 1085,
+          "physical_lines": 38,
+          "nonblank_lines": 31
         },
         "TypeScript": {
           "files": 3,
-          "bytes": 10653
+          "bytes": 10653,
+          "physical_lines": 459,
+          "nonblank_lines": 373
         },
         ".sql": {
           "files": 48,
-          "bytes": 351964
+          "bytes": 351964,
+          "physical_lines": 9376,
+          "nonblank_lines": 8110
         }
       }
     },
@@ -2011,6 +2473,8 @@
       "bytes": 139080161,
       "code_files": 519,
       "code_bytes": 4045491,
+      "code_physical_lines": 118911,
+      "code_nonblank_lines": 106848,
       "markdown_files": 111,
       "derived_markdown_files": 2,
       "source_files": 519,
@@ -2019,19 +2483,27 @@
       "by_language": {
         "JavaScript": {
           "files": 467,
-          "bytes": 3681789
+          "bytes": 3681789,
+          "physical_lines": 109038,
+          "nonblank_lines": 98334
         },
         "Python": {
           "files": 1,
-          "bytes": 1085
+          "bytes": 1085,
+          "physical_lines": 38,
+          "nonblank_lines": 31
         },
         "TypeScript": {
           "files": 3,
-          "bytes": 10653
+          "bytes": 10653,
+          "physical_lines": 459,
+          "nonblank_lines": 373
         },
         ".sql": {
           "files": 48,
-          "bytes": 351964
+          "bytes": 351964,
+          "physical_lines": 9376,
+          "nonblank_lines": 8110
         }
       }
     },
@@ -2045,6 +2517,8 @@
       "bytes": 139177158,
       "code_files": 519,
       "code_bytes": 4045491,
+      "code_physical_lines": 118911,
+      "code_nonblank_lines": 106848,
       "markdown_files": 111,
       "derived_markdown_files": 2,
       "source_files": 519,
@@ -2053,19 +2527,27 @@
       "by_language": {
         "JavaScript": {
           "files": 467,
-          "bytes": 3681789
+          "bytes": 3681789,
+          "physical_lines": 109038,
+          "nonblank_lines": 98334
         },
         "Python": {
           "files": 1,
-          "bytes": 1085
+          "bytes": 1085,
+          "physical_lines": 38,
+          "nonblank_lines": 31
         },
         "TypeScript": {
           "files": 3,
-          "bytes": 10653
+          "bytes": 10653,
+          "physical_lines": 459,
+          "nonblank_lines": 373
         },
         ".sql": {
           "files": 48,
-          "bytes": 351964
+          "bytes": 351964,
+          "physical_lines": 9376,
+          "nonblank_lines": 8110
         }
       }
     },
@@ -2079,6 +2561,8 @@
       "bytes": 139177158,
       "code_files": 519,
       "code_bytes": 4045491,
+      "code_physical_lines": 118911,
+      "code_nonblank_lines": 106848,
       "markdown_files": 111,
       "derived_markdown_files": 2,
       "source_files": 519,
@@ -2087,19 +2571,27 @@
       "by_language": {
         "JavaScript": {
           "files": 467,
-          "bytes": 3681789
+          "bytes": 3681789,
+          "physical_lines": 109038,
+          "nonblank_lines": 98334
         },
         "Python": {
           "files": 1,
-          "bytes": 1085
+          "bytes": 1085,
+          "physical_lines": 38,
+          "nonblank_lines": 31
         },
         "TypeScript": {
           "files": 3,
-          "bytes": 10653
+          "bytes": 10653,
+          "physical_lines": 459,
+          "nonblank_lines": 373
         },
         ".sql": {
           "files": 48,
-          "bytes": 351964
+          "bytes": 351964,
+          "physical_lines": 9376,
+          "nonblank_lines": 8110
         }
       }
     },
@@ -2155,6 +2647,8 @@
       "bytes": 51257,
       "code_files": 0,
       "code_bytes": 0,
+      "code_physical_lines": 0,
+      "code_nonblank_lines": 0,
       "markdown_files": 4,
       "derived_markdown_files": 0,
       "source_files": 0,
@@ -2172,6 +2666,8 @@
       "bytes": 98066,
       "code_files": 0,
       "code_bytes": 0,
+      "code_physical_lines": 0,
+      "code_nonblank_lines": 0,
       "markdown_files": 7,
       "derived_markdown_files": 2,
       "source_files": 0,
@@ -2189,6 +2685,8 @@
       "bytes": 541759,
       "code_files": 45,
       "code_bytes": 171536,
+      "code_physical_lines": 5428,
+      "code_nonblank_lines": 4820,
       "markdown_files": 28,
       "derived_markdown_files": 2,
       "source_files": 45,
@@ -2197,7 +2695,9 @@
       "by_language": {
         "JavaScript": {
           "files": 45,
-          "bytes": 171536
+          "bytes": 171536,
+          "physical_lines": 5428,
+          "nonblank_lines": 4820
         }
       }
     },
@@ -2211,6 +2711,8 @@
       "bytes": 824687,
       "code_files": 61,
       "code_bytes": 234004,
+      "code_physical_lines": 7277,
+      "code_nonblank_lines": 6495,
       "markdown_files": 33,
       "derived_markdown_files": 2,
       "source_files": 61,
@@ -2219,7 +2721,9 @@
       "by_language": {
         "JavaScript": {
           "files": 61,
-          "bytes": 234004
+          "bytes": 234004,
+          "physical_lines": 7277,
+          "nonblank_lines": 6495
         }
       }
     },
@@ -2233,6 +2737,8 @@
       "bytes": 983771,
       "code_files": 79,
       "code_bytes": 300610,
+      "code_physical_lines": 8807,
+      "code_nonblank_lines": 7902,
       "markdown_files": 41,
       "derived_markdown_files": 2,
       "source_files": 79,
@@ -2241,11 +2747,15 @@
       "by_language": {
         "JavaScript": {
           "files": 77,
-          "bytes": 289466
+          "bytes": 289466,
+          "physical_lines": 8545,
+          "nonblank_lines": 7674
         },
         ".sh": {
           "files": 2,
-          "bytes": 11144
+          "bytes": 11144,
+          "physical_lines": 262,
+          "nonblank_lines": 228
         }
       }
     },
@@ -2259,6 +2769,8 @@
       "bytes": 983771,
       "code_files": 79,
       "code_bytes": 300610,
+      "code_physical_lines": 8807,
+      "code_nonblank_lines": 7902,
       "markdown_files": 41,
       "derived_markdown_files": 2,
       "source_files": 79,
@@ -2267,11 +2779,15 @@
       "by_language": {
         "JavaScript": {
           "files": 77,
-          "bytes": 289466
+          "bytes": 289466,
+          "physical_lines": 8545,
+          "nonblank_lines": 7674
         },
         ".sh": {
           "files": 2,
-          "bytes": 11144
+          "bytes": 11144,
+          "physical_lines": 262,
+          "nonblank_lines": 228
         }
       }
     },
@@ -2327,6 +2843,8 @@
       "bytes": 2424,
       "code_files": 0,
       "code_bytes": 0,
+      "code_physical_lines": 0,
+      "code_nonblank_lines": 0,
       "markdown_files": 1,
       "derived_markdown_files": 0,
       "source_files": 0,
@@ -2344,6 +2862,8 @@
       "bytes": 63589,
       "code_files": 0,
       "code_bytes": 0,
+      "code_physical_lines": 0,
+      "code_nonblank_lines": 0,
       "markdown_files": 8,
       "derived_markdown_files": 2,
       "source_files": 0,
@@ -2361,6 +2881,8 @@
       "bytes": 66189,
       "code_files": 0,
       "code_bytes": 0,
+      "code_physical_lines": 0,
+      "code_nonblank_lines": 0,
       "markdown_files": 8,
       "derived_markdown_files": 2,
       "source_files": 0,
@@ -2378,6 +2900,8 @@
       "bytes": 176014,
       "code_files": 0,
       "code_bytes": 0,
+      "code_physical_lines": 0,
+      "code_nonblank_lines": 0,
       "markdown_files": 13,
       "derived_markdown_files": 2,
       "source_files": 0,
@@ -2395,6 +2919,8 @@
       "bytes": 227474,
       "code_files": 0,
       "code_bytes": 0,
+      "code_physical_lines": 0,
+      "code_nonblank_lines": 0,
       "markdown_files": 13,
       "derived_markdown_files": 2,
       "source_files": 0,
@@ -2412,6 +2938,8 @@
       "bytes": 227474,
       "code_files": 0,
       "code_bytes": 0,
+      "code_physical_lines": 0,
+      "code_nonblank_lines": 0,
       "markdown_files": 13,
       "derived_markdown_files": 2,
       "source_files": 0,
@@ -2459,6 +2987,8 @@
       "bytes": 12381,
       "code_files": 0,
       "code_bytes": 0,
+      "code_physical_lines": 0,
+      "code_nonblank_lines": 0,
       "markdown_files": 1,
       "derived_markdown_files": 0,
       "source_files": 0,
@@ -2476,6 +3006,8 @@
       "bytes": 24336,
       "code_files": 0,
       "code_bytes": 0,
+      "code_physical_lines": 0,
+      "code_nonblank_lines": 0,
       "markdown_files": 2,
       "derived_markdown_files": 0,
       "source_files": 0,
@@ -2493,6 +3025,8 @@
       "bytes": 648634,
       "code_files": 0,
       "code_bytes": 0,
+      "code_physical_lines": 0,
+      "code_nonblank_lines": 0,
       "markdown_files": 19,
       "derived_markdown_files": 2,
       "source_files": 0,
@@ -2510,6 +3044,8 @@
       "bytes": 861217,
       "code_files": 0,
       "code_bytes": 0,
+      "code_physical_lines": 0,
+      "code_nonblank_lines": 0,
       "markdown_files": 26,
       "derived_markdown_files": 2,
       "source_files": 0,
@@ -2527,6 +3063,8 @@
       "bytes": 968427,
       "code_files": 0,
       "code_bytes": 0,
+      "code_physical_lines": 0,
+      "code_nonblank_lines": 0,
       "markdown_files": 32,
       "derived_markdown_files": 2,
       "source_files": 0,
@@ -2544,6 +3082,8 @@
       "bytes": 1588107,
       "code_files": 0,
       "code_bytes": 0,
+      "code_physical_lines": 0,
+      "code_nonblank_lines": 0,
       "markdown_files": 52,
       "derived_markdown_files": 2,
       "source_files": 0,
@@ -2561,6 +3101,8 @@
       "bytes": 1813134,
       "code_files": 0,
       "code_bytes": 0,
+      "code_physical_lines": 0,
+      "code_nonblank_lines": 0,
       "markdown_files": 60,
       "derived_markdown_files": 2,
       "source_files": 0,
@@ -2578,6 +3120,8 @@
       "bytes": 1813134,
       "code_files": 0,
       "code_bytes": 0,
+      "code_physical_lines": 0,
+      "code_nonblank_lines": 0,
       "markdown_files": 60,
       "derived_markdown_files": 2,
       "source_files": 0,
@@ -2625,6 +3169,8 @@
       "bytes": 103797,
       "code_files": 0,
       "code_bytes": 0,
+      "code_physical_lines": 0,
+      "code_nonblank_lines": 0,
       "markdown_files": 12,
       "derived_markdown_files": 0,
       "source_files": 0,
@@ -2642,6 +3188,8 @@
       "bytes": 253699,
       "code_files": 0,
       "code_bytes": 0,
+      "code_physical_lines": 0,
+      "code_nonblank_lines": 0,
       "markdown_files": 17,
       "derived_markdown_files": 0,
       "source_files": 0,
@@ -2659,6 +3207,8 @@
       "bytes": 577348,
       "code_files": 0,
       "code_bytes": 0,
+      "code_physical_lines": 0,
+      "code_nonblank_lines": 0,
       "markdown_files": 23,
       "derived_markdown_files": 2,
       "source_files": 0,
@@ -2676,6 +3226,8 @@
       "bytes": 780027,
       "code_files": 0,
       "code_bytes": 0,
+      "code_physical_lines": 0,
+      "code_nonblank_lines": 0,
       "markdown_files": 50,
       "derived_markdown_files": 2,
       "source_files": 0,
@@ -2693,6 +3245,8 @@
       "bytes": 785146,
       "code_files": 0,
       "code_bytes": 0,
+      "code_physical_lines": 0,
+      "code_nonblank_lines": 0,
       "markdown_files": 50,
       "derived_markdown_files": 2,
       "source_files": 0,
@@ -2710,6 +3264,8 @@
       "bytes": 984150,
       "code_files": 0,
       "code_bytes": 0,
+      "code_physical_lines": 0,
+      "code_nonblank_lines": 0,
       "markdown_files": 52,
       "derived_markdown_files": 2,
       "source_files": 0,
@@ -2727,6 +3283,8 @@
       "bytes": 1046604,
       "code_files": 0,
       "code_bytes": 0,
+      "code_physical_lines": 0,
+      "code_nonblank_lines": 0,
       "markdown_files": 52,
       "derived_markdown_files": 2,
       "source_files": 0,
@@ -2744,6 +3302,8 @@
       "bytes": 1046604,
       "code_files": 0,
       "code_bytes": 0,
+      "code_physical_lines": 0,
+      "code_nonblank_lines": 0,
       "markdown_files": 52,
       "derived_markdown_files": 2,
       "source_files": 0,
@@ -2761,6 +3321,8 @@
       "bytes": 152691,
       "code_files": 4,
       "code_bytes": 28485,
+      "code_physical_lines": 1030,
+      "code_nonblank_lines": 905,
       "markdown_files": 1,
       "derived_markdown_files": 0,
       "source_files": 4,
@@ -2769,11 +3331,15 @@
       "by_language": {
         "JavaScript": {
           "files": 3,
-          "bytes": 23168
+          "bytes": 23168,
+          "physical_lines": 879,
+          "nonblank_lines": 772
         },
         "Python": {
           "files": 1,
-          "bytes": 5317
+          "bytes": 5317,
+          "physical_lines": 151,
+          "nonblank_lines": 133
         }
       }
     },
@@ -2787,6 +3353,8 @@
       "bytes": 152691,
       "code_files": 4,
       "code_bytes": 28485,
+      "code_physical_lines": 1030,
+      "code_nonblank_lines": 905,
       "markdown_files": 1,
       "derived_markdown_files": 0,
       "source_files": 4,
@@ -2795,11 +3363,15 @@
       "by_language": {
         "JavaScript": {
           "files": 3,
-          "bytes": 23168
+          "bytes": 23168,
+          "physical_lines": 879,
+          "nonblank_lines": 772
         },
         "Python": {
           "files": 1,
-          "bytes": 5317
+          "bytes": 5317,
+          "physical_lines": 151,
+          "nonblank_lines": 133
         }
       }
     },
@@ -2813,6 +3385,8 @@
       "bytes": 152691,
       "code_files": 4,
       "code_bytes": 28485,
+      "code_physical_lines": 1030,
+      "code_nonblank_lines": 905,
       "markdown_files": 1,
       "derived_markdown_files": 0,
       "source_files": 4,
@@ -2821,11 +3395,15 @@
       "by_language": {
         "JavaScript": {
           "files": 3,
-          "bytes": 23168
+          "bytes": 23168,
+          "physical_lines": 879,
+          "nonblank_lines": 772
         },
         "Python": {
           "files": 1,
-          "bytes": 5317
+          "bytes": 5317,
+          "physical_lines": 151,
+          "nonblank_lines": 133
         }
       }
     },
@@ -2839,6 +3417,8 @@
       "bytes": 152691,
       "code_files": 4,
       "code_bytes": 28485,
+      "code_physical_lines": 1030,
+      "code_nonblank_lines": 905,
       "markdown_files": 1,
       "derived_markdown_files": 0,
       "source_files": 4,
@@ -2847,11 +3427,15 @@
       "by_language": {
         "JavaScript": {
           "files": 3,
-          "bytes": 23168
+          "bytes": 23168,
+          "physical_lines": 879,
+          "nonblank_lines": 772
         },
         "Python": {
           "files": 1,
-          "bytes": 5317
+          "bytes": 5317,
+          "physical_lines": 151,
+          "nonblank_lines": 133
         }
       }
     },
@@ -2865,6 +3449,8 @@
       "bytes": 152691,
       "code_files": 4,
       "code_bytes": 28485,
+      "code_physical_lines": 1030,
+      "code_nonblank_lines": 905,
       "markdown_files": 1,
       "derived_markdown_files": 0,
       "source_files": 4,
@@ -2873,11 +3459,15 @@
       "by_language": {
         "JavaScript": {
           "files": 3,
-          "bytes": 23168
+          "bytes": 23168,
+          "physical_lines": 879,
+          "nonblank_lines": 772
         },
         "Python": {
           "files": 1,
-          "bytes": 5317
+          "bytes": 5317,
+          "physical_lines": 151,
+          "nonblank_lines": 133
         }
       }
     },
@@ -2891,6 +3481,8 @@
       "bytes": 152691,
       "code_files": 4,
       "code_bytes": 28485,
+      "code_physical_lines": 1030,
+      "code_nonblank_lines": 905,
       "markdown_files": 1,
       "derived_markdown_files": 0,
       "source_files": 4,
@@ -2899,11 +3491,15 @@
       "by_language": {
         "JavaScript": {
           "files": 3,
-          "bytes": 23168
+          "bytes": 23168,
+          "physical_lines": 879,
+          "nonblank_lines": 772
         },
         "Python": {
           "files": 1,
-          "bytes": 5317
+          "bytes": 5317,
+          "physical_lines": 151,
+          "nonblank_lines": 133
         }
       }
     },
@@ -2917,6 +3513,8 @@
       "bytes": 152691,
       "code_files": 4,
       "code_bytes": 28485,
+      "code_physical_lines": 1030,
+      "code_nonblank_lines": 905,
       "markdown_files": 1,
       "derived_markdown_files": 0,
       "source_files": 4,
@@ -2925,11 +3523,15 @@
       "by_language": {
         "JavaScript": {
           "files": 3,
-          "bytes": 23168
+          "bytes": 23168,
+          "physical_lines": 879,
+          "nonblank_lines": 772
         },
         "Python": {
           "files": 1,
-          "bytes": 5317
+          "bytes": 5317,
+          "physical_lines": 151,
+          "nonblank_lines": 133
         }
       }
     },
@@ -2943,6 +3545,8 @@
       "bytes": 152691,
       "code_files": 4,
       "code_bytes": 28485,
+      "code_physical_lines": 1030,
+      "code_nonblank_lines": 905,
       "markdown_files": 1,
       "derived_markdown_files": 0,
       "source_files": 4,
@@ -2951,11 +3555,15 @@
       "by_language": {
         "JavaScript": {
           "files": 3,
-          "bytes": 23168
+          "bytes": 23168,
+          "physical_lines": 879,
+          "nonblank_lines": 772
         },
         "Python": {
           "files": 1,
-          "bytes": 5317
+          "bytes": 5317,
+          "physical_lines": 151,
+          "nonblank_lines": 133
         }
       }
     },
@@ -2969,6 +3577,8 @@
       "bytes": 152691,
       "code_files": 4,
       "code_bytes": 28485,
+      "code_physical_lines": 1030,
+      "code_nonblank_lines": 905,
       "markdown_files": 1,
       "derived_markdown_files": 0,
       "source_files": 4,
@@ -2977,11 +3587,15 @@
       "by_language": {
         "JavaScript": {
           "files": 3,
-          "bytes": 23168
+          "bytes": 23168,
+          "physical_lines": 879,
+          "nonblank_lines": 772
         },
         "Python": {
           "files": 1,
-          "bytes": 5317
+          "bytes": 5317,
+          "physical_lines": 151,
+          "nonblank_lines": 133
         }
       }
     },
@@ -2995,6 +3609,8 @@
       "bytes": 158024,
       "code_files": 4,
       "code_bytes": 28485,
+      "code_physical_lines": 1030,
+      "code_nonblank_lines": 905,
       "markdown_files": 2,
       "derived_markdown_files": 0,
       "source_files": 4,
@@ -3003,11 +3619,15 @@
       "by_language": {
         "JavaScript": {
           "files": 3,
-          "bytes": 23168
+          "bytes": 23168,
+          "physical_lines": 879,
+          "nonblank_lines": 772
         },
         "Python": {
           "files": 1,
-          "bytes": 5317
+          "bytes": 5317,
+          "physical_lines": 151,
+          "nonblank_lines": 133
         }
       }
     },
@@ -3021,6 +3641,8 @@
       "bytes": 356021,
       "code_files": 4,
       "code_bytes": 32273,
+      "code_physical_lines": 1151,
+      "code_nonblank_lines": 1009,
       "markdown_files": 4,
       "derived_markdown_files": 1,
       "source_files": 4,
@@ -3029,11 +3651,15 @@
       "by_language": {
         "JavaScript": {
           "files": 3,
-          "bytes": 26956
+          "bytes": 26956,
+          "physical_lines": 1000,
+          "nonblank_lines": 876
         },
         "Python": {
           "files": 1,
-          "bytes": 5317
+          "bytes": 5317,
+          "physical_lines": 151,
+          "nonblank_lines": 133
         }
       }
     },
@@ -3047,6 +3673,8 @@
       "bytes": 405112,
       "code_files": 4,
       "code_bytes": 32273,
+      "code_physical_lines": 1151,
+      "code_nonblank_lines": 1009,
       "markdown_files": 6,
       "derived_markdown_files": 2,
       "source_files": 4,
@@ -3055,11 +3683,15 @@
       "by_language": {
         "JavaScript": {
           "files": 3,
-          "bytes": 26956
+          "bytes": 26956,
+          "physical_lines": 1000,
+          "nonblank_lines": 876
         },
         "Python": {
           "files": 1,
-          "bytes": 5317
+          "bytes": 5317,
+          "physical_lines": 151,
+          "nonblank_lines": 133
         }
       }
     },
@@ -3073,6 +3705,8 @@
       "bytes": 405112,
       "code_files": 4,
       "code_bytes": 32273,
+      "code_physical_lines": 1151,
+      "code_nonblank_lines": 1009,
       "markdown_files": 6,
       "derived_markdown_files": 2,
       "source_files": 4,
@@ -3081,11 +3715,15 @@
       "by_language": {
         "JavaScript": {
           "files": 3,
-          "bytes": 26956
+          "bytes": 26956,
+          "physical_lines": 1000,
+          "nonblank_lines": 876
         },
         "Python": {
           "files": 1,
-          "bytes": 5317
+          "bytes": 5317,
+          "physical_lines": 151,
+          "nonblank_lines": 133
         }
       }
     },
@@ -3099,6 +3737,8 @@
       "bytes": 1361331,
       "code_files": 125,
       "code_bytes": 243390,
+      "code_physical_lines": 8530,
+      "code_nonblank_lines": 7412,
       "markdown_files": 9,
       "derived_markdown_files": 0,
       "source_files": 125,
@@ -3107,7 +3747,9 @@
       "by_language": {
         "JavaScript": {
           "files": 125,
-          "bytes": 243390
+          "bytes": 243390,
+          "physical_lines": 8530,
+          "nonblank_lines": 7412
         }
       }
     },
@@ -3121,6 +3763,8 @@
       "bytes": 1361331,
       "code_files": 125,
       "code_bytes": 243390,
+      "code_physical_lines": 8530,
+      "code_nonblank_lines": 7412,
       "markdown_files": 9,
       "derived_markdown_files": 0,
       "source_files": 125,
@@ -3129,7 +3773,9 @@
       "by_language": {
         "JavaScript": {
           "files": 125,
-          "bytes": 243390
+          "bytes": 243390,
+          "physical_lines": 8530,
+          "nonblank_lines": 7412
         }
       }
     },
@@ -3143,6 +3789,8 @@
       "bytes": 1361331,
       "code_files": 125,
       "code_bytes": 243390,
+      "code_physical_lines": 8530,
+      "code_nonblank_lines": 7412,
       "markdown_files": 9,
       "derived_markdown_files": 0,
       "source_files": 125,
@@ -3151,7 +3799,9 @@
       "by_language": {
         "JavaScript": {
           "files": 125,
-          "bytes": 243390
+          "bytes": 243390,
+          "physical_lines": 8530,
+          "nonblank_lines": 7412
         }
       }
     },
@@ -3165,6 +3815,8 @@
       "bytes": 1361331,
       "code_files": 125,
       "code_bytes": 243390,
+      "code_physical_lines": 8530,
+      "code_nonblank_lines": 7412,
       "markdown_files": 9,
       "derived_markdown_files": 0,
       "source_files": 125,
@@ -3173,7 +3825,9 @@
       "by_language": {
         "JavaScript": {
           "files": 125,
-          "bytes": 243390
+          "bytes": 243390,
+          "physical_lines": 8530,
+          "nonblank_lines": 7412
         }
       }
     },
@@ -3187,6 +3841,8 @@
       "bytes": 1361331,
       "code_files": 125,
       "code_bytes": 243390,
+      "code_physical_lines": 8530,
+      "code_nonblank_lines": 7412,
       "markdown_files": 9,
       "derived_markdown_files": 0,
       "source_files": 125,
@@ -3195,7 +3851,9 @@
       "by_language": {
         "JavaScript": {
           "files": 125,
-          "bytes": 243390
+          "bytes": 243390,
+          "physical_lines": 8530,
+          "nonblank_lines": 7412
         }
       }
     },
@@ -3209,6 +3867,8 @@
       "bytes": 1361331,
       "code_files": 125,
       "code_bytes": 243390,
+      "code_physical_lines": 8530,
+      "code_nonblank_lines": 7412,
       "markdown_files": 9,
       "derived_markdown_files": 0,
       "source_files": 125,
@@ -3217,7 +3877,9 @@
       "by_language": {
         "JavaScript": {
           "files": 125,
-          "bytes": 243390
+          "bytes": 243390,
+          "physical_lines": 8530,
+          "nonblank_lines": 7412
         }
       }
     },
@@ -3231,6 +3893,8 @@
       "bytes": 1361331,
       "code_files": 125,
       "code_bytes": 243390,
+      "code_physical_lines": 8530,
+      "code_nonblank_lines": 7412,
       "markdown_files": 9,
       "derived_markdown_files": 0,
       "source_files": 125,
@@ -3239,7 +3903,9 @@
       "by_language": {
         "JavaScript": {
           "files": 125,
-          "bytes": 243390
+          "bytes": 243390,
+          "physical_lines": 8530,
+          "nonblank_lines": 7412
         }
       }
     },
@@ -3253,6 +3919,8 @@
       "bytes": 1361331,
       "code_files": 125,
       "code_bytes": 243390,
+      "code_physical_lines": 8530,
+      "code_nonblank_lines": 7412,
       "markdown_files": 9,
       "derived_markdown_files": 0,
       "source_files": 125,
@@ -3261,7 +3929,9 @@
       "by_language": {
         "JavaScript": {
           "files": 125,
-          "bytes": 243390
+          "bytes": 243390,
+          "physical_lines": 8530,
+          "nonblank_lines": 7412
         }
       }
     },
@@ -3275,6 +3945,8 @@
       "bytes": 1361331,
       "code_files": 125,
       "code_bytes": 243390,
+      "code_physical_lines": 8530,
+      "code_nonblank_lines": 7412,
       "markdown_files": 9,
       "derived_markdown_files": 0,
       "source_files": 125,
@@ -3283,7 +3955,9 @@
       "by_language": {
         "JavaScript": {
           "files": 125,
-          "bytes": 243390
+          "bytes": 243390,
+          "physical_lines": 8530,
+          "nonblank_lines": 7412
         }
       }
     },
@@ -3297,6 +3971,8 @@
       "bytes": 1271659,
       "code_files": 158,
       "code_bytes": 428780,
+      "code_physical_lines": 14477,
+      "code_nonblank_lines": 12624,
       "markdown_files": 20,
       "derived_markdown_files": 2,
       "source_files": 158,
@@ -3305,11 +3981,15 @@
       "by_language": {
         "JavaScript": {
           "files": 156,
-          "bytes": 426578
+          "bytes": 426578,
+          "physical_lines": 14413,
+          "nonblank_lines": 12566
         },
         "TypeScript": {
           "files": 2,
-          "bytes": 2202
+          "bytes": 2202,
+          "physical_lines": 64,
+          "nonblank_lines": 58
         }
       }
     },
@@ -3323,6 +4003,8 @@
       "bytes": 1367763,
       "code_files": 158,
       "code_bytes": 428780,
+      "code_physical_lines": 14477,
+      "code_nonblank_lines": 12624,
       "markdown_files": 21,
       "derived_markdown_files": 2,
       "source_files": 158,
@@ -3331,11 +4013,15 @@
       "by_language": {
         "JavaScript": {
           "files": 156,
-          "bytes": 426578
+          "bytes": 426578,
+          "physical_lines": 14413,
+          "nonblank_lines": 12566
         },
         "TypeScript": {
           "files": 2,
-          "bytes": 2202
+          "bytes": 2202,
+          "physical_lines": 64,
+          "nonblank_lines": 58
         }
       }
     },
@@ -3349,6 +4035,8 @@
       "bytes": 1438139,
       "code_files": 158,
       "code_bytes": 428780,
+      "code_physical_lines": 14477,
+      "code_nonblank_lines": 12624,
       "markdown_files": 21,
       "derived_markdown_files": 2,
       "source_files": 158,
@@ -3357,11 +4045,15 @@
       "by_language": {
         "JavaScript": {
           "files": 156,
-          "bytes": 426578
+          "bytes": 426578,
+          "physical_lines": 14413,
+          "nonblank_lines": 12566
         },
         "TypeScript": {
           "files": 2,
-          "bytes": 2202
+          "bytes": 2202,
+          "physical_lines": 64,
+          "nonblank_lines": 58
         }
       }
     },
@@ -3375,6 +4067,8 @@
       "bytes": 1438139,
       "code_files": 158,
       "code_bytes": 428780,
+      "code_physical_lines": 14477,
+      "code_nonblank_lines": 12624,
       "markdown_files": 21,
       "derived_markdown_files": 2,
       "source_files": 158,
@@ -3383,11 +4077,15 @@
       "by_language": {
         "JavaScript": {
           "files": 156,
-          "bytes": 426578
+          "bytes": 426578,
+          "physical_lines": 14413,
+          "nonblank_lines": 12566
         },
         "TypeScript": {
           "files": 2,
-          "bytes": 2202
+          "bytes": 2202,
+          "physical_lines": 64,
+          "nonblank_lines": 58
         }
       }
     },
@@ -3449,6 +4147,8 @@
       "bytes": 50187,
       "code_files": 0,
       "code_bytes": 0,
+      "code_physical_lines": 0,
+      "code_nonblank_lines": 0,
       "markdown_files": 5,
       "derived_markdown_files": 2,
       "source_files": 0,
@@ -3466,6 +4166,8 @@
       "bytes": 52778,
       "code_files": 0,
       "code_bytes": 0,
+      "code_physical_lines": 0,
+      "code_nonblank_lines": 0,
       "markdown_files": 5,
       "derived_markdown_files": 2,
       "source_files": 0,
@@ -3483,6 +4185,8 @@
       "bytes": 146464,
       "code_files": 0,
       "code_bytes": 0,
+      "code_physical_lines": 0,
+      "code_nonblank_lines": 0,
       "markdown_files": 6,
       "derived_markdown_files": 2,
       "source_files": 0,
@@ -3500,6 +4204,8 @@
       "bytes": 194253,
       "code_files": 0,
       "code_bytes": 0,
+      "code_physical_lines": 0,
+      "code_nonblank_lines": 0,
       "markdown_files": 6,
       "derived_markdown_files": 2,
       "source_files": 0,
@@ -3517,6 +4223,8 @@
       "bytes": 195605,
       "code_files": 0,
       "code_bytes": 0,
+      "code_physical_lines": 0,
+      "code_nonblank_lines": 0,
       "markdown_files": 6,
       "derived_markdown_files": 2,
       "source_files": 0,
@@ -3582,6 +4290,8 @@
       "bytes": 43907,
       "code_files": 0,
       "code_bytes": 0,
+      "code_physical_lines": 0,
+      "code_nonblank_lines": 0,
       "markdown_files": 3,
       "derived_markdown_files": 2,
       "source_files": 0,
@@ -3599,6 +4309,8 @@
       "bytes": 46490,
       "code_files": 0,
       "code_bytes": 0,
+      "code_physical_lines": 0,
+      "code_nonblank_lines": 0,
       "markdown_files": 3,
       "derived_markdown_files": 2,
       "source_files": 0,
@@ -3616,6 +4328,8 @@
       "bytes": 140172,
       "code_files": 0,
       "code_bytes": 0,
+      "code_physical_lines": 0,
+      "code_nonblank_lines": 0,
       "markdown_files": 4,
       "derived_markdown_files": 2,
       "source_files": 0,
@@ -3633,6 +4347,8 @@
       "bytes": 187180,
       "code_files": 0,
       "code_bytes": 0,
+      "code_physical_lines": 0,
+      "code_nonblank_lines": 0,
       "markdown_files": 4,
       "derived_markdown_files": 2,
       "source_files": 0,
@@ -3650,6 +4366,8 @@
       "bytes": 187180,
       "code_files": 0,
       "code_bytes": 0,
+      "code_physical_lines": 0,
+      "code_nonblank_lines": 0,
       "markdown_files": 4,
       "derived_markdown_files": 2,
       "source_files": 0,
@@ -3715,6 +4433,8 @@
       "bytes": 84847,
       "code_files": 0,
       "code_bytes": 0,
+      "code_physical_lines": 0,
+      "code_nonblank_lines": 0,
       "markdown_files": 9,
       "derived_markdown_files": 2,
       "source_files": 0,
@@ -3732,6 +4452,8 @@
       "bytes": 93308,
       "code_files": 0,
       "code_bytes": 0,
+      "code_physical_lines": 0,
+      "code_nonblank_lines": 0,
       "markdown_files": 10,
       "derived_markdown_files": 2,
       "source_files": 0,
@@ -3749,6 +4471,8 @@
       "bytes": 205508,
       "code_files": 0,
       "code_bytes": 0,
+      "code_physical_lines": 0,
+      "code_nonblank_lines": 0,
       "markdown_files": 15,
       "derived_markdown_files": 2,
       "source_files": 0,
@@ -3766,6 +4490,8 @@
       "bytes": 256071,
       "code_files": 0,
       "code_bytes": 0,
+      "code_physical_lines": 0,
+      "code_nonblank_lines": 0,
       "markdown_files": 15,
       "derived_markdown_files": 2,
       "source_files": 0,
@@ -3783,6 +4509,8 @@
       "bytes": 256071,
       "code_files": 0,
       "code_bytes": 0,
+      "code_physical_lines": 0,
+      "code_nonblank_lines": 0,
       "markdown_files": 15,
       "derived_markdown_files": 2,
       "source_files": 0,
@@ -3800,6 +4528,8 @@
       "bytes": 97906,
       "code_files": 0,
       "code_bytes": 0,
+      "code_physical_lines": 0,
+      "code_nonblank_lines": 0,
       "markdown_files": 19,
       "derived_markdown_files": 1,
       "source_files": 0,
@@ -3817,6 +4547,8 @@
       "bytes": 97906,
       "code_files": 0,
       "code_bytes": 0,
+      "code_physical_lines": 0,
+      "code_nonblank_lines": 0,
       "markdown_files": 19,
       "derived_markdown_files": 1,
       "source_files": 0,
@@ -3834,6 +4566,8 @@
       "bytes": 97906,
       "code_files": 0,
       "code_bytes": 0,
+      "code_physical_lines": 0,
+      "code_nonblank_lines": 0,
       "markdown_files": 19,
       "derived_markdown_files": 1,
       "source_files": 0,
@@ -3851,6 +4585,8 @@
       "bytes": 97906,
       "code_files": 0,
       "code_bytes": 0,
+      "code_physical_lines": 0,
+      "code_nonblank_lines": 0,
       "markdown_files": 19,
       "derived_markdown_files": 1,
       "source_files": 0,
@@ -3868,6 +4604,8 @@
       "bytes": 97906,
       "code_files": 0,
       "code_bytes": 0,
+      "code_physical_lines": 0,
+      "code_nonblank_lines": 0,
       "markdown_files": 19,
       "derived_markdown_files": 1,
       "source_files": 0,
@@ -3885,6 +4623,8 @@
       "bytes": 97906,
       "code_files": 0,
       "code_bytes": 0,
+      "code_physical_lines": 0,
+      "code_nonblank_lines": 0,
       "markdown_files": 19,
       "derived_markdown_files": 1,
       "source_files": 0,
@@ -3902,6 +4642,8 @@
       "bytes": 97906,
       "code_files": 0,
       "code_bytes": 0,
+      "code_physical_lines": 0,
+      "code_nonblank_lines": 0,
       "markdown_files": 19,
       "derived_markdown_files": 1,
       "source_files": 0,
@@ -3919,6 +4661,8 @@
       "bytes": 97906,
       "code_files": 0,
       "code_bytes": 0,
+      "code_physical_lines": 0,
+      "code_nonblank_lines": 0,
       "markdown_files": 19,
       "derived_markdown_files": 1,
       "source_files": 0,
@@ -3936,6 +4680,8 @@
       "bytes": 145585,
       "code_files": 0,
       "code_bytes": 0,
+      "code_physical_lines": 0,
+      "code_nonblank_lines": 0,
       "markdown_files": 22,
       "derived_markdown_files": 3,
       "source_files": 0,
@@ -3953,6 +4699,8 @@
       "bytes": 147944,
       "code_files": 0,
       "code_bytes": 0,
+      "code_physical_lines": 0,
+      "code_nonblank_lines": 0,
       "markdown_files": 22,
       "derived_markdown_files": 3,
       "source_files": 0,
@@ -3970,6 +4718,8 @@
       "bytes": 240584,
       "code_files": 0,
       "code_bytes": 0,
+      "code_physical_lines": 0,
+      "code_nonblank_lines": 0,
       "markdown_files": 23,
       "derived_markdown_files": 3,
       "source_files": 0,
@@ -3987,6 +4737,8 @@
       "bytes": 294875,
       "code_files": 0,
       "code_bytes": 0,
+      "code_physical_lines": 0,
+      "code_nonblank_lines": 0,
       "markdown_files": 23,
       "derived_markdown_files": 3,
       "source_files": 0,
@@ -4004,6 +4756,8 @@
       "bytes": 294875,
       "code_files": 0,
       "code_bytes": 0,
+      "code_physical_lines": 0,
+      "code_nonblank_lines": 0,
       "markdown_files": 23,
       "derived_markdown_files": 3,
       "source_files": 0,
@@ -4016,7 +4770,7 @@
     "Git tree snapshot, not churn",
     "code extension filter",
     "generated/path exclusions heuristic",
-    "no LOC/SLOC yet",
+    "physical and nonblank line counts include comments and are not language-aware SLOC",
     "no private-repository metrics exported"
   ]
 }
