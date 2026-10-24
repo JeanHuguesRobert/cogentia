@@ -490,3 +490,10 @@ Or, more operationally:
 
 > **A packet should be attracted not by whoever is most visible, but by whoever can most credibly,
 > legitimately, and presently help it advance.**
+
+## Informational viscosity and FractaCache — research cross-reference (2026-10-24)
+
+**Research clarification, non-normative:** informational gravity here measures the contextual, time-bounded attraction of a **mobilizable capacity for a packet**. The proposed concept of *informational viscosity* concerns the expected persistence or change rate of a **knowledge claim's applicability or referent**. It is not an extra gravity factor or a validated universal law. Gravity may take freshness and evidence into account when they affect routing, but a high-gravity capacity cannot certify stale knowledge merely by attracting packets.
+
+See [Locality Principle — Informational viscosity](locality_principle.md#informational-viscosity--expected-rate-of-knowledge-change-candidate) for the candidate definition, distinctions from temperature and confidence, and its testable consequence for FractaCache revalidation. The human-validated v1.0 model above is not revised by this cross-reference.
+
