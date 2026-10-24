@@ -12,6 +12,7 @@ import { runWeeklyConsolidation } from "./lib/cogentia-core.js";
 import { runMonteCarloAudit } from "./lib/corpus-sleep-cycle/index.js";
 import { emitCopEvidence } from "./lib/cop-evidence-emitter.js";
 import { runRepoSyncPhase } from "./lib/repo-sync-phase.js";
+import { runConfiguredInteractions } from "./lib/corpus-sleep-cycle/configured-interactions.js";
 
 function nowMs() {
   return Date.now();
@@ -128,6 +129,19 @@ export async function runCorpusSleepCycle(options = {}) {
 
   const context = { root, options, availability, budget };
 
+  // An explicitly configured observational mission shares this cycle's capacity
+  // gate and wall budget. Run before network repo sync to prevent starvation.
+  if (options.interactionConfig || process.env.COGENTIA_INTERACTION_CONFIG) {
+    const remaining = budget.maxWallTimeMs === null ? 90000 : Math.max(0, budget.maxWallTimeMs - budgetStatus(budget).elapsedMs);
+    if (remaining <= 0) return { status: "preempted", reason: "wall_time_budget_exhausted", phases };
+    const receipt = await runConfiguredInteractions({
+      configFile: options.interactionConfig, maxWallTimeMs: Math.min(90000, remaining),
+      force: options.force, gmailReader: options.interactionGmailReader,
+    });
+    phases.push({ name: "interaction_evidence", status: receipt.status, evidence: receipt });
+    if (receipt.status === "PREEMPTED") return { status: "preempted", reason: receipt.code, phases };
+  }
+
   // Phase 2: Repo sync — same command an operator would invoke on demand
   // (`cogentia.js repos sync`), run first so later phases read fresh clones.
   let repoSync = { name: "repo_sync", status: "skipped", evidence: null };
@@ -186,9 +200,10 @@ export async function runCorpusSleepCycle(options = {}) {
       view: options.view || "public",
       force: options.force,
       maxPairs: options.maxPairs || 30,
-      maxWallTimeMs: budget.maxWallTimeMs || 10000,
+      maxWallTimeMs: budget.maxWallTimeMs === null ? 10000 : Math.max(10, budget.maxWallTimeMs - budgetStatus(budget).elapsedMs),
       resume: options.resume || null,
-      seed: options.seed ?? 42
+      seed: options.seed ?? 42,
+      queueRoot: options.sleepStateRoot || process.env.COGENTIA_SLEEP_STATE_ROOT
     });
 
     candidateLearning = {
@@ -329,7 +344,7 @@ export async function runCorpusSleepCycle(options = {}) {
   }
 
   const result = {
-    status: plannedCount === 0 ? "completed" : "completed_partial",
+    status: plannedCount === 0 && !phases.some((p) => ["PARTIAL", "BLOCKED_SECURITY"].includes(p.status)) ? "completed" : "completed_partial",
     availability,
     budget: finalBudget,
     phases,
@@ -350,7 +365,8 @@ export async function runCorpusSleepCycle(options = {}) {
           candidate_signals: result.candidate_signals,
           cognitive_gain_score: result.metrics?.cognitive_yield?.cognitive_gain_score || 0,
           elapsed_ms: finalBudget.elapsedMs || 0,
-          preempted: false
+          preempted: false,
+          interaction_evidence: phases.find((p) => p.name === "interaction_evidence")?.evidence || null
         }
       });
       result.cop_evidence = copResult;
@@ -370,6 +386,7 @@ function parseCliArgs() {
     skipConsolidation: args.includes("--skip-consolidation"),
     skipRepoSync: args.includes("--skip-repo-sync"),
     repoSyncIncludePrivate: args.includes("--repo-sync-include-private"),
+    noCopEvidence: args.includes("--no-cop-evidence"),
   };
 
   for (let i = 0; i < args.length; i++) {
