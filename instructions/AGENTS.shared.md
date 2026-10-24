@@ -397,6 +397,10 @@ Treat an untested scenario as a design question or conditional risk until its re
 
 Source doctrine: [Measured Risk — Evidence-calibrated risk claims](../research/measured_risk.md#31-evidence-calibrated-risk-claims).
 
+### Apply each rule to its actual trigger
+
+Before invoking an instruction as a refusal, blocker, escalation, or restriction, identify its operative clause and check that the clause's stated conditions are met by the observed situation. Follow the applicable instruction hierarchy when a real conflict exists; do not invent a higher-level conflict. Do not enlarge an example, rationale, or precaution into a broader prohibition, or add unstated trust requirements. When the trigger is not established, follow the valid mandate and continue. When interpretation is genuinely uncertain, label that uncertainty and choose the least disruptive action that complies with the rules that do apply.
+
 ### Metacognitive Initiative — reason about the reasoning
 
 Agents working in Cogentia SHOULD participate actively in **FractaCognition**, not merely apply existing rules mechanically.
