@@ -600,6 +600,22 @@ warming → pay justified activation cost
 
 The relevant objective is **minimize total lifecycle cost subject to recoverability, required access guarantees and locality/authority constraints**. Reinforcement can reheat a glacial trace when warranted; cooling must retain a discoverable recovery path whenever preservation is required. Access effort may include latency, compute, energy, network transfer, human attention and external/archive-handling costs; these dimensions should be measured separately rather than hidden inside a single scalar.
 
+### Revalidation on reactivation: historical truth is not current validity
+
+A stored trace can be faithful evidence of **what was known, asserted, authorized or observed at its historical time** without remaining true, applicable or actionable now. Warming a cold or glacial memory therefore requires an *as-of-now validity check appropriate to its intended use*, not merely successful byte restoration.
+
+Distinguish:
+
+- **Historical integrity:** provenance, original timestamp, content and meaning at capture remain inspectable.
+- **Present epistemic validity:** whether the statement still holds, has been corrected, superseded or remains uncertain.
+- **Present normative / operational validity:** whether current law, policy, mandate, capability and effect constraints permit relying on or acting upon it.
+
+A bounded **rehydration gate** is: resolve historical source and original context → identify the task's current claims and consequences → inspect relevant newer evidence and supersession links → apply current local control and authorization → classify `current | historical-only | superseded | contradicted | uncertain | inaccessible` → materialize an appropriately qualified projection or defer when verification is insufficient.
+
+**Never silently rewrite the old trace to match the present.** Preserve the historical statement and attach an attributable present assessment, including the verification date, evidence and unresolved uncertainty. A cache hit is not proof of current truth, and an old permission is not current mandate. The stricter the consequences (external effects, legal or probative reliance), the stronger the necessary freshness and evidence checks. Low-risk historical questions may legitimately use historical-only material without forcing an exhaustive current-world search.
+
+This check is part of **effective access effort** and must be accounted for when comparing cold/glacial storage against hot materialization. It is not a promise that every changing fact can be verified automatically.
+
 Evaporation MAY lower salience or evict reconstructible projections. It MUST NOT silently expire a mandate, delete a sovereign source, erase a causal trace required for COP recovery, or defeat explicit legal/evidentiary retention rules. Conversely, retention MUST NOT force permanent active context. Governed forgetting or erasure is a distinct authorized lifecycle act.
 
 Reality Test candidate: let multiple agents reinforce and neglect the same situated traces; verify that obsolete attractors cease dominating routing, retained glacial evidence remains recoverable, authorized reheating reconstructs usable local projections, and eviction never destroys unrecoverable authoritative information. Compare costs and false recalls against a non-evaporating baseline.
