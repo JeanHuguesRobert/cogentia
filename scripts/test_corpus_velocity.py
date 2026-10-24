@@ -75,7 +75,12 @@ class CoverageTests(unittest.TestCase):
                     "--root", root, "--out", str(out), "--start", "2025-10", "--end", "2025-11"]
             with patch.object(sys, "argv", args), redirect_stdout(StringIO()):
                 module.main()
-            rows = json.loads((out / "corpus-velocity.json").read_text())["metrics"]
+            result = json.loads((out / "corpus-velocity.json").read_text())
+            rows = result["metrics"]
+            self.assertTrue(result["generated_at"].endswith("+00:00"))
+            self.assertEqual(len(result["registry_sha256"]), 64)
+            self.assertEqual(result["record_count"], 4)
+            self.assertEqual(result["status_counts"], {"missing": 2, "excluded": 2})
             self.assertEqual(len(rows), 4)
             self.assertEqual({r["period"] for r in rows}, {"2025-10", "2025-11"})
             self.assertEqual(sorted(r["status"] for r in rows),

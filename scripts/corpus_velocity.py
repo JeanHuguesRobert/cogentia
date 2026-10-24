@@ -9,6 +9,7 @@ never reads private repository contents into an automatically published export.
 import argparse
 import csv
 import datetime as dt
+import hashlib
 import json
 import pathlib
 import re
@@ -96,7 +97,9 @@ def main():
     args = ap.parse_args()
     periods = list(month_ends(args.start, args.end))
     now = dt.datetime.now(dt.timezone.utc)
-    registry = json.loads(pathlib.Path(args.registry).read_text())
+    registry_path = pathlib.Path(args.registry)
+    registry_bytes = registry_path.read_bytes()
+    registry = json.loads(registry_bytes)
     rows = []
     for item in registry["repositories"]:
         name = item["name"]
@@ -126,7 +129,13 @@ def main():
                              "partial": partial, "reason": reason[:200]})
     out = pathlib.Path(args.out)
     out.mkdir(parents=True, exist_ok=True)
+    status_counts = {}
+    for row in rows:
+        status_counts[row["status"]] = status_counts.get(row["status"], 0) + 1
     (out / "corpus-velocity.json").write_text(json.dumps({
+        "generated_at": dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds"),
+        "registry_sha256": hashlib.sha256(registry_bytes).hexdigest(),
+        "record_count": len(rows), "status_counts": status_counts,
         "schema_version": 1, "period_start": args.start, "period_end": args.end,
         "coverage": "partial_unless_registry_exhaustive", "metrics": rows,
         "limitations": ["Git tree snapshot, not churn", "code extension filter",

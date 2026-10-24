@@ -1,0 +1,4022 @@
+{
+  "generated_at": "2026-10-24T16:29:31+00:00",
+  "registry_sha256": "ceeabdc4e99ea62d311ddf470bbdc395c2f684a4abb17ea5341e12b59a48360d",
+  "record_count": 221,
+  "status_counts": {
+    "ok": 154,
+    "not_created": 67
+  },
+  "schema_version": 1,
+  "period_start": "2025-10",
+  "period_end": "2026-10",
+  "coverage": "partial_unless_registry_exhaustive",
+  "metrics": [
+    {
+      "repo": "JeanHuguesRobert/inseme",
+      "period": "2025-10",
+      "status": "ok",
+      "partial": false,
+      "commit": "f6c45385bd2c3f827bd466ce71024b0bbbe2c6ec",
+      "blobs": 9,
+      "bytes": 128595,
+      "code_files": 1,
+      "code_bytes": 63259,
+      "markdown_files": 1,
+      "derived_markdown_files": 0,
+      "source_files": 1,
+      "test_files": 0,
+      "excluded_files": 0,
+      "by_language": {
+        "JavaScript": {
+          "files": 1,
+          "bytes": 63259
+        }
+      }
+    },
+    {
+      "repo": "JeanHuguesRobert/inseme",
+      "period": "2025-11",
+      "status": "ok",
+      "partial": false,
+      "commit": "f6c45385bd2c3f827bd466ce71024b0bbbe2c6ec",
+      "blobs": 9,
+      "bytes": 128595,
+      "code_files": 1,
+      "code_bytes": 63259,
+      "markdown_files": 1,
+      "derived_markdown_files": 0,
+      "source_files": 1,
+      "test_files": 0,
+      "excluded_files": 0,
+      "by_language": {
+        "JavaScript": {
+          "files": 1,
+          "bytes": 63259
+        }
+      }
+    },
+    {
+      "repo": "JeanHuguesRobert/inseme",
+      "period": "2025-12",
+      "status": "ok",
+      "partial": false,
+      "commit": "6428fb78f334297e35916ced06b96b1dbcc0a5b0",
+      "blobs": 837,
+      "bytes": 138684632,
+      "code_files": 572,
+      "code_bytes": 3856219,
+      "markdown_files": 116,
+      "derived_markdown_files": 0,
+      "source_files": 572,
+      "test_files": 19,
+      "excluded_files": 0,
+      "by_language": {
+        "JavaScript": {
+          "files": 511,
+          "bytes": 3480802
+        },
+        ".sh": {
+          "files": 2,
+          "bytes": 1224
+        },
+        ".sql": {
+          "files": 55,
+          "bytes": 362455
+        },
+        "Python": {
+          "files": 1,
+          "bytes": 1085
+        },
+        "TypeScript": {
+          "files": 3,
+          "bytes": 10653
+        }
+      }
+    },
+    {
+      "repo": "JeanHuguesRobert/inseme",
+      "period": "2026-01",
+      "status": "ok",
+      "partial": false,
+      "commit": "f4f40d47ccd3162f335b6c80fe7a3e4be79d9a1a",
+      "blobs": 1301,
+      "bytes": 148004891,
+      "code_files": 808,
+      "code_bytes": 5096763,
+      "markdown_files": 312,
+      "derived_markdown_files": 3,
+      "source_files": 808,
+      "test_files": 38,
+      "excluded_files": 1,
+      "by_language": {
+        "JavaScript": {
+          "files": 735,
+          "bytes": 4686502
+        },
+        ".sh": {
+          "files": 2,
+          "bytes": 1224
+        },
+        ".sql": {
+          "files": 59,
+          "bytes": 369356
+        },
+        "Python": {
+          "files": 4,
+          "bytes": 19562
+        },
+        "TypeScript": {
+          "files": 8,
+          "bytes": 20119
+        }
+      }
+    },
+    {
+      "repo": "JeanHuguesRobert/inseme",
+      "period": "2026-02",
+      "status": "ok",
+      "partial": false,
+      "commit": "0856bca0a210c61ce9ac249b311ae33b5f2cb024",
+      "blobs": 1392,
+      "bytes": 148667690,
+      "code_files": 896,
+      "code_bytes": 5483096,
+      "markdown_files": 313,
+      "derived_markdown_files": 3,
+      "source_files": 896,
+      "test_files": 37,
+      "excluded_files": 1,
+      "by_language": {
+        "JavaScript": {
+          "files": 825,
+          "bytes": 5079514
+        },
+        ".sh": {
+          "files": 2,
+          "bytes": 1224
+        },
+        ".sql": {
+          "files": 59,
+          "bytes": 369305
+        },
+        "Python": {
+          "files": 4,
+          "bytes": 19562
+        },
+        "TypeScript": {
+          "files": 6,
+          "bytes": 13491
+        }
+      }
+    },
+    {
+      "repo": "JeanHuguesRobert/inseme",
+      "period": "2026-03",
+      "status": "ok",
+      "partial": false,
+      "commit": "0856bca0a210c61ce9ac249b311ae33b5f2cb024",
+      "blobs": 1392,
+      "bytes": 148667690,
+      "code_files": 896,
+      "code_bytes": 5483096,
+      "markdown_files": 313,
+      "derived_markdown_files": 3,
+      "source_files": 896,
+      "test_files": 37,
+      "excluded_files": 1,
+      "by_language": {
+        "JavaScript": {
+          "files": 825,
+          "bytes": 5079514
+        },
+        ".sh": {
+          "files": 2,
+          "bytes": 1224
+        },
+        ".sql": {
+          "files": 59,
+          "bytes": 369305
+        },
+        "Python": {
+          "files": 4,
+          "bytes": 19562
+        },
+        "TypeScript": {
+          "files": 6,
+          "bytes": 13491
+        }
+      }
+    },
+    {
+      "repo": "JeanHuguesRobert/inseme",
+      "period": "2026-04",
+      "status": "ok",
+      "partial": false,
+      "commit": "ad71e3256bbe699154d0c676a6021d024deae9b6",
+      "blobs": 1418,
+      "bytes": 148883057,
+      "code_files": 913,
+      "code_bytes": 5585097,
+      "markdown_files": 316,
+      "derived_markdown_files": 3,
+      "source_files": 913,
+      "test_files": 38,
+      "excluded_files": 1,
+      "by_language": {
+        "JavaScript": {
+          "files": 842,
+          "bytes": 5181515
+        },
+        ".sh": {
+          "files": 2,
+          "bytes": 1224
+        },
+        ".sql": {
+          "files": 59,
+          "bytes": 369305
+        },
+        "Python": {
+          "files": 4,
+          "bytes": 19562
+        },
+        "TypeScript": {
+          "files": 6,
+          "bytes": 13491
+        }
+      }
+    },
+    {
+      "repo": "JeanHuguesRobert/inseme",
+      "period": "2026-05",
+      "status": "ok",
+      "partial": false,
+      "commit": "ea7afbf66ae840bba1023a3b67f2ed6328930f19",
+      "blobs": 1452,
+      "bytes": 149237708,
+      "code_files": 925,
+      "code_bytes": 5682925,
+      "markdown_files": 334,
+      "derived_markdown_files": 5,
+      "source_files": 925,
+      "test_files": 38,
+      "excluded_files": 1,
+      "by_language": {
+        "JavaScript": {
+          "files": 853,
+          "bytes": 5271499
+        },
+        ".sh": {
+          "files": 2,
+          "bytes": 1224
+        },
+        ".sql": {
+          "files": 60,
+          "bytes": 376284
+        },
+        "Python": {
+          "files": 4,
+          "bytes": 19562
+        },
+        "TypeScript": {
+          "files": 6,
+          "bytes": 14356
+        }
+      }
+    },
+    {
+      "repo": "JeanHuguesRobert/inseme",
+      "period": "2026-06",
+      "status": "ok",
+      "partial": false,
+      "commit": "8ad150e7971bde97e452eaff68225689aeb27ac9",
+      "blobs": 1518,
+      "bytes": 149975428,
+      "code_files": 961,
+      "code_bytes": 6094592,
+      "markdown_files": 358,
+      "derived_markdown_files": 5,
+      "source_files": 961,
+      "test_files": 40,
+      "excluded_files": 1,
+      "by_language": {
+        "JavaScript": {
+          "files": 891,
+          "bytes": 5684390
+        },
+        ".sql": {
+          "files": 60,
+          "bytes": 376284
+        },
+        "Python": {
+          "files": 4,
+          "bytes": 19562
+        },
+        "TypeScript": {
+          "files": 6,
+          "bytes": 14356
+        }
+      }
+    },
+    {
+      "repo": "JeanHuguesRobert/inseme",
+      "period": "2026-07",
+      "status": "ok",
+      "partial": false,
+      "commit": "9f749ed2648acc7d316ec917b0be6007023473b6",
+      "blobs": 1638,
+      "bytes": 150955484,
+      "code_files": 1032,
+      "code_bytes": 6613395,
+      "markdown_files": 381,
+      "derived_markdown_files": 5,
+      "source_files": 1032,
+      "test_files": 52,
+      "excluded_files": 4,
+      "by_language": {
+        "JavaScript": {
+          "files": 950,
+          "bytes": 6115253
+        },
+        ".sql": {
+          "files": 71,
+          "bytes": 446838
+        },
+        "Python": {
+          "files": 4,
+          "bytes": 19562
+        },
+        "TypeScript": {
+          "files": 7,
+          "bytes": 31742
+        }
+      }
+    },
+    {
+      "repo": "JeanHuguesRobert/inseme",
+      "period": "2026-08",
+      "status": "ok",
+      "partial": false,
+      "commit": "b2c6e4b0833ad7b8f925f6d2a4d634cec2b81fa0",
+      "blobs": 1930,
+      "bytes": 152478152,
+      "code_files": 1224,
+      "code_bytes": 7599987,
+      "markdown_files": 447,
+      "derived_markdown_files": 5,
+      "source_files": 1224,
+      "test_files": 108,
+      "excluded_files": 5,
+      "by_language": {
+        "JavaScript": {
+          "files": 1126,
+          "bytes": 6999170
+        },
+        ".sql": {
+          "files": 80,
+          "bytes": 509222
+        },
+        "TypeScript": {
+          "files": 14,
+          "bytes": 72033
+        },
+        "Python": {
+          "files": 4,
+          "bytes": 19562
+        }
+      }
+    },
+    {
+      "repo": "JeanHuguesRobert/inseme",
+      "period": "2026-09",
+      "status": "ok",
+      "partial": false,
+      "commit": "e06ca8e2d0e2f4f6d4578d9e6c16b81f0b0c3465",
+      "blobs": 2047,
+      "bytes": 153914050,
+      "code_files": 1315,
+      "code_bytes": 8580663,
+      "markdown_files": 461,
+      "derived_markdown_files": 5,
+      "source_files": 1315,
+      "test_files": 153,
+      "excluded_files": 8,
+      "by_language": {
+        "JavaScript": {
+          "files": 1213,
+          "bytes": 7915549
+        },
+        ".sql": {
+          "files": 84,
+          "bytes": 534998
+        },
+        "TypeScript": {
+          "files": 14,
+          "bytes": 110554
+        },
+        "Python": {
+          "files": 4,
+          "bytes": 19562
+        }
+      }
+    },
+    {
+      "repo": "JeanHuguesRobert/inseme",
+      "period": "2026-10",
+      "status": "ok",
+      "partial": true,
+      "commit": "53f9e62d47b91c582aba126bbdcf702fac0e5f25",
+      "blobs": 2180,
+      "bytes": 154343638,
+      "code_files": 1409,
+      "code_bytes": 8870952,
+      "markdown_files": 482,
+      "derived_markdown_files": 5,
+      "source_files": 1409,
+      "test_files": 193,
+      "excluded_files": 8,
+      "by_language": {
+        "JavaScript": {
+          "files": 1306,
+          "bytes": 8197454
+        },
+        ".sql": {
+          "files": 85,
+          "bytes": 543257
+        },
+        "TypeScript": {
+          "files": 14,
+          "bytes": 110679
+        },
+        "Python": {
+          "files": 4,
+          "bytes": 19562
+        }
+      }
+    },
+    {
+      "repo": "JeanHuguesRobert/cogentia",
+      "period": "2025-10",
+      "status": "not_created",
+      "partial": false
+    },
+    {
+      "repo": "JeanHuguesRobert/cogentia",
+      "period": "2025-11",
+      "status": "not_created",
+      "partial": false
+    },
+    {
+      "repo": "JeanHuguesRobert/cogentia",
+      "period": "2025-12",
+      "status": "not_created",
+      "partial": false
+    },
+    {
+      "repo": "JeanHuguesRobert/cogentia",
+      "period": "2026-01",
+      "status": "not_created",
+      "partial": false
+    },
+    {
+      "repo": "JeanHuguesRobert/cogentia",
+      "period": "2026-02",
+      "status": "not_created",
+      "partial": false
+    },
+    {
+      "repo": "JeanHuguesRobert/cogentia",
+      "period": "2026-03",
+      "status": "ok",
+      "partial": false,
+      "commit": "01606ce7c78dcedf707d1a3c3b6f47e2f3f26505",
+      "blobs": 39,
+      "bytes": 408454,
+      "code_files": 25,
+      "code_bytes": 215628,
+      "markdown_files": 5,
+      "derived_markdown_files": 0,
+      "source_files": 25,
+      "test_files": 0,
+      "excluded_files": 0,
+      "by_language": {
+        "JavaScript": {
+          "files": 23,
+          "bytes": 177864
+        },
+        ".sql": {
+          "files": 2,
+          "bytes": 37764
+        }
+      }
+    },
+    {
+      "repo": "JeanHuguesRobert/cogentia",
+      "period": "2026-04",
+      "status": "ok",
+      "partial": false,
+      "commit": "b68d90cb6f7953f7770580293b59f685a26b2175",
+      "blobs": 55,
+      "bytes": 451315,
+      "code_files": 38,
+      "code_bytes": 225633,
+      "markdown_files": 8,
+      "derived_markdown_files": 0,
+      "source_files": 38,
+      "test_files": 0,
+      "excluded_files": 0,
+      "by_language": {
+        "JavaScript": {
+          "files": 32,
+          "bytes": 180671
+        },
+        ".sql": {
+          "files": 6,
+          "bytes": 44962
+        }
+      }
+    },
+    {
+      "repo": "JeanHuguesRobert/cogentia",
+      "period": "2026-05",
+      "status": "ok",
+      "partial": false,
+      "commit": "3e98606795848ad666aaf8dc2ef91364965d54f8",
+      "blobs": 123,
+      "bytes": 1894401,
+      "code_files": 43,
+      "code_bytes": 606454,
+      "markdown_files": 60,
+      "derived_markdown_files": 2,
+      "source_files": 43,
+      "test_files": 0,
+      "excluded_files": 0,
+      "by_language": {
+        "JavaScript": {
+          "files": 39,
+          "bytes": 565091
+        },
+        ".sql": {
+          "files": 4,
+          "bytes": 41363
+        }
+      }
+    },
+    {
+      "repo": "JeanHuguesRobert/cogentia",
+      "period": "2026-06",
+      "status": "ok",
+      "partial": false,
+      "commit": "269746c18eecd6377f8a3b4204103564c282e82d",
+      "blobs": 251,
+      "bytes": 3268471,
+      "code_files": 74,
+      "code_bytes": 1322491,
+      "markdown_files": 123,
+      "derived_markdown_files": 2,
+      "source_files": 74,
+      "test_files": 0,
+      "excluded_files": 0,
+      "by_language": {
+        "JavaScript": {
+          "files": 70,
+          "bytes": 1281128
+        },
+        ".sql": {
+          "files": 4,
+          "bytes": 41363
+        }
+      }
+    },
+    {
+      "repo": "JeanHuguesRobert/cogentia",
+      "period": "2026-07",
+      "status": "ok",
+      "partial": false,
+      "commit": "bf61b7a4d20cd7a698e990c12ae29af912959125",
+      "blobs": 526,
+      "bytes": 5328868,
+      "code_files": 234,
+      "code_bytes": 2404284,
+      "markdown_files": 183,
+      "derived_markdown_files": 2,
+      "source_files": 234,
+      "test_files": 0,
+      "excluded_files": 7,
+      "by_language": {
+        "JavaScript": {
+          "files": 210,
+          "bytes": 2304396
+        },
+        ".sql": {
+          "files": 5,
+          "bytes": 44967
+        },
+        ".sh": {
+          "files": 19,
+          "bytes": 54921
+        }
+      }
+    },
+    {
+      "repo": "JeanHuguesRobert/cogentia",
+      "period": "2026-08",
+      "status": "ok",
+      "partial": false,
+      "commit": "039c68996bdc83aee235378d912a6c55c83c10cc",
+      "blobs": 815,
+      "bytes": 7757125,
+      "code_files": 392,
+      "code_bytes": 3699390,
+      "markdown_files": 274,
+      "derived_markdown_files": 2,
+      "source_files": 392,
+      "test_files": 1,
+      "excluded_files": 18,
+      "by_language": {
+        "JavaScript": {
+          "files": 363,
+          "bytes": 3587512
+        },
+        ".sql": {
+          "files": 6,
+          "bytes": 48889
+        },
+        ".sh": {
+          "files": 23,
+          "bytes": 62989
+        }
+      }
+    },
+    {
+      "repo": "JeanHuguesRobert/cogentia",
+      "period": "2026-09",
+      "status": "ok",
+      "partial": false,
+      "commit": "6a05f962ac14e97c6f9966a681301945d7d9bff8",
+      "blobs": 1039,
+      "bytes": 9843951,
+      "code_files": 515,
+      "code_bytes": 4787461,
+      "markdown_files": 341,
+      "derived_markdown_files": 3,
+      "source_files": 515,
+      "test_files": 14,
+      "excluded_files": 39,
+      "by_language": {
+        "JavaScript": {
+          "files": 486,
+          "bytes": 4675583
+        },
+        ".sql": {
+          "files": 6,
+          "bytes": 48889
+        },
+        ".sh": {
+          "files": 23,
+          "bytes": 62989
+        }
+      }
+    },
+    {
+      "repo": "JeanHuguesRobert/cogentia",
+      "period": "2026-10",
+      "status": "ok",
+      "partial": true,
+      "commit": "31b3ebfe046c22d4ab2c3ca9fef85016fdcd724c",
+      "blobs": 1165,
+      "bytes": 10816112,
+      "code_files": 577,
+      "code_bytes": 5304878,
+      "markdown_files": 358,
+      "derived_markdown_files": 3,
+      "source_files": 577,
+      "test_files": 14,
+      "excluded_files": 72,
+      "by_language": {
+        "JavaScript": {
+          "files": 547,
+          "bytes": 5190115
+        },
+        ".sql": {
+          "files": 7,
+          "bytes": 51774
+        },
+        ".sh": {
+          "files": 23,
+          "bytes": 62989
+        }
+      }
+    },
+    {
+      "repo": "JeanHuguesRobert/FractaVolta",
+      "period": "2025-10",
+      "status": "not_created",
+      "partial": false
+    },
+    {
+      "repo": "JeanHuguesRobert/FractaVolta",
+      "period": "2025-11",
+      "status": "not_created",
+      "partial": false
+    },
+    {
+      "repo": "JeanHuguesRobert/FractaVolta",
+      "period": "2025-12",
+      "status": "not_created",
+      "partial": false
+    },
+    {
+      "repo": "JeanHuguesRobert/FractaVolta",
+      "period": "2026-01",
+      "status": "not_created",
+      "partial": false
+    },
+    {
+      "repo": "JeanHuguesRobert/FractaVolta",
+      "period": "2026-02",
+      "status": "not_created",
+      "partial": false
+    },
+    {
+      "repo": "JeanHuguesRobert/FractaVolta",
+      "period": "2026-03",
+      "status": "not_created",
+      "partial": false
+    },
+    {
+      "repo": "JeanHuguesRobert/FractaVolta",
+      "period": "2026-04",
+      "status": "ok",
+      "partial": false,
+      "commit": "339a30281456f271a91bdf172ef55ef7513a5a93",
+      "blobs": 8,
+      "bytes": 110704,
+      "code_files": 0,
+      "code_bytes": 0,
+      "markdown_files": 6,
+      "derived_markdown_files": 0,
+      "source_files": 0,
+      "test_files": 0,
+      "excluded_files": 0,
+      "by_language": {}
+    },
+    {
+      "repo": "JeanHuguesRobert/FractaVolta",
+      "period": "2026-05",
+      "status": "ok",
+      "partial": false,
+      "commit": "a56beb794edf92e0639cf741da9534f55ca4c821",
+      "blobs": 66,
+      "bytes": 856420,
+      "code_files": 0,
+      "code_bytes": 0,
+      "markdown_files": 42,
+      "derived_markdown_files": 4,
+      "source_files": 0,
+      "test_files": 0,
+      "excluded_files": 0,
+      "by_language": {}
+    },
+    {
+      "repo": "JeanHuguesRobert/FractaVolta",
+      "period": "2026-06",
+      "status": "ok",
+      "partial": false,
+      "commit": "e9817d8f9c0763da0c0ea0c4af62bbf2a103ac44",
+      "blobs": 101,
+      "bytes": 1091736,
+      "code_files": 1,
+      "code_bytes": 10050,
+      "markdown_files": 72,
+      "derived_markdown_files": 5,
+      "source_files": 1,
+      "test_files": 0,
+      "excluded_files": 0,
+      "by_language": {
+        "JavaScript": {
+          "files": 1,
+          "bytes": 10050
+        }
+      }
+    },
+    {
+      "repo": "JeanHuguesRobert/FractaVolta",
+      "period": "2026-07",
+      "status": "ok",
+      "partial": false,
+      "commit": "61baf9453aa7ffd4bddd347c6580abbfef54888b",
+      "blobs": 109,
+      "bytes": 1355742,
+      "code_files": 1,
+      "code_bytes": 34837,
+      "markdown_files": 80,
+      "derived_markdown_files": 5,
+      "source_files": 1,
+      "test_files": 0,
+      "excluded_files": 0,
+      "by_language": {
+        "JavaScript": {
+          "files": 1,
+          "bytes": 34837
+        }
+      }
+    },
+    {
+      "repo": "JeanHuguesRobert/FractaVolta",
+      "period": "2026-08",
+      "status": "ok",
+      "partial": false,
+      "commit": "3e9ee224da17b928229193727bc2efd73cf5ef22",
+      "blobs": 125,
+      "bytes": 1601668,
+      "code_files": 4,
+      "code_bytes": 70522,
+      "markdown_files": 90,
+      "derived_markdown_files": 5,
+      "source_files": 4,
+      "test_files": 0,
+      "excluded_files": 0,
+      "by_language": {
+        "JavaScript": {
+          "files": 4,
+          "bytes": 70522
+        }
+      }
+    },
+    {
+      "repo": "JeanHuguesRobert/FractaVolta",
+      "period": "2026-09",
+      "status": "ok",
+      "partial": false,
+      "commit": "c9e2b6e2d67277f63d56202942d40c0bffc110f8",
+      "blobs": 138,
+      "bytes": 2222575,
+      "code_files": 10,
+      "code_bytes": 136187,
+      "markdown_files": 93,
+      "derived_markdown_files": 5,
+      "source_files": 10,
+      "test_files": 0,
+      "excluded_files": 0,
+      "by_language": {
+        "JavaScript": {
+          "files": 4,
+          "bytes": 70522
+        },
+        "Python": {
+          "files": 6,
+          "bytes": 65665
+        }
+      }
+    },
+    {
+      "repo": "JeanHuguesRobert/FractaVolta",
+      "period": "2026-10",
+      "status": "ok",
+      "partial": true,
+      "commit": "c9e2b6e2d67277f63d56202942d40c0bffc110f8",
+      "blobs": 138,
+      "bytes": 2222575,
+      "code_files": 10,
+      "code_bytes": 136187,
+      "markdown_files": 93,
+      "derived_markdown_files": 5,
+      "source_files": 10,
+      "test_files": 0,
+      "excluded_files": 0,
+      "by_language": {
+        "JavaScript": {
+          "files": 4,
+          "bytes": 70522
+        },
+        "Python": {
+          "files": 6,
+          "bytes": 65665
+        }
+      }
+    },
+    {
+      "repo": "JeanHuguesRobert/operium",
+      "period": "2025-10",
+      "status": "not_created",
+      "partial": false
+    },
+    {
+      "repo": "JeanHuguesRobert/operium",
+      "period": "2025-11",
+      "status": "not_created",
+      "partial": false
+    },
+    {
+      "repo": "JeanHuguesRobert/operium",
+      "period": "2025-12",
+      "status": "not_created",
+      "partial": false
+    },
+    {
+      "repo": "JeanHuguesRobert/operium",
+      "period": "2026-01",
+      "status": "not_created",
+      "partial": false
+    },
+    {
+      "repo": "JeanHuguesRobert/operium",
+      "period": "2026-02",
+      "status": "not_created",
+      "partial": false
+    },
+    {
+      "repo": "JeanHuguesRobert/operium",
+      "period": "2026-03",
+      "status": "not_created",
+      "partial": false
+    },
+    {
+      "repo": "JeanHuguesRobert/operium",
+      "period": "2026-04",
+      "status": "not_created",
+      "partial": false
+    },
+    {
+      "repo": "JeanHuguesRobert/operium",
+      "period": "2026-05",
+      "status": "not_created",
+      "partial": false
+    },
+    {
+      "repo": "JeanHuguesRobert/operium",
+      "period": "2026-06",
+      "status": "ok",
+      "partial": false,
+      "commit": "88b049a81e66f2e824815fb62a1b0b220a590806",
+      "blobs": 17,
+      "bytes": 71598,
+      "code_files": 0,
+      "code_bytes": 0,
+      "markdown_files": 15,
+      "derived_markdown_files": 2,
+      "source_files": 0,
+      "test_files": 0,
+      "excluded_files": 0,
+      "by_language": {}
+    },
+    {
+      "repo": "JeanHuguesRobert/operium",
+      "period": "2026-07",
+      "status": "ok",
+      "partial": false,
+      "commit": "77d44cd0dcdab72c5ee2735f1d36e793d0818699",
+      "blobs": 250,
+      "bytes": 1342183,
+      "code_files": 133,
+      "code_bytes": 552076,
+      "markdown_files": 60,
+      "derived_markdown_files": 2,
+      "source_files": 133,
+      "test_files": 0,
+      "excluded_files": 0,
+      "by_language": {
+        "JavaScript": {
+          "files": 99,
+          "bytes": 433209
+        },
+        ".sql": {
+          "files": 4,
+          "bytes": 6772
+        },
+        ".sh": {
+          "files": 29,
+          "bytes": 100173
+        },
+        "Python": {
+          "files": 1,
+          "bytes": 11922
+        }
+      }
+    },
+    {
+      "repo": "JeanHuguesRobert/operium",
+      "period": "2026-08",
+      "status": "ok",
+      "partial": false,
+      "commit": "c7fb1b9ebafaf94f603b069ec30ba7ced32e4f1a",
+      "blobs": 339,
+      "bytes": 1839688,
+      "code_files": 174,
+      "code_bytes": 783905,
+      "markdown_files": 77,
+      "derived_markdown_files": 2,
+      "source_files": 174,
+      "test_files": 0,
+      "excluded_files": 0,
+      "by_language": {
+        "JavaScript": {
+          "files": 133,
+          "bytes": 645374
+        },
+        ".sql": {
+          "files": 6,
+          "bytes": 8696
+        },
+        ".sh": {
+          "files": 34,
+          "bytes": 117913
+        },
+        "Python": {
+          "files": 1,
+          "bytes": 11922
+        }
+      }
+    },
+    {
+      "repo": "JeanHuguesRobert/operium",
+      "period": "2026-09",
+      "status": "ok",
+      "partial": false,
+      "commit": "b88e4795e22dff83d4b0755274467978c8a61151",
+      "blobs": 358,
+      "bytes": 1983429,
+      "code_files": 182,
+      "code_bytes": 817470,
+      "markdown_files": 84,
+      "derived_markdown_files": 2,
+      "source_files": 182,
+      "test_files": 0,
+      "excluded_files": 0,
+      "by_language": {
+        "JavaScript": {
+          "files": 140,
+          "bytes": 677196
+        },
+        ".sql": {
+          "files": 6,
+          "bytes": 8696
+        },
+        ".sh": {
+          "files": 35,
+          "bytes": 119656
+        },
+        "Python": {
+          "files": 1,
+          "bytes": 11922
+        }
+      }
+    },
+    {
+      "repo": "JeanHuguesRobert/operium",
+      "period": "2026-10",
+      "status": "ok",
+      "partial": true,
+      "commit": "ad1664f3841100796632c12d54b2d963a8b1f754",
+      "blobs": 387,
+      "bytes": 2207263,
+      "code_files": 199,
+      "code_bytes": 927717,
+      "markdown_files": 91,
+      "derived_markdown_files": 2,
+      "source_files": 199,
+      "test_files": 0,
+      "excluded_files": 0,
+      "by_language": {
+        "JavaScript": {
+          "files": 157,
+          "bytes": 787443
+        },
+        ".sql": {
+          "files": 6,
+          "bytes": 8696
+        },
+        ".sh": {
+          "files": 35,
+          "bytes": 119656
+        },
+        "Python": {
+          "files": 1,
+          "bytes": 11922
+        }
+      }
+    },
+    {
+      "repo": "JeanHuguesRobert/barons-Mariani",
+      "period": "2025-10",
+      "status": "ok",
+      "partial": false,
+      "commit": "514ed3e38025db406b0ba8c17890531ddb057e03",
+      "blobs": 1,
+      "bytes": 6726,
+      "code_files": 0,
+      "code_bytes": 0,
+      "markdown_files": 1,
+      "derived_markdown_files": 0,
+      "source_files": 0,
+      "test_files": 0,
+      "excluded_files": 0,
+      "by_language": {}
+    },
+    {
+      "repo": "JeanHuguesRobert/barons-Mariani",
+      "period": "2025-11",
+      "status": "ok",
+      "partial": false,
+      "commit": "514ed3e38025db406b0ba8c17890531ddb057e03",
+      "blobs": 1,
+      "bytes": 6726,
+      "code_files": 0,
+      "code_bytes": 0,
+      "markdown_files": 1,
+      "derived_markdown_files": 0,
+      "source_files": 0,
+      "test_files": 0,
+      "excluded_files": 0,
+      "by_language": {}
+    },
+    {
+      "repo": "JeanHuguesRobert/barons-Mariani",
+      "period": "2025-12",
+      "status": "ok",
+      "partial": false,
+      "commit": "514ed3e38025db406b0ba8c17890531ddb057e03",
+      "blobs": 1,
+      "bytes": 6726,
+      "code_files": 0,
+      "code_bytes": 0,
+      "markdown_files": 1,
+      "derived_markdown_files": 0,
+      "source_files": 0,
+      "test_files": 0,
+      "excluded_files": 0,
+      "by_language": {}
+    },
+    {
+      "repo": "JeanHuguesRobert/barons-Mariani",
+      "period": "2026-01",
+      "status": "ok",
+      "partial": false,
+      "commit": "514ed3e38025db406b0ba8c17890531ddb057e03",
+      "blobs": 1,
+      "bytes": 6726,
+      "code_files": 0,
+      "code_bytes": 0,
+      "markdown_files": 1,
+      "derived_markdown_files": 0,
+      "source_files": 0,
+      "test_files": 0,
+      "excluded_files": 0,
+      "by_language": {}
+    },
+    {
+      "repo": "JeanHuguesRobert/barons-Mariani",
+      "period": "2026-02",
+      "status": "ok",
+      "partial": false,
+      "commit": "24fa5d37c6f912224af07bb6b52daad4c3241df7",
+      "blobs": 2,
+      "bytes": 9558,
+      "code_files": 0,
+      "code_bytes": 0,
+      "markdown_files": 2,
+      "derived_markdown_files": 0,
+      "source_files": 0,
+      "test_files": 0,
+      "excluded_files": 0,
+      "by_language": {}
+    },
+    {
+      "repo": "JeanHuguesRobert/barons-Mariani",
+      "period": "2026-03",
+      "status": "ok",
+      "partial": false,
+      "commit": "24fa5d37c6f912224af07bb6b52daad4c3241df7",
+      "blobs": 2,
+      "bytes": 9558,
+      "code_files": 0,
+      "code_bytes": 0,
+      "markdown_files": 2,
+      "derived_markdown_files": 0,
+      "source_files": 0,
+      "test_files": 0,
+      "excluded_files": 0,
+      "by_language": {}
+    },
+    {
+      "repo": "JeanHuguesRobert/barons-Mariani",
+      "period": "2026-04",
+      "status": "ok",
+      "partial": false,
+      "commit": "4f1d309855d41ae90e0281d1ff7a3745b56f5ca1",
+      "blobs": 17,
+      "bytes": 263961,
+      "code_files": 0,
+      "code_bytes": 0,
+      "markdown_files": 15,
+      "derived_markdown_files": 0,
+      "source_files": 0,
+      "test_files": 0,
+      "excluded_files": 0,
+      "by_language": {}
+    },
+    {
+      "repo": "JeanHuguesRobert/barons-Mariani",
+      "period": "2026-05",
+      "status": "ok",
+      "partial": false,
+      "commit": "12aae3b01d781055cdb075f73b7bba160156aa0b",
+      "blobs": 72,
+      "bytes": 3030260,
+      "code_files": 0,
+      "code_bytes": 0,
+      "markdown_files": 68,
+      "derived_markdown_files": 2,
+      "source_files": 0,
+      "test_files": 0,
+      "excluded_files": 0,
+      "by_language": {}
+    },
+    {
+      "repo": "JeanHuguesRobert/barons-Mariani",
+      "period": "2026-06",
+      "status": "ok",
+      "partial": false,
+      "commit": "4abde90b5c938bc8cfcab36eb604b2a96d0a8968",
+      "blobs": 149,
+      "bytes": 4449006,
+      "code_files": 0,
+      "code_bytes": 0,
+      "markdown_files": 140,
+      "derived_markdown_files": 2,
+      "source_files": 0,
+      "test_files": 0,
+      "excluded_files": 0,
+      "by_language": {}
+    },
+    {
+      "repo": "JeanHuguesRobert/barons-Mariani",
+      "period": "2026-07",
+      "status": "ok",
+      "partial": false,
+      "commit": "735861922d6ce3cfc4ac778523aedbac078aeb91",
+      "blobs": 209,
+      "bytes": 5232790,
+      "code_files": 0,
+      "code_bytes": 0,
+      "markdown_files": 193,
+      "derived_markdown_files": 2,
+      "source_files": 0,
+      "test_files": 0,
+      "excluded_files": 0,
+      "by_language": {}
+    },
+    {
+      "repo": "JeanHuguesRobert/barons-Mariani",
+      "period": "2026-08",
+      "status": "ok",
+      "partial": false,
+      "commit": "d9a50c97a9c655b19cdef8974a923fab6eac99fa",
+      "blobs": 274,
+      "bytes": 9093457,
+      "code_files": 0,
+      "code_bytes": 0,
+      "markdown_files": 250,
+      "derived_markdown_files": 2,
+      "source_files": 0,
+      "test_files": 0,
+      "excluded_files": 0,
+      "by_language": {}
+    },
+    {
+      "repo": "JeanHuguesRobert/barons-Mariani",
+      "period": "2026-09",
+      "status": "ok",
+      "partial": false,
+      "commit": "6de2f1689db351321967fdabc2025adca62a426d",
+      "blobs": 597,
+      "bytes": 17363373,
+      "code_files": 5,
+      "code_bytes": 48770,
+      "markdown_files": 496,
+      "derived_markdown_files": 5,
+      "source_files": 5,
+      "test_files": 0,
+      "excluded_files": 1,
+      "by_language": {
+        "JavaScript": {
+          "files": 5,
+          "bytes": 48770
+        }
+      }
+    },
+    {
+      "repo": "JeanHuguesRobert/barons-Mariani",
+      "period": "2026-10",
+      "status": "ok",
+      "partial": true,
+      "commit": "58226aecf6143d5c576e7dc3bd711aa72955e60d",
+      "blobs": 1467,
+      "bytes": 67453107,
+      "code_files": 26,
+      "code_bytes": 172889,
+      "markdown_files": 1047,
+      "derived_markdown_files": 12,
+      "source_files": 26,
+      "test_files": 0,
+      "excluded_files": 3,
+      "by_language": {
+        "JavaScript": {
+          "files": 11,
+          "bytes": 94836
+        },
+        "Python": {
+          "files": 14,
+          "bytes": 72241
+        },
+        ".sh": {
+          "files": 1,
+          "bytes": 5812
+        }
+      }
+    },
+    {
+      "repo": "JeanHuguesRobert/Inox",
+      "period": "2025-10",
+      "status": "ok",
+      "partial": false,
+      "commit": "6b3b1d108f189de4b5517294f6f8728143933fb4",
+      "blobs": 92,
+      "bytes": 4397129,
+      "code_files": 16,
+      "code_bytes": 892326,
+      "markdown_files": 3,
+      "derived_markdown_files": 0,
+      "source_files": 16,
+      "test_files": 2,
+      "excluded_files": 0,
+      "by_language": {
+        "JavaScript": {
+          "files": 12,
+          "bytes": 219502
+        },
+        "TypeScript": {
+          "files": 4,
+          "bytes": 672824
+        }
+      }
+    },
+    {
+      "repo": "JeanHuguesRobert/Inox",
+      "period": "2025-11",
+      "status": "ok",
+      "partial": false,
+      "commit": "6b3b1d108f189de4b5517294f6f8728143933fb4",
+      "blobs": 92,
+      "bytes": 4397129,
+      "code_files": 16,
+      "code_bytes": 892326,
+      "markdown_files": 3,
+      "derived_markdown_files": 0,
+      "source_files": 16,
+      "test_files": 2,
+      "excluded_files": 0,
+      "by_language": {
+        "JavaScript": {
+          "files": 12,
+          "bytes": 219502
+        },
+        "TypeScript": {
+          "files": 4,
+          "bytes": 672824
+        }
+      }
+    },
+    {
+      "repo": "JeanHuguesRobert/Inox",
+      "period": "2025-12",
+      "status": "ok",
+      "partial": false,
+      "commit": "6b3b1d108f189de4b5517294f6f8728143933fb4",
+      "blobs": 92,
+      "bytes": 4397129,
+      "code_files": 16,
+      "code_bytes": 892326,
+      "markdown_files": 3,
+      "derived_markdown_files": 0,
+      "source_files": 16,
+      "test_files": 2,
+      "excluded_files": 0,
+      "by_language": {
+        "JavaScript": {
+          "files": 12,
+          "bytes": 219502
+        },
+        "TypeScript": {
+          "files": 4,
+          "bytes": 672824
+        }
+      }
+    },
+    {
+      "repo": "JeanHuguesRobert/Inox",
+      "period": "2026-01",
+      "status": "ok",
+      "partial": false,
+      "commit": "6b3b1d108f189de4b5517294f6f8728143933fb4",
+      "blobs": 92,
+      "bytes": 4397129,
+      "code_files": 16,
+      "code_bytes": 892326,
+      "markdown_files": 3,
+      "derived_markdown_files": 0,
+      "source_files": 16,
+      "test_files": 2,
+      "excluded_files": 0,
+      "by_language": {
+        "JavaScript": {
+          "files": 12,
+          "bytes": 219502
+        },
+        "TypeScript": {
+          "files": 4,
+          "bytes": 672824
+        }
+      }
+    },
+    {
+      "repo": "JeanHuguesRobert/Inox",
+      "period": "2026-02",
+      "status": "ok",
+      "partial": false,
+      "commit": "6b3b1d108f189de4b5517294f6f8728143933fb4",
+      "blobs": 92,
+      "bytes": 4397129,
+      "code_files": 16,
+      "code_bytes": 892326,
+      "markdown_files": 3,
+      "derived_markdown_files": 0,
+      "source_files": 16,
+      "test_files": 2,
+      "excluded_files": 0,
+      "by_language": {
+        "JavaScript": {
+          "files": 12,
+          "bytes": 219502
+        },
+        "TypeScript": {
+          "files": 4,
+          "bytes": 672824
+        }
+      }
+    },
+    {
+      "repo": "JeanHuguesRobert/Inox",
+      "period": "2026-03",
+      "status": "ok",
+      "partial": false,
+      "commit": "6b3b1d108f189de4b5517294f6f8728143933fb4",
+      "blobs": 92,
+      "bytes": 4397129,
+      "code_files": 16,
+      "code_bytes": 892326,
+      "markdown_files": 3,
+      "derived_markdown_files": 0,
+      "source_files": 16,
+      "test_files": 2,
+      "excluded_files": 0,
+      "by_language": {
+        "JavaScript": {
+          "files": 12,
+          "bytes": 219502
+        },
+        "TypeScript": {
+          "files": 4,
+          "bytes": 672824
+        }
+      }
+    },
+    {
+      "repo": "JeanHuguesRobert/Inox",
+      "period": "2026-04",
+      "status": "ok",
+      "partial": false,
+      "commit": "ed4c9ae4003603cf48e3b7842b1b504c674404e7",
+      "blobs": 92,
+      "bytes": 4398390,
+      "code_files": 16,
+      "code_bytes": 892326,
+      "markdown_files": 3,
+      "derived_markdown_files": 0,
+      "source_files": 16,
+      "test_files": 2,
+      "excluded_files": 0,
+      "by_language": {
+        "JavaScript": {
+          "files": 12,
+          "bytes": 219502
+        },
+        "TypeScript": {
+          "files": 4,
+          "bytes": 672824
+        }
+      }
+    },
+    {
+      "repo": "JeanHuguesRobert/Inox",
+      "period": "2026-05",
+      "status": "ok",
+      "partial": false,
+      "commit": "e2bab324df0dc8a2f1d03eed4fdbd0afa20f15dd",
+      "blobs": 107,
+      "bytes": 4515204,
+      "code_files": 17,
+      "code_bytes": 901811,
+      "markdown_files": 13,
+      "derived_markdown_files": 2,
+      "source_files": 17,
+      "test_files": 2,
+      "excluded_files": 0,
+      "by_language": {
+        "JavaScript": {
+          "files": 13,
+          "bytes": 222221
+        },
+        "TypeScript": {
+          "files": 4,
+          "bytes": 679590
+        }
+      }
+    },
+    {
+      "repo": "JeanHuguesRobert/Inox",
+      "period": "2026-06",
+      "status": "ok",
+      "partial": false,
+      "commit": "77fb19f9bfb294c121443e5e9050702017809e9a",
+      "blobs": 127,
+      "bytes": 4676236,
+      "code_files": 17,
+      "code_bytes": 961945,
+      "markdown_files": 24,
+      "derived_markdown_files": 2,
+      "source_files": 17,
+      "test_files": 3,
+      "excluded_files": 0,
+      "by_language": {
+        "JavaScript": {
+          "files": 13,
+          "bytes": 223146
+        },
+        "TypeScript": {
+          "files": 4,
+          "bytes": 738799
+        }
+      }
+    },
+    {
+      "repo": "JeanHuguesRobert/Inox",
+      "period": "2026-07",
+      "status": "ok",
+      "partial": false,
+      "commit": "c474827c49934853fbeb68b59fa04e0c20fec4bb",
+      "blobs": 160,
+      "bytes": 4944569,
+      "code_files": 36,
+      "code_bytes": 1051107,
+      "markdown_files": 33,
+      "derived_markdown_files": 2,
+      "source_files": 36,
+      "test_files": 5,
+      "excluded_files": 0,
+      "by_language": {
+        "JavaScript": {
+          "files": 32,
+          "bytes": 312308
+        },
+        "TypeScript": {
+          "files": 4,
+          "bytes": 738799
+        }
+      }
+    },
+    {
+      "repo": "JeanHuguesRobert/Inox",
+      "period": "2026-08",
+      "status": "ok",
+      "partial": false,
+      "commit": "3eb13de2c6bb1a9cb5c6d6633268dd0191f98ed6",
+      "blobs": 162,
+      "bytes": 5104779,
+      "code_files": 36,
+      "code_bytes": 1051107,
+      "markdown_files": 33,
+      "derived_markdown_files": 2,
+      "source_files": 36,
+      "test_files": 5,
+      "excluded_files": 0,
+      "by_language": {
+        "JavaScript": {
+          "files": 32,
+          "bytes": 312308
+        },
+        "TypeScript": {
+          "files": 4,
+          "bytes": 738799
+        }
+      }
+    },
+    {
+      "repo": "JeanHuguesRobert/Inox",
+      "period": "2026-09",
+      "status": "ok",
+      "partial": false,
+      "commit": "3a4d2b356b9c3d5f7452b08b97a0123ac8588c19",
+      "blobs": 163,
+      "bytes": 5145010,
+      "code_files": 37,
+      "code_bytes": 1053966,
+      "markdown_files": 33,
+      "derived_markdown_files": 2,
+      "source_files": 37,
+      "test_files": 5,
+      "excluded_files": 0,
+      "by_language": {
+        "JavaScript": {
+          "files": 33,
+          "bytes": 315167
+        },
+        "TypeScript": {
+          "files": 4,
+          "bytes": 738799
+        }
+      }
+    },
+    {
+      "repo": "JeanHuguesRobert/Inox",
+      "period": "2026-10",
+      "status": "ok",
+      "partial": true,
+      "commit": "3a4d2b356b9c3d5f7452b08b97a0123ac8588c19",
+      "blobs": 163,
+      "bytes": 5145010,
+      "code_files": 37,
+      "code_bytes": 1053966,
+      "markdown_files": 33,
+      "derived_markdown_files": 2,
+      "source_files": 37,
+      "test_files": 5,
+      "excluded_files": 0,
+      "by_language": {
+        "JavaScript": {
+          "files": 33,
+          "bytes": 315167
+        },
+        "TypeScript": {
+          "files": 4,
+          "bytes": 738799
+        }
+      }
+    },
+    {
+      "repo": "JeanHuguesRobert/survey",
+      "period": "2025-10",
+      "status": "ok",
+      "partial": false,
+      "commit": "250e5507e9758c49aad69a0d95e834d00de7b325",
+      "blobs": 46,
+      "bytes": 357847,
+      "code_files": 30,
+      "code_bytes": 185655,
+      "markdown_files": 4,
+      "derived_markdown_files": 0,
+      "source_files": 30,
+      "test_files": 0,
+      "excluded_files": 0,
+      "by_language": {
+        "JavaScript": {
+          "files": 27,
+          "bytes": 169009
+        },
+        ".sql": {
+          "files": 3,
+          "bytes": 16646
+        }
+      }
+    },
+    {
+      "repo": "JeanHuguesRobert/survey",
+      "period": "2025-11",
+      "status": "ok",
+      "partial": false,
+      "commit": "437cec17a88b0c5074a8f391e1030dfa0fab02cb",
+      "blobs": 386,
+      "bytes": 135132852,
+      "code_files": 212,
+      "code_bytes": 1468083,
+      "markdown_files": 69,
+      "derived_markdown_files": 0,
+      "source_files": 212,
+      "test_files": 0,
+      "excluded_files": 0,
+      "by_language": {
+        "JavaScript": {
+          "files": 194,
+          "bytes": 1402837
+        },
+        "Python": {
+          "files": 1,
+          "bytes": 1085
+        },
+        ".sql": {
+          "files": 17,
+          "bytes": 64161
+        }
+      }
+    },
+    {
+      "repo": "JeanHuguesRobert/survey",
+      "period": "2025-12",
+      "status": "ok",
+      "partial": false,
+      "commit": "be655309514d7fc651815e7b1c811ab10326dfb3",
+      "blobs": 746,
+      "bytes": 138597052,
+      "code_files": 514,
+      "code_bytes": 3963953,
+      "markdown_files": 107,
+      "derived_markdown_files": 0,
+      "source_files": 514,
+      "test_files": 19,
+      "excluded_files": 0,
+      "by_language": {
+        "JavaScript": {
+          "files": 462,
+          "bytes": 3600263
+        },
+        "Python": {
+          "files": 1,
+          "bytes": 1085
+        },
+        "TypeScript": {
+          "files": 3,
+          "bytes": 10653
+        },
+        ".sql": {
+          "files": 48,
+          "bytes": 351952
+        }
+      }
+    },
+    {
+      "repo": "JeanHuguesRobert/survey",
+      "period": "2026-01",
+      "status": "ok",
+      "partial": false,
+      "commit": "be655309514d7fc651815e7b1c811ab10326dfb3",
+      "blobs": 746,
+      "bytes": 138597052,
+      "code_files": 514,
+      "code_bytes": 3963953,
+      "markdown_files": 107,
+      "derived_markdown_files": 0,
+      "source_files": 514,
+      "test_files": 19,
+      "excluded_files": 0,
+      "by_language": {
+        "JavaScript": {
+          "files": 462,
+          "bytes": 3600263
+        },
+        "Python": {
+          "files": 1,
+          "bytes": 1085
+        },
+        "TypeScript": {
+          "files": 3,
+          "bytes": 10653
+        },
+        ".sql": {
+          "files": 48,
+          "bytes": 351952
+        }
+      }
+    },
+    {
+      "repo": "JeanHuguesRobert/survey",
+      "period": "2026-02",
+      "status": "ok",
+      "partial": false,
+      "commit": "be655309514d7fc651815e7b1c811ab10326dfb3",
+      "blobs": 746,
+      "bytes": 138597052,
+      "code_files": 514,
+      "code_bytes": 3963953,
+      "markdown_files": 107,
+      "derived_markdown_files": 0,
+      "source_files": 514,
+      "test_files": 19,
+      "excluded_files": 0,
+      "by_language": {
+        "JavaScript": {
+          "files": 462,
+          "bytes": 3600263
+        },
+        "Python": {
+          "files": 1,
+          "bytes": 1085
+        },
+        "TypeScript": {
+          "files": 3,
+          "bytes": 10653
+        },
+        ".sql": {
+          "files": 48,
+          "bytes": 351952
+        }
+      }
+    },
+    {
+      "repo": "JeanHuguesRobert/survey",
+      "period": "2026-03",
+      "status": "ok",
+      "partial": false,
+      "commit": "be655309514d7fc651815e7b1c811ab10326dfb3",
+      "blobs": 746,
+      "bytes": 138597052,
+      "code_files": 514,
+      "code_bytes": 3963953,
+      "markdown_files": 107,
+      "derived_markdown_files": 0,
+      "source_files": 514,
+      "test_files": 19,
+      "excluded_files": 0,
+      "by_language": {
+        "JavaScript": {
+          "files": 462,
+          "bytes": 3600263
+        },
+        "Python": {
+          "files": 1,
+          "bytes": 1085
+        },
+        "TypeScript": {
+          "files": 3,
+          "bytes": 10653
+        },
+        ".sql": {
+          "files": 48,
+          "bytes": 351952
+        }
+      }
+    },
+    {
+      "repo": "JeanHuguesRobert/survey",
+      "period": "2026-04",
+      "status": "ok",
+      "partial": false,
+      "commit": "be655309514d7fc651815e7b1c811ab10326dfb3",
+      "blobs": 746,
+      "bytes": 138597052,
+      "code_files": 514,
+      "code_bytes": 3963953,
+      "markdown_files": 107,
+      "derived_markdown_files": 0,
+      "source_files": 514,
+      "test_files": 19,
+      "excluded_files": 0,
+      "by_language": {
+        "JavaScript": {
+          "files": 462,
+          "bytes": 3600263
+        },
+        "Python": {
+          "files": 1,
+          "bytes": 1085
+        },
+        "TypeScript": {
+          "files": 3,
+          "bytes": 10653
+        },
+        ".sql": {
+          "files": 48,
+          "bytes": 351952
+        }
+      }
+    },
+    {
+      "repo": "JeanHuguesRobert/survey",
+      "period": "2026-05",
+      "status": "ok",
+      "partial": false,
+      "commit": "e51b13d1b539fa732a4fb2e4612c01386e9e6342",
+      "blobs": 750,
+      "bytes": 138863283,
+      "code_files": 516,
+      "code_bytes": 3980889,
+      "markdown_files": 108,
+      "derived_markdown_files": 0,
+      "source_files": 516,
+      "test_files": 19,
+      "excluded_files": 0,
+      "by_language": {
+        "JavaScript": {
+          "files": 464,
+          "bytes": 3617187
+        },
+        "Python": {
+          "files": 1,
+          "bytes": 1085
+        },
+        "TypeScript": {
+          "files": 3,
+          "bytes": 10653
+        },
+        ".sql": {
+          "files": 48,
+          "bytes": 351964
+        }
+      }
+    },
+    {
+      "repo": "JeanHuguesRobert/survey",
+      "period": "2026-06",
+      "status": "ok",
+      "partial": false,
+      "commit": "e51b13d1b539fa732a4fb2e4612c01386e9e6342",
+      "blobs": 750,
+      "bytes": 138863283,
+      "code_files": 516,
+      "code_bytes": 3980889,
+      "markdown_files": 108,
+      "derived_markdown_files": 0,
+      "source_files": 516,
+      "test_files": 19,
+      "excluded_files": 0,
+      "by_language": {
+        "JavaScript": {
+          "files": 464,
+          "bytes": 3617187
+        },
+        "Python": {
+          "files": 1,
+          "bytes": 1085
+        },
+        "TypeScript": {
+          "files": 3,
+          "bytes": 10653
+        },
+        ".sql": {
+          "files": 48,
+          "bytes": 351964
+        }
+      }
+    },
+    {
+      "repo": "JeanHuguesRobert/survey",
+      "period": "2026-07",
+      "status": "ok",
+      "partial": false,
+      "commit": "00df8be26bf97ef689070063a67fdd563bff5f44",
+      "blobs": 756,
+      "bytes": 138978553,
+      "code_files": 519,
+      "code_bytes": 4045491,
+      "markdown_files": 110,
+      "derived_markdown_files": 2,
+      "source_files": 519,
+      "test_files": 19,
+      "excluded_files": 0,
+      "by_language": {
+        "JavaScript": {
+          "files": 467,
+          "bytes": 3681789
+        },
+        "Python": {
+          "files": 1,
+          "bytes": 1085
+        },
+        "TypeScript": {
+          "files": 3,
+          "bytes": 10653
+        },
+        ".sql": {
+          "files": 48,
+          "bytes": 351964
+        }
+      }
+    },
+    {
+      "repo": "JeanHuguesRobert/survey",
+      "period": "2026-08",
+      "status": "ok",
+      "partial": false,
+      "commit": "835f2a31f1dd0075129142a75e4b62c5afeb7a32",
+      "blobs": 759,
+      "bytes": 139080161,
+      "code_files": 519,
+      "code_bytes": 4045491,
+      "markdown_files": 111,
+      "derived_markdown_files": 2,
+      "source_files": 519,
+      "test_files": 19,
+      "excluded_files": 0,
+      "by_language": {
+        "JavaScript": {
+          "files": 467,
+          "bytes": 3681789
+        },
+        "Python": {
+          "files": 1,
+          "bytes": 1085
+        },
+        "TypeScript": {
+          "files": 3,
+          "bytes": 10653
+        },
+        ".sql": {
+          "files": 48,
+          "bytes": 351964
+        }
+      }
+    },
+    {
+      "repo": "JeanHuguesRobert/survey",
+      "period": "2026-09",
+      "status": "ok",
+      "partial": false,
+      "commit": "b51bd8039834164c38ca7d14a932bd78c48228d6",
+      "blobs": 759,
+      "bytes": 139177158,
+      "code_files": 519,
+      "code_bytes": 4045491,
+      "markdown_files": 111,
+      "derived_markdown_files": 2,
+      "source_files": 519,
+      "test_files": 19,
+      "excluded_files": 0,
+      "by_language": {
+        "JavaScript": {
+          "files": 467,
+          "bytes": 3681789
+        },
+        "Python": {
+          "files": 1,
+          "bytes": 1085
+        },
+        "TypeScript": {
+          "files": 3,
+          "bytes": 10653
+        },
+        ".sql": {
+          "files": 48,
+          "bytes": 351964
+        }
+      }
+    },
+    {
+      "repo": "JeanHuguesRobert/survey",
+      "period": "2026-10",
+      "status": "ok",
+      "partial": true,
+      "commit": "b51bd8039834164c38ca7d14a932bd78c48228d6",
+      "blobs": 759,
+      "bytes": 139177158,
+      "code_files": 519,
+      "code_bytes": 4045491,
+      "markdown_files": 111,
+      "derived_markdown_files": 2,
+      "source_files": 519,
+      "test_files": 19,
+      "excluded_files": 0,
+      "by_language": {
+        "JavaScript": {
+          "files": 467,
+          "bytes": 3681789
+        },
+        "Python": {
+          "files": 1,
+          "bytes": 1085
+        },
+        "TypeScript": {
+          "files": 3,
+          "bytes": 10653
+        },
+        ".sql": {
+          "files": 48,
+          "bytes": 351964
+        }
+      }
+    },
+    {
+      "repo": "JeanHuguesRobert/ubikia",
+      "period": "2025-10",
+      "status": "not_created",
+      "partial": false
+    },
+    {
+      "repo": "JeanHuguesRobert/ubikia",
+      "period": "2025-11",
+      "status": "not_created",
+      "partial": false
+    },
+    {
+      "repo": "JeanHuguesRobert/ubikia",
+      "period": "2025-12",
+      "status": "not_created",
+      "partial": false
+    },
+    {
+      "repo": "JeanHuguesRobert/ubikia",
+      "period": "2026-01",
+      "status": "not_created",
+      "partial": false
+    },
+    {
+      "repo": "JeanHuguesRobert/ubikia",
+      "period": "2026-02",
+      "status": "not_created",
+      "partial": false
+    },
+    {
+      "repo": "JeanHuguesRobert/ubikia",
+      "period": "2026-03",
+      "status": "not_created",
+      "partial": false
+    },
+    {
+      "repo": "JeanHuguesRobert/ubikia",
+      "period": "2026-04",
+      "status": "not_created",
+      "partial": false
+    },
+    {
+      "repo": "JeanHuguesRobert/ubikia",
+      "period": "2026-05",
+      "status": "ok",
+      "partial": false,
+      "commit": "79c781a2c8a24c41db478cc46215f6209f9448a6",
+      "blobs": 4,
+      "bytes": 51257,
+      "code_files": 0,
+      "code_bytes": 0,
+      "markdown_files": 4,
+      "derived_markdown_files": 0,
+      "source_files": 0,
+      "test_files": 0,
+      "excluded_files": 0,
+      "by_language": {}
+    },
+    {
+      "repo": "JeanHuguesRobert/ubikia",
+      "period": "2026-06",
+      "status": "ok",
+      "partial": false,
+      "commit": "1697b99b6cd029927e6a9078145b1b34af2294d9",
+      "blobs": 9,
+      "bytes": 98066,
+      "code_files": 0,
+      "code_bytes": 0,
+      "markdown_files": 7,
+      "derived_markdown_files": 2,
+      "source_files": 0,
+      "test_files": 0,
+      "excluded_files": 0,
+      "by_language": {}
+    },
+    {
+      "repo": "JeanHuguesRobert/ubikia",
+      "period": "2026-07",
+      "status": "ok",
+      "partial": false,
+      "commit": "835d14af7000479f02133930c1806088ed966ba5",
+      "blobs": 98,
+      "bytes": 541759,
+      "code_files": 45,
+      "code_bytes": 171536,
+      "markdown_files": 28,
+      "derived_markdown_files": 2,
+      "source_files": 45,
+      "test_files": 8,
+      "excluded_files": 0,
+      "by_language": {
+        "JavaScript": {
+          "files": 45,
+          "bytes": 171536
+        }
+      }
+    },
+    {
+      "repo": "JeanHuguesRobert/ubikia",
+      "period": "2026-08",
+      "status": "ok",
+      "partial": false,
+      "commit": "194322798cea0d8b24ddef04329615196459ffa7",
+      "blobs": 121,
+      "bytes": 824687,
+      "code_files": 61,
+      "code_bytes": 234004,
+      "markdown_files": 33,
+      "derived_markdown_files": 2,
+      "source_files": 61,
+      "test_files": 13,
+      "excluded_files": 0,
+      "by_language": {
+        "JavaScript": {
+          "files": 61,
+          "bytes": 234004
+        }
+      }
+    },
+    {
+      "repo": "JeanHuguesRobert/ubikia",
+      "period": "2026-09",
+      "status": "ok",
+      "partial": false,
+      "commit": "411d20f56f75b29022677c14467266c6d95ba0be",
+      "blobs": 151,
+      "bytes": 983771,
+      "code_files": 79,
+      "code_bytes": 300610,
+      "markdown_files": 41,
+      "derived_markdown_files": 2,
+      "source_files": 79,
+      "test_files": 18,
+      "excluded_files": 0,
+      "by_language": {
+        "JavaScript": {
+          "files": 77,
+          "bytes": 289466
+        },
+        ".sh": {
+          "files": 2,
+          "bytes": 11144
+        }
+      }
+    },
+    {
+      "repo": "JeanHuguesRobert/ubikia",
+      "period": "2026-10",
+      "status": "ok",
+      "partial": true,
+      "commit": "411d20f56f75b29022677c14467266c6d95ba0be",
+      "blobs": 151,
+      "bytes": 983771,
+      "code_files": 79,
+      "code_bytes": 300610,
+      "markdown_files": 41,
+      "derived_markdown_files": 2,
+      "source_files": 79,
+      "test_files": 18,
+      "excluded_files": 0,
+      "by_language": {
+        "JavaScript": {
+          "files": 77,
+          "bytes": 289466
+        },
+        ".sh": {
+          "files": 2,
+          "bytes": 11144
+        }
+      }
+    },
+    {
+      "repo": "acorsica/gouvernance",
+      "period": "2025-10",
+      "status": "not_created",
+      "partial": false
+    },
+    {
+      "repo": "acorsica/gouvernance",
+      "period": "2025-11",
+      "status": "not_created",
+      "partial": false
+    },
+    {
+      "repo": "acorsica/gouvernance",
+      "period": "2025-12",
+      "status": "not_created",
+      "partial": false
+    },
+    {
+      "repo": "acorsica/gouvernance",
+      "period": "2026-01",
+      "status": "not_created",
+      "partial": false
+    },
+    {
+      "repo": "acorsica/gouvernance",
+      "period": "2026-02",
+      "status": "not_created",
+      "partial": false
+    },
+    {
+      "repo": "acorsica/gouvernance",
+      "period": "2026-03",
+      "status": "not_created",
+      "partial": false
+    },
+    {
+      "repo": "acorsica/gouvernance",
+      "period": "2026-04",
+      "status": "not_created",
+      "partial": false
+    },
+    {
+      "repo": "acorsica/gouvernance",
+      "period": "2026-05",
+      "status": "ok",
+      "partial": false,
+      "commit": "2522397e4e5af560dac5bb56d9015fb1c32f5437",
+      "blobs": 2,
+      "bytes": 2424,
+      "code_files": 0,
+      "code_bytes": 0,
+      "markdown_files": 1,
+      "derived_markdown_files": 0,
+      "source_files": 0,
+      "test_files": 0,
+      "excluded_files": 0,
+      "by_language": {}
+    },
+    {
+      "repo": "acorsica/gouvernance",
+      "period": "2026-06",
+      "status": "ok",
+      "partial": false,
+      "commit": "95d91cb9baa353b64ba30818f1eb8f8c88737e5c",
+      "blobs": 11,
+      "bytes": 63589,
+      "code_files": 0,
+      "code_bytes": 0,
+      "markdown_files": 8,
+      "derived_markdown_files": 2,
+      "source_files": 0,
+      "test_files": 0,
+      "excluded_files": 0,
+      "by_language": {}
+    },
+    {
+      "repo": "acorsica/gouvernance",
+      "period": "2026-07",
+      "status": "ok",
+      "partial": false,
+      "commit": "3fdad7dfec72c7b35555d7c7fa3d119b25bb2ce2",
+      "blobs": 11,
+      "bytes": 66189,
+      "code_files": 0,
+      "code_bytes": 0,
+      "markdown_files": 8,
+      "derived_markdown_files": 2,
+      "source_files": 0,
+      "test_files": 0,
+      "excluded_files": 0,
+      "by_language": {}
+    },
+    {
+      "repo": "acorsica/gouvernance",
+      "period": "2026-08",
+      "status": "ok",
+      "partial": false,
+      "commit": "4854d8b865b772f4cba2f9b4813129bc2516f452",
+      "blobs": 19,
+      "bytes": 176014,
+      "code_files": 0,
+      "code_bytes": 0,
+      "markdown_files": 13,
+      "derived_markdown_files": 2,
+      "source_files": 0,
+      "test_files": 0,
+      "excluded_files": 0,
+      "by_language": {}
+    },
+    {
+      "repo": "acorsica/gouvernance",
+      "period": "2026-09",
+      "status": "ok",
+      "partial": false,
+      "commit": "c791e2553780cd10d94a82a7a654f08f475afe89",
+      "blobs": 19,
+      "bytes": 227474,
+      "code_files": 0,
+      "code_bytes": 0,
+      "markdown_files": 13,
+      "derived_markdown_files": 2,
+      "source_files": 0,
+      "test_files": 0,
+      "excluded_files": 0,
+      "by_language": {}
+    },
+    {
+      "repo": "acorsica/gouvernance",
+      "period": "2026-10",
+      "status": "ok",
+      "partial": true,
+      "commit": "c791e2553780cd10d94a82a7a654f08f475afe89",
+      "blobs": 19,
+      "bytes": 227474,
+      "code_files": 0,
+      "code_bytes": 0,
+      "markdown_files": 13,
+      "derived_markdown_files": 2,
+      "source_files": 0,
+      "test_files": 0,
+      "excluded_files": 0,
+      "by_language": {}
+    },
+    {
+      "repo": "JeanHuguesRobert/JeanHuguesRobert",
+      "period": "2025-10",
+      "status": "not_created",
+      "partial": false
+    },
+    {
+      "repo": "JeanHuguesRobert/JeanHuguesRobert",
+      "period": "2025-11",
+      "status": "not_created",
+      "partial": false
+    },
+    {
+      "repo": "JeanHuguesRobert/JeanHuguesRobert",
+      "period": "2025-12",
+      "status": "not_created",
+      "partial": false
+    },
+    {
+      "repo": "JeanHuguesRobert/JeanHuguesRobert",
+      "period": "2026-01",
+      "status": "not_created",
+      "partial": false
+    },
+    {
+      "repo": "JeanHuguesRobert/JeanHuguesRobert",
+      "period": "2026-02",
+      "status": "not_created",
+      "partial": false
+    },
+    {
+      "repo": "JeanHuguesRobert/JeanHuguesRobert",
+      "period": "2026-03",
+      "status": "ok",
+      "partial": false,
+      "commit": "384dc563a518501483eda0b11f2f1e39c38ca485",
+      "blobs": 2,
+      "bytes": 12381,
+      "code_files": 0,
+      "code_bytes": 0,
+      "markdown_files": 1,
+      "derived_markdown_files": 0,
+      "source_files": 0,
+      "test_files": 0,
+      "excluded_files": 0,
+      "by_language": {}
+    },
+    {
+      "repo": "JeanHuguesRobert/JeanHuguesRobert",
+      "period": "2026-04",
+      "status": "ok",
+      "partial": false,
+      "commit": "c84e3076af65a48d3a8d1947d3e8cbc75bfbe4e7",
+      "blobs": 3,
+      "bytes": 24336,
+      "code_files": 0,
+      "code_bytes": 0,
+      "markdown_files": 2,
+      "derived_markdown_files": 0,
+      "source_files": 0,
+      "test_files": 0,
+      "excluded_files": 0,
+      "by_language": {}
+    },
+    {
+      "repo": "JeanHuguesRobert/JeanHuguesRobert",
+      "period": "2026-05",
+      "status": "ok",
+      "partial": false,
+      "commit": "f1a910a11cea1b6babf1e0dff5d62984d4b6eb79",
+      "blobs": 27,
+      "bytes": 648634,
+      "code_files": 0,
+      "code_bytes": 0,
+      "markdown_files": 19,
+      "derived_markdown_files": 2,
+      "source_files": 0,
+      "test_files": 0,
+      "excluded_files": 0,
+      "by_language": {}
+    },
+    {
+      "repo": "JeanHuguesRobert/JeanHuguesRobert",
+      "period": "2026-06",
+      "status": "ok",
+      "partial": false,
+      "commit": "67e251e76ef8852c9d098c3e8faab646c05e3ffc",
+      "blobs": 37,
+      "bytes": 861217,
+      "code_files": 0,
+      "code_bytes": 0,
+      "markdown_files": 26,
+      "derived_markdown_files": 2,
+      "source_files": 0,
+      "test_files": 0,
+      "excluded_files": 0,
+      "by_language": {}
+    },
+    {
+      "repo": "JeanHuguesRobert/JeanHuguesRobert",
+      "period": "2026-07",
+      "status": "ok",
+      "partial": false,
+      "commit": "f64b40f8cc65d4ac4681117864ede83d0c53d9ef",
+      "blobs": 50,
+      "bytes": 968427,
+      "code_files": 0,
+      "code_bytes": 0,
+      "markdown_files": 32,
+      "derived_markdown_files": 2,
+      "source_files": 0,
+      "test_files": 0,
+      "excluded_files": 0,
+      "by_language": {}
+    },
+    {
+      "repo": "JeanHuguesRobert/JeanHuguesRobert",
+      "period": "2026-08",
+      "status": "ok",
+      "partial": false,
+      "commit": "6b6eee0a34fb31b24713b5fef1c7e0b686f2b4d8",
+      "blobs": 87,
+      "bytes": 1588107,
+      "code_files": 0,
+      "code_bytes": 0,
+      "markdown_files": 52,
+      "derived_markdown_files": 2,
+      "source_files": 0,
+      "test_files": 0,
+      "excluded_files": 0,
+      "by_language": {}
+    },
+    {
+      "repo": "JeanHuguesRobert/JeanHuguesRobert",
+      "period": "2026-09",
+      "status": "ok",
+      "partial": false,
+      "commit": "9dccf9832a0cc5f4f36dbddd891a859adc832ff8",
+      "blobs": 110,
+      "bytes": 1813134,
+      "code_files": 0,
+      "code_bytes": 0,
+      "markdown_files": 60,
+      "derived_markdown_files": 2,
+      "source_files": 0,
+      "test_files": 0,
+      "excluded_files": 0,
+      "by_language": {}
+    },
+    {
+      "repo": "JeanHuguesRobert/JeanHuguesRobert",
+      "period": "2026-10",
+      "status": "ok",
+      "partial": true,
+      "commit": "9dccf9832a0cc5f4f36dbddd891a859adc832ff8",
+      "blobs": 110,
+      "bytes": 1813134,
+      "code_files": 0,
+      "code_bytes": 0,
+      "markdown_files": 60,
+      "derived_markdown_files": 2,
+      "source_files": 0,
+      "test_files": 0,
+      "excluded_files": 0,
+      "by_language": {}
+    },
+    {
+      "repo": "JeanHuguesRobert/marenostrum",
+      "period": "2025-10",
+      "status": "not_created",
+      "partial": false
+    },
+    {
+      "repo": "JeanHuguesRobert/marenostrum",
+      "period": "2025-11",
+      "status": "not_created",
+      "partial": false
+    },
+    {
+      "repo": "JeanHuguesRobert/marenostrum",
+      "period": "2025-12",
+      "status": "not_created",
+      "partial": false
+    },
+    {
+      "repo": "JeanHuguesRobert/marenostrum",
+      "period": "2026-01",
+      "status": "not_created",
+      "partial": false
+    },
+    {
+      "repo": "JeanHuguesRobert/marenostrum",
+      "period": "2026-02",
+      "status": "not_created",
+      "partial": false
+    },
+    {
+      "repo": "JeanHuguesRobert/marenostrum",
+      "period": "2026-03",
+      "status": "ok",
+      "partial": false,
+      "commit": "b5fd7b3b572ae0bd342428cce4afee93230a5da8",
+      "blobs": 13,
+      "bytes": 103797,
+      "code_files": 0,
+      "code_bytes": 0,
+      "markdown_files": 12,
+      "derived_markdown_files": 0,
+      "source_files": 0,
+      "test_files": 0,
+      "excluded_files": 0,
+      "by_language": {}
+    },
+    {
+      "repo": "JeanHuguesRobert/marenostrum",
+      "period": "2026-04",
+      "status": "ok",
+      "partial": false,
+      "commit": "a40ad4db9a82a25ceddda3039ff9dae4bdce5a7f",
+      "blobs": 18,
+      "bytes": 253699,
+      "code_files": 0,
+      "code_bytes": 0,
+      "markdown_files": 17,
+      "derived_markdown_files": 0,
+      "source_files": 0,
+      "test_files": 0,
+      "excluded_files": 0,
+      "by_language": {}
+    },
+    {
+      "repo": "JeanHuguesRobert/marenostrum",
+      "period": "2026-05",
+      "status": "ok",
+      "partial": false,
+      "commit": "18910386218af638ad07157241945e909e984f04",
+      "blobs": 26,
+      "bytes": 577348,
+      "code_files": 0,
+      "code_bytes": 0,
+      "markdown_files": 23,
+      "derived_markdown_files": 2,
+      "source_files": 0,
+      "test_files": 0,
+      "excluded_files": 0,
+      "by_language": {}
+    },
+    {
+      "repo": "JeanHuguesRobert/marenostrum",
+      "period": "2026-06",
+      "status": "ok",
+      "partial": false,
+      "commit": "92365d3e75bd4e139a73557835afc4413e4c5438",
+      "blobs": 55,
+      "bytes": 780027,
+      "code_files": 0,
+      "code_bytes": 0,
+      "markdown_files": 50,
+      "derived_markdown_files": 2,
+      "source_files": 0,
+      "test_files": 0,
+      "excluded_files": 0,
+      "by_language": {}
+    },
+    {
+      "repo": "JeanHuguesRobert/marenostrum",
+      "period": "2026-07",
+      "status": "ok",
+      "partial": false,
+      "commit": "a54199afd1afc36f8d9a88532c4ecc8dac0afb40",
+      "blobs": 55,
+      "bytes": 785146,
+      "code_files": 0,
+      "code_bytes": 0,
+      "markdown_files": 50,
+      "derived_markdown_files": 2,
+      "source_files": 0,
+      "test_files": 0,
+      "excluded_files": 0,
+      "by_language": {}
+    },
+    {
+      "repo": "JeanHuguesRobert/marenostrum",
+      "period": "2026-08",
+      "status": "ok",
+      "partial": false,
+      "commit": "02aa6fe56ed5c7b24155499bbe2cf8ec80917587",
+      "blobs": 60,
+      "bytes": 984150,
+      "code_files": 0,
+      "code_bytes": 0,
+      "markdown_files": 52,
+      "derived_markdown_files": 2,
+      "source_files": 0,
+      "test_files": 0,
+      "excluded_files": 0,
+      "by_language": {}
+    },
+    {
+      "repo": "JeanHuguesRobert/marenostrum",
+      "period": "2026-09",
+      "status": "ok",
+      "partial": false,
+      "commit": "132f5cf7149bc42f482bfdc20701a8ae05b2696b",
+      "blobs": 60,
+      "bytes": 1046604,
+      "code_files": 0,
+      "code_bytes": 0,
+      "markdown_files": 52,
+      "derived_markdown_files": 2,
+      "source_files": 0,
+      "test_files": 0,
+      "excluded_files": 0,
+      "by_language": {}
+    },
+    {
+      "repo": "JeanHuguesRobert/marenostrum",
+      "period": "2026-10",
+      "status": "ok",
+      "partial": true,
+      "commit": "132f5cf7149bc42f482bfdc20701a8ae05b2696b",
+      "blobs": 60,
+      "bytes": 1046604,
+      "code_files": 0,
+      "code_bytes": 0,
+      "markdown_files": 52,
+      "derived_markdown_files": 2,
+      "source_files": 0,
+      "test_files": 0,
+      "excluded_files": 0,
+      "by_language": {}
+    },
+    {
+      "repo": "JeanHuguesRobert/StructEnv",
+      "period": "2025-10",
+      "status": "ok",
+      "partial": false,
+      "commit": "ffb4fc8940854e224647226912575398d7d076d9",
+      "blobs": 10,
+      "bytes": 152691,
+      "code_files": 4,
+      "code_bytes": 28485,
+      "markdown_files": 1,
+      "derived_markdown_files": 0,
+      "source_files": 4,
+      "test_files": 1,
+      "excluded_files": 0,
+      "by_language": {
+        "JavaScript": {
+          "files": 3,
+          "bytes": 23168
+        },
+        "Python": {
+          "files": 1,
+          "bytes": 5317
+        }
+      }
+    },
+    {
+      "repo": "JeanHuguesRobert/StructEnv",
+      "period": "2025-11",
+      "status": "ok",
+      "partial": false,
+      "commit": "ffb4fc8940854e224647226912575398d7d076d9",
+      "blobs": 10,
+      "bytes": 152691,
+      "code_files": 4,
+      "code_bytes": 28485,
+      "markdown_files": 1,
+      "derived_markdown_files": 0,
+      "source_files": 4,
+      "test_files": 1,
+      "excluded_files": 0,
+      "by_language": {
+        "JavaScript": {
+          "files": 3,
+          "bytes": 23168
+        },
+        "Python": {
+          "files": 1,
+          "bytes": 5317
+        }
+      }
+    },
+    {
+      "repo": "JeanHuguesRobert/StructEnv",
+      "period": "2025-12",
+      "status": "ok",
+      "partial": false,
+      "commit": "ffb4fc8940854e224647226912575398d7d076d9",
+      "blobs": 10,
+      "bytes": 152691,
+      "code_files": 4,
+      "code_bytes": 28485,
+      "markdown_files": 1,
+      "derived_markdown_files": 0,
+      "source_files": 4,
+      "test_files": 1,
+      "excluded_files": 0,
+      "by_language": {
+        "JavaScript": {
+          "files": 3,
+          "bytes": 23168
+        },
+        "Python": {
+          "files": 1,
+          "bytes": 5317
+        }
+      }
+    },
+    {
+      "repo": "JeanHuguesRobert/StructEnv",
+      "period": "2026-01",
+      "status": "ok",
+      "partial": false,
+      "commit": "ffb4fc8940854e224647226912575398d7d076d9",
+      "blobs": 10,
+      "bytes": 152691,
+      "code_files": 4,
+      "code_bytes": 28485,
+      "markdown_files": 1,
+      "derived_markdown_files": 0,
+      "source_files": 4,
+      "test_files": 1,
+      "excluded_files": 0,
+      "by_language": {
+        "JavaScript": {
+          "files": 3,
+          "bytes": 23168
+        },
+        "Python": {
+          "files": 1,
+          "bytes": 5317
+        }
+      }
+    },
+    {
+      "repo": "JeanHuguesRobert/StructEnv",
+      "period": "2026-02",
+      "status": "ok",
+      "partial": false,
+      "commit": "ffb4fc8940854e224647226912575398d7d076d9",
+      "blobs": 10,
+      "bytes": 152691,
+      "code_files": 4,
+      "code_bytes": 28485,
+      "markdown_files": 1,
+      "derived_markdown_files": 0,
+      "source_files": 4,
+      "test_files": 1,
+      "excluded_files": 0,
+      "by_language": {
+        "JavaScript": {
+          "files": 3,
+          "bytes": 23168
+        },
+        "Python": {
+          "files": 1,
+          "bytes": 5317
+        }
+      }
+    },
+    {
+      "repo": "JeanHuguesRobert/StructEnv",
+      "period": "2026-03",
+      "status": "ok",
+      "partial": false,
+      "commit": "ffb4fc8940854e224647226912575398d7d076d9",
+      "blobs": 10,
+      "bytes": 152691,
+      "code_files": 4,
+      "code_bytes": 28485,
+      "markdown_files": 1,
+      "derived_markdown_files": 0,
+      "source_files": 4,
+      "test_files": 1,
+      "excluded_files": 0,
+      "by_language": {
+        "JavaScript": {
+          "files": 3,
+          "bytes": 23168
+        },
+        "Python": {
+          "files": 1,
+          "bytes": 5317
+        }
+      }
+    },
+    {
+      "repo": "JeanHuguesRobert/StructEnv",
+      "period": "2026-04",
+      "status": "ok",
+      "partial": false,
+      "commit": "ffb4fc8940854e224647226912575398d7d076d9",
+      "blobs": 10,
+      "bytes": 152691,
+      "code_files": 4,
+      "code_bytes": 28485,
+      "markdown_files": 1,
+      "derived_markdown_files": 0,
+      "source_files": 4,
+      "test_files": 1,
+      "excluded_files": 0,
+      "by_language": {
+        "JavaScript": {
+          "files": 3,
+          "bytes": 23168
+        },
+        "Python": {
+          "files": 1,
+          "bytes": 5317
+        }
+      }
+    },
+    {
+      "repo": "JeanHuguesRobert/StructEnv",
+      "period": "2026-05",
+      "status": "ok",
+      "partial": false,
+      "commit": "ffb4fc8940854e224647226912575398d7d076d9",
+      "blobs": 10,
+      "bytes": 152691,
+      "code_files": 4,
+      "code_bytes": 28485,
+      "markdown_files": 1,
+      "derived_markdown_files": 0,
+      "source_files": 4,
+      "test_files": 1,
+      "excluded_files": 0,
+      "by_language": {
+        "JavaScript": {
+          "files": 3,
+          "bytes": 23168
+        },
+        "Python": {
+          "files": 1,
+          "bytes": 5317
+        }
+      }
+    },
+    {
+      "repo": "JeanHuguesRobert/StructEnv",
+      "period": "2026-06",
+      "status": "ok",
+      "partial": false,
+      "commit": "ffb4fc8940854e224647226912575398d7d076d9",
+      "blobs": 10,
+      "bytes": 152691,
+      "code_files": 4,
+      "code_bytes": 28485,
+      "markdown_files": 1,
+      "derived_markdown_files": 0,
+      "source_files": 4,
+      "test_files": 1,
+      "excluded_files": 0,
+      "by_language": {
+        "JavaScript": {
+          "files": 3,
+          "bytes": 23168
+        },
+        "Python": {
+          "files": 1,
+          "bytes": 5317
+        }
+      }
+    },
+    {
+      "repo": "JeanHuguesRobert/StructEnv",
+      "period": "2026-07",
+      "status": "ok",
+      "partial": false,
+      "commit": "9c080c84658ff7982eed5d3c7adf402af03938e7",
+      "blobs": 11,
+      "bytes": 158024,
+      "code_files": 4,
+      "code_bytes": 28485,
+      "markdown_files": 2,
+      "derived_markdown_files": 0,
+      "source_files": 4,
+      "test_files": 1,
+      "excluded_files": 0,
+      "by_language": {
+        "JavaScript": {
+          "files": 3,
+          "bytes": 23168
+        },
+        "Python": {
+          "files": 1,
+          "bytes": 5317
+        }
+      }
+    },
+    {
+      "repo": "JeanHuguesRobert/StructEnv",
+      "period": "2026-08",
+      "status": "ok",
+      "partial": false,
+      "commit": "5ed3c3482df702adca4bd39213f07959554df335",
+      "blobs": 15,
+      "bytes": 356021,
+      "code_files": 4,
+      "code_bytes": 32273,
+      "markdown_files": 4,
+      "derived_markdown_files": 1,
+      "source_files": 4,
+      "test_files": 1,
+      "excluded_files": 0,
+      "by_language": {
+        "JavaScript": {
+          "files": 3,
+          "bytes": 26956
+        },
+        "Python": {
+          "files": 1,
+          "bytes": 5317
+        }
+      }
+    },
+    {
+      "repo": "JeanHuguesRobert/StructEnv",
+      "period": "2026-09",
+      "status": "ok",
+      "partial": false,
+      "commit": "1ed997c6896b41bf36bbf641b2a8356344cca815",
+      "blobs": 18,
+      "bytes": 405112,
+      "code_files": 4,
+      "code_bytes": 32273,
+      "markdown_files": 6,
+      "derived_markdown_files": 2,
+      "source_files": 4,
+      "test_files": 1,
+      "excluded_files": 0,
+      "by_language": {
+        "JavaScript": {
+          "files": 3,
+          "bytes": 26956
+        },
+        "Python": {
+          "files": 1,
+          "bytes": 5317
+        }
+      }
+    },
+    {
+      "repo": "JeanHuguesRobert/StructEnv",
+      "period": "2026-10",
+      "status": "ok",
+      "partial": true,
+      "commit": "1ed997c6896b41bf36bbf641b2a8356344cca815",
+      "blobs": 18,
+      "bytes": 405112,
+      "code_files": 4,
+      "code_bytes": 32273,
+      "markdown_files": 6,
+      "derived_markdown_files": 2,
+      "source_files": 4,
+      "test_files": 1,
+      "excluded_files": 0,
+      "by_language": {
+        "JavaScript": {
+          "files": 3,
+          "bytes": 26956
+        },
+        "Python": {
+          "files": 1,
+          "bytes": 5317
+        }
+      }
+    },
+    {
+      "repo": "JeanHuguesRobert/serra",
+      "period": "2025-10",
+      "status": "ok",
+      "partial": false,
+      "commit": "2f66f5198aafd9e5927eeca7db8959036a004e25",
+      "blobs": 155,
+      "bytes": 1361331,
+      "code_files": 125,
+      "code_bytes": 243390,
+      "markdown_files": 9,
+      "derived_markdown_files": 0,
+      "source_files": 125,
+      "test_files": 5,
+      "excluded_files": 2,
+      "by_language": {
+        "JavaScript": {
+          "files": 125,
+          "bytes": 243390
+        }
+      }
+    },
+    {
+      "repo": "JeanHuguesRobert/serra",
+      "period": "2025-11",
+      "status": "ok",
+      "partial": false,
+      "commit": "2f66f5198aafd9e5927eeca7db8959036a004e25",
+      "blobs": 155,
+      "bytes": 1361331,
+      "code_files": 125,
+      "code_bytes": 243390,
+      "markdown_files": 9,
+      "derived_markdown_files": 0,
+      "source_files": 125,
+      "test_files": 5,
+      "excluded_files": 2,
+      "by_language": {
+        "JavaScript": {
+          "files": 125,
+          "bytes": 243390
+        }
+      }
+    },
+    {
+      "repo": "JeanHuguesRobert/serra",
+      "period": "2025-12",
+      "status": "ok",
+      "partial": false,
+      "commit": "2f66f5198aafd9e5927eeca7db8959036a004e25",
+      "blobs": 155,
+      "bytes": 1361331,
+      "code_files": 125,
+      "code_bytes": 243390,
+      "markdown_files": 9,
+      "derived_markdown_files": 0,
+      "source_files": 125,
+      "test_files": 5,
+      "excluded_files": 2,
+      "by_language": {
+        "JavaScript": {
+          "files": 125,
+          "bytes": 243390
+        }
+      }
+    },
+    {
+      "repo": "JeanHuguesRobert/serra",
+      "period": "2026-01",
+      "status": "ok",
+      "partial": false,
+      "commit": "2f66f5198aafd9e5927eeca7db8959036a004e25",
+      "blobs": 155,
+      "bytes": 1361331,
+      "code_files": 125,
+      "code_bytes": 243390,
+      "markdown_files": 9,
+      "derived_markdown_files": 0,
+      "source_files": 125,
+      "test_files": 5,
+      "excluded_files": 2,
+      "by_language": {
+        "JavaScript": {
+          "files": 125,
+          "bytes": 243390
+        }
+      }
+    },
+    {
+      "repo": "JeanHuguesRobert/serra",
+      "period": "2026-02",
+      "status": "ok",
+      "partial": false,
+      "commit": "2f66f5198aafd9e5927eeca7db8959036a004e25",
+      "blobs": 155,
+      "bytes": 1361331,
+      "code_files": 125,
+      "code_bytes": 243390,
+      "markdown_files": 9,
+      "derived_markdown_files": 0,
+      "source_files": 125,
+      "test_files": 5,
+      "excluded_files": 2,
+      "by_language": {
+        "JavaScript": {
+          "files": 125,
+          "bytes": 243390
+        }
+      }
+    },
+    {
+      "repo": "JeanHuguesRobert/serra",
+      "period": "2026-03",
+      "status": "ok",
+      "partial": false,
+      "commit": "2f66f5198aafd9e5927eeca7db8959036a004e25",
+      "blobs": 155,
+      "bytes": 1361331,
+      "code_files": 125,
+      "code_bytes": 243390,
+      "markdown_files": 9,
+      "derived_markdown_files": 0,
+      "source_files": 125,
+      "test_files": 5,
+      "excluded_files": 2,
+      "by_language": {
+        "JavaScript": {
+          "files": 125,
+          "bytes": 243390
+        }
+      }
+    },
+    {
+      "repo": "JeanHuguesRobert/serra",
+      "period": "2026-04",
+      "status": "ok",
+      "partial": false,
+      "commit": "2f66f5198aafd9e5927eeca7db8959036a004e25",
+      "blobs": 155,
+      "bytes": 1361331,
+      "code_files": 125,
+      "code_bytes": 243390,
+      "markdown_files": 9,
+      "derived_markdown_files": 0,
+      "source_files": 125,
+      "test_files": 5,
+      "excluded_files": 2,
+      "by_language": {
+        "JavaScript": {
+          "files": 125,
+          "bytes": 243390
+        }
+      }
+    },
+    {
+      "repo": "JeanHuguesRobert/serra",
+      "period": "2026-05",
+      "status": "ok",
+      "partial": false,
+      "commit": "2f66f5198aafd9e5927eeca7db8959036a004e25",
+      "blobs": 155,
+      "bytes": 1361331,
+      "code_files": 125,
+      "code_bytes": 243390,
+      "markdown_files": 9,
+      "derived_markdown_files": 0,
+      "source_files": 125,
+      "test_files": 5,
+      "excluded_files": 2,
+      "by_language": {
+        "JavaScript": {
+          "files": 125,
+          "bytes": 243390
+        }
+      }
+    },
+    {
+      "repo": "JeanHuguesRobert/serra",
+      "period": "2026-06",
+      "status": "ok",
+      "partial": false,
+      "commit": "2f66f5198aafd9e5927eeca7db8959036a004e25",
+      "blobs": 155,
+      "bytes": 1361331,
+      "code_files": 125,
+      "code_bytes": 243390,
+      "markdown_files": 9,
+      "derived_markdown_files": 0,
+      "source_files": 125,
+      "test_files": 5,
+      "excluded_files": 2,
+      "by_language": {
+        "JavaScript": {
+          "files": 125,
+          "bytes": 243390
+        }
+      }
+    },
+    {
+      "repo": "JeanHuguesRobert/serra",
+      "period": "2026-07",
+      "status": "ok",
+      "partial": false,
+      "commit": "1f58373f5e3114fdb78d59a8cab44e957303683a",
+      "blobs": 203,
+      "bytes": 1271659,
+      "code_files": 158,
+      "code_bytes": 428780,
+      "markdown_files": 20,
+      "derived_markdown_files": 2,
+      "source_files": 158,
+      "test_files": 5,
+      "excluded_files": 0,
+      "by_language": {
+        "JavaScript": {
+          "files": 156,
+          "bytes": 426578
+        },
+        "TypeScript": {
+          "files": 2,
+          "bytes": 2202
+        }
+      }
+    },
+    {
+      "repo": "JeanHuguesRobert/serra",
+      "period": "2026-08",
+      "status": "ok",
+      "partial": false,
+      "commit": "472e9ed342286564c76c3c096122c1a98b3b8f5f",
+      "blobs": 206,
+      "bytes": 1367763,
+      "code_files": 158,
+      "code_bytes": 428780,
+      "markdown_files": 21,
+      "derived_markdown_files": 2,
+      "source_files": 158,
+      "test_files": 5,
+      "excluded_files": 0,
+      "by_language": {
+        "JavaScript": {
+          "files": 156,
+          "bytes": 426578
+        },
+        "TypeScript": {
+          "files": 2,
+          "bytes": 2202
+        }
+      }
+    },
+    {
+      "repo": "JeanHuguesRobert/serra",
+      "period": "2026-09",
+      "status": "ok",
+      "partial": false,
+      "commit": "5d47e86c449b853f9e9f65384c9218a97f439146",
+      "blobs": 206,
+      "bytes": 1438139,
+      "code_files": 158,
+      "code_bytes": 428780,
+      "markdown_files": 21,
+      "derived_markdown_files": 2,
+      "source_files": 158,
+      "test_files": 5,
+      "excluded_files": 0,
+      "by_language": {
+        "JavaScript": {
+          "files": 156,
+          "bytes": 426578
+        },
+        "TypeScript": {
+          "files": 2,
+          "bytes": 2202
+        }
+      }
+    },
+    {
+      "repo": "JeanHuguesRobert/serra",
+      "period": "2026-10",
+      "status": "ok",
+      "partial": true,
+      "commit": "5d47e86c449b853f9e9f65384c9218a97f439146",
+      "blobs": 206,
+      "bytes": 1438139,
+      "code_files": 158,
+      "code_bytes": 428780,
+      "markdown_files": 21,
+      "derived_markdown_files": 2,
+      "source_files": 158,
+      "test_files": 5,
+      "excluded_files": 0,
+      "by_language": {
+        "JavaScript": {
+          "files": 156,
+          "bytes": 426578
+        },
+        "TypeScript": {
+          "files": 2,
+          "bytes": 2202
+        }
+      }
+    },
+    {
+      "repo": "acorsica/institut-mariani",
+      "period": "2025-10",
+      "status": "not_created",
+      "partial": false
+    },
+    {
+      "repo": "acorsica/institut-mariani",
+      "period": "2025-11",
+      "status": "not_created",
+      "partial": false
+    },
+    {
+      "repo": "acorsica/institut-mariani",
+      "period": "2025-12",
+      "status": "not_created",
+      "partial": false
+    },
+    {
+      "repo": "acorsica/institut-mariani",
+      "period": "2026-01",
+      "status": "not_created",
+      "partial": false
+    },
+    {
+      "repo": "acorsica/institut-mariani",
+      "period": "2026-02",
+      "status": "not_created",
+      "partial": false
+    },
+    {
+      "repo": "acorsica/institut-mariani",
+      "period": "2026-03",
+      "status": "not_created",
+      "partial": false
+    },
+    {
+      "repo": "acorsica/institut-mariani",
+      "period": "2026-04",
+      "status": "not_created",
+      "partial": false
+    },
+    {
+      "repo": "acorsica/institut-mariani",
+      "period": "2026-05",
+      "status": "not_created",
+      "partial": false
+    },
+    {
+      "repo": "acorsica/institut-mariani",
+      "period": "2026-06",
+      "status": "ok",
+      "partial": false,
+      "commit": "f3dcd5b4081a76c8ef6ef4a73cad881be3efa081",
+      "blobs": 7,
+      "bytes": 50187,
+      "code_files": 0,
+      "code_bytes": 0,
+      "markdown_files": 5,
+      "derived_markdown_files": 2,
+      "source_files": 0,
+      "test_files": 0,
+      "excluded_files": 0,
+      "by_language": {}
+    },
+    {
+      "repo": "acorsica/institut-mariani",
+      "period": "2026-07",
+      "status": "ok",
+      "partial": false,
+      "commit": "307c41e8b3e2797df7f907ab588455bdd4384e18",
+      "blobs": 7,
+      "bytes": 52778,
+      "code_files": 0,
+      "code_bytes": 0,
+      "markdown_files": 5,
+      "derived_markdown_files": 2,
+      "source_files": 0,
+      "test_files": 0,
+      "excluded_files": 0,
+      "by_language": {}
+    },
+    {
+      "repo": "acorsica/institut-mariani",
+      "period": "2026-08",
+      "status": "ok",
+      "partial": false,
+      "commit": "9c8573582db9bccd46eba049b421baec46314e1d",
+      "blobs": 11,
+      "bytes": 146464,
+      "code_files": 0,
+      "code_bytes": 0,
+      "markdown_files": 6,
+      "derived_markdown_files": 2,
+      "source_files": 0,
+      "test_files": 0,
+      "excluded_files": 0,
+      "by_language": {}
+    },
+    {
+      "repo": "acorsica/institut-mariani",
+      "period": "2026-09",
+      "status": "ok",
+      "partial": false,
+      "commit": "6c4658d2a3db1722e9ec92b6786cce1b0d6a544d",
+      "blobs": 11,
+      "bytes": 194253,
+      "code_files": 0,
+      "code_bytes": 0,
+      "markdown_files": 6,
+      "derived_markdown_files": 2,
+      "source_files": 0,
+      "test_files": 0,
+      "excluded_files": 0,
+      "by_language": {}
+    },
+    {
+      "repo": "acorsica/institut-mariani",
+      "period": "2026-10",
+      "status": "ok",
+      "partial": true,
+      "commit": "0ff5179849e62bd45e11837c591e0db95adc7041",
+      "blobs": 11,
+      "bytes": 195605,
+      "code_files": 0,
+      "code_bytes": 0,
+      "markdown_files": 6,
+      "derived_markdown_files": 2,
+      "source_files": 0,
+      "test_files": 0,
+      "excluded_files": 0,
+      "by_language": {}
+    },
+    {
+      "repo": "acorsica/acorsica.org",
+      "period": "2025-10",
+      "status": "not_created",
+      "partial": false
+    },
+    {
+      "repo": "acorsica/acorsica.org",
+      "period": "2025-11",
+      "status": "not_created",
+      "partial": false
+    },
+    {
+      "repo": "acorsica/acorsica.org",
+      "period": "2025-12",
+      "status": "not_created",
+      "partial": false
+    },
+    {
+      "repo": "acorsica/acorsica.org",
+      "period": "2026-01",
+      "status": "not_created",
+      "partial": false
+    },
+    {
+      "repo": "acorsica/acorsica.org",
+      "period": "2026-02",
+      "status": "not_created",
+      "partial": false
+    },
+    {
+      "repo": "acorsica/acorsica.org",
+      "period": "2026-03",
+      "status": "not_created",
+      "partial": false
+    },
+    {
+      "repo": "acorsica/acorsica.org",
+      "period": "2026-04",
+      "status": "not_created",
+      "partial": false
+    },
+    {
+      "repo": "acorsica/acorsica.org",
+      "period": "2026-05",
+      "status": "not_created",
+      "partial": false
+    },
+    {
+      "repo": "acorsica/acorsica.org",
+      "period": "2026-06",
+      "status": "ok",
+      "partial": false,
+      "commit": "91367e1dc02ad875fe2e61ce221dee468210509a",
+      "blobs": 8,
+      "bytes": 43907,
+      "code_files": 0,
+      "code_bytes": 0,
+      "markdown_files": 3,
+      "derived_markdown_files": 2,
+      "source_files": 0,
+      "test_files": 0,
+      "excluded_files": 0,
+      "by_language": {}
+    },
+    {
+      "repo": "acorsica/acorsica.org",
+      "period": "2026-07",
+      "status": "ok",
+      "partial": false,
+      "commit": "7956c965cce6a8e72b9c45a626daeb1abc419ffb",
+      "blobs": 8,
+      "bytes": 46490,
+      "code_files": 0,
+      "code_bytes": 0,
+      "markdown_files": 3,
+      "derived_markdown_files": 2,
+      "source_files": 0,
+      "test_files": 0,
+      "excluded_files": 0,
+      "by_language": {}
+    },
+    {
+      "repo": "acorsica/acorsica.org",
+      "period": "2026-08",
+      "status": "ok",
+      "partial": false,
+      "commit": "1a303d66911021afcebb0ee1c7bdb5d7cc062fa4",
+      "blobs": 12,
+      "bytes": 140172,
+      "code_files": 0,
+      "code_bytes": 0,
+      "markdown_files": 4,
+      "derived_markdown_files": 2,
+      "source_files": 0,
+      "test_files": 0,
+      "excluded_files": 0,
+      "by_language": {}
+    },
+    {
+      "repo": "acorsica/acorsica.org",
+      "period": "2026-09",
+      "status": "ok",
+      "partial": false,
+      "commit": "f314b0ac45895a260e70964ec0bb9ad0a5a0af59",
+      "blobs": 12,
+      "bytes": 187180,
+      "code_files": 0,
+      "code_bytes": 0,
+      "markdown_files": 4,
+      "derived_markdown_files": 2,
+      "source_files": 0,
+      "test_files": 0,
+      "excluded_files": 0,
+      "by_language": {}
+    },
+    {
+      "repo": "acorsica/acorsica.org",
+      "period": "2026-10",
+      "status": "ok",
+      "partial": true,
+      "commit": "f314b0ac45895a260e70964ec0bb9ad0a5a0af59",
+      "blobs": 12,
+      "bytes": 187180,
+      "code_files": 0,
+      "code_bytes": 0,
+      "markdown_files": 4,
+      "derived_markdown_files": 2,
+      "source_files": 0,
+      "test_files": 0,
+      "excluded_files": 0,
+      "by_language": {}
+    },
+    {
+      "repo": "acorsica/privai",
+      "period": "2025-10",
+      "status": "not_created",
+      "partial": false
+    },
+    {
+      "repo": "acorsica/privai",
+      "period": "2025-11",
+      "status": "not_created",
+      "partial": false
+    },
+    {
+      "repo": "acorsica/privai",
+      "period": "2025-12",
+      "status": "not_created",
+      "partial": false
+    },
+    {
+      "repo": "acorsica/privai",
+      "period": "2026-01",
+      "status": "not_created",
+      "partial": false
+    },
+    {
+      "repo": "acorsica/privai",
+      "period": "2026-02",
+      "status": "not_created",
+      "partial": false
+    },
+    {
+      "repo": "acorsica/privai",
+      "period": "2026-03",
+      "status": "not_created",
+      "partial": false
+    },
+    {
+      "repo": "acorsica/privai",
+      "period": "2026-04",
+      "status": "not_created",
+      "partial": false
+    },
+    {
+      "repo": "acorsica/privai",
+      "period": "2026-05",
+      "status": "not_created",
+      "partial": false
+    },
+    {
+      "repo": "acorsica/privai",
+      "period": "2026-06",
+      "status": "ok",
+      "partial": false,
+      "commit": "b7b1a420c258c2e5c012a9916087ef879779c079",
+      "blobs": 12,
+      "bytes": 84847,
+      "code_files": 0,
+      "code_bytes": 0,
+      "markdown_files": 9,
+      "derived_markdown_files": 2,
+      "source_files": 0,
+      "test_files": 0,
+      "excluded_files": 0,
+      "by_language": {}
+    },
+    {
+      "repo": "acorsica/privai",
+      "period": "2026-07",
+      "status": "ok",
+      "partial": false,
+      "commit": "f4ea6b6920908d25ac828d82f6e566cb34294b37",
+      "blobs": 13,
+      "bytes": 93308,
+      "code_files": 0,
+      "code_bytes": 0,
+      "markdown_files": 10,
+      "derived_markdown_files": 2,
+      "source_files": 0,
+      "test_files": 0,
+      "excluded_files": 0,
+      "by_language": {}
+    },
+    {
+      "repo": "acorsica/privai",
+      "period": "2026-08",
+      "status": "ok",
+      "partial": false,
+      "commit": "c83c62474d83da254ef4a9f42159a676f01a6d82",
+      "blobs": 21,
+      "bytes": 205508,
+      "code_files": 0,
+      "code_bytes": 0,
+      "markdown_files": 15,
+      "derived_markdown_files": 2,
+      "source_files": 0,
+      "test_files": 0,
+      "excluded_files": 0,
+      "by_language": {}
+    },
+    {
+      "repo": "acorsica/privai",
+      "period": "2026-09",
+      "status": "ok",
+      "partial": false,
+      "commit": "f7fe0c03e718bef1deb6c6f8beb2b3af84e39e55",
+      "blobs": 21,
+      "bytes": 256071,
+      "code_files": 0,
+      "code_bytes": 0,
+      "markdown_files": 15,
+      "derived_markdown_files": 2,
+      "source_files": 0,
+      "test_files": 0,
+      "excluded_files": 0,
+      "by_language": {}
+    },
+    {
+      "repo": "acorsica/privai",
+      "period": "2026-10",
+      "status": "ok",
+      "partial": true,
+      "commit": "f7fe0c03e718bef1deb6c6f8beb2b3af84e39e55",
+      "blobs": 21,
+      "bytes": 256071,
+      "code_files": 0,
+      "code_bytes": 0,
+      "markdown_files": 15,
+      "derived_markdown_files": 2,
+      "source_files": 0,
+      "test_files": 0,
+      "excluded_files": 0,
+      "by_language": {}
+    },
+    {
+      "repo": "acorsica/Kudos",
+      "period": "2025-10",
+      "status": "ok",
+      "partial": false,
+      "commit": "3f70590326b9802a7311642713064c8db39ad032",
+      "blobs": 21,
+      "bytes": 97906,
+      "code_files": 0,
+      "code_bytes": 0,
+      "markdown_files": 19,
+      "derived_markdown_files": 1,
+      "source_files": 0,
+      "test_files": 0,
+      "excluded_files": 0,
+      "by_language": {}
+    },
+    {
+      "repo": "acorsica/Kudos",
+      "period": "2025-11",
+      "status": "ok",
+      "partial": false,
+      "commit": "3f70590326b9802a7311642713064c8db39ad032",
+      "blobs": 21,
+      "bytes": 97906,
+      "code_files": 0,
+      "code_bytes": 0,
+      "markdown_files": 19,
+      "derived_markdown_files": 1,
+      "source_files": 0,
+      "test_files": 0,
+      "excluded_files": 0,
+      "by_language": {}
+    },
+    {
+      "repo": "acorsica/Kudos",
+      "period": "2025-12",
+      "status": "ok",
+      "partial": false,
+      "commit": "3f70590326b9802a7311642713064c8db39ad032",
+      "blobs": 21,
+      "bytes": 97906,
+      "code_files": 0,
+      "code_bytes": 0,
+      "markdown_files": 19,
+      "derived_markdown_files": 1,
+      "source_files": 0,
+      "test_files": 0,
+      "excluded_files": 0,
+      "by_language": {}
+    },
+    {
+      "repo": "acorsica/Kudos",
+      "period": "2026-01",
+      "status": "ok",
+      "partial": false,
+      "commit": "3f70590326b9802a7311642713064c8db39ad032",
+      "blobs": 21,
+      "bytes": 97906,
+      "code_files": 0,
+      "code_bytes": 0,
+      "markdown_files": 19,
+      "derived_markdown_files": 1,
+      "source_files": 0,
+      "test_files": 0,
+      "excluded_files": 0,
+      "by_language": {}
+    },
+    {
+      "repo": "acorsica/Kudos",
+      "period": "2026-02",
+      "status": "ok",
+      "partial": false,
+      "commit": "3f70590326b9802a7311642713064c8db39ad032",
+      "blobs": 21,
+      "bytes": 97906,
+      "code_files": 0,
+      "code_bytes": 0,
+      "markdown_files": 19,
+      "derived_markdown_files": 1,
+      "source_files": 0,
+      "test_files": 0,
+      "excluded_files": 0,
+      "by_language": {}
+    },
+    {
+      "repo": "acorsica/Kudos",
+      "period": "2026-03",
+      "status": "ok",
+      "partial": false,
+      "commit": "3f70590326b9802a7311642713064c8db39ad032",
+      "blobs": 21,
+      "bytes": 97906,
+      "code_files": 0,
+      "code_bytes": 0,
+      "markdown_files": 19,
+      "derived_markdown_files": 1,
+      "source_files": 0,
+      "test_files": 0,
+      "excluded_files": 0,
+      "by_language": {}
+    },
+    {
+      "repo": "acorsica/Kudos",
+      "period": "2026-04",
+      "status": "ok",
+      "partial": false,
+      "commit": "3f70590326b9802a7311642713064c8db39ad032",
+      "blobs": 21,
+      "bytes": 97906,
+      "code_files": 0,
+      "code_bytes": 0,
+      "markdown_files": 19,
+      "derived_markdown_files": 1,
+      "source_files": 0,
+      "test_files": 0,
+      "excluded_files": 0,
+      "by_language": {}
+    },
+    {
+      "repo": "acorsica/Kudos",
+      "period": "2026-05",
+      "status": "ok",
+      "partial": false,
+      "commit": "3f70590326b9802a7311642713064c8db39ad032",
+      "blobs": 21,
+      "bytes": 97906,
+      "code_files": 0,
+      "code_bytes": 0,
+      "markdown_files": 19,
+      "derived_markdown_files": 1,
+      "source_files": 0,
+      "test_files": 0,
+      "excluded_files": 0,
+      "by_language": {}
+    },
+    {
+      "repo": "acorsica/Kudos",
+      "period": "2026-06",
+      "status": "ok",
+      "partial": false,
+      "commit": "a2a8db8649b7ed6d265c4e74219e60430563c38e",
+      "blobs": 26,
+      "bytes": 145585,
+      "code_files": 0,
+      "code_bytes": 0,
+      "markdown_files": 22,
+      "derived_markdown_files": 3,
+      "source_files": 0,
+      "test_files": 0,
+      "excluded_files": 0,
+      "by_language": {}
+    },
+    {
+      "repo": "acorsica/Kudos",
+      "period": "2026-07",
+      "status": "ok",
+      "partial": false,
+      "commit": "05e4958cccde559b0edcedd84c7206515d7610cd",
+      "blobs": 26,
+      "bytes": 147944,
+      "code_files": 0,
+      "code_bytes": 0,
+      "markdown_files": 22,
+      "derived_markdown_files": 3,
+      "source_files": 0,
+      "test_files": 0,
+      "excluded_files": 0,
+      "by_language": {}
+    },
+    {
+      "repo": "acorsica/Kudos",
+      "period": "2026-08",
+      "status": "ok",
+      "partial": false,
+      "commit": "e3e0109160ea366032cb0a07f193789e42437c84",
+      "blobs": 29,
+      "bytes": 240584,
+      "code_files": 0,
+      "code_bytes": 0,
+      "markdown_files": 23,
+      "derived_markdown_files": 3,
+      "source_files": 0,
+      "test_files": 0,
+      "excluded_files": 0,
+      "by_language": {}
+    },
+    {
+      "repo": "acorsica/Kudos",
+      "period": "2026-09",
+      "status": "ok",
+      "partial": false,
+      "commit": "96ed34ce898c730a969d578f72a6e06b2c9b9fa3",
+      "blobs": 29,
+      "bytes": 294875,
+      "code_files": 0,
+      "code_bytes": 0,
+      "markdown_files": 23,
+      "derived_markdown_files": 3,
+      "source_files": 0,
+      "test_files": 0,
+      "excluded_files": 0,
+      "by_language": {}
+    },
+    {
+      "repo": "acorsica/Kudos",
+      "period": "2026-10",
+      "status": "ok",
+      "partial": true,
+      "commit": "96ed34ce898c730a969d578f72a6e06b2c9b9fa3",
+      "blobs": 29,
+      "bytes": 294875,
+      "code_files": 0,
+      "code_bytes": 0,
+      "markdown_files": 23,
+      "derived_markdown_files": 3,
+      "source_files": 0,
+      "test_files": 0,
+      "excluded_files": 0,
+      "by_language": {}
+    }
+  ],
+  "limitations": [
+    "Git tree snapshot, not churn",
+    "code extension filter",
+    "generated/path exclusions heuristic",
+    "no LOC/SLOC yet",
+    "no private-repository metrics exported"
+  ]
+}
