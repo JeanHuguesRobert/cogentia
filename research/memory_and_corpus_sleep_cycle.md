@@ -204,6 +204,12 @@ Cooling also changes the **effort of effective access**, beyond salience: a hot 
 
 ---
 
+### Reheating requires present-time validation
+
+Restoring old bytes or discovering a cold trace is not enough to make it currently actionable. Preserve the trace's original date, provenance and historical assertion, then qualify its **present** epistemic status, relevant supersession and current policy/mandate for the requested use. Possible outcomes include `current`, `historical-only`, `superseded`, `contradicted`, `uncertain` and `inaccessible`. Record the verification timestamp and evidence; do not overwrite history or confuse a cached grant with fresh authorization. Verification is part of reactivation cost, scaled to the consequences of reliance. See [FractaCache revalidation](locality_principle.md#revalidation-on-reactivation-historical-truth-is-not-current-validity).
+
+---
+
 ## 4. Ephemeral memory is not a defect
 
 Some memory should be ephemeral:
