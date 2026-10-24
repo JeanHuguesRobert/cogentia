@@ -94,8 +94,8 @@ export function validateManifest(manifest) {
   } else {
     const requiredBools = ['book', 'magazine', 'site'];
     for (const key of requiredBools) {
-      if (manifest.editorial[key] === undefined) {
-        errors.push(`Missing "editorial.${key}" flag`);
+      if (typeof manifest.editorial[key] !== 'boolean') {
+        errors.push(`Missing or invalid "editorial.${key}" boolean flag`);
       }
     }
     if (manifest.editorial.janus === true) {
