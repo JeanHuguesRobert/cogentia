@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "scope": "fixed set of 18 public repositories for quantitative comparison, including historically established repositories regardless of age; non-exhaustive; known other historical repositories are recorded separately",
+  "scope": "fixed set of 22 public repositories for quantitative comparison, including historically established repositories regardless of age; non-exhaustive; known other historical repositories are recorded separately",
   "repositories": [
     {
       "name": "JeanHuguesRobert/inseme",
@@ -65,7 +65,18 @@
       "visibility": "public",
       "repository_created_at": "2025-10-20T05:54:43Z",
       "repository_metadata_url": "https://api.github.com/repos/JeanHuguesRobert/survey",
-      "metadata_verified_on": "2026-10-24"
+      "metadata_verified_on": "2026-10-24",
+      "historical_origin": {
+        "repository": "virteal/kudocracy",
+        "path": "kudocracy",
+        "created_at": "2014-04-20T13:25:47Z",
+        "metadata_url": "https://api.github.com/repos/virteal/kudocracy",
+        "branch": "master",
+        "verified_commit": "efec8539a0f696009b182b84240bc2bd0db6408b",
+        "verified_commit_url": "https://github.com/virteal/kudocracy/commit/efec8539a0f696009b182b84240bc2bd0db6408b",
+        "verified_on": "2026-10-24",
+        "relationship": "confirmed_historical_predecessor_by_repository_owner"
+      }
     },
     {
       "name": "JeanHuguesRobert/ubikia",
@@ -162,22 +173,56 @@
       "repository_created_at": "2012-10-23T13:11:20Z",
       "repository_metadata_url": "https://api.github.com/repos/virteal/l8",
       "metadata_verified_on": "2026-10-24"
-    }
-  ],
-  "historical_repositories_outside_fixed_scope": [
+    },
     {
       "name": "virteal/side",
+      "path": "side",
+      "visibility": "public",
       "repository_created_at": "2016-09-24T09:29:22Z",
       "repository_metadata_url": "https://api.github.com/repos/virteal/side",
-      "default_branch": "master",
-      "baseline_cutoff": "2022-10-24T17:40:04Z",
-      "baseline_mainline_commit": "baba18c44c3affa9ab3d777bf17707ca3eb30113",
-      "baseline_commit_date": "2016-10-07T16:27:16Z",
-      "baseline_commit_url": "https://github.com/virteal/side/commit/baba18c44c3affa9ab3d777bf17707ca3eb30113",
-      "current_master_tip": "7e405a56288f7d7f55584997c8b5d883e7402322",
-      "current_tip_first_parent_is_baseline_commit": true,
-      "verified_on": "2026-10-24",
-      "included_in_fixed_17": false
+      "metadata_verified_on": "2026-10-24"
+    },
+    {
+      "name": "virteal/SimpliWiki",
+      "path": "SimpliWiki",
+      "visibility": "public",
+      "repository_created_at": "2010-03-24T16:41:42Z",
+      "repository_metadata_url": "https://api.github.com/repos/virteal/SimpliWiki",
+      "metadata_verified_on": "2026-10-24",
+      "historical_origin": {
+        "repository": "JeanHuguesRobert/simpli",
+        "path": "simpli-engine",
+        "created_at": "2011-01-21T08:43:54Z",
+        "metadata_url": "https://api.github.com/repos/JeanHuguesRobert/simpli",
+        "branch": "master",
+        "first_mainline_commit": "566a1b3ffb7ad65154b2ad68473b2db1934ab861",
+        "first_mainline_commit_url": "https://github.com/JeanHuguesRobert/simpli/commit/566a1b3ffb7ad65154b2ad68473b2db1934ab861",
+        "handoff_at": "2026-07-04T13:58:13Z",
+        "handoff_basis": "first first-parent commit in virteal/SimpliWiki current history; README identifies JeanHuguesRobert/simpli as the engine powering it",
+        "verified_on": "2026-10-24",
+        "handoff_commit": "3db131e78d1ba8551dea712e95d211a53289cb4a",
+        "handoff_commit_url": "https://github.com/virteal/SimpliWiki/commit/3db131e78d1ba8551dea712e95d211a53289cb4a",
+        "relationship": "current README states JeanHuguesRobert/simpli is the SimpliWiki engine",
+        "verified_commit": "50e88a49a475b42e46d25b13dab20931139d5cea",
+        "verified_commit_url": "https://github.com/JeanHuguesRobert/simpli/commit/50e88a49a475b42e46d25b13dab20931139d5cea"
+      }
+    },
+    {
+      "name": "virteal/water",
+      "path": "water",
+      "visibility": "public",
+      "repository_created_at": "2014-04-22T10:57:04Z",
+      "repository_metadata_url": "https://api.github.com/repos/virteal/water",
+      "metadata_verified_on": "2026-10-24"
+    },
+    {
+      "name": "virteal/boxon",
+      "path": "boxon",
+      "visibility": "public",
+      "repository_created_at": "2014-04-22T10:47:03Z",
+      "repository_metadata_url": "https://api.github.com/repos/virteal/boxon",
+      "metadata_verified_on": "2026-10-24"
     }
-  ]
+  ],
+  "historical_repositories_outside_fixed_scope": []
 }

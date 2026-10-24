@@ -68,7 +68,8 @@ def snapshot(repo, ref, cutoff):
     if not commit:
         return None
     metrics = tree_metrics(repo, commit)
-    return {"commit": commit, **{key: metrics[key] for key in SIZE_FIELDS}}
+    return {"commit": commit, "source_repository": None, "branch": ref.rsplit("/", 1)[-1],
+            "ref": ref, **{key: metrics[key] for key in SIZE_FIELDS}}
 
 
 def sum_snapshots(rows, date_key):
@@ -93,7 +94,7 @@ def compare_totals(baseline, current):
 def write_csv(path, rows, date_keys):
     fields = ["repo", "repository_created_at", "effective_created_at",
               "historical_origin_repository", "status", "branch", "ref",
-              "snapshot_at", "snapshot_status", "commit"]
+              "snapshot_at", "snapshot_status", "source_repository", "source_branch", "source_ref", "commit"]
     fields += list(SIZE_FIELDS)
     with pathlib.Path(path).open("w", newline="") as stream:
         writer = csv.DictWriter(stream, fieldnames=fields, lineterminator="\n")
@@ -110,6 +111,9 @@ def write_csv(path, rows, date_keys):
                         "snapshot_at": key,
                         "snapshot_status": row.get("snapshot_statuses", {}).get(
                             key, "ok" if snap else "creation_date_unverified"),
+                        "source_repository": snap.get("source_repository") if snap else None,
+                        "source_branch": snap.get("branch") if snap else None,
+                        "source_ref": snap.get("ref") if snap else None,
                         "commit": snap.get("commit") if snap else None}
                 flat.update({field: snap.get(field) if snap else None for field in SIZE_FIELDS})
                 writer.writerow(flat)
@@ -147,16 +151,33 @@ def main():
             "effective_created_at": created.isoformat(timespec="seconds") if created else None,
             "historical_origin": item.get("historical_origin"),
         }
-        if not (repo / ".git").exists():
+        origin = item.get("historical_origin") or {}
+        origin_path = origin.get("path")
+        origin_repo = root / origin_path if origin_path else None
+        has_origin = bool(origin_repo and (origin_repo / ".git").exists())
+        if not (repo / ".git").exists() and not has_origin:
             rows.append({"repo": name, **creation_fields, "status": "missing_checkout"})
             continue
         try:
-            ref = mainline_ref(repo)
-            if ref is None:
+            ref = mainline_ref(repo) if (repo / ".git").exists() else None
+            if ref is None and not has_origin:
                 rows.append({"repo": name, **creation_fields, "status": "missing_mainline_branch"})
                 continue
-            snapshots = {key: snapshot(repo, ref, cutoff)
-                         for key, cutoff in zip(date_keys, args.snapshots)}
+            origin_ref = "refs/remotes/origin/" + origin.get("branch", "master")
+            snapshots = {}
+            handoff_value = origin.get("handoff_at") or item.get("repository_created_at")
+            origin_handoff = (dt.datetime.fromisoformat(handoff_value.replace("Z", "+00:00"))
+                               .astimezone(dt.timezone.utc) if handoff_value else None)
+            for key, cutoff in zip(date_keys, args.snapshots):
+                snap = snapshot(repo, ref, cutoff) if ref else None
+                if snap:
+                    snap["source_repository"] = name
+                elif (origin_handoff and cutoff < origin_handoff and origin_repo
+                      and (origin_repo / ".git").exists()):
+                    snap = snapshot(origin_repo, origin_ref, cutoff)
+                    if snap:
+                        snap["source_repository"] = origin["repository"]
+                snapshots[key] = snap
         except (OSError, subprocess.CalledProcessError, ValueError) as exc:
             reason = (exc.stderr.decode(errors="replace") if isinstance(exc, subprocess.CalledProcessError)
                       else str(exc))
@@ -165,7 +186,7 @@ def main():
         statuses = {key: snapshot_status(item, cutoff, snapshots[key])
                     for key, cutoff in zip(date_keys, args.snapshots)}
         rows.append({"repo": name, **creation_fields, "status": "ok",
-                     "branch": ref.rsplit("/", 1)[-1], "ref": ref,
+                     "branch": ref.rsplit("/", 1)[-1] if ref else None, "ref": ref,
                      "snapshots": snapshots, "snapshot_statuses": statuses})
 
     valid_rows = [row for row in rows if row["status"] == "ok"]
@@ -216,7 +237,7 @@ def main():
         "generated_at": dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds"),
         "snapshots": date_keys,
         "registry_sha256": hashlib.sha256(registry_bytes).hexdigest(),
-        "branch_policy": "main/master only; origin/HEAD when it resolves to main/master, otherwise origin/main, origin/master, local main, local master; first-parent snapshots; never use HEAD or side branches",
+        "branch_policy": "main/master only; origin/HEAD when it resolves to main/master, otherwise origin/main, origin/master, local main, local master; historical_origin main/master supplies the lineage slot only before its recorded handoff date (or current repository creation date) and when no current snapshot exists; first-parent snapshots; never use HEAD or side branches",
         "source": "existing local Git clones; no fetch performed",
         "creation_metadata_basis": "repository_created_at from GitHub REST repository metadata; verified historical_origin used when recorded; source URLs and verification dates are in each registry entry",
         "commit_metadata_verification": "selected commit SHAs and Git timestamps checked through GitHub commit metadata on 2026-10-24",

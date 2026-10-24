@@ -191,35 +191,50 @@ def main():
                              "status": "excluded", "reason": "privacy_or_scope"})
             continue
         repo = pathlib.Path(args.root).expanduser() / item["path"]
-        if not (repo / ".git").exists():
+        origin = item.get("historical_origin") or {}
+        origin_repo = pathlib.Path(args.root).expanduser() / origin["path"] if origin.get("path") else None
+        has_origin = bool(origin_repo and (origin_repo / ".git").exists())
+        if not (repo / ".git").exists() and not has_origin:
             for _, period in periods:
                 rows.append({"repo": name, **creation_fields, "period": period,
                              "status": "missing", "reason": "local_checkout_absent"})
             continue
-        ref = mainline_ref(repo)
-        if ref is None:
+        ref = mainline_ref(repo) if (repo / ".git").exists() else None
+        origin_ref = "refs/remotes/origin/" + origin.get("branch", "master")
+        if ref is None and not has_origin:
             for _, period in periods:
                 rows.append({"repo": name, **creation_fields, "period": period,
                              "status": "missing_mainline_branch",
                              "reason": "main_or_master_ref_absent"})
             continue
-        branch = ref.rsplit("/", 1)[-1]
+        branch = ref.rsplit("/", 1)[-1] if ref else None
+        handoff_value = origin.get("handoff_at") or item.get("repository_created_at")
+        origin_handoff = (dt.datetime.fromisoformat(handoff_value.replace("Z", "+00:00"))
+                          if handoff_value else None)
         for until, period in periods:
             cutoff = min(dt.datetime.strptime(until, "%Y-%m-%dT%H:%M:%SZ").replace(tzinfo=dt.timezone.utc), now)
             partial = cutoff < dt.datetime.strptime(until, "%Y-%m-%dT%H:%M:%SZ").replace(tzinfo=dt.timezone.utc)
             try:
-                head = git(repo, "rev-list", "--first-parent", "-1",
-                           "--before=" + cutoff.strftime("%Y-%m-%dT%H:%M:%SZ"),
-                           ref).decode().strip()
+                source_repo, source_ref = repo, ref
+                head = (git(source_repo, "rev-list", "--first-parent", "-1",
+                            "--before=" + cutoff.strftime("%Y-%m-%dT%H:%M:%SZ"),
+                            source_ref).decode().strip() if source_ref else "")
+                if not head and has_origin and origin_handoff and cutoff < origin_handoff:
+                    source_repo, source_ref = origin_repo, origin_ref
+                    head = git(source_repo, "rev-list", "--first-parent", "-1",
+                               "--before=" + cutoff.strftime("%Y-%m-%dT%H:%M:%SZ"),
+                               source_ref).decode().strip()
                 if not head:
                     status = "not_yet_created" if created and cutoff < created else "no_mainline_commit_by_cutoff"
                     rows.append({"repo": name, **creation_fields, "period": period,
                                  "status": status,
                                  "partial": partial, "branch": branch, "ref": ref})
                     continue
-                metrics = tree_metrics(repo, head)
+                metrics = tree_metrics(source_repo, head)
+                source_name = name if source_repo == repo else origin["repository"]
                 rows.append({"repo": name, **creation_fields, "period": period, "status": "ok",
-                             "partial": partial, "branch": branch, "ref": ref,
+                             "partial": partial, "branch": source_ref.rsplit("/", 1)[-1], "ref": source_ref,
+                             "source_repository": source_name,
                              "commit": head, **metrics})
             except (subprocess.CalledProcessError, ValueError) as e:
                 reason = (e.stderr.decode(errors="replace") if isinstance(e, subprocess.CalledProcessError)
@@ -239,7 +254,7 @@ def main():
         "coverage": "partial_unless_registry_exhaustive", "metrics": rows,
         "historical_repositories_outside_fixed_scope": registry.get(
             "historical_repositories_outside_fixed_scope", []),
-        "branch_policy": "origin/HEAD when it resolves to main/master; otherwise origin/main, origin/master, local main, local master; snapshots use first-parent commits only",
+        "branch_policy": "origin/HEAD when it resolves to main/master; otherwise origin/main, origin/master, local main, local master; documented historical_origin supplies the lineage slot only before its recorded handoff date (or current repository creation date) and when no current snapshot is available; snapshots use first-parent commits only",
         "source": "existing local Git clones; no fetch performed",
         "creation_metadata_basis": "repository_created_at from GitHub REST repository metadata; verified historical_origin used when recorded; source URLs and verification dates are in research/corpus-velocity-registry.json",
         "filters": {
@@ -257,7 +272,7 @@ def main():
                         "snapshot selection uses Git commit timestamps, not independent archival timestamps",
                         "no private-repository metrics exported"]}, indent=2) + "\n")
     fields = ["repo", "repository_created_at", "effective_created_at",
-              "historical_origin_repository", "period", "status", "branch", "ref", "commit", "blobs", "bytes",
+              "historical_origin_repository", "period", "status", "branch", "ref", "source_repository", "commit", "blobs", "bytes",
               "code_files", "code_bytes", "code_physical_lines", "code_nonblank_lines",
               "document_files", "document_bytes", "text_document_files",
               "text_document_physical_lines", "text_document_nonblank_lines",

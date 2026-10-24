@@ -5,7 +5,7 @@ description: "Document source souverain établissant la genèse historique, l'an
 author: "Jean Hugues Noël Robert, baron Mariani"
 affiliation: "Institut Mariani / C.O.R.S.I.C.A., 1 cours Paoli, F-20250 Corte, Corsica"
 date: "2026-09-04"
-last_modified_at: "2026-09-09"
+last_modified_at: "2026-10-24"
 license: "CC BY-SA 4.0"
 language: "fr"
 version: "0.1"
@@ -443,6 +443,8 @@ La FractaCognition gouverne donc la transmissibilité proportionnée de l'appren
 ### 4. La hiérarchie fractale des caches et la localité
 
 Cette logique fractacognitive s'incarne directement dans la gestion de la mémoire et des caches du système, gouvernée par le principe de localité :
+
+Le motif de [`side.js`](https://github.com/virteal/side) rend visible un principe central : la RAM, SQLite et les stores plus persistants sont des **niveaux de cache**, différenciés par leur proximité, leur coût, leur durée de vie et leur portée. Cette lecture ne rend pas leurs propriétés interchangeables : elle évite de confondre un support de stockage avec la source de vérité du travail, de ses traces et de ses effets.
 
 1. **Micro-localité (L0 — La RAM du processus hôte) :**
    Matérialisée par [`side.js`](https://github.com/JeanHuguesRobert/side), créé en **septembre 2016**. À l'intérieur d'une machine virtuelle JavaScript banale, un calcul interrompu par une promesse asynchrone non résolue ne bloque pas la machine : il lève une exception rattrapable, met en cache les résultats intermédiaires dans des *slots* de mémoire vive, et rejoue instantanément le code depuis le début dès que la ressource est prête, tandis que les effets de bord d'écriture (*delayed writes*) sont strictement différés jusqu'au succès complet. Le temps de résolution se compte en microsecondes. Cette technique, conçue il y a dix ans pour le serverless, constitue le patron matriciel de la suspension/reprise sans état bloqué.
