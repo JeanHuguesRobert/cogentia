@@ -72,6 +72,13 @@ try {
   const v3 = validateManifest(invalidId);
   assert.ok(!v3.valid, 'Invalid ID pattern should fail');
 
+  // Reject YAML/string truthiness masquerading as an editorial boolean.
+  const invalidEditorialFlag = JSON.parse(JSON.stringify(validManifest));
+  invalidEditorialFlag.editorial.book = 'false';
+  const invalidEditorialResult = validateManifest(invalidEditorialFlag);
+  assert.equal(invalidEditorialResult.valid, false, 'Editorial flags must be booleans');
+  assert.ok(invalidEditorialResult.errors.some(e => e.includes('editorial.book')));
+
   // Missing institution.publisher
   const missingPub = JSON.parse(JSON.stringify(validManifest));
   delete missingPub.institution.publisher;
