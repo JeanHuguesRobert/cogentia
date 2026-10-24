@@ -9,7 +9,7 @@ author: unknown
 affiliation: "Institut Mariani / C.O.R.S.I.C.A."
 ai_assisted_by:
   - "ChatGPT GPT-6 (drafting and research synthesis)"
-last_modified_at: "2026-10-23"
+last_modified_at: "2026-10-24"
 license: "CC BY-SA 4.0"
 document_role: source
 document_kind: "research-note"
@@ -97,9 +97,11 @@ These are proposed **moves** for exploration and composition, not a new normativ
 | **FractaRouting** | Recursive, capability-aware routing; optionally nested envelopes; routing itself can be packetized | **name adopted by Principal, 2026-10-08; normative specification pending** | [COP envelope](https://github.com/JeanHuguesRobert/inseme/blob/main/research/cop_zero_draft.md), [packet attractors](https://github.com/JeanHuguesRobert/inseme/blob/main/research/packet_attractor_fractanet.md) |
 | **FractaJudgement** | Composable, attributable human/AI judgement at semantic, normative and contextual boundaries | **candidate concept, not yet adopted as normative** | [Judgment boundaries](./portable_continuations_and_judgment_boundaries.md), [Intent](./intent.md) |
 
+| **FractaCache** | Situated, governed, reversible materialization of bounded data, memory projections and continuity state near an activity, under Minimum Sufficient Locality | **candidate concept, non-normative; no separate component established** | [Locality Principle — FractaCache](./locality_principle.md#121-fractacache--situated-materialization-candidate) |
+
 ### Proposed names — not projects or established concepts
 
-FractaCompute (compute-placement), FractaStore (durable storage), FractaTrust (trust and delegation), FractaMemory (memory projections), FractaFlow (composition). These are hypotheses; first determine whether COP/Operium/Cogentia already name and implement the exact responsibility. Avoid duplicating FractaCalendar with a proposed FractaTime.
+FractaCompute (compute-placement), FractaStore (durable storage), FractaTrust (trust and delegation), FractaMemory (memory projections), FractaFlow (composition). FractaCache is listed above as a candidate because its locality-governed materialization responsibility is distinguishable from memory itself, but no independent runtime, protocol, or novelty claim is implied. These are hypotheses; first determine whether COP/Operium/Cogentia already name and implement the exact responsibility. Avoid duplicating FractaCalendar with a proposed FractaTime.
 
 ## Composition grammar — reuse before extending
 
