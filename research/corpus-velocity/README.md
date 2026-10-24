@@ -1,10 +1,11 @@
-# Corpus velocity data
+# Code and document size data
 
 The dated directories contain reproducible snapshots for the public subset
 listed in [`../corpus-velocity-registry.json`](../corpus-velocity-registry.json).
-Each JSON manifest records its generation time, registry SHA-256, coverage,
-filters, period, and per-repository status. `not_created`, `missing`,
-`excluded`, and `error` are distinct outcomes; they must not be treated as zero.
+Each JSON manifest records its generation time, registry SHA-256, selected
+branch and commit, coverage, filters, period, and per-repository status.
+`not_created`, `missing`, `missing_mainline_branch`, `excluded`, and `error`
+are distinct outcomes; they must not be treated as zero.
 
 ## Git tree snapshots
 
@@ -18,38 +19,20 @@ python3 scripts/corpus_velocity.py \
   --out research/corpus-velocity/2026-10
 ```
 
-For each month, the script selects the latest commit reachable from the
-registry ref at that month's UTC cutoff, then counts its Git tree. The report
-stores the selected commit SHA. Commit counts are monthly deltas in the number
-of commits reachable before each UTC month end; Git's committer timestamps
-determine the month. The current month is marked partial until its end.
+For each repository, the script selects `origin/HEAD` only when it resolves to
+`main` or `master`; otherwise it tries `origin/main`, `origin/master`, local
+`main`, then local `master`. It never falls back to `HEAD` or another branch.
+For each month, it selects the latest first-parent commit on that branch at the
+UTC month cutoff, then counts that commit's Git tree. The report stores the
+branch, ref, and selected commit SHA. The current month is marked partial until
+its end. The script reads existing local clones and does not fetch them.
 
-The manifest publishes the exact code-extension set and path expressions.
-Physical and nonblank lines include comments and tests: these are line-count
-proxies, not language-aware SLOC. `test_files` is inferred from path names; it
-does not say whether tests ran or passed. Generated/vendor/test-fixture
-exclusions are path heuristics. Git tree sizes include every blob, while code
-counts apply the published filters.
-
-## GitHub activity
-
-Run the public API collector with an authenticated `gh` installation:
-
-```sh
-python3 scripts/corpus_velocity_github.py \
-  --registry research/corpus-velocity-registry.json \
-  --start 2025-10 --end 2026-10 \
-  --out research/corpus-velocity/2026-10
-```
-
-It paginates public Issues and Pulls API records. Issue/PR creation is grouped
-by `created_at`; merged PRs are grouped by `merged_at`, all in UTC. The API's
-`since` parameter filters on `updated_at`, which includes in-range creations.
-Merged PR count is only a count of accepted changes; it does not measure review
-quality, effort, CI status, or the contents/size of the change. Deleted or
-otherwise no-longer-retained records are absent.
-
-Neither report measures code authorship across repositories, copied or
-generated-code propagation, PR lead time, review workload, machine cost, or
-economic value. A repository-level change should not be summed as unique new
-code across the whole corpus without a separate duplicate/propagation audit.
+The manifest publishes the exact code/document extension sets and excluded
+path expression. It reports total Git tree blobs and bytes, plus code and
+document file counts and bytes. Markdown counts are a subset of document counts.
+Physical and nonblank code lines are included as literal line counts, not
+language-aware SLOC. Generated/vendor/test-fixture exclusions are path
+heuristics. Total tree size includes every blob; code and document counts apply
+the published path and extension filters. Aggregates sum each repository tree;
+the same copied file in two repositories is counted twice, so these figures
+are not deduplicated storage size.

@@ -29,15 +29,6 @@ class MonthEndTests(unittest.TestCase):
             ],
         )
 
-    def test_monthly_commit_counts_are_deltas_of_end_of_month_snapshots(self):
-        with patch.object(module, "git", side_effect=[b"false\n", b"5\n", b"8\n", b"14\n"]):
-            counts, history = module.monthly_commit_counts(
-                "/fake", "HEAD", list(module.month_ends("2025-10", "2025-11")))
-        self.assertEqual(counts, {"2025-10": 3, "2025-11": 6})
-        self.assertEqual(history, "complete")
-
-
-
 class TreeMetricsTests(unittest.TestCase):
     def test_padded_ls_tree_sizes_are_counted(self):
         # Git's --long format commonly contains two spaces before the size.
@@ -58,13 +49,13 @@ class TreeMetricsTests(unittest.TestCase):
         self.assertEqual(metrics["blobs"], 6)
         self.assertEqual(metrics["bytes"], 201)
         self.assertEqual(metrics["code_files"], 2)
-        self.assertEqual(metrics["source_files"], 2)
         self.assertEqual(metrics["code_bytes"], 132)
         self.assertEqual(metrics["code_physical_lines"], 4)
         self.assertEqual(metrics["code_nonblank_lines"], 3)
         self.assertEqual(metrics["markdown_files"], 2)
-        self.assertEqual(metrics["derived_markdown_files"], 1)
-        self.assertEqual(metrics["test_files"], 1)
+        self.assertEqual(metrics["markdown_bytes"], 51)
+        self.assertEqual(metrics["document_files"], 2)
+        self.assertEqual(metrics["document_bytes"], 51)
         self.assertEqual(metrics["excluded_files"], 2)
         self.assertEqual(metrics["by_language"]["Python"]["bytes"], 123)
         self.assertEqual(metrics["by_language"]["Python"]["physical_lines"], 3)
@@ -119,11 +110,11 @@ class CoverageTests(unittest.TestCase):
                     "--start", "2099-01", "--end", "2099-01"]
 
             def fake_git(_repo, *git_args, input=None):
-                if git_args[:2] == ("rev-parse", "--is-shallow-repository"):
-                    return b"false\n"
-                if git_args[0] == "rev-list" and "--count" in git_args:
-                    return b"1\n"
-                if git_args[0] == "rev-list" and "-1" in git_args:
+                if git_args[0] == "for-each-ref":
+                    return b"refs/remotes/origin/main\n"
+                if git_args[:2] == ("symbolic-ref", "refs/remotes/origin/HEAD"):
+                    return b"refs/remotes/origin/main\n"
+                if git_args[0] == "rev-list" and "--first-parent" in git_args:
                     return b"deadbeef\n"
                 if git_args[:2] == ("ls-tree", "-rz"):
                     return b""
