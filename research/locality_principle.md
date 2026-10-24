@@ -581,6 +581,25 @@ repeated situated use / verified reinforcement
 
 **Glacial** denotes very low-cost, low-activation preservation, potentially offline, for historical, evidentiary or posterity purposes. It is **not** a synonym for erased, obsolete, inaccessible or immutable: these are independent policy dimensions. The term complements the Corpus Sleep Cycle's existing Hot/Warm/Cold/Frozen/Obsolete/Forgettable taxonomy; **Frozen** denotes a preservation constraint, while **Glacial** describes an extreme temperature / placement condition. A legally frozen source can be hot in use; glacial material can be restored into a hot projection without altering source authority.
 
+### Temperature as access effort
+
+**The colder a memory materialization, the more work may be required to make it effectively accessible again.** Temperature therefore describes not only operational salience and likely reuse but an *access-effort profile*: discovery, authorization, retrieval, transfer, decoding, verification, reconstruction, contextualization and reintegration into a task. A hot item may already be in a process context; a glacial item may require locating an offline archive, restoring its representation, checking provenance and rebuilding an admissible local projection.
+
+This is an **engineering ordering and policy target**, not a physical law or a guarantee of monotonic elapsed time. A cold indexed item may be cheaper to retrieve than a corrupted hot item; expensive access may arise from security, distance or missing capabilities independently of temperature. Nor may cooling make required evidence effectively irretrievable.
+
+~~~text
+access_effort(item, task, locality, policy)
+  = discovery + retrieval + restoration + verification + contextualization
+    + required authorization / handling costs
+
+cooling → lower expected maintenance and attention cost
+        + generally higher on-demand activation effort
+warming → pay justified activation cost
+        + restore a task-sufficient accessible projection
+~~~
+
+The relevant objective is **minimize total lifecycle cost subject to recoverability, required access guarantees and locality/authority constraints**. Reinforcement can reheat a glacial trace when warranted; cooling must retain a discoverable recovery path whenever preservation is required. Access effort may include latency, compute, energy, network transfer, human attention and external/archive-handling costs; these dimensions should be measured separately rather than hidden inside a single scalar.
+
 Evaporation MAY lower salience or evict reconstructible projections. It MUST NOT silently expire a mandate, delete a sovereign source, erase a causal trace required for COP recovery, or defeat explicit legal/evidentiary retention rules. Conversely, retention MUST NOT force permanent active context. Governed forgetting or erasure is a distinct authorized lifecycle act.
 
 Reality Test candidate: let multiple agents reinforce and neglect the same situated traces; verify that obsolete attractors cease dominating routing, retained glacial evidence remains recoverable, authorized reheating reconstructs usable local projections, and eviction never destroys unrecoverable authoritative information. Compare costs and false recalls against a non-evaporating baseline.
