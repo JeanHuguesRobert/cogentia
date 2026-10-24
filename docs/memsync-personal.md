@@ -147,7 +147,10 @@ Next: restore browser-tool access; verify anonymous navigation, exact clipboard
 payload, two synthetic observations, local download and purge after reload,
 keyboard use and a narrow mobile viewport. Record actual PASS/FAIL/BLOCKED before
 closing. Deployment/public endpoint checks require their own authority. Commit,
-push and Issue publication remain separate gated effects. Changes are local and
-uncommitted at this checkpoint; a cold handler must receive the working tree or
-a subsequently authorized Git checkpoint. No remote delivery is implied by the
-canonical document URL.
+push and Issue publication remain separate gated effects. The implementation was subsequently committed and pushed to main in
+[0460293](https://github.com/JeanHuguesRobert/cogentia/commit/0460293e876e8ae63ee834466582315d166e975e)
+(16 files); code delivery is verified, but visual/browser/mobile clipboard and
+anonymous real-user acceptance remain unverified. The GitHub Pages deployment
+check at that commit reported success, but it does not by itself prove that the
+Cogentia Personal app is hosted or working at its intended public URL. No
+production live-user acceptance is claimed.
