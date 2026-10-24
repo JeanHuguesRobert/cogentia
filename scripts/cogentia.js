@@ -11,6 +11,8 @@
  */
 
 import fs from "node:fs";
+import { executeTrustedAnalysis, magistralTokenFromService, fetchPilotPacket } from "./lib/trusted-handler-analysis.js";
+import { prepareExternalResume, discoverMagistralResume, projectResumeRouting, planGovernedResume, assessReadOnlyDelegation, planTrustedHandlerResume } from "./lib/resume-prepare.js";
 import http from "node:http";
 import os from "node:os";
 import path from "node:path";
@@ -5899,12 +5901,43 @@ function daemonCliSkillsGet(url) {
  * Execution belongs to a capability-specific COP handler after authorization;
  * GitHub Issue comments and a successful audit are not execution receipts.
  */
-function cmdResumeExternalIssue() {
+async function cmdResumeExternalIssue() {
+  const prepare = takeFlag("--prepare");
+  const handlersFile = valueFlag("--handlers-file");
+  const magistral = takeFlag("--magistral");
+  const readOnly = takeFlag("--read-only");
+  const runAnalysis = takeFlag("--run-analysis");
+  if(runAnalysis && (prepare || readOnly || handlersFile)) throw new Error("--run-analysis excludes prepare, read-only and handlers-file");
+  if (readOnly && !magistral) throw new Error("--read-only requires --magistral");
+  if (magistral && (!prepare && !readOnly || handlersFile)) throw new Error("--magistral requires --prepare and excludes --handlers-file");
+  if (handlersFile && !prepare) throw new Error("--handlers-file requires --prepare");
   if (hasFlag("--execute") || hasFlag("--apply") || hasFlag("--dispatch")) {
     throw new Error("cogentia resume: no authorized execution adapter is wired; refusing effectful dispatch");
   }
   const target = readResumableIssueTarget("resume <https://github.com/owner/repo/issues/N> [--json] [--root <dir>]");
   const { issue, root } = target;
+  if(runAnalysis) {
+    if(issue.url !== "https://github.com/JeanHuguesRobert/inseme/issues/120") throw new Error("pilot is limited to Inseme #120");
+    const discovered=await discoverMagistralResume();
+    if(discovered.status!=="WAITING_HANDLER_PROBE") throw new Error("Magistral handler not discovered");
+    const token=magistralTokenFromService();
+    const packet=await fetchPilotPacket();
+    const prompt="Analyze the following actual Cognitive Packet as a trusted local advisor. "+
+      "Identify its real goal and acceptance criteria, distinguish evidence from assumptions, "+
+      "and recommend the smallest executable next step. "+
+      "No external mutations are authorized by this pilot. "+
+      "Do not claim repository files or comments were read unless actually supplied.\\n"+
+      "PACKET URL: "+issue.url+"\\nUPDATED: "+packet.updated_at+
+      "\\nTITLE: "+packet.title+"\\nISSUE BODY:\\n"+packet.body;
+    const receipt=await executeTrustedAnalysis({issue,prompt,token});
+    output({schema:"cogentia.external-resume/v1",phase:"ANALYSIS",status:receipt.receipt.status,
+      receipt_path:receipt.receipt_path,receipt:receipt.receipt},
+      "Handler analysis: "+receipt.receipt.status+"\\nReceipt: "+receipt.receipt_path+"\\n"+
+      (receipt.receipt.answer||receipt.receipt.error||""));
+    if(receipt.receipt.status!=="PASS")process.exitCode=3;
+    return;
+  }
+
   const audit = auditResumableIssue(issue, {
     fileExists: root ? resumableAuditFileExists(root) : null,
   });
@@ -5931,10 +5964,12 @@ function cmdResumeExternalIssue() {
     expected_response: { format: "json", required: ["handler", "capability_truth", "mandate_basis", "execution_receipt_or_blocker"] },
   };
   const registry = tryLoadContext();
-  const emitted = registry?.configPath
+  const emitted = !prepare && !readOnly && registry?.configPath
     ? emitContinuation(registry, continuationRequest)
     : null;
-  const continuation = emitted
+  const continuation = (prepare || readOnly)
+    ? { emitted: false, persisted: false, status: "PREPARE_ONLY", required_capabilities: requiredCapabilities }
+    : emitted
     ? { emitted: true, persisted: true, created: emitted.created, id: emitted.continuation.id, path: emitted.path, required_capabilities: requiredCapabilities }
     : { emitted: true, persisted: false, status: "PORTABLE_ONLY", reason: "registry_unavailable", packet: {
         type: "continuation", protocol: CONTINUATION_PROTOCOL, status: "active",
@@ -5962,6 +5997,19 @@ function cmdResumeExternalIssue() {
     },
     execution_receipt: null,
   };
+  if (prepare || readOnly) {
+    const plan = magistral
+      ? { ...await discoverMagistralResume(), schema: "cogentia.external-resume-prepare/v1", phase: "PREPARE", issue: { repository: issue.repository, number: issue.number, url: issue.url }, required_capabilities: requiredCapabilities, execution_receipt: null, effects: { handler_spawned: false, command_executed: false, git_commit: false, github_mutation: false } }
+      : prepareExternalResume({ issue, handlersFile });
+    const preparedRouting = projectResumeRouting(plan, magistral ? "magistral" : handlersFile ? "manifest" : "none");
+    const governedPlan = planGovernedResume({ issue, discovery: plan });
+    const trustedPlan = magistral ? planTrustedHandlerResume({ issue, discovery: plan, trust: "trusted_local_handler", effect: "worktree_edit" }) : null;
+    const delegation = readOnly ? assessReadOnlyDelegation({ issue, discovery: plan, requested: true }) : null;
+    output({ ...result, phase: "PREPARE", preparation: plan, routing: preparedRouting, governed_plan: governedPlan, ...(trustedPlan ? {trusted_handler_plan: trustedPlan} : {}), ...(readOnly ? { read_only_delegation: delegation } : {}), status: readOnly ? delegation.status : plan.status },
+      `Cogentia resume PREPARE  ${issueRef}\nstate: ${plan.status}\nhandler: ${plan.selected_handler?.id || "none"}\nExecution: none — no mandate or dispatch\nContinuation: ${continuation.id || "portable only"}`);
+    process.exitCode = 3;
+    return;
+  }
   output(result, [
     `Cogentia resume  ${issue.repository}#${issue.number}`,
     `state: ${result.status}`,
