@@ -1,0 +1,1568 @@
+{
+  "generated_at": "2026-10-24T16:37:32+00:00",
+  "registry_sha256": "ceeabdc4e99ea62d311ddf470bbdc395c2f684a4abb17ea5341e12b59a48360d",
+  "schema_version": 1,
+  "period_start": "2025-10",
+  "period_end": "2026-10",
+  "record_count": 221,
+  "status_counts": {
+    "ok": 221
+  },
+  "coverage": "complete_for_registry",
+  "retrieval": "GitHub REST Issues API via gh; created_at grouped by UTC month",
+  "limitations": [
+    "counts use currently retained public Issues API records; deleted records are absent",
+    "since filters updated_at; all items created in-range are expected to be returned",
+    "counts measure creation only, not resolution, review effort, or quality"
+  ],
+  "failures": [],
+  "metrics": [
+    {
+      "repo": "JeanHuguesRobert/inseme",
+      "period": "2025-10",
+      "status": "ok",
+      "issues_created": 0,
+      "pull_requests_created": 0
+    },
+    {
+      "repo": "JeanHuguesRobert/inseme",
+      "period": "2025-11",
+      "status": "ok",
+      "issues_created": 0,
+      "pull_requests_created": 0
+    },
+    {
+      "repo": "JeanHuguesRobert/inseme",
+      "period": "2025-12",
+      "status": "ok",
+      "issues_created": 0,
+      "pull_requests_created": 0
+    },
+    {
+      "repo": "JeanHuguesRobert/inseme",
+      "period": "2026-01",
+      "status": "ok",
+      "issues_created": 0,
+      "pull_requests_created": 1
+    },
+    {
+      "repo": "JeanHuguesRobert/inseme",
+      "period": "2026-02",
+      "status": "ok",
+      "issues_created": 0,
+      "pull_requests_created": 0
+    },
+    {
+      "repo": "JeanHuguesRobert/inseme",
+      "period": "2026-03",
+      "status": "ok",
+      "issues_created": 0,
+      "pull_requests_created": 0
+    },
+    {
+      "repo": "JeanHuguesRobert/inseme",
+      "period": "2026-04",
+      "status": "ok",
+      "issues_created": 0,
+      "pull_requests_created": 0
+    },
+    {
+      "repo": "JeanHuguesRobert/inseme",
+      "period": "2026-05",
+      "status": "ok",
+      "issues_created": 3,
+      "pull_requests_created": 1
+    },
+    {
+      "repo": "JeanHuguesRobert/inseme",
+      "period": "2026-06",
+      "status": "ok",
+      "issues_created": 6,
+      "pull_requests_created": 0
+    },
+    {
+      "repo": "JeanHuguesRobert/inseme",
+      "period": "2026-07",
+      "status": "ok",
+      "issues_created": 16,
+      "pull_requests_created": 2
+    },
+    {
+      "repo": "JeanHuguesRobert/inseme",
+      "period": "2026-08",
+      "status": "ok",
+      "issues_created": 30,
+      "pull_requests_created": 0
+    },
+    {
+      "repo": "JeanHuguesRobert/inseme",
+      "period": "2026-09",
+      "status": "ok",
+      "issues_created": 51,
+      "pull_requests_created": 3
+    },
+    {
+      "repo": "JeanHuguesRobert/inseme",
+      "period": "2026-10",
+      "status": "ok",
+      "issues_created": 36,
+      "pull_requests_created": 29
+    },
+    {
+      "repo": "JeanHuguesRobert/cogentia",
+      "period": "2025-10",
+      "status": "ok",
+      "issues_created": 0,
+      "pull_requests_created": 0
+    },
+    {
+      "repo": "JeanHuguesRobert/cogentia",
+      "period": "2025-11",
+      "status": "ok",
+      "issues_created": 0,
+      "pull_requests_created": 0
+    },
+    {
+      "repo": "JeanHuguesRobert/cogentia",
+      "period": "2025-12",
+      "status": "ok",
+      "issues_created": 0,
+      "pull_requests_created": 0
+    },
+    {
+      "repo": "JeanHuguesRobert/cogentia",
+      "period": "2026-01",
+      "status": "ok",
+      "issues_created": 0,
+      "pull_requests_created": 0
+    },
+    {
+      "repo": "JeanHuguesRobert/cogentia",
+      "period": "2026-02",
+      "status": "ok",
+      "issues_created": 0,
+      "pull_requests_created": 0
+    },
+    {
+      "repo": "JeanHuguesRobert/cogentia",
+      "period": "2026-03",
+      "status": "ok",
+      "issues_created": 0,
+      "pull_requests_created": 2
+    },
+    {
+      "repo": "JeanHuguesRobert/cogentia",
+      "period": "2026-04",
+      "status": "ok",
+      "issues_created": 0,
+      "pull_requests_created": 3
+    },
+    {
+      "repo": "JeanHuguesRobert/cogentia",
+      "period": "2026-05",
+      "status": "ok",
+      "issues_created": 11,
+      "pull_requests_created": 1
+    },
+    {
+      "repo": "JeanHuguesRobert/cogentia",
+      "period": "2026-06",
+      "status": "ok",
+      "issues_created": 20,
+      "pull_requests_created": 2
+    },
+    {
+      "repo": "JeanHuguesRobert/cogentia",
+      "period": "2026-07",
+      "status": "ok",
+      "issues_created": 28,
+      "pull_requests_created": 9
+    },
+    {
+      "repo": "JeanHuguesRobert/cogentia",
+      "period": "2026-08",
+      "status": "ok",
+      "issues_created": 60,
+      "pull_requests_created": 5
+    },
+    {
+      "repo": "JeanHuguesRobert/cogentia",
+      "period": "2026-09",
+      "status": "ok",
+      "issues_created": 64,
+      "pull_requests_created": 8
+    },
+    {
+      "repo": "JeanHuguesRobert/cogentia",
+      "period": "2026-10",
+      "status": "ok",
+      "issues_created": 52,
+      "pull_requests_created": 23
+    },
+    {
+      "repo": "JeanHuguesRobert/FractaVolta",
+      "period": "2025-10",
+      "status": "ok",
+      "issues_created": 0,
+      "pull_requests_created": 0
+    },
+    {
+      "repo": "JeanHuguesRobert/FractaVolta",
+      "period": "2025-11",
+      "status": "ok",
+      "issues_created": 0,
+      "pull_requests_created": 0
+    },
+    {
+      "repo": "JeanHuguesRobert/FractaVolta",
+      "period": "2025-12",
+      "status": "ok",
+      "issues_created": 0,
+      "pull_requests_created": 0
+    },
+    {
+      "repo": "JeanHuguesRobert/FractaVolta",
+      "period": "2026-01",
+      "status": "ok",
+      "issues_created": 0,
+      "pull_requests_created": 0
+    },
+    {
+      "repo": "JeanHuguesRobert/FractaVolta",
+      "period": "2026-02",
+      "status": "ok",
+      "issues_created": 0,
+      "pull_requests_created": 0
+    },
+    {
+      "repo": "JeanHuguesRobert/FractaVolta",
+      "period": "2026-03",
+      "status": "ok",
+      "issues_created": 0,
+      "pull_requests_created": 0
+    },
+    {
+      "repo": "JeanHuguesRobert/FractaVolta",
+      "period": "2026-04",
+      "status": "ok",
+      "issues_created": 0,
+      "pull_requests_created": 0
+    },
+    {
+      "repo": "JeanHuguesRobert/FractaVolta",
+      "period": "2026-05",
+      "status": "ok",
+      "issues_created": 1,
+      "pull_requests_created": 2
+    },
+    {
+      "repo": "JeanHuguesRobert/FractaVolta",
+      "period": "2026-06",
+      "status": "ok",
+      "issues_created": 5,
+      "pull_requests_created": 1
+    },
+    {
+      "repo": "JeanHuguesRobert/FractaVolta",
+      "period": "2026-07",
+      "status": "ok",
+      "issues_created": 6,
+      "pull_requests_created": 1
+    },
+    {
+      "repo": "JeanHuguesRobert/FractaVolta",
+      "period": "2026-08",
+      "status": "ok",
+      "issues_created": 11,
+      "pull_requests_created": 0
+    },
+    {
+      "repo": "JeanHuguesRobert/FractaVolta",
+      "period": "2026-09",
+      "status": "ok",
+      "issues_created": 5,
+      "pull_requests_created": 0
+    },
+    {
+      "repo": "JeanHuguesRobert/FractaVolta",
+      "period": "2026-10",
+      "status": "ok",
+      "issues_created": 0,
+      "pull_requests_created": 0
+    },
+    {
+      "repo": "JeanHuguesRobert/operium",
+      "period": "2025-10",
+      "status": "ok",
+      "issues_created": 0,
+      "pull_requests_created": 0
+    },
+    {
+      "repo": "JeanHuguesRobert/operium",
+      "period": "2025-11",
+      "status": "ok",
+      "issues_created": 0,
+      "pull_requests_created": 0
+    },
+    {
+      "repo": "JeanHuguesRobert/operium",
+      "period": "2025-12",
+      "status": "ok",
+      "issues_created": 0,
+      "pull_requests_created": 0
+    },
+    {
+      "repo": "JeanHuguesRobert/operium",
+      "period": "2026-01",
+      "status": "ok",
+      "issues_created": 0,
+      "pull_requests_created": 0
+    },
+    {
+      "repo": "JeanHuguesRobert/operium",
+      "period": "2026-02",
+      "status": "ok",
+      "issues_created": 0,
+      "pull_requests_created": 0
+    },
+    {
+      "repo": "JeanHuguesRobert/operium",
+      "period": "2026-03",
+      "status": "ok",
+      "issues_created": 0,
+      "pull_requests_created": 0
+    },
+    {
+      "repo": "JeanHuguesRobert/operium",
+      "period": "2026-04",
+      "status": "ok",
+      "issues_created": 0,
+      "pull_requests_created": 0
+    },
+    {
+      "repo": "JeanHuguesRobert/operium",
+      "period": "2026-05",
+      "status": "ok",
+      "issues_created": 0,
+      "pull_requests_created": 0
+    },
+    {
+      "repo": "JeanHuguesRobert/operium",
+      "period": "2026-06",
+      "status": "ok",
+      "issues_created": 1,
+      "pull_requests_created": 0
+    },
+    {
+      "repo": "JeanHuguesRobert/operium",
+      "period": "2026-07",
+      "status": "ok",
+      "issues_created": 13,
+      "pull_requests_created": 4
+    },
+    {
+      "repo": "JeanHuguesRobert/operium",
+      "period": "2026-08",
+      "status": "ok",
+      "issues_created": 13,
+      "pull_requests_created": 10
+    },
+    {
+      "repo": "JeanHuguesRobert/operium",
+      "period": "2026-09",
+      "status": "ok",
+      "issues_created": 8,
+      "pull_requests_created": 7
+    },
+    {
+      "repo": "JeanHuguesRobert/operium",
+      "period": "2026-10",
+      "status": "ok",
+      "issues_created": 6,
+      "pull_requests_created": 3
+    },
+    {
+      "repo": "JeanHuguesRobert/barons-Mariani",
+      "period": "2025-10",
+      "status": "ok",
+      "issues_created": 0,
+      "pull_requests_created": 0
+    },
+    {
+      "repo": "JeanHuguesRobert/barons-Mariani",
+      "period": "2025-11",
+      "status": "ok",
+      "issues_created": 0,
+      "pull_requests_created": 0
+    },
+    {
+      "repo": "JeanHuguesRobert/barons-Mariani",
+      "period": "2025-12",
+      "status": "ok",
+      "issues_created": 0,
+      "pull_requests_created": 0
+    },
+    {
+      "repo": "JeanHuguesRobert/barons-Mariani",
+      "period": "2026-01",
+      "status": "ok",
+      "issues_created": 0,
+      "pull_requests_created": 0
+    },
+    {
+      "repo": "JeanHuguesRobert/barons-Mariani",
+      "period": "2026-02",
+      "status": "ok",
+      "issues_created": 0,
+      "pull_requests_created": 0
+    },
+    {
+      "repo": "JeanHuguesRobert/barons-Mariani",
+      "period": "2026-03",
+      "status": "ok",
+      "issues_created": 0,
+      "pull_requests_created": 0
+    },
+    {
+      "repo": "JeanHuguesRobert/barons-Mariani",
+      "period": "2026-04",
+      "status": "ok",
+      "issues_created": 0,
+      "pull_requests_created": 0
+    },
+    {
+      "repo": "JeanHuguesRobert/barons-Mariani",
+      "period": "2026-05",
+      "status": "ok",
+      "issues_created": 3,
+      "pull_requests_created": 0
+    },
+    {
+      "repo": "JeanHuguesRobert/barons-Mariani",
+      "period": "2026-06",
+      "status": "ok",
+      "issues_created": 4,
+      "pull_requests_created": 1
+    },
+    {
+      "repo": "JeanHuguesRobert/barons-Mariani",
+      "period": "2026-07",
+      "status": "ok",
+      "issues_created": 14,
+      "pull_requests_created": 5
+    },
+    {
+      "repo": "JeanHuguesRobert/barons-Mariani",
+      "period": "2026-08",
+      "status": "ok",
+      "issues_created": 11,
+      "pull_requests_created": 0
+    },
+    {
+      "repo": "JeanHuguesRobert/barons-Mariani",
+      "period": "2026-09",
+      "status": "ok",
+      "issues_created": 57,
+      "pull_requests_created": 0
+    },
+    {
+      "repo": "JeanHuguesRobert/barons-Mariani",
+      "period": "2026-10",
+      "status": "ok",
+      "issues_created": 50,
+      "pull_requests_created": 5
+    },
+    {
+      "repo": "JeanHuguesRobert/Inox",
+      "period": "2025-10",
+      "status": "ok",
+      "issues_created": 0,
+      "pull_requests_created": 0
+    },
+    {
+      "repo": "JeanHuguesRobert/Inox",
+      "period": "2025-11",
+      "status": "ok",
+      "issues_created": 0,
+      "pull_requests_created": 0
+    },
+    {
+      "repo": "JeanHuguesRobert/Inox",
+      "period": "2025-12",
+      "status": "ok",
+      "issues_created": 0,
+      "pull_requests_created": 0
+    },
+    {
+      "repo": "JeanHuguesRobert/Inox",
+      "period": "2026-01",
+      "status": "ok",
+      "issues_created": 0,
+      "pull_requests_created": 0
+    },
+    {
+      "repo": "JeanHuguesRobert/Inox",
+      "period": "2026-02",
+      "status": "ok",
+      "issues_created": 0,
+      "pull_requests_created": 0
+    },
+    {
+      "repo": "JeanHuguesRobert/Inox",
+      "period": "2026-03",
+      "status": "ok",
+      "issues_created": 0,
+      "pull_requests_created": 0
+    },
+    {
+      "repo": "JeanHuguesRobert/Inox",
+      "period": "2026-04",
+      "status": "ok",
+      "issues_created": 0,
+      "pull_requests_created": 0
+    },
+    {
+      "repo": "JeanHuguesRobert/Inox",
+      "period": "2026-05",
+      "status": "ok",
+      "issues_created": 0,
+      "pull_requests_created": 3
+    },
+    {
+      "repo": "JeanHuguesRobert/Inox",
+      "period": "2026-06",
+      "status": "ok",
+      "issues_created": 5,
+      "pull_requests_created": 13
+    },
+    {
+      "repo": "JeanHuguesRobert/Inox",
+      "period": "2026-07",
+      "status": "ok",
+      "issues_created": 3,
+      "pull_requests_created": 7
+    },
+    {
+      "repo": "JeanHuguesRobert/Inox",
+      "period": "2026-08",
+      "status": "ok",
+      "issues_created": 3,
+      "pull_requests_created": 3
+    },
+    {
+      "repo": "JeanHuguesRobert/Inox",
+      "period": "2026-09",
+      "status": "ok",
+      "issues_created": 0,
+      "pull_requests_created": 2
+    },
+    {
+      "repo": "JeanHuguesRobert/Inox",
+      "period": "2026-10",
+      "status": "ok",
+      "issues_created": 1,
+      "pull_requests_created": 0
+    },
+    {
+      "repo": "JeanHuguesRobert/survey",
+      "period": "2025-10",
+      "status": "ok",
+      "issues_created": 0,
+      "pull_requests_created": 3
+    },
+    {
+      "repo": "JeanHuguesRobert/survey",
+      "period": "2025-11",
+      "status": "ok",
+      "issues_created": 0,
+      "pull_requests_created": 2
+    },
+    {
+      "repo": "JeanHuguesRobert/survey",
+      "period": "2025-12",
+      "status": "ok",
+      "issues_created": 0,
+      "pull_requests_created": 1
+    },
+    {
+      "repo": "JeanHuguesRobert/survey",
+      "period": "2026-01",
+      "status": "ok",
+      "issues_created": 0,
+      "pull_requests_created": 2
+    },
+    {
+      "repo": "JeanHuguesRobert/survey",
+      "period": "2026-02",
+      "status": "ok",
+      "issues_created": 0,
+      "pull_requests_created": 4
+    },
+    {
+      "repo": "JeanHuguesRobert/survey",
+      "period": "2026-03",
+      "status": "ok",
+      "issues_created": 0,
+      "pull_requests_created": 0
+    },
+    {
+      "repo": "JeanHuguesRobert/survey",
+      "period": "2026-04",
+      "status": "ok",
+      "issues_created": 0,
+      "pull_requests_created": 0
+    },
+    {
+      "repo": "JeanHuguesRobert/survey",
+      "period": "2026-05",
+      "status": "ok",
+      "issues_created": 0,
+      "pull_requests_created": 0
+    },
+    {
+      "repo": "JeanHuguesRobert/survey",
+      "period": "2026-06",
+      "status": "ok",
+      "issues_created": 1,
+      "pull_requests_created": 0
+    },
+    {
+      "repo": "JeanHuguesRobert/survey",
+      "period": "2026-07",
+      "status": "ok",
+      "issues_created": 0,
+      "pull_requests_created": 1
+    },
+    {
+      "repo": "JeanHuguesRobert/survey",
+      "period": "2026-08",
+      "status": "ok",
+      "issues_created": 0,
+      "pull_requests_created": 0
+    },
+    {
+      "repo": "JeanHuguesRobert/survey",
+      "period": "2026-09",
+      "status": "ok",
+      "issues_created": 0,
+      "pull_requests_created": 0
+    },
+    {
+      "repo": "JeanHuguesRobert/survey",
+      "period": "2026-10",
+      "status": "ok",
+      "issues_created": 0,
+      "pull_requests_created": 0
+    },
+    {
+      "repo": "JeanHuguesRobert/ubikia",
+      "period": "2025-10",
+      "status": "ok",
+      "issues_created": 0,
+      "pull_requests_created": 0
+    },
+    {
+      "repo": "JeanHuguesRobert/ubikia",
+      "period": "2025-11",
+      "status": "ok",
+      "issues_created": 0,
+      "pull_requests_created": 0
+    },
+    {
+      "repo": "JeanHuguesRobert/ubikia",
+      "period": "2025-12",
+      "status": "ok",
+      "issues_created": 0,
+      "pull_requests_created": 0
+    },
+    {
+      "repo": "JeanHuguesRobert/ubikia",
+      "period": "2026-01",
+      "status": "ok",
+      "issues_created": 0,
+      "pull_requests_created": 0
+    },
+    {
+      "repo": "JeanHuguesRobert/ubikia",
+      "period": "2026-02",
+      "status": "ok",
+      "issues_created": 0,
+      "pull_requests_created": 0
+    },
+    {
+      "repo": "JeanHuguesRobert/ubikia",
+      "period": "2026-03",
+      "status": "ok",
+      "issues_created": 0,
+      "pull_requests_created": 0
+    },
+    {
+      "repo": "JeanHuguesRobert/ubikia",
+      "period": "2026-04",
+      "status": "ok",
+      "issues_created": 0,
+      "pull_requests_created": 0
+    },
+    {
+      "repo": "JeanHuguesRobert/ubikia",
+      "period": "2026-05",
+      "status": "ok",
+      "issues_created": 0,
+      "pull_requests_created": 0
+    },
+    {
+      "repo": "JeanHuguesRobert/ubikia",
+      "period": "2026-06",
+      "status": "ok",
+      "issues_created": 0,
+      "pull_requests_created": 0
+    },
+    {
+      "repo": "JeanHuguesRobert/ubikia",
+      "period": "2026-07",
+      "status": "ok",
+      "issues_created": 18,
+      "pull_requests_created": 3
+    },
+    {
+      "repo": "JeanHuguesRobert/ubikia",
+      "period": "2026-08",
+      "status": "ok",
+      "issues_created": 1,
+      "pull_requests_created": 0
+    },
+    {
+      "repo": "JeanHuguesRobert/ubikia",
+      "period": "2026-09",
+      "status": "ok",
+      "issues_created": 11,
+      "pull_requests_created": 0
+    },
+    {
+      "repo": "JeanHuguesRobert/ubikia",
+      "period": "2026-10",
+      "status": "ok",
+      "issues_created": 4,
+      "pull_requests_created": 0
+    },
+    {
+      "repo": "acorsica/gouvernance",
+      "period": "2025-10",
+      "status": "ok",
+      "issues_created": 0,
+      "pull_requests_created": 0
+    },
+    {
+      "repo": "acorsica/gouvernance",
+      "period": "2025-11",
+      "status": "ok",
+      "issues_created": 0,
+      "pull_requests_created": 0
+    },
+    {
+      "repo": "acorsica/gouvernance",
+      "period": "2025-12",
+      "status": "ok",
+      "issues_created": 0,
+      "pull_requests_created": 0
+    },
+    {
+      "repo": "acorsica/gouvernance",
+      "period": "2026-01",
+      "status": "ok",
+      "issues_created": 0,
+      "pull_requests_created": 0
+    },
+    {
+      "repo": "acorsica/gouvernance",
+      "period": "2026-02",
+      "status": "ok",
+      "issues_created": 0,
+      "pull_requests_created": 0
+    },
+    {
+      "repo": "acorsica/gouvernance",
+      "period": "2026-03",
+      "status": "ok",
+      "issues_created": 0,
+      "pull_requests_created": 0
+    },
+    {
+      "repo": "acorsica/gouvernance",
+      "period": "2026-04",
+      "status": "ok",
+      "issues_created": 0,
+      "pull_requests_created": 0
+    },
+    {
+      "repo": "acorsica/gouvernance",
+      "period": "2026-05",
+      "status": "ok",
+      "issues_created": 0,
+      "pull_requests_created": 0
+    },
+    {
+      "repo": "acorsica/gouvernance",
+      "period": "2026-06",
+      "status": "ok",
+      "issues_created": 0,
+      "pull_requests_created": 0
+    },
+    {
+      "repo": "acorsica/gouvernance",
+      "period": "2026-07",
+      "status": "ok",
+      "issues_created": 0,
+      "pull_requests_created": 0
+    },
+    {
+      "repo": "acorsica/gouvernance",
+      "period": "2026-08",
+      "status": "ok",
+      "issues_created": 0,
+      "pull_requests_created": 0
+    },
+    {
+      "repo": "acorsica/gouvernance",
+      "period": "2026-09",
+      "status": "ok",
+      "issues_created": 0,
+      "pull_requests_created": 0
+    },
+    {
+      "repo": "acorsica/gouvernance",
+      "period": "2026-10",
+      "status": "ok",
+      "issues_created": 1,
+      "pull_requests_created": 2
+    },
+    {
+      "repo": "JeanHuguesRobert/JeanHuguesRobert",
+      "period": "2025-10",
+      "status": "ok",
+      "issues_created": 0,
+      "pull_requests_created": 0
+    },
+    {
+      "repo": "JeanHuguesRobert/JeanHuguesRobert",
+      "period": "2025-11",
+      "status": "ok",
+      "issues_created": 0,
+      "pull_requests_created": 0
+    },
+    {
+      "repo": "JeanHuguesRobert/JeanHuguesRobert",
+      "period": "2025-12",
+      "status": "ok",
+      "issues_created": 0,
+      "pull_requests_created": 0
+    },
+    {
+      "repo": "JeanHuguesRobert/JeanHuguesRobert",
+      "period": "2026-01",
+      "status": "ok",
+      "issues_created": 0,
+      "pull_requests_created": 0
+    },
+    {
+      "repo": "JeanHuguesRobert/JeanHuguesRobert",
+      "period": "2026-02",
+      "status": "ok",
+      "issues_created": 0,
+      "pull_requests_created": 0
+    },
+    {
+      "repo": "JeanHuguesRobert/JeanHuguesRobert",
+      "period": "2026-03",
+      "status": "ok",
+      "issues_created": 0,
+      "pull_requests_created": 0
+    },
+    {
+      "repo": "JeanHuguesRobert/JeanHuguesRobert",
+      "period": "2026-04",
+      "status": "ok",
+      "issues_created": 0,
+      "pull_requests_created": 0
+    },
+    {
+      "repo": "JeanHuguesRobert/JeanHuguesRobert",
+      "period": "2026-05",
+      "status": "ok",
+      "issues_created": 0,
+      "pull_requests_created": 0
+    },
+    {
+      "repo": "JeanHuguesRobert/JeanHuguesRobert",
+      "period": "2026-06",
+      "status": "ok",
+      "issues_created": 0,
+      "pull_requests_created": 0
+    },
+    {
+      "repo": "JeanHuguesRobert/JeanHuguesRobert",
+      "period": "2026-07",
+      "status": "ok",
+      "issues_created": 1,
+      "pull_requests_created": 0
+    },
+    {
+      "repo": "JeanHuguesRobert/JeanHuguesRobert",
+      "period": "2026-08",
+      "status": "ok",
+      "issues_created": 2,
+      "pull_requests_created": 0
+    },
+    {
+      "repo": "JeanHuguesRobert/JeanHuguesRobert",
+      "period": "2026-09",
+      "status": "ok",
+      "issues_created": 1,
+      "pull_requests_created": 0
+    },
+    {
+      "repo": "JeanHuguesRobert/JeanHuguesRobert",
+      "period": "2026-10",
+      "status": "ok",
+      "issues_created": 0,
+      "pull_requests_created": 0
+    },
+    {
+      "repo": "JeanHuguesRobert/marenostrum",
+      "period": "2025-10",
+      "status": "ok",
+      "issues_created": 0,
+      "pull_requests_created": 0
+    },
+    {
+      "repo": "JeanHuguesRobert/marenostrum",
+      "period": "2025-11",
+      "status": "ok",
+      "issues_created": 0,
+      "pull_requests_created": 0
+    },
+    {
+      "repo": "JeanHuguesRobert/marenostrum",
+      "period": "2025-12",
+      "status": "ok",
+      "issues_created": 0,
+      "pull_requests_created": 0
+    },
+    {
+      "repo": "JeanHuguesRobert/marenostrum",
+      "period": "2026-01",
+      "status": "ok",
+      "issues_created": 0,
+      "pull_requests_created": 0
+    },
+    {
+      "repo": "JeanHuguesRobert/marenostrum",
+      "period": "2026-02",
+      "status": "ok",
+      "issues_created": 0,
+      "pull_requests_created": 0
+    },
+    {
+      "repo": "JeanHuguesRobert/marenostrum",
+      "period": "2026-03",
+      "status": "ok",
+      "issues_created": 1,
+      "pull_requests_created": 0
+    },
+    {
+      "repo": "JeanHuguesRobert/marenostrum",
+      "period": "2026-04",
+      "status": "ok",
+      "issues_created": 0,
+      "pull_requests_created": 0
+    },
+    {
+      "repo": "JeanHuguesRobert/marenostrum",
+      "period": "2026-05",
+      "status": "ok",
+      "issues_created": 0,
+      "pull_requests_created": 0
+    },
+    {
+      "repo": "JeanHuguesRobert/marenostrum",
+      "period": "2026-06",
+      "status": "ok",
+      "issues_created": 1,
+      "pull_requests_created": 0
+    },
+    {
+      "repo": "JeanHuguesRobert/marenostrum",
+      "period": "2026-07",
+      "status": "ok",
+      "issues_created": 1,
+      "pull_requests_created": 0
+    },
+    {
+      "repo": "JeanHuguesRobert/marenostrum",
+      "period": "2026-08",
+      "status": "ok",
+      "issues_created": 2,
+      "pull_requests_created": 0
+    },
+    {
+      "repo": "JeanHuguesRobert/marenostrum",
+      "period": "2026-09",
+      "status": "ok",
+      "issues_created": 0,
+      "pull_requests_created": 0
+    },
+    {
+      "repo": "JeanHuguesRobert/marenostrum",
+      "period": "2026-10",
+      "status": "ok",
+      "issues_created": 0,
+      "pull_requests_created": 0
+    },
+    {
+      "repo": "JeanHuguesRobert/StructEnv",
+      "period": "2025-10",
+      "status": "ok",
+      "issues_created": 0,
+      "pull_requests_created": 0
+    },
+    {
+      "repo": "JeanHuguesRobert/StructEnv",
+      "period": "2025-11",
+      "status": "ok",
+      "issues_created": 0,
+      "pull_requests_created": 1
+    },
+    {
+      "repo": "JeanHuguesRobert/StructEnv",
+      "period": "2025-12",
+      "status": "ok",
+      "issues_created": 0,
+      "pull_requests_created": 0
+    },
+    {
+      "repo": "JeanHuguesRobert/StructEnv",
+      "period": "2026-01",
+      "status": "ok",
+      "issues_created": 0,
+      "pull_requests_created": 1
+    },
+    {
+      "repo": "JeanHuguesRobert/StructEnv",
+      "period": "2026-02",
+      "status": "ok",
+      "issues_created": 0,
+      "pull_requests_created": 1
+    },
+    {
+      "repo": "JeanHuguesRobert/StructEnv",
+      "period": "2026-03",
+      "status": "ok",
+      "issues_created": 0,
+      "pull_requests_created": 0
+    },
+    {
+      "repo": "JeanHuguesRobert/StructEnv",
+      "period": "2026-04",
+      "status": "ok",
+      "issues_created": 0,
+      "pull_requests_created": 0
+    },
+    {
+      "repo": "JeanHuguesRobert/StructEnv",
+      "period": "2026-05",
+      "status": "ok",
+      "issues_created": 0,
+      "pull_requests_created": 0
+    },
+    {
+      "repo": "JeanHuguesRobert/StructEnv",
+      "period": "2026-06",
+      "status": "ok",
+      "issues_created": 0,
+      "pull_requests_created": 0
+    },
+    {
+      "repo": "JeanHuguesRobert/StructEnv",
+      "period": "2026-07",
+      "status": "ok",
+      "issues_created": 1,
+      "pull_requests_created": 0
+    },
+    {
+      "repo": "JeanHuguesRobert/StructEnv",
+      "period": "2026-08",
+      "status": "ok",
+      "issues_created": 0,
+      "pull_requests_created": 0
+    },
+    {
+      "repo": "JeanHuguesRobert/StructEnv",
+      "period": "2026-09",
+      "status": "ok",
+      "issues_created": 0,
+      "pull_requests_created": 0
+    },
+    {
+      "repo": "JeanHuguesRobert/StructEnv",
+      "period": "2026-10",
+      "status": "ok",
+      "issues_created": 0,
+      "pull_requests_created": 0
+    },
+    {
+      "repo": "JeanHuguesRobert/serra",
+      "period": "2025-10",
+      "status": "ok",
+      "issues_created": 0,
+      "pull_requests_created": 0
+    },
+    {
+      "repo": "JeanHuguesRobert/serra",
+      "period": "2025-11",
+      "status": "ok",
+      "issues_created": 0,
+      "pull_requests_created": 0
+    },
+    {
+      "repo": "JeanHuguesRobert/serra",
+      "period": "2025-12",
+      "status": "ok",
+      "issues_created": 0,
+      "pull_requests_created": 0
+    },
+    {
+      "repo": "JeanHuguesRobert/serra",
+      "period": "2026-01",
+      "status": "ok",
+      "issues_created": 0,
+      "pull_requests_created": 0
+    },
+    {
+      "repo": "JeanHuguesRobert/serra",
+      "period": "2026-02",
+      "status": "ok",
+      "issues_created": 0,
+      "pull_requests_created": 0
+    },
+    {
+      "repo": "JeanHuguesRobert/serra",
+      "period": "2026-03",
+      "status": "ok",
+      "issues_created": 0,
+      "pull_requests_created": 0
+    },
+    {
+      "repo": "JeanHuguesRobert/serra",
+      "period": "2026-04",
+      "status": "ok",
+      "issues_created": 0,
+      "pull_requests_created": 0
+    },
+    {
+      "repo": "JeanHuguesRobert/serra",
+      "period": "2026-05",
+      "status": "ok",
+      "issues_created": 0,
+      "pull_requests_created": 0
+    },
+    {
+      "repo": "JeanHuguesRobert/serra",
+      "period": "2026-06",
+      "status": "ok",
+      "issues_created": 0,
+      "pull_requests_created": 0
+    },
+    {
+      "repo": "JeanHuguesRobert/serra",
+      "period": "2026-07",
+      "status": "ok",
+      "issues_created": 1,
+      "pull_requests_created": 7
+    },
+    {
+      "repo": "JeanHuguesRobert/serra",
+      "period": "2026-08",
+      "status": "ok",
+      "issues_created": 0,
+      "pull_requests_created": 0
+    },
+    {
+      "repo": "JeanHuguesRobert/serra",
+      "period": "2026-09",
+      "status": "ok",
+      "issues_created": 0,
+      "pull_requests_created": 0
+    },
+    {
+      "repo": "JeanHuguesRobert/serra",
+      "period": "2026-10",
+      "status": "ok",
+      "issues_created": 0,
+      "pull_requests_created": 0
+    },
+    {
+      "repo": "acorsica/institut-mariani",
+      "period": "2025-10",
+      "status": "ok",
+      "issues_created": 0,
+      "pull_requests_created": 0
+    },
+    {
+      "repo": "acorsica/institut-mariani",
+      "period": "2025-11",
+      "status": "ok",
+      "issues_created": 0,
+      "pull_requests_created": 0
+    },
+    {
+      "repo": "acorsica/institut-mariani",
+      "period": "2025-12",
+      "status": "ok",
+      "issues_created": 0,
+      "pull_requests_created": 0
+    },
+    {
+      "repo": "acorsica/institut-mariani",
+      "period": "2026-01",
+      "status": "ok",
+      "issues_created": 0,
+      "pull_requests_created": 0
+    },
+    {
+      "repo": "acorsica/institut-mariani",
+      "period": "2026-02",
+      "status": "ok",
+      "issues_created": 0,
+      "pull_requests_created": 0
+    },
+    {
+      "repo": "acorsica/institut-mariani",
+      "period": "2026-03",
+      "status": "ok",
+      "issues_created": 0,
+      "pull_requests_created": 0
+    },
+    {
+      "repo": "acorsica/institut-mariani",
+      "period": "2026-04",
+      "status": "ok",
+      "issues_created": 0,
+      "pull_requests_created": 0
+    },
+    {
+      "repo": "acorsica/institut-mariani",
+      "period": "2026-05",
+      "status": "ok",
+      "issues_created": 0,
+      "pull_requests_created": 0
+    },
+    {
+      "repo": "acorsica/institut-mariani",
+      "period": "2026-06",
+      "status": "ok",
+      "issues_created": 0,
+      "pull_requests_created": 0
+    },
+    {
+      "repo": "acorsica/institut-mariani",
+      "period": "2026-07",
+      "status": "ok",
+      "issues_created": 0,
+      "pull_requests_created": 0
+    },
+    {
+      "repo": "acorsica/institut-mariani",
+      "period": "2026-08",
+      "status": "ok",
+      "issues_created": 0,
+      "pull_requests_created": 0
+    },
+    {
+      "repo": "acorsica/institut-mariani",
+      "period": "2026-09",
+      "status": "ok",
+      "issues_created": 0,
+      "pull_requests_created": 0
+    },
+    {
+      "repo": "acorsica/institut-mariani",
+      "period": "2026-10",
+      "status": "ok",
+      "issues_created": 0,
+      "pull_requests_created": 0
+    },
+    {
+      "repo": "acorsica/acorsica.org",
+      "period": "2025-10",
+      "status": "ok",
+      "issues_created": 0,
+      "pull_requests_created": 0
+    },
+    {
+      "repo": "acorsica/acorsica.org",
+      "period": "2025-11",
+      "status": "ok",
+      "issues_created": 0,
+      "pull_requests_created": 0
+    },
+    {
+      "repo": "acorsica/acorsica.org",
+      "period": "2025-12",
+      "status": "ok",
+      "issues_created": 0,
+      "pull_requests_created": 0
+    },
+    {
+      "repo": "acorsica/acorsica.org",
+      "period": "2026-01",
+      "status": "ok",
+      "issues_created": 0,
+      "pull_requests_created": 0
+    },
+    {
+      "repo": "acorsica/acorsica.org",
+      "period": "2026-02",
+      "status": "ok",
+      "issues_created": 0,
+      "pull_requests_created": 0
+    },
+    {
+      "repo": "acorsica/acorsica.org",
+      "period": "2026-03",
+      "status": "ok",
+      "issues_created": 0,
+      "pull_requests_created": 0
+    },
+    {
+      "repo": "acorsica/acorsica.org",
+      "period": "2026-04",
+      "status": "ok",
+      "issues_created": 0,
+      "pull_requests_created": 0
+    },
+    {
+      "repo": "acorsica/acorsica.org",
+      "period": "2026-05",
+      "status": "ok",
+      "issues_created": 0,
+      "pull_requests_created": 0
+    },
+    {
+      "repo": "acorsica/acorsica.org",
+      "period": "2026-06",
+      "status": "ok",
+      "issues_created": 0,
+      "pull_requests_created": 0
+    },
+    {
+      "repo": "acorsica/acorsica.org",
+      "period": "2026-07",
+      "status": "ok",
+      "issues_created": 0,
+      "pull_requests_created": 0
+    },
+    {
+      "repo": "acorsica/acorsica.org",
+      "period": "2026-08",
+      "status": "ok",
+      "issues_created": 0,
+      "pull_requests_created": 0
+    },
+    {
+      "repo": "acorsica/acorsica.org",
+      "period": "2026-09",
+      "status": "ok",
+      "issues_created": 0,
+      "pull_requests_created": 0
+    },
+    {
+      "repo": "acorsica/acorsica.org",
+      "period": "2026-10",
+      "status": "ok",
+      "issues_created": 0,
+      "pull_requests_created": 0
+    },
+    {
+      "repo": "acorsica/privai",
+      "period": "2025-10",
+      "status": "ok",
+      "issues_created": 0,
+      "pull_requests_created": 0
+    },
+    {
+      "repo": "acorsica/privai",
+      "period": "2025-11",
+      "status": "ok",
+      "issues_created": 0,
+      "pull_requests_created": 0
+    },
+    {
+      "repo": "acorsica/privai",
+      "period": "2025-12",
+      "status": "ok",
+      "issues_created": 0,
+      "pull_requests_created": 0
+    },
+    {
+      "repo": "acorsica/privai",
+      "period": "2026-01",
+      "status": "ok",
+      "issues_created": 0,
+      "pull_requests_created": 0
+    },
+    {
+      "repo": "acorsica/privai",
+      "period": "2026-02",
+      "status": "ok",
+      "issues_created": 0,
+      "pull_requests_created": 0
+    },
+    {
+      "repo": "acorsica/privai",
+      "period": "2026-03",
+      "status": "ok",
+      "issues_created": 0,
+      "pull_requests_created": 0
+    },
+    {
+      "repo": "acorsica/privai",
+      "period": "2026-04",
+      "status": "ok",
+      "issues_created": 0,
+      "pull_requests_created": 0
+    },
+    {
+      "repo": "acorsica/privai",
+      "period": "2026-05",
+      "status": "ok",
+      "issues_created": 0,
+      "pull_requests_created": 0
+    },
+    {
+      "repo": "acorsica/privai",
+      "period": "2026-06",
+      "status": "ok",
+      "issues_created": 0,
+      "pull_requests_created": 0
+    },
+    {
+      "repo": "acorsica/privai",
+      "period": "2026-07",
+      "status": "ok",
+      "issues_created": 0,
+      "pull_requests_created": 0
+    },
+    {
+      "repo": "acorsica/privai",
+      "period": "2026-08",
+      "status": "ok",
+      "issues_created": 1,
+      "pull_requests_created": 0
+    },
+    {
+      "repo": "acorsica/privai",
+      "period": "2026-09",
+      "status": "ok",
+      "issues_created": 0,
+      "pull_requests_created": 0
+    },
+    {
+      "repo": "acorsica/privai",
+      "period": "2026-10",
+      "status": "ok",
+      "issues_created": 0,
+      "pull_requests_created": 0
+    },
+    {
+      "repo": "acorsica/Kudos",
+      "period": "2025-10",
+      "status": "ok",
+      "issues_created": 0,
+      "pull_requests_created": 0
+    },
+    {
+      "repo": "acorsica/Kudos",
+      "period": "2025-11",
+      "status": "ok",
+      "issues_created": 0,
+      "pull_requests_created": 0
+    },
+    {
+      "repo": "acorsica/Kudos",
+      "period": "2025-12",
+      "status": "ok",
+      "issues_created": 0,
+      "pull_requests_created": 0
+    },
+    {
+      "repo": "acorsica/Kudos",
+      "period": "2026-01",
+      "status": "ok",
+      "issues_created": 0,
+      "pull_requests_created": 0
+    },
+    {
+      "repo": "acorsica/Kudos",
+      "period": "2026-02",
+      "status": "ok",
+      "issues_created": 0,
+      "pull_requests_created": 0
+    },
+    {
+      "repo": "acorsica/Kudos",
+      "period": "2026-03",
+      "status": "ok",
+      "issues_created": 0,
+      "pull_requests_created": 0
+    },
+    {
+      "repo": "acorsica/Kudos",
+      "period": "2026-04",
+      "status": "ok",
+      "issues_created": 0,
+      "pull_requests_created": 0
+    },
+    {
+      "repo": "acorsica/Kudos",
+      "period": "2026-05",
+      "status": "ok",
+      "issues_created": 0,
+      "pull_requests_created": 0
+    },
+    {
+      "repo": "acorsica/Kudos",
+      "period": "2026-06",
+      "status": "ok",
+      "issues_created": 0,
+      "pull_requests_created": 0
+    },
+    {
+      "repo": "acorsica/Kudos",
+      "period": "2026-07",
+      "status": "ok",
+      "issues_created": 0,
+      "pull_requests_created": 0
+    },
+    {
+      "repo": "acorsica/Kudos",
+      "period": "2026-08",
+      "status": "ok",
+      "issues_created": 0,
+      "pull_requests_created": 0
+    },
+    {
+      "repo": "acorsica/Kudos",
+      "period": "2026-09",
+      "status": "ok",
+      "issues_created": 0,
+      "pull_requests_created": 0
+    },
+    {
+      "repo": "acorsica/Kudos",
+      "period": "2026-10",
+      "status": "ok",
+      "issues_created": 0,
+      "pull_requests_created": 0
+    }
+  ]
+}
