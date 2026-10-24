@@ -564,6 +564,29 @@ Candidate invariants for a later Reality Test:
 5. **Degraded continuity:** during loss of a global index or coordinator, a cold handler can continue within valid local control, or preserve an explicit blocked/deferred state for later reconciliation.
 6. **Semantic portability:** logical locality is independent of machine placement; moving materializations does not silently move authority.
 
+### Stigmergic evaporation, cooling and glacial retention
+
+FractaCache must not equate **eviction of an active materialization** with **destruction of memory**. Stigmergic coordination relies on traces that remain salient while useful and gradually lose *operational attraction* when they are no longer reinforced. This evaporation acts on discovery priority, activation, propagation and local caching, not automatically on historical existence.
+
+A bounded working lifecycle is:
+
+~~~text
+repeated situated use / verified reinforcement
+→ hot trace or local projection
+→ declining utility / no reinforcement
+→ warm, then cold discovery priority
+→ glacial or offline preservation if retention value warrants it
+→ deliberate recall / rehydration on demand
+~~~
+
+**Glacial** denotes very low-cost, low-activation preservation, potentially offline, for historical, evidentiary or posterity purposes. It is **not** a synonym for erased, obsolete, inaccessible or immutable: these are independent policy dimensions. The term complements the Corpus Sleep Cycle's existing Hot/Warm/Cold/Frozen/Obsolete/Forgettable taxonomy; **Frozen** denotes a preservation constraint, while **Glacial** describes an extreme temperature / placement condition. A legally frozen source can be hot in use; glacial material can be restored into a hot projection without altering source authority.
+
+Evaporation MAY lower salience or evict reconstructible projections. It MUST NOT silently expire a mandate, delete a sovereign source, erase a causal trace required for COP recovery, or defeat explicit legal/evidentiary retention rules. Conversely, retention MUST NOT force permanent active context. Governed forgetting or erasure is a distinct authorized lifecycle act.
+
+Reality Test candidate: let multiple agents reinforce and neglect the same situated traces; verify that obsolete attractors cease dominating routing, retained glacial evidence remains recoverable, authorized reheating reconstructs usable local projections, and eviction never destroys unrecoverable authoritative information. Compare costs and false recalls against a non-evaporating baseline.
+
+See [Corpus Sleep Cycle](memory_and_corpus_sleep_cycle.md) and [Packet-native memory temperature](cognitive_packet_closure_and_packet_native_semantics.md).
+
 **Smallest discriminating experiment:** resume an existing Cognitive Packet with a cold handler, first with and then without global discovery, comparing reference-only access against bounded local materialization. Measure completeness, correctness, recovered state, latency, exposure and transfer costs; record the explicit blocker when local control is insufficient. If ordinary existing COP/index/Side storage mechanisms already provide these guarantees without a new layer, keep FractaCache as a *named design discipline*, not a new component.
 
 **Side boundary (unverified):** inspect Side's actual data, locality and storage contracts before proposing any implementation or claiming reuse. A matching existing primitive should be adapted, not duplicated. This section does not assert that Side has been inspected.
