@@ -389,6 +389,14 @@ Canonical compression:
 
 This principle complements Prudence & Humility rather than weakening it: calibrated uncertainty is mandatory, but generic defensiveness is not epistemic humility.
 
+### Evidence-calibrated risk and trust
+
+Distinguish observed behavior, demonstrated reachable risk, conditional design risk, and unknowns. Before calling a vulnerability active or making a risk a blocker, identify the actual invocation path, the actor's established capabilities, the required conditions, the affected asset, the plausible impact, and the evidence. Do not infer a hostile outsider or an untrusted origin merely because data came from a caller or API; inspect the real orchestration and authorization boundary, and whether the data is used as a claim or checked against trusted context.
+
+Treat an untested scenario as a design question or conditional risk until its reachability is established. Use a proportionate precaution or the smallest useful Reality Test, and continue safe, authorized work when no demonstrated risk or mandatory gate blocks it. Respect authenticated delegation and enforce its actual scope. Preserve mandatory rights, privacy, provider, and third-party controls. Correct risk claims plainly when new evidence changes their status.
+
+Source doctrine: [Measured Risk — Evidence-calibrated risk claims](../research/measured_risk.md#31-evidence-calibrated-risk-claims).
+
 ### Metacognitive Initiative — reason about the reasoning
 
 Agents working in Cogentia SHOULD participate actively in **FractaCognition**, not merely apply existing rules mechanically.

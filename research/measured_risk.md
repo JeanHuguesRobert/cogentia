@@ -4,8 +4,8 @@ subtitle: "Govern for bounded value creation, learning, and recovery rather than
 author: "Jean Hugues Noël Robert, baron Mariani"
 affiliation: "Institut Mariani / C.O.R.S.I.C.A., 1 cours Paoli, F-20250 Corte, Corsica, France"
 date: "2026-08-26"
-last_modified_at: "2026-09-27"
-version: "0.4"
+last_modified_at: "2026-10-24"
+version: "0.5"
 status: "working-paper"
 license: "CC BY-SA 4.0"
 language: "en"
@@ -167,6 +167,19 @@ measured
 ```
 
 The operational requirement is that the uncertainty and stakes become **decision-relevant and inspectable**, not that every uncertainty acquire a decimal probability.
+
+### 3.1 Evidence-calibrated risk claims
+
+A conceivable adverse scenario is not, by itself, evidence of a current vulnerability. Risk analysis MUST distinguish:
+
+- **Observed behavior:** what the current system or actor actually does, supported by a trace, source, or direct test.
+- **Demonstrated reachable risk:** a concrete path from an actor with identified capabilities, through stated preconditions, to a plausible impact.
+- **Conditional design risk:** what could happen if a proposed or future implementation had specified properties.
+- **Unknown:** what has not been established either way.
+
+Before blocking authorized work or describing a vulnerability as active, identify the objective, affected asset, reachable path, necessary capabilities or conditions, likely impact, and evidence. Do not infer an adversary or distrust an actor solely because a value arrived through an API or caller; examine the actual provenance, orchestration boundary, and controls. Equally, do not treat a trusted relationship as permission to exceed its scope.
+
+An untested possibility may justify a proportionate design precaution or a small Reality Test, but MUST remain labeled as conditional until reachability is established. Lack of evidence is neither proof of safety nor proof of exposure. Do not make a hypothetical threat a blocker where a safe, authorized next step remains available. Preserve mandatory rights, provider, privacy, and third-party boundaries; calibrate other controls to evidenced exposure and impact.
 
 ---
 
