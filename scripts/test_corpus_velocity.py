@@ -36,15 +36,21 @@ class TreeMetricsTests(unittest.TestCase):
         # Git's --long format commonly contains two spaces before the size.
         listing = (b"100644 blob aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa  123\tapp/main.py\0"
                    b"100644 blob bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb    45\tREADME.md\0"
-                   b"100644 blob cccccccccccccccccccccccccccccccccccccccc     8\tnode_modules/x.js\0")
+                   b"100644 blob cccccccccccccccccccccccccccccccccccccccc     8\tnode_modules/x.js\0"
+                   b"100644 blob dddddddddddddddddddddddddddddddddddddddd     9\ttests/check.test.js\0"
+                   b"100644 blob eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee    10\tgenerated/index.md\0"
+                   b"100644 blob ffffffffffffffffffffffffffffffffffffffff     6\tdocs/index.md\0")
         with patch.object(module, "git", return_value=listing):
             metrics = module.tree_metrics("/fake", "deadbeef")
-        self.assertEqual(metrics["blobs"], 3)
-        self.assertEqual(metrics["bytes"], 176)
-        self.assertEqual(metrics["code_files"], 1)
-        self.assertEqual(metrics["source_files"], 1)
-        self.assertEqual(metrics["code_bytes"], 123)
-        self.assertEqual(metrics["markdown_files"], 1)
+        self.assertEqual(metrics["blobs"], 6)
+        self.assertEqual(metrics["bytes"], 201)
+        self.assertEqual(metrics["code_files"], 2)
+        self.assertEqual(metrics["source_files"], 2)
+        self.assertEqual(metrics["code_bytes"], 132)
+        self.assertEqual(metrics["markdown_files"], 2)
+        self.assertEqual(metrics["derived_markdown_files"], 1)
+        self.assertEqual(metrics["test_files"], 1)
+        self.assertEqual(metrics["excluded_files"], 2)
         self.assertEqual(metrics["by_language"]["Python"]["bytes"], 123)
 
 
@@ -61,12 +67,12 @@ class CoverageTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as root:
             registry = pathlib.Path(root) / "registry.json"
             registry.write_text(json.dumps({"repositories": [
-                {"name": "example/missing", "local_path": str(pathlib.Path(root) / "absent"), "visibility": "public"},
-                {"name": "example/excluded", "local_path": str(pathlib.Path(root) / "private"), "visibility": "private"},
+                {"name": "example/missing", "path": "absent", "visibility": "public"},
+                {"name": "example/excluded", "path": "private", "visibility": "private"},
             ]}))
             out = pathlib.Path(root) / "result"
             args = ["corpus_velocity.py", "--registry", str(registry),
-                    "--out", str(out), "--start", "2025-10", "--end", "2025-11"]
+                    "--root", root, "--out", str(out), "--start", "2025-10", "--end", "2025-11"]
             with patch.object(sys, "argv", args), redirect_stdout(StringIO()):
                 module.main()
             rows = json.loads((out / "corpus-velocity.json").read_text())["metrics"]
@@ -81,11 +87,12 @@ class CoverageTests(unittest.TestCase):
             (checkout / ".git").mkdir(parents=True)
             registry = pathlib.Path(root) / "registry.json"
             registry.write_text(json.dumps({"repositories": [
-                {"name": "example/public", "local_path": str(checkout), "visibility": "public"}
+                {"name": "example/public", "path": "checkout", "visibility": "public"}
             ]}))
             out = pathlib.Path(root) / "result"
             args = ["corpus_velocity.py", "--registry", str(registry),
-                    "--out", str(out), "--start", "2099-01", "--end", "2099-01"]
+                    "--root", str(pathlib.Path(root)), "--out", str(out),
+                    "--start", "2099-01", "--end", "2099-01"]
             with patch.object(sys, "argv", args), patch.object(
                     module, "git", side_effect=[b"deadbeef\\n", b""]), redirect_stdout(StringIO()):
                 module.main()

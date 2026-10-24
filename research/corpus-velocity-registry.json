@@ -4,94 +4,94 @@
   "repositories": [
     {
       "name": "JeanHuguesRobert/inseme",
-      "local_path": "/srv/cogentia/repos/inseme",
+      "path": "inseme",
       "visibility": "public"
     },
     {
       "name": "JeanHuguesRobert/cogentia",
-      "local_path": "/srv/cogentia/repos/cogentia",
+      "path": "cogentia",
       "visibility": "public"
     },
     {
       "name": "JeanHuguesRobert/FractaVolta",
-      "local_path": "/srv/cogentia/repos/FractaVolta",
+      "path": "FractaVolta",
       "visibility": "public"
     },
     {
       "name": "JeanHuguesRobert/operium",
-      "local_path": "/srv/cogentia/repos/operium",
+      "path": "operium",
       "visibility": "public"
     },
     {
       "name": "JeanHuguesRobert/barons-Mariani",
-      "local_path": "/srv/cogentia/repos/barons-Mariani",
+      "path": "barons-Mariani",
       "visibility": "public"
     },
     {
       "name": "JeanHuguesRobert/Inox",
-      "local_path": "/srv/cogentia/repos/Inox",
+      "path": "Inox",
       "visibility": "public"
     },
     {
       "name": "JeanHuguesRobert/survey",
-      "local_path": "/srv/cogentia/repos/survey",
+      "path": "survey",
       "visibility": "public"
     },
     {
       "name": "JeanHuguesRobert/ubikia",
-      "local_path": "/srv/cogentia/repos/ubikia",
+      "path": "ubikia",
       "visibility": "public"
     },
     {
       "name": "acorsica/gouvernance",
-      "local_path": "/srv/cogentia/repos/gouvernance",
+      "path": "gouvernance",
       "visibility": "public"
     },
     {
       "name": "JeanHuguesRobert/JeanHuguesRobert",
-      "local_path": "/srv/cogentia/repos/JeanHuguesRobert",
+      "path": "JeanHuguesRobert",
       "visibility": "public",
       "category": "corpus"
     },
     {
       "name": "JeanHuguesRobert/marenostrum",
-      "local_path": "/srv/cogentia/repos/marenostrum",
+      "path": "marenostrum",
       "visibility": "public",
       "category": "corpus"
     },
     {
       "name": "JeanHuguesRobert/StructEnv",
-      "local_path": "/srv/cogentia/repos/StructEnv",
+      "path": "StructEnv",
       "visibility": "public",
       "category": "corpus"
     },
     {
       "name": "JeanHuguesRobert/serra",
-      "local_path": "/srv/cogentia/repos/serra",
+      "path": "serra",
       "visibility": "public",
       "category": "corpus"
     },
     {
       "name": "acorsica/institut-mariani",
-      "local_path": "/srv/cogentia/repos/institut-mariani",
+      "path": "institut-mariani",
       "visibility": "public",
       "category": "association"
     },
     {
       "name": "acorsica/acorsica.org",
-      "local_path": "/srv/cogentia/repos/acorsica.org",
+      "path": "acorsica.org",
       "visibility": "public",
       "category": "association"
     },
     {
       "name": "acorsica/privai",
-      "local_path": "/srv/cogentia/repos/privai",
+      "path": "privai",
       "visibility": "public",
       "category": "association"
     },
     {
       "name": "acorsica/Kudos",
-      "local_path": "/srv/cogentia/repos/Kudos",
+      "path": "Kudos",
       "visibility": "public",
       "category": "association"
     }

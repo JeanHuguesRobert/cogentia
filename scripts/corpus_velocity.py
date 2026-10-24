@@ -2,7 +2,7 @@
 """Corpus velocity #267: reproducible, read-only monthly Git tree inventory.
 
 Usage:
-  python3 scripts/corpus_velocity.py --registry research/corpus-velocity-registry.json --out /tmp/corpus-velocity
+  python3 scripts/corpus_velocity.py --registry research/corpus-velocity-registry.json --root ~/srv/cogentia/repos --out /tmp/corpus-velocity
 Records missing repositories explicitly. Operates only on existing local clones;
 never reads private repository contents into an automatically published export.
 """
@@ -16,7 +16,9 @@ import subprocess
 
 CODE = {".js", ".jsx", ".mjs", ".cjs", ".ts", ".tsx", ".py", ".go", ".rs", ".c",
         ".h", ".cpp", ".hpp", ".java", ".sh", ".rb", ".php", ".sql", ".swift", ".kt"}
-IGNORE = re.compile(r"(^|/)(node_modules|vendor|dist|build|coverage|generated|target|\.next)(/|$)")
+IGNORE = re.compile(r"(^|/)(node_modules|vendor|dist|build|coverage|generated|__generated__|snapshots?|fixtures|target|\.next)(/|$)")
+TEST_PATH = re.compile(r"(^|/)(__tests__|tests?|specs?)(/|$)|\.(test|spec)\.")
+DERIVED_MARKDOWN = re.compile(r"(^|/)(index|corpus-status|llms(-full)?|readme\.generated)\.md$", re.I)
 LANG = {".js": "JavaScript", ".jsx": "JavaScript", ".mjs": "JavaScript",
         ".cjs": "JavaScript", ".ts": "TypeScript", ".tsx": "TypeScript",
         ".py": "Python", ".rs": "Rust", ".go": "Go"}
@@ -43,7 +45,9 @@ def month_ends(start, end):
 
 def tree_metrics(repo, commit):
     result = {"blobs": 0, "bytes": 0, "code_files": 0, "code_bytes": 0,
-              "markdown_files": 0, "source_files": 0, "by_language": {}}
+              "markdown_files": 0, "derived_markdown_files": 0,
+              "source_files": 0, "test_files": 0, "excluded_files": 0,
+              "by_language": {}}
     # NUL-delimited Git tree output safely handles spaces and Unicode paths.
     entries = git(repo, "ls-tree", "-rz", "-l", commit).split(b"\0")
     for entry in entries:
@@ -60,10 +64,17 @@ def tree_metrics(repo, commit):
         size = int(bits[3])
         result["blobs"] += 1
         result["bytes"] += size
+        if IGNORE.search(path):
+            result["excluded_files"] += 1
+            continue
         suffix = pathlib.PurePosixPath(path).suffix.lower()
         if suffix == ".md":
             result["markdown_files"] += 1
-        if suffix in CODE and not IGNORE.search(path):
+            if DERIVED_MARKDOWN.search(path):
+                result["derived_markdown_files"] += 1
+        if TEST_PATH.search(path):
+            result["test_files"] += 1
+        if suffix in CODE:
             result["code_files"] += 1
             result["source_files"] += 1
             result["code_bytes"] += size
@@ -77,6 +88,8 @@ def tree_metrics(repo, commit):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--registry", required=True)
+    ap.add_argument("--root", default=str(pathlib.Path.home() / "srv/cogentia/repos"),
+                    help="directory containing local repository clones (default: ~/srv/cogentia/repos)")
     ap.add_argument("--out", required=True)
     ap.add_argument("--start", default="2025-10")
     ap.add_argument("--end", default="2026-10")
@@ -91,7 +104,7 @@ def main():
             for _, period in periods:
                 rows.append({"repo": name, "period": period, "status": "excluded", "reason": "privacy_or_scope"})
             continue
-        repo = pathlib.Path(item["local_path"]).expanduser()
+        repo = pathlib.Path(args.root).expanduser() / item["path"]
         if not (repo / ".git").exists():
             for _, period in periods:
                 rows.append({"repo": name, "period": period, "status": "missing", "reason": "local_checkout_absent"})
@@ -120,7 +133,8 @@ def main():
                         "generated/path exclusions heuristic", "no LOC/SLOC yet",
                         "no private-repository metrics exported"]}, indent=2) + "\n")
     fields = ["repo", "period", "status", "commit", "blobs", "bytes", "code_files",
-              "code_bytes", "markdown_files", "partial", "reason"]
+              "code_bytes", "markdown_files", "derived_markdown_files", "test_files",
+              "excluded_files", "partial", "reason"]
     with (out / "corpus-velocity.csv").open("w", newline="") as f:
         writer = csv.DictWriter(f, fieldnames=fields, extrasaction="ignore")
         writer.writeheader()
