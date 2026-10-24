@@ -58,3 +58,36 @@ Les lignes physiques comptent chaque ligne de contenu, y compris les lignes
 vides ; les lignes non vides excluent les lignes composées uniquement
 d’espaces. Ce sont des comptes bruts, pas des SLOC ni une mesure de logique
 exécutable.
+
+## Évolution à périmètre constant
+
+Le nombre de dépôts ayant un snapshot mesurable passe de **7 en octobre 2025 à
+17 en octobre 2026**. Pour isoler l’évolution à périmètre constant, le tableau
+ci-dessous suit uniquement les 7 dépôts mesurables dès octobre 2025.
+
+| Mois | Code (MB) | Lignes physiques de code | Documents (MB) | Lignes physiques Markdown |
+| --- | ---: | ---: | ---: | ---: |
+| 2025-10 | 1,41 | 43 411 | 0,34 | 7 425 |
+| 2025-11 | 2,70 | 81 161 | 131,62 | 73 930 |
+| 2025-12 | 8,98 | 264 643 | 264,39 | 183 200 |
+| 2026-01 | 10,22 | 302 626 | 264,63 | 189 088 |
+| 2026-02 | 10,61 | 314 959 | 264,70 | 191 007 |
+| 2026-03 | 10,61 | 314 959 | 264,70 | 191 007 |
+| 2026-04 | 10,71 | 318 140 | 264,95 | 194 662 |
+| 2026-05 | 10,84 | 322 048 | 268,31 | 253 404 |
+| 2026-06 | 11,31 | 333 619 | 270,17 | 290 240 |
+| 2026-07 | 12,17 | 359 208 | 271,53 | 319 162 |
+| 2026-08 | 13,16 | 387 639 | 273,70 | 350 013 |
+| 2026-09 | 14,19 | 416 770 | 277,75 | 425 768 |
+| 2026-10 | 14,79 | 430 502 | 289,80 | 534 370 |
+
+Sur ces 7 dépôts, le code passe de **1,41 à 14,79 MB** et de **43 411 à
+430 502 lignes physiques**. Les documents passent de **0,34 à 289,80 MB** ;
+les lignes physiques Markdown passent de **7 425 à 534 370**. La croissance
+documentaire est surtout concentrée entre novembre et décembre 2025, puis
+reprend plus graduellement. Ces variations sont des tailles de snapshots, pas
+des additions nettes de contenu entre deux mois.
+
+La comparaison des totaux des 17 dépôts avec octobre 2025 mélangerait cette
+croissance et les 10 dépôts qui n’avaient pas encore de commit sur la branche
+retenue au début de la période.
