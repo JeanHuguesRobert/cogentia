@@ -198,6 +198,12 @@ For the situated materialization rule and the prohibition on confusing cache evi
 
 ---
 
+### Temperature and the cost of making memory accessible
+
+Cooling also changes the **effort of effective access**, beyond salience: a hot memory may already be in working context, whereas a glacial archive can require discovery, retrieval, restoration, provenance validation and recontextualization before an agent can use it. A temperature tier is therefore a *policy expectation* about activation effort, not a strict latency metric: security, placement and corruption may reverse simple cost comparisons. A retained glacial item needs an explicit recovery route and should be reheated through a bounded, task-relative projection when justified. See [FractaCache temperature as access effort](locality_principle.md#temperature-as-access-effort).
+
+---
+
 ## 4. Ephemeral memory is not a defect
 
 Some memory should be ephemeral:
