@@ -16,6 +16,7 @@ import {
 } from "./side-effect-store.js";
 import { asDecisionGrant, asExposeContinuation, isSuccessfulEffectReceipt } from "./side-effect-packets.js";
 import { maybeRecordCopEffectSpend } from "./cop-surface-accounting.js";
+import { isResolvedCallerAuth } from "./cogentia-mcp-auth.js";
 
 /**
  * #285: Conservative effect-boundary classification. This is advisory only:
@@ -270,7 +271,7 @@ export function mintSideEffectGrantFromPrepared(prepared, {
   });
 }
 
-export function grantSideEffectAuthorization({
+function createStoredGrant({
   principal,
   action_class,
   target,
@@ -341,6 +342,14 @@ export function grantSideEffectAuthorization({
   return grant;
 }
 
+export function grantSideEffectAuthorization(args = {}) {
+  if (args.authority_origin === "mandate_derived") {
+    throw fail("mandate_derived_verifier_unavailable",
+      "mandate-derived grants can only be created by the configured workspace capability");
+  }
+  return createStoredGrant(args);
+}
+
 /**
  * Restricted COP mandate-derived grant. Never claims Principal approval.
  * This authorizes only already attested internal local effects and is stored
@@ -348,15 +357,35 @@ export function grantSideEffectAuthorization({
  */
 export function mintMandateDerivedGrant({
   action_class, target, payload, mandate_ref, recovery_ref,
-  policy_evidence = {}, expires_in_ms = 10 * 60 * 1000,
+  auth_context, budget_reservation_id, account_id = null, treatment_id = null,
+  expose_packet_id, expires_in_ms = 10 * 60 * 1000,
 } = {}) {
-  // Fail closed until a trusted runtime verifier can attest the mandate,
-  // recovery path, budget and privacy boundary independently of this caller.
-  // Caller-provided references and policy_evidence are descriptive data only.
-  void action_class; void target; void payload; void mandate_ref; void recovery_ref;
-  void policy_evidence; void expires_in_ms;
-  throw fail("mandate_derived_verifier_unavailable",
-    "mandate-derived grants are disabled until trusted adapter-side evidence verification is wired");
+  if (!isResolvedCallerAuth(auth_context) || auth_context.auth !== "jhn" || auth_context.allowMutate !== true) {
+    throw fail("mandate_derived_verifier_unavailable", "resolved JHN caller authority is required");
+  }
+  if (action_class !== "host.fs.write" || target?.node !== "node:agent-jhn-workspace"
+      || !target?.path || !payload || payload.capability !== "host.fs.write"
+      || !mandate_ref || mandate_ref !== auth_context.mandate_ref
+      || !recovery_ref || !budget_reservation_id || !expose_packet_id) {
+    throw fail("mandate_derived_scope_invalid", "mandate-derived authority is limited to an attributed, recoverable workspace write");
+  }
+  return createStoredGrant({
+    principal: auth_context.principal_ref,
+    action_class,
+    target,
+    payload,
+    authority_origin: "mandate_derived",
+    actor: auth_context.actor,
+    mandate_ref,
+    budget_reservation_id,
+    account_id,
+    treatment_id,
+    recovery_ref,
+    expose_packet_id,
+    material_parameters: { scope: "configured_agent_jhn_workspace", recovery_verified: true },
+    expires_in_ms,
+    single_use: true,
+  });
 }
 
 export function resetAuthorizationStore() {
@@ -416,9 +445,11 @@ export function validateSideEffectAuthorization(authorization, expected = {}) {
     throw fail("explicit_send_exception_required",
       "draft only: no independently verified, act-specific Principal approval path is available");
   }
-  if (authorization.authority_origin === "mandate_derived") {
-    throw fail("mandate_derived_verifier_unavailable",
-      "mandate-derived grants cannot be validated without trusted adapter-side evidence");
+  if (authorization.authority_origin === "mandate_derived"
+      && (authorization.action_class !== "host.fs.write"
+        || authorization.target?.node !== "node:agent-jhn-workspace"
+        || !authorization.recovery_ref || !authorization.budget_reservation_id)) {
+    throw fail("mandate_derived_scope_invalid", "stored mandate-derived grant is outside the workspace write scope");
   }
   if (expected.action_class && authorization.action_class !== expected.action_class) {
     throw fail(

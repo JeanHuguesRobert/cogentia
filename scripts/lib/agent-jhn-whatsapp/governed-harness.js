@@ -20,7 +20,7 @@ export const AGENT_STEP_PROTOCOL = "cogentia.agent_step/v1";
 export const STEP_RESULT_PROTOCOL = "cogentia.step_result/v1";
 export { REQUIRED_EVENT_POLICY, requiredEventsForTurn } from "../required-events.js";
 
-const RISKS = new Set(["read_only", "external_write"]);
+const RISKS = new Set(["read_only", "internal_recoverable", "external_write"]);
 const KINDS = new Set(["tool", "skill", "mcp", "model"]);
 const STEP_KINDS = new Set(["reason", "capability_call", "answer", "clarify", "stop"]);
 
@@ -54,6 +54,7 @@ export function createGovernedHarness(options = {}) {
       const bounds = {
         maxSteps: boundedInteger(limits.maxSteps, 4, 1, 12),
         maxCapabilityCalls: boundedInteger(limits.maxCapabilityCalls, 3, 0, 10),
+        maxInternalEffects: boundedInteger(limits.maxInternalEffects, 0, 0, 10),
         maxElapsedMs: boundedInteger(limits.maxElapsedMs, 15000, 100, 120000),
         maxCostUnits: boundedInteger(limits.maxCostUnits, 10, 0, 1000),
       };
@@ -72,6 +73,7 @@ export function createGovernedHarness(options = {}) {
         sequence: typeof init.sequence === "number" ? init.sequence : 0,
         requiredEventCount: typeof init.requiredEventCount === "number" ? init.requiredEventCount : (init.requiredEventReceipts ? init.requiredEventReceipts.length : 0),
         capabilityCalls: typeof init.capabilityCalls === "number" ? init.capabilityCalls : 0,
+        internalEffects: typeof init.internalEffects === "number" ? init.internalEffects : 0,
         costUnits: typeof init.costUnits === "number" ? init.costUnits : 0,
       };
 
@@ -263,6 +265,7 @@ function snapshot(state, registry, bounds) {
     sharedEvidence: (state.sharedEvidence || []).slice(),
     nextSequence: state.sequence,
     capabilityCalls: state.capabilityCalls,
+    internalEffects: state.internalEffects,
     costUnits: state.costUnits,
     requiredEventCount: state.requiredEventCount || 0,
     capabilities: registry.list(),
@@ -276,7 +279,7 @@ function terminal(ok, stopReason, answer, state, startedAt, clock, extra = {}) {
     ok, answer, stopReason, observations: state.observations, steps: state.steps,
     stepCount: state.sequence, requiredEventCount: state.requiredEventCount || 0,
     requiredEventReceipts: state.requiredEventReceipts || [],
-    capabilityCalls: state.capabilityCalls, costUnits: state.costUnits,
+    capabilityCalls: state.capabilityCalls, internalEffects: state.internalEffects, costUnits: state.costUnits,
     latencyMs: clock() - startedAt, ...extra,
   };
 }
@@ -295,6 +298,9 @@ async function governedInvokeCapability({
   }
   if (state.capabilityCalls >= bounds.maxCapabilityCalls) {
     return { status: "budget", reason: "capability_call_budget" };
+  }
+  if (capability.risk === "internal_recoverable" && state.internalEffects >= bounds.maxInternalEffects) {
+    return { status: "budget", reason: "internal_effect_budget" };
   }
   if (state.costUnits + capability.costUnits > bounds.maxCostUnits) {
     return { status: "budget", reason: "cost_budget" };
@@ -315,6 +321,7 @@ async function governedInvokeCapability({
     }
   }
   state.capabilityCalls += 1;
+  if (capability.risk === "internal_recoverable") state.internalEffects += 1;
   state.costUnits += capability.costUnits;
   const callStartedAt = clock();
   try {
@@ -443,12 +450,36 @@ function observationForReasoner(observation, registry) {
   };
 }
 function summarizeCapabilityObservation(observation) {
+  const value = observation?.ok && observation.value && typeof observation.value === "object"
+    ? observation.value
+    : {};
+  const receipt = value.effect_receipt && typeof value.effect_receipt === "object"
+    ? Object.fromEntries(["transport", "id", "sha", "operation", "ok", "status"]
+      .filter((key) => value.effect_receipt[key] != null)
+      .map((key) => [key, value.effect_receipt[key]]))
+    : null;
   return {
     type: "capability_result",
     capability: safeName(observation?.capability),
     ok: Boolean(observation?.ok),
+    authorization_id: safeName(value.authorization_id),
+    accounting_complete: typeof value.accounting_complete === "boolean" ? value.accounting_complete : null,
+    effect_receipt: receipt,
+    cop_spend: value.cop_spend && typeof value.cop_spend === "object"
+      ? {
+        ok: value.cop_spend.ok === true,
+        durable: value.cop_spend.durable === true,
+        reason: safeName(value.cop_spend.reason),
+        packet_id: safePacketRef(value.cop_spend.packet_id),
+        spend_id: safeName(value.cop_spend.spend_id),
+      }
+      : null,
     error: observation?.ok ? undefined : observation?.error,
   };
+}
+function safePacketRef(value) {
+  const ref = String(value || "");
+  return /^urn:cop:packet:[A-Za-z0-9._:-]{1,180}$/.test(ref) ? ref : null;
 }
 function boundedInteger(value, fallback, minimum, maximum) {
   const number = Number(value);

@@ -1,6 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { assessPresumedEffect, mintMandateDerivedGrant, grantSideEffectAuthorization, canonicalPayloadHash, resetAuthorizationStore, executeAuthorizedEffect } from "./side-effect-authorization.js";
+import { assessPresumedEffect, mintMandateDerivedGrant, grantSideEffectAuthorization, canonicalPayloadHash, resetAuthorizationStore, executeAuthorizedEffect, validateSideEffectAuthorization } from "./side-effect-authorization.js";
+import { resolveCallerAuth } from "./cogentia-mcp-auth.js";
 
 const safe = {
   action_class: "git.commit",
@@ -43,6 +44,40 @@ test("caller-supplied mandate and recovery evidence cannot mint a grant", () => 
       recovery_ref: "snapshot:isolated-test", policy_evidence: { ...safe },
     }), (e) => e.error_class === "mandate_derived_verifier_unavailable");
   }
+});
+test("resolved JHN authority can mint only the attributed workspace write grant", () => {
+  resetAuthorizationStore();
+  const auth = resolveCallerAuth({
+    COGENTIA_MCP_JHN_MUTATE: "1",
+    COGENTIA_MCP_JHN_TOKEN: "test-token",
+  }, {
+    meta: { "cogentia.actor": "agent:jhn", "cogentia.mandate_ref": "mandate:test" },
+    headers: { authorization: "Bearer test-token" },
+  });
+  const target = { node: "node:agent-jhn-workspace", path: "/tmp/assigned/notes.txt" };
+  const payload = { capability: "host.fs.write", path: target.path, content_sha256: "sha256:content" };
+  const grant = mintMandateDerivedGrant({
+    auth_context: auth,
+    action_class: "host.fs.write",
+    target,
+    payload,
+    mandate_ref: auth.mandate_ref,
+    budget_reservation_id: "budget:test",
+    recovery_ref: "git-worktree:agent-jhn:test.txt:sha256:old",
+    expose_packet_id: "urn:cop:packet:expose:test",
+  });
+  assert.equal(grant.authority_origin, "mandate_derived");
+  assert.equal(validateSideEffectAuthorization(grant, { action_class: "host.fs.write", target, payload }).ok, true);
+  assert.throws(() => mintMandateDerivedGrant({
+    auth_context: { ...auth }, action_class: "host.fs.write", target, payload,
+    mandate_ref: auth.mandate_ref, budget_reservation_id: "budget:test",
+    recovery_ref: "git-worktree:agent-jhn:test.txt:old", expose_packet_id: "expose:test",
+  }), (error) => error.error_class === "mandate_derived_verifier_unavailable");
+  assert.throws(() => mintMandateDerivedGrant({
+    auth_context: auth, action_class: "git.push", target, payload,
+    mandate_ref: auth.mandate_ref, budget_reservation_id: "budget:test",
+    recovery_ref: "git-worktree:agent-jhn:test.txt:old", expose_packet_id: "expose:test",
+  }), (error) => error.error_class === "mandate_derived_scope_invalid");
 });
 test("mandate-derived grant minting fails closed for every action until trusted verification exists", () => {
   resetAuthorizationStore();

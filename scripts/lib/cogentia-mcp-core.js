@@ -5,9 +5,10 @@ import {
   wrapToolError,
   ENVELOPE_KIND,
 } from "./cogentia-mcp-envelope.js";
-import { resolveCallerAuth, deriveLockers } from "./cogentia-mcp-auth.js";
+import { resolveCallerAuth, deriveLockers, isResolvedCallerAuth } from "./cogentia-mcp-auth.js";
 import { compareMandateAttenuation } from "./mandate-attenuation.js";
 import { runJohnRequest } from "./john-run.js";
+import { createAgentJhnWorkspaceCapabilities } from "./agent-jhn-workspace.js";
 import { auditCapabilitySymmetry } from "./symmetry-audit.js";
 import { listPatterns, getPattern } from "./cogentia-patterns.js";
 import { createHostCapabilityRouter } from "./host-capability-router.js";
@@ -1777,7 +1778,64 @@ export function createMcpCore(env = process.env, extras = {}) {
             ithaca: args.ithaca || undefined,
           };
         }
-        const events = await runJohnRequest(req);
+        const workspaceRoot = String(env.COGENTIA_JHN_WORKSPACE_WRITE_ROOT || "").trim();
+        const workspaceBranch = String(env.COGENTIA_JHN_WORKSPACE_WRITE_BRANCH || "").trim();
+        const writeEnabled = /^(1|true|yes)$/i.test(String(env.COGENTIA_JHN_WORKSPACE_WRITE_ENABLED || ""));
+        const configuredMandate = String(env.COGENTIA_JHN_WORKSPACE_WRITE_MANDATE || "").trim();
+        const configuredBudget = String(env.COGENTIA_JHN_WORKSPACE_WRITE_BUDGET_ID || "").trim();
+        const workspaceConfigured = Boolean(workspaceRoot && workspaceBranch);
+        const serverModelReady = req.handler?.kind === "model"
+          && Boolean(env.OPENAI_API_KEY || process.env.OPENAI_API_KEY);
+        if (req.handler?.options && Object.prototype.hasOwnProperty.call(req.handler.options, "api_key")) {
+          const { api_key: _discardedApiKey, ...safeOptions } = req.handler.options;
+          req.handler.options = safeOptions;
+        }
+        const trustedJhn = isResolvedCallerAuth(callOpts.auth)
+          && callOpts.auth.auth === "jhn" && callOpts.auth.allowMutate === true;
+        const writeAuthorized = writeEnabled && workspaceConfigured && trustedJhn
+          && configuredMandate && callOpts.auth.mandate_ref === configuredMandate
+          && configuredBudget && serverModelReady;
+        const workspaceCapabilities = workspaceConfigured && trustedJhn
+          ? createAgentJhnWorkspaceCapabilities({
+            root: workspaceRoot,
+            branch: workspaceBranch,
+            authContext: callOpts.auth,
+            budget_reservation_id: configuredBudget || undefined,
+            account_id: env.COGENTIA_JHN_WORKSPACE_WRITE_ACCOUNT_ID || null,
+            treatment_id: env.COGENTIA_JHN_WORKSPACE_WRITE_TREATMENT_ID || null,
+          }).filter((capability) => capability.name === "workspace.read" || writeAuthorized)
+          : [];
+        const serverAllowedCapabilities = workspaceCapabilities
+          .filter((capability) => capability.name === "workspace.read" || writeAuthorized)
+          .map((capability) => capability.name);
+        const scopedCapabilities = workspaceCapabilities
+          .filter((capability) => capability.name === "workspace.read" || writeAuthorized);
+        const requestedWorkspaceCapabilities = Array.isArray(req.handler.allowed_capabilities)
+          ? req.handler.allowed_capabilities
+          : serverAllowedCapabilities;
+        if (writeAuthorized) {
+          req.principal = { id: callOpts.auth.principal_ref };
+          req.mandate = { ...req.mandate, id: configuredMandate };
+          req.budget = { id: configuredBudget };
+          req.exposure = "bounded";
+          const configuredMaxEffects = Number(env.COGENTIA_JHN_WORKSPACE_WRITE_MAX_EFFECTS || 3);
+          const requestedMaxEffects = req.execution_budget.max_internal_effects;
+          req.execution_budget.max_internal_effects = Math.min(
+            Number.isInteger(requestedMaxEffects) ? Math.max(0, Math.min(10, requestedMaxEffects)) : 3,
+            Number.isInteger(configuredMaxEffects) ? Math.max(0, Math.min(10, configuredMaxEffects)) : 3,
+          );
+          req.handler.allowed_capabilities = requestedWorkspaceCapabilities
+            .filter((name) => serverAllowedCapabilities.includes(name));
+        } else if (workspaceConfigured) {
+          req.handler.allowed_capabilities = requestedWorkspaceCapabilities
+            .filter((name) => name === "workspace.read" && serverAllowedCapabilities.includes(name));
+        }
+        const events = await runJohnRequest(req, {
+          env,
+          capabilities: scopedCapabilities,
+          allowedCapabilities: serverAllowedCapabilities,
+          maxInternalEffects: writeAuthorized ? req.execution_budget.max_internal_effects : 0,
+        });
         const completed = events.find((e) => e.type === "john.run.completed");
         const failed = events.find((e) => e.type === "john.run.failed");
         const settled = events.find((e) => e.type === "john.accounting.settled");
