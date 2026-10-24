@@ -190,6 +190,14 @@ Temperature is not moral value. It is operational status.
 
 ---
 
+### Evaporation and glacial preservation (FractaCache relation)
+
+Stigmergic evaporation reduces the operational salience of traces that are no longer reinforced; it need not delete their historical content. **Glacial** adds a low-activation/offline retention possibility beyond ordinary cold retrieval, without replacing **Frozen**, which signifies preservation restrictions rather than temperature. Cooling, projection eviction, archiving, evidence retention, rehydration and authorized erasure are separate operations. A dormant trace may become hot again following justified recall without promoting its authority.
+
+For the situated materialization rule and the prohibition on confusing cache eviction with source destruction, see [FractaCache](locality_principle.md#121-fractacache--situated-materialization-candidate). This is a conceptual extension, not a claim that an automatic multi-agent evaporation engine is deployed.
+
+---
+
 ## 4. Ephemeral memory is not a defect
 
 Some memory should be ephemeral:
