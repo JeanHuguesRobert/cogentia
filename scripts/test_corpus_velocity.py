@@ -81,6 +81,7 @@ class CoverageTests(unittest.TestCase):
             self.assertEqual(len(result["registry_sha256"]), 64)
             self.assertEqual(result["record_count"], 4)
             self.assertEqual(result["status_counts"], {"missing": 2, "excluded": 2})
+            self.assertNotIn(b"\r\n", (out / "corpus-velocity.csv").read_bytes())
             self.assertEqual(len(rows), 4)
             self.assertEqual({r["period"] for r in rows}, {"2025-10", "2025-11"})
             self.assertEqual(sorted(r["status"] for r in rows),

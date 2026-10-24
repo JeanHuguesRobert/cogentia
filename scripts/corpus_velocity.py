@@ -145,7 +145,7 @@ def main():
               "code_bytes", "markdown_files", "derived_markdown_files", "test_files",
               "excluded_files", "partial", "reason"]
     with (out / "corpus-velocity.csv").open("w", newline="") as f:
-        writer = csv.DictWriter(f, fieldnames=fields, extrasaction="ignore")
+        writer = csv.DictWriter(f, fieldnames=fields, extrasaction="ignore", lineterminator="\n")
         writer.writeheader()
         writer.writerows(rows)
     print(f"Wrote {len(rows)} records; complete data only for available public clones.")
