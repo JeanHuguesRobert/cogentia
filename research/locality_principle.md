@@ -600,6 +600,34 @@ warming → pay justified activation cost
 
 The relevant objective is **minimize total lifecycle cost subject to recoverability, required access guarantees and locality/authority constraints**. Reinforcement can reheat a glacial trace when warranted; cooling must retain a discoverable recovery path whenever preservation is required. Access effort may include latency, compute, energy, network transfer, human attention and external/archive-handling costs; these dimensions should be measured separately rather than hidden inside a single scalar.
 
+### Informational viscosity — expected rate of knowledge change (candidate)
+
+**Informational viscosity** is a provisional measure of how resistant a knowledge claim is to *actual change in its referent or applicability over time*, relative to its domain and context. **Low viscosity** describes rapidly changing or *liquid* information; **high viscosity** describes information expected to remain stable or *solid* over longer periods. This is an analogy and a research hypothesis, not a measured universal physical constant.
+
+Distinguish four independent qualities:
+
+- **Temperature:** situated availability, salience and activation/rehydration effort.
+- **Viscosity:** anticipated rate of change of the subject matter and conditions of validity.
+- **Epistemic confidence:** evidential support for a particular claim, at a specified time.
+- **Informational gravity:** contextual attraction of a mobilizable capacity for a packet, as defined in [Informational Gravity](informational_gravity.md). Gravity is not automatically viscosity or truth.
+
+A long-cold but high-viscosity claim may require relatively inexpensive present-time corroboration. A recently captured low-viscosity fact may already require fresh observation. Strong persistence of *belief* or institutional inertia is not proof that the belief's *referent* is stable: distinguish **world-change viscosity** from **correction/institutional friction** in experiments.
+
+For a claim `k` and present use `q`, a policy may estimate:
+
+~~~text
+revalidation_need(k, q)
+  ← elapsed time
+  + observed/domain-specific change rate (inverse-viscosity proxy)
+  + known intervening events and contradictions
+  + uncertainty and evidence quality
+  + consequences of relying on the claim
+~~~
+
+This is a qualitative dependency model, **not an additive numerical formula** or permission to assume independent factors. Even apparently solid claims must be checked against known corrections and supersession; mutable legal status, authorizations, contact details or safety-critical conditions require current control regardless of an assigned viscosity. Immutable *historical events* and revisable *interpretations of those events* may have different viscosities.
+
+Candidate Reality Test: sample time-stamped claims across domains with different observed change frequencies, compare viscosity-aware revalidation policies with fixed TTL and always-refresh baselines, and measure obsolete claims accepted, valid claims unnecessarily refreshed, effort, and consequence-weighted errors. Do not create an independent FractaX component before this discrimination is established.
+
 ### Revalidation on reactivation: historical truth is not current validity
 
 A stored trace can be faithful evidence of **what was known, asserted, authorized or observed at its historical time** without remaining true, applicable or actionable now. Warming a cold or glacial memory therefore requires an *as-of-now validity check appropriate to its intended use*, not merely successful byte restoration.
