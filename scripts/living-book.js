@@ -109,8 +109,8 @@ async function main() {
       } else {
         console.log(formatInspectReport(report));
       }
-      if (report.summary.failed > 0) {
-        process.exit(1);
+      if (!report.manifest_valid || report.summary.failed > 0) {
+        process.exitCode = 1;
       }
     } else if (command === 'scaffold') {
       const manifestPath = positional[1];
