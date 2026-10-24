@@ -497,3 +497,46 @@ Or, more operationally:
 
 See [Locality Principle — Informational viscosity](locality_principle.md#informational-viscosity--expected-rate-of-knowledge-change-candidate) for the candidate definition, distinctions from temperature and confidence, and its testable consequence for FractaCache revalidation. The human-validated v1.0 model above is not revised by this cross-reference.
 
+## Metaphorical mechanics — generative research agenda (2026-10-24)
+
+**Epistemic status: exploratory analogy, not a physical theory or a revised gravity law.** The established, human-validated informational-gravity definition remains the contextual attraction of a mobilizable capacity for a Cognitive Packet. Importing neighboring physical concepts can generate *testable questions*; it does not transfer physical equations or imply universal measurement units.
+
+| Metaphor | Distinct candidate interpretation | Discriminating question |
+|---|---|---|
+| Viscosity | Expected resistance of a claim's referent/applicability to change; not resistance to correcting a belief | Does change-rate-aware revalidation beat fixed TTL? |
+| Inertia | Persistence of an agent's chosen trajectory despite changed input | Does a change-sensitive router escape obsolete plans? |
+| Friction | Boundary-crossing effort: conversion, review, latency, attention | Does explicit friction accounting improve placement? |
+| Pressure | Accumulated unmet needs or contradictions | Does measured pressure predict useful consolidation or escalation? |
+| Diffusion | Selective spread of validated findings across localities | Is bounded propagation better than broadcasting? |
+| Conductivity / permeability | Capacity of a medium or governed boundary to convey admissible knowledge | Which barriers protect privacy without excessive siloing? |
+| Surface tension | Resistance at a domain/community interface | When does boundary cohesion impede necessary correction? |
+| Elasticity / plasticity | Reversible adaptation versus lasting learning | Does a changed behavior survive cold-handler substitution? |
+| Hysteresis | Present state depends on past correction/decision trajectory | Does retaining correction history outperform last-state-only memory? |
+| Entropy | Precisely specified uncertainty or dispersion, not a synonym for disorder | Can a defined entropy estimate predict retrieval difficulty? |
+| Metastability / phase transition | Prolonged local stability then qualitative reorganization | Can a threshold be identified without post-hoc storytelling? |
+| Crystallization | Consolidation of dispersed traces into structured reusable knowledge | Can validation prevent repeated errors becoming doctrine? |
+| Resonance | Selective amplification from alignment of signals and contextual structures | Does amplification improve recall without echo-chamber effects? |
+
+**Do not collapse the variables.** Temperature concerns activation/access effort; viscosity concerns expected change of the referent; inertia concerns persistence of a trajectory; hysteresis concerns path dependence; epistemic confidence concerns evidence; governance defines what is admissible. Stable beliefs may be false; repeated traces may crystallize an error; stronger attraction is not greater truth.
+
+Prefer initial reality tests of **hysteresis, metastability and crystallization** alongside the existing FractaCache viscosity test. For each metaphor, require a specified observed phenomenon, a simpler baseline, falsifying outcomes, measurable costs and explicit domain limitations. Reuse FractaMemory, FractaCognition, Sleep Cycle, COP and Locality before naming another component.
+
+### Next metaphorical source: evolutionary theory
+
+**Research program, not a claim that software or culture undergo biological evolution.** Compare Darwinian descent with modification and natural selection, the modern synthesis (mutation/recombination, inheritance, selection, drift, gene flow), population genetics, ecological interactions, developmental constraints and multilevel selection with observable packet/agent/corpus dynamics.
+
+Provisional correspondences to test:
+
+- *Variation*: competing packet strategies, candidate heuristics, alternative projections and forks, under finite budgets.
+- *Inheritance*: what a successor agent can actually reproduce from durable, attributable traces rather than a predecessor's hidden session.
+- *Selection*: reality-tested outcomes and authorized policy filters; do not confuse popularity or propagation frequency with fitness, truth or desirability.
+- *Drift*: stochastic adoption/forgetting unrelated to demonstrated utility; explicitly test against selection claims.
+- *Ecology and niche*: local task context and available resources change which capacities are useful.
+- *Coevolution*: agents, tools, protocols and corpus instructions adapt in response to each other, risking self-reinforcing errors.
+- *Extinction and refugia*: abandoned ideas can lose activation yet persist in glacial archives for later reassessment.
+- *Exaptation*: an existing ability or artifact finds a new use without implying that it was originally designed for it.
+
+**Necessary boundaries:** biological reproduction and genetic heredity are not identical to copying code or retraining a model; human goals and governance add deliberate selection; Lamarckian inheritance of acquired modifications may describe software practices better than biological inheritance; harmful replicators can spread efficiently. Treat evolutionary vocabulary as a comparison framework, not a normative imperative. First Reality Test: compare a versioned pool of bounded heuristics with and without variation, held-out evaluation, explicit provenance, human-governed selection, and rollback; measure task success, diversity, regression and capture while keeping unchanged task budgets.
+
+Cross-links: [FractaXXXX](fractaxxxx.md), [Locality Principle / FractaCache](locality_principle.md), [Corpus Sleep Cycle](memory_and_corpus_sleep_cycle.md), [FractaCognition](fractacognition_principles.md).
+
