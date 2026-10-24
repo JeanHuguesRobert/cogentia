@@ -1,0 +1,96 @@
+{
+  "schema_version": 1,
+  "scope": "Public starter inventory: NOT a complete Corpus registry; expand from Cogentia registry with consent",
+  "repos": [
+    {
+      "name": "JeanHuguesRobert/JeanHuguesRobert",
+      "visibility": "public",
+      "include": true,
+      "path": "JeanHuguesRobert"
+    },
+    {
+      "name": "JeanHuguesRobert/barons-Mariani",
+      "visibility": "public",
+      "include": true,
+      "path": "barons-Mariani"
+    },
+    {
+      "name": "JeanHuguesRobert/marenostrum",
+      "visibility": "public",
+      "include": true,
+      "path": "marenostrum"
+    },
+    {
+      "name": "JeanHuguesRobert/FractaVolta",
+      "visibility": "public",
+      "include": true,
+      "path": "FractaVolta"
+    },
+    {
+      "name": "JeanHuguesRobert/cogentia",
+      "visibility": "public",
+      "include": true,
+      "path": "cogentia"
+    },
+    {
+      "name": "JeanHuguesRobert/inseme",
+      "visibility": "public",
+      "include": true,
+      "path": "inseme"
+    },
+    {
+      "name": "JeanHuguesRobert/Inox",
+      "visibility": "public",
+      "include": true,
+      "path": "Inox"
+    },
+    {
+      "name": "JeanHuguesRobert/ubikia",
+      "visibility": "public",
+      "include": true,
+      "path": "ubikia"
+    },
+    {
+      "name": "JeanHuguesRobert/survey",
+      "visibility": "public",
+      "include": true,
+      "path": "survey"
+    },
+    {
+      "name": "JeanHuguesRobert/StructEnv",
+      "visibility": "public",
+      "include": true,
+      "path": "StructEnv"
+    },
+    {
+      "name": "JeanHuguesRobert/operium",
+      "visibility": "public",
+      "include": true,
+      "path": "operium"
+    },
+    {
+      "name": "JeanHuguesRobert/Serra",
+      "visibility": "public",
+      "include": true,
+      "path": "Serra"
+    },
+    {
+      "name": "acorsica/gouvernance",
+      "visibility": "public",
+      "include": true,
+      "path": "gouvernance"
+    },
+    {
+      "name": "acorsica/privai",
+      "visibility": "public",
+      "include": true,
+      "path": "privai"
+    },
+    {
+      "name": "acorsica/Kudos",
+      "visibility": "public",
+      "include": true,
+      "path": "Kudos"
+    }
+  ]
+}
