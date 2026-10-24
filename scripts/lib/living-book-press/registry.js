@@ -1,157 +1,163 @@
 /**
- * In-memory and file-backed collision-safe atomic registry for Living Book Press copies.
- * Conforms to the Packet-Backed Projection pattern.
+ * Transactional Living Book registry (Node 24 node:sqlite).
+ * Single-host local filesystem only; remote/shared filesystem is unsupported.
+ * The SQLite transaction owns allocation, lifecycle and biography changes.
  */
-
 import fs from 'node:fs';
 import path from 'node:path';
+import { DatabaseSync } from 'node:sqlite';
 
 export class LivingBookRegistry {
   constructor(options = {}) {
     this.storageDir = options.storageDir || null;
-    this.records = new Map(); // copy_id -> record
-    this.counters = new Map(); // book_id:edition_id -> number
-    this._load();
-  }
-
-  _getStoragePath(bookId) {
-    if (!this.storageDir) return null;
-    return path.join(this.storageDir, `press-registry-${bookId}.json`);
-  }
-
-  _load() {
-    if (!this.storageDir || !fs.existsSync(this.storageDir)) return;
-    try {
-      const files = fs.readdirSync(this.storageDir).filter(f => f.startsWith('press-registry-') && f.endsWith('.json'));
-      for (const f of files) {
-        const fullPath = path.join(this.storageDir, f);
-        const data = JSON.parse(fs.readFileSync(fullPath, 'utf8'));
-        if (Array.isArray(data.records)) {
-          for (const rec of data.records) {
-            this.records.set(rec.copy_id, rec);
-            const key = `${rec.book_id}:${rec.edition_id}`;
-            const parts = rec.copy_id.split('-C');
-            if (parts.length === 2) {
-              const num = parseInt(parts[1], 10);
-              const cur = this.counters.get(key) || 0;
-              if (num > cur) this.counters.set(key, num);
-            }
-          }
-        }
+    if (this.storageDir) {
+      fs.mkdirSync(this.storageDir, { recursive: true });
+      // Existing JSON registries need a reviewed one-time migration. Never reset counters silently.
+      if (fs.readdirSync(this.storageDir).some(name => /^press-registry-.*\.json$/.test(name))) {
+        throw new Error('Legacy JSON registry detected: migration required before transactional issuance');
       }
-    } catch (e) {
-      // Ignore load error in fallback
     }
+    this.db = new DatabaseSync(this.storageDir ? path.join(this.storageDir, 'living-book-press.sqlite') : ':memory:');
+    this.db.exec('PRAGMA busy_timeout = 5000');
+    this.db.exec('PRAGMA synchronous = FULL');
+    if (this.storageDir) this.db.exec('PRAGMA journal_mode = WAL');
+    this.db.exec(`
+      CREATE TABLE IF NOT EXISTS copies (
+        copy_id TEXT PRIMARY KEY,
+        book_id TEXT NOT NULL,
+        edition_id TEXT NOT NULL,
+        record_json TEXT NOT NULL
+      );
+      CREATE INDEX IF NOT EXISTS copies_by_edition ON copies(book_id, edition_id);
+      CREATE TABLE IF NOT EXISTS counters (
+        book_id TEXT NOT NULL,
+        edition_id TEXT NOT NULL,
+        serial INTEGER NOT NULL,
+        PRIMARY KEY (book_id, edition_id)
+      );
+    `);
+    this._transactionDepth = 0;
   }
 
-  _persist(bookId) {
-    if (!this.storageDir) return;
+  _transaction(fn) {
+    if (this._transactionDepth) return fn();
+    this.db.exec('BEGIN IMMEDIATE');
+    this._transactionDepth++;
     try {
-      if (!fs.existsSync(this.storageDir)) {
-        fs.mkdirSync(this.storageDir, { recursive: true });
-      }
-      const outPath = this._getStoragePath(bookId);
-      const bookRecords = Array.from(this.records.values()).filter(r => r.book_id === bookId);
-      fs.writeFileSync(outPath, JSON.stringify({ book_id: bookId, updated_at: new Date().toISOString(), records: bookRecords }, null, 2), 'utf8');
-    } catch (e) {
-      // Fallback
+      const result = fn();
+      this.db.exec('COMMIT');
+      return result;
+    } catch (error) {
+      try { this.db.exec('ROLLBACK'); } catch { /* preserve primary failure */ }
+      throw error;
+    } finally { this._transactionDepth--; }
+  }
+
+  _allocateCopyId(bookId, editionId, prefix = 'BK') {
+    if (!this._transactionDepth) throw new Error('Copy allocation requires a transaction');
+    const key = { bookId, editionId };
+    this.db.prepare(`INSERT INTO counters(book_id, edition_id, serial)
+      VALUES (?, ?, 1) ON CONFLICT(book_id, edition_id)
+      DO UPDATE SET serial = serial + 1`).run(key.bookId, key.editionId);
+    const serial = this.db.prepare('SELECT serial FROM counters WHERE book_id=? AND edition_id=?')
+      .get(bookId, editionId).serial;
+    const match = editionId.match(/(\d{4})[-_]?(\d{2})[-_]?(\d{2})/);
+    const dateStr = match ? `${match[1]}${match[2]}${match[3]}` : 'GENERIC';
+    return `${prefix.toUpperCase()}-${dateStr}-C${String(serial).padStart(4, '0')}`;
+  }
+
+  allocateCopyId() {
+    throw new Error('Use reserveCopy: allocation must be committed with a RESERVED record');
+  }
+
+  _saveRecord(record, existing = false) {
+    if (!record?.copy_id || !record?.book_id || !record?.edition_id) throw new Error('Incomplete registry record');
+    const serialized = JSON.stringify(record);
+    if (existing) {
+      const current = this.getRecord(record.copy_id);
+      if (!current) throw new Error('Cannot update unknown copy');
+      if (current.book_id !== record.book_id || current.edition_id !== record.edition_id)
+        throw new Error('Cannot change copy identity');
+      this.db.prepare('UPDATE copies SET record_json=? WHERE copy_id=?')
+        .run(serialized, record.copy_id);
+    } else {
+      this.db.prepare('INSERT INTO copies(copy_id, book_id, edition_id, record_json) VALUES (?, ?, ?, ?)')
+        .run(record.copy_id, record.book_id, record.edition_id, serialized);
     }
+    return record;
   }
 
-  /**
-   * Atomically allocates a new collision-safe copy_id for a given book and edition.
-   */
-  allocateCopyId(bookId, editionId, prefix = 'BK') {
-    const key = `${bookId}:${editionId}`;
-    const nextNum = (this.counters.get(key) || 0) + 1;
-    this.counters.set(key, nextNum);
-
-    // Extract clean date from editionId (e.g. "2026-09-17-anniversaire" -> "20260917")
-    const dateMatch = editionId.match(/(\d{4})[-_]?(\d{2})[-_]?(\d{2})/);
-    const dateStr = dateMatch ? `${dateMatch[1]}${dateMatch[2]}${dateMatch[3]}` : 'GENERIC';
-    const numStr = String(nextNum).padStart(4, '0');
-
-    return `${prefix.toUpperCase()}-${dateStr}-C${numStr}`;
-  }
-
-  /**
-   * Saves or updates a copy record atomically.
-   */
-  saveRecord(record) {
-    if (!record || !record.copy_id) {
-      throw new Error('Invalid record: missing copy_id');
-    }
-    this.records.set(record.copy_id, { ...record });
-    this._persist(record.book_id);
-    return this.records.get(record.copy_id);
-  }
-
-  /**
-   * Retrieves a copy record by copy_id.
-   */
-  getRecord(copyId) {
-    return this.records.get(copyId) || null;
-  }
-
-  /**
-   * Lists records with optional filtering.
-   */
-  listRecords(filter = {}) {
-    let list = Array.from(this.records.values());
-    if (filter.bookId) list = list.filter(r => r.book_id === filter.bookId);
-    if (filter.editionId) list = list.filter(r => r.edition_id === filter.editionId);
-    if (filter.status) list = list.filter(r => r.status === filter.status);
-    if (filter.singularization) list = list.filter(r => r.singularization === filter.singularization);
-    return list;
-  }
-
-  /**
-   * Updates status of an existing copy record.
-   */
-  updateStatus(copyId, newStatus, extra = {}) {
-    const rec = this.getRecord(copyId);
-    if (!rec) throw new Error(`Copy not found: ${copyId}`);
-    rec.status = newStatus;
-    Object.assign(rec, extra);
-    this.records.set(copyId, rec);
-    this._persist(rec.book_id);
-    return rec;
-  }
-
-  /**
-   * Appends an event to the biography of a copy.
-   */
-  addBiographyEvent(copyId, event) {
-    const rec = this.getRecord(copyId);
-    if (!rec) throw new Error(`Copy not found: ${copyId}`);
-    if (!rec.biography) rec.biography = {};
-    if (!Array.isArray(rec.biography.events)) rec.biography.events = [];
-    rec.biography.events.push({
-      ...event,
-      timestamp: event.timestamp || new Date().toISOString()
+  reserveCopy(buildRecord) {
+    return this._transaction(() => {
+      let called = false;
+      const record = buildRecord((bookId, editionId, prefix) => {
+        if (called) throw new Error('Only one copy allocation per reservation');
+        called = true;
+        return this._allocateCopyId(bookId, editionId, prefix);
+      });
+      if (!called || !record?.copy_id || record.status !== 'RESERVED')
+        throw new Error('Invalid reservation');
+      return this._saveRecord(record);
     });
-    this.records.set(copyId, rec);
-    this._persist(rec.book_id);
-    return rec;
   }
 
-  /**
-   * Exports an audit summary for a given book or all books.
-   */
+  saveRecord(record) {
+    return this._transaction(() => this._saveRecord(record, Boolean(this.getRecord(record.copy_id))));
+  }
+
+  updateRecord(copyId, updater) {
+    return this._transaction(() => {
+      const old = this.getRecord(copyId);
+      if (!old) throw new Error(`Copy not found: ${copyId}`);
+      const next = updater(structuredClone(old));
+      if (!next || next.copy_id !== copyId || next.book_id !== old.book_id || next.edition_id !== old.edition_id)
+        throw new Error('Cannot change copy identity');
+      return this._saveRecord(next, true);
+    });
+  }
+
+  getRecord(copyId) {
+    const row = this.db.prepare('SELECT record_json FROM copies WHERE copy_id=?').get(copyId);
+    return row ? JSON.parse(row.record_json) : null;
+  }
+
+  listRecords(filter = {}) {
+    const where = [], args = [];
+    for (const [field, value] of [['bookId', filter.bookId], ['editionId', filter.editionId]]) {
+      if (value !== undefined) { where.push((field === 'bookId' ? 'book_id' : 'edition_id') + '=?'); args.push(value); }
+    }
+    const sql = 'SELECT record_json FROM copies' + (where.length ? ' WHERE ' + where.join(' AND ') : '');
+    let records = this.db.prepare(sql).all(...args).map(row => JSON.parse(row.record_json));
+    if (filter.status) records = records.filter(r => r.status === filter.status);
+    if (filter.singularization) records = records.filter(r => r.singularization === filter.singularization);
+    return records;
+  }
+
+  updateStatus(copyId, newStatus, extra = {}) {
+    return this.updateRecord(copyId, record => ({...record, ...extra, status: newStatus}));
+  }
+
+  addBiographyEvent(copyId, event) {
+    return this.updateRecord(copyId, record => ({
+      ...record,
+      biography: {
+        ...(record.biography || {}),
+        events: [...(record.biography?.events || []),
+          { ...event, timestamp: event.timestamp || new Date().toISOString() }]
+      }
+    }));
+  }
+
   exportAudit(bookId = null) {
-    const list = this.listRecords(bookId ? { bookId } : {});
+    const list = this.listRecords(bookId ? {bookId} : {});
     return {
       exported_at: new Date().toISOString(),
       total_copies: list.length,
-      by_status: list.reduce((acc, r) => {
-        acc[r.status] = (acc[r.status] || 0) + 1;
-        return acc;
-      }, {}),
-      by_singularization: list.reduce((acc, r) => {
-        acc[r.singularization] = (acc[r.singularization] || 0) + 1;
-        return acc;
-      }, {}),
+      by_status: list.reduce((a, r) => (a[r.status] = (a[r.status] || 0) + 1, a), {}),
+      by_singularization: list.reduce((a, r) => (a[r.singularization] = (a[r.singularization] || 0) + 1, a), {}),
       records: list
     };
   }
+
+  close() { this.db.close(); }
 }
