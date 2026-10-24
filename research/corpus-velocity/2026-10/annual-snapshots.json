@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-10-24T18:01:50+00:00",
+  "generated_at": "2026-10-24T18:37:29+00:00",
   "snapshots": [
     "2022-10-24T17:40:04+00:00",
     "2023-10-24T17:40:04+00:00",
@@ -7,434 +7,457 @@
     "2025-10-24T17:40:04+00:00",
     "2026-10-24T17:40:04+00:00"
   ],
-  "registry_sha256": "ceeabdc4e99ea62d311ddf470bbdc395c2f684a4abb17ea5341e12b59a48360d",
+  "registry_sha256": "5b54d33242bb18c8316855fd1f73659470b493a70ec2dcb80705fd2ad1336784",
   "branch_policy": "main/master only; origin/HEAD when it resolves to main/master, otherwise origin/main, origin/master, local main, local master; first-parent snapshots; never use HEAD or side branches",
   "source": "existing local Git clones; no fetch performed",
-  "registered_repository_count": 17,
+  "registered_repository_count": 18,
   "row_status_counts": {
     "ok": 17
   },
   "snapshot_repository_counts": {
-    "2022-10-24T17:40:04+00:00": 2,
-    "2023-10-24T17:40:04+00:00": 3,
-    "2024-10-24T17:40:04+00:00": 3,
-    "2025-10-24T17:40:04+00:00": 7,
-    "2026-10-24T17:40:04+00:00": 17
+    "2022-10-24T17:40:04+00:00": 3,
+    "2023-10-24T17:40:04+00:00": 4,
+    "2024-10-24T17:40:04+00:00": 4,
+    "2025-10-24T17:40:04+00:00": 8,
+    "2026-10-24T17:40:04+00:00": 18
   },
   "fixed_registry_snapshots": [
     {
       "as_of": "2022-10-24T17:40:04+00:00",
-      "active_repository_count": 2,
+      "active_repository_count": 3,
       "totals": {
-        "blobs": 46,
-        "bytes": 1913566,
-        "code_files": 4,
-        "code_bytes": 197534,
-        "code_physical_lines": 7121,
-        "code_nonblank_lines": 5635,
-        "document_files": 11,
-        "document_bytes": 14770,
-        "text_document_files": 11,
-        "text_document_physical_lines": 332,
-        "text_document_nonblank_lines": 191,
-        "markdown_files": 11,
-        "markdown_bytes": 14770,
-        "markdown_physical_lines": 332,
-        "markdown_nonblank_lines": 191
-      }
+        "blobs": 91,
+        "bytes": 2377972,
+        "code_files": 37,
+        "code_bytes": 570239,
+        "code_physical_lines": 19802,
+        "code_nonblank_lines": 17246,
+        "document_files": 13,
+        "document_bytes": 87282,
+        "text_document_files": 13,
+        "text_document_physical_lines": 2520,
+        "text_document_nonblank_lines": 1698,
+        "markdown_files": 12,
+        "markdown_bytes": 35569,
+        "markdown_physical_lines": 793,
+        "markdown_nonblank_lines": 549
+      },
+      "unknown_historical_size_count": 0,
+      "unknown_historical_size_repositories": [],
+      "totals_status": "qualified"
     },
     {
       "as_of": "2023-10-24T17:40:04+00:00",
-      "active_repository_count": 3,
+      "active_repository_count": 4,
       "totals": {
-        "blobs": 98,
-        "bytes": 4515516,
-        "code_files": 14,
-        "code_bytes": 940021,
-        "code_physical_lines": 28136,
-        "code_nonblank_lines": 22870,
-        "document_files": 5,
-        "document_bytes": 126253,
-        "text_document_files": 5,
-        "text_document_physical_lines": 2309,
-        "text_document_nonblank_lines": 1720,
-        "markdown_files": 5,
-        "markdown_bytes": 126253,
-        "markdown_physical_lines": 2309,
-        "markdown_nonblank_lines": 1720
-      }
+        "blobs": 143,
+        "bytes": 4979922,
+        "code_files": 47,
+        "code_bytes": 1312726,
+        "code_physical_lines": 40817,
+        "code_nonblank_lines": 34481,
+        "document_files": 7,
+        "document_bytes": 198765,
+        "text_document_files": 7,
+        "text_document_physical_lines": 4497,
+        "text_document_nonblank_lines": 3227,
+        "markdown_files": 6,
+        "markdown_bytes": 147052,
+        "markdown_physical_lines": 2770,
+        "markdown_nonblank_lines": 2078
+      },
+      "unknown_historical_size_count": 0,
+      "unknown_historical_size_repositories": [],
+      "totals_status": "qualified"
     },
     {
       "as_of": "2024-10-24T17:40:04+00:00",
-      "active_repository_count": 3,
+      "active_repository_count": 4,
       "totals": {
-        "blobs": 98,
-        "bytes": 4515516,
-        "code_files": 14,
-        "code_bytes": 940021,
-        "code_physical_lines": 28136,
-        "code_nonblank_lines": 22870,
-        "document_files": 5,
-        "document_bytes": 126253,
-        "text_document_files": 5,
-        "text_document_physical_lines": 2309,
-        "text_document_nonblank_lines": 1720,
-        "markdown_files": 5,
-        "markdown_bytes": 126253,
-        "markdown_physical_lines": 2309,
-        "markdown_nonblank_lines": 1720
-      }
+        "blobs": 143,
+        "bytes": 4979922,
+        "code_files": 47,
+        "code_bytes": 1312726,
+        "code_physical_lines": 40817,
+        "code_nonblank_lines": 34481,
+        "document_files": 7,
+        "document_bytes": 198765,
+        "text_document_files": 7,
+        "text_document_physical_lines": 4497,
+        "text_document_nonblank_lines": 3227,
+        "markdown_files": 6,
+        "markdown_bytes": 147052,
+        "markdown_physical_lines": 2770,
+        "markdown_nonblank_lines": 2078
+      },
+      "unknown_historical_size_count": 0,
+      "unknown_historical_size_repositories": [],
+      "totals_status": "qualified"
     },
     {
       "as_of": "2025-10-24T17:40:04+00:00",
-      "active_repository_count": 7,
+      "active_repository_count": 8,
       "totals": {
-        "blobs": 324,
-        "bytes": 6427321,
-        "code_files": 169,
-        "code_bytes": 1345639,
-        "code_physical_lines": 41625,
-        "code_nonblank_lines": 34673,
-        "document_files": 38,
-        "document_bytes": 331142,
-        "text_document_files": 38,
-        "text_document_physical_lines": 7357,
-        "text_document_nonblank_lines": 5433,
-        "markdown_files": 38,
-        "markdown_bytes": 331142,
-        "markdown_physical_lines": 7357,
-        "markdown_nonblank_lines": 5433
-      }
+        "blobs": 369,
+        "bytes": 6891727,
+        "code_files": 202,
+        "code_bytes": 1718344,
+        "code_physical_lines": 54306,
+        "code_nonblank_lines": 46284,
+        "document_files": 40,
+        "document_bytes": 403654,
+        "text_document_files": 40,
+        "text_document_physical_lines": 9545,
+        "text_document_nonblank_lines": 6940,
+        "markdown_files": 39,
+        "markdown_bytes": 351941,
+        "markdown_physical_lines": 7818,
+        "markdown_nonblank_lines": 5791
+      },
+      "unknown_historical_size_count": 0,
+      "unknown_historical_size_repositories": [],
+      "totals_status": "qualified"
     },
     {
       "as_of": "2026-10-24T17:40:04+00:00",
-      "active_repository_count": 17,
+      "active_repository_count": 18,
       "totals": {
-        "blobs": 7105,
-        "bytes": 390373445,
-        "code_files": 3158,
-        "code_bytes": 21924085,
-        "code_physical_lines": 616690,
-        "code_nonblank_lines": 556112,
-        "document_files": 2691,
-        "document_bytes": 301312750,
-        "text_document_files": 2579,
-        "text_document_physical_lines": 801742,
-        "text_document_nonblank_lines": 558967,
-        "markdown_files": 2497,
-        "markdown_bytes": 36227600,
-        "markdown_physical_lines": 745417,
-        "markdown_nonblank_lines": 517583
-      }
+        "blobs": 7150,
+        "bytes": 390839992,
+        "code_files": 3191,
+        "code_bytes": 22296790,
+        "code_physical_lines": 629371,
+        "code_nonblank_lines": 567723,
+        "document_files": 2693,
+        "document_bytes": 301387403,
+        "text_document_files": 2581,
+        "text_document_physical_lines": 803950,
+        "text_document_nonblank_lines": 560486,
+        "markdown_files": 2498,
+        "markdown_bytes": 36250540,
+        "markdown_physical_lines": 745898,
+        "markdown_nonblank_lines": 517953
+      },
+      "unknown_historical_size_count": 0,
+      "unknown_historical_size_repositories": [],
+      "totals_status": "qualified"
     }
   ],
   "fixed_registry_year_over_year": [
     {
       "baseline_at": "2022-10-24T17:40:04+00:00",
       "as_of": "2023-10-24T17:40:04+00:00",
-      "registered_repository_count": 17,
+      "registered_repository_count": 18,
       "repositories_with_snapshot": {
-        "baseline": 2,
-        "current": 3
+        "baseline": 3,
+        "current": 4
       },
       "fixed_registry_totals": {
         "blobs": {
-          "baseline": 46,
-          "current": 98,
+          "baseline": 91,
+          "current": 143,
           "change": 52,
-          "growth_percent": 113.0
+          "growth_percent": 57.1
         },
         "bytes": {
-          "baseline": 1913566,
-          "current": 4515516,
+          "baseline": 2377972,
+          "current": 4979922,
           "change": 2601950,
-          "growth_percent": 136.0
+          "growth_percent": 109.4
         },
         "code_files": {
-          "baseline": 4,
-          "current": 14,
+          "baseline": 37,
+          "current": 47,
           "change": 10,
-          "growth_percent": 250.0
+          "growth_percent": 27.0
         },
         "code_bytes": {
-          "baseline": 197534,
-          "current": 940021,
+          "baseline": 570239,
+          "current": 1312726,
           "change": 742487,
-          "growth_percent": 375.9
+          "growth_percent": 130.2
         },
         "code_physical_lines": {
-          "baseline": 7121,
-          "current": 28136,
+          "baseline": 19802,
+          "current": 40817,
           "change": 21015,
-          "growth_percent": 295.1
+          "growth_percent": 106.1
         },
         "code_nonblank_lines": {
-          "baseline": 5635,
-          "current": 22870,
+          "baseline": 17246,
+          "current": 34481,
           "change": 17235,
-          "growth_percent": 305.9
+          "growth_percent": 99.9
         },
         "document_files": {
-          "baseline": 11,
-          "current": 5,
+          "baseline": 13,
+          "current": 7,
           "change": -6,
-          "growth_percent": -54.5
+          "growth_percent": -46.2
         },
         "document_bytes": {
-          "baseline": 14770,
-          "current": 126253,
+          "baseline": 87282,
+          "current": 198765,
           "change": 111483,
-          "growth_percent": 754.8
+          "growth_percent": 127.7
         },
         "text_document_files": {
-          "baseline": 11,
-          "current": 5,
+          "baseline": 13,
+          "current": 7,
           "change": -6,
-          "growth_percent": -54.5
+          "growth_percent": -46.2
         },
         "text_document_physical_lines": {
-          "baseline": 332,
-          "current": 2309,
+          "baseline": 2520,
+          "current": 4497,
           "change": 1977,
-          "growth_percent": 595.5
+          "growth_percent": 78.5
         },
         "text_document_nonblank_lines": {
-          "baseline": 191,
-          "current": 1720,
+          "baseline": 1698,
+          "current": 3227,
           "change": 1529,
-          "growth_percent": 800.5
+          "growth_percent": 90.0
         },
         "markdown_files": {
-          "baseline": 11,
-          "current": 5,
+          "baseline": 12,
+          "current": 6,
           "change": -6,
-          "growth_percent": -54.5
+          "growth_percent": -50.0
         },
         "markdown_bytes": {
-          "baseline": 14770,
-          "current": 126253,
+          "baseline": 35569,
+          "current": 147052,
           "change": 111483,
-          "growth_percent": 754.8
+          "growth_percent": 313.4
         },
         "markdown_physical_lines": {
-          "baseline": 332,
-          "current": 2309,
+          "baseline": 793,
+          "current": 2770,
           "change": 1977,
-          "growth_percent": 595.5
+          "growth_percent": 249.3
         },
         "markdown_nonblank_lines": {
-          "baseline": 191,
-          "current": 1720,
+          "baseline": 549,
+          "current": 2078,
           "change": 1529,
-          "growth_percent": 800.5
+          "growth_percent": 278.5
         }
       },
       "newly_measurable_repositories": [
         "JeanHuguesRobert/barons-Mariani"
       ],
-      "no_longer_measurable_repositories": []
+      "no_longer_measurable_repositories": [],
+      "historical_size_unknown": {
+        "2022-10-24T17:40:04+00:00": [],
+        "2023-10-24T17:40:04+00:00": []
+      }
     },
     {
       "baseline_at": "2023-10-24T17:40:04+00:00",
       "as_of": "2024-10-24T17:40:04+00:00",
-      "registered_repository_count": 17,
+      "registered_repository_count": 18,
       "repositories_with_snapshot": {
-        "baseline": 3,
-        "current": 3
+        "baseline": 4,
+        "current": 4
       },
       "fixed_registry_totals": {
         "blobs": {
-          "baseline": 98,
-          "current": 98,
+          "baseline": 143,
+          "current": 143,
           "change": 0,
           "growth_percent": 0.0
         },
         "bytes": {
-          "baseline": 4515516,
-          "current": 4515516,
+          "baseline": 4979922,
+          "current": 4979922,
           "change": 0,
           "growth_percent": 0.0
         },
         "code_files": {
-          "baseline": 14,
-          "current": 14,
+          "baseline": 47,
+          "current": 47,
           "change": 0,
           "growth_percent": 0.0
         },
         "code_bytes": {
-          "baseline": 940021,
-          "current": 940021,
+          "baseline": 1312726,
+          "current": 1312726,
           "change": 0,
           "growth_percent": 0.0
         },
         "code_physical_lines": {
-          "baseline": 28136,
-          "current": 28136,
+          "baseline": 40817,
+          "current": 40817,
           "change": 0,
           "growth_percent": 0.0
         },
         "code_nonblank_lines": {
-          "baseline": 22870,
-          "current": 22870,
+          "baseline": 34481,
+          "current": 34481,
           "change": 0,
           "growth_percent": 0.0
         },
         "document_files": {
-          "baseline": 5,
-          "current": 5,
+          "baseline": 7,
+          "current": 7,
           "change": 0,
           "growth_percent": 0.0
         },
         "document_bytes": {
-          "baseline": 126253,
-          "current": 126253,
+          "baseline": 198765,
+          "current": 198765,
           "change": 0,
           "growth_percent": 0.0
         },
         "text_document_files": {
-          "baseline": 5,
-          "current": 5,
+          "baseline": 7,
+          "current": 7,
           "change": 0,
           "growth_percent": 0.0
         },
         "text_document_physical_lines": {
-          "baseline": 2309,
-          "current": 2309,
+          "baseline": 4497,
+          "current": 4497,
           "change": 0,
           "growth_percent": 0.0
         },
         "text_document_nonblank_lines": {
-          "baseline": 1720,
-          "current": 1720,
+          "baseline": 3227,
+          "current": 3227,
           "change": 0,
           "growth_percent": 0.0
         },
         "markdown_files": {
-          "baseline": 5,
-          "current": 5,
+          "baseline": 6,
+          "current": 6,
           "change": 0,
           "growth_percent": 0.0
         },
         "markdown_bytes": {
-          "baseline": 126253,
-          "current": 126253,
+          "baseline": 147052,
+          "current": 147052,
           "change": 0,
           "growth_percent": 0.0
         },
         "markdown_physical_lines": {
-          "baseline": 2309,
-          "current": 2309,
+          "baseline": 2770,
+          "current": 2770,
           "change": 0,
           "growth_percent": 0.0
         },
         "markdown_nonblank_lines": {
-          "baseline": 1720,
-          "current": 1720,
+          "baseline": 2078,
+          "current": 2078,
           "change": 0,
           "growth_percent": 0.0
         }
       },
       "newly_measurable_repositories": [],
-      "no_longer_measurable_repositories": []
+      "no_longer_measurable_repositories": [],
+      "historical_size_unknown": {
+        "2023-10-24T17:40:04+00:00": [],
+        "2024-10-24T17:40:04+00:00": []
+      }
     },
     {
       "baseline_at": "2024-10-24T17:40:04+00:00",
       "as_of": "2025-10-24T17:40:04+00:00",
-      "registered_repository_count": 17,
+      "registered_repository_count": 18,
       "repositories_with_snapshot": {
-        "baseline": 3,
-        "current": 7
+        "baseline": 4,
+        "current": 8
       },
       "fixed_registry_totals": {
         "blobs": {
-          "baseline": 98,
-          "current": 324,
+          "baseline": 143,
+          "current": 369,
           "change": 226,
-          "growth_percent": 230.6
+          "growth_percent": 158.0
         },
         "bytes": {
-          "baseline": 4515516,
-          "current": 6427321,
+          "baseline": 4979922,
+          "current": 6891727,
           "change": 1911805,
-          "growth_percent": 42.3
+          "growth_percent": 38.4
         },
         "code_files": {
-          "baseline": 14,
-          "current": 169,
+          "baseline": 47,
+          "current": 202,
           "change": 155,
-          "growth_percent": 1107.1
+          "growth_percent": 329.8
         },
         "code_bytes": {
-          "baseline": 940021,
-          "current": 1345639,
+          "baseline": 1312726,
+          "current": 1718344,
           "change": 405618,
-          "growth_percent": 43.1
+          "growth_percent": 30.9
         },
         "code_physical_lines": {
-          "baseline": 28136,
-          "current": 41625,
+          "baseline": 40817,
+          "current": 54306,
           "change": 13489,
-          "growth_percent": 47.9
+          "growth_percent": 33.0
         },
         "code_nonblank_lines": {
-          "baseline": 22870,
-          "current": 34673,
+          "baseline": 34481,
+          "current": 46284,
           "change": 11803,
-          "growth_percent": 51.6
+          "growth_percent": 34.2
         },
         "document_files": {
-          "baseline": 5,
-          "current": 38,
+          "baseline": 7,
+          "current": 40,
           "change": 33,
-          "growth_percent": 660.0
+          "growth_percent": 471.4
         },
         "document_bytes": {
-          "baseline": 126253,
-          "current": 331142,
+          "baseline": 198765,
+          "current": 403654,
           "change": 204889,
-          "growth_percent": 162.3
+          "growth_percent": 103.1
         },
         "text_document_files": {
-          "baseline": 5,
-          "current": 38,
+          "baseline": 7,
+          "current": 40,
           "change": 33,
-          "growth_percent": 660.0
+          "growth_percent": 471.4
         },
         "text_document_physical_lines": {
-          "baseline": 2309,
-          "current": 7357,
+          "baseline": 4497,
+          "current": 9545,
           "change": 5048,
-          "growth_percent": 218.6
+          "growth_percent": 112.3
         },
         "text_document_nonblank_lines": {
-          "baseline": 1720,
-          "current": 5433,
+          "baseline": 3227,
+          "current": 6940,
           "change": 3713,
-          "growth_percent": 215.9
+          "growth_percent": 115.1
         },
         "markdown_files": {
-          "baseline": 5,
-          "current": 38,
+          "baseline": 6,
+          "current": 39,
           "change": 33,
-          "growth_percent": 660.0
+          "growth_percent": 550.0
         },
         "markdown_bytes": {
-          "baseline": 126253,
-          "current": 331142,
+          "baseline": 147052,
+          "current": 351941,
           "change": 204889,
-          "growth_percent": 162.3
+          "growth_percent": 139.3
         },
         "markdown_physical_lines": {
-          "baseline": 2309,
-          "current": 7357,
+          "baseline": 2770,
+          "current": 7818,
           "change": 5048,
-          "growth_percent": 218.6
+          "growth_percent": 182.2
         },
         "markdown_nonblank_lines": {
-          "baseline": 1720,
-          "current": 5433,
+          "baseline": 2078,
+          "current": 5791,
           "change": 3713,
-          "growth_percent": 215.9
+          "growth_percent": 178.7
         }
       },
       "newly_measurable_repositories": [
@@ -443,106 +466,110 @@
         "JeanHuguesRobert/serra",
         "acorsica/Kudos"
       ],
-      "no_longer_measurable_repositories": []
+      "no_longer_measurable_repositories": [],
+      "historical_size_unknown": {
+        "2024-10-24T17:40:04+00:00": [],
+        "2025-10-24T17:40:04+00:00": []
+      }
     },
     {
       "baseline_at": "2025-10-24T17:40:04+00:00",
       "as_of": "2026-10-24T17:40:04+00:00",
-      "registered_repository_count": 17,
+      "registered_repository_count": 18,
       "repositories_with_snapshot": {
-        "baseline": 7,
-        "current": 17
+        "baseline": 8,
+        "current": 18
       },
       "fixed_registry_totals": {
         "blobs": {
-          "baseline": 324,
-          "current": 7105,
+          "baseline": 369,
+          "current": 7150,
           "change": 6781,
-          "growth_percent": 2092.9
+          "growth_percent": 1837.7
         },
         "bytes": {
-          "baseline": 6427321,
-          "current": 390373445,
-          "change": 383946124,
-          "growth_percent": 5973.7
+          "baseline": 6891727,
+          "current": 390839992,
+          "change": 383948265,
+          "growth_percent": 5571.1
         },
         "code_files": {
-          "baseline": 169,
-          "current": 3158,
+          "baseline": 202,
+          "current": 3191,
           "change": 2989,
-          "growth_percent": 1768.6
+          "growth_percent": 1479.7
         },
         "code_bytes": {
-          "baseline": 1345639,
-          "current": 21924085,
+          "baseline": 1718344,
+          "current": 22296790,
           "change": 20578446,
-          "growth_percent": 1529.3
+          "growth_percent": 1197.6
         },
         "code_physical_lines": {
-          "baseline": 41625,
-          "current": 616690,
+          "baseline": 54306,
+          "current": 629371,
           "change": 575065,
-          "growth_percent": 1381.5
+          "growth_percent": 1058.9
         },
         "code_nonblank_lines": {
-          "baseline": 34673,
-          "current": 556112,
+          "baseline": 46284,
+          "current": 567723,
           "change": 521439,
-          "growth_percent": 1503.9
+          "growth_percent": 1126.6
         },
         "document_files": {
-          "baseline": 38,
-          "current": 2691,
+          "baseline": 40,
+          "current": 2693,
           "change": 2653,
-          "growth_percent": 6981.6
+          "growth_percent": 6632.5
         },
         "document_bytes": {
-          "baseline": 331142,
-          "current": 301312750,
-          "change": 300981608,
-          "growth_percent": 90892.0
+          "baseline": 403654,
+          "current": 301387403,
+          "change": 300983749,
+          "growth_percent": 74564.8
         },
         "text_document_files": {
-          "baseline": 38,
-          "current": 2579,
+          "baseline": 40,
+          "current": 2581,
           "change": 2541,
-          "growth_percent": 6686.8
+          "growth_percent": 6352.5
         },
         "text_document_physical_lines": {
-          "baseline": 7357,
-          "current": 801742,
-          "change": 794385,
-          "growth_percent": 10797.7
+          "baseline": 9545,
+          "current": 803950,
+          "change": 794405,
+          "growth_percent": 8322.7
         },
         "text_document_nonblank_lines": {
-          "baseline": 5433,
-          "current": 558967,
-          "change": 553534,
-          "growth_percent": 10188.4
+          "baseline": 6940,
+          "current": 560486,
+          "change": 553546,
+          "growth_percent": 7976.2
         },
         "markdown_files": {
-          "baseline": 38,
-          "current": 2497,
+          "baseline": 39,
+          "current": 2498,
           "change": 2459,
-          "growth_percent": 6471.1
+          "growth_percent": 6305.1
         },
         "markdown_bytes": {
-          "baseline": 331142,
-          "current": 36227600,
-          "change": 35896458,
-          "growth_percent": 10840.2
+          "baseline": 351941,
+          "current": 36250540,
+          "change": 35898599,
+          "growth_percent": 10200.2
         },
         "markdown_physical_lines": {
-          "baseline": 7357,
-          "current": 745417,
-          "change": 738060,
-          "growth_percent": 10032.1
+          "baseline": 7818,
+          "current": 745898,
+          "change": 738080,
+          "growth_percent": 9440.8
         },
         "markdown_nonblank_lines": {
-          "baseline": 5433,
-          "current": 517583,
-          "change": 512150,
-          "growth_percent": 9426.7
+          "baseline": 5791,
+          "current": 517953,
+          "change": 512162,
+          "growth_percent": 8844.1
         }
       },
       "newly_measurable_repositories": [
@@ -557,7 +584,11 @@
         "acorsica/acorsica.org",
         "acorsica/privai"
       ],
-      "no_longer_measurable_repositories": []
+      "no_longer_measurable_repositories": [],
+      "historical_size_unknown": {
+        "2025-10-24T17:40:04+00:00": [],
+        "2026-10-24T17:40:04+00:00": []
+      }
     }
   ],
   "filters": {
@@ -617,7 +648,10 @@
     "excluded_path_regex": "(^|/)(node_modules|vendor|dist|build|coverage|generated|__generated__|snapshots?|fixtures|target|\\.next)(/|$)"
   },
   "limitations": [
-    "the registered repository list is fixed across snapshots; a repository with no main/master commit contributes zero to the aggregate at that cutoff",
+    "the registered repository list is fixed across snapshots; a repository contributes zero before its verified repository or documented historical-origin creation date",
+    "absence of a selected commit does not establish that the underlying project did not yet exist",
+    "if a repository existed by a cutoff but has no selected main/master commit, its historical size is unknown; totals and percentages are lower-bound reconstructions",
+    "snapshot selection uses Git commit timestamps, which are not independent archival timestamps",
     "individual repository growth percentages are not calculated when that repository has no baseline snapshot",
     "line counts are physical/nonblank lines, not language-aware SLOC",
     "Git tree sizes count each repository copy separately"
@@ -719,6 +753,18 @@
           "markdown_physical_lines": 141021,
           "markdown_nonblank_lines": 95511
         }
+      },
+      "repository_created_at": "2016-04-09T13:07:38Z",
+      "repository_metadata_url": "https://api.github.com/repos/JeanHuguesRobert/inseme",
+      "metadata_verified_on": "2026-10-24",
+      "effective_created_at": "2016-04-09T13:07:38+00:00",
+      "historical_origin": null,
+      "snapshot_statuses": {
+        "2022-10-24T17:40:04+00:00": "ok",
+        "2023-10-24T17:40:04+00:00": "ok",
+        "2024-10-24T17:40:04+00:00": "ok",
+        "2025-10-24T17:40:04+00:00": "ok",
+        "2026-10-24T17:40:04+00:00": "ok"
       }
     },
     {
@@ -749,6 +795,18 @@
           "markdown_physical_lines": 115165,
           "markdown_nonblank_lines": 85701
         }
+      },
+      "repository_created_at": "2026-03-02T00:43:52Z",
+      "repository_metadata_url": "https://api.github.com/repos/JeanHuguesRobert/cogentia",
+      "metadata_verified_on": "2026-10-24",
+      "effective_created_at": "2026-03-02T00:43:52+00:00",
+      "historical_origin": null,
+      "snapshot_statuses": {
+        "2022-10-24T17:40:04+00:00": "not_yet_created",
+        "2023-10-24T17:40:04+00:00": "not_yet_created",
+        "2024-10-24T17:40:04+00:00": "not_yet_created",
+        "2025-10-24T17:40:04+00:00": "not_yet_created",
+        "2026-10-24T17:40:04+00:00": "ok"
       }
     },
     {
@@ -779,6 +837,18 @@
           "markdown_physical_lines": 24557,
           "markdown_nonblank_lines": 17170
         }
+      },
+      "repository_created_at": "2026-04-15T09:03:39Z",
+      "repository_metadata_url": "https://api.github.com/repos/JeanHuguesRobert/FractaVolta",
+      "metadata_verified_on": "2026-10-24",
+      "effective_created_at": "2026-04-15T09:03:39+00:00",
+      "historical_origin": null,
+      "snapshot_statuses": {
+        "2022-10-24T17:40:04+00:00": "not_yet_created",
+        "2023-10-24T17:40:04+00:00": "not_yet_created",
+        "2024-10-24T17:40:04+00:00": "not_yet_created",
+        "2025-10-24T17:40:04+00:00": "not_yet_created",
+        "2026-10-24T17:40:04+00:00": "ok"
       }
     },
     {
@@ -809,6 +879,18 @@
           "markdown_physical_lines": 22663,
           "markdown_nonblank_lines": 17897
         }
+      },
+      "repository_created_at": "2026-06-24T05:57:00Z",
+      "repository_metadata_url": "https://api.github.com/repos/JeanHuguesRobert/operium",
+      "metadata_verified_on": "2026-10-24",
+      "effective_created_at": "2026-06-24T05:57:00+00:00",
+      "historical_origin": null,
+      "snapshot_statuses": {
+        "2022-10-24T17:40:04+00:00": "not_yet_created",
+        "2023-10-24T17:40:04+00:00": "not_yet_created",
+        "2024-10-24T17:40:04+00:00": "not_yet_created",
+        "2025-10-24T17:40:04+00:00": "not_yet_created",
+        "2026-10-24T17:40:04+00:00": "ok"
       }
     },
     {
@@ -890,6 +972,18 @@
           "markdown_physical_lines": 281719,
           "markdown_nonblank_lines": 192092
         }
+      },
+      "repository_created_at": "2023-05-29T13:23:55Z",
+      "repository_metadata_url": "https://api.github.com/repos/JeanHuguesRobert/barons-Mariani",
+      "metadata_verified_on": "2026-10-24",
+      "effective_created_at": "2023-05-29T13:23:55+00:00",
+      "historical_origin": null,
+      "snapshot_statuses": {
+        "2022-10-24T17:40:04+00:00": "not_yet_created",
+        "2023-10-24T17:40:04+00:00": "ok",
+        "2024-10-24T17:40:04+00:00": "ok",
+        "2025-10-24T17:40:04+00:00": "ok",
+        "2026-10-24T17:40:04+00:00": "ok"
       }
     },
     {
@@ -988,6 +1082,26 @@
           "markdown_physical_lines": 11288,
           "markdown_nonblank_lines": 8623
         }
+      },
+      "repository_created_at": "2026-05-21T15:41:17Z",
+      "repository_metadata_url": "https://api.github.com/repos/JeanHuguesRobert/Inox",
+      "metadata_verified_on": "2026-10-24",
+      "effective_created_at": "2021-06-03T17:40:51+00:00",
+      "historical_origin": {
+        "repository": "virteal/Inox",
+        "created_at": "2021-06-03T17:40:51Z",
+        "metadata_url": "https://api.github.com/repos/virteal/Inox",
+        "branch": "master",
+        "verified_commit": "602d94f0279a26a3b43a5dcdd8d2b982e0fda26f",
+        "verified_commit_url": "https://github.com/virteal/Inox/commit/602d94f0279a26a3b43a5dcdd8d2b982e0fda26f",
+        "verified_on": "2026-10-24"
+      },
+      "snapshot_statuses": {
+        "2022-10-24T17:40:04+00:00": "ok",
+        "2023-10-24T17:40:04+00:00": "ok",
+        "2024-10-24T17:40:04+00:00": "ok",
+        "2025-10-24T17:40:04+00:00": "ok",
+        "2026-10-24T17:40:04+00:00": "ok"
       }
     },
     {
@@ -1035,6 +1149,18 @@
           "markdown_physical_lines": 91442,
           "markdown_nonblank_lines": 56841
         }
+      },
+      "repository_created_at": "2025-10-20T05:54:43Z",
+      "repository_metadata_url": "https://api.github.com/repos/JeanHuguesRobert/survey",
+      "metadata_verified_on": "2026-10-24",
+      "effective_created_at": "2025-10-20T05:54:43+00:00",
+      "historical_origin": null,
+      "snapshot_statuses": {
+        "2022-10-24T17:40:04+00:00": "not_yet_created",
+        "2023-10-24T17:40:04+00:00": "not_yet_created",
+        "2024-10-24T17:40:04+00:00": "not_yet_created",
+        "2025-10-24T17:40:04+00:00": "ok",
+        "2026-10-24T17:40:04+00:00": "ok"
       }
     },
     {
@@ -1065,6 +1191,18 @@
           "markdown_physical_lines": 13214,
           "markdown_nonblank_lines": 9917
         }
+      },
+      "repository_created_at": "2026-05-23T14:33:06Z",
+      "repository_metadata_url": "https://api.github.com/repos/JeanHuguesRobert/ubikia",
+      "metadata_verified_on": "2026-10-24",
+      "effective_created_at": "2026-05-23T14:33:06+00:00",
+      "historical_origin": null,
+      "snapshot_statuses": {
+        "2022-10-24T17:40:04+00:00": "not_yet_created",
+        "2023-10-24T17:40:04+00:00": "not_yet_created",
+        "2024-10-24T17:40:04+00:00": "not_yet_created",
+        "2025-10-24T17:40:04+00:00": "not_yet_created",
+        "2026-10-24T17:40:04+00:00": "ok"
       }
     },
     {
@@ -1095,6 +1233,18 @@
           "markdown_physical_lines": 1891,
           "markdown_nonblank_lines": 1555
         }
+      },
+      "repository_created_at": "2026-05-03T10:29:09Z",
+      "repository_metadata_url": "https://api.github.com/repos/acorsica/gouvernance",
+      "metadata_verified_on": "2026-10-24",
+      "effective_created_at": "2026-05-03T10:29:09+00:00",
+      "historical_origin": null,
+      "snapshot_statuses": {
+        "2022-10-24T17:40:04+00:00": "not_yet_created",
+        "2023-10-24T17:40:04+00:00": "not_yet_created",
+        "2024-10-24T17:40:04+00:00": "not_yet_created",
+        "2025-10-24T17:40:04+00:00": "not_yet_created",
+        "2026-10-24T17:40:04+00:00": "ok"
       }
     },
     {
@@ -1125,6 +1275,18 @@
           "markdown_physical_lines": 14651,
           "markdown_nonblank_lines": 11053
         }
+      },
+      "repository_created_at": "2026-03-30T04:56:40Z",
+      "repository_metadata_url": "https://api.github.com/repos/JeanHuguesRobert/JeanHuguesRobert",
+      "metadata_verified_on": "2026-10-24",
+      "effective_created_at": "2026-03-30T04:56:40+00:00",
+      "historical_origin": null,
+      "snapshot_statuses": {
+        "2022-10-24T17:40:04+00:00": "not_yet_created",
+        "2023-10-24T17:40:04+00:00": "not_yet_created",
+        "2024-10-24T17:40:04+00:00": "not_yet_created",
+        "2025-10-24T17:40:04+00:00": "not_yet_created",
+        "2026-10-24T17:40:04+00:00": "ok"
       }
     },
     {
@@ -1155,6 +1317,18 @@
           "markdown_physical_lines": 13972,
           "markdown_nonblank_lines": 9678
         }
+      },
+      "repository_created_at": "2026-03-28T05:10:42Z",
+      "repository_metadata_url": "https://api.github.com/repos/JeanHuguesRobert/marenostrum",
+      "metadata_verified_on": "2026-10-24",
+      "effective_created_at": "2026-03-28T05:10:42+00:00",
+      "historical_origin": null,
+      "snapshot_statuses": {
+        "2022-10-24T17:40:04+00:00": "not_yet_created",
+        "2023-10-24T17:40:04+00:00": "not_yet_created",
+        "2024-10-24T17:40:04+00:00": "not_yet_created",
+        "2025-10-24T17:40:04+00:00": "not_yet_created",
+        "2026-10-24T17:40:04+00:00": "ok"
       }
     },
     {
@@ -1202,6 +1376,18 @@
           "markdown_physical_lines": 3200,
           "markdown_nonblank_lines": 2593
         }
+      },
+      "repository_created_at": "2025-03-15T12:06:24Z",
+      "repository_metadata_url": "https://api.github.com/repos/JeanHuguesRobert/StructEnv",
+      "metadata_verified_on": "2026-10-24",
+      "effective_created_at": "2025-03-15T12:06:24+00:00",
+      "historical_origin": null,
+      "snapshot_statuses": {
+        "2022-10-24T17:40:04+00:00": "not_yet_created",
+        "2023-10-24T17:40:04+00:00": "not_yet_created",
+        "2024-10-24T17:40:04+00:00": "not_yet_created",
+        "2025-10-24T17:40:04+00:00": "ok",
+        "2026-10-24T17:40:04+00:00": "ok"
       }
     },
     {
@@ -1249,6 +1435,18 @@
           "markdown_physical_lines": 3063,
           "markdown_nonblank_lines": 2578
         }
+      },
+      "repository_created_at": "2025-02-21T19:03:23Z",
+      "repository_metadata_url": "https://api.github.com/repos/JeanHuguesRobert/serra",
+      "metadata_verified_on": "2026-10-24",
+      "effective_created_at": "2025-02-21T19:03:23+00:00",
+      "historical_origin": null,
+      "snapshot_statuses": {
+        "2022-10-24T17:40:04+00:00": "not_yet_created",
+        "2023-10-24T17:40:04+00:00": "not_yet_created",
+        "2024-10-24T17:40:04+00:00": "not_yet_created",
+        "2025-10-24T17:40:04+00:00": "ok",
+        "2026-10-24T17:40:04+00:00": "ok"
       }
     },
     {
@@ -1279,6 +1477,18 @@
           "markdown_physical_lines": 1146,
           "markdown_nonblank_lines": 998
         }
+      },
+      "repository_created_at": "2026-06-03T11:48:51Z",
+      "repository_metadata_url": "https://api.github.com/repos/acorsica/institut-mariani",
+      "metadata_verified_on": "2026-10-24",
+      "effective_created_at": "2026-06-03T11:48:51+00:00",
+      "historical_origin": null,
+      "snapshot_statuses": {
+        "2022-10-24T17:40:04+00:00": "not_yet_created",
+        "2023-10-24T17:40:04+00:00": "not_yet_created",
+        "2024-10-24T17:40:04+00:00": "not_yet_created",
+        "2025-10-24T17:40:04+00:00": "not_yet_created",
+        "2026-10-24T17:40:04+00:00": "ok"
       }
     },
     {
@@ -1309,6 +1519,18 @@
           "markdown_physical_lines": 841,
           "markdown_nonblank_lines": 805
         }
+      },
+      "repository_created_at": "2026-06-19T10:43:05Z",
+      "repository_metadata_url": "https://api.github.com/repos/acorsica/acorsica.org",
+      "metadata_verified_on": "2026-10-24",
+      "effective_created_at": "2026-06-19T10:43:05+00:00",
+      "historical_origin": null,
+      "snapshot_statuses": {
+        "2022-10-24T17:40:04+00:00": "not_yet_created",
+        "2023-10-24T17:40:04+00:00": "not_yet_created",
+        "2024-10-24T17:40:04+00:00": "not_yet_created",
+        "2025-10-24T17:40:04+00:00": "not_yet_created",
+        "2026-10-24T17:40:04+00:00": "ok"
       }
     },
     {
@@ -1339,6 +1561,18 @@
           "markdown_physical_lines": 2947,
           "markdown_nonblank_lines": 2473
         }
+      },
+      "repository_created_at": "2026-06-03T11:46:42Z",
+      "repository_metadata_url": "https://api.github.com/repos/acorsica/privai",
+      "metadata_verified_on": "2026-10-24",
+      "effective_created_at": "2026-06-03T11:46:42+00:00",
+      "historical_origin": null,
+      "snapshot_statuses": {
+        "2022-10-24T17:40:04+00:00": "not_yet_created",
+        "2023-10-24T17:40:04+00:00": "not_yet_created",
+        "2024-10-24T17:40:04+00:00": "not_yet_created",
+        "2025-10-24T17:40:04+00:00": "not_yet_created",
+        "2026-10-24T17:40:04+00:00": "ok"
       }
     },
     {
@@ -1386,7 +1620,153 @@
           "markdown_physical_lines": 2637,
           "markdown_nonblank_lines": 2098
         }
+      },
+      "repository_created_at": "2025-03-30T13:18:01Z",
+      "repository_metadata_url": "https://api.github.com/repos/acorsica/Kudos",
+      "metadata_verified_on": "2026-10-24",
+      "effective_created_at": "2025-03-30T13:18:01+00:00",
+      "historical_origin": null,
+      "snapshot_statuses": {
+        "2022-10-24T17:40:04+00:00": "not_yet_created",
+        "2023-10-24T17:40:04+00:00": "not_yet_created",
+        "2024-10-24T17:40:04+00:00": "not_yet_created",
+        "2025-10-24T17:40:04+00:00": "ok",
+        "2026-10-24T17:40:04+00:00": "ok"
       }
+    },
+    {
+      "repo": "virteal/l8",
+      "repository_created_at": "2012-10-23T13:11:20Z",
+      "repository_metadata_url": "https://api.github.com/repos/virteal/l8",
+      "metadata_verified_on": "2026-10-24",
+      "effective_created_at": "2012-10-23T13:11:20+00:00",
+      "historical_origin": null,
+      "status": "ok",
+      "branch": "master",
+      "ref": "refs/remotes/origin/master",
+      "snapshots": {
+        "2022-10-24T17:40:04+00:00": {
+          "commit": "9dd83739b6c21889d1000e8eb1dd5c07bd013f6b",
+          "blobs": 45,
+          "bytes": 464406,
+          "code_files": 33,
+          "code_bytes": 372705,
+          "code_physical_lines": 12681,
+          "code_nonblank_lines": 11611,
+          "document_files": 2,
+          "document_bytes": 72512,
+          "text_document_files": 2,
+          "text_document_physical_lines": 2188,
+          "text_document_nonblank_lines": 1507,
+          "markdown_files": 1,
+          "markdown_bytes": 20799,
+          "markdown_physical_lines": 461,
+          "markdown_nonblank_lines": 358
+        },
+        "2023-10-24T17:40:04+00:00": {
+          "commit": "9dd83739b6c21889d1000e8eb1dd5c07bd013f6b",
+          "blobs": 45,
+          "bytes": 464406,
+          "code_files": 33,
+          "code_bytes": 372705,
+          "code_physical_lines": 12681,
+          "code_nonblank_lines": 11611,
+          "document_files": 2,
+          "document_bytes": 72512,
+          "text_document_files": 2,
+          "text_document_physical_lines": 2188,
+          "text_document_nonblank_lines": 1507,
+          "markdown_files": 1,
+          "markdown_bytes": 20799,
+          "markdown_physical_lines": 461,
+          "markdown_nonblank_lines": 358
+        },
+        "2024-10-24T17:40:04+00:00": {
+          "commit": "9dd83739b6c21889d1000e8eb1dd5c07bd013f6b",
+          "blobs": 45,
+          "bytes": 464406,
+          "code_files": 33,
+          "code_bytes": 372705,
+          "code_physical_lines": 12681,
+          "code_nonblank_lines": 11611,
+          "document_files": 2,
+          "document_bytes": 72512,
+          "text_document_files": 2,
+          "text_document_physical_lines": 2188,
+          "text_document_nonblank_lines": 1507,
+          "markdown_files": 1,
+          "markdown_bytes": 20799,
+          "markdown_physical_lines": 461,
+          "markdown_nonblank_lines": 358
+        },
+        "2025-10-24T17:40:04+00:00": {
+          "commit": "9dd83739b6c21889d1000e8eb1dd5c07bd013f6b",
+          "blobs": 45,
+          "bytes": 464406,
+          "code_files": 33,
+          "code_bytes": 372705,
+          "code_physical_lines": 12681,
+          "code_nonblank_lines": 11611,
+          "document_files": 2,
+          "document_bytes": 72512,
+          "text_document_files": 2,
+          "text_document_physical_lines": 2188,
+          "text_document_nonblank_lines": 1507,
+          "markdown_files": 1,
+          "markdown_bytes": 20799,
+          "markdown_physical_lines": 461,
+          "markdown_nonblank_lines": 358
+        },
+        "2026-10-24T17:40:04+00:00": {
+          "commit": "51d3605ad5b65e97c66b969f423066904a891177",
+          "blobs": 45,
+          "bytes": 466547,
+          "code_files": 33,
+          "code_bytes": 372705,
+          "code_physical_lines": 12681,
+          "code_nonblank_lines": 11611,
+          "document_files": 2,
+          "document_bytes": 74653,
+          "text_document_files": 2,
+          "text_document_physical_lines": 2208,
+          "text_document_nonblank_lines": 1519,
+          "markdown_files": 1,
+          "markdown_bytes": 22940,
+          "markdown_physical_lines": 481,
+          "markdown_nonblank_lines": 370
+        }
+      },
+      "snapshot_statuses": {
+        "2022-10-24T17:40:04+00:00": "ok",
+        "2023-10-24T17:40:04+00:00": "ok",
+        "2024-10-24T17:40:04+00:00": "ok",
+        "2025-10-24T17:40:04+00:00": "ok",
+        "2026-10-24T17:40:04+00:00": "ok"
+      }
+    }
+  ],
+  "creation_metadata_basis": "repository_created_at from GitHub REST repository metadata; verified historical_origin used when recorded; source URLs and verification dates are in each registry entry",
+  "commit_metadata_verification": "selected commit SHAs and Git timestamps checked through GitHub commit metadata on 2026-10-24; L8 snapshot timestamps additionally checked against its fetched Git history",
+  "commit_lineage_verification": {
+    "verified_on": "2026-10-24",
+    "method": "GitHub compare API: each selected snapshot SHA compared as base against the current main/master tip",
+    "selected_snapshot_commit_count": 28,
+    "result": "all selected snapshot commits are ancestors of their current main/master tip"
+  },
+  "historical_repositories_outside_fixed_scope": [
+    {
+      "name": "virteal/side",
+      "repository_created_at": "2016-09-24T09:29:22Z",
+      "repository_metadata_url": "https://api.github.com/repos/virteal/side",
+      "default_branch": "master",
+      "baseline_cutoff": "2022-10-24T17:40:04Z",
+      "baseline_mainline_commit": "baba18c44c3affa9ab3d777bf17707ca3eb30113",
+      "baseline_commit_date": "2016-10-07T16:27:16Z",
+      "baseline_commit_url": "https://github.com/virteal/side/commit/baba18c44c3affa9ab3d777bf17707ca3eb30113",
+      "current_master_tip": "7e405a56288f7d7f55584997c8b5d883e7402322",
+      "current_tip_first_parent_is_baseline_commit": true,
+      "verified_on": "2026-10-24",
+      "included_in_fixed_17": false
     }
   ]
 }

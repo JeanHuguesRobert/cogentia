@@ -4,9 +4,9 @@ subtitle: "Granularity, causal continuity, placement, effects, and the requireme
 author: "Jean Hugues Noël Robert, baron Mariani"
 affiliation: "Institut Mariani / C.O.R.S.I.C.A., 1 cours Paoli, F-20250 Corte, Corsica, France"
 date: "2026-08-25"
-last_modified_at: "2026-09-23"
-version: "0.5"
-status: "working source note"
+last_modified_at: "2026-10-24"
+version: "0.6"
+status: "working-paper — working source note"
 license: "CC BY-SA 4.0"
 language: "en"
 document_role: "source"
@@ -48,10 +48,21 @@ tags:
   - side-js
   - l8-tasks-steps
 update_policy: "UP-DEFAULT-REVIEWED"
+provenance:
+  origin_type: unknown
+  origin_repository: unknown
+  origin_ref: unknown
+  origin_date: unknown
+  derived_from: []
+review:
+  status: unreviewed
+  reviewed_by: []
 changelog:
   - "v0.1 (2026-08-25) — initial formalization of Packet Closure and packet-native semantics."
   - "v0.2 (2026-08-26) — clarified that Closure is relative to a declared admissible-handler environment; separated self-bootstrap from closure conformance; decomposed ambiguous lifecycle `forget`."
-  - "v0.3 (2026-09-05) — Integrates VM native closures vs serialized closures (l8) and deterministic replay substitution of serialized state (side.js), linked to master architectural sources (Issue #55)."\n  - "v0.5 (2026-09-23) — records bounded cross-provider evidence from inseme#91: a GitHub Issue plus repository references materialized sufficient state for active Codex resume and later terminal Grok resume without predecessor-private session state; no new Packet primitive is inferred."
+  - "v0.3 (2026-09-05) — Integrates VM native closures vs serialized closures (l8) and deterministic replay substitution of serialized state (side.js), linked to master architectural sources (Issue #55)."
+  - "v0.5 (2026-09-23) — records bounded cross-provider evidence from inseme#91: a GitHub Issue plus repository references materialized sufficient state for active Codex resume and later terminal Grok resume without predecessor-private session state; no new Packet primitive is inferred."
+  - "v0.6 (2026-10-24) — clarifies that l8 and l9 decompose work within one process address space; portable cross-process continuation is a later generalization."
 classification_source: "cogentia.js"
 classification_version: "1"
 classification_rule: "explicit-metadata"
@@ -231,7 +242,7 @@ This does not imply that a Cognitive Packet serializes a native call stack. Clos
 The distinction between an implicit runtime continuation and Packet Closure reflects a historical and architectural progression in the JHN lineage (see [`logique_capacitaire_jhr_forth_linkos_fractanet.md`](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/logique_capacitaire_jhr_forth_linkos_fractanet.md)):
 
 1. **VM Native Closures vs. Transportable Serialized Closures:**
-   In languages like Scheme (`call/cc`), Forth, or JavaScript, a closure captures pointers within a uniform address-space memory heap. The closure is fast and cheap, but strictly process-bound. Once computation is distributed across asynchronous agents, human-AI handoffs, and network boundaries, native VM closures cannot travel. They must become **serialized closures** — encapsulated packets containing explicit inputs, declared dependencies, and expected resumption schemas. This was directly prefigured by `l8` (2014), where monolithic execution was decomposed into discrete `Tasks` and `Steps`, and continuations were materialized as externalized objects supporting cancellation and resumption across sessions.
+   In languages like Scheme (`call/cc`), Forth, or JavaScript, a closure captures pointers within a uniform address-space memory heap. The closure is fast and cheap, but strictly process-bound. Once computation is distributed across asynchronous agents, human-AI handoffs, and network boundaries, native VM closures cannot travel. They must become **serialized closures** — encapsulated packets containing explicit inputs, declared dependencies, and expected resumption schemas. The conceptual antecedent in [`l8`](https://github.com/JeanHuguesRobert/l8) (2014) is the decomposition of work into `Tasks` and `Steps`; l8 itself, like l9 in Inox, remains within one process and address space. The later packet and COP architecture generalizes resumable work across process boundaries.
 
 2. **Substitution of Serialized State by Deterministic Replay (`side.js`):**
    Full serialization of an evolving execution stack across heterogeneous machines is notoriously brittle, verbose, and schema-dependent. A powerful alternative pattern, formalized in `side.js` (2016), achieves Packet Closure without heavy state serialization: **deterministic replay from the top**.

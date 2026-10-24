@@ -1,11 +1,41 @@
+---
+title: Code and document size data
+author: unknown
+affiliation: Institut Mariani / C.O.R.S.I.C.A., 1 cours Paoli, F-20250 Corte, Corsica
+date: null
+last_modified_at: 2026-10-24
+license: CC BY-SA 4.0
+language: en
+status: working-paper — methodology
+canonical_url: https://github.com/JeanHuguesRobert/cogentia/blob/main/research/corpus-velocity/README.md
+last_stamped_at: unknown
+document_role: operational
+document_kind: methodology
+visibility: public
+lifecycle_state: working
+update_policy: UP-DEFAULT-REVIEWED
+provenance:
+  origin_type: repository
+  origin_repository: JeanHuguesRobert/cogentia
+  origin_ref: 34cfe727b3f524bc76e74932ed52babe153aee1f
+  origin_date: 2026-10-24
+  derived_from: []
+review:
+  status: unreviewed
+  reviewed_by: []
+---
+
 # Code and document size data
 
 The dated directories contain reproducible snapshots for the public subset
 listed in [`../corpus-velocity-registry.json`](../corpus-velocity-registry.json).
 Each JSON manifest records its generation time, registry SHA-256, selected
 branch and commit, coverage, filters, period, and per-repository status.
-`not_created`, `missing`, `missing_mainline_branch`, `excluded`, and `error`
-are distinct outcomes; they must not be treated as zero.
+`no_mainline_commit_by_cutoff`, `missing`, `missing_mainline_branch`,
+`excluded`, and `error` are distinct outcomes. The first means that the
+selected mainline has no commit chosen by that cutoff; it does not mean the
+project or repository did not yet exist. Missing or excluded data must not be
+treated as zero.
 
 ## Git tree snapshots
 
@@ -42,11 +72,21 @@ python3 scripts/corpus_size_annual_comparison.py \
   --out research/corpus-velocity/2026-10/annual-snapshots.json
 ```
 
-The registry remains the same 17 public repositories at every date. A
-repository with no main/master snapshot yet contributes zero to that date's
-portfolio total; the report separately shows how many had a snapshot. The
-year-over-year percentages therefore measure the growth of the fixed 17-repo
-portfolio, including repositories created or first measured later.
+The registry remains the same 18 public repositories at every date, including
+historical repositories such as L8 on the same basis as newer projects. A
+repository created after a cutoff contributes zero to the fixed-registry total
+at that date. Creation dates are captured from GitHub repository metadata; a
+documented earlier repository lineage may establish an earlier effective
+creation date, as for Inox. If a repository existed by a cutoff but has no
+selected main/master commit, its historical size is unknown and the total is
+marked as a lower bound. Snapshot selection uses Git commit dates, which are
+not independent archival timestamps. The report separately shows how many
+mainline trees could be reconstructed and which historical sizes remain
+unknown.
+
+Other known historical repositories outside those 18 (currently
+`virteal/side`) are recorded separately in the registry and manifests. They do
+not enter the fixed-18 totals unless added to the registered cohort.
 
 The manifest publishes the exact code/document extension sets and excluded
 path expression. It reports total Git tree blobs and bytes, plus code and

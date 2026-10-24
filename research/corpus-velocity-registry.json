@@ -1,99 +1,183 @@
 {
   "schema_version": 1,
-  "scope": "expanded verified-public subset only; not exhaustive; absent local clones recorded monthly as missing",
+  "scope": "fixed set of 18 public repositories for quantitative comparison, including historically established repositories regardless of age; non-exhaustive; known other historical repositories are recorded separately",
   "repositories": [
     {
       "name": "JeanHuguesRobert/inseme",
       "path": "inseme",
-      "visibility": "public"
+      "visibility": "public",
+      "repository_created_at": "2016-04-09T13:07:38Z",
+      "repository_metadata_url": "https://api.github.com/repos/JeanHuguesRobert/inseme",
+      "metadata_verified_on": "2026-10-24"
     },
     {
       "name": "JeanHuguesRobert/cogentia",
       "path": "cogentia",
-      "visibility": "public"
+      "visibility": "public",
+      "repository_created_at": "2026-03-02T00:43:52Z",
+      "repository_metadata_url": "https://api.github.com/repos/JeanHuguesRobert/cogentia",
+      "metadata_verified_on": "2026-10-24"
     },
     {
       "name": "JeanHuguesRobert/FractaVolta",
       "path": "FractaVolta",
-      "visibility": "public"
+      "visibility": "public",
+      "repository_created_at": "2026-04-15T09:03:39Z",
+      "repository_metadata_url": "https://api.github.com/repos/JeanHuguesRobert/FractaVolta",
+      "metadata_verified_on": "2026-10-24"
     },
     {
       "name": "JeanHuguesRobert/operium",
       "path": "operium",
-      "visibility": "public"
+      "visibility": "public",
+      "repository_created_at": "2026-06-24T05:57:00Z",
+      "repository_metadata_url": "https://api.github.com/repos/JeanHuguesRobert/operium",
+      "metadata_verified_on": "2026-10-24"
     },
     {
       "name": "JeanHuguesRobert/barons-Mariani",
       "path": "barons-Mariani",
-      "visibility": "public"
+      "visibility": "public",
+      "repository_created_at": "2023-05-29T13:23:55Z",
+      "repository_metadata_url": "https://api.github.com/repos/JeanHuguesRobert/barons-Mariani",
+      "metadata_verified_on": "2026-10-24"
     },
     {
       "name": "JeanHuguesRobert/Inox",
       "path": "Inox",
-      "visibility": "public"
+      "visibility": "public",
+      "repository_created_at": "2026-05-21T15:41:17Z",
+      "repository_metadata_url": "https://api.github.com/repos/JeanHuguesRobert/Inox",
+      "metadata_verified_on": "2026-10-24",
+      "historical_origin": {
+        "repository": "virteal/Inox",
+        "created_at": "2021-06-03T17:40:51Z",
+        "metadata_url": "https://api.github.com/repos/virteal/Inox",
+        "branch": "master",
+        "verified_commit": "602d94f0279a26a3b43a5dcdd8d2b982e0fda26f",
+        "verified_commit_url": "https://github.com/virteal/Inox/commit/602d94f0279a26a3b43a5dcdd8d2b982e0fda26f",
+        "verified_on": "2026-10-24"
+      }
     },
     {
       "name": "JeanHuguesRobert/survey",
       "path": "survey",
-      "visibility": "public"
+      "visibility": "public",
+      "repository_created_at": "2025-10-20T05:54:43Z",
+      "repository_metadata_url": "https://api.github.com/repos/JeanHuguesRobert/survey",
+      "metadata_verified_on": "2026-10-24"
     },
     {
       "name": "JeanHuguesRobert/ubikia",
       "path": "ubikia",
-      "visibility": "public"
+      "visibility": "public",
+      "repository_created_at": "2026-05-23T14:33:06Z",
+      "repository_metadata_url": "https://api.github.com/repos/JeanHuguesRobert/ubikia",
+      "metadata_verified_on": "2026-10-24"
     },
     {
       "name": "acorsica/gouvernance",
       "path": "gouvernance",
-      "visibility": "public"
+      "visibility": "public",
+      "repository_created_at": "2026-05-03T10:29:09Z",
+      "repository_metadata_url": "https://api.github.com/repos/acorsica/gouvernance",
+      "metadata_verified_on": "2026-10-24"
     },
     {
       "name": "JeanHuguesRobert/JeanHuguesRobert",
       "path": "JeanHuguesRobert",
       "visibility": "public",
-      "category": "corpus"
+      "category": "corpus",
+      "repository_created_at": "2026-03-30T04:56:40Z",
+      "repository_metadata_url": "https://api.github.com/repos/JeanHuguesRobert/JeanHuguesRobert",
+      "metadata_verified_on": "2026-10-24"
     },
     {
       "name": "JeanHuguesRobert/marenostrum",
       "path": "marenostrum",
       "visibility": "public",
-      "category": "corpus"
+      "category": "corpus",
+      "repository_created_at": "2026-03-28T05:10:42Z",
+      "repository_metadata_url": "https://api.github.com/repos/JeanHuguesRobert/marenostrum",
+      "metadata_verified_on": "2026-10-24"
     },
     {
       "name": "JeanHuguesRobert/StructEnv",
       "path": "StructEnv",
       "visibility": "public",
-      "category": "corpus"
+      "category": "corpus",
+      "repository_created_at": "2025-03-15T12:06:24Z",
+      "repository_metadata_url": "https://api.github.com/repos/JeanHuguesRobert/StructEnv",
+      "metadata_verified_on": "2026-10-24"
     },
     {
       "name": "JeanHuguesRobert/serra",
       "path": "serra",
       "visibility": "public",
-      "category": "corpus"
+      "category": "corpus",
+      "repository_created_at": "2025-02-21T19:03:23Z",
+      "repository_metadata_url": "https://api.github.com/repos/JeanHuguesRobert/serra",
+      "metadata_verified_on": "2026-10-24"
     },
     {
       "name": "acorsica/institut-mariani",
       "path": "institut-mariani",
       "visibility": "public",
-      "category": "association"
+      "category": "association",
+      "repository_created_at": "2026-06-03T11:48:51Z",
+      "repository_metadata_url": "https://api.github.com/repos/acorsica/institut-mariani",
+      "metadata_verified_on": "2026-10-24"
     },
     {
       "name": "acorsica/acorsica.org",
       "path": "acorsica.org",
       "visibility": "public",
-      "category": "association"
+      "category": "association",
+      "repository_created_at": "2026-06-19T10:43:05Z",
+      "repository_metadata_url": "https://api.github.com/repos/acorsica/acorsica.org",
+      "metadata_verified_on": "2026-10-24"
     },
     {
       "name": "acorsica/privai",
       "path": "privai",
       "visibility": "public",
-      "category": "association"
+      "category": "association",
+      "repository_created_at": "2026-06-03T11:46:42Z",
+      "repository_metadata_url": "https://api.github.com/repos/acorsica/privai",
+      "metadata_verified_on": "2026-10-24"
     },
     {
       "name": "acorsica/Kudos",
       "path": "Kudos",
       "visibility": "public",
-      "category": "association"
+      "category": "association",
+      "repository_created_at": "2025-03-30T13:18:01Z",
+      "repository_metadata_url": "https://api.github.com/repos/acorsica/Kudos",
+      "metadata_verified_on": "2026-10-24"
+    },
+    {
+      "name": "virteal/l8",
+      "path": "l8",
+      "visibility": "public",
+      "repository_created_at": "2012-10-23T13:11:20Z",
+      "repository_metadata_url": "https://api.github.com/repos/virteal/l8",
+      "metadata_verified_on": "2026-10-24"
+    }
+  ],
+  "historical_repositories_outside_fixed_scope": [
+    {
+      "name": "virteal/side",
+      "repository_created_at": "2016-09-24T09:29:22Z",
+      "repository_metadata_url": "https://api.github.com/repos/virteal/side",
+      "default_branch": "master",
+      "baseline_cutoff": "2022-10-24T17:40:04Z",
+      "baseline_mainline_commit": "baba18c44c3affa9ab3d777bf17707ca3eb30113",
+      "baseline_commit_date": "2016-10-07T16:27:16Z",
+      "baseline_commit_url": "https://github.com/virteal/side/commit/baba18c44c3affa9ab3d777bf17707ca3eb30113",
+      "current_master_tip": "7e405a56288f7d7f55584997c8b5d883e7402322",
+      "current_tip_first_parent_is_baseline_commit": true,
+      "verified_on": "2026-10-24",
+      "included_in_fixed_17": false
     }
   ]
 }

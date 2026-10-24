@@ -8,6 +8,7 @@ status: working-paper — Working paper
 version: '0.7'
 license: CC BY-SA 4.0 for text; MIT for associated schemas or code
 spdx: CC-BY-SA-4.0
+language: en
 operational_prompt: cogentia/prompts/cognitive_packet.md
 canonical_url: https://github.com/JeanHuguesRobert/cogentia/blob/main/research/cognitive_packets.md
 last_stamped_at: 2026-09-05T00:00:00.000Z
@@ -272,7 +273,7 @@ Cognitive packet:
 
 In a classical execution runtime (such as Scheme, Forth, or Node.js), a continuation is a **native VM closure**. It relies on an implicit, uniform address-space memory heap and active stack frames. Such closures are intrinsically non-transportable: they cannot cross machine reboot, process restart, or heterogeneous multi-agent boundaries.
 
-For multi-agent and human-AI cooperation, a continuation must be transformed into a **serialized closure**: an explicit envelope and payload containing declared dependencies, validated inputs, and expected resumption schemas. This transition directly reflects the lineage of `l8` (2014), where monolithic execution threads were broken into discrete `Tasks` and `Steps`, turning continuations into first-class, externalized data objects capable of being paused, cancelled, and safely resumed across independent sessions.
+For multi-agent and human-AI cooperation, resumable work must be represented as **portable data**: an explicit envelope and payload containing declared dependencies, validated inputs, and expected resumption schemas. This has a conceptual antecedent in [`l8`](https://github.com/JeanHuguesRobert/l8) (2014), where work was decomposed into discrete `Tasks` and `Steps`. In `l8` (and in the later `l9` within Inox), those tasks and steps still execute within one process and address space: their native closures depend on that process's RAM. Later Cognitive Packet/COP work generalizes this decomposition across Unix process and machine boundaries. This is a lineage of an idea, not a claim that `l8` itself provided cross-process continuations.
 
 ### 4.6.2 Deterministic replay as state substitution (`side.js`)
 

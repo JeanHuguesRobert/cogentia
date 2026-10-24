@@ -240,21 +240,20 @@ Le Learning Computer ne se réduit pas à une unité de calcul unique. Sa struct
 
 ## IV. La généalogie du contrôle : De l8 (2014) et Side (2016) à call/cc et au CPS
 
-### 1. La préhistoire du contrôle asynchrone : l8 (2014), Tasks, Steps et Acteurs sérialisés
+### 1. La préhistoire du contrôle asynchrone : l8 (2014), Tasks et Steps coopératifs
 
 L'architecture du Learning Computer ne commence pas avec l'avènement des modèles de langage de 2024. Elle plonge ses racines dans une recherche de plus d'une décennie sur les limites du contrôle séquentiel en environnement asynchrone.
 
 Dès **2014**, la bibliothèque [`l8`](https://github.com/JeanHuguesRobert/l8) posait les fondations conceptuelles de cette mécanique pour surmonter le « callback hell » de l'écosystème Node.js naissant :
 
-1. **La décomposition en Tasks et Steps :** Une fonction synchrone conventionnelle ne pouvant pas bloquer sans paralyser le thread JavaScript unique, `l8` décompose l'activité en **Steps** coopératifs ordonnés à l'intérieur d'une **Task**. L'arbre d'exécution n'est pas un graphe statique figé à froid : il se construit **dynamiquement au fil de l'exécution** (`l8.step()`, `l8.task()`, `l8.fork()`, `l8.repeat()`, `l8.spawn()`).
-2. **Closures natives de la VM versus closures sérialisées des Acteurs :**
-   Au sein d'un même processus hôte, les Steps sont des fermetures lexicales (*closures*) directement « offertes » par la machine virtuelle JavaScript : elles capturent naturellement leur environnement de variables en mémoire vive sans surcoût. Mais dès que `l8` aborde la distribution par le modèle des **Acteurs** (communication inter-processus, répartition navigateur/serveur), la closure locale en RAM devient caduque : **il devient indispensable d'expliciter et de sérialiser la closure**. C'est l'acte de naissance exact de ce qui deviendra dix ans plus tard le **Packet Closure** et le **Cognitive Packet** : transformer une fermeture lexicale volatile en un objet de données portable, indépendant de la machine qui l'a instanciée.
+1. **La décomposition en Tasks et Steps :** `l8` décompose l'activité en **Steps** coopératifs ordonnés à l'intérieur d'une **Task**, composés dynamiquement au fil de l'exécution (`l8.step()`, `l8.task()`, `l8.fork()`, `l8.repeat()`, `l8.spawn()`). C'est un ancêtre conceptuel de la décomposition en unités de travail reprise plus tard par Tasks/Steps dans Inox et par les continuations du COP.
+2. **La frontière de l'espace d'adressage :** Dans `l8`, les closures s'appuient sur l'environnement vivant de la VM JavaScript ; elles restent attachées au processus et à son espace mémoire. La même limite demeure dans `l9` au sein d'Inox. La généralisation vers des continuations transportables entre processus Unix, puis entre machines et agents, appartient aux développements ultérieurs : elle rend explicites les données et le contexte de reprise au lieu de transporter une closure native. `l8` est donc un précurseur conceptuel, pas une implémentation ancienne du Cognitive Packet ni de l'exécution distribuée.
 3. **Composabilité par l'algèbre des Promises enrichie de l'annulation (`cancel`) :**
    Dans `l8`, chaque Task implémente le protocole des *Promises* (`thenable`). Toute l'algèbre compositionnelle des promesses (`Promise.all()`, `Promise.race()`, chaînage séquentiel) devient immédiatement opératoire pour orchestrer les tâches. Cependant, face à la tare majeure des Promises standard d'ECMAScript — l'impossibilité d'interrompre une promesse en vol —, `l8` étend l'algèbre par des opérateurs d'annulation de premier ordre (`.cancel()`, `.stop()`, timeouts, détection d'abandon gracieux ou brutal). Cette capacité d'élagage préfigure directement la coupure des branches d'exploration divergentes et la gestion stricte des budgets de calcul.
 
 En **septembre 2016**, [`side.js`](https://github.com/JeanHuguesRobert/side) affine cette intuition en traitant le blocage comme une exception rattrapable rejouée depuis le sommet à coût nul grâce à un cache de slots en RAM et au report des effets de bord (*delayed writes*).
 
-C'est cet héritage technique continu (2014–2016–2026) qui permet aujourd'hui d'aborder l'orchestration des grands modèles d'IA non comme un bricolage de prompts sur une pile d'appels éphémère, mais comme une science rigoureuse des continuations distribuées.
+C'est une généalogie d'idées et de généralisations successives (2014–2016–2026), pas une continuité d'implémentation : l8 fournit la décomposition coopérative en mémoire locale ; des travaux ultérieurs étendent cette intuition à des continuations explicites et distribuées.
 
 ### 2. L'impasse contemporaine de la pile d'exécution séquentielle (Call Stack)
 

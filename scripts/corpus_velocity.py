@@ -46,6 +46,14 @@ def month_ends(start, end):
         yield (limit - dt.timedelta(seconds=1)).strftime("%Y-%m-%dT%H:%M:%SZ"), period
 
 
+def effective_creation_date(item):
+    origin = item.get("historical_origin") or {}
+    value = origin.get("created_at") or item.get("repository_created_at")
+    if not value:
+        return None
+    return dt.datetime.fromisoformat(value.replace("Z", "+00:00")).astimezone(dt.timezone.utc)
+
+
 def mainline_ref(repo):
     allowed_refs = {
         "refs/remotes/origin/main", "refs/remotes/origin/master",
@@ -171,19 +179,27 @@ def main():
     rows = []
     for item in registry["repositories"]:
         name = item["name"]
+        created = effective_creation_date(item)
+        creation_fields = {
+            "repository_created_at": item.get("repository_created_at"),
+            "effective_created_at": created.isoformat(timespec="seconds") if created else None,
+            "historical_origin_repository": (item.get("historical_origin") or {}).get("repository"),
+        }
         if item.get("visibility") != "public" or not item.get("included", True):
             for _, period in periods:
-                rows.append({"repo": name, "period": period, "status": "excluded", "reason": "privacy_or_scope"})
+                rows.append({"repo": name, **creation_fields, "period": period,
+                             "status": "excluded", "reason": "privacy_or_scope"})
             continue
         repo = pathlib.Path(args.root).expanduser() / item["path"]
         if not (repo / ".git").exists():
             for _, period in periods:
-                rows.append({"repo": name, "period": period, "status": "missing", "reason": "local_checkout_absent"})
+                rows.append({"repo": name, **creation_fields, "period": period,
+                             "status": "missing", "reason": "local_checkout_absent"})
             continue
         ref = mainline_ref(repo)
         if ref is None:
             for _, period in periods:
-                rows.append({"repo": name, "period": period,
+                rows.append({"repo": name, **creation_fields, "period": period,
                              "status": "missing_mainline_branch",
                              "reason": "main_or_master_ref_absent"})
             continue
@@ -196,17 +212,19 @@ def main():
                            "--before=" + cutoff.strftime("%Y-%m-%dT%H:%M:%SZ"),
                            ref).decode().strip()
                 if not head:
-                    rows.append({"repo": name, "period": period, "status": "not_created",
+                    status = "not_yet_created" if created and cutoff < created else "no_mainline_commit_by_cutoff"
+                    rows.append({"repo": name, **creation_fields, "period": period,
+                                 "status": status,
                                  "partial": partial, "branch": branch, "ref": ref})
                     continue
                 metrics = tree_metrics(repo, head)
-                rows.append({"repo": name, "period": period, "status": "ok",
+                rows.append({"repo": name, **creation_fields, "period": period, "status": "ok",
                              "partial": partial, "branch": branch, "ref": ref,
                              "commit": head, **metrics})
             except (subprocess.CalledProcessError, ValueError) as e:
                 reason = (e.stderr.decode(errors="replace") if isinstance(e, subprocess.CalledProcessError)
                           else str(e))
-                rows.append({"repo": name, "period": period, "status": "error",
+                rows.append({"repo": name, **creation_fields, "period": period, "status": "error",
                              "partial": partial, "reason": reason[:200]})
     out = pathlib.Path(args.out)
     out.mkdir(parents=True, exist_ok=True)
@@ -219,8 +237,11 @@ def main():
         "record_count": len(rows), "status_counts": status_counts,
         "schema_version": 1, "period_start": args.start, "period_end": args.end,
         "coverage": "partial_unless_registry_exhaustive", "metrics": rows,
+        "historical_repositories_outside_fixed_scope": registry.get(
+            "historical_repositories_outside_fixed_scope", []),
         "branch_policy": "origin/HEAD when it resolves to main/master; otherwise origin/main, origin/master, local main, local master; snapshots use first-parent commits only",
         "source": "existing local Git clones; no fetch performed",
+        "creation_metadata_basis": "repository_created_at from GitHub REST repository metadata; verified historical_origin used when recorded; source URLs and verification dates are in research/corpus-velocity-registry.json",
         "filters": {
             "code_extensions": sorted(CODE),
             "document_extensions": sorted(DOCUMENTS),
@@ -231,8 +252,12 @@ def main():
         "limitations": ["Git tree snapshot, not churn", "code extension filter",
                         "generated/path exclusions heuristic",
                         "physical and nonblank line counts include comments and are not language-aware SLOC",
+                        "no selected mainline commit by cutoff does not establish that the project did not yet exist",
+                        "if a repository existed by a cutoff but has no selected mainline commit, its historical size is unknown",
+                        "snapshot selection uses Git commit timestamps, not independent archival timestamps",
                         "no private-repository metrics exported"]}, indent=2) + "\n")
-    fields = ["repo", "period", "status", "branch", "ref", "commit", "blobs", "bytes",
+    fields = ["repo", "repository_created_at", "effective_created_at",
+              "historical_origin_repository", "period", "status", "branch", "ref", "commit", "blobs", "bytes",
               "code_files", "code_bytes", "code_physical_lines", "code_nonblank_lines",
               "document_files", "document_bytes", "text_document_files",
               "text_document_physical_lines", "text_document_nonblank_lines",
