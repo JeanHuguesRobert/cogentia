@@ -1878,6 +1878,25 @@ export function createMcpCore(env = process.env, extras = {}) {
           capabilities: scopedCapabilities,
           allowedCapabilities: serverAllowedCapabilities,
           maxInternalEffects: writeAuthorized ? req.execution_budget.max_internal_effects : 0,
+          // The required orientation event is a real, public, read-only corpus lookup.
+          // Never discharge it with a synthetic receipt; failure must remain visible.
+          requiredEventHandlers: {
+            "orientation.required": async ({ input }) => {
+              const query = String(input?.text || input?.prompt || "").trim();
+              if (!query) return { ok: false, reason: "empty_orientation_query" };
+              const orientation = await daemonGet("/api/context/orient", { q: query });
+              if (orientation?.ok !== true || orientation?.schema !== "cogentia.orientation.v1") {
+                return { ok: false, reason: "orientation_unavailable" };
+              }
+              return {
+                ok: true,
+                source: "corpus.orient",
+                schema: orientation.schema,
+                terminal_state: orientation.terminal_state || null,
+                resolved_concept_count: orientation.resolved_concepts?.length || 0,
+              };
+            },
+          },
         });
         const completed = events.find((e) => e.type === "john.run.completed");
         const failed = events.find((e) => e.type === "john.run.failed");

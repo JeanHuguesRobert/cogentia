@@ -175,6 +175,37 @@ assert.equal(governedCompleted.data.result.yield.semantic_yield, "Synthesis base
 assert.equal(governedCompleted.data.result.odyssey.lifecycle.isReturned, true);
 assert.equal(governedCompleted.data.result.odyssey.journey.hopsCount, 3);
 
+// Regression: a corpus-like prompt cannot bypass required orientation.
+const orientationRequest = {
+  ...governedRequest,
+  request_id: "john-test-required-orientation",
+  execution_budget: { ...governedRequest.execution_budget, max_tool_calls: 0 },
+  input: { prompt: "Explain the Cognitive Packet mandate" },
+  handler: { ...governedRequest.handler, allowed_capabilities: [] },
+};
+const missingOrientation = await runJohnRequest(orientationRequest);
+assert.equal(missingOrientation.at(-1).type, "john.run.failed");
+assert.equal(missingOrientation.at(-1).data.data.code, "required_event_handler_missing");
+
+let orientationCalls = 0;
+const oriented = await runJohnRequest(orientationRequest, {
+  requiredEventHandlers: {
+    "orientation.required": async () => {
+      orientationCalls += 1;
+      return { ok: true, source: "corpus.orient", schema: "cogentia.orientation.v1" };
+    },
+  },
+});
+assert.equal(orientationCalls, 1);
+assert.equal(oriented.at(-1).type, "john.run.completed");
+assert.equal(oriented.find(x => x.type === "john.accounting.settled").data.ithaca_returned, true);
+
+const failedOrientation = await runJohnRequest(orientationRequest, {
+  requiredEventHandlers: { "orientation.required": async () => ({ ok: false }) },
+});
+assert.equal(failedOrientation.at(-1).type, "john.run.failed");
+assert.equal(failedOrientation.at(-1).data.data.code, "required_event_failed");
+
 // Test Invalid Request
 const invalid = await runJohnRequest({ version: "wrong" });
 assert.equal(invalid.length, 1);

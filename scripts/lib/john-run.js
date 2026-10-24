@@ -354,6 +354,7 @@ export async function runJohnRequest(request, options = {}) {
       registry,
       reasoner,
       reviewer: options.reviewer,
+      requiredEventHandlers: options.requiredEventHandlers,
       clock: options.clock || Date.now,
     });
 
