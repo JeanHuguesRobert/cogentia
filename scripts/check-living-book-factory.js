@@ -8,6 +8,7 @@
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
+import { spawnSync } from 'node:child_process';
 import { loadManifest, validateManifest } from './lib/living-book-factory/manifest.js';
 import { inspectLivingBook } from './lib/living-book-factory/inspector.js';
 import { scaffoldLivingBook } from './lib/living-book-factory/scaffold.js';
@@ -96,6 +97,31 @@ try {
   assert.ok(fs.existsSync(path.join(bookDir, 'site', 'magazine.html')), 'site/magazine.html must exist');
   assert.ok(fs.existsSync(path.join(bookDir, 'site', 'contribuer.html')), 'site/contribuer.html must exist');
   assert.ok(fs.existsSync(path.join(bookDir, 'chronology')), 'chronology/ extension dir must exist');
+
+  // CLI contract: JSON validation and inspection must fail for an invalid manifest.
+  // Use one existing scaffolded Reality Case; do not introduce a separate test framework.
+  const manifestPath = path.join(bookDir, 'living-book.yml');
+  const originalManifest = fs.readFileSync(manifestPath, 'utf8');
+  const invalidManifest = originalManifest.replace('living-book/v1', 'invalid/v1');
+  assert.notEqual(invalidManifest, originalManifest, 'Test fixture must corrupt the schema');
+  try {
+    fs.writeFileSync(manifestPath, invalidManifest, 'utf8');
+    for (const command of ['validate', 'inspect']) {
+      const result = spawnSync(process.execPath, [
+        path.join(process.cwd(), 'scripts', 'living-book.js'),
+        command, manifestPath, '--json'
+      ], { encoding: 'utf8' });
+      assert.equal(result.status, 1, command + ' --json must fail with invalid schema');
+      const report = JSON.parse(result.stdout);
+      if (command === 'validate') {
+        assert.equal(report.valid, false);
+      } else {
+        assert.equal(report.manifest_valid, false);
+      }
+    }
+  } finally {
+    fs.writeFileSync(manifestPath, originalManifest, 'utf8');
+  }
 
   // Check Janus separation in editorial-architecture.md
   const edArch = fs.readFileSync(path.join(bookDir, 'editorial-architecture.md'), 'utf8');
