@@ -88,14 +88,14 @@ graph LR
   r_github[".github"]
   r_acorsica_org["acorsica.org"]
   r_structenv["StructEnv"]
-  r_cogentia -->|122| r_barons_mariani
+  r_cogentia -->|139| r_barons_mariani
   r_barons_mariani -->|95| r_cogentia
   r_jeanhuguesrobert -->|68| r_barons_mariani
   r_fractavolta -->|54| r_cogentia
   r_inseme -->|45| r_cogentia
   r_fractavolta -->|37| r_marenostrum
   r_jeanhuguesrobert -->|36| r_cogentia
-  r_cogentia -->|30| r_inseme
+  r_cogentia -->|35| r_inseme
   r_barons_mariani -->|24| r_marenostrum
   r_barons_mariani -->|22| r_fractavolta
   r_fractavolta -->|22| r_inseme
@@ -107,38 +107,40 @@ graph LR
   r_barons_mariani -->|16| r_jeanhuguesrobert
   r_inox -->|16| r_cogentia
   r_jeanhuguesrobert -->|16| r_marenostrum
-  r_operium -->|13| r_cogentia
+  r_operium -->|14| r_cogentia
   r_inseme -->|12| r_fractavolta
   r_inseme -->|12| r_inox
   r_marenostrum -->|12| r_fractavolta
   r_inox -->|11| r_barons_mariani
   r_marenostrum -->|11| r_barons_mariani
+  r_cogentia -->|10| r_fractavolta
   r_inox -->|10| r_fractavolta
   r_inox -->|9| r_inseme
   r_jeanhuguesrobert -->|9| r_fractavolta
+  r_cogentia -->|8| r_jeanhuguesrobert
   r_fractavolta -->|8| r_inox
   r_inox -->|8| r_marenostrum
   r_ubikia -->|8| r_cogentia
   r_barons_mariani -->|7| r_inox
-  r_cogentia -->|7| r_jeanhuguesrobert
   r_inseme -->|7| r_jeanhuguesrobert
   r_jeanhuguesrobert -->|7| r_inseme
   r_inseme -->|6| r_kudos
   r_jeanhuguesrobert -->|6| r_inox
-  r_cogentia -->|5| r_fractavolta
+  r_cogentia -->|5| r_privai
   r_ubikia -->|5| r_barons_mariani
   r_barons_mariani -->|4| r_ubikia
+  r_cogentia -->|4| r_inox
   r_fractavolta -->|4| r_jeanhuguesrobert
   r_marianivillage -->|4| r_fractavolta
   r_operium -->|4| r_inseme
   r_operium -->|4| r_marenostrum
   r_ubikia -->|4| r_jeanhuguesrobert
   r_github -->|3| r_gouvernance
-  r_cogentia -->|3| r_inox
   r_jeanhuguesrobert -->|3| r_ubikia
   r_kudos -->|3| r_barons_mariani
   r_operium -->|3| r_barons_mariani
   r_barons_mariani -->|2| r_privai
+  r_cogentia -->|2| r_operium
   r_gouvernance -->|2| r_barons_mariani
   r_gouvernance -->|2| r_fractavolta
   r_inox -->|2| r_jeanhuguesrobert
@@ -150,7 +152,6 @@ graph LR
   r_marenostrum -->|2| r_inox
   r_github -->|1| r_institut_mariani
   r_barons_mariani -->|1| r_institut_mariani
-  r_cogentia -->|1| r_operium
   r_cogentia -->|1| r_kudos
   r_gouvernance -->|1| r_jeanhuguesrobert
   r_gouvernance -->|1| r_cogentia
@@ -718,6 +719,7 @@ graph LR
 <!-- BEGIN_AUTO: published -->
 | Title | Location | Date |
 |---|---|---|
+| [Effectivity Interaction Matrix](effectivity_interaction_matrix.md) *(working specification v0.2 — source-first interaction model with capability effects, routing, evidence states and Reality Test semantics; instrumented H4 and remedial-probe cases added 2026-10-06)* | this repo | 2026-10-02 → |
 | [**Cogentia — the framework, in five distinctive moves**](../COGENTIA.md) *(identity document; entry point)* | this repo | 2026-05-13 |
 | [Intent Kernel Pattern](../docs/intent-kernel-pattern.md) *(generic method v0.1 — short stable operational intention documents for humans and AI agents transforming a corpus without distorting its purpose)* | this repo | 2026-06-20 |
 | [Lien avec C.O.R.S.I.C.A., l’Institut Mariani et PrivAI](acorsica-institut-mariani.md) *(institutional boundary note — documentary links without institutional confusion)* | this repo | 2026-06-03 |
