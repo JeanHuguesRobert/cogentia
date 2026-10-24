@@ -5,10 +5,11 @@ import {
   wrapToolError,
   ENVELOPE_KIND,
 } from "./cogentia-mcp-envelope.js";
-import { resolveCallerAuth, deriveLockers, parseBearer, safeEqualString } from "./cogentia-mcp-auth.js";
+import { resolveCallerAuth, deriveLockers, parseBearer, safeEqualString, isResolvedCallerAuth } from "./cogentia-mcp-auth.js";
 import { captureMemoryForSurface, MEMORY_CAPTURE_MAX_BYTES } from "./memory-capture-surface.js";
 import { compareMandateAttenuation } from "./mandate-attenuation.js";
 import { runJohnRequest } from "./john-run.js";
+import { createAgentJhnWorkspaceCapabilities } from "./agent-jhn-workspace.js";
 import { auditCapabilitySymmetry } from "./symmetry-audit.js";
 import { listPatterns, getPattern } from "./cogentia-patterns.js";
 import { createHostCapabilityRouter } from "./host-capability-router.js";
@@ -1008,7 +1009,10 @@ export const TOOLS = [
       properties: {
         prepared: { type: "object", description: "EXPOSE envelope from *_prepare" },
         confirm: { type: "string", description: "Must match payload_hash (sha256:…)" },
-        principal: { type: "string" },
+        budget_reservation_id: { type: "string" },
+        account_id: { type: "string" },
+        treatment_id: { type: "string" },
+        recovery_ref: { type: "string" },
       },
       required: ["prepared", "confirm"],
       additionalProperties: false,
@@ -1817,7 +1821,64 @@ export function createMcpCore(env = process.env, extras = {}) {
             ithaca: args.ithaca || undefined,
           };
         }
-        const events = await runJohnRequest(req);
+        const workspaceRoot = String(env.COGENTIA_JHN_WORKSPACE_WRITE_ROOT || "").trim();
+        const workspaceBranch = String(env.COGENTIA_JHN_WORKSPACE_WRITE_BRANCH || "").trim();
+        const writeEnabled = /^(1|true|yes)$/i.test(String(env.COGENTIA_JHN_WORKSPACE_WRITE_ENABLED || ""));
+        const configuredMandate = String(env.COGENTIA_JHN_WORKSPACE_WRITE_MANDATE || "").trim();
+        const configuredBudget = String(env.COGENTIA_JHN_WORKSPACE_WRITE_BUDGET_ID || "").trim();
+        const workspaceConfigured = Boolean(workspaceRoot && workspaceBranch);
+        const serverModelReady = req.handler?.kind === "model"
+          && Boolean(env.OPENAI_API_KEY || process.env.OPENAI_API_KEY);
+        if (req.handler?.options && Object.prototype.hasOwnProperty.call(req.handler.options, "api_key")) {
+          const { api_key: _discardedApiKey, ...safeOptions } = req.handler.options;
+          req.handler.options = safeOptions;
+        }
+        const trustedJhn = isResolvedCallerAuth(callOpts.auth)
+          && callOpts.auth.auth === "jhn" && callOpts.auth.allowMutate === true;
+        const writeAuthorized = writeEnabled && workspaceConfigured && trustedJhn
+          && configuredMandate && callOpts.auth.mandate_ref === configuredMandate
+          && configuredBudget && serverModelReady;
+        const workspaceCapabilities = workspaceConfigured && trustedJhn
+          ? createAgentJhnWorkspaceCapabilities({
+            root: workspaceRoot,
+            branch: workspaceBranch,
+            authContext: callOpts.auth,
+            budget_reservation_id: configuredBudget || undefined,
+            account_id: env.COGENTIA_JHN_WORKSPACE_WRITE_ACCOUNT_ID || null,
+            treatment_id: env.COGENTIA_JHN_WORKSPACE_WRITE_TREATMENT_ID || null,
+          }).filter((capability) => capability.name === "workspace.read" || writeAuthorized)
+          : [];
+        const serverAllowedCapabilities = workspaceCapabilities
+          .filter((capability) => capability.name === "workspace.read" || writeAuthorized)
+          .map((capability) => capability.name);
+        const scopedCapabilities = workspaceCapabilities
+          .filter((capability) => capability.name === "workspace.read" || writeAuthorized);
+        const requestedWorkspaceCapabilities = Array.isArray(req.handler.allowed_capabilities)
+          ? req.handler.allowed_capabilities
+          : serverAllowedCapabilities;
+        if (writeAuthorized) {
+          req.principal = { id: callOpts.auth.principal_ref };
+          req.mandate = { ...req.mandate, id: configuredMandate };
+          req.budget = { id: configuredBudget };
+          req.exposure = "bounded";
+          const configuredMaxEffects = Number(env.COGENTIA_JHN_WORKSPACE_WRITE_MAX_EFFECTS || 3);
+          const requestedMaxEffects = req.execution_budget.max_internal_effects;
+          req.execution_budget.max_internal_effects = Math.min(
+            Number.isInteger(requestedMaxEffects) ? Math.max(0, Math.min(10, requestedMaxEffects)) : 3,
+            Number.isInteger(configuredMaxEffects) ? Math.max(0, Math.min(10, configuredMaxEffects)) : 3,
+          );
+          req.handler.allowed_capabilities = requestedWorkspaceCapabilities
+            .filter((name) => serverAllowedCapabilities.includes(name));
+        } else if (workspaceConfigured) {
+          req.handler.allowed_capabilities = requestedWorkspaceCapabilities
+            .filter((name) => name === "workspace.read" && serverAllowedCapabilities.includes(name));
+        }
+        const events = await runJohnRequest(req, {
+          env,
+          capabilities: scopedCapabilities,
+          allowedCapabilities: serverAllowedCapabilities,
+          maxInternalEffects: writeAuthorized ? req.execution_budget.max_internal_effects : 0,
+        });
         const completed = events.find((e) => e.type === "john.run.completed");
         const failed = events.find((e) => e.type === "john.run.failed");
         const settled = events.find((e) => e.type === "john.accounting.settled");
@@ -1960,9 +2021,19 @@ export function createMcpCore(env = process.env, extras = {}) {
         if (!args.prepared || typeof args.prepared !== "object") throw new Error("prepared is required");
         requireString(args.confirm, "confirm");
         return mintSideEffectGrantFromPrepared(args.prepared, {
-          principal: args.principal || auth?.principal_ref || auth?.actor || "principal:mcp",
+          principal: auth?.principal_ref || (auth?.auth === "admin" ? "principal:admin" : null),
           confirm: args.confirm,
           actor: auth?.actor,
+          authority_origin: auth?.auth === "jhn"
+            ? "mcp_jhn_attested_mutate"
+            : auth?.auth === "admin"
+              ? "mcp_admin_mutate"
+              : "in_process_effect_grant",
+          mandate_ref: auth?.mandate_ref || null,
+          budget_reservation_id: args.budget_reservation_id || null,
+          account_id: args.account_id || null,
+          treatment_id: args.treatment_id || null,
+          recovery_ref: args.recovery_ref || null,
         });
       case "cogentia_side_effect_record":
         requireString(args.action_class, "action_class");

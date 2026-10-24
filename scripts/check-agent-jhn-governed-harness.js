@@ -19,17 +19,25 @@ function registry(overrides = {}) {
   ]);
 }
 
-test("a reasoner can mobilize an authorized capability then answer", async () => {
+test("the governed harness continues from an intermediate capability result to an answer", async () => {
+  let reasonerCalls = 0;
   const harness = createGovernedHarness({
     registry: registry(),
-    reasoner: reasoner(async state => state.observations.length
-      ? { kind: "answer", answer: state.observations[0].value.excerpts[0] }
-      : { kind: "capability_call", capability: "corpus.search", input: { query: "FractaVolta" } }),
+    reasoner: reasoner(async state => {
+      reasonerCalls += 1;
+      return state.observations.length
+        ? { kind: "answer", answer: state.observations[0].value.excerpts[0] }
+        : { kind: "capability_call", capability: "corpus.search", input: { query: "FractaVolta" } };
+    }),
   });
   const result = await harness.run({ text: "Explain" }, { allowedCapabilities: ["corpus.search"] });
   assert.equal(result.ok, true);
   assert.equal(result.answer, "evidence:FractaVolta");
   assert.equal(result.capabilityCalls, 1);
+  assert.equal(result.stepCount, 2);
+  assert.equal(reasonerCalls, 2);
+  assert.deepEqual(result.steps.map(item => item.step.kind), ["capability_call", "answer"]);
+  assert.notEqual(result.stopReason, "clarification_required");
   assert.equal(result.steps[0].step.protocol, AGENT_STEP_PROTOCOL);
   assert.equal(result.steps[0].result.protocol, STEP_RESULT_PROTOCOL);
 });

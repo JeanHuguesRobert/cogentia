@@ -4,6 +4,7 @@ import {
 } from "./agent-jhn-whatsapp/governed-harness.js";
 import { createOpenAiStepReasoner } from "./agent-jhn-whatsapp/openai-step-reasoner.js";
 import { runAgentJohnV2SurfaceTurn, reasoningLoopV2Enabled } from "./agent-jhn-reasoning-loop-v2.js";
+import { redactWorkspaceWriteInput } from "./agent-jhn-workspace.js";
 
 const REQUEST_VERSION = "john.request.v1";
 const TERMINAL_EVENTS = new Set([
@@ -62,6 +63,10 @@ export function validateJohnRequest(request) {
     if (!Number.isInteger(limits?.[name]) || limits[name] < (name === "max_steps" || name === "max_elapsed_ms" ? 1 : 0)) {
       problems.push(problem(`$.execution_budget.${name}`, "must be a non-negative integer (positive for steps and elapsed time)"));
     }
+  }
+  if (limits?.max_internal_effects !== undefined
+      && (!Number.isInteger(limits.max_internal_effects) || limits.max_internal_effects < 0)) {
+    problems.push(problem("$.execution_budget.max_internal_effects", "must be a non-negative integer"));
   }
   if (!request.mandate || typeof request.mandate !== "object" || !String(request.mandate.id || "").trim()) {
     problems.push(problem("$.mandate.id", "is required"));
@@ -270,6 +275,7 @@ export async function runJohnRequest(request, options = {}) {
         max_tool_calls: request.execution_budget.max_tool_calls,
         max_subagents: request.execution_budget.max_subagents,
         max_external_effects: request.execution_budget.max_external_effects,
+        max_internal_effects: request.execution_budget.max_internal_effects || 0,
       },
       ithaca,
       note: "Admitted under COP boundary rules as an authoritative Cognitive Packet.",
@@ -324,7 +330,7 @@ export async function runJohnRequest(request, options = {}) {
 
     if (!reasoner) {
       if (request.handler.id === "openai.step_reasoner" || request.handler.kind === "model") {
-        const apiKey = options.apiKey || process.env.OPENAI_API_KEY || request.handler.options?.api_key;
+        const apiKey = options.apiKey || options.env?.OPENAI_API_KEY || process.env.OPENAI_API_KEY;
         if (!apiKey) {
           throw new Error("API key is required for OpenAI step reasoner handler");
         }
@@ -351,7 +357,11 @@ export async function runJohnRequest(request, options = {}) {
       clock: options.clock || Date.now,
     });
 
-    const allowedCaps = request.handler.allowed_capabilities || options.allowedCapabilities || [];
+    const serverAllowedCaps = Array.isArray(options.allowedCapabilities) ? new Set(options.allowedCapabilities) : null;
+    const requestedCaps = request.handler.allowed_capabilities || options.allowedCapabilities || [];
+    const allowedCaps = serverAllowedCaps
+      ? requestedCaps.filter((name) => serverAllowedCaps.has(name))
+      : requestedCaps;
     const confirmedCaps = request.handler.confirmed_capabilities || options.confirmedCapabilities || [];
 
     const authorization = {
@@ -363,6 +373,10 @@ export async function runJohnRequest(request, options = {}) {
       maxSteps: request.execution_budget.max_steps,
       maxCapabilityCalls: request.execution_budget.max_tool_calls,
       maxElapsedMs: request.execution_budget.max_elapsed_ms,
+      maxInternalEffects: Math.min(
+        request.execution_budget.max_internal_effects ?? 0,
+        options.maxInternalEffects ?? 0,
+      ),
     };
 
     try {
@@ -385,7 +399,7 @@ export async function runJohnRequest(request, options = {}) {
               event(request, seq++, "john.tool.requested", {
                 step_id: step.step_id,
                 capability: step.capability,
-                input: step.input,
+                input: step.capability === "workspace.write" ? redactWorkspaceWriteInput(step.input) : step.input,
               })
             );
             if (result?.status === "completed") {
@@ -393,8 +407,15 @@ export async function runJohnRequest(request, options = {}) {
                 event(request, seq++, "john.tool.receipt", {
                   step_id: step.step_id,
                   capability: step.capability,
-                  status: "completed",
+                  status: step.capability === "workspace.write"
+                    && result.observation?.accounting_complete !== true
+                    ? "effect_unaccounted"
+                    : "completed",
                   elapsed_ms: result.elapsed_ms,
+                  authorization_id: result.observation?.authorization_id || null,
+                  accounting_complete: result.observation?.accounting_complete ?? null,
+                  effect_receipt: result.observation?.effect_receipt || null,
+                  cop_spend: result.observation?.cop_spend || null,
                 })
               );
             } else if (result?.status === "denied") {
@@ -411,7 +432,15 @@ export async function runJohnRequest(request, options = {}) {
         }
       }
 
-      if (harnessResult.ok) {
+      const unaccountedWorkspaceEffect = (harnessResult.steps || []).some((entry) =>
+        entry.step?.capability === "workspace.write"
+          && entry.result?.status === "completed"
+          && entry.result?.observation?.accounting_complete !== true);
+      if (unaccountedWorkspaceEffect) {
+        executionSuccess = false;
+        failureReason = "cop_accounting_incomplete";
+        outputText = "Workspace effect executed but its COP accounting receipt is incomplete.";
+      } else if (harnessResult.ok) {
         outputText = harnessResult.answer || "";
         events.push(event(request, seq++, "john.assistant.delta", { delta: outputText }));
       } else if (harnessResult.stopReason === "clarification_required") {
@@ -467,6 +496,7 @@ export async function runJohnRequest(request, options = {}) {
       settlement_mode: "exact",
       provider_cost: costUnits,
       external_effects: 0,
+      internal_effects: harnessResult?.internalEffects || 0,
       observed_steps: observedSteps,
       tool_calls_count: capabilityCallsCount,
       hops_count: packet.envelope.hops.length,

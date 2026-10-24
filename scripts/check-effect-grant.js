@@ -10,16 +10,19 @@ import {
   canonicalPayloadHash,
 } from "./lib/side-effect-authorization.js";
 import { prepareCommunicationSend } from "./lib/communication-send.js";
+import { prepareGitWrite } from "./lib/git-write.js";
 import { createMcpCore } from "./lib/cogentia-mcp-core.js";
 import { cmdEffectGrant } from "./lib/cogentia-effect-cli.js";
 
 resetAuthorizationStore();
-const prepared = prepareCommunicationSend({
+const mailPrepared = prepareCommunicationSend({
   to: ["ext@example.com"],
   subject: "Mint UI",
   body: "exact body",
 });
+const prepared = prepareGitWrite({ operation: "commit", cwd: "/tmp/cogentia-285", message: "test" });
 const hash = canonicalPayloadHash(prepared.payload);
+assert.throws(() => mintSideEffectGrantFromPrepared(mailPrepared, { principal: "principal:test", confirm: canonicalPayloadHash(mailPrepared.payload) }), (e) => e.error_class === "explicit_send_exception_required");
 
 assert.throws(
   () => mintSideEffectGrantFromPrepared(prepared, { principal: "principal:test" }),
@@ -55,9 +58,10 @@ await assert.rejects(
 const viaMcp = await core.callTool("cogentia_side_effect_grant", {
   prepared,
   confirm: hash,
-  principal: "principal:mcp",
 });
-assert.equal(viaMcp.authorization_id, viaMcp.packet.payload ? viaMcp.authorization_id : viaMcp.authorization_id);
+assert.equal(viaMcp.principal, "principal:admin");
+assert.equal(viaMcp.authority_origin, "mcp_admin_mutate");
+assert.equal(viaMcp.packet.payload.authority.principal, "principal:admin");
 assert.ok(viaMcp.authorization_id.startsWith("sea_"));
 
 const dir = fs.mkdtempSync(path.join(os.tmpdir(), "cogentia-mint-"));
@@ -69,11 +73,20 @@ try {
     (e) => e.error_class === "confirm_required"
   );
   const minted = cmdEffectGrant(
-    ["--from", exposePath, "--confirm", hash, "--json", "--principal", "principal:cli"],
+    ["--from", exposePath, "--confirm", hash, "--json", "--principal", "principal:cli",
+      "--actor", "agent:cli-test", "--mandate", "mandate:cli-test",
+      "--budget-reservation", "budget:cli-test", "--account", "account:cli-test",
+      "--treatment", "treatment:cli-test", "--recovery", "recovery:cli-test"],
     process.env
   );
   assert.equal(minted.ok, true);
   assert.ok(minted.grant.authorization_id);
+  assert.equal(minted.grant.actor, "agent:cli-test");
+  assert.equal(minted.grant.mandate_ref, "mandate:cli-test");
+  assert.equal(minted.grant.budget_reservation_id, "budget:cli-test");
+  assert.equal(minted.grant.account_id, "account:cli-test");
+  assert.equal(minted.grant.treatment_id, "treatment:cli-test");
+  assert.equal(minted.grant.recovery_ref, "recovery:cli-test");
 } finally {
   try { fs.rmSync(dir, { recursive: true, force: true }); } catch { /* ignore */ }
 }

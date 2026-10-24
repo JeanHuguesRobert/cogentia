@@ -15,6 +15,12 @@ export function cmdEffectGrant(argv = process.argv.slice(3), env = process.env) 
   let fromPath = null;
   let confirm = null;
   let principal = env.COGENTIA_PRINCIPAL || env.COGENTIA_ACTOR || "principal:cli";
+  let actor = env.COGENTIA_ACTOR || null;
+  let mandate_ref = env.COGENTIA_MANDATE_REF || null;
+  let budget_reservation_id = env.COGENTIA_COP_BUDGET_RESERVATION_ID || null;
+  let account_id = env.COGENTIA_COP_ACCOUNT_ID || null;
+  let treatment_id = env.COGENTIA_COP_TREATMENT_ID || null;
+  let recovery_ref = env.COGENTIA_RECOVERY_REF || null;
   let jsonOut = false;
   let inline = null;
   while (args.length) {
@@ -22,11 +28,19 @@ export function cmdEffectGrant(argv = process.argv.slice(3), env = process.env) 
     if (a === "--from") fromPath = args.shift();
     else if (a === "--confirm") confirm = args.shift();
     else if (a === "--principal") principal = args.shift();
+    else if (a === "--actor") actor = args.shift();
+    else if (a === "--mandate") mandate_ref = args.shift();
+    else if (a === "--budget-reservation") budget_reservation_id = args.shift();
+    else if (a === "--account") account_id = args.shift();
+    else if (a === "--treatment") treatment_id = args.shift();
+    else if (a === "--recovery") recovery_ref = args.shift();
     else if (a === "--json") jsonOut = true;
     else if (a === "--prepared-json") inline = args.shift();
     else if (a === "--help" || a === "-h") {
-      const text = `effect grant --from <expose.json> --confirm <payload_hash>
+      const text = `effect grant --from <expose.json> --confirm <payload_hash> [COP attribution options]
   Mint a side_effect_authorization after reviewing EXPOSE.
+  Attribution: --principal <id> --actor <id> --mandate <id>
+               --budget-reservation <id> --account <id> --treatment <id> --recovery <ref>
   First run without --confirm prints the payload preview and hash (exit 2).
   Chat utterances never mint.`;
       if (jsonOut) return { ok: true, help: text };
@@ -61,7 +75,17 @@ export function cmdEffectGrant(argv = process.argv.slice(3), env = process.env) 
     err.expose = expose;
     throw err;
   }
-  const grant = mintSideEffectGrantFromPrepared(prepared, { principal, confirm });
+  const grant = mintSideEffectGrantFromPrepared(prepared, {
+    principal,
+    confirm,
+    actor,
+    authority_origin: "cli_principal_confirm",
+    mandate_ref,
+    budget_reservation_id,
+    account_id,
+    treatment_id,
+    recovery_ref,
+  });
   if (jsonOut) console.log(JSON.stringify(grant, null, 2));
   else {
     console.log(`granted ${grant.authorization_id}`);

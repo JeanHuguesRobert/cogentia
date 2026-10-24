@@ -211,13 +211,14 @@ export class DesktopCommanderProvider {
     const mapping = this.mapCapability(capability);
     const upstreamArgs = mapping.toArgs(args);
     const raw = await this.client.callTool(mapping.upstream, upstreamArgs);
+    const structured = raw?.structuredContent || null;
     return {
-      ok: true,
+      ok: raw?.isError !== true && structured?.ok !== false,
       capability,
       provider: this.id,
       upstream_tool: mapping.upstream,
       result_text: extractToolText(raw).slice(0, 16_384),
-      structured: raw?.structuredContent || null,
+      structured,
     };
   }
 

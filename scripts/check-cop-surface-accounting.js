@@ -58,7 +58,18 @@ assert.equal(resolvePacketById(synth.packet_id)?.packet_id, synth.packet_id);
 const effectSpend = await maybeRecordCopEffectSpend({
   action_class: "gmail.send",
   authorization_id: "auth-test-1",
+  authority_origin: "mcp_jhn_authenticated",
+  principal: "principal:test",
+  recovery_ref: "recovery:test-effect",
   payload_hash: "sha256:testpayload",
+  mandate_id: "mandate:test-effect",
+  treatment_id: "treatment:test-effect",
+  account_id: "account:test-effect",
+  budget_reservation_id: "budget:test-effect",
+  actor: "agent:test",
+  expose_packet_id: "urn:cop:packet:expose:test",
+  grant_packet_id: "urn:cop:packet:sea:test",
+  receipt: { transport: "test", message_id: "message-1", ok: true },
   surface: "effect",
 });
 assert.equal(effectSpend.ok, true);
@@ -66,6 +77,25 @@ assert.equal(effectSpend.reason, "recorded");
 assert.equal(effectSpend.spendingEntry.spend_id, "effect:auth-test-1");
 assert.equal(effectSpend.spendingEntry.capability, "effect/gmail.send");
 assert.equal(effectSpend.spendingEntry.evidence_hash, "sha256:testpayload");
+const effectPacket = resolvePacketById(effectSpend.packet_id);
+assert.equal(effectPacket.mandate_id, "mandate:test-effect");
+assert.equal(effectPacket.treatment_id, "treatment:test-effect");
+assert.equal(effectPacket.account_id, "account:test-effect");
+assert.equal(effectPacket.budget_reservation_id, "budget:test-effect");
+assert.equal(effectPacket.payload.authorization_id, "auth-test-1");
+assert.equal(effectPacket.payload.authority_origin, "mcp_jhn_authenticated");
+assert.equal(effectPacket.payload.principal_ref, "principal:test");
+assert.equal(effectPacket.payload.recovery_ref, "recovery:test-effect");
+assert.equal(effectPacket.payload.grant_packet_id, "urn:cop:packet:sea:test");
+assert.equal(effectPacket.payload.expose_packet_id, "urn:cop:packet:expose:test");
+assert.deepEqual(effectPacket.payload.receipt, { transport: "test", message_id: "message-1", ok: true });
+assert.equal(effectSpend.spool.ok, true);
+
+const missingMandate = await maybeRecordCopEffectSpend({
+  action_class: "git.commit",
+  authorization_id: "auth-without-mandate",
+});
+assert.deepEqual(missingMandate, { ok: false, reason: "mandate_id_required" });
 
 console.log("test-cop-surface-accounting: ok");
 console.log(JSON.stringify({

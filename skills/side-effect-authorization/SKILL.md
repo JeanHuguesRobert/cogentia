@@ -40,10 +40,18 @@ Before any write-class execute (send, comment, commit, push, WhatsApp enqueue):
 
 Reads stay ungated. Drafts are PREPARE, not EXECUTE.
 
+## Mandate-derived low-risk autonomy and reserved acts (Cogentia #285)
+
+The blanket phrase "before any write-class execute" below describes the legacy grant path and MUST NOT be construed as a demand for repetitive Principal approval for recoverable, in-mandate internal operations. The intended rule permits a traceable mandate-derived authorization for low-exposure internal changes with verified recovery. **The implementation is currently fail-closed:** `mintMandateDerivedGrant` rejects all requests because the repository has no trusted adapter verifier for mandate provenance, budget, privacy, exposure, and recovery. Caller-supplied references and policy fields are descriptive data, not evidence. Keep the legacy authorization gate until such a verifier is wired and tested end to end; never fabricate a Principal grant.
+
+**Hard boundary:** email is draft-only. Prepare/update the draft, identify it to the Principal, and leave sending to the Principal. Neither a general mandate nor a previous approval can authorize an outbound email. The implementation rejects every agent send grant, including caller-supplied claims of explicit consent, until a trusted interface can verify an exceptionally justified, current, act-specific approval. The same preparation-without-emission rule governs other acts comparably committing the Principal to third parties, including public postings and formal submissions.
+
+At intermediate milestones, continue useful allowed work automatically instead of asking for "continue"; request human judgment only when a substantive decision or hard gate requires it. Stop on successful verified completion, not on an arbitrary substep.
+
 ## Gmail
 
 `gmail__create_draft` / `list_drafts` / `get_message` are fine without a grant.
-`gmail__send_message` / `send_draft` / `forward` / `reply_all` need a grant on the exact to/subject/body.
+`gmail__send_message` / `send_draft` / `forward` / `reply_all` are disabled in the current implementation; prepare a draft and notify the Principal. `direct_send_exception` fields supplied by a caller are not accepted as proof of approval.
 Prefer `cogentia_communication_prepare` then execute (native send or `cogentia_communication_send`).
 
 ## GitHub writes

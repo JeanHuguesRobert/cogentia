@@ -10,6 +10,8 @@
  */
 import { timingSafeEqual } from "node:crypto";
 
+const resolvedCallerAuth = new WeakSet();
+
 export const ACTOR_META_KEY = "cogentia.actor";
 export const MANDATE_META_KEY = "cogentia.mandate_ref";
 export const PRINCIPAL_META_KEY = "cogentia.principal_ref";
@@ -104,7 +106,11 @@ export function deriveLockers({ allowMutate = false, auth = "none" } = {}) {
  * }}
  */
 export function resolveCallerAuth(env, { meta = {}, headers = {}, view = "public", staticAllowMutate = false } = {}) {
-  const finish = (result) => ({ ...result, lockers: deriveLockers(result) });
+  const finish = (result) => {
+    const resolved = Object.freeze({ ...result, lockers: deriveLockers(result) });
+    resolvedCallerAuth.add(resolved);
+    return resolved;
+  };
   const actor =
     String(meta[ACTOR_META_KEY] || meta.actor || "").trim() ||
     headerGet(headers, "x-cogentia-actor") ||
@@ -188,4 +194,9 @@ export function resolveCallerAuth(env, { meta = {}, headers = {}, view = "public
     logical_agent_ref: logical_agent_ref || "agent:jhn",
     reason: "jhn_attested",
   });
+}
+
+/** True only for an auth result constructed by this module in this process. */
+export function isResolvedCallerAuth(value) {
+  return Boolean(value && typeof value === "object" && resolvedCallerAuth.has(value));
 }

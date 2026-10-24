@@ -14,8 +14,42 @@ import {
   setAuthorizationStore,
   createMemoryStore,
 } from "./side-effect-store.js";
-import { asDecisionGrant, asExposeContinuation } from "./side-effect-packets.js";
+import { asDecisionGrant, asExposeContinuation, isSuccessfulEffectReceipt } from "./side-effect-packets.js";
 import { maybeRecordCopEffectSpend } from "./cop-surface-accounting.js";
+import { isResolvedCallerAuth } from "./cogentia-mcp-auth.js";
+
+/**
+ * #285: Conservative effect-boundary classification. This is advisory only:
+ * it never mints a Principal grant and never bypasses existing effect gates.
+ * Recoverability must be proven by the caller rather than inferred from git.
+ */
+export function assessPresumedEffect({
+  action_class,
+  within_mandate = false,
+  within_budget = false,
+  recovery_verified = false,
+  negligible_residue = false,
+  low_exposure = false,
+  privacy_cleared = false,
+  externally_engaging = false,
+  mandatory_confirmation = false,
+} = {}) {
+  const action = String(action_class || "").toLowerCase();
+  const reserved = externally_engaging
+    || /(^|\.)(send|publish|post|forward|reply|submit|disclose|contract|payment|transfer)(\.|$)/.test(action)
+    || action.startsWith("gmail.")
+    || action.startsWith("whatsapp.")
+    || action.startsWith("communication.");
+  if (reserved) return { decision: "explicit_principal_authorization", reason: "third_party_commitment" };
+  if (mandatory_confirmation) return { decision: "platform_confirmation", reason: "mandatory_external_control" };
+  if (!within_mandate) return { decision: "escalate", reason: "outside_mandate" };
+  if (!within_budget) return { decision: "escalate", reason: "budget" };
+  if (!privacy_cleared) return { decision: "escalate", reason: "privacy" };
+  if (!(recovery_verified && negligible_residue && low_exposure)) {
+    return { decision: "escalate", reason: "recovery_or_exposure_unproven" };
+  }
+  return { decision: "mandate_derived_candidate", reason: "bounded_recoverable_internal_effect" };
+}
 
 export const AUTHORIZATION_KIND = "cogentia.side_effect_authorization/v1";
 export { getAuthorizationStore, setAuthorizationStore, createMemoryStore };
@@ -192,7 +226,17 @@ export function confirmMatchesPayloadHash(confirm, payload_hash) {
  * Principal mint: EXPOSE envelope + confirm of payload_hash → decision grant.
  * Utterances cannot mint. Confirm is the human/mandate "I saw this hash".
  */
-export function mintSideEffectGrantFromPrepared(prepared, { principal, confirm, actor } = {}) {
+export function mintSideEffectGrantFromPrepared(prepared, {
+  principal,
+  confirm,
+  actor,
+  authority_origin = "principal",
+  mandate_ref = null,
+  budget_reservation_id = null,
+  account_id = null,
+  treatment_id = null,
+  recovery_ref = null,
+} = {}) {
   if (!prepared || typeof prepared !== "object" || !prepared.payload || !prepared.action_class) {
     throw fail("invalid_prepare", "prepared EXPOSE envelope with action_class and payload required");
   }
@@ -216,10 +260,18 @@ export function mintSideEffectGrantFromPrepared(prepared, { principal, confirm, 
     action_class: prepared.action_class,
     target: prepared.target || {},
     payload: prepared.payload,
+    authority_origin,
+    actor: actor || null,
+    mandate_ref,
+    budget_reservation_id,
+    account_id,
+    treatment_id,
+    recovery_ref,
+    expose_packet_id: prepared.packet?.packet_id || prepared.packet?.envelope?.packet_id || null,
   });
 }
 
-export function grantSideEffectAuthorization({
+function createStoredGrant({
   principal,
   action_class,
   target,
@@ -227,7 +279,20 @@ export function grantSideEffectAuthorization({
   expires_in_ms = 10 * 60 * 1000,
   single_use = true,
   material_parameters = {},
+  direct_send_exception = null,
+  authority_origin = "principal",
+  actor = null,
+  mandate_ref = null,
+  budget_reservation_id = null,
+  account_id = null,
+  treatment_id = null,
+  recovery_ref = null,
+  expose_packet_id = null,
 } = {}) {
+  if (new Set(["gmail.send", "communication.send"]).has(action_class)) {
+    throw fail("explicit_send_exception_required",
+      "email sending is disabled until an independently verified, act-specific Principal approval path exists; create a draft for manual sending");
+  }
   const now = Date.now();
   const authorization_id = `sea_${randomUUID()}`;
   const granted_at = new Date(now).toISOString();
@@ -236,11 +301,22 @@ export function grantSideEffectAuthorization({
     kind: AUTHORIZATION_KIND,
     authorization_id,
     principal: principal || null,
+    authority_origin,
+    actor: actor || null,
+    mandate_ref: mandate_ref || null,
+    budget_reservation_id: budget_reservation_id || null,
+    account_id: account_id || null,
+    treatment_id: treatment_id || null,
+    recovery_ref: recovery_ref || null,
+    expose_packet_id: expose_packet_id || null,
     status: "granted",
     action_class,
     target: target || {},
     payload_hash,
-    material_parameters,
+    material_parameters: {
+      ...material_parameters,
+      ...(direct_send_exception ? { direct_send_exception } : {}),
+    },
     granted_at,
     expires_at: new Date(now + expires_in_ms).toISOString(),
     single_use,
@@ -252,10 +328,72 @@ export function grantSideEffectAuthorization({
       payload_hash,
       single_use,
       granted_at,
+      authority_origin,
+      actor,
+      mandate_ref,
+      budget_reservation_id,
+      account_id,
+      treatment_id,
+      recovery_ref,
+      expose_packet_id,
     }),
   };
   getAuthorizationStore().putGrant(grant);
   return grant;
+}
+
+export function grantSideEffectAuthorization(args = {}) {
+  if (args.authority_origin === "mandate_derived") {
+    throw fail("mandate_derived_verifier_unavailable",
+      "mandate-derived grants can only be created by the configured workspace capability");
+  }
+  return createStoredGrant(args);
+}
+
+/**
+ * Restricted COP mandate-derived grant. Never claims Principal approval.
+ * This authorizes only already attested internal local effects and is stored
+ * in the same #171 grant store as human-issued grants.
+ */
+export function mintMandateDerivedGrant({
+  action_class, target, payload, mandate_ref, recovery_ref,
+  auth_context, budget_reservation_id, account_id = null, treatment_id = null,
+  expose_packet_id, expose_packet, expires_in_ms = 10 * 60 * 1000,
+} = {}) {
+  if (!isResolvedCallerAuth(auth_context) || auth_context.auth !== "jhn" || auth_context.allowMutate !== true) {
+    throw fail("mandate_derived_verifier_unavailable", "resolved JHN caller authority is required");
+  }
+  if (action_class !== "host.fs.write" || target?.node !== "node:agent-jhn-workspace"
+      || !target?.path || !payload || payload.capability !== "host.fs.write"
+      || !mandate_ref || mandate_ref !== auth_context.mandate_ref
+      || !recovery_ref || !budget_reservation_id || !expose_packet_id
+      || expose_packet?.envelope?.id !== expose_packet_id
+      || expose_packet?.envelope?.packet_kind !== "continuation"
+      || !expose_packet?.envelope?.traces?.some((trace) => trace.type === "action_class" && trace.value === action_class)
+      || !expose_packet?.envelope?.traces?.some((trace) => trace.type === "payload_hash" && trace.value === canonicalPayloadHash(payload))) {
+    throw fail("mandate_derived_scope_invalid", "mandate-derived authority is limited to an attributed, recoverable workspace write");
+  }
+  return createStoredGrant({
+    principal: auth_context.principal_ref,
+    action_class,
+    target,
+    payload,
+    authority_origin: "mandate_derived",
+    actor: auth_context.actor,
+    mandate_ref,
+    budget_reservation_id,
+    account_id,
+    treatment_id,
+    recovery_ref,
+    expose_packet_id,
+    material_parameters: {
+      scope: "configured_agent_jhn_workspace",
+      recovery_verified: true,
+      expose_packet,
+    },
+    expires_in_ms,
+    single_use: true,
+  });
 }
 
 export function resetAuthorizationStore() {
@@ -278,11 +416,48 @@ export function validateSideEffectAuthorization(authorization, expected = {}) {
   if (!authorization.authorization_id) {
     throw fail("authorization_invalid", "authorization_id required");
   }
+  // A caller-supplied envelope is not authority. Look up the minted grant.
+  const storedGrant = getAuthorizationStore().getGrant(authorization.authorization_id);
+  if (!storedGrant) {
+    throw fail("authorization_untrusted", "authorization must match its stored minted record");
+  }
+  if (storedGrant.single_use !== false && getAuthorizationStore().isConsumed(authorization.authorization_id)) {
+    throw fail("authorization_replay", "single-use authorization already consumed");
+  }
+  if (storedGrant.status !== authorization.status
+      || storedGrant.principal !== authorization.principal
+      || storedGrant.expires_at !== authorization.expires_at
+      || storedGrant.single_use !== authorization.single_use
+      || stableSerialize(storedGrant.material_parameters || {}) !== stableSerialize(authorization.material_parameters || {})
+      || stableSerialize(storedGrant.packet || {}) !== stableSerialize(authorization.packet || {})
+      || storedGrant.payload_hash !== authorization.payload_hash
+      || storedGrant.action_class !== authorization.action_class
+      || stableSerialize(storedGrant.target || {}) !== stableSerialize(authorization.target || {})
+      || storedGrant.authority_origin !== authorization.authority_origin
+      || storedGrant.actor !== authorization.actor
+      || storedGrant.mandate_ref !== authorization.mandate_ref
+      || storedGrant.budget_reservation_id !== authorization.budget_reservation_id
+      || storedGrant.account_id !== authorization.account_id
+      || storedGrant.treatment_id !== authorization.treatment_id
+      || storedGrant.recovery_ref !== authorization.recovery_ref
+      || storedGrant.expose_packet_id !== authorization.expose_packet_id) {
+    throw fail("authorization_untrusted", "authorization must match its stored minted record");
+  }
   if (authorization.single_use !== false && getAuthorizationStore().isConsumed(authorization.authorization_id)) {
     throw fail("authorization_replay", "single-use authorization already consumed");
   }
   if (authorization.expires_at && Date.parse(authorization.expires_at) < Date.now()) {
     throw fail("authorization_expired", "authorization expired");
+  }
+  if (new Set(["gmail.send", "communication.send"]).has(authorization.action_class)) {
+    throw fail("explicit_send_exception_required",
+      "draft only: no independently verified, act-specific Principal approval path is available");
+  }
+  if (authorization.authority_origin === "mandate_derived"
+      && (authorization.action_class !== "host.fs.write"
+        || authorization.target?.node !== "node:agent-jhn-workspace"
+        || !authorization.recovery_ref || !authorization.budget_reservation_id)) {
+    throw fail("mandate_derived_scope_invalid", "stored mandate-derived grant is outside the workspace write scope");
   }
   if (expected.action_class && authorization.action_class !== expected.action_class) {
     throw fail(
@@ -329,7 +504,7 @@ export function consumeSideEffectAuthorization(authorization, extra = {}) {
 }
 
 /**
- * VERIFY after a native execute. Capacities stay; this consumes the grant
+ * Record a native execute outcome. Capacities stay; this consumes the grant
  * and hops the decision packet. Does not call Gmail/GitHub/git.
  */
 export async function recordSideEffectExecution({
@@ -340,28 +515,47 @@ export async function recordSideEffectExecution({
   receipt,
 } = {}) {
   validateSideEffectAuthorization(authorization, { action_class, target, payload });
-  consumeSideEffectAuthorization(authorization, { receipt });
-  const stored = getAuthorizationStore().getGrant(authorization.authorization_id);
+  const executedAt = new Date().toISOString();
+  const safeReceipt = redactEffectReceipt(receipt);
+  const effectVerified = isSuccessfulEffectReceipt(safeReceipt);
   const cop_spend = await maybeRecordCopEffectSpend({
     action_class,
     authorization_id: authorization.authorization_id,
+    authority_origin: authorization.authority_origin,
+    principal: authorization.principal,
+    recovery_ref: authorization.recovery_ref,
     payload_hash: authorization.payload_hash || canonicalPayloadHash(payload),
+    mandate_id: authorization.mandate_ref,
+    budget_reservation_id: authorization.budget_reservation_id,
+    account_id: authorization.account_id,
+    treatment_id: authorization.treatment_id,
+    instance_id: authorization.actor,
+    grant_packet_id: authorization.packet?.envelope?.id || null,
+    expose_packet_id: authorization.expose_packet_id || authorization.packet?.payload?.expose_packet_id || null,
+    receipt: safeReceipt,
     surface: "effect",
   });
+  consumeSideEffectAuthorization(authorization, {
+    receipt: safeReceipt,
+    executed_at: executedAt,
+    accounting: { ...cop_spend, durable: cop_spend.ok === true },
+  });
+  const stored = getAuthorizationStore().getGrant(authorization.authorization_id);
   return {
-    ok: true,
+    ok: effectVerified,
     authorization_id: authorization.authorization_id,
     verification: {
-      ok: true,
+      ok: effectVerified,
       executed_at: stored?.consumed_at || new Date().toISOString(),
       packet: stored?.packet || null,
       cop_spend,
+      accounting_complete: cop_spend.ok === true,
     },
   };
 }
 
 /**
- * Choke point: validate, run, consume only on success, return verification.
+ * Choke point: validate, run once, consume the grant, and return verification.
  * Fail closed before `run` when authorization is missing or mismatched.
  */
 export async function executeAuthorizedEffect({
@@ -380,24 +574,68 @@ export async function executeAuthorizedEffect({
     return { ok: true, authorization_id: null, skipped: "not_effectful", result: await run() };
   }
   validateSideEffectAuthorization(authorization, { action_class, target, payload });
-  const result = await run();
-  consumeSideEffectAuthorization(authorization);
-  const stored = getAuthorizationStore().getGrant(authorization.authorization_id);
+  let result;
+  try {
+    result = await run();
+  } catch (error) {
+    consumeSideEffectAuthorization(authorization, {
+      receipt: { status: "unknown" },
+      executed_at: new Date().toISOString(),
+      accounting: { ok: false, reason: "effect_outcome_unknown", durable: false },
+    });
+    throw error;
+  }
+  const executedAt = new Date().toISOString();
+  const safeReceipt = redactEffectReceipt(result);
+  const effectVerified = isSuccessfulEffectReceipt(safeReceipt);
   const cop_spend = await maybeRecordCopEffectSpend({
     action_class,
     authorization_id: authorization.authorization_id,
+    authority_origin: authorization.authority_origin,
+    principal: authorization.principal,
+    recovery_ref: authorization.recovery_ref,
     payload_hash: authorization.payload_hash || canonicalPayloadHash(payload),
+    mandate_id: authorization.mandate_ref,
+    budget_reservation_id: authorization.budget_reservation_id,
+    account_id: authorization.account_id,
+    treatment_id: authorization.treatment_id,
+    instance_id: authorization.actor,
+    grant_packet_id: authorization.packet?.envelope?.id || null,
+    expose_packet_id: authorization.expose_packet_id || authorization.packet?.payload?.expose_packet_id || null,
+    receipt: safeReceipt,
     surface: "effect",
   });
+  consumeSideEffectAuthorization(authorization, {
+    receipt: safeReceipt,
+    executed_at: executedAt,
+    accounting: { ...cop_spend, durable: cop_spend.ok === true },
+  });
+  const stored = getAuthorizationStore().getGrant(authorization.authorization_id);
   return {
-    ok: true,
+    ok: effectVerified,
     authorization_id: authorization.authorization_id,
+    effect_executed: true,
+    effect_verified: effectVerified,
+    accounting_complete: cop_spend.ok === true,
     verification: {
-      ok: true,
+      ok: effectVerified,
       executed_at: new Date().toISOString(),
       packet: stored?.packet || authorization.packet || null,
       cop_spend,
     },
     result,
   };
+}
+
+function redactEffectReceipt(receipt) {
+  if (!receipt || typeof receipt !== "object") return null;
+  const allowed = ["transport", "id", "message_id", "sha", "commit_sha", "html_url", "operation", "ok", "status"];
+  const safe = {};
+  for (const key of allowed) {
+    const value = receipt[key];
+    if (value != null && value !== "" && ["string", "number", "boolean"].includes(typeof value)) {
+      safe[key] = value;
+    }
+  }
+  return Object.keys(safe).length ? safe : null;
 }
