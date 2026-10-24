@@ -86,6 +86,7 @@ async function main() {
 
       if (flags.json) {
         console.log(JSON.stringify(res, null, 2));
+        if (!res.valid) process.exitCode = 1;
       } else {
         if (res.valid) {
           console.log(`✓ Manifest "${manifestPath}" is valid living-book/v1.`);
