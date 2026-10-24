@@ -44,9 +44,10 @@ octets seulement.
 
 ## Données et méthode
 
-- [Données JSON détaillées](./corpus-velocity.json), avec le commit exact et les
-  mesures mensuelles par dépôt.
-- [Données CSV](./corpus-velocity.csv), pour tableur et traitements ultérieurs.
+- [Snapshots annuels JSON](./annual-snapshots.json), avec le commit exact de
+  chaque dépôt à chaque date et les agrégats du périmètre fixe de 17 dépôts.
+- [Snapshots annuels CSV](./annual-snapshots.csv), pour tableur et traitements
+  ultérieurs.
 - [Définitions des catégories et filtres](../README.md).
 
 Les volumes sont additionnés dépôt par dépôt : un même fichier présent dans
@@ -59,7 +60,7 @@ vides ; les lignes non vides excluent les lignes composées uniquement
 d’espaces. Ce sont des comptes bruts, pas des SLOC ni une mesure de logique
 exécutable.
 
-## Points annuels et variation d’une année à l’autre
+## Évolution annuelle du même ensemble de 17 dépôts
 
 Les snapshots sont pris chaque **24 octobre à 17:40 UTC**, de 2022 à 2026.
 Celui de 2022 précède le lancement public de ChatGPT, le **30 novembre 2022**
@@ -67,7 +68,13 @@ Celui de 2022 précède le lancement public de ChatGPT, le **30 novembre 2022**
 référence pré-lancement ; octobre 2023 est le premier point annuel après ce
 lancement.
 
-| Date | Dépôts mesurables | Code (MB, variation annuelle) | Lignes physiques de code (variation) | Documents (MB, variation annuelle) | Lignes physiques Markdown (variation) |
+Le périmètre est la **même liste de 17 dépôts** à chaque date. La colonne
+« snapshots présents » indique combien avaient déjà un commit sur `main` ou
+`master` ; les autres contribuent zéro à la taille agrégée à cette date. Les
+pourcentages suivent donc le portefeuille complet, y compris l’apparition de
+nouveaux dépôts.
+
+| Date | Snapshots présents / 17 | Code (MB, variation annuelle) | Lignes physiques de code (variation) | Documents (MB, variation annuelle) | Lignes physiques Markdown (variation) |
 | --- | ---: | ---: | ---: | ---: | ---: |
 | 2022-10-24 | 2 | 0,20 — base | 7 121 — base | 0,01 — base | 332 — base |
 | 2023-10-24 | 3 | 0,94 (+375,9 %) | 28 136 (+295,1 %) | 0,13 (+754,8 %) | 2 309 (+595,5 %) |
@@ -75,54 +82,19 @@ lancement.
 | 2025-10-24 | 7 | 1,35 (+43,1 %) | 41 625 (+47,9 %) | 0,33 (+162,3 %) | 7 357 (+218,6 %) |
 | 2026-10-24 | 17 | 21,92 (+1 529,3 %) | 616 690 (+1 381,5 %) | 301,31 (+90 892,0 %) | 745 417 (+10 032,1 %) |
 
-Ces variations portent sur le **portefeuille mesurable à chaque date** ; elles
-incluent donc les dépôts qui n’avaient pas encore de snapshot l’année
-précédente. Sur les deux dépôts mesurables à tous les points (`inseme` et
-`Inox`), la comparaison d’octobre 2022 à octobre 2026 donne **+5 019,9 %** de
-code en octets, **+4 000,4 %** en lignes physiques de code, **+913 124,0 %**
-de documents en octets et **+45 776,2 %** en lignes physiques Markdown. Les
-baselines étaient très petites ; les tailles absolues sont dans le rapport
-détaillé.
+Entre octobre 2022 et octobre 2026, le portefeuille fixe passe de **0,20 à
+21,92 MB de code** (**+10 998,9 %**) et de **0,01 à 301,31 MB de documents**
+(**+2 039 932,2 %**). Les lignes physiques passent de **7 121 à 616 690** pour
+le code (**+8 560,2 %**) et de **332 à 745 417** pour Markdown
+(**+224 423,2 %**). Les baselines documentaires étaient très petites, d’où les
+pourcentages élevés. La comparaison porte sur les 17 dépôts enregistrés, en
+incluant la taille nulle avant leur premier snapshot main/master.
 
-Les dépôts sans snapshot au premier point ne reçoivent pas de taux individuel
-calculé à partir de zéro ; leur apparition est comprise dans la variation du
-portefeuille. Ces mesures suivent la taille du code et des documents ; à elles
-seules, elles n’attribuent pas cette croissance à l’IA ni ne mesurent la
-productivité personnelle.
+Un dépôt sans snapshot initial n’a pas de taux individuel calculable depuis
+zéro ; il reste inclus dans l’agrégat fixe de 17 dépôts. Ces mesures suivent la
+taille du code et des documents ; à elles seules, elles n’attribuent pas cette
+croissance à l’IA ni ne mesurent la productivité personnelle.
 
 Les cinq points et les SHA des branches principales sont dans le
 [rapport annuel JSON](./annual-snapshots.json) et son
 [CSV](./annual-snapshots.csv).
-
-## Évolution mensuelle à périmètre constant
-
-Le nombre de dépôts ayant un snapshot mesurable passe de **7 en octobre 2025 à
-17 en octobre 2026**. Pour isoler l’évolution à périmètre constant, le tableau
-ci-dessous suit uniquement les 7 dépôts mesurables dès octobre 2025.
-
-| Mois | Code (MB) | Lignes physiques de code | Documents (MB) | Lignes physiques Markdown |
-| --- | ---: | ---: | ---: | ---: |
-| 2025-10 | 1,41 | 43 411 | 0,34 | 7 425 |
-| 2025-11 | 2,70 | 81 161 | 131,62 | 73 930 |
-| 2025-12 | 8,98 | 264 643 | 264,39 | 183 200 |
-| 2026-01 | 10,22 | 302 626 | 264,63 | 189 088 |
-| 2026-02 | 10,61 | 314 959 | 264,70 | 191 007 |
-| 2026-03 | 10,61 | 314 959 | 264,70 | 191 007 |
-| 2026-04 | 10,71 | 318 140 | 264,95 | 194 662 |
-| 2026-05 | 10,84 | 322 048 | 268,31 | 253 404 |
-| 2026-06 | 11,31 | 333 619 | 270,17 | 290 240 |
-| 2026-07 | 12,17 | 359 208 | 271,53 | 319 162 |
-| 2026-08 | 13,16 | 387 639 | 273,70 | 350 013 |
-| 2026-09 | 14,19 | 416 770 | 277,75 | 425 768 |
-| 2026-10 | 14,79 | 430 502 | 289,80 | 534 370 |
-
-Sur ces 7 dépôts, le code passe de **1,41 à 14,79 MB** et de **43 411 à
-430 502 lignes physiques**. Les documents passent de **0,34 à 289,80 MB** ;
-les lignes physiques Markdown passent de **7 425 à 534 370**. La croissance
-documentaire est surtout concentrée entre novembre et décembre 2025, puis
-reprend plus graduellement. Ces variations sont des tailles de snapshots, pas
-des additions nettes de contenu entre deux mois.
-
-La comparaison des totaux des 17 dépôts avec octobre 2025 mélangerait cette
-croissance et les 10 dépôts qui n’avaient pas encore de commit sur la branche
-retenue au début de la période.

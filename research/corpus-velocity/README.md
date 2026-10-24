@@ -42,10 +42,11 @@ python3 scripts/corpus_size_annual_comparison.py \
   --out research/corpus-velocity/2026-10/annual-snapshots.json
 ```
 
-The report gives each year's portfolio size and year-over-year percentages,
-plus comparisons on the fixed cohort measurable at every snapshot. Portfolio
-percentages include repositories becoming measurable; fixed-cohort percentages
-isolate size changes in the same repositories.
+The registry remains the same 17 public repositories at every date. A
+repository with no main/master snapshot yet contributes zero to that date's
+portfolio total; the report separately shows how many had a snapshot. The
+year-over-year percentages therefore measure the growth of the fixed 17-repo
+portfolio, including repositories created or first measured later.
 
 The manifest publishes the exact code/document extension sets and excluded
 path expression. It reports total Git tree blobs and bytes, plus code and

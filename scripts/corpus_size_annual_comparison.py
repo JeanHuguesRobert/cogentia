@@ -110,47 +110,30 @@ def main():
     points = []
     for date_key in date_keys:
         totals, count = sum_snapshots(valid_rows, date_key)
-        points.append({"as_of": date_key, "repository_count": count, "totals": totals})
+        points.append({"as_of": date_key, "active_repository_count": count, "totals": totals})
 
     intervals = []
     for index in range(1, len(date_keys)):
         before_key, current_key = date_keys[index - 1:index + 1]
-        paired = [row for row in valid_rows
-                  if row["snapshots"].get(before_key) and row["snapshots"].get(current_key)]
         newly_measurable = [row for row in valid_rows
                             if not row["snapshots"].get(before_key)
                             and row["snapshots"].get(current_key)]
         no_longer_measurable = [row for row in valid_rows
                                 if row["snapshots"].get(before_key)
                                 and not row["snapshots"].get(current_key)]
-        before_totals, _ = sum_snapshots(paired, before_key)
-        current_totals, _ = sum_snapshots(paired, current_key)
         portfolio_before, before_count = sum_snapshots(valid_rows, before_key)
         portfolio_current, current_count = sum_snapshots(valid_rows, current_key)
         intervals.append({
             "baseline_at": before_key,
             "as_of": current_key,
-            "comparable_repository_count": len(paired),
-            "comparable_repositories": [row["repo"] for row in paired],
-            "comparable_cohort_totals": compare_totals(before_totals, current_totals),
-            "portfolio_repository_counts": {"baseline": before_count, "current": current_count},
-            "portfolio_totals": compare_totals(portfolio_before, portfolio_current),
+            "registered_repository_count": len(rows),
+            "repositories_with_snapshot": {"baseline": before_count, "current": current_count},
+            "fixed_registry_totals": compare_totals(portfolio_before, portfolio_current),
             "newly_measurable_repositories": [row["repo"] for row in newly_measurable],
             "no_longer_measurable_repositories": [row["repo"] for row in no_longer_measurable],
         })
 
-    stable_rows = [row for row in valid_rows
-                   if all(row["snapshots"].get(key) for key in date_keys)]
-    stable_points = []
-    first_totals, _ = sum_snapshots(stable_rows, date_keys[0])
-    for key in date_keys:
-        totals, count = sum_snapshots(stable_rows, key)
-        stable_points.append({"as_of": key, "repository_count": count, "totals": totals,
-                              "growth_from_first_percent": {
-                                  field: growth_percent(first_totals[field], totals[field])
-                                  for field in SIZE_FIELDS}})
-
-    snapshot_counts = {point["as_of"]: point["repository_count"] for point in points}
+    snapshot_counts = {point["as_of"]: point["active_repository_count"] for point in points}
     row_status_counts = dict(collections.Counter(row["status"] for row in rows))
     manifest = {
         "generated_at": dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds"),
@@ -158,23 +141,19 @@ def main():
         "registry_sha256": hashlib.sha256(registry_bytes).hexdigest(),
         "branch_policy": "main/master only; origin/HEAD when it resolves to main/master, otherwise origin/main, origin/master, local main, local master; first-parent snapshots; never use HEAD or side branches",
         "source": "existing local Git clones; no fetch performed",
-        "repository_count": len(rows),
+        "registered_repository_count": len(rows),
         "row_status_counts": row_status_counts,
         "snapshot_repository_counts": snapshot_counts,
-        "portfolio_snapshots": points,
-        "year_over_year_portfolio_comparisons": intervals,
-        "fixed_cohort_repository_count": len(stable_rows),
-        "fixed_cohort_repositories": [row["repo"] for row in stable_rows],
-        "fixed_cohort_snapshots": stable_points,
+        "fixed_registry_snapshots": points,
+        "fixed_registry_year_over_year": intervals,
         "filters": {"code_extensions": sorted(CODE),
                     "document_extensions": sorted(DOCUMENTS),
                     "text_document_extensions": sorted(TEXT_DOCUMENTS),
                     "markdown_extensions": sorted(MARKDOWN),
                     "excluded_path_regex": IGNORE.pattern},
         "limitations": [
-            "portfolio growth percentages include repositories first measurable since the previous snapshot",
-            "comparable-cohort percentages use only repositories with snapshots at both dates",
-            "repositories with no snapshot are not assigned a fabricated zero per-repository percentage",
+            "the registered repository list is fixed across snapshots; a repository with no main/master commit contributes zero to the aggregate at that cutoff",
+            "individual repository growth percentages are not calculated when that repository has no baseline snapshot",
             "line counts are physical/nonblank lines, not language-aware SLOC",
             "Git tree sizes count each repository copy separately",
         ],
@@ -199,9 +178,8 @@ def main():
                         "commit": snap.get("commit") if snap else None}
                 flat.update({field: snap.get(field) if snap else None for field in SIZE_FIELDS})
                 writer.writerow(flat)
-    print(json.dumps({"repositories": len(rows), "row_status_counts": row_status_counts,
+    print(json.dumps({"registered_repositories": len(rows), "row_status_counts": row_status_counts,
                       "snapshot_repository_counts": snapshot_counts,
-                      "fixed_cohort": len(stable_rows),
                       "json": str(out), "csv": str(csv_path)}))
 
 
