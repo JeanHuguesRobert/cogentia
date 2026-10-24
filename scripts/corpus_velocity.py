@@ -44,6 +44,21 @@ def month_ends(start, end):
         yield (limit - dt.timedelta(seconds=1)).strftime("%Y-%m-%dT%H:%M:%SZ"), period
 
 
+def monthly_commit_counts(repo, ref, periods):
+    if not periods:
+        return {}, "complete"
+    shallow = git(repo, "rev-parse", "--is-shallow-repository").decode().strip() == "true"
+    first_month = dt.datetime.strptime(periods[0][1], "%Y-%m").replace(tzinfo=dt.timezone.utc)
+    previous_cutoff = first_month.strftime("%Y-%m-%dT%H:%M:%SZ")
+    previous_count = int(git(repo, "rev-list", "--count", "--before=" + previous_cutoff, ref).decode().strip() or 0)
+    counts = {}
+    for until, period in periods:
+        current_count = int(git(repo, "rev-list", "--count", "--before=" + until, ref).decode().strip() or 0)
+        counts[period] = max(0, current_count - previous_count)
+        previous_count = current_count
+    return counts, "partial_shallow_history" if shallow else "complete"
+
+
 def tree_metrics(repo, commit):
     result = {"blobs": 0, "bytes": 0, "code_files": 0, "code_bytes": 0,
               "code_physical_lines": 0, "code_nonblank_lines": 0,
@@ -140,16 +155,25 @@ def main():
             for _, period in periods:
                 rows.append({"repo": name, "period": period, "status": "missing", "reason": "local_checkout_absent"})
             continue
+        ref = item.get("ref", "HEAD")
+        try:
+            commit_counts, commit_history_status = monthly_commit_counts(repo, ref, periods)
+        except (subprocess.CalledProcessError, ValueError):
+            commit_counts, commit_history_status = {}, "unavailable"
         for until, period in periods:
             cutoff = min(dt.datetime.strptime(until, "%Y-%m-%dT%H:%M:%SZ").replace(tzinfo=dt.timezone.utc), now)
             partial = cutoff < dt.datetime.strptime(until, "%Y-%m-%dT%H:%M:%SZ").replace(tzinfo=dt.timezone.utc)
             try:
-                head = git(repo, "rev-list", "-1", "--before=" + cutoff.strftime("%Y-%m-%dT%H:%M:%SZ"), item.get("ref", "HEAD")).decode().strip()
+                head = git(repo, "rev-list", "-1", "--before=" + cutoff.strftime("%Y-%m-%dT%H:%M:%SZ"), ref).decode().strip()
                 if not head:
-                    rows.append({"repo": name, "period": period, "status": "not_created", "partial": partial})
+                    rows.append({"repo": name, "period": period, "status": "not_created", "partial": partial,
+                                 "commit_count": commit_counts.get(period),
+                                 "commit_history_status": commit_history_status})
                     continue
                 metrics = tree_metrics(repo, head)
-                rows.append({"repo": name, "period": period, "status": "ok", "partial": partial, "commit": head, **metrics})
+                rows.append({"repo": name, "period": period, "status": "ok", "partial": partial,
+                             "commit": head, "commit_count": commit_counts.get(period),
+                             "commit_history_status": commit_history_status, **metrics})
             except (subprocess.CalledProcessError, ValueError) as e:
                 reason = (e.stderr.decode(errors="replace") if isinstance(e, subprocess.CalledProcessError)
                           else str(e))
@@ -169,10 +193,12 @@ def main():
         "limitations": ["Git tree snapshot, not churn", "code extension filter",
                         "generated/path exclusions heuristic",
                         "physical and nonblank line counts include comments and are not language-aware SLOC",
+                        "no pull-request, issue, CI, review-time, or machine-cost metrics",
                         "no private-repository metrics exported"]}, indent=2) + "\n")
     fields = ["repo", "period", "status", "commit", "blobs", "bytes", "code_files",
               "code_bytes", "code_physical_lines", "code_nonblank_lines", "markdown_files",
-              "derived_markdown_files", "test_files", "excluded_files", "partial", "reason"]
+              "derived_markdown_files", "test_files", "excluded_files", "commit_count",
+              "commit_history_status", "partial", "reason"]
     with (out / "corpus-velocity.csv").open("w", newline="") as f:
         writer = csv.DictWriter(f, fieldnames=fields, extrasaction="ignore", lineterminator="\n")
         writer.writeheader()

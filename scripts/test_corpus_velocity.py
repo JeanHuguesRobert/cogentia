@@ -29,6 +29,13 @@ class MonthEndTests(unittest.TestCase):
             ],
         )
 
+    def test_monthly_commit_counts_are_deltas_of_end_of_month_snapshots(self):
+        with patch.object(module, "git", side_effect=[b"false\n", b"5\n", b"8\n", b"14\n"]):
+            counts, history = module.monthly_commit_counts(
+                "/fake", "HEAD", list(module.month_ends("2025-10", "2025-11")))
+        self.assertEqual(counts, {"2025-10": 3, "2025-11": 6})
+        self.assertEqual(history, "complete")
+
 
 
 class TreeMetricsTests(unittest.TestCase):
@@ -110,8 +117,20 @@ class CoverageTests(unittest.TestCase):
             args = ["corpus_velocity.py", "--registry", str(registry),
                     "--root", str(pathlib.Path(root)), "--out", str(out),
                     "--start", "2099-01", "--end", "2099-01"]
+
+            def fake_git(_repo, *git_args, input=None):
+                if git_args[:2] == ("rev-parse", "--is-shallow-repository"):
+                    return b"false\n"
+                if git_args[0] == "rev-list" and "--count" in git_args:
+                    return b"1\n"
+                if git_args[0] == "rev-list" and "-1" in git_args:
+                    return b"deadbeef\n"
+                if git_args[:2] == ("ls-tree", "-rz"):
+                    return b""
+                raise AssertionError(git_args)
+
             with patch.object(sys, "argv", args), patch.object(
-                    module, "git", side_effect=[b"deadbeef\\n", b""]), redirect_stdout(StringIO()):
+                    module, "git", side_effect=fake_git), redirect_stdout(StringIO()):
                 module.main()
             rows = json.loads((out / "corpus-velocity.json").read_text())["metrics"]
             self.assertEqual(len(rows), 1)
