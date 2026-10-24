@@ -140,6 +140,7 @@ export async function runCorpusSleepCycle(options = {}) {
     });
     phases.push({ name: "interaction_evidence", status: receipt.status, evidence: receipt });
     if (receipt.status === "PREEMPTED") return { status: "preempted", reason: receipt.code, phases };
+    if (options.interactionsOnly) return { status: receipt.status === "COMPLETED" ? "completed" : "completed_partial", phases };
   }
 
   // Phase 2: Repo sync — same command an operator would invoke on demand
@@ -387,6 +388,7 @@ function parseCliArgs() {
     skipRepoSync: args.includes("--skip-repo-sync"),
     repoSyncIncludePrivate: args.includes("--repo-sync-include-private"),
     noCopEvidence: args.includes("--no-cop-evidence"),
+    interactionsOnly: args.includes("--interactions-only"),
   };
 
   for (let i = 0; i < args.length; i++) {

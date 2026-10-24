@@ -96,7 +96,8 @@ VERIFY advice where classification or coverage is insufficient. They cannot
 justify an exhaustive no-reply assertion, legal deadline or automatic follow-up.
 An acknowledgment does not contradict an explicitly substantive awaiting claim.
 
-Batch cursors rotate through cases, newest first. A frozen normalized snapshot
+Batch cursors rotate through source-addressable cases first, newest first within
+that group, then the remaining cases. A frozen normalized snapshot
 and the existing mission checkpoint allow process replacement without losing
 or duplicating findings. Earlier rejected advice remains rejected; later
 evidence supersedes outdated pending advice. Original sources are preserved.
@@ -108,6 +109,13 @@ weekly task may contribute evidence; source corrections remain a single
 separately authorized review/handler pathway. Enabling this reader grants no
 send or source-correction authority. Current execution state belongs in the
 [owning Packet](https://github.com/JeanHuguesRobert/cogentia/issues/271).
+
+`--interactions-only` is an explicitly selected bounded source probe; it returns
+after the interaction phase, without running the Monte Carlo audit or weekly
+consolidation. Document discovery in normal audits also checks the wall budget
+and emits a preemption continuation when it expires. Operators may temporarily
+override CPU idle priority for a budgeted forced probe; scheduled runs retain
+residual-capacity qualification and their configured low priority.
 
 Checks: `node --test scripts/check-interaction-evidence.js
 scripts/check-interaction-sources.js`, `python scripts/check-gmail-readonly.py`,
