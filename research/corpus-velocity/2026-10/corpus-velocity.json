@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-10-24T16:33:15+00:00",
+  "generated_at": "2026-10-24T16:47:18+00:00",
   "registry_sha256": "ceeabdc4e99ea62d311ddf470bbdc395c2f684a4abb17ea5341e12b59a48360d",
   "record_count": 221,
   "status_counts": {
@@ -5208,11 +5208,39 @@
       "by_language": {}
     }
   ],
+  "filters": {
+    "code_extensions": [
+      ".c",
+      ".cjs",
+      ".cpp",
+      ".go",
+      ".h",
+      ".hpp",
+      ".java",
+      ".js",
+      ".jsx",
+      ".kt",
+      ".mjs",
+      ".php",
+      ".py",
+      ".rb",
+      ".rs",
+      ".sh",
+      ".sql",
+      ".swift",
+      ".ts",
+      ".tsx"
+    ],
+    "excluded_path_regex": "(^|/)(node_modules|vendor|dist|build|coverage|generated|__generated__|snapshots?|fixtures|target|\\.next)(/|$)",
+    "test_path_regex": "(^|/)(__tests__|tests?|specs?)(/|$)|\\.(test|spec)\\.",
+    "derived_markdown_regex": "(^|/)(index|corpus-status|llms(-full)?|readme\\.generated)\\.md$"
+  },
   "limitations": [
     "Git tree snapshot, not churn",
     "code extension filter",
     "generated/path exclusions heuristic",
     "physical and nonblank line counts include comments and are not language-aware SLOC",
+    "test_files is inferred from path names and does not indicate executed or passing tests",
     "no pull-request, issue, CI, review-time, or machine-cost metrics",
     "no private-repository metrics exported"
   ]

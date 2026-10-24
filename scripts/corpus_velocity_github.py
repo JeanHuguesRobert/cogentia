@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-"""Monthly issue/PR creation counts for registry-listed public repositories.
+"""Monthly issue/PR activity counts for registry-listed public repositories.
 
-Requires the GitHub CLI (`gh`) and uses only the read-only public Issues API.
+Requires the GitHub CLI (`gh`) and reads public Issues and Pulls API metadata.
 It does not fetch titles, bodies, users, comments, or private repository data.
 """
 import argparse
@@ -37,6 +37,20 @@ def count_created_records(repo, output, periods):
             for period in periods]
 
 
+def count_merged_records(repo, output, periods):
+    counts = {period: {"merged_pull_requests": 0} for period in periods}
+    for line in output.splitlines():
+        if not line:
+            continue
+        merged_at = line
+        period = merged_at[:7]
+        if period not in counts:
+            continue
+        counts[period]["merged_pull_requests"] += 1
+    return [{"repo": repo, "period": period, "status": "ok", **counts[period]}
+            for period in periods]
+
+
 def fetch_repo(repo, start, periods):
     since = f"{start}-01T00:00:00Z"
     command = ["gh", "api", "-X", "GET", "--paginate", "--jq", JQ_RECORD,
@@ -44,7 +58,20 @@ def fetch_repo(repo, start, periods):
                "-f", "per_page=100"]
     completed = subprocess.run(command, capture_output=True, text=True,
                                check=True, timeout=180)
-    return count_created_records(repo, completed.stdout, periods)
+    created = count_created_records(repo, completed.stdout, periods)
+    # The PR list endpoint can be paginated completely. Group merged PRs by
+    # merge time to count changes accepted in each month.
+    pull_command = ["gh", "api", "-X", "GET", "--paginate", "--jq",
+                    '.[] | select(.merged_at != null) | .merged_at',
+                    f"repos/{repo}/pulls", "-f", "state=closed", "-f",
+                    "sort=created", "-f", "direction=desc", "-f", "per_page=100"]
+    pull_completed = subprocess.run(pull_command, capture_output=True, text=True,
+                                    check=True, timeout=300)
+    merged = count_merged_records(repo, pull_completed.stdout, periods)
+    for created_row, merged_row in zip(created, merged):
+        created_row.update({key: value for key, value in merged_row.items()
+                            if key not in {"repo", "period", "status"}})
+    return created
 
 
 def main():
@@ -75,7 +102,8 @@ def main():
                 reason = str(exc)
             failures.append({"repo": repo, "reason": reason[:240]})
             rows.extend({"repo": repo, "period": period, "status": "unavailable",
-                         "issues_created": None, "pull_requests_created": None}
+                         "issues_created": None, "pull_requests_created": None,
+                         "merged_pull_requests": None}
                         for period in periods)
     out = pathlib.Path(args.out)
     out.mkdir(parents=True, exist_ok=True)
@@ -89,17 +117,18 @@ def main():
         "record_count": len(rows),
         "status_counts": status_counts,
         "coverage": "partial" if failures else "complete_for_registry",
-        "retrieval": "GitHub REST Issues API via gh; created_at grouped by UTC month",
+        "retrieval": "GitHub REST Issues and Pulls APIs via gh; created_at and merged_at grouped by UTC month",
         "limitations": [
             "counts use currently retained public Issues API records; deleted records are absent",
             "since filters updated_at; all items created in-range are expected to be returned",
-            "counts measure creation only, not resolution, review effort, or quality",
+            "merged PR counts are an acceptance proxy, not evidence of review quality or human effort",
         ],
         "failures": failures,
         "metrics": rows,
     }
     (out / "github-activity.json").write_text(json.dumps(manifest, indent=2) + "\n")
-    fields = ["repo", "period", "status", "issues_created", "pull_requests_created"]
+    fields = ["repo", "period", "status", "issues_created", "pull_requests_created",
+              "merged_pull_requests"]
     with (out / "github-activity.csv").open("w", newline="") as stream:
         writer = csv.DictWriter(stream, fieldnames=fields, lineterminator="\n")
         writer.writeheader()

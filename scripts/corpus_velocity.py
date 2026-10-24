@@ -190,9 +190,16 @@ def main():
         "record_count": len(rows), "status_counts": status_counts,
         "schema_version": 1, "period_start": args.start, "period_end": args.end,
         "coverage": "partial_unless_registry_exhaustive", "metrics": rows,
+        "filters": {
+            "code_extensions": sorted(CODE),
+            "excluded_path_regex": IGNORE.pattern,
+            "test_path_regex": TEST_PATH.pattern,
+            "derived_markdown_regex": DERIVED_MARKDOWN.pattern,
+        },
         "limitations": ["Git tree snapshot, not churn", "code extension filter",
                         "generated/path exclusions heuristic",
                         "physical and nonblank line counts include comments and are not language-aware SLOC",
+                        "test_files is inferred from path names and does not indicate executed or passing tests",
                         "no pull-request, issue, CI, review-time, or machine-cost metrics",
                         "no private-repository metrics exported"]}, indent=2) + "\n")
     fields = ["repo", "period", "status", "commit", "blobs", "bytes", "code_files",
