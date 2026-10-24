@@ -4,7 +4,7 @@ subtitle: "Smallest sufficient locality, explicit crossing, and global reference
 author: "Jean Hugues Noël Robert, baron Mariani"
 affiliation: "Institut Mariani / C.O.R.S.I.C.A., 1 cours Paoli, F-20250 Corte, Corsica, France"
 date: "2026-09-19"
-last_modified_at: "2026-10-17"
+last_modified_at: "2026-10-24"
 version: "0.6"
 status: "working-paper — locality doctrine candidate"
 document_role: "source"
@@ -536,6 +536,39 @@ freshness and epistemic requirements
 A MemoryView SHOULD expose enough information to expand when insufficient rather than preloading the entire memory graph.
 
 ---
+
+### 12.1 FractaCache — situated materialization (candidate)
+
+**FractaCache** is a proposed cross-scale discipline for the **selective, governed, reversible materialization** of information or state close enough to a situated activity to satisfy its needs. Its role is neither to own memory nor to define an additional universal storage protocol. It applies **Minimum Sufficient Locality** to decisions about what to retain or materialize, where, for what purpose, with which validity and cost constraints, and when to refresh or evict it.
+
+Compact formulation:
+
+> Bring what is needed near the activity without needlessly moving its source, ownership or authority.
+
+The distinction is functional:
+
+- **FractaMemory (candidate):** governed memory availability and bounded memory projections; what can be recalled and brought into context.
+- **FractaCache (candidate):** the materialization, reuse, validation, refresh and eviction of a bounded representation for a particular locality and activity.
+- **Locality Principle (source):** how to choose sufficient scope and cross-locality access, irrespective of physical placement.
+
+A FractaCache materialization may hold a reference, derived projection, index, validated routing observation, or appropriately scoped continuation data. It MUST NOT silently become a sovereign source merely because it is local, fast or resilient. Nor does it confer mandate, custody, fresh truth or permission to execute an effect.
+
+A minimal conceptual cycle is **need → identify sufficient locality → reuse an admissible local materialization → resolve bounded references/projections when necessary → validate provenance, freshness and applicable control → operate or explicitly defer → refresh/reconcile/evict**. The operations and policy remain with existing source, memory, cache, COP and operational contracts. Recursive caches are possible only with finite budgets, bounded dependencies and measurable gains.
+
+Candidate invariants for a later Reality Test:
+
+1. **Recoverability:** removing a derived cache does not destroy the authoritative source, packet identity, local history or essential provenance.
+2. **Authority separation:** cached presence/reachability/permissions observations never become fresh authorization; privacy and disclosure gates remain applicable.
+3. **Validity:** content has a traceable source or declared epistemic status, version/freshness scope, and an explicit invalidation or reconciliation path; TTL alone is not proof of correctness.
+4. **Minimum sufficiency:** materialize only what improves a specified workload after considering latency, transfer, storage, cognitive load, privacy and recovery cost.
+5. **Degraded continuity:** during loss of a global index or coordinator, a cold handler can continue within valid local control, or preserve an explicit blocked/deferred state for later reconciliation.
+6. **Semantic portability:** logical locality is independent of machine placement; moving materializations does not silently move authority.
+
+**Smallest discriminating experiment:** resume an existing Cognitive Packet with a cold handler, first with and then without global discovery, comparing reference-only access against bounded local materialization. Measure completeness, correctness, recovered state, latency, exposure and transfer costs; record the explicit blocker when local control is insufficient. If ordinary existing COP/index/Side storage mechanisms already provide these guarantees without a new layer, keep FractaCache as a *named design discipline*, not a new component.
+
+**Side boundary (unverified):** inspect Side's actual data, locality and storage contracts before proposing any implementation or claiming reuse. A matching existing primitive should be adapted, not duplicated. This section does not assert that Side has been inspected.
+
+This is a **research candidate**, not a cache protocol, implementation requirement, global store, or asserted invention. It is indexed in [FractaXXXX](fractaxxxx.md); promotion requires a distinguishing Reality Test and reuse audit.
 
 ## 13. Cognitive Packet relation
 
