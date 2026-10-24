@@ -1078,3 +1078,51 @@ packet hypothesis
 ```
 
 The burden of implementing Cognitive Packet Switching is therefore also an experimental instrument: failures of the runtime can reveal missing concepts in the model of distributed cognition itself.
+
+
+## Evolutionary cognition research crosswalk (2026-10-24; non-normative)
+
+Recent 2025–2026 studies make evolutionary mechanisms a useful *comparative research lens* for packet-native cognition, without turning a Cognitive Packet into a gene, organism, or biologically reproducing entity.
+
+**Core invariant unchanged:** a Cognitive Packet remains a bounded, routable, inspectable and resumable unit of cognitive work, with envelope/payload separation, declared dependencies, lineage, mandate and effects. Evolutionary mechanisms are **relations and processes involving populations of packet variants and retained experience**, not new mandatory envelope fields or a new COP wire kind.
+
+### Three levels must remain separate
+
+1. **Packet level:** an individual bounded hypothesis, experiment, critique, continuation or candidate method travels and can resume. Fork identity and causal lineage do not by themselves establish an evolutionary offspring.
+2. **Population level:** related alternatives form a declared candidate set with provenance, comparable tests, diversity descriptors, evaluation conditions and explicit selection policy.
+3. **Ecosystem level:** agents, handlers, tools, environments, memory policies and evaluators change together; these changes may shift apparent fitness or invalidate an earlier selection.
+
+Evolutionary analogues, each subject to reality tests:
+
+| Biological analogy | Packet-native candidate mechanism | Caveat |
+|---|---|---|
+| Variation / mutation | Explicit branch or revised candidate artifact with preserved ancestry | Not every fork is a mutation; some are mere parallel work |
+| Recombination | Qualified synthesis of lessons from distinct candidates | Merge must preserve conflicts/provenance, not average truth |
+| Heredity | Cold successor demonstrably reproduces a method from durable references | Hidden session memory is not portable inheritance |
+| Selection | Evidence-backed comparison under mandate, task and budget | Popularity, high reuse, fast propagation or a green CI check are not proof of fitness |
+| Drift | Change in prevalence without measured advantage | Separate stochastic effects from selection |
+| Niche / local adaptation | Different candidates useful in different localities | No global best by default |
+| Coevolution | Mutual change of agents, evaluators and tasks | A moving benchmark risks Goodhart/capture |
+| Refugia / extinction | Glacial retention of inactive but recoverable diversity | Retention, erasure and active salience are distinct |
+| Exaptation | A previously tested capacity used for a new purpose | New mandate and fresh validation remain necessary |
+
+### Relationship to FractaMemory, FractaCache and Sleep Cycle
+
+An experience begins as an attributable trace, may become a qualified lesson, and only then a reproducible transferable heuristic. FractaMemory addresses the governed remembering; FractaCache controls situated materialization, stigmergic evaporation and rehydration cost; Sleep Cycle evaluates and consolidates. Cooling a variant does not refute it, and repeated copying does not validate it. Reviving a cold candidate requires present-time checks including the viscosity/change rate of its assumptions and the validity of its evaluation environment.
+
+### Literature and discriminating experiment
+
+- [AlphaEvolve (DeepMind, 2025; impact update 2026)](https://deepmind.google/blog/alphaevolve-a-gemini-powered-coding-agent-for-designing-advanced-algorithms/): generated programs plus automated evaluation and an evolutionary archive.
+- [Darwin Gödel Machine (2025)](https://arxiv.org/abs/2505.22954): self-modified coding agents, benchmarked branches and diversity archive; its subject is an agent population, not packets as such.
+- [GEPA (ICLR 2026)](https://proceedings.iclr.cc/paper_files/paper/2026/hash/0e9e708b6f48e14fd0ac29e167413f76-Abstract-Conference.html): textual reflection, proposal, testing and recombination of prompt lessons.
+- [FLEX (2025)](https://arxiv.org/abs/2511.06449): transfer of structured experience without weight updates.
+- [From Storage to Experience (2026)](https://arxiv.org/abs/2605.06716): memory progresses from trace storage through reflection to transferable abstraction.
+- [When Continual Learning Moves to Memory (2026)](https://arxiv.org/abs/2604.27003): external memory shifts rather than eliminates forgetting/negative transfer.
+- [Endogenous Observations in Agent Self-Evolution (EMNLP 2026)](https://aclanthology.org/2026.findings-emnlp.1196/): agent-generated feedback is not automatically reliable supervision.
+- [Does Failure Feedback Direct Agent Self-Modification? (October 2026)](https://arxiv.org/abs/2610.14662): target repair and held-out generalization must be separately measured.
+- [Red Queen Gödel Machine (2026)](https://arxiv.org/abs/2606.26294): evaluators and objectives may coevolve, making scores time-relative.
+
+**Smallest Reality Test:** for one fixed, bounded coding or corpus-maintenance task, produce a modest set of packet-backed alternative heuristics; preserve provenance and ancestry, evaluate on identical held-out cases, recheck after a cold-handler swap, archive nonwinners at low activation, and later rehydrate a candidate under changed conditions. Compare against one unchanged baseline and a last-result-only baseline. Record quality, diversity, transfer, regressions, energy/token/attention costs and present-time validity. Test *selection outcomes*, *lineage fidelity*, *retention/revival*, and *evaluator drift* independently.
+
+**Falsifier:** if ordinary COP forks + durable evidence + existing evaluation and memory mechanisms yield the same measurable outcomes, no evolutionary packet subtype, new protocol or FractaX component is justified.
+
