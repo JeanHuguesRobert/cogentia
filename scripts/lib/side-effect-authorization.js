@@ -358,7 +358,7 @@ export function grantSideEffectAuthorization(args = {}) {
 export function mintMandateDerivedGrant({
   action_class, target, payload, mandate_ref, recovery_ref,
   auth_context, budget_reservation_id, account_id = null, treatment_id = null,
-  expose_packet_id, expires_in_ms = 10 * 60 * 1000,
+  expose_packet_id, expose_packet, expires_in_ms = 10 * 60 * 1000,
 } = {}) {
   if (!isResolvedCallerAuth(auth_context) || auth_context.auth !== "jhn" || auth_context.allowMutate !== true) {
     throw fail("mandate_derived_verifier_unavailable", "resolved JHN caller authority is required");
@@ -366,7 +366,11 @@ export function mintMandateDerivedGrant({
   if (action_class !== "host.fs.write" || target?.node !== "node:agent-jhn-workspace"
       || !target?.path || !payload || payload.capability !== "host.fs.write"
       || !mandate_ref || mandate_ref !== auth_context.mandate_ref
-      || !recovery_ref || !budget_reservation_id || !expose_packet_id) {
+      || !recovery_ref || !budget_reservation_id || !expose_packet_id
+      || expose_packet?.envelope?.id !== expose_packet_id
+      || expose_packet?.envelope?.packet_kind !== "continuation"
+      || !expose_packet?.envelope?.traces?.some((trace) => trace.type === "action_class" && trace.value === action_class)
+      || !expose_packet?.envelope?.traces?.some((trace) => trace.type === "payload_hash" && trace.value === canonicalPayloadHash(payload))) {
     throw fail("mandate_derived_scope_invalid", "mandate-derived authority is limited to an attributed, recoverable workspace write");
   }
   return createStoredGrant({
@@ -382,7 +386,11 @@ export function mintMandateDerivedGrant({
     treatment_id,
     recovery_ref,
     expose_packet_id,
-    material_parameters: { scope: "configured_agent_jhn_workspace", recovery_verified: true },
+    material_parameters: {
+      scope: "configured_agent_jhn_workspace",
+      recovery_verified: true,
+      expose_packet,
+    },
     expires_in_ms,
     single_use: true,
   });

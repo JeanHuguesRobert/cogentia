@@ -6,6 +6,7 @@ import { execFileSync } from "node:child_process";
 import {
   buildHostFsWritePayload,
   executeAuthorizedEffect,
+  attachExposePacket,
   mintMandateDerivedGrant,
 } from "./side-effect-authorization.js";
 import { isResolvedCallerAuth } from "./cogentia-mcp-auth.js";
@@ -93,17 +94,19 @@ export function createAgentJhnWorkspaceCapabilities({
           payload,
           action_request_id: `workspace-write:${randomUUID()}`,
         };
+        const exposed = attachExposePacket(prepared, { actor: authContext.actor });
         const authorization = mintMandateDerivedGrant({
           auth_context: authContext,
-          action_class: prepared.action_class,
-          target: prepared.target,
-          payload: prepared.payload,
+          action_class: exposed.action_class,
+          target: exposed.target,
+          payload: exposed.payload,
           mandate_ref: authContext.mandate_ref,
           budget_reservation_id,
           account_id,
           treatment_id,
           recovery_ref: `git-worktree:${expectedBranch}:${relative}:${previousHash}`,
-          expose_packet_id: `urn:cop:packet:expose:${prepared.action_request_id}`,
+          expose_packet_id: exposed.packet.envelope.id,
+          expose_packet: exposed.packet,
         });
 
         const executed = await executeAuthorizedEffect({
