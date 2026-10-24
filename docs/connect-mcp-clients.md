@@ -1,6 +1,11 @@
 ---
 title: Connect MCP clients to Cogentia
 author: unknown
+affiliation: unknown
+license: unknown
+language: en
+status: working-paper
+last_modified_at: '2026-10-24'
 date: '2026-06-30'
 document_role: source
 document_kind: documentation
@@ -25,8 +30,11 @@ classification_confidence: "medium"
 # Connect MCP clients to Cogentia
 
 Cogentia exposes the corpus through a read-only MCP surface. The MCP surface is
-an adapter over the Cogentia Context Gateway daemon; it does not read SQLite
-directly, open corpus files, rebuild indexes, or call provider APIs.
+an adapter over shared governed capabilities and the Context Gateway daemon.
+Corpus retrieval uses the daemon; private KYS/AMI capture runs in the MCP
+process. See [private memory capture](memory-capture.md#cli-and-mcp-surfaces-282)
+for its full-view stdio configuration and per-request HTTP authentication.
+Capture does not require a daemon, storage writes or provider API access.
 
 The SQLite index is a reconstructible cache. Git, the registry, and the
 continuation policies remain the source of truth.

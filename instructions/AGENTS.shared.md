@@ -3,9 +3,9 @@ title: Cogentia Shared Agent Instructions
 author: unknown
 affiliation: "Institut Mariani / C.O.R.S.I.C.A., 1 cours Paoli, F-20250 Corte, Corsica"
 status: "working-paper — active operational mandate"
-version: 37
+version: 38
 date: 2026-10-02
-last_modified_at: "2026-10-18"
+last_modified_at: "2026-10-23"
 license: CC BY-SA 4.0
 language: en
 canonical_url: https://github.com/JeanHuguesRobert/cogentia/blob/main/instructions/AGENTS.shared.md
@@ -213,6 +213,18 @@ ordinary resume instruction requires an explanatory prompt, fix the **packet**
 rather than routinely lengthening the prompt. Preserve Minimum Sufficient
 Locality: do not copy retrievable source material just to make an Issue longer.
 See [the canonical formulation](../docs/resumable_github_issues.md#self-contained-resumability-invariant-normative).
+
+**Apply Minimum Sufficient Locality before creating a handoff artifact.** For
+work owned by an existing Issue/Packet, put progress, decisions, validation,
+blockers and the next action in that Issue's comment thread. Do not create a
+separate Markdown handoff/checkpoint file merely to make the work resumable.
+Create a versioned document only when it has an independently useful purpose
+(for example a reusable interface contract or maintained operational guide),
+and keep task history in the owning Issue. Length alone is not a reason to
+move that history into a file. Before declaring a handoff ready, verify that
+the owning Packet points to the delivered evidence; a file pointing back to
+the Packet does not close that return path. See
+[Canonical hop journal — Issue first](../docs/resumable_github_issues.md#canonical-hop-journal--issue-first).
 
 #### Applicable Control Gate — effective metacognitive coupling
 

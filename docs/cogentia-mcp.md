@@ -1,6 +1,11 @@
 ---
 title: Cogentia MCP adapter
 author: unknown
+affiliation: unknown
+license: unknown
+language: en
+status: working-paper
+last_modified_at: '2026-10-24'
 date: '2026-06-30'
 document_role: source
 document_kind: documentation
@@ -26,7 +31,10 @@ classification_confidence: "medium"
 
 `scripts/cogentia-mcp.js` is a thin MCP (Model Context Protocol) stdio server for the Cogentia Context Gateway. `scripts/cogentia-mcp-http.js` exposes the same tools over HTTP at `/mcp`. 
 
-Both adapters act as thin facades: they delegate execution to the Cogentia daemon over HTTP (`/api/*`). They never open SQLite, read corpus files directly, rebuild the index, execute raw shell commands, or mutate the corpus without policy authorization.
+Both adapters expose shared governed implementations. Corpus retrieval delegates
+to the Cogentia daemon over HTTP (`/api/*`); private memory capture invokes the
+v3 capability in the MCP process, without forwarding its text to the daemon.
+They never open SQLite directly or mutate the corpus without policy authorization.
 
 For client setup recipes (Claude Code, Grok, Codex, Cursor, and Fracta public service), see [connect-mcp-clients.md](connect-mcp-clients.md).
 
@@ -42,7 +50,7 @@ Authorization is not execution.
 Caller mediation remains the execution boundary.
 ```
 
-1. **Thin Adapter:** The MCP layer contains zero side logic or database connections. It maps MCP `tools/call` JSON-RPC messages directly to daemon HTTP routes.
+1. **Thin Adapter:** The MCP layer maps calls to shared capability implementations or daemon HTTP routes, with authorization enforced before private capture. It does not maintain a parallel capture implementation or database connection.
 2. **Tiered Trust Boundaries:** Tools are grouped into strict Trust Tiers (P0 through P4). Public facades default to read-only (`P0`). Mutation tools (`P3`) require explicit administrative token attestation or agent mandate claims.
 3. **Stateless Resume & Continuations:** Tools return or point to durable **Continuation IDs** (`ctn_[hex]`). Clients do not rely on transient server session affinity.
 4. **Line-Level Citations:** All retrieval tools return `source_id` citations (`#L123-L145`). Agents must cite these references when claiming corpus content.
@@ -86,6 +94,22 @@ For local agents (Claude Code, Cursor, Codex, Grok CLI):
 | `COGENTIA_HOST_FS_PROVIDER` | `desktop-commander` | Provider id; not the public semantic name |
 | `COGENTIA_DC_MCP_INDEX` | auto | Explicit path to extracted Desktop Commander `dist/index.js` |
 | `COGENTIA_DC_MCP_COMMAND` / `COGENTIA_DC_MCP_ARGS` | extracted or `npx` | Override DC spawn; prefer extracted binary over `npx -y` |
+
+### Private KYS/AMI capture
+
+`cogentia_memory_capture` accepts `{ "text": "..." }` and runs the same
+`memory.capture` capability as `cogentia memory capture --stdin`. It is hidden
+from unauthenticated discovery and requires private-read access. It stores
+nothing and makes no provider or daemon call. The complete result, including
+raw text and diagnostics, is private.
+
+Local stdio requires full view and an admin token; mutation can remain disabled.
+HTTP `POST /mcp` verifies a credential on each capture request, even on a
+full-view server. The legacy `POST /tools/cogentia_memory_capture` shortcut is
+blocked. The capture text limit is 262144 UTF-8 bytes.
+
+See [the capture contract and usage examples](memory-capture.md#cli-and-mcp-surfaces-282)
+for exact authorization paths, envelope semantics, transport limits and checks.
 
 Host filesystem tools (`cogentia_host_fs_list` / `_read` / `_search` / `_write`) are **private-read or mutate**, never on the anonymous public catalogue. They are Cogentia semantic capabilities (`host.fs.*`). Desktop Commander is one local provider behind COP and #171, not a tool the client should name.
 
@@ -149,6 +173,7 @@ Tools are registered in `scripts/lib/cogentia-mcp-core.js`. They are categorized
 | `cogentia_index_status` / `index_search` | **P0** | Local FTS index status and raw search |
 | `cogentia_pattern_list` / `pattern_get` | **P2** | Patterns / Anti-patterns (#110); not Skills, not authority |
 | `cogentia_cli_catalog` | **P0** | Live CLI/MCP/skill/pattern inventory (maximum visible set) |
+| `cogentia_memory_capture` | **P4** private-read | In-memory KYS/AMI normalization; result stays private; no daemon or storage |
 | `cogentia_host_fs_list` | **P4** private-read | Bounded directory list on a selected host node (`host.fs.list`) |
 | `cogentia_host_fs_read` | **P4** private-read | Bounded file read (`host.fs.read`) |
 | `cogentia_host_fs_search` | **P4** private-read | Bounded host search (`host.fs.search`) |

@@ -64,6 +64,7 @@ import { replaceIndexCatalog, stripIndexCatalog } from "./lib/research-index-nav
 import { listAgentSkills, getAgentSkill } from "./lib/cogentia-agent-skills.js";
 import { registerModule, invokeCapability } from "./lib/v3-modules.js";
 import "./lib/memory-capture.js";
+import { captureMemoryForSurface, readMemoryCaptureStdin } from "./lib/memory-capture-surface.js";
 import { resolveCallerAuth, deriveLockers } from "./lib/cogentia-mcp-auth.js";
 import { checkSemanticMutation, MUTATION_STATUS } from "./lib/semantic-mutation-checker.js";
 import { runConvergenceLoop } from "./lib/convergence-loop.js";
@@ -201,6 +202,13 @@ const BUILTIN_IGNORED_BASENAMES = new Set([
 ]);
 const BUILTIN_SKIP_DIRS = new Set([
   ".git",
+  ".tmp",
+  ".local",
+  "_tmp",
+  "_temp",
+  "_scratch",
+  "tmp",
+  "temp",
   "node_modules",
   ".turbo",
   "dist",
@@ -511,6 +519,8 @@ async function main() {
       return cmdNavBenchmark();
     case "locate":
       return cmdLocate();
+    case "memory":
+      return cmdMemoryCapture();
     case "orient":
       return cmdOrient();
     case "orient-benchmark":
@@ -876,6 +886,8 @@ Core commands:
                            bounded pre-flight: corpus/privacy/continuations only;
                            omit it for git, worktree and generated-view audits.
                            Flags: --progress --stage-budget-ms <n>
+  consolidate --weekly    Generate this week's public/private local digests.
+                           Flags: --at <ISO-8601> --force --no-fan-out
   triage [repo|all]        Correlated full diagnostic across consolidate, classify,
                            docs judgments, and active continuations (cogentia#175).
                            Flags stale continuations and untracked judgments.
@@ -1046,6 +1058,10 @@ Semantic search (continuation-based):
                            --dimensions <n> --source <label>
 
 Navigation (v3 module seam, #80/#108 / #122):
+  memory capture --stdin   Normalize a private KYS/AMI reply from stdin only.
+                             JSON output; max 262144 UTF-8 bytes. Local,
+                             in-memory operation, without daemon or storage.
+                             Details: memory capture --help; docs/memory-capture.md
   locate <subject>          Resolve a subject to concrete corpus locations by
                              composing guide routing, the concept registry and
                              full-text search. Flags: --intent <label>
@@ -1070,7 +1086,8 @@ Context Gateway:
   GET /api/context/search  Short citable retrieval over the Markdown index.
   GET /api/context/pack    Deterministic, budgeted context for agents.
   GET /api/issues/graph    Read-only issue graph over tracked GitHub work items.
-  scripts/cogentia-mcp.js  MCP stdio adapter; calls the daemon and never SQLite directly.
+  scripts/cogentia-mcp.js  MCP stdio adapter; corpus retrieval uses the daemon.
+                           Private memory capture runs locally; no direct SQLite access.
   Docs: docs/cogentia-context-gateway.md and docs/cogentia-mcp.md
 
 Effect commands (#171 mint UI):
@@ -1510,6 +1527,29 @@ registerModule({
     return validateFrontmatterPaths(paths || [], options);
   },
 });
+
+async function cmdMemoryCapture() {
+  if ((argv.length === 1 && ["--help", "-h"].includes(argv[0])) ||
+      (argv.length === 2 && argv[0] === "capture" && ["--help", "-h"].includes(argv[1]))) {
+    console.log(`Usage: node scripts/cogentia.js memory capture --stdin [--json]
+
+Normalize a supplied KYS/AMI reply through the governed memory.capture capability.
+Input: UTF-8 text on stdin only, at most 262144 bytes. No text or file arguments.
+Output: ingestion JSON on stdout, including unchanged raw text and SHA-256.
+Keep stdout private. No daemon, provider call, storage write or Corpus promotion.
+Exit codes: 0 accepted; 2 rejected capture; 1 surface/input failure.
+MCP equivalent: cogentia_memory_capture({ text }), requiring private-read access.
+Docs: docs/memory-capture.md`);
+    return;
+  }
+  if (argv.length !== 2 || argv[0] !== "capture" || argv[1] !== "--stdin") {
+    throw Object.assign(new Error("Usage: cogentia memory capture --stdin [--json]"), { error_class: "invalid_input" });
+  }
+  const text = await readMemoryCaptureStdin(process.stdin);
+  const result = await captureMemoryForSurface({ text }, CLI_TRUSTED_AUTH);
+  console.log(JSON.stringify(result, null, 2));
+  if (!result.ok) process.exitCode = 2;
+}
 
 function cmdLocate() {
   // Flags must be stripped before joining what remains into the subject --
@@ -3814,7 +3854,7 @@ async function cmdConsolidate() {
     if (at && Number.isNaN(new Date(at).getTime())) {
       throw new Error("--at must be a valid ISO-8601 timestamp");
     }
-    const result = await runWeeklyConsolidation({ now: at, force: hasFlag("--force") });
+    const result = await runWeeklyConsolidation({ now: at, force: hasFlag("--force"), fanOut: !hasFlag("--no-fan-out") });
     if (hasFlag("--converge") || hasFlag("-c")) {
       console.log(`\nSunday Consolidation Completed [${result.sprint_tag}]\nDigest: ${result.digest_path}\n`);
       console.log(`[Phase 5] Auto-converging Corpus Navigation to Fixed Point...`);
@@ -17978,6 +18018,14 @@ function escapeRegExp(s) {
 }
 
 main().catch(err => {
+  if (command === "memory") {
+    const error_class = err.error_class || "memory_capture_failed";
+    // Never echo stdin, argument values, a stack or local paths on this surface.
+    const message = err.error_class ? err.message : "memory.capture failed";
+    console.log(JSON.stringify({ ok: false, error_class, error: { message, class: error_class } }));
+    process.exitCode = 1;
+    return;
+  }
   if (JSON_MODE) {
     console.error(JSON.stringify({ ok: false, error: err.message, stack: err.stack }, null, 2));
   } else {

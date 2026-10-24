@@ -31,6 +31,7 @@ function nowMs() {
  */
 export async function runMonteCarloAudit(options = {}) {
   const root = path.resolve(options.root || process.cwd());
+  const queueRoot = path.resolve(options.queueRoot || root);
   const view = options.view || PUBLIC_VIEW;
   const startedAt = nowMs();
   const runId = options.runId || `sleep_audit_${startedAt}`;
@@ -43,7 +44,7 @@ export async function runMonteCarloAudit(options = {}) {
     ? Math.max(1, options.maxPairs)
     : 50;
 
-  const reviewQueue = new SleepCycleReviewQueue({ root });
+  const reviewQueue = new SleepCycleReviewQueue({ root: queueRoot });
 
   // 1. Capacity Qualification Gate
   const availability = qualifySystemAvailability(options);
@@ -62,10 +63,10 @@ export async function runMonteCarloAudit(options = {}) {
   // A live adapter must be reattached by an authorized handler on each resume.
   if (options.mission === "interaction_evidence") {
     const resumed = typeof options.resume === "string"
-      ? loadContinuationFile(root, options.resume) : options.resume;
+      ? loadContinuationFile(queueRoot, options.resume) : options.resume;
     const checkpoint = resumed?.state?.checkpoint || options.checkpoint;
     const receipt = await runInteractionEvidenceMission({
-      ...options, root, checkpoint,
+      ...options, root: queueRoot, checkpoint,
       resumeUnavailable: Boolean(options.resume && !resumed?.state?.checkpoint),
       now: checkpoint?.through || options.now,
       from: checkpoint?.from || options.from,
@@ -73,7 +74,7 @@ export async function runMonteCarloAudit(options = {}) {
       shouldPreempt: () => options.shouldPreempt?.() || (!options.force && !qualifySystemAvailability(options).is_idle)
     });
     const continuation = receipt.status === "PREEMPTED"
-      ? emitSleepCycleContinuation(root, {
+      ? emitSleepCycleContinuation(queueRoot, {
         runId, reason: receipt.code, checkpoint: receipt.checkpoint,
         accumulatedSignals: [], metrics: null,
         options: { mission: "interaction_evidence", from: receipt.checkpoint.from, now: receipt.checkpoint.through, maxCases: options.maxCases, minePatterns: options.minePatterns }
@@ -100,7 +101,7 @@ export async function runMonteCarloAudit(options = {}) {
 
   if (options.resume) {
     const continuationData = typeof options.resume === "string"
-      ? loadContinuationFile(root, options.resume)
+      ? loadContinuationFile(queueRoot, options.resume)
       : options.resume;
 
     if (continuationData?.state?.checkpoint) {
@@ -183,7 +184,7 @@ export async function runMonteCarloAudit(options = {}) {
 
   // 7. Handle Preemption & Emit Continuation
   if (preemptionReason) {
-    const continuationPacket = emitSleepCycleContinuation(root, {
+    const continuationPacket = emitSleepCycleContinuation(queueRoot, {
       runId,
       reason: preemptionReason,
       checkpoint: finalCheckpoint,

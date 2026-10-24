@@ -79,6 +79,10 @@ try {
     path.join(repoB, "research", "b.md"),
     "# B\n\nSee [A](https://github.com/JeanHuguesRobert/repo-a/blob/main/research/a.md).\n"
   );
+  for (const folder of [".tmp", ".local", "_tmp", "_temp", "_scratch", "tmp", "temp"]) {
+    write(path.join(repoB, folder, "backup.md"),
+      "# Disposable backup\n\nSee [A](https://github.com/JeanHuguesRobert/repo-a/blob/main/research/a.md).\n");
+  }
 
   const registry = path.join(scratch, ".cogentia.json");
   write(registry, JSON.stringify({
@@ -115,6 +119,8 @@ try {
     /r_repo_b\s+--?>\|1\|\s+r_repo_a/,
     "repo-scoped projection must retain cross-repo evidence from repo-b"
   );
+  assert.doesNotMatch(status.after, /Disposable backup|backup\.md/,
+    "temporary copies must not enter generated navigation");
   assert.equal(
     plan.changes.some(change => change.repo === "repo-b"),
     false,

@@ -4,8 +4,22 @@ subtitle: "Governed background consistency, contradiction detection, and adaptiv
 author: "Jean Hugues Noël Robert, baron Mariani"
 affiliation: "Institut Mariani / C.O.R.S.I.C.A."
 date: "2026-08-31"
-status: "architecture-specification"
-version: "1.0"
+status: "working-paper — architecture specification"
+version: "1.1"
+last_modified_at: "2026-10-24"
+license: CC BY-SA 4.0
+language: en
+update_policy: UP-DEFAULT-REVIEWED
+canonical_url: https://github.com/JeanHuguesRobert/cogentia/blob/main/docs/corpus-sleep-cycle-monte-carlo.md
+provenance:
+  origin_type: unknown
+  origin_repository: JeanHuguesRobert/cogentia
+  origin_ref: unknown
+  origin_date: unknown
+  derived_from: []
+review:
+  status: unreviewed
+  reviewed_by: []
 repository: "JeanHuguesRobert/cogentia"
 canonical_path: "cogentia/docs/corpus-sleep-cycle-monte-carlo.md"
 document_role: "source"
@@ -34,6 +48,70 @@ tags:
 ---
 
 # Corpus Sleep Cycle : Preemptible Monte Carlo Audit on Residual Capacity
+
+## Optional interaction-evidence mission
+
+`run-corpus-sleep-cycle.js` runs the observational interaction mission when
+`COGENTIA_INTERACTION_CONFIG` points to an authorized configuration. It shares
+capacity qualification and the cycle's wall budget; it runs before repository
+sync to avoid starvation. It does not require another scheduler. Operium owns
+activation and rollback through
+[`deploy-cogentia-interactions-fracta.sh`](https://github.com/JeanHuguesRobert/operium/blob/main/scripts/ops/deploy-cogentia-interactions-fracta.sh).
+
+The configuration names a private `stateRoot`, `authorized: true`, a bounded
+`maxCases` (at most 50), `readTimeoutMs`, and source `repositories` with `name`
+and `root`. `refreshRepositories: true` fetches canonical main revisions into
+private reconstructible Git caches, never pulling or resetting source checkouts.
+`projectionFiles` may name existing JSON SQL-projection exports (`path`, `name`)
+whose rows contain `id`, `date`, `status`; no database is created or modified.
+Repository YAML, readable registers and tabular dashboards are compared by
+interaction ID. Missing links, malformed rows, conflicting dates, duplicate
+rows and status disagreements produce advisory diagnostics.
+
+All source aliases, original locators, metadata caches, normalized snapshots,
+findings and decisions stay in the private runtime directory. Public mode
+excludes private cases. Source citations pair opaque aliases with a private
+resolver containing exact content hashes and observed Git revisions. No source
+body or locator appears in service output. Configuration/storage denial and
+connector denial yield typed BLOCKED_SECURITY receipts; read failures yield
+PARTIAL receipts. The public log contains only status, code and aggregate
+counts. `COGENTIA_SLEEP_STATE_ROOT` separates the public Monte Carlo runtime
+queue from read-only corpus directories.
+
+The Gmail reader uses Python's standard-library IMAP client, EXAMINE and
+BODY.PEEK header reads. It uses exact source-reviewed Gmail message IDs and
+provider thread correlation, with at most 80 messages per thread. Each case has
+a date-scoped incremental window with a three-day overlap, retaining earlier
+metadata evidence. Credentials come from a systemd `gmail-password` credential
+and `INTERACTION_GMAIL_USER`; the existing secret is never printed or embedded
+in source. Protocol references: [Google IMAP extensions](https://developers.google.com/workspace/gmail/imap/imap-extensions)
+and [RFC 9051](https://www.rfc-editor.org/rfc/rfc9051.html).
+
+Coverage is explicit: All Mail excludes Spam/Trash. Unclassified messages remain
+unclassified; neither human authorship nor substantive resolution is inferred
+from thread membership. Provider INTERNALDATE observations are stored separately
+from established send/reply timestamps, and do not fabricate exact reply latency.
+Bounded observations therefore return PARTIAL / SOURCE_COVERAGE_LIMITED and
+VERIFY advice where classification or coverage is insufficient. They cannot
+justify an exhaustive no-reply assertion, legal deadline or automatic follow-up.
+An acknowledgment does not contradict an explicitly substantive awaiting claim.
+
+Batch cursors rotate through cases, newest first. A frozen normalized snapshot
+and the existing mission checkpoint allow process replacement without losing
+or duplicating findings. Earlier rejected advice remains rejected; later
+evidence supersedes outdated pending advice. Original sources are preserved.
+
+For an observational activation, use `--skip-repo-sync --skip-consolidation
+--no-cop-evidence` so the Sleep Cycle cannot also invoke the independently owned
+weekly consolidation or mutate source checkouts. The separately scheduled
+weekly task may contribute evidence; source corrections remain a single
+separately authorized review/handler pathway. Enabling this reader grants no
+send or source-correction authority. Current execution state belongs in the
+[owning Packet](https://github.com/JeanHuguesRobert/cogentia/issues/271).
+
+Checks: `node --test scripts/check-interaction-evidence.js
+scripts/check-interaction-sources.js`, `python scripts/check-gmail-readonly.py`,
+and the existing `node scripts/check-corpus-sleep-cycle.js` regression suite.
 
 ## 1. Executive Summary
 
