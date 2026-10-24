@@ -10,14 +10,10 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { LivingBookPress } from './lib/living-book-press/press.js';
 import { LivingBookRegistry } from './lib/living-book-press/registry.js';
+import { loadProfilesFromRepository } from './lib/living-book-press/profile-loader.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-const defaultStorageDir = path.join(process.cwd(), '.cogentia', 'press');
-
-const press = new LivingBookPress({
-  registry: new LivingBookRegistry({ storageDir: defaultStorageDir })
-});
 
 function printUsage() {
   console.log(`
@@ -39,12 +35,13 @@ Options:
   --edition <id>                     Frozen edition ID (defaults to book's active edition)
   --singularization <mode>           singulier (default) | standard
   --material <profile>               accessible (default) | luxe
-  --format <fmt>                     A4 (default) | A5
+  --format <fmt>                     A4 or A5 (defaults to the profile's print format, then A4)
   --mission <text>                   Initial mission or dedication text
   --out <path>                       File path to save the generated PDF
   --rematerialize                    Document rematerialization of the same copy
   --fork                             Issue an incarnation fork (new copy ID)
   --reason <text>                    Reason for rematerialization or fork
+  --repo <path>                      Repository root to discover projects/*/press/profile.yml (defaults to current directory)
   --json                             Emit pure JSON output
 `);
 }
@@ -71,6 +68,14 @@ function parseArgs(args) {
 
 const { flags, positional } = parseArgs(process.argv.slice(2));
 const cmd = positional[0];
+const repositoryRoot = flags.repo ? path.resolve(flags.repo) : process.cwd();
+const defaultStorageDir = path.join(repositoryRoot, '.cogentia', 'press');
+const press = new LivingBookPress({
+  registry: new LivingBookRegistry({ storageDir: defaultStorageDir })
+});
+for (const profile of loadProfilesFromRepository(repositoryRoot)) {
+  press.registerProfile(profile);
+}
 
 if (!cmd || cmd === 'help' || flags.help) {
   printUsage();
@@ -87,10 +92,14 @@ try {
       for (const p of list) {
         console.log(`• [${p.id}] ${p.title}`);
         console.log(`  Subtitle: ${p.subtitle}`);
-        console.log(`  Repository: ${p.repository}`);
-        console.log('  Frozen Editions:');
+        console.log(`  Repository: ${p.repository || '(not declared)'}`);
+        console.log('  Configured Editions:');
+        if (Object.keys(p.editions || {}).length === 0) {
+          console.log('    - none; issuance unavailable until a frozen edition is recorded');
+        }
         for (const [eId, ed] of Object.entries(p.editions)) {
-          console.log(`    - ${eId} (${ed.name}) [commit: ${ed.commit.slice(0, 10)}]`);
+          const immutable = /^[a-f0-9]{40}$/i.test(ed.commit || '') && ed.manifest_ref && (ed.freeze_date || ed.status === 'frozen');
+          console.log(`    - ${eId} (${ed.name}) [${immutable ? `frozen ${ed.commit.slice(0, 10)}` : 'not frozen; issuance unavailable'}]`);
         }
         console.log('');
       }
@@ -103,9 +112,9 @@ try {
     }
 
     const editionId = flags.edition;
-    const singularization = flags.singularization || 'singulier';
+    const singularization = flags.singularization;
     const materialProfile = flags.material || 'accessible';
-    const format = flags.format || 'A4';
+    const format = flags.format;
     const biography = {
       mission_ref: flags.mission || null
     };

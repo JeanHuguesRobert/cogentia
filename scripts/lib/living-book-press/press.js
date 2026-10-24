@@ -18,6 +18,9 @@ export class LivingBookPress {
     if (!profile || !profile.id) {
       throw new Error('Invalid profile: missing profile id');
     }
+    if (this.profiles.has(profile.id)) {
+      throw new Error(`Duplicate Living Book profile: ${profile.id}`);
+    }
     this.profiles.set(profile.id, profile);
   }
 
@@ -37,9 +40,9 @@ export class LivingBookPress {
     const {
       bookId,
       editionId,
-      singularization = 'singulier',
+      singularization,
       materialProfile = 'accessible',
-      format = 'A4',
+      format,
       biography = {}
     } = params;
 
@@ -49,10 +52,29 @@ export class LivingBookPress {
     }
 
     const edKey = editionId || profile.defaultEdition;
+    if (!edKey) {
+      throw new Error(`No frozen edition is configured for ${bookId}; copy issuance refused`);
+    }
     const edition = profile.editions[edKey];
     if (!edition) {
       throw new Error(`Unrecognized edition ${editionId} for book ${bookId}`);
     }
+    if (!profile.repository || !profile.verificationBaseUrl || !/^[a-f0-9]{40}$/i.test(edition.commit || '') ||
+        !edition.manifest_ref || !(edition.freeze_date || edition.status === 'frozen')) {
+      throw new Error(`Edition ${edKey} for ${bookId} has no complete frozen source identity; copy issuance refused`);
+    }
+
+    const resolvedFormat = String(format || profile.print?.format || 'A4').toUpperCase();
+    const supportedFormats = profile.supportedFormats || ['A4', 'A5'];
+    if (!supportedFormats.includes(resolvedFormat)) {
+      throw new Error(`Unsupported format ${resolvedFormat} for ${bookId}; supported formats: ${supportedFormats.join(', ')}`);
+    }
+    const resolvedMaterialProfile = materialProfile || 'accessible';
+    const supportedMaterialProfiles = profile.supportedMaterialProfiles || ['accessible', 'luxe'];
+    if (!supportedMaterialProfiles.includes(resolvedMaterialProfile)) {
+      throw new Error(`Unsupported material profile ${resolvedMaterialProfile} for ${bookId}; supported profiles: ${supportedMaterialProfiles.join(', ')}`);
+    }
+    const resolvedSingularization = singularization || profile.singularizationDefault || 'singulier';
 
     // Step 1: Allocate authoritative unique copy_id
     const copyId = this.registry.allocateCopyId(bookId, edition.id, profile.prefix);
@@ -64,8 +86,8 @@ export class LivingBookPress {
       copy_id: copyId,
       book_id: bookId,
       edition_id: edition.id,
-      singularization: singularization === 'standard' ? 'standard' : 'singulier',
-      material_profile: materialProfile === 'luxe' ? 'luxe' : 'accessible',
+      singularization: resolvedSingularization === 'standard' ? 'standard' : 'singulier',
+      material_profile: resolvedMaterialProfile,
       issued_at: issuedAt,
       edition_source: {
         repository: profile.repository,
@@ -93,15 +115,15 @@ export class LivingBookPress {
     const renderResult = renderUniqueCopyPdf(initialRecord, {
       bookTitle: profile.title,
       bookSubtitle: profile.subtitle,
-      format
+      format: resolvedFormat
     });
 
     // Step 4: Record render evidence and promote to GENERATED
     const generatedRecord = {
       ...initialRecord,
       render: {
-        format,
-        print_profile: materialProfile,
+        format: resolvedFormat,
+        print_profile: resolvedMaterialProfile,
         sha256: renderResult.sha256,
         byte_length: renderResult.byteLength,
         generated_at: new Date().toISOString()
