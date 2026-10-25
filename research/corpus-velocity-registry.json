@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "scope": "fixed set of 23 public repositories for quantitative comparison, including historically established repositories regardless of age; non-exhaustive; known other historical repositories are recorded separately",
+  "scope": "fixed set of 24 public repositories for quantitative comparison, including historically established repositories regardless of age; non-exhaustive; known other historical repositories are recorded separately",
   "repositories": [
     {
       "name": "JeanHuguesRobert/inseme",
@@ -232,6 +232,15 @@
       "metadata_verified_on": "2026-10-24",
       "related_repository": "virteal/kudocracy",
       "measurement_note": "Separate Firebase project created from the Kudocracy prototype; its extracted source is counted in both repository trees under the tree-size methodology."
+    },
+    {
+      "name": "JeanHuguesRobert/simpli",
+      "path": "simpli-engine",
+      "visibility": "public",
+      "repository_created_at": "2011-01-21T08:43:54Z",
+      "repository_metadata_url": "https://api.github.com/repos/JeanHuguesRobert/simpli",
+      "metadata_verified_on": "2026-10-24",
+      "measurement_note": "Standalone historical repository and engine powering virteal/SimpliWiki; both are counted as repository trees, including the overlapping lineage before the July 2026 handoff."
     }
   ],
   "historical_repositories_outside_fixed_scope": []

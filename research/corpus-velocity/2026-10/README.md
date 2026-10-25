@@ -27,18 +27,18 @@ review:
 
 # Taille du code et des documents — octobre 2026
 
-Relevé arrêté au **24 octobre 2026**. Il porte sur **23 dépôts publics** du
-registre : **17 branches `main` et six branches `master`**. Le mois d’octobre
+Relevé arrêté au **24 octobre 2026**. Il porte sur **24 dépôts publics** du
+registre : **17 branches `main` et sept branches `master`**. Le mois d’octobre
 est encore en cours.
 
 ## Vue d’ensemble
 
 | Mesure | Fichiers | Taille | Lignes physiques | Lignes non vides |
 | --- | ---: | ---: | ---: | ---: |
-| Arbres Git complets | 7 263 | 391,36 MB | — | — |
-| Code, selon les extensions retenues | 3 199 | 22,42 MB | 634 050 | 571 429 |
-| Documents, selon les extensions retenues | 2 699 | 301,52 MB | — | — |
-| dont Markdown (`.md`, `.markdown`, `.mdx`) | 2 503 | 36,27 MB | 746 544 | 518 405 |
+| Arbres Git complets | 7 523 | 394,40 MB | — | — |
+| Code, selon les extensions retenues | 3 252 | 25,00 MB | 714 795 | 645 702 |
+| Documents, selon les extensions retenues | 2 701 | 301,53 MB | — | — |
+| dont Markdown (`.md`, `.markdown`, `.mdx`) | 2 505 | 36,28 MB | 746 981 | 518 743 |
 
 Les MB sont décimaux : 1 MB = 1 000 000 octets. Markdown est compris dans le
 total des documents. Le total des arbres Git comprend tous les types de
@@ -71,6 +71,7 @@ octets seulement.
 | [L8](https://github.com/virteal/l8) | `master` | 33 | 0,37 | 12 681 / 11 611 | 2 | 0,07 | 481 / 370 |
 | [Side](https://github.com/virteal/side) | `master` | 1 | 0,03 | 1 294 / 1 003 | 1 | 0,02 | 594 / 419 |
 | [SimpliWiki](https://github.com/virteal/SimpliWiki) | `master` | 3 | 0,02 | 785 / 584 | 2 | 0,11 | 28 / 19 |
+| [Simpli](https://github.com/JeanHuguesRobert/simpli) | `master` | 53 | 2,58 | 80 745 / 74 273 | 2 | 0,01 | 437 / 338 |
 | [Water](https://github.com/virteal/water) | `master` | 0 | 0,00 | 0 / 0 | 1 | 0,00 | 6 / 4 |
 | [Boxon](https://github.com/virteal/boxon) | `master` | 0 | 0,00 | 0 / 0 | 1 | 0,00 | 9 / 5 |
 | [Tweesic](https://github.com/virteal/tweesic) | `main` | 4 | 0,07 | 2 600 / 2 119 | 1 | 0,00 | 9 / 5 |
@@ -78,7 +79,7 @@ octets seulement.
 ## Données et méthode
 
 - [Snapshots annuels JSON](./annual-snapshots.json), avec le commit exact de
-  chaque dépôt à chaque date et les agrégats du périmètre fixe de 23 dépôts.
+  chaque dépôt à chaque date et les agrégats du périmètre fixe de 24 dépôts.
 - [Snapshots annuels CSV](./annual-snapshots.csv), pour tableur et traitements
   ultérieurs.
 - [Définitions des catégories et filtres](../README.md).
@@ -93,7 +94,7 @@ vides ; les lignes non vides excluent les lignes composées uniquement
 d’espaces. Ce sont des comptes bruts, pas des SLOC ni une mesure de logique
 exécutable.
 
-## Évolution annuelle du même ensemble de 23 dépôts
+## Évolution annuelle du même ensemble de 24 dépôts
 
 Les snapshots sont pris chaque **24 octobre à 17:40 UTC**, de 2022 à 2026.
 Celui de 2022 précède le lancement public de ChatGPT, le **30 novembre 2022**
@@ -101,11 +102,11 @@ Celui de 2022 précède le lancement public de ChatGPT, le **30 novembre 2022**
 référence pré-lancement ; octobre 2023 est le premier point annuel après ce
 lancement.
 
-Le périmètre est la **même liste de 23 dépôts** à chaque date, en incluant L8,
-Side, SimpliWiki, Water et Boxon au même rang que les dépôts plus récents. La
+Le périmètre est la **même liste de 24 dépôts** à chaque date, en incluant L8,
+Side, Simpli, SimpliWiki, Tweesic, Water et Boxon au même rang que les dépôts plus récents. La
 colonne indique combien ont un arbre que l’on peut reconstruire depuis un
 commit de `main` ou `master` daté au plus tard du relevé. Les dates de création
-GitHub des 23 dépôts sont enregistrées dans le registre. Pour Inox, le
+GitHub des 24 dépôts sont enregistrées dans le registre. Pour Inox, le
 registre conserve aussi la date du dépôt historique `virteal/Inox` ; pour
 Survey, il conserve son prédécesseur conceptuel et historique
 [`virteal/kudocracy`](https://github.com/virteal/kudocracy). Les dépôts
@@ -118,9 +119,9 @@ Les dépôts créés après une date contribuent zéro à cette date. Si un dép
 créé n’avait aucun commit principal sélectionné, sa taille serait inconnue et
 non zéro ; le manifeste signale séparément ce cas.
 
-En octobre 2022, neuf arbres sont retenus : ceux d’**Inseme**, d’**Inox**, de
+En octobre 2022, dix arbres sont retenus : ceux d’**Inseme**, d’**Inox**, de
 **L8**, de **Side**, de **Water**, de **Boxon**, et les lignées
-**Survey/Kudocracy** et **SimpliWiki/SimpliJs**. Le relevé Survey reprend alors
+**Survey/Kudocracy**, **SimpliWiki/SimpliJs** et le dépôt **Simpli**. Le relevé Survey reprend alors
 l’arbre `master` de Kudocracy, dont le dernier commit vérifié est `efec853`
 (3 juin 2021). À partir du premier commit de Survey, sa propre branche
 principale fournit les instantanés ; Kudocracy reste la source historique de
@@ -145,12 +146,16 @@ son importance conceptuelle dans le Corpus.
 2022, mais leurs arbres actuels ne contiennent que leurs README et fichiers de
 licence/configuration : aucun fichier de code n’entre dans les filtres.
 SimpliJs fournit l’arbre historique SimpliWiki jusqu’au transfert de juillet
-2026 ; le dépôt Virteal actuel est un dépôt de contenu de wiki.
+2026 ; le dépôt Virteal actuel est un dépôt de contenu de wiki. Simpli reste
+aussi un dépôt mesuré à part entière : son arbre `master` représente déjà
+2,92 MB et 78 351 lignes de code aux relevés 2022–2025. Il s’agit de deux
+entrées liées ; avant le transfert de juillet 2026, leurs arbres recouvrent la
+même lignée et sont donc additionnés séparément dans ces mesures.
 Tweesic apporte aussi un arbre dès 2022, sur son `main` (commit `f0a83c6`).
 Son README décrit la création du projet à partir du prototype Kudocracy ; une
 comparaison du code `ui1twit` initial montre une forte reprise de source. Comme
 la mesure additionne les arbres Git de chaque dépôt, ce code partagé est compté
-dans les deux arbres. La série compte donc **9 arbres sur 23** en 2022.
+dans les deux arbres. La série compte donc **10 arbres sur 24** en 2022.
 
 Les instantanés historiques sont reconstruits à partir de l’historique Git
 premier-parent de la branche principale, selon les dates des commits ; les SHA
@@ -172,35 +177,36 @@ date de création précède un relevé ne reste sans arbre historique qualifié
 dans ces cinq points. La mesure ne permet pas à elle seule d’attribuer la
 croissance à l’IA ni de mesurer la productivité personnelle.
 
-| Date | Arbres `main`/`master` reconstituables / 23 | Code (MB, variation annuelle) | Lignes physiques de code (variation) | Documents (MB, variation annuelle) | Lignes physiques Markdown (variation) |
+| Date | Arbres `main`/`master` reconstituables / 24 | Code (MB, variation annuelle) | Lignes physiques de code (variation) | Documents (MB, variation annuelle) | Lignes physiques Markdown (variation) |
 | --- | ---: | ---: | ---: | ---: | ---: |
-| 2022-10-24 | 9 | 4,07 — base | 133 463 — base | 0,11 — base | 1 491 — base |
-| 2023-10-24 | 10 | 4,82 (+18,2 %) | 154 478 (+15,7 %) | 0,22 (+98,7 %) | 3 468 (+132,6 %) |
-| 2024-10-24 | 10 | 4,82 (0,0 %) | 154 478 (0,0 %) | 0,22 (0,0 %) | 3 468 (0,0 %) |
-| 2025-10-24 | 13 | 4,31 (−10,5 %) | 136 551 (−11,6 %) | 0,43 (+89,6 %) | 8 428 (+143,0 %) |
-| 2026-10-24 | 23 | 22,42 (+419,8 %) | 634 050 (+364,3 %) | 301,52 (+70 785,1 %) | 746 544 (+8 757,9 %) |
+| 2022-10-24 | 10 | 6,57 — base | 211 814 — base | 0,11 — base | 1 503 — base |
+| 2023-10-24 | 11 | 7,31 (+11,3 %) | 232 829 (+9,9 %) | 0,22 (+98,5 %) | 3 480 (+131,5 %) |
+| 2024-10-24 | 11 | 7,31 (0,0 %) | 232 829 (0,0 %) | 0,22 (0,0 %) | 3 480 (0,0 %) |
+| 2025-10-24 | 14 | 6,81 (−6,9 %) | 214 902 (−7,7 %) | 0,43 (+89,5 %) | 8 440 (+142,5 %) |
+| 2026-10-24 | 24 | 25,00 (+267,3 %) | 714 795 (+232,6 %) | 301,53 (+70 739,6 %) | 746 981 (+8 750,5 %) |
 
 Dans cette reconstruction, entre octobre 2022 et octobre 2026, le portefeuille
-fixe passe de **4,07 à 22,42 MB de code** (**+450,1 %**) et de
-**0,11 à 301,52 MB de documents** (**+266 983,5 %**). Les lignes physiques
-passent de **133 463 à 634 050** pour le code (**+375,1 %**) et de **1 491 à
-746 544** pour Markdown (**+49 970,0 %**). Les baselines documentaires étaient très petites, d’où les
-pourcentages élevés. La comparaison porte sur les 23 dépôts enregistrés, en
+fixe passe de **6,57 à 25,00 MB de code** (**+280,5 %**) et de
+**0,11 à 301,53 MB de documents** (**+266 316,6 %**). Les lignes physiques
+passent de **211 814 à 714 795** pour le code (**+237,5 %**) et de **1 503 à
+746 981** pour Markdown (**+49 599,3 %**). Les baselines documentaires étaient très petites, d’où les
+pourcentages élevés. La comparaison porte sur les 24 dépôts enregistrés, en
 incluant zéro avant leur première date mesurable. Le
 recul entre 2024 et 2025 reflète le passage de l’arbre Kudocracy historique à
 l’arbre propre de Survey, plus petit ; il marque le changement de dépôt dans
 cette lignée, pas une disparition du travail.
 
-Les taux du tableau portent sur le portefeuille fixe de 23 dépôts ; les dépôts
+Les taux du tableau portent sur le portefeuille fixe de 24 dépôts ; les dépôts
 pas encore créés contribuent zéro. Un dépôt déjà créé sans arbre principal
 historique qualifié rendrait son total partiel et les taux provisoires ; aucun
 cas de ce type n’apparaît dans les points annuels présents.
 
-Les chiffres reflètent maintenant les **23 dépôts enregistrés**. Tweesic est
+Les chiffres reflètent maintenant les **24 dépôts enregistrés**. Tweesic est
 un projet Firebase distinct créé depuis le prototype Kudocracy ; les sources
 partagées ou extraites sont comptées dans les deux arbres Git selon la méthode
-retenue. Pour SimpliWiki, la source passe du moteur SimpliJs au dépôt de contenu Virteal en
-juillet 2026 ; Water et Boxon apportent des arbres documentaires très légers.
+retenue. Simpli et SimpliWiki ont des entrées distinctes, et leur lignée
+partagée avant juillet 2026 est comptée dans les deux arbres. Pour SimpliWiki, la source passe du moteur Simpli au dépôt de contenu Virteal
+en juillet 2026 ; Water et Boxon apportent des arbres documentaires très légers.
 Les cinq points et les SHA des branches principales sont dans le
 [rapport annuel JSON](./annual-snapshots.json) et son
 [CSV](./annual-snapshots.csv).
