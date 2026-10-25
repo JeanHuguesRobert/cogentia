@@ -77,16 +77,16 @@ python3 scripts/corpus_size_annual_comparison.py \
   --out research/corpus-velocity/2026-10/annual-snapshots.json
 ```
 
-The registry remains the same 22 public repositories at every date, including
-L8, Side, SimpliWiki, Water and Boxon on the same basis as newer projects.
+The registry remains the same 23 public repositories at every date, including
+L8, Side, SimpliWiki, Tweesic, Water and Boxon on the same basis as newer projects. Tweesic is a separate Firebase project created from the Kudocracy prototype; both repository trees are counted, including shared and extracted code.
 Survey uses Kudocracy as its earlier lineage source; SimpliWiki uses the
 SimpliJs engine until the current Virteal content repository begins its own
 mainline history. These sources occupy their successors' existing cohort
 slots and are not counted a second time. A repository created after a cutoff
 contributes zero to the fixed-registry total at that date. Creation dates are
 captured from GitHub repository metadata; a documented earlier repository
-lineage may establish an earlier effective creation date, as for Inox, Survey
-and SimpliWiki. If a repository existed by a cutoff but has no selected
+lineage may establish an earlier effective creation date, as for Inox, Survey,
+SimpliWiki and Tweesic. If a repository existed by a cutoff but has no selected
 main/master commit or documented lineage tree, its historical size is unknown
 and the total is marked as a lower bound. Snapshot selection uses Git commit
 dates, which are not independent archival timestamps. The report separately
@@ -94,7 +94,7 @@ shows how many mainline trees could be reconstructed and which historical
 sizes remain unknown.
 
 The registry currently records no additional historical repositories outside
-those 22.
+those 23.
 
 The manifest publishes the exact code/document extension sets and excluded
 path expression. It reports total Git tree blobs and bytes, plus code and

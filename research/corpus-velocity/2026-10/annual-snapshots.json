@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-10-24T20:31:52+00:00",
+  "generated_at": "2026-10-25T06:36:15+00:00",
   "snapshots": [
     "2022-10-24T17:40:04+00:00",
     "2023-10-24T17:40:04+00:00",
@@ -7,139 +7,139 @@
     "2025-10-24T17:40:04+00:00",
     "2026-10-24T17:40:04+00:00"
   ],
-  "registry_sha256": "5a31b8b76cf9b3013398abf02cfe338960cc1fcdc805d73229e13eb14b1630f2",
+  "registry_sha256": "8f7c09d8927362e0600682fb309ffd3f666626c6d83051d932d15553ed810ff5",
   "branch_policy": "main/master only; documented historical_origin branch supplies a lineage slot before its recorded handoff date when the current repository has no snapshot; first-parent commits only; never use HEAD or side branches",
-  "source": "existing full local Git clones; the three newly added repositories and the SimpliJs predecessor were cloned on 2026-10-24; no fetch performed by the generators",
-  "registered_repository_count": 22,
+  "source": "existing full local Git clones; Tweesic and earlier predecessor sources were cloned on 2026-10-24; no fetch performed by the generators",
+  "registered_repository_count": 23,
   "row_status_counts": {
-    "ok": 22
+    "ok": 23
   },
   "snapshot_repository_counts": {
-    "2022-10-24T17:40:04+00:00": 8,
-    "2023-10-24T17:40:04+00:00": 9,
-    "2024-10-24T17:40:04+00:00": 9,
-    "2025-10-24T17:40:04+00:00": 12,
-    "2026-10-24T17:40:04+00:00": 22
+    "2022-10-24T17:40:04+00:00": 9,
+    "2023-10-24T17:40:04+00:00": 10,
+    "2024-10-24T17:40:04+00:00": 10,
+    "2025-10-24T17:40:04+00:00": 13,
+    "2026-10-24T17:40:04+00:00": 23
   },
   "fixed_registry_snapshots": [
     {
       "as_of": "2022-10-24T17:40:04+00:00",
-      "active_repository_count": 8,
+      "active_repository_count": 9,
       "unknown_historical_size_count": 0,
       "unknown_historical_size_repositories": [],
       "totals_status": "qualified",
       "totals": {
-        "blobs": 361,
-        "bytes": 6293490,
-        "code_files": 96,
-        "code_bytes": 4001884,
-        "code_physical_lines": 130730,
-        "code_nonblank_lines": 117237,
-        "document_files": 18,
-        "document_bytes": 112603,
-        "text_document_files": 18,
-        "text_document_physical_lines": 3209,
-        "text_document_nonblank_lines": 2171,
-        "markdown_files": 17,
-        "markdown_bytes": 60890,
-        "markdown_physical_lines": 1482,
-        "markdown_nonblank_lines": 1022
+        "blobs": 383,
+        "bytes": 6555395,
+        "code_files": 99,
+        "code_bytes": 4074382,
+        "code_physical_lines": 133463,
+        "code_nonblank_lines": 119534,
+        "document_files": 19,
+        "document_bytes": 112895,
+        "text_document_files": 19,
+        "text_document_physical_lines": 3218,
+        "text_document_nonblank_lines": 2176,
+        "markdown_files": 18,
+        "markdown_bytes": 61182,
+        "markdown_physical_lines": 1491,
+        "markdown_nonblank_lines": 1027
       }
     },
     {
       "as_of": "2023-10-24T17:40:04+00:00",
-      "active_repository_count": 9,
+      "active_repository_count": 10,
       "unknown_historical_size_count": 0,
       "unknown_historical_size_repositories": [],
       "totals_status": "qualified",
       "totals": {
-        "blobs": 413,
-        "bytes": 8895440,
-        "code_files": 106,
-        "code_bytes": 4744371,
-        "code_physical_lines": 151745,
-        "code_nonblank_lines": 134472,
-        "document_files": 12,
-        "document_bytes": 224086,
-        "text_document_files": 12,
-        "text_document_physical_lines": 5186,
-        "text_document_nonblank_lines": 3700,
-        "markdown_files": 11,
-        "markdown_bytes": 172373,
-        "markdown_physical_lines": 3459,
-        "markdown_nonblank_lines": 2551
+        "blobs": 435,
+        "bytes": 9157345,
+        "code_files": 109,
+        "code_bytes": 4816869,
+        "code_physical_lines": 154478,
+        "code_nonblank_lines": 136769,
+        "document_files": 13,
+        "document_bytes": 224378,
+        "text_document_files": 13,
+        "text_document_physical_lines": 5195,
+        "text_document_nonblank_lines": 3705,
+        "markdown_files": 12,
+        "markdown_bytes": 172665,
+        "markdown_physical_lines": 3468,
+        "markdown_nonblank_lines": 2556
       }
     },
     {
       "as_of": "2024-10-24T17:40:04+00:00",
-      "active_repository_count": 9,
+      "active_repository_count": 10,
       "unknown_historical_size_count": 0,
       "unknown_historical_size_repositories": [],
       "totals_status": "qualified",
       "totals": {
-        "blobs": 413,
-        "bytes": 8895440,
-        "code_files": 106,
-        "code_bytes": 4744371,
-        "code_physical_lines": 151745,
-        "code_nonblank_lines": 134472,
-        "document_files": 12,
-        "document_bytes": 224086,
-        "text_document_files": 12,
-        "text_document_physical_lines": 5186,
-        "text_document_nonblank_lines": 3700,
-        "markdown_files": 11,
-        "markdown_bytes": 172373,
-        "markdown_physical_lines": 3459,
-        "markdown_nonblank_lines": 2551
+        "blobs": 435,
+        "bytes": 9157345,
+        "code_files": 109,
+        "code_bytes": 4816869,
+        "code_physical_lines": 154478,
+        "code_nonblank_lines": 136769,
+        "document_files": 13,
+        "document_bytes": 224378,
+        "text_document_files": 13,
+        "text_document_physical_lines": 5195,
+        "text_document_nonblank_lines": 3705,
+        "markdown_files": 12,
+        "markdown_bytes": 172665,
+        "markdown_physical_lines": 3468,
+        "markdown_nonblank_lines": 2556
       }
     },
     {
       "as_of": "2025-10-24T17:40:04+00:00",
-      "active_repository_count": 12,
+      "active_repository_count": 13,
       "unknown_historical_size_count": 0,
       "unknown_historical_size_repositories": [],
       "totals_status": "qualified",
       "totals": {
-        "blobs": 615,
-        "bytes": 9873254,
-        "code_files": 246,
-        "code_bytes": 4244669,
-        "code_physical_lines": 133951,
-        "code_nonblank_lines": 119460,
-        "document_files": 44,
-        "document_bytes": 425078,
-        "text_document_files": 44,
-        "text_document_physical_lines": 10146,
-        "text_document_nonblank_lines": 7364,
-        "markdown_files": 43,
-        "markdown_bytes": 373365,
-        "markdown_physical_lines": 8419,
-        "markdown_nonblank_lines": 6215
+        "blobs": 639,
+        "bytes": 10155994,
+        "code_files": 250,
+        "code_bytes": 4311958,
+        "code_physical_lines": 136551,
+        "code_nonblank_lines": 121579,
+        "document_files": 45,
+        "document_bytes": 425370,
+        "text_document_files": 45,
+        "text_document_physical_lines": 10155,
+        "text_document_nonblank_lines": 7369,
+        "markdown_files": 44,
+        "markdown_bytes": 373657,
+        "markdown_physical_lines": 8428,
+        "markdown_nonblank_lines": 6220
       }
     },
     {
       "as_of": "2026-10-24T17:40:04+00:00",
-      "active_repository_count": 22,
+      "active_repository_count": 23,
       "unknown_historical_size_count": 0,
       "unknown_historical_size_repositories": [],
       "totals_status": "qualified",
       "totals": {
-        "blobs": 7239,
-        "bytes": 391076141,
-        "code_files": 3195,
-        "code_bytes": 22347816,
-        "code_physical_lines": 631450,
-        "code_nonblank_lines": 569310,
-        "document_files": 2698,
-        "document_bytes": 301523574,
-        "text_document_files": 2586,
-        "text_document_physical_lines": 806612,
-        "text_document_nonblank_lines": 562613,
-        "markdown_files": 2502,
-        "markdown_bytes": 36274244,
-        "markdown_physical_lines": 746535,
-        "markdown_nonblank_lines": 518400
+        "blobs": 7263,
+        "bytes": 391358881,
+        "code_files": 3199,
+        "code_bytes": 22415105,
+        "code_physical_lines": 634050,
+        "code_nonblank_lines": 571429,
+        "document_files": 2699,
+        "document_bytes": 301523866,
+        "text_document_files": 2587,
+        "text_document_physical_lines": 806621,
+        "text_document_nonblank_lines": 562618,
+        "markdown_files": 2503,
+        "markdown_bytes": 36274536,
+        "markdown_physical_lines": 746544,
+        "markdown_nonblank_lines": 518405
       }
     }
   ],
@@ -147,10 +147,10 @@
     {
       "baseline_at": "2022-10-24T17:40:04+00:00",
       "as_of": "2023-10-24T17:40:04+00:00",
-      "registered_repository_count": 22,
+      "registered_repository_count": 23,
       "repositories_with_snapshot": {
-        "baseline": 8,
-        "current": 9
+        "baseline": 9,
+        "current": 10
       },
       "historical_size_unknown": {
         "baseline": [],
@@ -158,108 +158,106 @@
       },
       "fixed_registry_totals": {
         "blobs": {
-          "baseline": 361,
-          "current": 413,
+          "baseline": 383,
+          "current": 435,
           "change": 52,
-          "growth_percent": 14.4
+          "growth_percent": 13.6
         },
         "bytes": {
-          "baseline": 6293490,
-          "current": 8895440,
+          "baseline": 6555395,
+          "current": 9157345,
           "change": 2601950,
-          "growth_percent": 41.3
+          "growth_percent": 39.7
         },
         "code_files": {
-          "baseline": 96,
-          "current": 106,
+          "baseline": 99,
+          "current": 109,
           "change": 10,
-          "growth_percent": 10.4
+          "growth_percent": 10.1
         },
         "code_bytes": {
-          "baseline": 4001884,
-          "current": 4744371,
+          "baseline": 4074382,
+          "current": 4816869,
           "change": 742487,
-          "growth_percent": 18.6
+          "growth_percent": 18.2
         },
         "code_physical_lines": {
-          "baseline": 130730,
-          "current": 151745,
+          "baseline": 133463,
+          "current": 154478,
           "change": 21015,
-          "growth_percent": 16.1
+          "growth_percent": 15.7
         },
         "code_nonblank_lines": {
-          "baseline": 117237,
-          "current": 134472,
+          "baseline": 119534,
+          "current": 136769,
           "change": 17235,
-          "growth_percent": 14.7
+          "growth_percent": 14.4
         },
         "document_files": {
-          "baseline": 18,
-          "current": 12,
+          "baseline": 19,
+          "current": 13,
           "change": -6,
-          "growth_percent": -33.3
+          "growth_percent": -31.6
         },
         "document_bytes": {
-          "baseline": 112603,
-          "current": 224086,
+          "baseline": 112895,
+          "current": 224378,
           "change": 111483,
-          "growth_percent": 99.0
+          "growth_percent": 98.7
         },
         "text_document_files": {
+          "baseline": 19,
+          "current": 13,
+          "change": -6,
+          "growth_percent": -31.6
+        },
+        "text_document_physical_lines": {
+          "baseline": 3218,
+          "current": 5195,
+          "change": 1977,
+          "growth_percent": 61.4
+        },
+        "text_document_nonblank_lines": {
+          "baseline": 2176,
+          "current": 3705,
+          "change": 1529,
+          "growth_percent": 70.3
+        },
+        "markdown_files": {
           "baseline": 18,
           "current": 12,
           "change": -6,
           "growth_percent": -33.3
         },
-        "text_document_physical_lines": {
-          "baseline": 3209,
-          "current": 5186,
-          "change": 1977,
-          "growth_percent": 61.6
-        },
-        "text_document_nonblank_lines": {
-          "baseline": 2171,
-          "current": 3700,
-          "change": 1529,
-          "growth_percent": 70.4
-        },
-        "markdown_files": {
-          "baseline": 17,
-          "current": 11,
-          "change": -6,
-          "growth_percent": -35.3
-        },
         "markdown_bytes": {
-          "baseline": 60890,
-          "current": 172373,
+          "baseline": 61182,
+          "current": 172665,
           "change": 111483,
-          "growth_percent": 183.1
+          "growth_percent": 182.2
         },
         "markdown_physical_lines": {
-          "baseline": 1482,
-          "current": 3459,
+          "baseline": 1491,
+          "current": 3468,
           "change": 1977,
-          "growth_percent": 133.4
+          "growth_percent": 132.6
         },
         "markdown_nonblank_lines": {
-          "baseline": 1022,
-          "current": 2551,
+          "baseline": 1027,
+          "current": 2556,
           "change": 1529,
-          "growth_percent": 149.6
+          "growth_percent": 148.9
         }
       },
-      "newly_measurable_repositories": [
-        "JeanHuguesRobert/barons-Mariani"
-      ],
+      "newly_measurable_repositories": [],
       "no_longer_measurable_repositories": []
     },
     {
       "baseline_at": "2023-10-24T17:40:04+00:00",
       "as_of": "2024-10-24T17:40:04+00:00",
-      "registered_repository_count": 22,
+      "registered_repository_count": 23,
       "repositories_with_snapshot": {
-        "baseline": 9,
-        "current": 9
+        "baseline": 10,
+        "current": 10
       },
       "historical_size_unknown": {
         "baseline": [],
@@ -267,92 +265,92 @@
       },
       "fixed_registry_totals": {
         "blobs": {
-          "baseline": 413,
-          "current": 413,
+          "baseline": 435,
+          "current": 435,
           "change": 0,
           "growth_percent": 0.0
         },
         "bytes": {
-          "baseline": 8895440,
-          "current": 8895440,
+          "baseline": 9157345,
+          "current": 9157345,
           "change": 0,
           "growth_percent": 0.0
         },
         "code_files": {
-          "baseline": 106,
-          "current": 106,
+          "baseline": 109,
+          "current": 109,
           "change": 0,
           "growth_percent": 0.0
         },
         "code_bytes": {
-          "baseline": 4744371,
-          "current": 4744371,
+          "baseline": 4816869,
+          "current": 4816869,
           "change": 0,
           "growth_percent": 0.0
         },
         "code_physical_lines": {
-          "baseline": 151745,
-          "current": 151745,
+          "baseline": 154478,
+          "current": 154478,
           "change": 0,
           "growth_percent": 0.0
         },
         "code_nonblank_lines": {
-          "baseline": 134472,
-          "current": 134472,
+          "baseline": 136769,
+          "current": 136769,
           "change": 0,
           "growth_percent": 0.0
         },
         "document_files": {
-          "baseline": 12,
-          "current": 12,
+          "baseline": 13,
+          "current": 13,
           "change": 0,
           "growth_percent": 0.0
         },
         "document_bytes": {
-          "baseline": 224086,
-          "current": 224086,
+          "baseline": 224378,
+          "current": 224378,
           "change": 0,
           "growth_percent": 0.0
         },
         "text_document_files": {
+          "baseline": 13,
+          "current": 13,
+          "change": 0,
+          "growth_percent": 0.0
+        },
+        "text_document_physical_lines": {
+          "baseline": 5195,
+          "current": 5195,
+          "change": 0,
+          "growth_percent": 0.0
+        },
+        "text_document_nonblank_lines": {
+          "baseline": 3705,
+          "current": 3705,
+          "change": 0,
+          "growth_percent": 0.0
+        },
+        "markdown_files": {
           "baseline": 12,
           "current": 12,
           "change": 0,
           "growth_percent": 0.0
         },
-        "text_document_physical_lines": {
-          "baseline": 5186,
-          "current": 5186,
-          "change": 0,
-          "growth_percent": 0.0
-        },
-        "text_document_nonblank_lines": {
-          "baseline": 3700,
-          "current": 3700,
-          "change": 0,
-          "growth_percent": 0.0
-        },
-        "markdown_files": {
-          "baseline": 11,
-          "current": 11,
-          "change": 0,
-          "growth_percent": 0.0
-        },
         "markdown_bytes": {
-          "baseline": 172373,
-          "current": 172373,
+          "baseline": 172665,
+          "current": 172665,
           "change": 0,
           "growth_percent": 0.0
         },
         "markdown_physical_lines": {
-          "baseline": 3459,
-          "current": 3459,
+          "baseline": 3468,
+          "current": 3468,
           "change": 0,
           "growth_percent": 0.0
         },
         "markdown_nonblank_lines": {
-          "baseline": 2551,
-          "current": 2551,
+          "baseline": 2556,
+          "current": 2556,
           "change": 0,
           "growth_percent": 0.0
         }
@@ -363,10 +361,10 @@
     {
       "baseline_at": "2024-10-24T17:40:04+00:00",
       "as_of": "2025-10-24T17:40:04+00:00",
-      "registered_repository_count": 22,
+      "registered_repository_count": 23,
       "repositories_with_snapshot": {
-        "baseline": 9,
-        "current": 12
+        "baseline": 10,
+        "current": 13
       },
       "historical_size_unknown": {
         "baseline": [],
@@ -374,110 +372,106 @@
       },
       "fixed_registry_totals": {
         "blobs": {
-          "baseline": 413,
-          "current": 615,
-          "change": 202,
-          "growth_percent": 48.9
+          "baseline": 435,
+          "current": 639,
+          "change": 204,
+          "growth_percent": 46.9
         },
         "bytes": {
-          "baseline": 8895440,
-          "current": 9873254,
-          "change": 977814,
-          "growth_percent": 11.0
+          "baseline": 9157345,
+          "current": 10155994,
+          "change": 998649,
+          "growth_percent": 10.9
         },
         "code_files": {
-          "baseline": 106,
-          "current": 246,
-          "change": 140,
-          "growth_percent": 132.1
+          "baseline": 109,
+          "current": 250,
+          "change": 141,
+          "growth_percent": 129.4
         },
         "code_bytes": {
-          "baseline": 4744371,
-          "current": 4244669,
-          "change": -499702,
+          "baseline": 4816869,
+          "current": 4311958,
+          "change": -504911,
           "growth_percent": -10.5
         },
         "code_physical_lines": {
-          "baseline": 151745,
-          "current": 133951,
-          "change": -17794,
-          "growth_percent": -11.7
+          "baseline": 154478,
+          "current": 136551,
+          "change": -17927,
+          "growth_percent": -11.6
         },
         "code_nonblank_lines": {
-          "baseline": 134472,
-          "current": 119460,
-          "change": -15012,
-          "growth_percent": -11.2
+          "baseline": 136769,
+          "current": 121579,
+          "change": -15190,
+          "growth_percent": -11.1
         },
         "document_files": {
-          "baseline": 12,
-          "current": 44,
+          "baseline": 13,
+          "current": 45,
           "change": 32,
-          "growth_percent": 266.7
+          "growth_percent": 246.2
         },
         "document_bytes": {
-          "baseline": 224086,
-          "current": 425078,
+          "baseline": 224378,
+          "current": 425370,
           "change": 200992,
-          "growth_percent": 89.7
+          "growth_percent": 89.6
         },
         "text_document_files": {
+          "baseline": 13,
+          "current": 45,
+          "change": 32,
+          "growth_percent": 246.2
+        },
+        "text_document_physical_lines": {
+          "baseline": 5195,
+          "current": 10155,
+          "change": 4960,
+          "growth_percent": 95.5
+        },
+        "text_document_nonblank_lines": {
+          "baseline": 3705,
+          "current": 7369,
+          "change": 3664,
+          "growth_percent": 98.9
+        },
+        "markdown_files": {
           "baseline": 12,
           "current": 44,
           "change": 32,
           "growth_percent": 266.7
         },
-        "text_document_physical_lines": {
-          "baseline": 5186,
-          "current": 10146,
-          "change": 4960,
-          "growth_percent": 95.6
-        },
-        "text_document_nonblank_lines": {
-          "baseline": 3700,
-          "current": 7364,
-          "change": 3664,
-          "growth_percent": 99.0
-        },
-        "markdown_files": {
-          "baseline": 11,
-          "current": 43,
-          "change": 32,
-          "growth_percent": 290.9
-        },
         "markdown_bytes": {
-          "baseline": 172373,
-          "current": 373365,
+          "baseline": 172665,
+          "current": 373657,
           "change": 200992,
-          "growth_percent": 116.6
+          "growth_percent": 116.4
         },
         "markdown_physical_lines": {
-          "baseline": 3459,
-          "current": 8419,
+          "baseline": 3468,
+          "current": 8428,
           "change": 4960,
-          "growth_percent": 143.4
+          "growth_percent": 143.0
         },
         "markdown_nonblank_lines": {
-          "baseline": 2551,
-          "current": 6215,
+          "baseline": 2556,
+          "current": 6220,
           "change": 3664,
-          "growth_percent": 143.6
+          "growth_percent": 143.3
         }
       },
-      "newly_measurable_repositories": [
-        "JeanHuguesRobert/StructEnv",
-        "JeanHuguesRobert/serra",
-        "acorsica/Kudos"
-      ],
+      "newly_measurable_repositories": [],
       "no_longer_measurable_repositories": []
     },
     {
       "baseline_at": "2025-10-24T17:40:04+00:00",
       "as_of": "2026-10-24T17:40:04+00:00",
-      "registered_repository_count": 22,
+      "registered_repository_count": 23,
       "repositories_with_snapshot": {
-        "baseline": 12,
-        "current": 22
+        "baseline": 13,
+        "current": 23
       },
       "historical_size_unknown": {
         "baseline": [],
@@ -485,108 +479,97 @@
       },
       "fixed_registry_totals": {
         "blobs": {
-          "baseline": 615,
-          "current": 7239,
+          "baseline": 639,
+          "current": 7263,
           "change": 6624,
-          "growth_percent": 1077.1
+          "growth_percent": 1036.6
         },
         "bytes": {
-          "baseline": 9873254,
-          "current": 391076141,
+          "baseline": 10155994,
+          "current": 391358881,
           "change": 381202887,
-          "growth_percent": 3861.0
+          "growth_percent": 3753.5
         },
         "code_files": {
-          "baseline": 246,
-          "current": 3195,
+          "baseline": 250,
+          "current": 3199,
           "change": 2949,
-          "growth_percent": 1198.8
+          "growth_percent": 1179.6
         },
         "code_bytes": {
-          "baseline": 4244669,
-          "current": 22347816,
+          "baseline": 4311958,
+          "current": 22415105,
           "change": 18103147,
-          "growth_percent": 426.5
+          "growth_percent": 419.8
         },
         "code_physical_lines": {
-          "baseline": 133951,
-          "current": 631450,
+          "baseline": 136551,
+          "current": 634050,
           "change": 497499,
-          "growth_percent": 371.4
+          "growth_percent": 364.3
         },
         "code_nonblank_lines": {
-          "baseline": 119460,
-          "current": 569310,
+          "baseline": 121579,
+          "current": 571429,
           "change": 449850,
-          "growth_percent": 376.6
+          "growth_percent": 370.0
         },
         "document_files": {
-          "baseline": 44,
-          "current": 2698,
+          "baseline": 45,
+          "current": 2699,
           "change": 2654,
-          "growth_percent": 6031.8
+          "growth_percent": 5897.8
         },
         "document_bytes": {
-          "baseline": 425078,
-          "current": 301523574,
+          "baseline": 425370,
+          "current": 301523866,
           "change": 301098496,
-          "growth_percent": 70833.7
+          "growth_percent": 70785.1
         },
         "text_document_files": {
-          "baseline": 44,
-          "current": 2586,
+          "baseline": 45,
+          "current": 2587,
           "change": 2542,
-          "growth_percent": 5777.3
+          "growth_percent": 5648.9
         },
         "text_document_physical_lines": {
-          "baseline": 10146,
-          "current": 806612,
+          "baseline": 10155,
+          "current": 806621,
           "change": 796466,
-          "growth_percent": 7850.0
+          "growth_percent": 7843.1
         },
         "text_document_nonblank_lines": {
-          "baseline": 7364,
-          "current": 562613,
+          "baseline": 7369,
+          "current": 562618,
           "change": 555249,
-          "growth_percent": 7540.0
+          "growth_percent": 7534.9
         },
         "markdown_files": {
-          "baseline": 43,
-          "current": 2502,
+          "baseline": 44,
+          "current": 2503,
           "change": 2459,
-          "growth_percent": 5718.6
+          "growth_percent": 5588.6
         },
         "markdown_bytes": {
-          "baseline": 373365,
-          "current": 36274244,
+          "baseline": 373657,
+          "current": 36274536,
           "change": 35900879,
-          "growth_percent": 9615.5
+          "growth_percent": 9608.0
         },
         "markdown_physical_lines": {
-          "baseline": 8419,
-          "current": 746535,
+          "baseline": 8428,
+          "current": 746544,
           "change": 738116,
-          "growth_percent": 8767.3
+          "growth_percent": 8757.9
         },
         "markdown_nonblank_lines": {
-          "baseline": 6215,
-          "current": 518400,
+          "baseline": 6220,
+          "current": 518405,
           "change": 512185,
-          "growth_percent": 8241.1
+          "growth_percent": 8234.5
         }
       },
-      "newly_measurable_repositories": [
-        "JeanHuguesRobert/cogentia",
-        "JeanHuguesRobert/FractaVolta",
-        "JeanHuguesRobert/operium",
-        "JeanHuguesRobert/ubikia",
-        "acorsica/gouvernance",
-        "JeanHuguesRobert/JeanHuguesRobert",
-        "JeanHuguesRobert/marenostrum",
-        "acorsica/institut-mariani",
-        "acorsica/acorsica.org",
-        "acorsica/privai"
-      ],
+      "newly_measurable_repositories": [],
       "no_longer_measurable_repositories": []
     }
   ],
@@ -2434,6 +2417,131 @@
         "2025-10-24T17:40:04+00:00": "ok",
         "2026-10-24T17:40:04+00:00": "ok"
       }
+    },
+    {
+      "repo": "virteal/tweesic",
+      "repository_created_at": "2021-02-04T11:11:04Z",
+      "repository_metadata_url": "https://api.github.com/repos/virteal/tweesic",
+      "metadata_verified_on": "2026-10-24",
+      "effective_created_at": "2021-02-04T11:11:04+00:00",
+      "historical_origin": null,
+      "status": "ok",
+      "branch": "main",
+      "ref": "refs/remotes/origin/main",
+      "snapshots": {
+        "2022-10-24T17:40:04+00:00": {
+          "commit": "f0a83c668194ce9d8b2a64fb14f6fa0a7c86703b",
+          "source_repository": "virteal/tweesic",
+          "branch": "main",
+          "ref": "refs/remotes/origin/main",
+          "blobs": 22,
+          "bytes": 261905,
+          "code_files": 3,
+          "code_bytes": 72498,
+          "code_physical_lines": 2733,
+          "code_nonblank_lines": 2297,
+          "document_files": 1,
+          "document_bytes": 292,
+          "text_document_files": 1,
+          "text_document_physical_lines": 9,
+          "text_document_nonblank_lines": 5,
+          "markdown_files": 1,
+          "markdown_bytes": 292,
+          "markdown_physical_lines": 9,
+          "markdown_nonblank_lines": 5
+        },
+        "2023-10-24T17:40:04+00:00": {
+          "commit": "f0a83c668194ce9d8b2a64fb14f6fa0a7c86703b",
+          "source_repository": "virteal/tweesic",
+          "branch": "main",
+          "ref": "refs/remotes/origin/main",
+          "blobs": 22,
+          "bytes": 261905,
+          "code_files": 3,
+          "code_bytes": 72498,
+          "code_physical_lines": 2733,
+          "code_nonblank_lines": 2297,
+          "document_files": 1,
+          "document_bytes": 292,
+          "text_document_files": 1,
+          "text_document_physical_lines": 9,
+          "text_document_nonblank_lines": 5,
+          "markdown_files": 1,
+          "markdown_bytes": 292,
+          "markdown_physical_lines": 9,
+          "markdown_nonblank_lines": 5
+        },
+        "2024-10-24T17:40:04+00:00": {
+          "commit": "f0a83c668194ce9d8b2a64fb14f6fa0a7c86703b",
+          "source_repository": "virteal/tweesic",
+          "branch": "main",
+          "ref": "refs/remotes/origin/main",
+          "blobs": 22,
+          "bytes": 261905,
+          "code_files": 3,
+          "code_bytes": 72498,
+          "code_physical_lines": 2733,
+          "code_nonblank_lines": 2297,
+          "document_files": 1,
+          "document_bytes": 292,
+          "text_document_files": 1,
+          "text_document_physical_lines": 9,
+          "text_document_nonblank_lines": 5,
+          "markdown_files": 1,
+          "markdown_bytes": 292,
+          "markdown_physical_lines": 9,
+          "markdown_nonblank_lines": 5
+        },
+        "2025-10-24T17:40:04+00:00": {
+          "commit": "4e7a414db5f1a7fb944e1a526f663915796856d3",
+          "source_repository": "virteal/tweesic",
+          "branch": "main",
+          "ref": "refs/remotes/origin/main",
+          "blobs": 24,
+          "bytes": 282740,
+          "code_files": 4,
+          "code_bytes": 67289,
+          "code_physical_lines": 2600,
+          "code_nonblank_lines": 2119,
+          "document_files": 1,
+          "document_bytes": 292,
+          "text_document_files": 1,
+          "text_document_physical_lines": 9,
+          "text_document_nonblank_lines": 5,
+          "markdown_files": 1,
+          "markdown_bytes": 292,
+          "markdown_physical_lines": 9,
+          "markdown_nonblank_lines": 5
+        },
+        "2026-10-24T17:40:04+00:00": {
+          "commit": "4e7a414db5f1a7fb944e1a526f663915796856d3",
+          "source_repository": "virteal/tweesic",
+          "branch": "main",
+          "ref": "refs/remotes/origin/main",
+          "blobs": 24,
+          "bytes": 282740,
+          "code_files": 4,
+          "code_bytes": 67289,
+          "code_physical_lines": 2600,
+          "code_nonblank_lines": 2119,
+          "document_files": 1,
+          "document_bytes": 292,
+          "text_document_files": 1,
+          "text_document_physical_lines": 9,
+          "text_document_nonblank_lines": 5,
+          "markdown_files": 1,
+          "markdown_bytes": 292,
+          "markdown_physical_lines": 9,
+          "markdown_nonblank_lines": 5
+        }
+      },
+      "snapshot_statuses": {
+        "2022-10-24T17:40:04+00:00": "ok",
+        "2023-10-24T17:40:04+00:00": "ok",
+        "2024-10-24T17:40:04+00:00": "ok",
+        "2025-10-24T17:40:04+00:00": "ok",
+        "2026-10-24T17:40:04+00:00": "ok"
+      }
     }
   ],
   "creation_metadata_basis": "GitHub repository creation dates; documented predecessor dates for lign\u00e9e slots; metadata and source URLs are in the registry",
@@ -2441,7 +2549,7 @@
   "commit_lineage_verification": {
     "verified_on": "2026-10-24",
     "method": "GitHub compare API for previously measured current-repository snapshots; full local Git ancestry checks for newly added snapshots and documented predecessor handoffs",
-    "selected_snapshot_commit_count": 35,
+    "selected_snapshot_commit_count": 37,
     "result": "current repository snapshots are first-parent ancestors of the selected main/master tips; snapshots from predecessor repositories are attributed to their verified predecessor branch"
   },
   "historical_repositories_outside_fixed_scope": []

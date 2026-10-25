@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "scope": "fixed set of 22 public repositories for quantitative comparison, including historically established repositories regardless of age; non-exhaustive; known other historical repositories are recorded separately",
+  "scope": "fixed set of 23 public repositories for quantitative comparison, including historically established repositories regardless of age; non-exhaustive; known other historical repositories are recorded separately",
   "repositories": [
     {
       "name": "JeanHuguesRobert/inseme",
@@ -222,6 +222,16 @@
       "repository_created_at": "2014-04-22T10:47:03Z",
       "repository_metadata_url": "https://api.github.com/repos/virteal/boxon",
       "metadata_verified_on": "2026-10-24"
+    },
+    {
+      "name": "virteal/tweesic",
+      "path": "tweesic",
+      "visibility": "public",
+      "repository_created_at": "2021-02-04T11:11:04Z",
+      "repository_metadata_url": "https://api.github.com/repos/virteal/tweesic",
+      "metadata_verified_on": "2026-10-24",
+      "related_repository": "virteal/kudocracy",
+      "measurement_note": "Separate Firebase project created from the Kudocracy prototype; its extracted source is counted in both repository trees under the tree-size methodology."
     }
   ],
   "historical_repositories_outside_fixed_scope": []
