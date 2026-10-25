@@ -4,106 +4,51 @@
 
 ## Repositories & Canonical Entry Points
 
-- **[cogentia]**: /srv/cogentia/repos/cogentia
+- **[cogentia]**: .
   - Role: primary
   - Visibility: public
-  - Index: /srv/cogentia/repos/cogentia/research/index.md
-  - Concepts: /srv/cogentia/repos/cogentia/research/concepts.md
-- **[FractaVolta]**: /srv/cogentia/repos/FractaVolta
+  - Index: research/index.md
+  - Concepts: research/concepts.md
+- **[FractaVolta]**: ../FractaVolta
   - Role: primary
   - Visibility: public
-  - Index: /srv/cogentia/repos/FractaVolta/research/index.md
-  - Concepts: /srv/cogentia/repos/FractaVolta/research/concepts.md
-- **[marenostrum]**: /srv/cogentia/repos/marenostrum
+  - Index: ../FractaVolta/research/index.md
+  - Concepts: ../FractaVolta/research/concepts.md
+- **[marenostrum]**: ../marenostrum
   - Role: primary
   - Visibility: public
-  - Index: /srv/cogentia/repos/marenostrum/research/index.md
-  - Concepts: /srv/cogentia/repos/marenostrum/research/concepts.md
-- **[barons-Mariani]**: /srv/cogentia/repos/barons-Mariani
+  - Index: ../marenostrum/research/index.md
+  - Concepts: ../marenostrum/research/concepts.md
+- **[barons-Mariani]**: ../barons-Mariani
   - Role: primary
   - Visibility: public
-  - Index: /srv/cogentia/repos/barons-Mariani/research/index.md
-  - Concepts: /srv/cogentia/repos/barons-Mariani/research/concepts.md
-- **[suicide-corse]**: /srv/cogentia/repos/suicide-corse
+  - Index: ../barons-Mariani/research/index.md
+  - Concepts: ../barons-Mariani/research/concepts.md
+- **[inseme]**: ../inseme
   - Role: primary
   - Visibility: public
-  - Index: /srv/cogentia/repos/suicide-corse/research/index.md
-  - Concepts: /srv/cogentia/repos/suicide-corse/research/concepts.md
-- **[inseme]**: /srv/cogentia/repos/inseme
+  - Index: ../inseme/research/index.md
+  - Concepts: ../inseme/research/concepts.md
+- **[Inox]**: ../Inox
   - Role: primary
   - Visibility: public
-  - Index: /srv/cogentia/repos/inseme/research/index.md
-  - Concepts: /srv/cogentia/repos/inseme/research/concepts.md
-- **[survey]**: /srv/cogentia/repos/survey
+  - Index: ../Inox/research/index.md
+  - Concepts: ../Inox/research/concepts.md
+- **[ubikia]**: ../ubikia
   - Role: primary
   - Visibility: public
-  - Index: /srv/cogentia/repos/survey/research/index.md
-  - Concepts: /srv/cogentia/repos/survey/research/concepts.md
-- **[Inox]**: /srv/cogentia/repos/Inox
+  - Index: ../ubikia/research/index.md
+  - Concepts: ../ubikia/research/concepts.md
+- **[JeanHuguesRobert]**: ../JeanHuguesRobert
   - Role: primary
   - Visibility: public
-  - Index: /srv/cogentia/repos/Inox/research/index.md
-  - Concepts: /srv/cogentia/repos/Inox/research/concepts.md
-- **[ubikia]**: /srv/cogentia/repos/ubikia
+  - Index: ../JeanHuguesRobert/research/index.md
+  - Concepts: ../JeanHuguesRobert/research/concepts.md
+- **[StructEnv]**: ../StructEnv
   - Role: primary
   - Visibility: public
-  - Index: /srv/cogentia/repos/ubikia/research/index.md
-  - Concepts: /srv/cogentia/repos/ubikia/research/concepts.md
-- **[operium]**: /srv/cogentia/repos/operium
-  - Role: primary
-  - Visibility: public
-  - Index: /srv/cogentia/repos/operium/research/index.md
-  - Concepts: /srv/cogentia/repos/operium/research/concepts.md
-- **[serra]**: /srv/cogentia/repos/serra
-  - Role: primary
-  - Visibility: public
-  - Index: /srv/cogentia/repos/serra/research/index.md
-  - Concepts: /srv/cogentia/repos/serra/research/concepts.md
-- **[JeanHuguesRobert]**: /srv/cogentia/repos/JeanHuguesRobert
-  - Role: primary
-  - Visibility: public
-  - Index: /srv/cogentia/repos/JeanHuguesRobert/research/index.md
-  - Concepts: /srv/cogentia/repos/JeanHuguesRobert/research/concepts.md
-- **[privai]**: /srv/cogentia/repos/privai
-  - Role: primary
-  - Visibility: public
-  - Index: /srv/cogentia/repos/privai/research/index.md
-  - Concepts: /srv/cogentia/repos/privai/research/concepts.md
-- **[gouvernance]**: /srv/cogentia/repos/gouvernance
-  - Role: primary
-  - Visibility: public
-  - Index: /srv/cogentia/repos/gouvernance/research/index.md
-  - Concepts: /srv/cogentia/repos/gouvernance/research/concepts.md
-- **[marianivillage]**: /srv/cogentia/repos/marianivillage
-  - Role: primary
-  - Visibility: public
-  - Index: /srv/cogentia/repos/marianivillage/research/index.md
-  - Concepts: /srv/cogentia/repos/marianivillage/research/concepts.md
-- **[institut-mariani]**: /srv/cogentia/repos/institut-mariani
-  - Role: primary
-  - Visibility: public
-  - Index: /srv/cogentia/repos/institut-mariani/research/index.md
-  - Concepts: /srv/cogentia/repos/institut-mariani/research/concepts.md
-- **[Kudos]**: /srv/cogentia/repos/Kudos
-  - Role: primary
-  - Visibility: public
-  - Index: /srv/cogentia/repos/Kudos/research/index.md
-  - Concepts: /srv/cogentia/repos/Kudos/research/concepts.md
-- **[.github]**: /srv/cogentia/repos/.github
-  - Role: primary
-  - Visibility: public
-  - Index: /srv/cogentia/repos/.github/research/index.md
-  - Concepts: /srv/cogentia/repos/.github/research/concepts.md
-- **[acorsica.org]**: /srv/cogentia/repos/acorsica.org
-  - Role: primary
-  - Visibility: public
-  - Index: /srv/cogentia/repos/acorsica.org/research/index.md
-  - Concepts: /srv/cogentia/repos/acorsica.org/research/concepts.md
-- **[StructEnv]**: /srv/cogentia/repos/StructEnv
-  - Role: primary
-  - Visibility: public
-  - Index: /srv/cogentia/repos/StructEnv/research/index.md
-  - Concepts: /srv/cogentia/repos/StructEnv/research/concepts.md
+  - Index: ../StructEnv/research/index.md
+  - Concepts: ../StructEnv/research/concepts.md
 
 ## Privacy Note
 

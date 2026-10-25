@@ -4,8 +4,8 @@
   "kind": "cognitive_packet_journey",
   "subject": "sunday_corpus_consolidation",
   "status": "completed",
-  "created_at": "2026-10-19T00:17:57.439Z",
-  "updated_at": "2026-10-19T00:17:57.439Z",
+  "created_at": "2026-10-25T09:43:29.000Z",
+  "updated_at": "2026-10-25T09:43:29.000Z",
   "origin_home": "https://jhn.baronsmariani.org/",
   "destination": "https://cogentia.fractavolta.com/mcp",
   "mandate": {
@@ -14,9 +14,9 @@
   },
   "privacy_domains": {
     "public": {
-      "digest": "research/sprints/weekly_digest_2026-W43-snapshot-2026-10-19.md",
-      "llms": "llms.txt",
-      "llms_full": "llms-full.txt",
+      "digest": "/srv/cogentia/repos/cogentia/research/sprints/weekly_digest_2026-W43.md",
+      "llms": "/srv/cogentia/repos/cogentia/llms.txt",
+      "llms_full": "/srv/cogentia/repos/cogentia/llms-full.txt",
       "repos": [
         "cogentia",
         "FractaVolta",
@@ -30,9 +30,9 @@
       ]
     },
     "private": {
-      "digest": ".cogentia/sprints/weekly_digest_full_2026-W43.md",
-      "llms": ".cogentia/projections/llms.txt",
-      "llms_full": ".cogentia/projections/llms-full.txt",
+      "digest": "/srv/cogentia/repos/cogentia/.cogentia/sprints/weekly_digest_full_2026-W43.md",
+      "llms": "/srv/cogentia/repos/cogentia/.cogentia/projections/llms.txt",
+      "llms_full": "/srv/cogentia/repos/cogentia/.cogentia/projections/llms-full.txt",
       "repos": [
         "cogentia",
         "FractaVolta",
@@ -52,8 +52,8 @@
     }
   },
   "target_documents": [
-    "research/sprints/weekly_digest_2026-W43-snapshot-2026-10-19.md",
-    ".cogentia/sprints/weekly_digest_full_2026-W43.md",
+    "/srv/cogentia/repos/cogentia/research/sprints/weekly_digest_2026-W43.md",
+    "/srv/cogentia/repos/cogentia/.cogentia/sprints/weekly_digest_full_2026-W43.md",
     "docs/sunday-consolidation-master-plan.md"
   ],
   "execution_steps_completed": 5,
