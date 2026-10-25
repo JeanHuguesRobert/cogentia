@@ -226,3 +226,45 @@ decision: new_packet_profile_needed
 remaining continuation: none for study phase.
 next resumable action: none required until human validation of this study.
 ```
+
+---
+
+## 10. Principe candidat : continuité effective attestable des incarnations (17 octobre 2026)
+
+**Statut : proposition doctrinale issue d'un Reality Case technique, non invariant normatif adopté.** Ce principe porte sur la possibilité **d'attester et de reprendre** une identité, un état et une mission après interruption ou changement de support ; il n'exige pas une base de données, un éditeur, un détenteur ou un hébergeur unique.
+
+> **Dans un périmètre d'autorité déclaré, la continuité attestable d'une identité suppose de pouvoir distinguer les actes validés, les actes incertains et leurs provenances, puis reprendre les opérations autorisées sans attribuer indûment une même identité à plusieurs incarnations.**
+
+### Distinctions à préserver
+
+- **Identité** : ce qui est réputé rester le même ; ne pas confondre contenu, édition, exemplaire, mission et détenteur.
+- **Incarnation** : support physique ou numérique provisoire, qui peut changer sans rendre la mission identique à ce support.
+- **Continuité** : possibilité de reconstituer l'état recevable et de poursuivre sans effacement, duplication ou inférence silencieuse.
+- **Autorité** : qui peut attribuer une identité, attester un acte, modifier un état ; avec quel mandat, dans quel périmètre, et avec quelle révocation.
+- **Effectivité** : preuve observable de l'acte ou du résultat, et non simple proclamation de conformité.
+
+Une intention d'émission n'est pas une émission validée. Un identifiant alloué mais non conservé n'établit pas une continuité durable. À l'inverse, un acte durablement enregistré ne prouve ni que le support physique a été fabriqué, ni qu'un destinataire l'a reçu, ni qu'une mission a été accomplie.
+
+### Invariants candidats et contre-épreuves
+
+1. **Pas d'émission attestée par le registre sans enregistrement durable dans son périmètre** : réserver une identité sous une autorité bornée, puis établir séparément le rendu, la matérialisation et les effets.
+2. **Reprise sans usurpation de continuité** : après interruption, retrouver les actes validés, identifier les opérations interrompues et éviter toute réémission silencieuse d'identité.
+3. **Continuité sans monopole nécessaire** : des autorités locales ou fédérées peuvent garantir un périmètre annoncé ; l'unicité « mondiale » n'est pas présumée.
+4. **Traçabilité proportionnée** : suivre l'histoire de l'objet et de la mission sans identifier systématiquement les détenteurs ni confondre observation, événement, attribution et preuve.
+
+**Reality Case technique — [Cogentia #238](https://github.com/JeanHuguesRobert/cogentia/issues/238)** : le registre d'exemplaires singuliers de Living Book Press a fait apparaître les limites des compteurs en mémoire et des verrous abandonnables ; la [PR #239](https://github.com/JeanHuguesRobert/cogentia/pull/239) teste la réservation transactionnelle, la concurrence interprocessus, le crash et la reprise. Ces vérifications établissent des propriétés **dans leur périmètre d'essai**, pas une doctrine générale ni une garantie multi-hôtes. Voir [architecture Living Book Press](living_book_press_architecture.md).
+
+**Transpositions à éprouver, non déductions acquises** : [Livre Vivant et exemplaires uniques](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/livre_vivant.md), [Bouteille à la Mer](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/musee-mariani/methodes/bouteille_a_la_mer.md), [Marche du Soleil](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/projects/capable/campaign/marche-du-soleil.md), et objets vestimentaires singuliers. Ces supports ne partagent pas nécessairement les mêmes mécanismes de persistance : **la doctrine spécifie les propriétés recherchées ; les mécanismes techniques restent des implémentations locales réfutables.**
+
+### Limites révélées par la revue adverse
+
+- **Continuité vécue ≠ continuité attestable** : une transmission orale ou un objet sans registre peuvent poursuivre une histoire sans preuve numérique.
+- **Absence de preuve ≠ absence de continuité** : la destruction des archives peut empêcher de vérifier des actes réellement accomplis.
+- **Conflit d'identité ≠ collision automatiquement tranchée** : représenter explicitement les provenances contradictoires et les états `CONTESTED` / `UNKNOWN`, sans présumer d'un arbitre universel.
+- **Continuité ≠ rétention perpétuelle** : minimisation, confidentialité, révocation et effacement légitime peuvent limiter les traces conservées.
+
+### Critère de falsification
+
+Prendre deux incarnations ou deux Handlers indépendants, puis provoquer une interruption entre allocation, transformation et observation. Si l'on ne peut plus distinguer un acte validé d'un acte projeté, ou si deux incarnations revendiquent abusivement une même identité, la continuité effective n'est pas établie. Une reprise qui exige une intervention documentée peut être sûre sans être automatiquement disponible.
+
+Cette section n'amende pas rétroactivement les résultats des sections précédentes ; elle ouvre une hypothèse et des tests additionnels.
