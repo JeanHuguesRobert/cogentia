@@ -96,13 +96,14 @@ sizes remain unknown.
 The registry currently records no additional historical repositories outside
 those 24.
 
-The manifest publishes the exact code/document extension sets and excluded
-path expression. It reports total Git tree blobs and bytes, plus code and
-document file counts and bytes. Markdown counts are a subset of document counts.
-Physical and nonblank code and text-document lines are literal line counts;
-binary documents are counted by files and bytes only. These line counts are
-not language-aware SLOC. Generated/vendor/test-fixture exclusions are path
-heuristics. Total tree size includes every blob; code and document counts apply
-the published path and extension filters. Aggregates sum each repository tree;
-the same copied file in two repositories is counted twice, so these figures
-are not deduplicated storage size.
+The manifest publishes the exact code/document extension sets and excluded path
+expression. PDF files are excluded from document counts. Raw Git tree blob counts
+and bytes remain separate technical statistics and include PDFs and other
+assets; they are outside the source-code/document measure. Code and document
+file counts and bytes use their listed filters. Markdown counts are a subset of
+document counts. Physical and nonblank code and text-document lines are literal
+line counts; binary document formats other than PDF are counted by files and
+bytes only. These line counts are not language-aware SLOC. Generated/vendor/
+test-fixture exclusions are path heuristics. Aggregates sum each repository
+tree; the same copied file in two repositories is counted in each, so the
+figures are not deduplicated storage size.

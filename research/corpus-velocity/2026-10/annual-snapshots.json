@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-10-25T07:14:58+00:00",
+  "generated_at": "2026-10-25T07:58:35+00:00",
   "snapshots": [
     "2022-10-24T17:40:04+00:00",
     "2023-10-24T17:40:04+00:00",
@@ -9,7 +9,7 @@
   ],
   "registry_sha256": "baaac8cd14a2f9bb415124d22535359bd0073aa3b20f9c603c0a8bf73c4d0e1e",
   "branch_policy": "main/master only; documented historical_origin branch supplies a lineage slot before its recorded handoff date when the current repository has no snapshot; first-parent commits only; never use HEAD or side branches",
-  "source": "existing full local Git clones; Simpli and Tweesic were included as separately measured public repositories; predecessor sources were cloned on 2026-10-24; no fetch performed by the generators",
+  "source": "Snapshots use the recorded main/master commits. PDF counts and sizes were reconstructed per commit from partial public Git clones on 2026-10-25; raw Git tree totals remain the original full-tree measurements.",
   "registered_repository_count": 24,
   "row_status_counts": {
     "ok": 24
@@ -131,8 +131,8 @@
         "code_bytes": 24996098,
         "code_physical_lines": 714795,
         "code_nonblank_lines": 645702,
-        "document_files": 2701,
-        "document_bytes": 301533002,
+        "document_files": 2589,
+        "document_bytes": 39315154,
         "text_document_files": 2589,
         "text_document_physical_lines": 807058,
         "text_document_nonblank_lines": 562956,
@@ -516,15 +516,15 @@
         },
         "document_files": {
           "baseline": 46,
-          "current": 2701,
-          "change": 2655,
-          "growth_percent": 5771.7
+          "current": 2589,
+          "change": 2543,
+          "growth_percent": 5528.3
         },
         "document_bytes": {
           "baseline": 425656,
-          "current": 301533002,
-          "change": 301107346,
-          "growth_percent": 70739.6
+          "current": 39315154,
+          "change": 38889498,
+          "growth_percent": 9136.4
         },
         "text_document_files": {
           "baseline": 46,
@@ -606,7 +606,6 @@
       ".mdx",
       ".odt",
       ".org",
-      ".pdf",
       ".rst",
       ".tex",
       ".txt"
@@ -630,6 +629,7 @@
     "excluded_path_regex": "(^|/)(node_modules|vendor|dist|build|coverage|generated|__generated__|snapshots?|fixtures|target|\\.next)(/|$)"
   },
   "limitations": [
+    "PDF files are excluded from document counts; raw Git tree bytes still include every blob",
     "the registered repository list is fixed across snapshots; a repository contributes zero before its verified repository or documented historical-origin creation date",
     "absence of a selected commit does not establish that the underlying project did not yet exist",
     "if a repository existed by a cutoff but has no selected main/master commit, its historical size is unknown; totals and percentages are lower-bound reconstructions",
@@ -737,8 +737,8 @@
           "code_bytes": 9059349,
           "code_physical_lines": 260802,
           "code_nonblank_lines": 235907,
-          "document_files": 539,
-          "document_bytes": 134222957,
+          "document_files": 498,
+          "document_bytes": 4882746,
           "text_document_files": 498,
           "text_document_physical_lines": 141167,
           "text_document_nonblank_lines": 95645,
@@ -977,8 +977,8 @@
           "code_bytes": 172889,
           "code_physical_lines": 3971,
           "code_nonblank_lines": 3635,
-          "document_files": 1110,
-          "document_bytes": 21529833,
+          "document_files": 1080,
+          "document_bytes": 17992407,
           "text_document_files": 1080,
           "text_document_physical_lines": 285978,
           "text_document_nonblank_lines": 195206,
@@ -1235,8 +1235,8 @@
           "code_bytes": 4045491,
           "code_physical_lines": 118911,
           "code_nonblank_lines": 106848,
-          "document_files": 162,
-          "document_bytes": 132523070,
+          "document_files": 121,
+          "document_bytes": 3182859,
           "text_document_files": 121,
           "text_document_physical_lines": 99461,
           "text_document_nonblank_lines": 63344,

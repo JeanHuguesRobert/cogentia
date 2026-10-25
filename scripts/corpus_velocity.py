@@ -18,9 +18,9 @@ import subprocess
 CODE = {".js", ".jsx", ".mjs", ".cjs", ".ts", ".tsx", ".py", ".go", ".rs", ".c",
         ".h", ".cpp", ".hpp", ".java", ".sh", ".rb", ".php", ".sql", ".swift", ".kt"}
 DOCUMENTS = {".md", ".markdown", ".mdx", ".txt", ".rst", ".adoc",
-             ".asciidoc", ".org", ".tex", ".pdf", ".doc", ".docx", ".odt"}
+             ".asciidoc", ".org", ".tex", ".doc", ".docx", ".odt"}
 MARKDOWN = {".md", ".markdown", ".mdx"}
-TEXT_DOCUMENTS = DOCUMENTS - {".pdf", ".doc", ".docx", ".odt"}
+TEXT_DOCUMENTS = DOCUMENTS - {".doc", ".docx", ".odt"}
 IGNORE = re.compile(r"(^|/)(node_modules|vendor|dist|build|coverage|generated|__generated__|snapshots?|fixtures|target|\.next)(/|$)")
 LANG = {".js": "JavaScript", ".jsx": "JavaScript", ".mjs": "JavaScript",
         ".cjs": "JavaScript", ".ts": "TypeScript", ".tsx": "TypeScript",
@@ -264,7 +264,7 @@ def main():
             "markdown_extensions": sorted(MARKDOWN),
             "excluded_path_regex": IGNORE.pattern,
         },
-        "limitations": ["Git tree snapshot, not churn", "code extension filter",
+        "limitations": ["Git tree snapshot, not churn", "PDF files excluded from document counts; total tree bytes still include them", "code extension filter",
                         "generated/path exclusions heuristic",
                         "physical and nonblank line counts include comments and are not language-aware SLOC",
                         "no selected mainline commit by cutoff does not establish that the project did not yet exist",

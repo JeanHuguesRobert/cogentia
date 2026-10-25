@@ -35,29 +35,42 @@ est encore en cours.
 
 | Mesure | Fichiers | Taille | Lignes physiques | Lignes non vides |
 | --- | ---: | ---: | ---: | ---: |
-| Arbres Git complets | 7 523 | 394,40 MB | — | — |
+| Arbres Git complets (mesure technique, hors périmètre code/document) | 7 523 | 394,40 MB | — | — |
 | Code, selon les extensions retenues | 3 252 | 25,00 MB | 714 795 | 645 702 |
-| Documents, selon les extensions retenues | 2 701 | 301,53 MB | — | — |
+| Documentation (PDF exclus) | 2 589 | 39,32 MB | — | — |
 | dont Markdown (`.md`, `.markdown`, `.mdx`) | 2 505 | 36,28 MB | 746 981 | 518 743 |
 
 Les MB sont décimaux : 1 MB = 1 000 000 octets. Markdown est compris dans le
 total des documents. Le total des arbres Git comprend tous les types de
 fichiers ; les totaux code et documents appliquent les filtres décrits dans la
 [méthode](../README.md). Les lignes Markdown sont un sous-ensemble des lignes
-des documents textuels ; les formats binaires sont comptés en fichiers et
-octets seulement.
+des documents textuels ; les formats binaires documentaires conservés sont
+comptés en fichiers et octets seulement. Les PDF sont exclus des totaux
+documentaires, mais restent présents dans la mesure technique brute des arbres.
+
+## Périmètre documentaire
+
+Les fichiers `.pdf` sont exclus des totaux de documentation. Pour le relevé
+2026, cela retire **112 fichiers PDF** (262,22 MB) des mesures documentaires :
+41 fichiers identiques présents dans chacun d’Inseme et Survey, plus 30 dans
+Barons-Mariani. Les PDF restent compris dans la taille brute des arbres Git,
+qui est publiée séparément comme donnée technique hors périmètre.
+
+Les documents mesurés occupent **39,32 MB** ; le Markdown en représente
+**36,28 MB** sur 2 505 fichiers. Les autres formats documentaires mesurés
+représentent 3,03 MB sur 84 fichiers.
 
 ## Détail par dépôt
 
 | Dépôt | Branche | Code : fichiers | Code : MB | Code : lignes phys./non vides | Docs : fichiers | Docs : MB | Markdown : lignes phys./non vides |
 | --- | :---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| [inseme](https://github.com/JeanHuguesRobert/inseme) | `main` | 1 462 | 9,06 | 260 802 / 235 907 | 539 | 134,22 | 141 021 / 95 511 |
+| [inseme](https://github.com/JeanHuguesRobert/inseme) | `main` | 1 462 | 9,06 | 260 802 / 235 907 | 498 | 4,88 | 141 021 / 95 511 |
 | [cogentia](https://github.com/JeanHuguesRobert/cogentia) | `main` | 623 | 5,60 | 143 839 / 131 730 | 373 | 5,14 | 115 165 / 85 701 |
 | [FractaVolta](https://github.com/JeanHuguesRobert/FractaVolta) | `main` | 10 | 0,14 | 3 080 / 2 806 | 96 | 1,52 | 24 557 / 17 170 |
 | [operium](https://github.com/JeanHuguesRobert/operium) | `main` | 229 | 1,06 | 29 901 / 27 236 | 98 | 1,03 | 22 663 / 17 897 |
-| [barons-Mariani](https://github.com/JeanHuguesRobert/barons-Mariani) | `main` | 26 | 0,17 | 3 971 / 3 635 | 1 110 | 21,53 | 281 719 / 192 092 |
+| [barons-Mariani](https://github.com/JeanHuguesRobert/barons-Mariani) | `main` | 26 | 0,17 | 3 971 / 3 635 | 1 080 | 17,99 | 281 719 / 192 092 |
 | [Inox](https://github.com/JeanHuguesRobert/Inox) | `master` | 37 | 1,05 | 31 190 / 25 873 | 35 | 0,66 | 11 288 / 8 623 |
-| [survey](https://github.com/JeanHuguesRobert/survey) | `main` | 519 | 4,05 | 118 911 / 106 848 | 162 | 132,52 | 91 442 / 56 841 |
+| [survey](https://github.com/JeanHuguesRobert/survey) | `main` | 519 | 4,05 | 118 911 / 106 848 | 121 | 3,18 | 91 442 / 56 841 |
 | [ubikia](https://github.com/JeanHuguesRobert/ubikia) | `main` | 90 | 0,33 | 9 368 / 8 444 | 46 | 0,63 | 13 214 / 9 917 |
 | [gouvernance](https://github.com/acorsica/gouvernance) | `main` | 0 | 0,00 | 0 / 0 | 15 | 0,23 | 1 891 / 1 555 |
 | [JeanHuguesRobert](https://github.com/JeanHuguesRobert/JeanHuguesRobert) | `main` | 0 | 0,00 | 0 / 0 | 76 | 1,29 | 14 651 / 11 053 |
@@ -165,7 +178,7 @@ attestation indépendante du moment où ce contenu existait. Les dates de
 création du dépôt et les commits retenus ont été vérifiés via l’API GitHub.
 Les SHA des instantanés issus des dépôts actuels ont été comparés à leurs
 branches principales actuelles ; ils en sont des ancêtres. Les instantanés de
-Kudocracy et SimpliJs sont attribués à leurs branches historiques documentées
+Kudocracy, Simpli et SimpliJs sont attribués à leurs branches historiques documentées
 dans le registre. Le passage SimpliJs → SimpliWiki est visible dans la source
 de chaque ligne ; il change le périmètre du slot, du moteur vers le contenu du
 wiki.
@@ -177,20 +190,22 @@ date de création précède un relevé ne reste sans arbre historique qualifié
 dans ces cinq points. La mesure ne permet pas à elle seule d’attribuer la
 croissance à l’IA ni de mesurer la productivité personnelle.
 
-| Date | Arbres `main`/`master` reconstituables / 24 | Code (MB, variation annuelle) | Lignes physiques de code (variation) | Documents (MB, variation annuelle) | Lignes physiques Markdown (variation) |
+| Date | Arbres `main`/`master` reconstituables / 24 | Code (MB, variation annuelle) | Lignes physiques de code (variation) | Documentation hors PDF (MB, variation annuelle) | Lignes physiques Markdown (variation) |
 | --- | ---: | ---: | ---: | ---: | ---: |
 | 2022-10-24 | 10 | 6,57 — base | 211 814 — base | 0,11 — base | 1 503 — base |
 | 2023-10-24 | 11 | 7,31 (+11,3 %) | 232 829 (+9,9 %) | 0,22 (+98,5 %) | 3 480 (+131,5 %) |
 | 2024-10-24 | 11 | 7,31 (0,0 %) | 232 829 (0,0 %) | 0,22 (0,0 %) | 3 480 (0,0 %) |
 | 2025-10-24 | 14 | 6,81 (−6,9 %) | 214 902 (−7,7 %) | 0,43 (+89,5 %) | 8 440 (+142,5 %) |
-| 2026-10-24 | 24 | 25,00 (+267,3 %) | 714 795 (+232,6 %) | 301,53 (+70 739,6 %) | 746 981 (+8 750,5 %) |
+| 2026-10-24 | 24 | 25,00 (+267,3 %) | 714 795 (+232,6 %) | 39,32 (+9 136,4 %) | 746 981 (+8 750,5 %) |
 
 Dans cette reconstruction, entre octobre 2022 et octobre 2026, le portefeuille
 fixe passe de **6,57 à 25,00 MB de code** (**+280,5 %**) et de
-**0,11 à 301,53 MB de documents** (**+266 316,6 %**). Les lignes physiques
+**0,11 à 39,32 MB de documentation hors PDF** (**+34 636,5 %**). Les lignes physiques
 passent de **211 814 à 714 795** pour le code (**+237,5 %**) et de **1 503 à
-746 981** pour Markdown (**+49 599,3 %**). Les baselines documentaires étaient très petites, d’où les
-pourcentages élevés. La comparaison porte sur les 24 dépôts enregistrés, en
+746 981** pour Markdown (**+49 599,3 %**). Les baselines documentaires étaient
+très petites, d’où les pourcentages élevés. La taille brute des arbres Git reste
+une mesure technique séparée et comprend les PDF et autres fichiers hors
+périmètre. La comparaison porte sur les 24 dépôts enregistrés, en
 incluant zéro avant leur première date mesurable. Le
 recul entre 2024 et 2025 reflète le passage de l’arbre Kudocracy historique à
 l’arbre propre de Survey, plus petit ; il marque le changement de dépôt dans

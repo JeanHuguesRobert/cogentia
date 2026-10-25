@@ -26,6 +26,7 @@ LIMITATIONS = [
     "snapshot selection uses Git commit timestamps, which are not independent archival timestamps",
     "individual repository growth percentages are not calculated when that repository has no baseline snapshot",
     "line counts are physical/nonblank lines, not language-aware SLOC",
+    "PDF files are excluded from document counts; raw Git tree bytes still include every blob",
     "Git tree sizes count each repository copy separately",
 ]
 
