@@ -98,6 +98,14 @@ node scripts/cogentia.js corpus apply
 
 This keeps trail handling inside the same smaller `plan/apply/verify` model as backlinks and corpus status, instead of reviving a separate legacy command surface.
 
+### Trails à embranchements : choix du lecteur
+
+Un Trail ne doit pas nécessairement imposer une lecture séquentielle. Préserver les Trails linéaires lorsqu'un ordre dépendant est réellement utile ; préférer une **entrée commune suivie de branches thématiques** quand plusieurs questions de lecteurs sont également légitimes. Chaque branche doit indiquer son intention (« Je veux comprendre… », « Je veux vérifier… », « Je veux contribuer… »), avec peu de destinations réelles et une possibilité de retour ou de changement de branche.
+
+La structure documentaire sous-jacente demeure un **graphe**, non un arbre strict : les chemins peuvent se rejoindre, mais le lecteur ne doit pas être forcé de traverser tout le graphe. Rester en Markdown natif et conserver `document_role: trail` ; ne pas inventer un moteur ou un schéma technique avant un besoin réel. Les Trails sont des **projections de navigation éditoriale**, non des sources souveraines.
+
+**Premier cas pratique :** [Trail arborescent Casa Mariani](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/trails/casa_mariani.md) : choix entre sens du Musée, expériences, démarrage matériel et contribution. Examiner d'autres Trails progressivement au rythme des révisions, sans conversion massive.
+
 ## 4. Web Rendering (Jekyll)
 
 Because all references are standard relative Markdown links and metadata is managed as Jekyll Front-Matter, the entire corpus can be rendered instantly into a website.
