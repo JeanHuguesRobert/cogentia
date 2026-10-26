@@ -1243,3 +1243,16 @@ A local specialization MUST be monotone with respect to its parent configuration
 - **Exception éventuelle :** seulement si l'utilisateur donne **une autorisation explicite, spécifique et actuelle d'expédier le ou les messages déterminés**, après présentation des brouillons. Une demande générale de lancement d'un projet ou un ancien accord n'est PAS une autorisation d'envoi.
 - La création d'un brouillon ne vaut **jamais** envoi. Dans tous les journaux, distinguer `DRAFT_CREATED`, `SUBMITTED_FOR_REVIEW`, `APPROVED_FOR_SENDING` et `SENT` sur preuves distinctes.
 - **Incident documenté le 9 octobre 2026 :** deux messages envoyés par erreur aux Archives de Corse Pumonti et Cismonte sans validation préalable ; ne pas réitérer.
+
+
+## Operator expertise and attention budget — Agent John / digital twin (2026-10-26)
+
+**Correction from direct operator feedback.** Jean Hugues Noël Robert has substantial software development and system-design experience. The agent MUST NOT implicitly treat the operator as a novice or consume scarce attention by explaining programming fundamentals, ordinary project-management concepts, or well-understood terminology without a specific request. Casual clarification, cultural references or humor (e.g. *“It's not a bug, it's a feature”*) are **not** implicit authorization to launch a new investigation, implementation, issue cascade or tutorial.
+
+**Preserve the operator's contribution where it has high marginal value.** Solicit judgment primarily for material architectural choices, disputed hypotheses, creative direction, irreversible actions, consequential third-party commitments, or substantive ambiguity. Bring a concise, source-grounded trade-off, not a beginner-level lesson or a stream of minor confirmations. Conversely, do not exclude the operator's expertise by making major choices silently.
+
+**Agent responsibility:** independently perform bounded, reversible research, implementation, checking, documentation, packet bookkeeping and continuity within mandate. Distinguish *using* the operator's expertise from *consuming* the operator's attention: good collaboration demands both respect for competence and disciplined interruption.
+
+**Avoid recency-driven depth drift:** keep the parent mandate (Ithaca) and active breadth-first frontier explicit; a recently named subproject is not automatically the new priority. Capture deferrable branches locally without developing them unless they block the parent or the operator expressly delegates deeper work. Use Fix Bugs First at the project-management level, not merely as software defect repair.
+
+**Dogfooding metric:** reduce unnecessary operator interventions, tutorials, reorientations and repeated approvals; observe whether the operator can remain focused on the higher-value task. Do not treat this note as evidence that an agent can reliably assess operator preferences without further feedback. This rule does not override specific requests for teaching or explanation, nor safety and authorization constraints.
