@@ -139,6 +139,21 @@ La Navigation Guidée vise **deux catégories de lecteurs** en croissance : pers
 
 **Surface de Chance :** chaque chemin public réellement intelligible pour l'un ou l'autre lectorat constitue une occasion supplémentaire de rencontre utile ; trafic automatique, réponses non sourcées ou multiplication de formats ne constituent pas à eux seuls une réussite.
 
+### Représentations HTTP symétriques d'une ressource (convention proposée)
+
+Pour les **serveurs HTTP que nous développons et contrôlons**, lorsqu'une ressource s'y prête, proposer une même identité de ressource sous plusieurs représentations :
+
+- `GET /ressource` ou `?format=html` : **HTML par défaut**, lisible et accessible par les humains ;
+- `?format=markdown` : Markdown réutilisable, avec liens et provenance ;
+- `?format=json` : représentation structurée versionnable (identité, titre, statut, liens, source et, selon le type de ressource, sections/contenu) ;
+- compléter si pertinent par la négociation HTTP standard via `Accept: text/html`, `text/markdown`, `application/json` ; lorsqu'un paramètre `format` explicite est présent, il prend priorité selon une règle documentée.
+
+**Invariant :** même ressource, même identité canonique, même base de contenu et de provenance, mêmes règles de visibilité et d'autorisation ; seules les projections changent. Définir `Content-Type` exact, liens inter-représentations (`Link: rel="alternate"` ou équivalent), `Vary: Accept` lorsque l'en-tête influe sur la réponse, erreurs explicites pour formats non disponibles et tests de cohérence entre vues. Une représentation JSON peut exposer métadonnées, sections et références sans dupliquer nécessairement la totalité du texte : son contrat doit le préciser. Ne jamais laisser l'une des variantes révéler du contenu privé invisible aux autres utilisateurs autorisés au même niveau.
+
+Il s'agit d'une **convention de conception proposée, pas d'une affirmation sur tous les serveurs existants**. Elle prolonge [Capability Symmetry](../patterns/capability-symmetry/PATTERN.md) et la politique de parité CLI/daemon/MCP déjà décrite dans [Intent](../research/intent.md). MCP, CLI, API et A2A ne sont pas des « formats » HTTP interchangeables : ils peuvent transporter ou invoquer les mêmes ressources/capacités avec leurs propres contrats, tout en préservant sémantique, provenance, mandat, droits et traces.
+
+**Test du Réel minimal :** sur **un** serveur HTTP contrôlé et réellement déployé, choisir une ressource publique ; vérifier les représentations disponibles, les codes et en-têtes HTTP, les liens, les statuts/provenances et l'absence de divulgation entre variantes. Étendre progressivement sans conversion massive ni promesse générale non testée.
+
 ## 4. Web Rendering (Jekyll)
 
 Because all references are standard relative Markdown links and metadata is managed as Jekyll Front-Matter, the entire corpus can be rendered instantly into a website.
