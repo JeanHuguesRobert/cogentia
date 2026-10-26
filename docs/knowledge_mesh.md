@@ -66,6 +66,18 @@ node scripts/cogentia.js corpus apply
 
 The CLI scans Markdown links across all registered repositories. It refreshes existing managed backlink blocks by default. Use `--create-backlinks` when you explicitly want missing backlink blocks created.
 
+## 2 bis. Chaque document peut être une porte d'entrée (« Pour aller plus loin »)
+
+La fonction d'un document public ne se limite pas à transmettre son contenu : il peut aussi permettre au lecteur d'entrer dans le **maillage de connaissances**. Lorsque le contexte et le lectorat le justifient, terminer par une courte rubrique **« Pour aller plus loin »** (ou proposer un encadré de navigation au point naturel de sortie), avec des **liens cliquables vérifiés** vers quelques documents réellement complémentaires.
+
+- **Sélection éditoriale, pas génération systématique** : proposer généralement deux à cinq destinations, chacune annotée par sa valeur pour le lecteur ; omettre la rubrique lorsqu'elle serait artificielle, redondante ou disproportionnée (pièce probatoire, courrier, document bref, etc.).
+- **Diversité des portes** : selon le cas, une introduction plus accessible, la source souveraine, un approfondissement contradictoire, un cas concret, ou une voie de contribution. Distinguer clairement ces rôles.
+- **Liens utiles et stables** : privilégier les URL canoniques publiques ou les chemins relatifs résolus au sein du dépôt. Vérifier l'existence des cibles ; ne pas annoncer des sites, rendus ou publications non déployés. Une référence en métadonnées `related_documents` et des backlinks automatiques ne remplacent pas à eux seuls un chemin intelligible pour un lecteur humain.
+- **Sans détournement du propos** : la navigation sert la lecture et la Surface de Chance ; elle ne doit ni se substituer à la conclusion, ni transformer chaque document en catalogue promotionnel.
+- **Maintenance proportionnée** : ajouter et corriger les liens lors des révisions ordinaires ou d'un Test du Réel ; ne pas lancer une propagation massive simplement pour insérer une rubrique standard.
+
+**Cas pilote :** [présentation de Casa Mariani](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/musee-mariani/presentation-publique-casa-mariani.md). Elle dispose déjà d'un passage « Découvrir, vérifier, contribuer » : ce passage joue le rôle de « Pour aller plus loin » et ne nécessite pas de seconde rubrique identique. Tester auprès d'un lecteur si ses liens suffisent à aller vers la doctrine, les sources et une contribution.
+
 ## 3. Curated Pathways (Trails)
 
 The raw concept graph can be overwhelming. To guide humans (or agents) through complex subjects step-by-step, you can create "Trails".
