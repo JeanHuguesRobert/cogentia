@@ -120,6 +120,25 @@ Les Trails balisés et les Guides conversationnels spécialisés sont **deux pro
 
 **Implémentations existantes :** [Living Book Checklist](../research/living_book_checklist.md) (Face 4 — Guide borné), [Trail Casa Mariani](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/trails/casa_mariani.md), [Guide du Livre Vivant 1755](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/projects/1755/site/guide.html), [Trails as Consolidated Orientation](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/trails_as_consolidated_orientation.md).
 
+### Deux catégories de lecteurs : humains et machines
+
+La Navigation Guidée vise **deux catégories de lecteurs** en croissance : personnes humaines et agents logiciels (LLM, indexeurs, outils documentaires et autres machines). Cela constitue une **seconde dimension**, indépendante des deux modalités *Trail balisé* et *Guide conversationnel* :
+
+| Lecteur | Trail balisé | Exploration dialogique ou outillée |
+| --- | --- | --- |
+| Humain | Questions, synthèses, liens commentés, choix de branches | Guide spécialisé, contradictions et approfondissements à la demande |
+| Machine | Graphe de liens, métadonnées, URL canoniques, identifiants, états et provenance | Recherche structurée, consultation de sources, outils ou Guides bornés |
+
+**Principe : unité sémantique, pluralité des présentations.** Ne pas entretenir deux vérités ni deux Corpus divergents. Sources et statuts souverains restent communs ; la présentation humaine et les représentations exploitables par machine sont des projections, chacune adaptée aux capacités et contraintes de son destinataire.
+
+**Contrat minimal des portes d'entrée machine :** liens réellement résolvables ; métadonnées explicites (`document_role`, `visibility`, `lifecycle_state`, provenance, `canonical_url` quand pertinent) ; chemins de navigation et frontières des corpus ; distinction source/projection ; citations et incertitudes ; conditions d'accès et de contribution. Réutiliser les ressources existantes (Markdown, frontmatter, `llms.txt`/`llms-full.txt`, index et requêtes Cogentia) sans supposer que leur simple présence garantit indexation ou interopérabilité. Éviter les formats parallèles sans besoin vérifié.
+
+**Transversalité :** une machine peut emprunter un Trail humain et un humain consulter un index structuré. L'adaptation est un service, non une barrière. Les Guides ne doivent pas inventer de liens, de sources ou de services disponibles.
+
+**Test du Réel :** vérifier séparément qu'un nouveau lecteur humain *et* un agent externe dépourvu de contexte préalable peuvent découvrir Casa Mariani, trouver une introduction, retrouver la source d'une affirmation, puis identifier un canal de correction. Mesurer les défauts de résolution et de provenance avant d'ajouter une infrastructure.
+
+**Surface de Chance :** chaque chemin public réellement intelligible pour l'un ou l'autre lectorat constitue une occasion supplémentaire de rencontre utile ; trafic automatique, réponses non sourcées ou multiplication de formats ne constituent pas à eux seuls une réussite.
+
 ## 4. Web Rendering (Jekyll)
 
 Because all references are standard relative Markdown links and metadata is managed as Jekyll Front-Matter, the entire corpus can be rendered instantly into a website.
