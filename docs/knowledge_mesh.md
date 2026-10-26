@@ -106,6 +106,20 @@ La structure documentaire sous-jacente demeure un **graphe**, non un arbre stric
 
 **Premier cas pratique :** [Trail arborescent Casa Mariani](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/trails/casa_mariani.md) : choix entre sens du Musée, expériences, démarrage matériel et contribution. Examiner d'autres Trails progressivement au rythme des révisions, sans conversion massive.
 
+### Navigation Guidée à deux modalités : Trails et Guides conversationnels
+
+Les Trails balisés et les Guides conversationnels spécialisés sont **deux projections complémentaires d'un même Corpus**, et non deux autorités documentaires concurrentes.
+
+1. **Trail (guidage éditorial relativement stable)** : parcours lisible sans agent, en Markdown et avec URLs stables ; chemin linéaire quand nécessaire, embranchements par curiosité quand utile. Il offre un point d'entrée reproductible et vérifiable.
+2. **Guide (guidage dialogique, adaptatif et borné)** : l'utilisateur pose sa question, demande une comparaison, signale une surprise ou choisit une nouvelle direction ; l'agent oriente et explique en citant les sources et en distinguant faits, hypothèses et propositions. Son champ de réponse et ses pouvoirs restent bornés par les règles du Livre Vivant et du Corpus.
+3. **Passerelle bidirectionnelle** : un Trail peut proposer un Guide correspondant à son domaine ; une réponse de Guide peut proposer un Trail ou quelques documents précis. Chaque voie garde un retour explicite à l'autre et une voie de lecture sans JavaScript ni agent.
+4. **Amélioration révisée, jamais automatique** : questions récurrentes, incompréhensions ou découvertes inattendues peuvent motiver une correction de la carte ou un nouvel embranchement, mais aucune conversation ne réécrit silencieusement les sources ou ne devient une preuve. Respecter consentement, vie privée, provenance et budget attentionnel.
+5. **Double piège** : ni dispersion par branches infinies, ni promotion d'une idée du seul fait qu'elle est récente ou formulée par le dernier interlocuteur. Un Guide doit réancrer les explorations dans le projet parent et comparer les nouvelles pistes aux priorités existantes.
+
+**Test du Réel / Surface de Chance :** vérifier, sans assimiler clics et succès, si l'alternance entre Trail et Guide facilite découverte, compréhension, accès aux sources et contributions qualifiées. Distinguer une page ou un profil de Guide **présent dans Git** d'un service conversationnel **effectivement disponible en ligne** ; ne pas affirmer cette disponibilité sans test. Aucun nouveau moteur n'est nécessaire à la formalisation.
+
+**Implémentations existantes :** [Living Book Checklist](../research/living_book_checklist.md) (Face 4 — Guide borné), [Trail Casa Mariani](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/trails/casa_mariani.md), [Guide du Livre Vivant 1755](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/projects/1755/site/guide.html), [Trails as Consolidated Orientation](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/trails_as_consolidated_orientation.md).
+
 ## 4. Web Rendering (Jekyll)
 
 Because all references are standard relative Markdown links and metadata is managed as Jekyll Front-Matter, the entire corpus can be rendered instantly into a website.
