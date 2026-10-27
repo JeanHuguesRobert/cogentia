@@ -179,7 +179,23 @@ const daemon = http.createServer(async (req, res) => {
       });
     }
     if (payload.stream) {
+      const question = String(payload.messages?.findLast?.(message => message.role === "user")?.content || "");
       res.writeHead(200, { "Content-Type": "text/event-stream" });
+      if (/provider diagnostic sse/i.test(question)) {
+        for (const content of [
+          "Warning: Model metadata for gpt-6-luna not found. ",
+          "{\"error\":{\"code\":\"model_not_found\",\"message\":\"The 'gpt-6-luna' model is not supported when using Codex with a ChatGPT account.\"}}",
+        ]) {
+          res.write(`data: ${JSON.stringify({
+            id: "chatcmpl_mock_codex_provider_error_stream",
+            object: "chat.completion.chunk",
+            model: payload.model,
+            choices: [{ delta: { content }, finish_reason: null }],
+          })}\n\n`);
+        }
+        res.write("data: [DONE]\n\n");
+        return res.end();
+      }
       res.write(`data: ${JSON.stringify({
         id: "chatcmpl_mock_stream",
         object: "chat.completion.chunk",
@@ -202,6 +218,21 @@ const daemon = http.createServer(async (req, res) => {
     }
     seenChatPayloads.push(payload);
     const question = String(payload.messages?.findLast?.(message => message.role === "user")?.content || "");
+    if (/provider diagnostic contract/i.test(question)) {
+      return sendJson(res, 200, {
+        id: "chatcmpl_mock_codex_provider_error",
+        object: "chat.completion",
+        model: payload.model,
+        choices: [{
+          index: 0,
+          message: {
+            role: "assistant",
+            content: "Warning: Model metadata for gpt-6-luna not found. {\"error\":{\"code\":\"model_not_found\",\"message\":\"The 'gpt-6-luna' model is not supported when using Codex with a ChatGPT account.\"}}",
+          },
+          finish_reason: "stop",
+        }],
+      });
+    }
     if (/fallback/i.test(question)) {
       return sendJson(res, 502, {
         error: { type: "ai_router_unavailable", message: "mock router down" },
@@ -439,6 +470,34 @@ try {
   assert.equal(streamedAnswer.ok, true);
   assert.equal(streamedAnswer.mode, "conversational");
   assert.match(streamedAnswer.answer, /\[mock:README\.md#L1-L4\]/);
+
+  const providerFailureStream = await postSse(`${mcpBase}/guide/chat`, {
+    question: "provider diagnostic SSE please",
+    locale: "en",
+    stream: true,
+  });
+  assert.ok(providerFailureStream.some(event => event.name === "guide_answer"));
+  assert.ok(providerFailureStream.some(event => event.name === "done" && event.data.ok === true));
+  assert.equal(
+    providerFailureStream.some(event => event.name === "guide_delta" && /model_not_found|Model metadata for gpt-6-luna/i.test(event.data.content)),
+    false,
+  );
+  assert.doesNotMatch(
+    providerFailureStream.find(event => event.name === "guide_answer")?.data.answer || "",
+    /model_not_found|Model metadata for gpt-6-luna/i,
+  );
+
+  const providerFailure = await postJson(`${mcpBase}/guide/chat`, {
+    question: "provider diagnostic contract please",
+    locale: "en",
+  });
+  assert.equal(providerFailure.ok, true);
+  assert.notEqual(providerFailure.mode, "conversational");
+  assert.doesNotMatch(providerFailure.answer, /model_not_found|Model metadata for gpt-6-luna/i);
+  assert.ok(
+    providerFailure.warnings.includes("guide_synthesis_openrouter_free_fallback")
+      || providerFailure.warnings.includes("guide_chat_backend_unavailable"),
+  );
 
   const fallback = await postJson(`${mcpBase}/guide/chat`, {
     question: "fallback please",

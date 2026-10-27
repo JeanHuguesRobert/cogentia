@@ -211,15 +211,50 @@ async function guideChatCapability() {
   }
 }
 
+function validateGuideSynthesisResult(result, provider) {
+  if (!result?.ok) return result;
+  const body = result.body;
+  const content = String(
+    body?.choices?.[0]?.message?.content || body?.choices?.[0]?.text || ""
+  ).trim();
+  if (body?.error || !content || isCodexModelFailureContent(content)) {
+    return {
+      ...result,
+      ok: false,
+      status: 502,
+      error: "guide_provider_invalid_completion",
+      body: { error: { type: "guide_provider_invalid_completion", provider } },
+    };
+  }
+  return result;
+}
+
+function isCodexModelFailureContent(content) {
+  return /Warning:\s*Model metadata for .+? not found/i.test(String(content || ""))
+    && /model_not_found|not supported when using Codex with a ChatGPT account/i.test(String(content || ""));
+}
+
+function isCodexModelDiagnosticPrefix(content) {
+  const prefix = "warning: model metadata for";
+  const candidate = String(content || "").trimStart().toLowerCase();
+  return prefix.startsWith(candidate) || candidate.startsWith(prefix);
+}
+
 async function guideSynthesisPost(payload, options = {}) {
   if (!guideAgentGateway) {
     // Explicit operational mode for bounded provider evaluation or continuity.
     // It is opt-in and never selects a paid OpenRouter model.
     if (guideSynthesisProvider() === "openrouter_free") {
-      return guideOpenRouterChatCompletions(payload, { freeOnly: true });
+      return validateGuideSynthesisResult(
+        await guideOpenRouterChatCompletions(payload, { freeOnly: true }),
+        "openrouter_free",
+      );
     }
     if (guideMagistralUrl) {
-      const routed = await guideMagistralPost(payload, options);
+      const routed = validateGuideSynthesisResult(
+        await guideMagistralPost(payload, options),
+        "magistral",
+      );
       if (routed.ok) {
         if (routed.body && typeof routed.body === "object") {
           routed.body._cogentia_guide_synthesis = "magistral_router";
@@ -229,7 +264,10 @@ async function guideSynthesisPost(payload, options = {}) {
     }
     // 1. Daemon / Magistral router (if circuit is not OPEN)
     if (providerCircuitBreaker.isAvailable("daemon")) {
-      const routed = await daemonPost("/v1/chat/completions", payload, { timeoutMs: 5000 });
+      const routed = validateGuideSynthesisResult(
+        await daemonPost("/v1/chat/completions", payload, { timeoutMs: 5000 }),
+        "daemon",
+      );
       if (routed.ok) {
         providerCircuitBreaker.recordSuccess("daemon");
         return routed;
@@ -239,14 +277,20 @@ async function guideSynthesisPost(payload, options = {}) {
 
     // 2. Direct OpenAI (gpt-5.6-sol -> gpt-5.6-terra)
     if (providerCircuitBreaker.isAvailable("openai")) {
-      const directOpenAi = await guideOpenAiChatCompletions(payload);
+      const directOpenAi = validateGuideSynthesisResult(
+        await guideOpenAiChatCompletions(payload),
+        "openai",
+      );
       if (directOpenAi.ok) return directOpenAi;
     }
 
     // 3. Direct OpenRouter (Claude-5 / Llama / DeepSeek)
     if (providerCircuitBreaker.isAvailable("openrouter")
       || (guideOpenRouterFreeEnabled() && providerCircuitBreaker.isAvailable("openrouter_free"))) {
-      const directOpenRouter = await guideOpenRouterChatCompletions(payload);
+      const directOpenRouter = validateGuideSynthesisResult(
+        await guideOpenRouterChatCompletions(payload),
+        "openrouter",
+      );
       if (directOpenRouter.ok) return directOpenRouter;
     }
 
@@ -282,17 +326,17 @@ async function guideSynthesisPost(payload, options = {}) {
     });
     const sessionId = String(result.body?.metadata?.session_id || "").trim();
     if (sessionId) guideAgentSessionId = sessionId;
-    return result;
+    return validateGuideSynthesisResult({ ok: true, status: 200, body: result.body }, "agent_gateway");
   };
   try {
     if (!guideAgentSessionId) {
       guideAgentSessionInit = request();
       const result = await guideAgentSessionInit;
       guideAgentSessionInit = null;
-      return { ok: true, status: 200, body: result.body };
+      return validateGuideSynthesisResult({ ok: true, status: 200, body: result.body }, "agent_gateway");
     }
     const result = await request();
-    return { ok: true, status: 200, body: result.body };
+    return validateGuideSynthesisResult({ ok: true, status: 200, body: result.body }, "agent_gateway");
   } catch (error) {
     guideAgentSessionInit = null;
     return { ok: false, status: error.status || 502, error: error.code || "guide_agent_gateway_failed", body: error.body || null };
@@ -1316,7 +1360,13 @@ async function handleGuideChatStream(res, question, locale, history = [], payloa
       }
       decorateGuideProfile(fallback.body, profile, requestedSurface);
       emit(fallback.body?.ok === false ? "guide_error" : "guide_answer", fallback.body);
-      sendSse(res, "done", { ok: true, elapsed_ms: Date.now() - startedAt, chat_available: false });
+      const turnOk = fallback.body?.ok === true;
+      sendSse(res, "done", {
+        ok: turnOk,
+        ...(!turnOk ? { error: fallback.body?.error || "guide_chat_failed" } : {}),
+        elapsed_ms: Date.now() - startedAt,
+        chat_available: false,
+      });
       return;
     }
 
@@ -1345,18 +1395,31 @@ async function handleGuideChatStream(res, question, locale, history = [], payloa
       web_search_attempted: Boolean(web.attempted),
     });
 
+    let heldProviderDiagnostic = "";
+    let synthesisContent = "";
     const routed = await guideSynthesisPost(
       guideMagistralUrl ? { ...chatPayload, stream: true } : chatPayload,
       {
         onEvent: (event) => {
           if (event.type === "content") {
-            emit("guide_delta", { content: event.content });
+            const fragment = String(event.content || "");
+            synthesisContent += fragment;
+            if (heldProviderDiagnostic || isCodexModelDiagnosticPrefix(synthesisContent)) {
+              heldProviderDiagnostic += fragment;
+            } else {
+              emit("guide_delta", { content: fragment });
+            }
           } else if (event.type === "trace") {
             trace(`provider.${event.trace?.step || "update"}`, { provider_trace: event.trace });
           }
         },
       },
     );
+    if (routed.ok && heldProviderDiagnostic && !isCodexModelFailureContent(synthesisContent)) {
+      emit("guide_delta", { content: heldProviderDiagnostic });
+      heldProviderDiagnostic = "";
+    }
+    let turnOk = true;
     if (routed.ok) {
       trace("synthesis.completed", {
         model: routed.body?.model || guideModel,
@@ -1371,8 +1434,13 @@ async function handleGuideChatStream(res, question, locale, history = [], payloa
       const fallback = await guideFallback(question, locale, routed, retrieval, web);
       decorateGuideProfile(fallback.body, profile, requestedSurface);
       emit(fallback.body?.ok === false ? "guide_error" : "guide_answer", fallback.body);
+      turnOk = fallback.body?.ok === true;
     }
-    sendSse(res, "done", { ok: true, elapsed_ms: Date.now() - startedAt });
+    sendSse(res, "done", {
+      ok: turnOk,
+      ...(!turnOk ? { error: "guide_chat_failed" } : {}),
+      elapsed_ms: Date.now() - startedAt,
+    });
   } catch (error) {
     sendSse(res, "guide_error", {
       ok: false,
@@ -2880,6 +2948,9 @@ async function guideFallback(question, locale, routed, retrieval = null, web = n
         s7: retrieval?.s7 || null,
         warnings: [
           "guide_chat_backend_unavailable",
+          ...(routed?.error === "guide_provider_invalid_completion"
+            ? ["guide_synthesis_provider_error"]
+            : []),
           ...(pack.warnings || []),
           ...(web?.warnings || []),
         ],
