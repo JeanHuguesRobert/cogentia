@@ -83,6 +83,18 @@ export function scaffoldLivingBook(manifest, targetDir, options = {}) {
 
   const isJanus = Boolean(manifest.editorial?.janus);
 
+  // Ephemeral binary build outputs are artifacts, not Git sources.
+  // Applies per Living Book even when hosted outside barons-Mariani.
+  // Frozen releases are immutable GitHub Release assets instead.
+  writeFile('.gitignore', [
+    '# Living Book Factory — replaceable working artifacts',
+    '/projections/preview.pdf',
+    '/projections/preview.epub',
+    '/site/book.pdf',
+    '/site/book.epub',
+    ''
+  ].join('\\n'));
+
   // 2. Manifest file
   writeFile('living-book.yml', jsYaml.dump(manifest));
 
