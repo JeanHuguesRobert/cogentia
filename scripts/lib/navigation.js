@@ -134,6 +134,16 @@ export const SEED_CONCEPT_ALIASES = [
   }
 ];
 
+function writeProjectionFile(target, content) {
+  const temporaryPath = `${target}.tmp-${process.pid}`;
+  try {
+    fs.writeFileSync(temporaryPath, content, "utf8");
+    fs.renameSync(temporaryPath, target);
+  } finally {
+    if (fs.existsSync(temporaryPath)) fs.unlinkSync(temporaryPath);
+  }
+}
+
 /**
  * S1 — Static Projection Generator
  * Generates llms.txt / llms-full.txt for a privacy view.
@@ -172,11 +182,18 @@ export function emitStaticProjection(ctx, inventory = [], options = {}) {
   ];
 
   for (const repo of visibleRepos) {
-    lines.push(`- **[${repo.name}]**: ${repo.path}`);
+    const githubFullName = repo.github_full_name || repo.policy?.github || repo.policy?.github_repo || `JeanHuguesRobert/${repo.name}`;
+    const repoUrl = `https://github.com/${githubFullName}`;
+    const branch = encodeURIComponent(repo.branch || "main");
+    lines.push(`- **[${repo.name}]**: ${repoUrl}`);
     lines.push(`  - Role: ${repo.role || "primary"}`);
     lines.push(`  - Visibility: ${repo.visibility || repo.policy?.visibility || (isPrivateRepo(repo) ? "private" : "public")}`);
-    lines.push(`  - Index: ${path.join(repo.path, "research", "index.md")}`);
-    lines.push(`  - Concepts: ${path.join(repo.path, "research", "concepts.md")}`);
+    if (repo.path && fs.existsSync(path.join(repo.path, "research", "index.md"))) {
+      lines.push(`  - Index: [research/index.md](${repoUrl}/blob/${branch}/research/index.md)`);
+    }
+    if (repo.path && fs.existsSync(path.join(repo.path, "research", "concepts.md"))) {
+      lines.push(`  - Concepts: [research/concepts.md](${repoUrl}/blob/${branch}/research/concepts.md)`);
+    }
   }
 
   if (view === PUBLIC_VIEW) {
@@ -251,11 +268,12 @@ export function emitStaticProjection(ctx, inventory = [], options = {}) {
     }
   }
 
-  const fullContent = fullLines.join("\n") + "\n";
+  const fullContent = fullLines.join("\n").trimEnd() + "\n";
 
   let llmsPath;
   let llmsFullPath;
   const publishedRepos = [];
+  const fanOutFailures = [];
   const cleanedPrivateRepos = [];
 
   if (view === PRIVATE_VIEW) {
@@ -264,14 +282,14 @@ export function emitStaticProjection(ctx, inventory = [], options = {}) {
     if (!fs.existsSync(projDir)) fs.mkdirSync(projDir, { recursive: true });
     llmsPath = path.join(projDir, "llms.txt");
     llmsFullPath = path.join(projDir, "llms-full.txt");
-    fs.writeFileSync(llmsPath, content, "utf8");
-    fs.writeFileSync(llmsFullPath, fullContent, "utf8");
+    writeProjectionFile(llmsPath, content);
+    writeProjectionFile(llmsFullPath, fullContent);
     publishedRepos.push("cogentia:.cogentia/projections");
   } else {
     llmsPath = path.join(rootDir, "llms.txt");
     llmsFullPath = path.join(rootDir, "llms-full.txt");
-    fs.writeFileSync(llmsPath, content, "utf8");
-    fs.writeFileSync(llmsFullPath, fullContent, "utf8");
+    writeProjectionFile(llmsPath, content);
+    writeProjectionFile(llmsFullPath, fullContent);
 
     const fanOut = options.fanOut !== false;
     if (fanOut) {
@@ -279,12 +297,20 @@ export function emitStaticProjection(ctx, inventory = [], options = {}) {
         const repoDir = path.resolve(rootDir, repo.path || ".");
         if (fs.existsSync(repoDir) && fs.statSync(repoDir).isDirectory()) {
           try {
-            fs.writeFileSync(path.join(repoDir, "llms.txt"), content, "utf8");
-            fs.writeFileSync(path.join(repoDir, "llms-full.txt"), fullContent, "utf8");
+            writeProjectionFile(path.join(repoDir, "llms.txt"), content);
+            writeProjectionFile(path.join(repoDir, "llms-full.txt"), fullContent);
             publishedRepos.push(repo.name || path.basename(repoDir));
-          } catch {
-            // Skip unwriteable directories
+          } catch (error) {
+            fanOutFailures.push({
+              repo: repo.name || path.basename(repoDir),
+              error: error instanceof Error ? error.message : String(error),
+            });
           }
+        } else {
+          fanOutFailures.push({
+            repo: repo.name || path.basename(repoDir),
+            error: "Repository directory is unavailable",
+          });
         }
       }
     } else {
@@ -314,8 +340,9 @@ export function emitStaticProjection(ctx, inventory = [], options = {}) {
   }
 
   return {
-    ok: true,
+    ok: fanOutFailures.length === 0,
     view,
+    fan_out_failures: fanOutFailures,
     llms_path: llmsPath,
     llms_full_path: llmsFullPath,
     repos_listed: visibleRepos.length,

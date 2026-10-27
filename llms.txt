@@ -4,51 +4,93 @@
 
 ## Repositories & Canonical Entry Points
 
-- **[cogentia]**: .
+- **[cogentia]**: https://github.com/JeanHuguesRobert/cogentia
   - Role: primary
   - Visibility: public
-  - Index: research/index.md
-  - Concepts: research/concepts.md
-- **[FractaVolta]**: ../FractaVolta
+  - Index: [research/index.md](https://github.com/JeanHuguesRobert/cogentia/blob/main/research/index.md)
+  - Concepts: [research/concepts.md](https://github.com/JeanHuguesRobert/cogentia/blob/main/research/concepts.md)
+- **[FractaVolta]**: https://github.com/JeanHuguesRobert/FractaVolta
   - Role: primary
   - Visibility: public
-  - Index: ../FractaVolta/research/index.md
-  - Concepts: ../FractaVolta/research/concepts.md
-- **[marenostrum]**: ../marenostrum
+  - Index: [research/index.md](https://github.com/JeanHuguesRobert/FractaVolta/blob/main/research/index.md)
+  - Concepts: [research/concepts.md](https://github.com/JeanHuguesRobert/FractaVolta/blob/main/research/concepts.md)
+- **[marenostrum]**: https://github.com/JeanHuguesRobert/marenostrum
   - Role: primary
   - Visibility: public
-  - Index: ../marenostrum/research/index.md
-  - Concepts: ../marenostrum/research/concepts.md
-- **[barons-Mariani]**: ../barons-Mariani
+  - Index: [research/index.md](https://github.com/JeanHuguesRobert/marenostrum/blob/main/research/index.md)
+  - Concepts: [research/concepts.md](https://github.com/JeanHuguesRobert/marenostrum/blob/main/research/concepts.md)
+- **[barons-Mariani]**: https://github.com/JeanHuguesRobert/barons-Mariani
   - Role: primary
   - Visibility: public
-  - Index: ../barons-Mariani/research/index.md
-  - Concepts: ../barons-Mariani/research/concepts.md
-- **[inseme]**: ../inseme
+  - Index: [research/index.md](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/index.md)
+  - Concepts: [research/concepts.md](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/concepts.md)
+- **[suicide-corse]**: https://github.com/JeanHuguesRobert/suicide-corse
   - Role: primary
   - Visibility: public
-  - Index: ../inseme/research/index.md
-  - Concepts: ../inseme/research/concepts.md
-- **[Inox]**: ../Inox
+- **[inseme]**: https://github.com/JeanHuguesRobert/inseme
   - Role: primary
   - Visibility: public
-  - Index: ../Inox/research/index.md
-  - Concepts: ../Inox/research/concepts.md
-- **[ubikia]**: ../ubikia
+  - Index: [research/index.md](https://github.com/JeanHuguesRobert/inseme/blob/main/research/index.md)
+  - Concepts: [research/concepts.md](https://github.com/JeanHuguesRobert/inseme/blob/main/research/concepts.md)
+- **[survey]**: https://github.com/JeanHuguesRobert/survey
   - Role: primary
   - Visibility: public
-  - Index: ../ubikia/research/index.md
-  - Concepts: ../ubikia/research/concepts.md
-- **[JeanHuguesRobert]**: ../JeanHuguesRobert
+  - Index: [research/index.md](https://github.com/JeanHuguesRobert/survey/blob/main/research/index.md)
+- **[Inox]**: https://github.com/JeanHuguesRobert/Inox
   - Role: primary
   - Visibility: public
-  - Index: ../JeanHuguesRobert/research/index.md
-  - Concepts: ../JeanHuguesRobert/research/concepts.md
-- **[StructEnv]**: ../StructEnv
+  - Index: [research/index.md](https://github.com/JeanHuguesRobert/Inox/blob/master/research/index.md)
+  - Concepts: [research/concepts.md](https://github.com/JeanHuguesRobert/Inox/blob/master/research/concepts.md)
+- **[ubikia]**: https://github.com/JeanHuguesRobert/ubikia
   - Role: primary
   - Visibility: public
-  - Index: ../StructEnv/research/index.md
-  - Concepts: ../StructEnv/research/concepts.md
+  - Index: [research/index.md](https://github.com/JeanHuguesRobert/ubikia/blob/main/research/index.md)
+- **[operium]**: https://github.com/JeanHuguesRobert/operium
+  - Role: primary
+  - Visibility: public
+  - Index: [research/index.md](https://github.com/JeanHuguesRobert/operium/blob/main/research/index.md)
+- **[serra]**: https://github.com/JeanHuguesRobert/serra
+  - Role: primary
+  - Visibility: public
+  - Index: [research/index.md](https://github.com/JeanHuguesRobert/serra/blob/main/research/index.md)
+- **[JeanHuguesRobert]**: https://github.com/JeanHuguesRobert/JeanHuguesRobert
+  - Role: primary
+  - Visibility: public
+  - Index: [research/index.md](https://github.com/JeanHuguesRobert/JeanHuguesRobert/blob/main/research/index.md)
+  - Concepts: [research/concepts.md](https://github.com/JeanHuguesRobert/JeanHuguesRobert/blob/main/research/concepts.md)
+- **[privai]**: https://github.com/acorsica/privai
+  - Role: primary
+  - Visibility: public
+  - Index: [research/index.md](https://github.com/acorsica/privai/blob/main/research/index.md)
+- **[gouvernance]**: https://github.com/acorsica/gouvernance
+  - Role: primary
+  - Visibility: public
+  - Index: [research/index.md](https://github.com/acorsica/gouvernance/blob/main/research/index.md)
+- **[marianivillage]**: https://github.com/acorsica/marianivillage
+  - Role: primary
+  - Visibility: public
+  - Index: [research/index.md](https://github.com/acorsica/marianivillage/blob/main/research/index.md)
+- **[institut-mariani]**: https://github.com/acorsica/institut-mariani
+  - Role: primary
+  - Visibility: public
+  - Index: [research/index.md](https://github.com/acorsica/institut-mariani/blob/main/research/index.md)
+- **[Kudos]**: https://github.com/acorsica/Kudos
+  - Role: primary
+  - Visibility: public
+  - Index: [research/index.md](https://github.com/acorsica/Kudos/blob/main/research/index.md)
+- **[.github]**: https://github.com/acorsica/.github
+  - Role: primary
+  - Visibility: public
+  - Index: [research/index.md](https://github.com/acorsica/.github/blob/main/research/index.md)
+- **[acorsica.org]**: https://github.com/acorsica/acorsica.org
+  - Role: primary
+  - Visibility: public
+  - Index: [research/index.md](https://github.com/acorsica/acorsica.org/blob/main/research/index.md)
+- **[StructEnv]**: https://github.com/JeanHuguesRobert/StructEnv
+  - Role: primary
+  - Visibility: public
+  - Index: [research/index.md](https://github.com/JeanHuguesRobert/StructEnv/blob/main/research/index.md)
+  - Concepts: [research/concepts.md](https://github.com/JeanHuguesRobert/StructEnv/blob/main/research/concepts.md)
 
 ## Privacy Note
 
