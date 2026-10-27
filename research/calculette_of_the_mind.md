@@ -422,3 +422,35 @@ There is no need to wait for the full Learning Computer to deliver relief. **The
 - [Capability inventory](https://github.com/JeanHuguesRobert/cogentia/blob/main/scripts/lib/capability-inventory.js) and [symmetry audit](https://github.com/JeanHuguesRobert/cogentia/blob/main/scripts/lib/symmetry-audit.js).
 
 **Evidence note:** These branch-specific implementation paths are referenced to their PR rather than assumed present on `main`. External prior-art examples are research friends, not endorsements, agreements or asserted compatible deployments. This synthesis is not itself evidence that the candidate capabilities are live.
+
+## Garde-fou de pilotage : largeur d'abord au niveau du mandat (26 octobre 2026)
+
+**Défaut constaté en dogfooding :** l'agent peut surpondérer le dernier sous-sujet discuté, lui consacrer de nombreux approfondissements et détourner le budget d'attention du mandant. Exemple : au cours de la construction de Casa Mariani et du Musée, l'idée d'un futur dépôt Unikia a conduit à approfondir son infrastructure avant d'avoir parcouru les autres chantiers de même niveau. L'orientation "BFS" a été appliquée au sous-projet plutôt qu'au projet parent. Cette dérive est une **régression de qualité cognitive**, même si chaque approfondissement est techniquement pertinent.
+
+### Invariant de priorité et de niveau
+
+**La priorité reste attachée à l'objectif directeur et à son niveau de décision, non à la récence de la dernière branche.** Un nouveau nom de dépôt, outil, idée ou risque n'est pas une autorisation tacite à déplacer le centre de gravité du travail.
+
+À chaque bifurcation significative, l'agent devrait conserver un petit registre d'orientation :
+
+- **Ithaca / objectif parent** : résultat concret poursuivi, en une phrase ;
+- **niveau actif** : projet global, chantier, paquet, composant ;
+- **frontière BFS** : chantiers frères non encore couverts à ce niveau ;
+- **branche nouvelle** : contribution immédiate, blocage avéré ou possibilité différable ;
+- **coût attentionnel** : nouvelles décisions réclamées à l'humain, détails injectés, reprises de contexte ;
+- **retour** : prochaine action au niveau parent après toute incursion nécessaire.
+
+### Politique par défaut
+
+1. **Orienter avant d'exécuter** : relier la demande au mandat et à la frontière BFS du projet parent ; préserver les contraintes déjà fixées.
+2. **Parcourir les frères avant les enfants** : tant qu'une dimension majeure du projet parent reste inconnue, lui accorder une première passe avant de creuser une dimension déjà suffisamment cadrée.
+3. **Différer sans perdre** : noter brièvement une branche utile dans un paquet ou registre existant ; **ne pas** créer automatiquement une cascade d'issues ni une nouvelle architecture pour toute idée incidente.
+4. **Approfondir uniquement sous condition** : blocage réel, risque majeur ou irréversible, décision maintenant nécessaire, ou approfondissement expressément mandaté.
+5. **Revenir à Ithaca** : après chaque outil, recherche ou modification significative, synthétiser ce qui a changé et rétablir l'objectif parent, sans demander une confirmation inutile.
+6. **Économiser le jugement humain** : ne présenter que les options qui exigent réellement une décision ; les détails techniques sont conservés dans le Corpus et accessibles à la demande.
+
+### Test du réel / dogfooding
+
+Pour les conversations et Cognitive Packets, observer : (a) dérives non mandatées de niveau ; (b) nombre de sujets frères couverts avant approfondissement ; (c) décisions inutiles sollicitées ; (d) répétitions et interruptions ; (e) temps ou messages nécessaires pour retrouver Ithaca. Ne pas réduire la charge mentale à une seule métrique physiologique présumée. Réviser cette règle si elle devient un prétexte à éviter un approfondissement indispensable.
+
+**Application immédiate :** Unikia est enregistré comme dépendance différable de Casa Mariani ; le développement du dépôt reste en attente. La frontière BFS active revient à la construction globale de Casa Mariani, de son Musée et de sa Boutique Mobile. Une issue ouverte n'est pas un ordre implicite de l'exécuter immédiatement.

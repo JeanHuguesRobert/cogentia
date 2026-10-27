@@ -102,6 +102,41 @@ cognitive packets; envelope and payload; continuation; multi-agent systems; agen
 
 ---
 
+## Umbrella Cognitive Packet — coordinating adaptive packet graphs (working pattern, 2026-10-26)
+
+An **Umbrella Cognitive Packet** is a cognitive packet whose payload coordinates a bounded, evolving graph of other cognitive work packets. Unlike an ordinary continuation that carries one resumable work unit, the umbrella preserves the *shared finality, dependency graph, interfaces, decision gates, integration criteria and closure condition* of a multi-packet endeavour.
+
+Its characteristic metacognitive operation is **revision of the work decomposition itself** when exploration encounters new evidence, productive branches or dead ends. The umbrella is therefore not a rigid project plan, a perpetual backlog, an automatic supervisor, a new source of doctrine, or an authority above the Principal and the governed sources.
+
+An umbrella uses the existing packet **envelope/payload** and by-copy/by-reference conventions; `packet_kind: umbrella` is a candidate semantic specialization, **not** a claim that all runtimes or COP schemas already recognize this kind. GitHub Issues provide one practical incarnation, not the essence of the pattern. Coordination/lease ownership belongs to existing COP PacketClaim mechanisms; do not create a parallel locking protocol.
+
+Minimum useful umbrella payload:
+
+1. **Shared goal and falsifiable acceptance:** what observable outcome will justify closure?
+2. **Current evidence and source authority:** immutable references, latest accessible revisions, explicit UNKNOWN, disclosure limits.
+3. **Graph of child work:** existing packets first; dependencies, interfaces, outputs and owners where established; proposed children only when independently executable.
+4. **Decision and effect boundaries:** what may be explored or edited, versus what requires distinct approval (public release, third-party communication, deployment, irreversible acts).
+5. **Replanning record:** discovery, contradiction, branch opened/abandoned, motivation and effect on existing nodes; preserve old decisions as dated traces.
+6. **Integration and Reality Tests:** child receipts PASS/FAIL/BLOCKED, cross-child coherence, anti-regression, demonstrated external effect versus merely completed artifacts.
+7. **Return to Ithaca:** terminal synthesis, completed or explicitly transferred residues, closure; do not leave an umbrella open merely awaiting unrelated future events.
+
+```text
+umbrella finality + boundaries
+          ↕  evidence-driven revision
+qualified sources → bounded children (parallel where independent)
+          → integration / contradiction / Reality Tests
+          → coherent deliverable + receipts
+          → closure / transfer of residual watches
+```
+
+**Occam test:** if one packet and an ordered checklist suffice, do not create an umbrella; if an existing umbrella covers the goal, link it rather than duplicating the authority. A child is worth creating only for genuine independent continuation, divergent dependencies, specialized handler/risks, or a separately testable deliverable.
+
+**Scale invariance without authority inflation:** an umbrella may itself be a child of another umbrella, but this does not grant new mandate, source sovereignty or permissions. Child results can require revisiting the parent hypothesis; the parent cannot silently rewrite a child's historically completed external acts.
+
+**Observed precedents, not proofs of a universally supported protocol:** [barons-Mariani #127](https://github.com/JeanHuguesRobert/barons-Mariani/issues/127), [Cogentia #278](https://github.com/JeanHuguesRobert/cogentia/issues/278), and [Capable coordination #152](https://github.com/JeanHuguesRobert/barons-Mariani/issues/152). This candidate pattern refines the use of existing Cognitive Packets through FractaCognition and the Second Method. Test it against work already done before proposing additional schemas or executors.
+
+---
+
 # 1. Introduction
 
 Multi-agent systems increasingly exchange messages, tasks, tool calls, artifacts, traces, and state snapshots. This is useful but insufficient.

@@ -1,0 +1,52 @@
+id: "2026-10-22-002"
+type: "interaction_packet"
+date: "2026-10-22"
+channel: "email"
+subject: "CONVOCATION - Deuxième rencontre du Comité des usagers du Musée de la Corse"
+from: "Musée de la Corse / Collectivité de Corse"
+to:
+  - "Jean Hugues Noël Robert (membre invité du Comité des usagers)"
+status: "reply_sent_pending_answer"
+disclosure: "D2"
+source_disclosure: "D1 — correspondance originale conservée dans Gmail ; adresse privée de l'amie non collectée"
+public_summary: >-
+  Invitation à la deuxième rencontre du Comité des usagers du Musée de la Corse
+  le 26 novembre 2026, de 14 h à 17 h, à Corte, pour la refonte des galeries permanentes,
+  avec la muséographe Elsa Olu. Le 26 octobre, Jean Hugues Robert a confirmé sa présence
+  et demandé si une amie cortenaise pouvait aussi participer à la démarche.
+  Aucune réponse à cette question constatée lors de la consultation du 26 octobre.
+source_messages:
+  invitation_gmail_id: "1a1627282bf17567"
+  reply_gmail_id: "1a176cef5220f5c8"
+  source_thread_id: "1a1627282bf17567"
+  source_of_truth: "Gmail natif — consultation du 26 octobre 2026"
+context:
+  earlier_update:
+    date: "2026-10-13"
+    gmail_id: "1a134874050613a8"
+    summary: >-
+      Le Musée informe le Comité de l'avancement de la refonte,
+      de la mobilisation des contributions, de l'arrivée d'Elsa Olu
+      et de son adhésion à la Fédération des écomusées et musées de société.
+  relevance: >-
+    Occasion d'échange sur le Musée Mariani des Possibles et ses travaux,
+    sans sollicitation formelle de partenariat ni intérêt explicite du Musée
+    pour Casa Mariani constaté dans cette correspondance.
+follow_up:
+  - date: "2026-10-26"
+    direction: "outbound"
+    event: "Confirmation de présence et question sur une participation accompagnante"
+    status: "reply_sent_pending_answer"
+observed_continuation: >-
+  Présence confirmée par le participant ; aucune réponse identifiée à la
+  question de l'accompagnement lors de la consultation.
+expected_continuation: >-
+  Éventuelle réponse de l'équipe du Musée sur l'accueil de l'amie ;
+  rencontre prévue le 26 novembre 2026.
+epistemic_limits:
+  - "L'invitation au Comité n'est pas un accord de coopération entre institutions."
+  - "L'absence de réponse constatée ne prouve pas l'absence de réponse future."
+  - "Ne pas publier les données personnelles de l'amie."
+links:
+  casa_mariani_presentation: "https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/musee-mariani/presentation-publique-casa-mariani.md"
+last_verified: "2026-10-26"

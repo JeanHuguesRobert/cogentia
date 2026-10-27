@@ -511,6 +511,23 @@ However, like Hanlon, this is a search-order heuristic, not an uncritical endors
 
 Specialized sources: [Telescript as a Friend](telescript_as_a_friend.md), [`AGENTS.shared.md`](../instructions/AGENTS.shared.md#friends-before-competitors).
 
+### 6.3 Ne pas réinventer la roue — surtout quand elle est à notre taille
+
+**Principe opérationnel :** avant de concevoir un protocole, une abstraction, une infrastructure ou un outil supplémentaire, chercher les standards, capacités et composants **déjà disponibles**, puis évaluer s'ils résolvent **assez bien** le problème réel. **Réutiliser, composer ou adapter avant d'inventer.**
+
+« À notre taille » est une condition essentielle : une solution standard peut être disproportionnée, trop coûteuse, inadaptée à notre mandat, ou créer une dépendance excessive. Dans ce cas, justifier explicitement la plus petite adaptation ou construction propre, plutôt que forcer un réemploi inadéquat.
+
+**Test avant création :**
+1. Quelle capacité manque réellement, avec quel critère vérifiable ?
+2. Existe-t-il un standard établi, une implémentation locale ou un composant réutilisable (IETF/RFC, CLI, MCP, A2A, bibliothèque, service) ?
+3. Sa maturité est-elle avérée ? Distinguer norme publiée, Internet-Draft, prototype et service réellement opérationnel.
+4. Quels coûts et dépendances apporte la réutilisation ? Peut-on l'adapter localement, de façon réversible ?
+5. Quel delta minimal reste à développer et quel Test du Réel le justifie ?
+
+Ce principe est un cas pratique d'[Occam](#2-the-occam-principle), de **Friends Before Competitors** et de **Prior art is prepaid Reality** ; il ne justifie pas un nouveau chantier de recherche à chaque découverte d'une technologie. Refuser simultanément la réinvention inutile **et** la nouveauté séduisante mais non prioritaire.
+
+**Cas concret (octobre 2026) :** [Cogentia #170](https://github.com/JeanHuguesRobert/cogentia/issues/170) teste la réutilisation du serveur d'artefacts [Inseme #53](https://github.com/JeanHuguesRobert/inseme/issues/53) et des règles HTTP existantes ([RFC 9110](https://www.rfc-editor.org/rfc/rfc9110), [RFC 9111](https://www.rfc-editor.org/rfc/rfc9111), [RFC 8288](https://www.rfc-editor.org/rfc/rfc8288)) avant d'envisager une nouvelle pile de publication.
+
 ## 7. Metacognition and Minimum Sufficient Locality
 
 Metacognition does not require creating an omnipresent central monitor. Like all cognition in this architecture, it is subject to the [Locality Principle](locality_principle.md):
