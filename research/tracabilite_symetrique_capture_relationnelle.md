@@ -1841,6 +1841,10 @@ Une personne morale peut imposer un canal. Mais si elle impose son canal, elle d
 ### Backlinks
 
 *These documents link to this file:*
+- [2026-6589 SEN — Compléments d'information au dossier](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/senatoriales-2026/complement-2026-6589-sen/texte-maitre-candidat-qpc-integrales-2026-10-22.md)
+- [2026-6589 SEN — Notices de provenance à double fonction : protocole et applications](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/senatoriales-2026/complement-2026-6589-sen/doctrine-notices-double-fonction-suite-demande-greffe-2026-10-21.md)
+- [Notice de provenance complémentaire — P-46 et demandes de vérification P-12/P-13](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/senatoriales-2026/complement-2026-6589-sen/notice-provenance-p46-courriels-verification-p12-p13-2026-10-21.md)
+- [Notice G4 — provenance, authenticité et pertinence des correspondances P-12 à P-46](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/senatoriales-2026/complement-2026-6589-sen/notice-g4-provenance-pertinence-p12-p46.md)
 - [Rendre capable — noyau doctrinal provisoire](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/noyau_doctrinal_rendre_capable.md)
 - [Stigmergie sans limite haute](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/stigmergie_sans_limite_haute.md)
 - [Test du critère Rossignol](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/test_critere_rossignol.md)

@@ -1779,10 +1779,11 @@ The novelty of cognitive packets is therefore not the existence of the pattern, 
 
 *These documents link to this file:*
 - [Alien, l’IA et les intelligences xénoformes](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/alien_blogpost.md)
+- [Capable — architecture du Livre Vivant](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/projects/capable/architecture.md)
 - [Incremental Transmissible Corpus Model](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/modele_corpus_transmissible_incremental.md)
 - [Mauvaise calibration métacognitive face aux intelligences xénoformes](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/alien_academic.md)
+- [Qu'est-ce que la politique ? — Cahier des Charges Motivé](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/projects/capable/research/ccm-quest-ce-que-la-politique.md)
 - [Quand le Réel répond](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/quand_le_reel_repond_pkd.md)
-- [Reactive Corpus semantic propagation: Learning Computer genesis, Trace primitive, and RAIX array cascades](https://github.com/JeanHuguesRobert/barons-Mariani/issues/55)
 - [Rendre capable — noyau doctrinal provisoire](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/noyau_doctrinal_rendre_capable.md)
 - [Act, mandate and responsibility](act_mandate_responsibility.md)
 - [AGENTS.md — Cogentia local specialization](../AGENTS.md)
@@ -1796,6 +1797,7 @@ The novelty of cognitive packets is therefore not the existence of the pattern, 
 - [Concept Index — cogentia](concepts.md)
 - [Conceptual Gravity — Governed Conceptual Routing for a Self-Orienting Reactive Corpus](conceptual_gravity.md)
 - [Continuations and Cognitive Packets — early agent briefing](../docs/continuations_and_cognitive_packets_for_agents.md)
+- [Evolutionary Learning Computer — Research Programme](evolutionary_learning_computer_research_program.md)
 - [Informational Gravity — Contextual Attraction for Cognitive-Packet Routing](informational_gravity.md)
 - [Operational Stance](operational_stance.md)
 - [Pipeline](pipeline.md)
@@ -1809,9 +1811,9 @@ The novelty of cognitive packets is therefore not the existence of the pattern, 
 - Methodology
 - [The Unconscious Grid](https://github.com/JeanHuguesRobert/FractaVolta/blob/main/research/UNCONSCIOUS_GRID.md)
 - [When Cognition Became Traffic](https://github.com/JeanHuguesRobert/FractaVolta/blob/main/research/when_cognition_became_traffic.md)
-- [Library packets — when the library is a specification, not code](https://github.com/JeanHuguesRobert/Inox/blob/master/research/library_packets.md)
-- [Reactive Sets in Inox — Native Implementation Path](https://github.com/JeanHuguesRobert/Inox/blob/master/research/reactive_sets_inox_cop_implementation.md)
-- [Research Index — Inox](https://github.com/JeanHuguesRobert/Inox/blob/master/research/index.md)
+- [Library packets — when the library is a specification, not code](https://github.com/JeanHuguesRobert/Inox/blob/main/research/library_packets.md)
+- [Reactive Sets in Inox — Native Implementation Path](https://github.com/JeanHuguesRobert/Inox/blob/main/research/reactive_sets_inox_cop_implementation.md)
+- [Research Index — Inox](https://github.com/JeanHuguesRobert/Inox/blob/main/research/index.md)
 - COP Reactive Cognitive Extension
 - [COP Zero Draft — Mission-Bearing Cognitive Packet Kernel](https://github.com/JeanHuguesRobert/inseme/blob/main/research/cop_zero_draft.md)
 - COP/Accounting — Resource, Budget, Mandate, and Ledger Semantics

@@ -1447,18 +1447,22 @@ This case should remain distinguished from authorship transfer: provenance is pr
 - [Quand le Réel répond](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/quand_le_reel_repond_pkd.md)
 - [Rendre capable — noyau doctrinal provisoire](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/noyau_doctrinal_rendre_capable.md)
 - [Cogentia](../README.md)
+- [Cogentia Shared Agent Instructions](../instructions/AGENTS.shared.md)
 - [cogentia.js - Tutorial and Near-Specification](cogentia_js_tutorial.md)
 - [Cogentigraphic Distillation](cogentigraphic_distillation.md)
 - [Concept Index — cogentia](concepts.md)
+- [FractaCognition — Prudence, Humility, Occam, Hanlon, Talleyrand, Bounded Assertion, Friends Before Competitors, and Locality](fractacognition_principles.md)
+- [FractaXXXX — A Generative Grammar of Possibilities](fractaxxxx.md)
+- [Living Book Factory](living_book_factory.md)
 - [Pipeline](pipeline.md)
 - [Research Index — Cogentia](index.md)
 - [The Cogentia Commons Living Corpus](cogentia_commons_living_corpus.md)
 - Cogentia R&D Traceability
 - For researchers
-- FractaVolta
 - [FractaVolta](https://github.com/JeanHuguesRobert/FractaVolta/blob/main/README.md)
+- FractaVolta
 - Methodology
-- [Library packets — when the library is a specification, not code](https://github.com/JeanHuguesRobert/Inox/blob/master/research/library_packets.md)
+- [Library packets — when the library is a specification, not code](https://github.com/JeanHuguesRobert/Inox/blob/main/research/library_packets.md)
 - [COOP — Tutorial and Near-Specification](https://github.com/JeanHuguesRobert/inseme/blob/main/research/coop_tutorial.md)
 - [Jean Hugues Noël Robert, baron Mariani](https://github.com/JeanHuguesRobert/JeanHuguesRobert/blob/main/README.md)
 - [Persona-aware Multichannel Discovery](https://github.com/JeanHuguesRobert/ubikia/blob/main/docs/persona_multichannel_discovery.md)

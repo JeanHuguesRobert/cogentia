@@ -3,9 +3,9 @@ title: Corpus Status — cogentia
 description: Current state of the cogentia knowledge corpus — what is proved, what is open, what remains possible
 layout: default
 nav_order: 2
-last_modified_at: 2026-10-17
+last_modified_at: 2026-10-27
 canonical_url: https://github.com/JeanHuguesRobert/cogentia/blob/main/research/corpus-status.md
-last_stamped_at: 2026-10-17
+last_stamped_at: 2026-10-27
 license: CC BY-SA 4.0
 affiliation: Institut Mariani / C.O.R.S.I.C.A., 1 cours Paoli, F-20250 Corte, Corsica
 date: 2026-05-27T00:00:00.000Z
@@ -43,22 +43,10 @@ update_policy: UP-DEFAULT-REVIEWED
 | FractaVolta | yes | main | all | public | full |
 | marenostrum | yes | main | all | public | full |
 | barons-Mariani | yes | main | all | public | full |
-| suicide-corse | no | main | all | public | full |
 | inseme | yes | main | research | public | full |
-| survey | yes | main | all | public | full |
-| Inox | yes | master | all | public | full |
-| registre-mariani | yes | main | all | private | stub |
+| Inox | yes | main | all | public | full |
 | ubikia | yes | main | all | public | full |
-| operium | yes | main | all | public | full |
-| serra | yes | main | all | public | full |
 | JeanHuguesRobert | yes | main | all | public | full |
-| privai | yes | main | all | public | full |
-| gouvernance | yes | main | all | public | full |
-| marianivillage | yes | main | all | public | full |
-| institut-mariani | yes | main | all | public | full |
-| Kudos | yes | main | all | public | full |
-| .github | yes | main | all | public | full |
-| acorsica.org | yes | main | all | public | full |
 | StructEnv | yes | main | all | public | full |
 <!-- END_AUTO: registered_repos -->
 ---
@@ -71,110 +59,58 @@ graph LR
   r_fractavolta["FractaVolta"]
   r_marenostrum["marenostrum"]
   r_barons_mariani["barons-Mariani"]
-  r_suicide_corse["suicide-corse"]
   r_inseme["inseme"]
-  r_survey["survey"]
   r_inox["Inox"]
-  r_registre_mariani["registre-mariani"]
   r_ubikia["ubikia"]
-  r_operium["operium"]
-  r_serra["serra"]
   r_jeanhuguesrobert["JeanHuguesRobert"]
-  r_privai["privai"]
-  r_gouvernance["gouvernance"]
-  r_marianivillage["marianivillage"]
-  r_institut_mariani["institut-mariani"]
-  r_kudos["Kudos"]
-  r_github[".github"]
-  r_acorsica_org["acorsica.org"]
   r_structenv["StructEnv"]
-  r_cogentia -->|139| r_barons_mariani
-  r_barons_mariani -->|95| r_cogentia
-  r_jeanhuguesrobert -->|68| r_barons_mariani
+  r_cogentia -->|150| r_barons_mariani
+  r_barons_mariani -->|115| r_cogentia
+  r_jeanhuguesrobert -->|96| r_barons_mariani
+  r_inseme -->|67| r_cogentia
   r_fractavolta -->|54| r_cogentia
-  r_inseme -->|45| r_cogentia
+  r_barons_mariani -->|42| r_jeanhuguesrobert
+  r_cogentia -->|42| r_inseme
+  r_jeanhuguesrobert -->|39| r_cogentia
   r_fractavolta -->|37| r_marenostrum
-  r_jeanhuguesrobert -->|36| r_cogentia
-  r_cogentia -->|35| r_inseme
   r_barons_mariani -->|24| r_marenostrum
-  r_barons_mariani -->|22| r_fractavolta
   r_fractavolta -->|22| r_inseme
   r_fractavolta -->|21| r_barons_mariani
+  r_barons_mariani -->|20| r_fractavolta
   r_inseme -->|20| r_barons_mariani
-  r_barons_mariani -->|19| r_inseme
   r_cogentia -->|19| r_marenostrum
+  r_inox -->|19| r_cogentia
   r_marenostrum -->|19| r_cogentia
-  r_barons_mariani -->|16| r_jeanhuguesrobert
-  r_inox -->|16| r_cogentia
+  r_barons_mariani -->|18| r_inseme
   r_jeanhuguesrobert -->|16| r_marenostrum
-  r_operium -->|14| r_cogentia
   r_inseme -->|12| r_fractavolta
   r_inseme -->|12| r_inox
   r_marenostrum -->|12| r_fractavolta
+  r_cogentia -->|11| r_jeanhuguesrobert
   r_inox -->|11| r_barons_mariani
   r_marenostrum -->|11| r_barons_mariani
   r_cogentia -->|10| r_fractavolta
+  r_inox -->|10| r_inseme
   r_inox -->|10| r_fractavolta
-  r_inox -->|9| r_inseme
   r_jeanhuguesrobert -->|9| r_fractavolta
-  r_cogentia -->|8| r_jeanhuguesrobert
+  r_barons_mariani -->|8| r_ubikia
   r_fractavolta -->|8| r_inox
   r_inox -->|8| r_marenostrum
-  r_ubikia -->|8| r_cogentia
   r_barons_mariani -->|7| r_inox
   r_inseme -->|7| r_jeanhuguesrobert
   r_jeanhuguesrobert -->|7| r_inseme
-  r_inseme -->|6| r_kudos
   r_jeanhuguesrobert -->|6| r_inox
-  r_cogentia -->|5| r_privai
-  r_ubikia -->|5| r_barons_mariani
-  r_barons_mariani -->|4| r_ubikia
+  r_ubikia -->|6| r_cogentia
   r_cogentia -->|4| r_inox
   r_fractavolta -->|4| r_jeanhuguesrobert
-  r_marianivillage -->|4| r_fractavolta
-  r_operium -->|4| r_inseme
-  r_operium -->|4| r_marenostrum
   r_ubikia -->|4| r_jeanhuguesrobert
-  r_github -->|3| r_gouvernance
   r_jeanhuguesrobert -->|3| r_ubikia
-  r_kudos -->|3| r_barons_mariani
-  r_operium -->|3| r_barons_mariani
-  r_barons_mariani -->|2| r_privai
-  r_cogentia -->|2| r_operium
-  r_gouvernance -->|2| r_barons_mariani
-  r_gouvernance -->|2| r_fractavolta
   r_inox -->|2| r_jeanhuguesrobert
   r_inseme -->|2| r_marenostrum
-  r_institut_mariani -->|2| r_barons_mariani
-  r_institut_mariani -->|2| r_fractavolta
   r_marenostrum -->|2| r_jeanhuguesrobert
   r_marenostrum -->|2| r_inseme
   r_marenostrum -->|2| r_inox
-  r_github -->|1| r_institut_mariani
-  r_barons_mariani -->|1| r_institut_mariani
-  r_cogentia -->|1| r_kudos
-  r_gouvernance -->|1| r_jeanhuguesrobert
-  r_gouvernance -->|1| r_cogentia
-  r_gouvernance -->|1| r_inseme
-  r_gouvernance -->|1| r_marenostrum
-  r_gouvernance -->|1| r_inox
-  r_gouvernance -->|1| r_kudos
-  r_gouvernance -->|1| r_marianivillage
-  r_inseme -->|1| r_operium
-  r_inseme -->|1| r_privai
   r_inseme -->|1| r_ubikia
-  r_institut_mariani -->|1| r_privai
-  r_institut_mariani -->|1| r_kudos
-  r_institut_mariani -->|1| r_marianivillage
-  r_institut_mariani -->|1| r_inseme
-  r_institut_mariani -->|1| r_cogentia
-  r_institut_mariani -->|1| r_marenostrum
-  r_institut_mariani -->|1| r_inox
-  r_jeanhuguesrobert -->|1| r_operium
-  r_kudos -->|1| r_institut_mariani
-  r_marianivillage -->|1| r_institut_mariani
-  r_privai -->|1| r_barons_mariani
-  r_privai -->|1| r_institut_mariani
 ```
 <!-- END_AUTO: graph -->
 ---
@@ -296,6 +232,7 @@ graph LR
   c_the_second_method["The Second Method"]
   c_projet_minesteggio["Projet Minesteggio"]
   c_discret_holography["Discret Holography"]
+  c_surface_de_chance["Surface de Chance"]
   c_cogentia["Cogentia"]
   c_cogentigram["Cogentigram"]
   c_cop_continuous_operation_protocol["COP (Continuous Operation Protocol)"]
@@ -683,6 +620,7 @@ graph LR
   click c_the_second_method "https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/concepts.md#the-second-method" "Open The Second Method"
   click c_projet_minesteggio "https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/concepts.md#projet-minesteggio" "Open Projet Minesteggio"
   click c_discret_holography "https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/concepts.md#discret-holography" "Open Discret Holography"
+  click c_surface_de_chance "https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/concepts.md#surface-de-chance" "Open Surface de Chance"
   click c_cogentia "https://github.com/JeanHuguesRobert/inseme/blob/main/research/concepts.md#cogentia" "Open Cogentia"
   click c_cogentigram "https://github.com/JeanHuguesRobert/inseme/blob/main/research/concepts.md#cogentigram" "Open Cogentigram"
   click c_cop_continuous_operation_protocol "https://github.com/JeanHuguesRobert/inseme/blob/main/research/concepts.md#cop-continuous-operation-protocol" "Open COP (Continuous Operation Protocol)"
@@ -697,19 +635,19 @@ graph LR
   click c_cop_cognitive_orchestration_protocol "https://github.com/JeanHuguesRobert/inseme/blob/main/research/concepts.md#cop-cognitive-orchestration-protocol" "Open COP (Cognitive Orchestration Protocol)"
   click c_brique_spec_multi_instance "https://github.com/JeanHuguesRobert/inseme/blob/main/research/concepts.md#brique-spec-multi-instance" "Open Brique Spec / Multi-Instance"
   click c_modular_system "https://github.com/JeanHuguesRobert/inseme/blob/main/research/concepts.md#modular-system" "Open Modular System"
-  click c_concatenative_language "https://github.com/JeanHuguesRobert/Inox/blob/master/research/concepts.md#concatenative-language" "Open Concatenative language"
-  click c_stack_vm "https://github.com/JeanHuguesRobert/Inox/blob/master/research/concepts.md#stack-vm" "Open Stack VM"
-  click c_control_data_plane_separation "https://github.com/JeanHuguesRobert/Inox/blob/master/research/concepts.md#control-data-plane-separation" "Open Control/data plane separation"
-  click c_named_values "https://github.com/JeanHuguesRobert/Inox/blob/master/research/concepts.md#named-values" "Open Named values"
-  click c_reactive_sets "https://github.com/JeanHuguesRobert/Inox/blob/master/research/concepts.md#reactive-sets" "Open Reactive sets"
-  click c_actors "https://github.com/JeanHuguesRobert/Inox/blob/master/research/concepts.md#actors" "Open Actors"
-  click c_dialects "https://github.com/JeanHuguesRobert/Inox/blob/master/research/concepts.md#dialects" "Open Dialects"
-  click c_fractanet "https://github.com/JeanHuguesRobert/Inox/blob/master/research/concepts.md#fractanet" "Open Fractanet"
+  click c_concatenative_language "https://github.com/JeanHuguesRobert/Inox/blob/main/research/concepts.md#concatenative-language" "Open Concatenative language"
+  click c_stack_vm "https://github.com/JeanHuguesRobert/Inox/blob/main/research/concepts.md#stack-vm" "Open Stack VM"
+  click c_control_data_plane_separation "https://github.com/JeanHuguesRobert/Inox/blob/main/research/concepts.md#control-data-plane-separation" "Open Control/data plane separation"
+  click c_named_values "https://github.com/JeanHuguesRobert/Inox/blob/main/research/concepts.md#named-values" "Open Named values"
+  click c_reactive_sets "https://github.com/JeanHuguesRobert/Inox/blob/main/research/concepts.md#reactive-sets" "Open Reactive sets"
+  click c_actors "https://github.com/JeanHuguesRobert/Inox/blob/main/research/concepts.md#actors" "Open Actors"
+  click c_dialects "https://github.com/JeanHuguesRobert/Inox/blob/main/research/concepts.md#dialects" "Open Dialects"
+  click c_fractanet "https://github.com/JeanHuguesRobert/Inox/blob/main/research/concepts.md#fractanet" "Open Fractanet"
   click c_cogentia "https://github.com/JeanHuguesRobert/JeanHuguesRobert/blob/main/research/concepts.md#cogentia" "Open Cogentia"
   click c_cogentigram "https://github.com/JeanHuguesRobert/JeanHuguesRobert/blob/main/research/concepts.md#cogentigram" "Open Cogentigram"
 ```
 
-*Orphan concepts: `Civilizational Stakes` (cogentia), `Cogentia` (cogentia), `Cogentia Commons` (cogentia), `Sovereign Digital Twin` (cogentia), `Agent-Resumable CLI` (cogentia), `Kernel Extractor` (cogentia), `KYS (Know Your Self) / Psychocognitive Analysis` (cogentia), `Cogentia Workflows` (cogentia), `Packet Capsule` (cogentia), `Human-Routed Handoff` (cogentia), `Recursive Reality Test` (cogentia), `Eventual Reconciliation` (cogentia), `IPN (Inference Packet Network)` (FractaVolta), `EPN (Energy Packet Network)` (FractaVolta), `PGN (Power Generation Node)` (FractaVolta), `Packet Attractors (Fractanet routing)` (FractaVolta), `Packet as evolutionary attractor` (FractaVolta), `The Unconscious Grid` (FractaVolta), `Mariani Village` (FractaVolta), `Value-Shaped Solar` (FractaVolta), `Containerized Compute (Tera)` (FractaVolta), `Traceable Governance` (FractaVolta), `DHITL (Democratic Human In The Loop)` (marenostrum), `CXU (Compute and Exergy Unit)` (marenostrum), `Safe Compute Exergy` (marenostrum), `Constellia` (marenostrum), `Corsica Forest Synergies` (marenostrum), `Sun to Sovereignty` (marenostrum), `Civilizational Stakes` (barons-Mariani), `Cogentia` (barons-Mariani), `Presencology` (barons-Mariani), `Presence` (barons-Mariani), `Projection of The Possible` (barons-Mariani), `Cognitive Waves` (barons-Mariani), `Mimetic Desynchronization` (barons-Mariani), `Invidia` (barons-Mariani), `Transition Markets` (barons-Mariani), `The Uchronian Museum` (barons-Mariani), `Possibilism` (barons-Mariani), `Territoires Possibilistes` (barons-Mariani), `The Second Method` (barons-Mariani), `Discret Holography` (barons-Mariani), `COP (Continuous Operation Protocol)` (inseme), `Briques` (inseme), `Kudocracy` (inseme), `Agora` (inseme), `Ophélia` (inseme), `COP (Cognitive Orchestration Protocol)` (inseme), `Brique Spec / Multi-Instance` (inseme), `Modular System` (inseme), `Reactive sets` (Inox), `Actors` (Inox), `Dialects` (Inox).*
+*Orphan concepts: `Civilizational Stakes` (cogentia), `Cogentia` (cogentia), `Cogentia Commons` (cogentia), `Sovereign Digital Twin` (cogentia), `Agent-Resumable CLI` (cogentia), `Kernel Extractor` (cogentia), `KYS (Know Your Self) / Psychocognitive Analysis` (cogentia), `Cogentia Workflows` (cogentia), `Packet Capsule` (cogentia), `Human-Routed Handoff` (cogentia), `Recursive Reality Test` (cogentia), `Eventual Reconciliation` (cogentia), `IPN (Inference Packet Network)` (FractaVolta), `EPN (Energy Packet Network)` (FractaVolta), `PGN (Power Generation Node)` (FractaVolta), `Packet Attractors (Fractanet routing)` (FractaVolta), `Packet as evolutionary attractor` (FractaVolta), `The Unconscious Grid` (FractaVolta), `Mariani Village` (FractaVolta), `Value-Shaped Solar` (FractaVolta), `Containerized Compute (Tera)` (FractaVolta), `Traceable Governance` (FractaVolta), `DHITL (Democratic Human In The Loop)` (marenostrum), `CXU (Compute and Exergy Unit)` (marenostrum), `Safe Compute Exergy` (marenostrum), `Constellia` (marenostrum), `Corsica Forest Synergies` (marenostrum), `Sun to Sovereignty` (marenostrum), `Civilizational Stakes` (barons-Mariani), `Cogentia` (barons-Mariani), `Presencology` (barons-Mariani), `Presence` (barons-Mariani), `Projection of The Possible` (barons-Mariani), `Cognitive Waves` (barons-Mariani), `Mimetic Desynchronization` (barons-Mariani), `Invidia` (barons-Mariani), `Transition Markets` (barons-Mariani), `The Uchronian Museum` (barons-Mariani), `Possibilism` (barons-Mariani), `Territoires Possibilistes` (barons-Mariani), `The Second Method` (barons-Mariani), `Discret Holography` (barons-Mariani), `Surface de Chance` (barons-Mariani), `COP (Continuous Operation Protocol)` (inseme), `Briques` (inseme), `Kudocracy` (inseme), `Agora` (inseme), `Ophélia` (inseme), `COP (Cognitive Orchestration Protocol)` (inseme), `Brique Spec / Multi-Instance` (inseme), `Modular System` (inseme), `Reactive sets` (Inox), `Actors` (Inox), `Dialects` (Inox).*
 
 *Referenced but undefined: `Democratic AI Safety`, `Cogentia Commons (déclinaison manuelle)`, `Fractanet / COP (déclinaison automatisée)`, `Stabilisateurs (anti-Ubik)`, `DHITL (couches 4/5)`, `Effet Ubik (opposé)`, `Machine à explorer (opposé symétrique)`, `FM-11 (outer optimizer capture)`, `Concentration de compute (85% frontier)`, `Invidia (densité sociale destructrice)`, `DHITL (Compute Exergy comme unité traçable)`, `Map vs territory`, `Operational memory`, `Traceable agency`, `Non-deterministic Cognitive Step`, `Causal Trace Replay`, `COP/HITL Profile`, `Rule 0 (seconde méthode)`, `DHITL Layer 5`, `Engagement levels (E3/E4)`, `Envelope (kind-agnostic metadata layer)`, `Payload (kind-specific content layer)`, `Continuation payload`, `Objection payload`, `Hypothesis payload`, `Decision payload`, `Failure payload`, `Routing payload`, `Source Document`, `DHITL`, `Machine à explorer (contrepartie exploratoire)`, `Machine à Rendre Capable (symétrique constructif)`, `Machine à empêcher (symétrique critique)`, `Machine à explorer (complément exploratoire)`, `Écart capacitaire`, `Situation de handicap comme écart capacitaire situé`, `Capabilities approach / facteurs de conversion`, `Écart d’effectivité`, `Booster Principle`, `Démocratie capable`, `Potentique territoriale`, `Méthode des terrains féconds`, `corrigibilité`, `non-abandon capacitaire`, `assistance non directive`, `contrôle-capacité`, `facteurs de conversion`, `écart d’égalité effective`, `asymétrie capacitaire`, `Potentique`, `liberté de non-usage`, `bifurcation`, `réversibilité`, `sortie`, `Agent Mandaté`, `non-auto-élévation`, `Effectivité`, `Rational Odyssey`, `Rational Exploration of The Possible`, `Potentiality Map`, `Explicit Supermap`, `Rich Stigmergy`, `Flotilla Architecture`, `Cartographer`, `Possibilism (academic framework)`, `COP (stigmergic orchestration)`, `DHITL (democratic human-in-the-loop)`, `Digital twins as cognitive liberation`, `Attractor-based exploration`, `Stateless agents for scalable exploration`, `Joy as method (against grim optimization)`, `Musée Mariani des Possibles (muséological application)`, `Applied Possibilism in agile style`, `Continuations as resumable exploration`, `Capabilities approach (Sen, Nussbaum)`, `Spécificité de phase`, `Flexibilité d'usage (redistributive vs. predatory)`, `Auto-institution démocratique (Castoriadis)`, `Communs (Ostrom)`, `Mauss — gift / counter-gift`, `Democratic AI Safety (thesis kernel)`, `DHITL — Democratic Humans in the Loop`, `Cogentia Commons (auditable knowledge)`, `Traçabilité civique anti-mafieuse`, `Muséologie capacitaire`, `Indice de friction administrative`, `Indice de capacité retrouvée`, `Grille de remise en service`, `Deterministic Replay (protocol layer only)`, `Energy Packet Network (FractaVolta)`, `Cognitive Packet envelope/payload (Cogentia)`, `Auxilia (Inseme brique — human-scale Fractanet exchange)`.*
 <!-- END_AUTO: concept_graph -->
@@ -840,7 +778,7 @@ graph LR
 - [From Biometrics and Psychometrics to Structural Signatures](structural_signatures.md)
 - [Frontmatter Synonym Mapping — v0.1](../docs/frontmatter-synonym-mapping.md)
 - [Research Index — FractaVolta](https://github.com/JeanHuguesRobert/FractaVolta/blob/main/research/index.md)
-- [Research Index — Inox](https://github.com/JeanHuguesRobert/Inox/blob/master/research/index.md)
+- [Research Index — Inox](https://github.com/JeanHuguesRobert/Inox/blob/main/research/index.md)
 - [Research Index — Inseme](https://github.com/JeanHuguesRobert/inseme/blob/main/research/index.md)
 - [Research Index — Jean Hugues Noël Robert (Profile / Entry Point)](https://github.com/JeanHuguesRobert/JeanHuguesRobert/blob/main/research/index.md)
 - [Research Index — MareNostrum](https://github.com/JeanHuguesRobert/marenostrum/blob/main/research/index.md)

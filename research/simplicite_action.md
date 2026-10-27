@@ -162,5 +162,6 @@ continuation:
 *These documents link to this file:*
 - [Conceptual Gravity — Governed Conceptual Routing for a Self-Orienting Reactive Corpus](conceptual_gravity.md)
 - [FractaCognition — Prudence, Humility, Occam, Hanlon, Talleyrand, Bounded Assertion, Friends Before Competitors, and Locality](fractacognition_principles.md)
+- [Packet/Continuation Machine — distributed branching computation model](packet_continuation_machine.md)
 - [Research Index — Cogentia](index.md)
 <!-- END_AUTO: backlinks -->

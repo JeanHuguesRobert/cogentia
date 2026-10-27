@@ -204,5 +204,6 @@ The system should remain simple until repeated use proves what deserves automati
 ### Backlinks
 
 *These documents link to this file:*
+- [Interaction evidence in the Corpus Sleep Cycle](../docs/interaction-evidence-sleep-cycle.md)
 - [Jean Hugues Robert — Tableau de bord Interaction Packets](dashboard.md)
 <!-- END_AUTO: backlinks -->
