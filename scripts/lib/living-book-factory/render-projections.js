@@ -7,12 +7,42 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
+import { execFileSync } from 'node:child_process';
 import * as jsYaml from 'js-yaml';
 import { loadManifest } from './manifest.js';
 import { renderLivingBookPdf } from './pdf-book-renderer.js';
 import { renderLivingBookEpub } from './epub-renderer.js';
 
-function markdownToSimpleHtml(md) {
+function repositoryContext(projectDir) {
+  try {
+    const root = execFileSync('git', ['-C', projectDir, 'rev-parse', '--show-toplevel'], { encoding: 'utf8' }).trim();
+    const remote = execFileSync('git', ['-C', projectDir, 'remote', 'get-url', 'origin'], { encoding: 'utf8' }).trim();
+    const match = remote.match(/^(?:git@github\\.com:|https:\\/\\/github\\.com\\/)([A-Za-z0-9_.-]+\\/[A-Za-z0-9_.-]+?)(?:\\.git)?$/);
+    if (!match) return null;
+    return { root, repo: match[1] };
+  } catch {
+    return null;
+  }
+}
+
+function resolveSourceLink(raw, chapterFile, siteDir, context, warnings) {
+  if (!raw.startsWith('../') && !raw.startsWith('./')) return raw;
+  const [relative, suffix = ''] = raw.split(/(?=[?#])/, 2);
+  const target = path.resolve(path.dirname(chapterFile), relative);
+  // Existing site-local references stay local. Chapter links to non-site files
+  // can only become GitHub links if the actual source exists in the same repo.
+  if (target.startsWith(siteDir + path.sep) && fs.existsSync(target)) {
+    return path.relative(siteDir, target).split(path.sep).join('/') + suffix;
+  }
+  if (context && target.startsWith(context.root + path.sep) && fs.existsSync(target) && fs.statSync(target).isFile()) {
+    const rel = path.relative(context.root, target).split(path.sep).map(encodeURIComponent).join('/');
+    return 'https://github.com/' + context.repo + '/blob/main/' + rel + suffix;
+  }
+  warnings.push({ chapter: path.basename(chapterFile), href: raw, reason: 'unresolved_source_reference' });
+  return raw;
+}
+
+function markdownToSimpleHtml(md, resolveLink = href => href) {
   let html = md;
 
   // Escape basic XML chars first
@@ -180,6 +210,9 @@ export function renderLivingBookProjections(projectDirInput, options = {}) {
   }
 
   const chapters = [];
+  const linkWarnings = [];
+  const repoContext = repositoryContext(projectDir);
+  const siteRoot = path.join(projectDir, 'site');
 
   for (const f of files) {
     const fullPath = path.join(manuscriptDir, f);
@@ -200,7 +233,7 @@ export function renderLivingBookProjections(projectDirInput, options = {}) {
 
     const title = frontmatter.title || f.replace(/^\d+-/, '').replace(/\.md$/, '').replace(/-/g, ' ');
     const subtitle = frontmatter.subtitle || '';
-    const htmlBody = markdownToSimpleHtml(body);
+    const htmlBody = markdownToSimpleHtml(body, href => resolveSourceLink(href, fullPath, siteRoot, repoContext, linkWarnings));
 
     chapters.push({
       file: f,
@@ -415,6 +448,7 @@ ${chaptersHtml}
   return {
     bookId: bookMeta.id,
     projDir,
+    linkWarnings,
     html: { path: htmlProjPath, sha256: htmlSha, size: Buffer.byteLength(fullHtml, 'utf8') },
     pdf: { path: pdfProjPath, sha256: pdfSha, size: pdfBuffer.length },
     epub: { path: epubProjPath, sha256: epubSha, size: epubBuffer.length }
