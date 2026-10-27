@@ -53,6 +53,16 @@ Decide at each potential stopping point: is the objective complete, does a genui
 
 Source doctrine: [Measured Risk](../research/measured_risk.md); mandate and implementation packet: [Cogentia #285](https://github.com/JeanHuguesRobert/cogentia/issues/285).
 
+## No ritual backups, copies, or precautionary isolation
+
+**Precautions require a demonstrated need, not merely an imaginable failure.** Before prescribing a backup, snapshot, temporary project copy, separate worktree, staging clone, or additional isolation layer, identify (1) the concrete reachable loss scenario, (2) the asset not already recoverable through the existing versioned state and operational controls, (3) its exposure and recovery cost, and (4) why the least-cost existing mechanism is inadequate. If no such reason is established, **do not create or request the extra copy**.
+
+In a clean, version-controlled Git repository, prefer direct scoped edits, status/diff, targeted tests, and commit/revert when these suffice. A renderer's writes to tracked generated files are not inherently a reason to duplicate the entire project; inspect its write set and existing protection first. If a generator could overwrite unique untracked/unversioned material, or external/frozen assets, state and address that specific risk proportionately. Preserve actual publication, disclosure and third-party authorization boundaries.
+
+The cost of making and later reconciling redundant copies—operator attention, storage, stale versions, semantic drift, delayed completion—is itself an Exposure under Measured Risk. **No precaution may be justified solely by invoking "safety", "prudence", or "best practices" without a case-specific rationale.** Do not ritualize a precaution once its initial trigger has disappeared.
+
+Source: [Measured Risk](../research/measured_risk.md), [FractaCognition principles](../research/fractacognition_principles.md), and Occam / Minimum Sufficient Locality.
+
 ## Mandatory two-channel GitHub Actions discipline (FBF)
 
 **Before creating or changing ANY workflow, recall and enforce this invariant.** GitHub Actions status is the transport/infrastructure channel, not the task result. Expected work failures (test, build, validation, missing dependency/input, timeout, and handled exceptions) MUST be converted to typed durable results while the GitHub job/check remains green. Preserve the original phase, error code, cause, logs, and outcome in a separate COP receipt/Issue callback and/or artifact. Never hide the cause to make the check green.
