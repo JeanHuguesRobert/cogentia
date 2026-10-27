@@ -93,7 +93,7 @@ export function scaffoldLivingBook(manifest, targetDir, options = {}) {
     '/site/book.pdf',
     '/site/book.epub',
     ''
-  ].join('\\n'));
+  ].join('\n'));
 
   // 2. Manifest file
   writeFile('living-book.yml', jsYaml.dump(manifest));
