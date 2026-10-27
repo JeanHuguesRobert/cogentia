@@ -230,7 +230,7 @@ export function renderLivingBookProjections(projectDirInput, options = {}) {
     </article>
   `).join('\n<hr class="chapter-sep"/>\n');
 
-  const fullHtml = `<!doctype html>
+  let fullHtml = `<!doctype html>
 <html lang="${bookMeta.language}">
 <head>
 <meta charset="utf-8">
@@ -291,13 +291,14 @@ ${chaptersHtml}
 </body>
 </html>`;
 
+  fullHtml = fullHtml.replace(/^[ \\t]+$/gm, '');
   const htmlProjPath = path.join(projDir, 'preview.html');
   fs.writeFileSync(htmlProjPath, fullHtml, 'utf8');
   const htmlSha = crypto.createHash('sha256').update(fullHtml).digest('hex');
 
   // 5. Update site/book.html with embedded reading view
   const siteBookPath = path.join(siteDir, 'book.html');
-  const siteBookContent = `<!doctype html>
+  let siteBookContent = `<!doctype html>
 <html lang="${bookMeta.language}">
 <head>
 <meta charset="utf-8">
@@ -338,7 +339,7 @@ ${chaptersHtml}
     <div>
       <a class="btn-download" href="book.pdf" download>Format PDF</a>
       <a class="btn-download" href="book.epub" download>Format EPUB</a>
-      <a class="btn-download" href="../projections/preview.html" target="_blank" style="background:#4a5568;">Version intégrale</a>
+      <a class="btn-download" href="index.html" style="background:#4a5568;">Retour à l’accueil</a>
     </div>
   </div>
 
@@ -357,6 +358,7 @@ ${chaptersHtml}
 </footer>
 </body>
 </html>`;
+  siteBookContent = siteBookContent.replace(/^[ \\t]+$/gm, '');
   fs.writeFileSync(siteBookPath, siteBookContent, 'utf8');
 
   // 6. Write projection contract in projections/preview.yml
