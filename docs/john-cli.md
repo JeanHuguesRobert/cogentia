@@ -1,12 +1,27 @@
 ---
 title: "John CLI — headless event contract"
 date: "2026-08-20"
+last_modified_at: '2026-10-27'
+author: unknown
+affiliation: unknown
+license: CC BY-SA 4.0
+status: "working-paper — updated for failed-yield reporting"
+canonical_url: https://github.com/JeanHuguesRobert/cogentia/blob/main/docs/john-cli.md
 document_role: operational
 document_kind: documentation
 visibility: public
 lifecycle_state: experimental
 update_policy: UP-DEFAULT-REVIEWED
 language: en
+provenance:
+  origin_type: unknown
+  origin_repository: JeanHuguesRobert/cogentia
+  origin_ref: unknown
+  origin_date: unknown
+  derived_from: []
+review:
+  status: unreviewed
+  reviewed_by: []
 related_issues:
   - cogentia#112
   - inseme#54
@@ -59,6 +74,11 @@ time and external effects.
 NDJSON is canonical. Human rendering is a projection. Every run emits exactly
 one terminal event: `john.run.completed`, `john.run.failed`, or
 `john.run.cancelled`.
+
+Both success and failure return a packet yield. A failed run keeps its failure
+status and code while exposing the semantic yield, operational counters, and
+safe handler error name/code when available; callers must not discard that
+result merely because execution did not complete successfully.
 
 ## Symmetric MCP Projection (`cogentia_john_run`)
 

@@ -153,7 +153,7 @@ export class JohnRepl {
       if (completed) {
         outputLines.push(completed.data.result.yield?.semantic_yield || completed.data.result.text);
       } else if (failed) {
-        outputLines.push(`[Execution Failed]: ${failed.data.code}`);
+        outputLines.push(`[Execution Failed]: ${failed.data?.data?.code || failed.data?.code || "execution_failed"}`);
       }
     }
 

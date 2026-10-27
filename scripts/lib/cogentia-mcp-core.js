@@ -1922,6 +1922,7 @@ export function createMcpCore(env = process.env, extras = {}) {
         });
         const completed = events.find((e) => e.type === "john.run.completed");
         const failed = events.find((e) => e.type === "john.run.failed");
+        const failedData = failed?.data?.data || failed?.data || {};
         const settled = events.find((e) => e.type === "john.accounting.settled");
         const admitted = events.find((e) => e.type === "john.packet.admitted");
 
@@ -1930,10 +1931,11 @@ export function createMcpCore(env = process.env, extras = {}) {
           request_id: req.request_id,
           packet_id: admitted?.data?.packet_id || null,
           status: completed ? "completed" : "failed",
-          text: completed?.data?.result?.text || failed?.data?.text || "",
-          yield: completed?.data?.result?.yield || null,
+          text: completed?.data?.result?.text || failedData.text || failedData.yield?.semantic_yield || "",
+          yield: completed?.data?.result?.yield || failedData.yield || null,
           accounting: settled?.data || null,
-          odyssey: completed?.data?.result?.odyssey || failed?.data?.odyssey || null,
+          odyssey: completed?.data?.result?.odyssey || failedData.odyssey || null,
+          failure: failed ? { code: failedData.code || "execution_failed", handler_error: failedData.handler_error || null } : null,
           events_count: events.length,
           events,
         };

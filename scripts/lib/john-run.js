@@ -476,6 +476,9 @@ export async function runJohnRequest(request, options = {}) {
   };
   packet.yield = packetYield;
   packet.envelope.status = executionSuccess ? "solved" : "failed";
+  const handlerFailure = Array.isArray(harnessResult?.steps)
+    ? [...harnessResult.steps].reverse().find((entry) => entry?.result?.status === "failed" && (entry.result.error_name || entry.result.error_code))?.result
+    : null;
 
   // Hop 2: Return to Ithaca
   const returnTime = nowIso();
@@ -531,6 +534,10 @@ export async function runJohnRequest(request, options = {}) {
           text: outputText,
           packet_id: packet.envelope.id,
           status: packet.envelope.status,
+          yield: packetYield,
+          handler_error: handlerFailure
+            ? { name: handlerFailure.error_name || null, code: handlerFailure.error_code || null }
+            : null,
           odyssey,
         },
       })
@@ -572,7 +579,7 @@ export function renderJohnEventHuman(item) {
     return `✨ [Run Completed]: status=${item.data?.result?.status || "returned"}`;
   }
   if (item.type === "john.run.failed") {
-    return `❌ [Run Failed]: code=${item.data?.code}`;
+    return `❌ [Run Failed]: code=${item.data?.data?.code || item.data?.code || "execution_failed"}`;
   }
   if (isTerminalEvent(item)) return `[${item.type}]`;
   return `[${item.type}] ${JSON.stringify(item.data)}`;

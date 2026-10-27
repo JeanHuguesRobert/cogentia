@@ -240,7 +240,8 @@ async function buildHostedBrowserDraft(normalized, config, options, userText) {
   });
   const completed = events.find((item) => item.type === "john.run.completed");
   const failed = events.find((item) => item.type === "john.run.failed");
-  const answer = String(completed?.data?.result?.text || failed?.data?.text || "").trim();
+  const failedData = failed?.data?.data || failed?.data || {};
+  const answer = String(completed?.data?.result?.text || failedData.text || failedData.yield?.semantic_yield || "").trim();
   return {
     ...base,
     text: answer || "Je n’ai pas pu compléter la demande de navigateur. Vérifie que le pont Fracta2 et son extension sont connectés.",
