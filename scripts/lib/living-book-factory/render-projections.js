@@ -17,7 +17,7 @@ function repositoryContext(projectDir) {
   try {
     const root = execFileSync('git', ['-C', projectDir, 'rev-parse', '--show-toplevel'], { encoding: 'utf8' }).trim();
     const remote = execFileSync('git', ['-C', projectDir, 'remote', 'get-url', 'origin'], { encoding: 'utf8' }).trim();
-    const match = remote.match(/^(?:git@github\\.com:|https:\\/\\/github\\.com\\/)([A-Za-z0-9_.-]+\\/[A-Za-z0-9_.-]+?)(?:\\.git)?$/);
+    const match = remote.match(/^(?:git@github\.com:|https:\/\/github\.com\/)([A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+?)(?:\.git)?$/);
     if (!match) return null;
     return { root, repo: match[1] };
   } catch {
