@@ -373,6 +373,7 @@ export async function runJohnRequest(request, options = {}) {
     const limits = {
       maxSteps: request.execution_budget.max_steps,
       maxCapabilityCalls: request.execution_budget.max_tool_calls,
+      maxExternalEffects: request.execution_budget.max_external_effects,
       maxElapsedMs: request.execution_budget.max_elapsed_ms,
       maxInternalEffects: Math.min(
         request.execution_budget.max_internal_effects ?? 0,
@@ -464,6 +465,7 @@ export async function runJohnRequest(request, options = {}) {
     operational_yield: {
       observed_steps: observedSteps,
       capability_calls: capabilityCallsCount,
+      external_effects: harnessResult?.externalEffects || 0,
       cost_units: costUnits,
       elapsed_ms: Math.max(1, Date.now() - startTime),
       handler_id: request.handler.id,
@@ -496,7 +498,7 @@ export async function runJohnRequest(request, options = {}) {
     event(request, seq++, "john.accounting.settled", {
       settlement_mode: "exact",
       provider_cost: costUnits,
-      external_effects: 0,
+      external_effects: harnessResult?.externalEffects || 0,
       internal_effects: harnessResult?.internalEffects || 0,
       observed_steps: observedSteps,
       tool_calls_count: capabilityCallsCount,

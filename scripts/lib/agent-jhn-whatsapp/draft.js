@@ -32,6 +32,9 @@ import {
   projectTurnAccounting,
 } from "../cop-surface-accounting.js";
 import { runAgentJohnV2SurfaceTurn } from "../agent-jhn-reasoning-loop-v2.js";
+import { runJohnRequest } from "../john-run.js";
+import { createHostedBrowserCapabilities } from "../hosted-browser-capabilities.js";
+import { isAllowedSelfPeer } from "./self-peer.js";
 
 const RETRIEVAL_MODES = new Set(["guide", "librarian", "shadow"]);
 
@@ -119,6 +122,19 @@ export function buildDeterministicDraft(normalized, config, options = {}) {
  * Build a cognitive draft via Guide and/or corpus librarian retrieval.
  */
 export async function buildCognitiveDraft(normalized, config, options = {}) {
+  const requestedText = String(normalized?.text || "").trim();
+  if (requestedText && isHostedBrowserRequest(requestedText)) {
+    if (!isAllowedSelfPeer(normalized, config).ok) {
+      return {
+        ...buildDeterministicDraft(normalized, config, options),
+        text: "La capacité du navigateur hébergé est réservée au self-chat autorisé d’Agent John.",
+        stub: true,
+        browser_task: true,
+        browser_trace: { status: "denied", reason: "self_chat_only" },
+      };
+    }
+    return buildHostedBrowserDraft(normalized, config, options, requestedText);
+  }
   if (!options.reasoningLoopV2Internal) {
     const v2 = await runAgentJohnV2SurfaceTurn({
       text: normalized?.text || "",
@@ -169,6 +185,73 @@ export async function buildCognitiveDraft(normalized, config, options = {}) {
 
   const guideDraft = await buildGuideDraft(normalized, config, options, questionAnalysis, userText);
   return { ...guideDraft, retrieval_mode: "guide" };
+}
+
+function isHostedBrowserRequest(text) {
+  return /(?:browser\.fractavolta\.com|hosted browser|navigateur hébergé|mon navigateur|navigateur actif|onglet actif|dans (?:le|mon) navigateur|browser tab)/i.test(String(text || ""));
+}
+
+async function buildHostedBrowserDraft(normalized, config, options, userText) {
+  const apiKey = String(process.env.OPENAI_API_KEY || "").trim();
+  const base = buildDeterministicDraft(normalized, config, options);
+  if (!apiKey) {
+    return { ...base, text: "Je n’ai pas le fournisseur de raisonnement nécessaire pour piloter le navigateur dans cette session. La capacité est disponible via l’interface MCP Agent John.", stub: true };
+  }
+  const requestedInteraction = /\b(ouvre|ouvrir|open|navigue|va sur|sélectionne|active|ferme|close|insère|saisis|tape)\b/i.test(userText);
+  const capabilities = createHostedBrowserCapabilities({
+    gateway: process.env.COGENTIA_HOSTED_BROWSER_GATEWAY,
+    health: process.env.COGENTIA_HOSTED_BROWSER_HEALTH,
+  });
+  const allowedCapabilities = capabilities
+    .filter((item) => item.name === "browser.hosted.inspect" || (requestedInteraction && item.name === "browser.hosted.interact"))
+    .map((item) => item.name);
+  const requestId = "wa-browser-" + Date.now() + "-" + Math.random().toString(16).slice(2, 8);
+  const request = {
+    version: "john.request.v1",
+    request_id: requestId,
+    principal: { id: config.principal_id || "principal:jhn" },
+    mandate: { id: config.mandate_id || "mandate:agent-jhn-whatsapp", version: String(config.mandate_version || "1") },
+    budget: { id: "budget:" + requestId },
+    execution_budget: {
+      max_steps: 5,
+      max_tool_calls: 3,
+      max_subagents: 0,
+      max_elapsed_ms: 30000,
+      max_external_effects: 0,
+      max_internal_effects: requestedInteraction ? 2 : 0,
+    },
+    exposure: requestedInteraction ? "bounded" : "read_only",
+    capability: "browser.hosted.session",
+    input: { prompt: userText },
+    handler: {
+      id: "openai.step_reasoner",
+      kind: "step_reasoner",
+      model: process.env.AGENT_JHN_WHATSAPP_OPENAI_MODEL || "gpt-5.6-sol",
+      allowed_capabilities: allowedCapabilities,
+      confirmed_capabilities: [],
+    },
+  };
+  const events = await runJohnRequest(request, {
+    env: process.env,
+    apiKey,
+    capabilities,
+    allowedCapabilities,
+    maxInternalEffects: requestedInteraction ? 2 : 0,
+  });
+  const completed = events.find((item) => item.type === "john.run.completed");
+  const failed = events.find((item) => item.type === "john.run.failed");
+  const answer = String(completed?.data?.result?.text || failed?.data?.text || "").trim();
+  return {
+    ...base,
+    text: answer || "Je n’ai pas pu compléter la demande de navigateur. Vérifie que le pont Fracta2 et son extension sont connectés.",
+    stub: !completed,
+    browser_task: true,
+    browser_request_id: requestId,
+    browser_trace: {
+      status: completed ? "completed" : "failed",
+      capabilities: events.filter((item) => item.type === "john.tool.requested").map((item) => item.data?.capability).filter(Boolean),
+    },
+  };
 }
 
 async function buildGuideDraft(normalized, config, options, questionAnalysis, userText) {

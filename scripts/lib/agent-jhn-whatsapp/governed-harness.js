@@ -55,6 +55,7 @@ export function createGovernedHarness(options = {}) {
         maxSteps: boundedInteger(limits.maxSteps, 4, 1, 12),
         maxCapabilityCalls: boundedInteger(limits.maxCapabilityCalls, 3, 0, 10),
         maxInternalEffects: boundedInteger(limits.maxInternalEffects, 0, 0, 10),
+        maxExternalEffects: boundedInteger(limits.maxExternalEffects, 0, 0, 10),
         maxElapsedMs: boundedInteger(limits.maxElapsedMs, 15000, 100, 120000),
         maxCostUnits: boundedInteger(limits.maxCostUnits, 10, 0, 1000),
       };
@@ -74,6 +75,7 @@ export function createGovernedHarness(options = {}) {
         requiredEventCount: typeof init.requiredEventCount === "number" ? init.requiredEventCount : (init.requiredEventReceipts ? init.requiredEventReceipts.length : 0),
         capabilityCalls: typeof init.capabilityCalls === "number" ? init.capabilityCalls : 0,
         internalEffects: typeof init.internalEffects === "number" ? init.internalEffects : 0,
+        externalEffects: typeof init.externalEffects === "number" ? init.externalEffects : 0,
         costUnits: typeof init.costUnits === "number" ? init.costUnits : 0,
       };
 
@@ -266,6 +268,7 @@ function snapshot(state, registry, bounds) {
     nextSequence: state.sequence,
     capabilityCalls: state.capabilityCalls,
     internalEffects: state.internalEffects,
+    externalEffects: state.externalEffects,
     costUnits: state.costUnits,
     requiredEventCount: state.requiredEventCount || 0,
     capabilities: registry.list(),
@@ -279,7 +282,7 @@ function terminal(ok, stopReason, answer, state, startedAt, clock, extra = {}) {
     ok, answer, stopReason, observations: state.observations, steps: state.steps,
     stepCount: state.sequence, requiredEventCount: state.requiredEventCount || 0,
     requiredEventReceipts: state.requiredEventReceipts || [],
-    capabilityCalls: state.capabilityCalls, internalEffects: state.internalEffects, costUnits: state.costUnits,
+    capabilityCalls: state.capabilityCalls, internalEffects: state.internalEffects, externalEffects: state.externalEffects, costUnits: state.costUnits,
     latencyMs: clock() - startedAt, ...extra,
   };
 }
@@ -302,6 +305,9 @@ async function governedInvokeCapability({
   if (capability.risk === "internal_recoverable" && state.internalEffects >= bounds.maxInternalEffects) {
     return { status: "budget", reason: "internal_effect_budget" };
   }
+  if (capability.risk === "external_write" && state.externalEffects >= bounds.maxExternalEffects) {
+    return { status: "budget", reason: "external_effect_budget" };
+  }
   if (state.costUnits + capability.costUnits > bounds.maxCostUnits) {
     return { status: "budget", reason: "cost_budget" };
   }
@@ -322,6 +328,7 @@ async function governedInvokeCapability({
   }
   state.capabilityCalls += 1;
   if (capability.risk === "internal_recoverable") state.internalEffects += 1;
+  if (capability.risk === "external_write") state.externalEffects += 1;
   state.costUnits += capability.costUnits;
   const callStartedAt = clock();
   try {

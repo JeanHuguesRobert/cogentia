@@ -28,7 +28,7 @@ First direct WhatsApp adapter for Agent JHN. Narrow by design.
 
 - OpenClaw runtime, public REST, CRM, UI, multi-tenancy, Personas.
 - Third-party send, media handling, campaign automation, commercial bots.
-- Linking WhatsApp to Agent Gateway, shell, browser, or general action tools.
+- Linking WhatsApp to Agent Gateway, shell, or general action tools. A separately governed hosted-browser route is available only for explicit self-chat requests; it does not enable generic shell or gateway access.
 - Representation mandate: Agent JHN is **not** Jean Hugues Robert and does not speak in his name.
 - Concurrent multi-agent use of the same account (architecture allows future grants; MVP activates only `agent-jhn`).
 
@@ -75,6 +75,23 @@ The outbound gate is the last transform: unmarked drafts are stamped with a visi
 Turn civil date/time comes from an explicit clock (`AGENT_JHN_WHATSAPP_TIMEZONE`, default `Europe/Paris`), never from yesterday’s cached prompt or thread summary.
 
 `last-self-peer.json` may only remember a **confirmed self** JID. An outgoing chat with someone else must not become the next send target.
+
+## Hosted browser capability (self-chat only)
+
+When an explicitly addressed self-chat request names the Fracta2 hosted browser,
+the WhatsApp adapter routes it through Agent John's governed step runner and the
+same extension bridge documented in [`navigation-assistant.md`](navigation-assistant.md).
+The adapter exposes status, tab listing, active-page context, and explicitly
+requested tab navigation or text insertion. Its WhatsApp path does not expose
+arbitrary page JavaScript, form submission, or public posting. Those require the
+authenticated `cogentia_john_run` path and, for page JavaScript, explicit
+`browser.hosted.evaluate` confirmation. The portable method is
+[`skills/hosted-browser-fracta/SKILL.md`](../skills/hosted-browser-fracta/SKILL.md).
+
+The feature requires the Fracta2 navigation extension to remain connected to
+`navigation-assistant-gateway` on loopback. A disconnected extension produces a
+normal failed browser result; it does not fall back to public CDP or export
+session credentials.
 
 ## Commands
 

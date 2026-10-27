@@ -1,3 +1,6 @@
+Warning: truncated output (original token count: 23545)
+Total output lines: 2278
+
 import { listAgentSkills, getAgentSkill, exportSkillAsMethodPackage, resolveRepoRoot } from "./cogentia-agent-skills.js";
 import {
   extractCorrelation,
@@ -10,6 +13,7 @@ import { captureMemoryForSurface, MEMORY_CAPTURE_MAX_BYTES } from "./memory-capt
 import { compareMandateAttenuation } from "./mandate-attenuation.js";
 import { runJohnRequest } from "./john-run.js";
 import { createAgentJhnWorkspaceCapabilities } from "./agent-jhn-workspace.js";
+import { createHostedBrowserCapabilities } from "./hosted-browser-capabilities.js";
 import { auditCapabilitySymmetry } from "./symmetry-audit.js";
 import { listPatterns, getPattern } from "./cogentia-patterns.js";
 import { createHostCapabilityRouter } from "./host-capability-router.js";
@@ -1046,343 +1050,7 @@ async function resolveResourceRead(uri, env) {
   if (read.deferred === "inventory") {
     const { buildCapabilityInventory, CLI_COMMANDS } = await import("./capability-inventory.js");
     const inventory = buildCapabilityInventory({ env });
-    const payload = read.uri === "cogentia://cli/catalog"
-      ? { ok: true, uri: read.uri, commands: CLI_COMMANDS }
-      : inventory;
-    return {
-      ok: true,
-      uri: read.uri,
-      mimeType: "application/json",
-      text: JSON.stringify(payload, null, 2),
-    };
-  }
-  return read;
-}
-
-function parseAllowMutate(env, view) {
-  if (view !== "full") return false;
-  const raw = String(env.COGENTIA_MCP_ALLOW_MUTATE || "").trim().toLowerCase();
-  return raw === "1" || raw === "true" || raw === "yes";
-}
-
-async function listOperiumCalendarViaOna(nodeId, env, timeoutMs) {
-  const base = String(env.ONA_URL || "http://127.0.0.1:8794").replace(/\/$/, "");
-  const token = String(env.ONA_READ_TOKEN || env.ONA_ADMIN_TOKEN || "").trim();
-  const headers = { Accept: "application/json" };
-  if (token) headers.Authorization = `Bearer ${token}`;
-  const url = `${base}/node/calendar`;
-  const response = await fetch(url, {
-    method: "GET",
-    headers,
-    signal: AbortSignal.timeout(timeoutMs),
-  });
-  const body = await response.json().catch(() => ({ ok: false, error: "invalid_json" }));
-  if (!response.ok) {
-    const err = new Error(body.error || `ona_calendar_http_${response.status}`);
-    err.error_class = body.error || "ona_calendar_failed";
-    throw err;
-  }
-  return { ...body, proxy: { node_id: nodeId, routed_via: "ona_direct" } };
-}
-
-export function createMcpCore(env = process.env, extras = {}) {
-  const daemonUrl = validateDaemonUrl(env.COGENTIA_DAEMON_URL || "http://127.0.0.1:8790");
-  // Phase 4 inventory-backed tools need headroom; Fracta Guide already uses 90s.
-  const requestTimeoutMs = boundedInteger(env.COGENTIA_MCP_TIMEOUT_MS, 60000, 1000, 120000);
-  const requestedView = String(env.COGENTIA_MCP_VIEW || "public").toLowerCase();
-  const adminToken = String(env.COGENTIA_ADMIN_TOKEN || "");
-  const view = requestedView === "full" && adminToken ? "full" : "public";
-  const staticAllowMutate = parseAllowMutate(env, view);
-  const jhnMutateConfigured =
-    /^(1|true|yes)$/i.test(String(env.COGENTIA_MCP_JHN_MUTATE || "").trim()) &&
-    Boolean(String(env.COGENTIA_MCP_JHN_TOKEN || "").trim());
-  /** Default tool list (anonymous). Per-request list may include mutate for JHN. */
-  const allowPrivateReadStatic = view === "full";
-  const tools = TOOLS.filter((tool) =>
-    (staticAllowMutate || !MUTATE_TOOLS.has(tool.name)) &&
-    (allowPrivateReadStatic || !PRIVATE_READ_TOOLS.has(tool.name))
-  );
-
-  let hostRouter = extras.hostRouter || null;
-  function getHostRouter() {
-    if (hostRouter) return hostRouter;
-    hostRouter = createHostCapabilityRouter({ env });
-    return hostRouter;
-  }
-  const communicationTransport = extras.communicationTransport || createDryRunTransport();
-  const githubTransport = extras.githubTransport || createGithubDryRunTransport();
-  const gitTransport = extras.gitTransport || createGitDryRunTransport();
-
-  async function callHostCapability(capability, args, auth) {
-    const router = getHostRouter();
-    // MCP already enforced private-read / mutate. Project that onto the
-    // shared v3 lockers so host routing does not depend on JHN-mutate
-    // being the only path that sets auth="admin"|"jhn".
-    const hostAuth = {
-      ...(auth || {}),
-      lockers: {
-        public: { read: true, write: Boolean(auth?.allowMutate) },
-        private: {
-          read: true,
-          write: Boolean(auth?.allowMutate),
-        },
-      },
-    };
-    const actor = auth?.actor || (auth?.auth === "admin" ? "actor:admin" : null);
-    const principal = auth?.principal_ref || (auth?.auth === "admin" ? "principal:admin" : null);
-    const mandate = args.mandate || auth?.mandate_ref || (auth?.auth === "admin" ? "mandate:admin-session" : null);
-
-    return router.invoke(capability, args, {
-      auth: hostAuth,
-      actor,
-      principal,
-      mandate,
-      target: args.target,
-      provider: args.provider,
-      authorization: args.side_effect_authorization || args.authorization,
-    });
-  }
-
-  const instructions =
-    "Playbook: (1) cogentia_agent_start and/or cogentia_views_snapshot — situation and load.mode_recommendation. " +
-    "(2) cogentia_skill_list then cogentia_skill_get id=continuation-handling when work may suspend or resume. " +
-    "(3) cogentia_context_pack or cogentia_search for evidence; cogentia_get_lines before asserting a passage; always cite source_id. " +
-    "(4) cogentia_continuation_schema if preparing a step_result; list → inspect → prepare; resolve/emit only if mutate tools are listed and mandate allows. " +
-    "Continuations are non-blocking judgment boundaries, not crashes. Skills recommend methods and never grant authority. " +
-    "Discover the maximum capability set via server/discover, resources/list, skills/list (SEP-2640 experimental), and cogentia_cli_catalog / cogentia_pattern_list — not tools/list alone. " +
-    "MCP is a thin dual-era adapter (legacy initialize + modern server/discover); corpus truth lives in cogentia.js / the daemon. " +
-    "Tool results are packet-shaped (cogentia.mcp_tool_result/v1): read citations, continuation, skill_hint, error_class, correlation — no MCP session affinity required. " +
-    "Agent JHN (or agent:jhn.subagent:*) may use mutate tools when the server enables JHN attestation " +
-    "(Authorization Bearer + X-Cogentia-Actor / _meta cogentia.actor); anonymous public remains read-only. " +
-    `Active view=${view}; mutate_static=${staticAllowMutate ? "on" : "off"}; jhn_mutate_configured=${jhnMutateConfigured ? "yes" : "no"}.`;
-
-  function serverInfo() {
-    return { name: SERVER_NAME, version: SERVER_VERSION };
-  }
-
-  function serverCapabilities() {
-    return serverCapabilityBlock();
-  }
-
-  /** Legacy handshake path (2025-11-25 and earlier). */
-  function initialize(params = {}) {
-    const forced = String(env.COGENTIA_MCP_FORCE_PROTOCOL || "").trim();
-    if (forced && SUPPORTED_PROTOCOLS.has(forced)) {
-      return {
-        protocolVersion: forced,
-        capabilities: serverCapabilities(),
-        serverInfo: serverInfo(),
-        instructions,
-      };
-    }
-    const requested = String(params.protocolVersion || "");
-    let negotiated = PROTOCOL_VERSION;
-    if (LEGACY_PROTOCOLS.has(requested)) negotiated = requested;
-    else if (MODERN_PROTOCOLS.has(requested)) negotiated = requested;
-    else if (SUPPORTED_PROTOCOLS.has(requested)) negotiated = requested;
-    return {
-      protocolVersion: negotiated,
-      capabilities: serverCapabilities(),
-      serverInfo: serverInfo(),
-      instructions,
-    };
-  }
-
-  /** Modern discovery (2026-07-28 server/discover). */
-  function discover() {
-    let experimental = {
-      skills_over_mcp: "experimental",
-      skills_delivery: "sep2640_and_tools_first",
-      skills_extension: "io.modelcontextprotocol/skills",
-      jhn_mutate: jhnMutateConfigured ? "token_attested" : "disabled",
-      note: "SEP-2640 Skills Over MCP is experimental; tools-first skill_list/get remain for hosts without the extension (#82).",
-    };
-    try {
-      const inv = listAgentSkills({ env, repoRoot: resolveRepoRoot(env) });
-      experimental = {
-        ...experimental,
-        skills_count: inv.count,
-        skill_ids: (inv.skills || []).map((s) => s.id),
-      };
-    } catch {
-      experimental.skills_count = 0;
-    }
-    return {
-      resultType: "complete",
-      supportedVersions: [...SUPPORTED_PROTOCOLS],
-      capabilities: serverCapabilities(),
-      instructions,
-      ttlMs: 3_600_000,
-      cacheScope: "public",
-      experimental,
-      _meta: {
-        [MCP_META.serverInfo]: serverInfo(),
-        experimental,
-      },
-    };
-  }
-
-  function resolveRequestProtocol(message, transport = {}) {
-    const paramsMeta = message?.params && typeof message.params === "object" ? message.params._meta : null;
-    const topMeta = message && typeof message._meta === "object" ? message._meta : null;
-    const meta = (paramsMeta && typeof paramsMeta === "object" ? paramsMeta : null)
-      || (topMeta && typeof topMeta === "object" ? topMeta : null)
-      || {};
-    const fromMeta = String(meta[MCP_META.protocolVersion] || "").trim();
-    const fromHeader = String(transport.protocolVersionHeader || "").trim();
-    const method = String(message?.method || "");
-
-    if (method === "initialize") {
-      return {
-        era: "legacy",
-        protocolVersion: LEGACY_PROTOCOLS.has(String(message.params?.protocolVersion || ""))
-          ? String(message.params.protocolVersion)
-          : PROTOCOL_VERSION,
-        meta,
-      };
-    }
-
-    const requested = fromHeader || fromMeta;
-    if (requested) {
-      if (!SUPPORTED_PROTOCOLS.has(requested)) {
-        return { era: "error", protocolVersion: requested, meta, unsupported: true };
-      }
-      return {
-        era: MODERN_PROTOCOLS.has(requested) ? "modern" : "legacy",
-        protocolVersion: requested,
-        meta,
-      };
-    }
-
-    if (method === "server/discover") {
-      return { era: "modern", protocolVersion: PROTOCOL_VERSION_MODERN, meta };
-    }
-
-    return { era: "legacy", protocolVersion: PROTOCOL_VERSION, meta };
-  }
-
-  function attachModernMeta(result, protocolVersion) {
-    if (!result || typeof result !== "object" || Array.isArray(result)) return result;
-    const existing = result._meta && typeof result._meta === "object" ? result._meta : {};
-    return {
-      ...result,
-      _meta: {
-        ...existing,
-        [MCP_META.protocolVersion]: protocolVersion,
-        [MCP_META.serverInfo]: existing[MCP_META.serverInfo] || serverInfo(),
-      },
-    };
-  }
-
-  function toolsForAuth(auth) {
-    const allow = auth?.allowMutate === true;
-    const allowPrivateRead = view === "full" || auth?.auth === "jhn";
-    return TOOLS.filter((tool) =>
-      (tool.name !== "cogentia_memory_capture" || (auth?.memoryCaptureRead ?? auth?.lockers?.private?.read) === true) &&
-      (allow || !MUTATE_TOOLS.has(tool.name)) &&
-      (allowPrivateRead || !PRIVATE_READ_TOOLS.has(tool.name))
-    );
-  }
-
-  function toolsListResult(era, auth) {
-    const callerTools = toolsForAuth(auth).map((tool) => ({
-      ...tool,
-      annotations: {
-        readOnlyHint: !MUTATE_TOOLS.has(tool.name),
-        destructiveHint: MUTATE_TOOLS.has(tool.name),
-        openWorldHint: false,
-      },
-    }));
-    const base = {
-      tools: callerTools,
-      _cogentia: {
-        view,
-        allowMutate: auth?.allowMutate === true,
-        auth: auth?.auth || "none",
-        actor: auth?.actor || null,
-        mutate_tools: [...MUTATE_TOOLS],
-        private_read_tools: [...PRIVATE_READ_TOOLS],
-        jhn_mutate_configured: jhnMutateConfigured,
-        auth_reason: auth?.reason || null,
-      },
-    };
-    if (era === "modern") {
-      return { ...base, ttlMs: LIST_TTL_MS, cacheScope: view === "public" &&
-        !callerTools.some((tool) => tool.name === "cogentia_memory_capture") ? "public" : "private" };
-    }
-    return base;
-  }
-
-  function requireMutate(name, auth) {
-    if (auth?.allowMutate) return;
-    const err = new Error(
-      `tier_forbidden: ${name} requires either (full view + admin + COGENTIA_MCP_ALLOW_MUTATE=1) ` +
-        `or Agent JHN attestation (COGENTIA_MCP_JHN_MUTATE=1 + token + actor agent:jhn|agent:jhn.subagent:*). ` +
-        `reason=${auth?.reason || "none"}`
-    );
-    err.error_class = "tier_forbidden";
-    throw err;
-  }
-
-  function requirePrivateRead(name, auth) {
-    if (view === "full" || auth?.auth === "jhn") return;
-    const err = new Error(
-      `tier_forbidden: ${name} requires full access or an attested Agent JHN caller. ` +
-        `reason=${auth?.reason || "none"}`
-    );
-    err.error_class = "tier_forbidden";
-    throw err;
-  }
-
-  function callerAuthFor(message, transport = {}) {
-    const paramsMeta = message?.params && typeof message.params === "object" ? message.params._meta : null;
-    const topMeta = message && typeof message._meta === "object" ? message._meta : null;
-    const meta = (paramsMeta && typeof paramsMeta === "object" ? paramsMeta : null)
-      || (topMeta && typeof topMeta === "object" ? topMeta : null)
-      || {};
-    if (message?.params?.name === "cogentia_memory_capture" || message?.method === "tools/list") {
-      // This private capture must not inherit an HTTP server's static admin
-      // grant. HTTP needs a verified per-request credential; stdio is local.
-      let captureAuth;
-      if (transport.headers) {
-        const presented = parseBearer(transport.headers.authorization || transport.headers.Authorization);
-        if (view === "full" && safeEqualString(presented, adminToken)) {
-          captureAuth = { auth: "admin", allowMutate: false, lockers: deriveLockers({ auth: "admin" }) };
-        } else {
-          captureAuth = resolveCallerAuth(env, { meta, headers: transport.headers, view: "public", staticAllowMutate: false });
-        }
-      } else if (view === "full") {
-        captureAuth = { auth: "admin", allowMutate: staticAllowMutate,
-          lockers: deriveLockers({ auth: "admin", allowMutate: staticAllowMutate }) };
-      } else {
-        captureAuth = resolveCallerAuth(env, { meta, headers: {}, view, staticAllowMutate });
-      }
-      if (message?.params?.name === "cogentia_memory_capture") return captureAuth;
-      // Keep legacy catalogue authorization intact; only filter capture.
-      const legacy = resolveCallerAuth(env, { meta, headers: transport.headers || {}, view, staticAllowMutate });
-      return { ...legacy, memoryCaptureRead: captureAuth.lockers.private.read };
-    }
-    return resolveCallerAuth(env, {
-      meta,
-      headers: transport.headers || {},
-      view,
-      staticAllowMutate,
-    });
-  }
-
-  /**
-   * @param {object} message
-   * @param {{ protocolVersionHeader?: string, mcpMethod?: string, mcpName?: string, headers?: object }} [transport]
-   */
-  async function handleJsonRpc(message, transport = {}) {
-    if (!message || message.jsonrpc !== "2.0" || typeof message.method !== "string") {
-      return jsonRpcError(message?.id ?? null, -32600, "Invalid Request");
-    }
-    if (message.id === undefined) return null;
-
-    if (transport.mcpMethod) {
-      const headerMethod = String(transport.mcpMethod).trim();
-      if (headerMethod && headerMethod !== message.method) {
+    const pay…3545 tokens truncated…od) {
         return jsonRpcError(message.id, -32600, `Mcp-Method header (${headerMethod}) does not match body method (${message.method})`);
       }
     }
@@ -1833,8 +1501,16 @@ export function createMcpCore(env = process.env, extras = {}) {
           const { api_key: _discardedApiKey, ...safeOptions } = req.handler.options;
           req.handler.options = safeOptions;
         }
-        const trustedJhn = isResolvedCallerAuth(callOpts.auth)
-          && callOpts.auth.auth === "jhn" && callOpts.auth.allowMutate === true;
+        const jhnCaller = isResolvedCallerAuth(callOpts.auth) && callOpts.auth.auth === "jhn";
+        const trustedJhn = jhnCaller && callOpts.auth.allowMutate === true;
+        const browserEnabled = !/^(0|false|no)$/i.test(String(env.COGENTIA_JHN_HOSTED_BROWSER_ENABLED || "1"));
+        const browserCapabilities = jhnCaller && browserEnabled
+          ? createHostedBrowserCapabilities({
+            gateway: env.COGENTIA_HOSTED_BROWSER_GATEWAY,
+            health: env.COGENTIA_HOSTED_BROWSER_HEALTH,
+          })
+          : [];
+        const browserCapabilityNames = new Set(browserCapabilities.map((item) => item.name));
         const writeAuthorized = writeEnabled && workspaceConfigured && trustedJhn
           && configuredMandate && callOpts.auth.mandate_ref === configuredMandate
           && configuredBudget && serverModelReady;
@@ -1848,12 +1524,11 @@ export function createMcpCore(env = process.env, extras = {}) {
             treatment_id: env.COGENTIA_JHN_WORKSPACE_WRITE_TREATMENT_ID || null,
           }).filter((capability) => capability.name === "workspace.read" || writeAuthorized)
           : [];
-        const serverAllowedCapabilities = workspaceCapabilities
-          .filter((capability) => capability.name === "workspace.read" || writeAuthorized)
-          .map((capability) => capability.name);
-        const scopedCapabilities = workspaceCapabilities
+        const scopedWorkspaceCapabilities = workspaceCapabilities
           .filter((capability) => capability.name === "workspace.read" || writeAuthorized);
-        const requestedWorkspaceCapabilities = Array.isArray(req.handler.allowed_capabilities)
+        const scopedCapabilities = [...scopedWorkspaceCapabilities, ...browserCapabilities];
+        const serverAllowedCapabilities = scopedCapabilities.map((capability) => capability.name);
+        const requestedCapabilities = Array.isArray(req.handler.allowed_capabilities)
           ? req.handler.allowed_capabilities
           : serverAllowedCapabilities;
         if (writeAuthorized) {
@@ -1867,17 +1542,31 @@ export function createMcpCore(env = process.env, extras = {}) {
             Number.isInteger(requestedMaxEffects) ? Math.max(0, Math.min(10, requestedMaxEffects)) : 3,
             Number.isInteger(configuredMaxEffects) ? Math.max(0, Math.min(10, configuredMaxEffects)) : 3,
           );
-          req.handler.allowed_capabilities = requestedWorkspaceCapabilities
+          req.handler.allowed_capabilities = requestedCapabilities
             .filter((name) => serverAllowedCapabilities.includes(name));
         } else if (workspaceConfigured) {
-          req.handler.allowed_capabilities = requestedWorkspaceCapabilities
-            .filter((name) => name === "workspace.read" && serverAllowedCapabilities.includes(name));
+          req.handler.allowed_capabilities = requestedCapabilities
+            .filter((name) => (name === "workspace.read" || browserCapabilityNames.has(name)) && serverAllowedCapabilities.includes(name));
+        } else if (jhnCaller) {
+          req.handler.allowed_capabilities = requestedCapabilities
+            .filter((name) => browserCapabilityNames.has(name));
         }
+        const browserInteractRequested = jhnCaller
+          && browserCapabilityNames.has("browser.hosted.interact")
+          && Array.isArray(req.handler.allowed_capabilities)
+          && req.handler.allowed_capabilities.includes("browser.hosted.interact")
+          && ["bounded", "consequential"].includes(req.exposure);
+        if (browserInteractRequested && !Number.isInteger(req.execution_budget.max_internal_effects)) {
+          req.execution_budget.max_internal_effects = 2;
+        }
+        const browserInternalLimit = browserInteractRequested
+          ? Math.min(Math.max(0, req.execution_budget.max_internal_effects || 0), 2)
+          : 0;
         const events = await runJohnRequest(req, {
           env,
           capabilities: scopedCapabilities,
           allowedCapabilities: serverAllowedCapabilities,
-          maxInternalEffects: writeAuthorized ? req.execution_budget.max_internal_effects : 0,
+          maxInternalEffects: Math.max(writeAuthorized ? req.execution_budget.max_internal_effects : 0, browserInternalLimit),
           // The required orientation event is a real, public, read-only corpus lookup.
           // Never discharge it with a synthetic receipt; failure must remain visible.
           requiredEventHandlers: {
