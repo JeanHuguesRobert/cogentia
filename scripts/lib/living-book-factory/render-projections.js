@@ -112,12 +112,12 @@ function existingSiteNavigation(siteDir) {
   const indexPath = path.join(siteDir, 'index.html');
   if (!fs.existsSync(indexPath)) return null;
   const html = fs.readFileSync(indexPath, 'utf8');
-  const header = html.match(/<header\\b[^>]*class=["'][^"']*\\bsite\\b[^"']*["'][^>]*>[\\s\\S]*?<\\/header>/i);
+  const header = html.match(/<header\b[^>]*class=["'][^"']*\bsite\b[^"']*["'][^>]*>[\s\S]*?<\/header>/i);
   if (!header) return null;
   // Book is not the current index page. Make its active state explicit.
-  return header[0].replace(/(<a\\b[^>]*href=["'])([^"']+)(["'][^>]*)(>)/gi, (tag, start, href, rest, close) => {
+  return header[0].replace(/(<a\b[^>]*href=["'])([^"']+)(["'][^>]*)(>)/gi, (tag, start, href, rest, close) => {
     const isBook = href === 'book.html' || href === './book.html';
-    const attributes = rest.replace(/\\saria-current=["'][^"']*["']/gi, '');
+    const attributes = rest.replace(/\saria-current=["'][^"']*["']/gi, '');
     return start + href + attributes + (isBook ? ' aria-current="page"' : '') + close;
   });
 }
