@@ -1116,7 +1116,9 @@ Continuation commands:
   calculette orient <owner/repo#N>   Read-only orientation over Issue audit.\n                           Flags: --body-file <path> --root <dir> --json.\n\n Issue commands:
   issues list <repo>       List GitHub issues for a registered repo using gh.
                            Flags: --state open|closed|all --limit <n>
-  resume <GitHub Issue URL>  Inspect external Cognitive Packet and report handler routing boundary (no effects).\n  issues packet <repo> <number>
+  resume <GitHub Issue URL> [--prepare [--handlers-file <manifest.json>]] [--json] [--root <dir>]
+                                  Inspect or prepare external Cognitive Packet handling; no execution.
+  issues packet <repo> <number>
                            Export one GitHub issue as a read-only continuation packet.
   issues graph <repo|all>  Build a read-only graph of issues and their target docs.
                            Flags: --state open|closed|all --limit <n>
