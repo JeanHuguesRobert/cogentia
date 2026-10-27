@@ -291,7 +291,7 @@ ${chaptersHtml}
 </body>
 </html>`;
 
-  fullHtml = fullHtml.replace(/^[ \\t]+$/gm, '');
+  fullHtml = fullHtml.replace(/^[ ]+$/gm, '');
   const htmlProjPath = path.join(projDir, 'preview.html');
   fs.writeFileSync(htmlProjPath, fullHtml, 'utf8');
   const htmlSha = crypto.createHash('sha256').update(fullHtml).digest('hex');
@@ -358,7 +358,7 @@ ${chaptersHtml}
 </footer>
 </body>
 </html>`;
-  siteBookContent = siteBookContent.replace(/^[ \\t]+$/gm, '');
+  siteBookContent = siteBookContent.replace(/^[ ]+$/gm, '');
   fs.writeFileSync(siteBookPath, siteBookContent, 'utf8');
 
   // 6. Write projection contract in projections/preview.yml
