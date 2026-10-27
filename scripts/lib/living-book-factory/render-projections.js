@@ -35,6 +35,14 @@ function resolveSourceLink(raw, chapterFile, siteDir, context, warnings) {
     return path.relative(siteDir, target).split(path.sep).join('/') + suffix;
   }
   if (context && target.startsWith(context.root + path.sep) && fs.existsSync(target) && fs.statSync(target).isFile()) {
+    // Only repository-tracked sources have stable GitHub blob references.
+    const sourceRel = path.relative(context.root, target);
+    try {
+      execFileSync('git', ['-C', context.root, 'ls-files', '--error-unmatch', '--', sourceRel], { stdio: 'ignore' });
+    } catch {
+      warnings.push({ chapter: path.basename(chapterFile), href: raw, reason: 'source_not_tracked' });
+      return raw;
+    }
     const rel = path.relative(context.root, target).split(path.sep).map(encodeURIComponent).join('/');
     return 'https://github.com/' + context.repo + '/blob/main/' + rel + suffix;
   }
