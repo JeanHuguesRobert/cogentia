@@ -97,8 +97,7 @@ try {
   assert.ok(fs.existsSync(path.join(bookDir, 'corpus.yml')), 'corpus.yml must exist');
   const buildIgnore = fs.readFileSync(path.join(bookDir, '.gitignore'), 'utf8');
   for (const rel of ['/projections/preview.pdf', '/projections/preview.epub', '/site/book.pdf', '/site/book.epub']) {
-    assert.ok(buildIgnore.split('\
-').includes(rel), 'Working binary output must be ignored: ' + rel);
+    assert.ok(buildIgnore.split(String.fromCharCode(10)).includes(rel), 'Working binary output must be ignored: ' + rel);
   }
 
   assert.ok(fs.existsSync(path.join(bookDir, 'editorial-architecture.md')), 'editorial-architecture.md must exist');
