@@ -9218,6 +9218,10 @@ function buildPlan(ctx, options) {
   if (options.corpusStatus) {
     for (const repo of ctx.repos) {
       if (!repoSelected(repo, options)) continue;
+      // A publication-only repository without a research index has no
+      // research surface for a corpus-status projection. In particular, do
+      // not add operational metadata to a static-edition release root.
+      if (repo.kind === "publication" && !fileExists(repo.path, "research", INDEX_FILE)) continue;
       const full = path.join(repo.path, "research", CORPUS_STATUS_FILE);
       const before = readFileIfExists(full);
       const after = renderCorpusStatus(repo, ctx, inventory, before, viewForRepo(repo, options));
@@ -11559,6 +11563,7 @@ function loadContext() {
     return {
       name: r.name,
       path: repoPath,
+      kind: r.kind,
       branch: r.branch || "main",
       added: r.added,
       github_full_name: githubFullName,
