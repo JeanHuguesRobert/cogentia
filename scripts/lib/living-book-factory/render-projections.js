@@ -80,7 +80,7 @@ function markdownToSimpleHtml(md, resolveLink = href => href) {
   html = html.replace(/\*([^*]+)\*/g, '<em>$1</em>');
 
   // Links [text](url)
-  html = html.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2">$1</a>');
+  html = html.replace(/\[([^\]]+)\]\(([^)]+)\)/g, (_match, label, href) => '<a href="' + resolveLink(href) + '">' + label + '</a>');
 
   // Unordered Lists
   html = html.replace(/^\s*[-*]\s+(.*$)/gim, '<li>$1</li>');
