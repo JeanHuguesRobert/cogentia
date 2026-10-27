@@ -250,6 +250,11 @@ Il verifie que la generation multi-format fonctionne parfaitement.
     '</nav></header></body></html>'
   ].join(String.fromCharCode(10)), 'utf8');
 
+  // Source links outside site must be backed by an actual tracked file.
+  fs.appendFileSync(path.join(bookDir, 'manuscript', '01-intro.md'),
+    '\n[Source suivie](../../../../scripts/check-living-book-factory.js)\\n' +
+    '[Source absente](../../../../research/definitely-not-a-source-123456.md)\\n');
+
   const renderRes = renderLivingBookProjections(bookDir);
   assert.ok(fs.existsSync(renderRes.html.path), 'HTML preview must exist');
   assert.ok(fs.existsSync(renderRes.pdf.path), 'PDF preview must exist');
@@ -263,6 +268,9 @@ Il verifie que la generation multi-format fonctionne parfaitement.
   const renderedBookHtml = fs.readFileSync(path.join(bookDir, 'site', 'book.html'), 'utf8');
   assert.ok(!renderedBookHtml.includes('../projections/'), 'Site-only book must not link outside deployed site');
   assert.ok(renderedBookHtml.includes('href="index.html"'), 'Reader must link back to site index');
+  assert.ok(renderedBookHtml.includes('https://github.com/JeanHuguesRobert/cogentia/blob/main/scripts/check-living-book-factory.js'), 'Tracked external source must be canonical');
+  assert.ok(renderRes.linkWarnings.some(w => w.reason === 'unresolved_source_reference'), 'Unresolved source must be reported');
+
   assert.ok(renderedBookHtml.includes('href="n1.html"'), 'Book-specific navigation should be preserved');
   assert.ok(renderedBookHtml.includes('href="chronologie.html"'), 'Custom navigation should survive rendering');
   assert.ok(!renderedBookHtml.includes('href="magazine.html"'), 'Generic menu must not replace source navigation');
