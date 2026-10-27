@@ -239,20 +239,16 @@ Il verifie que la generation multi-format fonctionne parfaitement.
 
   // Existing per-book navigation is authoritative, including book-specific pages.
   const siteIndex = path.join(bookDir, 'site', 'index.html');
-  const originalIndex = fs.readFileSync(siteIndex, 'utf8');
-  fs.writeFileSync(siteIndex, originalIndex.replace(
-    '</body>',
-    '</body>'
-  ).replace(
-    /<header class="site">[\\s\\S]*?<\\/header>/,
-    '<header class="site"><p class="mark"><a href="index.html">Test</a></p>' +
-    '<nav aria-label="Navigation principale">' +
-    '<a href="index.html" aria-current="page">Accueil</a>' +
-    '<a href="book.html">Livre</a>' +
-    '<a href="n1.html">n°1</a>' +
-    '<a href="chronologie.html">Chronologie</a>' +
-    '</nav></header>'
-  ), 'utf8');
+  fs.writeFileSync(siteIndex, [
+    '<!doctype html><html><body>',
+    '<header class="site"><p class="mark"><a href="index.html">Test</a></p>',
+    '<nav aria-label="Navigation principale">',
+    '<a href="index.html" aria-current="page">Accueil</a>',
+    '<a href="book.html">Livre</a>',
+    '<a href="n1.html">n°1</a>',
+    '<a href="chronologie.html">Chronologie</a>',
+    '</nav></header></body></html>'
+  ].join(String.fromCharCode(10)), 'utf8');
 
   const renderRes = renderLivingBookProjections(bookDir);
   assert.ok(fs.existsSync(renderRes.html.path), 'HTML preview must exist');
