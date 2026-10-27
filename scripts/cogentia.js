@@ -16858,7 +16858,12 @@ function buildIssuePacket(repo, issue) {
   return {
     ok: true,
     type: "cogentia.issue_continuation.v1",
-    repository: repo.full_name,
+    repository: repo.full_name
+      || repo.github_full_name
+      || repo.policy?.github
+      || repo.policy?.github_repo
+      || githubFullNameFromRemote(repo)
+      || repo.name,
     issue: issue.number,
     title: issue.title,
     status: String(issue.state || "").toLowerCase(),
@@ -16975,6 +16980,35 @@ function renderIssuePacket(packet) {
   return lines.join("\n");
 }
 
+function preserveIssuePacketMetadata(existingText, generatedText) {
+  const existingMatch = String(existingText || "").match(/^---\s*\r?\n([\s\S]*?)\r?\n---\s*\r?\n/);
+  const generatedMatch = String(generatedText || "").match(/^---\s*\r?\n([\s\S]*?)\r?\n---\s*\r?\n/);
+  if (!existingMatch || !generatedMatch) return generatedText;
+
+  let existingMetadata;
+  let generatedMetadata;
+  try {
+    existingMetadata = js_yaml.load(existingMatch[1]);
+    generatedMetadata = js_yaml.load(generatedMatch[1]);
+  } catch (error) {
+    throw new Error(`Cannot preserve existing issue packet metadata: ${error.message}`);
+  }
+  if (!existingMetadata || typeof existingMetadata !== "object" || Array.isArray(existingMetadata)) return generatedText;
+  if (!generatedMetadata || typeof generatedMetadata !== "object" || Array.isArray(generatedMetadata)) return generatedText;
+
+  const generatedKeys = new Set(Object.keys(generatedMetadata));
+  const extensions = Object.fromEntries(
+    Object.entries(existingMetadata).filter(([key]) => !generatedKeys.has(key)),
+  );
+  if (Object.keys(extensions).length === 0) return generatedText;
+
+  const mergedFrontmatter = js_yaml.dump({ ...generatedMetadata, ...extensions }, {
+    lineWidth: -1,
+    noRefs: true,
+  });
+  return `---\n${mergedFrontmatter}---\n${generatedText.slice(generatedMatch[0].length)}`;
+}
+
 function formatIssueSync(result) {
   const lines = ["\nIssue sync\n"];
   lines.push(`Repositories: ${result.repositories.length}`);
@@ -17075,12 +17109,12 @@ function syncIssuePacketsForRepo(ctx, repo, { state = "all", limit = 100 } = {})
       continue;
     }
     const detail = normalizeGitHubIssue(viewCall.result);
-    const packet = buildIssuePacket(repo, detail);
+    const packet = buildIssuePacket({ ...repo, full_name: repoFull }, detail);
     packet.content_hash = sha(`${packet.repository}\n${packet.issue}\n${packet.updated_at}\n${packet.title}\n${packet.issue_body || ""}`);
-    const rendered = renderIssuePacket(packet);
     const file = path.join(cacheDir, `issue-${String(packet.issue).padStart(5, "0")}.md`);
     seen.add(path.resolve(file));
     const before = fs.existsSync(file) ? fs.readFileSync(file, "utf8") : "";
+    const rendered = preserveIssuePacketMetadata(before, renderIssuePacket(packet));
     if (before !== rendered) {
       fs.writeFileSync(file, ensureFinalNewline(rendered), "utf8");
       written++;
