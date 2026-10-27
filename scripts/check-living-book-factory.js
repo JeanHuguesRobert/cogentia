@@ -271,6 +271,17 @@ Il verifie que la generation multi-format fonctionne parfaitement.
   assert.ok(renderedBookHtml.includes('https://github.com/JeanHuguesRobert/cogentia/blob/main/scripts/check-living-book-factory.js'), 'Tracked external source must be canonical');
   assert.ok(renderRes.linkWarnings.some(w => w.reason === 'unresolved_source_reference'), 'Unresolved source must be reported');
 
+  // Regression: a symlinked project path must resolve exactly like its physical path.
+  const linkedBookDir = path.join(tmpDir, 'linked-book');
+  fs.symlinkSync(bookDir, linkedBookDir, 'dir');
+  const linkedRender = renderLivingBookProjections(linkedBookDir);
+  const linkedHtml = fs.readFileSync(path.join(bookDir, 'site', 'book.html'), 'utf8');
+  assert.ok(linkedHtml.includes('https://github.com/JeanHuguesRobert/cogentia/blob/main/scripts/check-living-book-factory.js'),
+    'Symlinked worktree must retain canonical source links');
+  assert.ok(linkedRender.linkWarnings.some(w => w.reason === 'unresolved_source_reference'),
+    'Symlinked project must still report genuinely unresolved links');
+
+
   assert.ok(renderedBookHtml.includes('href="n1.html"'), 'Book-specific navigation should be preserved');
   assert.ok(renderedBookHtml.includes('href="chronologie.html"'), 'Custom navigation should survive rendering');
   assert.ok(!renderedBookHtml.includes('href="magazine.html"'), 'Generic menu must not replace source navigation');
