@@ -337,7 +337,7 @@ export function buildRetrievalInlineAttractor(options = {}) {
       verbs: ["retrieval.batch@v1"],
     },
     legitimacy: {
-      mandate_surfaces: ["web-guide", "owner-cli"],
+      mandate_surfaces: ["owner-cli"],
       forbidden: ["private-view", "unbounded-provider-spend"],
     },
     pressure: {

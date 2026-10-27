@@ -10,12 +10,7 @@
       "ok": true,
       "service": "guide-mcp",
       "context": {
-        "retrieval_backend": "inox-session",
-        "inox_retrieval": {
-          "configured": true,
-          "url": "http://100.122.121.68:8792",
-          "transport": "inox.session.v1"
-        }
+        "retrieval_backend": "supabase"
       }
     },
     "blackboard": {

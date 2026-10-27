@@ -6,9 +6,12 @@ classification_confidence: "medium"
 title: Agent CLI Gateway
 subtitle: OpenAI-compatible SSE gateway over coding-agent child processes
 author: Jean Hugues Noël Robert, baron Mariani
+affiliation: unknown
 date: '2026-07-07'
-status: specification — draft
+last_modified_at: '2026-10-27'
+status: draft
 license: CC BY-SA 4.0 for text; MIT for associated code
+language: en
 document_role: source
 document_kind: specification
 visibility: public
@@ -38,7 +41,6 @@ It is the **action plane** complement to existing Cogentia read paths:
 | Plane | Existing component | Role |
 |-------|-------------------|------|
 | Context (read) | Context Gateway (`cogentia.js daemon`) | corpus search, packs, citations |
-| Retrieval (session) | `inox-serve` | Phase 4 inline retrieval mandat |
 | **Action (agent)** | **Agent CLI Gateway** (this spec) | run Grok/Codex/Claude on local repos |
 
 On Fractanet, a gateway instance on a capable node (`poco-jhr`, `i7-thinkpad-jhr`) becomes an

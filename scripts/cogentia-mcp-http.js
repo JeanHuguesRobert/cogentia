@@ -21,7 +21,6 @@ import { createRegistryAwareMcpCore } from "./lib/cogentia-mcp-registries.js";
 import { aiRouterHealth } from "./lib/ai-router-client.js";
 import { mergeGuideRetrievalFromPacks } from "./lib/guide-retrieval-merge.js";
 import { runAgentJohnV2SurfaceTurn, resolveGuideReasoningLoopV2, sanitizeSurfaceAnswer } from "./lib/agent-jhn-reasoning-loop-v2.js";
-import { retrievalInoxConfigured, retrievalInoxPackBatch, inoxRetrievalBaseUrl } from "./lib/retrieval-inox-session.js";
 import { retrievalSupabaseConfigured, retrievalSupabasePackBatch } from "./lib/retrieval-supabase.js";
 import {
   BLACKBOARD_EVENTS,
@@ -347,7 +346,6 @@ const guideBudget = boundedInteger(process.env.COGENTIA_GUIDE_BUDGET, 14000, 256
 const guideQueryLimit = boundedInteger(process.env.COGENTIA_GUIDE_QUERY_LIMIT, 6, 1, 10);
 const guideBatchEnabled = parseBoolean(process.env.COGENTIA_GUIDE_BATCH, true);
 function resolveGuideRetrievalBackend() {
-  if (retrievalInoxConfigured()) return "inox-session";
   if (retrievalSupabaseConfigured()) return "supabase";
   return guideBatchEnabled ? "daemon-batch" : "daemon-sequential";
 }
@@ -540,11 +538,6 @@ async function guideHealth() {
       query_limit: guideQueryLimit,
       batch_enabled: guideBatchEnabled,
       retrieval_backend: guideRetrievalBackend,
-      inox_retrieval: {
-        configured: retrievalInoxConfigured(),
-        url: retrievalInoxConfigured() ? inoxRetrievalBaseUrl() : null,
-        transport: "inox.session.v1",
-      },
       planner_enabled: guidePlannerEnabled,
       planner_query_limit: guidePlannerQueryLimit,
       history_limit: guideHistoryLimit,
@@ -2080,30 +2073,6 @@ async function guideS7FetchAnchorExcerpt(s7) {
 
 async function fetchGuideRetrievalPacks(queries, packOptions) {
   const packs = new Map();
-  if (guideRetrievalBackend === "inox-session") {
-    try {
-      const batch = await retrievalInoxPackBatch(queries, packOptions);
-      if (!batch.ok) {
-        for (const query of queries) {
-          packs.set(query, {
-            ok: false,
-            error: batch.error || "inox_retrieval_failed",
-            message: batch.message,
-            query,
-            continuation_required: batch.error === "continuation_fulfillment_required",
-          });
-        }
-        return packs;
-      }
-      for (const item of batch.packs || []) {
-        packs.set(item.query, item);
-      }
-      return packs;
-    } catch (error) {
-      for (const query of queries) packs.set(query, { ok: false, error: error.message, query });
-      return packs;
-    }
-  }
   if (guideRetrievalBackend === "supabase") {
     try {
       const batch = await retrievalSupabasePackBatch(queries, packOptions);

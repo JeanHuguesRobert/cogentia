@@ -101,22 +101,19 @@ The earlier design in [Cogentia issue #42](https://github.com/JeanHuguesRobert/c
 proposed using Inox for Guide retrieval. That is not the live Guide setup:
 Operium reported `backend=supabase` on 2026-10-27.
 
-Cogentia source still has an optional Inox client
-(`scripts/lib/retrieval-inox-session.js`) that would be selected if
-`COGENTIA_INOX_RETRIEVAL_URL` or `INOX_RETRIEVAL_URL` is configured. This code
-and the ThinkPad's `retrieval.inline` blackboard advertisement are not evidence
-that current Guide requests use Inox. The Guide resolves its backend statically;
-the current live backend reports Supabase. The `web-guide` advertisement remains
-on the blackboard, but no Guide request routed through Inox was established by
-this audit.
+The live Guide reports `retrieval_backend=supabase` and
+`inox_configured=false`. The current Cogentia source removes the optional Guide
+Inox retrieval client and restricts future ThinkPad retrieval-attractor
+advertisements to `owner-cli`. That source change has not been deployed: the live
+blackboard still advertises `web-guide` as of 2026-10-27, and the deployed Guide
+may still contain the unconfigured legacy client.
 
 The ThinkPad `inox-serve` is a separate remote Inox runtime. Its live `/health`
 response confirms support for `/run` (remote `.nox` execution), `/session/turn`
 (`mandate.run` and continuation/fulfillment turns), `/continuation/fulfill`, and
-`/retrieval/batch`. The current blackboard advertisement lists both `owner-cli`
-and `web-guide` mandate surfaces, but does not prove either is invoking the
-service. Do not point the Guide at Inox or remove its Supabase configuration
-based on this parked design; any such change needs a separate, verified decision.
+`/retrieval/batch`. The service is advertised for `owner-cli` retrieval; health
+and capability advertisements establish availability, not actual invocation.
+The Guide remains on Supabase.
 
 ## Cache split rule
 

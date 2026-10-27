@@ -164,12 +164,11 @@
       const mcpOk = data.mcp?.ok === true;
       const guideOk = data.guide?.ok === true;
       const backend = data.guide?.context?.retrieval_backend || "unknown";
-      const inox = data.guide?.context?.inox_retrieval;
       const bb = data.blackboard || {};
       const cards = [
         { title: "MCP HTTP", value: pill(mcpOk, mcpOk ? "healthy" : "degraded"), sub: data.mcp?.mcp || data.mcp?.error || "" },
         { title: "Guide", value: pill(guideOk, guideOk ? "healthy" : "degraded"), sub: data.guide?.service || data.guide?.error || "" },
-        { title: "Retrieval", value: backend, sub: inox?.configured ? `inox → ${inox.url || "configured"}` : "local / supabase" },
+        { title: "Guide retrieval", value: backend, sub: "Selected Guide backend" },
         { title: "Attractors", value: `${bb.fresh_attractor_count ?? 0} fresh / ${bb.attractor_count ?? 0} total`, sub: bb.snapshot_at ? `updated ${bb.snapshot_at}` : "no snapshot" },
       ];
       document.getElementById("cards").innerHTML = cards.map(c => `

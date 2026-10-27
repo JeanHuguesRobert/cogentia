@@ -76,9 +76,6 @@ export async function buildFractanetOpsStatus(deps = {}) {
       blackboard: blackboardSummary,
       retrieval: {
         backend: guideContext.retrieval_backend || null,
-        inox_configured: guideContext.inox_retrieval?.configured === true,
-        inox_url: guideContext.inox_retrieval?.url || null,
-        transport: guideContext.inox_retrieval?.transport || null,
         phase2_wired: false,
       },
       action: summarizeActionLayer(blackboardSummary),
