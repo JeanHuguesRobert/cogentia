@@ -104,6 +104,24 @@ function renderTableHtml(lines) {
 </table>`;
 }
 
+/**
+ * Reuse the navigation authored for the site instead of imposing generic links.
+ * Accept only the first site header/nav pair; if absent, retain the Factory default.
+ */
+function existingSiteNavigation(siteDir) {
+  const indexPath = path.join(siteDir, 'index.html');
+  if (!fs.existsSync(indexPath)) return null;
+  const html = fs.readFileSync(indexPath, 'utf8');
+  const header = html.match(/<header\\b[^>]*class=["'][^"']*\\bsite\\b[^"']*["'][^>]*>[\\s\\S]*?<\\/header>/i);
+  if (!header) return null;
+  // Book is not the current index page. Make its active state explicit.
+  return header[0].replace(/(<a\\b[^>]*href=["'])([^"']+)(["'][^>]*)(>)/gi, (tag, start, href, rest, close) => {
+    const isBook = href === 'book.html' || href === './book.html';
+    const attributes = rest.replace(/\\saria-current=["'][^"']*["']/gi, '');
+    return start + href + attributes + (isBook ? ' aria-current="page"' : '') + close;
+  });
+}
+
 export function renderLivingBookProjections(projectDirInput, options = {}) {
   let projectDir = path.resolve(projectDirInput);
   if (fs.existsSync(projectDir) && fs.statSync(projectDir).isFile()) {
@@ -296,6 +314,8 @@ ${chaptersHtml}
   fs.writeFileSync(htmlProjPath, fullHtml, 'utf8');
   const htmlSha = crypto.createHash('sha256').update(fullHtml).digest('hex');
 
+  const sourceSiteHeader = existingSiteNavigation(siteDir);
+
   // 5. Update site/book.html with embedded reading view
   const siteBookPath = path.join(siteDir, 'book.html');
   let siteBookContent = `<!doctype html>
@@ -313,7 +333,7 @@ ${chaptersHtml}
 </head>
 <body>
 <a class="skip" href="#contenu">Aller au contenu</a>
-<header class="site">
+${sourceSiteHeader || `<header class="site">
   <p class="mark"><a href="index.html">${bookMeta.title}</a></p>
   <nav aria-label="Navigation principale">
     <a href="index.html">Accueil</a>
@@ -324,7 +344,7 @@ ${chaptersHtml}
     <a href="guide.html">Guide</a>
     <a href="mentions.html">Mentions</a>
   </nav>
-</header>
+</header>`}
 <main id="contenu">
   <p class="pill">Projection de travail · En préparation</p>
   <h1>Le Livre — Synthèse durable</h1>
