@@ -43,10 +43,22 @@ update_policy: UP-DEFAULT-REVIEWED
 | FractaVolta | yes | main | all | public | full |
 | marenostrum | yes | main | all | public | full |
 | barons-Mariani | yes | main | all | public | full |
+| suicide-corse | no | main | all | public | full |
 | inseme | yes | main | research | public | full |
-| Inox | yes | main | all | public | full |
+| survey | yes | main | all | public | full |
+| Inox | yes | master | all | public | full |
+| registre-mariani | yes | main | all | private | stub |
 | ubikia | yes | main | all | public | full |
+| operium | yes | main | all | public | full |
+| serra | yes | main | all | public | full |
 | JeanHuguesRobert | yes | main | all | public | full |
+| privai | yes | main | all | public | full |
+| gouvernance | yes | main | all | public | full |
+| marianivillage | yes | main | all | public | full |
+| institut-mariani | yes | main | all | public | full |
+| Kudos | yes | main | all | public | full |
+| .github | yes | main | all | public | full |
+| acorsica.org | yes | main | all | public | full |
 | StructEnv | yes | main | all | public | full |
 <!-- END_AUTO: registered_repos -->
 ---
@@ -59,10 +71,22 @@ graph LR
   r_fractavolta["FractaVolta"]
   r_marenostrum["marenostrum"]
   r_barons_mariani["barons-Mariani"]
+  r_suicide_corse["suicide-corse"]
   r_inseme["inseme"]
+  r_survey["survey"]
   r_inox["Inox"]
+  r_registre_mariani["registre-mariani"]
   r_ubikia["ubikia"]
+  r_operium["operium"]
+  r_serra["serra"]
   r_jeanhuguesrobert["JeanHuguesRobert"]
+  r_privai["privai"]
+  r_gouvernance["gouvernance"]
+  r_marianivillage["marianivillage"]
+  r_institut_mariani["institut-mariani"]
+  r_kudos["Kudos"]
+  r_github[".github"]
+  r_acorsica_org["acorsica.org"]
   r_structenv["StructEnv"]
   r_cogentia -->|150| r_barons_mariani
   r_barons_mariani -->|115| r_cogentia
@@ -82,6 +106,7 @@ graph LR
   r_inox -->|19| r_cogentia
   r_marenostrum -->|19| r_cogentia
   r_barons_mariani -->|18| r_inseme
+  r_operium -->|18| r_cogentia
   r_jeanhuguesrobert -->|16| r_marenostrum
   r_inseme -->|12| r_fractavolta
   r_inseme -->|12| r_inox
@@ -99,18 +124,63 @@ graph LR
   r_barons_mariani -->|7| r_inox
   r_inseme -->|7| r_jeanhuguesrobert
   r_jeanhuguesrobert -->|7| r_inseme
+  r_cogentia -->|6| r_operium
+  r_inseme -->|6| r_kudos
   r_jeanhuguesrobert -->|6| r_inox
   r_ubikia -->|6| r_cogentia
+  r_ubikia -->|6| r_barons_mariani
+  r_cogentia -->|5| r_privai
+  r_inseme -->|5| r_operium
+  r_barons_mariani -->|4| r_operium
   r_cogentia -->|4| r_inox
   r_fractavolta -->|4| r_jeanhuguesrobert
+  r_marianivillage -->|4| r_fractavolta
+  r_operium -->|4| r_marenostrum
   r_ubikia -->|4| r_jeanhuguesrobert
+  r_github -->|3| r_gouvernance
   r_jeanhuguesrobert -->|3| r_ubikia
+  r_kudos -->|3| r_barons_mariani
+  r_operium -->|3| r_barons_mariani
+  r_operium -->|3| r_inseme
+  r_ubikia -->|3| r_suicide_corse
+  r_ubikia -->|3| r_operium
+  r_barons_mariani -->|2| r_privai
+  r_gouvernance -->|2| r_inseme
+  r_gouvernance -->|2| r_barons_mariani
+  r_gouvernance -->|2| r_fractavolta
   r_inox -->|2| r_jeanhuguesrobert
   r_inseme -->|2| r_marenostrum
+  r_institut_mariani -->|2| r_barons_mariani
+  r_institut_mariani -->|2| r_fractavolta
   r_marenostrum -->|2| r_jeanhuguesrobert
   r_marenostrum -->|2| r_inseme
   r_marenostrum -->|2| r_inox
+  r_github -->|1| r_institut_mariani
+  r_barons_mariani -->|1| r_institut_mariani
+  r_cogentia -->|1| r_kudos
+  r_gouvernance -->|1| r_jeanhuguesrobert
+  r_gouvernance -->|1| r_cogentia
+  r_gouvernance -->|1| r_marenostrum
+  r_gouvernance -->|1| r_inox
+  r_gouvernance -->|1| r_kudos
+  r_gouvernance -->|1| r_marianivillage
+  r_inseme -->|1| r_privai
   r_inseme -->|1| r_ubikia
+  r_institut_mariani -->|1| r_privai
+  r_institut_mariani -->|1| r_kudos
+  r_institut_mariani -->|1| r_marianivillage
+  r_institut_mariani -->|1| r_inseme
+  r_institut_mariani -->|1| r_cogentia
+  r_institut_mariani -->|1| r_marenostrum
+  r_institut_mariani -->|1| r_inox
+  r_jeanhuguesrobert -->|1| r_operium
+  r_kudos -->|1| r_institut_mariani
+  r_marianivillage -->|1| r_institut_mariani
+  r_operium -->|1| r_ubikia
+  r_operium -->|1| r_suicide_corse
+  r_privai -->|1| r_barons_mariani
+  r_privai -->|1| r_institut_mariani
+  r_suicide_corse -->|1| r_operium
 ```
 <!-- END_AUTO: graph -->
 ---
@@ -635,14 +705,14 @@ graph LR
   click c_cop_cognitive_orchestration_protocol "https://github.com/JeanHuguesRobert/inseme/blob/main/research/concepts.md#cop-cognitive-orchestration-protocol" "Open COP (Cognitive Orchestration Protocol)"
   click c_brique_spec_multi_instance "https://github.com/JeanHuguesRobert/inseme/blob/main/research/concepts.md#brique-spec-multi-instance" "Open Brique Spec / Multi-Instance"
   click c_modular_system "https://github.com/JeanHuguesRobert/inseme/blob/main/research/concepts.md#modular-system" "Open Modular System"
-  click c_concatenative_language "https://github.com/JeanHuguesRobert/Inox/blob/main/research/concepts.md#concatenative-language" "Open Concatenative language"
-  click c_stack_vm "https://github.com/JeanHuguesRobert/Inox/blob/main/research/concepts.md#stack-vm" "Open Stack VM"
-  click c_control_data_plane_separation "https://github.com/JeanHuguesRobert/Inox/blob/main/research/concepts.md#control-data-plane-separation" "Open Control/data plane separation"
-  click c_named_values "https://github.com/JeanHuguesRobert/Inox/blob/main/research/concepts.md#named-values" "Open Named values"
-  click c_reactive_sets "https://github.com/JeanHuguesRobert/Inox/blob/main/research/concepts.md#reactive-sets" "Open Reactive sets"
-  click c_actors "https://github.com/JeanHuguesRobert/Inox/blob/main/research/concepts.md#actors" "Open Actors"
-  click c_dialects "https://github.com/JeanHuguesRobert/Inox/blob/main/research/concepts.md#dialects" "Open Dialects"
-  click c_fractanet "https://github.com/JeanHuguesRobert/Inox/blob/main/research/concepts.md#fractanet" "Open Fractanet"
+  click c_concatenative_language "https://github.com/JeanHuguesRobert/Inox/blob/master/research/concepts.md#concatenative-language" "Open Concatenative language"
+  click c_stack_vm "https://github.com/JeanHuguesRobert/Inox/blob/master/research/concepts.md#stack-vm" "Open Stack VM"
+  click c_control_data_plane_separation "https://github.com/JeanHuguesRobert/Inox/blob/master/research/concepts.md#control-data-plane-separation" "Open Control/data plane separation"
+  click c_named_values "https://github.com/JeanHuguesRobert/Inox/blob/master/research/concepts.md#named-values" "Open Named values"
+  click c_reactive_sets "https://github.com/JeanHuguesRobert/Inox/blob/master/research/concepts.md#reactive-sets" "Open Reactive sets"
+  click c_actors "https://github.com/JeanHuguesRobert/Inox/blob/master/research/concepts.md#actors" "Open Actors"
+  click c_dialects "https://github.com/JeanHuguesRobert/Inox/blob/master/research/concepts.md#dialects" "Open Dialects"
+  click c_fractanet "https://github.com/JeanHuguesRobert/Inox/blob/master/research/concepts.md#fractanet" "Open Fractanet"
   click c_cogentia "https://github.com/JeanHuguesRobert/JeanHuguesRobert/blob/main/research/concepts.md#cogentia" "Open Cogentia"
   click c_cogentigram "https://github.com/JeanHuguesRobert/JeanHuguesRobert/blob/main/research/concepts.md#cogentigram" "Open Cogentigram"
 ```
