@@ -19,7 +19,7 @@ function repositoryContext(projectDir) {
     const remote = execFileSync('git', ['-C', projectDir, 'remote', 'get-url', 'origin'], { encoding: 'utf8' }).trim();
     const match = remote.match(/^(?:git@github\.com:|https:\/\/github\.com\/)([A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+?)(?:\.git)?$/);
     if (!match) return null;
-    return { root, repo: match[1] };
+    return { root: fs.realpathSync(root), repo: match[1] };
   } catch {
     return null;
   }
@@ -28,11 +28,13 @@ function repositoryContext(projectDir) {
 function resolveSourceLink(raw, chapterFile, siteDir, context, warnings) {
   if (!raw.startsWith('../') && !raw.startsWith('./')) return raw;
   const [relative, suffix = ''] = raw.split(/(?=[?#])/, 2);
-  const target = path.resolve(path.dirname(chapterFile), relative);
+  const candidate = path.resolve(path.dirname(chapterFile), relative);
+  const target = fs.existsSync(candidate) ? fs.realpathSync(candidate) : candidate;
+  const canonicalSiteDir = fs.existsSync(siteDir) ? fs.realpathSync(siteDir) : siteDir;
   // Existing site-local references stay local. Chapter links to non-site files
   // can only become GitHub links if the actual source exists in the same repo.
-  if (target.startsWith(siteDir + path.sep) && fs.existsSync(target)) {
-    return path.relative(siteDir, target).split(path.sep).join('/') + suffix;
+  if (target.startsWith(canonicalSiteDir + path.sep) && fs.existsSync(target)) {
+    return path.relative(canonicalSiteDir, target).split(path.sep).join('/') + suffix;
   }
   if (context && target.startsWith(context.root + path.sep) && fs.existsSync(target) && fs.statSync(target).isFile()) {
     // Only repository-tracked sources have stable GitHub blob references.
