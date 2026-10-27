@@ -246,6 +246,16 @@ Il verifie que la generation multi-format fonctionne parfaitement.
   assert.ok(fs.existsSync(path.join(bookDir, 'site', 'book.epub')), 'site/book.epub must exist');
   assert.ok(fs.existsSync(path.join(bookDir, 'projections', 'preview.yml')), 'preview.yml projection contract must exist');
 
+  // Site-only deployments must not depend on files above the site root.
+  const renderedBookHtml = fs.readFileSync(path.join(bookDir, 'site', 'book.html'), 'utf8');
+  assert.ok(!renderedBookHtml.includes('../projections/'), 'Site-only book must not link outside deployed site');
+  assert.ok(renderedBookHtml.includes('href="index.html"'), 'Reader must link back to site index');
+  for (const rel of ['site/book.html', 'projections/preview.html']) {
+    const generatedHtml = fs.readFileSync(path.join(bookDir, rel), 'utf8');
+    assert.ok(!generatedHtml.split(String.fromCharCode(10)).some(line => /^[ ]+$/.test(line)),
+      rel + ' must not contain whitespace-only lines');
+  }
+
   // Verify PDF header
   const pdfBytes = fs.readFileSync(renderRes.pdf.path);
   assert.ok(pdfBytes.toString('binary').startsWith('%PDF-1.4'), 'Rendered PDF must have %PDF-1.4 header');
