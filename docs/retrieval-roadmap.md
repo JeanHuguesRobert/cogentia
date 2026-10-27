@@ -1,7 +1,12 @@
 ---
 title: Retrieval roadmap — Guide, Ophelia, Fractanet
 author: unknown
+affiliation: unknown
 date: '2026-07-03'
+last_modified_at: '2026-10-27'
+license: unknown
+language: en
+status: working-paper
 document_role: source
 document_kind: documentation
 visibility: public
@@ -38,7 +43,7 @@ The current live setup is intentionally two-level:
 - **Weak nodes subcontract** (fracta → regional serving).
 - **Only what must ascend ascends** (public retrieval slice, not private registry).
 
-Scale: `local` (canon/build) → `regional` (pgvector) → `edge` (user/SSE) → `federated` (future Inox packets).
+Scale: `local` (canon/build) → `regional` (pgvector) → `edge` (user/SSE) → `federated` (future, undecided).
 
 ## Phases
 
@@ -82,7 +87,7 @@ COGENTIA_REGISTRY=... COGENTIA_DATA_DIR=/var/lib/cogentia \
 ### Phase 2 — Netlify Deno façade (deferred)
 
 - Skipped for now: adds deploy dependency without removing OpenAI/Supabase work.
-- Revisit only if a client needs edge HTTP without VPS secrets before Inox is ready.
+- Revisit only if a client needs edge HTTP without VPS secrets; choose a backend separately based on evidence and authorization.
 
 ### Phase 3 — Ophelia / future survey platform
 
@@ -90,13 +95,28 @@ COGENTIA_REGISTRY=... COGENTIA_DATA_DIR=/var/lib/cogentia \
 - Replace JS `vector_search` (fetch 1000 + cosine) with RPC.
 - Ingest pipelines (`ingest_file`, `rag-ingest`) write to `retrieval_chunks`.
 
-### Phase 4 — Inox + Fractanet (in progress)
+### Phase 4 — parked; not the current Guide runtime
 
-- GitHub issue: https://github.com/JeanHuguesRobert/cogentia/issues/42
-- **Proto fulfiller (Inox repo):** `inox-serve` — `POST /session/turn` (`inox.session.v1`) with continuation loop; legacy `POST /retrieval/batch`
-- **Guide client (cogentia):** `COGENTIA_INOX_RETRIEVAL_URL` + optional `COGENTIA_INOX_SERVE_TOKEN` → `scripts/lib/retrieval-inox-session.js`
-- Next ops: point fracta `guide.env` at capable-host inox-serve; remove Supabase/OpenAI secrets from VPS when inline fulfill works remotely
-- Later: mandate packet `.nox` + COP stream instead of HTTP per turn
+The earlier design in [Cogentia issue #42](https://github.com/JeanHuguesRobert/cogentia/issues/42)
+proposed using Inox for Guide retrieval. That is not the live Guide setup:
+Operium reported `backend=supabase` on 2026-10-27.
+
+Cogentia source still has an optional Inox client
+(`scripts/lib/retrieval-inox-session.js`) that would be selected if
+`COGENTIA_INOX_RETRIEVAL_URL` or `INOX_RETRIEVAL_URL` is configured. This code
+and the ThinkPad's `retrieval.inline` blackboard advertisement are not evidence
+that current Guide requests use Inox. The Guide resolves its backend statically;
+the current live backend reports Supabase. The `web-guide` advertisement remains
+on the blackboard, but no Guide request routed through Inox was established by
+this audit.
+
+The ThinkPad `inox-serve` is a separate remote Inox runtime. Its live `/health`
+response confirms support for `/run` (remote `.nox` execution), `/session/turn`
+(`mandate.run` and continuation/fulfillment turns), `/continuation/fulfill`, and
+`/retrieval/batch`. The current blackboard advertisement lists both `owner-cli`
+and `web-guide` mandate surfaces, but does not prove either is invoking the
+service. Do not point the Guide at Inox or remove its Supabase configuration
+based on this parked design; any such change needs a separate, verified decision.
 
 ## Cache split rule
 
