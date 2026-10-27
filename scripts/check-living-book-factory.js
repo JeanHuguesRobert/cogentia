@@ -237,6 +237,23 @@ Ceci est le contenu du premier chapitre de test.
 Il verifie que la generation multi-format fonctionne parfaitement.
 `, 'utf8');
 
+  // Existing per-book navigation is authoritative, including book-specific pages.
+  const siteIndex = path.join(bookDir, 'site', 'index.html');
+  const originalIndex = fs.readFileSync(siteIndex, 'utf8');
+  fs.writeFileSync(siteIndex, originalIndex.replace(
+    '</body>',
+    '</body>'
+  ).replace(
+    /<header class="site">[\\s\\S]*?<\\/header>/,
+    '<header class="site"><p class="mark"><a href="index.html">Test</a></p>' +
+    '<nav aria-label="Navigation principale">' +
+    '<a href="index.html" aria-current="page">Accueil</a>' +
+    '<a href="book.html">Livre</a>' +
+    '<a href="n1.html">n°1</a>' +
+    '<a href="chronologie.html">Chronologie</a>' +
+    '</nav></header>'
+  ), 'utf8');
+
   const renderRes = renderLivingBookProjections(bookDir);
   assert.ok(fs.existsSync(renderRes.html.path), 'HTML preview must exist');
   assert.ok(fs.existsSync(renderRes.pdf.path), 'PDF preview must exist');
@@ -250,6 +267,12 @@ Il verifie que la generation multi-format fonctionne parfaitement.
   const renderedBookHtml = fs.readFileSync(path.join(bookDir, 'site', 'book.html'), 'utf8');
   assert.ok(!renderedBookHtml.includes('../projections/'), 'Site-only book must not link outside deployed site');
   assert.ok(renderedBookHtml.includes('href="index.html"'), 'Reader must link back to site index');
+  assert.ok(renderedBookHtml.includes('href="n1.html"'), 'Book-specific navigation should be preserved');
+  assert.ok(renderedBookHtml.includes('href="chronologie.html"'), 'Custom navigation should survive rendering');
+  assert.ok(!renderedBookHtml.includes('href="magazine.html"'), 'Generic menu must not replace source navigation');
+  assert.ok(renderedBookHtml.includes('href="book.html" aria-current="page"'), 'Book link must be marked current');
+  assert.ok(!renderedBookHtml.includes('href="index.html" aria-current="page"'), 'Index link must not remain current');
+
   for (const rel of ['site/book.html', 'projections/preview.html']) {
     const generatedHtml = fs.readFileSync(path.join(bookDir, rel), 'utf8');
     assert.ok(!generatedHtml.split(String.fromCharCode(10)).some(line => /^[ ]+$/.test(line)),
