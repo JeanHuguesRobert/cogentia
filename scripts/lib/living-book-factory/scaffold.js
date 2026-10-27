@@ -90,6 +90,7 @@ export function scaffoldLivingBook(manifest, targetDir, options = {}) {
     '# Living Book Factory — replaceable working artifacts',
     '/projections/preview.pdf',
     '/projections/preview.epub',
+    '/projections/preview.yml',
     '/site/book.pdf',
     '/site/book.epub',
     ''
