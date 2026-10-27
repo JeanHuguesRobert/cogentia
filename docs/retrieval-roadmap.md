@@ -101,12 +101,11 @@ The earlier design in [Cogentia issue #42](https://github.com/JeanHuguesRobert/c
 proposed using Inox for Guide retrieval. That is not the live Guide setup:
 Operium reported `backend=supabase` on 2026-10-27.
 
-The live Guide reports `retrieval_backend=supabase` and
-`inox_configured=false`. The current Cogentia source removes the optional Guide
-Inox retrieval client and restricts future ThinkPad retrieval-attractor
-advertisements to `owner-cli`. That source change has not been deployed: the live
-blackboard still advertises `web-guide` as of 2026-10-27, and the deployed Guide
-may still contain the unconfigured legacy client.
+Commit `122d0ba` is deployed on `fracta2`: `mcp-cogentia.service` is active, and
+the live Guide reports `retrieval_backend=supabase` without the legacy
+`inox_retrieval` field. The ThinkPad retrieval-attractor heartbeat was refreshed
+on 2026-10-27; the live blackboard now advertises `owner-cli` only for
+`retrieval.inline` (snapshot observed at 21:22:50 UTC).
 
 The ThinkPad `inox-serve` is a separate remote Inox runtime. Its live `/health`
 response confirms support for `/run` (remote `.nox` execution), `/session/turn`
