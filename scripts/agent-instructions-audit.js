@@ -3,9 +3,21 @@ import fs from "node:fs";
 import path from "node:path";
 import { extractFrontmatter } from "./lib/frontmatter-validator.js";
 
-const registryPath = process.env.COGENTIA_REGISTRY || process.argv[2] || ".cogentia.json";
+const requestedRegistry = process.env.COGENTIA_REGISTRY || process.argv[2] || null;
+let registryPath = requestedRegistry || ".cogentia.json";
+if (!requestedRegistry && !fs.existsSync(registryPath) && fs.existsSync("docs/registry.json")) {
+  registryPath = "docs/registry.json";
+}
+if (!fs.existsSync(registryPath)) {
+  console.error(`Registry not found: ${registryPath}. Pass a registry path or set COGENTIA_REGISTRY.`);
+  process.exit(2);
+}
 const registry = JSON.parse(fs.readFileSync(registryPath, "utf8"));
-const registryRoot = path.dirname(path.resolve(registryPath));
+const resolvedRegistryPath = path.resolve(registryPath);
+const registryRoot = resolvedRegistryPath === path.resolve("docs/registry.json")
+  ? path.dirname(path.dirname(resolvedRegistryPath))
+  : path.dirname(resolvedRegistryPath);
+const repositories = Array.isArray(registry) ? registry : (registry.repos || []);
 const skip = new Set([".git", "node_modules", "dist", "build", ".cache", ".next", "coverage"]);
 const names = new Set(["agents.md", "claude.md", "instructions.md", ".ai-rules.md", ".rules.md", ".cursorrules", ".windsurfrules", ".clinerules", "copilot-instructions.md"]);
 const promptPath = /(^|[\\/])(prompts?|\.agents)([\\/]|$)|(?:^|[-_])prompt(?:[-_.]|$)/i;
@@ -30,7 +42,7 @@ function walk(root, current, found) {
 
 const entries = [];
 const issues = [];
-const cogentiaRepo = (registry.repos || []).find(repo => repo.name === "cogentia");
+const cogentiaRepo = repositories.find(repo => repo.name === "cogentia");
 const cogentiaRoot = cogentiaRepo ? path.resolve(registryRoot, cogentiaRepo.path) : null;
 const shared = cogentiaRoot ? path.join(cogentiaRoot, "instructions", "AGENTS.shared.md") : null;
 if (!shared || !fs.existsSync(shared)) {
@@ -64,7 +76,7 @@ if (!publicReadonly || !fs.existsSync(publicReadonly)) {
   });
 }
 
-for (const repo of registry.repos || []) {
+for (const repo of repositories) {
   const root = path.resolve(registryRoot, repo.path);
   if (!fs.existsSync(root)) {
     issues.push({ type: "repository_unavailable", repo: repo.name });

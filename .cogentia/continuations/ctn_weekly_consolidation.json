@@ -1,20 +1,20 @@
 {
-  "id": "ctn_weekly_consolidation_2026-W43",
-  "packet_id": "CPKT-2026-W43-CONSOLIDATION",
+  "id": "ctn_weekly_consolidation_2026-W44",
+  "packet_id": "CPKT-2026-W44-CONSOLIDATION",
   "kind": "cognitive_packet_journey",
   "subject": "sunday_corpus_consolidation",
   "status": "completed",
-  "created_at": "2026-10-25T09:43:29.000Z",
-  "updated_at": "2026-10-25T09:43:29.000Z",
+  "created_at": "2026-10-26T00:15:40.015Z",
+  "updated_at": "2026-10-26T00:15:40.015Z",
   "origin_home": "https://jhn.baronsmariani.org/",
   "destination": "https://cogentia.fractavolta.com/mcp",
   "mandate": {
-    "mission": "Sunday Corpus De-Entropy & Sprint Wrap-Up for 2026-W43",
+    "mission": "Sunday Corpus De-Entropy & Sprint Wrap-Up for 2026-W44",
     "budget_units": 200
   },
   "privacy_domains": {
     "public": {
-      "digest": "/srv/cogentia/repos/cogentia/research/sprints/weekly_digest_2026-W43.md",
+      "digest": "/srv/cogentia/repos/cogentia/research/sprints/weekly_digest_2026-W44.md",
       "llms": "/srv/cogentia/repos/cogentia/llms.txt",
       "llms_full": "/srv/cogentia/repos/cogentia/llms-full.txt",
       "repos": [
@@ -30,7 +30,7 @@
       ]
     },
     "private": {
-      "digest": "/srv/cogentia/repos/cogentia/.cogentia/sprints/weekly_digest_full_2026-W43.md",
+      "digest": "/srv/cogentia/repos/cogentia/.cogentia/sprints/weekly_digest_full_2026-W44.md",
       "llms": "/srv/cogentia/repos/cogentia/.cogentia/projections/llms.txt",
       "llms_full": "/srv/cogentia/repos/cogentia/.cogentia/projections/llms-full.txt",
       "repos": [
@@ -52,11 +52,11 @@
     }
   },
   "target_documents": [
-    "/srv/cogentia/repos/cogentia/research/sprints/weekly_digest_2026-W43.md",
-    "/srv/cogentia/repos/cogentia/.cogentia/sprints/weekly_digest_full_2026-W43.md",
+    "/srv/cogentia/repos/cogentia/research/sprints/weekly_digest_2026-W44.md",
+    "/srv/cogentia/repos/cogentia/.cogentia/sprints/weekly_digest_full_2026-W44.md",
     "docs/sunday-consolidation-master-plan.md"
   ],
   "execution_steps_completed": 5,
   "serendipity_ledger_count": 0,
-  "continuation_scheduled": "CPKT-2026-W44-CONSOLIDATION"
+  "continuation_scheduled": "CPKT-2026-W45-CONSOLIDATION"
 }

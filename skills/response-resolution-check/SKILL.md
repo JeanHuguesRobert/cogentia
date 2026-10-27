@@ -1,8 +1,32 @@
 ---
+schema: cogentia.agent_skill/v1
+id: cogentia.response-resolution-check
+status: "working-paper — experimental"
+effects: read_only
+sources:
+  - docs/agent-skills-contract.md
+  - research/cognitive_packets.md
+  - research/reality_probe_selection.md
+title: "Response resolution check"
+author: unknown
+affiliation: unknown
+date: null
+last_modified_at: "2026-10-27"
+license: CC BY-SA 4.0
+language: en
+update_policy: UP-DEFAULT-REVIEWED
+provenance:
+  origin_type: unknown
+  origin_repository: JeanHuguesRobert/cogentia
+  origin_ref: unknown
+  origin_date: unknown
+  derived_from: []
+review:
+  status: unreviewed
+  reviewed_by: []
 name: response-resolution-check
 description: Detect whether a response actually resolves the question asked, preserve unresolved epistemic residue, detect question substitution and unexplained external fragmentation, distinguish effect from intent, recover the original frame, and select the next Reality Probe when needed.
 version: 0.3.0
-status: experimental
 document_role: "operational"
 document_kind: "documentation"
 visibility: "public"

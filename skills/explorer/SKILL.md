@@ -1,8 +1,32 @@
 ---
+schema: cogentia.agent_skill/v1
+id: cogentia.explorer
+status: "working-paper — experimental"
+effects: read_only
+sources:
+  - docs/agent-skills-contract.md
+  - research/ideas_to_explore_as_issues.md
+  - research/CPKT-2026-007_open_possible_booster_handoff.md
+title: "Explorer"
+author: unknown
+affiliation: unknown
+date: null
+last_modified_at: "2026-10-27"
+license: CC BY-SA 4.0
+language: en
+update_policy: UP-DEFAULT-REVIEWED
+provenance:
+  origin_type: unknown
+  origin_repository: JeanHuguesRobert/cogentia
+  origin_ref: unknown
+  origin_date: unknown
+  derived_from: []
+review:
+  status: unreviewed
+  reviewed_by: []
 name: explorer
 description: Expand the rationally interesting space of possibilities before convergence. Use for open-ended research, reframing, hypothesis generation, distant structural analogy, anomaly preservation, and discovery work where premature convergence is a risk.
 version: 0.1.5
-status: experimental
 document_role: "operational"
 document_kind: "documentation"
 visibility: "public"

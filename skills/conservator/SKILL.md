@@ -1,8 +1,32 @@
 ---
+schema: cogentia.agent_skill/v1
+id: cogentia.conservator
+status: "working-paper — experimental"
+effects: read_only
+sources:
+  - docs/agent-skills-contract.md
+  - research/reality_probe_selection.md
+  - research/reality_probe_mapping.md
+title: "Conservator"
+author: unknown
+affiliation: unknown
+date: null
+last_modified_at: "2026-10-27"
+license: CC BY-SA 4.0
+language: en
+update_policy: UP-DEFAULT-REVIEWED
+provenance:
+  origin_type: unknown
+  origin_repository: JeanHuguesRobert/cogentia
+  origin_ref: unknown
+  origin_date: unknown
+  derived_from: []
+review:
+  status: unreviewed
+  reviewed_by: []
 name: conservator
 description: Evaluate exploratory candidates after incubation and determine what deserves to survive, be tested, or approach stabilization. Use for prior-art reconciliation, bullshit reduction, assumption checking, falsification, evidence ranking, and cheap Reality-test design without retrospectively suppressing exploration.
 version: 0.1.0
-status: experimental
 document_role: "operational"
 document_kind: "documentation"
 visibility: "public"

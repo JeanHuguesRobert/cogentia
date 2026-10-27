@@ -3,9 +3,9 @@ title: Cogentia Shared Agent Instructions
 author: unknown
 affiliation: "Institut Mariani / C.O.R.S.I.C.A., 1 cours Paoli, F-20250 Corte, Corsica"
 status: "working-paper — active operational mandate"
-version: 38
+version: 39
 date: 2026-10-02
-last_modified_at: "2026-10-23"
+last_modified_at: "2026-10-27"
 license: CC BY-SA 4.0
 language: en
 canonical_url: https://github.com/JeanHuguesRobert/cogentia/blob/main/instructions/AGENTS.shared.md
@@ -180,6 +180,8 @@ schema- and judgment-bearing, traveling **by copy** or **by reference**.
 
 **Handler procedure:**  
 [`skills/continuation-handling/SKILL.md`](../skills/continuation-handling/SKILL.md)
+
+**Terminal result is mandatory.** Every handler MUST return a terminal outcome that addresses the Packet's `expected_response` and closure contract. The outcome may be success, failure, refusal, or `needs_acceptance`; success is never to be invented, but an intermediate tool result or an invitation to "continue" is not a result. Complete clear in-scope recovery and required Packet traces before closing or handing off.
 
 **Sources:** [`research/cognitive_packets.md`](../research/cognitive_packets.md),
 [`research/agent_resumable_cli.md`](../research/agent_resumable_cli.md).
@@ -720,6 +722,8 @@ authorization and all provider controls. A generic `send it`, earlier assent,
 or routine mandate is insufficient. For bounded internal recoverable effects,
 an auditable, verified mandate-derived grant may replace repetitive human
 confirmation once supported by the applicable trusted adapter.
+
+**Packet-owned execution report:** When a resumable GitHub Issue is the owning Packet and its acceptance or return contract requires a factual execution report, that mandate authorizes one comment on the same Issue, limited to its required result fields. The handler MUST write and verify that report without requesting a second approval or separate UI grant; the returned comment ID and body are the durable receipt. This does not authorize posting a derived product, contacting third parties, widening the Issue's existing disclosure audience, changing the target, or adding commitments. Continue to apply all account and platform controls.
 
 The following NEVER create execution authority by themselves:
 

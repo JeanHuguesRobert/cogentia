@@ -1,7 +1,7 @@
 ---
 schema: cogentia.agent_skill/v1
 id: cogentia.continuation-handling
-version: 7
+version: 8
 status: "working-paper — experimental"
 title: "Continuation handling"
 author: unknown
@@ -303,10 +303,18 @@ state change:
 ```text
 prepare
 → expose exact action + target + material payload
-→ obtain explicit execution directive
+→ locate or obtain the explicit execution directive
 → execute once
 → verify
 ```
+
+The Packet's own explicit mandate is an execution directive for acts it
+specifies. When its acceptance/return contract requires a factual report on the
+same owning GitHub Issue, the handler MUST add and verify one comment there,
+limited to the declared result fields, without asking for a second approval or
+a separate UI grant. Keep the comment within the Issue's existing disclosure
+envelope. This narrow trace rule does not authorize publication of the derived
+product, third-party communication, or any act outside the Packet.
 
 Do not classify workflow narration, plan approval, draft approval, urgency,
 reversibility, prior similar permission, or the Next Logical Action Principle
@@ -371,6 +379,8 @@ consume material attention or resources ahead of it.
 #### Closure Contract Integrity
 
 A handler MUST NOT silently weaken the Packet's declared closure contract.
+
+Every handler MUST produce a terminal result that answers the Packet's `expected_response`, even when it cannot succeed. Use the declared result schema for success, failure, refusal, or `needs_acceptance`; do not stop at an intermediate tool response or ask whether to continue when useful in-mandate work remains. A missing result is not successful closure.
 
 If completion is declared as a conjunction:
 

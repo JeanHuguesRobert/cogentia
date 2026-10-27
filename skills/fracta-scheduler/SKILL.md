@@ -1,5 +1,7 @@
 ---
 schema: cogentia.agent_skill/v1
+id: cogentia.fracta-scheduler
+status: "working-paper — experimental"
 name: fracta-scheduler
 version: "0.1.0"
 title: "FractaScheduler — Multi-level Distributed Corpus Sleep Cycle"
@@ -15,8 +17,29 @@ capabilities_provided:
 tools:
   - cogentia_scheduler_status
   - cogentia_scheduler_run
+effects: governed_write
+sources:
+  - docs/fracta-scheduler.md
+  - scripts/lib/fracta-scheduler.js
+  - scripts/check-fracta-scheduler.js
 entrypoint:
   command: "node scripts/cogentia.js scheduler run --mode sleep"
+author: unknown
+affiliation: unknown
+date: null
+last_modified_at: "2026-10-27"
+license: CC BY-SA 4.0
+language: en
+update_policy: UP-DEFAULT-REVIEWED
+provenance:
+  origin_type: unknown
+  origin_repository: JeanHuguesRobert/cogentia
+  origin_ref: unknown
+  origin_date: unknown
+  derived_from: []
+review:
+  status: unreviewed
+  reviewed_by: []
 document_role: "operational"
 document_kind: "documentation"
 visibility: "public"

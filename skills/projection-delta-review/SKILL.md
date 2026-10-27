@@ -2,7 +2,24 @@
 schema: cogentia.agent_skill/v1
 id: cogentia.projection-delta-review
 version: 3
-status: experimental
+status: "working-paper — experimental"
+title: "Projection delta review"
+author: unknown
+affiliation: unknown
+date: null
+last_modified_at: "2026-10-27"
+license: CC BY-SA 4.0
+language: en
+update_policy: UP-DEFAULT-REVIEWED
+provenance:
+  origin_type: unknown
+  origin_repository: JeanHuguesRobert/cogentia
+  origin_ref: unknown
+  origin_date: unknown
+  derived_from: []
+review:
+  status: unreviewed
+  reviewed_by: []
 name: projection-delta-review
 description: Reconcile a bounded, locality-aware Corpus delta against a target projection to detect silent omissions and propagation failures, propose explicit dispositions, generate coverage/journal views, and emit localized Continuation candidates.
 triggers:
@@ -14,16 +31,21 @@ inputs: [from_reference, to_reference, target_projection, source_corpus]
 outputs: [delta_items, projection_coverage_report, campaign_journal_candidate, localized_continuation_candidates]
 effects: read_only
 requires:
-  capabilities: [corpus_retrieval, version_comparison, semantic_analysis]
+  capabilities:
+    - corpus_retrieval
+    - version_comparison
+    - semantic_analysis
 governance:
   minimum_mandate: read_public
   may_disclose: false
   may_resolve_without_mandate: false
   trace_minimum: material
 sources:
-  - ../../patterns/delta-disposition/PATTERN.md
-  - ../../schemas/delta-disposition.v0.schema.json
-  - ../../research/locality_principle.md
+  - patterns/delta-disposition/PATTERN.md
+  - schemas/delta-disposition.v0.schema.json
+  - research/locality_principle.md
+document_role: operational
+document_kind: documentation
 ---
 
 # Projection Delta Review
