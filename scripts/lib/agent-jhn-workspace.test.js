@@ -78,6 +78,23 @@ test("workspace write rejects untrusted auth, stale hashes and a different branc
   );
 });
 
+test("workspace write accepts the Principal-assigned main branch", async (t) => {
+  const root = temporaryGitWorktree(t);
+  execFileSync("git", ["branch", "-M", "main"], { cwd: root });
+  const [, write] = createAgentJhnWorkspaceCapabilities({
+    root,
+    branch: "main",
+    authContext: jhnAuth(),
+    budget_reservation_id: "budget:test",
+  });
+
+  await assert.rejects(
+    () => write.execute({ path: "notes.txt", content: "changed\n", expected_sha256: "sha256:stale" }),
+    (error) => error.code === "workspace_precondition_failed",
+  );
+  assert.equal(fs.readFileSync(path.join(root, "notes.txt"), "utf8"), "initial\n");
+});
+
 test("governed harness enforces the configured internal effect count", async () => {
   let executions = 0;
   let next = 0;

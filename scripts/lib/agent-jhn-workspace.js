@@ -169,7 +169,7 @@ function assertAssignedBranch(root, expectedBranch) {
   const gitRoot = execFileSync("git", ["rev-parse", "--show-toplevel"], { cwd: root, encoding: "utf8" }).trim();
   const currentBranch = execFileSync("git", ["branch", "--show-current"], { cwd: root, encoding: "utf8" }).trim();
   if (path.resolve(gitRoot) !== path.resolve(root) || currentBranch !== expectedBranch
-      || new Set(["main", "master", "production"]).has(currentBranch.toLowerCase())) {
+      || new Set(["master", "production"]).has(currentBranch.toLowerCase())) {
     throw failure("workspace_branch_mismatch");
   }
 }
