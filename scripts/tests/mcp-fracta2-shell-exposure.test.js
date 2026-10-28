@@ -41,3 +41,15 @@ test("invalid JHN credential does not expose Fracta2 shell probe", async () => {
   assert.ok(response.result);
   assert.equal(response.result.tools.some(tool => tool.name === NAME), false);
 });
+
+test("OAuth-configured discovery advertises protected shell with oauth2 scheme but still denies unauthenticated execution", async () => {
+  const core = createMcpCore({ ...env, COGENTIA_MCP_OAUTH_ISSUER: "https://issuer.example.org" });
+  const listing = await core.handleJsonRpc({ jsonrpc:"2.0", id:4, method:"tools/list", params:{} }, { headers:{} });
+  const tool = listing.result.tools.find(t => t.name === NAME);
+  assert.ok(tool);
+  assert.deepEqual(tool.securitySchemes, [{ type:"oauth2", scopes:["cogentia.private.read"] }]);
+  const invoked = await core.handleJsonRpc({ jsonrpc:"2.0", id:5, method:"tools/call",
+    params:{ name:NAME, arguments:{} } }, { headers:{} });
+  assert.equal(invoked.result.isError, true);
+  assert.match(JSON.stringify(invoked.result), /tier_forbidden/);
+});
