@@ -3,9 +3,9 @@ title: Cogentia Shared Agent Instructions
 author: unknown
 affiliation: "Institut Mariani / C.O.R.S.I.C.A., 1 cours Paoli, F-20250 Corte, Corsica"
 status: "working-paper — active operational mandate"
-version: 39
+version: 40
 date: 2026-10-02
-last_modified_at: "2026-10-27"
+last_modified_at: "2026-10-28"
 license: CC BY-SA 4.0
 language: en
 canonical_url: https://github.com/JeanHuguesRobert/cogentia/blob/main/instructions/AGENTS.shared.md
@@ -1183,6 +1183,49 @@ See [`docs/readme-topology.md`](../docs/readme-topology.md).
 - A blocked tool, access failure or missing evidence is a result to report, never a success to imply.
 - **Validate the delivered artifact, not only its pre-transformation source.** Whenever content passes through a renderer, converter, serializer, templating layer, code string, escaping layer, or other transformation before delivery, inspect or mechanically check the final bytes/artifact for semantic and syntactic corruption. A transformation step is part of the system under test, not a transparent pipe. For Markdown with TeX intended for GitHub, prefer `$...$` / `$$...$$`, preserve TeX backslashes through any interpreted string layer (raw strings or explicit escaping), and scan the final artifact for transformation signatures when material (for example dropped backslashes, `{=tex}`, broken math delimiters, or malformed commands).
 - Before presenting work as ready, state scope, files affected, checks run, known risks/Exposure, recovery path, unresolved residue and required human validation.
+
+### Prompt GitHub stabilization for significant results
+
+The Principal's instruction of 2026-10-28 establishes this standing, scoped
+authorization for routine GitHub stabilization in the Principal's own or
+expressly designated repositories: when a task produces a significant local
+result, agents MUST preserve it in the appropriate versioned source and push a
+small, validated commit to the existing authorized canonical remote branch
+promptly. Do not wait for the entire broader task to finish. This authorization
+covers only changes already within the active task's scope; it does not
+authorize additional implementation or unrelated cleanup. Ordinary repository
+CI triggered by a push is included; deployments, release/promotion, data
+transfer, messaging, spending, production changes, or other consequential
+external automation are not.
+
+A result is significant when it is validated and a successor would reasonably
+reuse it, rely on it, or otherwise spend meaningful effort reconstructing it.
+Examples include a completed defect correction or implementation slice, a
+verified operational finding or decision, reusable documentation or tooling,
+and a durable checkpoint or handoff needed to resume unfinished work. A
+coherent partial result qualifies. Scratch notes, transient command output,
+unverified hypotheses with no durable next-step value, and generated files not
+intended as repository sources do not qualify by themselves.
+
+When the threshold is met, agents MUST inspect the worktree, preserve unrelated
+changes, stage only mandate-scoped paths, validate the result proportionately,
+fetch and reconcile the canonical remote, then commit and push on the existing
+authorized branch. Verify that the exact commit is present on the remote and
+report its repository, commit, paths, checks, and any unresolved residue. Do
+not leave significant work local without either completing this synchronization
+or recording the precise technical or authority blocker and a durable resume
+point.
+
+This standing authorization does not cover publishing secrets or private
+material, moving content across a repository visibility boundary, changing
+issue or review state, creating branches, opening pull requests or releases,
+force-pushing or rewriting history, changing credentials, or triggering
+deployments or other consequential external workflows. If a push would trigger
+such an effect, or a repository-specific mandate or protection requires a
+separate gate, stop before that effect and prepare the smallest useful local
+trace for the Principal. Continue to preserve public/private boundaries,
+repository-specific rules, the [Optimistic Mainline Governance](../research/optimistic_mainline_governance.md),
+and [Agentic Commit Transparency](../research/agentic_commit_transparency.md).
 
 ## Delivery policy — Optimistic Locking
 
