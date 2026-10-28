@@ -993,6 +993,7 @@ async function produceGuideTurn(question, history, payload = {}, options = {}) {
     question,
     locale: defaultLocale,
     instance_id: surface.startsWith("jhn") ? "agent:jhn:openai-surface" : "agent:jhn:guide",
+    ...(profile?.mandate?.instance_id ? { mandate_id: `mandate:${profile.mandate.instance_id}:readonly` } : {}),
   });
   const rootPacket = turnAcct.ok ? turnAcct.packet : null;
   const cop = turnAcct.ok ? turnAcct.cop : null;
