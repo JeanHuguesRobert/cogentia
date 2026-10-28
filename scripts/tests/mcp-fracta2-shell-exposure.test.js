@@ -57,12 +57,12 @@ test("OAuth-configured discovery advertises protected shell with oauth2 scheme b
 test("OAuth verified private-read principal exposes shell without granting mutation", async () => {
   const core = createMcpCore({
     ...env,
-    COGENTIA_MCP_OAUTH_JHN_SUB: "principal:jhn",
+    COGENTIA_MCP_OAUTH_IDENTITY_BINDINGS: JSON.stringify([{ issuer: "https://issuer.example.org", subject: "principal:jhn", principal: "principal:jhn" }]),
     COGENTIA_MCP_OAUTH_ISSUER: "https://issuer.example.org",
   });
   const transport = {
     headers: {},
-    oauthPrincipal: { verified: true, subject: "principal:jhn", scopes: ["cogentia.private.read"] },
+    oauthPrincipal: { verified: true, issuer: "https://issuer.example.org", subject: "principal:jhn", scopes: ["cogentia.private.read"] },
   };
   const listing = await core.handleJsonRpc({ jsonrpc:"2.0", id:6, method:"tools/list", params:{} }, transport);
   assert.ok(listing.result.tools.some(t => t.name === NAME));
@@ -70,4 +70,20 @@ test("OAuth verified private-read principal exposes shell without granting mutat
     params: { name:"cogentia_concepts_init", arguments:{} } }, transport);
   assert.equal(mutate.result.isError, true);
   assert.match(JSON.stringify(mutate.result), /tier_forbidden/);
+});
+
+test("unknown issuer never maps to JHN private read", async () => {
+  const core = createMcpCore({
+    ...env,
+    COGENTIA_MCP_OAUTH_IDENTITY_BINDINGS: JSON.stringify([
+      { issuer:"https://first.example.org", subject:"same-sub", principal:"principal:jhn" },
+    ]),
+  });
+  const response = await core.handleJsonRpc({ jsonrpc:"2.0", id:8, method:"tools/call",
+    params:{name:NAME,arguments:{}} }, { headers:{}, oauthPrincipal:{
+      verified:true, issuer:"https://second.example.org", subject:"same-sub",
+      scopes:["cogentia.private.read"],
+    } });
+  assert.equal(response.result.isError, true);
+  assert.match(JSON.stringify(response.result), /tier_forbidden/);
 });
