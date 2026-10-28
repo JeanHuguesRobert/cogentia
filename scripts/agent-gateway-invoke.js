@@ -112,10 +112,10 @@ function buildClientOptions(args) {
   return {
     blackboardUrl: args.blackboardUrl || process.env.COGENTIA_BLACKBOARD_URL,
     token: args.token
-      || process.env.COGENTIA_API_KEY
       || process.env.AGENT_GATEWAY_INVOKE_TOKEN
       || process.env.AGENT_GATEWAY_ACCEPT_TOKEN
-      || process.env.AGENT_GATEWAY_TOKEN,
+      || process.env.AGENT_GATEWAY_TOKEN
+      || process.env.COGENTIA_API_KEY,
     endpoint: args.endpoint || process.env.AGENT_GATEWAY_INVOKE_ENDPOINT,
     attractorId: args.attractorId || process.env.AGENT_GATEWAY_INVOKE_ATTRACTOR_ID,
     capability: args.capability || process.env.AGENT_GATEWAY_INVOKE_CAPABILITY,
