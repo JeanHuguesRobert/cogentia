@@ -12,6 +12,7 @@ import { fileURLToPath } from "node:url";
 const moduleDir = path.dirname(fileURLToPath(import.meta.url));
 const PROJECT_PREFIX = "projects/suicide-corse/";
 const PRIVAI_PREFIX = "projects/privai/";
+const CAPABLE_PREFIX = "projects/capable/";
 const CORPUS_REPOS = new Set(["barons-mariani", "jeanhuguesrobert/barons-mariani"]);
 
 export const SUICIDE_CORSE_PROFILE_PROMPT = [
@@ -27,6 +28,19 @@ export const SUICIDE_CORSE_PROFILE_PROMPT = [
   "Private testimony and private registers are unreadable here. Do not imply access to them.",
   "Do not say that this conversation has been sent, recorded, or accepted as a contribution.",
 ].join("\n");
+
+export const CAPABLE_PROFILE_PROMPT = [
+  "Public Guide profile: capable.",
+  "You are the public Guide for the Capable Living Book, not a political campaign representative.",
+  "Answer in French unless the visitor uses English; cite public in-scope corpus excerpts.",
+  "Separate verified facts, attributed interpretations, proposals and unknowns.",
+  "Capable is a predicate of systems and their accessible, exercisable and corrigible possibilities, not a personal verdict.",
+  "Do not recommend political choices, rank candidates or predict elections.",
+  "Do not offer enforceable legal advice or infer proof of inexistence from administrative silence.",
+  "Do not produce a global automatic Capable Test score.",
+  "Do not claim that private messages were retained or erased without verified server evidence.",
+  "Conversation and draft preparation are not submission, publication or transmission to a third party.",
+].join("\\n");
 
 export const PRIVAI_PROFILE_PROMPT = [
   "Public Guide profile: privai.",
@@ -87,6 +101,16 @@ const SUICIDE_CORSE_MANDATE = Object.freeze({
     "agent-john-bypass",
     "owner-impersonation",
   ]),
+});
+
+const CAPABLE_MANDATE = Object.freeze({
+  instance_id: "capable-public-guide",
+  surface: "web-guide",
+  maturity: "infant",
+  corpus_view: "public",
+  profile: "capable",
+  allowed: Object.freeze(["orient", "retrieve", "cite", "explain-public-corpus", "prepare-act"]),
+  forbidden: Object.freeze(["private-view", "mutate", "publish", "send", "legal-advice", "campaign-endorsement", "unbounded-web", "owner-impersonation"]),
 });
 
 const PRIVAI_MANDATE = Object.freeze({
@@ -152,6 +176,21 @@ const SUICIDE_CORSE_ACT_TEMPLATES = Object.freeze([
   }),
 ]);
 
+const CAPABLE_ACT_TEMPLATES = Object.freeze([
+  act("submit-contribution", "contact@lepp.fr", {
+    fr: "Capable — brouillon de contribution", en: "Capable — contribution draft",
+  }, {
+    fr: "Ce brouillon ne soumet aucune contribution et n'ajoute aucun fait non fourni par le visiteur.",
+    en: "This draft submits nothing and adds no unsupported fact.",
+  }),
+  act("report-correction", "contact@lepp.fr", {
+    fr: "Capable — brouillon de correction", en: "Capable — correction draft",
+  }, {
+    fr: "Cette objection reste un brouillon non envoyé et ne transforme pas une hypothèse en fait.",
+    en: "This objection remains unsent and does not turn a hypothesis into fact.",
+  }),
+]);
+
 const PRIVAI_ACT_TEMPLATES = Object.freeze([
   act("submit-contribution", "jhr@baronsmariani.org", {
     fr: "PrivAI — brouillon d'objection",
@@ -189,12 +228,17 @@ export function defaultPrivaiManifestPath() {
   return path.resolve(moduleDir, "../../../barons-Mariani/projects/privai/corpus.yml");
 }
 
+export function defaultCapableGuideProfilePath() {
+  return path.resolve(moduleDir, "../../../barons-Mariani/projects/capable/guide-profile.yml");
+}
+
 export function resolvePublicGuideProfile(raw, options = {}) {
   const id = String(raw ?? "").trim().toLowerCase();
   if (!id) return { ok: true, profile: null };
   if (id === "fractavolta") return { ok: true, profile: fractavoltaProfile() };
   if (id === "suicide-corse") return { ok: true, profile: suicideCorseProfile(options) };
   if (id === "privai") return { ok: true, profile: privaiProfile(options) };
+  if (id === "capable") return { ok: true, profile: capableProfile(options) };
   return { ok: false, error: "unknown_profile" };
 }
 
@@ -313,6 +357,47 @@ function suicideCorseProfile(options) {
     },
     prompt: SUICIDE_CORSE_PROFILE_PROMPT,
   };
+}
+
+function capableProfile(options = {}) {
+  const sourceScope = loadCapableScope(options);
+  return {
+    id: "capable",
+    bindsSurface: true,
+    surfaceId: "capable-public-guide",
+    usesCanonicalCache: false,
+    webSearch: "explicit",
+    mandate: CAPABLE_MANDATE,
+    act_templates: CAPABLE_ACT_TEMPLATES,
+    sourceScope,
+    sourceScopeSummary: {
+      mode: sourceScope.mode,
+      repos: ["barons-Mariani"],
+      path_prefix: CAPABLE_PREFIX,
+      manifest_path: sourceScope.manifestPath,
+      manifest_path_count: sourceScope.exactPaths.size,
+      issue_numbers: [],
+    },
+    prompt: CAPABLE_PROFILE_PROMPT,
+  };
+}
+
+function loadCapableScope(options = {}) {
+  const manifestPath = options.capableManifestPath || defaultCapableGuideProfilePath();
+  let contents;
+  try {
+    contents = typeof options.capableManifestText === "string"
+      ? options.capableManifestText
+      : fs.readFileSync(manifestPath, "utf8");
+  } catch {
+    return failClosedScope(manifestPath, CAPABLE_PREFIX);
+  }
+  const sourcesBlock = String(contents).split(/^sources:\\s*$/m)[1]?.split(/^\\S/m)[0] || "";
+  const exactPaths = [...sourcesBlock.matchAll(/^\\s+-\\s+["']?([^"'\\s]+)["']?\\s*$/gm)].map(match => match[1]);
+  if (!exactPaths.some(item => item.startsWith(CAPABLE_PREFIX))) {
+    return failClosedScope(manifestPath, CAPABLE_PREFIX);
+  }
+  return { mode: "manifest", manifestPath, pathPrefix: CAPABLE_PREFIX, exactPaths: new Set(exactPaths), issueNumbers: [] };
 }
 
 function privaiProfile(options) {
