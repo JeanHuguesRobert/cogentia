@@ -6,6 +6,8 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import {
   defaultPrivaiManifestPath,
+  defaultCapableGuideProfilePath,
+  CAPABLE_PROFILE_PROMPT,
   defaultSuicideCorseManifestPath,
   filterRetrievalForProfile,
   preparePublicGuideAct,
@@ -26,6 +28,26 @@ assert.equal(absent.profile, null);
 const unknown = resolvePublicGuideProfile("other-guide");
 assert.equal(unknown.ok, false);
 assert.equal(unknown.error, "unknown_profile");
+
+const capableMissing = resolvePublicGuideProfile("capable", { capableManifestPath: "/nonexistent/capable-guide-profile.yml" });
+assert.equal(capableMissing.ok, true);
+assert.equal(capableMissing.profile.sourceScope.mode, "fail_closed");
+assert.equal(sourceAllowedByProfile({ repo: "barons-Mariani", path: "research/autonomia.md" }, capableMissing.profile), false);
+const capable = resolvePublicGuideProfile("capable", { capableManifestText: [
+  "sources:",
+  '  - "projects/capable/README.md"',
+  '  - "research/noyau_doctrinal_rendre_capable.md"',
+].join("\\n") });
+assert.equal(capable.profile.id, "capable");
+assert.equal(capable.profile.mandate.instance_id, "capable-public-guide");
+assert.equal(capable.profile.bindsSurface, true);
+assert.deepEqual(capable.profile.act_templates.map(t => t.id), ["submit-contribution", "report-correction"]);
+assert.equal(sourceAllowedByProfile({ repo: "barons-Mariani", path: "research/noyau_doctrinal_rendre_capable.md" }, capable.profile), true);
+assert.equal(sourceAllowedByProfile({ repo: "barons-Mariani", path: "research/private-notes.md" }, capable.profile), false);
+assert.equal(sourceAllowedByProfile({ repo: "barons-Mariani", path: "projects/privai/README.md" }, capable.profile), false);
+assert.equal(resolveProfileWebSearch(capable.profile, "Que signifie le Capable Test ?").mode, "off");
+assert.match(CAPABLE_PROFILE_PROMPT, /Capable Living Book/);
+assert.ok(defaultCapableGuideProfilePath().endsWith("projects/capable/guide-profile.yml"));
 
 const fracta = resolvePublicGuideProfile("FractaVolta");
 assert.equal(fracta.ok, true);
