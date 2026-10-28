@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useLocation } from 'react-router-dom'
 import { supabase } from '../supabaseClient'
 
 const CONSENT_VERSION = '2026-10-28-v2'
@@ -34,8 +34,8 @@ async function hashRecoverySecret(secret) {
   return hex(new Uint8Array(digest))
 }
 
-function getAttribution() {
-  const params = new URLSearchParams(window.location.search)
+function getAttribution(search) {
+  const params = new URLSearchParams(search)
   const clean = (value) => {
     const candidate = value?.trim()
     return candidate && /^[A-Za-z0-9][A-Za-z0-9._-]{0,79}$/.test(candidate) ? candidate : null
@@ -56,6 +56,7 @@ function RightsContact() {
 }
 
 export default function Waitlist() {
+  const location = useLocation()
   const [email, setEmail] = useState('')
   const [consented, setConsented] = useState(false)
   const [position, setPosition] = useState(null)
@@ -80,7 +81,7 @@ export default function Waitlist() {
   useEffect(() => {
     const secret = localStorage.getItem(STORAGE_KEY)
     if (!READY || !secret) return
-    const { source, campaign } = getAttribution()
+    const { source, campaign } = getAttribution(location.search)
     hashRecoverySecret(secret)
       .then(tokenHash => supabase.rpc('get_waitlist_position', {
         p_token_hash: tokenHash,
@@ -95,7 +96,7 @@ export default function Waitlist() {
         }
       })
       .catch(() => {})
-  }, [])
+  }, [location.search])
 
   const handleSubmit = async (event) => {
     event.preventDefault()
@@ -104,7 +105,7 @@ export default function Waitlist() {
     try {
       const normalizedEmail = email.trim().toLowerCase()
       const { secret, hash } = await createRecoverySecret()
-      const { source, campaign } = getAttribution()
+      const { source, campaign } = getAttribution(location.search)
       const { data, error } = await supabase.rpc('join_waitlist', {
         p_email: normalizedEmail,
         p_token_hash: hash,

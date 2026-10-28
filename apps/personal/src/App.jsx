@@ -1,4 +1,4 @@
-import { Routes, Route, NavLink, Navigate } from 'react-router-dom'
+import { BrowserRouter, HashRouter, Routes, Route, NavLink, Navigate } from 'react-router-dom'
 import Home from './pages/Home'
 import Snapshot from './pages/Snapshot'
 import LearnedContextMirror from './pages/LearnedContextMirror'
@@ -47,23 +47,27 @@ function Layout({ children }) {
 }
 
 export default function App() {
-  return (
-    <Routes>
-      <Route path="/" element={<Layout><Home /></Layout>} />
-      <Route path="/snapshot" element={<Layout><Snapshot /></Layout>} />
-      <Route path="/mirror" element={<Layout><LearnedContextMirror /></Layout>} />
-      <Route path="/about" element={<Layout><About /></Layout>} />
-      <Route path="/indicators" element={<Layout><Indicators /></Layout>} />
-      <Route path="/more" element={<Layout><More /></Layout>} />
-      <Route path="/waitlist" element={<Layout><Waitlist /></Layout>} />
+  const Router = import.meta.env.BASE_URL === '/' ? BrowserRouter : HashRouter
 
-      {/* Parcours avancé historique, conservé mais non exposé pendant la transition. */}
-      <Route path="/submit" element={<Layout><Submit /></Layout>} />
-      <Route path="/results/:id" element={<Layout><Results /></Layout>} />
-      <Route path="/history" element={<Layout><History /></Layout>} />
-      <Route path="/docs" element={<Layout><Docs /></Layout>} />
-      <Route path="/auth" element={<Layout><Auth /></Layout>} />
-      <Route path="*" element={<Navigate to="/" replace />} />
-    </Routes>
+  return (
+    <Router>
+      <Routes>
+        <Route path="/" element={<Layout><Home /></Layout>} />
+        <Route path="/snapshot" element={<Layout><Snapshot /></Layout>} />
+        <Route path="/mirror" element={<Layout><LearnedContextMirror /></Layout>} />
+        <Route path="/about" element={<Layout><About /></Layout>} />
+        <Route path="/indicators" element={<Layout><Indicators /></Layout>} />
+        <Route path="/more" element={<Layout><More /></Layout>} />
+        <Route path="/waitlist" element={<Layout><Waitlist /></Layout>} />
+
+        {/* Parcours avancé historique, conservé mais non exposé pendant la transition. */}
+        <Route path="/submit" element={<Layout><Submit /></Layout>} />
+        <Route path="/results/:id" element={<Layout><Results /></Layout>} />
+        <Route path="/history" element={<Layout><History /></Layout>} />
+        <Route path="/docs" element={<Layout><Docs /></Layout>} />
+        <Route path="/auth" element={<Layout><Auth /></Layout>} />
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+    </Router>
   )
 }
