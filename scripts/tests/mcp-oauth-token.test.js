@@ -43,7 +43,9 @@ test("rejects missing scopes", async () => {
 test("rejects tampered signature", async () => {
   const t = token();
   const parts = t.split(".");
-  parts[1] = parts[1].slice(0, -2) + (parts[1].slice(-2, -1) === "A" ? "B" : "A") + parts[1].slice(-1);
+  const signature = Buffer.from(parts[2], "base64url");
+  signature[0] ^= 1;
+  parts[2] = signature.toString("base64url");
   const altered = parts.join(".");
   await assert.rejects(verifyMcpOAuthToken(altered, opts), /invalid_token_signature/);
 });
