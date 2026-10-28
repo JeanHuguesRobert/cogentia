@@ -111,6 +111,12 @@ export function resolveHopStrategy({
     };
   }
 
+  // Public Capable Guide is a source-grounded reading surface, not a campaign persona.
+  // Explicit caller strategy and packet continuations retain precedence.
+  if (surface === "capable-public-guide") {
+    return { schema: STRATEGY_SCHEMA, ...BUILTIN_STRATEGIES.doctrinal_synthesis, source: "capable_public_default" };
+  }
+
   // Contextual inference
   const lower = String(text || "").toLowerCase();
   if (
