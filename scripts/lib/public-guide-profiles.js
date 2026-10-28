@@ -393,7 +393,7 @@ function loadCapableScope(options = {}) {
     return failClosedScope(manifestPath, "__capable_fail_closed__/");
   }
   const sourcesBlock = String(contents).split(/^sources:\s*$/m)[1]?.split(/^\S/m)[0] || "";
-  const exactPaths = [...sourcesBlock.matchAll(/^\\s+-\\s+["']?([^"'\\s]+)["']?\\s*$/gm)].map(match => match[1]);
+  const exactPaths = [...sourcesBlock.matchAll(/^\s+-\s+["']?([^"'\s]+)["']?\s*$/gm)].map(match => match[1]);
   if (!exactPaths.some(item => item.startsWith(CAPABLE_PREFIX))) {
     return failClosedScope(manifestPath, "__capable_fail_closed__/");
   }
