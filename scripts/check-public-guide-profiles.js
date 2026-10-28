@@ -342,7 +342,8 @@ assert.equal(fs.existsSync(path.join(siteRoot, "editions", "2026-09-17", "index.
 
 console.log(JSON.stringify({
   ok: true,
-  profiles: ["fractavolta", "suicide-corse", "privai"],
+  profiles: ["fractavolta", "suicide-corse", "privai", "capable"],
+  capable_scope: capable.profile.sourceScopeSummary.mode,
   prepare_act: true,
   suicide_corse_scope: live.profile.sourceScopeSummary.mode,
 }, null, 2));
