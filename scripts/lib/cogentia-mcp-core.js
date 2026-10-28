@@ -1,3 +1,4 @@
+import { resolveOAuthIdentity } from "./mcp-oauth-identity.js";
 import { listAgentSkills, getAgentSkill, exportSkillAsMethodPackage, resolveRepoRoot } from "./cogentia-agent-skills.js";
 import {
   extractCorrelation,
@@ -1357,12 +1358,11 @@ export function createMcpCore(env = process.env, extras = {}) {
     // signature, issuer, audience, time and scope checks. Never read it from
     // client-controlled JSON-RPC metadata or a request header.
     const oauth = transport.oauthPrincipal;
-    if (oauth?.verified === true &&
-        oauth.subject === String(env.COGENTIA_MCP_OAUTH_JHN_SUB || "") &&
-        oauth.subject &&
+    const identity = resolveOAuthIdentity(oauth, env.COGENTIA_MCP_OAUTH_IDENTITY_BINDINGS);
+    if (identity?.principal === "principal:jhn" &&
         oauth.scopes?.includes("cogentia.private.read")) {
       return {
-        auth: "jhn", actor: "agent:jhn", principal_ref: oauth.subject,
+        auth: "jhn", actor: "agent:jhn", principal_ref: identity.principal,
         mandate_ref: "mandate:oauth:private-read",
         allowMutate: false,
         reason: "oauth_private_read_verified",
