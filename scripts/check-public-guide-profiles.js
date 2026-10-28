@@ -37,7 +37,7 @@ const capable = resolvePublicGuideProfile("capable", { capableManifestText: [
   "sources:",
   '  - "projects/capable/README.md"',
   '  - "research/noyau_doctrinal_rendre_capable.md"',
-].join("\\n") });
+].join("\n") });
 assert.equal(capable.profile.id, "capable");
 assert.equal(capable.profile.mandate.instance_id, "capable-public-guide");
 assert.equal(capable.profile.bindsSurface, true);
