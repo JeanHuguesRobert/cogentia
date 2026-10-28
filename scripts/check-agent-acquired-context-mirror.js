@@ -6,19 +6,28 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import React from "../apps/personal/node_modules/react/index.js";
 import { renderToStaticMarkup } from "../apps/personal/node_modules/react-dom/server.js";
+import { createServer } from "../apps/personal/node_modules/vite/dist/node/index.js";
 import * as yaml from "js-yaml";
 import { ingestAgentAcquiredContext } from "./lib/agent-acquired-context-ingest.js";
 import { sha256Prefixed } from "./lib/agent-acquired-context.js";
 import { buildAgentAcquiredContextMirror } from "./lib/agent-acquired-context-mirror.js";
 import { ingestLearnedContext, mirrorLearnedContext } from "../apps/personal/src/lib/learned-context-ingest.js";
-import {
-  AgentClaimMirror,
-  LearnedContextPasteForm,
-  immediatePasteText,
-} from "../apps/personal/src/components/AgentClaimMirror.js";
-
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const fixtureDir = path.join(root, "prompts", "fixtures", "agent-acquired-context");
+const viteServer = await createServer({
+  root: path.join(root, "apps", "personal"),
+  server: { middlewareMode: true },
+  appType: "custom",
+});
+let AgentClaimMirror;
+let LearnedContextPasteForm;
+let immediatePasteText;
+try {
+  ({ AgentClaimMirror, LearnedContextPasteForm, immediatePasteText } =
+    await viteServer.ssrLoadModule("/src/components/AgentClaimMirror.js"));
+} finally {
+  await viteServer.close();
+}
 
 function read(name) {
   return fs.readFileSync(path.join(fixtureDir, name), "utf8");
@@ -388,5 +397,25 @@ assert.equal(mirrorWithComparison.includes("data-reobservation-comparison=\"true
 assert.equal(mirrorWithComparison.includes("data-epistemic-disclaimer=\"true\""), true);
 assert.equal(mirrorWithComparison.includes("data-metric=\"remedied\""), true);
 assert.equal(mirrorWithComparison.includes("data-metric=\"conflicts\""), true);
+
+const sampleEvents = [];
+const sampleForm = LearnedContextPasteForm({
+  text: "",
+  onText: (value) => sampleEvents.push({ type: "text", value }),
+  onReveal: (value) => sampleEvents.push({ type: "reveal", value }),
+  onPaste() {},
+  mirror: null,
+});
+const sampleButtons = sampleForm.props.children[3].props.children[4].props.children;
+assert.equal(sampleButtons.length, 2);
+sampleButtons[0].props.onClick();
+assert.equal(sampleEvents[0].type, "text");
+assert.match(sampleEvents[0].value, /kys-snapshot-0\.2/);
+assert.deepEqual(sampleEvents[1], { type: "reveal", value: sampleEvents[0].value });
+sampleEvents.length = 0;
+sampleButtons[1].props.onClick();
+assert.equal(sampleEvents[0].type, "text");
+assert.match(sampleEvents[0].value, /cogentia\.agent-acquired-context\.v0/);
+assert.deepEqual(sampleEvents[1], { type: "reveal", value: sampleEvents[0].value });
 
 console.log("agent-acquired-context mirror: ok");

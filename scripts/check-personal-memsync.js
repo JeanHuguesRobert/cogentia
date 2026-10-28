@@ -102,12 +102,14 @@ if (process.argv.includes('--render')) {
     appType: 'custom',
   })
   try {
-    const { default: App } = await server.ssrLoadModule('/src/App.jsx')
-    for (const route of ['/', '/snapshot', '/mirror']) {
-      const html = renderToStaticMarkup(React.createElement(MemoryRouter, { initialEntries: [route] }, React.createElement(App)))
+    const { AppRoutes } = await server.ssrLoadModule('/src/App.jsx')
+    for (const route of ['/', '/snapshot', '/mirror', '/indicators', '/more']) {
+      const html = renderToStaticMarkup(React.createElement(MemoryRouter, { initialEntries: [route] }, React.createElement(AppRoutes)))
       assert.doesNotMatch(html, /type="email"/)
       assert.match(html, /Que savent mes IA de moi/)
       if (route === '/') assert.match(html, /Quelle vérité utile m&#x27;échappe \?/)
+      if (route === '/indicators') assert.match(html, /73 indicateurs, plusieurs façons de lire un portrait/)
+      if (route === '/more') assert.match(html, /Vous êtes venu par curiosité/)
     }
     const card = await server.ssrLoadModule('/src/components/BlindSpotCard.jsx')
     assert.equal(card.BLIND_SPOT_PROMPT, "Quelle vérité utile m'échappe ?")

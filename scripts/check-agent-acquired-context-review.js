@@ -7,6 +7,7 @@ import { fileURLToPath } from "node:url";
 import * as yaml from "js-yaml";
 import React from "../apps/personal/node_modules/react/index.js";
 import { renderToStaticMarkup } from "../apps/personal/node_modules/react-dom/server.js";
+import { createServer } from "../apps/personal/node_modules/vite/dist/node/index.js";
 import {
   REVIEW_VERDICTS,
   VERDICT_TO_STANCE,
@@ -20,12 +21,22 @@ import {
 import { buildAgentAcquiredContextMirror } from "./lib/agent-acquired-context-mirror.js";
 import { ingestAgentAcquiredContext } from "./lib/agent-acquired-context-ingest.js";
 import { validateAgentAcquiredContext } from "./lib/agent-acquired-context.js";
-import { AgentClaimMirror } from "../apps/personal/src/components/AgentClaimMirror.js";
 import { emptyLog, forwardIntent, recordParsedResponse, updateTurnReview } from "../apps/personal/src/lib/turns.js";
 import { normalizeSnapshot } from "../apps/personal/src/lib/kys-snapshot.js";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const fixturesDir = path.join(root, "prompts", "fixtures", "agent-acquired-context");
+const viteServer = await createServer({
+  root: path.join(root, "apps", "personal"),
+  server: { middlewareMode: true },
+  appType: "custom",
+});
+let AgentClaimMirror;
+try {
+  ({ AgentClaimMirror } = await viteServer.ssrLoadModule("/src/components/AgentClaimMirror.js"));
+} finally {
+  await viteServer.close();
+}
 
 function readFixture(name) {
   return fs.readFileSync(path.join(fixturesDir, name), "utf8");
