@@ -21,6 +21,7 @@ export default function Home() {
         <div className="flex flex-col sm:flex-row gap-3 sm:items-center">
           <Link className="btn-primary justify-center" to="/snapshot">Interroger mon agent →</Link>
           <Link className="btn-ghost justify-center" to="/mirror">Coller une réponse</Link>
+          <Link className="btn-ghost justify-center" to="/waitlist?source=home">Suivre l’ouverture du futur pilote</Link>
           <span className="font-body text-xs text-muted">Sans compte · sans connexion à votre agent · sans conversation brute</span>
         </div>
       </section>

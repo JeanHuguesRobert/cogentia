@@ -10,6 +10,7 @@ import Results from './pages/Results'
 import History from './pages/History'
 import Docs from './pages/Docs'
 import Auth from './pages/Auth'
+import Waitlist from './pages/Waitlist'
 
 function Layout({ children }) {
   const links = [
@@ -19,6 +20,7 @@ function Layout({ children }) {
     { to: '/indicators', label: '73 indicateurs' },
     { to: '/about', label: 'Comprendre' },
     { to: '/more', label: 'Aller plus loin' },
+    { to: '/waitlist?source=menu', label: 'Liste d’attente' },
   ]
 
   return (
@@ -53,6 +55,7 @@ export default function App() {
       <Route path="/about" element={<Layout><About /></Layout>} />
       <Route path="/indicators" element={<Layout><Indicators /></Layout>} />
       <Route path="/more" element={<Layout><More /></Layout>} />
+      <Route path="/waitlist" element={<Layout><Waitlist /></Layout>} />
 
       {/* Parcours avancé historique, conservé mais non exposé pendant la transition. */}
       <Route path="/submit" element={<Layout><Submit /></Layout>} />

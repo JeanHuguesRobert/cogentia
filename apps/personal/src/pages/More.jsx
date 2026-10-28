@@ -31,6 +31,7 @@ export default function More() {
         <div className="flex flex-wrap gap-3">
           <Link className="btn-primary" to="/snapshot">Commencer avec mon agent →</Link>
           <Link className="btn-ghost" to="/indicators">Voir les 73 indicateurs</Link>
+          <Link className="btn-ghost" to="/waitlist?source=more">Être informé de l’ouverture du pilote</Link>
         </div>
       </header>
 
