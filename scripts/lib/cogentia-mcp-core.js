@@ -1353,6 +1353,22 @@ export function createMcpCore(env = process.env, extras = {}) {
   }
 
   function callerAuthFor(message, transport = {}) {
+    // Only the HTTP adapter may supply this verified principal, after JWT
+    // signature, issuer, audience, time and scope checks. Never read it from
+    // client-controlled JSON-RPC metadata or a request header.
+    const oauth = transport.oauthPrincipal;
+    if (oauth?.verified === true &&
+        oauth.subject === String(env.COGENTIA_MCP_OAUTH_JHN_SUB || "") &&
+        oauth.subject &&
+        oauth.scopes?.includes("cogentia.private.read")) {
+      return {
+        auth: "jhn", actor: "agent:jhn", principal_ref: oauth.subject,
+        mandate_ref: "mandate:oauth:private-read",
+        allowMutate: false,
+        reason: "oauth_private_read_verified",
+        lockers: deriveLockers({ auth: "jhn", allowMutate: false }),
+      };
+    }
     const paramsMeta = message?.params && typeof message.params === "object" ? message.params._meta : null;
     const topMeta = message && typeof message._meta === "object" ? message._meta : null;
     const meta = (paramsMeta && typeof paramsMeta === "object" ? paramsMeta : null)
