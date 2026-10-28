@@ -1293,8 +1293,18 @@ export function createMcpCore(env = process.env, extras = {}) {
   }
 
   function toolsListResult(era, auth) {
-    const callerTools = toolsForAuth(auth).map((tool) => ({
+    const oauthDiscoveryEnabled = Boolean(String(env.COGENTIA_MCP_OAUTH_ISSUER || "").trim());
+    // Announce protected tools only when a real OAuth issuer is configured.
+    // Discovery never grants authorization: tools/call remains fail-closed.
+    const visibleTools = oauthDiscoveryEnabled ? TOOLS : toolsForAuth(auth);
+    const callerTools = visibleTools.map((tool) => ({
       ...tool,
+      ...(oauthDiscoveryEnabled ? {
+        securitySchemes: (PRIVATE_READ_TOOLS.has(tool.name) || MUTATE_TOOLS.has(tool.name))
+          ? [{ type: "oauth2", scopes: MUTATE_TOOLS.has(tool.name)
+            ? ["cogentia.mutate"] : ["cogentia.private.read"] }]
+          : [{ type: "noauth" }],
+      } : {}),
       annotations: {
         readOnlyHint: !MUTATE_TOOLS.has(tool.name),
         destructiveHint: MUTATE_TOOLS.has(tool.name),
