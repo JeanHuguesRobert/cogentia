@@ -6,6 +6,7 @@
  */
 
 import http from "node:http";
+import { verifyMcpOAuthToken } from "./lib/mcp-oauth-token.js";
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -390,6 +391,17 @@ const server = http.createServer(async (req, res) => {
     }
     const method = headRequest ? "GET" : req.method;
     if (method === "OPTIONS") return sendNoContent(res, 204);
+    if (method === "GET" && pathOnly === "/.well-known/oauth-protected-resource") {
+      const issuer = String(process.env.COGENTIA_MCP_OAUTH_ISSUER || "").trim();
+      const resource = String(process.env.COGENTIA_MCP_OAUTH_RESOURCE || "").trim();
+      if (!issuer || !resource) return sendJson(res, 404, { error: "oauth_not_configured" });
+      return sendJson(res, 200, {
+        resource,
+        authorization_servers: [issuer],
+        scopes_supported: ["cogentia.private.read"],
+        bearer_methods_supported: ["header"],
+      });
+    }
     if (method === "GET" && pathOnly === "/service-info") return sendJson(res, 200, guideServiceInfo());
     if (method === "GET" && req.url === "/health") return sendJson(res, 200, await health());
     if (method === "GET" && req.url === "/tools") return sendJson(res, 200, { tools: core.tools });
@@ -714,6 +726,25 @@ async function handleMcpPost(req, res) {
     return sendJson(res, 400, jsonRpcError(null, -32700, "Parse error"));
   }
   const transport = transportFromHttpRequest(req);
+  const issuer = String(process.env.COGENTIA_MCP_OAUTH_ISSUER || "").trim();
+  const audience = String(process.env.COGENTIA_MCP_OAUTH_RESOURCE || "").trim();
+  const jwksUrl = String(process.env.COGENTIA_MCP_OAUTH_JWKS_URL || "").trim();
+  if (issuer && audience && jwksUrl) {
+    const header = String(req.headers.authorization || "");
+    const match = /^Bearer\\s+(.+)$/i.exec(header);
+    if (match) {
+      try {
+        const principal = await verifyMcpOAuthToken(match[1], {
+          issuer, audience, jwksUrl,
+          requiredScopes: ["cogentia.private.read"],
+        });
+        transport.oauthPrincipal = { ...principal, verified: true };
+      } catch {
+        // A failed OAuth token never creates a principal. Preserve legacy
+        // public and separately-attested JHN access during migration.
+      }
+    }
+  }
   const requests = Array.isArray(payload) ? payload : [payload];
   if (requests.some((message) => message?.method === "tools/call" && message?.params?.name === "cogentia_memory_capture")) {
     res.setHeader("Cache-Control", "no-store");
