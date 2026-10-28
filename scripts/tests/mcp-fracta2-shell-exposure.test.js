@@ -53,3 +53,21 @@ test("OAuth-configured discovery advertises protected shell with oauth2 scheme b
   assert.equal(invoked.result.isError, true);
   assert.match(JSON.stringify(invoked.result), /tier_forbidden/);
 });
+
+test("OAuth verified private-read principal exposes shell without granting mutation", async () => {
+  const core = createMcpCore({
+    ...env,
+    COGENTIA_MCP_OAUTH_JHN_SUB: "principal:jhn",
+    COGENTIA_MCP_OAUTH_ISSUER: "https://issuer.example.org",
+  });
+  const transport = {
+    headers: {},
+    oauthPrincipal: { verified: true, subject: "principal:jhn", scopes: ["cogentia.private.read"] },
+  };
+  const listing = await core.handleJsonRpc({ jsonrpc:"2.0", id:6, method:"tools/list", params:{} }, transport);
+  assert.ok(listing.result.tools.some(t => t.name === NAME));
+  const mutate = await core.handleJsonRpc({ jsonrpc:"2.0", id:7, method:"tools/call",
+    params: { name:"cogentia_concepts_init", arguments:{} } }, transport);
+  assert.equal(mutate.result.isError, true);
+  assert.match(JSON.stringify(mutate.result), /tier_forbidden/);
+});
