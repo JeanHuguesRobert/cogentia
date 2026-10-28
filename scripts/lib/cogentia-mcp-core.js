@@ -14,6 +14,7 @@ import { createHostedBrowserCapabilities } from "./hosted-browser-capabilities.j
 import { auditCapabilitySymmetry } from "./symmetry-audit.js";
 import { listPatterns, getPattern } from "./cogentia-patterns.js";
 import { createHostCapabilityRouter } from "./host-capability-router.js";
+import { invokeThroughGateway } from "./agent-gateway-client.js";
 import { recordSideEffectExecution, mintSideEffectGrantFromPrepared } from "./side-effect-authorization.js";
 import { prepareCommunicationSend, executeCommunicationSend, createDryRunTransport } from "./communication-send.js";
 import { prepareGithubWrite, executeGithubWrite, createGithubDryRunTransport } from "./github-write.js";
@@ -86,6 +87,7 @@ export const PRIVATE_READ_TOOLS = new Set([
   "cogentia_host_fs_list",
   "cogentia_host_fs_read",
   "cogentia_host_fs_search",
+  "cogentia_fracta2_shell_probe",
   "cogentia_communication_prepare",
   "cogentia_github_prepare",
   "cogentia_git_prepare",
@@ -831,6 +833,11 @@ export const TOOLS = [
       required: ["node_id"],
       additionalProperties: false,
     },
+  },
+  {
+    name: "cogentia_fracta2_shell_probe",
+    description: "Private-read, fixed read-only Unix probe on resource://fracta2. Runs hostname, id -un, pwd via the advertised coding-agents.shell gateway. No arbitrary commands or user-controlled shell input.",
+    inputSchema: { type: "object", properties: {}, additionalProperties: false },
   },
   {
     name: "cogentia_host_fs_list",
@@ -2021,6 +2028,28 @@ export function createMcpCore(env = process.env, extras = {}) {
           return extras.listOperiumCalendar(args);
         }
         return listOperiumCalendarViaOna(args.node_id, env, requestTimeoutMs);
+      }
+      case "cogentia_fracta2_shell_probe": {
+        const token = String(env.AGENT_GATEWAY_FRACTA2_TOKEN || env.AGENT_GATEWAY_INVOKE_TOKEN || "").trim();
+        if (!token) throw new Error("fracta2_gateway_token_not_configured");
+        const blackboardUrl = String(env.COGENTIA_BLACKBOARD_URL || "https://cogentia.fractavolta.com").trim();
+        const result = await invokeThroughGateway({
+          blackboardUrl,
+          token,
+          hostname: "fracta2",
+          capability: "coding-agents.shell",
+          model: "shell-repl",
+          prompt: "printf 'FRACTA2_MCP_PROBE_OK\\n'; hostname; id -un; pwd",
+          repl: true,
+          expect: "FRACTA2_MCP_PROBE_OK",
+          timeoutMs: Math.min(requestTimeoutMs, 30000),
+        });
+        if (!result.content?.includes("FRACTA2_MCP_PROBE_OK") ||
+            !result.content?.includes("fracta2")) {
+          throw new Error("fracta2_shell_probe_unexpected_output");
+        }
+        return { ok: true, node_id: "resource://fracta2", content: result.content,
+          route: { routed_via: result.route?.routed_via, attractor_id: result.route?.attractor_id } };
       }
       case "cogentia_host_fs_list":
         requireString(args.path, "path");
