@@ -3,6 +3,7 @@ import Home from './pages/Home'
 import Snapshot from './pages/Snapshot'
 import LearnedContextMirror from './pages/LearnedContextMirror'
 import About from './pages/About'
+import Indicators from './pages/Indicators'
 import Submit from './pages/Submit'
 import Results from './pages/Results'
 import History from './pages/History'
@@ -14,6 +15,7 @@ function Layout({ children }) {
     { to: '/', label: 'Accueil' },
     { to: '/snapshot', label: 'Que savent mes IA de moi ?' },
     { to: '/mirror', label: 'Coller' },
+    { to: '/indicators', label: '73 indicateurs' },
     { to: '/about', label: 'Comprendre' },
   ]
 
@@ -47,6 +49,7 @@ export default function App() {
       <Route path="/snapshot" element={<Layout><Snapshot /></Layout>} />
       <Route path="/mirror" element={<Layout><LearnedContextMirror /></Layout>} />
       <Route path="/about" element={<Layout><About /></Layout>} />
+      <Route path="/indicators" element={<Layout><Indicators /></Layout>} />
 
       {/* Parcours avancé historique, conservé mais non exposé pendant la transition. */}
       <Route path="/submit" element={<Layout><Submit /></Layout>} />

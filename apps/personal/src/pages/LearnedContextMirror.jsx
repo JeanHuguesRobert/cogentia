@@ -209,7 +209,7 @@ export default function LearnedContextMirrorPage() {
       <LearnedContextPasteForm
         text={text}
         onText={onText}
-        onReveal={() => reveal(text)}
+        onReveal={(sample) => reveal(sample ?? text)}
         onPaste={(event) => {
           const pasted = immediatePasteText(text, event.clipboardData?.getData('text') ?? '')
           if (!pasted) return

@@ -13,16 +13,23 @@ export default function Home() {
       <section className="max-w-3xl">
         <p className="font-mono text-signal text-xs tracking-widest uppercase mb-5">KYS Snapshot · Know Your Self</p>
         <h1 className="font-display text-4xl md:text-6xl font-bold text-bright leading-tight mb-6">
-          Que savent mes IA de moi ?
+          Voyez ce que votre IA croit savoir de vous.
         </h1>
         <p className="font-body text-lg text-dim leading-relaxed mb-8">
-          Votre agent s’est déjà construit une représentation de vos préférences, de vos sujets et de votre manière de travailler. KYS la rend visible, contestable et portable.
+          KYS rend visible et corrigeable la représentation que vos agents expriment à votre sujet. Les réponses restent celles de chaque agent : elles ne définissent pas qui vous êtes.
         </p>
         <div className="flex flex-col sm:flex-row gap-3 sm:items-center">
           <Link className="btn-primary justify-center" to="/snapshot">Interroger mon agent →</Link>
           <Link className="btn-ghost justify-center" to="/mirror">Coller une réponse</Link>
           <span className="font-body text-xs text-muted">Sans compte · sans connexion à votre agent · sans conversation brute</span>
         </div>
+      </section>
+
+      <section className="mt-10 card border-signal/30 space-y-4">
+        <p className="font-mono text-signal text-xs tracking-widest uppercase">Explorer aussi</p>
+        <h2 className="font-display text-2xl font-semibold text-bright">73 indicateurs et des lectures familières</h2>
+        <p className="text-sm text-dim leading-relaxed">Découvrez les dimensions du modèle et les présentations autrefois proposées : Big Five, MBTI, DISC et Ennéagramme. Elles restent des lectures estimatives, sans certification psychométrique.</p>
+        <Link className="btn-ghost" to="/indicators">Explorer les indicateurs et les présentations →</Link>
       </section>
 
       <BlindSpotCard />

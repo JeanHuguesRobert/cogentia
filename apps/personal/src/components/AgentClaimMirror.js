@@ -1,4 +1,6 @@
 import React from "react";
+import kysExample from "../../../../prompts/fixtures/agent-acquired-context/kys-snapshot-portrait.json?raw";
+import amiExample from "../../../../prompts/fixtures/agent-acquired-context/rich-memory.yaml?raw";
 import {
   REVIEW_VERDICTS,
   isSalientItem,
@@ -482,6 +484,10 @@ export function LearnedContextPasteForm({ text, onText, onReveal, onPaste, mirro
     h("button", { className: "btn-primary w-full sm:w-auto", type: "submit" },
       pending ? "Lecture de la réponse…" : "Afficher le miroir"),
     h("p", { className: "font-body text-xs text-muted" }, "Sans compte. Conservation dans ce navigateur jusqu’à effacement ; aucun envoi automatique."),
+    h("div", { className: "flex flex-wrap gap-2", "aria-label": "Exemples de démonstration" },
+      h("button", { type: "button", className: "btn-ghost", onClick: () => { onText(kysExample); onReveal(kysExample); } }, "Essayer le portrait d’exemple"),
+      h("button", { type: "button", className: "btn-ghost", onClick: () => { onText(amiExample); onReveal(amiExample); } }, "Essayer le relevé d’exemple"),
+    ),
     ),
     failure ? h("p", { role: "alert", className: "font-body text-sm text-dim" }, failure) : null,
     mirror ? h(AgentClaimMirror, { model: mirror, reviews, onReview, comparison }) : null,
