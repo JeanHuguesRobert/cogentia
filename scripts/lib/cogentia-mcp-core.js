@@ -2030,7 +2030,7 @@ export function createMcpCore(env = process.env, extras = {}) {
         return listOperiumCalendarViaOna(args.node_id, env, requestTimeoutMs);
       }
       case "cogentia_fracta2_shell_probe": {
-        const token = String(env.AGENT_GATEWAY_FRACTA2_TOKEN || env.AGENT_GATEWAY_INVOKE_TOKEN || "").trim();
+        const token = String(env.AGENT_GATEWAY_FRACTA2_TOKEN || env.AGENT_GATEWAY_INVOKE_TOKEN || env.AGENT_GATEWAY_TOKEN || "").trim();
         if (!token) throw new Error("fracta2_gateway_token_not_configured");
         const blackboardUrl = String(env.COGENTIA_BLACKBOARD_URL || "https://cogentia.fractavolta.com").trim();
         const result = await invokeThroughGateway({
