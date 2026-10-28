@@ -91,6 +91,7 @@ These are proposed **moves** for exploration and composition, not a new normativ
 | FractaVolta | Energy-packet and mobile-buffer applications | established project | [FractaVolta](https://github.com/JeanHuguesRobert/FractaVolta) |
 | FractaCognition | Metacognitive discipline and composable heuristics | documented | [Principles](./fractacognition_principles.md) |
 | FractaCarta | Fractal maps, local autonomy and exploration grammar | documented | [FractaCarta](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/fractacarta.md) |
+| **FractaHandler** | Situated execution role accepting governed work on a FractaNode; distinct from a Unix shell, process, protocol or new daemon | **terminology introduced by Principal, 2026-10-28; semantic contract under review** | [Operium operational ownership](./operium_owns_operational_deploy.md), [Shell Fracta2 umbrella #292](https://github.com/JeanHuguesRobert/cogentia/issues/292) |
 | FractaScheduler | Scheduling and progress of distributed cognitive work | implemented/documented profile | [Scheduler](../docs/fracta-scheduler.md) |
 | FractaCalendar | Federated temporal obligations | documented | [Calendar](https://github.com/JeanHuguesRobert/operium/blob/main/docs/fracta-calendar.md) |
 | FractaLog | Trace and act observability | documented | [Act catalog](https://github.com/JeanHuguesRobert/inseme/blob/main/docs/fractalog-act-catalog.md) |
@@ -102,6 +103,18 @@ These are proposed **moves** for exploration and composition, not a new normativ
 ### Proposed names — not projects or established concepts
 
 FractaCompute (compute-placement), FractaStore (durable storage), FractaTrust (trust and delegation), FractaMemory (memory projections), FractaFlow (composition). FractaCache is listed above as a candidate because its locality-governed materialization responsibility is distinguishable from memory itself, but no independent runtime, protocol, or novelty claim is implied. These are hypotheses; first determine whether COP/Operium/Cogentia already name and implement the exact responsibility. Avoid duplicating FractaCalendar with a proposed FractaTime.
+
+## FractaHandler — situated execution role (terminology, 2026-10-28)
+
+**Provisional definition:** a FractaHandler is an identifiable *role* that takes charge of a governed work item or capability invocation within a FractaNode, using the node's actual operational environment, and returns attributable outcomes and receipts. It is not by definition a permanent process, Unix account, shell, model, protocol, or new service. A concrete implementation may be resident, ephemeral, delegated or resumed, subject to its declared lifecycle and continuity guarantees.
+
+- **FractaNode** situates resources, services, execution context and observations. The node's operational description, diagnosis and deployment evidence belong to **Operium** (`operium up`, `operium node diagnose`, node profiles, `operium invoke tool`); a shell's environment variables alone do not establish that context.
+- **FractaHandler** accepts and executes or defers bounded work under its applicable COP mandate and budget; its identity and execution receipt must remain distinct from the routing decision.
+- **FractaRouting** selects or delegates to a capable domain/handler; **FractaScheduler** governs when work advances; **FractaLog** supplies traces. Routing, acceptance, execution and successful fulfillment are distinct facts.
+- **Cogentia** defines and governs semantic capabilities such as `host.process.run` and `browser.*`. CLI/MCP/A2A are exposure surfaces, not competing cores; implementations/providers and transport mechanisms are replaceable.
+- **Locality:** describe and verify the actual execution environment at the node, retaining provenance and secret boundaries; avoid requiring a central registry when local evidence and a bounded mandate suffice. Discovery and connectivity never themselves grant execution authority.
+
+**Occam / status:** this names a responsibility to make existing handlers intelligible across contexts; it neither replaces existing COP handlers nor proposes an independent FractaHandler daemon. Reconcile naming with Operium ONA and existing handler contracts before any normative promotion. Discriminating Reality Test: characterize two concrete existing executors with the same role-level fields (node, provider, mandate, task, lifecycle, receipt), compare results and failures, and identify a meaningful distinction that generic `handler` does not already convey. See [Cogentia #293](https://github.com/JeanHuguesRobert/cogentia/issues/293) and [#291](https://github.com/JeanHuguesRobert/cogentia/issues/291).
 
 ## Composition grammar — reuse before extending
 
