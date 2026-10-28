@@ -101,6 +101,13 @@ assert.equal(recovered.reasoning.error, "forced_v2_failure");
 assert.equal(recovered.reasoning.strategy_out.yield_classification, "failure_residue");
 
 // Dynamic Hop Strategy (sigma_in -> sigma_out) tests
+const capableStrat = resolveHopStrategy({ text: "Que signifie le Capable Test ?", surface: "capable-public-guide" });
+assert.equal(capableStrat.id, "doctrinal_synthesis");
+assert.equal(capableStrat.posture, "academic_doctrinal");
+assert.equal(capableStrat.source, "capable_public_default");
+const explicitCapable = resolveHopStrategy({ strategy: "adversarial_verification", text: "Capable Test", surface: "capable-public-guide" });
+assert.equal(explicitCapable.id, "adversarial_verification");
+
 const mayoralStrat = resolveHopStrategy({ text: "Question du maire de Corte sur la DGF", surface: "senatoriales" });
 assert.equal(mayoralStrat.id, "mayoral_inquiry");
 assert.equal(mayoralStrat.posture, "political_representative");
