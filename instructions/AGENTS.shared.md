@@ -3,7 +3,7 @@ title: Cogentia Shared Agent Instructions
 author: unknown
 affiliation: "Institut Mariani / C.O.R.S.I.C.A., 1 cours Paoli, F-20250 Corte, Corsica"
 status: "working-paper — active operational mandate"
-version: 40
+version: 41
 date: 2026-10-02
 last_modified_at: "2026-10-28"
 license: CC BY-SA 4.0
@@ -70,6 +70,12 @@ Source: [Measured Risk](../research/measured_risk.md), [FractaCognition principl
 **Pre-write gate:** audit every potentially failing step INCLUDING setup and dependency installation; put expected failures under a non-failing supervisor and ensure finalization of the result; reuse existing Inseme generic patterns rather than raw failing shell steps; test both successful and deliberately failing tasks; do not infer task success from a green workflow. Platform/runner failures can still be outside our control: do not falsely promise absolute prevention of every red status.
 
 **Why this is a hard invariant:** recurring unwanted GitHub failure notifications reported by the principal. Reproduction 2026-10-18: Inseme `.github/workflows/fbf-magistral-receipts.yml` had non-failing test handling but an unprotected `npm ci` step; corrected under FBF. See Inseme #120, #121 and generic compute finalizer. This must be recalled before each GitHub Actions change, not only after a failure.
+
+## CI modes for work in progress
+
+CI mode is scoped to an individual change, never switched off repository-wide. Treat work in progress as **unstable** and skip its automatic build and test jobs; focused local checks and explicitly requested manual workflow runs remain available. Keep CI active for `main` and unrelated changes.
+
+For pull requests, use draft status as the unstable marker. When the work is stabilized, mark the pull request ready for review; that transition MUST resume the applicable CI, and later updates to the ready pull request MUST run it again. Before treating the change as validated or integrating it, inspect the run and its task result. Do not leave stabilized work in unstable mode. Where a repository does not use pull requests, define an equivalent explicit per-change marker and a clear transition that resumes CI.
 
 
 This is the common operational layer for every agent working in the Cogentia corpus. Repository-local `AGENTS.md` files may add constraints or become stricter; they must not silently weaken this layer.
