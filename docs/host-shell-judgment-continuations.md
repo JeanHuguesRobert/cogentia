@@ -22,3 +22,30 @@ This preserves the existing `cogentia.continuation.v2` protocol, separates the w
 - Test shell emit -> ChatGPT inspect -> resolve -> independently authorized resume, including cancellation, duplicate delivery and crash recovery.
 - Establish per-node capacity and fair scheduling across clients; the current queue lives in one provider process.
 - Ensure execution authorizations are reserved atomically before concurrent side effects to avoid concurrent replay races.
+
+
+## Mission-first authority (implementation increment, 2026-10-29)
+An agent receives a mission mandate at the governance level; ordinary internal
+host actions do **not** require renewed Principal judgment for each command.
+Tools remain technical facilities and do not own the mandate.
+
+The host router now has an optional, trusted `missionAuthorityResolver`.
+It receives the actor, Principal, mandate, capability, target, provider and
+canonical payload hash. Only an attested verdict with matching identity,
+mandate, capability, target and non-expired scope may use the mission path.
+A string supplied in a shell command or tool argument is **not** verification.
+
+The pre-existing per-effect EXPOSE/grant route remains available for explicit
+effect authorization and remains the default when no trusted resolver has been
+configured. In particular, the standard MCP deployment has **not yet**
+been wired to a durable COP mandate service; mission mode must never be
+enabled by accepting a caller-supplied Boolean or unverified mandate string.
+
+Each executed mission action receives its own trace ID and separate COP
+accounting ID. Mission identity is reusable, accounting receipts are not.
+
+To finish deployment, inject a genuine COP mandate resolver in the trusted
+core startup, verify delegation/revocation/budgets and audit the two paths.
+Retain explicit human authorization for binding third-party acts, including
+sending email. Keep OS sandbox/resource limits as technical constraints,
+not additional layers of discretionary judgment.
