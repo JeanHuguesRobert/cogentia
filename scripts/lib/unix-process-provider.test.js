@@ -43,3 +43,21 @@ test('invalid timeouts and commands fail closed', async () => {
   await assert.rejects(p.invoke('host.process.run',{command:'echo yes',timeout_ms:-1}),/invalid timeout_ms/);
   await assert.rejects(p.invoke('host.process.run',{command:'  '}),/command must contain/);
 });
+
+test('timeout terminates descendants, not just the parent shell', async () => {
+  const { mkdtempSync, existsSync, rmSync } = await import('node:fs');
+  const { tmpdir } = await import('node:os');
+  const { join } = await import('node:path');
+  const dir = mkdtempSync(join(tmpdir(), 'cogentia-process-group-'));
+  const marker = join(dir, 'orphan');
+  try {
+    const p = new UnixProcessProvider({timeoutMs: 80});
+    const command = `(sleep 0.25; printf orphan > "${marker}") & wait`;
+    const result = await p.invoke('host.process.run', {command});
+    assert.equal(result.timeout, true);
+    await new Promise(resolve => setTimeout(resolve, 320));
+    assert.equal(existsSync(marker), false, 'descendant survived command timeout');
+  } finally {
+    rmSync(dir, {recursive:true, force:true});
+  }
+});
