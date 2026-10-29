@@ -2124,10 +2124,27 @@ export function createMcpCore(env = process.env, extras = {}) {
         return callHostCapability("host.fs.search", args, auth);
       case "cogentia_host_process_prepare":
         return prepareHostProcessRun(args);
-      case "cogentia_host_process_run":
+      case "cogentia_host_process_run": {
         requireString(args.command, "command");
         if (args.command.length > 4096) throw new Error("command too long");
-        return callHostCapability("host.process.run", args, auth);
+        const result = await callHostCapability("host.process.run", args, auth);
+        if (result?.judgment?.status !== "needs_judgment") return result;
+        // Shell output is untrusted: it requests review but cannot authorize
+        // itself or declare a continuation resolved.
+        const request = result.judgment.request;
+        const emitted = await daemonPost("/api/ops/continuations/emit", {
+          question: request.question,
+          subject: "host.process.run",
+          kind: "shell_judgment",
+          actor: auth?.actor || undefined,
+          mandate_ref: auth?.mandate_ref || undefined,
+          auth: auth?.auth || undefined,
+        }, { auth });
+        return { ...result, judgment: {
+          ...result.judgment, continuation: emitted,
+          status: "needs_judgment",
+        } };
+      }
       case "cogentia_host_fs_write":
         requireString(args.path, "path");
         if (typeof args.content !== "string") throw new Error("content must be a string");
