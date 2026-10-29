@@ -8,6 +8,8 @@
  */
 import fs from "node:fs";
 import { UnixProcessProvider } from "./unix-process-provider.js";
+import { resolveHostMissionAuthority } from "./host-mission-authority.js";
+import { maybeRecordCopEffectSpend } from "./cop-surface-accounting.js";
 import { createHash, randomUUID } from "node:crypto";
 import path from "node:path";
 import { registerModule, invokeCapability } from "./v3-modules.js";
@@ -216,6 +218,7 @@ export function createHostCapabilityRouter(options = {}) {
     const budget = ctx.budget || options.budget || null;
     let effectTarget = null;
     let effectPayload = null;
+    let missionAuthority = null;
 
     const traceBase = {
       protocol: "cogentia.host_capability_trace/v1",
@@ -297,11 +300,19 @@ export function createHostCapabilityRouter(options = {}) {
         const payload = buildEffectPayload(capability, argsIn, { target, provider: providerName });
         effectPayload = payload;
         effectTarget = { node: target, path: payload.path || null };
-        validateSideEffectAuthorization(ctx.authorization, {
-          action_class: capability,
-          target: effectTarget,
-          payload,
-        });
+        if (ctx.authorization) {
+          validateSideEffectAuthorization(ctx.authorization, { action_class: capability, target: effectTarget, payload });
+        } else {
+          missionAuthority = await resolveHostMissionAuthority(options.missionAuthorityResolver, {
+            actor, principal, mandate, capability, target, provider: providerName,
+            payload_hash: canonicalPayloadHash(payload),
+          });
+          if (!missionAuthority) {
+            const err = new Error("authorization_missing: no verified mission or effect grant");
+            err.error_class = "authorization_missing";
+            throw err;
+          }
+        }
       }
 
       if (!fsRoot && capability.startsWith("host.fs.")) {
@@ -312,7 +323,7 @@ export function createHostCapabilityRouter(options = {}) {
       const args = argsIn.path ? boundedPath(argsIn, fsRoot) : argsIn;
       if (args.command && effectful && !ctx.allowProcess) {
         // Process execution is never implicit merely because DC exposes it.
-        if (capability === "host.process.run" && !ctx.authorization) {
+        if (capability === "host.process.run" && !ctx.authorization && !missionAuthority) {
           const err = new Error("host.process.run requires authorization");
           err.error_class = "authorization_missing";
           throw err;
