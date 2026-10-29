@@ -69,6 +69,7 @@ export const MUTATE_TOOLS = new Set([
   "cogentia_issues_sync",
   "cogentia_concepts_init",
   "cogentia_host_fs_write",
+  "cogentia_host_process_run",
   "cogentia_communication_send",
   "cogentia_github_write",
   "cogentia_git_write",
@@ -909,6 +910,23 @@ export const TOOLS = [
         side_effect_authorization: { type: "object" },
       },
       required: ["path", "content"],
+      additionalProperties: false,
+    },
+  },
+  {
+    name: "cogentia_host_process_run",
+    description: "Run a bounded host command via Cogentia semantic host.process.run. Private mutate tool, target/provider routed by the core, requires mandate and a payload-bound side_effect_authorization. Never available anonymously.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        command: { type: "string", minLength: 1, maxLength: 4096 },
+        timeout_ms: { type: "integer", minimum: 1, maximum: 15000 },
+        target: { type: "string", description: "Target host node id" },
+        provider: { type: "string", description: "Provider id (e.g. unix-process)" },
+        mandate: { type: "string" },
+        side_effect_authorization: { type: "object" },
+      },
+      required: ["command"],
       additionalProperties: false,
     },
   },
@@ -2087,6 +2105,10 @@ export function createMcpCore(env = process.env, extras = {}) {
         requireString(args.path, "path");
         requireString(args.pattern, "pattern");
         return callHostCapability("host.fs.search", args, auth);
+      case "cogentia_host_process_run":
+        requireString(args.command, "command");
+        if (args.command.length > 4096) throw new Error("command too long");
+        return callHostCapability("host.process.run", args, auth);
       case "cogentia_host_fs_write":
         requireString(args.path, "path");
         if (typeof args.content !== "string") throw new Error("content must be a string");
