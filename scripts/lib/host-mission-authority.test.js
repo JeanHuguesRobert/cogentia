@@ -27,3 +27,30 @@ test('outside communication actions remain reserved', async () => {
   const alleged={...grant,capability:req.capability,allowed_operations:[req.capability]};
   assert.equal(await resolveHostMissionAuthority(async () => alleged,req),null);
 });
+
+test('router executes repeated internal actions under one verified mission', async () => {
+  const { createHostCapabilityRouter } = await import('./host-capability-router.js');
+  const router = createHostCapabilityRouter({
+    cacheKey:'mission-authority-test',
+    providerName:'unix-process',
+    missionAuthorityResolver: async request => ({
+      ...grant, actor:request.actor, mandate:request.mandate,
+      capability:request.capability, target:request.target,
+    }),
+    providerFactory: async () => ({
+      start:async()=>{},
+      invoke:async()=>({ok:true,upstream_tool:'fake',stdout:'ok',stderr:'',exit_code:0}),
+    }),
+  });
+  const context = {
+    actor:request.actor, principal:'principal:jhn', mandate:request.mandate,
+    auth:{lockers:{private:{write:true}}},target:request.target,
+    provider:'unix-process',
+  };
+  const first = await router.invoke(request.capability,{command:'printf first'},context);
+  const second = await router.invoke(request.capability,{command:'printf second'},context);
+  assert.equal(first.ok,true);
+  assert.equal(second.ok,true);
+  assert.equal(first.trace.authority_origin,'verified_mission');
+  await router.stop();
+});
