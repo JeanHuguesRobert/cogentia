@@ -346,7 +346,7 @@ export function createHostCapabilityRouter(options = {}) {
             };
             const cop = result?.ok === true
               ? await maybeRecordCopEffectSpend({
-                  action_class: capability, authorization_id: missionAuthority.authority_id,
+                  action_class: capability, authorization_id: `mission-effect:${traceId}`,
                   authority_origin: "verified_mission", actor, principal,
                   mandate_id: mandate, payload_hash: canonicalPayloadHash(effectPayload),
                   receipt,
