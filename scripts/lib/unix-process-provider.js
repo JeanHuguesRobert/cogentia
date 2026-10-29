@@ -26,16 +26,16 @@ export class UnixProcessProvider {
     return new Promise(resolve => {
       let timedOut = false;
       let timer;
-      const child = execFile('/bin/sh', ['-c', args.command], {
+      const child = execFile('setsid', ['/bin/sh', '-c', args.command], {
         cwd: this.cwd, timeout: 0, maxBuffer: this.maxBuffer,
-        encoding: 'utf8', windowsHide: true, detached: true,
+        encoding: 'utf8', windowsHide: true,
       }, (error, stdout, stderr) => {
         clearTimeout(timer);
         if (error?.code === 'ERR_CHILD_PROCESS_STDIO_MAXBUFFER') killGroup();
         const user = userInfo();
         resolve({
           ok: !error && !timedOut, upstream_tool: 'unix.execFile',
-          exit_code: typeof error?.code === 'number' ? error.code : (error ? null : 0),
+          exit_code: timedOut ? null : (typeof error?.code === 'number' ? error.code : (error ? null : 0)),
           signal: error?.signal || null,
           timeout: timedOut,
           output_truncated: error?.code === 'ERR_CHILD_PROCESS_STDIO_MAXBUFFER', stdout, stderr,
@@ -43,8 +43,8 @@ export class UnixProcessProvider {
           error: error?.message || null,
         });
       });
-      // A detached child leads its own process group on Unix. Terminate the
-      // group, not only /bin/sh, so children cannot continue after timeout.
+      // setsid makes the shell lead an isolated session/process group.
+      // Kill the group, not only the shell, so children cannot outlive timeout.
       const killGroup = () => {
         if (!child.pid) return;
         try { process.kill(-child.pid, 'SIGKILL'); }
