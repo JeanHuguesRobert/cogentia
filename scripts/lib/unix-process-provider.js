@@ -24,21 +24,34 @@ export class UnixProcessProvider {
     if (!Number.isInteger(requested) || requested < 1) throw new Error('invalid timeout_ms');
     const timeout = Math.min(this.timeoutMs, requested);
     return new Promise(resolve => {
-      execFile('/bin/sh', ['-c', args.command], {
-        cwd: this.cwd, timeout, maxBuffer: this.maxBuffer,
-        encoding: 'utf8', windowsHide: true,
+      let timedOut = false;
+      let timer;
+      const child = execFile('/bin/sh', ['-c', args.command], {
+        cwd: this.cwd, timeout: 0, maxBuffer: this.maxBuffer,
+        encoding: 'utf8', windowsHide: true, detached: true,
       }, (error, stdout, stderr) => {
+        clearTimeout(timer);
+        if (error?.code === 'ERR_CHILD_PROCESS_STDIO_MAXBUFFER') killGroup();
         const user = userInfo();
         resolve({
           ok: !error, upstream_tool: 'unix.execFile',
           exit_code: typeof error?.code === 'number' ? error.code : (error ? null : 0),
           signal: error?.signal || null,
-          timeout: error?.killed === true,
+          timeout: timedOut,
           output_truncated: error?.code === 'ERR_CHILD_PROCESS_STDIO_MAXBUFFER', stdout, stderr,
           identity: { user: user.username, uid: user.uid, gid: user.gid, hostname: hostname() },
           error: error?.message || null,
         });
       });
+      // A detached child leads its own process group on Unix. Terminate the
+      // group, not only /bin/sh, so children cannot continue after timeout.
+      const killGroup = () => {
+        if (!child.pid) return;
+        try { process.kill(-child.pid, 'SIGKILL'); }
+        catch (error) { if (error.code !== 'ESRCH') throw error; }
+      };
+      timer = setTimeout(() => { timedOut = true; killGroup(); }, timeout);
+      timer.unref();
     });
   }
 }
