@@ -7,6 +7,7 @@
  * machine effecter. Desktop Commander is one provider, selected by target.
  */
 import fs from "node:fs";
+import { UnixProcessProvider } from "./unix-process-provider.js";
 import { createHash, randomUUID } from "node:crypto";
 import path from "node:path";
 import { registerModule, invokeCapability } from "./v3-modules.js";
@@ -142,6 +143,17 @@ export function ensureHostCapabilityModules() {
       return provider.invoke(input.capability, input.args || {});
     },
   });
+  registerModule({
+    id: "host.unix-process",
+    kind: "capability_provider",
+    provider: "unix-process",
+    provides: { capabilities: ["host.process.run"] },
+    governance: {
+      requires: [{ locker: "private", mode: "write" }],
+      trace_minimum: "host_capability_trace",
+    },
+    run: async (input) => input._providerInstance.invoke(input.capability, input.args || {}),
+  });
 }
 
 export function createHostCapabilityRouter(options = {}) {
@@ -162,6 +174,12 @@ export function createHostCapabilityRouter(options = {}) {
       providers.set(key, created);
       await created.start();
       return created;
+    }
+    if (providerName === "unix-process") {
+      const spawned = new UnixProcessProvider({ cwd: options.cwd, timeoutMs: options.timeoutMs });
+      providers.set(key, spawned);
+      await spawned.start();
+      return spawned;
     }
     if (providerName === "desktop-commander") {
       const useFake = /^(1|true|yes|fake)$/i.test(String(env.COGENTIA_DC_MCP_FAKE || ""));
@@ -228,7 +246,7 @@ export function createHostCapabilityRouter(options = {}) {
     };
 
     try {
-      if (!HOST_CAPABILITY_MAP[capability]) {
+      if (!HOST_CAPABILITY_MAP[capability] || (providerName === "unix-process" && capability !== "host.process.run")) {
         const err = new Error(`unknown_capability: ${capability}`);
         err.error_class = "unknown_capability";
         throw err;
@@ -286,7 +304,7 @@ export function createHostCapabilityRouter(options = {}) {
         });
       }
 
-      if (!fsRoot) {
+      if (!fsRoot && capability.startsWith("host.fs.")) {
         const err = new Error("COGENTIA_HOST_FS_ROOT is required; refusing blanket filesystem export");
         err.error_class = "fs_root_required";
         throw err;
