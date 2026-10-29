@@ -185,6 +185,33 @@ and [Cogentia #294](https://github.com/JeanHuguesRobert/cogentia/issues/294).
 Never infer access merely from this documentation; never use `mock.echo` as an
 execution proof.
 
+## Pair programming — observable execution, shared review
+
+When an agent performs coding or operational work with a human collaborator,
+including through **Cogentia Unix Shell Exec** or its future governed successor,
+use **pair programming** as the default collaboration pattern:
+
+- **Show the actual command** sent to the execution tool, then its meaningful
+  **actual stdout/stderr**, exit status and any failure or truncation. Distinguish
+  proposed commands, attempted calls, blocked calls and executed commands.
+- For edits, expose the relevant diff and tests; for Git operations, provide
+  the commit SHA, branch and remote publication outcome. Make audit invocation
+  IDs available when returned. Never claim success merely from intention.
+- Keep transcripts concise but inspectable: summarize voluminous output with
+  precise commands, bounded excerpts and pointers to durable full logs when
+  available. Do **not** print credentials, tokens, private keys or sensitive data;
+  redact them before sharing, without concealing meaningful errors.
+- **Act autonomously within the established mandate** for routine reversible
+  steps. Invite human review where judgment helps, but do not impose approval
+  for each command or turn the collaborator into a continuous supervisor.
+  Escalate genuinely consequential, ambiguous or third-party-committing acts.
+- Treat the human as a technical peer: welcome corrections, test disagreements
+  against observed evidence and apply FixBugsFirst. Two reviewers improve the
+  Test du Réel; neither authority nor confidence replaces verification.
+
+These are presentation and cooperation rules, **not** additional execution
+permissions. Recheck current authority and provider security boundaries.
+
 ## Cognitive Packets, Continuations, and Handlers (read early)
 
 **Continuations are not optional trivia.** They are the operational form of
