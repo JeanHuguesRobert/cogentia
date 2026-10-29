@@ -61,3 +61,35 @@ test('timeout terminates descendants, not just the parent shell', async () => {
     rmSync(dir, {recursive:true, force:true});
   }
 });
+
+test('FIFO scheduler serializes commands by default', async () => {
+  const p = new UnixProcessProvider();
+  let active = 0, maximum = 0;
+  const jobs = Array.from({length: 4}, (_, i) => p.enqueue(async () => {
+    active++; maximum = Math.max(maximum, active);
+    await new Promise(r => setTimeout(r, 15));
+    active--; return i;
+  }));
+  assert.deepEqual(await Promise.all(jobs), [0,1,2,3]);
+  assert.equal(maximum, 1);
+});
+test('FIFO scheduler supports bounded parallel execution', async () => {
+  const p = new UnixProcessProvider({maxConcurrent: 2});
+  let active = 0, maximum = 0;
+  await Promise.all(Array.from({length: 4}, () => p.enqueue(async () => {
+    active++; maximum = Math.max(maximum, active);
+    await new Promise(r => setTimeout(r, 20)); active--;
+  })));
+  assert.equal(maximum, 2);
+});
+test('FIFO scheduler refuses requests beyond bounded queue', async () => {
+  const p = new UnixProcessProvider({maxConcurrent:1,maxQueued:1});
+  let release;
+  const gate = new Promise(r => {release=r;});
+  const running = p.enqueue(() => gate);
+  const waiting = p.enqueue(async () => 2);
+  await assert.rejects(p.enqueue(async () => 3), /host_process_queue_full/);
+  release();
+  assert.equal(await running, undefined);
+  assert.equal(await waiting, 2);
+});
