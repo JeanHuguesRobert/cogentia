@@ -5,12 +5,27 @@ import { execFile } from 'node:child_process';
 import { hostname, userInfo } from 'node:os';
 
 export class UnixProcessProvider {
-  constructor({ cwd = process.cwd(), timeoutMs = 15000, maxBuffer = 32768 } = {}) {
+  constructor({ cwd = process.cwd(), timeoutMs = 15000, maxBuffer = 32768, maxConcurrent = 1, maxQueued = 32 } = {}) {
     this.cwd = cwd;
     this.timeoutMs = timeoutMs;
     this.maxBuffer = maxBuffer;
+    this.maxConcurrent = maxConcurrent;
+    this.maxQueued = maxQueued;
+    this.active = 0;
+    this.pending = [];
+
   }
   async start() {}
+  enqueue(job) {
+    if (this.active >= this.maxConcurrent && this.pending.length >= this.maxQueued) return Promise.reject(new Error('host_process_queue_full'));
+    return new Promise((resolve,reject) => { this.pending.push({job,resolve,reject}); this.drain(); });
+  }
+  drain() {
+    while (this.active < this.maxConcurrent && this.pending.length) {
+      const task = this.pending.shift(); this.active++;
+      Promise.resolve().then(task.job).then(task.resolve,task.reject).finally(() => { this.active--; this.drain(); });
+    }
+  }
   async invoke(capability, args = {}) {
     if (capability !== 'host.process.run') {
       const err = new Error(`unsupported_capability: ${capability}`);
@@ -23,7 +38,7 @@ export class UnixProcessProvider {
     const requested = args.timeout_ms == null ? this.timeoutMs : args.timeout_ms;
     if (!Number.isInteger(requested) || requested < 1) throw new Error('invalid timeout_ms');
     const timeout = Math.min(this.timeoutMs, requested);
-    return new Promise(resolve => {
+    return this.enqueue(() => new Promise(resolve => {
       let timedOut = false;
       let timer;
       const child = execFile('setsid', ['/bin/sh', '-c', args.command], {
@@ -51,6 +66,6 @@ export class UnixProcessProvider {
         catch (error) { if (error.code !== 'ESRCH') throw error; }
       };
       timer = setTimeout(() => { timedOut = true; killGroup(); }, timeout);
-    });
+    }));
   }
 }
