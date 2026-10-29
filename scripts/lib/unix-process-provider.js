@@ -34,7 +34,7 @@ export class UnixProcessProvider {
         if (error?.code === 'ERR_CHILD_PROCESS_STDIO_MAXBUFFER') killGroup();
         const user = userInfo();
         resolve({
-          ok: !error, upstream_tool: 'unix.execFile',
+          ok: !error && !timedOut, upstream_tool: 'unix.execFile',
           exit_code: typeof error?.code === 'number' ? error.code : (error ? null : 0),
           signal: error?.signal || null,
           timeout: timedOut,
@@ -51,7 +51,6 @@ export class UnixProcessProvider {
         catch (error) { if (error.code !== 'ESRCH') throw error; }
       };
       timer = setTimeout(() => { timedOut = true; killGroup(); }, timeout);
-      timer.unref();
     });
   }
 }
