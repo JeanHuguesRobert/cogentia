@@ -38,6 +38,44 @@ They never open SQLite directly or mutate the corpus without policy authorizatio
 
 For client setup recipes (Claude Code, Grok, Codex, Cursor, and Fracta public service), see [connect-mcp-clients.md](connect-mcp-clients.md).
 
+### Temporary ChatGPT Unix coding bootstrap — 29 October 2026
+
+**Operationally verified; transitional, not a replacement for governed Cogentia MCP.**
+For Corpus coding work from a ChatGPT session, discover the **Cogentia Unix Shell Exec**
+plugin and its callable action `mcp__Cogential_Unix_Shell_Exec__shell_exec` with
+arguments `{"command":"hostname; id; uname -a"}`. The exact internal name
+has **Cogential** (not Cogentia). Always check current tool availability before
+claiming that it can be used; capability recall is not an access grant.
+
+The plugin is backed by the experimental one-tool Node MCP provider
+[`scripts/experimental/jhn-shell-mcp.mjs`](https://github.com/JeanHuguesRobert/cogentia/blob/experiment/minimal-jhn-shell-mcp-20261029/scripts/experimental/jhn-shell-mcp.mjs),
+running as Unix user `ubuntu` on `fracta2` at `127.0.0.1:8798/mcp`, reached
+via OpenAI `tunnel-client` outbound Secure MCP Tunnel (profile
+`jhn-fracta2-shell`). No public incoming port is necessary. This is **not**
+the normal `cogentia_fracta2_shell_probe` tool, and does not cure the normal
+MCP's private-tool authentication/discovery issue.
+
+**Reality Test:** On 2026-10-29 a direct ChatGPT tool call executed
+`hostname; id; uname -a` on `fracta2` under UID/GID 1001 (`ubuntu`),
+`exit_code=0`, with real stdout, empty stderr and invocation ID
+`676491f0-a5e5-4076-be99-d3197084b7e9`. A second shell call confirmed
+matching `started` / `finished` receipts in
+`~/.config/jhn-shell-mcp/audit.jsonl`. Evidence:
+[Cogentia #294, Reality Test](https://github.com/JeanHuguesRobert/cogentia/issues/294#issuecomment-6495527010).
+
+**Use discipline:** Re-check the current mandate and the target before every
+coding action; prefer narrow inspect/edit/test commands, preserve production
+services, do not print credentials, and inspect the exit code and receipt.
+`shell_exec` accepts arbitrary shell text and inherits the service Unix
+privileges; its private tunnel is not itself a COP side-effect policy.
+The JSONL receipts are experimental **not** canonical COP Acts. If the
+tool is absent, report the missing live connector rather than substituting
+`cogentia_john_run` / `mock.echo` or claiming execution. Work toward
+integrating `host.process.run` into the governed provider under
+[Cogentia #294](https://github.com/JeanHuguesRobert/cogentia/issues/294);
+do not turn this shortcut into a competing permanent gateway.
+
+
 ---
 
 ## 1. Architectural Invariants & Trust Model

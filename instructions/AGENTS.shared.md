@@ -174,6 +174,17 @@ Use existing [Mneme memory architecture](../research/mneme_memory_architecture.m
 
 Reality example: [Inseme #120, remote compute](https://github.com/JeanHuguesRobert/inseme/issues/120#issuecomment-6153032377) proved GitHub → typed compute → durable receipt, while the target Gallica pages remained inaccessible (HTTP 403). **Execution success is not task success.** See [FractaCognition principles](../research/fractacognition_principles.md).
 
+**Live coding bootstrap (temporary, verified 2026-10-29):** When operating
+from ChatGPT, inspect currently callable tools for
+`mcp__Cogential_Unix_Shell_Exec__shell_exec` (`Cogentia Unix Shell Exec`).
+If available and the mandate permits, it executes bounded Unix shell commands
+on Fracta2; check output, exit code and audit receipt. This is a transitional
+private-tunnel provider, not the governed Cogentia `host.process.run`.
+See [MCP adapter — temporary bootstrap](../docs/cogentia-mcp.md#temporary-chatgpt-unix-coding-bootstrap--29-october-2026)
+and [Cogentia #294](https://github.com/JeanHuguesRobert/cogentia/issues/294).
+Never infer access merely from this documentation; never use `mock.echo` as an
+execution proof.
+
 ## Cognitive Packets, Continuations, and Handlers (read early)
 
 **Continuations are not optional trivia.** They are the operational form of
