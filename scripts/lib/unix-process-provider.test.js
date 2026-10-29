@@ -93,3 +93,17 @@ test('FIFO scheduler refuses requests beyond bounded queue', async () => {
   assert.equal(await running, undefined);
   assert.equal(await waiting, 2);
 });
+
+test('shell can request external judgment without making the decision', async () => {
+  const p = new UnixProcessProvider();
+  const command = "printf '%s\\n' 'COGENTIA_JUDGMENT_REQUEST_V1:{\"question\":\"Proceed with test? \"}'";
+  const result = await p.invoke('host.process.run', { command });
+  assert.equal(result.ok, true);
+  assert.equal(result.judgment.status, 'needs_judgment');
+  assert.equal(result.judgment.request.question, 'Proceed with test? ');
+});
+test('invalid shell judgment produces diagnostic, never implied approval', async () => {
+  const p = new UnixProcessProvider();
+  const r = await p.invoke('host.process.run', { command: "printf '%s\\n' 'COGENTIA_JUDGMENT_REQUEST_V1:invalid'" });
+  assert.equal(r.judgment.status, 'invalid_judgment_request');
+});
