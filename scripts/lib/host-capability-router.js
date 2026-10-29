@@ -337,7 +337,26 @@ export function createHostCapabilityRouter(options = {}) {
         { auth: ctx.auth, provider: providerName }
       );
 
-      const effectVerification = effectful
+      const effectVerification = effectful && missionAuthority
+        ? await (async () => {
+            const receipt = {
+              transport: providerName, operation: capability,
+              ok: result?.ok === true,
+              status: result?.ok === true ? "success" : "failed",
+            };
+            const cop = result?.ok === true
+              ? await maybeRecordCopEffectSpend({
+                  action_class: capability, authorization_id: missionAuthority.authority_id,
+                  authority_origin: "verified_mission", actor, principal,
+                  mandate_id: mandate, payload_hash: canonicalPayloadHash(effectPayload),
+                  receipt,
+                })
+              : { ok: false, reason: "effect_not_verified" };
+            return { ok: result?.ok === true, verification: {
+              accounting_complete: cop.ok === true, cop_spend: cop,
+            } };
+          })()
+        : effectful
         ? await recordSideEffectExecution({
           authorization: ctx.authorization,
           action_class: capability,
@@ -355,7 +374,8 @@ export function createHostCapabilityRouter(options = {}) {
       const trace = finish({
         status: result?.ok === false ? "error" : "ok",
         upstream_tool: result.upstream_tool,
-        authorization_id: ctx.authorization?.authorization_id || null,
+        authorization_id: ctx.authorization?.authorization_id || missionAuthority?.authority_id || null,
+        authority_origin: missionAuthority ? "verified_mission" : "effect_grant",
         verification: effectVerification
           ? {
             ok: effectVerification.ok === true,
