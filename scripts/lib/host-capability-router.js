@@ -294,7 +294,7 @@ export function createHostCapabilityRouter(options = {}) {
       const effectful = isEffectfulCapability(capability);
       if (effectful) {
         // Cogentia #192 Finding A: Exact payload binding including content digest, mode, and target
-        const payload = buildEffectPayload(capability, argsIn, { target });
+        const payload = buildEffectPayload(capability, argsIn, { target, provider: providerName });
         effectPayload = payload;
         effectTarget = { node: target, path: payload.path || null };
         validateSideEffectAuthorization(ctx.authorization, {

@@ -94,7 +94,7 @@ export function buildHostFsWritePayload({
 /**
  * Generic canonical effect payload builder.
  */
-export function buildEffectPayload(capability, args = {}, { target = "node:local" } = {}) {
+export function buildEffectPayload(capability, args = {}, { target = "node:local", provider = null } = {}) {
   if (capability === "host.fs.write") {
     return buildHostFsWritePayload({
       path: args.path,
@@ -110,6 +110,8 @@ export function buildEffectPayload(capability, args = {}, { target = "node:local
       target: typeof target === "string" ? target : target?.node || "node:local",
       command: args.command || "",
       args: args.args || [],
+      timeout_ms: args.timeout_ms ?? null,
+      provider: provider || null,
     };
   }
   return {

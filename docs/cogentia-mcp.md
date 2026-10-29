@@ -78,6 +78,29 @@ do not turn this shortcut into a competing permanent gateway.
 
 ---
 
+### Governed Unix process surface — integration status (29 October 2026)
+
+The normal Cogentia MCP catalog now declares two semantic core operations:
+`cogentia_host_process_prepare` (private-read EXPOSE) and
+`cogentia_host_process_run` (private-mutate EXECUTE). The latter delegates to
+`host.process.run` through the existing v3 host-capability router, selecting
+`unix-process` as a provider when explicitly requested. It is not a raw-shell
+implementation inside MCP. The prepare response includes the command, node,
+provider, timeout and canonical payload hash; the pre-existing
+`cogentia_side_effect_grant` can mint a hash-bound, single-use grant only after
+its authorization conditions are satisfied. Execution uses that grant and
+records the existing side-effect receipt. A tested standalone core path confirms
+EXPOSE → grant → native Unix execution → receipt → replay refusal.
+
+**Deployment and authority boundary:** this is source-level implementation
+and isolated integration testing, **not yet a successful ChatGPT call through
+normal deployed MCP**. The running adapter has a public view; anonymous discovery
+must hide protected tools (unless an OAuth issuer advertises them without
+conferring invocation rights). A real JHN/admin caller must satisfy the normal
+mutate authorization conditions and grant flow. The temporary tunnel connector
+remains separate while the normal adapter's deployment/authentication is tested.
+Do not relax the public tier simply to expose process execution.
+
 ## 1. Architectural Invariants & Trust Model
 
 The MCP layer is a **surface**, not a second product. All semantic identity, citations, and execution state remain grounded in **Cognitive Packets, Continuations, and Git Markdown files**.

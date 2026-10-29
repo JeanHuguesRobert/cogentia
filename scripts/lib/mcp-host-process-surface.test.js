@@ -19,3 +19,16 @@ test('normal MCP surface denies unauthenticated process invocation before provid
   const core = createMcpCore({ COGENTIA_MCP_VIEW:'public' });
   await assert.rejects(core.callTool(name, {command:'printf SHOULD_NOT_RUN'}), /tier_forbidden/);
 });
+
+test('EXPOSE preparation binds command, provider, timeout and node without executing', async () => {
+  const core = createMcpCore({ COGENTIA_MCP_VIEW:'full', COGENTIA_ADMIN_TOKEN:'test-admin' });
+  const base = { command:'printf PREPARE_ONLY', provider:'unix-process', target:'node:fracta2', timeout_ms:1000 };
+  const prepared = await core.callTool('cogentia_host_process_prepare', base);
+  assert.equal(prepared.action_class, 'host.process.run');
+  assert.equal(prepared.phase, 'EXPOSE');
+  assert.equal(prepared.payload.provider, base.provider);
+  assert.equal(prepared.payload.timeout_ms, 1000);
+  assert.ok(prepared.payload_hash.startsWith('sha256:'));
+  const changed = await core.callTool('cogentia_host_process_prepare', {...base,timeout_ms:2000});
+  assert.notEqual(changed.payload_hash, prepared.payload_hash);
+});

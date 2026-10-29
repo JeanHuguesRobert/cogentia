@@ -15,6 +15,7 @@ import { createHostedBrowserCapabilities } from "./hosted-browser-capabilities.j
 import { auditCapabilitySymmetry } from "./symmetry-audit.js";
 import { listPatterns, getPattern } from "./cogentia-patterns.js";
 import { createHostCapabilityRouter } from "./host-capability-router.js";
+import { prepareHostProcessRun } from "./host-process-prepare.js";
 import { invokeThroughGateway } from "./agent-gateway-client.js";
 import { recordSideEffectExecution, mintSideEffectGrantFromPrepared } from "./side-effect-authorization.js";
 import { prepareCommunicationSend, executeCommunicationSend, createDryRunTransport } from "./communication-send.js";
@@ -90,6 +91,7 @@ export const PRIVATE_READ_TOOLS = new Set([
   "cogentia_host_fs_read",
   "cogentia_host_fs_search",
   "cogentia_fracta2_shell_probe",
+  "cogentia_host_process_prepare",
   "cogentia_communication_prepare",
   "cogentia_github_prepare",
   "cogentia_git_prepare",
@@ -910,6 +912,21 @@ export const TOOLS = [
         side_effect_authorization: { type: "object" },
       },
       required: ["path", "content"],
+      additionalProperties: false,
+    },
+  },
+  {
+    name: "cogentia_host_process_prepare",
+    description: "EXPOSE a bounded host.process.run command, its exact target/provider and payload hash before any grant or execution. Private-read; never executes.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        command: { type: "string", minLength: 1, maxLength: 4096 },
+        timeout_ms: { type: "integer", minimum: 1, maximum: 15000 },
+        target: { type: "string", minLength: 1 },
+        provider: { type: "string", minLength: 1 },
+      },
+      required: ["command", "target", "provider"],
       additionalProperties: false,
     },
   },
@@ -2105,6 +2122,8 @@ export function createMcpCore(env = process.env, extras = {}) {
         requireString(args.path, "path");
         requireString(args.pattern, "pattern");
         return callHostCapability("host.fs.search", args, auth);
+      case "cogentia_host_process_prepare":
+        return prepareHostProcessRun(args);
       case "cogentia_host_process_run":
         requireString(args.command, "command");
         if (args.command.length > 4096) throw new Error("command too long");
