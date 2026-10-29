@@ -3,6 +3,7 @@
  */
 import { execFile } from 'node:child_process';
 import { hostname, userInfo } from 'node:os';
+import { extractShellJudgment } from './shell-judgment-signal.js';
 
 export class UnixProcessProvider {
   constructor({ cwd = process.cwd(), timeoutMs = 15000, maxBuffer = 32768, maxConcurrent = 1, maxQueued = 32 } = {}) {
@@ -48,6 +49,11 @@ export class UnixProcessProvider {
         clearTimeout(timer);
         if (error?.code === 'ERR_CHILD_PROCESS_STDIO_MAXBUFFER') killGroup();
         const user = userInfo();
+        let judgment = null;
+        if (!error && !timedOut) {
+          try { judgment = extractShellJudgment(stdout); }
+          catch (parseError) { judgment = {status:'invalid_judgment_request', error:parseError.message}; }
+        }
         resolve({
           ok: !error && !timedOut, upstream_tool: 'unix.execFile',
           exit_code: timedOut ? null : (typeof error?.code === 'number' ? error.code : (error ? null : 0)),
@@ -56,6 +62,7 @@ export class UnixProcessProvider {
           output_truncated: error?.code === 'ERR_CHILD_PROCESS_STDIO_MAXBUFFER', stdout, stderr,
           identity: { user: user.username, uid: user.uid, gid: user.gid, hostname: hostname() },
           error: error?.message || null,
+          ...(judgment ? { judgment } : {}),
         });
       });
       // setsid makes the shell lead an isolated session/process group.
