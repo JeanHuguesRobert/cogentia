@@ -20,7 +20,9 @@ export class UnixProcessProvider {
     if (typeof args.command !== 'string' || !args.command.trim() || args.command.length > 4096) {
       throw new Error('command must contain 1..4096 characters');
     }
-    const timeout = Math.max(1, Math.min(this.timeoutMs, Number(args.timeout_ms) || this.timeoutMs));
+    const requested = args.timeout_ms == null ? this.timeoutMs : args.timeout_ms;
+    if (!Number.isInteger(requested) || requested < 1) throw new Error('invalid timeout_ms');
+    const timeout = Math.min(this.timeoutMs, requested);
     return new Promise(resolve => {
       execFile('/bin/sh', ['-c', args.command], {
         cwd: this.cwd, timeout, maxBuffer: this.maxBuffer,
@@ -29,8 +31,10 @@ export class UnixProcessProvider {
         const user = userInfo();
         resolve({
           ok: !error, upstream_tool: 'unix.execFile',
-          exit_code: error?.code ?? 0, signal: error?.signal || null,
-          timeout: error?.killed === true, stdout, stderr,
+          exit_code: typeof error?.code === 'number' ? error.code : (error ? null : 0),
+          signal: error?.signal || null,
+          timeout: error?.killed === true,
+          output_truncated: error?.code === 'ERR_CHILD_PROCESS_STDIO_MAXBUFFER', stdout, stderr,
           identity: { user: user.username, uid: user.uid, gid: user.gid, hostname: hostname() },
           error: error?.message || null,
         });
