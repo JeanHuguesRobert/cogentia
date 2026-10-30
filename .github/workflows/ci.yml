@@ -37,5 +37,8 @@ jobs:
           python3 scripts/check-calculette-decision-quality.py
           python3 scripts/check-calculette-orientation-cost.py
 
+      - name: Validate KYS service manifests
+        run: node scripts/check-kys-services.mjs
+
       - name: Build Cogentia Personal (web and mobile responsive bundle)
         run: pnpm --filter @cogentia/personal build
