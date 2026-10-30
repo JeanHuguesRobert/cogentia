@@ -219,6 +219,8 @@ Canonical formulations:
 
 This distinction concerns moral and governance doctrine. Particular legal duties, privileges, offences and disclosure obligations remain jurisdiction- and context-dependent.
 
+This asymmetry is **act-based rather than person-based**: holding a mandate does not erase unrelated private rights. A private citizen need not justify a secret ballot; a representative or delegated agent should be able to account for the public acts performed within a mandate. The account is limited to relevant and proportionate evidence, without exposing unrelated personal life or third-party confidentiality. See [Act, mandate and responsibility](act_mandate_responsibility.md#accountability-asymmetry-citizen-and-mandatary).
+
 
 ## 4. The patents mode
 
