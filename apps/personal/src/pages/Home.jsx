@@ -26,6 +26,13 @@ export default function Home() {
         </div>
       </section>
 
+      <section className="mt-8 card space-y-4 border-signal/30" aria-labelledby="serenia-rights">
+        <p className="font-mono text-signal text-xs uppercase tracking-widest">Nouveau parcours · Serenia</p>
+        <h2 id="serenia-rights" className="font-display text-2xl font-semibold text-bright">Et si vous aviez droit au RSA ?</h2>
+        <p className="text-dim text-sm">Utilisez votre propre IA pour faire un premier point sur vos droits, puis vérifiez auprès des services officiels. Sans compte Cogentia. D’autres aides sont à l’étude.</p>
+        <Link className="btn-primary inline-flex" to="/rights">Explorer mes droits →</Link>
+      </section>
+
       <section className="mt-12 card space-y-4" aria-labelledby="why-title">
         <p className="font-mono text-signal text-xs tracking-widest uppercase">Pourquoi rendre cela visible ?</p>
         <h2 id="why-title" className="font-display text-2xl font-semibold text-bright">La curiosité peut ouvrir un chemin vers plus de maîtrise</h2>

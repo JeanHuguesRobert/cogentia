@@ -36,3 +36,16 @@ jobs:
           python3 scripts/check-calculette-janus-receipts.py
           python3 scripts/check-calculette-decision-quality.py
           python3 scripts/check-calculette-orientation-cost.py
+
+      - name: Validate KYS service manifests
+        run: node scripts/check-kys-services.mjs
+
+      - name: Build Cogentia Personal (web and mobile responsive bundle)
+        run: pnpm --filter @cogentia/personal build
+
+      - name: Browser smoke test for KYS Services and RSA
+        run: |
+          pnpm --filter @cogentia/personal preview --host 127.0.0.1 --port 4177 --strictPort &
+          PREVIEW_PID=$!
+          trap 'kill "$PREVIEW_PID" 2>/dev/null || true' EXIT
+          node scripts/check-kys-personal-browser.mjs
