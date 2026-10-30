@@ -36,3 +36,6 @@ jobs:
           python3 scripts/check-calculette-janus-receipts.py
           python3 scripts/check-calculette-decision-quality.py
           python3 scripts/check-calculette-orientation-cost.py
+
+      - name: Build Cogentia Personal (web and mobile responsive bundle)
+        run: pnpm --filter @cogentia/personal build
