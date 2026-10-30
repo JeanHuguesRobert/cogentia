@@ -6,41 +6,33 @@
   "services": [
     {
       "id": "org.cogentia.kys.snapshot",
-      "name": "Que savent mes IA de moi ?",
-      "category": "self-knowledge",
-      "status": "experimental",
-      "path": "/snapshot",
-      "manifest": "/services/kys-snapshot.json",
-      "mode": "bring-your-own-ai",
-      "account_required": false
+      "manifest": "/services/kys-snapshot.json"
     },
     {
       "id": "org.cogentia.serenia.rsa",
-      "name": "Comprendre mes droits au RSA",
-      "category": "social-rights",
-      "status": "experimental",
-      "path": "/rights",
-      "manifest": "/services/serenia-rsa.json",
-      "mode": "bring-your-own-ai",
-      "account_required": false
+      "manifest": "/services/serenia-rsa.json"
     }
   ],
   "planned": [
     {
       "id": "org.cogentia.serenia.prime-activite",
-      "name": "Prime d'activité"
+      "name": "Prime d'activité",
+      "description": "Explorer les droits liés aux revenus d'activité."
     },
     {
       "id": "org.cogentia.serenia.logement",
-      "name": "Aides au logement"
+      "name": "Aides au logement",
+      "description": "Découvrir les aides liées au logement."
     },
     {
       "id": "org.cogentia.serenia.aah",
-      "name": "AAH"
+      "name": "AAH",
+      "description": "Explorer les droits en lien avec le handicap."
     },
     {
       "id": "org.cogentia.serenia.aspa",
-      "name": "ASPA"
+      "name": "ASPA",
+      "description": "Explorer les ressources minimales des personnes âgées."
     }
   ],
   "policy": {
