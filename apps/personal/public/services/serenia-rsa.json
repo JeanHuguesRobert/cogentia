@@ -1,0 +1,37 @@
+{
+  "schema": "org.cogentia.kys.service.v0.1",
+  "id": "org.cogentia.serenia.rsa",
+  "name": "Comprendre mes droits au RSA",
+  "version": "0.1.0",
+  "status": "experimental",
+  "language": "fr",
+  "category": [
+    "social-rights",
+    "administrative-assistance"
+  ],
+  "entry": {
+    "type": "copy-prompt",
+    "web": "/rights"
+  },
+  "provider": {
+    "name": "C.O.R.S.I.C.A."
+  },
+  "policy": {
+    "pricing": "free",
+    "account_required": false,
+    "provider_requires_personal_data": false,
+    "third_party_actions": "none"
+  },
+  "mandate": {
+    "scope": "Explain and prepare; do not submit an application or contact third parties",
+    "requires_explicit_human_approval_for_effects": true
+  },
+  "sources": [
+    "https://www.mesdroitssociaux.gouv.fr/simulateurs/rsa-pa",
+    "https://www.caf.fr/"
+  ],
+  "limitations": [
+    "No guaranteed eligibility or administrative decision.",
+    "Verify current rules with official sources."
+  ]
+}
