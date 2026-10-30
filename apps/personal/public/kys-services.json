@@ -1,0 +1,49 @@
+{
+  "schema": "org.cogentia.kys.services.v0.1",
+  "version": "0.1.0",
+  "status": "experimental",
+  "disclaimer": "Catalogue de parcours expérimentaux, sans certification ni décision administrative",
+  "services": [
+    {
+      "id": "org.cogentia.kys.snapshot",
+      "name": "Que savent mes IA de moi ?",
+      "category": "self-knowledge",
+      "status": "experimental",
+      "path": "/snapshot",
+      "mode": "bring-your-own-ai",
+      "account_required": false
+    },
+    {
+      "id": "org.cogentia.serenia.rsa",
+      "name": "Comprendre mes droits au RSA",
+      "category": "social-rights",
+      "status": "experimental",
+      "path": "/rights",
+      "mode": "bring-your-own-ai",
+      "account_required": false
+    }
+  ],
+  "planned": [
+    {
+      "id": "org.cogentia.serenia.prime-activite",
+      "name": "Prime d'activité"
+    },
+    {
+      "id": "org.cogentia.serenia.logement",
+      "name": "Aides au logement"
+    },
+    {
+      "id": "org.cogentia.serenia.aah",
+      "name": "AAH"
+    },
+    {
+      "id": "org.cogentia.serenia.aspa",
+      "name": "ASPA"
+    }
+  ],
+  "policy": {
+    "pricing": "free",
+    "third_party_effects": "explicit-mandate-required",
+    "user_data_submission": "none-required"
+  }
+}
