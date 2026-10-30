@@ -1,5 +1,5 @@
 ---
-title: "BYOAI Commons Service Protocol — minimal service contract v0.1"
+title: "KYS Services — minimal BYOAI interoperability contract v0.1"
 author: "Cogentia / C.O.R.S.I.C.A."
 date: "2026-10-30"
 last_modified_at: "2026-10-30"
@@ -22,7 +22,11 @@ review:
   reviewed_by: []
 ---
 
-# BYOAI Commons Service Protocol (BCSP) v0.1 — proposal
+# KYS Services — minimal interoperability contract v0.1 (proposal)
+
+## Naming decision (Principal, 2026-10-30)
+
+**KYS Services** is the umbrella name for the public-interest services offering. **BYOAI (Bring Your Own AI)** describes only one possible technical means by which a person brings their own assistant; it is not the service proposition or public-facing brand. Avoid **BYOAI Commons** as the product/initiative name. Keep this file path temporarily stable for existing links; a later coherent migration may rename it. KYS Services must remain usable by a person without an AI, through human or official alternatives when needed.
 
 ## Purpose
 
@@ -93,7 +97,7 @@ All example.org URLs are placeholders, NOT deployed endpoints. Registry entries 
 - **Accessibility:** human-readable Web page, copyable text, screen-reader/keyboard/mobile support; alternatives for people with no personal AI.
 - **Correctness:** separate source-grounded domain rules, dated snapshots, and model-generated explanations; do not call a language model a deterministic legal eligibility calculator.
 
-## Commons directory — not a commercial marketplace
+## KYS Services directory — not a commercial marketplace
 
 A catalogue may index public manifests with categories, language, audience, accessibility, provider, license, source freshness, maintenance status and observed conformance. Links remain open, non-exclusive and vendor-neutral. Free search/browsing; no payments, checkout, commissions, affiliate links, auctions, paid placement, or resale of leads.
 
@@ -125,7 +129,7 @@ The protocol's initial interoperability proofs should therefore be **(1) existin
 **Working hypothesis from the Principal (2026-10-30):** KYS / Know Your Self may become the *umbrella* for the human-centric relationship to personal AI, not merely a one-off introspection tool. In that reading:
 
 - **KYS** asks who knows what about the person, how that knowledge is formed, held, contested and used, and how the person gains effective control over it. Its ambiguity is deliberate, echoing *Connais-toi toi-même* without assuming that self-knowledge belongs to the person, the agent or a platform.
-- **BYOAI Commons** is a minimal interoperability method for practical services consumed with a person's own AI; it sits **within the possible KYS umbrella**, while remaining independently implementable by third-party commons providers.
+- **KYS Services** is a public-interest service framework; BYOAI is its initial minimal interoperability method for practical services consumed with a person's own AI; it sits **within the possible KYS umbrella**, while remaining independently implementable by third-party commons providers.
 - **Serenia / RSA** is an application-specific service built upon that method; its substantive purpose is access to rights, not psychological assessment.
 - **PrivAI** is a **future** independent foundation / assurance and anti-capture framework, not an already incorporated foundation, approved regulator, or existing certification authority. Its potential standards and guarantees must be distinguished from services' own claims and must be tested before any trust badge or certification language.
 
