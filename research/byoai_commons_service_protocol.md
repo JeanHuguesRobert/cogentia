@@ -120,6 +120,21 @@ KYS predates the Serenia/RSA extension and is the **first actual BYOAI-style ser
 
 The protocol's initial interoperability proofs should therefore be **(1) existing KYS, (2) Serenia/RSA**. Retrospectively document where KYS is already compliant with the proposed minimal contract, and identify gaps instead of retrofitting it into a new silo.
 
+## KYS as a potential umbrella; PrivAI as a separate trust layer (hypothesis)
+
+**Working hypothesis from the Principal (2026-10-30):** KYS / Know Your Self may become the *umbrella* for the human-centric relationship to personal AI, not merely a one-off introspection tool. In that reading:
+
+- **KYS** asks who knows what about the person, how that knowledge is formed, held, contested and used, and how the person gains effective control over it. Its ambiguity is deliberate, echoing *Connais-toi toi-même* without assuming that self-knowledge belongs to the person, the agent or a platform.
+- **BYOAI Commons** is a minimal interoperability method for practical services consumed with a person's own AI; it sits **within the possible KYS umbrella**, while remaining independently implementable by third-party commons providers.
+- **Serenia / RSA** is an application-specific service built upon that method; its substantive purpose is access to rights, not psychological assessment.
+- **PrivAI** is a **future** independent foundation / assurance and anti-capture framework, not an already incorporated foundation, approved regulator, or existing certification authority. Its potential standards and guarantees must be distinguished from services' own claims and must be tested before any trust badge or certification language.
+
+**Institutional and operational status reported by the Principal:** PrivAI is currently hosted legally under the association **C.O.R.S.I.C.A.** and technically within the **Supabase database used by Agent JHN**. Treat these statements as reported context to verify before any public or legal representation: do not infer separate legal personality, foundation status, an independent data controller, effective certification, nor full infrastructure separation from the mere use of these hosts. Clarify data-controller/processor roles and boundary conditions when actual user-data processing is undertaken.
+
+**Architectural rule:** governance (who authorizes), trust assurance (who evaluates), service publication (what is offered), execution (who acts), and hosting (where software/data reside) are distinct concerns. Hosting PrivAI in Agent JHN infrastructure does not grant Agent JHN ownership of users' information or automatically authorize PrivAI to inspect it. An accredited PrivAI regime, if created, cannot be presumed to exist today.
+
+**Decision pending:** whether KYS becomes the public umbrella brand, the normative constitutional layer, or both. Preserve the name and existing KYS behavior until that distinction has been tested; avoid renaming or merging subsystems solely on the strength of the hypothesis.
+
 ## First discriminating experiments
 
 1. KYS: verify the existing anonymous copy/paste, original-source preservation, correction, export, and no false claim to provider memory.
