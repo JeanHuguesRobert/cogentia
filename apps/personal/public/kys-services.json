@@ -10,6 +10,7 @@
       "category": "self-knowledge",
       "status": "experimental",
       "path": "/snapshot",
+      "manifest": "/services/kys-snapshot.json",
       "mode": "bring-your-own-ai",
       "account_required": false
     },
@@ -19,6 +20,7 @@
       "category": "social-rights",
       "status": "experimental",
       "path": "/rights",
+      "manifest": "/services/serenia-rsa.json",
       "mode": "bring-your-own-ai",
       "account_required": false
     }
