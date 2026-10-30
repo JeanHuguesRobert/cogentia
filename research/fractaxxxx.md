@@ -2,7 +2,7 @@
 title: "FractaXXXX — A Generative Grammar of Possibilities"
 subtitle: "Principles, composition, emerging possibilities, friendly prior art, and Reality Tests"
 date: "2026-10-08"
-version: "0.7"
+version: "0.8"
 status: "working-paper — non-normative"
 language: "en"
 author: unknown
@@ -92,6 +92,7 @@ These are proposed **moves** for exploration and composition, not a new normativ
 | FractaCognition | Metacognitive discipline and composable heuristics | documented | [Principles](./fractacognition_principles.md) |
 | FractaCarta | Fractal maps, local autonomy and exploration grammar | documented | [FractaCarta](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/fractacarta.md) |
 | **FractaMandate / FractaMandat** | Fractal, locality-aware mandate composition: reasonable competence, attenuated subdelegation, contextual judgment, resource forecasts and accountable acts | **name adopted by Principal, 2026-10-30; doctrine v0.2 working, implementation not established** | [Mandate — Reasonable Agency](./mandate_reasonable_agency.md), [COP/Accounting](https://github.com/JeanHuguesRobert/inseme/blob/main/packages/cop-core/COP_ACCOUNTING.md) |
+| **FractaReality / FractaRéalité** | Candidate for situated, cross-scale reconciliation of partial Reality observations; avoid duplicating Reality Probes and Trace Treatment | **research candidate; no independent component established** | [Interrogating Reality](./interrogating_reality.md), [Reality Probe Selection](./reality_probe_selection.md), [Trace Treatment](./trace_treatment_packet.md) |
 | **FractaHandler** | Situated execution role accepting governed work on a FractaNode; distinct from a Unix shell, process, protocol or new daemon | **terminology introduced by Principal, 2026-10-28; semantic contract under review** | [Operium operational ownership](./operium_owns_operational_deploy.md), [Shell Fracta2 umbrella #292](https://github.com/JeanHuguesRobert/cogentia/issues/292) |
 | FractaScheduler | Scheduling and progress of distributed cognitive work | implemented/documented profile | [Scheduler](../docs/fracta-scheduler.md) |
 | FractaCalendar | Federated temporal obligations | documented | [Calendar](https://github.com/JeanHuguesRobert/operium/blob/main/docs/fracta-calendar.md) |
@@ -124,6 +125,30 @@ The same minimal accountability pattern can recur at different levels of abstrac
 **Minimum discriminating Reality Test:** compare a flattened permission-per-act workflow with (a) standing contextual FractaMandate and (b) standing FractaMandate plus budget forecast/settlement feedback on matched realistic tasks. Measure mandate compliance, completion, prediction calibration, human-attention cost, harmful exposure, repair effectiveness and traceability. Test adversarial ambiguity and material context changes. Do not claim novelty or reliability prior to independent prior-art and empirical examination.
 
 **Authoritative conceptual source:** [Mandate — Reasonable Agency, Judgment, and Accountable Delegation](./mandate_reasonable_agency.md) (working v0.2). FractaXXXX provides the generative crosswalk only; COP/Accounting retains its accounting authority, [Intent](./intent.md) its provenance and meaning doctrine, [Measured Risk](./measured_risk.md) its exposure doctrine, and [Traçabilité des actes](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/traceabilite_des_actes.md) its imputation doctrine.
+
+## FractaReality / FractaRéalité — candidate, not yet an independent component (2026-10-30)
+
+**Research question:** how can a distributed, mandated system of agents retain a reliable, continuous, and corrigible relationship with a Reality that no agent observes completely? This is a **candidate conceptual responsibility**, not Reality itself, not a truth oracle, not a new daemon or a substitute for any existing doctrine.
+
+Existing source responsibilities already cover most of the ground:
+- [Interrogating Reality](./interrogating_reality.md) and its co-sovereign French peer [Interroger le Réel](./interroger_le_reel.md): ask a discriminating question, probe, capture traces, qualify observations, revise knowledge.
+- [Reality Probe Selection](./reality_probe_selection.md): choose valuable, affordable probes under mandate, risk and human-attention constraints.
+- [Trace Treatment Packet](./trace_treatment_packet.md): distinguish raw trace from independently resumable treatment and optional propagation.
+- [FractaCognition](./fractacognition_principles.md), [Measured Risk](./measured_risk.md), [FractaMandate](./mandate_reasonable_agency.md), COP/Accounting and the Rossignol principle: contextual interpretation, bounded action, accountability and learning.
+
+**Potential distinct seam:** *situated reconciliation of multiple partial and apparently conflicting observations across scales and actors*, with independent provenance, applicable question, bounded confidence, contradiction preservation and selective escalation. One agent may observe a running process, another a failing HTTP request, and a third a completed end-user task; these observations can all be true without supporting the same service-level conclusion. FractaReality would relate observed facts to the decision claim being tested, without falsely promoting an internally reported success into external Reality.
+
+Candidate properties:
+1. **Epistemic locality:** a conclusion is qualified by observer, time, domain, scope, observation path and question; no global omniscient state.
+2. **Cross-scale projection:** local traces may support wider conclusions only with an explicit, testable inference and recorded uncertainty; general policy does not automatically follow from one local incident.
+3. **Adversarial independence:** corroboration is evaluated for correlated sources and common-mode failure, not counted by number of agreeing LLMs.
+4. **Prospective commitments and feedback:** link forecasts, mandates, budget estimates, actions, real observations, settlement and remediation without hindsight rewriting or unilaterally resetting failure history.
+5. **Choice of discriminating Reality Probe:** when different interpretations would change a decision, seek the smallest sufficiently informative and safe observation rather than forcing premature consensus.
+6. **No central truth monopoly:** preserve disagreement, unknowns and a right to challenge; authoritative external facts and legal determinations retain their own provenance and jurisdiction.
+
+**Occam test:** if existing Interrogating Reality + Trace Treatment + COP already compose this function without losing essential semantics, FractaReality stays an *integrative view* and not a standalone implementation. To justify a separate responsibility, show an empirical failure of the existing composition and a measurable improvement from the proposed seam.
+
+**Reality Test:** give independent agents a common service question but different observations (process alive, endpoint failing, user task completed), including correlated/misleading traces and time-shifted states. Compare (A) existing source composition and (B) an explicit cross-scale reconciliation view. Evaluate evidence provenance, contradictions retained, appropriate probes, errors of promoted certainty, latency, attention and compute cost, and actionable correctness. First test is bounded and simulated; no additional deployment is implied.
 
 ## FractaHandler — situated execution role (terminology, 2026-10-28)
 
