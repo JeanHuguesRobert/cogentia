@@ -42,3 +42,10 @@ jobs:
 
       - name: Build Cogentia Personal (web and mobile responsive bundle)
         run: pnpm --filter @cogentia/personal build
+
+      - name: Browser smoke test for KYS Services and RSA
+        run: |
+          pnpm --filter @cogentia/personal preview --host 127.0.0.1 --port 4177 --strictPort &
+          PREVIEW_PID=$!
+          trap 'kill "$PREVIEW_PID" 2>/dev/null || true' EXIT
+          node scripts/check-kys-personal-browser.mjs
