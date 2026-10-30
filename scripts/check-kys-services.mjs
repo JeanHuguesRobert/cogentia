@@ -19,7 +19,7 @@ for (const service of index.services ?? []) {
   try { item = load(service.manifest) } catch (error) { failures.push('Invalid manifest ' + service.id + ': ' + error.message); continue }
   assert(item.schema === 'org.cogentia.kys.service.v0.1', 'Invalid service schema: ' + service.id)
   assert(item.id === service.id, 'Manifest ID mismatch: ' + service.id)
-  assert(typeof item.entry?.web === 'string' && /^\\/(?!\\/)[a-z-]+$/.test(item.entry.web), 'Invalid local entry route: ' + service.id)
+  assert(typeof item.entry?.web === 'string' && item.entry.web.startsWith('/') && !item.entry.web.startsWith('//') && /^[a-z-]+$/.test(item.entry.web.slice(1)), 'Invalid local entry route: ' + service.id)
   assert(typeof item.name === 'string' && item.name.trim().length > 0, 'Missing service name: ' + service.id)
   assert(typeof item.description === 'string' && item.description.trim().length > 0, 'Missing description: ' + service.id)
   assert(typeof item.display_category === 'string' && item.display_category.trim().length > 0, 'Missing display category: ' + service.id)
