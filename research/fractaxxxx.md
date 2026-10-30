@@ -2,14 +2,14 @@
 title: "FractaXXXX — A Generative Grammar of Possibilities"
 subtitle: "Principles, composition, emerging possibilities, friendly prior art, and Reality Tests"
 date: "2026-10-08"
-version: "0.6"
+version: "0.7"
 status: "working-paper — non-normative"
 language: "en"
 author: unknown
 affiliation: "Institut Mariani / C.O.R.S.I.C.A."
 ai_assisted_by:
   - "ChatGPT GPT-6 (drafting and research synthesis)"
-last_modified_at: "2026-10-24"
+last_modified_at: "2026-10-30"
 license: "CC BY-SA 4.0"
 document_role: source
 document_kind: "research-note"
@@ -91,6 +91,7 @@ These are proposed **moves** for exploration and composition, not a new normativ
 | FractaVolta | Energy-packet and mobile-buffer applications | established project | [FractaVolta](https://github.com/JeanHuguesRobert/FractaVolta) |
 | FractaCognition | Metacognitive discipline and composable heuristics | documented | [Principles](./fractacognition_principles.md) |
 | FractaCarta | Fractal maps, local autonomy and exploration grammar | documented | [FractaCarta](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/fractacarta.md) |
+| **FractaMandate / FractaMandat** | Fractal, locality-aware mandate composition: reasonable competence, attenuated subdelegation, contextual judgment, resource forecasts and accountable acts | **name adopted by Principal, 2026-10-30; doctrine v0.2 working, implementation not established** | [Mandate — Reasonable Agency](./mandate_reasonable_agency.md), [COP/Accounting](https://github.com/JeanHuguesRobert/inseme/blob/main/packages/cop-core/COP_ACCOUNTING.md) |
 | **FractaHandler** | Situated execution role accepting governed work on a FractaNode; distinct from a Unix shell, process, protocol or new daemon | **terminology introduced by Principal, 2026-10-28; semantic contract under review** | [Operium operational ownership](./operium_owns_operational_deploy.md), [Shell Fracta2 umbrella #292](https://github.com/JeanHuguesRobert/cogentia/issues/292) |
 | FractaScheduler | Scheduling and progress of distributed cognitive work | implemented/documented profile | [Scheduler](../docs/fracta-scheduler.md) |
 | FractaCalendar | Federated temporal obligations | documented | [Calendar](https://github.com/JeanHuguesRobert/operium/blob/main/docs/fracta-calendar.md) |
@@ -103,6 +104,26 @@ These are proposed **moves** for exploration and composition, not a new normativ
 ### Proposed names — not projects or established concepts
 
 FractaCompute (compute-placement), FractaStore (durable storage), FractaTrust (trust and delegation), FractaMemory (memory projections), FractaFlow (composition). FractaCache is listed above as a candidate because its locality-governed materialization responsibility is distinguishable from memory itself, but no independent runtime, protocol, or novelty claim is implied. These are hypotheses; first determine whether COP/Operium/Cogentia already name and implement the exact responsibility. Avoid duplicating FractaCalendar with a proposed FractaTime.
+
+## FractaMandate / FractaMandat — responsible authority across scales (2026-10-30)
+
+**Canonical bilingual naming:** `FractaMandate` (English; code and technical protocols), **FractaMandat** (French; French-language doctrine). This is a named *approach* to the generic `mandate` concept in COP, **not** a competing protocol, runtime service, new legal personality, or permission to bypass existing governance. Module names such as `fracta-mandate` and a hypothetical `fracta.mandate` identifier remain **proposals**, not implemented or stabilized interfaces.
+
+The same minimal accountability pattern can recur at different levels of abstraction: principal's intent → mandate → optional attenuated submandate → open work batch → situated action → trace, accounting, repair and learning. **Authority may narrow but must never increase by subdelegation.** The delegate must itself be authorized to subdelegate. A child budget is a bounded allocation of parent resources, not a new grant or an accounting duplicate. The legal bearer and applicable human or institutional answerability remain identifiable along the chain.
+
+**Principle of Locality:** make an ordinary decision at the lowest suitable level where authority, competence, budget and context are sufficient. Request higher-level judgment, specialist advice or principal consultation only where the mandate requires it or where material uncertainty, insufficient authority/resources, external effects or ruin exposure justify escalation. Delegation and judgment should **not** generate permanent per-action approval theatre.
+
+**Levels of abstraction and indirection:** abstract intent can be progressively instantiated into situated decisions while retaining provenance. An additional indirection level is justified only where it makes meaning, capabilities, budgets, isolation, responsibility or learning measurably easier to manage; it is not an obligation to proliferate layers. Vertical delegation coexists with lateral consultation and local synthesis. Local Reality Tests can inform more general doctrine, but must not automatically promote observations into authority.
+
+**Two complementary pillars:**
+1. Contextual, contestable **judgment under uncertainty** about feasibility, risk, reversibility, exposure, mandate interpretation and when to consult; trust a reasonably competent mandatary within evidenced limits, not an infallible agent.
+2. Strict **COP/Accounting** of resource envelopes, reservations, commitments, settlements, releases and attribution, including separate financial, compute, time and human-attention dimensions. Forecasts of required resources and probability of completion are decision inputs, *not* ledger facts; compare predictions with actual settlements and preserve calibration evidence.
+
+**Validity and acceptance:** the mandant's authority, meaningful proposal/acceptance or counterproposal, effective status, review/revocation, and the legal status of consequential acts are conceptually distinct. An operational agent acceptance does not itself legally bind an unconsenting human or legal person. A bad outcome does not retroactively make an ex-ante reasonable decision unlawful; deviations, remedies and responsibilities require causal traces. **Synthetic Skin in the Game** means non-resettable answerability, not simulated suffering; bounded losses do not authorize catastrophic or impermissible effects.
+
+**Minimum discriminating Reality Test:** compare a flattened permission-per-act workflow with (a) standing contextual FractaMandate and (b) standing FractaMandate plus budget forecast/settlement feedback on matched realistic tasks. Measure mandate compliance, completion, prediction calibration, human-attention cost, harmful exposure, repair effectiveness and traceability. Test adversarial ambiguity and material context changes. Do not claim novelty or reliability prior to independent prior-art and empirical examination.
+
+**Authoritative conceptual source:** [Mandate — Reasonable Agency, Judgment, and Accountable Delegation](./mandate_reasonable_agency.md) (working v0.2). FractaXXXX provides the generative crosswalk only; COP/Accounting retains its accounting authority, [Intent](./intent.md) its provenance and meaning doctrine, [Measured Risk](./measured_risk.md) its exposure doctrine, and [Traçabilité des actes](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/traceabilite_des_actes.md) its imputation doctrine.
 
 ## FractaHandler — situated execution role (terminology, 2026-10-28)
 
