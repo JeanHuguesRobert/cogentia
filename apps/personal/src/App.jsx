@@ -11,10 +11,12 @@ import History from './pages/History'
 import Docs from './pages/Docs'
 import Auth from './pages/Auth'
 import Waitlist from './pages/Waitlist'
+import Rights from './pages/Rights'
 
 function Layout({ children }) {
   const links = [
     { to: '/', label: 'Accueil' },
+    { to: '/rights', label: 'Accès aux droits' },
     { to: '/snapshot', label: 'Que savent mes IA de moi ?' },
     { to: '/mirror', label: 'Coller' },
     { to: '/indicators', label: '73 indicateurs' },
@@ -50,6 +52,7 @@ export function AppRoutes() {
   return (
     <Routes>
       <Route path="/" element={<Layout><Home /></Layout>} />
+      <Route path="/rights" element={<Layout><Rights /></Layout>} />
       <Route path="/snapshot" element={<Layout><Snapshot /></Layout>} />
       <Route path="/mirror" element={<Layout><LearnedContextMirror /></Layout>} />
       <Route path="/about" element={<Layout><About /></Layout>} />
