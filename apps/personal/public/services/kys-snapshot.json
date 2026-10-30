@@ -1,0 +1,31 @@
+{
+  "schema": "org.cogentia.kys.service.v0.1",
+  "id": "org.cogentia.kys.snapshot",
+  "name": "Que savent mes IA de moi ?",
+  "version": "0.1.0",
+  "status": "experimental",
+  "language": "fr",
+  "category": [
+    "self-knowledge"
+  ],
+  "entry": {
+    "type": "copy-prompt",
+    "web": "/snapshot"
+  },
+  "provider": {
+    "name": "C.O.R.S.I.C.A."
+  },
+  "policy": {
+    "pricing": "free",
+    "account_required": false,
+    "provider_requires_personal_data": false,
+    "third_party_actions": "none"
+  },
+  "mandate": {
+    "scope": "Ask an AI for its claimed knowledge, review, correct and export; no third-party acts",
+    "requires_explicit_human_approval_for_effects": true
+  },
+  "limitations": [
+    "An AI response does not prove access to provider-side stored memory."
+  ]
+}
