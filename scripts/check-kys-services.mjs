@@ -19,13 +19,19 @@ for (const service of index.services ?? []) {
   try { item = load(service.manifest) } catch (error) { failures.push('Invalid manifest ' + service.id + ': ' + error.message); continue }
   assert(item.schema === 'org.cogentia.kys.service.v0.1', 'Invalid service schema: ' + service.id)
   assert(item.id === service.id, 'Manifest ID mismatch: ' + service.id)
-  assert(typeof item.entry?.web === 'string' && /^\\/(?!\\/)[a-z-]+$/.test(item.entry.web), 'Invalid local entry route: ' + service.id)\n  assert(typeof item.name === 'string' && item.name.trim().length > 0, 'Missing service name: ' + service.id)\n  assert(typeof item.description === 'string' && item.description.trim().length > 0, 'Missing description: ' + service.id)\n  assert(typeof item.display_category === 'string' && item.display_category.trim().length > 0, 'Missing display category: ' + service.id)
+  assert(typeof item.entry?.web === 'string' && /^\\/(?!\\/)[a-z-]+$/.test(item.entry.web), 'Invalid local entry route: ' + service.id)
+  assert(typeof item.name === 'string' && item.name.trim().length > 0, 'Missing service name: ' + service.id)
+  assert(typeof item.description === 'string' && item.description.trim().length > 0, 'Missing description: ' + service.id)
+  assert(typeof item.display_category === 'string' && item.display_category.trim().length > 0, 'Missing display category: ' + service.id)
   assert(item.policy?.pricing === 'free', 'Non-free service: ' + service.id)
   assert(item.policy?.account_required === false, 'Mandatory account: ' + service.id)
   assert(item.policy?.third_party_actions === 'none', 'Unexpected external effects: ' + service.id)
   assert(item.mandate?.requires_explicit_human_approval_for_effects === true, 'Missing mandate control: ' + service.id)
   assert(['experimental', 'tested', 'maintained'].includes(item.status), 'Invalid status: ' + service.id)
 }
-for (const planned of index.planned ?? []) {\n  assert(!ids.has(planned.id), 'Planned service already active: ' + planned.id)\n  assert(typeof planned.name === 'string' && planned.name.length > 0, 'Planned service missing name')\n}
+for (const planned of index.planned ?? []) {
+  assert(!ids.has(planned.id), 'Planned service already active: ' + planned.id)
+  assert(typeof planned.name === 'string' && planned.name.length > 0, 'Planned service missing name')
+}
 if (failures.length) { failures.forEach(x => console.error('FAIL:', x)); process.exit(1) }
 console.log('PASS: KYS Services catalogue and ' + index.services.length + ' service manifests')
