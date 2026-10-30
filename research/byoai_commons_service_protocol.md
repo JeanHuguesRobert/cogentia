@@ -139,6 +139,32 @@ The protocol's initial interoperability proofs should therefore be **(1) existin
 
 **Decision pending:** whether KYS becomes the public umbrella brand, the normative constitutional layer, or both. Preserve the name and existing KYS behavior until that distinction has been tested; avoid renaming or merging subsystems solely on the strength of the hypothesis.
 
+## Capable / Autonomie de Capacité and DNS topology (2026-10-30)
+
+KYS Services is a **concrete instrument of Autonomie de Capacité**, an idea also expressed by the Capable initiative. The practical shared test is whether a person can understand, decide, obtain a right and act, rather than merely whether an interface or an AI appears effective.
+
+**Do not collapse the brands or institutions.** Capable is a public/civic doctrinal and political initiative; KYS Services is a general-purpose, nonpartisan service infrastructure; Serenia is an assistance methodology; PrivAI is a proposed assurance layer. Social rights services must not condition access on political support, contact-list enrollment, membership or endorsement of Capable. KYS Services can *demonstrate* Autonomie de Capacité without being a campaign website.
+
+### DNS responsibility, not deployment declaration
+
+Only currently documented example hosts are confirmed by the Corpus; **the following new hostnames are design candidates, not existing DNS records or deployments**. Choose the canonical service domain by neutrality, permanence, and legal stewardship rather than whichever machine currently serves the app.
+
+| Function | Candidate / existing host | Boundary |
+| --- | --- | --- |
+| Public umbrella/entry and directory of useful KYS Services | `services.acorsica.org` (**candidate**) | Neutral services and discovery; avoid linking mandatory use to a person, political movement or vendor |
+| Specific service landing page | `services.acorsica.org/rights/rsa` (**candidate**) | A user-facing public route; RSA one entry among others |
+| Existing Cogentia Personal application | `apps/personal` in the Cogentia repository; public canonical DNS to verify | Reuse deployed app and routes before any domain migration |
+| Public noncommercial service manifest discovery | `services.acorsica.org/.well-known/kys-services.json` (**candidate**) | Versioned machine-readable catalogue, no private data |
+| Capable doctrinal/civic publications | Current Capable domain/path to be verified against its live migration | Links to the service, but is not a required entry or data controller |
+| PrivAI project/trust documents | `privai.acorsica.org` (documented project host; live status not verified here) | Future trust evidence, not a currently accredited certification authority |
+| Personal JHN twin | `jhn.baronsmariani.org` (registered in `inseme/research/instance_map.md`) | Personal host, **not** a mandatory public KYS provider endpoint |
+
+**Selection rule:** Put the service under a public-interest institutional domain with durable stewardship; leave infrastructure hosts (`fracta2`, Netlify, Supabase) interchangeable behind DNS. Keep a service's canonical ID stable independently of hostname. Use HTTP redirects when changing hosts; do not duplicate canonical pages or split the same registration list across domains. Distinguish production status from namespace intent.
+
+**Open decision:** whether KYS Services merits its own dedicated apex domain, or a path/subdomain under an existing nonpartisan `acorsica.org` umbrella. The provisional candidate above is not an instruction to provision DNS.
+
+**Relationship to Capable:** express the explicit conceptual bridge (Autonomie de Capacité → practical ability → KYS Services); cross-link doctrinal sources but maintain separable governance and unbiased access to rights.
+
 ## First discriminating experiments
 
 1. KYS: verify the existing anonymous copy/paste, original-source preservation, correction, export, and no false claim to provider memory.
