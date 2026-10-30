@@ -35,7 +35,7 @@ export default function Rights() {
         <p className="font-mono text-signal text-xs tracking-widest uppercase">Cogentia Personal · Serenia</p>
         <h1 className="font-display text-3xl md:text-5xl font-bold text-bright">Et si vous aviez droit au RSA ?</h1>
         <p className="text-lg text-dim">Un premier parcours pour examiner vos droits avec votre propre assistant IA, sans compte Cogentia et sans transmettre votre situation personnelle à notre serveur.</p>
-        <p className="text-sm text-dim">Vous n'avez pas d'IA personnelle ? Utilisez directement le <a className="text-signal underline" href="https://www.mesdroitssociaux.gouv.fr/" target="_blank" rel="noreferrer">simulateur public Mes droits sociaux</a>, ou rapprochez-vous de la CAF, de la MSA ou d'un service d'accompagnement.</p>
+        <p className="text-sm text-dim">Vous n'avez pas d'IA personnelle ? Utilisez directement le <a className="text-signal underline" href="https://www.mesdroitssociaux.gouv.fr/simulateurs/rsa-pa" target="_blank" rel="noreferrer">simulateur public Mes droits sociaux</a>, ou rapprochez-vous de la CAF, de la MSA ou d'un service d'accompagnement.</p>
       </header>
       <section className="card space-y-4" aria-labelledby="rights-start">
         <h2 id="rights-start" className="font-display text-2xl font-semibold text-bright">Commencer avec votre IA personnelle</h2>
@@ -48,7 +48,7 @@ export default function Rights() {
       <section className="card space-y-3" aria-labelledby="rights-check">
         <h2 id="rights-check" className="font-display text-xl font-semibold text-bright">Avant toute demande</h2>
         <p className="text-dim text-sm">Une IA peut se tromper sur une règle ou un montant. Ce parcours n'est ni une simulation réglementaire certifiée ni une décision d'éligibilité. Seule l'administration compétente peut décider et verser la prestation.</p>
-        <a className="btn-ghost inline-flex" href="https://www.mesdroitssociaux.gouv.fr/" target="_blank" rel="noreferrer">Vérifier sur Mes droits sociaux →</a>
+        <a className="btn-ghost inline-flex" href="https://www.mesdroitssociaux.gouv.fr/simulateurs/rsa-pa" target="_blank" rel="noreferrer">Vérifier sur Mes droits sociaux →</a>
         <a className="text-signal underline block text-sm" href="https://www.caf.fr/" target="_blank" rel="noreferrer">Site de la CAF</a>
       </section>
       <section className="space-y-4">
