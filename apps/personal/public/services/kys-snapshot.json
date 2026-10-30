@@ -27,5 +27,7 @@
   },
   "limitations": [
     "An AI response does not prove access to provider-side stored memory."
-  ]
+  ],
+  "description": "Interrogez votre propre IA, examinez ses déclarations, corrigez et exportez.",
+  "display_category": "KYS · Connaissance de soi"
 }
