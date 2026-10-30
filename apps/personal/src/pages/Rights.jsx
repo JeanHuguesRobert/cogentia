@@ -40,7 +40,7 @@ export default function Rights() {
       <section className="card space-y-4" aria-labelledby="rights-start">
         <h2 id="rights-start" className="font-display text-2xl font-semibold text-bright">Commencer avec votre IA personnelle</h2>
         <p className="text-dim text-sm">1. Copiez les instructions ci-dessous. 2. Collez-les dans ChatGPT, Claude ou un autre assistant que vous utilisez. 3. Discutez avec lui, puis vérifiez les résultats auprès des services officiels.</p>
-        <label htmlFor="rights-prompt" className="block text-sm text-bright">Instructions proposées — vérifiables et modifiables</label>
+        <label htmlFor="rights-prompt" className="block text-sm text-bright">Instructions proposées — à adapter dans votre assistant</label>
         <textarea id="rights-prompt" className="input w-full min-h-56 text-sm" readOnly value={PROMPT} aria-label="Instructions à copier dans votre assistant personnel"/>
         <button type="button" className="btn-primary" onClick={copyPrompt}>{copied ? 'Instructions copiées' : 'Copier les instructions'}</button>
         <p className="text-xs text-muted">Votre conversation a lieu chez le fournisseur d'IA que vous choisissez, conformément à ses règles de confidentialité. Le texte de vos réponses n'est ni demandé ni enregistré par ce parcours Cogentia. Vérifiez les données sensibles avant tout partage.</p>
