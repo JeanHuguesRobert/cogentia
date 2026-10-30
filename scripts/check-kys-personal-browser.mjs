@@ -75,7 +75,15 @@ async function snapshot(path, width) {
 }
 
 try {
-  check((await fetch(base + '/services')).ok, 'Vite preview server unavailable')
+  // The CI preview command starts asynchronously; allow its HTTP listener to bind.
+  let previewReady = false
+  for (let attempt = 0; attempt < 50; attempt++) {
+    try {
+      if ((await fetch(base + '/services')).ok) { previewReady = true; break }
+    } catch { /* preview still starting */ }
+    await sleep(200)
+  }
+  check(previewReady, 'Vite preview server unavailable after 10 seconds')
   const tab = await connect()
   ws = new WebSocket(tab.webSocketDebuggerUrl)
   await new Promise((resolve, reject) => {
