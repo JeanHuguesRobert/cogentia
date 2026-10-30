@@ -165,6 +165,20 @@ Only currently documented example hosts are confirmed by the Corpus; **the follo
 
 **Relationship to Capable:** express the explicit conceptual bridge (Autonomie de Capacité → practical ability → KYS Services); cross-link doctrinal sources but maintain separable governance and unbiased access to rights.
 
+## « IA pour Tous » / « IA pour Chacun » — dialectical architecture
+
+This service model is a concrete articulation of the existing Cogentia doctrine of **« IA pour Tous » and « IA pour Chacun »** (see `research/ia_pour_tous_ia_pour_chacun.md`).
+
+- **IA pour Tous:** public-interest knowledge, service definitions, sources, maintained prompts, catalogue and reusable capability contracts are commons. They must remain broadly accessible, understandable, auditable and usable without compulsory registration or adherence to Capable.
+- **IA pour Chacun:** the person chooses their own assistant, holds or governs personal context, grants limited mandates, decides what to share, and may seek human help instead. The person is not merely an account in the collective system.
+- **Their dialectical conjunction:** public common capabilities become **effective individual capacities**, while individual uses may motivate improvements to the common service *without harvesting individual conversations*. Neither a fully centralized assistant nor isolated individual assistants suffice alone.
+
+**Practical expression:** KYS Services Directory = shared/public side; a user's own IA (BYOAI / optional personal twin) = personal side; a versioned service manifest and explicit scope = their interface. Serenia/RSA is a first test of the *practical* benefits of this junction, while KYS introspection is the existing first service.
+
+**DNS implication:** a public-interest institutional namespace should represent the **shared commons** (e.g. proposed `services.acorsica.org`), while personal twins retain their separate personal hostnames (e.g. existing `jhn.baronsmariani.org`). This is semantic and governance separation, not a requirement for separate physical servers. Capable supplies an articulation of Autonomie de Capacité, not an exclusive service host.
+
+**Test du Réel:** verify (a) a service remains useful without giving the collective provider private personal data, (b) a person can use it with different AI providers or no AI, and (c) the resulting benefit is concretely observable (a better understood or effectively accessed right), not just a completed chatbot conversation.
+
 ## First discriminating experiments
 
 1. KYS: verify the existing anonymous copy/paste, original-source preservation, correction, export, and no false claim to provider memory.
