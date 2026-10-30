@@ -33,5 +33,13 @@ for (const planned of index.planned ?? []) {
   assert(!ids.has(planned.id), 'Planned service already active: ' + planned.id)
   assert(typeof planned.name === 'string' && planned.name.length > 0, 'Planned service missing name')
 }
+
+// Regression guard for the pre-existing duplicate-router crash discovered in
+// real Chromium testing of Personal (the production build alone did not fail).
+const mainEntry = readFileSync(new URL('../apps/personal/src/main.jsx', import.meta.url), 'utf8')
+const appEntry = readFileSync(new URL('../apps/personal/src/App.jsx', import.meta.url), 'utf8')
+const wrapsRouter = text => /<(?:BrowserRouter|HashRouter|Router)(?:\\s|>)/.test(text)
+assert(!(wrapsRouter(mainEntry) && wrapsRouter(appEntry)), 'Personal has nested top-level React Routers')
+
 if (failures.length) { failures.forEach(x => console.error('FAIL:', x)); process.exit(1) }
 console.log('PASS: KYS Services catalogue and ' + index.services.length + ' service manifests')
