@@ -103,18 +103,37 @@ Submissions may be reviewed for interoperability and misleading claims. **Common
 
 Draft → experimental → tested → maintained → deprecated/withdrawn. A service is marked tested only with separately recorded evidence: manifest lint, copied-prompt walkthrough on at least two different AI providers (with synthetic inputs), human verification of sources, privacy review, mobile/desktop accessibility checks. An untested listing must be labeled experimental.
 
+## Historical first service: KYS (Know Your Self)
+
+KYS predates the Serenia/RSA extension and is the **first actual BYOAI-style service** in Cogentia Personal: a person asks their own conversational agent to disclose what it claims to know, remember or infer about them, then brings the answer back for examination, corrections and export. RSA is the **second domain**, demonstrating generality, not the inaugural service.
+
+**Polysemy is an essential part of the KYS design:**
+
+- **Know yourself:** the classical Delphic injunction *gnōthi seauton* (γνωθι σεαυτόν), familiar through Socratic/philosophical usage, translated as *Connais-toi toi-même*. The inscription's exact philosophical interpretation cannot be reduced to AI profiling.
+- **What do I know about myself?** Self-reflection by the person.
+- **What does my AI claim to know about me?** Agent-reported observation; no direct inspection of secret provider state is implied.
+- **What do others know or infer about me?** An epistemic and privacy question about third parties, not information KYS automatically retrieves.
+- **Who holds this knowledge, and who controls its uses?** Ownership, access, disclosure, correction, retention, revocation and anti-capture are distinct from mere introspection.
+- **What can be done with that knowledge?** Increased personal agency versus profiling, manipulation or discrimination; no inference automatically becomes an authorized act.
+
+**KYS does not settle who possesses knowledge or what may be done with it.** A response from an AI is an attributed claim, not a validated self-description, nor proof of what a provider has stored. The Principal should be able to contest, limit, export and refuse consequential uses.
+
+The protocol's initial interoperability proofs should therefore be **(1) existing KYS, (2) Serenia/RSA**. Retrospectively document where KYS is already compliant with the proposed minimal contract, and identify gaps instead of retrofitting it into a new silo.
+
 ## First discriminating experiments
 
-1. RSA: user arrives anonymously, imports public instructions into their own AI, reaches a clear checklist without sending data to Cogentia. Validate official references independently.
-2. Non-RSA: reuse the identical manifest and exchange semantics for a different practical public-good topic, proving the contract is general rather than RSA-specific.
-3. Model-neutrality: use two distinct AI providers, preserving instructions' intent and clear uncertainty disclosure.
-4. Failure: a misleading or stale service manifest is correctly flagged, without silent promotion to trusted status.
-5. Mobile: copy/export, read and return navigation work at a narrow viewport.
+1. KYS: verify the existing anonymous copy/paste, original-source preservation, correction, export, and no false claim to provider memory.
+2. RSA: user arrives anonymously, imports public instructions into their own AI, reaches a clear checklist without sending data to Cogentia. Validate official references independently.
+3. Demonstrate that KYS and RSA can expose the same manifest fields while keeping domain-specific logic separate.
+4. Model-neutrality: use two distinct AI providers, preserving instructions' intent and clear uncertainty disclosure.
+5. Failure: a misleading or stale service manifest is correctly flagged, without silent promotion to trusted status.
+6. Mobile: copy/export, read and return navigation work at a narrow viewport.
 
 ## Relationship to the Corpus
 
 - `apps/personal/`: discovery and user interface; an optional client of this convention.
-- Serenia: one producer of services, not the owner of the protocol.
+- KYS: first pre-existing personal-IA service, inherited rather than recreated.
+- Serenia: another producer of services, not the owner of the protocol.
 - Cogentia / COP: may later introduce richer capability invocations, mandates, traces and receipts; this minimal convention does **not** replace MCP, A2A, COP or require their implementation.
 - PrivAI: independent privacy and anti-capture evidence.
 - Personal Digital Twin: optional richer user environment; never a prerequisite.
