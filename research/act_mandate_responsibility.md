@@ -112,6 +112,18 @@ The trace should therefore distinguish:
 - the level of human decision;
 - the possible residual personal responsibility.
 
+## Non-dissolution of responsibility across delegated agents (2026-10-31)
+
+**Talleyrand clarification, not a new legal regime:** no chain of AI delegation, collective governance, inter-Fractanet routing or automated execution may silently dissolve the connection between a consequential act, the represented real-world subject, the competent human decision or representation authority, the applicable mandate, and the material executor. Increasing the number of intermediaries MUST NOT make an act effectively anonymous or unaccountable.
+
+- **Separate legal capacity from technical execution.** A Cogentia Personal Digital Twin assists its natural-person Principal. A Collective Digital Twin assists its collective or legal-person subject under its competent organs and valid representation arrangements. Neither twin acquires independent legal personality merely by being deployed.
+- **Representatives are not automatically criminally liable.** Record the competent human legal representative or authorized governing organ **when applicable**, its authority source and validity at the time of the act; also distinguish the decision-maker, delegator, operator, verifier and represented subject. Legal, civil and criminal liability are determinations under applicable law, not a status automatically assigned to a president or produced by a COP event.
+- **Retain an accountable path.** For a consequential act, a COP receipt SHOULD permit reconstruction of `act → material executor → mandate chain → decision/authorization → represented subject → competent human authority (if applicable) → outcome/evidence`. Preserve unknowns and disputes explicitly rather than manufacturing missing authorizations or certainty.
+- **Accountability survives boundaries.** Subagents may receive only attenuated authority; inter-locality and inter-Fractanet transfers require traceable references, scoped proofs and reconciliation of consequential effects. Neither an adapter, a collective twin nor the COP itself is a universal human legal representative.
+- **Proportionate evidence, not permanent micromanagement.** Routine operations covered by bounded mandates require no repeated human approval. Record and consolidate meaningful evidence; escalate reserved acts, expired or ambiguous authority, consequential disputes, and budget exceptions. Failure, refusal and attempted effects are also relevant events, not reasons to erase the record.
+
+This is an **operational accountability invariant**, not a claim that every tool is already instrumented or that complete COP evidence alone proves legal responsibility. Coverage gaps and unverifiable chains must remain visible.
+
 ## DHITL implication
 
 In DHITL, responsibility cannot be imputed merely to the tool that generated a sentence, suggested a decision, or executed an operation.
