@@ -95,6 +95,22 @@ Formule :
 
 ---
 
+### Déploiement progressif : prototype avancé et jumeaux robustes
+
+**Décision de convergence du 31 octobre 2026 — objectif de premiers jumeaux pour d'autres personnes le 25 décembre 2026.** L'Agent John/JHN, Cogentia Personal Digital Twin de son Principal, sert de prototype avancé (*dogfooding*) : il peut expérimenter des fonctions encore instables dans un périmètre personnel assumé. Cette latitude expérimentale n'est **pas** un mandat par défaut pour les jumeaux d'autres personnes.
+
+Les premiers jumeaux destinés à autrui doivent privilégier une **robustesse démontrée à capacités bornées** plutôt qu'une richesse fonctionnelle prématurée. Le socle commun exige au minimum : identité distincte du Principal et séparation des données ; consentement, mandats et révocation ; sauvegarde, restauration, reprise après interruption ; limites d'effets externes et de budgets ; traces COP significatives, sans prétendre à une couverture exhaustive tant qu'elle n'est pas vérifiée ; possibilité de correction, d'export et de retrait ; communication intelligible des limitations. La présence de ces mécanismes doit être **testée**, non seulement documentée.
+
+La progression suit une logique de *promotion de capacités* : expérimentation sur JHN → tests techniques et de sécurité → vérification de reprise, d'isolation et de comptabilité → essai borné auprès de personnes volontaires → activation graduelle pour chacun. Un échec remet la fonction en quarantaine ou déclenche un retour arrière sans interrompre les fonctions de base. L'écart de capacités entre prototype et offre générale est **temporaire et justifié par la fiabilité**, jamais un privilège structurel ou une souveraineté supérieure.
+
+Le calendrier du 25 décembre constitue une **cible de première mise à disposition expérimentale**, non une permission d'ignorer les critères d'acceptation ni la promesse d'un jumeau mature. Il vaut mieux distribuer un compagnon limité, transparent et récupérable qu'un agent spectaculaire mais fragile ou incontrôlable.
+
+Cette stratégie articule les deux volets de la doctrine : **IA pour chacun** garantit une capacité personnelle réellement gouvernée ; **IA pour tous** mutualise l'infrastructure, les améliorations éprouvées et les moyens de diffusion, afin que les capacités découvertes avec un prototype profitent progressivement à davantage de personnes. Les personnes équipées gardent leurs propres mandats et données ; le partage porte sur les capacités et les biens communs, non sur une captation de leurs Corpus.
+
+**Critère pratique de succès du premier pilote :** une personne autre que le concepteur peut obtenir un jumeau distinct, lui confier une tâche bornée, recevoir un résultat et ses limites, interrompre ou révoquer son mandat et retrouver son travail après une interruption, sans intervention improvisée de l'équipe sur ses données personnelles.
+
+---
+
 ## 3. IA pour tous
 
 Une IA collective ne doit pas prétendre incarner une volonté générale artificielle. Elle fournit des capacités communes :
