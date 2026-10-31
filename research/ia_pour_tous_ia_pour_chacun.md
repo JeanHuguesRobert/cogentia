@@ -190,9 +190,17 @@ Les implémentations, modèles, interfaces, communautés et cultures peuvent res
 
 ---
 
-## 6. De la personne à la fédération
+## 6. Des jumeaux personnels et collectifs à la Confédération
 
-Le passage de l'IA pour chacun à l'IA pour tous peut suivre une subsidiarité ascendante :
+Les **Cogentia Personal Digital Twins (IA pour chacun)** et les **Cogentia Collective Digital Twins (IA pour tous)** coexistent au sein d'une **Confédération de Fractanets interconnectés**. La Confédération articule des sujets souverains et des collectifs gouvernés ; elle n'est ni un jumeau unique de tous, ni une autorité centrale implicite. Un CCDT n'absorbe pas les CPDT de ses membres, et l'interconnexion n'étend aucun mandat.
+
+Le déploiement doit respecter le [Principe de Localité](locality_principle.md), en particulier la *Minimum Sufficient Locality* : état, histoire, interprétation, autorité et calcul demeurent dans la plus petite localité suffisante. Les interactions entre Fractanets passent par des références explicites, projections bornées, échanges vérifiables et accords de coopération ; la localisation logique ne se confond pas avec un serveur physique.
+
+**Conséquence pour le passage à l'échelle :** une tâche locale, un budget local ou une décision locale ne doit pas exiger une consultation globale systématique. Les nœuds peuvent progresser indépendamment dans leurs mandats et limites, même lorsque les liens inter-Fractanets sont momentanément indisponibles, sous réserve des dépendances explicitement déclarées. Les opérations inter-localités exigent un protocole d'échange, de validation et de réconciliation ; la comptabilité COP reste imputable à ses autorités et domaines comptables, sans supposer un grand livre physique mondial ni confondre une projection consolidée avec une écriture nouvelle. Les conflits et incertitudes ne sont pas effacés par la synchronisation.
+
+Cette architecture fédérée est une **cible de convergence**, non une preuve que l'interopérabilité multi-Fractanets, les règlements interdomaines et les modes dégradés sont déjà entièrement implémentés. La scalabilité doit être démontrée par des tests de charge et de partition, pas seulement déduite du Principe de Localité.
+
+La subsidiarité ascendante décrit des relations de coopération possibles, et non une transformation automatique d'un CPDT en CCDT :
 
 ```text
 personne
