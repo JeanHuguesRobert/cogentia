@@ -268,6 +268,20 @@ export function createHostCapabilityRouter(options = {}) {
         throw err;
       }
 
+      // Never silently downgrade privileged intent to an ordinary provider.
+      // An independent, trusted privileged executor must be installed and
+      // authorized before this mode can be operationally enabled.
+      if (capability === "host.process.run" && argsIn.execution_mode === "super") {
+        const err = new Error("super_requires_independent_privileged_executor");
+        err.error_class = "privileged_executor_unavailable";
+        throw err;
+      }
+      if (capability === "host.process.run" && ![undefined, "normal", "super"].includes(argsIn.execution_mode)) {
+        const err = new Error("invalid_execution_mode");
+        err.error_class = "invalid_execution_mode";
+        throw err;
+      }
+
       // Cogentia #192 Finding D: Bounded COP budget enforcement / seam
       if (budget) {
         if (typeof budget.check === "function") {

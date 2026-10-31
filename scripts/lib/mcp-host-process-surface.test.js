@@ -32,3 +32,14 @@ test('EXPOSE preparation binds command, provider, timeout and node without execu
   const changed = await core.callTool('cogentia_host_process_prepare', {...base,timeout_ms:2000});
   assert.notEqual(changed.payload_hash, prepared.payload_hash);
 });
+
+test('governed surface admits new bounds without public execution', async () => {
+  const core = createMcpCore({ COGENTIA_MCP_VIEW:'full', COGENTIA_ADMIN_TOKEN:'test-admin', COGENTIA_MCP_ALLOW_MUTATE:'1' });
+  const prepared = await core.callTool('cogentia_host_process_prepare', {command:'printf OK', target:'node:fracta2', provider:'unix-process',timeout_ms:120000});
+  assert.equal(prepared.exposed_mutation.timeout_ms, 120000);
+  const run = core.tools.find(t => t.name === 'cogentia_host_process_run');
+  assert.equal(run.inputSchema.properties.command.maxLength, 32768);
+  assert.equal(run.inputSchema.properties.timeout_ms.maximum, 120000);
+  const anonymous = createMcpCore({COGENTIA_MCP_VIEW:'public'});
+  assert.ok(!anonymous.tools.some(t=>t.name==='cogentia_host_process_run'));
+});

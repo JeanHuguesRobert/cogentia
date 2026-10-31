@@ -107,3 +107,14 @@ test('invalid shell judgment produces diagnostic, never implied approval', async
   const r = await p.invoke('host.process.run', { command: "printf '%s\\n' 'COGENTIA_JUDGMENT_REQUEST_V1:invalid'" });
   assert.equal(r.judgment.status, 'invalid_judgment_request');
 });
+
+test('defaults are 120 seconds, 256 KiB, and 32 KiB commands', async () => {
+  const p = new UnixProcessProvider();
+  assert.equal(p.timeoutMs, 120000);
+  assert.equal(p.maxBuffer, 262144);
+  const command = 'printf OK' + ' '.repeat(10000);
+  const result = await p.invoke('host.process.run', {command});
+  assert.equal(result.ok, true);
+  assert.equal(result.stdout, 'OK');
+  await assert.rejects(p.invoke('host.process.run', {command:'x'.repeat(32769)}), /32768/);
+});

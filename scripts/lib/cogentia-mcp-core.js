@@ -921,8 +921,9 @@ export const TOOLS = [
     inputSchema: {
       type: "object",
       properties: {
-        command: { type: "string", minLength: 1, maxLength: 4096 },
-        timeout_ms: { type: "integer", minimum: 1, maximum: 15000 },
+        command: { type: "string", minLength: 1, maxLength: 32768 },
+        timeout_ms: { type: "integer", minimum: 1, maximum: 120000 },
+        execution_mode: { type: "string", enum: ["normal", "super"], description: "Super requires a separately authorized privileged executor; never implied by a grant for normal." },
         target: { type: "string", minLength: 1 },
         provider: { type: "string", minLength: 1 },
       },
@@ -936,8 +937,9 @@ export const TOOLS = [
     inputSchema: {
       type: "object",
       properties: {
-        command: { type: "string", minLength: 1, maxLength: 4096 },
-        timeout_ms: { type: "integer", minimum: 1, maximum: 15000 },
+        command: { type: "string", minLength: 1, maxLength: 32768 },
+        timeout_ms: { type: "integer", minimum: 1, maximum: 120000 },
+        execution_mode: { type: "string", enum: ["normal", "super"], description: "Super requires a separately authorized privileged executor; never implied by a grant for normal." },
         target: { type: "string", description: "Target host node id" },
         provider: { type: "string", description: "Provider id (e.g. unix-process)" },
         mandate: { type: "string" },
@@ -2126,7 +2128,7 @@ export function createMcpCore(env = process.env, extras = {}) {
         return prepareHostProcessRun(args);
       case "cogentia_host_process_run": {
         requireString(args.command, "command");
-        if (args.command.length > 4096) throw new Error("command too long");
+        if (args.command.length > 32768) throw new Error("command too long");
         const result = await callHostCapability("host.process.run", args, auth);
         if (result?.judgment?.status !== "needs_judgment") return result;
         // Shell output is untrusted: it requests review but cannot authorize

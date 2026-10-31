@@ -342,3 +342,32 @@ For a bounded, no-paid-provider evaluation, set
 `COGENTIA_GUIDE_OPENROUTER_FREE_FALLBACK=1` and an explicit
 `COGENTIA_GUIDE_OPENROUTER_FREE_MODEL`. This mode is opt-in; it bypasses the
 daemon, OpenAI, and paid OpenRouter candidates for synthesis.
+
+### 31 October 2026 — two execution modes, one semantic process capability
+
+`host.process.run` now accepts `execution_mode: normal | super` (default `normal`).
+The **normal** provider allows commands up to 32 KiB, at most 120 s synchronous
+execution, and 256 KiB output; the temporary local shell MCP additionally
+allows 64 KiB request bodies. These are independent *resource* bounds, not
+privilege grants. A remote client's own response timeout may be lower, so use
+existing durable jobs/continuations for long-running work rather than assuming
+a 120 s uninterrupted HTTP request.
+
+**Super is an explicitly modelled, fail-closed intent, NOT a deployed privilege.**
+Preparation binds `execution_mode` in the COP side-effect payload hash: a normal
+grant cannot be reused for super. Both the host capability router and the native
+Unix provider refuse `super` with `privileged_executor_unavailable`; they cannot
+silently fall back to normal execution. A production super implementation needs
+an independently governed privileged process boundary, an authority resolver
+that cannot be spoofed by a shell argument, command-specific budget and audit,
+and an operator-installed service/sudo policy. Keep `NoNewPrivileges=true` on
+the temporary arbitrary-command MCP and preserve the already-tested read-only
+SSH/Caddy workflows. Do **not** enable sudo in that unrestricted temporary
+server: its bearer token alone is not a sufficient administrator mandate.
+
+The temporary experimental implementation is source-controlled at
+`scripts/experimental/jhn-shell-mcp.mjs`, with a loopback-only integration test.
+The operational service uses `/home/ubuntu/.config/jhn-shell-mcp/server.mjs`;
+changing the source file alone does not reload a running service. Restart and
+validate its actual reported tool schema and receipts before claiming live
+activation. No public anonymous discovery of governed mutate tools is allowed.

@@ -6,7 +6,7 @@ import { hostname, userInfo } from 'node:os';
 import { extractShellJudgment } from './shell-judgment-signal.js';
 
 export class UnixProcessProvider {
-  constructor({ cwd = process.cwd(), timeoutMs = 15000, maxBuffer = 32768, maxConcurrent = 1, maxQueued = 32 } = {}) {
+  constructor({ cwd = process.cwd(), timeoutMs = 120000, maxBuffer = 262144, maxConcurrent = 1, maxQueued = 32 } = {}) {
     this.cwd = cwd;
     this.timeoutMs = timeoutMs;
     this.maxBuffer = maxBuffer;
@@ -33,8 +33,13 @@ export class UnixProcessProvider {
       err.error_class = 'unsupported_capability';
       throw err;
     }
-    if (typeof args.command !== 'string' || !args.command.trim() || args.command.length > 4096) {
-      throw new Error('command must contain 1..4096 characters');
+    if (typeof args.command !== 'string' || !args.command.trim() || args.command.length > 32768) {
+      throw new Error('command must contain 1..32768 characters');
+    }
+    if ((args.execution_mode ?? 'normal') !== 'normal') {
+      const err = new Error('super_requires_independent_privileged_executor');
+      err.error_class = 'privileged_executor_unavailable';
+      throw err;
     }
     const requested = args.timeout_ms == null ? this.timeoutMs : args.timeout_ms;
     if (!Number.isInteger(requested) || requested < 1) throw new Error('invalid timeout_ms');

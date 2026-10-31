@@ -111,6 +111,7 @@ export function buildEffectPayload(capability, args = {}, { target = "node:local
       command: args.command || "",
       args: args.args || [],
       timeout_ms: args.timeout_ms ?? null,
+      execution_mode: args.execution_mode ?? "normal",
       provider: provider || null,
     };
   }

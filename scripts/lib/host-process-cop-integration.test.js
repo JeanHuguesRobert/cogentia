@@ -21,3 +21,17 @@ test('existing COP EXPOSE → hash-bound grant → Unix provider → receipt; gr
   await assert.rejects(router.invoke('host.process.run',args,ctx), e=>e.error_class==='authorization_replay');
   await router.stop();
 });
+
+test('super intent is hash-bound and fails closed without privileged executor', async () => {
+  resetAuthorizationStore();
+  const common = {command:'printf NEVER_SUPER',target:'node:fracta2',provider:'unix-process',timeout_ms:1000};
+  const normal=prepareHostProcessRun({...common,execution_mode:'normal'});
+  const elevated=prepareHostProcessRun({...common,execution_mode:'super'});
+  assert.notEqual(normal.payload_hash,elevated.payload_hash);
+  const grant=mintSideEffectGrantFromPrepared(elevated,{principal:'principal:test',actor:'actor:test',mandate_ref:'mandate:test',confirm:elevated.payload_hash});
+  const router=createHostCapabilityRouter({providerName:'unix-process'});
+  await assert.rejects(router.invoke('host.process.run',{command:common.command,timeout_ms:1000,execution_mode:'super'},
+    {auth,actor:'actor:test',mandate:'mandate:test',target:common.target,provider:'unix-process',authorization:grant}),
+    e=>e.error_class==='privileged_executor_unavailable');
+  await router.stop();
+});
