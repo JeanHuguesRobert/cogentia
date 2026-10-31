@@ -33,9 +33,9 @@ classification_confidence: "medium"
 
 L'intelligence artificielle peut augmenter les capacités d'une personne et celles d'une communauté. Ces deux finalités sont complémentaires, mais elles ne se confondent pas.
 
-**IA pour chacun** désigne les capacités cognitives placées au service d'une personne vivante : comprendre, mémoriser, explorer, créer, défendre ses intérêts, expliciter ses valeurs, reprendre un travail et agir sous mandat.
+**IA pour chacun** désigne les **Cogentia Personal Digital Twins (CPDT)** : des jumeaux numériques personnels placés sous la souveraineté de chaque personne vivante, capables de comprendre, mémoriser, explorer, créer, défendre ses intérêts, expliciter ses valeurs, reprendre un travail et agir sous mandat.
 
-**IA pour tous** désigne les capacités mises en commun : connaissance publique, délibération, coordination, mémoire institutionnelle, audit, mutualisation de ressources et exploration collective des possibles.
+**IA pour tous** désigne les **Cogentia Collective Digital Twins (CCDT)** : des jumeaux numériques de sujets collectifs (communautés, associations, institutions ou autres collectifs valablement constitués), gouvernés selon leurs règles propres. Ils peuvent soutenir la connaissance publique, la délibération, la coordination, la mémoire institutionnelle, l’audit et les biens communs ; ces fonctions sont des applications, **pas la définition** du CCDT.
 
 La thèse de ce document est :
 
@@ -47,8 +47,8 @@ La thèse de ce document est :
 
 | Couche | Fonction principale | Risque de capture |
 |---|---|---|
-| IA pour chacun | Augmenter une personne selon ses intérêts, valeurs et mandats | plateforme possédant le jumeau ; substitution du modèle à la personne |
-| IA pour tous | Augmenter une communauté et ses biens communs | centre cognitif définissant seul le vrai, le visible ou le permis |
+| IA pour chacun — CPDT | Représenter et assister une personne vivante sous son autorité | plateforme possédant le jumeau ; substitution du modèle à la personne |
+| IA pour tous — CCDT | Représenter et assister un sujet collectif sous sa gouvernance légitime | centre cognitif définissant seul le vrai, le visible ou le permis |
 
 L'IA pour chacun sans IA pour tous peut produire une société d'agents privés concurrents, inégalement puissants et dépendants de leurs fournisseurs.
 
@@ -105,13 +105,15 @@ La progression suit une logique de *promotion de capacités* : expérimentation 
 
 Le calendrier du 25 décembre constitue une **cible de première mise à disposition expérimentale**, non une permission d'ignorer les critères d'acceptation ni la promesse d'un jumeau mature. Il vaut mieux distribuer un compagnon limité, transparent et récupérable qu'un agent spectaculaire mais fragile ou incontrôlable.
 
-Cette stratégie articule les deux volets de la doctrine : **IA pour chacun** garantit une capacité personnelle réellement gouvernée ; **IA pour tous** mutualise l'infrastructure, les améliorations éprouvées et les moyens de diffusion, afin que les capacités découvertes avec un prototype profitent progressivement à davantage de personnes. Les personnes équipées gardent leurs propres mandats et données ; le partage porte sur les capacités et les biens communs, non sur une captation de leurs Corpus.
+Cette stratégie concerne d’abord **IA pour chacun**, c’est-à-dire le déploiement progressif des CPDT à partir du prototype JHN. Elle bénéficie aussi aux **CCDT (IA pour tous)** lorsque les mêmes composants éprouvés peuvent servir des collectifs sous leur gouvernance propre. La mutualisation des outils et des infrastructures est un moyen transversal, non une définition des CCDT ; elle ne fusionne jamais les Corpus, mandats ou autorités des personnes et des collectifs.
 
 **Critère pratique de succès du premier pilote :** une personne autre que le concepteur peut obtenir un jumeau distinct, lui confier une tâche bornée, recevoir un résultat et ses limites, interrompre ou révoquer son mandat et retrouver son travail après une interruption, sans intervention improvisée de l'équipe sur ses données personnelles.
 
 ---
 
 ## 3. IA pour tous
+
+**IA pour tous = Cogentia Collective Digital Twins (CCDT).** Le Principal d’un CCDT est un sujet collectif, dont le mandat et la légitimité dépendent de règles de gouvernance explicites, et non de la simple somme de préférences individuelles. Un CCDT ne devient ni une voix politique supplémentaire ni le souverain de ses membres. Voir [Individual and Collective Digital Twins](individual_and_collective_digital_twins.md).
 
 Une IA collective ne doit pas prétendre incarner une volonté générale artificielle. Elle fournit des capacités communes :
 
