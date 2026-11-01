@@ -361,3 +361,18 @@ private browser capability. The test `node scripts/check-navigation-john-cop.js`
 now verifies `capability_once` against the live gateway using **fixture auth**,
 including a denial case with zero execution receipts. Production MCP requires
 restarting its process to load this change; no browser service restart needed.
+
+### 2026-11-01 — Production-authenticated JHN positive probe
+
+The live MCP `initialize` advertises `jhn_mutate_configured=yes`, but this
+shell channel does not have JHN production credentials or mandate references.
+Never copy the MCP service token from systemd/proc/env files or impersonate an
+agent to produce a positive result. A separate **opt-in, fail-closed** probe is
+available: `npm run test:navigation-john-production`. It only operates when
+invoked inside an already authorized JHN execution context with its native
+`COGENTIA_MCP_JHN_TOKEN` and `COGENTIA_JHN_MANDATE_REF`; it only connects to
+`127.0.0.1:8791/mcp`, requests `browser.navigation.instances` (no tab access),
+and checks the actual MCP/COP receipt, settlement, one tool call, zero external
+effects and Ithaca return. It prints no secrets and will exit 2 (`NOT_RUN`)
+without credentials. A successful fixture test **is not** a production JHN
+positive. The CLI does not elevate authority or alter MCP settings.

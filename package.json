@@ -117,6 +117,7 @@
     "test:navigation-tab-target": "node scripts/check-navigation-tab-target.js",
     "test:navigation-john-session": "node scripts/check-navigation-john-session.js",
     "test:navigation-john-cop": "node scripts/check-navigation-john-cop.js",
+    "test:navigation-john-production": "node scripts/check-navigation-john-production.js",
     "test:navigation-journal": "node scripts/check-navigation-assistant-journal.js",
     "skills:validate": "node scripts/validate-agent-skills.js",
     "test:agent-skills": "node scripts/validate-agent-skills.js",
