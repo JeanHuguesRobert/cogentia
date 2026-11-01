@@ -376,3 +376,33 @@ and checks the actual MCP/COP receipt, settlement, one tool call, zero external
 effects and Ithaca return. It prints no secrets and will exit 2 (`NOT_RUN`)
 without credentials. A successful fixture test **is not** a production JHN
 positive. The CLI does not elevate authority or alter MCP settings.
+
+### 2026-11-01 — One-shot JHN production proof without broadening the WhatsApp daemon
+
+On Fracta2, `mcp-cogentia.service` already has an `EnvironmentFile` for the
+production JHN MCP attestation, whereas `agent-john-whatsapp.service` does
+**not**. Avoid adding the powerful shared MCP token to the long-running
+WhatsApp process solely to run a read-only verification. The authorized
+operator can instead run a transient, self-collecting **one-shot** unit:
+
+```bash
+sudo systemd-run --unit=cogentia-jhn-nav-probe --wait --collect --pipe \
+  -p User=ubuntu \
+  -p WorkingDirectory=/srv/cogentia/repos/cogentia \
+  -p EnvironmentFile=/srv/cogentia/secrets/jhn-mcp.env \
+  /usr/local/node-v26.5.0/bin/node \
+  scripts/check-navigation-john-production.js
+```
+
+This must be invoked by the operator under the existing mandate; the env file
+must already exist and contain the matching JHN token. The script uses the
+canonical `MANDATE_ID` and `PRINCIPAL_ID` defined by Agent John, acts as the
+explicit technical `agent:jhn/handler:navigation-probe`, calls **only**
+`browser.navigation.instances` through the local MCP, and checks the COP
+receipt, accounting and principal/mandate association. It does not inspect
+pages, print tokens, modify browser state, or install a persistent systemd
+service. A missing credential makes the run fail closed. The output of this
+one-shot proves an authenticated *operator-invoked delegated test*, not that
+the permanent WhatsApp daemon itself invoked the MCP, and not that broader
+interactive navigation permissions are authorized. Never use `set -x` to
+expose the command environment, or pass a token as an argument.
