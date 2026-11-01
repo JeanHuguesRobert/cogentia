@@ -1152,7 +1152,7 @@ export function createMcpCore(env = process.env, extras = {}) {
   let hostRouter = extras.hostRouter || null;
   function getHostRouter() {
     if (hostRouter) return hostRouter;
-    hostRouter = createHostCapabilityRouter({ env, missionAuthorityResolver: extras.missionAuthorityResolver, privilegedExecutor: extras.privilegedExecutor, superCommandPolicy: extras.superCommandPolicy });
+    hostRouter = createHostCapabilityRouter({ env, missionAuthorityResolver: extras.missionAuthorityResolver, privilegedExecutor: extras.privilegedExecutor });
     return hostRouter;
   }
   const communicationTransport = extras.communicationTransport || createDryRunTransport();

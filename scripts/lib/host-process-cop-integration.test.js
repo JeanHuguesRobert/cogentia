@@ -45,7 +45,6 @@ test('super is independently brokered, policy-gated, and requires an exact one-u
   const router=createHostCapabilityRouter({
     providerName:'unix-process',
     cacheKey:'super-broker-governed-test',
-    superCommandPolicy: async ({command,authorization_origin}) => command === 'systemctl status cogentia.service' && authorization_origin === 'effect_grant',
     privilegedExecutor:{invoke:async()=>{invoked++;return {ok:true,stdout:'super-broker-ok',stderr:'',exit_code:0};}},
   });
   const args={command:'systemctl status cogentia.service',execution_mode:'super',timeout_ms:1000};
@@ -58,19 +57,18 @@ test('super is independently brokered, policy-gated, and requires an exact one-u
   assert.equal(invoked,1);
   await router.stop();
 });
-test('super policy denial never calls privileged executor',async()=>{
+test('unrestricted super script requires a valid grant, not a command allowlist',async()=>{
   resetAuthorizationStore();
   const target='node:fracta2';
-  const command='systemctl restart other.service';
+  const command='printf arbitrary-script; echo second-operation';
   const prepared=prepareHostProcessRun({command,target,provider:'unix-process',execution_mode:'super'});
   const grant=mintSideEffectGrantFromPrepared(prepared,{principal:'principal:test',actor:'actor:test',mandate_ref:'mandate:test',confirm:prepared.payload_hash});
-  let called=0;
-  const router=createHostCapabilityRouter({providerName:'unix-process',cacheKey:'super-denial-test',
-    superCommandPolicy:async()=>false,
-    privilegedExecutor:{invoke:async()=>{called++;return {ok:true};}}});
-  await assert.rejects(router.invoke('host.process.run',{command,execution_mode:'super'},
-    {auth,actor:'actor:test',mandate:'mandate:test',target,provider:'unix-process',authorization:grant}),
-    e=>e.error_class==='super_command_not_allowed');
-  assert.equal(called,0);
+  let received=null;
+  const router=createHostCapabilityRouter({providerName:'unix-process',cacheKey:'super-any-script-test',
+    privilegedExecutor:{invoke:async args=>{received=args.command;return {ok:true,exit_code:0,stdout:'broker-result'};}}});
+  const result=await router.invoke('host.process.run',{command,execution_mode:'super'},
+    {auth,actor:'actor:test',mandate:'mandate:test',target,provider:'unix-process',authorization:grant});
+  assert.equal(result.ok,true);
+  assert.equal(received,command);
   await router.stop();
 });

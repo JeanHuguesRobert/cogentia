@@ -268,11 +268,10 @@ export function createHostCapabilityRouter(options = {}) {
         throw err;
       }
 
-      // Super requires an independently injected broker AND trusted policy.
-      // No generic shell, sudo fallback or caller-selected provider escalation.
+      // Super is a general-purpose script executor behind a distinct
+      // privileged broker. Authority comes from COP, not command allowlists.
       const isSuper = capability === "host.process.run" && argsIn.execution_mode === "super";
-      if (isSuper && (typeof options.privilegedExecutor?.invoke !== "function"
-          || typeof options.superCommandPolicy !== "function")) {
+      if (isSuper && typeof options.privilegedExecutor?.invoke !== "function") {
         const err = new Error("super_requires_independent_privileged_executor");
         err.error_class = "privileged_executor_unavailable";
         throw err;
@@ -320,6 +319,7 @@ export function createHostCapabilityRouter(options = {}) {
         } else {
           missionAuthority = await resolveHostMissionAuthority(options.missionAuthorityResolver, {
             actor, principal, mandate, capability, target, provider: providerName,
+            execution_mode: argsIn.execution_mode ?? "normal",
             payload_hash: canonicalPayloadHash(payload),
           });
           if (!missionAuthority) {
@@ -345,17 +345,6 @@ export function createHostCapabilityRouter(options = {}) {
         }
       }
 
-      // The policy is trusted code. Its decision is evaluated only after the
-      // effect-specific COP grant or attested mission authority is checked.
-      if (isSuper && await options.superCommandPolicy({
-        command: args.command, target, actor, principal, mandate,
-        payload_hash: canonicalPayloadHash(effectPayload),
-        authorization_origin: missionAuthority ? "verified_mission" : "effect_grant",
-      }) !== true) {
-        const err = new Error("super_command_not_allowed");
-        err.error_class = "super_command_not_allowed";
-        throw err;
-      }
       const providerInstance = isSuper
         ? { invoke: (_capability, governedArgs) => options.privilegedExecutor.invoke({
             command: governedArgs.command,

@@ -54,3 +54,10 @@ test('router executes repeated internal actions under one verified mission', asy
   assert.equal(first.trace.authority_origin,'verified_mission');
   await router.stop();
 });
+
+test('super requires explicit execution-mode scope in a trusted mission verdict', async () => {
+  const elevated={...request, execution_mode:'super'};
+  assert.equal(await resolveHostMissionAuthority(async()=>grant,elevated),null);
+  const scoped={...grant,allowed_execution_modes:['normal','super']};
+  assert.equal((await resolveHostMissionAuthority(async()=>scoped,elevated)).authority_id,'mission:1');
+});

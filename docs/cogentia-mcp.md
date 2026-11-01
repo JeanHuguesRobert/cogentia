@@ -343,29 +343,31 @@ For a bounded, no-paid-provider evaluation, set
 `COGENTIA_GUIDE_OPENROUTER_FREE_MODEL`. This mode is opt-in; it bypasses the
 daemon, OpenAI, and paid OpenRouter candidates for synthesis.
 
-### 1 November 2026 — governed super broker seam and trusted mission injection
+### 1 November 2026 — general-purpose super scripts governed by mandate
 
-The host router now accepts an **operator-injected** `privilegedExecutor` and
-`superCommandPolicy` together. Both are required for `execution_mode=super`;
-without either, execution fails closed. The core verifies actor, mandate and
-the payload-bound one-use COP grant (or a trusted mission resolver) **before**
-evaluating the policy. Only after a positive policy verdict does it dispatch
-to the independently supplied broker. The normal Unix provider does not gain
-sudo or any privileged process capability.
+`host.process.run` uses the same general script interface for `normal` and
+`super`; there is deliberately **no per-command allowlist**. The privileged
+executor is a distinct, operator-installed broker. Its authority is derived
+from a COP grant bound to the exact script/payload/target/mode, or from a
+trusted mission resolver with explicit `allowed_execution_modes: ['super']`.
+A normal mission verdict must not authorize super. Mission verification
+belongs to trusted code, not user-provided text or shell arguments.
 
-The MCP core can receive `missionAuthorityResolver`,
-`privilegedExecutor` and `superCommandPolicy` through trusted server
-construction extras, never through MCP request parameters. This is a
-**connection point**, not a verified persistent COP service or deployed root
-broker. Production requires an independently administered broker with a
-root-owned narrow command allowlist, process isolation, durable/revocable
-mission records, atomic spending, audit receipts and an operator-controlled
-installation. Neither a caller-provided mandate ID nor a positive JavaScript
-boolean alone qualifies as governance authority.
+The MCP core accepts a trusted `missionAuthorityResolver` and
+`privilegedExecutor` at construction time, never from tool arguments.
+Operational safeguards are mandate scope, identity, duration, revocation,
+budget, atomic reservation, accounting, receipt, and audit, rather than an
+ever-expanding list of individual commands. The privileged broker may execute
+arbitrary scripts *once they are governed*, but must not itself be callable
+through the ordinary MCP credential or an ungoverned socket.
 
-Until that installation and end-to-end verification, `super` remains
-unavailable in the deployed MCP service. The existing shell MCP with
-`NoNewPrivileges=true` must not be given sudo or a root broker token.
+**Status:** This is a source-level integration point, not a deployed root
+executor or verified durable COP mandate service. Keep `NoNewPrivileges=true`
+for the ordinary shell MCP; independently install and verify the broker and
+durable revocable authorization before enabling `super`. Root scripts can
+alter the mandate verifier or logs unless those are protected outside the
+privileged host's control; no mandate policy alone provides isolation against
+a compromised administrator.
 
 ### 31 October 2026 — two execution modes, one semantic process capability
 

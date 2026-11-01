@@ -14,6 +14,11 @@ export async function resolveHostMissionAuthority(resolver, request) {
     return null;
   }
   if (!Array.isArray(verdict.allowed_operations) || !verdict.allowed_operations.includes(request.capability)) return null;
+  // Super authority is an explicit mission scope, never inferred from ordinary
+  // host.process.run access. Scripts are unrestricted *within* that authority.
+  if (request.execution_mode === 'super' &&
+      (!Array.isArray(verdict.allowed_execution_modes) ||
+       !verdict.allowed_execution_modes.includes('super'))) return null;
   if (verdict.expires_at && (!Number.isFinite(Date.parse(verdict.expires_at)) || Date.parse(verdict.expires_at) <= Date.now())) return null;
   // Never treat an ordinary mission verdict as permission for externally
   // engaging acts: those remain subject to explicit Principal authority.
