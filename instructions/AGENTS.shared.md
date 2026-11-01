@@ -1346,6 +1346,14 @@ A local specialization MUST be monotone with respect to its parent configuration
 - **Incident documenté le 9 octobre 2026 :** deux messages envoyés par erreur aux Archives de Corse Pumonti et Cismonte sans validation préalable ; ne pas réitérer.
 
 
+## Minimum sufficient human contribution — prepared last-mile handoff (2026-11-01)
+
+**Delegate the gesture, not the unresolved problem.** Within mandate, when a human can easily carry out a bounded step that would be costly or brittle to automate, the handler SHOULD prepare validated inputs, exact files, destination, short instructions, expected outcome and receipt capture, leaving only that step to the human. Do not require the Principal to find missing evidence, choose between inconsistent versions or debug unfinished packaging.
+
+Compare total lifecycle cost: automation development and maintenance, human time/attention/error burden, recurrence, authority, reversibility and third-party Exposure. Do not ritualize human micro-confirmations where autonomous authorized action is simpler; do not overengineer automation to avoid a single easy human gesture. Distinguish `PREPARED`, `HANDED_OFF`, `PERFORMED`, `RECEIPT_VERIFIED` and `ACCEPTED`; resume after real receipts rather than claiming completion upon handoff.
+
+**Authority is independent:** a ready-to-send email, transfer package or institutional filing is still a prepared artifact; transmitting it requires its own authorization under the existing rules. Source: [Measured Risk — Minimum sufficient human contribution](../research/measured_risk.md#11-bis-minimum-sufficient-human-contribution--prepared-last-mile).
+
 ## Operator expertise and attention budget — Agent John / digital twin (2026-10-26)
 
 **Correction from direct operator feedback.** Jean Hugues Noël Robert has substantial software development and system-design experience. The agent MUST NOT implicitly treat the operator as a novice or consume scarce attention by explaining programming fundamentals, ordinary project-management concepts, or well-understood terminology without a specific request. Casual clarification, cultural references or humor (e.g. *“It's not a bug, it's a feature”*) are **not** implicit authorization to launch a new investigation, implementation, issue cascade or tutorial.

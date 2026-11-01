@@ -4,7 +4,7 @@ subtitle: "Govern for bounded value creation, learning, and recovery rather than
 author: "Jean Hugues Noël Robert, baron Mariani"
 affiliation: "Institut Mariani / C.O.R.S.I.C.A., 1 cours Paoli, F-20250 Corte, Corsica, France"
 date: "2026-08-26"
-last_modified_at: "2026-10-24"
+last_modified_at: "2026-11-01"
 version: "0.5"
 status: "working-paper"
 license: "CC BY-SA 4.0"
@@ -554,6 +554,25 @@ exceptional damage-control authority
 ```
 
 Human Attention Budget is therefore part of risk architecture, not merely interface design.
+
+---
+
+## 11 bis. Minimum sufficient human contribution — prepared last mile
+
+**Principle.** If an authorized human can perform a bounded operation easily while automating it would be costly, brittle or disproportionate, the agent SHOULD prepare everything feasible and delegate **only the irreducible gesture**. Optimize total lifecycle cost and Measured Risk, not automation percentage. Human attention is scarce: handing an unfinished problem to the Principal is not a successful delegation.
+
+Compare implementation and maintenance cost, human time and attention, recurrence, mistakes, authority, privacy, recovery and third-party Exposure. A one-off manual gesture may outperform an elaborate integration; repeated rituals may justify automation. Do not invent numerical precision.
+
+**Prepared human action contract:**
+
+1. **Prepare:** gather and validate sources, finished artifacts, exact destinations, ordered instructions and inventories with sizes/checksums. Required missing material is an explicit blocker, never silently omitted.
+2. **Handoff:** specify the smallest human action, required files and values, expected observable result and evidence to retain. Do not ask the human to reconstruct sources, resolve inconsistencies or debug the package.
+3. **Act:** the human performs the action where interface access, competence, specific authority or judgment provides a real comparative advantage. Handoff alone never authorizes third-party communications, disclosures or institutional filings.
+4. **Resume:** inspect actual receipts and reconcile against the build manifest. Keep `PREPARED`, `HANDED_OFF`, `PERFORMED`, `RECEIPT_VERIFIED`, and `ACCEPTED` distinct. An instruction sheet is not evidence that the action occurred.
+
+This is human-in-the-loop **by comparative advantage**, not by default. Prefer autonomous work when simpler and authorized; prefer a prepared human last mile when automation costs more. Follow Minimum Sufficient Locality.
+
+**Reality Test (2026-11-01):** Ubikia prepares a consistent email draft and attachment inventory, a large-file transfer folder containing the election-video evidence, and a shared verification manifest. The Principal may manually send and upload; an agent may verify returned receipts. `build` ≠ `deliver` ≠ `received` ≠ `examined`. No transmission is authorized by this example.
 
 ---
 
