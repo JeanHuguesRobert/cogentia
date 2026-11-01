@@ -35,3 +35,13 @@ Do not invent another browser authorization policy. Resolve valid parent and chi
 6. Preserve actual COP evidence chain and existing platform constraints. Never give the child the MCP credential merely to execute its work.
 
 **Scope:** The Inseme distributed packet handler is a pilot, not proof that the production John MCP ingress already uses it. First establish authoritative store connectivity and contract compatibility; verify with fixtures and actual runtime receipts before changing live policy.
+
+## 2026-11-01 production attachment check (Fracta2)
+
+- `mcp-cogentia.service` is running, but its *declared* environment exposes `COGENTIA_COP_ACCOUNTING_PERSIST`, `COGENTIA_COP_SPEND_SPOOL`, and `COGENTIA_SUPER_COP_ENABLED`, **not an identified authoritative mandate/event-store endpoint**. Some EnvironmentFiles are protected and were not read. This establishes a *missing verified attachment*, not proof that no remote COP store exists.
+- `/var/lib/cogentia/accounting/spend.ndjson` exists and is populated. Its role is accounting/spend trace, **not proof of mandate, revocation or atomically reserved available parent balance**.
+- No local COP SQLite event DB was discovered by bounded filename inspection under `/var/lib/cogentia` and `/srv/cogentia`. This check cannot rule out a differently named database or remote store.
+- From the current Inseme checkout on Fracta2, all four imports execute: `evaluateMandate`, `reserveEventSourcedDelegatedBudget`, `createSqliteCopEventStore`, `executeDelegatedPacket` (Node 22 SQLite experimental warning only). Available runtime modules are not evidence of a wired service.
+- Inseme `docs/cop-persistence-source-vs-projection.md` explicitly distinguishes the authoritative append-only `Event` source from spool, projection and cache; `packages/cop-core/COP_STORE_AND_PERSISTENCE.md` advises against multiplying persistence entities. Supabase COP event-log SQL and the SQLite COP event-store adapter are available candidates, **not yet a verified John production attachment**.
+
+**Next acceptance dependency:** identify the existing authoritative event-store instance, authority-grant source, connection/ownership and CAS semantics, then test real mandate lookup and budget reservation in read-only discovery mode **before** enabling an ingress guard. If a private store has to be attached, use the existing service configuration mechanism; do not infer authority from transport credentials, fabricated local MandateDeclarations or the spend spool. No production policy change made by this audit.
