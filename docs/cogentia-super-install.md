@@ -13,11 +13,12 @@ not convey authority beyond the broker's lifetime, target or scope.
 The current `mcp-cogentia.service` and unrestricted normal shell run as
 `ubuntu`. Do not give `ubuntu` membership in the `cogentia-super` group;
 do not store a live super credential in files, environment or services
-readable by `ubuntu`. That would allow any normal shell command to steal
-the credential. The root service can be installed and tested by the human
-administrator now, but automatic MCP activation must wait for a separately
-isolated, root-owned trusted gateway/mandate verifier. The repo working tree
-is writable by ubuntu: **never run the checkout itself as root**.
+readable by `ubuntu`. That would make the super authority technically reusable by any normal
+shell command. The broker can be installed and tested by the administrator
+now. Automatic MCP activation must first consume the **canonical COP mandate**
+with accurate identity, mode and effect scope; a separate gateway hierarchy
+is not an additional policy prerequisite in FractaTrust v0. The repo working
+tree is writable by ubuntu: **never run the checkout itself as root**.
 
 ## SSH administrator installation
 
@@ -87,6 +88,34 @@ make this smoke test pass.
 Never execute a writable repository `.mjs` with `sudo node`: install a
 root-owned immutable copy of both client and broker first. The smoke script
 and credential should likewise live in root-only storage.
+
+## FractaTrust v0 — trust-perimeter simplification
+
+FractaTrust v0 assumes that agents and services admitted by the Principal
+within the Trust Perimeter cooperate in good faith. This is a conscious,
+revisable *bootstrap assumption*, not a claim that compromised agents cannot
+exist. For normal and super, **COP remains the only mandate authority**.
+A separate compromise-detection engine, reputation scoring, mandatory
+segmentation of every agent, or independent permissions catalog must not be
+made a prerequisite to initial operation without concrete evidence that
+the added complexity is justified.
+
+The root broker and Unix permissions are an execution implementation, not
+another authorization doctrine. Likewise, `sudo -n` explicitly marks
+privileged commands to prevent accidental elevation, not to demand another
+Principal decision. The existing experimental root-local grant database must
+still be retired in favour of COP rather than accepted as a second authority.
+
+**Accepted limitation:** a malicious or compromised in-perimeter agent with
+access to effective administrative credentials could cause significant harm;
+trust alone does not technically prevent this. If actual incident evidence or
+a demonstrated high-impact flaw calls the bootstrap assumption into question,
+revise FractaTrust with a focused Reality Test and a proportionate corrective
+measure. Do not presume an unobserved attack has occurred.
+
+Canonical context: Operium
+`research/fractatrust-v0-binary-perimeter.md` and Cogentia
+`research/measured_risk.md`.
 
 ## Single mandate authority — integration decision (1 November 2026)
 
