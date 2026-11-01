@@ -43,6 +43,24 @@ export function createNavigationGateway(options = {}) {
   const instance = options.instance || DEFAULT_INSTANCE;
   const sockets = { extension: new Set(), assistant: new Set() };
   const pending = new Map();
+  const subscriptions = new Map();
+  const leases = new Map();
+  function leaseKey(browserId, tabId) { return `${browserId}:${tabId}`; }
+  function currentLease(key) {
+    const lease = leases.get(key);
+    if (lease && lease.expiresAt <= Date.now()) { leases.delete(key); return null; }
+    return lease || null;
+  }
+  function matchesSubscription(subscription, source, message) {
+    if (subscription.browserInstanceId !== source.browserInstanceId) return false;
+    if (!message.method?.startsWith("page.")) return false;
+    if (subscription.methods && !subscription.methods.includes(message.method)) return false;
+    if (subscription.tabIds) {
+      const tabId = message.params?.tabId ?? message.params?.tab?.id;
+      if (!subscription.tabIds.includes(tabId)) return false;
+    }
+    return true;
+  }
   let sequence = 0;
   function fail(ws, id, code, message) {
     sendJson(ws, { jsonrpc: "2.0", id, error: { code, message } });
@@ -129,8 +147,60 @@ export function createNavigationGateway(options = {}) {
             sendJson(req.assistant, { ...message, id: req.originalId });
             return;
           }
-          // Notifications are not shared across agents until explicit scoped subscriptions exist.
-          if (sockets.extension.size === 1) broadcast("assistant", JSON.stringify(message));
+          if (message.method?.startsWith("page.") && ws.browserInstanceId) {
+            for (const [assistant, rules] of subscriptions) {
+              if (rules.some((rule) => matchesSubscription(rule, ws, message)))
+                sendJson(assistant, { ...message, params: { ...message.params, browser_instance_id: ws.browserInstanceId } });
+            }
+          } else if (sockets.extension.size === 1) {
+            // Legacy compatibility for unscoped bridge notifications on a single browser.
+            broadcast("assistant", JSON.stringify(message));
+          }
+          return;
+        }
+        if (message.method === "tabs.lease.acquire" && message.id !== undefined) {
+          const { browser_instance_id: browserId, tabId, ttlMs = 30000 } = message.params || {};
+          if (typeof browserId !== "string" || !browserId || !Number.isInteger(tabId) || tabId < 0 || !Number.isInteger(ttlMs) || ttlMs < 1000 || ttlMs > 120000) {
+            fail(ws, message.id, -32602, "Invalid tab lease parameters"); return;
+          }
+          if (![...sockets.extension].some((peer) => peer.browserInstanceId === browserId && peer.readyState === 1)) {
+            fail(ws, message.id, -32020, "browser extension is not connected"); return;
+          }
+          const key = leaseKey(browserId, tabId);
+          const held = currentLease(key);
+          if (held && held.owner !== ws) { fail(ws, message.id, -32026, "tab is leased by another agent connection"); return; }
+          const expiresAt = Date.now() + ttlMs;
+          leases.set(key, { owner: ws, expiresAt });
+          sendJson(ws, { jsonrpc: "2.0", id: message.id, result: { acquired: true, browser_instance_id: browserId, tabId, expiresAt } });
+          return;
+        }
+        if (message.method === "tabs.lease.release" && message.id !== undefined) {
+          const { browser_instance_id: browserId, tabId } = message.params || {};
+          if (typeof browserId !== "string" || !Number.isInteger(tabId)) { fail(ws, message.id, -32602, "Invalid tab lease parameters"); return; }
+          const key = leaseKey(browserId, tabId);
+          const held = currentLease(key);
+          if (held && held.owner !== ws) { fail(ws, message.id, -32026, "tab is leased by another agent connection"); return; }
+          if (held) leases.delete(key);
+          sendJson(ws, { jsonrpc: "2.0", id: message.id, result: { released: Boolean(held) } });
+          return;
+        }
+        if (message.method === "events.subscribe" && message.id !== undefined) {
+          const { browser_instance_id: browserId, methods, tabIds } = message.params || {};
+          const validMethods = methods === undefined || (Array.isArray(methods) && methods.length <= 32 && methods.every((m) => typeof m === "string" && /^page\.[a-zA-Z]+$/.test(m)));
+          const validTabs = tabIds === undefined || (Array.isArray(tabIds) && tabIds.length <= 100 && tabIds.every((id) => Number.isInteger(id) && id >= 0));
+          if (typeof browserId !== "string" || !browserId || !validMethods || !validTabs) {
+            fail(ws, message.id, -32602, "Invalid scoped event subscription"); return;
+          }
+          const rules = subscriptions.get(ws) || [];
+          if (rules.length >= 32) { fail(ws, message.id, -32025, "subscription limit reached"); return; }
+          rules.push({ browserInstanceId: browserId, methods: methods || null, tabIds: tabIds || null });
+          subscriptions.set(ws, rules);
+          sendJson(ws, { jsonrpc: "2.0", id: message.id, result: { subscribed: true, count: rules.length } });
+          return;
+        }
+        if (message.method === "events.unsubscribeAll" && message.id !== undefined) {
+          subscriptions.delete(ws);
+          sendJson(ws, { jsonrpc: "2.0", id: message.id, result: { subscribed: false } });
           return;
         }
         if (message.method === "browser.instances" && message.id !== undefined) {
@@ -153,6 +223,13 @@ export function createNavigationGateway(options = {}) {
           return;
         }
         const target = candidates[0];
+        // Legacy active-tab commands remain accepted for compatibility;
+        // explicit tab-scoped operations honour another client's lease.
+        const tabId = message.params?.tabId;
+        if (Number.isInteger(tabId) && ["page.evaluate", "page.insertText", "tabs.activate", "tabs.close"].includes(message.method)) {
+          const held = currentLease(leaseKey(target.browserInstanceId, tabId));
+          if (held && held.owner !== ws) { fail(ws, message.id, -32026, "tab is leased by another agent connection"); return; }
+        }
         const wireId = ++sequence;
         const timer = setTimeout(() => {
           const req = pending.get(wireId);
@@ -168,6 +245,10 @@ export function createNavigationGateway(options = {}) {
       });
       ws.on("close", () => {
         clearPending(ws);
+        subscriptions.delete(ws);
+        for (const [key, lease] of leases) {
+          if (lease.owner === ws || (role === "extension" && key.startsWith(`${ws.browserInstanceId}:`))) leases.delete(key);
+        }
         sockets[role].delete(ws);
         if (role === "extension") {
           for (const assistant of sockets.assistant) {

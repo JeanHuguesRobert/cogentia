@@ -276,3 +276,19 @@ Tailscale; do not allow the corresponding port from the public Internet. Tailsca
 network membership is not by itself a fine-grained mandate: continue to enforce
 John's normal action permissions and make no attempts to access host-restricted
 browser pages.
+
+### Scoped event subscriptions and cooperative tab leases (gateway pilot)
+
+The shared gateway supports selective event subscriptions per assistant WebSocket:
+
+- `events.subscribe` with `{browser_instance_id, methods?: ["page.navigationCompleted", ...], tabIds?: [tabId, ...]}`. A missing method filter means all `page.*` events, while an omitted tab filter covers any tab of that browser. At most 32 subscriptions per connection; a filtered notification includes its `browser_instance_id` and is never copied to unrelated assistant connections.
+- `events.unsubscribeAll` removes the connection's subscriptions. Disconnecting also removes them.
+- `tabs.lease.acquire` with `{browser_instance_id, tabId, ttlMs?: 30000}` acquires or renews a tab lease for the assistant connection. Duration 1–120 seconds. `tabs.lease.release` relinquishes it. Conflicts return JSON-RPC error `-32026`. Leases expire automatically on lookup and are removed on owner or browser disconnection.
+- An active lease blocks `page.evaluate`, `page.insertText`, `tabs.activate` and `tabs.close` **when the competing command explicitly contains the same `tabId`**. Legacy commands without an explicit `tabId` are not protected yet, nor are operations implemented by other APIs. These are cooperative coordination leases **not** a security boundary or an authorization grant. They do not supersede the Principal's existing mandated-action checks.
+
+The `scripts/check-navigation-gateway-isolation.js` regression exercises two
+extensions and two assistants, event subscription by browser/method/tab,
+unsubscription, tab lease conflict and release, and response correlation.
+These are tests against an ephemeral gateway, **not** evidence that the live
+8776 service has been updated. Deploy the gateway code only after synchronizing
+the separately owned hosted checkout, with operator-controlled systemd restart.

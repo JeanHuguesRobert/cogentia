@@ -55,5 +55,37 @@ try {
    assert.equal(a.received.filter(m=>m.result?.tabs?.[0]?.title==='unsolicited').length,0);
    assert.equal(a.received.filter(m=>m.params?.secret==='private-event').length,0);
  }
+ // Scoped event subscription: only subscribed client, matching browser and tab.
+ a1.send(JSON.stringify({jsonrpc:'2.0',id:20,method:'events.subscribe',params:{browser_instance_id:'hosted',methods:['page.navigationCompleted'],tabIds:[24]}}));
+ await new Promise(r=>setTimeout(r,30));
+ assert.equal(a1.received.find(m=>m.id===20)?.result?.subscribed,true);
+ const emit=(socket,tabId,tag)=>socket.send(JSON.stringify({jsonrpc:'2.0',method:'page.navigationCompleted',params:{tab:{id:tabId},tag}}));
+ emit(e1,24,'allowed');emit(e1,25,'wrong-tab');emit(e2,24,'wrong-browser');
+ await new Promise(r=>setTimeout(r,40));
+ assert.deepEqual(a1.received.filter(m=>m.params?.tag).map(m=>m.params.tag),['allowed']);
+ assert.equal(a1.received.find(m=>m.params?.tag==='allowed')?.params?.browser_instance_id,'hosted');
+ assert.equal(a2.received.filter(m=>m.params?.tag).length,0);
+ a1.send(JSON.stringify({jsonrpc:'2.0',id:21,method:'events.unsubscribeAll',params:{}}));
+ await new Promise(r=>setTimeout(r,25));
+ emit(e1,24,'after-unsubscribe');
+ await new Promise(r=>setTimeout(r,25));
+ assert.equal(a1.received.filter(m=>m.params?.tag==='after-unsubscribe').length,0);
+ // Tab leases prevent concurrent agents from acting on the same target.
+ a1.send(JSON.stringify({jsonrpc:'2.0',id:31,method:'tabs.lease.acquire',params:{browser_instance_id:'hosted',tabId:44,ttlMs:3000}}));
+ await new Promise(r=>setTimeout(r,25));
+ assert.equal(a1.received.find(m=>m.id===31)?.result?.acquired,true);
+ a2.send(JSON.stringify({jsonrpc:'2.0',id:32,method:'page.evaluate',params:{browser_instance_id:'hosted',tabId:44,code:'1'}}));
+ await new Promise(r=>setTimeout(r,25));
+ assert.equal(a2.received.find(m=>m.id===32)?.error?.code,-32026);
+ assert.equal(e1.received.filter(m=>m.method==='page.evaluate'&&m.params?.tabId===44).length,0);
+ a2.send(JSON.stringify({jsonrpc:'2.0',id:33,method:'tabs.lease.acquire',params:{browser_instance_id:'hosted',tabId:44,ttlMs:3000}}));
+ await new Promise(r=>setTimeout(r,25));
+ assert.equal(a2.received.find(m=>m.id===33)?.error?.code,-32026);
+ a1.send(JSON.stringify({jsonrpc:'2.0',id:34,method:'tabs.lease.release',params:{browser_instance_id:'hosted',tabId:44}}));
+ await new Promise(r=>setTimeout(r,25));
+ assert.equal(a1.received.find(m=>m.id===34)?.result?.released,true);
+ a2.send(JSON.stringify({jsonrpc:'2.0',id:35,method:'tabs.lease.acquire',params:{browser_instance_id:'hosted',tabId:44,ttlMs:3000}}));
+ await new Promise(r=>setTimeout(r,25));
+ assert.equal(a2.received.find(m=>m.id===35)?.result?.acquired,true);
  console.log('2 extensions x 2 assistants: isolated');
 } finally {for(const s of sockets)s.close();await gateway.close();}
