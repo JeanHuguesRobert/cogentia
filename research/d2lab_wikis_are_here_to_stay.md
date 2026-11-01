@@ -112,6 +112,16 @@ Leur copie peut être récupérée manuellement à partir de l'interface Gmail p
 
 Le Mémorial luxembourgeois conserve les [statuts constitutifs de d2lab S.A. (2 juin 2006)](https://memorialc.public.lu/memorial/2006/C/Pdf/c1696129.pdf) et une [publication relative à une assemblée du 20 octobre 2009](https://memorialc.public.lu/memorial/2010/C/Pdf/c0048081.pdf). Ces documents doivent être lus intégralement avant de tirer des conclusions sur la liquidation : les changements de mandataires publiés en 2009 rendent insuffisante la seule formule « dissolution imminente en 2007 ».
 
+## Complément biographique et OSINT — 1er novembre 2026
+
+**Témoignage direct du fondateur (1er novembre 2026) :** « D² » dans D2Lab renvoyait à **Differently Different**. Jean Hugues Robert précise avoir recruté Jean-François Catz chez Perform puis de nouveau chez Odisei/8x8, et Thierry Parmentelat chez Odisei. Leur présence ultérieure parmi les cinq fondateurs D2Lab est indépendante de ces souvenirs et attestée par les [statuts notariés du 2 juin 2006](https://memorialc.public.lu/memorial/2006/C/Pdf/c1696129.pdf).
+
+**Croisement documentaire :** les statuts font apparaître 25 600 actions (Jean Hugues Robert, Jean-François Catz, Thierry Parmentelat et Rodolphe Briet : 6 272 chacun ; Yvan Balsamo : 512). Cette répartition **initiale** ne prouve pas l'actionnariat après 2006. La [publication du 20 octobre 2009](https://memorialc.public.lu/memorial/2010/C/Pdf/c0048081.pdf) atteste un changement de conseil d'administration et non, par elle-même, une cession d'actions. La perte de domiciliation et la démission du commissaire aux comptes signalées en 2014–2015 ne prouvent pas une radiation. Le statut RCS B 117401 actuel reste **à vérifier directement**.
+
+**Domaines :** les courriels de février 2008 témoignent de discussions sur le transfert de `d2lab.com` et `d2lab.net`, sans preuve d'exécution. Un constat technique du 1er novembre 2026 montre `d2lab.com` proposé à la vente sur HugeDomains à **7 795 USD** (prix ponctuel, non preuve de propriété historique) ; `d2lab.fr` ne figurait pas dans le RDAP AFNIC à cette date (non-enregistrement, pas garantie de disponibilité ni de liberté de marque). Aucune acquisition effectuée.
+
+**Portée :** cette source ajoute une **filiation humaine** Perform → Odisei/8x8 → D2Lab, et non une identité des entités juridiques ou une filiation de code automatiquement prouvée. Les recrutements proviennent du témoignage de l'intéressé ; les statuts, actes et courriels contemporains doivent rester distingués.
+
 ## Lacunes et actions d'archéologie
 
 1. Retrouver présentations, captures du site et offres D2Lab (env. 2005–2008), afin de corroborer le slogan et l'articulation commerciale.
