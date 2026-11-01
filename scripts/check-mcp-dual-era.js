@@ -279,6 +279,7 @@ const johnRpcResult = await publicCore.handleJsonRpc({
     name: "cogentia_john_run",
     arguments: {
       prompt: "Synthesize anti-capture principles",
+      handler: { id: "mock.echo", kind: "mock" },
       capability: "john.research",
       principal_id: "user:auditor",
       mandate_id: "mandate:audit",

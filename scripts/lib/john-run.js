@@ -15,6 +15,7 @@ const TERMINAL_EVENTS = new Set([
 
 const ALLOWED_HANDLER_KINDS = new Set([
   "mock",
+  "capability_once",
   "governed_reasoner",
   "step_reasoner",
   "model",
@@ -84,7 +85,7 @@ export function validateJohnRequest(request) {
   if (!request.handler || typeof request.handler !== "object" || !String(request.handler.id || "").trim()) {
     problems.push(problem("$.handler.id", "is required"));
   } else if (!ALLOWED_HANDLER_KINDS.has(request.handler.kind)) {
-    problems.push(problem("$.handler.kind", "must be one of mock, governed_reasoner, step_reasoner, model"));
+    problems.push(problem("$.handler.kind", "must be one of mock, capability_once, governed_reasoner, step_reasoner, model"));
   }
   if (request.ithaca !== undefined) {
     if (typeof request.ithaca !== "object" || request.ithaca === null || Array.isArray(request.ithaca)) {
@@ -321,6 +322,7 @@ export async function runJohnRequest(request, options = {}) {
     outputText = `Mock handler received: ${request.input.prompt}`;
     events.push(event(request, seq++, "john.assistant.delta", { delta: outputText }));
   } else if (
+    request.handler.kind === "capability_once" ||
     request.handler.kind === "governed_reasoner" ||
     request.handler.kind === "step_reasoner" ||
     request.handler.kind === "model"
@@ -329,7 +331,24 @@ export async function runJohnRequest(request, options = {}) {
     let reasoner = options.reasoner;
 
     if (!reasoner) {
-      if (request.handler.id === "openai.step_reasoner" || request.handler.kind === "model") {
+      if (request.handler.kind === "capability_once") {
+        const selected = registry.get(request.capability);
+        // This deterministic handler can never mutate a page or perform an
+        // internal/external effect, regardless of caller-supplied labels.
+        if (!selected || selected.risk !== "read_only") {
+          reasoner = { nextStep: async () => ({ kind: "stop", reason: "read_only_capability_required" }) };
+        } else {
+          reasoner = { nextStep: async (state) => {
+            const prior = state.observations.find(item => item.type === "capability_result" && item.capability === selected.name);
+            const denied = state.observations.find(item => item.type === "capability_denied" && item.capability === selected.name);
+            if (denied) return { kind: "stop", reason: "capability_denied" };
+            if (prior) return prior.ok
+              ? { kind: "answer", answer: JSON.stringify(prior.value ?? {}) }
+              : { kind: "stop", reason: "capability_failed" };
+            return { kind: "capability_call", capability: selected.name, input: request.input.arguments || {} };
+          } };
+        }
+      } else if (request.handler.id === "openai.step_reasoner" || request.handler.kind === "model") {
         const apiKey = options.apiKey || options.env?.OPENAI_API_KEY || process.env.OPENAI_API_KEY;
         if (!apiKey) {
           throw new Error("API key is required for OpenAI step reasoner handler");

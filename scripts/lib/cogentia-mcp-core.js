@@ -1870,6 +1870,11 @@ export function createMcpCore(env = process.env, extras = {}) {
           if (!reqPrompt) {
             throw new Error("prompt is required for cogentia_john_run");
           }
+          // Production never silently responds with a mock.  A caller must
+          // supply an explicit handler or name the actual capability to run.
+          if (!args.handler && (!args.capability || args.capability === "john.converse")) {
+            throw new Error("cogentia_john_run requires an explicit handler or executable capability; mock is test-only");
+          }
           req = {
             version: "john.request.v1",
             request_id: args.request_id || `mcp-${Date.now()}-${Math.random().toString(16).slice(2, 8)}`,
@@ -1889,7 +1894,7 @@ export function createMcpCore(env = process.env, extras = {}) {
             exposure: args.exposure || (auth.allowMutate ? "bounded" : "read_only"),
             capability: args.capability || "john.converse",
             input: { prompt: reqPrompt },
-            handler: args.handler || { id: "mock.echo", kind: "mock" },
+            handler: args.handler || { id: "capability.once", kind: "capability_once", allowed_capabilities: [args.capability] },
             ithaca: args.ithaca || undefined,
           };
         }

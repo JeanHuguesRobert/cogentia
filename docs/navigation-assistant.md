@@ -339,3 +339,25 @@ accounting (zero effects), and Ithaca; `mock.echo` does not exercise the browser
 A true production-authorized agent invocation requires an existing resolved
 JHN caller, a granted capability and normal bounded execution. Never forge
 production claims or copy service credentials into the test or Git repository.
+
+### 2026-11-01 — Production `cogentia_john_run` no longer silently mocks
+
+When an MCP caller requests an explicit executable capability and omits the
+handler, `cogentia_john_run` now chooses `capability_once` instead of `mock.echo`.
+This deterministic governed handler calls **exactly one** real `read_only`
+capability by its exact name, using `request.input.arguments` (if supplied),
+then returns the actual JSON observation. It follows the existing capability
+registry, caller auth, mandate envelope, step and tool budgets, COP receipts,
+and Ithaca return. Non-read-only capabilities cannot use this handler. Denied
+or failed calls produce a failed run; they never yield a fabricated success.
+
+An MCP caller with neither an explicit handler nor a named executable
+capability now gets an error instead of a deceptively successful mock result.
+`mock.echo` remains explicitly selectable for isolated compatibility tests,
+never an implicit production fallback. To exercise the new path, the normal
+JHN-authenticated client may request `capability=browser.navigation.instances`
+with a read-only budget and no handler. A non-JHN client does not get the
+private browser capability. The test `node scripts/check-navigation-john-cop.js`
+now verifies `capability_once` against the live gateway using **fixture auth**,
+including a denial case with zero execution receipts. Production MCP requires
+restarting its process to load this change; no browser service restart needed.

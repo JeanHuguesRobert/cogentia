@@ -30,4 +30,16 @@ const rejected=deniedEvents.find(x=>x.type==='john.tool.rejected');
 assert.equal(rejected?.data?.reason,'not_in_authorization_envelope');
 assert.equal(deniedEvents.some(x=>x.type==='john.tool.receipt'),false);
 
+// No reasoner stub: the production capability_once handler selects one real
+// read-only capability, invokes it under the COP harness and returns its value.
+const directRequest={...request,request_id:'nav-cop-direct-no-mock',capability,handler:{id:'capability.once',kind:'capability_once',allowed_capabilities:[capability]}};
+const directEvents=await runJohnRequest(directRequest,{env:{COGENTIA_AGENT_JHN_REASONING_LOOP_V2:'0'},capabilities:abilities,allowedCapabilities:[capability],maxInternalEffects:0,requiredEvents:false});
+const directReceipt=directEvents.find(e=>e.type==='john.tool.receipt');
+const directCompletion=directEvents.find(e=>e.type==='john.run.completed');
+assert.equal(directReceipt?.data?.capability,capability);
+assert.ok(directCompletion,'real, non-mock execution completes');
+assert.equal(JSON.parse(directCompletion.data?.result?.yield?.semantic_yield || '{}').browsers?.length>0,true);
+const deniedDirectEvents=await runJohnRequest({...directRequest,request_id:'nav-cop-direct-untrusted'}, {env:{COGENTIA_AGENT_JHN_REASONING_LOOP_V2:'0'},capabilities:abilities,allowedCapabilities:[],maxInternalEffects:0,requiredEvents:false});
+assert.equal(deniedDirectEvents.some(e=>e.type==='john.tool.receipt'),false);
+assert.equal(deniedDirectEvents.some(e=>e.type==='john.run.completed'),false);
 console.log(JSON.stringify({authenticated_test_fixture:true,unauthenticated_denied:unverified.auth==='none',governed_denial:rejected?.data?.reason,capability,request_id:request.request_id,receipt_status:receipt.data.status,accounting:accounting.data,completed:true}).slice(0,1400));
