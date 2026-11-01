@@ -87,3 +87,33 @@ make this smoke test pass.
 Never execute a writable repository `.mjs` with `sudo node`: install a
 root-owned immutable copy of both client and broker first. The smoke script
 and credential should likewise live in root-only storage.
+
+## MCP integration checkpoint (1 November 2026)
+
+The interactive root-only smoke test has passed on Fracta2: the governed
+script returned UID 1001 for an ordinary command and UID 0 only when
+explicitly invoking `sudo -n`; the second use of the same grant was denied.
+
+`scripts/lib/super-socket-executor.js` now supplies the transport seam for
+a *trusted isolated* service to relay the governed script and mandate to the
+broker. This module is deliberately not wired into `mcp-cogentia.service`.
+
+**Why:** both the existing MCP HTTP adapter and the unrestricted normal shell
+run as `ubuntu`. Any credential or broker socket access supplied to that
+identity is also available to arbitrary normal shell scripts, and therefore
+cannot safely attest a separate elevated mandate. An MCP bearer token already
+readable by `ubuntu` does not change that conclusion.
+
+Before enabling automatic agent super, isolate the trusted authorization
+verifier and execution adapter under a different OS identity; use OS socket
+permissions to keep the existing normal shell out, and validate authentic,
+revocable COP authorizations *at that verifier* before dispatch. Do not
+grant the ubuntu group direct access to the root broker or place grant
+secrets in environment variables or files readable by ubuntu.
+
+The adapter's credential resolver is an internal trusted constructor argument,
+not an API for user-provided mandate tokens. A valid authorization must
+be bound to actor, mandate, target and the requested script/payload, with
+atomic use reservation and an auditable receipt. The current broker's
+root-issued grant registry remains a separate experimental authority,
+not yet a production COP mandate service.
