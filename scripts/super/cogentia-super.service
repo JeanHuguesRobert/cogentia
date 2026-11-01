@@ -1,0 +1,21 @@
+[Unit]
+Description=Cogentia privileged script broker (root-owned, mandate gated)
+After=local-fs.target
+
+[Service]
+Type=simple
+User=root
+Group=cogentia-super
+RuntimeDirectory=cogentia-super
+RuntimeDirectoryMode=0750
+StateDirectory=cogentia-super
+StateDirectoryMode=0700
+UMask=0077
+ExecStart=/usr/local/node-v26.5.0/bin/node /usr/local/libexec/cogentia-super/broker.mjs serve
+Restart=on-failure
+RestartSec=3
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

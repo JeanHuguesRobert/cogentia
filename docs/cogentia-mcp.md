@@ -347,7 +347,10 @@ daemon, OpenAI, and paid OpenRouter candidates for synthesis.
 
 `host.process.run` uses the same general script interface for `normal` and
 `super`; there is deliberately **no per-command allowlist**. The privileged
-executor is a distinct, operator-installed broker. Its authority is derived
+executor is a distinct, operator-installed broker. The governed script
+starts as `ubuntu`; individual root operations require an explicit
+`sudo -n` prefix, just as in an administrator SSH shell. Entering super
+does not automatically elevate every command. Its authority is derived
 from a COP grant bound to the exact script/payload/target/mode, or from a
 trusted mission resolver with explicit `allowed_execution_modes: ['super']`.
 A normal mission verdict must not authorize super. Mission verification
