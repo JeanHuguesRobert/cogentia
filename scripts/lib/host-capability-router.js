@@ -308,6 +308,13 @@ export function createHostCapabilityRouter(options = {}) {
         }
       }
 
+      // Super must use a canonical stored COP effect decision. An abstract
+      // mission verdict is not itself a spendable effect grant.
+      if (isSuper && !ctx.authorization) {
+        const err = new Error("super_requires_cop_effect_grant");
+        err.error_class = "authorization_missing";
+        throw err;
+      }
       const effectful = isEffectfulCapability(capability);
       if (effectful) {
         // Cogentia #192 Finding A: Exact payload binding including content digest, mode, and target
@@ -351,6 +358,8 @@ export function createHostCapabilityRouter(options = {}) {
             timeout_ms: governedArgs.timeout_ms,
             target, actor, principal, mandate,
             payload_hash: canonicalPayloadHash(effectPayload),
+            provider: providerName,
+            authorization_id: ctx.authorization?.authorization_id,
           }) }
         : ctx.providerInstance || await resolveProvider(providerName);
       const result = await invokeCapability(
@@ -359,6 +368,21 @@ export function createHostCapabilityRouter(options = {}) {
         { auth: ctx.auth, provider: providerName }
       );
 
+      if (isSuper && result?.cop_reserved !== true) {
+        const error = new Error(result?.error || "broker_did_not_reserve_cop");
+        error.error_class = result?.error || "broker_did_not_reserve_cop";
+        throw error;
+      }
+
+      // The broker has already reserved the same canonical COP grant before
+      // running the script. Never revalidate it as unused after execution.
+      if (isSuper && result?.cop_reserved === true) {
+        if (!ctx.authorization || result.authority_id !== ctx.authorization.authorization_id
+            || result.payload_hash !== canonicalPayloadHash(effectPayload)) {
+          throw Object.assign(new Error("invalid_broker_cop_receipt"),
+            {error_class:"invalid_broker_cop_receipt"});
+        }
+      }
       const effectVerification = effectful && missionAuthority
         ? await (async () => {
             const receipt = {
@@ -377,6 +401,18 @@ export function createHostCapabilityRouter(options = {}) {
             return { ok: result?.ok === true, verification: {
               accounting_complete: cop.ok === true, cop_spend: cop,
             } };
+          })()
+        : isSuper && result?.cop_reserved === true
+        ? await (async () => {
+            const cop_spend = await maybeRecordCopEffectSpend({
+              action_class:capability,authorization_id:ctx.authorization.authorization_id,
+              authority_origin:ctx.authorization.authority_origin,principal,actor,
+              mandate_id:mandate,payload_hash:canonicalPayloadHash(effectPayload),
+              receipt:{transport:providerName,operation:capability,ok:result.ok===true,
+                status:result.ok===true?"success":"failed"},
+            });
+            return {ok:result.ok===true,authorization_id:ctx.authorization.authorization_id,
+              verification:{accounting_complete:cop_spend.ok===true,cop_spend}};
           })()
         : effectful
         ? await recordSideEffectExecution({

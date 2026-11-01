@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { prepareHostProcessRun } from './host-process-prepare.js';
 import { createHostCapabilityRouter } from './host-capability-router.js';
-import { mintSideEffectGrantFromPrepared, resetAuthorizationStore } from './side-effect-authorization.js';
+import { mintSideEffectGrantFromPrepared, resetAuthorizationStore, consumeSideEffectAuthorization } from './side-effect-authorization.js';
 
 const auth = { actor:'actor:test', principal_ref:'principal:test', mandate_ref:'mandate:test', lockers:{ public:{read:true,write:true}, private:{read:true,write:true} } };
 test('existing COP EXPOSE → hash-bound grant → Unix provider → receipt; grant is single-use', async () => {
@@ -36,7 +36,7 @@ test('super intent is hash-bound and fails closed without privileged executor', 
   await router.stop();
 });
 
-test('super is independently brokered, policy-gated, and requires an exact one-use grant', async () => {
+test('super uses one COP grant, broker reservation and receipt', async () => {
   resetAuthorizationStore();
   const target='node:fracta2';
   const prepared=prepareHostProcessRun({command:'systemctl status cogentia.service',target,provider:'unix-process',execution_mode:'super',timeout_ms:1000});
@@ -45,7 +45,9 @@ test('super is independently brokered, policy-gated, and requires an exact one-u
   const router=createHostCapabilityRouter({
     providerName:'unix-process',
     cacheKey:'super-broker-governed-test',
-    privilegedExecutor:{invoke:async()=>{invoked++;return {ok:true,stdout:'super-broker-ok',stderr:'',exit_code:0};}},
+    privilegedExecutor:{invoke:async()=>{invoked++;consumeSideEffectAuthorization(grant);
+      return {ok:true,stdout:'super-broker-ok',stderr:'',exit_code:0,
+        cop_reserved:true,authority_id:grant.authorization_id,payload_hash:grant.payload_hash};}},
   });
   const args={command:'systemctl status cogentia.service',execution_mode:'super',timeout_ms:1000};
   const context={auth,actor:'actor:test',mandate:'mandate:test',target,provider:'unix-process',authorization:grant};
@@ -65,7 +67,9 @@ test('unrestricted super script requires a valid grant, not a command allowlist'
   const grant=mintSideEffectGrantFromPrepared(prepared,{principal:'principal:test',actor:'actor:test',mandate_ref:'mandate:test',confirm:prepared.payload_hash});
   let received=null;
   const router=createHostCapabilityRouter({providerName:'unix-process',cacheKey:'super-any-script-test',
-    privilegedExecutor:{invoke:async args=>{received=args.command;return {ok:true,exit_code:0,stdout:'broker-result'};}}});
+    privilegedExecutor:{invoke:async args=>{received=args.command;consumeSideEffectAuthorization(grant);
+      return {ok:true,exit_code:0,stdout:'broker-result',cop_reserved:true,
+        authority_id:grant.authorization_id,payload_hash:grant.payload_hash};}}});
   const result=await router.invoke('host.process.run',{command,execution_mode:'super'},
     {auth,actor:'actor:test',mandate:'mandate:test',target,provider:'unix-process',authorization:grant});
   assert.equal(result.ok,true);

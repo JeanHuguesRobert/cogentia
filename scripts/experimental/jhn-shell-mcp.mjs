@@ -7,6 +7,7 @@ import { spawn } from "node:child_process";
 import { randomUUID, timingSafeEqual, createHash } from "node:crypto";
 import { appendFile, open } from "node:fs/promises";
 import os from "node:os";
+import { pathToFileURL } from "node:url";
 
 const token = process.env.JHN_SHELL_MCP_TOKEN || "";
 if (token.length < 32) throw new Error("JHN_SHELL_MCP_TOKEN must have >=32 characters");
@@ -19,10 +20,17 @@ const maxMs = 120_000;
 const maxInput = 64 * 1024;
 const tool = {
   name: "shell_exec",
-  description: "Run one bounded Unix shell command on Fracta2 as the dedicated service OS user. Returns exit code, stdout, stderr and auditable invocation ID. Caller must stay within mandate.",
+  description: "Run a bounded Unix script on Fracta2. Default normal is unprivileged. Explicit super requires an existing canonical COP effect authorization_id plus actor, principal and mandate; sudo must be explicit inside the script. No second broker grants.",
   inputSchema: {
     type: "object",
-    properties: { command: { type: "string", minLength: 1, maxLength: 32768 } },
+    properties: {
+      command: { type: "string", minLength: 1, maxLength: 32768 },
+      execution_mode: { type: "string", enum: ["normal","super"] },
+      authorization_id: { type: "string" },
+      actor: { type: "string" },
+      principal: { type: "string" },
+      mandate: { type: "string" },
+    },
     required: ["command"], additionalProperties: false
   }
 };
@@ -79,6 +87,18 @@ async function run(command) {
     timeout: timedOut, output_truncated: clipped, error: outcome.error || null });
   return result;
 }
+// Same COP authority as host.process.run. This is solely an MCP transport.
+async function runSuper(args) {
+  const modulePath = process.env.JHN_SHELL_SUPER_CLIENT_PATH
+    || "/srv/cogentia/repos/cogentia/scripts/lib/super-cop-client.js";
+  const {createSuperCopClient} = await import(pathToFileURL(modulePath).href);
+  return createSuperCopClient().invoke({
+    command:args.command,execution_mode:"super",
+    authorization_id:args.authorization_id,actor:args.actor,
+    principal:args.principal,mandate:args.mandate,
+    target:"node:fracta2",provider:"unix-process",
+  });
+}
 const server = http.createServer(async (req, res) => {
   if (req.url !== "/mcp" || req.method !== "POST") return send(res, 404, { error: "not_found" });
   if (!authenticated(req)) return send(res, 401, { error: "unauthorized" },
@@ -102,10 +122,15 @@ const server = http.createServer(async (req, res) => {
       if (msg.params?.name !== tool.name) return send(res, 200, rpcError(msg.id, -32602, "Unknown tool"));
       const args = msg.params.arguments;
       const command = args?.command;
-      if (!args || Object.keys(args).length !== 1 || typeof command !== "string" || !command.trim() || command.length > 32768)
-        return send(res, 200, rpcError(msg.id, -32602, "Invalid command"));
-      const result = await run(command);
-      return send(res, 200, rpc(msg.id, { content: [{ type: "text", text: JSON.stringify(result) }], isError: result.exit_code !== 0 }));
+      const mode=args?.execution_mode||"normal";
+      const allowed=["command","execution_mode","authorization_id","actor","principal","mandate"];
+      if (!args || Object.keys(args).some(k=>!allowed.includes(k))
+        || typeof command !== "string" || !command.trim() || command.length > 32768
+        || !["normal","super"].includes(mode)
+        || (mode==="super" && ![args.authorization_id,args.actor,args.principal,args.mandate].every(Boolean)))
+        return send(res, 200, rpcError(msg.id, -32602, "Invalid governed command"));
+      const result = mode==="super" ? await runSuper(args) : await run(command);
+      return send(res, 200, rpc(msg.id, { content: [{ type: "text", text: JSON.stringify(result) }], isError: result.ok === false || result.exit_code !== 0 }));
     }
     return send(res, 200, rpcError(msg.id, -32601, "Method not found"));
   } catch (e) {

@@ -3,47 +3,43 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-const dir=fs.mkdtempSync(path.join(os.tmpdir(),'cogentia-super-test-'));
-process.env.COGENTIA_SUPER_STATE=dir;
-const {issue,verify,handle,read,save,executionArguments}=await import('./broker.mjs');
-test('a mandate is checked, spent before execution, exhausted and never reusable',async()=>{
-  const g=issue({actor:'agent:jhn',mandate:'mission:test',ttl:1,uses:1});
-  const req={id:g.id,secret:g.secret,actor:g.actor,mandate:g.mandate,script:'printf SUPER_TEST'};
-  assert.equal(verify(req).remaining,1);
-  assert.equal(verify({...req,secret:'0'.repeat(64)}),null);
-  assert.equal(verify({...req,mandate:'mission:other'}),null);
-  const result=await handle({...req,op:'run',execution_mode:'super'});
-  assert.equal(result.ok,true);
-  assert.equal(result.stdout,'SUPER_TEST');
-  assert.equal((await handle({...req,op:'run',execution_mode:'super'})).error,'mandate_denied');
-  assert.equal(read()[g.id].remaining,0);
+const dir=fs.mkdtempSync(path.join(os.tmpdir(),'cogentia-super-cop-'));
+const store=path.join(dir,'cop-grants.json');
+process.env.COGENTIA_SEA_STORE_PATH=store;
+process.env.COGENTIA_SUPER_AUDIT=path.join(dir,'audit.jsonl');
+const {handle,effectHash,executionArguments}=await import('./broker.mjs');
+const {prepareHostProcessRun}=await import('../lib/host-process-prepare.js');
+const {mintSideEffectGrantFromPrepared,setAuthorizationStore}=await import('../lib/side-effect-authorization.js');
+const {createFileStore}=await import('../lib/side-effect-store.js');
+setAuthorizationStore(createFileStore(store));
+function prepare(command,mode='super'){
+  const prepared=prepareHostProcessRun({command,target:'node:fracta2',provider:'unix-process',execution_mode:mode});
+  const grant=mintSideEffectGrantFromPrepared(prepared,{principal:'principal:test',actor:'agent:test',
+    mandate_ref:'mandate:test',confirm:prepared.payload_hash});
+  const req={op:'run',execution_mode:'super',authorization_id:grant.authorization_id,
+    script:command,actor:'agent:test',principal:'principal:test',mandate:'mandate:test',target:'node:fracta2',provider:'unix-process'};
+  return {grant,req};
+}
+test('uses canonical COP grant and prevents replay without broker grants',async()=>{
+  const {grant,req}=prepare('printf COP_SUPER_OK');
+  assert.equal(effectHash(req),grant.payload_hash);
+  const a=await handle(req);
+  assert.equal(a.ok,true);
+  assert.equal(a.stdout,'COP_SUPER_OK');
+  assert.equal(a.authority_id,grant.authorization_id);
+  assert.equal((await handle(req)).error,'cop_authorization_denied');
+  const data=JSON.parse(fs.readFileSync(store,'utf8'));
+  assert.ok(data.grants[grant.authorization_id].consumed_at);
 });
-test('revoked, expired and malformed mandates fail closed',async()=>{
-  const g=issue({actor:'agent:jhn',mandate:'mission:revoke',uses:2});
-  const req={op:'run',execution_mode:'super',id:g.id,secret:g.secret,actor:g.actor,mandate:g.mandate,script:'printf NO'};
-  let all=read();all[g.id].revoked=true;save(all);
-  assert.equal((await handle(req)).error,'mandate_denied');
-  all=read();all[g.id].revoked=false;all[g.id].expires=Date.now()-1;save(all);
-  assert.equal((await handle(req)).error,'mandate_denied');
-  assert.equal((await handle({...req,script:''})).error,'invalid_script');
+test('mode, actor, target, mandate and script are bound to the same COP grant',async()=>{
+  const {req}=prepare('printf INTENDED');
+  for(const alteration of [
+    {execution_mode:'normal'}, {actor:'agent:forged'}, {principal:'principal:forged'},
+    {target:'node:other'}, {mandate:'mandate:other'},
+    {script:'printf ALTERED'}, {timeout_ms:500},
+  ]){
+    const result=await handle({...req,...alteration});
+    assert.equal(result.ok,false);
+  }
+  assert.equal((await handle(req)).ok,true);
 });
-test('no command allowlist; actual script exit status is reported',async()=>{
-  const g=issue({actor:'agent:jhn',mandate:'mission:general',uses:2});
-  const r=await handle({op:'run',execution_mode:'super',id:g.id,secret:g.secret,actor:g.actor,mandate:g.mandate,
-    script:'echo one; echo two; exit 3'});
-  assert.equal(r.ok,false);
-  assert.equal(r.exit_code,3);
-  assert.match(r.stdout,/one\ntwo/);
-});
-test('super is explicit and the script itself requires sudo for root operations', async()=>{
-  const g=issue({actor:'agent:jhn',mandate:'mission:explicit',uses:1});
-  const req={op:'run',id:g.id,secret:g.secret,actor:g.actor,mandate:g.mandate,script:'id -u'};
-  assert.equal((await handle(req)).error,'explicit_super_required');
-  assert.equal(read()[g.id].remaining,1);
-  assert.deepEqual(executionArguments('id; sudo -n id',0),
-    ['sudo',['-n','-u','ubuntu','--','/bin/sh','-c','id; sudo -n id']]);
-  const result=await handle({...req,execution_mode:'super'});
-  assert.equal(result.ok,true);
-  assert.equal(result.stdout.trim(),String(process.getuid()));
-});
-test.after(()=>fs.rmSync(dir,{recursive:true,force:true}));

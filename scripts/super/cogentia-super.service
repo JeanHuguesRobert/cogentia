@@ -5,12 +5,13 @@ After=local-fs.target
 [Service]
 Type=simple
 User=root
-Group=cogentia-super
+Group=ubuntu
 RuntimeDirectory=cogentia-super
 RuntimeDirectoryMode=0750
 StateDirectory=cogentia-super
 StateDirectoryMode=0700
-UMask=0077
+UMask=0007
+Environment=COGENTIA_SEA_STORE_PATH=/var/lib/cogentia/side-effect-authorization.json
 ExecStart=/usr/local/node-v26.5.0/bin/node /usr/local/libexec/cogentia-super/broker.mjs serve
 Restart=on-failure
 RestartSec=3

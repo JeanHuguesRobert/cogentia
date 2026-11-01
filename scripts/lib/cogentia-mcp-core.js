@@ -15,6 +15,7 @@ import { createHostedBrowserCapabilities } from "./hosted-browser-capabilities.j
 import { auditCapabilitySymmetry } from "./symmetry-audit.js";
 import { listPatterns, getPattern } from "./cogentia-patterns.js";
 import { createHostCapabilityRouter } from "./host-capability-router.js";
+import { createSuperCopClient } from "./super-cop-client.js";
 import { prepareHostProcessRun } from "./host-process-prepare.js";
 import { invokeThroughGateway } from "./agent-gateway-client.js";
 import { recordSideEffectExecution, mintSideEffectGrantFromPrepared } from "./side-effect-authorization.js";
@@ -1152,7 +1153,7 @@ export function createMcpCore(env = process.env, extras = {}) {
   let hostRouter = extras.hostRouter || null;
   function getHostRouter() {
     if (hostRouter) return hostRouter;
-    hostRouter = createHostCapabilityRouter({ env, missionAuthorityResolver: extras.missionAuthorityResolver, privilegedExecutor: extras.privilegedExecutor });
+    hostRouter = createHostCapabilityRouter({ env, missionAuthorityResolver: extras.missionAuthorityResolver, privilegedExecutor: extras.privilegedExecutor || (env.COGENTIA_SUPER_COP_ENABLED === "1" ? createSuperCopClient() : undefined) });
     return hostRouter;
   }
   const communicationTransport = extras.communicationTransport || createDryRunTransport();

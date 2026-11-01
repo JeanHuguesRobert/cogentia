@@ -34,6 +34,10 @@ test('temporary MCP supports expanded normal limits and refuses unauthenticated 
     assert.equal(r.status,200); assert.equal(JSON.parse(r.data.result.content[0].text).stdout,'OK');
     const list=await call({jsonrpc:'2.0',id:3,method:'tools/list'});
     assert.equal(list.data.result.tools[0].inputSchema.properties.command.maxLength,32768);
+    const missingCop=await call({jsonrpc:'2.0',id:4,method:'tools/call',
+      params:{name:'shell_exec',arguments:{command:'id -u',execution_mode:'super'}}});
+    assert.equal(missingCop.data.error.code,-32602);
+    assert.equal(list.data.result.tools[0].inputSchema.properties.execution_mode.enum[1],'super');
     const audit=await readFile(join(dir,'audit.jsonl'),'utf8');
     assert.match(audit,/"event":"started"/); assert.match(audit,/"event":"finished"/);
   } finally {child.kill('SIGTERM'); await rm(dir,{recursive:true,force:true});}
