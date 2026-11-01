@@ -268,10 +268,11 @@ export function createHostCapabilityRouter(options = {}) {
         throw err;
       }
 
-      // Never silently downgrade privileged intent to an ordinary provider.
-      // An independent, trusted privileged executor must be installed and
-      // authorized before this mode can be operationally enabled.
-      if (capability === "host.process.run" && argsIn.execution_mode === "super") {
+      // Super requires an independently injected broker AND trusted policy.
+      // No generic shell, sudo fallback or caller-selected provider escalation.
+      const isSuper = capability === "host.process.run" && argsIn.execution_mode === "super";
+      if (isSuper && (typeof options.privilegedExecutor?.invoke !== "function"
+          || typeof options.superCommandPolicy !== "function")) {
         const err = new Error("super_requires_independent_privileged_executor");
         err.error_class = "privileged_executor_unavailable";
         throw err;
@@ -344,7 +345,25 @@ export function createHostCapabilityRouter(options = {}) {
         }
       }
 
-      const providerInstance = ctx.providerInstance || await resolveProvider(providerName);
+      // The policy is trusted code. Its decision is evaluated only after the
+      // effect-specific COP grant or attested mission authority is checked.
+      if (isSuper && await options.superCommandPolicy({
+        command: args.command, target, actor, principal, mandate,
+        payload_hash: canonicalPayloadHash(effectPayload),
+        authorization_origin: missionAuthority ? "verified_mission" : "effect_grant",
+      }) !== true) {
+        const err = new Error("super_command_not_allowed");
+        err.error_class = "super_command_not_allowed";
+        throw err;
+      }
+      const providerInstance = isSuper
+        ? { invoke: (_capability, governedArgs) => options.privilegedExecutor.invoke({
+            command: governedArgs.command,
+            timeout_ms: governedArgs.timeout_ms,
+            target, actor, principal, mandate,
+            payload_hash: canonicalPayloadHash(effectPayload),
+          }) }
+        : ctx.providerInstance || await resolveProvider(providerName);
       const result = await invokeCapability(
         capability,
         { capability, args, _providerInstance: providerInstance },
