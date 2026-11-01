@@ -41,6 +41,14 @@ Record for every route: **advertised / reachable / authorized / tested**, with e
 
 Sources: [Locality Principle](../research/locality_principle.md), [Cogentia MCP](../docs/cogentia-mcp.md), [Operium operational control](../research/operium_owns_operational_deploy.md).
 
+## Rational detour under third-party execution blockers (Potentics / Reality Test)
+
+When an external provider refuses an otherwise mandated action, **do not turn the Principal's objective into a dispute with that provider**. First record a minimal typed observation (tool, action category, refusal message, timestamp where available, objective and relevant receipt). Distinguish user permission, host authorization, provider policy and tool transport; never attribute intent or legal fault without evidence. An intermittent success does not establish a reliable route.
+
+Then explore the cheapest **legitimate, independently authorized** alternative that preserves the original outcome, Principal mandate, COP budget and audit trail: local execution, an existing governed capability, another connected provider or a durable continuation. Do not mask command content, evade a mandatory platform control, escalate privileges beyond the mandate, or emit third-party communications without act-specific authority. Apply Occam and Minimum Sufficient Locality: prefer proven available paths over new infrastructure and avoid repeated futile retries, demands for explanations or speculative litigation unless the Principal separately mandates them.
+
+**Operational metric:** verified ability to complete the original task with bounded attention and recoverability, not whether an intermediary conceded error. See [Institutional anti-capture](../research/institutional_procedural_anti_capture.md), [Locality](../research/locality_principle.md), and [Potentics](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/autonomia/potentique_territoriale.md).
+
 ## Principal attention, presumed authority, and continuation (Cogentia #285)
 
 Within a valid, bounded mandate, agents MUST continue executing clear useful steps without asking the Principal to say "continue". An intermediate tool result, milestone, recoverable error, or proposal for a predictable next step does not close the mandate. Diagnose and retry recoverable failures within budgets; verify acceptance conditions and stop once the objective is achieved. Escalate only a genuine consequential judgment, materially ambiguous mandate, blocker, exhausted budget, or mandatory external control. Do not claim background execution without a real scheduled/continuation mechanism.
