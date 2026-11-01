@@ -221,3 +221,28 @@ The 30-second alarm and bounded jitter support retries after MV3 worker
 suspension; browser/computer sleep and certain network faults still require
 live verification. This remains a single-Principal pilot, with scoped
 subscriptions and leases pending in #291.
+
+#### ThinkPad connection to the common Fracta2 gateway (opt-in pilot)
+
+The ordinary ThinkPad `endpoint.json` continues to point to the **local**
+Operium bridge `ws://127.0.0.1:8765/ws`. This does **not** participate in the
+Fracta2 gateway's multi-browser inventory. To test both browsers together,
+choose the separate `endpoint.thinkpad-gateway.json` template as the **active**
+`endpoint.json` for the ThinkPad extension and establish a private SSH local
+port forward (PowerShell, while the test is running):
+
+```powershell
+ssh -N -o ExitOnForwardFailure=yes -L 127.0.0.1:18776:127.0.0.1:8776 fracta2
+```
+
+This leaves port 8765 for Operium's existing local bridge; the SSH forward
+connects local 18776 to Fracta2 loopback 8776. `browser_instance_id` remains
+`thinkpad-chrome`, whereas the hosted browser should use `fracta2-hosted`.
+Only use this mode **after** the separately maintained hosted gateway checkout
+has been updated and its service safely reloaded; the older gateway does not
+implement `browser.instances` or isolated multi-browser routing. The extension
+only supports one configured outbound endpoint at a time. Return to the local
+mode by restoring the default `endpoint.json` and reloading the extension.
+
+This is a private connectivity recipe, **not** permission to read prohibited
+browser pages or bypass provider-specific host restrictions.

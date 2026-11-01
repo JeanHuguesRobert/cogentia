@@ -7,8 +7,10 @@
   "host_permissions": [
     "http://127.0.0.1:8765/*",
     "http://127.0.0.1:8776/*",
+    "http://127.0.0.1:18776/*",
     "ws://127.0.0.1:8765/*",
     "ws://127.0.0.1:8776/*",
+    "ws://127.0.0.1:18776/*",
     "http://*/*",
     "https://*/*"
   ],
@@ -22,5 +24,5 @@
   ],
   "background": { "service_worker": "background.js", "type": "module" },
   "action": { "default_title": "Cogentia Navigation Assistant" },
-  "content_security_policy": { "extension_pages": "script-src 'self'; object-src 'self'; connect-src ws://127.0.0.1:8765 ws://127.0.0.1:8776" }
+  "content_security_policy": { "extension_pages": "script-src 'self'; object-src 'self'; connect-src ws://127.0.0.1:8765 ws://127.0.0.1:8776 ws://127.0.0.1:18776" }
 }

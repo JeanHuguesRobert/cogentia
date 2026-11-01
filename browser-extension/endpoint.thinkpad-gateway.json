@@ -1,0 +1,4 @@
+{
+  "endpoint": "ws://127.0.0.1:18776/extension",
+  "browser_instance_id": "thinkpad-chrome"
+}
