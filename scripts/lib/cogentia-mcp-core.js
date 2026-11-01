@@ -1955,15 +1955,24 @@ export function createMcpCore(env = process.env, extras = {}) {
           req.handler.allowed_capabilities = requestedCapabilities
             .filter((name) => browserCapabilityNames.has(name));
         }
+        // A coordination lease is an internal recoverable effect.  Give it the
+        // same bounded accounting path as browser interaction, without
+        // granting this budget to anonymous or read-only callers.
+        const browserCoordinationRequested = jhnCaller
+          && browserCapabilityNames.has("browser.navigation.coordination")
+          && Array.isArray(req.handler.allowed_capabilities)
+          && req.handler.allowed_capabilities.includes("browser.navigation.coordination")
+          && ["bounded", "consequential"].includes(req.exposure);
         const browserInteractRequested = jhnCaller
           && browserCapabilityNames.has("browser.hosted.interact")
           && Array.isArray(req.handler.allowed_capabilities)
           && req.handler.allowed_capabilities.includes("browser.hosted.interact")
           && ["bounded", "consequential"].includes(req.exposure);
-        if (browserInteractRequested && !Number.isInteger(req.execution_budget.max_internal_effects)) {
+        if ((browserInteractRequested || browserCoordinationRequested)
+          && !Number.isInteger(req.execution_budget.max_internal_effects)) {
           req.execution_budget.max_internal_effects = 2;
         }
-        const browserInternalLimit = browserInteractRequested
+        const browserInternalLimit = browserInteractRequested || browserCoordinationRequested
           ? Math.min(Math.max(0, req.execution_budget.max_internal_effects || 0), 2)
           : 0;
         const events = await runJohnRequest(req, {

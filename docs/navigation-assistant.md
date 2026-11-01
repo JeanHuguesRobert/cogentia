@@ -300,3 +300,23 @@ The gateway rejects implicit-target `page.evaluate`, `page.insertText`, `tabs.ac
 `scripts/lib/navigation-assistant/gateway-session.js` adds a correlated WebSocket session with `call()` and `withTabLease()` (acquire/operate/release on the same socket). Agent John's capability catalogue adds `browser.navigation.instances` (read-only instance IDs) and `browser.navigation.coordination` (bounded lease, optionally tab metadata only, URL redacted to origin by default). Historical `browser.hosted.*` now explicitly target `fracta2-hosted` in the multi-browser gateway. Sensitive insert/evaluate calls require `tab_id`; existing capability risk classifications remain.
 
 Extension 1.0.17 verifies the target URL a second time after debugger attachment and before CDP execution. This is an optimistic URL guard, not a full navigation-epoch lock. Both unpacked browser extensions need manual reload and the separately maintained gateway checkout needs its normal owner-controlled update. None of these changes is yet deployed in the live 8776 service. Test: `node scripts/check-navigation-john-session.js` plus existing navigation suites.
+
+### 2026-11-01 — MCP Agent John: internal budget and target checks
+
+The MCP adapter includes `browser.navigation.coordination` among bounded
+internal-recoverable effects **only** for resolved John callers that explicitly
+request this allowed capability with exposure `bounded` or `consequential`.
+It defaults to at most two internal effects when no caller budget is specified,
+and respects an explicit zero budget. It does not authorize a new Principal or
+increase external-write permissions. The hosted `inspect(context)` and
+`evaluate` capabilities require `tab_id`; they fail before opening a browser
+connection if the target is absent. These are compatibility safeguards for the
+shared multi-browser gateway and do not bypass the host's restrictions on
+ChatGPT page access.
+
+Live gateway event test: a temporary inactive `https://example.org/` tab
+produced one `page.navigationCompleted` notification at the subscribed
+assistant; a second un-subscribed assistant received none. Test tab was closed,
+and no page content was read. The MCP process is a separate `mcp-cogentia`
+service with ExecStart rooted in `/srv/cogentia/repos/cogentia`; it must be
+restarted through existing operator control to load new JavaScript modules.

@@ -20,6 +20,12 @@ try {
  first=await createGatewaySession(endpoint,{WebSocketClass:WebSocket,timeoutMs:2000});
  second=await createGatewaySession(endpoint,{WebSocketClass:WebSocket,timeoutMs:2000});
  const caps=createHostedBrowserCapabilities({gateway:endpoint,timeoutMs:2000});
+ const inspect=caps.find(x=>x.name==='browser.hosted.inspect');
+ const evalCap=caps.find(x=>x.name==='browser.hosted.evaluate');
+ assert.ok(inspect.inputSchema.properties.tab_id);
+ assert.ok(evalCap.inputSchema.required.includes('tab_id'));
+ await assert.rejects(()=>inspect.execute({action:'context'}),e=>e.code==='BROWSER_TAB_ID_INVALID');
+ await assert.rejects(()=>evalCap.execute({code:'1+1'}),e=>e.code==='BROWSER_TAB_ID_INVALID');
  const inventory=await caps.find(x=>x.name==='browser.navigation.instances').execute();
  assert.equal(inventory.browsers[0].browser_instance_id,'test-browser');
  await first.call('tabs.lease.acquire',{browser_instance_id:'test-browser',tabId:51,ttlMs:2000});

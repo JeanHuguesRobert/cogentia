@@ -66,7 +66,7 @@ export function createHostedBrowserCapabilities(options = {}) {
       risk: "read_only",
       resultVisibility: "reasoner",
       costUnits: 1,
-      description: "Inspect the authenticated Fracta2 hosted browser connection, tabs, or visible context of the active tab.",
+      description: "Inspect the Fracta2 hosted browser connection, tabs, or explicitly targeted page context.",
       inputSchema: {
         type: "object",
         properties: {
@@ -94,10 +94,11 @@ export function createHostedBrowserCapabilities(options = {}) {
           };
         }
         if (action === "context") {
+          const targetTabId = positiveInt(input.tab_id, "tab_id");
           const maxChars = boundedInteger(input.max_chars, 4000, 1, 12000);
           const result = await rpc(gateway, "page.evaluate", {
             browser_instance_id: browserId,
-            ...(input.tab_id === undefined ? {} : { tabId: input.tab_id }),
+            tabId: targetTabId,
             code: "(() => ({title:document.title,url:location.href,text:(document.body?.innerText||\"\").slice(0," + maxChars + ")}))()",
           }, timeoutMs);
           const page = result.value || {};
@@ -159,11 +160,11 @@ export function createHostedBrowserCapabilities(options = {}) {
       risk: "external_write",
       resultVisibility: "reasoner",
       costUnits: 2,
-      description: "Evaluate explicitly supplied JavaScript in the active hosted page. Requires this exact capability to be confirmed by the caller; page code can cause external effects.",
+      description: "Evaluate explicitly supplied JavaScript in an identified hosted tab. Requires this exact capability to be confirmed by the caller; page code can cause external effects.",
       inputSchema: {
         type: "object",
         properties: { code: { type: "string", minLength: 1, maxLength: 16000 }, tab_id: { type: "integer", minimum: 1 }, expected_url: { type: "string", maxLength: 4096 } },
-        required: ["code"],
+        required: ["code", "tab_id"],
         additionalProperties: false,
       },
       async execute(input = {}) {
