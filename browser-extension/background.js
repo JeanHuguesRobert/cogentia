@@ -1,3 +1,4 @@
+import { reconnectDelayMs, nextFailureCount, OPEN_TIMEOUT_MS } from "./reconnect-policy.js";
 // Minimal bridge: the extension initiates the WebSocket (it cannot listen).
 const DEFAULT_ENDPOINT = "ws://127.0.0.1:8765/ws";
 let ENDPOINT = DEFAULT_ENDPOINT;
@@ -5,6 +6,8 @@ let socket = null;
 let retry = 0;
 let retryTimer = null;
 let heartbeatTimer = null;
+let connectTimeout = null;
+let openedAt = 0;
 let currentAttachedTabId = null;
 let desiredTabId = null;
 
@@ -57,28 +60,47 @@ function trace(level, event, details = {}) {
   emit({ jsonrpc: "2.0", method: "bridge.trace", params: { level, event, ...details } });
 }
 
+function scheduleReconnect() {
+  retryTimer = setTimeout(() => { retryTimer = null; connect(); }, reconnectDelayMs(retry));
+}
+
 function connect() {
   if (socket || retryTimer) return;
-  socket = new WebSocket(ENDPOINT);
-  socket.onopen = () => {
-    retry = 0;
+  // WebSocket cannot listen inside an extension: the extension is always the client.
+  let ws;
+  try { ws = new WebSocket(ENDPOINT); }
+  catch { retry = nextFailureCount(retry, 0); scheduleReconnect(); return; }
+  socket = ws;
+  openedAt = 0;
+  connectTimeout = setTimeout(() => {
+    if (socket === ws && ws.readyState === WebSocket.CONNECTING) ws.close();
+  }, OPEN_TIMEOUT_MS);
+  ws.onopen = () => {
+    clearTimeout(connectTimeout);
+    connectTimeout = null;
+    openedAt = Date.now();
     emit({ type: "bridge.hello", extensionVersion: chrome.runtime.getManifest().version, protocolVersion: 2 });
     trace("info", "socket-open", { endpoint: ENDPOINT });
     announceActiveTab().catch((error) => trace("error", "active-tab-read-failed", { error: error.message }));
+    clearInterval(heartbeatTimer);
     heartbeatTimer = setInterval(() => emit({ jsonrpc: "2.0", method: "bridge.ping", params: {} }), 20000);
   };
-  socket.onmessage = async (event) => {
+  ws.onmessage = async (event) => {
     try { await handleCommand(JSON.parse(event.data)); }
     catch (error) { emit({ type: "bridge.error", message: error.message }); }
   };
-  socket.onclose = () => {
+  ws.onclose = () => {
+    if (socket !== ws) return;
+    clearTimeout(connectTimeout);
+    connectTimeout = null;
     clearInterval(heartbeatTimer);
     heartbeatTimer = null;
     socket = null;
-    retry += 1;
-    retryTimer = setTimeout(() => { retryTimer = null; connect(); }, Math.min(60000, 1000 * (2 ** retry)));
+    retry = nextFailureCount(retry, openedAt ? Date.now() - openedAt : 0);
+    openedAt = 0;
+    scheduleReconnect();
   };
-  socket.onerror = () => socket?.close();
+  ws.onerror = () => ws.close();
 }
 
 async function handleCommand(message) {
@@ -239,3 +261,11 @@ chrome.runtime.onMessage.addListener((message, sender) => {
   if (!tabId) return;
   notify("page.event", { tabId, event: message.event, via: "content-script" });
 });
+
+// MV3 may terminate an idle service worker during prolonged disconnects.
+// Alarms wake it again; the active WebSocket itself is kept alive by 20s pings.
+const RECONNECT_ALARM = "cogentia-navigation-reconnect";
+chrome.alarms.onAlarm.addListener((alarm) => {
+  if (alarm.name === RECONNECT_ALARM && !socket && !retryTimer) connect();
+});
+chrome.alarms.create(RECONNECT_ALARM, { periodInMinutes: 0.5 });

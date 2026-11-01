@@ -3,7 +3,7 @@
   "name": "Cogentia Navigation Assistant",
   "version": "1.0.14",
   "description": "Local active-tab bridge for the Cogentia navigation assistant.",
-  "permissions": ["debugger", "tabs", "windows"],
+  "permissions": ["debugger", "tabs", "windows", "alarms"],
   "host_permissions": [
     "http://127.0.0.1:8765/*",
     "http://127.0.0.1:8776/*",
