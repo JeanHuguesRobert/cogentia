@@ -343,6 +343,19 @@ For a bounded, no-paid-provider evaluation, set
 `COGENTIA_GUIDE_OPENROUTER_FREE_MODEL`. This mode is opt-in; it bypasses the
 daemon, OpenAI, and paid OpenRouter candidates for synthesis.
 
+### 1 November 2026 — one COP authority, no mandate labyrinth
+
+The mandate is the single policy decision for normal and super effects.
+The router, MCP, broker and OS are enforcement/transport mechanisms,
+not independently governed authorization systems. An explicit
+`sudo -n` in a super script is an anti-accident execution syntax, not a
+second grant or a per-command policy. The root-local experimental grant
+store used for the Fracta2 smoke test is temporary and MUST be replaced by
+one canonical, atomic, revocable COP authorization-and-reservation service
+before automatic agent activation. Do not turn the prototype grant registry
+or the intermediate `credentialResolver` into additional mandate authorities.
+The latter adapter was removed to avoid institutionalizing duplication.
+
 ### 1 November 2026 — general-purpose super scripts governed by mandate
 
 `host.process.run` uses the same general script interface for `normal` and

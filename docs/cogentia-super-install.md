@@ -88,32 +88,57 @@ Never execute a writable repository `.mjs` with `sudo node`: install a
 root-owned immutable copy of both client and broker first. The smoke script
 and credential should likewise live in root-only storage.
 
-## MCP integration checkpoint (1 November 2026)
+## Single mandate authority — integration decision (1 November 2026)
 
-The interactive root-only smoke test has passed on Fracta2: the governed
-script returned UID 1001 for an ordinary command and UID 0 only when
-explicitly invoking `sudo -n`; the second use of the same grant was denied.
+**COP is the sole authority** for both `normal` and `super`. The broker
+executes; it does not define a new mandate policy. The ordinary shell, MCP
+facade, router, privileged broker and OS do not each get their own independently
+configurable authorization rules.
 
-`scripts/lib/super-socket-executor.js` now supplies the transport seam for
-a *trusted isolated* service to relay the governed script and mandate to the
-broker. This module is deliberately not wired into `mcp-cogentia.service`.
+Canonical flow:
 
-**Why:** both the existing MCP HTTP adapter and the unrestricted normal shell
-run as `ubuntu`. Any credential or broker socket access supplied to that
-identity is also available to arbitrary normal shell scripts, and therefore
-cannot safely attest a separate elevated mandate. An MCP bearer token already
-readable by `ubuntu` does not change that conclusion.
+```text
+Principal → COP mandate (actor, scope, mode, target, validity, budget)
+                 ↓
+             COP authorize/reserve  ← single decision, atomic and revocable
+                 ↓
+      host.process.run(normal | super)
+                 ↓
+         execution provider / sudo-style broker
+                 ↓
+          COP effect receipt + audit
+```
 
-Before enabling automatic agent super, isolate the trusted authorization
-verifier and execution adapter under a different OS identity; use OS socket
-permissions to keep the existing normal shell out, and validate authentic,
-revocable COP authorizations *at that verifier* before dispatch. Do not
-grant the ubuntu group direct access to the root broker or place grant
-secrets in environment variables or files readable by ubuntu.
+`super` may contain arbitrary scripts: no command allowlist. A mandate
+authorizing `normal` cannot be promoted to `super`. Inside a `super` script,
+ordinary commands still run as `ubuntu`; privileged commands require
+explicit `sudo -n`. This explicit syntax prevents accidental elevation,
+but does not constitute a second authorization policy.
 
-The adapter's credential resolver is an internal trusted constructor argument,
-not an API for user-provided mandate tokens. A valid authorization must
-be bound to actor, mandate, target and the requested script/payload, with
-atomic use reservation and an auditable receipt. The current broker's
-root-issued grant registry remains a separate experimental authority,
-not yet a production COP mandate service.
+The prototype broker already installed on Fracta2 has a root-local
+`mandates.json` for its SSH smoke test. **This is temporary test scaffolding,
+not a second production mandate service and not a source of COP authority.**
+Do not expose the prototype grant mechanism as a permanent public MCP
+capability. Remove the duplicate registry once the broker consumes the
+canonical COP execution decision.
+
+OS permissions keep untrusted processes from modifying the verifier or
+impersonating its responses. They are an implementation property of the
+*same* COP decision, not an independent policy for what the agent may do.
+No additional user-facing ceremony, approval layer or command whitelist
+should be introduced.
+
+**Outstanding implementation:** a single trusted COP
+`authorize_and_reserve` operation must bind actor, Principal, mandate,
+`execution_mode`, target and execution effect. The broker must consume
+that verified decision and report the execution receipt to COP without
+creating, modifying or interpreting its own grants. The current
+`side-effect-store` file implementation is not an atomic concurrent
+reservation service, so this transition must not be declared completed
+until its race/replay/revocation tests pass end to end.
+
+The previous socket-adapter prototype with an additional
+`credentialResolver` has deliberately been removed: it was adding
+another credential layer rather than completing COP's authority path.
+The already-installed root broker is left running unchanged pending its
+migration to the single COP protocol.
