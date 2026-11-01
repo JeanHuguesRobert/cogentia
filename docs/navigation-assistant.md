@@ -320,3 +320,22 @@ assistant; a second un-subscribed assistant received none. Test tab was closed,
 and no page content was read. The MCP process is a separate `mcp-cogentia`
 service with ExecStart rooted in `/srv/cogentia/repos/cogentia`; it must be
 restarted through existing operator control to load new JavaScript modules.
+
+### 2026-11-01 — COP delegated read-only inventory smoke test
+
+`node scripts/check-navigation-john-cop.js` drives the actual `runJohnRequest`
+COP/governed harness through `browser.navigation.instances`, contacting the
+live shared gateway **without reading tabs**. The test intentionally uses an
+isolated, nonproduction JHN token fixture to verify resolution and an
+unverified caller to verify denial. It asserts the authorized capability
+receipt, `john.accounting.settled`, `john.run.completed` and Ithaca return;
+it also asserts an unauthorized capability request yields
+`not_in_authorization_envelope` and **no** `john.tool.receipt`.
+
+This test is an integrated *fixture*, not proof that a live production MCP
+caller is authorized. Separately, an actual call to the live Cogentia MCP
+`cogentia_john_run` using `mock.echo` returned a canonical COP packet,
+accounting (zero effects), and Ithaca; `mock.echo` does not exercise the browser.
+A true production-authorized agent invocation requires an existing resolved
+JHN caller, a granted capability and normal bounded execution. Never forge
+production claims or copy service credentials into the test or Git repository.
