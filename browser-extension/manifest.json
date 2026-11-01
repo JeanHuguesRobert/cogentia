@@ -1,9 +1,14 @@
 {
   "manifest_version": 3,
   "name": "Cogentia Navigation Assistant",
-  "version": "1.0.15",
+  "version": "1.0.16",
   "description": "Outbound multi-tab bridge for the Cogentia navigation assistant.",
-  "permissions": ["debugger", "tabs", "windows", "alarms"],
+  "permissions": [
+    "debugger",
+    "tabs",
+    "windows",
+    "alarms"
+  ],
   "host_permissions": [
     "http://127.0.0.1:8765/*",
     "http://127.0.0.1:8776/*",
@@ -12,17 +17,31 @@
     "ws://127.0.0.1:8776/*",
     "ws://127.0.0.1:18776/*",
     "http://*/*",
-    "https://*/*"
+    "https://*/*",
+    "http://100.84.109.87:8776/*",
+    "ws://100.84.109.87:8776/*"
   ],
   "content_scripts": [
     {
-      "matches": ["http://*/*", "https://*/*"],
-      "js": ["page-observe.js"],
+      "matches": [
+        "http://*/*",
+        "https://*/*"
+      ],
+      "js": [
+        "page-observe.js"
+      ],
       "run_at": "document_idle",
       "all_frames": false
     }
   ],
-  "background": { "service_worker": "background.js", "type": "module" },
-  "action": { "default_title": "Cogentia Navigation Assistant" },
-  "content_security_policy": { "extension_pages": "script-src 'self'; object-src 'self'; connect-src ws://127.0.0.1:8765 ws://127.0.0.1:8776 ws://127.0.0.1:18776" }
+  "background": {
+    "service_worker": "background.js",
+    "type": "module"
+  },
+  "action": {
+    "default_title": "Cogentia Navigation Assistant"
+  },
+  "content_security_policy": {
+    "extension_pages": "script-src 'self'; object-src 'self'; connect-src ws://127.0.0.1:8765 ws://127.0.0.1:8776 ws://127.0.0.1:18776 ws://100.84.109.87:8776"
+  }
 }

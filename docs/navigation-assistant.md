@@ -246,3 +246,33 @@ mode by restoring the default `endpoint.json` and reloading the extension.
 
 This is a private connectivity recipe, **not** permission to read prohibited
 browser pages or bypass provider-specific host restrictions.
+
+#### Recommended ThinkPad permanent connection (direct Tailscale)
+
+**Preferred over a long-lived SSH terminal/tunnel:** the gateway already binds
+`100.84.109.87:8776` on Fracta2's Tailscale interface. The Chrome extension
+initiates the WebSocket directly on Tailscale, without opening any inbound
+listener on the laptop. The unpacked extension's `manifest.json` version
+`1.0.16` explicitly permits `ws://100.84.109.87:8776` in its CSP, and
+`endpoint.thinkpad-tailscale.json` specifies the instance ID `thinkpad-chrome`.
+
+On the ThinkPad: fetch the revision, copy
+`browser-extension/endpoint.thinkpad-tailscale.json` to
+`browser-extension/endpoint.json`, reload the unpacked extension from
+`chrome://extensions`; verify with `Test-NetConnection 100.84.109.87 -Port
+8776`. Only when the gateway confirms `thinkpad-chrome` registered, close the
+old `ssh -N -L ...` terminal. The local Operium port 8765 remains unchanged.
+
+On Windows, verify the **Tailscale service** starts automatically and Chrome
+reopens after login; the extension cannot connect while Chrome is closed or
+the laptop is asleep, but reconnects on revival. This requires no new Windows
+startup task or permanent SSH process. The specific Tailscale address is
+currently `100.84.109.87`; if this node is re-enrolled/readdressed, the
+endpoint must be updated (MagicDNS can be a later improvement).
+
+Security: `ws://` is unencrypted WebSocket framing *inside encrypted Tailscale*
+transport, not a public ws endpoint. The gateway listens only on loopback and
+Tailscale; do not allow the corresponding port from the public Internet. Tailscale
+network membership is not by itself a fine-grained mandate: continue to enforce
+John's normal action permissions and make no attempts to access host-restricted
+browser pages.
