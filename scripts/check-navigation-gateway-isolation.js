@@ -14,6 +14,10 @@ try {
  e1.send(JSON.stringify({jsonrpc:'2.0',method:'browser.register',params:{browser_instance_id:'hosted'}}));
  e2.send(JSON.stringify({jsonrpc:'2.0',method:'browser.register',params:{browser_instance_id:'thinkpad'}}));
  await new Promise(r=>setTimeout(r,25));
+ a1.send(JSON.stringify({jsonrpc:'2.0',id:6,method:'browser.instances',params:{}}));
+ await new Promise(r=>setTimeout(r,30));
+ const inventory=a1.received.find(m=>m.id===6)?.result?.browsers;
+ assert.deepEqual(inventory?.map(b=>b.browser_instance_id).sort(),['hosted','thinkpad']);
  a1.send(JSON.stringify({jsonrpc:'2.0',id:7,method:'tabs.list',params:{browser_instance_id:'hosted'}}));
  await new Promise(r=>setTimeout(r,50));
  const deliveries=[e1,e2].map(s=>s.received.filter(m=>m.method==='tabs.list').length);

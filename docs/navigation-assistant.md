@@ -183,3 +183,41 @@ child actions may only attenuate that authority. The local assistant is a
 projection of that mandate, not an independent authority. Optimistic locking
 also prevents an action from applying to a page or field that changed after it
 was observed.
+
+### 2026-11-01 — Outbound multi-browser inventory and no-focus tab selection (pilot)
+
+The extension **always dials out**; it never listens. `browser-extension/endpoint.json`
+now accepts `browser_instance_id` in addition to `endpoint`. The default local
+configuration identifies `thinkpad-chrome` and `endpoint.hosted.json` identifies
+`fracta2-hosted` when installed as `endpoint.json` in the hosted browser's own
+extension directory. They are routing labels, not distinct human Principals:
+Agent John operates on behalf of the same Principal across both browsers.
+An instance announces itself with `browser.register` on each connection.
+
+The gateway's `browser.instances` RPC lists connected browser instance labels.
+`tabs.list` can target a given `browser_instance_id` and enumerates all tabs in
+all windows of that browser. `page.evaluate` / `page.insertText` accept integer
+`tabId` to address a specific tab without changing the active tab or window.
+Optionally pass `expectedUrl` to reject a stale target. Omit `tabId` only for
+legacy single-active-tab use. RPC IDs are remapped end-to-end to isolate clients;
+when more than one browser is connected, uncategorized commands are rejected.
+
+**Operator recipe (not performed automatically):** sync each installation to
+version 1.0.15, verify its `endpoint.json` before reloading the unpacked
+extension at `chrome://extensions`. On the hosted account, install
+`endpoint.hosted.json` as `endpoint.json` rather than using the ThinkPad default.
+The hosted browser account and service use a separate filesystem checkout;
+changing `/srv/cogentia/repos/cogentia` does not update that installation.
+Do not restart the live gateway with an unverified checkout; confirm the new
+code, then restart it under the owner account's existing operational control.
+Once loaded, test `browser.instances`, per-browser `tabs.list`, a harmless
+synthetic web tab addressed by `tabId` while another tab is active, a wrong
+`expectedUrl`, a brief disconnect and worker recovery. Do not use a protected
+site as a test target. Never infer that the current user's ChatGPT tab is
+accessible merely because the extension exists; the Browser host has explicitly
+blocked access to `chatgpt.com` in this session.
+
+The 30-second alarm and bounded jitter support retries after MV3 worker
+suspension; browser/computer sleep and certain network faults still require
+live verification. This remains a single-Principal pilot, with scoped
+subscriptions and leases pending in #291.

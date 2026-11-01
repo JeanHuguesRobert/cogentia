@@ -1,7 +1,9 @@
+import { selectTargetTab, ensureExpectedUrl } from "./tab-target.js";
 import { reconnectDelayMs, nextFailureCount, OPEN_TIMEOUT_MS } from "./reconnect-policy.js";
 // Minimal bridge: the extension initiates the WebSocket (it cannot listen).
 const DEFAULT_ENDPOINT = "ws://127.0.0.1:8765/ws";
 let ENDPOINT = DEFAULT_ENDPOINT;
+let BROWSER_INSTANCE_ID = null;
 let socket = null;
 let retry = 0;
 let retryTimer = null;
@@ -73,12 +75,22 @@ function connect() {
   socket = ws;
   openedAt = 0;
   connectTimeout = setTimeout(() => {
-    if (socket === ws && ws.readyState === WebSocket.CONNECTING) ws.close();
+    if (socket === ws && ws.readyState === WebSocket.CONNECTING) {
+      // WebSocket.close() may reject while CONNECTING; bound the attempt and retry.
+      try { ws.close(); } catch { /* failure is accounted for below */ }
+      if (socket === ws) {
+        socket = null;
+        retry = nextFailureCount(retry, 0);
+        scheduleReconnect();
+      }
+    }
   }, OPEN_TIMEOUT_MS);
   ws.onopen = () => {
+    if (socket !== ws) { ws.close(); return; }
     clearTimeout(connectTimeout);
     connectTimeout = null;
     openedAt = Date.now();
+    if (BROWSER_INSTANCE_ID) emit({ jsonrpc: "2.0", method: "browser.register", params: { browser_instance_id: BROWSER_INSTANCE_ID } });
     emit({ type: "bridge.hello", extensionVersion: chrome.runtime.getManifest().version, protocolVersion: 2 });
     trace("info", "socket-open", { endpoint: ENDPOINT });
     announceActiveTab().catch((error) => trace("error", "active-tab-read-failed", { error: error.message }));
@@ -105,7 +117,7 @@ function connect() {
 
 async function handleCommand(message) {
   if (message.jsonrpc === "2.0" && message.method === "tabs.list" && message.id !== undefined) {
-    const tabs = await chrome.tabs.query({ lastFocusedWindow: true });
+    const tabs = await chrome.tabs.query({});
     emit({ jsonrpc: "2.0", id: message.id, result: {
       tabs: tabs.map((tab) => ({ id: tab.id, title: tab.title || "", url: tab.url || "", windowId: tab.windowId, active: Boolean(tab.active) })),
     } });
@@ -161,8 +173,12 @@ async function handleCommand(message) {
     return;
   }
   if (message.jsonrpc === "2.0" && message.method === "page.evaluate" && message.id !== undefined && typeof message.params?.code === "string") {
-    const tabs = await chrome.tabs.query({ active: true, lastFocusedWindow: true });
-    const tab = tabs[0];
+    const tabs = await chrome.tabs.query({});
+    const [activeTab] = await chrome.tabs.query({ active: true, lastFocusedWindow: true });
+    const available = tabs.map((candidate) => ({ ...candidate, lastFocusedWindow: candidate.id === activeTab?.id }));
+    let tab;
+    try { tab = ensureExpectedUrl(selectTargetTab(available, message.params), message.params); }
+    catch (error) { emit({ jsonrpc: "2.0", id: message.id, error: { code: -32602, message: error.message } }); return; }
     if (!tab?.id || !tab.url || /^(chrome|brave|edge|about):\/\//i.test(tab.url)) {
       emit({ jsonrpc: "2.0", id: message.id, error: { code: -32001, message: "No executable active web tab" } });
       return;
@@ -187,8 +203,12 @@ async function handleCommand(message) {
     return;
   }
   if (message.jsonrpc === "2.0" && message.method === "page.insertText" && message.id !== undefined && typeof message.params?.text === "string") {
-    const tabs = await chrome.tabs.query({ active: true, lastFocusedWindow: true });
-    const tab = tabs[0];
+    const tabs = await chrome.tabs.query({});
+    const [activeTab] = await chrome.tabs.query({ active: true, lastFocusedWindow: true });
+    const available = tabs.map((candidate) => ({ ...candidate, lastFocusedWindow: candidate.id === activeTab?.id }));
+    let tab;
+    try { tab = ensureExpectedUrl(selectTargetTab(available, message.params), message.params); }
+    catch (error) { emit({ jsonrpc: "2.0", id: message.id, error: { code: -32602, message: error.message } }); return; }
     if (!tab?.id || !tab.url || /^(chrome|brave|edge|about):\/\//i.test(tab.url)) {
       emit({ jsonrpc: "2.0", id: message.id, error: { code: -32001, message: "No executable active web tab" } });
       return;
@@ -223,13 +243,14 @@ async function handleCommand(message) {
 async function loadEndpoint() {
   try {
     const data = await fetch(chrome.runtime.getURL("endpoint.json")).then((r) => r.json());
-    if (typeof data.endpoint === "string" && /^wss?:\/\//i.test(data.endpoint)) return data.endpoint;
+    if (typeof data.endpoint === "string" && /^wss?:\/\//i.test(data.endpoint)) return data;
   } catch { /* packed default */ }
-  return DEFAULT_ENDPOINT;
+  return { endpoint: DEFAULT_ENDPOINT };
 }
 
-loadEndpoint().then((endpoint) => {
-  ENDPOINT = endpoint;
+loadEndpoint().then((config) => {
+  ENDPOINT = config.endpoint;
+  BROWSER_INSTANCE_ID = typeof config.browser_instance_id === "string" ? config.browser_instance_id : null;
   connect();
 });
 chrome.tabs.onActivated.addListener(() => { announceActiveTab().catch((error) => emit({ type: "bridge.error", message: error.message })); });

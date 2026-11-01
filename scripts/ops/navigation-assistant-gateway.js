@@ -133,6 +133,15 @@ export function createNavigationGateway(options = {}) {
           if (sockets.extension.size === 1) broadcast("assistant", JSON.stringify(message));
           return;
         }
+        if (message.method === "browser.instances" && message.id !== undefined) {
+          sendJson(ws, { jsonrpc: "2.0", id: message.id, result: {
+            browsers: [...sockets.extension].filter((peer) => peer.readyState === 1).map((peer) => ({
+              browser_instance_id: peer.browserInstanceId || null,
+              registered: Boolean(peer.browserInstanceId),
+            })),
+          } });
+          return;
+        }
         if (message.method === "tabs.list" && message.id === undefined) return;
         if (message.id === undefined || !message.method) return;
         const targetId = message.params?.browser_instance_id;
