@@ -40,6 +40,12 @@ async function ensureAttached(tabId) {
   currentAttachedTabId = tabId;
 }
 
+async function ensureSameDocumentTarget(tab, params = {}) {
+  const current = await chrome.tabs.get(tab.id);
+  ensureExpectedUrl(current, { expectedUrl: params.expectedUrl ?? tab.url });
+  return current;
+}
+
 async function announceActiveTab() {
   const [tab] = await chrome.tabs.query({ active: true, lastFocusedWindow: true });
   if (!tab?.id) return;
@@ -186,6 +192,7 @@ async function handleCommand(message) {
     try {
       trace("info", "evaluate-start", { id: message.id, tab: { id: tab.id, title: tab.title || "", url: tab.url || "" }, codeLength: message.params.code.length });
       await ensureAttached(tab.id);
+      await ensureSameDocumentTarget(tab, message.params);
       const result = await chrome.debugger.sendCommand({ tabId: tab.id }, "Runtime.evaluate", { expression: message.params.code, returnByValue: true, awaitPromise: true });
       if (result.exceptionDetails) {
         const exception = result.exceptionDetails;
@@ -215,6 +222,7 @@ async function handleCommand(message) {
     }
     try {
       await ensureAttached(tab.id);
+      await ensureSameDocumentTarget(tab, message.params);
       await chrome.debugger.sendCommand({ tabId: tab.id }, "Input.insertText", { text: message.params.text });
       trace("info", "native-text-inserted", { id: message.id, tabId: tab.id, textLength: message.params.text.length });
       emit({ jsonrpc: "2.0", id: message.id, result: { insertedLength: message.params.text.length, tab: { id: tab.id, title: tab.title, url: tab.url } } });

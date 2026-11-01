@@ -292,3 +292,11 @@ unsubscription, tab lease conflict and release, and response correlation.
 These are tests against an ephemeral gateway, **not** evidence that the live
 8776 service has been updated. Deploy the gateway code only after synchronizing
 the separately owned hosted checkout, with operator-controlled systemd restart.
+
+### 2026-11-01 — Agent John coordination sessions
+
+The gateway rejects implicit-target `page.evaluate`, `page.insertText`, `tabs.activate` and `tabs.close` with `-32027` when any lease for the selected browser is active. Explicit `tabId` commands still reject a conflicting owner's lease (`-32026`). This blocks the historical active-tab bypass during a lease; leases are still cooperative, not a mandate or strict security boundary.
+
+`scripts/lib/navigation-assistant/gateway-session.js` adds a correlated WebSocket session with `call()` and `withTabLease()` (acquire/operate/release on the same socket). Agent John's capability catalogue adds `browser.navigation.instances` (read-only instance IDs) and `browser.navigation.coordination` (bounded lease, optionally tab metadata only, URL redacted to origin by default). Historical `browser.hosted.*` now explicitly target `fracta2-hosted` in the multi-browser gateway. Sensitive insert/evaluate calls require `tab_id`; existing capability risk classifications remain.
+
+Extension 1.0.17 verifies the target URL a second time after debugger attachment and before CDP execution. This is an optimistic URL guard, not a full navigation-epoch lock. Both unpacked browser extensions need manual reload and the separately maintained gateway checkout needs its normal owner-controlled update. None of these changes is yet deployed in the live 8776 service. Test: `node scripts/check-navigation-john-session.js` plus existing navigation suites.

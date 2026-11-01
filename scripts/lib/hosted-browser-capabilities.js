@@ -1,3 +1,4 @@
+import { createGatewaySession } from "./navigation-assistant/gateway-session.js";
 /** Hosted Chromium capabilities over the Fracta2 navigation-assistant extension. */
 
 const DEFAULT_GATEWAY = "ws://127.0.0.1:8776/assistant";
@@ -6,9 +7,59 @@ const DEFAULT_HEALTH = "http://127.0.0.1:8776/health";
 export function createHostedBrowserCapabilities(options = {}) {
   const gateway = String(options.gateway || process.env.COGENTIA_HOSTED_BROWSER_GATEWAY || DEFAULT_GATEWAY).trim();
   const health = String(options.health || process.env.COGENTIA_HOSTED_BROWSER_HEALTH || DEFAULT_HEALTH).trim();
+  const browserId = String(options.browserInstanceId || process.env.COGENTIA_HOSTED_BROWSER_INSTANCE || "fracta2-hosted").trim();
   const timeoutMs = boundedInteger(options.timeoutMs, 10000, 500, 30000);
 
   return [
+    {
+      name: "browser.navigation.instances",
+      kind: "tool",
+      risk: "read_only",
+      resultVisibility: "reasoner",
+      costUnits: 1,
+      description: "List registered personal browser instances, without reading tabs or page content.",
+      inputSchema: { type: "object", properties: {}, additionalProperties: false },
+      async execute() {
+        const session = await createGatewaySession(gateway, { timeoutMs });
+        try { return await session.call("browser.instances"); }
+        finally { session.close(); }
+      },
+    },
+    {
+      name: "browser.navigation.coordination",
+      kind: "tool",
+      risk: "internal_recoverable",
+      resultVisibility: "reasoner",
+      costUnits: 1,
+      description: "Acquire a scoped tab lease for a bounded operation, optionally reading that tab's metadata; never executes page code.",
+      inputSchema: {
+        type: "object",
+        properties: {
+          browser_instance_id: { type: "string", minLength: 1 },
+          tab_id: { type: "integer", minimum: 0 },
+          ttl_ms: { type: "integer", minimum: 1000, maximum: 120000 },
+          action: { type: "string", enum: ["probe", "tab_metadata"] },
+          include_url: { type: "boolean" },
+        },
+        required: ["browser_instance_id", "tab_id"],
+        additionalProperties: false,
+      },
+      async execute(input = {}) {
+        const session = await createGatewaySession(gateway, { timeoutMs });
+        try {
+          return await session.withTabLease(input.browser_instance_id, input.tab_id,
+            async (owner) => {
+              if (input.action === "tab_metadata") {
+                const result = await owner.call("tabs.list", { browser_instance_id: input.browser_instance_id });
+                const tab = result.tabs?.find(item => item.id === input.tab_id);
+                if (!tab) throw capabilityError("BROWSER_TARGET_TAB_MISSING");
+                return { acquired: true, released_on_completion: true, tab: summarizeTab(tab, input.include_url === true) };
+              }
+              return { acquired: true, released_on_completion: true };
+            }, input.ttl_ms || 30000);
+        } finally { session.close(); }
+      },
+    },
     {
       name: "browser.hosted.inspect",
       kind: "tool",
@@ -20,6 +71,7 @@ export function createHostedBrowserCapabilities(options = {}) {
         type: "object",
         properties: {
           action: { type: "string", enum: ["status", "tabs", "context"] },
+          tab_id: { type: "integer", minimum: 0 },
           max_chars: { type: "integer", minimum: 1, maximum: 12000 },
           include_url: { type: "boolean" },
         },
@@ -34,7 +86,7 @@ export function createHostedBrowserCapabilities(options = {}) {
           return response.json();
         }
         if (action === "tabs") {
-          const result = await rpc(gateway, "tabs.list", {}, timeoutMs);
+          const result = await rpc(gateway, "tabs.list", { browser_instance_id: browserId }, timeoutMs);
           return {
             tabs: Array.isArray(result.tabs)
               ? result.tabs.map((tab) => summarizeTab(tab, input.include_url === true))
@@ -44,6 +96,8 @@ export function createHostedBrowserCapabilities(options = {}) {
         if (action === "context") {
           const maxChars = boundedInteger(input.max_chars, 4000, 1, 12000);
           const result = await rpc(gateway, "page.evaluate", {
+            browser_instance_id: browserId,
+            ...(input.tab_id === undefined ? {} : { tabId: input.tab_id }),
             code: "(() => ({title:document.title,url:location.href,text:(document.body?.innerText||\"\").slice(0," + maxChars + ")}))()",
           }, timeoutMs);
           const page = result.value || {};
@@ -69,6 +123,7 @@ export function createHostedBrowserCapabilities(options = {}) {
         properties: {
           action: { type: "string", enum: ["activate", "open", "close", "insert_text"] },
           tab_id: { type: "integer", minimum: 1 },
+          expected_url: { type: "string", maxLength: 4096 },
           url: { type: "string", maxLength: 4096 },
           active: { type: "boolean" },
           text: { type: "string", maxLength: 12000 },
@@ -78,17 +133,22 @@ export function createHostedBrowserCapabilities(options = {}) {
       },
       async execute(input = {}) {
         const action = String(input.action || "");
-        if (action === "activate") return rpc(gateway, "tabs.activate", { tabId: positiveInt(input.tab_id, "tab_id") }, timeoutMs);
+        if (action === "activate") return rpc(gateway, "tabs.activate", { browser_instance_id: browserId, tabId: positiveInt(input.tab_id, "tab_id") }, timeoutMs);
         if (action === "open") {
           const url = String(input.url || "");
           if (!/^https?:\/\//i.test(url)) throw capabilityError("BROWSER_URL_INVALID");
-          return rpc(gateway, "tabs.create", { url, active: input.active !== false }, timeoutMs);
+          return rpc(gateway, "tabs.create", { browser_instance_id: browserId, url, active: input.active !== false }, timeoutMs);
         }
-        if (action === "close") return rpc(gateway, "tabs.close", { tabId: positiveInt(input.tab_id, "tab_id") }, timeoutMs);
+        if (action === "close") return rpc(gateway, "tabs.close", { browser_instance_id: browserId, tabId: positiveInt(input.tab_id, "tab_id") }, timeoutMs);
         if (action === "insert_text") {
           const text = String(input.text || "");
           if (!text || text.length > 12000) throw capabilityError("BROWSER_TEXT_INVALID");
-          return rpc(gateway, "page.insertText", { text }, timeoutMs);
+          return rpc(gateway, "page.insertText", {
+            browser_instance_id: browserId,
+            tabId: positiveInt(input.tab_id, "tab_id"),
+            ...(input.expected_url ? { expectedUrl: input.expected_url } : {}),
+            text,
+          }, timeoutMs);
         }
         throw capabilityError("BROWSER_ACTION_NOT_ALLOWED");
       },
@@ -102,14 +162,19 @@ export function createHostedBrowserCapabilities(options = {}) {
       description: "Evaluate explicitly supplied JavaScript in the active hosted page. Requires this exact capability to be confirmed by the caller; page code can cause external effects.",
       inputSchema: {
         type: "object",
-        properties: { code: { type: "string", minLength: 1, maxLength: 16000 } },
+        properties: { code: { type: "string", minLength: 1, maxLength: 16000 }, tab_id: { type: "integer", minimum: 1 }, expected_url: { type: "string", maxLength: 4096 } },
         required: ["code"],
         additionalProperties: false,
       },
       async execute(input = {}) {
         const code = String(input.code || "");
         if (!code || code.length > 16000) throw capabilityError("BROWSER_SCRIPT_INVALID");
-        return rpc(gateway, "page.evaluate", { code });
+        return rpc(gateway, "page.evaluate", {
+          browser_instance_id: browserId,
+          tabId: positiveInt(input.tab_id, "tab_id"),
+          ...(input.expected_url ? { expectedUrl: input.expected_url } : {}),
+          code,
+        }, timeoutMs);
       },
     },
   ];

@@ -223,12 +223,19 @@ export function createNavigationGateway(options = {}) {
           return;
         }
         const target = candidates[0];
-        // Legacy active-tab commands remain accepted for compatibility;
-        // explicit tab-scoped operations honour another client's lease.
+        // An implicitly chosen active tab could bypass a tab-specific lease.
+        // Fail closed while any lease exists for this browser; explicit targets
+        // remain available through the owner or after release.
         const tabId = message.params?.tabId;
-        if (Number.isInteger(tabId) && ["page.evaluate", "page.insertText", "tabs.activate", "tabs.close"].includes(message.method)) {
-          const held = currentLease(leaseKey(target.browserInstanceId, tabId));
-          if (held && held.owner !== ws) { fail(ws, message.id, -32026, "tab is leased by another agent connection"); return; }
+        const guardedMethods = ["page.evaluate", "page.insertText", "tabs.activate", "tabs.close"];
+        if (guardedMethods.includes(message.method)) {
+          if (!Number.isInteger(tabId)) {
+            const hasLease = [...leases.keys()].some((key) => key.startsWith(`${target.browserInstanceId}:`) && currentLease(key));
+            if (hasLease) { fail(ws, message.id, -32027, "explicit tabId required while browser has active leases"); return; }
+          } else {
+            const held = currentLease(leaseKey(target.browserInstanceId, tabId));
+            if (held && held.owner !== ws) { fail(ws, message.id, -32026, "tab is leased by another agent connection"); return; }
+          }
         }
         const wireId = ++sequence;
         const timer = setTimeout(() => {
