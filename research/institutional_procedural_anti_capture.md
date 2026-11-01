@@ -417,3 +417,13 @@ The goal is to make either outcome informative.
 > **Never let an intermediary silently replace one route with another.**
 
 > **A protective mechanism must remain subject to its own Reality tests.**
+
+## Addendum — 2026-11-01: algorithmic opacity and the rational alternative path
+
+Protective controls on powerful AI tools can be justified by serious abuse and accident risks. The anti-capture problem is not the existence of control but its **opaque, unpredictable, and unaccountable effects**. Saying “the algorithm decided” identifies an execution mechanism; it does not specify the institution's policy choice, correction authority, or legal responsibility. These categories must remain separate: a technical blocker is not evidence of intent or a legal violation.
+
+**Take institutions at their word / Reality Test:** (1) cite the exact public commitment; (2) classify it as legally binding, aspirational, or contractual; (3) specify an observable test; (4) compare the observed effect with the promise and preserve counterexamples; (5) state uncertainty explicitly. The standard for legal applicability is stricter than the standard for an operational observation. Reference source: [algorithmic decisions, transparency and responsibility](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/decision_algorithmique_transparence_responsabilite.md), including current EU AI Act, DSA and GDPR scope limits.
+
+**Detour before dispute:** the Principal does not seek a speculative, resource-intensive responsibility claim against an AI provider. Upon encountering an intermittent tool refusal, retain the minimum audit trace and then select a lawful, authorized alternative route toward the same goal. Measure expected time, attention, repeatability, portability, side-effects, rollback and dependency concentration. A temporary success on a provider-controlled route is not proof of its reliability. Do not disguise an operation to defeat an applicable safety barrier; change the architecture, tool, or execution locality legitimately instead.
+
+For Cogentia this means a blocked ChatGPT invocation must not automatically become a blocker of JHN's mandate: discover independently authorized local services, governed host-process execution, existing continuations, and alternative providers. Preserve the same principal authority, COP budget and evidence across the handoff. A fallback cannot expand the mandate or its privileges. Incident observations: [Operium #78](https://github.com/JeanHuguesRobert/operium/issues/78) and [#75](https://github.com/JeanHuguesRobert/operium/issues/75).
