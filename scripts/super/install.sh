@@ -27,7 +27,7 @@ sudo systemctl daemon-reload
 sudo systemctl restart mcp-cogentia.service
 systemctl is-active --quiet mcp-cogentia.service
 echo "== Update existing temporary shell MCP facade =="
-install -m 0644 scripts/experimental/jhn-shell-mcp.mjs /home/ubuntu/.config/jhn-shell-mcp/server.mjs
+install -m 0600 scripts/experimental/jhn-shell-mcp.mjs /home/ubuntu/.config/jhn-shell-mcp/server.mjs
 sudo systemctl restart jhn-shell-mcp.service
 systemctl is-active --quiet jhn-shell-mcp.service
 echo "== SUCCESS: super broker + both MCP facades active, COP sole authority =="
