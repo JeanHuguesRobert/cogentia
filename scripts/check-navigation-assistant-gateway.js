@@ -51,11 +51,12 @@ assert.equal(joined.type, "gateway.extensionConnected");
 
 assistant.send(JSON.stringify({ jsonrpc: "2.0", id: 7, method: "tabs.list", params: {} }));
 const forwarded = await extension.next();
-assert.equal(forwarded.id, 7);
+assert.ok(Number.isInteger(forwarded.id));
 assert.equal(forwarded.method, "tabs.list");
 
-extension.send(JSON.stringify({ jsonrpc: "2.0", id: 7, result: { tabs: [{ title: "x", url: "https://example.com/secret" }] } }));
+extension.send(JSON.stringify({ jsonrpc: "2.0", id: forwarded.id, result: { tabs: [{ title: "x", url: "https://example.com/secret" }] } }));
 const back = await assistant.next();
+assert.equal(back.id, 7);
 assert.equal(back.result.tabs[0].title, "x");
 
 await gateway.close();

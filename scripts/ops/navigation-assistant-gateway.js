@@ -42,6 +42,21 @@ function roleFromUrl(url) {
 export function createNavigationGateway(options = {}) {
   const instance = options.instance || DEFAULT_INSTANCE;
   const sockets = { extension: new Set(), assistant: new Set() };
+  const pending = new Map();
+  let sequence = 0;
+  function fail(ws, id, code, message) {
+    sendJson(ws, { jsonrpc: "2.0", id, error: { code, message } });
+  }
+  function clearPending(ws) {
+    for (const [id, request] of pending) {
+      if (request.assistant === ws || request.extension === ws) {
+        clearTimeout(request.timer);
+        pending.delete(id);
+        if (request.extension === ws && request.assistant.readyState === 1)
+          fail(request.assistant, request.originalId, -32021, "extension disconnected");
+      }
+    }
+  }
 
   function snapshot() {
     return {
@@ -93,17 +108,57 @@ export function createNavigationGateway(options = {}) {
         }
       }
       ws.on("message", (data) => {
-        const raw = data.toString();
-        if (role === "extension") broadcast("assistant", raw);
-        else if (role === "assistant") {
-          if (sockets.extension.size === 0) {
-            sendJson(ws, { jsonrpc: "2.0", error: { code: -32020, message: "hosted extension is not connected" } });
+        let message;
+        try { message = JSON.parse(data.toString()); } catch { return; }
+        if (role === "extension") {
+          if (message.method === "browser.register" && typeof message.params?.browser_instance_id === "string") {
+            const id = message.params.browser_instance_id.trim();
+            if (!id || [...sockets.extension].some((other) => other !== ws && other.browserInstanceId === id)) {
+              if (message.id !== undefined) fail(ws, message.id, -32022, "duplicate or invalid browser instance");
+              return;
+            }
+            ws.browserInstanceId = id;
+            if (message.id !== undefined) sendJson(ws, { jsonrpc: "2.0", id: message.id, result: { registered: true, browser_instance_id: id } });
             return;
           }
-          broadcast("extension", raw);
+          if (Object.prototype.hasOwnProperty.call(message, "id") && ("result" in message || "error" in message)) {
+            const req = pending.get(message.id);
+            if (!req || req.extension !== ws) return;
+            pending.delete(message.id);
+            clearTimeout(req.timer);
+            sendJson(req.assistant, { ...message, id: req.originalId });
+            return;
+          }
+          // Notifications are not shared across agents until explicit scoped subscriptions exist.
+          if (sockets.extension.size === 1) broadcast("assistant", JSON.stringify(message));
+          return;
         }
+        if (message.method === "tabs.list" && message.id === undefined) return;
+        if (message.id === undefined || !message.method) return;
+        const targetId = message.params?.browser_instance_id;
+        let candidates = [...sockets.extension].filter((peer) => peer.readyState === 1);
+        if (targetId !== undefined) candidates = candidates.filter((peer) => peer.browserInstanceId === targetId);
+        if (candidates.length !== 1) {
+          fail(ws, message.id, candidates.length ? -32023 : -32020,
+            candidates.length ? "browser instance is ambiguous" : "browser extension is not connected");
+          return;
+        }
+        const target = candidates[0];
+        const wireId = ++sequence;
+        const timer = setTimeout(() => {
+          const req = pending.get(wireId);
+          if (!req) return;
+          pending.delete(wireId);
+          fail(req.assistant, req.originalId, -32024, "browser request timed out");
+        }, 30000);
+        timer.unref?.();
+        pending.set(wireId, { assistant: ws, extension: target, originalId: message.id, timer });
+        const params = { ...(message.params || {}) };
+        delete params.browser_instance_id;
+        sendJson(target, { ...message, id: wireId, params });
       });
       ws.on("close", () => {
+        clearPending(ws);
         sockets[role].delete(ws);
         if (role === "extension") {
           for (const assistant of sockets.assistant) {
