@@ -140,7 +140,7 @@ La métaphore du routage par **gravité informationnelle** demeure également di
 
 Une composition candidate peut donc être pensée ainsi :
 
-\`\`\`text
+```text
 Finalité et mandat
     → capacités mobilisables (acteurs, agents, ressources)
     → composition / décomposition / recomposition adaptées
@@ -149,7 +149,7 @@ Finalité et mandat
     → actes, traces, coûts et conséquences
     → correction / réconciliation / apprentissage
     → révision de la composition
-\`\`\`
+```
 
 Cet enchaînement est un **schéma d'analyse**, non une pipeline obligatoire.
 
@@ -347,7 +347,7 @@ Le programme vise à **pouvoir réfuter** les avantages supposés.
 | Test | Comparaison | Signal de succès | Signal d'échec |
 | --- | --- | --- | --- |
 | RT1 — Passage à l'échelle | Monolithe, partition fixe, composition adaptative, sur charges croissantes | Capacité et qualité maintenues avec coûts d'organisation proportionnés | Supervision, latence ou calcul explosent |
-| RT2 — Perte du centre | Coordination normale puis indisponibilité bornée du hub | Les localités mandatées poursuivent ou différèrent proprement | Toute opération indépendante devient impossible |
+| RT2 — Perte du centre | Coordination normale puis indisponibilité bornée du hub | Les localités mandatées poursuivent ou diffèrent proprement | Toute opération indépendante devient impossible |
 | RT3 — Mandats et budgets | Délégation à plusieurs niveaux | Aucun privilège ni budget créés par sous-délégation | Autorité forgée, double dépense, absence de répondant |
 | RT4 — Coopération transversale | Équipe fixe versus coalition temporaire | Un résultat autrement inaccessible est obtenu à exposition bornée | Coordination plus coûteuse que la valeur acquise |
 | RT5 — Reconvergence | Observations contradictoires entre unités | Historique préservé ; correction, médiation ou désaccord durable traçables | Consensus forcé ou réécriture du passé |
