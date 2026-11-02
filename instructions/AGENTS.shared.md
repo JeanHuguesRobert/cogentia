@@ -3,9 +3,9 @@ title: Cogentia Shared Agent Instructions
 author: unknown
 affiliation: "Institut Mariani / C.O.R.S.I.C.A., 1 cours Paoli, F-20250 Corte, Corsica"
 status: "working-paper — active operational mandate"
-version: 41
+version: 42
 date: 2026-10-02
-last_modified_at: "2026-10-28"
+last_modified_at: "2026-11-02"
 license: CC BY-SA 4.0
 language: en
 canonical_url: https://github.com/JeanHuguesRobert/cogentia/blob/main/instructions/AGENTS.shared.md
@@ -135,6 +135,18 @@ Before creating or substantively modifying a derivative representation (Living B
 6. Return observations, contradictions and substantive revisions revealed by projection use to a qualified trace/source intake; do not silently rewrite the source from a derivative.
 
 **Boundaries:** Corpus membership ≠ canonical source authority; publication/freeze ≠ source promotion; projection ≠ proof that projected claims are correct. A frozen publication may be a primary historical trace **of what was published**, without becoming canonical authority for its underlying doctrine. Co-sovereign language peers retain their separate explicit contract.
+
+### External-reader intelligibility gate — public projections
+
+After **Source Before Projection** and before delivering public-facing prose, a Living Book chapter, civic/legal explanation, campaign note, or other text intended for readers unfamiliar with the Corpus, the handler MUST apply the situated reader test in [Self-Contained Documents in an Interconnected Corpus](../research/self_contained_documents.md).
+
+- Identify the actual audience and its reasonable prerequisites; do not confuse the Principal, an already-informed conversation participant, and the text's eventual independent reader.
+- Locate specialized Corpus terms, acronyms, methodological labels, and implicit cross-document dependencies that are **essential** to understanding the argument.
+- At first substantive use, give each essential term a **minimal local explanation** (prefer a concrete problem before the label), with a short example when useful. A canonical link supplies provenance and depth; it does **not** replace the reader's essential explanation.
+- Reread the final draft as someone arriving without the prior conversation or Corpus: can that reader state the claim, understand its pivotal concepts and grasp its limits without first following references? If not, repair the text before delivery.
+- Apply Occam to the reader's **total comprehension cost**, not the word count. Do not turn dense research sources into universal tutorials: this gate is proportionate to audience, purpose and genre and does not require encyclopedic self-containment.
+
+**Observed regression, 2026-11-02:** a public-facing text on Capable invoked “Terrains Féconds” without introducing the concept. The failure was audience mediation, not missing source material. For such cases, explain the practical reframing of a disagreement before naming the method. Preserve source/projection authority, publication permission and disclosure boundaries separately; this gate does not authorize publication or third-party engagement.
 
 ### Public projection disclosure gate
 
