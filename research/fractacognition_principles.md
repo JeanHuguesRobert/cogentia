@@ -5,8 +5,8 @@ description: "Consolidating note articulating FractaCognition definition, multis
 author: "Jean Hugues Noël Robert, baron Mariani"
 affiliation: "Institut Mariani / C.O.R.S.I.C.A., 1 cours Paoli, F-20250 Corte, Corsica"
 date: "2026-09-27"
-last_modified_at: "2026-10-08"
-version: "0.8"
+last_modified_at: "2026-11-02"
+version: "0.9"
 status: "working-paper"
 license: "CC BY-SA 4.0"
 language: "en"
@@ -41,6 +41,7 @@ related_documents:
   - "research/simplicite_action.md"
   - "research/non_resolutive_response_patterns.md"
   - "research/locality_principle.md"
+  - "research/self_contained_documents.md"
   - "research/telescript_as_a_friend.md"
   - "research/propagation_register.md"
   - "docs/frontmatter-schema.md"
@@ -830,6 +831,16 @@ A principle SHOULD remain primarily explained where its domain-specific semantic
 Canonical rule:
 
 > **Consolidate relationships, not authority.**
+
+### Coût d'intelligibilité et autonomie documentaire située (2026-11-02)
+
+L'économie cognitive documentaire ne se mesure ni au nombre de pages ni à la densité des liens. Un texte court peut transférer au lecteur un coût considérable de recherche, de traduction conceptuelle et de vérification ; un texte intégralement autoporteur peut devenir illisible par hypertrophie et duplication.
+
+**Prendre la finalité et le lecteur comme critères.** Une source de recherche dense peut renvoyer aux doctrines spécialisées tout en exposant sa thèse, ses réserves et son niveau de preuve. Un document pédagogique destiné à un novice peut nécessiter définitions et exemples locaux. Un paquet destiné à une continuation doit rendre ses dépendances effectivement disponibles. Une preuve ou un acte engageant ne peut renvoyer silencieusement sa justification à une chaîne circulaire de documents.
+
+**Ne pas confondre :** autonomie argumentative (thèse et limites critiquables), autonomie pédagogique (prérequis adaptés), autonomie opérationnelle (contexte nécessaire à l'acte) et autonomie encyclopédique (prétendre tout contenir). La quatrième est rarement un objectif pertinent. Préférer, selon le cas, **définition locale minimale, référence canonique qualifiée, annexe ou produit dérivé adapté**, sans fusionner les sources pour une impression d'autosuffisance.
+
+La règle complète et son tableau de décisions résident dans [*Self-Contained Documents in an Interconnected Corpus*](self_contained_documents.md) v0.4. C'est une **heuristique de FractaCognition**, pas une nouvelle obligation de frontmatter ni un contrôle automatique de longueur.
 
 ## 13. Placement rule
 
