@@ -1,9 +1,9 @@
 ---
 title: "Fractalisation — hypothèse de méthode pour composer les capacités autonomes"
-subtitle: "Du fractal descriptif au fractal méthodique, en complément de la paquetisation"
+subtitle: "Scalabilité opérationnelle des capacités, distincte du réductionnisme"
 author: "Jean Hugues Noël Robert — proposition issue de l'exploration du 2026-11-02"
 date: "2026-11-02"
-version: "0.1"
+version: "0.2"
 status: "working-paper — hypothèse méthodologique à éprouver"
 document_role: source
 document_kind: research-note
@@ -41,6 +41,18 @@ L'expression vient compléter les principes *déjà présents* du Corpus, partic
 Une unité peut être un agent, une équipe, une cellule collective, un service, un mandat ou un assemblage temporaire. Les parties ne sont pas des miniatures obligatoires du tout. La méthode s'applique aussi à la **recomposition latérale**, non seulement à une hiérarchie parent/enfant.
 
 Il ne suffit pas qu'une organisation soit divisée ou distribuée : elle doit préserver une **capacité locale effective de juger, décider, agir, réparer et apprendre**, sous les pouvoirs applicables.
+
+## Réductionnisme, holisme et scalabilité — clarification du 2 novembre 2026
+
+**Fractionner n'est pas nécessairement fractaliser.** Le réductionnisme décompose un problème pour faciliter sa compréhension et son traitement. Il reste utile, mais la décomposition ne suffit pas toujours à expliquer les interactions, rétroactions et propriétés émergentes du tout. Les approches holistiques, interdisciplinaires et transdisciplinaires cherchent à rétablir ces relations ; leurs proclamations ne garantissent pas leur mise en œuvre effective.
+
+**La fractalisation proposée est avant tout une méthode appliquée d'organisation de l'action.** Sa finalité n'est ni de réduire cognitivement un gros problème en petites parties, ni de proclamer abstraitement l'unité d'un système : elle cherche à composer, déléguer, articuler et recomposer des unités relativement autonomes, capables de décider et d'agir à plusieurs échelles. L'analyse réductionniste et la synthèse holistique peuvent toutes deux contribuer à cette méthode sans s'y confondre.
+
+**L'impératif dominant est la scalabilité effective** : augmenter le nombre de tâches, d'agents, de participants ou de territoires et la complexité des missions sans croissance insoutenable de la coordination, des validations humaines, des coûts de calcul, des dépendances centrales ni des dommages externalisés. L'objectif n'est pas de multiplier les unités mais de préserver ou d'accroître la capacité d'agir en changeant d'échelle, y compris par fusion ou simplification lorsqu'elle est préférable.
+
+L'IA peut rendre cette méthode praticable en réduisant le coût cognitif de la coordination, de la négociation, du jugement contextualisé, de la traçabilité et de la réconciliation. Mais ces gains sont **hypothétiques** : des agents supplémentaires peuvent aussi multiplier les communications, les erreurs corrélées, la consommation de ressources et la surveillance nécessaire. Comparer des solutions simples, centralisées et fractalisées sur les mêmes missions et charges croissantes.
+
+**Proposition de test :** mesurer, selon la charge, la capacité effective accomplie, le coût de coordination et de calcul, l'attention humaine par unité de résultat, la latence, la résilience, la qualité et l'imputabilité des décisions, la capacité de correction et l'exposition imposée à autrui. Un résultat favorable sur un seul axe ne suffit pas ; aucune loi d'échelle ni propriété géométrique n'est présumée.
 
 ## Fractalisation versus paquetisation
 
@@ -92,7 +104,7 @@ Les précédents prouvent l'existence de **familles d'idées voisines**, pas la 
 
 **T1 — Sans hub :** deux localités suffisamment mandatées poursuivent leurs tâches en dépit de la disparition temporaire d'un coordinateur global ; les restrictions d'autorité et les budgets communs restent respectés ou l'opération s'arrête explicitement.
 
-**T2 — Granularité utile :** sur mêmes missions, comparer monolithe, partage fixe et composition adaptative. Mesurer taux d'accomplissement, coûts compute/latence/coordination, interventions humaines, effets négatifs, possibilité de réparation et continuité.
+**T2 — Scalabilité et granularité utile :** comparer monolithe, partage fixe et composition adaptative sur plusieurs charges croissantes (tâches, agents, participants et dépendances). Mesurer taux d'accomplissement, coûts compute/latence/coordination, interventions humaines, effets négatifs, possibilité de réparation et continuité.
 
 **T3 — Imputabilité :** une tâche traverse plusieurs délégations et échanges latéraux ; un vérificateur externe reconstruit les chaînes de décision, les autorités et les risques sans supposer qu'un journal constitue à lui seul la preuve de légitimité.
 
