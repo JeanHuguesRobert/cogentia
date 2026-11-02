@@ -4,10 +4,10 @@ subtitle: A methodological principle for interconnected corpora without circular
 author: Jean Hugues Noël Robert
 affiliation: Institut Mariani / C.O.R.S.I.C.A., 1 cours Paoli, F-20250 Corte, Corsica
 date: '2026-05-27'
-status: Working note — v0.3, stabilized after external review
-version: '0.3'
+last_modified_at: '2026-11-02'
+status: Working note — v0.4, situated self-containment and cognitive-access costs
+version: '0.4'
 license: CC BY-SA 4.0
-intended_path: research/self_contained_documents.md
 canonical_url: https://github.com/JeanHuguesRobert/cogentia/blob/main/research/self_contained_documents.md
 method:
   - second method
@@ -23,10 +23,14 @@ tags:
   - second method
   - pipeline
   - traceability
+  - cognitive-access
+  - locality
 related_documents:
   - cogentia/research/pipeline.md
   - barons-Mariani/research/traceabilite_des_actes.md
   - cogentia/research/derived_products.md
+  - cogentia/research/fractacognition_principles.md
+  - cogentia/research/fractalisation_method_hypothesis_2026-11-02.md
 reviewed_by:
   - Grok — external AI reviewer
 ai_assisted_by:
@@ -82,6 +86,61 @@ This interconnection is a strength.
 But it creates a risk: an external reader may feel that each document justifies itself by referring to another document within the same corpus, without providing enough internal support.
 
 The principle of the **self-contained document** answers this risk.
+
+## Relecture FractaCognition : autonomie argumentative et coût d'accès (2026-11-02)
+
+La formulation initiale de cette note mérite une **qualification méthodologique**. Elle identifie justement le danger de la circularité documentaire, mais la règle « un document important doit être self-contained » ne saurait devenir une obligation de redéfinir toute sa généalogie conceptuelle.
+
+Distinguons quatre propriétés qui ne se confondent pas :
+
+1. **Autonomie argumentative** : on peut identifier la thèse, son statut (fait, hypothèse, analogie, proposition), ses principaux arguments, objections et conditions de révision à partir du texte.
+2. **Autonomie opérationnelle** : on peut effectuer une tâche ou reprendre un travail à partir du document et de ses dépendances effectivement disponibles, dans les limites du mandat ; une référence inaccessible peut rendre une continuation inutilisable.
+3. **Autonomie contextuelle ou pédagogique** : un lecteur correspondant au public visé dispose d'assez de définitions, d'exemples et de contexte pour comprendre le texte sans exploration préalable importante.
+4. **Autonomie encyclopédique** : l'ensemble des fondements et développements connexes est incorporé. Cette dernière n'est **généralement ni possible ni souhaitable** : elle multiplie les répétitions, le volume, les divergences de versions et les efforts de lecture.
+
+Un texte peut donc être **une bonne source argumentative tout en étant explicitement dépendant d'autres sources pour l'explication approfondie de ses concepts**. Sa qualité dépend de la visibilité de cette dépendance et de l'adéquation au lecteur, non d'une autarcie documentaire de principe.
+
+**Règle de choix :** documenter *localement* ce qui est indispensable à la bonne interprétation ou à l'action attendue ; **référencer** les doctrines canoniques stables et les développements utiles ; **produire une projection adaptée** lorsque le lecteur visé n'a pas les prérequis. Ne pas transformer un document source dense en vulgarisation universelle par défaut.
+
+### Arbitrer entre reprise locale et référence
+
+| Situation | Choix généralement approprié | Raison |
+|---|---|---|
+| Définition centrale sans laquelle la thèse change de sens | Définition minimale locale + lien canonique | Éviter l'ambiguïté, préserver une source détaillée unique |
+| Preuve, objection décisive ou limitation du résultat | Exposition suffisante dans le texte + référence probatoire | Permettre la critique sans argument d'autorité circulaire |
+| Historique, cas supplémentaires, état de l'art détaillé | Référence explicite | Éviter duplication et dérive de versions |
+| Document public destiné à un lecteur novice | Explication locale plus développée, ou produit dérivé autonome | Réduire la charge d'acquisition des prérequis |
+| Note de recherche pour lecteur déjà initié | Compression avec dépendances identifiées | Optimiser l'attention et la maintenance |
+| Paquet de transfert ou mission pouvant être exécutée hors ligne | Contexte suffisant inclus ou dépendances résolues et accessibles | La simple existence d'un lien ne garantit pas la reprise |
+| Acte engageant, juridique ou probatoire | Définir l'objet et l'autorité, fournir preuve et provenance exploitables | Le lecteur doit pouvoir vérifier ce qui l'engage |
+| Concept instable ou controversé | Expliciter l'hypothèse locale et l'état de son incertitude | Ne pas déléguer silencieusement la justification à un autre texte |
+
+Le **coût d'intelligibilité total** ne se lit pas dans le nombre de pages. Il comprend : effort de lecture, connaissance préalable, coût de recherche et de navigation, résolution des ambiguïtés, vérification des sources, entretien des répétitions et coût d'une erreur de compréhension. Ce n'est **pas un score universel** mais une grille de jugement.
+
+### Trois niveaux utiles, sans schéma obligatoire
+
+- **Source dense reliée** : argumentative, traçable, précise ; présupposés nommés et liens vérifiables ; pas nécessairement pédagogique pour un novice.
+- **Source ou dossier autonome pour une tâche** : inclut le contexte minimal réellement indispensable à l'analyse, à la décision ou à la continuation, y compris hors contexte ordinaire lorsque nécessaire.
+- **Produit dérivé intelligible pour un public** : réorganise et explique les notions requises, sans se substituer à la source canonique ni la réécrire silencieusement.
+
+Ces niveaux sont **des options situées**, pas des statuts obligatoires ni un nouveau protocole. Un même corpus peut conserver une source concise, un guide introductif et une annexe savante ; ils ne doivent pas être artificiellement fusionnés en un unique document hypertrophié.
+
+### Test de FractaCognition avant d'écrire ou réviser
+
+1. **Qui doit comprendre ou agir ?** Quels prérequis peut-on raisonnablement supposer ?
+2. **Que doit-il pouvoir contester ou vérifier sans sortir du texte ?** Éviter de sous-traiter les principales affirmations à des références internes.
+3. **Quelles dépendances doivent être effectivement accessibles ?** Un lien pertinent mais inaccessible ne rend pas le document opérationnel.
+4. **L'explication ajoutée simplifie-t-elle l'effort réel ou ne fait-elle que déplacer la complexité ?**
+5. **Quelle solution évite la duplication inutile : définition locale, lien qualifié, annexe, produit dérivé ou assistance IA sourcée ?**
+6. **Le texte conserve-t-il son propre niveau de preuve et la frontière entre source canonique et interprétation assistée ?**
+
+**Critère d'Occam :** le minimum d'explication **suffisant pour la finalité et le lecteur**, non le minimum de mots. **Principe de Localité :** la définition et la preuve résident autant que possible près de leur source ; leur résumé est localisé seulement là où le besoin du lecteur ou de l'acte le justifie. **Paquetisation :** le contenu nécessaire à une reprise doit rester accessible, et non seulement désigné par son nom.
+
+**Cas témoin :** le document [Fractalisation v1.0](fractalisation_method_hypothesis_2026-11-02.md) expose sa thèse et ses limites, mais présuppose certains concepts de Cogentia dont les définitions approfondies restent ailleurs. Il est légitime comme **source dense reliée**, sans prétendre être une introduction autoportante à l'ensemble du Corpus. Une présentation publique peut être dérivée séparément, si un public et une finalité le justifient.
+
+La prescription plus ancienne dans le présent document (« viser Oui partout », « plus public = plus self-contained ») doit désormais être lue **à la lumière de ce choix situé** : elle fournit une heuristique pour les textes destinés à une critique externe, **non une condition universelle imposée à chaque document source**. L'autonomie argumentative reste souhaitable ; l'autonomie pédagogique et opérationnelle se déterminent selon l'usage.
+
+---
 
 ## Central principle
 
