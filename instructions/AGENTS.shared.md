@@ -3,7 +3,7 @@ title: Cogentia Shared Agent Instructions
 author: unknown
 affiliation: "Institut Mariani / C.O.R.S.I.C.A., 1 cours Paoli, F-20250 Corte, Corsica"
 status: "working-paper — active operational mandate"
-version: 42
+version: 43
 date: 2026-10-02
 last_modified_at: "2026-11-02"
 license: CC BY-SA 4.0
@@ -147,6 +147,16 @@ After **Source Before Projection** and before delivering public-facing prose, a 
 - Apply Occam to the reader's **total comprehension cost**, not the word count. Do not turn dense research sources into universal tutorials: this gate is proportionate to audience, purpose and genre and does not require encyclopedic self-containment.
 
 **Observed regression, 2026-11-02:** a public-facing text on Capable invoked “Terrains Féconds” without introducing the concept. The failure was audience mediation, not missing source material. For such cases, explain the practical reframing of a disagreement before naming the method. Preserve source/projection authority, publication permission and disclosure boundaries separately; this gate does not authorize publication or third-party engagement.
+
+### Editorial control-plane / reader-copy data-plane separation
+
+For every reader-facing draft or publication projection, MUST separate **editorial control state** (review status, approval/publication gates, deployment readiness, proof receipts, internal caveats, packet references and editorial instructions) from the **exact copy intended for the reader**. Put workflow state in frontmatter that is excluded from rendering, the owning Cognitive Packet, or a separate editorial record; do not append an internal checklist, hidden HTML production comment, or operations appendix to the public-facing body. A public GitHub draft may contain machine-readable frontmatter without making it part of the reader's text.
+
+This separation is **semantic as well as structural**. Before delivery, inspect the prose for control-plane leakage disguised as substantive narration, e.g. “This proposal is not yet filed or adopted”, “This text will be reviewed and amended”, “Pending domain verification”, or other release/evidence disclaimers irrelevant to what the author wishes to communicate. Transfer such checks to the owning packet instead of merely deleting their labels. Express the proposal's actual purpose, intended changes and invitations to participate. Preserve truthfulness: real material facts and meaningful substantive limitations remain in the public text when necessary; what disappears is the agent's internal production commentary, not relevant uncertainty.
+
+**Acceptance test:** export the exact reader-facing body without frontmatter or external packet context; an independent reader sees only the author's communication, never build/review/deployment instructions. Verify any promised public destination before externally publishing, without embedding deployment uncertainty into the announcement itself. Genre matters: scholarly analysis may legitimately discuss proof status, whereas an authored founding declaration should not be diluted by automatic reviewer commentary.
+
+**Regression (2026-11-02):** the Capable announcement included an internal editorial annex and a sentence qualifying its constitutional proposal as “not yet filed or adopted”. These belonged to the issue control plane, not to the declaration. See [Capable launch packet #156](https://github.com/JeanHuguesRobert/barons-Mariani/issues/156) and [Living Book editorial genre separation](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/livre_vivant.md).
 
 ### Public projection disclosure gate
 
