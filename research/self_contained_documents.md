@@ -5,8 +5,8 @@ author: Jean Hugues Noël Robert
 affiliation: Institut Mariani / C.O.R.S.I.C.A., 1 cours Paoli, F-20250 Corte, Corsica
 date: '2026-05-27'
 last_modified_at: '2026-11-02'
-status: Working note — v0.4, situated self-containment and cognitive-access costs
-version: '0.4'
+status: Working note — v0.5, situated self-containment and reader-facing projection gate
+version: '0.5'
 license: CC BY-SA 4.0
 canonical_url: https://github.com/JeanHuguesRobert/cogentia/blob/main/research/self_contained_documents.md
 method:
@@ -133,6 +133,20 @@ Ces niveaux sont **des options situées**, pas des statuts obligatoires ni un no
 4. **L'explication ajoutée simplifie-t-elle l'effort réel ou ne fait-elle que déplacer la complexité ?**
 5. **Quelle solution évite la duplication inutile : définition locale, lien qualifié, annexe, produit dérivé ou assistance IA sourcée ?**
 6. **Le texte conserve-t-il son propre niveau de preuve et la frontière entre source canonique et interprétation assistée ?**
+
+### Contrôle du lecteur extérieur — avant livraison d'une projection publique
+
+Ce contrôle s'applique lorsqu'un texte, même bref, est destiné à un public qui **n'a pas participé au travail préalable**. Il complète le test de FractaCognition ci-dessus sans exiger l'autonomie encyclopédique d'une source de recherche.
+
+1. **Nommer la scène et le lecteur** : qui reçoit le texte, que sait-il raisonnablement, que doit-il comprendre ou pouvoir contester ?
+2. **Repérer les dépendances cachées** : notions, acronymes, noms de méthodes et catégories propres au Corpus dont le sens est nécessaire à la proposition.
+3. **Introduire localement chaque notion indispensable** au moment de son premier usage substantiel : problème concret ou situation accessible, puis définition courte et, si utile, exemple. Éviter d'exhiber un terme spécialisé comme un concept évident.
+4. **Conserver le renvoi canonique pour l'approfondissement et la preuve**, non comme substitut de la définition minimale ou de l'argument central. Un lien seul ne dispense jamais de fournir au lecteur la clé du sens.
+5. **Effectuer une seconde lecture « arrivée sans contexte »** : sans conversations antérieures ni consultation du Corpus, le lecteur peut-il restituer la thèse, comprendre les termes qui la portent et situer la limite de la proposition ? Si non, réviser avant livraison.
+
+**Critère de passage :** toute notion spécialisée indispensable à la compréhension d'un texte public pour non-initiés possède une introduction locale suffisante. Cette vérification est éditoriale et proportionnée : elle n'impose ni glossaire universel, ni longueur minimale, ni redéfinition complète des doctrines dans les sources expertes. Une source spécialisée peut assumer des prérequis **annoncés** ; sa projection publique ne peut les présumer silencieusement.
+
+**Cas de régression observé (2026-11-02).** Une présentation du Mouvement Capable et de l'histoire de la devise républicaine introduisait « Terrains Féconds » sans en exposer le sens pour un lecteur extérieur. Réparation minimale : partir du débat concret, expliquer pourquoi sa reformulation ouvre des options examinables, puis nommer un *terrain fécond* comme cette reformulation du désaccord ; ajouter ensuite, si nécessaire, la référence [La méthode des terrains féconds](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/methode_terrains_feconds.md). Le problème n'était pas l'absence de doctrine, mais sa projection sans médiation pédagogique.
 
 **Critère d'Occam :** le minimum d'explication **suffisant pour la finalité et le lecteur**, non le minimum de mots. **Principe de Localité :** la définition et la preuve résident autant que possible près de leur source ; leur résumé est localisé seulement là où le besoin du lecteur ou de l'acte le justifie. **Paquetisation :** le contenu nécessaire à une reprise doit rester accessible, et non seulement désigné par son nom.
 
@@ -350,13 +364,13 @@ Self-containment should not create documentary inflation.
 
 Not every document needs to redefine the whole corpus. The principle must remain proportionate:
 
-- the more public the document is, the more self-contained it should be;
+- the more a public document addresses readers without corpus prerequisites, the more pedagogically self-contained its essential claims and terms should be;
 - the more central a concept is, the more it should be defined;
 - the stronger a claim is, the more it should provide its own support;
 - the more operational a document is, the more it should avoid excessive conceptual cross-references;
 - the shorter the derived product is, the more selective its self-containment must be.
 
-In short, self-containment is a matter of proportion, not perfection.
+In short, self-containment is a matter of proportion, not perfection. These older heuristics are subordinate to the situated reader-and-purpose test above; they are not a universal requirement to explain every source concept in every document.
 
 ## Open work
 
