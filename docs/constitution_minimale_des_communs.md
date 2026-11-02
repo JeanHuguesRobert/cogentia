@@ -1,27 +1,27 @@
 ---
 title: "La constitution minimale des communs"
 subtitle: "Prendre soin du bien, rendre visibles ses transformations, gouverner ensemble ses usages"
-description: "Proposition de noyau constitutionnel en trois clauses pour les biens mis en commun, y compris lorsque leur propriété demeure privée."
+description: "Noyau constitutionnel validé en trois clauses pour les biens mis en commun, y compris lorsque leur propriété demeure privée."
 author: "Jean Hugues Noël Robert"
 affiliation: "Institut Mariani / C.O.R.S.I.C.A., 1 cours Paoli, F-20250 Corte, Corsica"
 date: "2026-07-17"
-status: "proposition de document source — working paper non encore validé"
-version: "0.1-draft"
+status: "document source — cohérence doctrinale validée par le Principal le 2026-11-02; expérimentation ouverte"
+version: "0.2"
 license: "CC BY-SA 4.0"
 language: "fr"
-canonical_url: "unknown — publication GitHub non encore autorisée"
+canonical_url: "https://github.com/JeanHuguesRobert/cogentia/blob/main/docs/constitution_minimale_des_communs.md"
 document_role: "source"
 document_kind: "research-paper"
-visibility: "local-draft"
-lifecycle_state: "proposed"
+visibility: "public"
+lifecycle_state: "active"
 classification_source: "human-AI drafting checkpoint"
 classification_version: "1"
 classification_rule: "research-paper-source-candidate"
 classification_confidence: "medium"
-human_validation_required: true
+human_validation_required: false
 ai_assisted_by:
   - "ChatGPT — recherche, structuration et rédaction sous arbitrage humain"
-human_arbitration_by: "Jean Hugues Noël Robert — en attente"
+human_arbitration_by: "Jean Hugues Noël Robert — validation doctrinale explicite, 2026-11-02"
 provenance:
   origin_type: "conversation-checkpoint"
   origin_repository: "unknown"
@@ -33,8 +33,9 @@ provenance:
     - "https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/traceabilite_des_actes.md"
     - "https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/second_method.md"
 review:
-  status: "unreviewed"
-  reviewed_by: []
+  status: "validated-by-principal — external review not performed"
+  reviewed_by:
+    - "Jean Hugues Noël Robert — 2026-11-02 (validation conditionnée à la cohérence, vérifiée)"
 update_policy: "UP-DEFAULT-REVIEWED"
 tags:
   - biens communs
@@ -48,13 +49,14 @@ tags:
   - casa cumuna
   - Autonomie de Capacité
 legacy_document_role: "source-candidate"
+validation_note: "Validation du noyau doctrinal et de sa cohérence avec le Corpus, non adoption juridique des règlements dérivés ni homologation externe."
 ---
 
 # La constitution minimale des communs
 
 ## Statut du texte
 
-Ce texte est une **proposition de document source** issue d'une conversation exploratoire. Il formule et met à l'épreuve une intuition de Jean Hugues Noël Robert. Il ne doit pas être tenu pour doctrinalement stabilisé avant son arbitrage humain explicite.
+Ce texte est un **document source validé sur le plan de sa cohérence doctrinale le 2 novembre 2026**, à la suite d'un examen explicite demandé par son auteur. Les trois clauses constituent le noyau retenu ; leurs applications, les modalités juridiques et les hypothèses empiriques demeurent ouvertes à l'expérimentation, à la critique et à la révision. Cette validation ne vaut pas adoption d'un règlement par une communauté particulière.
 
 La proposition tient en trois clauses. Le présent article ne cherche pas à les remplacer par un règlement exhaustif. Il examine ce qu'elles rendent possible, ce qu'elles laissent volontairement ouvert et les règles secondaires qu'un commun concret devra produire.
 
@@ -247,6 +249,20 @@ Le principe de précaution retrouve ainsi une place proportionnée. Il ne doit �
 
 ---
 
+### Finalité, initiative, risque et imputabilité — précision du 2 novembre 2026
+
+Les trois clauses prescrivent des **finalités communes** (soin, transmission, observabilité, gouvernement légitime), non une liste exhaustive de moyens. Le mandataire ou l'usager dispose, dans le périmètre de ses droits et des limites impératives, d'une large liberté d'initiative. Une règle dérivée doit être appréciée aussi d'après les possibilités d'action qu'elle entrave, et non seulement le dommage qu'elle prétend éviter.
+
+**Le devoir d'amélioration n'est pas une garantie de réussite.** Une initiative raisonnable, autorisée et proportionnée peut échouer sans constituer une faute ; l'apprentissage et la réparation possible comptent. L'absence totale d'échec n'est pas un objectif institutionnel et aucun quota d'erreurs ne doit être produit. Une réussite obtenue en transférant indûment le risque à autrui ne suffit pas à prouver la conformité de l'action.
+
+**Le risque doit rester imputable.** Une collectivité peut légitimement autoriser des explorations dont le résultat demeure incertain ; elle doit distinguer celui qui décide, celui qui bénéficie, celui qui supporte le risque et les tiers exposés. Une décision collective n'autorise pas à externaliser arbitrairement les pertes sur ceux qui n'ont pas consenti. La doctrine **DHITL (*Democratic Humans in the Loop*)** rattache les décisions engageantes aux personnes et organes humains compétents ; la traçabilité technique et les agents IA n'absorbent pas leur responsabilité.
+
+**La réconciliation précède, lorsque possible, le contentieux institutionnalisé.** Observation contradictoire, discussion, négociation, médiation, rectification et réparation peuvent suffire. La possibilité d'un juge ou d'un recours effectif demeure préservée lorsque les droits en jeu ou un différend réel le rendent nécessaire ; aucun tribunal artificiel ne doit être inventé par anticipation.
+
+Ces clarifications relient le texte à [*Mandate — Reasonable Agency*](../research/mandate_reasonable_agency.md), au [*Risque Mesuré*](../research/measured_risk.md), au [*Principe Rossignol*](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/principe_rossignol.md) et à [*DAO, imputabilité et DHITL*](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/dao_imputabilite_dhitl.md), sans ajouter une quatrième clause constitutionnelle.
+
+---
+
 ## 10. Cas d'épreuve : une « bright kitchen » à usages flexibles
 
 Le projet exploratoire « Autonomia, miam miam » fournit un terrain concret. Au lieu d'un restaurant en libre-service pour les convives, le lieu devient une infrastructure de restauration mise à disposition de ceux qui souhaitent inviter, cuisiner, organiser un repas ou produire un événement.
@@ -315,7 +331,7 @@ Oui. Le périmètre mis en commun est défini par un mandat ou un titre. La dém
 
 ### 12.5 Le noyau ne prévoit ni sanctions ni tribunal
 
-C'est volontaire. Les sanctions graduées et la résolution des conflits sont indispensables à un commun durable, mais leur forme dépend fortement de la ressource. Elles sont des règles constitutionnellement dérivées : elles doivent être produites démocratiquement, tracées et révisables.
+C'est volontaire. La capacité de traiter les désaccords et, si nécessaire, les manquements est importante pour un commun durable. Il n'est pas nécessaire d'instituer d'emblée sanctions, tribunal ou procédure lourde : la négociation, la médiation, la correction et la réparation peuvent répondre aux premières situations. Si des conflits concrets l'exigent, les règles dérivées devront définir des recours effectifs et des décisions compétentes, démocratiquement institués, tracés et révisables, sans supprimer les garanties légales existantes.
 
 ### 12.6 Les générations futures ne sont pas des usagers actuels
 
@@ -378,12 +394,12 @@ Elle fournit aussi un critère de vérité à la *casa cumuna*. La maison n'est 
 
 ---
 
-## Trace de production à compléter avant stabilisation
+## Trace de production et validation doctrinale
 
 - **Principal humain :** Jean Hugues Noël Robert.
 - **Mandat :** transformer la mini-constitution en proposition d'article académique reliée au corpus des communs et de l'Autonomie de Capacité.
 - **Assistance :** ChatGPT, recherche, structuration, rédaction et explicitation des objections.
-- **Arbitrage doctrinal :** en attente de validation humaine.
-- **Revue externe :** non effectuée.
-- **Statut GitHub :** aucune branche, aucun commit et aucune publication créés à la date de cette version locale.
+- **Arbitrage doctrinal :** validation explicite par le Principal le 2 novembre 2026, après examen de cohérence avec le Corpus mis à jour ; les trois clauses sont conservées.
+- **Revue externe :** non effectuée ; les questions d'efficacité empirique et de qualification juridique ne sont pas déclarées résolues.
+- **Statut GitHub :** document publié dans le dépôt Cogentia ; version mise à jour et validée dans le présent commit.
 - **Point sensible :** la qualification juridique des mécanismes de mise à disposition d'un bien privé doit être vérifiée par un juriste pour chaque cas réel.
