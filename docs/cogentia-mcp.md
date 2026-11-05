@@ -343,6 +343,24 @@ For a bounded, no-paid-provider evaluation, set
 `COGENTIA_GUIDE_OPENROUTER_FREE_MODEL`. This mode is opt-in; it bypasses the
 daemon, OpenAI, and paid OpenRouter candidates for synthesis.
 
+### 5 November 2026 — #299 canonical authority admission preflight (not activated)
+
+`scripts/lib/cop-super-admission.js` provides a **non-executing**, fail-closed
+preflight for an integration with Inseme's `evaluateMandate()` and its
+canonical event-sourced execution-budget ledger. It accepts only mandate
+references (not caller-provided declaration objects), requires verified
+principal and actor context, `super` intent, successful mandate evaluation
+and a budget ledger with an authority grant for the same mandate. It
+**does not** mint `side_effect_authorization`, reserve budget, or invoke the
+broker: a real atomic Inseme reservation, issuer provenance, and a trusted
+production store connector remain mandatory prior to execution.
+
+Read-only Supabase check of JHN on 2026-11-05: `cop_mandates` 0 rows,
+`cop_accounting_budget` 0 rows, and `cop_event_log` 0 event types containing
+Mandate or Budget. Existing persistent COP tables therefore cannot yet supply
+a verified funded mandate for super execution. No synthetic authority was
+inserted and the live MCP/broker authorization policy was not changed.
+
 ### 5 November 2026 — Fracta2 super broker observed; end-to-end authority still unverified
 
 **Live observation (read-only; not an execution authorization):**
