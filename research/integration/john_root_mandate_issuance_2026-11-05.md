@@ -49,6 +49,19 @@ an approval JSON with `kind: cogentia.principal-signature/v1`,
 checks it against the independently pinned public key. The command deliberately
 has no `issue`, `grant`, or `deploy` mode.
 
+## Atomic issuance adapter — tests only
+
+`scripts/lib/john-root-issuance.js` consumes a verified proposal/signature,
+requires an existing canonical store supporting `appendBatch`, refuses
+pre-existing mandate/budget topics and stages two Inseme events:
+`MandateDeclaration` and `ExecutionBudgetGrant`. Both are appended as one
+atomic batch; issuer fingerprint, signature and exact proposal hash are
+included in the mandate event. The test uses Inseme's SQLite store `:memory:`
+with an **ephemeral** Ed25519 key, confirms `evaluateMandate` can resolve the
+result, and tests forged signature and duplicate refusal. This is proof of
+**technical compatibility, not of a Principal identity or production issuance**.
+The adapter is not wired into any production MCP endpoint or service.
+
 ## Mandatory next work before issuance
 
 1. Provide an independently controlled identity enrollment process and pin the
