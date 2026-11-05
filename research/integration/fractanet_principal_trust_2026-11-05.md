@@ -118,6 +118,34 @@ accessed the capability catalogue and an EXPOSE for `id -un`, returning
 identity or confirmation**. This is a passing transport/preparation test,
 not a passing Principal approval test.
 
+## Signed transaction-bound OAuth step-up — 2026-11-05
+
+The existing `verifyMcpOAuthToken()` now accepts an **optional, server-supplied**
+`approvalBinding`: exact `challenge_id`, `payload_hash`, `action_class` and
+challenge `issued_at`. After signature validation, it requires a corresponding
+issuer-signed `cogentia_approval` claim with `confirmed: true`, a fresh
+`auth_time` not preceding the challenge, and an `amr` value of
+`user_presence`. A generic `cogentia.principal.approve` bearer is **not**
+sufficient. `createPrincipalStepUpVerifier()` composes these checks with the
+registered issuer+subject-to-Principal binding and can serve as the trusted
+callback of `confirmPrincipalApproval()`.
+
+This claim contract is **Cogentia-specific**, not a standard OAuth guarantee.
+The issuer must be separately configured and independently verified to mint
+these claims **only after** an actual human sees and confirms the exact
+transaction. Configuring a generic JWT service that permits clients or
+agents to request arbitrary `amr`, `auth_time` or `cogentia_approval` claims
+would defeat the protection. A verified ChatGPT connection or Tailscale node
+alone does not satisfy this transaction contract. Tests use a generated,
+short-lived RSA issuer key and signed example tokens with the real Inseme
+SQLite event store, not a production identity service.
+
+No approval route or grant minting has been activated. Next: select an
+existing trusted identity provider capable of this transaction-bound human
+assertion (or a comparably protected personal SSH/Tailscale approval surface),
+verify enrollment and actual human participation, and only then connect the
+issuer to canonical COP authority, revocation, budgets and privileged broker.
+
 ## Common boundary and budget
 
 `trusted principal session` → `confirm exact EXPOSE payload` → `COP issuance`

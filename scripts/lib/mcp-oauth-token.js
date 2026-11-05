@@ -64,5 +64,24 @@ export async function verifyMcpOAuthToken(token, options = {}) {
     ? verifySignature("RSA-SHA256", input, key, sig)
     : verifySignature("sha256", input, { key, dsaEncoding: "ieee-p1363" }, sig);
   if (!valid) fail("invalid_token_signature");
+  // Only a trusted issuer may attest a human confirmation of a *specific*
+  // challenge. Generic MCP access tokens cannot become Principal approvals.
+  const binding = options.approvalBinding;
+  if (binding) {
+    const tx = claims.cogentia_approval;
+    const start = Math.floor(Date.parse(binding.issued_at) / 1000);
+    if (!/^sha256:[a-f0-9]{64}$/.test(binding.payload_hash || '') ||
+        !/^[0-9a-f-]{36}$/i.test(binding.challenge_id || '') ||
+        !Number.isFinite(start) || start > now) fail('approval_challenge_invalid');
+    if (!tx || tx.challenge_id !== binding.challenge_id ||
+        tx.payload_hash !== binding.payload_hash ||
+        tx.action_class !== binding.action_class || tx.confirmed !== true)
+      fail('approval_transaction_mismatch');
+    if (!Number.isSafeInteger(claims.auth_time) ||
+        claims.auth_time < start || claims.auth_time > now ||
+        !Array.isArray(claims.amr) || !claims.amr.includes('user_presence'))
+      fail('approval_human_presence_unverified');
+  }
+
   return { subject: claims.sub, issuer, audience, scopes: [...scopes], claims: { sub: claims.sub, iss: claims.iss, aud: claims.aud, exp: claims.exp } };
 }

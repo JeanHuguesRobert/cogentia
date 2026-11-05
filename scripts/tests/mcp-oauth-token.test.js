@@ -49,3 +49,17 @@ test("rejects tampered signature", async () => {
   const altered = parts.join(".");
   await assert.rejects(verifyMcpOAuthToken(altered, opts), /invalid_token_signature/);
 });
+const challenge={challenge_id:'5d7344a1-5b50-4fa0-b76e-8f27093d900b',payload_hash:'sha256:'+'a'.repeat(64),action_class:'host.process.run',issued_at:new Date(nowMs-10000).toISOString()};
+const approved={scope:'cogentia.principal.approve',auth_time:Math.floor(nowMs/1000)-5,amr:['user_presence'],cogentia_approval:{challenge_id:challenge.challenge_id,payload_hash:challenge.payload_hash,action_class:challenge.action_class,confirmed:true}};
+test('signed fresh human presence bound to exact challenge passes',async()=>{
+ const r=await verifyMcpOAuthToken(token(approved),{...opts,requiredScopes:['cogentia.principal.approve'],approvalBinding:challenge});
+ assert.equal(r.subject,'principal:jhn');
+});
+test('ordinary MCP bearer, tampered binding or stale human presence cannot approve',async()=>{
+ const options={...opts,requiredScopes:['cogentia.principal.approve'],approvalBinding:challenge};
+ await assert.rejects(verifyMcpOAuthToken(token({scope:'cogentia.principal.approve'}),options),/approval_transaction_mismatch/);
+ await assert.rejects(verifyMcpOAuthToken(token(approved),{...options,approvalBinding:{...challenge,payload_hash:'sha256:'+'b'.repeat(64)}}),/approval_transaction_mismatch/);
+ await assert.rejects(verifyMcpOAuthToken(token({...approved,auth_time:Math.floor(nowMs/1000)-30}),options),/approval_human_presence_unverified/);
+ await assert.rejects(verifyMcpOAuthToken(token({...approved,amr:['pwd']}),options),/approval_human_presence_unverified/);
+ await assert.rejects(verifyMcpOAuthToken(token({...approved,cogentia_approval:{...approved.cogentia_approval,confirmed:false}}),options),/approval_transaction_mismatch/);
+});

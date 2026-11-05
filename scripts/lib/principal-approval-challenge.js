@@ -32,7 +32,7 @@ export async function confirmPrincipalApproval({store,challenge_id,payload_hash,
  // Authenticated bearer is not independent proof of a human approval gesture.
  if(typeof verifyHumanConfirmation!=='function'||!approvalProof)return fail('human_confirmation_required');
  let confirmed=false;
- try{confirmed=await verifyHumanConfirmation({approvalProof,challenge_id,payload_hash,session,request_event_id:history[0].event_id});}
+ try{confirmed=await verifyHumanConfirmation({approvalProof,challenge_id,payload_hash,action_class:request.action_class,issued_at:history[0].time.recorded_at,session,request_event_id:history[0].event_id});}
  catch{return fail('human_confirmation_invalid');}
  if(confirmed!==true)return fail('human_confirmation_invalid');
  // Explicit confirmation must occur on the Principal-controlled authenticated
