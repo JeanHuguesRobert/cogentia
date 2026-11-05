@@ -55,13 +55,17 @@ export function createFileStore(filePath) {
   function save(data) {
     fs.mkdirSync(path.dirname(filePath), { recursive: true });
     const tmp = `${filePath}.${process.pid}.tmp`;
-    fs.writeFileSync(tmp, `${JSON.stringify(data, null, 2)}\n`, "utf8");
+    // Authorization decisions are bearer-capable material: never create a
+    // world-readable file, even under a permissive service umask.
+    fs.writeFileSync(tmp, `${JSON.stringify(data, null, 2)}\n`, { encoding: "utf8", mode: 0o600 });
     try {
       fs.renameSync(tmp, filePath);
     } catch {
-      fs.writeFileSync(filePath, `${JSON.stringify(data, null, 2)}\n`, "utf8");
+      fs.writeFileSync(filePath, `${JSON.stringify(data, null, 2)}\n`, { encoding: "utf8", mode: 0o600 });
       try { fs.unlinkSync(tmp); } catch { /* ignore */ }
     }
+    // Existing files may predate this invariant (or have permissive modes).
+    fs.chmodSync(filePath, 0o600);
   }
   return {
     kind: "file",

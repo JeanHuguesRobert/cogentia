@@ -31,6 +31,16 @@ test('uses canonical COP grant and prevents replay without broker grants',async(
   const data=JSON.parse(fs.readFileSync(store,'utf8'));
   assert.ok(data.grants[grant.authorization_id].consumed_at);
 });
+test('broker rejects transport-attested and mandate-derived origins without trusted Principal proof',async()=>{
+  for(const origin of ['mcp_jhn_attested_mutate','mcp_admin_mutate','cli_principal_confirm','mandate_derived']){
+    const {grant,req}=prepare('printf SHOULD_NOT_RUN');
+    const contents=JSON.parse(fs.readFileSync(store,'utf8'));
+    contents.grants[grant.authorization_id].authority_origin=origin;
+    fs.writeFileSync(store,JSON.stringify(contents));
+    const denied=await handle(req);
+    assert.equal(denied.error,'cop_authorization_denied',origin);
+  }
+});
 test('mode, actor, target, mandate and script are bound to the same COP grant',async()=>{
   const {req}=prepare('printf INTENDED');
   for(const alteration of [
