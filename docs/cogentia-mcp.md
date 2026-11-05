@@ -5,7 +5,7 @@ affiliation: unknown
 license: unknown
 language: en
 status: working-paper
-last_modified_at: '2026-10-24'
+last_modified_at: '2026-11-05'
 date: '2026-06-30'
 document_role: source
 document_kind: documentation
@@ -342,6 +342,37 @@ For a bounded, no-paid-provider evaluation, set
 `COGENTIA_GUIDE_OPENROUTER_FREE_FALLBACK=1` and an explicit
 `COGENTIA_GUIDE_OPENROUTER_FREE_MODEL`. This mode is opt-in; it bypasses the
 daemon, OpenAI, and paid OpenRouter candidates for synthesis.
+
+### 5 November 2026 — Fracta2 super broker observed; end-to-end authority still unverified
+
+**Live observation (read-only; not an execution authorization):**
+`cogentia-super.service` is `active (running)` on Fracta2 and runs as
+`root` with group `ubuntu`. The Unix socket
+`/run/cogentia-super/broker.sock` exists with ownership `root:ubuntu`
+and mode `0660`. The unit selects the authorization store path
+`/var/lib/cogentia/side-effect-authorization.json`. These observations
+supersede the earlier *not deployed* description **for the broker process
+only**. They do **not** demonstrate an effective authenticated Principal
+mandate, durable COP reservation, correct MCP feature-flag configuration,
+or a successful `super` execution through the deployed ChatGPT MCP.
+
+The two-phase implementation exists: `cogentia_host_process_prepare`
+exposes the exact target/provider/command/mode and payload hash;
+`cogentia_side_effect_grant` or `cogentia.js effect grant` can mint a
+single-use hash-bound authorization; `cogentia_host_process_run` consumes
+it through the governed route. The CLI is the documented **mint UI**;
+no separate human-facing browser approval UI is evidenced. Hash
+confirmation alone proves agreement of payload bytes, **not independent
+human authentication**; do not manufacture a Principal-issued grant from
+chat text. A `normal` prepared payload cannot authorize `super`: a new
+EXPOSE with `execution_mode: super` is required, and the privileged
+broker must still validate and accept its authority chain. The MCP input
+schema used by the connected client must be checked for support of
+`execution_mode`, rather than assuming source-level support is live.
+
+**Reality-test pending:** inspect MCP runtime feature enablement, trusted
+Principal/mandate evidence and broker-side verification before any
+privileged act. Keep the ordinary shell gateway's `NoNewPrivileges=true`.
 
 ### 1 November 2026 — one COP authority, no mandate labyrinth
 
