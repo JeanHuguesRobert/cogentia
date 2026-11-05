@@ -12,12 +12,12 @@ const {prepareHostProcessRun}=await import('../lib/host-process-prepare.js');
 const {mintSideEffectGrantFromPrepared,setAuthorizationStore}=await import('../lib/side-effect-authorization.js');
 const {createFileStore}=await import('../lib/side-effect-store.js');
 setAuthorizationStore(createFileStore(store));
-function prepare(command,mode='super'){
-  const prepared=prepareHostProcessRun({command,target:'node:fracta2',provider:'unix-process',execution_mode:mode});
+function prepare(command,mode='super',target='node:fracta2'){
+  const prepared=prepareHostProcessRun({command,target,provider:'unix-process',execution_mode:mode});
   const grant=mintSideEffectGrantFromPrepared(prepared,{principal:'principal:test',actor:'agent:test',
     mandate_ref:'mandate:test',confirm:prepared.payload_hash});
   const req={op:'run',execution_mode:'super',authorization_id:grant.authorization_id,
-    script:command,actor:'agent:test',principal:'principal:test',mandate:'mandate:test',target:'node:fracta2',provider:'unix-process'};
+    script:command,actor:'agent:test',principal:'principal:test',mandate:'mandate:test',target,provider:'unix-process'};
   return {grant,req};
 }
 test('uses canonical COP grant and prevents replay without broker grants',async()=>{
@@ -52,4 +52,21 @@ test('mode, actor, target, mandate and script are bound to the same COP grant',a
     assert.equal(result.ok,false);
   }
   assert.equal((await handle(req)).ok,true);
+});
+
+test('legacy Fracta2 resource alias is accepted only with exact trusted origin and hash',async()=>{
+  const {grant,req}=prepare('printf ALIAS_OK','super','resource://fracta2');
+  const data=JSON.parse(fs.readFileSync(store,'utf8'));
+  data.grants[grant.authorization_id].authority_origin='verified_mission';
+  fs.writeFileSync(store,JSON.stringify(data));
+  const result=await handle(req);
+  assert.equal(result.ok,true,JSON.stringify(result));
+  assert.equal(result.stdout,'ALIAS_OK');
+  assert.equal((await handle(req)).error,'cop_authorization_denied');
+  const {grant:untrusted,req:untrustedReq}=prepare('printf NEVER_RUN','super','resource://fracta2');
+  assert.equal(untrusted.authority_origin,'principal');
+  const state=JSON.parse(fs.readFileSync(store,'utf8'));
+  state.grants[untrusted.authorization_id].authority_origin='mcp_jhn_attested_mutate';
+  fs.writeFileSync(store,JSON.stringify(state));
+  assert.equal((await handle(untrustedReq)).error,'cop_authorization_denied');
 });

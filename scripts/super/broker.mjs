@@ -33,16 +33,6 @@ export function trustedSuperStore(pathname, trustedUid=0){
       &&parent.isDirectory()&&!parent.isSymbolicLink()&&parent.uid===trustedUid&&(parent.mode&0o022)===0;
   }catch{return false;}
 }
-// Temporary opt-in one-shot bridge: the Principal expressly authorized this
-// exact EXPOSE hash for one hosted account. No generic MCP -> root authority.
-const pilotHash='sha256:9997c677d88aa2fa26c7252e6a4c616c9a81f1c93e3e03233e80af1ff8a4716e';
-export function isApprovedFredPilot(r,g,enabled=process.env.COGENTIA_SUPER_PILOT_FRED==='1'){
-  return enabled && g?.authority_origin==='mcp_jhn_attested_mutate'
-    && g.payload_hash===pilotHash && r.target==='resource://fracta2'
-    && r.timeout_ms===15000 && r.actor==='agent:jhn'
-    && r.principal==='principal:jhn' && r.mandate==='mandate:jhn:mcp_default'
-    && effectHash(r)===pilotHash;
-}
 export function reserveCopAuthorization(r){
   if(process.getuid?.()===0 && !trustedSuperStore(store))return null;
   const data=JSON.parse(fs.readFileSync(store,'utf8'));
@@ -52,7 +42,7 @@ export function reserveCopAuthorization(r){
     ||g.actor!==r.actor||g.principal!==r.principal||g.mandate_ref!==r.mandate
     ||!(r.target===localNode || (localNode==='node:fracta2' && r.target==='resource://fracta2'))
     ||g.target?.node!==r.target||g.payload_hash!==effectHash(r)
-    ||!(['principal','verified_mission'].includes(g.authority_origin)||isApprovedFredPilot(r,g)))return null;
+    ||!['principal','verified_mission'].includes(g.authority_origin))return null;
   g.consumed_at=new Date().toISOString();
   const stat=fs.statSync(store),tmp=store+'.'+process.pid+'.'+randomUUID()+'.tmp';
   try{

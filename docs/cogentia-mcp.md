@@ -38,6 +38,26 @@ They never open SQLite directly or mutate the corpus without policy authorizatio
 
 For client setup recipes (Claude Code, Grok, Codex, Cursor, and Fracta public service), see [connect-mcp-clients.md](connect-mcp-clients.md).
 
+### 5 November 2026 — completed normal/super Unix pilot
+
+The account `hosted-fred2b20250` was **actually created** on Fracta2 by
+`execution_mode:super` through the temporary MCP to the root-owned broker.
+Readback: UID/GID `1003:1003`, home `0750`, bash shell; root-side single-use
+grant consumed, broker effect `ok:true` and `cop_reserved:true`. This
+supersedes earlier "not created" statements **for this one operation only**.
+
+The completed pilot's hardcoded privileged authorization exception has been
+removed from the source to publish; in production the prior hook remains
+in the executable but its systemd override was removed, so it is disabled.
+Publishing to GitHub is **not** a service redeployment. The Fractanet SSH
+administrative issuer route was reachable to the bootstrap shell and is
+therefore not an independently proven human trust boundary. Durable mandate
+issuance, COP budget reservation and protected human identity remain open.
+Hosted-browser login/access for Fred is a separate workstream.
+
+Full receipt and limitations:
+[`frederic_unix_super_pilot_closure_2026-11-05.md`](../research/integration/frederic_unix_super_pilot_closure_2026-11-05.md).
+
 ### Temporary ChatGPT Unix coding bootstrap — 29 October 2026
 
 **Operationally verified; transitional, not a replacement for governed Cogentia MCP.**
