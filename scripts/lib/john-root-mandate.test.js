@@ -17,6 +17,7 @@ test('payload edits, revoked expiry, delegated forbidden rights and wildcards fa
  assert.equal(checked({...proposal,max_delegation_depth:9},approval(proposal)).error,'approval_binding_mismatch');
  assert.equal(checked({...proposal,scope:{...proposal.scope,forbidden_actions:[]}}).error,'reserved_acts_not_prohibited');
  assert.equal(checked({...proposal,scope:{...proposal.scope,allowed_actions:['*']}}).error,'scope_missing_or_wildcard');
+ assert.equal(checked({...proposal,scope:{...proposal.scope,allowed_actions:['gmail.send']}}).error,'scope_allow_deny_conflict');
  assert.equal(checked({...proposal,budget_limits:{max_steps:Infinity}}).error,'budget_limits_invalid');
  assert.equal(checked({...proposal,valid_until:'2026-10-01T00:00:00Z'}).error,'mandate_outside_validity');
 });
