@@ -3,8 +3,9 @@ title: "Mandate — Reasonable Agency, Judgment, and Accountable Delegation"
 author: "Jean Hugues Noël Robert, baron Mariani"
 affiliation: "Institut Mariani / C.O.R.S.I.C.A. / Cogentia"
 date: "2026-10-30"
-version: "0.2"
-status: "working-note — synthesis for critical review"
+last_modified_at: "2026-11-05"
+version: "0.3"
+status: "working-paper — synthesis for critical review"
 document_role: source
 document_kind: doctrinal-note
 visibility: public
@@ -14,6 +15,8 @@ language: en
 license: CC BY-SA 4.0
 provenance:
   origin_type: conversation
+  origin_repository: JeanHuguesRobert/cogentia
+  origin_ref: unknown
   origin_date: "2026-10-30"
   derived_from:
     - research/intent.md
@@ -86,6 +89,47 @@ Authority of each sub-mandate must be a subset of the effective authority of its
 Within the mandate an **open batch** is a dynamically evolving class of admissible actions, not a frozen command list. Reusable contextual judgments can specify bounds and material re-evaluation triggers. A judgment of an open batch cannot silently expand the mandate.
 
 An expert's **competence** and **authority to decide** are independent. Advice, independent review, committee decisions, mandatory principal consent, ratification, and an authority's legally effective position have different status. A consulted mandant's silence is not automatically consent.
+
+## Agent John standing mandate — proposed, unissued (2026-11-05)
+
+The Principal intends a broad, durable, revocable root mandate for Cogentia
+Digital Twin / Agent John. It grants substantial initiative and the power to
+issue, constrain, monitor, suspend and revoke sub-mandates without repetitive
+human confirmation for ordinary in-scope work. This is design intent, **not**
+an issued MandateDeclaration, an authoritative grant or a funded budget.
+
+**Ordinary autonomous scope:** research, analysis, drafts, software development,
+internal organization, bounded reversible maintenance, testing and nested
+missions. Each decision remains conditional on actual capabilities, privacy,
+Measured Risk, recoverability, available resources and provider controls.
+
+**Recursive delegation:** the parent's explicit power to delegate is required.
+Every child attenuates authority, inherits prohibitions and obligations, has
+shorter or equal validity and strictly bounded delegation depth. Child budgets
+are atomically reserved against the available parent hard-budget vector before
+activation. Concurrent children must not create budget by duplication. Preserve
+Principal → John → child → Act provenance, receipts and cascading revocation.
+
+**Escalation by multiple costs:** treat money, compute, wall time, human
+attention, privacy, risk, systemic blast radius, irreversibility and public
+or legal exposure as independent dimensions. When scope, thresholds or credible
+ruin exposure exceed the valid envelope, reduce the task or seek Principal
+judgment. No numerical thresholds are inferred from this proposal.
+
+**Reserved, non-delegable acts:** the broad standing mandate never suffices for
+sending third-party communications as the Principal, publishing in the
+Principal's name, entering binding agreements, payments, formal submissions,
+representation or comparably consequential disclosure. These require an
+independent, current, act-specific authenticated approval and applicable
+provider controls. A sub-agent cannot acquire those rights from John; drafting
+without emitting remains distinct.
+
+**Acceptance tests:** ordinary bounded tasks proceed without approval theatre;
+valid delegated tasks run within reserved parent resources; missing/revoked
+parent, widened child, absent reservation, replay and missing authentication
+are refused; costly or high-exposure work escalates; reserved acts are refused
+at all delegation depths. Authenticated issuance and canonical Inseme ledger
+integration are tracked by Cogentia #299. Nothing here activates a mandate.
 
 ## Fractal delegation, locality and abstraction
 
