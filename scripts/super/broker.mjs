@@ -7,7 +7,7 @@ import {execFile} from 'node:child_process';
 import {hostname} from 'node:os';
 import {fileURLToPath} from 'node:url';
 const socket=process.env.COGENTIA_SUPER_SOCKET||'/run/cogentia-super/broker.sock';
-const store=process.env.COGENTIA_SEA_STORE_PATH||'/var/lib/cogentia/side-effect-authorization.json';
+const store=process.env.COGENTIA_SEA_STORE_PATH||'/var/lib/cogentia-super/authorizations.json';
 const audit=process.env.COGENTIA_SUPER_AUDIT||'/var/lib/cogentia-super/audit.jsonl';
 const localNode=process.env.COGENTIA_SUPER_NODE_ID||'node:fracta2';
 const sha=s=>'sha256:'+createHash('sha256').update(s).digest('hex');
@@ -22,7 +22,19 @@ export function effectHash(r){
   return sha(stable({capability:'host.process.run',target:r.target,command:r.script,
     args:[],timeout_ms:r.timeout_ms??null,execution_mode:'super',provider:r.provider}));
 }
+/** Never trust a root execution grant writable by the unprivileged script actor.
+ * The root-owned state directory is an issuer boundary, not a second mandate.
+ * Permission checks are deliberately performed before every reservation.
+ */
+export function trustedSuperStore(pathname, trustedUid=0){
+  try{
+    const file=fs.lstatSync(pathname),parent=fs.lstatSync(pathname.slice(0,pathname.lastIndexOf('/')));
+    return file.isFile()&&!file.isSymbolicLink()&&file.uid===trustedUid&&(file.mode&0o077)===0
+      &&parent.isDirectory()&&!parent.isSymbolicLink()&&parent.uid===trustedUid&&(parent.mode&0o022)===0;
+  }catch{return false;}
+}
 export function reserveCopAuthorization(r){
+  if(process.getuid?.()===0 && !trustedSuperStore(store))return null;
   const data=JSON.parse(fs.readFileSync(store,'utf8'));
   const g=data?.grants?.[r.authorization_id];
   if(!g||g.action_class!=='host.process.run'||g.status!=='granted'||g.single_use!==true
@@ -34,7 +46,7 @@ export function reserveCopAuthorization(r){
   g.consumed_at=new Date().toISOString();
   const stat=fs.statSync(store),tmp=store+'.'+process.pid+'.'+randomUUID()+'.tmp';
   try{
-    fs.writeFileSync(tmp,JSON.stringify(data,null,2)+'\n',{mode:stat.mode&0o777,flag:'wx'});
+    fs.writeFileSync(tmp,JSON.stringify(data,null,2)+'\n',{mode:0o600,flag:'wx'});
     if(process.getuid?.()===0)fs.chownSync(tmp,stat.uid,stat.gid);
     fs.renameSync(tmp,store);
   }finally{try{fs.unlinkSync(tmp);}catch(e){if(e.code!=='ENOENT')throw e;}}

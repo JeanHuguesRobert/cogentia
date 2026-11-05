@@ -343,6 +343,29 @@ For a bounded, no-paid-provider evaluation, set
 `COGENTIA_GUIDE_OPENROUTER_FREE_MODEL`. This mode is opt-in; it bypasses the
 daemon, OpenAI, and paid OpenRouter candidates for synthesis.
 
+### 5 November 2026 — privileged broker issuer-boundary correction (source only)
+
+A critical trust-boundary defect was confirmed: the running `cogentia-super`
+root service previously read the COP side-effect grant file at
+`/var/lib/cogentia/side-effect-authorization.json`, owned by the unprivileged
+`ubuntu` account. Restricting that file to `0600` fixes disclosure to other
+users, but cannot stop its owner from forging `authority_origin: principal`
+that the root broker would accept. A transport token, hash confirmation, or
+ordinary-user ownership must never be elevated to Principal authority.
+
+The source-level broker now requires, **when running as root**, a regular
+non-symlink grant file owned by root and inaccessible to group/others,
+inside a root-owned directory not writable by group/others. Its future
+root-only path is `/var/lib/cogentia-super/authorizations.json`; the service
+source matches it. Unit tests cover owner mismatch, permissive modes,
+symlinks and missing files. A trusted issuer pathway still has to be
+implemented against the canonical Inseme authority and budget before
+provisioning the new root-owned store and deploying this change. **Do not
+copy the existing ubuntu-writable grants into the root-only store**; doing
+so would launder unauthenticated decisions. Old service continues running
+until a separately verified and authorized deployment. No privileged Unix
+account was created by these tests.
+
 ### 5 November 2026 — #299 canonical authority admission preflight (not activated)
 
 `scripts/lib/cop-super-admission.js` provides a **non-executing**, fail-closed
