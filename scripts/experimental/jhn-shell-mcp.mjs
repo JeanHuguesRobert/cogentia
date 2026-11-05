@@ -30,6 +30,8 @@ const tool = {
       actor: { type: "string" },
       principal: { type: "string" },
       mandate: { type: "string" },
+      timeout_ms: { type: "integer", minimum: 1, maximum: 120000 },
+      target: { type: "string", enum: ["node:fracta2", "resource://fracta2"] },
     },
     required: ["command"], additionalProperties: false
   }
@@ -96,7 +98,8 @@ async function runSuper(args) {
     command:args.command,execution_mode:"super",
     authorization_id:args.authorization_id,actor:args.actor,
     principal:args.principal,mandate:args.mandate,
-    target:"node:fracta2",provider:"unix-process",
+    target:args.target||"node:fracta2",provider:"unix-process",
+    timeout_ms:args.timeout_ms??null,
   });
 }
 const server = http.createServer(async (req, res) => {
@@ -123,10 +126,12 @@ const server = http.createServer(async (req, res) => {
       const args = msg.params.arguments;
       const command = args?.command;
       const mode=args?.execution_mode||"normal";
-      const allowed=["command","execution_mode","authorization_id","actor","principal","mandate"];
+      const allowed=["command","execution_mode","authorization_id","actor","principal","mandate","timeout_ms","target"];
       if (!args || Object.keys(args).some(k=>!allowed.includes(k))
         || typeof command !== "string" || !command.trim() || command.length > 32768
         || !["normal","super"].includes(mode)
+        || (args.timeout_ms!=null && (!Number.isInteger(args.timeout_ms)||args.timeout_ms<1||args.timeout_ms>120000))
+        || (args.target!=null && !["node:fracta2","resource://fracta2"].includes(args.target))
         || (mode==="super" && ![args.authorization_id,args.actor,args.principal,args.mandate].every(Boolean)))
         return send(res, 200, rpcError(msg.id, -32602, "Invalid governed command"));
       const result = mode==="super" ? await runSuper(args) : await run(command);
