@@ -24,6 +24,16 @@ related_issue: https://github.com/JeanHuguesRobert/cogentia/issues/299
 
 # Agent John — authenticated root mandate proposal, NOT ISSUED
 
+**2026-11-05 correction:** offline Ed25519 is one optional authentication
+channel, not the mandatory root-issuance ceremony. A properly authenticated
+Principal session via SSH, Tailscale-bound human identity or per-user MCP
+OAuth may also confirm an exact proposal, through a trusted server-side
+issuer. See `fractanet_principal_trust_2026-11-05.md`. Existing SSH agent
+accounts, tunnel bearer credentials and asserted MCP headers must not be
+treated as Principal authorization. The canonical COP mandate and budget
+store remains the only authority regardless of authentication channel.
+
+
 This is the **B + C integration design**, not an active authority declaration.
 A sentence from a chat, an MCP bearer, a GitHub issue or a mere hash confirmation
 is insufficient to mint John a durable root mandate.
