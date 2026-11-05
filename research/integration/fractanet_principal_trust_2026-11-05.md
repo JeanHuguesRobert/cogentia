@@ -50,6 +50,30 @@ Mandate/Grant/Budget authority and inherit the same reserved-act prohibitions.
   proves no user identity or mandate. Keep client/proxy headers untrusted
   unless inserted by an authenticated, trusted gateway.
 
+## OAuth adapter implementation — 2026-11-05
+
+Existing `mcp-oauth-token.js` already verifies signed JWTs against the
+configured issuer, audience, expiry, required scopes and HTTPS JWKS;
+`mcp-oauth-identity.js` already resolves issuer+subject to a pinned Principal
+mapping. Rather than creating a new key hierarchy,
+`scripts/lib/principal-oauth-session.js` composes these existing facilities
+with the read-only `principal-trust-context.js` identity classifier. It
+requires a separate `cogentia.principal.approve` scope: a JWT with only
+`cogentia.private.read` cannot approve a mandate. It returns proof of
+identity only, **never a COP mandate/grant/reservation**. Negative tests use
+real signed RSA tokens with wrong subject, audience, scope or expiry.
+
+**Production truth:** current MCP HTTP OAuth route (if configured) checks
+`cogentia.private.read` and projects a read-only identity; it does not
+provide a human approval endpoint or issue the extra scope. Live systemd
+service inspection did not expose any declared `COGENTIA_MCP_OAUTH_*`
+configuration (EnvironmentFiles may hold undisclosed values). No live
+OAuth issuer/subject binding was independently established. This adapter is
+therefore source-level tested but deliberately **not exposed as a mutation
+verb**. An actual OAuth issuer, principal binding, explicit challenge tied
+to the approved payload and replay-safe canonical COP issuance must be
+verified before operator activation.
+
 ## Common boundary and budget
 
 `trusted principal session` → `confirm exact EXPOSE payload` → `COP issuance`
