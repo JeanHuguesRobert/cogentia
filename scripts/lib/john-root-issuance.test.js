@@ -15,6 +15,8 @@ test('signed root issuance is atomic in canonical Inseme SQLite, with no replay'
   assert.equal(store.replay().length,2);
   const grant=evaluateMandate(store,{mandate_ref:proposal.mandate_id,expected_principal_ref:proposal.principal_ref,expected_actor_ref:proposal.logical_agent_ref,capability:'host.fs.read'});
   assert.equal(grant.granted,true,JSON.stringify(grant));
+  const forbidden=evaluateMandate(store,{mandate_ref:proposal.mandate_id,expected_principal_ref:proposal.principal_ref,expected_actor_ref:proposal.logical_agent_ref,capability:'gmail.send'});
+  assert.equal(forbidden.granted,false,JSON.stringify(forbidden));
   assert.equal(issueVerifiedJohnRoot({...args,store}).error,'existing_authority_requires_versioned_amendment');
   assert.equal(store.replay().length,2);
  }finally{store.close();}
