@@ -74,6 +74,29 @@ verb**. An actual OAuth issuer, principal binding, explicit challenge tied
 to the approved payload and replay-safe canonical COP issuance must be
 verified before operator activation.
 
+## Bounded one-use confirmation challenge — 2026-11-05
+
+`scripts/lib/principal-approval-challenge.js` now stages and consumes an
+EXPOSE-bound, short-lived (max. 10 minutes) challenge in the **existing**
+canonical Inseme COP event store. The confirmation is an atomic topic-sequence
+append and refuses a different payload, expiry or replay. The only currently
+accepted identity proof is a server-verified OAuth session produced by the
+existing JWT verifier; an object copied from that session cannot pass the
+in-process identity provenance check. A separate `verifyHumanConfirmation`
+callback is **required** before recording confirmation. Possessing a scoped
+OAuth bearer alone is not a human gesture or an authorization to approve any
+arbitrary operation. The proof callback in tests is deliberately a fixture,
+not an implemented trusted web approval surface.
+
+**Not production-ready:** there is no authenticated approval screen, trusted
+human-gesture verifier, registered Principal OAuth issuer, or live issuer
+endpoint. Confirmation events neither grant a mandate nor mint a super-broker
+authorization. The service remains unchanged. Wiring this library directly
+into an agent-callable MCP mutate tool, accepting a caller-supplied verifier,
+or treating a COP challenge event as an active mandate would be unsafe. It
+must remain an internal trusted-server component pending a human-controlled
+approval endpoint and end-to-end authority checks.
+
 ## Common boundary and budget
 
 `trusted principal session` → `confirm exact EXPOSE payload` → `COP issuance`
