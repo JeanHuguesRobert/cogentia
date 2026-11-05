@@ -44,3 +44,25 @@ export async function confirmPrincipalApproval({store,challenge_id,payload_hash,
  return result?.ok&&!result.duplicate?{ok:true,challenge_id,confirmation_event_id:result.event.event_id,payload_hash,
    grants_mandate_authority:false}:fail(result?.error||'approval_confirmation_conflict');
 }
+
+/** Read-only confirmation evidence lookup. NOT a grant or proof that the
+ * event-store writer was a trusted Principal issuer. That check belongs at
+ * the issuer boundary; never promote this receipt directly to super access. */
+export function inspectPrincipalApproval({store,challenge_id,payload_hash,action_class,now=new Date()}={}){
+ if(!store?.listTopic)return fail('cop_store_unavailable');
+ if(!/^[0-9a-f-]{36}$/i.test(challenge_id||''))return fail('challenge_id_invalid');
+ const events=store.listTopic(topic(challenge_id));
+ if(events.length!==2||events[0].event_type!=='PrincipalApprovalRequested'||events[1].event_type!=='PrincipalApprovalConfirmed')
+   return fail('approval_not_confirmed');
+ const [requested,confirmed]=events;
+ if(requested.payload?.payload_hash!==payload_hash||requested.payload?.action_class!==action_class
+   ||confirmed.payload?.payload_hash!==payload_hash||confirmed.payload?.request_event_id!==requested.event_id
+   ||confirmed.payload?.principal_ref!==requested.payload?.principal_ref)
+   return fail('approval_lineage_mismatch');
+ if(Date.parse(requested.payload?.expires_at)<=Date.parse(confirmed.time?.recorded_at)||Date.parse(confirmed.time?.recorded_at)>+new Date(now))
+   return fail('approval_outside_challenge_window');
+ return {ok:true,challenge_id,payload_hash,action_class,confirmation_event_id:confirmed.event_id,
+   // Issuer must independently verify this event was produced by a trusted
+   // human approval service with an authenticated session.
+   grants_mandate_authority:false};
+}

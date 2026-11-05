@@ -97,6 +97,27 @@ or treating a COP challenge event as an active mandate would be unsafe. It
 must remain an internal trusted-server component pending a human-controlled
 approval endpoint and end-to-end authority checks.
 
+## Approval receipt inspection and identity immutability (2026-11-05)
+
+A read-only `inspectPrincipalApproval()` now checks that the canonical
+challenge topic contains exactly one request and one confirmation, that the
+confirmation links to the original request event, that action class and
+payload hash match, and that the confirmation timestamp falls inside the
+original challenge window. It returns `grants_mandate_authority:false`.
+It is **not** an issuer provenance verifier: an actor able to write the
+canonical COP store could still manufacture both event records. Production
+issuance MUST additionally verify a server-controlled approval service's
+provenance and its authenticated human gesture; events and transport tokens
+alone are insufficient. Verified OAuth session objects are now frozen and
+internally provenance-marked; copied JSON cannot be used as a verified
+session. No new key or parallel mandate register was introduced.
+
+The real ChatGPT MCP session used in the 2026-11-05 Reality Test successfully
+accessed the capability catalogue and an EXPOSE for `id -un`, returning
+`auth: jhn`, `actor: agent:jhn`, but **no independently attested human
+identity or confirmation**. This is a passing transport/preparation test,
+not a passing Principal approval test.
+
 ## Common boundary and budget
 
 `trusted principal session` → `confirm exact EXPOSE payload` → `COP issuance`

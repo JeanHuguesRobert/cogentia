@@ -23,6 +23,6 @@ export async function authenticateOAuthPrincipalSession(token,{issuer,audience,j
       issuer:mapping.issuer,audience:'cogentia:principal-issuer',
       expires_at:new Date(verified.claims.exp*1000).toISOString()})
   });
-  if(resolved.ok)trustedOAuthSessions.add(resolved);
+  if(resolved.ok){Object.freeze(resolved);trustedOAuthSessions.add(resolved);}
   return resolved;
 }
