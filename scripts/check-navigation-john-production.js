@@ -1,6 +1,9 @@
 #!/usr/bin/env node
 /** One-shot operator-mandated JHN probe. No secret in command-line or logs. */
-import { MANDATE_ID, PRINCIPAL_ID } from './lib/agent-jhn-whatsapp/constants.js';
+import { MANDATE_ID } from './lib/agent-jhn-whatsapp/constants.js';
+// MCP transport attribution uses a canonical Principal ref, not the
+// WhatsApp/local biographical identifier. This does not issue COP authority.
+const PRINCIPAL_ID = 'principal:jhn';
 const endpoint = process.env.COGENTIA_JHN_MCP_ENDPOINT || 'http://127.0.0.1:8791/mcp';
 const secret = process.env.COGENTIA_MCP_JHN_TOKEN;
 const mandate = process.env.COGENTIA_JHN_MANDATE_REF || MANDATE_ID;

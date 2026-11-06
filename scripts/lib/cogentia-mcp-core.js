@@ -1,3 +1,4 @@
+import {bindJohnTransportClaims} from "./john-transport-binding.js";
 import { resolveOAuthIdentity } from "./mcp-oauth-identity.js";
 import { listAgentSkills, getAgentSkill, exportSkillAsMethodPackage, resolveRepoRoot } from "./cogentia-agent-skills.js";
 import {
@@ -1911,6 +1912,14 @@ export function createMcpCore(env = process.env, extras = {}) {
           req.handler.options = safeOptions;
         }
         const jhnCaller = isResolvedCallerAuth(callOpts.auth) && callOpts.auth.auth === "jhn";
+        // Bind the COP *labels* used for audit to authenticated transport,
+        // not caller-supplied principal_id/mandate_id. This does not issue
+        // a MandateDeclaration or budget; canonical admission is separate.
+        if (jhnCaller) {
+          const binding = bindJohnTransportClaims(req, callOpts.auth);
+          if (!binding.bound) throw new Error(binding.error || "john_transport_identity_unavailable");
+          req = binding.request;
+        }
         const trustedJhn = jhnCaller && callOpts.auth.allowMutate === true;
         const browserEnabled = !/^(0|false|no)$/i.test(String(env.COGENTIA_JHN_HOSTED_BROWSER_ENABLED || "1"));
         const browserCapabilities = jhnCaller && browserEnabled

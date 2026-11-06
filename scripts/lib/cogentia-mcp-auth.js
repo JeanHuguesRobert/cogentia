@@ -185,12 +185,20 @@ export function resolveCallerAuth(env, { meta = {}, headers = {}, view = "public
     });
   }
 
+  // A JHN service credential cannot mint arbitrary Principal identities by
+  // supplying x-cogentia-principal or a client-controlled _meta field.
+  // Accept the historical JHN alias, but normalize to the canonical ref.
+  if (principal_ref && !["principal:jhn", "jean-hugues-noel-robert"].includes(principal_ref)) {
+    return finish({allowMutate:false,auth:"none",actor:effectiveActor,
+      mandate_ref,principal_ref:null,logical_agent_ref,reason:"jhn_principal_claim_mismatch"});
+  }
+
   return finish({
     allowMutate: true,
     auth: "jhn",
     actor: effectiveActor,
     mandate_ref: mandate_ref || "mandate:jhn:mcp_default",
-    principal_ref: principal_ref || "principal:jhn",
+    principal_ref: "principal:jhn",
     logical_agent_ref: logical_agent_ref || "agent:jhn",
     reason: "jhn_attested",
   });
