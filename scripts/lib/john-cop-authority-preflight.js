@@ -37,6 +37,10 @@ export function assessJohnCopAuthority({store,auth,mandate_ref,version_pin,capab
     try {snapshot=ledger.snapshot();}catch {return deny('canonical_budget_unavailable');}
     if (!snapshot?.has_grant || snapshot.mandate_ref!==mandate_ref)
       return deny('canonical_budget_not_funded');
+    const ceiling=mandate.scope?.budget_ceiling;
+    if (ceiling && (typeof ceiling!=='object' || Object.entries(ceiling).some(([k,v]) =>
+      !Number.isSafeInteger(v) || v<0 || !Number.isSafeInteger(snapshot.limits?.[k]) ||
+      snapshot.limits[k]>v))) return deny('canonical_budget_exceeds_signed_ceiling');
   }
   // A successful authority preflight alone MUST NOT be interpreted as an
   // executable grant: actual budget reservation and effect gate are separate.

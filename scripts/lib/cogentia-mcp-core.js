@@ -1,3 +1,6 @@
+import {executeJohnCanonicalRead} from "./john-cop-read-execution.js";
+import {openExistingJohnCopStore} from "./john-cop-existing-store.js";
+import {createSqliteCopEventStore} from "../../../inseme/packages/cop-core/src/sqlite-cop-event-store.js";
 import {bindJohnTransportClaims} from "./john-transport-binding.js";
 import { resolveOAuthIdentity } from "./mcp-oauth-identity.js";
 import { listAgentSkills, getAgentSkill, exportSkillAsMethodPackage, resolveRepoRoot } from "./cogentia-agent-skills.js";
@@ -1989,6 +1992,51 @@ export function createMcpCore(env = process.env, extras = {}) {
         const browserInternalLimit = browserInteractRequested || browserCoordinationRequested
           ? Math.min(Math.max(0, req.execution_budget.max_internal_effects || 0), 2)
           : 0;
+        // #299 opt-in: genuine canonical mandate+budget for the two signed
+        // read capabilities. Disabled by default; no synthetic authority.
+        if (env.COGENTIA_JHN_CANONICAL_READ_ENABLED === "1" && jhnCaller
+            && ["browser.navigation.instances", "browser.hosted.inspect"].includes(req.capability)) {
+          const dbpath=String(env.COGENTIA_JHN_CANONICAL_STORE_PATH || "");
+          const issuerKeys=String(env.COGENTIA_JHN_ISSUER_AUTHORIZED_KEYS || "");
+          const existing=openExistingJohnCopStore(dbpath);
+          if (!existing.ok) return {ok:false,status:"failed",failure:{code:existing.error},accounting:null};
+          existing.close();
+          const canonicalStore=createSqliteCopEventStore(dbpath);
+          try {
+            const result=await executeJohnCanonicalRead({store:canonicalStore,
+              authorizedKeysPath:issuerKeys,auth:callOpts.auth,request:req,
+              run:()=>runJohnRequest(req,{
+                env,capabilities:scopedCapabilities,
+                allowedCapabilities:serverAllowedCapabilities,
+                maxInternalEffects:0,
+                requiredEventHandlers:{
+                  "orientation.required":async ({input})=>{
+                    const query=String(input?.text||input?.prompt||"").trim();
+                    if(!query)return {ok:false,reason:"empty_orientation_query"};
+                    const orientation=await daemonGet("/api/context/orient",{q:query});
+                    if(orientation?.ok!==true||orientation.schema!=="cogentia.orientation.v1")
+                      return {ok:false,reason:"orientation_unavailable"};
+                    return {ok:true,source:"corpus.orient",schema:orientation.schema,
+                      terminal_state:orientation.terminal_state||null,
+                      resolved_concept_count:orientation.resolved_concepts?.length||0};
+                  },
+                },
+              })});
+            if (!result.ok) return {ok:false,status:"failed",failure:{code:result.error},accounting:null};
+            const e=result.events;
+            const completed=e.find(x=>x.type==="john.run.completed");
+            const settled=e.find(x=>x.type==="john.accounting.settled");
+            const admitted=e.find(x=>x.type==="john.packet.admitted");
+            return {ok:true,status:"completed",request_id:req.request_id,
+              packet_id:admitted?.data?.packet_id||null,
+              text:completed?.data?.result?.text||"",
+              yield:completed?.data?.result?.yield||null,
+              accounting:settled?.data||null,
+              canonical_accounting:{mandate_ref:result.canonical_mandate_ref,settled_steps:result.settled_steps},
+              odyssey:completed?.data?.result?.odyssey||null,
+              events_count:e.length,events:e};
+          } finally {canonicalStore.close();}
+        }
         const events = await runJohnRequest(req, {
           env,
           capabilities: scopedCapabilities,
