@@ -8,6 +8,12 @@ const proposal={kind:ROOT_MANDATE_KIND,mandate_id:'mandate:jhn:john-root',versio
 const approval=p=>({kind:'cogentia.principal-signature/v1',principal_ref:p.principal_ref,payload_hash:proposalHash(p),key_fingerprint:publicKeyFingerprint(pub),signature_base64:sign(null,canonicalProposalBytes(p),pair.privateKey).toString('base64')});
 const checked=(p=proposal,a=approval(p),key=pub)=>check({proposal:p,approval:a,trustedPublicKeyPem:key,now:new Date('2026-11-05T12:00:00Z')});
 test('valid offline principal signature is accepted without publishing authority',()=>{assert.equal(checked().ok,true);});
+test('sensitive disclosure, payments and irreversible actions cannot be silently omitted from root prohibitions',()=>{
+ for(const reserved of ['sensitive.disclose','private.disclose','purchase.execute','security.credentials.change','irreversible.delete']) {
+  const narrowed={...proposal,scope:{...proposal.scope,forbidden_actions:RESERVED_ACTIONS.filter(a=>a!==reserved)}};
+  assert.equal(checked(narrowed).error,'reserved_acts_not_prohibited',reserved);
+ }
+});
 test('missing trust anchor and forged signer fail',()=>{
  assert.equal(checked(proposal,approval(proposal),null).error,'trusted_issuer_key_missing');
  const forged={...approval(proposal),signature_base64:sign(null,canonicalProposalBytes(proposal),other.privateKey).toString('base64')};

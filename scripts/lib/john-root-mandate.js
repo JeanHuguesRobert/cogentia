@@ -9,7 +9,8 @@ export const ROOT_MANDATE_KIND='cogentia.john-root-mandate-proposal/v1';
 export const RESERVED_ACTIONS=Object.freeze([
   'communication.send','gmail.send','whatsapp.send','publish','legal.commit',
   'financial.commit','payment.execute','formal.submit','representation.act',
-  'third_party.disclose'
+  'third_party.disclose','sensitive.disclose','private.disclose',
+  'purchase.execute','security.credentials.change','irreversible.delete'
 ]);
 const sha=x=>'sha256:'+createHash('sha256').update(x).digest('hex');
 const refuse=error=>({ok:false,error});
