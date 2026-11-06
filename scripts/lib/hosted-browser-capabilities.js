@@ -210,7 +210,7 @@ export function createHostedBrowserCapabilities(options = {}) {
         const response=scriptBackend
           ? await rpc(gateway,"page.evaluate",{browser_instance_id:browserId,
               tabId:tab,expectedUrl:expected,
-              code:compileNonSecretFormFill({fieldIndex:input.field_index,text:value})},timeoutMs)
+              code:compileNonSecretFormFill({fieldIndex:input.field_index,text:value,expectedUrl:expected})},timeoutMs)
           : await rpc(gateway,"page.form.fill",{browser_instance_id:browserId,
               tabId:tab,expectedUrl:expected,fieldIndex:input.field_index,text:value},timeoutMs);
         const inserted=scriptBackend ? {...response.value,tabId:tab,fieldIndex:input.field_index} : response;

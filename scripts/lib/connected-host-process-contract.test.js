@@ -18,3 +18,15 @@ test('current connected tool schema drift detected at exact missing super parame
 test('same source schema in both surfaces has no drift',()=>{
  const r=audit({serverTools,connectedTools:serverTools});assert.equal(r.ok,true);
 });
+import {readFileSync} from 'node:fs';
+test('connector publication artifact tracks the canonical server without drift',()=>{
+ const artifact=JSON.parse(readFileSync(new URL('../../docs/connectors/cogentia-private-host-process-schema.json',import.meta.url),'utf8'));
+ const server=createMcpCore({COGENTIA_MCP_VIEW:'full',COGENTIA_ADMIN_TOKEN:'test-admin',COGENTIA_MCP_ALLOW_MUTATE:'1'});
+ const report=audit({serverTools:server.tools,connectedTools:artifact.tools});
+ assert.equal(report.ok,true,JSON.stringify(report.tools));
+ for(const tool of artifact.tools){
+  assert.deepEqual(tool.inputSchema.properties.execution_mode.enum,['normal','super']);
+  assert.equal(tool.inputSchema.properties.command.maxLength,32768);
+  assert.equal(tool.inputSchema.properties.timeout_ms.maximum,120000);
+ }
+});

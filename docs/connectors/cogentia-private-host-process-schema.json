@@ -1,0 +1,93 @@
+{
+  "kind": "cogentia.private.connector-schema-source/v1",
+  "source": "scripts/lib/cogentia-mcp-core.js",
+  "note": "A publication artifact only. Authentication, permissions, effect authorization and COP issuance are independent.",
+  "tools": [
+    {
+      "name": "cogentia_host_process_prepare",
+      "description": "EXPOSE a bounded host.process.run command, its exact target/provider and payload hash before any grant or execution. Private-read; never executes.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "command": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 32768
+          },
+          "timeout_ms": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 120000
+          },
+          "execution_mode": {
+            "type": "string",
+            "enum": [
+              "normal",
+              "super"
+            ],
+            "description": "Super requires a separately authorized privileged executor; never implied by a grant for normal."
+          },
+          "target": {
+            "type": "string",
+            "minLength": 1
+          },
+          "provider": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "command",
+          "target",
+          "provider"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "cogentia_host_process_run",
+      "description": "Run a bounded host command via Cogentia semantic host.process.run. Private mutate tool, target/provider routed by the core, requires mandate and a payload-bound side_effect_authorization. Never available anonymously.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "command": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 32768
+          },
+          "timeout_ms": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 120000
+          },
+          "execution_mode": {
+            "type": "string",
+            "enum": [
+              "normal",
+              "super"
+            ],
+            "description": "Super requires a separately authorized privileged executor; never implied by a grant for normal."
+          },
+          "target": {
+            "type": "string",
+            "description": "Target host node id"
+          },
+          "provider": {
+            "type": "string",
+            "description": "Provider id (e.g. unix-process)"
+          },
+          "mandate": {
+            "type": "string"
+          },
+          "side_effect_authorization": {
+            "type": "object"
+          }
+        },
+        "required": [
+          "command"
+        ],
+        "additionalProperties": false
+      }
+    }
+  ]
+}
