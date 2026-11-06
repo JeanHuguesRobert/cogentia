@@ -1,3 +1,4 @@
+import {compileNonSecretFormFill} from "./browser-form-script.js";
 import { SAFE_DOM_STRUCTURE_CODE } from "./browser-safe-dom-structure.js";
 import { createGatewaySession } from "./navigation-assistant/gateway-session.js";
 /** Hosted Chromium capabilities over the Fracta2 navigation-assistant extension. */
@@ -202,8 +203,17 @@ export function createHostedBrowserCapabilities(options = {}) {
         const expected=String(input.expected_url||"");
         const value=String(input.text||"");
         if(!expected.startsWith('https://')||!value||value.length>2048)throw capabilityError('BROWSER_FORM_INPUT_INVALID');
-        const inserted=await rpc(gateway,"page.form.fill",{browser_instance_id:browserId,
-          tabId:tab,expectedUrl:expected,fieldIndex:input.field_index,text:value},timeoutMs);
+        // FBF: new recipes live in the Core, not the extension worker.
+        // Explicit alternate path uses existing generic page.evaluate bridge.
+        // Keep the proven native-CDP path as default until browser parity tests.
+        const scriptBackend=options.formFillBackend==='client-script';
+        const response=scriptBackend
+          ? await rpc(gateway,"page.evaluate",{browser_instance_id:browserId,
+              tabId:tab,expectedUrl:expected,
+              code:compileNonSecretFormFill({fieldIndex:input.field_index,text:value})},timeoutMs)
+          : await rpc(gateway,"page.form.fill",{browser_instance_id:browserId,
+              tabId:tab,expectedUrl:expected,fieldIndex:input.field_index,text:value},timeoutMs);
+        const inserted=scriptBackend ? {...response.value,tabId:tab,fieldIndex:input.field_index} : response;
         if(inserted.ok!==true||inserted.submitted!==false||inserted.insertedLength!==value.length||
           inserted.tabId!==tab||inserted.fieldIndex!==input.field_index)
           throw capabilityError('BROWSER_FORM_INSERTION_UNCONFIRMED');

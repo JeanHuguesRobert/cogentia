@@ -3,7 +3,7 @@ title: Cogentia Shared Agent Instructions
 author: unknown
 affiliation: "Institut Mariani / C.O.R.S.I.C.A., 1 cours Paoli, F-20250 Corte, Corsica"
 status: "working-paper — active operational mandate"
-version: 44
+version: 45
 date: 2026-10-02
 last_modified_at: "2026-11-06"
 license: CC BY-SA 4.0
@@ -38,6 +38,8 @@ classification_confidence: "medium"
 Check in order: in-session execution tools (Python, Node, shell); attached/materialized inputs; connected repository fetch/write tools (which may supply files without git network); existing CI triggered by branch/PR changes and retrievable logs; advertised connector discovery; then the external operational control plane (Operium/Fractanet/Magistral) only if actually reachable and authorized. Cogentia's MCP publishes a maximum capability inventory through `cogentia_cli_catalog` / `cogentia://capability/catalog` even where `tools/list` intentionally hides gated verbs. Discovery does not confer authorization.
 
 **Root execution FBF (Fracta2):** before asking the Principal to copy a `ssh ... sudo ...` command, run `node scripts/ops/fracta-execution-route-check.js` from the existing coding shell and examine the independently governed `cogentia-super` broker / Cogentia_Private `host_process_prepare` / effect-specific grant path. `NoNewPrivs:1` denies `sudo` only in the normal shell; it does **not** prove the absence of an authorized super route. Broker reachability or a prepared hash is **not** permission: require a verified Principal issuer, exact payload-bound grant and canonical budget before any super execution. Independent SSHSIG mandate approval must stay on the Principal-controlled device. Preserve rollback receipts and report a genuine remaining boundary before consuming human attention.
+
+**Connected-tool schema parity FBF:** when the source MCP supports a parameter (notably `execution_mode:super`) but the tool actually offered to this agent omits it, verify the *connected tool schema* independently and record typed contract drift. Do not treat source support as usable authority, do not smuggle an excluded parameter via other fields, and do not ask the Principal to solve a schema mismatch by repeatedly running shell commands. See Cogentia #300 and `scripts/ops/check-connected-host-process-contract.js`.
 
 **Stable browser bridge FBF:** place new navigation/form recipes and site adapters in client/Core dynamic libraries, not extension worker business handlers. Reuse the generic CDP and versioned protocol primitives, governed by semantic COP mandates, redaction and tab/document-target checks. An extension change is warranted only for genuine transport/security/protocol evolution; the next recipe must demonstrably work without browser extension reinstallation/reload. Do not mistake arbitrary `page.evaluate` for a read-only or unrestricted authority.
 
