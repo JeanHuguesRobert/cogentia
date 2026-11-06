@@ -16,6 +16,7 @@ const TERMINAL_EVENTS = new Set([
 const ALLOWED_HANDLER_KINDS = new Set([
   "mock",
   "capability_once",
+  "capability_once_bounded",
   "governed_reasoner",
   "step_reasoner",
   "model",
@@ -85,7 +86,7 @@ export function validateJohnRequest(request) {
   if (!request.handler || typeof request.handler !== "object" || !String(request.handler.id || "").trim()) {
     problems.push(problem("$.handler.id", "is required"));
   } else if (!ALLOWED_HANDLER_KINDS.has(request.handler.kind)) {
-    problems.push(problem("$.handler.kind", "must be one of mock, capability_once, governed_reasoner, step_reasoner, model"));
+    problems.push(problem("$.handler.kind", "must be one of mock, capability_once, capability_once_bounded, governed_reasoner, step_reasoner, model"));
   }
   if (request.ithaca !== undefined) {
     if (typeof request.ithaca !== "object" || request.ithaca === null || Array.isArray(request.ithaca)) {
@@ -323,6 +324,7 @@ export async function runJohnRequest(request, options = {}) {
     events.push(event(request, seq++, "john.assistant.delta", { delta: outputText }));
   } else if (
     request.handler.kind === "capability_once" ||
+    request.handler.kind === "capability_once_bounded" ||
     request.handler.kind === "governed_reasoner" ||
     request.handler.kind === "step_reasoner" ||
     request.handler.kind === "model"
@@ -331,18 +333,22 @@ export async function runJohnRequest(request, options = {}) {
     let reasoner = options.reasoner;
 
     if (!reasoner) {
-      if (request.handler.kind === "capability_once") {
+      if (request.handler.kind === "capability_once" || request.handler.kind === "capability_once_bounded") {
         const selected = registry.get(request.capability);
         // This deterministic handler can never mutate a page or perform an
         // internal/external effect, regardless of caller-supplied labels.
-        if (!selected || selected.risk !== "read_only") {
+        const bounded = request.handler.kind === "capability_once_bounded";
+        const approved = bounded && selected?.name === "browser.form.fill"
+          && selected.risk === "internal_recoverable"
+          && options.approvedBoundedOnceCapability === selected.name;
+        if (!selected || (bounded ? !approved : selected.risk !== "read_only")) {
           // An absent capability means the *server-side* registry did not
           // expose it to this caller (often due to missing authentication).
           // Do not confuse that with a known capability whose risk forbids
           // execution by the deterministic read-only handler.
           const reason = !selected
             ? "read_only_capability_unavailable"
-            : "read_only_capability_required";
+            : bounded ? "canonical_bounded_capability_required" : "read_only_capability_required";
           reasoner = { nextStep: async () => ({ kind: "stop", reason }) };
         } else {
           reasoner = { nextStep: async (state) => {
@@ -427,7 +433,11 @@ export async function runJohnRequest(request, options = {}) {
               event(request, seq++, "john.tool.requested", {
                 step_id: step.step_id,
                 capability: step.capability,
-                input: step.capability === "workspace.write" ? redactWorkspaceWriteInput(step.input) : step.input,
+                input: step.capability === "workspace.write" ? redactWorkspaceWriteInput(step.input)
+                  : step.capability === "browser.form.fill"
+                    ? {tab_id:step.input?.tab_id,field_index:step.input?.field_index,
+                       expected_origin:"[redacted]",text:"[redacted]",text_length:String(step.input?.text||"").length}
+                    : step.input,
               })
             );
             if (result?.status === "completed") {

@@ -1,3 +1,4 @@
+import {executeJohnCanonicalForm} from "./john-cop-form-execution.js";
 import {executeJohnCanonicalRead} from "./john-cop-read-execution.js";
 import {openExistingJohnCopStore} from "./john-cop-existing-store.js";
 import {createSqliteCopEventStore} from "../../../inseme/packages/cop-core/src/sqlite-cop-event-store.js";
@@ -1925,12 +1926,15 @@ export function createMcpCore(env = process.env, extras = {}) {
         }
         const trustedJhn = jhnCaller && callOpts.auth.allowMutate === true;
         const browserEnabled = !/^(0|false|no)$/i.test(String(env.COGENTIA_JHN_HOSTED_BROWSER_ENABLED || "1"));
-        const browserCapabilities = jhnCaller && browserEnabled
+        const allBrowserCapabilities = jhnCaller && browserEnabled
           ? createHostedBrowserCapabilities({
             gateway: env.COGENTIA_HOSTED_BROWSER_GATEWAY,
             health: env.COGENTIA_HOSTED_BROWSER_HEALTH,
-          })
-          : [];
+          }) : [];
+        // No legacy bypass: form entry is available ONLY through the
+        // separately signed canonical effect gate below.
+        const formCapability=allBrowserCapabilities.find(c=>c.name==="browser.form.fill");
+        const browserCapabilities=allBrowserCapabilities.filter(c=>c.name!=="browser.form.fill");
         const browserCapabilityNames = new Set(browserCapabilities.map((item) => item.name));
         const writeAuthorized = writeEnabled && workspaceConfigured && trustedJhn
           && configuredMandate && callOpts.auth.mandate_ref === configuredMandate
@@ -1992,6 +1996,42 @@ export function createMcpCore(env = process.env, extras = {}) {
         const browserInternalLimit = browserInteractRequested || browserCoordinationRequested
           ? Math.min(Math.max(0, req.execution_budget.max_internal_effects || 0), 2)
           : 0;
+        // Preserve only the exact requested form capability for the separate
+        // canonical gate. It is NOT inserted into the legacy capability set.
+        if(req.capability==="browser.form.fill" && requestedCapabilities.length===1
+            && requestedCapabilities[0]==="browser.form.fill")
+          req.handler.allowed_capabilities=["browser.form.fill"];
+        // #291/#299: opt-in only after a distinct human-signed form mandate.
+        if(req.capability === "browser.form.fill") {
+          if(env.COGENTIA_JHN_CANONICAL_FORM_ENABLED!=="1"||!jhnCaller||!formCapability)
+            return {ok:false,status:"failed",failure:{code:"canonical_form_not_enabled"},accounting:null};
+          const path=String(env.COGENTIA_JHN_CANONICAL_STORE_PATH||"");
+          const existing=openExistingJohnCopStore(path);
+          if(!existing.ok)return {ok:false,status:"failed",failure:{code:existing.error},accounting:null};
+          existing.close();
+          const canonicalStore=createSqliteCopEventStore(path);
+          try {
+            const result=await executeJohnCanonicalForm({store:canonicalStore,
+              authorizedKeysPath:String(env.COGENTIA_JHN_ISSUER_AUTHORIZED_KEYS||""),
+              auth:callOpts.auth,request:req,
+              run:()=>runJohnRequest(req,{env,capabilities:[formCapability],
+                allowedCapabilities:["browser.form.fill"],
+                maxInternalEffects:1,approvedBoundedOnceCapability:"browser.form.fill",
+              })});
+            if(!result.ok)return {ok:false,status:"failed",failure:{code:result.error},accounting:null};
+            const e=result.events,completed=e.find(x=>x.type==="john.run.completed");
+            const settled=e.find(x=>x.type==="john.accounting.settled");
+            const admitted=e.find(x=>x.type==="john.packet.admitted");
+            return {ok:true,status:"completed",request_id:req.request_id,
+              packet_id:admitted?.data?.packet_id||null,
+              text:completed?.data?.result?.text||"",
+              yield:completed?.data?.result?.yield||null,
+              accounting:settled?.data||null,
+              canonical_accounting:{mandate_ref:result.canonical_mandate_ref,
+                settled_steps:result.settled_steps},
+              events_count:e.length,events:e};
+          }finally{canonicalStore.close()}
+        }
         // #299 opt-in: genuine canonical mandate+budget for the two signed
         // read capabilities. Disabled by default; no synthetic authority.
         if (env.COGENTIA_JHN_CANONICAL_READ_ENABLED === "1" && jhnCaller
