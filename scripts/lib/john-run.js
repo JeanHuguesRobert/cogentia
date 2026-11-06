@@ -336,7 +336,14 @@ export async function runJohnRequest(request, options = {}) {
         // This deterministic handler can never mutate a page or perform an
         // internal/external effect, regardless of caller-supplied labels.
         if (!selected || selected.risk !== "read_only") {
-          reasoner = { nextStep: async () => ({ kind: "stop", reason: "read_only_capability_required" }) };
+          // An absent capability means the *server-side* registry did not
+          // expose it to this caller (often due to missing authentication).
+          // Do not confuse that with a known capability whose risk forbids
+          // execution by the deterministic read-only handler.
+          const reason = !selected
+            ? "read_only_capability_unavailable"
+            : "read_only_capability_required";
+          reasoner = { nextStep: async () => ({ kind: "stop", reason }) };
         } else {
           reasoner = { nextStep: async (state) => {
             const prior = state.observations.find(item => item.type === "capability_result" && item.capability === selected.name);
