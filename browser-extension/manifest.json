@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Cogentia Navigation Assistant",
-  "version": "1.0.17",
+  "version": "1.0.18",
   "description": "Outbound multi-tab bridge for the Cogentia navigation assistant.",
   "permissions": [
     "debugger",

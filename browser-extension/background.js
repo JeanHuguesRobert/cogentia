@@ -1,3 +1,4 @@
+import {safeFormFocusCode} from "./form-field-focus.js";
 import { selectTargetTab, ensureExpectedUrl } from "./tab-target.js";
 import { reconnectDelayMs, nextFailureCount, OPEN_TIMEOUT_MS } from "./reconnect-policy.js";
 // Minimal bridge: the extension initiates the WebSocket (it cannot listen).
@@ -207,6 +208,40 @@ async function handleCommand(message) {
       trace("error", "evaluate-failed", { id: message.id, tabId: tab.id, error: error.message });
       emit({ jsonrpc: "2.0", id: message.id, error: { code: -32003, message: error.message } });
     } finally { /* Keep the desired active tab attached for the next request. */ }
+    return;
+  }
+  // Generic, non-secret form assistance: one extension operation, not two
+  // independently routable focus/insert RPCs. Never echoes input text.
+  if (message.jsonrpc === "2.0" && message.method === "page.form.fill" && message.id !== undefined) {
+    const index = message.params?.fieldIndex;
+    const value = message.params?.text;
+    if (!Number.isInteger(index) || index < 0 || index > 79 ||
+        typeof value !== "string" || !value || value.length > 2048 ||
+        typeof message.params?.expectedUrl !== "string" ||
+        !message.params.expectedUrl.startsWith("https://") ||
+        !Number.isInteger(message.params?.tabId)) {
+      emit({jsonrpc:"2.0",id:message.id,error:{code:-32602,message:"Invalid bounded form fill"}});
+      return;
+    }
+    let tab;
+    try {
+      const tabs=await chrome.tabs.query({});
+      tab=ensureExpectedUrl(selectTargetTab(tabs,message.params),message.params);
+      await ensureAttached(tab.id);
+      await ensureSameDocumentTarget(tab,message.params);
+      const focused=await chrome.debugger.sendCommand({tabId:tab.id},"Runtime.evaluate",
+        {expression:safeFormFocusCode(index),returnByValue:true,awaitPromise:false});
+      if(focused.exceptionDetails||focused.result?.value?.ok!==true)
+        throw new Error("Target field not focusable");
+      // Revalidate document identity before inserting; never submit/click.
+      await ensureSameDocumentTarget(tab,message.params);
+      await chrome.debugger.sendCommand({tabId:tab.id},"Input.insertText",{text:value});
+      trace("info","form-fill-complete",{tabId:tab.id,fieldIndex:index,insertedLength:value.length});
+      emit({jsonrpc:"2.0",id:message.id,result:{ok:true,insertedLength:value.length,tabId:tab.id,fieldIndex:index,submitted:false}});
+    } catch(error) {
+      trace("error","form-fill-failed",{tabId:tab?.id||null});
+      emit({jsonrpc:"2.0",id:message.id,error:{code:-32028,message:"Bounded form fill failed"}});
+    }
     return;
   }
   if (message.jsonrpc === "2.0" && message.method === "page.insertText" && message.id !== undefined && typeof message.params?.text === "string") {

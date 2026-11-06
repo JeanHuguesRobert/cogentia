@@ -1,4 +1,3 @@
-import {safeFormFocusCode} from "./browser-safe-form-focus.js";
 import { SAFE_DOM_STRUCTURE_CODE } from "./browser-safe-dom-structure.js";
 import { createGatewaySession } from "./navigation-assistant/gateway-session.js";
 /** Hosted Chromium capabilities over the Fracta2 navigation-assistant extension. */
@@ -203,12 +202,12 @@ export function createHostedBrowserCapabilities(options = {}) {
         const expected=String(input.expected_url||"");
         const value=String(input.text||"");
         if(!expected.startsWith('https://')||!value||value.length>2048)throw capabilityError('BROWSER_FORM_INPUT_INVALID');
-        const focused=await rpc(gateway,"page.evaluate",{browser_instance_id:browserId,
-          tabId:tab,expectedUrl:expected,code:safeFormFocusCode(input.field_index)},timeoutMs);
-        if(focused.value?.ok!==true)throw capabilityError("BROWSER_FORM_FIELD_NOT_FOCUSABLE");
-        const inserted=await rpc(gateway,"page.insertText",{browser_instance_id:browserId,
-          tabId:tab,expectedUrl:expected,text:value},timeoutMs);
-        return {ok:true,inserted_length:inserted.insertedLength||0,tab_id:tab,field_index:input.field_index,
+        const inserted=await rpc(gateway,"page.form.fill",{browser_instance_id:browserId,
+          tabId:tab,expectedUrl:expected,fieldIndex:input.field_index,text:value},timeoutMs);
+        if(inserted.ok!==true||inserted.submitted!==false||inserted.insertedLength!==value.length||
+          inserted.tabId!==tab||inserted.fieldIndex!==input.field_index)
+          throw capabilityError('BROWSER_FORM_INSERTION_UNCONFIRMED');
+        return {ok:true,inserted_length:value.length,tab_id:tab,field_index:input.field_index,
           submitted:false};
       },
     },
