@@ -1,3 +1,4 @@
+import {safeFormFocusCode} from "./browser-safe-form-focus.js";
 import { SAFE_DOM_STRUCTURE_CODE } from "./browser-safe-dom-structure.js";
 import { createGatewaySession } from "./navigation-assistant/gateway-session.js";
 /** Hosted Chromium capabilities over the Fracta2 navigation-assistant extension. */
@@ -186,6 +187,29 @@ export function createHostedBrowserCapabilities(options = {}) {
           }, timeoutMs);
         }
         throw capabilityError("BROWSER_ACTION_NOT_ALLOWED");
+      },
+    },
+    {
+      name: "browser.form.fill",
+      kind: "tool", risk: "internal_recoverable", resultVisibility: "reasoner", costUnits: 1,
+      description: "Focus an indexed ordinary text field and insert supplied non-secret text in an explicit tab. No form submission, no passwords or OTP, no arbitrary JavaScript. Top-level document only.",
+      inputSchema: {type:"object",properties:{
+        tab_id:{type:"integer",minimum:1},field_index:{type:"integer",minimum:0,maximum:79},
+        expected_url:{type:"string",minLength:1,maxLength:4096},
+        text:{type:"string",minLength:1,maxLength:2048},
+      },required:["tab_id","field_index","expected_url","text"],additionalProperties:false},
+      async execute(input={}) {
+        const tab=positiveInt(input.tab_id,"tab_id");
+        const expected=String(input.expected_url||"");
+        const value=String(input.text||"");
+        if(!expected.startsWith('https://')||!value||value.length>2048)throw capabilityError('BROWSER_FORM_INPUT_INVALID');
+        const focused=await rpc(gateway,"page.evaluate",{browser_instance_id:browserId,
+          tabId:tab,expectedUrl:expected,code:safeFormFocusCode(input.field_index)},timeoutMs);
+        if(focused.value?.ok!==true)throw capabilityError("BROWSER_FORM_FIELD_NOT_FOCUSABLE");
+        const inserted=await rpc(gateway,"page.insertText",{browser_instance_id:browserId,
+          tabId:tab,expectedUrl:expected,text:value},timeoutMs);
+        return {ok:true,inserted_length:inserted.insertedLength||0,tab_id:tab,field_index:input.field_index,
+          submitted:false};
       },
     },
     {
