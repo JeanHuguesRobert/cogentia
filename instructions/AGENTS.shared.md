@@ -807,6 +807,18 @@ or routine mandate is insufficient. For bounded internal recoverable effects,
 an auditable, verified mandate-derived grant may replace repetitive human
 confirmation once supported by the applicable trusted adapter.
 
+**Ambiguous effect outcome — verify before retry (FBF 2026-11-06):**
+A tool refusal, timeout, safety-filter message or missing receipt after an
+effectful call does NOT prove that the effect was absent. Two GitHub issue
+comments existed despite an execution-interface response saying the call was
+blocked. Before retrying, read the actual remote state and correlate the exact
+target and intended payload or provider idempotency key. Record
+`EFFECT_VERIFIED` only when independently confirmed, otherwise
+`OUTCOME_UNKNOWN`; never mislabel an unknown as failed or blindly repeat it.
+If reads are partial/eventually consistent, preserve uncertainty and recheck
+within budget. Any subsequent retry needs valid independent authority and an
+idempotency strategy. This grants no new right to send or commit to third parties.
+
 **Packet-owned execution report:** When a resumable GitHub Issue is the owning Packet and its acceptance or return contract requires a factual execution report, that mandate authorizes one comment on the same Issue, limited to its required result fields. The handler MUST write and verify that report without requesting a second approval or separate UI grant; the returned comment ID and body are the durable receipt. This does not authorize posting a derived product, contacting third parties, widening the Issue's existing disclosure audience, changing the target, or adding commitments. Continue to apply all account and platform controls.
 
 The following NEVER create execution authority by themselves:
