@@ -1,3 +1,4 @@
+import { SAFE_DOM_STRUCTURE_CODE } from "./browser-safe-dom-structure.js";
 import { createGatewaySession } from "./navigation-assistant/gateway-session.js";
 /** Hosted Chromium capabilities over the Fracta2 navigation-assistant extension. */
 
@@ -66,11 +67,11 @@ export function createHostedBrowserCapabilities(options = {}) {
       risk: "read_only",
       resultVisibility: "reasoner",
       costUnits: 1,
-      description: "Inspect the Fracta2 hosted browser connection, tabs, or explicitly targeted page context.",
+      description: "Inspect the Fracta2 hosted browser connection, tabs, bounded page text or DOM field structure without reading field values.",
       inputSchema: {
         type: "object",
         properties: {
-          action: { type: "string", enum: ["status", "tabs", "context"] },
+          action: { type: "string", enum: ["status", "tabs", "context", "structure"] },
           tab_id: { type: "integer", minimum: 0 },
           max_chars: { type: "integer", minimum: 1, maximum: 12000 },
           include_url: { type: "boolean" },
@@ -91,6 +92,33 @@ export function createHostedBrowserCapabilities(options = {}) {
             tabs: Array.isArray(result.tabs)
               ? result.tabs.map((tab) => summarizeTab(tab, input.include_url === true))
               : [],
+          };
+        }
+        if (action === "structure") {
+          const targetTabId = positiveInt(input.tab_id, "tab_id");
+          const result = await rpc(gateway, "page.evaluate", {
+            browser_instance_id: browserId, tabId: targetTabId,
+            code: SAFE_DOM_STRUCTURE_CODE,
+          }, timeoutMs);
+          const raw = result.value || {};
+          // Explicit allowlist: never return arbitrary extension/page fields.
+          return {
+            tab: result.tab ? summarizeTab(result.tab, false) : null,
+            title: String(raw.title || "").slice(0, 180),
+            origin: originOf(raw.origin),
+            forms: boundedInteger(raw.forms, 0, 0, 100),
+            fields: Array.isArray(raw.fields) ? raw.fields.slice(0, 80).map(f => ({
+              tag: String(f.tag || "").slice(0, 16),
+              type: String(f.type || "").slice(0, 30),
+              role: String(f.role || "").slice(0, 40),
+              required: f.required === true,
+              disabled: f.disabled === true,
+              readonly: f.readonly === true,
+              autocomplete: String(f.autocomplete || "").slice(0, 64),
+            })) : [],
+            total_fields: boundedInteger(raw.total_fields, 0, 0, 100000),
+            frames: boundedInteger(raw.frames, 0, 0, 100),
+            truncated: raw.truncated === true,
           };
         }
         if (action === "context") {
