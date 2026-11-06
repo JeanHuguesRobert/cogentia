@@ -4,14 +4,14 @@
 import { evaluateMandate, resolveMandate } from '../../../inseme/packages/cop-core/src/governed-act.js';
 import { isResolvedCallerAuth } from './cogentia-mcp-auth.js';
 const deny = error => ({ ok:false, admitted:false, error, reservation:null });
-export function assessJohnCopAuthority({store,auth,mandate_ref,version_pin,capability,ledger,verifyIssuer,require_budget=true,at_time}={}) {
+export function assessJohnCopAuthority({store,auth,mandate_ref,version_pin,capability,ledger,verifyIssuer,require_budget=true,at_time,transport_mandate_label=null}={}) {
   if (!isResolvedCallerAuth(auth) || auth.auth!=='jhn' || auth.allowMutate!==true)
     return deny('authenticated_jhn_caller_required');
   if (auth.principal_ref!=='principal:jhn' || !auth.actor || !auth.actor.startsWith('agent:jhn'))
     return deny('principal_actor_binding_required');
   if (!mandate_ref || !capability) return deny('mandate_and_capability_required');
   if (!version_pin) return deny('mandate_version_pin_required');
-  if (auth.mandate_ref!==mandate_ref) return deny('mandate_transport_mismatch');
+  if (auth.mandate_ref!==(transport_mandate_label || mandate_ref)) return deny('mandate_transport_mismatch');
   if (!store || typeof store.replay!=='function' || typeof store.listTopic!=='function')
     return deny('canonical_authority_store_unavailable');
   const mandate=resolveMandate(store,mandate_ref);
