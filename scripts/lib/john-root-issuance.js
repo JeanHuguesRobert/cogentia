@@ -3,11 +3,13 @@
  * canonical store. Never call from the ordinary MCP credential by default.
  */
 import {verifyJohnRootApproval} from './john-root-mandate.js';
+import {verifyRootSshsig} from './john-sshsig-approval.js';
 import {createMemoryCopEventStore} from '../../../inseme/packages/cop-core/src/cop-event-spool.js';
 import {recordMandateDeclaration} from '../../../inseme/packages/cop-core/src/governed-act.js';
 import {recordExecutionBudgetGrant} from '../../../inseme/packages/cop-core/src/execution-budget.js';
-export function issueVerifiedJohnRoot({store,proposal,approval,trustedPublicKeyPem,now}={}){
-  const proof=verifyJohnRootApproval({proposal,approval,trustedPublicKeyPem,now});
+export function issueVerifiedJohnRoot({store,proposal,approval,trustedPublicKeyPem,trustedSshPublicKey,expectedSshFingerprint,now}={}){
+  const sshsig=approval?.kind==='cogentia.principal-sshsig/v1';
+  const proof=sshsig ? verifyRootSshsig({proposal,approval,trustedPublicKey:trustedSshPublicKey,expectedFingerprint:expectedSshFingerprint,now}) : verifyJohnRootApproval({proposal,approval,trustedPublicKeyPem,now});
   if(!proof.ok)return {ok:false,error:proof.error};
   // Only canonical, atomic event stores qualify. No local parallel ledger.
   if(!store||typeof store.appendBatch!=='function'||typeof store.listTopic!=='function'||typeof store.replay!=='function')
@@ -23,7 +25,7 @@ export function issueVerifiedJohnRoot({store,proposal,approval,trustedPublicKeyP
     valid_from:proposal.valid_from,valid_until:proposal.valid_until,
     scope:{...proposal.scope,budget_ceiling:proposal.budget_limits},
     metadata:{issuer_fingerprint:proof.issuer_fingerprint,proposal_hash:proof.proposal_hash,
-      max_delegation_depth:proposal.max_delegation_depth,signature_base64:approval.signature_base64}
+      max_delegation_depth:proposal.max_delegation_depth,...(sshsig?{signature_scheme:'sshsig',signature:approval.signature}:{signature_base64:approval.signature_base64})}
   });
   recordExecutionBudgetGrant(staged,{budget_id:budgetId,mandate_ref:proposal.mandate_id,
     principal_ref:proposal.principal_ref,limits:proposal.budget_limits});
