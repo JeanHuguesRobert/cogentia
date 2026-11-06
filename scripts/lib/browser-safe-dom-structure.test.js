@@ -20,7 +20,7 @@ test('fixed read-only structure omits passwords, user input, private text and li
    assert.equal(req.params.tabId,51);
    assert.equal(req.params.code,SAFE_DOM_STRUCTURE_CODE);
    assert.ok(!req.params.code.includes('.value'));
-   const response={jsonrpc:'2.0',id:req.id,result:{tab:{id:51,title:'Login',url:'https://bank.example.test/path?secret=DELIBERATELY_PRIVATE'},value:{title:'Login',origin:'https://bank.example.test',forms:1,total_fields:2,frames:0,truncated:false,fields:[{tag:'input',type:'password',required:true,autocomplete:'current-password',value:'DO_NOT_LEAK',name:'secret_name',placeholder:'DO_NOT_LEAK',outerHTML:'DO_NOT_LEAK'},{tag:'button',value:'DO_NOT_LEAK'}],secret:'DO_NOT_LEAK'}}};
+   const response={jsonrpc:'2.0',id:req.id,result:{tab:{id:51,title:'Login',url:'https://bank.example.test/path?secret=DELIBERATELY_PRIVATE'},value:{title:'Login',origin:'https://bank.example.test',forms:1,total_fields:2,frames:1,iframe_metadata:[{origin:'https://embedded.example.test/path?secret=DO_NOT_LEAK',same_origin:false,forms:0,controls:0}],truncated:false,fields:[{tag:'input',type:'password',required:true,autocomplete:'current-password',value:'DO_NOT_LEAK',name:'secret_name',placeholder:'DO_NOT_LEAK',outerHTML:'DO_NOT_LEAK'},{tag:'button',value:'DO_NOT_LEAK'}],secret:'DO_NOT_LEAK'}}};
    extension.send(JSON.stringify(response));
   });
   const cap=createHostedBrowserCapabilities({gateway:endpoint}).find(c=>c.name==='browser.hosted.inspect');
@@ -35,5 +35,7 @@ test('fixed read-only structure omits passwords, user input, private text and li
   assert.ok(!JSON.stringify(r).includes('DO_NOT_LEAK'));
   assert.ok(!JSON.stringify(r).includes('/path?secret='));
   assert.equal(r.tab.url,'https://bank.example.test');
+  assert.equal(r.iframe_metadata[0].origin,'https://embedded.example.test');
+  assert.equal(r.iframe_metadata[0].same_origin,false);
  }finally{extension?.close();await gateway.close()}
 });

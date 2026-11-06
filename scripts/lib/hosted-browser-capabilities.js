@@ -118,6 +118,12 @@ export function createHostedBrowserCapabilities(options = {}) {
             })) : [],
             total_fields: boundedInteger(raw.total_fields, 0, 0, 100000),
             frames: boundedInteger(raw.frames, 0, 0, 100),
+            iframe_metadata: Array.isArray(raw.iframe_metadata) ? raw.iframe_metadata.slice(0,20).map(frame => ({
+              origin: originOf(frame.origin),
+              same_origin: frame.same_origin === true,
+              forms: boundedInteger(frame.forms, 0, 0, 100),
+              controls: boundedInteger(frame.controls, 0, 0, 100000),
+            })) : [],
             truncated: raw.truncated === true,
           };
         }
