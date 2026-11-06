@@ -35,11 +35,17 @@ export function assessPresumedEffect({
   mandatory_confirmation = false,
 } = {}) {
   const action = String(action_class || "").toLowerCase();
+  // Compose/save/update a draft is not transmission to a third party.
+  // It remains a remote effect and needs a verified recoverable grant, but
+  // must not be classified as an exceptional *sending* authorization.
+  const draftOnly = /^(gmail|email|communication|whatsapp)\.(draft|create_draft|update_draft|save_draft)$/.test(action);
   const reserved = externally_engaging
-    || /(^|\.)(send|publish|post|forward|reply|submit|disclose|contract|payment|transfer)(\.|$)/.test(action)
-    || action.startsWith("gmail.")
-    || action.startsWith("whatsapp.")
-    || action.startsWith("communication.");
+    || /(^|\.)(send|publish|post|forward|reply|submit|disclose|contract|payment|transfer|purchase|sign|consent)(\.|$)/.test(action)
+    || /^(financial|legal)\.commit$/.test(action)
+    || /^(third_party|private|sensitive)\.disclose$/.test(action)
+    || (!draftOnly && (action.startsWith("gmail.")
+      || action.startsWith("whatsapp.")
+      || action.startsWith("communication.")));
   if (reserved) return { decision: "explicit_principal_authorization", reason: "third_party_commitment" };
   if (mandatory_confirmation) return { decision: "platform_confirmation", reason: "mandatory_external_control" };
   if (!within_mandate) return { decision: "escalate", reason: "outside_mandate" };

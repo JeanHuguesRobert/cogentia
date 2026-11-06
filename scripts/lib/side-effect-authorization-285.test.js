@@ -22,6 +22,19 @@ test("email and third party effects never inherit presumed authority", () => {
   }
   assert.equal(assessPresumedEffect({ ...safe, externally_engaging: true }).decision, "explicit_principal_authorization");
 });
+test("draft preparation is not sending, but still needs a verified mandate and recovery", () => {
+  for (const action_class of ["gmail.draft", "gmail.create_draft", "gmail.update_draft", "communication.draft"]) {
+    assert.equal(assessPresumedEffect({ ...safe, action_class }).decision, "mandate_derived_candidate");
+    assert.equal(assessPresumedEffect({ ...safe, action_class, recovery_verified: false }).decision, "escalate");
+    assert.equal(assessPresumedEffect({ ...safe, action_class, privacy_cleared: false }).decision, "escalate");
+    assert.equal(assessPresumedEffect({ ...safe, action_class, externally_engaging: true }).decision, "explicit_principal_authorization");
+  }
+});
+test("payments, signatures, sensitive disclosure and formal commitments require specific authority", () => {
+  for (const action_class of ["payment.execute", "financial.commit", "legal.commit", "contract.sign", "purchase.execute", "third_party.disclose", "private.disclose", "sensitive.disclose", "formal.submit", "communication.reply"]) {
+    assert.equal(assessPresumedEffect({ ...safe, action_class }).decision, "explicit_principal_authorization", action_class);
+  }
+});
 test("missing mandate, budget, privacy, recovery and platform gates fail closed", () => {
   for (const key of ["within_mandate", "within_budget", "privacy_cleared", "recovery_verified", "negligible_residue", "low_exposure"]) {
     assert.equal(assessPresumedEffect({ ...safe, [key]: false }).decision, "escalate");
