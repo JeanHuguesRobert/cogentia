@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {createMemoryCopEventStore} from '../../../inseme/packages/cop-core/src/cop-event-spool.js';
-import {recordMandateDeclaration} from '../../../inseme/packages/cop-core/src/governed-act.js';
+import {recordMandateDeclaration,recordMandateControl} from '../../../inseme/packages/cop-core/src/governed-act.js';
 import {resolveCallerAuth} from './cogentia-mcp-auth.js';
 import {assessJohnCopAuthority as assess} from './john-cop-authority-preflight.js';
 const store=createMemoryCopEventStore();
@@ -35,4 +35,15 @@ test('issuer, principal, transport, budget and capability gates refuse',()=>{
   [{version_pin:'v0'},'mandate_version_mismatch'],
   [{at_time:new Date('2027-01-01T00:00:00Z')},'mandate_expired']
  ]) assert.equal(assess({...args,at_time:new Date('2026-11-06T13:00:00Z'),...mod}).error,error,JSON.stringify(mod));
+});
+
+test('canonical revocation blocks previously valid read-only mandate',()=>{
+ const state=createMemoryCopEventStore();
+ recordMandateDeclaration(state,{mandate_id:mandate_ref,version:'v1',principal_ref:'principal:jhn',logical_agent_ref:'agent:jhn',scope:{allowed_actions:['browser.hosted.inspect'],forbidden_actions:['gmail.send','payment.execute']}});
+ assert.equal(assess({...args,store:state}).preflight_ok,true);
+ assert.equal(recordMandateControl(state,{principal_ref:'principal:jhn',mandate_ref,action:'revoke'}).ok,true);
+ const rejected=assess({...args,store:state});
+ assert.equal(rejected.ok,false);
+ assert.equal(rejected.error,'mandate_inactive');
+ assert.equal(rejected.reservation,null);
 });
