@@ -70,3 +70,11 @@ test('legacy Fracta2 resource alias is accepted only with exact trusted origin a
   fs.writeFileSync(store,JSON.stringify(state));
   assert.equal((await handle(untrustedReq)).error,'cop_authorization_denied');
 });
+test('super broker never executes an arbitrary script directly as root by default',()=>{
+ const [bin,args]=executionArguments('id -u',0);
+ assert.equal(bin,'sudo');
+ assert.deepEqual(args,['-n','-u','ubuntu','--','/bin/sh','-c','id -u']);
+ const [unprivilegedBin,unprivilegedArgs]=executionArguments('id -u',1001);
+ assert.equal(unprivilegedBin,'/bin/sh');
+ assert.deepEqual(unprivilegedArgs,['-c','id -u']);
+});
