@@ -406,3 +406,15 @@ one-shot proves an authenticated *operator-invoked delegated test*, not that
 the permanent WhatsApp daemon itself invoked the MCP, and not that broader
 interactive navigation permissions are authorized. Never use `set -x` to
 expose the command environment, or pass a token as an argument.
+
+## Credential lookup and fill: trusted capability boundary (2026-11-07)
+
+The browser has a non-secret `browser.form.fill` primitive; it **must not** be used for passwords, OTPs, bank data or vault-backed secrets. `scripts/lib/browser-credential-capabilities.js` introduces a *fixture-tested, fail-closed foundation*, not a production-enabled connector:
+
+- `credential.lookup` returns only a bounded reference, exact HTTPS origin and available field names (`username`, `password`). No secret bytes or masked value are returned.
+- `credential.fill` accepts only `browser_instance_id`, `tab_id`, `expected_origin`, `credential_ref`, `field`. It requires verified COP actor/principal/mandate and effect authorization plus budget reservation. The trusted vault callback transfers the value to a trusted browser adapter **without passing through the language model**, and exposes a redacted result only after a matching insertion receipt; no submit, navigation, OTP or payment capability.
+- Both operations fail closed if independent authority verification or vault/browser adapters are missing. They are **not yet registered as callable JHN/MCP capabilities** and no production vault, secret delivery bridge, issuer verification or end-to-end evidence adapter has been connected. Fixture tests do not establish readiness or permission to use secrets.
+
+Integration prerequisites: an audited `authorize()` adapter calling the canonical COP issuer/grant/budget validation, a per-Principal `vault.describe`/`vault.withSecret` adapter with server-held secrets, a trusted `browser.fillSecret` operation that rechecks the *actual* browser instance, top-level document URL and field type immediately before injection, and account-specific access controls. Sensitive return values and thrown errors must be redacted inside those trusted adapters; the generic WebSocket `page.evaluate`, `page.form.fill`, `page.insertText` and agent-provided scripting APIs **are not approved secret conduits**. A full implementation also requires reliable navigation-race rejection, per-origin allowlisting, bounded effect receipt and revocation/settlement, as well as adversarial non-disclosure tests. This is a capability development step only; it confers neither authentication nor transaction authority.
+
+Fixture test: `node scripts/lib/browser-credential-capabilities.test.js`.
