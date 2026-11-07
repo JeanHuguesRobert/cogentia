@@ -20,9 +20,9 @@ function target(input) {
     expected_origin:parsed.origin,credential_ref:input.credential_ref});
 }
 
-function normalizeMetadata(meta, request) {
+function normalizeMetadata(meta, request, principal_ref) {
   if (!meta || meta.credential_ref !== request.credential_ref ||
-      meta.principal_ref == null || meta.origin !== request.expected_origin ||
+      meta.principal_ref !== principal_ref || meta.origin !== request.expected_origin ||
       !Array.isArray(meta.available_fields) ||
       meta.available_fields.some(x => !FIELDS.has(x))) throw codeError('CREDENTIAL_METADATA_MISMATCH');
   return {credential_ref:request.credential_ref, origin:request.expected_origin,
@@ -47,25 +47,25 @@ export function createBrowserCredentialCapabilities({vault,authorize,browser}={}
         grant.actor_ref == null || grant.mandate_ref == null ||
         (action === 'credential.fill' && (!grant.effect_authorization_id || !grant.budget_reservation_id)))
       throw codeError('CREDENTIAL_AUTHORITY_DENIED');
-    return t;
+    return {target:t,principal_ref:grant.principal_ref};
   }
   return Object.freeze({
     async lookup(input) {
-      const t=await gate('credential.lookup',input);
+      const {target:t,principal_ref}=await gate('credential.lookup',input);
       if (typeof vault?.describe !== 'function') throw codeError('CREDENTIAL_VAULT_UNAVAILABLE');
-      return normalizeMetadata(await vault.describe(t),t);
+      return normalizeMetadata(await vault.describe(t),t,principal_ref);
     },
     async fill(input) {
       if (!FIELDS.has(input?.field)) throw codeError('CREDENTIAL_FIELD_UNSUPPORTED');
-      const t=await gate('credential.fill',input,input.field);
+      const {target:t,principal_ref}=await gate('credential.fill',input,input.field);
       if (typeof vault?.describe !== 'function' || typeof vault?.withSecret !== 'function' ||
           typeof browser?.fillSecret !== 'function') throw codeError('CREDENTIAL_BACKEND_UNAVAILABLE');
-      const meta=normalizeMetadata(await vault.describe(t),t);
+      const meta=normalizeMetadata(await vault.describe(t),t,principal_ref);
       if (!meta.available_fields.includes(input.field)) throw codeError('CREDENTIAL_FIELD_UNAVAILABLE');
       // Trusted callback never yields a secret to the caller: sanitize exceptions.
       let receipt;
       try {
-        receipt=await vault.withSecret({...t,field:input.field},async (secret)=> {
+        receipt=await vault.withSecret({...t,principal_ref,field:input.field},async (secret)=> {
           if (typeof secret !== 'string' || !secret) throw codeError('CREDENTIAL_SECRET_UNAVAILABLE');
           return browser.fillSecret({target:t,field:input.field,secret});
         });

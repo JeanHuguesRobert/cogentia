@@ -115,9 +115,14 @@ export async function loadDigitalTwinInstance(options = {}) {
   const supabaseUrl = options.supabaseUrl || process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
   const supabaseKey = options.supabaseKey || process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY;
 
-  if (supabaseUrl && supabaseKey) {
+  // Never project non-public or secret parameters into an agent-visible manifest.
+  // The database can host multiple Principals; require a pinned instance UUID.
+  const supabaseInstanceId = options.supabaseInstanceId || process.env.COGENTIA_SUPABASE_INSTANCE_UUID;
+  const validInstanceId = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(supabaseInstanceId || "");
+  if (supabaseUrl && supabaseKey && validInstanceId) {
     try {
-      const response = await fetch(`${supabaseUrl}/rest/v1/instance_config?select=key,value,category,is_public`, {
+      const params = new URLSearchParams({select:"key,value,is_public,is_secret",instance_id:`eq.${supabaseInstanceId}`,is_public:"eq.true",is_secret:"eq.false"});
+      const response = await fetch(`${supabaseUrl}/rest/v1/instance_config?${params}`, {
         headers: {
           "apikey": supabaseKey,
           "Authorization": `Bearer ${supabaseKey}`
@@ -126,8 +131,10 @@ export async function loadDigitalTwinInstance(options = {}) {
       if (response.ok) {
         const rows = await response.json();
         const kv = {};
+        const publicKeys = new Set(["bot_name", "principal_repo", "disclosure_tag", "policy_mode"]);
         for (const r of rows) {
-          kv[r.key] = r.value;
+          if (r.is_public === true && r.is_secret === false && publicKeys.has(r.key) && typeof r.value === "string")
+            kv[r.key] = r.value;
         }
         manifest.supabase_vault = {
           connected: true,
@@ -148,7 +155,7 @@ export async function loadDigitalTwinInstance(options = {}) {
   } else {
     manifest.supabase_vault = {
       connected: false,
-      reason: "No Supabase credentials present; running on pure local/repo SoT manifest."
+      reason: !validInstanceId ? "supabase_instance_uuid_not_pinned" : "missing_supabase_credentials"
     };
   }
 
