@@ -21,6 +21,12 @@ import {
 
 export const LIST_TTL_MS = 3_600_000;
 export const MCP_APP_DEMO_URI = "ui://cogentia/fractatest-demo-v3";
+// Keep old template pointers resolvable: ChatGPT connector metadata can outlive
+// a server deployment, and ecosystem/widget requests may use a cached URI.
+export const MCP_APP_DEMO_COMPAT_URIS = Object.freeze([
+  "ui://cogentia/fractatest-demo-v2",
+  "ui://cogentia/fractatest-demo-v1",
+]);
 export const MCP_APP_DEMO_MIME = "text/html;profile=mcp-app";
 export const SKILL_URI_PREFIX = "skill://cogentia/";
 export const PATTERN_URI_PREFIX = "cogentia://pattern/";
@@ -156,6 +162,13 @@ export function listCatalogResources() {
       mimeType: MCP_APP_DEMO_MIME,
       description: "Read-only local interactive UI (no credentials, no external effects).",
     },
+    ...MCP_APP_DEMO_COMPAT_URIS.map((uri) => ({
+      uri,
+      name: "fractatest-demo-compat",
+      title: "FractaTest — backwards-compatible MCP Apps resource",
+      mimeType: MCP_APP_DEMO_MIME,
+      description: "Legacy URI alias serving the current read-only FractaTest UI.",
+    })),
     {
       uri: CLI_CATALOG_URI,
       name: "cli-catalog",
@@ -201,7 +214,7 @@ export function readMcpResource(uri, options = {}) {
   const raw = String(uri || "").trim();
   if (!raw) return { ok: false, error: "missing_uri" };
 
-  if (raw === MCP_APP_DEMO_URI) {
+  if (raw === MCP_APP_DEMO_URI || MCP_APP_DEMO_COMPAT_URIS.includes(raw)) {
     return {
       ok: true, uri: raw, mimeType: MCP_APP_DEMO_MIME,
       text: fs.readFileSync(path.join(repoRoot, "scripts", "lib", "mcp-apps", "fractatest.html"), "utf8"),
