@@ -52,3 +52,15 @@ Cette étape valide seulement le contrat d'interface et la pédagogie du contrô
 ## Non-régressions et exploitation
 
 Ne pas redémarrer `mcp-cogentia.service` pour le seul prototype non émetteur : cela réclamerait la procédure de signature que ce chantier vise à rendre moins fréquente. Garder la MCP Apps FractaTest fonctionnelle. Aucun changement du courtier root, aucune extension de mandat, aucune dépendance au shell bootstrap. Pour les changements GitHub Actions futurs, respecter la double voie FBF : statut d'infrastructure distinct du résultat de tâche.
+
+## Secours de développement à intervention minimale (Windows PowerShell)
+
+Tant que l’émetteur d’approbation légère n'est pas en production, le script `scripts/super/approve-cop-effect-windows.ps1` remplace les multiples commandes manuelles SCP/hash/SSHSIG/SCP par **une invocation** sur le ThinkPad. Il obtient la clé depuis `ssh -G fracta2`, télécharge une proposition existante, vérifie son schéma et son expiration, affiche la commande et exige la saisie explicite de `OUI` avant une signature SSHSIG locale. Il transmet **seulement** le `.sig` et ne délivre aucun grant, ne réserve pas de budget, ne redémarre rien. Il refuse un hash attendu divergent (`-ExpectedSha256` obligatoire, fourni hors du serveur pour vérifier l’effet préparé). Le courtier root reste exclusivement responsable de l'émission et de l'exécution. Ce script n'est pas la solution définitive d'ergonomie : son prompt est local au poste du Principal.
+
+Exemple PowerShell depuis le dépôt synchronisé :
+
+```powershell
+.\scripts\super\approve-cop-effect-windows.ps1 -RemoteProposal /tmp/PROPOSITION-COP.json -ExpectedSha256 EMPREINTE_SHA256_CONFIRMEE
+```
+
+Le script doit être exécuté sur une proposition actuelle, avant son expiration, et non sur une ancienne proposition signée. Aucun contournement du courtier en mode normal ou bootstrap.
