@@ -28,6 +28,26 @@ class BundleChecks(unittest.TestCase):
             a.write_bytes(corrupt)
             self.assertFalse(verify.verify_bundle(a,digest)['ok'])
             self.assertFalse(verify.verify_bundle(b,'0'*64)['ok'])
+    def test_partial_verified_root_source_can_be_completed_only_if_exact(self):
+        import os
+        with tempfile.TemporaryDirectory() as td:
+            root=pathlib.Path(td)/'issuer';root.mkdir()
+            members={'issuer/repos/cogentia/code.mjs':b'known',
+                     'issuer/repos/inseme/module.js':b'module'}
+            for name,data in members.items():
+                path=root/pathlib.PurePosixPath(name).relative_to('issuer')
+                path.parent.mkdir(parents=True,exist_ok=True);path.write_bytes(data)
+            verified={'members':members}
+            self.assertTrue(install.verified_existing_stage(root,verified,owner_uid=os.getuid()))
+            changed=root/'repos/cogentia/code.mjs';changed.write_bytes(b'altered')
+            self.assertFalse(install.verified_existing_stage(root,verified,owner_uid=os.getuid()))
+            changed.write_bytes(b'known')
+            extra=root/'repos/cogentia/unexpected';extra.write_bytes(b'bad')
+            self.assertFalse(install.verified_existing_stage(root,verified,owner_uid=os.getuid()))
+            extra.unlink()
+            changed.unlink();changed.symlink_to('/etc/hostname')
+            self.assertFalse(install.verified_existing_stage(root,verified,owner_uid=os.getuid()))
+
     def test_without_root_activation_is_denied(self):
         import os
         if os.geteuid()==0:self.skipTest('root installer intentionally never exercised by automated tests')

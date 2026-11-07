@@ -77,10 +77,30 @@ def install_file(dest,data,mode=0o644):
     finally:
         if os.path.exists(name):os.unlink(name)
 
-def install(verified,keydata):
+def verified_existing_stage(directory,verified,owner_uid=0):
+    """Accept an existing root-owned staged source tree only by exact bytes.
+
+    This validates code; it does not enroll a Principal or grant permission.
+    """
+    if not directory.is_dir() or directory.is_symlink() or directory.stat().st_uid!=owner_uid or directory.stat().st_mode&0o022:return False
+    expected={str(pathlib.PurePosixPath(name).relative_to('issuer')):data
+              for name,data in verified['members'].items()}
+    actual={}
+    for item in directory.rglob('*'):
+        if item.is_symlink() or item.stat().st_uid!=owner_uid or item.stat().st_mode&0o022:
+            return False
+        if item.is_file():actual[str(item.relative_to(directory))]=item
+        elif not item.is_dir():return False
+    return set(actual)==set(expected) and all(
+        hashlib.sha256(actual[name].read_bytes()).digest()==hashlib.sha256(data).digest()
+        for name,data in expected.items())
+
+def install(verified,keydata,allow_verified_stage=False):
     if os.geteuid()!=0:return {'ok':False,'error':'root_required'}
     if not protected_dir(BASE) or not protected_dir(STATE):return {'ok':False,'error':'root_directories_not_protected'}
-    if BUNDLE_DIR.exists() or KEY.exists() or BACKUP.exists():return {'ok':False,'error':'already_initialized_review_manually'}
+    reuse_stage=BUNDLE_DIR.exists() and allow_verified_stage and verified_existing_stage(BUNDLE_DIR,verified)
+    if (BUNDLE_DIR.exists() and not reuse_stage) or KEY.exists() or BACKUP.exists():
+        return {'ok':False,'error':'already_initialized_review_manually'}
     if not BROKER.is_file() or BROKER.is_symlink() or BROKER.stat().st_uid!=0:return {'ok':False,'error':'broker_not_root_owned'}
     if GRANTS.exists() and (GRANTS.is_symlink() or GRANTS.stat().st_uid!=0 or GRANTS.stat().st_mode&0o077):
         return {'ok':False,'error':'grant_store_not_protected'}
@@ -88,21 +108,21 @@ def install(verified,keydata):
         return {'ok':False,'error':'existing_cop_store_not_protected'}
     KEY_DIR.mkdir(mode=0o700,parents=False,exist_ok=True)
     if not protected_dir(KEY_DIR):return {'ok':False,'error':'trusted_key_dir_invalid'}
-    # The installed bundle is never built by root from a live mutable repo:
-    # only the pinned, verified archive bytes are admitted.
-    stage=pathlib.Path(tempfile.mkdtemp(prefix='.issuer-stage-',dir=BASE))
-    try:
-        for name,data in verified['members'].items():
-            target=stage/pathlib.PurePosixPath(name).relative_to('issuer')
-            target.parent.mkdir(parents=True,exist_ok=True)
-            target.write_bytes(data)
-            os.chmod(target,0o644)
-        for folder in [stage,*stage.rglob('*')]:
-            if folder.is_dir():os.chmod(folder,0o755)
-        # Broker remains running and unchanged until all source is installed.
-        os.replace(stage,BUNDLE_DIR)
-    finally:
-        if stage.exists():shutil.rmtree(stage)
+    # Install from exact pinned bytes, or reuse a previously staged exact tree.
+    # Never execute/import a mutable checkout under root.
+    if not reuse_stage:
+        stage=pathlib.Path(tempfile.mkdtemp(prefix='.issuer-stage-',dir=BASE))
+        try:
+            for name,data in verified['members'].items():
+                target=stage/pathlib.PurePosixPath(name).relative_to('issuer')
+                target.parent.mkdir(parents=True,exist_ok=True)
+                target.write_bytes(data)
+                os.chmod(target,0o644)
+            for folder in [stage,*stage.rglob('*')]:
+                if folder.is_dir():os.chmod(folder,0o755)
+            os.replace(stage,BUNDLE_DIR)
+        finally:
+            if stage.exists():shutil.rmtree(stage)
     install_file(KEY,keydata,0o644)
     if not GRANTS.exists():install_file(GRANTS,b'{"grants":{}}\n',0o600)
     if not COP.exists():
@@ -175,6 +195,7 @@ def main():
     parser.add_argument('--pubkey-sha256',required=True)
     parser.add_argument('--activate',action='store_true')
     parser.add_argument('--upgrade',action='store_true')
+    parser.add_argument('--resume-verified-stage',action='store_true')
     args=parser.parse_args()
     result=verify_bundle(args.bundle,args.sha256)
     if not result['ok']:print(json.dumps(result));return 1
@@ -188,10 +209,10 @@ def main():
         print(json.dumps({'ok':False,'error':'principal_key_fingerprint_mismatch'}));return 1
     summary={'ok':True,'bundle_sha256':result['sha256'],'key_sha256':key_hash,'files':len(result['members']),
              'phase':'DRY_RUN_NO_INSTALL' if not args.activate else 'EXPLICIT_ROOT_ACTIVATION'}
-    if args.activate and args.upgrade:
+    if (args.activate and args.upgrade) or (args.resume_verified_stage and not args.activate):
         print(json.dumps({'ok':False,'error':'mutually_exclusive_activation_modes'}));return 1
     if not (args.activate or args.upgrade):print(json.dumps(summary,indent=2));return 0
-    outcome=upgrade(result) if args.upgrade else install(result,key)
+    outcome=upgrade(result) if args.upgrade else install(result,key,allow_verified_stage=args.resume_verified_stage)
     print(json.dumps(outcome,indent=2));return 0 if outcome['ok'] else 1
 
 if __name__=='__main__':sys.exit(main())
