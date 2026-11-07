@@ -1,3 +1,5 @@
+> **2026-11-07 — Note de sécurité :** le vieux `scripts/super/install.sh` ci-dessous est un protocole historique de bootstrap et ne réalise PAS l'enrôlement signé ni le stockage root-owned du nouvel issuer COP. Ne l'exécutez pas pour résoudre le refus actuel de `sudo`. La procédure d'approbation proportionnée est documentée dans [le pont d'issuer Principal](cop-trusted-principal-issuer-bridge.md), qui exige un paquet figé, une clé publique du Principal authentifiée et un mandat initial signé. Ce texte historique est conservé pour l'audit, pas comme instruction d'installation actuelle.
+
 # Cogentia Super — COP authority, Unix execution
 
 Status: implementation candidate, pending root-owned deployment and live smoke test.

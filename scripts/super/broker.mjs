@@ -69,6 +69,29 @@ function execute(script,timeout){
   });
 }
 export async function handle(r){
+  if(r?.op==='prepare'){
+    if(process.geteuid?.()!==0)return fail('root_issuer_unavailable');
+    try{
+      const {prepareRootSuper}=await import('file:///usr/local/libexec/cogentia-super/issuer/repos/cogentia/scripts/super/root-super-prepare.mjs');
+      return prepareRootSuper({command:r.command,recovery_ref:r.recovery_ref});
+    }catch(e){log({event:'cop_prepare_unavailable',reason:e.code||'uninstalled'});return fail('root_issuer_unavailable');}
+  }
+  if(r?.op==='enroll'){
+    if(process.geteuid?.()!==0)return fail('root_issuer_unavailable');
+    try{
+      const {enrollMaintenanceMandate}=await import('file:///usr/local/libexec/cogentia-super/issuer/repos/cogentia/scripts/super/root-maintenance-mandate.mjs');
+      return enrollMaintenanceMandate({proposal:r.proposal,signature:r.signature});
+    }catch(e){log({event:'cop_enrollment_unavailable',reason:e.code||'uninstalled'});return fail('root_issuer_unavailable');}
+  }
+  if(r?.op==='issue'){
+    if(process.geteuid?.()!==0)return fail('root_issuer_unavailable');
+    // Only the broker imports this pinned root-owned module. No paths, issuer
+    // flags, key material or callback functions may be supplied by the client.
+    try{
+      const {issueRootApprovedEffect}=await import('file:///usr/local/libexec/cogentia-super/issuer/repos/cogentia/scripts/super/root-principal-effect-issue.mjs');
+      return issueRootApprovedEffect({proposal:r.proposal,signature:r.signature});
+    }catch(e){log({event:'cop_issuer_unavailable',reason:e.code||'uninstalled'});return fail('root_issuer_unavailable');}
+  }
   if(r?.op!=='run')return fail('unsupported_operation');
   if(r.execution_mode!=='super')return fail('explicit_super_required');
   if(typeof r.script!=='string'||!r.script.trim()||Buffer.byteLength(r.script)>32768)return fail('invalid_script');

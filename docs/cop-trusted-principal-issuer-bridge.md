@@ -3,7 +3,7 @@ title: "COP — Pont de confiance Principal, signature et émission privilégié
 author: "Institut Mariani / C.O.R.S.I.C.A."
 date: "2026-11-07"
 last_modified_at: "2026-11-07"
-version: "0.2"
+version: "0.3"
 status: "working-paper"
 language: "fr"
 license: "CC BY-SA 4.0"
@@ -40,10 +40,22 @@ review:
 - Un reçu `COP_CLAIMED_NOT_ISSUED` est délibérément distinct d'un grant root : une panne entre la claim COP et l'émission root laisse un acte non exécuté et **non rejouable automatiquement**. Une reprise nécessitera une réconciliation gouvernée du paquet et de la réservation, sans re-signature implicite.
 - **Limite de confiance déterminante :** les tests peuvent injecter des simulateurs d'issuer et de vérification de signature. Ces fonctions ne sont **pas une surface MCP**, et leur seul résultat n'établit pas l'identité du Principal. En production, seuls du code et une clé publique installés sous le contrôle root, avec accès au registre COP également protégé, pourront les appeler. Ne pas propager un booléen `issuerVerified` reçu d'un client comme preuve.
 
+## 7 novembre — Émetteur root et chemin d'enrôlement signés (source et prévisualisation)
+
+L'infrastructure source complète désormais les primitives précédentes :
+
+- `root-maintenance-mandate.mjs` accepte **une première déclaration v1 signée indépendamment** de `mandate:jhn:maintenance`, dans une portée limitée (`host.process.run`, nœud Fracta2, `super`, budget au plus 50 étapes et validité bornée). Elle crée atomiquement déclaration et budget dans le COP **root-owned**, sans produire de grant d'effet.
+- `root-super-prepare.mjs` vérifie le mandat, réserve une étape COP, fabrique la proposition exacte à signer sous `cogentia-super-effect-v1`, et rend le travail traçable. Une réservation non revendiquée peut être libérée après expiration ; une claim déjà émise impose la réconciliation.
+- `root-principal-effect-issue.mjs` vérifie la signature SSHSIG sur l'effet exact, la réservation courante et la claim unique, puis prépare un grant consommable dans le magasin de l'unique courtier `root`. Ce code refuse l'exécution hors du répertoire source root-owned et des magasins protégés.
+- Le même processus `cogentia-super` expose les opérations internes `enroll`, `prepare`, `issue`, `run`. Aucune n'accepte une provenance d'autorité déclarée par le client à la place d'une signature réelle ; seul `run` exécute l'acte, après consommation de son grant. Les opérations d'issuer ne doivent jamais être ajoutées en tant que raccourcis de mutation MCP non authentifiés.
+- `build-principal-issuer-bundle.py` produit un paquet déterministe de la fermeture des sources ; `verify-principal-issuer-bundle.py` valide la liste blanche et les hashes de chaque fichier. `install-principal-issuer-bundle.py` reste en prévisualisation par défaut et exige `--activate`, le privilège root et les empreintes explicites de l'archive et de la clé publique ; aucun mandat n'est généré par l'installation.
+
+Les tests locaux prouvent une signature SSH réelle, un enrôlement canonique dans SQLite, une préparation bornée, une claim unique et la séparation `COP_CLAIMED_NOT_ISSUED` / `ROOT_GRANT_ISSUED_NOT_EXECUTED`. Ils ne démontrent pas encore une installation root ni un effet système sur Fracta2. **Une approbation de commande effectuée dans ChatGPT reste insuffisante pour attester une présence humaine au courtier.** À ce stade, SSHSIG depuis le ThinkPad est le canal initial ; un approbateur OAuth avec présence humaine vérifiée pourra ensuite diminuer le nombre de signatures manuelles pour la maintenance B.
+
 ## Dernière frontière avant activation
 
-1. Installer sous propriété `root`, indépendamment du dépôt modifiable par `ubuntu`, une version auditée du vérificateur, de son registre COP et des clés publiques de confiance. Aucun code exécutable privilégié ne doit être importé depuis un dépôt non protégé.
-2. Établir une véritable identité de Principal enrôlée une fois depuis le ThinkPad. La signature SSH constitue un premier canal fort ; pour les actes B, une UI OAuth/approbation légère pourra produire des assertions de présence humaine exactes via `createPrincipalStepUpVerifier`, après installation d'un issuer humain réellement vérifié. Une simple session ChatGPT ou un bouton d'app ne suffit pas.
+1. Depuis une session SSH du ThinkPad authentifiant le Principal, contrôler le paquet construit **après commit Git**, sa SHA256, et la SHA256 de la clé SSH effectivement contrôlée par l'humain ; installer une fois la version root-owned avec le script à activation explicite. Aucun code privilégié ne doit être importé depuis un dépôt non protégé.
+2. Établir le mandat COP initial par une **proposition v1 effectivement signée sur le ThinkPad** (`cogentia-maintenance-mandate-v1`) et l'enregistrer dans le store protégé ; l'installation de la clé publique ne crée pas en elle-même ce mandat. Les futures évolutions doivent utiliser un amendement signé du même identifiant. Pour les actes B, une UI OAuth/approbation légère pourra produire une assertion de présence humaine exacte après enrôlement d'un issuer dédié ; une simple session ChatGPT ou un bouton d'app ne suffit pas.
 3. Réaliser une admission transactionnelle **mandat actif + version + budget réservé non consommé + issuer approuvé + hash exact**, puis inscrire un grant à usage unique dans le registre root-owned lu par `cogentia-super`. Le contrôle refuse désormais une réservation soldée ou libérée et prend un verrou de claim à usage unique dans COP ; il reste à vérifier l'atomicité transversale et la cohérence entre ce journal et le registre root-owned du courtier, sans laisser une panne intermédiaire provoquer une double exécution.
 4. Consommer le grant par le broker, obtenir un reçu corrélé, constater l'état réel de `mcp-cogentia.service`, puis seulement demander la reconnexion ChatGPT et vérifier les deux nouveaux outils (`cogentia_mcp_apps_demo`, `cogentia_risk_assess`).
 5. Préparer une procédure d'installation unique, inspectable et indépendante du MCP que l'on redémarre, à exécuter depuis le ThinkPad. Aucune commande de bootstrap ne doit être demandée tant que sa portée et sa récupération ne sont pas prouvées.
