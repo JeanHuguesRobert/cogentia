@@ -3,8 +3,8 @@ title: "Mandate — Reasonable Agency, Judgment, and Accountable Delegation"
 author: "Jean Hugues Noël Robert, baron Mariani"
 affiliation: "Institut Mariani / C.O.R.S.I.C.A. / Cogentia"
 date: "2026-10-30"
-last_modified_at: "2026-11-05"
-version: "0.3"
+last_modified_at: "2026-11-07"
+version: "0.4"
 status: "working-paper — synthesis for critical review"
 document_role: source
 document_kind: doctrinal-note
@@ -136,6 +136,25 @@ integration are tracked by Cogentia #299. Nothing here activates a mandate.
 The same general pattern recurs at multiple scales: purpose → authority → resource envelope → situated judgment → acts → trace → accounting → answerability. This **fractal** property is about recursive composition and scale-aware decision-making, not a demand for endlessly nested approval bureaucracy.
 
 **Principle of locality:** make the decision at the closest effective level possessing sufficient mandate, competence, context and budget. Escalate only what cannot be resolved locally: material scope ambiguity, missing powers or resources, binding consultation obligations, cross-boundary effects, credible ruin exposure, or a dispute requiring a more independent authority. Locality is not an exemption from non-local constraints or the accountability chain.
+
+### Upward proposals and mandate renegotiation as FractaCognition (7 November 2026)
+
+**Subsidiarity is not a one-way assignment of work.** A situated delegate may discover a feasible or promising route toward the Principal's finality that needs an input, a resource, a specialist, a risk allowance, a mandate amendment or contextual information unavailable within its present authority. It must not treat this lack as proof that the mission is impossible, silently stretch its mandate, or invoke an exceptional recovery channel. Nor does it have to passively execute the original plan when a better route has become visible. Instead, it may **propose upward a bounded mandate/resource revision** to its delegating mandator, or consult laterally where admissible.
+
+The *mandatary/delegate* has privileged **situated knowledge** from its local work; the *delegating mandator* may possess broader objectives, other commitments, more information and legitimate discretionary authority. Neither vantage point is automatically infallible. The delegate's metacognitive responsibility is to observe its own missing capability and formulate a reasoned, corrigible proposal; the upstream party's **Judgment** is to test the proposal against the full mandate chain, context, alternatives, opportunity costs, third-party rights, exposure and budget, and to **accept, amend, counteroffer, request evidence, decline, or escalate** to the actual Principal when required. This is negotiation, not automatic approval and not an escalation ritual for ordinary in-envelope decisions.
+
+~~~text
+situated delegate: Reality Test → useful route discovered, but missing means/authority
+→ proposal (intended outcome, evidence, alternatives, exact delta, forecast, risks)
+→ delegating mandator: informed Judgment within its own authority
+→ accept / amend / counteroffer / request evidence / decline / escalate
+→ if accepted: independently valid amended/new mandate + funded budget/effect grant
+→ situated agent or different authorized handler acts; receipts and learning return
+~~~
+
+**Authority remains monotone down the chain.** A delegating mandator may redeploy a resource or issue a narrower submandate **only within its own valid authorizations**, with real reservations, applicable issuer verification, and effective revocation. If the requested expansion exceeds the parent mandate, it must seek a change from the next legitimate authority; it cannot create it. Upward information and argument do not themselves grant permission. The upstream party may also assist without transferring the privileged capability, or decide that it should perform the sensitive effect itself. A refusal becomes an inspectable decision and may be reconsidered if materially new evidence appears; silence is not approval.
+
+This is a cross-scale FractaCognition loop: a local agent diagnoses its own constraint, enlarges the **known solution space** through a proposal, invites higher-context Judgment, and assimilates the response. It pairs [ascending subsidiarity](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/autonomia.md) with finite [recursive workshops](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/pluralisation_cognitive_sous_mandat.md), without making the chain a rigid command hierarchy: confederated peers may jointly contribute under distinct mandates, without mutual subordination or pooling their rights by default. This is a proposed interaction discipline, not a claim that current COP runtime implements every negotiation and grant transition end-to-end.
 
 **Levels of abstraction:** a general intention is progressively instantiated as a mandate, a derived mandate or mission, an open batch, a particular action, and a concrete tool operation. The relationship is not necessarily a rigid hierarchy: lateral composition and consultation are allowed, and several independent mandates may be relevant. At each lower level the applicable authority remains bounded by the parent, including restrictions and aggregate resource envelopes. More specificity must not confer more permission.
 
