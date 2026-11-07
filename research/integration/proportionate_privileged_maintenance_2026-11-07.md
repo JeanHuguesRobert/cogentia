@@ -3,7 +3,7 @@ title: "Maintenance privilégiée proportionnée — capacité, réversibilité 
 author: "Institut Mariani / C.O.R.S.I.C.A."
 date: "2026-11-07"
 last_modified_at: "2026-11-07"
-version: "0.2"
+version: "0.3"
 status: "working-paper"
 language: "fr"
 license: "CC BY-SA 4.0"
@@ -17,6 +17,7 @@ related_documents:
   - "research/integration/john_proportionate_delegation_2026-11-06.md"
   - "research/integration/fractanet_principal_trust_2026-11-05.md"
   - "research/mandate_reasonable_agency.md"
+  - "research/measured_risk.md"
   - "docs/mcp-super-mandate-amendment-fbf-2026-11-07.md"
 provenance:
   origin_type: "conversation"
@@ -43,6 +44,17 @@ Le recours à `sudo` n'est pas en soi une classe de risque ; inversement, une op
 | **C — critique / réduction durable des capacités** | Perte plausible de données non récupérables, clés, réseau, accès SSH, politique de sécurité, sauvegardes, contrôle COP, ou engagements de tiers | Authentification renforcée, éventuellement commande depuis ThinkPad / SSH signé, ou refus | Preuve forte du Principal, version/portée verrouillées, mesure de récupération et justification ; même COP |
 
 **Le seuil B/C peut dépendre du contexte et varier dans le temps.** Le service peut être le seul canal d'accès distant : son redémarrage n'est alors pas banal. L'absence de preuve de recovery interdit de qualifier B par simple optimisme. Le risque n'est pas mathématiquement nul ; il peut être raisonnablement négligeable par rapport à la valeur du travail.
+
+## Measured Risk : le gain justifie l'exposition, jamais la ruine
+
+Cette doctrine est une application opérationnelle de [Measured Risk](../measured_risk.md) et de [Mandate — Reasonable Agency](../mandate_reasonable_agency.md). **On n'évalue pas un risque isolément** : le jugement commence par le gain réellement recherché (capacité accrue, apprentissage, continuité ou option future), le coût de l'inaction et les occasions perdues. Le but n'est pas de minimiser chaque risque mais de prendre **le plus petit risque suffisant** pour obtenir un gain intéressant, dans les limites du mandat et des droits d'autrui.
+
+**Deux frontières non négociables :**
+
+1. **Risque de ruine** : un résultat attendu favorable ou une faible probabilité estimée ne justifient pas de mettre en jeu la capacité durable de fonctionner, de récupérer les données ou de restaurer la souveraineté du Principal. Construire des limites d'exposition et une récupération indépendante ; refuser les expositions catastrophiques non bornées même lorsque la valeur espérée affichée est positive.
+2. **Black Swans / cygnes noirs** : une liste de scénarios connus ne couvre pas les événements inconnus aux effets extrêmes. Ne pas prétendre leur attribuer des probabilités exactes ; limiter structurellement le rayon d'impact, les couplages, les accès irrévocables et les pertes corrélées. Préserver la récupération indépendante quand elle est raisonnablement nécessaire, sans transformer chaque hypothèse spéculative en interdiction automatique.
+
+L'évaluation est **prospective et contextualisée** : tracer les informations disponibles lors de la décision, le bénéfice visé, les inconnues, le seuil de perte tolérable, le mécanisme d'arrêt ou de récupération, les conséquences observées et les écarts. Un échec raisonnablement anticipé et contenu n'est pas en soi une faute ; un gain obtenu par violation du mandat ou transfert des pertes à autrui ne devient pas légitime. Le degré de confirmation humaine A/B/C découle de ces conséquences et de la capacité de récupération, **pas du seul niveau de privilège Unix**.
 
 ## Trois surfaces MCP, trois régimes opérationnels à ne pas confondre
 
