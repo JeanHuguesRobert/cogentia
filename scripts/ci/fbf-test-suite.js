@@ -5,6 +5,7 @@ import {mkdirSync,writeFileSync,appendFileSync} from 'node:fs';
 import {join} from 'node:path';
 const commands=[
  ['pnpm','test'],
+ ['node','scripts/check-mcp-apps-demo.js'],
  ['node','scripts/check-continuation-frontier-f2a.js'],
  ['node','scripts/check-calculette-cold-orientation.js'],
  ['node','scripts/check-calculette-git-delta.js'],

@@ -1,0 +1,19 @@
+<!doctype html>
+<html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<style>
+:root{color-scheme:light dark;font:15px/1.5 system-ui,sans-serif}body{margin:0;padding:22px;max-width:660px}h2{margin:0 0 6px;font-size:21px}p{margin:4px 0 16px}button{border:1px solid #888;border-radius:8px;padding:9px 13px;background:transparent;color:inherit;cursor:pointer}ul{padding-left:23px}li{padding:4px 0}.muted{opacity:.72;font-size:13px}#message{margin-top:12px}
+</style></head><body>
+<h2>FractaTest · MCP Apps</h2>
+<p>Premier démonstrateur Cogentia, entièrement local et en lecture seule.</p>
+<p class="muted">Cette interface est une ressource <code>ui://</code> du serveur MCP, pas une page externe.</p>
+<button id="toggle" type="button" aria-pressed="false">Afficher les invariants</button>
+<ul id="invariants" hidden>
+<li>Un outil accessible n'est pas un mandat.</li>
+<li>Le paquet cognitif survit à la conversation.</li>
+<li>Une trace d'exécution n'est pas un effet vérifié.</li>
+</ul>
+<p id="message" role="status">Interaction locale : prête.</p>
+<script>
+const button=document.getElementById('toggle'), panel=document.getElementById('invariants');
+button.addEventListener('click',()=>{panel.hidden=!panel.hidden;button.setAttribute('aria-pressed',String(!panel.hidden));button.textContent=panel.hidden?'Afficher les invariants':'Masquer les invariants';document.getElementById('message').textContent='Interaction locale : '+(panel.hidden?'fermée':'ouverte')+'.';});
+</script></body></html>

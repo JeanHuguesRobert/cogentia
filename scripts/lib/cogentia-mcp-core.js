@@ -115,6 +115,12 @@ export const TOOLS = [
     },
   },
   {
+    name: "cogentia_mcp_apps_demo",
+    description: "Show a read-only FractaTest MCP Apps widget; static demo, no credentials, persistence, or side effects. Text fallback works on non-UI clients.",
+    inputSchema: { type: "object", properties: {}, additionalProperties: false },
+    _meta: { ui: { resourceUri: "ui://cogentia/fractatest-demo", visibility: ["model", "app"] } },
+  },
+  {
     name: "cogentia_agent_start",
     description:
       "Cold-start bootstrap for agents: read-only session summary (repos, gaps, privacy signals, active continuations, recommended next actions, MCP playbook). Prefer with or just after views_snapshot. Does not write the corpus.",
@@ -1517,6 +1523,7 @@ export function createMcpCore(env = process.env, extras = {}) {
               uri: read.uri || uri,
               mimeType: read.mimeType || "text/plain",
               text: read.text,
+              ...(read.uiMeta ? { _meta: { ui: read.uiMeta } } : {}),
             },
           ],
         };
@@ -1652,6 +1659,8 @@ export function createMcpCore(env = process.env, extras = {}) {
     switch (name) {
       case "cogentia_memory_capture":
         return captureMemoryForSurface(args, auth);
+      case "cogentia_mcp_apps_demo":
+        return { ok: true, kind: "cogentia.mcp_apps_demo.v1", label: "FractaTest MCP Apps", mode: "read_only", message: "Démonstrateur interactif sans effet externe." };
       case "cogentia_agent_start":
         return daemonGet("/api/agent/start", {});
       case "cogentia_skill_list":

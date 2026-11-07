@@ -20,6 +20,8 @@ import {
 } from "./cogentia-patterns.js";
 
 export const LIST_TTL_MS = 3_600_000;
+export const MCP_APP_DEMO_URI = "ui://cogentia/fractatest-demo";
+export const MCP_APP_DEMO_MIME = "text/html;profile=mcp-app";
 export const SKILL_URI_PREFIX = "skill://cogentia/";
 export const PATTERN_URI_PREFIX = "cogentia://pattern/";
 export const ANTIPATTERN_URI_PREFIX = "cogentia://antipattern/";
@@ -148,6 +150,13 @@ export function listPromptResources(options = {}) {
 export function listCatalogResources() {
   return [
     {
+      uri: MCP_APP_DEMO_URI,
+      name: "fractatest-demo",
+      title: "FractaTest — MCP Apps read-only demo",
+      mimeType: MCP_APP_DEMO_MIME,
+      description: "Read-only local interactive UI (no credentials, no external effects).",
+    },
+    {
       uri: CLI_CATALOG_URI,
       name: "cli-catalog",
       mimeType: "application/json",
@@ -192,6 +201,13 @@ export function readMcpResource(uri, options = {}) {
   const raw = String(uri || "").trim();
   if (!raw) return { ok: false, error: "missing_uri" };
 
+  if (raw === MCP_APP_DEMO_URI) {
+    return {
+      ok: true, uri: raw, mimeType: MCP_APP_DEMO_MIME,
+      text: fs.readFileSync(path.join(repoRoot, "scripts", "lib", "mcp-apps", "fractatest.html"), "utf8"),
+      uiMeta: { csp: { connectDomains: [], resourceDomains: [] }, prefersBorder: true },
+    };
+  }
   if (raw === CLI_CATALOG_URI || raw === CAPABILITY_CATALOG_URI) {
     return { ok: true, deferred: "inventory", uri: raw, mimeType: "application/json" };
   }
