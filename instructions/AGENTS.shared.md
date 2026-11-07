@@ -3,9 +3,9 @@ title: Cogentia Shared Agent Instructions
 author: unknown
 affiliation: "Institut Mariani / C.O.R.S.I.C.A., 1 cours Paoli, F-20250 Corte, Corsica"
 status: "working-paper — active operational mandate"
-version: 45
+version: 46
 date: 2026-10-02
-last_modified_at: "2026-11-06"
+last_modified_at: "2026-11-07"
 license: CC BY-SA 4.0
 language: en
 canonical_url: https://github.com/JeanHuguesRobert/cogentia/blob/main/instructions/AGENTS.shared.md
@@ -46,6 +46,16 @@ Check in order: in-session execution tools (Python, Node, shell); attached/mater
 Record for every route: **advertised / reachable / authorized / tested**, with evidence and exact missing boundary. Prefer a local minimal test against retrieved sources before saying all validation is blocked. Never conflate documented capability with a live, callable tool, or green CI transport with verified test success. This requirement also applies during continuing packet processing: route around recoverable input or transport failures before consuming Principal attention.
 
 Sources: [Locality Principle](../research/locality_principle.md), [Cogentia MCP](../docs/cogentia-mcp.md), [Operium operational control](../research/operium_owns_operational_deploy.md).
+
+## Capability, mandate, and effect authority are separate (COP invariant)
+
+**An available tool or reachable service grants no right to use it.** Before performing a governed operation, resolve the actual Principal and actor, a current independently verifiable MandateDeclaration, the precise semantic capability, its purpose and scope (including privacy and third-party boundaries), and any required COP budget. A successful read-only preflight is **not** an effect grant. Mutating or consequential acts require the appropriate independently issued, effect-bound authorization and actual reservation *before* dispatch, then receipt verification and settlement or release. Authentication tokens, `service_role`, tunnel access, a shell, CDP, an open browser tab, or possession of a secret are **technical access**, not COP mandate or authority to use every accessible resource.
+
+**The control applies equally to alternate technical routes.** Do not use generic shell, raw CDP, direct SQL, REST, administrative credentials, or another tool to obtain privileged or confidential data, fill credentials, or produce an effect that the corresponding semantic Cogentia capability could not lawfully perform. When a lower-level diagnostic is necessary, limit it to the mandated objective and minimal non-secret metadata, identify its bounded authority basis, and explicitly report whether canonical COP actually admitted and accounted for the call. If not, mark **authorized by user context, not COP-verified**, and open an enforcement gap rather than claiming a complete security property.
+
+**Per-Principal vaults:** the Supabase instance and `instance_config` may hold personal secret references or bounded credentials, but a publishable key identifies an application and a `service_role`/secret key may bypass RLS. Neither proves a current Principal mandate. Never send instance secret keys or banking identifiers to the model or general logs. A `credential.lookup` capability must separate metadata from the value; `credential.fill` must retrieve and insert directly inside a narrowly authorized trusted service with exact origin/tab/frame binding and a redacted receipt; `authentication.complete`, financial operations, and third-party commitments require their own authority. Future autonomous delegation attenuates the Principal's valid authority; it does not follow automatically from possession of the instance keys.
+
+**Four independent reports:** distinguish advertised, reachable, authorized (identity + mandate + issuer + budget), and tested (effect + verified receipt). Missing enforcement is a real gap even when an agent's actions happened to be prudent. Avoid redundant per-action confirmation inside valid bounded mandates, but never manufacture authority from capability discovery, user narration, or a technical access credential. See [Mandate — Reasonable Agency](../research/mandate_reasonable_agency.md), [Proportionate COP Delegation](../research/integration/john_proportionate_delegation_2026-11-06.md), [#299](https://github.com/JeanHuguesRobert/cogentia/issues/299), [#291](https://github.com/JeanHuguesRobert/cogentia/issues/291).
 
 ## Rational detour under third-party execution blockers (Potentics / Reality Test)
 
