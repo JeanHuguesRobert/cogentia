@@ -17,7 +17,7 @@ function setup(){const store=createMemoryCopEventStore();const mandate_ref='mand
  const reservation=ledger.reserve({idempotency_key:'test:effect',expected_version:ledger.snapshot().version,demand:{max_steps:1}});
  assert.equal(reservation.ok,true,JSON.stringify(reservation));
  const proposal={kind:'cogentia.super-effect-proposal/v1',principal_ref:'principal:jhn',actor_ref:'agent:jhn',mandate_ref,mandate_version:'v1',budget_reservation_id:reservation.reservation.reservation_id,issuer_evidence:'ssh:principal:demo',recovery_ref:'ssh:independent',expires_at:'2026-11-07T08:05:00Z',risk_control:'B',single_use:true,effect};
- return {store,proposal};}
+ return {store,proposal,ledger};}
 const opts=x=>({...x,now,signature:'-----BEGIN SSH SIGNATURE-----\nfixture',trustedPublicKey:'ssh-rsa TEST',verifiedSignature:()=>true,issuerVerified:true});
 test('valid signed effect + canonical mandate and reservation returns admission, NOT a root grant',()=>{const s=setup();const r=admitSignedSuperEffect(opts(s));assert.equal(r.ok,true,JSON.stringify(r));assert.equal(r.grant,null);assert.equal(r.requires_atomic_claim,true);});
 test('refuses absent independent issuer, stale mandate, lost reservation or altered command',()=>{
@@ -25,4 +25,14 @@ test('refuses absent independent issuer, stale mandate, lost reservation or alte
  assert.equal(admitSignedSuperEffect(opts({...s,proposal:{...s.proposal,mandate_version:'v2'}})).ok,false);
  assert.equal(admitSignedSuperEffect(opts({...s,proposal:{...s.proposal,budget_reservation_id:'not-reserved'}})).error,'canonical_reservation_missing');
  assert.equal(admitSignedSuperEffect(opts({...s,proposal:{...s.proposal,effect:{...effect,command:'sudo reboot'}}})).error,'effect_hash_invalid');
+});
+
+test('historical reservation cannot authorize an effect after release or settlement',()=>{
+ for(const finalize of ['release','settle']){
+  const s=setup();
+  const options={reservation_id:s.proposal.budget_reservation_id,expected_version:s.ledger.snapshot().version};
+  const r=finalize==='release'?s.ledger.release(options):s.ledger.settle({...options,usage:{max_steps:1}});
+  assert.equal(r.ok,true,JSON.stringify(r));
+  assert.equal(admitSignedSuperEffect(opts(s)).error,'canonical_reservation_not_active');
+ }
 });

@@ -9,6 +9,7 @@ const commands=[
  ['node','--test','scripts/lib/proportionate-risk.test.js'],
  ['node','scripts/check-mcp-risk-assess.js'],
  ['node','--test','scripts/super/principal-effect-issuer.test.mjs','scripts/lib/principal-super-effect-admission.test.js'],
+ ['node','--test','scripts/lib/principal-super-effect-claim.test.js'],
  ['node','scripts/check-continuation-frontier-f2a.js'],
  ['node','scripts/check-calculette-cold-orientation.js'],
  ['node','scripts/check-calculette-git-delta.js'],
