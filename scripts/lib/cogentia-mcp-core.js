@@ -15,6 +15,7 @@ import { resolveCallerAuth, deriveLockers, parseBearer, safeEqualString, isResol
 import { captureMemoryForSurface, MEMORY_CAPTURE_MAX_BYTES } from "./memory-capture-surface.js";
 import { compareMandateAttenuation } from "./mandate-attenuation.js";
 import { assessProportionateRisk } from "./proportionate-risk.js";
+import {normalizeJohnReadArguments} from "./john-read-argument-gate.js";
 import { runJohnRequest } from "./john-run.js";
 import { createAgentJhnWorkspaceCapabilities } from "./agent-jhn-workspace.js";
 import { createHostedBrowserCapabilities } from "./hosted-browser-capabilities.js";
@@ -702,6 +703,10 @@ export const TOOLS = [
       properties: {
         prompt: { type: "string", minLength: 1, description: "Input prompt or instruction." },
         capability: { type: "string", description: "Target capability name (default: john.converse)." },
+        read_arguments: {type:"object",additionalProperties:false,description:"Only for browser.hosted.inspect or browser.navigation.instances; validated read selectors, never credentials or effects.",properties:{
+          action:{type:"string",enum:["status","tabs","structure","frames","context"]},
+          tab_id:{type:"integer",minimum:1},max_chars:{type:"integer",minimum:1,maximum:12000},
+          include_url:{type:"boolean"}}},
         principal_id: { type: "string", description: "Principal identity id (e.g. principal:operator or jhn)." },
         mandate_id: { type: "string", description: "Mandate authorizing execution." },
         mandate_version: { type: "string", description: "Mandate version (default: 1)." },
@@ -1927,6 +1932,8 @@ export function createMcpCore(env = process.env, extras = {}) {
         return daemonGet("/api/ops/emit-static", {});
       case "cogentia_john_run": {
         let req = args.request;
+        if(args.read_arguments!==undefined && req && typeof req==='object')
+          throw new Error('john_read_arguments_conflict_with_raw_request');
         if (!req || typeof req !== "object") {
           const reqPrompt = String(args.prompt || args.input?.prompt || "").trim();
           if (!reqPrompt) {
@@ -1955,7 +1962,8 @@ export function createMcpCore(env = process.env, extras = {}) {
             },
             exposure: args.exposure || (auth.allowMutate ? "bounded" : "read_only"),
             capability: args.capability || "john.converse",
-            input: { prompt: reqPrompt },
+            input: { prompt: reqPrompt,
+              ...(args.read_arguments!==undefined ? {arguments:normalizeJohnReadArguments(args.capability,args.read_arguments)} : {}) },
             handler: args.handler || { id: "capability.once", kind: "capability_once", allowed_capabilities: [args.capability] },
             ithaca: args.ithaca || undefined,
           };
@@ -2119,7 +2127,8 @@ export function createMcpCore(env = process.env, extras = {}) {
                   },
                 },
               })});
-            if (!result.ok) return {ok:false,status:"failed",failure:{code:result.error},accounting:null};
+            if (!result.ok) return {ok:false,status:"failed",failure:{code:result.error,
+              ...(result.failure_code?{cause:result.failure_code}:{})},accounting:null};
             const e=result.events;
             const completed=e.find(x=>x.type==="john.run.completed");
             const settled=e.find(x=>x.type==="john.accounting.settled");

@@ -4,6 +4,7 @@ import {createEventSourcedExecutionBudgetLedger} from '../../../inseme/packages/
 import {createOfflineJohnIssuerVerifier} from './john-offline-issuer-verifier.js';
 import {sshFingerprint} from './john-sshsig-approval.js';
 import {createJohnTransportMandateMap} from './john-transport-mandate-map.js';
+import {classifyJohnReadExecution} from './john-cop-read-failure.js';
 const REF='mandate:jhn:john-root';
 const FP='SHA256:lG9BC3fIjurrBccYLO1w7VQpmc9ZMr8MvM1o3zJ6L3c';
 const ALLOWED=['browser.hosted.inspect','browser.navigation.instances'];
@@ -34,6 +35,8 @@ export async function executeJohnCanonicalRead({store,authorizedKeysPath,auth,re
  const steps=Number.isInteger(accounting?.observed_steps)&&accounting.observed_steps>=0&&accounting.observed_steps<=b.max_steps?accounting.observed_steps:b.max_steps;
  const settlement=ledger.settle({reservation_id:reserve.reservation.reservation_id,expected_version:ledger.snapshot().version,usage:{max_steps:steps}});
  if(!settlement.ok)return {ok:false,executed:true,error:'canonical_settlement_unconfirmed',reservation_id:reserve.reservation.reservation_id};
- if(error||!Array.isArray(events)||!events.some(x=>x.type==='john.run.completed')||!accounting)return {ok:false,executed:true,error:'canonical_execution_receipt_unconfirmed',settled_steps:steps};
+ if(error||!Array.isArray(events)||!accounting)return {ok:false,executed:true,error:'canonical_execution_receipt_unconfirmed',settled_steps:steps};
+ const outcome=classifyJohnReadExecution(events);
+ if(!outcome.ok)return {...outcome,executed:true,settled_steps:steps};
  return {ok:true,executed:true,events,settled_steps:steps,canonical_mandate_ref:REF};
 }
