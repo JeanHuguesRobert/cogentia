@@ -18,6 +18,7 @@ EXPECTED={
     'issuer/repos/cogentia/scripts/super/principal-effect-issuer.mjs',
     'issuer/repos/cogentia/scripts/super/root-maintenance-mandate.mjs',
     'issuer/repos/cogentia/scripts/super/root-super-prepare.mjs',
+    'issuer/repos/cogentia/scripts/super/root-effect-reconcile.mjs',
     'issuer/repos/cogentia/scripts/lib/principal-super-effect-admission.js',
     'issuer/repos/cogentia/scripts/lib/principal-super-effect-claim.js',
     'issuer/repos/inseme/packages/cop-core/src/cop-event-envelope.js',
@@ -121,6 +122,51 @@ def install(verified,keydata):
             'broker_active':active.stdout.strip()=='active','cop_store_created':True,
             'rollback_broker':str(BACKUP),'required_next':'independently_signed_principal_mandate_bootstrap'}
 
+def upgrade(verified):
+    """Upgrade root-owned *code only*; never mutate Principal keys or COP."""
+    if os.geteuid()!=0:return {'ok':False,'error':'root_required'}
+    if not protected_dir(BASE) or not protected_dir(STATE) or not protected_dir(BUNDLE_DIR):
+        return {'ok':False,'error':'root_directories_not_protected'}
+    if not protected_dir(KEY_DIR) or not KEY.is_file() or KEY.is_symlink() or KEY.stat().st_uid!=0:
+        return {'ok':False,'error':'trusted_principal_key_missing'}
+    if not BROKER.is_file() or BROKER.is_symlink() or BROKER.stat().st_uid!=0 or not BACKUP.is_file():
+        return {'ok':False,'error':'broker_rollback_missing'}
+    if not COP.is_file() or COP.is_symlink() or COP.stat().st_uid!=0 or COP.stat().st_mode&0o077:
+        return {'ok':False,'error':'canonical_root_cop_missing'}
+    if not GRANTS.is_file() or GRANTS.is_symlink() or GRANTS.stat().st_uid!=0 or GRANTS.stat().st_mode&0o077:
+        return {'ok':False,'error':'canonical_root_grants_missing'}
+    # Keep the pre-upgrade broker and source tree for independent rollback.
+    previous=BUNDLE_DIR.with_name('issuer.pre-reconciliation')
+    previous_broker=BROKER.with_name('broker.mjs.pre-reconciliation')
+    if previous.exists() or previous_broker.exists():return {'ok':False,'error':'upgrade_already_attempted'}
+    stage=pathlib.Path(tempfile.mkdtemp(prefix='.issuer-upgrade-',dir=BASE))
+    try:
+        for name,data in verified['members'].items():
+            target=stage/pathlib.PurePosixPath(name).relative_to('issuer')
+            target.parent.mkdir(parents=True,exist_ok=True)
+            target.write_bytes(data);os.chmod(target,0o644)
+        for folder in [stage,*stage.rglob('*')]:
+            if folder.is_dir():os.chmod(folder,0o755)
+        os.replace(BUNDLE_DIR,previous)
+        os.replace(stage,BUNDLE_DIR)
+    finally:
+        if stage.exists():shutil.rmtree(stage)
+    install_file(previous_broker,BROKER.read_bytes(),0o755)
+    install_file(BROKER,verified['members']['issuer/repos/cogentia/scripts/super/broker.mjs'],0o755)
+    restarted=subprocess.run(['systemctl','restart','cogentia-super.service'],capture_output=True,text=True,timeout=20)
+    active=subprocess.run(['systemctl','is-active','cogentia-super.service'],capture_output=True,text=True,timeout=8)
+    if restarted.returncode!=0 or active.stdout.strip()!='active':
+        # Best-effort rollback; preserve the COP database and keys untouched.
+        install_file(BROKER,previous_broker.read_bytes(),0o755)
+        failed=BUNDLE_DIR.with_name('issuer.failed-upgrade')
+        os.replace(BUNDLE_DIR,failed)
+        os.replace(previous,BUNDLE_DIR)
+        subprocess.run(['systemctl','restart','cogentia-super.service'],timeout=20)
+        return {'ok':False,'error':'broker_upgrade_failed_rolled_back'}
+    return {'ok':True,'phase':'ROOT_ISSUER_UPGRADED_NO_NEW_MANDATE',
+      'broker_active':True,'cop_preserved':True,'principal_key_preserved':True,
+      'previous_broker':str(previous_broker),'previous_source':str(previous)}
+
 def main():
     parser=argparse.ArgumentParser()
     parser.add_argument('--bundle',required=True)
@@ -128,6 +174,7 @@ def main():
     parser.add_argument('--pubkey',required=True)
     parser.add_argument('--pubkey-sha256',required=True)
     parser.add_argument('--activate',action='store_true')
+    parser.add_argument('--upgrade',action='store_true')
     args=parser.parse_args()
     result=verify_bundle(args.bundle,args.sha256)
     if not result['ok']:print(json.dumps(result));return 1
@@ -141,8 +188,10 @@ def main():
         print(json.dumps({'ok':False,'error':'principal_key_fingerprint_mismatch'}));return 1
     summary={'ok':True,'bundle_sha256':result['sha256'],'key_sha256':key_hash,'files':len(result['members']),
              'phase':'DRY_RUN_NO_INSTALL' if not args.activate else 'EXPLICIT_ROOT_ACTIVATION'}
-    if not args.activate:print(json.dumps(summary,indent=2));return 0
-    outcome=install(result,key)
+    if args.activate and args.upgrade:
+        print(json.dumps({'ok':False,'error':'mutually_exclusive_activation_modes'}));return 1
+    if not (args.activate or args.upgrade):print(json.dumps(summary,indent=2));return 0
+    outcome=upgrade(result) if args.upgrade else install(result,key)
     print(json.dumps(outcome,indent=2));return 0 if outcome['ok'] else 1
 
 if __name__=='__main__':sys.exit(main())

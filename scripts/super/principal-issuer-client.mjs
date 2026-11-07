@@ -10,6 +10,9 @@ export function buildIssuerRequest(argv){
   return {op,proposal:JSON.parse(fs.readFileSync(a,'utf8')),
    signature:fs.readFileSync(b,'utf8')};
  }
+ if(op==='reconcile'){
+  if(!a||b)return null;return {op,authorization_id:a};
+ }
  if(op==='prepare'){
   if(!a||!b)return null;
   return {op,command:a,recovery_ref:b};

@@ -12,6 +12,7 @@ const commands=[
  ['node','--test','scripts/super/principal-effect-issuer.test.mjs','scripts/lib/principal-super-effect-admission.test.js'],
  ['node','--test','scripts/lib/principal-super-effect-claim.test.js'],
  ['node','--test','scripts/super/root-principal-effect-issue.test.mjs','scripts/super/root-maintenance-mandate.test.mjs','scripts/super/root-super-prepare.test.mjs'],
+ ['node','--test','scripts/super/root-effect-reconcile.test.mjs'],
  ['node','--test','scripts/super/principal-issuer-client.test.mjs'],
  ['python3','scripts/super/principal-issuer-bundle.test.py'],
  ['node','scripts/check-continuation-frontier-f2a.js'],

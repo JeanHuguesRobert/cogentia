@@ -69,6 +69,13 @@ function execute(script,timeout){
   });
 }
 export async function handle(r){
+  if(r?.op==='reconcile'){
+    if(process.geteuid?.()!==0)return fail('root_reconciliation_unavailable');
+    try{
+      const {reconcileRootEffect}=await import('file:///usr/local/libexec/cogentia-super/issuer/repos/cogentia/scripts/super/root-effect-reconcile.mjs');
+      return reconcileRootEffect({authorization_id:r.authorization_id});
+    }catch(e){log({event:'cop_reconciliation_unavailable',reason:e.code||'uninstalled'});return fail('root_reconciliation_unavailable');}
+  }
   if(r?.op==='prepare'){
     if(process.geteuid?.()!==0)return fail('root_issuer_unavailable');
     try{
@@ -103,6 +110,13 @@ export async function handle(r){
   const result=await execute(r.script,r.timeout_ms??120000);
   log({event:'effect_result',authorization_id:permit.authorization_id,
     payload_hash:permit.payload_hash,ok:result.ok,exit_code:result.exit_code,timeout:result.timeout});
+  // Account for an already-consumed action, including failed executions:
+  // one budget step was attempted either way. Never reverse the grant.
+  try{
+    const {reconcileRootEffect}=await import('file:///usr/local/libexec/cogentia-super/issuer/repos/cogentia/scripts/super/root-effect-reconcile.mjs');
+    const settled=reconcileRootEffect({authorization_id:permit.authorization_id});
+    if(!settled.ok)log({event:'cop_settlement_pending',authorization_id:permit.authorization_id,error:settled.error});
+  }catch(e){log({event:'cop_settlement_pending',authorization_id:permit.authorization_id,error:'issuer_unavailable'});}
   return {...result,authority_id:permit.authorization_id,mandate:permit.mandate,
     payload_hash:permit.payload_hash,node:hostname(),cop_reserved:true};
 }

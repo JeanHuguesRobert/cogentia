@@ -14,6 +14,7 @@ test('client transport cannot mint rights and preserves exact signed effect mate
   assert.equal(buildIssuerRequest(['issue',p,s]).proposal.effect.command,proposal.effect.command);
   assert.equal(buildIssuerRequest(['run','sea:trusted',p]).script,proposal.effect.command);
   assert.equal(buildIssuerRequest(['prepare','sudo -n true','ssh:independent']).recovery_ref,'ssh:independent');
+  assert.equal(buildIssuerRequest(['reconcile','sea_4944ba77-7140-4bbd-af6c-278bb0030704']).op,'reconcile');
   assert.equal(buildIssuerRequest(['unknown']),null);
  }finally{rmSync(dir,{recursive:true,force:true});}
 });

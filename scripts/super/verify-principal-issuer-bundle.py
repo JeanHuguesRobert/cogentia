@@ -8,6 +8,7 @@ FILES = [
     'cogentia/scripts/super/principal-effect-issuer.mjs',
     'cogentia/scripts/super/root-maintenance-mandate.mjs',
     'cogentia/scripts/super/root-super-prepare.mjs',
+    'cogentia/scripts/super/root-effect-reconcile.mjs',
     'cogentia/scripts/lib/principal-super-effect-admission.js',
     'cogentia/scripts/lib/principal-super-effect-claim.js',
     'inseme/packages/cop-core/src/cop-event-envelope.js',
