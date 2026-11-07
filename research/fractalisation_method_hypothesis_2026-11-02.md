@@ -5,9 +5,9 @@ description: "Document source de référence proposant la fractalisation comme m
 author: "Jean Hugues Noël Robert, baron Mariani"
 affiliation: "Institut Mariani / C.O.R.S.I.C.A., 1 cours Paoli, F-20250 Corte, Corsica"
 date: "2026-11-02"
-last_modified_at: "2026-11-02"
-version: "1.0"
-status: "working-paper — version doctrinale de référence, validation empirique ouverte"
+last_modified_at: "2026-11-07"
+version: "1.0.1"
+status: "working-paper — version doctrinale de référence ; validation empirique ouverte"
 document_role: source
 document_kind: research-paper
 document_function: "methodological-doctrine"
@@ -88,6 +88,16 @@ Le problème n'est donc pas de choisir abstraitement entre centralisation et dé
 Le changement apporté par l'IA contemporaine est une hypothèse de faisabilité : des tâches de traduction, de synthèse, de négociation, de recherche documentaire, de contrôle de cohérence et de suivi des engagements, jadis coûteuses en attention humaine qualifiée, deviennent partiellement automatisables. Leur coût n'est toutefois ni nul ni uniformément décroissant : vérification, erreurs, énergie, infrastructures et capture par des fournisseurs peuvent annuler les bénéfices attendus.
 
 **Question centrale :** une organisation peut-elle augmenter ses capacités sans faire croître plus vite ses charges de coordination et les risques qu'elle impose ?
+
+### 1 bis. Ordre coopératif sans domination centrale (7 novembre 2026)
+
+**L'ordre fonctionnel n'implique pas une concentration du pouvoir.** Des unités relativement autonomes peuvent coordonner leurs actes au moyen de règles communes, mandats bornés, négociation, responsabilité, contradiction et correction. À l'inverse, l'ordre apparent d'une hiérarchie coercitive peut cacher capture et dommages. Mais la simple absence de centre ne suffit pas davantage à garantir l'ordre : coûts de coordination, conflits de règles, asymétries de moyens, capture locale et risques systémiques sont des objections réelles à tester.
+
+Cette idée est **proche de certains anarchismes philosophiques**, qui contestent la légitimité de la domination et proposent des organisations volontaires ou fédératives, sans pour autant faire de FractaCognition ou COP une doctrine anarchiste. Le mot *anarchie* est polysémique : il désigne notamment l'absence de pouvoir hiérarchique, une doctrine politique ou le désordre. Définir le sens avant de l'employer. Références : [Stanford Encyclopedia of Philosophy, Anarchism, révision 2025](https://plato.stanford.edu/entries/anarchism/) ; [Dictionnaire de l'Académie française, anarchie](https://www.dictionnaire-academie.fr/article/A9A1659) ; [Larousse, anarchisme](https://www.larousse.fr/encyclopedie/divers/anarchisme/20896). Un jalon ancien du Corpus, [De l'ordre juste à la Traçabilité](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/genealogie_ordre_transparence_traceabilite.md), distingue dès les publications de 2010 l'ordre utile de l'ordre opaque imposé par le pouvoir.
+
+**Hypothèse critique, non invariant démontré :** associer systématiquement « anarchie » et « chaos » peut constituer une stratégie rhétorique légitimant la centralisation. Cependant, attribuer cette intention à une personne ou à un groupe, ou invoquer des intérêts financiers/corruptions, requiert des éléments spécifiques. *Follow the money* désigne une enquête sur les flux et les bénéficiaires, non une preuve automatique de motifs ou de causalité. Le débat doit conserver la possibilité de critiques sincères de l'organisation décentralisée.
+
+**Traduction architecturale :** un agent peut recevoir un mandat, coopérer latéralement ou soumettre une proposition à son mandant sans être un sujet souverain nouveau. L'ordre provient des accords, des règles applicables et des effets vérifiables ; la légitimité vient de l'autorité réellement mandatante. COP limite et impute les actes ; DHITL préserve le jugement humain ou démocratique. La régulation n'exige ni pyramide permanente ni absence de responsabilité.
 
 ## 2. Définition et statut de l'analogie
 
