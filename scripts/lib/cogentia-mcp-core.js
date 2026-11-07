@@ -129,7 +129,7 @@ export const TOOLS = [
   },
   {
     name: "cogentia_risk_assess",
-    description: "Read-only advisory: classify objective-relative risk and proposed human control A/B/C, including ruin, black-swan exposure and independent recovery. NEVER issues a mandate, grant, sudo authority or permission.",
+    description: "Read-only advisory: explain nuanced contextual risk judgment (optional cognitive_judgment with B+, B++ etc.) and coarse A/B/C control projection; never confuse the projection with the judgment. NEVER issues a mandate, grant, sudo authority or permission.",
     inputSchema: {
       type: "object", additionalProperties: false,
       properties: {
@@ -140,6 +140,12 @@ export const TOOLS = [
         durable_capacity_loss: {type:"boolean"}, ruin_possible:{type:"boolean"},
         independent_recovery:{type:"boolean"},third_party_commitment:{type:"boolean"},
         critical_control_change:{type:"boolean"},uncertain_tail:{type:"boolean"},
+        cognitive_judgment:{type:"object",additionalProperties:false,properties:{
+          position:{type:"string",enum:["low","middle","high","very_high","borderline"]},
+          rationale:{type:"string",minLength:1,maxLength:2000},
+          uncertainties:{type:"array",maxItems:8,items:{type:"string",minLength:1,maxLength:240}},
+          evidence_refs:{type:"array",maxItems:12,items:{type:"string",minLength:1,maxLength:400}}
+        },required:["position","rationale"]},
       },
       required:["objective","mandate_ref","expected_gain","exposure","recovery","durable_capacity_loss","ruin_possible","independent_recovery","third_party_commitment","critical_control_change","uncertain_tail"]
     },

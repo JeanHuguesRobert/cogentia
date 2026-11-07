@@ -30,3 +30,17 @@ test('existing side-effect advisory can only escalate controls, not relax establ
  assert.equal(assessPresumedEffect({...safe,within_mandate:false,risk_assessment:base}).reason,'outside_mandate');
  assert.equal(assessPresumedEffect({...safe,action_class:'gmail.send',risk_assessment:base}).decision,'explicit_principal_authorization');
 });
+
+test('Nuance B++ preserves coarse B control without inventing authority',()=>{
+ const r=assess({exposure:'bounded',cognitive_judgment:{position:'very_high',rationale:'Dependency chain needs review',uncertainties:['fallback not exercised'],evidence_refs:['cop:receipt:42']}});
+ assert.equal(r.control,'B');assert.equal(r.nuance.label,'B++');assert.equal(r.nuance.affects_authority,false);assert.equal(r.control_projection,'coarse_pedagogical');
+ assert.equal(r.grants_authority,false);
+});
+test('Nuance cannot override hard C boundary',()=>{
+ const r=assess({ruin_possible:true,cognitive_judgment:{position:'low',rationale:'Operator considers it minor'}});
+ assert.equal(r.control,'C');assert.equal(r.nuance.label,'C−');assert.equal(r.grants_authority,false);
+});
+test('Malformed cognitive narrative fails validation rather than silently disappearing',()=>{
+ const r=assess({cognitive_judgment:{position:'extreme',rationale:'not supported'}});
+ assert.equal(r.ok,false);assert.ok(r.errors.includes('cognitive_judgment_invalid'));
+});
