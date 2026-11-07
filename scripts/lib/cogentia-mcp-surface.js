@@ -27,6 +27,7 @@ export const MCP_APP_DEMO_COMPAT_URIS = Object.freeze([
   "ui://cogentia/fractatest-demo-v2",
   "ui://cogentia/fractatest-demo-v1",
 ]);
+export const COP_APPROVAL_PREVIEW_URI = "ui://cogentia/cop-approval-preview-v1";
 export const MCP_APP_DEMO_MIME = "text/html;profile=mcp-app";
 export const SKILL_URI_PREFIX = "skill://cogentia/";
 export const PATTERN_URI_PREFIX = "cogentia://pattern/";
@@ -170,6 +171,13 @@ export function listCatalogResources() {
       description: "Legacy URI alias serving the current read-only FractaTest UI.",
     })),
     {
+      uri: COP_APPROVAL_PREVIEW_URI,
+      name: "cop-approval-preview",
+      title: "COP — revue proportionnée (prototype sans émission)",
+      mimeType: MCP_APP_DEMO_MIME,
+      description: "Review-only UI; cannot approve, sign or issue grants.",
+    },
+    {
       uri: CLI_CATALOG_URI,
       name: "cli-catalog",
       mimeType: "application/json",
@@ -218,6 +226,13 @@ export function readMcpResource(uri, options = {}) {
     return {
       ok: true, uri: raw, mimeType: MCP_APP_DEMO_MIME,
       text: fs.readFileSync(path.join(repoRoot, "scripts", "lib", "mcp-apps", "fractatest.html"), "utf8"),
+      uiMeta: { csp: { connectDomains: [], resourceDomains: [] }, prefersBorder: true },
+    };
+  }
+  if (raw === COP_APPROVAL_PREVIEW_URI) {
+    return {
+      ok: true, uri: raw, mimeType: MCP_APP_DEMO_MIME,
+      text: fs.readFileSync(path.join(repoRoot, "scripts", "lib", "mcp-apps", "cop-approval-preview.html"), "utf8"),
       uiMeta: { csp: { connectDomains: [], resourceDomains: [] }, prefersBorder: true },
     };
   }

@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<style>
+:root{color-scheme:light dark;font:15px/1.5 system-ui,sans-serif}body{margin:0;padding:20px;max-width:640px}h2{font-size:20px;margin:0 0 8px}.subtle{opacity:.8}.panel{border:1px solid #8886;border-radius:8px;padding:14px;margin:12px 0}dl{display:grid;grid-template-columns:130px 1fr;gap:8px;margin:0}dt{opacity:.7}dd{margin:0;overflow-wrap:anywhere}button{background:transparent;color:inherit;border:1px solid currentColor;border-radius:7px;padding:8px 12px;cursor:pointer}button:focus-visible{outline:3px solid Highlight}#details[hidden]{display:none}code{overflow-wrap:anywhere}
+</style></head><body>
+<h2>COP · Revue d'un effet</h2>
+<p class="subtle">Prototype de présentation uniquement. Cet exemple n'est pas une demande réelle et aucun bouton ne délivre d'autorisation.</p>
+<div class="panel"><dl>
+<dt>Effet illustratif</dt><dd>Redémarrer le service MCP Cogentia</dd>
+<dt>Classe</dt><dd>B — maintenance bornée, récupération indépendante à vérifier</dd>
+<dt>Mandat</dt><dd><code>mandate:jhn:maintenance</code> (exemple)</dd>
+<dt>Cible</dt><dd><code>node:fracta2</code></dd>
+<dt>Émission</dt><dd><strong>Interdite dans ce prototype</strong></dd>
+</dl></div>
+<button id="inspect" type="button" aria-expanded="false">Examiner les contrôles nécessaires</button>
+<div id="details" class="panel" hidden>
+<p>À vérifier côté serveur protégé : identité authentifiée du Principal et preuve de sa présence, mandat et version actifs, portée et hash exacts, budget réservé, révocation, caractère unique de la décision et reçu COP.</p>
+<p>La session ChatGPT et le clic dans ce widget ne prouvent pas ces conditions. Une décision humaine ne devient effective qu'après validation indépendante par l'émetteur de confiance.</p>
+</div>
+<p id="status" role="status">Aucune autorisation émise.</p>
+<script>
+const button=document.getElementById('inspect');
+const details=document.getElementById('details');
+button.addEventListener('click',()=>{details.hidden=!details.hidden;button.setAttribute('aria-expanded',String(!details.hidden));button.textContent=details.hidden?'Examiner les contrôles nécessaires':'Masquer les contrôles';});
+const requestId='cop-approval-preview-init-v1';
+let initialized=false;
+window.addEventListener('message',event=>{
+ if(event.source!==window.parent||!event.data||event.data.jsonrpc!=='2.0')return;
+ if(event.data.id===requestId && !initialized && event.data.result && typeof event.data.result.protocolVersion==='string'){
+  initialized=true;
+  window.parent.postMessage({jsonrpc:'2.0',method:'ui/notifications/initialized',params:{}},'*');
+ }
+ if(event.data.method==='ui/resource-teardown' && Object.hasOwn(event.data,'id'))window.parent.postMessage({jsonrpc:'2.0',id:event.data.id,result:{}},'*');
+});
+window.parent.postMessage({jsonrpc:'2.0',id:requestId,method:'ui/initialize',params:{protocolVersion:'2026-01-26',appInfo:{name:'COP Approval Preview',version:'1.0.0'},appCapabilities:{availableDisplayModes:['inline']}}},'*');
+</script></body></html>

@@ -122,6 +122,12 @@ export const TOOLS = [
     _meta: { ui: { resourceUri: "ui://cogentia/fractatest-demo-v3", visibility: ["model", "app"] } },
   },
   {
+    name: "cogentia_cop_approval_preview",
+    description: "Read-only MCP App proof of concept for COP effect review. Illustrative effect only; no real approval, signature, grant, budget mutation or execution. Do not use as an authorization channel.",
+    inputSchema: {type:"object", properties:{}, additionalProperties:false},
+    _meta: {ui:{resourceUri:"ui://cogentia/cop-approval-preview-v1",visibility:["model","app"]}},
+  },
+  {
     name: "cogentia_risk_assess",
     description: "Read-only advisory: classify objective-relative risk and proposed human control A/B/C, including ruin, black-swan exposure and independent recovery. NEVER issues a mandate, grant, sudo authority or permission.",
     inputSchema: {
@@ -1685,6 +1691,8 @@ export function createMcpCore(env = process.env, extras = {}) {
         return captureMemoryForSurface(args, auth);
       case "cogentia_mcp_apps_demo":
         return { ok: true, kind: "cogentia.mcp_apps_demo.v1", label: "FractaTest MCP Apps", mode: "read_only", message: "Démonstrateur interactif sans effet externe." };
+      case "cogentia_cop_approval_preview":
+        return {ok:true,kind:"cogentia.cop_approval_preview.v1",mode:"read_only",source:"illustrative",authorizes:false,grants_authority:false,execution:false,message:"Revue locale uniquement ; aucune autorisation COP n'est émise."};
       case "cogentia_risk_assess":
         return assessProportionateRisk(args);
       case "cogentia_agent_start":
