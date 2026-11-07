@@ -14,6 +14,7 @@ import {
 import { resolveCallerAuth, deriveLockers, parseBearer, safeEqualString, isResolvedCallerAuth } from "./cogentia-mcp-auth.js";
 import { captureMemoryForSurface, MEMORY_CAPTURE_MAX_BYTES } from "./memory-capture-surface.js";
 import { compareMandateAttenuation } from "./mandate-attenuation.js";
+import { assessProportionateRisk } from "./proportionate-risk.js";
 import { runJohnRequest } from "./john-run.js";
 import { createAgentJhnWorkspaceCapabilities } from "./agent-jhn-workspace.js";
 import { createHostedBrowserCapabilities } from "./hosted-browser-capabilities.js";
@@ -119,6 +120,24 @@ export const TOOLS = [
     description: "Show a read-only FractaTest MCP Apps widget; static demo, no credentials, persistence, or side effects. Text fallback works on non-UI clients.",
     inputSchema: { type: "object", properties: {}, additionalProperties: false },
     _meta: { ui: { resourceUri: "ui://cogentia/fractatest-demo", visibility: ["model", "app"] } },
+  },
+  {
+    name: "cogentia_risk_assess",
+    description: "Read-only advisory: classify objective-relative risk and proposed human control A/B/C, including ruin, black-swan exposure and independent recovery. NEVER issues a mandate, grant, sudo authority or permission.",
+    inputSchema: {
+      type: "object", additionalProperties: false,
+      properties: {
+        objective: {type:"string"}, mandate_ref: {type:"string"},
+        expected_gain: {type:"string", enum:["none","minor","useful","substantial","essential"]},
+        exposure: {type:"string",enum:["negligible","bounded","material","catastrophic","unknown"]},
+        recovery: {type:"string",enum:["verified","unverified","none"]},
+        durable_capacity_loss: {type:"boolean"}, ruin_possible:{type:"boolean"},
+        independent_recovery:{type:"boolean"},third_party_commitment:{type:"boolean"},
+        critical_control_change:{type:"boolean"},uncertain_tail:{type:"boolean"},
+      },
+      required:["objective","mandate_ref","expected_gain","exposure","recovery","durable_capacity_loss","ruin_possible","independent_recovery","third_party_commitment","critical_control_change","uncertain_tail"]
+    },
+    annotations:{readOnlyHint:true,destructiveHint:false},
   },
   {
     name: "cogentia_agent_start",
@@ -1661,6 +1680,8 @@ export function createMcpCore(env = process.env, extras = {}) {
         return captureMemoryForSurface(args, auth);
       case "cogentia_mcp_apps_demo":
         return { ok: true, kind: "cogentia.mcp_apps_demo.v1", label: "FractaTest MCP Apps", mode: "read_only", message: "Démonstrateur interactif sans effet externe." };
+      case "cogentia_risk_assess":
+        return assessProportionateRisk(args);
       case "cogentia_agent_start":
         return daemonGet("/api/agent/start", {});
       case "cogentia_skill_list":

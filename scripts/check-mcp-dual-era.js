@@ -76,6 +76,7 @@ assert.ok(publicNames.includes("cogentia_continuation_list"));
 assert.ok(publicNames.includes("cogentia_continuation_inspect"));
 assert.ok(publicNames.includes("cogentia_health"));
 assert.ok(publicNames.includes("cogentia_agent_start"));
+assert.ok(publicNames.includes("cogentia_risk_assess"));
 assert.ok(publicNames.includes("cogentia_skill_list"));
 assert.ok(publicNames.includes("cogentia_skill_get"));
 assert.ok(publicNames.includes("cogentia_continuation_schema"));

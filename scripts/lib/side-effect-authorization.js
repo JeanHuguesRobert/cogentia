@@ -17,6 +17,7 @@ import {
 import { asDecisionGrant, asExposeContinuation, isSuccessfulEffectReceipt } from "./side-effect-packets.js";
 import { maybeRecordCopEffectSpend } from "./cop-surface-accounting.js";
 import { isResolvedCallerAuth } from "./cogentia-mcp-auth.js";
+import { assessProportionateRisk } from "./proportionate-risk.js";
 
 /**
  * #285: Conservative effect-boundary classification. This is advisory only:
@@ -33,6 +34,7 @@ export function assessPresumedEffect({
   privacy_cleared = false,
   externally_engaging = false,
   mandatory_confirmation = false,
+  risk_assessment = null,
 } = {}) {
   const action = String(action_class || "").toLowerCase();
   // Compose/save/update a draft is not transmission to a third party.
@@ -53,6 +55,15 @@ export function assessPresumedEffect({
   if (!privacy_cleared) return { decision: "escalate", reason: "privacy" };
   if (!(recovery_verified && negligible_residue && low_exposure)) {
     return { decision: "escalate", reason: "recovery_or_exposure_unproven" };
+  }
+  if (risk_assessment !== null) {
+    const risk = assessProportionateRisk(risk_assessment);
+    if (!risk.ok || risk.control === "C") return {
+      decision: "escalate", reason: "proportionate_risk_strong_control_required", risk
+    };
+    if (risk.control === "B") return {
+      decision: "escalate", reason: "proportionate_risk_confirmation_required", risk
+    };
   }
   return { decision: "mandate_derived_candidate", reason: "bounded_recoverable_internal_effect" };
 }
