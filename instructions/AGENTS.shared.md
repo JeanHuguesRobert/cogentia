@@ -3,7 +3,7 @@ title: Cogentia Shared Agent Instructions
 author: unknown
 affiliation: "Institut Mariani / C.O.R.S.I.C.A., 1 cours Paoli, F-20250 Corte, Corsica"
 status: "working-paper — active operational mandate"
-version: 46
+version: 47
 date: 2026-10-02
 last_modified_at: "2026-11-07"
 license: CC BY-SA 4.0
@@ -56,6 +56,14 @@ Sources: [Locality Principle](../research/locality_principle.md), [Cogentia MCP]
 **Per-Principal vaults:** the Supabase instance and `instance_config` may hold personal secret references or bounded credentials, but a publishable key identifies an application and a `service_role`/secret key may bypass RLS. Neither proves a current Principal mandate. Never send instance secret keys or banking identifiers to the model or general logs. A `credential.lookup` capability must separate metadata from the value; `credential.fill` must retrieve and insert directly inside a narrowly authorized trusted service with exact origin/tab/frame binding and a redacted receipt; `authentication.complete`, financial operations, and third-party commitments require their own authority. Future autonomous delegation attenuates the Principal's valid authority; it does not follow automatically from possession of the instance keys.
 
 **Four independent reports:** distinguish advertised, reachable, authorized (identity + mandate + issuer + budget), and tested (effect + verified receipt). Missing enforcement is a real gap even when an agent's actions happened to be prudent. Avoid redundant per-action confirmation inside valid bounded mandates, but never manufacture authority from capability discovery, user narration, or a technical access credential. See [Mandate — Reasonable Agency](../research/mandate_reasonable_agency.md), [Proportionate COP Delegation](../research/integration/john_proportionate_delegation_2026-11-06.md), [#299](https://github.com/JeanHuguesRobert/cogentia/issues/299), [#291](https://github.com/JeanHuguesRobert/cogentia/issues/291).
+
+## Missing-capability growth versus exceptional recovery (operational modes)
+
+**An obstacle is not authority for a shortcut, and it is not a reason to abandon the Principal's objective.** On finding a missing or unusable *ordinary* semantic capability, the agent MUST first identify the missing behavior and its intended effect; search for an already governed alternative or composable authorized path; record the gap as a resumable continuation/candidate capability; and, when development is warranted, propose to the Principal a bounded coding mandate (unless that coding work is already authorized). Reuse the established coding, testing, review, packaging and deployment workflow. The outcome is a **new reusable semantic capability with its own COP enforcement and evidence**, not a one-off ungated shell or CDP workaround. A developer's authorization to *implement* a capability does not grant authority to *activate or exercise* it on live Principal/third-party resources.
+
+Distinguish three regimes: (1) **bootstrap** — temporary broad coding and installation tools used to build the initial governed surface; (2) **normal** — work using discoverable, independently mandated and COP-accounted semantic capabilities; (3) **emergency recovery** — independently authorized, exceptional repair of genuinely broken normal controls, when ordinary governed repair is unavailable or inadequate. The generic Unix Shell MCP currently belongs to bootstrap, with an intended later break-glass role, **not** a routine production fallback. Mere absence of a feature, insufficiency of a mandate, provider refusal or lack of convenient permissions is **not** an emergency; it must never trigger the recovery route. Recover first the governed operating regime, then retire emergency privilege and reconcile the exceptional acts.
+
+For missing functionality, report: intended outcome; missing semantic capability; existing alternatives checked; proposed reusable interface; required coding authority; separate operational mandate/issuer/effect gates; tests and receipts; any genuinely blocked decision for the Principal. Do not generate repetitive Principal approval requests for coding already covered by a live bounded mandate. Discovery and creation enlarge the **set of possible actions**, not the **set of authorized actions**. See [Mandate — Reasonable Agency](../research/mandate_reasonable_agency.md), [FractaCognition principles](../research/fractacognition_principles.md), and [#299](https://github.com/JeanHuguesRobert/cogentia/issues/299).
 
 ## Rational detour under third-party execution blockers (Potentics / Reality Test)
 

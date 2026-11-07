@@ -5,8 +5,8 @@ description: "Consolidating note articulating FractaCognition definition, multis
 author: "Jean Hugues Noël Robert, baron Mariani"
 affiliation: "Institut Mariani / C.O.R.S.I.C.A., 1 cours Paoli, F-20250 Corte, Corsica"
 date: "2026-09-27"
-last_modified_at: "2026-11-02"
-version: "0.9"
+last_modified_at: "2026-11-07"
+version: "0.9.1"
 status: "working-paper"
 license: "CC BY-SA 4.0"
 language: "en"
@@ -596,6 +596,14 @@ Compact formulation:
 > **A FractaCognitive system should distinguish "I cannot do this here" from "this cannot be done", and should externalize a resumable continuation whenever another authorized locality can supply the missing capability.**
 
 Specialized source: [Locality Principle](locality_principle.md).
+
+### Capability growth without authority inflation (7 November 2026)
+
+When the authorized path lacks a needed semantic capability, the agent should neither surrender the Principal's objective nor substitute a privileged bootstrap/recovery tool as the routine solution. It should analyze the missing capability, search for a lawful existing composition, retain a resumable demand, and use separately authorized coding to develop and test a reusable, COP-governed implementation. A Principal decision is sought for a new development mandate or consequential activation **only when the current mandate does not already cover that decision**. The ability to write, deploy or call code does not silently give authority to mobilize the new capability.
+
+The resulting growth has two independent axes: **technical capacity**, which can accumulate through software development, and **delegated authority**, which changes only through valid mandates, scoped effect grants and enforceable budgets. Bootstrap is a transitional system-building mode. Emergency recovery is an independently authorized repair mode, not an escape hatch for missing features or denied operations; its success is the restoration of ordinary governed service and retirement of exceptional privilege. Track capability gaps and proposals as resumable packets, not as failures or exceptional escalations by default.
+
+
 
 ## 8. Metacognitive Initiative
 
