@@ -68,11 +68,11 @@ export function createHostedBrowserCapabilities(options = {}) {
       risk: "read_only",
       resultVisibility: "reasoner",
       costUnits: 1,
-      description: "Inspect the Fracta2 hosted browser connection, tabs, bounded page text or DOM field structure without reading field values.",
+      description: "Inspect the Fracta2 hosted browser connection, tabs, bounded page text, DOM field structure or redacted frame identities without reading field values.",
       inputSchema: {
         type: "object",
         properties: {
-          action: { type: "string", enum: ["status", "tabs", "context", "structure"] },
+          action: { type: "string", enum: ["status", "tabs", "context", "structure", "frames"] },
           tab_id: { type: "integer", minimum: 0 },
           max_chars: { type: "integer", minimum: 1, maximum: 12000 },
           include_url: { type: "boolean" },
@@ -94,6 +94,23 @@ export function createHostedBrowserCapabilities(options = {}) {
               ? result.tabs.map((tab) => summarizeTab(tab, input.include_url === true))
               : [],
           };
+        }
+        if (action === "frames") {
+          const tabId = positiveInt(input.tab_id, "tab_id");
+          // The gateway must never infer the URL for this call. Pin the exact
+          // top-level document from an explicit caller-owned selection.
+          const tabs = await rpc(gateway,"tabs.list",{browser_instance_id:browserId},timeoutMs);
+          const tab = (tabs.tabs||[]).find(t=>t.id===tabId);
+          if(!tab || !/^https:\/\//i.test(tab.url||""))throw capabilityError("BROWSER_TARGET_TAB_MISSING");
+          const response=await rpc(gateway,"page.frames.list",{browser_instance_id:browserId,
+            tabId,expectedUrl:tab.url},timeoutMs);
+          if(response.tab_id!==tabId||!Array.isArray(response.frames))throw capabilityError("BROWSER_FRAME_RECEIPT_INVALID");
+          return {tab_id:tabId,frame_count:response.frame_count,truncated:response.truncated===true,
+            contains_cross_origin_frames:response.contains_cross_origin_frames===true,
+            frames:response.frames.slice(0,32).map(f=>({frame_id:String(f.frame_id||'').slice(0,160),
+              parent_frame_id:f.parent_frame_id===null?null:String(f.parent_frame_id||'').slice(0,160),
+              depth:boundedInteger(f.depth,0,0,12),is_top_level:f.is_top_level===true,
+              origin:originOf(f.origin)}))};
         }
         if (action === "structure") {
           const targetTabId = positiveInt(input.tab_id, "tab_id");
@@ -192,30 +209,41 @@ export function createHostedBrowserCapabilities(options = {}) {
     {
       name: "browser.form.fill",
       kind: "tool", risk: "internal_recoverable", resultVisibility: "reasoner", costUnits: 1,
-      description: "Focus an indexed ordinary text field and insert supplied non-secret text in an explicit tab. No form submission, no passwords or OTP, no arbitrary JavaScript. Top-level document only.",
+      description: "Focus an indexed ordinary text field and insert supplied non-secret text in an explicit tab. No form submission, no passwords or OTP, no arbitrary JavaScript. Optional explicit frame ID + origin; refuses unsupported cross-process frame contexts.",
       inputSchema: {type:"object",properties:{
         tab_id:{type:"integer",minimum:1},field_index:{type:"integer",minimum:0,maximum:79},
         expected_url:{type:"string",minLength:1,maxLength:4096},
         text:{type:"string",minLength:1,maxLength:2048},
+        frame_id:{type:"string",minLength:1,maxLength:160},
+        expected_frame_origin:{type:"string",minLength:1,maxLength:256},
       },required:["tab_id","field_index","expected_url","text"],additionalProperties:false},
       async execute(input={}) {
         const tab=positiveInt(input.tab_id,"tab_id");
         const expected=String(input.expected_url||"");
         const value=String(input.text||"");
         if(!expected.startsWith('https://')||!value||value.length>2048)throw capabilityError('BROWSER_FORM_INPUT_INVALID');
+        const hasFrame=input.frame_id!==undefined||input.expected_frame_origin!==undefined;
+        if(hasFrame){
+          let origin;
+          try {origin=new URL(input.expected_frame_origin);}catch{throw capabilityError('BROWSER_FORM_FRAME_INVALID');}
+          if(!/^[A-Za-z0-9_-]{1,160}$/.test(input.frame_id||'')||origin.protocol!=='https:'||
+            origin.origin!==input.expected_frame_origin)throw capabilityError('BROWSER_FORM_FRAME_INVALID');
+        }
         // FBF: new recipes live in the Core, not the extension worker.
         // Explicit alternate path uses existing generic page.evaluate bridge.
         // Keep the proven native-CDP path as default until browser parity tests.
-        const scriptBackend=options.formFillBackend==='client-script';
+        const scriptBackend=options.formFillBackend==='client-script' && !hasFrame;
         const response=scriptBackend
           ? await rpc(gateway,"page.evaluate",{browser_instance_id:browserId,
               tabId:tab,expectedUrl:expected,
               code:compileNonSecretFormFill({fieldIndex:input.field_index,text:value,expectedUrl:expected})},timeoutMs)
           : await rpc(gateway,"page.form.fill",{browser_instance_id:browserId,
-              tabId:tab,expectedUrl:expected,fieldIndex:input.field_index,text:value},timeoutMs);
+              tabId:tab,expectedUrl:expected,fieldIndex:input.field_index,text:value,
+              ...(hasFrame?{frameId:input.frame_id,expectedFrameOrigin:input.expected_frame_origin}:{})},timeoutMs);
         const inserted=scriptBackend ? {...response.value,tabId:tab,fieldIndex:input.field_index} : response;
         if(inserted.ok!==true||inserted.submitted!==false||inserted.insertedLength!==value.length||
-          inserted.tabId!==tab||inserted.fieldIndex!==input.field_index)
+          inserted.tabId!==tab||inserted.fieldIndex!==input.field_index||
+          (hasFrame && inserted.frameId!==input.frame_id))
           throw capabilityError('BROWSER_FORM_INSERTION_UNCONFIRMED');
         return {ok:true,inserted_length:value.length,tab_id:tab,field_index:input.field_index,
           submitted:false};
