@@ -6,6 +6,7 @@ import {join} from 'node:path';
 const commands=[
  ['pnpm','test'],
  ['node','scripts/check-mcp-apps-demo.js'],
+ ['node','--test','scripts/lib/mcp-apps/fractatest-ui-protocol.test.mjs'],
  ['node','--test','scripts/lib/proportionate-risk.test.js'],
  ['node','scripts/check-mcp-risk-assess.js'],
  ['node','--test','scripts/super/principal-effect-issuer.test.mjs','scripts/lib/principal-super-effect-admission.test.js'],

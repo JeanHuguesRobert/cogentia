@@ -119,7 +119,7 @@ export const TOOLS = [
     name: "cogentia_mcp_apps_demo",
     description: "Show a read-only FractaTest MCP Apps widget; static demo, no credentials, persistence, or side effects. Text fallback works on non-UI clients.",
     inputSchema: { type: "object", properties: {}, additionalProperties: false },
-    _meta: { ui: { resourceUri: "ui://cogentia/fractatest-demo", visibility: ["model", "app"] } },
+    _meta: { ui: { resourceUri: "ui://cogentia/fractatest-demo-v2", visibility: ["model", "app"] } },
   },
   {
     name: "cogentia_risk_assess",

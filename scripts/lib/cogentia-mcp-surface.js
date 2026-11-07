@@ -20,7 +20,7 @@ import {
 } from "./cogentia-patterns.js";
 
 export const LIST_TTL_MS = 3_600_000;
-export const MCP_APP_DEMO_URI = "ui://cogentia/fractatest-demo";
+export const MCP_APP_DEMO_URI = "ui://cogentia/fractatest-demo-v2";
 export const MCP_APP_DEMO_MIME = "text/html;profile=mcp-app";
 export const SKILL_URI_PREFIX = "skill://cogentia/";
 export const PATTERN_URI_PREFIX = "cogentia://pattern/";

@@ -14,6 +14,37 @@
 </ul>
 <p id="message" role="status">Interaction locale : prête.</p>
 <script>
-const button=document.getElementById('toggle'), panel=document.getElementById('invariants');
-button.addEventListener('click',()=>{panel.hidden=!panel.hidden;button.setAttribute('aria-pressed',String(!panel.hidden));button.textContent=panel.hidden?'Afficher les invariants':'Masquer les invariants';document.getElementById('message').textContent='Interaction locale : '+(panel.hidden?'fermée':'ouverte')+'.';});
+// MCP Apps SEP-1865: the view, not the host, starts the UI handshake.
+// Everything here is self-contained: no external scripts, network or credentials.
+const button=document.getElementById('toggle');
+const panel=document.getElementById('invariants');
+const status=document.getElementById('message');
+button.addEventListener('click',()=>{
+  panel.hidden=!panel.hidden;
+  button.setAttribute('aria-pressed',String(!panel.hidden));
+  button.textContent=panel.hidden?'Afficher les invariants':'Masquer les invariants';
+  status.textContent='Interaction locale : '+(panel.hidden?'fermée':'ouverte')+'.';
+});
+const initId='fractatest-init-v2';
+let initialized=false;
+window.addEventListener('message',event=>{
+  // Only messages from the embedding parent may finish initialization.
+  if(event.source!==window.parent || !event.data || event.data.jsonrpc!=='2.0')return;
+  if(event.data.id===initId){
+    if(initialized)return;
+    if(event.data.error){status.textContent='Initialisation MCP Apps refusée.';return;}
+    if(!event.data.result || typeof event.data.result.protocolVersion!=='string')return;
+    initialized=true;
+    window.parent.postMessage({jsonrpc:'2.0',method:'ui/notifications/initialized',params:{}},'*');
+    status.textContent='MCP Apps connecté — interaction locale : prête.';
+  }
+  if(event.data.method==='ui/resource-teardown' && Object.hasOwn(event.data,'id')){
+    window.parent.postMessage({jsonrpc:'2.0',id:event.data.id,result:{}},'*');
+  }
+});
+window.parent.postMessage({
+  jsonrpc:'2.0',id:initId,method:'ui/initialize',
+  params:{protocolVersion:'2026-01-26',capabilities:{},clientInfo:{name:'FractaTest',version:'2.0.0'},
+    appCapabilities:{availableDisplayModes:['inline']}}
+},'*');
 </script></body></html>
