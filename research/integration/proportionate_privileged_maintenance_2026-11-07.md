@@ -3,7 +3,7 @@ title: "Maintenance privilégiée proportionnée — capacité, réversibilité 
 author: "Institut Mariani / C.O.R.S.I.C.A."
 date: "2026-11-07"
 last_modified_at: "2026-11-07"
-version: "0.1"
+version: "0.2"
 status: "working-paper"
 language: "fr"
 license: "CC BY-SA 4.0"
@@ -43,6 +43,26 @@ Le recours à `sudo` n'est pas en soi une classe de risque ; inversement, une op
 | **C — critique / réduction durable des capacités** | Perte plausible de données non récupérables, clés, réseau, accès SSH, politique de sécurité, sauvegardes, contrôle COP, ou engagements de tiers | Authentification renforcée, éventuellement commande depuis ThinkPad / SSH signé, ou refus | Preuve forte du Principal, version/portée verrouillées, mesure de récupération et justification ; même COP |
 
 **Le seuil B/C peut dépendre du contexte et varier dans le temps.** Le service peut être le seul canal d'accès distant : son redémarrage n'est alors pas banal. L'absence de preuve de recovery interdit de qualifier B par simple optimisme. Le risque n'est pas mathématiquement nul ; il peut être raisonnablement négligeable par rapport à la valeur du travail.
+
+## Trois surfaces MCP, trois régimes opérationnels à ne pas confondre
+
+Dans le déploiement Fractanet, distinguer les **surfaces de connexion** des **niveaux d'autorisation des actes**. On dispose de :
+
+1. **MCP Cogentia** — interface sémantique ordinaire, mandatée, dont les travaux sont des Cognitive Packets et leurs continuations ; fonctionnement normal A ou B selon l'effet.
+2. **MCP Cogentia Private** — accès aux capacités et contextes privés du Principal avec contrôles d'identité, mandat, budget, droits et effet ; ce n'est ni un consentement générique ni un accès `root` implicite. Une maintenance bornée peut relever de B.
+3. **MCP Unix Shell temporaire de bootstrap, à terme voie de secours / *break-glass*** — surface générique d'exécution, à conserver indépendante des services dont elle peut réparer les défaillances. Lorsqu'elle sert à **récupérer une capacité importante réellement cassée**, c'est le régime exceptionnel de crise, **non une solution pratique aux refus de permission ordinaires**. Le contrôle doit être plus strict, avec décision humaine manuelle presque toujours requise, idéalement depuis un appareil du Principal indépendant de l'incident (par exemple son ThinkPad). Ce MCP n'est pas une troisième source de souveraineté : il consomme des autorisations COP ou un chemin d'urgence explicitement attribué, journalisé et réconcilié.
+
+Une panne du contrôle COP ou de son émetteur de confiance crée un cas particulier : la restauration peut nécessiter une autorisation *break-glass* fondée sur une identité du Principal établie **hors du composant en panne**. On ne peut pas demander au service cassé de certifier sa propre restauration. La procédure d'urgence doit être préparée tant que le système est sain, avec protection des preuves hors du périmètre compromis ; son usage doit rester rare et révisable.
+
+### Reçu minimal d'une récupération de crise
+
+- **Déclencheur et nécessité** : capacité réellement indisponible, impact constaté, alternatives A/B essayées et raisons de leur insuffisance.
+- **Imputation et autorité** : Principal identifiable, opérateur, mandat d'urgence ou preuve d'approbation hors bande, portée, durée et justification d'accès élevé ; refus si le lien de confiance n'est pas vérifiable.
+- **Préparation** : cible, commande/changement exact, dépendances et chemin de retour, éléments de santé avant intervention ; préservation des traces et des données originales quand elles sont à risque.
+- **Exécution** : identifiant d'acte unique, corrélation avec le paquet, canal utilisé, horodatages, résultat, éventuelles commandes supplémentaires et écart expliqué. Éviter de journaliser mots de passe, clés ou données sensibles ; protéger la confidentialité et l'intégrité du journal.
+- **Vérification** : capacité restaurée ou non, contrôles de sécurité, perte résiduelle, comptes/réservations et reconciliation COP a posteriori si l'autorité normale était indisponible ; rapport au Principal et retrait des privilèges temporaires.
+
+**Proportionnalité même en crise** : la traçabilité renforcée n'est pas une obligation de rédiger un dossier avant de restaurer un service vital ; capturer automatiquement les traces accessibles, exiger la décision humaine décisive, puis compléter la réconciliation aussitôt que l'infrastructure le permet. Ne pas transformer un problème de disponibilité ordinaire ou une autorisation insuffisante en « crise » pour accéder au shell d'urgence.
 
 ## Cas concret du serveur MCP
 
