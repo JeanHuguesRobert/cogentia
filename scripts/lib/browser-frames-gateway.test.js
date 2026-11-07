@@ -13,20 +13,19 @@ test('frame metadata uses explicit tab and URL, no secrets or HTML',async()=>{
   const seen=[];
   ext.on('message',raw=>{
    const req=JSON.parse(String(raw));seen.push(req.method);
-   if(req.method==='tabs.list')ext.send(JSON.stringify({jsonrpc:'2.0',id:req.id,result:{tabs:[{id:42,url:'https://bank.example/login?session=SENSITIVE',title:'Bank login'}]}}));
-   if(req.method==='page.frames.list'){
-    assert.equal(req.params.tabId,42);assert.equal(req.params.expectedUrl,'https://bank.example/login?session=SENSITIVE');
-    ext.send(JSON.stringify({jsonrpc:'2.0',id:req.id,result:{tab_id:42,frame_count:2,truncated:false,contains_cross_origin_frames:true,frames:[
-      {frame_id:'top',parent_frame_id:null,depth:0,is_top_level:true,origin:'https://bank.example'},
-      {frame_id:'login',parent_frame_id:'top',depth:1,is_top_level:false,origin:'https://auth.bank.example'}
-    ]}}));
+   if(req.method==='page.evaluate'){
+    assert.equal(req.params.tabId,42);
+    assert.ok(!req.params.code.includes('Input.insertText'));
+    ext.send(JSON.stringify({jsonrpc:'2.0',id:req.id,result:{value:{origin:'https://bank.example',frames:[
+      {iframe_index:0,origin:'https://auth.bank.example',same_origin:false}
+    ]},tab:{id:42,url:'https://bank.example/login'}}}));
    }
   });
   const cap=createHostedBrowserCapabilities({gateway:url+'/assistant'}).find(x=>x.name==='browser.hosted.inspect');
   const out=await cap.execute({action:'frames',tab_id:42});
-  assert.deepEqual(seen,['tabs.list','page.frames.list']);
-  assert.equal(out.frames[1].frame_id,'login');
-  assert.equal(out.frames[1].origin,'https://auth.bank.example');
+  assert.deepEqual(seen,['page.evaluate']);
+  assert.equal(out.frame_identity,'dom_index_not_cdp_frame_id');
+  assert.equal(out.frames[0].origin,'https://auth.bank.example');
   assert.doesNotMatch(JSON.stringify(out),/SENSITIVE|session=|Bank login/);
  }finally{ext?.close();await gate.close()}
 });

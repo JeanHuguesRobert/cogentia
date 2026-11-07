@@ -8,8 +8,8 @@ import {join} from 'node:path';
 import assert from 'node:assert/strict';
 import WebSocket from 'ws';
 import {safeFormFocusCode} from '../browser-extension/form-field-focus.js';
-import {verifyFrameTarget} from '../browser-extension/frame-target.js';
-import {projectFrameTree} from '../browser-extension/frame-tree.js';
+import {verifyFrameTarget} from './lib/browser-frame-target.js';
+import {projectFrameTree} from './lib/browser-frame-tree.js';
 
 function listen(host,fn){return new Promise((yes,no)=>{const s=http.createServer(fn);s.on('error',no);s.listen(0,host,()=>yes(s))})}
 const port=s=>s.address().port;

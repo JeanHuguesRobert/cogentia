@@ -1,5 +1,5 @@
 import test from 'node:test';import assert from 'node:assert/strict';
-import {verifyFrameTarget} from './frame-target.js';
+import {verifyFrameTarget} from './browser-frame-target.js';
 const tree={frame:{id:'top',url:'https://bank.example/page'},childFrames:[{frame:{id:'loginFrame',url:'https://login.bank.example/secure?token=PRIVATE'}}]};
 test('explicit frame selector rejects stale origin, unknown IDs and root substitution',()=>{
  assert.deepEqual(verifyFrameTarget(tree,{frameId:'loginFrame',expectedOrigin:'https://login.bank.example'}),{frameId:'loginFrame',origin:'https://login.bank.example'});

@@ -3,7 +3,7 @@ title: "FBF — recette iframe réelle et diagnostic COP de la navigation bancai
 author: "Institut Mariani / C.O.R.S.I.C.A."
 date: "2026-11-07"
 last_modified_at: "2026-11-07"
-version: "0.1"
+version: "0.2"
 status: "working-paper"
 language: "fr"
 license: "CC BY-SA 4.0"
@@ -20,6 +20,9 @@ review:
 ---
 
 # Reality Test iframe, puis FBF du reçu COP
+
+**Note corrective :** l’architecture de sélection de frames proposée le matin dans l’extension a été retirée du code source dans la tranche FBF suivante. Voir [bibliothèque JavaScript stable](navigation_stable_eval_library_fbf_2026-11-07.md). Le Reality Test Chrome et les reçus COP positifs restent valides, mais le chemin de déploiement d’une nouvelle extension n’est plus retenu.
+
 
 ## 1. Vraie navigation test, sans session personnelle
 

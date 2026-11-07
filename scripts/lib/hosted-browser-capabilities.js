@@ -96,21 +96,18 @@ export function createHostedBrowserCapabilities(options = {}) {
           };
         }
         if (action === "frames") {
-          const tabId = positiveInt(input.tab_id, "tab_id");
-          // The gateway must never infer the URL for this call. Pin the exact
-          // top-level document from an explicit caller-owned selection.
-          const tabs = await rpc(gateway,"tabs.list",{browser_instance_id:browserId},timeoutMs);
-          const tab = (tabs.tabs||[]).find(t=>t.id===tabId);
-          if(!tab || !/^https:\/\//i.test(tab.url||""))throw capabilityError("BROWSER_TARGET_TAB_MISSING");
-          const response=await rpc(gateway,"page.frames.list",{browser_instance_id:browserId,
-            tabId,expectedUrl:tab.url},timeoutMs);
-          if(response.tab_id!==tabId||!Array.isArray(response.frames))throw capabilityError("BROWSER_FRAME_RECEIPT_INVALID");
-          return {tab_id:tabId,frame_count:response.frame_count,truncated:response.truncated===true,
-            contains_cross_origin_frames:response.contains_cross_origin_frames===true,
-            frames:response.frames.slice(0,32).map(f=>({frame_id:String(f.frame_id||'').slice(0,160),
-              parent_frame_id:f.parent_frame_id===null?null:String(f.parent_frame_id||'').slice(0,160),
-              depth:boundedInteger(f.depth,0,0,12),is_top_level:f.is_top_level===true,
-              origin:originOf(f.origin)}))};
+          // Core-owned recipe over the original, stable page.evaluate primitive.
+          // This identifies DOM iframe elements by index and origin; cross-origin
+          // CDP frame IDs are unavailable from this page execution context.
+          const tabId=positiveInt(input.tab_id,'tab_id');
+          const result=await rpc(gateway,'page.evaluate',{
+            browser_instance_id:browserId,tabId,
+            code:`(() => ({ origin:location.origin,frames:Array.from(document.querySelectorAll('iframe')).slice(0,20).map((f,i)=>({iframe_index:i,origin:(()=>{try{return new URL(f.getAttribute('src')||'',location.href).origin}catch{return null}})(),same_origin:(()=>{try{return !!f.contentDocument}catch{return false}})()})) }))()`
+          },timeoutMs);
+          const raw=result.value||{};
+          return {tab_id:tabId,origin:originOf(raw.origin),frames:Array.isArray(raw.frames)?raw.frames.slice(0,20).map(f=>({
+            iframe_index:boundedInteger(f.iframe_index,0,0,19),origin:originOf(f.origin),same_origin:f.same_origin===true
+          })):[], frame_identity:'dom_index_not_cdp_frame_id'};
         }
         if (action === "structure") {
           const targetTabId = positiveInt(input.tab_id, "tab_id");
@@ -209,12 +206,12 @@ export function createHostedBrowserCapabilities(options = {}) {
     {
       name: "browser.form.fill",
       kind: "tool", risk: "internal_recoverable", resultVisibility: "reasoner", costUnits: 1,
-      description: "Focus an indexed ordinary text field and insert supplied non-secret text in an explicit tab. No form submission, no passwords or OTP, no arbitrary JavaScript. Optional explicit frame ID + origin; refuses unsupported cross-process frame contexts.",
+      description: "Fill a non-secret ordinary field. For same-origin iframes, Core sends a compiled JavaScript recipe through the stable page.evaluate primitive. Cross-origin frames require a separately authorized frame-scoped transport; no extension-specific RPC.",
       inputSchema: {type:"object",properties:{
         tab_id:{type:"integer",minimum:1},field_index:{type:"integer",minimum:0,maximum:79},
         expected_url:{type:"string",minLength:1,maxLength:4096},
         text:{type:"string",minLength:1,maxLength:2048},
-        frame_id:{type:"string",minLength:1,maxLength:160},
+        iframe_index:{type:"integer",minimum:0,maximum:19},
         expected_frame_origin:{type:"string",minLength:1,maxLength:256},
       },required:["tab_id","field_index","expected_url","text"],additionalProperties:false},
       async execute(input={}) {
@@ -222,28 +219,28 @@ export function createHostedBrowserCapabilities(options = {}) {
         const expected=String(input.expected_url||"");
         const value=String(input.text||"");
         if(!expected.startsWith('https://')||!value||value.length>2048)throw capabilityError('BROWSER_FORM_INPUT_INVALID');
-        const hasFrame=input.frame_id!==undefined||input.expected_frame_origin!==undefined;
+        const hasFrame=input.iframe_index!==undefined||input.expected_frame_origin!==undefined;
         if(hasFrame){
           let origin;
           try {origin=new URL(input.expected_frame_origin);}catch{throw capabilityError('BROWSER_FORM_FRAME_INVALID');}
-          if(!/^[A-Za-z0-9_-]{1,160}$/.test(input.frame_id||'')||origin.protocol!=='https:'||
+          if(!Number.isInteger(input.iframe_index)||input.iframe_index<0||input.iframe_index>19||origin.protocol!=='https:'||
             origin.origin!==input.expected_frame_origin)throw capabilityError('BROWSER_FORM_FRAME_INVALID');
         }
         // FBF: new recipes live in the Core, not the extension worker.
         // Explicit alternate path uses existing generic page.evaluate bridge.
         // Keep the proven native-CDP path as default until browser parity tests.
-        const scriptBackend=options.formFillBackend==='client-script' && !hasFrame;
+        const scriptBackend=hasFrame||options.formFillBackend==='client-script';
         const response=scriptBackend
           ? await rpc(gateway,"page.evaluate",{browser_instance_id:browserId,
               tabId:tab,expectedUrl:expected,
-              code:compileNonSecretFormFill({fieldIndex:input.field_index,text:value,expectedUrl:expected})},timeoutMs)
+              code:compileNonSecretFormFill({fieldIndex:input.field_index,text:value,expectedUrl:expected,
+                ...(hasFrame?{iframeIndex:input.iframe_index,expectedFrameOrigin:input.expected_frame_origin}:{})})},timeoutMs)
           : await rpc(gateway,"page.form.fill",{browser_instance_id:browserId,
-              tabId:tab,expectedUrl:expected,fieldIndex:input.field_index,text:value,
-              ...(hasFrame?{frameId:input.frame_id,expectedFrameOrigin:input.expected_frame_origin}:{})},timeoutMs);
+              tabId:tab,expectedUrl:expected,fieldIndex:input.field_index,text:value},timeoutMs);
         const inserted=scriptBackend ? {...response.value,tabId:tab,fieldIndex:input.field_index} : response;
         if(inserted.ok!==true||inserted.submitted!==false||inserted.insertedLength!==value.length||
           inserted.tabId!==tab||inserted.fieldIndex!==input.field_index||
-          (hasFrame && inserted.frameId!==input.frame_id))
+          (hasFrame && inserted.iframeIndex!==input.iframe_index))
           throw capabilityError('BROWSER_FORM_INSERTION_UNCONFIRMED');
         return {ok:true,inserted_length:value.length,tab_id:tab,field_index:input.field_index,
           submitted:false};

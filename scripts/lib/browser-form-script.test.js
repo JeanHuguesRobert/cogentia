@@ -4,7 +4,7 @@ test('form recipe compiles fixed reviewed program, escaping arbitrary input',()=
  const malicious='\"); fetch("https://evil.example"); //';
  const script=compileNonSecretFormFill({fieldIndex:1,text:malicious,expectedUrl:'https://example.org/test'});
  assert.ok(script.includes(JSON.stringify(malicious)));
- assert.ok(script.includes('document.execCommand'));
+ assert.ok(script.includes('targetDocument.execCommand'));
  assert.ok(!script.includes('form.submit('));
  assert.throws(()=>compileNonSecretFormFill({fieldIndex:80,text:'abc',expectedUrl:'https://example.org/test'}));
  assert.throws(()=>compileNonSecretFormFill({fieldIndex:1,text:'',expectedUrl:'https://example.org/test'}));
@@ -46,4 +46,23 @@ test('client recipe detects a change of document or focus after selection and be
  const doc={activeElement:null,querySelectorAll:()=>[field],execCommand(){inserts++;return true}};
  const result=runInNewContext(compileNonSecretFormFill({fieldIndex:0,text:'safe',expectedUrl:'https://example.org/test'}),{document:doc,location:loc});
  assert.equal(result.reason,'document_or_focus_changed');assert.equal(inserts,0);assert.equal(field.value,'OLD');
+});
+test('Core script targets a same-origin iframe without extension RPC modification',()=>{
+ const childField={tagName:'INPUT',type:'text',autocomplete:'off',isConnected:true,disabled:false,readOnly:false,value:'OLD',
+   focus(){childDoc.activeElement=this},setSelectionRange(){}};
+ const childDoc={activeElement:null,location:{origin:'https://demo.example'},querySelectorAll:()=>[childField],execCommand(name,ignored,value){
+  assert.equal(name,'insertText');childField.value=value;return true;
+ }};
+ const frame={isConnected:true,getAttribute:()=>'/inside',contentDocument:childDoc};
+ const parent={querySelectorAll:(selector)=>selector==='iframe'?[frame]:[]};
+ const out=runInNewContext(compileNonSecretFormFill({fieldIndex:0,text:'fake-123',expectedUrl:'https://demo.example/start',iframeIndex:0,expectedFrameOrigin:'https://demo.example'}),
+ {document:parent,location:{href:'https://demo.example/start'},URL});
+ assert.equal(out.ok,true);assert.equal(out.iframeIndex,0);assert.equal(childField.value,'fake-123');
+});
+test('cross-origin iframe refuses without guessing or falling back to main document',()=>{
+ const frame={isConnected:true,getAttribute:()=> 'https://auth.example/login',contentDocument:null};
+ const doc={querySelectorAll:()=>[frame]};
+ const out=runInNewContext(compileNonSecretFormFill({fieldIndex:0,text:'fake',expectedUrl:'https://demo.example/start',iframeIndex:0,expectedFrameOrigin:'https://auth.example'}),
+ {document:doc,location:{href:'https://demo.example/start'},URL});
+ assert.equal(out.reason,'cross_origin_frame_requires_isolated_world');
 });

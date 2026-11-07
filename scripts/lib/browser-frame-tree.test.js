@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {projectFrameTree} from './frame-tree.js';
+import {projectFrameTree} from './browser-frame-tree.js';
 test('frame projection preserves opaque IDs and origins, hides page URLs and query secrets',()=>{
  const r=projectFrameTree({frame:{id:'top_12',url:'https://bank.example/private?token=NO_LEAK'},childFrames:[
   {frame:{id:'sub_9',url:'https://login.bank.example/auth?secret=NO_LEAK2',securityOrigin:'https://login.bank.example'}},

@@ -3,7 +3,7 @@ title: "Navigation Assistant — ciblage générique d'iframes et formulaire ban
 author: "Institut Mariani / C.O.R.S.I.C.A."
 date: "2026-11-07"
 last_modified_at: "2026-11-07"
-version: "0.1"
+version: "0.2"
 status: "working-paper"
 language: "fr"
 license: "CC BY-SA 4.0"
@@ -20,6 +20,10 @@ review:
 ---
 
 # Iframes : preuve de capacité et frontière de confidentialité
+
+**Correction d'architecture (même jour, FBF) :** la proposition ci-dessous d'ajouter `page.frames.list` et un ciblage CDP dédié dans `browser-extension/background.js` **est abandonnée et remplacée** par la doctrine décrite dans [Navigation : bibliothèque JS stable et exécution gouvernée](../research/integration/navigation_stable_eval_library_fbf_2026-11-07.md). Elle est conservée comme historique du détour et non comme instruction de déploiement. Le code de l'extension et de la passerelle est revenu à l'état pré-changement ; les recettes sont désormais dans la bibliothèque Core. Aucun rechargement de l'extension 1.0.18 n'est nécessaire pour les recettes ordinaires.
+
+
 
 ## Besoin concret
 

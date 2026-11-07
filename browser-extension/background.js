@@ -1,6 +1,4 @@
 import {safeFormFocusCode} from "./form-field-focus.js";
-import {projectFrameTree} from "./frame-tree.js";
-import {verifyFrameTarget} from "./frame-target.js";
 import { selectTargetTab, ensureExpectedUrl } from "./tab-target.js";
 import { reconnectDelayMs, nextFailureCount, OPEN_TIMEOUT_MS } from "./reconnect-policy.js";
 // Minimal bridge: the extension initiates the WebSocket (it cannot listen).
@@ -181,26 +179,6 @@ async function handleCommand(message) {
     }
     return;
   }
-  // General-purpose frame identities, scoped to a selected tab. No HTML,
-  // values, full URLs, JS evaluation or credential access.
-  if(message.jsonrpc === "2.0" && message.method === "page.frames.list" && message.id !== undefined){
-    let tab;
-    try {
-      if(!Number.isInteger(message.params?.tabId) || typeof message.params?.expectedUrl !== 'string')
-        throw Error('frame_target_invalid');
-      const tabs=await chrome.tabs.query({});
-      tab=ensureExpectedUrl(selectTargetTab(tabs,message.params),message.params);
-      await ensureAttached(tab.id);
-      await ensureSameDocumentTarget(tab,message.params);
-      const tree=await chrome.debugger.sendCommand({tabId:tab.id},'Page.getFrameTree');
-      await ensureSameDocumentTarget(tab,message.params);
-      const projection=projectFrameTree(tree.frameTree);
-      emit({jsonrpc:'2.0',id:message.id,result:{...projection,tab_id:tab.id}});
-    } catch {
-      emit({jsonrpc:'2.0',id:message.id,error:{code:-32029,message:'Frame inspection unavailable'}});
-    }
-    return;
-  }
   if (message.jsonrpc === "2.0" && message.method === "page.evaluate" && message.id !== undefined && typeof message.params?.code === "string") {
     const tabs = await chrome.tabs.query({});
     const [activeTab] = await chrome.tabs.query({ active: true, lastFocusedWindow: true });
@@ -251,36 +229,15 @@ async function handleCommand(message) {
       tab=ensureExpectedUrl(selectTargetTab(tabs,message.params),message.params);
       await ensureAttached(tab.id);
       await ensureSameDocumentTarget(tab,message.params);
-      const scopedFrame=message.params?.frameId!==undefined || message.params?.expectedFrameOrigin!==undefined;
-      if(scopedFrame && (!message.params?.frameId || !message.params?.expectedFrameOrigin))
-        throw Error('frame_scope_incomplete');
-      let contextId;
-      if(scopedFrame){
-        const tree=await chrome.debugger.sendCommand({tabId:tab.id},'Page.getFrameTree');
-        verifyFrameTarget(tree.frameTree,{frameId:message.params.frameId,expectedOrigin:message.params.expectedFrameOrigin});
-        // A frame-specific isolated world is mandatory. If the frame lives in
-        // another CDP target (OOPIF) and Chromium rejects this operation, fail
-        // closed rather than focusing another field or switching to raw CDP.
-        const world=await chrome.debugger.sendCommand({tabId:tab.id},'Page.createIsolatedWorld',
-          {frameId:message.params.frameId,worldName:'cogentia-form-assist'});
-        if(!Number.isInteger(world?.executionContextId))throw Error('frame_context_unavailable');
-        contextId=world.executionContextId;
-      }
       const focused=await chrome.debugger.sendCommand({tabId:tab.id},"Runtime.evaluate",
-        {expression:safeFormFocusCode(index),returnByValue:true,awaitPromise:false,
-         ...(scopedFrame?{contextId}:{})});
+        {expression:safeFormFocusCode(index),returnByValue:true,awaitPromise:false});
       if(focused.exceptionDetails||focused.result?.value?.ok!==true)
         throw new Error("Target field not focusable");
-      // Revalidate document and frame identity before inserting; never submit/click.
+      // Revalidate document identity before inserting; never submit/click.
       await ensureSameDocumentTarget(tab,message.params);
-      if(scopedFrame){
-        const latest=await chrome.debugger.sendCommand({tabId:tab.id},'Page.getFrameTree');
-        verifyFrameTarget(latest.frameTree,{frameId:message.params.frameId,expectedOrigin:message.params.expectedFrameOrigin});
-      }
       await chrome.debugger.sendCommand({tabId:tab.id},"Input.insertText",{text:value});
       trace("info","form-fill-complete",{tabId:tab.id,fieldIndex:index,insertedLength:value.length});
-      emit({jsonrpc:"2.0",id:message.id,result:{ok:true,insertedLength:value.length,tabId:tab.id,fieldIndex:index,
-        ...(scopedFrame?{frameId:message.params.frameId}:{}),submitted:false}});
+      emit({jsonrpc:"2.0",id:message.id,result:{ok:true,insertedLength:value.length,tabId:tab.id,fieldIndex:index,submitted:false}});
     } catch(error) {
       trace("error","form-fill-failed",{tabId:tab?.id||null});
       emit({jsonrpc:"2.0",id:message.id,error:{code:-32028,message:"Bounded form fill failed"}});
