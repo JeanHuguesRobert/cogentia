@@ -13,7 +13,7 @@ review:
   status: unreviewed
   reviewed_by: []
 status: working-paper
-version: '0.1'
+version: '0.2'
 date: '2026-11-07'
 last_modified_at: '2026-11-07'
 language: fr
@@ -51,6 +51,16 @@ Le **premier lancement crée un point de départ** correspondant aux messages d�
 Dans `~/.local/state/cogentia/yahoo-gmail-sync.sqlite` (privé), on ne conserve que `(compte source, UIDVALIDITY, UID)` des messages déjà importés et un unique point de départ. **Aucun corps, adresse de correspondant, objet, pièce jointe, identifiant bancaire ou copie de message** n'est stocké dans cet état. C'est un simple index local technique, pas un registre Supabase.
 
 Avant `APPEND`, une recherche Gmail du marqueur technique `X-Cogentia-Yahoo-Import-Id` (hachage déterministe du compte + UIDVALIDITY + UID, sans divulguer le nom de l'expéditeur) limite le risque de doublon après une interruption située entre l'import distant et l'écriture de l'état local. L'original MIME est conservé à l'exception de cet en-tête technique supplémentaire. **L'exactement-une-fois interserveur n'est pas démontré** ; il faudra le mesurer avec deux boîtes de test avant activation personnelle. L'import dans Gmail n'est pas un acte de correspondance sortante mais reste une modification de boîte soumise à l'autorisation du Principal.
+
+## Tests préalables et datation de la rupture (7 novembre 2026)
+
+**Fracta2, sans identifiants :** connexion TCP/TLS sur `imap.mail.yahoo.com:993` et `imap.gmail.com:993` établie, certificats valides et bannières IMAP reçues. Quatre tests unitaires et simulés du collecteur réussis, comprenant initialisation sans archive, collecte d'un nouveau message, répétition sans doublon et refus sans secret. Aucun message réel, login ou transfert n'a été effectué. Les credentials sont absents de l'environnement disponible ; ne pas activer le timer à ce stade.
+
+**Chronologie vérifiée par en-têtes Gmail** (le contenu n'est pas nécessaire au diagnostic) : Yahoo annonçait la suppression du transfert automatique gratuit au **1er janvier 2021** ([Le Monde Informatique, 5/11/2020](https://www.lemondeinformatique.fr/actualites/lire-yahoo-mail-va-faire-payer-le-transfert-automatique-des-mails-80939.html) ; [Next, 6/11/2020](https://next.ink/brief_article/yahoo-mail-le-transfert-automatique-des-emails-va-etre-desactive-pour-les-comptes-gratuits/)). Pourtant plusieurs messages adressés à `jean_hugues_robert@yahoo.com` ont été reçus par Gmail **via les relais sortants Yahoo**, de façon constatée les 30 décembre 2021, 31 décembre 2023, 6, 8, 10, 11 et **12 février 2024**. Le message du 12 février, en provenance de Microsoft, possède un en-tête `Received` explicitant une livraison de `sonic319-21.consmr.mail.ne1.yahoo.com` vers `mx.google.com` pour `jeanhuguesrobert@gmail.com` : preuve d'un **relais Yahoo→Gmail effectif**, non d'un simple champ `To` Yahoo. C'est le **dernier relais Yahoo identifié dans les échantillons examinés**, pas la preuve qu'aucun autre relais n'a eu lieu après.
+
+À partir du **22 février 2024**, les notifications GitHub trouvées dans Gmail avec `To: jean_hugues_robert@yahoo.com` ont un parcours `out-*.smtp.github.com → mx.google.com` **sans Yahoo**, y compris en 2025 et 2026 ; elles ne démontrent donc pas que le transfert Yahoo était encore actif. Des messages contenant l'adresse Yahoo en champ destinataire ou mention textuelle ne constituent pas une preuve de transport. La date personnelle d'interruption se situe plausiblement **aux alentours de février 2024**, mais elle ne peut être fixée exactement sans comparer les messages présents exclusivement dans la boîte Yahoo et les journaux de réception Gmail. Ne pas attribuer avec certitude cette coupure de 2024 à l'annonce commerciale de 2021 ; un autre mécanisme de collecte ou une configuration transitoire peut expliquer ce décalage.
+
+**Décision de périmètre :** exclusivement les messages arrivant dans Yahoo **après le premier démarrage**, jamais d'import massif de 2024–2026 par défaut. Le code initialise un seuil UID au premier démarrage ; ne jamais ajouter `--include-existing` pour cette installation sans demande spécifique. Le petit état local est suffisant : **aucune écriture Supabase par message**. Cette politique évite un coût disproportionné sans compromettre la fonction voulue.
 
 ## Reality Test et limitations
 
