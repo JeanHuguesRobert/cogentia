@@ -6,7 +6,7 @@ author: "Jean Hugues Noël Robert, baron Mariani"
 affiliation: "Institut Mariani / C.O.R.S.I.C.A., 1 cours Paoli, F-20250 Corte, Corsica"
 date: "2026-09-27"
 last_modified_at: "2026-11-07"
-version: "0.9.1"
+version: "0.9.2"
 status: "working-paper"
 license: "CC BY-SA 4.0"
 language: "en"
@@ -604,6 +604,26 @@ When the authorized path lacks a needed semantic capability, the agent should ne
 The resulting growth has two independent axes: **technical capacity**, which can accumulate through software development, and **delegated authority**, which changes only through valid mandates, scoped effect grants and enforceable budgets. Bootstrap is a transitional system-building mode. Emergency recovery is an independently authorized repair mode, not an escape hatch for missing features or denied operations; its success is the restoration of ordinary governed service and retirement of exceptional privilege. Track capability gaps and proposals as resumable packets, not as failures or exceptional escalations by default.
 
 
+
+### Situated incapacity as metacognitive information (7 November 2026)
+
+A task-level obstacle can expose a **situated capability gap**: what the situation demands exceeds what a person, agent or collective can effectively mobilize with its present tools and environment. This is an analogy across scales, **not** a claim that software agents have a human disability, nor a reduction of human disability to deficient performance. The [Rendre capable doctrinal kernel](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/noyau_doctrinal_rendre_capable.md#53-situation-de-handicap-comme-%C3%A9cart-capacitaire-situ%C3%A9) defines human situations of disability as situated interactions, including social and environmental conversion factors.
+
+**Reflexive capability-conversion rule:** when a meaningful obstacle occurs, do not only retry the same action or abandon it. Characterize the required capability and observed gap; distinguish absent knowledge, unavailable tool, inaccessible environment, missing authority, and provider-imposed restriction; identify the lowest-cost admissible *conversion factor* (learning, accessible interface, adapted procedure, authorized composition, tool development or institutional correction); test whether it actually reduces the situated gap; then retain and propagate validated learning proportionately. When appropriate, propose a reusable capability to the Principal for development under a coding mandate. **Development ≠ operational authority**, and recovery privilege is never a shortcut around COP. The sequence is exploratory, not an obligation to build software for every isolated obstacle.
+
+~~~text
+situated objective + actual environment
+→ observed obstacle / capacity gap
+→ reflexive diagnosis (person / tool / environment / authority)
+→ conversion-factor hypothesis
+→ separately authorized adaptation or capability development
+→ Reality Test of regained ability
+→ reusable learning, without automatic authority expansion
+~~~
+
+Two safeguards: (1) **not every failure is productive**; unnecessary friction, severe injury or disability must not be romanticized, and the burden of removing exclusionary barriers must not be shifted onto the affected individual; (2) distinguish improving the agent from changing an inaccessible or unjust environment, including legitimate efforts to change institutional rules. Consider cost, recurrence, transfer potential, time pressure and the Principal's attention budget. The criterion is **increased effective freedom of action**, not maximum number of tools, mandatory self-improvement, or success at any price.
+
+This connection brings together the existing *Reality → Trace → Learning → Capability Δ → Possible Δ → Reality* loop, Metacognitive Initiative, and the *Machine à Rendre Capable*. It is a doctrinal synthesis, not proof that a universal autonomous improvement loop is already implemented or that productive failure applies to every domain. Relevant neighboring literatures include Argyris–Schön double-loop learning and Manu Kapur's productive failure, without claiming either as equivalent to this governed capability-development rule.
 
 ## 8. Metacognitive Initiative
 
