@@ -13,6 +13,22 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      # Cogentia imports COP modules from a sibling Inseme checkout.
+      # Checkout into this workspace, then expose the historical sibling path.
+      # Pin the exact dependency revision so CI cannot silently follow main.
+      - name: Checkout pinned Inseme COP dependency
+        uses: actions/checkout@v4
+        with:
+          repository: JeanHuguesRobert/inseme
+          ref: ef0965f27e55a7e3ff29d9c13fe233d2d40601fd
+          path: inseme
+          persist-credentials: false
+
+      - name: Connect historical Inseme sibling import path
+        run: |
+          ln -s "$GITHUB_WORKSPACE/inseme" "$GITHUB_WORKSPACE/../inseme"
+          test -f "$GITHUB_WORKSPACE/../inseme/packages/cop-core/src/execution-budget.js"
+
       - name: Install pnpm
         uses: pnpm/action-setup@v4
         with:
@@ -27,12 +43,14 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Run tests
-        run: |
-          pnpm test
-          node scripts/check-continuation-frontier-f2a.js
-          node scripts/check-calculette-cold-orientation.js
-          node scripts/check-calculette-git-delta.js
-          python3 scripts/check-calculette-janus-receipts.py
-          python3 scripts/check-calculette-decision-quality.py
-          python3 scripts/check-calculette-orientation-cost.py
+      - name: Run tests (typed FBF result)
+        run: node scripts/ci/fbf-test-suite.js
+
+      - name: Upload FBF test result
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: cogentia-fbf-test-result
+          path: ci-receipts/test-suite.json
+          if-no-files-found: warn
+          retention-days: 7
