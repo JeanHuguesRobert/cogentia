@@ -1,0 +1,11 @@
+[Unit]
+Description=Collect incoming Yahoo IMAP mail into personal Gmail every 10 minutes
+
+[Timer]
+OnStartupSec=3min
+OnUnitInactiveSec=10min
+AccuracySec=1min
+Unit=cogentia-yahoo-gmail-sync.service
+
+[Install]
+WantedBy=timers.target

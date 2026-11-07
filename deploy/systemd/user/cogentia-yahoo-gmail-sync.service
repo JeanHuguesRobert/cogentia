@@ -1,0 +1,11 @@
+[Unit]
+Description=Cogentia private Yahoo to Gmail IMAP collector (no SMTP)
+Documentation=https://github.com/JeanHuguesRobert/cogentia/blob/main/docs/yahoo-gmail-sync.md
+
+[Service]
+Type=oneshot
+UMask=0077
+NoNewPrivileges=true
+PrivateTmp=true
+EnvironmentFile=%h/.config/cogentia/yahoo-gmail-sync.env
+ExecStart=/usr/bin/python3 /srv/cogentia/repos/cogentia/scripts/ops/mail-sync/yahoo-to-gmail.py --state-file %h/.local/state/cogentia/yahoo-gmail-sync.sqlite --limit 50
