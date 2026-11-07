@@ -38,3 +38,17 @@ The connector publisher must determine whether the narrower contract is intentio
 4. Then update the dated observed schema fixture, run the contract parity check and close #300. The source-level tests alone cannot close the connected-client incident.
 
 **Security:** never hide an unadvertised parameter inside `command`, `provider`, or another accepted field, contact the broker directly without a legitimate grant, or forge a Principal-issued authority. Independent human approval and a valid plugin schema are different prerequisites.
+
+## Live server verification — 2026-11-07
+
+Fracta2 `mcp-cogentia.service` and `cogentia-private-tunnel.service` are active. `tunnel-client doctor --profile cogentia-private --explain` reports the MCP target `http://127.0.0.1:8791/mcp`, HTTP 200, and `RESULT ok`. A **local authenticated** `tools/list` request to this live target (the tunnel's exact upstream) returned HTTP 200, 86 tools, including BOTH `cogentia_host_process_prepare` and `cogentia_host_process_run`. Both live declarations expose `execution_mode.enum=[normal,super]`, `command.maxLength=32768` and `timeout_ms.maximum=120000` — matching the exported source schema. No bearer token was printed or stored in this document. This establishes **source and live MCP server parity**; the known ChatGPT tool signature remains frozen at `command=4096`, `timeout_ms=15000`, no `execution_mode`.
+
+A subsequent local MCP `tools/call` prepare-only reality probe was blocked by the current tool execution boundary, with no verified result. Do not claim that the super preparation call itself has succeeded. A separate ChatGPT connector refresh and new tool-schema readback is required.
+
+Current OpenAI guidance for a custom MCP connection: go to ChatGPT **Plugins**, open the connected Cogentia Private app, select **Refresh** to fetch updated tool schemas and review changes, then start a fresh conversation for the affected test. Depending on workspace/app publishing type, refresh can require app-management permissions; published Business apps may need to be recreated and republished, Enterprise/Edu admins can review refreshed action definitions. Do not recreate or disconnect this working tunnel unless the app settings specifically require it. Authoritative references:
+
+- https://developers.openai.com/plugins/deploy/connect-chatgpt
+- https://help.openai.com/en/articles/12584461-connecting-custom-mcp-servers-in-chatgpt
+- https://developers.openai.com/api/docs/guides/secure-mcp-tunnels
+
+After Refresh, verify that the actual **ChatGPT-connected** `cogentia_host_process_prepare` and `cogentia_host_process_run` both expose the optional `execution_mode` argument; this validation must happen on the client, not from the repo. Then test a harmless super EXPOSE proposal with no execution. COP-verified issuer, effect-bound grant and budget remain independent prerequisites for any privileged `run`.
