@@ -8,11 +8,11 @@ import {prepareHostProcessRun} from './host-process-prepare.js';
 import {verifySuperProbeApproval,SUPER_PROBE_MANDATE} from './super-probe-approval.js';
 import {proposalHash} from './john-root-mandate.js';
 
-export function issueSignedSuperProbe({store,proposal,signature,trustedPublicKey,expectedFingerprint,now,issueRootGrant}={}){
+export function reserveSignedSuperProbe({store,proposal,signature,trustedPublicKey,expectedFingerprint,now}={}){
  const refuse=error=>({ok:false,error});
  const proof=verifySuperProbeApproval({proposal,signature,trustedPublicKey,expectedFingerprint,now});
  if(!proof.ok)return refuse(proof.error);
- if(typeof issueRootGrant!=='function'||!store||typeof store.appendBatch!=='function'||typeof store.listTopic!=='function')
+ if(!store||typeof store.appendBatch!=='function'||typeof store.listTopic!=='function')
   return refuse('trusted_issuer_context_required');
  const ref=SUPER_PROBE_MANDATE,budgetRef='budget:'+ref;
  if(store.listTopic('mandate:'+ref).length||store.listTopic('execution-budget:'+budgetRef).length)
@@ -37,17 +37,25 @@ export function issueSignedSuperProbe({store,proposal,signature,trustedPublicKey
  const reservation=ledger.reserve({idempotency_key:'signed-super-probe:'+proposalHash(proposal),
    expected_version:ledger.snapshot().version,demand:{max_steps:1}});
  if(!reservation.ok||reservation.duplicate)return refuse('canonical_probe_reservation_failed');
+ return {ok:true,mandate_ref:ref,payload_hash:prepared.payload_hash,prepared,
+  reservation_id:reservation.reservation.reservation_id,
+  event_ids:appended.results.map(x=>x.event.event_id)};
+}
+
+export function issueSignedSuperProbe({issueRootGrant,...args}={}){
+ if(typeof issueRootGrant!=='function')return {ok:false,error:'trusted_issuer_context_required'};
+ const issued=reserveSignedSuperProbe(args);
+ if(!issued.ok)return issued;
+ const {proposal}=args;
  // The callback must be ROOT-owned and must verify root store protection.
- // The signed approval does not give this module authority to write the root store.
+ // Signature does not grant an untrusted agent write access to the broker store.
  let grant;
- try {grant=issueRootGrant({prepared,principal:proposal.principal_ref,actor:proposal.actor_ref,
-   mandate_ref:ref,budget_reservation_id:reservation.reservation.reservation_id,
+ try {grant=issueRootGrant({prepared:issued.prepared,principal:proposal.principal_ref,actor:proposal.actor_ref,
+   mandate_ref:issued.mandate_ref,budget_reservation_id:issued.reservation_id,
    authority_origin:'principal'});}
- catch {return {ok:false,error:'root_grant_issuance_failed',reservation_id:reservation.reservation.reservation_id};}
+ catch {return {ok:false,error:'root_grant_issuance_failed',reservation_id:issued.reservation_id};}
  if(!grant?.authorization_id||grant.payload_hash!==proposal.effect.payload_hash||
-   grant.authority_origin!=='principal'||grant.mandate_ref!==ref||grant.single_use!==true)
-  return {ok:false,error:'root_grant_receipt_invalid',reservation_id:reservation.reservation.reservation_id};
- return {ok:true,mandate_ref:ref,authorization_id:grant.authorization_id,
-   payload_hash:grant.payload_hash,reservation_id:reservation.reservation.reservation_id,
-   event_ids:appended.results.map(x=>x.event.event_id)};
+   grant.authority_origin!=='principal'||grant.mandate_ref!==issued.mandate_ref||grant.single_use!==true)
+  return {ok:false,error:'root_grant_receipt_invalid',reservation_id:issued.reservation_id};
+ return {...issued,authorization_id:grant.authorization_id};
 }
