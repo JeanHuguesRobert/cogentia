@@ -1,6 +1,9 @@
 import {compileNonSecretFormFill} from "./browser-form-script.js";
 import { SAFE_DOM_STRUCTURE_CODE } from "./browser-safe-dom-structure.js";
 import { createGatewaySession } from "./navigation-assistant/gateway-session.js";
+import {createHostedFrameTransport} from "./browser-frame-cdp-transport.js";
+import {executeFrameEvaluate} from "./browser-frame-evaluate.js";
+import {projectFrameTree} from "./browser-frame-tree.js";
 /** Hosted Chromium capabilities over the Fracta2 navigation-assistant extension. */
 
 const DEFAULT_GATEWAY = "ws://127.0.0.1:8776/assistant";
@@ -11,6 +14,11 @@ export function createHostedBrowserCapabilities(options = {}) {
   const health = String(options.health || process.env.COGENTIA_HOSTED_BROWSER_HEALTH || DEFAULT_HEALTH).trim();
   const browserId = String(options.browserInstanceId || process.env.COGENTIA_HOSTED_BROWSER_INSTANCE || "fracta2-hosted").trim();
   const timeoutMs = boundedInteger(options.timeoutMs, 10000, 500, 30000);
+  const frameTransport = options.frameTransport || createHostedFrameTransport({
+    gateway,browserInstanceId:browserId,
+    cdpHttpEndpoint:options.cdpHttpEndpoint||process.env.COGENTIA_HOSTED_BROWSER_CDP_HTTP||'http://127.0.0.1:9223/',
+    timeoutMs,
+  });
 
   return [
     {
@@ -72,10 +80,13 @@ export function createHostedBrowserCapabilities(options = {}) {
       inputSchema: {
         type: "object",
         properties: {
-          action: { type: "string", enum: ["status", "tabs", "context", "structure", "frames"] },
+          action: { type: "string", enum: ["status", "tabs", "context", "structure", "frames", "frame_tree", "frame_structure"] },
           tab_id: { type: "integer", minimum: 0 },
           max_chars: { type: "integer", minimum: 1, maximum: 12000 },
           include_url: { type: "boolean" },
+          expected_url: {type:"string",minLength:1,maxLength:4096},
+          frame_id: {type:"string",minLength:1,maxLength:160},
+          expected_frame_origin: {type:"string",minLength:1,maxLength:256},
         },
         required: ["action"],
         additionalProperties: false,
@@ -108,6 +119,33 @@ export function createHostedBrowserCapabilities(options = {}) {
           return {tab_id:tabId,origin:originOf(raw.origin),frames:Array.isArray(raw.frames)?raw.frames.slice(0,20).map(f=>({
             iframe_index:boundedInteger(f.iframe_index,0,0,19),origin:originOf(f.origin),same_origin:f.same_origin===true
           })):[], frame_identity:'dom_index_not_cdp_frame_id'};
+        }
+        if(action==='frame_tree'||action==='frame_structure'){
+          const tabId=positiveInt(input.tab_id,'tab_id');
+          const expectedUrl=String(input.expected_url||'');
+          if(!expectedUrl.startsWith('https://'))throw capabilityError('BROWSER_FRAME_TARGET_INVALID');
+          if(action==='frame_tree'){
+            return frameTransport.withFrame({tabId,expectedUrl,operation:async({frameTree,discoverFrames})=>{
+              const result=projectFrameTree(frameTree);
+              const related=await discoverFrames();
+              return {tab_id:tabId,frame_tree:result,
+                oopif_frames:related.slice(0,24).map(f=>({frame_id:f.frameId,
+                  origin:f.origin,parent_frame_id:frameTree.frame.id,is_process_isolated:true}))};
+            }});
+          }
+          const frameId=String(input.frame_id||''),expectedOrigin=String(input.expected_frame_origin||'');
+          if(!frameId||!expectedOrigin.startsWith('https://'))throw capabilityError('BROWSER_FRAME_TARGET_INVALID');
+          const detail=await frameTransport.withFrame({tabId,expectedUrl,frameId,expectedOrigin,
+            operation:async({send})=>executeFrameEvaluate({send,frameId,expectedOrigin,
+              script:SAFE_DOM_STRUCTURE_CODE})});
+          const raw=detail.value||{};
+          return {tab_id:tabId,frame_id:frameId,origin:expectedOrigin,
+            forms:boundedInteger(raw.forms,0,0,100),total_fields:boundedInteger(raw.total_fields,0,0,100000),
+            fields:Array.isArray(raw.fields)?raw.fields.slice(0,80).map(f=>({
+              tag:String(f.tag||'').slice(0,16),type:String(f.type||'').slice(0,30),
+              required:f.required===true,disabled:f.disabled===true,readonly:f.readonly===true,
+              autocomplete:String(f.autocomplete||'').slice(0,64)
+            })):[],truncated:raw.truncated===true};
         }
         if (action === "structure") {
           const targetTabId = positiveInt(input.tab_id, "tab_id");
@@ -211,6 +249,7 @@ export function createHostedBrowserCapabilities(options = {}) {
         tab_id:{type:"integer",minimum:1},field_index:{type:"integer",minimum:0,maximum:79},
         expected_url:{type:"string",minLength:1,maxLength:4096},
         text:{type:"string",minLength:1,maxLength:2048},
+        frame_id:{type:"string",minLength:1,maxLength:160},
         iframe_index:{type:"integer",minimum:0,maximum:19},
         expected_frame_origin:{type:"string",minLength:1,maxLength:256},
       },required:["tab_id","field_index","expected_url","text"],additionalProperties:false},
@@ -219,12 +258,31 @@ export function createHostedBrowserCapabilities(options = {}) {
         const expected=String(input.expected_url||"");
         const value=String(input.text||"");
         if(!expected.startsWith('https://')||!value||value.length>2048)throw capabilityError('BROWSER_FORM_INPUT_INVALID');
-        const hasFrame=input.iframe_index!==undefined||input.expected_frame_origin!==undefined;
+        const cdpFrame=input.frame_id!==undefined;
+        const hasFrame=cdpFrame||input.iframe_index!==undefined||input.expected_frame_origin!==undefined;
+        if(cdpFrame&&input.iframe_index!==undefined)throw capabilityError('BROWSER_FORM_FRAME_INVALID');
         if(hasFrame){
           let origin;
           try {origin=new URL(input.expected_frame_origin);}catch{throw capabilityError('BROWSER_FORM_FRAME_INVALID');}
-          if(!Number.isInteger(input.iframe_index)||input.iframe_index<0||input.iframe_index>19||origin.protocol!=='https:'||
+          if((cdpFrame?!/^[A-Za-z0-9_-]{1,160}$/.test(input.frame_id):
+              !Number.isInteger(input.iframe_index)||input.iframe_index<0||input.iframe_index>19)||origin.protocol!=='https:'||
             origin.origin!==input.expected_frame_origin)throw capabilityError('BROWSER_FORM_FRAME_INVALID');
+        }
+        if(cdpFrame){
+          const result=await frameTransport.withFrame({tabId:tab,expectedUrl:expected,
+            frameId:input.frame_id,expectedOrigin:input.expected_frame_origin,
+            operation:async({send,frameTree})=>{
+              const pending=[frameTree];let located=null;
+              while(pending.length){const item=pending.shift();if(item.frame?.id===input.frame_id)located=item.frame;
+                if(Array.isArray(item.childFrames))pending.push(...item.childFrames);}
+              if(!located?.url?.startsWith('https://'))throw capabilityError('BROWSER_FORM_FRAME_INVALID');
+              const script=compileNonSecretFormFill({fieldIndex:input.field_index,text:value,expectedUrl:located.url});
+              return executeFrameEvaluate({send,frameId:input.frame_id,expectedOrigin:input.expected_frame_origin,script});
+            }});
+          const receipt=result.value||{};
+          if(receipt.ok!==true||receipt.submitted!==false||receipt.insertedLength!==value.length)
+            throw capabilityError('BROWSER_FORM_INSERTION_UNCONFIRMED');
+          return {ok:true,inserted_length:value.length,tab_id:tab,field_index:input.field_index,submitted:false};
         }
         // FBF: new recipes live in the Core, not the extension worker.
         // Explicit alternate path uses existing generic page.evaluate bridge.

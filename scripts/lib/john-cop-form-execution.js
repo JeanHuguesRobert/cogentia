@@ -7,6 +7,10 @@ import {FORM_ASSIST_MANDATE,FORM_ASSIST_CAPABILITY} from './john-form-assist-man
 import {sshFingerprint} from './john-sshsig-approval.js';
 const FINGERPRINT='SHA256:lG9BC3fIjurrBccYLO1w7VQpmc9ZMr8MvM1o3zJ6L3c';
 const fail=error=>({ok:false,executed:false,error});
+function exactHttpsOrigin(value){
+ try{const u=new URL(value);return u.protocol==='https:'&&u.origin===value&&!u.username&&!u.password;}
+ catch{return false;}
+}
 export async function executeJohnCanonicalForm({store,authorizedKeysPath,auth,request,run,issuerFingerprint=FINGERPRINT}={}){
  const b=request?.execution_budget,args=request?.input?.arguments;
  if(!request||request.capability!==FORM_ASSIST_CAPABILITY||request.exposure!=='bounded'||
@@ -16,7 +20,10 @@ export async function executeJohnCanonicalForm({store,authorizedKeysPath,auth,re
    !Number.isInteger(b?.max_steps)||b.max_steps<1||b.max_steps>8||
    b.max_tool_calls!==1||b.max_internal_effects!==1||b.max_external_effects!==0||
    typeof run!=='function'||!/^[-\w:.]{1,120}$/.test(String(request.request_id||''))||
-   !args||Object.keys(args).sort().join(',')!=='expected_url,field_index,tab_id,text'||
+   !args||!['expected_url,field_index,tab_id,text',
+    'expected_frame_origin,expected_url,field_index,frame_id,tab_id,text'].includes(Object.keys(args).sort().join(','))||
+   (args.frame_id!==undefined && (!/^[A-Za-z0-9_-]{1,160}$/.test(args.frame_id)||
+     !exactHttpsOrigin(args.expected_frame_origin)))||
    !Number.isInteger(args.tab_id)||args.tab_id<1||
    !Number.isInteger(args.field_index)||args.field_index<0||args.field_index>79||
    typeof args.expected_url!=='string'||!args.expected_url.startsWith('https://')||

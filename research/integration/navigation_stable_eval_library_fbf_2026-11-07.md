@@ -44,4 +44,6 @@ La délégation et le contrôle des effets demeurent en amont ; l'agent peut cho
 - Aucun déploiement, rechargement ou modification de secrets.
 - Le COP de lecture est effectivement utilisable avec des paramètres complets ; le correctif de l'ergonomie de ses erreurs existe sur `main` mais demande son déploiement distinct.
 
+**Réalisation ultérieure du même jour :** l’adaptateur générique Core et la recette Chromium/OOPIF sont désormais implémentés et vérifiés sur pages fictives. Voir [Reality Test OOPIF](governed_generic_oopif_adapter_2026-11-07.md). L’extension et la passerelle demeurent inchangées ; le Core n’est pas encore déployé.
+
 **Suite FBF minimale :** brancher le transport CDP générique au dispatch sémantique `browser` déjà mandaté, en conservant l'admission et la comptabilité COP ; valider sur iframe fictive, puis sur le site bancaire exclusivement pour une inspection redigée et des actions explicitement autorisées. Ne pas reprendre l'ajout de RPC métier à l'extension.

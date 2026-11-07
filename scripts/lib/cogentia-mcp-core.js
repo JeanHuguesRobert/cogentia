@@ -704,9 +704,10 @@ export const TOOLS = [
         prompt: { type: "string", minLength: 1, description: "Input prompt or instruction." },
         capability: { type: "string", description: "Target capability name (default: john.converse)." },
         read_arguments: {type:"object",additionalProperties:false,description:"Only for browser.hosted.inspect or browser.navigation.instances; validated read selectors, never credentials or effects.",properties:{
-          action:{type:"string",enum:["status","tabs","structure","frames","context"]},
+          action:{type:"string",enum:["status","tabs","structure","frames","context","frame_tree","frame_structure"]},
           tab_id:{type:"integer",minimum:1},max_chars:{type:"integer",minimum:1,maximum:12000},
-          include_url:{type:"boolean"}}},
+          include_url:{type:"boolean"},expected_url:{type:"string",maxLength:4096},
+          frame_id:{type:"string",maxLength:160},expected_frame_origin:{type:"string",maxLength:256}}},
         principal_id: { type: "string", description: "Principal identity id (e.g. principal:operator or jhn)." },
         mandate_id: { type: "string", description: "Mandate authorizing execution." },
         mandate_version: { type: "string", description: "Mandate version (default: 1)." },

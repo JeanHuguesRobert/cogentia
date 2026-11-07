@@ -34,13 +34,24 @@ try{
  const executed=await executeJohnCanonicalForm({store,auth,request:req,issuerFingerprint:fp,authorizedKeysPath:join(dir,'allowed'),run:async()=>{const ev=await runJohnRequest(req,{capabilities:[cap],allowedCapabilities:['browser.form.fill'],maxInternalEffects:1,approvedBoundedOnceCapability:'browser.form.fill',requiredEvents:false});return ev;}});
  assert.equal(executed.ok,true,JSON.stringify(executed.error));assert.equal(invoked,1);
  assert.equal(executed.settled_steps>=1,true);
+ const framed={...req,request_id:'signed-fixture-oopif',input:{...req.input,arguments:{
+   ...req.input.arguments,frame_id:'FRAME_0123',expected_frame_origin:'https://auth.example.org'
+ }}};
+ const framedReceipt=await executeJohnCanonicalForm({store,auth,request:framed,
+   issuerFingerprint:fp,authorizedKeysPath:join(dir,'allowed'),run:()=>runJohnRequest(framed,{
+     capabilities:[cap],allowedCapabilities:['browser.form.fill'],maxInternalEffects:1,
+     approvedBoundedOnceCapability:'browser.form.fill',requiredEvents:false
+   })});
+ assert.equal(framedReceipt.ok,true,'signed fixture admits scoped iframe form');
+ assert.equal(framedReceipt.events.some(e=>e.type==='john.tool.receipt'),true);
+ assert.equal(invoked,2);
  assert.equal((await executeJohnCanonicalForm({store,auth,request:req,issuerFingerprint:fp,authorizedKeysPath:join(dir,'allowed'),run:()=>{invoked++}})).error,'canonical_form_request_duplicate');
- assert.equal(invoked,1);
+ assert.equal(invoked,2);
  recordMandateControl(store,{principal_ref:'principal:jhn',mandate_ref:FORM_ASSIST_MANDATE,action:'revoke'});
  assert.equal((await executeJohnCanonicalForm({store,auth,request:{...req,request_id:'after-revoke'},issuerFingerprint:fp,authorizedKeysPath:join(dir,'allowed'),run:()=>{invoked++}})).ok,false);
- assert.equal(invoked,1);
+ assert.equal(invoked,2);
  const ledger=createEventSourcedExecutionBudgetLedger({store,budget_id:'budget:'+FORM_ASSIST_MANDATE,limits:{max_steps:512},require_authority_grant:true});
  assert.equal(ledger.snapshot().has_grant,true);
- console.log(JSON.stringify({no_approval_no_execution:true,signed_fixture_admitted:true,actual_capability_calls:invoked,settled:ledger.snapshot().settled.max_steps,duplicate_denied:true,revocation_denied:true}));
+ console.log(JSON.stringify({no_approval_no_execution:true,signed_fixture_admitted:true,actual_capability_calls:invoked,framed_scoped_receipt:true,settled:ledger.snapshot().settled.max_steps,duplicate_denied:true,revocation_denied:true}));
  }finally{store.close()}
 }finally{rmSync(dir,{recursive:true,force:true})}

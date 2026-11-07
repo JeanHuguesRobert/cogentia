@@ -9,7 +9,10 @@ test('form canonical gate validates target and budget before any execution',asyn
   {...req,execution_budget:{...req.execution_budget,max_internal_effects:0}},
   {...req,input:{...req.input,arguments:{...input,expected_url:'http://example.org/form'}}},
   {...req,input:{...req.input,arguments:{...input,text:''}}},
-  {...req,handler:{...req.handler,kind:'capability_once'}}];
+  {...req,handler:{...req.handler,kind:'capability_once'}},
+  {...req,input:{...req.input,arguments:{...input,frame_id:'bad frame',expected_frame_origin:'https://auth.example'}}},
+  {...req,input:{...req.input,arguments:{...input,frame_id:'abc_123',expected_frame_origin:'https://auth.example/path'}}},
+  {...req,input:{...req.input,arguments:{...input,frame_id:'abc_123'}}}];
  for(const request of bad)assert.equal((await executeJohnCanonicalForm({request,run})).error,'canonical_form_envelope_invalid');
  assert.equal(calls,0);
  assert.equal((await executeJohnCanonicalForm({request:req,authorizedKeysPath:'/no-such-file',run})).error,'trusted_form_issuer_missing');
