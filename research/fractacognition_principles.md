@@ -6,7 +6,7 @@ author: "Jean Hugues Noël Robert, baron Mariani"
 affiliation: "Institut Mariani / C.O.R.S.I.C.A., 1 cours Paoli, F-20250 Corte, Corsica"
 date: "2026-09-27"
 last_modified_at: "2026-11-07"
-version: "0.9.2"
+version: "0.9.3"
 status: "working-paper"
 license: "CC BY-SA 4.0"
 language: "en"
@@ -721,6 +721,22 @@ This is a form of *second-order agility*: not merely replanning which tree to cu
 **Minimal decision test:** “Are we executing with an axe, sharpening the axe, reusing an existing chainsaw, or justified in building one — and what observation would make us change course?”
 
 **Reality Case:** [barons-Mariani #127](https://github.com/JeanHuguesRobert/barons-Mariani/issues/127) — an umbrella packet for an extensive judicial supplemental message. Its outline and children are revised on discovery, subject to a non-regression checklist, while the already filed petition remains historically immutable. The proposed reuse of this method is general; legal admissibility of any late material is a separate question.
+
+### 8.3 Transmission against capture of the future by the past (7 November 2026)
+
+**Rational Exploration of the Possible is not merely selection among currently available paths; the exploration can transform its own future possibility space.** Each genuine obstacle can reveal a situated capability gap, and a justified adaptation can create a reusable conversion factor for later actors. The relevant heritage is not only *what happened*, but how it happened, what did not work, why, under which conditions, which options were not explored, and what new capacities were acquired. Through durable, source-grounded, revisable transmission, yesterday's negative result can improve tomorrow's freedom of action. The past is evidence and transferable know-how, **not** an immutable authority over future feasibility.
+
+Two opposite failures must be avoided: **amnesia** (discarding hard-won past learning and repeating avoidable mistakes) and **presentism/future capture** (projecting past or present constraints, categories, tools, failed plans and institutions into the future as permanent impossibilities). Protecting the future does not require rejecting memory. It requires a **non-captive transmission**: preserve immutable historical acts and provenance, retain the scope and conditions of past conclusions, yet keep prospective plans, methods and capacity assumptions corrigible by new Reality Tests. The duty to learn does not mean every negative experience warrants expensive development, nor that a past obstacle proves an emerging tool will succeed.
+
+~~~text
+past actions and obstacles → faithful trace and causal qualification
+→ revisable lesson, including constraints and untested alternatives
+→ selection / creation of a conversion factor under mandate
+→ newly effective capabilities → new possible futures
+→ Reality Test and further transmissible learning
+~~~
+
+This connects the existing [anti-presentist woodcutter heuristic](#82-anti-presentism-and-the-third-woodcutter--invest-in-changing-the-means), [situated incapacity as metacognitive information](#situated-incapacity-as-metacognitive-information-7-november-2026), [epistemic assimilation and salience](epistemic_assimilation_and_salience.md), [Janus and the Museum of Possibles](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/musee-mariani/methodes/exploration_rationnelle_des_possibles.md), and the [Possibilist Manifesto's specific usage of presentism](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/manifeste_possibiliste_note_analytique.md). The word *presentism* also has other scholarly meanings; this is the Corpus's situated usage, not a universal redefinition. **Capability growth never implies growth of legitimate authority**: every new operational use remains subject to COP and an applicable Principal mandate.
 
 ## 9. Validated Learning and Selective Propagation
 
