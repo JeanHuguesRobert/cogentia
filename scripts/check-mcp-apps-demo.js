@@ -5,7 +5,7 @@ const c = createMcpCore({COGENTIA_MCP_VIEW:'public'});
 const rpc=(method,params={})=>c.handleJsonRpc({jsonrpc:'2.0',id:1,method,params});
 const tools=(await rpc('tools/list')).result.tools;
 const demo=tools.find(t=>t.name==='cogentia_mcp_apps_demo');
-assert.equal(demo._meta.ui.resourceUri,'ui://cogentia/fractatest-demo-v2');
+assert.equal(demo._meta.ui.resourceUri,'ui://cogentia/fractatest-demo-v3');
 assert.deepEqual(demo._meta.ui.visibility,['model','app']);
 assert.equal(demo.annotations.readOnlyHint,true);
 const resource=(await rpc('resources/read',{uri:demo._meta.ui.resourceUri})).result.contents[0];

@@ -15,6 +15,9 @@ test('MCP Apps v2 sends a proper initialization and signals ready only after hos
  assert.equal(outgoing.length,1);
  assert.equal(outgoing[0].method,'ui/initialize');
  assert.equal(outgoing[0].params.protocolVersion,'2026-01-26');
+ assert.equal(outgoing[0].params.appInfo.name,'FractaTest');
+ assert.equal(Object.hasOwn(outgoing[0].params,'clientInfo'),false);
+ assert.equal(Object.hasOwn(outgoing[0].params,'capabilities'),false);
  assert.deepEqual(Array.from(outgoing[0].params.appCapabilities.availableDisplayModes),['inline']);
  listeners.message({source:{},data:{jsonrpc:'2.0',id:outgoing[0].id,result:{protocolVersion:'2026-01-26'}}});
  assert.equal(outgoing.length,1,'ignored foreign-frame message');

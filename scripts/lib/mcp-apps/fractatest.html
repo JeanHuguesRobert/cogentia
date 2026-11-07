@@ -25,7 +25,7 @@ button.addEventListener('click',()=>{
   button.textContent=panel.hidden?'Afficher les invariants':'Masquer les invariants';
   status.textContent='Interaction locale : '+(panel.hidden?'fermée':'ouverte')+'.';
 });
-const initId='fractatest-init-v2';
+const initId='fractatest-init-v3';
 let initialized=false;
 window.addEventListener('message',event=>{
   // Only messages from the embedding parent may finish initialization.
@@ -44,7 +44,7 @@ window.addEventListener('message',event=>{
 });
 window.parent.postMessage({
   jsonrpc:'2.0',id:initId,method:'ui/initialize',
-  params:{protocolVersion:'2026-01-26',capabilities:{},clientInfo:{name:'FractaTest',version:'2.0.0'},
+  params:{protocolVersion:'2026-01-26',appInfo:{name:'FractaTest',version:'3.0.0'},
     appCapabilities:{availableDisplayModes:['inline']}}
 },'*');
 </script></body></html>
