@@ -1536,7 +1536,12 @@ export function createMcpCore(env = process.env, extras = {}) {
         if (!read.ok) {
           return jsonRpcError(message.id, -32602, "Unknown resource", { uri, error: read.error });
         }
+        // ChatGPT's per-request resource validator requires cache hints even
+        // when its call arrives without an explicit modern protocol marker.
+        // No cache prevents private/cross-version UI resource reuse.
         let result = {
+          ttlMs: 0,
+          cacheScope: "private",
           contents: [
             {
               uri: read.uri || uri,
