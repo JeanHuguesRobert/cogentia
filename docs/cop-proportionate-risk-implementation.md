@@ -3,7 +3,7 @@ title: "COP — jugement nuancé du risque et projection pédagogique A/B/C"
 author: "Institut Mariani / C.O.R.S.I.C.A."
 date: "2026-11-07"
 last_modified_at: "2026-11-07"
-version: "0.2"
+version: "0.3"
 status: "working-paper"
 language: "fr"
 license: "CC BY-SA 4.0"
@@ -53,6 +53,16 @@ La **doctrine** distingue (1) le jugement situé, révisable et motivé ; (2) la
 **Coopération responsable :** l'agent mandaté est abordé comme un collaborateur loyal, faillible, auquel on demande vigilance, transparence et traçabilité proportionnées. Les contrôles visent l'erreur, l'ambiguïté, les environnements défaillants et les dommages réels, et non la présomption que le modèle serait hostile. Rendre compte n'est pas demander permission. Les actes engageants envers des tiers restent réservés aux autorisations spécifiques applicables. Les incertitudes et les preuves sont tracées sans imposer au Principal la charge d'une micro-autorisation continue.
 
 **Non réalisé dans ce lot :** une continuation qui collecte automatiquement les preuves et rédige le jugement situé ; une attestation d'un clic ChatGPT apte à autoriser effectivement B ; une modification des garde-fous de l'issuer root. Ne pas prétendre que les labels nuancés changent le contrôle opérationnel actuel.
+
+## 7 novembre 2026 — Ouvrir des possibles plutôt que seulement juger l'acte proposé
+
+Le jugement d'un mandataire coopératif ne doit pas être prisonnier du **premier moyen** proposé. Sa mission première porte sur un **résultat recherché**, sous mandat et dans des limites proportionnées. À effort de recherche raisonnable, une continuation peut découvrir et proposer des chemins alternatifs : éviter l'effet, le différer, le décomposer, réutiliser une capacité existante, ou concevoir une capacité réutilisable lorsque son coût global est justifié. Préserver la distinction entre **équivalence des résultats** (totale, substantielle, partielle, incertaine) et **similarité des moyens**. Le meilleur chemin peut être celui qui évite complètement l'opération initiale.
+
+Cette règle **prolonge**, sans créer de nouvelle doctrine concurrente, la [Recherche rationnelle des possibles](../research/fractacognition_principles.md#82-anti-presentism-and-the-third-woodcutter--invest-in-changing-the-means), son heuristique du troisième bûcheron, l'attention périphérique (§8.1), et [Measured Risk](../research/measured_risk.md). Le gain ne réside pas seulement dans un risque inférieur : compter aussi le coût de recherche, l'effort d'exécution, les délais, la réversibilité, les effets cumulatifs, les apprentissages et les options futures. Ne pas explorer indéfiniment lorsqu'une solution sûre et suffisante est disponible ; l'attention et le temps du Principal sont des ressources.
+
+**Contrat logiciel additif :** `assessProportionateRisk` accepte `alternative_paths` (jusqu'à six pistes documentées), avec `path`, `rationale`, `relative_risk`, `relative_effort`, `outcome_equivalence`, `unknowns`. Ce sont des **hypothèses de l'agent**, non des faits vérifiés ni un calcul automatique de la meilleure décision. La réponse retourne ces propositions avec `epistemic_status=agent_hypothesis_unverified` et `authorization_required_separately=true`. Elles ne modifient pas le contrôle A/B/C de l'acte original, son mandat ni son budget ; chaque effet alternatif doit être évalué en propre. La continuité cognitive pourra ultérieurement collecter les preuves et confronter les alternatives par un Reality Test.
+
+**Exemple :** avant de redémarrer un service MCP, tenter un diagnostic en lecture seule peut fournir une part importante de la valeur recherchée sans interruption ; ce diagnostic n'est toutefois pas « équivalent » à un redémarrage si le service est réellement bloqué. La qualification de résultat partiel doit rester explicite.
 
 ## Prochaine tranche : contrôles vérifiés et confirmation légère
 

@@ -26,6 +26,28 @@ function qualitativePosition(judgment,control){
     affects_authority:false};
 }
 
+// An agent may open other paths to the same objective. These are hypotheses,
+// not an automatic ranking, authorization or proof of equivalence.
+const COMPARISON = new Set(['lower','similar','higher','unknown']);
+const EQUIVALENCE = new Set(['equivalent','substantially_equivalent','partial','unknown']);
+function candidatePaths(paths){
+  if(paths === undefined) return {ok:true,items:[]};
+  if(!Array.isArray(paths)||paths.length>6)return {ok:false};
+  const items=[];
+  for(const p of paths){
+    if(!p || typeof p!=='object' || Array.isArray(p) || !isNonempty(p.path) || p.path.length>500 ||
+       !isNonempty(p.rationale) || p.rationale.length>2000 ||
+       !COMPARISON.has(p.relative_risk) || !EQUIVALENCE.has(p.outcome_equivalence) ||
+       !COMPARISON.has(p.relative_effort) ||
+       (p.unknowns!==undefined && (!Array.isArray(p.unknowns)||p.unknowns.length>8||p.unknowns.some(x=>!isNonempty(x)||x.length>240))))return {ok:false};
+    items.push({path:p.path.trim(),rationale:p.rationale.trim(),relative_risk:p.relative_risk,
+      outcome_equivalence:p.outcome_equivalence,relative_effort:p.relative_effort,
+      unknowns:p.unknowns||[],epistemic_status:'agent_hypothesis_unverified',
+      authorization_required_separately:true});
+  }
+  return {ok:true,items};
+}
+
 export function assessProportionateRisk(input = {}) {
   const errors=[];
   if(!isNonempty(input.objective)) errors.push('objective_required');
@@ -36,6 +58,8 @@ export function assessProportionateRisk(input = {}) {
   for(const flag of ['durable_capacity_loss','ruin_possible','independent_recovery','third_party_commitment','critical_control_change','uncertain_tail']){
     if(typeof input[flag] !== 'boolean') errors.push(`${flag}_required`);
   }
+  const alternatives=candidatePaths(input.alternative_paths);
+  if(!alternatives.ok) errors.push('alternative_paths_invalid');
   if(input.cognitive_judgment !== undefined && qualitativePosition(input.cognitive_judgment,'B')?.error) errors.push('cognitive_judgment_invalid');
   if(errors.length) return {kind:RISK_ADVICE_KIND,ok:false,control:'C',decision:CONTROL.C,reason:'insufficient_evidence',errors,advisory_only:true,grants_authority:false};
   const reasons=[];
@@ -59,7 +83,7 @@ export function assessProportionateRisk(input = {}) {
   const nuance=qualitativePosition(input.cognitive_judgment,control);
   return {
     kind:RISK_ADVICE_KIND,ok:true,control,decision:CONTROL[control],reasons,
-    nuance,control_projection:'coarse_pedagogical',
+    nuance,alternative_paths:alternatives.items,control_projection:'coarse_pedagogical',
     expected_gain:input.expected_gain,objective:input.objective.trim(),mandate_ref:input.mandate_ref,
     recovery:input.recovery,independent_recovery:input.independent_recovery,
     exposure:input.exposure,ruin_possible:input.ruin_possible,uncertain_tail:input.uncertain_tail,

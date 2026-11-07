@@ -14,6 +14,8 @@ assert.equal(result.result.structuredContent.data.grants_authority,false);
 const nuanced=await rpc('tools/call',{name:'cogentia_risk_assess',arguments:{...input,cognitive_judgment:{position:'very_high',rationale:'Near external dependency threshold'}}});
 assert.equal(nuanced.result.structuredContent.data.nuance.label,'B++');
 assert.equal(nuanced.result.structuredContent.data.control,'B');
+const paths=await rpc('tools/call',{name:'cogentia_risk_assess',arguments:{...input,alternative_paths:[{path:'Read-only health probe',rationale:'Test without restart',relative_risk:'lower',relative_effort:'lower',outcome_equivalence:'partial'}]}});
+assert.equal(paths.result.structuredContent.data.alternative_paths[0].epistemic_status,'agent_hypothesis_unverified');
 const ruin=await rpc('tools/call',{name:'cogentia_risk_assess',arguments:{...input,ruin_possible:true,expected_gain:'essential'}});
 assert.equal(ruin.result.structuredContent.data.control,'C');
 console.log('MCP risk advisory smoke: PASS (advertised, read-only, B/C, no authority)');

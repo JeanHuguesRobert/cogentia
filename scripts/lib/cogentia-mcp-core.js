@@ -140,6 +140,14 @@ export const TOOLS = [
         durable_capacity_loss: {type:"boolean"}, ruin_possible:{type:"boolean"},
         independent_recovery:{type:"boolean"},third_party_commitment:{type:"boolean"},
         critical_control_change:{type:"boolean"},uncertain_tail:{type:"boolean"},
+        alternative_paths:{type:"array",maxItems:6,items:{type:"object",additionalProperties:false,properties:{
+          path:{type:"string",minLength:1,maxLength:500},
+          rationale:{type:"string",minLength:1,maxLength:2000},
+          relative_risk:{type:"string",enum:["lower","similar","higher","unknown"]},
+          relative_effort:{type:"string",enum:["lower","similar","higher","unknown"]},
+          outcome_equivalence:{type:"string",enum:["equivalent","substantially_equivalent","partial","unknown"]},
+          unknowns:{type:"array",maxItems:8,items:{type:"string",minLength:1,maxLength:240}}
+        },required:["path","rationale","relative_risk","relative_effort","outcome_equivalence"]}},
         cognitive_judgment:{type:"object",additionalProperties:false,properties:{
           position:{type:"string",enum:["low","middle","high","very_high","borderline"]},
           rationale:{type:"string",minLength:1,maxLength:2000},

@@ -44,3 +44,17 @@ test('Malformed cognitive narrative fails validation rather than silently disapp
  const r=assess({cognitive_judgment:{position:'extreme',rationale:'not supported'}});
  assert.equal(r.ok,false);assert.ok(r.errors.includes('cognitive_judgment_invalid'));
 });
+
+test('agent may open a lower-risk path with comparable outcome but cannot authorize it',()=>{
+ const r=assess({exposure:'bounded',alternative_paths:[{path:'Use a read-only health check before any restart',rationale:'May restore confidence without changing service state',relative_risk:'lower',relative_effort:'lower',outcome_equivalence:'partial',unknowns:['Whether restart is actually necessary']}]});
+ assert.equal(r.ok,true);assert.equal(r.control,'B');
+ assert.equal(r.alternative_paths[0].relative_risk,'lower');
+ assert.equal(r.alternative_paths[0].outcome_equivalence,'partial');
+ assert.equal(r.alternative_paths[0].authorization_required_separately,true);
+ assert.equal(r.grants_authority,false);
+});
+test('alternatives cannot downgrade hard risk or invent equivalence',()=>{
+ const input={ruin_possible:true,alternative_paths:[{path:'Other route',rationale:'Agent hypothesis',relative_risk:'lower',relative_effort:'unknown',outcome_equivalence:'unknown'}]};
+ assert.equal(assess(input).control,'C');
+ assert.equal(assess({alternative_paths:[{path:'Other route',rationale:'No evidence',relative_risk:'magic',relative_effort:'lower',outcome_equivalence:'equivalent'}]}).ok,false);
+});
