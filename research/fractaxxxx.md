@@ -2,14 +2,14 @@
 title: "FractaXXXX — A Generative Grammar of Possibilities"
 subtitle: "Principles, composition, emerging possibilities, friendly prior art, and Reality Tests"
 date: "2026-10-08"
-version: "0.8"
+version: "0.8.1"
 status: "working-paper — non-normative"
 language: "en"
 author: unknown
 affiliation: "Institut Mariani / C.O.R.S.I.C.A."
 ai_assisted_by:
   - "ChatGPT GPT-6 (drafting and research synthesis)"
-last_modified_at: "2026-10-30"
+last_modified_at: "2026-11-07"
 license: "CC BY-SA 4.0"
 document_role: source
 document_kind: "research-note"
@@ -93,6 +93,7 @@ These are proposed **moves** for exploration and composition, not a new normativ
 | FractaCarta | Fractal maps, local autonomy and exploration grammar | documented | [FractaCarta](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/fractacarta.md) |
 | **FractaMandate / FractaMandat** | Fractal, locality-aware mandate composition: reasonable competence, attenuated subdelegation, contextual judgment, resource forecasts and accountable acts | **name adopted by Principal, 2026-10-30; doctrine v0.2 working, implementation not established** | [Mandate — Reasonable Agency](./mandate_reasonable_agency.md), [COP/Accounting](https://github.com/JeanHuguesRobert/inseme/blob/main/packages/cop-core/COP_ACCOUNTING.md) |
 | **FractaReality / FractaRéalité** | Candidate for situated, cross-scale reconciliation of partial Reality observations; avoid duplicating Reality Probes and Trace Treatment | **research candidate; no independent component established** | [Interrogating Reality](./interrogating_reality.md), [Reality Probe Selection](./reality_probe_selection.md), [Trace Treatment](./trace_treatment_packet.md) |
+| **FractaAgent** | Candidate *recursive orchestration role* for a governed agent that may receive work and, when expressly permitted, delegate attenuated sub-missions, reconcile evidence and return a result | **proposed by Principal, 2026-11-07; terminological candidate only — no new agent class, COP primitive or implementation established** | [Pluralisation cognitive sous mandat](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/pluralisation_cognitive_sous_mandat.md), [FractaMandate](./mandate_reasonable_agency.md) |
 | **FractaHandler** | Situated execution role accepting governed work on a FractaNode; distinct from a Unix shell, process, protocol or new daemon | **terminology introduced by Principal, 2026-10-28; semantic contract under review** | [Operium operational ownership](./operium_owns_operational_deploy.md), [Shell Fracta2 umbrella #292](https://github.com/JeanHuguesRobert/cogentia/issues/292) |
 | FractaScheduler | Scheduling and progress of distributed cognitive work | implemented/documented profile | [Scheduler](../docs/fracta-scheduler.md) |
 | FractaCalendar | Federated temporal obligations | documented | [Calendar](https://github.com/JeanHuguesRobert/operium/blob/main/docs/fracta-calendar.md) |
@@ -125,6 +126,24 @@ The same minimal accountability pattern can recur at different levels of abstrac
 **Minimum discriminating Reality Test:** compare a flattened permission-per-act workflow with (a) standing contextual FractaMandate and (b) standing FractaMandate plus budget forecast/settlement feedback on matched realistic tasks. Measure mandate compliance, completion, prediction calibration, human-attention cost, harmful exposure, repair effectiveness and traceability. Test adversarial ambiguity and material context changes. Do not claim novelty or reliability prior to independent prior-art and empirical examination.
 
 **Authoritative conceptual source:** [Mandate — Reasonable Agency, Judgment, and Accountable Delegation](./mandate_reasonable_agency.md) (working v0.2). FractaXXXX provides the generative crosswalk only; COP/Accounting retains its accounting authority, [Intent](./intent.md) its provenance and meaning doctrine, [Measured Risk](./measured_risk.md) its exposure doctrine, and [Traçabilité des actes](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/traceabilite_des_actes.md) its imputation doctrine.
+
+## FractaAgent — candidate name for recursive, governed agent composition (2026-11-07)
+
+**Not a new software species or governance system.** The Principal's public metaphor of an *adult Santa Claus, workshop and elves* already appears in [Le Père Noël revient](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/le-pere-noel-revient.md) and, with four workshops and seven distinct functional elf roles, in [Pluralisation cognitive sous mandat](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/pluralisation_cognitive_sous_mandat.md). Its recursion is meaningful: an elf mandated to coordinate work may itself commission bounded sub-work from smaller elves; relative to the children it is the local workshop coordinator, not a new sovereign Principal. Both human and nonhuman performers remain possible, and public metaphors are never protocol field names.
+
+**Technical disambiguation (candidate):** `Agent` = identifiable logical delegate capable of pursuing a mission under a mandate; `Handler` / `FractaHandler` = situated executor for an operation or Cognitive Packet, not necessarily autonomous or able to delegate; `Digital Twin` = a persistent, corpus-grounded personal or collective assistive relationship, not each spawned subagent; `FractaAgent` = *optional architectural designation* for an Agent participating in recursively composable, mandate-attenuating and accountable delegation. A `FractaAgent` is not an independent Principal and does not inherit its parent's full authority, even when it is a coordinator. The same agent can be the *mandatary* of an upstream mandate and a *delegating mandator* of a narrower downstream submandate, **only where parent authority explicitly permits subdelegation**.
+
+~~~text
+order / intent from legitimate Principal
+→ verified parent mandate + budget and permitted delegation depth
+→ agent receives work → executes directly OR delegates narrower child mandate
+→ child reserves a strict share of parent hard budget before exercising effects
+→ child returns artifacts, evidence, actual usage and objections
+→ parent reconciles, verifies and reports to commissioning level
+→ Principal/legitimate collective retains reserved decisions and revocation
+~~~
+
+**Fractal is bounded recursion, not unlimited nesting.** At every tier preserve the original Principal, signed provenance and current status of the mandate chain, action/privacy/exposure scope, independently checked issuer, finite budgets, deadlines, depth, cancellation propagation, effects receipts and non-double-counted settlements. Lateral cooperation and multiple mission relationships may make the execution graph a DAG rather than a simple tree. Child creation and possession of tool or instance keys never confer new authority. The principle is generic and works without the `FractaAgent` label; current COP evaluator and delegated budget primitives are partial implementations, **not** demonstrated end-to-end enforcement of arbitrary-depth subagent orchestration. The exact extra explanatory value of this name versus `Agent` + `FractaMandate` + `FractaHandler` should be tested, applying Occam and Friends Before Competitors, before naming a runtime or publishing a normative specification.
 
 ## FractaReality / FractaRéalité — candidate, not yet an independent component (2026-10-30)
 
