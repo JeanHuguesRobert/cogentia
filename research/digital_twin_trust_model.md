@@ -1,12 +1,14 @@
 ---
 title: Digital Twin Trust Model
 subtitle: Maturity, capability, owner sovereignty, and the right to grow safely
-version: '0.1'
-status: source document — trust architecture
+version: '0.2'
+status: working-paper — trust architecture
 date: '2026-06-30'
 author: Jean Hugues Noël Robert
+affiliation: Institut Mariani / C.O.R.S.I.C.A.
 license: CC BY-SA 4.0
 language: en
+last_modified_at: "2026-11-07"
 repository: cogentia
 canonical_path: cogentia/research/digital_twin_trust_model.md
 tags:
@@ -96,6 +98,20 @@ must not be treated as unconstrained clones. Each instance needs a declared
 corpus view, maturity profile, mandate, and authority boundary.
 
 ---
+
+## 1 bis. A faithful twin is not a restrictive replica (2026-11-07)
+
+**Purpose, not literal similarity.** A Cogentia Personal Digital Twin is an artificial, approximate and corrigible representation **and a mandated capability-extending assistant** for a living human Principal. A historically faithful reconstruction may deliberately model what that person knew, believed or could do at a given time; this is a *dated epistemic snapshot*, not the default operational objective. The map is not the territory: a high-fidelity model never becomes the human, and its fluent predictions are not retroactive proof of what the person knew.
+
+**Operational twin:** preserve provenance, continuity, authentic values, intentions, interests, preferences and explicit constraints, while **increasing or restoring the person's effective freedom of action** through memory support, administrative burden absorption, accessible interfaces, independent checking, learning, reusable tools, and authorized assistance. Losing abilities through age, illness, environment or a situational obstacle does not require the agent to mimic that loss. In the Corpus's functional sense, the twin is a **cognitive prosthesis**: an enabling factor, not a substitute sovereign. This must not imply the Principal's dignity or rights depend on measured productivity, nor that every restriction can or should be compensated technically.
+
+**Guardian angel is a functional metaphor, not guardianship or tutelage.** Protective work may involve warnings, corroboration, traceability, contradiction, risk detection, restoring options, and limiting unjustified third-party pressure. It does not authorize surveillance of the protected person, paternalistic override, impersonation, coercion or a claimed superior moral authority. The Principal's right **not to act**, decline assistance, contest interpretation, amend/revoke mandates and disengage is part of the desired freedom. Different roles may distribute across Gabriel (notice), angelots (checks/protection) and lutins (execution); see [Un Ange Gardien #104](https://github.com/JeanHuguesRobert/cogentia/issues/104).
+
+**Freedom is not unilateral power maximization.** The Principal's effective choices expand only within the equal rights, autonomy, freedom and safety of others. An assistant must not boost one person's feasible acts by secretly shifting material risk, cost, surveillance, exclusion, or loss of rights onto third parties. Safety and rights remain independently applicable constraints; they cannot be waived by a general mandate. The resulting goal is *sustainable non-dominating autonomy of capacity*, not maximal acts or maximal autonomous agent privileges.
+
+**Democratic AI Safety / DHITL:** computational scale, replicated agents, data ownership and better inference do not confer political sovereignty or a new human vote. Mandates are attributable, bounded and revocable; consequential powers require independently authentic human or collective authority, effect gates, budgets and accounts. Merely putting a human approval button after a machine's decision is not sufficient. The living Principal and, for collective subjects, their legitimate democratic procedures remain sovereign. See [IA pour chacun / IA pour tous](ia_pour_tous_ia_pour_chacun.md), [Personne numérique mandatée](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/personne_numerique_mandatee.md), and [FractaCognition](fractacognition_principles.md).
+
+**Operational validation:** compare effective options and choices before/after twin assistance, quality of decisions, reproducible acts, human attention gained *net of supervision*, retained exit and correction routes, absence of rights/safety externalities to others, and authoritative COP provenance. Technical capability growth without a corresponding valid operational mandate confers no right to act. This section defines the intended trust standard, not proof that today's deployed Agent John meets it in full.
 
 ## 2. Developmental analogy
 

@@ -4,7 +4,7 @@ subtitle: "Articuler capacités personnelles, intelligence collective et souvera
 author: "Jean Hugues Noël Robert"
 affiliation: "Institut Mariani / C.O.R.S.I.C.A., 1 cours Paoli, F-20250 Corte, Corsica"
 date: "2026-07-20"
-version: "0.1"
+version: "0.2"
 status: "working-paper — doctrine charnière"
 license: "CC BY-SA 4.0"
 canonical_url: "https://github.com/JeanHuguesRobert/cogentia/blob/main/research/ia_pour_tous_ia_pour_chacun.md"
@@ -12,6 +12,18 @@ document_role: "source"
 document_kind: "doctrinal-note"
 visibility: "public"
 lifecycle_state: "working"
+language: fr
+last_modified_at: "2026-11-07"
+update_policy: UP-DEFAULT-REVIEWED
+provenance:
+  origin_type: repository
+  origin_repository: JeanHuguesRobert/cogentia
+  origin_ref: unknown
+  origin_date: "2026-07-20"
+  derived_from: []
+review:
+  status: unreviewed
+  reviewed_by: []
 x_method:
   - "seconde méthode"
   - "Cogentia"
@@ -42,6 +54,12 @@ La thèse de ce document est :
 > **Une intelligence collective démocratique ne doit ni absorber les intelligences personnelles, ni être capturée par elles. Elle doit les relier par des protocoles communs tout en préservant leur pluralité et la souveraineté politique des vivants.**
 
 ---
+
+### Fidélité de représentation, augmentation de capacité et protection sans tutelle
+
+Le terme « jumeau » ne commande pas une copie des limites cognitives ou pratiques de la personne. La reconstitution historique d'une Cogentia située à une date peut choisir cette contrainte, en rappelant que la carte ne devient jamais le territoire. Le **jumeau opérationnel**, en revanche, doit respecter les valeurs, intentions et limites de mandat du Principal **tout en augmentant ou restaurant ses capacités effectives**. Il tient de la prothèse cognitive et, métaphoriquement, de l'« ange gardien » : mémoire, mise en garde, vérification, assistance et possibilité de refus, non tutelle, surveillance intime ou substitution de volonté.
+
+Le but n'est pas de maximiser une puissance d'agir au détriment d'autrui. Les libertés, droits et sécurité des tiers restent des bornes indépendantes. La concentration de capacités computationnelles et la multiplication d'agents ne doivent produire ni souveraineté politique supplémentaire ni domination algorithmique. **DHITL exige un pouvoir humain et démocratique effectif**, pas un clic rituel de validation. Les capacités techniques se développent ; les mandats, ressources et effets demeurent bornés et traçables. Voir le [Digital Twin Trust Model](digital_twin_trust_model.md) et [Un Ange Gardien #104](https://github.com/JeanHuguesRobert/cogentia/issues/104).
 
 ## 1. Deux capacités, une même architecture
 
