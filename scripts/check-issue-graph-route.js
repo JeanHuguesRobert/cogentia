@@ -90,7 +90,43 @@ try {
   assert.ok(issueGraphTool, JSON.stringify(mcp, null, 2));
   assert.equal(issueGraphTool.result.structuredContent.data.summary.issues, 1);
 
-  console.log(JSON.stringify({ ok: true, graph_nodes: graph.nodes.length, graph_edges: graph.edges.length, mcp_tool: "cogentia_issue_graph" }, null, 2));
+  // Regression: issues_list is a list, not the graph projection; short repo alias
+  // must retain registered policy metadata through resolveIssueRepo().
+  const listResponse = await fetch(`${base}/api/issues/list?repo=inseme&state=open&limit=5`, {
+    headers: { Authorization: "Bearer testtoken" },
+  });
+  const listed = await listResponse.json();
+  assert.equal(listResponse.status, 200, JSON.stringify(listed));
+  assert.equal(listed.schema, "cogentia.issues-list.v1");
+  assert.equal(listed.issues.length, 1);
+  assert.equal(listed.issues[0].number, 18);
+  const mcpList = await runMcp([
+    { jsonrpc: "2.0", id: 1, method: "initialize", params: { protocolVersion: "2025-11-25", capabilities: {}, clientInfo: { name: "test", version: "1" } } },
+    { jsonrpc: "2.0", method: "notifications/initialized" },
+    { jsonrpc: "2.0", id: 2, method: "tools/call", params: { name: "cogentia_issues_list", arguments: { repo: "inseme", state: "open" } } },
+  ]);
+  const listedTool = mcpList.find(message => message.result?.structuredContent?.data?.schema === "cogentia.issues-list.v1");
+  assert.ok(listedTool, JSON.stringify(mcpList, null, 2));
+  assert.equal(listedTool.result.structuredContent.data.issues[0].number, 18);
+  const searchResponse = await fetch(`${base}/api/cli/code/search?repo=cogentia&q=Cognitive%20Packets&limit=3`, {
+    headers: { Authorization: "Bearer testtoken" },
+  });
+  const search = await searchResponse.json();
+  assert.equal(searchResponse.status, 200, JSON.stringify(search));
+  assert.equal(search.schema, "cogentia.code-search.v1");
+  assert.ok(/^[a-f0-9]{40}$/.test(search.commit));
+  assert.ok(search.count > 0, JSON.stringify(search));
+  const mcpSearch = await runMcp([
+    { jsonrpc: "2.0", id: 1, method: "initialize", params: { protocolVersion: "2025-11-25", capabilities: {}, clientInfo: { name: "test", version: "1" } } },
+    { jsonrpc: "2.0", method: "notifications/initialized" },
+    { jsonrpc: "2.0", id: 2, method: "tools/call", params: { name: "cogentia_code_search", arguments: { repo: "cogentia", query: "Cognitive Packets", limit: 3 } } },
+  ]);
+  const searchTool = mcpSearch.find(message => message.result?.structuredContent?.data?.schema === "cogentia.code-search.v1");
+  assert.ok(searchTool, JSON.stringify(mcpSearch, null, 2));
+  assert.ok(searchTool.result.structuredContent.data.count > 0);
+  console.log(JSON.stringify({ ok: true, graph_nodes: graph.nodes.length, graph_edges: graph.edges.length,
+    issues_list_count: listed.issues.length, code_search_count: search.count,
+    mcp_tools: ["cogentia_issue_graph", "cogentia_issues_list", "cogentia_code_search"] }, null, 2));
 } finally {
   daemon.kill();
 }

@@ -228,6 +228,7 @@ Tools are registered in `scripts/lib/cogentia-mcp-core.js`. They are categorized
 | `cogentia_views_snapshot` | **P0** | Redacted session cockpit snapshot (preferred at session start) |
 | `cogentia_issue_graph` | **P0** | Read-only issue graph mapping work items to target documents |
 | `cogentia_issues_list` | **P0** | List tracked GitHub issues for a registered repository |
+| `cogentia_code_search` | **P0** | Search exact text in the committed tree of a visible, registered repository without GitHub code search API; returns commit and line references |
 | `cogentia_continuation_list` | **P1** | List active continuation queue (`alive`, `hibernating`, `closed`) |
 | `cogentia_continuation_inspect` | **P1** | Inspect a specific continuation payload and execution status |
 | `cogentia_git_verify` | **P1** | Check git clean/dirty state and ahead/behind branch status |
