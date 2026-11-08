@@ -48,6 +48,24 @@ Handler
 operational twin of a packet whose `packet_kind` is continuation; the skill
 `continuation-handling` is the **handler** procedure.
 
+## Conversations as agile packet-routing handlers
+
+A conversation may touch **several existing Cognitive Packets**. On a
+meaningful Act or new observation, inspect candidate work loci before creating
+anything: existing packet with compatible finality and lineage; several links
+with different roles; or merely a durable Act receipt when no continuation is
+needed. A completed packet remains a valid historical attachment even when a
+new successor is justified. New packets are a last resort for work requiring
+its own identity, handler, acceptance and return contract.
+
+Do not confuse exact active-continuation `dedupe_key` matching with semantic
+identification; the latter is not yet automatically implemented. Keep
+attachment evidence and uncertainty explicit, and allow subsequent packet
+graph revisions (re-parent, link, split, consolidate) without renumbering or
+fabricating past intent. The present organization is a **revisable working
+hypothesis**, not a restriction on future routing. Prefer organizing real
+conversation Acts over creating simulations or perpetual task backlogs.
+
 ## Why tools emit continuations (IoC)
 
 When a structural tool hits a judgment boundary, it must **not** hide an

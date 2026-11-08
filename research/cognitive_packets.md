@@ -131,6 +131,30 @@ qualified sources → bounded children (parallel where independent)
 
 **Occam test:** if one packet and an ordered checklist suffice, do not create an umbrella; if an existing umbrella covers the goal, link it rather than duplicating the authority. A child is worth creating only for genuine independent continuation, divergent dependencies, specialized handler/risks, or a separately testable deliverable.
 
+**Conversation-to-packet attachment first (agile, anti-proliferation):** a
+conversation is a temporary cognitive handler, not an automatic packet factory.
+When it produces a material Act, decision, observation or unresolved question,
+search for the best existing packet(s) first, including completed ones whose
+historical or prospective continuation is relevant. Multiple packet links may
+be appropriate for one conversation or Act, with explicit roles (primary
+continuation, supporting evidence, dependency, contradiction) rather than an
+arbitrary exclusive owner. Do not treat textual similarity alone as identity;
+check shared finality, evidence, causal lineage, constraints and future
+handler needs. Preserve a trace of why the attachment was chosen, with
+uncertainty where material. Only create a new packet when no existing packet
+provides a coherent home for *independently continuable* work. Otherwise a
+plain durable Act trace may suffice.
+
+The packet graph is a **present-tense, revisable projection**, not a rigid plan
+that can capture future possibilities. Re-parenting, merging work loci,
+splitting genuine independent branches and retiring unhelpful links must
+preserve packet IDs, historical relations, receipts and the dated reason for
+reorganization. New evidence may change organization without rewriting what
+was originally known or decided. The intended result is progressively clearer
+work coordination **without automatic growth in packet count**. An exact
+`dedupe_key` for active continuations is useful but is not semantic
+conversation-to-packet reconciliation, especially across completed packets.
+
 **Scale invariance without authority inflation:** an umbrella may itself be a child of another umbrella, but this does not grant new mandate, source sovereignty or permissions. Child results can require revisiting the parent hypothesis; the parent cannot silently rewrite a child's historically completed external acts.
 
 **Observed precedents, not proofs of a universally supported protocol:** [barons-Mariani #127](https://github.com/JeanHuguesRobert/barons-Mariani/issues/127), [Cogentia #278](https://github.com/JeanHuguesRobert/cogentia/issues/278), and [Capable coordination #152](https://github.com/JeanHuguesRobert/barons-Mariani/issues/152). This candidate pattern refines the use of existing Cognitive Packets through FractaCognition and the Second Method. Test it against work already done before proposing additional schemas or executors.
