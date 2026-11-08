@@ -66,6 +66,15 @@ fabricating past intent. The present organization is a **revisable working
 hypothesis**, not a restriction on future routing. Prefer organizing real
 conversation Acts over creating simulations or perpetual task backlogs.
 
+**Spirit of Synthesis:** consider connections across several packet
+histories when they can genuinely make an additional capability or useful
+continuation reachable; do not confuse more tags, links or compressed
+summaries with a generative result. See
+[Potentics §3.5](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/potentics.md#35-spirit-of-synthesis)
+and [the cognitive-packet anti-proliferation rule](../research/cognitive_packets.md).
+Existing-packet attachment is preferable to creating a new synthetic umbrella
+solely to represent this cross-link.
+
 ## Why tools emit continuations (IoC)
 
 When a structural tool hits a judgment boundary, it must **not** hide an

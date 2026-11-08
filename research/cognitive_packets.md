@@ -155,6 +155,23 @@ work coordination **without automatic growth in packet count**. An exact
 `dedupe_key` for active continuations is useful but is not semantic
 conversation-to-packet reconciliation, especially across completed packets.
 
+**Relation to the Spirit of Synthesis (Potentics):** attaching one
+conversation's Acts to several already existing packets is first an
+*organization/reconciliation* operation, not automatically a generative
+synthesis. The [Spirit of Synthesis](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/potentics.md#35-spirit-of-synthesis)
+refers more specifically to the possible **emergence of new reachable
+capabilities or combinations** when previously separate observations,
+methods, people, or partial solutions interact. Therefore semantic packet
+linking serves two distinct outcomes: reduce fragmentation and duplicate
+work; *sometimes* enable new work that neither packet could have supported
+alone. The latter must be established by observable effects, not inferred
+from a more connected graph. Preserve dissenting or incompatible packet
+claims; never force conceptual unity merely to increase apparent synthesis.
+An agile packet graph remains revisable, so today's useful synthesis cannot
+become tomorrow's mandatory decomposition. This is a conceptual connection,
+not a proposal for a separate Spirit-of-Synthesis daemon, mandatory new
+packet kind, or additional governance layer.
+
 **Scale invariance without authority inflation:** an umbrella may itself be a child of another umbrella, but this does not grant new mandate, source sovereignty or permissions. Child results can require revisiting the parent hypothesis; the parent cannot silently rewrite a child's historically completed external acts.
 
 **Observed precedents, not proofs of a universally supported protocol:** [barons-Mariani #127](https://github.com/JeanHuguesRobert/barons-Mariani/issues/127), [Cogentia #278](https://github.com/JeanHuguesRobert/cogentia/issues/278), and [Capable coordination #152](https://github.com/JeanHuguesRobert/barons-Mariani/issues/152). This candidate pattern refines the use of existing Cognitive Packets through FractaCognition and the Second Method. Test it against work already done before proposing additional schemas or executors.
