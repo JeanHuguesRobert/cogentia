@@ -84,16 +84,20 @@ try {
     $generator = '/srv/cogentia/repos/cogentia/scripts/super/prepare-maintenance-mandate.mjs'
     External 'Preparation du mandat temporaire' { ssh -i $Key -o IdentitiesOnly=yes $Remote "node $generator $mandateRemote" }
     External 'Telechargement mandat' { scp -i $Key "${Remote}:$mandateRemote" $mandate }
-    $m = Get-Content -LiteralPath $mandate -Raw | ConvertFrom-Json
+    $m = Get-Content -LiteralPath $mandate -Raw | ConvertFrom-Json -DateKind String
     # FBF: never hide which part of a signed mandate failed validation.
     # Use Fracta2 UTC as the reference for this mandate; the trusted broker
     # evaluates that same clock, not the Windows workstation's potentially
     # offset clock. Clock disagreement cannot broaden the signed time window.
     $serverUtcText = (& ssh -i $Key -o IdentitiesOnly=yes $Remote 'date -u +%Y-%m-%dT%H:%M:%SZ') -join ''
     if ($LASTEXITCODE -ne 0) { throw 'Cannot obtain Fracta2 UTC time' }
-    $serverUtc = [DateTimeOffset]::Parse($serverUtcText)
-    $from = [DateTimeOffset]::Parse([string]$m.valid_from)
-    $until = [DateTimeOffset]::Parse([string]$m.valid_until)
+    # ConvertFrom-Json -DateKind String keeps the exact ISO text in PS 7.6.
+    # ParseExact with InvariantCulture prevents fr-FR day/month reinterpretation.
+    $invariant = [System.Globalization.CultureInfo]::InvariantCulture
+    $utcStyle = [System.Globalization.DateTimeStyles]::AssumeUniversal
+    $serverUtc = [DateTimeOffset]::ParseExact($serverUtcText, "yyyy-MM-dd'T'HH:mm:ss'Z'", $invariant, $utcStyle)
+    $from = [DateTimeOffset]::ParseExact([string]$m.valid_from, "yyyy-MM-dd'T'HH:mm:ss.fff'Z'", $invariant, $utcStyle)
+    $until = [DateTimeOffset]::ParseExact([string]$m.valid_until, "yyyy-MM-dd'T'HH:mm:ss.fff'Z'", $invariant, $utcStyle)
     $violations = [System.Collections.Generic.List[string]]::new()
     if ($m.kind -cne 'cogentia.maintenance-mandate-proposal/v1') { $violations.Add('kind') }
     if ($m.mandate_id -cne 'mandate:jhn:maintenance') { $violations.Add('mandate_id') }
