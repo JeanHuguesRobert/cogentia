@@ -71,6 +71,7 @@ import { checkSemanticMutation, MUTATION_STATUS } from "./lib/semantic-mutation-
 import { runConvergenceLoop } from "./lib/convergence-loop.js";
 import { createSchedulerRunContext, runFractaCycle, SCHEDULER_CYCLE_MODES, SCHEDULER_STAGE_STATUS } from "./lib/fracta-scheduler.js";
 import { packDocumentToCapsule, verifyCapsule, unpackCapsule } from "./lib/packet-capsule.js";
+import { relatePacket } from "./lib/packet-relate.js";
 import { runMonteCarloAudit, SleepCycleReviewQueue, REVIEW_DECISIONS } from "./lib/corpus-sleep-cycle/index.js";
 import {
   runSenatorialesIocSuite,
@@ -472,6 +473,8 @@ async function main() {
       return cmdConcepts(argv.shift() || "check");
     case "resume":
       return cmdResumeExternalIssue();
+    case "packet":
+      return cmdPacketRelateOrCapsule();
     case "continuation":
       return cmdContinuation(argv.shift() || "list");
     case "effect":
@@ -1100,6 +1103,9 @@ Effect commands (#171 mint UI):
                            Flags: --principal <id> --json --prepared-json <json>
 
 Continuation commands:
+  packet relate --text "..."   Read-only candidate attachment to existing packets.
+                             Flags: --file <path> --root <repo> --limit <1..25> --json.
+  packet capsule           Pack, verify, or unpack portable packet capsules.
   continuation emit        Emit an external judgment request.
   continuation list        List continuations.
                            Flags: --status active|resolved|cancelled|completed|dormant|
@@ -1943,6 +1949,28 @@ registerModule({
     return unpackCapsule(capsuleText, targetDir, { dryRun });
   },
 });
+
+function cmdPacketRelateOrCapsule() {
+  const sub = argv[0] || 'help';
+  if (sub !== 'relate') return cmdPacket(null, argv);
+  argv.shift();
+  const inline = valueFlag('--text');
+  const file = valueFlag('--file');
+  const source = file ? path.resolve(file) : 'inline';
+  if ((inline && file) || (!inline && !file)) throw new Error('Usage: cogentia packet relate --text "..." | --file <path> [--root <repo>] [--limit <n>] [--json]');
+  const input = file ? fs.readFileSync(source, 'utf8') : inline;
+  const root = valueFlag('--root');
+  const limitRaw = valueFlag('--limit');
+  const limit = limitRaw ? Number(limitRaw) : 6;
+  if (!Number.isInteger(limit)||limit<1||limit>25)throw new Error('--limit must be an integer 1..25');
+  const roots = root ? [path.resolve(root)] : [process.cwd()];
+  const report=relatePacket({text:input,roots,limit,source});
+  return output(report, [
+    `Read-only packet attachment proposals (${report.candidates.length}, scanned ${report.scanned_files})`,
+    ...report.candidates.map(c=>`- ${c.reference} [${c.rank_signal} ranking signal] ${c.title}: ${c.matched_terms.join(', ')}`),
+    'Review finality, causal lineage and evidence before any attachment. No new packet or change was created.'
+  ].join('\n'));
+}
 
 function cmdPacket(ctx, argv) {
   const sub = argv.shift() || "help";

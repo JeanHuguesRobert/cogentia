@@ -234,6 +234,20 @@ as a mandatory database, new scheduler, or central authority merely to
 resolve this gap. Apply FBF and existing on-the-job examples; a simple
 traceable candidate suggestion is preferable to a large synthetic testbed.
 
+**Implemented read-only bootstrap (2026-11-08):**
+`scripts/cogentia.js packet relate --text "..." --json` (or `--file path`)
+scans local continuations (including completed), issue packets and research
+Markdown, and returns `cogentia.packet_relation_proposal.v1`: ranked candidate
+references, matched terms, source excerpt, decision `review_required` and
+explicit `packet_creation_assessed: false`. `--root repo` bounds scope.
+The ranking is **explainable lexical overlap**, *not* embedding-based
+semantic reconciliation, a verified shared finality, an automatic Act
+attachment or a COP authorization. It writes nothing*. This modest candidate
+finder makes an existing handler decision less blind while leaving semantic
+judgment, cross-repository discovery, attachment receipts and governance to
+future work driven by real use. Deterministic tests are in
+`test/packet-relate.test.js`.
+
 **Scientific and commons boundary:** distinguish retrieving evidence from
 asserting truth, correlation from causation, ranking from permission, and
 observed improvement from universal validity. This mapping is an
