@@ -78,8 +78,41 @@ test('CLI preview stays read-only; emit deduplicates in real continuation store'
   assert.equal(record.context.protocol,'cogentia.packet_relation_judgment.v1');
 }));
 
-test('rejects missing return recipient rather than silently abandoning ownership',()=>fixture(root=>{
+test('optional return recipient: default is reply slot, not transfer of ownership',()=>fixture(root=>{
   write(root,'research/a.md','---\ntitle: packet continuation claim\n---\nA packet continuation claim');
   const discovery=relatePacket({text:'packet continuation claim',roots:[root]});
-  assert.throws(()=>packetRelateJudgmentRequest(discovery,{input:'packet continuation claim'}),/explicit result recipient/);
+  const request=packetRelateJudgmentRequest(discovery,{input:'packet continuation claim'});
+  assert.equal(request.result_recipient,undefined);
+  assert.equal(request.delegation.transfers_work_ownership,false);
+}));
+
+import { deriveContinuationReturn } from '../scripts/lib/continuation-return.js';
+test('return path can be inferred from parent lineage, subject or continuation itself',()=>{
+  const implicit=deriveContinuationReturn({id:'ctn_12345678'});
+  assert.equal(implicit.result_ref,'continuation:ctn_12345678/resolution');
+  assert.equal(implicit.route_source,'continuation_identity');
+  assert.equal(implicit.delivery_confirmed,false);
+  const parent=deriveContinuationReturn({id:'ctn_12345678',context:{parentRef:'CPKT-work-7'}});
+  assert.equal(parent.lineage_ref,'CPKT-work-7');
+  assert.equal(parent.route_source,'parent_lineage');
+  const explicit=deriveContinuationReturn({id:'ctn_12345678',subject:{repo:'cogentia',path:'research/abc.md'},result_recipient:{address:'packet:review-owner'}});
+  assert.equal(explicit.result_recipient,'packet:review-owner');
+  assert.equal(explicit.route_source,'explicit');
+  assert.equal(explicit.ownership_transferred,false);
+});
+test('generic emit and resolve leave result in return slot without false delivery',()=>fixture(root=>{
+  write(root,'registry.json',JSON.stringify({repos:[]}));
+  const args=['scripts/cogentia.js','--registry',path.join(root,'registry.json')];
+  // command dispatch consumes --registry globally via loadContext; flags are position-independent.
+  const run=(sub)=>JSON.parse(execFileSync(process.execPath,['scripts/cogentia.js',...sub,'--registry',path.join(root,'registry.json'),'--json'],{encoding:'utf8',cwd:path.resolve('')}));
+  const emitted=run(['continuation','emit','--question','Please judge bounded claim']);
+  const id=emitted.continuation.id;
+  const stored=JSON.parse(fs.readFileSync(path.join(root,'.cogentia/continuations',`${id}.json`),'utf8'));
+  assert.equal(stored.return_contract.result_ref,`continuation:${id}/resolution`);
+  assert.equal(stored.return_contract.ownership_transferred,false);
+  const resolved=run(['continuation','resolve',id,'--decision','no_attachment','--reason','No matching work']);
+  assert.equal(resolved.continuation.status,'resolved');
+  const after=JSON.parse(fs.readFileSync(path.join(root,'.cogentia/continuations',`${id}.json`),'utf8'));
+  assert.equal(after.resolution.return_state.result_available,true);
+  assert.equal(after.resolution.return_state.delivered,false);
 }));

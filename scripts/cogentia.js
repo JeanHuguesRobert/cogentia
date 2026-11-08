@@ -73,6 +73,7 @@ import { createSchedulerRunContext, runFractaCycle, SCHEDULER_CYCLE_MODES, SCHED
 import { packDocumentToCapsule, verifyCapsule, unpackCapsule } from "./lib/packet-capsule.js";
 import { relatePacket } from "./lib/packet-relate.js";
 import { packetRelateJudgmentRequest } from "./lib/packet-relate-judgment.js";
+import { deriveContinuationReturn } from "./lib/continuation-return.js";
 import { runMonteCarloAudit, SleepCycleReviewQueue, REVIEW_DECISIONS } from "./lib/corpus-sleep-cycle/index.js";
 import {
   runSenatorialesIocSuite,
@@ -1107,7 +1108,8 @@ Continuation commands:
   packet relate --text "..."   Read-only candidate attachment to existing packets.
                              Flags: --file <path> --root <repo> --limit <1..25> --json.
                              --judgment-preview (read-only) or --emit-continuation;
-                             both require --return-to <result-recipient>
+                             optional --return-to <result-recipient>; default return
+                             is the originating Continuation / parent work
                              (durable deduplicated Judgment handoff, no attachment).
   packet capsule           Pack, verify, or unpack portable packet capsules.
   continuation emit        Emit an external judgment request.
@@ -1962,7 +1964,6 @@ function cmdPacketRelateOrCapsule() {
   const preview = takeFlag('--judgment-preview');
   if (emit && preview) throw new Error('Choose --emit-continuation OR --judgment-preview');
   const returnTo = valueFlag('--return-to');
-  if ((emit || preview) && !returnTo) throw new Error('Judgment handoff requires --return-to <recipient>; emitting a Continuation does not transfer ownership of work.');
   const inline = valueFlag('--text');
   const file = valueFlag('--file');
   const source = file ? path.resolve(file) : 'inline';
@@ -5877,6 +5878,9 @@ function daemonHttpContinuationResolve(ctx, body = {}) {
   const now = new Date().toISOString();
   continuation.status = "resolved";
   continuation.updated_at = now;
+  // Resolution deposits a result into the originating continuation's reply slot;
+  // it does not prove that a parent packet or explicit recipient has consumed it.
+  if (!continuation.return_contract) continuation.return_contract = deriveContinuationReturn(continuation);
   continuation.resolution = {
     resolved_at: now,
     decision,
@@ -6668,6 +6672,7 @@ function cmdContinuationResolve(ctx, id) {
     reason,
     payload,
     ...(materialization ? { materialization } : {}),
+    return_state: {result_available: true, delivered: false, result_ref: continuation.return_contract.result_ref},
   };
   continuation.history.push({ at: now, event: "resolved", decision, reason });
   saveContinuation(ctx, continuation);
@@ -12031,6 +12036,7 @@ function emitContinuation(ctx, request) {
     required_capabilities: Array.isArray(request.required_capabilities) ? request.required_capabilities : [],
     ...(request.result_recipient ? { result_recipient: request.result_recipient } : {}),
     ...(request.delegation ? { delegation: request.delegation } : {}),
+    return_contract: deriveContinuationReturn({ id, subject: request.subject || {}, context: request.context || {}, result_recipient: request.result_recipient || null }),
     expected_response: request.expected_response || {
       format: "json",
       required: ["decision", "reason"],
@@ -16223,6 +16229,8 @@ function formatContinuationSchema() {
     "Required fields: id, status, kind, title, question, subject, context, expected_response.",
     "Optional: required_capabilities (string[]) -- resolver-facing hint, e.g. \"web_search\";",
     "not matched/enforced by any registry yet (inseme#111 tracks that).",
+    "Return is the next continuation of work, not necessarily a literal destination; results are retrievable via the same continuation ID.",
+    "Resolution records result availability, not verified delivery or ownership transfer.",
     "Resolution is written by continuation resolve/cancel.",
     "",
     "Liveness (views/list default: alive ≈ open issues):",
@@ -16721,6 +16729,7 @@ function continuationSchema() {
         "Hibernating (dormant) wait for unknown conditions; closed are visited graph nodes, not deleted.",
     },
     required: ["id", "status", "kind", "title", "question", "subject", "context", "expected_response"],
+    return_semantics: "Reply result in originating continuation slot; optional explicit recipient and/or packet lineage. Handler never inherits parent work ownership or effect authority. Resolution is not proof of delivery.",
     commands: [
       "continuation emit --question <text>",
       "continuation list --status alive|hibernating|closed|active|resolved|cancelled|dormant|all",

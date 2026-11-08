@@ -263,23 +263,50 @@ Integration tests exercise actual store creation and deduplication in an
 isolated registry. **Assimilation of approved judgments remains a separate
 follow-up concern**, not an undocumented effect of this flag.
 
-**Ownership / return address invariant (2026-11-08):**
-Emitting a Judgment Continuation does **not** divest the issuer of its work,
-or authorize the judging handler to appropriate, reroute, complete or mutate
-the parent work. The handler receives a **bounded mandate to judge**, not
-ownership. `packet relate --judgment-preview` and `--emit-continuation`
-therefore require `--return-to <result-recipient>`; the continuation records
-`result_recipient` and a `delegation` contract asserting
-`transfers_work_ownership: false`, `transfers_effect_authority: false` and
-`return_required: true`. The return recipient participates in the active
-Continuation's deduplication identity. The judgment handler must return a
-structured answer to that recipient, who determines authorized subsequent
-acts. **Present limit:** this enforces the *declaration* of a recipient in
-new `relate` requests; actual delivery, recipient existence/routability,
-acknowledgement and authorization checks upon `continuation resolve` are
-**not yet implemented**. Do not confuse recording a local resolution with
-fulfilling the return obligation. The emitter retains the original work
-and any follow-up obligations until there is a verified handback.
+**Work ownership and return-as-continuation invariant (2026-11-08, revised):**
+Emitting a Continuation **does not divest the issuer / parent Cognitive Packet
+of its work** and does not give the handler the mandate to appropriate,
+complete, extend or redirect that parent work. The delegated task is bounded
+by its question, expected result and authority. The *return* is the
+**intended continuation of the parent computation**, not necessarily a
+literal network address or an obligatory field in the child packet.
+
+For current `cogentia.continuation.v2` CLI emissions, every new record
+now has a `return_contract`: the same continuation's durable
+`continuation:<id>/resolution` reply slot, plus **optional** explicit
+`result_recipient` and lineage (`context.parentRef` / `parent_ref` /
+`parent_packet_ref`, or packet/subject identifiers). `packet relate`
+accepts `--return-to` as an explicit override, **not a requirement**.
+Its Judgment request still explicitly forbids work ownership or effect
+authority transfer. A result recipient or inherited parent points toward
+*who may resume*, not a license for the judging handler to do so.
+
+On CLI `continuation resolve`, `resolution.return_state.result_available`
+records that the result has been deposited in the originating reply slot,
+with `delivered: false`. Reading, accepting, rejoining, resuming, and
+acknowledging it are separate operations; the local resolver cannot claim
+delivery merely because it wrote JSON. Old records without the new fields
+remain readable and get a derived return contract when resolved. A
+subject line alone identifies the **work**, not necessarily the person or
+process authorized to decide its fate.
+
+**Existing-producer audit (2026-11-08):**
+
+| Path / producer | Existing continuation linkage | Findings / remaining gap |
+|---|---|---|
+| `continuation-acp-server.js` | `session/prompt` emits, polls the same continuation ID, and sends the resolution as `agent_message_chunk` to the original session | **Actual return path exists** in this adapter; session timeouts still require a later resume |
+| `cogentia.js` `docs judgments`, README reviews, `index`, `triage`, conceptual issues, issue resumability | `subject` and structured context identify the underlying repository work; reply is in the shared continuation store | Return is **pull-based**, with no automatic consumer notification or resumption |
+| `cogentia.js` `embeddings`, `semantic-search`, capability and clarification delegates | Work/query identifiers and expected result are explicit | Result is stored, but **the original query/operation is not automatically re-entered**; no handler work takeover is authorized |
+| `continuation-frontier-f2a.js` | Parent references and explicit OR/AND joins for funded branches | Designed for explicit joins; a branch result does not itself authorize joining or parent ownership |
+| `senatoriales-ioc.js` | Typed continuation with a `resume_command` directing a designated question/answer flow | A separate, purpose-specific continuation producer; not the common CLI store |
+| `migrate-frontmatter.js` | Legacy `cogentia.continuation.v1`, context with repository/file and expected result | **Independent legacy emitter**; it bypasses the common V2 producer and thus does not yet inherit its return contract |
+
+The central finding is **not** that every producer was already safe: there
+is no universal enforcement that a judging handler returns only the bounded
+result, or that an authorized parent resumes it. This audit hardens the
+common store's invariant and identifies adapters/legacy producers requiring
+future convergence. Do not add mandatory return addresses to old packet
+formats just to mimic the common store.
 
 **Scientific and commons boundary:** distinguish retrieving evidence from
 asserting truth, correlation from causation, ranking from permission, and
