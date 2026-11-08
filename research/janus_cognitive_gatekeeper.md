@@ -816,6 +816,41 @@ or manufacture missing authorization. If there is no useful continuity, retain
 the Act traces without manufacturing a packet. See
 [`docs/resumable_github_issues.md`, §18.3a](../docs/resumable_github_issues.md).
 
+### Dual possible-branch projections around the present
+
+Janus has a structural symmetry that is especially visible when a Cognitive
+Packet is born retrospectively from observed Acts. On the **Past** side, the
+handler explores possible causal antecedents that could account for current
+traces (abduction/retroduction); on the **Future** side, it explores possible
+continuations and consequences from the qualified current state. Both can be
+represented as branching *projections*, but neither should be mistaken for an
+exhaustive, literal tree: causation, dependencies, convergence and shared
+antecedents generally form a graph.
+
+This is **not** an epistemic symmetry. The actual past is not made multiple by
+our uncertainty: historical alternatives are rival explanations of what
+happened, constrained by surviving evidence. Future alternatives concern
+possible yet-unrealized outcomes, constrained by current capacities, physical
+and institutional limits, and later choices. `supported_by_evidence`,
+`contradicted`, and `unknown` are not interchangeable with `feasible`,
+`blocked`, or `not_yet_realized`. Counterfactual pasts remain expressly
+counterfactual, not competing claims that several incompatible histories all
+occurred.
+
+The present is a **hinge of qualification**, not a magical merger of proof
+regimes. New observations can prune or revise historical attributions;
+prospective results may also disclose previously unseen historical evidence,
+without rewriting past events or original intentions. Conversely, a revised
+account of why an Act happened may change the admissible or sensible next
+handler and thus the prospective packet route.
+
+For on-the-fly packet creation, preserve this loop with existing COP
+Assertions/EvidenceRelations and Continuations rather than a new Janus daemon:
+`observed Acts → candidate past lineages → qualified present packet birth or
+attachment → possible continuations → new Acts/evidence → revised attribution`.
+Keep creation time, observation time and event time distinct. The goal is a
+better warranted continuation, not reconstruction for its own sake.
+
 The prospective product should pass the simple cold-handler test:
 
 ```text

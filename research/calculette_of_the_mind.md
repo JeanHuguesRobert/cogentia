@@ -201,6 +201,17 @@ A dependency graph has **upstream** prerequisites and **downstream** dependants.
 | Retrospective | What prior evidence or prerequisites supported this? | Which effects were actually observed after earlier changes? |
 | Prospective | What resources, permissions or tests would make this feasible? | What results or documents might require review if it changes? |
 
+The present can also be visualized as a Janus hinge between **alternative
+explanatory pasts** (abductive hypotheses about observed traces) and
+**alternative prospective futures** (feasible or unresolved continuations).
+These are graph projections, not necessarily literal trees, and not equivalent
+truth regimes: past hypotheses are assessed against evidence of an already
+occurred history; future branches concern not-yet-realized possibilities.
+When an observed Act reveals an otherwise undeclared work continuity, Janus
+may justify attaching it to an existing Cognitive Packet or creating a packet
+at the present time; the packet is not backdated to the historical Act.
+See [Janus — dual possible-branch projections](janus_cognitive_gatekeeper.md).
+
 A prospective impact candidate is **not** an observed consequence or an automatic invalidation. Retrospective reconstruction must not rewrite what earlier participants knew; distinguish `occurred_at` from `observed_at` and late import from an earlier event.
 
 ## 5. The Fractanet relationship: the network as the Learning Computer
