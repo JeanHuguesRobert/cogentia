@@ -16,7 +16,7 @@ import http from "node:http";
 import os from "node:os";
 import path from "node:path";
 import readline from "node:readline";
-import { execFileSync } from "node:child_process";
+import { execFileSync, spawnSync } from "node:child_process";
 import { createHash, randomBytes, timingSafeEqual } from "node:crypto";
 import { once } from "node:events";
 import { finished } from "node:stream/promises";
@@ -320,6 +320,8 @@ const PUBLIC_DAEMON_GET_ROUTES = new Set([
   "/api/context/pack",
   "/api/context/pack-batch",
   "/api/issues/graph",
+  "/api/issues/list",
+  "/api/cli/code/search",
   "/api/views/snapshot",
   "/api/context/doc",
   "/api/context/lines",
@@ -4757,6 +4759,25 @@ async function handleDaemonRequest(req, res) {
       skipRemote: !includeRemote,
       probeStore: !noStoreProbe,
     }));
+  }
+  if (req.method === "GET" && url.pathname === "/api/cli/code/search") {
+    const effectiveCtx = ctx || loadContext();
+    const result = codeSearchReport(effectiveCtx, {
+      repoArg: url.searchParams.get("repo") || "cogentia",
+      query: url.searchParams.get("q") || "",
+      limit: boundedInteger(url.searchParams.get("limit"), 20, 1, 50), view,
+    });
+    return daemonJson(res, result.ok ? 200 : (result.error === "repository_not_visible" ? 403 : 400), result);
+  }
+  if (req.method === "GET" && url.pathname === "/api/issues/list") {
+    const effectiveCtx = ctx || loadContext();
+    const result = issueListReport(effectiveCtx, {
+      repoArg: url.searchParams.get("repo") || "all",
+      state: url.searchParams.get("state") || "open",
+      limit: boundedInteger(url.searchParams.get("limit"), 25, 1, 100),
+      view,
+    });
+    return daemonJson(res, result.ok ? 200 : (result.error === "repository_not_visible" ? 403 : 502), result);
   }
   if (req.method === "GET" && url.pathname === "/api/issues/graph") {
     const effectiveCtx = ctx || loadContext();
@@ -16690,7 +16711,9 @@ function resolveIssueRepo(ctx, repoArg) {
   if (!repo) throw new Error(`Unknown registered repo: ${repoArg}`);
   const fullName = repo.github_full_name || repo.policy?.github || repo.policy?.github_repo || githubFullNameFromRemote(repo);
   if (!fullName) throw new Error(`Cannot determine GitHub repository for ${repo.name}. Pass owner/name explicitly.`);
-  return { name: repo.name, full_name: fullName, path: repo.path };
+  // Preserve the registered repository policy: downstream view checks must not
+  // receive a lossy GitHub locator with policy omitted (HTTP 500 regression).
+  return { ...repo, full_name: fullName };
 }
 
 function githubFullNameFromRemote(repo) {
@@ -17170,11 +17193,68 @@ function syncIssuePacketsForRepo(ctx, repo, { state = "all", limit = 100 } = {})
   return { written, unchanged, removed, deferred_issues: deferredIssues };
 }
 
+function codeSearchReport(ctx, { repoArg = "cogentia", query = "", limit = 20, view = PUBLIC_VIEW } = {}) {
+  const repo = ctx.repos.find(item => item.name === repoArg || item.github_full_name === repoArg);
+  if (!repo) return { ok: false, error: "unknown_registered_repository" };
+  if (!canSeeRepo(repo, view)) return { ok: false, error: "repository_not_visible" };
+  const needle = String(query).trim();
+  if (!needle || needle.length > 200) return { ok: false, error: "invalid_query" };
+  // No shell, no remote API, no untracked files: search exactly the committed tree.
+  const sha = spawnSync("git", ["-C", repo.path, "rev-parse", "HEAD"],
+    { encoding: "utf8", timeout: 10000 });
+  if (sha.status !== 0) return { ok: false, error: "git_revision_unavailable" };
+  const grep = spawnSync("git", ["-C", repo.path, "grep", "-n", "-I", "-F", "-e", needle, "HEAD", "--"],
+    { encoding: "utf8", timeout: 15000, maxBuffer: 1024 * 1024 * 2 });
+  if (grep.error || (grep.status !== 0 && grep.status !== 1)) {
+    return { ok: false, error: "git_search_failed" };
+  }
+  const lines = String(grep.stdout || "").split("\n").filter(Boolean);
+  const results = lines.slice(0, limit).map(raw => {
+    const match = /^HEAD:(.*?):(\d+):(.*)$/.exec(raw);
+    return match ? { path: match[1], line: Number(match[2]), snippet: match[3].slice(0, 350) } : null;
+  }).filter(Boolean);
+  return { ok: true, schema: "cogentia.code-search.v1", repo: repo.name,
+    commit: sha.stdout.trim(), source: "git_committed_tree", query: needle,
+    results, truncated: lines.length > limit, count: results.length };
+}
+
+function issueListReport(ctx, { repoArg = "all", state = "open", limit = 25, view = PUBLIC_VIEW } = {}) {
+  const repos = repoArg === "all"
+    ? ctx.repos.filter(repo => canSeeRepo(repo, view))
+    : [resolveIssueRepo(ctx, repoArg)];
+  // Visibility enforcement precedes any remote lookup, including explicit repo selectors.
+  if (repos.some(repo => !canSeeRepo(repo, view))) {
+    return { ok: false, error: "repository_not_visible" };
+  }
+  const issues = [];
+  const repository_errors = [];
+  for (const repo of repos) {
+    try {
+      const rows = ghJson([
+        "issue", "list", "--repo", repo.full_name || repo.github_full_name,
+        "--state", state, "--limit", String(limit),
+        "--json", "number,title,state,updatedAt,closedAt,url,labels,author",
+      ]);
+      issues.push(...rows.map(issue => ({
+        repository: repo.full_name || repo.github_full_name,
+        ...normalizeGitHubIssue(issue),
+      })));
+    } catch (error) {
+      repository_errors.push({ repository: repo.full_name || repo.github_full_name, error: error.message });
+    }
+  }
+  return { ok: repository_errors.length === 0, schema: "cogentia.issues-list.v1",
+    request: { repo: repoArg, state, limit, view }, issues, repository_errors };
+}
+
 function issueGraphReport(ctx, { repoArg = "all", state = "open", limit = 25, view = PUBLIC_VIEW } = {}) {
   const inventory = buildInventory(ctx);
   const repos = repoArg === "all"
     ? ctx.repos.filter(repo => canSeeRepo(repo, view))
     : [resolveIssueRepo(ctx, repoArg)];
+  if (repos.some(repo => !canSeeRepo(repo, view))) {
+    return { ok: false, error: "repository_not_visible", request: { repo: repoArg, state, limit, view } };
+  }
   const packets = [];
   const repoErrors = [];
   for (const repo of repos) {

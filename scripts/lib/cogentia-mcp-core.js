@@ -468,6 +468,20 @@ export const TOOLS = [
     inputSchema: { type: "object", properties: {}, additionalProperties: false },
   },
   {
+    name: "cogentia_code_search",
+    description: "Search a registered repository's committed source code locally, independent of GitHub code-search quota. Read-only; returns commit, paths, lines and snippets.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        query: { type: "string", minLength: 1, maxLength: 200 },
+        repo: { type: "string" },
+        limit: { type: "integer", minimum: 1, maximum: 50 },
+      },
+      required: ["query"],
+      additionalProperties: false,
+    },
+  },
+  {
     name: "cogentia_issue_graph",
     description: "Build a read-only graph of issues and their target documents.",
     inputSchema: {
@@ -1837,6 +1851,13 @@ export function createMcpCore(env = process.env, extras = {}) {
         return daemonGet("/api/context/explain", { result_id: args.result_id });
       case "cogentia_health":
         return daemonGet("/api/context/health", { quick: "1" });
+      case "cogentia_code_search":
+        requireString(args.query, "query");
+        return daemonGet("/api/cli/code/search", {
+          q: args.query,
+          repo: args.repo || "cogentia",
+          limit: boundedOptional(args.limit, 1, 50) || 20,
+        });
       case "cogentia_issue_graph":
         return daemonGet("/api/issues/graph", {
           repo: args.repo || "all",
@@ -1892,7 +1913,7 @@ export function createMcpCore(env = process.env, extras = {}) {
           kind: typeof args.kind === "string" ? args.kind : undefined,
         });
       case "cogentia_issues_list":
-        return daemonGet("/api/issues/graph", {
+        return daemonGet("/api/issues/list", {
           repo: args.repo || "all",
           state: enumOptional(args.state, ["open", "closed", "all"], "state") || "open",
         });
