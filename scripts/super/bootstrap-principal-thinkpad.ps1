@@ -85,27 +85,43 @@ try {
     External 'Preparation du mandat temporaire' { ssh -i $Key -o IdentitiesOnly=yes $Remote "node $generator $mandateRemote" }
     External 'Telechargement mandat' { scp -i $Key "${Remote}:$mandateRemote" $mandate }
     $m = Get-Content -LiteralPath $mandate -Raw | ConvertFrom-Json
+    # FBF: never hide which part of a signed mandate failed validation.
+    # Use Fracta2 UTC as the reference for this mandate; the trusted broker
+    # evaluates that same clock, not the Windows workstation's potentially
+    # offset clock. Clock disagreement cannot broaden the signed time window.
+    $serverUtcText = (& ssh -i $Key -o IdentitiesOnly=yes $Remote 'date -u +%Y-%m-%dT%H:%M:%SZ') -join ''
+    if ($LASTEXITCODE -ne 0) { throw 'Cannot obtain Fracta2 UTC time' }
+    $serverUtc = [DateTimeOffset]::Parse($serverUtcText)
+    $from = [DateTimeOffset]::Parse([string]$m.valid_from)
+    $until = [DateTimeOffset]::Parse([string]$m.valid_until)
+    $violations = [System.Collections.Generic.List[string]]::new()
+    if ($m.kind -cne 'cogentia.maintenance-mandate-proposal/v1') { $violations.Add('kind') }
+    if ($m.mandate_id -cne 'mandate:jhn:maintenance') { $violations.Add('mandate_id') }
+    if ($m.version -cne 'v1') { $violations.Add('version') }
+    if ($m.principal_ref -cne 'principal:jhn') { $violations.Add('principal_ref') }
+    if ($m.actor_ref -cne 'agent:jhn') { $violations.Add('actor_ref') }
+    if ($m.max_delegation_depth -ne 0) { $violations.Add('delegation_depth') }
+    if ($m.scope.execution_mode -cne 'super') { $violations.Add('execution_mode') }
+    if ($m.scope.target -cne 'node:fracta2') { $violations.Add('target') }
+    if ($m.scope.service -cne 'mcp-cogentia.service') { $violations.Add('service') }
     $scopeNames = @($m.scope.PSObject.Properties.Name | Sort-Object)
     $expectedScope = @('allowed_actions','execution_mode','service','target')
-    $from = [DateTimeOffset]::Parse($m.valid_from)
-    $until = [DateTimeOffset]::Parse($m.valid_until)
-    if ($m.kind -ne 'cogentia.maintenance-mandate-proposal/v1' -or
-        $m.mandate_id -ne 'mandate:jhn:maintenance' -or $m.version -ne 'v1' -or
-        $m.principal_ref -ne 'principal:jhn' -or $m.actor_ref -ne 'agent:jhn' -or
-        $m.max_delegation_depth -ne 0 -or
-        (@($m.scope.allowed_actions).Count -ne 1) -or
-        $m.scope.allowed_actions[0] -ne 'service.restart' -or
-        $m.scope.execution_mode -ne 'super' -or
-        $m.scope.target -ne 'node:fracta2' -or
-        $m.scope.service -ne 'mcp-cogentia.service' -or
-        ($scopeNames -join ',') -cne ($expectedScope -join ',') -or
-        $m.budget_limits.max_steps -ne 12 -or
-        (@($m.budget_limits.PSObject.Properties.Name).Count -ne 1) -or
-        $until -le [DateTimeOffset]::UtcNow -or
-        $from -gt [DateTimeOffset]::UtcNow -or
-        ($until - $from).TotalHours -gt 48) {
-        throw 'Mandat COP non borne exactement aux 12 redemarrages / 48 heures'
+    if (($scopeNames -join ',') -cne ($expectedScope -join ',')) { $violations.Add('scope_field_names') }
+    $actions = @($m.scope.allowed_actions)
+    if ($actions.Count -ne 1 -or [string]$actions[0] -cne 'service.restart') { $violations.Add('allowed_actions') }
+    $budgetNames = @($m.budget_limits.PSObject.Properties.Name)
+    if ($budgetNames.Count -ne 1 -or [string]$budgetNames[0] -cne 'max_steps') { $violations.Add('budget_field_names') }
+    if ($m.budget_limits.max_steps -ne 12) { $violations.Add('budget_max_steps') }
+    if ($until -le $serverUtc) { $violations.Add('expired') }
+    if ($from -gt $serverUtc) { $violations.Add('not_yet_valid') }
+    if (($until - $from).TotalSeconds -gt 172800) { $violations.Add('duration_exceeds_48h') }
+    if ($violations.Count -gt 0) {
+        throw ('Mandate validation failed: ' + ($violations -join ',') +
+            '; server_utc=' + $serverUtc.ToString('o') +
+            '; valid_from=' + $from.ToString('o') +
+            '; valid_until=' + $until.ToString('o'))
     }
+    Write-Host 'Mandate verified: only MCP restart; 12 operations; <= 48h, server-clock aligned.'
     External 'Cle publique sur Fracta2' { scp -i $Key $Public "${Remote}:$WorkRemote/principal-issuer.pub" }
     External 'Installateur sur Fracta2' { scp -i $Key $installer "${Remote}:$WorkRemote/installer.py" }
 
