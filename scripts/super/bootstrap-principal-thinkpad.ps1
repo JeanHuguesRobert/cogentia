@@ -11,8 +11,10 @@ $ErrorActionPreference = 'Stop'
 Set-StrictMode -Version Latest
 
 $Remote = 'ubuntu@100.84.109.87'
-$Key = Join-Path $HOME '.ssh\fractanet-mesh'
-$Public = "$Key.pub"
+$Key = Join-Path $HOME '.ssh\fractanet-mesh' # SSH transport only
+$PrincipalFingerprint = 'SHA256:lG9BC3fIjurrBccYLO1w7VQpmc9ZMr8MvM1o3zJ6L3c'
+$SigningKey = $null
+$Public = $null
 $WorkRemote = '/tmp/cogentia-maintenance-handoff-20261107'
 $Head = 'a997b12'
 $InstallerHash = '811da318b8d15849b56bdfb65946f91962adc6e2eb5e18c762e85c0d5c9da4ed'
@@ -39,17 +41,29 @@ function RemoteJson([string]$Task,[string]$Command) {
     return $data
 }
 function SignFile([string]$Path,[string]$Namespace) {
-    External "Signature $Namespace" { ssh-keygen -Y sign -f $Key -n $Namespace $Path }
+    External "Signature $Namespace" { ssh-keygen -Y sign -f $SigningKey -n $Namespace $Path }
     if (-not (Test-Path -LiteralPath "$Path.sig" -PathType Leaf)) { throw "Signature absente : $Path.sig" }
 }
 try {
     Step 'SSH et identité locale'
     if (-not (Test-Path -LiteralPath $Key -PathType Leaf)) { throw "Clé SSH introuvable : $Key" }
-    if (-not (Test-Path -LiteralPath $Public -PathType Leaf)) {
-        $output = (& ssh-keygen -y -f $Key) -join "`n"
-        if ($LASTEXITCODE -ne 0 -or -not $output.StartsWith('ssh-')) { throw 'Impossible de dériver la clé publique' }
-        [IO.File]::WriteAllText($Public,($output.Trim() + "`n"),$Utf8)
+    # Reuse the already trusted personal RSA signing identity, not the
+    # Fractanet mesh transport key. Never infer signing authority from SSH login.
+    $matches = @()
+    foreach ($candidate in @(Get-ChildItem -LiteralPath (Join-Path $HOME '.ssh') -File -Filter '*.pub')) {
+        $identity = $candidate.FullName.Substring(0,$candidate.FullName.Length - 4)
+        if (-not (Test-Path -LiteralPath $identity -PathType Leaf)) { continue }
+        $lines = @(& ssh-keygen -lf $candidate.FullName 2>$null)
+        if ($LASTEXITCODE -eq 0 -and ($lines -join ' ') -match [regex]::Escape($PrincipalFingerprint)) {
+            $matches += [pscustomobject]@{ Private = $identity; Public = $candidate.FullName }
+        }
     }
+    if ($matches.Count -ne 1) {
+        throw "Clé RSA personnelle SSHSIG introuvable ou ambiguë : $PrincipalFingerprint. Ne pas utiliser fractanet-mesh comme substitut."
+    }
+    $SigningKey = $matches[0].Private
+    $Public = $matches[0].Public
+    Write-Host "Identité indépendante retrouvée : $PrincipalFingerprint"
     External 'Connexion Fracta2' { ssh -i $Key -o IdentitiesOnly=yes $Remote 'test "$(hostname)" = fracta2 && test "$(whoami)" = ubuntu' }
     $publicHash = SHA $Public
 
@@ -104,7 +118,7 @@ try {
 
     Step 'Activation COP root contrôlée'
     Write-Host "Fracta2 ; issuer uniquement ; archive $BundleHash"
-    Write-Host "Clé SSH publique : $publicHash"
+    Write-Host "Clé de signature RSA préexistante : $PrincipalFingerprint ; SHA256 fichier $publicHash"
     Write-Host "Une seule signature pour 12 redémarrages du seul MCP pendant 48 heures."
     $consent = Read-Host 'Tapez OUI pour autoriser ce parcours complet'
     if ($consent -cne 'OUI') { throw 'Parcours annulé' }
@@ -157,6 +171,6 @@ exec(compile(content,p,'exec'),{'__name__':'__main__','__file__':p})
     Write-Error "ÉCHEC CONTRÔLÉ : $($_.Exception.Message)"
     throw
 } finally {
-    # No private key is copied or included in this temporary work directory.
+    # Neither the mesh transport key nor personal RSA private key is copied.
     Remove-Item -LiteralPath $WorkLocal -Recurse -Force -ErrorAction SilentlyContinue
 }
