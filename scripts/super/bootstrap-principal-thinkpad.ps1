@@ -103,7 +103,7 @@ sys.argv=[p]+sys.argv[3:]
 exec(compile(content,p,'exec'),{'__name__':'__main__','__file__':p})
 '@
     $guardB64 = [Convert]::ToBase64String([Text.Encoding]::UTF8.GetBytes($guard))
-    $python = "import base64;exec(base64.b64decode(\"$guardB64\"))"
+    $python = 'import base64;exec(base64.b64decode("' + $guardB64 + '"))'
     $rootArgs = "--bundle $WorkRemote/root-issuer.tar.gz --sha256 $BundleHash --pubkey $WorkRemote/principal-issuer.pub --pubkey-sha256 $publicHash --activate --resume-verified-stage"
     $state = (& ssh -i $Key -o IdentitiesOnly=yes $Remote "test -f /etc/cogentia-super/principal-issuer.pub && echo ENROLLED || echo INITIAL") -join ''
     if ($LASTEXITCODE -ne 0) { throw 'État issuer illisible' }
