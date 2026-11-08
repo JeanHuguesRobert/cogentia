@@ -49,20 +49,20 @@ try {
     if (-not (Test-Path -LiteralPath $Key -PathType Leaf)) { throw "Cle SSH introuvable : $Key" }
     # Reuse the already trusted personal RSA signing identity, not the
     # Fractanet mesh transport key. Never infer signing authority from SSH login.
-    $matches = @()
+    $signerCandidates = @()
     foreach ($candidate in @(Get-ChildItem -LiteralPath (Join-Path $HOME '.ssh') -File -Filter '*.pub')) {
         $identity = $candidate.FullName.Substring(0,$candidate.FullName.Length - 4)
         if (-not (Test-Path -LiteralPath $identity -PathType Leaf)) { continue }
         $lines = @(& ssh-keygen -lf $candidate.FullName 2>$null)
         if ($LASTEXITCODE -eq 0 -and ($lines -join ' ') -match [regex]::Escape($PrincipalFingerprint)) {
-            $matches += [pscustomobject]@{ Private = $identity; Public = $candidate.FullName }
+            $signerCandidates += [pscustomobject]@{ Private = $identity; Public = $candidate.FullName }
         }
     }
-    if ($matches.Count -ne 1) {
+    if ($signerCandidates.Count -ne 1) {
         throw "Cle RSA personnelle SSHSIG introuvable ou ambigue : $PrincipalFingerprint. Ne pas utiliser fractanet-mesh comme substitut."
     }
-    $SigningKey = $matches[0].Private
-    $Public = $matches[0].Public
+    $SigningKey = $signerCandidates[0].Private
+    $Public = $signerCandidates[0].Public
     Write-Host "Identite independante retrouvee : $PrincipalFingerprint"
     External 'Connexion Fracta2' { ssh -i $Key -o IdentitiesOnly=yes $Remote 'test "$(hostname)" = fracta2 && test "$(whoami)" = ubuntu' }
     $publicHash = SHA $Public
