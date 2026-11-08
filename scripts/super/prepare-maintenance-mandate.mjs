@@ -10,11 +10,11 @@ const proposal={
  mandate_id:'mandate:jhn:maintenance',version:'v1',
  principal_ref:'principal:jhn',actor_ref:'agent:jhn',
  max_delegation_depth:0,
- scope:{allowed_actions:['host.process.run'],execution_mode:'super',target:'node:fracta2'},
+ scope:{allowed_actions:['service.restart'],execution_mode:'super',target:'node:fracta2',service:'mcp-cogentia.service'},
  budget_limits:{max_steps:12},
  valid_from:new Date(now-60000).toISOString(),
- valid_until:new Date(+now+30*86400000).toISOString(),
- reason:'Maintenance limitee, recuperable et imputable des services Fractanet sur fracta2'
+ valid_until:new Date(+now+48*3600000).toISOString(),
+ reason:'Mise au point du MCP : au plus douze redemarrages du seul mcp-cogentia.service en 48 heures'
 };
 fs.writeFileSync(target,canonical(proposal),{encoding:'utf8',mode:0o644,flag:'wx'});
 console.log(JSON.stringify({ok:true,phase:'PROPOSAL_ONLY_NOT_AUTHORIZED',filename:target,

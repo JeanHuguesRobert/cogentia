@@ -8,7 +8,7 @@ import {createSqliteCopEventStore} from '../../../inseme/packages/cop-core/src/s
 import {canonical} from './principal-effect-issuer.mjs';
 import {verifySignedMaintenanceMandate,recordVerifiedMaintenanceMandate,enrollMaintenanceMandate} from './root-maintenance-mandate.mjs';
 const now=new Date('2026-11-07T08:00:00Z');
-const proposal={kind:'cogentia.maintenance-mandate-proposal/v1',mandate_id:'mandate:jhn:maintenance',version:'v1',principal_ref:'principal:jhn',actor_ref:'agent:jhn',max_delegation_depth:0,scope:{allowed_actions:['host.process.run'],execution_mode:'super',target:'node:fracta2'},budget_limits:{max_steps:12},valid_from:'2026-11-07T07:00:00Z',valid_until:'2026-12-07T07:00:00Z',reason:'Deploy and maintain Fractanet MCP under signed COP approval'};
+const proposal={kind:'cogentia.maintenance-mandate-proposal/v1',mandate_id:'mandate:jhn:maintenance',version:'v1',principal_ref:'principal:jhn',actor_ref:'agent:jhn',max_delegation_depth:0,scope:{allowed_actions:['service.restart'],execution_mode:'super',target:'node:fracta2',service:'mcp-cogentia.service'},budget_limits:{max_steps:12},valid_from:'2026-11-07T07:00:00Z',valid_until:'2026-11-09T07:00:00Z',reason:'Deploy and maintain Fractanet MCP under signed COP approval'};
 test('real SSHSIG maintenance mandate enrols once on canonical SQLite with traceable budget',()=>{
  const dir=mkdtempSync(join(tmpdir(),'jhn-maintenance-sign-'));
  try{
@@ -29,6 +29,9 @@ test('real SSHSIG maintenance mandate enrols once on canonical SQLite with trace
    assert.equal(recordVerifiedMaintenanceMandate({store,proposal,proof:{...proof,proposal_hash:'sha256:other'}}).ok,false);
   } finally {store.close();}
   assert.equal(verifySignedMaintenanceMandate({proposal:{...proposal,budget_limits:{max_steps:500}},signature,trustedPublicKey,now}).ok,false);
+  assert.equal(verifySignedMaintenanceMandate({proposal:{...proposal,budget_limits:{max_steps:13}},signature,trustedPublicKey,now}).ok,false);
+  assert.equal(verifySignedMaintenanceMandate({proposal:{...proposal,valid_until:'2026-11-10T07:01:00Z'},signature,trustedPublicKey,now}).ok,false);
+  assert.equal(verifySignedMaintenanceMandate({proposal:{...proposal,scope:{...proposal.scope,service:'other.service'}},signature,trustedPublicKey,now}).ok,false);
   assert.equal(verifySignedMaintenanceMandate({proposal:{...proposal,reason:'Modified while signed'},signature,trustedPublicKey,now}).error,'signed_principal_approval_invalid');
  }finally{rmSync(dir,{recursive:true,force:true});}
 });

@@ -69,6 +69,21 @@ function execute(script,timeout){
   });
 }
 export async function handle(r){
+  if(r?.op==='restart_mcp'){
+    if(Object.keys(r).sort().join(',')!=='op')return fail('restart_request_scope_invalid');
+    if(process.geteuid?.()!==0)return fail('root_required');
+    try{
+      const {restartMcpFromProtectedBroker}=await import('file:///usr/local/libexec/cogentia-super/issuer/repos/cogentia/scripts/super/root-bounded-mcp-restart.mjs');
+      return await restartMcpFromProtectedBroker({performRestart:service=>new Promise(resolve=>{
+        if(service!=='mcp-cogentia.service')return resolve({ok:false});
+        execFile('/usr/bin/systemctl',['restart','mcp-cogentia.service'],{timeout:20000},(error)=>{
+          if(error)return resolve({ok:false});
+          execFile('/usr/bin/systemctl',['is-active','mcp-cogentia.service'],{timeout:5000},(err,stdout)=>
+            resolve({ok:!err&&stdout.trim()==='active'}));
+        });
+      })});
+    }catch(e){log({event:'bounded_restart_unavailable',reason:e?.code||'module_error'});return fail('bounded_restart_unavailable');}
+  }
   if(r?.op==='reconcile'){
     if(process.geteuid?.()!==0)return fail('root_reconciliation_unavailable');
     try{

@@ -23,6 +23,7 @@ class BundleChecks(unittest.TestCase):
             self.assertTrue(trusted['ok'],trusted)
             self.assertIn('issuer/repos/cogentia/scripts/super/root-maintenance-mandate.mjs',trusted['members'])
             self.assertIn('issuer/repos/cogentia/scripts/super/root-super-prepare.mjs',trusted['members'])
+            self.assertIn('issuer/repos/cogentia/scripts/super/root-bounded-mcp-restart.mjs',trusted['members'])
             self.assertIn('issuer/repos/cogentia/scripts/super/root-effect-reconcile.mjs',trusted['members'])
             corrupt=bytearray(a.read_bytes());corrupt[len(corrupt)//2]^=1
             a.write_bytes(corrupt)

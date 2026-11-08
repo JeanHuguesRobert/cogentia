@@ -18,6 +18,7 @@ FILES = [
     'cogentia/scripts/super/root-principal-effect-issue.mjs',
     'cogentia/scripts/super/principal-effect-issuer.mjs',
     'cogentia/scripts/super/root-maintenance-mandate.mjs',
+    'cogentia/scripts/super/root-bounded-mcp-restart.mjs',
     'cogentia/scripts/super/root-super-prepare.mjs',
     'cogentia/scripts/super/root-effect-reconcile.mjs',
     'cogentia/scripts/lib/principal-super-effect-admission.js',

@@ -17,6 +17,7 @@ EXPECTED={
     'issuer/repos/cogentia/scripts/super/root-principal-effect-issue.mjs',
     'issuer/repos/cogentia/scripts/super/principal-effect-issuer.mjs',
     'issuer/repos/cogentia/scripts/super/root-maintenance-mandate.mjs',
+    'issuer/repos/cogentia/scripts/super/root-bounded-mcp-restart.mjs',
     'issuer/repos/cogentia/scripts/super/root-super-prepare.mjs',
     'issuer/repos/cogentia/scripts/super/root-effect-reconcile.mjs',
     'issuer/repos/cogentia/scripts/lib/principal-super-effect-admission.js',
@@ -95,11 +96,13 @@ def verified_existing_stage(directory,verified,owner_uid=0):
         hashlib.sha256(actual[name].read_bytes()).digest()==hashlib.sha256(data).digest()
         for name,data in expected.items())
 
-def install(verified,keydata,allow_verified_stage=False):
+def install(verified,keydata,allow_verified_stage=False,previous_verified=None):
     if os.geteuid()!=0:return {'ok':False,'error':'root_required'}
     if not protected_dir(BASE) or not protected_dir(STATE):return {'ok':False,'error':'root_directories_not_protected'}
     reuse_stage=BUNDLE_DIR.exists() and allow_verified_stage and verified_existing_stage(BUNDLE_DIR,verified)
-    if (BUNDLE_DIR.exists() and not reuse_stage) or KEY.exists() or BACKUP.exists():
+    replace_reviewed=BUNDLE_DIR.exists() and allow_verified_stage and not reuse_stage and previous_verified is not None and verified_existing_stage(BUNDLE_DIR,previous_verified)
+    previous_dir=BUNDLE_DIR.with_name('issuer.pre-initial-completion')
+    if (BUNDLE_DIR.exists() and not reuse_stage and not replace_reviewed) or (replace_reviewed and previous_dir.exists()) or KEY.exists() or BACKUP.exists():
         return {'ok':False,'error':'already_initialized_review_manually'}
     if not BROKER.is_file() or BROKER.is_symlink() or BROKER.stat().st_uid!=0:return {'ok':False,'error':'broker_not_root_owned'}
     if GRANTS.exists() and (GRANTS.is_symlink() or GRANTS.stat().st_uid!=0 or GRANTS.stat().st_mode&0o077):
@@ -120,7 +123,13 @@ def install(verified,keydata,allow_verified_stage=False):
                 os.chmod(target,0o644)
             for folder in [stage,*stage.rglob('*')]:
                 if folder.is_dir():os.chmod(folder,0o755)
-            os.replace(stage,BUNDLE_DIR)
+            if replace_reviewed:
+                os.replace(BUNDLE_DIR,previous_dir)
+            try:os.replace(stage,BUNDLE_DIR)
+            except:
+                if replace_reviewed and previous_dir.exists() and not BUNDLE_DIR.exists():
+                    os.replace(previous_dir,BUNDLE_DIR)
+                raise
         finally:
             if stage.exists():shutil.rmtree(stage)
     install_file(KEY,keydata,0o644)
@@ -196,6 +205,8 @@ def main():
     parser.add_argument('--activate',action='store_true')
     parser.add_argument('--upgrade',action='store_true')
     parser.add_argument('--resume-verified-stage',action='store_true')
+    parser.add_argument('--previous-bundle')
+    parser.add_argument('--previous-sha256')
     args=parser.parse_args()
     result=verify_bundle(args.bundle,args.sha256)
     if not result['ok']:print(json.dumps(result));return 1
@@ -209,10 +220,15 @@ def main():
         print(json.dumps({'ok':False,'error':'principal_key_fingerprint_mismatch'}));return 1
     summary={'ok':True,'bundle_sha256':result['sha256'],'key_sha256':key_hash,'files':len(result['members']),
              'phase':'DRY_RUN_NO_INSTALL' if not args.activate else 'EXPLICIT_ROOT_ACTIVATION'}
-    if (args.activate and args.upgrade) or (args.resume_verified_stage and not args.activate):
+    if (args.activate and args.upgrade) or (args.resume_verified_stage and not args.activate) or bool(args.previous_bundle)!=bool(args.previous_sha256) or (args.previous_bundle and not args.resume_verified_stage):
         print(json.dumps({'ok':False,'error':'mutually_exclusive_activation_modes'}));return 1
     if not (args.activate or args.upgrade):print(json.dumps(summary,indent=2));return 0
-    outcome=upgrade(result) if args.upgrade else install(result,key,allow_verified_stage=args.resume_verified_stage)
+    previous=None
+    if args.previous_bundle:
+        previous=verify_bundle(args.previous_bundle,args.previous_sha256)
+        if not previous['ok']:
+            print(json.dumps({'ok':False,'error':'previous_archive_unverified'}));return 1
+    outcome=upgrade(result) if args.upgrade else install(result,key,allow_verified_stage=args.resume_verified_stage,previous_verified=previous)
     print(json.dumps(outcome,indent=2));return 0 if outcome['ok'] else 1
 
 if __name__=='__main__':sys.exit(main())

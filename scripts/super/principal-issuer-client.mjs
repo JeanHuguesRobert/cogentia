@@ -10,6 +10,7 @@ export function buildIssuerRequest(argv){
   return {op,proposal:JSON.parse(fs.readFileSync(a,'utf8')),
    signature:fs.readFileSync(b,'utf8')};
  }
+ if(op==='restart_mcp'){if(argv.length!==1)return null;return {op:'restart_mcp'};}
  if(op==='reconcile'){
   if(!a||b)return null;return {op,authorization_id:a};
  }

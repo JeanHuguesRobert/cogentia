@@ -78,3 +78,8 @@ test('super broker never executes an arbitrary script directly as root by defaul
  assert.equal(unprivilegedBin,'/bin/sh');
  assert.deepEqual(unprivilegedArgs,['-c','id -u']);
 });
+
+test('mandated recurring restart requires root broker and accepts no command or service argument',async()=>{
+ assert.equal((await handle({op:'restart_mcp',script:'id -u'})).error,'restart_request_scope_invalid');
+ if(process.geteuid?.()!==0)assert.equal((await handle({op:'restart_mcp'})).error,'root_required');
+});

@@ -13,6 +13,7 @@ import {createMemoryCopEventStore} from '../../../inseme/packages/cop-core/src/c
 import {recordMandateDeclaration} from '../../../inseme/packages/cop-core/src/governed-act.js';
 import {recordExecutionBudgetGrant} from '../../../inseme/packages/cop-core/src/execution-budget.js';
 const NS='cogentia-maintenance-mandate-v1';
+const RESTART_SCOPE={allowed_actions:['service.restart'],execution_mode:'super',target:'node:fracta2',service:'mcp-cogentia.service'};
 const deny=error=>({ok:false,error,grants_authority:false});
 export function verifySignedMaintenanceMandate({proposal:p,signature,trustedPublicKey,now=new Date()}={}){
  if(!p||typeof p!=='object'||Array.isArray(p))return deny('proposal_required');
@@ -22,14 +23,12 @@ export function verifySignedMaintenanceMandate({proposal:p,signature,trustedPubl
  if(p.kind!=='cogentia.maintenance-mandate-proposal/v1'||
    p.principal_ref!=='principal:jhn'||p.actor_ref!=='agent:jhn'||p.mandate_id!=='mandate:jhn:maintenance'||
    p.version!=='v1'||p.max_delegation_depth!==0||
-   Object.keys(scope).sort().join(',')!=='allowed_actions,execution_mode,target'||
-   JSON.stringify(scope.allowed_actions)!=='["host.process.run"]'||
-   scope.execution_mode!=='super'||scope.target!=='node:fracta2'||
+   JSON.stringify(scope)!==JSON.stringify(RESTART_SCOPE)||
    Object.keys(p.budget_limits||{}).join(',')!=='max_steps'||
-   !Number.isSafeInteger(p.budget_limits.max_steps)||p.budget_limits.max_steps<1||p.budget_limits.max_steps>50||
+   !Number.isSafeInteger(p.budget_limits.max_steps)||p.budget_limits.max_steps<1||p.budget_limits.max_steps>12||
    typeof p.reason!=='string'||p.reason.trim().length<12)return deny('maintenance_mandate_scope_invalid');
  const from=Date.parse(p.valid_from),until=Date.parse(p.valid_until),ts=+new Date(now);
- if(!Number.isFinite(from)||!Number.isFinite(until)||from>ts||ts>=until||until-from>46*86400000)
+ if(!Number.isFinite(from)||!Number.isFinite(until)||from>ts||ts>=until||until-from>48*3600000)
    return deny('maintenance_mandate_validity_invalid');
  if(!trustedPublicKey||typeof signature!=='string'||signature.length>8192||!signature.startsWith('-----BEGIN SSH SIGNATURE-----'))return deny('signed_principal_approval_missing');
  const tmp=mkdtempSync(join(tmpdir(),'maintenance-mandate-'));
