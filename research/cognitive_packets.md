@@ -172,6 +172,15 @@ become tomorrow's mandatory decomposition. This is a conceptual connection,
 not a proposal for a separate Spirit-of-Synthesis daemon, mandatory new
 packet kind, or additional governance layer.
 
+**Mechanism hypothesis (2026-11-08, not yet demonstrated):**
+semantic reconciliation of conversational Acts with previously separate
+Cognitive Packets may be **one means by which the Spirit of Synthesis acts**.
+The potentially generative step is not matching or filing the packets, but
+composing their observations and capacities so that some additional Possible
+becomes accessible. This precise causal hypothesis is retained in the
+[canonical Potentics definition, §3.5](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/potentics.md#35-spirit-of-synthesis).
+Observed attachment/deduplication alone does not establish generative synthesis.
+
 **Scale invariance without authority inflation:** an umbrella may itself be a child of another umbrella, but this does not grant new mandate, source sovereignty or permissions. Child results can require revisiting the parent hypothesis; the parent cannot silently rewrite a child's historically completed external acts.
 
 **Observed precedents, not proofs of a universally supported protocol:** [barons-Mariani #127](https://github.com/JeanHuguesRobert/barons-Mariani/issues/127), [Cogentia #278](https://github.com/JeanHuguesRobert/cogentia/issues/278), and [Capable coordination #152](https://github.com/JeanHuguesRobert/barons-Mariani/issues/152). This candidate pattern refines the use of existing Cognitive Packets through FractaCognition and the Second Method. Test it against work already done before proposing additional schemas or executors.
