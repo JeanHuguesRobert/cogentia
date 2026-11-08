@@ -248,6 +248,21 @@ judgment, cross-repository discovery, attachment receipts and governance to
 future work driven by real use. Deterministic tests are in
 `test/packet-relate.test.js`.
 
+**Judgment Continuation handoff (2026-11-08):**
+The `packet relate` CLI additionally supports `--judgment-preview` (no
+mutation) and explicit `--emit-continuation`, which uses the **existing**
+`emitContinuation` store and `kind: judgment`, with a stable content-based
+`dedupe_key`, candidates, line evidence, source text, review criteria,
+`required_capabilities: [semantic_judgment]` and typed expected JSON return
+(`cogentia.packet_relation_judgment.v1`). An empty discovery does not
+create a Judgment task. Repeating an identical request reuses the active
+Continuation. No model invocation, automatic dispatch, packet attachment,
+COP permission or semantic judgment is implied. The handler, when available,
+examines candidates and may conclude `no_attachment` or `needs_evidence`.
+Integration tests exercise actual store creation and deduplication in an
+isolated registry. **Assimilation of approved judgments remains a separate
+follow-up concern**, not an undocumented effect of this flag.
+
 **Scientific and commons boundary:** distinguish retrieving evidence from
 asserting truth, correlation from causation, ranking from permission, and
 observed improvement from universal validity. This mapping is an

@@ -47,6 +47,11 @@ export function relatePacket({text,roots=[],limit=6,source='inline',maxFiles=350
       if(seen.has(key))continue;seen.add(key);
       const content=safeRead(file);
       if(!content)continue;read++;
+      // Never rediscover the Judgment Continuation this command just emitted:
+      // doing so changes the candidate set and defeats content-addressed deduplication.
+      if (file.endsWith('.json') && content.includes('cogentia.packet_relation_judgment.v1')) {
+        try { if (JSON.parse(content)?.context?.protocol === 'cogentia.packet_relation_judgment.v1') continue; } catch {}
+      }
       const m=meta(content,file);
       // No silent eligibility for private/non-public sources.
       if(['private','confidential','restricted'].includes(normalize(m.visibility)))continue;

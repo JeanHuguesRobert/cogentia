@@ -72,6 +72,7 @@ import { runConvergenceLoop } from "./lib/convergence-loop.js";
 import { createSchedulerRunContext, runFractaCycle, SCHEDULER_CYCLE_MODES, SCHEDULER_STAGE_STATUS } from "./lib/fracta-scheduler.js";
 import { packDocumentToCapsule, verifyCapsule, unpackCapsule } from "./lib/packet-capsule.js";
 import { relatePacket } from "./lib/packet-relate.js";
+import { packetRelateJudgmentRequest } from "./lib/packet-relate-judgment.js";
 import { runMonteCarloAudit, SleepCycleReviewQueue, REVIEW_DECISIONS } from "./lib/corpus-sleep-cycle/index.js";
 import {
   runSenatorialesIocSuite,
@@ -1105,6 +1106,8 @@ Effect commands (#171 mint UI):
 Continuation commands:
   packet relate --text "..."   Read-only candidate attachment to existing packets.
                              Flags: --file <path> --root <repo> --limit <1..25> --json.
+                             --judgment-preview (read-only) or --emit-continuation
+                             (durable deduplicated Judgment handoff, no attachment).
   packet capsule           Pack, verify, or unpack portable packet capsules.
   continuation emit        Emit an external judgment request.
   continuation list        List continuations.
@@ -1954,10 +1957,13 @@ function cmdPacketRelateOrCapsule() {
   const sub = argv[0] || 'help';
   if (sub !== 'relate') return cmdPacket(null, argv);
   argv.shift();
+  const emit = takeFlag('--emit-continuation');
+  const preview = takeFlag('--judgment-preview');
+  if (emit && preview) throw new Error('Choose --emit-continuation OR --judgment-preview');
   const inline = valueFlag('--text');
   const file = valueFlag('--file');
   const source = file ? path.resolve(file) : 'inline';
-  if ((inline && file) || (!inline && !file)) throw new Error('Usage: cogentia packet relate --text "..." | --file <path> [--root <repo>] [--limit <n>] [--json]');
+  if ((inline && file) || (!inline && !file)) throw new Error('Usage: cogentia packet relate --text "..." | --file <path> [--root <repo>] [--limit <n>] [--judgment-preview | --emit-continuation] [--json]');
   const input = file ? fs.readFileSync(source, 'utf8') : inline;
   const root = valueFlag('--root');
   const limitRaw = valueFlag('--limit');
@@ -1965,6 +1971,13 @@ function cmdPacketRelateOrCapsule() {
   if (!Number.isInteger(limit)||limit<1||limit>25)throw new Error('--limit must be an integer 1..25');
   const roots = root ? [path.resolve(root)] : [process.cwd()];
   const report=relatePacket({text:input,roots,limit,source});
+  if (emit || preview) {
+    if (!report.candidates.length) return output({ok:true,created:false,reason:'no_candidates',discovery:report},'No candidate: no judgment continuation emitted.');
+    const request=packetRelateJudgmentRequest(report,{input,source});
+    if (preview) return output({ok:true,read_only:true,created:false,request,discovery:report},'Judgment continuation preview only. Use --emit-continuation to create it.');
+    const result=emitContinuation(loadContext(),request);
+    return output({ok:result.ok,created:result.created,path:result.path,continuation_id:result.continuation?.id,dedupe_key:request.dedupe_key,discovery:report},`Judgment continuation ${result.created?'created':'reused'}: ${result.continuation?.id}. No packet attachment performed.`);
+  }
   return output(report, [
     `Read-only packet attachment proposals (${report.candidates.length}, scanned ${report.scanned_files})`,
     ...report.candidates.map(c=>`- ${c.reference} [${c.rank_signal} ranking signal] ${c.title}: ${c.matched_terms.join(', ')}`),
