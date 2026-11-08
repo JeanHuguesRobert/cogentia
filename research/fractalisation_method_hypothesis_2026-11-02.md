@@ -369,6 +369,46 @@ Pour chaque expérience : expliciter la charge, les alternatives, le critère d'
 
 **Critère de falsification essentiel :** si la composition adaptative n'apporte pas de bénéfice robuste par rapport à une solution plus simple, ne pas la promouvoir au rang de méthode par défaut.
 
+### 11 bis. Extension inter-échelles : de l'infiniment petit au cosmologique (8 novembre 2026)
+
+**Hypothèse de portée, non constat de fractalité physique universelle.** En
+rapprochant la méthode de fractalisation du [Principe de Localité](locality_principle.md),
+de l'[Esprit de Synthèse](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/potentics.md#35-spirit-of-synthesis)
+et de l'hypothèse exploratoire d'un [Univers computationnel](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/potentics.md#821-exploratory-cosmological-hypothesis--the-universe-is-a-networked-learning-computer),
+on peut envisager une **récursivité fonctionnelle** des processus
+organisationnels à des échelles situées aussi bien en dessous qu'au-dessus
+de notre échelle humaine. Humains et agents cognitifs se situeraient ainsi
+**à l'intérieur** de la gamme d'échelles étudiée, non à son sommet ni à sa
+base privilégiés.
+
+La grammaire hypothétique est : interactions localement réalisables,
+traces et mémoire physique ou informationnelle, dépendances, compositions,
+formation de nouvelles structures/capacités et changements d'échelle. Ce qui
+se conserve est une **question d'organisation et de localité suffisante**,
+non une géométrie identique, une unité matérielle commune, un format de
+paquet, une conscience ou un mandat transposable à des particules et galaxies.
+Une cellule ne gouverne pas comme une association ; un champ quantique ne
+réalise pas une continuation COP.
+
+Le Principe de Localité du Corpus reste **normatif/méthodologique** : placer
+les décisions, ressources et responsabilités à la plus petite localité
+suffisante. La localité physique (relativité, causalité et corrélations
+quantiques) relève d'autres définitions et ne saurait être déduite de cette
+règle. Des phénomènes non locaux, des niveaux non composables ou des limites
+d'échelle peuvent interrompre l'analogie. De surcroît, la distribution des
+galaxies est approximativement homogène statistiquement à suffisamment
+grande échelle : aucune fractalité spatiale sans borne n'est établie
+([WiggleZ, 2012](https://academic.oup.com/mnras/article/425/1/116/996621) ;
+[S-PLUS, 2026](https://doi.org/10.1103/382j-p22b)).
+
+Cette extension n'ajoute donc ni obligation de décomposition infinie ni
+nouvel acteur cosmique. Elle propose une **question transversale** : à
+quelles échelles des interactions situées et leurs traces rendent-elles
+possibles de nouvelles capacités de composition ? L'intérêt opérationnel
+pour Cogentia demeure modeste et concret : créer peu de paquets, réutiliser
+leurs continuités, composer les capacités de handlers sans effacer la
+provenance, et laisser les organisations futures se réviser librement.
+
 ## 12. Articulation avec le Corpus : source, méthode et implémentation
 
 Cette recherche ne remplace aucun des textes canoniques spécialisés :
