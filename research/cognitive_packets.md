@@ -308,6 +308,76 @@ common store's invariant and identifies adapters/legacy producers requiring
 future convergence. Do not add mandatory return addresses to old packet
 formats just to mimic the common store.
 
+**Scheduler drain-loop invariant and starvation audit (2026-11-08):**
+
+The previously agreed operational goal is **not merely to monitor** the
+Continuation backlog: one or several Schedulers must repeatedly select an
+eligible Continuation, acquire exclusive processing rights through the
+*existing COP PacketClaim*, invoke a qualified handler under its mandate,
+record the result, make the parent continuation runnable again, and repeat
+until no **currently runnable** work remains or a bounded resource/time
+budget ends. Work waiting for capability, data, time or authorization is
+**blocked/hibernating, not silently completed or starved**. Do not create a
+second queue authority or duplicate the COP coordination protocol.
+
+**Live code inspection:**
+
+- `scripts/lib/fracta-scheduler.js` `runFractaCycle()` executes six
+  corpus-maintenance stages. Its `continuations_maintenance` hook, wired
+  in `scripts/cogentia.js` `scheduler.run-cycle`, currently **counts alive
+  continuations** and does not claim, select, judge, deliver, resume or drain
+  them. Therefore a successful FractaScheduler cycle **does not imply any
+  backlog work was processed**.
+- `inseme/packages/cop-kernel/src/scheduler.js` `COPScheduler` can register
+  waiting continuations, respond to time/events, invoke a resolver, and,
+  when mutation coordination is configured, use a COP PacketClaim. It is
+  primarily event-driven, not yet a generic fair drain loop over the
+  durable `.cogentia/continuations` backlog. It does not prove fairness
+  merely because it has a timer.
+- `inseme/packages/cop-kernel/src/packetCoordination.js` provides a COP
+  event-store claim implementation with lease epochs and stale-claim
+  rejection, as well as an in-memory coordinator; independent-process,
+  shared-store atomicity and effect-provider fencing require confirmation
+  on the selected deployment adapter. The filesystem optimistic-claim
+  prototype in `scripts/lib/resolver-registry.js` is **not wired** to
+  `continuation-acp-server.js`; do not infer exclusive processing from it.
+- `scripts/continuation-acp-server.js` demonstrates a **real return to the
+  waiting session** once a specific continuation is resolved. It does
+  not itself provide global fairness across a durable shared backlog.
+
+**Required scheduler selection protocol:**
+
+1. Project the open runnable frontier using capability, mandate,
+   prerequisites, lease/claim state, due time, deadline, priority, and
+   chronological waiting age. Never treat all `active` records as runnable.
+2. Apply a documented **anti-starvation** rule, such as aging of effective
+   priority or bounded bypass count among continuously eligible packets;
+   preserve an explicit upper bound on discretionary bypass under defined
+   resource assumptions. Priority alone does not guarantee fairness.
+3. Attempt **atomic COP PacketClaim** at the selected packet/scope;
+   contention returns to selection, never executes on a rejected/stale
+   claim. Lease expiration, renewal, epoch fencing, cancellation and
+   idempotent effects are part of safe recovery; a claim is not a mandate.
+4. Invoke the handler for the **delegated step only**; deposit a receipt
+   and result in the originating reply slot, then join/resume the parent
+   through the intended continuation. A handler does not take over work
+   ownership. Return delivery and parent advancement must be separately
+   observable, and retries must not replay irreversible effects.
+5. Repeat while runnable, claimed-capable work and bounded processing
+   budget remain. Record `drained`, `remaining_runnable`, `blocked_by_reason`,
+   `oldest_wait_age`, `claim_conflicts`, `delivered`, `awaiting_parent_resume`
+   and starvation-alert evidence. A cycle that merely lists pending packets
+   must never claim queue exhaustion or convergence.
+
+**Fairness boundary:** no scheduler can guarantee execution when no
+compatible funded/authorized handler becomes available. Conditional
+liveness requires that continuously eligible work eventually receives
+sufficient service and that shared claims are reliably reclaimed. Nor does
+an exhausted *currently runnable* queue mean the globally outstanding
+Continuation set is empty. Do not add a synthetic Scheduler or a new
+lock database to demonstrate this; wire the existing FractaScheduler/COP
+boundary, first on actual pending work and with real shared coordination.
+
 **Scientific and commons boundary:** distinguish retrieving evidence from
 asserting truth, correlation from causation, ranking from permission, and
 observed improvement from universal validity. This mapping is an
