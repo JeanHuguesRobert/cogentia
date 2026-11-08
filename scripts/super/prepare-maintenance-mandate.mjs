@@ -13,7 +13,7 @@ const proposal={
  scope:{allowed_actions:['service.restart'],execution_mode:'super',target:'node:fracta2',service:'mcp-cogentia.service'},
  budget_limits:{max_steps:12},
  valid_from:new Date(now-60000).toISOString(),
- valid_until:new Date(+now+48*3600000).toISOString(),
+ valid_until:new Date(+now+48*3600000-60000).toISOString(),
  reason:'Mise au point du MCP : au plus douze redemarrages du seul mcp-cogentia.service en 48 heures'
 };
 fs.writeFileSync(target,canonical(proposal),{encoding:'utf8',mode:0o644,flag:'wx'});
