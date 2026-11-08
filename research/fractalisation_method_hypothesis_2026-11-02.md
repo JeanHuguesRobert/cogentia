@@ -409,6 +409,19 @@ pour Cogentia demeure modeste et concret : créer peu de paquets, réutiliser
 leurs continuités, composer les capacités de handlers sans effacer la
 provenance, et laisser les organisations futures se réviser librement.
 
+**Frontière des métaphores physiques (8 novembre 2026).**
+La *thermodynamique physique* régit réellement les coûts énergétiques, la
+chaleur et l'entropie des infrastructures. En revanche, la « dissipation de
+l'attention » ou l'« entropie cognitive » restent des analogies, sauf
+formalisation propre et vérification empirique. De même, la
+[Gravité Informationnelle](informational_gravity.md) est une relation
+contextuelle de routage, non une interaction physique, et notre fractalité
+une méthode de composition, non la preuve d'une géométrie universelle.
+L'hypothèse d'un Univers computationnel ne transforme aucune de ces
+métaphores en loi physique. Distinguer toujours l'objet matériel, sa
+modélisation mathématique, l'heuristique d'ingénierie et la spéculation
+ontologique.
+
 ## 12. Articulation avec le Corpus : source, méthode et implémentation
 
 Cette recherche ne remplace aucun des textes canoniques spécialisés :

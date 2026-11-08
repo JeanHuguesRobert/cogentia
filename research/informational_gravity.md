@@ -419,6 +419,16 @@ objection, safer destination, or explicit failure.
 Informational gravity is an engineering and institutional metaphor. It does not claim inverse-square
 behavior, conservation laws, physical mass, or universal mathematical necessity.
 
+**Cross-domain boundary (2026-11-08):** physical gravitation is a
+physical interaction described by empirically constrained theories;
+`informational_gravity(packet, candidate, context, time)` is a
+**task-relative comparison for routing**. Even if an attraction function
+is quantified or optimized, this does not make it a force, a mass, a
+spacetime geometry or an inverse-square law. Physical information/energy
+costs of computing remain real, whereas the name *gravity* here is an
+engineering analogy. A conjecture of a computational Universe does not
+promote this routing vocabulary into physical ontology.
+
 ### 13.6 Autonomous moral ranking
 
 The concept does not authorize a global social-credit system, secret scoring, or an algorithmic
