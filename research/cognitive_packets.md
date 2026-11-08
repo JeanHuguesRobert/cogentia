@@ -255,6 +255,50 @@ observed improvement from universal validity. This mapping is an
 Respect upstream licenses and attribution; contribute corrections or useful
 interoperability findings to the respective communities when warranted.
 
+### Model-independent progress through Cognitive Packet Switching (2026-11-08)
+
+**The Learning Computer does not require better LLM weights to become more
+capable as an organization.** The architecture distinguishes two largely
+orthogonal, interacting improvement axes:
+
+1. **Component capability** — reasoning competence, accuracy, latency,
+   energy, inference price and tool reliability of individual handlers,
+   whether human, deterministic, local or remote LLM.
+2. **System capability** — packet decomposition, identity and handoff,
+   continuation persistence, opportunistic routing, multiplexing,
+   store-and-forward, causal receipts, retrieval of earlier Acts and
+   learning from observed returns.
+
+CPS owes its structure to the second axis. A Cognitive Packet is not an
+LLM prompt, and its existence must not require model inference, a live
+agent connection or a permanent circuit between handlers. Under Inversion
+of Control, a producer can **emit a resumable Continuation rather than
+invoke the eventual Judgment provider**. The latter may be a human/ChatGPT
+conversation available only intermittently, without any paid model API.
+The packet carries the work state; the handler contributes a capability
+when available. This makes model-provider replacement and asynchronous
+compute possible, not cost-free or automatically reliable.
+
+**Boundary:** this is *architectural model independence*, **not** independence
+of achieved outcomes from handler competence. Packet switching alone does
+not confer semantic understanding, truthful reasoning, reliability,
+provenance, exactly-once effects or learning. Those demand explicit
+protocols, evidence and governance. In particular, a lexical `packet
+relate` ranking cannot substitute for a Judgment Continuation. Nor does
+better coordination guarantee super-additive collective capability.
+
+**State-of-art and investment context (November 2026):** although frontier
+model scaling and infrastructure attract major investment, agent
+orchestration and inference are also active engineering disciplines.
+Do not claim the industry ignores them. [Gartner's September 2026
+forecast](https://www.gartner.com/en/newsroom/press-releases/2026-09-16-gartner-forecasts-worldwide-ai-spending-to-grow-49-point-5-percent-in-2026)
+explicitly separates spending on infrastructure, AI models and AI agents;
+its [August inference forecast](https://www.gartner.com/en/newsroom/press-releases/2026-08-10-gartner-forecasts-worldwide-artificial-intelligence-optimized-iaas-spending-to-grow-96-percent-in-2026)
+expects inference workloads to exceed training spending in 2026. The
+contribution sought here is a composable **commons of durable cognitive
+work and interchangeable handlers**, not a claim to have invented queues,
+workflows or model-independent coordination.
+
 **Scale invariance without authority inflation:** an umbrella may itself be a child of another umbrella, but this does not grant new mandate, source sovereignty or permissions. Child results can require revisiting the parent hypothesis; the parent cannot silently rewrite a child's historically completed external acts.
 
 **Observed precedents, not proofs of a universally supported protocol:** [barons-Mariani #127](https://github.com/JeanHuguesRobert/barons-Mariani/issues/127), [Cogentia #278](https://github.com/JeanHuguesRobert/cogentia/issues/278), and [Capable coordination #152](https://github.com/JeanHuguesRobert/barons-Mariani/issues/152). This candidate pattern refines the use of existing Cognitive Packets through FractaCognition and the Second Method. Test it against work already done before proposing additional schemas or executors.
