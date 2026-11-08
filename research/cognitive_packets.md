@@ -173,6 +173,10 @@ not a proposal for a separate Spirit-of-Synthesis daemon, mandatory new
 packet kind, or additional governance layer.
 
 **Mechanism hypothesis (2026-11-08, not yet demonstrated):**
+The observed emergence of organization in cosmic and biological history is
+**not** what is hypothesized here. The hypothesis concerns this **particular
+means** of generative composition, as distinguished from mere classification.
+
 semantic reconciliation of conversational Acts with previously separate
 Cognitive Packets may be **one means by which the Spirit of Synthesis acts**.
 The potentially generative step is not matching or filing the packets, but
