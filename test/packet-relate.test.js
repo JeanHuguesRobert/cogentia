@@ -37,10 +37,12 @@ import { packetRelateJudgmentRequest } from '../scripts/lib/packet-relate-judgme
 test('handoff preserves candidate provenance, multiple and zero allowed, dedupe stable',()=>fixture(root=>{
   write(root,'research/packet.md','---\ntitle: Packet continuation ownership\n---\npacket continuation ownership of cognitive work');
   const discovery=relatePacket({text:'packet continuation ownership',roots:[root]});
-  const a=packetRelateJudgmentRequest(discovery,{input:'packet continuation ownership',source:'inline'});
-  const b=packetRelateJudgmentRequest(discovery,{input:'packet continuation ownership',source:'inline'});
+  const a=packetRelateJudgmentRequest(discovery,{input:'packet continuation ownership',source:'inline',returnTo:'packet:owner-42'});
+  const b=packetRelateJudgmentRequest(discovery,{input:'packet continuation ownership',source:'inline',returnTo:'packet:owner-42'});
   assert.equal(a.dedupe_key,b.dedupe_key);
   assert.equal(a.kind,'judgment');
+  assert.equal(a.result_recipient.address,'packet:owner-42');
+  assert.equal(a.delegation.transfers_work_ownership,false);
   assert.deepEqual(a.required_capabilities,['semantic_judgment']);
   assert.equal(a.expected_response.protocol,'cogentia.packet_relation_judgment.v1');
   assert.equal(a.context.discovery.candidates.length,1);
@@ -49,14 +51,14 @@ test('handoff preserves candidate provenance, multiple and zero allowed, dedupe 
 }));
 test('handoff refuses no candidates',()=>fixture(root=>{
   const discovery=relatePacket({text:'imagination nouvelle',roots:[root]});
-  assert.throws(()=>packetRelateJudgmentRequest(discovery,{input:'imagination nouvelle'}),/No candidates/);
+  assert.throws(()=>packetRelateJudgmentRequest(discovery,{input:'imagination nouvelle',returnTo:'packet:owner-42'}),/No candidates/);
 }));
 
 import { execFileSync } from 'node:child_process';
 test('CLI preview stays read-only; emit deduplicates in real continuation store',()=>fixture(root=>{
   write(root,'registry.json',JSON.stringify({repos:[]}));
   write(root,'research/relate.md','---\ntitle: Cognitive packet continuation judgment\nvisibility: public\n---\nA conversation requests packet continuation judgment with sources.');
-  const base=['scripts/cogentia.js','packet','relate','--text','cognitive packet continuation judgment','--root',root,'--registry',path.join(root,'registry.json'),'--json'];
+  const base=['scripts/cogentia.js','packet','relate','--text','cognitive packet continuation judgment','--root',root,'--registry',path.join(root,'registry.json'),'--return-to','packet:issuer-42','--json'];
   const run=more=>JSON.parse(execFileSync(process.execPath,[...base,...more],{encoding:'utf8',cwd:path.resolve('') }));
   const preview=run(['--judgment-preview']);
   assert.equal(preview.read_only,true);
@@ -71,5 +73,13 @@ test('CLI preview stays read-only; emit deduplicates in real continuation store'
   assert.equal(fs.readdirSync(store).length,1);
   const record=JSON.parse(fs.readFileSync(path.join(store,`${created.continuation_id}.json`),'utf8'));
   assert.equal(record.kind,'judgment');
+  assert.equal(record.result_recipient.address,'packet:issuer-42');
+  assert.equal(record.delegation.transfers_work_ownership,false);
   assert.equal(record.context.protocol,'cogentia.packet_relation_judgment.v1');
+}));
+
+test('rejects missing return recipient rather than silently abandoning ownership',()=>fixture(root=>{
+  write(root,'research/a.md','---\ntitle: packet continuation claim\n---\nA packet continuation claim');
+  const discovery=relatePacket({text:'packet continuation claim',roots:[root]});
+  assert.throws(()=>packetRelateJudgmentRequest(discovery,{input:'packet continuation claim'}),/explicit result recipient/);
 }));

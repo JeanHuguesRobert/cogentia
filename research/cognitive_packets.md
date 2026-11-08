@@ -263,6 +263,24 @@ Integration tests exercise actual store creation and deduplication in an
 isolated registry. **Assimilation of approved judgments remains a separate
 follow-up concern**, not an undocumented effect of this flag.
 
+**Ownership / return address invariant (2026-11-08):**
+Emitting a Judgment Continuation does **not** divest the issuer of its work,
+or authorize the judging handler to appropriate, reroute, complete or mutate
+the parent work. The handler receives a **bounded mandate to judge**, not
+ownership. `packet relate --judgment-preview` and `--emit-continuation`
+therefore require `--return-to <result-recipient>`; the continuation records
+`result_recipient` and a `delegation` contract asserting
+`transfers_work_ownership: false`, `transfers_effect_authority: false` and
+`return_required: true`. The return recipient participates in the active
+Continuation's deduplication identity. The judgment handler must return a
+structured answer to that recipient, who determines authorized subsequent
+acts. **Present limit:** this enforces the *declaration* of a recipient in
+new `relate` requests; actual delivery, recipient existence/routability,
+acknowledgement and authorization checks upon `continuation resolve` are
+**not yet implemented**. Do not confuse recording a local resolution with
+fulfilling the return obligation. The emitter retains the original work
+and any follow-up obligations until there is a verified handback.
+
 **Scientific and commons boundary:** distinguish retrieving evidence from
 asserting truth, correlation from causation, ranking from permission, and
 observed improvement from universal validity. This mapping is an

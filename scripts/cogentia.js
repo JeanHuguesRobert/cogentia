@@ -1106,7 +1106,8 @@ Effect commands (#171 mint UI):
 Continuation commands:
   packet relate --text "..."   Read-only candidate attachment to existing packets.
                              Flags: --file <path> --root <repo> --limit <1..25> --json.
-                             --judgment-preview (read-only) or --emit-continuation
+                             --judgment-preview (read-only) or --emit-continuation;
+                             both require --return-to <result-recipient>
                              (durable deduplicated Judgment handoff, no attachment).
   packet capsule           Pack, verify, or unpack portable packet capsules.
   continuation emit        Emit an external judgment request.
@@ -1960,6 +1961,8 @@ function cmdPacketRelateOrCapsule() {
   const emit = takeFlag('--emit-continuation');
   const preview = takeFlag('--judgment-preview');
   if (emit && preview) throw new Error('Choose --emit-continuation OR --judgment-preview');
+  const returnTo = valueFlag('--return-to');
+  if ((emit || preview) && !returnTo) throw new Error('Judgment handoff requires --return-to <recipient>; emitting a Continuation does not transfer ownership of work.');
   const inline = valueFlag('--text');
   const file = valueFlag('--file');
   const source = file ? path.resolve(file) : 'inline';
@@ -1973,7 +1976,7 @@ function cmdPacketRelateOrCapsule() {
   const report=relatePacket({text:input,roots,limit,source});
   if (emit || preview) {
     if (!report.candidates.length) return output({ok:true,created:false,reason:'no_candidates',discovery:report},'No candidate: no judgment continuation emitted.');
-    const request=packetRelateJudgmentRequest(report,{input,source});
+    const request=packetRelateJudgmentRequest(report,{input,source,returnTo});
     if (preview) return output({ok:true,read_only:true,created:false,request,discovery:report},'Judgment continuation preview only. Use --emit-continuation to create it.');
     const result=emitContinuation(loadContext(),request);
     return output({ok:result.ok,created:result.created,path:result.path,continuation_id:result.continuation?.id,dedupe_key:request.dedupe_key,discovery:report},`Judgment continuation ${result.created?'created':'reused'}: ${result.continuation?.id}. No packet attachment performed.`);
@@ -12026,6 +12029,8 @@ function emitContinuation(ctx, request) {
     // implicit need (e.g. "this needs live web search") explicit instead
     // of relying on whoever picks up the continuation to guess.
     required_capabilities: Array.isArray(request.required_capabilities) ? request.required_capabilities : [],
+    ...(request.result_recipient ? { result_recipient: request.result_recipient } : {}),
+    ...(request.delegation ? { delegation: request.delegation } : {}),
     expected_response: request.expected_response || {
       format: "json",
       required: ["decision", "reason"],
