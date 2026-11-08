@@ -62,6 +62,10 @@ STATE=pathlib.Path('/var/lib/cogentia-super')
 COP=STATE/'canonical-authority.sqlite'
 BROKER=BASE/'broker.mjs'
 BACKUP=BASE/'broker.mjs.pre-principal-issuer'
+# Independently observed pre-issuer rollback image on Fracta2. An existing
+# backup is accepted ONLY if this exact root-owned image is still intact;
+# never overwrite or silently trust an arbitrary file under this name.
+PRIOR_ROLLBACK_SHA256='a8cee53ef7f3267b47a68349bef472ca347f96b6a022b366c0125ea6c76cb235'
 GRANTS=STATE/'authorizations.json'
 NODE='/usr/local/node-v26.5.0/bin/node'
 
@@ -98,15 +102,37 @@ def verified_existing_stage(directory,verified,owner_uid=0):
         hashlib.sha256(actual[name].read_bytes()).digest()==hashlib.sha256(data).digest()
         for name,data in expected.items())
 
+def pinned_existing_rollback(path,expected_sha=PRIOR_ROLLBACK_SHA256,owner_uid=0):
+    if not path.is_file() or path.is_symlink():return False
+    st=path.stat()
+    if st.st_uid!=owner_uid or st.st_mode&0o022 or st.st_mode&0o777!=0o755:return False
+    return hashlib.sha256(path.read_bytes()).hexdigest()==expected_sha
+
+def initial_install_recovery_gate(*,stage_matches_prior,broker_matches_prior,rollback_present,rollback_trusted):
+    # A previous root-owned rollback is legitimate only with a matched staged
+    # historical issuer AND the exact original live broker. No permissions are
+    # inferred from the backup alone. This gate cannot issue a mandate.
+    if not rollback_present:return True
+    return bool(stage_matches_prior and broker_matches_prior and rollback_trusted)
+
 def install(verified,keydata,allow_verified_stage=False,previous_verified=None):
     if os.geteuid()!=0:return {'ok':False,'error':'root_required'}
     if not protected_dir(BASE) or not protected_dir(STATE):return {'ok':False,'error':'root_directories_not_protected'}
     reuse_stage=BUNDLE_DIR.exists() and allow_verified_stage and verified_existing_stage(BUNDLE_DIR,verified)
     replace_reviewed=BUNDLE_DIR.exists() and allow_verified_stage and not reuse_stage and previous_verified is not None and verified_existing_stage(BUNDLE_DIR,previous_verified)
     previous_dir=BUNDLE_DIR.with_name('issuer.pre-initial-completion')
-    if (BUNDLE_DIR.exists() and not reuse_stage and not replace_reviewed) or (replace_reviewed and previous_dir.exists()) or KEY.exists() or BACKUP.exists():
+    if not BROKER.is_file() or BROKER.is_symlink() or BROKER.stat().st_uid!=0 or BROKER.stat().st_mode&0o022:
+        return {'ok':False,'error':'broker_not_root_owned'}
+    old_broker_sha=hashlib.sha256(BROKER.read_bytes()).hexdigest()
+    old_archive_broker_sha=hashlib.sha256(previous_verified['members']['issuer/repos/cogentia/scripts/super/broker.mjs']).hexdigest() if previous_verified else None
+    stage_matches_prior=bool(replace_reviewed)
+    broker_matches_prior=bool(old_archive_broker_sha and old_broker_sha==old_archive_broker_sha)
+    rollback_trusted=pinned_existing_rollback(BACKUP) if BACKUP.exists() else False
+    if (BUNDLE_DIR.exists() and not reuse_stage and not replace_reviewed) or (replace_reviewed and previous_dir.exists()) or KEY.exists():
         return {'ok':False,'error':'already_initialized_review_manually'}
-    if not BROKER.is_file() or BROKER.is_symlink() or BROKER.stat().st_uid!=0:return {'ok':False,'error':'broker_not_root_owned'}
+    if not initial_install_recovery_gate(stage_matches_prior=stage_matches_prior,
+            broker_matches_prior=broker_matches_prior,rollback_present=BACKUP.exists(),rollback_trusted=rollback_trusted):
+        return {'ok':False,'error':'existing_rollback_not_trusted_or_previous_broker_mismatch'}
     if GRANTS.exists() and (GRANTS.is_symlink() or GRANTS.stat().st_uid!=0 or GRANTS.stat().st_mode&0o077):
         return {'ok':False,'error':'grant_store_not_protected'}
     if COP.exists() and (COP.is_symlink() or COP.stat().st_uid!=0 or COP.stat().st_mode&0o077):
@@ -143,8 +169,8 @@ def install(verified,keydata,allow_verified_stage=False,previous_verified=None):
         os.chmod(COP,0o600)
     elif COP.is_symlink() or COP.stat().st_uid!=0 or COP.stat().st_mode&0o077:
         return {'ok':False,'error':'existing_cop_store_not_protected'}
-    # Preserve the existing, root-owned broker for a real rollback.
-    install_file(BACKUP,BROKER.read_bytes(),0o755)
+    # Never overwrite the pre-existing root-owned rollback record.
+    if not BACKUP.exists():install_file(BACKUP,BROKER.read_bytes(),0o755)
     new_broker=verified['members']['issuer/repos/cogentia/scripts/super/broker.mjs']
     install_file(BROKER,new_broker,0o755)
     restarted=subprocess.run(['systemctl','restart','cogentia-super.service'],capture_output=True,text=True,timeout=20)

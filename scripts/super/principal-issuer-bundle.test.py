@@ -70,6 +70,27 @@ class BundleChecks(unittest.TestCase):
             changed.unlink();changed.symlink_to('/etc/hostname')
             self.assertFalse(install.verified_existing_stage(root,verified,owner_uid=os.getuid()))
 
+    def test_existing_root_rollback_requires_pinned_bytes_and_previous_code(self):
+        import os
+        with tempfile.TemporaryDirectory() as td:
+            backup=pathlib.Path(td)/'broker.mjs.pre-principal-issuer'
+            backup.write_bytes(b'known-original-root-broker')
+            backup.chmod(0o755)
+            expected=hashlib.sha256(backup.read_bytes()).hexdigest()
+            self.assertTrue(install.pinned_existing_rollback(backup,expected_sha=expected,owner_uid=os.getuid()))
+            self.assertTrue(install.initial_install_recovery_gate(stage_matches_prior=True,
+                broker_matches_prior=True,rollback_present=True,rollback_trusted=True))
+            for key in ('stage_matches_prior','broker_matches_prior','rollback_trusted'):
+                params=dict(stage_matches_prior=True,broker_matches_prior=True,rollback_present=True,rollback_trusted=True)
+                params[key]=False
+                self.assertFalse(install.initial_install_recovery_gate(**params),key)
+            self.assertTrue(install.initial_install_recovery_gate(stage_matches_prior=False,
+                broker_matches_prior=False,rollback_present=False,rollback_trusted=False))
+            backup.write_bytes(b'tampered')
+            self.assertFalse(install.pinned_existing_rollback(backup,expected_sha=expected,owner_uid=os.getuid()))
+            backup.unlink();backup.symlink_to('/etc/hostname')
+            self.assertFalse(install.pinned_existing_rollback(backup,expected_sha=expected,owner_uid=os.getuid()))
+
     def test_without_root_activation_is_denied(self):
         import os
         if os.geteuid()==0:self.skipTest('root installer intentionally never exercised by automated tests')
