@@ -851,6 +851,35 @@ attachment → possible continuations → new Acts/evidence → revised attribut
 Keep creation time, observation time and event time distinct. The goal is a
 better warranted continuation, not reconstruction for its own sake.
 
+### Terminal objective and latent continuation
+
+A Cognitive Packet may legitimately achieve its **situated objective** and be
+closed while retaining *possible future continuations*. Completion is an
+observed state under the current objective and evidence, not a claim that no
+further traces or relevant possibilities will ever emerge.
+
+Keep three states distinct:
+
+1. **Active continuation:** unfinished work remains within the present scope.
+2. **Completed packet, latent continuation:** the declared objective has been
+   satisfied and no work is presently due. A future observation, discovered
+   historical trace, changed dependency or newly chosen goal might justify
+   renewed work. This potential is a conditional possibility, **not** an
+   outstanding task, an unspent mandate or a standing monitoring obligation.
+3. **Reactivated or successor packet:** a *new* attributable event and judgment
+   establish that fresh work is warranted. Preserve the original completion
+   evidence and timestamp; append or link the new continuation without
+   retrospectively declaring the earlier closure false.
+
+Janus.Past can revise our evidence-backed account of the original work;
+Janus.Future can reveal a new possible branch. These operations may be joined
+by a conditionally interesting future discovery, but they do not entail an
+always-running watcher. Use existing event references and conditional
+reactivation where already warranted; avoid immortal open issues, automatic
+packet proliferation and unbounded agent attention. A terminal packet remains
+terminal until a justified present-time decision changes its work state or
+creates an explicit successor.
+
 The prospective product should pass the simple cold-handler test:
 
 ```text

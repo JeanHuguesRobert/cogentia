@@ -192,6 +192,12 @@ Mneme supplies **governed, addressable memory units**. A packet, agent, document
 
 A high-value design rule follows: **the Calculette should remember more than it displays**. Display only the smallest context sufficient to continue correctly. Preserve the rest durably and retrieve by reference.
 
+**Closure does not extinguish possibility.** A completed Cognitive Packet may
+retain latent, event-conditional continuation possibilities without becoming
+an active task or generating routine monitoring. A later discovery can open a
+successor or justify reactivation, retaining the evidence of the original
+completion. See [Janus — terminal objective and latent continuation](janus_cognitive_gatekeeper.md).
+
 ### 4.4 Janus: two different bidirectionalities
 
 A dependency graph has **upstream** prerequisites and **downstream** dependants. Janus adds another distinction: **retrospective** reconstruction of what was known at time *t*, versus **prospective** exploration of what might happen after *t*. The combination offers four lenses, not two equivalent directions:
