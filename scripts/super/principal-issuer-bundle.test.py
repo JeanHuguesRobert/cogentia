@@ -91,6 +91,20 @@ class BundleChecks(unittest.TestCase):
             backup.unlink();backup.symlink_to('/etc/hostname')
             self.assertFalse(install.pinned_existing_rollback(backup,expected_sha=expected,owner_uid=os.getuid()))
 
+    def test_existing_principal_key_must_be_identical_and_protected(self):
+        import os
+        with tempfile.TemporaryDirectory() as td:
+            p=pathlib.Path(td)/'principal-issuer.pub'
+            rsa=b'ssh-rsa AAAAfictional-example principal-key\n'
+            p.write_bytes(rsa);p.chmod(0o644)
+            self.assertTrue(install.protected_existing_principal_key(p,rsa,owner_uid=os.getuid()))
+            self.assertFalse(install.protected_existing_principal_key(p,rsa+b'x',owner_uid=os.getuid()))
+            self.assertFalse(install.protected_existing_principal_key(p,rsa,owner_uid=os.getuid()+1))
+            p.chmod(0o666)
+            self.assertFalse(install.protected_existing_principal_key(p,rsa,owner_uid=os.getuid()))
+            p.unlink();p.symlink_to('/etc/hostname')
+            self.assertFalse(install.protected_existing_principal_key(p,rsa,owner_uid=os.getuid()))
+
     def test_without_root_activation_is_denied(self):
         import os
         if os.geteuid()==0:self.skipTest('root installer intentionally never exercised by automated tests')

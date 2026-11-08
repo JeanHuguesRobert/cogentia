@@ -102,6 +102,13 @@ def verified_existing_stage(directory,verified,owner_uid=0):
         hashlib.sha256(actual[name].read_bytes()).digest()==hashlib.sha256(data).digest()
         for name,data in expected.items())
 
+def protected_existing_principal_key(path,expected_bytes,owner_uid=0):
+    # Called ONLY after privileged access to KEY_DIR: never infer the key's
+    # absence from an unprivileged test -e against a directory mode 0700.
+    if path.is_symlink() or not path.is_file():return False
+    st=path.stat()
+    return st.st_uid==owner_uid and st.st_mode&0o022==0 and path.read_bytes()==expected_bytes
+
 def pinned_existing_rollback(path,expected_sha=PRIOR_ROLLBACK_SHA256,owner_uid=0):
     if not path.is_file() or path.is_symlink():return False
     st=path.stat()
@@ -128,8 +135,21 @@ def install(verified,keydata,allow_verified_stage=False,previous_verified=None):
     stage_matches_prior=bool(replace_reviewed)
     broker_matches_prior=bool(old_archive_broker_sha and old_broker_sha==old_archive_broker_sha)
     rollback_trusted=pinned_existing_rollback(BACKUP) if BACKUP.exists() else False
-    if (BUNDLE_DIR.exists() and not reuse_stage and not replace_reviewed) or (replace_reviewed and previous_dir.exists()) or KEY.exists():
-        return {'ok':False,'error':'already_initialized_review_manually'}
+    # Root-only trust inspection: KEY_DIR is 0700, so unprivileged test -e
+    # falsely reports an absent key. Preserve an already installed key ONLY
+    # if it is the exact independently signed RSA Principal identity supplied.
+    if BUNDLE_DIR.exists() and not (reuse_stage or replace_reviewed):
+        return {'ok':False,'error':'issuer_staged_tree_unrecognized'}
+    if replace_reviewed and previous_dir.exists():
+        return {'ok':False,'error':'issuer_previous_stage_already_preserved'}
+    if KEY.exists() or KEY.is_symlink():
+        if KEY.is_symlink() or not KEY.is_file() or KEY.stat().st_uid!=0 or KEY.stat().st_mode&0o022:
+            return {'ok':False,'error':'existing_principal_key_not_protected'}
+        if not protected_existing_principal_key(KEY,keydata):
+            return {'ok':False,'error':'existing_principal_key_differs_from_independent_rsa'}
+        reuse_existing_key=True
+    else:
+        reuse_existing_key=False
     if not initial_install_recovery_gate(stage_matches_prior=stage_matches_prior,
             broker_matches_prior=broker_matches_prior,rollback_present=BACKUP.exists(),rollback_trusted=rollback_trusted):
         return {'ok':False,'error':'existing_rollback_not_trusted_or_previous_broker_mismatch'}
@@ -160,7 +180,7 @@ def install(verified,keydata,allow_verified_stage=False,previous_verified=None):
                 raise
         finally:
             if stage.exists():shutil.rmtree(stage)
-    install_file(KEY,keydata,0o644)
+    if not reuse_existing_key:install_file(KEY,keydata,0o644)
     if not GRANTS.exists():install_file(GRANTS,b'{"grants":{}}\n',0o600)
     if not COP.exists():
         src=BUNDLE_DIR/'repos/inseme/packages/cop-core/src/sqlite-cop-event-store.js'
@@ -177,6 +197,7 @@ def install(verified,keydata,allow_verified_stage=False,previous_verified=None):
     active=subprocess.run(['systemctl','is-active','cogentia-super.service'],capture_output=True,text=True,timeout=8)
     return {'ok':restarted.returncode==0 and active.returncode==0,'phase':'ISSUER_INSTALLED_NO_MANDATE_ISSUED',
             'broker_active':active.stdout.strip()=='active','cop_store_created':True,
+            'principal_key_reused':reuse_existing_key,
             'rollback_broker':str(BACKUP),'required_next':'independently_signed_principal_mandate_bootstrap'}
 
 def upgrade(verified):
