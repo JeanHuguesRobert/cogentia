@@ -192,7 +192,11 @@ Mneme supplies **governed, addressable memory units**. A packet, agent, document
 
 A high-value design rule follows: **the Calculette should remember more than it displays**. Display only the smallest context sufficient to continue correctly. Preserve the rest durably and retrieve by reference.
 
-**Closure does not extinguish possibility.** A completed Cognitive Packet may
+**Closure does not extinguish possibility.** Distinguish *weak operational
+termination* (a situated goal has been met, but later evidence might call for
+reconsideration) from *strong demonstrative termination* (the exact question is
+resolved under fixed premises, as for a valid arithmetic proof). Neither
+should be conflated with an active obligation. A completed Cognitive Packet may
 retain latent, event-conditional continuation possibilities without becoming
 an active task or generating routine monitoring. A later discovery can open a
 successor or justify reactivation, retaining the evidence of the original

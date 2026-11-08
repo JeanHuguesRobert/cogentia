@@ -858,6 +858,27 @@ closed while retaining *possible future continuations*. Completion is an
 observed state under the current objective and evidence, not a claim that no
 further traces or relevant possibilities will ever emerge.
 
+**Two strengths of termination:**
+
+- **Weak (operational) termination:** the situated objective has been met,
+  and no present action is due. A newly discovered trace, changed dependency,
+  recurrence or revised understanding might justify reopening or a successor.
+  Example: a repaired software incident, even when verified live.
+- **Strong (demonstrative) termination:** the *precise question* is fully
+  discharged within explicit, stable premises and rules of inference. In
+  ordinary arithmetic, a correct proof of `2+2=4` needs no later factual
+  discovery to complete the very same proof obligation. Changing the axioms,
+  requesting a different proof or examining foundations defines a new
+  question, not an unfinished branch of that proof.
+
+These strengths qualify **why** a packet is terminal; they do not require two
+new workflow statuses, a permanent watcher, or a claim of metaphysical
+certainty. A formally concluded theorem can have successor research packets;
+that does not weaken its original conclusion. Conversely, a weakly completed
+packet is not secretly an open task. Normal conversation may call both simply
+`completed`; the qualifier matters only when assessing whether new evidence
+undermines the *same finality* or merely suggests a different one.
+
 Keep three states distinct:
 
 1. **Active continuation:** unfinished work remains within the present scope.
