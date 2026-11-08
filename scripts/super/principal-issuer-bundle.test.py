@@ -29,6 +29,27 @@ class BundleChecks(unittest.TestCase):
             a.write_bytes(corrupt)
             self.assertFalse(verify.verify_bundle(a,digest)['ok'])
             self.assertFalse(verify.verify_bundle(b,'0'*64)['ok'])
+            # Construct an independently manifest-hashed v0 closure, not just
+            # a renamed modern archive; the legacy verifier must accept it.
+            import tarfile,io,json,gzip
+            legacy=pathlib.Path(td)/'previous.tar.gz'
+            with tarfile.open(b,'r:gz') as tar:
+                members={m.name:tar.extractfile(m).read() for m in tar if m.isfile()}
+            removed='issuer/repos/cogentia/scripts/super/root-bounded-mcp-restart.mjs'
+            members.pop(removed)
+            manifest=json.loads(members['issuer/manifest.json'])
+            manifest['files'].pop(removed)
+            members['issuer/manifest.json']=(json.dumps(manifest,sort_keys=True,indent=2)+'\n').encode()
+            with legacy.open('wb') as out, gzip.GzipFile(fileobj=out,mode='wb',mtime=0,filename='') as gz:
+                with tarfile.open(fileobj=gz,mode='w',format=tarfile.PAX_FORMAT) as target:
+                    for name,data in sorted(members.items()):
+                        item=tarfile.TarInfo(name);item.uid=0;item.gid=0
+                        item.mode=0o644;item.size=len(data);item.mtime=0
+                        target.addfile(item,io.BytesIO(data))
+            old_hash=hashlib.sha256(legacy.read_bytes()).hexdigest()
+            self.assertFalse(install.verify_bundle(legacy,old_hash)['ok'])
+            self.assertTrue(install.verify_bundle(legacy,old_hash,previous=True)['ok'])
+            self.assertFalse(install.verify_bundle(b,digest,previous=True)['ok'])
     def test_partial_verified_root_source_can_be_completed_only_if_exact(self):
         import os
         with tempfile.TemporaryDirectory() as td:

@@ -31,7 +31,9 @@ EXPECTED={
     'issuer/repos/inseme/packages/cop-core/src/sqlite-budget-projection.js',
     'issuer/repos/inseme/packages/cop-core/src/sqlite-cop-event-store.js',
 }
-def verify_bundle(filename, expected_sha):
+PREVIOUS_EXPECTED=EXPECTED-{'issuer/repos/cogentia/scripts/super/root-bounded-mcp-restart.mjs'}
+def verify_bundle(filename, expected_sha, *, previous=False):
+    required=PREVIOUS_EXPECTED if previous else EXPECTED
     raw=pathlib.Path(filename).read_bytes()
     digest=hashlib.sha256(raw).hexdigest()
     if len(expected_sha)!=64 or digest!=expected_sha:return {'ok':False,'error':'archive_hash_mismatch'}
@@ -39,12 +41,12 @@ def verify_bundle(filename, expected_sha):
     try:
         with tarfile.open(fileobj=io.BytesIO(raw),mode='r:gz') as archive:
             for m in archive:
-                if not m.isfile() or m.name in members or m.name not in EXPECTED or m.size>1_000_000 or \
+                if not m.isfile() or m.name in members or m.name not in required or m.size>1_000_000 or \
                    m.uid!=0 or m.gid!=0 or m.mode!=0o644:
                     return {'ok':False,'error':'unsafe_archive_member'}
                 members[m.name]=archive.extractfile(m).read()
     except (tarfile.TarError,EOFError,ValueError):return {'ok':False,'error':'archive_invalid'}
-    if set(members)!=EXPECTED:return {'ok':False,'error':'manifest_member_mismatch'}
+    if set(members)!=required:return {'ok':False,'error':'manifest_member_mismatch'}
     try:manifest=json.loads(members.pop('issuer/manifest.json'))
     except (ValueError,UnicodeError):return {'ok':False,'error':'manifest_invalid'}
     if manifest.get('kind')!='cogentia.root_principal_issuer_bundle/v1' or \
@@ -225,7 +227,7 @@ def main():
     if not (args.activate or args.upgrade):print(json.dumps(summary,indent=2));return 0
     previous=None
     if args.previous_bundle:
-        previous=verify_bundle(args.previous_bundle,args.previous_sha256)
+        previous=verify_bundle(args.previous_bundle,args.previous_sha256,previous=True)
         if not previous['ok']:
             print(json.dumps({'ok':False,'error':'previous_archive_unverified'}));return 1
     outcome=upgrade(result) if args.upgrade else install(result,key,allow_verified_stage=args.resume_verified_stage,previous_verified=previous)
