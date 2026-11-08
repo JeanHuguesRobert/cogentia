@@ -25,6 +25,10 @@ review:
 
 # Première installation d'une autorité COP protégée
 
+**Mise à jour 8 novembre 2026 :** la procédure historique ci-dessous exigeait inutilement une signature par redémarrage du MCP. Elle est remplacée pour ce chantier par un mandat unique signé de **48 heures et 12 redémarrages** du seul `mcp-cogentia.service`, contrôlé à chaque exécution par COP. Voir [décision de portée](cop-bounded-mcp-development-mandate-2026-11-08.md). Ne pas utiliser la procédure `prepare/issue/run` pour cette maintenance récurrente ; l'entrée est désormais `principal-issuer-client.mjs restart_mcp` après l'enrôlement signé initial et l'installation de l'issuer root. Les autres demandes privilégiées restent soumises à leurs mandats propres.
+
+
+
 **Destinataire** : Principal sur son ThinkPad, et agent Cogentia pilotant Fracta2. **État : procédure préparée et testée sans privilèges ; aucune activation `root` réalisée.**
 
 ## État et préconditions

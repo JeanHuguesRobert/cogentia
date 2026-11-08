@@ -21,6 +21,10 @@ review:
 
 # Réconcilier l'issuer COP avant l'activation du Core OOPIF
 
+**Addendum du 8 novembre 2026 :** le mandat de maintenance est désormais limité à `service.restart` du seul `mcp-cogentia.service`, pendant 48 heures et avec 12 unités au total. Il **ne requiert plus de signature individuelle** pour chaque redémarrage après l'enrôlement initial. Le paquet root et son empreinte doivent correspondre au nouveau code, avec remplacement du stage historique par comparaison exacte contre l'ancienne archive. Se reporter à [la décision actuelle](cop-bounded-mcp-development-mandate-2026-11-08.md) ; les séquences de signatures par effet ci-dessous sont conservées uniquement comme historique, non comme marche à suivre.
+
+
+
 ## Objectif immédiat
 
 Activer le Core `5301f9a` dans `mcp-cogentia.service`, puis utiliser les nouvelles capacités de lecture `browser.hosted.inspect(action=frame_tree|frame_structure)` pour vérifier l'iframe La Banque Postale sans secret. L'extension hébergée **ne doit pas être modifiée ou redémarrée**. L'acte de maintenance `systemctl restart mcp-cogentia.service` exige une autorisation root indépendante du simple consentement dans ChatGPT.

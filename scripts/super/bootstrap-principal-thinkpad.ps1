@@ -1,6 +1,6 @@
 #requires -Version 5.1
 <#
-  One-shot, Principal-side COP bootstrap + exact MCP restart.
+  One-shot, Principal-side 48h/12-restart bounded COP mandate bootstrap.
   No unattended elevation and no private-key upload. Do not run on Fracta2.
   The installer code is fetched from a pinned commit and SHA256 verified.
   Run only from the Principal's trusted ThinkPad PowerShell session.
@@ -14,11 +14,10 @@ $Remote = 'ubuntu@100.84.109.87'
 $Key = Join-Path $HOME '.ssh\fractanet-mesh'
 $Public = "$Key.pub"
 $WorkRemote = '/tmp/cogentia-maintenance-handoff-20261107'
-$Head = '5ff14c4'
-$InstallerHash = '4a1821fe04aff0b4c5d379f4e6d3dbedc5a9b89f55ac9c62516b1f828f3749b4'
-$BundleHash = '6272b7bfc0ec155eafeef244f201d5541a874361ec9e3febbc11f958d89f20e0'
-$MandateHash = 'a782de32871f9a51017a309ecda96aa04930c0f0ad812509d6e90049f9de0c8b'
-$EffectCommand = 'sudo -n systemctl restart mcp-cogentia.service && systemctl is-active mcp-cogentia.service'
+$Head = 'a997b12'
+$InstallerHash = '811da318b8d15849b56bdfb65946f91962adc6e2eb5e18c762e85c0d5c9da4ed'
+$BundleHash = '0029a7a44f54475a8482c0ff5087d420a049f8cd0213a6e6217ed21dec462799'
+$PreviousBundleHash = '6272b7bfc0ec155eafeef244f201d5541a874361ec9e3febbc11f958d89f20e0'
 $Utf8 = New-Object System.Text.UTF8Encoding($false)
 $WorkLocal = Join-Path $env:TEMP ('cogentia-cop-' + [guid]::NewGuid().ToString('N'))
 New-Item -ItemType Directory -Path $WorkLocal -Force | Out-Null
@@ -57,36 +56,56 @@ try {
     Step 'Contrôles de provenance et archive'
     $installer = Join-Path $WorkLocal 'install-principal-issuer-bundle.py'
     $archive = Join-Path $WorkLocal 'root-issuer.tar.gz'
-    $mandate = Join-Path $WorkLocal 'maintenance-v1.json'
+    $oldArchive = Join-Path $WorkLocal 'root-issuer-previous.tar.gz'
+    $mandateName = 'maintenance-' + [guid]::NewGuid().ToString('N') + '.json'
+    $mandateRemote = "$WorkRemote/$mandateName"
+    $mandate = Join-Path $WorkLocal $mandateName
     $source = "https://raw.githubusercontent.com/JeanHuguesRobert/cogentia/$Head/scripts/super/install-principal-issuer-bundle.py"
     Invoke-WebRequest -UseBasicParsing -Uri $source -OutFile $installer
     CheckHash $installer $InstallerHash
     External 'Téléchargement archive' { scp -i $Key "${Remote}:$WorkRemote/root-issuer.tar.gz" $archive }
-    External 'Téléchargement mandat' { scp -i $Key "${Remote}:$WorkRemote/maintenance-v1.json" $mandate }
+    External 'Téléchargement archive précédente' { scp -i $Key "${Remote}:$WorkRemote/root-issuer-previous.tar.gz" $oldArchive }
     CheckHash $archive $BundleHash
-    CheckHash $mandate $MandateHash
+    CheckHash $oldArchive $PreviousBundleHash
+    $generator = '/srv/cogentia/repos/cogentia/scripts/super/prepare-maintenance-mandate.mjs'
+    External 'Préparation du mandat temporaire' { ssh -i $Key -o IdentitiesOnly=yes $Remote "node $generator $mandateRemote" }
+    External 'Téléchargement mandat' { scp -i $Key "${Remote}:$mandateRemote" $mandate }
     $m = Get-Content -LiteralPath $mandate -Raw | ConvertFrom-Json
+    $scopeNames = @($m.scope.PSObject.Properties.Name | Sort-Object)
+    $expectedScope = @('allowed_actions','execution_mode','service','target')
+    $from = [DateTimeOffset]::Parse($m.valid_from)
+    $until = [DateTimeOffset]::Parse($m.valid_until)
     if ($m.kind -ne 'cogentia.maintenance-mandate-proposal/v1' -or
         $m.mandate_id -ne 'mandate:jhn:maintenance' -or $m.version -ne 'v1' -or
         $m.principal_ref -ne 'principal:jhn' -or $m.actor_ref -ne 'agent:jhn' -or
-        $m.scope.execution_mode -ne 'super' -or $m.scope.target -ne 'node:fracta2' -or
-        $m.budget_limits.max_steps -gt 12 -or
-        [DateTimeOffset]::Parse($m.valid_until) -le [DateTimeOffset]::UtcNow) {
-        throw 'Mandat COP inattendu ou expiré'
+        $m.max_delegation_depth -ne 0 -or
+        (@($m.scope.allowed_actions).Count -ne 1) -or
+        $m.scope.allowed_actions[0] -ne 'service.restart' -or
+        $m.scope.execution_mode -ne 'super' -or
+        $m.scope.target -ne 'node:fracta2' -or
+        $m.scope.service -ne 'mcp-cogentia.service' -or
+        ($scopeNames -join ',') -cne ($expectedScope -join ',') -or
+        $m.budget_limits.max_steps -ne 12 -or
+        (@($m.budget_limits.PSObject.Properties.Name).Count -ne 1) -or
+        $until -le [DateTimeOffset]::UtcNow -or
+        $from -gt [DateTimeOffset]::UtcNow -or
+        ($until - $from).TotalHours -gt 48) {
+        throw 'Mandat COP non borné exactement aux 12 redémarrages / 48 heures'
     }
     External 'Clé publique sur Fracta2' { scp -i $Key $Public "${Remote}:$WorkRemote/principal-issuer.pub" }
     External 'Installateur sur Fracta2' { scp -i $Key $installer "${Remote}:$WorkRemote/installer.py" }
 
     # Remote independent hashes: avoid relying only on SCP success.
-    $remoteDigests = (& ssh -i $Key -o IdentitiesOnly=yes $Remote "sha256sum $WorkRemote/installer.py $WorkRemote/root-issuer.tar.gz $WorkRemote/principal-issuer.pub") -join "`n"
+    $remoteDigests = (& ssh -i $Key -o IdentitiesOnly=yes $Remote "sha256sum $WorkRemote/installer.py $WorkRemote/root-issuer.tar.gz $WorkRemote/root-issuer-previous.tar.gz $WorkRemote/principal-issuer.pub") -join "`n"
     if ($LASTEXITCODE -ne 0 -or $remoteDigests -notmatch [regex]::Escape($InstallerHash) -or
         $remoteDigests -notmatch [regex]::Escape($BundleHash) -or
+        $remoteDigests -notmatch [regex]::Escape($PreviousBundleHash) -or
         $remoteDigests -notmatch [regex]::Escape($publicHash)) { throw 'Empreintes distantes non concordantes' }
 
     Step 'Activation COP root contrôlée'
     Write-Host "Fracta2 ; issuer uniquement ; archive $BundleHash"
     Write-Host "Clé SSH publique : $publicHash"
-    Write-Host "Puis signature du mandat v1 (12 étapes) et d'un seul redémarrage MCP."
+    Write-Host "Une seule signature pour 12 redémarrages du seul MCP pendant 48 heures."
     $consent = Read-Host 'Tapez OUI pour autoriser ce parcours complet'
     if ($consent -cne 'OUI') { throw 'Parcours annulé' }
 
@@ -104,7 +123,7 @@ exec(compile(content,p,'exec'),{'__name__':'__main__','__file__':p})
 '@
     $guardB64 = [Convert]::ToBase64String([Text.Encoding]::UTF8.GetBytes($guard))
     $python = 'import base64;exec(base64.b64decode("' + $guardB64 + '"))'
-    $rootArgs = "--bundle $WorkRemote/root-issuer.tar.gz --sha256 $BundleHash --pubkey $WorkRemote/principal-issuer.pub --pubkey-sha256 $publicHash --activate --resume-verified-stage"
+    $rootArgs = "--bundle $WorkRemote/root-issuer.tar.gz --sha256 $BundleHash --previous-bundle $WorkRemote/root-issuer-previous.tar.gz --previous-sha256 $PreviousBundleHash --pubkey $WorkRemote/principal-issuer.pub --pubkey-sha256 $publicHash --activate --resume-verified-stage"
     $state = (& ssh -i $Key -o IdentitiesOnly=yes $Remote "test -f /etc/cogentia-super/principal-issuer.pub && echo ENROLLED || echo INITIAL") -join ''
     if ($LASTEXITCODE -ne 0) { throw 'État issuer illisible' }
     if ($state -eq 'INITIAL') {
@@ -116,42 +135,24 @@ exec(compile(content,p,'exec'),{'__name__':'__main__','__file__':p})
 
     Step 'Mandat COP signé et inscrit'
     SignFile $mandate 'cogentia-maintenance-mandate-v1'
-    External 'Transfert signature de mandat' { scp -i $Key "$mandate.sig" "${Remote}:$WorkRemote/maintenance-v1.json.sig" }
+    External 'Transfert signature de mandat' { scp -i $Key "$mandate.sig" "${Remote}:$mandateRemote.sig" }
     $issuerClient = '/srv/cogentia/repos/cogentia/scripts/super/principal-issuer-client.mjs'
-    $enrolled = RemoteJson 'enroll' "node $issuerClient enroll $WorkRemote/maintenance-v1.json $WorkRemote/maintenance-v1.json.sig"
+    $enrolled = RemoteJson 'enroll' "node $issuerClient enroll $mandateRemote $mandateRemote.sig"
     if ($enrolled.phase -ne 'ROOT_MAINTENANCE_MANDATE_RECORDED') { throw 'Reçu mandat inconnu' }
 
-    Step 'Proposition d’effet COP unique et exacte'
-    $recovery = 'recovery:systemd:mcp-cogentia:active-check'
-    $prepared = RemoteJson 'prepare' "node $issuerClient prepare '$EffectCommand' '$recovery'"
-    if ($prepared.phase -ne 'COP_RESERVED_AWAITING_SIGNATURE' -or
-        $prepared.proposal.effect.command -cne $EffectCommand -or
-        $prepared.proposal.principal_ref -ne 'principal:jhn' -or
-        $prepared.proposal.mandate_ref -ne 'mandate:jhn:maintenance' -or
-        $prepared.proposal.single_use -ne $true -or
-        [DateTimeOffset]::Parse($prepared.proposal.expires_at) -le [DateTimeOffset]::UtcNow) {
-        throw 'Effet COP différent de la commande autorisée'
+    Step 'Premier redémarrage automatiquement couvert par le mandat'
+    # No second signature: the root broker checks signed mandate + budget.
+    # No caller-controlled command or service parameter is accepted.
+    $ran = RemoteJson 'restart_mcp' "node $issuerClient restart_mcp"
+    if ($ran.executed -ne $true -or $ran.settled -ne $true -or
+        $ran.service -ne 'mcp-cogentia.service' -or
+        $ran.remaining -ne 11 -or
+        $ran.receipt.mandate_ref -ne 'mandate:jhn:maintenance') {
+        throw 'Reçu de redémarrage COP non conforme'
     }
-    $effect = Join-Path $WorkLocal 'one-use-effect.json'
-    [IO.File]::WriteAllText($effect,[string]$prepared.canonical_to_sign,$Utf8)
-    SignFile $effect 'cogentia-super-effect-v1'
-    $remoteEffect = "$WorkRemote/effect-$([guid]::NewGuid().ToString('N')).json"
-    External 'Transfert proposition exacte' { scp -i $Key $effect "${Remote}:$remoteEffect" }
-    External 'Transfert signature effet' { scp -i $Key "$effect.sig" "${Remote}:$remoteEffect.sig" }
-
-    Step 'Émission du grant root à usage unique'
-    $issued = RemoteJson 'issue' "node $issuerClient issue $remoteEffect $remoteEffect.sig"
-    if ($issued.phase -ne 'ROOT_GRANT_ISSUED_NOT_EXECUTED' -or
-        $issued.authorization_id -notmatch '^sea_[a-z0-9-]{30,}$') { throw 'Reçu émission non confirmé' }
-
-    Step 'Consommation COP et redémarrage MCP'
-    # Never retry an uncertain execution; the root broker controls single-use.
-    $ran = RemoteJson 'run' "node $issuerClient run $($issued.authorization_id) $remoteEffect"
-    if ($ran.cop_reserved -ne $true -or $ran.authority_id -ne $issued.authorization_id -or
-        $ran.exit_code -ne 0) { throw 'Exécution ou reçu COP non conforme' }
     External 'État MCP' { ssh -i $Key -o IdentitiesOnly=yes $Remote 'systemctl is-active mcp-cogentia.service' }
-    Write-Host 'SUCCÈS : issuer enrôlé, mandat et effet signés, reçu COP, MCP actif.'
-    Write-Host 'La recette bancaire en lecture seule peut maintenant reprendre côté agent.'
+    Write-Host 'SUCCÈS : mandat de 48 heures signé une fois ; premier redémarrage reçu ; 11 restants.'
+    Write-Host 'Cogentia pourra redémarrer le MCP dans le même mandat sans vous solliciter.'
 } catch {
     Write-Error "ÉCHEC CONTRÔLÉ : $($_.Exception.Message)"
     throw
