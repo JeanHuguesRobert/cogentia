@@ -805,6 +805,17 @@ Therefore an observed historical action does not establish its original
 rationale, and a useful next action reconstructed today must not be backdated as
 the original author's intention.
 
+**Retrospective packet birth.** Janus.Past can also start without a declared
+packet: a conversation observes several already accomplished Acts, constructs
+evidence-backed hypotheses about their common cognitive continuity, and
+attaches them to an existing packet or creates a packet *now* when meaningful
+follow-up remains. The resulting packet's creation is a new present-time Act;
+its reconstructed history remains a qualified projection over earlier traces.
+Packet creation cannot establish historical intent, rewrite Act timestamps,
+or manufacture missing authorization. If there is no useful continuity, retain
+the Act traces without manufacturing a packet. See
+[`docs/resumable_github_issues.md`, §18.3a](../docs/resumable_github_issues.md).
+
 The prospective product should pass the simple cold-handler test:
 
 ```text

@@ -863,6 +863,41 @@ stop conditions when material
 This is Janus.Future: make explicit now what future handlers and future Reality
 will later have to answer.
 
+### 18.3a Retrospective packet birth from observed Acts
+
+A conversation or operational history may produce material Acts **before** anyone
+has declared the Cognitive Packet to which they belong. Janus.Past can then
+recognize a candidate continuity from the surviving traces. This is a
+**retrospective packet attribution**, not evidence that a packet already existed
+at the earlier event time.
+
+```text
+Acts / effects / outcomes / evidence already observed
+  -> Janus.Past: candidate common objective and causal lineage
+  -> evidence-qualified packet attribution (competing hypotheses allowed)
+  -> NOW: attach to an existing packet, create a new packet, or retain traces only
+  -> Janus.Future: current continuation, next handler and return conditions
+```
+
+The test for new packet creation is **useful remaining continuity**, not the
+mere occurrence of an Act. If an existing packet covers the work, append or
+reference the traces there rather than duplicate its identity. If nothing
+remains to handle, ordinary durable Act receipts may be sufficient.
+
+A newly created packet records `created_at` at its actual creation time and
+references historical Acts using their own event times and source locations.
+Its reconstructed purpose, grouping and rationale are present-day assertions,
+with evidence and uncertainty. Do not backdate packet identity, infer a missing
+historical intention as fact, or confuse current causal explanation with an
+original mandate. Where an earlier Act lacks authorization evidence, packet
+creation does not retroactively authorize it.
+
+The conversation is one possible **interpretation/routing handler**, not the
+packet's permanent memory or authority. When a conversation discovers the
+missing continuity, the packet can become durable on the available substrate
+and later synchronize with its canonical home, preserving identity, lineage
+and provenance. This does not require a new Janus daemon or a simulation.
+
 ### 18.4 Refactoring is not historical normalization
 
 Operationally, we may wish to make an Issue usable *as if* it had been
