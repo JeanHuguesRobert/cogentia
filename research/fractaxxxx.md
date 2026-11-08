@@ -2,14 +2,14 @@
 title: "FractaXXXX — A Generative Grammar of Possibilities"
 subtitle: "Principles, composition, emerging possibilities, friendly prior art, and Reality Tests"
 date: "2026-10-08"
-version: "0.8.1"
+version: "0.8.2"
 status: "working-paper — non-normative"
 language: "en"
 author: unknown
 affiliation: "Institut Mariani / C.O.R.S.I.C.A."
 ai_assisted_by:
   - "ChatGPT GPT-6 (drafting and research synthesis)"
-last_modified_at: "2026-11-07"
+last_modified_at: "2026-11-08"
 license: "CC BY-SA 4.0"
 document_role: source
 document_kind: "research-note"
@@ -90,7 +90,7 @@ These are proposed **moves** for exploration and composition, not a new normativ
 | Fractanet / FractaNet | The infrastructural instance of Generalized Packet Networks | documented | [Fractanet](https://github.com/JeanHuguesRobert/FractaVolta/blob/main/research/fractanet.md) |
 | FractaVolta | Energy-packet and mobile-buffer applications | established project | [FractaVolta](https://github.com/JeanHuguesRobert/FractaVolta) |
 | FractaCognition | Metacognitive discipline and composable heuristics | documented | [Principles](./fractacognition_principles.md) |
-| FractaCarta | Fractal maps, local autonomy and exploration grammar | documented | [FractaCarta](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/fractacarta.md) |
+| FractaCarta | Corrigible, recursive maps of informational locations, traversable reasoning steps, situated effort and exploratory traces; no map owns its territory | documented working hypothesis; extended operational crosswalk proposed, not implemented | [FractaCarta](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/fractacarta.md) |
 | **FractaMandate / FractaMandat** | Fractal, locality-aware mandate composition: reasonable competence, attenuated subdelegation, contextual judgment, resource forecasts and accountable acts | **name adopted by Principal, 2026-10-30; doctrine v0.2 working, implementation not established** | [Mandate — Reasonable Agency](./mandate_reasonable_agency.md), [COP/Accounting](https://github.com/JeanHuguesRobert/inseme/blob/main/packages/cop-core/COP_ACCOUNTING.md) |
 | **FractaReality / FractaRéalité** | Candidate for situated, cross-scale reconciliation of partial Reality observations; avoid duplicating Reality Probes and Trace Treatment | **research candidate; no independent component established** | [Interrogating Reality](./interrogating_reality.md), [Reality Probe Selection](./reality_probe_selection.md), [Trace Treatment](./trace_treatment_packet.md) |
 | **FractaAgent** | Candidate *recursive orchestration role* for a governed agent that may receive work and, when expressly permitted, delegate attenuated sub-missions, reconcile evidence and return a result | **proposed by Principal, 2026-11-07; terminological candidate only — no new agent class, COP primitive or implementation established** | [Pluralisation cognitive sous mandat](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/pluralisation_cognitive_sous_mandat.md), [FractaMandate](./mandate_reasonable_agency.md) |
@@ -106,6 +106,22 @@ These are proposed **moves** for exploration and composition, not a new normativ
 ### Proposed names — not projects or established concepts
 
 FractaCompute (compute-placement), FractaStore (durable storage), FractaTrust (trust and delegation), FractaMemory (memory projections), FractaFlow (composition). FractaCache is listed above as a candidate because its locality-governed materialization responsibility is distinguishable from memory itself, but no independent runtime, protocol, or novelty claim is implied. These are hypotheses; first determine whether COP/Operium/Cogentia already name and implement the exact responsibility. Avoid duplicating FractaCalendar with a proposed FractaTime.
+
+## FractaCarta — cognitive passage maps and situated exploration (2026-11-08)
+
+**Status: conceptual crosswalk only; no implementation claim or new FractaCarta protocol.** The authoritative [FractaCarta note](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/fractacarta.md) already defines Anchor, Projection, Scope and Provenance and the navigation operations ZOOM, PIVOT and REANCHOR. This FractaXXXX entry makes their connection with the present reasoning/stigmergy investigation explicit without replacing that source.
+
+- **Location / emplacement:** an addressable visitable anchor or situated state; identity, material placement, content and agent cognitive state remain distinguishable. Locations need not possess universal Cartesian coordinates or independent axes.
+- **Passage / étape:** a typed, directed, potentially asymmetric reasoning or exploration transition between locations. An edge may depend on several premises; navigation is not itself valid inference. Its effective and predicted effort can vary with agent, mission, knowledge, context, available capabilities and time.
+- **Locality:** a budget-relative accessibility neighborhood under feasible, authorized transitions; distinguish accessible locality from the *Minimum Sufficient Locality* required for correct task completion. Cost cannot purchase authority; inaccessible, unknown, forbidden and demonstrated impossible are distinct.
+- **Map:** a bounded, corrigible projection of possible passages, costs, beliefs, observations, uncertainties and epistemic conditions, never the exhaustive Territory. Map disagreement and independent exploration are assets for error correction, not automatically anomalies to erase.
+- **Stigmergic trace:** an attributable situated signal associated with a location *or passage* that may alter perceived attraction, expected costs or discovery; its evaporation concerns operational salience, not historical destruction. Species/scope-specific readers, independent provenance, deduplication and anti-feedback-loop protection belong to existing trace, memory and governance contracts.
+- **Serendipity / chance / self-correction:** a bounded exploration can choose nonpreferred passages or notice unexpected observations; a Reality Probe or contradictory evidence can challenge the current Map. An observed dead end is useful evidence only under its stated conditions, not a universal impossibility certificate.
+- **Ithaca return:** a Cognitive Packet can return verified observations, invalidated assumptions, newly identified passages, negative results and effort evidence to its semantic home. Assimilation may update future Maps and capabilities, but recording a trace alone is not demonstrated learning.
+
+**Candidate composition, not a new scheduler:** existing FractaCarta `ZOOM/PIVOT/REANCHOR`, Cogentia Level-2 continuation/frontier, the Calculette de l'esprit ([#233](https://github.com/JeanHuguesRobert/cogentia/issues/233)), FractaLog, COP mandate/budget and Ithaca can be composed as `orient → sense local map/traces → select feasible passage → step/probe → challenge/map-correct → mark attributable residue → return/assimilate`. These are *semantic actions under investigation*, not claims of registered callable methods. FractaCarta owns only projection/navigation meaning; COP remains authority/accounting, source-local history remains authoritative, and FractaCognition covers reflexive error correction.
+
+**Minimum discriminating Reality Test:** over an identical small exploration graph and fixed mandates/budgets, compare unassisted navigation, trace-guided navigation and trace-guided navigation with bounded independent challenge/random exploration. Seed one misleading well-reinforced path and one neglected useful path. Measure achieved objectives, actual effort, false-impossibility corrections, distinct independent evidence, preserved negative results, privacy/authority invariants and subsequent cold-handler reuse after Ithaca assimilation. Reject additional runtime objects unless the test exposes a specific gap in existing Core mechanisms. See also [Locality Principle](./locality_principle.md), [FractaCognition](./fractacognition_principles.md) and [stigmergy exploration issue #137](https://github.com/JeanHuguesRobert/cogentia/issues/137).
 
 ## FractaMandate / FractaMandat — responsible authority across scales (2026-10-30)
 
