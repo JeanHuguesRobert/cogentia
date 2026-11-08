@@ -242,7 +242,7 @@ references, matched terms, source excerpt, decision `review_required` and
 explicit `packet_creation_assessed: false`. `--root repo` bounds scope.
 The ranking is **explainable lexical overlap**, *not* embedding-based
 semantic reconciliation, a verified shared finality, an automatic Act
-attachment or a COP authorization. It writes nothing*. This modest candidate
+attachment or a COP authorization. It writes nothing. This modest candidate
 finder makes an existing handler decision less blind while leaving semantic
 judgment, cross-repository discovery, attachment receipts and governance to
 future work driven by real use. Deterministic tests are in
@@ -298,6 +298,59 @@ expects inference workloads to exceed training spending in 2026. The
 contribution sought here is a composable **commons of durable cognitive
 work and interchangeable handlers**, not a claim to have invented queues,
 workflows or model-independent coordination.
+
+### Harnesses versus a durable work substrate (research synthesis, 2026-11-08)
+
+An important **difference in starting point** separates the usual agent
+harness from the intended Cognitive Packet Switching substrate:
+
+- A **model-centric harness** normally surrounds a model with its agent
+  loop, context, tools, approvals, persistence and recovery. Its natural
+  unit is the *agent run or session*, even where runs may be long-lived.
+- A **work-centric CPS substrate** starts with the work's independent,
+  durable identity and Continuations. Its natural unit is *resumable work*,
+  which may outlive or precede every particular human/LLM/script handler.
+  A harness can be **one handler adapter**, not the sovereign home of the
+  work or its only scheduler.
+
+The difference is a **system boundary and architectural emphasis**, not a
+claim that harnesses lack persistence, recovery, humans-in-the-loop, or
+model/provider independence. Substantial Friends and overlaps include:
+
+- [LangChain, *The Anatomy of an Agent Harness* (2026-03-10)](https://www.langchain.com/blog/the-anatomy-of-an-agent-harness): deliberately defines the agent as model plus harness and describes context, tools, planning and delegation.
+- [Google Cloud, *What is an agent harness?* (2026-10-15)](https://cloud.google.com/discover/agent-harness): the runtime surrounding an AI model to make it capable of autonomous work.
+- [Cloudflare Agents harnesses (updated 2026-10-29)](https://developers.cloudflare.com/agents/harnesses/): durable jobs, sessions and recovery, but the harness is still defined by its model/tool execution loop.
+- [OpenAI Agents SDK and separation of harness from compute (2026)](https://openai.com/index/the-next-evolution-of-the-agents-sdk/): persistence, sandbox replacement and durable model-centered runs; real prior art, not an absent capability.
+- [LangGraph interrupts and persistence](https://github.com/langchain-ai/docs/blob/main/src/oss/langgraph/interrupts.mdx): durable checkpoints and deferred human input, directly relevant to Continuation handling.
+- [Microsoft Agent Framework harness](https://learn.microsoft.com/agent-framework/concepts/harness): composed chat-client and tools with context, approvals, and multistep persistence.
+
+**Inversion of Control / call/cc distinction:** `call/cc` captures an
+execution continuation within a language runtime, whereas Cogentia's
+Continuation is a *serialized, semantically resumable work contract*, not
+a promise of captured stack restoration. The packet is emitted without a
+required synchronous call to a designated next model. Switching chooses
+which available handler is capable and authorized to continue. This turns
+LLM unavailability or missing paid inference into *deferred work* rather
+than necessarily a lost session.
+
+**Necessity claim, carefully bounded:** even a hypothetical very capable
+model cannot by intelligence alone eliminate finite resources, elapsed
+time, network interruptions, independent actors' permissions, provenance,
+or conflicting responsibilities. Such environments still need durable
+state, recovery, coordination and effect accounting. These *functions*
+are structurally necessary where those conditions obtain; **this does
+not establish that CPS is the uniquely necessary implementation**.
+Predictions of an imminent Singularity or truly unlimited intelligence
+are speculative, not needed for the architecture argument.
+
+The practical opportunity is a **commons-level substrate** of durable,
+portable, contestable cognitive work into which many model-centric
+harnesses, deterministic executors and human conversations can plug.
+Do not attempt to replace their tested runners; adapt them as possible
+handlers. The next grounded progression remains `packet relate` candidate
+discovery -> governed Judgment Continuation -> qualified handler return ->
+traceable deterministic assimilation; no mandatory new framework, API
+budget or speculative evaluation benchmark.
 
 **Scale invariance without authority inflation:** an umbrella may itself be a child of another umbrella, but this does not grant new mandate, source sovereignty or permissions. Child results can require revisiting the parent hypothesis; the parent cannot silently rewrite a child's historically completed external acts.
 
