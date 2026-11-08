@@ -5,12 +5,11 @@ import net from 'node:net';
 const SOCKET='/run/cogentia-super/broker.sock';
 export function buildIssuerRequest(argv){
  const [op,a,b]=argv;
- if(op==='enroll'||op==='issue'){
+ if(op==='issue'){
   if(!a||!b)return null;
   return {op,proposal:JSON.parse(fs.readFileSync(a,'utf8')),
    signature:fs.readFileSync(b,'utf8')};
  }
- if(op==='restart_mcp'){if(argv.length!==1)return null;return {op:'restart_mcp'};}
  if(op==='reconcile'){
   if(!a||b)return null;return {op,authorization_id:a};
  }
@@ -46,7 +45,7 @@ export function sendIssuerRequest(request,{socket=SOCKET,timeout_ms=25000}={}){
 if(process.argv[1]&&import.meta.url==='file://'+process.argv[1]){
  try{
   const request=buildIssuerRequest(process.argv.slice(2));
-  if(!request){process.stderr.write('usage: client enroll PROPOSAL SIG | prepare COMMAND RECOVERY_REF | issue PROPOSAL SIG | run AUTH_ID SIGNED_PROPOSAL\n');process.exitCode=2;}
+  if(!request){process.stderr.write('usage: client prepare COMMAND RECOVERY_REF | issue PROPOSAL SIG | run AUTH_ID SIGNED_PROPOSAL\n');process.exitCode=2;}
   else{const answer=await sendIssuerRequest(request);process.stdout.write(JSON.stringify(answer)+'\n');if(!answer.ok)process.exitCode=1;}
  }catch{process.stderr.write('issuer_request_invalid\n');process.exitCode=2;}
 }

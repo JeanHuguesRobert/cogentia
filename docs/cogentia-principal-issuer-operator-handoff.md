@@ -4,7 +4,7 @@ author: "Institut Mariani / C.O.R.S.I.C.A."
 date: "2026-11-07"
 last_modified_at: "2026-11-07"
 version: "0.1"
-status: "working-paper"
+status: "superseded"
 language: "fr"
 license: "CC BY-SA 4.0"
 document_role: "operational"
@@ -25,7 +25,7 @@ review:
 
 # Première installation d'une autorité COP protégée
 
-**Mise à jour 8 novembre 2026 :** la procédure historique ci-dessous exigeait inutilement une signature par redémarrage du MCP. Elle est remplacée pour ce chantier par un mandat unique signé de **48 heures et 12 redémarrages** du seul `mcp-cogentia.service`, contrôlé à chaque exécution par COP. Voir [décision de portée](cop-bounded-mcp-development-mandate-2026-11-08.md). Ne pas utiliser la procédure `prepare/issue/run` pour cette maintenance récurrente ; l'entrée est désormais `principal-issuer-client.mjs restart_mcp` après l'enrôlement signé initial et l'installation de l'issuer root. Les autres demandes privilégiées restent soumises à leurs mandats propres.
+**ARCHIVE — décision du 8 novembre 2026 :** ce runbook d'enrôlement et de signature ne doit plus être employé pour administrer Fracta2. Le montage du mandat expérimental 48 h/12 redémarrages est retiré. Utiliser le canal SSH/sudo du propriétaire pour l'administration du nœud. Conserver cette description uniquement pour comprendre les essais passés ; les délégations autonomes des agents constituent une question distincte. Voir [la décision active](fractanode-owner-administration-2026-11-08.md).
 
 
 

@@ -4,7 +4,7 @@ author: "Institut Mariani / C.O.R.S.I.C.A."
 date: "2026-11-08"
 last_modified_at: "2026-11-08"
 version: "0.1"
-status: "working-paper"
+status: "superseded"
 language: "fr"
 license: "CC BY-SA 4.0"
 document_role: "operational"
@@ -17,6 +17,14 @@ provenance:
   origin_date: "2026-11-08"
 review:
   status: "unreviewed"
+---
+
+# Archive — essai de mandat 48 h / 12 redémarrages, abandonné
+
+**Décision du 8 novembre 2026 :** cet essai n'est pas une procédure de maintenance en vigueur. L'administration directe du FractaNode par son propriétaire authentifié en SSH/sudo est suffisante, sans autorisation COP supplémentaire ou signature RSA spécialisée. Les scripts de bootstrap ThinkPad et de création de proposition ont été retirés ; les commandes MCP expérimentales `enroll` et `restart_mcp` ont été retirées de leur surface source. Les modules internes restants sont de l'archéologie technique, non une invitation à réactiver l'issuer.
+
+Voir [l'autorité d'administration du propriétaire du FractaNode](fractanode-owner-administration-2026-11-08.md).
+
 ---
 
 # Mandat continu ≠ signature d'effet répétée

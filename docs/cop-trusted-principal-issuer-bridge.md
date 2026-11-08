@@ -24,6 +24,8 @@ review:
   status: "unreviewed"
 ---
 
+> **Archéologie — 8 novembre 2026 :** la voie d'enrôlement d'un mandat de maintenance du propriétaire (`enroll` et `restart_mcp`) est abandonnée et retirée des sources du broker. Ce document conserve l'historique de l'émission de mandats **pour les délégations distinctes**, mais ne prescrit plus d'émettre un mandat pour l'administration SSH/sudo de `fracta2` par son propriétaire. Voir [décision active](fractanode-owner-administration-2026-11-08.md).
+
 # Pont d'issuer — réalisé et restant
 
 ## Réalisé, avec tests

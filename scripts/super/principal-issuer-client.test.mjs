@@ -10,7 +10,8 @@ test('client transport cannot mint rights and preserves exact signed effect mate
   const proposal={kind:'cogentia.super-effect-proposal/v1',actor_ref:'agent:jhn',principal_ref:'principal:jhn',mandate_ref:'mandate:jhn:maintenance',
    effect:{command:'sudo -n id -u',target:'node:fracta2',provider:'unix-process',timeout_ms:15000}};
   const p=join(dir,'proposal'),s=join(dir,'sig');writeFileSync(p,JSON.stringify(proposal));writeFileSync(s,'signed-proof');
-  assert.equal(buildIssuerRequest(['enroll',p,s]).signature,'signed-proof');
+  assert.equal(buildIssuerRequest(['enroll',p,s]),null);
+  assert.equal(buildIssuerRequest(['restart_mcp']),null);
   assert.equal(buildIssuerRequest(['issue',p,s]).proposal.effect.command,proposal.effect.command);
   assert.equal(buildIssuerRequest(['run','sea:trusted',p]).script,proposal.effect.command);
   assert.equal(buildIssuerRequest(['prepare','sudo -n true','ssh:independent']).recovery_ref,'ssh:independent');

@@ -19,6 +19,8 @@ review:
   status: "unreviewed"
 ---
 
+**ARCHIVE — 8 novembre 2026 :** reprise de l'issuer abandonnée pour la maintenance du FractaNode. Ne pas appliquer cette procédure. La décision en vigueur est [l'administration par le propriétaire](fractanode-owner-administration-2026-11-08.md). Les octets et essais historiques restent consultables dans Git.
+
 # Réconcilier l'issuer COP avant l'activation du Core OOPIF
 
 **Addendum du 8 novembre 2026 :** le mandat de maintenance est désormais limité à `service.restart` du seul `mcp-cogentia.service`, pendant 48 heures et avec 12 unités au total. Il **ne requiert plus de signature individuelle** pour chaque redémarrage après l'enrôlement initial. Le paquet root et son empreinte doivent correspondre au nouveau code, avec remplacement du stage historique par comparaison exacte contre l'ancienne archive. Se reporter à [la décision actuelle](cop-bounded-mcp-development-mandate-2026-11-08.md) ; les séquences de signatures par effet ci-dessous sont conservées uniquement comme historique, non comme marche à suivre.
