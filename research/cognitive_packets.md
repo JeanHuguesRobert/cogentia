@@ -185,6 +185,62 @@ becomes accessible. This precise causal hypothesis is retained in the
 [canonical Potentics definition, §3.5](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/potentics.md#35-spirit-of-synthesis).
 Observed attachment/deduplication alone does not establish generative synthesis.
 
+### Friends / prior art for semantic attachment and learning (research update, 2026-11-08)
+
+The following are **independent antecedents and reusable commons**, not
+competitors to be outclaimed. They resolve different pieces of the problem.
+No single cited system is asserted to implement the Cogentia packet/Act/COP
+contract end-to-end, and benchmark outcomes do not establish local fitness.
+
+| Friend and source | Established contribution | Specific use / boundary for Cogentia |
+| --- | --- | --- |
+| [A-MEM (2025)](https://arxiv.org/abs/2502.12110), [open source](https://github.com/agiresearch/A-mem) | Zettelkasten-inspired dynamic indexing and linking of agent memories, with evolution of existing notes | **Retrieve and attach first**, revise contextual links; memory-note similarity alone does not imply packet identity, finality or authority |
+| [Graphiti / Zep temporal KG (2025)](https://arxiv.org/abs/2501.13956), [open source](https://github.com/getzep/graphiti) | Time-aware ingestion of conversations and structured data, historical fact validity and changing relations | Keep **when something happened** distinct from **when it was recorded/learned**; never overwrite a former belief with today's interpretation |
+| [Doyle's Truth Maintenance System (1979)](https://dspace.mit.edu/entities/publication/5377b306-4ecc-4687-b1f5-78cbb4a0543a) and [de Kleer's ATMS (1986)](https://doi.org/10.1016/0004-3702(86)90080-9) | Explicit justifications, assumption sets, alternative contexts and belief revision | Record explanations for proposed packet links, keep competing Janus.Past branches; **do not equate** a belief-management technique with established truth |
+| [W3C PROV-O (2013)](https://www.w3.org/TR/prov-o/) | Shared vocabulary of Entities, Activities, Agents, associations and derivations | Map our existing Acts, Artifacts and provenance by **projection**, not by creating a second sovereign history or granting new permissions |
+| [Hayes-Roth's blackboard control architecture (1985)](https://doi.org/10.1016/0004-3702(85)90063-3) | Opportunistic invocation of heterogeneous knowledge sources based on a shared problem-solving situation | Conversations/handlers can enrich a **shared work situation**; preserve packet ownership and no hard dependency on a central blackboard |
+| [LangGraph durable checkpoints](https://github.com/langchain-ai/langgraph) and [Temporal workflows](https://docs.temporal.io/workflow-execution) | Persistent execution, history, human intervention and recovery; Temporal also provides durable event-based workflows | Reuse continuation/recovery patterns where appropriate; **thread or workflow execution identity is not cognitive packet identity**, and not a COP effect grant |
+| [Microsoft GraphRAG local/global/DRIFT retrieval](https://github.com/microsoft/graphrag/blob/main/docs/query/overview.md) | Retrieval at different graph scopes, including query refinement from community context | Candidate discovery should combine lexical/semantic/local links and wider related work; avoid costly global graph regeneration on every conversation |
+| [IETF Bundle Protocol v7 (RFC 9171)](https://www.rfc-editor.org/rfc/rfc9171.html) | Store-carry-forward transport over disrupted networks | Established transport analogy; a Bundle's routing/delivery semantics do not by themselves convey cognitive meaning or authorized effects |
+| [Zep Agent Skills / *Learning by Doing* (2026-11-01)](https://arxiv.org/abs/2611.01386) and [open Agent Skills format](https://github.com/agentskills/agentskills) | Compiles versioned reusable procedural skills from **verified traces**; reports validation and provenance | Assimilate useful real Acts into portable procedures only when grounded and warranted. New research: reported evaluations are **not** proof of general production reliability |
+| [Graph-based Agent Memory survey (2026)](https://arxiv.org/abs/2602.05665), [living open bibliography](https://github.com/DEEP-PolyU/Awesome-GraphMemory) | Taxonomy of extraction, storage, retrieval, memory evolution and research resources | Maintain links to the **Friends**, prefer contributions upstream, and avoid announcing already-existing ideas as inventions |
+
+**Operational consequence, using existing infrastructure first:**
+
+1. From a concrete conversation Act or observed GitHub/COP event, identify its
+   provenance and whether independently resumable work actually exists.
+2. Query **existing packets first** using direct IDs/lineage and available
+   lexical/contextual search; optionally rank semantic candidates, but
+   preserve the evidence and explanation of the match. Explicitly allow
+   *several* relevant packets and non-attachment.
+3. Attach only the useful observation, contradiction, derived relation or
+   candidate next action as a trace with original source and time.
+   Suggestions are not authoritative changes to packet history or mandate.
+4. Keep new interpretations and concurrent hypotheses **revisable**.
+   Relabeling a completed packet is not automatically reopening its work;
+   a cross-link is not necessarily a merge.
+5. When an actual return demonstrates reusable procedural learning, offer
+   an existing versioned skill or guidance update; do not publish an
+   unverified agent-generated recipe as established competence.
+6. Create a new Cognitive Packet **only** when a genuinely independent
+   continuation has no coherent pre-existing home; record the reason and
+   allow later restructuring without historical erasure.
+
+**Concrete present gap:** `scripts/cogentia.js` currently uses `dedupe_key`
+for exact deduplication of **active** continuations, not semantic matching
+across completed packets and multiple corpus locations. Prior-art systems
+suggest mechanisms and interoperable formats but should **not** be installed
+as a mandatory database, new scheduler, or central authority merely to
+resolve this gap. Apply FBF and existing on-the-job examples; a simple
+traceable candidate suggestion is preferable to a large synthetic testbed.
+
+**Scientific and commons boundary:** distinguish retrieving evidence from
+asserting truth, correlation from causation, ranking from permission, and
+observed improvement from universal validity. This mapping is an
+**integration hypothesis**, not a claim of unique scientific novelty.
+Respect upstream licenses and attribution; contribute corrections or useful
+interoperability findings to the respective communities when warranted.
+
 **Scale invariance without authority inflation:** an umbrella may itself be a child of another umbrella, but this does not grant new mandate, source sovereignty or permissions. Child results can require revisiting the parent hypothesis; the parent cannot silently rewrite a child's historically completed external acts.
 
 **Observed precedents, not proofs of a universally supported protocol:** [barons-Mariani #127](https://github.com/JeanHuguesRobert/barons-Mariani/issues/127), [Cogentia #278](https://github.com/JeanHuguesRobert/cogentia/issues/278), and [Capable coordination #152](https://github.com/JeanHuguesRobert/barons-Mariani/issues/152). This candidate pattern refines the use of existing Cognitive Packets through FractaCognition and the Second Method. Test it against work already done before proposing additional schemas or executors.
