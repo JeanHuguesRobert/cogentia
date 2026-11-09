@@ -94,6 +94,8 @@ export const MUTATE_TOOLS = new Set([
 export const PRIVATE_READ_TOOLS = new Set([
   "cogentia_memory_capture",
   "cogentia_config_hygiene_audit",
+  "cogentia_vault_list",
+  "cogentia_vault_describe",
   "operium_calendar_list",
   "cogentia_host_fs_list",
   "cogentia_host_fs_read",
@@ -316,6 +318,16 @@ export const TOOLS = [
       },
       additionalProperties: false,
     },
+  },
+  {
+    name: "cogentia_vault_list",
+    description: "List existing JHN Vault references with metadata only (NO secret values, no claim of authority). Private-read; provider execution is a separate governed capability.",
+    inputSchema: {type:"object",properties:{instance:{type:"string",enum:["jhn"]},prefix:{type:"string",pattern:"^[a-z][a-z0-9_]{0,127}$"},limit:{type:"integer",minimum:1,maximum:200}},additionalProperties:false},
+  },
+  {
+    name: "cogentia_vault_describe",
+    description: "Describe one JHN Vault configuration reference without retrieving or exposing its value. Private-read; no execution authority.",
+    inputSchema: {type:"object",properties:{instance:{type:"string",enum:["jhn"]},key:{type:"string",pattern:"^[a-z][a-z0-9_]{0,127}$"}},required:["key"],additionalProperties:false},
   },
   {
     name: "cogentia_consolidate",
@@ -1791,6 +1803,18 @@ export function createMcpCore(env = process.env, extras = {}) {
         return daemonGet("/api/cli/config/hygiene-audit", {
           instance: enumOptional(args.instance, ["jhn"], "instance") || "jhn",
         }, { privateRead: auth?.auth === "jhn" });
+      case "cogentia_vault_list":
+        return daemonGet("/api/cli/config/vault-catalog",{
+          instance:enumOptional(args.instance,["jhn"],"instance") || "jhn",
+          prefix:typeof args.prefix === "string" ? args.prefix : undefined,
+          limit:boundedOptional(args.limit,1,200) || 100,
+        },{privateRead:auth?.auth === "jhn"});
+      case "cogentia_vault_describe":
+        requireString(args.key,"key");
+        return daemonGet("/api/cli/config/vault-catalog",{
+          instance:enumOptional(args.instance,["jhn"],"instance") || "jhn",
+          key:args.key,limit:1,
+        },{privateRead:auth?.auth === "jhn"});
       case "cogentia_consolidate":
         return daemonGet("/api/cli/corpus/consolidate", {
           full: args.full === true ? "1" : undefined,

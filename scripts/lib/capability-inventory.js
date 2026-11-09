@@ -35,6 +35,8 @@ export const CLI_COMMANDS = [
   { verb: "grep", mcp_tool: "cogentia_grep", daemon: "/api/cli/grep", risk: "read" },
   { verb: "ask", mcp_tool: "cogentia_john_run", risk: "read" },
   { verb: "config hygiene-audit", mcp_tool: "cogentia_config_hygiene_audit", daemon: "/api/cli/config/hygiene-audit", risk: "private_read" },
+  { verb: "config vault-list", mcp_tool: "cogentia_vault_list", daemon: "/api/cli/config/vault-catalog", risk: "private_read" },
+  { verb: "config vault-describe", mcp_tool: "cogentia_vault_describe", daemon: "/api/cli/config/vault-catalog", risk: "private_read" },
   { verb: "docs summary", mcp_tool: "cogentia_docs_summary", daemon: "/api/cli/docs/summary", risk: "read" },
   { verb: "docs query", mcp_tool: "cogentia_docs_query", daemon: "/api/cli/docs/query", risk: "read" },
   { verb: "docs search", mcp_tool: "cogentia_search", daemon: "/api/context/search", risk: "read" },

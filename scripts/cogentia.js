@@ -374,6 +374,7 @@ const DAEMON_LOOPBACK_POST_ROUTES = new Set([
  */
 const DAEMON_LOOPBACK_GET_ROUTES = new Set([
   "/api/cli/config/hygiene-audit",
+  "/api/cli/config/vault-catalog",
 ]);
 const DAEMON_PRIVATE_READ_HEADER = "x-cogentia-private-read";
 const daemonRateLimits = new Map();
@@ -948,6 +949,10 @@ Core commands:
                            --mode keyword|hybrid|semantic --stream
   config hygiene-audit     Read-only Vault/cache hygiene report for a configured
                            Digital Twin. Returns no configuration values.
+  config vault-list        Read-only scoped Vault reference catalog (no secret values).
+                           Flags: --instance jhn --prefix <key-prefix> --limit <1..200> --json
+  config vault-describe    Inspect one exact Vault reference without reading its value.
+                           Flags: --instance jhn --key <config-key> --json
   interactions list        List Agent JHN Interaction Cases desk projection
                            (Inseme #77). Flags: --open --limit <n> --json
                            --instance jhn
@@ -4120,16 +4125,60 @@ function configHygieneAudit(ctx, instance = "jhn") {
   }
 }
 
-function cmdConfig(subcommand) {
-  if (subcommand !== "hygiene-audit") {
-    throw new Error("Unknown config subcommand. Use hygiene-audit.");
+/** Thin, bounded metadata-only bridge to Inseme's canonical JHN Vault.
+ * The Inseme query never selects value/value_json; this bridge never handles
+ * raw credentials. For any secret *use*, a trusted provider adapter with its
+ * own COP authorization and effect boundary is still mandatory.
+ */
+function configVaultCatalog(ctx, {instance = "jhn", prefix = "", key = "", limit = 100} = {}) {
+  if (instance !== "jhn") return {ok:false,error:"unsupported_instance"};
+  if (typeof prefix !== "string" || (prefix && !/^[a-z][a-z0-9_]{0,127}$/.test(prefix)) ||
+      typeof key !== "string" || (key && !/^[a-z][a-z0-9_]{0,127}$/.test(key)) ||
+      !Number.isSafeInteger(limit) || limit < 1 || limit > 200) {
+    return {ok:false,error:"invalid_vault_reference"};
   }
+  const inseme = ctx.repos.find(repo => repo.name === "inseme");
+  if (!inseme || !fs.existsSync(inseme.path)) return {ok:false,error:"vault_catalog_unavailable"};
+  const script = path.resolve(inseme.path,"apps/platform/scripts/vault-catalog.js");
+  if (!fs.existsSync(script)) return {ok:false,error:"vault_catalog_unavailable"};
+  try {
+    const args = [script,key ? "describe" : "list","--instance","jhn","--json"];
+    if (key) args.push("--key",key);
+    if (prefix) args.push("--prefix",prefix);
+    args.push("--limit",String(limit));
+    const raw = execFileSync(process.execPath,args,{
+      cwd:path.dirname(script),encoding:"utf8",stdio:["ignore","pipe","ignore"],
+      timeout:30000,maxBuffer:128*1024,
+    });
+    const report = JSON.parse(raw);
+    if (report?.schema !== "cogentia.vault_catalog.v1" || report?.read_only !== true ||
+        report?.values_exposed !== false || !Array.isArray(report.entries)) {
+      return {ok:false,error:"vault_catalog_invalid_response"};
+    }
+    return report;
+  } catch {
+    return {ok:false,error:"vault_catalog_unavailable"};
+  }
+}
+
+function cmdConfig(subcommand) {
+  if (!["hygiene-audit","vault-list","vault-describe"].includes(subcommand))
+    throw new Error("Unknown config subcommand. Use hygiene-audit, vault-list or vault-describe.");
   const ctx = loadContext();
   const instance = valueFlag("--instance") || "jhn";
-  const result = configHygieneAudit(ctx, instance);
-  return output(result, result.ok === false
-    ? `Configuration hygiene audit unavailable: ${result.reason || result.error}`
-    : `Configuration hygiene audit: ${result.instance} (${result.read_only ? "read-only" : "invalid"})`);
+  if (subcommand === "hygiene-audit") {
+    const result = configHygieneAudit(ctx, instance);
+    return output(result, result.ok === false
+      ? `Configuration hygiene audit unavailable: ${result.reason || result.error}`
+      : `Configuration hygiene audit: ${result.instance} (${result.read_only ? "read-only" : "invalid"})`);
+  }
+  const key = subcommand === "vault-describe" ? valueFlag("--key") : "";
+  if (subcommand === "vault-describe" && !key)
+    return output({ok:false,error:"vault_key_required"},"Vault key required");
+  const result = configVaultCatalog(ctx,{instance,key,prefix:valueFlag("--prefix")||"",
+    limit:Number(valueFlag("--limit")||100)});
+  return output(result,result.ok ? `Vault references: ${result.count} (values never read)`
+    : `Vault catalog unavailable: ${result.error}`);
 }
 
 /**
@@ -4462,6 +4511,16 @@ async function handleDaemonRequest(req, res) {
     } catch (error) {
       return daemonJson(res, 500, { ok: false, error: "privacy_check_failed", message: error.message });
     }
+  }
+  if (req.method === "GET" && url.pathname === "/api/cli/config/vault-catalog") {
+    const effectiveCtx = ctx || loadContext();
+    const key = url.searchParams.get("key") || "";
+    const result = configVaultCatalog(effectiveCtx,{
+      instance:url.searchParams.get("instance") || "jhn",
+      key,prefix:url.searchParams.get("prefix") || "",
+      limit:Number(url.searchParams.get("limit") || 100),
+    });
+    return daemonJson(res,result.ok ? 200 : (result.error === "invalid_vault_reference" ? 400 : 503),result);
   }
   if (req.method === "GET" && url.pathname === "/api/cli/config/hygiene-audit") {
     const effectiveCtx = ctx || loadContext();

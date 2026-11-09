@@ -87,6 +87,8 @@ assert.ok(publicNames.includes("cogentia_consolidate"));
 assert.ok(publicNames.includes("cogentia_embeddings_status"));
 assert.ok(publicNames.includes("cogentia_mandate_attenuation_check"));
 assert.ok(!publicNames.includes("cogentia_config_hygiene_audit"));
+assert.ok(!publicNames.includes("cogentia_vault_list"));
+assert.ok(!publicNames.includes("cogentia_vault_describe"));
 assert.match(init.result.instructions, /cogentia_skill_get/);
 for (const name of MUTATE_TOOLS) {
   assert.ok(!publicNames.includes(name), `public tools/list must hide ${name}`);
@@ -217,6 +219,13 @@ const privateReadDenied = await publicCore.handleJsonRpc({
 });
 assert.equal(privateReadDenied.result.isError, true);
 assert.equal(privateReadDenied.result.structuredContent?.error_class, "tier_forbidden");
+
+for (const name of ["cogentia_vault_list", "cogentia_vault_describe"]) {
+  const denied = await publicCore.handleJsonRpc({jsonrpc:"2.0",id:161,
+    method:"tools/call",params:{name,arguments:name.endsWith("describe") ? {key:"cloudflare_api_key"} : {}}});
+  assert.equal(denied.result.isError,true,`${name} must reject anonymous requests`);
+  assert.equal(denied.result.structuredContent?.error_class,"tier_forbidden");
+}
 
 // Phase 5: JHN attestation unlocks mutate tools without full admin view
 const jhnCore = createMcpCore({
