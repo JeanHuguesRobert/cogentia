@@ -127,7 +127,10 @@ export function createBaileysTransport(config, hooks = {}) {
     const generation = ++socketGeneration;
     const B = await loadBaileys();
     const authDir = resolveAuthDir(config);
-    fs.mkdirSync(authDir, { recursive: true });
+    // Baileys stores private Signal identity and pre-keys in this directory.
+    // Default umask is not necessarily private (observed 775 on Fracta2).
+    fs.mkdirSync(authDir, { recursive: true, mode: 0o700 });
+    fs.chmodSync(authDir, 0o700);
 
     const { state, saveCreds } = await B.useMultiFileAuthState(authDir);
     const version = B.fetchLatestBaileysVersion
