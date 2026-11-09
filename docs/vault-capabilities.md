@@ -84,3 +84,52 @@ the core or treat tool discovery as a use mandate.
 - `check-mcp-dual-era.js` and `check-capability-inventory.js` check MCP
   visibility and capability discovery. Source and published commits are not
   proof that running MCP services have already been redeployed.
+
+## 2026-11-09 — trusted provider-side secret consumption building blocks
+
+The next generic phase is implemented as **in-process libraries** (source-level,
+not yet enabled on live provider dispatch):
+
+- Inseme `apps/platform/scripts/lib/vault-secret-lease.js` exports
+  `createJhnVaultSecretLease({client})`. Its `withSecret('jhn-vault:<key>',
+  consume)` uses an exact `instance_id` **and** `key` equality predicate, checks
+  tenant, secret/private metadata and nonempty value, and invokes the trusted
+  callback while the secret remains in-process. Errors are redacted, including
+  callbacks containing a secret in their exception message. There is **no**
+  CLI, HTTP, MCP, logging or serialization surface for reading the value.
+- Cogentia `scripts/lib/governed-provider-secret-use.js` exports
+  `createGovernedProviderSecretUse({vault,authorize,providers,settle})`. It
+  accepts a **trusted startup registry** binding an exact semantic capability,
+  provider alias and Vault reference to a provider implementation. Runtime
+  calls accept only the provider, semantic capability, bounded input and
+  context; **no dynamic destination, credential reference or caller-supplied
+  callback**. It requires a verified authorization result carrying principal,
+  actor, issuer, mandate, effect authorization, budget reservation and exact
+  provider/capability/credential matching **before** the Vault callback.
+  It returns a fixed-schema receipt; neither the provider's raw response nor
+  the secret may be spread into a caller-visible result. Completion or failure
+  is handed to the injected settlement service.
+- Cross-repository integration test executes the synthetic path:
+  `authorization -> instance-scoped Vault query -> trusted provider callback
+  -> settlement -> redacted receipt`. No external provider was contacted,
+  no actual key loaded, no COP issuer/ledger was simulated as production.
+
+**Trust boundary to complete:** production wiring must inject *independently
+verifying* COP authorize/settle adapters, a service-role Vault client held
+entirely within a constrained trusted process, and trusted provider adapters.
+The caller cannot issue its own grants or bypass a revoked mandate. The
+current functions check the returned grant structure and exact bindings;
+they do not themselves validate a remote issuer signature, reserve funds or
+implement replay-proof settlement. A caller's possession of an MCP token or
+service-role key is not sufficient. Before enabling this path, enforce real
+issuer verification, reservation/fencing and single-use effects in the
+canonical COP store. Define provider-specific **safe result projections**
+separately from the fixed receipt; never echo an untrusted provider response
+through the generic secret-use envelope.
+
+Because this is backend composition, adding these two libraries does **not**
+require advertising any new MCP tool or asking ChatGPT to refresh an old
+conversation. The existing `cogentia_vault_list` and
+`cogentia_vault_describe` remain the correct discovery surface; actual use
+is mediated through the future governed semantic provider dispatch, not
+through a new `vault.get_secret` tool.
