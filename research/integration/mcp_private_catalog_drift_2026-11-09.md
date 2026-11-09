@@ -2,7 +2,7 @@
 title: "Cogentia Private MCP catalogue drift after Vault capability publication"
 date: 2026-11-09
 last_modified_at: 2026-11-09
-status: working-paper
+status: resolved
 document_role: source
 document_kind: incident-report
 visibility: public
@@ -16,6 +16,35 @@ related:
 ---
 
 # FBF: source ↔ server ↔ connector catalog drift
+
+## Resolution — verified by the Principal in a new ChatGPT conversation
+
+**CLOSED — conversation-scoped tool-inventory staleness.** After the owner
+restarted `cogentia.service` and `mcp-cogentia.service` and refreshed the
+connected plugins, the original ChatGPT conversation still advertised the
+pre-update Cogentia Private tool inventory (90 tools, excluding the two new
+Vault tools). The Principal opened a **new** ChatGPT conversation and provided
+its successful tool readback:
+
+- `cogentia_vault_list` present and invoked successfully (`ok: true`),
+  returning 10 metadata references with `has_more: true`.
+- `cogentia_vault_describe` present and invoked successfully (`ok: true`),
+  reporting `anthropic_api_key` with `configured: true`, `is_secret: true`,
+  version 2, `values_exposed: false` and `authority: none`.
+- Both operations returned schema `cogentia.vault_catalog.v1`.
+- No private tunnel restart, reconfiguration, second MCP deployment or secret
+  exposure was necessary. This evidence comes from the Principal's pasted
+  result of a different conversation; it is not an independently re-run tool
+  invocation in this historical conversation.
+
+**Operational lesson (FBF):** tool declarations supplied to an already-running
+ChatGPT conversation may remain frozen after connector Refresh. When an
+updated authenticated MCP endpoint already declares an added tool, first open
+a new ChatGPT conversation and inspect the tool catalog there. Do not restart
+long-lived tunnels or weaken `GET /tools` private-read classification merely
+to force synchronization of an old conversation. Keep the four separate
+statuses explicit: source published, endpoint loaded, connector refreshed,
+new conversation actually invoked.
 
 ## Facts measured after owner restart and ChatGPT refresh
 
@@ -57,7 +86,7 @@ related:
   absent in the conversation tool inventory. Demonstrates that endpoint
   success and connected-tool availability are different properties.
 
-## Differential diagnosis
+## Differential diagnosis (before the new-conversation readback)
 
 1. **Not a missing implementation**: local and authenticated live server
    report the new tools, and direct JHN Vault metadata query succeeds.
@@ -70,7 +99,7 @@ related:
    The long-lived tunnel process may cache capability discovery but this is
    **unproven**; repeated server restarts alone are not a remedy.
 
-## Smallest next checks
+## Historical conditional next checks (not required after resolution)
 
 - Open a genuinely **new ChatGPT conversation** after Plugin Refresh and
   inspect connected tool names, rather than relying on the existing chat's
