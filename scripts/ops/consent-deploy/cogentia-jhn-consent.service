@@ -1,0 +1,26 @@
+[Unit]
+Description=Cogentia JHN canonical COP consent listener (Supabase-authenticated, loopback only)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=ubuntu
+Group=ubuntu
+WorkingDirectory=/srv/cogentia/repos/cogentia
+EnvironmentFile=/srv/cogentia/repos/inseme/.env
+Environment=COGENTIA_JHN_CONSENT_ORIGIN=https://jhn.baronsmariani.org
+Environment=COGENTIA_JHN_CONSENT_PORT=8796
+Environment=COGENTIA_JHN_CONSENT_ENABLE_DECISION=0
+ExecStart=/usr/local/node-v26.5.0/bin/node /srv/cogentia/repos/cogentia/scripts/ops/jhn-consent-local-server.js
+Restart=on-failure
+RestartSec=5
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=full
+ReadWritePaths=/var/lib/cogentia/cop
+UMask=0077
+MemoryMax=180M
+
+[Install]
+WantedBy=multi-user.target
