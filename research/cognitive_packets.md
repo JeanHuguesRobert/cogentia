@@ -378,6 +378,42 @@ Continuation set is empty. Do not add a synthetic Scheduler or a new
 lock database to demonstrate this; wire the existing FractaScheduler/COP
 boundary, first on actual pending work and with real shared coordination.
 
+**Locality-first handler meeting projection (2026-11-09, incremental implementation):**
+
+`node scripts/cogentia.js continuation placement --handlers-file <manifest.json>
+--home-node <node> --json` reads the **existing continuation store** and
+an optional, local set of FractaHandler capability declarations. It projects
+`cogentia.continuation_placement.v1` without new persistent state, polling
+service, claim or hidden authority. For each active continuation it derives
+its `packet_ref` from explicit Packet/parent lineage where available; where
+not, `continuation:<id>` is only a **minimal, on-demand work projection**, not
+a full reconstruction or claim that a standalone canonical Packet was born.
+The result exposes required capabilities, locality, handler candidates,
+capability-confidence declarations, blockers, wait age and return slot.
+`available:true` is only the manifest's claim of availability, not a
+verified live offer; effect mandate, funding and `Closed(p,h,E)` remain
+unverified. Nodes publish or inspect their own local Views; do not
+aggregate all packets or handlers behind a new global scheduler.
+
+A deliberately simple selection policy lists **runnable candidates by
+oldest wait age first**, with priority only as a tie-breaker, so new
+higher-priority requests cannot indefinitely displace an old
+continuously eligible item. This is an *advisory local ordering*, not a
+proof of fairness across nodes, funding, actual handler throughput or
+multiple competing schedulers. Claim arbitration is deliberately left
+with canonical COP PacketClaim (#121). Result delivery/rejoin is left with
+existing COP Continuation result and return machinery (#113). For real
+background execution reuse the approved typed Operium ONA consumer (#165),
+not its old Task workers or an ad-hoc process runner. These interfaces are
+not yet wired end to end for `packet relate` Judgment.
+
+This is closer to an **Erlang/OTP-inspired placement and supervision
+pattern** than to model-centric agent orchestration, but similarities
+must not be exaggerated: no BEAM process, mailbox, monitor, supervisor,
+node-failure recovery or distributed COP claim was implemented by this
+projection. The native COP equivalents must supply these properties as
+needed without requiring a global controller.
+
 **Scientific and commons boundary:** distinguish retrieving evidence from
 asserting truth, correlation from causation, ranking from permission, and
 observed improvement from universal validity. This mapping is an

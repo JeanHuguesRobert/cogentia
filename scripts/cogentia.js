@@ -74,6 +74,7 @@ import { packDocumentToCapsule, verifyCapsule, unpackCapsule } from "./lib/packe
 import { relatePacket } from "./lib/packet-relate.js";
 import { packetRelateJudgmentRequest } from "./lib/packet-relate-judgment.js";
 import { deriveContinuationReturn } from "./lib/continuation-return.js";
+import { projectContinuationPlacement } from "./lib/continuation-placement.js";
 import { runMonteCarloAudit, SleepCycleReviewQueue, REVIEW_DECISIONS } from "./lib/corpus-sleep-cycle/index.js";
 import {
   runSenatorialesIocSuite,
@@ -1113,6 +1114,9 @@ Continuation commands:
                              (durable deduplicated Judgment handoff, no attachment).
   packet capsule           Pack, verify, or unpack portable packet capsules.
   continuation emit        Emit an external judgment request.
+  continuation placement   Read-only local match of active continuations with handler declarations.
+                           Flags: --handlers-file <manifest.json> --home-node <id> --json.
+                           Does not claim, execute or authorize.
   continuation list        List continuations.
                            Flags: --status active|resolved|cancelled|completed|dormant|
                                   alive|hibernating|closed|all  (default: alive)
@@ -6530,6 +6534,8 @@ function cmdContinuation(sub) {
   switch (sub) {
     case "emit":
       return cmdContinuationEmit(ctx);
+    case "placement":
+      return cmdContinuationPlacement(ctx);
     case "list":
     case "queue":
       return cmdContinuationList(ctx);
@@ -6552,6 +6558,22 @@ function cmdContinuation(sub) {
     default:
       throw new Error(`Unknown continuation subcommand "${sub}". Use emit, list, export, inspect, resolve, cancel, audit-backfill, or schema.`);
   }
+}
+
+function cmdContinuationPlacement(ctx) {
+  const file = valueFlag('--handlers-file');
+  const homeNode = valueFlag('--home-node') || '';
+  const now = valueFlag('--at') || new Date().toISOString();
+  // This read-only route never executes, claims or registers a handler.
+  // Imported declarations are untrusted offers, not verified authority.
+  let handlers=[];
+  if (file) {
+    const parsed=JSON.parse(fs.readFileSync(path.resolve(file),'utf8'));
+    if (!Array.isArray(parsed.handlers)) throw new Error('Handler manifest must contain handlers[]');
+    handlers=parsed.handlers;
+  }
+  const placement=projectContinuationPlacement({continuations:loadContinuations(ctx),handlers,homeNode,now});
+  return output(placement,[`Local continuation placement: ${placement.counts.runnable_candidates} candidates, ${placement.counts.blocked} blocked.`,...placement.entries.slice(0,20).map(e=>`${e.continuation_id} ${e.packet_ref}: ${e.runnable_candidate?'candidate':'blocked ('+e.blocked_reason+')'}; handlers: ${e.handler_candidates.map(h=>h.handler_id).join(',')||'none'}`),'No execution or claim performed.'].join('\n'));
 }
 
 function cmdContinuationEmit(ctx) {
