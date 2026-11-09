@@ -1,0 +1,31 @@
+import test from 'node:test';import assert from 'node:assert/strict';
+import {createMemoryCopEventStore} from '../../../inseme/packages/cop-core/src/cop-event-spool.js';
+import {recordMandateDeclaration} from '../../../inseme/packages/cop-core/src/governed-act.js';
+import {JHN_VAULT_INSTANCE_ID} from '../../../inseme/apps/platform/scripts/lib/vault-catalog.js';
+import {createJhnCanonicalConsentWorkflow} from './jhn-canonical-consent-workflow.js';
+import {createJhnConsentHttpHandler} from './jhn-consent-http-handler.js';
+const origin='https://insemex.example.test',user='aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa';
+const store=createMemoryCopEventStore();recordMandateDeclaration(store,{mandate_id:'mandate:jhn:test',version:'v1',principal_ref:'principal:jhn',logical_agent_ref:'agent:jhn',scope:{allowed_actions:['corpus.read']}});
+const adminClient={from(){return {select(){return {eq(){return {single:async()=>({data:{id:JHN_VAULT_INSTANCE_ID,canonical_slug:'jhn',status:'autonomous',principal_id:user}})}}}}}}};
+const authClient={auth:{getUser:async bearer=>({data:{user:{id:bearer==='OWNER'?user:'smoke',email_confirmed_at:'confirmed',is_anonymous:false}}})}};
+const workflow=createJhnCanonicalConsentWorkflow({store,adminClient,authClient});
+const request=workflow.request({mandate:{mandate_ref:'mandate:jhn:test',principal_ref:'principal:jhn',expected_version:'v1',reason:'test consent',scope:{allowed_actions:['corpus.read','corpus.search']}}});
+const url=origin+'/api/cop/principal-consent/'+request.challenge_id;
+const handler=createJhnConsentHttpHandler({workflow,origin});
+const invoke=(method,token,extra={})=>handler(new Request(url,{method,headers:{...(token?{authorization:'Bearer '+token}:{}),...(method==='POST'?{origin}:{}),...(extra.headers||{})},...(method==='POST'?{body:JSON.stringify(extra.data||{decision:'approve',payload_hash:request.payload_hash})}: {})}));
+test('GET reveals proposal only to live linked Supabase Principal',async()=>{
+ assert.equal((await invoke('GET',null)).status,401);
+ assert.equal((await invoke('GET','SMOKE')).status,403);
+ const r=await invoke('GET','OWNER');assert.equal(r.status,200);const j=await r.json();
+ assert.equal(j.payload_hash,request.payload_hash);assert.equal(j.status,'pending');
+ assert.equal(j.grants_mandate_authority,false);
+});
+test('POST refuses cross-origin, wrong token and invalid hash then stores only authenticated intent',async()=>{
+ assert.equal((await invoke('POST','OWNER',{headers:{origin:'https://evil.test'}})).status,403);
+ assert.equal((await invoke('POST','SMOKE')).status,403);
+ assert.equal((await invoke('POST','OWNER',{data:{decision:'approve',payload_hash:'sha256:'+'0'.repeat(64)}})).status,403);
+ const r=await invoke('POST','OWNER');assert.equal(r.status,200,await r.clone().text());
+ const j=await r.json();assert.equal(j.decision,'approve');assert.equal(j.grants_mandate_authority,false);
+ assert.equal((await invoke('POST','OWNER')).status,409);
+ assert.equal(store.replay().filter(x=>x.payload?.kind==='MandateDeclaration').length,1);
+});
