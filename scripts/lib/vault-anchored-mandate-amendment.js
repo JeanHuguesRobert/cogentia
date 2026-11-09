@@ -1,35 +1,61 @@
 /**
- * Optional mandate amendment bridge anchored to the existing Supabase instance
- * Principal binding. Uses Inseme's canonical append-only COP amendment; neither
- * Vault possession nor a transport bearer is a human approval.
+ * Production-composition seam for a versioned COP mandate amendment. The
+ * Principal's Supabase identity is verified via the JHN instance binding.
+ * A *separate, trusted* asynchronous verifier must check and consume a fresh,
+ * single-use, exact-proposal human approval (e.g. OAuth step-up challenge).
+ * Supabase service role / MCP bearer / agent utterance is NOT such an issuer.
  *
- * All operational adapters are injected by a trusted server composition.
- * There is no generic MCP mutation endpoint in this module.
+ * No HTTP, MCP or CLI API is exported by this module. The real issuer and
+ * immutable approval UI must be wired in a distinct trusted process before
+ * operational activation; this library has no defaults or permissive mode.
  */
+import {createHash} from 'node:crypto';
 import {amendMandate} from '../../../inseme/packages/cop-core/src/governed-act.js';
 const fail=error=>({ok:false,error});
+export const mandateProposalHash = proposal => 'sha256:'+createHash('sha256')
+  .update(JSON.stringify(proposal)).digest('hex');
+
 export function createVaultAnchoredMandateAmendment({preflight,store,verifyExactApproval}={}) {
   return Object.freeze({
     async amend({session,mandate,approval}={}) {
       if(typeof preflight?.inspect!=='function')return fail('principal_binding_preflight_unavailable');
-      const identity=await preflight.inspect({session});
+      let identity;
+      try{identity=await preflight.inspect({session});}
+      catch{return fail('principal_identity_unverified');}
       if(identity?.ok!==true||identity?.principal_ref!=='principal:jhn'||identity?.authenticated!==true)
         return fail(identity?.reason || 'principal_identity_unverified');
       if(typeof verifyExactApproval!=='function')return fail('trusted_approval_verifier_unavailable');
-      // The trusted verifier must validate Principal session, full canonical
-      // proposal bytes, user approval intent and fresh single-use evidence.
-      // The COP amendment checks expected version, revocation and event chain.
-      const result=amendMandate(store,{...mandate,approval},{
-        verifyPrincipalApproval:(proposal,presented)=>{
-          try {
-            const proof=verifyExactApproval({session,proposal,presented});
-            if(!proof||proof.verified!==true||proof.principal_ref!=='principal:jhn'||
-               typeof proof.evidence_ref!=='string'||!proof.evidence_ref.trim())return {verified:false};
-            return proof;
-          }catch{return {verified:false};}
-        }
-      });
-      return result;
+      // Extract the canonical COP proposal with the kernel's actual
+      // validate/version/revocation rules. The first call refuses approval
+      // and cannot append an event; it is the draft/EXPOSE phase.
+      let proposal;
+      let draft;
+      try {
+        draft=amendMandate(store,{...mandate,approval},{
+          verifyPrincipalApproval:generated=>{proposal=generated;return {verified:false};}
+        });
+      } catch{return fail('mandate_preparation_failed');}
+      if(!proposal)return draft?.ok?fail('unexpected_draft_mutation'):draft;
+      if(draft?.ok || draft?.error!=='principal_approval_unverified')return fail('mandate_preparation_inconsistent');
+      const payload_hash=mandateProposalHash(proposal);
+      let evidence;
+      try {
+        evidence=await verifyExactApproval({session,proposal,payload_hash,presented:approval});
+      } catch{return fail('principal_approval_unverified');}
+      if(!evidence||evidence.verified!==true||evidence.principal_ref!=='principal:jhn'||
+          evidence.payload_hash!==payload_hash||evidence.single_use!==true||
+          evidence.consumed!==true||typeof evidence.evidence_ref!=='string'||!evidence.evidence_ref)
+        return fail('principal_approval_unverified');
+      // Revalidate the same proposal at commit time. A concurrent amendment,
+      // revocation, changed version/scope or expiry invalidates the approval.
+      try {
+        return amendMandate(store,{...mandate,approval},{
+          verifyPrincipalApproval:current=>mandateProposalHash(current)===payload_hash
+            ? {verified:true,principal_ref:'principal:jhn',evidence_ref:evidence.evidence_ref,
+               scheme:evidence.scheme||'independent_exact_approval'}
+            : {verified:false}
+        });
+      }catch{return fail('mandate_commit_failed');}
     }
   });
 }

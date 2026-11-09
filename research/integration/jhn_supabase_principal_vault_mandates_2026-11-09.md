@@ -85,3 +85,58 @@ there was no real human session in this operation and therefore no legitimate
 production enrollment or mandate amendment. A signed-in, verified claim and
 actual issuer wiring remain outstanding. This avoids treating an agent's own
 service-role privilege as authority to enlarge its mandates.
+
+## 2026-11-09 — Supabase Principal is now bound; application bridge implemented
+
+Following the Principal's explicit owner-SSH confirmation, independent live
+readback verified the `public.instances` JHN root row now has `principal_id`
+equal to the **only** verified Supabase Auth account for
+`jhr@baronsmariani.org` (existing `public.users` role `admin`). The initial
+identity-link blocker described above is **resolved**. The JHN database owner
+binding is persistent; this is not a general issuer credential.
+
+The reusable server-side approval composition is now:
+
+1. Inseme `apps/platform/scripts/lib/jhn-auth-session-verifier.js`: verify
+   actual human access token through `authClient.auth.getUser(accessToken)`;
+   reject missing, anonymous, unconfirmed and invalid Auth sessions. The token
+   is **not** accepted from the LLM or MCP and does not appear in the receipt.
+2. Inseme `vault-principal-preflight.js`: compare authenticated user UUID to
+   the authoritative `instances.principal_id` for autonomous root JHN.
+   `may_issue:false` remains explicit on identity success.
+3. Cogentia `scripts/lib/jhn-supabase-mandate-approval-service.js`: compose
+   the two checks with `vault-anchored-mandate-amendment.js` and an **injected
+   separate issuer** `verifyExactApproval`.
+4. Existing Inseme `amendMandate()` produces the exact canonical proposal in
+   a *non-writing* preparation pass. The trusted issuer must independently
+   confirm that proposal's `sha256` hash, the human Principal, a consumed
+   single-use approval and an evidence reference. The kernel revalidates the
+   same proposal/hash and current version/expiry/revocation immediately
+   before writing a new versioned append-only declaration. Failed proof never
+   appends anything; stale versions fail even after issuer approval.
+5. Return only the existing COP amendment receipt; no secrets or user tokens.
+
+This implementation supports **amendment composition**, not first issuance:
+initial mandate creation still needs a canonical separately approved budget
+and atomic append. Creating a `MandateDeclaration` from Vault access or from
+the JHN `principal_id` link alone would be a privilege-escalation bug.
+
+**Activation gate:** neither the current private MCP bearer nor the already
+connected Cogentia Private tunnel is a configured human approval issuer.
+Existing `principal-oauth-session.js`, `principal-approval-challenge.js`,
+`principal-step-up.js` provide the exact signed one-use challenge pattern, but
+no verified live step-up issuer/binding is configured in production yet. The
+active SQLite COP event store was explicitly created for a pilot and still
+needs review of writer isolation, canonical ledger and irreversible effects
+before enabling mandate issuance. No new mutation endpoint, public OAuth
+claims handling, unsigned signature substitute, or self-minted authority was
+deployed. Tests use synthetic human session and issuer proof only.
+
+Next minimal operational sequence: configure an actual authenticated
+Principal-controlled approval surface that can emit a fresh, transaction-bound
+step-up proof; bind its issuer/JWKS and audience server-side; use a reviewed
+canonical COP writer; deploy the protected service adapter (not a generic
+MCP permission to amend). Verify a benign real amendment with explicit
+Principal confirmation, replay/refusal tests and actual accounting receipt.
+For ordinary future amendments, the approved transaction can be confirmed
+in the existing authenticated session without new SSHSIG workstation rituals.
