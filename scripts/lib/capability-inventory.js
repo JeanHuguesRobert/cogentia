@@ -16,6 +16,8 @@ export const CLI_COMMANDS = [
   { verb: "memory capture", mcp_tool: "cogentia_memory_capture", risk: "private_read" },
   { verb: "agent start", mcp_tool: "cogentia_agent_start", daemon: "/api/agent/start", risk: "read" },
   { verb: "agent health", mcp_tool: "cogentia_agent_health", daemon: "/api/agent/health", risk: "read" },
+  { verb: "cop consent review", mcp_tool: "cogentia_cop_consent_review", risk: "private_read" },
+  { verb: "cop consent decide", mcp_resource: "cogentia://cli/catalog", risk: "advisory_only" },
   { verb: "agent mandates plan", mcp_resource: "cogentia://cli/catalog", risk: "read" },
   { verb: "agent mandates apply", mcp_resource: "cogentia://cli/catalog", risk: "write" },
   { verb: "agent mandates verify", mcp_resource: "cogentia://cli/catalog", risk: "read" },

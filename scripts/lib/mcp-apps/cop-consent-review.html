@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<style>
+:root{color-scheme:light dark;font:15px/1.5 system-ui,sans-serif}body{margin:0;padding:20px;max-width:700px}h2{font-size:20px;margin:0 0 9px}.subtle{opacity:.82}.panel{border:1px solid #8887;border-radius:9px;padding:14px;margin:13px 0}dl{display:grid;grid-template-columns:minmax(105px,30%) 1fr;gap:8px}dd{margin:0;overflow-wrap:anywhere}dt{opacity:.75}button{color:inherit;background:transparent;border:1px solid currentColor;border-radius:8px;padding:10px 14px;margin-right:8px;cursor:pointer}button:disabled{opacity:.4;cursor:not-allowed}#warn{font-weight:600}code{word-break:break-all}
+</style></head><body>
+<h2>COP · Revue d'une proposition</h2>
+<p id="warn">Aucune proposition vérifiée reçue. Les boutons sont désactivés.</p>
+<div class="panel"><dl>
+<dt>Mandat</dt><dd id="mandate">—</dd>
+<dt>Version</dt><dd id="version">—</dd>
+<dt>Motif</dt><dd id="reason">—</dd>
+<dt>Actions proposées</dt><dd id="actions">—</dd>
+<dt>Empreinte</dt><dd><code id="hash">—</code></dd>
+<dt>Autorité</dt><dd>Aucune : l'identité, l'émetteur et le budget restent à vérifier</dd>
+</dl></div>
+<button id="approve" disabled type="button">Exprimer une intention favorable</button>
+<button id="refuse" disabled type="button">Refuser</button>
+<p id="status" role="status" class="subtle">Aucun mandat créé ou modifié.</p>
+<p class="subtle">Le clic transmet un message dans la conversation ; il ne vaut pas authentification du Principal ni autorisation COP. La confirmation finale exige une vérification indépendante de la proposition exacte.</p>
+<script>
+const el=id=>document.getElementById(id);let packet=null,ready=false,pending=null;
+const write=(id,text)=>{el(id).textContent=String(text||'—')};
+function update(input){
+ const d=input?.structuredContent?.data||input?.structuredContent||input?.data||input;
+ if(!d||d.ok!==true||d.schema!=='cogentia.cop_consent_review.v1'||!d.proposal||!/^sha256:[a-f0-9]{64}$/.test(d.payload_hash||''))return;
+ // The MCP tool result is presentation data; server-side source verification
+ // and a human step-up are ALWAYS required, even when the hash is well-formed.
+ packet=d;write('mandate',d.proposal.mandate_ref);write('version',(d.proposal.previous_version||'')+' → '+(d.proposal.new_version||''));
+ write('reason',d.proposal.reason);write('actions',(d.proposal.scope?.allowed_actions||[]).join(', '));write('hash',d.payload_hash);
+ el('warn').textContent='Proposition reçue — source non attestée. Expression d’intention uniquement.';
+ el('approve').disabled=false;el('refuse').disabled=false;
+}
+function respond(decision){
+ if(!packet||!ready||pending)return;
+ pending='consent-'+decision+'-'+Date.now();
+ el('approve').disabled=true;el('refuse').disabled=true;
+ el('status').textContent='Transmission de l’intention à la conversation ; aucune autorisation émise.';
+ const label=decision==='approve'?'favorable':'défavorable';
+ const message=`Mon intention est ${label} concernant la proposition COP ${packet.proposal.mandate_ref} version ${packet.proposal.previous_version} → ${packet.proposal.new_version}, empreinte ${packet.payload_hash}. Ceci n’est pas une approbation authentifiée et ne doit déclencher ni émission ni exécution : prépare la confirmation indépendante nécessaire.`;
+ window.parent.postMessage({jsonrpc:'2.0',id:pending,method:'ui/message',params:{role:'user',content:[{type:'text',text:message}]}},'*');
+}
+el('approve').addEventListener('click',()=>respond('approve'));
+el('refuse').addEventListener('click',()=>respond('refuse'));
+const init='cop-consent-init-v1';
+window.addEventListener('message',event=>{
+ const d=event.data;
+ if(event.source!==window.parent||!d||d.jsonrpc!=='2.0')return;
+ if(d.id===init&&d.result?.protocolVersion&&!ready){ready=true;window.parent.postMessage({jsonrpc:'2.0',method:'ui/notifications/initialized',params:{}},'*');}
+ if(d.method==='ui/notifications/tool-result')update(d.params);
+ if(d.id===pending){el('status').textContent=d.error?'La transmission a été refusée.':'Intention transmise. Validation indépendante encore nécessaire.';pending=null;}
+ if(d.method==='ui/resource-teardown'&&Object.hasOwn(d,'id'))window.parent.postMessage({jsonrpc:'2.0',id:d.id,result:{}},'*');
+});
+window.parent.postMessage({jsonrpc:'2.0',id:init,method:'ui/initialize',params:{protocolVersion:'2026-01-26',appInfo:{name:'COP Consent Review',version:'1.0.0'},appCapabilities:{availableDisplayModes:['inline']}}},'*');
+</script></body></html>

@@ -9,11 +9,10 @@
  * immutable approval UI must be wired in a distinct trusted process before
  * operational activation; this library has no defaults or permissive mode.
  */
-import {createHash} from 'node:crypto';
 import {amendMandate} from '../../../inseme/packages/cop-core/src/governed-act.js';
+import {mandateProposalHash} from './cop-proposal-digest.js';
+export {mandateProposalHash} from './cop-proposal-digest.js';
 const fail=error=>({ok:false,error});
-export const mandateProposalHash = proposal => 'sha256:'+createHash('sha256')
-  .update(JSON.stringify(proposal)).digest('hex');
 
 export function createVaultAnchoredMandateAmendment({preflight,store,verifyExactApproval}={}) {
   return Object.freeze({

@@ -94,6 +94,7 @@ export const MUTATE_TOOLS = new Set([
 export const PRIVATE_READ_TOOLS = new Set([
   "cogentia_memory_capture",
   "cogentia_config_hygiene_audit",
+  "cogentia_cop_consent_review",
   "cogentia_vault_list",
   "cogentia_vault_describe",
   "operium_calendar_list",
@@ -123,6 +124,16 @@ export const TOOLS = [
     description: "Show a read-only FractaTest MCP Apps widget; static demo, no credentials, persistence, or side effects. Text fallback works on non-UI clients.",
     inputSchema: { type: "object", properties: {}, additionalProperties: false },
     _meta: { ui: { resourceUri: "ui://cogentia/fractatest-demo-v3", visibility: ["model", "app"] } },
+  },
+  {
+    name: "cogentia_cop_consent_review",
+    description: "Review one supplied JHN COP amendment proposal in MCP Apps and collect a non-authoritative user intention. Source is NOT independently verified. No Principal signature, issued mandate, budget grant, effect or execution. An independently authenticated issuer must validate any eventual approval.",
+    inputSchema: {type:"object",additionalProperties:false,properties:{
+      proposal:{type:"object",description:"Exact canonical-looking mandate amendment proposal; untrusted until resolved from COP issuer",maxProperties:30},
+      source_ref:{type:"string",maxLength:250}
+    },required:["proposal"]},
+    _meta:{ui:{resourceUri:"ui://cogentia/cop-consent-review-v1",visibility:["model","app"]}},
+    annotations:{readOnlyHint:true,destructiveHint:false,openWorldHint:false},
   },
   {
     name: "cogentia_cop_approval_preview",
@@ -1737,6 +1748,10 @@ export function createMcpCore(env = process.env, extras = {}) {
         return captureMemoryForSurface(args, auth);
       case "cogentia_mcp_apps_demo":
         return { ok: true, kind: "cogentia.mcp_apps_demo.v1", label: "FractaTest MCP Apps", mode: "read_only", message: "Démonstrateur interactif sans effet externe." };
+      case "cogentia_cop_consent_review": {
+        const {copReviewPacket}=await import('./cop-consent-packet.js');
+        return copReviewPacket(args.proposal,{source:args.source_ref||'mcp-chat:unverified',source_verified:false});
+      }
       case "cogentia_cop_approval_preview":
         return {ok:true,kind:"cogentia.cop_approval_preview.v1",mode:"read_only",source:"illustrative",authorizes:false,grants_authority:false,execution:false,message:"Revue locale uniquement ; aucune autorisation COP n'est émise."};
       case "cogentia_risk_assess":

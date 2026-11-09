@@ -483,6 +483,8 @@ async function main() {
       return cmdContinuation(argv.shift() || "list");
     case "effect":
       return cmdEffect(argv);
+    case "cop":
+      return cmdCop(argv);
     case "issues":
       return cmdIssues(argv.shift() || "list");
     case "calculette":
@@ -545,6 +547,15 @@ async function main() {
     default:
       throw new Error(`Unknown command "${command}". Run: node scripts/cogentia.js help`);
   }
+}
+
+async function cmdCop(args) {
+  const sub=args.shift()||'help';
+  if(sub!=='consent')return output({ok:false,error:'COP_CLI_USAGE_INVALID'},'Usage: cop consent review|decide --from <proposal.json>');
+  const {cmdCopConsent}=await import('./lib/cop-consent-cli.js');
+  const result=await cmdCopConsent(args);
+  if(result.ok===false)process.exitCode=1;
+  return output(result,JSON.stringify(result,null,2));
 }
 
 async function cmdEffect(args) {
@@ -875,6 +886,10 @@ Core commands:
                            Flags: --router-url <url> --check-query [--query <text>]
   agent mandates plan      List repositories that need the minimal local mandate.
   agent mandates apply     Create missing local mandates from the canonical template.
+  cop consent review --from <proposal.json>
+                           Examine an exact COP proposal without issuing authority.
+  cop consent decide --from <proposal.json> --decision approve|refuse
+                           Interactive intention only; no grant until trusted issuer validates.
   agent mandates verify    Verify that every configured repository declares the
                            canonical shared mandate.
   agent public-readonly verify

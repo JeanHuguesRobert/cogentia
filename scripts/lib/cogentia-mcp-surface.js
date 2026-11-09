@@ -28,6 +28,7 @@ export const MCP_APP_DEMO_COMPAT_URIS = Object.freeze([
   "ui://cogentia/fractatest-demo-v1",
 ]);
 export const COP_APPROVAL_PREVIEW_URI = "ui://cogentia/cop-approval-preview-v1";
+export const COP_CONSENT_REVIEW_URI = "ui://cogentia/cop-consent-review-v1";
 export const MCP_APP_DEMO_MIME = "text/html;profile=mcp-app";
 export const SKILL_URI_PREFIX = "skill://cogentia/";
 export const PATTERN_URI_PREFIX = "cogentia://pattern/";
@@ -171,6 +172,13 @@ export function listCatalogResources() {
       description: "Legacy URI alias serving the current read-only FractaTest UI.",
     })),
     {
+      uri: COP_CONSENT_REVIEW_URI,
+      name: "cop-consent-review",
+      title: "COP — proposition et intention (validation indépendante requise)",
+      mimeType: MCP_APP_DEMO_MIME,
+      description: "Review proposal and collect unauthenticated intent; never emits authority.",
+    },
+    {
       uri: COP_APPROVAL_PREVIEW_URI,
       name: "cop-approval-preview",
       title: "COP — revue proportionnée (prototype sans émission)",
@@ -227,6 +235,13 @@ export function readMcpResource(uri, options = {}) {
       ok: true, uri: raw, mimeType: MCP_APP_DEMO_MIME,
       text: fs.readFileSync(path.join(repoRoot, "scripts", "lib", "mcp-apps", "fractatest.html"), "utf8"),
       uiMeta: { csp: { connectDomains: [], resourceDomains: [] }, prefersBorder: true },
+    };
+  }
+  if (raw === COP_CONSENT_REVIEW_URI) {
+    return {
+      ok:true,uri:raw,mimeType:MCP_APP_DEMO_MIME,
+      text:fs.readFileSync(path.join(repoRoot,"scripts","lib","mcp-apps","cop-consent-review.html"),"utf8"),
+      uiMeta:{csp:{connectDomains:[],resourceDomains:[]},prefersBorder:true},
     };
   }
   if (raw === COP_APPROVAL_PREVIEW_URI) {
