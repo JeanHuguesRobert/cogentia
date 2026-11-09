@@ -438,6 +438,14 @@ async function cmdRun(config, args) {
     },
     onConnectionUpdate: (u) => {
       if (u.connection) console.log(`[connection] ${u.connection}`);
+      if (u.connection === "close") {
+        console.log(JSON.stringify({ event: "whatsapp_connection_closed", status_code: u.statusCode ?? null,
+          will_reconnect: u.willReconnect === true }));
+      }
+    },
+    onReconnectScheduled: ({ delayMs, consecutiveFailures, reason }) => {
+      console.log(JSON.stringify({ event: "whatsapp_reconnect_scheduled", delay_ms: delayMs,
+        consecutive_failures: consecutiveFailures, reason }));
     },
   });
 

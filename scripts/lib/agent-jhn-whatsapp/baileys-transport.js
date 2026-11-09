@@ -10,6 +10,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { resolveAuthDir } from "./config.js";
+import { createReconnectPolicy } from "./reconnect-policy.js";
 
 /**
  * Mock transport for offline tests and dry-run pipelines.
@@ -77,6 +78,35 @@ export function createBaileysTransport(config, hooks = {}) {
   let suppressQrHooks = false;
   let openSocketOptions = {};
   let pairingCodeIssued = false;
+  // Only one socket and reconnect timer may be active for this transport.
+  const reconnectPolicy = createReconnectPolicy();
+  let reconnectTimer = null;
+  let socketGeneration = 0;
+
+  function clearReconnectTimer() {
+    if (reconnectTimer !== null) clearTimeout(reconnectTimer);
+    reconnectTimer = null;
+  }
+
+  function scheduleReconnect(generation, delayMs) {
+    if (reconnectTimer !== null || stopRequested || !reconnectEnabled) return;
+    reconnectTimer = setTimeout(async () => {
+      reconnectTimer = null;
+      if (stopRequested || !reconnectEnabled || generation !== socketGeneration) return;
+      try {
+        await openSocket(openSocketOptions);
+      } catch (err) {
+        if (typeof hooks.onHandlerError === "function") hooks.onHandlerError(err);
+        if (!stopRequested && reconnectEnabled) {
+          const retry = reconnectPolicy.nextDelay();
+          if (typeof hooks.onReconnectScheduled === "function") {
+            hooks.onReconnectScheduled({ ...retry, reason: "socket_open_failed" });
+          }
+          scheduleReconnect(socketGeneration, retry.delayMs);
+        }
+      }
+    }, delayMs);
+  }
   /** @type {((u: object) => void) | null} */
   let connectionWaiter = null;
 
@@ -94,6 +124,7 @@ export function createBaileysTransport(config, hooks = {}) {
 
   async function openSocket(options = {}) {
     openSocketOptions = { ...openSocketOptions, ...options };
+    const generation = ++socketGeneration;
     const B = await loadBaileys();
     const authDir = resolveAuthDir(config);
     fs.mkdirSync(authDir, { recursive: true });
@@ -146,13 +177,15 @@ export function createBaileysTransport(config, hooks = {}) {
 
     sock.ev.on("creds.update", saveCreds);
 
-    sock.ev.on("connection.update", async (update) => {
+    sock.ev.on("connection.update", (update) => {
+      if (generation !== socketGeneration || stopRequested) return;
       const { connection, lastDisconnect, qr } = update;
       if (qr && typeof hooks.onQr === "function" && !suppressQrHooks) {
         hooks.onQr(qr);
       }
       if (connection === "open") {
         connected = true;
+        reconnectPolicy.onOpen();
       }
       if (connection === "close") {
         connected = false;
@@ -167,18 +200,13 @@ export function createBaileysTransport(config, hooks = {}) {
             willReconnect: reconnectEnabled && !stopRequested && !loggedOut,
           });
         }
-        // Keep pairing session alive: WhatsApp often closes once; Baileys expects reconnect.
+        // A fast open/close cycle must not reset the backoff or spawn a second socket.
         if (reconnectEnabled && !stopRequested && !loggedOut) {
-          await sleep(2000);
-          if (!stopRequested) {
-            try {
-              await openSocket(openSocketOptions);
-            } catch (err) {
-              if (typeof hooks.onHandlerError === "function") {
-                hooks.onHandlerError(err);
-              }
-            }
+          const retry = reconnectPolicy.nextDelay();
+          if (typeof hooks.onReconnectScheduled === "function") {
+            hooks.onReconnectScheduled({ ...retry, reason: "connection_closed", statusCode });
           }
+          scheduleReconnect(generation, retry.delayMs);
         }
         return;
       }
@@ -198,7 +226,7 @@ export function createBaileysTransport(config, hooks = {}) {
     });
 
     sock.ev.on("messages.upsert", async (upsert) => {
-      if (stopRequested) return;
+      if (stopRequested || generation !== socketGeneration) return;
       if (upsert.type !== "notify" && upsert.type !== "append") return;
       const messages = upsert.messages || [];
       for (const msg of messages) {
@@ -246,6 +274,7 @@ export function createBaileysTransport(config, hooks = {}) {
         };
       }
       stopRequested = false;
+      clearReconnectTimer();
       reconnectEnabled = true;
       pairingCodeIssued = false;
       const useCode = options.pairingCode === true;
@@ -333,6 +362,7 @@ export function createBaileysTransport(config, hooks = {}) {
         };
       }
       stopRequested = false;
+      clearReconnectTimer();
       reconnectEnabled = true;
       await openSocket();
       return { ok: true, mode: "connect" };
@@ -341,6 +371,8 @@ export function createBaileysTransport(config, hooks = {}) {
     async disconnect() {
       stopRequested = true;
       reconnectEnabled = false;
+      clearReconnectTimer();
+      socketGeneration++;
       connected = false;
       try {
         if (sock) {
