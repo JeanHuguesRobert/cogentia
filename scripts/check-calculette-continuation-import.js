@@ -1,0 +1,23 @@
+#!/usr/bin/env node
+import assert from "node:assert/strict";
+import { createFactLog, openOrChoicePoint, allocateExplicit } from "./lib/continuation-frontier-f2a.js";
+import { importContinuationFacts } from "./lib/calculette-continuation-import.js";
+import { buildJanusSeed } from "./lib/calculette-janus-seed.js";
+const log=createFactLog();
+openOrChoicePoint(log,{id:"choice",parentRef:"parent",branches:[{id:"a"},{id:"b"}]});
+allocateExplicit(log,{choicePointId:"choice",fund:"a"});
+const source="fixture://f2a-log-001", observedAt="2026-10-10T00:00:00Z";
+const imported=importContinuationFacts(log.facts(),{source,observedAt});
+assert.equal(imported.observations.length,4);
+assert.equal(imported.edges.length,2);
+assert.ok(imported.observations.every(e=>e.occurred_at===null));
+assert.ok(imported.observations.every(e=>e.kind!=="f2a_branch_exhausted"));
+const now=buildJanusSeed({...imported,asOf:observedAt});
+assert.equal(now.facts.length,4);
+assert.equal(now.relations.length,2);
+assert.equal(buildJanusSeed({...imported,asOf:"2026-10-09T23:59:00Z"}).facts.length,0);
+assert.deepEqual(importContinuationFacts(log.facts(),{source,observedAt}), imported);
+assert.throws(()=>importContinuationFacts(log.facts(),{source,observedAt,scope:"private"}),/authorized/);
+const duplicate=[...log.facts(),log.facts()[0]];
+assert.throws(()=>importContinuationFacts(duplicate,{source,observedAt}),/duplicate/);
+console.log("ok - continuation Janus importer: source chronology, lineage, replay and non-exhaustion");
