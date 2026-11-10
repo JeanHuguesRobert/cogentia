@@ -46,6 +46,7 @@
 
 import fs from "node:fs";
 import path from "node:path";
+import { randomUUID } from "node:crypto";
 
 function resolversDir(cogentiaRoot) {
   return path.join(cogentiaRoot, ".cogentia", "resolvers");
@@ -115,15 +116,24 @@ export function claimContinuation(cogentiaRoot, continuationId, resolverId) {
   ensureDir(dir);
   const claimFile = path.join(dir, `${continuationId}.json`);
   const claim = { continuation_id: continuationId, resolver_id: resolverId, claimed_at: new Date().toISOString() };
+  // Exclusive creation alone is insufficient: a loser can read a
+  // truncated file between creation and completion of the JSON write.
+  // Publish a fully written file through a same-filesystem atomic hard link.
+  const preparedFile = path.join(dir, "." + continuationId + "." + randomUUID() + ".tmp");
+  fs.writeFileSync(preparedFile, JSON.stringify(claim, null, 2), { encoding: "utf8", flag: "wx" });
   try {
-    fs.writeFileSync(claimFile, JSON.stringify(claim, null, 2), { encoding: "utf8", flag: "wx" });
-    return { claimed: true, claim };
-  } catch (err) {
-    if (err.code === "EEXIST") {
-      const existingClaim = JSON.parse(fs.readFileSync(claimFile, "utf8"));
-      return { claimed: false, existingClaim };
+    try {
+      fs.linkSync(preparedFile, claimFile);
+      return { claimed: true, claim };
+    } catch (err) {
+      if (err.code === "EEXIST") {
+        const existingClaim = JSON.parse(fs.readFileSync(claimFile, "utf8"));
+        return { claimed: false, existingClaim };
+      }
+      throw err;
     }
-    throw err;
+  } finally {
+    fs.unlinkSync(preparedFile);
   }
 }
 
