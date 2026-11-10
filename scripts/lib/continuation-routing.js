@@ -59,6 +59,12 @@ export function inspectRouting(root, continuationId) {
   if (!fs.existsSync(file)) return [];
   return fs.readFileSync(file, "utf8").split("\n").filter(Boolean).map((line) => JSON.parse(line));
 }
+function recordRouteEvent(root, id, event) {
+  const file = routeFile(root, id);
+  fs.mkdirSync(path.dirname(file), { recursive: true });
+  fs.appendFileSync(file, JSON.stringify(event) + "\n", "utf8");
+  return event;
+}
 /**
  * Records a proposed hop, not an accepted assignment or a resolution.
  * Identity and origin return slot remain untouched. The caller must ensure
@@ -66,26 +72,28 @@ export function inspectRouting(root, continuationId) {
  */
 export function rerouteContinuation(root, continuation, { from, to, reason, maxHops = 4, admissible } = {}) {
   const id = safeId(continuation?.id || continuation?.continuation_id);
-  safeId(from); safeId(to);
+  safeId(from);
+  if (to) safeId(to);
+  const prior = inspectRouting(root, id);
+  const hops = prior.filter((h) => h.status === "proposed");
+  const base = { schema: "cogentia.fractarouting.hop.v1", continuation_id: id,
+    from, to: to || null, reason: String(reason || ""),
+    at: new Date().toISOString(),
+    return_ref: continuation.return_contract?.result_ref || `continuation:${id}/resolution` };
+  const reject = (status) => {
+    recordRouteEvent(root, id, { ...base, status, hop: hops.length });
+    return { status, continuation_id: id, hops: hops.length };
+  };
   if (typeof admissible !== "function" || admissible(continuation, { from, to }) !== true)
-    return { status: "not_admissible", continuation_id: id };
-  const hops = inspectRouting(root, id);
-  if (continuation.status !== "active") return { status: "not_active", continuation_id: id };
-  if (from === to || hops.length >= maxHops || hops.some((h) => h.from === to))
-    return { status: "routing_exhausted", continuation_id: id, hops: hops.length };
+    return reject("not_admissible");
+  if (continuation.status !== "active") return reject("not_active");
+  if (!to || from === to || hops.length >= maxHops || hops.some((h) => h.from === to))
+    return reject("routing_exhausted");
   const target = findCapableResolvers(root, "").find((r) => r.resolver_id === to);
-  if (!target) return { status: "destination_unregistered", continuation_id: id };
+  if (!target) return reject("destination_unregistered");
   const targetProfile = { capabilities: target.capabilities, judgement: target.capabilities.includes("Judgement") };
   if (!matching(continuation, targetProfile) || (isJudgement(continuation) && !hasJudgement(targetProfile)))
-    return { status: "destination_incapable", continuation_id: id };
-  const event = {
-    schema: "cogentia.fractarouting.hop.v1", continuation_id: id,
-    from, to, reason: String(reason || ""), status: "proposed",
-    hop: hops.length + 1, at: new Date().toISOString(),
-    return_ref: continuation.return_contract?.result_ref || `continuation:${id}/resolution`,
-  };
-  const file = routeFile(root, id);
-  fs.mkdirSync(path.dirname(file), { recursive: true });
-  fs.appendFileSync(file, JSON.stringify(event) + "\n", "utf8");
+    return reject("destination_incapable");
+  const event = recordRouteEvent(root, id, { ...base, status: "proposed", hop: hops.length + 1 });
   return { status: "proposed", event };
 }
