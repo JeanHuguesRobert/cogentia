@@ -103,6 +103,25 @@ export function findCapableResolvers(cogentiaRoot, requiredCapability) {
 }
 
 /**
+ * Find resolvers that declare ALL requested capabilities (AND semantics).
+ *
+ * This is eligibility by declaration only, not authorization or liveness.
+ * Fail closed on malformed requirements; callers must separately verify
+ * freshness, mandate and the scope of every consequential effect.
+ */
+export function findCapableResolversForAll(cogentiaRoot, requiredCapabilities) {
+  if (!Array.isArray(requiredCapabilities) ||
+      requiredCapabilities.some((c) => typeof c !== "string" || !c.trim())) {
+    throw new TypeError("requiredCapabilities must be an array of nonempty strings");
+  }
+  const required = [...new Set(requiredCapabilities.map((c) => c.trim()))];
+  return listResolvers(cogentiaRoot).filter((resolver) =>
+    Array.isArray(resolver.capabilities) &&
+    required.every((capability) => resolver.capabilities.includes(capability))
+  );
+}
+
+/**
  * Attempt to claim a continuation for a given resolver. Returns
  * { claimed: true, claim } on success, { claimed: false, existingClaim }
  * if someone else already claimed it first -- the optimistic-locking
@@ -136,4 +155,27 @@ export function getClaim(cogentiaRoot, continuationId) {
 export function releaseClaim(cogentiaRoot, continuationId) {
   const claimFile = path.join(claimsDir(cogentiaRoot), `${continuationId}.json`);
   if (fs.existsSync(claimFile)) fs.unlinkSync(claimFile);
+}
+
+/**
+ * Explicitly admitted resolver claim. No execution or continuation resolution.
+ * Caller-supplied gates must establish fresh availability and inherited mandate;
+ * a registry entry by itself is never authority. A stale claim is not stolen.
+ */
+export function claimAdmissibleResolver(cogentiaRoot, continuationId, requiredCapabilities, {
+  isAvailable,
+  isAuthorized,
+} = {}) {
+  if (typeof isAvailable !== "function" || typeof isAuthorized !== "function") {
+    return { claimed: false, reason: "missing_admission_checks" };
+  }
+  const candidates = findCapableResolversForAll(cogentiaRoot, requiredCapabilities);
+  if (!candidates.length) return { claimed: false, reason: "no_capable_resolver_available" };
+  for (const candidate of candidates) {
+    if (isAvailable(candidate) !== true || isAuthorized(candidate, continuationId) !== true) continue;
+    const result = claimContinuation(cogentiaRoot, continuationId, candidate.resolver_id);
+    if (result.claimed) return { ...result, resolver: candidate };
+    return { claimed: false, reason: "already_claimed", existingClaim: result.existingClaim };
+  }
+  return { claimed: false, reason: "no_admissible_resolver" };
 }
