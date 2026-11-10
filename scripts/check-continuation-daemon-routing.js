@@ -9,6 +9,7 @@ import { execFileSync, spawn } from "node:child_process";
 import { once } from "node:events";
 import { fileURLToPath } from "node:url";
 import { registerResolver } from "./lib/resolver-registry.js";
+import { acquirePacketClaim } from "./lib/continuation-packet-claim.js";
 import { rerouteContinuation } from "./lib/continuation-routing.js";
 import { createMcpCore } from "./lib/cogentia-mcp-core.js";
 const scripts = path.dirname(fileURLToPath(import.meta.url));
@@ -81,8 +82,19 @@ try {
   assert.equal(privateMcp.tools.some(t=>t.name==="cogentia_continuation_routing_history"),true);
   const mcpHistory = await privateMcp.callTool("cogentia_continuation_routing_history",{id:emitted.id});
   assert.equal(mcpHistory.history[0].to,"judge-b");
+  // The legacy HTTP mutation endpoint cannot bypass an active COP v1 claim,
+  // even when the caller is authenticated as the test administrator.
+  const guarded=acquirePacketClaim(root,emitted.id,"judge-b",{leaseMs:20000});
+  assert.equal(guarded.claimed,true);
+  const bypass=await fetch(base+"/api/ops/continuations/resolve?view=full",{
+    method:"POST",
+    headers:{Authorization:"Bearer "+token,"Content-Type":"application/json"},
+    body:JSON.stringify({id:emitted.id,decision:"forbidden_legacy_terminal"}),
+  });
+  assert.equal(bypass.status,409);
+  assert.equal((await bypass.json()).error,"cop_v1_claim_requires_guarded_terminal");
   console.log(JSON.stringify({ok:true,http_preview:200,public_routing:403,
-    unverified_loopback:403,authenticated_private_routing:200,mcp_preview:true,mcp_private_history:true,
+    unverified_loopback:403,authenticated_private_routing:200,mcp_preview:true,mcp_private_history:true,legacy_http_guard:409,
     cop_admission:preview.cop_admission,claimed:false},null,2));
 } finally {
   if (child && child.exitCode===null) {
