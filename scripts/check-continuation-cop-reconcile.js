@@ -16,7 +16,7 @@ import {resolveCallerAuth} from "./lib/cogentia-mcp-auth.js";
 import {acquirePacketClaim} from "./lib/continuation-packet-claim.js";
 import {continuationRevision} from "./lib/continuation-terminal-settlement.js";
 import {resolveJohnCopContinuation} from "./lib/continuation-cop-governed.js";
-import {reconcileJohnCopSettlement} from "./lib/continuation-cop-reconcile.js";
+import {reconcileJohnCopSettlement,reconcileOrphanJohnCopReservation} from "./lib/continuation-cop-reconcile.js";
 const root=fs.mkdtempSync(path.join(os.tmpdir(),"cop-reconcile-111-"));
 const db=path.join(root,"events.sqlite");
 const config=path.join(root,".cogentia.json");
@@ -61,6 +61,21 @@ try {
   store=createSqliteCopEventStore(db);
   const postRestartLedger=ledger();
   assert.equal(postRestartLedger.snapshot().reserved.max_steps,1);
+  // Independent orphaned reservation: acquired while the mandate was valid,
+  // then lost its handler before any terminal intent was published.
+  const orphan=cli("emit","--kind","judgment","--question","Orphaned budget fixture").continuation;
+  const oldTime=new Date("2026-01-02T00:00:00Z");
+  const orphanClaim=acquirePacketClaim(root,orphan.id,"disconnected-handler",{
+    leaseMs:100,now:oldTime,
+  }).claim;
+  const orphanKey="cop:continuation:terminal:"+orphan.id+":"+orphanClaim.claim_id;
+  const orphanReservation=postRestartLedger.reserve({
+    idempotency_key:orphanKey,
+    expected_version:postRestartLedger.snapshot().version,
+    demand:{max_steps:1},
+  });
+  assert.equal(orphanReservation.ok,true);
+  assert.equal(postRestartLedger.snapshot().available.max_steps,0);
   recordMandateControl(store,{principal_ref:"principal:jhn",mandate_ref,action:"revoke"});
   // Starting a new effect with a now-revoked mandate is impossible.
   const denied=resolveJohnCopContinuation(root,work.id,{
@@ -74,6 +89,16 @@ try {
   assert.equal(cli("inspect",work.id).continuation.status,"resolved");
   assert.equal(postRestartLedger.snapshot().reserved.max_steps,0);
   assert.equal(postRestartLedger.snapshot().settled.max_steps,1);
+  const orphanArgs={auth,store,ledger:postRestartLedger,witness:orphanClaim};
+  assert.equal(reconcileOrphanJohnCopReservation(root,orphan.id,{
+    ...orphanArgs,now:new Date(oldTime.getTime()+50)}).code,"CLAIM_STILL_ACTIVE");
+  assert.equal(postRestartLedger.snapshot().reserved.max_steps,1);
+  const released=reconcileOrphanJohnCopReservation(root,orphan.id,orphanArgs);
+  assert.equal(released.code,"ORPHAN_RESERVATION_RELEASED");
+  assert.equal(postRestartLedger.snapshot().reserved.max_steps,0);
+  assert.equal(postRestartLedger.snapshot().settled.max_steps,1);
+  assert.equal(reconcileOrphanJohnCopReservation(root,orphan.id,orphanArgs).code,
+    "ALREADY_RELEASED");
   const repeated=reconcileJohnCopSettlement(root,work.id,{auth,store,ledger:ledger()});
   assert.equal(repeated.code,"ALREADY_RECONCILED");
   assert.equal(ledger().snapshot().settled.max_steps,1);
