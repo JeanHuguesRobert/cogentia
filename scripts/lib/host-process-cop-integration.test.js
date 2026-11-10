@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { prepareHostProcessRun } from './host-process-prepare.js';
 import { createHostCapabilityRouter } from './host-capability-router.js';
+import { inspectUnixProcessCopCustody } from './unix-process-cop-custody.js';
 import { mintSideEffectGrantFromPrepared, resetAuthorizationStore, consumeSideEffectAuthorization } from './side-effect-authorization.js';
 
 const auth = { actor:'actor:test', principal_ref:'principal:test', mandate_ref:'mandate:test', lockers:{ public:{read:true,write:true}, private:{read:true,write:true} } };
@@ -13,6 +14,15 @@ test('existing COP EXPOSE → hash-bound grant → Unix provider → receipt; gr
   const router = createHostCapabilityRouter({providerName:'unix-process'});
   const args = {command:'printf COP_UNIX_OK',timeout_ms:1000};
   const ctx = {auth, actor:'actor:test', mandate:'mandate:test', target, provider:'unix-process', authorization:grant};
+  // On a real node where the current Unix account owns the canonical COP
+  // database, a successful host.process.run would be a regression.
+  const custody = inspectUnixProcessCopCustody();
+  if (custody.blocked) {
+    await assert.rejects(router.invoke('host.process.run', args, ctx),
+      error => error.error_class === custody.reason);
+    await router.stop();
+    return;
+  }
   const result = await router.invoke('host.process.run',args,ctx);
   assert.equal(result.ok,true);
   assert.equal(result.stdout,'COP_UNIX_OK');

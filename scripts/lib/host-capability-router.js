@@ -8,6 +8,7 @@
  */
 import fs from "node:fs";
 import { UnixProcessProvider } from "./unix-process-provider.js";
+import { inspectUnixProcessCopCustody } from "./unix-process-cop-custody.js";
 import { resolveHostMissionAuthority } from "./host-mission-authority.js";
 import { maybeRecordCopEffectSpend } from "./cop-surface-accounting.js";
 import { createHash, randomUUID } from "node:crypto";
@@ -280,6 +281,19 @@ export function createHostCapabilityRouter(options = {}) {
         const err = new Error("invalid_execution_mode");
         err.error_class = "invalid_execution_mode";
         throw err;
+      }
+
+      // The canonical COP store must be protected from the Unix identity that
+      // executes an agent-supplied script. Filesystem roots for host.fs.* do
+      // not confine /bin/sh. Trusted injected providers retain their own
+      // custody contract; the built-in Unix effecter is checked on every call.
+      if (!isSuper && providerName === "unix-process" && !providerFactory && !ctx.providerInstance) {
+        const custody = inspectUnixProcessCopCustody({ env });
+        if (custody.blocked) {
+          const err = new Error(custody.reason);
+          err.error_class = custody.reason;
+          throw err;
+        }
       }
 
       // Cogentia #192 Finding D: Bounded COP budget enforcement / seam
