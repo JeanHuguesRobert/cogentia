@@ -105,6 +105,30 @@ can involve several packets; never multiply packets solely to replace a
 handler. Copy a bounded self-describing continuation only when a durable
 reference cannot be accessed.
 
+## CPS first executable profile — existing Issue packet
+
+A bounded CLI profile is available for an **explicit existing GitHub Issue
+packet**. Its one-step invocations are:
+
+    node scripts/cogentia.js packet park owner/repo#123 --acquired "verified results" --next "first feasible action" --json
+    node scripts/cogentia.js packet handoff owner/repo#123 --acquired "verified results" --next "successor action" --json
+    node scripts/cogentia.js packet resume owner/repo#123 --json
+
+The handler, not the human Principal, supplies acquired results and the next
+action from its actual known work. Park/handoff append an idempotently
+identifiable checkpoint comment **to that Issue**, not a second packet,
+per-session file or judgment continuation. Resume reads the latest CPS
+checkpoint; if none exists, it says so and does not invent progress.
+
+This is an initial **Issue-backed implementation profile**, not an
+end-to-end automatic conversation migration. It does not discover the current
+conversation focus, silently extract non-persisted semantic decisions,
+acquire/dispose COP claims, verify an incoming handler's capabilities, open a
+new ChatGPT conversation or execute the next action. Handler handoff and
+successor acknowledgement are distinct. Issue-comment writes remain GitHub
+effects subject to their existing authorization plane. For a cold-handler
+readiness audit, use existing issues handoff-preflight independently.
+
 ## CPS work handling: park, handoff, resume
 
 These are three **single-step intentions over existing packet identities**,

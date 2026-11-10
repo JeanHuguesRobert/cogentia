@@ -72,6 +72,7 @@ import { runConvergenceLoop } from "./lib/convergence-loop.js";
 import { createSchedulerRunContext, runFractaCycle, SCHEDULER_CYCLE_MODES, SCHEDULER_STAGE_STATUS } from "./lib/fracta-scheduler.js";
 import { packDocumentToCapsule, verifyCapsule, unpackCapsule } from "./lib/packet-capsule.js";
 import { relatePacket } from "./lib/packet-relate.js";
+import { cpsWorkControl, parseIssueRef } from "./lib/cps-work-control.js";
 import { packetRelateJudgmentRequest } from "./lib/packet-relate-judgment.js";
 import { deriveContinuationReturn } from "./lib/continuation-return.js";
 import { projectContinuationPlacement } from "./lib/continuation-placement.js";
@@ -1128,7 +1129,7 @@ Effect commands (#171 mint UI):
                            Flags: --principal <id> --json --prepared-json <json>
 
 Continuation commands:
-  packet relate --text "..."   Read-only candidate attachment to existing packets.
+  packet park|handoff <owner/repo#N> --acquired <text> --next <text>\n                             Single-entry CPS checkpoint in the owning Issue; no new packet.\n  packet resume <owner/repo#N>\n                             Read-only recovery of the last CPS checkpoint.\n  packet relate --text "..."   Read-only candidate attachment to existing packets.
                              Flags: --file <path> --root <repo> --limit <1..25> --json.
                              --judgment-preview (read-only) or --emit-continuation;
                              optional --return-to <result-recipient>; default return
@@ -1984,6 +1985,7 @@ registerModule({
 
 function cmdPacketRelateOrCapsule() {
   const sub = argv[0] || 'help';
+  if (['park', 'handoff', 'resume'].includes(sub)) return cmdPacketWorkControl();
   if (sub !== 'relate') return cmdPacket(null, argv);
   argv.shift();
   const emit = takeFlag('--emit-continuation');
@@ -2013,6 +2015,37 @@ function cmdPacketRelateOrCapsule() {
     ...report.candidates.map(c=>`- ${c.reference} [${c.rank_signal} ranking signal] ${c.title}: ${c.matched_terms.join(', ')}`),
     'Review finality, causal lineage and evidence before any attachment. No new packet or change was created.'
   ].join('\n'));
+}
+
+function cmdPacketWorkControl() {
+  const op = argv.shift();
+  const rawRef = argv.shift();
+  if (!rawRef) throw new Error("Usage: cogentia packet park|handoff|resume <owner/repo#N> [--acquired TEXT --next TEXT] [--json]");
+  const target = parseIssueRef(rawRef);
+  const acquired = valueFlag("--acquired") || "";
+  const next = valueFlag("--next") || "";
+  const blocker = valueFlag("--blocker") || "";
+  const handler = valueFlag("--handler") || "conversation";
+  if (hasFlag("--execute") || hasFlag("--claim") || hasFlag("--grant"))
+    throw new Error("CPS participation action does not dispatch or grant effects");
+  // The Issue (not a per-conversation file) remains the canonical journal.
+  // Read only the requested Issue and its own comments.
+  const issue = ghJson(["issue", "view", String(target.number), "--repo", target.repo,
+    "--json", "number,title,state,updatedAt,comments,url"]);
+  const writeComment = (ref, body) => {
+    const result = spawnSync("gh",["issue","comment",String(ref.number),"--repo",ref.repo,"--body",body],
+      {encoding:"utf8",timeout:20000,maxBuffer:1024*1024});
+    if (result.status !== 0) throw new Error("Unable to persist CPS hop in owning Issue: " + String(result.stderr||"").slice(0,400));
+    const refreshed = ghJson(["issue","view",String(ref.number),"--repo",ref.repo,"--json","comments"]);
+    if (!(refreshed.comments || []).some(item => item.body === body)) {
+      throw new Error("CPS checkpoint write not independently verified on the owning Issue");
+    }
+    return true;
+  };
+  const result = cpsWorkControl({op,ref:rawRef,acquired,next,blocker,handler,issue,writeComment});
+  return output(result, op === "resume"
+    ? "CPS resume: " + target.url + "\nNext: " + (result.next_action || "No checkpoint; inspect Issue")
+    : "CPS " + op + " persisted at " + target.url + " (" + result.receipt?.receipt_id + ")");
 }
 
 function cmdPacket(ctx, argv) {

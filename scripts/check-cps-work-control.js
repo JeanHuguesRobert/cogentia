@@ -1,0 +1,25 @@
+#!/usr/bin/env node
+import assert from "node:assert/strict";
+import {cpsWorkControl,parseIssueRef} from "./lib/cps-work-control.js";
+const ref="JeanHuguesRobert/cogentia#271";
+assert.equal(parseIssueRef(ref).number,271);
+const issue={state:"OPEN",title:"Resumable work",comments:[],updatedAt:"2026-11-10T05:00:00Z"};
+const writes=[];
+const writer=(_,body)=>{writes.push(body);issue.comments.push({body});};
+const args={op:"park",ref,acquired:"Fixed bug and committed source",next:"Verify deployment",issue,writeComment:writer};
+assert.equal(cpsWorkControl(args).persisted,true);
+assert.equal(cpsWorkControl(args).deduplicated,true);
+assert.equal(writes.length,1);
+issue.updatedAt = "2026-11-10T05:12:00Z";
+assert.equal(cpsWorkControl(args).deduplicated,true);
+assert.equal(writes.length,1);
+assert.equal(cpsWorkControl({op:"resume",ref,issue}).next_action,"Verify deployment");
+assert.equal(cpsWorkControl({...args,op:"handoff",next:"Inspect actual MCP schemas"}).persisted,true);
+assert.equal(cpsWorkControl({op:"resume",ref,issue}).next_action,"Inspect actual MCP schemas");
+assert.equal(writes.length,2);
+assert.equal(cpsWorkControl({op:"resume",ref,issue:{...issue,comments:[{body:"unrelated"}]}}).continuity,"no_cps_checkpoint");
+assert.throws(()=>cpsWorkControl({...args,writeComment:null}),/durable Issue comment writer/);
+assert.throws(()=>cpsWorkControl({...args,acquired:""}),/requires explicit/);
+assert.throws(()=>cpsWorkControl({...args,ref:"bad"}),/Expected/);
+assert.throws(()=>cpsWorkControl({...args,issue:{state:"CLOSED"}}),/closed/);
+console.log(JSON.stringify({ok:true,operations:["park","handoff","resume"],idempotency:true,no_new_packet:true,no_claim:true}));
