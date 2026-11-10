@@ -95,6 +95,7 @@ export const MUTATE_TOOLS = new Set([
  * agent, never to the anonymous public catalogue.
  */
 export const PRIVATE_READ_TOOLS = new Set([
+  "cogentia_continuation_routing_history",
   "cogentia_memory_capture",
   "cogentia_config_hygiene_audit",
   "cogentia_cop_consent_review",
@@ -684,6 +685,16 @@ export const TOOLS = [
         resolver_id: { type: "string", minLength: 1, description: "Registered resolver ID" },
       },
       required: ["resolver_id"],
+      additionalProperties: false,
+    },
+  },
+  {
+    name: "cogentia_continuation_routing_history",
+    description: "Read routing proposals, accepted claims and treated observations for a continuation. Private read; neither a mandate, execution nor delivery receipt.",
+    inputSchema: {
+      type: "object",
+      properties: { id: { type: "string", minLength: 1 } },
+      required: ["id"],
       additionalProperties: false,
     },
   },
@@ -2009,6 +2020,10 @@ export function createMcpCore(env = process.env, extras = {}) {
         return daemonGet("/api/cli/continuation/next-preview", {
           resolver_id: args.resolver_id,
         });
+      case "cogentia_continuation_routing_history":
+        requireString(args.id, "id");
+        return daemonGet("/api/cli/continuation/routing-history", { id: args.id },
+          { privateRead: true });
       case "cogentia_continuation_inspect":
         requireString(args.id, "id");
         return daemonGet("/api/cli/continuation/inspect", { id: args.id });
