@@ -296,6 +296,8 @@ reference
 
 ### Control / data plane distinction
 
+**Capability/authority refinement (2026-11-10):** the data plane answers *what can technically be done*; the COP control plane answers *what this actor has the right and budget to do*. Their effective coupling occurs at the semantic effect boundary, without collapsing them into one layer. A healthy `gmail.send` is not a permission; a drafts-only mandate is not a technical incapacity. In particular, do not degrade or conceal available capabilities as a surrogate for enforcing mandate/budget checks. See [Capability and Authority as Orthogonal Data and Control Planes](capability_authority_control_data_planes_2026-11-10.md).
+
 The [control/data plane separation](https://github.com/JeanHuguesRobert/Inox/blob/master/research/concepts.md#control-data-plane-separation)
 is a complementary distinction. For any operation, the **control plane**
 declares or selects what is to be considered, where it belongs, which boundary

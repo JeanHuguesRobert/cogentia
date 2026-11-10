@@ -241,6 +241,8 @@ Compact invariant:
 
 > **A cognitive packet is not correctly routed merely because it reaches a capable handler. The hop is complete only when the applicable control plane can be resolved and activated for the next cognitive act.**
 
+**Independent dimensions:** the handler’s technical capability belongs to the data-plane routing question; the applicable mandate and budget belong to the control-plane admission question. A missing mandate does not mean that the capability is absent, and a matching capability does not imply authority. Routing and dispatch must report these failures separately and enforce the latter at the semantic effect boundary. See [Capability/Authority ↔ Control/Data Planes](capability_authority_control_data_planes_2026-11-10.md).
+
 This is the routing projection of the FractaCognition coupling:
 
 ```text
