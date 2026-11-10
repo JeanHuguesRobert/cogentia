@@ -97,3 +97,37 @@ export function rerouteContinuation(root, continuation, { from, to, reason, maxH
   const event = recordRouteEvent(root, id, { ...base, status: "proposed", hop: hops.length + 1 });
   return { status: "proposed", event };
 }
+
+/**
+ * Reconcile a routing proposal with an observed claim or a canonical
+ * continuation resolution. This is evidence recording, NOT assignment,
+ * authorization, an alternate resolver, or a delivery notification.
+ */
+export function recordRoutingOutcome(root, continuation, { resolverId, phase, receiptRef = null } = {}) {
+  const id = safeId(continuation?.id || continuation?.continuation_id);
+  safeId(resolverId);
+  if (!["accepted", "treated"].includes(phase))
+    throw new Error("routing outcome phase must be accepted or treated");
+  const prior = inspectRouting(root, id);
+  const proposal = prior.findLast((h) => h.status === "proposed" && h.to === resolverId);
+  if (!proposal) return { status: "missing_proposal", continuation_id: id };
+  const holder = getClaim(root, id);
+  if (!holder || holder.resolver_id !== resolverId)
+    return { status: "claim_not_held", continuation_id: id };
+  if (phase === "treated" && continuation.status !== "resolved")
+    return { status: "resolution_not_observed", continuation_id: id };
+  if (phase === "treated" && !continuation.resolution?.return_state?.result_available)
+    return { status: "return_slot_not_ready", continuation_id: id };
+  const priorOutcome = prior.find((h) => h.status === phase && h.to === resolverId && h.proposal_hop === proposal.hop);
+  if (priorOutcome) return { status: "already_recorded", event: priorOutcome };
+  const event = recordRouteEvent(root, id, {
+    schema: "cogentia.fractarouting.outcome.v1",
+    continuation_id: id, from: proposal.from, to: resolverId,
+    status: phase, proposal_hop: proposal.hop, at: new Date().toISOString(),
+    claim_at: holder.claimed_at,
+    receipt_ref: receiptRef || (phase === "treated"
+      ? continuation.resolution.return_state.result_ref : null),
+    delivery_confirmed: false,
+  });
+  return { status: phase, event };
+}
