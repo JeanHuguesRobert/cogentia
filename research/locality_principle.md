@@ -4,7 +4,7 @@ subtitle: "Smallest sufficient locality, explicit crossing, and global reference
 author: "Jean Hugues Noël Robert, baron Mariani"
 affiliation: "Institut Mariani / C.O.R.S.I.C.A., 1 cours Paoli, F-20250 Corte, Corsica, France"
 date: "2026-09-19"
-last_modified_at: "2026-10-24"
+last_modified_at: "2026-11-10"
 version: "0.6"
 status: "working-paper — locality doctrine candidate"
 document_role: "source"
@@ -565,6 +565,15 @@ Candidate invariants for a later Reality Test:
 4. **Minimum sufficiency:** materialize only what improves a specified workload after considering latency, transfer, storage, cognitive load, privacy and recovery cost.
 5. **Degraded continuity:** during loss of a global index or coordinator, a cold handler can continue within valid local control, or preserve an explicit blocked/deferred state for later reconciliation.
 6. **Semantic portability:** logical locality is independent of machine placement; moving materializations does not silently move authority.
+
+
+### 12.1.1 Message-first locality (clarification, 2026-11-10)
+
+The locality principle applies not only to data retrieval but also to **cooperative work conversations** among actors. Assume the semantics of asynchronous messages, work orders, questions, partial deliveries and negotiated completion even when the actors are physically co-located in one Unix process. Do not replace this cooperative model with transparent RPC; conversely, do not impose remote serialization or durable network transport on each in-RAM exchange.
+
+Use the cheapest admissible materialization: direct immutable reference or RAM mailbox within one trusted process; IPC across processes; explicit packet/continuation closure across persistence, trust or machine boundaries. The need for a recoverable work record depends on consequence and recovery requirements, not on the fact that a message was sent. Actor-local mutable state remains privately governed, and a shared cache never confers authority or disclosure rights.
+
+Canonical semantic discussion: [Packet/Continuation Machine, section 16](packet_continuation_machine.md#16-message-first-cooperative-work-and-locality-2026-11-10). Alan language implications: [Alan, section 19](alan_turing_mcp.md#19-future-actorcooperative-work-semantics-clarification-2026-11-10).
 
 ### Stigmergic evaporation, cooling and glacial retention
 
