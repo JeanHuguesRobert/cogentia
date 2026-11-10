@@ -38,9 +38,11 @@ import { spawn } from "node:child_process";
 import { randomUUID } from "node:crypto";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { findCapableResolvers } from "./lib/resolver-registry.js";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const cogentiaScript = path.join(root, "scripts", "cogentia.js");
+const resolverRoot = path.resolve(process.env.CONTINUATION_ACP_REGISTRY_ROOT || root);
 
 const POLL_INTERVAL_MS = boundedNumber(process.env.CONTINUATION_ACP_POLL_MS, 3_000, 500, 60_000);
 const WAIT_TIMEOUT_MS = boundedNumber(process.env.CONTINUATION_ACP_TIMEOUT_MS, 15 * 60_000, 5_000, 24 * 60 * 60_000);
@@ -58,6 +60,7 @@ export const CONTINUATION_ERROR_INFO = Object.freeze({
   SUBSYSTEM_ERROR: "subsystem_error", // cogentia.js's own continuation store errored/returned nothing
   CANCELLED: "cancelled", // a resolver explicitly cancelled the continuation
   RESOLUTION_TIMEOUT: "resolution_timeout", // nobody resolved it within WAIT_TIMEOUT_MS
+  NO_CAPABLE_RESOLVER_AVAILABLE: "no_capable_resolver_available", // no registered resolver can meet all technical requirements at deadline
   MALFORMED_RESOLUTION: "malformed_resolution", // resolved, but no usable answer/decision/reason
   EMISSION_FAILED: "emission_failed", // cogentia continuation emit itself did not return an id
   INVALID_SESSION: "invalid_session", // session/prompt referenced an unknown sessionId
@@ -109,7 +112,7 @@ function extractEmbeddedContext(prompt) {
   return { resources, images };
 }
 
-async function waitForResolution(sessionId, continuationId, streaming) {
+async function waitForResolution(sessionId, continuationId, streaming, requiredCapabilities = []) {
   const startedAt = Date.now();
   const deadline = startedAt + WAIT_TIMEOUT_MS;
   if (streaming) {
@@ -144,8 +147,16 @@ async function waitForResolution(sessionId, continuationId, streaming) {
     await sleep(POLL_INTERVAL_MS);
   }
   if (streaming) notifyProgress(sessionId, `Continuation ${continuationId} timed out unresolved.`);
-  throw acpError(-32603, "Timed out waiting for a resolver to answer the continuation", {
-    continuationErrorInfo: CONTINUATION_ERROR_INFO.RESOLUTION_TIMEOUT,
+  const capable = findCapableResolvers(resolverRoot, "").filter((r) =>
+    requiredCapabilities.every((capability) => r.capabilities?.includes(capability)));
+  const noCapable = requiredCapabilities.length > 0 && capable.length === 0;
+  throw acpError(-32603, noCapable
+    ? "No registered resolver currently declares all required capabilities"
+    : "Timed out waiting for a resolver to answer the continuation", {
+    continuationErrorInfo: noCapable
+      ? CONTINUATION_ERROR_INFO.NO_CAPABLE_RESOLVER_AVAILABLE
+      : CONTINUATION_ERROR_INFO.RESOLUTION_TIMEOUT,
+    requiredCapabilities,
     continuationId,
     waitedMs: WAIT_TIMEOUT_MS,
   });
@@ -352,7 +363,7 @@ async function dispatch(method, params) {
           throw acpError(-32603, "Failed to emit continuation", { continuationErrorInfo: CONTINUATION_ERROR_INFO.EMISSION_FAILED });
         }
       }
-      const resolved = await waitForResolution(sessionId, continuationId, session.streaming);
+      const resolved = await waitForResolution(sessionId, continuationId, session.streaming, requiredCapabilities);
       const answer =
         resolved.resolution?.payload?.answer ||
         resolved.resolution?.reason ||
