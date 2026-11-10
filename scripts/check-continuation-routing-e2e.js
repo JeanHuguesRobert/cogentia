@@ -76,9 +76,20 @@ try {
   assert.equal(nextContinuation(root, [read(), second.continuation], bProfile,
     { admissible }).continuation.id, second.continuation.id,
     "next item selected after first resolution in the same session");
+  const secondClaim = nextContinuation(root, [read(), second.continuation], bProfile,
+    { claim: true, admissible });
+  assert.equal(secondClaim.status, "claimed");
+  cli("resolve", second.continuation.id, "--decision", "synthetic_second_answer",
+    "--reason", "Second synthetic decision in the same worker session");
+  const secondFetched = cli("inspect", second.continuation.id).continuation;
+  assert.equal(secondFetched.status, "resolved");
+  assert.equal(secondFetched.resolution.decision, "synthetic_second_answer");
+  assert.equal(secondFetched.resolution.return_state.result_available, true);
+  assert.equal(secondFetched.resolution.return_state.delivered, false);
+  releaseClaim(root, second.continuation.id);
   console.log(JSON.stringify({
     ok:true, continuation_id:id, returned_ref:origin, route:["proposed","accepted","treated"],
-    second_id:second.continuation.id, delivery_confirmed:false,
+    second_id:second.continuation.id, second_status:secondFetched.status, delivery_confirmed:false,
     cop_verified:false, effect:"synthetic_only",
   },null,2));
 } finally {
