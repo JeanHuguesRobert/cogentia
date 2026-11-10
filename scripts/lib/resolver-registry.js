@@ -25,23 +25,22 @@
  *   Per the issue's own stated assumption, the realistic resolver pool
  *   is small (jhrobert + one or two coding-agent sessions), so a
  *   manually-maintained registry is acceptable for v1.
- * - Claiming realizes one local COP PacketClaim enforcement strategy using the
- *   filesystem's own atomic "create if not exists"
- *   semantics (`fs.writeFileSync(path, data, { flag: "wx" })`) as the
- *   optimistic-locking primitive: two resolvers racing to claim the same
- *   continuation will have exactly one writeFileSync succeed and one
- *   throw EEXIST, with no separate lock server or database needed --
- *   matching the corpus's existing preference for git-trackable,
- *   inspectable, filesystem-based state.
+ * - Claiming provides only a LOCAL exclusive-create adapter, not a fully
+ *   reconciled `cop.packet-claim/v1` lease/fencing implementation.
+ *   A complete JSON claim is prepared privately then atomically published
+ *   by `fs.linkSync`: exactly one competing process wins; losers can never
+ *   observe a truncated winning JSON record. This does not implement COP
+ *   claim epoch, expiry, stale-holder fencing, mandate, or effect-boundary CAS.
+ *   Those remain explicit prerequisites before production claim/resolve.
  * - This module deliberately does NOT touch cogentia.js's own
  *   `.cogentia/continuations/*.json` files -- resolver registrations and
  *   claims live in a sibling `.cogentia/resolvers/` tree, so this stays
  *   additive and doesn't require changing continuation.js's file format
  *   or its owning code.
- * - NOT wired into continuation-acp-server.js yet (inseme#107/#108/#109/
- *   #110's server) -- this is the claim-step prototype only, tested in
- *   isolation, per the issue's own Next Action #2 ("prototype the claim
- *   step only... before wiring it into the full ACP server").
+ * - Only technical next-preview (CLI/daemon/MCP) and ACP's diagnostic
+ *   for absent registered capabilities are integrated. Real claim/resolve
+ *   authority and FractaRouting mutations remain UNEXPOSED through MCP;
+ *   preview expressly reports COP admission as not checked.
  */
 
 import fs from "node:fs";
