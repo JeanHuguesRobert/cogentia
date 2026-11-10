@@ -102,11 +102,29 @@ try {
   assert.equal(ledger.snapshot().settled.max_steps,1,"replay must not double bill");
   const second=cli("emit","--kind","judgment","--question","Second bounded COP step").continuation;
   const secondWitness=acquirePacketClaim(root,second.id,"judge-b",{leaseMs:90000}).claim;
+  const secondRevision=continuationRevision(root,second.id);
+  const interrupted=resolveJohnCopContinuation(root,second.id,{
+    ...args,witness:secondWitness,expectedSha256:secondRevision,
+    decision:"bounded_second",
+    beforeCanonicalWrite:()=>{throw new Error("synthetic_crash_after_intent");},
+  });
+  assert.equal(interrupted.code,"TERMINAL_EXECUTION_INTERRUPTED");
+  assert.equal(interrupted.settlement_pending,true);
+  assert.equal(ledger.snapshot().reserved.max_steps,1);
+  assert.equal(cli("inspect",second.id).continuation.status,"active");
+  const alteredRecovery=resolveJohnCopContinuation(root,second.id,{
+    ...args,witness:secondWitness,expectedSha256:secondRevision,
+    decision:"wrong_late_answer",
+  });
+  assert.equal(alteredRecovery.code,"COP_RECOVERY_INTENT_MISMATCH");
+  assert.equal(ledger.snapshot().reserved.max_steps,1);
   const secondOk=resolveJohnCopContinuation(root,second.id,{
-    ...args,witness:secondWitness,expectedSha256:continuationRevision(root,second.id),
+    ...args,witness:secondWitness,expectedSha256:secondRevision,
     decision:"bounded_second",
   });
   assert.equal(secondOk.ok,true,JSON.stringify(secondOk));
+  assert.equal(ledger.snapshot().reserved.max_steps,0);
+  assert.equal(cli("inspect",second.id).continuation.resolution.decision,"bounded_second");
   assert.equal(ledger.snapshot().settled.max_steps,2);
   const third=cli("emit","--kind","judgment","--question","Exhausted COP budget").continuation;
   const thirdWitness=acquirePacketClaim(root,third.id,"judge-b",{leaseMs:90000}).claim;
