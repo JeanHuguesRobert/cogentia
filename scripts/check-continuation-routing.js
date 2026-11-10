@@ -23,6 +23,10 @@ try {
   assert.equal(hop.status, "proposed");
   assert.equal(inspectRouting(root,c.id)[0].return_ref, c.return_contract.result_ref);
   assert.equal(rerouteContinuation(root,c,{from:"judge-b",to:"router-a",admissible:yes}).status,"routing_exhausted");
+  assert.equal(inspectRouting(root,c.id).length,2,"blocked route is durably recorded");
+  assert.equal(inspectRouting(root,c.id)[1].status,"routing_exhausted");
+  assert.equal(rerouteContinuation(root,c,{from:"router-a",to:"missing-agent",admissible:yes}).status,"destination_unregistered");
+  assert.equal(inspectRouting(root,c.id).filter((h)=>h.status==="proposed").length,1,"failed attempts do not consume hop budget");
   const profile = {resolver_id:"judge-b",capabilities:["Judgement","tool_use"]};
   assert.equal(nextContinuation(root,[c],profile,{admissible:yes}).status,"available");
   assert.equal(nextContinuation(root,[c],profile,{claim:true,admissible:yes}).status,"claimed");
