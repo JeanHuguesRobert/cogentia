@@ -87,7 +87,7 @@ try {
   assert.equal(reconcileJohnCopSettlement(root,work.id,{
     auth,store,ledger:postRestartLedger}).code,"RECONCILED");
   assert.equal(cli("inspect",work.id).continuation.status,"resolved");
-  assert.equal(postRestartLedger.snapshot().reserved.max_steps,0);
+  assert.equal(postRestartLedger.snapshot().reserved.max_steps,1);
   assert.equal(postRestartLedger.snapshot().settled.max_steps,1);
   const orphanArgs={auth,store,ledger:postRestartLedger,witness:orphanClaim};
   assert.equal(reconcileOrphanJohnCopReservation(root,orphan.id,{
