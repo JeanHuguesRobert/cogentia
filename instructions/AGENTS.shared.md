@@ -309,7 +309,7 @@ resolve without mandate. Do not invent missing by-reference context.
 During substantive work, WATCH for the moment when a verified result,
 important decision, consequential negative finding, or reusable convergence
 crosses the **existing checkpoint threshold**. Do not wait for a request to
-publish a transcript or for \`park\`/\`handoff\`. Apply
+publish a transcript or for `park`/`handoff`. Apply
 [checkpoint/crystallization discipline](../research/ideas_to_explore_as_issues.md#41-proactive-crystallization--recognize-a-threshold-not-every-step-2026-11-10):
 
 - Clear, appropriately authorized milestone: consolidate the minimal

@@ -201,8 +201,8 @@ document or packet only if independently justified. Group compatible minor
 corrections rather than producing one commit for every step.
 
 **Relationship to CPS:** crystallize selects and stabilizes an acquired
-semantic delta. \`park\` suspends this handler's treatment; \`handoff\` routes
-that treatment onward; \`resume\` reconstructs it. They can be combined,
+semantic delta. `park` suspends this handler's treatment; `handoff` routes
+that treatment onward; `resume` reconstructs it. They can be combined,
 but none requires the others. A handler may crystallize during ordinary
 work, without waiting for park or handoff.
 

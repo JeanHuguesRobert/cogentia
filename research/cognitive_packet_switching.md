@@ -160,11 +160,11 @@ Compact formulation:
 
 CPS handles two orthogonal dimensions of work continuity:
 **semantic consolidation** and **handler participation**.
-\`crystallize\` is the existing checkpoint judgment that promotes a
+`crystallize` is the existing checkpoint judgment that promotes a
 materially verified or otherwise properly qualified acquired result into
 its smallest justified durable Corpus/Packet representation. It does not
-transport, suspend, close, claim or duplicate the packet. \`park\`,
-\`handoff\` and \`resume\` operate on the participation/continuation side.
+transport, suspend, close, claim or duplicate the packet. `park`,
+`handoff` and `resume` operate on the participation/continuation side.
 A handler SHOULD watch for crystallization thresholds *during* ordinary
 work, not only before a handoff. When the semantic threshold is debatable,
 refer the substantive judgment to the Principal instead of automatically
