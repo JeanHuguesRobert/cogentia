@@ -92,9 +92,13 @@ try {
   assert.equal(ledger.snapshot().settled.max_steps,1);
   assert.equal(cli("inspect",one.id).continuation.resolution.decision,"signed_synthetic");
   const replay=resolveJohnCopContinuation(root,one.id,{
-    ...args,witness,expectedSha256:rev,decision:"signed_synthetic"});
+    ...args,witness,expectedSha256:rev,decision:"signed_synthetic",
+    reason:"fixture only",payload:{synthetic:true}});
   assert.equal(replay.ok,true,JSON.stringify(replay));
   assert.equal(replay.code,"ALREADY_COMPLETED");
+  const switched=resolveJohnCopContinuation(root,one.id,{
+    ...args,witness,expectedSha256:rev,decision:"different_late_answer"});
+  assert.equal(switched.code,"COP_REPLAY_INTENT_MISMATCH");
   assert.equal(ledger.snapshot().settled.max_steps,1,"replay must not double bill");
   const second=cli("emit","--kind","judgment","--question","Second bounded COP step").continuation;
   const secondWitness=acquirePacketClaim(root,second.id,"judge-b",{leaseMs:90000}).claim;
