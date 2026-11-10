@@ -6,6 +6,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { findCapableResolvers, claimContinuation, getClaim } from "./resolver-registry.js";
+import { acquirePacketClaim, currentPacketClaim } from "./continuation-packet-claim.js";
 
 const safeId = (id) => {
   if (typeof id !== "string" || !/^[a-zA-Z0-9_-]+$/.test(id)) throw new Error("invalid continuation/resolver id");
@@ -30,7 +31,8 @@ const rank = (a, b) => (Number(b.priority) || 0) - (Number(a.priority) || 0) ||
  * mandate + budget admission check, not an inference from a technical capability.
  * When claim=true the atomic exclusive-create decides concurrent claim races.
  */
-export function nextContinuation(root, continuations, profile, { claim = false, admissible } = {}) {
+export function nextContinuation(root, continuations, profile, { claim = false, admissible, claimMode = "legacy", leaseMs = 300000 } = {}) {
+  if (!["legacy", "cop_v1"].includes(claimMode)) throw new Error("unknown claimMode");
   if (!profile?.resolver_id || !Array.isArray(profile.capabilities))
     throw new Error("resolver profile with capabilities required");
   safeId(profile.resolver_id);
@@ -43,12 +45,17 @@ export function nextContinuation(root, continuations, profile, { claim = false, 
     .filter((c) => admissible(c, effective) === true).sort(rank);
   for (const c of candidates) {
     const id = safeId(c.id || c.continuation_id);
-    if (!claim) {
-      if (!getClaim(root, id)) return { status: "available", continuation: c, claimed: false };
-      continue;
-    }
-    const result = claimContinuation(root, id, profile.resolver_id);
-    if (result.claimed) return { status: "claimed", continuation: c, claimed: true, claim: result.claim };
+    const canonical = currentPacketClaim(root, id);
+    const canonicalLive = canonical && Date.parse(canonical.expires_at) > Date.now();
+    // Never let a legacy claimant bypass a live canonical lease, or the
+    // canonical claimant bypass a legacy holder while migration is incomplete.
+    if (getClaim(root, id) || canonicalLive) continue;
+    if (!claim) return { status: "available", continuation: c, claimed: false };
+    const result = claimMode === "cop_v1"
+      ? acquirePacketClaim(root, id, profile.resolver_id, { leaseMs })
+      : claimContinuation(root, id, profile.resolver_id);
+    if (result.claimed) return { status: "claimed", continuation: c, claimed: true,
+      claim: result.claim, claim_mode: claimMode };
   }
   return { status: "no_admissible_unclaimed_continuation", continuation: null };
 }
