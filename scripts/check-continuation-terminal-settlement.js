@@ -85,5 +85,20 @@ try {
     expectedSha256:continuationRevision(root,third.id),decision:"late",authorize:permitted}).code,
     "STALE_CLAIM");
   assert.equal(cli("inspect",third.id).continuation.status,"active");
+  // If an out-of-protocol writer changes the canonical file after intent,
+  // fail closed rather than overwrite that newer evidence during recovery.
+  const fourth=cli("emit","--kind","judgment","--question","Conflict recovery fixture").continuation;
+  const holder=acquirePacketClaim(root,fourth.id,"judge-b",{leaseMs:20000}).claim;
+  const fourthRevision=continuationRevision(root,fourth.id);
+  assert.throws(()=>resolveClaimedContinuation(root,fourth.id,{
+    witness:holder,expectedSha256:fourthRevision,decision:"prepared_not_written",
+    authorize:permitted,beforeCanonicalWrite:()=>{throw new Error("simulated_crash");}
+  }),/simulated_crash/);
+  const fourthFile=path.join(root,".cogentia","continuations",fourth.id+".json");
+  const external=JSON.parse(fs.readFileSync(fourthFile,"utf8"));
+  external.updated_at="synthetic_out_of_band_change";
+  fs.writeFileSync(fourthFile,JSON.stringify(external,null,2)+"\\n");
+  assert.equal(recoverClaimedResolution(root,fourth.id).code,"BASELINE_CHANGED_AFTER_PREPARE");
+  assert.equal(cli("inspect",fourth.id).continuation.updated_at,"synthetic_out_of_band_change");
   console.log("inseme#111 canonical terminal settlement / crash replay / stale fencing PASS");
 } finally { fs.rmSync(root,{recursive:true,force:true}); }
