@@ -93,3 +93,27 @@ Le fait que le Principal approuve le mandat existant ne remplace pas une
 nouvelle demande **amendement exact** pour modifier des pouvoirs. Le pont
 d'amendement est codé, mais sa mise en émission réelle reste distincte et
 nécessite une vérification transactionnelle des fonds/versions/autorités.
+
+## Commande propriétaire unique, avec garde-fou de déploiement
+
+La commande suivante regroupe la prévalidation de l'interface, l'activation
+administrative contrôlée des seules **décisions**, puis la préparation d'une
+revue de `john-root` v1 (dix minutes) :
+
+```powershell
+ssh -tt fracta2 'bash /srv/cogentia/repos/cogentia/scripts/ops/consent-deploy/prepare-jhn-ratification.sh'
+```
+
+Le script source `prepare-jhn-ratification.sh` vérifie **avant le sudo**
+que le bundle JS réellement servi par `https://jhn.baronsmariani.org`
+contient l'interface explicite « Ratifier le mandat existant ». Si ce n'est
+pas le cas, il s'arrête **sans activer l'enregistrement et sans écrire dans
+le journal COP**. Il exige ensuite SSH + TTY et délègue l'activation exacte à
+`enable-jhn-consent-decisions.py --apply`, avant de créer seulement une
+requête de ratification sur le mandat réel. Aucun jeton Supabase n'est
+transmis dans le terminal, l'URL ne contient qu'un UUID opaque. Le Principal
+ouvre cette URL et décide dans sa propre session Supabase.
+
+La vérification locale du 10 novembre a précisément observé que l'ancien
+bundle était encore servi ; le script a refusé et le journal est resté à
+36 événements, 3 déclarations et 0 événements de consentement.
