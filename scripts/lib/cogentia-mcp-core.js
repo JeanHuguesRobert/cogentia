@@ -676,6 +676,18 @@ export const TOOLS = [
     },
   },
   {
+    name: "cogentia_continuation_next_preview",
+    description: "Read-only technical continuation candidate for a registered resolver. No COP admission, PacketClaim, routing effect, or execution; never use this alone as authorization.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        resolver_id: { type: "string", minLength: 1, description: "Registered resolver ID" },
+      },
+      required: ["resolver_id"],
+      additionalProperties: false,
+    },
+  },
+  {
     name: "cogentia_continuation_inspect",
     description: "Inspect full state, context, and question for a specific continuation ID.",
     inputSchema: {
@@ -1991,6 +2003,11 @@ export function createMcpCore(env = process.env, extras = {}) {
         return daemonGet("/api/issues/list", {
           repo: args.repo || "all",
           state: enumOptional(args.state, ["open", "closed", "all"], "state") || "open",
+        });
+      case "cogentia_continuation_next_preview":
+        requireString(args.resolver_id, "resolver_id");
+        return daemonGet("/api/cli/continuation/next-preview", {
+          resolver_id: args.resolver_id,
         });
       case "cogentia_continuation_inspect":
         requireString(args.id, "id");
