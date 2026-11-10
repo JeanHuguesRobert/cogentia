@@ -13,6 +13,9 @@ import { listMcpPrompts, listAllResources } from "./cogentia-mcp-surface.js";
  * Write verbs may be catalog-only on the anonymous surface.
  */
 export const CLI_COMMANDS = [
+  {verb:"agent mail status",mcp_tool:"cogentia_agent_mail_status",risk:"private_read"},
+  {verb:"agent mail receive",mcp_tool:"cogentia_agent_mail_receive",risk:"private_read"},
+  {verb:"agent mail send",mcp_tool:"cogentia_agent_mail_send",risk:"write"},
   { verb: "memory capture", mcp_tool: "cogentia_memory_capture", risk: "private_read" },
   { verb: "agent start", mcp_tool: "cogentia_agent_start", daemon: "/api/agent/start", risk: "read" },
   { verb: "agent health", mcp_tool: "cogentia_agent_health", daemon: "/api/agent/health", risk: "read" },
@@ -209,12 +212,13 @@ function rowToCapability(row) {
   const web = row.risk === "write"
     ? { available: false, target: "governed mutate; not anonymous web" }
     : { available: true, target: "Guide / daemon HTTP used by web surfaces" };
+  const agentMailNeedsBroker = row.verb === "agent mail send" || row.verb === "agent mail receive";
   return {
     name: `cli.${row.verb.replace(/\s+/g, ".")}`,
     category: row.risk === "write" ? "mutate" : "cli",
     description: `CLI verb: ${row.verb}`,
     projections: {
-      human_cli: { available: true, target: row.verb },
+      human_cli: { available: !agentMailNeedsBroker, target: agentMailNeedsBroker ? `${row.verb} (contract only; service broker + COP authorizer pending)` : row.verb },
       human_web_ux: web,
       machine_mcp: mcp,
       machine_api_v1: row.daemon

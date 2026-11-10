@@ -11,6 +11,7 @@
  */
 
 import fs from "node:fs";
+import {createAgentMail} from "./lib/agent-mail.js";
 import { prepareExternalResume } from "./lib/resume-prepare.js";
 import http from "node:http";
 import os from "node:os";
@@ -499,6 +500,7 @@ async function main() {
     case "repos":
       return cmdRepos(argv.shift() || "status");
     case "agent":
+      if (argv[0] === "mail") { argv.shift(); return cmdAgentMail(argv.shift() || "status"); }
       return cmdAgent(argv.shift() || "start");
     case "consolidate":
       return cmdConsolidate();
@@ -548,6 +550,20 @@ async function main() {
     default:
       throw new Error(`Unknown command "${command}". Run: node scripts/cogentia.js help`);
   }
+}
+
+async function cmdAgentMail(subcommand) {
+  // The generic CLI is a projection of the same semantic library, not a
+  // credential bypass. A standalone CLI must not infer COP authority from
+  // OS root or env variables. An integrated broker/authorizer is required.
+  const mail=createAgentMail();
+  if (subcommand==='status')return output(mail.status(),JSON.stringify(mail.status(),null,2));
+  if (subcommand==='send' || subcommand==='receive') {
+    const err=new Error('agent_mail_service_broker_and_cop_authorizer_required');
+    err.error_class='agent_mail_service_broker_and_cop_authorizer_required';
+    throw err;
+  }
+  throw new Error('Usage: cogentia agent mail status|send|receive (effects require integrated broker and COP)');
 }
 
 async function cmdCop(args) {

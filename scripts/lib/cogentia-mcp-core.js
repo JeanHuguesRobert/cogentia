@@ -27,6 +27,7 @@ import { prepareHostProcessRun } from "./host-process-prepare.js";
 import { invokeThroughGateway } from "./agent-gateway-client.js";
 import { recordSideEffectExecution, mintSideEffectGrantFromPrepared } from "./side-effect-authorization.js";
 import { prepareCommunicationSend, executeCommunicationSend, createDryRunTransport } from "./communication-send.js";
+import { createAgentMail } from "./agent-mail.js";
 import { prepareGithubWrite, executeGithubWrite, createGithubDryRunTransport } from "./github-write.js";
 import { prepareGitWrite, executeGitWrite, createGitDryRunTransport } from "./git-write.js";
 import {
@@ -80,6 +81,7 @@ export const MUTATE_TOOLS = new Set([
   "cogentia_host_fs_write",
   "cogentia_host_process_run",
   "cogentia_communication_send",
+  "cogentia_agent_mail_send",
   "cogentia_github_write",
   "cogentia_git_write",
   "cogentia_side_effect_record",
@@ -104,6 +106,8 @@ export const PRIVATE_READ_TOOLS = new Set([
   "cogentia_fracta2_shell_probe",
   "cogentia_host_process_prepare",
   "cogentia_communication_prepare",
+  "cogentia_agent_mail_status",
+  "cogentia_agent_mail_receive",
   "cogentia_github_prepare",
   "cogentia_git_prepare",
 ]);
@@ -1045,6 +1049,21 @@ export const TOOLS = [
     },
   },
   {
+    name: "cogentia_agent_mail_status",
+    description: "Describe internal agent.mail JMAP transport, surface and broker readiness; no credentials or messages. Private-read.",
+    inputSchema: {type:"object",properties:{},additionalProperties:false},
+  },
+  {
+    name: "cogentia_agent_mail_receive",
+    description: "Read this Twin agent's private mailbox through broker-backed JMAP, only after trusted COP read authorization. Never exposes credentials. Private-read.",
+    inputSchema: {type:"object",properties:{agent:{type:"string",minLength:1},limit:{type:"integer",minimum:1,maximum:50}},required:["agent"],additionalProperties:false},
+  },
+  {
+    name: "cogentia_agent_mail_send",
+    description: "Send one intra-Twin agent message over private JMAP. Requires trusted COP effect authorizer and service credential broker, both enforced server-side. No human Gmail draft review; no external recipient; no effect if infrastructure or authority missing.",
+    inputSchema: {type:"object",properties:{from:{type:"string",minLength:1},to:{type:"string",minLength:1},subject:{type:"string",minLength:1,maxLength:255},body:{type:"string",minLength:1,maxLength:20000},correlation_id:{type:"string",maxLength:100}},required:["from","to","subject","body"],additionalProperties:false},
+  },
+  {
     name: "cogentia_communication_prepare",
     description:
       "PREPARE/EXPOSE a gmail.send payload. Does not send. Returns the exact message for human review and hashing. Private-read.",
@@ -1251,6 +1270,7 @@ export function createMcpCore(env = process.env, extras = {}) {
     return hostRouter;
   }
   const communicationTransport = extras.communicationTransport || createDryRunTransport();
+  const agentMail = createAgentMail({credentialBroker:extras.agentMailCredentialBroker,authorize:extras.agentMailAuthorize,post:extras.agentMailPost,getSession:extras.agentMailGetSession});
   const githubTransport = extras.githubTransport || createGithubDryRunTransport();
   const gitTransport = extras.gitTransport || createGitDryRunTransport();
 
@@ -2392,6 +2412,12 @@ export function createMcpCore(env = process.env, extras = {}) {
         requireString(args.path, "path");
         if (typeof args.content !== "string") throw new Error("content must be a string");
         return callHostCapability("host.fs.write", args, auth);
+      case "cogentia_agent_mail_status":
+        return agentMail.status();
+      case "cogentia_agent_mail_receive":
+        return agentMail.receive(args);
+      case "cogentia_agent_mail_send":
+        return agentMail.send(args);
       case "cogentia_communication_prepare":
         return prepareCommunicationSend(args);
       case "cogentia_communication_send":
