@@ -11,7 +11,7 @@ const ID=/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const JSON_HEADERS={'content-type':'application/json; charset=utf-8','cache-control':'no-store','x-content-type-options':'nosniff'};
 const reply=(status,body)=>new Response(JSON.stringify(body),{status,headers:JSON_HEADERS});
 const denied=(status,error)=>reply(status,{ok:false,error,grants_mandate_authority:false});
-export function createJhnConsentHttpHandler({workflow,origin}={}) {
+export function createJhnConsentHttpHandler({workflow,origin,exactAgentMailAmendmentPlan}={}) {
   if(!workflow||typeof workflow.inspect!=='function'||typeof workflow.decide!=='function'||typeof workflow.authenticate!=='function')
     throw Error('canonical_consent_workflow_required');
   if(typeof origin!=='string'||!/^https:\/\/[^/]+$/.test(origin))
@@ -46,9 +46,36 @@ export function createJhnConsentHttpHandler({workflow,origin}={}) {
     } catch{return denied(400,'invalid_decision_json');}
     if(!data||Object.keys(data).some(k=>!['payload_hash','decision'].includes(k)))
       return denied(400,'invalid_decision_fields');
+    // Narrow owner-enabled atomic consent->apply for the *exact* mail-only
+    // extension. All other COP approvals remain decision-only by design.
+    let applyMail=false;
+    if(data.decision==='approve'&&typeof exactAgentMailAmendmentPlan==='function') {
+      const expected=exactAgentMailAmendmentPlan();
+      const presented=workflow.inspect({challenge_id}).proposal;
+      applyMail=expected?.ok===true&&expected.requires_owner_consent===true&&
+        presented?.kind==='cop.mandate-amendment.proposal/v1'&&
+        presented.mandate_ref===expected.mandate_ref&&
+        presented.principal_ref==='principal:jhn'&&
+        presented.previous_version===expected.previous_version&&
+        presented.new_version===`v${Number(expected.previous_version.slice(1))+1}`&&
+        presented.valid_from===expected.mandate.valid_from&&
+        presented.valid_until===expected.mandate.valid_until&&
+        presented.reason===expected.mandate.reason&&
+        JSON.stringify(presented.scope)===JSON.stringify(expected.mandate.scope);
+    }
     const result=await workflow.decide({challenge_id,payload_hash:data.payload_hash,
       decision:data.decision,session});
     if(!result.ok)return denied(result.error==='challenge_not_pending'?409:403,result.error||'decision_refused');
-    return reply(200,result);
+    if(!applyMail)return reply(200,result);
+    // Uses the same independently authenticated Supabase Principal session.
+    // apply() rechecks the canonical version, revocation and one-time approved
+    // challenge; it cannot mint a new unrelated mandate.
+    const applied=await workflow.apply({challenge_id,session});
+    if(!applied?.ok)return reply(409,{...result,mandate_amendment_applied:false,
+      apply_error:applied?.error||'canonical_consent_apply_failed'});
+    return reply(200,{...result,mandate_amendment_applied:true,
+      mandate_ref:applied.mandate_ref,mandate_version:applied.version,
+      approval_evidence_ref:applied.receipt?.approval_evidence_ref,
+      grants_mandate_authority:true});
   };
 }

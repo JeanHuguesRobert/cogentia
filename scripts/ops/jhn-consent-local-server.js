@@ -12,6 +12,7 @@ import {realpathSync,statSync} from 'node:fs';
 import {createSqliteCopEventStore} from '../../../inseme/packages/cop-core/src/sqlite-cop-event-store.js';
 import {createJhnCanonicalConsentWorkflow} from '../lib/jhn-canonical-consent-workflow.js';
 import {createJhnConsentHttpHandler} from '../lib/jhn-consent-http-handler.js';
+import {agentMailMandatePlan} from './jhn-agent-mail-consent-cli.js';
 import {createSupabaseClient} from '../../../inseme/apps/platform/scripts/lib/config.js';
 
 const CONFIGURED_CANONICAL='/var/lib/cogentia/cop/john-root-v1.sqlite';
@@ -23,11 +24,12 @@ function makeOptions(env) {
  if(!env.SUPABASE_URL||!env.SUPABASE_SERVICE_ROLE_KEY)throw Error('supabase_config_missing');
  const path=realpathSync(CONFIGURED_CANONICAL);
  if(path!==CONFIGURED_CANONICAL||!statSync(path).isFile())throw Error('canonical_store_not_verified');
- return {port,origin,path,enableDecision:env.COGENTIA_JHN_CONSENT_ENABLE_DECISION==='1'};
+ return {port,origin,path,enableDecision:env.COGENTIA_JHN_CONSENT_ENABLE_DECISION==='1',
+   enableAgentMailApply:env.COGENTIA_JHN_CONSENT_ENABLE_AGENT_MAIL_APPLY==='1'};
 }
 
-export function createLocalConsentServer({workflow,origin,enableDecision=false}={}) {
- const api=createJhnConsentHttpHandler({workflow,origin});
+export function createLocalConsentServer({workflow,origin,enableDecision=false,exactAgentMailAmendmentPlan}={}) {
+ const api=createJhnConsentHttpHandler({workflow,origin,exactAgentMailAmendmentPlan});
  const expectedHost=new URL(origin).host;
  return createServer(async(req,res)=>{
    const response=(status,body)=>{res.writeHead(status,{'content-type':'application/json','cache-control':'no-store','x-content-type-options':'nosniff'});res.end(JSON.stringify(body));};
@@ -63,7 +65,8 @@ async function main(){
  server.headersTimeout=12000;
  server.listen(opts.port,'127.0.0.1',()=>{
    console.log(JSON.stringify({schema:'cogentia.jhn_consent_listener.v1',listening:'loopback',port:opts.port,
-     decisions_enabled:opts.enableDecision,origin:opts.origin,issuer_routes_exposed:false}));
+     decisions_enabled:opts.enableDecision,agent_mail_exact_apply_enabled:opts.enableAgentMailApply,
+     origin:opts.origin,issuer_routes_exposed:false}));
  });
  for(const signal of ['SIGTERM','SIGINT'])process.on(signal,()=>server.close(()=>{store.close();process.exit(0)}));
 }
