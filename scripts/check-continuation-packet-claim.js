@@ -6,6 +6,8 @@ import path from "node:path";
 import { spawn } from "node:child_process";
 import { fileURLToPath } from "node:url";
 import { acquirePacketClaim, currentPacketClaim, validatePacketClaim, packetClaimFence } from "./lib/continuation-packet-claim.js";
+import { registerResolver } from "./lib/resolver-registry.js";
+import { nextContinuation } from "./lib/continuation-routing.js";
 const root=fs.mkdtempSync(path.join(os.tmpdir(),"cop-claim-111-"));
 try {
   const id="ctn_epoch_fixture", t0=new Date("2026-11-10T12:00:00Z");
@@ -50,5 +52,17 @@ try {
   assert.equal(reclamation.filter(r=>r.claimed).length,1);
   assert.equal(currentPacketClaim(root,expired).epoch,2);
   assert.equal(validatePacketClaim(root,expired,initial.claim).code,"STALE_CLAIM");
+  registerResolver(root,"judge-c",["Judgement"]);
+  const synthetic={id:"ctn_select_lease",status:"active",kind:"judgment",required_capabilities:["Judgement"]};
+  const profile={resolver_id:"judge-c",capabilities:["Judgement"]};
+  const offered=nextContinuation(root,[synthetic],profile,{claimMode:"cop_v1",admissible:()=>true});
+  assert.equal(offered.status,"available");
+  const selected=nextContinuation(root,[synthetic],profile,{claim:true,claimMode:"cop_v1",
+    leaseMs:1000,admissible:()=>true});
+  assert.equal(selected.claimed,true);
+  assert.equal(selected.claim.schema,"cop.packet-claim/v1");
+  assert.equal(selected.claim.epoch,1);
+  assert.equal(nextContinuation(root,[synthetic],profile,{claimMode:"legacy",admissible:()=>true}).continuation,null);
+  assert.equal(validatePacketClaim(root,synthetic.id,selected.claim).ok,true);
   console.log("inseme#111 immutable epoch claim / expiry / stale fence / process collision PASS");
 }finally{fs.rmSync(root,{recursive:true,force:true});}
