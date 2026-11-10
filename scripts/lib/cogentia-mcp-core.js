@@ -131,6 +131,13 @@ export const TOOLS = [
     _meta: { ui: { resourceUri: "ui://cogentia/fractatest-demo-v3", visibility: ["model", "app"] } },
   },
   {
+    name: "cogentia_idual_calibration",
+    description: "Open iDual IR calibration MCP App: command requests are sent to the chat, never directly dispatched. Records observations locally in the widget and exports a structured report through the conversation. No automatic hardware effects.",
+    inputSchema: { type:"object", properties:{}, additionalProperties:false },
+    _meta: { ui: { resourceUri:"ui://cogentia/idual-calibration-v1", visibility:["model","app"] } },
+    annotations: { readOnlyHint:true, destructiveHint:false, openWorldHint:false },
+  },
+  {
     name: "cogentia_cop_consent_review",
     description: "Review one supplied JHN COP amendment proposal in MCP Apps and collect a non-authoritative user intention. Source is NOT independently verified. No Principal signature, issued mandate, budget grant, effect or execution. An independently authenticated issuer must validate any eventual approval.",
     inputSchema: {type:"object",additionalProperties:false,properties:{
@@ -1783,6 +1790,8 @@ export function createMcpCore(env = process.env, extras = {}) {
         return captureMemoryForSurface(args, auth);
       case "cogentia_mcp_apps_demo":
         return { ok: true, kind: "cogentia.mcp_apps_demo.v1", label: "FractaTest MCP Apps", mode: "read_only", message: "Démonstrateur interactif sans effet externe." };
+      case "cogentia_idual_calibration":
+        return {ok:true,kind:"cogentia.idual_calibration.v1",mode:"conversation_mediated",hardware_dispatch:false,physical_effect:false,device:"iDual via BroadLink RM Pro+",status:"ready",notice:"Les boutons demandent une émission par message dans la conversation; ils ne l'exécutent pas directement."};
       case "cogentia_cop_consent_review": {
         const {copReviewPacket}=await import('./cop-consent-packet.js');
         return copReviewPacket(args.proposal,{source:args.source_ref||'mcp-chat:unverified',source_verified:false});

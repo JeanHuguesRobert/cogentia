@@ -29,6 +29,7 @@ export const MCP_APP_DEMO_COMPAT_URIS = Object.freeze([
 ]);
 export const COP_APPROVAL_PREVIEW_URI = "ui://cogentia/cop-approval-preview-v1";
 export const COP_CONSENT_REVIEW_URI = "ui://cogentia/cop-consent-review-v1";
+export const IDUAL_CALIBRATION_URI = "ui://cogentia/idual-calibration-v1";
 export const MCP_APP_DEMO_MIME = "text/html;profile=mcp-app";
 export const SKILL_URI_PREFIX = "skill://cogentia/";
 export const PATTERN_URI_PREFIX = "cogentia://pattern/";
@@ -172,6 +173,13 @@ export function listCatalogResources() {
       description: "Legacy URI alias serving the current read-only FractaTest UI.",
     })),
     {
+      uri: IDUAL_CALIBRATION_URI,
+      name: "idual-calibration",
+      title: "iDual — calibration IR",
+      mimeType: MCP_APP_DEMO_MIME,
+      description: "Calibration interactive; commandes transmises à la conversation, jamais exécutées par l'iframe.",
+    },
+    {
       uri: COP_CONSENT_REVIEW_URI,
       name: "cop-consent-review",
       title: "COP — proposition et intention (validation indépendante requise)",
@@ -234,6 +242,13 @@ export function readMcpResource(uri, options = {}) {
     return {
       ok: true, uri: raw, mimeType: MCP_APP_DEMO_MIME,
       text: fs.readFileSync(path.join(repoRoot, "scripts", "lib", "mcp-apps", "fractatest.html"), "utf8"),
+      uiMeta: { csp: { connectDomains: [], resourceDomains: [] }, prefersBorder: true },
+    };
+  }
+  if (raw === IDUAL_CALIBRATION_URI) {
+    return {
+      ok: true, uri: raw, mimeType: MCP_APP_DEMO_MIME,
+      text: fs.readFileSync(path.join(repoRoot, "scripts", "lib", "mcp-apps", "idual-calibration.html"), "utf8"),
       uiMeta: { csp: { connectDomains: [], resourceDomains: [] }, prefersBorder: true },
     };
   }
