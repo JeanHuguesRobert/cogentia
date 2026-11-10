@@ -85,6 +85,10 @@ try {
   assert.equal(ok.code,"COP_TERMINAL_SETTLED");
   assert.equal(ok.cop_preflight_verified,true);
   assert.equal(ok.budget_settled,true);
+  assert.equal(ok.receipt.budget_reservation.reservation_id,ok.reservation_id);
+  assert.equal(ok.receipt.budget_reservation.mandate_ref,mandate_ref);
+  assert.equal(ok.receipt.budget_reservation.capability,"continuation.resolve");
+  assert.equal(ok.receipt.claim.claim_id,witness.claim_id);
   assert.equal(ledger.snapshot().settled.max_steps,1);
   assert.equal(cli("inspect",one.id).continuation.resolution.decision,"signed_synthetic");
   const replay=resolveJohnCopContinuation(root,one.id,{
