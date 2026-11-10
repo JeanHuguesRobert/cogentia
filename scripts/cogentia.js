@@ -76,6 +76,8 @@ import { relatePacket } from "./lib/packet-relate.js";
 import { cpsWorkControl, parseIssueRef } from "./lib/cps-work-control.js";
 import { packetRelateJudgmentRequest } from "./lib/packet-relate-judgment.js";
 import { deriveContinuationReturn } from "./lib/continuation-return.js";
+import { nextContinuation } from "./lib/continuation-routing.js";
+import { findCapableResolvers } from "./lib/resolver-registry.js";
 import { projectContinuationPlacement } from "./lib/continuation-placement.js";
 import { runMonteCarloAudit, SleepCycleReviewQueue, REVIEW_DECISIONS } from "./lib/corpus-sleep-cycle/index.js";
 import {
@@ -4680,6 +4682,27 @@ async function handleDaemonRequest(req, res) {
     const effectiveCtx = ctx || loadContext();
     const result = daemonCliContinuationList(effectiveCtx, url);
     return daemonJson(res, result.ok === false ? 400 : 200, result);
+  }
+  if (req.method === "GET" && url.pathname === "/api/cli/continuation/next-preview") {
+    const effectiveCtx = ctx || loadContext();
+    const resolverId = url.searchParams.get("resolver_id") || "";
+    if (!/^[a-zA-Z0-9_-]+$/.test(resolverId))
+      return daemonJson(res, 400, { ok: false, error: "invalid_resolver_id" });
+    const resolver = findCapableResolvers(effectiveCtx.registryRoot, "")
+      .find((item) => item.resolver_id === resolverId);
+    if (!resolver)
+      return daemonJson(res, 404, { ok: false, error: "resolver_not_registered" });
+    const selected = nextContinuation(effectiveCtx.registryRoot, loadContinuations(effectiveCtx),
+      { resolver_id: resolverId, capabilities: resolver.capabilities },
+      { claim: false, admissible: () => true });
+    return daemonJson(res, 200, {
+      ok: true, status: selected.continuation
+        ? "technical_candidate_requires_cop_admission" : selected.status,
+      resolver_id: resolverId,
+      continuation: selected.continuation ? stripContinuationBody(selected.continuation) : null,
+      technical_capability_match_only: true,
+      cop_admission: "not_checked", claimed: false, executed: false,
+    });
   }
   if (req.method === "GET" && url.pathname === "/api/cli/continuation/inspect") {
     const effectiveCtx = ctx || loadContext();
