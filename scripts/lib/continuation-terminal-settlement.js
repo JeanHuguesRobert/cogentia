@@ -14,7 +14,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { createHash, randomUUID } from "node:crypto";
-import { PacketClaimEvent } from "../../../inseme/packages/cop-core/src/packet-coordination.js";
+import { PacketClaimEvent, projectPacketCoordination, isClaimExpired } from "../../../inseme/packages/cop-core/src/packet-coordination.js";
 import {
   currentPacketClaim, validatePacketClaim, prepareTerminalEpoch,
 } from "./continuation-packet-claim.js";
@@ -137,4 +137,42 @@ export function resolveClaimedContinuation(root,id,{
 }
 export function continuationRevision(root,id) {
   return sha(fs.readFileSync(continuationPath(root,id),"utf8"));
+}
+
+/**
+ * Read-only COP projection from persisted epoch records and terminal receipt.
+ * A prepared-but-not-finalized settlement is never presented as completed.
+ */
+export function inspectContinuationPacketCoordination(root,id) {
+  safeId(id);
+  const dir=path.join(root,".cogentia","resolvers","claims-v1",id);
+  const files=fs.existsSync(dir)
+    ? fs.readdirSync(dir).filter(f=>/^\d{12}\.json$/.test(f)).sort() : [];
+  const records=files.map(f=>JSON.parse(fs.readFileSync(path.join(dir,f),"utf8")));
+  const events=[];
+  let seenClaim=false;
+  for (const record of records) {
+    if (record.schema!=="cop.packet-claim/v1") continue;
+    events.push({
+      type:seenClaim ? PacketClaimEvent.RECLAIMED : PacketClaimEvent.GRANTED,
+      claim:record,
+    });
+    seenClaim=true;
+  }
+  const receiptFile=receiptPath(root,id);
+  const receipt=fs.existsSync(receiptFile)
+    ? JSON.parse(fs.readFileSync(receiptFile,"utf8")) : null;
+  if (receipt) events.push(receipt);
+  const projection=projectPacketCoordination(events);
+  const latest=records.at(-1) || null;
+  const status=receipt ? "completed"
+    : latest?.status==="settlement_prepared" ? "settlement_prepared"
+    : !latest ? "unclaimed"
+    : isClaimExpired(latest) ? "expired" : "claimed";
+  return {
+    schema:"cogentia.cop-coordination-projection/v1",
+    continuation_id:id,status,projection,events,
+    receipt_ref:receipt ? "continuation:"+id+"/settlement-receipt" : null,
+    delivery_confirmed:false,
+  };
 }
