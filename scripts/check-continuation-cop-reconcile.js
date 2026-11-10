@@ -89,7 +89,16 @@ try {
   assert.equal(cli("inspect",work.id).continuation.status,"resolved");
   assert.equal(postRestartLedger.snapshot().reserved.max_steps,1);
   assert.equal(postRestartLedger.snapshot().settled.max_steps,1);
+  // Never release a budget for an already prepared terminal, irrespective
+  // of a simulated distant expiry, because its effect may be committed.
+  assert.equal(reconcileOrphanJohnCopReservation(root,work.id,{
+    auth,store,ledger:postRestartLedger,witness,
+    now:new Date("2028-01-01T00:00:00Z"),
+  }).code,"TERMINAL_SETTLEMENT_PREPARED");
   const orphanArgs={auth,store,ledger:postRestartLedger,witness:orphanClaim};
+  assert.equal(reconcileOrphanJohnCopReservation(root,orphan.id,{
+    ...orphanArgs,witness:{...orphanClaim,claim_id:"forged_claim_id"}
+  }).code,"CLAIM_WITNESS_MISMATCH");
   assert.equal(reconcileOrphanJohnCopReservation(root,orphan.id,{
     ...orphanArgs,now:new Date(oldTime.getTime()+50)}).code,"CLAIM_STILL_ACTIVE");
   assert.equal(postRestartLedger.snapshot().reserved.max_steps,1);
