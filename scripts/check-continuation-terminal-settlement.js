@@ -97,7 +97,7 @@ try {
   const fourthFile=path.join(root,".cogentia","continuations",fourth.id+".json");
   const external=JSON.parse(fs.readFileSync(fourthFile,"utf8"));
   external.updated_at="synthetic_out_of_band_change";
-  fs.writeFileSync(fourthFile,JSON.stringify(external,null,2)+"\\n");
+  fs.writeFileSync(fourthFile,JSON.stringify(external,null,2)+String.fromCharCode(10));
   assert.equal(recoverClaimedResolution(root,fourth.id).code,"BASELINE_CHANGED_AFTER_PREPARE");
   assert.equal(cli("inspect",fourth.id).continuation.updated_at,"synthetic_out_of_band_change");
   console.log("inseme#111 canonical terminal settlement / crash replay / stale fencing PASS");
