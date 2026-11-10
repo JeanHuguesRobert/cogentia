@@ -34,6 +34,14 @@ try {
   const read = () => cli("inspect", id).continuation;
   const aProfile = { resolver_id: "router-a", capabilities: ["tool_use"] };
   const bProfile = { resolver_id: "judge-b", capabilities: ["Judgement", "tool_use"] };
+  const cliPreviewA = cli("next-preview", "--resolver-id", "router-a");
+  assert.equal(cliPreviewA.continuation, null, "non-judge receives no judgement");
+  const cliPreviewB = cli("next-preview", "--resolver-id", "judge-b");
+  assert.equal(cliPreviewB.status, "technical_candidate_requires_cop_admission");
+  assert.equal(cliPreviewB.continuation.id, id);
+  assert.equal(cliPreviewB.cop_admission, "not_checked");
+  assert.equal(cliPreviewB.claimed, false);
+  assert.equal(getClaim(root,id), null, "CLI preview must remain read-only");
   assert.equal(nextContinuation(root, [read()], aProfile, { admissible }).continuation, null);
   const forwarded = rerouteContinuation(root, read(),
     { from: "router-a", to: "judge-b", reason: "requires real Judgement", admissible });
@@ -66,6 +74,9 @@ try {
   assert.equal(treated.event.receipt_ref, origin);
   assert.equal(treated.event.delivery_confirmed, false);
   assert.deepEqual(inspectRouting(root,id).map(e=>e.status),
+    ["proposed","accepted","treated"]);
+  const historyFromCli = cli("routing-history", id);
+  assert.deepEqual(historyFromCli.history.map(e=>e.status),
     ["proposed","accepted","treated"]);
   assert.equal(getClaim(root,id).resolver_id, "judge-b");
   releaseClaim(root,id); // synthetic reconciliation only; canonical COP settlement not claimed
