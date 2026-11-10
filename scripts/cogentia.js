@@ -4683,6 +4683,20 @@ async function handleDaemonRequest(req, res) {
     const result = daemonCliContinuationList(effectiveCtx, url);
     return daemonJson(res, result.ok === false ? 400 : 200, result);
   }
+  if (req.method === "GET" && url.pathname === "/api/cli/continuation/routing-history") {
+    const effectiveCtx = ctx || loadContext();
+    const id = url.searchParams.get("id") || "";
+    if (!/^ctn_[a-f0-9]{8,}$/i.test(id))
+      return daemonJson(res, 400, { ok: false, error: "invalid_continuation_id" });
+    const auth = daemonResolveAuth(req, view);
+    if (auth?.lockers?.private?.read !== true)
+      return daemonJson(res, 403, { ok: false, error: "private_read_required" });
+    return daemonJson(res, 200, {
+      ok: true, continuation_id: id,
+      history: inspectRouting(effectiveCtx.registryRoot, id),
+      claimed: false, executed: false,
+    });
+  }
   if (req.method === "GET" && url.pathname === "/api/cli/continuation/next-preview") {
     const effectiveCtx = ctx || loadContext();
     const result = continuationNextPreview(effectiveCtx, url.searchParams.get("resolver_id") || "");
