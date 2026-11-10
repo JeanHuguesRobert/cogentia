@@ -1,0 +1,15 @@
+{
+  "name": "@cogentia/idual-calibration-app",
+  "version": "1.0.0",
+  "scripts": {
+    "build": "node build.mjs"
+  },
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "@modelcontextprotocol/ext-apps": "2.0.4"
+  },
+  "devDependencies": {
+    "esbuild": "0.25.12"
+  }
+}

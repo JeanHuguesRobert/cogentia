@@ -6822,7 +6822,7 @@ function cmdContinuationResolve(ctx, id) {
     reason,
     payload,
     ...(materialization ? { materialization } : {}),
-    return_state: {result_available: true, delivered: false, result_ref: continuation.return_contract.result_ref},
+    return_state: {result_available: true, delivered: false, result_ref: continuation.return_contract?.result_ref ?? null},
   };
   continuation.history.push({ at: now, event: "resolved", decision, reason });
   saveContinuation(ctx, continuation);

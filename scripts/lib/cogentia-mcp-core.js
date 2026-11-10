@@ -1,3 +1,4 @@
+import {listRegisteredMcpAppTools,callRegisteredMcpAppTool} from "./cogentia-mcp-app-registry.js";
 import {executeJohnCanonicalForm} from "./john-cop-form-execution.js";
 import {executeJohnCanonicalRead} from "./john-cop-read-execution.js";
 import {openExistingJohnCopStore} from "./john-cop-existing-store.js";
@@ -1463,7 +1464,15 @@ export function createMcpCore(env = process.env, extras = {}) {
     const oauthDiscoveryEnabled = Boolean(String(env.COGENTIA_MCP_OAUTH_ISSUER || "").trim());
     // Announce protected tools only when a real OAuth issuer is configured.
     // Discovery never grants authorization: tools/call remains fail-closed.
-    const visibleTools = oauthDiscoveryEnabled ? TOOLS : toolsForAuth(auth);
+    const registeredTools=listRegisteredMcpAppTools({env});
+    for(const t of registeredTools){
+      if(TOOLS.some(base=>base.name===t.name))
+        throw new Error('MCP App tool conflicts with existing core tool: '+t.name);
+    }
+    const visibleTools = [
+      ...(oauthDiscoveryEnabled ? TOOLS : toolsForAuth(auth)),
+      ...registeredTools,
+    ];
     const callerTools = visibleTools.map((tool) => ({
       ...tool,
       ...(oauthDiscoveryEnabled ? {
@@ -1775,6 +1784,8 @@ export function createMcpCore(env = process.env, extras = {}) {
     }
     if (MUTATE_TOOLS.has(name)) requireMutate(name, auth);
     if (PRIVATE_READ_TOOLS.has(name)) requirePrivateRead(name, auth);
+    const registeredApp = callRegisteredMcpAppTool(name,args,{env});
+    if(registeredApp)return registeredApp;
     if (!TOOLS.some((t) => t.name === name)) {
       throw new Error(`Unknown tool: ${name}`);
     }

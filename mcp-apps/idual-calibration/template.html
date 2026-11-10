@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="fr">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>iDual · Calibration</title>
+<style>
+:root{color-scheme:light dark;font:14px/1.45 system-ui,sans-serif}
+body{margin:0;padding:16px;max-width:710px}h2{font-size:19px;margin:0 0 5px}h3{font-size:15px;margin:18px 0 8px}
+p{margin:5px 0 12px}.muted{opacity:.75;font-size:12px}
+fieldset{border:1px solid #8887;border-radius:10px;padding:10px 12px;margin:10px 0}legend{font-weight:650}
+.row{display:flex;align-items:center;flex-wrap:wrap;gap:8px;margin:8px 0}
+button,select,input,textarea{font:inherit;color:inherit;border:1px solid #8889;background:transparent;border-radius:7px;padding:8px}
+button{cursor:pointer}button:disabled{opacity:.45;cursor:not-allowed}
+button:focus-visible,select:focus-visible,input:focus-visible{outline:2px solid #6d9cfa;outline-offset:2px}
+input[type=number]{width:70px}input[type=text]{min-width:180px;flex:1}
+.color{min-width:69px;color:white!important;border-color:transparent;font-weight:650}
+#red{background:#b52c38}#yellow{background:#be8a0b}#green{background:#18834d}#blue{background:#3355bc}
+#status{border-left:3px solid #7997c3;padding:9px;margin-top:12px;background:color-mix(in srgb,currentColor 6%,transparent)}
+#log{max-height:180px;overflow:auto;font:12px/1.5 ui-monospace,monospace;white-space:pre-wrap;overflow-wrap:anywhere}
+small{font-size:12px}output{font-weight:600}
+</style></head>
+<body>
+<h2>iDual · Banc de calibration</h2>
+<p class="muted">MCP App Cogentia · Interface d'observation et de demandes. Aucun signal IR n'est envoyé directement par cette fenêtre. Une demande est transmise à la conversation, puis exécutée séparément.</p>
+<fieldset><legend>Commandes élémentaires</legend>
+<div class="row"><button data-command="on">Allumer</button><button data-command="off">Éteindre</button><button data-command="cool_white">Neige / blanc froid</button></div>
+<div class="row"><button class="color" id="red" data-command="red">Rouge</button><button class="color" id="yellow" data-command="orange">Jaune</button><button class="color" id="green" data-command="green">Vert</button><button class="color" id="blue" data-command="blue">Bleu</button></div>
+<div class="row"><button data-command="vivid_colors">Saturation +</button><button data-command="pastel_colors">Pastel +</button><button data-command="brightness_down">Luminosité −</button><button data-command="brightness_up">Luminosité +</button></div>
+</fieldset>
+<fieldset><legend>Expérience de calibration</legend>
+<div class="row"><label for="baseline">Référence :</label><select id="baseline"><option value="cool_white">Blanc neige</option><option value="red">Rouge</option><option value="orange">Jaune</option><option value="green">Vert</option><option value="blue">Bleu</option><option value="none">Aucune</option></select></div>
+<div class="row"><label for="command">Commande :</label><select id="command"><option value="blue">Bleu</option><option value="red">Rouge</option><option value="orange">Jaune</option><option value="green">Vert</option><option value="pastel_colors">Pastel +</option><option value="vivid_colors">Saturation +</option><option value="brightness_down">Luminosité −</option><option value="brightness_up">Luminosité +</option><option value="cool_white">Neige</option></select><label for="count">Répétitions :</label><input id="count" type="number" min="1" max="32" value="1"></div>
+<div class="row"><label for="interval">Intervalle (ms) :</label><input id="interval" type="number" min="200" max="5000" step="100" value="500"><button id="run">Demander la séquence</button></div>
+<p class="muted">La demande explicite contient les paramètres et la consigne de ne pas exécuter d'autre séquence. Les durées de transition visibles ne sont pas mesurées automatiquement.</p>
+</fieldset>
+<fieldset><legend>Observation</legend>
+<div class="row"><label for="observed">Couleur constatée :</label><input id="observed" type="text" placeholder="Ex. rose pâle, bleu vif"></div>
+<div class="row"><label for="transition">Transition :</label><select id="transition"><option value="unknown">Non déterminée</option><option value="direct">Directe</option><option value="progressive">Progressive</option><option value="none">Aucun effet</option></select><label for="certainty">Confiance :</label><select id="certainty"><option value="certain">Certaine</option><option value="probable">Probable</option><option value="uncertain">Incertaine</option></select></div>
+<div class="row"><button id="record">Noter l'observation</button><button id="export">Transmettre le journal à Cogentia</button><button id="clear">Effacer le journal local</button></div>
+<pre id="log" aria-label="Journal de calibration"></pre>
+</fieldset>
+<p id="status" role="status">Initialisation de l'interface…</p>
+<!-- BUNDLED_SDK_SCRIPT -->
+</body></html>

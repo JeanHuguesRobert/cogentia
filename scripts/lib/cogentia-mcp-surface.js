@@ -2,6 +2,7 @@
  * MCP 2026-07-28 extra primitives: resources, prompts, completions,
  * and experimental Skills Over MCP (SEP-2640).
  */
+import {listRegisteredMcpAppResources,readRegisteredMcpAppResource} from "./cogentia-mcp-app-registry.js";
 import fs from "node:fs";
 import path from "node:path";
 import { createHash } from "node:crypto";
@@ -155,7 +156,7 @@ export function listPromptResources(options = {}) {
   }));
 }
 
-export function listCatalogResources() {
+export function listCatalogResources(options={}) {
   return [
     {
       uri: MCP_APP_DEMO_URI,
@@ -164,6 +165,7 @@ export function listCatalogResources() {
       mimeType: MCP_APP_DEMO_MIME,
       description: "Read-only local interactive UI (no credentials, no external effects).",
     },
+    ...listRegisteredMcpAppResources(options),
     ...MCP_APP_DEMO_COMPAT_URIS.map((uri) => ({
       uri,
       name: "fractatest-demo-compat",
@@ -208,7 +210,7 @@ export function listCatalogResources() {
 
 export function listAllResources(options = {}) {
   const resources = [
-    ...listCatalogResources(),
+    ...listCatalogResources(options),
     ...listSkillResources(options),
     ...listPatternResources(options),
     ...listPromptResources(options),
@@ -237,6 +239,8 @@ export function readMcpResource(uri, options = {}) {
       uiMeta: { csp: { connectDomains: [], resourceDomains: [] }, prefersBorder: true },
     };
   }
+  const registered = readRegisteredMcpAppResource(raw,options);
+  if(registered)return registered;
   if (raw === COP_CONSENT_REVIEW_URI) {
     return {
       ok:true,uri:raw,mimeType:MCP_APP_DEMO_MIME,

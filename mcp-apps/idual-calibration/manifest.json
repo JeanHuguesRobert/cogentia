@@ -1,0 +1,15 @@
+{
+  "schema": "cogentia.mcp-app.manifest.v1",
+  "name": "idual-calibration",
+  "tool": "cogentia_idual_calibration",
+  "uri": "ui://cogentia/idual-calibration-v1",
+  "title": "iDual — calibration IR",
+  "description": "Banc de calibration interactif iDual, sans accès direct au matériel.",
+  "html": "index.html",
+  "visibility": ["model", "app"],
+  "access": "public",
+  "mode": "conversation_mediated",
+  "kind": "cogentia.idual_calibration.v1",
+  "inputSchema": {"type":"object","properties":{},"additionalProperties":false},
+  "csp": {"connectDomains":[],"resourceDomains":[]}
+}
