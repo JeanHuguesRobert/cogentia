@@ -52,6 +52,24 @@ The same physical person, legal person, association, company or institution may 
 
 A traceability system must therefore avoid treating the actor name alone as sufficient.
 
+## Accountability asymmetry: citizen and mandatary
+
+**The duty to account attaches to an entrusted act, not permanently to the person.** A citizen acting privately has no general obligation to reveal or justify lawful personal choices, beliefs or a secret ballot. This does not remove specific legal duties or liability for wrongful acts.
+
+A mandatary acts with a power entrusted by a principal. For acts within that mandate, the mandatary must be **able to account** for the authority invoked, the action or inaction, the grounds and evidence, the beneficiaries, the effects, and possible correction. For a public-interest mandate, the ability and willingness to render this account are a positive ethical quality of the role, not only a constraint. Neither the mandate nor public interest authorizes unrelated intrusion into private life or third-party disclosure.
+
+The asymmetry concerns **roles, acts and delegated powers**, not superior or inferior classes of persons. One person may alternate between private citizen and public mandatary. An ordinary citizen's secret ballot is not a representative's publicly accountable vote. An AI agent or workflow exercising delegated power likewise needs an attributable mandate, effect trace and reviewable account: scrutiny of the agent must not be transferred as a blanket justification burden to the citizen.
+
+Before requesting or publishing accountability evidence, check:
+
+1. **Role** — private act or exercise of entrusted authority; who is the legitimate principal?
+2. **Scope** — which entrusted powers, persons and interests are materially affected?
+3. **Account** — what minimum facts establish actions, decisions, omissions, consequences and corrections?
+4. **Rights** — what privacy, confidentiality, ballot secrecy and third-party protections restrict disclosure?
+5. **Recourse** — who may contest the account or seek correction, review or revocation?
+
+This is a governance principle, not a claim that all such duties have identical legal force. Statutory obligations depend on jurisdiction and mandate. See [privacy and public accountability](cogentia_commons_visibility_and_private_modes.md#31-privacy-defensive-opacity-and-public-truthfulness) and [sovereignty and delegation](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/souverainete_delegation_agents_mandates.md).
+
 ## Mandate is necessary for imputation
 
 To impute responsibility, it is not enough to know that an act occurred.
