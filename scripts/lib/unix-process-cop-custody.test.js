@@ -62,3 +62,35 @@ test("FBF: root process cannot serve as the ordinary agent shell", () => {
   assert.equal(r.blocked, true);
   assert.equal(r.reason, "unix_process_executor_identity_untrusted");
 });
+
+
+test("FBF: custody denial precedes any COP budget consumption or shell dispatch", async () => {
+  const { mkdtempSync, writeFileSync, rmSync } = await import("node:fs");
+  const { tmpdir } = await import("node:os");
+  const { join } = await import("node:path");
+  const { createHostCapabilityRouter } = await import("./host-capability-router.js");
+  const dir = mkdtempSync(join(tmpdir(), "cop-shell-custody-"));
+  const db = join(dir, "authority.sqlite");
+  writeFileSync(db, "fixture");
+  const budget = { budget_id: "budget:custody-regression", remaining: 2 };
+  const router = createHostCapabilityRouter({
+    env: { COGENTIA_JHN_CANONICAL_STORE_PATH: db },
+    providerName: "unix-process",
+    budget,
+  });
+  try {
+    await assert.rejects(
+      router.invoke("host.process.run", { command: "printf MUST_NOT_RUN", execution_mode: "normal" }, {
+        actor: "agent:jhn", principal: "principal:jhn", mandate: "mandate:dev",
+        provider: "unix-process", target: "node:fracta2",
+        auth: { lockers: { private: { write: true } } },
+      }),
+      error => ["unix_process_cop_store_writable_by_executor",
+        "unix_process_executor_identity_untrusted"].includes(error.error_class)
+    );
+    assert.equal(budget.remaining, 2);
+  } finally {
+    await router.stop();
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
