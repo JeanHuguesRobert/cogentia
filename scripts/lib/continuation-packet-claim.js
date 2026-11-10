@@ -126,7 +126,7 @@ export function prepareTerminalEpoch(root, packetId, witness, settlement, {
     predecessor_epoch:witness.epoch,
     packet_ref:witness.packet_ref,
     prepared_at:new Date(now).toISOString(),
-    ...settlement,
+    settlement,
   };
   const temporary=path.join(dir,"." + randomUUID() + ".tmp");
   fs.writeFileSync(temporary,JSON.stringify(record)+"\n",{flag:"wx",encoding:"utf8"});
