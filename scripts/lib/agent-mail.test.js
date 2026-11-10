@@ -47,6 +47,7 @@ test('recipient JMAP read is independent and returns message body',async()=>{
 test('nonlocal recipient rejected before any transport or authorization',async()=>{
   const opts=mocks(),mail=createAgentMail(opts);
   await assert.rejects(()=>mail.send({from:sender,to:'any@gmail.com',subject:'hi',body:'x'}),/outside_twin_trust_perimeter/);
+  await assert.rejects(()=>mail.send({from:sender,to:'admin@mail.fractavolta.com',subject:'hi',body:'x'}),/agent_mailbox_not_enrolled_in_twin/);
   assert.equal(opts.events.length,0);
 });
 test('missing broker and COP decision fail closed',async()=>{

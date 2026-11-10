@@ -9,6 +9,7 @@ import { randomUUID } from 'node:crypto';
 export const AGENT_MAIL_VERSION = 'cogentia.agent_mail.v1';
 export const DEFAULT_LOCAL_DOMAIN = 'mail.fractavolta.com';
 export const DEFAULT_JMAP_ORIGIN = 'http://127.0.0.1:8080';
+const ENROLLED_AGENT_ADDRESSES=new Set(['john@mail.fractavolta.com','john-worker@mail.fractavolta.com']);
 
 function failure(code) { const error = new Error(code); error.error_class = code; throw error; }
 function str(value, max, field) {
@@ -18,6 +19,7 @@ function str(value, max, field) {
 function localAddress(value, domain) {
   const address = str(value, 254, 'agent_address').toLowerCase();
   if (!/^[a-z][a-z0-9-]{0,62}@[a-z0-9.-]+$/.test(address) || !address.endsWith('@'+domain) || address.split('@')[1] !== domain) failure('outside_twin_trust_perimeter');
+  if(!ENROLLED_AGENT_ADDRESSES.has(address)) failure('agent_mailbox_not_enrolled_in_twin');
   return address;
 }
 function defaultJmapSession(origin) {
