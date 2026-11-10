@@ -29,7 +29,8 @@ function mocks() {
 }
 test('local agent message: send uses immediate JMAP workflow with implicit response collision',async()=>{
   const opts=mocks(),mail=createAgentMail(opts);
-  assert.equal(mail.status().ready,true);
+  assert.equal(mail.status().bindings_configured,true);
+  assert.equal(mail.status().ready,false);
   const result=await mail.send({from:sender,to:recipient,subject:'hi',body:'hello',correlation_id:'c1'});
   assert.equal(result.status,'submitted_not_delivery_verified');
   assert.equal(result.authorization_id,'cop-fixture-1');
@@ -73,4 +74,37 @@ test('MCP and CLI advertise agent mail without anonymous access',async()=>{
   assert.ok(!names.includes('cogentia_agent_mail_status'));
   const runtime=await core.callTool('cogentia_agent_mail_send',{from:sender,to:recipient,subject:'x',body:'y'}).then(()=>null,e=>e);
   assert.ok(runtime instanceof Error);
+});
+
+// The caller-to-mailbox binding is independent of COP's *effect* admission.
+// An authenticated JHN agent may not claim a sibling mailbox by altering args.
+import {bindAgentMailCaller} from './agent-mail-auth-binding.js';
+import {resolveCallerAuth} from './cogentia-mcp-auth.js';
+import {createLocalStalwartCredentialBroker} from './agent-mail-credential-broker.js';
+const callerEnv={COGENTIA_MCP_JHN_MUTATE:'1',COGENTIA_MCP_JHN_TOKEN:'test-only'};
+const authenticatedCaller=()=>resolveCallerAuth(callerEnv,{headers:{authorization:'Bearer test-only'},meta:{'cogentia.actor':'agent:jhn','cogentia.mandate_ref':'mandate:test'}});
+test('real resolved MCP actor is tied to one mailbox',()=>{
+  const auth=authenticatedCaller();
+  assert.equal(bindAgentMailCaller(auth,'send',{from:sender}).mailbox,sender);
+  assert.throws(()=>bindAgentMailCaller(auth,'send',{from:recipient}),/mail_actor_sender_mismatch/);
+  assert.throws(()=>bindAgentMailCaller(auth,'receive',{agent:recipient}),/mail_actor_sender_mismatch/);
+  assert.throws(()=>bindAgentMailCaller({auth:'jhn',actor:'agent:jhn'},'send',{from:sender}),/mail_verified_jhn_caller_required/);
+});
+test('broker checks address and file mode, without exposing passwords as result from tool',async()=>{
+  const broker=createLocalStalwartCredentialBroker({
+    statFile:async()=>({isFile:()=>true,mode:0o100640}),
+    reader:async()=>JSON.stringify({[sender]:'test-internal-credential-12345678'})
+  });
+  assert.equal((await broker(sender)).password,'test-internal-credential-12345678');
+  await assert.rejects(()=>broker('evil@example.com'),/outside_twin_trust_perimeter/);
+  const bad=createLocalStalwartCredentialBroker({statFile:async()=>({isFile:()=>true,mode:0o100644}),reader:async()=>'{"foo":"bar"}'});
+  await assert.rejects(()=>bad(sender),/mail_credential_permissions_invalid/);
+});
+test('MCP actor claim cannot bypass mail sender binding even when authorizer and broker are present',async()=>{
+  const opts=mocks();
+  const core=createMcpCore({COGENTIA_MCP_VIEW:'full',COGENTIA_ADMIN_TOKEN:'test-admin',COGENTIA_MCP_ALLOW_MUTATE:'1'},
+    {agentMailCredentialBroker:opts.credentialBroker,agentMailAuthorize:async({request})=>opts.authorize(request),agentMailPost:opts.post,agentMailGetSession:opts.getSession});
+  await assert.rejects(core.callTool('cogentia_agent_mail_send', {from:recipient,to:sender,subject:'x',body:'y'},
+    {auth:authenticatedCaller()}),/mail_actor_sender_mismatch/);
+  assert.equal(opts.events.length,0);
 });

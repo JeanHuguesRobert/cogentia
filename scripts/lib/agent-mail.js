@@ -94,7 +94,8 @@ export function createAgentMail({
         origin,domain, credential_broker_configured:typeof credentialBroker==='function',
         cop_authorizer_configured:typeof authorize==='function',
         no_external_recipients:true, gmail_draft_review:false,
-        ready:typeof credentialBroker==='function' && typeof authorize==='function'};
+        bindings_configured:typeof credentialBroker==='function' && typeof authorize==='function',
+        ready:false, operational_state:'requires_canonical_mandate_and_live_receipt'};
     },
     async receive({agent,limit=10}={}) {
       const address=localAddress(agent,domain);
@@ -103,15 +104,20 @@ export function createAgentMail({
       if (typeof authorize!=='function') failure('cop_read_authorization_required');
       const grant=await authorize({capability:'agent.mail.receive',agent:address,limit});
       if (!grant || grant.authorized!==true || grant.capability!=='agent.mail.receive' || grant.agent!==address || grant.actor!==address || grant.principal!=='principal:jhn') failure('cop_read_authorization_required');
+      let outcome='failed';
+      try {
       const account=await accountId(address);
       const mailboxes=pick(await request(address,[['Mailbox/get',{accountId:account,ids:null},'b']]),'b','Mailbox/get');
       const inbox=mailbox(mailboxes.list||[],'inbox');
       const found=pick(await request(address,[['Email/query',{accountId:account,filter:{inMailbox:inbox},limit,sort:[{property:'receivedAt',isAscending:false}]},'q']]),'q','Email/query');
       const ids=(found.ids||[]).slice(0,limit);
-      if (!ids.length) return {ok:true,agent:address,messages:[]};
+      if (!ids.length) {outcome='completed'; return {ok:true,agent:address,messages:[]};}
       const result=pick(await request(address,[['Email/get',{accountId:account,ids,properties:['id','subject','from','to','receivedAt','textBody','bodyValues'],fetchTextBodyValues:true},'g']]),'g','Email/get');
-      return {ok:true,agent:address,messages:(result.list||[]).map(m=>({id:m.id,subject:m.subject,from:m.from,to:m.to,receivedAt:m.receivedAt,
-        text:(m.textBody||[]).map(part=>m.bodyValues?.[part.partId]?.value||'').join('\n')}))};
+      const messages=(result.list||[]).map(m=>({id:m.id,subject:m.subject,from:m.from,to:m.to,receivedAt:m.receivedAt,
+        text:(m.textBody||[]).map(part=>m.bodyValues?.[part.partId]?.value||'').join('\n')}));
+      outcome='completed';
+      return {ok:true,agent:address,messages};
+      } finally {if(typeof grant.finalize==='function') await grant.finalize({outcome});}
     },
     async send({from,to,subject,body,correlation_id}={}) {
       const sender=localAddress(from,domain), recipient=localAddress(to,domain);
@@ -123,6 +129,8 @@ export function createAgentMail({
       validateDecision(decision,{from:sender,to:recipient,subject,body,correlationId});
       // No possibility to supply an external envelope: both addresses are
       // constructed from validated local agent addresses.
+      let outcome='failed',submissionId=null;
+      try {
       const account=await accountId(sender);
       const [identityResult,mailboxResult]=await Promise.all([
         request(sender,[['Identity/get',{accountId:account,ids:null},'i']]),
@@ -140,8 +148,11 @@ export function createAgentMail({
       const stage=pick(response,'e','Email/set');
       const submitted=pick(response,'s','EmailSubmission/set');
       if (!stage.created?.m || !submitted.created?.s) failure('agent_mail_submission_rejected');
+      submissionId=submitted.created.s.id;
+      outcome='submitted';
       return {ok:true,status:'submitted_not_delivery_verified',from:sender,to:recipient,correlation_id:correlationId,
         authorization_id:decision.authorization_id,submission_id:submitted.created.s.id};
+      } finally {if(typeof decision.finalize==='function')await decision.finalize({outcome,submission_id:submissionId});}
     },
   };
 }

@@ -28,6 +28,7 @@ import { invokeThroughGateway } from "./agent-gateway-client.js";
 import { recordSideEffectExecution, mintSideEffectGrantFromPrepared } from "./side-effect-authorization.js";
 import { prepareCommunicationSend, executeCommunicationSend, createDryRunTransport } from "./communication-send.js";
 import { createAgentMail } from "./agent-mail.js";
+import { bindAgentMailCaller } from "./agent-mail-auth-binding.js";
 import { prepareGithubWrite, executeGithubWrite, createGithubDryRunTransport } from "./github-write.js";
 import { prepareGitWrite, executeGitWrite, createGitDryRunTransport } from "./git-write.js";
 import {
@@ -1270,7 +1271,17 @@ export function createMcpCore(env = process.env, extras = {}) {
     return hostRouter;
   }
   const communicationTransport = extras.communicationTransport || createDryRunTransport();
-  const agentMail = createAgentMail({credentialBroker:extras.agentMailCredentialBroker,authorize:extras.agentMailAuthorize,post:extras.agentMailPost,getSession:extras.agentMailGetSession});
+  const agentMailOptions = {credentialBroker:extras.agentMailCredentialBroker,post:extras.agentMailPost,getSession:extras.agentMailGetSession};
+  const agentMail = createAgentMail(agentMailOptions);
+  function agentMailForCaller(auth,operation,args) {
+    const caller = bindAgentMailCaller(auth,operation,args);
+    // An authority adapter must be independently configured as trusted server
+    // startup code. It must resolve the canonical mandate, issuer and budget,
+    // and account for one effect. An attested MCP token cannot substitute.
+    return createAgentMail({...agentMailOptions, authorize:
+      typeof extras.agentMailAuthorize === 'function'
+      ? (request)=>extras.agentMailAuthorize({request,caller}) : undefined});
+  }
   const githubTransport = extras.githubTransport || createGithubDryRunTransport();
   const gitTransport = extras.gitTransport || createGitDryRunTransport();
 
@@ -2415,9 +2426,9 @@ export function createMcpCore(env = process.env, extras = {}) {
       case "cogentia_agent_mail_status":
         return agentMail.status();
       case "cogentia_agent_mail_receive":
-        return agentMail.receive(args);
+        return agentMailForCaller(auth,'receive',args).receive(args);
       case "cogentia_agent_mail_send":
-        return agentMail.send(args);
+        return agentMailForCaller(auth,'send',args).send(args);
       case "cogentia_communication_prepare":
         return prepareCommunicationSend(args);
       case "cogentia_communication_send":
