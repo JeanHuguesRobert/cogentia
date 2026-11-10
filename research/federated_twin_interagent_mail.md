@@ -67,6 +67,10 @@ Multiple twins **should use a shared Stalwart installation by default**, as requ
 
 **Phase C — federation across separate Stalwart services / trust perimeters:** define a versioned federation protocol, mutual authentication, sender/recipient trust agreements, replay protection, expiry/TTL, resource budgets, size limits, spam/abuse controls, trace receipts and revocation. If standard Internet SMTP is used, only its deliberately chosen ingress/egress is opened; a secure authenticated HTTPS message relay is also viable. No assumption that every twin must have a public MX or SMTP daemon.
 
+## Private transport and security proportionality
+
+The Principal explicitly limits **inter-agent email to Trust Perimeters, not public Internet services**. Public MX, Internet-facing SMTP/IMAP/JMAP, spam filtering, public deliverability and public-facing TLS certificates are not prerequisites. Inside a single trusted local runtime, loopback/IPC plus filesystem/process permissions and Cogentia actor routing can be enough; duplicate application-level encryption and authentication handshakes are not mandatory merely because RFC 5322 is used as the message format. For movement across machines, trust perimeter admission and secure mesh transport may supply needed channel security, but are not equivalent to COP authority. Across different Principals or tenants sharing one daemon, the essential requirement is **access and confidentiality separation at the shared storage and API boundary**, even though the system is private. Security controls should match demonstrated adversaries and boundaries instead of replicating full public hosting. See [AGPL multi-tenant feasibility — private-only scope](stalwart-community-multitenancy-feasibility-2026-11-10.md#private-only-scope-and-proportionate-security-principal-clarification-2026-11-10).
+
 ## Message contract and routing invariants
 
 Minimal packet envelope (illustrative, no user secrets):

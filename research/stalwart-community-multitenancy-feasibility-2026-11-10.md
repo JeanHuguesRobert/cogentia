@@ -72,6 +72,23 @@ Minimum independently specified components, without copying SEL source:
 
 This is much larger than a configuration change or a couple of Rust patches.
 
+## Private-only scope and proportionate security (Principal clarification 2026-11-10)
+
+**Scope reduction:** Cogentia's inter-agent mail is not an Internet-facing email hosting offer. Stalwart transports messages **only inside explicitly configured Trust Perimeters**, with no inbound public SMTP/IMAP/JMAP, no public MX dependency and no unrestricted outbound relay. Therefore public-mail deliverability, internet spam/abuse processing, DKIM/SPF/DMARC, general webmail public TLS and public tenant self-service provisioning are **out of scope for the initial use case**. Do not import the broad Enterprise feature set as a minimum product requirement.
+
+Apply **proportionate protection** to the actual boundary:
+
+| Scope | Minimal appropriate protection | Not presumed necessary |
+|---|---|---|
+| Same twin, same Unix host/process trust boundary | Loopback or local IPC; service-account/process permissions; stable actor IDs and delivery receipts; a bounded actor routing policy | End-to-end message encryption and independently credentialed SMTP for each internal handler |
+| Different twin instances sharing one Stalwart process | Distinct mailbox ownership and access checks *enforced at the shared service boundary*, mailbox isolation and tenant-aware routing; auditable administrator role | Public MTA features, independent commercial-billing tenants or complete hosted-mail UI |
+| Different machines within one trusted mesh | Authenticated machine/twin admission and private connectivity; authorize recipient/actor separately from network reachability | A second application-level encrypted envelope **when** the lower-level trusted transport supplies adequate confidentiality/integrity |
+| Different Trust Perimeters / Principals | Explicit cross-perimeter trust, sender authentication, least-privilege mailbox admission, policy on which private data may cross, revocation | Global public SMTP, unless federation intentionally selects it |
+
+**Threat-model clarification:** a Trust Perimeter excludes untrusted outside parties, but it does not magically give every sub-agent permission to read a sibling's mail, impersonate a different Principal or issue COP mandates. A shared process or daemon is itself a trust boundary: if all tenants are equally trusted by one operator and merely need routing separation, a simple AGPL gateway and restricted local accounts may be adequate; if independently sovereign Principals require non-access by each other or the operator, strong isolation and possibly separate Community processes/data stores remain necessary. Do not describe a simple alias mapping as security isolation. No external attacker model, hostile Internet tenants, strong cryptography or multi-principal distrust should be invented without an actual requirement; conversely, do not waive confidentiality of a Principal's private corpus simply because the network is private.
+
+**Reduced free-software MVP:** a single Community Stalwart service on a private interface, a registry mapping stable `twin_instance_id` and `actor_id` to local mailbox aliases, mailbox-scoped credentials/capabilities where the Community API supports them, default-deny outbound/inbound Internet, and a Cogentia handler that converts messages to cognitive packets. Test agent A cannot read agent B's mailbox and twin A cannot address twin B under a forbidden route. Use multiple isolated processes or Enterprise only if actual trust boundaries require guarantees a shared Community daemon cannot provide. This is a design candidate, **not** a claim that Community currently supplies native tenant isolation.
+
 ## Suggested engineering sequence
 
 - **Now:** continue bootstrapping John's Stalwart Community mail for *one twin* on Fracta2, private endpoints only; keep canonical `twin_instance_id` distinct from mailbox address. No commercial feature dependency yet.
