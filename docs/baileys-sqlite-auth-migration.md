@@ -44,3 +44,22 @@ npm run test:agent-jhn-whatsapp
 ```
 
 Status: implementation & synthetic tests complete; **real multi-file import, live selection, and post-cutover decrypt NOT tested**. Linked to #301 and infrastructure #77.
+
+## Simplified disposable-state option (Principal decision 2026-11-10)
+
+The Principal clarified that the JHN WhatsApp service is **non-critical at present**, and that loss of the current account-linked local Signal state or messages has no operational impact. Therefore, **do not incur the expense of importing 1.43M pre-key JSON files unless continuity becomes a requirement**. Prefer creating a fresh SQLite identity and re-pairing on demand.
+
+1. Stop the systemd service using the owner's authenticated host administration; verify it is inactive. No Agent or outbound mail is triggered.
+2. On Fracta2, run the new tool as `ubuntu` with the Node 26 daemon runtime:
+
+   ```bash
+   /usr/local/node-v26.5.0/bin/node scripts/ops/init-baileys-sqlite-fresh.js --fresh-unpaired --target /var/lib/cogentia/agent-john-whatsapp/baileys-sqlite/state.sqlite
+   ```
+
+   The command makes **new, unpaired** credentials, not a clone of the former identity. It refuses to overwrite any existing DB.
+3. Configure the systemd service to select `AGENT_JHN_WHATSAPP_AUTH_BACKEND=sqlite` through a root-owned systemd drop-in (do not change unrelated service variables). Verify with `systemctl show -p Environment` after `daemon-reload`.
+4. Keep the daemon stopped until a human is present for explicit WhatsApp pairing. Pair under `ubuntu` with the same state-directory and backend environment; pairing with phone code is documented by the existing CLI. Do not emit pairing codes to generic logs or public tools.
+5. Start the daemon, verify `open` and a real *inbound* operational event without a test message from the agent. Then, and only then, remove the obsolete multi-file auth folder to release about 5.6 GiB. Confirm the target backend is SQLite and the old directory is not open by any process. The Principal accepts permanent loss of the old state, but unlinking before successful SQLite pairing adds no useful benefit unless disk pressure is urgent.
+6. Observe the new DB size, connection stability and pre-key count over time. Re-pairing should not be automated without human presence.
+
+This disposable-state option is **simpler and cheaper** than bulk migration, but intentionally sacrifices the prior WhatsApp cryptographic state. The original importer remains available for future situations where continuity matters.
