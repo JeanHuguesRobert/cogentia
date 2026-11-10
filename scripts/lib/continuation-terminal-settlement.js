@@ -54,6 +54,7 @@ function completeReceipt(root, id, intent) {
     baseline_sha256:intent.settlement.baseline_sha256,
     result_sha256:intent.settlement.result_sha256,
     result_ref:intent.settlement.result_ref,
+    ...(intent.settlement.budget_reservation ? {budget_reservation:intent.settlement.budget_reservation} : {}),
     completed_at:new Date().toISOString(),delivery_confirmed:false,
   };
   fs.mkdirSync(path.dirname(file),{recursive:true});
@@ -96,7 +97,7 @@ export function recoverClaimedResolution(root,id) {
  */
 export function resolveClaimedContinuation(root,id,{
   witness,expectedSha256,decision,reason="",payload={},authorize,
-  beforeCanonicalWrite,
+  budgetReservation=null,beforeCanonicalWrite,
 }={}) {
   safeId(id);
   if (typeof authorize!=="function") return {ok:false,code:"AUTHORITY_ADAPTER_REQUIRED"};
@@ -131,6 +132,7 @@ export function resolveClaimedContinuation(root,id,{
   const intent=prepareTerminalEpoch(root,id,witness,{
     baseline_sha256:expectedSha256,result_sha256:sha(desiredJson),
     desired_json:desiredJson,result_ref:resultRef,claim:witness,
+    ...(budgetReservation ? {budget_reservation:budgetReservation} : {}),
   },{checkBaseline:()=>sha(fs.readFileSync(file,"utf8"))===expectedSha256});
   if (!intent.ok) return intent;
   if (typeof beforeCanonicalWrite==="function") beforeCanonicalWrite(intent.record);
