@@ -22,7 +22,7 @@ try {
   assert.equal(inspectRouting(root,c.id)[0].return_ref, c.return_contract.result_ref);
   assert.equal(rerouteContinuation(root,c,{from:"judge-b",to:"router-a",admissible:yes}).status,"routing_exhausted");
   const profile = {resolver_id:"judge-b",capabilities:["Judgement","tool_use"]};
-  assert.equal(nextContinuation(root,[c],profile,{admissible:yes}).claimed,false);
+  assert.equal(nextContinuation(root,[c],profile,{admissible:yes}).status,"available");
   assert.equal(nextContinuation(root,[c],profile,{claim:true,admissible:yes}).status,"claimed");
   assert.equal(nextContinuation(root,[c],profile,{claim:true,admissible:yes}).continuation,null);
   releaseClaim(root,c.id);
