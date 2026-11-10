@@ -37,7 +37,7 @@ export function nextContinuation(root, continuations, profile, { claim = false, 
   if (typeof admissible !== "function") throw new Error("independent admissible predicate required");
   const registered = findCapableResolvers(root, "").find((r) => r.resolver_id === profile.resolver_id);
   if (!registered) return { status: "resolver_not_registered", continuation: null };
-  const effective = { ...profile, capabilities: profile.capabilities.filter((v) => registered.capabilities.includes(v)) };
+  const effective = { ...profile, judgement: profile.judgement === true && registered.capabilities.includes("Judgement"), capabilities: profile.capabilities.filter((v) => registered.capabilities.includes(v)) };
   const candidates = [...continuations].filter((c) => c && c.status === "active" && (c.id || c.continuation_id))
     .filter((c) => matching(c, effective) && (!isJudgement(c) || hasJudgement(effective)))
     .filter((c) => admissible(c, effective) === true).sort(rank);
@@ -75,6 +75,9 @@ export function rerouteContinuation(root, continuation, { from, to, reason, maxH
     return { status: "routing_exhausted", continuation_id: id, hops: hops.length };
   const target = findCapableResolvers(root, "").find((r) => r.resolver_id === to);
   if (!target) return { status: "destination_unregistered", continuation_id: id };
+  const targetProfile = { capabilities: target.capabilities, judgement: target.capabilities.includes("Judgement") };
+  if (!matching(continuation, targetProfile) || (isJudgement(continuation) && !hasJudgement(targetProfile)))
+    return { status: "destination_incapable", continuation_id: id };
   const event = {
     schema: "cogentia.fractarouting.hop.v1", continuation_id: id,
     from, to, reason: String(reason || ""), status: "proposed",
