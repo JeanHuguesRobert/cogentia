@@ -10,6 +10,7 @@ import { once } from "node:events";
 import { fileURLToPath } from "node:url";
 import { registerResolver } from "./lib/resolver-registry.js";
 import { rerouteContinuation } from "./lib/continuation-routing.js";
+import { createMcpCore } from "./lib/cogentia-mcp-core.js";
 const scripts = path.dirname(fileURLToPath(import.meta.url));
 const root = fs.mkdtempSync(path.join(os.tmpdir(), "inseme-111-http-"));
 const registry = path.join(root, ".cogentia.json");
@@ -69,8 +70,19 @@ try {
   const history=await privileged.json();
   assert.equal(history.history[0].status,"proposed");
   assert.equal(history.history[0].to,"judge-b");
+  const publicMcp = createMcpCore({ COGENTIA_DAEMON_URL:base, COGENTIA_MCP_VIEW:"public" });
+  assert.equal(publicMcp.tools.some(t=>t.name==="cogentia_continuation_routing_history"),false);
+  assert.equal(publicMcp.tools.some(t=>t.name==="cogentia_continuation_next_preview"),true);
+  const mcpPreview = await publicMcp.callTool("cogentia_continuation_next_preview",{resolver_id:"judge-b"});
+  assert.equal(mcpPreview.continuation.id,emitted.id);
+  assert.equal(mcpPreview.cop_admission,"not_checked");
+  const privateMcp = createMcpCore({
+    COGENTIA_DAEMON_URL:base, COGENTIA_MCP_VIEW:"full", COGENTIA_ADMIN_TOKEN:token });
+  assert.equal(privateMcp.tools.some(t=>t.name==="cogentia_continuation_routing_history"),true);
+  const mcpHistory = await privateMcp.callTool("cogentia_continuation_routing_history",{id:emitted.id});
+  assert.equal(mcpHistory.history[0].to,"judge-b");
   console.log(JSON.stringify({ok:true,http_preview:200,public_routing:403,
-    unverified_loopback:403,authenticated_private_routing:200,
+    unverified_loopback:403,authenticated_private_routing:200,mcp_preview:true,mcp_private_history:true,
     cop_admission:preview.cop_admission,claimed:false},null,2));
 } finally {
   if (child && child.exitCode===null) {
