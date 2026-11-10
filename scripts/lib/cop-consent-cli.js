@@ -5,9 +5,13 @@ import {stdin,stdout} from 'node:process';
 import {copReviewPacket,copConsentIntent} from './cop-consent-packet.js';
 export async function cmdCopConsent(args,{input=stdin,output=stdout}={}) {
   const sub=args.shift()||'help';
+  if(sub==='ratify'){
+    const {runRatifyCli}=await import('../ops/jhn-consent-ratify-cli.js');
+    return runRatifyCli({args});
+  }
   const pathAt=args.indexOf('--from');
   const file=pathAt>=0?args[pathAt+1]:null;
-  if(sub==='help')return {ok:true,usage:'cop consent review --from <proposal.json> | cop consent decide --from <proposal.json> --decision approve|refuse'};
+  if(sub==='help')return {ok:true,usage:'cop consent review --from <proposal.json> | cop consent decide --from <proposal.json> --decision approve|refuse | cop consent ratify --mandate mandate:jhn:john-root'};
   if(!['review','decide'].includes(sub)||!file||file.startsWith('-')||args.some((a,i)=>a==='--from'&&!args[i+1]))
     return {ok:false,error:'CONSENT_CLI_USAGE_INVALID'};
   let content;

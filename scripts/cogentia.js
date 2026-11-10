@@ -889,6 +889,8 @@ Core commands:
   cop consent review --from <proposal.json>
                            Examine an exact COP proposal without issuing authority.
   cop consent decide --from <proposal.json> --decision approve|refuse
+  cop consent ratify --mandate mandate:jhn:john-root
+                           Request authenticated review of real existing JHN mandate; no grant.
                            Interactive intention only; no grant until trusted issuer validates.
   agent mandates verify    Verify that every configured repository declares the
                            canonical shared mandate.

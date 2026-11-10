@@ -11,7 +11,7 @@
  * canonical amendment kernel (subject to version/revocation checks).
  */
 import {randomUUID} from 'node:crypto';
-import {amendMandate} from '../../../inseme/packages/cop-core/src/governed-act.js';
+import {amendMandate,isMandateActive} from '../../../inseme/packages/cop-core/src/governed-act.js';
 import {mandateProposalHash} from './cop-proposal-digest.js';
 import {createJhnSupabaseMandateApprovalService} from './jhn-supabase-mandate-approval-service.js';
 const HASH=/^sha256:[a-f0-9]{64}$/;
@@ -67,6 +67,43 @@ export function createJhnCanonicalConsentWorkflow({store,adminClient,authClient,
     }
   });
   return Object.freeze({
+    /** Review the exact existing mandate without an amendment or a grant.
+     * This is a REAL Principal ratification of a real present scope, not a
+     * fixture: the recorded decision is advisory-only and cannot be applied
+     * as a new COP MandateDeclaration. */
+    requestRatification({mandate_ref,ttl_ms=600000}={}) {
+      if(!store?.append||!store?.listTopic||!store?.replay)return deny('canonical_store_required');
+      if(!Number.isSafeInteger(ttl_ms)||ttl_ms<1000||ttl_ms>600000)return deny('invalid_ttl');
+      if(typeof mandate_ref!=='string'||!/^mandate:jhn:[a-z0-9-]{2,80}$/.test(mandate_ref))
+        return deny('invalid_mandate_ref');
+      const events=store.replay().filter(e=>e.payload?.kind==='MandateDeclaration'&&
+        e.payload?.mandate_id===mandate_ref);
+      const latest=events.at(-1);
+      const row=latest?.payload;
+      if(!row||row.status!=='active'||row.principal_ref!=='principal:jhn'||
+        !isMandateActive(store,mandate_ref)||
+        (row.valid_until&&Date.parse(row.valid_until)<=+clock()))
+        return deny('mandate_not_active_or_unverified');
+      // A ratification deliberately contains NO target version and can never
+      // pass the mandate-amendment kernel (which requires previous_version).
+      const proposal={kind:'cop.mandate-ratification.proposal/v1',
+        mandate_ref,version:row.version,mandate_event_id:latest.event_id,
+        principal_ref:'principal:jhn',logical_agent_ref:row.logical_agent_ref,
+        scope:structuredClone(row.scope),valid_from:row.valid_from,
+        valid_until:row.valid_until,
+        reason:'Revue et ratification du mandat JHN déjà existant ; aucun nouveau pouvoir',
+        effects:false,amendment:false};
+      const challenge_id=randomUUID(),payload_hash=mandateProposalHash(proposal),
+        expires_at=new Date(+clock()+ttl_ms).toISOString();
+      const record=append(store,challenge_id,1,'PrincipalConsentRequested',{
+        principal_ref:'principal:jhn',payload_hash,proposal,expires_at,
+        action_class:'cop.mandate.ratification.no_grant'
+      });
+      if(!record)return deny('consent_request_append_failed');
+      return {ok:true,schema:'cogentia.cop_consent_challenge.v1',challenge_id,
+        payload_hash,proposal,expires_at,status:'pending',
+        authority:'none',grants_mandate_authority:false};
+    },
     // Read-only authentication gate for a protected presentation endpoint.
     authenticate:({session}={})=>approval.inspect({session}),
     /** The trusted issuer supplies this mandate only after resolving the
@@ -107,6 +144,17 @@ export function createJhnCanonicalConsentWorkflow({store,adminClient,authClient,
       const current=this.inspect({challenge_id});
       if(!current.ok||current.status!=='pending')return deny('challenge_not_pending');
       if(current.payload_hash!==payload_hash)return deny('proposal_hash_mismatch');
+      if(current.proposal?.kind==='cop.mandate-ratification.proposal/v1') {
+        // Deny consent to a previously shown scope if its mandate was
+        // superseded, expired, revoked or otherwise changed in the meantime.
+        const events=store.replay().filter(e=>e.payload?.kind==='MandateDeclaration'&&
+          e.payload?.mandate_id===current.proposal.mandate_ref);
+        const latest=events.at(-1);
+        if(!latest||latest.event_id!==current.proposal.mandate_event_id||
+          !isMandateActive(store,current.proposal.mandate_ref)||
+          (latest.payload.valid_until&&Date.parse(latest.payload.valid_until)<=+clock()))
+          return deny('ratification_mandate_changed');
+      }
       // Reverify the live human session and the stored JHN principal_id at the
       // moment of the decision; the technical MCP bearer never enters here.
       const identity=await approval.inspect({session});
@@ -128,6 +176,8 @@ export function createJhnCanonicalConsentWorkflow({store,adminClient,authClient,
     async apply({challenge_id,session}={}) {
       const pending=this.inspect({challenge_id});
       if(!pending.ok||pending.status!=='approved')return deny('approved_challenge_required');
+      if(pending.proposal?.kind!=='cop.mandate-amendment.proposal/v1')
+        return deny('ratification_never_grants_mandate');
       // Require the same current authenticated JHN Principal at commit time;
       // an untrusted MCP request or previously observed UI message is not enough.
       const result=await approval.amend({session,mandate:{
