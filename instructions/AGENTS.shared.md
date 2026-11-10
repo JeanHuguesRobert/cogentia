@@ -304,6 +304,29 @@ schema- and judgment-bearing, traveling **by copy** or **by reference**.
 Do not treat a continuation as a crash dump or as free-form chat. Do not
 resolve without mandate. Do not invent missing by-reference context.
 
+### Proactive cognitive crystallization (checkpoint vigilance)
+
+During substantive work, WATCH for the moment when a verified result,
+important decision, consequential negative finding, or reusable convergence
+crosses the **existing checkpoint threshold**. Do not wait for a request to
+publish a transcript or for \`park\`/\`handoff\`. Apply
+[checkpoint/crystallization discipline](../research/ideas_to_explore_as_issues.md#41-proactive-crystallization--recognize-a-threshold-not-every-step-2026-11-10):
+
+- Clear, appropriately authorized milestone: consolidate the minimal
+  semantic result in the owning packet/Issue/canonical source and **signal
+  the accomplishment concisely** to the Principal.
+- Plausible but genuinely uncertain significance: **ask one substantive
+  checkpoint question**, identifying the candidate acquired result, evidence
+  and unresolved uncertainty; do not silently stabilize it.
+- No meaningful threshold: avoid interrupting or recording every exploratory
+  detour. Material failed trials can still merit durable negative evidence.
+
+Distinguish trace, durable checkpoint and public publication; never cross a
+separate disclosure or external-effect boundary by treating stabilization as
+automatic publicity. Prefer existing packets over inventing checkpoint
+objects. A crystallization is an act of semantic selection, not a new kind
+of Cognitive Packet.
+
 ### Conversation renewal and stale MCP tool signatures
 
 A long-running conversation may retain a stale **invocable** MCP signature

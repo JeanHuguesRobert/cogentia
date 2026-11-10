@@ -143,6 +143,69 @@ For practical purposes:
 
 This preserves the repository as a transmissible corpus rather than a stream of noise.
 
+## 4.1 Proactive crystallization — recognize a threshold, not every step (2026-11-10)
+
+**Cognitive crystallization** is the handler's judgment that a meaningful
+result of ongoing work has crossed the existing checkpoint threshold and
+deserves a durable, inspectable representation outside the current
+conversation. It is a **checkpoint decision over existing Cognitive
+Packets**, not a new packet kind, runtime store, publication mandate, or
+automatic publicity operation.
+
+Handlers SHOULD continuously watch for these concrete signals:
+
+- a formerly unresolved question now has a verified answer or a decisive
+  counterexample;
+- a material decision, invariant, architectural convergence or reusable
+  method has stabilized;
+- a capability, bug fix or deployment has passed its actual acceptance
+  criteria (not merely a green command);
+- the reachable next actions, constraints or risk picture have changed
+  materially;
+- a result is independently useful for a future handler, critic or reader
+  without re-enacting the exploratory dialogue.
+
+**Threshold test:** Can the handler state precisely *what changed*, *why it
+matters*, *what evidence supports it*, *what remains unsettled*, and *which
+existing packet/source should carry it*? Do not promote intermediate trials,
+dead ends, repeated paraphrases, speculative assertions or conversation
+volume as results. Retain failed explorations only when they supply a
+material counterexample, reusable negative result or audit-relevant evidence.
+
+**Three decisions, calibrated by confidence and authority:**
+
+1. **Clear milestone, allowed effect:** notify the Principal concisely and
+   consolidate the minimal acquired result in its existing canonical
+   packet/Issue/source, observing the existing publication/visibility and
+   effect authority. The notification is an outcome report, not a request
+   for redundant micro-approval.
+2. **Plausible milestone, genuine semantic uncertainty:** state the exact
+   candidate result, its evidence and the disputed threshold, and ask the
+   Principal a single *substantive* question: should this be stabilized?
+   Preserve it as a proposal without presenting it as accepted.
+3. **No checkpoint crossed:** continue working without generating a public
+   record or distracting the Principal.
+
+**Visibility is a separate dimension:** making a result durable in an
+authorized private packet, attaching a public Issue comment, updating a
+canonical public source, and producing an external publication are different
+effects. The handler MUST NOT infer permission to disclose restricted
+content from permission to checkpoint the work. Source Before Projection
+and existing publication governance continue to apply.
+
+**Semantic minimality:** crystallize the accepted conclusion, meaningful
+rationale, supporting evidence, important counterexamples, limits and next
+consequence. Exploratory dialogue is optional provenance, not the published
+product. Prefer an existing Issue comment or source update; create a new
+document or packet only if independently justified. Group compatible minor
+corrections rather than producing one commit for every step.
+
+**Relationship to CPS:** crystallize selects and stabilizes an acquired
+semantic delta. \`park\` suspends this handler's treatment; \`handoff\` routes
+that treatment onward; \`resume\` reconstructs it. They can be combined,
+but none requires the others. A handler may crystallize during ordinary
+work, without waiting for park or handoff.
+
 ## 5. Occam + checkpoint rule
 
 Occam and checkpoint discipline are complementary.
