@@ -3,6 +3,8 @@ import assert from "node:assert/strict";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
+import { spawn } from "node:child_process";
+import { fileURLToPath } from "node:url";
 import { registerResolver, releaseClaim } from "./lib/resolver-registry.js";
 import { nextContinuation, rerouteContinuation, inspectRouting } from "./lib/continuation-routing.js";
 
@@ -27,6 +29,23 @@ try {
   assert.equal(nextContinuation(root,[c],profile,{claim:true,admissible:yes}).continuation,null);
   releaseClaim(root,c.id);
   assert.equal(nextContinuation(root,[c],profile,{claim:true,admissible:yes}).status,"claimed");
+  releaseClaim(root,c.id);
+  // Concurrent claims from distinct operating-system processes.
+  const registryFile = fileURLToPath(new URL("./lib/resolver-registry.js", import.meta.url));
+  const raceId = "ctn_parallel";
+  const runClaim = (who) => new Promise((resolve,reject) => {
+    const program = "import { claimContinuation } from " + JSON.stringify(registryFile) +
+      "; const r=claimContinuation(process.argv[1],process.argv[2],process.argv[3]); console.log(JSON.stringify(r));";
+    const child=spawn(process.execPath,["--input-type=module","-e",program,root,raceId,who],{stdio:["ignore","pipe","pipe"]});
+    let out="",err="";
+    child.stdout.on("data",d=>out+=d);
+    child.stderr.on("data",d=>err+=d);
+    child.on("error",reject);
+    child.on("close",code=>code===0 ? resolve(JSON.parse(out)) : reject(new Error(err)));
+  });
+  const competing = await Promise.all([runClaim("router-a"),runClaim("judge-b")]);
+  assert.equal(competing.filter((r)=>r.claimed).length,1,"exactly one independent process must win PacketClaim");
+  assert.equal(competing.filter((r)=>!r.claimed).length,1,"loser must observe the existing claim");
   // A resolution is produced by the canonical continuation store, not by routing.
   assert.equal(c.id, "ctn_routing_test");
   console.log("inseme#111 local routing and PacketClaim tests: PASS");
