@@ -575,6 +575,23 @@ Use the cheapest admissible materialization: direct immutable reference or RAM m
 
 Canonical semantic discussion: [Packet/Continuation Machine, section 16](packet_continuation_machine.md#16-message-first-cooperative-work-and-locality-2026-11-10). Alan language implications: [Alan, section 19](alan_turing_mcp.md#19-future-actorcooperative-work-semantics-clarification-2026-11-10).
 
+### 12.1.2 Optimistic cooperation and database minimalism (Principal clarification, 2026-11-10)
+
+**Trustful cooperation is the default among identified, collaborating Twins and, a fortiori, among sub-agents operating under a common Principal.** Do not turn the possible deployment of multiple actors in one PostgreSQL/Supabase project into a presumption of mutual hostility. Applying Row Level Security (RLS), separate SQL tenants, independent processes, restrictive per-actor databases or protective copies merely because those mechanisms exist violates Occam, Measured Risk and the Corpus's operational Optimistic Locking doctrine.
+
+Put strong checks where **authority is exercised**: resolve the actual Principal, actor, mandate, purpose, scope, budget, intended disclosure and consequential effect at the relevant COP admission/dispatch boundary. An incoming instruction or cooperation message is a work proposal, not by itself a newly issued mandate. Existing independent confidentiality commitments, third-party rights and actual untrusted ingress still matter; the trust default is not a claim that any authenticated identity may read every secret or perform any effect.
+
+Keep two different uses of "optimistic" distinct:
+
+- **Optimistic collaboration**: allow ordinary cooperative work without prophylactic obstacles; observe and correct demonstrated problems.
+- **Optimistic concurrency control**: use versions, conditional compare-and-set updates and explicit reconciliation when concurrent edits conflict; it does not grant authorization.
+
+**Keep application and governance semantics outside the database by default.** PostgreSQL/Supabase should primarily provide durable state, indexing, queries, constraints and atomic commits. Prefer explicit application code for agent orchestration, configuration inheritance, mandate resolution, routing and business rules. Avoid stored procedures, triggers and SQL-embedded workflows as routine implementation strategies. Database-native atomicity or integrity constraints are justified when the invariant genuinely requires them, and should remain small and documented rather than becoming a second opaque control plane.
+
+For `instance_config`, do not infer a design flaw solely from a broad non-secret read policy. First identify the actual disclosure contract and whether the row represents ordinary shareable configuration or genuinely restricted material. Protect the latter at a justified boundary; do not automatically add RLS walls between mutually cooperative logical agents. No SQL or RLS change is mandated by this clarification.
+
+See [Optimistic Mainline Governance](optimistic_mainline_governance.md), [Digital Twin Trust Model](digital_twin_trust_model.md), [Packet/Continuation Machine](packet_continuation_machine.md), and [COP authority boundaries](capability_authority_control_data_planes_2026-11-10.md).
+
 ### Stigmergic evaporation, cooling and glacial retention
 
 FractaCache must not equate **eviction of an active materialization** with **destruction of memory**. Stigmergic coordination relies on traces that remain salient while useful and gradually lose *operational attraction* when they are no longer reinforced. This evaporation acts on discovery priority, activation, propagation and local caching, not automatically on historical existence.
