@@ -12,6 +12,7 @@ import path from "node:path";
 import { createHash } from "node:crypto";
 import { isResolvedCallerAuth } from "./cogentia-mcp-auth.js";
 import { currentPacketClaim } from "./continuation-packet-claim.js";
+import { isClaimExpired } from "../../../inseme/packages/cop-core/src/packet-coordination.js";
 import {
   recoverClaimedResolution, inspectContinuationPacketCoordination,
 } from "./continuation-terminal-settlement.js";
@@ -126,6 +127,70 @@ export function reconcileJohnCopSettlement(root,id,{
       delivered:false};
     if(result.error!=="budget_version_conflict")
       return refuse("COP_BUDGET_RECONCILIATION_FAILED",{reason:result.error});
+  }
+  return refuse("COP_BUDGET_VERSION_CONFLICT");
+}
+
+/**
+ * Release an abandoned budget reservation ONLY when its original claim
+ * epoch has expired and NO terminal intent/receipt was ever published for
+ * this particular witness. Never releases a currently live reservation.
+ */
+export function reconcileOrphanJohnCopReservation(root,id,{
+  auth,store,ledger,witness,now=new Date(),retryLimit=3,
+}={}) {
+  if(!validId(id)) return refuse("INVALID_CONTINUATION_ID");
+  if(!isResolvedCallerAuth(auth) || auth.auth!=="jhn" ||
+     auth.principal_ref!=="principal:jhn" || auth.allowMutate!==true)
+    return refuse("AUTHENTICATED_JHN_RECONCILER_REQUIRED");
+  if(typeof store?.listTopic!=="function" ||
+     typeof ledger?.release!=="function" || typeof ledger?.snapshot!=="function")
+    return refuse("DURABLE_COP_REQUIRED");
+  if(typeof witness?.claim_id!=="string" ||
+     !Number.isInteger(witness.epoch) || witness.epoch<1 ||
+     witness.packet_ref!=="continuation:"+id)
+    return refuse("CLAIM_WITNESS_REQUIRED");
+  const dir=path.join(root,".cogentia","resolvers","claims-v1",id);
+  const file=path.join(dir,String(witness.epoch).padStart(12,"0")+".json");
+  if(!fs.existsSync(file)) return refuse("CLAIM_EPOCH_NOT_FOUND");
+  const original=JSON.parse(fs.readFileSync(file,"utf8"));
+  if(original.schema!=="cop.packet-claim/v1" ||
+     original.claim_id!==witness.claim_id ||
+     original.handler_ref!==witness.handler_ref ||
+     original.epoch!==witness.epoch)
+    return refuse("CLAIM_WITNESS_MISMATCH");
+  if(!isClaimExpired(original,now)) return refuse("CLAIM_STILL_ACTIVE");
+  const epochs=fs.readdirSync(dir).filter(f=>/^\d{12}\.json$/.test(f)).sort();
+  for(const f of epochs) {
+    const item=JSON.parse(fs.readFileSync(path.join(dir,f),"utf8"));
+    if(item.status==="settlement_prepared" && item.claim_id===witness.claim_id)
+      return refuse("TERMINAL_SETTLEMENT_PREPARED");
+  }
+  const receipt=inspectContinuationPacketCoordination(root,id);
+  if(receipt.events.some(e=>e.type==="PACKET_CLAIM_COMPLETED" &&
+     e.claim_id===witness.claim_id))
+    return refuse("TERMINAL_ALREADY_COMPLETED");
+  const snap=ledger.snapshot();
+  const budget_id=snap.budget_id;
+  if(!validBudget(budget_id)) return refuse("INVALID_BUDGET_IDENTITY");
+  const idempotency_key="cop:continuation:terminal:"+id+":"+witness.claim_id;
+  const reservation_id="reservation:"+budget_id+":"+idempotency_key;
+  const history=reservationEvents(store,budget_id,reservation_id);
+  if(!history?.original || !history.grants.length)
+    return refuse("COP_RESERVATION_EVIDENCE_MISSING");
+  if(history.original.payload?.reservation?.idempotency_key!==idempotency_key)
+    return refuse("COP_RESERVATION_EVIDENCE_MISMATCH");
+  if(history.settlements.length) return refuse("COP_RESERVATION_ALREADY_SETTLED");
+  for(let attempt=0;attempt<retryLimit;attempt++) {
+    const result=ledger.release({
+      reservation_id,expected_version:ledger.snapshot().version,
+      idempotency_key:"release:"+reservation_id,
+    });
+    if(result.ok) return {ok:true,code:result.duplicate?
+      "ALREADY_RELEASED":"ORPHAN_RESERVATION_RELEASED",
+      reservation_id,budget_released:true};
+    if(result.error!=="budget_version_conflict")
+      return refuse("COP_ORPHAN_RELEASE_FAILED",{reason:result.error});
   }
   return refuse("COP_BUDGET_VERSION_CONFLICT");
 }
