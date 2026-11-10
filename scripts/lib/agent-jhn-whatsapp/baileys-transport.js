@@ -11,6 +11,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { resolveAuthDir } from "./config.js";
 import { createReconnectPolicy } from "./reconnect-policy.js";
+import { openSQLiteAuthStore } from "./sqlite-auth-store.js";
 
 /**
  * Mock transport for offline tests and dry-run pipelines.
@@ -82,6 +83,7 @@ export function createBaileysTransport(config, hooks = {}) {
   const reconnectPolicy = createReconnectPolicy();
   let reconnectTimer = null;
   let socketGeneration = 0;
+  let sqliteStore = null;
 
   function clearReconnectTimer() {
     if (reconnectTimer !== null) clearTimeout(reconnectTimer);
@@ -132,7 +134,24 @@ export function createBaileysTransport(config, hooks = {}) {
     fs.mkdirSync(authDir, { recursive: true, mode: 0o700 });
     fs.chmodSync(authDir, 0o700);
 
-    const { state, saveCreds } = await B.useMultiFileAuthState(authDir);
+    // Fail closed: selecting SQLite never falls back to a fresh identity.
+    const selectedBackend = process.env.AGENT_JHN_WHATSAPP_AUTH_BACKEND || "multifile";
+    if (selectedBackend !== "multifile" && selectedBackend !== "sqlite") {
+      throw new Error("unsupported WhatsApp auth backend");
+    }
+    let authState;
+    if (selectedBackend === "sqlite") {
+      if (!sqliteStore) {
+        const file = path.join(path.resolve(config.state_dir), "baileys-sqlite", "state.sqlite");
+        const candidate = openSQLiteAuthStore(file); // never create new credentials
+        if (!candidate.hasCredentials()) { candidate.close(); throw new Error("SQLite auth credentials missing"); }
+        sqliteStore = candidate;
+      }
+      authState = sqliteStore;
+    } else {
+      authState = await B.useMultiFileAuthState(authDir);
+    }
+    const { state, saveCreds } = authState;
     const version = B.fetchLatestBaileysVersion
       ? (await B.fetchLatestBaileysVersion()).version
       : undefined;
@@ -384,6 +403,10 @@ export function createBaileysTransport(config, hooks = {}) {
         }
       } catch {
         sock = null;
+      }
+      if (sqliteStore) {
+        sqliteStore.close();
+        sqliteStore = null;
       }
       return { ok: true };
     },
