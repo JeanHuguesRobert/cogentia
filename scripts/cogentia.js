@@ -4692,7 +4692,8 @@ async function handleDaemonRequest(req, res) {
       .find((item) => item.resolver_id === resolverId);
     if (!resolver)
       return daemonJson(res, 404, { ok: false, error: "resolver_not_registered" });
-    const selected = nextContinuation(effectiveCtx.registryRoot, loadContinuations(effectiveCtx),
+    const selected = nextContinuation(effectiveCtx.registryRoot,
+      loadContinuations(effectiveCtx).filter((c) => !c.context?._truncated_for_view),
       { resolver_id: resolverId, capabilities: resolver.capabilities },
       { claim: false, admissible: () => true });
     return daemonJson(res, 200, {
