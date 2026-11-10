@@ -67,10 +67,15 @@ export function resolveJohnCopContinuation(root,id,{
     const latest=currentPacketClaim(root,id);
     if (latest?.status==="settlement_prepared" &&
         latest.claim_id===witness.claim_id && latest.handler_ref===witness.handler_ref) {
+      if (latest.settlement?.budget_reservation?.reservation_id!==reservationId)
+        return refuse("COP_SETTLEMENT_BUDGET_IDENTITY_MISMATCH");
       terminal=recoverClaimedResolution(root,id);
     } else {
       terminal=resolveClaimedContinuation(root,id,{
         witness,expectedSha256,decision,reason,payload,
+        budgetReservation:{reservation_id:reservationId,
+          budget_id:reservation.reservation.budget_id,mandate_ref,
+          version_pin,capability},
         // This callback is internal to an already verified COP preflight
         // and a successfully persisted budget reservation.
         authorize:()=>({ok:true,preflight, reservation_id:reservationId}),
