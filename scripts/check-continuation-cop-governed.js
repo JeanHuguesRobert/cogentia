@@ -96,6 +96,23 @@ try {
   assert.equal(replay.ok,true,JSON.stringify(replay));
   assert.equal(replay.code,"ALREADY_COMPLETED");
   assert.equal(ledger.snapshot().settled.max_steps,1,"replay must not double bill");
+  const second=cli("emit","--kind","judgment","--question","Second bounded COP step").continuation;
+  const secondWitness=acquirePacketClaim(root,second.id,"judge-b",{leaseMs:90000}).claim;
+  const secondOk=resolveJohnCopContinuation(root,second.id,{
+    ...args,witness:secondWitness,expectedSha256:continuationRevision(root,second.id),
+    decision:"bounded_second",
+  });
+  assert.equal(secondOk.ok,true,JSON.stringify(secondOk));
+  assert.equal(ledger.snapshot().settled.max_steps,2);
+  const third=cli("emit","--kind","judgment","--question","Exhausted COP budget").continuation;
+  const thirdWitness=acquirePacketClaim(root,third.id,"judge-b",{leaseMs:90000}).claim;
+  const exhausted=resolveJohnCopContinuation(root,third.id,{
+    ...args,witness:thirdWitness,expectedSha256:continuationRevision(root,third.id),
+    decision:"budget_denied",
+  });
+  assert.equal(exhausted.code,"COP_BUDGET_RESERVATION_DENIED");
+  assert.equal(exhausted.reason,"budget_exhausted");
+  assert.equal(cli("inspect",third.id).continuation.status,"active");
   recordMandateControl(store,{principal_ref:"principal:jhn",mandate_ref,action:"revoke"});
   const two=cli("emit","--kind","judgment","--question","Revoked COP synthetic terminal").continuation;
   const witness2=acquirePacketClaim(root,two.id,"judge-b",{leaseMs:90000}).claim;
@@ -104,8 +121,8 @@ try {
     decision:"must_refuse"});
   assert.equal(denied.code,"COP_PREFLIGHT_DENIED");
   assert.equal(cli("inspect",two.id).continuation.status,"active");
-  assert.equal(ledger.snapshot().settled.max_steps,1);
-  console.log("inseme#111 signed COP root + budget reserve/settle/replay/revocation PASS");
+  assert.equal(ledger.snapshot().settled.max_steps,2);
+  console.log("inseme#111 signed COP root + budget reserve/settle/replay/exhaustion/revocation PASS");
 } finally {
   store.close();
   fs.rmSync(root,{recursive:true,force:true});
