@@ -43,6 +43,10 @@ The architectural axes must remain distinct:
 5. **Transport** — a replaceable delivery mechanism (Stalwart private mail, JMAP, authenticated private relay, or later federated delivery). Email addresses are *aliases*, not the source of identity or COP authority.
 6. **Cognitive packet** — versioned semantic payload and provenance; neither RFC 5322 nor the mailbox decides what to do with it.
 
+## Edition and multi-tenancy constraint
+
+The official Stalwart documentation explicitly labels **Tenants** as an Enterprise-only capability: tenants have own administrators, domains, accounts and quotas, with membership via `memberTenantId`. Both editions share the same binary and data format, but actual Enterprise functionality requires a valid licence. A single Community server with multiple domains/accounts does **not** satisfy the stronger cross-principal isolation requirement automatically. This is a licensing and deployment gate, not grounds to abandon the Principal's selected Stalwart multi-tenant architecture. Sources: https://www.stalw.art/docs/auth/authorization/tenants/ ; https://stalw.art/docs/server/enterprise/ ; https://stalw.art/docs/domains/.
+
 ## Stable addressing versus deployment-specific aliases
 
 Assign stable opaque identifiers such as `twin_instance_id` and `actor_id` *independently* of DNS, hostname, owner display name, or infrastructure. A routing directory resolves `(twin_instance_id, actor_id)` to current authenticated delivery endpoint and one or more email aliases. Never infer an actor's identity from the `From:` header or equate an email alias with a mandate.
@@ -53,15 +57,15 @@ Examples, **illustrative only and not provisioned**:
 - `twin_instance_id: twin:jhn`, `actor_id: agent:jhn:researcher-1`, alias `researcher-1@mail.fractavolta.com`;
 - `twin_instance_id: twin:other-001`, `actor_id: agent:other-001:root`, alias under its own private/controlled domain, **not** necessarily `mail.fractavolta.com`.
 
-Never force distinct future Principals' twins into one shared address space or a single administrator-controlled server. Multi-tenant hosting is possible only with enforced tenant isolation in credentials, storage, authorization and audit; separate server instances are valid and often preferable. A mailbox may move without changing the twin's stable identifier.
+Multiple twins **should use a shared Stalwart installation by default**, as requested by the Principal, but must not share mailbox credentials, administrative permissions, or trust. Use a true Stalwart Enterprise Tenant per independently governed twin, rather than confusing multiple mailbox domains in Community with tenant isolation. Separate Stalwart installations are a fallback where Enterprise is unavailable or independent physical/administrative trust boundaries require separation. A mailbox may move without changing the twin's stable identifier.
 
 ## Topology and phased growth
 
-**Phase A — one instance, many actors:** John and his sub-agents share a Stalwart installation on Fracta2; JMAP for mailbox management, internal controlled submission/delivery. Only the designated twin and agent accounts may access it. The server's administration remains within the trust perimeter. No public SMTP, IMAP or JMAP listeners are required.
+**Phase A — one Stalwart service, one twin, many actors:** John and his sub-agents share a Stalwart installation on Fracta2; JMAP for mailbox management, internal controlled submission/delivery. Only the designated twin and agent accounts may access it. The server's administration remains within the trust perimeter. No public SMTP, IMAP or JMAP listeners are required.
 
-**Phase B — many twin instances on a trusted private mesh:** each twin may run its own Stalwart or a strongly tenant-isolated mail service. The relay discovers and authenticates the destination twin through the governed directory. Tailscale/private network membership alone is not sufficient authorization. Explicit cross-twin trust, identity verification, privacy classification and routing policy are required. Transport acknowledgments and processing acknowledgments are different.
+**Phase B — multiple twins on one multi-tenant Stalwart service (the intended default):** provide a distinct Stalwart Tenant object and delegated administrator per independently governed twin instance, with tenant-scoped domains, mailboxes and quotas. Stalwart documents real `Tenant` objects and `memberTenantId` isolation as an **Enterprise edition feature**; the Community edition can host multiple domains/accounts but that is not equivalent to independently administered tenant isolation. Verify the installed licence/entitlement before implementing this phase, and do not claim multi-tenant isolation if it is unavailable. The routing directory authenticates a destination twin rather than trusting a mailbox alias. Tailscale/private network membership alone is not sufficient authorization. Explicit cross-twin trust, identity verification, privacy classification and routing policy are required. Transport acknowledgments and processing acknowledgments are different.
 
-**Phase C — federation across unrelated trust perimeters:** define a versioned federation protocol, mutual authentication, sender/recipient trust agreements, replay protection, expiry/TTL, resource budgets, size limits, spam/abuse controls, trace receipts and revocation. If standard Internet SMTP is used, only its deliberately chosen ingress/egress is opened; a secure authenticated HTTPS message relay is also viable. No assumption that every twin must have a public MX or SMTP daemon.
+**Phase C — federation across separate Stalwart services / trust perimeters:** define a versioned federation protocol, mutual authentication, sender/recipient trust agreements, replay protection, expiry/TTL, resource budgets, size limits, spam/abuse controls, trace receipts and revocation. If standard Internet SMTP is used, only its deliberately chosen ingress/egress is opened; a secure authenticated HTTPS message relay is also viable. No assumption that every twin must have a public MX or SMTP daemon.
 
 ## Message contract and routing invariants
 
@@ -106,7 +110,7 @@ The Principal may choose Gmail as their human conversational interface to John. 
 1. Two isolated twin instances can exchange messages via distinct verified identities without sharing mailbox passwords or privileged admin credentials.
 2. One twin's sub-agent cannot read/write another twin's mail without explicit delegation; negative tests enforce this at protocol and storage levels.
 3. Messages survive transport restart and preserve `packet_ref`, correlation, provenance, retry/idempotency and distinct delivery/processing receipts.
-4. Unauthorized routing, spoofed sender alias, cross-tenant replay, oversized message and external recipient all fail closed.
+4. Unauthorized routing, spoofed sender alias, cross-tenant replay, oversized message and external recipient all fail closed. Record the Stalwart edition and tenant isolation evidence; multiple domains alone do not pass this test.
 5. A twin can migrate between mail stores without changing its stable identity or breaking replies.
 6. Human Gmail traffic and inter-agent traffic remain isolated; a forged external message never turns into a COP mandate.
 
