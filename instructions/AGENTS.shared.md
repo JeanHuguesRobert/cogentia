@@ -1401,6 +1401,20 @@ and [Agentic Commit Transparency](../research/agentic_commit_transparency.md).
 - A lightweight, disposable stash or tag may help preserve work before a risky reconciliation when warranted; **it does not authorize a new branch**. Avoid automatic or systematic precautionary machinery.
 - Report the active branch, observed baseline, actual verification and remaining divergence after each material integration. A separate branch remains an explicitly approved, justified exception, not the default delivery mechanism.
 
+### Live alpha: incremental reality rather than premature stabilization
+
+A service can be **deployed and reachable** while still being an **alpha**.
+Do not infer a stabilized production contract merely from its availability.
+For live alpha work, prefer the smallest useful increment that addresses an
+observed need, produces a verifiable result, and retains a credible recovery
+path. Prefer one current runtime/tool path over speculative compatibility
+layers or redundant environments. Version pinning and lockfiles are justified
+by a concrete reproducibility, dependency or compatibility requirement, not
+by an automatic presumption that every alpha runtime must be frozen.
+Inspect the actually available version/tool contract before diagnosing a
+compatibility problem. These engineering preferences do not widen mandates,
+publication rights, privacy constraints or the Measured Risk ceiling.
+
 ## Operational agility, conflicts, and incidents
 
 Move through small, independently verifiable increments. Use the least
