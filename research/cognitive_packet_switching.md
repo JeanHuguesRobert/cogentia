@@ -156,6 +156,67 @@ Compact formulation:
 
 ---
 
+## Park / Handoff / Resume — converging on existing CPS primitives (2026-11-10)
+
+**Work, not conversations, is parked, handed off or resumed.** Its durable
+identity belongs to one or several existing Cognitive Packets. A conversation
+is a transient handler environment and may simultaneously contribute to
+several packets; changing conversations is only one instance of changing
+handlers. A packet's business lifecycle and a particular handler's
+responsibility for it are distinct. Neither parking a handler nor handing
+off its participation closes the packet, and neither requires creating a new
+judgment Continuation.
+
+- **PARK:** reconcile and persist material work deltas in their canonical
+  packets/Issue hop journals, record an actionable next step and relevant
+  controls, then suspend/release *this handler's* compatible work scope.
+  Other handlers and other compatible scopes may continue.
+- **HANDOFF:** perform the same durable reconciliation, identify or leave
+  discoverable an admissible successor, verify by-reference cold-start
+  sufficiency and applicable control-plane discoverability, then transfer
+  the work scope without requiring the successor to know the previous chat.
+  Transfer completion and successor acknowledgement are different facts.
+- **RESUME:** resolve the packet(s) from durable references and the last
+  relevant hop, refresh mutable state, identify actual available handler
+  capabilities, resolve applicable COP control, acquire a scoped claim
+  **only where necessary**, and continue the first feasible action.
+  If work changed during suspension, reconcile rather than overwrite.
+
+**Reuse, do not fork architecture:** packet envelope/identity and source
+references; existing COP \`cop.packet-claim/v1\` for incompatible concurrent
+mutation and fencing (not for generic permission); continuation.v2 only
+when a missing judgment requires it; existing Issues as canonical hop
+journals, \`handoff-preflight\` for cold-resume verification,
+\`packet-relate\` for tentative existing-packet association and
+\`continuation-placement\` as advisory handler matching. Current
+implementation maturity varies: the local claim prototype is not proof
+of distributed lease/fencing enforcement, and lexical candidates are not
+semantic identity assertions.
+
+**Single-step user intention:** one public utterance, \`park\`, \`handoff\`
+or \`resume\`, may orchestrate the above internal stages. The invocation
+may refer to the current packet focus or a packet reference, without
+creating a second canonical work-context database. Focus is a transient
+pointer/projection to packet identities, not a new work object. If several
+unrelated packets are plausible, preserve all in the durable reference or
+surface the genuine ambiguity rather than choosing arbitrarily.
+
+**Verified continuity is relative, not perfect transcript preservation:**
+retain achieved results, governing decisions and evidence, unresolved
+hypotheses, dependencies, next feasible act and acceptance/return contract.
+Pass verified references instead of replaying chat history. An externally
+committing effect still needs its own control-plane admission; the routing
+verb itself conveys no additional authority. The source and successor
+may observe different MCP tool schemas, so the successor must check the
+actual *invocable* capabilities on arrival.
+
+Suggested minimal public CPS surface (not yet implemented):
+\`packet park [ref|focus]\`, \`packet handoff [ref|focus]\`,
+\`packet resume [ref|focus]\`. These are workflow intentions over existing
+packets, **not** three new packet kinds or independent persistence stores.
+
+---
+
 ## Abstract
 
 Most current workflow systems model AI-assisted work as pipelines, graphs, orchestrators, agents, tasks, traces, or durable execution states. These are useful but incomplete. They often leave underspecified the unit of cognitive work that must circulate through the system.

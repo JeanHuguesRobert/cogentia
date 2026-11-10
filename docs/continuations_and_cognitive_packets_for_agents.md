@@ -105,6 +105,19 @@ can involve several packets; never multiply packets solely to replace a
 handler. Copy a bounded self-describing continuation only when a durable
 reference cannot be accessed.
 
+## CPS work handling: park, handoff, resume
+
+These are three **single-step intentions over existing packet identities**,
+not actions on a conversation transcript. \`park\` preserves work and suspends
+this handler's participation; \`handoff\` makes its scope retrievable by a
+successor; \`resume\` resolves current packet state and continues, possibly
+with a different handler or MCP schema. Keep packet lifecycle separate from
+handler claim state. Use existing COP PacketClaim only for incompatible
+concurrent work, and a Judgment Continuation only for an actual judgment
+boundary. Do not manufacture a packet or separate session store for each
+conversation change. For the canonical convergence, see
+[CPS Park/Handoff/Resume](../research/cognitive_packet_switching.md#park--handoff--resume--converging-on-existing-cps-primitives-2026-11-10).
+
 ## Why tools emit continuations (IoC)
 
 When a structural tool hits a judgment boundary, it must **not** hide an
