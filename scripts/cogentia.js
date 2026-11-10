@@ -339,6 +339,7 @@ const PUBLIC_DAEMON_GET_ROUTES = new Set([
   // P1/P2 read: continuation + git + skills bootstrap
   "/api/cli/continuation/list",
   "/api/cli/continuation/inspect",
+  "/api/cli/continuation/next-preview",
   "/api/cli/continuation/schema",
   "/api/cli/git/verify",
   "/api/cli/skills",
@@ -377,6 +378,7 @@ const DAEMON_LOOPBACK_POST_ROUTES = new Set([
  * catalogue. MCP enforces administrator/JHN attestation before using them.
  */
 const DAEMON_LOOPBACK_GET_ROUTES = new Set([
+  "/api/cli/continuation/routing-history",
   "/api/cli/config/hygiene-audit",
   "/api/cli/config/vault-catalog",
 ]);
