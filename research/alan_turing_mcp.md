@@ -790,3 +790,26 @@ Final short formula:
 ```text
 Alan: direct-style scripts, resumable MCP effects, accountable continuations.
 ```
+
+## 19. Future actor/cooperative-work semantics (clarification, 2026-11-10)
+
+**Alan v0.1 remains unchanged.** Its direct style and serialized MCP suspensions are the initial implementation profile, not a commitment to RPC or a requirement that every local operation become a serialized continuation.
+
+For a prospective version beyond v0.1, distinguish:
+
+- `call`: pure or ordinary internal computation within an actor;
+- **message**: address a logical recipient without assuming a particular process or placement;
+- **work order**: request an outcome and open a potentially asynchronous, cooperative conversation;
+- **delivery**: partial, provisional or final contribution, not necessarily the terminal response;
+- **question / revision**: legitimate intermediate exchanges;
+- **closure**: a separately recorded outcome of the work relationship, not inferred merely from handler termination.
+
+Syntax such as `spawn`, `send`, `receive`, `commission`, `on delivery` or `on question` is **candidate syntax only**, not a feature or grammar commitment of v0.1. The conceptual model must be agreed before adding keywords or an interpreter.
+
+An actor may create many ephemeral workers; a durable agent identity need not correspond to a permanently resident OS process, Unix thread, LLM session, or separate Supabase `instance_config`. Multiple actors may share one Unix process while retaining separate logical state and COP responsibility. FractaCache can serve Side-style intermediate slots, per-actor working memory, and shared immutable process-local projections; crossing a physical boundary may require encoding, stable references or durable packet closure.
+
+An optimization that compiles a message into a direct local function dispatch is permissible **only if it preserves the observable message/work semantics**. Alan must not claim that remote work behaves like a local function. A supplier may negotiate, ask for clarification, deliver incrementally or decline; the requester need not block. The relationship is a graph of cooperative work, not a distributed call stack.
+
+External effects still require the applicable caller mediation, mandate, budget, receipts and COP trace; a local fast path cannot bypass these obligations. Side-style replay and warm in-RAM continuations are valid execution strategies alongside a cold serialized continuation when the required recovery semantics are met.
+
+See the canonical [Packet/Continuation Machine — message-first cooperative work](packet_continuation_machine.md#16-message-first-cooperative-work-and-locality-2026-11-10), [Locality Principle / FractaCache](locality_principle.md), [Side](https://github.com/virteal/side), and [Inox / Erlang OTP / virtual actors](https://github.com/JeanHuguesRobert/Inox/blob/master/research/fractanet_language_abstractions.md).
