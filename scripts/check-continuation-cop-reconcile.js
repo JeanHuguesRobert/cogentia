@@ -116,6 +116,12 @@ try {
   const repeated=reconcileJohnCopSettlement(root,work.id,{auth,store,ledger:ledger()});
   assert.equal(repeated.code,"ALREADY_RECONCILED");
   assert.equal(ledger().snapshot().settled.max_steps,1);
+  assert.equal(scanJohnCopReconciliation(root,{
+    auth,store,budget_id:"budget:"+mandate_ref,
+  }).count,0);
+  assert.equal(scanJohnCopReconciliation(root,{
+    auth:{...auth},store,budget_id:"budget:"+mandate_ref,
+  }).code,"AUTHENTICATED_JHN_RECONCILER_REQUIRED");
   // A foreign budget cannot be used to settle this continuation.
   const foreign=createEventSourcedExecutionBudgetLedger({store,
     budget_id:"budget:mandate:foreign",limits:{max_steps:2},require_authority_grant:true});
