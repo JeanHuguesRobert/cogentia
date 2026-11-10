@@ -4,10 +4,10 @@
  * event-backed execution ledger. Never use client JSON to build these.
  */
 import { assessJohnCopAuthority } from "./john-cop-authority-preflight.js";
-import { currentPacketClaim } from "./continuation-packet-claim.js";
+import { currentPacketClaim, validatePacketClaim } from "./continuation-packet-claim.js";
 import {
   resolveClaimedContinuation, recoverClaimedResolution,
-  inspectContinuationPacketCoordination,
+  inspectContinuationPacketCoordination, continuationRevision,
 } from "./continuation-terminal-settlement.js";
 
 const refuse=(code,extra={})=>({ok:false,code,...extra});
@@ -30,6 +30,18 @@ export function resolveJohnCopContinuation(root,id,{
     return refuse("COP_BUDGET_LEDGER_REQUIRED");
   if (typeof witness?.claim_id!=="string" || typeof witness.handler_ref!=="string")
     return refuse("CLAIM_WITNESS_REQUIRED");
+  // Read-only checks before budget reservation: invalid revisions and
+  // stale witnesses must not consume a one-shot idempotency key.
+  const latestBefore=currentPacketClaim(root,id);
+  const inRecovery=latestBefore?.status==="settlement_prepared" &&
+    latestBefore.claim_id===witness.claim_id &&
+    latestBefore.handler_ref===witness.handler_ref;
+  if (!inRecovery) {
+    const validity=validatePacketClaim(root,id,witness);
+    if (!validity.ok) return refuse(validity.code);
+    if (continuationRevision(root,id)!==expectedSha256)
+      return refuse("BASELINE_CHANGED");
+  }
   const idempotency_key="cop:continuation:terminal:"+id+":"+witness.claim_id;
   const previous=ledger.snapshot();
   const reservation=ledger.reserve({
