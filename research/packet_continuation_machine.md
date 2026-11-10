@@ -726,6 +726,20 @@ The network is then not merely transport between computers. It participates in d
 
 ## 16. Message-first cooperative work and locality (2026-11-10)
 
+### Optimistic inter-actor trust and effect-bound governance (Principal clarification, 2026-11-10)
+
+The message-first cooperation model is **trust-first**, not an adversarial zero-trust simulation among Twins. Identified cooperating Twins and sub-agents, especially within one Principal's Twin, SHOULD share work, references and useful in-process resources without preventive barriers whose value has not been established. Physical co-location is an optimization opportunity, not proof of a security problem. Shared trust does not erase genuinely different Principals' privacy obligations or an actor's obligation to stay within its mandate.
+
+**Place protection at the semantic mandate/effect boundary.** A work order can be received, discussed, negotiated, delegated and partially delivered without creating a new defensive layer at every internal hop. Actions that spend resources, disclose protected material, mutate authoritative state or engage outsiders require the applicable COP admission, budget and effect evidence. Never conflate a friendly sender, an available capability or a Stalwart inbox message with a grant of authority.
+
+**Optimistic concurrency is compatible with trust**: compare versions and reconcile actual conflicting edits instead of preemptively locking entire domains. Failures are observable facts to repair, not a reason to build hypothetical barriers in advance.
+
+**Database minimalism:** keep cooperation, actor lifecycle, routing, inheritance and policy evaluation in application/runtime code where possible. PostgreSQL is durable storage and an atomic consistency substrate, not the default home of business logic. Avoid stored procedures and triggers unless a specific non-negotiable database invariant makes a small localized mechanism necessary. The existence of RLS or an isolated-tenancy feature is not itself a reason to enable another barrier.
+
+See [Locality Principle, section 12.1.2](locality_principle.md#1212-optimistic-cooperation-and-database-minimalism), [Optimistic Mainline Governance](optimistic_mainline_governance.md), and [Digital Twin Trust Model](digital_twin_trust_model.md).
+
+
+
 ### Semantic correction: no transparent RPC
 
 The foundational abstraction between actors is **message exchange**, not a procedure call whose remoteness is concealed. Smalltalk contributes message-first object interaction; Erlang/OTP contributes lightweight asynchronous actors and supervision. Cogentia deliberately extends the pattern to **cooperative work orders and deliveries**. Classical Smalltalk message sends commonly execute synchronously; that timing is not imported as an invariant of inter-agent cooperation.
