@@ -22,6 +22,11 @@ try {
   assert.equal(recovered.claimed,true);
   assert.equal(recovered.claim.epoch,2);
   assert.equal(validatePacketClaim(root,id,first.claim,{now:new Date(t0.getTime()+1002)}).code,"STALE_CLAIM");
+  // The old format must not reclaim an already-upgraded packet.
+  registerResolver(root,"legacy-judge",["Judgement"]);
+  const oldProfile={resolver_id:"legacy-judge",capabilities:["Judgement"]};
+  const migrated={id,status:"active",kind:"judgment",required_capabilities:["Judgement"]};
+  assert.equal(nextContinuation(root,[migrated],oldProfile,{claim:true,claimMode:"legacy",admissible:()=>true}).continuation,null);
   assert.equal(packetClaimFence(root,id,recovered.claim,{now:new Date(t0.getTime()+1002)}).may_execute_effect,false);
   assert.equal(validatePacketClaim(root,id,recovered.claim,{now:new Date(t0.getTime()+1002)}).ok,true);
   const race="ctn_parallel_epochs";
