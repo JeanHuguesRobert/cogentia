@@ -15,6 +15,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { createHash, randomUUID } from "node:crypto";
 import { PacketClaimEvent, projectPacketCoordination, isClaimExpired } from "../../../inseme/packages/cop-core/src/packet-coordination.js";
+import { LATENT_SOVEREIGN_KIND } from "./latent-sovereign.js";
 import {
   currentPacketClaim, validatePacketClaim, prepareTerminalEpoch,
 } from "./continuation-packet-claim.js";
@@ -117,7 +118,7 @@ export function resolveClaimedContinuation(root,id,{
   if (typeof resultRef!=="string" || !resultRef)
     return {ok:false,code:"RETURN_SLOT_MISSING"};
   // No latent-sovereign side effect or foreign resource materialization here.
-  if (c.kind==="latent_sovereign")
+  if (c.kind===LATENT_SOVEREIGN_KIND)
     return {ok:false,code:"SIDE_EFFECT_KIND_UNSUPPORTED"};
   const now=new Date().toISOString();
   const desired={
