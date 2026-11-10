@@ -51,6 +51,8 @@ export function acquirePacketClaim(root, packetId, handlerRef, {
   fs.mkdirSync(dir, { recursive: true });
   // A racing contender cannot bypass a not-yet-expired claim.
   const previous = currentPacketClaim(root, packetId);
+  if (previous?.status === "settlement_prepared")
+    return { claimed:false, code:"TERMINAL_SETTLEMENT_PENDING", existingClaim:previous };
   if (previous && !isClaimExpired(previous, at))
     return { claimed:false, code:"ACTIVE_CLAIM", existingClaim:previous };
   const epoch = previous ? previous.epoch + 1 : 1;
@@ -85,6 +87,7 @@ export function validatePacketClaim(root, packetId, witness, { now = new Date() 
   if (!witness || typeof witness !== "object") return {ok:false,code:"CLAIM_WITNESS_REQUIRED"};
   const current = currentPacketClaim(root, packetId);
   if (!current) return {ok:false,code:"NO_ACTIVE_CLAIM"};
+  if (current.status === "settlement_prepared") return {ok:false,code:"STALE_CLAIM"};
   return validateCurrentPacketClaim({active_claim:current}, {
     claimId:witness.claim_id, handlerRef:witness.handler_ref,
     epoch:witness.epoch, now,
@@ -99,4 +102,44 @@ export function packetClaimFence(root, packetId, witness, options = {}) {
   const result = validatePacketClaim(root, packetId, witness, options);
   return { ...result, can_prepare:result.ok, may_execute_effect:false,
     cop_authority_verified:false, effect_cas_verified:false };
+}
+
+/**
+ * One atomic epoch slot is shared between reclaim and terminal settlement.
+ * The prepared record carries enough data for deterministic crash recovery.
+ * Not an authority check: the caller supplies independently admitted work.
+ */
+export function prepareTerminalEpoch(root, packetId, witness, settlement, {
+  now = new Date(), checkBaseline,
+} = {}) {
+  const verdict = validatePacketClaim(root, packetId, witness, { now });
+  if (!verdict.ok) return {ok:false,code:verdict.code};
+  if (typeof checkBaseline !== "function" || checkBaseline() !== true)
+    return {ok:false,code:"BASELINE_CHANGED"};
+  const dir = claimDir(root, packetId);
+  const record = {
+    schema:"cogentia.cop-terminal-intent/v1",
+    status:"settlement_prepared",
+    epoch:witness.epoch + 1,
+    claim_id:witness.claim_id,
+    handler_ref:witness.handler_ref,
+    predecessor_epoch:witness.epoch,
+    packet_ref:witness.packet_ref,
+    prepared_at:new Date(now).toISOString(),
+    ...settlement,
+  };
+  const temporary=path.join(dir,"." + randomUUID() + ".tmp");
+  fs.writeFileSync(temporary,JSON.stringify(record)+"\n",{flag:"wx",encoding:"utf8"});
+  try {
+    // The shared next-epoch slot is exclusive with expiry-based reclaim.
+    if (!validatePacketClaim(root,packetId,witness,{now:new Date()}).ok ||
+        checkBaseline() !== true)
+      return {ok:false,code:"STALE_CLAIM_OR_BASELINE"};
+    try {fs.linkSync(temporary,epochFile(dir,record.epoch));}
+    catch(e) {
+      if (e.code!=="EEXIST") throw e;
+      return {ok:false,code:"TERMINAL_RACE_LOST",latest:currentPacketClaim(root,packetId)};
+    }
+    return {ok:true,code:"SETTLEMENT_PREPARED",record};
+  }finally{fs.unlinkSync(temporary);}
 }
