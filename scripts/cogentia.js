@@ -76,7 +76,7 @@ import { relatePacket } from "./lib/packet-relate.js";
 import { cpsWorkControl, parseIssueRef } from "./lib/cps-work-control.js";
 import { packetRelateJudgmentRequest } from "./lib/packet-relate-judgment.js";
 import { deriveContinuationReturn } from "./lib/continuation-return.js";
-import { nextContinuation } from "./lib/continuation-routing.js";
+import { nextContinuation, inspectRouting } from "./lib/continuation-routing.js";
 import { findCapableResolvers } from "./lib/resolver-registry.js";
 import { projectContinuationPlacement } from "./lib/continuation-placement.js";
 import { runMonteCarloAudit, SleepCycleReviewQueue, REVIEW_DECISIONS } from "./lib/corpus-sleep-cycle/index.js";
@@ -4685,25 +4685,9 @@ async function handleDaemonRequest(req, res) {
   }
   if (req.method === "GET" && url.pathname === "/api/cli/continuation/next-preview") {
     const effectiveCtx = ctx || loadContext();
-    const resolverId = url.searchParams.get("resolver_id") || "";
-    if (!/^[a-zA-Z0-9_-]+$/.test(resolverId))
-      return daemonJson(res, 400, { ok: false, error: "invalid_resolver_id" });
-    const resolver = findCapableResolvers(effectiveCtx.registryRoot, "")
-      .find((item) => item.resolver_id === resolverId);
-    if (!resolver)
-      return daemonJson(res, 404, { ok: false, error: "resolver_not_registered" });
-    const selected = nextContinuation(effectiveCtx.registryRoot,
-      loadContinuations(effectiveCtx).filter((c) => !c.context?._truncated_for_view),
-      { resolver_id: resolverId, capabilities: resolver.capabilities },
-      { claim: false, admissible: () => true });
-    return daemonJson(res, 200, {
-      ok: true, status: selected.continuation
-        ? "technical_candidate_requires_cop_admission" : selected.status,
-      resolver_id: resolverId,
-      continuation: selected.continuation ? stripContinuationBody(selected.continuation) : null,
-      technical_capability_match_only: true,
-      cop_admission: "not_checked", claimed: false, executed: false,
-    });
+    const result = continuationNextPreview(effectiveCtx, url.searchParams.get("resolver_id") || "");
+    return daemonJson(res, result.ok ? 200
+      : result.error === "invalid_resolver_id" ? 400 : 404, result);
   }
   if (req.method === "GET" && url.pathname === "/api/cli/continuation/inspect") {
     const effectiveCtx = ctx || loadContext();
@@ -6691,6 +6675,10 @@ function cmdContinuation(sub) {
     case "list":
     case "queue":
       return cmdContinuationList(ctx);
+    case "next-preview":
+      return cmdContinuationNextPreview(ctx, valueFlag("--resolver-id") || argv.shift());
+    case "routing-history":
+      return cmdContinuationRoutingHistory(ctx, argv.shift());
     case "inspect":
       return cmdContinuationInspect(ctx, argv.shift());
     case "resolve":
@@ -6799,6 +6787,36 @@ function cmdPublishPush(ctx) {
   const dryRun = hasFlag("--dry-run") || hasFlag("-n");
   const result = publishViews(ctx, { viewId, target, dryRun });
   output(result, formatPublishResult(result));
+}
+
+function continuationNextPreview(ctx, resolverId) {
+  if (!/^[a-zA-Z0-9_-]+$/.test(resolverId || ""))
+    return { ok: false, error: "invalid_resolver_id" };
+  const resolver = findCapableResolvers(ctx.registryRoot, "")
+    .find((item) => item.resolver_id === resolverId);
+  if (!resolver) return { ok: false, error: "resolver_not_registered" };
+  const selected = nextContinuation(ctx.registryRoot,
+    loadContinuations(ctx).filter((c) => !c.context?._truncated_for_view),
+    { resolver_id: resolverId, capabilities: resolver.capabilities },
+    { claim: false, admissible: () => true });
+  return {
+    ok: true,
+    status: selected.continuation
+      ? "technical_candidate_requires_cop_admission" : selected.status,
+    resolver_id: resolverId,
+    continuation: selected.continuation ? stripContinuationBody(selected.continuation) : null,
+    technical_capability_match_only: true,
+    cop_admission: "not_checked", claimed: false, executed: false,
+  };
+}
+function cmdContinuationNextPreview(ctx, resolverId) {
+  const result = continuationNextPreview(ctx, resolverId);
+  return output(result, JSON.stringify(result, null, 2));
+}
+function cmdContinuationRoutingHistory(ctx, id) {
+  if (!/^ctn_[a-f0-9]{8,}$/i.test(id || "")) throw new Error("invalid continuation id");
+  const result = { ok: true, continuation_id: id, history: inspectRouting(ctx.registryRoot, id) };
+  return output(result, JSON.stringify(result, null, 2));
 }
 
 function cmdContinuationInspect(ctx, id) {
