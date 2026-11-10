@@ -11,6 +11,7 @@ import {
   inspectContinuationPacketCoordination,
 } from "./lib/continuation-terminal-settlement.js";
 import { projectPacketCoordination, PacketClaimEvent } from "../../inseme/packages/cop-core/src/packet-coordination.js";
+import { LATENT_SOVEREIGN_KIND } from "./lib/latent-sovereign.js";
 
 const root=fs.mkdtempSync(path.join(os.tmpdir(),"cop-terminal-111-"));
 const cli=(...args)=>JSON.parse(execFileSync(process.execPath,
@@ -131,5 +132,12 @@ try {
   assert.equal(compete.ok,false);
   assert.equal(compete.code,"TERMINAL_RACE_LOST");
   assert.equal(currentPacketClaim(root,fifth.id).handler_ref,"claimant-b");
+  const sixth=cli("emit","--kind",LATENT_SOVEREIGN_KIND,
+    "--question","Synthetic side-effectful materialization").continuation;
+  const unsafeClaim=acquirePacketClaim(root,sixth.id,"judge-b",{leaseMs:20000}).claim;
+  assert.equal(resolveClaimedContinuation(root,sixth.id,{witness:unsafeClaim,
+    expectedSha256:continuationRevision(root,sixth.id),
+    decision:"materialize",authorize:permitted}).code,"SIDE_EFFECT_KIND_UNSUPPORTED");
+  assert.equal(cli("inspect",sixth.id).continuation.status,"active");
   console.log("inseme#111 canonical terminal settlement / crash replay / stale fencing PASS");
 } finally { fs.rmSync(root,{recursive:true,force:true}); }
