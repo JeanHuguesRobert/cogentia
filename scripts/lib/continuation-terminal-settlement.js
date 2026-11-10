@@ -46,7 +46,8 @@ function completeReceipt(root, id, intent) {
   }
   const receipt={
     schema:"cogentia.continuation-settlement-receipt/v1",
-    event:PacketClaimEvent.COMPLETED, continuation_id:id,
+    type:PacketClaimEvent.COMPLETED, continuation_id:id,
+    claim:intent.settlement.claim,
     claim_id:intent.claim_id,handler_ref:intent.handler_ref,
     epoch:intent.predecessor_epoch,settlement_epoch:intent.epoch,
     baseline_sha256:intent.settlement.baseline_sha256,
@@ -128,7 +129,7 @@ export function resolveClaimedContinuation(root,id,{
   const desiredJson=JSON.stringify(desired,null,2)+"\n";
   const intent=prepareTerminalEpoch(root,id,witness,{
     baseline_sha256:expectedSha256,result_sha256:sha(desiredJson),
-    desired_json:desiredJson,result_ref:resultRef,
+    desired_json:desiredJson,result_ref:resultRef,claim:witness,
   },{checkBaseline:()=>sha(fs.readFileSync(file,"utf8"))===expectedSha256});
   if (!intent.ok) return intent;
   if (typeof beforeCanonicalWrite==="function") beforeCanonicalWrite(intent.record);
