@@ -3,9 +3,9 @@ title: Cogentia Shared Agent Instructions
 author: unknown
 affiliation: "Institut Mariani / C.O.R.S.I.C.A., 1 cours Paoli, F-20250 Corte, Corsica"
 status: "working-paper — active operational mandate"
-version: 47
+version: 48
 date: 2026-10-02
-last_modified_at: "2026-11-07"
+last_modified_at: "2026-11-10"
 license: CC BY-SA 4.0
 language: en
 canonical_url: https://github.com/JeanHuguesRobert/cogentia/blob/main/instructions/AGENTS.shared.md
@@ -91,6 +91,24 @@ Authorization is presumed **only** for internal, low-exposure effects with a doc
 Decide at each potential stopping point: is the objective complete, does a genuine human judgment/control block progress, or is there a safe in-mandate next step? In the last case, **execute it**. Distinguish completion from premature stopping and from mandate-expanding scope creep. This rule never overrides stronger local rules or provider protections.
 
 Source doctrine: [Measured Risk](../research/measured_risk.md); mandate and implementation packet: [Cogentia #285](https://github.com/JeanHuguesRobert/cogentia/issues/285).
+
+## Main-first Git operation: optimistic locking, no branch/worktree proliferation
+
+**Default to the existing repository's `main`** (or its actual canonical default branch). The Principal explicitly prefers real-world correction of occasional conflicts over accumulated artificial isolation and deferred integration. Do not create a branch, detached worktree, staging clone, or PR merely because a coding agent is involved, because several agents may work concurrently, or because a conflict/bug *might* occur. These extra states are ongoing coordination debt, not automatically safer development.
+
+For ordinary bounded changes:
+1. Inspect the current branch, remote, dirty paths and relevant files. Identify the exact files owned by the present task, not all dirty changes as an automatic blocker.
+2. Refresh the canonical baseline. Use optimistic locking: blob-SHA / expected version for remote file updates, and `fetch`, `pull --ff-only`, and narrowly staged diffs for local Git workflows as applicable. Never reset, discard, `stash` indiscriminately, or overwrite someone else's uncommitted work to achieve a clean tree.
+3. Make the smallest useful edit directly on `main`; validate; stage **only task-owned files**; commit promptly and push. Preserve an agent/mandate trace. If a real conflict occurs, inspect, reconcile, repair, and retry against the new version. A later correction or revert is legitimate; pretending no accidents are possible is not.
+4. Treat stabilization as completion: avoid long-lived unmerged branches and forgotten local commits. At milestones, inspect unpushed commits, dirty files, and existing branches/worktrees; surface actionable leftovers rather than automatically creating a new isolation surface.
+
+**A separate branch/worktree is exceptional.** Require a concrete reason such as an actually incompatible concurrent edit of the same files, a long-running destructive experiment that cannot safely share the checked-out tree, or an explicit review/isolation requirement. State the reason, ownership, merge/closure condition and expected lifetime; reuse an existing exceptional worktree when possible. Close it promptly when its need ends. Do not treat security isolation as equivalent to Git worktree isolation.
+
+**Deployment rule:** the production service must load an explicitly identified, stable code revision. A development checkout temporarily switched to a feature branch is not a deployment strategy. Before suggesting `git pull && systemctl restart`, verify which branch and `HEAD` the service actually loads and whether local modifications affect the deployed code; do not infer that `Already up to date` means `main` or that a service restart applied the intended commit. Prefer deployment directly from a verified canonical revision rather than creating more long-lived branches or worktrees merely to satisfy a ritual. A production runtime boundary can be independent of Git branching; justify any separate checkout by its actual operational need.
+
+Existing branches/worktrees are **cleanup candidates**, not reasons to add new ones. Inventory first; classify each as genuinely active, merged, obsolete, or holding unique uncommitted work; integrate useful work into `main` with optimistic reconciliation, then delete only after confirming that no unique work would be lost. Never mass-delete blindly.
+
+Source doctrine: [Optimistic Mainline Governance](../research/optimistic_mainline_governance.md); [No ritual backups](#no-ritual-backups-copies-or-precautionary-isolation).
 
 ## No ritual backups, copies, or precautionary isolation
 
