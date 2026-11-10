@@ -4691,7 +4691,7 @@ async function handleDaemonRequest(req, res) {
     if (!/^ctn_[a-f0-9]{8,}$/i.test(id))
       return daemonJson(res, 400, { ok: false, error: "invalid_continuation_id" });
     const auth = daemonResolveAuth(req, view);
-    if (auth?.lockers?.private?.read !== true)
+    if (auth?.lockers?.private?.read !== true && !daemonHasAdminToken(req))
       return daemonJson(res, 403, { ok: false, error: "private_read_required" });
     return daemonJson(res, 200, {
       ok: true, continuation_id: id,
