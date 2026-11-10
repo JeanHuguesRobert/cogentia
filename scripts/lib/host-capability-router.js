@@ -283,6 +283,19 @@ export function createHostCapabilityRouter(options = {}) {
         throw err;
       }
 
+      // The canonical COP store must be protected from the Unix identity that
+      // executes an agent-supplied script. Filesystem roots for host.fs.* do
+      // not confine /bin/sh. Trusted injected providers retain their own
+      // custody contract; the built-in Unix effecter is checked on every call.
+      if (!isSuper && providerName === "unix-process" && !providerFactory && !ctx.providerInstance) {
+        const custody = inspectUnixProcessCopCustody({ env });
+        if (custody.blocked) {
+          const err = new Error(custody.reason);
+          err.error_class = custody.reason;
+          throw err;
+        }
+      }
+
       // Cogentia #192 Finding D: Bounded COP budget enforcement / seam
       if (budget) {
         if (typeof budget.check === "function") {
@@ -349,19 +362,6 @@ export function createHostCapabilityRouter(options = {}) {
         if (capability === "host.process.run" && !ctx.authorization && !missionAuthority) {
           const err = new Error("host.process.run requires authorization");
           err.error_class = "authorization_missing";
-          throw err;
-        }
-      }
-
-      // The canonical COP store must be protected from the Unix identity that
-      // executes an agent-supplied script. Filesystem roots for host.fs.* do
-      // not confine /bin/sh. Trusted injected providers retain their own
-      // custody contract; the built-in Unix effecter is checked on every call.
-      if (!isSuper && providerName === "unix-process" && !providerFactory && !ctx.providerInstance) {
-        const custody = inspectUnixProcessCopCustody({ env });
-        if (custody.blocked) {
-          const err = new Error(custody.reason);
-          err.error_class = custody.reason;
           throw err;
         }
       }
