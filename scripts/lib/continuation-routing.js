@@ -47,9 +47,11 @@ export function nextContinuation(root, continuations, profile, { claim = false, 
     const id = safeId(c.id || c.continuation_id);
     const canonical = currentPacketClaim(root, id);
     const canonicalLive = canonical && Date.parse(canonical.expires_at) > Date.now();
-    // Never let a legacy claimant bypass a live canonical lease, or the
-    // canonical claimant bypass a legacy holder while migration is incomplete.
-    if (getClaim(root, id) || canonicalLive) continue;
+    // Once a packet entered v1, all subsequent claims must use v1 epochs.
+    // The legacy adapter must never reclaim it even after lease expiry.
+    // Cross-mode simultaneous FIRST claims remain unsupported: deploy with
+    // a single configured claim mode, not with concurrent mixed writers.
+    if (getClaim(root, id) || canonicalLive || (canonical && claimMode === "legacy")) continue;
     if (!claim) return { status: "available", continuation: c, claimed: false };
     const result = claimMode === "cop_v1"
       ? acquirePacketClaim(root, id, profile.resolver_id, { leaseMs })
