@@ -2,7 +2,7 @@
 title: "Packet/Continuation Machine — distributed branching computation model"
 author: "Jean Hugues Noël Robert, baron Mariani"
 date: "2026-09-09"
-last_modified_at: "2026-09-04"
+last_modified_at: "2026-11-10"
 status: "working-note"
 version: "0.5"
 license: "CC BY-SA 4.0"
@@ -723,3 +723,49 @@ Packet carrying a partially resolved computation
 ```
 
 The network is then not merely transport between computers. It participates in defining where and how computation continues.
+
+## 16. Message-first cooperative work and locality (2026-11-10)
+
+### Semantic correction: no transparent RPC
+
+The foundational abstraction between actors is **message exchange**, not a procedure call whose remoteness is concealed. Smalltalk contributes message-first object interaction; Erlang/OTP contributes lightweight asynchronous actors and supervision. Cogentia deliberately extends the pattern to **cooperative work orders and deliveries**. Classical Smalltalk message sends commonly execute synchronously; that timing is not imported as an invariant of inter-agent cooperation.
+
+A request for work is not a promise of one return value. The recipient remains autonomous within its mandate and can accept, decline, negotiate scope, ask questions, deliver provisional or partial outcomes, report obstacles, subcontract bounded work, and eventually deliver a final outcome or a justified closure. The client can continue other work, revise the request, accept or dispute a delivery, or terminate it under the applicable rules.
+
+A minimal conceptual conversation vocabulary (not a new mandatory COP wire schema) is:
+
+- **WorkOrder**: desired outcome, constraints, acceptance criteria, references, authority, budget.
+- **Offer / Acceptance / Decline**: capacity and proposed conditions, possibly implicit when already covered by a bounded standing mandate.
+- **Question / Clarification / Revision**: cooperative negotiation during the work.
+- **Delivery**: one of potentially many typed contributions, partial/provisional/final, referencing artifacts, evidence, uncertainty, cost, and pending continuations.
+- **Closure**: completed, accepted, rejected, refused, cancelled, obsolete, or impossible, with appropriate provenance.
+
+Supplier completion and customer acceptance are distinct events. Questions and partial results are normal productive outcomes, not protocol errors. A nested actor may become the customer of further work orders; these relations form a causal **graph of cooperative conversations**, not a remote call stack.
+
+**Message-first invariant:** A message may be optimized into an in-process call only when the relevant observable semantics (recipient autonomy, ordering, isolation, reentrancy, cancellation, failure handling, progress, and multiple possible deliveries) are preserved. Optimizing the implementation MUST NOT redefine a cooperative work order as synchronous RPC. Ordinary pure local functions remain legitimate for calculations internal to an actor.
+
+### Fractal execution with minimum sufficient locality
+
+Assume the semantics of potentially remote cooperation **even if both actors presently occupy the same Unix process**. This is *not* a requirement to serialize, persist, route through MCP, or make a network request for each local message. A work conversation can consist entirely of lightweight in-RAM mailboxes, immutable shared references, and local scheduling.
+
+Keep separate:
+
+1. **Actor identity**: durable logical address and role, independent of activation or host.
+2. **Activation**: an optional live process/runtime embodiment; may be lazy, temporary, or restartable.
+3. **Worker**: a short-lived actor or task created under a parent work context, generally without a new hosted instance or institutional identity.
+4. **Work order / Cognitive Packet**: purposeful, governable, potentially portable work, distinct from a process or actor.
+5. **Mandate / Principal**: authorization and accountability; neither process ownership nor parent supervision grants new authority.
+
+The same message/work/delivery semantics apply inside one process, across Unix processes, across FractaNodes, and through external providers, but **materialization costs scale with the boundary**:
+
+- same process: RAM mailbox, immutable object references, Side-style slots, local supervision;
+- same host, different process: IPC, appropriate encoding or controlled shared memory;
+- remote or delayed: durable Cognitive Packets, explicit references, receipts and continuation closure.
+
+An actor need not remain resident to keep its identity, mailbox or outstanding work. OTP-style restart supervision, Orleans-style virtual identities, Side-style replay with memoized results, FractaCache's situated materialization, COP's governed effects and Inox's prospective native actors are complementary **patterns**, not one mandatory runtime.
+
+Cache presence does not imply authority, fresh validity or permission to disclose. Share immutable data within an authorized locality where economical; mutable actor-private state stays owned by its actor. Serialize or persist at real correctness/recovery/authority boundaries, not as a ritual tax on RAM-local messages. An in-process optimization is not itself a security boundary for untrusted code.
+
+**Canonical rule:** *Program cooperation, not disguised remote calls. Messages define the relationship; locality optimizes its materialization; mandate governs its effects.*
+
+This refinement is consistent with [Alan v0.1](alan_turing_mcp.md), [Locality Principle / FractaCache](locality_principle.md), [Cognitive Packet Closure](cognitive_packet_closure_and_packet_native_semantics.md), [Mailboxes at Two Scales](mailboxes_at_two_scales.md), [Inox / OTP / virtual actors](https://github.com/JeanHuguesRobert/Inox/blob/master/research/fractanet_language_abstractions.md), [Side](https://github.com/virteal/side), and [COP Packet Attractor](https://github.com/JeanHuguesRobert/inseme/blob/main/research/packet_attractor_fractanet.md). It is a design clarification, not a claim that the actor runtime or new Alan syntax is deployed.
