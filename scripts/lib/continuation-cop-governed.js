@@ -4,6 +4,7 @@
  * event-backed execution ledger. Never use client JSON to build these.
  */
 import { assessJohnCopAuthority } from "./john-cop-authority-preflight.js";
+import { createHash } from "node:crypto";
 import { currentPacketClaim, validatePacketClaim } from "./continuation-packet-claim.js";
 import {
   resolveClaimedContinuation, recoverClaimedResolution,
@@ -42,6 +43,8 @@ export function resolveJohnCopContinuation(root,id,{
     if (continuationRevision(root,id)!==expectedSha256)
       return refuse("BASELINE_CHANGED");
   }
+  const intent_sha256=createHash("sha256").update(
+    JSON.stringify({decision,reason,payload})).digest("hex");
   const idempotency_key="cop:continuation:terminal:"+id+":"+witness.claim_id;
   const previous=ledger.snapshot();
   const reservation=ledger.reserve({
@@ -54,10 +57,14 @@ export function resolveJohnCopContinuation(root,id,{
   if (reservation.duplicate && reservation.reservation.status==="settled") {
     const receipt=inspectContinuationPacketCoordination(root,id);
     if (receipt.status==="completed" &&
-        receipt.projection.completed_claims.some(x=>x.claim_id===witness.claim_id))
+        receipt.projection.completed_claims.some(x=>x.claim_id===witness.claim_id)) {
+      const completedEvent=receipt.events.find(x=>x.type==="PACKET_CLAIM_COMPLETED");
+      if (completedEvent?.budget_reservation?.intent_sha256!==intent_sha256)
+        return refuse("COP_REPLAY_INTENT_MISMATCH");
       return {ok:true,code:"ALREADY_COMPLETED",reservation_id:reservationId,
         result_ref:receipt.projection.completed_claims.find(x=>x.claim_id===witness.claim_id).result_ref,
         budget_settled:true};
+    }
     return refuse("COP_RESERVATION_ALREADY_SETTLED_WITHOUT_RECEIPT");
   }
   if (reservation.duplicate && reservation.reservation.status!=="reserved")
@@ -75,7 +82,7 @@ export function resolveJohnCopContinuation(root,id,{
         witness,expectedSha256,decision,reason,payload,
         budgetReservation:{reservation_id:reservationId,
           budget_id:reservation.reservation.budget_id,mandate_ref,
-          version_pin,capability},
+          version_pin,capability,intent_sha256},
         // This callback is internal to an already verified COP preflight
         // and a successfully persisted budget reservation.
         authorize:()=>({ok:true,preflight, reservation_id:reservationId}),
