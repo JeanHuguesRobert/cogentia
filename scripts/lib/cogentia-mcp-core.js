@@ -1272,7 +1272,10 @@ export function createMcpCore(env = process.env, extras = {}) {
   }
   const communicationTransport = extras.communicationTransport || createDryRunTransport();
   const agentMailOptions = {credentialBroker:extras.agentMailCredentialBroker,post:extras.agentMailPost,getSession:extras.agentMailGetSession};
-  const agentMail = createAgentMail(agentMailOptions);
+  // Status reports binding configuration (not effective COP permission).
+  const agentMail = createAgentMail({...agentMailOptions,
+    authorize:typeof extras.agentMailAuthorize==='function'
+      ? async()=>{throw new Error('agent_mail_status_only')} : undefined});
   function agentMailForCaller(auth,operation,args) {
     const caller = bindAgentMailCaller(auth,operation,args);
     // An authority adapter must be independently configured as trusted server
