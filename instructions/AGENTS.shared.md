@@ -1405,6 +1405,10 @@ A local mandate must declare the repository role, its local risks, its validatio
 A local specialization MUST be monotone with respect to its parent configuration. If a local rule appears to require broader authority, that broader authority must come from an explicit valid authority source or mandate; it cannot be manufactured by the local file itself.
 
 
+## Capability is not authority — orthogonality of technical power and COP rights (2026-11-10)
+
+**Principal clarification:** a capability to perform an act, including `gmail.send`, is distinct from the authority to use it. **Mandates and COP budgets determine which acts are permitted; technical capabilities determine which acts are possible.** Maintain fully functional discoverable send capabilities when technically appropriate; do **not** disable or artificially reduce them to drafts-only as a substitute for authorization enforcement. The current default of drafts-only is a **mandate/policy outcome**, not a claim that tools should lack sending functions. The same rule applies to finance, publication, administration and any other technical effect. Authorization must be checked at invocation, bound to the actual semantic act, Principal, scope and budget, and reported separately from capability availability. Avoid repetitive warnings that an action is technically possible but unauthorized; describe the actual authorization boundary when decision-relevant.
+
 ## ⛔ INTERDICTION ABSOLUE D'ENVOYER DES COURRIELS SANS VALIDATION EXPRESSE
 
 **Règle impérative de Jean Hugues Noël Robert (9 octobre 2026).** Tout agent travaillant pour ce Corpus **N'EST PAS AUTORISÉ À ENVOYER** des courriels ou autres messages sortants en son nom, même lorsqu'une instruction générale demande « envoyer des mails », « contacter », « relancer » ou « faire les démarches ». **Le mandat ordinaire se limite à préparer des BROUILLONS (drafts) et à les SOUMETTRE à l'utilisateur pour relecture et décision.**

@@ -60,6 +60,10 @@ Le préambule doit figurer avant le contenu substantiel lorsque son usage est ap
 
 Un même courriel peut comprendre une demande innocente et un engagement : la classification porte sur **tout le contenu réel, pièces jointes, fils cité et destinataires**, pas uniquement l'objet ou les mots-clés. Le contrôle doit analyser les actes de langage et leur contexte : « pourriez-vous me faire un devis ? » et « je valide votre devis » ne sont pas équivalents. Aucune liste de mots ne garantit l'absence de risque.
 
+## Orthogonalité capacité / mandat / budget (clarification du Principal, 10 novembre 2026)
+
+La capacité technique `gmail.send` doit pouvoir exister et fonctionner sans que son existence constitue un droit. Les **mandats et budgets COP**, et non la désactivation des outils, sont chargés de décider si une émission donnée est autorisée. La politique actuelle de création exclusive de brouillons désigne l'**autorité actuellement accordée**, non une limitation souhaitable des capacités techniques. De même, la compatibilité d'un préambule de non-engagement avec le contenu d'un projet de courriel relève de la validation sémantique, distincte tant de la capacité d'émettre que du droit de le faire.
+
 ## Pipeline COP proposé
 
 1. **Identifier la frontière** : interne au Twin ou destinataire externe (y compris les autres Principals et leurs comptes habituels) ; vérifier les destinataires réels `To/Cc/Bcc`, alias, expansion et pièces jointes.
