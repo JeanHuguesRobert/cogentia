@@ -75,6 +75,36 @@ and [the cognitive-packet anti-proliferation rule](../research/cognitive_packets
 Existing-packet attachment is preferable to creating a new synthetic umbrella
 solely to represent this cross-link.
 
+## Conversation renewal without breaking work continuity (MCP schema freshness)
+
+**Observed FBF case, 2026-11-10:** after deploying a new optional
+strategy parameter with local and remote_first values on cogentia_code_search,
+and refreshing both Cogentia MCP connectors, an **already-running ChatGPT
+conversation** still exposed only query, repo and limit. A **new conversation**
+exposed strategy through both connectors. The live daemon already included
+the parameter. This is evidence of per-conversation schema staleness in this
+case, not proof of universal ChatGPT behavior.
+
+**Normative implication:** renewing a conversation is an ordinary handler
+replacement for gaining updated MCP contracts, not a reason to lose ongoing
+work or create duplicate Cognitive Packets. Before handoff, update the
+**existing authoritative work loci** with material decisions, evidence,
+current status, unresolved questions, applicable mandate/budget constraints,
+exact next step and acceptance criteria; record the source commit/endpoint,
+and which capability signatures were actually advertised, accessible and
+tested. The successor must cold-start by verified references, without
+requiring the predecessor's private model memory or a full transcript.
+
+**Practical recipe:** identify the active packet(s)/Issue(s) and semantic
+relations; persist material deltas and a hop receipt; open a fresh conversation
+after connector refresh; resolve packet references; inspect the **new
+conversation's actual** offered tool contracts; recheck permissions; resume
+from the recorded next action. If the new signature remains stale, report
+that precise gap. Renewal alone never grants new authority. One conversation
+can involve several packets; never multiply packets solely to replace a
+handler. Copy a bounded self-describing continuation only when a durable
+reference cannot be accessed.
+
 ## Why tools emit continuations (IoC)
 
 When a structural tool hits a judgment boundary, it must **not** hide an

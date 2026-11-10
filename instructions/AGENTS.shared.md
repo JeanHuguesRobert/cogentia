@@ -304,6 +304,23 @@ schema- and judgment-bearing, traveling **by copy** or **by reference**.
 Do not treat a continuation as a crash dump or as free-form chat. Do not
 resolve without mandate. Do not invent missing by-reference context.
 
+### Conversation renewal and stale MCP tool signatures
+
+A long-running conversation may retain a stale **invocable** MCP signature
+even after connector refresh. Observed 2026-11-10: both Cogentia connectors
+exposed cogentia_code_search without the new strategy parameter in an old
+conversation; a fresh conversation exposed local and remote_first, while
+the server already advertised them. Distinguish server schema, refreshed
+connector and the current handler's actually invocable typed tools.
+
+**Continuity must survive replacing the conversation.** Persist material
+work deltas in their existing authoritative Cognitive Packets/Issues, not
+only in chat history. Preserve IDs, receipts, provenance, state, mandate and
+budget constraints, next steps and acceptance. A fresh handler must resolve
+these by reference and check its own actual tool signatures before resuming.
+Do not proliferate packets or ask the Principal to reconstruct a transcript.
+See [conversation renewal protocol](../docs/continuations_and_cognitive_packets_for_agents.md#conversation-renewal-without-breaking-work-continuity-mcp-schema-freshness).
+
 ### Resumable GitHub Issues
 
 When asked to **packetize work as a resumable GitHub Issue**, create or prepare
