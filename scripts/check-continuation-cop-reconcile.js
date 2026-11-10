@@ -76,6 +76,11 @@ try {
   });
   assert.equal(orphanReservation.ok,true);
   assert.equal(postRestartLedger.snapshot().available.max_steps,0);
+  const pending=scanJohnCopReconciliation(root,{auth,store,budget_id:"budget:"+mandate_ref});
+  assert.equal(pending.count,2);
+  assert.deepEqual(pending.candidates.map(x=>x.kind).sort(),
+    ["expired_orphan_budget","terminal_budget_pending"]);
+  assert.equal(postRestartLedger.snapshot().reserved.max_steps,2);
   recordMandateControl(store,{principal_ref:"principal:jhn",mandate_ref,action:"revoke"});
   // Starting a new effect with a now-revoked mandate is impossible.
   const denied=resolveJohnCopContinuation(root,work.id,{
