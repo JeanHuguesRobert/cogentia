@@ -31,7 +31,7 @@ review:
 
 ## Principal requirement
 
-Study *exactly what is needed* to make the **AGPL open-source Stalwart Community foundation** support several independently governed Cogentia Digital Twin instances, each with separate agent mailboxes and controlled inter-twin communications, without assuming a commercial licence indefinitely. This is an **architecture and due-diligence study**, not a mandate to circumvent a licence, modify deployed binary or activate external SMTP.
+Study *exactly what is needed* to make the **AGPL open-source Stalwart Community foundation** support several independently governed Cogentia Digital Twin instances, each with separate **intra-Twin** agent mailboxes; cross-Twin communication passes through the ordinary email addresses of the respective Principals, without assuming a commercial licence indefinitely. This is an **architecture and due-diligence study**, not a mandate to circumvent a licence, modify deployed binary or activate external SMTP.
 
 ## Verified facts as of 2026-11-10 (Stalwart v1.1.0)
 
@@ -64,13 +64,15 @@ Minimum independently specified components, without copying SEL source:
 1. **Tenant registry**: opaque `twin_instance_id` mapped to internal `tenant_id`, tenant lifecycle, domains, principals, groups, alias namespaces and administrator roles; migration and archival rules.
 2. **Authentication and authorization**: every API/service request resolves authenticated tenant and actor, enforces scoped role and denies cross-tenant object lookups. Distinguish system operator, tenant administrator and agent mailbox user. No raw API route may bypass checks.
 3. **Message and directory storage**: tenant-qualified indexes, object IDs, mailbox operations, attachment/blob access, search, quotas and cleanup; enforce isolation in backend, not only at HTTP handlers.
-4. **Transport policy**: check both SMTP envelope and resolved recipients, including aliases, group expansions, Sieve forwards, DSNs/bounces, relay routing and local queue. Explicitly allow inter-twin messages only under trust policy; never treat arbitrary inbound email as COP grant.
+4. **Transport policy**: check both SMTP envelope and resolved recipients, including aliases, group expansions, Sieve forwards, DSNs/bounces, relay routing and local queue. Disallow direct inter-Twin Stalwart delivery. External Principal-to-Principal email is handled separately by each Principal’s ordinary email adapter; never treat arbitrary inbound email as COP grant.
 5. **Provisioning and lifecycle**: tenant/domain/mailbox creation, atomic removal, password/key rotation, backup/export/import, storage migrations, namespace collision prevention and per-twin retention.
 6. **Observability and limits**: per-tenant usage, throughput, queue quotas, rate limiting, anti-abuse, redacted tenant-bound logs, failed-delivery receipts and independent recovery.
-7. **Inter-twin security**: authenticated identities and signed/sealed semantic envelopes as needed, traceable `packet_ref` and idempotency keys; never confuse stable twin identity with email alias or machine address.
+7. **Boundary security**: private Stalwart messaging never crosses a Twin boundary, even on a shared server. Cross-Twin messages use the ordinary email addresses of the respective Principals and only externally approved content; preserve permitted `packet_ref` and idempotency keys without leaking private packets.
 8. **Test and review**: at least two distinct tenants, two admins and multiple users; negative tests across JMAP, IMAP, SMTP, management API, shared mailbox, calendars/contacts if enabled, alias expansion, all query/search/blob paths and backup recovery; inspect authorization bypasses. Security review required before claiming production-grade isolation.
 
 This is much larger than a configuration change or a couple of Rust patches.
+
+**Additional canonical invariant:** « Ce qui se passe à l’intérieur d’un Twin reste à l’intérieur d’un Twin. » The Stalwart service is *intra-Twin only*, even when a single daemon hosts several Twins. Between distinct Twins, all communication is conducted as authorized ordinary email between their Principals (Gmail or another provider), never as direct Stalwart-to-Stalwart transport. Cross-Twin disclosure is an explicit Principal-governed act, not a routing exception.
 
 ## Private-only scope and proportionate security (Principal clarification 2026-11-10)
 
@@ -83,7 +85,7 @@ Apply **proportionate protection** to the actual boundary:
 | Same twin, same Unix host/process trust boundary | Loopback or local IPC; service-account/process permissions; stable actor IDs and delivery receipts; a bounded actor routing policy | End-to-end message encryption and independently credentialed SMTP for each internal handler |
 | Different twin instances sharing one Stalwart process | Distinct mailbox ownership and access checks *enforced at the shared service boundary*, mailbox isolation and tenant-aware routing; auditable administrator role | Public MTA features, independent commercial-billing tenants or complete hosted-mail UI |
 | Different machines within one trusted mesh | Authenticated machine/twin admission and private connectivity; authorize recipient/actor separately from network reachability | A second application-level encrypted envelope **when** the lower-level trusted transport supplies adequate confidentiality/integrity |
-| Different Trust Perimeters / Principals | Explicit cross-perimeter trust, sender authentication, least-privilege mailbox admission, policy on which private data may cross, revocation | Global public SMTP, unless federation intentionally selects it |
+| Different Trust Perimeters / Principals | **No Stalwart interconnection**. Only Principal-to-Principal correspondence via each person’s ordinary external email provider, with explicit authorization for any disclosure | Public Stalwart SMTP, federated private relay, cross-Twin JMAP |
 
 **Threat-model clarification:** a Trust Perimeter excludes untrusted outside parties, but it does not magically give every sub-agent permission to read a sibling's mail, impersonate a different Principal or issue COP mandates. A shared process or daemon is itself a trust boundary: if all tenants are equally trusted by one operator and merely need routing separation, a simple AGPL gateway and restricted local accounts may be adequate; if independently sovereign Principals require non-access by each other or the operator, strong isolation and possibly separate Community processes/data stores remain necessary. Do not describe a simple alias mapping as security isolation. No external attacker model, hostile Internet tenants, strong cryptography or multi-principal distrust should be invented without an actual requirement; conversely, do not waive confidentiality of a Principal's private corpus simply because the network is private.
 
