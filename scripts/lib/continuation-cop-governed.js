@@ -16,7 +16,7 @@ export function resolveJohnCopContinuation(root,id,{
   witness,expectedSha256,decision,reason="",payload={},
   store,auth,mandate_ref,version_pin,verifyIssuer,ledger,
   capability="continuation.resolve",demand={max_steps:1},
-  at_time,
+  at_time,beforeCanonicalWrite,
 }={}) {
   // COP preflight is not an execution grant and cannot be replaced by
   // the legacy boolean admission hook used in synthetic core unit tests.
@@ -76,6 +76,8 @@ export function resolveJohnCopContinuation(root,id,{
         latest.claim_id===witness.claim_id && latest.handler_ref===witness.handler_ref) {
       if (latest.settlement?.budget_reservation?.reservation_id!==reservationId)
         return refuse("COP_SETTLEMENT_BUDGET_IDENTITY_MISMATCH");
+      if (latest.settlement?.budget_reservation?.intent_sha256!==intent_sha256)
+        return refuse("COP_RECOVERY_INTENT_MISMATCH");
       terminal=recoverClaimedResolution(root,id);
     } else {
       terminal=resolveClaimedContinuation(root,id,{
@@ -86,6 +88,7 @@ export function resolveJohnCopContinuation(root,id,{
         // This callback is internal to an already verified COP preflight
         // and a successfully persisted budget reservation.
         authorize:()=>({ok:true,preflight, reservation_id:reservationId}),
+        beforeCanonicalWrite,
       });
     }
   } catch (error) {
