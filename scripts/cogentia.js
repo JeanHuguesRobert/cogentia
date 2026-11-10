@@ -77,6 +77,7 @@ import { cpsWorkControl, parseIssueRef } from "./lib/cps-work-control.js";
 import { packetRelateJudgmentRequest } from "./lib/packet-relate-judgment.js";
 import { deriveContinuationReturn } from "./lib/continuation-return.js";
 import { nextContinuation, inspectRouting } from "./lib/continuation-routing.js";
+import { currentPacketClaim } from "./lib/continuation-packet-claim.js";
 import { findCapableResolvers } from "./lib/resolver-registry.js";
 import { projectContinuationPlacement } from "./lib/continuation-placement.js";
 import { runMonteCarloAudit, SleepCycleReviewQueue, REVIEW_DECISIONS } from "./lib/corpus-sleep-cycle/index.js";
@@ -6027,6 +6028,9 @@ function daemonHttpContinuationResolve(ctx, body = {}) {
       status: continuation.status,
     }];
   }
+  if (currentPacketClaim(ctx.registryRoot, id)) {
+    return [409, {ok:false,error:"cop_v1_claim_requires_guarded_terminal",id}];
+  }
   const payload = body.payload && typeof body.payload === "object" ? body.payload : {};
   const decision = String(body.decision || payload.decision || payload.chosen_alternative || payload.status || "").trim();
   const reason = String(body.reason || payload.reason || payload.summary || "").trim();
@@ -6860,6 +6864,7 @@ function cmdContinuationResolve(ctx, id) {
   if (!id) throw new Error("Usage: continuation resolve <id> [result.json] --decision <text> --reason <text>");
   const continuation = loadContinuation(ctx, id);
   if (continuation.status !== "active") throw new Error(`Continuation ${id} is not active (status=${continuation.status}).`);
+  if (currentPacketClaim(ctx.registryRoot, id)) throw new Error("cop_v1_claim_requires_guarded_terminal");
   const payload = readContinuationPayload();
   if (payload.continuation_id && payload.continuation_id !== id) {
     throw new Error(`continuation_id mismatch: got ${payload.continuation_id}, expected ${id}`);
@@ -6907,6 +6912,7 @@ function cmdContinuationCancel(ctx, id) {
   if (!id) throw new Error("Usage: continuation cancel <id> --reason <text>");
   const continuation = loadContinuation(ctx, id);
   if (continuation.status !== "active") throw new Error(`Continuation ${id} is not active (status=${continuation.status}).`);
+  if (currentPacketClaim(ctx.registryRoot, id)) throw new Error("cop_v1_claim_requires_guarded_terminal");
   const reason = valueFlag("--reason") || argv.join(" ").trim();
   if (!reason) throw new Error("Cancel requires --reason <text>.");
   cancelContinuationRecord(ctx, continuation, reason);
