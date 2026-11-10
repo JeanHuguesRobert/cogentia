@@ -16,7 +16,7 @@ import {resolveCallerAuth} from "./lib/cogentia-mcp-auth.js";
 import {acquirePacketClaim} from "./lib/continuation-packet-claim.js";
 import {continuationRevision} from "./lib/continuation-terminal-settlement.js";
 import {resolveJohnCopContinuation} from "./lib/continuation-cop-governed.js";
-import {reconcileJohnCopSettlement,reconcileOrphanJohnCopReservation} from "./lib/continuation-cop-reconcile.js";
+import {reconcileJohnCopSettlement,reconcileOrphanJohnCopReservation,scanJohnCopReconciliation} from "./lib/continuation-cop-reconcile.js";
 const root=fs.mkdtempSync(path.join(os.tmpdir(),"cop-reconcile-111-"));
 const db=path.join(root,"events.sqlite");
 const config=path.join(root,".cogentia.json");
