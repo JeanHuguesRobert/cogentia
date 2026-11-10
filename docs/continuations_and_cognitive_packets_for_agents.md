@@ -108,9 +108,9 @@ reference cannot be accessed.
 ## CPS work handling: park, handoff, resume
 
 These are three **single-step intentions over existing packet identities**,
-not actions on a conversation transcript. \`park\` preserves work and suspends
-this handler's participation; \`handoff\` makes its scope retrievable by a
-successor; \`resume\` resolves current packet state and continues, possibly
+not actions on a conversation transcript. `park` preserves work and suspends
+this handler's participation; `handoff` makes its scope retrievable by a
+successor; `resume` resolves current packet state and continues, possibly
 with a different handler or MCP schema. Keep packet lifecycle separate from
 handler claim state. Use existing COP PacketClaim only for incompatible
 concurrent work, and a Judgment Continuation only for an actual judgment

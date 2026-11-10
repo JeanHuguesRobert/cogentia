@@ -183,18 +183,18 @@ judgment Continuation.
   If work changed during suspension, reconcile rather than overwrite.
 
 **Reuse, do not fork architecture:** packet envelope/identity and source
-references; existing COP \`cop.packet-claim/v1\` for incompatible concurrent
+references; existing COP `cop.packet-claim/v1` for incompatible concurrent
 mutation and fencing (not for generic permission); continuation.v2 only
 when a missing judgment requires it; existing Issues as canonical hop
-journals, \`handoff-preflight\` for cold-resume verification,
-\`packet-relate\` for tentative existing-packet association and
-\`continuation-placement\` as advisory handler matching. Current
+journals, `handoff-preflight` for cold-resume verification,
+`packet-relate` for tentative existing-packet association and
+`continuation-placement` as advisory handler matching. Current
 implementation maturity varies: the local claim prototype is not proof
 of distributed lease/fencing enforcement, and lexical candidates are not
 semantic identity assertions.
 
-**Single-step user intention:** one public utterance, \`park\`, \`handoff\`
-or \`resume\`, may orchestrate the above internal stages. The invocation
+**Single-step user intention:** one public utterance, `park`, `handoff`
+or `resume`, may orchestrate the above internal stages. The invocation
 may refer to the current packet focus or a packet reference, without
 creating a second canonical work-context database. Focus is a transient
 pointer/projection to packet identities, not a new work object. If several
@@ -211,8 +211,8 @@ may observe different MCP tool schemas, so the successor must check the
 actual *invocable* capabilities on arrival.
 
 Suggested minimal public CPS surface (not yet implemented):
-\`packet park [ref|focus]\`, \`packet handoff [ref|focus]\`,
-\`packet resume [ref|focus]\`. These are workflow intentions over existing
+`packet park [ref|focus]`, `packet handoff [ref|focus]`,
+`packet resume [ref|focus]`. These are workflow intentions over existing
 packets, **not** three new packet kinds or independent persistence stores.
 
 ---
