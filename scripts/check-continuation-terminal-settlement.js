@@ -8,6 +8,7 @@ import { execFileSync } from "node:child_process";
 import { acquirePacketClaim, currentPacketClaim, validatePacketClaim, prepareTerminalEpoch } from "./lib/continuation-packet-claim.js";
 import {
   resolveClaimedContinuation, recoverClaimedResolution, continuationRevision,
+  inspectContinuationPacketCoordination,
 } from "./lib/continuation-terminal-settlement.js";
 import { projectPacketCoordination, PacketClaimEvent } from "../../inseme/packages/cop-core/src/packet-coordination.js";
 
@@ -59,6 +60,12 @@ try {
   ]);
   assert.equal(projection.active_claim,null);
   assert.equal(projection.completed_claims[0].result_ref,result.result_ref);
+  const persistentProjection=inspectContinuationPacketCoordination(root,id);
+  assert.equal(persistentProjection.status,"completed");
+  assert.deepEqual(persistentProjection.events.map(e=>e.type),
+    [PacketClaimEvent.GRANTED,PacketClaimEvent.COMPLETED]);
+  assert.equal(persistentProjection.projection.active_claim,null);
+  assert.equal(persistentProjection.projection.completed_claims[0].result_ref,result.result_ref);
   // Crash after exclusive intent but before writing canonical continuation.
   const second=cli("emit","--kind","judgment","--question","Recovery fixture").continuation;
   const witness=acquirePacketClaim(root,second.id,"judge-b",{leaseMs:20000}).claim;
@@ -69,11 +76,13 @@ try {
     /simulated_process_crash/);
   assert.equal(cli("inspect",second.id).continuation.status,"active");
   assert.equal(currentPacketClaim(root,second.id).status,"settlement_prepared");
+  assert.equal(inspectContinuationPacketCoordination(root,second.id).status,"settlement_prepared");
   assert.equal(acquirePacketClaim(root,second.id,"reclaimer").code,"TERMINAL_SETTLEMENT_PENDING");
   const recovery=recoverClaimedResolution(root,second.id);
   assert.equal(recovery.ok,true);
   assert.equal(recovery.recovered,true);
   assert.equal(cli("inspect",second.id).continuation.status,"resolved");
+  assert.equal(inspectContinuationPacketCoordination(root,second.id).status,"completed");
   assert.equal(recoverClaimedResolution(root,second.id).code,"RECEIPT_ALREADY_PRESENT");
   // The old witness cannot write after a newer claim epoch.
   const third=cli("emit","--kind","judgment","--question","Stale fixture").continuation;
@@ -81,6 +90,8 @@ try {
   const stale=acquirePacketClaim(root,third.id,"old",{leaseMs:100,now:past}).claim;
   const fresh=acquirePacketClaim(root,third.id,"new",{leaseMs:20000}).claim;
   assert.equal(fresh.epoch,2);
+  assert.deepEqual(inspectContinuationPacketCoordination(root,third.id).events.map(e=>e.type),
+    [PacketClaimEvent.GRANTED,PacketClaimEvent.RECLAIMED]);
   assert.equal(resolveClaimedContinuation(root,third.id,{witness:stale,
     expectedSha256:continuationRevision(root,third.id),decision:"late",authorize:permitted}).code,
     "STALE_CLAIM");
