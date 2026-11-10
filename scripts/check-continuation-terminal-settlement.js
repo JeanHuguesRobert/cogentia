@@ -5,7 +5,7 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { execFileSync } from "node:child_process";
-import { acquirePacketClaim, currentPacketClaim, validatePacketClaim } from "./lib/continuation-packet-claim.js";
+import { acquirePacketClaim, currentPacketClaim, validatePacketClaim, prepareTerminalEpoch } from "./lib/continuation-packet-claim.js";
 import {
   resolveClaimedContinuation, recoverClaimedResolution, continuationRevision,
 } from "./lib/continuation-terminal-settlement.js";
@@ -100,5 +100,25 @@ try {
   fs.writeFileSync(fourthFile,JSON.stringify(external,null,2)+String.fromCharCode(10));
   assert.equal(recoverClaimedResolution(root,fourth.id).code,"BASELINE_CHANGED_AFTER_PREPARE");
   assert.equal(cli("inspect",fourth.id).continuation.updated_at,"synthetic_out_of_band_change");
+  // Deterministic race: a competing future-time reclaim publishes epoch+1
+  // between terminal validation and the final hard-link operation.
+  const fifth=cli("emit","--kind","judgment","--question","CAS race fixture").continuation;
+  const timed=acquirePacketClaim(root,fifth.id,"claimant-a",{leaseMs:100}).claim;
+  let checked=0;
+  const compete=prepareTerminalEpoch(root,fifth.id,timed,{marker:"synthetic"},{
+    checkBaseline:()=>{
+      checked++;
+      if(checked===2) {
+        const reclaimed=acquirePacketClaim(root,fifth.id,"claimant-b",{
+          leaseMs:30000,now:new Date(Date.now()+1000),
+        });
+        assert.equal(reclaimed.claimed,true);
+      }
+      return true;
+    },
+  });
+  assert.equal(compete.ok,false);
+  assert.equal(compete.code,"TERMINAL_RACE_LOST");
+  assert.equal(currentPacketClaim(root,fifth.id).handler_ref,"claimant-b");
   console.log("inseme#111 canonical terminal settlement / crash replay / stale fencing PASS");
 } finally { fs.rmSync(root,{recursive:true,force:true}); }
