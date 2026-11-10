@@ -14,7 +14,7 @@ const safeId = (id) => {
 const needs = (c) => Array.isArray(c.required_capabilities)
   ? c.required_capabilities : c.required_capability ? [c.required_capability] : [];
 const hasJudgement = (profile) => profile.judgement === true ||
-  profile.capabilities?.includes("judgement") === true;
+  profile.capabilities?.some((c) => c.toLowerCase() === "judgement") === true;
 const isJudgement = (c) => needs(c).some((v) => /^(judgement|legal_judgment)$/i.test(v)) ||
   /judg(e)?ment/i.test(c.kind || "");
 const matching = (c, profile) => needs(c).every((v) =>
