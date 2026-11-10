@@ -76,13 +76,12 @@ export class LivingBookPress {
     }
     const resolvedSingularization = singularization || profile.singularizationDefault || 'singulier';
 
-    // Step 1: Allocate authoritative unique copy_id
-    const copyId = this.registry.allocateCopyId(bookId, edition.id, profile.prefix);
-    const issuedAt = new Date().toISOString();
-    const verificationUrl = `${profile.verificationBaseUrl}/${copyId}`;
-
-    // Step 2: Persist provisional RESERVED record in registry before render
-    const initialRecord = {
+    // Reserve identity and record in one SQLite transaction.
+    const initialRecord = this.registry.reserveCopy(allocate => {
+      const copyId = allocate(bookId, edition.id, profile.prefix);
+      const issuedAt = new Date().toISOString();
+      const verificationUrl = profile.verificationBaseUrl + '/' + copyId;
+      return {
       copy_id: copyId,
       book_id: bookId,
       edition_id: edition.id,
@@ -108,8 +107,9 @@ export class LivingBookPress {
           }
         ]
       }
-    };
-    this.registry.saveRecord(initialRecord);
+      };
+    });
+    const copyId = initialRecord.copy_id;
 
     // Step 3: Render copy-specific PDF artifact
     const renderResult = renderUniqueCopyPdf(initialRecord, {
@@ -118,9 +118,9 @@ export class LivingBookPress {
       format: resolvedFormat
     });
 
-    // Step 4: Record render evidence and promote to GENERATED
-    const generatedRecord = {
-      ...initialRecord,
+    // Transactionally update the existing copy; concurrent biography entries survive.
+    const generatedRecord = this.registry.updateRecord(copyId, current => ({
+      ...current,
       render: {
         format: resolvedFormat,
         print_profile: resolvedMaterialProfile,
@@ -128,16 +128,19 @@ export class LivingBookPress {
         byte_length: renderResult.byteLength,
         generated_at: new Date().toISOString()
       },
-      status: 'GENERATED'
-    };
-
-    generatedRecord.biography.events.push({
-      event_type: 'RENDERED',
-      timestamp: generatedRecord.render.generated_at,
-      description: `Rendered copy-specific PDF (${renderResult.byteLength} bytes, SHA-256: ${renderResult.sha256})`
-    });
-
-    this.registry.saveRecord(generatedRecord);
+      status: 'GENERATED',
+      biography: {
+        ...current.biography,
+        events: [
+          ...(current.biography?.events || []),
+          {
+            event_type: 'RENDERED',
+            timestamp: new Date().toISOString(),
+            description: 'Rendered copy-specific PDF (' + renderResult.byteLength + ' bytes, SHA-256: ' + renderResult.sha256 + ')'
+          }
+        ]
+      }
+    }));
 
     return {
       record: generatedRecord,
