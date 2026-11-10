@@ -901,6 +901,8 @@ Core commands:
                            Add --task <request> to attach a bounded corpus-orientation packet.
   agent health             Check context index, embedding target and AI router.
                            Flags: --router-url <url> --check-query [--query <text>]
+  agent mail status        Show private intra-Twin JMAP capability and runtime binding readiness.
+  agent mail send|receive  Reserved semantic verbs: blocked until server-side credential broker and COP authorizer are connected.
   agent mandates plan      List repositories that need the minimal local mandate.
   agent mandates apply     Create missing local mandates from the canonical template.
   cop consent review --from <proposal.json>
