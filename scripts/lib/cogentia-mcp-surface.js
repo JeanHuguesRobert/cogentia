@@ -2,6 +2,7 @@
  * MCP 2026-07-28 extra primitives: resources, prompts, completions,
  * and experimental Skills Over MCP (SEP-2640).
  */
+import {listRegisteredMcpAppResources,readRegisteredMcpAppResource} from "./cogentia-mcp-app-registry.js";
 import fs from "node:fs";
 import path from "node:path";
 import { createHash } from "node:crypto";
@@ -29,7 +30,6 @@ export const MCP_APP_DEMO_COMPAT_URIS = Object.freeze([
 ]);
 export const COP_APPROVAL_PREVIEW_URI = "ui://cogentia/cop-approval-preview-v1";
 export const COP_CONSENT_REVIEW_URI = "ui://cogentia/cop-consent-review-v1";
-export const IDUAL_CALIBRATION_URI = "ui://cogentia/idual-calibration-v1";
 export const MCP_APP_DEMO_MIME = "text/html;profile=mcp-app";
 export const SKILL_URI_PREFIX = "skill://cogentia/";
 export const PATTERN_URI_PREFIX = "cogentia://pattern/";
@@ -156,7 +156,7 @@ export function listPromptResources(options = {}) {
   }));
 }
 
-export function listCatalogResources() {
+export function listCatalogResources(options={}) {
   return [
     {
       uri: MCP_APP_DEMO_URI,
@@ -165,6 +165,7 @@ export function listCatalogResources() {
       mimeType: MCP_APP_DEMO_MIME,
       description: "Read-only local interactive UI (no credentials, no external effects).",
     },
+    ...listRegisteredMcpAppResources(options),
     ...MCP_APP_DEMO_COMPAT_URIS.map((uri) => ({
       uri,
       name: "fractatest-demo-compat",
@@ -172,13 +173,6 @@ export function listCatalogResources() {
       mimeType: MCP_APP_DEMO_MIME,
       description: "Legacy URI alias serving the current read-only FractaTest UI.",
     })),
-    {
-      uri: IDUAL_CALIBRATION_URI,
-      name: "idual-calibration",
-      title: "iDual — calibration IR",
-      mimeType: MCP_APP_DEMO_MIME,
-      description: "Calibration interactive; commandes transmises à la conversation, jamais exécutées par l'iframe.",
-    },
     {
       uri: COP_CONSENT_REVIEW_URI,
       name: "cop-consent-review",
@@ -216,7 +210,7 @@ export function listCatalogResources() {
 
 export function listAllResources(options = {}) {
   const resources = [
-    ...listCatalogResources(),
+    ...listCatalogResources(options),
     ...listSkillResources(options),
     ...listPatternResources(options),
     ...listPromptResources(options),
@@ -245,13 +239,8 @@ export function readMcpResource(uri, options = {}) {
       uiMeta: { csp: { connectDomains: [], resourceDomains: [] }, prefersBorder: true },
     };
   }
-  if (raw === IDUAL_CALIBRATION_URI) {
-    return {
-      ok: true, uri: raw, mimeType: MCP_APP_DEMO_MIME,
-      text: fs.readFileSync(path.join(repoRoot, "scripts", "lib", "mcp-apps", "idual-calibration.html"), "utf8"),
-      uiMeta: { csp: { connectDomains: [], resourceDomains: [] }, prefersBorder: true },
-    };
-  }
+  const registered = readRegisteredMcpAppResource(raw,options);
+  if(registered)return registered;
   if (raw === COP_CONSENT_REVIEW_URI) {
     return {
       ok:true,uri:raw,mimeType:MCP_APP_DEMO_MIME,

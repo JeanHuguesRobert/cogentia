@@ -151,7 +151,8 @@
     "test:mandate-attenuation": "node scripts/check-mandate-attenuation.js",
     "mcp:inspect": "npx @modelcontextprotocol/inspector node scripts/cogentia-mcp.js",
     "mcp:inspect:2026": "node -e \"process.env.COGENTIA_MCP_FORCE_PROTOCOL='2026-07-28'; require('child_process').spawn('npx', ['@modelcontextprotocol/inspector', 'node', 'scripts/cogentia-mcp.js'], {stdio: 'inherit', shell: true})\"",
-    "test:corpus-plan-scope": "node scripts/check-corpus-plan-scope.js"
+    "test:corpus-plan-scope": "node scripts/check-corpus-plan-scope.js",
+    "test:mcp-apps": "node scripts/check-mcp-app-registry.js && node scripts/check-idual-calibration-mcp-app.js && node scripts/check-idual-calibration-browser.js && node scripts/check-mcp-apps-demo.js && node scripts/check-cop-consent-surface.js"
   },
   "devDependencies": {
     "@modelcontextprotocol/inspector": "^2.7.0",

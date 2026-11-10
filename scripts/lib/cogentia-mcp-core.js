@@ -1,3 +1,4 @@
+import {listRegisteredMcpAppTools,callRegisteredMcpAppTool} from "./cogentia-mcp-app-registry.js";
 import {executeJohnCanonicalForm} from "./john-cop-form-execution.js";
 import {executeJohnCanonicalRead} from "./john-cop-read-execution.js";
 import {openExistingJohnCopStore} from "./john-cop-existing-store.js";
@@ -129,13 +130,6 @@ export const TOOLS = [
     description: "Show a read-only FractaTest MCP Apps widget; static demo, no credentials, persistence, or side effects. Text fallback works on non-UI clients.",
     inputSchema: { type: "object", properties: {}, additionalProperties: false },
     _meta: { ui: { resourceUri: "ui://cogentia/fractatest-demo-v3", visibility: ["model", "app"] } },
-  },
-  {
-    name: "cogentia_idual_calibration",
-    description: "Open iDual IR calibration MCP App: command requests are sent to the chat, never directly dispatched. Records observations locally in the widget and exports a structured report through the conversation. No automatic hardware effects.",
-    inputSchema: { type:"object", properties:{}, additionalProperties:false },
-    _meta: { ui: { resourceUri:"ui://cogentia/idual-calibration-v1", visibility:["model","app"] } },
-    annotations: { readOnlyHint:true, destructiveHint:false, openWorldHint:false },
   },
   {
     name: "cogentia_cop_consent_review",
@@ -1470,7 +1464,15 @@ export function createMcpCore(env = process.env, extras = {}) {
     const oauthDiscoveryEnabled = Boolean(String(env.COGENTIA_MCP_OAUTH_ISSUER || "").trim());
     // Announce protected tools only when a real OAuth issuer is configured.
     // Discovery never grants authorization: tools/call remains fail-closed.
-    const visibleTools = oauthDiscoveryEnabled ? TOOLS : toolsForAuth(auth);
+    const registeredTools=listRegisteredMcpAppTools({env});
+    for(const t of registeredTools){
+      if(TOOLS.some(base=>base.name===t.name))
+        throw new Error('MCP App tool conflicts with existing core tool: '+t.name);
+    }
+    const visibleTools = [
+      ...(oauthDiscoveryEnabled ? TOOLS : toolsForAuth(auth)),
+      ...registeredTools,
+    ];
     const callerTools = visibleTools.map((tool) => ({
       ...tool,
       ...(oauthDiscoveryEnabled ? {
@@ -1782,6 +1784,8 @@ export function createMcpCore(env = process.env, extras = {}) {
     }
     if (MUTATE_TOOLS.has(name)) requireMutate(name, auth);
     if (PRIVATE_READ_TOOLS.has(name)) requirePrivateRead(name, auth);
+    const registeredApp = callRegisteredMcpAppTool(name,args,{env});
+    if(registeredApp)return registeredApp;
     if (!TOOLS.some((t) => t.name === name)) {
       throw new Error(`Unknown tool: ${name}`);
     }
@@ -1790,8 +1794,6 @@ export function createMcpCore(env = process.env, extras = {}) {
         return captureMemoryForSurface(args, auth);
       case "cogentia_mcp_apps_demo":
         return { ok: true, kind: "cogentia.mcp_apps_demo.v1", label: "FractaTest MCP Apps", mode: "read_only", message: "Démonstrateur interactif sans effet externe." };
-      case "cogentia_idual_calibration":
-        return {ok:true,kind:"cogentia.idual_calibration.v1",mode:"conversation_mediated",hardware_dispatch:false,physical_effect:false,device:"iDual via BroadLink RM Pro+",status:"ready",notice:"Les boutons demandent une émission par message dans la conversation; ils ne l'exécutent pas directement."};
       case "cogentia_cop_consent_review": {
         const {copReviewPacket}=await import('./cop-consent-packet.js');
         return copReviewPacket(args.proposal,{source:args.source_ref||'mcp-chat:unverified',source_verified:false});
