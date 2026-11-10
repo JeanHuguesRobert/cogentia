@@ -10,6 +10,7 @@ import os
 from pathlib import Path
 import subprocess
 import sys
+import time
 import urllib.error
 import urllib.request
 
@@ -22,11 +23,23 @@ URL='http://127.0.0.1:8796/api/cop/principal-consent/aaaaaaaa-aaaa-4aaa-8aaa-aaa
 def run(*cmd):
     subprocess.run(cmd,check=True,stdout=subprocess.DEVNULL)
 
-def check(code):
+def check(code, *, after_restart=False):
     req=urllib.request.Request(URL,headers={'Host':'jhn.baronsmariani.org'},method='GET')
-    try:
-        with urllib.request.urlopen(req,timeout=6) as r: return r.status==code
-    except urllib.error.HTTPError as e: return e.code==code
+    # systemctl restart waits for the process, not its HTTP listen(). The
+    # existing listener initializes Supabase + SQLite before binding 8796.
+    # Probe bounded readiness, not a fixed blind sleep or a one-shot request.
+    attempts = 30 if after_restart else 1
+    for index in range(attempts):
+        try:
+            with urllib.request.urlopen(req,timeout=2) as r:
+                if r.status==code:return True
+                return False
+        except urllib.error.HTTPError as e:
+            return e.code==code
+        except (urllib.error.URLError, TimeoutError, ConnectionError):
+            if index+1==attempts:return False
+            time.sleep(0.2)
+    return False
 
 def main():
     parser=argparse.ArgumentParser()
@@ -52,7 +65,7 @@ def main():
         run('systemctl','daemon-reload')
         run('systemctl','restart','cogentia-jhn-consent.service')
         run('systemctl','is-active','--quiet','cogentia-jhn-consent.service')
-        if not check(401):raise RuntimeError('post_restart_anonymous_denial_failed')
+        if not check(401,after_restart=True):raise RuntimeError('post_restart_anonymous_denial_failed')
         output=subprocess.run(['systemctl','show','cogentia-jhn-consent.service','-p','Environment','--value'],capture_output=True,text=True,check=True).stdout
         if 'COGENTIA_JHN_CONSENT_ENABLE_DECISION=1' not in output:
             raise RuntimeError('decision_enable_not_applied')
