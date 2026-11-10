@@ -194,3 +194,58 @@ export function reconcileOrphanJohnCopReservation(root,id,{
   }
   return refuse("COP_BUDGET_VERSION_CONFLICT");
 }
+
+/**
+ * Private inventory only: inspect durable work needing reconciliation.
+ * Does not call ledger.reserve/settle/release and never changes claim files.
+ */
+export function scanJohnCopReconciliation(root,{
+  auth,store,budget_id,now=new Date(),limit=100,
+}={}) {
+  if(!isResolvedCallerAuth(auth) || auth.auth!=="jhn" ||
+     auth.principal_ref!=="principal:jhn")
+    return refuse("AUTHENTICATED_JHN_RECONCILER_REQUIRED");
+  if(!validBudget(budget_id) || typeof store?.listTopic!=="function")
+    return refuse("DURABLE_COP_STORE_REQUIRED");
+  if(!Number.isInteger(limit) || limit<1 || limit>1000)
+    return refuse("INVALID_SCAN_LIMIT");
+  const top=path.join(root,".cogentia","resolvers","claims-v1");
+  if(!fs.existsSync(top)) return {ok:true,candidates:[],count:0,truncated:false};
+  const dirs=fs.readdirSync(top).filter(validId).sort();
+  const candidates=[];
+  for(const id of dirs) {
+    const dir=path.join(top,id);
+    if(!fs.statSync(dir).isDirectory()) continue;
+    const records=fs.readdirSync(dir).filter(f=>/^\d{12}\.json$/.test(f))
+      .sort().map(f=>JSON.parse(fs.readFileSync(path.join(dir,f),"utf8")));
+    const intent=records.at(-1);
+    for(const witness of records) {
+      if(witness.schema!=="cop.packet-claim/v1") continue;
+      const key="cop:continuation:terminal:"+id+":"+witness.claim_id;
+      const reservation_id="reservation:"+budget_id+":"+key;
+      const history=reservationEvents(store,budget_id,reservation_id);
+      if(!history?.original || history.settlements.length || history.releases.length)
+        continue;
+      let kind=null;
+      if(intent?.status==="settlement_prepared" &&
+         intent.claim_id===witness.claim_id &&
+         intent.settlement?.budget_reservation?.reservation_id===reservation_id)
+        kind="terminal_budget_pending";
+      else if(isClaimExpired(witness,now) &&
+         !records.some(record=>record.status==="settlement_prepared" &&
+           record.claim_id===witness.claim_id)) {
+        const coordination=inspectContinuationPacketCoordination(root,id);
+        if(!coordination.events.some(event=>
+          event.type==="PACKET_CLAIM_COMPLETED" && event.claim_id===witness.claim_id))
+          kind="expired_orphan_budget";
+      }
+      if(kind) {
+        candidates.push({continuation_id:id,claim_id:witness.claim_id,
+          epoch:witness.epoch,reservation_id,kind});
+        if(candidates.length>=limit)
+          return {ok:true,candidates,count:candidates.length,truncated:true};
+      }
+    }
+  }
+  return {ok:true,candidates,count:candidates.length,truncated:false};
+}
