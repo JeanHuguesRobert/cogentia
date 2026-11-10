@@ -44,9 +44,28 @@ if (args[0] === "issue" && args[1] === "list") {
   process.stdout.write(${JSON.stringify(JSON.stringify(issueList))});
   process.exit(0);
 }
+if (args[0] === "api" && args.includes("search/code")) {
+  if (args.some(arg => arg.includes("simulate-429"))) {
+    process.stderr.write("gh: API rate limit exceeded (HTTP 429)");
+    process.exit(1);
+  }
+  if (args.some(arg => arg.includes("simulate-403"))) {
+    process.stderr.write("gh: Resource not accessible by integration (HTTP 403)");
+    process.exit(1);
+  }
+  process.stdout.write(JSON.stringify({ total_count: 1, items: [{
+    path: "README.md", html_url: "https://github.com/JeanHuguesRobert/cogentia/blob/main/README.md"
+  }] }));
+  process.exit(0);
+}
 process.stdout.write("[]");
 `, "utf8");
 fs.writeFileSync(ghCmd, `@echo off\r\nnode "${ghJs}" %*\r\n`, "utf8");
+
+const ghUnix = path.join(temp, "gh");
+fs.writeFileSync(ghUnix, `#!/bin/sh
+exec node "${ghJs}" "$@"
+`, { encoding: "utf8", mode: 0o755 });
 
 const port = await freePort();
 const base = `http://127.0.0.1:${port}`;
@@ -124,6 +143,33 @@ try {
   const searchTool = mcpSearch.find(message => message.result?.structuredContent?.data?.schema === "cogentia.code-search.v1");
   assert.ok(searchTool, JSON.stringify(mcpSearch, null, 2));
   assert.ok(searchTool.result.structuredContent.data.count > 0);
+  // A public code search must not leak the unique heading of a private-frontmatter file.
+  const privateResponse = await fetch(`${base}/api/cli/code/search?repo=cogentia&q=IoC%20continuations%20vs%20OpenAI-compatible%20calls&limit=10`, {
+    headers: { Authorization: "Bearer testtoken" },
+  });
+  const privateResult = await privateResponse.json();
+  assert.equal(privateResponse.status, 200, JSON.stringify(privateResult));
+  assert.ok(!privateResult.results.some(result => result.path.includes("ioc_continuation_openai_path_audit")),
+    JSON.stringify(privateResult));
+  const fallbackResponse = await fetch(`${base}/api/cli/code/search?repo=cogentia&q=simulate-429&strategy=remote_first&limit=2`, {
+    headers: { Authorization: "Bearer testtoken" },
+  });
+  const fallback = await fallbackResponse.json();
+  assert.equal(fallbackResponse.status, 200, JSON.stringify(fallback));
+  assert.equal(fallback.source, "git_committed_tree");
+  assert.equal(fallback.fallback?.reason, "github_quota_or_transport");
+  const deniedResponse = await fetch(`${base}/api/cli/code/search?repo=cogentia&q=simulate-403&strategy=remote_first&limit=2`, {
+    headers: { Authorization: "Bearer testtoken" },
+  });
+  const denied = await deniedResponse.json();
+  assert.equal(deniedResponse.status, 400, JSON.stringify(denied));
+  assert.equal(denied.error, "remote_access_denied");
+  const remoteResponse = await fetch(`${base}/api/cli/code/search?repo=cogentia&q=Cognitive&strategy=remote_first&limit=2`, {
+    headers: { Authorization: "Bearer testtoken" },
+  });
+  const remoteResult = await remoteResponse.json();
+  assert.equal(remoteResponse.status, 200, JSON.stringify(remoteResult));
+  assert.equal(remoteResult.source, "github_code_search");
   console.log(JSON.stringify({ ok: true, graph_nodes: graph.nodes.length, graph_edges: graph.edges.length,
     issues_list_count: listed.issues.length, code_search_count: search.count,
     mcp_tools: ["cogentia_issue_graph", "cogentia_issues_list", "cogentia_code_search"] }, null, 2));

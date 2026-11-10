@@ -229,6 +229,17 @@ Tools are registered in `scripts/lib/cogentia-mcp-core.js`. They are categorized
 | `cogentia_issue_graph` | **P0** | Read-only issue graph mapping work items to target documents |
 | `cogentia_issues_list` | **P0** | List tracked GitHub issues for a registered repository |
 | `cogentia_code_search` | **P0** | Search exact text in the committed tree of a visible, registered repository without GitHub code search API; returns commit and line references |
+
+Code search supports `strategy: local` (default, exact committed tree) or
+`strategy: remote_first` (GitHub code search, with automatic local fallback
+only on rate limits and transport/server failures). Authorization failures do
+**not** trigger fallback. Both strategies enforce repository and per-path public
+visibility, including private Markdown frontmatter, ignored paths, and private
+directories. Local results carry their exact commit and explicitly mark their
+remote freshness as unverified; remote-index results are not commit-pinned.
+The fallback is inside this semantic Cogentia capability, not an interception
+of independent third-party GitHub connector calls.
+
 | `cogentia_continuation_list` | **P1** | List active continuation queue (`alive`, `hibernating`, `closed`) |
 | `cogentia_continuation_inspect` | **P1** | Inspect a specific continuation payload and execution status |
 | `cogentia_git_verify` | **P1** | Check git clean/dirty state and ahead/behind branch status |

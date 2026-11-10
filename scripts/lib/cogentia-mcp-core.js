@@ -499,6 +499,7 @@ export const TOOLS = [
         query: { type: "string", minLength: 1, maxLength: 200 },
         repo: { type: "string" },
         limit: { type: "integer", minimum: 1, maximum: 50 },
+        strategy: { type: "string", enum: ["local", "remote_first"] },
       },
       required: ["query"],
       additionalProperties: false,
@@ -1896,6 +1897,7 @@ export function createMcpCore(env = process.env, extras = {}) {
           q: args.query,
           repo: args.repo || "cogentia",
           limit: boundedOptional(args.limit, 1, 50) || 20,
+          strategy: enumOptional(args.strategy, ["local", "remote_first"], "strategy") || "local",
         });
       case "cogentia_issue_graph":
         return daemonGet("/api/issues/graph", {

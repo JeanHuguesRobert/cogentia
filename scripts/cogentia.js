@@ -4891,6 +4891,7 @@ async function handleDaemonRequest(req, res) {
       repoArg: url.searchParams.get("repo") || "cogentia",
       query: url.searchParams.get("q") || "",
       limit: boundedInteger(url.searchParams.get("limit"), 20, 1, 50), view,
+      strategy: url.searchParams.get("strategy") || "local",
     });
     return daemonJson(res, result.ok ? 200 : (result.error === "repository_not_visible" ? 403 : 400), result);
   }
@@ -17346,12 +17347,62 @@ function syncIssuePacketsForRepo(ctx, repo, { state = "all", limit = 100 } = {})
   return { written, unchanged, removed, deferred_issues: deferredIssues };
 }
 
-function codeSearchReport(ctx, { repoArg = "cogentia", query = "", limit = 20, view = PUBLIC_VIEW } = {}) {
+function codeSearchReport(ctx, { repoArg = "cogentia", query = "", limit = 20, view = PUBLIC_VIEW, strategy = "local" } = {}) {
   const repo = ctx.repos.find(item => item.name === repoArg || item.github_full_name === repoArg);
   if (!repo) return { ok: false, error: "unknown_registered_repository" };
-  if (!canSeeRepo(repo, view)) return { ok: false, error: "repository_not_visible" };
+  if (!canSeeRepo(repo, view) || (isPublicView(view) && repoVisibility(repo) !== "public")) return { ok: false, error: "repository_not_visible" };
+  strategy = String(strategy);
+  if (!["local", "remote_first"].includes(strategy)) return { ok: false, error: "invalid_strategy" };
   const needle = String(query).trim();
   if (!needle || needle.length > 200) return { ok: false, error: "invalid_query" };
+  const ignored = loadIgnore(repo.path);
+  const visibilityCache = new Map();
+  const allowed = relPath => {
+    if (!isPublicView(view)) return true;
+    if (relPath.startsWith(".cogentia/") || /(^|\/)(?:personal|private|secrets)(\/|$)/i.test(relPath)
+      || /(^|\/)\.env(?:\.|$)/.test(relPath) || matchesIgnore(relPath, ignored)) return false;
+    if (repo.policy.default_scope === "research" && !relPath.startsWith("research/")) return false;
+    if (!/\.md$/i.test(relPath)) return true;
+    if (!visibilityCache.has(relPath)) {
+      const file = spawnSync("git", ["-C", repo.path, "show", "HEAD:" + relPath],
+        { encoding: "utf8", timeout: 8000, maxBuffer: 1024 * 1024 });
+      const fm = file.status === 0 ? parseFrontmatter(file.stdout).data : null;
+      const visibility = fm ? documentVisibility(repo, relPath, fm) : null;
+      visibilityCache.set(relPath, !!(fm && fm.public !== false && fm.published !== false && visibility && visibility.level === "public" && visibility.public_presence === "full"));
+    }
+    return visibilityCache.get(relPath);
+  };
+  // Optional remote-first: fall back only on quota/transport/server errors.
+  // Authentication/authorization errors must not trigger an alternate data route.
+  let fallback = null;
+  if (strategy === "remote_first") {
+    const fullName = repo.github_full_name || repo.policy?.github || githubFullNameFromRemote(repo);
+    if (fullName) {
+      const remote = spawnSync("gh", ["api", "-X", "GET", "search/code", "-f",
+        "q=" + JSON.stringify(needle) + " repo:" + fullName, "-f", "per_page=" + limit],
+        { encoding: "utf8", timeout: 12000, maxBuffer: 1024 * 1024 });
+      if (remote.status === 0) {
+        try {
+          const response = JSON.parse(remote.stdout);
+          const permittedRemote = (response.items || []).filter(item => allowed(item.path));
+          const results = permittedRemote.slice(0, limit).map(item => ({
+            path: item.path, line: null, snippet: null, url: item.html_url,
+          }));
+          return { ok: true, schema: "cogentia.code-search.v1", repo: repo.name,
+            commit: null, source: "github_code_search", query: needle, results,
+            truncated: Number(response.total_count || 0) > (response.items || []).length || permittedRemote.length > limit, count: results.length,
+            freshness: "remote_index_not_commit_pinned" };
+        } catch { return { ok: false, error: "remote_invalid_response" }; }
+      }
+      const details = String(remote.stderr || "");
+      if (/401|403|404|forbidden|not found|authentication/i.test(details)
+        && !/rate.limit|secondary.rate|429/i.test(details))
+        return { ok: false, error: "remote_access_denied" };
+      if (!remote.error && !/429|rate.limit|secondary.rate|5\d\d|timed.out|timeout|connect|unavailable/i.test(details))
+        return { ok: false, error: "remote_unclassified_failure" };
+      fallback = { reason: "github_quota_or_transport" };
+    } else fallback = { reason: "remote_locator_missing" };
+  }
   // No shell, no remote API, no untracked files: search exactly the committed tree.
   const sha = spawnSync("git", ["-C", repo.path, "rev-parse", "HEAD"],
     { encoding: "utf8", timeout: 10000 });
@@ -17362,13 +17413,14 @@ function codeSearchReport(ctx, { repoArg = "cogentia", query = "", limit = 20, v
     return { ok: false, error: "git_search_failed" };
   }
   const lines = String(grep.stdout || "").split("\n").filter(Boolean);
-  const results = lines.slice(0, limit).map(raw => {
-    const match = /^HEAD:(.*?):(\d+):(.*)$/.exec(raw);
-    return match ? { path: match[1], line: Number(match[2]), snippet: match[3].slice(0, 350) } : null;
-  }).filter(Boolean);
+  const permitted = lines.map(raw => /^HEAD:(.*?):(\d+):(.*)$/.exec(raw))
+    .filter(match => match && allowed(match[1]));
+  const results = permitted.slice(0, limit).map(match => ({
+    path: match[1], line: Number(match[2]), snippet: match[3].slice(0, 350)
+  }));
   return { ok: true, schema: "cogentia.code-search.v1", repo: repo.name,
     commit: sha.stdout.trim(), source: "git_committed_tree", query: needle,
-    results, truncated: lines.length > limit, count: results.length };
+    results, truncated: permitted.length > limit, count: results.length, fallback, freshness: "local_commit_not_remote_verified" };
 }
 
 function issueListReport(ctx, { repoArg = "all", state = "open", limit = 25, view = PUBLIC_VIEW } = {}) {
