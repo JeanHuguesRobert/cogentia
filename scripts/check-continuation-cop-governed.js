@@ -17,6 +17,8 @@ import { resolveCallerAuth } from "./lib/cogentia-mcp-auth.js";
 import { acquirePacketClaim } from "./lib/continuation-packet-claim.js";
 import { continuationRevision } from "./lib/continuation-terminal-settlement.js";
 import { resolveJohnCopContinuation } from "./lib/continuation-cop-governed.js";
+import { verifyJohnSupabaseRuntimeBinding, resolveJohnCopViaSupabaseInstance } from "./lib/john-supabase-continuation-binding.js";
+import { JHN_VAULT_INSTANCE_ID } from "../../inseme/apps/platform/scripts/lib/vault-catalog.js";
 
 const root=fs.mkdtempSync(path.join(os.tmpdir(),"cop-governed-111-"));
 const registry=path.join(root,".cogentia.json");
@@ -77,12 +79,37 @@ try {
   assert.equal(mismatch.code,"BASELINE_CHANGED");
   assert.equal(ledger.snapshot().available.max_steps,2,
     "failed terminal must release reserved budget");
-  const ok=resolveJohnCopContinuation(root,one.id,{
-    ...args,witness,expectedSha256:rev,decision:"signed_synthetic",
+  const owner="aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa";
+  const adminClient={from(table){
+    assert.equal(table,"instances");
+    return {select:()=>({eq:()=>({single:async()=>({data:{
+      id:JHN_VAULT_INSTANCE_ID,canonical_slug:"jhn",
+      status:"autonomous",principal_id:owner,
+    }})})})};
+  }};
+  const authClient={auth:{admin:{getUserById:async id=>{
+    assert.equal(id,owner);
+    return {data:{user:{id:owner,email_confirmed_at:"2026-11-10T00:00:00Z",
+      is_anonymous:false}}};
+  }}}};
+  const verified=await verifyJohnSupabaseRuntimeBinding({auth,adminClient,authClient});
+  assert.equal(verified.ok,true);
+  assert.equal(verified.cop_authorized,false);
+  assert.equal(Object.hasOwn(verified,"user_id"),false);
+  assert.equal((await verifyJohnSupabaseRuntimeBinding({
+    auth:{...auth},adminClient,authClient})).reason,"john_runtime_credential_required");
+  assert.equal((await verifyJohnSupabaseRuntimeBinding({
+    auth,adminClient:{from:()=>({select:()=>({eq:()=>({single:async()=>({
+      data:{id:JHN_VAULT_INSTANCE_ID,canonical_slug:"jhn",status:"autonomous",
+        principal_id:null}})})})})},authClient,
+  })).reason,"john_instance_principal_unbound");
+  const ok=await resolveJohnCopViaSupabaseInstance(root,one.id,{
+    ...args,adminClient,authClient,witness,expectedSha256:rev,decision:"signed_synthetic",
     reason:"fixture only",payload:{synthetic:true},
   });
   assert.equal(ok.ok,true,JSON.stringify(ok));
   assert.equal(ok.code,"COP_TERMINAL_SETTLED");
+  assert.equal(ok.instance_binding_verified,true);
   assert.equal(ok.cop_preflight_verified,true);
   assert.equal(ok.budget_settled,true);
   assert.equal(ok.receipt.budget_reservation.reservation_id,ok.reservation_id);
