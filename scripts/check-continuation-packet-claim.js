@@ -24,9 +24,9 @@ try {
   assert.equal(validatePacketClaim(root,id,recovered.claim,{now:new Date(t0.getTime()+1002)}).ok,true);
   const race="ctn_parallel_epochs";
   const file=fileURLToPath(new URL("./lib/continuation-packet-claim.js",import.meta.url));
-  const contender=(handler)=>new Promise((resolve,reject)=>{
+  const contender=(packetId,handler)=>new Promise((resolve,reject)=>{
     const src="import {acquirePacketClaim} from "+JSON.stringify(file)+";console.log(JSON.stringify(acquirePacketClaim(process.argv[1],process.argv[2],process.argv[3],{leaseMs:300000})))";
-    const child=spawn(process.execPath,["--input-type=module","-e",src,root,race,handler],
+    const child=spawn(process.execPath,["--input-type=module","-e",src,root,packetId,handler],
       {stdio:["ignore","pipe","pipe"]});
     let out="",err="";
     child.stdout.on("data",d=>out+=d);
@@ -36,10 +36,19 @@ try {
   });
   for(let i=0;i<12;i++){
     const name=race+"_"+i;
-    const results=await Promise.all([contender(name+"a"),contender(name+"b")]);
+    const results=await Promise.all([contender(name,name+"a"),contender(name,name+"b")]);
     assert.equal(results.filter(r=>r.claimed).length,1,"one winner per competing pair");
-    assert.equal(currentPacketClaim(root,race).epoch,i+1===1?1:1);
-    // The same claim remains active; next attempts must all lose.
+    assert.equal(currentPacketClaim(root,name).epoch,1);
+    assert.equal((await contender(name,name+"c")).claimed,false,"active claim blocks next claimant");
   }
+  // Simultaneous contenders reclaim an expired epoch using the same CAS slot.
+  const expired="ctn_expired_race";
+  const past=new Date("2026-01-01T00:00:00Z");
+  const initial=acquirePacketClaim(root,expired,"initial",{leaseMs:100,now:past});
+  assert.equal(initial.claim.epoch,1);
+  const reclamation=await Promise.all([contender(expired,"reclaimer-a"),contender(expired,"reclaimer-b")]);
+  assert.equal(reclamation.filter(r=>r.claimed).length,1);
+  assert.equal(currentPacketClaim(root,expired).epoch,2);
+  assert.equal(validatePacketClaim(root,expired,initial.claim).code,"STALE_CLAIM");
   console.log("inseme#111 immutable epoch claim / expiry / stale fence / process collision PASS");
 }finally{fs.rmSync(root,{recursive:true,force:true});}
