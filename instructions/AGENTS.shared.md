@@ -102,6 +102,31 @@ The cost of making and later reconciling redundant copies—operator attention, 
 
 Source: [Measured Risk](../research/measured_risk.md), [FractaCognition principles](../research/fractacognition_principles.md), and Occam / Minimum Sufficient Locality.
 
+## Fix Bugs First — agent attention signal, not Principal constraint
+
+**Fix Bugs First is a stigmergic prioritization reminder, not the
+Engagement Gatekeeper or a control over the Principal.** When starting
+substantive work or proposing agent-initiated new feature development,
+consult the relevant existing bug register if readily accessible.
+Mention a relevant high/critical problem **at most once**, briefly,
+then follow the Principal's current request. Do not withhold a requested
+capability, obstruct a conversation, monitor the Principal's attention,
+log deviation from the backlog, demand a waiver or repeatedly nag.
+The Principal's choice to change priority needs no justification to the
+agent.
+
+An existing mechanical backlog gate remains **agent self-discipline** for
+unsolicited feature expansion on a broken operational subsystem. It does
+not authorize surveillance, impose an approval ceremony or supplant the
+Principal's present mandate. A mandated action must still satisfy its
+own genuine COP, rights and third-party effect boundaries; FBF is not a
+shortcut around them. Keep the backlog in its owning Operium register
+and resumable work in existing packets, not a parallel attention ledger.
+
+Provenance: reconciled from Cogentia PR #151 and its Operium reference,
+without replacing newer shared-agent instructions or promoting a
+synthetic text-assertion test into a runtime safety guarantee.
+
 ## Mandatory two-channel GitHub Actions discipline (FBF)
 
 **Before creating or changing ANY workflow, recall and enforce this invariant.** GitHub Actions status is the transport/infrastructure channel, not the task result. Expected work failures (test, build, validation, missing dependency/input, timeout, and handled exceptions) MUST be converted to typed durable results while the GitHub job/check remains green. Preserve the original phase, error code, cause, logs, and outcome in a separate COP receipt/Issue callback and/or artifact. Never hide the cause to make the check green.
