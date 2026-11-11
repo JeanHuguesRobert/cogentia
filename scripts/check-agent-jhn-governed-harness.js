@@ -90,14 +90,48 @@ test("external writes require confirmation", async () => {
   assert.equal(sends, 0);
 });
 
-test("confirmed external writes can execute", async () => {
+test("confirmation alone never increases the default zero external-effect budget", async () => {
   let sends = 0;
   const harness = createGovernedHarness({
     registry: registry({ send: async () => { sends += 1; return { sent: true }; } }),
-    reasoner: reasoner(async state => state.observations.length ? { kind: "answer", answer: "sent" } : { kind: "capability_call", capability: "gmail.send" }),
+    reasoner: reasoner(async () => ({ kind: "capability_call", capability: "gmail.send" })),
   });
   const result = await harness.run({}, { allowedCapabilities: ["gmail.send"], confirmedCapabilities: ["gmail.send"] });
+  assert.equal(result.ok, false);
+  assert.equal(result.stopReason, "external_effect_budget");
+  assert.equal(result.externalEffects, 0);
+  assert.equal(result.capabilityCalls, 0);
+  assert.equal(sends, 0);
+});
+
+test("external writes still require confirmation when an explicit effect budget exists", async () => {
+  let sends = 0;
+  const harness = createGovernedHarness({
+    registry: registry({ send: async () => { sends += 1; return { sent: true }; } }),
+    reasoner: reasoner(async state => state.observations.length ? { kind: "stop", reason: "done" } : { kind: "capability_call", capability: "gmail.send" }),
+  });
+  const result = await harness.run({}, { allowedCapabilities: ["gmail.send"] }, { maxExternalEffects: 1 });
+  assert.equal(result.observations[0].reason, "confirmation_required");
+  assert.equal(result.externalEffects, 0);
+  assert.equal(sends, 0);
+});
+
+test("explicitly bounded and confirmed external writes can reach a stub executor", async () => {
+  // This isolated harness contract does not issue or verify a COP mandate.
+  // A confirmedCapabilities test fixture is NOT evidence of live send authority.
+  let sends = 0;
+  const harness = createGovernedHarness({
+    registry: registry({ send: async () => { sends += 1; return { sent: true }; } }),
+    reasoner: reasoner(async state => state.observations.length ? { kind: "answer", answer: "stub completed" } : { kind: "capability_call", capability: "gmail.send" }),
+  });
+  const result = await harness.run(
+    {},
+    { allowedCapabilities: ["gmail.send"], confirmedCapabilities: ["gmail.send"] },
+    { maxExternalEffects: 1 },
+  );
   assert.equal(result.ok, true);
+  assert.equal(result.externalEffects, 1);
+  assert.equal(result.capabilityCalls, 1);
   assert.equal(sends, 1);
 });
 
