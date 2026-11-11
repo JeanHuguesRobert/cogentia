@@ -13,7 +13,6 @@ import {resolveMandate} from '../../../inseme/packages/cop-core/src/governed-act
 import {createOfflineJohnIssuerVerifier} from '../lib/john-offline-issuer-verifier.js';
 import {sshFingerprint} from '../lib/john-sshsig-approval.js';
 import {johnContinuationMandatePlan} from '../lib/jhn-continuation-mandate-plan.js';
-import {createJhnCanonicalConsentWorkflow} from '../lib/jhn-canonical-consent-workflow.js';
 
 const PATH='/var/lib/cogentia/cop/john-root-v1.sqlite';
 const KEY_PATH='/home/ubuntu/.ssh/authorized_keys';
@@ -42,11 +41,15 @@ export function continuationConsentPlan(store,{verifyIssuer=verifyCurrentIssuer}
   if(!verifyIssuer(store))return fail('canonical_issuer_unverified');
   return johnContinuationMandatePlan({store});
 }
-export function requestContinuationConsent(store,{verifyIssuer=verifyCurrentIssuer,ttl_ms=600000}={}) {
+export async function requestContinuationConsent(store,{verifyIssuer=verifyCurrentIssuer,ttl_ms=600000,workflowFactory}={}) {
   const plan=continuationConsentPlan(store,{verifyIssuer});
   if(!plan.ok||plan.already_authorized_in_scope)return plan;
   if(!plan.requires_owner_consent||!plan.mandate)return fail('consent_plan_unavailable');
-  const workflow=createJhnCanonicalConsentWorkflow({store});
+  if(!workflowFactory) {
+    const module=await import('../lib/jhn-canonical-consent-workflow.js');
+    workflowFactory=module.createJhnCanonicalConsentWorkflow;
+  }
+  const workflow=workflowFactory({store});
   const result=workflow.request({mandate:plan.mandate,ttl_ms});
   if(!result.ok)return fail(result.error||'consent_request_failed');
   // Re-read and confirm a durable request, not a fabricated token or URL.
@@ -62,7 +65,7 @@ export function requestContinuationConsent(store,{verifyIssuer=verifyCurrentIssu
     requires_supabase_principal_decision:true,
     challenge_created:true,mandate_amended:false,execution:false};
 }
-export function runContinuationConsentCli({args=process.argv.slice(2),ownerShell=Boolean(process.env.SSH_CONNECTION)}={}) {
+export async function runContinuationConsentCli({args=process.argv.slice(2),ownerShell=Boolean(process.env.SSH_CONNECTION)}={}) {
   if(args.length!==1||!['--plan','--request'].includes(args[0]))
     return fail('usage: --plan|--request');
   // Operator policy, not a cryptographic identity proof; a delegated agent
@@ -79,12 +82,12 @@ export function runContinuationConsentCli({args=process.argv.slice(2),ownerShell
     }
     // Only a verified existing COP path. No new ledger or authority DB.
     store=createSqliteCopEventStore(PATH);
-    return requestContinuationConsent(store);
+    return await requestContinuationConsent(store);
   }catch{return fail('canonical_consent_preparation_failed')}
   finally{opened?.close();store?.close()}
 }
 if(process.argv[1]&&import.meta.url===new URL('file://'+process.argv[1]).href) {
-  const result=runContinuationConsentCli();
+  const result=await runContinuationConsentCli();
   console.log(JSON.stringify(result,null,2));
   if(!result.ok)process.exitCode=1;
 }
