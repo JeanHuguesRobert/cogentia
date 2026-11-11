@@ -77,6 +77,9 @@ import { relatePacket } from "./lib/packet-relate.js";
 import { cpsWorkControl, parseIssueRef } from "./lib/cps-work-control.js";
 import { packetRelateJudgmentRequest } from "./lib/packet-relate-judgment.js";
 import { deriveContinuationReturn } from "./lib/continuation-return.js";
+import { nextContinuation, inspectRouting } from "./lib/continuation-routing.js";
+import { currentPacketClaim } from "./lib/continuation-packet-claim.js";
+import { findCapableResolvers } from "./lib/resolver-registry.js";
 import { projectContinuationPlacement } from "./lib/continuation-placement.js";
 import { runMonteCarloAudit, SleepCycleReviewQueue, REVIEW_DECISIONS } from "./lib/corpus-sleep-cycle/index.js";
 import {
@@ -338,6 +341,7 @@ const PUBLIC_DAEMON_GET_ROUTES = new Set([
   // P1/P2 read: continuation + git + skills bootstrap
   "/api/cli/continuation/list",
   "/api/cli/continuation/inspect",
+  "/api/cli/continuation/next-preview",
   "/api/cli/continuation/schema",
   "/api/cli/git/verify",
   "/api/cli/skills",
@@ -376,6 +380,7 @@ const DAEMON_LOOPBACK_POST_ROUTES = new Set([
  * catalogue. MCP enforces administrator/JHN attestation before using them.
  */
 const DAEMON_LOOPBACK_GET_ROUTES = new Set([
+  "/api/cli/continuation/routing-history",
   "/api/cli/config/hygiene-audit",
   "/api/cli/config/vault-catalog",
 ]);
@@ -4703,6 +4708,26 @@ async function handleDaemonRequest(req, res) {
     const result = daemonCliContinuationList(effectiveCtx, url);
     return daemonJson(res, result.ok === false ? 400 : 200, result);
   }
+  if (req.method === "GET" && url.pathname === "/api/cli/continuation/routing-history") {
+    const effectiveCtx = ctx || loadContext();
+    const id = url.searchParams.get("id") || "";
+    if (!/^ctn_[a-f0-9]{8,}$/i.test(id))
+      return daemonJson(res, 400, { ok: false, error: "invalid_continuation_id" });
+    const auth = daemonResolveAuth(req, view);
+    if (auth?.lockers?.private?.read !== true && !daemonHasAdminToken(req))
+      return daemonJson(res, 403, { ok: false, error: "private_read_required" });
+    return daemonJson(res, 200, {
+      ok: true, continuation_id: id,
+      history: inspectRouting(effectiveCtx.registryRoot, id),
+      claimed: false, executed: false,
+    });
+  }
+  if (req.method === "GET" && url.pathname === "/api/cli/continuation/next-preview") {
+    const effectiveCtx = ctx || loadContext();
+    const result = continuationNextPreview(effectiveCtx, url.searchParams.get("resolver_id") || "");
+    return daemonJson(res, result.ok ? 200
+      : result.error === "invalid_resolver_id" ? 400 : 404, result);
+  }
   if (req.method === "GET" && url.pathname === "/api/cli/continuation/inspect") {
     const effectiveCtx = ctx || loadContext();
     const result = daemonCliContinuationInspect(effectiveCtx, url, view);
@@ -6025,6 +6050,9 @@ function daemonHttpContinuationResolve(ctx, body = {}) {
       status: continuation.status,
     }];
   }
+  if (currentPacketClaim(ctx.registryRoot, id)) {
+    return [409, {ok:false,error:"cop_v1_claim_requires_guarded_terminal",id}];
+  }
   const payload = body.payload && typeof body.payload === "object" ? body.payload : {};
   const decision = String(body.decision || payload.decision || payload.chosen_alternative || payload.status || "").trim();
   const reason = String(body.reason || payload.reason || payload.summary || "").trim();
@@ -6706,6 +6734,10 @@ function cmdContinuation(sub) {
     case "list":
     case "queue":
       return cmdContinuationList(ctx);
+    case "next-preview":
+      return cmdContinuationNextPreview(ctx, valueFlag("--resolver-id") || argv.shift());
+    case "routing-history":
+      return cmdContinuationRoutingHistory(ctx, argv.shift());
     case "inspect":
       return cmdContinuationInspect(ctx, argv.shift());
     case "resolve":
@@ -6816,6 +6848,36 @@ function cmdPublishPush(ctx) {
   output(result, formatPublishResult(result));
 }
 
+function continuationNextPreview(ctx, resolverId) {
+  if (!/^[a-zA-Z0-9_-]+$/.test(resolverId || ""))
+    return { ok: false, error: "invalid_resolver_id" };
+  const resolver = findCapableResolvers(ctx.registryRoot, "")
+    .find((item) => item.resolver_id === resolverId);
+  if (!resolver) return { ok: false, error: "resolver_not_registered" };
+  const selected = nextContinuation(ctx.registryRoot,
+    loadContinuations(ctx).filter((c) => !c.context?._truncated_for_view),
+    { resolver_id: resolverId, capabilities: resolver.capabilities },
+    { claim: false, admissible: () => true });
+  return {
+    ok: true,
+    status: selected.continuation
+      ? "technical_candidate_requires_cop_admission" : selected.status,
+    resolver_id: resolverId,
+    continuation: selected.continuation ? stripContinuationBody(selected.continuation) : null,
+    technical_capability_match_only: true,
+    cop_admission: "not_checked", claimed: false, executed: false,
+  };
+}
+function cmdContinuationNextPreview(ctx, resolverId) {
+  const result = continuationNextPreview(ctx, resolverId);
+  return output(result, JSON.stringify(result, null, 2));
+}
+function cmdContinuationRoutingHistory(ctx, id) {
+  if (!/^ctn_[a-f0-9]{8,}$/i.test(id || "")) throw new Error("invalid continuation id");
+  const result = { ok: true, continuation_id: id, history: inspectRouting(ctx.registryRoot, id) };
+  return output(result, JSON.stringify(result, null, 2));
+}
+
 function cmdContinuationInspect(ctx, id) {
   if (!id) throw new Error("Usage: continuation inspect <id>");
   const continuation = loadContinuation(ctx, id);
@@ -6841,6 +6903,7 @@ function cmdContinuationResolve(ctx, id) {
   if (!id) throw new Error("Usage: continuation resolve <id> [result.json] --decision <text> --reason <text>");
   const continuation = loadContinuation(ctx, id);
   if (continuation.status !== "active") throw new Error(`Continuation ${id} is not active (status=${continuation.status}).`);
+  if (currentPacketClaim(ctx.registryRoot, id)) throw new Error("cop_v1_claim_requires_guarded_terminal");
   const payload = readContinuationPayload();
   if (payload.continuation_id && payload.continuation_id !== id) {
     throw new Error(`continuation_id mismatch: got ${payload.continuation_id}, expected ${id}`);
@@ -6888,6 +6951,7 @@ function cmdContinuationCancel(ctx, id) {
   if (!id) throw new Error("Usage: continuation cancel <id> --reason <text>");
   const continuation = loadContinuation(ctx, id);
   if (continuation.status !== "active") throw new Error(`Continuation ${id} is not active (status=${continuation.status}).`);
+  if (currentPacketClaim(ctx.registryRoot, id)) throw new Error("cop_v1_claim_requires_guarded_terminal");
   const reason = valueFlag("--reason") || argv.join(" ").trim();
   if (!reason) throw new Error("Cancel requires --reason <text>.");
   cancelContinuationRecord(ctx, continuation, reason);
