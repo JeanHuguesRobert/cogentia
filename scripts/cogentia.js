@@ -12,7 +12,7 @@
 
 import fs from "node:fs";
 import {createAgentMail} from "./lib/agent-mail.js";
-import { prepareExternalResume } from "./lib/resume-prepare.js";
+import { prepareExternalResume, discoverMagistralResume, projectResumeRouting, planGovernedResume, assessReadOnlyDelegation } from "./lib/resume-prepare.js";
 import http from "node:http";
 import os from "node:os";
 import path from "node:path";
@@ -6103,9 +6103,14 @@ function daemonCliSkillsGet(url) {
  * Execution belongs to a capability-specific COP handler after authorization;
  * GitHub Issue comments and a successful audit are not execution receipts.
  */
-function cmdResumeExternalIssue() {
+async function cmdResumeExternalIssue() {
   const prepare = takeFlag("--prepare");
   const handlersFile = valueFlag("--handlers-file");
+  const magistral = takeFlag("--magistral");
+  const readOnly = takeFlag("--read-only");
+  if ((magistral || readOnly) && !prepare) throw new Error("--magistral and --read-only require --prepare");
+  if (readOnly && !magistral) throw new Error("--read-only requires --magistral");
+  if (magistral && handlersFile) throw new Error("--magistral excludes --handlers-file");
   if (handlersFile && !prepare) throw new Error("--handlers-file requires --prepare");
   if (hasFlag("--execute") || hasFlag("--apply") || hasFlag("--dispatch")) {
     throw new Error("cogentia resume: no authorized execution adapter is wired; refusing effectful dispatch");
@@ -6172,8 +6177,20 @@ function cmdResumeExternalIssue() {
     execution_receipt: null,
   };
   if (prepare) {
-    const plan = prepareExternalResume({ issue, handlersFile });
-    output({ ...result, phase: "PREPARE", preparation: plan, status: plan.status },
+    const plan = magistral
+      ? { ...await discoverMagistralResume(),
+          schema: "cogentia.external-resume-prepare/v1", phase: "PREPARE",
+          issue: { repository: issue.repository, number: issue.number, url: issue.url },
+          required_capabilities: requiredCapabilities, execution_authorized: false,
+          execution_receipt: null, effects: { handler_spawned: false, command_executed: false,
+            git_commit: false, github_mutation: false } }
+      : prepareExternalResume({ issue, handlersFile });
+    const routing = projectResumeRouting(plan, magistral ? "magistral" : handlersFile ? "manifest" : "none");
+    const governedPlan = planGovernedResume({ issue, discovery: plan });
+    const readOnlyPlan = readOnly
+      ? { read_only_delegation: assessReadOnlyDelegation({ issue, discovery: plan, requested: true }) } : {};
+    output({ ...result, phase: "PREPARE", preparation: plan, routing, governed_plan: governedPlan,
+      ...readOnlyPlan, status: readOnly ? readOnlyPlan.read_only_delegation.status : plan.status },
       `Cogentia resume PREPARE  ${issueRef}\nstate: ${plan.status}\nhandler: ${plan.selected_handler?.id || "none"}\nExecution: none — no mandate or dispatch\nContinuation: ${continuation.id || "portable only"}`);
     process.exitCode = 3;
     return;
