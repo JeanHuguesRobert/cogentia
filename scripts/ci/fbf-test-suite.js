@@ -5,6 +5,8 @@ import {mkdirSync,writeFileSync,appendFileSync} from 'node:fs';
 import {join} from 'node:path';
 const commands=[
  ['pnpm','test'],
+ ['pnpm','--filter','@cogentia/personal','build'],
+ ['bash','scripts/check-kys-personal-preview.sh'],
  ['node','scripts/check-mcp-apps-demo.js'],
  ['node','--test','scripts/lib/mcp-apps/fractatest-ui-protocol.test.mjs'],
  ['node','--test','scripts/lib/proportionate-risk.test.js'],
