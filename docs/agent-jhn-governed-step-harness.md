@@ -117,6 +117,45 @@ or enabling a WhatsApp-side tool. Its successful trace justifies proceeding to
 runtime integration while keeping that integration independently reversible.
 `resultVisibility: reasoner`.
 
+## Historical Reality tests — August 2026 (reconciled from ThinkPad)
+
+The ThinkPad's detached historical work was **four unique commits** ending at
+`713997ab879a6a26d42f0d95aceb2427bf00a7e5` (12 August 2026), never
+merged into the current `main`. Its version-specific WhatsApp code is **not**
+a valid patch against the later runtime. The recoverable Git history is held in
+a **single verified private bundle** on the ThinkPad, and twelve ignored local
+evaluation files in one private archive; neither is a live feature or a mandate.
+
+The older harness experiments contrasted:
+
+- **L0**, legacy retrieval and final synthesis, kept as the outbound reference;
+- **S1/S2**, where a step reasoner writes or iteratively revises the final
+  answer: insufficient quality or convergence in the recorded experiments;
+- **H1**, reasoner-first with one `corpus.search`: 1 hybrid win, 8 legacy wins,
+  1 tie and 1 critical regression in the ten-case blind review; reject
+  activation, since reformulation added cost without new capability value;
+- **H2**, evidence-first handoff (retrieve first, reason only on evidence gaps,
+  then let the existing finalizer answer): on a six-case shadow comparison,
+  2 hybrid wins, 3 legacy wins, 1 tie and zero critical hybrid regressions.
+  The **gap path was not tested** in that comparison. H2 was therefore
+  **not activation-ready**, despite its more promising structure.
+
+**Interpretation:** keep useful negative results and the distinction between
+*capability mobilization* and *answer synthesis*. Do not restore historical
+`draft.js`, `answer-core.js`, `package.json`, test harnesses, environment
+switches or model adapters by cherry-picking the four commits. A future H2
+proposal must first rebase its **semantics** onto the currently deployed
+reasoning loop, mandates and test contracts, then compare quality, latency,
+cost and critical regressions against a current baseline. The old six-case
+sample is neither a new CI gate nor proof of deployment.
+
+Provenance: ThinkPad branch `agent/handoff-20260812-jhn-step`; archived
+research `research/agent_jhn_step_loop_solution_rating_2026-08-12.md` and
+`research/agent_jhn_shadow_eval_h2_2026-08-12_summary.json` are marked
+**private** in the historical branch, so their full content must not be
+reintroduced into this public repository without a separate disclosure review.
+Cleanup and durable inventory: [Cogentia #310](https://github.com/JeanHuguesRobert/cogentia/issues/310).
+
 ## Correction trace
 
 An earlier working draft named the cognitive dependency `planner`. That name
