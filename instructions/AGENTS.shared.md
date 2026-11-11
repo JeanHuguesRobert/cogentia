@@ -118,6 +118,21 @@ In a clean, version-controlled Git repository, prefer direct scoped edits, statu
 
 The cost of making and later reconciling redundant copies—operator attention, storage, stale versions, semantic drift, delayed completion—is itself an Exposure under Measured Risk. **No precaution may be justified solely by invoking "safety", "prudence", or "best practices" without a case-specific rationale.** Do not ritualize a precaution once its initial trigger has disappeared.
 
+### Synthetic Skin in the Game — net lifecycle cost and residual ownership (mandatory)
+
+**An agent's locally safer step is not necessarily safer for the Principal.** Before creating a durable or semi-durable state (backup, bundle, zip, stash, worktree, branch, duplicate packet, generated archive, snapshot, retained test fixture), compare the **net lifecycle outcome**, not merely the immediate risk reduction. Include disk and resource consumption, future maintenance, divergent versions, secrecy/exposure, recovery burden and **Human Attention**; identify who actually bears those costs. Never externalize a precaution's residual cost to the Principal merely because the agent does not personally pay it.
+
+Apply the smallest sufficient **pre-write gate**, proportionate to the effect:
+
+1. **Existing recovery:** can the exact unique asset already be recovered from Git objects, an existing version, a verified receipt or an existing archive? Prefer that route; do not duplicate it by habit.
+2. **Net necessity:** what *specific* otherwise unrecoverable loss does the new state prevent, and does that avoided exposure outweigh its full lifecycle cost? If not, **do not create it**. A task called *cleanup* must not quietly increase the total number of obligations it leaves behind.
+3. **Owner and end condition:** if a new state is genuinely required, specify its owner, location, uniqueness, bounded retention/expiration or reconciliation condition, and verified disposal path **before creation**. Keep this in the existing task's receipt/packet; do not create a second ledger just to track the first.
+4. **Close the loop:** at the task's acceptance checkpoint, verify useful contributions and privacy are preserved, remove redundant temporary states within authority, and report **net remaining cost and residue**. If deletion would threaten unique evidence or lacks authority, keep the data and name the unresolved obligation instead of claiming success.
+
+This is **Synthetic Skin in the Game**, not artificial punishment, error quotas or zero-risk bureaucracy: the responsible agent's durable trace must acknowledge the costs it imposed and any unclosed residue; a restart or sub-agent handoff must not make them someone else's invisible problem. Apply the same test to process proliferation (extra approvals, reports, tracking tickets and precautionary checks), not only filesystem bytes. **No ceremony is required for ordinary ephemeral computations that leave no material state or significant cost.** Mandates, rights, preservation of unique work and independent human sovereignty remain superior constraints.
+
+**Observed failure (2026-11-11):** during Git worktree cleanup, extra bundles and evaluation archives were created without first verifying that existing recoverability sufficed or specifying final disposal. The technically successful backup transferred storage and reconciliation obligations to the Principal. Treat this as a counterexample when evaluating future cleanup plans. See [Cogentia #310](https://github.com/JeanHuguesRobert/cogentia/issues/310) and [#311](https://github.com/JeanHuguesRobert/cogentia/issues/311).
+
 Source: [Measured Risk](../research/measured_risk.md), [FractaCognition principles](../research/fractacognition_principles.md), and Occam / Minimum Sufficient Locality.
 
 ## Fix Bugs First — agent attention signal, not Principal constraint

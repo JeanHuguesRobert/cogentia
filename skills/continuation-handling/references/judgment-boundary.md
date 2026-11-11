@@ -60,3 +60,5 @@ Ask:
 - Is explicit human acceptance required?
 
 If answers are missing and impact is material → **accountability_gap**, not creative improvisation.
+
+**Net-cost/Synthetic Skin in the Game test:** when the continuation would create persistent state, a duplicate, a precautionary archive or a new review obligation, identify the unique loss avoided, existing recovery, total storage/attention/maintenance cost borne by the Principal, and the condition for removing that state. If the new state has no demonstrated net benefit, select the existing recoverable route instead. If indispensable, include owner, retention/reconciliation and disposal evidence in the *existing* packet/receipt, rather than opening another tracking layer. A locally cautious step is not a successful resolution when its residual burden is silently delegated to someone else. Do not demand fresh human approval for in-scope, low-exposure cleanup.
