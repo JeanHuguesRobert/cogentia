@@ -11,6 +11,7 @@
  */
 
 import fs from "node:fs";
+import { wipInventory, wipCompare } from "./lib/wip-inventory.js";
 import {createAgentMail} from "./lib/agent-mail.js";
 import { prepareExternalResume, discoverMagistralResume, projectResumeRouting, planGovernedResume, assessReadOnlyDelegation } from "./lib/resume-prepare.js";
 import http from "node:http";
@@ -495,6 +496,22 @@ async function main() {
       return cmdDashboard(argv.shift() || "refresh");
     case "publish":
       return cmdPublish(argv.shift() || "list");
+    case "wip": {
+      const sub = argv.shift() || "inventory";
+      if (sub === "inventory") {
+        const root = valueFlag("--root") || process.cwd();
+        const data = wipInventory({ root });
+        return output(data, JSON.stringify(data, null, 2));
+      }
+      if (sub === "compare") {
+        const repo = valueFlag("--repo");
+        const ref = valueFlag("--ref");
+        const base = valueFlag("--base") || "origin/main";
+        const data = wipCompare({ repo, ref, base });
+        return output(data, JSON.stringify(data, null, 2));
+      }
+      throw new Error(`Unknown wip subcommand "${sub}". Use inventory or compare.`);
+    }
     case "git":
       return cmdGit(argv.shift() || "verify");
     case "repos":
@@ -1227,6 +1244,11 @@ Publish commands:
   publish list             List views available for publishing to Views Store.
   publish push [view|all]  Publish generated views to Views Store (fracta VPS).
                            Flags: --target <host> --dry-run
+
+WIP (observational only):
+  wip inventory --root <workspace>   Inventory local Git state, branches, stashes and worktrees.
+  wip compare --repo <path> --ref <branch> [--base origin/main]
+                                     Compare structural and patch-equivalence deltas.
 
 Git:
   git verify               Ahead/behind and dirty state for all repos.
