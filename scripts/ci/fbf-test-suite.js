@@ -10,6 +10,8 @@ const commands=[
  ['node','scripts/check-mcp-apps-demo.js'],
  ['node','--test','scripts/lib/mcp-apps/fractatest-ui-protocol.test.mjs'],
  ['node','--test','scripts/lib/proportionate-risk.test.js'],
+ ['node','--test','scripts/lib/jhn-continuation-mandate-plan.test.js'],
+ ['node','--test','scripts/ops/jhn-continuation-consent-cli.test.js'],
  ['node','scripts/check-mcp-risk-assess.js'],
  ['node','--test','scripts/super/principal-effect-issuer.test.mjs','scripts/lib/principal-super-effect-admission.test.js'],
  ['node','--test','scripts/lib/principal-super-effect-claim.test.js'],
