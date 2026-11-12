@@ -18,7 +18,7 @@ test('router denies execution without identity and mandate', async () => {
   await assert.rejects(router.invoke('host.process.run', { command: 'printf forbidden' }, { actor: 'test' }), /mandate_required/);
   await assert.rejects(router.invoke('host.process.run', { command: 'printf forbidden' }, {
     actor: 'test', mandate: 'test-mandate',
-  }), /authorization_missing|authorization/);
+  }), /authorization_missing|authorization|unix_process_cop_store_writable_by_executor/);
 });
 
 test('Unix provider does not expose host filesystem capabilities', async () => {
@@ -117,4 +117,28 @@ test('defaults are 120 seconds, 256 KiB, and 32 KiB commands', async () => {
   assert.equal(result.ok, true);
   assert.equal(result.stdout, 'OK');
   await assert.rejects(p.invoke('host.process.run', {command:'x'.repeat(32769)}), /32768/);
+});
+
+test('FBF #318: built-in local provider rejects remote Windows target before effects', async () => {
+  const router = createHostCapabilityRouter({ providerName: 'unix-process' });
+  try {
+    await assert.rejects(
+      router.invoke('host.process.run', {command:'printf MUST_NOT_RUN'}, {
+        actor:'actor:test', mandate:'mandate:test', target:'node:i7-thinkpad-jhr',
+      }),
+      e => e.error_class === 'target_provider_mismatch' && /i7-thinkpad-jhr/.test(e.message),
+    );
+  } finally { await router.stop(); }
+});
+
+test('FBF #318: local execution still requires independent effect authorization', async () => {
+  const router = createHostCapabilityRouter({ providerName: 'unix-process' });
+  try {
+    await assert.rejects(
+      router.invoke('host.process.run', {command:'printf MUST_NOT_RUN'}, {
+        actor:'actor:test', mandate:'mandate:test', target:'node:local',
+      }),
+      e => e.error_class === 'authorization_missing' || e.error_class === 'unix_process_cop_store_writable_by_executor',
+    );
+  } finally { await router.stop(); }
 });

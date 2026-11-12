@@ -13,6 +13,7 @@ import { resolveHostMissionAuthority } from "./host-mission-authority.js";
 import { maybeRecordCopEffectSpend } from "./cop-surface-accounting.js";
 import { createHash, randomUUID } from "node:crypto";
 import path from "node:path";
+import { hostname } from "node:os";
 import { registerModule, invokeCapability } from "./v3-modules.js";
 import {
   DesktopCommanderProvider,
@@ -266,6 +267,22 @@ export function createHostCapabilityRouter(options = {}) {
       if (!mandate) {
         const err = new Error(`mandate_required: capability ${capability} requires explicit or inherited mandate`);
         err.error_class = "mandate_required";
+        throw err;
+      }
+
+      // FBF #318: a local provider cannot claim to execute on an arbitrary
+      // remote node merely because the caller supplied a target label.
+      // Injected/test providers and separately governed super brokers have
+      // their own locality contract; built-in providers run on this host.
+      const localNode = hostname().toLowerCase();
+      const localTargets = new Set([
+        "node:local", `node:${localNode}`, `resource://${localNode}`,
+      ]);
+      if (!providerFactory && !ctx.providerInstance
+          && !(capability === "host.process.run" && argsIn.execution_mode === "super")
+          && !localTargets.has(String(target).toLowerCase())) {
+        const err = new Error(`target_provider_mismatch: ${providerName} is local to ${localNode}, not ${target}`);
+        err.error_class = "target_provider_mismatch";
         throw err;
       }
 
