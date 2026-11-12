@@ -3,7 +3,7 @@ title: Cogentia
 author: unknown
 affiliation: Institut Mariani / C.O.R.S.I.C.A., 1 cours Paoli, F-20250 Corte, Corsica
 date: '2026-07-15'
-last_modified_at: '2026-10-24'
+last_modified_at: '2026-11-13'
 license: CC BY-SA 4.0
 language: en
 document_role: source
@@ -35,6 +35,8 @@ classification_confidence: "strong"
 
 ## Quick Orientation
 
+- **Public web service:** [Cogentia Guide](https://cogentia.fractavolta.com/guide) (page d'accueil vérifiée le 13 novembre 2026). La route historique `/docs` retourne actuellement 404 ; suivi [#40](https://github.com/JeanHuguesRobert/cogentia/issues/40).
+
 - [`AGENTS.md`](AGENTS.md) — **read before modifying this repository**; when working across repositories, also read the target repository's local `AGENTS.md`
 - [`research/agentic_commit_transparency.md`](research/agentic_commit_transparency.md) — rule for AI-agent-assisted commits: mandate, provenance, human review, reversibility
 - [`research/index.md`](research/index.md) — generated document catalog
@@ -63,7 +65,7 @@ The architectural axiom lives in [`marenostrum/DHITL.md`](https://github.com/Jea
 ## Public Guide Web Interface & S7 Layered Retrieval (v2.4)
 
 Cogentia exposes a public web interface and real-time streaming endpoint for corpus navigation and Q&A:
-- **Public Guide Web UI**: `https://cogentia.fractavolta.com/guide` (Dark mode glassmorphism interface, EN/FR toggles, interactive S7 source badges).
+- **Public Guide Web UI**: [https://cogentia.fractavolta.com/guide](https://cogentia.fractavolta.com/guide) (Dark mode glassmorphism interface, EN/FR toggles, interactive S7 source badges).
 - **Real-Time SSE Streaming**: Emits live progress events (`guide_status`, `guide_plan`, `guide_retrieval`, `guide_answer`, `done`) via `Accept: text/event-stream` over `POST /guide/chat`.
 - **S7 Layered Retrieval**:
   - **Layer 1**: Deterministic S7 Alias Resolution (`barons-Mariani:research/potentics.md`).
