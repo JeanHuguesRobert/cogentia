@@ -276,6 +276,22 @@ await check("effectful capability without authorization is rejected before DC-MC
   }
 });
 
+await check("FBF #318: built-in Desktop Commander rejects mismatched Windows target", async () => {
+  const router = createHostCapabilityRouter({
+    fsRoot: process.cwd(),
+    cacheKey: `locality-fbf-${Date.now()}`,
+    providerName: "desktop-commander",
+  });
+  try {
+    await assert.rejects(
+      router.invoke("host.fs.list", {path:process.cwd()}, {
+        auth:readAuth(), target:"node:i7-thinkpad-jhr",
+      }),
+      (e) => e.error_class === "target_provider_mismatch",
+    );
+  } finally { await router.stop(); }
+});
+
 await check("trace records semantic capability + target + provider without leaking content", async () => {
   resetAuthorizationStore();
   const dir = fixtureDir();
