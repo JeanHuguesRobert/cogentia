@@ -59,3 +59,21 @@ This test is read-only. It checks the SSH alias and expected Windows identity, t
 `cogentia_host_process_run` with `target=node:i7-thinkpad-jhr` and provider `desktop-commander` had invoked `/bin/bash` on a Linux node. Fix the semantic router/provider to attest the actual host identity and reject mismatches, rather than treating a target string as proof of execution locality. Expose a discoverable Windows execution provider routed to the ThinkPad, with the existing COP effect checks and receipt semantics; do not promote unrestricted SSH to a universal semantic capability.
 
 This entry captures one verified operational route. It does **not** certify that the generic Cogentia host-process connector now reaches Windows.
+
+## Governed semantic provider (Cogentia #318, 2026-11-12)
+
+A bounded Windows provider is implemented as `windows-ssh` for semantic capability
+`host.process.run` (PowerShell source as `command`, target **exactly**
+`node:i7-thinkpad-jhr`). It uses the *existing* Fracta2 `ssh thinkpad` alias,
+attests `hostname` before passing any supplied command, and uses PowerShell
+UTF-16LE encoded input. The router maintains existing COP admission and receipts.
+The provider refuses other targets and privileged `super` invocations. The
+trace records the remote host, OS and exit code where available. Regression
+fixtures exercise correct and mismatched hosts without touching the workstation.
+
+**Operational verification:** deterministic tests passed. The first live provider
+probe could not complete because Tailscale reported the Windows ThinkPad offline
+(last seen roughly eight minutes earlier), so live semantic execution is **not
+certified** until a successful read-only end-to-end check while the node is online.
+Do not infer that a successful raw SSH test in an earlier session establishes
+current connectivity or a valid current COP effect grant.

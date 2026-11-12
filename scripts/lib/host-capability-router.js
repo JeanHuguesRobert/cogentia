@@ -8,6 +8,7 @@
  */
 import fs from "node:fs";
 import { UnixProcessProvider } from "./unix-process-provider.js";
+import { WindowsSshProcessProvider } from "./windows-ssh-process-provider.js";
 import { inspectUnixProcessCopCustody } from "./unix-process-cop-custody.js";
 import { resolveHostMissionAuthority } from "./host-mission-authority.js";
 import { maybeRecordCopEffectSpend } from "./cop-surface-accounting.js";
@@ -148,6 +149,17 @@ export function ensureHostCapabilityModules() {
     },
   });
   registerModule({
+    id: "host.windows-ssh",
+    kind: "capability_provider",
+    provider: "windows-ssh",
+    provides: { capabilities: ["host.process.run"] },
+    governance: {
+      requires: [{ locker: "private", mode: "write" }],
+      trace_minimum: "host_capability_trace",
+    },
+    run: async (input) => input._providerInstance.invoke(input.capability, input.args || {}),
+  });
+  registerModule({
     id: "host.unix-process",
     kind: "capability_provider",
     provider: "unix-process",
@@ -178,6 +190,12 @@ export function createHostCapabilityRouter(options = {}) {
       providers.set(key, created);
       await created.start();
       return created;
+    }
+    if (providerName === "windows-ssh") {
+      const spawned = new WindowsSshProcessProvider({ timeoutMs: options.timeoutMs });
+      providers.set(key, spawned);
+      await spawned.start();
+      return spawned;
     }
     if (providerName === "unix-process") {
       const spawned = new UnixProcessProvider({ cwd: options.cwd, timeoutMs: options.timeoutMs });
@@ -251,7 +269,7 @@ export function createHostCapabilityRouter(options = {}) {
     };
 
     try {
-      if (!HOST_CAPABILITY_MAP[capability] || (providerName === "unix-process" && capability !== "host.process.run")) {
+      if (!HOST_CAPABILITY_MAP[capability] || (["unix-process", "windows-ssh"].includes(providerName) && capability !== "host.process.run")) {
         const err = new Error(`unknown_capability: ${capability}`);
         err.error_class = "unknown_capability";
         throw err;
@@ -270,6 +288,12 @@ export function createHostCapabilityRouter(options = {}) {
         throw err;
       }
 
+      if (providerName === "windows-ssh" && target !== "node:i7-thinkpad-jhr") {
+        const err = new Error(`target_provider_mismatch: windows-ssh cannot route ${target}`);
+        err.error_class = "target_provider_mismatch";
+        throw err;
+      }
+
       // FBF #318: a local provider cannot claim to execute on an arbitrary
       // remote node merely because the caller supplied a target label.
       // Injected/test providers and separately governed super brokers have
@@ -280,9 +304,16 @@ export function createHostCapabilityRouter(options = {}) {
       ]);
       if (!providerFactory && !ctx.providerInstance
           && !(capability === "host.process.run" && argsIn.execution_mode === "super")
+          && providerName !== "windows-ssh"
           && !localTargets.has(String(target).toLowerCase())) {
         const err = new Error(`target_provider_mismatch: ${providerName} is local to ${localNode}, not ${target}`);
         err.error_class = "target_provider_mismatch";
+        throw err;
+      }
+
+      if (providerName === "windows-ssh" && argsIn.execution_mode === "super") {
+        const err = new Error("windows_ssh_super_unsupported");
+        err.error_class = "privileged_executor_unavailable";
         throw err;
       }
 
@@ -374,6 +405,7 @@ export function createHostCapabilityRouter(options = {}) {
         throw err;
       }
       const args = argsIn.path ? boundedPath(argsIn, fsRoot) : argsIn;
+      if (providerName === "windows-ssh") args.target = target;
       if (args.command && effectful && !ctx.allowProcess) {
         // Process execution is never implicit merely because DC exposes it.
         if (capability === "host.process.run" && !ctx.authorization && !missionAuthority) {
@@ -463,6 +495,9 @@ export function createHostCapabilityRouter(options = {}) {
       const trace = finish({
         status: result?.ok === false ? "error" : "ok",
         upstream_tool: result.upstream_tool,
+        observed_host: result.identity?.hostname || null,
+        observed_os: result.identity?.os || null,
+        exit_code: result.exit_code ?? null,
         authorization_id: ctx.authorization?.authorization_id || missionAuthority?.authority_id || null,
         authority_origin: missionAuthority ? "verified_mission" : "effect_grant",
         verification: effectVerification
