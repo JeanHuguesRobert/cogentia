@@ -138,3 +138,51 @@ cost imputation still need integration with #161–164.
 
 **Do not claim end-to-end autonomous operation until all six steps have
 been demonstrated on the actual runtime.**
+
+## 11. Principal attention — prepared one-confirmation path (2026-11-13)
+
+The Principal explicitly reported the excessive attention cost of repeated
+manual setup. The ownership of that cost belongs to the agents/infrastructure,
+not to the Principal. Avoid requesting terminal commands or multiple approval
+steps until the entire technical proposal and its verification are ready.
+
+**Prepared on the actual Fracta2 canonical JHN root (read-only):**
+`node scripts/ops/john-result-mandate.mjs inspect` reports current
+`mandate:jhn:john-root@v1`, an exact `v2` proposal that *only* appends
+`cogentia.continuation.result.submit` to the two existing read capabilities,
+and confirms that forbidden actions, budget ceiling and validity are unchanged.
+The signed bytes are deterministically produced by
+`node scripts/ops/john-result-mandate.mjs prepare`. The proposal's current
+SHA-256 was checked against the actual canonical output, **without modifying
+COP**. A deliberately invalid signature was refused by `apply`; the number
+of live mandate declarations stayed **1 before and after**.
+
+**One-time interim user action (not yet performed):** on a reachable ThinkPad
+with PowerShell and the existing RSA SSH issuer key, review
+`scripts/ops/john-result-mandate-sign.ps1`, then execute it once. It
+reads and displays the exact proposal via SSH, identifies the existing issuer
+key by its pinned fingerprint, independently checks the bytewise SHA-256,
+asks the Principal to type `OUI` **once**, signs in the dedicated SSH
+namespace, uploads **only the signature**, and invokes the server's
+`apply` routine. The server recomputes the proposal from the *current* COP
+state, verifies the pinned public key and signature, records only the
+v2 amendment, and cold-verifies its lineage. It leaves the MCP runtime
+**disabled**. No private SSH key is sent anywhere. The PowerShell orchestration
+has not yet been executed on the ThinkPad; source-level preparation and
+cryptographic proof tests passed on Fracta2. If the ThinkPad is unavailable,
+do not repeatedly ask the Principal to operate Fracta2 manually.
+
+The existing Supabase-authenticated JHN Principal consent flow is a
+promising **future one-click** issuer interface and is already designed in
+`docs/cop-supabase-authenticated-consent-2026-11-09.md`, but its authenticated
+HTTP/App deployment and independent *portable* amendment-proof lineage are
+not yet integrated. Do not mistake a Supabase service-role credential, a
+MCP Apps UI click, or an unverified COP ledger event for issuer authority.
+Fixing this UX should eventually retire the recurring terminal-signature
+ceremony **without weakening Principal consent**.
+
+The operator should report one narrow decision at a time; after that the
+agent must continue with canonical COP budget admission, provider/channel
+permission proof, deployment and CPS Reality Test without imposing a
+series of unrelated human operations. This reduces Human Attention and
+repeated context switching, not accountability.
