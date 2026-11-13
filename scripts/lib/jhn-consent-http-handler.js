@@ -34,8 +34,10 @@ export function createJhnConsentHttpHandler({workflow,origin,exactAgentMailAmend
     if(request.method!=='GET'&&request.method!=='POST')return denied(405,'method_not_allowed');
     const url=new URL(request.url);
     if(url.origin!==origin)return denied(403,'wrong_origin');
+    const isContinuationRequest=url.pathname==='/api/cop/principal-consent/continuation-request';
     const match=/^\/api\/cop\/principal-consent\/([a-f0-9-]{36})$/.exec(url.pathname);
-    if(!match||!ID.test(match[1]))return denied(404,'consent_route_not_found');
+    if(!isContinuationRequest&&(!match||!ID.test(match[1])))return denied(404,'consent_route_not_found');
+    if(isContinuationRequest&&request.method!=='POST')return denied(405,'method_not_allowed');
     if(request.method==='POST'&&request.headers.get('origin')!==origin)
       return denied(403,'cross_origin_decision_forbidden');
     const token=request.headers.get('authorization')?.match(/^Bearer\s+([^\s]+)$/i)?.[1];
