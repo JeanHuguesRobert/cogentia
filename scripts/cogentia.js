@@ -71,6 +71,7 @@ import { captureMemoryForSurface, readMemoryCaptureStdin } from "./lib/memory-ca
 import { resolveCallerAuth, deriveLockers } from "./lib/cogentia-mcp-auth.js";
 import { checkSemanticMutation, MUTATION_STATUS } from "./lib/semantic-mutation-checker.js";
 import { runConvergenceLoop } from "./lib/convergence-loop.js";
+import { snapshotChunkEmbeddings, restoreChunkEmbeddings } from "./lib/index-embedding-preservation.js";
 import { createSchedulerRunContext, runFractaCycle, SCHEDULER_CYCLE_MODES, SCHEDULER_STAGE_STATUS } from "./lib/fracta-scheduler.js";
 import { packDocumentToCapsule, verifyCapsule, unpackCapsule } from "./lib/packet-capsule.js";
 import { relatePacket } from "./lib/packet-relate.js";
@@ -9013,6 +9014,7 @@ async function indexRebuild(ctx, options = {}) {
     db.exec("BEGIN");
     try {
       initIndexSchema(db);
+      const embeddingSnapshot = snapshotChunkEmbeddings(db);
       clearIndex(db);
       const insertDocument = db.prepare(`
         INSERT INTO documents (
@@ -9098,6 +9100,7 @@ async function indexRebuild(ctx, options = {}) {
         if (!from || !to) continue;
         insertEdge.run(from.repo, from.rel, to.repo, to.rel, edge.url || "");
       }
+      const embeddingRetention = restoreChunkEmbeddings(db, embeddingSnapshot);
       const indexHash = computeIndexHash(db);
       const indexState = {
         schema_version: INDEX_SCHEMA_VERSION,
@@ -9130,6 +9133,7 @@ async function indexRebuild(ctx, options = {}) {
         schema_version: INDEX_SCHEMA_VERSION,
         index_hash: indexHash,
         updated_at: startedAt,
+        embedding_retention: embeddingRetention,
         documents: indexedDocuments,
         chunks: indexedChunks,
         edges: inventory.edges.length,
