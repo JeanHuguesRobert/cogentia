@@ -25,7 +25,8 @@ function matchesExactMandatePlan(presented,expected) {
 }
 
 export function createJhnConsentHttpHandler({workflow,origin,exactAgentMailAmendmentPlan,
-  exactContinuationAmendmentPlan,requestExactContinuationConsent}={}) {
+  exactContinuationAmendmentPlan,requestExactContinuationConsent,
+  exactRepositoryAmendmentPlan}={}) {
   if(!workflow||typeof workflow.inspect!=='function'||typeof workflow.decide!=='function'||typeof workflow.authenticate!=='function')
     throw Error('canonical_consent_workflow_required');
   if(typeof origin!=='string'||!/^https:\/\/[^/]+$/.test(origin))
@@ -35,9 +36,10 @@ export function createJhnConsentHttpHandler({workflow,origin,exactAgentMailAmend
     const url=new URL(request.url);
     if(url.origin!==origin)return denied(403,'wrong_origin');
     const isContinuationRequest=url.pathname==='/api/cop/principal-consent/continuation-request';
+    const isRepositoryRequest=url.pathname==='/api/cop/principal-consent/repository-request';
     const match=/^\/api\/cop\/principal-consent\/([a-f0-9-]{36})$/.exec(url.pathname);
-    if(!isContinuationRequest&&(!match||!ID.test(match[1])))return denied(404,'consent_route_not_found');
-    if(isContinuationRequest&&request.method!=='POST')return denied(405,'method_not_allowed');
+    if(!isContinuationRequest&&!isRepositoryRequest&&(!match||!ID.test(match[1])))return denied(404,'consent_route_not_found');
+    if((isContinuationRequest||isRepositoryRequest)&&request.method!=='POST')return denied(405,'method_not_allowed');
     if(request.method==='POST'&&request.headers.get('origin')!==origin)
       return denied(403,'cross_origin_decision_forbidden');
     const token=request.headers.get('authorization')?.match(/^Bearer\s+([^\s]+)$/i)?.[1];
@@ -66,6 +68,23 @@ export function createJhnConsentHttpHandler({workflow,origin,exactAgentMailAmend
         expires_at:created.expires_at,url:'/cop/consent/'+created.challenge_id,
         grants_mandate_authority:false});
     }
+    if(isRepositoryRequest){
+      if(typeof exactRepositoryAmendmentPlan!=='function')
+        return denied(403,'repository_request_not_enabled');
+      const body=await request.text().catch(()=>null);
+      if(body!=='{}')return denied(400,'request_body_must_be_empty_object');
+      const plan=exactRepositoryAmendmentPlan();
+      if(!plan?.ok||plan.ready_for_issuance!==true||!plan.requires_owner_consent)
+        return denied(409,plan?.error||'repository_plan_not_ready');
+      if(!plan.mandate)return denied(409,'repository_mandate_missing');
+      // Only the trusted server computes this fixed proposal. No arbitrary
+      // scope or mandate data may be supplied from the browser.
+      const created=workflow.request({mandate:plan.mandate,ttl_ms:600000});
+      if(!created.ok)return denied(409,created.error||'repository_request_failed');
+      return reply(201,{ok:true,challenge_id:created.challenge_id,
+        payload_hash:created.payload_hash,expires_at:created.expires_at,
+        url:'/cop/consent/'+created.challenge_id,grants_mandate_authority:false});
+    }
     const challenge_id=match[1];
     if(request.method==='GET'){
       const check=workflow.inspect({challenge_id});
@@ -87,7 +106,10 @@ export function createJhnConsentHttpHandler({workflow,origin,exactAgentMailAmend
       (typeof exactAgentMailAmendmentPlan==='function'&&
        matchesExactMandatePlan(presented,exactAgentMailAmendmentPlan()))||
       (typeof exactContinuationAmendmentPlan==='function'&&
-       matchesExactMandatePlan(presented,exactContinuationAmendmentPlan()))
+       matchesExactMandatePlan(presented,exactContinuationAmendmentPlan()))||
+      (typeof exactRepositoryAmendmentPlan==='function'&&
+       exactRepositoryAmendmentPlan()?.ready_for_issuance===true&&
+       matchesExactMandatePlan(presented,exactRepositoryAmendmentPlan()))
     );
     const result=await workflow.decide({challenge_id,payload_hash:data.payload_hash,
       decision:data.decision,session});

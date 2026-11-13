@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {createMemoryCopEventStore} from '../../../inseme/packages/cop-core/src/cop-event-spool.js';
 import {recordMandateDeclaration,recordMandateControl,resolveMandate} from '../../../inseme/packages/cop-core/src/governed-act.js';
+import {recordExecutionBudgetGrant} from '../../../inseme/packages/cop-core/src/execution-budget.js';
 import {johnRepositoryMandatePlan} from './jhn-repository-mandate-plan.js';
 const REF='mandate:jhn:john-root';
 function fixture(scope={allowed_actions:['browser.hosted.inspect'],
@@ -10,13 +11,15 @@ function fixture(scope={allowed_actions:['browser.hosted.inspect'],
  const store=createMemoryCopEventStore();
  recordMandateDeclaration(store,{mandate_id:REF,version:'v1',principal_ref:'principal:jhn',
   logical_agent_ref:'agent:jhn',valid_until:'2027-11-06T00:00:00Z',scope});
+ if(scope.budget_ceiling?.max_steps)recordExecutionBudgetGrant(store,{budget_id:'budget:mandate:jhn:john-root',mandate_ref:REF,principal_ref:'principal:jhn',limits:{max_steps:scope.budget_ceiling.max_steps},authority_version:1});
  return store;
 }
 test('planning is nonmutating and retains restrictions and budget',()=>{
  const store=fixture(),before=store.replay().length;
  const r=johnRepositoryMandatePlan({store,at_time:new Date('2026-11-13T00:00:00Z')});
  assert.equal(r.ok,true);
- assert.equal(r.ready_for_issuance,false);
+ assert.equal(r.ready_for_issuance,true);
+ assert.equal(r.budget_snapshot_for_review.limits.max_steps,2048);
  assert.deepEqual(r.added_capabilities,['github.write','git.commit','git.push']);
  assert.equal(r.repository_policy.selection,'credential_accessible');
  assert.equal(r.repository_policy.ownership_check,'provider_enforced');
