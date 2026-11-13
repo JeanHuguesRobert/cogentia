@@ -128,6 +128,7 @@
     "skills:validate": "node scripts/validate-agent-skills.js",
     "test:agent-skills": "node scripts/validate-agent-skills.js",
     "test:mcp-dual-era": "node scripts/check-mcp-dual-era.js",
+    "test:mcp-public-effect-boundary": "node scripts/check-mcp-public-effect-boundary.js",
     "test:host-dc": "node scripts/check-side-effect-authorization.js && node scripts/check-host-desktop-commander-provider.js",
     "test:communication-send": "node scripts/check-communication-send.js",
     "reality:communication-send": "node scripts/ops/reality-test-communication-send.js",
