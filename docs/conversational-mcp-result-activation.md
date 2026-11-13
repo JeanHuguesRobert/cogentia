@@ -198,3 +198,20 @@ PowerShell engine with **zero parse errors**, without executing its body.
 This is a tested *readiness* check, not a demonstration of interactive
 key-unlock/sign/import. If/when the Principal chooses to run it, it still
 must display and obtain one explicit confirmation before signing.
+
+**Verified one-command staging (2026-11-13):** The reviewed signer script
+was staged (NOT executed) at `$env:TEMP\cogentia-john-result-mandate-sign.ps1`
+in the authenticated Windows SSH account on ThinkPad. The bytes there match
+the source file SHA-256, and its source parsed with **zero PowerShell errors**
+on the actual ThinkPad. The script uses noninteractive `ssh -n` for read-only
+transport calls, preventing SSH from consuming the signing session input.
+The canonical proposal was also read successfully using an SSH roundtrip
+ThinkPad→Fracta2; no signature was produced. When the Principal chooses to
+review and approve, he can run one PowerShell command:
+
+`powershell -NoProfile -ExecutionPolicy RemoteSigned -File "$env:TEMP\cogentia-john-result-mandate-sign.ps1"`
+
+**A failed staging or signing run must not be represented as consent.**
+This file is only a temporary convenience copy; it can be deleted after the
+signed amendment is duly recorded. The authoritative source remains GitHub,
+and the authority after signing remains only the existing COP journal.

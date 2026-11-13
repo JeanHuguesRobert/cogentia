@@ -19,7 +19,7 @@ $remoteSignature = '/home/ubuntu/john-result-mandate-' + [guid]::NewGuid().ToStr
 New-Item -ItemType Directory -Path $localDir | Out-Null
 try {
   Write-Host '1. Lecture de la proposition canonique, sans modification...' -ForegroundColor Cyan
-  $summaryText = (& ssh $Remote "$command inspect" | Out-String)
+  $summaryText = (& ssh -n $Remote "$command inspect" | Out-String)
   if ($LASTEXITCODE -ne 0) { throw 'Lecture du mandat sur Fracta2 impossible.' }
   $summary = $summaryText | ConvertFrom-Json
   if (!$summary.forbidden_actions_unchanged -or !$summary.budget_ceiling_unchanged -or
@@ -29,7 +29,7 @@ try {
       $summary.changed_fields[0] -ne 'scope.allowed_actions') {
     throw 'La proposition ne respecte pas le périmètre de la signature attendue.'
   }
-  $proposalText = ((& ssh $Remote "$command prepare" | Out-String) -replace "(\r?\n)+$", "")
+  $proposalText = ((& ssh -n $Remote "$command prepare" | Out-String) -replace "(\r?\n)+$", "")
   if ($LASTEXITCODE -ne 0 -or [string]::IsNullOrEmpty($proposalText)) {
     throw 'La proposition à signer ne peut pas être préparée.'
   }
@@ -81,14 +81,14 @@ try {
   # Trusted server recomputes the exact proposal and independently verifies
   # the signature; the signed proposal itself is never accepted from client.
   $uploaded = $true
-  & ssh $Remote "$command apply $remoteSignature"
+  & ssh -n $Remote "$command apply $remoteSignature"
   if ($LASTEXITCODE -ne 0) { throw 'Importation du mandat refusee ; verifier le journal COP avant toute nouvelle signature.' }
   $success = $true
   Write-Host 'Mandat v2 enregistre et verifie. Runtime MCP toujours desactive.' -ForegroundColor Green
 }
 finally {
   if ($uploaded) {
-    & ssh $Remote "rm -f $remoteSignature" | Out-Null
+    & ssh -n $Remote "rm -f $remoteSignature" | Out-Null
   }
   if (Test-Path $localDir) {
     Remove-Item $localDir -Force -Recurse
