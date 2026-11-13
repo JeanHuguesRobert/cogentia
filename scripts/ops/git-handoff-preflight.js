@@ -9,6 +9,18 @@ const repoArg=args.indexOf('--repo');
 const repo=path.resolve(repoArg>=0 ? args[repoArg+1] : process.cwd());
 const json=args.includes('--json');
 const fetch=args.includes('--fetch');
+const issueIx=args.indexOf('--issue');
+const issueArg=issueIx>=0?args[issueIx+1]:null;
+function inspectIssue(value){
+  const match=String(value||'').match(/^([\w.-]+\/[\w.-]+)#([1-9][0-9]*)$/);
+  if(!match)return {state:'INVALID_FORMAT',input:value||null};
+  const result=spawnSync('gh',['issue','view',match[2],'--repo',match[1],'--json','state,title,url'],{encoding:'utf8',timeout:20000,maxBuffer:100000});
+  if(result.error||result.status!==0)return {state:'UNVERIFIED',input:value,reason:(result.error?.message||result.stderr||'gh unavailable').trim().slice(0,150)};
+  try {
+    const issue=JSON.parse(result.stdout);
+    return {state:issue.state==='OPEN'?'ACTIVE':'CLOSED',url:issue.url,title:issue.title};
+  } catch{return {state:'UNVERIFIED',input:value,reason:'invalid gh JSON'}}
+}
 function git(cmd, {optional=false,raw=false}={}) {
   const r=spawnSync('git',['-C',repo,...cmd],{encoding:'utf8',maxBuffer:8_000_000,timeout:25000});
   if(r.error || r.status!==0) {
@@ -46,14 +58,17 @@ try {
   else if(ahead>0 && changed.length>0)state='LOCAL_COMMITS_AND_WIP';
   else if(ahead>0)state='UNPUSHED_COMMITS';
   else if(changed.length>0)state='LOCAL_WIP';
+  const packet=issueIx>=0?inspectIssue(issueArg):null;
   const result={
+    packet,
     schema:'cogentia.git_handoff_preflight.v1',
     repo,branch,head,upstream,ahead,behind,state,
     dirty_count:changed.length,
     generated_count:changed.filter(x=>x.generated).length,
     sensitive_hint_count:changed.filter(x=>x.sensitive_hint).length,
     changed,
-    next:state==='CURRENT'?'Nothing to transfer':
+    next:issueIx>=0 && packet?.state!=='ACTIVE' ? 'Resolve or create the owning cognitive packet before WIP publication; do not infer authorization from issue existence' :
+      state==='CURRENT'?'Nothing to transfer':
       state==='FAST_FORWARD_AVAILABLE'?'git pull --ff-only after confirming no live build relies on the old revision':
       state==='UNPUSHED_COMMITS'?'Review commits and push to GitHub after checking public/private and deployment effects':
       state==='LOCAL_WIP'?'Review the exact WIP diff, checkpoint task-owned publishable files to GitHub, then verify remote SHA':
@@ -64,6 +79,8 @@ try {
   else {
     console.log(`${path.basename(repo)} [${branch||'DETACHED'}] ${head.slice(0,10)}: ${state} (ahead=${ahead??'?'}, behind=${behind??'?'}, dirty=${changed.length})`);
     for(const c of changed)console.log(`  ${c.code} ${c.path}${c.sensitive_hint?' [REVIEW PRIVACY]':''}${c.generated?' [GENERATED]':''}`);
+    if(packet)console.log('Cognitive packet:',packet.state,packet.url||packet.input||'');
+    else if(changed.length>0 || ahead>0)console.log('Cognitive packet: UNSPECIFIED — search existing issues first; create only when genuinely absent');
     console.log(result.next);
     console.log(result.note);
   }
