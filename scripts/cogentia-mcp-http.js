@@ -20,6 +20,7 @@ import {
 } from "./lib/cogentia-mcp-core.js";
 import { createRegistryAwareMcpCore } from "./lib/cogentia-mcp-registries.js";
 import {createAgentMailRuntime} from "./lib/agent-mail-runtime.js";
+import {createMcpJudgmentResultRuntime} from "./lib/cogentia-mcp-judgment-result-runtime.js";
 import { aiRouterHealth } from "./lib/ai-router-client.js";
 import { mergeGuideRetrievalFromPacks } from "./lib/guide-retrieval-merge.js";
 import { runAgentJohnV2SurfaceTurn, resolveGuideReasoningLoopV2, sanitizeSurfaceAnswer } from "./lib/agent-jhn-reasoning-loop-v2.js";
@@ -82,8 +83,10 @@ loadOptionalEnvFiles([
 
 const blackboard = createBlackboardStore();
 const agentMailRuntime=createAgentMailRuntime(process.env);
+const judgmentResultRuntime=createMcpJudgmentResultRuntime(process.env);
 const core = createRegistryAwareMcpCore(process.env, {
   ...agentMailRuntime.extras,
+  ...judgmentResultRuntime.extras,
   listOperiumCalendar: async (args) => {
     const encoded = encodeURIComponent(String(args.node_id || "").trim());
     const result = await handleOpsNodeProxyRequest({

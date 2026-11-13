@@ -77,6 +77,7 @@ export const ERR_UNSUPPORTED_PROTOCOL_VERSION = -32022;
 /** Tools that write continuations/issues — require full view + COGENTIA_MCP_ALLOW_MUTATE=1. */
 export const MUTATE_TOOLS = new Set([
   "cogentia_continuation_resolve",
+  "cogentia_continuation_result_submit",
   "cogentia_continuation_emit",
   "cogentia_issues_sync",
   "cogentia_concepts_init",
@@ -709,6 +710,27 @@ export const TOOLS = [
         id: { type: "string", minLength: 1, description: "Continuation ID to inspect" },
       },
       required: ["id"],
+      additionalProperties: false,
+    },
+  },
+  {
+    name: "cogentia_continuation_result_submit",
+    description: "Submit a COP candidate Judgment result through a mandate-and-budget-governed, durable, claim-fenced receipt channel. A receipt proves observation only, never approval or resolution.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        protocol: { type: "string", enum: ["cop.continuation-result-submit/v0"] },
+        continuation_id: { type: "string", minLength: 1 },
+        attempt_id: { type: "string", minLength: 1 },
+        execution_binding_ref: { type: "string", minLength: 1 },
+        continuation_version: { type: "string", minLength: 1 },
+        idempotency_key: { type: "string", minLength: 1 },
+        result_digest: { type: "string" },
+        step_result: { type: "object" },
+        usage_observation: { type: "object" },
+      },
+      required: ["protocol", "continuation_id", "attempt_id", "execution_binding_ref",
+        "continuation_version", "idempotency_key", "step_result"],
       additionalProperties: false,
     },
   },
@@ -2040,6 +2062,25 @@ export function createMcpCore(env = process.env, extras = {}) {
       case "cogentia_continuation_inspect":
         requireString(args.id, "id");
         return daemonGet("/api/cli/continuation/inspect", { id: args.id });
+      case "cogentia_continuation_result_submit": {
+        // This endpoint is intentionally stricter than legacy mutate tools:
+        // synthetic admin/full-view status is not a caller attestation.
+        if (!isResolvedCallerAuth(callOpts.auth) || !callOpts.auth.allowMutate)
+          return { ok: false, reason: "authenticated_result_caller_required" };
+        // No implicit default store, account, mandate or budget authority.
+        // Runtime may inject a trusted host; the model cannot supply it.
+        const provider = extras.mcpContinuationResultHost;
+        if (typeof provider !== "function") {
+          return { ok: false, reason: "governed_result_ingress_not_configured" };
+        }
+        const host = await provider({ auth: callOpts.auth, env });
+        if (!host || typeof host.admit !== "function" || !host.store)
+          return { ok: false, reason: "governed_result_ingress_not_configured" };
+        const { commitMcpContinuationResult } = await import(
+          "../../../inseme/packages/cop-core/src/mcp-continuation-result-commit.js"
+        );
+        return commitMcpContinuationResult(args, host);
+      }
       case "cogentia_continuation_resolve":
         requireString(args.id, "id");
         requireString(args.decision, "decision");
