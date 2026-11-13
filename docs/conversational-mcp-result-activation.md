@@ -67,9 +67,17 @@ to synthesize a signed COP mandate.
 **Live source audit (2026-11-13):** the canonical JHN root mandate exists
 at version `v1`, but its current signed scope does **not** include
 `cogentia.continuation.result.submit`. Consequently this capability is
-NOT authorized in production. Introducing it requires the ordinary versioned,
-independently signed scope extension and matching budget authority, not an
-undocumented test override or a new signing ceremony.
+NOT authorized in production. Introducing it requires the existing versioned, independently signed amendment workflow and matching
+budget authority, not an undocumented test override.
+
+**FBF of the amendment path:** Inseme `amendMandate()` supports append-only
+v1→v2 revisions, but the existing Cogentia root signature verifier
+(`createOfflineJohnIssuerVerifier()`) validates a v1 root proposal rather
+than the amendment evidence and its immutable lineage. Before a v2 mandate
+can authorize this tool, its independent signature evidence must be
+reconstructible and verified on a cold read, and the runtime's version pin
+must be updated accordingly. Do not forge, reinterpret, or merely label a
+v2 amendment as though it inherited the v1 signature.
 
 ## Source tests performed on Fracta2
 
@@ -86,9 +94,18 @@ undocumented test override or a new signing ceremony.
   `node scripts/check-mcp-public-effect-boundary.js`: existing protocol-era
   compatibility and anonymous mutation denial.
 
+An additional three-continuation fixture reuses the same signed test
+mandate, ledger and claim coordinator. It submits three distinct MCP
+candidate results to the existing event store and uses Inseme #113's
+recognizer for separate `observed/correlated/accepted/returned` Events.
+Three unique observations and three terminal `returned` events are
+verified. The driver is a test harness, **not** an autonomous dispatcher.
+
 These are source-level tests on Fracta2, **not** a proof of the live hosted
 browser, third-party provider terms, production Accounting settlement or an
-autonomous three-continuation CPS loop. Provider-side usage estimates and
+autonomous three-continuation CPS loop. The fixture records three budget
+reservations but does not settle observed vendor usage; reservation does
+not prove resource consumption. Provider-side usage estimates and
 cost imputation still need integration with #161–164.
 
 ## Next legitimate Reality Test

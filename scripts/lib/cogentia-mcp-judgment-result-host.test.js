@@ -9,7 +9,7 @@ import { issueVerifiedJohnRoot } from "./john-root-issuance.js";
 import { ROOT_MANDATE_KIND, RESERVED_ACTIONS, canonicalProposalBytes, proposalHash, publicKeyFingerprint } from "./john-root-mandate.js";
 import { createSqliteCopEventStore } from "../../../inseme/packages/cop-core/src/sqlite-cop-event-store.js";
 import { createEventSourcedExecutionBudgetLedger } from "../../../inseme/packages/cop-core/src/execution-budget.js";
-import { declaredContinuationRecord } from "../../../inseme/packages/cop-core/src/continuation-result.js";
+import { declaredContinuationRecord, observeContinuationResult } from "../../../inseme/packages/cop-core/src/continuation-result.js";
 import { EventStorePacketClaimCoordinator } from "../../../inseme/packages/cop-kernel/src/packetCoordination.js";
 import { hashPayload } from "../../../inseme/packages/cop-core/src/cop-event-envelope.js";
 
@@ -17,12 +17,12 @@ const TOOL = "cogentia_continuation_result_submit";
 const MANDATE = "mandate:jhn:john-root";
 const BUDGET = "budget:" + MANDATE;
 const NOW = new Date("2026-11-13T12:00:00Z");
-const submission = () => {
+const submission = (id = "ctn_test") => {
   const step_result = { protocol: "cogentia.step_result/v1",
-    continuation_id: "ctn_test", challenge: "c-1",
+    continuation_id: id, challenge: "c-1",
     status: "answered", result: { answer: "ok" } };
   return { protocol: "cop.continuation-result-submit/v0",
-    continuation_id: "ctn_test", attempt_id: "a1",
+    continuation_id: id, attempt_id: "a1",
     execution_binding_ref: "b1", continuation_version: "1",
     idempotency_key: "a1:result", result_digest: hashPayload(step_result),
     step_result };
@@ -107,5 +107,60 @@ test("real signed COP mandate and active budget reservation gate MCP receipt", a
     assert.equal(replay.duplicate,true);
     assert.equal(replay.receipt_ref,received.receipt_ref);
     assert.equal(store.listTopic("continuation:ctn_test").length,2);
+
+    // Minimal local three-continuation COP pipeline, no external vendor or
+    // hidden browser execution. The existing recognizer owns acceptance.
+    for (let i = 1; i <= 3; i++) {
+      const id = i === 1 ? "ctn_test" : `ctn_test_${i}`;
+      if (i > 1) {
+        const packetRef = "packet:" + id;
+        const reserve = ledger.reserve({
+          idempotency_key: "packet:" + id + ":a1",
+          expected_version: ledger.snapshot().version,
+          demand: { max_steps:1 },
+        });
+        assert.equal(reserve.ok, true);
+        const newClaim = await claimCoordinator.tryClaim({
+          packetRef, handlerRef: auth.actor, ttlMs: 600000,
+        });
+        assert.equal(newClaim.ok, true);
+        const declaration = declaredContinuationRecord({
+          continuation_id: id, packet_ref: packetRef,
+          version: 1, attempt_id: "a1", execution_binding_ref: "b1",
+          lifecycle:"suspended", correlation:{challenge:"c-1"},
+          budget_reservation_id: reserve.reservation.reservation_id,
+          claim: { claim_id: newClaim.claim.claim_id,
+            epoch: newClaim.claim.epoch,
+            expected_generation: claimCoordinator.inspect(packetRef).generation },
+          expected_result:{schema:"cogentia.step_result/v1"},
+          provider:"local-fixture", channel:"mcp",
+        });
+        assert.equal(store.append(declaration).ok, true);
+        const next = await core.callTool(TOOL, submission(id), { auth });
+        assert.equal(next.ok, true, JSON.stringify(next));
+        assert.equal(next.duplicate, false);
+      }
+      const persisted = store.listTopic("continuation:" + id);
+      const observed = persisted.find(e => e.payload?.surface === "mcp");
+      assert.ok(observed, "durable observation required for " + id);
+      const rec = observeContinuationResult(observed, {
+        continuations: {
+          [id]: { continuation_id:id,
+            correlation:{challenge:"c-1"},
+            expected_result:{schema:"cogentia.step_result/v1"},
+            lifecycle:"suspended" },
+        },
+      });
+      assert.equal(rec.progression, "returned");
+      assert.deepEqual(rec.proposed_events.map(e => e.payload.phase),
+        ["observed","correlated","accepted","returned"]);
+      const events = store.appendBatch(rec.proposed_events);
+      assert.equal(events.ok, true, JSON.stringify(events));
+      assert.equal(store.listTopic("continuation:" + id).filter(
+        e => e.payload?.profile === "cop.continuation-result/v1" &&
+          e.payload.phase === "returned").length, 1);
+    }
+    assert.equal(ledger.snapshot().reserved.max_steps, 3);
+    assert.equal(store.replay().filter(e => e.payload?.surface === "mcp").length,3);
   } finally {store.close();}
 });
