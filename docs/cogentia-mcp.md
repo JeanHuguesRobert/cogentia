@@ -29,6 +29,50 @@ classification_confidence: "medium"
 
 # Cogentia MCP Adapter & Architecture Specification
 
+
+## FBF status — 13 November 2026: effect classification and public GET
+
+Source commit [`15607ee`](https://github.com/JeanHuguesRobert/cogentia/commit/15607ee)
+corrects a verified classification error: `scheduler_run`, `emit_static`,
+`publish_registry`, and `consolidate_weekly` were advertised as
+read-only although they can invoke operational effects. They are now classified
+as mutating tools, hidden from anonymous MCP discovery under the existing
+legacy model and denied at anonymous `tools/call`. The daemon no longer
+whitelists the corresponding operational GET routes as public. The isolated
+regression command is
+`node scripts/check-mcp-public-effect-boundary.js`.
+
+The previously misleading `consolidate_weekly` handler called only
+`emit-static`. It now returns an explicit `not_implemented` error
+**for an otherwise authorized caller**, rather than claiming to run the
+five-phase Sunday pipeline. The actual weekly CLI runner remains available
+separately. Its governed MCP integration is unfinished.
+
+**Deployment boundary:** passing source tests and pushing GitHub do not
+restart the running `cogentia.service` and `mcp-cogentia.service`.
+On 2026-11-13 both running services were observed to have started before
+this source change; do **not** claim the public production surface is patched
+until services have been restarted through the normal owner administration
+route and a real anonymous-GET/MCP regression has succeeded.
+
+The desired architecture is a **single** Cogentia MCP service for public
+and private applications, with effective standing/derived Principal mandates,
+semantic effect controls and budgets instead of two separate Cogentia/Cogentia
+Private connectors. That future design is tracked by
+[Cogentia #325](https://github.com/JeanHuguesRobert/cogentia/issues/325),
+dependent on [#324](https://github.com/JeanHuguesRobert/cogentia/issues/324)
+and [#299](https://github.com/JeanHuguesRobert/cogentia/issues/299).
+The independent outbound Bootstrap MCP shell is **not** part of that fusion:
+[architecture decision](bootstrap-mcp-recovery-channel.md).
+
+A separate corpus retrieval freshness issue tracks index convergence, stale
+citations and missing/stale embeddings:
+[Cogentia #326](https://github.com/JeanHuguesRobert/cogentia/issues/326).
+The production index observed on 2026-11-13 had last been updated on
+2026-10-04. Use both the actual service `COGENTIA_REGISTRY` and
+`COGENTIA_DATA_DIR` when checking that database.
+
+
 `scripts/cogentia-mcp.js` is a thin MCP (Model Context Protocol) stdio server for the Cogentia Context Gateway. `scripts/cogentia-mcp-http.js` exposes the same tools over HTTP at `/mcp`. 
 
 Both adapters expose shared governed implementations. Corpus retrieval delegates
