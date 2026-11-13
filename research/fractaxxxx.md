@@ -235,7 +235,7 @@ Not every item constitutes a direct predecessor of the same protocol. For each: 
 - E. Gelenbe, R. Lent & Z. Xu, *Design and Performance of Cognitive Packet Networks*, Performance Evaluation 46 (2001).
 - IETF [RFC 9171 — Bundle Protocol Version 7](https://www.rfc-editor.org/rfc/rfc9171.html).
 - [Telescript as a Friend](./telescript_as_a_friend.md).
-- [When Cognition Became Traffic](https://github.com/JeanHuguesRobert/FractaVolta/blob/main/research/when_cognition_became_traffic.md); see its deliberately *relative* CPN→CPS inversion and prior-art objections.
+- [When Cognition Became Traffic](https://github.com/JeanHuguesRobert/FractaVolta/blob/main/research/when_cognition_became_traffic.md); see its corrected CPN/CPS complementarity and prior-art objections (the earlier inversion formulation was superseded after direct clarification with Gelenbe).
 
 ## Review of assertions and epistemic status
 
@@ -262,7 +262,7 @@ Not every item constitutes a direct predecessor of the same protocol. For each: 
 
 ## Friends: verified anchors and open comparison
 
-- [Gelenbe, Lent, Xu (2001)](https://stars.library.ucf.edu/scopus2000/162/) describes smart, dumb and acknowledgment packets optimizing QoS through feedback. **CPN ≠ CPS**; the [Corpus's C11 study](https://github.com/JeanHuguesRobert/FractaVolta/blob/main/research/CPKT-2026-001_c11_substitution.md) qualifies the inversion as relative, considering mobile-agent prior art.
+- [Gelenbe, Lent, Xu (2001)](https://stars.library.ucf.edu/scopus2000/162/) describes smart, dumb and acknowledgment packets optimizing QoS through feedback. **CPN ≠ CPS**; the [Corpus's C11 study](https://github.com/JeanHuguesRobert/FractaVolta/blob/main/research/CPKT-2026-001_c11_substitution.md) preserves the historical experiment's provisional inversion hypothesis and its mobile-agent prior-art findings; the canonical paper now corrects that hypothesis to a complementary relation, because the CPN application payload was not constrained to be non-intelligent.
 - [RFC 9171 §5.4 and Appendix A](https://www.rfc-editor.org/rfc/rfc9171.html) supports forwarding to an intermediary and clarifies that *custody transfer* was migrated to the separate bundle-in-bundle encapsulation mechanism. Avoid claiming intrinsic BPv7 custody semantics.
 - [A2A specification](https://a2a-protocol.org/latest/specification/) is an inter-agent interoperability contract, not a proof of COP authority, accounting, or semantic supersession. Version and features require checking when implementing.
 - [Telescript as a Friend](./telescript_as_a_friend.md) is already an explicit Corpus reference. No evidence of a real-world partnership follows merely from conceptual kinship.
