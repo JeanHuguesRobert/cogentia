@@ -113,6 +113,8 @@ Cluster de dynamiques (concentration de compute/mémoire/influence, opacité, pe
 - FM-11 (outer optimizer capture)
 - Concentration de compute (85% frontier)
 
+**New research extension (13 November 2026):** [Contradicteur loyal, non-nivellement et valeur des questions](contradicteur_loyal_non_nivellement_2026-11-13.md). Hypothesis: a rule or reviewer can suppress valuable outliers, unvoiced minority information and recoverable initiatives even when each local precaution is defensible. Test both the cost of action and the cost of foreclosed possibilities; do not confuse unconventionality with error or originality with proof.
+
 **Reference documents:**
 - `barons-Mariani/research/ubik_reality_dislocation.md`
 - `marenostrum/DHITL.md` (§1.2, FM-11)
