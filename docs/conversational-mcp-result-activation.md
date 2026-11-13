@@ -70,14 +70,22 @@ at version `v1`, but its current signed scope does **not** include
 NOT authorized in production. Introducing it requires the existing versioned, independently signed amendment workflow and matching
 budget authority, not an undocumented test override.
 
-**FBF of the amendment path:** Inseme `amendMandate()` supports append-only
-v1→v2 revisions, but the existing Cogentia root signature verifier
-(`createOfflineJohnIssuerVerifier()`) validates a v1 root proposal rather
-than the amendment evidence and its immutable lineage. Before a v2 mandate
-can authorize this tool, its independent signature evidence must be
-reconstructible and verified on a cold read, and the runtime's version pin
-must be updated accordingly. Do not forge, reinterpret, or merely label a
-v2 amendment as though it inherited the v1 signature.
+**FBF correction (2026-11-13):** Inseme `amendMandate()` now optionally
+persists a bounded self-contained public approval proof supplied only by its
+independently trusted verifier. Cogentia `amendVerifiedJohnRoot()` verifies
+an Ed25519 or SSH-signature against the exact canonical amendment proposal
+and pinned issuer key; `createOfflineJohnIssuerVerifier()` reconstructs
+the *full* chain v1→v2→… on a cold read, checking each previous event ID,
+version, principal, scope, dates, signature, and verified proof reference.
+It rejects opaque-only unsigned amendments for use as JHN's canonical
+authority. A configured runtime selects the required version with
+`COGENTIA_MCP_JUDGMENT_RESULT_MANDATE_VERSION=v2` only after a real
+independently signed amendment is recorded. The old v1 signature cannot
+silently grant an additional capability.
+
+The live JHN v1 mandate remains unchanged: no production amendment was
+signed or activated. Do not fabricate an issuer signature, or use the MCP
+transport token as Principal approval.
 
 ## Source tests performed on Fracta2
 
