@@ -187,7 +187,7 @@ permission proof, deployment and CPS Reality Test without imposing a
 series of unrelated human operations. This reduces Human Attention and
 repeated context switching, not accountability.
 
-**ThinkPad verification (2026-11-13):** The existing 
+**ThinkPad verification (2026-11-13):** The existing
 `i7-thinkpad-jhr` is online through Tailscale, SSH from Fracta2 works,
 SSH from ThinkPad to `ubuntu@fracta2` works, and the ThinkPad's existing
 `~/.ssh` public-key catalog contains exactly one public key matching the
