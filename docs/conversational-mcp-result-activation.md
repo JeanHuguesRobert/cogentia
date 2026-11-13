@@ -186,3 +186,15 @@ agent must continue with canonical COP budget admission, provider/channel
 permission proof, deployment and CPS Reality Test without imposing a
 series of unrelated human operations. This reduces Human Attention and
 repeated context switching, not accountability.
+
+**ThinkPad verification (2026-11-13):** The existing 
+`i7-thinkpad-jhr` is online through Tailscale, SSH from Fracta2 works,
+SSH from ThinkPad to `ubuntu@fracta2` works, and the ThinkPad's existing
+`~/.ssh` public-key catalog contains exactly one public key matching the
+already-pinned JHN issuer fingerprint, with its private key file present.
+No private-key contents were read or exported and **no signing operation was
+performed**. The PowerShell helper's syntax was parsed by the real ThinkPad
+PowerShell engine with **zero parse errors**, without executing its body.
+This is a tested *readiness* check, not a demonstration of interactive
+key-unlock/sign/import. If/when the Principal chooses to run it, it still
+must display and obtain one explicit confirmation before signing.
