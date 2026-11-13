@@ -18,7 +18,9 @@ test('planning is nonmutating and retains restrictions and budget',()=>{
  assert.equal(r.ok,true);
  assert.equal(r.ready_for_issuance,false);
  assert.deepEqual(r.added_capabilities,['github.write','git.commit','git.push']);
- assert.equal(r.repository_policy.selection,'owned_or_administered');
+ assert.equal(r.repository_policy.selection,'credential_accessible');
+ assert.equal(r.repository_policy.ownership_check,'provider_enforced');
+ assert.equal(r.blocking_reasons.includes('canonical_repository_target_enforcement_missing'),false);
  assert.equal(r.repository_policy.include_future,true);
  assert.deepEqual(r.mandate.scope.forbidden_actions,['gmail.send','communication.send','irreversible.delete']);
  assert.deepEqual(r.mandate.scope.budget_ceiling,{max_steps:2048});
