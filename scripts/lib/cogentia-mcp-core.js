@@ -88,6 +88,11 @@ export const MUTATE_TOOLS = new Set([
   "cogentia_git_write",
   "cogentia_side_effect_record",
   "cogentia_side_effect_grant",
+  // These public-looking operational tools can write state or initiate work.
+  "cogentia_scheduler_run",
+  "cogentia_emit_static",
+  "cogentia_publish_registry",
+  "cogentia_consolidate_weekly",
 ]);
 
 /**
@@ -2066,7 +2071,9 @@ export function createMcpCore(env = process.env, extras = {}) {
           auth: callOpts.auth?.auth || undefined,
         });
       case "cogentia_consolidate_weekly":
-        return daemonGet("/api/ops/emit-static", {});
+        // The real five-phase runner is CLI-only for now. Never silently
+        // substitute emit-static, which has different observable effects.
+        throw Object.assign(new Error("weekly_consolidation_mcp_not_implemented: run the governed CLI workflow or connect a real scheduled job"), { error_class: "not_implemented" });
       case "cogentia_john_run": {
         let req = args.request;
         if(args.read_arguments!==undefined && req && typeof req==='object')
