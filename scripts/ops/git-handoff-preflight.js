@@ -8,7 +8,13 @@ const args=process.argv.slice(2);
 const repoArg=args.indexOf('--repo');
 const repo=path.resolve(repoArg>=0 ? args[repoArg+1] : process.cwd());
 const json=args.includes('--json');
-const fetch=args.includes('--fetch');
+const phaseIx=args.indexOf('--phase');
+const phase=phaseIx>=0 ? args[phaseIx+1] : null;
+if(phase!==null && !['start','checkpoint'].includes(phase)){
+  console.error('git-handoff-preflight: --phase must be start or checkpoint');
+  process.exit(2);
+}
+const fetch=args.includes('--fetch') || phase!==null;
 const issueIx=args.indexOf('--issue');
 const issueArg=issueIx>=0?args[issueIx+1]:null;
 function inspectIssue(value){
@@ -50,6 +56,16 @@ try {
     generated:isProjection(line.slice(3)),
     sensitive_hint:looksSensitive(line.slice(3)),
   }));
+  // Changes from merge base; advisory for semantic reconciliation.
+  const mergeBase=upstream && behind>0 ? git(['merge-base','HEAD',upstream],{optional:true}) : null;
+  const incomingPaths=mergeBase
+    ? lines(git(['diff','--name-only','--no-renames',mergeBase,upstream],{optional:true}))
+    : [];
+  const localPaths=new Set(changed.map(item=>item.path.replace(/.* -> /,'')));
+  const overlap=incomingPaths.filter(file=>localPaths.has(file));
+  const incomingSample=mergeBase && behind>0
+    ? lines(git(['log','--format=%h %s','--max-count=5','HEAD..'+upstream],{optional:true}))
+    : [];
   let state='CURRENT';
   if(!upstream)state='NO_UPSTREAM';
   else if(ahead>0 && behind>0)state='DIVERGED';
@@ -62,7 +78,12 @@ try {
   const result={
     packet,
     schema:'cogentia.git_handoff_preflight.v1',
-    repo,branch,head,upstream,ahead,behind,state,
+    repo,branch,head,upstream,ahead,behind,state,phase,
+    remote_changed_count: incomingPaths.length,
+    remote_changed_paths: incomingPaths.slice(0,25),
+    local_remote_overlap_count: overlap.length,
+    local_remote_overlap_paths: overlap.slice(0,25),
+    incoming_commits:incomingSample,
     dirty_count:changed.length,
     generated_count:changed.filter(x=>x.generated).length,
     sensitive_hint_count:changed.filter(x=>x.sensitive_hint).length,
@@ -81,6 +102,11 @@ try {
     for(const c of changed)console.log(`  ${c.code} ${c.path}${c.sensitive_hint?' [REVIEW PRIVACY]':''}${c.generated?' [GENERATED]':''}`);
     if(packet)console.log('Cognitive packet:',packet.state,packet.url||packet.input||'');
     else if(changed.length>0 || ahead>0)console.log('Cognitive packet: UNSPECIFIED — search existing issues first; create only when genuinely absent');
+    if(behind>0) {
+      console.log('Remote changes:',incomingPaths.length,'paths; local overlap:',overlap.length);
+      for(const file of overlap.slice(0,10))console.log('  OVERLAP',file);
+      for(const commit of incomingSample)console.log('  INCOMING',commit);
+    }
     console.log(result.next);
     console.log(result.note);
   }

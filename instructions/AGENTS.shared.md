@@ -764,6 +764,15 @@ increase as consequence decreases, but it never bypasses governance.
 
 Before relying on repository state for substantive work, verify that the local
 checkout reflects the latest reachable shared state.
+**Time-of-check is not time-of-use.** Use git-handoff-preflight --phase
+start before substantive edits; run it again with --phase checkpoint after
+a meaningful increment or pause and before integration or push. Both phases
+fetch and report incoming commits/path overlaps without mutating local files.
+If upstream moved while editing, reconcile before publishing; a non-overlap
+of filenames is not proof of semantic independence. Never pull automatically
+into a dirty checkout or describe a failed fetch as current. Prefer milestone
+checks over frequent polling. See [cross-host GitHub protocol](../docs/cross-host-github-handoff.md).
+
 
 For Git-backed repositories:
 

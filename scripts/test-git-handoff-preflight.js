@@ -43,5 +43,25 @@ test('preflight distinguishes current, local work and unpushed commit without wr
   s=check();
   assert.equal(s.changed.find(x=>x.path==='README.md').code,' M');
   assert.equal(run('git',['status','--porcelain'],repo).split('\n').length,2);
+  // Another host publishes a change to a file being edited locally.
+  const other=path.join(dir,'other');
+  run('git',['clone','--branch','main',remote,other],dir);
+  run('git',['config','user.name','Remote Fixture'],other);
+  run('git',['config','user.email','remote@example.invalid'],other);
+  await writeFile(path.join(other,'README.md'),'remote concurrent change\n');
+  run('git',['add','README.md'],other);
+  run('git',['commit','-m','remote: concurrent README update'],other);
+  run('git',['push','origin','main'],other);
+  const checkCheckpoint=()=>JSON.parse(run(process.execPath,[script,'--repo',repo,'--phase','checkpoint','--json'],repo));
+  s=checkCheckpoint();
+  assert.equal(s.state,'DIVERGED');
+  assert.equal(s.phase,'checkpoint');
+  assert.equal(s.ahead,1);
+  assert.equal(s.behind,1);
+  assert.deepEqual(s.local_remote_overlap_paths,['README.md']);
+  assert.deepEqual(s.remote_changed_paths,['README.md']);
+  assert.match(s.incoming_commits[0],/remote: concurrent README update/);
+  assert.equal(run('git',['status','--porcelain'],repo).split('\n').length,2);
+  assert.equal(run('git',['log','-1','--format=%s'],repo),'wip: test');
  } finally {await rm(dir,{recursive:true,force:true})}
 });

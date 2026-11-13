@@ -8,6 +8,14 @@ Two independent Git working directories have no shared uncommitted state. A clea
 
 A deliberate **WIP checkpoint is a recoverable state, not a completion claim**. Use a narrowly staged commit carrying a task/issue reference, for example: wip(document-package): checkpoint local-only compiler (#43). Do not assert green CI, human review, deployment, acceptance or source correctness merely because the commit was pushed. Preserve source and contract provenance and a concise unfinished-work note in the existing issue, not in a new tracking register.
 
+## Freshness before and during work
+
+**Start (before reading/editing a repository):** run the preflight with --repo PATH --phase start (optionally --issue OWNER/REPO#N). It fetches and diagnoses the branch, working tree and remote drift. A clean checkout only behind can safely fast-forward before editing, subject to live-service revision controls. An unreachable remote means freshness unverified.
+
+**Checkpoint (at a meaningful milestone, before commit/push, or after resuming a pause):** rerun with --phase checkpoint. It refreshes remote refs without touching the worktree, reports up to 25 changed remote paths, five incoming commit headings and local-file overlaps. A no-overlap report is not proof of semantic independence; reconcile any relevant incoming work before publishing. Never pull automatically into a dirty checkout.
+
+Avoid high-frequency polling; check after meaningful increments, tests or long pauses. Periodic safe fast-forward is for idle clean worktrees; explicit checkpoint is for active editing.
+
 ## Leaving a machine
 
 1. Run the portable, read-only diagnostic from Cogentia: node scripts/ops/git-handoff-preflight.js --repo PATH --fetch (optionally --json). Optional fetch updates remote-tracking metadata, not worktree files. Distinguish local WIP, unpushed commits, behind and divergence.
