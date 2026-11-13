@@ -29,7 +29,12 @@ shareEvidence(log, { evidenceId: published.evidenceId, recipientRefs: BRANCHES }
 
 for (const id of BRANCHES) {
   allocateExplicit(log, { choicePointId: CP, fund: id });
-  const outcome = id === "hypothesis-c" ? { ok: false, stopReason: "falsified", costUnits: 0 } : { ok: true, costUnits: 1, capabilityCalls: 1 };
+  // The F2a contract narrowed terminal outcomes in #234: only an explicit
+  // hypothesis-level refutation/exhaustion can exhaust a branch. An unfamiliar
+  // "falsified" stop string must not silently turn a recoverable stop terminal.
+  const outcome = id === "hypothesis-c"
+    ? { ok: false, stopReason: "hypothesis_refuted", costUnits: 0 }
+    : { ok: true, costUnits: 1, capabilityCalls: 1 };
   await executeFundedBranch(log, { continuationRef: id, execute: async () => outcome });
 }
 
