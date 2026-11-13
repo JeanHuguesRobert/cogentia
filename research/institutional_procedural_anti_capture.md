@@ -358,6 +358,26 @@ The response is not primarily suspicion.
 
 It is instrumentation.
 
+### 10.1 — Capacités individuelles neutralisées : le test anti-nivellement (13 novembre 2026)
+
+Une organisation peut réunir des acteurs compétents et néanmoins produire des résultats collectifs pauvres si la discussion, la sélection des propositions ou la distribution des mandats **empêchent les informations singulières de changer la décision**. Hypothèse mécaniste, à distinguer d'un jugement sur les personnes.
+
+**Rapprochements de recherche (non équivalences) :**
+- [Alvesson et Spicer (2012), *A Stupidity-Based Theory of Organizations*](https://doi.org/10.1111/j.1467-6486.2012.01072.x) : la *stupidité fonctionnelle* désigne notamment une restriction de la réflexivité et de la justification, parfois produite par les conditions d'organisation elles-mêmes.
+- [Chris Argyris (1986), *Skilled Incompetence*](https://hbr.org/1986/09/skilled-incompetence) : des conduites individuellement habiles (éviter un conflit, préserver les relations) peuvent bloquer l'apprentissage collectif.
+- [Lu, Yuan et McLeod (2012), méta-analyse de 65 études et 3 189 groupes](https://pubmed.ncbi.nlm.nih.gov/21896790/) : dans les tâches expérimentales à *profil caché*, les groupes discutent davantage l'information commune que l'information détenue par un membre, avec une perte de qualité décisionnelle.
+
+**Remèdes candidats à éprouver, non prescriptions universelles :**
+1. Collecter les analyses **indépendamment avant** de révéler le consensus ou les préférences hiérarchiques.
+2. Protéger et tracer les informations singulières et les objections matériellement pertinentes, sans obligation de consensus.
+3. Donner un droit réel de proposer **une expérimentation réversible**, sous mandat et avec critères d'arrêt, plutôt qu'un simple droit d'expression.
+4. Instituer un retour d'expérience factuel : décision initiale → résultat → cause probable → correction contrôlable.
+5. Permettre aux intéressés de corriger les **règles de sélection et de contrôle** qui filtrent systématiquement leurs initiatives ; préserver droits, sécurité et imputabilité.
+
+**Mesurer l'effectivité, sans score artificiel de « valeur humaine » :** proportion d'informations nouvelles examinées, propositions originales testées ou rejetées avec motifs, délai d'accès au décideur, décisions corrigées, coûts d'empêchement, risques effectivement matérialisés, possibilités légitimes perdues. Une option rejetée à raison après examen n'est pas une victime du nivellement.
+
+Cette extension rejoint la [note sur le Contradicteur loyal](contradicteur_loyal_non_nivellement_2026-11-13.md). Le contrôleur doit rechercher les initiatives écartées **et** les erreurs de fond ; il ne doit pas devenir une seconde instance de veto conformiste.
+
 ## 11. Relationship with Archia
 
 For a material institutional interaction, the minimum reconstructible unit is:
