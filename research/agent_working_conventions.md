@@ -90,14 +90,7 @@ Nothing here overrides `AGENTS.shared.md`; where the two disagree, the shared la
   committing. If unrelated modified files are already present, diff them before touching
   anything — they may be genuine in-progress work (leave alone) or a harmless residue (e.g. a
   file-mode-only diff, safe to discard).
-- **When you need `main` but the primary checkout is elsewhere, look for (or use) a worktree
-  already on `main`** rather than fighting the primary checkout's branch state. `git worktree
-  list` surfaces every checkout of a repo; several long-running repos in this corpus keep a
-  standing worktree per in-flight branch under `handoffs/worktrees/<repo>-<topic>` (see
-  `operium`, which as of 2026-09-27 has one at `handoffs/worktrees/operium-pause-fix` sitting on
-  `main`). Save the change as a patch (`git diff > /tmp/x.patch`), discard it from the
-  branch-mismatched checkout, `git apply` it in the `main` worktree, review the diff, then
-  commit and push there.
+- **Cross-machine handoff supersedes standing worktrees as the default.** The earlier suggestion to use standing handoffs/worktrees paths applied to particular historical collisions; it is no longer the ordinary workflow. The Principal chose one canonical main worktree per machine with optimistic locking, and the November 2026 cleanup retired these auxiliary checkouts. For ThinkPad ↔ Fracta2 handoff, use narrowly scoped WIP commits pushed to GitHub when publication and deployment boundaries allow, with a linked issue. On the receiving host, fetch and fast-forward only after confirming a clean tree. See [GitHub-first WIP handoff](../docs/cross-host-github-handoff.md) and [Shared Agent Instructions](../instructions/AGENTS.shared.md). No automatic stash, detached worktree, patch-copy ritual or blind pull/reset.
 
 ## Placement and locality
 
