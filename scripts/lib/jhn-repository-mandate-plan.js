@@ -10,7 +10,7 @@ import {resolveMandate,isMandateActive} from '../../../inseme/packages/cop-core/
 import {createEventSourcedExecutionBudgetLedger} from '../../../inseme/packages/cop-core/src/execution-budget.js';
 
 const REF='mandate:jhn:john-root';
-const EXTRA=['github.write','git.commit','git.push'];
+const EXTRA=['github.write','github.commit','github.push','git.commit','git.push'];
 const fail=error=>({ok:false,error,mandate_amended:false});
 
 export function johnRepositoryMandatePlan({store,at_time=new Date()}={}) {
