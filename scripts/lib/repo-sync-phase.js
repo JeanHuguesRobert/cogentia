@@ -14,6 +14,7 @@
 // crashed sleep cycle.
 
 import { execFile } from "node:child_process";
+import {declaredSyncHealth} from "./repo-sync-health.js";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -53,9 +54,11 @@ export async function runRepoSyncPhase(options = {}) {
 
         try {
           const parsed = JSON.parse(stdout);
+          const health = declaredSyncHealth(parsed.repos || []);
           resolve({
-            status: parsed.ok ? "completed" : "completed_with_errors",
-            evidence: parsed,
+            status: !parsed.ok ? "completed_with_errors" :
+              health.blocked_count ? "completed_with_blocks" : "completed",
+            evidence: {...parsed, health},
             error: null,
           });
         } catch (parseError) {

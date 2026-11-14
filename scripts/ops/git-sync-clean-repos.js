@@ -1,10 +1,13 @@
 #!/usr/bin/env node
 // Safe, cross-platform existing-checkouts-only fast-forward. No clone/checkout/stash/commit/push.
-import {readdir,stat} from 'node:fs/promises';
+import {readdir,stat,rm} from 'node:fs/promises';
 import path from 'node:path';
 import process from 'node:process';
 import {spawnSync} from 'node:child_process';
 import {fileURLToPath} from 'node:url';
+import {mkdir,rename,writeFile} from 'node:fs/promises';
+import {randomUUID} from 'node:crypto';
+import {cleanSyncHealth} from '../lib/repo-sync-health.js';
 
 export function runGit(repo,args,{optional=false}={}) {
   const p=spawnSync('git',['-C',repo,...args],{encoding:'utf8',maxBuffer:4*1024*1024,timeout:20000});
@@ -60,6 +63,7 @@ export async function syncExistingRoot(root,{apply=false}={}) {
     results.push(syncExistingRepo(p,{apply}));
   }
   return {schema:'cogentia.git_clean_repo_sync.v1',root,apply,results,
+    health:cleanSyncHealth(results),
     summary:Object.fromEntries([...new Set(results.map(x=>x.status))].sort().map(k=>[k,results.filter(x=>x.status===k).length]))};
 }
 
@@ -67,8 +71,20 @@ const invoked=process.argv[1] && path.resolve(process.argv[1])===fileURLToPath(i
 if(invoked) {
   const args=process.argv.slice(2),ix=args.indexOf('--root');
   const root=path.resolve(ix<0?process.cwd():args[ix+1]);
+  const receiptIx=args.indexOf('--receipt');
+  const receipt=receiptIx>=0?args[receiptIx+1]:null;
   try {
     const r=await syncExistingRoot(root,{apply:args.includes('--apply')});
+    if(receipt){
+      if(!receipt || receipt.startsWith('--'))throw Error('--receipt requires a filename');
+      const target=path.resolve(receipt);
+      await mkdir(path.dirname(target),{recursive:true});
+      const temporary=target+'.'+randomUUID()+'.tmp';
+      try {
+        await writeFile(temporary,JSON.stringify({schema:'cogentia.repo_sync_receipt.v1',checked_at:new Date().toISOString(),root:r.root,apply:r.apply,summary:r.summary,health:r.health},null,2)+'\n',{mode:0o600,flag:'wx'});
+        await rename(temporary,target);
+      } finally {await rm(temporary,{force:true});}
+    }
     if(args.includes('--json'))console.log(JSON.stringify(r,null,2));
     else {for(const v of r.results)console.log(v.repo+': '+v.status+(v.error?' — '+v.error:''));console.log('Summary:',JSON.stringify(r.summary))}
     if(r.results.some(x=>x.status==='ERROR'))process.exitCode=1;
