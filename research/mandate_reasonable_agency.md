@@ -62,6 +62,12 @@ An AI system does not acquire independent legal personality through this archite
 
 This is a cross-cutting clarification of [Measured Risk](measured_risk.md), [Principal Instrumental Freedom](principal_instrumental_freedom.md), [Act, Mandate and Responsibility](act_mandate_responsibility.md), [Mandate Judgment and Reconciliation](integration/mandate_judgment_reconciliation_2026-11-02.md), the [Rossignol principle](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/principe_rossignol.md) and [DAO/DHITL accountability](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/dao_imputabilite_dhitl.md). It does not create a grant, service, tribunal, automatic sanction or new runtime authority.
 
+## Mandats signés et histoire non réinscriptible — 14 novembre 2026
+
+La décision commune est [COP / FractaLog — Mandats et continuité historique proportionnée](https://github.com/JeanHuguesRobert/inseme/blob/main/docs/mandates-fractalog-historical-continuity.md). Une signature établit l’usage de la clé de confiance, non une certitude de volonté humaine. Autorité courante, réservations, effets et reçus restent distincts. Un amendement ou une révocation de mandat est un changement de données, **sans rechargement du MCP**. FractaLog conserve des chaînes locales horodatées ; toute correction est un nouvel événement. Le risque de réécriture par contrôle complet du stockage et des engagements est reconnu et accepté provisoirement, sans imposer de blockchain globale.
+
+**Fait constaté :** le 14/11/2026, JHN root v2 est signé et vérifié ; son activation comme capacité de retour MCP reste une opération technique distincte.
+
 ## Two pillars
 
 1. **Judgment under uncertainty.** Interpret intent, mandate, current context, feasible alternatives, known unknowns, risk of ruin, reversibility, and repair. Seek *admissible*, not imaginary perfect, decisions. Predictions must not feign probability estimates for unquantifiable tails.
@@ -90,7 +96,9 @@ Within the mandate an **open batch** is a dynamically evolving class of admissib
 
 An expert's **competence** and **authority to decide** are independent. Advice, independent review, committee decisions, mandatory principal consent, ratification, and an authority's legally effective position have different status. A consulted mandant's silence is not automatically consent.
 
-## Agent John standing mandate — proposed, unissued (2026-11-05)
+## Agent John standing mandate — historical broad proposal (2026-11-05)
+
+**Historical broader proposal:** the narrower JHN root v1 and signed v2 have since been issued; the full standing mandate proposed below has not been issued as such.
 
 The Principal intends a broad, durable, revocable root mandate for Cogentia
 Digital Twin / Agent John. It grants substantial initiative and the power to

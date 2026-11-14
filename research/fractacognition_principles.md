@@ -701,6 +701,8 @@ This rule extends—not replaces—the existing [Reality Probe Selection](realit
 
 The rule's effect will be observed **naturally** in subsequent explorations. Record convincing discoveries and counterexamples when they occur; do not create a dedicated A/B campaign merely to demonstrate the rule. Avoid confirmation bias in retrospective attribution.
 
+**Historical continuity (2026-11-14):** freeing the future from the past does not authorize rewriting past acts. Corrections are new events in local timestamped COP/FractaLog chains; residual full-host compromise is consciously accepted at this stage. See [the shared doctrine](https://github.com/JeanHuguesRobert/inseme/blob/main/docs/mandates-fractalog-historical-continuity.md).
+
 ### 8.2 Anti-presentism and the third woodcutter — invest in changing the means
 
 **Canonical maxim:** *Free the future from capture by the past.* A plan, decomposition, backlog, or chosen tool is a dated hypothesis about how to act, not a permanent claim of authority over possibilities discovered later.

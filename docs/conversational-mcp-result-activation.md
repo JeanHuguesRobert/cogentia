@@ -296,3 +296,8 @@ names/schemas may require a client refresh. These are **software deployments**,
 not mandate operations. Provider-channel approval is a separate operator
 configuration and must not be mistaken for a mandate or silently opened by
 an agent.
+
+
+## 14. Consolidated doctrine (2026-11-14)
+
+The shared architectural decision is [COP / FractaLog — Mandats et continuité historique proportionnée](https://github.com/JeanHuguesRobert/inseme/blob/main/docs/mandates-fractalog-historical-continuity.md). Mandates are dynamically verified control-plane data, not MCP connector configuration. Acts are represented by timestamped locally chained records and corrections are additional events. Full storage compromise is a consciously accepted residual risk, not a reason to impose blockchain, global ordering or external time authority before useful capability deployment.
