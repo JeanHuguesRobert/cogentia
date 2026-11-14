@@ -51,7 +51,10 @@ export async function syncExistingRoot(root,{apply=false}={}) {
   const candidates=await readdir(root,{withFileTypes:true});
   const results=[];
   for(const entry of candidates.sort((a,b)=>a.name.localeCompare(b.name))) {
-    if(!entry.isDirectory()||entry.name.startsWith('.'))continue;
+    // Existing checkout aliases on Fracta2 (e.g. barons-Mariani and
+    // suicide-corse) are directory symlinks into /home/ubuntu. Scanning only
+    // Dirent.isDirectory() silently omitted them from every freshness report.
+    if((!entry.isDirectory()&&!entry.isSymbolicLink())||entry.name.startsWith('.'))continue;
     const p=path.join(root,entry.name);
     try {await stat(path.join(p,'.git'))}catch{continue}
     results.push(syncExistingRepo(p,{apply}));

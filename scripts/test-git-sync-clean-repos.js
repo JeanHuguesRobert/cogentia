@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {mkdtemp,mkdir,writeFile,rm} from 'node:fs/promises';
+import {mkdtemp,mkdir,writeFile,rm,symlink} from 'node:fs/promises';
 import {tmpdir} from 'node:os';
 import path from 'node:path';
 import {spawnSync} from 'node:child_process';
@@ -31,12 +31,18 @@ test('sync advances only a clean, non-diverged canonical checkout; never overwri
   run(ahead,'add','own.md');run(ahead,'commit','-m','wip: not published');
   await writeFile(path.join(source,'file.md'),'two\n');
   run(source,'add','file.md');run(source,'commit','-m','second');run(source,'push');
+  // A symlinked checkout must not be silently skipped from a root-wide
+  // freshness scan. This is the actual Fracta2 layout for two repos.
+  await symlink(clean,path.join(root,'clean-alias'),'dir');
   const initial=run(clean,'rev-parse','HEAD');
   const dry=await syncExistingRoot(root);
   assert.equal(dry.results.find(x=>x.repo==='clean').status,'DRY_RUN');
+  assert.equal(dry.results.find(x=>x.repo==='clean-alias').status,'DRY_RUN');
   assert.equal(run(clean,'rev-parse','HEAD'),initial);
   const applied=await syncExistingRoot(root,{apply:true});
   assert.equal(applied.results.find(x=>x.repo==='clean').status,'FAST_FORWARDED');
+  assert.ok(['FAST_FORWARDED','CURRENT'].includes(
+    applied.results.find(x=>x.repo==='clean-alias').status));
   assert.equal(applied.results.find(x=>x.repo==='dirty').status,'SKIP_DIRTY');
   assert.equal(applied.results.find(x=>x.repo==='ahead').status,'SKIP_DIVERGED');
   assert.equal(run(clean,'rev-parse','HEAD'),run(source,'rev-parse','HEAD'));
