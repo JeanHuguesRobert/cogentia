@@ -8,6 +8,7 @@ import {execFileSync} from 'node:child_process';
 import {realpathSync, statSync, readFileSync} from 'node:fs';
 import {fileURLToPath} from 'node:url';
 import {resolve} from 'node:path';
+import {MUTATE_TOOLS} from '../lib/cogentia-mcp-core.js';
 
 const ROOT = resolve(fileURLToPath(new URL('../../',import.meta.url)));
 const MODULE = resolve(ROOT,'scripts/lib/cogentia-mcp-judgment-result-runtime.js');
@@ -28,7 +29,7 @@ function hasEnv(env, name, value) {
   return value === undefined ? Boolean(match&&match[1]) : Boolean(match&&match[1]===value);
 }
 function inspect({env='',storePath=EXPECTED_STORE,keyPath='/home/ubuntu/.ssh/authorized_keys',
-  unitActive=false,startedAfterSource=false,mandateStatus=null,toolVisible=false}={}){
+  unitActive=false,startedAfterSource=false,mandateStatus=null,anonymousToolVisible=false,toolContractRegistered=MUTATE_TOOLS.has('cogentia_continuation_result_submit')}={}){
   const runtime=hasEnv(env,'COGENTIA_MCP_JUDGMENT_RESULT_ENABLED','1');
   const channels=hasEnv(env,'COGENTIA_MCP_JUDGMENT_RESULT_PERMITTED_CHANNELS');
   const transport=hasEnv(env,'COGENTIA_MCP_JHN_MUTATE','1') &&
@@ -43,15 +44,17 @@ function inspect({env='',storePath=EXPECTED_STORE,keyPath='/home/ubuntu/.ssh/aut
     runtime_enabled:check(runtime,'result_runtime_not_enabled'),
     allowed_channels_configured:check(channels,'provider_channel_allowlist_missing'),
     jhn_authenticated_mutate_configured:check(transport,'jhn_mutate_transport_not_verified_in_unit_environment'),
-    mcp_tool_exposed:check(toolVisible,'tool_not_exposed_in_running_mcp'),
+    source_tool_contract:check(toolContractRegistered,'result_tool_not_registered_in_source'),
   };
-  return {schema:'cogentia.continuation-result-readiness/v1',ready:Object.values(checks).every(x=>x.ok),checks,
-    note:'No external provider permission, live caller attestation, result receipt, or autonomous redispatch is proven by this report.'};
+  return {schema:'cogentia.continuation-result-readiness/v2',ready:Object.values(checks).every(x=>x.ok),checks,
+    discovery:{anonymous_public_tool_visible:Boolean(anonymousToolVisible),
+      authenticated_jhn_tool_visible:'not_checked'},
+    note:'Public /tools deliberately hides mutate tools. Ready means local configuration checks only, NOT live JHN authentication, provider permission, actual result receipt, or autonomous redispatch.'};
 }
 export {inspect};
 
 if(process.argv[1]&&resolve(process.argv[1])===fileURLToPath(import.meta.url)){
-  let env='',unitActive=false,startedAfterSource=false,toolVisible=false,mandateStatus=null;
+  let env='',unitActive=false,startedAfterSource=false,anonymousToolVisible=false,mandateStatus=null;
   let path=EXPECTED_STORE,keyPath='/home/ubuntu/.ssh/authorized_keys';
   try {env=readServiceEnv();} catch {}
   try {execFileSync('systemctl',['is-active','--quiet','mcp-cogentia.service'],{stdio:'ignore',timeout:3000});unitActive=true;} catch {}
@@ -67,7 +70,7 @@ if(process.argv[1]&&resolve(process.argv[1])===fileURLToPath(import.meta.url)){
   try {
     const url='http://127.0.0.1:8791/tools';
     const raw=execFileSync('curl',['-fsS','--max-time','3',url],{encoding:'utf8',timeout:4500});
-    toolVisible=JSON.parse(raw).tools?.some(x=>x.name==='cogentia_continuation_result_submit')===true;
+    anonymousToolVisible=JSON.parse(raw).tools?.some(x=>x.name==='cogentia_continuation_result_submit')===true;
   }catch{}
   // Check read-only canonical mandate and issuer by reusing the existing
   // preflight, which opens no writer and reports no secret values.
@@ -92,7 +95,7 @@ if(process.argv[1]&&resolve(process.argv[1])===fileURLToPath(import.meta.url)){
         budget:budget.has_grant===true && (budget.available?.max_steps||0)>0};
     }finally{opened.close()}
   }catch{mandateStatus={verified:false,budget:false}}
-  const report=inspect({env,storePath:path,keyPath,unitActive,startedAfterSource,mandateStatus,toolVisible});
+  const report=inspect({env,storePath:path,keyPath,unitActive,startedAfterSource,mandateStatus,anonymousToolVisible});
   process.stdout.write(JSON.stringify(report,null,2)+'\n');
   process.exitCode=report.ready?0:2;
 }

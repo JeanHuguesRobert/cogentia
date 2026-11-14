@@ -337,3 +337,37 @@ authenticated JHN transport. Do not configure an arbitrary consumer-provider
 channel merely to make this report green. The separate end-to-end receipt and
 autonomous CPS wake/redispatch test must follow before reporting this capacity
 as live.
+
+## 16. FBF — public catalogue is not authenticated discovery (2026-11-14)
+
+The prior readiness diagnostic mistakenly treated absence of
+`cogentia_continuation_result_submit` from anonymous GET `/tools` as
+proof that the tool was not registered in the live MCP. This was wrong:
+`MUTATE_TOOLS` are intentionally hidden from **anonymous** discovery.
+An authenticated JHN caller may see them via MCP `tools/list` while
+the public catalogue continues to omit them.
+
+`check-continuation-result-activation.mjs` now reports the anonymous
+discovery as **informational**, checks the *source contract* separately,
+and explicitly marks authenticated JHN discovery as `not_checked`
+rather than inventing an authorization result. The readiness output is
+versioned `cogentia.continuation-result-readiness/v2`.
+Do not switch the entire service to `COGENTIA_MCP_VIEW=full` or enable
+anonymous mutate merely to make the public `/tools` response display
+a protected capability.
+
+A new **disposable local HTTP loopback** regression covers actual
+`POST /mcp` with JSON-RPC `tools/list` and `tools/call`, using a
+test-signed COP issuer, actual budget reservation, live packet claim
+and SQLite event receipt store. It asserts: anonymous refusal,
+authenticated JHN discovery, rejection of the bad token without a
+write, one successful candidate receipt, and idempotent replay without
+duplicate write. This is a realistic HTTP transport **test fixture**,
+not the production service or an external provider test.
+
+**Actual deployment blocker:** the live MCP has not reloaded the new
+source runtime, the optional result feature flag and reviewed
+provider/channel allowlist are absent, and authenticated write transport
+is not verified in its unit Environment property. External channel
+permission, an authorized one-time deployment and end-to-end CPS
+autonomous redispatch still require separate evidence.

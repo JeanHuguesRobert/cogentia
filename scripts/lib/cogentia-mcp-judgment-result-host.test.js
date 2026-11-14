@@ -1,7 +1,9 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { generateKeyPairSync, sign } from "node:crypto";
-import { createMcpCore } from "./cogentia-mcp-core.js";
+import { createServer } from "node:http";
+import { once } from "node:events";
+import { createMcpCore, transportFromHttpRequest } from "./cogentia-mcp-core.js";
 import { resolveCallerAuth } from "./cogentia-mcp-auth.js";
 import { createCanonicalMcpJudgmentResultHost, RESULT_RETURN_CAPABILITY } from "./cogentia-mcp-judgment-result-host.js";
 import { createOfflineJohnIssuerVerifier } from "./john-offline-issuer-verifier.js";
@@ -15,6 +17,40 @@ import { declaredContinuationRecord, observeContinuationResult } from "../../../
 import { EventStorePacketClaimCoordinator } from "../../../inseme/packages/cop-kernel/src/packetCoordination.js";
 import { hashPayload } from "../../../inseme/packages/cop-core/src/cop-event-envelope.js";
 
+// Disposable loopback transport reproduces POST /mcp without importing the
+// production server, its process environment, or the real COP database.
+async function withLocalMcpHttp(core, callback) {
+  const server=createServer(async (req,res)=>{
+    try{
+      const parts=[];
+      for await(const chunk of req)parts.push(chunk);
+      const msg=JSON.parse(Buffer.concat(parts).toString("utf8"));
+      const answer=await core.handleJsonRpc(msg,transportFromHttpRequest(req));
+      res.writeHead(200,{"content-type":"application/json","cache-control":"no-store"});
+      res.end(JSON.stringify(answer));
+    }catch(error){
+      res.writeHead(500,{"content-type":"application/json"});
+      res.end(JSON.stringify({error:"test_transport_failed"}));
+    }
+  });
+  server.listen(0,"127.0.0.1");
+  await once(server,"listening");
+  try{
+    const url="http://127.0.0.1:"+server.address().port+"/mcp";
+    const send=async(msg,token="test-token")=>{
+      const response=await fetch(url,{method:"POST",headers:{
+        "content-type":"application/json",authorization:"Bearer "+token,
+        "x-cogentia-actor":"agent:jhn",
+        "x-cogentia-mandate":"mandate:chatgpt-corpus-coding",
+      },body:JSON.stringify(msg)});
+      assert.equal(response.status,200);
+      return response.json();
+    };
+    return await callback(send);
+  }finally{
+    await new Promise((resolve,reject)=>server.close(err=>err?reject(err):resolve()));
+  }
+}
 const TOOL = "cogentia_continuation_result_submit";
 const MANDATE = "mandate:jhn:john-root";
 const BUDGET = "budget:" + MANDATE;
@@ -138,9 +174,35 @@ test("real signed COP mandate and active budget reservation gate MCP receipt", a
           provider:"local-fixture", channel:"mcp",
         });
         assert.equal(store.append(declaration).ok, true);
-        const next = await core.callTool(TOOL, submission(id), { auth });
-        assert.equal(next.ok, true, JSON.stringify(next));
-        assert.equal(next.duplicate, false);
+        if(i===3){
+          // Real local HTTP POST /mcp + header authentication + MCP JSON-RPC,
+          // using the independently signed fixture mandate and durable store.
+          const httpCore=createMcpCore({
+            COGENTIA_MCP_VIEW:"public",
+            COGENTIA_MCP_JHN_MUTATE:"1",COGENTIA_MCP_JHN_TOKEN:"test-token",
+          },{mcpContinuationResultHost:factory});
+          await withLocalMcpHttp(httpCore,async send=>{
+            const anon=await send({jsonrpc:"2.0",id:41,method:"tools/list"},"bad-token");
+            assert.equal(anon.result.tools.some(t=>t.name===TOOL),false);
+            const member=await send({jsonrpc:"2.0",id:42,method:"tools/list"});
+            assert.equal(member.result.tools.some(t=>t.name===TOOL),true);
+            const message={jsonrpc:"2.0",id:43,method:"tools/call",
+              params:{name:TOOL,arguments:submission(id)}};
+            const refused=await send(message,"bad-token");
+            assert.equal(refused.result?.isError,true);
+            assert.equal(store.listTopic("continuation:"+id).length,1);
+            const received=await send(message);
+            assert.equal(received.result?.structuredContent?.data?.ok,true,JSON.stringify(received));
+            assert.equal(received.result.structuredContent.data.duplicate,false);
+            const replay=await send(message);
+            assert.equal(replay.result?.structuredContent?.data?.duplicate,true);
+            assert.equal(store.listTopic("continuation:"+id).length,2);
+          });
+        }else{
+          const next=await core.callTool(TOOL,submission(id),{auth});
+          assert.equal(next.ok,true,JSON.stringify(next));
+          assert.equal(next.duplicate,false);
+        }
       }
       const persisted = store.listTopic("continuation:" + id);
       const observed = persisted.find(e => e.payload?.surface === "mcp");
