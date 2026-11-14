@@ -27,7 +27,7 @@ const a=openExistingJohnCopStore('/var/lib/cogentia/cop/john-root-v1.sqlite');
 if(!a.ok)throw Error(a.error);
 try{
  const mandate=resolveMandate(a.store,ref);
- const verified=createOfflineJohnIssuerVerifier({trustedSshPublicKey:key,expectedSshFingerprint:fp})({mandate,mandate_ref:ref});
+ const verified=createOfflineJohnIssuerVerifier({trustedSshPublicKey:key,expectedSshFingerprint:fp})({mandate,mandate_ref:ref,store:a.store});
  const budget=createEventSourcedExecutionBudgetLedger({store:a.store,budget_id:'budget:'+ref,limits:{max_steps:2048},require_authority_grant:true}).snapshot();
  if(!verified.verified||!budget.has_grant||budget.mandate_ref!==ref||budget.available.max_steps<1)throw Error('canonical_read_authority_unavailable');
  console.log('SIGNED_ROOT_AND_CANONICAL_BUDGET=VALID');

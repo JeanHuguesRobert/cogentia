@@ -1,5 +1,6 @@
 /** #299: explicit COP read vertical, independently verified, atomically budgeted. */
 import {readFileSync} from 'node:fs';
+import {resolveMandate} from '../../../inseme/packages/cop-core/src/governed-act.js';
 import {createEventSourcedExecutionBudgetLedger} from '../../../inseme/packages/cop-core/src/execution-budget.js';
 import {createOfflineJohnIssuerVerifier} from './john-offline-issuer-verifier.js';
 import {sshFingerprint} from './john-sshsig-approval.js';
@@ -23,7 +24,12 @@ export async function executeJohnCanonicalRead({store,authorizedKeysPath,auth,re
  });}catch{return deny('trusted_issuer_key_unavailable');}
  if(!key)return deny('trusted_issuer_key_unavailable');
  const verifyIssuer=createOfflineJohnIssuerVerifier({trustedSshPublicKey:key,expectedSshFingerprint:FP});
- const map=createJohnTransportMandateMap({transport_label:'mandate:chatgpt-corpus-coding',mandate_ref:REF,version_pin:'v1',allowed_read_capabilities:ALLOWED,verifyIssuer});
+ // A successful signed v2 amendment supersedes v1's freshness pin. Do not
+ // freeze a read-only capability to the initial issuance version.
+ const current=resolveMandate(store,REF);
+ const version_pin=current?.version;
+ if(!/^v[1-9]\d*$/.test(version_pin||''))return deny('canonical_read_mandate_version_missing');
+ const map=createJohnTransportMandateMap({transport_label:'mandate:chatgpt-corpus-coding',mandate_ref:REF,version_pin,allowed_read_capabilities:ALLOWED,verifyIssuer});
  const ledger=createEventSourcedExecutionBudgetLedger({store,budget_id:'budget:'+REF,limits:{max_steps:2048},require_authority_grant:true});
  const pre=map.inspect({auth,store,ledger,capability:request.capability});
  if(!pre.preflight_ok)return deny(pre.error||'canonical_read_denied');
