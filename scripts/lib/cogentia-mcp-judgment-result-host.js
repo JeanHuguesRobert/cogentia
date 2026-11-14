@@ -15,6 +15,7 @@ import { createSqliteMcpResultReceiptStore } from
 import { projectPacketCoordination, validateCurrentPacketClaim } from
   "../../../inseme/packages/cop-core/src/packet-coordination.js";
 import { assessJohnCopAuthority } from "./john-cop-authority-preflight.js";
+import { resolveMandate } from "../../../inseme/packages/cop-core/src/governed-act.js";
 import { isResolvedCallerAuth } from "./cogentia-mcp-auth.js";
 
 export const RESULT_RETURN_CAPABILITY = "cogentia.continuation.result.submit";
@@ -43,13 +44,13 @@ function hasActiveBudgetReservation(store, budgetId, reservationId) {
  * any running public or private MCP server.
  */
 export function createCanonicalMcpJudgmentResultHost({
-  store, mandate_ref, version_pin, budget_id, transport_mandate_label,
+  store, mandate_ref, budget_id, transport_mandate_label,
   verifyIssuer, channelPermission,
 } = {}) {
   if (!store || store.kind !== "sqlite" ||
       typeof store.listTopic !== "function" ||
       typeof store.transaction !== "function" ||
-      !mandate_ref || !version_pin || !budget_id ||
+      !mandate_ref || !budget_id ||
       typeof verifyIssuer !== "function" ||
       typeof channelPermission !== "function")
     throw new TypeError("canonical_result_authority_configuration_required");
@@ -77,6 +78,11 @@ export function createCanonicalMcpJudgmentResultHost({
         const ledger = createEventSourcedExecutionBudgetLedger({
           store, budget_id, require_authority_grant: true,
         });
+        // Resolve version on EVERY admission. A signed vN amendment or
+        // revocation must take effect without restarting the MCP connection.
+        // assessJohnCopAuthority independently verifies the full issuer chain
+        // and rejects a stale/revoked/invalid current declaration.
+        const version_pin = resolveMandate(store, mandate_ref)?.version;
         const preflight = assessJohnCopAuthority({
           store, auth, mandate_ref, version_pin,
           transport_mandate_label, capability: RESULT_RETURN_CAPABILITY,

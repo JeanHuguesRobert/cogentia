@@ -48,12 +48,6 @@ export function createMcpJudgmentResultRuntime(env = process.env) {
   );
   if (!allowedChannels.size) fail("judgment_result_channels_not_reviewed");
 
-  const versionPin = String(
-    env.COGENTIA_MCP_JUDGMENT_RESULT_MANDATE_VERSION || "v1"
-  ).trim();
-  if (!/^v[1-9]\d*$/.test(versionPin))
-    fail("judgment_result_invalid_mandate_version");
-
   const store = createSqliteCopEventStore(storePath);
   try {
     const verifyIssuer = createOfflineJohnIssuerVerifier({
@@ -62,7 +56,6 @@ export function createMcpJudgmentResultRuntime(env = process.env) {
     const provider = createCanonicalMcpJudgmentResultHost({
       store,
       mandate_ref: "mandate:jhn:john-root",
-      version_pin: versionPin,
       budget_id: "budget:mandate:jhn:john-root",
       transport_mandate_label: "mandate:chatgpt-corpus-coding",
       verifyIssuer,

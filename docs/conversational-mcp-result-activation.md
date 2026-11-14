@@ -78,13 +78,15 @@ and pinned issuer key; `createOfflineJohnIssuerVerifier()` reconstructs
 the *full* chain v1→v2→… on a cold read, checking each previous event ID,
 version, principal, scope, dates, signature, and verified proof reference.
 It rejects opaque-only unsigned amendments for use as JHN's canonical
-authority. A configured runtime selects the required version with
-`COGENTIA_MCP_JUDGMENT_RESULT_MANDATE_VERSION=v2` only after a real
-independently signed amendment is recorded. The old v1 signature cannot
-silently grant an additional capability.
+authority. Following the 2026-11-14 FBF correction, the active mandate
+version is resolved dynamically at every admission
+from the canonical COP journal. The old v1 signature cannot silently grant
+an additional capability. No change to the MCP tool schema or connector is
+required for a mandate amendment, issuance or revocation.
 
-The live JHN v1 mandate remains unchanged: no production amendment was
-signed or activated. Do not fabricate an issuer signature, or use the MCP
+Historical state on 2026-11-13: JHN root v1 was not yet amended. As
+verified on 2026-11-14 (§12), the Principal subsequently signed v2;
+its MCP runtime is not yet activated. Do not fabricate an issuer signature, or use the MCP
 transport token as Principal approval.
 
 ## Source tests performed on Fracta2
@@ -252,7 +254,8 @@ with process started 2026-11-12 (before these changes). Its unauthenticated
 loopback `/tools` surface currently lists 64 tools and does not advertise
 `cogentia_continuation_result_submit`. The runtime has NO
 `COGENTIA_MCP_JUDGMENT_RESULT_ENABLED`, permitted channel allowlist, or
-v2 version pin configured. Local `sudo -n` is denied by `no new privileges`;
+runtime activation configured (the version pin is no longer needed).
+Local `sudo -n` is denied by `no new privileges`;
 this session has not restarted or changed systemd. No remote ChatGPT,
 Claude or Grok invocation was attempted. Enabling without a permitted,
 independently reviewed provider/channel and authorized restart remains
@@ -265,3 +268,31 @@ one narrowly defined `provider:channel` pair. Respect the operator's existing
 restart channel; do not bypass root broker or ask Principal to sign another
 broad mandate. Actual CPS redispatch, authenticated consumer transport,
 usage settlement and provider-specific terms remain separately testable.
+
+
+## 13. Dynamic mandate control plane (2026-11-14)
+
+**Architectural invariant:** The MCP server exposes stable technical tools;
+COP mandates authorize their use dynamically. Issuing, amending, revoking or
+expiring a mandate **must never require an MCP connector refresh, a tool
+schema change, or a service restart**. Retain independent cryptographic
+issuer verification and exact capability/budget/claim checks on every fresh
+admission; do not reuse a previously allowed decision without revalidation.
+
+FBF implemented in `createCanonicalMcpJudgmentResultHost`: remove startup
+`version_pin`, read `resolveMandate(store, mandate_ref)?.version` on each
+incoming result and run `assessJohnCopAuthority` against the currently signed,
+validated and non-revoked lineage. The HTTP runtime no longer reads the
+`COGENTIA_MCP_JUDGMENT_RESULT_MANDATE_VERSION` environment variable.
+An integration test keeps the **same MCP host instance** while applying a
+signed `v1→v2` amendment, then a COP revocation; admission succeeds after
+the valid amendment and fails immediately after revocation, without a reload.
+No actual Principal key, real database or provider account is changed by this
+test.
+
+One-time service deployment of a new server implementation may require a
+service restart or a hot-code deployment. Likewise changes to MCP tool
+names/schemas may require a client refresh. These are **software deployments**,
+not mandate operations. Provider-channel approval is a separate operator
+configuration and must not be mistaken for a mandate or silently opened by
+an agent.

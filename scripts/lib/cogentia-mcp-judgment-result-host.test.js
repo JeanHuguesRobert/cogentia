@@ -6,6 +6,8 @@ import { resolveCallerAuth } from "./cogentia-mcp-auth.js";
 import { createCanonicalMcpJudgmentResultHost, RESULT_RETURN_CAPABILITY } from "./cogentia-mcp-judgment-result-host.js";
 import { createOfflineJohnIssuerVerifier } from "./john-offline-issuer-verifier.js";
 import { issueVerifiedJohnRoot } from "./john-root-issuance.js";
+import { amendVerifiedJohnRoot } from "./john-mandate-amendment.js";
+import { resolveMandate, recordMandateControl } from "../../../inseme/packages/cop-core/src/governed-act.js";
 import { ROOT_MANDATE_KIND, RESERVED_ACTIONS, canonicalProposalBytes, proposalHash, publicKeyFingerprint } from "./john-root-mandate.js";
 import { createSqliteCopEventStore } from "../../../inseme/packages/cop-core/src/sqlite-cop-event-store.js";
 import { createEventSourcedExecutionBudgetLedger } from "../../../inseme/packages/cop-core/src/execution-budget.js";
@@ -87,7 +89,7 @@ test("real signed COP mandate and active budget reservation gate MCP receipt", a
     });
     let permit = true;
     const factory = createCanonicalMcpJudgmentResultHost({
-      store,mandate_ref:MANDATE,version_pin:"v1",budget_id:BUDGET,
+      store,mandate_ref:MANDATE,budget_id:BUDGET,
       transport_mandate_label:"mandate:chatgpt-corpus-coding",verifyIssuer,
       channelPermission:()=>permit,
     });
@@ -162,5 +164,37 @@ test("real signed COP mandate and active budget reservation gate MCP receipt", a
     }
     assert.equal(ledger.snapshot().reserved.max_steps, 3);
     assert.equal(store.replay().filter(e => e.payload?.surface === "mcp").length,3);
+
+    // The same already-created MCP host must react to a separately signed
+    // amendment and revocation without reconstructing its tool catalog.
+    const original=resolveMandate(store, MANDATE);
+    const last=store.replay().filter(e=>e.payload?.kind==="MandateDeclaration").at(-1);
+    const scope={...original.scope,allowed_actions:[
+      ...original.scope.allowed_actions,"browser.hosted.inspect"]};
+    const proposalV2={kind:"cop.mandate-amendment.proposal/v1",
+      mandate_ref:MANDATE,previous_version:"v1",new_version:"v2",
+      previous_event_id:last.event_id,principal_ref:"principal:jhn",
+      logical_agent_ref:"agent:jhn",scope,
+      valid_from:original.valid_from,valid_until:original.valid_until,
+      reason:"Maintain result receipts while extending a read-only capability"};
+    const approvalV2={kind:"cogentia.john-mandate-amendment-proof/v1",
+      signature_scheme:"ed25519",issuer_fingerprint:publicKeyFingerprint(pem),
+      proposal_hash:proposalHash(proposalV2),
+      signature_base64:sign(null,canonicalProposalBytes(proposalV2),
+        key.privateKey).toString("base64")};
+    const amend=amendVerifiedJohnRoot({store,input:{
+      mandate_ref:MANDATE,expected_version:"v1",principal_ref:"principal:jhn",
+      scope,reason:proposalV2.reason,approval:approvalV2},
+      trustedPublicKeyPem:pem,now:()=>NOW});
+    assert.equal(amend.ok,true,JSON.stringify(amend));
+    const sameHost=await factory({auth});
+    const liveV2=await sameHost.admit(submission("ctn_test_3"));
+    assert.equal(liveV2.mandate_valid,true,"signed amendment must work without MCP restart");
+    assert.equal(liveV2.budget_admitted,true);
+    assert.equal(recordMandateControl(store,{principal_ref:"principal:jhn",
+      mandate_ref:MANDATE,action:"revoke",reason:"test revocation"}).ok,true);
+    const afterRevoke=await sameHost.admit(submission("ctn_test_3"));
+    assert.equal(afterRevoke.mandate_valid,false,"revocation must apply without MCP restart");
+    assert.equal(afterRevoke.budget_admitted,false);
   } finally {store.close();}
 });
