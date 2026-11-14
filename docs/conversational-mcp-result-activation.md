@@ -301,3 +301,39 @@ an agent.
 ## 14. Consolidated doctrine (2026-11-14)
 
 The shared architectural decision is [COP / FractaLog — Mandats et continuité historique proportionnée](https://github.com/JeanHuguesRobert/inseme/blob/main/docs/mandates-fractalog-historical-continuity.md). Mandates are dynamically verified control-plane data, not MCP connector configuration. Acts are represented by timestamped locally chained records and corrections are additional events. Full storage compromise is a consciously accepted residual risk, not a reason to impose blockchain, global ordering or external time authority before useful capability deployment.
+
+## 15. Live readiness diagnostic — 2026-11-14
+
+Run **without root, no service restart and no COP mutations**:
+
+```sh
+node scripts/ops/check-continuation-result-activation.mjs
+```
+
+The command prints only a redacted JSON readiness report and exits 0 when
+all **local configuration/preflight** checks pass, 2 otherwise. It:
+- cold-verifies the signed JHN root mandate and available event-sourced budget
+  from the existing read-only COP adapter;
+- checks the running systemd unit, service start relative to the result-runtime
+  source, loopback tool discovery, activation flag, reviewed provider/channel
+  allowlist, and whether JHN authenticated mutate configuration is **visible
+  in the unit Environment property**;
+- does **not** output token values or inspect EnvironmentFile contents, which
+  means a transport credential supplied through a separate EnvironmentFile is
+  conservatively **unverified**, not necessarily absent;
+- does **not** prove external provider permission, real authenticated caller,
+  claim, durable result delivery or autonomous scheduler redispatch.
+
+Observed Fracta2: canonical mandate v2 and budget ready; service active;
+runtime newer than current MCP process, feature flag/channel list absent,
+mutate transport not verifiable in the unit environment, tool missing from
+the current loopback discovery. The previously documented one-time deployment
+and provider/channel authority are therefore still pending. Ordinary
+future mandate changes must **not** restart or reload the MCP.
+
+The minimal next *operational* step is an authorized, healthchecked
+deployment of the existing code with a **concretely reviewed** channel and
+authenticated JHN transport. Do not configure an arbitrary consumer-provider
+channel merely to make this report green. The separate end-to-end receipt and
+autonomous CPS wake/redispatch test must follow before reporting this capacity
+as live.
