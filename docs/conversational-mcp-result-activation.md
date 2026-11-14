@@ -215,3 +215,53 @@ review and approve, he can run one PowerShell command:
 This file is only a temporary convenience copy; it can be deleted after the
 signed amendment is duly recorded. The authoritative source remains GitHub,
 and the authority after signing remains only the existing COP journal.
+
+## 12. Live signed v2 and post-approval FBF (2026-11-14)
+
+**Principal action completed; do not ask for another signature.** JHN signed
+only the reviewed exact proposal SHA-256
+`088bf80ebda0b2f8265b450ea3bc0c3671f2af500add5677e8a3709b1a955d13`
+via the already enrolled ThinkPad SSH issuer key. The canonical SQLite COP
+journal records the amendment event
+`897fdac6-bd6a-43ce-b34f-327246155981`. Independent Fracta2 read-only
+inspection reconstructs `v1 → v2` and validates the full SSH-signature
+lineage. Scope: existing `browser.navigation.instances` and
+`browser.hosted.inspect` unchanged; one new
+`cogentia.continuation.result.submit` capability; all 15 explicit forbidden
+actions and original validity preserved.
+
+At the same inspection, the root budget ledger had a signed grant of
+2048 max steps, 15 already settled, 2033 available, zero reserved. No new
+budget grant or reservation was needed to validate the **mandate** itself.
+A fully signed-root, funded COP preflight for the exact new capability on
+`v2` passed with an isolated **test transport identity** (no live caller
+attestation claimed), with zero event writes and zero external execution.
+
+**Regression found and fixed (FBF):** the existing canonical browser-read
+vertical had hard-coded `version_pin:'v1'`, and its activation check called
+the issuer verifier without passing the COP store required for a v2 chain.
+After legitimate v2 issuance, `activate-john-root-read.sh --check` failed
+with `canonical_read_authority_unavailable`; the fix makes the read
+vertical use the currently resolved, independently verified mandate version
+and passes the store to the checker. `--check` now reports
+`SIGNED_ROOT_AND_CANONICAL_BUDGET=VALID`, with no effect or budget spend.
+Source commit `e48e448`.
+
+**Remaining deployment status:** `mcp-cogentia.service` active on Fracta2,
+with process started 2026-11-12 (before these changes). Its unauthenticated
+loopback `/tools` surface currently lists 64 tools and does not advertise
+`cogentia_continuation_result_submit`. The runtime has NO
+`COGENTIA_MCP_JUDGMENT_RESULT_ENABLED`, permitted channel allowlist, or
+v2 version pin configured. Local `sudo -n` is denied by `no new privileges`;
+this session has not restarted or changed systemd. No remote ChatGPT,
+Claude or Grok invocation was attempted. Enabling without a permitted,
+independently reviewed provider/channel and authorized restart remains
+blocked. The already signed v2 alone is NOT a reason to enable arbitrary
+consumer-provider web automation.
+
+**Next FBF without Principal toil:** prepare a local, provider-independent
+worker MCP Reality Test and a healthchecked, reversible activation plan for
+one narrowly defined `provider:channel` pair. Respect the operator's existing
+restart channel; do not bypass root broker or ask Principal to sign another
+broad mandate. Actual CPS redispatch, authenticated consumer transport,
+usage settlement and provider-specific terms remain separately testable.
