@@ -60,6 +60,85 @@ test("private capability results are redacted before the next reasoner step", as
 });
 
 
+test("a JudgmentHandler executes a declared authorized read-only next probe before closing", async()=>{
+  let reads=0;
+  const harness=createGovernedHarness({requiredEvents:false,
+    registry:registry({search:async({query})=>{reads++;return {excerpts:[`verified:${query}`]}}}),
+    reasoner:reasoner(async(state)=>{
+      const receipt=state.observations.find(x=>x.type==="capability_result");
+      return receipt?{kind:"answer",answer:receipt.value.excerpts[0]}:{
+        kind:"answer",answer:"The next step would be to inspect the corpus",
+        next_action:{capability:"corpus.search",input:{query:"Cogentia"}}};
+    }),
+  });
+  const r=await harness.run({text:"Check the corpus"},
+    {allowedCapabilities:["corpus.search"]},{maxSteps:4,maxCapabilityCalls:1});
+  assert.equal(r.ok,true);
+  assert.equal(r.answer,"verified:Cogentia");
+  assert.equal(reads,1);
+  assert.equal(r.capabilityCalls,1);
+  assert.deepEqual(r.steps.map(x=>x.result.status),["deferred","completed"]);
+});
+
+test("a suggested next probe never inherits authority from the model",async()=>{
+  let reads=0;
+  const harness=createGovernedHarness({requiredEvents:false,
+    registry:registry({search:async()=>{reads++;return {}}}),
+    reasoner:reasoner(async()=>({kind:"answer",answer:"I recommend inspecting",
+      next_action:{capability:"corpus.search",input:{query:"secret"}}})),
+  });
+  const r=await harness.run({}, {allowedCapabilities:[]});
+  assert.equal(r.ok,false);
+  assert.equal(r.stopReason,"answer_next_action_not_authorized");
+  assert.equal(reads,0);
+  assert.equal(r.answer,"I recommend inspecting");
+});
+
+test("a final-answer suggestion must never silently send external communications",async()=>{
+  let sends=0;
+  const harness=createGovernedHarness({requiredEvents:false,
+    registry:registry({send:async()=>{sends++;return {sent:true}}}),
+    reasoner:reasoner(async()=>({kind:"answer",answer:"I'll send the message",
+      next_action:{capability:"gmail.send",input:{body:"hello"}}})),
+  });
+  const r=await harness.run({}, {allowedCapabilities:["gmail.send"],
+    confirmedCapabilities:["gmail.send"]},{maxExternalEffects:1});
+  assert.equal(r.ok,false);
+  assert.equal(r.stopReason,"answer_next_action_not_authorized");
+  assert.equal(sends,0);
+});
+
+test("a next-action recommendation cannot replay an already completed explicit read",async()=>{
+  let reads=0;
+  const harness=createGovernedHarness({requiredEvents:false,
+    registry:registry({search:async()=>{reads++;return {excerpts:["a result"]}}}),
+    reasoner:reasoner(async(state)=>state.observations.length?{
+      kind:"answer",answer:"Read again",next_action:{capability:"corpus.search",input:{query:"X"}}
+    }:{kind:"capability_call",capability:"corpus.search",input:{query:"X"}}),
+  });
+  const r=await harness.run({}, {allowedCapabilities:["corpus.search"]},
+    {maxSteps:4,maxCapabilityCalls:3});
+  assert.equal(reads,1);
+  assert.equal(r.stopReason,"answer_next_action_duplicate");
+});
+
+test("a repeated or unaffordable recommended probe cannot run twice",async()=>{
+  let reads=0;
+  const harness=createGovernedHarness({requiredEvents:false,
+    registry:registry({search:async()=>{reads++;return {ok:true}}}),
+    reasoner:reasoner(async()=>({kind:"answer",answer:"Need another look",
+      next_action:{capability:"corpus.search",input:{query:"same"}}})),
+  });
+  const r=await harness.run({}, {allowedCapabilities:["corpus.search"]},
+    {maxSteps:5,maxCapabilityCalls:4});
+  assert.equal(r.stopReason,"answer_next_action_duplicate");
+  assert.equal(reads,1);
+  const constrained=await harness.run({}, {allowedCapabilities:["corpus.search"]},
+    {maxSteps:3,maxCapabilityCalls:0});
+  assert.equal(constrained.stopReason,"capability_call_budget");
+  assert.equal(reads,1);
+});
+
 test("registration does not grant authorization", async () => {
   const harness = createGovernedHarness({
     registry: registry(),

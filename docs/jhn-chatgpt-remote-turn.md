@@ -674,3 +674,56 @@ reinstall the three connectors just to change the badge. Separately verify
 the exact public/private descriptor after refresh. Version identity for the
 Unix Shell Exec connector needs inspection of its own implementation or
 registered package metadata.
+
+
+## FractaCognition: pre-answer execution of next authorized read-only probe (15 November 2026)
+
+The generic **John governed step harness** now implements an executable
+pre-answer continuation gate, not merely the operator guidance in
+`instructions/AGENTS.shared.md`. This closes a concrete gap from Cogentia
+#285: a JudgmentHandler could previously propose an obvious authorized read
+and then declare its own answer complete without actually using that
+capability.
+
+- A `governed_reasoner` may return a structured step
+  `{"kind":"answer","answer":"provisional explanation", "next_action":
+  {"capability":"corpus.search", "input":{"query":"..."}}}`.
+  The OpenAI step-reasoner system prompt exposes this optional shape and
+  advises calling an admissible capability directly where possible.
+- `createGovernedHarness()` intercepts an accepted answer carrying
+  `next_action`, invokes the **existing**
+  `decideMandateContinuation()` decision boundary, then independently
+  requires the named capability to be registered, of risk `read_only`, and
+  included in **actual caller authorization**. It uses the existing
+  `governedInvokeCapability()` path, which enforces max tool calls, cost,
+  time and effect budgets. Neither model prose nor a model-supplied mandate
+  extends authority.
+- A successful read **defers** the provisional answer; the real observation
+  is given to the next reasoning step so the answer can be updated from
+  evidence. John records a real `john.tool.requested` / `john.tool.receipt`
+  pair with source `pre_answer_gate`, including native `tool_calls_count`
+  accounting. This is not simulated tool execution.
+- Unregistered, unauthorized, non-read-only, unaffordable, failed and
+  repeated probes stop with typed, **non-success** boundary reasons rather
+  than falsely reporting completion or executing an unapproved operation.
+  The previous provisional answer is retained only as nonterminal context.
+  A closing recommendation cannot replay an already completed exact
+  capability+input pair, nor can it cause a duplicate second implicit read.
+- **Deliberate limitation:** unstructured free-form answer text cannot
+  reliably be interpreted as an executable command; the generic runtime
+  gate acts when the provider emits an explicit structured `next_action`.
+  This is real wired enforcement for opted-in step reasoners, not a
+  universal interception of the ChatGPT app's message composer, the
+  provider's hidden reasoning or all external JudgmentHandlers. Nor does
+  the implementation turn a read-only capability into a broad right to
+  read unrelated resources: the capability's own identity, data/privacy
+  gates and currently admitted COP envelope continue to apply.
+
+Validation: `scripts/check-agent-jhn-governed-harness.js` and
+`node --test scripts/lib/john-answer-next-action.test.js`; both exercise
+actual governed dispatch with stubbed source results, authorization denial,
+no unauthorized email, duplicate suppression and complete John receipt
+projection. No OpenAI paid API calls or external sends were made as part
+of these tests. A later live, controlled Judgment turn should exercise
+this route with a real read-only capability and verify the actual source
+result, canonical journal and provider quota behavior.

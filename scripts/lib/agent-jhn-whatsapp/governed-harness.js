@@ -15,6 +15,7 @@ import {
   REQUIRED_EVENT_POLICY,
   requiredEventsForTurn,
 } from "../required-events.js";
+import {decideMandateContinuation} from "../mandate-continuation.js";
 
 export const AGENT_STEP_PROTOCOL = "cogentia.agent_step/v1";
 export const STEP_RESULT_PROTOCOL = "cogentia.step_result/v1";
@@ -113,6 +114,9 @@ export function createGovernedHarness(options = {}) {
         ? []
         : requiredEventsForTurn(input, options);
       const capabilityFingerprints = [];
+      // Per-run fence: a reasoner may suggest a read-only probe in its final
+      // answer, but it may never cause the same implicit probe twice.
+      const answerProbeFingerprints = new Set();
       const invokeCtx = {
         registry, bounds, allowed, confirmed, authorization, turnInput: input, clock, noProgressHeuristic, capabilityFingerprints,
       };
@@ -161,6 +165,59 @@ export function createGovernedHarness(options = {}) {
           const answer = String(review?.answer || step.answer || "").trim();
           const issues = normalizeNames(review?.issues).slice(0, 12);
           const accepted = review?.accepted !== false && Boolean(answer);
+          if (accepted && step.next_action) {
+            const requested=step.next_action;
+            const capability=registry.get(requested.capability);
+            // Never trust a model's claim of authorization. Only read-only
+            // capabilities that the caller actually admitted may be
+            // triggered by a proposed closing action. Other acts are human
+            // judgment boundaries, not a promotion of model authority.
+            const eligible=capability?.risk==="read_only"&&allowed.has(requested.capability);
+            const boundary=decideMandateContinuation({
+              next_step_clear:true,next_step_allowed:eligible,
+              judgment_required:capability?.risk!=="read_only"&&!!capability,
+            });
+            if(boundary.action!=="continue"){
+              appendStep(state,step,stepResult(step,"requires_input",{
+                observation:{type:"answer_next_action_boundary",reason:
+                  !capability?"unknown_capability":!eligible?"not_in_authorization_envelope":boundary.reason,
+                  capability:requested.capability},
+              }));
+              return terminal(false,"answer_next_action_not_authorized",answer,
+                state,startedAt,clock,{next_action_boundary:boundary.reason});
+            }
+            const fingerprint=JSON.stringify([requested.capability,requested.input]);
+            // This also applies if an explicit earlier step already ran the
+            // same probe; do not let a closing recommendation waste quota.
+            const repeated=answerProbeFingerprints.has(fingerprint)||
+              state.steps.some(x=>x.step?.kind==="capability_call"&&
+                x.step.capability===requested.capability&&
+                JSON.stringify([x.step.capability,x.step.input||{}])===fingerprint&&
+                x.result?.status==="completed");
+            if(repeated){
+              appendStep(state,step,stepResult(step,"rejected",{
+                observation:{type:"answer_next_action_duplicate",capability:requested.capability},
+              }));
+              return terminal(false,"answer_next_action_duplicate",answer,state,startedAt,clock);
+            }
+            answerProbeFingerprints.add(fingerprint);
+            const invoked=await governedInvokeCapability({...invokeCtx,state,
+              requestedName:requested.capability,input:requested.input});
+            const result=stepResult(step,invoked.status==="completed"?"deferred":"failed",{
+              observation:{type:"answer_next_action_attempt",status:invoked.status,
+                capability:requested.capability,reason:invoked.reason||null},
+              elapsed_ms:invoked.elapsed_ms,error:invoked.error,
+            });
+            appendStep(state,step,result);
+            if(invoked.observation)state.observations.push(invoked.observation);
+            if(invoked.status==="completed"){
+              // The reasoner must consume observed evidence and formulate a
+              // new answer; the provisional recommendation is NOT final.
+              continue;
+            }
+            return terminal(false,invoked.reason||"answer_next_action_failed",answer,
+              state,startedAt,clock,{next_action_boundary:invoked.status});
+          }
           const result = stepResult(step, accepted ? "completed" : "rejected", {
             observation: { type: "answer_review", accepted, issues },
           });
@@ -231,7 +288,18 @@ function normalizeStep(value = {}, sequence, idFactory) {
   const kind = STEP_KINDS.has(String(value.kind)) ? String(value.kind) : "stop";
   const base = { protocol: AGENT_STEP_PROTOCOL, step_id: safeName(value.step_id) || idFactory(sequence), sequence, kind };
   if (kind === "capability_call") return { ...base, capability: String(value.capability || ""), input: value.input };
-  if (kind === "answer") return { ...base, answer: String(value.answer || "") };
+  if (kind === "answer") {
+    const next=value.next_action;
+    // Unknown structures do not authorize actions. Reject malformed proposed
+    // next actions rather than silently discarding the intent to act.
+    const nextAction=next==null?null:
+      next&&typeof next==="object"&&!Array.isArray(next)&&
+      safeName(next.capability)&&next.input&&typeof next.input==="object"&&
+      !Array.isArray(next.input)?{capability:next.capability,input:next.input}:
+      {capability:"invalid_next_action",input:{}};
+    return {...base,answer:String(value.answer||""),
+      ...(nextAction?{next_action:nextAction}:{})};
+  }
   if (kind === "clarify") return { ...base, question: String(value.question || "").slice(0, 2000) };
   if (kind === "stop") return { ...base, reason: safeName(value.reason) || "invalid_step" };
   return { ...base, note: String(value.note || "").slice(0, 500) };

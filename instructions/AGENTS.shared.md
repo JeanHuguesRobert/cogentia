@@ -106,7 +106,12 @@ established”. Do not stop just because a first transport/handler refused:
 search for a legitimate, already governed route **without bypassing the
 refusal**. Use the established `decideMandateContinuation()` /
 `runMandateToBoundary()` gate when implemented by the active handler; a
-textual instruction does not prove the agent invoked it.
+textual instruction does not prove the agent invoked it. **Implemented
+2026-11-15 in the John governed step harness for structured `answer.next_action`
+read-only candidates:** the harness calls the existing continuation gate,
+authorizes and executes the read, then requires a new answer after a real
+receipt. This is not a guarantee for unstructured ChatGPT answers or every
+external JudgmentHandler. See [runtime Reality Probe gate](../docs/jhn-chatgpt-remote-turn.md#fractacognition-pre-answer-execution-of-next-authorized-read-only-probe-15-november-2026).
 
 **Only hand off the irreducible remainder.** A proposed next step is not a
 human judgment boundary merely because it was phrased as advice. Hand off

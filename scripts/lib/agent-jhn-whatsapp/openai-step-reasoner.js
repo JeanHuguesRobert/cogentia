@@ -52,6 +52,9 @@ function systemPrompt() {
     "Choose exactly one next step. The harness, not you, authorizes and executes capabilities.",
     "Return one JSON object only; never return markdown or hidden chain-of-thought.",
     "Use a capability only when its result can materially improve the answer.",
+    "Before answering, prefer executing a useful, authorized read-only next probe instead of telling the Principal to do it.",
+    "If the answer still proposes an executable read-only next probe, add next_action with the exact registered capability and its input; the harness checks authority and executes before final answer.",
+    "Never use next_action for writes, inferred permissions, fabricated capabilities or redundant probes.",
     "Never invent a capability. A denied observation means choose another step or clarify.",
     "Do not propose external writes unless the user explicitly requested that act.",
     "Kinds and fields:",
@@ -90,7 +93,8 @@ function reasonerView(state) {
 function normalizeProviderStep(value = {}) {
   const kind = String(value.kind || "");
   if (kind === "capability_call") return { kind, capability: String(value.capability || ""), input: objectOrEmpty(value.input) };
-  if (kind === "answer") return { kind, answer: String(value.answer || "") };
+  if (kind === "answer") return {kind,answer:String(value.answer||""),
+    ...(value.next_action!==undefined?{next_action:value.next_action}:{})};
   if (kind === "clarify") return { kind, question: String(value.question || "") };
   if (kind === "reason") return { kind, note: String(value.note || "").slice(0, 500) };
   if (kind === "stop") return { kind, reason: safeName(value.reason) || "reasoner_stop" };

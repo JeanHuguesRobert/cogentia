@@ -433,6 +433,27 @@ export async function runJohnRequest(request, options = {}) {
         for (const stepEntry of harnessResult.steps) {
           const step = stepEntry.step;
           const result = stepEntry.result;
+          // A read-only probe selected at the pre-answer gate executes via
+          // exactly the same governedInvokeCapability path as an explicit
+          // capability_call. Preserve its real tool request + receipt in the
+          // canonical John trace; never silently count a side-channel call.
+          if(step?.kind==="answer"&&step.next_action){
+            const capability=step.next_action.capability;
+            if(result?.status==="deferred"||result?.status==="failed"){
+              events.push(event(request,seq++,"john.tool.requested",{
+                step_id:step.step_id,capability,input:step.next_action.input,
+                source:"pre_answer_gate",
+              }));
+              events.push(event(request,seq++,
+                result.status==="deferred"?"john.tool.receipt":"john.tool.rejected",{
+                  step_id:step.step_id,capability,
+                  source:"pre_answer_gate",
+                  status:result.status==="deferred"?"completed":"failed",
+                  elapsed_ms:result.elapsed_ms,
+                  reason:result.observation?.reason||null,
+              }));
+            }
+          }
           if (step?.kind === "capability_call") {
             events.push(
               event(request, seq++, "john.tool.requested", {
