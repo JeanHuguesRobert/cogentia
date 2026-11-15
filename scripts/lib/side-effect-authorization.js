@@ -42,6 +42,9 @@ export function assessPresumedEffect({
   // must not be classified as an exceptional *sending* authorization.
   const draftOnly = /^(gmail|email|communication|whatsapp)\.(draft|create_draft|update_draft|save_draft)$/.test(action);
   const reserved = externally_engaging
+    // #285: new, nonconflicting DNS-only records may be ordinary technical work;
+    // delegation, mail routing and destructive replacement are not.
+    || /^dns\.(zone\.(delegate|transfer)|nameservers\.(set|replace|change)|mx\.(create|update|delete)|record\.(update|delete|replace))$/.test(action)
     || /(^|\.)(send|publish|post|forward|reply|submit|disclose|contract|payment|transfer|purchase|sign|consent)(\.|$)/.test(action)
     || /^(financial|legal)\.commit$/.test(action)
     || /^(third_party|private|sensitive)\.disclose$/.test(action)
