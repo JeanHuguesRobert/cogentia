@@ -74,6 +74,27 @@ La première instance autonome peut devenir **un nœud local d'une Confédérati
 
 Conserver dès l'origine les invariants propices à cette extension : identifiants stables, références et preuves exportables, événements rejouables, frontières de confiance, mécanismes d'import/export, gestion des conflits et compatibilité de versions. **La confédération inter-VPS n'est pas encore opérationnelle** : ne pas ajouter un consensus global ou une infrastructure de fédération comme prérequis au pilote de Noël.
 
+### Catalogue d'implémentations : portabilité sans capture
+
+**Le choix de l'infrastructure ne doit pas devenir une dépendance irréversible du jumeau.** Le catalogue décrit des *fonctions* et, pour chacune, plusieurs réalisations possibles. Il ne choisit ni propriétaire ni fournisseur comme composant obligatoire :
+
+| Fonction stable du jumeau | Implémentations candidates | Exigence de sortie |
+| --- | --- | --- |
+| Corpus/historique | Git local ; GitHub ; autre forge Git | Historique, références, droits et pièces récupérables |
+| Identité, consentements et données | Supabase ; base et authentification locales ; service managé | Identité, droits, révocations et preuve du consentement transposables ou revalidés |
+| Stockage des événements/continuations COP | SQLite ; PostgreSQL ; autre backend de journal | Rejouabilité, causalité, statut des mandats et idempotence conservés |
+| Navigateur télécommandé | Brave hébergé ; Chromium hébergé ; autre adaptateur gouverné | Session reconnectable, secrets traités sans export illicite, capacité de reprise testée |
+| Recherche/embeddings | API ; fournisseur gratuit vérifié ; moteur local ; recherche lexicale | Réindexation reproductible, compatibilité des dimensions/modèles ou reconstruction annoncée |
+| Exécution/hébergement | VPS individuel ; installation locale ; hébergeur géré ; confédération de VPS | Sauvegarde, restauration, autonomie d'administration et migration à froid |
+
+**Contrat de substitution, indépendant de la technologie :** chaque entrée de catalogue devrait déclarer son rôle, ses capacités réelles, ses formats, ses versions, les dépendances externes, les frontières d'autorité et de confidentialité, ses procédures d'export/import et de migration, ainsi que les écarts ou pertes connus. Une alternative affichée dans le catalogue est une **candidate**, non une compatibilité garantie ; distinguer *conçue*, *implémentée*, *testée* et *mise en production*.
+
+Le test de portabilité n'est pas la seule extraction de fichiers. Après export depuis A et restauration dans B, arrêter ou rendre indisponible A ; vérifier qu'un handler ou un humain **froid** peut retrouver le corpus, les provenances, corrections et relations, interpréter les mandats et révocations, reprendre une continuation inachevée et produire un reçu attribuable. Les secrets, sessions et autorisations propres à un fournisseur **ne doivent pas être copiés illicitement** : les reconfigurer et revalider auprès du Principal quand nécessaire. Exiger intégrité, traçabilité et un inventaire explicite des éléments non transportables.
+
+**« Sans perte » constitue un critère d'acceptation à démontrer**, pas une garantie générale anticipée. Un cache d'embeddings peut être recalculé ; une preuve historique, une décision de révocation ou une correction perdue ne le peut pas silencieusement. Réutiliser les six niveaux du [cadre de portabilité Cogentia](../research/cogentia_personal_data_portability.md) et l'épreuve indépendante [PrivAI Migration-Tested](https://github.com/acorsica/privai/blob/main/conformance/migration_tested_v0.1.md), plutôt que créer une certification concurrente.
+
+**Pour Noël 2026 :** prouver au minimum la sauvegarde/restauration indépendante du premier pilote et produire le manifeste de ses dépendances/écarts. Une migration complète entre deux stacks hétérogènes constitue une étape supplémentaire à planifier sans bloquer artificiellement la livraison du premier jumeau externe.
+
 ### Trajectoires de distribution
 
 1. **Mode actuellement éprouvé chez JHN** : VPS + navigateur personnel + GitHub + Supabase. C'est le chemin le plus proche du code existant pour un second Principal.

@@ -149,6 +149,16 @@ Operational implementation belongs to [MEMSYNC umbrella #278](https://github.com
 **Research questions:** Do users place value on verifiable exit? Does a visible export-and-resume demonstration measurably improve adoption? What exit assurances are economically sustainable and independently auditable? Compare before/after controlled pilots, avoiding claims of causality without evidence.
 
 
+## Catalog of interchangeable twin implementations (2026-11-15)
+
+**Provider choice is not twin identity.** A Cogentia Personal Digital Twin should outlive the replacement of its storage, identity backend, Git host, embeddings provider, browser adapter or compute host. A **catalog of implementations** maps a stable functional contract to several realizations (for example GitHub vs local Git; Supabase vs local database/auth; hosted Brave vs another governed browser; one VPS vs another). It is not a list of equivalent product claims: each entry needs a versioned contract, actual capability status, explicit prerequisites, export and restore procedure, authority boundary, and **measured migration evidence**.
+
+**The anti-capture acceptance test is a cold A → B migration with A unavailable.** Export authorized source corpus and provenance, historical events, corrections, references, mandate lifecycle, consent/revocation evidence, pending CPS continuations, and relevant configurations. Verify checksums, import into B, reconstruct the operational state and exercise a real authorized resume. Reissue or rebind secrets and sessions rather than pretending proprietary tokens or accounts migrate; regenerated embeddings do not constitute a substantive loss when rebuild rules and source are retained. Report every missing or revalidated component. Never weaken a revocation or enlarge a mandate merely to complete a migration.
+
+**No-loss claim needs a declared boundary:** source history, provenance, identity continuity, authority, knowledge and unfinished work; derived caches may be recomputed. A human or agent on B should not need provider A's live service to interpret the restored state. User-visible export alone, or a backup that needs the original server to recover, is not enough. Reuse the six-level exit/provider-swap test above and PrivAI *Migration-Tested v0.1* below.
+
+The November 2026 product pilot can use either existing GitHub/Supabase dependencies or a future standalone VPS implementation, but neither should become a mandatory capture mechanism. The **catalog** keeps additional backends and a future confederation of VPS possible without forcing their development before the first external pilot. See [Christmas 2026 product brief](../docs/first-personal-twin-offer-2026-12-25.md) and [Minimum Sufficient Locality](locality_principle.md).
+
 ## PrivAI governance and conformance linkage (2026-10-23)
 
 **Canonical spelling: PrivAI**, not “PrivaAI”. Its governance and public conformance home is [acorsica/privai](https://github.com/acorsica/privai), which explicitly treats Cogentia as a prospective open implementation rather than a self-certifying standard. Maintain the separation between **PrivAI (normative guarantees, KYS profiles/contracts, assurance, independent tests)** and **Cogentia (implementation, corpus, memories, adapters and evidence)**.
