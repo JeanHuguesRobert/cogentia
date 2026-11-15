@@ -37,7 +37,10 @@ export async function resolveHostMissionAuthority(resolver, request) {
     actor: verdict.actor,
     origin: 'verified_mission',
     ...(typeof verdict.finalize === 'function'
-      ? {finalize:verdict.finalize,canonical_cop:true,
+      ? {finalize:verdict.finalize,
+        ...(typeof verdict.beforeDispatch === 'function'
+          ? {beforeDispatch:verdict.beforeDispatch} : {}),
+        canonical_cop:true,
         mandate_version:verdict.mandate_version,
         reservation_id:verdict.authority_id} : {}),
   });
