@@ -310,3 +310,16 @@ next-turn dispatcher* attached to a canonical Packet/Continuation under
 current provider terms, quota, independently verified mandate and budget.
 Its provider-neutral test can use a local fixture or a permitted API
 without pretending it was a browser test.
+
+
+## Principal channel choice — 15 November 2026
+
+The Principal explicitly retains the **hosted browser / personal ChatGPT tab**
+as the target channel, relying on the [Fair Usage research and policy](../research/integration/conversational_agents_fair_usage_cop_2026-11-13.md#6-arbitrage-du-principal-du-15-novembre-2026--navigateur-conservé-fair-usage-revendiqué). Do not silently substitute the OpenAI API as the product goal.
+This design preference does not override the independent provider-permission
+gate: current permission to run a new unattended consumer Web interaction
+remains **disputed/unverified** under the 16 January 2026 EEA terms. The
+direct MCP result path is meaningfully different from DOM output scraping,
+but it does not settle what the provider permits in its consumer interface.
+The local code and deterministic three-step CPS loop remain available for
+verification while live autonomous browser dispatch remains disabled.
