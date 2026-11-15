@@ -9,12 +9,14 @@ import {createSqliteCopEventStore} from '../../../inseme/packages/cop-core/src/s
 import {sshFingerprint} from '../lib/john-sshsig-approval.js';
 import {createOfflineJohnIssuerVerifier} from '../lib/john-offline-issuer-verifier.js';
 import {createChatgptCpsLocalWakeReconciler} from '../lib/chatgpt-cps-return-evaluator.js';
+import {listAssignedChatgptCpsContinuations,runAssignedChatgptCpsBatch} from '../lib/chatgpt-cps-assigned-dispatch.js';
+import {listChatgptCpsNextSteps,runChatgptCpsNextStepBatch} from '../lib/chatgpt-cps-next-step.js';
 
 const DB='/var/lib/cogentia/cop/john-root-v1.sqlite';
 const FP='SHA256:lG9BC3fIjurrBccYLO1w7VQpmc9ZMr8MvM1o3zJ6L3c';
 const MANDATE='mandate:jhn:john-root';
 const BUDGET='budget:'+MANDATE;
-export async function runScheduledHeartbeat({env=process.env}={}){
+export async function runScheduledHeartbeat({env=process.env,assignedWorker=null,nextWorker=null}={}){
   if(env.COGENTIA_CPS_WAKE_RECOVERY_ENABLED!=='1')
     return {ok:true,skipped:'not_enabled',external_effects:0};
   const publicKeyFile=env.COGENTIA_JHN_ISSUER_AUTHORIZED_KEYS;
@@ -35,14 +37,68 @@ export async function runScheduledHeartbeat({env=process.env}={}){
       expectedSshFingerprint:FP});
     const reconcile=createChatgptCpsLocalWakeReconciler({store,
       mandate_ref:MANDATE,budget_id:BUDGET,verifyIssuer});
-    const result=await reconcile({max_steps:6});
-    return {ok:result.ok,status:result.status,
-      steps_completed:result.steps_completed,
-      pending_count:result.pending_count,
-      needs_reconciliation:result.needs_reconciliation,
-      external_effects:0,autonomous_browser_worker:false,
-      parent_mandate_completed:false};
+    return runChatgptCpsResidentCycle({store,
+      reconcile,env,assignedWorker,nextWorker});
   }finally{store.close()}
+}
+
+/** Existing ONA scheduler is the sole clock. Test this entire decision
+ * cycle against a disposable COP store without production tokens or effects.
+ */
+export async function runChatgptCpsResidentCycle({store,reconcile,env={},
+  assignedWorker=null,nextWorker=null}={}){
+  if(!store||typeof reconcile!=='function')return {ok:false,status:'invalid_cycle'};
+  const result=await reconcile({max_steps:6});
+  const assigned=listAssignedChatgptCpsContinuations(store,{limit:100});
+  const next=listChatgptCpsNextSteps(store,{limit:100});
+  const overview={pending_assigned:assigned.filter(x=>x.status==='ready').length,
+    assigned_needs_reconciliation:assigned.filter(x=>x.status==='needs_reconciliation').length,
+    pending_next_actions:next.filter(x=>x.status==='pending_admission').length,
+    next_needs_reconciliation:next.filter(x=>x.status==='needs_reconciliation').length};
+  const common={steps_completed:result.steps_completed,
+    pending_count:result.pending_count,
+    needs_reconciliation:result.needs_reconciliation,
+    external_effects:0,parent_mandate_completed:false,...overview};
+  if(!result.ok)return {ok:false,status:result.status,...common,
+    autonomous_browser_worker:false};
+  if(env.COGENTIA_CPS_BROWSER_DISPATCH_ENABLED!=='1')
+    return {ok:true,status:result.status,...common,
+      autonomous_browser_worker:false};
+  if(overview.assigned_needs_reconciliation||overview.next_needs_reconciliation)
+    return {ok:false,status:'dispatch_needs_reconciliation',...common,
+      autonomous_browser_worker:false};
+  let steps=result.steps_completed;
+  if(overview.pending_assigned){
+    if(typeof assignedWorker?.admit!=='function'||
+       typeof assignedWorker?.dispatch!=='function')
+      return {ok:false,status:'governed_browser_dispatcher_not_configured',
+        ...common,autonomous_browser_worker:false};
+    const dispatched=await runAssignedChatgptCpsBatch({store,
+      admit:assignedWorker.admit,dispatch:assignedWorker.dispatch,max_steps:3});
+    steps+=dispatched.steps_completed;
+    if(!dispatched.ok)return {ok:false,status:dispatched.status,
+      ...common,steps_completed:steps,autonomous_browser_worker:true};
+  }
+  if(overview.pending_next_actions){
+    if(typeof nextWorker?.admit!=='function'||typeof nextWorker?.dispatch!=='function')
+      return {ok:false,status:'governed_next_step_dispatcher_not_configured',
+        ...common,steps_completed:steps,autonomous_browser_worker:false};
+    const continued=await runChatgptCpsNextStepBatch({store,
+      admit:nextWorker.admit,dispatch:nextWorker.dispatch,
+      verifyDispatchReceipt:nextWorker.verifyDispatchReceipt,max_steps:3});
+    steps+=continued.steps_completed;
+    if(!continued.ok)return {ok:false,status:continued.status,
+      ...common,steps_completed:steps,autonomous_browser_worker:true};
+  }
+  const assignedAfter=listAssignedChatgptCpsContinuations(store,{limit:100});
+  const nextAfter=listChatgptCpsNextSteps(store,{limit:100});
+  return {ok:true,status:steps>result.steps_completed?'dispatched_awaiting_return':result.status,
+    ...common,steps_completed:steps,
+    pending_assigned:assignedAfter.filter(x=>x.status==='ready').length,
+    assigned_needs_reconciliation:assignedAfter.filter(x=>x.status==='needs_reconciliation').length,
+    pending_next_actions:nextAfter.filter(x=>x.status==='pending_admission').length,
+    next_needs_reconciliation:nextAfter.filter(x=>x.status==='needs_reconciliation').length,
+    autonomous_browser_worker:Boolean(overview.pending_assigned||overview.pending_next_actions)};
 }
 
 if(process.argv[1]&&import.meta.url===new URL('file:'+process.argv[1]).href){
@@ -51,7 +107,9 @@ if(process.argv[1]&&import.meta.url===new URL('file:'+process.argv[1]).href){
     const {listChatgptCpsWakes}=await import('../lib/chatgpt-cps-wake-consumer.js');
     const store=createSqliteCopEventStore(DB);
     try{console.log(JSON.stringify({mode:'read_only',
-      pending:listChatgptCpsWakes(store,{limit:25})}));}
+      pending:listChatgptCpsWakes(store,{limit:25}),
+      assigned:listAssignedChatgptCpsContinuations(store,{limit:25}),
+      next_actions:listChatgptCpsNextSteps(store,{limit:25})}));}
     finally{store.close()}
   }else if(args.length===1&&args[0]==='--run-once'){
     const result=await runScheduledHeartbeat();

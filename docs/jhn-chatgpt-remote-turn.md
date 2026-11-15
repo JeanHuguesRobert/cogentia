@@ -961,3 +961,69 @@ The source-level regression tests demonstrate both closed parents and admitted
 candidate continuations. They do **not** claim an already-running ONA
 process has loaded these new sources, or that a truly unattended child browser
 turn has been executed in production.
+
+## Resident ONA cycle: explicitly assigned CPS packets and trusted agent next actions — 15 November 2026 (#330)
+
+**The same 60-second ONA job** now has a source-level orchestration path for
+three queues, without another scheduler or daemon: (1) MCP returns already
+settled that need COPScheduler evaluation, (2) explicitly assigned new
+continuations awaiting their first browser delivery, and (3) `next_action`
+candidates emitted by a mandated JudgmentHandler. The existing
+`runMandateToBoundary` driver handles bounded batches. This change does not
+rewrite the earlier, read-only recovery job or replay historical conversations.
+
+The **explicit assignment** rule intentionally excludes older test artifacts:
+a continuation must be canonical and suspended, with `provider=chatgpt`,
+`channel=browser`, `resumeTo=handler:chatgpt-browser-result-observer`, an
+existing packet claim and a reserved COP budget, and must contain
+`state.dispatch_mode="cps:assigned-browser-turn/v1"` plus a nonempty
+`state.question`. The provider/channel markers alone are *not* sufficient.
+A previously returned or abandoned continuation is never eligible for first
+delivery. The normal `chatgpt-cps-wake-status.mjs --status` command exposes
+`assigned_ready` and `assigned_reconciliation_required` separately from
+returned wakes and next-action candidates.
+
+`chatgpt-cps-assigned-dispatch.js` checks the active packet lease and
+unsettled reservation, then requires the existing COP/provider admission
+callback, commits one SQLite `first-dispatch-intent` under the existing
+transaction lock, and only then calls the governed John dispatcher. A
+confirmed UI click produces `first-dispatch-receipt` with
+`phase=ui_click_dispatched_not_model_result`; **it is not a ChatGPT result**.
+After an unknown outcome, a competing worker or a process restart sees
+`needs_reconciliation`; it cannot blindly submit the same prompt twice.
+The agent's ordinary explicit `mandate_status=completed` or `next_action`
+remains trusted under Optimistic Locking, without a second judging model.
+
+The **Core-owned prompt recipe** carries the real assigned question and the
+already allocated `continuation_id`, `attempt_id`, binding, version and
+challenge. It asks the ChatGPT JudgmentHandler to call
+`cogentia_continuation_result_submit` directly, filling in its actual answer
+and its own `mandate_status`; no constant `READY` result is fabricated.
+`chatgpt-cps-john-dispatch.js` uses only the existing authenticated loopback
+MCP `cogentia_john_run` capability: read a stable, blank ChatGPT composer
+through the output-free `status` action, then invoke `submit` under its own
+bounded COP request. No new extension API and **no assistant Output scraping**.
+
+**Activation boundaries (do not collapse):** the existing resident recovery
+job is active, but the new source code is not yet loaded in its Node process.
+Production first-delivery **remains disabled** until
+`COGENTIA_CPS_BROWSER_DISPATCH_ENABLED=1` is explicitly configured *and* an
+admitted `assignedWorker`/`nextWorker` is bound to the existing John transport,
+with independently established provider/channel permission and the existing
+mandate/budget/claim. The actual ONA environment inspected had **no**
+`COGENTIA_MCP_JHN_TOKEN` and no enable flag. An enable flag without a
+configured governed worker produces an explicit error, not a fabricated
+submission. This source change is **not** evidence of unattended consumer
+browser traffic or provider permission. Do not activate it merely by flipping
+a variable. Use the existing provider permission review and runtime authority
+rather than adding a new signature/mandate infrastructure.
+
+Source tests exercise a disposable SQLite journal and real Operium
+`runScheduledJob`: first admission, lease expiry, already settled budget,
+three assigned sends in one bounded batch, crash/restart ambiguity, duplicate
+suppression, output-free John-MCP request shape, no-token/permission refusal,
+the two dispatch classes within the same resident tick, and explicit
+historical-test exclusion. They do not claim an unattended live ChatGPT
+response. The canonical production store has **zero** explicitly assigned
+first deliveries and **zero** pending `next_action` candidates at the time of
+inspection; none of the earlier eight browser test declarations was reissued.
