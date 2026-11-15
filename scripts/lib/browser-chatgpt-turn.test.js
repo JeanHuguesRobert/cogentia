@@ -154,3 +154,52 @@ test('ensure_tab must verify the newly created exact domain',async()=>{
  const cap=createChatgptTurnCapability({sessionFactory:async()=>mock});
  await assert.rejects(cap.execute({action:'ensure_tab'}),/chatgpt_created_tab_not_verified/);
 });
+
+
+test('submit waits for transient Send readiness without inserting or clicking twice',async()=>{
+ let submits=0,inserts=0;
+ const remote={
+   async withTabLease(id,tabId,fn){return fn(this)},
+   async call(method,args){
+     if(method==='tabs.list')return {tabs:[tab]};
+     if(method==='page.insertText'){
+       inserts++;return {insertedLength:args.text.length,tab:{id:42}};
+     }
+     if(method==='page.evaluate'){
+       if(args.code.includes('composer_found'))return {value:{ok:true,composer_found:true}};
+       if(args.code.includes('click_dispatched')){
+         submits++;
+         return {value:submits<3?{ok:false,error:'send_button_not_ready'}:
+           {ok:true,click_dispatched:true}};
+       }
+     }
+     throw Error('unexpected '+method);
+   },close(){},
+ };
+ const cap=createChatgptTurnCapability({sessionFactory:async()=>remote});
+ const r=await cap.execute({action:'submit',tab_id:42,prompt:'Bounded test'});
+ assert.equal(r.submitted,true);
+ assert.equal(inserts,1);
+ assert.equal(submits,3);
+});
+
+test('submit does not retry a non-transient error or a confirmed click',async()=>{
+ let submits=0;
+ const remote={
+   async withTabLease(id,tabId,fn){return fn(this)},
+   async call(method,args){
+     if(method==='tabs.list')return {tabs:[tab]};
+     if(method==='page.insertText')return {insertedLength:args.text.length,tab:{id:42}};
+     if(method==='page.evaluate'){
+       if(args.code.includes('composer_found'))return {value:{ok:true,composer_found:true}};
+       if(args.code.includes('click_dispatched')){
+         submits++;return {value:{ok:false,error:'origin_changed'}};
+       }
+     }
+     throw Error('unexpected');
+   },close(){},
+ };
+ await assert.rejects(createChatgptTurnCapability({sessionFactory:async()=>remote})
+   .execute({action:'submit',tab_id:42,prompt:'Never repeat'}),/origin_changed/);
+ assert.equal(submits,1);
+});

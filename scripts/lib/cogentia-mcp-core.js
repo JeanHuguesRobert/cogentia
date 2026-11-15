@@ -2351,7 +2351,9 @@ export function createMcpCore(env = process.env, extras = {}) {
               }),
             });
             if(!result.ok)return {ok:false,status:"failed",
-              failure:{code:result.error},executed:result.executed===true};
+              failure:{code:result.error,
+                ...(result.failure_code?{cause:result.failure_code}:{})},
+              executed:result.executed===true};
             const e=result.events,completed=e.find(x=>x.type==="john.run.completed");
             const settled=e.find(x=>x.type==="john.accounting.settled");
             const continuity=journalTurn(e);

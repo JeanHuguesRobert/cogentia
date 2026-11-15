@@ -196,7 +196,17 @@ export function createChatgptTurnCapability({gateway=GATEWAY,browserId=BROWSER,t
            expectedUrl:tab.url,text:input.prompt});
          if(inserted?.insertedLength!==input.prompt.length||
             inserted?.tab?.id!==input.tab_id)deny('chatgpt_insert_not_confirmed');
-         const submitted=await rpc(submitCode);
+         // React can enable the Send control slightly after insertText
+         // returns. Retry only pre-click states; NEVER retry after an
+         // acknowledged click because that could submit twice.
+         let submitted;
+         for(let attempt=0;attempt<5;attempt++){
+           submitted=await rpc(submitCode);
+           if(submitted.ok)break;
+           if(!['send_button_not_ready','composer_empty'].includes(submitted.error))
+             break;
+           if(attempt<4)await new Promise(resolve=>setTimeout(resolve,180));
+         }
          if(!submitted.ok)deny(submitted.error||'chatgpt_submit_not_confirmed');
          return {...meta,action:'submit',submitted:true,
            prompt_chars:input.prompt.length,

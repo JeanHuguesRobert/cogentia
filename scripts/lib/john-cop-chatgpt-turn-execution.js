@@ -70,7 +70,17 @@ export async function executeJohnCanonicalChatgptTurn({
  if(error||!Array.isArray(events)||!accounting)
    return {ok:false,executed:true,error:'chatgpt_execution_receipt_unconfirmed'};
  const complete=events.find(x=>x.type==='john.run.completed');
- if(!complete)return {ok:false,executed:true,error:'chatgpt_turn_failed',events};
+ if(!complete){
+   // Expose only fixed-shape, non-sensitive diagnostic codes from the actual
+   // terminal receipt. Never forward arbitrary browser text or a URL.
+   const failed=events.find(x=>x.type==='john.run.failed');
+   const raw=failed?.data?.data?.handler_error?.code||
+     failed?.data?.data?.code||null;
+   const safe=typeof raw==='string'&&/^[a-z][a-z0-9_]{1,79}$/.test(raw)
+     ?raw:null;
+   return {ok:false,executed:true,error:'chatgpt_turn_failed',
+     ...(safe?{failure_code:safe}:{}),events};
+ }
  return {ok:true,executed:true,events,settled_steps:observed,
    canonical_mandate_ref:REF};
 }

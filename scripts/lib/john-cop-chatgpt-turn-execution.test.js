@@ -98,3 +98,20 @@ test('real John governed harness invokes the fixed browser recipe and settles CO
    assert.equal(done.events.find(e=>e.type==='john.accounting.settled').data.internal_effects,1);
  }finally{store.close();}
 });
+
+
+test('terminal browser failure exposes only a sanitized reason from John receipt',async()=>{
+ const store=fixture(true);
+ try{
+   const fail={...request,request_id:'jhn-test-diagnostic-failed'};
+   const result=await executeJohnCanonicalChatgptTurn({store,auth,request:fail,
+     verifyIssuer:verifier,run:async()=>[
+       {type:'john.accounting.settled',data:{observed_steps:2}},
+       {type:'john.run.failed',data:{data:{code:'harness_stopped',
+         handler_error:{code:'send_button_not_ready'}}}},
+     ]});
+   assert.equal(result.error,'chatgpt_turn_failed');
+   assert.equal(result.failure_code,'send_button_not_ready');
+   assert.equal(result.executed,true);
+ }finally{store.close()}
+});
