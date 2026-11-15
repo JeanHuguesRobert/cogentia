@@ -28,7 +28,6 @@ import { listPatterns, getPattern } from "./cogentia-patterns.js";
 import { createHostCapabilityRouter } from "./host-capability-router.js";
 import { createSuperCopClient } from "./super-cop-client.js";
 import { prepareHostProcessRun } from "./host-process-prepare.js";
-import {MUSEUM_DNS,MUSEUM_RELEASE} from "./john-standing-technical-effects.js";
 import { invokeThroughGateway } from "./agent-gateway-client.js";
 import { recordSideEffectExecution, mintSideEffectGrantFromPrepared } from "./side-effect-authorization.js";
 import { prepareCommunicationSend, executeCommunicationSend, createDryRunTransport } from "./communication-send.js";
@@ -89,8 +88,6 @@ export const MUTATE_TOOLS = new Set([
   "cogentia_concepts_init",
   "cogentia_host_fs_write",
   "cogentia_host_process_run",
-  "cogentia_dns_record_ensure",
-  "cogentia_site_static_release",
   "cogentia_communication_send",
   "cogentia_agent_mail_send",
   "cogentia_github_write",
@@ -130,20 +127,6 @@ export const PRIVATE_READ_TOOLS = new Set([
 ]);
 
 export const TOOLS = [
-  {
-    name: "cogentia_dns_record_ensure",
-    description: "Idempotently ensure the already approved Museum CNAME via the independently signed JHN v4 standing mandate, authenticated Cloudflare operator, preflight, readback and canonical COP budget receipt. No arbitrary zone/record changes.",
-    inputSchema: {type:"object",properties:{site:{type:"string",enum:["museum"]}},
-      required:["site"],additionalProperties:false},
-    annotations:{readOnlyHint:false,destructiveHint:false,openWorldHint:true},
-  },
-  {
-    name: "cogentia_site_static_release",
-    description: "Verify or publish the already-public, immutable Museum static revision using Operium rollback, HTTPS readback and canonical COP standing budget. No arbitrary shell, site or revision.",
-    inputSchema: {type:"object",properties:{site:{type:"string",enum:["museum"]}},
-      required:["site"],additionalProperties:false},
-    annotations:{readOnlyHint:false,destructiveHint:false,openWorldHint:true},
-  },
   {
     name: "cogentia_calculette_bootstrap",
     description: "Cold-start provider-neutral Calculette capability discovery and usage contract; no writes.",
@@ -2647,24 +2630,6 @@ export function createMcpCore(env = process.env, extras = {}) {
         requireString(args.path, "path");
         requireString(args.pattern, "pattern");
         return callHostCapability("host.fs.search", args, auth);
-      case "cogentia_dns_record_ensure": {
-        if (!args || args.site!=="museum" || Object.keys(args).length!==1)
-          throw Object.assign(new Error("semantic_dns_target_outside_registry"),
-            {error_class:"semantic_dns_target_outside_registry"});
-        if (!extras.standingTechnicalEffects)
-          throw Object.assign(new Error("canonical_standing_technical_runtime_unavailable"),
-            {error_class:"canonical_standing_technical_runtime_unavailable"});
-        return extras.standingTechnicalEffects.ensureDns({auth,effect:MUSEUM_DNS});
-      }
-      case "cogentia_site_static_release": {
-        if (!args || args.site!=="museum" || Object.keys(args).length!==1)
-          throw Object.assign(new Error("semantic_site_target_outside_registry"),
-            {error_class:"semantic_site_target_outside_registry"});
-        if (!extras.standingTechnicalEffects)
-          throw Object.assign(new Error("canonical_standing_technical_runtime_unavailable"),
-            {error_class:"canonical_standing_technical_runtime_unavailable"});
-        return extras.standingTechnicalEffects.releaseSite({auth,effect:MUSEUM_RELEASE});
-      }
       case "cogentia_host_process_prepare":
         return prepareHostProcessRun(args);
       case "cogentia_host_process_run": {

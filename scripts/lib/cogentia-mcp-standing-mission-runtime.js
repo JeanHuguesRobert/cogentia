@@ -10,8 +10,6 @@ import {createSqliteCopEventStore} from
 import {sshFingerprint} from "./john-sshsig-approval.js";
 import {createOfflineJohnIssuerVerifier} from "./john-offline-issuer-verifier.js";
 import {createCanonicalStandingMissionResolver} from "./john-standing-mission-authority.js";
-import {createStandingTechnicalProviders} from "./john-standing-technical-providers.js";
-import {createStandingTechnicalEffects} from "./john-standing-technical-effects.js";
 
 const PINNED_STORE="/var/lib/cogentia/cop/john-root-v1.sqlite";
 const PINNED_ISSUER="SHA256:lG9BC3fIjurrBccYLO1w7VQpmc9ZMr8MvM1o3zJ6L3c";
@@ -46,13 +44,7 @@ export function createMcpStandingMissionRuntime(env=process.env) {
     const missionAuthorityResolver=createCanonicalStandingMissionResolver({
       store,verifyIssuer,
     });
-    const providers=createStandingTechnicalProviders();
-    const standingTechnicalEffects=createStandingTechnicalEffects({
-      missionAuthorityResolver,
-      dnsProvider:providers.dnsProvider,
-      siteProvider:providers.siteProvider,
-    });
-    return {enabled:true,extras:{missionAuthorityResolver,standingTechnicalEffects},
+    return {enabled:true,extras:{missionAuthorityResolver},
       close(){store.close();}};
   }catch(e){store.close();throw e;}
 }
