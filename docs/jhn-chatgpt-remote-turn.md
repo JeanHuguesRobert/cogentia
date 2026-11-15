@@ -113,3 +113,51 @@ The specific existing ChatGPT blank tab at first inspection was
 tab ID as permanent; resolve the current tab ID through the read-only
 signed `browser.hosted.inspect` capability at dispatch time and
 verify the expected origin.
+
+## Live two-turn Reality Test — 15 November 2026
+
+Standing capability browser.chatgpt.turn was approved independently by the
+Principal through Supabase authenticated consent, amending canonical JHN
+root v2 to v3. The provenance verifier was corrected to accept the actual
+signed SSH v1 + SSH amendment v2 + consumed Supabase authenticated v3
+lineage without accepting fabricated declarations. Readiness returned true.
+
+Hosted Brave instance: fracta2-hosted, tab 94450542, verified by the
+governed browser.hosted.inspect capability. A first prompt created
+https://chatgpt.com/c/6af94e1d-8d10-83ed-8daf-27251cc9fd90
+with the title Verification livraison Cogentia.
+
+First continuation: ctn_chatgpt_browser_bc0bf4f22e1749e58057c58cf2013e1d
+- A composer-selector defect initially inserted the prompt but did not send.
+  The fix used the actual form submission button; send_draft sent the
+  already staged prompt without insertion duplication.
+- ChatGPT used the actual Cogentia connector and replied in the page:
+  READY cop:event:a76df3c7-3097-4ef7-9a55-37802acebd94
+- Canonical result went through observed, correlated, accepted, returned.
+  Exactly one reserved budget settlement was recorded:
+  cop:event:232ae8ad-3eff-47bc-974a-dc87c2797ee3.
+- Browser UI showed Response complete and returned to the composer.
+
+Second continuation: ctn_chatgpt_browser_a05ddff3e414402c87033382de86c791
+- Without a new Principal message, the controlling agent prepared a new
+  CPS packet, claim, correlation challenge and independent budget reserve.
+- The SAME signed browser.chatgpt.turn capability submitted a second prompt
+  in the SAME ChatGPT conversation tab after the prior response completed.
+  John independently settled two steps for that browser effect.
+- The ChatGPT browser actually replied:
+  READY cop:event:c2529909-f42a-4d6f-8fd4-dad64e6fa124
+- The second canonical result was returned and its reservation was
+  settled exactly once at cop:event:e3c3dd06-5658-4a21-a1a6-8b0e306e656b.
+  Browser UI again showed Response complete with an available composer.
+
+PROVEN: Native browser teleoperation, real ChatGPT tool delivery, COP
+correlation, budget settlement, and a second turn launched after the
+previous conversational end without a Principal intervention.
+
+NOT YET PROVEN: a permanently unattended CPS scheduler consuming returned
+continuations and automatically selecting/starting subsequent ChatGPT
+turns while the controlling agent is inactive. The second turn here was
+initiated by the live controlling agent using existing governed tools.
+A future worker must check parent acceptance, authorization, available
+budget and stable composer before issuing any next step. The standing
+browser authority does not require per-turn approval.
