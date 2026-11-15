@@ -12,6 +12,7 @@
 
 import fs from "node:fs";
 import { wipInventory, wipCompare } from "./lib/wip-inventory.js";
+import { wipMergeInventories } from "./lib/wip-merge.js";
 import {createAgentMail} from "./lib/agent-mail.js";
 import { prepareExternalResume, discoverMagistralResume, projectResumeRouting, planGovernedResume, assessReadOnlyDelegation } from "./lib/resume-prepare.js";
 import http from "node:http";
@@ -509,7 +510,13 @@ async function main() {
         const data = wipCompare({ repo, ref, base });
         return output(data, JSON.stringify(data, null, 2));
       }
-      throw new Error(`Unknown wip subcommand "${sub}". Use inventory or compare.`);
+      if (sub === "merge") {
+        const files=argv.flatMap((v,i)=>v==="--input"&&argv[i+1]?[argv[i+1]]:[]);
+        const data=wipMergeInventories(files.map(p=>JSON.parse(fs.readFileSync(p,"utf8"))),
+          {maxAgeHours:Number(valueFlag("--max-age-hours")||24)});
+        return output(data,JSON.stringify(data,null,2));
+      }
+      throw new Error(`Unknown wip subcommand "${sub}". Use inventory, compare or merge.`);
     }
     case "git":
       return cmdGit(argv.shift() || "verify");
@@ -1248,6 +1255,8 @@ WIP (observational only):
   wip inventory --root <workspace>   Inventory local Git state, branches, stashes and worktrees.
   wip compare --repo <path> --ref <branch> [--base origin/main]
                                      Compare structural and patch-equivalence deltas.
+  wip merge --input <inventory1.json> --input <inventory2.json> [--max-age-hours 24]
+                                     Compare cross-machine observations; never authorizes cleanup.
 
 Git:
   git verify               Ahead/behind and dirty state for all repos.
