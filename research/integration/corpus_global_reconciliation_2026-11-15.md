@@ -211,3 +211,46 @@ L'état historique est maintenant conservé sous le répertoire privé barons-Ma
 **Test de récupération exécuté :** clone isolé du bundle, application du patch, extraction des 17 fichiers, comparaison du statut Git exact sur les 32 chemins, comparaison octet par octet des 30 fichiers, accès aux dix objets de référence, git fsck PASS. Le répertoire temporaire a été supprimé. Remplacement de l'ancien checkout de 81 Mo par l'archive de 51 Mo, libérant **27 401 756 octets** supplémentaires, sans toucher aux branches canoniques ni aux sites actifs.
 
 Le gain net cumulé sur Fracta2 des trois premiers remplacements et des deux compactages supplémentaires (Inseme et Barons Mariani) approche **827 Mo**. La conservation du WIP historique ne vaut pas validation du contenu des anciens manuscrits ; les passages uniques restent consultables et restituables.
+
+
+## 15 novembre 2026 — Reprise checkpointée après interruption (#309)
+
+La suite de la consolidation est désormais journalisée **après chaque unité contrôlée**, sans création d'un nouveau checkout ou worktree persistant. Le reçu privé atomique (Fracta2) est conservé à :
+
+    /home/ubuntu/travel/recovered-20261010/semantic-reconciliation-checkpoint.json
+
+Il conserve les SHA-256 historiques et actuels, les dispositions des onze fichiers WIP, les neuf groupes de références historiques et les tests fonctionnels. La reprise doit lire ce JSON avant tout recalcul et ne réexaminer les unités acquittées que si leurs entrées changent. Le reçu contient des chemins privés : **ne pas le copier intégralement dans un dépôt public**. Une synthèse durable est aussi disponible dans le commentaire de Cogentia #309 du 15 novembre (issuecomment-6902008772).
+
+### Consolidation matérielle supplémentaire, réellement vérifiée
+
+- Sept anciens checkouts sans travail source non récupérable (Kudos, acorsica.org, institut-mariani, marianivillage, privai, ubikia, marenostrum) : toutes les anciennes références sont ancêtres des branches canoniques, zéro stash / ignored / untracked ; neuf fichiers locaux dérivés conservés exactement dans un tar privé de 143 540 octets. **5 838 340 octets libérés**.
+- Operium : ancien checkout avec trois stashes, 50 références historiques, 26 chemins issus des stashes. Bundle Git complet et **autonome**, restauration réellement testée, refs/OID/blobs et fsck contrôlés ; archive 1,5 Mo. **2 486 071 octets libérés**. Les branches non fusionnées restent récupérables, pas déclarées automatiquement effectives.
+- Huit autres anciens checkouts (StructEnv, gouvernance, serra, Inox, FractaVolta, JeanHuguesRobert, registre-mariani, firelayer) : bundles complets **autonomes**, WIP exact par SHA-256 et manifestes ; huit restaurations isolées PASS, incluant deux commits inaccessibles précédemment de l'ancien Inox. **13 744 859 octets libérés**.
+
+Le répertoire de récupération du 10 octobre occupe désormais environ **63 Mo**, contre environ 897 Mo au début de ce chantier. Il contient des archives et manifests, **plus aucun des anciens checkouts actifs**. La conservation autonome ne suffit pas à prouver que chaque ancien comportement a été intégré.
+
+### Registre JeanHuguesRobert : onze fichiers analysés unitairement
+
+- Audit primaire .cogentia/audit.jsonl : les **1 566 lignes historiques** sont une sous-séquence **exacte et ordonnée** des **1 640 lignes** de l'audit courant. Disposition : intégré, sans perte de ligne historique détectée.
+- Registre interaction_packets/mail_trace.md : les **20 identifiants historiques** figurent tous parmi **52 identifiants actuels** ; onze statuts ont été prolongés par des observations ultérieures. Disposition : anciennes formulations supplantées, versions exactes archivées ; aucune interaction historique disparue.
+- Les neuf autres états de cette ancienne copie (index, tableaux FBF, vues llms, état du corpus) sont des projections dérivées : ne pas les remettre sur main pour satisfaire artificiellement un diff.
+- Défaut réel retrouvé : trois backlinks issus de Barons Mariani manquaient dans le registre courant bien que les sources renvoient toujours vers lui. Plan de génération en lecture seule sur **2 518 documents** : quatre blocs concernés. Régénération bornée, sans changement du corps rédigé, publiée sur https://github.com/JeanHuguesRobert/JeanHuguesRobert/commit/965e6a65e6a11a3c7eb64f96eea330539d24688c. **Second plan : zéro changement** (point fixe).
+
+### Analyse des références historiques (neuf ensembles)
+
+Comparaison par OID, ascendance réelle et contenus de fichiers, **checkpointée par dépôt** :
+
+- Gouvernance : les deux anciennes lignées de comptabilité portent six documents **tous présents et enrichis** sur le main actuel ; aucune restauration brute.
+- FractaVolta : une ancienne branche de données site a un contenu identique malgré des commits différents ; ancien HEAD et objets particuliers préservés dans bundle.
+- Inox : l'ancienne branche #34 possède sa sonde d'audit des écarts entre spécification et runtime dans le master actuel ; 27 des 39 chemins ont un corps documentaire équivalent ou contenu, les autres restent classés séparément. Trois branches Dependabot demeurent des mises à jour distinctes, sans assimilation à l'état courant.
+- StructEnv et Serra : anciennes propositions Dependabot non incluses par ascendance ; ne pas fusionner automatiquement des versions anciennes de dépendances.
+- Operium : les familles Calendar/COP, navigation, observateur ONA, console et navigateur hébergé sont présentes dans les sources actuelles, et leurs tests ciblés sont opérationnels. Les anciennes branches comportent cependant des versions et quelques scripts supprimés ou remplacés : leur abandon, substitution ou réintégration ne doit pas être inféré du seul statut Git ; les bundles en conservent les contenus.
+- Registre privé et Firelayer : conservation locale autonome, aucune publication ni suppression de source primaire.
+
+### Contrôle comportemental et FBF
+
+**16 tests actuels d'Operium PASS**, incluant calendrier et événements, COP roundtrip, portail Nasa, navigation, recovery/observer, base ONA, actions, console, politique et supervision des workspaces hébergés. Un défaut initial détecté dans le test COP roundtrip provenait d'un port 8795 fixe déjà occupé par un service. L'emploi d'un port local éphémère a restauré **11 assertions PASS**, y compris **deux exécutions simultanées PASS**. Correctif test seul poussé à https://github.com/JeanHuguesRobert/operium/commit/bc2cacc06a286d44dba732cbaf44d4c45ad6861e ; SHA distant contrôlé.
+
+La sonde Inox #34 a été exécutée : **19 cas enregistrés, dont quatre sorties non nulles**, à interpréter comme des observations d'écart et non comme un succès de conformité. L'exécution de l'outil lui-même a réussi.
+
+**Restes :** classer les scripts historiques propres aux modes de session hébergés, les branches Dependabot par comparaison aux versions actuelles, et les changements fonctionnels non couvrables par les tests ci-dessus. Ne pas purger les branches distantes ou les bundles propriétaires avant disposition et preuve distinctes. Le commentaire Cogentia #309 et le reçu privé constituent les points de reprise canoniques ; aucune nouvelle validation humaine n'est requise pour poursuivre les comparaisons et corrections ordinaires.
