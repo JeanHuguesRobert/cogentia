@@ -3,7 +3,7 @@ title: Cogentia Shared Agent Instructions
 author: unknown
 affiliation: "Institut Mariani / C.O.R.S.I.C.A., 1 cours Paoli, F-20250 Corte, Corsica"
 status: "working-paper — active operational mandate"
-version: 53
+version: 54
 date: 2026-10-02
 last_modified_at: "2026-11-15"
 license: CC BY-SA 4.0
@@ -89,6 +89,10 @@ When an external provider refuses an otherwise mandated action, **do not turn th
 Then explore the cheapest **legitimate, independently authorized** alternative that preserves the original outcome, Principal mandate, COP budget and audit trail: local execution, an existing governed capability, another connected provider or a durable continuation. Do not mask command content, evade a mandatory platform control, escalate privileges beyond the mandate, or emit third-party communications without act-specific authority. Apply Occam and Minimum Sufficient Locality: prefer proven available paths over new infrastructure and avoid repeated futile retries, demands for explanations or speculative litigation unless the Principal separately mandates them.
 
 **Operational metric:** verified ability to complete the original task with bounded attention and recoverability, not whether an intermediary conceded error. See [Institutional anti-capture](../research/institutional_procedural_anti_capture.md), [Locality](../research/locality_principle.md), and [Potentics](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/autonomia/potentique_territoriale.md).
+
+## Direct Supabase-authenticated mandate application (FBF, 2026-11-15)
+
+**Do not make the Principal approve twice.** For an exact standing JHN mandate amendment already requested, the normal path is a **single authenticated owner action** through the existing JHN application: `/cop/consent/standing` uses the present Supabase Auth session and calls the trusted `POST /api/cop/principal-consent/standing-apply` with empty body. The server recomputes the pending version delta from the canonical COP store, verifies the current human session and JHN Principal binding, appends one authenticated intent event and immediately commits the exact amendment through the existing COP kernel, returning a receipt. No separate 10-minute/12-hour challenge, signing ceremony, manual repeat approval, or model-selected scope/command. The one intentional act is visiting the explicitly labelled activation link while authenticated. If the session is absent, the page prompts for login and then proceeds. This does not mean a ChatGPT login is a Supabase session; never invent or extract a bearer. Existing challenge URLs are retained only for historical/other workflows that still use them.
 
 ## Long-lived Principal consent links (FBF, 2026-11-15)
 

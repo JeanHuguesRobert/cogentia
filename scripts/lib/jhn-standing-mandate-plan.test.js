@@ -172,3 +172,34 @@ test("FBF: one v4→v5 permanent amendment enables general existing host executi
     assert.equal(f.plan().already_authorized_in_scope,true);
   }finally{f.store.close();}
 });
+
+test("Supabase-linked Principal activates standing mandate in one authenticated POST, without challenge",async()=>{
+  const f=fixture();try{
+    const endpoint="/api/cop/principal-consent/standing-apply";
+    const before=f.store.replay().length;
+    assert.equal((await f.http(endpoint,"untrusted-user",{})).status,403);
+    assert.equal((await f.http(endpoint,"owner-session",{scope:{allowed_actions:["arbitrary"]}})).status,400);
+    assert.equal(f.store.replay().length,before,"rejected requests cannot create consent events");
+    const first=await f.http(endpoint,"owner-session",{});
+    assert.equal(first.status,200,await first.clone().text());
+    const a=await first.json();
+    assert.equal(a.mandate_amendment_applied,true);
+    assert.equal(a.mandate_version,"v4");
+    const again=await f.http(endpoint,"owner-session",{});
+    assert.equal(again.status,200,await again.clone().text());
+    assert.equal((await again.json()).mandate_version,"v5");
+    assert.equal(resolveMandate(f.store,ref).version,"v5");
+    const third=await f.http(endpoint,"owner-session",{});
+    assert.equal(third.status,200);
+    assert.equal((await third.json()).already_authorized_in_scope,true);
+    const events=f.store.replay();
+    assert.equal(events.filter(e=>e.payload?.kind==="PrincipalConsentRequested").length,0);
+    assert.equal(events.filter(e=>e.payload?.kind==="PrincipalAuthenticatedMandateIntent").length,2);
+    assert.equal(events.filter(e=>e.payload?.kind==="MandateDeclaration").length,3);
+    assert.equal(events.filter(e=>e.payload?.kind==="MandateDeclaration")
+      .at(-1).payload.metadata.amendment.approval_scheme,
+      "supabase_authenticated_owner_direct_intent_v1");
+    assert.equal(evaluateMandate(f.store,{mandate_ref:ref,version_pin:"v5",
+      capability:"gmail.send",at_time:NOW}).granted,false);
+  }finally{f.store.close();}
+});

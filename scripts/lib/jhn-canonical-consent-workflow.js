@@ -108,6 +108,56 @@ export function createJhnCanonicalConsentWorkflow({store,adminClient,authClient,
     },
     // Read-only authentication gate for a protected presentation endpoint.
     authenticate:({session}={})=>approval.inspect({session}),
+    /** Single authenticated Principal act: no challenge, approval link or
+     * second decision. The exact mandate is built by the trusted server.
+     * Supabase Auth plus canonical JHN instance binding is the independent
+     * issuer evidence. A one-use event supplies the existing COP kernel's
+     * approval_evidence_ref; the caller cannot select a scope or approval. */
+    async applyAuthenticated({session,mandate}={}) {
+      if(!store?.append||!store?.replay||!store?.listTopic)
+        return deny('canonical_store_required');
+      let identity;
+      try{identity=await approval.inspect({session});}
+      catch{return deny('principal_authentication_unavailable');}
+      if(identity?.ok!==true||identity.authenticated!==true||
+          identity.principal_ref!=='principal:jhn')
+        return deny('principal_session_unverified');
+      const proposal=validatedMandate(store,mandate);
+      if(!proposal)return deny('mandate_proposal_invalid_or_inactive');
+      const payload_hash=mandateProposalHash(proposal);
+      const intent_id=randomUUID();
+      const evidence=append(store,'direct:'+intent_id,1,
+        'PrincipalAuthenticatedMandateIntent',{
+          principal_ref:'principal:jhn',
+          mandate_ref:proposal.mandate_ref,
+          previous_version:proposal.previous_version,
+          new_version:proposal.new_version,
+          payload_hash,
+          authentication:'supabase-auth-current-session-and-jhn-instance',
+          intent:'authenticated_owner_request_apply_exact_server_proposal',
+        });
+      if(!evidence)return deny('principal_intent_not_recorded');
+      const evidence_ref=evidence.event.event_id;
+      // Validation is against the exact server-side proposal, not an
+      // agent-supplied confirmation/hash or an ambient shell credential.
+      const result=amendMandate(store,mandate,{
+        verifyPrincipalApproval:current=>{
+          const same=mandateProposalHash(current)===payload_hash;
+          const row=store.listTopic(topic('direct:'+intent_id))[0];
+          return same&&row?.event_id===evidence_ref&&
+              row.payload?.payload_hash===payload_hash
+            ?{verified:true,principal_ref:'principal:jhn',evidence_ref,
+               scheme:'supabase_authenticated_owner_direct_intent_v1'}
+            :{verified:false};
+        }
+      });
+      if(!result?.ok)return deny(result?.error||'mandate_amendment_failed');
+      return {ok:true,mandate_amendment_applied:true,
+        grants_mandate_authority:true,
+        mandate_ref:result.mandate_ref,
+        mandate_version:result.version,
+        approval_evidence_ref:evidence_ref};
+    },
     /** The trusted issuer supplies this mandate only after resolving the
      * currently active canonical MandateDeclaration and its scope. */
     request({mandate,ttl_ms=CONSENT_LINK_TTL_MS}={}) {

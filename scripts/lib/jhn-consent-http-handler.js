@@ -37,12 +37,13 @@ export function createJhnConsentHttpHandler({workflow,origin,exactAgentMailAmend
     if(request.method!=='GET'&&request.method!=='POST')return denied(405,'method_not_allowed');
     const url=new URL(request.url);
     if(url.origin!==origin)return denied(403,'wrong_origin');
+    const isDirectStandingApply=url.pathname==='/api/cop/principal-consent/standing-apply';
     const isContinuationRequest=url.pathname==='/api/cop/principal-consent/continuation-request';
     const isRepositoryRequest=url.pathname==='/api/cop/principal-consent/repository-request';
     const isChatgptRequest=url.pathname==='/api/cop/principal-consent/chatgpt-turn-request';
     const match=/^\/api\/cop\/principal-consent\/([a-f0-9-]{36})$/.exec(url.pathname);
-    if(!isContinuationRequest&&!isRepositoryRequest&&!isChatgptRequest&&(!match||!ID.test(match[1])))return denied(404,'consent_route_not_found');
-    if((isContinuationRequest||isRepositoryRequest||isChatgptRequest)&&request.method!=='POST')return denied(405,'method_not_allowed');
+    if(!isDirectStandingApply&&!isContinuationRequest&&!isRepositoryRequest&&!isChatgptRequest&&(!match||!ID.test(match[1])))return denied(404,'consent_route_not_found');
+    if((isDirectStandingApply||isContinuationRequest||isRepositoryRequest||isChatgptRequest)&&request.method!=='POST')return denied(405,'method_not_allowed');
     if(request.method==='POST'&&request.headers.get('origin')!==origin)
       return denied(403,'cross_origin_decision_forbidden');
     const token=request.headers.get('authorization')?.match(/^Bearer\s+([^\s]+)$/i)?.[1];
@@ -53,6 +54,25 @@ export function createJhnConsentHttpHandler({workflow,origin,exactAgentMailAmend
     catch{return denied(503,'principal_preflight_unavailable');}
     if(identity?.ok!==true||identity.authenticated!==true||identity.principal_ref!=='principal:jhn')
       return denied(403,'principal_session_not_verified');
+    // One authenticated owner action directly applies the exact server
+    // plan. No intermediate challenge, second approval, or expiration link.
+    if(isDirectStandingApply){
+      if(typeof exactStandingAmendmentPlan!=='function'||
+         typeof workflow.applyAuthenticated!=='function')
+        return denied(403,'standing_apply_not_enabled');
+      const body=await request.text().catch(()=>null);
+      if(body!=='{}')return denied(400,'request_body_must_be_empty_object');
+      const plan=exactStandingAmendmentPlan();
+      if(!plan?.ok)return denied(409,plan?.error||'standing_plan_unavailable');
+      if(plan.already_authorized_in_scope)
+        return reply(200,{ok:true,already_authorized_in_scope:true,
+          mandate_ref:plan.mandate_ref,mandate_version:plan.version});
+      if(!plan.ready_for_issuance||!plan.mandate)
+        return denied(409,'standing_plan_not_ready');
+      const applied=await workflow.applyAuthenticated({session,mandate:plan.mandate});
+      if(!applied?.ok)return denied(409,applied?.error||'standing_apply_failed');
+      return reply(200,applied);
+    }
     // The ONLY browser-exposed creation operation is a fixed, owner-authenticated,
     // server-generated continuation amendment, never an arbitrary supplied mandate.
     if(isContinuationRequest) {
