@@ -15,6 +15,7 @@ import {createJhnConsentHttpHandler} from '../lib/jhn-consent-http-handler.js';
 import {agentMailMandatePlan} from './jhn-agent-mail-consent-cli.js';
 import {johnContinuationMandatePlan} from '../lib/jhn-continuation-mandate-plan.js';
 import {johnRepositoryMandatePlan} from '../lib/jhn-repository-mandate-plan.js';
+import {johnStandingMandatePlan} from '../lib/jhn-standing-mandate-plan.js';
 import {johnChatgptTurnMandatePlan} from '../lib/jhn-chatgpt-turn-mandate-plan.js';
 import {requestContinuationConsent} from './jhn-continuation-consent-cli.js';
 import {createSupabaseClient} from '../../../inseme/apps/platform/scripts/lib/config.js';
@@ -33,9 +34,11 @@ function makeOptions(env) {
 }
 
 export function createLocalConsentServer({workflow,origin,enableDecision=false,exactAgentMailAmendmentPlan,exactContinuationAmendmentPlan,requestExactContinuationConsent,exactRepositoryAmendmentPlan,
-  exactChatgptTurnAmendmentPlan,requestExactChatgptTurnConsent}={}) {
+  exactChatgptTurnAmendmentPlan,requestExactChatgptTurnConsent,
+  exactStandingAmendmentPlan}={}) {
  const api=createJhnConsentHttpHandler({workflow,origin,exactAgentMailAmendmentPlan,exactContinuationAmendmentPlan,requestExactContinuationConsent,exactRepositoryAmendmentPlan,
-    exactChatgptTurnAmendmentPlan,requestExactChatgptTurnConsent});
+    exactChatgptTurnAmendmentPlan,requestExactChatgptTurnConsent,
+    exactStandingAmendmentPlan});
  const expectedHost=new URL(origin).host;
  return createServer(async(req,res)=>{
    const response=(status,body)=>{res.writeHead(status,{'content-type':'application/json','cache-control':'no-store','x-content-type-options':'nosniff'});res.end(JSON.stringify(body));};
@@ -69,6 +72,7 @@ async function main(){
  const server=createLocalConsentServer({...opts,workflow,
    exactContinuationAmendmentPlan:()=>johnContinuationMandatePlan({store}),
    exactRepositoryAmendmentPlan:()=>johnRepositoryMandatePlan({store}),
+   exactStandingAmendmentPlan:()=>johnStandingMandatePlan({store}),
    exactChatgptTurnAmendmentPlan:()=>johnChatgptTurnMandatePlan({store}),
    requestExactChatgptTurnConsent:()=>{
      const plan=johnChatgptTurnMandatePlan({store});
