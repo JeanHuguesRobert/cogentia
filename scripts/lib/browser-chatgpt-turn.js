@@ -50,8 +50,6 @@ const observeCode=`(() => {
   if(location.origin!=="https://chatgpt.com")return {ok:false,error:"origin_changed"};
   const assistant=[...document.querySelectorAll('[data-message-author-role="assistant"]')];
   const last=assistant.at(-1);
-  const responseCandidates=[...document.querySelectorAll(
-    'article, [data-testid^="conversation-turn"], [data-turn-id], [data-message-author-role]')];
   const responseSelectorCounts={
     article:document.querySelectorAll('article').length,
     conversation_turn:document.querySelectorAll('[data-testid^="conversation-turn"]').length,
@@ -59,6 +57,11 @@ const observeCode=`(() => {
     message_role:document.querySelectorAll('[data-message-author-role]').length
   };
   const responseText=(document.querySelector('main')?.innerText||'').slice(-6000);
+  const transcriptReplies=responseText.split('ChatGPT said:');
+  const transcriptCount=Math.max(0,transcriptReplies.length-1);
+  const transcriptAnswer=transcriptCount
+    ? transcriptReplies.at(-1).split('ChatGPT can make mistakes.')[0].trim().slice(-9000)
+    : '';
   const generating=!!document.querySelector('button[data-testid="stop-button"],button[aria-label="Stop generating"]');
   const input=!!document.querySelector("#prompt-textarea,[contenteditable=true][role=textbox]");
   const composer=document.querySelector("#prompt-textarea,[contenteditable=true][role=textbox]");
@@ -76,7 +79,11 @@ const observeCode=`(() => {
     composer_buttons:buttons,
     response_selector_counts:responseSelectorCounts,
     response_complete_text:responseText.includes('Response complete'),
-    assistant_reply_visible:responseText.includes('ChatGPT said:'),
+    assistant_reply_visible:transcriptCount>0,
+    transcript_assistant_count:transcriptCount,
+    stable_composer:!generating&&input&&
+      (composer?.innerText||'').trim().length===0&&transcriptCount>0,
+    transcript_answer:transcriptAnswer,
     reply_tail:responseText.slice(-1800),
     last_answer:(last?.innerText||"").slice(-9000),
     generating,composer_present:input,
