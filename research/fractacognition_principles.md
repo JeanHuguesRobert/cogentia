@@ -1,12 +1,12 @@
 ---
 title: "FractaCognition — Prudence, Humility, Occam, Hanlon, Talleyrand, Bounded Assertion, Friends Before Competitors, and Locality"
 subtitle: "A cardinal discipline of prudence and humility, with heuristics for simplicity, attribution, explicit assumptions, bounded assertion, adjacent kinship, and minimum sufficient locality"
-description: "Consolidating note articulating FractaCognition definition, multiscale reflexive grammar, Prudence and Humility as a cardinal discipline, and complementary heuristics including Occam, Hanlon, Talleyrand, Bounded Assertion, Friends Before Competitors, Minimum Sufficient Locality, and Metacognitive Initiative."
+description: "Consolidating note articulating FractaCognition definition, multiscale reflexive grammar, Prudence and Humility as a cardinal discipline, and complementary heuristics including Occam, Hanlon, Talleyrand, Bounded Assertion, Friends Before Competitors, Minimum Sufficient Locality, Metacognitive Initiative, and Bifocal Design for transferable capability.\"
 author: "Jean Hugues Noël Robert, baron Mariani"
 affiliation: "Institut Mariani / C.O.R.S.I.C.A., 1 cours Paoli, F-20250 Corte, Corsica"
 date: "2026-09-27"
-last_modified_at: "2026-11-07"
-version: "0.9.3"
+last_modified_at: "2026-11-15"
+version: "0.9.4"
 status: "working-paper"
 license: "CC BY-SA 4.0"
 language: "en"
@@ -30,6 +30,7 @@ tags:
   - locality
   - handler-capacity
   - metacognitive-initiative
+  - bifocal-design
   - serendipity
   - peripheral-attention
   - heuristics
@@ -753,6 +754,40 @@ past actions and obstacles → faithful trace and causal qualification
 ~~~
 
 This connects the existing [anti-presentist woodcutter heuristic](#82-anti-presentism-and-the-third-woodcutter--invest-in-changing-the-means), [situated incapacity as metacognitive information](#situated-incapacity-as-metacognitive-information-7-november-2026), [epistemic assimilation and salience](epistemic_assimilation_and_salience.md), [Janus and the Museum of Possibles](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/musee-mariani/methodes/exploration_rationnelle_des_possibles.md), and the [Possibilist Manifesto's specific usage of presentism](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/manifeste_possibiliste_note_analytique.md). The word *presentism* also has other scholarly meanings; this is the Corpus's situated usage, not a universal redefinition. **Capability growth never implies growth of legitimate authority**: every new operational use remains subject to COP and an applicable Principal mandate.
+
+### 8.4 Bifocal design — reusable capability and situated application
+
+> **Treat every concrete mandate on two complementary planes: the situated result needed now, and the reusable capability that might make comparable results easier tomorrow. Always inspect both; build the generic layer only when justified.**
+
+A situated project can yield two different kinds of value:
+
+1. **Particular value:** the requested deliverable, under its actual facts, constraints, deadlines, authority and evidence.
+2. **Generic value:** a reusable method, engine, interface, test, recipe schema, or correction that can lower the cost and increase the possible actions of later projects.
+
+The generic and particular layers are **distinct but mutually informative**. The concrete case supplies the first Reality Test of the reusable capability; a well-placed reusable capability improves the particular work without taking over its domain semantics.
+
+~~~text
+concrete mandate and deadline
+    → inspect existing reusable tools and methods (FBF)
+    → classify: invariant / parameter / extension / local accident
+    → separate reusable kernel from situated recipe or adapter
+    → deliver and test the particular case
+    → record observable benefits, failures, maintenance and transfer cost
+    → generalize / reuse / retain locally / reject by measured value
+    → return to the immediate mandate
+~~~
+
+**Design boundary:** generic engines and transferable contracts belong in the repository that owns the reusable capability; domain-specific sources, legal constraints, case evidence, decisions and delivery instructions stay with the particular project. Cross-reference both instead of duplicating authoritative content. A source-to-product engine is not authorized to reinterpret or silently edit case-specific legal acts.
+
+**Generalization gate (counterweight to abstraction inflation):** *Every particular problem deserves a brief genericity check; not every problem deserves a new generic framework.* Before extracting an abstraction, verify at least one concrete consumer, plausible recurrence or diversity of consumers, a demonstrable reduction in whole-life cost, a small reversible implementation, and a Reality Test. Prefer extending an existing mechanism to creating a competitor. A single urgent case may justify a minimal general extension when its reuse value is strong, but speculative universality must never postpone a time-critical deliverable without explicit informed judgment.
+
+**Failure modes:** (a) copy-pasting the same ad hoc implementation across projects, creating drift; (b) encoding case-specific legal or editorial rules into a shared engine; (c) premature framework-building that consumes Human Attention and delays the primary mandate; (d) claiming generic capability from one synthetic success without testing the actual use case.
+
+**Reality Case — SEN 2026-6589:** the particular task is an auditable, one-episode communication to the French Constitutional Council clerk with a consistent email body, PDF projection, autonomous QPC PDFs, evidence inventory and P-13 video. The generic task is the Ubikia multi-artifact Markdown compiler/linker, source inclusion, reproducible TXT/PDF projections, manifests, and channel-specific packaging. Generic engine: `JeanHuguesRobert/ubikia#43`; particular recipe and requirements: `JeanHuguesRobert/barons-Mariani#127` and its consolidated cahier des charges. A working compiler does not prove filing, delivery, admissibility, or examination by the Council.
+
+**Relationship to established principles:** this rule specializes Metacognitive Initiative (§8), the third woodcutter (§8.2), Friends Before Competitors (§6), Occam (§2), and Minimum Sufficient Locality (§7). Its four-way classification already has a situated implementation in `research/living_book_factory.md`; here it becomes an explicit *general decision heuristic*, without a new universal schema or mandatory framework.
+
+**Compact test:** *What must we deliver now? What, if anything, should become reusable? Which repository owns each part? What evidence would justify extracting the reusable part?*
 
 ## 9. Validated Learning and Selective Propagation
 
