@@ -142,6 +142,10 @@ test('bounded batch stops on authorization denial instead of spinning',async()=>
  }finally{store.close()}
 });
 
+const nextActionVerifiedReceipt=async({child_continuation_id,execution_receipt_ref})=>({
+  verified:true,child_continuation_id,execution_receipt_ref,
+  evidence_ref:'fixture:verified-john-dispatch-receipt:'+child_continuation_id,
+});
 const nextActionAdmit=async({action_id})=>({granted:true,action_id,
   authorization_ref:'fixture:independently-verified-mandate',
   provider_permitted:true,provider_permission_receipt_ref:'fixture:provider-review',
@@ -163,24 +167,24 @@ test('next-step candidate becomes a durable separately admitted child, no replay
   const dispatch=async()=>{invokes++;return {ok:true,
     child_continuation_id:'ctn_next_child_01',execution_receipt_ref:'fixture:john-result'};};
   assert.equal((await consumeChatgptCpsNextStep({store,continuation_id:id,
-    admit:async()=>({granted:false}),dispatch})).status,'not_admitted');
+    admit:async()=>({granted:false}),dispatch,verifyDispatchReceipt:nextActionVerifiedReceipt})).status,'not_admitted');
   assert.equal(invokes,0);
   assert.equal((await consumeChatgptCpsNextStep({store,continuation_id:id,
     admit:async x=>({...await nextActionAdmit(x),provider_permission_receipt_ref:''}),
-    dispatch})).status,'not_admitted');
+    dispatch,verifyDispatchReceipt:nextActionVerifiedReceipt})).status,'not_admitted');
   assert.equal(invokes,0);
   const done=await consumeChatgptCpsNextStep({store,continuation_id:id,
-    admit:nextActionAdmit,dispatch});
+    admit:nextActionAdmit,dispatch,verifyDispatchReceipt:nextActionVerifiedReceipt});
   assert.equal(done.status,'child_dispatched');
   assert.equal(done.child_continuation_id,'ctn_next_child_01');
   assert.equal(invokes,1);
   assert.equal((await consumeChatgptCpsNextStep({store,continuation_id:id,
-    admit:nextActionAdmit,dispatch})).status,'already_dispatched');
+    admit:nextActionAdmit,dispatch,verifyDispatchReceipt:nextActionVerifiedReceipt})).status,'already_dispatched');
   store.close();
   store=createSqliteCopEventStore(file);
   assert.deepEqual(listChatgptCpsNextSteps(store),[]);
   assert.equal((await consumeChatgptCpsNextStep({store,continuation_id:id,
-    admit:nextActionAdmit,dispatch})).status,'already_dispatched');
+    admit:nextActionAdmit,dispatch,verifyDispatchReceipt:nextActionVerifiedReceipt})).status,'already_dispatched');
   assert.equal(invokes,1);
   assert.equal(store.auditCommitments().ok,true);
   store.close();
@@ -199,12 +203,12 @@ test('unknown dispatch after durable next-step intent is never blindly retried',
   let invoked=0;
   const fail=async()=>{invoked++;throw Error('unknown_dispatch_after_network_cut')};
   assert.equal((await consumeChatgptCpsNextStep({store,continuation_id:id,
-    admit:nextActionAdmit,dispatch:fail})).status,'needs_reconciliation');
+    admit:nextActionAdmit,dispatch:fail,verifyDispatchReceipt:nextActionVerifiedReceipt})).status,'needs_reconciliation');
   store.close();
   store=createSqliteCopEventStore(file);
   assert.deepEqual(listChatgptCpsNextSteps(store).map(x=>x.status),['needs_reconciliation']);
   assert.equal((await consumeChatgptCpsNextStep({store,continuation_id:id,
-    admit:nextActionAdmit,dispatch:fail})).status,'needs_reconciliation');
+    admit:nextActionAdmit,dispatch:fail,verifyDispatchReceipt:nextActionVerifiedReceipt})).status,'needs_reconciliation');
   assert.equal(invoked,1);
   store.close();
  }finally{rmSync(dir,{recursive:true,force:true})}
@@ -219,7 +223,8 @@ test('finished or uncorrelated scheduler output is never upgraded to autonomous 
   assert.deepEqual(listChatgptCpsNextSteps(store),[]);
   let invoked=0;
   assert.equal((await consumeChatgptCpsNextStep({store,continuation_id:id,
-    admit:nextActionAdmit,dispatch:async()=>{invoked++;return {ok:true}}})).status,'verified_candidate_missing');
+    admit:nextActionAdmit,dispatch:async()=>{invoked++;return {ok:true}},
+    verifyDispatchReceipt:nextActionVerifiedReceipt})).status,'verified_candidate_missing');
   assert.equal(invoked,0);
  }finally{store.close()}
 });
@@ -242,7 +247,7 @@ test('one bounded mandate driver dispatches three separately admitted causal chi
   }
   await record(ids[0]);
   const result=await runChatgptCpsNextStepBatch({store,
-   max_steps:4,admit:nextActionAdmit,
+   max_steps:4,admit:nextActionAdmit,verifyDispatchReceipt:nextActionVerifiedReceipt,
    dispatch:async({continuation_id})=>{
     const index=ids.indexOf(continuation_id);
     handled.push(continuation_id);
@@ -274,10 +279,28 @@ test('competing next-step consumers cannot dispatch the same candidate twice',as
   }};
   const results=await Promise.all([0,1,2].map(()=>consumeChatgptCpsNextStep({
     store,continuation_id:id,admit:nextActionAdmit,dispatch,
+    verifyDispatchReceipt:nextActionVerifiedReceipt,
   })));
   assert.equal(results.filter(x=>x.status==='child_dispatched').length,1);
   assert.equal(results.filter(x=>['needs_reconciliation','already_dispatched'].includes(x.status)).length,2);
   assert.equal(dispatched,1);
   assert.equal(store.auditCommitments().ok,true);
+ }finally{store.close()}
+});
+
+test('a self-claimed dispatch receipt never certifies a child without independent evidence',async()=>{
+ const store=createSqliteCopEventStore(':memory:');
+ try{
+  const id='ctn_next_fake_receipt_01';addReturned(store,id);
+  assert.equal((await consumeChatgptCpsWake({store,continuation_id:id,
+    scheduler:scheduler(()=>({status:'continue',next_action:'inspect-next-source'})),admit})).ok,true);
+  const dispatch=async()=>({ok:true,child_continuation_id:'ctn_next_fake_child_01',
+    execution_receipt_ref:'john:claimed-but-not-verified'});
+  const result=await consumeChatgptCpsNextStep({store,continuation_id:id,
+    admit:nextActionAdmit,dispatch,
+    verifyDispatchReceipt:async()=>({verified:false})});
+  assert.equal(result.status,'needs_reconciliation');
+  assert.equal(store.eventByIdempotency('chatgpt-browser:'+id+':next-step-dispatched'),null);
+  assert.deepEqual(listChatgptCpsNextSteps(store).map(x=>x.status),['needs_reconciliation']);
  }finally{store.close()}
 });

@@ -770,7 +770,10 @@ bounded action ID. It records `next_action_candidate` and
    durable `cop.continuation-next-step/v1` intent in a CAS transaction before
    passing the candidate to a callback that must use the **existing John/COP
    execution route**. It records `child_dispatched` only after a valid child
-   continuation ID and an actual dispatch receipt are returned.
+   continuation ID and a **separate trusted verification of the actual**
+   John/COP dispatch receipt. An arbitrary `john:...` reference supplied by
+   a handler is only a claim, not independent evidence; failed verification
+   leaves a durable `needs_reconciliation` state.
 3. Concurrent calls cannot execute a second child; after a crash between
    intent and receipt, the state remains `needs_reconciliation`. Replaying an
    uncertain external effect is forbidden. A child return must still arrive
