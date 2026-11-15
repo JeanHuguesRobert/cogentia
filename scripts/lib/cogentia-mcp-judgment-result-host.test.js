@@ -15,6 +15,7 @@ import { createSqliteCopEventStore } from "../../../inseme/packages/cop-core/src
 import { createEventSourcedExecutionBudgetLedger } from "../../../inseme/packages/cop-core/src/execution-budget.js";
 import { declaredContinuationRecord, observeContinuationResult } from "../../../inseme/packages/cop-core/src/continuation-result.js";
 import { EventStorePacketClaimCoordinator } from "../../../inseme/packages/cop-kernel/src/packetCoordination.js";
+import { resumeContinuationFromReturnedEvent } from "../../../inseme/packages/cop-kernel/src/continuation.js";
 import { hashPayload } from "../../../inseme/packages/cop-core/src/cop-event-envelope.js";
 
 // Disposable loopback transport reproduces POST /mcp without importing the
@@ -148,6 +149,7 @@ test("real signed COP mandate and active budget reservation gate MCP receipt", a
 
     // Minimal local three-continuation COP pipeline, no external vendor or
     // hidden browser execution. The existing recognizer owns acceptance.
+    const reservations=new Map([["ctn_test",reserved.reservation.reservation_id]]);
     for (let i = 1; i <= 3; i++) {
       const id = i === 1 ? "ctn_test" : `ctn_test_${i}`;
       if (i > 1) {
@@ -158,6 +160,7 @@ test("real signed COP mandate and active budget reservation gate MCP receipt", a
           demand: { max_steps:1 },
         });
         assert.equal(reserve.ok, true);
+        reservations.set(id,reserve.reservation.reservation_id);
         const newClaim = await claimCoordinator.tryClaim({
           packetRef, handlerRef: auth.actor, ttlMs: 600000,
         });
@@ -220,11 +223,37 @@ test("real signed COP mandate and active budget reservation gate MCP receipt", a
         ["observed","correlated","accepted","returned"]);
       const events = store.appendBatch(rec.proposed_events);
       assert.equal(events.ok, true, JSON.stringify(events));
-      assert.equal(store.listTopic("continuation:" + id).filter(
+      const returned=store.listTopic("continuation:" + id).filter(
         e => e.payload?.profile === "cop.continuation-result/v1" &&
-          e.payload.phase === "returned").length, 1);
+          e.payload.phase === "returned");
+      assert.equal(returned.length,1);
+      if(i===3){
+        // Source-of-truth event drives the actual existing kernel resume
+        // primitive. A receipt alone must never masquerade as a resumed task.
+        const wake=await resumeContinuationFromReturnedEvent({
+          continuation:{continuationId:id,resumeTo:"handler:local-result-evaluator",
+            state:{step:"awaiting-judgment"}},
+          returnedEvent:returned[0],
+          handlerResolver:async()=>async({payload})=>({
+            accepted:payload?.yield?.answer==="ok", next_action:"continue",
+          }),
+        });
+        assert.equal(wake.resumed,true);
+        assert.equal(wake.lifecycle,"resumed");
+        assert.equal(wake.execution?.result?.accepted,true);
+        assert.equal(wake.yield?.answer,"ok");
+        // Accounting closes only when the resumed handler has accepted the
+        // result. The other two continuations remain deliberately reserved.
+        const settled=ledger.settle({
+          reservation_id:reservations.get(id),
+          idempotency_key:"result-accepted:"+id,
+          usage:{max_steps:1},
+          expected_version:ledger.snapshot().version,
+        });
+        assert.equal(settled.ok,true,JSON.stringify(settled));
+      }
     }
-    assert.equal(ledger.snapshot().reserved.max_steps, 3);
+    assert.equal(ledger.snapshot().reserved.max_steps, 2);
     assert.equal(store.replay().filter(e => e.payload?.surface === "mcp").length,3);
 
     // The same already-created MCP host must react to a separately signed
@@ -250,12 +279,13 @@ test("real signed COP mandate and active budget reservation gate MCP receipt", a
       trustedPublicKeyPem:pem,now:()=>NOW});
     assert.equal(amend.ok,true,JSON.stringify(amend));
     const sameHost=await factory({auth});
-    const liveV2=await sameHost.admit(submission("ctn_test_3"));
+    // ctn_test_3 was accepted and settled; check an outstanding reservation.
+    const liveV2=await sameHost.admit(submission("ctn_test_2"));
     assert.equal(liveV2.mandate_valid,true,"signed amendment must work without MCP restart");
     assert.equal(liveV2.budget_admitted,true);
     assert.equal(recordMandateControl(store,{principal_ref:"principal:jhn",
       mandate_ref:MANDATE,action:"revoke",reason:"test revocation"}).ok,true);
-    const afterRevoke=await sameHost.admit(submission("ctn_test_3"));
+    const afterRevoke=await sameHost.admit(submission("ctn_test_2"));
     assert.equal(afterRevoke.mandate_valid,false,"revocation must apply without MCP restart");
     assert.equal(afterRevoke.budget_admitted,false);
   } finally {store.close();}

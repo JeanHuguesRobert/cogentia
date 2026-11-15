@@ -326,8 +326,9 @@ all **local configuration/preflight** checks pass, 2 otherwise. It:
 
 Observed Fracta2: canonical mandate v2 and budget ready; service active;
 runtime newer than current MCP process, feature flag/channel list absent,
-mutate transport not verifiable in the unit environment, tool missing from
-the current loopback discovery. The previously documented one-time deployment
+mutate transport not verifiable in the unit environment, and the tool omitted
+from **anonymous** loopback discovery by design (not an absence of the
+source capability). The previously documented one-time deployment
 and provider/channel authority are therefore still pending. Ordinary
 future mandate changes must **not** restart or reload the MCP.
 
@@ -371,3 +372,35 @@ provider/channel allowlist are absent, and authenticated write transport
 is not verified in its unit Environment property. External channel
 permission, an authorized one-time deployment and end-to-end CPS
 autonomous redispatch still require separate evidence.
+
+## 17. 15 November 2026 — HTTP result through actual kernel resumption, in a disposable COP fixture
+
+Expanded the existing Cogentia #330 test (not a new pipeline/service) to
+connect the complete chain:
+
+1. authenticated JHN `POST /mcp` and signed fixture MandateDeclaration;
+2. COP budget reservation + valid packet claim + one durable idempotent
+   candidate receipt; anonymous/bad-token refusal and duplicate replay;
+3. the **existing** Inseme continuation recognizer persists
+   `observed → correlated → accepted → returned` events;
+4. `resumeContinuationFromReturnedEvent` from Inseme's COP kernel invokes
+   the test handler with the recovered candidate yield; handler explicitly
+   accepts the value;
+5. the existing COP event-sourced budget ledger settles that one reserved
+   step, while two unrelated reservations remain open;
+6. the same host continues evaluating mandate v2 dynamically and refuses
+   subsequent authority after revocation, without re-instantiation.
+
+This is the first connected source-level fixture for result → returned →
+kernel handler resume → accounting settlement. It is **not** a statement
+that an actual CPS autonomous daemon subscribes to the returned event on
+Fracta2, that a provider account is authorized, that production events
+were written or that production MCP has been restarted.
+
+Live Fracta2 still has no result opt-in, no reviewed provider/channel
+allowlist, no verified authenticated JHN write client and an MCP process
+started before the current source. The privileged broker probe remains
+`real_super_broker_available_but_effect_authority_unverified`. Do not
+manufacture privileged restart authority or treat a local fixture as a
+real provider session; the next integration milestone is the authorized
+one-time activation and an observed persistent CPS wake/re-dispatch.
