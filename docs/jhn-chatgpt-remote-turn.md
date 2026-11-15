@@ -85,3 +85,31 @@ result if that connector is actually available in its session. If not,
 Agent JHN must observe the response through the governed browser read
 and record that observation separately, never fabricate a model-issued
 tool receipt. The browser reply alone is not proof of a COP return.
+
+## First claimed browser continuation
+
+After the standing browser mandate is approved, the owner-side command
+
+```bash
+node scripts/ops/prepare-chatgpt-browser-cps-turn.mjs --prepare
+```
+
+reserves one funded step in the existing canonical COP journal and claims
+a new `chatgpt:browser` continuation for Agent JHN (15-minute claim).
+Its JSON output contains an exact first-test prompt with the genuine
+continuation ID, binding, version, challenge and idempotence key. The
+model is asked to call the existing Cogentia result-submit MCP tool. A
+missing tool must be reported as unavailable, **not simulated**.
+
+The submit handler recognizes the result, preserves the durable receipt
+and settles that reserved step exactly once. Later retries are
+idempotent; the next CPS decision remains separate from simple
+turn completion. This script refuses to reserve a task while
+`browser.chatgpt.turn` is absent from the active canonical mandate.
+No application credentials or browser cookies are embedded in the prompt.
+
+The specific existing ChatGPT blank tab at first inspection was
+`94450542` with exact URL `https://chatgpt.com/`. Never treat the
+tab ID as permanent; resolve the current tab ID through the read-only
+signed `browser.hosted.inspect` capability at dispatch time and
+verify the expected origin.

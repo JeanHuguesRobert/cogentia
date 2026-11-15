@@ -290,3 +290,66 @@ test("real signed COP mandate and active budget reservation gate MCP receipt", a
     assert.equal(afterRevoke.budget_admitted,false);
   } finally {store.close();}
 });
+
+test("signed ChatGPT browser result is recognized and settles the real reserved budget once",async()=>{
+ const store=createSqliteCopEventStore(":memory:");
+ try{
+   const keys=generateKeyPairSync("ed25519");
+   const pem=keys.publicKey.export({type:"spki",format:"pem"});
+   const proposal={kind:ROOT_MANDATE_KIND,mandate_id:MANDATE,version:"v1",
+     principal_ref:"principal:jhn",logical_agent_ref:"agent:jhn",
+     valid_from:"2026-01-01T00:00:00Z",valid_until:"2027-01-01T00:00:00Z",
+     scope:{allowed_actions:[RESULT_RETURN_CAPABILITY],forbidden_actions:[...RESERVED_ACTIONS]},
+     max_delegation_depth:1,budget_limits:{max_steps:5}};
+   const approval={kind:"cogentia.principal-signature/v1",principal_ref:"principal:jhn",
+     payload_hash:proposalHash(proposal),key_fingerprint:publicKeyFingerprint(pem),
+     signature_base64:sign(null,canonicalProposalBytes(proposal),keys.privateKey).toString("base64")};
+   assert.equal(issueVerifiedJohnRoot({store,proposal,approval,trustedPublicKeyPem:pem,now:NOW}).ok,true);
+   const ledger=createEventSourcedExecutionBudgetLedger({
+     store,budget_id:BUDGET,limits:{max_steps:5},require_authority_grant:true});
+   const reserved=ledger.reserve({idempotency_key:"chatgpt:ctn_browser_test",
+     expected_version:ledger.snapshot().version,demand:{max_steps:1}});
+   assert.equal(reserved.ok,true);
+   const coordinator=new EventStorePacketClaimCoordinator({store});
+   const packetRef="packet:ctn_browser_test";
+   const claim=await coordinator.tryClaim({packetRef,handlerRef:"agent:jhn",ttlMs:600000});
+   assert.equal(claim.ok,true);
+   assert.equal(store.append(declaredContinuationRecord({
+     continuation_id:"ctn_browser_test",packet_ref:packetRef,version:1,
+     attempt_id:"a1",execution_binding_ref:"b1",lifecycle:"suspended",
+     correlation:{challenge:"c-1"},
+     budget_reservation_id:reserved.reservation.reservation_id,
+     claim:{claim_id:claim.claim.claim_id,epoch:claim.claim.epoch,
+       expected_generation:coordinator.inspect(packetRef).generation},
+     expected_result:{schema:"cogentia.step_result/v1"},
+     provider:"chatgpt",channel:"browser",
+   })).ok,true);
+   const core=createMcpCore({
+     COGENTIA_MCP_VIEW:"public",COGENTIA_MCP_JHN_MUTATE:"1",
+     COGENTIA_MCP_JHN_TOKEN:"test-token",
+   },{mcpContinuationResultHost:createCanonicalMcpJudgmentResultHost({
+     store,mandate_ref:MANDATE,budget_id:BUDGET,
+     transport_mandate_label:"mandate:chatgpt-corpus-coding",
+     verifyIssuer:createOfflineJohnIssuerVerifier({trustedPublicKeyPem:pem,now:()=>NOW}),
+     channelPermission:({provider,channel})=>provider==="chatgpt"&&channel==="browser",
+     autoProcess:true,
+   })});
+   const auth=resolveCallerAuth({
+     COGENTIA_MCP_JHN_MUTATE:"1",COGENTIA_MCP_JHN_TOKEN:"test-token",
+   },{headers:{authorization:"Bearer test-token"},meta:{
+      "cogentia.actor":"agent:jhn","cogentia.mandate_ref":"mandate:chatgpt-corpus-coding",
+   }});
+   const args=submission("ctn_browser_test");
+   const first=await core.callTool(TOOL,args,{auth});
+   assert.equal(first.ok,true,JSON.stringify(first));
+   assert.equal(first.continuation_status,"returned");
+   assert.equal(ledger.snapshot().settled.max_steps,1);
+   const final=store.listTopic("continuation:ctn_browser_test")
+     .filter(x=>x.payload?.profile==="cop.continuation-result/v1"&&x.payload.phase==="returned");
+   assert.equal(final.length,1);
+   const duplicate=await core.callTool(TOOL,args,{auth});
+   assert.equal(duplicate.ok,true);
+   assert.equal(duplicate.duplicate,true);
+   assert.equal(ledger.snapshot().settled.max_steps,1);
+ }finally{store.close()}
+});

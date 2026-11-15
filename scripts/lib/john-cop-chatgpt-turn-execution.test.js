@@ -56,3 +56,45 @@ test('signed scope plus independent issuer and reserve -> one action; duplicate 
   assert.equal(createEventSourcedExecutionBudgetLedger({store,budget_id:'budget:'+ref,require_authority_grant:true}).snapshot().settled.max_steps,2);
  }finally{store.close()}
 });
+
+test('real John governed harness invokes the fixed browser recipe and settles COP',async()=>{
+ const {runJohnRequest}=await import('./john-run.js');
+ const {createChatgptTurnCapability}=await import('./browser-chatgpt-turn.js');
+ const store=fixture(true);
+ let remoteCalls=0;
+ const gatewaySession=()=>({
+   async withTabLease(browserId,tab,operation){assert.equal(browserId,'fracta2-hosted');assert.equal(tab,42);return operation(this)},
+   async call(method,params){
+     remoteCalls++;
+     if(method==='tabs.list')return {tabs:[{id:42,url:'https://chatgpt.com/',title:'ChatGPT'}]};
+     if(method==='page.insertText')return {insertedLength:params.text.length,tab:{id:42}};
+     if(method==='page.evaluate')return {value:{ok:true,composer_found:true,click_dispatched:true}};
+     throw Error('unsupported');
+   },
+   close(){},
+ });
+ const capability=createChatgptTurnCapability({sessionFactory:gatewaySession});
+ const req={...request,request_id:'jhn-test-chatgpt-real-harness',
+   principal:{id:'principal:jhn'},mandate:{id:'mandate:chatgpt-corpus-coding',version:'1'},
+   budget:{id:'budget:'+ref},input:{prompt:'Hello',arguments:request.input.arguments},
+   handler:{id:'governed.step_reasoner',kind:'governed_reasoner',
+     allowed_capabilities:['browser.chatgpt.turn']}};
+ try{
+   const done=await executeJohnCanonicalChatgptTurn({store,auth,request:req,
+     verifyIssuer:verifier,run:()=>runJohnRequest(req,{
+       capabilities:[capability],allowedCapabilities:[capability.name],
+       maxInternalEffects:1,requiredEvents:false,
+       reasoner:{nextStep:async state=>{
+         const observed=state.observations.find(x=>x.type==='capability_result'&&x.capability===capability.name);
+         return observed
+           ? {kind:'answer',answer:JSON.stringify(observed.value??{})}
+           : {kind:'capability_call',capability:capability.name,input:req.input.arguments};
+       }},
+     })});
+   assert.equal(done.ok,true,JSON.stringify(done));
+   assert.ok(remoteCalls>=4,'actually dispatched browser RPC sequence');
+   const ended=done.events.find(e=>e.type==='john.run.completed');
+   assert.ok(ended,'complete handler turn with two steps');
+   assert.equal(done.events.find(e=>e.type==='john.accounting.settled').data.internal_effects,1);
+ }finally{store.close();}
+});

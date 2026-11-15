@@ -88,6 +88,27 @@ export function createCanonicalMcpJudgmentResultHost({
         const returned = records.find(e => e.payload?.profile ===
           "cop.continuation-result/v1" && e.payload.phase === "returned");
         if (!returned) return { status: "processing_pending" };
+        // A browser ChatGPT return is a durable result, not permission to
+        // invent or dispatch its next prompt. Release its actual, already
+        // reserved one-step COP budget once, and let the CPS observer route
+        // the verified return under the parent mandate separately.
+        if (continuation.provider === "chatgpt" &&
+            continuation.channel === "browser") {
+          const settlementKey="chatgpt-browser:"+id+":settled";
+          if (!store.eventByIdempotency(settlementKey)) {
+            const ledger=createEventSourcedExecutionBudgetLedger({
+              store,budget_id,require_authority_grant:true});
+            const settled=ledger.settle({
+              reservation_id:continuation.budget_reservation_id,
+              expected_version:ledger.snapshot().version,
+              idempotency_key:settlementKey,
+              usage:{max_steps:1},
+            });
+            if (!settled.ok) throw new Error(
+              settled.error || "chatgpt_result_budget_settlement_failed");
+          }
+          return {status:"returned",autonomous_handler:false};
+        }
         // Dispatch only the trusted, no-external-effects local fixture handler.
         // Production agents need a separately configured governed resolver.
         if (continuation.provider !== "local-fixture" ||
