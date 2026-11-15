@@ -81,7 +81,7 @@ if(argv.length===1&&argv[0]==='--status'){
    }
    const ready=async()=>{
      for(let count=0;count<5;count++){
-       const r=await john('observe',{action:'observe',tab_id:tabId});
+       const r=await john('status',{action:'status',tab_id:tabId});
        if(r.ok&&r.observation.stable_composer===true&&
          r.observation.composer_blank===true&&
          r.observation.generating===false)return true;
@@ -162,8 +162,8 @@ if(argv.length===1&&argv[0]==='--status'){
            // once, and only if the canonical MCP return is still absent.
            if(!recoveryAttempted && wait>=3 && wait%3===0){
              let observation=null;
-             try{observation=await john('observe',{
-               action:'observe',tab_id:tabId,
+             try{observation=await john('status',{
+               action:'status',tab_id:tabId,
                expected_continuation_id:prepared.continuation_id});}
              catch{/* observability failure is not authority to retry */}
              if(observation?.ok===true&&

@@ -23,7 +23,7 @@ export function canRecoverChatgptFailedDraft(observed={}){
    observed.generating===false;
 }
 export function validateChatgptTurnRequest(input={}){
- if(!input||typeof input!=='object'||!['submit','observe','send_draft','ensure_tab'].includes(input.action))
+ if(!input||typeof input!=='object'||!['submit','observe','status','send_draft','ensure_tab'].includes(input.action))
    return {ok:false,error:'chatgpt_action_invalid'};
  if(input.action==='ensure_tab'){
    if(input.tab_id!==undefined||input.prompt!==undefined||
@@ -41,9 +41,9 @@ export function validateChatgptTurnRequest(input={}){
      !/^ctn_chatgpt_browser_[a-f0-9]{32}$/.test(input.expected_continuation_id)||
      input.prompt!==undefined))
    return {ok:false,error:'chatgpt_draft_binding_invalid'};
- if(input.action==='observe'&&input.prompt!==undefined)
+ if(['observe','status'].includes(input.action)&&input.prompt!==undefined)
    return {ok:false,error:'chatgpt_unexpected_prompt'};
- if(input.action==='observe'&&input.expected_continuation_id!==undefined&&
+ if(['observe','status'].includes(input.action)&&input.expected_continuation_id!==undefined&&
     !/^ctn_chatgpt_browser_[a-f0-9]{32}$/.test(input.expected_continuation_id))
    return {ok:false,error:'chatgpt_observe_binding_invalid'};
  return {ok:true};
@@ -138,13 +138,32 @@ const observeCode=`(() => {
     generating,composer_present:input,
     current_path:location.pathname};
 })()`;
+// Status-only path for CPS workers: never read assistant messages, main text,
+// transcript, model Output or the contents of another browser tab.
+const statusCode=`(() => {
+  const expectedContinuationId=null;
+  if(location.origin!=="https://chatgpt.com")return {ok:false,error:"origin_changed"};
+  const composer=document.querySelector('#prompt-textarea,[contenteditable=true][role=textbox]');
+  const draft=(composer?.innerText||'');
+  const generating=!!document.querySelector('button[data-testid="stop-button"],button[aria-label="Stop generating"]');
+  const alerts=[...document.querySelectorAll('[role="alert"],[data-testid="toast"]')];
+  const sendFailureVisible=alerts.some(x=>/Could not send this ChatGPT message/i.test(x.textContent||''));
+  const bound=typeof expectedContinuationId==='string'&&
+    draft.includes(expectedContinuationId);
+  return {ok:true,composer_present:!!composer,composer_chars:draft.length,
+    composer_blank:draft.trim().length===0,generating,
+    stable_composer:!!composer&&draft.trim().length===0&&!generating,
+    send_failure_visible:sendFailureVisible,
+    draft_bound_to_requested_continuation:bound,
+    current_path:location.pathname};
+})()`;
 function value(result){return result?.value||{};}
 export function createChatgptTurnCapability({gateway=GATEWAY,browserId=BROWSER,timeoutMs=12000,sessionFactory=createGatewaySession}={}){
  return {name:'browser.chatgpt.turn',kind:'tool',risk:'internal_recoverable',
    resultVisibility:'reasoner',costUnits:1,
    description:'Find or create an available ChatGPT tab, submit one prompt, or observe the response under signed COP authority.',
    inputSchema:{type:'object',properties:{
-     action:{type:'string',enum:['ensure_tab','submit','observe','send_draft']},
+     action:{type:'string',enum:['ensure_tab','submit','observe','status','send_draft']},
      tab_id:{type:'integer',minimum:1},
      prompt:{type:'string',maxLength:6000},
      expected_continuation_id:{type:'string'},
@@ -162,7 +181,9 @@ export function createChatgptTurnCapability({gateway=GATEWAY,browserId=BROWSER,t
          // Never overwrite an existing draft or interrupt a running turn.
          for(const candidate of listed.tabs){
            if(!Number.isSafeInteger(candidate.id)||candidate.id<1||
-              !isChatgptTabUrl(candidate.url))continue;
+              !isChatgptTabUrl(candidate.url)||
+              !(new URL(candidate.url).pathname==='/'||
+                String(candidate.title||'').startsWith(JUDGMENT_TAB_MARKER)))continue;
            try{
              const reusable=await session.withTabLease(
                browserId,candidate.id,async owner=>{
@@ -171,7 +192,7 @@ export function createChatgptTurnCapability({gateway=GATEWAY,browserId=BROWSER,t
                  if(!same||same.url!==candidate.url)return false;
                  const result=await owner.call('page.evaluate',{
                    browser_instance_id:browserId,tabId:candidate.id,
-                   expectedUrl:candidate.url,code:observeCode,
+                   expectedUrl:candidate.url,code:statusCode,
                  });
                  const observation=value(result);
                  return observation.ok===true&&observation.composer_present===true&&
@@ -212,6 +233,25 @@ export function createChatgptTurnCapability({gateway=GATEWAY,browserId=BROWSER,t
          const rpc=async code=>value(await owner.call('page.evaluate',{
            browser_instance_id:browserId,tabId:input.tab_id,
            expectedUrl:tab.url,code}));
+         if(input.action==='status'){
+           const code=input.expected_continuation_id
+             ?statusCode.replace('const expectedContinuationId=null;',
+                'const expectedContinuationId='+JSON.stringify(input.expected_continuation_id)+';')
+             :statusCode;
+           const observed=await rpc(code);
+           if(!observed.ok)deny(observed.error||'chatgpt_status_unconfirmed');
+           // Explicit result projection: never leak unexpected provider data.
+           return {...meta,action:'status',ok:true,
+             composer_present:observed.composer_present===true,
+             composer_chars:Number.isSafeInteger(observed.composer_chars)?observed.composer_chars:0,
+             composer_blank:observed.composer_blank===true,
+             generating:observed.generating===true,
+             stable_composer:observed.stable_composer===true,
+             send_failure_visible:observed.send_failure_visible===true,
+             draft_bound_to_requested_continuation:
+               observed.draft_bound_to_requested_continuation===true,
+             current_path:typeof observed.current_path==='string'?observed.current_path.slice(0,120):null};
+         }
          if(input.action==='observe'){
            const code=input.expected_continuation_id
              ?observeCode.replace('const expectedContinuationId=null;',

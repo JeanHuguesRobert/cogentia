@@ -64,9 +64,10 @@ test('ensure_tab reuses a free existing ChatGPT editor without creating anything
    async call(method,args){
      calls.push([method,args]);
      if(method==='tabs.list')return {tabs:[{id:60,url:'https://example.com/'},
-       {id:42,url:'https://chatgpt.com/c/abc12345'}]};
+       {id:42,url:'https://chatgpt.com/c/abc12345',
+        title:JUDGMENT_TAB_MARKER+' | Test'}]};
      if(method==='page.evaluate')return {value:{ok:true,composer_present:true,
-       composer_chars:1,composer_blank:true,generating:false}};
+       composer_chars:1,composer_blank:true,generating:false,stable_composer:true}};
      throw Error('unexpected '+method);
    },
    async withTabLease(browser,id,fn){calls.push(['lease',id]);return fn(this)},
@@ -253,4 +254,65 @@ test('every governed Judgment submission and bound draft recovery marks its brow
  await createChatgptTurnCapability({sessionFactory:async()=>mockSession(observedCalls)})
    .execute({action:'observe',tab_id:42});
  assert.equal(observedCalls.some(x=>x[0]==='page.evaluate'&&x[1].code.includes('document.title=')),false);
+});
+
+
+test('status observation never reads or returns model Output or transcript',async()=>{
+ const calls=[];
+ const remote={
+   async withTabLease(browser,id,fn){return fn(this)},
+   async call(method,args){
+     calls.push([method,args]);
+     if(method==='tabs.list')return {tabs:[tab]};
+     if(method==='page.evaluate')return {value:{
+       ok:true,composer_present:true,composer_chars:0,composer_blank:true,
+       stable_composer:true,generating:false,send_failure_visible:false,
+       last_answer:'SECRET_OUTPUT',transcript_answer:'SECRET_OUTPUT',
+     }};
+     throw Error('unexpected '+method);
+   },close(){},
+ };
+ const cap=createChatgptTurnCapability({sessionFactory:async()=>remote});
+ const id='ctn_chatgpt_browser_'+'a'.repeat(32);
+ const observed=await cap.execute({action:'status',tab_id:42,
+   expected_continuation_id:id});
+ assert.equal(observed.action,'status');
+ assert.equal(observed.stable_composer,true);
+ assert.equal('last_answer' in observed,false);
+ assert.equal('transcript_answer' in observed,false);
+ const code=calls.find(x=>x[0]==='page.evaluate')[1].code;
+ assert.equal(code.includes('SECRET_OUTPUT'),false);
+ assert.equal(code.includes('ChatGPT said:'),false);
+ assert.equal(code.includes('responseText'),false);
+ assert.equal(code.includes("querySelector('main')"),false);
+ assert.equal(code.includes(JSON.stringify(id)),true);
+ assert.equal(calls.some(x=>x[0]==='page.insertText'),false);
+ assert.equal(validateChatgptTurnRequest({action:'status',tab_id:42,
+   prompt:'not allowed'}).ok,false);
+});
+
+test('ensure_tab never reuses an unmarked personal conversation',async()=>{
+ const calls=[];
+ let created=false;
+ const remote={
+   async withTabLease(browser,id,fn){return fn(this)},
+   async call(method,args){
+     calls.push([method,args]);
+     if(method==='tabs.list')return {tabs:created
+       ?[{id:100,url:'https://chatgpt.com/c/abc12345',title:'Personal chat'},
+         {id:102,url:'https://chatgpt.com/',title:'ChatGPT'}]
+       :[{id:100,url:'https://chatgpt.com/c/abc12345',title:'Personal chat'}]};
+     if(method==='page.evaluate')throw Error('personal_tab_must_not_be_probed');
+     if(method==='tabs.create'){
+       created=true;assert.equal(args.active,false);
+       return {tab:{id:102,url:'https://chatgpt.com/'}};
+     }
+     throw Error('unexpected '+method);
+   },close(){},
+ };
+ const cap=createChatgptTurnCapability({sessionFactory:async()=>remote});
+ const result=await cap.execute({action:'ensure_tab'});
+ assert.equal(result.created,true);
+ assert.equal(result.tab_id,102);
+ assert.equal(calls.filter(x=>x[0]==='page.evaluate').length,0);
 });

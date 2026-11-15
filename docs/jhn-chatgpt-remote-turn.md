@@ -37,7 +37,8 @@ The new capability is `browser.chatgpt.turn`, scoped to
 `https://chatgpt.com` in browser instance `fracta2-hosted`, with a
 specific integer tab ID and an optimistic URL check. The bounded operations
 now include `submit` (up to 6000 characters), `observe` (read-only),
-`send_draft` (recover one verified failed-send draft) and `ensure_tab`
+`status` (output-free operational observation), `send_draft` (recover one
+verified failed-send draft) and `ensure_tab`
 (reuse or create a verified ChatGPT-only tab). No arbitrary site URL or
 script is granted by this capability. A ChatGPT turn is *not* a parent
 Cognitive Packet completion.
@@ -810,3 +811,37 @@ acknowledgement, revocation and crash repair. Validate real unattended behavior
 separately from passing source tests, without replaying the three previously
 settled ChatGPT turns. The Principal's browser/Fair Usage choice is preserved;
 current supplier permission remains disputed rather than assumed.
+
+
+## Output-free hosted-browser CPS observation — 15 November 2026
+
+The bounded CPS pilot's automated readiness and failed-draft checks now call
+`browser.chatgpt.turn(action=status)` rather than the older, diagnostic
+`observe` projection. The new fixed Core `status` recipe checks only:
+current exact origin, composer presence/blankness and character count,
+generation flag, exact continuation ID in **the user's unsent draft** (when
+specified), and a failure indication in UI alert/toast elements. It does
+**not** select assistant messages, read the main transcript, extract or return
+model Output, or infer success from rendered text. Its return object is
+allowlisted field by field, so unsolicited output content is discarded.
+
+The existing `ensure_tab` action also uses this output-free status probe.
+It will reuse an existing conversation **only when it is marked** with
+`[COGENTIA JUDGMENT - NE PAS INTERAGIR]`, or a blank root ChatGPT tab.
+Personal, unmarked conversations are not silently adopted as CPS workspaces;
+if none is suitable, an inactive blank tab is created through the existing
+verified-origin Navigation Assistant capability. The older diagnostic
+`observe` method remains for backwards compatibility but is **not used**
+by the automated CPS pilot. A full page refresh can remove a cosmetic tab
+marker; using the native ChatGPT Rename control remains the durable option.
+
+This closes the explicit automated-Output-extraction issue in the normal CPS
+pilot's status checks. It **does not itself establish** the provider's
+permission for unattended browser submission, credential/session use or any
+other service-specific restriction; that gate stays independent. UI errors
+that do not appear in alert/toast elements may not be auto-recovered; the
+correct behavior is an ambiguous-effect handoff, not a blind second click.
+Source tests cover omission of malicious/unexpected Output fields, no
+transcript selectors, exact continuation binding, preservation of personal
+tabs and no insertion under status operations. No live browser effect occurred
+as part of this code change.
