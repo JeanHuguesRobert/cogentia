@@ -22,6 +22,18 @@ test("email and third party effects never inherit presumed authority", () => {
   }
   assert.equal(assessPresumedEffect({ ...safe, externally_engaging: true }).decision, "explicit_principal_authorization");
 });
+test("standing delegation distinguishes a small DNS-only addition from DNS authority changes", () => {
+  for (const action_class of ["dns.record.ensure", "site.deploy.static", "git.commit"]) {
+    assert.equal(assessPresumedEffect({ ...safe, action_class }).decision, "mandate_derived_candidate", action_class);
+  }
+  for (const action_class of ["dns.zone.delegate", "dns.zone.transfer", "dns.nameservers.change", "dns.mx.update", "dns.record.delete", "dns.record.replace"]) {
+    assert.equal(assessPresumedEffect({ ...safe, action_class }).decision, "explicit_principal_authorization", action_class);
+  }
+  assert.equal(assessPresumedEffect({ ...safe, action_class: "dns.record.ensure", within_mandate: false }).decision, "escalate");
+  assert.equal(assessPresumedEffect({ ...safe, action_class: "dns.record.ensure", recovery_verified: false }).decision, "escalate");
+  assert.equal(assessPresumedEffect({ ...safe, action_class: "dns.record.ensure", mandatory_confirmation: true }).decision, "platform_confirmation");
+});
+
 test("draft preparation is not sending, but still needs a verified mandate and recovery", () => {
   for (const action_class of ["gmail.draft", "gmail.create_draft", "gmail.update_draft", "communication.draft"]) {
     assert.equal(assessPresumedEffect({ ...safe, action_class }).decision, "mandate_derived_candidate");
