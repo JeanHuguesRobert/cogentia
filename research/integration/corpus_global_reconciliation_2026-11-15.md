@@ -254,3 +254,31 @@ Comparaison par OID, ascendance réelle et contenus de fichiers, **checkpointée
 La sonde Inox #34 a été exécutée : **19 cas enregistrés, dont quatre sorties non nulles**, à interpréter comme des observations d'écart et non comme un succès de conformité. L'exécution de l'outil lui-même a réussi.
 
 **Restes :** classer les scripts historiques propres aux modes de session hébergés, les branches Dependabot par comparaison aux versions actuelles, et les changements fonctionnels non couvrables par les tests ci-dessus. Ne pas purger les branches distantes ou les bundles propriétaires avant disposition et preuve distinctes. Le commentaire Cogentia #309 et le reçu privé constituent les points de reprise canoniques ; aucune nouvelle validation humaine n'est requise pour poursuivre les comparaisons et corrections ordinaires.
+
+
+## 15 novembre 2026 — Suppression effective des branches GitHub redondantes (#309)
+
+Contrôle de **six dépôts** (Gouvernance, FractaVolta, Inox, Operium, StructEnv, Serra) et des **14 branches non canoniques** retrouvées sur leurs remotes. Avant toute suppression : SHA exact, contenu historique et état des PR. Suppression par **lease sur le SHA attendu**, puis vérification que la référence distante a disparu. **Reçu privé écrit atomiquement avant et après chaque opération** dans `semantic-reconciliation-checkpoint.json` sous /home/ubuntu/travel/recovered-20261010/ sur Fracta2.
+
+**12 branches distantes supprimées, suppression effectivement vérifiée :**
+
+| Dépôt | Branche(s) | Motif démontré |
+| --- | --- | --- |
+| acorsica/gouvernance | docs/objectif-comptabilite-cop-20261009 ; work/cop-accounting-inventory-001-20261009 | Six textes déjà inclus et enrichis sur main, PR #1 et #3 closes |
+| JeanHuguesRobert/FractaVolta | site-update-corpus-2026-07 | Source modifiée identique octet par octet dans main |
+| JeanHuguesRobert/Inox | docs/issue-34-spec-runtime-audit | Ancienne PR #38 close, textes supplantés ; le bug Inox #35 demeure ouvert |
+| JeanHuguesRobert/operium | feat/hosted-browser-user-provision ; feat/hosted-workspace-session-modes | PR #48 et #50 closes, récupération de code testée, exclusions de sécurité documentées dans docs/hosted-browser-pr48-pr50-reconciliation-2026-11-15.md ; #25/#49 toujours ouverts |
+| JeanHuguesRobert/operium | wip/fracta2-dev | PR #74 close ; fonctionnalité réintégrée dans main à 3c84fd2, ancien SHA distant distinct du snapshot privé : bundle supplémentaire autonome (1 414 096 octets, SHA-256 0d3296ab87592d48a99f558496e61797a4cb1c6b7b15ae28a128ab198eeb0199), testé par restauration bare indépendante avant suppression |
+| JeanHuguesRobert/StructEnv | dependabot/npm_and_yarn/js-yaml-4.1.1 ; dependabot/npm_and_yarn/multi-a07fd7252a | PR #1/#3 remplacées d'abord par correctif supérieur testé, puis fermées |
+| JeanHuguesRobert/serra | dependabot/npm_and_yarn/client/multi-99764170ca ; dependabot/npm_and_yarn/vite-6.2.7 | PR #1/#6 remplacées d'abord par verrouillage npm workspaces unique testé, puis fermées |
+| JeanHuguesRobert/Inox | dependabot/npm_and_yarn/trace-browser/browserslist-4.28.8 | PR #39 visait 4.28.8, mais lock canonique déjà à 4.29.0 : PR fermée et branche supprimée |
+
+**Correctifs publiés :**
+
+- [StructEnv main 93b08a31](https://github.com/JeanHuguesRobert/StructEnv/commit/93b08a31f0e0616bfd9ca353bb1d4e04223fb8d9) : Express 4.22.3, js-yaml 4.3.2, qs 6.16.2 ; installation npm et **16/16 tests Mocha PASS**. Les deux anciennes PR de sécurité visaient des versions inférieures.
+- [Serra main a298b540](https://github.com/JeanHuguesRobert/serra/commit/a298b540ea54b90b39736b788441556d2f61e1bc) : Vite 6.4.6, esbuild 0.25.0 ; incompatibilité de pairs MUI Icons 6 / Material 5 corrigée par alignement MUI Icons 5.18.0. Suppression des **trois lockfiles secondaires** client/core/server : la racine npm-workspaces conserve un seul package-lock faisant autorité, avec .gitignore et procédure README explicités. **Installation fraîche npm ci (953 paquets), 44/44 tests Jest PASS et build client PASS**. Il ne s'agit pas de validation en production.
+- Le travail utile des branches Operium reste décrit dans son document de réconciliation ; le test COP et ses 11 assertions ainsi que deux exécutions concurrentes ont été réparés sur main (bc2cacc). Source récupérée n'implique pas déploiement réel corrigé.
+
+**Deux branches distantes restent, non déclarées bruit :** [Inox PR #25 TypeScript 7.0.2](https://github.com/JeanHuguesRobert/Inox/pull/25) et [Inox PR #37 @types/node 26.4.0](https://github.com/JeanHuguesRobert/Inox/pull/37). Ce sont des changements majeurs d'outillage, pas des doublons établis ; évaluer la compatibilité runtime et compilateur sans imposer de fusion ni de suppression automatique. Les PR Github fermées conservent leurs discussions et les bundles historiques leurs objets. Ces correctifs ne règlent pas les autres alertes GitHub de dépendances.
+
+**Règle de reprise :** consulter d'abord le reçu privé avant de recalculer ou d'agir sur les branches encore présentes ; ne jamais confondre disposition sémantique, vérification de compilation, effet de déploiement et clôture juridique.
