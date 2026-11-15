@@ -441,3 +441,33 @@ append-only `cop.continuation-abandonment/v1` event was committed. It must
 not be replayed or counted as a third live success. The new send-readiness
 fix and server-side returned-parent evaluator remain pending a reload of the
 running `mcp-cogentia.service` to replace its earlier in-memory module image.
+
+### Single owner-run activation command — no token exposure
+
+For the Principal's own authenticated administrative SSH session on Fracta2,
+`activate-chatgpt-cps-browser-loop.sh` is a narrow one-shot wrapper:
+
+```bash
+sudo bash /srv/cogentia/repos/cogentia/scripts/ops/activate-chatgpt-cps-browser-loop.sh --run-three-turns
+```
+
+It checks root owner administration first; reads **only** the exact JHN
+local MCP bearer key as dotenv *data* from the already deployed
+`/srv/cogentia/repos/inseme/.env`, not via `source`/`eval`; passes that
+one credential only to an `ubuntu` child without printing it; checks the
+child's authenticated environment; restarts the existing systemd unit;
+checks its HTTP health endpoint; and launches the three-turn test in the
+**foreground** using the canonical `browser.chatgpt.turn` and direct MCP
+return path. All authority, remaining quotas and tab/origin checks happen
+again in John before each effect. The script **never** copies general
+secrets or exports the whole `.env` file to a child. It is not a new
+production daemon. The harmless `--check` option validates shell and Node
+source syntax without credentials, service changes or browser operations.
+
+The normal coding-shell tool cannot perform the root restart: its
+`NoNewPrivs=1` and the independent super-broker requires effect-bound
+authorization not present in that agent route. Reaching Fracta2 by SSH
+or possessing a private environment-file path does not by itself supply
+that delegation. **The owner-run command is therefore a true operational
+boundary, not an additional policy preference or an invitation to paste
+secrets into ChatGPT.** The command has not been executed by the agent.
