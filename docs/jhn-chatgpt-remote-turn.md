@@ -510,3 +510,44 @@ after inspecting the durable journal and the ChatGPT tab for an existing
 unexpected submission, and then by reusing the canonical one-shot entrypoint.
 If the new run fails, its sanitized `failure` and `cause` should be used
 for root-cause repair before further retries.
+
+### Root cause resolved — 15 November 2026, second owner-run (`required_event_handler_missing`)
+
+The Principal re-ran the one-shot administrative command. The bounded
+foreground pilot prepared continuation
+`ctn_chatgpt_browser_061723fdbf3c44e196964d2ceabd2054` and reported
+`dispatch_rejected` with the now-surfaced canonical failure
+`chatgpt_turn_failed`, cause `required_event_handler_missing`, with
+`completed_turns=0` and `dispatch_ambiguous`. The issue is **within John**,
+not a missing subscription or a provider-origin browser error.
+
+**Precisely established cause:** the `browser.chatgpt.turn` canonical path
+already passed `requiredEvents:false` to `runJohnRequest()`, appropriate for
+its very narrow pre-authorized fixed capability. However,
+`runJohnRequest()` constructed `createGovernedHarness()` **without
+forwarding `options.requiredEvents`**. The harness therefore used its
+normal `requiredEventsForTurn` heuristic, found words such as `Cogentia`,
+`packet` or `agent` in the generated CPS test prompt, demanded
+`orientation.required`, and stopped because that handler is intentionally
+absent from the strictly scoped browser-turn registry. The result was
+`required_event_handler_missing` **before any browser capability call**.
+
+**FBF:** `scripts/lib/john-run.js` now forwards
+`requiredEvents: options.requiredEvents` to `createGovernedHarness()`.
+This preserves the general policy for all callers who do not supply an
+explicit override; it only respects the existing deliberate bypass for
+fully governed narrow flows, which still have signed John/COP scope,
+fixed capability, quota, budget and output checks. The concrete regression
+fixture now uses a prompt explicitly mentioning `Cogentia cognitive packet`
+and proves that the actual browser recipe is dispatched in its mocked
+session instead of requesting an unconfigured orientation handler. Full
+44-test CPS/browser suite passes. No provider-facing third turn has yet
+been proven after this correction.
+
+**Recovery:** independent John-governed read-only inspection of test tab
+`94450542` confirmed exactly two historical assistant replies, an empty
+composer and no generation. No canonical `returned` result exists for the
+failed continuation. Its reserved COP step was released (active reserved
+steps 1→0), its PacketClaim released (`CLAIM_RELEASED`) and
+`cop.continuation-abandonment/v1` was appended with the exact error reason.
+A later run MUST use a new continuation ID; do not replay this one.

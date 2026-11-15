@@ -76,7 +76,7 @@ test('real John governed harness invokes the fixed browser recipe and settles CO
  const capability=createChatgptTurnCapability({sessionFactory:gatewaySession});
  const req={...request,request_id:'jhn-test-chatgpt-real-harness',
    principal:{id:'principal:jhn'},mandate:{id:'mandate:chatgpt-corpus-coding',version:'1'},
-   budget:{id:'budget:'+ref},input:{prompt:'Hello',arguments:request.input.arguments},
+   budget:{id:'budget:'+ref},input:{prompt:'Cogentia cognitive packet: report a verified result',arguments:{...request.input.arguments,prompt:'Cogentia cognitive packet: report a verified result'}},
    handler:{id:'governed.step_reasoner',kind:'governed_reasoner',
      allowed_capabilities:['browser.chatgpt.turn']}};
  try{
@@ -92,7 +92,8 @@ test('real John governed harness invokes the fixed browser recipe and settles CO
        }},
      })});
    assert.equal(done.ok,true,JSON.stringify(done));
-   assert.ok(remoteCalls>=4,'actually dispatched browser RPC sequence');
+   assert.ok(remoteCalls>=4,'actually dispatched browser RPC sequence despite Cogentia keyword triggering required event classification by default');
+   assert.equal(done.events.some(e=>JSON.stringify(e).includes('required_event_handler_missing')),false);
    const ended=done.events.find(e=>e.type==='john.run.completed');
    assert.ok(ended,'complete handler turn with two steps');
    assert.equal(done.events.find(e=>e.type==='john.accounting.settled').data.internal_effects,1);

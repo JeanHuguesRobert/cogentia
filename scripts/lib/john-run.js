@@ -387,6 +387,11 @@ export async function runJohnRequest(request, options = {}) {
       reasoner,
       reviewer: options.reviewer,
       requiredEventHandlers: options.requiredEventHandlers,
+      // Pass through the explicit required-event policy. The bounded
+      // browser ChatGPT recipe already supplies requiredEvents:false; if
+      // ignored, its literal prompt text may spuriously demand
+      // orientation.required without a configured handler.
+      requiredEvents: options.requiredEvents,
       clock: options.clock || Date.now,
     });
 
