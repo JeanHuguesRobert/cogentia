@@ -757,7 +757,7 @@ protocol format whose version is part of its identity, or incompatible
 parallel variant MAY use a dated/versioned filename when that distinction
 is substantively necessary. Never rename existing historical artifacts
 mechanically in the name of this default. This is the practical complement
-to [the Verified Handoff Principle](#verified-handoff-principle):
+to [the Verified Handoff Principle](#living-corpus-synchronization-and-reasonable-principal-mobilization):
 stable canonical path → evolving content → immutable commit checkpoints.
 
 Before reporting an authored document ready, agents **MUST** run
