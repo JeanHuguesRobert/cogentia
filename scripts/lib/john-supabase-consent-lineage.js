@@ -10,6 +10,41 @@
  */
 import {mandateProposalHash} from './cop-proposal-digest.js';
 const deny=()=>({verified:false,reason:'supabase_consent_lineage_unverified'});
+/** Cold-read evidence for the streamlined one-step Supabase Principal action.
+ * The issuer listener validated the human auth token and matched the JHN
+ * Supabase user ID to the instance principal_id before appending the intent.
+ * The offline reader trusts that existing protected COP event journal, not
+ * an agent-controlled claim or an unverified MandateDeclaration alone.
+ */
+export function verifyJohnSupabaseDirectAmendment({store,prior,current,proposal}={}){
+ if(!store?.replay||!store?.listTopic||!prior?.event_id||!current?.event_id||!proposal)
+   return deny();
+ const a=current.payload?.metadata?.amendment;
+ if(a?.approval_scheme!=='supabase_authenticated_owner_direct_intent_v1'||
+    typeof a.approval_evidence_ref!=='string')return deny();
+ const evidence=store.replay().find(e=>e.event_id===a.approval_evidence_ref);
+ if(evidence?.payload?.kind!=='PrincipalAuthenticatedMandateIntent'||
+    typeof evidence.topic?.id!=='string'||
+    !/^principal-consent:direct:[0-9a-f-]{36}$/.test(evidence.topic.id))
+   return deny();
+ const history=store.listTopic(evidence.topic.id);
+ if(history.length!==1||history[0].event_id!==evidence.event_id||
+    evidence.topic.seq!==1||evidence.actor_ref!=='principal:jhn'||
+    evidence.subject_ref!=='principal:jhn'||evidence.visibility!=='restricted')
+   return deny();
+ const p=evidence.payload;
+ if(p.principal_ref!==current.payload.principal_ref||
+    p.principal_ref!=='principal:jhn'||
+    p.mandate_ref!==proposal.mandate_ref||
+    p.previous_version!==prior.payload.version||
+    p.new_version!==current.payload.version||
+    p.payload_hash!==mandateProposalHash(proposal)||
+    p.authentication!=='supabase-auth-current-session-and-jhn-instance'||
+    p.intent!=='authenticated_owner_request_apply_exact_server_proposal')
+   return deny();
+ return {verified:true,scheme:'supabase_authenticated_owner_direct_intent_v1',
+   evidence_ref:evidence.event_id};
+}
 export function verifyJohnSupabaseConsentAmendment({store,prior,current,proposal}={}){
  if(!store?.replay||!prior?.event_id||!current?.event_id||!proposal)
    return deny();

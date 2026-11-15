@@ -45,3 +45,56 @@ test('a signed root followed by exact Supabase consent is verified; tampering fa
   assert.equal(verify({mandate:amended,mandate_ref:ref,store:fakeStore}).verified,false);
  }finally{store.close()}
 });
+
+test('direct Supabase Principal intent verifies the signed COP amendment without second approval',async()=>{
+ const keys=generateKeyPairSync('ed25519');
+ const pem=keys.publicKey.export({type:'spki',format:'pem'});
+ const root={kind:ROOT_MANDATE_KIND,mandate_id:ref,version:'v1',
+   principal_ref:'principal:jhn',logical_agent_ref:'agent:jhn',
+   valid_from:'2026-01-01T00:00:00Z',valid_until:'2027-11-06T00:00:00Z',
+   scope:{allowed_actions:['host.process.run'],forbidden_actions:[...RESERVED_ACTIONS]},
+   max_delegation_depth:1,budget_limits:{max_steps:10}};
+ const signature={kind:'cogentia.principal-signature/v1',
+   principal_ref:'principal:jhn',payload_hash:proposalHash(root),
+   key_fingerprint:publicKeyFingerprint(pem),
+   signature_base64:sign(null,canonicalProposalBytes(root),keys.privateKey).toString('base64')};
+ const store=createSqliteCopEventStore(':memory:');
+ try{
+   assert.equal(issueVerifiedJohnRoot({store,proposal:root,approval:signature,
+      trustedPublicKeyPem:pem,now}).ok,true);
+   const principalId='aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa';
+   const adminClient={from(){return {select(){return {eq(){return {single:async()=>({
+     data:{id:JHN_VAULT_INSTANCE_ID,canonical_slug:'jhn',
+       status:'autonomous',principal_id:principalId}
+   })}}}}}}};
+   const authClient={auth:{getUser:async token=>({data:{
+     user:token==='owner'?{id:principalId,email_confirmed_at:now.toISOString(),
+       is_anonymous:false}:{id:'other-user',email_confirmed_at:now.toISOString(),
+       is_anonymous:false}
+   }})}};
+   const workflow=createJhnCanonicalConsentWorkflow({store,adminClient,authClient,clock:()=>now});
+   const mandate={mandate_ref:ref,principal_ref:'principal:jhn',expected_version:'v1',
+     scope:{...resolveMandate(store,ref).scope,
+       standing_operations:[{profile:'host.process-general/v1',capability:'host.process.run',
+       target:'node:fracta2',provider:'unix-process',execution_mode:'normal'}]},
+     reason:'Administration générale du Fractanet'};
+   assert.equal((await workflow.applyAuthenticated({session:{accessToken:'other'},
+     mandate})).error,'principal_session_unverified');
+   assert.equal(resolveMandate(store,ref).version,'v1');
+   const applied=await workflow.applyAuthenticated({session:{accessToken:'owner'},mandate});
+   assert.equal(applied.ok,true,JSON.stringify(applied));
+   assert.equal(applied.mandate_version,'v2');
+   const verify=createOfflineJohnIssuerVerifier({trustedPublicKeyPem:pem,now:()=>now});
+   const amended=resolveMandate(store,ref);
+   assert.equal(verify({mandate:amended,mandate_ref:ref,store}).verified,true);
+   const evidence=store.replay().find(e=>e.payload?.kind==='PrincipalAuthenticatedMandateIntent');
+   assert.ok(evidence?.event_id);
+   assert.equal(store.replay().filter(e=>e.payload?.kind==='PrincipalConsentRequested').length,0);
+   const fakeStore={replay:()=>store.replay().filter(e=>e.event_id!==evidence.event_id),
+     listTopic:id=>store.listTopic(id)};
+   assert.equal(verify({mandate:amended,mandate_ref:ref,store:fakeStore}).verified,false);
+   const mutated=structuredClone(amended);
+   mutated.scope.allowed_actions.push('gmail.send');
+   assert.equal(verify({mandate:mutated,mandate_ref:ref,store}).verified,false);
+ }finally{store.close()}
+});

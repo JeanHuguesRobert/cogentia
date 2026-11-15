@@ -5,7 +5,7 @@
 import {ROOT_MANDATE_KIND,publicKeyFingerprint,verifyJohnRootApproval} from './john-root-mandate.js';
 import {verifyRootSshsig} from './john-sshsig-approval.js';
 import {verifyJohnAmendmentProof} from './john-mandate-amendment-proof.js';
-import {verifyJohnSupabaseConsentAmendment} from './john-supabase-consent-lineage.js';
+import {verifyJohnSupabaseConsentAmendment,verifyJohnSupabaseDirectAmendment} from './john-supabase-consent-lineage.js';
 export function createOfflineJohnIssuerVerifier({trustedPublicKeyPem,trustedSshPublicKey,expectedSshFingerprint,now=()=>new Date()}={}) {
  if(!trustedPublicKeyPem&&!trustedSshPublicKey)throw Error('trusted_issuer_key_missing');
  const fingerprint=trustedPublicKeyPem?publicKeyFingerprint(trustedPublicKeyPem):expectedSshFingerprint;
@@ -47,6 +47,10 @@ export function createOfflineJohnIssuerVerifier({trustedPublicKeyPem,trustedSshP
      };
      const proof=a.approval_scheme==='supabase_authenticated_exact_consent_v1'
        ? verifyJohnSupabaseConsentAmendment({
+           store,prior,current,proposal
+         })
+       : a.approval_scheme==='supabase_authenticated_owner_direct_intent_v1'
+       ? verifyJohnSupabaseDirectAmendment({
            store,prior,current,proposal
          })
        : verifyJohnAmendmentProof({
