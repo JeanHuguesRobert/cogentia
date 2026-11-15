@@ -845,3 +845,49 @@ Source tests cover omission of malicious/unexpected Output fields, no
 transcript selectors, exact continuation binding, preservation of personal
 tabs and no insertion under status operations. No live browser effect occurred
 as part of this code change.
+
+
+## ONA resident recovery of already returned MCP results — 15 November 2026
+
+`createChatgptCpsLocalWakeReconciler` in
+`chatgpt-cps-return-evaluator.js` reuses **the exact same COPScheduler
+result-observer handler** as the interactive MCP return path. Its authority
+check is suitable for a resident *local* replay: it re-resolves the current
+canonical John mandate, independently verifies its full issuer lineage,
+checks the `cogentia.continuation.result.submit` scope and insists that
+an already-recorded result's budget settlement belongs to the **pinned
+original budget**. There is no new reservation or model/browser effect.
+An invalid issuer, revoked/expired mandate, unrelated settlement or pending
+ambiguity fails closed without marking the parent completed.
+
+The adapter `scripts/ops/ona-chatgpt-cps-reconcile.mjs` exports
+`runScheduledHeartbeat({env})`, matching the **existing** Operium Node
+Agent (ONA) `kind=script` scheduler interface. It adds no timer, daemon,
+parallel scheduler or new COP store. The owner may configure a job with
+script `cogentia/scripts/ops/ona-chatgpt-cps-reconcile.mjs`, cwd `cogentia`
+and a bounded polling interval using the existing ONA catalogue/job policy.
+An existing job must be **explicitly enabled**; there is no default
+activation. Its runtime environment must specify:
+
+- `COGENTIA_CPS_WAKE_RECOVERY_ENABLED=1` (otherwise returns `not_enabled`)
+- `COGENTIA_JHN_ISSUER_AUTHORIZED_KEYS` pointing to the already trusted
+  public authorized-keys file (no private key or new credential issuer).
+
+The canonical SQLite path is fixed to
+`/var/lib/cogentia/cop/john-root-v1.sqlite`; the pinned issuer fingerprint
+is the same as the current MCP result host. Credentials are not copied into
+the model, printed or exported. The `--status` CLI observes the pending
+wakes without writing; `--run-once` invokes the opt-in bounded local replay
+and requires exactly the existing trusted runtime configuration. ONA
+`runScheduledHeartbeat` is called automatically **only after** the owner has
+configured and enabled its pre-existing scheduler job.
+
+The implementation is tested with two queued results, a persisted SQLite
+close/reopen, duplicate replay, independently rejected issuer, revoked
+mandate, unrelated budget, disabled-by-default ONA integration and missing
+issuer path. Test signers are explicit fixtures, not proof of production
+authorization. The running ONA service was **not** reconfigured or restarted;
+new code on main is source-ready, not evidence of resident execution.
+This recovery slice ONLY processes settled result wakes. It does not inspect
+ChatGPT output or submit an additional prompt, so it cannot be mistaken for
+completion of the separate *fully autonomous browser Judgment loop*.

@@ -5,11 +5,13 @@ import {tmpdir} from 'node:os';
 import {join} from 'node:path';
 import {createSqliteCopEventStore} from '../../../inseme/packages/cop-core/src/sqlite-cop-event-store.js';
 import {declaredContinuationRecord} from '../../../inseme/packages/cop-core/src/continuation-result.js';
+import {recordMandateDeclaration,recordMandateControl} from '../../../inseme/packages/cop-core/src/governed-act.js';
 import {COPScheduler} from '../../../inseme/packages/cop-kernel/src/scheduler.js';
 import {COPBus} from '../../../inseme/packages/cop-kernel/src/bus.js';
 import {recordChatgptReturnWake} from './chatgpt-cps-return-wake.js';
 import {consumeChatgptCpsWake,listChatgptCpsWakes} from './chatgpt-cps-wake-consumer.js';
 import {runChatgptCpsWakeBatch} from './chatgpt-cps-wake-batch.js';
+import {createChatgptCpsLocalWakeReconciler} from './chatgpt-cps-return-evaluator.js';
 import {listChatgptCpsNextSteps,consumeChatgptCpsNextStep,runChatgptCpsNextStepBatch} from './chatgpt-cps-next-step.js';
 const HANDLER='handler:chatgpt-browser-result-observer';
 const BUDGET='budget:mandate:jhn:john-root';
@@ -302,5 +304,73 @@ test('a self-claimed dispatch receipt never certifies a child without independen
   assert.equal(result.status,'needs_reconciliation');
   assert.equal(store.eventByIdempotency('chatgpt-browser:'+id+':next-step-dispatched'),null);
   assert.deepEqual(listChatgptCpsNextSteps(store).map(x=>x.status),['needs_reconciliation']);
+ }finally{store.close()}
+});
+
+
+function addFixtureSignedMandate(store){
+ recordMandateDeclaration(store,{
+   mandate_id:'mandate:jhn:john-root',version:'v1',
+   principal_ref:'principal:jhn',logical_agent_ref:'agent:jhn',
+   valid_from:'2026-01-01T00:00:00Z',valid_until:'2027-11-06T00:00:00Z',
+   scope:{allowed_actions:['cogentia.continuation.result.submit'],
+     forbidden_actions:['gmail.send','payment.execute']},
+ });
+}
+const fixtureVerifiedIssuer=({mandate_ref})=>({verified:true,
+ principal_ref:'principal:jhn',mandate_ref});
+function localReconciler(store,verifyIssuer=fixtureVerifiedIssuer,budget_id=BUDGET){
+ return createChatgptCpsLocalWakeReconciler({store,
+   mandate_ref:'mandate:jhn:john-root',budget_id,verifyIssuer});
+}
+
+test('resident local reconciliation reuses COPScheduler after cold restart, no new browser action',async()=>{
+ const dir=mkdtempSync(join(tmpdir(),'cps-resident-'));
+ const file=join(dir,'cop.sqlite');
+ try{
+   let store=createSqliteCopEventStore(file);
+   addFixtureSignedMandate(store);
+   addReturned(store,'ctn_resident_replay_01');
+   addReturned(store,'ctn_resident_replay_02');
+   const replay=localReconciler(store);
+   assert.equal((await replay({max_steps:4})).status,'queue_drained');
+   assert.equal(store.replay().filter(x=>x.payload?.phase==='handler_completed').length,2);
+   assert.deepEqual(listChatgptCpsWakes(store),[]);
+   store.close();
+   store=createSqliteCopEventStore(file);
+   assert.equal((await localReconciler(store)({max_steps:4})).steps_completed,0);
+   assert.equal(store.replay().filter(x=>x.payload?.phase==='handler_completed').length,2);
+   assert.equal(store.auditCommitments().ok,true);
+   store.close();
+ }finally{rmSync(dir,{recursive:true,force:true})}
+});
+
+test('resident replay requires current independently verified issuer and non-revoked mandate',async()=>{
+ const store=createSqliteCopEventStore(':memory:');
+ try{
+   addFixtureSignedMandate(store);
+   addReturned(store,'ctn_resident_denied_01');
+   const denied=await localReconciler(store,()=>({verified:false}))({max_steps:3});
+   assert.equal(denied.status,'step_failed');
+   assert.equal(denied.steps_completed,0);
+   assert.equal(listChatgptCpsWakes(store)[0].status,'pending');
+   recordMandateControl(store,{principal_ref:'principal:jhn',
+     mandate_ref:'mandate:jhn:john-root',action:'revoke'});
+   const revoked=await localReconciler(store)({max_steps:3});
+   assert.equal(revoked.steps_completed,0);
+   assert.equal(listChatgptCpsWakes(store)[0].status,'pending');
+ }finally{store.close()}
+});
+
+test('a settlement under another COP budget never admits resident result replay',async()=>{
+ const store=createSqliteCopEventStore(':memory:');
+ try{
+   addFixtureSignedMandate(store);
+   addReturned(store,'ctn_resident_budget_mix_01');
+   const differentBudget=await localReconciler(store,fixtureVerifiedIssuer,
+     'budget:unrelated-mandate')({max_steps:2});
+   assert.equal(differentBudget.steps_completed,0);
+   assert.equal(differentBudget.status,'step_failed');
+   assert.equal(listChatgptCpsWakes(store)[0].status,'pending');
  }finally{store.close()}
 });
