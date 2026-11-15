@@ -260,7 +260,7 @@ La sonde Inox #34 a été exécutée : **19 cas enregistrés, dont quatre sortie
 
 Contrôle de **six dépôts** (Gouvernance, FractaVolta, Inox, Operium, StructEnv, Serra) et des **14 branches non canoniques** retrouvées sur leurs remotes. Avant toute suppression : SHA exact, contenu historique et état des PR. Suppression par **lease sur le SHA attendu**, puis vérification que la référence distante a disparu. **Reçu privé écrit atomiquement avant et après chaque opération** dans `semantic-reconciliation-checkpoint.json` sous /home/ubuntu/travel/recovered-20261010/ sur Fracta2.
 
-**12 branches distantes supprimées, suppression effectivement vérifiée :**
+**12 branches distantes supprimées à cette étape intermédiaire (24 au terme de la passe), suppression effectivement vérifiée :**
 
 | Dépôt | Branche(s) | Motif démontré |
 | --- | --- | --- |
@@ -279,6 +279,33 @@ Contrôle de **six dépôts** (Gouvernance, FractaVolta, Inox, Operium, StructEn
 - [Serra main a298b540](https://github.com/JeanHuguesRobert/serra/commit/a298b540ea54b90b39736b788441556d2f61e1bc) : Vite 6.4.6, esbuild 0.25.0 ; incompatibilité de pairs MUI Icons 6 / Material 5 corrigée par alignement MUI Icons 5.18.0. Suppression des **trois lockfiles secondaires** client/core/server : la racine npm-workspaces conserve un seul package-lock faisant autorité, avec .gitignore et procédure README explicités. **Installation fraîche npm ci (953 paquets), 44/44 tests Jest PASS et build client PASS**. Il ne s'agit pas de validation en production.
 - Le travail utile des branches Operium reste décrit dans son document de réconciliation ; le test COP et ses 11 assertions ainsi que deux exécutions concurrentes ont été réparés sur main (bc2cacc). Source récupérée n'implique pas déploiement réel corrigé.
 
-**Deux branches distantes restent, non déclarées bruit :** [Inox PR #25 TypeScript 7.0.2](https://github.com/JeanHuguesRobert/Inox/pull/25) et [Inox PR #37 @types/node 26.4.0](https://github.com/JeanHuguesRobert/Inox/pull/37). Ce sont des changements majeurs d'outillage, pas des doublons établis ; évaluer la compatibilité runtime et compilateur sans imposer de fusion ni de suppression automatique. Les PR Github fermées conservent leurs discussions et les bundles historiques leurs objets. Ces correctifs ne règlent pas les autres alertes GitHub de dépendances.
+**À cette étape intermédiaire**, deux branches Inox restaient ouvertes ([PR #25](https://github.com/JeanHuguesRobert/Inox/pull/25) et [PR #37](https://github.com/JeanHuguesRobert/Inox/pull/37)). **Depuis, elles ont été intégrées, testées, fermées et supprimées**, comme précisé dans la section finale ci-dessous. Les PR Github fermées conservent leurs discussions et les bundles historiques leurs objets. Ces correctifs ne règlent pas les autres alertes GitHub de dépendances.
 
 **Règle de reprise :** consulter d'abord le reçu privé avant de recalculer ou d'agir sur les branches encore présentes ; ne jamais confondre disposition sémantique, vérification de compilation, effet de déploiement et clôture juridique.
+
+
+## 15 novembre 2026 — État final de la passe : 21 dépôts, 24 branches éliminées (#309)
+
+Le dernier contrôle indépendant, par `git ls-remote`, a parcouru **les 21 dépôts du registre canonique**. Résultat : **24 références GitHub redondantes effectivement supprimées** (chacune avec bail SHA exact, contrôle après suppression et checkpoint écrit avant/après), **8 branches non canoniques conservées à bon escient**, et toutes les branches canoniques `main`/`master` présentes.
+
+| État | Décompte | Qualification |
+| --- | ---: | --- |
+| Branches supplémentaires supprimées | **24** | Copie intégrée, PR déjà fusionnée/fermée, expérience supplantée, ou correction testée sur main. Reçus individuels, conservation Git historique |
+| Branches conservées pour correctifs de dépendances | **6** | PR Survey #18, #21, #22, #23, #24, #26 encore ouvertes et réellement plus récentes que le verrouillage actuel |
+| Branches conservées pour travaux fonctionnels | **2** | [Cogentia PR #306](https://github.com/JeanHuguesRobert/cogentia/pull/306) et [Barons Mariani PR #114](https://github.com/JeanHuguesRobert/barons-Mariani/pull/114), toutes deux ouvertes |
+| Dépôts vérifiés | **21** | Chacun dispose de sa branche par défaut ; **aucune suppression de branche de travail ouverte** |
+
+### Complément de consolidation depuis les 12 premières suppressions
+
+- [Inox master 13598d8](https://github.com/JeanHuguesRobert/Inox/commit/13598d80df378bb561328e690a8b05c4ee933722) regroupe les PR Dependabot #25 et #37 : TypeScript **7.0.2** et `@types/node` **26.6.6**. `npm ci`, compilation principale, tests de sessions, pools, service HTTP et continuations PASS. La génération TypeScript 6 / 7 du runtime est **strictement identique** (387 674 octets, SHA-256 5a1533484940d2f4e4816ef8e476c959a9a6a38f228f07e1343e63f79f72abfc). Runtime testé : **Node 22**, pas Node 26. Les PR ont été fermées et leurs branches supprimées.
+- **Deux branches anciennes déjà ancêtres de main**, sans PR, ont été supprimées : Suicide Corse `feat/public-guide-prepare-act` et profil JeanHuguesRobert `research/jhn-instagram-mandate-20260820`. Tous leurs commits étaient dans main.
+- **Quatre branches de PR Survey déjà fusionnées** (#6, #7, #8 et #12) ont été supprimées. Leur SHA non ancêtre direct, issu d'un mode de fusion Git, est préservé dans un **bundle différentiel privé de 33 585 octets** (SHA-256 1d865ab1b2f2114208f903a7ad7b01fbc125329210f51463d8cc41bd67a18d03). Une restauration réelle des quatre arbres dans un Git bare, avec les objets canoniques en alternates et `git fsck`, a réussi ; les fichiers WIP simultanés de Survey sont demeurés intacts.
+- **Deux branches de Cogentia supplantées** ont été archivées de même dans un bundle de **30 683 octets** (SHA-256 6878415cec74944552dc7ac092d84a42be5c264b497db25592f0f0820e4c655f) : ancienne expérience de shell MCP, et ancienne PR #240 `resume-prepare` fermée. Les apports utiles sont dans les modules actuels ; 26 tests PREPARE/handlers et un test shell MCP passent. Avant suppression, le lien documentaire vers l'ancienne branche a été corrigé dans [Cogentia main c3889440](https://github.com/JeanHuguesRobert/cogentia/commit/c38894408514b09c726e04a4e92f8b24106ff1b0), sans déployer ni redémarrer le fournisseur shell.
+- **Une branche WIP historique Inseme** (`wip/poco-2026-09-07-inseme-autostash`) : 9 chemins examinés, 3 identiques, les implémentations de runtime et de routage actuelles enrichissent les anciennes ; **3 tests hostRuntime et 11 tests Magistral passent**. OID préservé dans un bundle différentiel vérifié de **3 380 octets** (SHA-256 39897b3a22cb496c459e06f61bb355f33a63d52c67638970f0a3d4c2a7811eec), puis branche distante supprimée.
+- **Une ancienne branche WIP privée du registre Mariani** a été supprimée après comparaison structurée : les cinq anciens enregistrements sont tous présents dans la version actuelle avec champs historiques inchangés et annotations nouvelles ; l'autre fichier était une projection générée. La copie exacte est toujours dans le bundle **autonome privé** du registre. Aucun contenu privé n'a été publié.
+
+### Actions explicitement non entreprises
+
+Les **six PR Survey ouvertes** ne sont pas du bruit. Le verrouillage du dépôt courant ne contient pas encore leurs versions cibles (DOMPurify, fast-uri, glob, ip-address, React Router et Undici). La copie locale Survey comporte un travail concurrent sur `package.json` et `package-lock.json` ; **aucune modification de ce travail en cours n'a été tentée**. Leur intégration doit passer par tests et résolution du WIP propriétaire. Les PR de fonctionnalités Cogentia #306 et Barons Mariani #114 sont également conservées.
+
+Le paquet Cogentia #309 et le checkpoint privé **`/home/ubuntu/travel/recovered-20261010/semantic-reconciliation-checkpoint.json` sont les points de reprise. Le checkpoint comprend l'inventaire de 21 dépôts, les 24 reçus individuels, les différences testées et les SHA-256 des archives. **Ne plus inventorier les références éliminées** sauf changement du registre ou du remote. La suppression de bruit est accomplie sur ce périmètre, pas la fin des travaux fonctionnels des 8 branches conservées.
