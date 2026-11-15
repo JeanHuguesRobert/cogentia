@@ -15,7 +15,7 @@ usage(){ echo "Usage: $0 --check|--apply" >&2; exit 2; }
 actual="$(sha256sum "$SOURCE" | cut -d' ' -f1)"
 [[ "$actual" == "$SHA" ]] || { echo 'BLOCKED: source publisher not pinned' >&2; exit 2; }
 bash -n "$SOURCE"
-[[ "$(grep "^REV=" "$SOURCE")" == "REV='f7f8ef131b5fc81d5a68e11cb404e886ad865861'" ]] || {echo 'BLOCKED: release pin changed' >&2;exit 2;}
+[[ "$(grep "^REV=" "$SOURCE")" == "REV='f7f8ef131b5fc81d5a68e11cb404e886ad865861'" ]] || { echo 'BLOCKED: release pin changed' >&2; exit 2; }
 bash "$SOURCE" --check | grep -q 'PREFLIGHT=PASS'
 for f in "$PINNED" "$WRAPPER" "$SUDOERS"; do
   if [[ -e "$f" ]];then
