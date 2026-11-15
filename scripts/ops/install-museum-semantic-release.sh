@@ -48,7 +48,7 @@ if [[ ! -e "$WRAPPER" ]];then
   cat > "$WRAPPER" <<EOF
 #!/usr/bin/env bash
 set -Eeuo pipefail
-[[ \\$# -eq 0 ]] || exit 2
+[[ \$# -eq 0 ]] || exit 2
 exec /bin/bash $PINNED --apply
 EOF
   chmod 0755 "$WRAPPER"
