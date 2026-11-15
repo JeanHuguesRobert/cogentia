@@ -121,3 +121,54 @@ test("modified or superseded standing proposal cannot be approved",async()=>{
     assert.equal(resolveMandate(f.store,ref).version,"v3");
   }finally{f.store.close();}
 });
+
+test("FBF: one v4→v5 permanent amendment enables general existing host execution, not another tool per task",async()=>{
+  const f=fixture();
+  try{
+    // The historic v3→v4 signed lineage is preserved exactly.
+    const v4=f.plan();
+    const first=f.workflow.request({mandate:v4.mandate,ttl_ms:600000});
+    assert.equal(first.ok,true);
+    const firstReply=await f.http("/api/cop/principal-consent/"+first.challenge_id,
+      "owner-session",{decision:"approve",payload_hash:first.payload_hash});
+    assert.equal(firstReply.status,200,await firstReply.clone().text());
+    assert.equal(resolveMandate(f.store,ref).version,"v4");
+
+    const v5=f.plan();
+    assert.equal(v5.ok,true,JSON.stringify(v5));
+    assert.equal(v5.previous_version,"v4");
+    assert.equal(v5.next_version,"v5");
+    assert.deepEqual(v5.added_capabilities,[]);
+    assert.deepEqual(v5.removed_obsolete_capabilities,["dns.record.ensure","site.static.release"]);
+    const next=v5.mandate.scope;
+    assert.ok(next.allowed_actions.includes("host.process.run"));
+    assert.ok(!next.allowed_actions.includes("dns.record.ensure"));
+    assert.ok(!next.allowed_actions.includes("site.static.release"));
+    assert.deepEqual(next.forbidden_actions,[...RESERVED_ACTIONS]);
+    assert.equal(next.budget_ceiling.max_steps,2048);
+    assert.equal(next.standing_operations.length,2);
+    assert.ok(next.standing_operations.every(x=>x.profile==="host.process-general/v1"));
+    assert.equal("standing_technical_policy" in next,false);
+    // Generic host targets use signed data, not model-chosen aliases.
+    assert.deepEqual(next.standing_operations.map(x=>x.target),
+      ["node:fracta2","node:i7-thinkpad-jhr"]);
+    assert.equal(resolveMandate(f.store,ref).version,"v4","proposal alone did not amend");
+
+    const challenge=f.workflow.request({mandate:v5.mandate,ttl_ms:600000});
+    assert.equal(challenge.ok,true);
+    const approved=await f.http("/api/cop/principal-consent/"+challenge.challenge_id,
+      "owner-session",{decision:"approve",payload_hash:challenge.payload_hash});
+    assert.equal(approved.status,200,await approved.clone().text());
+    const active=resolveMandate(f.store,ref);
+    assert.equal(active.version,"v5");
+    assert.equal(evaluateMandate(f.store,{mandate_ref:ref,version_pin:"v5",
+      capability:"host.process.run",at_time:NOW}).granted,true);
+    assert.equal(evaluateMandate(f.store,{mandate_ref:ref,version_pin:"v5",
+      capability:"gmail.send",at_time:NOW}).granted,false);
+    const budget=createEventSourcedExecutionBudgetLedger({
+      store:f.store,budget_id:"budget:"+ref,require_authority_grant:true
+    }).snapshot();
+    assert.equal(budget.available.max_steps,2048);
+    assert.equal(f.plan().already_authorized_in_scope,true);
+  }finally{f.store.close();}
+});

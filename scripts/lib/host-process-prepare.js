@@ -1,6 +1,6 @@
 /** Core EXPOSE preparation for the semantic host.process.run capability. */
 import { attachExposePacket, buildEffectPayload } from './side-effect-authorization.js';
-import { inspectUnixProcessCopCustody } from './unix-process-cop-custody.js';
+import { inspectUnixProcessCopCustody, inspectIsolatedUnixProcessCopCustody } from './unix-process-cop-custody.js';
 
 export function prepareHostProcessRun({ command, timeout_ms, target, provider, execution_mode = "normal" } = {}) {
   if (typeof command !== 'string' || !command.trim() || command.length > 32768) {
@@ -20,14 +20,16 @@ export function prepareHostProcessRun({ command, timeout_ms, target, provider, e
     payload,
     exposed_mutation: { command, timeout_ms: timeout_ms ?? 120000, execution_mode, target, provider },
     phase: 'EXPOSE',
-    note: 'Preparation only. Does not execute. Side-effect grant bound to the exact payload is required.',
+    note: 'Preparation only; no execution or authorization. A verified standing mandate or exact COP effect grant is required for dispatch.',
   });
   // Local public-metadata diagnostic only: this does not grant authority or
   // prove complete OS isolation, and cannot execute the prepared command.
   return {
     ...exposed,
     executor_custody: provider === 'unix-process' && execution_mode === 'normal'
-      ? inspectUnixProcessCopCustody()
+      ? (process.env.COGENTIA_HOST_UNIX_ISOLATED_USER
+        ? inspectIsolatedUnixProcessCopCustody()
+        : inspectUnixProcessCopCustody())
       : { blocked: null, checked: false, reason: 'not_a_local_normal_unix_executor' },
   };
 }

@@ -6,7 +6,7 @@ document_role: operational
 document_kind: integration-runbook
 visibility: public
 language: fr
-status: "working-paper — Unix production proven; technical semantic effects deployed, connector invocation pending"
+status: "historical — Museum-specific MCP tools removed; general host-process route retained"
 update_policy: UP-DEFAULT-REVIEWED
 related_documents:
   - "instructions/AGENTS.shared.md"
@@ -29,13 +29,16 @@ related_documents:
 > traçabilité. Conserver les améliorations utiles d'isolation Unix, de
 > preuve des effets et d'idempotence, mais **réabsorber les deux outils
 > spécialisés dans le flux générique d'administration des machines**.
-> La déclaration COP v4 actuellement signée limite encore la voie
-> `host.process.run` permanente au profil de diagnostics ; sa
-> généralisation exige une évolution du **mandat durable**, une fois,
-> jamais une série d'autorisations à chaque tâche. Les deux outils
-> sont donc un état historique de transition, non une recommandation
-> d'architecture cible. Leur suppression effective du serveur MCP
-> n'est pas encore réalisée.
+> **Correction déployée :** commit `f53640e4`, les deux noms MCP et
+> leurs cinq modules/fichiers spécialisés sont supprimés. L'exception
+> `sudo` root et les exécutables locaux propres au Musée sont retirés,
+> sans toucher au site, à son DNS ni au script général Operium.
+> Le serveur MCP a été redémarré : catalogue épuré, `host.process.run`
+> général présent et testé sous v4 pour les diagnostics Unix/Windows.
+> **Autorité restante :** le profil général `host.process-general/v1`
+> exige une seule approbation canonique v4→v5 de la délégation permanente,
+> elle ne peut pas être activée par simple modification du code. Le mode
+> `super` conserve son admission propre jusqu'à vérification explicite.
 
 
 ## Cause et résolution

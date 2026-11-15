@@ -8,8 +8,8 @@ import {isMandateActive,resolveMandate} from
   "../../../inseme/packages/cop-core/src/governed-act.js";
 import {createEventSourcedExecutionBudgetLedger} from
   "../../../inseme/packages/cop-core/src/execution-budget.js";
-import {STANDING_DIAGNOSTIC_PROFILE,STANDING_MANDATE_REF} from
-  "./john-standing-mission-authority.js";
+import {STANDING_DIAGNOSTIC_PROFILE,STANDING_GENERAL_HOST_PROFILE,
+  STANDING_MANDATE_REF} from "./john-standing-mission-authority.js";
 const REF=STANDING_MANDATE_REF;
 export const STANDING_CAPABILITIES=Object.freeze([
   "github.write","github.commit","github.push","git.commit","git.push",
@@ -57,6 +57,46 @@ export function johnStandingMandatePlan({store,at_time=new Date()}={}) {
     budget.available.max_steps<1 ||
     budget.limits?.max_steps!==existing.scope.budget_ceiling?.max_steps)
     return fail("canonical_budget_not_usable");
+  // v4 was already signed by the Principal. Its broad action name was
+  // accidentally paired with a diagnostics-only admission profile. A single
+  // authenticated v4→v5 amendment fixes that durable delegation; no new MCP
+  // tool, capacity, provider, host or per-command signature is introduced.
+  if (existing.version==="v4") {
+    const scope=structuredClone(existing.scope);
+    if (!scope.allowed_actions.includes("host.process.run") ||
+        !Array.isArray(scope.standing_operations) ||
+        scope.standing_operations.length!==2 ||
+        scope.standing_operations.some(op=>
+          op.profile!==STANDING_DIAGNOSTIC_PROFILE ||
+          op.capability!=="host.process.run"))
+      return fail("standing_v4_lineage_untrusted");
+    scope.allowed_actions=scope.allowed_actions.filter(action=>
+      action!=="dns.record.ensure"&&action!=="site.static.release");
+    scope.standing_operations=[
+      {profile:STANDING_GENERAL_HOST_PROFILE,capability:"host.process.run",
+        target:"node:fracta2",provider:"unix-process",execution_mode:"normal"},
+      {profile:STANDING_GENERAL_HOST_PROFILE,capability:"host.process.run",
+        target:"node:i7-thinkpad-jhr",provider:"windows-ssh",execution_mode:"normal"},
+    ];
+    delete scope.standing_technical_policy;
+    return {ok:true,ready_for_issuance:true,requires_owner_consent:true,
+      mandate_ref:REF,previous_version:"v4",next_version:"v5",
+      added_capabilities:[],removed_obsolete_capabilities:[
+        "dns.record.ensure","site.static.release"],
+      forbidden_actions_unchanged:true,budget_ceiling_unchanged:true,
+      budget_snapshot_for_review:{budget_id:ids[0],limits:budget.limits,
+        available:budget.available,observed_version:budget.version},
+      mandate:{mandate_ref:REF,principal_ref:"principal:jhn",
+        expected_version:"v4",scope,valid_from:existing.valid_from,
+        valid_until:existing.valid_until,
+        reason:"Correction FBF : une capacité générale host.process.run sur les nœuds Fractanet existants sous mandat permanent, avec budget COP et reçus ; suppression des outils spécialisés au Musée. Restrictions externes et durée inchangées."},
+      mandate_amended:false};
+  }
+  if (existing.version!=="v3"&&existing.version!=="v5")
+    return fail("standing_plan_version_unsupported");
+  if (existing.version==="v5")return {ok:true,
+    already_authorized_in_scope:true,mandate_ref:REF,version:"v5",
+    mandate_amended:false};
   const scope=structuredClone(existing.scope);
   const added=STANDING_CAPABILITIES.filter(x=>!scope.allowed_actions.includes(x));
   if(added.some(x=>scope.forbidden_actions.includes(x)))
@@ -67,9 +107,9 @@ export function johnStandingMandatePlan({store,at_time=new Date()}={}) {
     selection:"credential_accessible",include_future:true,
     require_verified_target:true,ownership_check:"provider_enforced",
   };
-  // A real host.process.run is an arbitrary interpreter. Only the exact
-  // read-only diagnostic profile is admitted by the current standing router.
-  // Future bounded effect profiles require dedicated semantic adapters.
+  // Historical v3→v4 exact-consent payload, preserved for the signed
+  // 2026-11-15 lineage. The v4→v5 correction above removes the accidental
+  // diagnostics-only limitation without inventing any new MCP capability.
   scope.standing_operations=[
     {profile:STANDING_DIAGNOSTIC_PROFILE,capability:"host.process.run",
       target:"node:fracta2",provider:"unix-process",execution_mode:"normal"},

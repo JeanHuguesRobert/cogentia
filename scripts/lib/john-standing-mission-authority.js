@@ -19,6 +19,7 @@ import { assessJohnCopAuthority } from "./john-cop-authority-preflight.js";
 import { isResolvedCallerAuth } from "./cogentia-mcp-auth.js";
 
 export const STANDING_DIAGNOSTIC_PROFILE = "host.readonly-diagnostics/v1";
+export const STANDING_GENERAL_HOST_PROFILE = "host.process-general/v1";
 export const STANDING_MANDATE_REF = "mandate:jhn:john-root";
 export const STANDING_TRANSPORT_LABEL = "mandate:chatgpt-corpus-coding";
 export const STANDING_BUDGET_ID = "budget:mandate:jhn:john-root";
@@ -41,11 +42,22 @@ function activeStandingOperation(scope, request) {
   const operations = scope?.standing_operations;
   if (!Array.isArray(operations)) return false;
   if (request.capability !== "host.process.run" ||
-      request.execution_mode !== "normal" ||
-      !DIAGNOSTIC_COMMANDS.has(request.command)) return false;
+      request.execution_mode !== "normal") return false;
   if (DEFAULT_TARGETS[request.target] !== request.provider) return false;
+  // A separately authenticated, signed v5 mandate can authorize generic
+  // command execution. The actual command is an effect payload, not a new
+  // capability or a hardcoded recipe. No v4 diagnostic permit is widened.
+  if (typeof request.command==="string" && request.command.trim() &&
+      request.command.length<=32768 &&
+      operations.some(item=>item && typeof item==="object" &&
+        item.profile===STANDING_GENERAL_HOST_PROFILE &&
+        item.capability===request.capability &&
+        item.target===request.target &&
+        item.provider===request.provider &&
+        item.execution_mode==="normal"))return true;
   return operations.some((item) => item && typeof item === "object" &&
     item.profile === STANDING_DIAGNOSTIC_PROFILE &&
+    DIAGNOSTIC_COMMANDS.has(request.command) &&
     item.capability === request.capability &&
     item.target === request.target &&
     item.provider === request.provider &&

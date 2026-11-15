@@ -13,7 +13,8 @@ import {resolveCallerAuth} from "./cogentia-mcp-auth.js";
 import {ROOT_MANDATE_KIND,RESERVED_ACTIONS,canonicalProposalBytes,proposalHash,
   publicKeyFingerprint} from "./john-root-mandate.js";
 import {createCanonicalStandingMissionResolver,STANDING_DIAGNOSTIC_PROFILE,
-  STANDING_MANDATE_REF,STANDING_BUDGET_ID} from "./john-standing-mission-authority.js";
+  STANDING_GENERAL_HOST_PROFILE,STANDING_MANDATE_REF,STANDING_BUDGET_ID}
+  from "./john-standing-mission-authority.js";
 import {resolveHostMissionAuthority} from "./host-mission-authority.js";
 
 const AT=new Date("2026-11-15T12:00:00Z");
@@ -40,7 +41,7 @@ const request=(caller=auth(),extra={})=>({
   command:"hostname",payload_hash:"sha256:fixture-exact-command",
   caller_auth:caller,...extra,
 });
-function fixture({actions=true,standing=true,steps=8,issuerValid=true,
+function fixture({actions=true,standing=true,general=false,steps=8,issuerValid=true,
   until="2027-01-01T00:00:00Z"}={}){
   const store=createSqliteCopEventStore(":memory:");
   const proposal={kind:ROOT_MANDATE_KIND,mandate_id:REF,version:"v1",
@@ -48,7 +49,8 @@ function fixture({actions=true,standing=true,steps=8,issuerValid=true,
     valid_from:"2026-01-01T00:00:00Z",valid_until:until,
     scope:{allowed_actions:actions?["host.process.run"]:["browser.hosted.inspect"],
       forbidden_actions:[...RESERVED_ACTIONS],
-      ...(standing?{standing_operations:[operation]}:{})},
+      ...(standing?{standing_operations:[general
+        ?{...operation,profile:STANDING_GENERAL_HOST_PROFILE}:operation]}:{})},
     max_delegation_depth:2,budget_limits:{max_steps:steps}};
   const issued=issueVerifiedJohnRoot({store,proposal,
     approval:{kind:"cogentia.principal-signature/v1",
@@ -225,4 +227,34 @@ test("router preserves branded caller and accounts a successful provider effect 
       {command:"rm -rf /tmp/something"},ctx),e=>e.error_class==="authorization_missing");
     assert.equal(f.ledger().snapshot().settled.max_steps,1);
   }finally{await router.stop();f.store.close();}
+});
+
+test("one signed general host profile permits different commands on the same node, with per-effect COP accounting",async()=>{
+  const f=fixture({general:true,steps:5});
+  try {
+    const commands=["hostname","pwd","printf CHECK_GENERAL_EXECUTION",
+      "git status --short","sudo -n systemctl is-active caddy"];
+    for(const command of commands){
+      const granted=await f.resolver(request(auth(),{command}));
+      assert.equal(granted.allowed,true,command+":"+granted.reason);
+      assert.equal(await granted.beforeDispatch(),true);
+      const out=await granted.finalize({attempted:true,ok:true,receipt:{status:"success"}});
+      assert.equal(out.accounting_complete,true);
+    }
+    assert.equal(f.ledger().snapshot().settled.max_steps,5);
+    assert.equal(f.ledger().snapshot().reserved.max_steps,0);
+    assert.equal((await f.resolver(request(auth(),{command:"echo beyond budget"}))).allowed,false);
+    assert.equal((await f.resolver(request(auth(),{provider:"desktop-commander"}))).allowed,false);
+    assert.equal((await f.resolver(request(auth(),{execution_mode:"super"}))).allowed,false);
+  } finally{f.store.close();}
+});
+test("v4 diagnostics-only profile remains unable to run general shell code",async()=>{
+  const f=fixture({general:false});
+  try{
+    for(const command of ["git status --short","sudo -n systemctl is-active caddy"]){
+      const denied=await f.resolver(request(auth(),{command}));
+      assert.equal(denied.allowed,false);
+    }
+    assert.equal(f.ledger().snapshot().reserved.max_steps,0);
+  }finally{f.store.close();}
 });
