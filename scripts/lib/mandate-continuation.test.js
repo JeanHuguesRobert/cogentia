@@ -60,3 +60,28 @@ test("runner stops on failed step rather than spinning", async () => {
   assert.equal(result.reason, "step_failed");
   assert.equal(result.steps_completed, 0);
 });
+
+
+test("an executable read-only next probe is carried out instead of being delegated as advice", async () => {
+  let inspected=false;
+  const result=await runMandateToBoundary({
+    inspect:()=>inspected
+      ? {objective_met:true}
+      : {next_step_clear:true,next_step_allowed:true},
+    execute:async()=>{inspected=true;return {ok:true,code:"read_only_probe_receipt"}},
+  });
+  assert.equal(result.action,"complete");
+  assert.equal(inspected,true);
+  assert.deepEqual(result.events.map(e=>e.code),["read_only_probe_receipt"]);
+});
+
+test("an unverified read-only permission requires a real boundary, not a fabricated visit", async () => {
+  let invoked=0;
+  const result=await runMandateToBoundary({
+    inspect:()=>({next_step_clear:true,next_step_allowed:false}),
+    execute:async()=>{invoked++;return {ok:true}},
+  });
+  assert.equal(invoked,0);
+  assert.equal(result.action,"escalate");
+  assert.equal(result.reason,"mandate_or_next_step_unclear");
+});

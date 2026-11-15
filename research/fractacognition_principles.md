@@ -6,7 +6,7 @@ author: "Jean Hugues Noël Robert, baron Mariani"
 affiliation: "Institut Mariani / C.O.R.S.I.C.A., 1 cours Paoli, F-20250 Corte, Corsica"
 date: "2026-09-27"
 last_modified_at: "2026-11-15"
-version: "0.9.4"
+version: "0.9.5"
 status: "working-paper"
 license: "CC BY-SA 4.0"
 language: "en"
@@ -692,6 +692,53 @@ agent = co-researcher of the reasoning process
 ~~~
 
 This matters especially when the Principal is currently carrying most of the metacognitive load. A capable agent should help discover, test, sharpen, and operationalize FractaCognition rather than waiting for every principle to be supplied explicitly.
+
+### 8.0.1 Recommendation-to-execution inversion — agent autonomy failure (15 November 2026)
+
+A recurrent failure mode is to diagnose a cheap, authorized next Reality
+Probe and then convert it into **advice that the Principal perform the
+probe**. The recommendation itself demonstrates that the agent has
+identified the next operation, yet no execution receipt exists. This is a
+*recommendation-to-execution inversion*: the burden-absorbing agent becomes
+a producer of instructions for its already-burdened Principal.
+
+**Reflexive correction:** before emitting a recommendation, assess whether
+it is an executable in-mandate next step. If yes, execute, observe and
+report; if not, state the precise boundary, alternative routes checked and
+residual Human Judgment. Existing COP continuation and risk/authority
+primitives suffice; do not introduce a rival planner. This is the
+**pre-answer analogue of `decideMandateContinuation()`**, with a concrete
+receipt required to claim execution. It is not authorization to bypass
+technical/contractual controls or to perform consequential third-party
+acts. An unsuccessful but lawful probe is useful evidence; it is not a
+reason to simulate a successful inspection.
+
+**Reality Test — ChatGPT Cogentia custom-MCP plugin:** an assistant said the
+next step was to inspect the plugin's Update menu, but did not inspect it
+in that turn. On explicit correction, it could list tabs in the hosted
+browser, but a second interaction method failed a `read_only_capability_required`
+gate. The boundary was discovered **after** the unjustified handoff. A
+future successful test must show: (i) the original question remains the
+active objective; (ii) available routes are investigated before advice;
+(iii) one bounded read-only verification is actually performed if
+admissible; (iv) a receipt and specific answer replace speculative UI
+instructions; and (v) an unavailable GUI is reported without inventing
+menu content or claiming an account-wide incapacity.
+
+**Evaluation:** `avoidable_human_handoffs / eligible_next_actions`,
+`in_mandate_next_probes_executed / eligible_next_actions`, and residual
+Human Attention under native COP `human.attention` accounting. Record
+`not_estimated` when no comparable quota/token/time evidence exists; this
+is **not** an assertion of zero cost. Avoid optimizing raw agent calls:
+a cheap useful probe is preferable to long self-analysis, while a costly
+or unsafe probe may reasonably be deferred. Compare against the existing
+[Human Attention Budget](reality_probe_selection.md),
+[Burden Absorption](digital_twin_burden_absorption.md), and
+[non-resolutive response patterns](non_resolutive_response_patterns.md).
+
+This is an **operational specialization** of Metacognitive Initiative,
+reasonable agency and Fix Bugs First, not a new FractaCognition axiom or
+a verified fully autonomous runtime enforcement mechanism.
 
 ### 8.1 Promotion threshold
 
