@@ -390,3 +390,54 @@ service reload before this fix can be tested in the running MCP process.
 The incomplete third packet must be reconciled and its unused budget
 reservation released when abandoned; it must not be counted as a returned
 Judgment result.
+
+## Bounded hosted-browser CPS turn driver — 15 November 2026
+
+The reusable `scripts/lib/chatgpt-cps-browser-loop.js` adds a **foreground,
+explicitly invoked** orchestration contract on top of Cogentia's existing
+`runMandateToBoundary` driver. It prepares a fresh child Continuation, submits
+one turn only through authenticated `browser.chatgpt.turn`, waits for both the
+MCP `returned` receipt and the canonical COPScheduler `handler_completed`
+receipt, and only then consults a separate parent-policy decision for the
+next turn. A UI click alone never counts as delivery. Missing authority,
+ambiguous result, or exhausted turn budget stops the driver and requests
+reconciliation; it never silently submits again. A three-turn deterministic
+fixture checks the whole orchestration, final acceptance, timeout and denial.
+This fixture does **not** establish a three-turn live browser run.
+
+`node scripts/ops/run-chatgpt-cps-browser-loop.mjs --status` is a safe,
+read-only preflight. The opt-in, bounded operational entrypoint is:
+
+```bash
+node scripts/ops/run-chatgpt-cps-browser-loop.mjs --run --tab-id 94450542 --three-turns
+```
+
+The command **requires** a trusted, locally supplied
+`COGENTIA_MCP_JHN_TOKEN` environment variable. It does not print the token,
+read the browser cookies or call model APIs. Every browser interaction is a
+fresh `john.request.v1` to the existing authenticated MCP endpoint; the
+server independently verifies the signed root, version, scope and separate
+COP budget before dispatch. The CLI's three-turn intent is **not a new
+principal mandate**. Its child packets use the existing canonically claimed
+and reserved `prepare-chatgpt-browser-cps-turn.mjs` protocol. The caller must
+ensure the channel is permitted under the applicable provider conditions.
+
+The shell available to coding agents lacks this JHN transport credential,
+which is expected: repository write authority is not permission to
+impersonate the MCP agent or extract secrets. A successful `--status` run
+reported JHN root v3, browser-scope grant and available COP budget, but
+`mcp_token_present=false` in the shell. A production run must be launched
+from a trusted owner/service context that already possesses that credential.
+No new credentials or service restarts are invented or circumvented.
+
+**Live result of this turn:** two prior verified ChatGPT returns remain
+canonical. The 15 November third continuation
+`ctn_chatgpt_browser_2892f946a8e44935aa55b1790d3608d4` was **never
+confirmed delivered**: both original-source guarded attempts failed, and a
+subsequent governed observation found only the two historical replies. The
+attempt was explicitly abandoned, its original COP reservation was released
+(`reserved.max_steps` 1→0), its PacketClaim was released, and the
+append-only `cop.continuation-abandonment/v1` event was committed. It must
+not be replayed or counted as a third live success. The new send-readiness
+fix and server-side returned-parent evaluator remain pending a reload of the
+running `mcp-cogentia.service` to replace its earlier in-memory module image.
