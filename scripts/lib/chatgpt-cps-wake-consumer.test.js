@@ -10,6 +10,7 @@ import {COPBus} from '../../../inseme/packages/cop-kernel/src/bus.js';
 import {recordChatgptReturnWake} from './chatgpt-cps-return-wake.js';
 import {consumeChatgptCpsWake,listChatgptCpsWakes} from './chatgpt-cps-wake-consumer.js';
 import {runChatgptCpsWakeBatch} from './chatgpt-cps-wake-batch.js';
+import {listChatgptCpsNextSteps,consumeChatgptCpsNextStep,runChatgptCpsNextStepBatch} from './chatgpt-cps-next-step.js';
 const HANDLER='handler:chatgpt-browser-result-observer';
 const BUDGET='budget:mandate:jhn:john-root';
 const commit=(store,e)=>assert.equal(store.append(e).ok,true);
@@ -138,5 +139,145 @@ test('bounded batch stops on authorization denial instead of spinning',async()=>
    assert.equal(result.steps_completed,0);
    assert.equal(result.pending_count,1);
    assert.equal(invokes,0);
+ }finally{store.close()}
+});
+
+const nextActionAdmit=async({action_id})=>({granted:true,action_id,
+  authorization_ref:'fixture:independently-verified-mandate',
+  provider_permitted:true,provider_permission_receipt_ref:'fixture:provider-review',
+  budget_admitted:true,budget_authorization_ref:'fixture:budget-admission'});
+
+test('next-step candidate becomes a durable separately admitted child, no replay after cold restart',async()=>{
+ const dir=mkdtempSync(join(tmpdir(),'cps-next-action-'));
+ const file=join(dir,'cop.sqlite');
+ try{
+  let store=createSqliteCopEventStore(file);
+  const id='ctn_next_parent_01';
+  addReturned(store,id);
+  const r=await consumeChatgptCpsWake({store,continuation_id:id,
+    scheduler:scheduler(()=>({status:'continue',next_action:'inspect-next-source'})),admit});
+  assert.equal(r.status,'handler_completed');
+  assert.deepEqual(listChatgptCpsNextSteps(store).map(x=>[x.action_id,x.status]),
+    [['inspect-next-source','pending_admission']]);
+  let invokes=0;
+  const dispatch=async()=>{invokes++;return {ok:true,
+    child_continuation_id:'ctn_next_child_01',execution_receipt_ref:'fixture:john-result'};};
+  assert.equal((await consumeChatgptCpsNextStep({store,continuation_id:id,
+    admit:async()=>({granted:false}),dispatch})).status,'not_admitted');
+  assert.equal(invokes,0);
+  assert.equal((await consumeChatgptCpsNextStep({store,continuation_id:id,
+    admit:async x=>({...await nextActionAdmit(x),provider_permission_receipt_ref:''}),
+    dispatch})).status,'not_admitted');
+  assert.equal(invokes,0);
+  const done=await consumeChatgptCpsNextStep({store,continuation_id:id,
+    admit:nextActionAdmit,dispatch});
+  assert.equal(done.status,'child_dispatched');
+  assert.equal(done.child_continuation_id,'ctn_next_child_01');
+  assert.equal(invokes,1);
+  assert.equal((await consumeChatgptCpsNextStep({store,continuation_id:id,
+    admit:nextActionAdmit,dispatch})).status,'already_dispatched');
+  store.close();
+  store=createSqliteCopEventStore(file);
+  assert.deepEqual(listChatgptCpsNextSteps(store),[]);
+  assert.equal((await consumeChatgptCpsNextStep({store,continuation_id:id,
+    admit:nextActionAdmit,dispatch})).status,'already_dispatched');
+  assert.equal(invokes,1);
+  assert.equal(store.auditCommitments().ok,true);
+  store.close();
+ }finally{rmSync(dir,{recursive:true,force:true})}
+});
+
+test('unknown dispatch after durable next-step intent is never blindly retried',async()=>{
+ const dir=mkdtempSync(join(tmpdir(),'cps-next-ambiguous-'));
+ const file=join(dir,'cop.sqlite');
+ try{
+  let store=createSqliteCopEventStore(file);
+  const id='ctn_next_unknown_01';
+  addReturned(store,id);
+  assert.equal((await consumeChatgptCpsWake({store,continuation_id:id,
+    scheduler:scheduler(()=>({status:'continue',next_action:'inspect-source'})),admit})).ok,true);
+  let invoked=0;
+  const fail=async()=>{invoked++;throw Error('unknown_dispatch_after_network_cut')};
+  assert.equal((await consumeChatgptCpsNextStep({store,continuation_id:id,
+    admit:nextActionAdmit,dispatch:fail})).status,'needs_reconciliation');
+  store.close();
+  store=createSqliteCopEventStore(file);
+  assert.deepEqual(listChatgptCpsNextSteps(store).map(x=>x.status),['needs_reconciliation']);
+  assert.equal((await consumeChatgptCpsNextStep({store,continuation_id:id,
+    admit:nextActionAdmit,dispatch:fail})).status,'needs_reconciliation');
+  assert.equal(invoked,1);
+  store.close();
+ }finally{rmSync(dir,{recursive:true,force:true})}
+});
+
+test('finished or uncorrelated scheduler output is never upgraded to autonomous execution',async()=>{
+ const store=createSqliteCopEventStore(':memory:');
+ try{
+  const id='ctn_next_none_01';addReturned(store,id);
+  assert.equal((await consumeChatgptCpsWake({store,continuation_id:id,
+    scheduler:scheduler(()=>({status:'completed',next_action:'claimed-by-model'})),admit})).ok,true);
+  assert.deepEqual(listChatgptCpsNextSteps(store),[]);
+  let invoked=0;
+  assert.equal((await consumeChatgptCpsNextStep({store,continuation_id:id,
+    admit:nextActionAdmit,dispatch:async()=>{invoked++;return {ok:true}}})).status,'verified_candidate_missing');
+  assert.equal(invoked,0);
+ }finally{store.close()}
+});
+
+
+test('one bounded mandate driver dispatches three separately admitted causal children',async()=>{
+ const store=createSqliteCopEventStore(':memory:');
+ try{
+  const ids=['ctn_bounded_chain_01','ctn_bounded_chain_02','ctn_bounded_chain_03'];
+  const handled=[];
+  const stepScheduler=scheduler(({continuationId})=>({
+    status:continuationId===ids[2]?'open':'continue',
+    next_action:continuationId===ids[2]?null:'inspect-next-source',
+  }));
+  async function record(id){
+   addReturned(store,id);
+   const r=await consumeChatgptCpsWake({store,continuation_id:id,
+     scheduler:stepScheduler,admit});
+   assert.equal(r.status,'handler_completed');
+  }
+  await record(ids[0]);
+  const result=await runChatgptCpsNextStepBatch({store,
+   max_steps:4,admit:nextActionAdmit,
+   dispatch:async({continuation_id})=>{
+    const index=ids.indexOf(continuation_id);
+    handled.push(continuation_id);
+    await record(ids[index+1]);
+    return {ok:true,child_continuation_id:ids[index+1],
+      execution_receipt_ref:'fixture:john:'+ids[index+1]};
+   },
+  });
+  assert.equal(result.status,'queue_drained',JSON.stringify(result));
+  assert.equal(result.steps_completed,2);
+  assert.deepEqual(handled,ids.slice(0,2));
+  assert.equal(result.parent_mandate_completed,false);
+  assert.equal(result.persistent_worker,false);
+  assert.deepEqual(listChatgptCpsNextSteps(store),[]);
+ }finally{store.close()}
+});
+
+test('competing next-step consumers cannot dispatch the same candidate twice',async()=>{
+ const store=createSqliteCopEventStore(':memory:');
+ try{
+  const id='ctn_next_concurrent_01';
+  addReturned(store,id);
+  assert.equal((await consumeChatgptCpsWake({store,continuation_id:id,
+    scheduler:scheduler(()=>({status:'continue',next_action:'inspect-next-source'})),admit})).ok,true);
+  let dispatched=0;
+  const dispatch=async()=>{dispatched++;await Promise.resolve();return {
+    ok:true,child_continuation_id:'ctn_next_concurrent_child_01',
+    execution_receipt_ref:'fixture:john:concurrent',
+  }};
+  const results=await Promise.all([0,1,2].map(()=>consumeChatgptCpsNextStep({
+    store,continuation_id:id,admit:nextActionAdmit,dispatch,
+  })));
+  assert.equal(results.filter(x=>x.status==='child_dispatched').length,1);
+  assert.equal(results.filter(x=>['needs_reconciliation','already_dispatched'].includes(x.status)).length,2);
+  assert.equal(dispatched,1);
+  assert.equal(store.auditCommitments().ok,true);
  }finally{store.close()}
 });

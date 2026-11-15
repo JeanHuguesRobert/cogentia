@@ -1,24 +1,45 @@
 ---
 title: "Agent JHN — standing ChatGPT browser turn delegation"
+author: "Institut Mariani / C.O.R.S.I.C.A."
+affiliation: "Institut Mariani / C.O.R.S.I.C.A., 1 cours Paoli, F-20250 Corte, Corsica"
 date: 2026-11-15
+last_modified_at: 2026-11-15
 document_role: operational
+document_kind: runbook
 status: working-paper
+visibility: public
+lifecycle_state: active
+language: en
+license: CC BY-SA 4.0
+update_policy: UP-DEFAULT-REVIEWED
+provenance:
+  origin_type: repository
+  origin_repository: JeanHuguesRobert/cogentia
+  origin_ref: ""
+  origin_date: 2026-11-15
+  derived_from:
+    - ../instructions/AGENTS.shared.md
+review:
+  status: unreviewed
+  reviewed_by: []
 ---
 
 # Standing ChatGPT turns through Navigation Assistant
 
 The Principal explicitly requested a **standing** capability to resume
 otherwise terminal conversational LLM work through their own hosted Brave
-browser. Agent JHN's current signed root v2 authorizes only browser reads and
-MCP result ingress; it does not yet grant browser prompts. Do not confuse
-this absence with an inability of Navigation Assistant to control the tab.
+browser. **Current verified state (15 November 2026):** JHN's independently signed
+root mandate is **v3** and includes `browser.chatgpt.turn`. The earlier v2
+restriction described the initial setup, not the current authority. Provider
+permission and signed effect-bound admission remain separate gates.
 
 The new capability is `browser.chatgpt.turn`, scoped to
 `https://chatgpt.com` in browser instance `fracta2-hosted`, with a
-specific integer tab ID and an optimistic URL check. Only two operations
-exist: `submit` (up to 6000 characters, fixed code) and `observe` (read
-the latest assistant message and generation status). No arbitrary JS or
-writes to other domains are provided. A ChatGPT turn is *not* a parent
+specific integer tab ID and an optimistic URL check. The bounded operations
+now include `submit` (up to 6000 characters), `observe` (read-only),
+`send_draft` (recover one verified failed-send draft) and `ensure_tab`
+(reuse or create a verified ChatGPT-only tab). No arbitrary site URL or
+script is granted by this capability. A ChatGPT turn is *not* a parent
 Cognitive Packet completion.
 
 The canonical executor:
@@ -727,3 +748,62 @@ projection. No OpenAI paid API calls or external sends were made as part
 of these tests. A later live, controlled Judgment turn should exercise
 this route with a real read-only capability and verify the actual source
 result, canonical journal and provider quota behavior.
+
+
+## Durable next-action bridge — 15 November 2026 (#330)
+
+The original result-to-scheduler wake consumer only recorded
+`handler_completed`, with `next_turn_dispatched=false`. The existing
+`COPScheduler` can now also retain a **candidate** returned by its trusted
+parent handler when its projection says `status=continue` and identifies a
+bounded action ID. It records `next_action_candidate` and
+`next_action_admitted=false`; this is **not a browser authorization**,
+**not a parent completion**, and not a prompt sent.
+
+`chatgpt-cps-next-step.js` supplies a minimal, reusable dispatch bridge:
+
+1. `listChatgptCpsNextSteps(store)` projects candidates and ambiguous
+   intents from the canonical COP journal; it does not inspect the browser.
+2. `consumeChatgptCpsNextStep(...)` first requires a **trusted** separate
+   admission callback, with current mandate, independently evidenced provider
+   permission and an already admitted child execution budget. It commits a
+   durable `cop.continuation-next-step/v1` intent in a CAS transaction before
+   passing the candidate to a callback that must use the **existing John/COP
+   execution route**. It records `child_dispatched` only after a valid child
+   continuation ID and an actual dispatch receipt are returned.
+3. Concurrent calls cannot execute a second child; after a crash between
+   intent and receipt, the state remains `needs_reconciliation`. Replaying an
+   uncertain external effect is forbidden. A child return must still arrive
+   and be independently evaluated in the ordinary wake path.
+4. `runChatgptCpsNextStepBatch()` uses `runMandateToBoundary`, not a new
+   scheduler. It drains several independently admitted candidates in one
+   invocation and preserves the parent's open status.
+
+The read-only operator command now reports both return-wake and next-action
+queues and their reconciliation needs:
+
+```bash
+node scripts/ops/chatgpt-cps-wake-status.mjs --status
+```
+
+**Testing and deployment limits.** The source tests cover one child,
+concurrent contenders, three causally chained returns and next-action
+handoffs, signed-admission mock denial, deliberate crash, persistent SQLite
+replay and reopening. Fixture permissions and provider receipts are explicit
+**test doubles**, not operational authorization. The bridge has no resident
+service, no autonomous browser activation, no new credential access, no new
+provider permission and no model/API billing. The canonical production journal
+was clean when inspected: 5 real returned events, 3 evaluated wakes, no pending
+wake, no next-action candidate, no reconciliation required. This source change
+needs a normal service reload before the running MCP host could use its updated
+consumer, but no active production code dispatches new browser turns merely
+because the new module exists.
+
+The remaining milestone is to connect an independently permitted, scoped,
+restart-resilient CPS **worker within the existing operational control plane**
+to this bridge (not a second scheduler), with a current signed mandate, provider
+permission evidence, quota accounting, child claim and budget, start-up replay,
+acknowledgement, revocation and crash repair. Validate real unattended behavior
+separately from passing source tests, without replaying the three previously
+settled ChatGPT turns. The Principal's browser/Fair Usage choice is preserved;
+current supplier permission remains disputed rather than assumed.

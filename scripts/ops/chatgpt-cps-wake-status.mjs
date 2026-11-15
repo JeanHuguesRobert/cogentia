@@ -3,6 +3,7 @@
 import {createSqliteCopEventStore} from '../../../inseme/packages/cop-core/src/sqlite-cop-event-store.js';
 import {resolveMandate,evaluateMandate} from '../../../inseme/packages/cop-core/src/governed-act.js';
 import {listChatgptCpsWakes} from '../lib/chatgpt-cps-wake-consumer.js';
+import {listChatgptCpsNextSteps} from '../lib/chatgpt-cps-next-step.js';
 const path='/var/lib/cogentia/cop/john-root-v1.sqlite';
 if(process.argv.length!==3||process.argv[2]!=='--status'){
   console.error('Usage: node scripts/ops/chatgpt-cps-wake-status.mjs --status');
@@ -31,13 +32,17 @@ if(process.argv.length!==3||process.argv[2]!=='--status'){
     const processed=all.filter(e=>e.payload?.profile==='cop.continuation-dispatch/v1'&&
       e.payload.phase==='handler_completed').length;
     const pending=listChatgptCpsWakes(store,{limit:100});
+    const nextCandidates=listChatgptCpsNextSteps(store,{limit:100});
     console.log(JSON.stringify({ok:true,mode:'read_only',journal:'canonical-jhn-cop',
       mandate:{version:mandate?.version||null,browser_turn_scope:auth.granted===true},
       counts:{chatgpt_declarations:declarations,chatgpt_returned_events:returned,
         wake_events:wakes,consumer_completed_events:processed,
         pending_wakes:pending.filter(x=>x.status==='pending').length,
-        reconciliation_required:pending.filter(x=>x.status==='needs_reconciliation').length},
+        reconciliation_required:pending.filter(x=>x.status==='needs_reconciliation').length,
+        next_step_candidates:nextCandidates.filter(x=>x.status==='pending_admission').length,
+        next_step_reconciliation_required:nextCandidates.filter(x=>x.status==='needs_reconciliation').length},
       pending:pending.slice(0,15).map(x=>({continuation_id:x.continuation_id,status:x.status})),
+      next_steps:nextCandidates.slice(0,15),
       note:'No browser or model execution; no new COP effects.'},null,2));
   }finally{store.close()}
 }

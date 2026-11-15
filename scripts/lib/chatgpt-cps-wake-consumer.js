@@ -117,6 +117,13 @@ export async function consumeChatgptCpsWake({store,continuation_id,scheduler,adm
     // Do not release the dispatch intent: side effects may have occurred.
     return {ok:false,status:'needs_reconciliation',error:String(error?.message||error)};
   }
+  const outcome=execution?.execution?.result;
+  // A scheduler evaluation may identify a candidate next act. Persist it as
+  // data for a separate authority/budget/claim admission, never as a grant.
+  const nextAction=outcome?.status==='continue'&&
+    typeof outcome.next_action==='string'&&
+    /^[a-zA-Z0-9_.:-]{1,96}$/.test(outcome.next_action)
+      ?outcome.next_action:null;
   const committed=store.append({
     topic_id:topic,event_type:'cop.event/v1',
     actor_id:'cop:chatgpt-wake-consumer',
@@ -129,7 +136,9 @@ export async function consumeChatgptCpsWake({store,continuation_id,scheduler,adm
       parent_mandate_status:'open',
       // This event reflects ONLY scheduler handler return, not a browser
       // message delivery or an autonomous next-turn result.
-      next_turn_dispatched:false},
+      next_turn_dispatched:false,
+      next_action_candidate:nextAction,
+      next_action_admitted:false},
   });
   if(!committed.ok)return {ok:false,status:'needs_reconciliation',error:'completion_receipt_missing'};
   return {ok:true,status:'handler_completed',continuation_id,
