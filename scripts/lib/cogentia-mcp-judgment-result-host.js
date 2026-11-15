@@ -18,6 +18,7 @@ import { assessJohnCopAuthority } from "./john-cop-authority-preflight.js";
 import { resolveMandate } from "../../../inseme/packages/cop-core/src/governed-act.js";
 import { isResolvedCallerAuth } from "./cogentia-mcp-auth.js";
 import { projectMandateProgress } from "./mandate-completion-projection.js";
+import { recordChatgptReturnWake } from "./chatgpt-cps-return-wake.js";
 import { resumeContinuationFromReturnedEvent } from
   "../../../inseme/packages/cop-kernel/src/continuation.js";
 
@@ -107,7 +108,11 @@ export function createCanonicalMcpJudgmentResultHost({
             if (!settled.ok) throw new Error(
               settled.error || "chatgpt_result_budget_settlement_failed");
           }
-          return {status:"returned",autonomous_handler:false};
+          const wake=recordChatgptReturnWake({store,continuation:{...continuation,
+            continuation_id:id},returned,budget_id});
+          if(!wake.ok)throw new Error(wake.error||"chatgpt_scheduler_wake_failed");
+          return {status:"returned",autonomous_handler:false,
+            scheduler_wake_receipt:wake.receipt_ref};
         }
         // Dispatch only the trusted, no-external-effects local fixture handler.
         // Production agents need a separately configured governed resolver.

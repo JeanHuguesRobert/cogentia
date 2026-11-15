@@ -347,9 +347,17 @@ test("signed ChatGPT browser result is recognized and settles the real reserved 
    const final=store.listTopic("continuation:ctn_browser_test")
      .filter(x=>x.payload?.profile==="cop.continuation-result/v1"&&x.payload.phase==="returned");
    assert.equal(final.length,1);
+   const wakes=store.listTopic("continuation:ctn_browser_test")
+     .filter(x=>x.payload?.profile==="cop.continuation-scheduler-wake/v1");
+   assert.equal(wakes.length,1);
+   assert.equal(wakes[0].payload.phase,"pending_scheduler_review");
+   assert.equal(wakes[0].payload.dispatch_permitted,false);
+   assert.equal(wakes[0].payload.requires_next_step_authority,true);
    const duplicate=await core.callTool(TOOL,args,{auth});
    assert.equal(duplicate.ok,true);
    assert.equal(duplicate.duplicate,true);
    assert.equal(ledger.snapshot().settled.max_steps,1);
+   assert.equal(store.listTopic("continuation:ctn_browser_test")
+     .filter(x=>x.payload?.profile==="cop.continuation-scheduler-wake/v1").length,1);
  }finally{store.close()}
 });

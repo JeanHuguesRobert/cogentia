@@ -203,3 +203,37 @@ A created tab does not imply a ChatGPT message has been sent. If the newly
 created page fails exact-origin verification, the action fails rather than
 marking the tab ready. No extension protocol or browser installation change
 is required; `tabs.create` already exists in the installed extension.
+
+
+## Durable scheduler wake from a ChatGPT return — 15 November 2026
+
+The MCP result host now emits, **after** acceptance and actual COP budget
+settlement, one idempotent `cop.continuation-scheduler-wake/v1` event on the
+existing `continuation:<id>` journal topic. This is a durable **request for
+scheduler review**, not a new authorization to send a browser prompt. Its
+`phase=pending_scheduler_review`, `parent_mandate_status=open`,
+`requires_next_step_authority=true`, and `dispatch_permitted=false` ensure
+that a returned ChatGPT result is not silently reclassified as a completed
+parent mandate or a permission for another model turn.
+
+Implementation: `scripts/lib/chatgpt-cps-return-wake.js`, invoked in
+`cogentia-mcp-judgment-result-host.js` only for the signed, recognized
+`chatgpt:browser` channel. Actual settlement is checked using the
+existing canonical COP budget event by **reservation ID** rather than
+assuming an unprefixed event idempotency key. Duplicate MCP result
+submissions create no additional wake or settlement. Independent tests
+cover three sequential return-wake projections, replay and rejected
+unsettled/non-returned input. These are in-memory source-level tests,
+**not** a three-turn unattended browser run.
+
+The scheduler consumer is deliberately **not** duplicated here: Inseme
+`COPScheduler` and the existing event-driven/claimed consumer remain its
+owners. The next integration must (1) read the actual durable wake from
+the COP journal, (2) reconstruct and evaluate the parent continuation,
+mandate, quota/budget, claim and handler admission, (3) admit a new bounded
+ChatGPT turn using the existing `browser.chatgpt.turn` executor only if
+permitted, (4) correlate the next result, and (5) verify retries and
+interruption/restart. The wake alone neither starts a worker nor demonstrates
+unattended autonomous continuation. Do not activate a background third-party
+browser scheduler solely because these tests are green; consult the applicable
+provider terms and separate operational mandate.
