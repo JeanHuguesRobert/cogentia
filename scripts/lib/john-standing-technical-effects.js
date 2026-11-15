@@ -47,24 +47,31 @@ export function createStandingTechnicalEffects({
     const grant=await missionAuthorityResolver(requested);
     if(!grant?.allowed || !grant.verified || !grant.finalize)
       return denied(grant?.reason || "standing_mission_missing");
-    let attempted=false,ok=false,receipt=null,settlement=null;
+    let attempted=false,ok=false,receipt=null,settlement=null,response=null;
     try {
       if(typeof grant.beforeDispatch!=="function" ||
-        await grant.beforeDispatch()!==true)
-        return denied("standing_mission_revoked_before_dispatch");
+        await grant.beforeDispatch()!==true) {
+        response=denied("standing_mission_revoked_before_dispatch");
+        return response;
+      }
       attempted=true;
       const outcome=await invoke(effect);
       ok=outcome?.ok===true && outcome?.verified===true;
       receipt=outcome?.receipt||null;
-      if(!ok)return {...denied(outcome?.reason || "provider_result_unverified"),
-        executed:true,provider_receipt:receipt};
-      return {ok:true,executed:true,verified:true,changed:outcome.changed===true,
+      if(!ok) {
+        response={...denied(outcome?.reason || "provider_result_unverified"),
+          executed:true,provider_receipt:receipt};
+        return response;
+      }
+      response={ok:true,executed:true,verified:true,changed:outcome.changed===true,
         action_class:capability,payload_hash,
         provider_receipt:receipt,
         authority_id:grant.authority_id,mandate_version:grant.mandate_version};
+      return response;
     } catch (e) {
-      return {...denied(e?.error_class||"provider_execution_failed"),
+      response={...denied(e?.error_class||"provider_execution_failed"),
         executed:attempted};
+      return response;
     } finally {
       // A provider launch consumes one canonical step even if its ACK is lost.
       settlement=await grant.finalize({attempted,ok,receipt});
@@ -73,6 +80,16 @@ export function createStandingTechnicalEffects({
         // finally overrides any optimistic provider result.
         throw Object.assign(new Error("canonical_cop_settlement_unconfirmed"),
           {error_class:"canonical_cop_settlement_unconfirmed"});
+      }
+      if (response) {
+        response.canonical_cop=true;
+        response.accounting_complete=true;
+        response.cop_spend={
+          budget_action:settlement.budget_action,
+          reservation_id:settlement.reservation_id,
+          mandate_ref:settlement.mandate_ref,
+          mandate_version:settlement.mandate_version,
+        };
       }
     }
   }
