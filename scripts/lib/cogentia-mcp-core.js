@@ -2289,7 +2289,7 @@ export function createMcpCore(env = process.env, extras = {}) {
         } else if (workspaceConfigured) {
           req.handler.allowed_capabilities = requestedCapabilities
             .filter((name) => (name === "workspace.read" || browserCapabilityNames.has(name)) && serverAllowedCapabilities.includes(name));
-        } else if (jhnCaller) {
+        } else if (jhnCaller && req.capability !== "browser.chatgpt.turn") {
           req.handler.allowed_capabilities = requestedCapabilities
             .filter((name) => browserCapabilityNames.has(name));
         }
