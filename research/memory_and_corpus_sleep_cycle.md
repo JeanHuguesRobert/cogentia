@@ -244,6 +244,14 @@ The **Corpus Sleep Cycle** names a periodic or opportunistic consolidation proce
 
 During active work, the corpus accumulates traces and candidate learnings. During the sleep cycle, it reorganizes, tests and selectively assimilates them.
 
+### Dormancy without compute is not the Corpus Sleep Cycle (2026-11-15)
+
+A Cogentia Personal Digital Twin may become *dormant* when none of its authorized compute nodes is available (home PC powered off, laptop sleeping, phone disconnected, VPS down). This resembles the Principal's colloquial « I sleep »: it may cease acting temporarily without ceasing to have a recoverable identity, Corpus, mandates and unfinished continuations.
+
+**Distinct mechanisms:** (a) *zero-compute dormancy*: no agent can think, monitor, execute or guarantee timed reactions; recoverability depends on durable storage and an eventual wake-up path; (b) *Corpus Sleep Cycle*: an **active computational workload** for consolidation, requiring compute and authority. A twin may remain dormant without running its Sleep Cycle. Neither analogy implies consciousness.
+
+On recovery, a cold handler must rehydrate the saved continuations and re-evaluate current mandate validity, revocations, supersession, budgets, trust and idempotency before any effect. A lost durable state, inaccessible credentials or permanently absent restart mechanism is a failure or loss of recoverability, not merely sleep. See [mixed personal compute in the first CPDT offer](../docs/first-personal-twin-offer-2026-12-25.md) and [packet continuation](packet_continuation_machine.md).
+
 The original consolidation pipeline remains useful:
 
 ```text
