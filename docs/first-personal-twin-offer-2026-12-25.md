@@ -85,7 +85,7 @@ Conserver dès l'origine les invariants propices à cette extension : identifian
 | Stockage des événements/continuations COP | SQLite ; PostgreSQL ; autre backend de journal | Rejouabilité, causalité, statut des mandats et idempotence conservés |
 | Navigateur télécommandé | Brave hébergé ; Chromium hébergé ; autre adaptateur gouverné | Session reconnectable, secrets traités sans export illicite, capacité de reprise testée |
 | Recherche/embeddings | API ; fournisseur gratuit vérifié ; moteur local ; recherche lexicale | Réindexation reproductible, compatibilité des dimensions/modèles ou reconstruction annoncée |
-| Exécution/hébergement | VPS individuel ; installation locale ; hébergeur géré ; fonctions serverless + services persistants ; confédération de VPS | Sauvegarde, restauration, autonomie d'administration et migration à froid |
+| Exécution/hébergement | VPS individuel ; PC fixe/portable ; téléphone mobile ; serverless ; combinaison de nœuds permanents et intermittents ; confédération | Sauvegarde, reprise hors ligne, routage selon disponibilité, restauration et migration à froid |
 
 ### Déploiement serverless : alternative et retour d'expérience
 
@@ -94,6 +94,25 @@ Conserver dès l'origine les invariants propices à cette extension : identifian
 Le choix actuel d'un **VPS Oracle Cloud Free Tier**, souscrit par le Principal et présenté commercialement comme une offre de type « Always Free », facilite l'expérimentation sur un hôte persistant. **Ne pas convertir « Always Free » en garantie éternelle** : disponibilité des ressources, quotas, conditions de maintien et changements d'offre relèvent du fournisseur et doivent être vérifiés lors d'un déploiement externe.
 
 **Décomposition à préserver :** interfaces web statiques, webhooks et traitements événementiels courts peuvent convenir à une infrastructure serverless ; en revanche, le navigateur hébergé avec sessions actives, la continuité CPS, certains workers, les journaux durables et les sauvegardes requièrent des mécanismes persistants explicites. Une fonction éphémère ne remplace pas à elle seule un navigateur en mémoire ni un ordonnanceur fiable. Un futur packaging peut donc être **hybride** (serverless pour les surfaces et événements, nœud persistant pour le navigateur et les continuations), ou utiliser des services managés équivalents, à tester.
+
+### Compute personnel intermittent : PC fixe, portable et mobile
+
+Le catalogue de déploiement doit également prendre en compte les **ressources de calcul déjà possédées par l'usager** : ordinateur fixe à domicile, portable, téléphone mobile ou équipement équivalent. Elles peuvent participer à l'exécution de certaines tâches, en complément ou à la place de ressources cloud, **sans être supposées disponibles en permanence**.
+
+**Séparer deux fonctions :** (1) la *garde durable* du Corpus, des journaux COP, des mandats et des continuations, avec une voie de réveil/reprise ; (2) le *calcul opportuniste* (indexation, embeddings locaux, traitements lourds, automatisations, agents auxiliaires) effectué sur un équipement présent et admissible à l'instant considéré. La permanence du jumeau ne requiert pas que chaque processeur soit permanent ; elle requiert que le travail en attente demeure récupérable et que les effets ne soient pas exécutés deux fois.
+
+| Ressource | Disponibilité typique à vérifier | Affectation candidate |
+| --- | --- | --- |
+| VPS / nœud toujours joignable | Plus continue, sous réserve de pannes, quotas ou suspensions | Ancrage durable, événements, ordonnanceur, réception/routage et éventuellement navigateur |
+| PC fixe de l'usager | Selon alimentation, veille et connectivité | Calcul local intensif, indexation, stockage ou navigateur si disponibilité suffisante |
+| Portable | Variable : arrêts, veille, déplacements | Travail à la demande, calcul local et synchronisation différée |
+| Téléphone mobile | Très variable : batterie, réseau, restrictions d'arrière-plan et permissions | Interaction, capteurs autorisés, calcul léger ou opportuniste, relai/reprise sous contraintes |
+
+**FractaRouting / CPS :** un nœud n'est candidat que s'il annonce la capacité requise, son niveau de confiance, son coût/énergie, sa disponibilité effective et un mandat compatible. En cas de déconnexion, mettre en attente ou réattribuer une continuation avec *lease*, délai et idempotence ; vérifier les événements déjà exécutés avant tout rejeu. L'acheminement différé ne prouve ni livraison ni réussite et ne doit jamais élargir les permissions de l'appareil.
+
+**Contraintes particulières du mobile :** consentement explicite pour les tâches en arrière-plan, batterie/données cellulaires, secrets et Corpus sensibles, sandbox du système, réveil et restrictions OS. Le téléphone ne doit pas être présenté comme un serveur permanent ni comme capable d'héberger en continu le navigateur ChatGPT sans essai réel.
+
+**Packaging possible :** un petit nœud permanent minimal (VPS ou équivalent) et des équipements personnels intermittents ; ou, pour un usage acceptant des périodes d'indisponibilité, une solution totalement locale avec synchronisation/reprise à la reconnexion. Comparer la qualité de service obtenue et les exigences de disponibilité du Principal avant de choisir ; aucune architecture permanente universelle n'est imposée. Cette extension ne remet pas en cause le pilote Noël : l'ancrage et la télécommande déjà éprouvés sur VPS demeurent le chemin de référence tant qu'une alternative n'est pas démontrée.
 
 Le catalogue devra évaluer chaque implantation sur **coût complet et risque de dépassement des free tiers, disponibilité, limites des exécutions, latence, reprise après interruption, ergonomie de développement itératif, observabilité et sortie vérifiable**. Ne pas optimiser le seul coût de l'hébergement au prix du temps de développement ou d'une dépendance capturante. Le choix VPS de novembre 2026 est pragmatique et réversible, pas une doctrine anti-serverless.
 
