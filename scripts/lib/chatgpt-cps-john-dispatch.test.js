@@ -14,7 +14,8 @@ function fakeTransport({composer=true,delivered=true,receipt=true}={}){
     assert.equal(john.budget.id,'budget:mandate:jhn:john-root');
     calls.push(john.input.arguments.action);
     const action=john.input.arguments.action;
-    const observation=action==='status'
+    const observation=action==='ensure_tab'?{tab_id:47,created:false,reused:true}
+      :action==='status'
       ?{stable_composer:composer,composer_blank:composer,generating:false}
       :{submitted:delivered,delivery_state:'ui_click_dispatched_not_model_result'};
     return {ok:true,json:async()=>({result:{structuredContent:{ok:true,
@@ -59,4 +60,13 @@ test('ambiguous submitted delivery never pretends a model returned',async()=>{
    fetchImpl:fake.fetchImpl})({continuation_id:id,prompt:'test'});
  assert.equal(r.error,'browser_dispatch_unconfirmed');
  assert.deepEqual(fake.calls,['status','submit']);
+});
+
+test('governed ensure_tab selects a dedicated tab without requiring a historical fixed tab ID',async()=>{
+  const fake=fakeTransport();
+  const go=createCpsGovernedJohnBrowserDispatch({token:'fixture',
+    fetchImpl:fake.fetchImpl});
+  const r=await go({continuation_id:id,prompt:'A real correlated CPS task'});
+  assert.equal(r.ok,true);
+  assert.deepEqual(fake.calls,['ensure_tab','status','submit']);
 });

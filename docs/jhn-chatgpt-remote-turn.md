@@ -1027,3 +1027,44 @@ historical-test exclusion. They do not claim an unattended live ChatGPT
 response. The canonical production store has **zero** explicitly assigned
 first deliveries and **zero** pending `next_action` candidates at the time of
 inspection; none of the earlier eight browser test declarations was reissued.
+
+### Generic assignment preparation and automatic tab selection (same #330 packet)
+
+The original `prepare-chatgpt-browser-cps-turn.mjs` was test-only and always
+requested the fixed `READY` response. It now also supports
+`--prepare-assigned`, reading a small JSON object containing `task_ref` and
+`question` on standard input. Its **generic** producer
+`chatgpt-cps-assignment.js` uses the existing signed John COP mandate,
+execution-budget reservation and Inseme packet claim. It derives a stable
+continuation ID from `task_ref`; replay of the exact question returns the
+existing ID, while a conflicting question under the same reference is refused.
+The resulting packet has the explicit assignment marker expected by the ONA
+cycle. This operation **only prepares** the task: it does not submit anything
+to a web provider, call an LLM or insert a prompt into a browser tab.
+
+Example of preparing a packet *after the appropriate task and authorization
+have been selected* (illustration, **not executed against production**):
+
+```bash
+printf '%s' '{"task_ref":"issue:JeanHuguesRobert/cogentia#330:investigate","question":"Analysez les résultats de ce paquet."}' | node scripts/ops/prepare-chatgpt-browser-cps-turn.mjs --prepare-assigned
+```
+
+The existing governed John transport can now use its **existing**
+`browser.chatgpt.turn(action=ensure_tab)` when no tab ID is supplied,
+selecting a marked Judgment conversation or safe blank tab before the
+output-free composer `status` preflight and `submit`. It does not adopt the
+Principal's unmarked personal conversations, and an uncertain UI effect
+remains fenced; the MCP result must still be explicitly returned and
+recognized. No new navigation extension or additional capability.
+
+FBF: both the assigned-first-delivery batch and the next-action batch now
+recognize that **exactly N** successful deliveries within a bound of N may
+empty the queue on the final allowed step. That is `queue_drained`, not a
+spurious `step_limit` failure. An actual failure or remaining queue still
+reports the appropriate boundary. Tests use the exact-bound case.
+
+The production ONA job remains limited to settled MCP return reconciliation:
+the automatic browser dispatcher has neither been configured with a valid
+provider-channel authorization nor with the existing authenticated John
+transport token. No old task was silently resent and no live new browser
+submission is claimed.

@@ -249,7 +249,7 @@ test('one bounded mandate driver dispatches three separately admitted causal chi
   }
   await record(ids[0]);
   const result=await runChatgptCpsNextStepBatch({store,
-   max_steps:4,admit:nextActionAdmit,verifyDispatchReceipt:nextActionVerifiedReceipt,
+   max_steps:2,admit:nextActionAdmit,verifyDispatchReceipt:nextActionVerifiedReceipt,
    dispatch:async({continuation_id})=>{
     const index=ids.indexOf(continuation_id);
     handled.push(continuation_id);

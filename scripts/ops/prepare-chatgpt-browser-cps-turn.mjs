@@ -5,6 +5,8 @@
  * A returned result is accepted only with real claim and reserved budget.
  */
 import {randomUUID} from 'node:crypto';
+import {readFileSync} from 'node:fs';
+import {prepareAssignedChatgptCpsContinuation} from '../lib/chatgpt-cps-assignment.js';
 import {createSqliteCopEventStore} from '../../../inseme/packages/cop-core/src/sqlite-cop-event-store.js';
 import {createEventSourcedExecutionBudgetLedger} from '../../../inseme/packages/cop-core/src/execution-budget.js';
 import {EventStorePacketClaimCoordinator} from '../../../inseme/packages/cop-kernel/src/packetCoordination.js';
@@ -14,8 +16,28 @@ import {resolveMandate,evaluateMandate} from '../../../inseme/packages/cop-core/
 const path='/var/lib/cogentia/cop/john-root-v1.sqlite';
 const ref='mandate:jhn:john-root';
 const deny=error=>{console.log(JSON.stringify({ok:false,error}));process.exitCode=1};
+// Generic producer mode: accept existing Cognitive Packet task identity and
+// question through bounded stdin. No new browser effect; the signed JHN root,
+// budget and packet-claim coordinator admit the assignment. This reuses the
+// already established prep CLI instead of proliferating capabilities.
+if(process.argv.length===3&&process.argv[2]==='--prepare-assigned'){
+  let request;
+  try{
+    const raw=readFileSync(0,'utf8');
+    if(raw.length>6000)throw Error('invalid_assignment_input');
+    request=JSON.parse(raw);
+  }catch{deny('invalid_assignment_input');process.exit(1)}
+  const writableStore=createSqliteCopEventStore(path);
+  try{
+    const result=await prepareAssignedChatgptCpsContinuation({store:writableStore,
+      task_ref:request?.task_ref,question:request?.question});
+    console.log(JSON.stringify(result));
+    if(!result.ok)process.exitCode=1;
+  }finally{writableStore.close()}
+  process.exit();
+}
 if(process.argv.length!==3||process.argv[2]!=='--prepare'){
-  deny('usage: --prepare');process.exit(1);
+  deny('usage: --prepare or --prepare-assigned (task_ref and question as JSON stdin)');process.exit(1);
 }
 const store=createSqliteCopEventStore(path);
 try {

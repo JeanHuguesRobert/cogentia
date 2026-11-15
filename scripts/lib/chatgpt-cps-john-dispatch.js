@@ -13,7 +13,8 @@ export function createCpsGovernedJohnBrowserDispatch({
 }={}){
   // Do not use a remote URL or an attacker-supplied MCP endpoint.
   if(mcpUrl!==LOCAL_MCP||typeof token!=='string'||!token||
-     !Number.isSafeInteger(tab_id)||tab_id<1||typeof fetchImpl!=='function')
+     (tab_id!==undefined&&(!Number.isSafeInteger(tab_id)||tab_id<1))||
+     typeof fetchImpl!=='function')
     throw new TypeError('authenticated_local_john_browser_transport_required');
   async function invoke(action,continuation_id,argumentsValue){
     const request_id=`jhn-cps-${action}-${continuation_id}`;
@@ -57,13 +58,24 @@ export function createCpsGovernedJohnBrowserDispatch({
       return fail('canonical_prompt_missing');
     // Non-extractive composer readiness observation. A failure cannot be used
     // to justify a blind second submission after a possibly ambiguous click.
-    const status=await invoke('status',continuation_id,{action:'status',tab_id});
+    // No fixed tab identifier is required: the existing browser.chatgpt.turn
+    // ensure_tab operation selects only a marked Judgment conversation or a
+    // blank root tab, under the same governed John/mandate channel.
+    let targetTab=tab_id;
+    if(targetTab===undefined){
+      const selection=await invoke('ensure_tab',continuation_id,{action:'ensure_tab'});
+      if(!selection.ok)return selection;
+      targetTab=selection.observation.tab_id;
+      if(!Number.isSafeInteger(targetTab)||targetTab<1)
+        return fail('governed_tab_not_available');
+    }
+    const status=await invoke('status',continuation_id,{action:'status',tab_id:targetTab});
     if(!status.ok)return status;
     if(status.observation.stable_composer!==true||
        status.observation.composer_blank!==true||
        status.observation.generating!==false)
       return fail('composer_not_ready');
-    const sent=await invoke('submit',continuation_id,{action:'submit',tab_id,prompt});
+    const sent=await invoke('submit',continuation_id,{action:'submit',tab_id:targetTab,prompt});
     if(!sent.ok)return sent;
     if(sent.observation.submitted!==true||
        sent.observation.delivery_state!=='ui_click_dispatched_not_model_result')

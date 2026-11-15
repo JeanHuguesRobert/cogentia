@@ -169,7 +169,8 @@ export async function runChatgptCpsNextStepBatch({store,admit,dispatch,verifyDis
    return {ok:result.ok===true,code:result.status};
  }});
  const pending=listChatgptCpsNextSteps(store,{limit:100});
- const drained=run.action==='complete'&&run.reason==='verified_objective_met';
+ const drained=(run.action==='complete'&&run.reason==='verified_objective_met')||
+   (run.reason==='step_limit'&&pending.length===0);
  return {ok:drained,status:drained?'queue_drained':run.reason,
    steps_completed:run.steps_completed,
    pending_count:pending.filter(x=>x.status==='pending_admission').length,

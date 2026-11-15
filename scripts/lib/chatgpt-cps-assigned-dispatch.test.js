@@ -109,7 +109,7 @@ test('three assigned continuations use the existing bounded mandate driver, no d
  const s=createSqliteCopEventStore(':memory:');try{
   for(let i=1;i<=3;i++)await assigned(s,'ctn_assigned_batch_0'+i);
   let sent=0;
-  const batch=await runAssignedChatgptCpsBatch({store:s,max_steps:4,admit:permit,
+  const batch=await runAssignedChatgptCpsBatch({store:s,max_steps:3,admit:permit,
     dispatch:async input=>{sent++;return send(input)}});
   assert.equal(batch.ok,true,JSON.stringify(batch));
   assert.equal(sent,3);
