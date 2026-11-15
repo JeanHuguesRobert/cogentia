@@ -471,3 +471,42 @@ or possessing a private environment-file path does not by itself supply
 that delegation. **The owner-run command is therefore a true operational
 boundary, not an additional policy preference or an invitation to paste
 secrets into ChatGPT.** The command has not been executed by the agent.
+
+### Recovery of first owner-run Reality Test — 15 November 2026, 10:12 UTC
+
+The Principal executed the documented one-shot activation by PowerShell
+`ssh fracta2 'sudo bash ... --run-three-turns'`. The initial `curl: (7)`
+was **transient**, during the service restart: systemd logs show
+`mcp-cogentia.service` restarted and listening at **10:12:23 UTC**;
+`GET /health` returned HTTP 200 afterwards. The owner wrapper then
+reported `needs_reconciliation`, `completed_turns=0`, stage
+`dispatch_ambiguous` for continuation
+`ctn_chatgpt_browser_c5e8f5f0d6e54673b573d6c8576613b2`.
+
+The CPS journal confirmed a new child declaration with an active one-step
+budget reservation and PacketClaim, **no `returned` event and no wake**.
+An independent read-only, John-governed inspection of the existing
+ChatGPT test tab `94450542` still found exactly the **two historical
+assistant replies**, a blank editor and no generation. On this evidence,
+the child was explicitly **abandoned**: its budget reservation changed to
+`released`, its claim returned `CLAIM_RELEASED`, and a durable
+`cop.continuation-abandonment/v1` event was appended. Canonical outstanding
+budget reservation count returned to **zero**; no third live completion is
+claimed. The ambiguous attempt is never retried under its old identity.
+
+**FBF action:** the runner previously swallowed the exact failure returned
+by `cogentia_john_run` and reported only `dispatch_ambiguous`. It now logs
+only an **allowlisted error-code token** and optional sanitized cause
+(`dispatch_rejected` / `dispatch_exception`), plus the correlation ID.
+No prompt body, authentication token, URL, browser response or secret is
+logged. A retry is **never automatic** after an ambiguous click. The
+owner wrapper also silences the expected `curl` stderr during HTTP health
+polling, without weakening the health check itself. Those improvements
+are source-level changes and do not retroactively reveal the missing
+underlying failure code from the already-ended run.
+
+After this fix, an owner-run test can be retried **as a new child** only
+after inspecting the durable journal and the ChatGPT tab for an existing
+unexpected submission, and then by reusing the canonical one-shot entrypoint.
+If the new run fails, its sanitized `failure` and `cause` should be used
+for root-cause repair before further retries.

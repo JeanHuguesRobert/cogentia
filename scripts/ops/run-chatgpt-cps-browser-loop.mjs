@@ -15,6 +15,7 @@ const MANDATE='mandate:jhn:john-root';
 const LOCAL_MCP='http://127.0.0.1:8791/mcp';
 const sleep=ms=>new Promise(resolve=>setTimeout(resolve,ms));
 const output=(status,data={})=>console.log(JSON.stringify({status,...data}));
+const safeFailure=x=>typeof x==='string'&&/^[a-z][a-z0-9_]{0,79}$/.test(x)?x:'unspecified_failure';
 const argv=process.argv.slice(2);
 if(argv.length===1&&argv[0]==='--status'){
  const store=createSqliteCopEventStore(DB);
@@ -63,15 +64,17 @@ if(argv.length===1&&argv[0]==='--status'){
          params:{name:'cogentia_john_run',arguments:{request:johnRequest(action,args,request_id)}}})});
      if(!result.ok)throw Error('mcp_http_'+result.status);
      const rpc=await result.json();
-     if(rpc.error)throw Error('mcp_rpc_error');
+     if(rpc.error)throw Error('mcp_rpc_error_'+(Number.isSafeInteger(rpc.error.code)?Math.abs(rpc.error.code):'unknown'));
      const projected=rpc.result?.structuredContent||
        (typeof rpc.result?.content?.[0]?.text==='string'
          ?JSON.parse(rpc.result.content[0].text):rpc.result)||{};
      if(projected.ok!==true||projected.data?.ok!==true)
-       return {ok:false,failure:projected.data?.failure?.code||'john_denied'};
+       return {ok:false,failure:safeFailure(projected.data?.failure?.code||projected.error_class||'john_denied'),
+         cause:safeFailure(projected.data?.failure?.cause||'unspecified_failure'),
+         request_id};
      let observation;
      try{observation=JSON.parse(projected.data.text||'{}')}
-     catch{return {ok:false,failure:'john_observation_unparseable'}}
+     catch{return {ok:false,failure:'john_observation_unparseable',request_id}}
      return {ok:true,observation,request_id,
        canonical:projected.data.canonical_accounting||null};
    }
@@ -114,10 +117,28 @@ if(argv.length===1&&argv[0]==='--status'){
          return v;
        },
        dispatch:async({prepared})=>{
-         const d=await john('submit',{action:'submit',tab_id:tabId,prompt:prepared.prompt});
+         let d;
+         try{d=await john('submit',{action:'submit',tab_id:tabId,prompt:prepared.prompt});}
+         catch(error){
+           output('dispatch_exception',{
+             stage:'john_browser_turn',continuation_id:prepared.continuation_id,
+             failure:safeFailure(String(error?.message||'transport_failure')),
+             sent_unconfirmed:true,
+           });
+           return {ok:false,submitted:false,failure:'transport_failure'};
+         }
          const sent=d.ok===true&&d.observation.submitted===true&&
            d.observation.delivery_state==='ui_click_dispatched_not_model_result';
+         if(!sent)output('dispatch_rejected',{
+           request_id:d.request_id||null,
+           failure:safeFailure(d.failure||'delivery_unconfirmed'),
+           cause:safeFailure(d.cause||'unspecified_failure'),
+           stage:'john_browser_turn',
+           continuation_id:prepared.continuation_id,
+           sent_unconfirmed:true,
+         });
          return {ok:sent,submitted:sent,
+           failure:safeFailure(d.failure||'delivery_unconfirmed'),
            execution_receipt_ref:sent?'john:'+d.request_id:null};
        },
        observeReturn:async({prepared})=>{

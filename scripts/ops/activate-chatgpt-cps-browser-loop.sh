@@ -56,10 +56,10 @@ if [[ "$status" != *'"mcp_token_present":true'* ]]; then
 fi
 systemctl restart mcp-cogentia.service
 for i in {1..20}; do
-  if curl -fsS --max-time 2 http://127.0.0.1:8791/health >/dev/null; then break; fi
+  if curl -fs --max-time 2 http://127.0.0.1:8791/health >/dev/null; then break; fi
   sleep 1
 done
-if ! curl -fsS --max-time 2 http://127.0.0.1:8791/health >/dev/null; then
+if ! curl -fs --max-time 2 http://127.0.0.1:8791/health >/dev/null; then
   echo 'mcp_service_not_healthy_after_restart' >&2
   exit 1
 fi
