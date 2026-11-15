@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { DEFAULT_JHN_COP_STORE, inspectUnixProcessCopCustody } from "./unix-process-cop-custody.js";
+import { DEFAULT_JHN_COP_STORE, inspectUnixProcessCopCustody, inspectIsolatedUnixProcessCopCustody } from "./unix-process-cop-custody.js";
 
 const parent = "/var/lib/cogentia/cop";
 function fakeFilesystem({ storeUid = 1001, parentUid = 1001, writablePaths = [], missing = false } = {}) {
@@ -93,4 +93,33 @@ test("FBF: custody denial precedes any COP budget consumption or shell dispatch"
     await router.stop();
     rmSync(dir, { recursive: true, force: true });
   }
+});
+
+test("isolated Unix executor must prove a distinct non-writer UID through sudo", () => {
+  const fsFixture={
+    statSync(p) {
+      if(p===DEFAULT_JHN_COP_STORE)return {uid:1001,gid:1001,mode:0o100600,isFile:()=>true,isDirectory:()=>false};
+      if(p===parent)return {uid:1001,gid:1001,mode:0o40700,isFile:()=>false,isDirectory:()=>true};
+      throw Error("unexpected path");
+    },
+    realpathSync:p=>p,
+  };
+  const env={COGENTIA_HOST_UNIX_ISOLATED_USER:"cogentia-effect",
+    COGENTIA_JHN_CANONICAL_STORE_PATH:DEFAULT_JHN_COP_STORE};
+  const good=()=>({status:0,stdout:"UID=1801\nGIDS=1801\nWRITABLE=no\n"});
+  const grant=inspectIsolatedUnixProcessCopCustody({env,filesystem:fsFixture,spawn:good});
+  assert.equal(grant.blocked,false);
+  assert.equal(grant.executor_uid,1801);
+  const same=inspectIsolatedUnixProcessCopCustody({env,filesystem:fsFixture,
+    spawn:()=>({status:0,stdout:"UID=1001\nGIDS=1001\nWRITABLE=no\n"})});
+  assert.equal(same.blocked,true);
+  for(const bad of [
+    {status:0,stdout:"UID=0\nGIDS=0\nWRITABLE=no\n"},
+    {status:0,stdout:"UID=1801\nGIDS=1801\nWRITABLE=yes\n"},
+    {status:1,stdout:""},
+    {status:0,stdout:"invalid"},
+  ])assert.equal(inspectIsolatedUnixProcessCopCustody({
+    env,filesystem:fsFixture,spawn:()=>bad}).blocked,true);
+  assert.equal(inspectIsolatedUnixProcessCopCustody({
+    env:{},filesystem:fsFixture,spawn:good}).blocked,true);
 });
