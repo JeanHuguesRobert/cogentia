@@ -63,6 +63,35 @@ Ces 26 résultats utilisent les références origin localement disponibles penda
 | survey | origin/dependabot/npm_and_yarn/rollup-4.59.0 | 1 | 0 | 0 | Revoir versions et CI ; ne pas fusionner une mise à jour périmée |
 | survey | origin/dependabot/npm_and_yarn/undici-7.18.2 | 1 | 0 | 0 | Revoir versions et CI ; ne pas fusionner une mise à jour périmée |
 
+## Extension GitHub au-delà des checkouts locaux
+
+Recherche en lecture seule parmi les dépôts des propriétaires GitHub connus : 30 dépôts JeanHuguesRobert et 7 dépôts acorsica. Les 7 dépôts acorsica sont représentés par un checkout Fracta2, mais **16 dépôts publics JeanHuguesRobert ne le sont pas**. Leur seule absence d'un checkout Fracta2 ne prouve pas qu'aucune contribution n'a atteint le Corpus. L'inventaire des autres organisations GitHub éventuelles n'est pas exhaustif.
+
+| Dépôt distant sans checkout Fracta2 | Dernier push connu | Checkout ThinkPad recensé | Qualification |
+| --- | --- | --- | --- |
+| JeanHuguesRobert/paese-capace | 2026-11-12 | non | Prototype de pré-dossier territorial, paquet #1 ; site non confirmé en service ; rapprocher de la doctrine de capacité sans assimilation institutionnelle |
+| JeanHuguesRobert/pertitellu | 2026-08-27 | non | Corpus politique distinct ; respecter la séparation juridique/financière de C.O.R.S.I.C.A. et de FractaVolta |
+| JeanHuguesRobert/DEnBUG | 2026-08-17 | oui | Vérifier l utilité actuelle et la présence de liens canoniques |
+| JeanHuguesRobert/simpli | 2026-07-17 | oui | Vérifier l utilité actuelle et la présence de liens canoniques |
+| JeanHuguesRobert/Rhuma | 2026-07-02 | oui | Vérifier l utilité actuelle et la présence de liens canoniques |
+| JeanHuguesRobert/ubikial | 2026-05-23 | non | Ancienne application de gestion de personas ; comparaison fonctionnelle avec les systèmes Ubikia/agents en vigueur |
+| JeanHuguesRobert/civic-ideas | 2026-05-14 | oui | Vérifier l utilité actuelle et la présence de liens canoniques |
+| JeanHuguesRobert/Mailai | 2026-03-01 | oui | Vérifier l utilité actuelle et la présence de liens canoniques |
+| JeanHuguesRobert/paese | 2026-02-03 | oui | Vérifier l utilité actuelle et la présence de liens canoniques |
+| JeanHuguesRobert/recruit | 2025-08-08 | non | Ancienne source : audit de portée et conservation, pas de clonage par défaut |
+| JeanHuguesRobert/Ubiks | 2025-04-25 | non | Ancienne source : audit de portée et conservation, pas de clonage par défaut |
+| JeanHuguesRobert/Ubik-jean-hugues | 2025-03-05 | non | Ancienne source : audit de portée et conservation, pas de clonage par défaut |
+| JeanHuguesRobert/gabriel | 2025-02-27 | non | Ancienne source : audit de portée et conservation, pas de clonage par défaut |
+| JeanHuguesRobert/scrollcue | 2014-06-06 | non | Ancienne source : audit de portée et conservation, pas de clonage par défaut |
+| JeanHuguesRobert/gojee | 2014-03-31 | non | Ancienne source : audit de portée et conservation, pas de clonage par défaut |
+| JeanHuguesRobert/debug | 2012-10-25 | non | Ancienne source : audit de portée et conservation, pas de clonage par défaut |
+
+Les deux candidats les plus récents sont Paese Capace (push du 12 novembre 2026) et Pertitellu (27 août). Le README de Paese Capace présente un service d'aide à la formulation de dossiers Territorii, sans preuve de déploiement public ; le corpus du Petit Parti indique expressément qu'une interconnexion documentaire ne constitue pas une fusion ou un soutien financier politique. **Ne pas transposer automatiquement** leurs contenus dans le Livre Vivant Capable ni suggérer qu'un service soit opérationnel sans recette.
+
+## Vérification des références distantes
+
+Un contrôle live par git ls-remote --heads a été effectué pour les 11 dépôts possédant les 26 références anciennes à commits non fusionnés : les 26 branches **existent toujours** sur GitHub et leur pointe correspond aux références locales utilisées pour le tableau, sans déplacement ni suppression détectés lors du contrôle. Elles ne sont donc pas de simples références locales obsolètes. Le statut de contenu utile reste cependant distinct.
+
 ## Restes à trancher
 
 1. Operium : les branches de provisionnement multi-utilisateur du navigateur et de validation distante contiennent plusieurs scripts absents de main. Un ancien outil d'authentification ou de commande distante ne doit pas être déployé par simple fusion. Propriétaire : Operium #25, suivi transversal Cogentia #309.
