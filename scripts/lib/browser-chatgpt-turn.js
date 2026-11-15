@@ -10,13 +10,18 @@ const GATEWAY='ws://127.0.0.1:8776/assistant';
 const deny=code=>{throw Object.assign(new Error(code),{code});};
 const textLimit=(s,n)=>typeof s==='string'?s.slice(0,n):'';
 export function validateChatgptTurnRequest(input={}){
- if(!input||typeof input!=='object'||!['submit','observe'].includes(input.action))
+ if(!input||typeof input!=='object'||!['submit','observe','send_draft'].includes(input.action))
    return {ok:false,error:'chatgpt_action_invalid'};
  if(!Number.isSafeInteger(input.tab_id)||input.tab_id<1)
    return {ok:false,error:'chatgpt_target_tab_invalid'};
  if(input.action==='submit' &&
     (typeof input.prompt!=='string'||!input.prompt.trim()||input.prompt.length>6000))
    return {ok:false,error:'chatgpt_prompt_invalid'};
+ if(input.action==='send_draft'&&
+    (typeof input.expected_continuation_id!=='string'||
+     !/^ctn_chatgpt_browser_[a-f0-9]{32}$/.test(input.expected_continuation_id)||
+     input.prompt!==undefined))
+   return {ok:false,error:'chatgpt_draft_binding_invalid'};
  if(input.action==='observe'&&input.prompt!==undefined)
    return {ok:false,error:'chatgpt_unexpected_prompt'};
  return {ok:true};
@@ -36,7 +41,8 @@ const submitCode=`(() => {
   if(location.origin!=="https://chatgpt.com")return {ok:false,error:"origin_changed"};
   const e=document.querySelector("#prompt-textarea,[contenteditable=true][data-placeholder],div[contenteditable=true][role=textbox]");
   if(!e||(e.innerText||"").trim().length===0)return {ok:false,error:"composer_empty"};
-  const send=document.querySelector('button[data-testid="send-button"],button[aria-label="Send prompt"],button[aria-label="Envoyer le message"]');
+  const send=e.closest('form')?.querySelector('button[type="submit"][aria-label="Send"],button[data-testid="send-button"],button[type="submit"]')
+    ||document.querySelector('button[data-testid="send-button"],button[aria-label="Send prompt"],button[aria-label="Envoyer le message"]');
   if(!send||send.disabled)return {ok:false,error:"send_button_not_ready"};
   send.click();return {ok:true,click_dispatched:true};
 })()`;
@@ -91,6 +97,19 @@ export function createChatgptTurnCapability({gateway=GATEWAY,browserId=BROWSER,t
            const observed=await rpc(observeCode);
            if(!observed.ok)deny(observed.error||'chatgpt_observation_unconfirmed');
            return {...meta,action:'observe',...observed};
+         }
+         // Submit exactly the already staged prompt, without inserting it
+         // again, only if its declared continuation ID is still present.
+         if(input.action==='send_draft'){
+           const code=submitCode.replace(
+             'const send=e.closest',
+             'if(!(e.innerText||" ").includes('+JSON.stringify(input.expected_continuation_id)+'))return {ok:false,error:"draft_binding_mismatch"};\n  const send=e.closest'
+           );
+           const submitted=await rpc(code);
+           if(!submitted.ok)deny(submitted.error||'chatgpt_draft_submit_failed');
+           return {...meta,action:'send_draft',submitted:true,
+             continuation_id:input.expected_continuation_id,
+             delivery_state:'ui_click_dispatched_not_model_result'};
          }
          // Preflight is a focused field only, not an arbitrary page script.
          const focus=await rpc(focusCode);

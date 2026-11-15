@@ -46,7 +46,7 @@ export async function executeJohnCanonicalChatgptTurn({
  if(policy?.origin!=='https://chatgpt.com'||
    policy.browser_instance_id!=='fracta2-hosted'||
    !Array.isArray(policy.operations)||
-   !policy.operations.includes(args.action==='submit'?'submit_prompt':'observe_result')||
+   !policy.operations.includes(args.action==='observe'?'observe_result':'submit_prompt')||
    policy.require_cop_result_receipt!==true)
    return refuse('canonical_chatgpt_policy_not_signed');
  const ledger=createEventSourcedExecutionBudgetLedger({

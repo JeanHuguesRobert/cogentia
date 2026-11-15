@@ -45,3 +45,15 @@ test('no request to another website, wrong tab or arbitrary input',async()=>{
  await assert.rejects(cap.execute({action:'submit',tab_id:42,prompt:'hello'}),/chatgpt_target_changed/);
  assert.equal(calls.some(x=>x[0]==='page.insertText'),false);
 });
+
+test('already drafted prompt can be sent only under exact continuation binding',async()=>{
+ const calls=[];const cap=createChatgptTurnCapability({sessionFactory:async()=>mockSession(calls)});
+ const id='ctn_chatgpt_browser_'+'a'.repeat(32);
+ const sent=await cap.execute({action:'send_draft',tab_id:42,expected_continuation_id:id});
+ assert.equal(sent.submitted,true);
+ assert.equal(sent.continuation_id,id);
+ assert.equal(calls.some(x=>x[0]==='page.insertText'),false);
+ assert.equal(calls.filter(x=>x[0]==='page.evaluate').length,1);
+ assert.ok(calls.find(x=>x[0]==='page.evaluate')[1].code.includes(id));
+ assert.equal(validateChatgptTurnRequest({action:'send_draft',tab_id:42,expected_continuation_id:'other'}).ok,false);
+});
