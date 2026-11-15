@@ -9,7 +9,7 @@
 import fs from "node:fs";
 import { UnixProcessProvider } from "./unix-process-provider.js";
 import { WindowsSshProcessProvider } from "./windows-ssh-process-provider.js";
-import { inspectUnixProcessCopCustody } from "./unix-process-cop-custody.js";
+import { inspectUnixProcessCopCustody, inspectIsolatedUnixProcessCopCustody, ISOLATED_UNIX_EXECUTOR_USER } from "./unix-process-cop-custody.js";
 import { resolveHostMissionAuthority } from "./host-mission-authority.js";
 import { maybeRecordCopEffectSpend } from "./cop-surface-accounting.js";
 import { createHash, randomUUID } from "node:crypto";
@@ -198,7 +198,9 @@ export function createHostCapabilityRouter(options = {}) {
       return spawned;
     }
     if (providerName === "unix-process") {
-      const spawned = new UnixProcessProvider({ cwd: options.cwd, timeoutMs: options.timeoutMs });
+      const spawned = new UnixProcessProvider({ cwd: options.cwd, timeoutMs: options.timeoutMs,
+        isolatedUser: env.COGENTIA_HOST_UNIX_ISOLATED_USER === ISOLATED_UNIX_EXECUTOR_USER
+          ? ISOLATED_UNIX_EXECUTOR_USER : null });
       providers.set(key, spawned);
       await spawned.start();
       return spawned;
@@ -339,7 +341,9 @@ export function createHostCapabilityRouter(options = {}) {
       // not confine /bin/sh. Trusted injected providers retain their own
       // custody contract; the built-in Unix effecter is checked on every call.
       if (!isSuper && providerName === "unix-process" && !providerFactory && !ctx.providerInstance) {
-        const custody = inspectUnixProcessCopCustody({ env });
+        const custody = env.COGENTIA_HOST_UNIX_ISOLATED_USER
+          ? inspectIsolatedUnixProcessCopCustody({ env })
+          : inspectUnixProcessCopCustody({ env });
         if (custody.blocked) {
           const err = new Error(custody.reason);
           err.error_class = custody.reason;
