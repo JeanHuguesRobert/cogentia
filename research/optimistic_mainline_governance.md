@@ -1,7 +1,7 @@
 ---
 title: Optimistic Mainline Governance
 subtitle: Direct agent work on main under trace, Measured Risk and scoped authorization
-version: '0.4'
+version: '0.5'
 status: working-paper — source document — operational doctrine
 date: '2026-07-07'
 author: Jean Hugues Noël Robert, baron Mariani
@@ -154,6 +154,16 @@ Therefore:
 > **Prefer the smallest sufficient operational Exposure, not the smallest conceivable risk.**
 
 ---
+
+### 3.1 Standing mandate for routine operational changes (15 November 2026)
+
+**Decision by the Principal:** optimistic execution is not limited to Git commits. A single **standing, revisable mandate** covers repeatable small technical operations in the entrusted Corpus and infrastructure. Its effect is *once-delegated authority, many effect receipts*, not *one signed mandate per operation*.
+
+**Presumptively in scope**, subject to actual actor rights, provider controls and cheap restoration: small source changes and commits to the agreed mainline; documented tests and cleanups; existing static-site release processes for already approved public materials; provisioning a single non-conflicting **DNS-only CNAME** for an agreed new host in an already controlled zone, without changing other records. A DNS mutation through an outside provider is not automatically a legal/public communication by the Principal. Distinguish the narrow technical operation from transferring nameservers, altering MX/registrar or sending correspondence.
+
+**Default action loop:** inspect exact current state → check for conflict, exposure and recovery → apply smallest sufficient change under the durable standing authority → reread actual effect → record result and rollback pointer. If a test or provider denies the operation, diagnose the *specific* gate, repair reusable missing integration inside the mandate when possible, and preserve partial work; do **not** erect a new human signature or one-off grant to avoid an ordinary small change. Request human judgment only on a consequential scope expansion, material uncertainty, external provider-required confirmation or genuinely unavailable authority. In all cases record whether an existing COP runtime actually verified a standing mandate: editing a public guideline alone is not a signed mandate or a proven provider grant.
+
+**Excluded from presumption:** secrets disclosure, financial/legal/institutional undertakings, unsolicited external communication, outbound email, changing DNS delegation or mail, destruction, transferring ownership, release of previously private materials, or materially irreversible change. The same optimization principle applies: check limits, not imagined risks. Measure avoidable Principal interruptions as failures of the delegation interface.
 
 ### 3.2 Ordinary authorized writes and real failure classes
 
@@ -428,7 +438,7 @@ Reusable instruction:
 
 ```text
 Work directly on the default branch unless I explicitly ask for a branch or PR, or unless isolation materially improves the measured consequence/recovery profile. Apply Optimistic Mainline Governance and Measured Risk: use small inspectable acts, bound Exposure, preserve mandate and source history, validate when available, keep a credible correction/recovery path, and report files changed, expected value, validation, known risks/Exposure, recovery path, residue and next step. Do not minimize risk as an objective in itself: take the smallest sufficient risk needed for useful progress, while respecting hard authority, rights, privacy and third-party boundaries. If an act has high or poorly bounded Exposure, uncertain propagation, hard-to-repair consequences, legal/institutional commitment, protected information, or important OptionLoss, reduce scope or route through stronger review/human validation.
-If a tool, connector, permission, policy check, API limit, repository rule, file conflict, safety control, or GitHub operation blocks the work, report it explicitly, preserve partial work, and ask whether manual intervention is desired when it could unblock the operation.
+If a tool, connector, permission, policy check, API limit, repository rule, file conflict, safety control, or GitHub operation blocks the work, diagnose the exact boundary and perform any still-authorized recovery and integration work first. Preserve partial work; seek a single human judgment only when no proportionate authorized continuation exists. Never bypass a provider refusal or forge COP authority.
 ```
 
 ---
