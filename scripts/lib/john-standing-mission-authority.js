@@ -145,6 +145,21 @@ export function createCanonicalStandingMissionResolver({
       allowed_execution_modes:["normal"],
       issuer_ref:mandate_ref,mandate_version:mandate.version,
       expires_at:mandate.valid_until,
+      async beforeDispatch() {
+        // A previous reservation is NOT authority to execute after the
+        // Principal revokes or amends the standing mandate. Revalidate
+        // issuer, signed scope, version and current budget before dispatch.
+        if (finished) return false;
+        const current=resolveMandate(store,mandate_ref);
+        if (current?.version!==mandate.version ||
+            !activeStandingOperation(current.scope,request)) return false;
+        const fresh=assessJohnCopAuthority({
+          store,auth,mandate_ref,version_pin:mandate.version,
+          transport_mandate_label,capability:request.capability,
+          ledger,verifyIssuer,at_time:now(),
+        });
+        return fresh.preflight_ok===true;
+      },
       async finalize({attempted=false,ok=false,receipt=null}={}) {
         if (finished) return {ok:true,duplicate:true,reservation_id:reservationId};
         // A dispatch that was started consumes its step even if the provider
