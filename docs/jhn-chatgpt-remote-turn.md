@@ -237,3 +237,56 @@ interruption/restart. The wake alone neither starts a worker nor demonstrates
 unattended autonomous continuation. Do not activate a background third-party
 browser scheduler solely because these tests are green; consult the applicable
 provider terms and separate operational mandate.
+
+## Existing COPScheduler integration and repeatability — 15 November 2026
+
+`chatgpt-cps-wake-consumer.js` now reads the durable
+`cop.continuation-scheduler-wake/v1` events, reconstructs their **canonical**
+`cop/continuation` and `cop.continuation-result/v1` journal records, and
+checks the original budget settlement. With an **independently trusted**
+`admit` callback returning current authority evidence, it routes the verified
+result to the existing Inseme `COPScheduler.execute()` bridge. The callback
+is a service-side authority boundary, **not** an LLM-generated boolean.
+Importantly, a settled budget for the *returned* turn is not a reservation
+for the *next* turn; the next effect still requires a separate John/COP
+admission and signed mandate verification.
+
+The consumer writes one durable SQLite dispatch intent through the existing
+COP transaction boundary before invoking a handler. On duplicate or
+concurrent arrival it does not call that handler twice. On interruption after
+the intent but before a completed receipt it reports `needs_reconciliation`;
+it must NOT blindly send another browser prompt. On completion it persists a
+separate `handler_completed` record, with `next_turn_dispatched=false`. A
+successful resume here is **parent evaluation**, not a new ChatGPT invocation.
+A narrow read-only operational inspection tool is available:
+
+```
+node scripts/ops/chatgpt-cps-wake-status.mjs --status
+```
+
+The source-level suite exercises: a signed MCP result passing through the
+actual result host into the Inseme COP scheduler, three causally linked
+returned packets in a persistent SQLite journal, replay/reopen, crash
+reconciliation after restart, competing consumers, negative admission and
+browser turn regression tests. **17 tests pass.** The live journal at the
+moment of inspection contained **2 original browser continuation declarations
+and 2 returned events; 0 wake events**: the two earlier Reality Test returns
+predate deployment of the wake producer. Do not backfill or redispatch these
+historic completions as pending new work.
+
+**Deployment boundary:** publishing these files to main does not restart or
+update the running MCP HTTP adapter. A process reload and read-only runtime
+validation are separate actions. No unattended consumer service, recurring
+job, browser submission or third-party output extraction is activated by this
+commit. A production worker would additionally require authenticated local
+service identity, live issuer verification, budget and rate-limit admission,
+provider-policy compatibility, and recovery of ambiguous effects.
+
+**Provider-policy check:** the [OpenAI EU Terms of Use](https://openai.com/policies/eu-terms-of-use/),
+applicable to consumer ChatGPT use in the EEA as of the 2026 review, restrict
+automatic or programmatic extraction of Output. A personal subscription and
+a signed JHN mandate do not by themselves grant an exception from these
+third-party terms. This source implementation stays testable without an
+unattended production activation that would require independent contractual
+clarification or a permitted official API alternative. Do not confuse this
+constraint with a limitation of COP's ability to schedule continuations.

@@ -17,6 +17,10 @@ import { declaredContinuationRecord, observeContinuationResult } from "../../../
 import { EventStorePacketClaimCoordinator } from "../../../inseme/packages/cop-kernel/src/packetCoordination.js";
 import { resumeContinuationFromReturnedEvent } from "../../../inseme/packages/cop-kernel/src/continuation.js";
 import { hashPayload } from "../../../inseme/packages/cop-core/src/cop-event-envelope.js";
+import {COPScheduler} from "../../../inseme/packages/cop-kernel/src/scheduler.js";
+import {COPBus} from "../../../inseme/packages/cop-kernel/src/bus.js";
+import {consumeChatgptCpsWake} from "./chatgpt-cps-wake-consumer.js";
+import {assessJohnCopAuthority} from "./john-cop-authority-preflight.js";
 
 // Disposable loopback transport reproduces POST /mcp without importing the
 // production server, its process environment, or the real COP database.
@@ -323,6 +327,7 @@ test("signed ChatGPT browser result is recognized and settles the real reserved 
        expected_generation:coordinator.inspect(packetRef).generation},
      expected_result:{schema:"cogentia.step_result/v1"},
      provider:"chatgpt",channel:"browser",
+     resumeTo:"handler:chatgpt-browser-result-observer",
    })).ok,true);
    const core=createMcpCore({
      COGENTIA_MCP_VIEW:"public",COGENTIA_MCP_JHN_MUTATE:"1",
@@ -353,6 +358,37 @@ test("signed ChatGPT browser result is recognized and settles the real reserved 
    assert.equal(wakes[0].payload.phase,"pending_scheduler_review");
    assert.equal(wakes[0].payload.dispatch_permitted,false);
    assert.equal(wakes[0].payload.requires_next_step_authority,true);
+   const resumeEvidence=[];
+   const trustedVerifier=createOfflineJohnIssuerVerifier({
+     trustedPublicKeyPem:pem,now:()=>NOW});
+   const localScheduler=new COPScheduler(new COPBus({name:"mcp-return-to-cps"}),{
+     handlerResolver:async ref=>ref==="handler:chatgpt-browser-result-observer"
+       ? {execute:async ({payload})=>{
+           resumeEvidence.push(payload.yield?.answer);
+           return {status:"continue",next_action:"child_packet_pending_admission"};
+         }}:null,
+   });
+   const localAdmission=async ({continuation})=>{
+     const preflight=assessJohnCopAuthority({
+       store,auth,mandate_ref:MANDATE,version_pin:"v1",
+       capability:RESULT_RETURN_CAPABILITY,ledger,
+       verifyIssuer:trustedVerifier,
+       transport_mandate_label:"mandate:chatgpt-corpus-coding",
+     });
+     return {granted:preflight.preflight_ok===true,
+       authorization_ref:preflight.preflight_ok
+         ?"signed-mandate:"+MANDATE+":v1":null,
+       handler_ref:continuation.resumeTo};
+   };
+   const awakened=await consumeChatgptCpsWake({
+     store,continuation_id:"ctn_browser_test",
+     scheduler:localScheduler,admit:localAdmission,
+   });
+   assert.equal(awakened.status,"handler_completed",JSON.stringify(awakened));
+   assert.deepEqual(resumeEvidence,["ok"]);
+   assert.equal(store.listTopic("continuation:ctn_browser_test")
+     .filter(e=>e.payload?.profile==="cop.continuation-dispatch/v1"&&
+       e.payload.phase==="handler_completed").length,1);
    const duplicate=await core.callTool(TOOL,args,{auth});
    assert.equal(duplicate.ok,true);
    assert.equal(duplicate.duplicate,true);
