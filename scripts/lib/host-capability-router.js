@@ -239,6 +239,9 @@ export function createHostCapabilityRouter(options = {}) {
     let effectTarget = null;
     let effectPayload = null;
     let missionAuthority = null;
+    let providerAttempted = false;
+    let missionFinalized = false;
+    let canonicalSettlement = null;
 
     const traceBase = {
       protocol: "cogentia.host_capability_trace/v1",
@@ -390,6 +393,11 @@ export function createHostCapabilityRouter(options = {}) {
             actor, principal, mandate, capability, target, provider: providerName,
             execution_mode: argsIn.execution_mode ?? "normal",
             payload_hash: canonicalPayloadHash(payload),
+            // Never derive the authenticated Principal from tool args.
+            // The original branded MCP auth object is kept separate from
+            // the lock-enabled router copy, whose spread loses its WeakSet brand.
+            caller_auth: ctx.trustedCallerAuth || null,
+            command: argsIn.command || null,
           });
           if (!missionAuthority) {
             const err = new Error("authorization_missing: no verified mission or effect grant");
@@ -425,11 +433,23 @@ export function createHostCapabilityRouter(options = {}) {
             authorization_id: ctx.authorization?.authorization_id,
           }) }
         : ctx.providerInstance || await resolveProvider(providerName);
+      providerAttempted = true;
       const result = await invokeCapability(
         capability,
         { capability, args, _providerInstance: providerInstance },
         { auth: ctx.auth, provider: providerName }
       );
+      if (missionAuthority?.finalize) {
+        canonicalSettlement = await missionAuthority.finalize({
+          attempted: true, ok: result?.ok === true,
+          receipt: {status: result?.ok === true ? "success" : "failed"},
+        });
+        missionFinalized = true;
+        if (canonicalSettlement?.ok !== true) {
+          throw Object.assign(new Error("canonical_standing_budget_settlement_failed"),
+            {error_class:"canonical_standing_budget_settlement_failed"});
+        }
+      }
 
       if (isSuper && result?.cop_reserved !== true) {
         const error = new Error(result?.error || "broker_did_not_reserve_cop");
@@ -453,14 +473,14 @@ export function createHostCapabilityRouter(options = {}) {
               ok: result?.ok === true,
               status: result?.ok === true ? "success" : "failed",
             };
-            const cop = result?.ok === true
+            const cop = canonicalSettlement || (result?.ok === true
               ? await maybeRecordCopEffectSpend({
                   action_class: capability, authorization_id: `mission-effect:${traceId}`,
                   authority_origin: "verified_mission", actor, principal,
                   mandate_id: mandate, payload_hash: canonicalPayloadHash(effectPayload),
                   receipt,
                 })
-              : { ok: false, reason: "effect_not_verified" };
+              : { ok: false, reason: "effect_not_verified" });
             return { ok: result?.ok === true, verification: {
               accounting_complete: cop.ok === true, cop_spend: cop,
             } };
@@ -510,12 +530,28 @@ export function createHostCapabilityRouter(options = {}) {
       });
       return { ...result, trace };
     } catch (err) {
+      // FBF: a reserved standing mission must not leak its hard budget if a
+      // path/provider fails before dispatch. An attempted process may already
+      // have had effects even when the receipt is lost: account one step.
+      if (missionAuthority?.finalize && !missionFinalized) {
+        try {
+          const settled = await missionAuthority.finalize({
+            attempted: providerAttempted, ok:false,
+            receipt:{status: providerAttempted ? "failed_or_uncertain" : "not_dispatched"},
+          });
+          missionFinalized=settled?.ok===true;
+          if (!missionFinalized) err.canonical_accounting_error="standing_finalize_unconfirmed";
+        } catch (accountingError) {
+          err.canonical_accounting_error=accountingError.error_class || "standing_finalize_unconfirmed";
+        }
+      }
       const trace = finish({
         status: "error",
         error_class: err.error_class || "host_capability_error",
         error: err.message,
-        authorization_id: ctx.authorization?.authorization_id || null,
-        verification: { ok: false },
+        authorization_id: ctx.authorization?.authorization_id || missionAuthority?.authority_id || null,
+        verification: { ok: false, accounting_complete: missionFinalized,
+          ...(err.canonical_accounting_error ? {accounting_error:err.canonical_accounting_error} : {}) },
       });
       err.trace = trace;
       throw err;
