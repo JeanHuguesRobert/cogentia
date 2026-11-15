@@ -5,6 +5,7 @@
  */
 import fs from "node:fs";
 import path from "node:path";
+import {spawnSync} from "node:child_process";
 
 export const DEFAULT_JHN_COP_STORE = "/var/lib/cogentia/cop/john-root-v1.sqlite";
 
@@ -57,4 +58,56 @@ export function inspectUnixProcessCopCustody({
     return { blocked: true, checked: true, reason: "unix_process_cop_store_writable_by_executor" };
   }
   return { blocked: false, checked: true, reason: "unix_process_cop_store_not_writable_by_executor" };
+}
+
+/**
+ * #299: the MCP authority server remains ubuntu and owns the canonical COP
+ * store; only the *child process* is moved to an independently less-privileged
+ * OS user. Check the exact identity and effective write access through the
+ * same sudoers path used at dispatch, not the permissions of the MCP parent.
+ * This cannot be enabled by a tool argument or a model-supplied environment.
+ */
+export const ISOLATED_UNIX_EXECUTOR_USER = "cogentia-effect";
+const FIXED_ISOLATED_CUSTODY_CHECK =
+  'printf "UID="; id -u; printf "GIDS="; id -G; ' +
+  'if test -w /var/lib/cogentia/cop/john-root-v1.sqlite || ' +
+  'test -w /var/lib/cogentia/cop; then echo "WRITABLE=yes"; ' +
+  'else echo "WRITABLE=no"; fi';
+export function inspectIsolatedUnixProcessCopCustody({
+  env=process.env, filesystem=fs, spawn=spawnSync,
+}={}) {
+  if (env.COGENTIA_HOST_UNIX_ISOLATED_USER !== ISOLATED_UNIX_EXECUTOR_USER)
+    return {blocked:true,checked:false,reason:"isolated_unix_executor_not_configured"};
+  const storePath=String(env.COGENTIA_JHN_CANONICAL_STORE_PATH||DEFAULT_JHN_COP_STORE);
+  if (storePath!==DEFAULT_JHN_COP_STORE)
+    return {blocked:true,checked:false,reason:"isolated_unix_cop_path_untrusted"};
+  try {
+    const store=filesystem.statSync(storePath);
+    const parent=filesystem.statSync(path.dirname(storePath));
+    if (!store.isFile()||!parent.isDirectory())
+      return {blocked:true,checked:false,reason:"isolated_unix_store_invalid"};
+    if (filesystem.realpathSync(storePath)!==DEFAULT_JHN_COP_STORE ||
+        filesystem.realpathSync(path.dirname(storePath))!==path.dirname(storePath))
+      return {blocked:true,checked:false,reason:"isolated_unix_store_symlink"};
+    const check=spawn("sudo",["-n","-u",ISOLATED_UNIX_EXECUTOR_USER,
+      "--","/bin/sh","-c",FIXED_ISOLATED_CUSTODY_CHECK],{
+      encoding:"utf8",timeout:4000,maxBuffer:1024,
+      env:{PATH:"/usr/sbin:/usr/bin:/sbin:/bin"},
+    });
+    if (check.error || check.status!==0)
+      return {blocked:true,checked:false,reason:"isolated_unix_executor_unreachable"};
+    const match=/^UID=(\d+)\nGIDS=([\d ]+)\nWRITABLE=(yes|no)\n?$/.exec(check.stdout);
+    if (!match) return {blocked:true,checked:false,reason:"isolated_unix_identity_unverifiable"};
+    const uid=Number(match[1]),groups=match[2].trim().split(" ").map(Number);
+    if (!Number.isInteger(uid)||uid===0||uid===process.getuid?.() ||
+        store.uid===uid||parent.uid===uid||
+        groups.some(g=>(store.mode & 0o020 && store.gid===g) ||
+          (parent.mode & 0o020 && parent.gid===g))||
+        match[3]!=="no")
+      return {blocked:true,checked:true,reason:"unix_process_cop_store_writable_by_executor"};
+    return {blocked:false,checked:true,
+      reason:"isolated_unix_cop_store_not_writable_by_executor",executor_uid:uid};
+  } catch {
+    return {blocked:true,checked:false,reason:"isolated_unix_custody_unverifiable"};
+  }
 }
