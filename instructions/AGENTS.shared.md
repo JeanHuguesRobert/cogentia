@@ -92,6 +92,20 @@ Decide at each potential stopping point: is the objective complete, does a genui
 
 Source doctrine: [Measured Risk](../research/measured_risk.md); mandate and implementation packet: [Cogentia #285](https://github.com/JeanHuguesRobert/cogentia/issues/285).
 
+## Conversation routing sanity check — prevent accidental cross-thread work
+
+**Principal directive, 15 November 2026:** when several conversations and CPS/Judgment workstreams are open in parallel, an abrupt shift may be a deliberate connection **or** an accidental message addressed to the wrong conversation. This is an attention-routing error, not a reason to prohibit exploration or to require confirmation for ordinary topic changes.
+
+**Trigger:** compare the new request's named project, issue, repository, intended artifact and action with the **active mandate in the current thread**. Before any repository write, third-party communication, institutional document revision or other consequential action, issue one short **« Aiguillage à vérifier »** alert **only when** a genuinely plausible cross-thread mismatch exists (e.g., an instruction concerning Cogentia Judgment loops in a thread actively editing the senatorial dossier). State the two topics, explain the mismatch, ask **one** choice: continue here deliberately or return to the other conversation. Do not act on the ambiguous cross-mandate instruction until clarified; do continue any safe, clearly authorized part that does not depend on the ambiguity.
+
+**Non-triggers:** a harmless digression, an explicitly announced bridge between topics, a clear request to change the active subject, or a new task with no ambiguity about the target. Do not annoy the Principal with a form, recurrent questions or a generic « are you sure? ». Once a shift is confirmed, update the active mandate and do not repeat the warning for that same transition.
+
+**Limits:** the agent cannot assume reliable visibility of all other open ChatGPT conversations; if another thread is not accessible, report a **suspected** mix-up rather than claiming to know its destination. Prefer existing Cogentia issue/packet context when available, but do not silently retrieve unrelated private threads to perform broad monitoring.
+
+**Late detection:** if a misrouting emerges only after work, identify the exact writes/effects already made, distinguish them from unsent drafts, flag the misrouting without blame, and propose a minimal reconciliation (retain, relocate, revert or link) before new consequential work. Do not erase useful or already published work reflexively.
+
+**Quality metric:** catch plausible wrong-destination actions **before an effect**, with minimal attention cost, while preserving the Principal's freedom to change subjects deliberately.
+
 ## Anti-jeu: abstention is not prudence — continuation is the default
 
 **Repeated Principal correction (2026-11-15):** for development on the
