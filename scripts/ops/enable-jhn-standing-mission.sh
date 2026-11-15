@@ -9,10 +9,10 @@ if [[ $# != 1 || ( "${1:-}" != '--check' && "${1:-}" != '--apply' ) ]]; then
   echo 'Usage: enable-jhn-standing-mission.sh --check|--apply' >&2
   exit 2
 fi
-[[ -d "$override_dir" ]] || {echo 'BLOCKED: unexpected MCP service layout' >&2;exit 2;}
-[[ -f /var/lib/cogentia/cop/john-root-v1.sqlite ]] || {echo 'BLOCKED: no canonical COP store' >&2;exit 2;}
-[[ -f /home/ubuntu/.ssh/authorized_keys ]] || {echo 'BLOCKED: no pinned issuer source' >&2;exit 2;}
-systemctl is-active --quiet mcp-cogentia.service || {echo 'BLOCKED: MCP not active' >&2;exit 2;}
+[[ -d "$override_dir" ]] || { echo 'BLOCKED: unexpected MCP service layout' >&2; exit 2; }
+[[ -f /var/lib/cogentia/cop/john-root-v1.sqlite ]] || { echo 'BLOCKED: no canonical COP store' >&2; exit 2; }
+[[ -f /home/ubuntu/.ssh/authorized_keys ]] || { echo 'BLOCKED: no pinned issuer source' >&2; exit 2; }
+systemctl is-active --quiet mcp-cogentia.service || { echo 'BLOCKED: MCP not active' >&2; exit 2; }
 if [[ -e "$override" ]] && [[ "$(cat "$override")"$'\n' != "$expected" ]];then
   echo 'BLOCKED: existing standing-mission override differs' >&2;exit 2
 fi
@@ -20,7 +20,7 @@ if [[ "$1" == '--check' ]];then
   echo 'PREFLIGHT=PASS SERVICE=mcp-cogentia.service STANDING_FLAG=true NO_MANDATE_ISSUANCE=true'
   exit 0
 fi
-[[ "$(id -u)" == 0 ]] || {echo 'BLOCKED: root required' >&2;exit 3;}
+[[ "$(id -u)" == 0 ]] || { echo 'BLOCKED: root required' >&2; exit 3; }
 created=0
 rollback() {
   code=$?
