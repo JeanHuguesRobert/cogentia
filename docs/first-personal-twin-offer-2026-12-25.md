@@ -51,25 +51,35 @@ Un **VPS adapté** peut héberger une installation Cogentia/CPS par utilisateur,
 
 La première procédure d'installation doit inclure : provisionnement, mises à jour, stockage des secrets, isolation du Principal, import initial volontaire, sauvegarde et restauration, export/révocation, supervision minimale et documentation des dépendances externes. Le choix VPS n'interdit pas de futures offres locales ou mutualisées. **Ne pas annoncer de minimum CPU/RAM, de prix ou de garantie de disponibilité sans mesures.**
 
-## Prérequis structurels de la première version
+## Déploiement : dépendances actuelles et cible « un VPS autonome »
 
-Le pilote de Noël 2026 **n'est pas un produit autonome ne demandant qu'un compte ChatGPT**. Dans l'architecture actuelle, l'usager doit disposer des éléments suivants, ou les faire provisionner et contrôler pour son propre compte :
+**Rectification du 15 novembre 2026.** GitHub et Supabase sont des dépendances de l'implémentation JHN actuelle, **non des prérequis obligatoires du produit à terme**. Deux modes d'installation doivent être distingués, sans imposer leur ordre de développement par le nom « V1 » :
 
-| Prérequis | Usage actuel | Conséquence pour l'installation |
+| Fonction indispensable | Implémentation JHN actuelle | Variante entièrement embarquée dans un VPS (à réaliser) |
 | --- | --- | --- |
-| Compte sur un agent conversationnel compatible, **ChatGPT d'abord** | Interface de conversation et capacités d'inférence déjà acquises par l'usager | Connexion effective, outils disponibles, quotas et limites vérifiés |
-| **Compte GitHub** | Corpus personnel, dépôts et Git comme support de versionnage, audit et échange | Création/configuration des dépôts, permissions et révocation ; aucun jeton partagé entre Principaux |
-| **Instance/projet Supabase propre au Principal** | Identité, authentification, consentements et données applicatives du jumeau | Provisionnement, migrations, clés/secrets, isolation, sauvegarde et contrôle du propriétaire |
-| **VPS adapté et navigateur hébergé propre à l'usager** | CPS persistant, composants opérationnels, extension Navigation Assistant et télécommande des tours | Installation reproductible ; pas de dépendance durable aux machines ni aux sessions JHN |
-| Accès à un fournisseur d'embeddings, ou solution locale testée | Indexation et recherche sémantique lorsque requises | Budget explicite, éventuel free tier, mode dégradé sans dépenses non autorisées |
+| Interface conversationnelle et inférence | Compte ChatGPT de l'usager | Même compte et mêmes quotas existants : l'inférence reste externe au VPS |
+| Corpus versionné et historique | Git + dépôts GitHub | Git local dans le VPS, avec sauvegarde/export et dépôt distant facultatif |
+| Identités, consentements, données applicatives | Supabase | Base locale adaptée (SQLite ou PostgreSQL) + authentification et consentement locaux ; remplacement fonctionnel à tester |
+| COP, mandats, preuves et continuations | Services Cogentia et journaux COP | Services et stockage locaux sur le VPS, sans perdre traçabilité, révocation ni reprise |
+| Navigation Assistant | Brave/Chromium hébergé | **Navigateur propre au VPS**, extension et passerelle isolées |
+| Embeddings | API configurée séparément | API avec budget ou embeddings locaux ; recherche lexicale en secours |
 
-**Github et Supabase sont des contraintes réelles du premier déploiement**, pas des propriétés nécessaires par définition à tout futur double numérique. La documentation d'installation doit les annoncer en amont, les provisionner de manière compréhensible et tester l'indépendance des comptes/instances. Aucun compte, projet Supabase ou navigateur partagé avec JHN ne doit être présupposé chez un nouvel usager.
+**Un VPS autonome est une cible de packaging potentiellement plus simple pour l'usager** : une machine, une procédure d'installation, un domaine et ses sauvegardes. Aucun compte GitHub ni projet Supabase externe ne serait requis. Ne pas confondre **simplicité d'installation à l'usage** et **absence de travail d'ingénierie** : l'authentification, les migrations, les mandats, la sauvegarde et la reprise doivent avoir des substituts locaux effectivement testés avant d'affirmer que ce mode fonctionne.
 
-### Trajectoires de distribution envisagées, sans les confondre
+L'autonomie recherchée est celle du **plan de contrôle et des données du jumeau** : le compte ChatGPT et les éventuelles API d'embeddings restent des dépendances externes explicites. Une installation concentrée sur un VPS est physiquement peu distribuée, mais elle n'interdit pas une architecture logiquement fédérable.
 
-1. **V1 — VPS dédié / autohébergé assisté** : l'usager dispose de ses comptes GitHub et Supabase, de son VPS et de son navigateur. Cogentia est installé pour lui ; il conserve la maîtrise des identités et accès.
-2. **V2 possible — hébergement managé « un usager, une instance »** : un opérateur installe, met à jour et supervise le VPS et éventuellement provisionne GitHub/Supabase au nom du Principal. Il faut des procédures d'accès, restitution, séparation des données et sortie vérifiées. Ce n'est **pas encore** un SaaS mutualisé.
-3. **V3 possible — SaaS multi-utilisateur** : interface d'inscription et de facturation, infrastructure mutualisée ou par locataire, identité/secrets/stockages isolés, consentement et export. On pourrait remplacer progressivement Supabase ou GitHub par d'autres fournisseurs ou par des services intégrés, **à condition d'en conserver les fonctions vérifiables** (authentification, données, versionnage, traçabilité, reprise). Aucun de ces remplacements n'est réalisé aujourd'hui.
+### Confédération ultérieure de VPS
+
+La première instance autonome peut devenir **un nœud local d'une Confédération de Fractanets**, selon le [Principe de Localité](../research/locality_principle.md). Les Principaux conservent leur propre identité, corpus et autorité. Des coopérations entre VPS pourront transmettre, par protocoles explicites, des références, paquets cognitifs, tâches, preuves ou projections **sous mandats compatibles**, sans partager implicitement toutes les données ni confondre les autorités.
+
+Conserver dès l'origine les invariants propices à cette extension : identifiants stables, références et preuves exportables, événements rejouables, frontières de confiance, mécanismes d'import/export, gestion des conflits et compatibilité de versions. **La confédération inter-VPS n'est pas encore opérationnelle** : ne pas ajouter un consensus global ou une infrastructure de fédération comme prérequis au pilote de Noël.
+
+### Trajectoires de distribution
+
+1. **Mode actuellement éprouvé chez JHN** : VPS + navigateur personnel + GitHub + Supabase. C'est le chemin le plus proche du code existant pour un second Principal.
+2. **Mode VPS tout-en-un (candidat prioritaire à évaluer)** : navigateur, état, identités, autorisations et Git local sur un seul nœud, sans comptes GitHub/Supabase obligatoires. Comparer son coût de réalisation et de validation au mode précédent pour la deadline du 25 décembre.
+3. **Gestion de VPS dédiés** : un prestataire opère ces nœuds pour leurs Principaux, avec export et révocation ; ce n'est pas encore un SaaS mutualisé.
+4. **Confédération de VPS ou SaaS éventuel** : trajectoires différentes, éventuellement complémentaires. La confédération organise des nœuds souverains ; le SaaS simplifie la fourniture d'un service et peut être mutualisé. Aucun des deux n'est une condition de la première offre.
 
 **Positionnement vis-à-vis d'OpenClaw (vérification novembre 2026) :** OpenClaw est principalement un logiciel libre *local-first* exécuté sur une machine contrôlée par son utilisateur, y compris un VPS ; ce n'est pas intrinsèquement une offre SaaS officielle. Des opérateurs tiers commercialisent des installations OpenClaw gérées ou des services d'agents en SaaS. Le modèle de déploiement est **indépendant** du choix du moteur : Cogentia peut offrir une installation personnelle, un VPS géré, puis éventuellement une expérience SaaS sans transformer sa doctrine de mandat ni absorber les données de tous les Principaux dans une autorité unique. Sources : [documentation de déploiement OpenClaw](https://docs.openclaw.ai/install), [présentation OpenClaw](https://docs.openclaw.ai/help/faq/what-is-openclaw). Les alternatives comparables — notamment n8n Cloud, Lindy ou plateformes d'agents managées — constituent des références de packaging, pas la preuve d'une équivalence fonctionnelle avec Cogentia.
 
@@ -87,14 +97,14 @@ Le pilote de Noël 2026 **n'est pas un produit autonome ne demandant qu'un compt
 2. Son agent ChatGPT peut poursuivre une mission bornée sur plusieurs tours sans lui demander systématiquement « continuons », avec réception et corrélation COP de chaque étape.
 3. Le nœud peut redémarrer sans perdre le mandat, la mémoire ou la possibilité de reprise. L'utilisateur peut examiner les preuves et reconnaître ce qui n'est pas achevé.
 4. Le Principal peut restreindre ou révoquer les autorisations, exporter les données et récupérer son travail après une panne ; les effets externes restent bornés.
-5. Installation et restauration sont reproductibles pour une personne extérieure au développement, **avec son navigateur hébergé isolé, son projet Supabase et son compte GitHub**, sans intervention improvisée du concepteur sur ses données.
+5. Installation et restauration sont reproductibles pour une personne extérieure au développement, **avec son navigateur hébergé isolé et l'un des modes de stockage/authentification explicitement validés** : services GitHub/Supabase du Principal, ou équivalents locaux effectivement testés sur son VPS ; aucune dépendance cachée aux comptes JHN.
 6. Les embeddings disposent d'un provisionnement et d'un plafond de dépense testés ; un quota épuisé n'entraîne pas une dépense silencieuse ni une perte du mandat ou du Corpus.
 
 ## Chemin critique — avant le 25 décembre
 
 - **P0** : rendre la relance réellement autonome par un ordonnanceur CPS persistant, au-delà de la télécommande exécutée par un contrôleur encore actif.
 - **P0** : isoler plusieurs Principaux ; consentements et signatures, sauvegarde, restauration, révocation et secrets vérifiés.
-- **P0** : empaqueter l'installation VPS **avec son navigateur hébergé propre**, son projet Supabase et son compte GitHub (configuration des accès, isolation des sessions, restauration, installation de l'extension et raccordement Navigation Assistant), puis mesurer ses ressources sur un pilote réel.
+- **P0** : empaqueter l'installation VPS **avec son navigateur hébergé propre**, vérifier le chemin existant GitHub/Supabase, et comparer rapidement son coût au mode local autonome (Git + identité/données/consentements locaux). Choisir et tester **un chemin de livraison reproductible** pour Noël, avec isolation des sessions, restauration et raccordement Navigation Assistant ; mesurer ses ressources réelles.
 - **P0** : provisionnement simple des embeddings, quotas/budget, visibilité de consommation, recherche de *free tiers* pertinents et dégradation sans facturation non autorisée.
 - **P1** : rendre intelligibles pour l'utilisateur le mandat, son état, les résultats, les limites et le coût.
 - **Après le pilote** : élargir aux autres agents et travailler l'adaptateur MCP générique, sans compromettre la première livraison.
