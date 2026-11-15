@@ -1,7 +1,7 @@
 ---
 schema: cogentia.agent_skill/v1
 id: cogentia.side-effect-authorization
-version: 3
+version: 4
 status: "working-paper — experimental"
 name: side-effect-authorization
 description: >
@@ -11,7 +11,7 @@ title: "Side-effect authorization"
 author: unknown
 affiliation: unknown
 date: null
-last_modified_at: "2026-10-27"
+last_modified_at: "2026-11-15"
 license: CC BY-SA 4.0
 language: en
 update_policy: UP-DEFAULT-REVIEWED
@@ -48,10 +48,10 @@ Tool availability is not authority. Native Gmail/GitHub/git capacities stay.
 
 Never mint a grant from chat. `authorizationFromUtterance` is always false.
 
-Before any write-class execute (send, comment, commit, push, WhatsApp enqueue):
+Before a write-class execute, **classify the effect against the standing mandate**, then follow the shortest lawful path (do not demand an interactive grant automatically for every comment, commit, DNS record or deploy):
 
 1. EXPOSE the exact payload (Cogentia `*_prepare` tools, or an equivalent preview).
-2. Locate the authorization source. Use the mint UI for a Principal-issued grant when required; never mint one from chat or workflow narration. A valid, explicit Packet mandate can itself authorize an in-scope operation. In particular, when the owning Issue's acceptance/return contract requires a result report there, its mandate authorizes one factual comment on that same Issue, bounded to the declared fields; do not request a second approval or a separate UI grant for that report. Do not widen this exception to other GitHub writes, publication, disclosure, or third-party contact. Provider and account controls still apply.
+2. Locate the **existing standing authorization** and determine whether this is an ordinary recoverable operation within it. Reuse that durable mandate and its already verified authority at dispatch; no new per-act human mandate. Where a high-impact action truly needs independent Principal approval, use the mint UI and verified issuer when available, never forge a grant from chat or workflow narration. A valid, explicit Packet mandate can itself authorize an in-scope operation. In particular, when the owning Issue's acceptance/return contract requires a result report there, its mandate authorizes one factual comment on that same Issue, bounded to the declared fields; do not request a second approval or a separate UI grant for that report. Do not widen this exception to other GitHub writes, publication, disclosure, or third-party contact. Provider and account controls still apply.
 3. EXECUTE with the native tool **or** the Cogentia adapter.
 4. VERIFY: if you used a Cogentia `*_write`/`_send` adapter, consume already happened. For other native effects, call `cogentia_side_effect_record` with the applicable authorization, target, payload and a redacted receipt when that recorder is available. For the owning-Packet report exception, verify the exact comment and retain its returned comment ID as the Packet's execution receipt; do not block the mandated result on a separate Principal-facing grant.
 
@@ -59,7 +59,9 @@ Reads stay ungated. Drafts are PREPARE, not EXECUTE.
 
 ## Mandate-derived low-risk autonomy and reserved acts (Cogentia #285)
 
-The blanket phrase "before any write-class execute" below describes the legacy grant path and MUST NOT be construed as a demand for repetitive Principal approval for recoverable, in-mandate internal operations. The intended rule permits a traceable mandate-derived authorization for low-exposure internal changes with verified recovery. **The implementation is currently fail-closed:** `mintMandateDerivedGrant` rejects all requests because the repository has no trusted adapter verifier for mandate provenance, budget, privacy, exposure, and recovery. Caller-supplied references and policy fields are descriptive data, not evidence. Keep the legacy authorization gate until such a verifier is wired and tested end to end; never fabricate a Principal grant.
+**Standing mandate first, per-act ceremony exceptional (Principal clarification 2026-11-15).** A durable authority for ordinary bounded work must support many independent technical effects with automatic validity/scope/revocation/budget checks, not ask for a fresh signature or human attention for every low-risk operation. Examples include direct-main non-sensitive corpus corrections, idempotent static-site publication of already agreed public material, and **creation of one nonconflicting DNS-only CNAME** beneath an existing Principal-controlled zone to a known reviewed origin. These are technical maintenance acts, not communications committing the Principal to third parties. Do not extend that presumption to NS/MX/mail changes, domain transfer, financial commitments, public declarations under the Principal's name, disclosure or unauthorized privilege escalation.
+
+The existing `assessPresumedEffect` is *advisory*. The current `mintMandateDerivedGrant` supports only the narrowly constrained JHN workspace `host.fs.write` path, and the deployed `host.process.run` lacks the configured trusted mission resolver. This is an **implementation gap**, not a reason to repeatedly interrupt the Principal, issue one-off DNS mandates, or say the existing policy has been cryptographically activated. Correct the shared authority adapter once; until then distinguish `user-delegated` from `COP-admitted` in receipts, and preserve genuine issuer/provider constraints. Caller-supplied references are not independent authorization evidence.
 
 **Hard boundary:** email is draft-only. Prepare/update the draft, identify it to the Principal, and leave sending to the Principal. Neither a general mandate nor a previous approval can authorize an outbound email. The implementation rejects every agent send grant, including caller-supplied claims of explicit consent, until a trusted interface can verify an exceptionally justified, current, act-specific approval. The same preparation-without-emission rule governs other acts comparably committing the Principal to third parties, including public postings and formal submissions.
 
@@ -73,7 +75,7 @@ Prefer `cogentia_communication_prepare` then execute (native send or `cogentia_c
 
 ## GitHub writes
 
-`github__issue_read` / `list_issues` are ungated. Ordinary `github__add_issue_comment` / `issue_write` actions require valid authorization for the exact owner/repo/body. Exception: the active owning Issue's explicit acceptance/return contract can authorize one factual result comment on that same Issue, limited to its stated fields. Verify the native tool receipt and do not ask again for this required Packet trace.
+`github__issue_read` / `list_issues` are ungated. Ordinary `github__add_issue_comment` / `issue_write` actions within the standing coding/maintenance mandate require a verified scope and receipt, **not a second human mandate each time**; higher-impact public commitments are separate. Exception: the active owning Issue's explicit acceptance/return contract can authorize one factual result comment on that same Issue, limited to its stated fields. Verify the native tool receipt and do not ask again for this required Packet trace.
 Prefer `cogentia_github_prepare` then execute when available.
 
 ## WhatsApp
@@ -83,5 +85,5 @@ Agent JHN still does not call Baileys `sendMessage` directly. `requestOutboundSe
 ## Git commit / push
 
 `git status` / `diff` / `log` are ungated.
-`git commit` / `git push` need a grant on the exact message/files/remote.
+`git commit` / `git push` **within the standing coding/maintenance mandate** require bounded scope, optimistic conflict checks and trace, but **no repeated Principal confirmation**. A valid reusable standing COP authorization may admit the exact effect automatically. Effects outside mandate or with material exposure still require their appropriate independent authorization.
 Prefer `cogentia_git_prepare` then execute (native git or `cogentia_git_write`).
