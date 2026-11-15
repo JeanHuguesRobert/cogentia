@@ -6,6 +6,7 @@
  */
 import {readFileSync,realpathSync,statSync} from 'node:fs';
 import {createSqliteCopEventStore} from '../../../inseme/packages/cop-core/src/sqlite-cop-event-store.js';
+import {reconcilePacketParentContinuations} from '../../../inseme/packages/cop-core/src/packet-parent-continuations.js';
 import {sshFingerprint} from '../lib/john-sshsig-approval.js';
 import {createOfflineJohnIssuerVerifier} from '../lib/john-offline-issuer-verifier.js';
 import {createChatgptCpsLocalWakeReconciler} from '../lib/chatgpt-cps-return-evaluator.js';
@@ -56,9 +57,15 @@ export async function runScheduledHeartbeat({env=process.env,assignedWorker=null
  * cycle against a disposable COP store without production tokens or effects.
  */
 export async function runChatgptCpsResidentCycle({store,reconcile,env={},
-  assignedWorker=null,nextWorker=null}={}){
+  assignedWorker=null,nextWorker=null,parentJoinExecutor=null}={}){
   if(!store||typeof reconcile!=='function')return {ok:false,status:'invalid_cycle'};
   const result=await reconcile({max_steps:6});
+  // Distributed Promise bridge: existing ONA poll reconciles child state
+  // transitions into the linked parent's durable COP topic. No second
+  // scheduler and no invented LLM completion. A registered join can resume
+  // through an explicitly configured existing COPScheduler handler.
+  const parentResults=await reconcilePacketParentContinuations(store,{
+    execute:parentJoinExecutor,max_parents:50,max_child_events:100});
   const assigned=listAssignedChatgptCpsContinuations(store,{limit:100});
   const next=listChatgptCpsNextSteps(store,{limit:100});
   const overview={pending_assigned:assigned.filter(x=>x.status==='ready').length,
@@ -66,9 +73,15 @@ export async function runChatgptCpsResidentCycle({store,reconcile,env={},
     pending_next_actions:next.filter(x=>x.status==='pending_admission').length,
     next_needs_reconciliation:next.filter(x=>x.status==='needs_reconciliation').length};
   const common={steps_completed:result.steps_completed,
+    parent_notifications:parentResults.notified,
+    parent_join_resumptions:parentResults.resumed,
+    parent_join_waiting:parentResults.waiting,
     pending_count:result.pending_count,
     needs_reconciliation:result.needs_reconciliation,
     external_effects:0,parent_packet_completed:false,...overview};
+  if(!parentResults.ok)return {ok:false,status:'parent_join_reconciliation_failed',...common,
+    parent_reconciliation_status:parentResults.status,
+    autonomous_browser_worker:false};
   if(!result.ok)return {ok:false,status:result.status,...common,
     autonomous_browser_worker:false};
   if(env.COGENTIA_CPS_BROWSER_DISPATCH_ENABLED!=='1')

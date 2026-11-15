@@ -1141,3 +1141,36 @@ conditional upon a genuine provider/channel permission basis and correct
 service-side authenticated John token. Neither was fabricated or enabled.
 Once legitimately configured, the existing ONA job is the only clock: one
 bounded poll every 60 seconds, not a recursive second agent/scheduler.
+
+## Distributed Promise parent notifications — 2026-11-15 (Inseme #186/#187)
+
+COP/Core now exports the source-level generic
+`reconcilePacketParentContinuations` from
+`inseme/packages/cop-core/src/packet-parent-continuations.js`. Existing ONA's
+**same 60-second cycle** invokes it after settled result-wake evaluation.
+No new scheduler or model verifier. The procedure identifies previously
+recorded `child_dispatched` causal relations and appends idempotent
+`cop.packet-parent-continuation/v1` `child_state_changed` facts on the
+*parent's own topic*. `returned` is distinct from `completed`; neither
+means the handler's mandate is terminated. Optional join-wait registrations
+with a designated scheduler executor can resume a parent exactly once after
+its declared `all` / `allSettled` condition becomes ready.
+
+**Actual canonical Fracta2 Reality Test (no outbound browser traffic):**
+initial parent `ctn_chatgpt_browser_e511159e639cedc26e3f9f6a181c4545`
+had only its `child_dispatched` link to
+`ctn_chatgpt_browser_4a16b3b54cd20c8dd9a6b0e41f4d19a9`; no
+child-completion notification. A safe one-shot reconciler with browser
+outbound explicitly disabled appended two distinct parent events for this
+child, one `returned` and one `completed`, with canonical source receipt
+refs; `auditTopicCommitment` passed. Across all live parent-child links:
+`parent_notifications=6`, `parent_join_resumptions=0`, `external_effects=0`.
+No older persisted parent has an explicit registered `join_wait` policy, so
+this change **informs** the parents and does not invent a speculative next
+model prompt, auto-complete a parent, or pretend an actual parent handler
+resumed. The new generic join path is separately tested against the real
+COPScheduler after a process restart, including a Fracta2→ThinkPad→Fracta2
+two-machine cross-process test; issue #187 retains the receipts. B/C extend
+the other Promise operators over this same event projection.
+
+The resident ONA process only loads this source revision **after reload**.
