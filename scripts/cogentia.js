@@ -6727,14 +6727,12 @@ function cmdContinuation(sub) {
       return cmdContinuationCancel(ctx, argv.shift());
     case "audit-backfill":
       return cmdContinuationAuditBackfill(ctx, argv.shift() || "all");
-    case "audit-backfill":
-      return cmdContinuationAuditBackfill(ctx, argv.shift() || "all");
     case "export":
       return cmdContinuationsExport(ctx);
     case "schema":
       return output(continuationSchema(), formatContinuationSchema());
     default:
-      throw new Error(`Unknown continuation subcommand "${sub}". Use emit, list, export, inspect, resolve, cancel, audit-backfill, or schema.`);
+      throw new Error(`Unknown continuation subcommand "${sub}". Use emit, placement, list, export, inspect, resolve, cancel, audit-backfill, or schema.`);
   }
 }
 
