@@ -66,7 +66,7 @@ const observeCode=`(() => {
 function value(result){return result?.value||{};}
 export function createChatgptTurnCapability({gateway=GATEWAY,browserId=BROWSER,timeoutMs=12000,sessionFactory=createGatewaySession}={}){
  return {name:'browser.chatgpt.turn',kind:'tool',risk:'internal_recoverable',
-   resultVisibility:'private',costUnits:1,
+   resultVisibility:'reasoner',costUnits:1,
    description:'Submit one prompt to Principal-owned ChatGPT Brave tab or observe its answer, under pre-admitted COP authority.',
    inputSchema:{type:'object',properties:{
      action:{type:'string',enum:['submit','observe']},
