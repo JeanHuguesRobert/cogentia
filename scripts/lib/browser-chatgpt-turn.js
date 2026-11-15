@@ -46,7 +46,19 @@ const observeCode=`(() => {
   const last=assistant.at(-1);
   const generating=!!document.querySelector('button[data-testid="stop-button"],button[aria-label="Stop generating"]');
   const input=!!document.querySelector("#prompt-textarea,[contenteditable=true][role=textbox]");
+  const composer=document.querySelector("#prompt-textarea,[contenteditable=true][role=textbox]");
+  const form=composer?.closest("form");
+  const buttons=[...(form?.querySelectorAll("button")||[])].slice(-20).map(b=>({
+    testid:b.getAttribute("data-testid")||"",
+    label:b.getAttribute("aria-label")||"",
+    title:b.getAttribute("title")||"",
+    type:b.type||"",
+    disabled:b.disabled===true,
+    html_type:b.tagName.toLowerCase()
+  }));
   return {ok:true,assistant_count:assistant.length,
+    composer_chars:(composer?.innerText||"").length,
+    composer_buttons:buttons,
     last_answer:(last?.innerText||"").slice(-9000),
     generating,composer_present:input,
     current_path:location.pathname};
