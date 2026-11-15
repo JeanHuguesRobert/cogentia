@@ -5,6 +5,7 @@
 import {ROOT_MANDATE_KIND,publicKeyFingerprint,verifyJohnRootApproval} from './john-root-mandate.js';
 import {verifyRootSshsig} from './john-sshsig-approval.js';
 import {verifyJohnAmendmentProof} from './john-mandate-amendment-proof.js';
+import {verifyJohnSupabaseConsentAmendment} from './john-supabase-consent-lineage.js';
 export function createOfflineJohnIssuerVerifier({trustedPublicKeyPem,trustedSshPublicKey,expectedSshFingerprint,now=()=>new Date()}={}) {
  if(!trustedPublicKeyPem&&!trustedSshPublicKey)throw Error('trusted_issuer_key_missing');
  const fingerprint=trustedPublicKeyPem?publicKeyFingerprint(trustedPublicKeyPem):expectedSshFingerprint;
@@ -44,10 +45,14 @@ export function createOfflineJohnIssuerVerifier({trustedPublicKeyPem,trustedSshP
        scope:p.scope,valid_from:p.valid_from,valid_until:p.valid_until,
        reason:a.reason
      };
-     const proof=verifyJohnAmendmentProof({
-       proposal,proof:a.approval_proof,trustedPublicKeyPem,
-       trustedSshPublicKey,expectedSshFingerprint,now:now()
-     });
+     const proof=a.approval_scheme==='supabase_authenticated_exact_consent_v1'
+       ? verifyJohnSupabaseConsentAmendment({
+           store,prior,current,proposal
+         })
+       : verifyJohnAmendmentProof({
+           proposal,proof:a.approval_proof,trustedPublicKeyPem,
+           trustedSshPublicKey,expectedSshFingerprint,now:now()
+         });
      if(!proof.verified || a.approval_evidence_ref!==proof.evidence_ref ||
          a.approval_scheme!==proof.scheme)return refuse();
    }
