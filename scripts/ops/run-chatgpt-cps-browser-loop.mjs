@@ -102,9 +102,12 @@ if(argv.length===1&&argv[0]==='--status'){
            parent_packet_ref:parent,action_id:'self-test-return-mcp'};
        },
        prepare:async()=>{
+         // Preparation reads COP state but never uses transport credentials.
+         // Do not needlessly inherit the JHN bearer into this child process.
+         const {COGENTIA_MCP_JHN_TOKEN:_transportSecret,...safeEnv}=process.env;
          const child=spawnSync(process.execPath,
            [new URL('./prepare-chatgpt-browser-cps-turn.mjs',import.meta.url).pathname,
-             '--prepare'],{encoding:'utf8',timeout:15000});
+             '--prepare'],{encoding:'utf8',timeout:15000,env:safeEnv});
          if(child.status!==0)throw Error('canonical_prepare_failed');
          const v=JSON.parse(child.stdout);
          if(v.ok!==true||!v.continuation_id||!v.packet_ref)throw Error('invalid_canonical_preparation');
