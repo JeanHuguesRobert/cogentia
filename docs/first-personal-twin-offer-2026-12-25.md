@@ -112,6 +112,25 @@ Le catalogue de déploiement doit également prendre en compte les **ressources 
 
 Ne pas confondre ce **sommeil par indisponibilité de compute** avec le *Corpus Sleep Cycle* de Cogentia, lequel est un **travail actif de consolidation** effectué précisément lorsqu'une ressource de calcul est disponible. On peut dormir sans rêver ; la métaphore n'implique ni conscience ni traitement cérébral durant l'arrêt.
 
+### Contrats gradués de disponibilité : sommeil, astreinte, service critique
+
+La **disponibilité** du double numérique est une dimension contractuelle (*SLA/SLO*) distincte de son identité, de son type personnel ou collectif, et de la puissance nominale du calcul. Une personne en **astreinte** peut dormir si un moyen fiable permet de la réveiller rapidement ; de même, un jumeau peut être dormant tant qu'un mécanisme de réveil permet de satisfaire l'obligation acceptée.
+
+| Profil illustratif, non contractuel | Attente du Principal | Mécanisme de disponibilité |
+| --- | --- | --- |
+| **À la demande** | Délai libre : réponse seulement lorsqu'un équipement revient | Stockage et reprise au prochain démarrage ; pas de surveillance garantie |
+| **Réveillable / astreinte** | Réactivation dans un délai **convenu et mesuré** après un événement ou appel | Déclencheur accessible, garde durable de la demande, réveil de compute ou bascule vers un nœud disponible |
+| **Service continu** | Réponse sous un délai et sur une plage de couverture définis | Worker permanent ou redondance, surveillance de santé, alarmes, reprises automatiques |
+| **Critique** | Engagement de continuité et de récupération particulièrement exigeant | Redondance, alertes et escalade vers responsable humain, essais réguliers de panne et de restauration, procédures dégradées |
+
+Ce sont des **profils à paramétrer**, pas des garanties chiffrées proposées aujourd'hui. Un contrat de service doit définir séparément la fenêtre couverte, la probabilité de disponibilité, le délai maximal de **détection**, **réveil**, **accusé de réception**, **prise en charge** et **résultat** (ce dernier n'étant pas toujours garanti), ainsi que les objectifs de restauration (*RTO*) et de perte de données tolérée (*RPO*), coûts, capacités de secours, escalade et responsabilités. Un simple ping ou un appel réussi ne prouve pas que la mission est accomplie.
+
+**Condition physique de l'astreinte :** le mécanisme d'alerte doit rester joignable pendant que le worker dort (service minimal, relais indépendant, autre appareil, ou intervention humaine). Sans aucun calcul ni récepteur capable de traiter le signal, impossible de promettre un réveil sous délai. Les tâches reçues durant l'indisponibilité doivent être conservées selon leurs durées de validité ; au retour, réévaluer autorité, échéance, priorité et idempotence.
+
+**Personnel versus collectif :** les jumeaux de services critiques seront vraisemblablement souvent collectifs, mais il ne faut **pas l'imposer par définition**. Le type de Principal détermine la gouvernance et les mandats ; le profil de disponibilité dépend des conséquences concrètes d'une interruption. La distinction est déjà définie dans [Individual and Collective Digital Twins](../research/individual_and_collective_digital_twins.md) et [IA pour tous, IA pour chacun](../research/ia_pour_tous_ia_pour_chacun.md) : la réutiliser plutôt que créer une classification concurrente.
+
+**Pour le pilote Noël :** annoncer la disponibilité réellement mesurée et ses limites ; ne pas promettre d'astreinte ni de service critique tant que le réveil, les délais et les reprises après panne n'ont pas été éprouvés.
+
 **FractaRouting / CPS :** un nœud n'est candidat que s'il annonce la capacité requise, son niveau de confiance, son coût/énergie, sa disponibilité effective et un mandat compatible. En cas de déconnexion, mettre en attente ou réattribuer une continuation avec *lease*, délai et idempotence ; vérifier les événements déjà exécutés avant tout rejeu. L'acheminement différé ne prouve ni livraison ni réussite et ne doit jamais élargir les permissions de l'appareil.
 
 **Contraintes particulières du mobile :** consentement explicite pour les tâches en arrière-plan, batterie/données cellulaires, secrets et Corpus sensibles, sandbox du système, réveil et restrictions OS. Le téléphone ne doit pas être présenté comme un serveur permanent ni comme capable d'héberger en continu le navigateur ChatGPT sans essai réel.
