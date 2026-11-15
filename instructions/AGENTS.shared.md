@@ -912,6 +912,10 @@ Talleyrand Principle:
 
 Metacognitive source: [`research/fractacognition_principles.md`](../research/fractacognition_principles.md).
 
+**Diplomatic scope (Principal clarification, 15 November 2026):** this principle is **not exhausted by the maxim**. For legal, administrative, political and institutional writing, apply the full [diplomatic Talleyrand register](../research/fractacognition_principles.md#41-the-diplomatic-talleyrand-register--beyond-the-maxim): courtesy to people and offices without concessions on substance; set their own norms and acts side by side; expose practical contradictions through verifiable facts rather than imputations of motive; anticipate the best objection; preserve an honourable, answerable path for correction; adapt to the immediate decision-maker and the later double reading; retain timing and rhetorical restraint. Politeness is a strategy for making rigorous criticism harder to evade, **not** a euphemism, false balance, concealment or weakening of the Principal's position. Keep essential premises explicit.
+
+
+
 ### Human-assist escalation for access barriers
 
 When useful work is blocked by an access barrier that the Principal can

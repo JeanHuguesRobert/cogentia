@@ -325,7 +325,25 @@ Joint rule:
 
 > **Say explicitly what must be shared for the work to succeed; omit what adds no useful closure.**
 
-### 4.1 Freshness as a Talleyrand case
+### 4.1 The diplomatic Talleyrand register — beyond the maxim
+
+**Principal clarification, 15 November 2026.** Invoking *Talleyrand* for a legal, institutional or political communication means more than metacognitive explicitness. It also calls for an **entire diplomatic method**, inspired by the historical negotiator's restraint, patience, command of principles, attention to the other party's interests, and ability to bring interlocutors face to face with consequences of their own declared commitments. This is a **modern working interpretation**, not an assertion that every rule below is a verified quotation, or an endorsement of historical deception.
+
+Operational rules, to apply jointly rather than as a politeness filter:
+
+1. **Firm substance, impeccable form.** Be courteous toward persons and offices; do not dilute facts, rights or requests. The more serious the criticism, the more controlled its expression.
+2. **Use the interlocutor's professed rules.** Start with official statutes, prior decisions, institutional goals and explicit undertakings. Show the discrepancy between those norms and the documented effect, rather than accusing the interlocutor's motives.
+3. **Let the contradiction become visible.** Put facts, dates, norms, feasible alternatives and actual consequences in an order permitting the reader to draw the conclusion. Where a decisive implication might be missed, state it in restrained terms; diplomatic indirection never excuses a hidden premise.
+4. **Preserve the other's room to respond.** Ask precise, answerable questions and offer a dignified path to correct, explain or document the action. Avoid public humiliation, speculative accusations, sarcasm and unnecessary moral verdicts.
+5. **Understand the audience, interests and timing.** Write for the immediate decision-maker and for later institutional, academic or public rereading; distinguish the immediate procedural question from a second political reading without conflating their evidentiary status. Choose what belongs in the body, provenance note or background, and the moment when each argument can be useful.
+6. **Retain control of the agenda.** Concede only what is established; anticipate and formulate the strongest adverse case; insist on a precise response to the unresolved point, not a generic reassurance or procedural deflection.
+7. **Never sacrifice truth or traceability to rhetoric.** Distinguish testimony from records, legal claim from judicial holding, and symbolic from material effects. Courtesy is not a requirement to exculpate, and strategic ambiguity must never conceal a material fact.
+
+**Quality test:** would the recipient be able to answer each issue on its merits without first defending their honour, and would an informed third-party reader perceive the contradiction even if no accusation were made? If yes, the text is diplomatically effective. If the text merely substitutes euphemism for facts, or makes the reader guess a necessary legal proposition, it fails.
+
+This diplomatic register **extends rather than replaces** the original Talleyrand maxim. Preserve the older operational/metacognitive sense and the separate rules of bounded assertion, Occam and procedural source fidelity.
+
+### 4.2 Freshness as a Talleyrand case
 
 The Freshness Before Work Gate is a direct operational projection:
 
