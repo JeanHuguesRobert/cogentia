@@ -15,57 +15,35 @@ import {runChatgptCpsWakeBatch} from './chatgpt-cps-wake-batch.js';
 
 const HANDLER='handler:chatgpt-browser-result-observer';
 /**
- * The continuation's state and the returned model answer are DATA, not issuer
- * authority. A claim carrying `verified:true` or `admissible:true` is never
- * sufficient to close a parent or select a new child. Only trusted, separately
- * provided verifier callbacks may confirm matching receipts. Until a runtime
- * wires real receipt checks, fail closed with the parent open.
+ * A correlated, admitted MCP result from the designated JudgmentHandler is
+ * trusted for its OWN completion/next-action decision (Optimistic Locking).
+ * The result status "answered" means the turn answered; it does NOT imply the
+ * parent mission is complete. The agent says so explicitly in result.mandate_status.
+ * A next_action is a CANDIDATE, not a browser dispatch grant: the separate
+ * executor still enforces current COP authority, claims, quotas and effects.
  */
-export function createReturnScheduler({verifyAcceptanceReceipt,admitNextAction}={}){
+export function createReturnScheduler(){
   return new COPScheduler(new COPBus({name:'chatgpt-cps-evaluator'}),{
     handlerResolver:async ref=>ref===HANDLER?{
       execute:async({continuation,payload})=>{
         const candidate=payload?.candidateResult;
-        const state=continuation.state||{};
-        const acceptance=Array.isArray(state.parent_acceptance)?state.parent_acceptance:[];
-        const evidence=[];
-        if(typeof verifyAcceptanceReceipt==='function'){
-          for(const item of Array.isArray(state.verified_evidence)?state.verified_evidence.slice(0,24):[]){
-            if(!item||typeof item.criterion!=='string'||
-               !acceptance.includes(item.criterion)||
-               typeof item.receipt_ref!=='string'||!item.receipt_ref)continue;
-            let proof;
-            try{proof=await verifyAcceptanceReceipt({continuation,
-              criterion:item.criterion,receipt_ref:item.receipt_ref});}
-            catch{continue;}
-            if(proof?.verified===true&&proof.criterion===item.criterion&&
-               proof.receipt_ref===item.receipt_ref&&
-               typeof proof.issuer_ref==='string'&&proof.issuer_ref)
-              evidence.push({criterion:item.criterion,receipt_ref:item.receipt_ref,verified:true});
-          }
-        }
-        const nextActions=[];
-        if(typeof admitNextAction==='function'){
-          for(const item of Array.isArray(state.next_actions)?state.next_actions.slice(0,24):[]){
-            if(!item||typeof item.id!=='string'||!item.id)continue;
-            let verdict;
-            try{verdict=await admitNextAction({continuation,action_id:item.id});}
-            catch{continue;}
-            if(verdict?.action_id===item.id&&verdict.admissible===true&&
-               verdict.available===true&&
-               typeof verdict.authorization_ref==='string'&&verdict.authorization_ref)
-              nextActions.push({id:item.id,admissible:true,available:true});
-          }
-        }
-        const progress=projectMandateProgress({acceptance,evidence,nextActions,
-          agentClaim:candidate?.status==='completed'?'completed':null});
+        const answered=candidate?.status==='answered' &&
+          typeof candidate.result?.answer==='string' &&
+          candidate.result.answer.trim().length>0;
+        const result=answered?candidate.result:{};
+        const agentClaim=['completed','continue','blocked'].includes(result.mandate_status)
+          ?result.mandate_status:null;
+        const progress=projectMandateProgress({
+          acceptance:continuation.state?.parent_acceptance||[],
+          trustAgentJudgment:answered,
+          agentClaim,
+          agentNextAction:agentClaim!=='completed'?result.next_action:null,
+        });
         return {observed:!!candidate,
           candidate_status:typeof candidate?.status==='string'?candidate.status:null,
           ...progress,
           next_turn_dispatched:false,
-          // Handler evaluation is NOT independent parent-mission closure,
-          // even if all acceptance evidence is present for later verification.
-          mandate_completed:false,
+          mandate_completed:progress.status==='completed',
         };
       },
     }:null,

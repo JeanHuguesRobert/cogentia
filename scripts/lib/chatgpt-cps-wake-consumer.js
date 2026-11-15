@@ -120,7 +120,9 @@ export async function consumeChatgptCpsWake({store,continuation_id,scheduler,adm
   const outcome=execution?.execution?.result;
   // A scheduler evaluation may identify a candidate next act. Persist it as
   // data for a separate authority/budget/claim admission, never as a grant.
-  const nextAction=outcome?.status==='continue'&&
+  const parentCompleted=outcome?.status==='completed'&&
+    outcome?.mandate_completed===true;
+  const nextAction=!parentCompleted&&outcome?.status==='continue'&&
     typeof outcome.next_action==='string'&&
     /^[a-zA-Z0-9_.:-]{1,96}$/.test(outcome.next_action)
       ?outcome.next_action:null;
@@ -133,7 +135,8 @@ export async function consumeChatgptCpsWake({store,continuation_id,scheduler,adm
     causal_refs:[reserveKey(continuation_id)],
     payload:{profile:'cop.continuation-dispatch/v1',phase:'handler_completed',
       continuation_id,handler_ref:continuation.resumeTo,
-      parent_mandate_status:'open',
+      parent_mandate_status:parentCompleted?'completed':'open',
+      parent_acceptance_basis:parentCompleted?outcome.acceptance_basis||'scheduler_result':null,
       // This event reflects ONLY scheduler handler return, not a browser
       // message delivery or an autonomous next-turn result.
       next_turn_dispatched:false,
@@ -142,6 +145,7 @@ export async function consumeChatgptCpsWake({store,continuation_id,scheduler,adm
   });
   if(!committed.ok)return {ok:false,status:'needs_reconciliation',error:'completion_receipt_missing'};
   return {ok:true,status:'handler_completed',continuation_id,
+    parent_mandate_status:parentCompleted?'completed':'open',
     receipt_ref:completedKey(continuation_id),
     result:execution?.execution?.result||null};
 }

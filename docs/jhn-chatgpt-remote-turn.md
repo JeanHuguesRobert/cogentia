@@ -771,9 +771,11 @@ bounded action ID. It records `next_action_candidate` and
    durable `cop.continuation-next-step/v1` intent in a CAS transaction before
    passing the candidate to a callback that must use the **existing John/COP
    execution route**. It records `child_dispatched` only after a valid child
-   continuation ID and a **separate trusted verification of the actual**
-   John/COP dispatch receipt. An arbitrary `john:...` reference supplied by
-   a handler is only a claim, not independent evidence; failed verification
+   continuation ID and a receipt returned by the **governed John/COP
+   dispatcher**. Under the Principal's later Optimistic Locking decision, its
+   report is trusted by default as an agent/executor statement; an independent
+   receipt verifier is **optional** for a profile that warrants extra review.
+   A missing or ambiguous receipt, or an explicitly failed optional check,
    leaves a durable `needs_reconciliation` state.
 3. Concurrent calls cannot execute a second child; after a crash between
    intent and receipt, the state remains `needs_reconciliation`. Replaying an
@@ -906,17 +908,56 @@ created. The generic ONA node-status `ok` was temporarily false because of
 an unsuccessful startup self-probe, even while its direct `/health` returned
 HTTP 200 and the CPS job was succeeding; keep these signals distinct.
 
-FBF: `chatgpt-cps-return-evaluator.js` now treats even
-`continuation.state.verified_evidence[].verified=true` and
-`continuation.state.next_actions[].admissible=true` as *untrusted claims*.
-An independently supplied receipt verifier must confirm the exact acceptance
-criterion AND receipt (with an issuer reference) before the evaluator credits
-it. A separately supplied action authority must return a matching action ID
-and authorization reference before the evaluator emits a **candidate** next
-action; that is still not a dispatched child. Without those trusted verifier
-adapters the scheduler fails closed and leaves the parent open. This is an
-explicit wiring requirement for general-worker dispatch and independent
-parent-mission closure, **not** a claim that either is deployed. Five regression
-tests cover hostile claims, mismatched proofs, verifier failures, allowed
-candidate projection, and the separation of acceptance evaluation from the
-final mandate-closure receipt.
+**Historical 17:42 implementation superseded later on 15 November 2026:**
+The evaluator originally demanded an additional independent verifier for
+claims made by the JudgmentHandler. The Principal rejected that rule as
+unnecessary friction; the subsequent Optimistic Locking policy below replaces
+it. The old regression milestone is retained as history, not current behavior.
+
+
+## Optimistic Locking: trust the mandated JudgmentHandler — 15 November 2026
+
+Principal's explicit decision: **trust the agent/LLM by default**. The
+returning JudgmentHandler is empowered to judge whether its own work is done;
+its decision does not need a second LLM, issuer, or independent acceptance
+certificate. Reconstruct the identity, correlation, COP mandate and result
+admission through the *existing* MCP return path; do not invent an extra
+verification role downstream of that admission.
+
+The existing step-result protocol has `status: "answered"` for a successful
+*turn*, not a completed *parent mandate*. The agent can express the latter as
+an optional judgment on the already supported result object:
+
+```json
+{"status":"answered","result":{"answer":"Le travail est achevé", "mandate_status":"completed"}}
+```
+
+Alternatively it can ask to continue with a bounded action identifier:
+
+```json
+{"status":"answered","result":{"answer":"Étape suivante identifiée", "mandate_status":"continue", "next_action":"inspect-next-source"}}
+```
+
+`chatgpt-cps-return-evaluator.js` accepts an explicit `completed` judgment
+from an admitted returned result and records `acceptance_basis=agent_judgment`;
+`chatgpt-cps-wake-consumer.js` projects `parent_mandate_status=completed`
+without demanding a second verifier. An explicit `next_action` is accepted as
+a **candidate**, and the existing next-step bridge enforces the current
+mandate, valid child claim, provider/channel permission and budget at actual
+dispatch. The entrusted John dispatcher reports its own receipt; absent an
+explicit higher-risk profile, no second independent receipt validator is
+required. An unadorned `answered` return does not imply completion and can
+remain open. The analogous John turn journal trusts an explicit
+`mandate_status=completed` in its terminal agent result; a mere
+`john.run.completed` event does not close a parent.
+
+The journal preserves the agent's judgment, canonical receipt and correction
+path; an observed contradiction is handled by ordinary append-only
+reconciliation, **after** the decision, not by a blocking review for each
+result. This is *trust in the agent's judgment*, not a new right to send mail,
+publish externally, spend money or bypass quota/platform restrictions.
+
+The source-level regression tests demonstrate both closed parents and admitted
+candidate continuations. They do **not** claim an already-running ONA
+process has loaded these new sources, or that a truly unattended child browser
+turn has been executed in production.

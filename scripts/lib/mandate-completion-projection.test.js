@@ -26,3 +26,20 @@ test("only concrete verified blocker can suspend an incomplete mandate",()=>{
   assert.equal(projectMandateProgress({acceptance:["deploy"],
     blocker:{verified:true,prevents_progress:true,evidence_ref:"ops:denied"}}).status,"blocked");
 });
+
+test("mandated agent completion is accepted under optimistic locking, no second judge",()=>{
+  const verdict=projectMandateProgress({acceptance:["build","deploy"],
+    trustAgentJudgment:true,agentClaim:"completed"});
+  assert.equal(verdict.status,"completed");
+  assert.equal(verdict.acceptance_basis,"agent_judgment");
+  assert.deepEqual(verdict.missing,[]);
+  assert.equal(projectMandateProgress({trustAgentJudgment:true,
+    agentClaim:"completed"}).status,"completed");
+});
+test("agent next step is a bounded proposal, not an executable grant",()=>{
+  const verdict=projectMandateProgress({trustAgentJudgment:true,
+    agentClaim:"continue",agentNextAction:"inspect-commit"});
+  assert.equal(verdict.status,"continue");
+  assert.equal(verdict.next_action,"inspect-commit");
+  assert.equal(projectMandateProgress({agentNextAction:"inspect-commit"}).status,"open");
+});

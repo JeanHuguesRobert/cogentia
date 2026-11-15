@@ -4,7 +4,9 @@
  * A candidate merely exposes an action the trusted parent policy may consider.
  * The independently authenticated caller supplies its own COP authorization,
  * fresh child packet, claim, budget and execution through governed callbacks.
- * A persisted intent fences ambiguous dispatch, including after process crash.
+ * The governed dispatcher's own receipt is trusted by default; an OPTIONAL
+ * stronger verifier can be supplied for a consequential profile. A persisted
+ * intent fences ambiguous dispatch, including after process crash.
  */
 import {runMandateToBoundary} from './mandate-continuation.js';
 const HANDLER_COMPLETED='cop.continuation-dispatch/v1';
@@ -45,7 +47,7 @@ export async function consumeChatgptCpsNextStep({store,continuation_id,admit,dis
   if(typeof store?.transaction!=='function'||typeof store.listTopic!=='function'||
      typeof store.eventByIdempotency!=='function'||!validId(continuation_id)||
      typeof admit!=='function'||typeof dispatch!=='function'||
-     typeof verifyDispatchReceipt!=='function')
+     (verifyDispatchReceipt!==undefined&&typeof verifyDispatchReceipt!=='function'))
     return {ok:false,status:'invalid_request'};
   const topic='continuation:'+continuation_id;
   const records=store.listTopic(topic);
@@ -107,27 +109,35 @@ export async function consumeChatgptCpsNextStep({store,continuation_id,admit,dis
   if(execution?.ok!==true||!validId(execution.child_continuation_id)||
      typeof execution.execution_receipt_ref!=='string'||!execution.execution_receipt_ref)
     return {ok:false,status:'needs_reconciliation'};
-  // The dispatcher response is a CLAIM, not proof. Independently resolve the
-  // John/COP effect receipt before certifying dispatch (no browser scraping).
-  let proof;
-  try{proof=await verifyDispatchReceipt({continuation_id,action_id,
-    execution_receipt_ref:execution.execution_receipt_ref,
-    child_continuation_id:execution.child_continuation_id});}
-  catch{return {ok:false,status:'needs_reconciliation'}}
-  if(proof?.verified!==true||
-     proof.child_continuation_id!==execution.child_continuation_id||
-     proof.execution_receipt_ref!==execution.execution_receipt_ref||
-     typeof proof.evidence_ref!=='string'||!proof.evidence_ref)
-    return {ok:false,status:'needs_reconciliation'};
+  // Optimistic Locking: the governed dispatcher's receipt is sufficient.
+  // A second verifier is OPTIONAL, not a mandatory distrust ritual. Keep
+  // reconciliation on transport ambiguity; never replay an uncertain effect.
+  let evidenceRef=execution.execution_receipt_ref;
+  let receiptBasis='mandated_dispatcher_report';
+  if(typeof verifyDispatchReceipt==='function'){
+    let proof;
+    try{proof=await verifyDispatchReceipt({continuation_id,action_id,
+      execution_receipt_ref:execution.execution_receipt_ref,
+      child_continuation_id:execution.child_continuation_id});}
+    catch{return {ok:false,status:'needs_reconciliation'}}
+    if(proof?.verified!==true||
+       proof.child_continuation_id!==execution.child_continuation_id||
+       proof.execution_receipt_ref!==execution.execution_receipt_ref||
+       typeof proof.evidence_ref!=='string'||!proof.evidence_ref)
+      return {ok:false,status:'needs_reconciliation'};
+    evidenceRef=proof.evidence_ref;
+    receiptBasis='optional_separate_verifier';
+  }
   const committed=store.append({topic_id:topic,event_type:'cop.event/v1',
     actor_id:'cop:chatgpt-next-step-bridge',subject_ref:'continuation:'+continuation_id,
     visibility:'restricted',epistemic_status:'observed',
     idempotency_key:resultKey(continuation_id),
-    causal_refs:[intentKey(continuation_id),proof.evidence_ref],
+    causal_refs:[intentKey(continuation_id),evidenceRef],
     payload:{profile:NEXT_DISPATCH,phase:'child_dispatched',
       continuation_id,action_id,child_continuation_id:execution.child_continuation_id,
       child_execution_receipt_ref:execution.execution_receipt_ref,
-      child_dispatch_evidence_ref:proof.evidence_ref,
+      child_dispatch_evidence_ref:evidenceRef,
+      receipt_basis:receiptBasis,
       parent_mandate_status:'open'},
   });
   if(!committed.ok)return {ok:false,status:'needs_reconciliation'};
@@ -142,7 +152,7 @@ export async function consumeChatgptCpsNextStep({store,continuation_id,admit,dis
  * Each dispatch is separately admitted by the trusted caller. */
 export async function runChatgptCpsNextStepBatch({store,admit,dispatch,verifyDispatchReceipt,max_steps=3}={}){
  if(!store||typeof admit!=='function'||typeof dispatch!=='function'||
-    typeof verifyDispatchReceipt!=='function'||
+    (verifyDispatchReceipt!==undefined&&typeof verifyDispatchReceipt!=='function')||
     !Number.isSafeInteger(max_steps)||max_steps<1||max_steps>20)
    return {ok:false,status:'invalid_batch'};
  const run=await runMandateToBoundary({max_steps,inspect:async()=>{

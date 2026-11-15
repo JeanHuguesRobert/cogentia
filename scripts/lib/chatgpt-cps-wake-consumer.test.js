@@ -11,7 +11,7 @@ import {COPBus} from '../../../inseme/packages/cop-kernel/src/bus.js';
 import {recordChatgptReturnWake} from './chatgpt-cps-return-wake.js';
 import {consumeChatgptCpsWake,listChatgptCpsWakes} from './chatgpt-cps-wake-consumer.js';
 import {runChatgptCpsWakeBatch} from './chatgpt-cps-wake-batch.js';
-import {createChatgptCpsLocalWakeReconciler} from './chatgpt-cps-return-evaluator.js';
+import {createChatgptCpsLocalWakeReconciler,createReturnScheduler} from './chatgpt-cps-return-evaluator.js';
 import {listChatgptCpsNextSteps,consumeChatgptCpsNextStep,runChatgptCpsNextStepBatch} from './chatgpt-cps-next-step.js';
 const HANDLER='handler:chatgpt-browser-result-observer';
 const BUDGET='budget:mandate:jhn:john-root';
@@ -20,7 +20,7 @@ const event=(topic,id,payload,event_type='cop.event/v1')=>({
   topic_id:topic,event_type,actor_id:'cop:test',subject_ref:topic,
   visibility:'restricted',epistemic_status:'observed',idempotency_key:id,payload,
 });
-function addReturned(store,id){
+function addReturned(store,id,candidate_result=null){
  const topic='continuation:'+id;
  const reservation_id='reservation:'+id;
  commit(store,declaredContinuationRecord({
@@ -32,7 +32,7 @@ function addReturned(store,id){
  }));
  const returned=event(topic,'return:'+id,{
    profile:'cop.continuation-result/v1',phase:'returned',continuation_id:id,
-   candidate_result:{status:'answered',result:{answer:'step '+id}},
+   candidate_result:candidate_result||{status:'answered',result:{answer:'step '+id}},
  });
  commit(store,returned);
  commit(store,event('execution-budget:'+BUDGET,'settlement:'+id,{
@@ -372,5 +372,70 @@ test('a settlement under another COP budget never admits resident result replay'
    assert.equal(differentBudget.steps_completed,0);
    assert.equal(differentBudget.status,'step_failed');
    assert.equal(listChatgptCpsWakes(store)[0].status,'pending');
+ }finally{store.close()}
+});
+
+test('real COPScheduler trusts explicit agent completion and records parent as completed',async()=>{
+  const store=createSqliteCopEventStore(':memory:');
+  try{
+    const id='ctn_judgment_completed_01';
+    addReturned(store,id,{status:'answered',result:{answer:'Completed',
+      mandate_status:'completed'}});
+    const result=await consumeChatgptCpsWake({store,continuation_id:id,
+      scheduler:createReturnScheduler(),admit});
+    assert.equal(result.ok,true);
+    assert.equal(result.parent_mandate_status,'completed');
+    const row=store.eventByIdempotency('chatgpt-browser:'+id+':dispatch-result');
+    assert.equal(row.payload.parent_mandate_status,'completed');
+    assert.equal(row.payload.parent_acceptance_basis,'agent_judgment');
+    assert.deepEqual(listChatgptCpsNextSteps(store),[]);
+  }finally{store.close()}
+});
+test('real COPScheduler trusts agent next action but waits for distinct dispatch authority',async()=>{
+  const store=createSqliteCopEventStore(':memory:');
+  try{
+    const id='ctn_judgment_continue_01';
+    addReturned(store,id,{status:'answered',result:{answer:'Inspect next input',
+      mandate_status:'continue',next_action:'inspect-next-source'}});
+    const result=await consumeChatgptCpsWake({store,continuation_id:id,
+      scheduler:createReturnScheduler(),admit});
+    assert.equal(result.ok,true);
+    assert.equal(result.parent_mandate_status,'open');
+    assert.deepEqual(listChatgptCpsNextSteps(store).map(e=>[e.action_id,e.status]),
+      [['inspect-next-source','pending_admission']]);
+  }finally{store.close()}
+});
+
+test('optimistic dispatch trusts the mandated John executor receipt without a redundant verifier',async()=>{
+ const store=createSqliteCopEventStore(':memory:');
+ try{
+  const id='ctn_optimistic_parent_01';addReturned(store,id);
+  assert.equal((await consumeChatgptCpsWake({store,continuation_id:id,
+    scheduler:scheduler(()=>({status:'continue',next_action:'inspect-source'})),admit})).ok,true);
+  let dispatched=0;
+  const result=await consumeChatgptCpsNextStep({store,continuation_id:id,
+   admit:nextActionAdmit,dispatch:async()=>{dispatched++;return {ok:true,
+    child_continuation_id:'ctn_optimistic_child_01',execution_receipt_ref:'john:receipt:1'};}});
+  assert.equal(result.status,'child_dispatched');
+  assert.equal(dispatched,1);
+  const event=store.eventByIdempotency('chatgpt-browser:'+id+':next-step-dispatched');
+  assert.equal(event.payload.receipt_basis,'mandated_dispatcher_report');
+  assert.equal(event.payload.child_dispatch_evidence_ref,'john:receipt:1');
+  assert.equal((await consumeChatgptCpsNextStep({store,continuation_id:id,
+   admit:nextActionAdmit,dispatch:()=>{throw Error('should never repeat')}})).status,'already_dispatched');
+ }finally{store.close()}
+});
+test('optimistic batch accepts the mandated dispatcher without extra verifier',async()=>{
+ const store=createSqliteCopEventStore(':memory:');
+ try{
+  const id='ctn_optimistic_batch_01';addReturned(store,id);
+  await consumeChatgptCpsWake({store,continuation_id:id,
+   scheduler:scheduler(()=>({status:'continue',next_action:'inspect-source'})),admit});
+  const result=await runChatgptCpsNextStepBatch({store,max_steps:2,
+   admit:nextActionAdmit,dispatch:async()=>({ok:true,
+    child_continuation_id:'ctn_optimistic_batch_child_01',
+    execution_receipt_ref:'john:receipt:batch'})});
+  assert.equal(result.ok,true);
+  assert.equal(result.steps_completed,1);
  }finally{store.close()}
 });

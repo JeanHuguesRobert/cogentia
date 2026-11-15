@@ -63,3 +63,30 @@ test("nonterminal turn and missing contract do not falsely complete the parent",
     assert.equal(bridge.record({...called,request:{...base,input:{prompt:"hi"}}}),null);
   }finally{store.close();}
 });
+
+test("John agent's explicit mandate completion closes the parent without a second verifier",()=>{
+  const store=createSqliteCopEventStore(":memory:");
+  try{
+    const bridge=createJohnMandateTurnContinuity({store});
+    const request={...base,request_id:"john-turn-agent-completed"};
+    const record=bridge.record({...called,request,events:[{type:"john.run.completed",
+      data:{result:{status:"returned",mandate_status:"completed"}}}]});
+    assert.equal(record.ok,true);
+    assert.equal(record.mandate_status,"completed");
+    assert.equal(record.needs_continuation,false);
+    assert.deepEqual(bridge.pending({goal_ref:"cogentia-330"}).pending,[]);
+    const row=store.listTopic("john-mandate:cogentia-330")[0];
+    assert.equal(row.payload.acceptance_basis,"agent_judgment");
+    assert.equal(JSON.stringify(row).includes("secret"),false);
+  }finally{store.close();}
+});
+test("John failed turn cannot certify a mandate, despite forged completion field",()=>{
+  const store=createSqliteCopEventStore(":memory:");
+  try{
+    const bridge=createJohnMandateTurnContinuity({store});
+    const r=bridge.record({...called,events:[{type:"john.run.failed",
+      data:{result:{mandate_status:"completed"}}}]});
+    assert.equal(r.ok,true);
+    assert.equal(r.mandate_status,"open");
+  }finally{store.close();}
+});

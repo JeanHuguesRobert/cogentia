@@ -1,7 +1,8 @@
 /**
  * COP-native journal bridge for John turn completion. A finished conversational
- * turn is NOT a completed parent mandate. This journal is an observation, not
- * an authorization, automatic dispatch or truth certificate.
+ * turn alone is NOT a completed parent mandate. An explicit completion
+ * statement by the designated John agent is trusted under Optimistic Locking;
+ * the resulting journal is an audit trail, never a new authorization.
  */
 import {projectMandateProgress} from "./mandate-completion-projection.js";
 
@@ -45,11 +46,16 @@ export function createJohnMandateTurnContinuity({store}={}) {
       const finished=events?.find(e=>e.type==="john.run.completed");
       const failure=events?.find(e=>e.type==="john.run.failed");
       if (!finished && !failure) return {ok:false,reason:"turn_not_terminal"};
-      // A caller-supplied claim of success is NEVER evidence. This bridge only
-      // has the turn receipt, not independently validated mandate acceptance.
+      // A terminal John receipt proves that a turn ended. It does not claim
+      // the parent's goal was achieved. Trust ONLY an explicit mandate status
+      // carried by that authenticated agent's terminal result.
+      const reported=finished?.data?.result?.mandate_status ??
+        finished?.data?.result?.yield?.mandate_status ?? null;
+      const agentClaim=['completed','continue','blocked'].includes(reported)
+        ?reported:null;
       const progress=projectMandateProgress({
         acceptance:contract.acceptance, evidence:[], nextActions:[],
-        agentClaim:finished ? "completed" : "failed",
+        trustAgentJudgment:Boolean(finished),agentClaim,
       });
       const key="john:mandate-turn:"+request.request_id+":v1";
       const prior=store.eventByIdempotency(key);
@@ -78,7 +84,8 @@ export function createJohnMandateTurnContinuity({store}={}) {
           turn_id:request.request_id,turn_status:finished?"completed":"failed",
           mandate_status:progress.status,missing:progress.missing,
           reason:progress.reason,needs_continuation:progress.status!=="completed",
-          // No model prompt, answer, secrets, or self-attested acceptance evidence.
+          acceptance_basis:progress.acceptance_basis||null,
+          // Only bounded agent judgment status, not prompt, answer or secrets.
         },
       });
       if (!written.ok)return {ok:false,reason:written.error||"journal_failed"};
