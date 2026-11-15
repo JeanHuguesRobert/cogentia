@@ -16,6 +16,28 @@ related_documents:
 
 # FBF #299 — un mandat permanent, plusieurs effets imputés
 
+> **Rectification architecturale FBF du 15 novembre 2026 (décision du Principal).**
+> Les outils `cogentia_dns_record_ensure({site:"museum"})` et
+> `cogentia_site_static_release({site:"museum"})` ont été effectivement
+> implémentés et déployés, mais leur découpage constitue une **erreur de
+> conception** : l'administration d'un nœud Fractanet est une capacité
+> générale existante, pas une infinité de capacités créées par site,
+> domaine, version ou incident. Ne pas reproduire ce modèle.
+> La bonne base est `host.process.run` (`normal`/`super`), les accès
+> fichiers et fournisseurs hôtes existants, FractaRouting/FractaHandlers,
+> des recettes/manifestes paramétrés, ainsi que COP pour la portée et la
+> traçabilité. Conserver les améliorations utiles d'isolation Unix, de
+> preuve des effets et d'idempotence, mais **réabsorber les deux outils
+> spécialisés dans le flux générique d'administration des machines**.
+> La déclaration COP v4 actuellement signée limite encore la voie
+> `host.process.run` permanente au profil de diagnostics ; sa
+> généralisation exige une évolution du **mandat durable**, une fois,
+> jamais une série d'autorisations à chaque tâche. Les deux outils
+> sont donc un état historique de transition, non une recommandation
+> d'architecture cible. Leur suppression effective du serveur MCP
+> n'est pas encore réalisée.
+
+
 ## Cause et résolution
 
 Le mandat canonique `mandate:jhn:john-root` a été amendé **v3 → v4** à la suite
