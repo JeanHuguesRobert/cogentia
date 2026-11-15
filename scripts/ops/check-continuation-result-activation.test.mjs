@@ -36,3 +36,12 @@ test('anonymous catalog omission is expected and never blocks a correctly gated 
  assert.equal(state.discovery.anonymous_public_tool_visible,false);
  assert.equal(state.discovery.authenticated_jhn_tool_visible,'not_checked');
 });
+
+test('process-bound authenticated JHN configuration is checked without disclosing credentials',()=>{
+ const env=base.env.replace(' COGENTIA_MCP_JHN_TOKEN=demo-only','');
+ const positive=inspect({...base,env,processAuthFlags:{jhnMutate:true,jhnTokenPresent:true}});
+ assert.equal(positive.checks.jhn_authenticated_mutate_configured.ok,true);
+ const negative=inspect({...base,processAuthFlags:{jhnMutate:true,jhnTokenPresent:false}});
+ assert.equal(negative.checks.jhn_authenticated_mutate_configured.ok,false);
+ assert.equal(JSON.stringify(positive).includes('demo-only'),false);
+});

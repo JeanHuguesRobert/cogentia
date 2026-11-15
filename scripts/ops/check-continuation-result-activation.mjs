@@ -28,12 +28,28 @@ function hasEnv(env, name, value) {
   const match=pattern.exec(env);
   return value === undefined ? Boolean(match&&match[1]) : Boolean(match&&match[1]===value);
 }
+function liveProcessFlags(pid) {
+  if (!Number.isSafeInteger(pid) || pid <= 1) return null;
+  try {
+    const entries=readFileSync('/proc/'+pid+'/environ').toString('utf8').split('\0');
+    const values=new Map(entries.filter(e=>e.includes('=')).map(e=>{
+      const index=e.indexOf('=');
+      return [e.slice(0,index),e.slice(index+1)];
+    }));
+    // Never include credential values in any report or log.
+    return {
+      jhnMutate:values.get('COGENTIA_MCP_JHN_MUTATE')==='1',
+      jhnTokenPresent:Boolean(values.get('COGENTIA_MCP_JHN_TOKEN')),
+    };
+  } catch { return null; }
+}
 function inspect({env='',storePath=EXPECTED_STORE,keyPath='/home/ubuntu/.ssh/authorized_keys',
-  unitActive=false,startedAfterSource=false,mandateStatus=null,anonymousToolVisible=false,toolContractRegistered=MUTATE_TOOLS.has('cogentia_continuation_result_submit')}={}){
+  unitActive=false,startedAfterSource=false,mandateStatus=null,anonymousToolVisible=false,processAuthFlags=null,toolContractRegistered=MUTATE_TOOLS.has('cogentia_continuation_result_submit')}={}){
   const runtime=hasEnv(env,'COGENTIA_MCP_JUDGMENT_RESULT_ENABLED','1');
   const channels=hasEnv(env,'COGENTIA_MCP_JUDGMENT_RESULT_PERMITTED_CHANNELS');
-  const transport=hasEnv(env,'COGENTIA_MCP_JHN_MUTATE','1') &&
-      hasEnv(env,'COGENTIA_MCP_JHN_TOKEN');
+  const transport=processAuthFlags
+    ? processAuthFlags.jhnMutate===true && processAuthFlags.jhnTokenPresent===true
+    : hasEnv(env,'COGENTIA_MCP_JHN_MUTATE','1') && hasEnv(env,'COGENTIA_MCP_JHN_TOKEN');
   const checks={
     service_active:check(unitActive,'mcp_service_inactive'),
     source_deployed:check(startedAfterSource,'restart_for_new_server_code_pending'),
@@ -43,7 +59,7 @@ function inspect({env='',storePath=EXPECTED_STORE,keyPath='/home/ubuntu/.ssh/aut
     trusted_issuer_reference:check(Boolean(keyPath),'trusted_issuer_path_missing'),
     runtime_enabled:check(runtime,'result_runtime_not_enabled'),
     allowed_channels_configured:check(channels,'provider_channel_allowlist_missing'),
-    jhn_authenticated_mutate_configured:check(transport,'jhn_mutate_transport_not_verified_in_unit_environment'),
+    jhn_authenticated_mutate_configured:check(transport,'jhn_mutate_transport_not_verified'),
     source_tool_contract:check(toolContractRegistered,'result_tool_not_registered_in_source'),
   };
   return {schema:'cogentia.continuation-result-readiness/v2',ready:Object.values(checks).every(x=>x.ok),checks,
@@ -95,7 +111,12 @@ if(process.argv[1]&&resolve(process.argv[1])===fileURLToPath(import.meta.url)){
         budget:budget.has_grant===true && (budget.available?.max_steps||0)>0};
     }finally{opened.close()}
   }catch{mandateStatus={verified:false,budget:false}}
-  const report=inspect({env,storePath:path,keyPath,unitActive,startedAfterSource,mandateStatus,anonymousToolVisible});
+  let processAuthFlags=null;
+  try {
+    const pid=Number.parseInt(execFileSync('systemctl',['show','mcp-cogentia.service','--value','-p','MainPID'],{encoding:'utf8',timeout:3000}).trim(),10);
+    processAuthFlags=liveProcessFlags(pid);
+  } catch {}
+  const report=inspect({env,storePath:path,keyPath,unitActive,startedAfterSource,mandateStatus,anonymousToolVisible,processAuthFlags});
   process.stdout.write(JSON.stringify(report,null,2)+'\n');
   process.exitCode=report.ready?0:2;
 }

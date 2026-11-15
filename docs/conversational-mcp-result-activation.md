@@ -404,3 +404,57 @@ started before the current source. The privileged broker probe remains
 manufacture privileged restart authority or treat a local fixture as a
 real provider session; the next integration milestone is the authorized
 one-time activation and an observed persistent CPS wake/re-dispatch.
+
+## 18. 15 November 2026 — **production runtime activated, local test channel only**
+
+The Principal explicitly requested activation after refreshing both MCP
+connectors. The existing owner-admin SSH route `ssh fracta2` with sudo
+was used; no new key, Principal mandate or privileged broker enrollment
+was required.
+
+Actual systemd drop-in:
+`/etc/systemd/system/mcp-cogentia.service.d/95-continuation-result-local.conf`
+
+```ini
+[Service]
+Environment=COGENTIA_MCP_JUDGMENT_RESULT_ENABLED=1
+Environment=COGENTIA_MCP_JUDGMENT_RESULT_PERMITTED_CHANNELS=local-fixture:mcp
+```
+
+The pre-existing service environment already contains
+`COGENTIA_MCP_JHN_MUTATE=1` and a nonempty JHN token (its **value was
+never printed or copied into documentation**). The previous diagnostic
+incorrectly reported these as unverified because they come from a
+systemd EnvironmentFile. The readiness probe now inspects only boolean
+presence in the live process environment, never the token value in
+output, and its source-only regression verifies that behavior.
+
+After healthchecked systemd restart, MCP PID `275336` (2026-11-15
+04:53:38 UTC) responded successfully. A real authenticated JHN HTTP
+`POST /mcp` `tools/list` yielded **100** tools and included
+`cogentia_continuation_result_submit`. The same call with a deliberately
+bad token did **not** advertise it. A `tools/call` referencing a
+nonexistent continuation failed closed with `unauthenticated_actor`
+and no admissible result receipt. The control gate is live.
+
+`node scripts/ops/check-continuation-result-activation.mjs` now reports
+`ready:true`, meaning service, local runtime, issuer/budget, channel
+configuration and JHN transport credentials are present. This does NOT
+mean a valid real continuation has been returned, nor any consumer
+browser provider is permitted or any CPS autonomous event listener has
+processed a `returned` event. The only permitted production
+`provider:channel` is the bounded test fixture
+`local-fixture:mcp`. User-facing ChatGPT connector schemas may need
+a further refresh before showing the new tool.
+
+Rollback, from the owner's SSH administrative session:
+
+```sh
+sudo rm /etc/systemd/system/mcp-cogentia.service.d/95-continuation-result-local.conf
+sudo systemctl daemon-reload
+sudo systemctl restart mcp-cogentia.service
+```
+
+Next: a *valid* local fixture continuation, claim, reserved budget,
+authenticated MCP result, durable receipt and CPS subscriber wake,
+without expanding the allowlist to a third-party provider.
