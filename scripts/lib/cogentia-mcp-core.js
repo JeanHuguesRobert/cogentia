@@ -49,7 +49,9 @@ import {
 } from "./cogentia-mcp-surface.js";
 
 export const SERVER_NAME = "cogentia-mcp";
-export const SERVER_VERSION = "0.9.0";
+// MCP implementation version (not the negotiated MCP protocol version,
+// package.json version, or ChatGPT-hosted plugin catalog revision).
+export const SERVER_VERSION = "0.10.0";
 export { ENVELOPE_KIND, wrapToolResult, wrapToolError, extractCorrelation };
 export { resolveCallerAuth, deriveLockers } from "./cogentia-mcp-auth.js";
 

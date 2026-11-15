@@ -603,3 +603,74 @@ and no canonical returned result exists. No blind retry after a confirmed
 click and no silent new continuation. This self-recovery code is tested
 at the source level; it was **not** part of the already-completed live
 third-turn recovery, which was invoked separately under John authority.
+
+## Human-visible Judgment tab ownership and MCP version provenance — 15 November 2026
+
+### Judgment browser tabs: clear visual separation
+
+The Principal requests tabs reserved for ChatGPT-based Judgment production to
+be unmistakable and not confused with his personal, interactive ChatGPT tabs.
+Live hosted-browser inspection identified the existing conversations:
+
+- `94450530` (and duplicate `94450623`): "Étude des boucles Judgment";
+- `94450542`: "Vérification livraison Cogentia".
+
+**Future generated first prompts** now begin with the literal
+`[COGENTIA JUDGMENT - NE PAS INTERAGIR]`, encouraging ChatGPT's automatic
+conversation title generator to preserve a distinguishing identifier. This
+mechanism is *heuristic*, not a guarantee: ChatGPT assigns conversation
+names under its own logic. For robust browser-tab warning, the existing
+**signed, already-authorized** `browser.chatgpt.turn` `submit` and
+`send_draft` recipes additionally set a fixed, local page title prefix:
+
+`[COGENTIA JUDGMENT - NE PAS INTERAGIR] | <previous title>`
+
+They do so only on the exact-origin and exact-tab path **after** a successful
+Send-button click; an in-document `MutationObserver` reapplies the prefix if
+the single-page application rewrites `<title>`. This change is deliberately
+**not** made by `observe` (read-only means no cosmetic mutations) and uses
+no new generic scripting or third-party writes. The label may disappear
+across full page reload or when the ChatGPT conversation is opened in a
+new tab: durable labels should be provided by ChatGPT's own conversation
+**Rename** control, using the same conspicuous prefix. Neither the local
+page title nor a first-prompt instruction changes the account-side title
+of historical conversations automatically. Do not claim the existing
+three hosted tab titles were already changed: the live service must first
+reload these new recipes and a governed send must occur for local stamping.
+
+### Three separately versioned concepts for the connected MCP apps
+
+1. **Cogentia MCP implementation `serverInfo.version`.** Previously
+   `0.9.0`, now **`0.10.0`** in `scripts/lib/cogentia-mcp-core.js`.
+   It appears in legacy MCP `initialize`, modern `server/discover`, server
+   `/_meta` and the `/health` response **after a service restart**. Both
+   Cogentia public/private views using this same server share this version.
+2. **Cogentia daemon implementation and MCP protocol version.** The
+   underlying gateway has independently reported `3.0.0`; protocol strings
+   such as `2025-11-25` and `2026-07-28` are *negotiated MCP protocol
+   revisions*, not the application/server release number. Cogentia's
+   `package.json` version is another independent project field.
+3. **ChatGPT-side plugin catalog/package version.** The Principal sees
+   `1.0.0` for three connected MCP plugin entries following Refresh. There
+   is **no evidence that these three UI labels derive from the
+   `serverInfo.version` handshake**: their value differs from the live
+   endpoint's verified `0.9.0`. The third, Unix Shell Exec, is a separate
+   connector and must not be claimed to use Cogentia's `SERVER_VERSION`.
+   The ChatGPT plugin package/app revision is distinct from the live MCP
+   server implementation metadata. OpenAI documents different publication
+   flows for a plugin package version and remote MCP metadata refresh;
+   refreshing tool schemas does **not guarantee** a visible change to a
+   plugin-package version badge. Sources:
+   <https://developers.openai.com/plugins/deploy/submission>,
+   <https://developers.openai.com/plugins/deploy/connect-chatgpt>,
+   <https://developers.openai.com/plugins/deploy/app-review>.
+
+**Operational expectation:** reload `mcp-cogentia.service`, check that
+`GET /health` reports `version=0.10.0`, then refresh the Cogentia public and
+private ChatGPT connectors. If the UI still shows `1.0.0`, that number is
+controlled by the connector package/version in ChatGPT rather than the live
+MCP handshake; do **not** reassign an arbitrary value in the server or
+reinstall the three connectors just to change the badge. Separately verify
+the exact public/private descriptor after refresh. Version identity for the
+Unix Shell Exec connector needs inspection of its own implementation or
+registered package metadata.

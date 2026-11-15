@@ -58,6 +58,7 @@ try {
      result:{answer:'READY'}},
  };
  const prompt=[
+   '[COGENTIA JUDGMENT - NE PAS INTERAGIR] — conversation réservée à un JudgmentHandler automatisé.',
    'Vous intervenez dans une conversation ChatGPT distincte, pilotée par le jumeau numérique JHN.',
    'Votre unique objectif pour ce premier essai est de vérifier une livraison de résultat à Cogentia.',
    'Utilisez réellement le connecteur Cogentia et appelez l’outil cogentia_continuation_result_submit',

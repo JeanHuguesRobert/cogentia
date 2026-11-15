@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {createChatgptTurnCapability,validateChatgptTurnRequest,isChatgptTabUrl,canRecoverChatgptFailedDraft}
+import {createChatgptTurnCapability,validateChatgptTurnRequest,isChatgptTabUrl,canRecoverChatgptFailedDraft,JUDGMENT_TAB_MARKER}
  from './browser-chatgpt-turn.js';
 
 const tab={id:42,url:'https://chatgpt.com/',title:'ChatGPT'};
@@ -233,4 +233,24 @@ test('bound observation uses exact literal continuation ID without new browser i
  assert.equal(evals.length,1);
  assert.equal(evals[0][1].code.includes(JSON.stringify(id)),true);
  assert.equal(calls.some(x=>x[0]==='page.insertText'),false);
+});
+
+
+test('every governed Judgment submission and bound draft recovery marks its browser tab',async()=>{
+ assert.equal(JUDGMENT_TAB_MARKER,'[COGENTIA JUDGMENT - NE PAS INTERAGIR]');
+ const calls=[],cap=createChatgptTurnCapability({sessionFactory:async()=>mockSession(calls)});
+ await cap.execute({action:'submit',tab_id:42,prompt:'CPS packet'});
+ await cap.execute({action:'send_draft',tab_id:42,
+   expected_continuation_id:'ctn_chatgpt_browser_'+'b'.repeat(32)});
+ const submitted=calls.filter(x=>x[0]==='page.evaluate'&&x[1].code.includes('click_dispatched'));
+ assert.equal(submitted.length,2);
+ for(const call of submitted){
+   assert.equal(call[1].code.includes(JUDGMENT_TAB_MARKER),true);
+   assert.equal(call[1].code.includes('MutationObserver'),true);
+   assert.equal(call[1].code.includes('document.title='),true);
+ }
+ const observedCalls=[];
+ await createChatgptTurnCapability({sessionFactory:async()=>mockSession(observedCalls)})
+   .execute({action:'observe',tab_id:42});
+ assert.equal(observedCalls.some(x=>x[0]==='page.evaluate'&&x[1].code.includes('document.title=')),false);
 });

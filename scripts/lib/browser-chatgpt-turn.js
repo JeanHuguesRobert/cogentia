@@ -6,6 +6,9 @@
 import {createGatewaySession} from './navigation-assistant/gateway-session.js';
 const ORIGIN='https://chatgpt.com';
 const BROWSER='fracta2-hosted';
+// A visual guardrail for browser tabs used by automated Judgment handlers.
+// This does not rename the ChatGPT conversation in its account sidebar.
+export const JUDGMENT_TAB_MARKER='[COGENTIA JUDGMENT - NE PAS INTERAGIR]';
 const GATEWAY='ws://127.0.0.1:8776/assistant';
 const deny=code=>{throw Object.assign(new Error(code),{code});};
 const textLimit=(s,n)=>typeof s==='string'?s.slice(0,n):'';
@@ -63,7 +66,27 @@ const submitCode=`(() => {
   const send=e.closest('form')?.querySelector('button[type="submit"][aria-label="Send"],button[data-testid="send-button"],button[type="submit"]')
     ||document.querySelector('button[data-testid="send-button"],button[aria-label="Send prompt"],button[aria-label="Envoyer le message"]');
   if(!send||send.disabled)return {ok:false,error:"send_button_not_ready"};
-  send.click();return {ok:true,click_dispatched:true};
+  send.click();
+  // Label only a tab actually used to submit a governed Judgment request.
+  // This cosmetic guardrail stays local to the current browser document.
+  // On SPA title updates, keep the marker until full navigation/reload.
+  try {
+    const marker='[COGENTIA JUDGMENT - NE PAS INTERAGIR]';
+    const titleNode=document.querySelector('head > title');
+    const label=()=>{
+      const current=document.title||'ChatGPT';
+      if(!current.startsWith(marker+' | '))
+        document.title=marker+' | '+current.replaceAll(marker+' | ','').slice(0,80);
+    };
+    label();
+    if(titleNode && !titleNode.__cogentiaJudgmentTitleObserver){
+      const observer=new MutationObserver(label);
+      observer.observe(titleNode,{childList:true,characterData:true,subtree:true});
+      Object.defineProperty(titleNode,'__cogentiaJudgmentTitleObserver',
+        {value:observer,configurable:true});
+    }
+  }catch{/* visual warning must never modify delivery accountability */}
+  return {ok:true,click_dispatched:true};
 })()`;
 const observeCode=`(() => {
   const expectedContinuationId=null;
