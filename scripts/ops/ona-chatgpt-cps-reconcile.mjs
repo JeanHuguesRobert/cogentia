@@ -11,11 +11,16 @@ import {createOfflineJohnIssuerVerifier} from '../lib/john-offline-issuer-verifi
 import {createChatgptCpsLocalWakeReconciler} from '../lib/chatgpt-cps-return-evaluator.js';
 import {listAssignedChatgptCpsContinuations,runAssignedChatgptCpsBatch} from '../lib/chatgpt-cps-assigned-dispatch.js';
 import {listChatgptCpsNextSteps,runChatgptCpsNextStepBatch} from '../lib/chatgpt-cps-next-step.js';
+import {createCpsDefaultAssignedWorker,createCpsDefaultNextWorker} from '../lib/chatgpt-cps-default-worker.js';
 
 const DB='/var/lib/cogentia/cop/john-root-v1.sqlite';
 const FP='SHA256:lG9BC3fIjurrBccYLO1w7VQpmc9ZMr8MvM1o3zJ6L3c';
 const MANDATE='mandate:jhn:john-root';
 const BUDGET='budget:'+MANDATE;
+/** The SQLite statement owner must outlive awaited COPScheduler handlers. */
+export async function withOwnedCpsStore(store,work){
+  try{return await work(store)}finally{store.close()}
+}
 export async function runScheduledHeartbeat({env=process.env,assignedWorker=null,nextWorker=null}={}){
   if(env.COGENTIA_CPS_WAKE_RECOVERY_ENABLED!=='1')
     return {ok:true,skipped:'not_enabled',external_effects:0};
@@ -31,15 +36,20 @@ export async function runScheduledHeartbeat({env=process.env,assignedWorker=null
     });
   }catch{return {ok:false,error:'canonical_store_or_issuer_unavailable'}}
   if(!key)return {ok:false,error:'trusted_issuer_key_missing'};
-  const store=createSqliteCopEventStore(DB);
-  try{
+  return withOwnedCpsStore(createSqliteCopEventStore(DB),async(store)=>{
     const verifyIssuer=createOfflineJohnIssuerVerifier({trustedSshPublicKey:key,
       expectedSshFingerprint:FP});
     const reconcile=createChatgptCpsLocalWakeReconciler({store,
       mandate_ref:MANDATE,budget_id:BUDGET,verifyIssuer});
-    return runChatgptCpsResidentCycle({store,
-      reconcile,env,assignedWorker,nextWorker});
-  }finally{store.close()}
+    const configuredWorker=assignedWorker||createCpsDefaultAssignedWorker({store,
+      env,verifyIssuer});
+    const configuredNext=nextWorker||createCpsDefaultNextWorker({store,
+      assignedWorker:configuredWorker});
+    // Await while the canonical SQLite store is still open; otherwise the
+    // enclosing finally closes prepared statements during async COP replay.
+    return await runChatgptCpsResidentCycle({store,
+      reconcile,env,assignedWorker:configuredWorker,nextWorker:configuredNext});
+  });
 }
 
 /** Existing ONA scheduler is the sole clock. Test this entire decision

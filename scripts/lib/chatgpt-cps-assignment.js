@@ -15,9 +15,10 @@ const deny=error=>({ok:false,error});
 const safeTaskRef=x=>typeof x==='string'&&x.length>=3&&x.length<=256&&
   /^[a-zA-Z0-9_:./@#-]+$/.test(x);
 export async function prepareAssignedChatgptCpsContinuation({store,task_ref,question,
-  claim_ttl_ms=900000}={}){
+  hop_count=0,claim_ttl_ms=900000}={}){
   if(store?.kind!=='sqlite'||!safeTaskRef(task_ref)||
      typeof question!=='string'||!question.trim()||question.length>4500||
+     !Number.isSafeInteger(hop_count)||hop_count<0||hop_count>100||
      !Number.isSafeInteger(claim_ttl_ms)||claim_ttl_ms<60000||claim_ttl_ms>3600000)
     return deny('invalid_task_assignment');
   const id='ctn_chatgpt_browser_'+createHash('sha256').update(task_ref).digest('hex').slice(0,32);
@@ -26,7 +27,8 @@ export async function prepareAssignedChatgptCpsContinuation({store,task_ref,ques
   const earlier=store.listTopic(topic).find(e=>e.payload?.profile==='cop/continuation');
   if(earlier){
     const prev=earlier.payload.continuation;
-    if(prev?.state?.assignment_ref!==task_ref||prev?.state?.question!==question)
+    if(prev?.state?.assignment_ref!==task_ref||prev?.state?.question!==question||
+       (prev?.state?.hop_count||0)!==hop_count)
       return deny('task_assignment_conflict');
     return {ok:true,duplicate:true,continuation_id:id,packet_ref,
       declaration_receipt_ref:earlier.idempotency_key};
@@ -36,6 +38,9 @@ export async function prepareAssignedChatgptCpsContinuation({store,task_ref,ques
     version_pin:mandate.version,expected_principal_ref:'principal:jhn',
     expected_actor_ref:'agent:jhn',capability:'browser.chatgpt.turn'}):{granted:false};
   if(allowed.granted!==true)return deny('signed_chatgpt_turn_mandate_required');
+  const maxHops=mandate.scope?.chatgpt_turn_policy?.max_consecutive_turns;
+  if(!Number.isSafeInteger(maxHops)||maxHops<1||hop_count>=maxHops)
+    return deny('signed_chatgpt_turn_hop_limit');
   const ledger=createEventSourcedExecutionBudgetLedger({store,budget_id:'budget:'+REF,
     require_authority_grant:true});
   const reserved=ledger.reserve({idempotency_key:'chatgpt-browser:'+id,
@@ -57,7 +62,7 @@ export async function prepareAssignedChatgptCpsContinuation({store,task_ref,ques
     resumeTo:'handler:chatgpt-browser-result-observer',
     expected_result:{schema:'cogentia.step_result/v1'},
     state:{assignment_ref:task_ref,dispatch_mode:'cps:assigned-browser-turn/v1',
-      question},
+      question,hop_count},
   };
   const prompt=buildAssignedChatgptCpsPrompt(continuation);
   const append=prompt.ok?store.append(declaredContinuationRecord(continuation))

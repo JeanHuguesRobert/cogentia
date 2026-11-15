@@ -32,7 +32,8 @@ export function buildAssignedChatgptCpsPrompt(c){
       continuation_id:c.continuation_id,challenge:c.correlation.challenge,
       status:'answered',result:{answer:'[Votre réponse réelle à la question]',
         mandate_status:'[completed, continue ou blocked selon votre jugement]',
-        next_action:'[identifiant bref uniquement si continue]'}}};
+        next_action:'[identifiant bref uniquement si continue]',
+        next_question:'[instruction précise de la prochaine étape, uniquement si continue]'}}};
   const prompt=[
     '[COGENTIA JUDGMENT - NE PAS INTERAGIR] — conversation dédiée à un mandat cognitif.',
     'Vous êtes le JudgmentHandler d’une continuation CPS attribuée par Cogentia.',
@@ -42,7 +43,8 @@ export function buildAssignedChatgptCpsPrompt(c){
     'Conservez EXACTEMENT les identifiants, challenge, version et clé d’idempotence.',
     'Remplacez les valeurs entre crochets par votre réponse ; ne copiez pas les exemples.',
     'Pour une tâche achevée, choisissez result.mandate_status="completed".',
-    'Pour une étape nécessaire, choisissez "continue" et indiquez result.next_action (identifiant court).',
+    'Pour une étape nécessaire, choisissez "continue" et indiquez result.next_action (identifiant court)',
+    'ainsi que result.next_question (l’instruction cognitive exacte de l’étape suivante).',
     'Si bloqué, choisissez "blocked" et expliquez pourquoi dans result.answer.',
     'L’évaluation de votre travail relève de votre jugement dans les limites du mandat.',
     'Modèle d’arguments de l’outil à compléter :',JSON.stringify(template),

@@ -439,3 +439,18 @@ test('optimistic batch accepts the mandated dispatcher without extra verifier',a
   assert.equal(result.steps_completed,1);
  }finally{store.close()}
 });
+
+test('next-question from an admitted agent result persists as CPS data, without new authority',async()=>{
+  const store=createSqliteCopEventStore(':memory:');try{
+    const id='ctn_next_question_01';
+    addReturned(store,id,{status:'answered',result:{answer:'Continue',
+      mandate_status:'continue',next_action:'inspect-next',
+      next_question:'Inspect the next relevant source'}});
+    const r=await consumeChatgptCpsWake({store,continuation_id:id,
+      scheduler:createReturnScheduler(),admit});
+    assert.equal(r.ok,true);
+    const event=store.eventByIdempotency('chatgpt-browser:'+id+':dispatch-result');
+    assert.equal(event.payload.next_action_candidate,'inspect-next');
+    assert.equal(event.payload.next_action_question_candidate,'Inspect the next relevant source');
+  }finally{store.close()}
+});

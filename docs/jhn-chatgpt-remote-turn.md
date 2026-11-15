@@ -1068,3 +1068,67 @@ the automatic browser dispatcher has neither been configured with a valid
 provider-channel authorization nor with the existing authenticated John
 transport token. No old task was silently resent and no live new browser
 submission is claimed.
+
+### Default ONA→John binding and bounded autonomous child chain (#330)
+
+The later source binding in `chatgpt-cps-default-worker.js` removes the need
+to inject testing callbacks into production. When **explicitly enabled by the
+operator after the provider channel review**, it (a) checks the current
+signed John root, pinned issuer and quota, (b) uses a designated reviewed
+provider/channel reference and the authenticated localhost John MCP token,
+(c) calls the generic first-delivery dispatcher, and (d) prepares child
+continuations directly from the designated agent's `next_action` plus the
+full `next_question` that agent supplied in its MCP result. Every child uses
+the same deterministic preparation, new claim, fresh budget reservation,
+existing John browser capability and idempotent result path. The signed
+`chatgpt_turn_policy.max_consecutive_turns` (8 in the observed JHN v4) bounds
+the chain, not a magic unbounded background recursion.
+
+The *entire* resident orchestration remains the **same ONA 60-second script
+job**, with no new timer or daemon. A disposable canonical SQLite + signed
+mandate test exercises first assignment, two resulting children, three
+sequential dispatch receipts, then an idle cycle with **no fourth delivery**.
+This is a **source-level chained reality test**, not evidence that ChatGPT
+answered three real unattended tasks after the new deployment.
+
+Production operator environment required for external provider dispatch:
+`COGENTIA_CPS_BROWSER_DISPATCH_ENABLED=1`,
+`COGENTIA_CPS_BROWSER_DISPATCH_PERMITTED_CHANNELS=chatgpt:browser`,
+`COGENTIA_CPS_BROWSER_PROVIDER_PERMISSION_REF` (the real operator-reviewed
+provider permission basis), and a safely provided `COGENTIA_MCP_JHN_TOKEN`.
+`COGENTIA_CPS_BROWSER_TAB_ID` is optional: without it the signed John
+`ensure_tab` action locates a safe, marked workspace. The provider-reference
+variable does **not by itself prove that a provider actually permitted this
+mode**. Its issuer, contract scope and evidence remain an operator/provider
+matter; it must not be fabricated from an LLM statement or a generic JHN
+mandate. The real ONA configuration **does not have these dispatch settings**.
+Leaving dispatch disabled is an affirmative, non-invasive production state;
+return reconciliation remains active. No fallback to paid API or unrelated
+models is silently substituted.
+
+### Canonical Fracta2 read-only Reality Test and FBF (latest 15 November 2026)
+
+After introducing the ONA async cycle, a real `--run-once` against the
+canonical Fracta2 COP store exposed `ERR_INVALID_STATE: statement has been
+finalized`: the caller returned the cycle Promise from inside a `try/finally`
+and closed SQLite before the awaited scheduler settled. **Fixed** by using
+`withOwnedCpsStore`, which holds SQLite ownership until the async cycle
+actually finishes. A regression test forces an async yield while the store
+must remain open and checks that it closes only after completion. The real
+one-shot then returned `ok=true,status=queue_drained`, no browser effects.
+
+Live post-restart evidence: JHN canonical mandate `v4`,
+`browser.chatgpt.turn` scope true, **1,932 available steps** in the observed
+ledger, and no JHN MCP bearer in the local foreground runtime. ONA's existing
+return-reconciliation job was healthy and running (182 successful scheduled
+runs at the last observation), but remained the **pre-new-source** resident
+process. Both eligible assigned-first-delivery and next-action candidate
+queues were empty, so the old `READY` test packets were not re-dispatched.
+
+The three-step autonomous chain, direct John command envelopes, auto safe-tab
+selection, trusted completion judgment and signed hop cap have passed source
+integration tests only. Sending new browser prompts unattended is still
+conditional upon a genuine provider/channel permission basis and correct
+service-side authenticated John token. Neither was fabricated or enabled.
+Once legitimately configured, the existing ONA job is the only clock: one
+bounded poll every 60 seconds, not a recursive second agent/scheduler.

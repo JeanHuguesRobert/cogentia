@@ -55,3 +55,11 @@ test('failed or declined delivery and an invalid next action cannot close or adv
   assert.equal(invalid.status,'open');
   assert.equal(invalid.next_action,undefined);
 });
+
+test('mandated agent may supply the next full question for autonomous CPS handoff',async()=>{
+  const r=await execute({answer:'Next action chosen',mandate_status:'continue',
+    next_action:'inspect-next',next_question:'Read the next relevant source'});
+  assert.equal(r.status,'continue');
+  assert.equal(r.next_question,'Read the next relevant source');
+  assert.equal(r.mandate_completed,false);
+});

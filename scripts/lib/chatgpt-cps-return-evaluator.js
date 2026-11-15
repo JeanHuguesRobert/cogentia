@@ -42,6 +42,12 @@ export function createReturnScheduler(){
         return {observed:!!candidate,
           candidate_status:typeof candidate?.status==='string'?candidate.status:null,
           ...progress,
+          // A short action ID names the branch; the agent can also provide
+          // the actual next cognitive question for automatic continuation.
+          next_question:progress.status==='continue'&&
+            typeof result.next_question==='string'&&
+            result.next_question.trim().length>0&&result.next_question.length<=4500
+              ?result.next_question:null,
           next_turn_dispatched:false,
           mandate_completed:progress.status==='completed',
         };

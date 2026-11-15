@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {runScheduledHeartbeat} from './ona-chatgpt-cps-reconcile.mjs';
+import {runScheduledHeartbeat,withOwnedCpsStore} from './ona-chatgpt-cps-reconcile.mjs';
+import {createSqliteCopEventStore} from '../../../inseme/packages/cop-core/src/sqlite-cop-event-store.js';
 
 test('ONA existing-job adapter is disabled by default without opening credentials',async()=>{
   assert.deepEqual(await runScheduledHeartbeat({env:{}}),
@@ -26,4 +27,17 @@ test('actual Operium Node Agent script job imports the existing adapter without 
   assert.equal(r.ok,true,JSON.stringify(r));
   assert.equal(r.skipped,'not_enabled');
   assert.equal(r.external_effects,0);
+});
+
+test('FBF: asynchronous ONA scheduler completion retains SQLite ownership until after await',async()=>{
+  const store=createSqliteCopEventStore(':memory:');
+  const result=await withOwnedCpsStore(store,async(s)=>{
+    await Promise.resolve();
+    const before=s.replay().length;
+    await new Promise(resolve=>setImmediate(resolve));
+    assert.equal(s.replay().length,before);
+    return 'completed_with_open_store';
+  });
+  assert.equal(result,'completed_with_open_store');
+  assert.throws(()=>store.replay(),/closed|finalized|invalid/i);
 });

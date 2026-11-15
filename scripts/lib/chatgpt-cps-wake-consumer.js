@@ -141,6 +141,8 @@ export async function consumeChatgptCpsWake({store,continuation_id,scheduler,adm
       // message delivery or an autonomous next-turn result.
       next_turn_dispatched:false,
       next_action_candidate:nextAction,
+      next_action_question_candidate:nextAction&&typeof outcome.next_question==='string'
+        ?outcome.next_question:null,
       next_action_admitted:false},
   });
   if(!committed.ok)return {ok:false,status:'needs_reconciliation',error:'completion_receipt_missing'};

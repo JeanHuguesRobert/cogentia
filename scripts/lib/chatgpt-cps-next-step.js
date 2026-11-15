@@ -72,7 +72,8 @@ export async function consumeChatgptCpsNextStep({store,continuation_id,admit,dis
     return {ok:false,status:'needs_reconciliation'};
   const action_id=completed.payload.next_action_candidate;
   let admission;
-  try{admission=await admit({continuation_id,action_id,completed,returned,wake});}
+  const next_question=completed.payload.next_action_question_candidate||null;
+  try{admission=await admit({continuation_id,action_id,next_question,completed,returned,wake});}
   catch{return {ok:false,status:'admission_failed'}}
   if(admission?.granted!==true||admission?.action_id!==action_id||
      typeof admission.authorization_ref!=='string'||!admission.authorization_ref||
@@ -102,7 +103,7 @@ export async function consumeChatgptCpsNextStep({store,continuation_id,admit,dis
   if(!intent.ok)return {ok:false,status:'intent_commit_failed'};
   if(!intent.value.reserved)return {ok:false,status:'needs_reconciliation'};
   let execution;
-  try{execution=await dispatch({continuation_id,action_id,
+  try{execution=await dispatch({continuation_id,action_id,next_question,
     authorization_ref:admission.authorization_ref,
     parent_handler_receipt_ref:completed.idempotency_key});}
   catch{return {ok:false,status:'needs_reconciliation'}}
