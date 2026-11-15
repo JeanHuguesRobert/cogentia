@@ -108,6 +108,29 @@ test('ensure_tab creates an unfocused exact-origin tab when no ChatGPT tab exist
  assert.equal(calls.filter(x=>x[0]==='tabs.create').length,1);
 });
 
+test('ensure_tab waits for just-created exact tab to finish navigation (real browser race)',async()=>{
+ let lists=0,created=0;
+ const remote={
+  async call(method){
+   if(method==='tabs.create'){
+     created++;return {tab:{id:79}};
+   }
+   if(method==='tabs.list'){
+     lists++;
+     if(lists===1)return {tabs:[]};
+     if(lists<4)return {tabs:[{id:79,url:'about:blank',title:''}]};
+     return {tabs:[{id:79,url:'https://chatgpt.com/',title:'ChatGPT'}]};
+   }
+   throw Error('unexpected: '+method);
+  },close(){}
+ };
+ const cap=createChatgptTurnCapability({sessionFactory:async()=>remote});
+ const result=await cap.execute({action:'ensure_tab'});
+ assert.equal(result.tab_id,79);
+ assert.equal(result.created,true);
+ assert.equal(created,1);
+ assert.ok(lists>=4);
+});
 test('ensure_tab preserves drafts and active generation; rejects caller-controlled targets',async()=>{
  const calls=[];
  let exists=false;

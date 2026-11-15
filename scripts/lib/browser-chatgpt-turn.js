@@ -4,6 +4,7 @@
  * The caller MUST independently pass canonical COP mandate + budget admission.
  */
 import {createGatewaySession} from './navigation-assistant/gateway-session.js';
+import {setTimeout as sleep} from 'node:timers/promises';
 const ORIGIN='https://chatgpt.com';
 const BROWSER='fracta2-hosted';
 // A visual guardrail for browser tabs used by automated Judgment handlers.
@@ -216,10 +217,22 @@ export function createChatgptTurnCapability({gateway=GATEWAY,browserId=BROWSER,t
          });
          const id=created?.tab?.id;
          if(!Number.isSafeInteger(id)||id<1)deny('chatgpt_tab_creation_unconfirmed');
-         const fresh=await session.call('tabs.list',{browser_instance_id:browserId});
-         const actual=fresh?.tabs?.find(x=>x.id===id);
-         if(!actual||!isChatgptTabUrl(actual.url))
-           deny('chatgpt_created_tab_not_verified');
+         // tabs.create acknowledges the browser tab before its navigation
+         // completes. The first tabs.list can still expose about:blank.
+         // Poll this EXACT newly created ID for at most 1.5s; never create
+         // another tab and never accept an unrelated origin.
+         let actual=null;
+         for(let attempt=0;attempt<6;attempt++){
+           const fresh=await session.call('tabs.list',{browser_instance_id:browserId});
+           const candidate=fresh?.tabs?.find(x=>x.id===id);
+           if(candidate&&isChatgptTabUrl(candidate.url)){
+             actual=candidate;break;
+           }
+           if(candidate?.url&&candidate.url!=='about:blank'&&
+              !candidate.url.startsWith(ORIGIN))break;
+           if(attempt<5)await sleep(250);
+         }
+         if(!actual)deny('chatgpt_created_tab_not_verified');
          return {browser_instance_id:browserId,tab_id:id,
            origin:ORIGIN,action:'ensure_tab',created:true,reused:false,
            url:actual.url};
