@@ -158,7 +158,7 @@ test('three CPS cognitive turns chain through the SAME resident ONA cycle, then 
       profile:'cop.continuation-dispatch/v1',phase:'intent_committed',continuation_id:id});
     add(topic,'chatgpt-browser:'+id+':dispatch-result',{
       profile:'cop.continuation-dispatch/v1',phase:'handler_completed',
-      continuation_id:id,parent_mandate_status:'open',next_turn_dispatched:false,
+      continuation_id:id,parent_packet_status:'open',next_turn_dispatched:false,
       next_action_admitted:false,next_action_candidate:action,
       next_action_question_candidate:question});
   }

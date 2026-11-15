@@ -68,7 +68,7 @@ export async function runChatgptCpsResidentCycle({store,reconcile,env={},
   const common={steps_completed:result.steps_completed,
     pending_count:result.pending_count,
     needs_reconciliation:result.needs_reconciliation,
-    external_effects:0,parent_mandate_completed:false,...overview};
+    external_effects:0,parent_packet_completed:false,...overview};
   if(!result.ok)return {ok:false,status:result.status,...common,
     autonomous_browser_worker:false};
   if(env.COGENTIA_CPS_BROWSER_DISPATCH_ENABLED!=='1')

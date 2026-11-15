@@ -10,13 +10,13 @@ const base={request_id:"john-turn-001",mandate:{id:"mandate:chatgpt-corpus-codin
 const called={request:base,events:[{type:"john.run.completed",data:{result:{text:"secret answer"}}}],
   actor:"agent:jhn",principal_ref:"principal:jhn"};
 
-test("real canonical journal never equates a completed turn with completed mandate",()=>{
+test("real canonical journal never equates a completed turn with a completed packet",()=>{
   const store=createSqliteCopEventStore(":memory:");
   try{
     const bridge=createJohnMandateTurnContinuity({store});
     const first=bridge.record(called);
     assert.equal(first.ok,true);
-    assert.equal(first.mandate_status,"open");
+    assert.equal(first.packet_status,"open");
     assert.equal(first.needs_continuation,true);
     assert.equal(first.duplicate,false);
     const replay=bridge.record(called);
@@ -29,10 +29,10 @@ test("real canonical journal never equates a completed turn with completed manda
     assert.equal(pending.pending.length,1);
     assert.equal(pending.pending[0].needs_continuation,true);
     assert.equal(bridge.pending({}).pending.length,1);
-    const records=store.listTopic("john-mandate:cogentia-330");
+    const records=store.listTopic("john-packet:cogentia-330");
     assert.equal(records.length,1);
     assert.equal(records[0].payload.turn_status,"completed");
-    assert.equal(records[0].payload.mandate_status,"open");
+    assert.equal(records[0].payload.packet_status,"open");
     assert.equal(JSON.stringify(records).includes("secret"),false);
   } finally {store.close();}
 });
@@ -64,29 +64,49 @@ test("nonterminal turn and missing contract do not falsely complete the parent",
   }finally{store.close();}
 });
 
-test("John agent's explicit mandate completion closes the parent without a second verifier",()=>{
+test("John agent's explicit packet completion completes the parent without a second verifier",()=>{
   const store=createSqliteCopEventStore(":memory:");
   try{
     const bridge=createJohnMandateTurnContinuity({store});
     const request={...base,request_id:"john-turn-agent-completed"};
     const record=bridge.record({...called,request,events:[{type:"john.run.completed",
-      data:{result:{status:"returned",mandate_status:"completed"}}}]});
+      data:{result:{status:"returned",packet_status:"completed"}}}]});
     assert.equal(record.ok,true);
-    assert.equal(record.mandate_status,"completed");
+    assert.equal(record.packet_status,"completed");
     assert.equal(record.needs_continuation,false);
     assert.deepEqual(bridge.pending({goal_ref:"cogentia-330"}).pending,[]);
-    const row=store.listTopic("john-mandate:cogentia-330")[0];
+    const row=store.listTopic("john-packet:cogentia-330")[0];
     assert.equal(row.payload.acceptance_basis,"agent_judgment");
     assert.equal(JSON.stringify(row).includes("secret"),false);
   }finally{store.close();}
 });
-test("John failed turn cannot certify a mandate, despite forged completion field",()=>{
+test("John failed turn cannot certify packet completion, despite forged completion field",()=>{
   const store=createSqliteCopEventStore(":memory:");
   try{
     const bridge=createJohnMandateTurnContinuity({store});
     const r=bridge.record({...called,events:[{type:"john.run.failed",
-      data:{result:{mandate_status:"completed"}}}]});
+      data:{result:{packet_status:"completed"}}}]});
     assert.equal(r.ok,true);
-    assert.equal(r.mandate_status,"open");
+    assert.equal(r.packet_status,"open");
   }finally{store.close();}
+});
+
+test('legacy John mandate-turn receipt remains readable with no mandate mutation',()=>{
+  const store=createSqliteCopEventStore(':memory:');
+  try {
+    const payload={profile:'cop.john-mandate-turn/v1',goal_ref:'legacy-goal',
+      principal_ref:'principal:jhn',mandate_ref:'mandate:chatgpt-corpus-coding',
+      turn_id:'legacy-req',mandate_status:'open',needs_continuation:true,
+      acceptance:[]};
+    assert.equal(store.append({topic_id:'john-mandate:legacy-goal',
+      event_type:'cop.event/v1',actor_id:'cop:john-mandate-turn',
+      subject_ref:'mandate:chatgpt-corpus-coding',
+      idempotency_key:'john:mandate-turn:legacy-req:v1',
+      visibility:'restricted',epistemic_status:'observed',payload}).ok,true);
+    const bridge=createJohnMandateTurnContinuity({store});
+    const pending=bridge.pending({goal_ref:'legacy-goal'});
+    assert.equal(pending.pending.length,1);
+    assert.equal(pending.pending[0].packet_status,'open');
+    assert.equal(pending.pending[0].needs_continuation,true);
+  } finally {store.close()}
 });

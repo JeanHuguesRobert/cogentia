@@ -169,7 +169,7 @@ test('resident ONA handles existing next-action bridge under the same cycle',asy
   assert.equal(add('chatgpt-browser:'+id+':dispatch-attempt',{profile:'cop.continuation-dispatch/v1',
     phase:'intent_committed',continuation_id:id}).ok,true);
   assert.equal(add('chatgpt-browser:'+id+':dispatch-result',{profile:'cop.continuation-dispatch/v1',
-    phase:'handler_completed',continuation_id:id,parent_mandate_status:'open',
+    phase:'handler_completed',continuation_id:id,parent_packet_status:'open',
     next_turn_dispatched:false,next_action_admitted:false,next_action_candidate:'inspect-child'}).ok,true);
   let calls=0;
   const result=await runChatgptCpsResidentCycle({store:s,reconcile:noWakes,
@@ -197,7 +197,7 @@ test('CPS source recipe carries real packet question and exact return binding, n
   assert.equal(built.prompt.includes(c.execution_binding_ref),true);
   assert.equal(built.prompt.includes(c.correlation.challenge),true);
   assert.equal(built.prompt.includes('cogentia_continuation_result_submit'),true);
-  assert.equal(built.prompt.includes('mandate_status'),true);
+  assert.equal(built.prompt.includes('packet_status'),true);
   assert.equal(built.prompt.length<=6000,true);
   assert.equal(buildAssignedChatgptCpsPrompt({...c,correlation:{challenge:''}}).ok,false);
   assert.equal(buildAssignedChatgptCpsPrompt({...c,state:{...c.state,

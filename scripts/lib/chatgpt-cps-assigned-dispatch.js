@@ -31,7 +31,7 @@ export function buildAssignedChatgptCpsPrompt(c){
     step_result:{protocol:'cogentia.step_result/v1',
       continuation_id:c.continuation_id,challenge:c.correlation.challenge,
       status:'answered',result:{answer:'[Votre réponse réelle à la question]',
-        mandate_status:'[completed, continue ou blocked selon votre jugement]',
+        packet_status:'[completed, continue ou blocked selon votre jugement]',
         next_action:'[identifiant bref uniquement si continue]',
         next_question:'[instruction précise de la prochaine étape, uniquement si continue]'}}};
   const prompt=[
@@ -42,11 +42,11 @@ export function buildAssignedChatgptCpsPrompt(c){
     'cogentia_continuation_result_submit en adaptant les champs de réponse du modèle ci-dessous.',
     'Conservez EXACTEMENT les identifiants, challenge, version et clé d’idempotence.',
     'Remplacez les valeurs entre crochets par votre réponse ; ne copiez pas les exemples.',
-    'Pour une tâche achevée, choisissez result.mandate_status="completed".',
-    'Pour une étape nécessaire, choisissez "continue" et indiquez result.next_action (identifiant court)',
+    'Pour un paquet cognitif achevé, choisissez result.packet_status="completed".',
+    'Si le travail doit progresser, choisissez result.packet_status="continue" et indiquez result.next_action (identifiant court)',
     'ainsi que result.next_question (l’instruction cognitive exacte de l’étape suivante).',
-    'Si bloqué, choisissez "blocked" et expliquez pourquoi dans result.answer.',
-    'L’évaluation de votre travail relève de votre jugement dans les limites du mandat.',
+    'Si le paquet est bloqué, choisissez result.packet_status="blocked" et expliquez pourquoi dans result.answer.',
+    'Le paquet décrit le travail ; le mandat délimite seulement vos permissions. Jugez librement la progression du paquet dans ces limites.',
     'Modèle d’arguments de l’outil à compléter :',JSON.stringify(template),
     'N’annoncez pas de livraison réussie sans reçu MCP. En cas d’absence de connecteur, répondez TOOL_UNAVAILABLE.',
   ].join('\n\n');
@@ -204,6 +204,6 @@ export async function runAssignedChatgptCpsBatch({store,admit,dispatch,max_steps
     steps_completed:running.steps_completed,
     pending_count:left.filter(x=>x.status==='ready').length,
     needs_reconciliation:left.filter(x=>x.status==='needs_reconciliation').length,
-    autonomous_browser_worker:false, parent_mandate_completed:false,
+    autonomous_browser_worker:false, parent_packet_completed:false,
     events:running.events};
 }

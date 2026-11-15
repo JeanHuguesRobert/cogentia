@@ -48,7 +48,7 @@ test('three independently returned continuations survive replay without extra wa
        .filter(e=>e.payload?.profile==='cop.continuation-scheduler-wake/v1');
      assert.equal(events.length,1);
      assert.equal(events[0].payload.dispatch_permitted,false);
-     assert.equal(events[0].payload.parent_mandate_status,'open');
+     assert.equal(events[0].payload.parent_packet_status,'open');
      assert.equal(events[0].payload.returned_receipt_ref,'result:'+id);
    }
  }finally{store.close()}

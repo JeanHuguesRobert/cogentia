@@ -9,7 +9,7 @@ import {COPBus} from '../../../inseme/packages/cop-kernel/src/bus.js';
 import {createEventSourcedExecutionBudgetLedger} from '../../../inseme/packages/cop-core/src/execution-budget.js';
 import {resolveMandate,evaluateMandate} from '../../../inseme/packages/cop-core/src/governed-act.js';
 import {assessJohnCopAuthority} from './john-cop-authority-preflight.js';
-import {projectMandateProgress} from './mandate-completion-projection.js';
+import {projectCognitivePacketProgress} from './cognitive-packet-progress.js';
 import {consumeChatgptCpsWake} from './chatgpt-cps-wake-consumer.js';
 import {runChatgptCpsWakeBatch} from './chatgpt-cps-wake-batch.js';
 
@@ -18,7 +18,8 @@ const HANDLER='handler:chatgpt-browser-result-observer';
  * A correlated, admitted MCP result from the designated JudgmentHandler is
  * trusted for its OWN completion/next-action decision (Optimistic Locking).
  * The result status "answered" means the turn answered; it does NOT imply the
- * parent mission is complete. The agent says so explicitly in result.mandate_status.
+ * Cognitive Packet is complete. The agent says so in result.packet_status.
+ * Historical result.mandate_status remains readable, but never changes authority.
  * A next_action is a CANDIDATE, not a browser dispatch grant: the separate
  * executor still enforces current COP authority, claims, quotas and effects.
  */
@@ -31,9 +32,10 @@ export function createReturnScheduler(){
           typeof candidate.result?.answer==='string' &&
           candidate.result.answer.trim().length>0;
         const result=answered?candidate.result:{};
-        const agentClaim=['completed','continue','blocked'].includes(result.mandate_status)
-          ?result.mandate_status:null;
-        const progress=projectMandateProgress({
+        const packetStatus=result.packet_status??result.mandate_status;
+        const agentClaim=['completed','continue','blocked'].includes(packetStatus)
+          ?packetStatus:null;
+        const progress=projectCognitivePacketProgress({
           acceptance:continuation.state?.parent_acceptance||[],
           trustAgentJudgment:answered,
           agentClaim,
@@ -49,7 +51,7 @@ export function createReturnScheduler(){
             result.next_question.trim().length>0&&result.next_question.length<=4500
               ?result.next_question:null,
           next_turn_dispatched:false,
-          mandate_completed:progress.status==='completed',
+          packet_completed:progress.status==='completed',
         };
       },
     }:null,

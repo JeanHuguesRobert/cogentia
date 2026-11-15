@@ -1,10 +1,25 @@
 ---
 title: Continuations and Cognitive Packets — early agent briefing
+author: "Jean Hugues Noël Robert"
+affiliation: "Institut Mariani / C.O.R.S.I.C.A., 1 cours Paoli, F-20250 Corte, Corsica"
+date: 2026-08-12
+last_modified_at: 2026-11-15
+status: working-paper
+license: CC BY-SA 4.0
 document_role: operational
 document_kind: agent-orientation
 visibility: public
 lifecycle_state: active
 update_policy: UP-DEFAULT-REVIEWED
+provenance:
+  origin_type: repository
+  origin_repository: JeanHuguesRobert/cogentia
+  origin_ref: "012e49c8"
+  origin_date: 2026-08-12
+  derived_from: []
+review:
+  status: unreviewed
+  reviewed_by: []
 language: en
 related:
   - "../research/cognitive_packets.md"
@@ -47,6 +62,17 @@ Handler
 **Continuations are 100% packet-shaped work:** the CLI continuation is the
 operational twin of a packet whose `packet_kind` is continuation; the skill
 `continuation-handling` is the **handler** procedure.
+
+**Authority is not work.** The Cognitive Packet progresses (and can generate
+more continuations) when a Handler returns its judgment. The Handler's
+MandateDeclaration merely bounds what it may do while handling these packets.
+A packet can finish while the same mandate stays valid for other packets;
+the mandate is not a parent task to close. In ChatGPT/CPS integrations,
+`result.packet_status` describes work (`continue`, `completed`, `blocked`),
+`step_result.status=answered` describes the single completed turn, and
+`parent_packet_status` is the derived packet projection. Historical
+`mandate_status` / `parent_mandate_status` fields are compatibility reads
+only. See the [#330 correction](https://github.com/JeanHuguesRobert/cogentia/issues/330).
 
 ## Conversations as agile packet-routing handlers
 

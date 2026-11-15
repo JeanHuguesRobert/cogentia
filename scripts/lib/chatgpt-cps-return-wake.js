@@ -35,7 +35,7 @@ export function recordChatgptReturnWake({store,continuation,returned,budget_id}=
       phase:'pending_scheduler_review',
       continuation_id:id,
       returned_receipt_ref:returned.idempotency_key,
-      parent_mandate_status:'open',
+      parent_packet_status:'open',
       requires_next_step_authority:true,
       dispatch_permitted:false,
     },

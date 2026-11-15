@@ -24,7 +24,7 @@ export function listChatgptCpsNextSteps(store,{limit=25}={}){
     e.payload?.phase==='handler_completed'&&
     validId(e.payload?.continuation_id)&&
     e.topic?.id==='continuation:'+e.payload.continuation_id&&
-    e.payload.parent_mandate_status==='open'&&
+    (e.payload.parent_packet_status??e.payload.parent_mandate_status)==='open'&&
     e.payload.next_turn_dispatched===false&&
     e.payload.next_action_admitted===false&&
     validAction(e.payload.next_action_candidate))
@@ -54,7 +54,7 @@ export async function consumeChatgptCpsNextStep({store,continuation_id,admit,dis
   const completed=records.find(e=>e.payload?.profile===HANDLER_COMPLETED&&
     e.payload.phase==='handler_completed'&&
     e.payload.continuation_id===continuation_id&&
-    e.payload.parent_mandate_status==='open'&&
+    (e.payload.parent_packet_status??e.payload.parent_mandate_status)==='open'&&
     e.payload.next_turn_dispatched===false&&
     e.payload.next_action_admitted===false&&
     validAction(e.payload.next_action_candidate));
@@ -139,7 +139,7 @@ export async function consumeChatgptCpsNextStep({store,continuation_id,admit,dis
       child_execution_receipt_ref:execution.execution_receipt_ref,
       child_dispatch_evidence_ref:evidenceRef,
       receipt_basis:receiptBasis,
-      parent_mandate_status:'open'},
+      parent_packet_status:'open'},
   });
   if(!committed.ok)return {ok:false,status:'needs_reconciliation'};
   return {ok:true,status:'child_dispatched',continuation_id,
@@ -176,6 +176,6 @@ export async function runChatgptCpsNextStepBatch({store,admit,dispatch,verifyDis
    steps_completed:run.steps_completed,
    pending_count:pending.filter(x=>x.status==='pending_admission').length,
    needs_reconciliation:pending.filter(x=>x.status==='needs_reconciliation').length,
-   parent_mandate_completed:false,persistent_worker:false,
+   parent_packet_completed:false,persistent_worker:false,
    events:run.events};
 }

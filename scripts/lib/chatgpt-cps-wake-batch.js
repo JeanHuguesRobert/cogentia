@@ -31,5 +31,5 @@ export async function runChatgptCpsWakeBatch({store,scheduler,admit,max_steps=3}
     pending_count:remaining.filter(x=>x.status==='pending').length,
     needs_reconciliation:remaining.filter(x=>x.status==='needs_reconciliation').length,
     events:run.events,autonomous_browser_worker:false,
-    parent_mandate_completed:false};
+    parent_packet_completed:false};
 }

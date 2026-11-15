@@ -103,13 +103,13 @@ try {
   assert.equal(woke[0].payload.phase,'resumed');
   assert.equal(woke[0].payload.execution?.status,'continue');
   assert.equal(woke[0].payload.execution?.next_action,'local-next-step');
-  assert.equal(woke[0].payload.execution?.mandate_completed,false);
-  assert.equal(woke[0].payload.parent_mandate_status,'open');
+  assert.equal(woke[0].payload.execution?.packet_completed,false);
+  assert.equal(woke[0].payload.parent_packet_status,'open');
   const settled=ledger.settle({reservation_id:reservationId,
     idempotency_key:'local-fixture:'+id+':settlement',
     usage:{max_steps:1},expected_version:ledger.snapshot().version});
   assert.equal(settled.ok,true,JSON.stringify(settled));
   console.log(JSON.stringify({ok:true,continuation_id:id,receipt_ref:first.receipt_ref,
     idempotent_retry:true,phase:'resumed',budget_settled:true,
-    autonomous_cps_wake_proven:true,parent_mandate_status:'open'}));
+    autonomous_cps_wake_proven:true,parent_packet_status:'open'}));
 } finally {store.close();}

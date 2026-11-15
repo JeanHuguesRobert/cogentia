@@ -497,6 +497,28 @@ Continuation     = payload kind (or CLI twin) for suspended judgment
 Handler          = human / agent / twin / fulfiller that inspects, prepares, resolves
 ```
 
+**Distinguish work, continuation, handler and authority (CPS FBF, #330).**
+A **Cognitive Packet** carries work and may progress, branch, remain blocked,
+or finish. A **continuation** is one suspended computation handed to a
+**Handler**, whose result can create further continuations. A
+**MandateDeclaration** is an authority boundary on the agent's permitted acts,
+lifetime, scope and budget; it is **not** the packet, and completing work does
+not complete, close, consume or revoke a mandate. Within the active mandate,
+trust the designated agent's own packet-progress judgment (Optimistic Locking)
+without a second reviewer by default.
+
+For new ChatGPT/CPS result submissions use `result.packet_status` with
+`continue | completed | blocked`, optionally `next_action` and
+`next_question`; the returned step's `status=answered` means only that
+the **turn answered**. Journal `parent_packet_status` for packet progression.
+Never use `mandate_status=completed` or `parent_mandate_status` to describe
+work completion. Historic events carrying these misleading keys are readable
+through explicit compatibility aliases, not grounds to reinterpret mandate
+authority or erase historical receipts. A new external act still requires
+its ordinary mandate, claim and budget admission; no extra independent
+certifier is a default precondition for accepting Judgment.
+See [#330](https://github.com/JeanHuguesRobert/cogentia/issues/330).
+
 When a structural tool hits a judgment boundary, it emits a continuation
 instead of embedding a silent OpenAI-compatible call (inversion of control).
 A continuation is like a **cross-process Promise/Future** (no shared RAM),

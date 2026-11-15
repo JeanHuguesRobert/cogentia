@@ -79,7 +79,7 @@ test('3 causally chained returns re-enter existing COPScheduler, no duplicate af
    assert.equal(drained.status,'queue_drained',JSON.stringify(drained));
    assert.equal(drained.steps_completed,3);
    assert.equal(drained.autonomous_browser_worker,false);
-   assert.equal(drained.parent_mandate_completed,false);
+   assert.equal(drained.parent_packet_completed,false);
    for(const id of ids)
      assert.equal((await consumeChatgptCpsWake({store,continuation_id:id,
        scheduler:existingScheduler,admit})).status,'already_processed');
@@ -261,7 +261,7 @@ test('one bounded mandate driver dispatches three separately admitted causal chi
   assert.equal(result.status,'queue_drained',JSON.stringify(result));
   assert.equal(result.steps_completed,2);
   assert.deepEqual(handled,ids.slice(0,2));
-  assert.equal(result.parent_mandate_completed,false);
+  assert.equal(result.parent_packet_completed,false);
   assert.equal(result.persistent_worker,false);
   assert.deepEqual(listChatgptCpsNextSteps(store),[]);
  }finally{store.close()}
@@ -380,14 +380,14 @@ test('real COPScheduler trusts explicit agent completion and records parent as c
   try{
     const id='ctn_judgment_completed_01';
     addReturned(store,id,{status:'answered',result:{answer:'Completed',
-      mandate_status:'completed'}});
+      packet_status:'completed'}});
     const result=await consumeChatgptCpsWake({store,continuation_id:id,
       scheduler:createReturnScheduler(),admit});
     assert.equal(result.ok,true);
-    assert.equal(result.parent_mandate_status,'completed');
+    assert.equal(result.parent_packet_status,'completed');
     const row=store.eventByIdempotency('chatgpt-browser:'+id+':dispatch-result');
-    assert.equal(row.payload.parent_mandate_status,'completed');
-    assert.equal(row.payload.parent_acceptance_basis,'agent_judgment');
+    assert.equal(row.payload.parent_packet_status,'completed');
+    assert.equal(row.payload.parent_packet_acceptance_basis,'agent_judgment');
     assert.deepEqual(listChatgptCpsNextSteps(store),[]);
   }finally{store.close()}
 });
@@ -396,11 +396,11 @@ test('real COPScheduler trusts agent next action but waits for distinct dispatch
   try{
     const id='ctn_judgment_continue_01';
     addReturned(store,id,{status:'answered',result:{answer:'Inspect next input',
-      mandate_status:'continue',next_action:'inspect-next-source'}});
+      packet_status:'continue',next_action:'inspect-next-source'}});
     const result=await consumeChatgptCpsWake({store,continuation_id:id,
       scheduler:createReturnScheduler(),admit});
     assert.equal(result.ok,true);
-    assert.equal(result.parent_mandate_status,'open');
+    assert.equal(result.parent_packet_status,'open');
     assert.deepEqual(listChatgptCpsNextSteps(store).map(e=>[e.action_id,e.status]),
       [['inspect-next-source','pending_admission']]);
   }finally{store.close()}
@@ -444,7 +444,7 @@ test('next-question from an admitted agent result persists as CPS data, without 
   const store=createSqliteCopEventStore(':memory:');try{
     const id='ctn_next_question_01';
     addReturned(store,id,{status:'answered',result:{answer:'Continue',
-      mandate_status:'continue',next_action:'inspect-next',
+      packet_status:'continue',next_action:'inspect-next',
       next_question:'Inspect the next relevant source'}});
     const r=await consumeChatgptCpsWake({store,continuation_id:id,
       scheduler:createReturnScheduler(),admit});
@@ -453,4 +453,33 @@ test('next-question from an admitted agent result persists as CPS data, without 
     assert.equal(event.payload.next_action_candidate,'inspect-next');
     assert.equal(event.payload.next_action_question_candidate,'Inspect the next relevant source');
   }finally{store.close()}
+});
+
+test('legacy parent_mandate_status receipt still produces a CPS next-step candidate',()=>{
+  const store=createSqliteCopEventStore(':memory:');
+  try{
+    const id='ctn_legacy_parent_packet_status_01';
+    addReturned(store,id,{status:'answered',result:{answer:'Legacy continue',
+      mandate_status:'continue',next_action:'inspect-source'}});
+    commit(store,event('continuation:'+id,'chatgpt-browser:'+id+':dispatch-result',{
+      profile:'cop.continuation-dispatch/v1',phase:'handler_completed',
+      continuation_id:id,parent_mandate_status:'open',
+      next_turn_dispatched:false,next_action_admitted:false,
+      next_action_candidate:'inspect-source'}));
+    assert.deepEqual(listChatgptCpsNextSteps(store).map(e=>e.action_id),
+      ['inspect-source']);
+  }finally{store.close()}
+});
+
+test('blocked cognitive packet is not mistaken for an open mandate',async()=>{
+ const store=createSqliteCopEventStore(':memory:');
+ try{
+  const id='ctn_packet_blocked_01';
+  addReturned(store,id,{status:'answered',result:{answer:'Missing input',packet_status:'blocked'}});
+  const r=await consumeChatgptCpsWake({store,continuation_id:id,
+    scheduler:createReturnScheduler(),admit});
+  assert.equal(r.ok,true);
+  assert.equal(r.parent_packet_status,'blocked');
+  assert.deepEqual(listChatgptCpsNextSteps(store),[]);
+ }finally{store.close()}
 });

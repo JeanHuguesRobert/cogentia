@@ -62,7 +62,7 @@ export async function consumeChatgptCpsWake({store,continuation_id,scheduler,adm
       continuation.provider!=='chatgpt'||continuation.channel!=='browser'||
       typeof continuation.budget_reservation_id!=='string')
     return {ok:false,status:'canonical_return_missing'};
-  // If the parent mandate uses a different ledger, it must be resolved by
+  // If the authority mandate uses a different ledger, it must be resolved by
   // the authoritative admission callback; no fallback to model claims.
   const settling=store.replay().find(e=>e.event_type==='ExecutionBudgetSettlement'&&
     e.payload?.reservation_id===continuation.budget_reservation_id);
@@ -121,7 +121,9 @@ export async function consumeChatgptCpsWake({store,continuation_id,scheduler,adm
   // A scheduler evaluation may identify a candidate next act. Persist it as
   // data for a separate authority/budget/claim admission, never as a grant.
   const parentCompleted=outcome?.status==='completed'&&
-    outcome?.mandate_completed===true;
+    (outcome?.packet_completed===true||outcome?.mandate_completed===true);
+  const parentPacketStatus=parentCompleted?'completed':
+    outcome?.status==='blocked'?'blocked':'open';
   const nextAction=!parentCompleted&&outcome?.status==='continue'&&
     typeof outcome.next_action==='string'&&
     /^[a-zA-Z0-9_.:-]{1,96}$/.test(outcome.next_action)
@@ -135,8 +137,8 @@ export async function consumeChatgptCpsWake({store,continuation_id,scheduler,adm
     causal_refs:[reserveKey(continuation_id)],
     payload:{profile:'cop.continuation-dispatch/v1',phase:'handler_completed',
       continuation_id,handler_ref:continuation.resumeTo,
-      parent_mandate_status:parentCompleted?'completed':'open',
-      parent_acceptance_basis:parentCompleted?outcome.acceptance_basis||'scheduler_result':null,
+      parent_packet_status:parentPacketStatus,
+      parent_packet_acceptance_basis:parentCompleted?outcome.acceptance_basis||'scheduler_result':null,
       // This event reflects ONLY scheduler handler return, not a browser
       // message delivery or an autonomous next-turn result.
       next_turn_dispatched:false,
@@ -147,7 +149,7 @@ export async function consumeChatgptCpsWake({store,continuation_id,scheduler,adm
   });
   if(!committed.ok)return {ok:false,status:'needs_reconciliation',error:'completion_receipt_missing'};
   return {ok:true,status:'handler_completed',continuation_id,
-    parent_mandate_status:parentCompleted?'completed':'open',
+    parent_packet_status:parentPacketStatus,
     receipt_ref:completedKey(continuation_id),
     result:execution?.execution?.result||null};
 }

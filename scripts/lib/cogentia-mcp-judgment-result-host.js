@@ -17,7 +17,7 @@ import { projectPacketCoordination, validateCurrentPacketClaim } from
 import { assessJohnCopAuthority } from "./john-cop-authority-preflight.js";
 import { resolveMandate } from "../../../inseme/packages/cop-core/src/governed-act.js";
 import { isResolvedCallerAuth } from "./cogentia-mcp-auth.js";
-import { projectMandateProgress } from "./mandate-completion-projection.js";
+import { projectCognitivePacketProgress } from "./cognitive-packet-progress.js";
 import { recordChatgptReturnWake } from "./chatgpt-cps-return-wake.js";
 import { createChatgptCpsReturnEvaluator } from "./chatgpt-cps-return-evaluator.js";
 import { resumeContinuationFromReturnedEvent } from
@@ -139,14 +139,14 @@ export function createCanonicalMcpJudgmentResultHost({
             handlerResolver: async (name) => name === "handler:local-result-evaluator"
               ? async ({ payload }) => ({
                   accepted: payload?.candidateResult?.status === "answered",
-                  ...projectMandateProgress({
+                  ...projectCognitivePacketProgress({
                     acceptance: continuation.parent_acceptance || [],
                     evidence: [],
                     nextActions: [{ id:"local-next-step", admissible:true,
                       available:true }],
                     agentClaim: "completed",
                   }),
-                  mandate_completed: false,
+                  packet_completed: false,
                 }) : null,
           });
           // Handler output is a Step result, not authority to close its parent.
@@ -165,7 +165,7 @@ export function createCanonicalMcpJudgmentResultHost({
               continuation_id: id,
               handler: continuation.resumeTo,
               execution: wake.execution?.result || null,
-              parent_mandate_status: wake.execution?.result?.status === "completed"
+              parent_packet_status: wake.execution?.result?.status === "completed"
                 ? "completed" : "open",
             },
           });

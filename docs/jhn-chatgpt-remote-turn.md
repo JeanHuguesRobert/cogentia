@@ -29,7 +29,7 @@ review:
 The Principal explicitly requested a **standing** capability to resume
 otherwise terminal conversational LLM work through their own hosted Brave
 browser. **Current verified state (15 November 2026):** JHN's independently signed
-root mandate is **v3** and includes `browser.chatgpt.turn`. The earlier v2
+root mandate is **v5** and includes `browser.chatgpt.turn`. The earlier v2
 restriction described the initial setup, not the current authority. Provider
 permission and signed effect-bound admission remain separate gates.
 
@@ -233,10 +233,10 @@ The MCP result host now emits, **after** acceptance and actual COP budget
 settlement, one idempotent `cop.continuation-scheduler-wake/v1` event on the
 existing `continuation:<id>` journal topic. This is a durable **request for
 scheduler review**, not a new authorization to send a browser prompt. Its
-`phase=pending_scheduler_review`, `parent_mandate_status=open`,
+`phase=pending_scheduler_review`, `parent_packet_status=open`,
 `requires_next_step_authority=true`, and `dispatch_permitted=false` ensure
 that a returned ChatGPT result is not silently reclassified as a completed
-parent mandate or a permission for another model turn.
+parent packet or a permission for another model turn.
 
 Implementation: `scripts/lib/chatgpt-cps-return-wake.js`, invoked in
 `cogentia-mcp-judgment-result-host.js` only for the signed, recognized
@@ -324,7 +324,7 @@ state, and advances to another return if one became available. There is
 **no separate per-packet human or agent-control call** in the three-step
 fixture test. The driver stops at its step ceiling, permission denial,
 ambiguous effect or empty queue. `queue_drained` **does not mean** the
-parent mandate is finished. It does not start a background service, invoke
+parent Cognitive Packet is finished. It does not start a background service, invoke
 a consumer web browser or automatically send an additional ChatGPT prompt.
 
 The immediate next production integration remains the *authorized
@@ -381,7 +381,7 @@ the existing **Inseme COPScheduler** and durably records a
 
 The parent evaluator projects acceptance from canonical packet state; a
 model's assertion of completion supplies no verified evidence. It never
-sends another message, never claims that the parent mandate is complete,
+sends another message, never claims that the parent Cognitive Packet is complete,
 and leaves `next_turn_dispatched=false`. Duplicate MCP results still settle
 one original budget unit and generate no second evaluation effect. A
 failure to admit the evaluator retains a durable wake for later
@@ -611,7 +611,7 @@ The third required one explicit browser-draft recovery **after** the owner
 foreground pilot had exhausted its return wait. Thus this experiment
 proves real inter-turn CPS continuity and effective recovery; it does
 **not yet** prove three completely unattended, error-free turns, nor an
-indefinitely resident autonomous Judgment loop. The parent mandate remains
+indefinitely resident autonomous Judgment loop. The parent Cognitive Packet remains
 open. No API-model substitution occurred.
 
 **Fix Bugs First follow-up:** `browser-chatgpt-turn.js` now exposes two
@@ -924,32 +924,41 @@ certificate. Reconstruct the identity, correlation, COP mandate and result
 admission through the *existing* MCP return path; do not invent an extra
 verification role downstream of that admission.
 
-The existing step-result protocol has `status: "answered"` for a successful
-*turn*, not a completed *parent mandate*. The agent can express the latter as
-an optional judgment on the already supported result object:
+**CPS vocabulary correction (#330):** a mandate governs authority, not
+completion of a task. The Cognitive Packet is the work to advance; the
+continuation is one suspended step; ChatGPT is its JudgmentHandler. The
+`status: "answered"` field reports the turn's return, while
+`result.packet_status` represents the agent's judgment of packet progress:
 
 ```json
-{"status":"answered","result":{"answer":"Le travail est achevé", "mandate_status":"completed"}}
+{"status":"answered","result":{"answer":"Le paquet est achevé","packet_status":"completed"}}
 ```
 
-Alternatively it can ask to continue with a bounded action identifier:
+If further work is necessary, the Handler chooses its next cognitive step:
 
 ```json
-{"status":"answered","result":{"answer":"Étape suivante identifiée", "mandate_status":"continue", "next_action":"inspect-next-source"}}
+{"status":"answered","result":{"answer":"Étape suivante identifiée","packet_status":"continue","next_action":"inspect-next-source","next_question":"Inspectez la prochaine source pertinente."}}
 ```
 
-`chatgpt-cps-return-evaluator.js` accepts an explicit `completed` judgment
-from an admitted returned result and records `acceptance_basis=agent_judgment`;
-`chatgpt-cps-wake-consumer.js` projects `parent_mandate_status=completed`
-without demanding a second verifier. An explicit `next_action` is accepted as
-a **candidate**, and the existing next-step bridge enforces the current
-mandate, valid child claim, provider/channel permission and budget at actual
-dispatch. The entrusted John dispatcher reports its own receipt; absent an
-explicit higher-risk profile, no second independent receipt validator is
-required. An unadorned `answered` return does not imply completion and can
-remain open. The analogous John turn journal trusts an explicit
-`mandate_status=completed` in its terminal agent result; a mere
-`john.run.completed` event does not close a parent.
+If blocked, `packet_status: "blocked"` describes work that cannot currently
+progress; it does not revoke the agent's mandate. A trusted, admitted
+JudgmentHandler's explicit completion decision is accepted under Optimistic
+Locking with `acceptance_basis=agent_judgment`; no second verifier is required.
+The wake consumer records `parent_packet_status` and, when applicable,
+`parent_packet_acceptance_basis`. `next_action` is a candidate for a fresh
+continuation subject to normal COP authority, packet claim and budget
+admission for *that effect*, not an extension of the Handler's mandate.
+
+Old receipts with `result.mandate_status`, `parent_mandate_status`,
+`mandate_completed`, or the `cop.john-mandate-turn/v1` journal profile
+remain readable. New records use `packet_status`, `parent_packet_status`,
+`packet_completed` and `cop.john-packet-turn/v2`; their coexistence does
+not modify existing MandateDeclarations or duplicate any prior execution.
+The existing John turn journal exposes `packet_continuity` and the private
+`cogentia_john_packet_pending` read tool (the older
+`cogentia_john_mandate_pending` name remains an alias), with legacy
+read fallback), and its return field `packet_status` describes work only.
+`john.run.completed` means one conversation turn ended, not the packet.
 
 The journal preserves the agent's judgment, canonical receipt and correction
 path; an observed contradiction is handled by ordinary append-only
@@ -991,14 +1000,14 @@ confirmed UI click produces `first-dispatch-receipt` with
 `phase=ui_click_dispatched_not_model_result`; **it is not a ChatGPT result**.
 After an unknown outcome, a competing worker or a process restart sees
 `needs_reconciliation`; it cannot blindly submit the same prompt twice.
-The agent's ordinary explicit `mandate_status=completed` or `next_action`
+The agent's ordinary explicit `packet_status=completed` or `next_action`
 remains trusted under Optimistic Locking, without a second judging model.
 
 The **Core-owned prompt recipe** carries the real assigned question and the
 already allocated `continuation_id`, `attempt_id`, binding, version and
 challenge. It asks the ChatGPT JudgmentHandler to call
 `cogentia_continuation_result_submit` directly, filling in its actual answer
-and its own `mandate_status`; no constant `READY` result is fabricated.
+and its own `packet_status`; no constant `READY` result is fabricated.
 `chatgpt-cps-john-dispatch.js` uses only the existing authenticated loopback
 MCP `cogentia_john_run` capability: read a stable, blank ChatGPT composer
 through the output-free `status` action, then invoke `submit` under its own

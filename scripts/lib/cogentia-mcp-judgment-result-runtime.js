@@ -10,7 +10,7 @@ import { createSqliteCopEventStore } from
 import { sshFingerprint } from "./john-sshsig-approval.js";
 import { createOfflineJohnIssuerVerifier } from "./john-offline-issuer-verifier.js";
 import { createCanonicalMcpJudgmentResultHost } from "./cogentia-mcp-judgment-result-host.js";
-import {createJohnMandateTurnContinuity} from "./john-mandate-turn-continuity.js";
+import {createJohnPacketTurnContinuity} from "./john-packet-turn-continuity.js";
 
 const PINNED_STORE = "/var/lib/cogentia/cop/john-root-v1.sqlite";
 const PINNED_ISSUER = "SHA256:lG9BC3fIjurrBccYLO1w7VQpmc9ZMr8MvM1o3zJ6L3c";
@@ -66,7 +66,7 @@ export function createMcpJudgmentResultRuntime(env = process.env) {
     });
     return {
       enabled: true, extras: { mcpContinuationResultHost: provider,
-        mandateTurnContinuity: createJohnMandateTurnContinuity({store}) },
+        packetTurnContinuity: createJohnPacketTurnContinuity({store}) },
       close() { store.close(); },
     };
   } catch (e) {

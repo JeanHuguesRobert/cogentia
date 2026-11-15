@@ -1,7 +1,21 @@
 ---
 title: "Conversational JudgmentHandler — MCP result submission activation"
 date: "2026-11-13"
-status: "source-ready, not deployed"
+status: "working-paper — historical and evolving"
+author: "Jean Hugues Noël Robert"
+affiliation: "Institut Mariani / C.O.R.S.I.C.A., 1 cours Paoli, F-20250 Corte, Corsica"
+last_modified_at: 2026-11-15
+language: en
+update_policy: UP-DEFAULT-REVIEWED
+provenance:
+  origin_type: repository
+  origin_repository: JeanHuguesRobert/cogentia
+  origin_ref: "383eebb3"
+  origin_date: 2026-11-13
+  derived_from: []
+review:
+  status: unreviewed
+  reviewed_by: []
 document_role: "operational"
 document_kind: "integration-runbook"
 visibility: "public"
@@ -16,6 +30,20 @@ license: "CC BY-SA 4.0"
 **Claim/fencing:** [Inseme #121](https://github.com/JeanHuguesRobert/inseme/issues/121).
 **Budget/Accounting:** [Inseme #161–164](https://github.com/JeanHuguesRobert/inseme/issues/161).
 **Fair Usage:** [source analysis](../research/integration/conversational_agents_fair_usage_cop_2026-11-13.md).
+
+**Semantic correction (15 November 2026, #330):** This document retains
+chronological records of the original experimental `mandate_status` and
+`parent_mandate_status` naming and the subsequently abandoned independent
+acceptance requirement. They are **historical**, not current CPS semantics.
+A **mandate** authorizes actions, it is not a work item and is not completed by
+a JudgmentHandler. A **Cognitive Packet** carries work that progresses through
+continuations; current results use `result.packet_status`, journal
+`parent_packet_status`, and John turn `packet_continuity`. Historic keys,
+receipts and journal profiles are read through explicit compatibility aliases.
+An admitted agent may judge completion itself under Optimistic Locking; no
+mandatory second verifier. See
+[the current browser CPS runbook](jhn-chatgpt-remote-turn.md#optimistic-locking-trust-the-mandated-judgmenthandler--15-november-2026).
+
 
 ## Verified source implementation
 
@@ -526,14 +554,15 @@ rather than the script, has independently recorded both the `returned`
 and `resumed` events before the script inspects the journal. It uses one
 canonical COP budget step and leaves parent mandate status open.
 
-## 21. Structural parent-mandate completion projection
+## 21. Historical structural packet progress projection (superseded)
 
 `scripts/lib/mandate-completion-projection.js` is a pure, deterministic
-projection reused in the local result handler. It distinguishes a finished
-handler Step from the status of the parent Mandate: an agent's declaration
-of `completed` is never accepted as the criterion itself. Closure
-requires nonempty declared acceptance criteria and independently verified
-receipts for **every** requirement. If an authorized and available next
+projection reused in the local result handler. It originally distinguished a finished
+handler Step from the status of the parent work packet (then mislabeled Mandate): an agent's declaration
+of `completed` is never accepted as the criterion itself. The original version required acceptance criteria
+and independently verified receipts for each requirement. This requirement
+was superseded by the Principal's explicit trust-in-agent decision; it is
+not a condition for current packet completion. If an authorized and available next
 action exists, the status is `continue`; verified, evidenced blockers
 can set `blocked`; otherwise it remains `open`. No new permission,
 signature, broker, background task or LLM approval is introduced.
@@ -550,14 +579,15 @@ that supplies `request.input.continuity` with an opaque `goal_ref` and bounded
 `acceptance` criterion IDs, the existing `cogentia_john_run` MCP action now
 records `cop.john-mandate-turn/v1` in the **same** canonical COP event journal.
 
-A `john.run.completed` event remains proof of one turn only. The independently
-projected `mandate_status` remains `open` without actual verified acceptance
-receipts. The result includes a persistent `mandate_continuity.receipt_ref` and
+A `john.run.completed` event remains proof of one turn only. At this
+historical stage the incorrectly named `mandate_status` remained `open`
+without additional receipts; current `packet_status` trusts an explicit
+JudgmentHandler decision by default. The result includes a persistent `mandate_continuity.receipt_ref` and
 `needs_continuation:true`. Retries are idempotent by John request ID. Neither
 prompt nor reply nor bearer credentials are copied into the journal.
 
 This is actual turn-end source instrumentation, not another prompt-level rule.
-It makes a noncompleted mandate discoverable after the request and server
+It makes unfinished **packet work** discoverable after the request and server
 restart. Autonomous general Agent JHN dispatch still needs a governed worker
 which consumes these canonical topics and resumes remaining actions. The
 hosted ChatGPT conversation runtime itself is not controlled by this repo;
@@ -579,7 +609,7 @@ one tool call, at most four steps, and at most 15 seconds. At most two
 automatic additional hops can be launched. The response exposes
 continuity_advance with the child's canonical accounting if available.
 
-A successful second Step still never completes the parent mandate solely
+A successful second Step still never completes the parent packet solely
 because it ended. It remains open until acceptance is verified from durable
 independent evidence. The current JHN root v2 mandate authorizes the two
 named browser read capabilities and MCP result ingress, not arbitrary
