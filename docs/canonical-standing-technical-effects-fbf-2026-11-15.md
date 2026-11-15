@@ -41,6 +41,36 @@ related_documents:
 > `super` conserve son admission propre jusqu'à vérification explicite.
 
 
+## État courant vérifié — 15 novembre 2026
+
+**Mandat JHN v5 actif et vérifié dans COP.** La connexion du Principal
+Supabase JHN a directement inscrit `PrincipalAuthenticatedMandateIntent`
+et la déclaration `v5`, sans validation supplémentaire ; lecture de la
+preuve hors ligne corrigée dans Cogentia `bd1e292a`. Le mandat couvre
+`host.process.run(normal)` sur Fracta2 et le ThinkPad ; les essais directs
+Unix/Windows ont produit des reçus `verified_mission` et
+`accounting_complete:true`.
+
+**Administration root réellement vérifiée par les capacités existantes :**
+appel MCP `host.process.run(normal)` sur le ThinkPad avec commande
+`ssh -n -T -o BatchMode=yes -o ConnectTimeout=8 fracta2 sudo -n id -u`
+→ `0`. Deuxième appel à `sudo -n systemctl is-active
+mcp-cogentia.service` → `active`, les deux imputés à v5.
+Ceci utilise les droits SSH/sudo du propriétaire via un nœud
+administrable ; il ne prétend **pas** que le drapeau MCP
+`execution_mode=super` bénéficie d'une délégation v5.
+
+**Recette John read-only du #299 :** `cogentia_john_run`,
+`browser.navigation.instances`, `exposure=read_only`,
+`max_steps=4`, `max_tool_calls=1` : exécution complète, deux instances
+inscrites `fracta2-hosted` et `thinkpad-chrome`, budget COP
+`settled_steps=2`, Odyssey retourné au Principal. Tests COP de
+clôture : 36/36 réussis. Aucun nouvel outil ni mandat spécialisé.
+
+**Les sections ci-dessous conservent l'historique des prototypes v4 et
+des outils Musée désormais supprimés.** Les assertions au présent qui
+s'y trouvent sont archivistiques, non une description de l'état v5.
+
 ## Cause et résolution
 
 Le mandat canonique `mandate:jhn:john-root` a été amendé **v3 → v4** à la suite
