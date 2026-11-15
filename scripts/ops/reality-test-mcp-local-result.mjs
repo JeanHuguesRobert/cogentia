@@ -11,7 +11,7 @@ import assert from 'node:assert/strict';
 import {createSqliteCopEventStore} from '../../../inseme/packages/cop-core/src/sqlite-cop-event-store.js';
 import {createEventSourcedExecutionBudgetLedger} from '../../../inseme/packages/cop-core/src/execution-budget.js';
 import {EventStorePacketClaimCoordinator} from '../../../inseme/packages/cop-kernel/src/packetCoordination.js';
-import {declaredContinuationRecord,observeContinuationResult} from '../../../inseme/packages/cop-core/src/continuation-result.js';
+import {declaredContinuationRecord,observeContinuationResult,continuationContextFromRecords} from '../../../inseme/packages/cop-core/src/continuation-result.js';
 import {hashPayload} from '../../../inseme/packages/cop-core/src/cop-event-envelope.js';
 
 if(process.argv[2]!=='--live-local-fixture') {
@@ -86,19 +86,24 @@ try {
   const records=store.listTopic('continuation:'+id);
   assert.equal(records.filter(x=>x.payload?.surface==='mcp').length,1);
   const observation=records.find(x=>x.payload?.surface==='mcp');
-  const recognized=observeContinuationResult(observation,{continuations:{
-    [id]:{continuation_id:id,correlation:{challenge},expected_result:{schema:'cogentia.step_result/v1'},lifecycle:'suspended'}
-  }});
-  assert.equal(recognized.progression,'returned',JSON.stringify(recognized));
-  assert.equal(recognized.proposed_events.length,0,
-    'production ingress must already have recognized and returned the result');
+  const historical=store.listTopic('continuation:'+id);
+  const context=continuationContextFromRecords(
+    historical.filter(e=>e.payload?.profile==='cop/continuation'),
+    historical.filter(e=>e.payload?.profile==='cop.continuation-result/v1')
+  );
+  const recognized=observeContinuationResult(observation,context);
+  assert.equal(recognized.idempotent,true,
+    'the server, not this script, must have already recognized the observation');
+  assert.equal(recognized.proposed_events.length,0);
   const returned=store.listTopic('continuation:'+id).filter(x=>x.payload?.profile==='cop.continuation-result/v1'&&x.payload.phase==='returned');
   assert.equal(returned.length,1);
   const woke=store.listTopic('continuation:'+id).filter(
     e=>e.payload?.profile==='cop.continuation-resumption/v1');
   assert.equal(woke.length,1,'automatic MCP to kernel handler wake must be durable');
   assert.equal(woke[0].payload.phase,'resumed');
-  assert.equal(woke[0].payload.execution?.next_action,'continue');
+  assert.equal(woke[0].payload.execution?.status,'continue');
+  assert.equal(woke[0].payload.execution?.next_action,'local-next-step');
+  assert.equal(woke[0].payload.execution?.mandate_completed,false);
   assert.equal(woke[0].payload.parent_mandate_status,'open');
   const settled=ledger.settle({reservation_id:reservationId,
     idempotency_key:'local-fixture:'+id+':settlement',

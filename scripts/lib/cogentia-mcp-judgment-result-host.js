@@ -17,6 +17,7 @@ import { projectPacketCoordination, validateCurrentPacketClaim } from
 import { assessJohnCopAuthority } from "./john-cop-authority-preflight.js";
 import { resolveMandate } from "../../../inseme/packages/cop-core/src/governed-act.js";
 import { isResolvedCallerAuth } from "./cogentia-mcp-auth.js";
+import { projectMandateProgress } from "./mandate-completion-projection.js";
 import { resumeContinuationFromReturnedEvent } from
   "../../../inseme/packages/cop-kernel/src/continuation.js";
 
@@ -101,7 +102,13 @@ export function createCanonicalMcpJudgmentResultHost({
             handlerResolver: async (name) => name === "handler:local-result-evaluator"
               ? async ({ payload }) => ({
                   accepted: payload?.candidateResult?.status === "answered",
-                  next_action: "continue",
+                  ...projectMandateProgress({
+                    acceptance: continuation.parent_acceptance || [],
+                    evidence: [],
+                    nextActions: [{ id:"local-next-step", admissible:true,
+                      available:true }],
+                    agentClaim: "completed",
+                  }),
                   mandate_completed: false,
                 }) : null,
           });
@@ -121,7 +128,8 @@ export function createCanonicalMcpJudgmentResultHost({
               continuation_id: id,
               handler: continuation.resumeTo,
               execution: wake.execution?.result || null,
-              parent_mandate_status: "open",
+              parent_mandate_status: wake.execution?.result?.status === "completed"
+                ? "completed" : "open",
             },
           });
           if (!recorded.ok) throw new Error(recorded.error || "resumption_commit_failed");

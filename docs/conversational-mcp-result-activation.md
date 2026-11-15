@@ -525,3 +525,19 @@ The opt-in production Reality Test script asserts that the MCP server,
 rather than the script, has independently recorded both the `returned`
 and `resumed` events before the script inspects the journal. It uses one
 canonical COP budget step and leaves parent mandate status open.
+
+## 21. Structural parent-mandate completion projection
+
+`scripts/lib/mandate-completion-projection.js` is a pure, deterministic
+projection reused in the local result handler. It distinguishes a finished
+handler Step from the status of the parent Mandate: an agent's declaration
+of `completed` is never accepted as the criterion itself. Closure
+requires nonempty declared acceptance criteria and independently verified
+receipts for **every** requirement. If an authorized and available next
+action exists, the status is `continue`; verified, evidenced blockers
+can set `blocked`; otherwise it remains `open`. No new permission,
+signature, broker, background task or LLM approval is introduced.
+
+This first integration demonstrates a structurally open parent after a
+genuinely resumed handler; it does **not** yet connect the complete
+multi-provider FractaRouting executor to the projected next action.
