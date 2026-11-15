@@ -10,26 +10,26 @@ SUDO_CONTENT="ubuntu ALL=($USER_NAME) NOPASSWD: /bin/sh"
 OVERRIDE_CONTENT=$'[Service]\nEnvironment=COGENTIA_HOST_UNIX_ISOLATED_USER=cogentia-effect\n'
 usage() { echo "Usage: $0 [--check|--apply]" >&2;exit 2; }
 [[ $# == 1 && ( "$1" == "--check" || "$1" == "--apply" ) ]] || usage
-[[ -f /var/lib/cogentia/cop/john-root-v1.sqlite ]] || {echo "BLOCKED: canonical COP DB absent" >&2;exit 2;}
-[[ -d /etc/systemd/system/mcp-cogentia.service.d ]] || {echo "BLOCKED: MCP drop-ins absent" >&2;exit 2;}
+[[ -f /var/lib/cogentia/cop/john-root-v1.sqlite ]] || { echo "BLOCKED: canonical COP DB absent" >&2; exit 2; }
+[[ -d /etc/systemd/system/mcp-cogentia.service.d ]] || { echo "BLOCKED: MCP drop-ins absent" >&2; exit 2; }
 for f in "$SUDOERS" "$DROPIN";do
  if [[ -e "$f" ]];then
    if [[ "$f" == "$SUDOERS" ]];then
      [[ "$(cat "$f")" == "$SUDO_CONTENT" ]] || { echo "BLOCKED: sudo policy conflict" >&2;exit 2; }
-   else [[ "$(cat "$f")" == "$(printf '%s' "$OVERRIDE_CONTENT")" ]] || {echo "BLOCKED: service override conflict" >&2;exit 2; }
+   else [[ "$(cat "$f")" == "$(printf '%s' "$OVERRIDE_CONTENT")" ]] || { echo "BLOCKED: service override conflict" >&2;exit 2; }
    fi
  fi
 done
 if getent passwd "$USER_NAME" >/dev/null;then
- [[ "$(getent passwd "$USER_NAME" | cut -d: -f7)" == "/usr/sbin/nologin" ]] || {echo "BLOCKED: unexpected effecter login shell" >&2;exit 2;}
- [[ "$(getent passwd "$USER_NAME" | cut -d: -f6)" == "/nonexistent" ]] || {echo "BLOCKED: unexpected effecter home" >&2;exit 2;}
- [[ "$(id -G "$USER_NAME" | wc -w)" == 1 ]] || {echo "BLOCKED: unexpected effecter supplementary groups" >&2;exit 2;}
+ [[ "$(getent passwd "$USER_NAME" | cut -d: -f7)" == "/usr/sbin/nologin" ]] || { echo "BLOCKED: unexpected effecter login shell" >&2; exit 2; }
+ [[ "$(getent passwd "$USER_NAME" | cut -d: -f6)" == "/nonexistent" ]] || { echo "BLOCKED: unexpected effecter home" >&2; exit 2; }
+ [[ "$(id -G "$USER_NAME" | wc -w)" == 1 ]] || { echo "BLOCKED: unexpected effecter supplementary groups" >&2; exit 2; }
 fi
 if [[ "$1" == "--check" ]];then
  echo "PREFLIGHT=PASS: dedicated non-login account, one fixed lower-privilege sudo target, canonical DB unchanged"
  exit 0
 fi
-[[ "$(id -u)" == 0 ]] || {echo "BLOCKED: owner root required" >&2;exit 3;}
+[[ "$(id -u)" == 0 ]] || { echo "BLOCKED: owner root required" >&2; exit 3; }
 created_account=0
 created_sudoers=0
 created_dropin=0
