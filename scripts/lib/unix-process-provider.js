@@ -4,9 +4,13 @@
 import { execFile } from 'node:child_process';
 import { hostname, userInfo } from 'node:os';
 import { extractShellJudgment } from './shell-judgment-signal.js';
+import { ISOLATED_UNIX_EXECUTOR_USER } from './unix-process-cop-custody.js';
 
 export class UnixProcessProvider {
-  constructor({ cwd = process.cwd(), timeoutMs = 120000, maxBuffer = 262144, maxConcurrent = 1, maxQueued = 32 } = {}) {
+  constructor({ cwd = process.cwd(), timeoutMs = 120000, maxBuffer = 262144, maxConcurrent = 1, maxQueued = 32, isolatedUser = null } = {}) {
+    if (isolatedUser !== null && isolatedUser !== ISOLATED_UNIX_EXECUTOR_USER)
+      throw new TypeError('unsupported_isolated_unix_executor');
+    this.isolatedUser = isolatedUser;
     this.cwd = cwd;
     this.timeoutMs = timeoutMs;
     this.maxBuffer = maxBuffer;
@@ -47,7 +51,13 @@ export class UnixProcessProvider {
     return this.enqueue(() => new Promise(resolve => {
       let timedOut = false;
       let timer;
-      const child = execFile('setsid', ['/bin/sh', '-c', args.command], {
+      // Build a new session BEFORE sudo so the timeout can kill the whole
+      // sudo + lower-privileged subprocess group. The MCP server retains
+      // COP authority; only this shell runs as the isolated user.
+      const commandArgs = this.isolatedUser
+        ? ['sudo','-n','-u',this.isolatedUser,'--','/bin/sh','-c',args.command]
+        : ['/bin/sh','-c',args.command];
+      const child = execFile('setsid', commandArgs, {
         cwd: this.cwd, timeout: 0, maxBuffer: this.maxBuffer,
         encoding: 'utf8', windowsHide: true,
       }, (error, stdout, stderr) => {
@@ -65,7 +75,10 @@ export class UnixProcessProvider {
           signal: error?.signal || null,
           timeout: timedOut,
           output_truncated: error?.code === 'ERR_CHILD_PROCESS_STDIO_MAXBUFFER', stdout, stderr,
-          identity: { user: user.username, uid: user.uid, gid: user.gid, hostname: hostname() },
+          identity: { user: this.isolatedUser || user.username,
+            uid: this.isolatedUser ? null : user.uid,
+            gid: this.isolatedUser ? null : user.gid,
+            hostname: hostname(), isolation: this.isolatedUser ? 'sudo-unprivileged' : 'none' },
           error: error?.message || null,
           ...(judgment ? { judgment } : {}),
         });
